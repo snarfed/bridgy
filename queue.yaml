@@ -1,0 +1,7 @@
+# queue handlers are defined in tasks.py
+queue:
+- name: poll
+  rate: 1/s
+
+- name: propagate
+  rate: 1/s

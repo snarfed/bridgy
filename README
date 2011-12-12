@@ -1,0 +1,8 @@
+An out-of-band implementation of OStatus and Salmon for Facebook, Twitter,
+Wordpress, and others.
+
+Background: http://snarfed.org/2011-07-27_facebook_app_for_ostatus
+
+The tests require the App Engine SDK and python-mox.
+
+IN PROGRESS!

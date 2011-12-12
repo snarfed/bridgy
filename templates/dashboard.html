@@ -1,0 +1,99 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <title>Bridgy</title>
+  <link href="/static/style.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body>
+
+{# TODO: javascript to set browser location to / so that reloads are harmless #}
+
+<div class="messages">
+{% for msg in msgs %}
+  <span>{{ msg }}</span>
+{% endfor %}
+</div>
+
+<div id="navbar">
+  <p> 
+  {% if user %}
+    {{ nickname }} | <a href="{{ logout_url }}">Sign out</a>
+  {% else %}
+    <a href="/register">Sign in</a>
+  {% endif %}
+</div>
+
+<div id="header">
+  <img id="logo" src="/static/bridgy_logo.jpg" />
+  <p id="title"><span>Bridgy</span></p>
+</div>
+
+<div id="body">
+{% if user %}
+  <p>Welcome back! Here are your current sources and destinations.</p>
+
+  <p>Sources:</p>
+  <ul>
+  {# TODO: paging #}
+  {% for source in sources %}
+    <li>
+      <a href="{{ source.url }}">
+        <img src="{{ source.pic_small }}" />
+        {{ source.display_name }}</a>
+      ({{ source.type_display_name }})
+    </li>
+  {% endfor %}
+  </ul>
+
+  <form method="post" action="/facebook/add">
+    <input type="submit" value="Add Facebook source">
+  </form>
+  <br />
+
+  <p>Destinations:</p>
+  <ul>
+  {% for dest in dests %}
+    <li>
+      <a href="{{ dest.url }}">{{ dest.display_name }}</a>
+      ({{ dest.type_display_name }})
+    </li>
+  {% endfor %}
+  </ul>
+
+  <form method="post" action="/wordpress/add">
+    <table><tr><td>
+          <label for="xmlrpc_url">XMLRPC URL</label>
+        </td><td>
+          <input id="xmlrpc_url" name="xmlrpc_url" type="text" />
+      </td></tr><tr><td>
+          <label for="username">Username</label>
+        </td><td>
+          <input id="username" name="username" type="text" />
+      </td></tr><tr><td>
+          <label for="password">Password</label>
+        </td><td>
+          <input id="password" name="password" type="password" />
+    </td></tr></table>
+    <input type="submit" value="Add Wordpress dest">
+  </form>
+
+{% else %}
+  <p>Please <a href="/register">sign in</a>.</p>
+{% endif %}
+</div>
+
+<div id="bottom"></div>
+
+<div id="footer">
+  <a href="http://snarfed.org/about">Questions?</a>
+  | <a href="http://code.google.com/appengine/">
+      <img src="/static/appengine_button_noborder.gif" /></a>
+</div>
+
+</body>
+</html>
+
