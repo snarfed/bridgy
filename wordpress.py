@@ -5,6 +5,7 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 
 import re
+import traceback
 import xmlrpclib
 
 import appengine_config
@@ -196,11 +197,22 @@ class Wordpress(object):
                                        {'comment_id': comment_id})
 
 
+# TODO: unify with facebook, etc?
 class AddWordpressSite(util.Handler):
   def post(self):
     site = WordpressSite.new(self.request.params, self)
     self.redirect('/?msg=Added %s destination: %s' % (site.type_display_name(),
                                                       site.display_name()))
+
+
+class DeleteWordpressSite(util.Handler):
+  def post(self):
+    site = WordpressSite.get_by_key_name(self.request.params['name'])
+    # TODO: remove tasks, etc.
+    msg = 'Deleted %s destination: %s' % (site.type_display_name(),
+                                                site.display_name())
+    site.delete()
+    self.redirect('/?msg=' + msg)
 
 
 class Go(util.Handler):
@@ -221,6 +233,7 @@ class Go(util.Handler):
 
 application = webapp.WSGIApplication([
     ('/wordpress/add', AddWordpressSite),
+    ('/wordpress/delete', DeleteWordpressSite),
     ('/wordpress/go', Go),
     ], debug=appengine_config.DEBUG)
 

@@ -61,11 +61,12 @@ body, input, textarea {
 div.messages {
   position: fixed;
   top: 0px;
-  width: 100%;
   text-align: center;
 }
 
-div.messages > span {
+div.messages > p {
+  margin: 0;
+  margin-bottom: 1px;
   background-color: #dd0;
   color: #444;
   padding-left: .8em;
@@ -109,6 +110,10 @@ img#logo {
   padding-right: 1em;
   margin-right: -.5em;
   margin-top: -2em;
+}
+
+form {
+  display: inline;
 }
 
 input[type^="submit"] {

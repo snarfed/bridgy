@@ -81,6 +81,23 @@ class WordpressSiteTest(WordpressBaseTest, models_test.ModelsTest):
       self.assertEqual(self.entity_keys(expected_sites),
                        models.User.get_current_user().dests)
 
+  def test_delete(self):
+    self.assertEqual(0, WordpressSite.all().count())
+
+    # add a site manually
+    params = dict(self.props)
+    params['xmlrpc_url'] = 'http://my/xmlrpc'
+    site = WordpressSite.new(params, self.handler)
+    self.assertEqual(1, WordpressSite.all().count())
+
+    # call the delete handler
+    resp = self.post(wordpress.application, '/wordpress/delete', 302,
+                     post_params={'name': site.key().name()})
+    location = resp.headers['Location']
+    self.assertTrue(location.startswith('http://HOST/?'), location)
+
+    self.assertEqual(0, WordpressSite.all().count())
+
   def test_add_comment(self):
     self.mox.StubOutWithMock(wordpress, 'get_post_id')
     wordpress.get_post_id('http://dest/post/url').AndReturn(789)

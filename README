@@ -6,3 +6,5 @@ Background: http://snarfed.org/2011-07-27_facebook_app_for_ostatus
 The tests require the App Engine SDK and python-mox.
 
 IN PROGRESS!
+
+STATE: delete bugfix. then transport engine?

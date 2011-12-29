@@ -12,6 +12,12 @@ just list of sources and destinations, no mapping!
 all of a user's sources map to all their destinations. also default sources into global receiving and destinations into auto sending, with opt out.
 
 need base url (ie prefix) for all destinations for mapping comments.
+
+TODO:
+port to webapp2?
+better exception handling
+better exception printing for handlers in tests. (right now just see opaque 500
+  error.)
 """
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
@@ -20,10 +26,13 @@ import logging
 import os
 import urllib
 
+# need to import modules with model class definitions, e.g. facebook and
+# wordpress, for template rendering.
 import appengine_config
 import facebook
 import models
 import util
+import wordpress
 
 from google.appengine.api import users
 from google.appengine.ext import db

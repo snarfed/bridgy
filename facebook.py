@@ -299,6 +299,16 @@ class AddFacebookPage(util.Handler):
     FacebookApp.get().get_access_token(self, '/facebook/got_access_token')
 
 
+class DeleteFacebookPage(util.Handler):
+  def post(self):
+    page = FacebookPage.get_by_key_name(self.request.params['name'])
+    # TODO: remove tasks, etc.
+    msg = 'Deleted %s source: %s' % (page.type_display_name(),
+                                     page.display_name())
+    page.delete()
+    self.redirect('/?msg=' + msg)
+
+
 class GotAuthCode(util.Handler):
   def get(self):
     FacebookApp.get()._get_access_token_with_auth_code(
@@ -314,6 +324,7 @@ class GotAccessToken(util.Handler):
 
 application = webapp.WSGIApplication([
     ('/facebook/add', AddFacebookPage),
+    ('/facebook/delete', DeleteFacebookPage),
     ('/facebook/got_auth_code', GotAuthCode),
     ('/facebook/got_access_token', GotAccessToken),
     ], debug=appengine_config.DEBUG)
