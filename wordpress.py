@@ -1,4 +1,4 @@
-"""Wordpress API code and datastore model classes.
+"""WordPress API code and datastore model classes.
 """
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
@@ -29,7 +29,7 @@ POST_ID_RE = "<link rel='shortlink' href='[^?]+\?p=([0-9]+)' />"
 
 
 def get_post_id(url):
-  """Finds and returns the Wordpress post or page id for a given URL.
+  """Finds and returns the WordPress post or page id for a given URL.
 
   TODO: pages
   TODO: error handling
@@ -40,7 +40,7 @@ def get_post_id(url):
   return re.search(POST_ID_RE, resp.content).group(1)
 
   
-class WordpressSite(models.Destination):
+class WordPressSite(models.Destination):
   """A wordpress blog.
 
   key_name: '[xmlrpc url]_[blog id]', e.g. 'http://my/xmlrpc_0'
@@ -50,7 +50,7 @@ class WordpressSite(models.Destination):
     blog_id: integer
   """
 
-  TYPE_NAME = 'Wordpress'
+  TYPE_NAME = 'WordPress'
   KEY_NAME_RE = re.compile('^(.+)_([0-9]+)$')
 
   username = db.StringProperty()
@@ -58,7 +58,7 @@ class WordpressSite(models.Destination):
   # post_prefix_url = db.LinkProperty(required=True)
 
   def __init__(self, *args, **kwargs):
-    super(WordpressSite, self).__init__(*args, **kwargs)
+    super(WordPressSite, self).__init__(*args, **kwargs)
     self.xmlrpc_url, self.blog_id = self.KEY_NAME_RE.match(self.key().name()).groups()
     self.blog_id = int(self.blog_id)
 
@@ -71,13 +71,13 @@ class WordpressSite(models.Destination):
 
   @staticmethod
   def new(properties, handler):
-    """Creates and saves a WordpressSite for the logged in user.
+    """Creates and saves a WordPressSite for the logged in user.
 
     Args:
       properties: dict
       handler: the current webapp.RequestHandler
 
-    Returns: WordpressSite
+    Returns: WordPressSite
     """
     properties = dict(properties)
 
@@ -89,11 +89,11 @@ class WordpressSite(models.Destination):
     properties['blog_id'] = blog_id
 
     key_name = '%s_%d' % (properties.get('xmlrpc_url'), blog_id)
-    existing = WordpressSite.get_by_key_name(key_name)
-    site = WordpressSite(key_name=key_name, **properties)
+    existing = WordPressSite.get_by_key_name(key_name)
+    site = WordPressSite(key_name=key_name, **properties)
 
     if existing:
-      logging.warning('Overwriting WordpressSite %s! Old version:\n%s' %
+      logging.warning('Overwriting WordPressSite %s! Old version:\n%s' %
                       (key_name, site.to_xml()))
       handler.messages.append('Updated existing %s site: %s' %
                               (existing.type_display_name(), existing.display_name()))
@@ -112,7 +112,7 @@ class WordpressSite(models.Destination):
     Args:
       comment: Comment instance
     """
-    wp = Wordpress(self.xmlrpc_url, self.blog_id, self.username, self.password)
+    wp = WordPress(self.xmlrpc_url, self.blog_id, self.username, self.password)
     content = '%s\n<a href="%s">(from %s)</a>' % (
       comment.content, comment.source_post_url, comment.source.type_display_name())
 
@@ -121,8 +121,8 @@ class WordpressSite(models.Destination):
                    author_url, content)
 
 
-class Wordpress(object):
-  """An XML-RPC interface to a Wordpress blog.
+class WordPress(object):
+  """An XML-RPC interface to a WordPress blog.
 
   Class attributes:
     transport: Transport instance passed to ServerProxy()
@@ -138,7 +138,7 @@ class Wordpress(object):
 
   def __init__(self, xmlrpc_url, blog_id, username, password):
     self.proxy = xmlrpclib.ServerProxy(xmlrpc_url, allow_none=True,
-                                       transport=Wordpress.transport)
+                                       transport=WordPress.transport)
     self.blog_id = blog_id
     self.username = username
     self.password = password
@@ -198,16 +198,16 @@ class Wordpress(object):
 
 
 # TODO: unify with facebook, etc?
-class AddWordpressSite(util.Handler):
+class AddWordPressSite(util.Handler):
   def post(self):
-    site = WordpressSite.new(self.request.params, self)
+    site = WordPressSite.new(self.request.params, self)
     self.redirect('/?msg=Added %s destination: %s' % (site.type_display_name(),
                                                       site.display_name()))
 
 
-class DeleteWordpressSite(util.Handler):
+class DeleteWordPressSite(util.Handler):
   def post(self):
-    site = WordpressSite.get_by_key_name(self.request.params['name'])
+    site = WordPressSite.get_by_key_name(self.request.params['name'])
     # TODO: remove tasks, etc.
     msg = 'Deleted %s destination: %s' % (site.type_display_name(),
                                                 site.display_name())
@@ -217,7 +217,7 @@ class DeleteWordpressSite(util.Handler):
 
 class Go(util.Handler):
   def get(self):
-    wp = Wordpress('http://localhost/w/xmlrpc.php', 0, 'ryan', 'w1JJmcwzD$T')
+    wp = WordPress('http://localhost/w/xmlrpc.php', 0, 'ryan', 'no1rdn)IR')
     self.response.headers['Content-Type'] = 'text/plain'
     self.response.out.write(`wp.get_comments(670)`)
     # return wp.proxy.wp.editComment(wp.blog_id, wp.username, wp.password, 26662,
@@ -232,8 +232,8 @@ class Go(util.Handler):
     
 
 application = webapp.WSGIApplication([
-    ('/wordpress/add', AddWordpressSite),
-    ('/wordpress/delete', DeleteWordpressSite),
+    ('/wordpress/add', AddWordPressSite),
+    ('/wordpress/delete', DeleteWordPressSite),
     ('/wordpress/go', Go),
     ], debug=appengine_config.DEBUG)
 

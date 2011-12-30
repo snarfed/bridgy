@@ -14,7 +14,7 @@ class DestComment(object):
   """A propagated comment in a destination site.
 
   The key name is the comment's uid in the destination site, e.g. comment_id in
-  Wordpress.
+  WordPress.
 
   A DestComment is a child of its corresponding SourceComment."""
   dest = db.ReferenceProperty(reference_class=destinations.Destination,
@@ -26,7 +26,7 @@ class DestComment(object):
   #   assert 'parent' in kwargs and kwargs['parent']
 
 
-class WordpressDestComment(db.Model, DestComment):
+class WordPressDestComment(db.Model, DestComment):
   """A comment in facebook.
 
   The key name is the comment's post_fbid:

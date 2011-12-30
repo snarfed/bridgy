@@ -5,7 +5,7 @@ TODO: think about how to determine stopping point. can all sources return
 comments in strict descending timestamp order? can we require/generate
 monotonically increasing comment ids for all sources? 
 TODO: default to promiscuous, ie have all sources feed all destinations, even if
-the salme user doesn't own both. include opt outs on both tasks.
+the same user doesn't own both. include opt outs on both tasks.
 TODO: check HRD consistency guarantees and change as needed
 """
 

@@ -11,18 +11,18 @@ import testutil
 import xmlrpclib
 
 import wordpress
-from wordpress import Wordpress, WordpressSite
+from wordpress import WordPress, WordPressSite
 import models
 import models_test
 
 
-class WordpressBaseTest(mox.MoxTestBase):
+class WordPressBaseTest(mox.MoxTestBase):
 
   def setUp(self):
-    super(WordpressBaseTest, self).setUp()
+    super(WordPressBaseTest, self).setUp()
     self.transport = self.mox.CreateMock(xmlrpclib.Transport)
-    Wordpress.transport = self.transport
-    self.wp = Wordpress('http://my/xmlrpc', 999, 'me', 'my_passwd')
+    WordPress.transport = self.transport
+    self.wp = WordPress('http://my/xmlrpc', 999, 'me', 'my_passwd')
     self.result = [{'foo': 0}, {'bar': 1}]
 
   def expect_xmlrpc(self, method,params):
@@ -30,7 +30,7 @@ class WordpressBaseTest(mox.MoxTestBase):
     self.transport.request('my', '/xmlrpc', body, verbose=0).AndReturn(self.result)
 
 
-class WordpressTest(WordpressBaseTest):
+class WordPressTest(WordPressBaseTest):
 
   def test_get_comments(self):
     self.expect_xmlrpc('wp.getComments', {'post_id': 123})
@@ -49,21 +49,21 @@ class WordpressTest(WordpressBaseTest):
     self.assertEqual(self.result, self.wp.delete_comment(456))
 
 
-class WordpressSiteTest(WordpressBaseTest, models_test.ModelsTest):
+class WordPressSiteTest(WordPressBaseTest, models_test.ModelsTest):
 
   def setUp(self):
-    super(WordpressSiteTest, self).setUp()
+    super(WordPressSiteTest, self).setUp()
     self.props = {
       'username': 'me',
       'password': 'my_passwd',
       }
-    self.site = WordpressSite(key_name='http://my/xmlrpc_999', **self.props)
+    self.site = WordPressSite(key_name='http://my/xmlrpc_999', **self.props)
     self.user = models.User.get_or_insert_current_user(self.handler)
 
   def test_new(self):
     post_params = dict(self.props)
     post_params['xmlrpc_url'] = 'http://my/xmlrpc'
-    self.assertEqual(0, WordpressSite.all().count())
+    self.assertEqual(0, WordPressSite.all().count())
 
     expected_sites = []
     # if not provided, blog id should default to 0
@@ -75,20 +75,20 @@ class WordpressSiteTest(WordpressBaseTest, models_test.ModelsTest):
       self.assertTrue(location.startswith('http://HOST/?'), location)
 
       key_name = 'http://my/xmlrpc_%d' % expected_blog_id
-      expected_sites.append(WordpressSite(key_name=key_name, **self.props))
-      self.assert_entities_equal(expected_sites, WordpressSite.all(),
+      expected_sites.append(WordPressSite(key_name=key_name, **self.props))
+      self.assert_entities_equal(expected_sites, WordPressSite.all(),
                                  ignore=['created'])
       self.assertEqual(self.entity_keys(expected_sites),
                        models.User.get_current_user().dests)
 
   def test_delete(self):
-    self.assertEqual(0, WordpressSite.all().count())
+    self.assertEqual(0, WordPressSite.all().count())
 
     # add a site manually
     params = dict(self.props)
     params['xmlrpc_url'] = 'http://my/xmlrpc'
-    site = WordpressSite.new(params, self.handler)
-    self.assertEqual(1, WordpressSite.all().count())
+    site = WordPressSite.new(params, self.handler)
+    self.assertEqual(1, WordPressSite.all().count())
 
     # call the delete handler
     resp = self.post(wordpress.application, '/wordpress/delete', 302,
@@ -96,12 +96,12 @@ class WordpressSiteTest(WordpressBaseTest, models_test.ModelsTest):
     location = resp.headers['Location']
     self.assertTrue(location.startswith('http://HOST/?'), location)
 
-    self.assertEqual(0, WordpressSite.all().count())
+    self.assertEqual(0, WordPressSite.all().count())
 
   def test_add_comment(self):
     self.mox.StubOutWithMock(wordpress, 'get_post_id')
     wordpress.get_post_id('http://dest/post/url').AndReturn(789)
-    # Wordpress.new_comment(mox.IgnoreArg(), 123, 'me', 'http://me', content)
+    # WordPress.new_comment(mox.IgnoreArg(), 123, 'me', 'http://me', content)
 
     content = """foo
 <a href="http://source/post/url">(from FakeSource)</a>"""

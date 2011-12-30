@@ -14,7 +14,7 @@ from google.appengine.ext.webapp.util import run_wsgi_app
 
 
 class Site(util.KeyNameModel):
-  """A web site for a single entity, e.g. Facebook profile or Wordpress blog.
+  """A web site for a single entity, e.g. Facebook profile or WordPress blog.
 
   Not intended to be used directly. Inherit from one or both of the Destination
   and Source subclasses.
@@ -58,7 +58,7 @@ class Source(Site):
 
 
 class Destination(Site):
-  """A web site to propagate comments to, e.g. a Wordpress blog.
+  """A web site to propagate comments to, e.g. a WordPress blog.
 
   Each concrete destination class should subclass this class.
   """

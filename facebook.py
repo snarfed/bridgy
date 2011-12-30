@@ -144,7 +144,7 @@ class FacebookPage(models.Source):
 
     Returns: FacebookPage
 
-    # TODO: unify with WordpressSite, etc
+    # TODO: unify with WordPressSite, etc
     """
     results = FacebookApp.get().fql(
       'SELECT id, name, url, pic_small, type, username FROM profile WHERE id = me()',
