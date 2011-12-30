@@ -25,26 +25,29 @@ class WordPressBaseTest(mox.MoxTestBase):
     self.wp = WordPress('http://my/xmlrpc', 999, 'me', 'my_passwd')
     self.result = [{'foo': 0}, {'bar': 1}]
 
-  def expect_xmlrpc(self, method,params):
-    body = xmlrpclib.dumps((999, 'me', 'my_passwd', params), methodname=method)
+  def expect_xmlrpc(self, method, *extra_args, **struct):
+    args = [999, 'me', 'my_passwd'] + list(extra_args)
+    if struct:
+      args.append(struct)
+    body = xmlrpclib.dumps(tuple(args), methodname=method)
     self.transport.request('my', '/xmlrpc', body, verbose=0).AndReturn(self.result)
 
 
 class WordPressTest(WordPressBaseTest):
 
   def test_get_comments(self):
-    self.expect_xmlrpc('wp.getComments', {'post_id': 123})
+    self.expect_xmlrpc('wp.getComments', post_id=123)
     self.mox.ReplayAll()
     self.assertEqual(self.result, self.wp.get_comments(123))
 
   def test_new_comment(self):
-    self.expect_xmlrpc('wp.newComment', {'post_id': 123, 'author': 'me',
-                                         'author_url': 'http://me', 'content': 'foo'})
+    self.expect_xmlrpc('wp.newComment', 123,
+                       author='me', author_url='http://me', content='foo')
     self.mox.ReplayAll()
     self.assertEqual(self.result, self.wp.new_comment(123, 'me', 'http://me', 'foo'))
                     
   def test_delete_comment(self):
-    self.expect_xmlrpc('wp.deleteComment', {'comment_id': 456})
+    self.expect_xmlrpc('wp.deleteComment', 456)
     self.mox.ReplayAll()
     self.assertEqual(self.result, self.wp.delete_comment(456))
 
@@ -105,12 +108,11 @@ class WordPressSiteTest(WordPressBaseTest, models_test.ModelsTest):
 
     content = """foo
 <a href="http://source/post/url">(from FakeSource)</a>"""
-    args = {'post_id': 789,
-            'author': 'me',
+    args = {'author': 'me',
             'author_url': 'http://me',
             'content': content,
             }
-    self.expect_xmlrpc('wp.newComment', args)
+    self.expect_xmlrpc('wp.newComment', 789, args)
 
     self.mox.ReplayAll()
     self.site.add_comment(self.comments[0])

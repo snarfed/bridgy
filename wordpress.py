@@ -25,7 +25,8 @@ from google.appengine.ext.webapp.util import run_wsgi_app
 # ...
 # <guid isPermaLink="false">http://wordpress.org/news/?p=1982</guid>
 #
-POST_ID_RE = "<link rel='shortlink' href='[^?]+\?p=([0-9]+)' />"
+# note that . does *not* match a newline by default.
+POST_ID_RE = '<body class=.*(postid|page-id)-([0-9]+)'
 
 
 def get_post_id(url):
@@ -37,7 +38,7 @@ def get_post_id(url):
 
   # find the wordpress post id
   resp = urlfetch.fetch(url)
-  return re.search(POST_ID_RE, resp.content).group(1)
+  return int(re.search(POST_ID_RE, resp.content).group(2))
 
   
 class WordPressSite(models.Destination):
@@ -117,8 +118,8 @@ class WordPressSite(models.Destination):
       comment.content, comment.source_post_url, comment.source.type_display_name())
 
     author_url = str(comment.author_url) # xmlrpclib complains about string subclasses
-    wp.new_comment(get_post_id(comment.dest_post_url), comment.author_name,
-                   author_url, content)
+    post_id = get_post_id(comment.dest_post_url)
+    wp.new_comment(post_id, comment.author_name, author_url, content)
 
 
 class WordPress(object):
@@ -173,10 +174,13 @@ class WordPress(object):
       content: string
 
     Returns: integer, the comment id
+
+    Details: http://codex.wordpress.org/XML-RPC_wp#wp.newComment
     """
-    return self.proxy.wp.newComment(self.blog_id, self.username, self.password,
-                                    {'post_id': post_id, 'author': author,
-                                     'author_url': author_url, 'content': content})
+    # print 'post id %d' % post_id
+    return self.proxy.wp.newComment(
+      self.blog_id, self.username, self.password, post_id,
+      {'author': author, 'author_url': author_url, 'content': content})
 
   def delete_comment(self, comment_id):
     """Deletes a comment.
@@ -192,9 +196,11 @@ class WordPress(object):
       comment_id: integer, comment id
 
     Returns: boolean, whether the delete succeeded
+
+    Details: http://codex.wordpress.org/XML-RPC_wp#wp.deleteComment
     """
-    return self.proxy.wp.deleteComment(self.blog_id, self.username, self.password,
-                                       {'comment_id': comment_id})
+    return self.proxy.wp.deleteComment(self.blog_id, self.username,
+                                       self.password, comment_id)
 
 
 # TODO: unify with facebook, etc?
@@ -217,9 +223,29 @@ class DeleteWordPressSite(util.Handler):
 
 class Go(util.Handler):
   def get(self):
-    wp = WordPress('http://localhost/w/xmlrpc.php', 0, 'ryan', 'no1rdn)IR')
-    self.response.headers['Content-Type'] = 'text/plain'
-    self.response.out.write(`wp.get_comments(670)`)
+    # # test get_comments()
+    # wp = WordPress('http://localhost/w/xmlrpc.php', 0, 'ryan', 'no1rdn)IR')
+    # self.response.headers['Content-Type'] = 'text/plain'
+    # self.response.out.write(`wp.get_comments(670)`)
+
+
+    # test add_comment()
+    import facebook
+    fbpage = facebook.FacebookPage(key_name='fbpage')
+    site = WordPressSite.all().get()
+    comment = models.Comment(key_name='my_comment',
+                             source=fbpage,
+                             dest=site,
+                             source_post_url='http://source.com/',
+                             # dest_post_url='http://localhost/about',
+                             dest_post_url='http://localhost/about',
+                             author_name='ryan',
+                             author_url='http://snarfed.org',
+                             content='foo bar today')
+    site.add_comment(comment)
+
+
+
     # return wp.proxy.wp.editComment(wp.blog_id, wp.username, wp.password, 26662,
     #                                {})
     # return wp.proxy.wp.getComment(wp.blog_id, wp.username, wp.password, 99999)
