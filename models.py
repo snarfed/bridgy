@@ -82,7 +82,7 @@ class Comment(util.KeyNameModel):
   STATUSES = ('new', 'processing', 'complete')
 
   source = db.ReferenceProperty(reference_class=Source, required=True)
-  dest = db.ReferenceProperty(reference_class=Destination)#, required=True)
+  dest = db.ReferenceProperty(reference_class=Destination, required=True)
   created = db.DateTimeProperty()
   source_post_url = db.LinkProperty()
   source_comment_url = db.LinkProperty()

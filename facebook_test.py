@@ -97,6 +97,36 @@ class FacebookPageTest(FacebookTestBase):
                              username='my_username',
                              access_token='my_access_token',
                              )
+
+    # TODO: unify with ModelsTest.setUp()
+    properties = {
+      'source': self.page,
+      'source_post_url': 'http://source/post/url',
+      'source_comment_url': 'http://source/comment/url',
+      'author_name': 'me',
+      'author_url': 'http://me',
+      'content': 'foo',
+      'fb_fromid': 456,
+      'fb_username': '',
+      'fb_object_id': 1,
+      }
+    self.comments = [
+      FacebookComment(key_name='123',
+                      created=datetime.datetime.utcfromtimestamp(1),
+                      dest=self.dests[1],
+                      dest_post_url='http://dest1/post/url',
+                      dest_comment_url='http://dest1/comment/url',
+                      **properties),
+      FacebookComment(key_name='789',
+                      created=datetime.datetime.utcfromtimestamp(2),
+                      dest=self.dests[0],
+                      dest_post_url='http://dest0/post/url',
+                      dest_comment_url='http://dest0/comment/url',
+                      **properties),
+      ]
+
+    self.sources[0].set_comments(self.comments)
+
     self.new_fql_results = [{
         'id': '2468',
         'name': 'my full name',
@@ -148,18 +178,8 @@ class FacebookPageTest(FacebookTestBase):
     self.expect_fql('WHERE owner = 2468', results)
 
     self.mox.ReplayAll()
-    expected = [
-      FacebookComment(key_name='123', source=self.page, object_id=1,
-                      fromid=456, username='',
-                      created=datetime.datetime.utcfromtimestamp(1),
-                      content='foo'),
-      FacebookComment(key_name='789', source=self.page, object_id=2,
-                      fromid=0, username='my_username',
-                      created=datetime.datetime.utcfromtimestamp(2),
-                      content='bar'),
-      ]
     got = self.page.poll()
-    self.assert_entities_equal(expected, got)
+    self.assert_entities_equal(self.comments, got)
 
   # def test_initialize_fresh(self):
   #   self.mox.StubOutWithMock(self.app, 'get_access_token')

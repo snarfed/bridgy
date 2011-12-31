@@ -171,16 +171,24 @@ class FacebookPage(models.Source):
     return page
 
   def poll(self):
+    # query = """SELECT link_id FROM link WHERE owner = %s
     query = """SELECT post_fbid, time, fromid, username, object_id, text FROM comment
                WHERE object_id IN (SELECT link_id FROM link WHERE owner = %s)
                ORDER BY time""" % self.key().name()
     results = FacebookApp.get().fql(query, self.access_token)
 
+    # # rename FacebookComment.fb_* properties
+    # for key in ('fromid', 'username', 'object_id'
+
     return [FacebookComment(key_name=r['post_fbid'],
                             source=self,
+                            # dest=models.Destination(key_name='x'),
                             created=datetime.datetime.utcfromtimestamp(r['time']),
                             content=r['text'],
-                            **r)
+                            fb_fromid=r['fromid'],
+                            fb_username=r['username'],
+                            fb_object_id=r['object_id'],
+                            )
             for r in results]
       
 
@@ -192,15 +200,15 @@ class FacebookComment(models.Comment):
   """
 
   # user id who wrote the comment
-  fromid = db.IntegerProperty(required=True)
+  fb_fromid = db.IntegerProperty(required=True)
 
   # name entered by the user when they posted the comment. usually blank,
-  # generally only populated for external users; . if this is provided,
-  # fromid will be 0.
-  username = db.StringProperty()
+  # generally only populated for external users. if this is provided,
+  # fb_fromid will be 0.
+  fb_username = db.StringProperty()
 
   # id of the object this comment refers to
-  object_id = db.IntegerProperty(required=True)
+  fb_object_id = db.IntegerProperty(required=True)
 
 
 class FacebookApp(db.Model):

@@ -103,7 +103,7 @@ class WordPressSiteTest(WordPressBaseTest, testutil.ModelsTest):
 
   def test_add_comment(self):
     self.mox.StubOutWithMock(wordpress, 'get_post_id')
-    wordpress.get_post_id('http://dest/post/url').AndReturn(789)
+    wordpress.get_post_id('http://dest1/post/url').AndReturn(789)
     # WordPress.new_comment(mox.IgnoreArg(), 123, 'me', 'http://me', content)
 
     content = """foo

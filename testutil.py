@@ -267,6 +267,8 @@ class ModelsTest(HandlerTest):
 
     self.sources = [FakeSource.new(), FakeSource.new()]
     self.dests = [FakeDestination.new(), FakeDestination.new()]
+    self.dests[0].url = 'http://dest0/'
+    self.dests[1].url = 'http://dest1/'
     now = datetime.datetime.now()
 
     properties = {
@@ -274,16 +276,23 @@ class ModelsTest(HandlerTest):
       'created': now,
       'source_post_url': 'http://source/post/url',
       'source_comment_url': 'http://source/comment/url',
-      'dest_post_url': 'http://dest/post/url',
-      'dest_comment_url': 'http://dest/comment/url',
-      'content': 'foo',
       'author_name': 'me',
       'author_url': 'http://me',
+      'content': 'foo',
       }
     self.comments = [
-      Comment(key_name='a', dest=self.dests[0], **properties),
-      Comment(key_name='b', dest=self.dests[1], **properties),
+      Comment(key_name='a',
+              dest=self.dests[1],
+              dest_post_url='http://dest1/post/url',
+              dest_comment_url='http://dest1/comment/url',
+              **properties),
+      Comment(key_name='b',
+              dest=self.dests[0],
+              dest_post_url='http://dest0/post/url',
+              dest_comment_url='http://dest0/comment/url',
+              **properties),
       ]
+
     self.sources[0].set_comments(self.comments)
 
     # unofficial APIs, whee! this is so we can call
