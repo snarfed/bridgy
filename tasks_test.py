@@ -13,17 +13,14 @@ import tasks
 from tasks import Poll, Propagate
 import testutil
 
-from google.appengine.api import apiproxy_stub_map
 from google.appengine.ext import db
-from google.appengine.ext import testbed
 from google.appengine.ext import webapp
 
 
-class TaskQueueTest(models_test.ModelsTest):
+class TaskQueueTest(testutil.ModelsTest):
   """Attributes:
     task_name: the task name to populate in the request headers in post_task()
-    post_url: the URL for  post_task() to post to
-    taskqueue_stub: the app engine task queue api proxy stub
+    post_url: the URL for post_task() to post to
     now: the datetime to be returned by datetime.now()
   """
 
@@ -36,11 +33,6 @@ class TaskQueueTest(models_test.ModelsTest):
     self.task_name = task_name
     self.post_url = post_url
     self.now = datetime.datetime.now()
-
-    # unofficial APIs, whee! this is so we can call
-    # TaskQueueServiceStub.GetTasks() in tests. see
-    # google/appengine/api/taskqueue/taskqueue_stub.py
-    self.taskqueue_stub = apiproxy_stub_map.apiproxy.GetStub('taskqueue')
 
   def post_task(self, expected_status=200):
     """Runs post(), injecting self.now to be returned by datetime.now().
@@ -181,7 +173,7 @@ class PropagateTest(TaskQueueTest):
     methods = [
       (Propagate, 'lease_comment', []),
       (Propagate, 'complete_comment', []),
-      (models_test.FakeDestination, 'add_comment', [mox.IgnoreArg()]),
+      (testutil.FakeDestination, 'add_comment', [mox.IgnoreArg()]),
       ]
 
     for cls, method, args in methods:

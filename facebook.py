@@ -200,7 +200,7 @@ class FacebookComment(models.Comment):
   username = db.StringProperty()
 
   # id of the object this comment refers to
-  object_id = db.StringProperty(required=True)
+  object_id = db.IntegerProperty(required=True)
 
 
 class FacebookApp(db.Model):

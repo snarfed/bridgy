@@ -16,6 +16,11 @@ import logging
 import re
 import time
 
+# need to import modules with model class definitions, e.g. facebook and
+# wordpress, for loading entities from datastore.
+import facebook
+import wordpress
+
 from google.appengine.ext import db
 from google.appengine.api import taskqueue
 from google.appengine.ext import webapp
@@ -69,6 +74,7 @@ class Poll(TaskHandler):
       logging.warning('duplicate poll task! deferring to the other task.')
       return
 
+    logging.debug('Polling source %s' % source.key().name())
     for comment in source.poll():
       comment.get_or_save()
 

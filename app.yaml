@@ -23,7 +23,7 @@ handlers:
   script: wordpress.py
   login: required
 
-- url: /tasks/.*
+- url: /_ah/queue/.*
   script: tasks.py
   login: admin
 

@@ -7,6 +7,7 @@ import logging
 import appengine_config
 import util
 
+from google.appengine.api import taskqueue
 from google.appengine.api import users
 from google.appengine.ext import db
 from google.appengine.ext import webapp
@@ -90,7 +91,7 @@ class Comment(util.KeyNameModel):
 
   author_name = db.StringProperty()
   author_url = db.LinkProperty()
-  content = db.StringProperty()
+  content = db.StringProperty(multiline=True)
 
   status = db.StringProperty(choices=STATUSES, default='new')
   leased_until = db.DateTimeProperty()
@@ -104,6 +105,8 @@ class Comment(util.KeyNameModel):
                 prop.get_value_for_datastore(existing))
       return existing
 
+    logging.debug('New comment to propagate: %s' % self.key().name())
+    taskqueue.add(name=str(self.key()), queue_name='propagate')
     self.save()
     return self
 

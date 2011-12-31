@@ -20,7 +20,7 @@ from google.appengine.api import urlfetch
 from google.appengine.ext import webapp
 
 
-class FacebookTestBase(tasks_test.TaskQueueTest):
+class FacebookTestBase(testutil.ModelsTest):
 
   def setUp(self):
     super(FacebookTestBase, self).setUp()
@@ -106,8 +106,7 @@ class FacebookPageTest(FacebookTestBase):
         'username': 'my_username',
         }]
 
-    task_name = str(self.page.key()) + '_1970-01-01-00-00-00'
-    self.setup_taskqueue(task_name, '/_ah/queue/poll')
+    self.task_name = str(self.page.key()) + '_1970-01-01-00-00-00'
 
   def _test_new(self):
     self.expect_fql('FROM profile WHERE id = me()', self.new_fql_results)
@@ -141,20 +140,20 @@ class FacebookPageTest(FacebookTestBase):
   def test_poll(self):
     # note that json requires double quotes. :/
     results = [
-       {'post_fbid': '123', 'object_id': '001', 'fromid': 456,
+       {'post_fbid': '123', 'object_id': 1, 'fromid': 456,
         'username': '', 'time': 1, 'text': 'foo'},
-       {'post_fbid': '789', 'object_id': '002', 'fromid': 0,
+       {'post_fbid': '789', 'object_id': 2, 'fromid': 0,
         'username': 'my_username', 'time': 2, 'text': 'bar'},
       ]
     self.expect_fql('WHERE owner = 2468', results)
 
     self.mox.ReplayAll()
     expected = [
-      FacebookComment(key_name='123', source=self.page, object_id='001',
+      FacebookComment(key_name='123', source=self.page, object_id=1,
                       fromid=456, username='',
                       created=datetime.datetime.utcfromtimestamp(1),
                       content='foo'),
-      FacebookComment(key_name='789', source=self.page, object_id='002',
+      FacebookComment(key_name='789', source=self.page, object_id=2,
                       fromid=0, username='my_username',
                       created=datetime.datetime.utcfromtimestamp(2),
                       content='bar'),

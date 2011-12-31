@@ -3,17 +3,21 @@
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
+import collections
 import cStringIO
+import datetime
 import mox
 import re
-import unittest
 import urllib
 import urlparse
 from webob import datastruct 
 import wsgiref
 
+from models import Comment, Destination, Source
+from tasks import Poll, Propagate
 import util
 
+from google.appengine.api import apiproxy_stub_map
 from google.appengine.api import urlfetch
 from google.appengine.ext import db
 from google.appengine.ext import testbed
@@ -200,3 +204,89 @@ class HandlerTest(TestbedTest):
 
     application(self.environ, start_response)
     return self.response
+
+
+class FakeBase(db.Model):
+  """Not thread safe.
+  """
+
+  key_name_counter = 0
+
+  @classmethod
+  def new(cls):
+    FakeBase.key_name_counter += 1
+    inst = cls(key_name=str(FakeBase.key_name_counter))
+    inst.save()
+    return inst
+
+  def type_display_name(self):
+    return self.__class__.__name__
+
+
+class FakeDestination(FakeBase, Destination):
+  """  Attributes:
+    comments: dict mapping FakeDestination string key to list of Comment entities
+  """
+
+  comments = collections.defaultdict(list)
+
+  def add_comment(self, comment):
+    FakeDestination.comments[str(self.key())].append(comment)
+
+  def get_comments(self):
+    return FakeDestination.comments[str(self.key())]
+
+
+class FakeSource(FakeBase, Source):
+  """Attributes:
+    comments: dict mapping FakeSource string key to list of Comments to be
+      returned by poll()
+  """
+  comments = {}
+
+  def poll(self):
+    return FakeSource.comments[str(self.key())]
+
+  def set_comments(self, comments):
+    FakeSource.comments[str(self.key())] = comments
+
+
+class ModelsTest(HandlerTest):
+  """Sets up some test sources, destinations, and comments.
+
+  Attributes:
+    sources: list of FakeSource
+    dests: list of FakeDestination
+    comments: list of unsaved Comment
+    taskqueue_stub: the app engine task queue api proxy stub
+  """
+
+  def setUp(self):
+    super(ModelsTest, self).setUp()
+    self.setup_testbed()
+
+    self.sources = [FakeSource.new(), FakeSource.new()]
+    self.dests = [FakeDestination.new(), FakeDestination.new()]
+    now = datetime.datetime.now()
+
+    properties = {
+      'source': self.sources[0],
+      'created': now,
+      'source_post_url': 'http://source/post/url',
+      'source_comment_url': 'http://source/comment/url',
+      'dest_post_url': 'http://dest/post/url',
+      'dest_comment_url': 'http://dest/comment/url',
+      'content': 'foo',
+      'author_name': 'me',
+      'author_url': 'http://me',
+      }
+    self.comments = [
+      Comment(key_name='a', dest=self.dests[0], **properties),
+      Comment(key_name='b', dest=self.dests[1], **properties),
+      ]
+    self.sources[0].set_comments(self.comments)
+
+    # unofficial APIs, whee! this is so we can call
+    # TaskQueueServiceStub.GetTasks() in tests. see
+    # google/appengine/api/taskqueue/taskqueue_stub.py
+    self.taskqueue_stub = apiproxy_stub_map.apiproxy.GetStub('taskqueue')

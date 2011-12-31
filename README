@@ -7,4 +7,5 @@ The tests require the App Engine SDK and python-mox.
 
 IN PROGRESS!
 
-STATE: delete bugfix. then transport engine?
+STATE: propagate tasks are now inserted. need to hook up FacebookComment.dest
+props. and rest: http://localhost:8080/_ah/admin/datastore?kind=FacebookComment

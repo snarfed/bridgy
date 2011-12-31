@@ -52,7 +52,7 @@ class WordPressTest(WordPressBaseTest):
     self.assertEqual(self.result, self.wp.delete_comment(456))
 
 
-class WordPressSiteTest(WordPressBaseTest, models_test.ModelsTest):
+class WordPressSiteTest(WordPressBaseTest, testutil.ModelsTest):
 
   def setUp(self):
     super(WordPressSiteTest, self).setUp()
