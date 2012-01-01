@@ -57,6 +57,7 @@ class WordPressSiteTest(WordPressBaseTest, testutil.ModelsTest):
   def setUp(self):
     super(WordPressSiteTest, self).setUp()
     self.props = {
+      'url': 'http://my/',
       'username': 'me',
       'password': 'my_passwd',
       }

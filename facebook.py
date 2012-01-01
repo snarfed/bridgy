@@ -62,6 +62,7 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 import datetime
 import logging
 import json
+import pprint
 import urllib
 import urlparse
 
@@ -169,11 +170,13 @@ class FacebookPage(models.Source):
     # TODO: ugh, *all* of this should be transactional
     page.save()
     models.User.get_current_user().add_source(page)
-    taskqueue.add(name=tasks.Poll.make_task_name(page), queue_name='poll',
-                  countdown=tasks.Poll.TASK_COUNTDOWN.seconds)
+    taskqueue.add(name=tasks.Poll.make_task_name(page), queue_name='poll')
     return page
 
   def poll(self):
+    # TODO: generic and expand beyond WordPressSite.
+    # GQL so i don't have to import wordpress
+    dests = db.GqlQuery('SELECT * FROM WordPressSite').fetch(100)
     comments = []
 
     query = """SELECT post_fbid, time, fromid, username, object_id, text FROM comment
@@ -189,25 +192,32 @@ class FacebookPage(models.Source):
     # TODO: cache?
     fromids = [str(c['fromid']) for c in comment_data]
     profile_data = self.fql(
-      'SELECT id, name, url FROM profile WHERE id IN = (%s)' % ','.join(fromids))
+      'SELECT id, name, url FROM profile WHERE id IN (%s)' % ','.join(fromids))
     profiles = dict((p['id'], p) for p in profile_data)
 
     for c in comment_data:
       link = links[c['object_id']]
       logging.debug('Looking for destination for link: %s' % link)
 
-      # TODO: make generic and expand beyond WordPressSite
+      # TODO: move rest of method to tasks!
+
       # look for destinations whose url contains this link. should be at most one.
-      query = db.GqlQuery(
-        'SELECT * FROM WordPressSite WHERE url >= :1 AND url <= :2',
-        link, link + u'\ufffd')
-      dest = query.get()
+      # (can't use this prefix code because we want the property that's a prefix
+      # of the filter value, not vice versa.)
+      # query = db.GqlQuery(
+      #   'SELECT * FROM WordPressSite WHERE url = :1 AND url <= :2',
+      #   link, link + u'\ufffd')
+      dest = [d for d in dests if link.startswith(d.url)]
+      assert len(dest) <= 1
 
       if dest:
-        logging.info('Found destination: %s' % dest.key().name())
+        dest = dest[0]
+        logging.debug('Found destination: %s' % dest.key().name())
 
+        fromid = c['fromid']
+        profile = profiles[fromid]
         post_url = 'https://www.facebook.com/permalink.php?story_fbid=%s&id=%s' % (
-          c['object_id'], c['fromid'])
+          c['object_id'], fromid)
 
         comments.append(FacebookComment(
             key_name=c['post_fbid'],
@@ -219,7 +229,7 @@ class FacebookPage(models.Source):
             author_url=profile['url'],
             created=datetime.datetime.utcfromtimestamp(c['time']),
             content=c['text'],
-            fb_fromid=c['fromid'],
+            fb_fromid=fromid,
             fb_username=c['username'],
             fb_object_id=c['object_id'],
             ))
@@ -274,13 +284,17 @@ class FacebookApp(db.Model):
     """
     assert access_token
 
+    logging.debug('Running FQL query "%s" with access token %s', query, access_token)
     args = {
       'access_token': access_token,
       'query': urllib.quote(query),
       }
-    logging.debug('Running FQL query: %r', args)
     resp = urlfetch.fetch(FQL_URL % args, deadline=999)
-    return json.loads(resp.content)
+    assert resp.status_code == 200, resp.status_code
+    data = json.loads(resp.content)
+    logging.debug('FQL response: %s', pprint.pformat(data))
+    assert 'error_code' not in data and 'error_msg' not in data
+    return data
 
   def get_access_token(self, handler, redirect_uri):
     """Gets an access token for the current user.

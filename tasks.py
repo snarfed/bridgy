@@ -7,9 +7,12 @@ monotonically increasing comment ids for all sources?
 TODO: default to promiscuous, ie have all sources feed all destinations, even if
 the same user doesn't own both. include opt outs on both tasks.
 TODO: check HRD consistency guarantees and change as needed
+TODO BUG: Poll and propagate task names need to be unique (even for the same
+e.g. source and last polled timestamp) so they can be
+recreated. otherwise we get TombstonedTaskError.
 """
 
-__ends__ = ['Ryan Barrett <bridgy@ryanb.org>']
+__author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import datetime
 import logging

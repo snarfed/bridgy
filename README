@@ -7,4 +7,4 @@ The tests require the App Engine SDK and python-mox.
 
 IN PROGRESS!
 
-STATE: dest matching should be working. next is testing propagation?
+STATE: posting comments but finding wrong post ids.
