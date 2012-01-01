@@ -99,16 +99,11 @@ class FacebookPageTest(FacebookTestBase):
                              )
 
     # TODO: unify with ModelsTest.setUp()
-    properties = {
+    source_props = {
       'source': self.page,
       'source_post_url': 'http://source/post/url',
       'source_comment_url': 'http://source/comment/url',
-      'author_name': 'me',
-      'author_url': 'http://me',
       'content': 'foo',
-      'fb_fromid': 456,
-      'fb_username': '',
-      'fb_object_id': 1,
       }
     self.comments = [
       FacebookComment(key_name='123',
@@ -116,13 +111,23 @@ class FacebookPageTest(FacebookTestBase):
                       dest=self.dests[1],
                       dest_post_url='http://dest1/post/url',
                       dest_comment_url='http://dest1/comment/url',
-                      **properties),
+                      author_name='fred',
+                      author_url='http://fred',
+                      fb_fromid=4,
+                      fb_username='',
+                      fb_object_id=1,
+                      **source_props),
       FacebookComment(key_name='789',
                       created=datetime.datetime.utcfromtimestamp(2),
                       dest=self.dests[0],
                       dest_post_url='http://dest0/post/url',
+                      author_name='bob',
+                      author_url='http://bob',
+                      fb_fromid=5,
+                      fb_username='',
+                      fb_object_id=2,
                       dest_comment_url='http://dest0/comment/url',
-                      **properties),
+                      **source_props),
       ]
 
     self.sources[0].set_comments(self.comments)
@@ -169,13 +174,20 @@ class FacebookPageTest(FacebookTestBase):
 
   def test_poll(self):
     # note that json requires double quotes. :/
-    results = [
-       {'post_fbid': '123', 'object_id': 1, 'fromid': 456,
-        'username': '', 'time': 1, 'text': 'foo'},
-       {'post_fbid': '789', 'object_id': 2, 'fromid': 0,
-        'username': 'my_username', 'time': 2, 'text': 'bar'},
-      ]
-    self.expect_fql('WHERE owner = 2468', results)
+    self.expect_fql('SELECT post_fbid, ', [
+        {'post_fbid': '123', 'object_id': 1, 'fromid': 4,
+         'username': '', 'time': 1, 'text': 'foo'},
+        {'post_fbid': '789', 'object_id': 2, 'fromid': 5,
+         'username': '', 'time': 2, 'text': 'bar'},
+        ])
+    self.expect_fql('SELECT link_id, url FROM link ', [
+        {'link_id': 1, 'url': 'http://dest1/post'},
+        {'link_id': 2, 'url': 'http://dest0/post'},
+        ])
+    self.expect_fql('SELECT id, name, url FROM profile ', [
+        {'id': 4, 'name': 'fred', 'url': 'http://fred'},
+        {'id': 5, 'name': 'bob', 'url': 'http://bob'},
+        ])
 
     self.mox.ReplayAll()
     got = self.page.poll()

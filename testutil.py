@@ -45,6 +45,7 @@ class TestbedTest(mox.MoxTestBase):
     super(TestbedTest, self).setUp()
     self.testbed = testbed.Testbed()
     self.setup_testbed()
+    self.mox.StubOutWithMock(urlfetch, 'fetch')
 
   def tearDown(self):
     self.testbed.deactivate()
@@ -75,8 +76,6 @@ class TestbedTest(mox.MoxTestBase):
       expected_url: string, regex, or 
       response: string
     """
-    self.mox.StubOutWithMock(urlfetch, 'fetch')
-
     if isinstance(expected_url, mox.Comparator):
       comparator = expected_url
     else:

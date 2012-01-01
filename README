@@ -7,6 +7,4 @@ The tests require the App Engine SDK and python-mox.
 
 IN PROGRESS!
 
-STATE: hooking up dest and rest of properties in FacebookComment in
-FacebookPage.poll(). then expanding poll to iterate over dests for each comment
-and match against base url.
+STATE: dest matching should be working. next is testing propagation?

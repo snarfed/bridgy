@@ -134,6 +134,9 @@ class FacebookPage(models.Source):
   def type_display_name(self):
     return self.TYPE_NAME
 
+  def fql(self, query):
+    return FacebookApp.get().fql(query, self.access_token)
+
   @staticmethod
   def new(access_token, handler):
     """Creates and saves a FacebookPage for the logged in user.
@@ -171,26 +174,58 @@ class FacebookPage(models.Source):
     return page
 
   def poll(self):
-    # query = """SELECT link_id FROM link WHERE owner = %s
+    comments = []
+
     query = """SELECT post_fbid, time, fromid, username, object_id, text FROM comment
                WHERE object_id IN (SELECT link_id FROM link WHERE owner = %s)
                ORDER BY time""" % self.key().name()
-    results = FacebookApp.get().fql(query, self.access_token)
+    comment_data = self.fql(query)
 
-    # # rename FacebookComment.fb_* properties
-    # for key in ('fromid', 'username', 'object_id'
+    link_ids = [str(c['object_id']) for c in comment_data]
+    link_data = self.fql('SELECT link_id, url FROM link WHERE link_id IN (%s)' %
+                       ','.join(link_ids))
+    links = dict((l['link_id'], l['url']) for l in link_data)
 
-    return [FacebookComment(key_name=r['post_fbid'],
-                            source=self,
-                            # dest=models.Destination(key_name='x'),
-                            created=datetime.datetime.utcfromtimestamp(r['time']),
-                            content=r['text'],
-                            fb_fromid=r['fromid'],
-                            fb_username=r['username'],
-                            fb_object_id=r['object_id'],
-                            )
-            for r in results]
-      
+    # TODO: cache?
+    fromids = [str(c['fromid']) for c in comment_data]
+    profile_data = self.fql(
+      'SELECT id, name, url FROM profile WHERE id IN = (%s)' % ','.join(fromids))
+    profiles = dict((p['id'], p) for p in profile_data)
+
+    for c in comment_data:
+      link = links[c['object_id']]
+      logging.debug('Looking for destination for link: %s' % link)
+
+      # TODO: make generic and expand beyond WordPressSite
+      # look for destinations whose url contains this link. should be at most one.
+      query = db.GqlQuery(
+        'SELECT * FROM WordPressSite WHERE url >= :1 AND url <= :2',
+        link, link + u'\ufffd')
+      dest = query.get()
+
+      if dest:
+        logging.info('Found destination: %s' % dest.key().name())
+
+        post_url = 'https://www.facebook.com/permalink.php?story_fbid=%s&id=%s' % (
+          c['object_id'], c['fromid'])
+
+        comments.append(FacebookComment(
+            key_name=c['post_fbid'],
+            source=self,
+            dest=dest,
+            source_post_url=post_url,
+            dest_post_url=link,
+            author_name=profile['name'],
+            author_url=profile['url'],
+            created=datetime.datetime.utcfromtimestamp(c['time']),
+            content=c['text'],
+            fb_fromid=c['fromid'],
+            fb_username=c['username'],
+            fb_object_id=c['object_id'],
+            ))
+
+    return comments
+
 
 class FacebookComment(models.Comment):
   """Key name is the comment's object_id.
