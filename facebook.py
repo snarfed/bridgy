@@ -193,13 +193,13 @@ class FacebookPage(models.Source):
                ORDER BY time DESC""" % self.key().name()
     comment_data = self.fql(query)
 
-    link_ids = [str(c['object_id']) for c in comment_data]
+    link_ids = set(str(c['object_id']) for c in comment_data)
     link_data = self.fql('SELECT link_id, url FROM link WHERE link_id IN (%s)' %
                        ','.join(link_ids))
     links = dict((l['link_id'], l['url']) for l in link_data)
 
     # TODO: cache?
-    fromids = [str(c['fromid']) for c in comment_data]
+    fromids = set(str(c['fromid']) for c in comment_data)
     profile_data = self.fql(
       'SELECT id, name, url FROM profile WHERE id IN (%s)' % ','.join(fromids))
     profiles = dict((p['id'], p) for p in profile_data)
