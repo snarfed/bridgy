@@ -80,8 +80,10 @@ from google.appengine.ext.webapp.util import run_wsgi_app
 
 # facebook api url templates. can't (easily) use urllib.urlencode() because i
 # want to keep the %(...)s placeholders as is and fill them in later in code.
+# TODO: use appengine_config.py for local mockfacebook vs prod facebook
 GET_AUTH_CODE_URL = '&'.join((
-    'https://www.facebook.com/dialog/oauth/?',
+    'http://localhost:8000/dialog/oauth/?',      # local mockfacebook
+    # 'https://www.facebook.com/dialog/oauth/?', # prod facebook
     'scope=read_stream,offline_access',
     'client_id=%(client_id)s',
     # redirect_uri here must be the same in the access token request!
@@ -91,7 +93,8 @@ GET_AUTH_CODE_URL = '&'.join((
     ))
 
 GET_ACCESS_TOKEN_URL = '&'.join((
-    'https://graph.facebook.com/oauth/access_token?',
+    'http://localhost:8000/oauth/access_token?',        # local mockfacebook
+    # 'https://graph.facebook.com/oauth/access_token?', # prod facebook
     'client_id=%(client_id)s',
     # redirect_uri here must be the same in the oauth request!
     # (the value here doesn't actually matter since it's requested server side.)
@@ -101,7 +104,8 @@ GET_ACCESS_TOKEN_URL = '&'.join((
     ))
 
 FQL_URL = '&'.join((
-    'https://api.facebook.com/method/fql.query?',
+    'http://localhost:8000/method/fql.query?',      # local mockfacebook
+    # 'https://api.facebook.com/method/fql.query?', # prod facebook
     'access_token=%(access_token)s',
     'format=json',
     'query=%(query)s',
@@ -181,7 +185,7 @@ class FacebookPage(models.Source):
 
     query = """SELECT post_fbid, time, fromid, username, object_id, text FROM comment
                WHERE object_id IN (SELECT link_id FROM link WHERE owner = %s)
-               ORDER BY time""" % self.key().name()
+               ORDER BY time DESC""" % self.key().name()
     comment_data = self.fql(query)
 
     link_ids = [str(c['object_id']) for c in comment_data]
