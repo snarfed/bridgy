@@ -34,9 +34,9 @@
 
 <div id="body">
 {% if user %}
-  <p>Welcome back! Here are your current sources and destinations.</p>
+  <p>Welcome back!</p>
 
-  <p>Sources:</p>
+  <p><b>Active sources:</b></p>
   <ul>
   {# TODO: paging #}
   {% for source in sources %}
@@ -62,7 +62,7 @@
   </form>
   <br />
 
-  <p>Destinations:</p>
+  <p><b>Active destinations:</b></p>
   <ul>
   {% for dest in dests %}
     <li>

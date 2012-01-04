@@ -115,11 +115,15 @@ class TestbedTest(mox.MoxTestBase):
       a = list(sorted(a, key=key_fn))
       b = list(sorted(b, key=key_fn))
 
+    self.assertEqual(len(a), len(b),
+                     'Different lengths:\n expected %s\n actual %s' % (a, b))
+
     for x, y in zip(a, b):
       try:
         self.assertEqual(x.key().to_path(), y.key().to_path())
       except (db.BadKeyError, db.NotSavedError):
-        pass
+        if keys_only:
+          raise
 
       if not keys_only:
         self.assertEqual(x.properties(), y.properties())

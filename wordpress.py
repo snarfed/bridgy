@@ -4,6 +4,7 @@
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 
+import logging
 import re
 import traceback
 import xmlrpclib
@@ -91,7 +92,9 @@ class WordPressSite(models.Destination):
 
     key_name = '%s_%d' % (properties.get('xmlrpc_url'), blog_id)
     existing = WordPressSite.get_by_key_name(key_name)
-    site = WordPressSite(key_name=key_name, **properties)
+    site = WordPressSite(key_name=key_name,
+                         owner=models.User.get_current_user(),
+                         **properties)
 
     if existing:
       logging.warning('Overwriting WordPressSite %s! Old version:\n%s' %
@@ -104,7 +107,6 @@ class WordPressSite(models.Destination):
 
     # TODO: ugh, *all* of this should be transactional
     site.save()
-    models.User.get_current_user().add_dest(site)
     return site
 
   def add_comment(self, comment):

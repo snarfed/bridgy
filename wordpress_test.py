@@ -79,11 +79,11 @@ class WordPressSiteTest(WordPressBaseTest, testutil.ModelsTest):
       self.assertTrue(location.startswith('http://HOST/?'), location)
 
       key_name = 'http://my/xmlrpc_%d' % expected_blog_id
-      expected_sites.append(WordPressSite(key_name=key_name, **self.props))
+      expected_sites.append(WordPressSite(key_name=key_name,
+                                          owner=models.User.get_current_user(),
+                                          **self.props))
       self.assert_entities_equal(expected_sites, WordPressSite.all(),
                                  ignore=['created'])
-      self.assertEqual(self.entity_keys(expected_sites),
-                       models.User.get_current_user().dests)
 
   def test_delete(self):
     self.assertEqual(0, WordPressSite.all().count())

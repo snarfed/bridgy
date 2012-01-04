@@ -14,6 +14,68 @@ from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
 
 
+class User(db.Model):
+  """A registered user.
+
+  The key name is either App Engine user_id or OpenID federated_identity.
+  """
+
+  # TODO: remove
+  # sources = db.ListProperty(db.Key)
+  # dests = db.ListProperty(db.Key)
+
+  @classmethod
+  def get_current_user(cls):
+    key_name = cls._current_user_key_name()
+    if key_name:
+      return cls.get_by_key_name(key_name)
+
+  @classmethod
+  @db.transactional
+  def get_or_insert_current_user(cls, handler):
+    """Returns the logged in user's User instance, creating it if necessary.
+
+    Implemented manually instead of via Model.get_or_insert() because we want to
+    know if we created the User object so we can add a message to the handler.
+
+    Args:
+      handler: the current webapp.RequestHandler
+    """
+    key_name = cls._current_user_key_name()
+    if key_name:
+      user = cls.get_by_key_name(key_name)
+      if not user:
+        user = cls(key_name=key_name)
+        user.save()
+        handler.messages.append('Registered new user.')
+
+      return user
+
+  @staticmethod
+  def _current_user_key_name():
+    """Returns a unique key name for the current user.
+
+    Returns: the user's OpenId identifier or App Engine user id or None if
+      they're not logged in, 
+    """
+    user = users.get_current_user()
+    if user:
+      return user.federated_identity() or user.user_id()
+
+    # TODO: remove
+  # @db.transactional
+  # def add_dest(self, dest):
+  #   if dest.key() not in self.dests:
+  #     self.dests.append(dest.key())
+  #     self.save()
+
+  # @db.transactional
+  # def add_source(self, source):
+  #   if source.key() not in self.sources:
+  #     self.sources.append(source.key())
+  #     self.save()
+
+
 class Site(util.KeyNameModel):
   """A web site for a single entity, e.g. Facebook profile or WordPress blog.
 
@@ -22,6 +84,7 @@ class Site(util.KeyNameModel):
   """
   created = db.DateTimeProperty(auto_now_add=True, required=True)
   url = db.LinkProperty()
+  owner = db.ReferenceProperty(User)
 
   def display_name(self):
     """Returns a human-readable name for this site, e.g. 'My Thoughts'.
@@ -109,63 +172,3 @@ class Comment(util.KeyNameModel):
     taskqueue.add(name=str(self.key()), queue_name='propagate')
     self.save()
     return self
-
-
-class User(db.Model):
-  """A registered user.
-
-  The key name is either App Engine user_id or OpenID federated_identity.
-  """
-
-  sources = db.ListProperty(db.Key)
-  dests = db.ListProperty(db.Key)
-
-  @classmethod
-  def get_current_user(cls):
-    key_name = cls._current_user_key_name()
-    if key_name:
-      return cls.get_by_key_name(key_name)
-
-  @classmethod
-  @db.transactional
-  def get_or_insert_current_user(cls, handler):
-    """Returns the logged in user's User instance, creating it if necessary.
-
-    Implemented manually instead of via Model.get_or_insert() because we want to
-    know if we created the User object so we can add a message to the handler.
-
-    Args:
-      handler: the current webapp.RequestHandler
-    """
-    key_name = cls._current_user_key_name()
-    if key_name:
-      user = cls.get_by_key_name(key_name)
-      if not user:
-        user = cls(key_name=key_name)
-        user.save()
-        handler.messages.append('Registered new user.')
-
-      return user
-
-  @staticmethod
-  def _current_user_key_name():
-    """Returns a unique key name for the current user.
-
-    Returns: the user's OpenId identifier or App Engine user id or None if
-      they're not logged in, 
-    """
-    user = users.get_current_user()
-    if user:
-      return user.federated_identity() or user.user_id()
-
-  @db.transactional
-  def add_dest(self, dest):
-    if dest.key() not in self.dests:
-      self.dests.append(dest.key())
-      self.save()
-
-  @db.transactional
-  def add_source(self, source):
-    if source.key() not in self.sources:
-      self.sources.append(source.key())
-      self.save()

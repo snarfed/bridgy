@@ -1,0 +1,6 @@
+lots of current hacks and hard-codings of FacebookPage and WordpressSite instead
+of using PolyModel for sources and dests. e.g. searching for dests in comment
+propagation, querying for the current user's sources and dests.
+
+used to handle current user by storing sources and dests in props on the user.
+not any more, just hard coded.

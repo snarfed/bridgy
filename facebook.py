@@ -82,8 +82,9 @@ from google.appengine.ext.webapp.util import run_wsgi_app
 # want to keep the %(...)s placeholders as is and fill them in later in code.
 # TODO: use appengine_config.py for local mockfacebook vs prod facebook
 GET_AUTH_CODE_URL = '&'.join((
-    'http://localhost:8000/dialog/oauth/?',      # local mockfacebook
-    # 'https://www.facebook.com/dialog/oauth/?', # prod facebook
+    ('http://localhost:8000/dialog/oauth/?'
+     if appengine_config.MOCKFACEBOOK else
+     'https://www.facebook.com/dialog/oauth/?'),
     'scope=read_stream,offline_access',
     'client_id=%(client_id)s',
     # redirect_uri here must be the same in the access token request!
@@ -93,8 +94,9 @@ GET_AUTH_CODE_URL = '&'.join((
     ))
 
 GET_ACCESS_TOKEN_URL = '&'.join((
-    'http://localhost:8000/oauth/access_token?',        # local mockfacebook
-    # 'https://graph.facebook.com/oauth/access_token?', # prod facebook
+    ('http://localhost:8000/oauth/access_token?'
+     if appengine_config.MOCKFACEBOOK else
+     'https://graph.facebook.com/oauth/access_token?'),
     'client_id=%(client_id)s',
     # redirect_uri here must be the same in the oauth request!
     # (the value here doesn't actually matter since it's requested server side.)
@@ -104,8 +106,9 @@ GET_ACCESS_TOKEN_URL = '&'.join((
     ))
 
 FQL_URL = '&'.join((
-    'http://localhost:8000/method/fql.query?',      # local mockfacebook
-    # 'https://api.facebook.com/method/fql.query?', # prod facebook
+    ('http://localhost:8000/method/fql.query?'
+     if appengine_config.MOCKFACEBOOK else
+     'https://api.facebook.com/method/fql.query?'),
     'access_token=%(access_token)s',
     'format=json',
     'query=%(query)s',
@@ -160,7 +163,10 @@ class FacebookPage(models.Source):
     result = results[0]
     id = str(result['id'])
     existing = FacebookPage.get_by_key_name(id)
-    page = FacebookPage(key_name=id, access_token=access_token, **result)
+    page = FacebookPage(key_name=id,
+                        owner=models.User.get_current_user(),
+                        access_token=access_token,
+                        **result)
 
     if existing:
       logging.warning('Overwriting FacebookPage %s! Old version:\n%s' %
@@ -173,7 +179,6 @@ class FacebookPage(models.Source):
 
     # TODO: ugh, *all* of this should be transactional
     page.save()
-    models.User.get_current_user().add_source(page)
     taskqueue.add(name=tasks.Poll.make_task_name(page), queue_name='poll')
     return page
 

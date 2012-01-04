@@ -56,8 +56,8 @@ class DashboardHandler(util.Handler):
       nickname = users.get_current_user().nickname()
       logout_url = users.create_logout_url('/')
       # TODO: paging
-      sources = db.get(user.sources)
-      dests = db.get(user.dests)
+      sources = facebook.FacebookPage.all().filter('owner =', user)
+      dests = wordpress.WordPressSite.all().filter('owner =', user)
     # else:
     #   login_url = users.create_login_url('/')
 

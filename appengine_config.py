@@ -9,3 +9,4 @@ from google.appengine import dist
 dist.use_library('django', '1.2')
 
 DEBUG = True
+MOCKFACEBOOK = True

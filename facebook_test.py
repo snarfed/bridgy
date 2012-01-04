@@ -37,10 +37,9 @@ class FacebookTestBase(testutil.ModelsTest):
       query_snippet: an unescaped snippet that should be in the query
       results: list or dict of results to return
     """
-    url_re = ('^https://api.facebook.com/method/fql.query\?'
-              '&access_token=my_access_token&format=json&query=(.*)$')
-    comparator = mox.Regex(url_re)
-      
+    comparator = mox.Regex(
+      '.*/method/fql.query\?&access_token=my_access_token&format=json&query=(.*)$')
+
     if query_snippet:
       quoted = urllib.quote(query_snippet)
       comparator = mox.And(comparator, mox.StrContains(quoted))
@@ -53,14 +52,15 @@ def FacebookAppTest(FacebookTestBase):
   def test_get_access_token(self):
     self.app.get_access_token(self.handler, '/redirect_to')
     self.assertEqual(302, self.handler.response.status)
-    self.assertEqual(
-      'http://www.facebook.com/dialog/oauth/?&scope=read_stream,offline_access&client_id=app_id&redirect_uri=http://HOST/facebook/got_auth_code&response_type=code&state=http://HOST/redirect_to',
-      self.handler.response.headers['Location'])
+    redirect = self.handler.response.headers['Location']
+    self.assertTrue(redirect.endswith(
+        '/dialog/oauth/?&scope=read_stream,offline_access&client_id=app_id&redirect_uri=http://HOST/facebook/got_auth_code&response_type=code&state=http://HOST/redirect_to'),
+                    redirect)
 
   def test_got_auth_code(self):
-    self.expect_urlfetch(
-      'https://graph.facebook.com/oauth/access_token?&client_id=app_id&redirect_uri=http://HOST/facebook/got_access_token&client_secret=app_secret&code=my_auth_code',
-      'foo=bar&access_token=my_access_token')
+    comparator = mox.Regex(
+      '.*/method/fql.query\?&access_token=my_access_token&format=json&query=(.*)$')
+    self.expect_urlfetch(comparator, 'foo=bar&access_token=my_access_token')
 
     self.mox.ReplayAll()
     url = '/facebook/got_auth_code?code=my_auth_code&state=http://my/redirect_to'
@@ -90,6 +90,7 @@ class FacebookPageTest(FacebookTestBase):
     self.user = models.User.get_or_insert_current_user(self.handler)
     self.handler.messages = []
     self.page = FacebookPage(key_name='2468',
+                             owner=self.user,
                              name='my full name',
                              url='http://my.fb/url',
                              pic_small='http://my.pic/small',
@@ -150,7 +151,6 @@ class FacebookPageTest(FacebookTestBase):
     got = FacebookPage.new('my_access_token', self.handler)
     self.assert_entities_equal(self.page, got, ignore=['created'])
     self.assert_entities_equal([self.page], FacebookPage.all(), ignore=['created'])
-    self.assertEqual([self.page.key()], models.User.get_current_user().sources)
 
     tasks = self.taskqueue_stub.GetTasks('poll')
     self.assertEqual(1, len(tasks))
