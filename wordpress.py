@@ -1,4 +1,6 @@
 """WordPress API code and datastore model classes.
+
+Note that WordPress doesn't support specifying a date for new comments!
 """
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
@@ -115,10 +117,18 @@ class WordPressSite(models.Destination):
       comment: Comment instance
     """
     wp = WordPress(self.xmlrpc_url, self.blog_id, self.username, self.password)
-    # i originally used a <br /> here, but xmlrpc.newComment strips it. :/ <p>
-    # works though.
-    content = '<i><a href="%s">On %s</a>:</i> %s' % (
-      comment.source_post_url, comment.source.type_display_name(), comment.content)
+    # note that wordpress strips many html tags (e.g. br) and almost all
+    # attributes (e.g. class) from html tags in comment contents. so, i use a
+    # fairly unique tag - cite - that site owners can use to style.
+    #
+    # example css on my site:
+    #
+    # .comment-content cite a {
+    #     font-size: small;
+    #     color: gray;
+    # }
+    content = '%s <cite><a href="%s">via %s</a></cite>' % (
+      comment.content, comment.source_post_url, comment.source.type_display_name())
 
     author_url = str(comment.author_url) # xmlrpclib complains about string subclasses
     post_id = get_post_id(comment.dest_post_url)
@@ -252,7 +262,7 @@ class Go(util.Handler):
     #                          dest_post_url='http://localhost/about',
     #                          author_name='ryan',
     #                          author_url='http://snarfed.org',
-    #                          content='foo bar tommy')
+    #                          content='foo bar tomme')
     # site.add_comment(comment)
 
     # return wp.proxy.wp.editComment(wp.blog_id, wp.username, wp.password, 26662,

@@ -70,7 +70,6 @@ class RegisterHandler(util.Handler):
     self.post()
 
   def post(self):
-    # note that the /register handler in app.yaml is login: required
     user = models.User.get_or_insert_current_user(self)
     logging.info('Registered %s', user.key().name())
     self.redirect('/')

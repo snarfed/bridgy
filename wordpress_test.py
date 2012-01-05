@@ -106,7 +106,7 @@ class WordPressSiteTest(WordPressBaseTest, testutil.ModelsTest):
     self.mox.StubOutWithMock(wordpress, 'get_post_id')
     wordpress.get_post_id('http://dest1/post/url').AndReturn(789)
 
-    content = """<i><a href="http://source/post/url">On FakeSource</a>:</i> foo"""
+    content = 'foo <cite><a href="http://source/post/url">via FakeSource</a></cite>'
     self.expect_xmlrpc('wp.newComment', 999, '', '', 789,
                        author='me', author_url='http://me', content=content)
     self.mox.ReplayAll()
