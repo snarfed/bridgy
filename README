@@ -12,3 +12,12 @@ fix brid.gy
 google+!
 twitter!
 
+handle case where not a page or post (e.g. http://snarfed.org/911_truth_and_cookies.jpg)
+Traceback (most recent call last):
+  File "/base/data/home/apps/s~brid-gy/1.355878225058706246/tasks.py", line 117, in post
+    comment.dest.add_comment(comment)
+  File "/base/data/home/apps/s~brid-gy/1.355878225058706246/wordpress.py", line 124, in add_comment
+    post_id = get_post_id(comment.dest_post_url)
+  File "/base/data/home/apps/s~brid-gy/1.355878225058706246/wordpress.py", line 42, in get_post_id
+    return int(re.search(POST_ID_RE, resp.content).group(2))
+AttributeError: 'NoneType' object has no attribute 'group'

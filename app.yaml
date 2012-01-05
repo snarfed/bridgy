@@ -30,9 +30,10 @@ handlers:
 
 - url: /
   script: app.py
-  secure: always
+  # not secure: always because app engine can't (yet) do ssl on custom domains
+  # like brid.gy
+  # secure: optional
 
 - url: .*
   script: app.py
-  secure: always
   login: required
