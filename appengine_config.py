@@ -5,13 +5,17 @@ App Engine config settings.
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
-from google.appengine import dist
-dist.use_library('django', '1.2')
+try:
+  from google.appengine import dist
+  dist.use_library('django', '1.2')
+except ImportError:
+  # python2.7 runtime doesn't have google.appengine.dist
+  pass
 
 import os
-if os.environ['SERVER_SOFTWARE'].startswith('Development'):
-  DEBUG = True
-  MOCKFACEBOOK = True
-else:
+if not os.environ.get('SERVER_SOFTWARE', '').startswith('Development'):
   DEBUG = False
   MOCKFACEBOOK = False
+else:
+  DEBUG = True
+  MOCKFACEBOOK = True

@@ -55,11 +55,8 @@ class DashboardHandler(util.Handler):
     if user:
       nickname = users.get_current_user().nickname()
       logout_url = users.create_logout_url('/')
-      # TODO: paging
       sources = facebook.FacebookPage.all().filter('owner =', user)
       dests = wordpress.WordPressSite.all().filter('owner =', user)
-    # else:
-    #   login_url = users.create_login_url('/')
 
     msgs = self.request.params.getall('msg')
     path = os.path.join(os.path.dirname(__file__), 'templates', 'dashboard.html')
@@ -69,7 +66,6 @@ class DashboardHandler(util.Handler):
 class RegisterHandler(util.Handler):
   """Registers the current user if they're not already registered.
   """
-  # TODO: remove. (just here for testing)
   def get(self):
     self.post()
 

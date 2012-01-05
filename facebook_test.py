@@ -7,9 +7,13 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 import datetime
 import logging
 import mox
-import json
 import testutil
 import urllib
+
+try:
+  import simplejson as json
+except ImportError:
+  import json
 
 import facebook
 from facebook import FacebookApp, FacebookComment, FacebookPage

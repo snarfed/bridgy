@@ -61,10 +61,14 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import datetime
 import logging
-import json
 import pprint
 import urllib
 import urlparse
+
+try:
+  import simplejson as json
+except ImportError:
+  import simplejson
 
 import appengine_config
 import models
@@ -278,9 +282,9 @@ class FacebookApp(db.Model):
   @classmethod
   def get(cls):
     if not cls.__singleton:
-      FacebookApp(app_id='160518970686787', app_secret='c9c676d47cf134a741b9744e6a4828c7').save()
       # TODO: check that there's only one
       cls.__singleton = cls.all().get()
+      assert cls.__singleton
     return cls.__singleton
 
   def fql(self, query, access_token):
