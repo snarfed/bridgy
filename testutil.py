@@ -216,9 +216,9 @@ class FakeBase(db.Model):
   key_name_counter = 0
 
   @classmethod
-  def new(cls):
+  def new(cls, **props):
     FakeBase.key_name_counter += 1
-    inst = cls(key_name=str(FakeBase.key_name_counter))
+    inst = cls(key_name=str(FakeBase.key_name_counter), **props)
     inst.save()
     return inst
 
@@ -269,9 +269,9 @@ class ModelsTest(HandlerTest):
     self.setup_testbed()
 
     self.sources = [FakeSource.new(), FakeSource.new()]
-    self.dests = [FakeDestination.new(), FakeDestination.new()]
-    self.dests[0].url = 'http://dest0/'
-    self.dests[1].url = 'http://dest1/'
+    self.dests = [FakeDestination.new(url='http://dest0/'),
+                  FakeDestination.new(url='http://dest1/'),
+                  ]
     now = datetime.datetime.now()
 
     properties = {

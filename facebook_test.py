@@ -87,6 +87,7 @@ class FacebookPageTest(FacebookTestBase):
 
   def setUp(self):
     super(FacebookPageTest, self).setUp()
+    facebook.HARD_CODED_DEST = 'FakeDestination'
     self.user = models.User.get_or_insert_current_user(self.handler)
     self.handler.messages = []
     self.page = FacebookPage(key_name='2468',
@@ -98,37 +99,38 @@ class FacebookPageTest(FacebookTestBase):
                              username='my_username',
                              access_token='my_access_token',
                              )
+    
 
     # TODO: unify with ModelsTest.setUp()
-    source_props = {
-      'source': self.page,
-      'source_post_url': 'http://source/post/url',
-      'source_comment_url': 'http://source/comment/url',
-      'content': 'foo',
-      }
     self.comments = [
-      FacebookComment(key_name='123',
-                      created=datetime.datetime.utcfromtimestamp(1),
-                      dest=self.dests[1],
-                      dest_post_url='http://dest1/post/url',
-                      dest_comment_url='http://dest1/comment/url',
-                      author_name='fred',
-                      author_url='http://fred',
-                      fb_fromid=4,
-                      fb_username='',
-                      fb_object_id=1,
-                      **source_props),
-      FacebookComment(key_name='789',
-                      created=datetime.datetime.utcfromtimestamp(2),
-                      dest=self.dests[0],
-                      dest_post_url='http://dest0/post/url',
-                      author_name='bob',
-                      author_url='http://bob',
-                      fb_fromid=5,
-                      fb_username='',
-                      fb_object_id=2,
-                      dest_comment_url='http://dest0/comment/url',
-                      **source_props),
+      FacebookComment(
+        key_name='123',
+        created=datetime.datetime.utcfromtimestamp(1),
+        source=self.page,
+        dest=self.dests[1],
+        source_post_url='https://www.facebook.com/permalink.php?story_fbid=1&id=4',
+        dest_post_url='http://dest1/post/url',
+        author_name='fred',
+        author_url='http://fred',
+        content='foo',
+        fb_fromid=4,
+        fb_username='',
+        fb_object_id=1,
+        ),
+      FacebookComment(
+        key_name='789',
+        created=datetime.datetime.utcfromtimestamp(2),
+        source=self.page,
+        dest=self.dests[0],
+        source_post_url='https://www.facebook.com/permalink.php?story_fbid=2&id=5',
+        dest_post_url='http://dest0/post/url',
+        author_name='bob',
+        author_url='http://bob',
+        content='bar',
+        fb_fromid=5,
+        fb_username='',
+        fb_object_id=2,
+        ),
       ]
 
     self.sources[0].set_comments(self.comments)
@@ -181,8 +183,8 @@ class FacebookPageTest(FacebookTestBase):
          'username': '', 'time': 2, 'text': 'bar'},
         ])
     self.expect_fql('SELECT link_id, url FROM link ', [
-        {'link_id': 1, 'url': 'http://dest1/post'},
-        {'link_id': 2, 'url': 'http://dest0/post'},
+        {'link_id': 1, 'url': 'http://dest1/post/url'},
+        {'link_id': 2, 'url': 'http://dest0/post/url'},
         ])
     self.expect_fql('SELECT id, name, url FROM profile ', [
         {'id': 4, 'name': 'fred', 'url': 'http://fred'},

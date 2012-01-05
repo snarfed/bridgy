@@ -78,6 +78,8 @@ from google.appengine.ext import db
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
 
+HARD_CODED_DEST = 'WordPressSite'
+
 # facebook api url templates. can't (easily) use urllib.urlencode() because i
 # want to keep the %(...)s placeholders as is and fill them in later in code.
 # TODO: use appengine_config.py for local mockfacebook vs prod facebook
@@ -185,7 +187,7 @@ class FacebookPage(models.Source):
   def poll(self):
     # TODO: generic and expand beyond WordPressSite.
     # GQL so i don't have to import wordpress
-    dests = db.GqlQuery('SELECT * FROM WordPressSite').fetch(100)
+    dests = db.GqlQuery('SELECT * FROM %s' % HARD_CODED_DEST).fetch(100)
     comments = []
 
     query = """SELECT post_fbid, time, fromid, username, object_id, text FROM comment

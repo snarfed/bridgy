@@ -36,13 +36,14 @@ class CommentTest(testutil.ModelsTest):
     self.assertEqual(saved.dest.key(), same.dest.key())
     self.assertEqual(1, len(tasks))
 
-    # different source and dest
-    diff = Comment(key_name=comment.key().name(),
-                   source=self.sources[0], dest=self.dests[1])
-    self.assertRaises(AssertionError, diff.get_or_save)
-    diff = Comment(key_name=comment.key().name(),
-                   source=self.sources[1], dest=self.dests[0])
-    self.assertRaises(AssertionError, diff.get_or_save)
+    # # different source and dest
+    # # i don't do this assert any more, but i might come back to it later.
+    # diff = Comment(key_name=comment.key().name(),
+    #                source=self.sources[0], dest=self.dests[1])
+    # self.assertRaises(AssertionError, diff.get_or_save)
+    # diff = Comment(key_name=comment.key().name(),
+    #                source=self.sources[1], dest=self.dests[0])
+    # self.assertRaises(AssertionError, diff.get_or_save)
 
 
 class UserTest(testutil.HandlerTest):
