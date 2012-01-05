@@ -125,7 +125,7 @@ class PropagateTest(TaskQueueTest):
     self.assertEqual([], dest.get_comments())
 
     self.post_task()
-    self.assert_keys_equal(self.comments, dest.get_comments())
+    self.assert_keys_equal([self.comments[0]], dest.get_comments())
     self.assert_comment_is('complete', self.now + Propagate.LEASE_LENGTH)
 
   def test_already_complete(self):
@@ -159,7 +159,7 @@ class PropagateTest(TaskQueueTest):
     self.comments[0].save()
 
     self.post_task()
-    self.assert_keys_equal(self.comments, self.comments[0].dest.get_comments())
+    self.assert_keys_equal([self.comments[0]], self.comments[0].dest.get_comments())
     self.assert_comment_is('complete', self.now + Propagate.LEASE_LENGTH)
 
   def test_no_comment(self):
