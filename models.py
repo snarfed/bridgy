@@ -163,9 +163,13 @@ class Comment(util.KeyNameModel):
   def get_or_save(self):
     existing = db.get(self.key())
     if existing:
-      for prop in self.properties().values():
-        assert (prop.get_value_for_datastore(self) ==
-                prop.get_value_for_datastore(existing))
+      logging.debug('Deferring to existing comment %s.', existing.key().name())
+      # this might be a nice sanity check, but we'd need to hard code certain
+      # properties (e.g. content) so others (e.g. status) aren't checked.
+      # for prop in self.properties().values():
+      #   new = prop.get_value_for_datastore(self)
+      #   existing = prop.get_value_for_datastore(existing)
+      #   assert new == existing, '%s: new %s, existing %s' % (prop, new, existing)
       return existing
 
     logging.debug('New comment to propagate: %s' % self.key().name())

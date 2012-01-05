@@ -22,11 +22,11 @@ class WordPressBaseTest(mox.MoxTestBase):
     super(WordPressBaseTest, self).setUp()
     self.transport = self.mox.CreateMock(xmlrpclib.Transport)
     WordPress.transport = self.transport
-    self.wp = WordPress('http://my/xmlrpc', 999, 'me', 'my_passwd')
+    self.wp = WordPress('http://my/xmlrpc', 999, 'me', 'passwd')
     self.result = [{'foo': 0}, {'bar': 1}]
 
-  def expect_xmlrpc(self, method, *extra_args, **struct):
-    args = [999, 'me', 'my_passwd'] + list(extra_args)
+  def expect_xmlrpc(self, method, *args, **struct):
+    args = list(args)
     if struct:
       args.append(struct)
     body = xmlrpclib.dumps(tuple(args), methodname=method)
@@ -36,18 +36,18 @@ class WordPressBaseTest(mox.MoxTestBase):
 class WordPressTest(WordPressBaseTest):
 
   def test_get_comments(self):
-    self.expect_xmlrpc('wp.getComments', post_id=123)
+    self.expect_xmlrpc('wp.getComments', 999, 'me', 'passwd', post_id=123)
     self.mox.ReplayAll()
     self.assertEqual(self.result, self.wp.get_comments(123))
 
   def test_new_comment(self):
-    self.expect_xmlrpc('wp.newComment', 123,
+    self.expect_xmlrpc('wp.newComment', 999, '', '', 123,
                        author='me', author_url='http://me', content='foo')
     self.mox.ReplayAll()
     self.assertEqual(self.result, self.wp.new_comment(123, 'me', 'http://me', 'foo'))
                     
   def test_delete_comment(self):
-    self.expect_xmlrpc('wp.deleteComment', 456)
+    self.expect_xmlrpc('wp.deleteComment', 999, 'me', 'passwd', 456)
     self.mox.ReplayAll()
     self.assertEqual(self.result, self.wp.delete_comment(456))
 
@@ -105,15 +105,10 @@ class WordPressSiteTest(WordPressBaseTest, testutil.ModelsTest):
   def test_add_comment(self):
     self.mox.StubOutWithMock(wordpress, 'get_post_id')
     wordpress.get_post_id('http://dest1/post/url').AndReturn(789)
-    # WordPress.new_comment(mox.IgnoreArg(), 123, 'me', 'http://me', content)
 
     content = """foo
-<a href="http://source/post/url">(from FakeSource)</a>"""
-    args = {'author': 'me',
-            'author_url': 'http://me',
-            'content': content,
-            }
-    self.expect_xmlrpc('wp.newComment', 789, args)
-
+<p>(<a href="http://source/post/url">from FakeSource</a>)</p>"""
+    self.expect_xmlrpc('wp.newComment', 999, '', '', 789,
+                       author='me', author_url='http://me', content=content)
     self.mox.ReplayAll()
     self.site.add_comment(self.comments[0])

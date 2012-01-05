@@ -57,7 +57,6 @@ class WordPressSite(models.Destination):
 
   username = db.StringProperty()
   password = db.StringProperty()
-  # post_prefix_url = db.LinkProperty(required=True)
 
   def __init__(self, *args, **kwargs):
     super(WordPressSite, self).__init__(*args, **kwargs)
@@ -116,7 +115,9 @@ class WordPressSite(models.Destination):
       comment: Comment instance
     """
     wp = WordPress(self.xmlrpc_url, self.blog_id, self.username, self.password)
-    content = '%s\n<a href="%s">(from %s)</a>' % (
+    # i originally used a <br /> here, but xmlrpc.newComment strips it. :/ <p>
+    # works though.
+    content = '%s\n<p>(<a href="%s">from %s</a>)</p>' % (
       comment.content, comment.source_post_url, comment.source.type_display_name())
 
     author_url = str(comment.author_url) # xmlrpclib complains about string subclasses
@@ -179,9 +180,18 @@ class WordPress(object):
 
     Details: http://codex.wordpress.org/XML-RPC_wp#wp.newComment
     """
-    # print 'post id %d' % post_id
+    # *don't* pass in username and password. if you do, that wordpress user's
+    # name and url override the ones we provide in the xmlrpc call.
+    #
+    # also, use '' instead of None, even though we use allow_none=True. it
+    # converts None to <nil />, which wordpress's xmlrpc server interprets as
+    # "no parameter" instead of "blank parameter."
+    # 
+    # note that this requires anonymous commenting to be turned on in wordpress
+    # via the xmlrpc_allow_anonymous_comments filter.
     return self.proxy.wp.newComment(
-      self.blog_id, self.username, self.password, post_id,
+      self.blog_id, '', '', post_id,
+      # self.blog_id, self.username, self.password, post_id,
       {'author': author, 'author_url': author_url, 'content': content})
 
   def delete_comment(self, comment_id):
@@ -226,27 +236,24 @@ class DeleteWordPressSite(util.Handler):
 class Go(util.Handler):
   def get(self):
     # # test get_comments()
-    # wp = WordPress('http://localhost/w/xmlrpc.php', 0, 'ryan', 'no1rdn)IR')
+    # wp = WordPress('http://localhost/w/xmlrpc.php', 0, '', '')
     # self.response.headers['Content-Type'] = 'text/plain'
     # self.response.out.write(`wp.get_comments(670)`)
 
-
-    # test add_comment()
-    import facebook
-    fbpage = facebook.FacebookPage(key_name='fbpage')
-    site = WordPressSite.all().get()
-    comment = models.Comment(key_name='my_comment',
-                             source=fbpage,
-                             dest=site,
-                             source_post_url='http://source.com/',
-                             # dest_post_url='http://localhost/about',
-                             dest_post_url='http://localhost/about',
-                             author_name='ryan',
-                             author_url='http://snarfed.org',
-                             content='foo bar today')
-    site.add_comment(comment)
-
-
+    # # test add_comment()
+    # import facebook
+    # fbpage = facebook.FacebookPage(key_name='fbpage')
+    # site = WordPressSite.all().get()
+    # comment = models.Comment(key_name='my_comment',
+    #                          source=fbpage,
+    #                          dest=site,
+    #                          source_post_url='http://source.com/',
+    #                          # dest_post_url='http://localhost/about',
+    #                          dest_post_url='http://localhost/about',
+    #                          author_name='ryan',
+    #                          author_url='http://snarfed.org',
+    #                          content='foo bar today')
+    # site.add_comment(comment)
 
     # return wp.proxy.wp.editComment(wp.blog_id, wp.username, wp.password, 26662,
     #                                {})
@@ -257,6 +264,7 @@ class Go(util.Handler):
     # self.response.out.write(wp.new_comment(670, 'name', 'http://name/', 'foo/nbar'))
     # self.response.out.write(wp.get_comments(670))
     # self.response.out.write(get_post_id('http://localhost/lists'))
+    pass
     
 
 application = webapp.WSGIApplication([
