@@ -25,6 +25,7 @@
   {% else %}
     <a href="/register">Sign in</a>
   {% endif %}
+  </p>
 </div>
 
 <div id="header">
@@ -33,10 +34,12 @@
 </div>
 
 <div id="body">
-{% if user %}
-  <p>Welcome back!</p>
 
-  <p><b>Active sources:</b></p>
+<p>Got a blog? Share your blog posts on social networks? Wish comments on those
+shared posts also showed up on your blog? Bridgy can help.</p>
+
+{% if user %}
+  <p><b>Your sources:</b></p>
   <ul>
   {# TODO: paging #}
   {% for source in sources %}
@@ -51,7 +54,7 @@
            -->
       <form method="post" action="/facebook/delete">
         <input name="name" type="hidden" value="{{ source.key.name }}" />
-        <input type="image" src="static/red_x.png" alt="Delete" />
+        <input type="image" src="static/red_x.png" title="Delete" />
       </form>
     </li>
   {% endfor %}
@@ -62,7 +65,7 @@
   </form>
   <br />
 
-  <p><b>Active destinations:</b></p>
+  <p><b>Your destinations:</b></p>
   <ul>
   {% for dest in dests %}
     <li>
@@ -71,7 +74,7 @@
 
       <form method="post" action="/wordpress/delete">
         <input name="name" type="hidden" value="{{ dest.key.name }}" />
-        <input type="image" src="static/red_x.png" alt="Delete" />
+        <input type="image" src="static/red_x.png" title="Delete" />
       </form>
     </li>
   {% endfor %}

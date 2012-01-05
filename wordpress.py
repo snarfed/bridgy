@@ -65,7 +65,7 @@ class WordPressSite(models.Destination):
 
   def display_name(self):
     """TODO: get this from the site itself."""
-    return self.xmlrpc_url
+    return self.url
 
   def type_display_name(self):
     return self.TYPE_NAME
