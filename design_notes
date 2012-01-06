@@ -4,3 +4,17 @@ propagation, querying for the current user's sources and dests.
 
 used to handle current user by storing sources and dests in props on the user.
 not any more, just hard coded.
+
+
+google+
+==
+use Activities.list, then look for attachments with objectType 'article'
+
+https://developers.google.com/+/api/latest/activities#object.attachments
+
+then use Comments.list for that activity
+
+https://developers.google.com/+/api/latest/comments/list
+
+explorer:
+http://code.google.com/apis/explorer/#_s=plus&_v=v1&_m=activities.list&userId=me&collection=public&alt=json

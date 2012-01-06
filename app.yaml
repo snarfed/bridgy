@@ -24,6 +24,13 @@ handlers:
   script: wordpress.py
   login: required
 
+- url: /googleplus/.*
+  script: googleplus.py
+  login: required
+
+- url: /oauth2callback
+  script: oauth2client/appengine.py
+
 - url: /_ah/queue/.*
   script: tasks.py
   login: admin

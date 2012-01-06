@@ -3,15 +3,39 @@ Wordpress, and others.
 
 Background: http://snarfed.org/2011-07-27_facebook_app_for_ostatus
 
-The tests require the App Engine SDK and python-mox.
-
 IN PROGRESS!
 
-STATE: check times on posted comments?
-fix brid.gy
-google+!
-twitter!
 
+Requires a bunch of libraries: google-api-python-client, httplib2,
+python-gflags, etc. I'd use git submodules, but I haven't yet found git repos
+hosting them. Here are easy setup instructions:
+
+http://code.google.com/p/google-api-python-client/wiki/Installation
+
+Or if you want to download and set them up manually:
+
+# in bridgy source directory
+hg clone https://code.google.com/p/google-api-python-client/
+ln -s google-api-python-client/apiclient
+ln -s google-api-python-client/oauth2client
+ln -s google-api-python-client/uritemplate
+
+hg clone https://code.google.com/p/httplib2/
+ln -s google-api-python-client/httplib2
+
+svn checkout http://python-gflags.googlecode.com/svn/trunk/ python-gflags
+ln -s python-gflags/gflags.py 
+ln -s python-gflags/gflags_validators.py 
+
+
+The tests require the App Engine SDK and python-mox.
+
+
+STATE: implementing google+. got oauth three-legged dance working, now to
+implement GooglePlusPage add, delete, poll, etc.
+
+
+TODO:
 handle case where not a page or post (e.g. http://snarfed.org/911_truth_and_cookies.jpg)
 Traceback (most recent call last):
   File "/base/data/home/apps/s~brid-gy/1.355878225058706246/tasks.py", line 117, in post
@@ -21,3 +45,8 @@ Traceback (most recent call last):
   File "/base/data/home/apps/s~brid-gy/1.355878225058706246/wordpress.py", line 42, in get_post_id
     return int(re.search(POST_ID_RE, resp.content).group(2))
 AttributeError: 'NoneType' object has no attribute 'group'
+
+port to webapp2?
+better exception handling
+better exception printing for handlers in tests. (right now just see opaque 500
+  error.)

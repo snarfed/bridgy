@@ -1,23 +1,4 @@
-"""bridgy App Engine app.
-
-Implements the Salmon protocol for Facebook comments on links to external sites.
-Periodically polls Facebook for new comments and sends them to those sites via
-Salmon.
-
-http://salmon-protocol.org/
-
-TODO design:
-just list of sources and destinations, no mapping!
-
-all of a user's sources map to all their destinations. also default sources into global receiving and destinations into auto sending, with opt out.
-
-need base url (ie prefix) for all destinations for mapping comments.
-
-TODO:
-port to webapp2?
-better exception handling
-better exception printing for handlers in tests. (right now just see opaque 500
-  error.)
+"""Bridgy front page/dashboard.
 """
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
@@ -29,10 +10,11 @@ import urllib
 # need to import modules with model class definitions, e.g. facebook and
 # wordpress, for template rendering.
 import appengine_config
-import facebook
+from facebook import FacebookPage
+from googleplus import GooglePlusPage
 import models
 import util
-import wordpress
+from wordpress import WordPressSite
 
 from google.appengine.api import users
 from google.appengine.ext import db
@@ -55,8 +37,10 @@ class DashboardHandler(util.Handler):
     if user:
       nickname = users.get_current_user().nickname()
       logout_url = users.create_logout_url('/')
-      sources = facebook.FacebookPage.all().filter('owner =', user)
-      dests = wordpress.WordPressSite.all().filter('owner =', user)
+      sources = (list(FacebookPage.all().filter('owner =', user)) +
+                 list(GooglePlusPage.all().filter('owner =', user))
+                 )
+      dests = WordPressSite.all().filter('owner =', user)
 
     msgs = self.request.params.getall('msg')
     path = os.path.join(os.path.dirname(__file__), 'templates', 'dashboard.html')
