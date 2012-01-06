@@ -1,6 +1,8 @@
 An out-of-band implementation of OStatus and Salmon for Facebook, Twitter,
 Wordpress, and others.
 
+http://brid.gy/
+
 Background: http://snarfed.org/2011-07-27_facebook_app_for_ostatus
 
 IN PROGRESS!
@@ -31,8 +33,7 @@ ln -s python-gflags/gflags_validators.py
 The tests require the App Engine SDK and python-mox.
 
 
-STATE: implementing google+. got oauth three-legged dance working, now to
-implement GooglePlusPage add, delete, poll, etc.
+STATE: google+ unit tests
 
 
 TODO:

@@ -172,6 +172,6 @@ class Comment(util.KeyNameModel):
       return existing
 
     logging.debug('New comment to propagate: %s' % self.key().name())
-    # taskqueue.add(name=str(self.key()), queue_name='propagate')
+    taskqueue.add(name=str(self.key()), queue_name='propagate')
     self.save()
     return self
