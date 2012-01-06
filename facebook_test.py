@@ -9,6 +9,7 @@ import logging
 import mox
 import testutil
 import urllib
+import urlparse
 
 try:
   import simplejson as json
@@ -20,15 +21,11 @@ from facebook import FacebookApp, FacebookComment, FacebookPage
 import models
 import tasks_test
 
-from google.appengine.api import urlfetch
-from google.appengine.ext import webapp
-
 
 class FacebookTestBase(testutil.ModelsTest):
 
   def setUp(self):
     super(FacebookTestBase, self).setUp()
-
     FacebookApp(app_id='app_id', app_secret='app_secret').save()
     self.app = FacebookApp.get()
 
@@ -51,34 +48,37 @@ class FacebookTestBase(testutil.ModelsTest):
     self.expect_urlfetch(comparator, json.dumps(results))
 
 
-def FacebookAppTest(FacebookTestBase):
+class FacebookAppTest(FacebookTestBase):
 
   def test_get_access_token(self):
     self.app.get_access_token(self.handler, '/redirect_to')
     self.assertEqual(302, self.handler.response.status)
     redirect = self.handler.response.headers['Location']
-    self.assertTrue(redirect.endswith(
-        '/dialog/oauth/?&scope=read_stream,offline_access&client_id=app_id&redirect_uri=http://HOST/facebook/got_auth_code&response_type=code&state=http://HOST/redirect_to'),
-                    redirect)
+
+    parsed = urlparse.urlparse(redirect)
+    self.assertEqual('/dialog/oauth/', parsed.path)
+
+    expected_params = {
+      'scope': ['read_stream,offline_access'],
+      'client_id': ['app_id'],
+      'redirect_uri': ['http://HOST/facebook/got_auth_code'],
+      'response_type': ['code'],
+      'state': ['http://HOST/redirect_to'],
+      }
+    self.assertEqual(expected_params, urlparse.parse_qs(parsed.query))
 
   def test_got_auth_code(self):
-    comparator = mox.Regex(
-      '.*/method/fql.query\?&access_token=my_access_token&format=json&query=(.*)$')
+    comparator = mox.Regex('.*/oauth/access_token\?.*&code=my_auth_code.*')
     self.expect_urlfetch(comparator, 'foo=bar&access_token=my_access_token')
 
     self.mox.ReplayAll()
-    url = '/facebook/got_auth_code?code=my_auth_code&state=http://my/redirect_to'
-    resp = self.get(facebook.application, url, 302)
+    resp = self.get(
+      facebook.application,
+      '/facebook/got_auth_code',
+      302,
+      query_params={'code': 'my_auth_code', 'state': 'http://my/redirect_to'})
     self.assertEqual('http://my/redirect_to?access_token=my_access_token',
                      resp.headers['Location'])
-
-  def test_run(self):
-    self.assertEqual(0, FacebookPage.all().count())
-    resp = self.post(facebook.application, '/facebook/go', 302)
-    self.assertEqual(1, FacebookPage.all().count())
-    # TODO:  make this work
-    # resp = self.post(application, '/facebook/go', 200)
-    # self.assertEqual(1, FacebookPage.all().count())
 
   def test_fql(self):
     self.expect_fql('my_query', {'my_key': [ 'my_list']})
@@ -198,11 +198,3 @@ class FacebookPageTest(FacebookTestBase):
     self.mox.ReplayAll()
     got = self.page.poll()
     self.assert_entities_equal(self.comments, got)
-
-  # def test_initialize_fresh(self):
-  #   self.mox.StubOutWithMock(self.app, 'get_access_token')
-  #   self.app.get_access_token(self.handler, '/sources/facebook/got_access_token')
-
-  #   self.mox.ReplayAll()
-  #   FacebookPage(key_name='foo').initialize()
-
