@@ -266,7 +266,10 @@ class ModelsTest(HandlerTest):
 
   def setUp(self):
     super(ModelsTest, self).setUp()
-    self.setup_testbed()
+    self.gae_user_id = '123'
+    self.setup_testbed(user_id=self.gae_user_id,
+                       user_email='foo@bar.com',
+                       federated_identity='')
 
     self.sources = [FakeSource.new(), FakeSource.new()]
     self.dests = [FakeDestination.new(url='http://dest0/'),

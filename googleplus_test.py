@@ -31,10 +31,11 @@ class GooglePlusPageTest(testutil.ModelsTest):
         }
 
     self.page = GooglePlusPage(key_name='2468',
+                               gae_user_id=self.gae_user_id,
                                owner=self.user,
                                name='my full name',
                                url='http://my.g+/url',
-                               pic_small='http://my.pic/small',
+                               picture='http://my.pic/small',
                                type='user',
                                )
 

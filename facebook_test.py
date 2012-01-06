@@ -98,7 +98,7 @@ class FacebookPageTest(FacebookTestBase):
                              owner=self.user,
                              name='my full name',
                              url='http://my.fb/url',
-                             pic_small='http://my.pic/small',
+                             picture='http://my.pic/small',
                              type='user',
                              username='my_username',
                              access_token='my_access_token',

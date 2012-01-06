@@ -77,7 +77,6 @@ import util
 
 from google.appengine.api import taskqueue
 from google.appengine.api import urlfetch
-from google.appengine.api import users
 from google.appengine.ext import db
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
@@ -131,7 +130,7 @@ class FacebookPage(models.Source):
 
   # full human-readable name
   name = db.StringProperty()
-  pic_small = db.LinkProperty()
+  picture = db.LinkProperty()
   type = db.StringProperty(choices=('user', 'page'))
   # unique name used in fb URLs, e.g. facebook.com/[username]
   username = db.StringProperty()
@@ -172,6 +171,7 @@ class FacebookPage(models.Source):
     page = FacebookPage(key_name=id,
                         owner=models.User.get_current_user(),
                         access_token=access_token,
+                        picture=result['pic_small'],
                         **result)
 
     if existing:
@@ -189,8 +189,8 @@ class FacebookPage(models.Source):
     return page
 
   def poll(self):
-    # TODO: generic and expand beyond WordPressSite.
-    # GQL so i don't have to import wordpress
+    # TODO: make generic and expand beyond single hard coded destination.
+    # GQL so i don't have to import the model class definition.
     dests = db.GqlQuery('SELECT * FROM %s' % HARD_CODED_DEST).fetch(100)
     comments = []
 
@@ -240,9 +240,9 @@ class FacebookPage(models.Source):
             dest=dest,
             source_post_url=post_url,
             dest_post_url=link,
+            created=datetime.datetime.utcfromtimestamp(c['time']),
             author_name=profile['name'],
             author_url=profile['url'],
-            created=datetime.datetime.utcfromtimestamp(c['time']),
             content=c['text'],
             fb_fromid=fromid,
             fb_username=c['username'],

@@ -19,9 +19,9 @@ import logging
 import re
 import time
 
-# need to import modules with model class definitions, e.g. facebook and
-# wordpress, for loading entities from datastore.
+# need to import model class definitions since poll creates and saves entities.
 import facebook
+import googleplus
 import wordpress
 
 from google.appengine.ext import db

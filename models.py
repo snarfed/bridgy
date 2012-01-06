@@ -146,15 +146,14 @@ class Comment(util.KeyNameModel):
 
   source = db.ReferenceProperty(reference_class=Source, required=True)
   dest = db.ReferenceProperty(reference_class=Destination, required=True)
-  created = db.DateTimeProperty()
   source_post_url = db.LinkProperty()
   source_comment_url = db.LinkProperty()
   dest_post_url = db.LinkProperty()
   dest_comment_url = db.LinkProperty()
-
+  created = db.DateTimeProperty()
   author_name = db.StringProperty()
   author_url = db.LinkProperty()
-  content = db.StringProperty(multiline=True)
+  content = db.TextProperty()
 
   status = db.StringProperty(choices=STATUSES, default='new')
   leased_until = db.DateTimeProperty()
@@ -173,6 +172,6 @@ class Comment(util.KeyNameModel):
       return existing
 
     logging.debug('New comment to propagate: %s' % self.key().name())
-    taskqueue.add(name=str(self.key()), queue_name='propagate')
+    # taskqueue.add(name=str(self.key()), queue_name='propagate')
     self.save()
     return self

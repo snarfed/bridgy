@@ -3,6 +3,7 @@
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
+import datetime
 import httplib2
 import logging
 import os
@@ -18,12 +19,14 @@ from oauth2client.appengine import CredentialsModel
 from oauth2client.appengine import OAuth2Decorator
 from oauth2client.appengine import StorageByKeyName
 
-from google.appengine.ext import db
 from google.appengine.api import taskqueue
 from google.appengine.api import urlfetch
+from google.appengine.api import users
+from google.appengine.ext import db
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
 
+HARD_CODED_DEST = 'WordPressSite'
 
 # client id and secret aren't stored in the datastore like FacebookApp since
 # it's hard to have the  datastore ready in unit tests at module load time.
@@ -33,7 +36,8 @@ with open('oauth_client_secret') as f:
     client_secret=f.read().strip(),
     scope='https://www.googleapis.com/auth/plus.me',
     )
-service = build("plus", "v1", http=httplib2.Http())
+http = httplib2.Http()
+service = build("plus", "v1", http)
 
 
 # class GooglePlusClient(db.Model):
@@ -68,9 +72,9 @@ class GooglePlusPage(models.Source):
 
   TYPE_NAME = 'Google+'
 
-  # full human-readable name
-  name = db.StringProperty()
-  pic_small = db.LinkProperty()
+  gae_user_id = db.StringProperty(required=True)
+  name = db.StringProperty()  # full human-readable name
+  picture = db.LinkProperty()
   type = db.StringProperty(choices=('user', 'page'))
 
   def display_name(self):
@@ -98,10 +102,11 @@ class GooglePlusPage(models.Source):
 
     existing = GooglePlusPage.get_by_key_name(id)
     page = GooglePlusPage(key_name=id,
+                          gae_user_id=users.get_current_user().user_id(),
                           url=person['url'],
                           owner=models.User.get_current_user(),
                           name=person['displayName'],
-                          pic_small = person['image']['url'],
+                          picture = person['image']['url'],
                           type=person['objectType'],
                           )
 
@@ -119,93 +124,73 @@ class GooglePlusPage(models.Source):
     taskqueue.add(name=tasks.Poll.make_task_name(page), queue_name='poll')
     return page
 
-  # def poll(self):
-  #   dests = db.GqlQuery('SELECT * FROM %s' % HARD_CODED_DEST).fetch(100)
-  #   comments = []
+  def poll(self):
+    # TODO: make generic and expand beyond single hard coded destination.
+    # GQL so i don't have to import the model class definition.
+    dests = db.GqlQuery('SELECT * FROM %s' % HARD_CODED_DEST).fetch(100)
+    comments = []
 
-  #   credentials = StorageByKeyName(CredentialsModel, user.gae_user_id,
-  #                                  'credentials').get()
+    credentials = StorageByKeyName(CredentialsModel, self.gae_user_id,
+                                   'credentials').get()
+    assert credentials, 'Credentials not found for user id %s' % self.gae_user_id
 
-  #   if not credentials:
-  #     logging.warning('Credentials not found')
-  #     self.error(403)
-  #     return
+    activities = service.activities().list(
+      userId='me', collection='public', maxResults=100)\
+        .execute(credentials.authorize(http))
 
-  #   query = """SELECT post_fbid, time, fromid, username, object_id, text FROM comment
-  #              WHERE object_id IN (SELECT link_id FROM link WHERE owner = %s)
-  #              ORDER BY time DESC""" % self.key().name()
-  #   comment_data = self.fql(query)
+    # list of (link, activity) pairs
+    links = []
+    for activity in activities['items']:
+      for attach in activity['object'].get('attachments', []):
+        if attach['objectType'] == 'article':
+          links.append((attach['url'], activity))
 
-#     link_ids = set(str(c['object_id']) for c in comment_data)
-#     link_data = self.fql('SELECT link_id, url FROM link WHERE link_id IN (%s)' %
-#                        ','.join(link_ids))
-#     links = dict((l['link_id'], l['url']) for l in link_data)
+    for link, activity in links:
+      logging.debug('Looking for destination for link: %s' % link)
 
-#     # TODO: cache?
-#     fromids = set(str(c['fromid']) for c in comment_data)
-#     profile_data = self.fql(
-#       'SELECT id, name, url FROM profile WHERE id IN (%s)' % ','.join(fromids))
-#     profiles = dict((p['id'], p) for p in profile_data)
+      # look for destinations whose url contains this link. should be at most one.
+      # (can't use a "string prefix" query because we want the property that's a
+      # prefix of the filter value, not vice versa.)
+      dest = [d for d in dests if link.startswith(d.url)]
+      assert len(dest) <= 1
 
-#     for c in comment_data:
-#       link = links[c['object_id']]
-#       logging.debug('Looking for destination for link: %s' % link)
+      if dest:
+        dest = dest[0]
+        logging.debug('Found destination: %s' % dest.key().name())
 
-#       # TODO: move rest of method to tasks!
+        comment_resources = service.comments().list(
+          activityId=activity['id'], maxResults=100)\
+          .execute(credentials.authorize(http))
 
-#       # look for destinations whose url contains this link. should be at most one.
-#       # (can't use this prefix code because we want the property that's a prefix
-#       # of the filter value, not vice versa.)
-#       # query = db.GqlQuery(
-#       #   'SELECT * FROM WordPressSite WHERE url = :1 AND url <= :2',
-#       #   link, link + u'\ufffd')
-#       dest = [d for d in dests if link.startswith(d.url)]
-#       assert len(dest) <= 1
+        for c in comment_resources['items']:
+          before_microsecs = c['published'].split('.')[0]
+          created = datetime.datetime.strptime(before_microsecs,
+                                               '%Y-%m-%dT%H:%M:%S')
+          comments.append(GooglePlusComment(
+              key_name=c['id'],
+              source=self,
+              dest=dest,
+              source_post_url=activity['url'],
+              dest_post_url=link,
+              created=created,
+              author_name=c['actor']['displayName'],
+              author_url=c['actor']['url'],
+              content=c['object']['content'],
+              user_id=c['actor']['id'],
+              ))
 
-#       if dest:
-#         dest = dest[0]
-#         logging.debug('Found destination: %s' % dest.key().name())
-
-#         fromid = c['fromid']
-#         profile = profiles[fromid]
-#         post_url = 'https://www.facebook.com/permalink.php?story_fbid=%s&id=%s' % (
-#           c['object_id'], fromid)
-
-#         comments.append(GooglePlusComment(
-#             key_name=c['post_fbid'],
-#             source=self,
-#             dest=dest,
-#             source_post_url=post_url,
-#             dest_post_url=link,
-#             author_name=profile['name'],
-#             author_url=profile['url'],
-#             created=datetime.datetime.utcfromtimestamp(c['time']),
-#             content=c['text'],
-#             fb_fromid=fromid,
-#             fb_username=c['username'],
-#             fb_object_id=c['object_id'],
-#             ))
-
-#     return comments
+    return comments
 
 
 class GooglePlusComment(models.Comment):
-  """Key name is the comment's object_id.
+  """Key name is the comment's id.
 
-  Most of the properties correspond to the columns of the content table in FQL.
-  http://developers.facebook.com/docs/reference/fql/comment/
+  The properties correspond to the Google+ comment resource:
+  https://developers.google.com/+/api/latest/comments#resource
   """
 
   # user id who wrote the comment
-  fb_fromid = db.IntegerProperty(required=True)
-
-  # name entered by the user when they posted the comment. usually blank,
-  # generally only populated for external users. if this is provided,
-  # fb_fromid will be 0.
-  fb_username = db.StringProperty()
-
-  # id of the object this comment refers to
-  fb_object_id = db.IntegerProperty(required=True)
+  user_id = db.StringProperty(required=True)
 
 
 class AddGooglePlusPage(util.Handler):

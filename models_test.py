@@ -46,7 +46,7 @@ class CommentTest(testutil.ModelsTest):
     # self.assertRaises(AssertionError, diff.get_or_save)
 
 
-class UserTest(testutil.HandlerTest):
+class UserTest(testutil.ModelsTest):
 
   def test_no_logged_in_user(self):
     self.testbed.deactivate()
@@ -55,27 +55,18 @@ class UserTest(testutil.HandlerTest):
     self.assertEqual(None, User.get_current_user())
     self.assertEqual(None, User.get_or_insert_current_user(self.handler))
 
-  def test_gae_user(self):
-    self._test_user('123', user_email='foo@bar.com', user_id='123',
-                    federated_identity='')
-
-  def test_openid_user(self):
-    self._test_user('foo.com/bar', federated_identity='foo.com/bar')
-
-  def _test_user(self, expected_key_name, **setup_env):
-    self.testbed.deactivate()
-    self.setup_testbed(**setup_env)
+  def test_user(self):
     self.assertEqual(0, User.all().count())
     self.assertEqual(None, User.get_current_user())
 
     user = User.get_or_insert_current_user(self.handler)
-    self.assertEqual(expected_key_name, user.key().name())
+    self.assertEqual(self.gae_user_id, user.key().name())
     self.assertEqual(['Registered new user.'], self.handler.messages)
-    self.assert_entities_equal([User(key_name=expected_key_name)], User.all())
+    self.assert_entities_equal([User(key_name=self.gae_user_id)], User.all())
 
     # get_or_insert_current_user() again shouldn't add a message
     self.handler.messages = []
     user = User.get_or_insert_current_user(self.handler)
-    self.assertEqual(expected_key_name, user.key().name())
+    self.assertEqual(self.gae_user_id, user.key().name())
     self.assertEqual([], self.handler.messages)
-    self.assert_entities_equal([User(key_name=expected_key_name)], User.all())
+    self.assert_entities_equal([User(key_name=self.gae_user_id)], User.all())
