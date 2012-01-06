@@ -25,30 +25,39 @@ from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
 
 
-class GooglePlusClient(db.Model):
-  """Stores the bridgy client credentials that we use with the API."""
-  # TODO: unify with FacebookApp
-  client_id = db.StringProperty(required=True)
-  client_secret = db.StringProperty(required=True)
-
-  # this will be cached in the runtime
-  __singleton = None
-
-  @classmethod
-  def get(cls):
-    if not cls.__singleton:
-      # TODO: check that there's only one
-      cls.__singleton = cls.all().get()
-      assert cls.__singleton
-    return cls.__singleton
-
-
-plus_api = OAuth2Decorator(
-  client_id=GooglePlusClient.get().client_id,
-  client_secret=GooglePlusClient.get().client_secret,
-  scope='https://www.googleapis.com/auth/plus.me',
-  )
+# client id and secret aren't stored in the datastore like FacebookApp since
+# it's hard to have the  datastore ready in unit tests at module load time.
+with open('oauth_client_secret') as f:
+  plus_api = OAuth2Decorator(
+    client_id='1029605954231.apps.googleusercontent.com',
+    client_secret=f.read().strip(),
+    scope='https://www.googleapis.com/auth/plus.me',
+    )
 service = build("plus", "v1", http=httplib2.Http())
+
+
+# class GooglePlusClient(db.Model):
+#   """Stores the bridgy client credentials that we use with the API."""
+#   # TODO: unify with FacebookApp
+#   client_id = db.StringProperty(required=True)
+#   client_secret = db.StringProperty(required=True)
+
+#   # this will be cached in the runtime
+#   __singleton = None
+
+#   @classmethod
+#   def get(cls):
+#     if not cls.__singleton:
+#       # TODO: check that there's only one
+#       cls.__singleton = cls.all().get()
+#       assert cls.__singleton
+#     return cls.__singleton
+
+# plus_api = OAuth2Decorator(
+#   client_id=GooglePlusClient.get().client_id,
+#   client_secret=GooglePlusClient.get().client_secret,
+#   scope='https://www.googleapis.com/auth/plus.me',
+#   )
 
 
 class GooglePlusPage(models.Source):
@@ -73,23 +82,27 @@ class GooglePlusPage(models.Source):
     return self.TYPE_NAME
 
   @staticmethod
-  def new(plus_api, handler):
+  def new(person, handler):
     """Creates and saves a GooglePlusPage for the logged in user.
 
     Args:
-      plus_api: OAuth2Decorator
+      person: dict, a Google+ Person resource:
+        https://developers.google.com/+/api/latest/people#resource
       handler: the current webapp.RequestHandler
 
     Returns: GooglePlusPage
     """
-    # user is a Google+ Person resource, as a dict
-    # https://developers.google.com/+/api/latest/people#resource
-    user = service.people().get(userId='me').execute(plus_api.http())
-    logging.debug(str(user))
-    id = str(user['id'])
+    id = person['id']
+    if person.get('objectType', 'person') == 'person':
+      person['objectType'] = 'user'
+
     existing = GooglePlusPage.get_by_key_name(id)
     page = GooglePlusPage(key_name=id,
+                          url=person['url'],
                           owner=models.User.get_current_user(),
+                          name=person['displayName'],
+                          pic_small = person['image']['url'],
+                          type=person['objectType'],
                           )
 
     if existing:
@@ -101,8 +114,8 @@ class GooglePlusPage(models.Source):
       handler.messages.append('Added %s page: %s' %
                               (page.type_display_name(), page.display_name()))
 
-#     # TODO: ugh, *all* of this should be transactional
-#     page.save()
+    # TODO: ugh, *all* of this should be transactional
+    page.save()
 #     taskqueue.add(name=tasks.Poll.make_task_name(page), queue_name='poll')
     return page
 
@@ -176,23 +189,23 @@ class GooglePlusPage(models.Source):
 #     return comments
 
 
-# class GooglePlusComment(models.Comment):
-#   """Key name is the comment's object_id.
+class GooglePlusComment(models.Comment):
+  """Key name is the comment's object_id.
 
-#   Most of the properties correspond to the columns of the content table in FQL.
-#   http://developers.facebook.com/docs/reference/fql/comment/
-#   """
+  Most of the properties correspond to the columns of the content table in FQL.
+  http://developers.facebook.com/docs/reference/fql/comment/
+  """
 
-#   # user id who wrote the comment
-#   fb_fromid = db.IntegerProperty(required=True)
+  # user id who wrote the comment
+  fb_fromid = db.IntegerProperty(required=True)
 
-#   # name entered by the user when they posted the comment. usually blank,
-#   # generally only populated for external users. if this is provided,
-#   # fb_fromid will be 0.
-#   fb_username = db.StringProperty()
+  # name entered by the user when they posted the comment. usually blank,
+  # generally only populated for external users. if this is provided,
+  # fb_fromid will be 0.
+  fb_username = db.StringProperty()
 
-#   # id of the object this comment refers to
-#   fb_object_id = db.IntegerProperty(required=True)
+  # id of the object this comment refers to
+  fb_object_id = db.IntegerProperty(required=True)
 
 
 class AddGooglePlusPage(util.Handler):
@@ -202,13 +215,14 @@ class AddGooglePlusPage(util.Handler):
 
   @plus_api.oauth_required
   def post(self):
-    GooglePlusPage.new(plus_api, self)
+    person = service.people().get(userId='me').execute(plus_api.http())
+    GooglePlusPage.new(person, self)
     self.redirect('/')
 
 
 class DeleteGooglePlusPage(util.Handler):
   def post(self):
-    page = GooglePlusPage.get_by_key_name(self.request.params['name'])
+    page = GooglePlusPage.get_by_key_name(self.request.params['key_name'])
     # TODO: remove tasks, etc.
     msg = 'Deleted %s source: %s' % (page.type_display_name(),
                                      page.display_name())

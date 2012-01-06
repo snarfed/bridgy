@@ -373,7 +373,7 @@ class AddFacebookPage(util.Handler):
 
 class DeleteFacebookPage(util.Handler):
   def post(self):
-    page = FacebookPage.get_by_key_name(self.request.params['name'])
+    page = FacebookPage.get_by_key_name(self.request.params['key_name'])
     # TODO: remove tasks, etc.
     msg = 'Deleted %s source: %s' % (page.type_display_name(),
                                      page.display_name())

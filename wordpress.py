@@ -8,7 +8,6 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import logging
 import re
-import traceback
 import xmlrpclib
 
 import appengine_config

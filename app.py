@@ -40,6 +40,8 @@ class DashboardHandler(util.Handler):
       sources = (list(FacebookPage.all().filter('owner =', user)) +
                  list(GooglePlusPage.all().filter('owner =', user))
                  )
+      for source in sources:
+        source.delete_url = '/%s/delete' % source.__module__
       dests = WordPressSite.all().filter('owner =', user)
 
     msgs = self.request.params.getall('msg')
