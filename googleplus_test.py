@@ -72,17 +72,17 @@ class GooglePlusPageTest(testutil.ModelsTest):
 
     # self.sources[0].set_comments(self.comments)
 
-    # self.task_name = str(self.page.key()) + '_1970-01-01-00-00-00'
+    self.task_name = str(self.page.key()) + '_1970-01-01-00-00-00'
 
   def _test_new(self):
     got = GooglePlusPage.new(self.person, self.handler)
     self.assert_entities_equal(self.page, got, ignore=['created'])
     self.assert_entities_equal([self.page], GooglePlusPage.all(), ignore=['created'])
 
-    # tasks = self.taskqueue_stub.GetTasks('poll')
-    # self.assertEqual(1, len(tasks))
-    # self.assertEqual(self.task_name, tasks[0]['name'])
-    # self.assertEqual('/_ah/queue/poll', tasks[0]['url'])
+    tasks = self.taskqueue_stub.GetTasks('poll')
+    self.assertEqual(1, len(tasks))
+    self.assertEqual(self.task_name, tasks[0]['name'])
+    self.assertEqual('/_ah/queue/poll', tasks[0]['url'])
 
   def test_new(self):
     self._test_new()

@@ -116,7 +116,7 @@ class GooglePlusPage(models.Source):
 
     # TODO: ugh, *all* of this should be transactional
     page.save()
-#     taskqueue.add(name=tasks.Poll.make_task_name(page), queue_name='poll')
+    taskqueue.add(name=tasks.Poll.make_task_name(page), queue_name='poll')
     return page
 
   # def poll(self):
