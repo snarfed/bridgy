@@ -12,6 +12,7 @@ import urllib
 import appengine_config
 from facebook import FacebookPage
 from googleplus import GooglePlusPage
+from twitter import TwitterUser
 import models
 import util
 from wordpress import WordPressSite

@@ -22,6 +22,7 @@ import time
 # need to import model class definitions since poll creates and saves entities.
 import facebook
 import googleplus
+import twitter
 import wordpress
 
 from google.appengine.ext import db
