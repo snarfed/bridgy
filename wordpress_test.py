@@ -111,3 +111,15 @@ class WordPressSiteTest(WordPressBaseTest, testutil.ModelsTest):
                        author='me', author_url='http://me', content=content)
     self.mox.ReplayAll()
     self.site.add_comment(self.comments[0])
+
+  def test_add_comment_reformat(self):
+    """<br /> in comments should be converted to <p />."""
+    self.mox.StubOutWithMock(wordpress, 'get_post_id')
+    wordpress.get_post_id('http://dest1/post/url').AndReturn(789)
+
+    self.comments[0].content = 'foo<br />bar'
+    expected = 'foo<p />bar <cite><a href="http://source/post/url">via FakeSource</a></cite>'
+    self.expect_xmlrpc('wp.newComment', 999, '', '', 789,
+                       author='me', author_url='http://me', content=expected)
+    self.mox.ReplayAll()
+    self.site.add_comment(self.comments[0])

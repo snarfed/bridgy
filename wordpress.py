@@ -116,9 +116,14 @@ class WordPressSite(models.Destination):
       comment: Comment instance
     """
     wp = WordPress(self.xmlrpc_url, self.blog_id, self.username, self.password)
+
     # note that wordpress strips many html tags (e.g. br) and almost all
-    # attributes (e.g. class) from html tags in comment contents. so, i use a
-    # fairly unique tag - cite - that site owners can use to style.
+    # attributes (e.g. class) from html tags in comment contents. so, convert
+    # some of those tags to other tags that wordpress accepts.
+    content = re.sub('<br */?>', '<p />', comment.content)
+
+    # since available tags are limited (see above), i use a fairly unique tag
+    # for the "via ..." link - cite - that site owners can use to style.
     #
     # example css on my site:
     #
@@ -127,7 +132,7 @@ class WordPressSite(models.Destination):
     #     color: gray;
     # }
     content = '%s <cite><a href="%s">via %s</a></cite>' % (
-      comment.content, comment.source_post_url, comment.source.type_display_name())
+      content, comment.source_post_url, comment.source.type_display_name())
 
     author_url = str(comment.author_url) # xmlrpclib complains about string subclasses
     post_id = get_post_id(comment.dest_post_url)
@@ -261,7 +266,7 @@ class Go(util.Handler):
     #                          dest_post_url='http://localhost/about',
     #                          author_name='ryan',
     #                          author_url='http://snarfed.org',
-    #                          content='foo bar tomme')
+    #                          content='foo<br>bar<br  />tomme')
     # site.add_comment(comment)
 
     # return wp.proxy.wp.editComment(wp.blog_id, wp.username, wp.password, 26662,
