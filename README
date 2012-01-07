@@ -1,5 +1,5 @@
-An out-of-band implementation of OStatus and Salmon for Facebook, Twitter,
-Wordpress, and others.
+Got a blog? Share your blog posts on social networks? Wish comments on those
+shared posts also showed up on your blog? Bridgy copies them back for you.
 
 http://brid.gy/
 
@@ -33,7 +33,7 @@ ln -s python-gflags/gflags_validators.py
 The tests require the App Engine SDK and python-mox.
 
 
-STATE: google+ unit tests
+STATE: test g+ in prod
 
 
 TODO:

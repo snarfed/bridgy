@@ -36,32 +36,46 @@ with open('oauth_client_secret') as f:
     client_secret=f.read().strip(),
     scope='https://www.googleapis.com/auth/plus.me',
     )
+
 http = httplib2.Http()
 service = build("plus", "v1", http)
 
 
-# class GooglePlusClient(db.Model):
-#   """Stores the bridgy client credentials that we use with the API."""
-#   # TODO: unify with FacebookApp
-#   client_id = db.StringProperty(required=True)
-#   client_secret = db.StringProperty(required=True)
+class GooglePlusService(db.Model):
+  """A Google+ API service wrapper. Useful for mocking."""
+  http = httplib2.Http()
+  service = build("plus", "v1", http)
 
-#   # this will be cached in the runtime
-#   __singleton = None
+  @classmethod
+  def call_with_creds(cls, gae_user_id, endpoint, **kwargs):
+    """Makes a Google+ API call with a user's stored credentials.
 
-#   @classmethod
-#   def get(cls):
-#     if not cls.__singleton:
-#       # TODO: check that there's only one
-#       cls.__singleton = cls.all().get()
-#       assert cls.__singleton
-#     return cls.__singleton
+    Args:
+      gae_user_id: string, App Engine user id used to retrieve the
+        CredentialsModel that stores the user credentials for this call
+      endpoint: string, 'RESOURCE.METHOD', e.g. 'Activities.list'
 
-# plus_api = OAuth2Decorator(
-#   client_id=GooglePlusClient.get().client_id,
-#   client_secret=GooglePlusClient.get().client_secret,
-#   scope='https://www.googleapis.com/auth/plus.me',
-#   )
+    Returns: dict
+    """
+    credentials = StorageByKeyName(CredentialsModel, gae_user_id,
+                                   'credentials').get()
+    assert credentials, 'Credentials not found for user id %s' % gae_user_id
+    return cls.call(credentials.authorize(http), endpoint, **kwargs)
+
+  @classmethod
+  def call(cls, http, endpoint, **kwargs):
+    """Makes a Google+ API call.
+
+    Args:
+      http: httplib2.Http instance
+      endpoint: string, 'RESOURCE.METHOD', e.g. 'Activities.list'
+
+    Returns: dict
+    """
+    resource, method = endpoint.split('.')
+    resource = resource.lower()
+    fn = getattr(getattr(cls.service, resource)(), method)
+    return fn(**kwargs).execute(http)
 
 
 class GooglePlusPage(models.Source):
@@ -86,16 +100,18 @@ class GooglePlusPage(models.Source):
     return self.TYPE_NAME
 
   @staticmethod
-  def new(person, handler):
+  def new(http, handler):
     """Creates and saves a GooglePlusPage for the logged in user.
 
     Args:
-      person: dict, a Google+ Person resource:
-        https://developers.google.com/+/api/latest/people#resource
+      http: httplib2.Http instance
       handler: the current webapp.RequestHandler
 
     Returns: GooglePlusPage
     """
+    # Google+ Person resource
+    # https://developers.google.com/+/api/latest/people#resource
+    person = GooglePlusService.call(http, 'people.get', userId='me')
     id = person['id']
     if person.get('objectType', 'person') == 'person':
       person['objectType'] = 'user'
@@ -130,13 +146,11 @@ class GooglePlusPage(models.Source):
     dests = db.GqlQuery('SELECT * FROM %s' % HARD_CODED_DEST).fetch(100)
     comments = []
 
-    credentials = StorageByKeyName(CredentialsModel, self.gae_user_id,
-                                   'credentials').get()
-    assert credentials, 'Credentials not found for user id %s' % self.gae_user_id
-
-    activities = service.activities().list(
-      userId='me', collection='public', maxResults=100)\
-        .execute(credentials.authorize(http))
+    # Google+ Activity resource
+    # https://developers.google.com/+/api/latest/activies#resource
+    activities = GooglePlusService.call_with_creds(
+      self.gae_user_id, 'activities.list', userId='me', collection='public',
+      maxResults=100)
 
     # list of (link, activity) pairs
     links = []
@@ -158,9 +172,11 @@ class GooglePlusPage(models.Source):
         dest = dest[0]
         logging.debug('Found destination: %s' % dest.key().name())
 
-        comment_resources = service.comments().list(
-          activityId=activity['id'], maxResults=100)\
-          .execute(credentials.authorize(http))
+        # Google+ Comment resource
+        # https://developers.google.com/+/api/latest/comments#resource
+        comment_resources = GooglePlusService.call_with_creds(
+          self.gae_user_id, 'comments.list', activityId=activity['id'],
+          maxResults=100)
 
         for c in comment_resources['items']:
           before_microsecs = c['published'].split('.')[0]
@@ -200,8 +216,7 @@ class AddGooglePlusPage(util.Handler):
 
   @plus_api.oauth_required
   def post(self):
-    person = service.people().get(userId='me').execute(plus_api.http())
-    GooglePlusPage.new(person, self)
+    GooglePlusPage.new(plus_api.http(), self)
     self.redirect('/')
 
 

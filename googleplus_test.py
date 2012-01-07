@@ -5,12 +5,16 @@
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import datetime
+import mox
 import testutil
 
 import googleplus
-from googleplus import GooglePlusPage, GooglePlusComment
+from googleplus import GooglePlusComment, GooglePlusPage, GooglePlusService
 import models
 import tasks_test
+
+import httplib2
+from oauth2client.appengine import OAuth2Decorator
 
 
 class GooglePlusPageTest(testutil.ModelsTest):
@@ -18,17 +22,12 @@ class GooglePlusPageTest(testutil.ModelsTest):
   def setUp(self):
     super(GooglePlusPageTest, self).setUp()
 
+    self.mox.StubOutWithMock(GooglePlusService, 'call')
+    self.mox.StubOutWithMock(GooglePlusService, 'call_with_creds')
+
     googleplus.HARD_CODED_DEST = 'FakeDestination'
     self.user = models.User.get_or_insert_current_user(self.handler)
     self.handler.messages = []
-
-    self.person = {
-        'id': '2468',
-        'displayName': 'my full name',
-        'url': 'http://my.g+/url',
-        'image': {'url': 'http://my.pic/small'},
-        'type': 'person',
-        }
 
     self.page = GooglePlusPage(key_name='2468',
                                gae_user_id=self.gae_user_id,
@@ -39,44 +38,89 @@ class GooglePlusPageTest(testutil.ModelsTest):
                                type='user',
                                )
 
-    # # TODO: unify with ModelsTest.setUp()
-    # self.comments = [
-    #   GooglePlusComment(
-    #     key_name='123',
-    #     created=datetime.datetime.utcfromtimestamp(1),
-    #     source=self.page,
-    #     dest=self.dests[1],
-    #     source_post_url='https://www.facebook.com/permalink.php?story_fbid=1&id=4',
-    #     dest_post_url='http://dest1/post/url',
-    #     author_name='fred',
-    #     author_url='http://fred',
-    #     content='foo',
-    #     fb_fromid=4,
-    #     fb_username='',
-    #     fb_object_id=1,
-    #     ),
-    #   GooglePlusComment(
-    #     key_name='789',
-    #     created=datetime.datetime.utcfromtimestamp(2),
-    #     source=self.page,
-    #     dest=self.dests[0],
-    #     source_post_url='https://www.facebook.com/permalink.php?story_fbid=2&id=5',
-    #     dest_post_url='http://dest0/post/url',
-    #     author_name='bob',
-    #     author_url='http://bob',
-    #     content='bar',
-    #     fb_fromid=5,
-    #     fb_username='',
-    #     fb_object_id=2,
-    #     ),
-    #   ]
+    self.people_get_response = {
+        'id': '2468',
+        'displayName': 'my full name',
+        'url': 'http://my.g+/url',
+        'image': {'url': 'http://my.pic/small'},
+        'type': 'person',
+        }
 
-    # self.sources[0].set_comments(self.comments)
+    self.activities_list_response = {'items': [
+        # no attachments
+        {'object': {}},
+        # no article attachment
+        {'object': {'attachments': [{'objectType': 'note'}]}},
+        # no matching dest
+        {'object': {'attachments': [{'objectType': 'article',
+                                     'url': 'http://no/matching/dest'}]}},
+        # matches self.dests[1]
+        {'object': {'attachments': [{'objectType': 'article',
+                                     'url': 'http://dest1/post/url'}]},
+         'id': '1',
+         'url': 'http://source/post/1',
+         },
+        # matches self.dests[0]
+        {'object': {'attachments': [{'objectType': 'article',
+                                     'url': 'http://dest0/post/url'}]},
+         'id': '2',
+         'url': 'http://source/post/0',
+         },
+        ]}
+
+    # TODO: unify with ModelsTest.setUp()
+    self.comments = [
+      GooglePlusComment(
+        key_name='123',
+        created=datetime.datetime.utcfromtimestamp(1),
+        source=self.page,
+        dest=self.dests[1],
+        source_post_url='http://source/post/1',
+        dest_post_url='http://dest1/post/url',
+        author_name='fred',
+        author_url='http://fred',
+        content='foo',
+        user_id='4',
+        ),
+      GooglePlusComment(
+        key_name='789',
+        created=datetime.datetime.utcfromtimestamp(2),
+        source=self.page,
+        dest=self.dests[0],
+        source_post_url='http://source/post/0',
+        dest_post_url='http://dest0/post/url',
+        author_name='bob',
+        author_url='http://bob',
+        content='bar',
+        user_id='5',
+        )]
+    self.sources[0].set_comments(self.comments)
+
+    # (activity id, JSON response) pairs
+    self.comments_list_responses = [
+      ('1', {'items': [{
+              'id': '123',
+              'object': {'content': 'foo'},
+              'actor': {'id': '4', 'displayName': 'fred', 'url': 'http://fred'},
+              'published': '1970-01-01T00:00:01.234Z',
+              }]}),
+      ('2', {'items': [{
+              'id': '789',
+              'object': {'content': 'bar'},
+              'actor': {'id': '5', 'displayName': 'bob', 'url': 'http://bob'},
+              'published': '1970-01-01T00:00:02.234Z',
+              }]}),
+      ]
 
     self.task_name = str(self.page.key()) + '_1970-01-01-00-00-00'
 
   def _test_new(self):
-    got = GooglePlusPage.new(self.person, self.handler)
+    http = httplib2.Http()
+    GooglePlusService.call(http, 'people.get', userId='me')\
+        .AndReturn(self.people_get_response)
+    self.mox.ReplayAll()
+
+    got = GooglePlusPage.new(http, self.handler)
     self.assert_entities_equal(self.page, got, ignore=['created'])
     self.assert_entities_equal([self.page], GooglePlusPage.all(), ignore=['created'])
 
@@ -100,23 +144,16 @@ class GooglePlusPageTest(testutil.ModelsTest):
     self.user.save()
     self._test_new()
 
-  # def test_poll(self):
-  #   # note that json requires double quotes. :/
-  #   self.expect_fql('SELECT post_fbid, ', [
-  #       {'post_fbid': '123', 'object_id': 1, 'fromid': 4,
-  #        'username': '', 'time': 1, 'text': 'foo'},
-  #       {'post_fbid': '789', 'object_id': 2, 'fromid': 5,
-  #        'username': '', 'time': 2, 'text': 'bar'},
-  #       ])
-  #   self.expect_fql('SELECT link_id, url FROM link ', [
-  #       {'link_id': 1, 'url': 'http://dest1/post/url'},
-  #       {'link_id': 2, 'url': 'http://dest0/post/url'},
-  #       ])
-  #   self.expect_fql('SELECT id, name, url FROM profile ', [
-  #       {'id': 4, 'name': 'fred', 'url': 'http://fred'},
-  #       {'id': 5, 'name': 'bob', 'url': 'http://bob'},
-  #       ])
+  def test_poll(self):
+    GooglePlusService.call_with_creds(
+      self.gae_user_id, 'activities.list', userId='me', collection='public',
+      maxResults=100)\
+      .AndReturn(self.activities_list_response)
+    for activity_id, response in self.comments_list_responses:
+      GooglePlusService.call_with_creds(
+        self.gae_user_id, 'comments.list', activityId=activity_id, maxResults=100)\
+        .AndReturn(response)
+    self.mox.ReplayAll()
 
-  #   self.mox.ReplayAll()
-  #   got = self.page.poll()
-  #   self.assert_entities_equal(self.comments, got)
+    got = self.page.poll()
+    self.assert_entities_equal(self.comments, got)
