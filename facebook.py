@@ -68,7 +68,7 @@ import urlparse
 try:
   import simplejson as json
 except ImportError:
-  import simplejson
+  import json
 
 import appengine_config
 import models

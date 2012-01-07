@@ -1,7 +1,7 @@
 application: brid-gy
 version: 1
-runtime: python
-# threadsafe: false
+runtime: python27
+threadsafe: false
 api_version: 1
 default_expiration: 1d
 

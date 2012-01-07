@@ -11,10 +11,7 @@ import testutil
 import urllib
 import urlparse
 
-try:
-  import simplejson as json
-except ImportError:
-  import json
+import json
 
 import facebook
 from facebook import FacebookApp, FacebookComment, FacebookPage

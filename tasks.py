@@ -42,9 +42,9 @@ class TaskHandler(webapp.RequestHandler):
       datetime.
   """
 
-  def __init__(self, now=datetime.datetime.now):
-    super(TaskHandler, self).__init__()
-    self.now = now
+  def __init__(self, *args, **kwargs):
+    super(TaskHandler, self).__init__(*args)
+    self.now = kwargs.pop('now', datetime.datetime.now)
 
   def task_name(self):
     """Returns this task's name.
