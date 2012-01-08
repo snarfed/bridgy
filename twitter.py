@@ -87,7 +87,7 @@ class TwitterService(db.Model):
     return fn(**kwargs).execute(http)
 
 
-class TwitterPage(models.Source):
+class TwitterUser(models.Source):
   """A Google+ profile or page.
 
   The key name is the user id.

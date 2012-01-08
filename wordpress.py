@@ -64,13 +64,6 @@ class WordPressSite(models.Destination):
     self.xmlrpc_url, self.blog_id = self.KEY_NAME_RE.match(self.key().name()).groups()
     self.blog_id = int(self.blog_id)
 
-  def display_name(self):
-    """TODO: get this from the site itself."""
-    return self.url
-
-  def type_display_name(self):
-    return self.TYPE_NAME
-
   @staticmethod
   def new(properties, handler):
     """Creates and saves a WordPressSite for the logged in user.
@@ -107,6 +100,7 @@ class WordPressSite(models.Destination):
 
     # TODO: ugh, *all* of this should be transactional
     site.save()
+
     return site
 
   def add_comment(self, comment):

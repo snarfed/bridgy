@@ -111,6 +111,10 @@ ul {
   list-style-type: none;
 }
 
+li form * {
+  vertical-align: middle;
+}
+
 form {
   display: inline;
 }

@@ -6,6 +6,7 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 import logging
 import os
 import urllib
+import urlparse
 
 # need to import modules with model class definitions, e.g. facebook and
 # wordpress, for template rendering.
@@ -37,13 +38,18 @@ class DashboardHandler(util.Handler):
     user = models.User.get_current_user()
     if user:
       nickname = users.get_current_user().nickname()
+
       logout_url = users.create_logout_url('/')
       sources = (list(FacebookPage.all().filter('owner =', user)) +
                  list(GooglePlusPage.all().filter('owner =', user))
                  )
       for source in sources:
         source.delete_url = '/%s/delete' % source.__module__
-      dests = WordPressSite.all().filter('owner =', user)
+
+      dests = list(WordPressSite.all().filter('owner =', user))
+      for dest in dests:
+        host = urlparse.urlparse(dest.url).netloc
+        dest.favicon_url = 'http://%s/favicon.ico' % host
 
     msgs = self.request.params.getall('msg')
     path = os.path.join(os.path.dirname(__file__), 'templates', 'dashboard.html')

@@ -3,6 +3,7 @@
 
 import datetime
 import logging
+import urlparse
 
 import appengine_config
 import util
@@ -126,7 +127,11 @@ class Destination(Site):
 
   Each concrete destination class should subclass this class.
   """
+
   last_updated = db.DateTimeProperty()
+
+  # human-readable name for this destination type. subclasses should override.
+  TYPE_NAME = None
 
   def add_comment(self, comment):
     """Posts the given comment to this site.
@@ -137,6 +142,14 @@ class Destination(Site):
       comment: Comment
     """
     raise NotImplementedError()
+
+  def display_name(self):
+    """TODO: get this from the site itself, e.g. <title> in <head>."""
+    parsed = urlparse.urlparse(self.url)
+    return '/'.join(parsed[1:2])
+
+  def type_display_name(self):
+    return self.TYPE_NAME
 
 
 class Comment(util.KeyNameModel):
