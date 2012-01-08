@@ -12,6 +12,18 @@ from google.appengine.ext import webapp
 EPOCH = datetime.datetime.utcfromtimestamp(0)
 
 
+def reduce_url(url):
+  """Removes a URL's leading scheme (e.g. http://) and trailing slash.
+  """
+  parsed = urlparse.urlparse(url)
+  reduced = parsed.netloc
+  if parsed.path:
+    reduced += parsed.path
+  if reduced.endswith('/'):
+    reduced = reduced[:-1]
+  return reduced
+
+
 class KeyNameModel(db.Model):
   """A model class that requires a key name.
   """

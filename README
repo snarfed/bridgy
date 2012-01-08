@@ -37,6 +37,9 @@ STATE: adding twitter to frontend
 
 
 TODO:
+error handling (e.g. bad form input)
+remove drop shadow from twitter logo
+clear toast messages
 handle case where not a page or post (e.g. http://snarfed.org/911_truth_and_cookies.jpg)
 Traceback (most recent call last):
   File "/base/data/home/apps/s~brid-gy/1.355878225058706246/tasks.py", line 117, in post

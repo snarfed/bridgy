@@ -140,12 +140,7 @@ class FacebookPage(models.Source):
   access_token = db.StringProperty()
 
   def display_name(self):
-    """Returns name.
-    """
     return self.name
-
-  def type_display_name(self):
-    return self.TYPE_NAME
 
   def fql(self, query):
     return FacebookApp.get().fql(query, self.access_token)

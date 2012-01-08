@@ -7,7 +7,6 @@ import datetime
 import httplib2
 import logging
 import os
-import pickle
 
 import appengine_config
 import models
@@ -101,12 +100,7 @@ class GooglePlusPage(models.Source):
   type = db.StringProperty(choices=('user', 'page'))
 
   def display_name(self):
-    """Returns name.
-    """
     return self.name
-
-  def type_display_name(self):
-    return self.TYPE_NAME
 
   @staticmethod
   def new(http, handler):

@@ -63,19 +63,6 @@ class User(db.Model):
     if user:
       return user.federated_identity() or user.user_id()
 
-    # TODO: remove
-  # @db.transactional
-  # def add_dest(self, dest):
-  #   if dest.key() not in self.dests:
-  #     self.dests.append(dest.key())
-  #     self.save()
-
-  # @db.transactional
-  # def add_source(self, source):
-  #   if source.key() not in self.sources:
-  #     self.sources.append(source.key())
-  #     self.save()
-
 
 class Site(util.KeyNameModel):
   """A web site for a single entity, e.g. Facebook profile or WordPress blog.
@@ -83,26 +70,28 @@ class Site(util.KeyNameModel):
   Not intended to be used directly. Inherit from one or both of the Destination
   and Source subclasses.
   """
+
+  # human-readable name for this destination type. subclasses should override.
+  TYPE_NAME = None
+
   created = db.DateTimeProperty(auto_now_add=True, required=True)
   url = db.LinkProperty()
   owner = db.ReferenceProperty(User)
 
   def display_name(self):
     """Returns a human-readable name for this site, e.g. 'My Thoughts'.
-    
-    To be implemented by subclasses.
+
+    Defaults to the url. May be overridden by subclasses.
     """
-    raise NotImplementedError()
+    # TODO: get this from the site itself, e.g. <title> in <head>
+    return util.reduce_url(self.url)
 
   def type_display_name(self):
     """Returns a human-readable name for this type of site, e.g. 'Facebook'.
     
-    To be implemented by subclasses.
+    May be overridden by subclasses.
     """
-    raise NotImplementedError()
-
-  # last_polled = db.DateTimeProperty()
-  # destinations = db.StringListProperty(choices=DESTINATIONS)
+    return self.TYPE_NAME
 
 
 class Source(Site):
@@ -130,9 +119,6 @@ class Destination(Site):
 
   last_updated = db.DateTimeProperty()
 
-  # human-readable name for this destination type. subclasses should override.
-  TYPE_NAME = None
-
   def add_comment(self, comment):
     """Posts the given comment to this site.
 
@@ -142,14 +128,6 @@ class Destination(Site):
       comment: Comment
     """
     raise NotImplementedError()
-
-  def display_name(self):
-    """TODO: get this from the site itself, e.g. <title> in <head>."""
-    parsed = urlparse.urlparse(self.url)
-    return '/'.join(parsed[1:2])
-
-  def type_display_name(self):
-    return self.TYPE_NAME
 
 
 class Comment(util.KeyNameModel):

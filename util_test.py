@@ -7,9 +7,22 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 import unittest
 
 import testutil
+import util
 from util import KeyNameModel, Handler
 
 from google.appengine.ext import db
+
+
+class UtilTest(unittest.TestCase):
+
+  def test_reduce_url(self):
+    for url in ('http://a.org/b/c?d=e&f=g', 'https://a.org/b/c',
+                'http://a.org/b/c/', 'http://a.org/b/c'):
+      self.assertEqual('a.org/b/c', util.reduce_url(url))
+
+    self.assertEqual('a.org', util.reduce_url('http://a.org/'))
+    self.assertEqual('a.org', util.reduce_url('http://a.org'))
+    self.assertEqual('asdf', util.reduce_url('asdf'))
 
 
 class KeyNameModelTest(testutil.TestbedTest):

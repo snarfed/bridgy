@@ -20,12 +20,16 @@ handlers:
   script: facebook.py
   login: required
 
+- url: /googleplus/.*
+  script: googleplus.py
+  login: required
+
 - url: /wordpress/.*
   script: wordpress.py
   login: required
 
-- url: /googleplus/.*
-  script: googleplus.py
+- url: /twitter/.*
+  script: twitter.py
   login: required
 
 - url: /oauth2callback

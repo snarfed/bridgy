@@ -13,7 +13,7 @@ import urlparse
 import appengine_config
 from facebook import FacebookPage
 from googleplus import GooglePlusPage
-from twitter import TwitterUser
+from twitter import TwitterSearch
 import models
 import util
 from wordpress import WordPressSite
@@ -40,8 +40,10 @@ class DashboardHandler(util.Handler):
       nickname = users.get_current_user().nickname()
 
       logout_url = users.create_logout_url('/')
+      twitter_searches = list(TwitterSearch.all().filter('owner =', user))
       sources = (list(FacebookPage.all().filter('owner =', user)) +
-                 list(GooglePlusPage.all().filter('owner =', user))
+                 list(GooglePlusPage.all().filter('owner =', user)) +
+                 twitter_searches
                  )
       for source in sources:
         source.delete_url = '/%s/delete' % source.__module__
@@ -50,6 +52,9 @@ class DashboardHandler(util.Handler):
       for dest in dests:
         host = urlparse.urlparse(dest.url).netloc
         dest.favicon_url = 'http://%s/favicon.ico' % host
+
+      available_twitter_dests = [d for d in dests if d.url not in
+                                 [t.url for t in twitter_searches]]
 
     msgs = self.request.params.getall('msg')
     path = os.path.join(os.path.dirname(__file__), 'templates', 'dashboard.html')

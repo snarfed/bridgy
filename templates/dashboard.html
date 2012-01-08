@@ -48,7 +48,8 @@ shared posts also showed up on your blog? Bridgy copies them back for you.</p>
       <form method="post" action="{{ source.delete_url }}">
         <!-- separate <a> tags so the whitespace between the picture and name
           doesn't have a blue underline.  -->
-        <a href="{{ source.url }}"><img src="{{ source.picture }}" /></a>
+        <a href="{{ source.url }}">
+          <img class="source" src="{{ source.picture }}" /></a>
         <a href="{{ source.url }}">{{ source.display_name }}</a>
         ({{ source.type_display_name }})
 
@@ -70,18 +71,24 @@ shared posts also showed up on your blog? Bridgy copies them back for you.</p>
     <input type="submit" value="Add Google+">
   </form>
 
-  {% if dests %}
+  {% if available_twitter_dests %}
     <form method="post" action="/twitter/add">
       <input type="submit" value="Add Twitter">
       <label for="add-twitter-url">for base URL</label>
       <select id="add-twitter-url" name="url">
-        {% for dest in dests %}
-        <option value="dest.url">{{ dest.display_name }}</option>
+        {% for dest in available_twitter_dests %}
+        <option value="{{ dest.url }}">{{ dest.display_name }}</option>
         {% endfor %}
       </select>
     </form>
   {% else %}
-    <p class="disabled">Add a destination to enable Twitter.</p>
+    <p class="disabled">
+      {% if dests %}
+        All destinations have Twitter sources.
+      {% else %}
+        Add a destination to enable Twitter.
+      {% endif %}
+    </p>
   {% endif %}
 
 </div>
@@ -92,7 +99,8 @@ shared posts also showed up on your blog? Bridgy copies them back for you.</p>
   {% for dest in dests %}
     <li>
       <form method="post" action="/wordpress/delete">
-        <a href="{{ dest.url }}"><img src="{{ dest.favicon_url }}" /></a>
+        <a href="{{ dest.url }}">
+          <img class="dest" src="{{ dest.favicon_url }}" /></a>
         <a href="{{ dest.url }}">{{ dest.display_name }}</a>
         ({{ dest.type_display_name }})
 
