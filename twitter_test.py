@@ -9,7 +9,7 @@ import mox
 import testutil
 
 import twitter
-from twitter import TwitterComment, TwitterSearch
+from twitter import TwitterReply, TwitterSearch
 import models
 import tasks_test
 
@@ -67,7 +67,7 @@ import tasks_test
 
 #     # TODO: unify with ModelsTest.setUp()
 #     self.comments = [
-#       TwitterComment(
+#       TwitterReply(
 #         key_name='123',
 #         created=datetime.datetime.utcfromtimestamp(1),
 #         source=self.page,
@@ -79,7 +79,7 @@ import tasks_test
 #         content='foo',
 #         user_id='4',
 #         ),
-#       TwitterComment(
+#       TwitterReply(
 #         key_name='789',
 #         created=datetime.datetime.utcfromtimestamp(2),
 #         source=self.page,

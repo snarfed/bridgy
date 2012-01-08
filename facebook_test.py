@@ -5,13 +5,12 @@
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import datetime
+import json
 import logging
 import mox
 import testutil
 import urllib
 import urlparse
-
-import json
 
 import facebook
 from facebook import FacebookApp, FacebookComment, FacebookPage

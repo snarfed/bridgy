@@ -28,7 +28,6 @@ from oauth2client.appengine import OAuth2Decorator
 from oauth2client.appengine import StorageByKeyName
 
 from google.appengine.api import taskqueue
-from google.appengine.api import urlfetch
 from google.appengine.api import users
 from google.appengine.ext import db
 from google.appengine.ext import webapp
@@ -182,9 +181,9 @@ class GooglePlusPage(models.Source):
           maxResults=100)
 
         for c in comment_resources['items']:
-          before_microsecs = c['published'].split('.')[0]
-          created = datetime.datetime.strptime(before_microsecs,
-                                               '%Y-%m-%dT%H:%M:%S')
+          # parse the iso8601 formatted timestamp
+          created = datetime.datetime.strptime(c['published'],
+                                               '%Y-%m-%dT%H:%M:%S.%fZ')
           comments.append(GooglePlusComment(
               key_name=c['id'],
               source=self,

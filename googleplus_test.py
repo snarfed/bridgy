@@ -72,7 +72,7 @@ class GooglePlusPageTest(testutil.ModelsTest):
     self.comments = [
       GooglePlusComment(
         key_name='123',
-        created=datetime.datetime.utcfromtimestamp(1),
+        created=datetime.datetime.utcfromtimestamp(1.01),
         source=self.page,
         dest=self.dests[1],
         source_post_url='http://source/post/1',
@@ -84,7 +84,7 @@ class GooglePlusPageTest(testutil.ModelsTest):
         ),
       GooglePlusComment(
         key_name='789',
-        created=datetime.datetime.utcfromtimestamp(2),
+        created=datetime.datetime.utcfromtimestamp(2.01),
         source=self.page,
         dest=self.dests[0],
         source_post_url='http://source/post/0',
@@ -102,13 +102,13 @@ class GooglePlusPageTest(testutil.ModelsTest):
               'id': '123',
               'object': {'content': 'foo'},
               'actor': {'id': '4', 'displayName': 'fred', 'url': 'http://fred'},
-              'published': '1970-01-01T00:00:01.234Z',
+              'published': '1970-01-01T00:00:01.01Z',
               }]}),
       ('2', {'items': [{
               'id': '789',
               'object': {'content': 'bar'},
               'actor': {'id': '5', 'displayName': 'bob', 'url': 'http://bob'},
-              'published': '1970-01-01T00:00:02.234Z',
+              'published': '1970-01-01T00:00:02.01Z',
               }]}),
       ]
 

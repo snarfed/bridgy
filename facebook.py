@@ -60,15 +60,11 @@ TODO: use third_party_id if we ever need to store an fb user id anywhere else.
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import datetime
+import json
 import logging
 import pprint
 import urllib
 import urlparse
-
-try:
-  import simplejson as json
-except ImportError:
-  import json
 
 import appengine_config
 import models

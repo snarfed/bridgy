@@ -4,8 +4,11 @@
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import datetime
+import json
 import logging
 import os
+import re
+import urllib
 
 import appengine_config
 import models
@@ -61,71 +64,132 @@ class TwitterSearch(models.Source):
     taskqueue.add(name=tasks.Poll.make_task_name(search), queue_name='poll')
     return search
 
-  # def poll(self):
-    # url = util.reduce_url(properties['url'])
-  #   # TODO: make generic and expand beyond single hard coded destination.
-  #   # GQL so i don't have to import the model class definition.
-  #   dests = db.GqlQuery('SELECT * FROM %s' % HARD_CODED_DEST).fetch(100)
-  #   comments = []
+  def poll(self):
+    # TODO: make generic and expand beyond single hard coded destination.
+    # GQL so i don't have to import the model class definition.
+    query = 'SELECT * FROM %s WHERE url = :1' % HARD_CODED_DEST
+    dest = db.GqlQuery(query, self.url).get()
+    replies = []
 
-  #   # Google+ Activity resource
-  #   # https://developers.google.com/+/api/latest/activies#resource
-  #   activities = TwitterService.call_with_creds(
-  #     self.gae_user_id, 'activities.list', userId='me', collection='public',
-  #     maxResults=100)
+    # find tweets with links that include our base url.
+    # search response is JSON tweets:
+    # https://dev.twitter.com/docs/api/1/get/search
+    results = self.search('%s filter:links' % util.reduce_url(self.url))
 
-  #   # list of (link, activity) pairs
-  #   links = []
-  #   for activity in activities['items']:
-  #     for attach in activity['object'].get('attachments', []):
-  #       if attach['objectType'] == 'article':
-  #         links.append((attach['url'], activity))
+    # maps username to list of @ mention search results, which includes replies
+    mentions = {}
+    for result in results:
+      user = result['from_user']
+      if user not in mentions:
+        mentions[user] = self.search('@%s filter:links' % user)        
 
-  #   for link, activity in links:
-  #     logging.debug('Looking for destination for link: %s' % link)
+    for result in results:
+      post_user = result['from_user']
+      post_id = result['id']
 
-  #     # look for destinations whose url contains this link. should be at most one.
-  #     # (can't use a "string prefix" query because we want the property that's a
-  #     # prefix of the filter value, not vice versa.)
-  #     dest = [d for d in dests if link.startswith(d.url)]
-  #     assert len(dest) <= 1
+      # extract destination post url from tweet entities
+      # https://dev.twitter.com/docs/tweet-entities
+      dest_post_url = None
+      post_tweet_url = self.tweet_url(post_user, post_id)
+      for url in result['entities'].get('urls', []):
+        if url['expanded_url'].startswith(self.url):
+          dest_post_url = url['expanded_url']
+          logging.debug('Found post %s in tweet %s', dest_post_url, post_tweet_url)
 
-  #     if dest:
-  #       dest = dest[0]
-  #       logging.debug('Found destination: %s' % dest.key().name())
+      if not dest_post_url:
+        logging.info("Tweet %s should have %s link but doesn't. Maybe shortened?",
+                     post_tweet_url, self.url)
+        continue
 
-  #       # Google+ Comment resource
-  #       # https://developers.google.com/+/api/latest/comments#resource
-  #       comment_resources = TwitterService.call_with_creds(
-  #         self.gae_user_id, 'comments.list', activityId=activity['id'],
-  #         maxResults=100)
+      # find and convert comments
+      logging.debug('Looking at %s\'s mentions', post_user)
+      for mention in mentions[post_user]:
+        logging.debug('Looking at mention: %s', mention)
+        if mention.get('in_reply_to_status_id') == post_id:
+          reply_id = mention['id']
+          reply_user = mention['from_user']
+          source_post_url = self.tweet_url(reply_user, reply_id)
+          author_name = (mention['from_user_name'] if mention['from_user_name']
+                         else '@' + reply_user)
+          logging.debug('Found reply %s', source_post_url)
 
-  #       for c in comment_resources['items']:
-  #         before_microsecs = c['published'].split('.')[0]
-  #         created = datetime.datetime.strptime(before_microsecs,
-  #                                              '%Y-%m-%dT%H:%M:%S')
-  #         comments.append(TwitterComment(
-  #             key_name=c['id'],
-  #             source=self,
-  #             dest=dest,
-  #             source_post_url=activity['url'],
-  #             dest_post_url=link,
-  #             created=created,
-  #             author_name=c['actor']['displayName'],
-  #             author_url=c['actor']['url'],
-  #             content=c['object']['content'],
-  #             user_id=c['actor']['id'],
-  #             ))
+          # parse the timestamp, format e.g. 'Sun, 01 Jan 2012 11:44:57 +0000'
+          created_at = re.sub(' \+[0-9]{4}$', '', mention['created_at'])
+          created = datetime.datetime.strptime(created_at,
+                                               '%a, %d %b %Y %H:%M:%S')
 
-  #   return comments
+          replies.append(TwitterReply(
+              key_name=str(reply_id),
+              source=self,
+              dest=dest,
+              source_post_url=source_post_url,
+              dest_post_url=dest_post_url,
+              created=created,
+              author_name=author_name,
+              author_url=self.user_url(reply_user),
+              content=self.linkify(mention['text']),
+              username=reply_user,
+              ))
+
+    return replies
+
+  @staticmethod
+  def search(query):
+    """Searches for tweets using the Twitter Search API.
+
+    Background:
+    https://dev.twitter.com/docs/using-search
+    https://dev.twitter.com/docs/api/1/get/search
+    http://stackoverflow.com/questions/2693553/replies-to-a-particular-tweet-twitter-api
+
+    Args:
+      query: string (not url-encoded)
+
+    Returns: dict, JSON results
+    """
+    url = ('http://search.twitter.com/search.json'
+           '?q=%s&include_entities=true&result_type=recent&rpp=100' %
+           urllib.quote_plus(query))
+    resp = urlfetch.fetch(url, deadline=999)
+    assert resp.status_code == 200, resp.status_code
+    return json.loads(resp.content)['results']
+
+  @staticmethod
+  def tweet_url(username, id):
+    """Returns the URL of a tweet.
+    """
+    return 'http://twitter.com/%s/status/%d' % (username, id)
+
+  @staticmethod
+  def user_url(username):
+    """Returns a user's URL.
+    """
+    return 'http://twitter.com/%s' % username
+
+  @staticmethod
+  def linkify(text):
+    """Converts @mentions and hashtags to HTML links.
+    """
+    # twitter usernames can only have \w chars, ie letters, numbers, or
+    # underscores. the pattern matches @, *not* preceded by a \w char, followed
+    # one or more \w chars.
+    text = re.sub(r'(?<!\w)[@#](\w+)',
+                 r'<a href="http://twitter.com/\1">\g<0></a>',
+                 text)
+
+    # no explicit info about hashtag chars, but i assume the same.
+    text = re.sub(r'(?<!\w)[@#](\w+)',
+                 r'<a href="http://twitter.com/search?q=%23\1">\g<0></a>',
+                 text)
+    return text
 
 
-class TwitterComment(models.Comment):
-  """Key name is the comment's id.
+class TwitterReply(models.Comment):
+  """Key name is the tweet (aka status) id.
   """
 
-  # user id who wrote the comment
-  user_id = db.StringProperty(required=True)
+  # user who wrote the comment
+  username = db.StringProperty(required=True)
 
 
 class AddTwitterSearch(util.Handler):
