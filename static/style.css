@@ -47,7 +47,6 @@ body, input, textarea {
   border-bottom-left-radius: .3em;
   -moz-outline-radius-bottomleft: .3em;
   -moz-outline-radius-bottomright: .3em;
-  margin-top: 2em;
 
   box-shadow: 3px 3px 3px rgba(0,0,0,0.3);
   -moz-box-shadow: 3px 3px 3px rgba(0,0,0,0.3);
@@ -85,9 +84,17 @@ div.messages > p {
   vertical-align: middle;
 }
 
+div#sources, div#destinations {
+  margin-left: 2em;
+  margin-bottom: 3em;
+}
+
+p.disabled {
+  color: gray;
+}
+
 a {
   color: #36c;
-  /* text-decoration: none; */
 }
 
 a:hover, a:active {
@@ -109,22 +116,22 @@ img#logo {
 
 ul {
   list-style-type: none;
+  padding: 0;
 }
 
 li form * {
   vertical-align: middle;
 }
 
-form {
-  display: inline;
+input[type="submit"] {
+  margin-right: .5em;
+  margin-top: .5em;
 }
 
-input[type^="submit"] {
-  margin-top: 1em;
-  margin-left: 3em;
+select, input[type="submit"], input[type="text"] {
   border: 1px solid #aa0;
-  border-radius: .3em;
-  -moz-outline-radius: .3em;
+  border-radius: .1em;
+  -moz-outline-radius: .2em;
   color: #222;
   text-shadow: 0pt 1px rgba(0, 0, 0, 0.1);
   padding: .3em;

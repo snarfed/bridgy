@@ -33,7 +33,7 @@ ln -s python-gflags/gflags_validators.py
 The tests require the App Engine SDK and python-mox.
 
 
-STATE: test g+ in prod
+STATE: adding twitter to frontend
 
 
 TODO:

@@ -39,7 +39,8 @@
 shared posts also showed up on your blog? Bridgy copies them back for you.</p>
 
 {% if user %}
-  <p><b>Your sources:</b></p>
+<p><b>Your sources:</b></p>
+<div id="sources">
   <ul>
   {# TODO: paging #}
   {% for source in sources %}
@@ -64,13 +65,29 @@ shared posts also showed up on your blog? Bridgy copies them back for you.</p>
   <form method="post" action="/facebook/add">
     <input type="submit" value="Add Facebook">
   </form>
+
   <form method="post" action="/googleplus/add">
     <input type="submit" value="Add Google+">
   </form>
 
-  <br /><br />
+  {% if dests %}
+    <form method="post" action="/twitter/add">
+      <input type="submit" value="Add Twitter">
+      <label for="add-twitter-url">for base URL</label>
+      <select id="add-twitter-url" name="url">
+        {% for dest in dests %}
+        <option value="dest.url">{{ dest.display_name }}</option>
+        {% endfor %}
+      </select>
+    </form>
+  {% else %}
+    <p class="disabled">Add a destination to enable Twitter.</p>
+  {% endif %}
 
-  <p><b>Your destinations:</b></p>
+</div>
+
+<p><b>Your destinations:</b></p>
+<div id="destinations">
   <ul>
   {% for dest in dests %}
     <li>
@@ -110,6 +127,7 @@ shared posts also showed up on your blog? Bridgy copies them back for you.</p>
     </td></tr></table>
     <input type="submit" value="Add Wordpress">
   </form>
+</div>
 
 {% else %}
   <p>Please <a href="/register">sign in</a>.</p>
