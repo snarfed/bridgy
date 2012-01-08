@@ -24,6 +24,10 @@ class UtilTest(unittest.TestCase):
     self.assertEqual('a.org', util.reduce_url('http://a.org'))
     self.assertEqual('asdf', util.reduce_url('asdf'))
 
+  def test_favicon_for_url(self):
+    for url in ('http://a.org/b/c?d=e&f=g', 'https://a.org/b/c', 'http://a.org/'):
+      self.assertEqual('http://a.org/favicon.ico', util.favicon_for_url(url))
+
 
 class KeyNameModelTest(testutil.TestbedTest):
 

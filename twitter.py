@@ -32,7 +32,11 @@ class TwitterSearch(models.Source):
   """
 
   TYPE_NAME = 'Twitter'
-  picture = '/static/twitter_logo.png'
+
+  def __init__(self, *args, **kwargs):
+    super(TwitterSearch, self).__init__(*args, **kwargs)
+    if 'url' in kwargs:
+      self.picture = util.favicon_for_url(kwargs['url'])
 
   @staticmethod
   def new(properties, handler):

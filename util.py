@@ -24,6 +24,10 @@ def reduce_url(url):
   return reduced
 
 
+def favicon_for_url(url):
+  return 'http://%s/favicon.ico' % urlparse.urlparse(url).netloc
+
+
 class KeyNameModel(db.Model):
   """A model class that requires a key name.
   """

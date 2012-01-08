@@ -50,8 +50,7 @@ class DashboardHandler(util.Handler):
 
       dests = list(WordPressSite.all().filter('owner =', user))
       for dest in dests:
-        host = urlparse.urlparse(dest.url).netloc
-        dest.favicon_url = 'http://%s/favicon.ico' % host
+        dest.favicon_url = util.favicon_for_url(dest.url)
 
       available_twitter_dests = [d for d in dests if d.url not in
                                  [t.url for t in twitter_searches]]
