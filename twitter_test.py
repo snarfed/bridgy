@@ -5,6 +5,7 @@
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import datetime
+import json
 import mox
 import testutil
 
@@ -14,143 +15,140 @@ import models
 import tasks_test
 
 
-# class TwitterSearchTest(testutil.ModelsTest):
+class TwitterSearchTest(testutil.ModelsTest):
 
-#   def setUp(self):
-#     super(TwitterSearchTest, self).setUp()
+  def setUp(self):
+    super(TwitterSearchTest, self).setUp()
 
-#     self.mox.StubOutWithMock(TwitterService, 'call')
-#     self.mox.StubOutWithMock(TwitterService, 'call_with_creds')
+    twitter.HARD_CODED_DEST = 'FakeDestination'
+    self.user = models.User.get_or_insert_current_user(self.handler)
+    self.handler.messages = []
 
-#     twitter.HARD_CODED_DEST = 'FakeDestination'
-#     self.user = models.User.get_or_insert_current_user(self.handler)
-#     self.handler.messages = []
+    self.search = TwitterSearch(key_name='http://dest1/',
+                                owner=self.user,
+                                url='http://dest1/',
+                                )
 
-#     self.page = TwitterSearch(key_name='2468',
-#                                gae_user_id=self.gae_user_id,
-#                                owner=self.user,
-#                                name='my full name',
-#                                url='http://my.g+/url',
-#                                picture='http://my.pic/small',
-#                                type='user',
-#                                )
+    # based on:
+    # http://search.twitter.com/search.json?q=snarfed.org+filter:links&include_entities=true
+    self.url_search_results = {'results': [
+        # two embedded urls, no replies
+        {'created_at': 'Wed, 04 Jan 2012 20:10:28 +0000',
+         'entities': {'urls': [{'display_url': 'bar.org/qwert',
+                                'expanded_url': 'http://bar.org/qwert',
+                                'url': 'http://t.co/ZhhEkuxo'},
+                               {'display_url': 'dest1/asdf',
+                                'expanded_url': 'http://dest1/asdf',
+                                'url': 'http://t.co/ghhEkuxo'},
+                               ]},
+         'from_user': 'user1',
+         'from_user_name': 'user 1 name',
+         'id': 1,
+         'text': 'this is a tweet',
+         },
 
-#     self.people_get_response = {
-#         'id': '2468',
-#         'displayName': 'my full name',
-#         'url': 'http://my.g+/url',
-#         'image': {'url': 'http://my.pic/small'},
-#         'type': 'person',
-#         }
+        # no embedded urls
+        {'created_at': 'Tue, 03 Jan 2012 16:17:16 +0000',
+         'entities': {},
+         'from_user': 'user2',
+         'from_user_name': 'user 2 name',
+         'id': 2,
+         'text': 'this is also a tweet',
+         },
 
-#     self.activities_list_response = {'items': [
-#         # no attachments
-#         {'object': {}},
-#         # no article attachment
-#         {'object': {'attachments': [{'objectType': 'note'}]}},
-#         # no matching dest
-#         {'object': {'attachments': [{'objectType': 'article',
-#                                      'url': 'http://no/matching/dest'}]}},
-#         # matches self.dests[1]
-#         {'object': {'attachments': [{'objectType': 'article',
-#                                      'url': 'http://dest1/post/url'}]},
-#          'id': '1',
-#          'url': 'http://source/post/1',
-#          },
-#         # matches self.dests[0]
-#         {'object': {'attachments': [{'objectType': 'article',
-#                                      'url': 'http://dest0/post/url'}]},
-#          'id': '2',
-#          'url': 'http://source/post/0',
-#          },
-#         ]}
+        # two embedded urls, one reply (below)
+        {'created_at': 'Wed, 04 Jan 2012 09:10:28 +0000',
+         'entities': {'urls': [{'display_url': 'dest1/xyz',
+                                'expanded_url': 'http://dest1/xyz',
+                                'url': 'http://t.co/AhhEkuxo'},
+                               ]},
+         'from_user': 'user3',
+         'from_user_name': 'user 3 name',
+         'id': 3,
+         'text': 'this is the last tweet',
+         },
+        ]}
 
-#     # TODO: unify with ModelsTest.setUp()
-#     self.comments = [
-#       TwitterReply(
-#         key_name='123',
-#         created=datetime.datetime.utcfromtimestamp(1),
-#         source=self.page,
-#         dest=self.dests[1],
-#         source_post_url='http://source/post/1',
-#         dest_post_url='http://dest1/post/url',
-#         author_name='fred',
-#         author_url='http://fred',
-#         content='foo',
-#         user_id='4',
-#         ),
-#       TwitterReply(
-#         key_name='789',
-#         created=datetime.datetime.utcfromtimestamp(2),
-#         source=self.page,
-#         dest=self.dests[0],
-#         source_post_url='http://source/post/0',
-#         dest_post_url='http://dest0/post/url',
-#         author_name='bob',
-#         author_url='http://bob',
-#         content='bar',
-#         user_id='5',
-#         )]
-#     self.sources[0].set_comments(self.comments)
+    # index is the user id. based on:
+    # http://search.twitter.com/search.json?q=@snarfed_org+filter:links&include_entities=true
+    self.mention_search_results = [
+      None,  # no user id 0
+      {'results': []},
+      {'results': []},
+      {'results': [
+        # not a reply
+        {'created_at': 'Sun, 01 Jan 2012 11:44:57 +0000',
+         'entities': {'user_mentions': [{'id': 3, 'screen_name': 'user3'}]},
+         'from_user': 'user4',
+         'from_user_name': 'user 4 name',
+         'id': 4,
+         'text': 'boring',
+         },
 
-#     # (activity id, JSON response) pairs
-#     self.comments_list_responses = [
-#       ('1', {'items': [{
-#               'id': '123',
-#               'object': {'content': 'foo'},
-#               'actor': {'id': '4', 'displayName': 'fred', 'url': 'http://fred'},
-#               'published': '1970-01-01T00:00:01.234Z',
-#               }]}),
-#       ('2', {'items': [{
-#               'id': '789',
-#               'object': {'content': 'bar'},
-#               'actor': {'id': '5', 'displayName': 'bob', 'url': 'http://bob'},
-#               'published': '1970-01-01T00:00:02.234Z',
-#               }]}),
-#       ]
+        # reply to tweet id 3 (above)
+        {'created_at': 'Sun, 01 Jan 1970 00:00:01 +0000',
+         'entities': {'user_mentions': [{'id': 3, 'screen_name': 'user3'}]},
+         'from_user': 'user5',
+         'from_user_name': 'user 5 name',
+         'id': 5,
+         'in_reply_to_status_id': 3,
+         # note the @ mention and hashtag for testing TwitterSearch.linkify()
+         'text': '@user3 i hereby #reply',
+         'to_user': 'user3',
+         },
+        ]},
+      ]
 
-#     self.task_name = str(self.page.key()) + '_1970-01-01-00-00-00'
+    # TODO: unify with ModelsTest.setUp()
+    self.replies = [TwitterReply(
+        key_name='5',
+        created=datetime.datetime.utcfromtimestamp(1),
+        source=self.search,
+        dest=self.dests[1],
+        source_post_url='http://twitter.com/user5/status/5',
+        dest_post_url='http://dest1/xyz',
+        author_name='user 5 name',
+        author_url='http://twitter.com/user5',
+        content='<a href="http://twitter.com/user3">@user3</a> i hereby <a href="http://twitter.com/search?q=%23reply">#reply</a>',
+        username='user5',
+        )]
+    # self.sources[0].set_comments(self.replies)
 
-#   def _test_new(self):
-#     http = httplib2.Http()
-#     TwitterService.call(http, 'people.get', userId='me')\
-#         .AndReturn(self.people_get_response)
-#     self.mox.ReplayAll()
+    self.task_name = str(self.search.key()) + '_1970-01-01-00-00-00'
 
-#     got = TwitterSearch.new(http, self.handler)
-#     self.assert_entities_equal(self.page, got, ignore=['created'])
-#     self.assert_entities_equal([self.page], TwitterSearch.all(), ignore=['created'])
+  def _test_new(self):
+    got = TwitterSearch.new({'url': 'http://dest1/'}, self.handler)
+    self.assert_entities_equal(self.search, got, ignore=['created'])
+    self.assert_entities_equal([self.search], TwitterSearch.all(), ignore=['created'])
 
-#     tasks = self.taskqueue_stub.GetTasks('poll')
-#     self.assertEqual(1, len(tasks))
-#     self.assertEqual(self.task_name, tasks[0]['name'])
-#     self.assertEqual('/_ah/queue/poll', tasks[0]['url'])
+    tasks = self.taskqueue_stub.GetTasks('poll')
+    self.assertEqual(1, len(tasks))
+    self.assertEqual(self.task_name, tasks[0]['name'])
+    self.assertEqual('/_ah/queue/poll', tasks[0]['url'])
 
-#   def test_new(self):
-#     self._test_new()
-#     self.assertEqual(self.handler.messages, ['Added Google+ page: my full name'])
+  def test_new(self):
+    self._test_new()
+    self.assertEqual(self.handler.messages, ['Added Twitter search: dest1'])
 
-#   def test_new_already_exists(self):
-#     self.page.save()
-#     self._test_new()
-#     self.assertEqual(self.handler.messages,
-#                      ['Updated existing Google+ page: my full name'])
+  def test_new_already_exists(self):
+    self.search.save()
+    self._test_new()
+    self.assertEqual(self.handler.messages,
+                     ['Updated existing Twitter search: dest1'])
 
-#   def test_new_user_already_owns(self):
-#     self.user.sources = [self.page.key()]
-#     self.user.save()
-#     self._test_new()
+  def test_new_user_already_owns(self):
+    self.user.sources = [self.search.key()]
+    self.user.save()
+    self._test_new()
 
-#   def test_poll(self):
-#     TwitterService.call_with_creds(
-#       self.gae_user_id, 'activities.list', userId='me', collection='public',
-#       maxResults=100)\
-#       .AndReturn(self.activities_list_response)
-#     for activity_id, response in self.comments_list_responses:
-#       TwitterService.call_with_creds(
-#         self.gae_user_id, 'comments.list', activityId=activity_id, maxResults=100)\
-#         .AndReturn(response)
-#     self.mox.ReplayAll()
+  def test_poll(self):
+    self.expect_urlfetch('.*/search\.json\?q=dest1\+filter%3Alinks&.*',
+                         json.dumps(self.url_search_results))
+    for i in range(1, 4):
+        self.expect_urlfetch(
+          '.*/search\.json\?q=%%40user%d\+filter%%3Alinks&.*' % i,
+          json.dumps(self.mention_search_results[i]))
+    self.mox.ReplayAll()
 
-#     got = self.page.poll()
-#     self.assert_entities_equal(self.comments, got)
+    got = self.search.poll()
+    self.assert_entities_equal(self.replies, got)

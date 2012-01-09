@@ -177,12 +177,12 @@ class TwitterSearch(models.Source):
     # twitter usernames can only have \w chars, ie letters, numbers, or
     # underscores. the pattern matches @, *not* preceded by a \w char, followed
     # one or more \w chars.
-    text = re.sub(r'(?<!\w)[@#](\w+)',
+    text = re.sub(r'(?<!\w)@(\w+)',
                  r'<a href="http://twitter.com/\1">\g<0></a>',
                  text)
 
     # no explicit info about hashtag chars, but i assume the same.
-    text = re.sub(r'(?<!\w)[@#](\w+)',
+    text = re.sub(r'(?<!\w)#(\w+)',
                  r'<a href="http://twitter.com/search?q=%23\1">\g<0></a>',
                  text)
     return text

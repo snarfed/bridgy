@@ -73,7 +73,7 @@ class TestbedTest(mox.MoxTestBase):
     """Stubs out urlfetch.fetch() and sets up an expected call.
 
     Args:
-      expected_url: string, regex, or 
+      expected_url: string, regex or mox.Comparator
       response: string
     """
     if isinstance(expected_url, mox.Comparator):
