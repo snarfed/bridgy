@@ -76,9 +76,21 @@ div.messages > p {
   vertical-align: middle;
 }
 
-div#sources, div#destinations {
+.section {
   margin-left: 2em;
-  margin-bottom: 3em;
+  margin-bottom: 2em;
+}
+
+#sources, #destinations {
+  border-spacing: .2em .2em;
+}
+
+#sources *, #destinations * {
+  vertical-align: middle;
+}
+
+#sources, #destinations {
+  text-align: center;
 }
 
 p.disabled {
@@ -104,19 +116,6 @@ img#logo {
   padding-right: 1em;
   margin-right: -.5em;
   margin-top: -1em;
-}
-
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-
-li {
-  margin-bottom: .5em;
-}
-
-li form * {
-  vertical-align: middle;
 }
 
 input[type="submit"] {

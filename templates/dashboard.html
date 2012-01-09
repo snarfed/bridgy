@@ -40,28 +40,28 @@ shared posts also showed up on your blog? Bridgy copies them back for you.</p>
 
 {% if user %}
 <p><b>Your sources:</b></p>
-<div id="sources">
-  <ul>
+<div class="section">
   {# TODO: paging #}
+  <table id="sources">
   {% for source in sources %}
-    <li>
-      <form method="post" action="{{ source.delete_url }}">
-        <!-- separate <a> tags so the whitespace between the picture and name
-          doesn't have a blue underline.  -->
+    <tr><td>
         <a href="{{ source.url }}">
           <img class="source" src="{{ source.picture }}" /></a>
+      </td><td>
         <a href="{{ source.url }}">{{ source.display_name }}</a>
+      </td><td>
         ({{ source.type_display_name }})
-
+      </td><td>
         <!-- TODO: make this generic across source types. need unique id across
              all source types, and way to look it up. (webfinger.) same w/dests.
           -->
-        <input name="key_name" type="hidden" value="{{ source.key.name }}" />
-        <input type="image" src="static/trash_can.png" title="Delete" />
-      </form>
-    </li>
+        <form method="post" action="{{ source.delete_url }}">
+          <input name="key_name" type="hidden" value="{{ source.key.name }}" />
+          <input type="image" src="static/trash_can.png" title="Delete" />
+        </form>
+    </td></tr>
   {% endfor %}
-  </ul>
+  </table>
 
   <form method="post" action="/facebook/add">
     <input type="submit" value="Add Facebook">
@@ -94,22 +94,24 @@ shared posts also showed up on your blog? Bridgy copies them back for you.</p>
 </div>
 
 <p><b>Your destinations:</b></p>
-<div id="destinations">
-  <ul>
+<div class="section">
+  <table id="destinations">
   {% for dest in dests %}
-    <li>
-      <form method="post" action="/wordpress/delete">
+    <tr><td>
         <a href="{{ dest.url }}">
           <img class="dest" src="{{ dest.favicon_url }}" /></a>
+      </td><td>
         <a href="{{ dest.url }}">{{ dest.display_name }}</a>
+      </td><td>
         ({{ dest.type_display_name }})
-
+      </td><td>
+      <form method="post" action="/wordpress/delete">
         <input name="name" type="hidden" value="{{ dest.key.name }}" />
         <input type="image" src="static/trash_can.png" title="Delete" />
       </form>
-    </li>
+    </td></tr>
   {% endfor %}
-  </ul>
+  </table>
 
   <form method="post" action="/wordpress/add">
     <table><tr><td>
@@ -120,18 +122,6 @@ shared posts also showed up on your blog? Bridgy copies them back for you.</p>
           <label for="xmlrpc_url">XMLRPC URL</label>
         </td><td>
           <input id="xmlrpc_url" name="xmlrpc_url" type="text" />
-      <!-- not needed, posting comments anonymously instead. (otherwise
-           logged in wordpress user would override commenter name and url.) -->
-      <!--
-      </td></tr><tr><td>
-          <label for="username">Admin username</label>
-        </td><td>
-          <input id="username" name="username" type="text" />
-      </td></tr><tr><td>
-          <label for="password">Password</label>
-        </td><td>
-          <input id="password" name="password" type="password" />
-      -->
     </td></tr></table>
     <input type="submit" value="Add Wordpress">
   </form>
