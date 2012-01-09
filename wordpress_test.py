@@ -85,6 +85,19 @@ class WordPressSiteTest(WordPressBaseTest, testutil.ModelsTest):
       self.assert_entities_equal(expected_sites, WordPressSite.all(),
                                  ignore=['created'])
 
+  def test_new_error(self):
+    self.assertEqual(0, WordPressSite.all().count())
+    self.props['xmlrpc_url'] = 'http://my/xmlrpc'
+
+    for prop in 'url', 'xmlrpc_url':
+      post_params = dict(self.props)
+      post_params[prop] = 'not a link'
+      resp = self.post(wordpress.application, '/wordpress/add', 302,
+                       post_params=post_params)
+      location = resp.headers['Location']
+      self.assertEqual('http://HOST/?msg=Invalid+URL%3A+not+a+link', location)
+      self.assertEqual(0, WordPressSite.all().count())
+
   def test_delete(self):
     self.assertEqual(0, WordPressSite.all().count())
 

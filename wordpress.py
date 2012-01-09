@@ -73,8 +73,12 @@ class WordPressSite(models.Destination):
       handler: the current webapp.RequestHandler
 
     Returns: WordPressSite
+
+    Raises: BadValueError if url or xmlrpc_url are bad
     """
     properties = dict(properties)
+    for prop in 'url', 'xmlrpc_url':
+      db.LinkProperty().validate(properties.get(prop))
 
     blog_id = properties.get('blog_id')
     if blog_id:
@@ -83,7 +87,7 @@ class WordPressSite(models.Destination):
       blog_id = 0
     properties['blog_id'] = blog_id
 
-    key_name = '%s_%d' % (properties.get('xmlrpc_url'), blog_id)
+    key_name = '%s_%d' % (properties['xmlrpc_url'], blog_id)
     existing = WordPressSite.get_by_key_name(key_name)
     site = WordPressSite(key_name=key_name,
                          owner=models.User.get_current_user(),
@@ -226,10 +230,12 @@ class WordPress(object):
 # TODO: unify with facebook, etc?
 class AddWordPressSite(util.Handler):
   def post(self):
-    site = WordPressSite.new(self.request.params, self)
-    self.redirect('/?msg=Added %s destination: %s' % (site.type_display_name(),
-                                                      site.display_name()))
-
+    try:
+      site = WordPressSite.new(self.request.params, self)
+      self.redirect('/?msg=Added %s destination: %s' % (site.type_display_name(),
+                                                        site.display_name()))
+    except db.BadValueError, e:
+      self.redirect('/?msg=%s' % e)
 
 class DeleteWordPressSite(util.Handler):
   def post(self):
@@ -241,44 +247,9 @@ class DeleteWordPressSite(util.Handler):
     self.redirect('/?msg=' + msg)
 
 
-class Go(util.Handler):
-  def get(self):
-    # # test get_comments()
-    # wp = WordPress('http://localhost/w/xmlrpc.php', 0, '', '')
-    # self.response.headers['Content-Type'] = 'text/plain'
-    # self.response.out.write(`wp.get_comments(670)`)
-
-    # # test add_comment()
-    # import facebook
-    # fbpage = facebook.FacebookPage(key_name='fbpage')
-    # site = WordPressSite.all().get()
-    # comment = models.Comment(key_name='my_comment',
-    #                          source=fbpage,
-    #                          dest=site,
-    #                          source_post_url='http://source.com/',
-    #                          # dest_post_url='http://localhost/about',
-    #                          dest_post_url='http://localhost/about',
-    #                          author_name='ryan',
-    #                          author_url='http://snarfed.org',
-    #                          content='foo<br>bar<br  />tomme')
-    # site.add_comment(comment)
-
-    # return wp.proxy.wp.editComment(wp.blog_id, wp.username, wp.password, 26662,
-    #                                {})
-    # return wp.proxy.wp.getComment(wp.blog_id, wp.username, wp.password, 99999)
-    # return wp.proxy.wp.deletePage(wp.blog_id, wp.username, wp.password, 999)
-
-    # self.response.out.write(wp.delete_comment(26674))
-    # self.response.out.write(wp.new_comment(670, 'name', 'http://name/', 'foo/nbar'))
-    # self.response.out.write(wp.get_comments(670))
-    # self.response.out.write(get_post_id('http://localhost/lists'))
-    pass
-    
-
 application = webapp.WSGIApplication([
     ('/wordpress/add', AddWordPressSite),
     ('/wordpress/delete', DeleteWordPressSite),
-    ('/wordpress/go', Go),
     ], debug=appengine_config.DEBUG)
 
 def main():

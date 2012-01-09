@@ -37,9 +37,6 @@ STATE: refactor
 
 
 TODO:
-source and dest type icons
-error handling (e.g. bad form input)
-remove drop shadow from twitter logo
 clear toast messages
 handle case where not a page or post (e.g. http://snarfed.org/911_truth_and_cookies.jpg)
 Traceback (most recent call last):
