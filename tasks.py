@@ -82,9 +82,11 @@ class Poll(TaskHandler):
 
     logging.debug('Polling source %s' % source.key().name())
 
-    # itertools.chain flattens.
-    dests = itertools.chain(*[list(db.GqlQuery('SELECT * FROM %s' % cls))
-                              for cls in DESTINATIONS])
+    # itertools.chain flattens. also, the list() is important, because
+    # itertools.chain returns a generator, and we need to be able to iterate
+    # over it multiple times. TODO: unit test this
+    dests = list(itertools.chain(*[list(db.GqlQuery('SELECT * FROM %s' % cls))
+                                   for cls in DESTINATIONS]))
     posts_and_dests = []
 
     for post, url in source.get_posts():

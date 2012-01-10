@@ -18,4 +18,4 @@ if not os.environ.get('SERVER_SOFTWARE', '').startswith('Development'):
   MOCKFACEBOOK = False
 else:
   DEBUG = True
-  MOCKFACEBOOK = True
+  MOCKFACEBOOK = False
