@@ -35,14 +35,13 @@ class TwitterSearchTest(testutil.ModelsTest):
     # based on:
     # http://search.twitter.com/search.json?q=snarfed.org+filter:links&include_entities=true
     self.tweets = [
-      # two embedded urls, no replies
+      # two embedded urls, only one with expanded_url, no replies
       {'created_at': 'Wed, 04 Jan 2012 20:10:28 +0000',
        'entities': {'urls': [{'display_url': 'bar.org/qwert',
                               'expanded_url': 'http://bar.org/qwert',
                               'url': 'http://t.co/ZhhEkuxo'},
                              {'display_url': 'dest1/asdf',
-                              'expanded_url': 'http://dest1/asdf',
-                              'url': 'http://t.co/ghhEkuxo'},
+                              'url': 'http://dest1/asdf'},
                              ]},
        'from_user': 'user1',
        'from_user_name': 'user 1 name',

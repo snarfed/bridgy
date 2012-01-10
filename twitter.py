@@ -72,18 +72,20 @@ class TwitterSearch(models.Source):
       # extract destination post url from tweet entities
       # https://dev.twitter.com/docs/tweet-entities
       dest_post_url = None
-      post_tweet_url = self.tweet_url(result['from_user'], result['id'])
+      tweet_url = self.tweet_url(result['from_user'], result['id'])
       for url in result['entities'].get('urls', []):
-        if url['expanded_url'].startswith(self.url):
-          dest_post_url = url['expanded_url']
-          logging.debug('Found post %s in tweet %s', dest_post_url, post_tweet_url)
+        # expanded_url isn't always provided
+        expanded_url = url.get('expanded_url', url['url'])
+        if expanded_url.startswith(self.url):
+          dest_post_url = expanded_url
+          logging.debug('Found post %s in tweet %s', dest_post_url, tweet_url)
 
       if dest_post_url:
         result['bridgy_link'] = dest_post_url
         tweets_and_urls.append((result, dest_post_url))
       else:
         logging.info("Tweet %s should have %s link but doesn't. Maybe shortened?",
-                     post_tweet_url, self.url)
+                     tweet_url, self.url)
 
     return tweets_and_urls
 
