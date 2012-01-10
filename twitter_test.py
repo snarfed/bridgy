@@ -7,12 +7,14 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 import datetime
 import json
 import mox
-import testutil
+import urllib
 
+import models
+import testutil
 import twitter
 from twitter import TwitterReply, TwitterSearch
-import models
-import tasks_test
+
+from google.appengine.ext import webapp
 
 
 class TwitterSearchTest(testutil.ModelsTest):
@@ -112,34 +114,16 @@ class TwitterSearchTest(testutil.ModelsTest):
         content='<a href="http://twitter.com/user3">@user3</a> i hereby <a href="http://twitter.com/search?q=%23reply">#reply</a>',
         username='user5',
         )]
-    # self.sources[0].set_comments(self.replies)
-
-    self.task_name = str(self.search.key()) + '_1970-01-01-00-00-00'
-
-  def _test_new(self):
-    got = TwitterSearch.new({'url': 'http://dest1/'}, self.handler)
-    self.assert_entities_equal(self.search, got, ignore=['created'])
-    self.assert_entities_equal([self.search], TwitterSearch.all(), ignore=['created'])
-
-    tasks = self.taskqueue_stub.GetTasks('poll')
-    self.assertEqual(1, len(tasks))
-    self.assertEqual(self.task_name, tasks[0]['name'])
-    self.assertEqual('/_ah/queue/poll', tasks[0]['url'])
 
   def test_new(self):
-    self._test_new()
-    self.assertEqual(self.handler.messages, ['Added Twitter search: dest1'])
+    self.environ['QUERY_STRING'] = urllib.urlencode(
+      {'url': 'http://dest1/'})
+    self.handler.request = webapp.Request(self.environ)
 
-  def test_new_already_exists(self):
-    self.search.save()
-    self._test_new()
-    self.assertEqual(self.handler.messages,
-                     ['Updated existing Twitter search: dest1'])
-
-  def test_new_user_already_owns(self):
-    self.user.sources = [self.search.key()]
-    self.user.save()
-    self._test_new()
+    self.assert_entities_equal(
+      self.search,
+      TwitterSearch.new(self.handler),
+      ignore=['created'])
 
   def test_poll(self):
     self.expect_urlfetch('.*/search\.json\?q=dest1\+filter%3Alinks&.*',

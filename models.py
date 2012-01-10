@@ -93,6 +93,10 @@ class Site(util.KeyNameModel):
     """
     return self.TYPE_NAME
 
+  def label(self):
+    """Human-readable label for this site."""
+    return '%s: %s' % (self.type_display_name(), self.display_name())
+
 
 class Source(Site):
   """A web site to read comments from, e.g. a Facebook profile.
@@ -102,6 +106,13 @@ class Source(Site):
 
   last_polled = db.DateTimeProperty(default=util.EPOCH)
 
+  def new(self, **kwargs):
+    """Factory method. Creates and returns a new instance for the current user.
+
+    To be implemented by subclasses.
+    """
+    raise NotImplementedError()
+
   def poll(self):
     """Returns a list of comments from this source.
 
@@ -109,6 +120,28 @@ class Source(Site):
     entities in increasing timestamp order.
     """
     raise NotImplementedError()
+
+  @classmethod
+  def create_new(cls, handler, **kwargs):
+    """Creates and saves a new Source and adds a poll task for it.
+
+    Args:
+      handler: the current webapp.RequestHandler
+      **kwargs: passed to new()
+    """
+    source = cls.new(handler, **kwargs)
+    existing = db.get(source.key())
+    if existing:
+      logging.warning('Overwriting %s %s! Old version:\n%s',
+                      existing.label(), source.key(), source.to_xml())
+      handler.messages.append('Updated existing %s' % existing.label())
+    else:
+      handler.messages.append('Added %s' % source.label())
+
+    # TODO: ugh, *all* of this should be transactional
+    source.save()
+    taskqueue.add(name=util.make_poll_task_name(source), queue_name='poll')
+    return source
 
 
 class Destination(Site):

@@ -69,6 +69,11 @@ class TestbedTest(mox.MoxTestBase):
     self.testbed.init_urlfetch_stub()
     self.testbed.init_user_stub()
 
+    # unofficial API, whee! this is so we can call
+    # TaskQueueServiceStub.GetTasks() in tests. see
+    # google/appengine/api/taskqueue/taskqueue_stub.py
+    self.taskqueue_stub = apiproxy_stub_map.apiproxy.GetStub('taskqueue')
+
   def expect_urlfetch(self, expected_url, response):
     """Stubs out urlfetch.fetch() and sets up an expected call.
 
@@ -151,6 +156,11 @@ class HandlerTest(TestbedTest):
     wsgiref.util.setup_testing_defaults(self.environ)
     self.environ['HTTP_HOST'] = 'HOST'
     
+    self.gae_user_id = '123'
+    self.setup_testbed(user_id=self.gae_user_id,
+                       user_email='foo@bar.com',
+                       federated_identity='')
+
     self.request = webapp.Request(self.environ)
     self.response = webapp.Response()
     self.handler = util.Handler()
@@ -213,13 +223,14 @@ class FakeBase(db.Model):
   """Not thread safe.
   """
 
-  key_name_counter = 0
+  key_name_counter = 1
 
   @classmethod
-  def new(cls, **props):
-    FakeBase.key_name_counter += 1
-    inst = cls(key_name=str(FakeBase.key_name_counter), **props)
-    inst.save()
+  def new(cls, handler, **props):
+    if 'url' not in props:
+      props['url'] = 'http://fake/url'
+    inst = cls(key_name=str(cls.key_name_counter), **props)
+    cls.key_name_counter += 1
     return inst
 
   def type_display_name(self):
@@ -266,15 +277,16 @@ class ModelsTest(HandlerTest):
 
   def setUp(self):
     super(ModelsTest, self).setUp()
-    self.gae_user_id = '123'
-    self.setup_testbed(user_id=self.gae_user_id,
-                       user_email='foo@bar.com',
-                       federated_identity='')
 
-    self.sources = [FakeSource.new(), FakeSource.new()]
-    self.dests = [FakeDestination.new(url='http://dest0/'),
-                  FakeDestination.new(url='http://dest1/'),
+    self.sources = [FakeSource.new(None), FakeSource.new(None)]
+    self.dests = [FakeDestination.new(None, url='http://dest0/'),
+                  FakeDestination.new(None, url='http://dest1/'),
                   ]
+    for dest in self.dests:
+      dest.save()
+      import logging
+      logging.debug('Saved %s' % dest.key())
+
     now = datetime.datetime.now()
 
     properties = {
@@ -300,8 +312,3 @@ class ModelsTest(HandlerTest):
       ]
 
     self.sources[0].set_comments(self.comments)
-
-    # unofficial APIs, whee! this is so we can call
-    # TaskQueueServiceStub.GetTasks() in tests. see
-    # google/appengine/api/taskqueue/taskqueue_stub.py
-    self.taskqueue_stub = apiproxy_stub_map.apiproxy.GetStub('taskqueue')

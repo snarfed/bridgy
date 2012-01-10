@@ -44,14 +44,16 @@ with open('oauth_client_secret') as f:
     scope='https://www.googleapis.com/auth/plus.me',
     )
 
-http = httplib2.Http()
-service = build("plus", "v1", http)
-
 
 class GooglePlusService(db.Model):
-  """A Google+ API service wrapper. Useful for mocking."""
+  """A Google+ API service wrapper. Useful for mocking.
+
+  Not thread safe.
+  """
+
   http = httplib2.Http()
-  service = build("plus", "v1", http)
+  # initialized in call()
+  service = None
 
   @classmethod
   def call_with_creds(cls, gae_user_id, endpoint, **kwargs):
@@ -67,7 +69,7 @@ class GooglePlusService(db.Model):
     credentials = StorageByKeyName(CredentialsModel, gae_user_id,
                                    'credentials').get()
     assert credentials, 'Credentials not found for user id %s' % gae_user_id
-    return cls.call(credentials.authorize(http), endpoint, **kwargs)
+    return cls.call(credentials.authorize(cls.http), endpoint, **kwargs)
 
   @classmethod
   def call(cls, http, endpoint, **kwargs):
@@ -79,6 +81,9 @@ class GooglePlusService(db.Model):
 
     Returns: dict
     """
+    if not cls.service:
+      cls.service = build('plus', 'v1', cls.http)
+
     resource, method = endpoint.split('.')
     resource = resource.lower()
     fn = getattr(getattr(cls.service, resource)(), method)
@@ -94,7 +99,8 @@ class GooglePlusPage(models.Source):
   TYPE_NAME = 'Google+'
 
   gae_user_id = db.StringProperty(required=True)
-  name = db.StringProperty()  # full human-readable name
+  # full human-readable name
+  name = db.StringProperty()
   picture = db.LinkProperty()
   type = db.StringProperty(choices=('user', 'page'))
 
@@ -102,12 +108,12 @@ class GooglePlusPage(models.Source):
     return self.name
 
   @staticmethod
-  def new(http, handler):
+  def new(handler, http=None):
     """Creates and saves a GooglePlusPage for the logged in user.
 
     Args:
-      http: httplib2.Http instance
       handler: the current webapp.RequestHandler
+      http: httplib2.Http instance
 
     Returns: GooglePlusPage
     """
@@ -119,7 +125,7 @@ class GooglePlusPage(models.Source):
       person['objectType'] = 'user'
 
     existing = GooglePlusPage.get_by_key_name(id)
-    page = GooglePlusPage(key_name=id,
+    return GooglePlusPage(key_name=id,
                           gae_user_id=users.get_current_user().user_id(),
                           url=person['url'],
                           owner=models.User.get_current_user(),
@@ -127,20 +133,6 @@ class GooglePlusPage(models.Source):
                           picture = person['image']['url'],
                           type=person['objectType'],
                           )
-
-    if existing:
-      logging.warning('Overwriting GooglePlusPage %s! Old version:\n%s' %
-                      (id, page.to_xml()))
-      handler.messages.append('Updated existing %s page: %s' %
-                              (existing.type_display_name(), existing.display_name()))
-    else:
-      handler.messages.append('Added %s page: %s' %
-                              (page.type_display_name(), page.display_name()))
-
-    # TODO: ugh, *all* of this should be transactional
-    page.save()
-    taskqueue.add(name=tasks.Poll.make_task_name(page), queue_name='poll')
-    return page
 
   def poll(self):
     # TODO: make generic and expand beyond single hard coded destination.
@@ -218,7 +210,7 @@ class AddGooglePlusPage(util.Handler):
 
   @plus_api.oauth_required
   def post(self):
-    GooglePlusPage.new(plus_api.http(), self)
+    GooglePlusPage.create_new(self, http=plus_api.http())
     self.redirect('/')
 
 

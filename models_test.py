@@ -6,6 +6,8 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 from models import Comment, User
 import testutil
+from testutil import FakeSource, FakeDestination
+import util
 
 from google.appengine.api import users
 
@@ -70,3 +72,33 @@ class UserTest(testutil.ModelsTest):
     self.assertEqual(self.gae_user_id, user.key().name())
     self.assertEqual([], self.handler.messages)
     self.assert_entities_equal([User(key_name=self.gae_user_id)], User.all())
+
+
+class SourceTest(testutil.HandlerTest):
+
+  # def setUp(self):
+  #   super(SourceTest, self).setUp()
+  #   self.source = FakeSource(key_name='1')
+
+  def _test_create_new(self):
+    FakeSource.create_new(self.handler)
+    self.assertEqual(1, FakeSource.all().count())
+
+    tasks = self.taskqueue_stub.GetTasks('poll')
+    self.assertEqual(1, len(tasks))
+    source = FakeSource.all().get()
+    self.assertEqual(util.make_poll_task_name(source), tasks[0]['name'])
+    self.assertEqual('/_ah/queue/poll', tasks[0]['url'])
+
+  def test_create_new(self):
+    self.assertEqual(0, FakeSource.all().count())
+    self._test_create_new()
+    self.assertEqual(['Added FakeSource: fake/url'],
+                     self.handler.messages)
+
+  def test_create_new_already_exists(self):
+    FakeSource(key_name=str(FakeSource.key_name_counter)).save()
+    self._test_create_new()
+    self.assertEqual(['Updated existing FakeSource: fake/url'],
+                     self.handler.messages)
+

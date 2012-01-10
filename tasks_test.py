@@ -63,11 +63,6 @@ class PollTest(TaskQueueTest):
     """Asserts that all of self.comments are saved."""
     self.assert_entities_equal(self.comments, models.Comment.all())
 
-  def test_make_task_name(self):
-    # microseconds should be dropped
-    self.sources[0].last_polled = datetime.datetime.utcfromtimestamp(0.1)
-    self.assertEqual(self.task_name, Poll.make_task_name(self.sources[0]))
-
   def test_poll(self):
     """A normal poll task."""
     self.assertEqual([], list(models.Comment.all()))

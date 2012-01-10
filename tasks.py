@@ -65,7 +65,6 @@ class Poll(TaskHandler):
   Inserts a propagate task for each comment that hasn't been seen before.
   """
 
-  LAST_POLLED_FORMAT = '%Y-%m-%d-%H-%M-%S'
   TASK_NAME_RE = re.compile('^(.+)_(.+)$')
   TASK_COUNTDOWN = datetime.timedelta(hours=1)
 
@@ -74,7 +73,7 @@ class Poll(TaskHandler):
     key = match.group(1)
     source = db.get(key)
 
-    if match.group(2) != source.last_polled.strftime(self.LAST_POLLED_FORMAT):
+    if match.group(2) != source.last_polled.strftime(util.POLL_TASK_DATETIME_FORMAT):
       logging.warning('duplicate poll task! deferring to the other task.')
       return
 
@@ -86,18 +85,6 @@ class Poll(TaskHandler):
     taskqueue.add(name=Poll.make_task_name(source), queue_name='poll',
                   countdown=self.TASK_COUNTDOWN.seconds)
     source.save()
-
-  @classmethod
-  def make_task_name(cls, source):
-    """Returns the poll task name for the given source.
-
-    Args:
-      source: models.Source entity
-
-    Returns: string
-    """
-    return '%s_%s' % (str(source.key()),
-                      source.last_polled.strftime(cls.LAST_POLLED_FORMAT))
 
 
 class Propagate(TaskHandler):

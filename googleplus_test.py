@@ -13,9 +13,6 @@ from googleplus import GooglePlusComment, GooglePlusPage, GooglePlusService
 import models
 import tasks_test
 
-import httplib2
-from oauth2client.appengine import OAuth2Decorator
-
 
 class GooglePlusPageTest(testutil.ModelsTest):
 
@@ -112,37 +109,15 @@ class GooglePlusPageTest(testutil.ModelsTest):
               }]}),
       ]
 
-    self.task_name = str(self.page.key()) + '_1970-01-01-00-00-00'
-
-  def _test_new(self):
-    http = httplib2.Http()
-    GooglePlusService.call(http, 'people.get', userId='me')\
+  def test_new(self):
+    GooglePlusService.call('http placeholder', 'people.get', userId='me')\
         .AndReturn(self.people_get_response)
     self.mox.ReplayAll()
 
-    got = GooglePlusPage.new(http, self.handler)
-    self.assert_entities_equal(self.page, got, ignore=['created'])
-    self.assert_entities_equal([self.page], GooglePlusPage.all(), ignore=['created'])
-
-    tasks = self.taskqueue_stub.GetTasks('poll')
-    self.assertEqual(1, len(tasks))
-    self.assertEqual(self.task_name, tasks[0]['name'])
-    self.assertEqual('/_ah/queue/poll', tasks[0]['url'])
-
-  def test_new(self):
-    self._test_new()
-    self.assertEqual(self.handler.messages, ['Added Google+ page: my full name'])
-
-  def test_new_already_exists(self):
-    self.page.save()
-    self._test_new()
-    self.assertEqual(self.handler.messages,
-                     ['Updated existing Google+ page: my full name'])
-
-  def test_new_user_already_owns(self):
-    self.user.sources = [self.page.key()]
-    self.user.save()
-    self._test_new()
+    self.assert_entities_equal(
+      self.page,
+      GooglePlusPage.new(self.handler, http='http placeholder'),
+      ignore=['created'])
 
   def test_poll(self):
     GooglePlusService.call_with_creds(

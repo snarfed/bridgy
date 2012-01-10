@@ -39,34 +39,18 @@ class TwitterSearch(models.Source):
       self.picture = util.favicon_for_url(kwargs['url'])
 
   @staticmethod
-  def new(properties, handler):
+  def new(handler):
     """Creates and saves a TwitterSearch.
 
     Args:
-      properties: dict
       handler: the current webapp.RequestHandler
 
     Returns: TwitterSearch
     """
-    url = properties['url']
-    existing = TwitterSearch.get_by_key_name(url)
-    search = TwitterSearch(key_name=url,
-                           url=url,
-                           owner=models.User.get_current_user(),
-                           )
-    if existing:
-      logging.warning('Overwriting TwitterSearch %s! Old version:\n%s' %
-                      (id, search.to_xml()))
-      handler.messages.append('Updated existing %s search: %s' %
-                              (existing.type_display_name(), existing.display_name()))
-    else:
-      handler.messages.append('Added %s search: %s' %
-                              (search.type_display_name(), search.display_name()))
-
-    # TODO: ugh, *all* of this should be transactional
-    search.save()
-    taskqueue.add(name=tasks.Poll.make_task_name(search), queue_name='poll')
-    return search
+    url = handler.request.params['url']
+    return TwitterSearch(key_name=url,
+                         url=url,
+                         owner=models.User.get_current_user())
 
   def poll(self):
     # TODO: make generic and expand beyond single hard coded destination.
@@ -198,7 +182,7 @@ class TwitterReply(models.Comment):
 
 class AddTwitterSearch(util.Handler):
   def post(self):
-    search = TwitterSearch.new(self.request.params, self)
+    TwitterSearch.new(self)
     self.redirect('/')
 
 

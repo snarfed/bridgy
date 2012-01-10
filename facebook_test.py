@@ -15,7 +15,8 @@ import urlparse
 import facebook
 from facebook import FacebookApp, FacebookComment, FacebookPage
 import models
-import tasks_test
+
+from google.appengine.ext import webapp
 
 
 class FacebookTestBase(testutil.ModelsTest):
@@ -144,35 +145,16 @@ class FacebookPageTest(FacebookTestBase):
         'username': 'my_username',
         }]
 
-    self.task_name = str(self.page.key()) + '_1970-01-01-00-00-00'
-
-  def _test_new(self):
+  def test_new(self):
     self.expect_fql('FROM profile WHERE id = me()', self.new_fql_results)
     self.mox.ReplayAll()
 
-    got = FacebookPage.new('my_access_token', self.handler)
-    self.assert_entities_equal(self.page, got, ignore=['created'])
-    self.assert_entities_equal([self.page], FacebookPage.all(), ignore=['created'])
-
-    tasks = self.taskqueue_stub.GetTasks('poll')
-    self.assertEqual(1, len(tasks))
-    self.assertEqual(self.task_name, tasks[0]['name'])
-    self.assertEqual('/_ah/queue/poll', tasks[0]['url'])
-
-  def test_new(self):
-    self._test_new()
-    self.assertEqual(self.handler.messages, ['Added Facebook page: my full name'])
-
-  def test_new_already_exists(self):
-    self.page.save()
-    self._test_new()
-    self.assertEqual(self.handler.messages,
-                     ['Updated existing Facebook page: my full name'])
-
-  def test_new_user_already_owns(self):
-    self.user.sources = [self.page.key()]
-    self.user.save()
-    self._test_new()
+    self.environ['QUERY_STRING'] = urllib.urlencode(
+      {'access_token': 'my_access_token'})
+    self.handler.request = webapp.Request(self.environ)
+    self.assert_entities_equal(self.page,
+                               FacebookPage.new(self.handler),
+                               ignore=['created'])
 
   def test_poll(self):
     # note that json requires double quotes. :/

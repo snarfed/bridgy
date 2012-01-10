@@ -142,42 +142,22 @@ class FacebookPage(models.Source):
     return FacebookApp.get().fql(query, self.access_token)
 
   @staticmethod
-  def new(access_token, handler):
+  def new(handler):
     """Creates and saves a FacebookPage for the logged in user.
 
-    Args:
-      access_token: string
-      handler: the current webapp.RequestHandler
-
     Returns: FacebookPage
-
-    # TODO: unify with WordPressSite, etc
     """
+    access_token = handler.request.params['access_token']
     results = FacebookApp.get().fql(
       'SELECT id, name, url, pic_small, type, username FROM profile WHERE id = me()',
       access_token)
     result = results[0]
     id = str(result['id'])
-    existing = FacebookPage.get_by_key_name(id)
-    page = FacebookPage(key_name=id,
+    return FacebookPage(key_name=id,
                         owner=models.User.get_current_user(),
                         access_token=access_token,
                         picture=result['pic_small'],
                         **result)
-
-    if existing:
-      logging.warning('Overwriting FacebookPage %s! Old version:\n%s' %
-                      (id, page.to_xml()))
-      handler.messages.append('Updated existing %s page: %s' %
-                              (existing.type_display_name(), existing.display_name()))
-    else:
-      handler.messages.append('Added %s page: %s' %
-                              (page.type_display_name(), page.display_name()))
-
-    # TODO: ugh, *all* of this should be transactional
-    page.save()
-    taskqueue.add(name=tasks.Poll.make_task_name(page), queue_name='poll')
-    return page
 
   def poll(self):
     # TODO: make generic and expand beyond single hard coded destination.
@@ -213,6 +193,7 @@ class FacebookPage(models.Source):
       # query = db.GqlQuery(
       #   'SELECT * FROM WordPressSite WHERE url = :1 AND url <= :2',
       #   link, link + u'\ufffd')
+      logging.debug('dests %s' % [d.url for d in dests])
       dest = [d for d in dests if link.startswith(d.url)]
       assert len(dest) <= 1
 
@@ -263,7 +244,10 @@ class FacebookComment(models.Comment):
 
 
 class FacebookApp(db.Model):
-  """Stores the bridgy app credentials that we use with the API."""
+  """Stores the bridgy app credentials that we use with the API.
+
+  Not thread safe.
+  """
   app_id = db.StringProperty(required=True)
   app_secret = db.StringProperty(required=True)
 
@@ -380,8 +364,7 @@ class GotAuthCode(util.Handler):
 
 class GotAccessToken(util.Handler):
   def get(self):
-    access_token = self.request.params['access_token']
-    page = FacebookPage.new(access_token, self)
+    FacebookPage.create_new(self)
     self.redirect('/')
 
 

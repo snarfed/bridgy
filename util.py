@@ -10,6 +10,7 @@ from google.appengine.ext import db
 from google.appengine.ext import webapp
 
 EPOCH = datetime.datetime.utcfromtimestamp(0)
+POLL_TASK_DATETIME_FORMAT = '%Y-%m-%d-%H-%M-%S'
 
 
 def reduce_url(url):
@@ -26,6 +27,18 @@ def reduce_url(url):
 
 def favicon_for_url(url):
   return 'http://%s/favicon.ico' % urlparse.urlparse(url).netloc
+
+
+def make_poll_task_name(source):
+  """Returns the poll task name for the given source.
+
+  Args:
+    source: models.Source entity
+
+  Returns: string
+  """
+  return '%s_%s' % (str(source.key()),
+                    source.last_polled.strftime(POLL_TASK_DATETIME_FORMAT))
 
 
 class KeyNameModel(db.Model):
