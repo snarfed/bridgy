@@ -65,18 +65,17 @@ class WordPressSite(models.Destination):
     self.blog_id = int(self.blog_id)
 
   @staticmethod
-  def new(properties, handler):
+  def new(handler):
     """Creates and saves a WordPressSite for the logged in user.
 
     Args:
-      properties: dict
       handler: the current webapp.RequestHandler
 
     Returns: WordPressSite
 
     Raises: BadValueError if url or xmlrpc_url are bad
     """
-    properties = dict(properties)
+    properties = dict(handler.request.params)
     for prop in 'url', 'xmlrpc_url':
       db.LinkProperty().validate(properties.get(prop))
 
@@ -88,24 +87,9 @@ class WordPressSite(models.Destination):
     properties['blog_id'] = blog_id
 
     key_name = '%s_%d' % (properties['xmlrpc_url'], blog_id)
-    existing = WordPressSite.get_by_key_name(key_name)
-    site = WordPressSite(key_name=key_name,
+    return WordPressSite(key_name=key_name,
                          owner=models.User.get_current_user(),
                          **properties)
-
-    if existing:
-      logging.warning('Overwriting WordPressSite %s! Old version:\n%s' %
-                      (key_name, site.to_xml()))
-      handler.messages.append('Updated existing %s site: %s' %
-                              (existing.type_display_name(), existing.display_name()))
-    else:
-      handler.messages.append('Added %s site: %s' %
-                              (site.type_display_name(), site.display_name()))
-
-    # TODO: ugh, *all* of this should be transactional
-    site.save()
-
-    return site
 
   def add_comment(self, comment):
     """Posts a comment to this site.
@@ -231,11 +215,10 @@ class WordPress(object):
 class AddWordPressSite(util.Handler):
   def post(self):
     try:
-      site = WordPressSite.new(self.request.params, self)
-      self.redirect('/?msg=Added %s destination: %s' % (site.type_display_name(),
-                                                        site.display_name()))
+      WordPressSite.create_new(self)
     except db.BadValueError, e:
-      self.redirect('/?msg=%s' % e)
+      self.messages.append(str(e))
+    self.redirect('/')
 
 class DeleteWordPressSite(util.Handler):
   def post(self):

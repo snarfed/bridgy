@@ -4,9 +4,9 @@
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
-from models import Comment, User
+from models import Comment, Site, User
 import testutil
-from testutil import FakeSource, FakeDestination
+from testutil import FakeSite, FakeSource, FakeDestination
 import util
 
 from google.appengine.api import users
@@ -76,6 +76,27 @@ class UserTest(testutil.ModelsTest):
     self.assert_entities_equal([User(key_name=self.gae_user_id)], User.all())
 
 
+class SiteTest(testutil.HandlerTest):
+
+  def _test_create_new(self):
+    FakeSite.create_new(self.handler)
+    self.assertEqual(1, FakeSite.all().count())
+    self.assertEqual(0, len(self.taskqueue_stub.GetTasks('poll')))
+
+  def test_create_new(self):
+    self.assertEqual(0, FakeSite.all().count())
+    self._test_create_new()
+    self.assertEqual(['Added FakeSite: fake/url'],
+                     self.handler.messages)
+
+  def test_create_new_already_exists(self):
+    FakeSite.new(None).save()
+    FakeSite.key_name_counter -= 1
+    self._test_create_new()
+    self.assertEqual(['Updated existing FakeSite: fake/url'],
+                     self.handler.messages)
+
+
 class SourceTest(testutil.HandlerTest):
 
   def _test_create_new(self):
@@ -91,13 +112,9 @@ class SourceTest(testutil.HandlerTest):
   def test_create_new(self):
     self.assertEqual(0, FakeSource.all().count())
     self._test_create_new()
-    self.assertEqual(['Added FakeSource: fake/url'],
-                     self.handler.messages)
 
   def test_create_new_already_exists(self):
     FakeSource.new(None).save()
     FakeSource.key_name_counter -= 1
     self._test_create_new()
-    self.assertEqual(['Updated existing FakeSource: fake/url'],
-                     self.handler.messages)
 

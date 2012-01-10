@@ -109,13 +109,11 @@ class GooglePlusPage(models.Source):
 
   @staticmethod
   def new(handler, http=None):
-    """Creates and saves a GooglePlusPage for the logged in user.
+    """Creates and returns a GooglePlusPage for the logged in user.
 
     Args:
       handler: the current webapp.RequestHandler
       http: httplib2.Http instance
-
-    Returns: GooglePlusPage
     """
     # Google+ Person resource
     # https://developers.google.com/+/api/latest/people#resource
@@ -124,7 +122,6 @@ class GooglePlusPage(models.Source):
     if person.get('objectType', 'person') == 'person':
       person['objectType'] = 'user'
 
-    existing = GooglePlusPage.get_by_key_name(id)
     return GooglePlusPage(key_name=id,
                           gae_user_id=users.get_current_user().user_id(),
                           url=person['url'],

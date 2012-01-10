@@ -237,6 +237,10 @@ class FakeBase(db.Model):
     return self.__class__.__name__
 
 
+class FakeSite(FakeBase, Destination):
+  pass
+
+
 class FakeDestination(FakeBase, Destination):
   """  Attributes:
     comments: dict mapping FakeDestination string key to list of Comment entities

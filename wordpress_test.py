@@ -8,12 +8,15 @@ import datetime
 import logging
 import mox
 import testutil
+import urllib
 import xmlrpclib
 
-import wordpress
-from wordpress import WordPress, WordPressSite
 import models
 import models_test
+import wordpress
+from wordpress import WordPress, WordPressSite
+
+from google.appengine.ext import webapp
 
 
 class WordPressBaseTest(mox.MoxTestBase):
@@ -64,7 +67,7 @@ class WordPressSiteTest(WordPressBaseTest, testutil.ModelsTest):
     self.site = WordPressSite(key_name='http://my/xmlrpc_999', **self.props)
     self.user = models.User.get_or_insert_current_user(self.handler)
 
-  def test_new(self):
+  def test_add_handler(self):
     post_params = dict(self.props)
     post_params['xmlrpc_url'] = 'http://my/xmlrpc'
     self.assertEqual(0, WordPressSite.all().count())
@@ -85,7 +88,7 @@ class WordPressSiteTest(WordPressBaseTest, testutil.ModelsTest):
       self.assert_entities_equal(expected_sites, WordPressSite.all(),
                                  ignore=['created'])
 
-  def test_new_error(self):
+  def test_add_handler_error(self):
     self.assertEqual(0, WordPressSite.all().count())
     self.props['xmlrpc_url'] = 'http://my/xmlrpc'
 
@@ -98,18 +101,17 @@ class WordPressSiteTest(WordPressBaseTest, testutil.ModelsTest):
       self.assertEqual('http://HOST/?msg=Invalid+URL%3A+not+a+link', location)
       self.assertEqual(0, WordPressSite.all().count())
 
-  def test_delete(self):
-    self.assertEqual(0, WordPressSite.all().count())
-
+  def test_delete_handler(self):
     # add a site manually
-    params = dict(self.props)
-    params['xmlrpc_url'] = 'http://my/xmlrpc'
-    site = WordPressSite.new(params, self.handler)
-    self.assertEqual(1, WordPressSite.all().count())
+    post_params = dict(self.props)
+    post_params['xmlrpc_url'] = 'http://my/xmlrpc'
+    resp = self.post(wordpress.application, '/wordpress/add', 302,
+                     post_params=post_params)
 
     # call the delete handler
+    key_name = WordPressSite.all().get().key().name()
     resp = self.post(wordpress.application, '/wordpress/delete', 302,
-                     post_params={'name': site.key().name()})
+                     post_params={'name': key_name})
     location = resp.headers['Location']
     self.assertTrue(location.startswith('http://HOST/?'), location)
 

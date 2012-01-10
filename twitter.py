@@ -1,4 +1,8 @@
 """Twitter source code and datastore model classes.
+
+Python code to pretty-print JSON responses from Twitter Search API:
+pprint.pprint(json.loads(urllib.urlopen(
+  'http://search.twitter.com/search.json?q=snarfed.org+filter%3Alinks&include_entities=true&result_type=recent&rpp=100').read()))
 """
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
@@ -40,12 +44,10 @@ class TwitterSearch(models.Source):
 
   @staticmethod
   def new(handler):
-    """Creates and saves a TwitterSearch.
+    """Creates and returns a TwitterSearch based on POST args.
 
     Args:
       handler: the current webapp.RequestHandler
-
-    Returns: TwitterSearch
     """
     url = handler.request.params['url']
     return TwitterSearch(key_name=url,

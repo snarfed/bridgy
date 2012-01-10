@@ -148,9 +148,10 @@ class FacebookPage(models.Source):
 
   @staticmethod
   def new(handler):
-    """Creates and saves a FacebookPage for the logged in user.
+    """Creates and returns a FacebookPage for the logged in user.
 
-    Returns: FacebookPage
+    Args:
+      handler: the current webapp.RequestHandler
     """
     access_token = handler.request.params['access_token']
     results = FacebookApp.get().fql(

@@ -98,6 +98,27 @@ class Site(util.KeyNameModel):
     """Human-readable label for this site."""
     return '%s: %s' % (self.type_display_name(), self.display_name())
 
+  @classmethod
+  def create_new(cls, handler, **kwargs):
+    """Creates and saves a new Site.
+
+    Args:
+      handler: the current webapp.RequestHandler
+      **kwargs: passed to new()
+    """
+    new = cls.new(handler, **kwargs)
+    existing = db.get(new.key())
+    if existing:
+      logging.warning('Overwriting %s %s! Old version:\n%s',
+                      existing.label(), new.key(), new.to_xml())
+      handler.messages.append('Updated existing %s' % existing.label())
+    else:
+      handler.messages.append('Added %s' % new.label())
+
+    # TODO: ugh, *all* of this should be transactional
+    new.save()
+    return new
+
 
 class Source(Site):
   """A web site to read comments from, e.g. a Facebook profile.
@@ -116,7 +137,7 @@ class Source(Site):
 
   def get_posts(self):
     """Returns a list of the most recent posts from this source.
-
+ 
     To be implemented by subclasses. The returned post objects will be passed
     back in get_comments().
 
@@ -144,19 +165,9 @@ class Source(Site):
       handler: the current webapp.RequestHandler
       **kwargs: passed to new()
     """
-    source = cls.new(handler, **kwargs)
-    existing = db.get(source.key())
-    if existing:
-      logging.warning('Overwriting %s %s! Old version:\n%s',
-                      existing.label(), source.key(), source.to_xml())
-      handler.messages.append('Updated existing %s' % existing.label())
-    else:
-      handler.messages.append('Added %s' % source.label())
-
-    # TODO: ugh, *all* of this should be transactional
-    source.save()
-    taskqueue.add(name=util.make_poll_task_name(source), queue_name='poll')
-    return source
+    new = super(Source, cls).create_new(handler, **kwargs)
+    taskqueue.add(name=util.make_poll_task_name(new), queue_name='poll')
+    return new
 
 
 class Destination(Site):
