@@ -15,6 +15,8 @@ from google.appengine.api import users
 class CommentTest(testutil.ModelsTest):
 
   def test_get_or_save(self):
+    self.sources[0].save()
+
     comment = self.comments[0]
     self.assertEqual(0, Comment.all().count())
     self.assertEqual(0, len(self.taskqueue_stub.GetTasks('propagate')))
@@ -76,10 +78,6 @@ class UserTest(testutil.ModelsTest):
 
 class SourceTest(testutil.HandlerTest):
 
-  # def setUp(self):
-  #   super(SourceTest, self).setUp()
-  #   self.source = FakeSource(key_name='1')
-
   def _test_create_new(self):
     FakeSource.create_new(self.handler)
     self.assertEqual(1, FakeSource.all().count())
@@ -97,7 +95,8 @@ class SourceTest(testutil.HandlerTest):
                      self.handler.messages)
 
   def test_create_new_already_exists(self):
-    FakeSource(key_name=str(FakeSource.key_name_counter)).save()
+    FakeSource.new(None).save()
+    FakeSource.key_name_counter -= 1
     self._test_create_new()
     self.assertEqual(['Updated existing FakeSource: fake/url'],
                      self.handler.messages)

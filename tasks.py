@@ -4,8 +4,6 @@ TODO: cron job to find sources without seed poll tasks.
 TODO: think about how to determine stopping point. can all sources return
 comments in strict descending timestamp order? can we require/generate
 monotonically increasing comment ids for all sources? 
-TODO: default to promiscuous, ie have all sources feed all destinations, even if
-the same user doesn't own both. include opt outs on both tasks.
 TODO: check HRD consistency guarantees and change as needed
 TODO BUG: Poll and propagate task names need to be unique (even for the same
 e.g. source and last polled timestamp) so they can be
@@ -15,6 +13,7 @@ recreated. otherwise we get TombstonedTaskError.
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import datetime
+import itertools
 import logging
 import re
 import time
@@ -23,6 +22,7 @@ import time
 import facebook
 import googleplus
 import twitter
+import util
 import wordpress
 
 from google.appengine.ext import db
@@ -33,6 +33,9 @@ from google.appengine.ext.webapp.util import run_wsgi_app
 import appengine_config
 
 TASK_NAME_HEADER = 'X-AppEngine-TaskName'
+
+# all concrete destination model classes
+DESTINATIONS = ['WordPressSite']
 
 
 class TaskHandler(webapp.RequestHandler):
@@ -80,8 +83,8 @@ class Poll(TaskHandler):
     logging.debug('Polling source %s' % source.key().name())
 
     # itertools.chain flattens.
-    dests = itertools.chain(list(db.GqlQuery('SELECT * FROM %s' % cls))
-                            for cls in DESTINATIONS)
+    dests = itertools.chain(*[list(db.GqlQuery('SELECT * FROM %s' % cls))
+                              for cls in DESTINATIONS])
     posts_and_dests = []
 
     for post, url in source.get_posts():
@@ -102,7 +105,7 @@ class Poll(TaskHandler):
       comment.get_or_save()
 
     source.last_polled = self.now()
-    taskqueue.add(name=Poll.make_task_name(source), queue_name='poll',
+    taskqueue.add(name=util.make_poll_task_name(source), queue_name='poll',
                   countdown=self.TASK_COUNTDOWN.seconds)
     source.save()
 

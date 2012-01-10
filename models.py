@@ -15,9 +15,6 @@ from google.appengine.ext import db
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
 
-# all concrete destination model classes
-DESTINATIONS = ['WordPress']
-
 
 class User(db.Model):
   """A registered user.

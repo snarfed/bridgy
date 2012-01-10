@@ -258,11 +258,14 @@ class FakeSource(FakeBase, Source):
   """
   comments = {}
 
-  def poll(self):
-    return FakeSource.comments[str(self.key())]
-
   def set_comments(self, comments):
     FakeSource.comments[str(self.key())] = comments
+
+  def get_posts(self):
+    return [(c, c.dest_post_url) for c in FakeSource.comments[str(self.key())]]
+
+  def get_comments(self, posts):
+    return FakeSource.comments[str(self.key())]
 
 
 class ModelsTest(HandlerTest):
@@ -282,10 +285,8 @@ class ModelsTest(HandlerTest):
     self.dests = [FakeDestination.new(None, url='http://dest0/'),
                   FakeDestination.new(None, url='http://dest1/'),
                   ]
-    for dest in self.dests:
-      dest.save()
-      import logging
-      logging.debug('Saved %s' % dest.key())
+    for entity in self.sources + self.dests:
+      entity.save()
 
     now = datetime.datetime.now()
 

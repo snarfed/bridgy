@@ -12,6 +12,7 @@ import models_test
 import tasks
 from tasks import Poll, Propagate
 import testutil
+import util
 
 from google.appengine.ext import db
 from google.appengine.ext import webapp
@@ -76,7 +77,7 @@ class PollTest(TaskQueueTest):
 
     tasks = self.taskqueue_stub.GetTasks('poll')
     self.assertEqual(1, len(tasks))
-    self.assertEqual(Poll.make_task_name(source), tasks[0]['name'])
+    self.assertEqual(util.make_poll_task_name(source), tasks[0]['name'])
     self.assertEqual('/_ah/queue/poll', tasks[0]['url'])
 
   def test_existing_comments(self):
