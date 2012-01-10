@@ -134,60 +134,53 @@ class GooglePlusPage(models.Source):
                           type=person['objectType'],
                           )
 
-  def poll(self):
-    # TODO: make generic and expand beyond single hard coded destination.
-    # GQL so i don't have to import the model class definition.
-    dests = db.GqlQuery('SELECT * FROM %s' % HARD_CODED_DEST).fetch(100)
-    comments = []
+  def get_posts(self):
+    """Returns list of (activity resource, link url).
 
-    # Google+ Activity resource
-    # https://developers.google.com/+/api/latest/activies#resource
+    The link url is also added to each returned activity resource in the
+    'bridgy_link' JSON value.
+
+    https://developers.google.com/+/api/latest/activies#resource
+    """
     activities = GooglePlusService.call_with_creds(
       self.gae_user_id, 'activities.list', userId='me', collection='public',
       maxResults=100)
 
-    # list of (link, activity) pairs
-    links = []
+    activities_with_links = []
     for activity in activities['items']:
       for attach in activity['object'].get('attachments', []):
         if attach['objectType'] == 'article':
-          links.append((attach['url'], activity))
+          activity['bridgy_link'] = attach['url']
+          activities_with_links.append((activity, attach['url']))
 
-    for link, activity in links:
-      logging.debug('Looking for destination for link: %s' % link)
+    return activities_with_links
 
-      # look for destinations whose url contains this link. should be at most one.
-      # (can't use a "string prefix" query because we want the property that's a
-      # prefix of the filter value, not vice versa.)
-      dest = [d for d in dests if link.startswith(d.url)]
-      assert len(dest) <= 1
+  def get_comments(self, posts):
+    comments = []
 
-      if dest:
-        dest = dest[0]
-        logging.debug('Found destination: %s' % dest.key().name())
+    for activity, dest in posts:
+      # Google+ Comment resource
+      # https://developers.google.com/+/api/latest/comments#resource
+      comment_resources = GooglePlusService.call_with_creds(
+        self.gae_user_id, 'comments.list', activityId=activity['id'],
+        maxResults=100)
 
-        # Google+ Comment resource
-        # https://developers.google.com/+/api/latest/comments#resource
-        comment_resources = GooglePlusService.call_with_creds(
-          self.gae_user_id, 'comments.list', activityId=activity['id'],
-          maxResults=100)
-
-        for c in comment_resources['items']:
-          # parse the iso8601 formatted timestamp
-          created = datetime.datetime.strptime(c['published'],
-                                               '%Y-%m-%dT%H:%M:%S.%fZ')
-          comments.append(GooglePlusComment(
-              key_name=c['id'],
-              source=self,
-              dest=dest,
-              source_post_url=activity['url'],
-              dest_post_url=link,
-              created=created,
-              author_name=c['actor']['displayName'],
-              author_url=c['actor']['url'],
-              content=c['object']['content'],
-              user_id=c['actor']['id'],
-              ))
+      for c in comment_resources['items']:
+        # parse the iso8601 formatted timestamp
+        created = datetime.datetime.strptime(c['published'],
+                                             '%Y-%m-%dT%H:%M:%S.%fZ')
+        comments.append(GooglePlusComment(
+            key_name=c['id'],
+            source=self,
+            dest=dest,
+            source_post_url=activity['url'],
+            dest_post_url=activity['bridgy_link'],
+            created=created,
+            author_name=c['actor']['displayName'],
+            author_url=c['actor']['url'],
+            content=c['object']['content'],
+            user_id=c['actor']['id'],
+            ))
 
     return comments
 

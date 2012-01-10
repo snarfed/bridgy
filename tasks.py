@@ -78,7 +78,27 @@ class Poll(TaskHandler):
       return
 
     logging.debug('Polling source %s' % source.key().name())
-    for comment in source.poll():
+
+    # itertools.chain flattens.
+    dests = itertools.chain(list(db.GqlQuery('SELECT * FROM %s' % cls))
+                            for cls in DESTINATIONS)
+    posts_and_dests = []
+
+    for post, url in source.get_posts():
+      logging.debug('Looking for destination for link: %s' % url)
+      # can't use this string prefix query code because we want the property
+      # that's a prefix of the filter value, not vice versa.
+      # query = db.GqlQuery(
+      #   'SELECT * FROM WordPressSite WHERE url = :1 AND url <= :2',
+      #   url, url + u'\ufffd')
+      dest = [d for d in dests if url.startswith(d.url)]
+      assert len(dest) <= 1
+      if dest:
+        dest = dest[0]
+        logging.debug('Found destination: %s' % dest.key().name())
+        posts_and_dests.append((post, dest))
+
+    for comment in source.get_comments(posts_and_dests):
       comment.get_or_save()
 
     source.last_polled = self.now()

@@ -52,48 +52,54 @@ class TwitterSearch(models.Source):
                          url=url,
                          owner=models.User.get_current_user())
 
-  def poll(self):
-    # TODO: make generic and expand beyond single hard coded destination.
-    # GQL so i don't have to import the model class definition.
-    query = 'SELECT * FROM %s WHERE url = :1' % HARD_CODED_DEST
-    dest = db.GqlQuery(query, self.url).get()
-    replies = []
+  def get_posts(self):
+    """Returns list of (JSON tweet, link url).
 
+    The link url is also added to each returned JSON tweet in the 'bridgy_link'
+    JSON value.
+
+    https://developers.google.com/+/api/latest/activies#resource
+    """
     # find tweets with links that include our base url.
     # search response is JSON tweets:
     # https://dev.twitter.com/docs/api/1/get/search
     results = self.search('%s filter:links' % util.reduce_url(self.url))
 
-    # maps username to list of @ mention search results, which includes replies
-    mentions = {}
+    tweets_and_urls = []
     for result in results:
-      user = result['from_user']
-      if user not in mentions:
-        mentions[user] = self.search('@%s filter:links' % user)        
-
-    for result in results:
-      post_user = result['from_user']
-      post_id = result['id']
-
       # extract destination post url from tweet entities
       # https://dev.twitter.com/docs/tweet-entities
       dest_post_url = None
-      post_tweet_url = self.tweet_url(post_user, post_id)
+      post_tweet_url = self.tweet_url(result['from_user'], result['id'])
       for url in result['entities'].get('urls', []):
         if url['expanded_url'].startswith(self.url):
           dest_post_url = url['expanded_url']
           logging.debug('Found post %s in tweet %s', dest_post_url, post_tweet_url)
 
-      if not dest_post_url:
+      if dest_post_url:
+        result['bridgy_link'] = dest_post_url
+        tweets_and_urls.append((result, dest_post_url))
+      else:
         logging.info("Tweet %s should have %s link but doesn't. Maybe shortened?",
                      post_tweet_url, self.url)
-        continue
 
-      # find and convert comments
-      logging.debug('Looking at %s\'s mentions', post_user)
-      for mention in mentions[post_user]:
+    return tweets_and_urls
+
+  def get_comments(self, tweets_and_dests):
+    replies = []
+
+    # maps username to list of @ mention search results, which includes replies
+    mentions = {}
+    for tweet, _ in tweets_and_dests:
+      user = tweet['from_user']
+      if user not in mentions:
+        mentions[user] = self.search('@%s filter:links' % user)        
+
+    # find and convert replies
+    for tweet, dest in tweets_and_dests:
+      for mention in mentions[tweet['from_user']]:
         logging.debug('Looking at mention: %s', mention)
-        if mention.get('in_reply_to_status_id') == post_id:
+        if mention.get('in_reply_to_status_id') == tweet['id']:
           reply_id = mention['id']
           reply_user = mention['from_user']
           source_post_url = self.tweet_url(reply_user, reply_id)
@@ -111,7 +117,7 @@ class TwitterSearch(models.Source):
               source=self,
               dest=dest,
               source_post_url=source_post_url,
-              dest_post_url=dest_post_url,
+              dest_post_url=tweet['bridgy_link'],
               created=created,
               author_name=author_name,
               author_url=self.user_url(reply_user),
@@ -182,7 +188,7 @@ class TwitterReply(models.Comment):
 
 class AddTwitterSearch(util.Handler):
   def post(self):
-    TwitterSearch.new(self)
+    TwitterSearch.create_new(self)
     self.redirect('/')
 
 

@@ -156,8 +156,7 @@ class FacebookPageTest(FacebookTestBase):
                                FacebookPage.new(self.handler),
                                ignore=['created'])
 
-  def test_poll(self):
-    # note that json requires double quotes. :/
+  def test_get_posts_and_get_comments(self):
     self.expect_fql('SELECT post_fbid, ', [
         {'post_fbid': '123', 'object_id': 1, 'fromid': 4,
          'username': '', 'time': 1, 'text': 'foo'},
@@ -172,7 +171,12 @@ class FacebookPageTest(FacebookTestBase):
         {'id': 4, 'name': 'fred', 'url': 'http://fred'},
         {'id': 5, 'name': 'bob', 'url': 'http://bob'},
         ])
-
     self.mox.ReplayAll()
-    got = self.page.poll()
-    self.assert_entities_equal(self.comments, got)
+
+    self.assertEqual(
+      [(1, 'http://dest1/post/url'), (2, 'http://dest0/post/url')],
+      self.page.get_posts())
+
+    self.assert_entities_equal(
+      self.comments,
+      self.page.get_comments([(1, self.dests[1]), (2, self.dests[0])]))

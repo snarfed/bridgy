@@ -120,6 +120,11 @@ class FacebookPage(models.Source):
   """A facebook profile or page.
 
   The key name is the facebook id.
+
+  Attributes:
+    comment_data: FQL results
+    link_data: FQL results
+    profile_data: FQL results
   """
 
   TYPE_NAME = 'Facebook'
@@ -159,67 +164,51 @@ class FacebookPage(models.Source):
                         picture=result['pic_small'],
                         **result)
 
-  def poll(self):
-    # TODO: make generic and expand beyond single hard coded destination.
-    # GQL so i don't have to import the model class definition.
-    dests = db.GqlQuery('SELECT * FROM %s' % HARD_CODED_DEST).fetch(100)
-    comments = []
+  def get_posts(self):
+    """Returns list of (link id aka post object id, link url).
+    """
+    self.comment_data = self.fql(
+      """SELECT post_fbid, time, fromid, username, object_id, text FROM comment
+         WHERE object_id IN (SELECT link_id FROM link WHERE owner = %s)
+         ORDER BY time DESC""" % self.key().name())
 
-    query = """SELECT post_fbid, time, fromid, username, object_id, text FROM comment
-               WHERE object_id IN (SELECT link_id FROM link WHERE owner = %s)
-               ORDER BY time DESC""" % self.key().name()
-    comment_data = self.fql(query)
-
-    link_ids = set(str(c['object_id']) for c in comment_data)
-    link_data = self.fql('SELECT link_id, url FROM link WHERE link_id IN (%s)' %
+    link_ids = set(str(c['object_id']) for c in self.comment_data)
+    self.link_data = self.fql('SELECT link_id, url FROM link WHERE link_id IN (%s)' %
                        ','.join(link_ids))
-    links = dict((l['link_id'], l['url']) for l in link_data)
 
-    # TODO: cache?
-    fromids = set(str(c['fromid']) for c in comment_data)
-    profile_data = self.fql(
+    fromids = set(str(c['fromid']) for c in self.comment_data)
+    self.profile_data = self.fql(
       'SELECT id, name, url FROM profile WHERE id IN (%s)' % ','.join(fromids))
-    profiles = dict((p['id'], p) for p in profile_data)
 
-    for c in comment_data:
-      link = links[c['object_id']]
-      logging.debug('Looking for destination for link: %s' % link)
+    return [(l['link_id'], l['url']) for l in self.link_data]
 
-      # TODO: move rest of method to tasks!
+  def get_comments(self, posts):
+    comments_by_link_id = dict((c['object_id'], c) for c in self.comment_data)
+    profiles = dict((p['id'], p) for p in self.profile_data)
+    links = dict((l['link_id'], l['url']) for l in self.link_data)
 
-      # look for destinations whose url contains this link. should be at most one.
-      # (can't use this prefix code because we want the property that's a prefix
-      # of the filter value, not vice versa.)
-      # query = db.GqlQuery(
-      #   'SELECT * FROM WordPressSite WHERE url = :1 AND url <= :2',
-      #   link, link + u'\ufffd')
-      logging.debug('dests %s' % [d.url for d in dests])
-      dest = [d for d in dests if link.startswith(d.url)]
-      assert len(dest) <= 1
+    comments = []
+    for link_id, dest in posts:
+      c = comments_by_link_id[link_id]
+      fromid = c['fromid']
+      profile = profiles[fromid]
+      post_url = 'https://www.facebook.com/permalink.php?story_fbid=%s&id=%s' % (
+        c['object_id'], fromid)
 
-      if dest:
-        dest = dest[0]
-        logging.debug('Found destination: %s' % dest.key().name())
-
-        fromid = c['fromid']
-        profile = profiles[fromid]
-        post_url = 'https://www.facebook.com/permalink.php?story_fbid=%s&id=%s' % (
-          c['object_id'], fromid)
-
-        comments.append(FacebookComment(
-            key_name=c['post_fbid'],
-            source=self,
-            dest=dest,
-            source_post_url=post_url,
-            dest_post_url=link,
-            created=datetime.datetime.utcfromtimestamp(c['time']),
-            author_name=profile['name'],
-            author_url=profile['url'],
-            content=c['text'],
-            fb_fromid=fromid,
-            fb_username=c['username'],
-            fb_object_id=c['object_id'],
-            ))
+      comments.append(FacebookComment(
+          key_name=c['post_fbid'],
+          source=self,
+          dest=dest,
+          source_post_url=post_url,
+          dest_post_url=links[link_id],
+          created=datetime.datetime.utcfromtimestamp(c['time']),
+          author_name=profile['name'],
+          author_url=profile['url'],
+          content=c['text'],
+          fb_fromid=fromid,
+          fb_username=c['username'],
+          fb_object_id=c['object_id'],
+          ))
 
     return comments
 

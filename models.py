@@ -2,6 +2,7 @@
 """
 
 import datetime
+import itertools
 import logging
 import urlparse
 
@@ -13,6 +14,9 @@ from google.appengine.api import users
 from google.appengine.ext import db
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
+
+# all concrete destination model classes
+DESTINATIONS = ['WordPress']
 
 
 class User(db.Model):
@@ -113,11 +117,25 @@ class Source(Site):
     """
     raise NotImplementedError()
 
-  def poll(self):
-    """Returns a list of comments from this source.
+  def get_posts(self):
+    """Returns a list of the most recent posts from this source.
 
-    To be implemented by subclasses. The returned list should have Comment
-    entities in increasing timestamp order.
+    To be implemented by subclasses. The returned post objects will be passed
+    back in get_comments().
+
+    Returns: list of (post, url), where post is any object and url is the string
+      url for the post
+    """
+    raise NotImplementedError()
+
+  def get_comments(self, posts):
+    """Returns a list of Comment instances for the given posts.
+
+    To be implemented by subclasses. Only called after get_posts().
+
+    Args:
+      posts: dict mapping post object to matching Destination. The post objects
+        are a subset of the ones returned by get_posts().
     """
     raise NotImplementedError()
 

@@ -4,6 +4,7 @@
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
+import copy
 import datetime
 import mox
 import testutil
@@ -43,7 +44,7 @@ class GooglePlusPageTest(testutil.ModelsTest):
         'type': 'person',
         }
 
-    self.activities_list_response = {'items': [
+    self.activities = [
         # no attachments
         {'object': {}},
         # no article attachment
@@ -63,7 +64,15 @@ class GooglePlusPageTest(testutil.ModelsTest):
          'id': '2',
          'url': 'http://source/post/0',
          },
-        ]}
+        ]
+    self.activities_list_response = {'items': copy.deepcopy(self.activities)}
+
+    self.activities_with_urls = []
+    for i, link in ((2, 'http://no/matching/dest'),
+                    (3, 'http://dest1/post/url'),
+                    (4, 'http://dest0/post/url')):
+      self.activities[i]['bridgy_link'] = link
+      self.activities_with_urls.append((self.activities[i], link))
 
     # TODO: unify with ModelsTest.setUp()
     self.comments = [
@@ -93,20 +102,22 @@ class GooglePlusPageTest(testutil.ModelsTest):
         )]
     self.sources[0].set_comments(self.comments)
 
+    self.comment_resources = [
+      {'id': '123',
+        'object': {'content': 'foo'},
+        'actor': {'id': '4', 'displayName': 'fred', 'url': 'http://fred'},
+        'published': '1970-01-01T00:00:01.01Z',
+       },
+      {'id': '789',
+       'object': {'content': 'bar'},
+       'actor': {'id': '5', 'displayName': 'bob', 'url': 'http://bob'},
+       'published': '1970-01-01T00:00:02.01Z',
+       },
+      ]
     # (activity id, JSON response) pairs
     self.comments_list_responses = [
-      ('1', {'items': [{
-              'id': '123',
-              'object': {'content': 'foo'},
-              'actor': {'id': '4', 'displayName': 'fred', 'url': 'http://fred'},
-              'published': '1970-01-01T00:00:01.01Z',
-              }]}),
-      ('2', {'items': [{
-              'id': '789',
-              'object': {'content': 'bar'},
-              'actor': {'id': '5', 'displayName': 'bob', 'url': 'http://bob'},
-              'published': '1970-01-01T00:00:02.01Z',
-              }]}),
+      ('1', {'items': [self.comment_resources[0]]}),
+      ('2', {'items': [self.comment_resources[1]]}),
       ]
 
   def test_new(self):
@@ -119,7 +130,7 @@ class GooglePlusPageTest(testutil.ModelsTest):
       GooglePlusPage.new(self.handler, http='http placeholder'),
       ignore=['created'])
 
-  def test_poll(self):
+  def test_get_posts_and_get_comments(self):
     GooglePlusService.call_with_creds(
       self.gae_user_id, 'activities.list', userId='me', collection='public',
       maxResults=100)\
@@ -130,5 +141,9 @@ class GooglePlusPageTest(testutil.ModelsTest):
         .AndReturn(response)
     self.mox.ReplayAll()
 
-    got = self.page.poll()
-    self.assert_entities_equal(self.comments, got)
+    # print 'a %s\n%s' % (self.activities_with_urls, self.page.get_posts())
+    self.assertEqual(self.activities_with_urls, self.page.get_posts())
+    self.assert_entities_equal(
+      self.comments,
+      self.page.get_comments([(self.activities[3], self.dests[1]),
+                              (self.activities[4], self.dests[0])]))
