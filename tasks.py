@@ -80,31 +80,35 @@ class Poll(TaskHandler):
       logging.warning('duplicate poll task! deferring to the other task.')
       return
 
-    logging.debug('Polling source %s' % source.key().name())
-
-    # itertools.chain flattens. also, the list() is important, because
+    # itertools.chain flattens. also, the outer list() is important, because
     # itertools.chain returns a generator, and we need to be able to iterate
     # over it multiple times. TODO: unit test this
     dests = list(itertools.chain(*[list(db.GqlQuery('SELECT * FROM %s' % cls))
                                    for cls in DESTINATIONS]))
-    posts_and_dests = []
 
-    for post, url in source.get_posts():
-      logging.debug('Looking for destination for link: %s' % url)
-      # can't use this string prefix query code because we want the property
-      # that's a prefix of the filter value, not vice versa.
-      # query = db.GqlQuery(
-      #   'SELECT * FROM WordPressSite WHERE url = :1 AND url <= :2',
-      #   url, url + u'\ufffd')
-      dest = [d for d in dests if url.startswith(d.url)]
-      assert len(dest) <= 1
-      if dest:
-        dest = dest[0]
-        logging.debug('Found destination: %s' % dest.key().name())
-        posts_and_dests.append((post, dest))
+    logging.debug('Polling source %s against destinations %r',
+                  source.key().name(), [d.url for d in dests])
 
-    for comment in source.get_comments(posts_and_dests):
-      comment.get_or_save()
+    if dests:
+      posts_and_dests = []
+
+      for post, url in source.get_posts():
+        logging.debug('Looking for destination for link: %r' % url)
+  
+        # can't use this string prefix query code because we want the property
+        # that's a prefix of the filter value, not vice versa.
+        # query = db.GqlQuery(
+        #   'SELECT * FROM WordPressSite WHERE url = :1 AND url <= :2',
+        #   url, url + u'\ufffd')
+        dest = [d for d in dests if url.startswith(d.url)]
+        assert len(dest) <= 1
+        if dest:
+          dest = dest[0]
+          logging.debug('Found destination: %s' % dest.key().name())
+          posts_and_dests.append((post, dest))
+  
+      for comment in source.get_comments(posts_and_dests):
+        comment.get_or_save()
 
     source.last_polled = self.now()
     taskqueue.add(name=util.make_poll_task_name(source), queue_name='poll',

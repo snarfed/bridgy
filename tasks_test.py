@@ -60,6 +60,13 @@ class PollTest(TaskQueueTest):
     task_name = str(self.sources[0].key()) + '_1970-01-01-00-00-00'
     self.setup_taskqueue(task_name, '/_ah/queue/poll')
 
+    self.orig_destinations = tasks.DESTINATIONS
+    tasks.DESTINATIONS = ['FakeDestination']
+
+  def tearDown(self):
+    tasks.DESTINATIONS = self.orig_destinations
+    super(PollTest, self).tearDown()
+
   def assert_comments(self):
     """Asserts that all of self.comments are saved."""
     self.assert_entities_equal(self.comments, models.Comment.all())

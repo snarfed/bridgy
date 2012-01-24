@@ -269,6 +269,7 @@ class FakeSource(FakeBase, Source):
     return [(c, c.dest_post_url) for c in FakeSource.comments[str(self.key())]]
 
   def get_comments(self, posts):
+    assert posts
     return FakeSource.comments[str(self.key())]
 
 
