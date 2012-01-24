@@ -86,8 +86,8 @@ class Poll(TaskHandler):
     dests = list(itertools.chain(*[list(db.GqlQuery('SELECT * FROM %s' % cls))
                                    for cls in DESTINATIONS]))
 
-    logging.debug('Polling source %s against destinations %r',
-                  source.key().name(), [d.url for d in dests])
+    logging.debug('Polling %s source %s against destinations %r',
+                  source.kind(), source.key().name(), [d.url for d in dests])
 
     if dests:
       posts_and_dests = []

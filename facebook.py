@@ -247,8 +247,6 @@ class FacebookApp(db.Model):
   @classmethod
   def get(cls):
     if not cls.__singleton:
-      FacebookApp(app_id='304421279593234',
-                  app_secret='a16bd3a3d9c005cf2a89f39fb4936057').save()
       # TODO: check that there's only one
       cls.__singleton = cls.all().get()
       assert cls.__singleton
