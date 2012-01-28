@@ -35,12 +35,13 @@ HARD_CODED_DEST = 'WordPressSite'
 
 # client id and secret aren't stored in the datastore like FacebookApp since
 # it's hard to have the datastore ready in unit tests at module load time.
-with open('oauth_client_secret') as f:
-  plus_api = OAuth2Decorator(
-    client_id='1029605954231.apps.googleusercontent.com',
-    client_secret=f.read().strip(),
-    scope='https://www.googleapis.com/auth/plus.me',
-    )
+with open('oauth_client_secret') as oauth_client_secret_file:
+  with open('oauth_scopes') as oauth_scopes_file:
+    plus_api = OAuth2Decorator(
+      client_id='1029605954231.apps.googleusercontent.com',
+      client_secret=oauth_client_secret_file.read().strip(),
+      scope=oauth_scopes_file.read().strip(),
+      )
 
 
 class GooglePlusService(db.Model):
