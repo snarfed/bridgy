@@ -16,8 +16,8 @@ APP_ENGINE_SDK_PATH = os.path.expanduser('~/google_appengine')
 
 def main():
   # don't show logging messages
-  # logging.disable(logging.CRITICAL + 1)
-  logging.getLogger().setLevel(logging.DEBUG)
+  logging.disable(logging.CRITICAL + 1)
+  # logging.getLogger().setLevel(logging.DEBUG)
 
   sys.path.insert(0, APP_ENGINE_SDK_PATH)
 

@@ -4,8 +4,10 @@
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
+import base64
 import datetime
 import mox
+import urlparse
 
 import models
 import models_test
@@ -20,20 +22,13 @@ from google.appengine.ext import webapp
 
 class TaskQueueTest(testutil.ModelsTest):
   """Attributes:
-    task_name: the task name to populate in the request headers in post_task()
+    task_params: the query parameters passed in the task POST request
     post_url: the URL for post_task() to post to
     now: the datetime to be returned by datetime.now()
   """
-
-  def setup_taskqueue(self, task_name, post_url):
-    """Sets up test data for tasks.
-
-    This isn't setUp() because task_name may depend on the test data created by
-    ModelsTest, but it needs to be evaluated before ModelTest.setUp().
-    """
-    self.task_name = task_name
-    self.post_url = post_url
-    self.now = datetime.datetime.now()
+  task_params = None
+  post_url = None
+  now = datetime.datetime.now()
 
   def post_task(self, expected_status=200):
     """Runs post(), injecting self.now to be returned by datetime.now().
@@ -48,18 +43,20 @@ class TaskQueueTest(testutil.ModelsTest):
         ('/_ah/queue/propagate', propagate_with_now),
         ])
 
-    headers = {tasks.TASK_NAME_HEADER: self.task_name}
-    super(TaskQueueTest, self).post(application, self.post_url,
-                                    expected_status, headers=headers)
+    super(TaskQueueTest, self).post(application,
+                                    self.post_url,
+                                    expected_status,
+                                    post_params=self.task_params)
 
 
 class PollTest(TaskQueueTest):
 
+  post_url = '/_ah/queue/poll'
+
   def setUp(self):
     super(PollTest, self).setUp()
-    task_name = str(self.sources[0].key()) + '_1970-01-01-00-00-00'
-    self.setup_taskqueue(task_name, '/_ah/queue/poll')
-
+    self.task_params = {'source_key': self.sources[0].key(),
+                        'last_polled': '1970-01-01-00-00-00'}
     self.orig_destinations = tasks.DESTINATIONS
     tasks.DESTINATIONS = ['FakeDestination']
 
@@ -84,8 +81,12 @@ class PollTest(TaskQueueTest):
 
     tasks = self.taskqueue_stub.GetTasks('poll')
     self.assertEqual(1, len(tasks))
-    self.assertEqual(util.make_poll_task_name(source), tasks[0]['name'])
     self.assertEqual('/_ah/queue/poll', tasks[0]['url'])
+
+    params = urlparse.parse_qs(base64.b64decode(tasks[0]['body']))
+    self.assertEqual(str(source.key()), params['source_key'][0])
+    self.assertEqual(self.now.strftime(util.POLL_TASK_DATETIME_FORMAT),
+                     params['last_polled'][0])
 
   def test_existing_comments(self):
     """Poll should be idempotent and not touch existing comment entities.
@@ -108,10 +109,12 @@ class PollTest(TaskQueueTest):
 
 class PropagateTest(TaskQueueTest):
 
+  post_url = '/_ah/queue/propagate'
+
   def setUp(self):
     super(PropagateTest, self).setUp()
     self.comments[0].save()
-    self.setup_taskqueue(str(self.comments[0].key()), '/_ah/queue/propagate')
+    self.task_params = {'comment_key': self.comments[0].key()}
 
   def assert_comment_is(self, status, leased_until=False):
     """Asserts that comments[0] has the given values in the datastore.

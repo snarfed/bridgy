@@ -5,9 +5,6 @@ TODO: think about how to determine stopping point. can all sources return
 comments in strict descending timestamp order? can we require/generate
 monotonically increasing comment ids for all sources? 
 TODO: check HRD consistency guarantees and change as needed
-TODO BUG: Poll and propagate task names need to be unique (even for the same
-e.g. source and last polled timestamp) so they can be
-recreated. otherwise we get TombstonedTaskError.
 """
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
@@ -32,8 +29,6 @@ from google.appengine.ext.webapp.util import run_wsgi_app
 
 import appengine_config
 
-TASK_NAME_HEADER = 'X-AppEngine-TaskName'
-
 # all concrete destination model classes
 DESTINATIONS = ['WordPressSite']
 
@@ -50,33 +45,25 @@ class TaskHandler(webapp.RequestHandler):
     super(TaskHandler, self).__init__(*args)
     self.now = kwargs.pop('now', datetime.datetime.now)
 
-  def task_name(self):
-    """Returns this task's name.
-
-    Raises KeyError if it doesn't have a name.
-    """
-    return self.request.headers[TASK_NAME_HEADER]
-
 
 class Poll(TaskHandler):
   """Task handler that fetches and processes new comments from a single source.
 
-  Task name is '[serialized source key]_[last polled datetime]', where last
-  polled time is formatted YYYY-MM-DD-HH-MM-SS. (This is isoformat() with -
-  as the separator for time as well as date.)
+  Request parameters:
+    source_key: string key of source entity
+    last_polled: timestamp, YYYY-MM-DD-HH-MM-SS
 
   Inserts a propagate task for each comment that hasn't been seen before.
   """
 
-  TASK_NAME_RE = re.compile('^(.+)_(.+)$')
   TASK_COUNTDOWN = datetime.timedelta(hours=1)
 
   def post(self):
-    match = self.TASK_NAME_RE.match(self.task_name())
-    key = match.group(1)
+    key = self.request.params['source_key']
     source = db.get(key)
 
-    if match.group(2) != source.last_polled.strftime(util.POLL_TASK_DATETIME_FORMAT):
+    last_polled = self.request.params['last_polled']
+    if last_polled != source.last_polled.strftime(util.POLL_TASK_DATETIME_FORMAT):
       logging.warning('duplicate poll task! deferring to the other task.')
       return
 
@@ -111,7 +98,10 @@ class Poll(TaskHandler):
         comment.get_or_save()
 
     source.last_polled = self.now()
-    taskqueue.add(name=util.make_poll_task_name(source), queue_name='poll',
+    last_polled_str = source.last_polled.strftime(util.POLL_TASK_DATETIME_FORMAT)
+    taskqueue.add(queue_name='poll',
+                  params={'source_key': source.key(),
+                          'last_polled': last_polled_str},
                   countdown=self.TASK_COUNTDOWN.seconds)
     source.save()
 
@@ -119,7 +109,8 @@ class Poll(TaskHandler):
 class Propagate(TaskHandler):
   """Task handler that propagates a single comment.
 
-  Task name is the serialized Comment key.
+  Request parameters:
+    comment_key: string key of comment entity
   """
 
   # request deadline (10m) plus some padding
@@ -146,7 +137,7 @@ class Propagate(TaskHandler):
 
     TODO: unify with complete_comment
     """
-    comment = db.get(self.task_name())
+    comment = db.get(self.request.params['comment_key'])
 
     if comment is None:
       self.fail('no comment entity!')
@@ -168,7 +159,7 @@ class Propagate(TaskHandler):
 
     Returns True on success, False otherwise.
     """
-    comment = db.get(self.task_name())
+    comment = db.get(self.request.params['comment_key'])
 
     if comment is None:
       self.fail('comment entity disappeared!')
@@ -189,7 +180,7 @@ class Propagate(TaskHandler):
   def release_comment(self):
     """Attempts to unlease the comment entity.
     """
-    comment = db.get(self.task_name())
+    comment = db.get(self.request.params['comment_key'])
     if comment.status == 'processing':
       comment.status = 'new'
       comment.leased_until = None

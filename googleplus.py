@@ -36,7 +36,7 @@ from google.appengine.ext.webapp.util import run_wsgi_app
 HARD_CODED_DEST = 'WordPressSite'
 
 # client id and secret aren't stored in the datastore like FacebookApp since
-# it's hard to have the  datastore ready in unit tests at module load time.
+# it's hard to have the datastore ready in unit tests at module load time.
 with open('oauth_client_secret') as f:
   plus_api = OAuth2Decorator(
     client_id='1029605954231.apps.googleusercontent.com',
