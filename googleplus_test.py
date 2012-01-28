@@ -12,7 +12,6 @@ import testutil
 import googleplus
 from googleplus import GooglePlusComment, GooglePlusPage, GooglePlusService
 import models
-import tasks_test
 
 
 class GooglePlusPageTest(testutil.ModelsTest):

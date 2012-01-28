@@ -22,10 +22,6 @@ class User(db.Model):
   The key name is either App Engine user_id or OpenID federated_identity.
   """
 
-  # TODO: remove
-  # sources = db.ListProperty(db.Key)
-  # dests = db.ListProperty(db.Key)
-
   @classmethod
   def get_current_user(cls):
     key_name = cls._current_user_key_name()
@@ -166,7 +162,7 @@ class Source(Site):
       **kwargs: passed to new()
     """
     new = super(Source, cls).create_new(handler, **kwargs)
-    taskqueue.add(name=util.make_poll_task_name(new), queue_name='poll')
+    util.add_poll_task(new)
     return new
 
 
@@ -222,6 +218,6 @@ class Comment(util.KeyNameModel):
       return existing
 
     logging.debug('New comment to propagate: %s' % self.key().name())
-    taskqueue.add(name=str(self.key()), queue_name='propagate')
+    taskqueue.add(queue_name='propagate', params={'comment_key': str(self.key())})
     self.save()
     return self

@@ -4,7 +4,6 @@
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
-import base64
 import datetime
 import mox
 import urlparse
@@ -83,10 +82,11 @@ class PollTest(TaskQueueTest):
     self.assertEqual(1, len(tasks))
     self.assertEqual('/_ah/queue/poll', tasks[0]['url'])
 
-    params = urlparse.parse_qs(base64.b64decode(tasks[0]['body']))
-    self.assertEqual(str(source.key()), params['source_key'][0])
+    params = testutil.get_task_params(tasks[0])
+    self.assertEqual(str(source.key()),
+                     params['source_key'])
     self.assertEqual(self.now.strftime(util.POLL_TASK_DATETIME_FORMAT),
-                     params['last_polled'][0])
+                     params['last_polled'])
 
   def test_existing_comments(self):
     """Poll should be idempotent and not touch existing comment entities.

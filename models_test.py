@@ -31,7 +31,8 @@ class CommentTest(testutil.ModelsTest):
 
     tasks = self.taskqueue_stub.GetTasks('propagate')
     self.assertEqual(1, len(tasks))
-    self.assertEqual(str(comment.key()), tasks[0]['name'])
+    self.assertEqual(str(comment.key()),
+                     testutil.get_task_params(tasks[0])['comment_key'])
     self.assertEqual('/_ah/queue/propagate', tasks[0]['url'])
 
     # existing. no new task.
@@ -106,8 +107,11 @@ class SourceTest(testutil.HandlerTest):
     tasks = self.taskqueue_stub.GetTasks('poll')
     self.assertEqual(1, len(tasks))
     source = FakeSource.all().get()
-    self.assertEqual(util.make_poll_task_name(source), tasks[0]['name'])
     self.assertEqual('/_ah/queue/poll', tasks[0]['url'])
+    params = testutil.get_task_params(tasks[0])
+    self.assertEqual(str(source.key()), params['source_key'])
+    self.assertEqual('1970-01-01-00-00-00',
+                     params['last_polled'])
 
   def test_create_new(self):
     self.assertEqual(0, FakeSource.all().count())

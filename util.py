@@ -6,6 +6,7 @@ import datetime
 import urllib
 import urlparse
 
+from google.appengine.api import taskqueue
 from google.appengine.ext import db
 from google.appengine.ext import webapp
 
@@ -29,16 +30,14 @@ def favicon_for_url(url):
   return 'http://%s/favicon.ico' % urlparse.urlparse(url).netloc
 
 
-def make_poll_task_name(source):
-  """Returns the poll task name for the given source.
-
-  Args:
-    source: models.Source entity
-
-  Returns: string
+def add_poll_task(source, **kwargs):
+  """Adds a poll task for the given source entity.
   """
-  return '%s_%s' % (str(source.key()),
-                    source.last_polled.strftime(POLL_TASK_DATETIME_FORMAT))
+  last_polled_str = source.last_polled.strftime(POLL_TASK_DATETIME_FORMAT)
+  taskqueue.add(queue_name='poll',
+                params={'source_key': str(source.key()),
+                        'last_polled': last_polled_str},
+                **kwargs)
 
 
 class KeyNameModel(db.Model):

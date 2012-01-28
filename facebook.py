@@ -68,10 +68,8 @@ import urlparse
 
 import appengine_config
 import models
-import tasks
 import util
 
-from google.appengine.api import taskqueue
 from google.appengine.api import urlfetch
 from google.appengine.ext import db
 from google.appengine.ext import webapp

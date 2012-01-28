@@ -59,6 +59,8 @@ class Poll(TaskHandler):
   TASK_COUNTDOWN = datetime.timedelta(hours=1)
 
   def post(self):
+    logging.debug('Params: %s', self.request.params)
+
     key = self.request.params['source_key']
     source = db.get(key)
 
@@ -98,11 +100,7 @@ class Poll(TaskHandler):
         comment.get_or_save()
 
     source.last_polled = self.now()
-    last_polled_str = source.last_polled.strftime(util.POLL_TASK_DATETIME_FORMAT)
-    taskqueue.add(queue_name='poll',
-                  params={'source_key': source.key(),
-                          'last_polled': last_polled_str},
-                  countdown=self.TASK_COUNTDOWN.seconds)
+    util.add_poll_task(source, countdown=self.TASK_COUNTDOWN.seconds)
     source.save()
 
 
@@ -119,6 +117,8 @@ class Propagate(TaskHandler):
   ERROR_HTTP_RETURN_CODE = 417  # Expectation Failed
 
   def post(self):
+    logging.debug('Params: %s', self.request.params)
+
     try:
       comment = self.lease_comment()
       if comment:

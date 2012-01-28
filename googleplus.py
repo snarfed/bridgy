@@ -10,7 +10,6 @@ import os
 
 import appengine_config
 import models
-import tasks
 import util
 
 from apiclient.discovery import build
@@ -27,7 +26,6 @@ from oauth2client.appengine import CredentialsModel
 from oauth2client.appengine import OAuth2Decorator
 from oauth2client.appengine import StorageByKeyName
 
-from google.appengine.api import taskqueue
 from google.appengine.api import users
 from google.appengine.ext import db
 from google.appengine.ext import webapp

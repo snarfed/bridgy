@@ -29,13 +29,6 @@ class UtilTest(testutil.ModelsTest):
     for url in ('http://a.org/b/c?d=e&f=g', 'https://a.org/b/c', 'http://a.org/'):
       self.assertEqual('http://a.org/favicon.ico', util.favicon_for_url(url))
 
-  def test_make_poll_task_name(self):
-    # microseconds should be dropped
-    source = testutil.FakeSource.new(
-      None, last_polled=datetime.datetime.utcfromtimestamp(0.1))
-    expected_task_name = str(source.key()) + '_1970-01-01-00-00-00'
-    self.assertEqual(expected_task_name, util.make_poll_task_name(source))
-
 
 class KeyNameModelTest(testutil.TestbedTest):
 

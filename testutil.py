@@ -3,6 +3,7 @@
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
+import base64
 import collections
 import cStringIO
 import datetime
@@ -23,6 +24,13 @@ from google.appengine.ext import db
 from google.appengine.ext import testbed
 from google.appengine.ext import webapp
 
+
+def get_task_params(task):
+  """Parses a task's POST body and returns the query params in a dict.
+  """
+  params = urlparse.parse_qs(base64.b64decode(task['body']))
+  params = dict((key, val[0]) for key, val in params.items())
+  return params
 
 class TestbedTest(mox.MoxTestBase):
   """Base test case class that sets up App Engine testbed.
