@@ -16,6 +16,14 @@ import os
 if not os.environ.get('SERVER_SOFTWARE', '').startswith('Development'):
   DEBUG = False
   MOCKFACEBOOK = False
+  # separate prod and devel google app ids because google only includes
+  # refresh_token in the *first* oauth response, even across redirect URLs (e.g.
+  # localhost vs brid.gy), so if localhost gets it, brid.gy doesn't and can't
+  # refresh a token after it expires.
+  GOOGLE_CLIENT_ID = '1029605954231.apps.googleusercontent.com'
+  GOOGLE_CLIENT_SECRET_FILE = 'google_client_secret_bridgy'
 else:
   DEBUG = True
   MOCKFACEBOOK = False
+  GOOGLE_CLIENT_ID = '581979435635.apps.googleusercontent.com'
+  GOOGLE_CLIENT_SECRET_FILE = 'google_client_secret_bridgy_devel'

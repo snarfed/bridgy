@@ -12,7 +12,7 @@ import appengine_config
 import models
 import util
 
-from apiclient.discovery import build, build_from_document
+from apiclient.discovery import build
 
 # hack to prevent oauth2client from trying to cache on the filesystem.
 # http://groups.google.com/group/google-appengine-python/browse_thread/thread/b48c23772dbc3334
@@ -36,9 +36,9 @@ HARD_CODED_DEST = 'WordPressSite'
 
 # client id and secret aren't stored in the datastore like FacebookApp since
 # it's hard to have the datastore ready in unit tests at module load time.
-with open('oauth_client_secret') as f:
+with open(appengine_config.GOOGLE_CLIENT_SECRET_FILE) as f:
   plus_api = OAuth2Decorator(
-    client_id='1029605954231.apps.googleusercontent.com',
+    client_id=appengine_config.GOOGLE_CLIENT_ID,
     client_secret=f.read().strip(),
     scope='https://www.googleapis.com/auth/plus.me',
     )
@@ -81,14 +81,7 @@ class GooglePlusService(db.Model):
     Returns: dict
     """
     if not cls.service:
-      if os.path.isfile('plus-dogfood.json'):
-        with open('plus-dogfood.json') as f:
-          discovery_doc = f.read()
-          cls.service = build_from_document(discovery_doc,
-                                            base='https://www.googleapis.com/',
-                                            http=httplib2.Http(memcache))
-      else:
-        cls.service = build('plus', 'v1', cls.http)
+      cls.service = build('plus', 'v1', cls.http)
 
     resource, method = endpoint.split('.')
     resource = resource.lower()
