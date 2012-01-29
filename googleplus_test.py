@@ -140,7 +140,6 @@ class GooglePlusPageTest(testutil.ModelsTest):
         .AndReturn(response)
     self.mox.ReplayAll()
 
-    # print 'a %s\n%s' % (self.activities_with_urls, self.page.get_posts())
     self.assertEqual(self.activities_with_urls, self.page.get_posts())
     self.assert_entities_equal(
       self.comments,

@@ -12,7 +12,7 @@ import appengine_config
 import models
 import util
 
-from apiclient.discovery import build
+from apiclient.discovery import build, build_from_document
 
 # hack to prevent oauth2client from trying to cache on the filesystem.
 # http://groups.google.com/group/google-appengine-python/browse_thread/thread/b48c23772dbc3334
@@ -27,6 +27,7 @@ from oauth2client.appengine import OAuth2Decorator
 from oauth2client.appengine import StorageByKeyName
 
 from google.appengine.api import users
+from google.appengine.api import memcache
 from google.appengine.ext import db
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
@@ -81,7 +82,14 @@ class GooglePlusService(db.Model):
     Returns: dict
     """
     if not cls.service:
-      cls.service = build('plus', 'v1', cls.http)
+      if os.path.isfile('plus-dogfood.json'):
+        with open('plus-dogfood.json') as f:
+          discovery_doc = f.read()
+          cls.service = build_from_document(discovery_doc,
+                                            base='https://www.googleapis.com/',
+                                            http=httplib2.Http(memcache))
+      else:
+        cls.service = build('plus', 'v1', cls.http)
 
     resource, method = endpoint.split('.')
     resource = resource.lower()
@@ -206,7 +214,7 @@ class AddGooglePlusPage(util.Handler):
 class DeleteGooglePlusPage(util.Handler):
   def post(self):
     page = GooglePlusPage.get_by_key_name(self.request.params['key_name'])
-    # TODO: remove tasks, etc.
+    # TODO: remove credentials, tasks, etc.
     msg = 'Deleted %s source: %s' % (page.type_display_name(),
                                      page.display_name())
     page.delete()
