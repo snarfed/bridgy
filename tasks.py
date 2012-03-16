@@ -63,6 +63,9 @@ class Poll(TaskHandler):
 
     key = self.request.params['source_key']
     source = db.get(key)
+    if not source:
+      logging.warning('Source not found! Dropping task.')
+      return
 
     last_polled = self.request.params['last_polled']
     if last_polled != source.last_polled.strftime(util.POLL_TASK_DATETIME_FORMAT):

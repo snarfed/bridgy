@@ -106,6 +106,13 @@ class PollTest(TaskQueueTest):
     self.post_task()
     self.assertEqual([], list(models.Comment.all()))
 
+  def test_no_source(self):
+    """If the source doesn't exist, do nothing and let the task die.
+    """
+    self.sources[0].delete()
+    self.post_task()
+    self.assertEqual([], self.taskqueue_stub.GetTasks('poll'))
+
 
 class PropagateTest(TaskQueueTest):
 
