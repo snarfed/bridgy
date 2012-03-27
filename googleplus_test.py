@@ -131,7 +131,7 @@ class GooglePlusPageTest(testutil.ModelsTest):
 
   def test_get_posts_and_get_comments(self):
     GooglePlusService.call_with_creds(
-      self.gae_user_id, 'activities.list', userId='me', collection='public',
+      self.gae_user_id, 'activities.list', userId='2468', collection='public',
       maxResults=100)\
       .AndReturn(self.activities_list_response)
     for activity_id, response in self.comments_list_responses:
