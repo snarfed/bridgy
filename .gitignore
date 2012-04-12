@@ -4,3 +4,9 @@ google_client_secret_bridgy_devel
 oauth_client_secret
 plus-dogfood.json
 private_notes
+apiclient
+gflags.py
+gflags_validators.py
+httplib2
+oauth2client
+uritemplate

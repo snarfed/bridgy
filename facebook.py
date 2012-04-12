@@ -59,6 +59,7 @@ TODO: use third_party_id if we ever need to store an fb user id anywhere else.
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
+import collections
 import datetime
 import json
 import logging
@@ -181,33 +182,36 @@ class FacebookPage(models.Source):
 
     return [(l['link_id'], l['url']) for l in self.link_data]
 
-  def get_comments(self, posts):
-    comments_by_link_id = dict((c['object_id'], c) for c in self.comment_data)
+  def get_comments(self, posts_and_dests):
+    comments_by_link_id = collections.defaultdict(list)
+    for c in self.comment_data:
+      comments_by_link_id[c['object_id']].append(c)
+
     profiles = dict((p['id'], p) for p in self.profile_data)
     links = dict((l['link_id'], l['url']) for l in self.link_data)
 
     comments = []
-    for link_id, dest in posts:
-      c = comments_by_link_id[link_id]
-      fromid = c['fromid']
-      profile = profiles[fromid]
-      post_url = 'https://www.facebook.com/permalink.php?story_fbid=%s&id=%s' % (
-        c['object_id'], fromid)
+    for link_id, dest in posts_and_dests:
+      for c in comments_by_link_id[link_id]:
+        fromid = c['fromid']
+        profile = profiles[fromid]
+        post_url = 'https://www.facebook.com/permalink.php?story_fbid=%s&id=%s' % (
+          c['object_id'], fromid)
 
-      comments.append(FacebookComment(
-          key_name=c['post_fbid'],
-          source=self,
-          dest=dest,
-          source_post_url=post_url,
-          dest_post_url=links[link_id],
-          created=datetime.datetime.utcfromtimestamp(c['time']),
-          author_name=profile['name'],
-          author_url=profile['url'],
-          content=c['text'],
-          fb_fromid=fromid,
-          fb_username=c['username'],
-          fb_object_id=c['object_id'],
-          ))
+        comments.append(FacebookComment(
+            key_name=c['post_fbid'],
+            source=self,
+            dest=dest,
+            source_post_url=post_url,
+            dest_post_url=links[link_id],
+            created=datetime.datetime.utcfromtimestamp(c['time']),
+            author_name=profile['name'],
+            author_url=profile['url'],
+            content=c['text'],
+            fb_fromid=fromid,
+            fb_username=c['username'],
+            fb_object_id=c['object_id'],
+            ))
 
     return comments
 

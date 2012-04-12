@@ -312,16 +312,22 @@ class ModelsTest(HandlerTest):
       'author_url': 'http://me',
       'content': 'foo',
       }
+
     self.comments = [
       Comment(key_name='a',
               dest=self.dests[1],
               dest_post_url='http://dest1/post/url',
-              dest_comment_url='http://dest1/comment/url',
+              dest_comment_url='http://dest1/comment/a/url',
               **properties),
       Comment(key_name='b',
               dest=self.dests[0],
               dest_post_url='http://dest0/post/url',
-              dest_comment_url='http://dest0/comment/url',
+              dest_comment_url='http://dest0/comment/b/url',
+              **properties),
+      Comment(key_name='c',
+              dest=self.dests[1],
+              dest_post_url='http://dest1/post/url',
+              dest_comment_url='http://dest1/comment/c/url',
               **properties),
       ]
 

@@ -142,14 +142,14 @@ class Source(Site):
     """
     raise NotImplementedError()
 
-  def get_comments(self, posts):
+  def get_comments(self, posts_and_dests):
     """Returns a list of Comment instances for the given posts.
 
     To be implemented by subclasses. Only called after get_posts().
 
     Args:
-      posts: dict mapping post object to matching Destination. The post objects
-        are a subset of the ones returned by get_posts().
+      posts_and_dests: list of (post object, Destination) tuples. The post
+        objects are a subset of the ones returned by get_posts().
     """
     raise NotImplementedError()
 

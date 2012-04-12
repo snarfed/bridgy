@@ -119,7 +119,7 @@ class FacebookPageTest(FacebookTestBase):
         fb_object_id=1,
         ),
       FacebookComment(
-        key_name='789',
+        key_name='456',
         created=datetime.datetime.utcfromtimestamp(2),
         source=self.page,
         dest=self.dests[0],
@@ -131,6 +131,20 @@ class FacebookPageTest(FacebookTestBase):
         fb_fromid=5,
         fb_username='',
         fb_object_id=2,
+        ),
+      FacebookComment(
+        key_name='789',
+        created=datetime.datetime.utcfromtimestamp(3),
+        source=self.page,
+        dest=self.dests[1],
+        source_post_url='https://www.facebook.com/permalink.php?story_fbid=1&id=6',
+        dest_post_url='http://dest1/post/url',
+        author_name='alice',
+        author_url='http://alice',
+        content='baz',
+        fb_fromid=6,
+        fb_username='',
+        fb_object_id=1,
         ),
       ]
 
@@ -160,8 +174,10 @@ class FacebookPageTest(FacebookTestBase):
     self.expect_fql('SELECT post_fbid, ', [
         {'post_fbid': '123', 'object_id': 1, 'fromid': 4,
          'username': '', 'time': 1, 'text': 'foo'},
-        {'post_fbid': '789', 'object_id': 2, 'fromid': 5,
+        {'post_fbid': '456', 'object_id': 2, 'fromid': 5,
          'username': '', 'time': 2, 'text': 'bar'},
+        {'post_fbid': '789', 'object_id': 1, 'fromid': 6,
+         'username': '', 'time': 3, 'text': 'baz'},
         ])
     self.expect_fql('SELECT link_id, url FROM link ', [
         {'link_id': 1, 'url': 'http://dest1/post/url'},
@@ -170,6 +186,7 @@ class FacebookPageTest(FacebookTestBase):
     self.expect_fql('SELECT id, name, url FROM profile ', [
         {'id': 4, 'name': 'fred', 'url': 'http://fred'},
         {'id': 5, 'name': 'bob', 'url': 'http://bob'},
+        {'id': 6, 'name': 'alice', 'url': 'http://alice'},
         ])
     self.mox.ReplayAll()
 
