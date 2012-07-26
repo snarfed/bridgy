@@ -73,7 +73,7 @@ class TwitterSearch(models.Source):
       # https://dev.twitter.com/docs/tweet-entities
       dest_post_url = None
       tweet_url = self.tweet_url(result['from_user'], result['id'])
-      for url in result['entities'].get('urls', []):
+      for url in result.get('entities', {}).get('urls', []):
         # expanded_url isn't always provided
         expanded_url = url.get('expanded_url', url['url'])
         if expanded_url.startswith(self.url):
@@ -97,7 +97,7 @@ class TwitterSearch(models.Source):
     for tweet, _ in tweets_and_dests:
       user = tweet['from_user']
       if user not in mentions:
-        mentions[user] = self.search('@%s filter:links' % user)        
+        mentions[user] = self.search('@%s filter:links' % user)
 
     # find and convert replies
     for tweet, dest in tweets_and_dests:

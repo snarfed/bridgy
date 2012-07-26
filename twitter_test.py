@@ -51,7 +51,6 @@ class TwitterSearchTest(testutil.ModelsTest):
 
       # no embedded urls
       {'created_at': 'Tue, 03 Jan 2012 16:17:16 +0000',
-       'entities': {},
        'from_user': 'user2',
        'from_user_name': 'user 2 name',
        'id': 2,
