@@ -42,7 +42,7 @@ def get_post_id(url):
   resp = urlfetch.fetch(url)
   return int(re.search(POST_ID_RE, resp.content).group(2))
 
-  
+
 class WordPressSite(models.Destination):
   """A wordpress blog.
 
@@ -118,7 +118,16 @@ class WordPressSite(models.Destination):
 
     author_url = str(comment.author_url) # xmlrpclib complains about string subclasses
     post_id = get_post_id(comment.dest_post_url)
-    wp.new_comment(post_id, comment.author_name, author_url, content)
+
+    try:
+      wp.new_comment(post_id, comment.author_name, author_url, content)
+    except xmlrpclib.Fault, e:
+      # if it's a dupe, we're done!
+      if (e.faultCode == 500 and
+          e.faultString.startswith('Duplicate comment detected')):
+        pass
+      else:
+        raise
 
 
 class WordPress(object):
@@ -147,7 +156,7 @@ class WordPress(object):
     """Fetches all of the comments for a given post or page.
 
     TODO: error handling
-  
+
     Args:
       post_id: integer, post or page id
 
@@ -160,12 +169,12 @@ class WordPress(object):
     """
     return self.proxy.wp.getComments(self.blog_id, self.username, self.password,
                                      {'post_id': post_id})
-  
+
   def new_comment(self, post_id, author, author_url, content):
     """Adds a new comment.
 
     TODO: error handling
-  
+
     Args:
       post_id: integer, post or page id
       author: string, human-readable name
@@ -182,7 +191,7 @@ class WordPress(object):
     # also, use '' instead of None, even though we use allow_none=True. it
     # converts None to <nil />, which wordpress's xmlrpc server interprets as
     # "no parameter" instead of "blank parameter."
-    # 
+    #
     # note that this requires anonymous commenting to be turned on in wordpress
     # via the xmlrpc_allow_anonymous_comments filter.
     return self.proxy.wp.newComment(
@@ -199,7 +208,7 @@ class WordPress(object):
     http://core.trac.wordpress.org/ticket/18104
 
     TODO: error handling
-  
+
     Args:
       comment_id: integer, comment id
 

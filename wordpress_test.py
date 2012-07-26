@@ -28,29 +28,32 @@ class WordPressBaseTest(mox.MoxTestBase):
     self.wp = WordPress('http://my/xmlrpc', 999, 'me', 'passwd')
     self.result = [{'foo': 0}, {'bar': 1}]
 
+  def expect_xmlrpc_ok(self, method, *args, **struct):
+    self.expect_xmlrpc(method, *args, **struct).AndReturn(self.result)
+
   def expect_xmlrpc(self, method, *args, **struct):
     args = list(args)
     if struct:
       args.append(struct)
     body = xmlrpclib.dumps(tuple(args), methodname=method)
-    self.transport.request('my', '/xmlrpc', body, verbose=0).AndReturn(self.result)
+    return self.transport.request('my', '/xmlrpc', body, verbose=0)
 
 
 class WordPressTest(WordPressBaseTest):
 
   def test_get_comments(self):
-    self.expect_xmlrpc('wp.getComments', 999, 'me', 'passwd', post_id=123)
+    self.expect_xmlrpc_ok('wp.getComments', 999, 'me', 'passwd', post_id=123)
     self.mox.ReplayAll()
     self.assertEqual(self.result, self.wp.get_comments(123))
 
   def test_new_comment(self):
-    self.expect_xmlrpc('wp.newComment', 999, '', '', 123,
+    self.expect_xmlrpc_ok('wp.newComment', 999, '', '', 123,
                        author='me', author_url='http://me', content='foo')
     self.mox.ReplayAll()
     self.assertEqual(self.result, self.wp.new_comment(123, 'me', 'http://me', 'foo'))
-                    
+
   def test_delete_comment(self):
-    self.expect_xmlrpc('wp.deleteComment', 999, 'me', 'passwd', 456)
+    self.expect_xmlrpc_ok('wp.deleteComment', 999, 'me', 'passwd', 456)
     self.mox.ReplayAll()
     self.assertEqual(self.result, self.wp.delete_comment(456))
 
@@ -66,6 +69,8 @@ class WordPressSiteTest(WordPressBaseTest, testutil.ModelsTest):
       }
     self.site = WordPressSite(key_name='http://my/xmlrpc_999', **self.props)
     self.user = models.User.get_or_insert_current_user(self.handler)
+    self.expected_content = 'foo <cite><a href="http://source/post/url">via FakeSource</a></cite>'
+
 
   def test_add_handler(self):
     post_params = dict(self.props)
@@ -121,9 +126,9 @@ class WordPressSiteTest(WordPressBaseTest, testutil.ModelsTest):
     self.mox.StubOutWithMock(wordpress, 'get_post_id')
     wordpress.get_post_id('http://dest1/post/url').AndReturn(789)
 
-    content = 'foo <cite><a href="http://source/post/url">via FakeSource</a></cite>'
-    self.expect_xmlrpc('wp.newComment', 999, '', '', 789,
-                       author='me', author_url='http://me', content=content)
+    self.expect_xmlrpc_ok('wp.newComment', 999, '', '', 789,
+                       author='me', author_url='http://me',
+                       content=self.expected_content)
     self.mox.ReplayAll()
     self.site.add_comment(self.comments[0])
 
@@ -132,9 +137,36 @@ class WordPressSiteTest(WordPressBaseTest, testutil.ModelsTest):
     self.mox.StubOutWithMock(wordpress, 'get_post_id')
     wordpress.get_post_id('http://dest1/post/url').AndReturn(789)
 
-    self.comments[0].content = 'foo<br />bar'
-    expected = 'foo<p />bar <cite><a href="http://source/post/url">via FakeSource</a></cite>'
-    self.expect_xmlrpc('wp.newComment', 999, '', '', 789,
+    self.comments[0].content = 'bar<br />foo'
+    expected = 'bar<p />' + self.expected_content
+    self.expect_xmlrpc_ok('wp.newComment', 999, '', '', 789,
                        author='me', author_url='http://me', content=expected)
     self.mox.ReplayAll()
     self.site.add_comment(self.comments[0])
+
+  def test_add_comment_ignores_500_duplicate_fault(self):
+    self.mox.StubOutWithMock(wordpress, 'get_post_id')
+    wordpress.get_post_id('http://dest1/post/url').AndReturn(789)
+
+    fault = xmlrpclib.Fault(500, 'Duplicate comment detected!')
+    self.expect_xmlrpc('wp.newComment', 999, '', '', 789,
+                       author='me', author_url='http://me',
+                       content=self.expected_content,
+                       ).AndRaise(fault)
+    self.mox.ReplayAll()
+
+    self.site.add_comment(self.comments[0])
+
+
+  def test_add_comment_passes_through_other_fault(self):
+    self.mox.StubOutWithMock(wordpress, 'get_post_id')
+    wordpress.get_post_id('http://dest1/post/url').AndReturn(789)
+
+    fault = xmlrpclib.Fault(500, 'other error')
+    self.expect_xmlrpc('wp.newComment', 999, '', '', 789,
+                       author='me', author_url='http://me',
+                       content=self.expected_content,
+                       ).AndRaise(fault)
+    self.mox.ReplayAll()
+
+    self.assertRaises(xmlrpclib.Fault, self.site.add_comment, self.comments[0])
