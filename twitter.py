@@ -97,7 +97,7 @@ class TwitterSearch(models.Source):
     for tweet, _ in tweets_and_dests:
       user = tweet['from_user']
       if user not in mentions:
-        mentions[user] = self.search('@%s filter:links' % user)
+        mentions[user] = self.search('@%s' % user)
 
     # find and convert replies
     for tweet, dest in tweets_and_dests:

@@ -134,7 +134,7 @@ class TwitterSearchTest(testutil.ModelsTest):
                          json.dumps(self.url_search_results))
     for user_id, results in self.mention_search_results:
         self.expect_urlfetch(
-          '.*/search\.json\?q=%%40user%d\+filter%%3Alinks&.*' % user_id,
+          '.*/search\.json\?q=%%40user%d\&.*' % user_id,
           json.dumps(results))
     self.mox.ReplayAll()
 
