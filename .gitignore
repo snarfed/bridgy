@@ -1,8 +1,11 @@
 datastore.dat
+google-api-python-client
 google_client_secret_bridgy
 google_client_secret_bridgy_devel
 oauth_client_secret
-plus-dogfood.json
+plus.dogfood.rest.json
+plus.v1.rest.json
+plus.json
 private_notes
 apiclient
 gflags.py

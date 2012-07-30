@@ -14,14 +14,6 @@ import util
 
 from apiclient.discovery import build
 
-# hack to prevent oauth2client from trying to cache on the filesystem.
-# http://groups.google.com/group/google-appengine-python/browse_thread/thread/b48c23772dbc3334
-# must be done before importing.
-# import oauth2client.client
-# oauth2client.client.CACHED_HTTP = httplib2.Http()
-if hasattr(os, 'tempnam'):
-  delattr(os, 'tempnam')
-
 from oauth2client.appengine import CredentialsModel
 from oauth2client.appengine import OAuth2Decorator
 from oauth2client.appengine import StorageByKeyName
@@ -40,7 +32,13 @@ with open(appengine_config.GOOGLE_CLIENT_SECRET_FILE) as f:
   plus_api = OAuth2Decorator(
     client_id=appengine_config.GOOGLE_CLIENT_ID,
     client_secret=f.read().strip(),
+    # make sure we ask for a refresh token so we can use it to get an access
+    # token offline. more:
+    # ~/etc/google+_oauth_credentials_debugging_for_plusstreamfeed_bridgy
+    # http://googleappsdeveloper.blogspot.com.au/2011/10/upcoming-changes-to-oauth-20-endpoint.html
     scope='https://www.googleapis.com/auth/plus.me',
+    access_type='offline',
+    approval_prompt='force',
     )
 
 
@@ -82,6 +80,17 @@ class GooglePlusService(db.Model):
     """
     if not cls.service:
       cls.service = build('plus', 'v1', cls.http)
+      # this doesn't work. i get 403 Access not configured on the request to
+      # https://www.googleapis.com/plus/v1/people/me?alt=json .
+      #
+      # from apiclient.discovery import build
+      #
+      # with open('plus.json') as f:
+      #   DISCOVERY_DOC = f.read()
+      #
+      # cls.service = build_from_document(DISCOVERY_DOC,
+      #                                   base='https://www.googleapis.com/',
+      #                                   http=cls.http)
 
     resource, method = endpoint.split('.')
     resource = resource.lower()
