@@ -4,6 +4,7 @@ shared posts also showed up on your blog? Bridgy copies them back for you.
 http://brid.gy/
 
 Background: http://snarfed.org/2011-07-27_facebook_app_for_ostatus
+License: This project is placed in the public domain.
 
 
 Requires a bunch of libraries because of Google+: google-api-python-client,
