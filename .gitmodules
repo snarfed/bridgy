@@ -4,3 +4,12 @@
 [submodule "tweepy_submodule"]
 	path = tweepy_submodule
 	url = git://github.com/tweepy/tweepy.git
+[submodule "google-api-python-client"]
+	path = google-api-python-client
+	url = git@github.com:musicmetric/google-api-python-client.git
+[submodule "python-gflags"]
+	path = python-gflags
+	url = git@github.com:wishabi/python-gflags.git
+[submodule "httplib2_module"]
+	path = httplib2_module
+	url = git@github.com:adamjmcgrath/httplib2.git
