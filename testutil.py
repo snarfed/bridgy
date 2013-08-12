@@ -11,7 +11,7 @@ import mox
 import re
 import urllib
 import urlparse
-from webob import datastruct 
+import webob
 import wsgiref
 
 from models import Comment, Destination, Source
@@ -214,7 +214,7 @@ class HandlerTest(TestbedTest):
     self.environ['CONTENT_LENGTH'] = len(body)
 
     if headers:
-      datastruct.EnvironHeaders(self.environ).update(headers)
+      webob.Request(self.environ).headers.update(headers)
 
     def start_response(status, headers, exc_info=None):
       assert exc_info is None

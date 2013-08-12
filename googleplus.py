@@ -28,18 +28,17 @@ HARD_CODED_DEST = 'WordPressSite'
 
 # client id and secret aren't stored in the datastore like FacebookApp since
 # it's hard to have the datastore ready in unit tests at module load time.
-with open(appengine_config.GOOGLE_CLIENT_SECRET_FILE) as f:
-  plus_api = OAuth2Decorator(
-    client_id=appengine_config.GOOGLE_CLIENT_ID,
-    client_secret=f.read().strip(),
-    # make sure we ask for a refresh token so we can use it to get an access
-    # token offline. more:
-    # ~/etc/google+_oauth_credentials_debugging_for_plusstreamfeed_bridgy
-    # http://googleappsdeveloper.blogspot.com.au/2011/10/upcoming-changes-to-oauth-20-endpoint.html
-    scope='https://www.googleapis.com/auth/plus.me',
-    access_type='offline',
-    approval_prompt='force',
-    )
+plus_api = OAuth2Decorator(
+  client_id=appengine_config.GOOGLE_CLIENT_ID,
+  client_secret=appengine_config.GOOGLE_CLIENT_SECRET,
+  # make sure we ask for a refresh token so we can use it to get an access
+  # token offline. more:
+  # ~/etc/google+_oauth_credentials_debugging_for_plusstreamfeed_bridgy
+  # http://googleappsdeveloper.blogspot.com.au/2011/10/upcoming-changes-to-oauth-20-endpoint.html
+  scope='https://www.googleapis.com/auth/plus.me',
+  access_type='offline',
+  approval_prompt='force',
+  )
 
 
 class GooglePlusService(db.Model):
