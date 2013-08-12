@@ -1,0 +1,3 @@
+[submodule "webutil"]
+	path = webutil
+	url = git@github.com:snarfed/webutil.git
