@@ -1,3 +1,6 @@
 [submodule "webutil"]
 	path = webutil
 	url = git@github.com:snarfed/webutil.git
+[submodule "tweepy_submodule"]
+	path = tweepy_submodule
+	url = git://github.com/tweepy/tweepy.git
