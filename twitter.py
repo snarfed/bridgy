@@ -13,10 +13,12 @@ import logging
 import os
 import re
 import urllib
+import urlparse
 
 import appengine_config
 import models
 import tasks
+import tweepy
 import util
 
 from google.appengine.api import taskqueue
@@ -27,6 +29,8 @@ from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
 
 HARD_CODED_DEST = 'WordPressSite'
+TWITTER_ACCESS_TOKEN_KEY = appengine_config.read('twitter_access_token_key')
+TWITTER_ACCESS_TOKEN_SECRET = appengine_config.read('twitter_access_token_secret')
 
 
 class TwitterSearch(models.Source):
@@ -72,7 +76,7 @@ class TwitterSearch(models.Source):
       # extract destination post url from tweet entities
       # https://dev.twitter.com/docs/tweet-entities
       dest_post_url = None
-      tweet_url = self.tweet_url(result['from_user'], result['id'])
+      tweet_url = self.tweet_url(result['user'], result['id'])
       for url in result.get('entities', {}).get('urls', []):
         # expanded_url isn't always provided
         expanded_url = url.get('expanded_url', url['url'])
@@ -105,10 +109,10 @@ class TwitterSearch(models.Source):
         logging.debug('Looking at mention: %s', mention)
         if mention.get('in_reply_to_status_id') == tweet['id']:
           reply_id = mention['id']
-          reply_user = mention['from_user']
+          reply_user = mention['user']
           source_post_url = self.tweet_url(reply_user, reply_id)
-          author_name = (mention['from_user_name'] if mention['from_user_name']
-                         else '@' + reply_user)
+          author_name = (reply_user['name'] if reply_user['name']
+                         else '@' + reply_user['screen_name'])
           logging.debug('Found reply %s', source_post_url)
 
           # parse the timestamp, format e.g. 'Sun, 01 Jan 2012 11:44:57 +0000'
@@ -145,18 +149,34 @@ class TwitterSearch(models.Source):
 
     Returns: dict, JSON results
     """
-    url = ('http://search.twitter.com/search.json'
-           '?q=%s&include_entities=true&result_type=recent&rpp=100' %
-           urllib.quote_plus(query))
-    resp = urlfetch.fetch(url, deadline=999)
-    assert resp.status_code == 200, resp.status_code
-    return json.loads(resp.content)['results']
+    url_without_query = 'https://api.twitter.com/1.1/search/tweets.json'
+    url = url_without_query + (
+      '?q=%s&include_entities=true&result_type=recent&count=100' %
+      urllib.quote_plus(query))
+    parsed = urlparse.urlparse(url)
+    headers = {}
+
+    auth = tweepy.OAuthHandler(appengine_config.TWITTER_APP_KEY,
+                               appengine_config.TWITTER_APP_SECRET)
+    # make sure token key and secret aren't unicode because python's hmac
+    # module (used by tweepy/oauth.py) expects strings.
+    # http://stackoverflow.com/questions/11396789
+    auth.set_access_token(str(TWITTER_ACCESS_TOKEN_KEY),
+                          str(TWITTER_ACCESS_TOKEN_SECRET))
+    auth.apply_auth(url_without_query, 'GET', headers,
+                    dict(urlparse.parse_qsl(parsed.query)))
+
+    logging.debug('Fetching %s', url)
+    resp = urlfetch.fetch(url, headers=headers, deadline=999)
+    logging.debug('Response %d: %s', resp.status_code, resp.content)
+    assert resp.status_code == 200
+    return json.loads(resp.content)['statuses']
 
   @staticmethod
-  def tweet_url(username, id):
+  def tweet_url(user, id):
     """Returns the URL of a tweet.
     """
-    return 'http://twitter.com/%s/status/%d' % (username, id)
+    return 'http://twitter.com/%s/status/%d' % (user['screen_name'], id)
 
   @staticmethod
   def user_url(username):

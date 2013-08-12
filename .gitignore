@@ -1,4 +1,6 @@
 datastore.dat
+facebook_app_id
+facebook_app_secret
 google-api-python-client
 google_client_secret_bridgy
 google_client_secret_bridgy_devel
@@ -12,4 +14,8 @@ gflags.py
 gflags_validators.py
 httplib2
 oauth2client
+twitter_access_token_key
+twitter_access_token_secret
+twitter_app_key
+twitter_app_secret
 uritemplate
