@@ -8,26 +8,7 @@ License: This project is placed in the public domain.
 
 
 Requires a bunch of libraries because of Google+: google-api-python-client,
-httplib2, python-gflags, etc. I'd use git submodules, but I haven't yet found
-git repos hosting them. Here are easy setup instructions:
-
-http://code.google.com/p/google-api-python-client/wiki/Installation
-
-Or if you want to download and set them up manually:
-
-# in bridgy source directory
-hg clone https://code.google.com/p/google-api-python-client/
-ln -s google-api-python-client/apiclient
-ln -s google-api-python-client/oauth2client
-ln -s google-api-python-client/uritemplate
-
-hg clone https://code.google.com/p/httplib2/
-ln -s google-api-python-client/httplib2
-
-svn checkout http://python-gflags.googlecode.com/svn/trunk/ python-gflags
-ln -s python-gflags/gflags.py 
-ln -s python-gflags/gflags_validators.py 
-
+httplib2, python-gflags, etc. They're all in git submodules.
 
 The tests require the App Engine SDK and python-mox.
 
