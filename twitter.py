@@ -99,13 +99,17 @@ class TwitterSearch(models.Source):
     # maps username to list of @ mention search results, which includes replies
     mentions = {}
     for tweet, _ in tweets_and_dests:
-      user = tweet['from_user']
-      if user not in mentions:
+      user = tweet.get('from_user')
+      if user and user not in mentions:
         mentions[user] = self.search('@%s' % user)
 
     # find and convert replies
     for tweet, dest in tweets_and_dests:
-      for mention in mentions[tweet['from_user']]:
+      author = tweet.get('from_user')
+      if not author:
+        continue
+
+      for mention in mentions[author]:
         logging.debug('Looking at mention: %s', mention)
         if mention.get('in_reply_to_status_id') == tweet['id']:
           reply_id = mention['id']
