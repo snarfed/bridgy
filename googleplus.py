@@ -149,7 +149,6 @@ class GooglePlusPage(models.Source):
     activities = GooglePlusService.call_with_creds(
       self.gae_user_id, 'activities.list', userId=self.key().name(),
       collection='public', maxResults=100)
-    logging.debug('@@ received:\n%s', activities)
 
     activities_with_links = []
     for activity in activities['items']:
