@@ -8,6 +8,7 @@ pprint.pprint(json.loads(urllib.urlopen(
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import datetime
+import email.utils
 import json
 import logging
 import os
@@ -119,11 +120,10 @@ class TwitterSearch(models.Source):
                           else '@' + reply_user['screen_name'])
           logging.debug('Found reply %s', source_post_url)
 
-          # parse the timestamp, format e.g. 'Sun, 01 Jan 2012 11:44:57 +0000'
-          created_at = re.sub(' \+[0-9]{4}$', '', mention['created_at'])
-          created = datetime.datetime.strptime(created_at,
-                                               '%a, %d %b %Y %H:%M:%S')
-
+          # parse the timestamp, format e.g. "Fri Sep 21 22:51:18 +0800 2012"
+          timetuple = list(email.utils.parsedate_tz(mention['created_at']))
+          del timetuple[6:9]  # these are day of week, week of month, and is_dst
+          created = datetime.datetime(*timetuple)
           replies.append(TwitterReply(
               key_name=str(reply_id),
               source=self,

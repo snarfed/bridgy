@@ -36,7 +36,7 @@ class TwitterSearchTest(testutil.ModelsTest):
     # https://dev.twitter.com/docs/api/1.1/get/search/tweets
     self.tweets = [
       # two embedded urls, only one with expanded_url, no replies
-      {'created_at': 'Wed, 04 Jan 2012 20:10:28 +0000',
+      {'created_at': 'Wed Jan 04 20:10:28 2012 +0000',
        'entities': {'urls': [{'display_url': 'bar.org/qwert',
                               'expanded_url': 'http://bar.org/qwert',
                               'url': 'http://t.co/ZhhEkuxo'},
@@ -49,14 +49,14 @@ class TwitterSearchTest(testutil.ModelsTest):
        },
 
       # no embedded urls
-      {'created_at': 'Tue, 03 Jan 2012 16:17:16 +0000',
+      {'created_at': 'Tue Jan 03 16:17:16 2012 +0000',
        'user': {'screen_name': 'user2', 'name': 'user 2 name'},
        'id': 2,
        'text': 'this is also a tweet',
        },
 
       # two embedded urls, one reply (below)
-      {'created_at': 'Wed, 04 Jan 2012 09:10:28 +0000',
+      {'created_at': 'Wed Jan 04 09:10:28 2012 +0000',
        'entities': {'urls': [{'display_url': 'dest1/xyz',
                               'expanded_url': 'http://dest1/xyz',
                               'url': 'http://t.co/AhhEkuxo'},
@@ -77,14 +77,14 @@ class TwitterSearchTest(testutil.ModelsTest):
     # https://dev.twitter.com/docs/api/1.1/get/search/tweets
     self.mentions = [
       # not a reply
-      {'created_at': 'Sun, 01 Jan 2012 11:44:57 +0000',
+      {'created_at': 'Sun Jan 01 11:44:57 2012 +0000',
        'entities': {'user_mentions': [{'id': 3, 'screen_name': 'user3'}]},
        'user': {'screen_name': 'user4', 'name': 'user 4 name'},
        'id': 4,
        'text': 'boring',
        },
       # reply to tweet id 3 (above)
-      {'created_at': 'Sun, 01 Jan 1970 00:00:01 +0000',
+      {'created_at': 'Sun Jan 01 11:44:57 2012 +0000',
        'entities': {'user_mentions': [{'id': 3, 'screen_name': 'user3'}]},
        'user': {'screen_name': 'user5', 'name': 'user 5 name'},
        'id': 5,
@@ -103,7 +103,7 @@ class TwitterSearchTest(testutil.ModelsTest):
     # TODO: unify with ModelsTest.setUp()
     self.replies = [TwitterReply(
         key_name='5',
-        created=datetime.datetime.utcfromtimestamp(1),
+        created=datetime.datetime(2012, 1, 1, 11, 44, 57),
         source=self.search,
         dest=self.dests[1],
         source_post_url='http://twitter.com/user5/status/5',
