@@ -33,7 +33,7 @@ class TwitterSearchTest(testutil.ModelsTest):
                                 )
 
     # based on:
-    # http://search.twitter.com/search.json?q=snarfed.org+filter:links&include_entities=true
+    # https://dev.twitter.com/docs/api/1.1/get/search/tweets
     self.tweets = [
       # two embedded urls, only one with expanded_url, no replies
       {'created_at': 'Wed, 04 Jan 2012 20:10:28 +0000',
@@ -43,16 +43,14 @@ class TwitterSearchTest(testutil.ModelsTest):
                              {'display_url': 'dest1/asdf',
                               'url': 'http://dest1/asdf'},
                              ]},
-       'from_user': 'user1',
-       'from_user_name': 'user 1 name',
+       'user': {'screen_name': 'user1', 'name': 'user 1 name'},
        'id': 1,
        'text': 'this is a tweet',
        },
 
       # no embedded urls
       {'created_at': 'Tue, 03 Jan 2012 16:17:16 +0000',
-       'from_user': 'user2',
-       'from_user_name': 'user 2 name',
+       'user': {'screen_name': 'user2', 'name': 'user 2 name'},
        'id': 2,
        'text': 'this is also a tweet',
        },
@@ -63,13 +61,12 @@ class TwitterSearchTest(testutil.ModelsTest):
                               'expanded_url': 'http://dest1/xyz',
                               'url': 'http://t.co/AhhEkuxo'},
                              ]},
-       'from_user': 'user3',
-       'from_user_name': 'user 3 name',
+       'user': {'screen_name': 'user3', 'name': 'user 3 name'},
        'id': 3,
        'text': 'this is the last tweet',
        },
       ]
-    self.url_search_results = {'results': copy.deepcopy(self.tweets)}
+    self.url_search_results = {'statuses': copy.deepcopy(self.tweets)}
 
     self.tweets_and_urls = []
     for i, link in (0, 'http://dest1/asdf'), (2, 'http://dest1/xyz'):
@@ -77,21 +74,19 @@ class TwitterSearchTest(testutil.ModelsTest):
       self.tweets_and_urls.append((self.tweets[i], link))
 
     # index is the user id. based on:
-    # http://search.twitter.com/search.json?q=@snarfed_org+filter:links&include_entities=true
+    # https://dev.twitter.com/docs/api/1.1/get/search/tweets
     self.mentions = [
       # not a reply
       {'created_at': 'Sun, 01 Jan 2012 11:44:57 +0000',
        'entities': {'user_mentions': [{'id': 3, 'screen_name': 'user3'}]},
-       'from_user': 'user4',
-       'from_user_name': 'user 4 name',
+       'user': {'screen_name': 'user4', 'name': 'user 4 name'},
        'id': 4,
        'text': 'boring',
        },
       # reply to tweet id 3 (above)
       {'created_at': 'Sun, 01 Jan 1970 00:00:01 +0000',
        'entities': {'user_mentions': [{'id': 3, 'screen_name': 'user3'}]},
-       'from_user': 'user5',
-       'from_user_name': 'user 5 name',
+       'user': {'screen_name': 'user5', 'name': 'user 5 name'},
        'id': 5,
        'in_reply_to_status_id': 3,
        # note the @ mention and hashtag for testing TwitterSearch.linkify()
@@ -101,8 +96,8 @@ class TwitterSearchTest(testutil.ModelsTest):
       ]
     # elements are (user id, search results)
     self.mention_search_results = [
-      (1, {'results': []}),
-      (3, {'results': self.mentions}),
+      (1, {'statuses': []}),
+      (3, {'statuses': self.mentions}),
       ]
 
     # TODO: unify with ModelsTest.setUp()
@@ -130,12 +125,14 @@ class TwitterSearchTest(testutil.ModelsTest):
       ignore=['created'])
 
   def test_get_posts_and_get_comments(self):
-    self.expect_urlfetch('.*/search\.json\?q=dest1\+filter%3Alinks&.*',
-                         json.dumps(self.url_search_results))
+    self.expect_urlfetch('.*/search/tweets\.json\?q=dest1\+filter%3Alinks&.*',
+                         json.dumps(self.url_search_results),
+                         headers=mox.IgnoreArg())
     for user_id, results in self.mention_search_results:
         self.expect_urlfetch(
-          '.*/search\.json\?q=%%40user%d\&.*' % user_id,
-          json.dumps(results))
+          '.*/search/tweets\.json\?q=%%40user%d\&.*' % user_id,
+          json.dumps(results),
+          headers=mox.IgnoreArg())
     self.mox.ReplayAll()
 
     self.assertEqual(self.tweets_and_urls, self.search.get_posts())

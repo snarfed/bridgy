@@ -68,7 +68,7 @@ class TwitterSearch(models.Source):
     """
     # find tweets with links that include our base url.
     # search response is JSON tweets:
-    # https://dev.twitter.com/docs/api/1/get/search
+    # https://dev.twitter.com/docs/api/1.1/search/tweets
     results = self.search('%s filter:links' % util.reduce_url(self.url))
 
     tweets_and_urls = []
@@ -88,8 +88,8 @@ class TwitterSearch(models.Source):
         result['bridgy_link'] = dest_post_url
         tweets_and_urls.append((result, dest_post_url))
       else:
-        logging.info("Tweet %s should have %s link but doesn't. Maybe shortened?",
-                     tweet_url, self.url)
+        logging.debug("Tweet %s should have %s link but doesn't. Maybe shortened?",
+                      tweet_url, self.url)
 
     return tweets_and_urls
 
@@ -99,24 +99,24 @@ class TwitterSearch(models.Source):
     # maps username to list of @ mention search results, which includes replies
     mentions = {}
     for tweet, _ in tweets_and_dests:
-      user = tweet.get('from_user')
+      user = tweet['user'].get('screen_name')
       if user and user not in mentions:
         mentions[user] = self.search('@%s' % user)
 
     # find and convert replies
     for tweet, dest in tweets_and_dests:
-      author = tweet.get('from_user')
+      author = tweet['user'].get('screen_name')
       if not author:
         continue
 
       for mention in mentions[author]:
-        logging.debug('Looking at mention: %s', mention)
+        logging.debug('Looking at mention: %s', mention['id'])
         if mention.get('in_reply_to_status_id') == tweet['id']:
           reply_id = mention['id']
           reply_user = mention['user']
           source_post_url = self.tweet_url(reply_user, reply_id)
-          author_name = (reply_user['name'] if reply_user['name']
-                         else '@' + reply_user['screen_name'])
+          replier_name = (reply_user['name'] if reply_user['name']
+                          else '@' + reply_user['screen_name'])
           logging.debug('Found reply %s', source_post_url)
 
           # parse the timestamp, format e.g. 'Sun, 01 Jan 2012 11:44:57 +0000'
@@ -131,10 +131,10 @@ class TwitterSearch(models.Source):
               source_post_url=source_post_url,
               dest_post_url=tweet['bridgy_link'],
               created=created,
-              author_name=author_name,
-              author_url=self.user_url(reply_user),
+              author_name=replier_name,
+              author_url=self.user_url(reply_user['screen_name']),
               content=self.linkify(mention['text']),
-              username=reply_user,
+              username=reply_user['screen_name'],
               ))
 
     return replies
@@ -172,9 +172,10 @@ class TwitterSearch(models.Source):
 
     logging.debug('Fetching %s', url)
     resp = urlfetch.fetch(url, headers=headers, deadline=999)
-    logging.debug('Response %d: %s', resp.status_code, resp.content)
-    assert resp.status_code == 200
-    return json.loads(resp.content)['statuses']
+    resp_json = json.loads(resp.content)
+    # logging.debug('Response %d: %s', resp.status_code, json.dumps(resp_json, indent=2))
+    assert resp.status_code == 200, resp.content
+    return resp_json['statuses']
 
   @staticmethod
   def tweet_url(user, id):

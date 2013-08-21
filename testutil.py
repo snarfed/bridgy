@@ -44,7 +44,6 @@ class TestbedTest(mox.MoxTestBase):
   class UrlfetchResult(object):
     """A fake urlfetch.fetch() result object.
     """
-  
     def __init__(self, status_code, content):
       self.status_code = status_code
       self.content = content
@@ -82,7 +81,7 @@ class TestbedTest(mox.MoxTestBase):
     # google/appengine/api/taskqueue/taskqueue_stub.py
     self.taskqueue_stub = apiproxy_stub_map.apiproxy.GetStub('taskqueue')
 
-  def expect_urlfetch(self, expected_url, response):
+  def expect_urlfetch(self, expected_url, response, **kwargs):
     """Stubs out urlfetch.fetch() and sets up an expected call.
 
     Args:
@@ -94,7 +93,7 @@ class TestbedTest(mox.MoxTestBase):
     else:
       comparator = mox.Regex(expected_url)
 
-    urlfetch.fetch(comparator, deadline=999).AndReturn(
+    urlfetch.fetch(comparator, deadline=999, **kwargs).AndReturn(
       self.UrlfetchResult(200, response))
 
   def assert_keys_equal(self, a, b):
