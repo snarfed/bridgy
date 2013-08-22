@@ -104,6 +104,9 @@ class TwitterSearch(models.Source):
       replies.append(self.tweet_to_reply(tweet, dest, dest_post_url))
       user = tweet['user'].get('screen_name')
       if user and user not in mentions:
+        # can't use statuses/mentions_timeline because i'd need to auth as the
+        # user being mentioned.
+        # https://dev.twitter.com/docs/api/1.1/get/statuses/mentions_timeline
         mentions[user] = self.search('@%s' % user)
 
     # find and convert replies
