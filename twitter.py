@@ -99,7 +99,9 @@ class TwitterSearch(models.Source):
 
     # maps username to list of @ mention search results, which includes replies
     mentions = {}
-    for tweet, _ in tweets_and_dests:
+    for tweet, dest in tweets_and_dests:
+      dest_post_url = tweet['bridgy_link']
+      replies.append(self.tweet_to_reply(tweet, dest, dest_post_url))
       user = tweet['user'].get('screen_name')
       if user and user not in mentions:
         mentions[user] = self.search('@%s' % user)
@@ -111,31 +113,10 @@ class TwitterSearch(models.Source):
         continue
 
       for mention in mentions[author]:
-        logging.debug('Looking at mention: %s', mention['id'])
         if mention.get('in_reply_to_status_id') == tweet['id']:
-          reply_id = mention['id']
-          reply_user = mention['user']
-          source_post_url = self.tweet_url(reply_user, reply_id)
-          replier_name = (reply_user['name'] if reply_user['name']
-                          else '@' + reply_user['screen_name'])
-          logging.debug('Found reply %s', source_post_url)
-
-          # parse the timestamp, format e.g. "Fri Sep 21 22:51:18 +0800 2012"
-          timetuple = list(email.utils.parsedate_tz(mention['created_at']))
-          del timetuple[6:9]  # these are day of week, week of month, and is_dst
-          created = datetime.datetime(*timetuple)
-          replies.append(TwitterReply(
-              key_name=str(reply_id),
-              source=self,
-              dest=dest,
-              source_post_url=source_post_url,
-              dest_post_url=tweet['bridgy_link'],
-              created=created,
-              author_name=replier_name,
-              author_url=self.user_url(reply_user['screen_name']),
-              content=self.linkify(mention['text']),
-              username=reply_user['screen_name'],
-              ))
+          reply = self.tweet_to_reply(mention, dest, dest_post_url)
+          logging.debug('Found reply %s', reply.source_post_url)
+          replies.append(reply)
 
     return replies
 
@@ -176,6 +157,31 @@ class TwitterSearch(models.Source):
     # logging.debug('Response %d: %s', resp.status_code, json.dumps(resp_json, indent=2))
     assert resp.status_code == 200, resp.content
     return resp_json['statuses']
+
+  def tweet_to_reply(self, tweet, dest, dest_post_url):
+    """Converts a tweet JSON dict to a TwitterReply.
+    """
+    id = tweet['id']
+    user = tweet['user']
+    source_post_url = self.tweet_url(user, id)
+    replier_name = (user['name'] if user['name'] else '@' + user['screen_name'])
+
+  # parse the timestamp, format e.g. "Fri Sep 21 22:51:18 +0800 2012"
+    timetuple = list(email.utils.parsedate_tz(tweet['created_at']))
+    del timetuple[6:9]  # these are day of week, week of month, and is_dst
+    created = datetime.datetime(*timetuple)
+    return TwitterReply(
+      key_name=str(id),
+      source=self,
+      dest=dest,
+      source_post_url=source_post_url,
+      dest_post_url=dest_post_url,
+      created=created,
+      author_name=replier_name,
+      author_url=self.user_url(user['screen_name']),
+      content=self.linkify(tweet['text']),
+      username=user['screen_name'],
+      )
 
   @staticmethod
   def tweet_url(user, id):

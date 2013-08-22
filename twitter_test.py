@@ -55,7 +55,7 @@ class TwitterSearchTest(testutil.ModelsTest):
        'text': 'this is also a tweet',
        },
 
-      # two embedded urls, one reply (below)
+      # one embedded url, one reply (below)
       {'created_at': 'Wed Jan 04 09:10:28 2012 +0000',
        'entities': {'urls': [{'display_url': 'dest1/xyz',
                               'expanded_url': 'http://dest1/xyz',
@@ -101,7 +101,32 @@ class TwitterSearchTest(testutil.ModelsTest):
       ]
 
     # TODO: unify with ModelsTest.setUp()
-    self.replies = [TwitterReply(
+    self.replies = [
+      TwitterReply(
+        key_name='1',
+        created=datetime.datetime(2012, 1, 4, 20, 10, 28),
+        source=self.search,
+        dest=self.dests[1],
+        source_post_url='http://twitter.com/user1/status/1',
+        dest_post_url='http://dest1/asdf',
+        author_name='user 1 name',
+        author_url='http://twitter.com/user1',
+        content='this is a tweet',
+        username='user1',
+        ),
+      TwitterReply(
+        key_name='3',
+        created=datetime.datetime(2012, 1, 4, 9, 10, 28),
+        source=self.search,
+        dest=self.dests[1],
+        source_post_url='http://twitter.com/user3/status/3',
+        dest_post_url='http://dest1/xyz',
+        author_name='user 3 name',
+        author_url='http://twitter.com/user3',
+        content='this is the last tweet',
+        username='user3',
+        ),
+      TwitterReply(
         key_name='5',
         created=datetime.datetime(2012, 1, 1, 11, 44, 57),
         source=self.search,
@@ -112,7 +137,8 @@ class TwitterSearchTest(testutil.ModelsTest):
         author_url='http://twitter.com/user5',
         content='<a href="http://twitter.com/user3">@user3</a> i hereby <a href="http://twitter.com/search?q=%23reply">#reply</a>',
         username='user5',
-        )]
+        ),
+      ]
 
   def test_new(self):
     self.environ['QUERY_STRING'] = urllib.urlencode(
