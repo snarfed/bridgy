@@ -73,31 +73,49 @@ class TwitterSearchTest(testutil.ModelsTest):
       self.tweets[i]['bridgy_link'] = link
       self.tweets_and_urls.append((self.tweets[i], link))
 
-    # index is the user id. based on:
+    # key is the user id. based on:
     # https://dev.twitter.com/docs/api/1.1/get/search/tweets
-    self.mentions = [
-      # not a reply
-      {'created_at': 'Sun Jan 01 11:44:57 2012 +0000',
-       'entities': {'user_mentions': [{'id': 3, 'screen_name': 'user3'}]},
-       'user': {'screen_name': 'user4', 'name': 'user 4 name'},
-       'id': 4,
-       'text': 'boring',
-       },
-      # reply to tweet id 3 (above)
-      {'created_at': 'Sun Jan 01 11:44:57 2012 +0000',
-       'entities': {'user_mentions': [{'id': 3, 'screen_name': 'user3'}]},
-       'user': {'screen_name': 'user5', 'name': 'user 5 name'},
-       'id': 5,
-       'in_reply_to_status_id': 3,
-       # note the @ mention and hashtag for testing TwitterSearch.linkify()
-       'text': '@user3 i hereby #reply',
-       'to_user': 'user3',
-       },
-      ]
     # elements are (user id, search results)
     self.mention_search_results = [
       (1, {'statuses': []}),
-      (3, {'statuses': self.mentions}),
+      (3, {'statuses': [
+           # not a reply
+           {'created_at': 'Sun Jan 01 11:44:57 2012 +0000',
+            'entities': {'user_mentions': [{'id': 3, 'screen_name': 'user3'}]},
+            'user': {'screen_name': 'user4', 'name': 'user 4 name'},
+            'id': 4,
+            'text': 'boring',
+            },
+           # reply to tweet id 3 (above)
+           {'created_at': 'Sun Jan 01 11:44:57 2012 +0000',
+            'entities': {'user_mentions': [{'id': 3, 'screen_name': 'user3'}]},
+            'user': {'screen_name': 'user5', 'name': 'user 5 name'},
+            'id': 5,
+            'in_reply_to_status_id': 3,
+            # note the @ mention and hashtag for testing TwitterSearch.linkify()
+            'text': '@user3 i hereby #reply',
+            'to_user': 'user3',
+            },
+           ]}),
+      (5, {'statuses': [
+             # reply to reply tweet id 5 (above)
+            {'created_at': 'Sun Jan 01 11:44:57 2013 +0000',
+             'entities': {'user_mentions': [{'id': 5, 'screen_name': 'user5'}]},
+             'user': {'screen_name': 'user6', 'name': 'user 6 name'},
+             'id': 6,
+             'in_reply_to_status_id': 5,
+             'text': 'we must go deeper',
+             'to_user': 'user5',
+             },
+            ]}),
+      (6, {'statuses': [
+            # not a reply to anything
+            {'user': {'screen_name': 'user2', 'name': 'user 2 name'},
+             'id': 999,
+             'text': 'too deep!',
+             'to_user': 'user6',
+             },
+            ]}),
       ]
 
     # TODO: unify with ModelsTest.setUp()
@@ -137,6 +155,18 @@ class TwitterSearchTest(testutil.ModelsTest):
         author_url='http://twitter.com/user5',
         content='<a href="http://twitter.com/user3">@user3</a> i hereby <a href="http://twitter.com/search?q=%23reply">#reply</a>',
         username='user5',
+        ),
+      TwitterReply(
+        key_name='6',
+        created=datetime.datetime(2013, 1, 1, 11, 44, 57),
+        source=self.search,
+        dest=self.dests[1],
+        source_post_url='http://twitter.com/user6/status/6',
+        dest_post_url='http://dest1/xyz',
+        author_name='user 6 name',
+        author_url='http://twitter.com/user6',
+        content='we must go deeper',
+        username='user6',
         ),
       ]
 

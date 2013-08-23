@@ -95,33 +95,40 @@ class TwitterSearch(models.Source):
     return tweets_and_urls
 
   def get_comments(self, tweets_and_dests):
-    replies = []
-
+    # maps tweet id to TwitterReply
+    replies = {}
     # maps username to list of @ mention search results, which includes replies
     mentions = {}
-    for tweet, dest in tweets_and_dests:
-      dest_post_url = tweet['bridgy_link']
-      replies.append(self.tweet_to_reply(tweet, dest, dest_post_url))
-      user = tweet['user'].get('screen_name')
-      if user and user not in mentions:
-        # can't use statuses/mentions_timeline because i'd need to auth as the
-        # user being mentioned.
-        # https://dev.twitter.com/docs/api/1.1/get/statuses/mentions_timeline
-        mentions[user] = self.search('@%s' % user)
 
     # find and convert replies
     for tweet, dest in tweets_and_dests:
       author = tweet['user'].get('screen_name')
       if not author:
         continue
+      elif tweet['id'] in replies:
+        logging.error('Already seen tweet %s! Should be impossible!', tweet['id'])
+        continue
 
+      reply = self.tweet_to_reply(tweet, dest)
+      logging.debug('Found matching tweet %s', reply.source_post_url)
+      replies[tweet['id']] = reply
+
+      # get mentions of this tweet's author so we can search them for replies to
+      # this tweet. can't use statuses/mentions_timeline because i'd need to
+      # auth as the user being mentioned.
+      # https://dev.twitter.com/docs/api/1.1/get/statuses/mentions_timeline
+      if author not in mentions:
+        mentions[author] = self.search('@%s' % author)
+
+      # look for replies. add any we find to the end of tweets_and_dests.
+      # this makes us recursively follow reply chains to their end. (python
+      # supports appending to a sequence while you're iterating over it.)
       for mention in mentions[author]:
         if mention.get('in_reply_to_status_id') == tweet['id']:
-          reply = self.tweet_to_reply(mention, dest, dest_post_url)
-          logging.debug('Found reply %s', reply.source_post_url)
-          replies.append(reply)
+          mention['bridgy_link'] = tweet['bridgy_link']
+          tweets_and_dests.append((mention, dest))
 
-    return replies
+    return replies.values()
 
   @staticmethod
   def search(query):
@@ -161,7 +168,7 @@ class TwitterSearch(models.Source):
     assert resp.status_code == 200, resp.content
     return resp_json['statuses']
 
-  def tweet_to_reply(self, tweet, dest, dest_post_url):
+  def tweet_to_reply(self, tweet, dest):
     """Converts a tweet JSON dict to a TwitterReply.
     """
     id = tweet['id']
@@ -169,7 +176,7 @@ class TwitterSearch(models.Source):
     source_post_url = self.tweet_url(user, id)
     replier_name = (user['name'] if user['name'] else '@' + user['screen_name'])
 
-  # parse the timestamp, format e.g. "Fri Sep 21 22:51:18 +0800 2012"
+    # parse the timestamp, format e.g. "Fri Sep 21 22:51:18 +0800 2012"
     timetuple = list(email.utils.parsedate_tz(tweet['created_at']))
     del timetuple[6:9]  # these are day of week, week of month, and is_dst
     created = datetime.datetime(*timetuple)
@@ -178,7 +185,7 @@ class TwitterSearch(models.Source):
       source=self,
       dest=dest,
       source_post_url=source_post_url,
-      dest_post_url=dest_post_url,
+      dest_post_url=tweet['bridgy_link'],
       created=created,
       author_name=replier_name,
       author_url=self.user_url(user['screen_name']),
