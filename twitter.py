@@ -81,11 +81,21 @@ class TwitterSearch(models.Source):
       for url in result.get('entities', {}).get('urls', []):
         # expanded_url isn't always provided
         expanded_url = url.get('expanded_url', url['url'])
+
+        if not expanded_url.startswith(self.url):
+          # may be a shortened link. try following redirects.
+          logging.debug('Following URL %s', expanded_url)
+          resolved = urlfetch.fetch(expanded_url, method='HEAD',
+                                    follow_redirects=True, deadline=999)
+          if hasattr(resolved, 'final_url'):
+            expanded_url = resolved.final_url
+            logging.debug('Resolved to %s', expanded_url)
+
         if expanded_url.startswith(self.url):
           dest_post_url = expanded_url
-          logging.debug('Found post %s in tweet %s', dest_post_url, tweet_url)
 
       if dest_post_url:
+        logging.debug('Found post %s in tweet %s', dest_post_url, tweet_url)
         result['bridgy_link'] = dest_post_url
         tweets_and_urls.append((result, dest_post_url))
       else:

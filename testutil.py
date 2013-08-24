@@ -32,6 +32,17 @@ def get_task_params(task):
   params = dict((key, val[0]) for key, val in params.items())
   return params
 
+
+class UrlfetchResult(object):
+  """A fake urlfetch.fetch() result object.
+  """
+  def __init__(self, status_code, content, final_url=None):
+    self.status_code = status_code
+    self.content = content
+    if final_url:
+      self.final_url = final_url
+
+
 class TestbedTest(mox.MoxTestBase):
   """Base test case class that sets up App Engine testbed.
 
@@ -40,13 +51,6 @@ class TestbedTest(mox.MoxTestBase):
   For more info on testbed, see:
   http://code.google.com/appengine/docs/python/tools/localunittesting.html
   """
-
-  class UrlfetchResult(object):
-    """A fake urlfetch.fetch() result object.
-    """
-    def __init__(self, status_code, content):
-      self.status_code = status_code
-      self.content = content
 
   def setUp(self):
     super(TestbedTest, self).setUp()
@@ -93,8 +97,9 @@ class TestbedTest(mox.MoxTestBase):
     else:
       comparator = mox.Regex(expected_url)
 
-    urlfetch.fetch(comparator, deadline=999, **kwargs).AndReturn(
-      self.UrlfetchResult(200, response))
+    if not isinstance(response, UrlfetchResult):
+      response = UrlfetchResult(200, response)
+    urlfetch.fetch(comparator, deadline=999, **kwargs).AndReturn(response)
 
   def assert_keys_equal(self, a, b):
     """Asserts that a and b have the same keys.

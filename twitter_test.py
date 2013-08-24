@@ -40,8 +40,8 @@ class TwitterSearchTest(testutil.ModelsTest):
        'entities': {'urls': [{'display_url': 'bar.org/qwert',
                               'expanded_url': 'http://bar.org/qwert',
                               'url': 'http://t.co/ZhhEkuxo'},
-                             {'display_url': 'dest1/asdf',
-                              'url': 'http://dest1/asdf'},
+                             {'display_url': 'bit.ly/dest1_asdf',
+                              'url': 'http://bit.ly/dest1_asdf'},
                              ]},
        'user': {'screen_name': 'user1', 'name': 'user 1 name'},
        'id': 1,
@@ -184,6 +184,17 @@ class TwitterSearchTest(testutil.ModelsTest):
     self.expect_urlfetch('.*/search/tweets\.json\?q=dest1\+filter%3Alinks&.*',
                          json.dumps(self.url_search_results),
                          headers=mox.IgnoreArg())
+
+    # following possibly shortened URLs
+    self.expect_urlfetch(
+      'http://bar.org/qwert', '',
+      follow_redirects=True, method='HEAD')
+    self.expect_urlfetch(
+      'http://bit.ly/dest1_asdf',
+      testutil.UrlfetchResult(200, '', final_url='http://dest1/asdf'),
+      follow_redirects=True, method='HEAD')
+
+    # mentions
     for user_id, results in self.mention_search_results:
         self.expect_urlfetch(
           '.*/search/tweets\.json\?q=%%40user%d\&.*' % user_id,
