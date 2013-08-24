@@ -89,7 +89,7 @@ class TwitterSearch(models.Source):
           logging.debug('Following URL %s', expanded_url)
           resolved = urlfetch.fetch(expanded_url, method='HEAD',
                                     follow_redirects=True, deadline=999)
-          if hasattr(resolved, 'final_url'):
+          if getattr(resolved, 'final_url', None):
             expanded_url = resolved.final_url
             logging.debug('Resolved to %s', expanded_url)
 
