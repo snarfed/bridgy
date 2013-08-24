@@ -84,6 +84,8 @@ class TwitterSearch(models.Source):
 
         if not expanded_url.startswith(self.url):
           # may be a shortened link. try following redirects.
+          # (could use a service like http://unshort.me/api.html instead,
+          # but not sure it'd buy us anything.)
           logging.debug('Following URL %s', expanded_url)
           resolved = urlfetch.fetch(expanded_url, method='HEAD',
                                     follow_redirects=True, deadline=999)
