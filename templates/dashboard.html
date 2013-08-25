@@ -34,7 +34,7 @@
 </div>
 
 <div id="navbar">
-  <p> 
+  <p>
   {% if user %}
     {{ nickname }} | <a href="{{ logout_url }}">Sign out</a>
   {% else %}
@@ -59,11 +59,17 @@ shared posts also showed up on your blog? Bridgy copies them back for you.</p>
   {# TODO: paging #}
   <table id="sources">
   {% for source in sources %}
-    <tr><td>
+    <tr {% if source.status == "disabled" %}
+         title="This source was disconnected on {{ source.type_display_name }}'s end. To fix this, delete and re-add it."
+       {% endif %}><td>
         <a href="{{ source.url }}">
           <img class="source" src="{{ source.picture }}" /></a>
       </td><td>
-        <a href="{{ source.url }}">{{ source.display_name }}</a>
+        {% if source.status == "disabled" %}
+          <img src="static/warning.png" /></a>
+        {% endif %}
+        <a href="{{ source.url }}" class="source {{ source.status }}"
+           >{{ source.display_name }}</a>
       </td><td>
         ({{ source.type_display_name }})
       </td><td>
