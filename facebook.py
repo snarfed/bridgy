@@ -239,6 +239,9 @@ class FacebookApp(db.Model):
   """Stores the bridgy app credentials that we use with the API.
 
   Not thread safe.
+
+  TODO(ryan): store the app id and secret in files instead, like twitter and
+  googe+ already do, using webutil/appengine_config.py.
   """
   app_id = db.StringProperty(required=True)
   app_secret = db.StringProperty(required=True)
