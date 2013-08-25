@@ -4,10 +4,15 @@
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
+import collections
 import copy
 import datetime
 import mox
 import testutil
+
+from apiclient.errors import HttpError
+from oauth2client.appengine import CredentialsModel
+from oauth2client.client import AccessTokenCredentials
 
 import googleplus
 from googleplus import GooglePlusComment, GooglePlusPage, GooglePlusService
@@ -145,3 +150,17 @@ class GooglePlusPageTest(testutil.ModelsTest):
       self.comments,
       self.page.get_comments([(self.activities[3], self.dests[1]),
                               (self.activities[4], self.dests[0])]))
+
+  def test_get_posts_and_get_comments(self):
+    self.mox.UnsetStubs()  # we want to use GooglePlusService.call()
+    self.mox.StubOutWithMock(GooglePlusService, 'call')
+
+    FakeHttpResponse = collections.namedtuple('FakeHttpResponse', ['status'])
+    GooglePlusService.call(mox.IgnoreArg(), 'endpoint').AndRaise(
+      HttpError(FakeHttpResponse(status=404), ''))
+    self.mox.ReplayAll()
+
+    creds = AccessTokenCredentials('token', 'user agent')
+    CredentialsModel(key_name=self.gae_user_id, credentials=creds).save()
+    self.assertRaises(models.DisableSource, GooglePlusService.call_with_creds,
+                      self.gae_user_id, 'endpoint')

@@ -13,6 +13,7 @@ import models
 import util
 
 from apiclient.discovery import build
+from apiclient.errors import HttpError
 
 from oauth2client.appengine import CredentialsModel
 from oauth2client.appengine import OAuth2Decorator
@@ -65,7 +66,14 @@ class GooglePlusService(db.Model):
     credentials = StorageByKeyName(CredentialsModel, gae_user_id,
                                    'credentials').get()
     assert credentials, 'Credentials not found for user id %s' % gae_user_id
-    return cls.call(credentials.authorize(cls.http), endpoint, **kwargs)
+    try:
+      return cls.call(credentials.authorize(cls.http), endpoint, **kwargs)
+    except HttpError, e:
+      if e.resp.status in (403, 404):
+        logging.exception('Got %d, disabling source.', e.resp.status)
+        raise models.DisableSource()
+      else:
+        raise
 
   @classmethod
   def call(cls, http, endpoint, **kwargs):
