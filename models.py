@@ -227,7 +227,7 @@ class Comment(util.KeyNameModel):
     return self
 
 
-class Deauthorized(Exception):
+class DisableSource(Exception):
   """Raised when a user has deauthorized our app inside a given platform.
   """
   pass

@@ -281,7 +281,7 @@ class FacebookApp(db.Model):
     # Facebook API error details:
     # https://developers.facebook.com/docs/reference/api/errors/
     if isinstance(data, dict) and data.get('error_code') in (102, 190):
-      raise models.Deauthorized()
+      raise models.DisableSource()
     assert 'error_code' not in data and 'error_msg' not in data
     return data
 

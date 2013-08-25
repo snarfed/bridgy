@@ -207,4 +207,4 @@ class FacebookPageTest(FacebookTestBase):
           'request_args': [{}]}))
     self.mox.ReplayAll()
 
-    self.assertRaises(models.Deauthorized, self.page.get_posts)
+    self.assertRaises(models.DisableSource, self.page.get_posts)

@@ -75,11 +75,11 @@ class Poll(TaskHandler):
 
     try:
       self.do_post(source)
-    except models.Deauthorized:
+    except models.DisableSource:
       # the user deauthorized the bridgy app, so disable this source.
       source.status = 'disabled'
       source.save()
-      logging.exception('Deauthorized!')
+      logging.exception('DisableSource!')
       # let this task complete successfully so that it's not retried.
 
   def do_post(self, source):

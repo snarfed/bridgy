@@ -114,7 +114,7 @@ class PollTest(TaskQueueTest):
     self.assertEqual([], self.taskqueue_stub.GetTasks('poll'))
 
   def test_disable_source_on_deauthorized(self):
-    """If the source raises Deauthorized, disable it.
+    """If the source raises DisableSource, disable it.
     """
     source = self.sources[0]
 
@@ -122,7 +122,7 @@ class PollTest(TaskQueueTest):
                          ('get_comments', [mox.IgnoreArg()])):
       self.mox.UnsetStubs()
       self.mox.StubOutWithMock(testutil.FakeSource, method)
-      getattr(testutil.FakeSource, method)(*cmps).AndRaise(models.Deauthorized)
+      getattr(testutil.FakeSource, method)(*cmps).AndRaise(models.DisableSource)
       self.mox.ReplayAll()
 
       source.status = 'enabled'
