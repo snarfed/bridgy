@@ -84,12 +84,14 @@ class TestbedTest(mox.MoxTestBase):
     # google/appengine/api/taskqueue/taskqueue_stub.py
     self.taskqueue_stub = apiproxy_stub_map.apiproxy.GetStub('taskqueue')
 
-  def expect_urlfetch(self, expected_url, response, **kwargs):
-    """Stubs out urlfetch.fetch() and sets up an expected call.
+  def expect_urlfetch(self, expected_url, response=None, **kwargs):
+    """Sets up an expected call to urlfetch.fetch.
 
     Args:
       expected_url: string, regex or mox.Comparator
       response: string
+
+    Returns: mox.MockMethod that you can call AndReturn(), AndRaise(), etc. on.
     """
     if isinstance(expected_url, mox.Comparator):
       comparator = expected_url
@@ -98,7 +100,11 @@ class TestbedTest(mox.MoxTestBase):
 
     if not isinstance(response, UrlfetchResult):
       response = UrlfetchResult(200, response)
-    urlfetch.fetch(comparator, deadline=999, **kwargs).AndReturn(response)
+
+    mock = urlfetch.fetch(comparator, deadline=999, **kwargs)
+    if response is not None:
+      mock.AndReturn(response)
+    return mock
 
   def assert_keys_equal(self, a, b):
     """Asserts that a and b have the same keys.
