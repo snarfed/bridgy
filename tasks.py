@@ -18,6 +18,7 @@ import time
 # need to import model class definitions since poll creates and saves entities.
 import facebook
 import googleplus
+import models
 import twitter
 import util
 import wordpress
@@ -72,6 +73,16 @@ class Poll(TaskHandler):
       logging.warning('duplicate poll task! deferring to the other task.')
       return
 
+    try:
+      self.do_post(source)
+    except models.Deauthorized:
+      # the user deauthorized the bridgy app, so disable this source.
+      source.status = 'disabled'
+      source.save()
+      logging.exception('Deauthorized!')
+      # let this task complete successfully so that it's not retried.
+
+  def do_post(self, source):
     # itertools.chain flattens. also, the outer list() is important, because
     # itertools.chain returns a generator, and we need to be able to iterate
     # over it multiple times. TODO: unit test this
