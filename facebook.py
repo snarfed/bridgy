@@ -142,9 +142,8 @@ class FacebookPage(models.Source):
   def display_name(self):
     return self.name
 
-  @staticmethod
-  def fql(query, access_token):
-    return FacebookApp.get().fql(query, access_token)
+  def fql(self, query):
+    return FacebookApp.get().fql(query, self.access_token)
 
   @staticmethod
   def new(handler):
@@ -154,7 +153,7 @@ class FacebookPage(models.Source):
       handler: the current webapp.RequestHandler
     """
     access_token = handler.request.params['access_token']
-    results = FacebookPage.fql(
+    results = FacebookApp.get().fql(
       'SELECT id, name, url, pic_small, type, username FROM profile WHERE id = me()',
       access_token)
     result = results[0]
@@ -171,18 +170,15 @@ class FacebookPage(models.Source):
     self.comment_data = self.fql(
       """SELECT post_fbid, time, fromid, username, object_id, text FROM comment
          WHERE object_id IN (SELECT link_id FROM link WHERE owner = %s)
-         ORDER BY time DESC""" % self.key().name(),
-      self.access_token)
+         ORDER BY time DESC""" % self.key().name())
 
     link_ids = set(str(c['object_id']) for c in self.comment_data)
     self.link_data = self.fql('SELECT link_id, url FROM link WHERE link_id IN (%s)' %
-                              ','.join(link_ids),
-                              self.access_token)
+                              ','.join(link_ids))
 
     fromids = set(str(c['fromid']) for c in self.comment_data)
     self.profile_data = self.fql(
-      'SELECT id, name, url FROM profile WHERE id IN (%s)' % ','.join(fromids),
-      self.access_token)
+      'SELECT id, name, url FROM profile WHERE id IN (%s)' % ','.join(fromids))
 
     return [(l['link_id'], l['url']) for l in self.link_data]
 
@@ -282,6 +278,9 @@ class FacebookApp(db.Model):
     assert resp.status_code == 200, resp.status_code
     data = json.loads(resp.content)
     logging.debug('FQL response: %s', pprint.pformat(data))
+    if (isinstance(data, dict) and
+        data.get('error_code') == 190 and data.get('error_subcode') == 458):
+      raise models.Deauthorized()
     assert 'error_code' not in data and 'error_msg' not in data
     return data
 

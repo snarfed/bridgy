@@ -100,7 +100,7 @@ class FacebookPageTest(FacebookTestBase):
                              username='my_username',
                              access_token='my_access_token',
                              )
-    
+
 
     # TODO: unify with ModelsTest.setUp()
     self.comments = [
@@ -197,3 +197,15 @@ class FacebookPageTest(FacebookTestBase):
     self.assert_entities_equal(
       self.comments,
       self.page.get_comments([(1, self.dests[1]), (2, self.dests[0])]))
+
+  def test_disable_on_auth_failure(self):
+    self.expect_urlfetch(
+      '.*',
+      json.dumps({
+          'error_code': 190,
+          'error_msg': 'Error validating access token: User 12345 has not authorized application 67890.',
+          'error_subcode': 458,
+          'request_args': [{}]}))
+    self.mox.ReplayAll()
+
+    self.assertRaises(models.Deauthorized, self.page.get_posts)

@@ -225,3 +225,9 @@ class Comment(util.KeyNameModel):
     taskqueue.add(queue_name='propagate', params={'comment_key': str(self.key())})
     self.save()
     return self
+
+
+class Deauthorized(Exception):
+  """Raised when a user has deauthorized our app inside a given platform.
+  """
+  pass
