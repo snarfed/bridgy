@@ -54,7 +54,7 @@ class User(db.Model):
     """Returns a unique key name for the current user.
 
     Returns: the user's OpenId identifier or App Engine user id or None if
-      they're not logged in, 
+      they're not logged in
     """
     user = users.get_current_user()
     if user:
@@ -70,10 +70,12 @@ class Site(util.KeyNameModel):
 
   # human-readable name for this destination type. subclasses should override.
   TYPE_NAME = None
+  STATUSES = ('enabled', 'disabled')
 
   created = db.DateTimeProperty(auto_now_add=True, required=True)
   url = db.LinkProperty()
   owner = db.ReferenceProperty(User)
+  status = db.StringProperty(choices=STATUSES, default='enabled')
 
   def display_name(self):
     """Returns a human-readable name for this site, e.g. 'My Thoughts'.
@@ -85,7 +87,7 @@ class Site(util.KeyNameModel):
 
   def type_display_name(self):
     """Returns a human-readable name for this type of site, e.g. 'Facebook'.
-    
+
     May be overridden by subclasses.
     """
     return self.TYPE_NAME
@@ -133,7 +135,7 @@ class Source(Site):
 
   def get_posts(self):
     """Returns a list of the most recent posts from this source.
- 
+
     To be implemented by subclasses. The returned post objects will be passed
     back in get_comments().
 
@@ -208,7 +210,7 @@ class Comment(util.KeyNameModel):
   def get_or_save(self):
     existing = db.get(self.key())
     if existing:
-      logging.debug('Deferring to existing comment %s.', existing.key().name())
+      # logging.debug('Deferring to existing comment %s.', existing.key().name())
       # this might be a nice sanity check, but we'd need to hard code certain
       # properties (e.g. content) so others (e.g. status) aren't checked.
       # for prop in self.properties().values():
@@ -217,7 +219,9 @@ class Comment(util.KeyNameModel):
       #   assert new == existing, '%s: new %s, existing %s' % (prop, new, existing)
       return existing
 
-    logging.debug('New comment to propagate: %s' % self.key().name())
+    logging.debug('New comment to propagate! %s %r\n%s on %s',
+                  self.kind(), self.key().id_or_name(),
+                  self.source_comment_url, self.dest_post_url)
     taskqueue.add(queue_name='propagate', params={'comment_key': str(self.key())})
     self.save()
     return self

@@ -86,23 +86,24 @@ class TwitterSearch(models.Source):
           # may be a shortened link. try following redirects.
           # (could use a service like http://unshort.me/api.html instead,
           # but not sure it'd buy us anything.)
-          logging.debug('Following URL %s', expanded_url)
           resolved = urlfetch.fetch(expanded_url, method='HEAD',
                                     follow_redirects=True, deadline=999)
           if getattr(resolved, 'final_url', None):
+            logging.debug('Resolved short url %s to %s', expanded_url,
+                          resolved.final_url)
             expanded_url = resolved.final_url
-            logging.debug('Resolved to %s', expanded_url)
 
         if expanded_url.startswith(self.url):
           dest_post_url = expanded_url
 
       if dest_post_url:
-        logging.debug('Found post %s in tweet %s', dest_post_url, tweet_url)
+        # logging.debug('Found post %s in tweet %s', dest_post_url, tweet_url)
         result['bridgy_link'] = dest_post_url
         tweets_and_urls.append((result, dest_post_url))
       else:
-        logging.debug("Tweet %s should have %s link but doesn't. Maybe shortened?",
-                      tweet_url, self.url)
+        # logging.debug("Tweet %s should have %s link but doesn't. Maybe shortened?",
+        #               tweet_url, self.url)
+        pass
 
     return tweets_and_urls
 
@@ -122,7 +123,7 @@ class TwitterSearch(models.Source):
         continue
 
       reply = self.tweet_to_reply(tweet, dest)
-      logging.debug('Found matching tweet %s', reply.source_post_url)
+      # logging.debug('Found matching tweet %s', reply.source_post_url)
       replies[tweet['id']] = reply
 
       # get mentions of this tweet's author so we can search them for replies to
@@ -142,8 +143,7 @@ class TwitterSearch(models.Source):
 
     return replies.values()
 
-  @staticmethod
-  def search(query):
+  def search(self, query):
     """Searches for tweets using the Twitter Search API.
 
     Background:
