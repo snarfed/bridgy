@@ -278,8 +278,9 @@ class FacebookApp(db.Model):
     assert resp.status_code == 200, resp.status_code
     data = json.loads(resp.content)
     logging.debug('FQL response: %s', pprint.pformat(data))
-    if (isinstance(data, dict) and
-        data.get('error_code') == 190 and data.get('error_subcode') == 458):
+    # Facebook API error details:
+    # https://developers.facebook.com/docs/reference/api/errors/
+    if isinstance(data, dict) and data.get('error_code') in (102, 190):
       raise models.Deauthorized()
     assert 'error_code' not in data and 'error_msg' not in data
     return data

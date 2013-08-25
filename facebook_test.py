@@ -204,7 +204,6 @@ class FacebookPageTest(FacebookTestBase):
       json.dumps({
           'error_code': 190,
           'error_msg': 'Error validating access token: User 12345 has not authorized application 67890.',
-          'error_subcode': 458,
           'request_args': [{}]}))
     self.mox.ReplayAll()
 
