@@ -90,6 +90,8 @@ class TestbedTest(mox.MoxTestBase):
     Args:
       expected_url: string, regex or mox.Comparator
       response: string
+
+    Returns: the mox.MockMethod, which you can call AndRaise(), etc. on
     """
     if isinstance(expected_url, mox.Comparator):
       comparator = expected_url
@@ -98,7 +100,10 @@ class TestbedTest(mox.MoxTestBase):
 
     if not isinstance(response, UrlfetchResult):
       response = UrlfetchResult(200, response)
-    urlfetch.fetch(comparator, deadline=999, **kwargs).AndReturn(response)
+
+    mock = urlfetch.fetch(comparator, deadline=999, **kwargs)
+    mock.AndReturn(response)
+    return mock
 
   def assert_keys_equal(self, a, b):
     """Asserts that a and b have the same keys.

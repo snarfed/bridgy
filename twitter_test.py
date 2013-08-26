@@ -15,6 +15,7 @@ import testutil
 import twitter
 from twitter import TwitterReply, TwitterSearch
 
+from google.appengine.api import urlfetch
 from google.appengine.ext import webapp
 
 
@@ -185,10 +186,9 @@ class TwitterSearchTest(testutil.ModelsTest):
                          json.dumps(self.url_search_results),
                          headers=mox.IgnoreArg())
 
-    # following possibly shortened URLs
-    self.expect_urlfetch(
-      'http://bar.org/qwert', '',
-      follow_redirects=True, method='HEAD')
+    # following possibly shortened URLs. errors should be ignored.
+    self.expect_urlfetch('http://bar.org/qwert', '', follow_redirects=True,
+                         method='HEAD').AndRaise(urlfetch.DownloadError())
     self.expect_urlfetch(
       'http://bit.ly/dest1_asdf',
       testutil.UrlfetchResult(200, '', final_url='http://dest1/asdf'),

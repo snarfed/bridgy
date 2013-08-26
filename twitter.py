@@ -86,12 +86,15 @@ class TwitterSearch(models.Source):
           # may be a shortened link. try following redirects.
           # (could use a service like http://unshort.me/api.html instead,
           # but not sure it'd buy us anything.)
-          resolved = urlfetch.fetch(expanded_url, method='HEAD',
-                                    follow_redirects=True, deadline=999)
-          if getattr(resolved, 'final_url', None):
-            logging.debug('Resolved short url %s to %s', expanded_url,
-                          resolved.final_url)
-            expanded_url = resolved.final_url
+          try:
+            resolved = urlfetch.fetch(expanded_url, method='HEAD',
+                                      follow_redirects=True, deadline=999)
+            if getattr(resolved, 'final_url', None):
+              logging.debug('Resolved short url %s to %s', expanded_url,
+                            resolved.final_url)
+              expanded_url = resolved.final_url
+          except urlfetch.DownloadError, e:
+            logging.error("Couldn't resolve URL: %s", e)
 
         if expanded_url.startswith(self.url):
           dest_post_url = expanded_url

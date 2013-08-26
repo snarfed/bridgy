@@ -230,4 +230,3 @@ class Comment(util.KeyNameModel):
 class DisableSource(Exception):
   """Raised when a user has deauthorized our app inside a given platform.
   """
-  pass
