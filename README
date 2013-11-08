@@ -13,7 +13,17 @@ httplib2, python-gflags, etc. They're all in git submodules.
 The tests require the App Engine SDK and python-mox.
 
 
+Related work
+--
+http://webmention.io/
+https://github.com/vrypan/webmention-tools
+http://indiewebcamp.com/original-post-discovery
+http://indiewebcamp.com/Twitter#Why_permashortcitation_instead_of_a_link
+
+
 TODO:
+flesh out this readme
+redesign
 clear toast messages
 handle case where not a page or post (e.g. http://snarfed.org/911_truth_and_cookies.jpg)
 Traceback (most recent call last):
