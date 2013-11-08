@@ -8,6 +8,10 @@ default_expiration: 1d
 builtins:
 - remote_api: on
 
+libraries:
+- name: ssl
+  version: latest
+
 handlers:
 
 # static
@@ -19,6 +23,9 @@ handlers:
   upload: static/favicon.ico
 
 # dynamic
+- url: /webmention
+  script: webmention.application
+
 - url: /facebook/.*
   script: facebook.application
   login: required
@@ -42,12 +49,15 @@ handlers:
   script: tasks.application
   login: admin
 
-- url: /
+- url: .*
   script: app.application
   # not secure: always because i haven't bought an SNI slot for SSL on the
   # brid.gy custom domain.
   # secure: optional
 
-- url: .*
-  script: app.application
-  login: required
+skip_files:
+- ^(.*/)?.*\.py[co]
+- ^(.*/)?.*/RCS/.*
+- ^(.*/)?\..*
+- ^(.*/)?.*\.bak$
+- ^(.*/)?(debian|doc|docs|pydocs|python3|ref|samples|tests)/.*
