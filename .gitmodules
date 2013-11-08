@@ -10,3 +10,6 @@
 [submodule "google-api-python-client"]
 	path = google-api-python-client
 	url = git@github.com:fmoga/google-api-python-client.git
+[submodule "activitystreams"]
+	path = activitystreams
+	url = git@github.com:snarfed/activitystreams-unofficial.git
