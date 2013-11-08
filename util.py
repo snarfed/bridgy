@@ -8,7 +8,7 @@ import urlparse
 
 from google.appengine.api import taskqueue
 from google.appengine.ext import db
-from google.appengine.ext import webapp
+import webapp2
 
 EPOCH = datetime.datetime.utcfromtimestamp(0)
 POLL_TASK_DATETIME_FORMAT = '%Y-%m-%d-%H-%M-%S'
@@ -53,7 +53,7 @@ class KeyNameModel(db.Model):
       assert False, 'key name required but not provided'
 
 
-class Handler(webapp.RequestHandler):
+class Handler(webapp2.RequestHandler):
   """Includes misc request handler utilities.
 
   Attributes:

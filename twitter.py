@@ -26,8 +26,7 @@ from google.appengine.api import taskqueue
 from google.appengine.api import urlfetch
 from google.appengine.api import users
 from google.appengine.ext import db
-from google.appengine.ext import webapp
-from google.appengine.ext.webapp.util import run_wsgi_app
+import webapp2
 
 HARD_CODED_DEST = 'WordPressSite'
 TWITTER_ACCESS_TOKEN_KEY = appengine_config.read('twitter_access_token_key')
@@ -52,7 +51,7 @@ class TwitterSearch(models.Source):
     """Creates and returns a TwitterSearch based on POST args.
 
     Args:
-      handler: the current webapp.RequestHandler
+      handler: the current RequestHandler
     """
     url = handler.request.params['url']
     return TwitterSearch(key_name=url,
@@ -262,14 +261,7 @@ class DeleteTwitterSearch(util.Handler):
     self.redirect('/?msg=' + msg)
 
 
-application = webapp.WSGIApplication([
+application = webapp2.WSGIApplication([
     ('/twitter/add', AddTwitterSearch),
     ('/twitter/delete', DeleteTwitterSearch),
     ], debug=appengine_config.DEBUG)
-
-def main():
-  run_wsgi_app(application)
-
-
-if __name__ == '__main__':
-  main()

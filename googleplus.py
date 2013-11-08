@@ -22,8 +22,7 @@ from oauth2client.appengine import StorageByKeyName
 from google.appengine.api import users
 from google.appengine.api import memcache
 from google.appengine.ext import db
-from google.appengine.ext import webapp
-from google.appengine.ext.webapp.util import run_wsgi_app
+import webapp2
 
 HARD_CODED_DEST = 'WordPressSite'
 
@@ -127,7 +126,7 @@ class GooglePlusPage(models.Source):
     """Creates and returns a GooglePlusPage for the logged in user.
 
     Args:
-      handler: the current webapp.RequestHandler
+      handler: the current RequestHandler
       http: httplib2.Http instance
     """
     # Google+ Person resource
@@ -229,14 +228,7 @@ class DeleteGooglePlusPage(util.Handler):
     self.redirect('/?msg=' + msg)
 
 
-application = webapp.WSGIApplication([
+application = webapp2.WSGIApplication([
     ('/googleplus/add', AddGooglePlusPage),
     ('/googleplus/delete', DeleteGooglePlusPage),
     ], debug=appengine_config.DEBUG)
-
-def main():
-  run_wsgi_app(application)
-
-
-if __name__ == '__main__':
-  main()

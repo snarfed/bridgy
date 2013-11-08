@@ -20,34 +20,34 @@ handlers:
 
 # dynamic
 - url: /facebook/.*
-  script: facebook.py
+  script: facebook.application
   login: required
 
 - url: /googleplus/.*
-  script: googleplus.py
+  script: googleplus.application
   login: required
 
 - url: /wordpress/.*
-  script: wordpress.py
+  script: wordpress.application
   login: required
 
 - url: /twitter/.*
-  script: twitter.py
+  script: twitter.application
   login: required
 
 - url: /oauth2callback
-  script: oauth2client/appengine.py
+  script: oauth2client/appengine.application
 
 - url: /_ah/queue/.*
-  script: tasks.py
+  script: tasks.application
   login: admin
 
 - url: /
-  script: app.py
-  # not secure: always because app engine can't (yet) do ssl on custom domains
-  # like brid.gy
+  script: app.application
+  # not secure: always because i haven't bought an SNI slot for SSL on the
+  # brid.gy custom domain.
   # secure: optional
 
 - url: .*
-  script: app.py
+  script: app.application
   login: required

@@ -25,8 +25,7 @@ import wordpress
 
 from google.appengine.ext import db
 from google.appengine.api import taskqueue
-from google.appengine.ext import webapp
-from google.appengine.ext.webapp.util import run_wsgi_app
+import webapp2
 
 import appengine_config
 
@@ -34,7 +33,7 @@ import appengine_config
 DESTINATIONS = ['WordPressSite']
 
 
-class TaskHandler(webapp.RequestHandler):
+class TaskHandler(webapp2.RequestHandler):
   """Task handler base class. Includes common utilities.
 
   Attributes:
@@ -205,14 +204,7 @@ class Propagate(TaskHandler):
     self.response.out.write(message)
 
 
-application = webapp.WSGIApplication([
+application = webapp2.WSGIApplication([
     ('/_ah/queue/poll', Poll),
     ('/_ah/queue/propagate', Propagate),
     ], debug=appengine_config.DEBUG)
-
-def main():
-  run_wsgi_app(application)
-
-
-if __name__ == '__main__':
-  main()

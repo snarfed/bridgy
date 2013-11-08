@@ -16,8 +16,7 @@ import util
 
 from google.appengine.api import urlfetch
 from google.appengine.ext import db
-from google.appengine.ext import webapp
-from google.appengine.ext.webapp.util import run_wsgi_app
+import webapp2
 
 # TODO: this isn't global. see e.g.
 # http://wordpress.org/news/2011/07/wordpress-3-2-1/
@@ -69,7 +68,7 @@ class WordPressSite(models.Destination):
     """Creates and saves a WordPressSite for the logged in user.
 
     Args:
-      handler: the current webapp.RequestHandler
+      handler: the current RequestHandler
 
     Returns: WordPressSite
 
@@ -239,14 +238,7 @@ class DeleteWordPressSite(util.Handler):
     self.redirect('/?msg=' + msg)
 
 
-application = webapp.WSGIApplication([
+application = webapp2.WSGIApplication([
     ('/wordpress/add', AddWordPressSite),
     ('/wordpress/delete', DeleteWordPressSite),
     ], debug=appengine_config.DEBUG)
-
-def main():
-  run_wsgi_app(application)
-
-
-if __name__ == '__main__':
-  main()

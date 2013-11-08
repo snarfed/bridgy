@@ -73,8 +73,7 @@ import util
 
 from google.appengine.api import urlfetch
 from google.appengine.ext import db
-from google.appengine.ext import webapp
-from google.appengine.ext.webapp.util import run_wsgi_app
+import webapp2
 
 HARD_CODED_DEST = 'WordPressSite'
 
@@ -150,7 +149,7 @@ class FacebookPage(models.Source):
     """Creates and returns a FacebookPage for the logged in user.
 
     Args:
-      handler: the current webapp.RequestHandler
+      handler: the current RequestHandler
     """
     access_token = handler.request.params['access_token']
     results = FacebookApp.get().fql(
@@ -292,7 +291,7 @@ class FacebookApp(db.Model):
     which makes the next request to get the access token.
 
     Args:
-      handler: the current webapp.RequestHandler
+      handler: the current RequestHandler
       redirect_uri: string, the local url to redirect to. Must begin with /.
     """
     assert self.app_id
@@ -313,7 +312,7 @@ class FacebookApp(db.Model):
     """Gets an access token based on an auth code.
 
     Args:
-      handler: the current webapp.RequestHandler
+      handler: the current RequestHandler
       auth_code: string
       redirect_uri: string, the local url to redirect to. Must begin with /.
     """
@@ -359,7 +358,7 @@ class GotAuthCode(util.Handler):
   def get(self):
     FacebookApp.get()._get_access_token_with_auth_code(
       self, self.request.params['code'], self.request.params['state'])
-    
+
 
 class GotAccessToken(util.Handler):
   def get(self):
@@ -367,16 +366,9 @@ class GotAccessToken(util.Handler):
     self.redirect('/')
 
 
-application = webapp.WSGIApplication([
+application = webapp2.WSGIApplication([
     ('/facebook/add', AddFacebookPage),
     ('/facebook/delete', DeleteFacebookPage),
     ('/facebook/got_auth_code', GotAuthCode),
     ('/facebook/got_access_token', GotAccessToken),
     ], debug=appengine_config.DEBUG)
-
-def main():
-  run_wsgi_app(application)
-
-
-if __name__ == '__main__':
-  main()

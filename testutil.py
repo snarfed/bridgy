@@ -171,7 +171,7 @@ class HandlerTest(TestbedTest):
     self.environ = {}
     wsgiref.util.setup_testing_defaults(self.environ)
     self.environ['HTTP_HOST'] = 'HOST'
-    
+
     self.gae_user_id = '123'
     self.setup_testbed(user_id=self.gae_user_id,
                        user_email='foo@bar.com',
@@ -184,7 +184,7 @@ class HandlerTest(TestbedTest):
 
   def get(self, *args, **kwargs):
     return self._make_request('GET', *args, **kwargs)
-  
+
   def post(self, *args, **kwargs):
     return self._make_request('POST', *args, **kwargs)
 

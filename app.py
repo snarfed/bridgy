@@ -16,13 +16,13 @@ from googleplus import GooglePlusPage
 from twitter import TwitterSearch
 import models
 import util
+from webutil import handlers
 from wordpress import WordPressSite
 
 from google.appengine.api import users
 from google.appengine.ext import db
-from google.appengine.ext import webapp
 from google.appengine.ext.webapp import template
-from google.appengine.ext.webapp.util import run_wsgi_app
+import webapp2
 
 
 class DashboardHandler(util.Handler):
@@ -57,6 +57,9 @@ class DashboardHandler(util.Handler):
 
     msgs = self.request.params.getall('msg')
     path = os.path.join(os.path.dirname(__file__), 'templates', 'dashboard.html')
+
+    self.response.headers['Link'] = ('<%s/webmention>; rel="webmention"' %
+                                     self.request.host_url)
     self.response.out.write(template.render(path, locals()))
 
 
@@ -72,14 +75,8 @@ class RegisterHandler(util.Handler):
     self.redirect('/')
 
 
-def main():
-  application = webapp.WSGIApplication(
-    [('/', DashboardHandler),
-     ('/register', RegisterHandler),
-     ],
-    debug=appengine_config.DEBUG)
-  run_wsgi_app(application)
-
-
-if __name__ == '__main__':
-  main()
+application = webapp2.WSGIApplication(
+  [('/', DashboardHandler),
+   ('/register', RegisterHandler),
+   ] + handlers.HOST_META_ROUTES,
+  debug=appengine_config.DEBUG)

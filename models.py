@@ -12,8 +12,6 @@ import util
 from google.appengine.api import taskqueue
 from google.appengine.api import users
 from google.appengine.ext import db
-from google.appengine.ext import webapp
-from google.appengine.ext.webapp.util import run_wsgi_app
 
 
 class User(db.Model):
@@ -37,7 +35,7 @@ class User(db.Model):
     know if we created the User object so we can add a message to the handler.
 
     Args:
-      handler: the current webapp.RequestHandler
+      handler: the current RequestHandler
     """
     key_name = cls._current_user_key_name()
     if key_name:
@@ -101,7 +99,7 @@ class Site(util.KeyNameModel):
     """Creates and saves a new Site.
 
     Args:
-      handler: the current webapp.RequestHandler
+      handler: the current RequestHandler
       **kwargs: passed to new()
     """
     new = cls.new(handler, **kwargs)
@@ -160,7 +158,7 @@ class Source(Site):
     """Creates and saves a new Source and adds a poll task for it.
 
     Args:
-      handler: the current webapp.RequestHandler
+      handler: the current RequestHandler
       **kwargs: passed to new()
     """
     new = super(Source, cls).create_new(handler, **kwargs)
