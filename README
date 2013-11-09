@@ -22,20 +22,20 @@ http://indiewebcamp.com/Twitter#Why_permashortcitation_instead_of_a_link
 
 
 TODO:
-flesh out this readme
-redesign
-clear toast messages
-handle case where not a page or post (e.g. http://snarfed.org/911_truth_and_cookies.jpg)
-Traceback (most recent call last):
+* twitter login
+* block tweets from logged in user
+* flesh out this readme
+* redesign
+* clear toast messages
+* handle case where not a page or post (e.g. http://snarfed.org/911_truth_and_cookies.jpg)
+  Traceback (most recent call last):
   File "/base/data/home/apps/s~brid-gy/1.355878225058706246/tasks.py", line 117, in post
     comment.dest.add_comment(comment)
   File "/base/data/home/apps/s~brid-gy/1.355878225058706246/wordpress.py", line 124, in add_comment
     post_id = get_post_id(comment.dest_post_url)
   File "/base/data/home/apps/s~brid-gy/1.355878225058706246/wordpress.py", line 42, in get_post_id
     return int(re.search(POST_ID_RE, resp.content).group(2))
-AttributeError: 'NoneType' object has no attribute 'group'
-
-port to webapp2?
-better exception handling
-better exception printing for handlers in tests. (right now just see opaque 500
+  AttributeError: 'NoneType' object has no attribute 'group'
+* better exception handling
+* better exception printing for handlers in tests. (right now just see opaque 500
   error.)
