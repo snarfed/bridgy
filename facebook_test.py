@@ -16,7 +16,7 @@ import facebook
 from facebook import FacebookApp, FacebookComment, FacebookPage
 import models
 
-from google.appengine.ext import webapp
+import webapp2
 
 
 class FacebookTestBase(testutil.ModelsTest):
@@ -49,7 +49,7 @@ class FacebookAppTest(FacebookTestBase):
 
   def test_get_access_token(self):
     self.app.get_access_token(self.handler, '/redirect_to')
-    self.assertEqual(302, self.handler.response.status)
+    self.assertEqual(302, self.handler.response.status_int)
     redirect = self.handler.response.headers['Location']
 
     parsed = urlparse.urlparse(redirect)
@@ -165,7 +165,7 @@ class FacebookPageTest(FacebookTestBase):
 
     self.environ['QUERY_STRING'] = urllib.urlencode(
       {'access_token': 'my_access_token'})
-    self.handler.request = webapp.Request(self.environ)
+    self.handler.request = webapp2.Request(self.environ)
     self.assert_entities_equal(self.page,
                                FacebookPage.new(self.handler),
                                ignore=['created'])

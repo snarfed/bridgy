@@ -16,7 +16,7 @@ import twitter
 from twitter import TwitterReply, TwitterSearch
 
 from google.appengine.api import urlfetch
-from google.appengine.ext import webapp
+import webapp2
 
 
 class TwitterSearchTest(testutil.ModelsTest):
@@ -174,7 +174,7 @@ class TwitterSearchTest(testutil.ModelsTest):
   def test_new(self):
     self.environ['QUERY_STRING'] = urllib.urlencode(
       {'url': 'http://dest1/'})
-    self.handler.request = webapp.Request(self.environ)
+    self.handler.request = webapp2.Request(self.environ)
 
     self.assert_entities_equal(
       self.search,

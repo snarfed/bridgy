@@ -117,9 +117,9 @@ class Site(util.KeyNameModel):
 
 
 class Source(Site):
-  """A web site to read comments from, e.g. a Facebook profile.
+  """A silo account, e.g. a Facebook or Google+ account.
 
-  Each concrete source class should subclass this class.
+  Each concrete silo class should subclass this class.
   """
 
   last_polled = db.DateTimeProperty(default=util.EPOCH)

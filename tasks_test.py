@@ -214,6 +214,10 @@ class PropagateTest(TaskQueueTest):
       getattr(cls, method)(*args).AndRaise(Exception('foo'))
       self.mox.ReplayAll()
 
-      self.post_task(expected_status=500)
+      try:
+        self.post_task(expected_status=500)
+        self.fail('Expected exception')
+      except Exception, e:
+        self.assertEqual('foo', str(e))
       self.assert_comment_is('new', None)
       self.mox.VerifyAll()

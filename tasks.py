@@ -191,7 +191,7 @@ class Propagate(TaskHandler):
     """Attempts to unlease the comment entity.
     """
     comment = db.get(self.request.params['comment_key'])
-    if comment.status == 'processing':
+    if comment and comment.status == 'processing':
       comment.status = 'new'
       comment.leased_until = None
       comment.save()

@@ -11,7 +11,6 @@ import mox
 import re
 import urllib
 import urlparse
-import webob
 import wsgiref
 
 from models import Comment, Destination, Source
@@ -22,8 +21,7 @@ from google.appengine.api import apiproxy_stub_map
 from google.appengine.api import urlfetch
 from google.appengine.ext import db
 from google.appengine.ext import testbed
-from google.appengine.ext import webapp
-
+import webapp2
 
 def get_task_params(task):
   """Parses a task's POST body and returns the query params in a dict.
@@ -177,8 +175,8 @@ class HandlerTest(TestbedTest):
                        user_email='foo@bar.com',
                        federated_identity='')
 
-    self.request = webapp.Request(self.environ)
-    self.response = webapp.Response()
+    self.request = webapp2.Request(self.environ)
+    self.response = webapp2.Response()
     self.handler = util.Handler()
     self.handler.initialize(self.request, self.response)
 
@@ -202,7 +200,7 @@ class HandlerTest(TestbedTest):
       headers: dict of string: string, the HTTP request headers
 
     Returns:
-      webapp.Response
+      webapp2.Response
     """
     assert method
     self.environ['REQUEST_METHOD'] = method
@@ -217,12 +215,12 @@ class HandlerTest(TestbedTest):
     else:
       body = ''
     self.environ['wsgi.input'] = cStringIO.StringIO(body)
-    # webob.Request (and hence webapp.Request) only reads CONTENT_LENGTH bytes
+    # webob.Request (and hence webapp2.Request) only reads CONTENT_LENGTH bytes
     # from wsgi.input, so we have to set it too.
     self.environ['CONTENT_LENGTH'] = len(body)
 
     if headers:
-      webob.Request(self.environ).headers.update(headers)
+      webapp2.Request(self.environ).headers.update(headers)
 
     def start_response(status, headers, exc_info=None):
       assert exc_info is None

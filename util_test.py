@@ -47,7 +47,7 @@ class HandlerTest(testutil.HandlerTest):
   def _test_redirect(self, uri, messages, expected_location):
     self.handler.messages = messages
     self.handler.redirect(uri)
-    self.assertEqual(302, self.response.status)
+    self.assertEqual(302, self.response.status_int)
     self.assertEqual('http://HOST' + expected_location,
                      self.response.headers['Location'])
 
