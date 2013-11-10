@@ -13,7 +13,8 @@ import urlparse
 import appengine_config
 from facebook import FacebookPage
 from googleplus import GooglePlusPage
-from twitter import TwitterSearch
+from twitter import Twitter
+from twitter_search import TwitterSearch
 import models
 import util
 from webutil import handlers
@@ -43,6 +44,7 @@ class DashboardHandler(util.Handler):
       twitter_searches = list(TwitterSearch.all().filter('owner =', user))
       sources = (list(FacebookPage.all().filter('owner =', user)) +
                  list(GooglePlusPage.all().filter('owner =', user)) +
+                 list(Twitter.all().filter('owner =', user)) +
                  twitter_searches
                  )
       for source in sources:
