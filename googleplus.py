@@ -5,19 +5,15 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import datetime
 import httplib2
+import json
 import logging
 import os
 
+from activitystreams.oauth_dropins import googleplus as oauth_googleplus
+from apiclient.errors import HttpError
 import appengine_config
 import models
 import util
-
-from apiclient.discovery import build
-from apiclient.errors import HttpError
-
-from oauth2client.appengine import CredentialsModel
-from oauth2client.appengine import OAuth2Decorator
-from oauth2client.appengine import StorageByKeyName
 
 from google.appengine.api import users
 from google.appengine.api import memcache
@@ -26,82 +22,16 @@ import webapp2
 
 HARD_CODED_DEST = 'WordPressSite'
 
-# client id and secret aren't stored in the datastore like FacebookApp since
-# it's hard to have the datastore ready in unit tests at module load time.
-plus_api = OAuth2Decorator(
-  client_id=appengine_config.GOOGLE_CLIENT_ID,
-  client_secret=appengine_config.GOOGLE_CLIENT_SECRET,
-  # make sure we ask for a refresh token so we can use it to get an access
-  # token offline. more:
-  # ~/etc/google+_oauth_credentials_debugging_for_plusstreamfeed_bridgy
-  # http://googleappsdeveloper.blogspot.com.au/2011/10/upcoming-changes-to-oauth-20-endpoint.html
-  scope='https://www.googleapis.com/auth/plus.me',
-  access_type='offline',
-  approval_prompt='force',
-  )
 
-
-class GooglePlusService(db.Model):
-  """A Google+ API service wrapper. Useful for mocking.
-
-  Not thread safe.
+def handle_exception(self, e, debug):
+  """Exception handler that disables the source on permission errors.
   """
-
-  http = httplib2.Http()
-  # initialized in call()
-  service = None
-
-  @classmethod
-  def call_with_creds(cls, gae_user_id, endpoint, **kwargs):
-    """Makes a Google+ API call with a user's stored credentials.
-
-    Args:
-      gae_user_id: string, App Engine user id used to retrieve the
-        CredentialsModel that stores the user credentials for this call
-      endpoint: string, 'RESOURCE.METHOD', e.g. 'Activities.list'
-
-    Returns: dict
-    """
-    credentials = StorageByKeyName(CredentialsModel, gae_user_id,
-                                   'credentials').get()
-    assert credentials, 'Credentials not found for user id %s' % gae_user_id
-    try:
-      return cls.call(credentials.authorize(cls.http), endpoint, **kwargs)
-    except HttpError, e:
-      if e.resp.status in (403, 404):
-        logging.exception('Got %d, disabling source.', e.resp.status)
-        raise models.DisableSource()
-      else:
-        raise
-
-  @classmethod
-  def call(cls, http, endpoint, **kwargs):
-    """Makes a Google+ API call.
-
-    Args:
-      http: httplib2.Http instance
-      endpoint: string, 'RESOURCE.METHOD', e.g. 'Activities.list'
-
-    Returns: dict
-    """
-    if not cls.service:
-      cls.service = build('plus', 'v1', cls.http)
-      # this doesn't work. i get 403 Access not configured on the request to
-      # https://www.googleapis.com/plus/v1/people/me?alt=json .
-      #
-      # from apiclient.discovery import build
-      #
-      # with open('plus.json') as f:
-      #   DISCOVERY_DOC = f.read()
-      #
-      # cls.service = build_from_document(DISCOVERY_DOC,
-      #                                   base='https://www.googleapis.com/',
-      #                                   http=cls.http)
-
-    resource, method = endpoint.split('.')
-    resource = resource.lower()
-    fn = getattr(getattr(cls.service, resource)(), method)
-    return fn(**kwargs).execute(http)
+  if isinstance(e, HttpError):
+    if e.resp.status in (403, 404):
+      logging.exception('Got %d, disabling source.', e.resp.status)
+      raise models.DisableSource()
+    else:
+      raise
 
 
 class GooglePlusPage(models.Source):
@@ -112,50 +42,47 @@ class GooglePlusPage(models.Source):
 
   TYPE_NAME = 'Google+'
 
-  gae_user_id = db.StringProperty(required=True)
   # full human-readable name
   name = db.StringProperty()
   picture = db.LinkProperty()
   type = db.StringProperty(choices=('user', 'page'))
+  auth_entity = db.ReferenceProperty(oauth_googleplus.GooglePlusAuth)
 
   def display_name(self):
     return self.name
 
   @staticmethod
-  def new(handler, http=None):
+  def new(handler, auth_entity=None):
     """Creates and returns a GooglePlusPage for the logged in user.
 
     Args:
       handler: the current RequestHandler
-      http: httplib2.Http instance
+      auth_entity: oauth_dropins.googleplus.GooglePlusAuth
     """
     # Google+ Person resource
     # https://developers.google.com/+/api/latest/people#resource
-    person = GooglePlusService.call(http, 'people.get', userId='me')
-    id = person['id']
-    if person.get('objectType', 'person') == 'person':
-      person['objectType'] = 'user'
-
-    return GooglePlusPage(key_name=id,
-                          gae_user_id=users.get_current_user().user_id(),
-                          url=person['url'],
+    user = json.loads(auth_entity.user_json)
+    type = 'user' if user.get('objectType', 'person') == 'person' else 'page'
+    return GooglePlusPage(key_name=user['id'],
+                          auth_entity=auth_entity,
+                          url=user['url'],
                           owner=models.User.get_current_user(),
-                          name=person['displayName'],
-                          picture = person['image']['url'],
-                          type=person['objectType'],
-                          )
+                          name=user['displayName'],
+                          picture=user['image']['url'],
+                          type=type)
 
   def get_posts(self):
     """Returns list of (activity resource, link url).
 
     The link url is also added to each returned activity resource in the
     'bridgy_link' JSON value.
-
-    https://developers.google.com/+/api/latest/activies#resource
     """
-    activities = GooglePlusService.call_with_creds(
-      self.gae_user_id, 'activities.list', userId=self.key().name(),
-      collection='public', maxResults=100)
+    # Google+ Activity resource
+    # https://developers.google.com/+/api/latest/activies#resource
+    call = self.auth_entity.api().activities().list(userId=self.key().name(),
+                                                    collection='public',
+                                                    maxResults=100)
+    activities = call.execute(self.auth_entity.http())
 
     activities_with_links = []
     for activity in activities['items']:
@@ -172,9 +99,9 @@ class GooglePlusPage(models.Source):
     for activity, dest in posts:
       # Google+ Comment resource
       # https://developers.google.com/+/api/latest/comments#resource
-      comment_resources = GooglePlusService.call_with_creds(
-        self.gae_user_id, 'comments.list', activityId=activity['id'],
-        maxResults=100)
+      call = self.auth_entity.api().comments().list(activityId=activity['id'],
+                                                    maxResults=100)
+      comment_resources = call.execute(self.auth_entity.http())
 
       for c in comment_resources['items']:
         # parse the iso8601 formatted timestamp
@@ -208,13 +135,9 @@ class GooglePlusComment(models.Comment):
 
 
 class AddGooglePlusPage(util.Handler):
-  @plus_api.oauth_required
   def get(self):
-    self.post()
-
-  @plus_api.oauth_required
-  def post(self):
-    GooglePlusPage.create_new(self, http=plus_api.http())
+    auth_entity = db.get(self.request.get('auth_entity'))
+    GooglePlusPage.create_new(self, auth_entity=auth_entity)
     self.redirect('/')
 
 
@@ -229,6 +152,10 @@ class DeleteGooglePlusPage(util.Handler):
 
 
 application = webapp2.WSGIApplication([
+    ('/googleplus/start',
+     oauth_googleplus.StartHandler.to('/googleplus/oauth2callback')),
+    ('/googleplus/oauth2callback',
+     oauth_googleplus.CallbackHandler.to('/googleplus/add')),
     ('/googleplus/add', AddGooglePlusPage),
     ('/googleplus/delete', DeleteGooglePlusPage),
     ], debug=appengine_config.DEBUG)
