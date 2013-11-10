@@ -178,7 +178,6 @@ class TwitterSearch(models.Source):
     logging.debug('Fetching %s', url)
     resp = urlfetch.fetch(url, headers=headers, deadline=999)
     resp_json = json.loads(resp.content)
-    # logging.debug('Response %d: %s', resp.status_code, json.dumps(resp_json, indent=2))
     assert resp.status_code == 200, resp.content
     return resp_json['statuses']
 
@@ -262,6 +261,6 @@ class DeleteTwitterSearch(util.Handler):
 
 
 application = webapp2.WSGIApplication([
-    ('/twitter/add', AddTwitterSearch),
-    ('/twitter/delete', DeleteTwitterSearch),
+    ('/twitter/add_search', AddTwitterSearch),
+    ('/twitter/delete_search', DeleteTwitterSearch),
     ], debug=appengine_config.DEBUG)

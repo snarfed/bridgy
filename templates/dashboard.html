@@ -92,9 +92,13 @@ shared posts also showed up on your blog? Bridgy copies them back for you.</p>
     <input type="submit" value="Add Google+">
   </form>
 
+  <form method="post" action="/twitter/start">
+    <input type="submit" value="Add Twitter">
+  </form>
+
   {% if available_twitter_dests %}
-    <form method="post" action="/twitter/start">
-      <input type="submit" value="Add Twitter">
+    <form method="post" action="/twitter/add_search">
+      <input type="submit" value="Add Twitter search">
       <label for="add-twitter-url">for base URL</label>
       <select id="add-twitter-url" name="url">
         {% for dest in available_twitter_dests %}
@@ -107,7 +111,7 @@ shared posts also showed up on your blog? Bridgy copies them back for you.</p>
       {% if dests %}
         All destinations have Twitter sources.
       {% else %}
-        Add a destination to enable Twitter.
+        Add a destination to enable Twitter searches.
       {% endif %}
     </p>
   {% endif %}
