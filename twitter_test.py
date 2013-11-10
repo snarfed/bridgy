@@ -182,21 +182,21 @@ class TwitterSearchTest(testutil.ModelsTest):
       ignore=['created'])
 
   def test_get_posts_and_get_comments(self):
-    self.expect_urlfetch('.*/search/tweets\.json\?q=dest1\+filter%3Alinks&.*',
+    self.expect_urlopen('.*/search/tweets\.json\?q=dest1\+filter%3Alinks&.*',
                          json.dumps(self.url_search_results),
                          headers=mox.IgnoreArg())
 
     # following possibly shortened URLs. errors should be ignored.
-    self.expect_urlfetch('http://bar.org/qwert', '', follow_redirects=True,
+    self.expect_urlopen('http://bar.org/qwert', '', follow_redirects=True,
                          method='HEAD').AndRaise(urlfetch.DownloadError())
-    self.expect_urlfetch(
+    self.expect_urlopen(
       'http://bit.ly/dest1_asdf',
       testutil.UrlfetchResult(200, '', final_url='http://dest1/asdf'),
       follow_redirects=True, method='HEAD')
 
     # mentions
     for user_id, results in self.mention_search_results:
-        self.expect_urlfetch(
+        self.expect_urlopen(
           '.*/search/tweets\.json\?q=%%40user%d\&.*' % user_id,
           json.dumps(results),
           headers=mox.IgnoreArg())

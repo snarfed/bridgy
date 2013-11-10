@@ -8,6 +8,7 @@ import urlparse
 
 import appengine_config
 import util
+from webutil.models import KeyNameModel
 
 from google.appengine.api import taskqueue
 from google.appengine.api import users
@@ -59,7 +60,7 @@ class User(db.Model):
       return user.federated_identity() or user.user_id()
 
 
-class Site(util.KeyNameModel):
+class Site(KeyNameModel):
   """A web site for a single entity, e.g. Facebook profile or WordPress blog.
 
   Not intended to be used directly. Inherit from one or both of the Destination
@@ -81,7 +82,7 @@ class Site(util.KeyNameModel):
     Defaults to the url. May be overridden by subclasses.
     """
     # TODO: get this from the site itself, e.g. <title> in <head>
-    return util.reduce_url(self.url)
+    return util.domain_from_link(self.url)
 
   def type_display_name(self):
     """Returns a human-readable name for this type of site, e.g. 'Facebook'.
@@ -185,7 +186,7 @@ class Destination(Site):
     raise NotImplementedError()
 
 
-class Comment(util.KeyNameModel):
+class Comment(KeyNameModel):
   """A comment to be propagated.
   """
   STATUSES = ('new', 'processing', 'complete')

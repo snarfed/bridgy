@@ -42,7 +42,7 @@ class FacebookTestBase(testutil.ModelsTest):
       quoted = urllib.quote(query_snippet)
       comparator = mox.And(comparator, mox.StrContains(quoted))
 
-    self.expect_urlfetch(comparator, json.dumps(results))
+    self.expect_urlopen(comparator, json.dumps(results))
 
 
 class FacebookAppTest(FacebookTestBase):
@@ -66,7 +66,7 @@ class FacebookAppTest(FacebookTestBase):
 
   def test_got_auth_code(self):
     comparator = mox.Regex('.*/oauth/access_token\?.*&code=my_auth_code.*')
-    self.expect_urlfetch(comparator, 'foo=bar&access_token=my_access_token')
+    self.expect_urlopen(comparator, 'foo=bar&access_token=my_access_token')
 
     self.mox.ReplayAll()
     resp = self.get(
@@ -199,7 +199,7 @@ class FacebookPageTest(FacebookTestBase):
       self.page.get_comments([(1, self.dests[1]), (2, self.dests[0])]))
 
   def test_disable_on_auth_failure(self):
-    self.expect_urlfetch(
+    self.expect_urlopen(
       '.*',
       json.dumps({
           'error_code': 190,

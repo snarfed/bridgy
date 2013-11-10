@@ -52,8 +52,6 @@ https://graph.facebook.com/256884317673197/accounts/test-users?&name=TestUser%20
 echo 'SELECT id, name, url, pic, pic_square, pic_small, pic_big, type, username FROM profile WHERE id = 212038' | \
   curl "https://api.facebook.com/method/fql.query?access_token=...&format=json&query=`sed 's/ /%20/g'`"
 
-
-
 TODO: use third_party_id if we ever need to store an fb user id anywhere else.
 """
 
@@ -67,6 +65,7 @@ import pprint
 import urllib
 import urlparse
 
+from activitystreams.oauth_dropins import facebook
 import appengine_config
 import models
 import util
@@ -77,41 +76,36 @@ import webapp2
 
 HARD_CODED_DEST = 'WordPressSite'
 
-# facebook api url templates. can't (easily) use urllib.urlencode() because i
-# want to keep the %(...)s placeholders as is and fill them in later in code.
-# TODO: use appengine_config.py for local mockfacebook vs prod facebook
-GET_AUTH_CODE_URL = '&'.join((
-    ('http://localhost:8000/dialog/oauth/?'
-     if appengine_config.MOCKFACEBOOK else
-     'https://www.facebook.com/dialog/oauth/?'),
-    'scope=read_stream,offline_access',
-    'client_id=%(client_id)s',
-    # redirect_uri here must be the same in the access token request!
-    'redirect_uri=%(host_url)s/facebook/got_auth_code',
-    'response_type=code',
-    'state=%(state)s',
-    ))
+FQL_URL = ('http://localhost:8000/fql' if appengine_config.MOCKFACEBOOK
+           else 'https://graph.facebook.com/fql')
 
-GET_ACCESS_TOKEN_URL = '&'.join((
-    ('http://localhost:8000/oauth/access_token?'
-     if appengine_config.MOCKFACEBOOK else
-     'https://graph.facebook.com/oauth/access_token?'),
-    'client_id=%(client_id)s',
-    # redirect_uri here must be the same in the oauth request!
-    # (the value here doesn't actually matter since it's requested server side.)
-    'redirect_uri=%(host_url)s/facebook/got_auth_code',
-    'client_secret=%(client_secret)s',
-    'code=%(auth_code)s',
-    ))
 
-FQL_URL = '&'.join((
-    ('http://localhost:8000/method/fql.query?'
-     if appengine_config.MOCKFACEBOOK else
-     'https://api.facebook.com/method/fql.query?'),
-    'access_token=%(access_token)s',
-    'format=json',
-    'query=%(query)s',
-    ))
+def fql(query, auth_entity):
+  """Runs an FQL query.
+
+  Args:
+  query: string
+  auth_entity: oauth_dropins.facebook.FacebookAuth
+
+  Returns: dict, decoded JSON response
+
+  TODO: error handling
+  """
+  logging.debug('Running FQL query "%s"', query)
+  url = util.add_query_params(FQL_URL, {'q': query})
+  resp = auth_entity.urlopen(url, timeout=999)
+  assert resp.getcode() == 200, resp.getcode()
+
+  data = resp.read()
+  logging.debug('FQL response: %s', data)#pprint.pformat(data))
+  data = json.loads(data)
+
+  # Facebook API error details:
+  # https://developers.facebook.com/docs/reference/api/errors/
+  if isinstance(data, dict) and data.get('error_code') in (102, 190):
+    raise models.DisableSource()
+  assert 'error_code' not in data and 'error_msg' not in data
+  return data
 
 
 class FacebookPage(models.Source):
@@ -136,32 +130,26 @@ class FacebookPage(models.Source):
 
   # the token should be generated with the offline_access scope so that it
   # doesn't expire. details: http://developers.facebook.com/docs/authentication/
-  access_token = db.StringProperty()
+  auth_entity = db.ReferenceProperty(facebook.FacebookAuth)
 
   def display_name(self):
     return self.name
 
-  def fql(self, query):
-    return FacebookApp.get().fql(query, self.access_token)
-
   @staticmethod
-  def new(handler):
+  def new(handler, auth_entity=None):
     """Creates and returns a FacebookPage for the logged in user.
 
     Args:
       handler: the current RequestHandler
     """
-    access_token = handler.request.params['access_token']
-    results = FacebookApp.get().fql(
-      'SELECT id, name, url, pic_small, type, username FROM profile WHERE id = me()',
-      access_token)
-    result = results[0]
-    id = str(result['id'])
+    user = json.loads(auth_entity.user_json)
+    id = (user['id'])
+    picture='http://graph.facebook.com/%s/picture' % user.get('username', id)
     return FacebookPage(key_name=id,
                         owner=models.User.get_current_user(),
-                        access_token=access_token,
-                        picture=result['pic_small'],
-                        **result)
+                        auth_entity=auth_entity,
+                        picture=picture,
+                        **user)
 
   def get_posts(self):
     """Returns list of (link id aka post object id, link url).
@@ -214,6 +202,9 @@ class FacebookPage(models.Source):
 
     return comments
 
+  def fql(self, query):
+    return fql(query, self.auth_entity)
+
 
 class FacebookComment(models.Comment):
   """Key name is the comment's object_id.
@@ -234,114 +225,12 @@ class FacebookComment(models.Comment):
   fb_object_id = db.IntegerProperty(required=True)
 
 
-class FacebookApp(db.Model):
-  """Stores the bridgy app credentials that we use with the API.
+class AddFacebookPage(facebook.CallbackHandler):
+  messages = []
 
-  Not thread safe.
-
-  TODO(ryan): store the app id and secret in files instead, like twitter and
-  googe+ already do, using webutil/appengine_config.py.
-  """
-  app_id = db.StringProperty(required=True)
-  app_secret = db.StringProperty(required=True)
-
-  # this will be cached in the runtime
-  __singleton = None
-
-  @classmethod
-  def get(cls):
-    if not cls.__singleton:
-      # TODO: check that there's only one
-      cls.__singleton = cls.all().get()
-      assert cls.__singleton
-    return cls.__singleton
-
-  def fql(self, query, access_token):
-    """Runs an FQL query.
-
-    Args:
-      access_token: string
-
-    Returns: string
-
-    TODO: error handling
-    """
-    assert access_token
-
-    logging.debug('Running FQL query "%s" with access token %s', query, access_token)
-    args = {
-      'access_token': access_token,
-      'query': urllib.quote(query),
-      }
-    resp = urlfetch.fetch(FQL_URL % args, deadline=999)
-    assert resp.status_code == 200, resp.status_code
-    data = json.loads(resp.content)
-    logging.debug('FQL response: %s', pprint.pformat(data))
-    # Facebook API error details:
-    # https://developers.facebook.com/docs/reference/api/errors/
-    if isinstance(data, dict) and data.get('error_code') in (102, 190):
-      raise models.DisableSource()
-    assert 'error_code' not in data and 'error_msg' not in data
-    return data
-
-  def get_access_token(self, handler, redirect_uri):
-    """Gets an access token for the current user.
-
-    Actually just gets the auth code and redirects to /facebook_got_auth_code,
-    which makes the next request to get the access token.
-
-    Args:
-      handler: the current RequestHandler
-      redirect_uri: string, the local url to redirect to. Must begin with /.
-    """
-    assert self.app_id
-    assert self.app_secret
-    assert redirect_uri.startswith('/'), '%s does not start with /' % redirect_uri
-
-    url = GET_AUTH_CODE_URL % {
-      'client_id': self.app_id,
-      # TODO: CSRF protection identifier.
-      # http://developers.facebook.com/docs/authentication/
-      'host_url': handler.request.host_url,
-      'state': handler.request.host_url + redirect_uri,
-      # 'state': urllib.quote(json.dumps({'redirect_uri': redirect_uri})),
-      }
-    handler.redirect(url)
-
-  def _get_access_token_with_auth_code(self, handler, auth_code, redirect_uri):
-    """Gets an access token based on an auth code.
-
-    Args:
-      handler: the current RequestHandler
-      auth_code: string
-      redirect_uri: string, the local url to redirect to. Must begin with /.
-    """
-    assert auth_code
-
-    redirect_uri = urllib.unquote(redirect_uri)
-    # assert redirect_uri.startswith('http://localhost:8080/'), redirect_uri
-    assert '?' not in redirect_uri
-
-    # TODO: handle permission declines, errors, etc
-    url = GET_ACCESS_TOKEN_URL % {
-      'auth_code': auth_code,
-      'client_id': self.app_id,
-      'client_secret': self.app_secret,
-      'host_url': handler.request.host_url,
-      }
-    resp = urlfetch.fetch(url, deadline=999)
-    # TODO: error handling. handle permission declines, errors, etc
-    logging.debug('access token response: %s' % resp.content)
-    params = urlparse.parse_qs(resp.content)
-    access_token = params['access_token'][0]
-
-    url = '%s?access_token=%s' % (redirect_uri, access_token)
-    handler.redirect(url)
-
-
-class AddFacebookPage(util.Handler):
-  def post(self):
-    FacebookApp.get().get_access_token(self, '/facebook/got_access_token')
+  def finish(self, auth_entity, state=None):
+    FacebookPage.create_new(self, auth_entity=auth_entity)
+    self.redirect('/')
 
 
 class DeleteFacebookPage(util.Handler):
@@ -354,21 +243,8 @@ class DeleteFacebookPage(util.Handler):
     self.redirect('/?msg=' + msg)
 
 
-class GotAuthCode(util.Handler):
-  def get(self):
-    FacebookApp.get()._get_access_token_with_auth_code(
-      self, self.request.params['code'], self.request.params['state'])
-
-
-class GotAccessToken(util.Handler):
-  def get(self):
-    FacebookPage.create_new(self)
-    self.redirect('/')
-
-
 application = webapp2.WSGIApplication([
+    ('/facebook/start', facebook.StartHandler.to('/facebook/add')),
     ('/facebook/add', AddFacebookPage),
     ('/facebook/delete', DeleteFacebookPage),
-    ('/facebook/got_auth_code', GotAuthCode),
-    ('/facebook/got_access_token', GotAccessToken),
     ], debug=appengine_config.DEBUG)

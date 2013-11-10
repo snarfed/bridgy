@@ -49,11 +49,15 @@ handlers:
   script: tasks.application
   login: admin
 
-- url: .*
+- url: /
   script: app.application
   # not secure: always because i haven't bought an SNI slot for SSL on the
   # brid.gy custom domain.
   # secure: optional
+
+- url: .*
+  script: app.application
+  login: required
 
 skip_files:
 - ^(.*/)?.*\.py[co]

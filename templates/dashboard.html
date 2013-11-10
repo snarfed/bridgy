@@ -84,16 +84,16 @@ shared posts also showed up on your blog? Bridgy copies them back for you.</p>
   {% endfor %}
   </table>
 
-  <form method="post" action="/facebook/add">
+  <form method="post" action="/facebook/start">
     <input type="submit" value="Add Facebook">
   </form>
 
-  <form method="post" action="/googleplus/add">
+  <form method="post" action="/googleplus/start">
     <input type="submit" value="Add Google+">
   </form>
 
   {% if available_twitter_dests %}
-    <form method="post" action="/twitter/add">
+    <form method="post" action="/twitter/start">
       <input type="submit" value="Add Twitter">
       <label for="add-twitter-url">for base URL</label>
       <select id="add-twitter-url" name="url">

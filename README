@@ -22,6 +22,8 @@ http://indiewebcamp.com/Twitter#Why_permashortcitation_instead_of_a_link
 
 
 TODO:
+* drop google login, switch to either indieauth or nothing (ie each silo account
+  is independent)
 * twitter login
 * block tweets from logged in user
 * flesh out this readme

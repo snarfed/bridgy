@@ -69,7 +69,7 @@ class TwitterSearch(models.Source):
     # find tweets with links that include our base url.
     # search response is JSON tweets:
     # https://dev.twitter.com/docs/api/1.1/search/tweets
-    results = self.search('%s filter:links' % util.reduce_url(self.url))
+    results = self.search('%s filter:links' % util.domain_from_link(self.url))
 
     tweets_and_urls = []
     for result in results:
