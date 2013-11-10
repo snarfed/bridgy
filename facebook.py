@@ -65,7 +65,7 @@ import pprint
 import urllib
 import urlparse
 
-from activitystreams.oauth_dropins import facebook
+from activitystreams.oauth_dropins import facebook as oauth_facebook
 import appengine_config
 import models
 import util
@@ -97,7 +97,7 @@ def fql(query, auth_entity):
   assert resp.getcode() == 200, resp.getcode()
 
   data = resp.read()
-  logging.debug('FQL response: %s', data)#pprint.pformat(data))
+  logging.debug('FQL response: %s', data)
   data = json.loads(data)
 
   # Facebook API error details:
@@ -130,7 +130,7 @@ class FacebookPage(models.Source):
 
   # the token should be generated with the offline_access scope so that it
   # doesn't expire. details: http://developers.facebook.com/docs/authentication/
-  auth_entity = db.ReferenceProperty(facebook.FacebookAuth)
+  auth_entity = db.ReferenceProperty(oauth_facebook.FacebookAuth)
 
   def display_name(self):
     return self.name
@@ -141,6 +141,7 @@ class FacebookPage(models.Source):
 
     Args:
       handler: the current RequestHandler
+      auth_entity: oauth_dropins.facebook.FacebookAuth
     """
     user = json.loads(auth_entity.user_json)
     id = (user['id'])
@@ -225,7 +226,7 @@ class FacebookComment(models.Comment):
   fb_object_id = db.IntegerProperty(required=True)
 
 
-class AddFacebookPage(facebook.CallbackHandler):
+class AddFacebookPage(oauth_facebook.CallbackHandler):
   messages = []
 
   def finish(self, auth_entity, state=None):
@@ -244,7 +245,7 @@ class DeleteFacebookPage(util.Handler):
 
 
 application = webapp2.WSGIApplication([
-    ('/facebook/start', facebook.StartHandler.to('/facebook/add')),
+    ('/facebook/start', oauth_facebook.StartHandler.to('/facebook/add')),
     ('/facebook/add', AddFacebookPage),
     ('/facebook/delete', DeleteFacebookPage),
     ], debug=appengine_config.DEBUG)
