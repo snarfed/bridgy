@@ -34,6 +34,10 @@ handlers:
   script: googleplus.application
   login: required
 
+- url: /instagram/.*
+  script: instagram.application
+  login: required
+
 - url: /wordpress/.*
   script: wordpress.application
   login: required

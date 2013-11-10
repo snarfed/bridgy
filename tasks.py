@@ -18,6 +18,7 @@ import time
 # need to import model class definitions since poll creates and saves entities.
 import facebook
 import googleplus
+import instagram
 import models
 import twitter
 import util
