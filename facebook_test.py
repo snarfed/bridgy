@@ -13,7 +13,7 @@ import urllib
 import urlparse
 
 import facebook
-from facebook import FacebookApp, FacebookComment, FacebookPage
+from facebook import FacebookComment, FacebookPage
 import models
 
 import webapp2
@@ -27,7 +27,7 @@ class FacebookTestBase(testutil.ModelsTest):
     self.app = FacebookApp.get()
 
   def expect_fql(self, query_snippet, results):
-    """Stubs out and expects an FQL query via urlfetch.
+    """Stubs out and expects an FQL query via urlopen.
 
     Expects my_access_token to be used as the access token.
 
@@ -43,45 +43,6 @@ class FacebookTestBase(testutil.ModelsTest):
       comparator = mox.And(comparator, mox.StrContains(quoted))
 
     self.expect_urlopen(comparator, json.dumps(results))
-
-
-class FacebookAppTest(FacebookTestBase):
-
-  def test_get_access_token(self):
-    self.app.get_access_token(self.handler, '/redirect_to')
-    self.assertEqual(302, self.handler.response.status_int)
-    redirect = self.handler.response.headers['Location']
-
-    parsed = urlparse.urlparse(redirect)
-    self.assertEqual('/dialog/oauth/', parsed.path)
-
-    expected_params = {
-      'scope': ['read_stream,offline_access'],
-      'client_id': ['app_id'],
-      'redirect_uri': ['http://HOST/facebook/got_auth_code'],
-      'response_type': ['code'],
-      'state': ['http://HOST/redirect_to'],
-      }
-    self.assertEqual(expected_params, urlparse.parse_qs(parsed.query))
-
-  def test_got_auth_code(self):
-    comparator = mox.Regex('.*/oauth/access_token\?.*&code=my_auth_code.*')
-    self.expect_urlopen(comparator, 'foo=bar&access_token=my_access_token')
-
-    self.mox.ReplayAll()
-    resp = self.get(
-      facebook.application,
-      '/facebook/got_auth_code',
-      302,
-      query_params={'code': 'my_auth_code', 'state': 'http://my/redirect_to'})
-    self.assertEqual('http://my/redirect_to?access_token=my_access_token',
-                     resp.headers['Location'])
-
-  def test_fql(self):
-    self.expect_fql('my_query', {'my_key': [ 'my_list']})
-    self.mox.ReplayAll()
-    self.assertEqual({'my_key': ['my_list']},
-                     self.app.fql('my_query', 'my_access_token'))
 
 
 class FacebookPageTest(FacebookTestBase):
@@ -158,6 +119,12 @@ class FacebookPageTest(FacebookTestBase):
         'type': 'user',
         'username': 'my_username',
         }]
+
+  def test_fql(self):
+    self.expect_fql('my_query', {'my_key': [ 'my_list']})
+    self.mox.ReplayAll()
+    self.assertEqual({'my_key': ['my_list']},
+                     self.app.fql('my_query', 'my_access_token'))
 
   def test_new(self):
     self.expect_fql('FROM profile WHERE id = me()', self.new_fql_results)

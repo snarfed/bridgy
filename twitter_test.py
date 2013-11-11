@@ -13,7 +13,7 @@ import urllib
 import models
 import testutil
 import twitter
-from twitter import TwitterReply, TwitterSearch
+from twitter import TwitterReply, Twitter
 
 from google.appengine.api import urlfetch
 import webapp2

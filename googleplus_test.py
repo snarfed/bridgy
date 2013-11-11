@@ -15,7 +15,7 @@ from oauth2client.appengine import CredentialsModel
 from oauth2client.client import AccessTokenCredentials
 
 import googleplus
-from googleplus import GooglePlusComment, GooglePlusPage, GooglePlusService
+from googleplus import GooglePlusComment, GooglePlusPage
 import models
 
 
@@ -24,8 +24,8 @@ class GooglePlusPageTest(testutil.ModelsTest):
   def setUp(self):
     super(GooglePlusPageTest, self).setUp()
 
-    self.mox.StubOutWithMock(GooglePlusService, 'call')
-    self.mox.StubOutWithMock(GooglePlusService, 'call_with_creds')
+    # self.mox.StubOutWithMock(GooglePlusService, 'call')
+    # self.mox.StubOutWithMock(GooglePlusService, 'call_with_creds')
 
     googleplus.HARD_CODED_DEST = 'FakeDestination'
     self.user = models.User.get_or_insert_current_user(self.handler)

@@ -6,6 +6,7 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import datetime
 import mox
+import urllib
 import urlparse
 
 import models
@@ -16,36 +17,27 @@ import testutil
 import util
 
 from google.appengine.ext import db
-from google.appengine.ext import webapp
+import webapp2
+
+NOW = datetime.datetime.now()
+tasks.now_fn = lambda: NOW
 
 
 class TaskQueueTest(testutil.ModelsTest):
   """Attributes:
     task_params: the query parameters passed in the task POST request
     post_url: the URL for post_task() to post to
-    now: the datetime to be returned by datetime.now()
   """
   task_params = None
   post_url = None
-  now = datetime.datetime.now()
 
   def post_task(self, expected_status=200):
-    """Runs post(), injecting self.now to be returned by datetime.now().
-
-    Args:
+    """Args:
       expected_status: integer, the expected HTTP return code
     """
-    poll_with_now = lambda: Poll(now=lambda: self.now)
-    propagate_with_now = lambda: Propagate(now=lambda: self.now)
-    application = webapp.WSGIApplication([
-        ('/_ah/queue/poll', poll_with_now),
-        ('/_ah/queue/propagate', propagate_with_now),
-        ])
-
-    super(TaskQueueTest, self).post(application,
-                                    self.post_url,
-                                    expected_status,
-                                    post_params=self.task_params)
+    resp = tasks.application.get_response(self.post_url, method='POST',
+                                          body=urllib.urlencode(self.task_params))
+    self.assertEqual(expected_status, resp.status_int)
 
 
 class PollTest(TaskQueueTest):
@@ -76,7 +68,7 @@ class PollTest(TaskQueueTest):
     self.assert_comments()
 
     source = db.get(self.sources[0].key())
-    self.assertEqual(self.now, source.last_polled)
+    self.assertEqual(NOW, source.last_polled)
 
     tasks = self.taskqueue_stub.GetTasks('poll')
     self.assertEqual(1, len(tasks))
@@ -85,7 +77,7 @@ class PollTest(TaskQueueTest):
     params = testutil.get_task_params(tasks[0])
     self.assertEqual(str(source.key()),
                      params['source_key'])
-    self.assertEqual(self.now.strftime(util.POLL_TASK_DATETIME_FORMAT),
+    self.assertEqual(NOW.strftime(util.POLL_TASK_DATETIME_FORMAT),
                      params['last_polled'])
 
   def test_existing_comments(self):
@@ -157,8 +149,8 @@ class PropagateTest(TaskQueueTest):
     self.assertEqual([], dest.get_comments())
 
     self.post_task()
-    self.assert_keys_equal([self.comments[0]], dest.get_comments())
-    self.assert_comment_is('complete', self.now + Propagate.LEASE_LENGTH)
+    self.assert_entities_equal([self.comments[0]], dest.get_comments())
+    self.assert_comment_is('complete', NOW + Propagate.LEASE_LENGTH)
 
   def test_already_complete(self):
     """If the comment has already been propagated, do nothing."""
@@ -172,7 +164,7 @@ class PropagateTest(TaskQueueTest):
   def test_leased(self):
     """If the comment is processing and the lease hasn't expired, do nothing."""
     self.comments[0].status = 'processing'
-    leased_until = self.now + datetime.timedelta(minutes=1)
+    leased_until = NOW + datetime.timedelta(minutes=1)
     self.comments[0].leased_until = leased_until
     self.comments[0].save()
 
@@ -187,12 +179,12 @@ class PropagateTest(TaskQueueTest):
   def test_lease_expired(self):
     """If the comment is processing but the lease has expired, process it."""
     self.comments[0].status = 'processing'
-    self.comments[0].leased_until = self.now - datetime.timedelta(minutes=1)
+    self.comments[0].leased_until = NOW - datetime.timedelta(minutes=1)
     self.comments[0].save()
 
     self.post_task()
-    self.assert_keys_equal([self.comments[0]], self.comments[0].dest.get_comments())
-    self.assert_comment_is('complete', self.now + Propagate.LEASE_LENGTH)
+    self.assert_entities_equal([self.comments[0]], self.comments[0].dest.get_comments())
+    self.assert_comment_is('complete', NOW + Propagate.LEASE_LENGTH)
 
   def test_no_comment(self):
     """If the comment doesn't exist, the request should fail."""
@@ -214,10 +206,6 @@ class PropagateTest(TaskQueueTest):
       getattr(cls, method)(*args).AndRaise(Exception('foo'))
       self.mox.ReplayAll()
 
-      try:
-        self.post_task(expected_status=500)
-        self.fail('Expected exception')
-      except Exception, e:
-        self.assertEqual('foo', str(e))
+      self.post_task(expected_status=500)
       self.assert_comment_is('new', None)
       self.mox.VerifyAll()

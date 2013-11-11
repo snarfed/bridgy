@@ -33,21 +33,11 @@ import appengine_config
 # all concrete destination model classes
 DESTINATIONS = ['WordPressSite']
 
-
-class TaskHandler(webapp2.RequestHandler):
-  """Task handler base class. Includes common utilities.
-
-  Attributes:
-    now: callable replacement for datetime.datetime.now(). Returns the current
-      datetime.
-  """
-
-  def __init__(self, *args, **kwargs):
-    super(TaskHandler, self).__init__(*args)
-    self.now = kwargs.pop('now', datetime.datetime.now)
+# allows injecting timestamps in task_test.py
+now_fn = datetime.datetime.now
 
 
-class Poll(TaskHandler):
+class Poll(webapp2.RequestHandler):
   """Task handler that fetches and processes new comments from a single source.
 
   Request parameters:
@@ -110,12 +100,12 @@ class Poll(TaskHandler):
       for comment in source.get_comments(posts_and_dests):
         comment.get_or_save()
 
-    source.last_polled = self.now()
+    source.last_polled = now_fn()
     util.add_poll_task(source, countdown=self.TASK_COUNTDOWN.seconds)
     source.save()
 
 
-class Propagate(TaskHandler):
+class Propagate(webapp2.RequestHandler):
   """Task handler that propagates a single comment.
 
   Request parameters:
@@ -155,12 +145,12 @@ class Propagate(TaskHandler):
     elif comment.status == 'complete':
       # let this response return 200 and finish
       logging.warning('duplicate task already propagated comment')
-    elif comment.status == 'processing' and self.now() < comment.leased_until:
+    elif comment.status == 'processing' and now_fn() < comment.leased_until:
       self.fail('duplicate task is currently processing!')
     else:
       assert comment.status in ('new', 'processing')
       comment.status = 'processing'
-      comment.leased_until = self.now() + self.LEASE_LENGTH
+      comment.leased_until = now_fn() + self.LEASE_LENGTH
       comment.save()
       return comment
 
