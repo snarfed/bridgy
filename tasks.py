@@ -22,7 +22,6 @@ import instagram
 import models
 import twitter
 import util
-import wordpress
 
 from google.appengine.ext import db
 from google.appengine.api import taskqueue

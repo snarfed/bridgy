@@ -1,7 +1,7 @@
 application: brid-gy
-version: 1
+version: 2
 runtime: python27
-threadsafe: false
+threadsafe: yes
 api_version: 1
 default_expiration: 1d
 
@@ -38,16 +38,9 @@ handlers:
   script: instagram.application
   login: required
 
-- url: /wordpress/.*
-  script: wordpress.application
-  login: required
-
 - url: /twitter/.*
   script: twitter.application
   login: required
-
-- url: /oauth2callback
-  script: oauth2client/appengine.application
 
 - url: /_ah/queue/.*
   script: tasks.application

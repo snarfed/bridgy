@@ -99,61 +99,6 @@ shared posts also showed up on your blog? Bridgy copies them back for you.</p>
   <form method="post" action="/instagram/start">
     <input type="submit" value="Add Instagram">
   </form>
-
-  {% if available_twitter_dests %}
-    <form method="post" action="/twitter/add_search">
-      <input type="submit" value="Add Twitter search">
-      <label for="add-twitter-url">for base URL</label>
-      <select id="add-twitter-url" name="url">
-        {% for dest in available_twitter_dests %}
-        <option value="{{ dest.url }}">{{ dest.display_name }}</option>
-        {% endfor %}
-      </select>
-    </form>
-  {% else %}
-    <p class="disabled">
-      {% if dests %}
-        All destinations have Twitter sources.
-      {% else %}
-        Add a destination to enable Twitter searches.
-      {% endif %}
-    </p>
-  {% endif %}
-
-</div>
-
-<p><b>Your destinations:</b></p>
-<div class="section">
-  <table id="destinations">
-  {% for dest in dests %}
-    <tr><td>
-        <a href="{{ dest.url }}">
-          <img class="dest" src="{{ dest.favicon_url }}" /></a>
-      </td><td>
-        <a href="{{ dest.url }}">{{ dest.display_name }}</a>
-      </td><td>
-        ({{ dest.type_display_name }})
-      </td><td>
-      <form method="post" action="/wordpress/delete">
-        <input name="name" type="hidden" value="{{ dest.key.name }}" />
-        <input type="image" src="static/trash_can.png" title="Delete" />
-      </form>
-    </td></tr>
-  {% endfor %}
-  </table>
-
-  <form method="post" action="/wordpress/add">
-    <table><tr><td>
-          <label for="xmlrpc_url">Base URL</label>
-        </td><td>
-          <input id="url" name="url" type="text" />
-      </td></tr><tr><td>
-          <label for="xmlrpc_url">XMLRPC URL</label>
-        </td><td>
-          <input id="xmlrpc_url" name="xmlrpc_url" type="text" />
-    </td></tr></table>
-    <input type="submit" value="Add Wordpress">
-  </form>
 </div>
 
 {% else %}

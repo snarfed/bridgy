@@ -8,8 +8,8 @@ import os
 import urllib
 import urlparse
 
-# need to import modules with model class definitions, e.g. facebook and
-# wordpress, for template rendering.
+# need to import modules with model class definitions, e.g. facebook, for
+# template rendering.
 import appengine_config
 from facebook import FacebookPage
 from googleplus import GooglePlusPage
@@ -19,7 +19,6 @@ from twitter_search import TwitterSearch
 import models
 import util
 from webutil import handlers
-from wordpress import WordPressSite
 
 from google.appengine.api import users
 from google.appengine.ext import db
@@ -51,13 +50,6 @@ class DashboardHandler(util.Handler):
                  )
       for source in sources:
         source.delete_url = '/%s/delete' % source.__module__
-
-      dests = list(WordPressSite.all().filter('owner =', user))
-      for dest in dests:
-        dest.favicon_url = util.favicon_for_url(dest.url)
-
-      available_twitter_dests = [d for d in dests if d.url not in
-                                 [t.url for t in twitter_searches]]
 
     msgs = self.request.params.getall('msg')
     path = os.path.join(os.path.dirname(__file__), 'templates', 'dashboard.html')
