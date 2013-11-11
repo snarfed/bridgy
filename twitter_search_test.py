@@ -19,7 +19,8 @@ from google.appengine.api import urlfetch
 import webapp2
 
 
-class TwitterSearchTest(testutil.ModelsTest):
+# TODO: uncomment if/when we start using twitter_search again
+class TwitterSearchTest(object): #testutil.ModelsTest):
 
   def setUp(self):
     super(TwitterSearchTest, self).setUp()
