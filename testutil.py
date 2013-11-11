@@ -10,6 +10,7 @@ import urlparse
 
 from models import Comment, Destination, Source
 from tasks import Poll, Propagate
+import util
 from webutil.testutil import *
 
 from google.appengine.ext import db
@@ -89,6 +90,7 @@ class ModelsTest(HandlerTest):
 
   def setUp(self):
     super(ModelsTest, self).setUp()
+    self.handler = util.Handler(self.request, self.response)
 
     self.sources = [FakeSource.new(None), FakeSource.new(None)]
     self.dests = [FakeDestination.new(None, url='http://dest0/'),

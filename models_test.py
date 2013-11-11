@@ -10,6 +10,7 @@ from testutil import FakeSite, FakeSource, FakeDestination
 import util
 
 from google.appengine.api import users
+from google.appengine.ext import testbed
 
 
 class CommentTest(testutil.ModelsTest):
@@ -23,7 +24,6 @@ class CommentTest(testutil.ModelsTest):
 
     # new. should add a propagate task.
     saved = comment.get_or_save()
-    self.assertEqual(1, Comment.all().count())
     self.assertTrue(saved.is_saved())
     self.assertEqual(comment.key(), saved.key())
     self.assertEqual(comment.source, saved.source)
@@ -54,8 +54,7 @@ class CommentTest(testutil.ModelsTest):
 class UserTest(testutil.ModelsTest):
 
   def test_no_logged_in_user(self):
-    self.testbed.deactivate()
-    self.setup_testbed(federated_identity='')
+    self.testbed.setup_env(user_id='', user_email='', overwrite=True)
     self.assertEqual(None, users.get_current_user())
     self.assertEqual(None, User.get_current_user())
     self.assertEqual(None, User.get_or_insert_current_user(self.handler))
@@ -65,16 +64,15 @@ class UserTest(testutil.ModelsTest):
     self.assertEqual(None, User.get_current_user())
 
     user = User.get_or_insert_current_user(self.handler)
-    self.assertEqual(self.gae_user_id, user.key().name())
+    self.assertEqual(self.current_user_id, user.key().name())
     self.assertEqual(['Registered new user.'], self.handler.messages)
-    self.assert_entities_equal([User(key_name=self.gae_user_id)], User.all())
+    self.assert_entities_equal(user, User.get_by_key_name(self.current_user_id))
 
     # get_or_insert_current_user() again shouldn't add a message
     self.handler.messages = []
     user = User.get_or_insert_current_user(self.handler)
-    self.assertEqual(self.gae_user_id, user.key().name())
+    self.assertEqual(self.current_user_id, user.key().name())
     self.assertEqual([], self.handler.messages)
-    self.assert_entities_equal([User(key_name=self.gae_user_id)], User.all())
 
 
 class SiteTest(testutil.HandlerTest):

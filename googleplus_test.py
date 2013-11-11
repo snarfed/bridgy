@@ -32,7 +32,7 @@ class GooglePlusPageTest(testutil.ModelsTest):
     self.handler.messages = []
 
     self.page = GooglePlusPage(key_name='2468',
-                               gae_user_id=self.gae_user_id,
+                               gae_user_id=self.current_user_id,
                                owner=self.user,
                                name='my full name',
                                url='http://my.g+/url',
@@ -136,12 +136,12 @@ class GooglePlusPageTest(testutil.ModelsTest):
 
   def test_get_posts_and_get_comments(self):
     GooglePlusService.call_with_creds(
-      self.gae_user_id, 'activities.list', userId='2468', collection='public',
+      self.current_user_id, 'activities.list', userId='2468', collection='public',
       maxResults=100)\
       .AndReturn(self.activities_list_response)
     for activity_id, response in self.comments_list_responses:
       GooglePlusService.call_with_creds(
-        self.gae_user_id, 'comments.list', activityId=activity_id, maxResults=100)\
+        self.current_user_id, 'comments.list', activityId=activity_id, maxResults=100)\
         .AndReturn(response)
     self.mox.ReplayAll()
 
@@ -161,6 +161,6 @@ class GooglePlusPageTest(testutil.ModelsTest):
     self.mox.ReplayAll()
 
     creds = AccessTokenCredentials('token', 'user agent')
-    CredentialsModel(key_name=self.gae_user_id, credentials=creds).save()
+    CredentialsModel(key_name=self.current_user_id, credentials=creds).save()
     self.assertRaises(models.DisableSource, GooglePlusService.call_with_creds,
-                      self.gae_user_id, 'endpoint')
+                      self.current_user_id, 'endpoint')
