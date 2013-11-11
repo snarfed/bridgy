@@ -12,8 +12,8 @@ import urllib
 
 import models
 import testutil
-import twitter
-from twitter import TwitterReply, Twitter
+import twitter_search
+from twitter_search import TwitterReply, TwitterSearch
 
 from google.appengine.api import urlfetch
 import webapp2
@@ -24,7 +24,7 @@ class TwitterSearchTest(testutil.ModelsTest):
   def setUp(self):
     super(TwitterSearchTest, self).setUp()
 
-    twitter.HARD_CODED_DEST = 'FakeDestination'
+    twitter_search.HARD_CODED_DEST = 'FakeDestination'
     self.user = models.User.get_or_insert_current_user(self.handler)
     self.handler.messages = []
 
