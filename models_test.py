@@ -85,14 +85,13 @@ class SiteTest(testutil.HandlerTest):
   def test_create_new(self):
     self.assertEqual(0, FakeSite.all().count())
     self._test_create_new()
-    self.assertEqual(['Added FakeSite: fake/url'],
-                     self.handler.messages)
+    self.assertEqual(['Added FakeSite: fake'], self.handler.messages)
 
   def test_create_new_already_exists(self):
     FakeSite.new(None).save()
     FakeSite.key_name_counter -= 1
     self._test_create_new()
-    self.assertEqual(['Updated existing FakeSite: fake/url'],
+    self.assertEqual(['Updated existing FakeSite: fake'],
                      self.handler.messages)
 
 

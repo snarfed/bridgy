@@ -11,8 +11,9 @@ import urlparse
 from models import Comment, Destination, Source
 from tasks import Poll, Propagate
 import util
-from webutil.testutil import *
+from webutil import testutil
 
+from google.appengine.datastore import datastore_stub_util
 from google.appengine.ext import db
 
 
@@ -78,6 +79,16 @@ class FakeSource(FakeBase, Source):
     return FakeSource.comments[str(self.key())]
 
 
+class HandlerTest(testutil.HandlerTest):
+  """Base test class.
+  """
+  def setUp(self):
+    super(HandlerTest, self).setUp()
+    self.handler = util.Handler(self.request, self.response)
+    # TODO: remove this and don't depend on consistent global queries
+    self.testbed.init_datastore_v3_stub(consistency_policy=None)
+
+
 class ModelsTest(HandlerTest):
   """Sets up some test sources, destinations, and comments.
 
@@ -90,7 +101,6 @@ class ModelsTest(HandlerTest):
 
   def setUp(self):
     super(ModelsTest, self).setUp()
-    self.handler = util.Handler(self.request, self.response)
 
     self.sources = [FakeSource.new(None), FakeSource.new(None)]
     self.dests = [FakeDestination.new(None, url='http://dest0/'),
