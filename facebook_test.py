@@ -8,10 +8,12 @@ import datetime
 import json
 import logging
 import mox
+import re
 import testutil
 import urllib
 import urlparse
 
+from activitystreams.oauth_dropins import facebook as oauth_facebook
 import facebook
 from facebook import FacebookComment, FacebookPage
 import models
@@ -19,39 +21,15 @@ import models
 import webapp2
 
 
-class FacebookTestBase(testutil.ModelsTest):
-
-  def setUp(self):
-    super(FacebookTestBase, self).setUp()
-    FacebookApp(app_id='app_id', app_secret='app_secret').save()
-    self.app = FacebookApp.get()
-
-  def expect_fql(self, query_snippet, results):
-    """Stubs out and expects an FQL query via urlopen.
-
-    Expects my_access_token to be used as the access token.
-
-    Args:
-      query_snippet: an unescaped snippet that should be in the query
-      results: list or dict of results to return
-    """
-    comparator = mox.Regex(
-      '.*/method/fql.query\?&access_token=my_access_token&format=json&query=(.*)$')
-
-    if query_snippet:
-      quoted = urllib.quote(query_snippet)
-      comparator = mox.And(comparator, mox.StrContains(quoted))
-
-    self.expect_urlopen(comparator, json.dumps(results))
-
-
-class FacebookPageTest(FacebookTestBase):
+class FacebookPageTest(testutil.ModelsTest):
 
   def setUp(self):
     super(FacebookPageTest, self).setUp()
     facebook.HARD_CODED_DEST = 'FakeDestination'
     self.user = models.User.get_or_insert_current_user(self.handler)
     self.handler.messages = []
+    self.auth_entity = oauth_facebook.FacebookAuth(
+      key_name='x', auth_code='x', access_token_str='x', user_json='x')
     self.page = FacebookPage(key_name='2468',
                              owner=self.user,
                              name='my full name',
@@ -59,9 +37,7 @@ class FacebookPageTest(FacebookTestBase):
                              picture='http://my.pic/small',
                              type='user',
                              username='my_username',
-                             access_token='my_access_token',
-                             )
-
+                             auth_entity=self.auth_entity)
 
     # TODO: unify with ModelsTest.setUp()
     self.comments = [
@@ -120,22 +96,20 @@ class FacebookPageTest(FacebookTestBase):
         'username': 'my_username',
         }]
 
+  def expect_fql(self, query_snippet='', results=None):
+    """Stubs out and expects an FQL query via urlopen.
+
+    Args:
+      query_snippet: an unescaped snippet that should be in the query
+      results: list or dict of results to return
+    """
+    self.expect_urlopen('.*%s.*' % re.escape(urllib.quote_plus(query_snippet)),
+                        json.dumps(results))
+
   def test_fql(self):
     self.expect_fql('my_query', {'my_key': [ 'my_list']})
     self.mox.ReplayAll()
-    self.assertEqual({'my_key': ['my_list']},
-                     self.app.fql('my_query', 'my_access_token'))
-
-  def test_new(self):
-    self.expect_fql('FROM profile WHERE id = me()', self.new_fql_results)
-    self.mox.ReplayAll()
-
-    self.environ['QUERY_STRING'] = urllib.urlencode(
-      {'access_token': 'my_access_token'})
-    self.handler.request = webapp2.Request(self.environ)
-    self.assert_entities_equal(self.page,
-                               FacebookPage.new(self.handler),
-                               ignore=['created'])
+    self.assertEqual({'my_key': ['my_list']}, self.page.fql('my_query'))
 
   def test_get_posts_and_get_comments(self):
     self.expect_fql('SELECT post_fbid, ', [
