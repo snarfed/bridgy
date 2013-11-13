@@ -22,6 +22,11 @@ http://indiewebcamp.com/Twitter#Why_permashortcitation_instead_of_a_link
 
 
 TODO:
+* likes/favorites.
+  based on http://indiewebcamp.com/like and http://indiewebcamp.com/responses, it looks like it's just u-like and a webmention, similar to a reply
+  and may not even need a u-in-reply-to
+  http://indiewebcamp.com/irc/2013-11-11
+  also http://indiewebcamp.com/repost
 * drop google login, switch to either indieauth or nothing (ie each silo account
   is independent)
 * twitter login
