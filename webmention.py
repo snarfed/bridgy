@@ -38,15 +38,10 @@ class Handler(webapp2.RequestHandler):
     Request path is of the form /user_id/group_id/app_id/activity_id , where
     each element is an optional string object id.
     """
-    source = self.get_required_param('source')
-    target = self.get_required_param('target')
+    source = util.get_required_param(self, 'source')
+    target = util.get_required_param(self, 'target')
     url = util.add_query_params('http://pin13.net/mf2/', {'url': source})
     urllib2.urlopen(url, timeout=999)
-
-  def get_required_param(self, name):
-    if name not in self.request.params:
-      self.abort(400, 'Missing required parameter: %s' % name)
-    return self.request.params[name]
 
 
 application = webapp2.WSGIApplication([

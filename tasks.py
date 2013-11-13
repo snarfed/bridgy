@@ -30,7 +30,7 @@ import webapp2
 import appengine_config
 
 # all concrete destination model classes
-DESTINATIONS = ['WordPressSite']
+DESTINATIONS = []
 
 # allows injecting timestamps in task_test.py
 now_fn = datetime.datetime.now
