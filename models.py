@@ -132,6 +132,16 @@ class Source(Site):
     """
     raise NotImplementedError()
 
+  def get_post(self, id):
+    """Returns a post from this source.
+
+    Args:
+      id: string, site-specific post id
+
+    Returns: dict, decoded ActivityStreams activity, or None
+    """
+    raise NotImplementedError()
+
   def get_posts(self):
     """Returns a list of the most recent posts from this source.
 
@@ -140,6 +150,16 @@ class Source(Site):
 
     Returns: list of (post, url), where post is any object and url is the string
       url for the post
+    """
+    raise NotImplementedError()
+
+  def get_comment(self, id):
+    """Returns a comment from this source.
+
+    Args:
+      id: string, site-specific comment id
+
+    Returns: dict, decoded ActivityStreams comment object, or None
     """
     raise NotImplementedError()
 

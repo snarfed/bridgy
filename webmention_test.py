@@ -14,12 +14,6 @@ import webapp2
 
 class WebmentionTest(testutil.HandlerTest):
 
-  def expect_urlopen(self, *args, **kwargs):
-    """Add timeout to the expected call.
-    """
-    super(WebmentionTest, self).expect_urlopen(
-      *args, timeout=mox.IgnoreArg(), **kwargs)
-
   def test_webmention(self):
     self.expect_urlopen('http://pin13.net/mf2/?url=%s' %
                         urllib.quote_plus('http://foo.com/bar'),

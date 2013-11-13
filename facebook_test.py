@@ -103,7 +103,8 @@ class FacebookPageTest(testutil.ModelsTest):
       query_snippet: an unescaped snippet that should be in the query
       results: list or dict of results to return
     """
-    self.expect_urlopen('.*%s.*' % re.escape(urllib.quote_plus(query_snippet)),
+    self.expect_urlopen(re.compile('.*%s.*' %
+                                   re.escape(urllib.quote_plus(query_snippet))),
                         json.dumps(results))
 
   def test_fql(self):
@@ -141,7 +142,7 @@ class FacebookPageTest(testutil.ModelsTest):
 
   def test_disable_on_auth_failure(self):
     self.expect_urlopen(
-      '.*',
+      re.compile('.*'),
       json.dumps({
           'error_code': 190,
           'error_msg': 'Error validating access token: User 12345 has not authorized application 67890.',
@@ -149,3 +150,24 @@ class FacebookPageTest(testutil.ModelsTest):
     self.mox.ReplayAll()
 
     self.assertRaises(models.DisableSource, self.page.get_posts)
+
+  def test_get_post(self):
+    self.expect_urlopen('https://graph.facebook.com/123?access_token=x',
+                        json.dumps({'id': '123', 'message': 'asdf'}))
+    self.mox.ReplayAll()
+    self.assertEquals({'id': 'tag:facebook.com,2013:123',
+                       'url': 'http://facebook.com/123',
+                       'objectType': 'note',
+                       'content': 'asdf'},
+                      self.page.get_post('123'))
+
+  def test_get_comment(self):
+    self.expect_urlopen('https://graph.facebook.com/456_789?access_token=x',
+                        json.dumps({'id': '456_789', 'message': 'qwert'}))
+    self.mox.ReplayAll()
+    self.assertEquals({'id': 'tag:facebook.com,2013:456_789',
+                       'url': 'http://facebook.com/456?comment_id=789',
+                       'objectType': 'comment',
+                       'content': 'qwert',
+                       'inReplyTo': {'id': 'tag:facebook.com,2013:456'}},
+                      self.page.get_comment('456_789'))

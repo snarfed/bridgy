@@ -65,6 +65,7 @@ import pprint
 import urllib
 import urlparse
 
+from activitystreams import facebook as as_facebook
 from activitystreams.oauth_dropins import facebook as oauth_facebook
 import appengine_config
 import models
@@ -151,6 +152,45 @@ class FacebookPage(models.Source):
                         auth_entity=auth_entity,
                         picture=picture,
                         **user)
+
+  def get_post(self, id):
+    """Returns a post.
+
+    Example data:
+      ids (both work)
+        10100823411129293
+        212038_10100823411129293
+
+      API URL https://graph.facebook.com/212038_10100823411094363
+
+      Permalinks
+        https://www.facebook.com/10100823411094363
+        https://www.facebook.com/212038/posts/10100823411094363
+        https://www.facebook.com/photo.php?fbid=10100823411094363
+
+    Args:
+      id: string, post object id
+
+    Returns: dict, decoded ActivityStreams object, or None
+    """
+    fb = as_facebook.Facebook(self.auth_entity.access_token())
+    count, activities = fb.get_activities(activity_id=id)
+    return activities[0]['object'] if activities else None
+
+  def get_comment(self, id):
+    """Returns a comment.
+
+    Example data:
+      id: 10100823411094363_10069288
+      API URL: https://graph.facebook.com/10100823411094363_10069288
+      Permalink: https://www.facebook.com/10100823411094363&comment_id=10069288
+
+    Args:
+      id: string, comment object id
+
+    Returns: dict, decoded ActivityStreams comment object, or None
+    """
+    return as_facebook.Facebook(self.auth_entity.access_token()).get_comment(id)
 
   def get_posts(self):
     """Returns list of (link id aka post object id, link url).
