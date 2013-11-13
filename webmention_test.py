@@ -1,7 +1,7 @@
 """Unit tests for webmention.py.
 """
 
-__author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
+__author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import json
 import mox

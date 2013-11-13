@@ -26,6 +26,10 @@ handlers:
 - url: /webmention
   script: webmention.application
 
+- url: /facebook/(post|comment)/.*
+  script: facebook.application
+  # login not required for post/comment handlers
+
 - url: /facebook/.*
   script: facebook.application
   login: required

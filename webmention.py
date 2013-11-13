@@ -18,7 +18,7 @@ Example response:
     http://brid.gy/webmentions/222
 """
 
-__author__ = ['Ryan Barrett <activitystreams@ryanb.org>']
+__author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import logging
 import urllib2

@@ -68,6 +68,7 @@ import urlparse
 from activitystreams import facebook as as_facebook
 from activitystreams.oauth_dropins import facebook as oauth_facebook
 import appengine_config
+import handlers
 import models
 import util
 
@@ -154,22 +155,18 @@ class FacebookPage(models.Source):
                         **user)
 
   def get_post(self, id):
-    """Returns a post.
+    """Fetches a post.
 
     Example data:
-      ids (both work)
-        10100823411129293
-        212038_10100823411129293
-
-      API URL https://graph.facebook.com/212038_10100823411094363
-
-      Permalinks
+      id: 212038_10100823411129293  [USER-ID]_[POST-ID]
+      API URL: https://graph.facebook.com/212038_10100823411094363
+      Permalinks:
         https://www.facebook.com/10100823411094363
         https://www.facebook.com/212038/posts/10100823411094363
         https://www.facebook.com/photo.php?fbid=10100823411094363
 
     Args:
-      id: string, post object id
+      id: string, full post id (with user id prefix)
 
     Returns: dict, decoded ActivityStreams object, or None
     """
@@ -178,15 +175,15 @@ class FacebookPage(models.Source):
     return activities[0]['object'] if activities else None
 
   def get_comment(self, id):
-    """Returns a comment.
+    """Fetches a comment.
 
     Example data:
-      id: 10100823411094363_10069288
+      id: 10100823411094363_10069288  [POST-ID]_[COMMENT-ID]
       API URL: https://graph.facebook.com/10100823411094363_10069288
       Permalink: https://www.facebook.com/10100823411094363&comment_id=10069288
 
     Args:
-      id: string, comment object id
+      id: string, full comment id (with post id prefix)
 
     Returns: dict, decoded ActivityStreams comment object, or None
     """
@@ -288,4 +285,9 @@ application = webapp2.WSGIApplication([
     ('/facebook/start', oauth_facebook.StartHandler.to('/facebook/add')),
     ('/facebook/add', AddFacebookPage),
     ('/facebook/delete', DeleteFacebookPage),
+    # e.g. http://localhost:8080/facebook/post/212038/10100823411094363
+    ('/facebook/post/([^/]+)/([^/]+)',
+     handlers.ObjectHandler.using(FacebookPage, FacebookPage.get_post)),
+    ('/facebook/comment/([^/]+)/([^/]+)',
+     handlers.ObjectHandler.using(FacebookPage, FacebookPage.get_comment)),
     ], debug=appengine_config.DEBUG)
