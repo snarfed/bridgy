@@ -8,12 +8,11 @@ from activitystreams import microformats2
 import appengine_config
 import util
 import webapp2
-from webob import exc
 from webutil import handlers
 
 
 class ObjectHandler(webapp2.RequestHandler):
-  """Fetches a post or comment and converts it to microformat2 HTML or JSON.
+  """Fetches a post or comment and serves it as microformat2 HTML or JSON.
   """
   handle_exception = handlers.handle_exception
 
@@ -27,10 +26,16 @@ class ObjectHandler(webapp2.RequestHandler):
 
   def get(self, key_name, id):
     src = self.source_cls.get_by_key_name(key_name)
-    obj = self.get_object_fn(src, id)
+    if not src:
+      self.abort(400, 'User %s not found' % key_name)
+
+    format = self.request.get('format', 'html')
+    if format not in ('html', 'json'):
+      self.abort(400, 'Invalid format %s, expected html or json' % format)
+
+    obj = getattr(src, self.get_object_fn)(id)
 
     self.response.headers['Access-Control-Allow-Origin'] = '*'
-    format = self.request.get('format', 'html')
     if format == 'html':
       self.response.headers['Content-Type'] = 'text/html'
       self.response.out.write("""\
@@ -43,6 +48,3 @@ class ObjectHandler(webapp2.RequestHandler):
       self.response.headers['Content-Type'] = 'application/json'
       self.response.out.write(json.dumps(microformats2.object_to_json(obj),
                                          indent=2))
-    else:
-      raise exc.HTTPBadRequest('Invalid format: %s, expected html or json',
-                               format)

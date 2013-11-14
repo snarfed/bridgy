@@ -287,7 +287,7 @@ application = webapp2.WSGIApplication([
     ('/facebook/delete', DeleteFacebookPage),
     # e.g. http://localhost:8080/facebook/post/212038/10100823411094363
     ('/facebook/post/([^/]+)/([^/]+)',
-     handlers.ObjectHandler.using(FacebookPage, FacebookPage.get_post)),
+     handlers.ObjectHandler.using(FacebookPage, 'get_post')),
     ('/facebook/comment/([^/]+)/([^/]+)',
-     handlers.ObjectHandler.using(FacebookPage, FacebookPage.get_comment)),
+     handlers.ObjectHandler.using(FacebookPage, 'get_comment')),
     ], debug=appengine_config.DEBUG)
