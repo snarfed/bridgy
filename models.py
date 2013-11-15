@@ -62,12 +62,9 @@ class User(db.Model):
 
 class Site(KeyNameModel):
   """A web site for a single entity, e.g. Facebook profile or WordPress blog.
-
-  Not intended to be used directly. Inherit from one or both of the Destination
-  and Source subclasses.
   """
 
-  # human-readable name for this destination type. subclasses should override.
+  # human-readable name for this site type. subclasses should override.
   TYPE_NAME = None
   STATUSES = ('enabled', 'disabled')
 
@@ -163,13 +160,13 @@ class Source(Site):
     """
     raise NotImplementedError()
 
-  def get_comments(self, posts_and_dests):
+  def get_comments(self, posts_and_targets):
     """Returns a list of Comment instances for the given posts.
 
     To be implemented by subclasses. Only called after get_posts().
 
     Args:
-      posts_and_dests: list of (post object, Destination) tuples. The post
+      posts_and_targets: list of (post object, target URL) tuples. The post
         objects are a subset of the ones returned by get_posts().
     """
     raise NotImplementedError()
@@ -187,36 +184,15 @@ class Source(Site):
     return new
 
 
-class Destination(Site):
-  """A web site to propagate comments to, e.g. a WordPress blog.
-
-  Each concrete destination class should subclass this class.
-  """
-
-  last_updated = db.DateTimeProperty()
-
-  def add_comment(self, comment):
-    """Posts the given comment to this site.
-
-    To be implemented by subclasses.
-
-    Args:
-      comment: Comment
-    """
-    raise NotImplementedError()
-
-
 class Comment(KeyNameModel):
   """A comment to be propagated.
   """
   STATUSES = ('new', 'processing', 'complete')
 
   source = db.ReferenceProperty(reference_class=Source, required=True)
-  dest = db.ReferenceProperty(reference_class=Destination, required=True)
   source_post_url = db.LinkProperty()
   source_comment_url = db.LinkProperty()
-  dest_post_url = db.LinkProperty()
-  dest_comment_url = db.LinkProperty()
+  target_post_url = db.LinkProperty()
   created = db.DateTimeProperty()
   author_name = db.StringProperty()
   author_url = db.LinkProperty()
@@ -240,7 +216,7 @@ class Comment(KeyNameModel):
 
     logging.debug('New comment to propagate! %s %r\n%s on %s',
                   self.kind(), self.key().id_or_name(),
-                  self.source_comment_url, self.dest_post_url)
+                  self.source_comment_url, self.target_post_url)
     taskqueue.add(queue_name='propagate', params={'comment_key': str(self.key())})
     self.save()
     return self

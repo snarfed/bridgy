@@ -25,8 +25,6 @@ from google.appengine.api import users
 from google.appengine.ext import db
 import webapp2
 
-HARD_CODED_DEST = 'WordPressSite'
-
 
 class Twitter(models.Source):
   """A Twitter account.
@@ -74,9 +72,9 @@ class Twitter(models.Source):
 
     tweets_and_urls = []
     for result in results:
-      # extract destination post url from tweet entities
+      # extract target url from tweet entities
       # https://dev.twitter.com/docs/tweet-entities
-      dest_post_url = None
+      target_url = None
       tweet_url = self.tweet_url(result['user'], result['id'])
       for url in result.get('entities', {}).get('urls', []):
         # expanded_url isn't always provided
@@ -97,12 +95,12 @@ class Twitter(models.Source):
             logging.error("Couldn't resolve URL: %s", e)
 
         if expanded_url.startswith(self.url):
-          dest_post_url = expanded_url
+          target_url = expanded_url
 
-      if dest_post_url:
-        # logging.debug('Found post %s in tweet %s', dest_post_url, tweet_url)
-        result['bridgy_link'] = dest_post_url
-        tweets_and_urls.append((result, dest_post_url))
+      if target_url:
+        # logging.debug('Found post %s in tweet %s', target_url, tweet_url)
+        result['bridgy_link'] = target_url
+        tweets_and_urls.append((result, target_url))
       else:
         # logging.debug("Tweet %s should have %s link but doesn't. Maybe shortened?",
         #               tweet_url, self.url)
@@ -110,14 +108,14 @@ class Twitter(models.Source):
 
     return tweets_and_urls
 
-  def get_comments(self, tweets_and_dests):
+  def get_comments(self, tweets_and_urls):
     # maps tweet id to TwitterReply
     replies = {}
     # maps username to list of @ mention search results, which includes replies
     mentions = {}
 
     # find and convert replies
-    for tweet, dest in tweets_and_dests:
+    for tweet, url in tweets_and_urls:
       author = tweet['user'].get('screen_name')
       if not author:
         continue
@@ -125,7 +123,7 @@ class Twitter(models.Source):
         logging.error('Already seen tweet %s! Should be impossible!', tweet['id'])
         continue
 
-      reply = self.tweet_to_reply(tweet, dest)
+      reply = self.tweet_to_reply(tweet, url)
       # logging.debug('Found matching tweet %s', reply.source_post_url)
       replies[tweet['id']] = reply
 
@@ -136,13 +134,13 @@ class Twitter(models.Source):
       if author not in mentions:
         mentions[author] = self.search('@%s' % author)
 
-      # look for replies. add any we find to the end of tweets_and_dests.
+      # look for replies. add any we find to the end of tweets_and_urls.
       # this makes us recursively follow reply chains to their end. (python
       # supports appending to a sequence while you're iterating over it.)
       for mention in mentions[author]:
         if mention.get('in_reply_to_status_id') == tweet['id']:
           mention['bridgy_link'] = tweet['bridgy_link']
-          tweets_and_dests.append((mention, dest))
+          tweets_and_urls.append((mention, url))
 
     return replies.values()
 

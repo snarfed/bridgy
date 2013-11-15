@@ -1,4 +1,3 @@
-#!/usr/bin/python
 """Unit tests for tasks.py.
 """
 
@@ -48,12 +47,6 @@ class PollTest(TaskQueueTest):
     super(PollTest, self).setUp()
     self.task_params = {'source_key': self.sources[0].key(),
                         'last_polled': '1970-01-01-00-00-00'}
-    self.orig_destinations = tasks.DESTINATIONS
-    tasks.DESTINATIONS = ['FakeDestination']
-
-  def tearDown(self):
-    tasks.DESTINATIONS = self.orig_destinations
-    super(PollTest, self).tearDown()
 
   def assert_comments(self):
     """Asserts that all of self.comments are saved."""

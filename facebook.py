@@ -76,8 +76,6 @@ from google.appengine.api import urlfetch
 from google.appengine.ext import db
 import webapp2
 
-HARD_CODED_DEST = 'WordPressSite'
-
 FQL_URL = ('http://localhost:8000/fql' if appengine_config.MOCKFACEBOOK
            else 'https://graph.facebook.com/fql')
 
@@ -207,7 +205,7 @@ class FacebookPage(models.Source):
 
     return [(l['link_id'], l['url']) for l in self.link_data]
 
-  def get_comments(self, posts_and_dests):
+  def get_comments(self, posts_and_targets):
     comments_by_link_id = collections.defaultdict(list)
     for c in self.comment_data:
       comments_by_link_id[c['object_id']].append(c)
@@ -216,7 +214,7 @@ class FacebookPage(models.Source):
     links = dict((l['link_id'], l['url']) for l in self.link_data)
 
     comments = []
-    for link_id, dest in posts_and_dests:
+    for link_id, dest in posts_and_targets:
       for c in comments_by_link_id[link_id]:
         fromid = c['fromid']
         profile = profiles[fromid]

@@ -8,7 +8,7 @@ import collections
 import datetime
 import urlparse
 
-from models import Comment, Destination, Source
+from models import Comment, Source
 from tasks import Poll, Propagate
 import util
 from webutil import testutil
@@ -43,24 +43,6 @@ class FakeBase(db.Model):
     return self.__class__.__name__
 
 
-class FakeSite(FakeBase, Destination):
-  pass
-
-
-class FakeDestination(FakeBase, Destination):
-  """  Attributes:
-    comments: dict mapping FakeDestination string key to list of Comments
-  """
-
-  comments = collections.defaultdict(list)
-
-  def add_comment(self, comment):
-    FakeDestination.comments[str(self.key())].append(comment)
-
-  def get_comments(self):
-    return FakeDestination.comments[str(self.key())]
-
-
 class FakeSource(FakeBase, Source):
   """Attributes:
     comments: dict mapping FakeSource string key to list of Comments to be
@@ -72,7 +54,7 @@ class FakeSource(FakeBase, Source):
     FakeSource.comments[str(self.key())] = comments
 
   def get_posts(self):
-    return [(c, c.dest_post_url) for c in FakeSource.comments[str(self.key())]]
+    return [(c, c.target_post_url) for c in FakeSource.comments[str(self.key())]]
 
   def get_comments(self, posts):
     assert posts
@@ -90,11 +72,10 @@ class HandlerTest(testutil.HandlerTest):
 
 
 class ModelsTest(HandlerTest):
-  """Sets up some test sources, destinations, and comments.
+  """Sets up some test sources and comments.
 
   Attributes:
     sources: list of FakeSource
-    dests: list of FakeDestination
     comments: list of unsaved Comment
     taskqueue_stub: the app engine task queue api proxy stub
   """
@@ -103,10 +84,7 @@ class ModelsTest(HandlerTest):
     super(ModelsTest, self).setUp()
 
     self.sources = [FakeSource.new(None), FakeSource.new(None)]
-    self.dests = [FakeDestination.new(None, url='http://dest0/'),
-                  FakeDestination.new(None, url='http://dest1/'),
-                  ]
-    for entity in self.sources + self.dests:
+    for entity in self.sources:
       entity.save()
 
     now = datetime.datetime.now()
@@ -123,19 +101,13 @@ class ModelsTest(HandlerTest):
 
     self.comments = [
       Comment(key_name='a',
-              dest=self.dests[1],
-              dest_post_url='http://dest1/post/url',
-              dest_comment_url='http://dest1/comment/a/url',
+              target_post_url='http://target1/post/url',
               **properties),
       Comment(key_name='b',
-              dest=self.dests[0],
-              dest_post_url='http://dest0/post/url',
-              dest_comment_url='http://dest0/comment/b/url',
+              target_post_url='http://target0/post/url',
               **properties),
       Comment(key_name='c',
-              dest=self.dests[1],
-              dest_post_url='http://dest1/post/url',
-              dest_comment_url='http://dest1/comment/c/url',
+              target_post_url='http://target1/post/url',
               **properties),
       ]
 

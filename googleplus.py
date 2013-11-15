@@ -20,8 +20,6 @@ from google.appengine.api import memcache
 from google.appengine.ext import db
 import webapp2
 
-HARD_CODED_DEST = 'WordPressSite'
-
 
 def handle_exception(self, e, debug):
   """Exception handler that disables the source on permission errors.
@@ -96,7 +94,7 @@ class GooglePlusPage(models.Source):
   def get_comments(self, posts):
     comments = []
 
-    for activity, dest in posts:
+    for activity, url in posts:
       # Google+ Comment resource
       # https://developers.google.com/+/api/latest/comments#resource
       call = self.auth_entity.api().comments().list(activityId=activity['id'],
@@ -110,9 +108,8 @@ class GooglePlusPage(models.Source):
         comments.append(GooglePlusComment(
             key_name=c['id'],
             source=self,
-            dest=dest,
             source_post_url=activity['url'],
-            dest_post_url=activity['bridgy_link'],
+            target_url=url, #activity['bridgy_link'],
             created=created,
             author_name=c['actor']['displayName'],
             author_url=c['actor']['url'],

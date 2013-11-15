@@ -25,7 +25,6 @@ class TwitterSearchTest(object): #testutil.ModelsTest):
   def setUp(self):
     super(TwitterSearchTest, self).setUp()
 
-    twitter_search.HARD_CODED_DEST = 'FakeDestination'
     self.user = models.User.get_or_insert_current_user(self.handler)
     self.handler.messages = []
 

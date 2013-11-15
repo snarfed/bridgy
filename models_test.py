@@ -4,9 +4,9 @@
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
-from models import Comment, Site, User
+from models import Comment, User
 import testutil
-from testutil import FakeSite, FakeSource, FakeDestination
+from testutil import FakeSource
 import util
 
 from google.appengine.api import users
@@ -27,7 +27,6 @@ class CommentTest(testutil.ModelsTest):
     self.assertTrue(saved.is_saved())
     self.assertEqual(comment.key(), saved.key())
     self.assertEqual(comment.source, saved.source)
-    self.assertEqual(comment.dest, saved.dest)
 
     tasks = self.taskqueue_stub.GetTasks('propagate')
     self.assertEqual(1, len(tasks))
@@ -38,17 +37,7 @@ class CommentTest(testutil.ModelsTest):
     # existing. no new task.
     same = saved.get_or_save()
     self.assertEqual(saved.source.key(), same.source.key())
-    self.assertEqual(saved.dest.key(), same.dest.key())
     self.assertEqual(1, len(tasks))
-
-    # # different source and dest
-    # # i don't do this assert any more, but i might come back to it later.
-    # diff = Comment(key_name=comment.key().name(),
-    #                source=self.sources[0], dest=self.dests[1])
-    # self.assertRaises(AssertionError, diff.get_or_save)
-    # diff = Comment(key_name=comment.key().name(),
-    #                source=self.sources[1], dest=self.dests[0])
-    # self.assertRaises(AssertionError, diff.get_or_save)
 
 
 class UserTest(testutil.ModelsTest):
@@ -75,26 +64,6 @@ class UserTest(testutil.ModelsTest):
     self.assertEqual([], self.handler.messages)
 
 
-class SiteTest(testutil.HandlerTest):
-
-  def _test_create_new(self):
-    FakeSite.create_new(self.handler)
-    self.assertEqual(1, FakeSite.all().count())
-    self.assertEqual(0, len(self.taskqueue_stub.GetTasks('poll')))
-
-  def test_create_new(self):
-    self.assertEqual(0, FakeSite.all().count())
-    self._test_create_new()
-    self.assertEqual(['Added FakeSite: fake'], self.handler.messages)
-
-  def test_create_new_already_exists(self):
-    FakeSite.new(None).save()
-    FakeSite.key_name_counter -= 1
-    self._test_create_new()
-    self.assertEqual(['Updated existing FakeSite: fake'],
-                     self.handler.messages)
-
-
 class SourceTest(testutil.HandlerTest):
 
   def _test_create_new(self):
@@ -113,9 +82,12 @@ class SourceTest(testutil.HandlerTest):
   def test_create_new(self):
     self.assertEqual(0, FakeSource.all().count())
     self._test_create_new()
+    self.assertEqual(['Added FakeSource: fake'], self.handler.messages)
 
   def test_create_new_already_exists(self):
     FakeSource.new(None).save()
     FakeSource.key_name_counter -= 1
     self._test_create_new()
+    self.assertEqual(['Updated existing FakeSource: fake'],
+                     self.handler.messages)
 

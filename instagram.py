@@ -20,8 +20,6 @@ from google.appengine.api import urlfetch
 from google.appengine.ext import db
 import webapp2
 
-HARD_CODED_DEST = 'WordPressSite'
-
 
 class Instagram(models.Source):
   """A instagram account.
@@ -61,7 +59,7 @@ class Instagram(models.Source):
     """
     raise NotImplementedError()
 
-  def get_comments(self, posts_and_dests):
+  def get_comments(self, posts_and_targets):
     raise NotImplementedError()
 
 

@@ -25,7 +25,6 @@ class FacebookPageTest(testutil.ModelsTest):
 
   def setUp(self):
     super(FacebookPageTest, self).setUp()
-    facebook.HARD_CODED_DEST = 'FakeDestination'
     self.user = models.User.get_or_insert_current_user(self.handler)
     self.handler.messages = []
     self.auth_entity = oauth_facebook.FacebookAuth(
@@ -45,9 +44,8 @@ class FacebookPageTest(testutil.ModelsTest):
         key_name='123',
         created=datetime.datetime.utcfromtimestamp(1),
         source=self.page,
-        dest=self.dests[1],
         source_post_url='https://www.facebook.com/permalink.php?story_fbid=1&id=4',
-        dest_post_url='http://dest1/post/url',
+        target_post_url='http://target1/post/url',
         author_name='fred',
         author_url='http://fred',
         content='foo',
@@ -59,9 +57,8 @@ class FacebookPageTest(testutil.ModelsTest):
         key_name='456',
         created=datetime.datetime.utcfromtimestamp(2),
         source=self.page,
-        dest=self.dests[0],
         source_post_url='https://www.facebook.com/permalink.php?story_fbid=2&id=5',
-        dest_post_url='http://dest0/post/url',
+        target_post_url='http://target0/post/url',
         author_name='bob',
         author_url='http://bob',
         content='bar',
@@ -73,9 +70,8 @@ class FacebookPageTest(testutil.ModelsTest):
         key_name='789',
         created=datetime.datetime.utcfromtimestamp(3),
         source=self.page,
-        dest=self.dests[1],
         source_post_url='https://www.facebook.com/permalink.php?story_fbid=1&id=6',
-        dest_post_url='http://dest1/post/url',
+        target_post_url='http://target1/post/url',
         author_name='alice',
         author_url='http://alice',
         content='baz',
@@ -122,8 +118,8 @@ class FacebookPageTest(testutil.ModelsTest):
          'username': '', 'time': 3, 'text': 'baz'},
         ])
     self.expect_fql('SELECT link_id, url FROM link ', [
-        {'link_id': 1, 'url': 'http://dest1/post/url'},
-        {'link_id': 2, 'url': 'http://dest0/post/url'},
+        {'link_id': 1, 'url': 'http://target1/post/url'},
+        {'link_id': 2, 'url': 'http://target0/post/url'},
         ])
     self.expect_fql('SELECT id, name, url FROM profile ', [
         {'id': 4, 'name': 'fred', 'url': 'http://fred'},
@@ -133,12 +129,13 @@ class FacebookPageTest(testutil.ModelsTest):
     self.mox.ReplayAll()
 
     self.assertEqual(
-      [(1, 'http://dest1/post/url'), (2, 'http://dest0/post/url')],
+      [(1, 'http://target1/post/url'), (2, 'http://target0/post/url')],
       self.page.get_posts())
 
     self.assert_entities_equal(
       self.comments,
-      self.page.get_comments([(1, self.dests[1]), (2, self.dests[0])]))
+      self.page.get_comments([(1, 'http://target0/post/url'),
+                              (2, 'http://target1/post/url')]))
 
   def test_disable_on_auth_failure(self):
     self.expect_urlopen(

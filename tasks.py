@@ -82,7 +82,7 @@ class Poll(webapp2.RequestHandler):
                   source.kind(), source.key().name(), [d.url for d in dests])
 
     if dests:
-      posts_and_dests = []
+      posts_and_targets = []
 
       for post, url in source.get_posts():
         # can't use this string prefix query code because we want the property
@@ -94,9 +94,9 @@ class Poll(webapp2.RequestHandler):
         assert len(dest) <= 1
         if dest:
           dest = dest[0]
-          posts_and_dests.append((post, dest))
+          posts_and_targets.append((post, dest))
 
-      for comment in source.get_comments(posts_and_dests):
+      for comment in source.get_comments(posts_and_targets):
         comment.get_or_save()
 
     source.last_polled = now_fn()
@@ -105,7 +105,7 @@ class Poll(webapp2.RequestHandler):
 
 
 class Propagate(webapp2.RequestHandler):
-  """Task handler that propagates a single comment.
+  """Task handler that sends a webmention for a single comment.
 
   Request parameters:
     comment_key: string key of comment entity

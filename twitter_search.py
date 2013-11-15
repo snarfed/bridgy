@@ -28,7 +28,6 @@ from google.appengine.api import users
 from google.appengine.ext import db
 import webapp2
 
-HARD_CODED_DEST = 'WordPressSite'
 TWITTER_ACCESS_TOKEN_KEY = appengine_config.read('twitter_access_token_key')
 TWITTER_ACCESS_TOKEN_SECRET = appengine_config.read('twitter_access_token_secret')
 
