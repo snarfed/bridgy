@@ -16,3 +16,6 @@
 [submodule "beautifulsoup"]
 	path = beautifulsoup
 	url = git@github.com:JinnLynn/beautifulsoup.git
+[submodule "webmention-tools"]
+	path = webmention-tools
+	url = git@github.com:snarfed/webmention-tools.git
