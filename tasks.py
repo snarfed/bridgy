@@ -22,6 +22,7 @@ import instagram
 import models
 import twitter
 import util
+from webmentiontools import send
 
 from google.appengine.ext import db
 from google.appengine.api import taskqueue
@@ -94,9 +95,25 @@ class Propagate(webapp2.RequestHandler):
 
     try:
       comment = self.lease_comment()
-      if comment:
-        comment.dest.add_comment(comment)
+      if not comment:
+        return
+
+      logging.info('Sending webmention with source %s, target %s',
+                   comment.source_comment_url, comment.target_post_url)
+      mention = send.WebmentionSend(comment.source_comment_url,
+                                    comment.target_post_url)
+      if mention.send():
+        logging.info('Sent to %s', mention.receiver_endpoint)
         self.complete_comment()
+      else:
+        if mention.error['code'] == 'NO_ENDPOINT':
+          logging.info('No webmention endpoint found, giving up this comment.')
+          self.complete_comment()
+        else:
+          self.fail('Error sending to endpoint %s: %s' %
+                    (mention.receiver_endpoint, mention.error))
+          self.release_comment()
+
     except:
       logging.exception('Propagate task failed')
       self.release_comment()

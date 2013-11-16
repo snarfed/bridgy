@@ -4,6 +4,7 @@
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import datetime
+import logging
 import mox
 import urllib
 import urlparse
@@ -14,6 +15,7 @@ import tasks
 from tasks import Poll, Propagate
 import testutil
 import util
+from webmentiontools import send
 
 from google.appengine.ext import db
 import webapp2
@@ -135,14 +137,29 @@ class PropagateTest(TaskQueueTest):
     if leased_until is not False:
       self.assertEqual(leased_until, comment.leased_until)
 
+  def expect_webmention(self):
+    self.mock_send = self.mox.CreateMock(send.WebmentionSend)
+    self.mox.StubOutWithMock(send, 'WebmentionSend', use_mock_anything=True)
+    send.WebmentionSend('http://source/comment/url', 'http://target1/post/url'
+                        ).AndReturn(self.mock_send)
+    self.mock_send.receiver_endpoint = 'http://webmention/endpoint'
+    return self.mock_send.send()
+
+  def expect_webmention_fail(self):
+    send.WebmentionSend('http://source/comment/url', 'http://target1/post/url'
+                        ).AndReturn(self.mock_send)
+    self.mock_send.receiver_endpoint = None
+    self.mock_send.error = {'code': 'FOO'}
+    self.mock_send.send().AndReturn(False)
+    self.mox.ReplayAll()
+
   def test_propagate(self):
     """A normal propagate task."""
     self.assertEqual('new', self.comments[0].status)
-    dest = self.comments[0].dest
-    self.assertEqual([], dest.get_comments())
 
+    self.expect_webmention().AndReturn(True)
+    self.mox.ReplayAll()
     self.post_task()
-    self.assert_entities_equal([self.comments[0]], dest.get_comments())
     self.assert_comment_is('complete', NOW + Propagate.LEASE_LENGTH)
 
   def test_already_complete(self):
@@ -151,7 +168,6 @@ class PropagateTest(TaskQueueTest):
     self.comments[0].save()
 
     self.post_task()
-    self.assertEqual([], self.comments[0].dest.get_comments())
     self.assert_comment_is('complete')
 
   def test_leased(self):
@@ -162,7 +178,6 @@ class PropagateTest(TaskQueueTest):
     self.comments[0].save()
 
     self.post_task(expected_status=Propagate.ERROR_HTTP_RETURN_CODE)
-    self.assertEqual([], self.comments[0].dest.get_comments())
     self.assert_comment_is('processing', leased_until)
 
     comment = db.get(self.comments[0].key())
@@ -175,30 +190,57 @@ class PropagateTest(TaskQueueTest):
     self.comments[0].leased_until = NOW - datetime.timedelta(minutes=1)
     self.comments[0].save()
 
+    self.expect_webmention().AndReturn(True)
+    self.mox.ReplayAll()
     self.post_task()
-    self.assert_entities_equal([self.comments[0]], self.comments[0].dest.get_comments())
     self.assert_comment_is('complete', NOW + Propagate.LEASE_LENGTH)
 
   def test_no_comment(self):
     """If the comment doesn't exist, the request should fail."""
     self.comments[0].delete()
     self.post_task(expected_status=Propagate.ERROR_HTTP_RETURN_CODE)
-    self.assertEqual([], self.comments[0].dest.get_comments())
 
-  def test_exceptions(self):
-    """If any part raises an exception, the lease should be released."""
-    methods = [
-      (Propagate, 'lease_comment', []),
-      (Propagate, 'complete_comment', []),
-      (testutil.FakeDestination, 'add_comment', [mox.IgnoreArg()]),
-      ]
-
-    for cls, method, args in methods:
+  def test_webmention_fail(self):
+    """If sending the webmention fails, the lease should be released."""
+    for code, give_up in (('NO_ENDPOINT', True),
+                          ('BAD_TARGET_URL', False),
+                          ('RECEIVER_ERROR', False)):
+      self.tearDown()
       self.mox.UnsetStubs()
-      self.mox.StubOutWithMock(cls, method)
-      getattr(cls, method)(*args).AndRaise(Exception('foo'))
+      self.setUp()
+      self.expect_webmention().AndReturn(False)
+      self.mock_send.error = {'code': code}
       self.mox.ReplayAll()
 
-      self.post_task(expected_status=500)
-      self.assert_comment_is('new', None)
+      logging.debug('Testing %s', code)
+      expected_status = 200 if give_up else Propagate.ERROR_HTTP_RETURN_CODE
+      self.post_task(expected_status=expected_status)
+      self.assert_comment_is('complete' if give_up else 'new')
       self.mox.VerifyAll()
+
+  def test_webmention_exception(self):
+    """If sending the webmention raises an exception, the lease should be released."""
+    self.expect_webmention().AndRaise(Exception('foo'))
+    self.mox.ReplayAll()
+
+    self.post_task(expected_status=500)
+    self.assert_comment_is('new', None)
+
+  def test_lease_exception(self):
+    """If leasing raises an exception, the lease should be released."""
+    self.mox.StubOutWithMock(Propagate, 'lease_comment')
+    Propagate.lease_comment().AndRaise(Exception('foo'))
+    self.mox.ReplayAll()
+
+    self.post_task(expected_status=500)
+    self.assert_comment_is('new', None)
+
+  def test_complete_exception(self):
+    """If completing raises an exception, the lease should be released."""
+    self.expect_webmention().AndReturn(True)
+    self.mox.StubOutWithMock(Propagate, 'complete_comment')
+    Propagate.complete_comment().AndRaise(Exception('foo'))
+    self.mox.ReplayAll()
+
+    self.post_task(expected_status=500)
+    self.assert_comment_is('new', None)
