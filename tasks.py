@@ -29,9 +29,6 @@ import webapp2
 
 import appengine_config
 
-# all concrete destination model classes
-DESTINATIONS = []
-
 # allows injecting timestamps in task_test.py
 now_fn = datetime.datetime.now
 
@@ -72,32 +69,8 @@ class Poll(webapp2.RequestHandler):
       # let this task complete successfully so that it's not retried.
 
   def do_post(self, source):
-    # itertools.chain flattens. also, the outer list() is important, because
-    # itertools.chain returns a generator, and we need to be able to iterate
-    # over it multiple times. TODO: unit test this
-    dests = list(itertools.chain(*[list(db.GqlQuery('SELECT * FROM %s' % cls))
-                                   for cls in DESTINATIONS]))
-
-    logging.debug('Polling %s source %s against destinations %r',
-                  source.kind(), source.key().name(), [d.url for d in dests])
-
-    if dests:
-      posts_and_targets = []
-
-      for post, url in source.get_posts():
-        # can't use this string prefix query code because we want the property
-        # that's a prefix of the filter value, not vice versa.
-        # query = db.GqlQuery(
-        #   'SELECT * FROM WordPressSite WHERE url = :1 AND url <= :2',
-        #   url, url + u'\ufffd')
-        dest = [d for d in dests if url.startswith(d.url)]
-        assert len(dest) <= 1
-        if dest:
-          dest = dest[0]
-          posts_and_targets.append((post, dest))
-
-      for comment in source.get_comments(posts_and_targets):
-        comment.get_or_save()
+    for comment in source.get_comments(source.get_posts()):
+      comment.get_or_save()
 
     source.last_polled = now_fn()
     util.add_poll_task(source, countdown=self.TASK_COUNTDOWN.seconds)

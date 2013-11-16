@@ -1,4 +1,3 @@
-#!/usr/bin/python
 """Unit tests for models.py.
 """
 

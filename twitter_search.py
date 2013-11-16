@@ -72,7 +72,7 @@ class TwitterSearch(models.Source):
 
     tweets_and_urls = []
     for result in results:
-      # extract destination post url from tweet entities
+      # extract target post url from tweet entities
       # https://dev.twitter.com/docs/tweet-entities
       dest_post_url = None
       tweet_url = self.tweet_url(result['user'], result['id'])
