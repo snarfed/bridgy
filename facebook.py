@@ -54,11 +54,6 @@ class FacebookPage(models.Source):
   """A facebook profile or page.
 
   The key name is the facebook id.
-
-  Attributes:
-    comment_data: FQL results
-    link_data: FQL results
-    profile_data: FQL results
   """
 
   TYPE_NAME = 'Facebook'
@@ -77,11 +72,11 @@ class FacebookPage(models.Source):
     """
     user = json.loads(auth_entity.user_json)
     id = user['id']
-    picture='http://graph.facebook.com/%s/picture' % user.get('username', id)
+    picture = 'http://graph.facebook.com/%s/picture' % user.get('username', id)
     return FacebookPage(key_name=id, auth_entity=auth_entity, picture=picture,
-                        **user)
+                        **user)  # for type, name, username
 
-  def __init__(*args, **kwargs):
+  def __init__(self, *args, **kwargs):
     super(FacebookPage, self).__init__(*args, **kwargs)
     if self.auth_entity:
       self.as_source = as_facebook.Facebook(self.auth_entity.access_token())
@@ -90,8 +85,11 @@ class FacebookPage(models.Source):
     return self.name
 
   def get_comments(self):
-    return itertools.chain(*(a.get('replies', {}).get('items', [])
-                             for a in self.as_source.get_activities()))
+    count, activities = self.as_source.get_activities()
+    logging.info('@ %s', activities)
+    return itertools.chain(*(
+        a.get('object', {}).get('replies', {}).get('items', [])
+        for a in activities))
 
     # TODO: handle errors. (activitystreams-unofficial doesn't yet handle *or*
     # expose them.

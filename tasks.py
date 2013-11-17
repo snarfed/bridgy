@@ -96,9 +96,9 @@ class Propagate(webapp2.RequestHandler):
       if not comment:
         return
 
-      props = json.loads(comment.mf2_json)['properties']
-      source = props['url'][0]
-      target = props['in-reply-to'][0]
+      obj = json.loads(comment.as_json)
+      source = obj['url']
+      target = obj['inReplyTo']['url']
       logging.info('Sending webmention with source %s, target %s', source, target)
       mention = send.WebmentionSend(source, target)
       if mention.send():

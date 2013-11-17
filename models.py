@@ -165,9 +165,11 @@ class Source(Site):
     return self.as_source.get_comment(id)
 
   def get_comments(self):
-    """Returns a list of Comment instances for recent posts from this source.
+    """Returns comments for recent posts from this source.
 
     To be implemented by subclasses.
+
+    Returns: list of dicts, decoded JSON ActivityStreams comment objects
     """
     raise NotImplementedError()
 
@@ -189,8 +191,8 @@ class Comment(KeyNameModel):
   """
   STATUSES = ('new', 'processing', 'complete')
 
-  # microformats2 json. sources may store extra source-specific properties.
-  mf2_json = db.TextProperty()
+  # ActivityStreams JSON. sources may store extra source-specific properties.
+  as_json = db.TextProperty()
   source = db.ReferenceProperty()
   status = db.StringProperty(choices=STATUSES, default='new')
   leased_until = db.DateTimeProperty()
@@ -208,10 +210,10 @@ class Comment(KeyNameModel):
       #   assert new == existing, '%s: new %s, existing %s' % (prop, new, existing)
       return existing
 
-    props = json.loads(self.mf2_json)['properties']
+    obj = json.loads(self.as_json)
     logging.debug('New comment to propagate! %s %r\n%s on %s',
                   self.kind(), self.key().id_or_name(),
-                  props.get('url'), props.get('in-reply-to'))
+                  obj['url'], obj['inReplyTo']['url'])
     taskqueue.add(queue_name='propagate', params={'comment_key': str(self.key())})
     self.save()
     return self

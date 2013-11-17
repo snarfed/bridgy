@@ -86,16 +86,14 @@ class ModelsTest(HandlerTest):
 
     now = datetime.datetime.now()
 
-    mf2_json = json.dumps({
-      "type": ["h-entry"],
-      "properties": {
-        "url": ["http://source/comment/url"],
-        "content": [{"value": "foo", "html": "foo"}],
-        "in-reply-to": ["http://target1/post/url"]
-        }
-      })
-
-    self.comments = [Comment(key_name=k, source=self.sources[0], mf2_json=mf2_json)
+    as_json = json.dumps({
+        'objectType': 'comment',
+        'content': 'foo bar baz',
+        # 'id': 'tag:example.com,2001:547822715231468_6796480',
+        'url': 'http://source/comment/url',
+        'inReplyTo': {'url': 'http://target1/post/url'}
+        })
+    self.comments = [Comment(key_name=k, source=self.sources[0], as_json=as_json)
                      for k in ('a', 'b', 'c')]
 
     self.sources[0].set_comments(self.comments)
