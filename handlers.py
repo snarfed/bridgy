@@ -1,4 +1,8 @@
 """Common handlers, e.g. post and comment permalinks.
+
+URL path format is /SITE/(post|comment)/USER_ID/OBJECT_ID, e.g.:
+  /facebook/post/212038/10100823411094363
+  /twitter/comment/snarfed_org/10100823411094363
 """
 
 import json
