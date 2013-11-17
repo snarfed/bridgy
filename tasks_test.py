@@ -205,9 +205,9 @@ class PropagateTest(TaskQueueTest):
     for code, give_up in (('NO_ENDPOINT', True),
                           ('BAD_TARGET_URL', False),
                           ('RECEIVER_ERROR', False)):
-      self.tearDown()
       self.mox.UnsetStubs()
-      self.setUp()
+      self.comments[0].status = 'new'
+      self.comments[0].save()
       self.expect_webmention().AndReturn(False)
       self.mock_send.error = {'code': code}
       self.mox.ReplayAll()
