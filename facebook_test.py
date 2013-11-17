@@ -14,7 +14,7 @@ import urlparse
 
 from activitystreams.oauth_dropins import facebook as oauth_facebook
 import facebook
-from facebook import FacebookComment, FacebookPage
+from facebook import FacebookPage
 import models
 
 import webapp2
@@ -36,60 +36,6 @@ class FacebookPageTest(testutil.ModelsTest):
                              type='user',
                              username='my_username',
                              auth_entity=self.auth_entity)
-
-    # TODO: unify with ModelsTest.setUp()
-    self.comments = [
-      FacebookComment(
-        key_name='123',
-        created=datetime.datetime.utcfromtimestamp(1),
-        source=self.page,
-        source_post_url='https://www.facebook.com/permalink.php?story_fbid=1&id=4',
-        target_post_url='http://target1/post/url',
-        author_name='fred',
-        author_url='http://fred',
-        content='foo',
-        fb_fromid=4,
-        fb_username='',
-        fb_object_id=1,
-        ),
-      FacebookComment(
-        key_name='456',
-        created=datetime.datetime.utcfromtimestamp(2),
-        source=self.page,
-        source_post_url='https://www.facebook.com/permalink.php?story_fbid=2&id=5',
-        target_post_url='http://target0/post/url',
-        author_name='bob',
-        author_url='http://bob',
-        content='bar',
-        fb_fromid=5,
-        fb_username='',
-        fb_object_id=2,
-        ),
-      FacebookComment(
-        key_name='789',
-        created=datetime.datetime.utcfromtimestamp(3),
-        source=self.page,
-        source_post_url='https://www.facebook.com/permalink.php?story_fbid=1&id=6',
-        target_post_url='http://target1/post/url',
-        author_name='alice',
-        author_url='http://alice',
-        content='baz',
-        fb_fromid=6,
-        fb_username='',
-        fb_object_id=1,
-        ),
-      ]
-
-    self.sources[0].set_comments(self.comments)
-
-    self.new_fql_results = [{
-        'id': '2468',
-        'name': 'my full name',
-        'url': 'http://my.fb/url',
-        'pic_small': 'http://my.pic/small',
-        'type': 'user',
-        'username': 'my_username',
-        }]
 
   def expect_fql(self, query_snippet='', results=None):
     """Stubs out and expects an FQL query via urlopen.
@@ -146,24 +92,3 @@ class FacebookPageTest(testutil.ModelsTest):
     self.mox.ReplayAll()
 
     self.assertRaises(models.DisableSource, self.page.get_posts)
-
-  def test_get_post(self):
-    self.expect_urlopen('https://graph.facebook.com/123?access_token=x',
-                        json.dumps({'id': '123', 'message': 'asdf'}))
-    self.mox.ReplayAll()
-    self.assertEquals({'id': 'tag:facebook.com,2013:123',
-                       'url': 'http://facebook.com/123',
-                       'objectType': 'note',
-                       'content': 'asdf'},
-                      self.page.get_post('123'))
-
-  def test_get_comment(self):
-    self.expect_urlopen('https://graph.facebook.com/456_789?access_token=x',
-                        json.dumps({'id': '456_789', 'message': 'qwert'}))
-    self.mox.ReplayAll()
-    self.assertEquals({'id': 'tag:facebook.com,2013:456_789',
-                       'url': 'http://facebook.com/456?comment_id=789',
-                       'objectType': 'comment',
-                       'content': 'qwert',
-                       'inReplyTo': {'id': 'tag:facebook.com,2013:456'}},
-                      self.page.get_comment('456_789'))

@@ -29,11 +29,6 @@ class Instagram(models.Source):
 
   TYPE_NAME = 'Instagram'
 
-  # full human-readable name
-  name = db.StringProperty()
-  picture = db.LinkProperty()
-  auth_entity = db.ReferenceProperty(oauth_instagram.InstagramAuth)
-
   def display_name(self):
     return self.name
 
@@ -84,18 +79,7 @@ class AddInstagram(oauth_instagram.CallbackHandler):
     self.redirect('/')
 
 
-class DeleteInstagram(util.Handler):
-  def post(self):
-    instagram = Instagram.get_by_key_name(self.request.params['key_name'])
-    # TODO: remove tasks, etc.
-    msg = 'Deleted %s source: %s' % (instagram.type_display_name(),
-                                     instagram.display_name())
-    instagram.delete()
-    self.redirect('/?msg=' + msg)
-
-
 application = webapp2.WSGIApplication([
     ('/instagram/start', oauth_instagram.StartHandler.to('/instagram/oauth_callback')),
     ('/instagram/oauth_callback', AddInstagram),
-    ('/instagram/delete', DeleteInstagram),
     ], debug=appengine_config.DEBUG)

@@ -8,6 +8,7 @@ import testutil
 from testutil import FakeSource
 import util
 
+from activitystreams import source as as_source
 from google.appengine.api import users
 from google.appengine.ext import testbed
 
@@ -90,3 +91,21 @@ class SourceTest(testutil.HandlerTest):
     self.assertEqual(['Updated existing FakeSource: fake'],
                      self.handler.messages)
 
+  def test_get_post(self):
+    post_obj = {'objectType': 'note', 'content': 'asdf'}
+    source = FakeSource.new(None)
+    source.as_source = self.mox.CreateMock(as_source.Source)
+    source.as_source.get_activities(activity_id='123').AndReturn(
+      (1, [{'verb': 'post', 'object': post_obj}]))
+
+    self.mox.ReplayAll()
+    self.assert_equals(post_obj, source.get_post('123'))
+
+  def test_get_comment(self):
+    comment_obj = {'objectType': 'comment', 'content': 'qwert'}
+    source = FakeSource.new(None)
+    source.as_source = self.mox.CreateMock(as_source.Source)
+    source.as_source.get_comment('123').AndReturn(comment_obj)
+
+    self.mox.ReplayAll()
+    self.assert_equals(comment_obj, source.get_comment('123'))

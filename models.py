@@ -3,6 +3,7 @@
 
 import datetime
 import itertools
+import json
 import logging
 import urlparse
 
@@ -70,7 +71,6 @@ class Site(KeyNameModel):
 
   created = db.DateTimeProperty(auto_now_add=True, required=True)
   url = db.LinkProperty()
-  owner = db.ReferenceProperty(User)
   status = db.StringProperty(choices=STATUSES, default='enabled')
 
   def display_name(self):
@@ -122,6 +122,20 @@ class Source(Site):
 
   last_polled = db.DateTimeProperty(default=util.EPOCH)
 
+  # full human-readable name
+  name = db.StringProperty()
+  picture = db.LinkProperty()
+
+  # points to an oauth-dropins auth entity. The model class should be a subclass
+  # of oauth_dropins.BaseAuth.
+  # the token should be generated with the offline_access scope so that it
+  # doesn't expire. details: http://developers.facebook.com/docs/authentication/
+  auth_entity = db.ReferenceProperty()
+
+  # An activitystreams-unofficial source instance. Initialized in the ctor if
+  # self.auth_entity is set.
+  as_source = None
+
   def new(self, **kwargs):
     """Factory method. Creates and returns a new instance for the current user.
 
@@ -137,18 +151,8 @@ class Source(Site):
 
     Returns: dict, decoded ActivityStreams activity, or None
     """
-    raise NotImplementedError()
-
-  def get_posts(self):
-    """Returns a list of the most recent posts from this source.
-
-    To be implemented by subclasses. The returned post objects will be passed
-    back in get_comments().
-
-    Returns: list of (post, url), where post is any object and url is the string
-      url for the post
-    """
-    raise NotImplementedError()
+    count, activities = self.as_source.get_activities(activity_id=id)
+    return activities[0]['object'] if activities else None
 
   def get_comment(self, id):
     """Returns a comment from this source.
@@ -158,16 +162,12 @@ class Source(Site):
 
     Returns: dict, decoded ActivityStreams comment object, or None
     """
-    raise NotImplementedError()
+    return self.as_source.get_comment(id)
 
-  def get_comments(self, posts_and_targets):
+  def get_comments(self):
     """Returns a list of Comment instances for the given posts.
 
     To be implemented by subclasses. Only called after get_posts().
-
-    Args:
-      posts_and_targets: list of (post object, target URL) tuples. The post
-        objects are a subset of the ones returned by get_posts().
     """
     raise NotImplementedError()
 
@@ -189,15 +189,9 @@ class Comment(KeyNameModel):
   """
   STATUSES = ('new', 'processing', 'complete')
 
-  source = db.ReferenceProperty(reference_class=Source, required=True)
-  source_post_url = db.LinkProperty()
-  source_comment_url = db.LinkProperty()
-  target_post_url = db.LinkProperty()
-  created = db.DateTimeProperty()
-  author_name = db.StringProperty()
-  author_url = db.LinkProperty()
-  content = db.TextProperty()
-
+  # microformats2 json. sources may store extra source-specific properties.
+  mf2_json = db.TextProperty()
+  source = db.ReferenceProperty()
   status = db.StringProperty(choices=STATUSES, default='new')
   leased_until = db.DateTimeProperty()
 
@@ -214,9 +208,10 @@ class Comment(KeyNameModel):
       #   assert new == existing, '%s: new %s, existing %s' % (prop, new, existing)
       return existing
 
+    props = json.loads(self.mf2_json)['properties']
     logging.debug('New comment to propagate! %s %r\n%s on %s',
                   self.kind(), self.key().id_or_name(),
-                  self.source_comment_url, self.target_post_url)
+                  props.get('url'), props.get('in-reply-to'))
     taskqueue.add(queue_name='propagate', params={'comment_key': str(self.key())})
     self.save()
     return self

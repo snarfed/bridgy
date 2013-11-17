@@ -40,11 +40,7 @@ class GooglePlusPage(models.Source):
 
   TYPE_NAME = 'Google+'
 
-  # full human-readable name
-  name = db.StringProperty()
-  picture = db.LinkProperty()
   type = db.StringProperty(choices=('user', 'page'))
-  auth_entity = db.ReferenceProperty(oauth_googleplus.GooglePlusAuth)
 
   def display_name(self):
     return self.name
@@ -138,21 +134,10 @@ class AddGooglePlusPage(util.Handler):
     self.redirect('/')
 
 
-class DeleteGooglePlusPage(util.Handler):
-  def post(self):
-    page = GooglePlusPage.get_by_key_name(self.request.params['key_name'])
-    # TODO: remove credentials, tasks, etc.
-    msg = 'Deleted %s source: %s' % (page.type_display_name(),
-                                     page.display_name())
-    page.delete()
-    self.redirect('/?msg=' + msg)
-
-
 application = webapp2.WSGIApplication([
     ('/googleplus/start',
      oauth_googleplus.StartHandler.to('/googleplus/oauth2callback')),
     ('/googleplus/oauth2callback',
      oauth_googleplus.CallbackHandler.to('/googleplus/add')),
     ('/googleplus/add', AddGooglePlusPage),
-    ('/googleplus/delete', DeleteGooglePlusPage),
     ], debug=appengine_config.DEBUG)

@@ -6,6 +6,7 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 import base64
 import collections
 import datetime
+import json
 import urlparse
 
 from models import Comment, Source
@@ -89,26 +90,16 @@ class ModelsTest(HandlerTest):
 
     now = datetime.datetime.now()
 
-    properties = {
-      'source': self.sources[0],
-      'created': now,
-      'source_post_url': 'http://source/post/url',
-      'source_comment_url': 'http://source/comment/url',
-      'author_name': 'me',
-      'author_url': 'http://me',
-      'content': 'foo',
-      }
+    mf2_json = json.dumps({
+      "type": ["h-entry"],
+      "properties": {
+        "url": ["http://source/comment/url"],
+        "content": [{"value": "foo", "html": "foo"}],
+        "in-reply-to": ["http://source/post/url"]
+        }
+      })
 
-    self.comments = [
-      Comment(key_name='a',
-              target_post_url='http://target1/post/url',
-              **properties),
-      Comment(key_name='b',
-              target_post_url='http://target0/post/url',
-              **properties),
-      Comment(key_name='c',
-              target_post_url='http://target1/post/url',
-              **properties),
-      ]
+    self.comments = [Comment(key_name=k, source=self.sources[0], mf2_json=mf2_json)
+                     for k in ('a', 'b', 'c')]
 
     self.sources[0].set_comments(self.comments)

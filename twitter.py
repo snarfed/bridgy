@@ -34,11 +34,6 @@ class Twitter(models.Source):
 
   TYPE_NAME = 'Twitter'
 
-  # full human-readable name
-  name = db.StringProperty()
-  picture = db.LinkProperty()
-  auth_entity = db.ReferenceProperty(oauth_twitter.TwitterAuth)
-
   def display_name(self):
     return self.name
 
@@ -173,18 +168,7 @@ class AddTwitter(oauth_twitter.CallbackHandler):
     self.redirect('/')
 
 
-class DeleteTwitter(util.Handler):
-  def post(self):
-    twitter = Twitter.get_by_key_name(self.request.params['key_name'])
-    # TODO: remove tasks, etc.
-    msg = 'Deleted %s source: %s' % (twitter.type_display_name(),
-                                     twitter.display_name())
-    twitter.delete()
-    self.redirect('/?msg=' + msg)
-
-
 application = webapp2.WSGIApplication([
     ('/twitter/start', oauth_twitter.StartHandler.to('/twitter/add')),
     ('/twitter/add', AddTwitter),
-    ('/twitter/delete', DeleteTwitter),
     ], debug=appengine_config.DEBUG)
