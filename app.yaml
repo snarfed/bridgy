@@ -28,23 +28,18 @@ handlers:
 
 - url: /facebook/(post|comment)/.*
   script: facebook.application
-  # login not required for post/comment handlers
 
 - url: /facebook/.*
   script: facebook.application
-  login: required
 
 - url: /googleplus/.*
   script: googleplus.application
-  login: required
 
 - url: /instagram/.*
   script: instagram.application
-  login: required
 
 - url: /twitter/.*
   script: twitter.application
-  login: required
 
 - url: /_ah/queue/.*
   script: tasks.application
@@ -58,7 +53,6 @@ handlers:
 
 - url: .*
   script: app.application
-  login: required
 
 skip_files:
 - ^(.*/)?.*\.py[co]

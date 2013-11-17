@@ -71,8 +71,19 @@ class RegisterHandler(util.Handler):
     self.redirect('/')
 
 
+class DeleteHandler(util.Handler):
+  def post(self):
+    source = db.get(util.get_required_param('key'))
+    source.delete()
+    # TODO: remove credentials, tasks, etc.
+    msg = 'Deleted %s source: %s' % (source.type_display_name(),
+                                     source.display_name())
+    self.redirect('/?msg=' + msg)
+
+
 application = webapp2.WSGIApplication(
   [('/', DashboardHandler),
    ('/register', RegisterHandler),
+   ('/delete', DeleterHandler),
    ] + handlers.HOST_META_ROUTES,
   debug=appengine_config.DEBUG)
