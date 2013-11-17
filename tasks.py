@@ -10,10 +10,8 @@ TODO: check HRD consistency guarantees and change as needed
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import datetime
-import itertools
+import json
 import logging
-import re
-import time
 
 # need to import model class definitions since poll creates and saves entities.
 import facebook
@@ -70,7 +68,7 @@ class Poll(webapp2.RequestHandler):
       # let this task complete successfully so that it's not retried.
 
   def do_post(self, source):
-    for comment in source.get_comments(source.get_posts()):
+    for comment in source.get_comments():
       comment.get_or_save()
 
     source.last_polled = now_fn()
@@ -98,10 +96,11 @@ class Propagate(webapp2.RequestHandler):
       if not comment:
         return
 
-      logging.info('Sending webmention with source %s, target %s',
-                   comment.source_comment_url, comment.target_post_url)
-      mention = send.WebmentionSend(comment.source_comment_url,
-                                    comment.target_post_url)
+      props = json.loads(comment.mf2_json)['properties']
+      source = props['url'][0]
+      target = props['in-reply-to'][0]
+      logging.info('Sending webmention with source %s, target %s', source, target)
+      mention = send.WebmentionSend(source, target)
       if mention.send():
         logging.info('Sent to %s', mention.receiver_endpoint)
         self.complete_comment()

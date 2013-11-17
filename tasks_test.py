@@ -104,20 +104,15 @@ class PollTest(TaskQueueTest):
     """If the source raises DisableSource, disable it.
     """
     source = self.sources[0]
+    self.mox.StubOutWithMock(testutil.FakeSource, 'get_comments')
+    testutil.FakeSource.get_comments().AndRaise(models.DisableSource)
+    self.mox.ReplayAll()
 
-    for method, cmps in (('get_posts', []),
-                         ('get_comments', [mox.IgnoreArg()])):
-      self.mox.UnsetStubs()
-      self.mox.StubOutWithMock(testutil.FakeSource, method)
-      getattr(testutil.FakeSource, method)(*cmps).AndRaise(models.DisableSource)
-      self.mox.ReplayAll()
-
-      source.status = 'enabled'
-      source.save()
-      self.post_task()
-      source = db.get(source.key())
-      self.assertEqual('disabled', source.status)
-      self.mox.VerifyAll()
+    source.status = 'enabled'
+    source.save()
+    self.post_task()
+    source = db.get(source.key())
+    self.assertEqual('disabled', source.status)
 
 
 class PropagateTest(TaskQueueTest):

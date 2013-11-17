@@ -165,9 +165,9 @@ class Source(Site):
     return self.as_source.get_comment(id)
 
   def get_comments(self):
-    """Returns a list of Comment instances for the given posts.
+    """Returns a list of Comment instances for recent posts from this source.
 
-    To be implemented by subclasses. Only called after get_posts().
+    To be implemented by subclasses.
     """
     raise NotImplementedError()
 

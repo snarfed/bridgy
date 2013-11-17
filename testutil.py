@@ -54,11 +54,7 @@ class FakeSource(FakeBase, Source):
   def set_comments(self, comments):
     FakeSource.comments[str(self.key())] = comments
 
-  def get_posts(self):
-    return [(c, c.target_post_url) for c in FakeSource.comments[str(self.key())]]
-
-  def get_comments(self, posts):
-    assert posts
+  def get_comments(self):
     return FakeSource.comments[str(self.key())]
 
 
@@ -95,7 +91,7 @@ class ModelsTest(HandlerTest):
       "properties": {
         "url": ["http://source/comment/url"],
         "content": [{"value": "foo", "html": "foo"}],
-        "in-reply-to": ["http://source/post/url"]
+        "in-reply-to": ["http://target1/post/url"]
         }
       })
 
