@@ -191,8 +191,10 @@ class Comment(KeyNameModel):
   """
   STATUSES = ('new', 'processing', 'complete')
 
-  # ActivityStreams JSON. sources may store extra source-specific properties.
-  as_json = db.TextProperty()
+  # ActivityStreams JSON post and comment. sources may store extra
+  # source-specific properties.
+  comment_as_json = db.TextProperty()
+  post_as_json = db.TextProperty()
   source = db.ReferenceProperty()
   status = db.StringProperty(choices=STATUSES, default='new')
   leased_until = db.DateTimeProperty()
