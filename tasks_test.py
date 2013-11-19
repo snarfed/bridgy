@@ -4,6 +4,7 @@
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import datetime
+import json
 import logging
 import mox
 import urllib
@@ -132,21 +133,16 @@ class PropagateTest(TaskQueueTest):
     if leased_until is not False:
       self.assertEqual(leased_until, comment.leased_until)
 
-  def expect_webmention(self):
+  def mock_webmention(self):
     self.mock_send = self.mox.CreateMock(send.WebmentionSend)
-    self.mox.StubOutWithMock(send, 'WebmentionSend', use_mock_anything=True)
-    send.WebmentionSend('http://source/comment/url', 'http://target1/post/url'
-                        ).AndReturn(self.mock_send)
     self.mock_send.receiver_endpoint = 'http://webmention/endpoint'
-    return self.mock_send.send()
+    self.mox.StubOutWithMock(send, 'WebmentionSend', use_mock_anything=True)
 
-  def expect_webmention_fail(self):
-    send.WebmentionSend('http://source/comment/url', 'http://target1/post/url'
+  def expect_webmention(self, target_url='http://target1/post/url'):
+    self.mock_webmention()
+    send.WebmentionSend('http://source/comment/url', target_url,
                         ).AndReturn(self.mock_send)
-    self.mock_send.receiver_endpoint = None
-    self.mock_send.error = {'code': 'FOO'}
-    self.mock_send.send().AndReturn(False)
-    self.mox.ReplayAll()
+    return self.mock_send.send()
 
   def test_propagate(self):
     """A normal propagate task."""
@@ -156,6 +152,25 @@ class PropagateTest(TaskQueueTest):
     self.mox.ReplayAll()
     self.post_task()
     self.assert_comment_is('complete', NOW + Propagate.LEASE_LENGTH)
+
+  def test_original_post_discovery(self):
+    """Target URLs should be extracted from attachments, tags, and text."""
+    activity = json.loads(self.comments[0].activity_json)
+    obj = activity['object']
+    obj['tags'] = [{'objectType': 'article', 'url': 'http://tar.get/a'}]
+    obj['attachments'] = [{'objectType': 'article', 'url': 'http://tar.get/b'}]
+    obj['content'] = 'foo http://tar.get/c bar (tar.get d) baz'
+    self.comments[0].activity_json = json.dumps(activity)
+    self.comments[0].save()
+
+    self.mock_webmention()
+    for i in 'a', 'b', 'c', 'd':
+      send.WebmentionSend('http://source/comment/url', 'http://tar.get/%s' % i,
+                          ).InAnyOrder().AndReturn(self.mock_send)
+      self.mock_send.send().InAnyOrder().AndReturn(True)
+
+    self.mox.ReplayAll()
+    self.post_task()
 
   def test_already_complete(self):
     """If the comment has already been propagated, do nothing."""

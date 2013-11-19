@@ -104,22 +104,39 @@ class Propagate(webapp2.RequestHandler):
       if not comment:
         return
 
-      obj = json.loads(comment.comment_json)
-      source = obj['url']
-      target = obj['inReplyTo']['url']
-      logging.info('Sending webmention with source %s, target %s', source, target)
-      mention = send.WebmentionSend(source, target)
-      if mention.send():
-        logging.info('Sent to %s', mention.receiver_endpoint)
-        self.complete_comment()
-      else:
-        if mention.error['code'] == 'NO_ENDPOINT':
-          logging.info('No webmention endpoint found, giving up this comment.')
+      source = json.loads(comment.comment_json)['url']
+
+      # a variant on the original post discovery algorithm.
+      # http://indiewebcamp.com/original-post-discovery
+      #
+      # differences: finds multiple candidate links instead of one, and doesn't
+      # bother looking for MF2 (etc) markup because the silos don't let you
+      # input it.
+      obj = json.loads(comment.activity_json)['object']
+      content = obj.get('content', '')
+      attachments = obj.get('tags', []) + obj.get('attachments', [])
+      targets = util.trim_nulls(
+        set(a.get('url') for a in attachments if a['objectType'] == 'article') |
+        util.extract_links(content) |
+        util.extract_permashortcitations(content))
+
+      # send webmentions!
+      logging.info('Discovered original post URLs in %s: %s',
+                   comment.key().name(), targets)
+      for target in targets:
+        mention = send.WebmentionSend(source, target)
+        logging.info('Sending webmention from %s to %s', source, target)
+        if mention.send():
+          logging.info('Sent to %s', mention.receiver_endpoint)
           self.complete_comment()
         else:
-          self.fail('Error sending to endpoint %s: %s' %
-                    (mention.receiver_endpoint, mention.error))
-          self.release_comment()
+          if mention.error['code'] == 'NO_ENDPOINT':
+            logging.info('No webmention endpoint found, giving up this comment.')
+            self.complete_comment()
+          else:
+            self.fail('Error sending to endpoint %s: %s' %
+                      (mention.receiver_endpoint, mention.error))
+            self.release_comment()
 
     except:
       logging.exception('Propagate task failed')

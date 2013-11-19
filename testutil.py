@@ -87,15 +87,15 @@ class ModelsTest(HandlerTest):
     self.activities = [{
       'object': {
         'objectType': 'note',
-        'id': 'tag:facebook.com,2013:212038_000',
-        'url': 'http://facebook.com/212038/posts/000',
+        'id': 'tag:source.com,2013:000',
+        'url': 'http://source/post/url',
+        'content': 'foo http://target1/post/url bar',
         'replies': {
           'items': [{
               'objectType': 'comment',
-              'id': 'tag:facebook.com,2013:1_2_%s' % id,
+              'id': 'tag:source.com,2013:1_2_%s' % id,
               'url': 'http://source/comment/url',
-              'inReplyTo': {'url': 'http://target1/post/url'},
-              'content': 'foo',
+              'content': 'foo bar',
               }],
           'totalItems': 1,
           },

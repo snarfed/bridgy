@@ -214,9 +214,8 @@ class Comment(KeyNameModel):
       return existing
 
     obj = json.loads(self.comment_json)
-    logging.debug('New comment to propagate! %s %r\n%s on %s',
-                  self.kind(), self.key().id_or_name(),
-                  obj['url'], obj['inReplyTo']['url'])
+    logging.debug('New comment to propagate! %s %r %s',
+                  self.kind(), self.key().id_or_name(), obj['url'])
     taskqueue.add(queue_name='propagate', params={'comment_key': str(self.key())})
     self.save()
     return self
