@@ -84,21 +84,8 @@ class FacebookPage(models.Source):
   def display_name(self):
     return self.name
 
-  def get_comments(self):
-    comments = []
-    count, activities = self.as_source.get_activities()
-
-    for activity in activities:
-      obj = activity['object']
-      replies = obj.pop('replies', {}).get('items', [])
-      obj_json = json.dumps(obj)
-      comments += [models.Comment(key_name=reply['id'],
-                                  source=self,
-                                  comment_as_json=json.dumps(reply),
-                                  post_as_json=obj_json)
-                   for reply in replies]
-
-    return comments
+  def get_activities(self):
+    return self.as_source.get_activities()[1]
 
     # TODO: handle errors. (activitystreams-unofficial doesn't yet handle *or*
     # expose them.

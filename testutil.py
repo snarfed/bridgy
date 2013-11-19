@@ -46,16 +46,16 @@ class FakeBase(db.Model):
 
 class FakeSource(FakeBase, Source):
   """Attributes:
-    comments: dict mapping FakeSource string key to list of Comments to be
-      returned by poll()
+    comments: dict mapping FakeSource string key to list of activities to be
+      returned by get_activities()
   """
-  comments = {}
+  activities = {}
 
-  def set_comments(self, comments):
-    FakeSource.comments[str(self.key())] = comments
+  def set_activities(self, activities):
+    FakeSource.activities[str(self.key())] = activities
 
-  def get_comments(self):
-    return FakeSource.comments[str(self.key())]
+  def get_activities(self):
+    return FakeSource.activities[str(self.key())]
 
 
 class HandlerTest(testutil.HandlerTest):
@@ -84,16 +84,29 @@ class ModelsTest(HandlerTest):
     for entity in self.sources:
       entity.save()
 
-    now = datetime.datetime.now()
+    self.activities = [{
+      'object': {
+        'objectType': 'note',
+        'id': 'tag:facebook.com,2013:212038_000',
+        'url': 'http://facebook.com/212038/posts/000',
+        'replies': {
+          'items': [{
+              'objectType': 'comment',
+              'id': 'tag:facebook.com,2013:1_2_%s' % id,
+              'url': 'http://source/comment/url',
+              'inReplyTo': {'url': 'http://target1/post/url'},
+              'content': 'foo',
+              }],
+          'totalItems': 1,
+          },
+        }
+      } for id in ('a', 'b', 'c')]
+    self.sources[0].set_activities(self.activities)
 
-    as_json = json.dumps({
-        'objectType': 'comment',
-        'content': 'foo bar baz',
-        # 'id': 'tag:example.com,2001:547822715231468_6796480',
-        'url': 'http://source/comment/url',
-        'inReplyTo': {'url': 'http://target1/post/url'}
-        })
-    self.comments = [Comment(key_name=k, source=self.sources[0], as_json=as_json)
-                     for k in ('a', 'b', 'c')]
-
-    self.sources[0].set_comments(self.comments)
+    self.comments = []
+    for activity in self.activities:
+      comment = activity['object']['replies']['items'][0]
+      self.comments.append(Comment(key_name=comment['id'],
+                                   activity_json=json.dumps(activity),
+                                   comment_json=json.dumps(comment),
+                                   source=self.sources[0]))

@@ -23,6 +23,7 @@ http://indiewebcamp.com/Twitter#Why_permashortcitation_instead_of_a_link
 
 
 TODO:
+* global s/comment/reply/
 * detect updated comments and send new webmentions for them
 * store and render last N polls and propagates for each source
 * likes/favorites.

@@ -164,12 +164,13 @@ class Source(Site):
     """
     return self.as_source.get_comment(id)
 
-  def get_comments(self):
-    """Returns comments for recent posts from this source.
+  def get_activities(self):
+    """Returns recent posts and embedded comments for this source.
 
     To be implemented by subclasses.
 
-    Returns: list of dicts, decoded JSON ActivityStreams comment objects
+    Returns: list of dicts, decoded JSON ActivityStreams activity objects
+      with comments in the 'replies' field, if any
     """
     raise NotImplementedError()
 
@@ -191,10 +192,10 @@ class Comment(KeyNameModel):
   """
   STATUSES = ('new', 'processing', 'complete')
 
-  # ActivityStreams JSON post and comment. sources may store extra
+  # ActivityStreams JSON activity and comment. sources may store extra
   # source-specific properties.
-  comment_as_json = db.TextProperty()
-  post_as_json = db.TextProperty()
+  activity_json = db.TextProperty()
+  comment_json = db.TextProperty()
   source = db.ReferenceProperty()
   status = db.StringProperty(choices=STATUSES, default='new')
   leased_until = db.DateTimeProperty()
@@ -212,7 +213,7 @@ class Comment(KeyNameModel):
       #   assert new == existing, '%s: new %s, existing %s' % (prop, new, existing)
       return existing
 
-    obj = json.loads(self.as_json)
+    obj = json.loads(self.comment_json)
     logging.debug('New comment to propagate! %s %r\n%s on %s',
                   self.kind(), self.key().id_or_name(),
                   obj['url'], obj['inReplyTo']['url'])

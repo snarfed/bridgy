@@ -68,8 +68,16 @@ class Poll(webapp2.RequestHandler):
       # let this task complete successfully so that it's not retried.
 
   def do_post(self, source):
-    for comment in source.get_comments():
-      comment.get_or_save()
+    for activity in source.get_activities():
+      # remove replies from activity JSON so we don't store them all in every
+      # Comment entity.
+      replies = activity['object'].pop('replies', {})
+      for reply in replies.get('items', []):
+        models.Comment(key_name=reply['id'],
+                       source=source,
+                       activity_json=json.dumps(activity),
+                       comment_json=json.dumps(reply),
+                       ).get_or_save()
 
     source.last_polled = now_fn()
     util.add_poll_task(source, countdown=self.TASK_COUNTDOWN.seconds)
@@ -96,7 +104,7 @@ class Propagate(webapp2.RequestHandler):
       if not comment:
         return
 
-      obj = json.loads(comment.as_json)
+      obj = json.loads(comment.comment_json)
       source = obj['url']
       target = obj['inReplyTo']['url']
       logging.info('Sending webmention with source %s, target %s', source, target)
