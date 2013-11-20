@@ -57,6 +57,9 @@ class FakeSource(FakeBase, Source):
   def get_activities(self):
     return FakeSource.activities[str(self.key())]
 
+  def local_comment_path(self, comment):
+    return '/local/comment/%s' % comment.key().name()
+
 
 class HandlerTest(testutil.HandlerTest):
   """Base test class.

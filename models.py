@@ -157,12 +157,24 @@ class Source(Site):
   def get_comment(self, id):
     """Returns a comment from this source.
 
+    To be implemented by subclasses.
+
     Args:
       id: string, site-specific comment id
 
     Returns: dict, decoded ActivityStreams comment object, or None
     """
     return self.as_source.get_comment(id)
+
+  def local_comment_path(self, comment):
+    """Returns the local handler path to the MF2 version of this comment.
+
+    Args:
+      comment: Comment
+
+    Returns: string
+    """
+    raise NotImplementedError()
 
   def get_activities(self):
     """Returns recent posts and embedded comments for this source.
@@ -196,6 +208,7 @@ class Comment(KeyNameModel):
   # source-specific properties.
   activity_json = db.TextProperty()
   comment_json = db.TextProperty()
+  local_handler_path = db.StringProperty()
   source = db.ReferenceProperty()
   status = db.StringProperty(choices=STATUSES, default='new')
   leased_until = db.DateTimeProperty()

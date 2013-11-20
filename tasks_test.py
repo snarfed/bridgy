@@ -140,7 +140,7 @@ class PropagateTest(TaskQueueTest):
 
   def expect_webmention(self, target_url='http://target1/post/url'):
     self.mock_webmention()
-    send.WebmentionSend('http://source/comment/url', target_url,
+    send.WebmentionSend('/local/comment/url', target_url,
                         ).AndReturn(self.mock_send)
     return self.mock_send.send()
 
@@ -165,7 +165,7 @@ class PropagateTest(TaskQueueTest):
 
     self.mock_webmention()
     for i in 'a', 'b', 'c', 'd':
-      send.WebmentionSend('http://source/comment/url', 'http://tar.get/%s' % i,
+      send.WebmentionSend('/local/comment/url', 'http://tar.get/%s' % i,
                           ).InAnyOrder().AndReturn(self.mock_send)
       self.mock_send.send().InAnyOrder().AndReturn(True)
 

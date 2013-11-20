@@ -13,11 +13,13 @@ Example post data
     https://www.facebook.com/10100823411094363
     https://www.facebook.com/212038/posts/10100823411094363
     https://www.facebook.com/photo.php?fbid=10100823411094363
+  Local handler path: /facebook/post/212038/10100823411094363
 
 Example comment data
   id: 10100823411094363_10069288  [POST-ID]_[COMMENT-ID]
   API URL: https://graph.facebook.com/10100823411094363_10069288
   Permalink: https://www.facebook.com/10100823411094363&comment_id=10069288
+  Local handler path: /facebook/post/212038/10100823411094363_10069288
 
 Extra properties stored in ActivityStreams comments returned by get_comments()
   TODO: remove this entirely? do we not need these at all?
@@ -83,6 +85,9 @@ class FacebookPage(models.Source):
 
   def display_name(self):
     return self.name
+
+  def local_comment_path(self, comment):
+    return '/facebook/comment/%s/%s' % (self.key().name(), comment.key().name())
 
   def get_activities(self):
     return self.as_source.get_activities()[1]

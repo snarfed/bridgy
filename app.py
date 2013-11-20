@@ -84,6 +84,6 @@ class DeleteHandler(util.Handler):
 application = webapp2.WSGIApplication(
   [('/', DashboardHandler),
    ('/register', RegisterHandler),
-   ('/delete', DeleterHandler),
+   ('/delete', DeleteHandler),
    ] + handlers.HOST_META_ROUTES,
   debug=appengine_config.DEBUG)

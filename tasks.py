@@ -104,7 +104,10 @@ class Propagate(webapp2.RequestHandler):
       if not comment:
         return
 
-      source = json.loads(comment.comment_json)['url']
+      local_comment_url = (self.request.host_url +
+                           comment.source.local_comment_path(comment))
+      logging.info('Starting %s comment %s',
+                   comment.source.kind(), comment.key().name())
 
       # a variant on the original post discovery algorithm.
       # http://indiewebcamp.com/original-post-discovery
@@ -124,8 +127,8 @@ class Propagate(webapp2.RequestHandler):
       logging.info('Discovered original post URLs in %s: %s',
                    comment.key().name(), targets)
       for target in targets:
-        mention = send.WebmentionSend(source, target)
-        logging.info('Sending webmention from %s to %s', source, target)
+        mention = send.WebmentionSend(local_comment_url, target)
+        logging.info('Sending webmention from %s to %s', local_comment_url, target)
         if mention.send():
           logging.info('Sent to %s', mention.receiver_endpoint)
           self.complete_comment()
