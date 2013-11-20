@@ -104,8 +104,7 @@ class Propagate(webapp2.RequestHandler):
       if not comment:
         return
 
-      local_comment_url = (self.request.host_url +
-                           comment.source.local_comment_path(comment))
+      local_comment_url = self.request.host_url + comment.local_path()
       logging.info('Starting %s comment %s',
                    comment.source.kind(), comment.key().name())
 

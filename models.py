@@ -166,16 +166,6 @@ class Source(Site):
     """
     return self.as_source.get_comment(id)
 
-  def local_comment_path(self, comment):
-    """Returns the local handler path to the MF2 version of this comment.
-
-    Args:
-      comment: Comment
-
-    Returns: string
-    """
-    raise NotImplementedError()
-
   def get_activities(self):
     """Returns recent posts and embedded comments for this source.
 
@@ -232,6 +222,15 @@ class Comment(KeyNameModel):
     taskqueue.add(queue_name='propagate', params={'comment_key': str(self.key())})
     self.save()
     return self
+
+  def local_path(self):
+    """Returns the local handler path to the MF2 version of this comment.
+
+    Returns: string
+    """
+    domain, id = util.parse_tag_uri(self.key().name())
+    source_name = domain.split('.')[0]
+    return '/%s/comment/%s/%s' % (source_name, self.source.key().name(), id)
 
 
 class DisableSource(Exception):

@@ -140,8 +140,9 @@ class PropagateTest(TaskQueueTest):
 
   def expect_webmention(self, target_url='http://target1/post/url'):
     self.mock_webmention()
-    send.WebmentionSend('/local/comment/url', target_url,
-                        ).AndReturn(self.mock_send)
+    local_url = 'http://localhost/source/comment/%s/1_2_a' % \
+      self.comments[0].source.key().name()
+    send.WebmentionSend(local_url, target_url).AndReturn(self.mock_send)
     return self.mock_send.send()
 
   def test_propagate(self):
@@ -163,10 +164,12 @@ class PropagateTest(TaskQueueTest):
     self.comments[0].activity_json = json.dumps(activity)
     self.comments[0].save()
 
+    source_name = self.comments[0].source.key().name()
+    local_url = 'http://localhost/source/comment/%s/1_2_a' % source_name
     self.mock_webmention()
     for i in 'a', 'b', 'c', 'd':
-      send.WebmentionSend('/local/comment/url', 'http://tar.get/%s' % i,
-                          ).InAnyOrder().AndReturn(self.mock_send)
+      target = 'http://tar.get/%s' % i
+      send.WebmentionSend(local_url, target).InAnyOrder().AndReturn(self.mock_send)
       self.mock_send.send().InAnyOrder().AndReturn(True)
 
     self.mox.ReplayAll()

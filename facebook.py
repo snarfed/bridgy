@@ -86,9 +86,6 @@ class FacebookPage(models.Source):
   def display_name(self):
     return self.name
 
-  def local_comment_path(self, comment):
-    return '/facebook/comment/%s/%s' % (self.key().name(), comment.key().name())
-
   def get_activities(self):
     return self.as_source.get_activities()[1]
 
