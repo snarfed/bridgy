@@ -3,6 +3,7 @@
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
+import itertools
 import logging
 import os
 import urllib
@@ -33,30 +34,15 @@ class DashboardHandler(util.Handler):
     Args:
       msg: string, message to be displayed
     """
-    # TODO: switch auth to OpenID and put in a nice selector:
-    # http://code.google.com/appengine/articles/openid.html
-    # http://jvance.com/pages/JQueryOpenIDPlugin.xhtml
-    user = models.User.get_current_user()
-    if user:
-      nickname = users.get_current_user().nickname()
-
-      logout_url = users.create_logout_url('/')
-      twitter_searches = list(TwitterSearch.all().filter('owner =', user))
-      sources = (list(FacebookPage.all().filter('owner =', user)) +
-                 list(GooglePlusPage.all().filter('owner =', user)) +
-                 list(Instagram.all().filter('owner =', user)) +
-                 list(Twitter.all().filter('owner =', user)) +
-                 twitter_searches
-                 )
-      for source in sources:
-        source.delete_url = '/%s/delete' % source.__module__
+    sources = itertools.chain(FacebookPage.all(), Twitter.all(),
+                              GooglePlusPage.all(), Instagram.all())
 
     msgs = self.request.params.getall('msg')
     path = os.path.join(os.path.dirname(__file__), 'templates', 'dashboard.html')
 
     self.response.headers['Link'] = ('<%s/webmention>; rel="webmention"' %
                                      self.request.host_url)
-    self.response.out.write(template.render(path, locals()))
+    self.response.out.write(template.render(path, {'sources': sources, 'msgs': msgs}))
 
 
 class RegisterHandler(util.Handler):
@@ -73,7 +59,7 @@ class RegisterHandler(util.Handler):
 
 class DeleteHandler(util.Handler):
   def post(self):
-    source = db.get(util.get_required_param('key'))
+    source = db.get(util.get_required_param(self, 'key'))
     source.delete()
     # TODO: remove credentials, tasks, etc.
     msg = 'Deleted %s source: %s' % (source.type_display_name(),
