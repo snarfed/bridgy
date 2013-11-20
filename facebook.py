@@ -74,9 +74,10 @@ class FacebookPage(models.Source):
     """
     user = json.loads(auth_entity.user_json)
     id = user['id']
+    url = 'http://facebook.com/' + id
     picture = 'http://graph.facebook.com/%s/picture' % user.get('username', id)
     return FacebookPage(key_name=id, auth_entity=auth_entity, picture=picture,
-                        **user)  # for type, name, username
+                        url=url, **user)  # for type, name, username
 
   def __init__(self, *args, **kwargs):
     super(FacebookPage, self).__init__(*args, **kwargs)
