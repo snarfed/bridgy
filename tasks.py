@@ -68,11 +68,18 @@ class Poll(webapp2.RequestHandler):
       # let this task complete successfully so that it's not retried.
 
   def do_post(self, source):
-    for activity in source.get_activities():
+    logging.info('Polling %s %s %s', source.type_display_name(),
+                 source.key().name(), source.name)
+    activities = source.get_activities()
+    logging.info('Found %d activities', len(activities))
+
+    for activity in activities:
       # remove replies from activity JSON so we don't store them all in every
       # Comment entity.
-      replies = activity['object'].pop('replies', {})
-      for reply in replies.get('items', []):
+      replies = activity['object'].pop('replies', {}).get('items', [])
+      logging.info('Found %d comments for activity %s', len(replies),
+                   activity['id'])
+      for reply in replies:
         models.Comment(key_name=reply['id'],
                        source=source,
                        activity_json=json.dumps(activity),

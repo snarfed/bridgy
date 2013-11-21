@@ -85,6 +85,7 @@ class ModelsTest(HandlerTest):
       entity.save()
 
     self.activities = [{
+      'id': 'tag:source.com,2013:000',
       'object': {
         'objectType': 'note',
         'id': 'tag:source.com,2013:000',

@@ -47,30 +47,30 @@ class FacebookPageTest(testutil.ModelsTest):
 
   def test_get_activities(self):
     self.expect_urlopen(
-      'https://graph.facebook.com/me/home?offset=0&limit=0&access_token=my_token',
+      'https://graph.facebook.com/me/home?offset=0&access_token=my_token',
       json.dumps({'data': [{
               'id': '212038_000',
               'comments': {'count': 1,
-                           'data': [{'id': '1_2_3', 'message': 'foo'}]}
+                           'data': [{'id': '2_3', 'message': 'foo'}]}
               }]}))
     self.mox.ReplayAll()
 
     page = FacebookPage.new(self.handler, auth_entity=self.auth_entity)
     self.assert_equals([{
           'verb': 'post',
-          'id': 'tag:facebook.com,2013:212038_000',
-          'url': 'http://facebook.com/212038/posts/000',
+          'id': 'tag:facebook.com,2013:000',
+          'url': 'http://facebook.com/000',
           'title': 'Unknown posted a unknown.',
           'object': {
             'objectType': 'note',
-            'id': 'tag:facebook.com,2013:212038_000',
-            'url': 'http://facebook.com/212038/posts/000',
+            'id': 'tag:facebook.com,2013:000',
+            'url': 'http://facebook.com/000',
             'replies': {
               'items': [{
                   'objectType': 'comment',
-                  'id': 'tag:facebook.com,2013:1_2_3',
+                  'id': 'tag:facebook.com,2013:2_3',
                   'url': 'http://facebook.com/2?comment_id=3',
-                  'inReplyTo': {'id': 'tag:facebook.com,2013:1_2'},
+                  'inReplyTo': {'id': 'tag:facebook.com,2013:2'},
                   'content': 'foo',
                   }],
               'totalItems': 1,
