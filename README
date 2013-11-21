@@ -1,14 +1,25 @@
+Bridgy ![Bridgy](https://raw.github.com/snarfed/bridgy/master/static/bridgy_small.png)
+===
+
 Got a blog? Share your blog posts on social networks? Wish comments on those
 shared posts also showed up on your blog? Bridgy copies them back for you.
 
 http://brid.gy/
 
+_Bridgy is currently in flux._ The [current site](http://brid.gy/) only supports
+WordPress, but I'm updating the code to use
+[webmentions](http://www.webmention.org/) instead, so it will soon be a part of
+the [IndieWeb](http://indiewebcamp.com/) ecosystem. Stay tuned!
+
 Background: http://snarfed.org/2011-07-27_facebook_app_for_ostatus
 License: This project is placed in the public domain.
 
 
-Requires a bunch of libraries because of Google+: google-api-python-client,
-httplib2, python-gflags, etc. They're all in git submodules.
+Development
+---
+
+All dependencies are in git submodules. Be sure to run
+`git submodule init; git submodule update` after you clone the repo.
 
 The tests require the App Engine SDK and python-mox.
 
