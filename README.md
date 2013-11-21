@@ -33,6 +33,7 @@ Related work
 
 TODOs
 ---
+* cache webmention discovery
 * global s/comment/reply/
 * detect updated comments and send new webmentions for them
 * store and render last N polls and propagates for each source

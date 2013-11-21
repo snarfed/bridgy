@@ -51,6 +51,8 @@ import util
 from google.appengine.ext import db
 import webapp2
 
+from activitystreams import source as as_source
+
 
 class FacebookPage(models.Source):
   """A facebook profile or page.
@@ -88,7 +90,7 @@ class FacebookPage(models.Source):
     return self.name
 
   def get_activities(self):
-    return self.as_source.get_activities()[1]
+    return self.as_source.get_activities(group_id=as_source.SELF)[1]
 
     # TODO: handle errors. (activitystreams-unofficial doesn't yet handle *or*
     # expose them.

@@ -42,7 +42,7 @@ class Poll(webapp2.RequestHandler):
   Inserts a propagate task for each comment that hasn't been seen before.
   """
 
-  TASK_COUNTDOWN = datetime.timedelta(hours=1)
+  TASK_COUNTDOWN = datetime.timedelta(minutes=15)
 
   def post(self):
     logging.debug('Params: %s', self.request.params)
@@ -78,7 +78,7 @@ class Poll(webapp2.RequestHandler):
       # Comment entity.
       replies = activity['object'].pop('replies', {}).get('items', [])
       logging.info('Found %d comments for activity %s', len(replies),
-                   activity['id'])
+                   activity.get('url'))
       for reply in replies:
         models.Comment(key_name=reply['id'],
                        source=source,
@@ -115,7 +115,7 @@ class Propagate(webapp2.RequestHandler):
       logging.info('Starting %s comment %s',
                    comment.source.kind(), comment.key().name())
 
-      # a variant on the original post discovery algorithm.
+      # a variation on the original post discovery algorithm.
       # http://indiewebcamp.com/original-post-discovery
       #
       # differences: finds multiple candidate links instead of one, and doesn't
