@@ -33,6 +33,8 @@ Related work
 
 TODOs
 ---
+* only handle public posts. (need to add privacy/audience detection to
+  activitystreams-unofficial?)
 * cache webmention discovery
 * global s/comment/reply/
 * detect updated comments and send new webmentions for them
