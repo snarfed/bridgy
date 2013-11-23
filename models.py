@@ -166,10 +166,11 @@ class Source(Site):
     """
     return self.as_source.get_comment(id)
 
-  def get_activities(self):
+  def get_activities(self, **kwargs):
     """Returns recent posts and embedded comments for this source.
 
-    To be implemented by subclasses.
+    To be implemented by subclasses. Keyword args should be passed through to
+    activitystreams-unofficial's Source.get_activities().
 
     Returns: list of dicts, decoded JSON ActivityStreams activity objects
       with comments in the 'replies' field, if any

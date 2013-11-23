@@ -9,6 +9,7 @@ import datetime
 import json
 import urlparse
 
+from activitystreams import source as as_source
 from models import Comment, Source
 from tasks import Poll, Propagate
 import util
@@ -50,11 +51,12 @@ class FakeSource(FakeBase, Source):
       returned by get_activities()
   """
   activities = {}
+  as_source = as_source.Source()
 
   def set_activities(self, activities):
     FakeSource.activities[str(self.key())] = activities
 
-  def get_activities(self):
+  def get_activities(self, **kwargs):
     return FakeSource.activities[str(self.key())]
 
 

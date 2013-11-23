@@ -89,8 +89,8 @@ class FacebookPage(models.Source):
   def display_name(self):
     return self.name
 
-  def get_activities(self):
-    return self.as_source.get_activities(group_id=as_source.SELF)[1]
+  def get_activities(self, **kwargs):
+    return self.as_source.get_activities(group_id=as_source.SELF, **kwargs)[1]
 
     # TODO: handle errors. (activitystreams-unofficial doesn't yet handle *or*
     # expose them.
