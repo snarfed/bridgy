@@ -70,7 +70,7 @@ class Poll(webapp2.RequestHandler):
   def do_post(self, source):
     logging.info('Polling %s %s %s', source.type_display_name(),
                  source.key().name(), source.name)
-    activities = source.get_activities()
+    activities = source.get_activities(count=5)
     logging.info('Found %d activities', len(activities))
 
     for activity in activities:
@@ -115,24 +115,19 @@ class Propagate(webapp2.RequestHandler):
       logging.info('Starting %s comment %s',
                    comment.source.kind(), comment.key().name())
 
-      # a variation on the original post discovery algorithm.
-      # http://indiewebcamp.com/original-post-discovery
-      #
-      # differences: finds multiple candidate links instead of one, and doesn't
-      # bother looking for MF2 (etc) markup because the silos don't let you
-      # input it.
-      obj = json.loads(comment.activity_json)['object']
-      content = obj.get('content', '')
-      attachments = obj.get('tags', []) + obj.get('attachments', [])
+      activity = json.loads(comment.activity_json)
+      comment.source.as_source.original_post_discovery(activity)
       targets = util.trim_nulls(
-        set(a.get('url') for a in attachments if a['objectType'] == 'article') |
-        util.extract_links(content) |
-        util.extract_permashortcitations(content))
+        t.get('url') for t in activity['object'].get('tags', []))
 
       # send webmentions!
       logging.info('Discovered original post URLs in %s: %s',
                    comment.key().name(), targets)
       for target in targets:
+        # When debugging locally, redirect my (snarfed.org) webmentions to localhost
+        if appengine_config.DEBUG and target.startswith('http://snarfed.org/'):
+          target = target.replace('http://snarfed.org/', 'http://localhost/')
+
         mention = send.WebmentionSend(local_comment_url, target)
         logging.info('Sending webmention from %s to %s', local_comment_url, target)
         if mention.send():
