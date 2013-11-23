@@ -44,7 +44,6 @@ import logging
 from activitystreams import facebook as as_facebook
 from activitystreams.oauth_dropins import facebook as oauth_facebook
 import appengine_config
-import handlers
 import models
 import util
 

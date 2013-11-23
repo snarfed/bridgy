@@ -154,7 +154,7 @@ class Source(Site):
     Returns: dict, decoded ActivityStreams activity, or None
     """
     count, activities = self.as_source.get_activities(activity_id=id)
-    return activities[0]['object'] if activities else None
+    return activities[0] if activities else None
 
   def get_comment(self, id):
     """Returns a comment from this source.

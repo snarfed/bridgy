@@ -50,6 +50,7 @@ class FakeSource(FakeBase, Source):
     comments: dict mapping FakeSource string key to list of activities to be
       returned by get_activities()
   """
+  SHORT_NAME = 'fake'
   activities = {}
   as_source = as_source.Source()
 
@@ -58,6 +59,9 @@ class FakeSource(FakeBase, Source):
 
   def get_activities(self, **kwargs):
     return FakeSource.activities[str(self.key())]
+
+  def get_post(self, id):
+    return self.get_activities()[int(id)]
 
 
 class HandlerTest(testutil.HandlerTest):

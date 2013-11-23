@@ -3,38 +3,39 @@
 
 import json
 
-from handlers import ObjectHandler
+import handlers
 import models
-from webutil import testutil
+import testutil
 import webapp2
 
 from google.appengine.ext import db
 
 
-class ObjectHandlerTest(testutil.HandlerTest):
+class HandlersTest(testutil.HandlerTest):
 
   def setUp(self):
-    super(ObjectHandlerTest, self).setUp()
-    self.source_cls = self.mox.CreateMock(db.Model)
-    self.source = self.mox.CreateMock(models.Source)
-    self.app = webapp2.WSGIApplication([
-        ('/(.+)/(.+)', ObjectHandler.using(self.source_cls, 'get_post'))])
+    super(HandlersTest, self).setUp()
+    handlers.SOURCES['fake'] = testutil.FakeSource
+    self.source = testutil.FakeSource.new(self.handler)
+    self.source.as_source.DOMAIN = 'fake.com'
+    self.source.set_activities(
+      [{'object': {
+            'id': 'tag:fake.com,2013:000',
+            'url': 'http://fake.com/000',
+            'content': 'asdf',
+            }}])
+    self.source.save()
 
-  def test_get_html(self):
-    self.source_cls.get_by_key_name('user1').AndReturn(self.source)
-    self.source.get_post('post2').AndReturn({
-        'url': 'http://facebook.com/123',
-        'content': 'asdf'})
-    self.mox.ReplayAll()
-
-    resp = self.app.get_response('/user1/post2')
-    self.assertEqual(200, resp.status_int)
+  def test_get_post_html(self):
+    resp = handlers.application.get_response('/post/fake/%s/000' %
+                                             self.source.key().name())
+    self.assertEqual(200, resp.status_int, resp.body)
     self.assert_equals("""\
 <!DOCTYPE html>
 <html>
 <article class="h-entry">
-<span class="u-uid"></span>
-<a class="u-url p-name" href="http://facebook.com/123">asdf</a>
+<span class="u-uid">tag:fake.com,2013:000</span>
+<a class="u-url p-name" href="http://fake.com/000">asdf</a>
 <time class="dt-published" datetime=""></time>
 <time class="dt-updated" datetime=""></time>
 
@@ -50,35 +51,26 @@ class ObjectHandlerTest(testutil.HandlerTest):
 </html>
 """, resp.body)
 
-  def test_get_json(self):
-    self.source_cls.get_by_key_name('user1').AndReturn(self.source)
-    self.source.get_post('post2').AndReturn({
-        'url': 'http://facebook.com/123',
-        'content': 'asdf'})
-    self.mox.ReplayAll()
-
-    resp = self.app.get_response('/user1/post2?format=json')
-    self.assertEqual(200, resp.status_int)
+  def test_get_post_json(self):
+    resp = handlers.application.get_response('/post/fake/%s/000?format=json' %
+                                             self.source.key().name())
+    self.assertEqual(200, resp.status_int, resp.body)
     self.assert_equals({
         'type': ['h-entry'],
-         'properties': {
-            'name': ['asdf'],
-            'url': ['http://facebook.com/123'],
-            'content': [{ 'html': 'asdf', 'value': 'asdf'}],
-            },
-         },
+        'properties': {
+          'uid': ['tag:fake.com,2013:000'],
+          'name': ['asdf'],
+          'url': ['http://fake.com/000'],
+          'content': [{ 'html': 'asdf', 'value': 'asdf'}],
+          },
+        },
         json.loads(resp.body))
 
-  def test_bad_user(self):
-    self.source_cls.get_by_key_name('user1').AndReturn(None)
-    self.mox.ReplayAll()
-
-    resp = self.app.get_response('/user1/post2')
+  def test_post_bad_user(self):
+    resp = handlers.application.get_response('/post/fake/not_a_user/000')
     self.assertEqual(400, resp.status_int)
 
-  def test_bad_format(self):
-    self.source_cls.get_by_key_name('user1').AndReturn(self.source)
-    self.mox.ReplayAll()
-
-    resp = self.app.get_response('/user1/post2?format=asdf')
+  def test_post_bad_format(self):
+    resp = handlers.application.get_response('/post/fake/%s/000?format=asdf' %
+                                             self.source.key().name())
     self.assertEqual(400, resp.status_int)

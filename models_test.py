@@ -3,7 +3,7 @@
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
-from models import Comment, User
+from models import Comment, Source, User
 import testutil
 from testutil import FakeSource
 import util
@@ -92,14 +92,13 @@ class SourceTest(testutil.HandlerTest):
                      self.handler.messages)
 
   def test_get_post(self):
-    post_obj = {'objectType': 'note', 'content': 'asdf'}
-    source = FakeSource.new(None)
+    post = {'verb': 'post', 'object': {'objectType': 'note', 'content': 'asdf'}}
+    source = Source(key_name='x')
     source.as_source = self.mox.CreateMock(as_source.Source)
-    source.as_source.get_activities(activity_id='123').AndReturn(
-      (1, [{'verb': 'post', 'object': post_obj}]))
+    source.as_source.get_activities(activity_id='123').AndReturn((1, [post]))
 
     self.mox.ReplayAll()
-    self.assert_equals(post_obj, source.get_post('123'))
+    self.assert_equals(post, source.get_post('123'))
 
   def test_get_comment(self):
     comment_obj = {'objectType': 'comment', 'content': 'qwert'}
