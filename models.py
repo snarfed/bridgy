@@ -66,7 +66,9 @@ class Site(KeyNameModel):
   """
 
   # human-readable name for this site type. subclasses should override.
-  TYPE_NAME = None
+  DISPLAY_NAME = None
+  # short name for this site type. used in URLs, ec.
+  SHORT_NAME = None
   STATUSES = ('enabled', 'disabled')
 
   created = db.DateTimeProperty(auto_now_add=True, required=True)
@@ -86,7 +88,7 @@ class Site(KeyNameModel):
 
     May be overridden by subclasses.
     """
-    return self.TYPE_NAME
+    return self.DISPLAY_NAME
 
   def label(self):
     """Human-readable label for this site."""

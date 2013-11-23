@@ -32,7 +32,7 @@ class Twitter(models.Source):
   The key name is the username.
   """
 
-  TYPE_NAME = 'Twitter'
+  DISPLAY_NAME = 'Twitter'
 
   def display_name(self):
     return self.name

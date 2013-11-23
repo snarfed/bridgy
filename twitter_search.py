@@ -38,7 +38,7 @@ class TwitterSearch(models.Source):
   The key name is the base url to search for.
   """
 
-  TYPE_NAME = 'Twitter'
+  DISPLAY_NAME = 'Twitter'
 
   def __init__(self, *args, **kwargs):
     super(TwitterSearch, self).__init__(*args, **kwargs)

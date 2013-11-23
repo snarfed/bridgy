@@ -27,7 +27,7 @@ class Instagram(models.Source):
   The key name is the username.
   """
 
-  TYPE_NAME = 'Instagram'
+  DISPLAY_NAME = 'Instagram'
 
   def display_name(self):
     return self.name

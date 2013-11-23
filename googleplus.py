@@ -38,7 +38,7 @@ class GooglePlusPage(models.Source):
   The key name is the user id.
   """
 
-  TYPE_NAME = 'Google+'
+  DISPLAY_NAME = 'Google+'
 
   type = db.StringProperty(choices=('user', 'page'))
 

@@ -60,7 +60,8 @@ class FacebookPage(models.Source):
   The key name is the facebook id.
   """
 
-  TYPE_NAME = 'Facebook'
+  DISPLAY_NAME = 'Facebook'
+  SHORT_NAME = 'facebook'
 
   type = db.StringProperty(choices=('user', 'page'))
   # unique name used in fb URLs, e.g. facebook.com/[username]
@@ -112,8 +113,4 @@ class AddFacebookPage(oauth_facebook.CallbackHandler):
 application = webapp2.WSGIApplication([
     ('/facebook/start', oauth_facebook.StartHandler.to('/facebook/add')),
     ('/facebook/add', AddFacebookPage),
-    ('/facebook/post/([^/]+)/([^/]+)',
-     handlers.ObjectHandler.using(FacebookPage, 'get_post')),
-    ('/facebook/comment/([^/]+)/([^/]+)',
-     handlers.ObjectHandler.using(FacebookPage, 'get_comment')),
     ], debug=appengine_config.DEBUG)
