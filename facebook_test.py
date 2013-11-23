@@ -70,7 +70,7 @@ class FacebookPageTest(testutil.ModelsTest):
                   'objectType': 'comment',
                   'id': 'tag:facebook.com,2013:2_3',
                   'url': 'http://facebook.com/2?comment_id=3',
-                  'inReplyTo': {'id': 'tag:facebook.com,2013:2'},
+                  'inReplyTo': [{'id': 'tag:facebook.com,2013:2'}],
                   'content': 'foo',
                   }],
               'totalItems': 1,
