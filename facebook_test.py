@@ -12,6 +12,7 @@ import testutil
 import urllib
 import urlparse
 
+from activitystreams import facebook_test as as_facebook_test
 from activitystreams.oauth_dropins import facebook as oauth_facebook
 from facebook import FacebookPage
 import models
@@ -46,32 +47,8 @@ class FacebookPageTest(testutil.ModelsTest):
   def test_get_activities(self):
     self.expect_urlopen(
       'https://graph.facebook.com/212038/posts?offset=0&access_token=my_token',
-      json.dumps({'data': [{
-              'id': '212038_000',
-              'comments': {'count': 1,
-                           'data': [{'id': '2_3', 'message': 'foo'}]}
-              }]}))
+      json.dumps({'data': [as_facebook_test.POST]}))
     self.mox.ReplayAll()
 
     page = FacebookPage.new(self.handler, auth_entity=self.auth_entity)
-    self.assert_equals([{
-          'verb': 'post',
-          'id': 'tag:facebook.com,2013:000',
-          'url': 'http://facebook.com/000',
-          'title': 'Unknown posted a unknown.',
-          'object': {
-            'objectType': 'note',
-            'id': 'tag:facebook.com,2013:000',
-            'url': 'http://facebook.com/000',
-            'replies': {
-              'items': [{
-                  'objectType': 'comment',
-                  'id': 'tag:facebook.com,2013:2_3',
-                  'url': 'http://facebook.com/2?comment_id=3',
-                  'inReplyTo': [{'id': 'tag:facebook.com,2013:2'}],
-                  'content': 'foo',
-                  }],
-              'totalItems': 1,
-              },
-            },
-          }], page.get_activities())
+    self.assert_equals([as_facebook_test.ACTIVITY], page.get_activities())
