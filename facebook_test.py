@@ -13,7 +13,6 @@ import urllib
 import urlparse
 
 from activitystreams.oauth_dropins import facebook as oauth_facebook
-import facebook
 from facebook import FacebookPage
 import models
 
@@ -24,7 +23,6 @@ class FacebookPageTest(testutil.ModelsTest):
 
   def setUp(self):
     super(FacebookPageTest, self).setUp()
-    # self.user = models.User.get_or_insert_current_user(self.handler)
     self.handler.messages = []
     self.auth_entity = oauth_facebook.FacebookAuth(
       key_name='my_key_name', auth_code='my_code', access_token_str='my_token',

@@ -1,24 +1,34 @@
 """Instagram API code and datastore model classes.
+
+Example post ID and links
+  id: 595990791004231349 or 595990791004231349_247678460
+    (suffix is user id)
+  Permalink: http://instagram.com/p/hFYnd7Nha1/
+  API URL: https://api.instagram.com/v1/media/595990791004231349
+  Local handler path: /post/instagram/212038/595990791004231349
+
+Example comment ID and links
+  id: 595996024371549506
+  No direct API URL or permalink, as far as I can tell. :/
+  API URL for all comments on that picture:
+    https://api.instagram.com/v1/media/595990791004231349_247678460/comments
+  Local handler path:
+    /comment/instagram/212038/595990791004231349_247678460/595996024371549506
 """
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
-import collections
-import datetime
 import json
-import logging
-import pprint
-import urllib
-import urlparse
 
+from activitystreams import instagram as as_instagram
 from activitystreams.oauth_dropins import instagram as oauth_instagram
 import appengine_config
 import models
-import util
 
-from google.appengine.api import urlfetch
 from google.appengine.ext import db
 import webapp2
+
+from activitystreams import source as as_source
 
 
 class Instagram(models.Source):
@@ -28,6 +38,7 @@ class Instagram(models.Source):
   """
 
   DISPLAY_NAME = 'Instagram'
+  SHORT_NAME = 'instagram'
 
   def display_name(self):
     return self.name
@@ -49,26 +60,13 @@ class Instagram(models.Source):
                      picture=user['profile_picture'],
                      url='http://instagram.com/' + username)
 
-  def get_posts(self):
-    """Returns list of (link id aka post object id, link url).
-    """
-    raise NotImplementedError()
+  def __init__(self, *args, **kwargs):
+    super(Instagram, self).__init__(*args, **kwargs)
+    if self.auth_entity:
+      self.as_source = as_instagram.Instagram(self.auth_entity.access_token())
 
-  def get_comments(self, posts_and_targets):
-    raise NotImplementedError()
-
-
-class InstagramComment(models.Comment):
-  """Key name is the comment's object_id.
-
-  Most of the properties correspond to the columns of the content table in FQL.
-  http://developers.instagram.com/docs/reference/fql/comment/
-  """
-  # user id who wrote the comment
-  from_username = db.IntegerProperty(required=True)
-
-  # id of the object this comment refers to
-  object_id = db.IntegerProperty(required=True)
+  def get_activities(self, **kwargs):
+    return self.as_source.get_activities(group_id=as_source.SELF, **kwargs)[1]
 
 
 class AddInstagram(oauth_instagram.CallbackHandler):

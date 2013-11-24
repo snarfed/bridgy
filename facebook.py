@@ -6,33 +6,20 @@ offline_access for, uh, offline access
 
 TODO: use third_party_id if we ever need to store an fb user id anywhere else.
 
-Example post data
+Example post ID and links
   id: 212038_10100823411129293  [USER-ID]_[POST-ID]
   API URL: https://graph.facebook.com/212038_10100823411094363
   Permalinks:
     https://www.facebook.com/10100823411094363
     https://www.facebook.com/212038/posts/10100823411094363
     https://www.facebook.com/photo.php?fbid=10100823411094363
-  Local handler path: /facebook/post/212038/10100823411094363
+  Local handler path: /post/facebook/212038/10100823411094363
 
-Example comment data
+Example comment ID and links
   id: 10100823411094363_10069288  [POST-ID]_[COMMENT-ID]
   API URL: https://graph.facebook.com/10100823411094363_10069288
   Permalink: https://www.facebook.com/10100823411094363&comment_id=10069288
-  Local handler path: /facebook/post/212038/10100823411094363_10069288
-
-Extra properties stored in ActivityStreams comments returned by get_comments()
-  TODO: remove this entirely? do we not need these at all?
-  # user id who wrote the comment
-  fb_fromid = db.IntegerProperty(required=True)
-
-  # name entered by the user when they posted the comment. usually blank,
-  # generally only populated for external users. if this is provided,
-  # fb_fromid will be 0.
-  fb_username = db.StringProperty()
-
-  # id of the object this comment refers to
-  fb_object_id = db.IntegerProperty(required=True)
+  Local handler path: /comment/facebook/212038/10100823411094363_10069288
 
 
 ongoing research, many posts have different types w/different ids, so the same
@@ -53,15 +40,12 @@ no field with picture id
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
-import itertools
 import json
-import logging
 
 from activitystreams import facebook as as_facebook
 from activitystreams.oauth_dropins import facebook as oauth_facebook
 import appengine_config
 import models
-import util
 
 from google.appengine.ext import db
 import webapp2
@@ -95,7 +79,7 @@ class FacebookPage(models.Source):
     url = 'http://facebook.com/' + id
     picture = 'http://graph.facebook.com/%s/picture' % user.get('username', id)
     return FacebookPage(key_name=id, auth_entity=auth_entity, picture=picture,
-                        url=url, **user)  # for type, name, username
+                        url=url, **user) # **user populates type, name, username
 
   def __init__(self, *args, **kwargs):
     super(FacebookPage, self).__init__(*args, **kwargs)
