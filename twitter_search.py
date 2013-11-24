@@ -249,17 +249,6 @@ class AddTwitterSearch(util.Handler):
     self.redirect('/')
 
 
-class DeleteTwitterSearch(util.Handler):
-  def post(self):
-    search = TwitterSearch.get_by_key_name(self.request.params['key_name'])
-    # TODO: remove tasks, etc.
-    msg = 'Deleted %s source: %s' % (search.type_display_name(),
-                                     search.display_name())
-    search.delete()
-    self.redirect('/?msg=' + msg)
-
-
 application = webapp2.WSGIApplication([
     ('/twitter/add_search', AddTwitterSearch),
-    ('/twitter/delete_search', DeleteTwitterSearch),
     ], debug=appengine_config.DEBUG)

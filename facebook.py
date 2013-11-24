@@ -86,9 +86,6 @@ class FacebookPage(models.Source):
     if self.auth_entity:
       self.as_source = as_facebook.Facebook(self.auth_entity.access_token())
 
-  def display_name(self):
-    return self.name
-
   def get_activities(self, **kwargs):
     return self.as_source.get_activities(group_id=as_source.SELF,
                                          user_id=self.key().name(), **kwargs)[1]

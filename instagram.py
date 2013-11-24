@@ -40,9 +40,6 @@ class Instagram(models.Source):
   DISPLAY_NAME = 'Instagram'
   SHORT_NAME = 'instagram'
 
-  def display_name(self):
-    return self.name
-
   @staticmethod
   def new(handler, auth_entity=None):
     """Creates and returns a InstagramPage for the logged in user.

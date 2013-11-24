@@ -62,8 +62,7 @@ class DeleteHandler(util.Handler):
     source = db.get(util.get_required_param(self, 'key'))
     source.delete()
     # TODO: remove credentials, tasks, etc.
-    msg = 'Deleted %s source: %s' % (source.type_display_name(),
-                                     source.display_name())
+    msg = 'Deleted %s' % source.label()
     self.redirect('/?msg=' + msg)
 
 

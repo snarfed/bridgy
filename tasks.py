@@ -78,8 +78,7 @@ class Poll(webapp2.RequestHandler):
       # let this task complete successfully so that it's not retried.
 
   def do_post(self, source):
-    logging.info('Polling %s %s %s', source.type_display_name(),
-                 source.key().name(), source.name)
+    logging.info('Polling %s %s', source.label(), source.key().name())
     activities = source.get_activities(start_index=8, count=13)
     logging.info('Found %d activities', len(activities))
 

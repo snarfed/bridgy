@@ -34,9 +34,6 @@ class Twitter(models.Source):
 
   DISPLAY_NAME = 'Twitter'
 
-  def display_name(self):
-    return self.name
-
   @staticmethod
   def new(handler, auth_entity=None):
     """Creates and returns a Twitter based on POST args.

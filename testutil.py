@@ -37,12 +37,12 @@ class FakeBase(db.Model):
   def new(cls, handler, **props):
     if 'url' not in props:
       props['url'] = 'http://fake/url'
+    if 'name' not in props:
+      props['name'] = 'fake'
     inst = cls(key_name=str(cls.key_name_counter), **props)
     cls.key_name_counter += 1
     return inst
 
-  def type_display_name(self):
-    return self.__class__.__name__
 
 
 class FakeSource(FakeBase, Source):
@@ -50,6 +50,7 @@ class FakeSource(FakeBase, Source):
     comments: dict mapping FakeSource string key to list of activities to be
       returned by get_activities()
   """
+  DISPLAY_NAME = 'FakeSource'
   SHORT_NAME = 'fake'
   activities = {}
   as_source = as_source.Source()

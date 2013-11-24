@@ -75,25 +75,6 @@ class Site(KeyNameModel):
   url = db.LinkProperty()
   status = db.StringProperty(choices=STATUSES, default='enabled')
 
-  def display_name(self):
-    """Returns a human-readable name for this site, e.g. 'My Thoughts'.
-
-    Defaults to the url. May be overridden by subclasses.
-    """
-    # TODO: get this from the site itself, e.g. <title> in <head>
-    return util.domain_from_link(self.url)
-
-  def type_display_name(self):
-    """Returns a human-readable name for this type of site, e.g. 'Facebook'.
-
-    May be overridden by subclasses.
-    """
-    return self.DISPLAY_NAME
-
-  def label(self):
-    """Human-readable label for this site."""
-    return '%s: %s' % (self.type_display_name(), self.display_name())
-
   @classmethod
   def create_new(cls, handler, **kwargs):
     """Creates and saves a new Site.
@@ -144,6 +125,10 @@ class Source(Site):
     To be implemented by subclasses.
     """
     raise NotImplementedError()
+
+  def label(self):
+    """Human-readable label for this site."""
+    return '%s: %s' % (self.DISPLAY_NAME, self.name)
 
   def get_post(self, id):
     """Returns a post from this source.

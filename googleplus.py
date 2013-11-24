@@ -42,9 +42,6 @@ class GooglePlusPage(models.Source):
 
   type = db.StringProperty(choices=('user', 'page'))
 
-  def display_name(self):
-    return self.name
-
   @staticmethod
   def new(handler, auth_entity=None):
     """Creates and returns a GooglePlusPage for the logged in user.
