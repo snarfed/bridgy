@@ -94,8 +94,8 @@ class SourceTest(testutil.HandlerTest):
   def test_get_post(self):
     post = {'verb': 'post', 'object': {'objectType': 'note', 'content': 'asdf'}}
     source = Source(key_name='x')
-    source.as_source = self.mox.CreateMock(as_source.Source)
-    source.as_source.get_activities(activity_id='123').AndReturn((1, [post]))
+    self.mox.StubOutWithMock(source, 'get_activities')
+    source.get_activities(activity_id='123').AndReturn(([post]))
 
     self.mox.ReplayAll()
     self.assert_equals(post, source.get_post('123'))

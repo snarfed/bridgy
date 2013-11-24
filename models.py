@@ -153,7 +153,7 @@ class Source(Site):
 
     Returns: dict, decoded ActivityStreams activity, or None
     """
-    count, activities = self.as_source.get_activities(activity_id=id)
+    activities = self.get_activities(activity_id=id)
     return activities[0] if activities else None
 
   def get_comment(self, id):
@@ -194,6 +194,8 @@ class Source(Site):
 
 class Comment(KeyNameModel):
   """A comment to be propagated.
+
+  The key name is the comment id as a tag URI.
   """
   STATUSES = ('new', 'processing', 'complete')
 
@@ -201,7 +203,6 @@ class Comment(KeyNameModel):
   # source-specific properties.
   activity_json = db.TextProperty()
   comment_json = db.TextProperty()
-  local_handler_path = db.StringProperty()
   source = db.ReferenceProperty()
   status = db.StringProperty(choices=STATUSES, default='new')
   leased_until = db.DateTimeProperty()
@@ -232,8 +233,8 @@ class Comment(KeyNameModel):
     Returns: string
     """
     domain, id = util.parse_tag_uri(self.key().name())
-    source_name = domain.split('.')[0]
-    return '/%s/comment/%s/%s' % (source_name, self.source.key().name(), id)
+    return '/comment/%s/%s/%s' % (self.source.SHORT_NAME,
+                                  self.source.key().name(), id)
 
 
 class DisableSource(Exception):

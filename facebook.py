@@ -33,6 +33,22 @@ Extra properties stored in ActivityStreams comments returned by get_comments()
 
   # id of the object this comment refers to
   fb_object_id = db.IntegerProperty(required=True)
+
+
+ongoing research, many posts have different types w/different ids, so the same
+post id isn't necessarily used for comments:
+
+212038_10100826987043133
+picture id
+'type': 'photo'
+'object_id': '10100826986998223'
+url needs user id
+
+10100826986998223
+post
+used as comment id prefix: 10100826987043133_10077197
+may also have user id: 212038_10100826987043133_10077197
+no field with picture id
 """
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
@@ -90,7 +106,8 @@ class FacebookPage(models.Source):
     return self.name
 
   def get_activities(self, **kwargs):
-    return self.as_source.get_activities(group_id=as_source.SELF, **kwargs)[1]
+    return self.as_source.get_activities(group_id=as_source.SELF,
+                                         user_id=self.key().name(), **kwargs)[1]
 
     # TODO: handle errors. (activitystreams-unofficial doesn't yet handle *or*
     # expose them.

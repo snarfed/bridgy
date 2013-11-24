@@ -47,7 +47,7 @@ class FacebookPageTest(testutil.ModelsTest):
 
   def test_get_activities(self):
     self.expect_urlopen(
-      'https://graph.facebook.com/me/posts?offset=0&access_token=my_token',
+      'https://graph.facebook.com/212038/posts?offset=0&access_token=my_token',
       json.dumps({'data': [{
               'id': '212038_000',
               'comments': {'count': 1,

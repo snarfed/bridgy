@@ -106,7 +106,8 @@ class PollTest(TaskQueueTest):
     """
     source = self.sources[0]
     self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities')
-    testutil.FakeSource.get_activities(count=mox.IgnoreArg()
+    testutil.FakeSource.get_activities(start_index=mox.IgnoreArg(),
+                                       count=mox.IgnoreArg(),
                                        ).AndRaise(models.DisableSource)
     self.mox.ReplayAll()
 
@@ -137,11 +138,12 @@ class PropagateTest(TaskQueueTest):
   def mock_webmention(self):
     self.mock_send = self.mox.CreateMock(send.WebmentionSend)
     self.mock_send.receiver_endpoint = 'http://webmention/endpoint'
+    self.mock_send.response = 'used in logging'
     self.mox.StubOutWithMock(send, 'WebmentionSend', use_mock_anything=True)
 
   def expect_webmention(self, target_url='http://target1/post/url'):
     self.mock_webmention()
-    local_url = 'http://localhost/source/comment/%s/1_2_a' % \
+    local_url = 'http://localhost/comment/fake/%s/1_2_a' % \
       self.comments[0].source.key().name()
     send.WebmentionSend(local_url, target_url).AndReturn(self.mock_send)
     return self.mock_send.send()
@@ -159,14 +161,16 @@ class PropagateTest(TaskQueueTest):
     """Target URLs should be extracted from attachments, tags, and text."""
     activity = json.loads(self.comments[0].activity_json)
     obj = activity['object']
-    obj['tags'] = [{'objectType': 'article', 'url': 'http://tar.get/a'}]
+    obj['tags'] = [{'objectType': 'article', 'url': 'http://tar.get/a'},
+                   {'objectType': 'person', 'url': 'http://pe.rs/on'},
+                   ]
     obj['attachments'] = [{'objectType': 'article', 'url': 'http://tar.get/b'}]
     obj['content'] = 'foo http://tar.get/c bar (tar.get d) baz'
     self.comments[0].activity_json = json.dumps(activity)
     self.comments[0].save()
 
     source_name = self.comments[0].source.key().name()
-    local_url = 'http://localhost/source/comment/%s/1_2_a' % source_name
+    local_url = 'http://localhost/comment/fake/%s/1_2_a' % source_name
     self.mock_webmention()
     for i in 'a', 'b', 'c', 'd':
       target = 'http://tar.get/%s' % i

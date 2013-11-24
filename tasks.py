@@ -12,6 +12,7 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 import datetime
 import json
 import logging
+import urlparse
 
 # need to import model class definitions since poll creates and saves entities.
 import facebook
@@ -27,6 +28,15 @@ from google.appengine.api import taskqueue
 import webapp2
 
 import appengine_config
+
+# Known domains that don't support webmentions. Mainly just the silos.
+WEBMENTION_BLACKLIST = (
+  'facebook.com',
+  'instagram.com',
+  'plus.google.com',
+  'twitter.com',
+  '', None,
+  )
 
 # allows injecting timestamps in task_test.py
 now_fn = datetime.datetime.now
@@ -70,7 +80,7 @@ class Poll(webapp2.RequestHandler):
   def do_post(self, source):
     logging.info('Polling %s %s %s', source.type_display_name(),
                  source.key().name(), source.name)
-    activities = source.get_activities(count=5)
+    activities = source.get_activities(start_index=8, count=13)
     logging.info('Found %d activities', len(activities))
 
     for activity in activities:
@@ -118,30 +128,33 @@ class Propagate(webapp2.RequestHandler):
       activity = json.loads(comment.activity_json)
       comment.source.as_source.original_post_discovery(activity)
       targets = util.trim_nulls(
-        t.get('url') for t in activity['object'].get('tags', []))
+        [t.get('url') for t in activity['object'].get('tags', [])
+         if t.get('objectType') == 'article'])
 
       # send webmentions!
-      logging.info('Discovered original post URLs in %s: %s',
-                   comment.key().name(), targets)
+      logging.info('Discovered original post URLs: %s', targets)
       for target in targets:
         # When debugging locally, redirect my (snarfed.org) webmentions to localhost
         if appengine_config.DEBUG and target.startswith('http://snarfed.org/'):
           target = target.replace('http://snarfed.org/', 'http://localhost/')
 
+        domain = urlparse.urlparse(target).netloc
+        if domain in WEBMENTION_BLACKLIST:
+          logging.info('Skipping known unsupported domain %s', domain)
+          continue
+
         mention = send.WebmentionSend(local_comment_url, target)
         logging.info('Sending webmention from %s to %s', local_comment_url, target)
         if mention.send():
-          logging.info('Sent to %s', mention.receiver_endpoint)
+          logging.info('Sent! %s', mention.response)
           self.complete_comment()
         else:
           if mention.error['code'] == 'NO_ENDPOINT':
-            logging.info('No webmention endpoint found, giving up this comment.')
+            logging.info('Giving up this comment. %s', mention.error)
             self.complete_comment()
           else:
-            self.fail('Error sending to endpoint %s: %s' %
-                      (mention.receiver_endpoint, mention.error))
             self.release_comment()
-
+            self.fail('Error sending to endpoint: %s' % mention.error)
     except:
       logging.exception('Propagate task failed')
       self.release_comment()

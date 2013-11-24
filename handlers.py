@@ -110,16 +110,28 @@ class CommentHandler(ItemHandler):
       logging.warning('Could not find source post in inReplyTo!')
       return cmt
 
-    post = source.get_post(post_id)
+    post = None
+    try:
+      post = source.get_post(post_id)
+    except:
+      logging.exception('Error fetching source post %s', post_id)
     if not post:
-      logging.warning('Could not fetch source post %s', post_id)
+      logging.warning('Source post %s not found', post_id)
       return cmt
 
     source.as_source.original_post_discovery(post)
     cmt['inReplyTo'] += [tag for tag in post['object'].get('tags', [])
                          if 'url' in tag and tag['objectType'] == 'article']
+
+    # When debugging locally, replace my (snarfed.org) URLs with localhost
+    if appengine_config.DEBUG:
+      for obj in cmt['inReplyTo']:
+        if obj.get('url', '').startswith('http://snarfed.org/'):
+          obj['url'] = obj['url'].replace('http://snarfed.org/',
+                                          'http://localhost/')
+
     logging.info('Original post discovery filled in inReplyTo URLs: %s',
-                 ', '.join(obj.get('url') for obj in cmt['inReplyTo']))
+                 ', '.join(obj.get('url', 'none') for obj in cmt['inReplyTo']))
 
     return cmt
 
