@@ -33,6 +33,7 @@ class HandlersTest(testutil.HandlerTest):
     self.assert_equals("""\
 <!DOCTYPE html>
 <html>
+<head><link rel="canonical" href="http://fake.com/000" /></head>
 <article class="h-entry">
 <span class="u-uid">tag:fake.com,2013:000</span>
 <a class="u-url p-name" href="http://fake.com/000">asdf</a>

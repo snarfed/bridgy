@@ -71,9 +71,10 @@ class ItemHandler(webapp2.RequestHandler):
       self.response.out.write("""\
 <!DOCTYPE html>
 <html>
+<head><link rel="canonical" href="%s" /></head>
 %s
 </html>
-""" % microformats2.object_to_html(obj))
+""" % (obj.get('url', ''), microformats2.object_to_html(obj)))
     elif format == 'json':
       self.response.headers['Content-Type'] = 'application/json'
       self.response.out.write(json.dumps(microformats2.object_to_json(obj),
