@@ -6,6 +6,7 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 import json
 import logging
 import re
+import urllib
 
 from activitystreams import twitter as as_twitter
 from activitystreams.oauth_dropins import twitter as oauth_twitter
@@ -45,95 +46,50 @@ class Twitter(models.Source):
       self.as_source = as_twitter.Twitter(*self.auth_entity.access_token())
 
   def get_activities(self, **kwargs):
-    return self.as_source.get_activities(
-      group_id=SELF, user_id=self.key().name(), **kwargs)[1]
+    activities = self.as_source.get_activities(
+      group_id=SELF, user_id=self.key().name(), count=100, **kwargs)[1]
 
-  def get_posts(self):
-    """Returns list of (JSON tweet, link url).
-
-    The link url is also added to each returned JSON tweet in the 'bridgy_link'
-    JSON value.
-
-    https://developers.google.com/+/api/latest/activies#resource
-    """
-    # find tweets with links that include our base url.
-    # search response is JSON tweets:
-    # https://dev.twitter.com/docs/api/1.1/search/tweets
-    results = self.search('%s filter:links' % util.domain_from_link(self.url))
-
-    tweets_and_urls = []
-    for result in results:
-      # extract target url from tweet entities
-      # https://dev.twitter.com/docs/tweet-entities
-      target_url = None
-      tweet_url = self.tweet_url(result['user'], result['id'])
-      for url in result.get('entities', {}).get('urls', []):
-        # expanded_url isn't always provided
-        expanded_url = url.get('expanded_url', url['url'])
-
-        if not expanded_url.startswith(self.url):
-          # may be a shortened link. try following redirects.
-          # (could use a service like http://unshort.me/api.html instead,
-          # but not sure it'd buy us anything.)
-          try:
-            resolved = urlfetch.fetch(expanded_url, method='HEAD',
-                                      follow_redirects=True, deadline=999)
-            if getattr(resolved, 'final_url', None):
-              logging.debug('Resolved short url %s to %s', expanded_url,
-                            resolved.final_url)
-              expanded_url = resolved.final_url
-          except urlfetch.DownloadError, e:
-            logging.error("Couldn't resolve URL: %s", e)
-
-        if expanded_url.startswith(self.url):
-          target_url = expanded_url
-
-      if target_url:
-        # logging.debug('Found post %s in tweet %s', target_url, tweet_url)
-        result['bridgy_link'] = target_url
-        tweets_and_urls.append((result, target_url))
-      else:
-        # logging.debug("Tweet %s should have %s link but doesn't. Maybe shortened?",
-        #               tweet_url, self.url)
-        pass
-
-    return tweets_and_urls
-
-  def get_comments(self, tweets_and_urls):
-    # maps tweet id to TwitterReply
-    replies = {}
-    # maps username to list of @ mention search results, which includes replies
+    # cache searches for @-mentions for individual users. maps username to dict
+    # mapping tweet id to ActivityStreams reply object dict.
     mentions = {}
 
-    # find and convert replies
-    for tweet, url in tweets_and_urls:
-      author = tweet['user'].get('screen_name')
-      if not author:
-        continue
-      elif tweet['id'] in replies:
-        logging.error('Already seen tweet %s! Should be impossible!', tweet['id'])
-        continue
+    # find replies
+    for activity in activities:
+      # list of ActivityStreams reply object dict and set of seen activity ids
+      # (tag URIs). seed with the original tweet; we'll filter it out later.
+      replies = [activity]
+      _, id = util.parse_tag_uri(activity['id'])
+      seen_ids = set([id])
 
-      reply = self.tweet_to_reply(tweet, url)
-      # logging.debug('Found matching tweet %s', reply.source_post_url)
-      replies[tweet['id']] = reply
+      for reply in replies:
+        # get mentions of this tweet's author so we can search them for replies to
+        # this tweet. can't use statuses/mentions_timeline because i'd need to
+        # auth as the user being mentioned.
+        # https://dev.twitter.com/docs/api/1.1/get/statuses/mentions_timeline
+        author = activity['actor']['username']
+        if author not in mentions:
+          resp = self.as_source.urlread(as_twitter.API_SEARCH_URL %
+                                        urllib.quote_plus('@' + author))
+          mentions[author] = json.loads(resp)['statuses']
 
-      # get mentions of this tweet's author so we can search them for replies to
-      # this tweet. can't use statuses/mentions_timeline because i'd need to
-      # auth as the user being mentioned.
-      # https://dev.twitter.com/docs/api/1.1/get/statuses/mentions_timeline
-      if author not in mentions:
-        mentions[author] = self.search('@%s' % author)
+        # look for replies. add any we find to the end of replies. this makes us
+        # recursively follow reply chains to their end. (python supports
+        # appending to a sequence while you're iterating over it.)
+        for mention in mentions[author]:
+          if mention.get('in_reply_to_status_id_str') in seen_ids:
+            id = mention['id_str']
+            if id in seen_ids:
+              logging.error('Already seen tweet %s! Should be impossible!', id)
+              continue
+            replies.append(self.as_source.tweet_to_activity(mention))
+            seen_ids.add(id)
 
-      # look for replies. add any we find to the end of tweets_and_urls.
-      # this makes us recursively follow reply chains to their end. (python
-      # supports appending to a sequence while you're iterating over it.)
-      for mention in mentions[author]:
-        if mention.get('in_reply_to_status_id') == tweet['id']:
-          mention['bridgy_link'] = tweet['bridgy_link']
-          tweets_and_urls.append((mention, url))
+      activity['object']['replies'] = {
+        'items': [r['object'] for r in replies[1:]],  # filter out seed activity
+        'totalItems': len(replies),
+        }
 
-    return replies.values()
+    return activities
 
   @staticmethod
   def tweet_url(user, id):
