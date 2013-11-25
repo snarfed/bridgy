@@ -1,8 +1,12 @@
 """Common handlers, e.g. post and comment permalinks.
 
-URL path format is /(post|comment)/SITE/USER_ID/OBJECT_ID, e.g.:
-  /post/facebook/212038/10100823411094363
-  /comment/twitter/snarfed_org/10100823411094363
+URL paths are:
+
+/post/SITE/USER_ID/POST_ID
+  e.g. /post/facebook/212038/10100823411094363
+
+/comment/SITE/USER_ID/POST_ID/COMMENT_ID
+  e.g. /comment/twitter/snarfed_org/10100823411094363/999999
 """
 
 import json
@@ -48,8 +52,8 @@ class ItemHandler(webapp2.RequestHandler):
     """
     raise NotImplementedError()
 
-  def get(self, source_short_name, key_name, id):
-    logging.info('Fetching %s:%s object %s', source_short_name, key_name, id)
+  def get(self, source_short_name, key_name, *ids):
+    logging.info('Fetching %s:%s object %s', source_short_name, key_name, ids)
 
     source_cls = SOURCES.get(source_short_name, '')
     key = db.Key.from_path(source_cls.kind(), key_name)
@@ -61,9 +65,9 @@ class ItemHandler(webapp2.RequestHandler):
     if format not in ('html', 'json'):
       self.abort(400, 'Invalid format %s, expected html or json' % format)
 
-    obj = self.get_item(source, id)
-    if format not in ('html', 'json'):
-      self.abort(404, 'Object %s not found' % id)
+    obj = self.get_item(source, *ids)
+    if not obj:
+      self.abort(404, 'Object %s not found' % ids)
 
     self.response.headers['Access-Control-Allow-Origin'] = '*'
     if format == 'html':
@@ -88,11 +92,14 @@ class PostHandler(ItemHandler):
 
 
 class CommentHandler(ItemHandler):
-  def get_item(self, source, id):
+  def get_item(self, source, post_id, id):
     cmt = source.get_comment(id)
     if not cmt:
       return None
 
+    # this is for deriving the post id from the comment data.
+    # TODO: assuming we stick with post id in the URL, drop this soon.
+    #
     # fetch the post, perform original post discovery on it, and add the
     # resulting links to the comment's inReplyTo.
     #
@@ -100,16 +107,15 @@ class CommentHandler(ItemHandler):
     # inReplyTo won't point to the very first (original) post of the thread.
     # figure out how to handle that, ideally without having to walk back each
     # step in the thread.
-    post_id = None
-    for in_reply_to in cmt.get('inReplyTo', []):
-      if 'id' in in_reply_to:
-        domain, post_id = util.parse_tag_uri(in_reply_to['id'])
-        if domain == source.as_source.DOMAIN:
-          break
+    # for in_reply_to in cmt.get('inReplyTo', []):
+    #   if 'id' in in_reply_to:
+    #     domain, post_id = util.parse_tag_uri(in_reply_to['id'])
+    #     if domain == source.as_source.DOMAIN:
+    #       break
 
-    if not post_id:
-      logging.warning('Could not find source post in inReplyTo!')
-      return cmt
+    # if not post_id:
+    #   logging.warning('Could not find source post in inReplyTo!')
+    #   return cmt
 
     post = None
     try:
@@ -138,6 +144,6 @@ class CommentHandler(ItemHandler):
 
 
 application = webapp2.WSGIApplication([
-    ('/post/([^/]+)/([^/]+)/([^/]+)', PostHandler),
-    ('/comment/([^/]+)/([^/]+)/([^/]+)', CommentHandler),
+    ('/post/(.+)/(.+)/(.+)', PostHandler),
+    ('/comment/(.+)/(.+)/(.+)/(.+)', CommentHandler),
     ], debug=appengine_config.DEBUG)

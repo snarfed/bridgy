@@ -212,15 +212,6 @@ class Comment(KeyNameModel):
     self.save()
     return self
 
-  def local_path(self):
-    """Returns the local handler path to the MF2 version of this comment.
-
-    Returns: string
-    """
-    domain, id = util.parse_tag_uri(self.key().name())
-    return '/comment/%s/%s/%s' % (self.source.SHORT_NAME,
-                                  self.source.key().name(), id)
-
 
 class DisableSource(Exception):
   """Raised when a user has deauthorized our app inside a given platform.

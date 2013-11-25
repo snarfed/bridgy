@@ -53,6 +53,7 @@ class FakeSource(FakeBase, Source):
   DISPLAY_NAME = 'FakeSource'
   SHORT_NAME = 'fake'
   activities = {}
+  comments = {}
   as_source = as_source.Source()
 
   def set_activities(self, activities):
@@ -63,6 +64,13 @@ class FakeSource(FakeBase, Source):
 
   def get_post(self, id):
     return self.get_activities()[int(id)]
+
+  def set_comment(self, comment):
+    FakeSource.comments[str(self.key())] = comment
+
+  def get_comment(self, id):
+    comment = FakeSource.comments.get(str(self.key()))
+    return comment if comment else super(FakeSource, self).get_comment(id)
 
 
 class HandlerTest(testutil.HandlerTest):

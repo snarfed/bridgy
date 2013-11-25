@@ -5,6 +5,7 @@ import json
 
 import handlers
 import models
+import mox
 import testutil
 import webapp2
 
@@ -36,7 +37,7 @@ class HandlersTest(testutil.HandlerTest):
 <head><link rel="canonical" href="http://fake.com/000" /></head>
 <article class="h-entry">
 <span class="u-uid">tag:fake.com,2013:000</span>
-<a class="u-url p-name" href="http://fake.com/000">asdf</a>
+<div class="p-name"><a class="u-url" href="http://fake.com/000">asdf</a></div>
 <time class="dt-published" datetime=""></time>
 <time class="dt-updated" datetime=""></time>
 
@@ -75,3 +76,36 @@ class HandlersTest(testutil.HandlerTest):
     resp = handlers.application.get_response('/post/fake/%s/000?format=asdf' %
                                              self.source.key().name())
     self.assertEqual(400, resp.status_int)
+
+  def test_get_comment_html(self):
+    self.source.set_comment({
+        'id': 'tag:fake.com,2013:111',
+        'content': 'qwert',
+        'inReplyTo': [{'url': 'http://fake.com/000'}]
+        })
+
+    resp = handlers.application.get_response('/comment/fake/%s/000/111' %
+                                             self.source.key().name())
+    self.assertEqual(200, resp.status_int, resp.body)
+    self.assert_equals("""\
+<!DOCTYPE html>
+<html>
+<head><link rel="canonical" href="" /></head>
+<article class="h-entry">
+<span class="u-uid">tag:fake.com,2013:111</span>
+<div class="p-name">qwert</div>
+<time class="dt-published" datetime=""></time>
+<time class="dt-updated" datetime=""></time>
+
+  <div class="e-content">
+  qwert
+
+  </div>
+
+<a class="u-in-reply-to" href="http://fake.com/000" />
+
+</article>
+
+</html>
+""", resp.body)
+

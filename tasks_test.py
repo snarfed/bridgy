@@ -106,8 +106,7 @@ class PollTest(TaskQueueTest):
     """
     source = self.sources[0]
     self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities')
-    testutil.FakeSource.get_activities(start_index=mox.IgnoreArg(),
-                                       count=mox.IgnoreArg(),
+    testutil.FakeSource.get_activities(count=mox.IgnoreArg()
                                        ).AndRaise(models.DisableSource)
     self.mox.ReplayAll()
 
@@ -143,7 +142,7 @@ class PropagateTest(TaskQueueTest):
 
   def expect_webmention(self, target_url='http://target1/post/url'):
     self.mock_webmention()
-    local_url = 'http://localhost/comment/fake/%s/1_2_a' % \
+    local_url = 'http://localhost/comment/fake/%s/000/1_2_a' % \
       self.comments[0].source.key().name()
     send.WebmentionSend(local_url, target_url).AndReturn(self.mock_send)
     return self.mock_send.send()
@@ -170,7 +169,7 @@ class PropagateTest(TaskQueueTest):
     self.comments[0].save()
 
     source_name = self.comments[0].source.key().name()
-    local_url = 'http://localhost/comment/fake/%s/1_2_a' % source_name
+    local_url = 'http://localhost/comment/fake/%s/000/1_2_a' % source_name
     self.mock_webmention()
     for i in 'a', 'b', 'c', 'd':
       target = 'http://tar.get/%s' % i

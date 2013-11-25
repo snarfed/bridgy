@@ -79,7 +79,7 @@ class Poll(webapp2.RequestHandler):
 
   def do_post(self, source):
     logging.info('Polling %s %s', source.label(), source.key().name())
-    activities = source.get_activities(start_index=8, count=13)
+    activities = source.get_activities(count=5)
     logging.info('Found %d activities', len(activities))
 
     for activity in activities:
@@ -120,17 +120,24 @@ class Propagate(webapp2.RequestHandler):
       if not comment:
         return
 
-      local_comment_url = self.request.host_url + comment.local_path()
+      _, comment_id = util.parse_tag_uri(comment.key().name())
       logging.info('Starting %s comment %s',
                    comment.source.kind(), comment.key().name())
 
+      # do original post discovery and inject into in-reply-to
       activity = json.loads(comment.activity_json)
       comment.source.as_source.original_post_discovery(activity)
       targets = util.trim_nulls(
         [t.get('url') for t in activity['object'].get('tags', [])
          if t.get('objectType') == 'article'])
 
-      # send webmentions!
+      # generate local comment URL
+      _, post_id = util.parse_tag_uri(activity['id'])
+      local_comment_url = '%s/comment/%s/%s/%s/%s' % (
+        self.request.host_url, comment.source.SHORT_NAME,
+        comment.source.key().name(), post_id, comment_id)
+
+      # send each webmention
       logging.info('Discovered original post URLs: %s', targets)
       for target in targets:
         # When debugging locally, redirect my (snarfed.org) webmentions to localhost
@@ -142,6 +149,7 @@ class Propagate(webapp2.RequestHandler):
           logging.info('Skipping known unsupported domain %s', domain)
           continue
 
+        # send! and handle response or error
         mention = send.WebmentionSend(local_comment_url, target)
         logging.info('Sending webmention from %s to %s', local_comment_url, target)
         if mention.send():
