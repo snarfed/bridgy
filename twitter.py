@@ -25,6 +25,7 @@ class Twitter(models.Source):
   """
 
   DISPLAY_NAME = 'Twitter'
+  SHORT_NAME = 'twitter'
 
   @staticmethod
   def new(handler, auth_entity=None):
@@ -46,8 +47,9 @@ class Twitter(models.Source):
       self.as_source = as_twitter.Twitter(*self.auth_entity.access_token())
 
   def get_activities(self, **kwargs):
+    kwargs.setdefault('count', 100)
     activities = self.as_source.get_activities(
-      group_id=SELF, user_id=self.key().name(), count=100, **kwargs)[1]
+      group_id=SELF, user_id=self.key().name(), **kwargs)[1]
 
     # cache searches for @-mentions for individual users. maps username to dict
     # mapping tweet id to ActivityStreams reply object dict.
@@ -66,7 +68,7 @@ class Twitter(models.Source):
         # this tweet. can't use statuses/mentions_timeline because i'd need to
         # auth as the user being mentioned.
         # https://dev.twitter.com/docs/api/1.1/get/statuses/mentions_timeline
-        author = activity['actor']['username']
+        author = reply['actor']['username']
         if author not in mentions:
           resp = self.as_source.urlread(as_twitter.API_SEARCH_URL %
                                         urllib.quote_plus('@' + author))
@@ -76,11 +78,9 @@ class Twitter(models.Source):
         # recursively follow reply chains to their end. (python supports
         # appending to a sequence while you're iterating over it.)
         for mention in mentions[author]:
-          if mention.get('in_reply_to_status_id_str') in seen_ids:
-            id = mention['id_str']
-            if id in seen_ids:
-              logging.error('Already seen tweet %s! Should be impossible!', id)
-              continue
+          id = mention['id_str']
+          if (mention.get('in_reply_to_status_id_str') in seen_ids and
+              id not in seen_ids):
             replies.append(self.as_source.tweet_to_activity(mention))
             seen_ids.add(id)
 

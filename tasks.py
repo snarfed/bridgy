@@ -35,6 +35,7 @@ WEBMENTION_BLACKLIST = (
   'instagram.com',
   'plus.google.com',
   'twitter.com',
+  't.co',
   '', None,
   )
 
@@ -145,6 +146,8 @@ class Propagate(webapp2.RequestHandler):
           target = target.replace('http://snarfed.org/', 'http://localhost/')
 
         domain = urlparse.urlparse(target).netloc
+        if domain.startswith('www.'):
+          domain = domain[4:]
         if domain in WEBMENTION_BLACKLIST:
           logging.info('Skipping known unsupported domain %s', domain)
           continue
