@@ -35,6 +35,7 @@ TODOs
 ---
 * only handle public posts. (need to add privacy/audience detection to
   activitystreams-unofficial?)
+* cache some API calls with a short expiration, e.g. twitter searches
 * cache webmention discovery
 * global s/comment/reply/
 * detect updated comments and send new webmentions for them
