@@ -80,7 +80,7 @@ class Poll(webapp2.RequestHandler):
 
   def do_post(self, source):
     logging.info('Polling %s %s', source.label(), source.key().name())
-    activities = source.get_activities()
+    activities = source.get_activities(count=5)
     logging.info('Found %d activities', len(activities))
 
     for activity in activities:
@@ -155,7 +155,7 @@ class Propagate(webapp2.RequestHandler):
         # send! and handle response or error
         mention = send.WebmentionSend(local_comment_url, target)
         logging.info('Sending webmention from %s to %s', local_comment_url, target)
-        if mention.send():
+        if mention.send(timeout=999):
           logging.info('Sent! %s', mention.response)
           self.complete_comment()
         else:

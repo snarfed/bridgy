@@ -145,7 +145,7 @@ class PropagateTest(TaskQueueTest):
     local_url = 'http://localhost/comment/fake/%s/000/1_2_a' % \
       self.comments[0].source.key().name()
     send.WebmentionSend(local_url, target_url).AndReturn(self.mock_send)
-    return self.mock_send.send()
+    return self.mock_send.send(timeout=999)
 
   def test_propagate(self):
     """A normal propagate task."""
@@ -174,7 +174,7 @@ class PropagateTest(TaskQueueTest):
     for i in 'a', 'b', 'c', 'd':
       target = 'http://tar.get/%s' % i
       send.WebmentionSend(local_url, target).InAnyOrder().AndReturn(self.mock_send)
-      self.mock_send.send().InAnyOrder().AndReturn(True)
+      self.mock_send.send(timeout=999).InAnyOrder().AndReturn(True)
 
     self.mox.ReplayAll()
     self.post_task()
