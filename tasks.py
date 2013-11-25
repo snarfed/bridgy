@@ -124,7 +124,7 @@ class Propagate(webapp2.RequestHandler):
       logging.info('Starting %s comment %s',
                    comment.source.kind(), comment.key().name())
 
-      # do original post discovery and inject into in-reply-to
+      # use original post discovery to find targets
       activity = json.loads(comment.activity_json)
       comment.source.as_source.original_post_discovery(activity)
       targets = util.trim_nulls(
