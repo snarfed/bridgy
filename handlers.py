@@ -127,8 +127,9 @@ class CommentHandler(ItemHandler):
       return cmt
 
     source.as_source.original_post_discovery(post)
-    cmt['inReplyTo'] += [tag for tag in post['object'].get('tags', [])
-                         if 'url' in tag and tag['objectType'] == 'article']
+    in_reply_tos = cmt.setdefault('inReplyTo', [])
+    in_reply_tos += [tag for tag in post['object'].get('tags', [])
+                     if 'url' in tag and tag['objectType'] == 'article']
 
     # When debugging locally, replace my (snarfed.org) URLs with localhost
     if appengine_config.DEBUG:
