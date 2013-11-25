@@ -22,13 +22,12 @@ import json
 
 from activitystreams import instagram as as_instagram
 from activitystreams.oauth_dropins import instagram as oauth_instagram
+from activitystreams.source import SELF
 import appengine_config
 import models
 
 from google.appengine.ext import db
 import webapp2
-
-from activitystreams import source as as_source
 
 
 class Instagram(models.Source):
@@ -63,7 +62,7 @@ class Instagram(models.Source):
       self.as_source = as_instagram.Instagram(self.auth_entity.access_token())
 
   def get_activities(self, **kwargs):
-    return self.as_source.get_activities(group_id=as_source.SELF, **kwargs)[1]
+    return self.as_source.get_activities(group_id=SELF, **kwargs)[1]
 
 
 class AddInstagram(oauth_instagram.CallbackHandler):

@@ -44,13 +44,12 @@ import json
 
 from activitystreams import facebook as as_facebook
 from activitystreams.oauth_dropins import facebook as oauth_facebook
+from activitystreams.source import SELF
 import appengine_config
 import models
 
 from google.appengine.ext import db
 import webapp2
-
-from activitystreams import source as as_source
 
 
 class FacebookPage(models.Source):
@@ -87,8 +86,8 @@ class FacebookPage(models.Source):
       self.as_source = as_facebook.Facebook(self.auth_entity.access_token())
 
   def get_activities(self, **kwargs):
-    return self.as_source.get_activities(group_id=as_source.SELF,
-                                         user_id=self.key().name(), **kwargs)[1]
+    return self.as_source.get_activities(
+      group_id=SELF, user_id=self.key().name(), **kwargs)[1]
 
     # TODO: handle errors. (activitystreams-unofficial doesn't yet handle *or*
     # expose them.

@@ -3,26 +3,17 @@
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
-import datetime
-import email.utils
 import json
 import logging
-import os
 import re
-import urllib
-import urlparse
 
+from activitystreams import twitter as as_twitter
 from activitystreams.oauth_dropins import twitter as oauth_twitter
+from activitystreams.source import SELF
 import appengine_config
 import models
-import tasks
-import tweepy
 import util
 
-from google.appengine.api import taskqueue
-from google.appengine.api import urlfetch
-from google.appengine.api import users
-from google.appengine.ext import db
 import webapp2
 
 
@@ -36,18 +27,26 @@ class Twitter(models.Source):
 
   @staticmethod
   def new(handler, auth_entity=None):
-    """Creates and returns a Twitter based on POST args.
+    """Creates and returns a Twitter entity.
 
     Args:
       handler: the current RequestHandler
     """
     user = json.loads(auth_entity.user_json)
     return Twitter(key_name=user['screen_name'],
-                   owner=models.User.get_current_user(),
                    auth_entity=auth_entity,
                    url=Twitter.user_url(user['screen_name']),
                    name=user['name'],
                    picture=user['profile_image_url'])
+
+  def __init__(self, *args, **kwargs):
+    super(Twitter, self).__init__(*args, **kwargs)
+    if self.auth_entity:
+      self.as_source = as_twitter.Twitter(*self.auth_entity.access_token())
+
+  def get_activities(self, **kwargs):
+    return self.as_source.get_activities(
+      group_id=SELF, user_id=self.key().name(), **kwargs)[1]
 
   def get_posts(self):
     """Returns list of (JSON tweet, link url).
@@ -147,14 +146,6 @@ class Twitter(models.Source):
     """Returns a user's URL.
     """
     return 'http://twitter.com/%s' % username
-
-
-class TwitterReply(models.Comment):
-  """Key name is the tweet (aka status) id.
-  """
-
-  # user who wrote the comment
-  username = db.StringProperty(required=True)
 
 
 class AddTwitter(oauth_twitter.CallbackHandler):

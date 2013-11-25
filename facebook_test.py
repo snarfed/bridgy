@@ -3,19 +3,12 @@
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
-import datetime
 import json
-import logging
-import mox
-import re
 import testutil
-import urllib
-import urlparse
 
 from activitystreams import facebook_test as as_facebook_test
 from activitystreams.oauth_dropins import facebook as oauth_facebook
 from facebook import FacebookPage
-import models
 
 import webapp2
 
