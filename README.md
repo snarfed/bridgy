@@ -35,8 +35,10 @@ TODOs
 ---
 * only handle public posts. (need to add privacy/audience detection to
   activitystreams-unofficial?)
-* cache some API calls with a short expiration, e.g. twitter searches
+* cache some API calls with a short expiration, e.g. twitter mentions
 * cache webmention discovery
+* cache served MF2 HTML and JSON with a short expiration. ideally include the
+  cache expiration in the content.
 * global s/comment/reply/
 * detect updated comments and send new webmentions for them
 * store and render last N polls and propagates for each source
