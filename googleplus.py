@@ -4,19 +4,18 @@
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import datetime
-import httplib2
 import json
 import logging
 import os
 
+from activitystreams import googleplus as as_googleplus
 from activitystreams.oauth_dropins import googleplus as oauth_googleplus
+from activitystreams.source import SELF
 from apiclient.errors import HttpError
 import appengine_config
 import models
 import util
 
-from google.appengine.api import users
-from google.appengine.api import memcache
 from google.appengine.ext import db
 import webapp2
 
@@ -39,6 +38,7 @@ class GooglePlusPage(models.Source):
   """
 
   DISPLAY_NAME = 'Google+'
+  SHORT_NAME = 'googleplus'
 
   type = db.StringProperty(choices=('user', 'page'))
 
@@ -62,67 +62,32 @@ class GooglePlusPage(models.Source):
                           picture=user['image']['url'],
                           type=type)
 
-  def get_posts(self):
-    """Returns list of (activity resource, link url).
+  def __init__(self, *args, **kwargs):
+    super(GooglePlusPage, self).__init__(*args, **kwargs)
+    if self.auth_entity:
+      self.as_source = as_googleplus.GooglePlus(auth_entity=self.auth_entity)
 
-    The link url is also added to each returned activity resource in the
-    'bridgy_link' JSON value.
-    """
-    # Google+ Activity resource
-    # https://developers.google.com/+/api/latest/activies#resource
-    call = self.auth_entity.api().activities().list(userId=self.key().name(),
-                                                    collection='public',
-                                                    maxResults=100)
-    activities = call.execute(self.auth_entity.http())
+  def get_activities(self, fetch_replies=False, **kwargs):
+    activities = self.as_source.get_activities(
+      group_id=SELF, user_id=self.key().name(), **kwargs)[1]
 
-    activities_with_links = []
-    for activity in activities['items']:
-      for attach in activity['object'].get('attachments', []):
-        if attach['objectType'] == 'article':
-          activity['bridgy_link'] = attach['url']
-          activities_with_links.append((activity, attach['url']))
+    if fetch_replies:
+      for activity in activities:
+        _, id = util.parse_tag_uri(activity['id'])
+        call = self.as_source.auth_entity.api().comments().list(
+          activityId=id, maxResults=500)
+        comments = call.execute(self.as_source.auth_entity.http())
+        # G+ puts almost everything in the comment *activity*, not the object
+        # inside the activity. so, copy over the content and use the activity
+        # itself.
+        for comment in comments['items']:
+          comment['content'] = comment['object']['content']
+          # alsoconvert id to tag URI
+          comment['id'] = self.as_source.tag_uri(comment['id'])
 
-    return activities_with_links
+        activity['object']['replies']['items'] = comments['items']
 
-  def get_comments(self, posts):
-    comments = []
-
-    for activity, url in posts:
-      # Google+ Comment resource
-      # https://developers.google.com/+/api/latest/comments#resource
-      call = self.auth_entity.api().comments().list(activityId=activity['id'],
-                                                    maxResults=100)
-      comment_resources = call.execute(self.auth_entity.http())
-
-      for c in comment_resources['items']:
-        # parse the iso8601 formatted timestamp
-        created = datetime.datetime.strptime(c['published'],
-                                             '%Y-%m-%dT%H:%M:%S.%fZ')
-        comments.append(GooglePlusComment(
-            key_name=c['id'],
-            source=self,
-            source_post_url=activity['url'],
-            target_url=url, #activity['bridgy_link'],
-            created=created,
-            author_name=c['actor']['displayName'],
-            author_url=c['actor']['url'],
-            content=c['object']['content'],
-            user_id=c['actor']['id'],
-            ))
-
-    return comments
-
-
-class GooglePlusComment(models.Comment):
-  """Key name is the comment's id.
-
-  The properties correspond to the Google+ comment resource:
-  https://developers.google.com/+/api/latest/comments#resource
-  """
-
-  # user id who wrote the comment
-  user_id = db.StringProperty(required=True)
-
+    return activities
 
 class AddGooglePlusPage(util.Handler):
   def get(self):
