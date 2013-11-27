@@ -106,7 +106,7 @@ class PollTest(TaskQueueTest):
     """
     source = self.sources[0]
     self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities')
-    testutil.FakeSource.get_activities(count=mox.IgnoreArg()
+    testutil.FakeSource.get_activities(count=mox.IgnoreArg(), fetch_replies=True
                                        ).AndRaise(models.DisableSource)
     self.mox.ReplayAll()
 

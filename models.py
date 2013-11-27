@@ -135,6 +135,8 @@ class Source(Site):
 
     Args:
       id: string, site-specific post id
+      fetch_replies: boolean, if True does any extra API calls needed to fetch
+        replies/comments
 
     Returns: dict, decoded ActivityStreams activity, or None
     """
@@ -153,7 +155,7 @@ class Source(Site):
     """
     return self.as_source.get_comment(id)
 
-  def get_activities(self, **kwargs):
+  def get_activities(self, fetch_replies=False, **kwargs):
     """Returns recent posts and embedded comments for this source.
 
     To be implemented by subclasses. Keyword args should be passed through to

@@ -46,10 +46,27 @@ class Twitter(models.Source):
     if self.auth_entity:
       self.as_source = as_twitter.Twitter(*self.auth_entity.access_token())
 
-  def get_activities(self, **kwargs):
+  def get_activities(self, fetch_replies=False, **kwargs):
     kwargs.setdefault('count', 100)
     activities = self.as_source.get_activities(
       group_id=SELF, user_id=self.key().name(), **kwargs)[1]
+
+    if fetch_replies:
+      self.fetch_replies(activities)
+    return activities
+
+  def fetch_replies(self, activities):
+    """Fetches and injects replies into a list of activities, in place
+
+    This searches for @-mentions, matches them to the original tweets with
+    in_reply_to_status_id_str, and recurses until it's walked the entire tree.
+
+    Args:
+      activities: list of activity dicts
+
+    Returns:
+      same activities list
+    """
 
     # cache searches for @-mentions for individual users. maps username to dict
     # mapping tweet id to ActivityStreams reply object dict.
@@ -88,8 +105,6 @@ class Twitter(models.Source):
         'items': [r['object'] for r in replies[1:]],  # filter out seed activity
         'totalItems': len(replies),
         }
-
-    return activities
 
   @staticmethod
   def tweet_url(user, id):
