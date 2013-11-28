@@ -143,17 +143,18 @@ class Source(Site):
     activities = self.get_activities(activity_id=id)
     return activities[0] if activities else None
 
-  def get_comment(self, id):
+  def get_comment(self, comment_id, activity_id=None):
     """Returns a comment from this source.
 
     To be implemented by subclasses.
 
     Args:
-      id: string, site-specific comment id
+      comment_id: string, site-specific comment id
+      activity_id: string, site-specific activity id
 
     Returns: dict, decoded ActivityStreams comment object, or None
     """
-    return self.as_source.get_comment(id)
+    return self.as_source.get_comment(comment_id, activity_id=activity_id)
 
   def get_activities(self, fetch_replies=False, **kwargs):
     """Returns recent posts and embedded comments for this source.

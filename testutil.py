@@ -68,9 +68,9 @@ class FakeSource(FakeBase, Source):
   def set_comment(self, comment):
     FakeSource.comments[str(self.key())] = comment
 
-  def get_comment(self, id):
+  def get_comment(self, comment_id, activity_id=None):
     comment = FakeSource.comments.get(str(self.key()))
-    return comment if comment else super(FakeSource, self).get_comment(id)
+    return comment if comment else super(FakeSource, self).get_comment(comment_id)
 
 
 class HandlerTest(testutil.HandlerTest):

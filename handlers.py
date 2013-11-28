@@ -93,7 +93,7 @@ class PostHandler(ItemHandler):
 
 class CommentHandler(ItemHandler):
   def get_item(self, source, post_id, id):
-    cmt = source.get_comment(id)
+    cmt = source.get_comment(id, activity_id=post_id)
     if not cmt:
       return None
 
