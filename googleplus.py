@@ -77,13 +77,8 @@ class GooglePlusPage(models.Source):
         call = self.as_source.auth_entity.api().comments().list(
           activityId=id, maxResults=500)
         comments = call.execute(self.as_source.auth_entity.http())
-        # G+ puts almost everything in the comment *activity*, not the object
-        # inside the activity. so, copy over the content and use the activity
-        # itself.
         for comment in comments['items']:
-          comment['content'] = comment['object']['content']
-          # alsoconvert id to tag URI
-          comment['id'] = self.as_source.tag_uri(comment['id'])
+          self.as_source.postprocess_comment(comment)
 
         activity['object']['replies']['items'] = comments['items']
 

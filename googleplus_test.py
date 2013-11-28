@@ -1,4 +1,3 @@
-#!/usr/bin/python
 """Unit tests for googleplus.py.
 """
 
@@ -16,7 +15,7 @@ from oauth2client.client import AccessTokenCredentials
 
 from activitystreams.oauth_dropins import googleplus as oauth_googleplus
 import googleplus
-from googleplus import GooglePlusComment, GooglePlusPage
+from googleplus import GooglePlusPage
 import models
 
 
