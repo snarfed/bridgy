@@ -1,26 +1,82 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-  <title>Bridgy</title>
-  <link href="/static/style.css" rel="stylesheet" type="text/css" />
+ <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+ <title>Brid.gy</title>
+ <meta name="viewport" content="width=device-width">
+ <!-- <link href="/static/style.css" rel="stylesheet" type="text/css" /> -->
 
-  <!-- google analytics -->
-  <script type="text/javascript">
+ <!-- Bootstrap CSS -->
+ <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" />
+ <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-theme.min.css" />
 
-  var _gaq = _gaq || [];
-  _gaq.push(['_setAccount', 'UA-11785301-2']);
-  _gaq.push(['_trackPageview']);
+ <!-- google analytics -->
+ <script type="text/javascript">
 
-  (function() {
-    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-  })();
+ var _gaq = _gaq || [];
+ _gaq.push(['_setAccount', 'UA-11785301-2']);
+ _gaq.push(['_trackPageview']);
 
-  </script>
+ (function() {
+   var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+   ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+   var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+ })();
+
+ </script>
 </head>
 
+<!-- Inline style -->
+<style type="text/css">
+body {
+  padding-top: 2em;
+}
+.tp-main {
+  padding-top: 6em;
+}
+.tp-main h1 {
+  font-size: 4em;
+}
+.tp-main .lead {
+  font-size: 2em;
+}
+#logo {
+  float: right;
+  width: 500px;
+}
+#title {
+  font-weight: normal;
+}
+.header {
+  text-align: left;
+}
+#footer {
+  margin-top: 1.5em;
+  margin-bottom: 1em;
+  text-align: right;
+}
+form {
+  display: inline;
+}
+form input {
+  vertical-align: middle;
+}
+.row {
+  text-align: center;
+}
+.col-md-3 {
+  margin-bottom: 1em;
+}
+.messages {
+  position: fixed;
+  top: 0px;
+  text-align: center;
+}
+</style>
+
+<!--
+ -- Content starts here
+ -->
 <body>
 
 {# TODO: javascript to set browser location to / so that reloads are harmless #}
@@ -31,23 +87,47 @@
 {% endfor %}
 </div>
 
-<div id="header">
+<main class="tp-main">
+ <div class="container">
   <img id="logo" src="/static/bridgy_logo.jpg" />
-  <p id="title"><span>Bridgy</span></p>
+
+<p class="lead header">Got an <a href="http://indiewebcamp.com/why">Indieweb</a> site?
+<br />
+<a href="http://indiewebcamp.com/POSSE">POSSE</a> your posts to the silos?
+<br />
+<span id="title">Brid.gy</span>
+<a href="http://indiewebcamp.com/backfeed">backfeeds</a> comments to your
+site.</p>
+
+<p class="clearfix" />
+
+<!-- Connect silo buttons -->
+<div class="row">
+<div class="col-md-3 col-sm-6"><form method="post" action="/facebook/start">
+  <input type="image" alt="Sign in with Facebook" src="/static/facebook_button.png" />
+</form></div>
+<div class="col-md-3 col-sm-6"><form method="post" action="/twitter/start">
+  <input type="image" alt="Sign in with Twitter" src="/static/twitter_button.png" />
+</form></div>
+  <div class="clearfix visible-sm"></div>
+<div class="col-md-3 col-sm-6"><form method="post" action="/googleplus/start">
+  <input type="image" alt="Sign in with Google+" src="/static/google_plus_button.png" />
+</form></div>
+<div class="col-md-3 col-sm-6"><form method="post" action="/instagram/start">
+  <input type="image" alt="Sign in with Instagram" src="/static/instagram_button.png" />
+</form></div>
 </div>
 
-<div id="body">
+<br />
 
-<p>Got a blog? Share your blog posts on social networks? Wish comments on those
-shared posts also showed up on your blog? Bridgy copies them back for you.</p>
-
-<p><b>Your sources:</b></p>
+<!-- Connected accounts -->
+<h3>Connected accounts</h3>
 <div class="section">
   {# TODO: paging #}
   <table id="sources">
   {% for source in sources %}
     <tr {% if source.status == "disabled" %}
-         title="This source was disconnected on {{ source.type_display_name }}'s end. To fix this, delete and re-add it."
+         title="This source was disconnected on {{ source.DISPLAY_NAME }}'s end. To fix this, delete and re-add it."
        {% endif %}><td>
         <a href="{{ source. }}">
           <img class="source" src="{{ source.picture }}" /></a>
@@ -71,34 +151,16 @@ shared posts also showed up on your blog? Bridgy copies them back for you.</p>
   {% endfor %}
   </table>
 
-  <form method="post" action="/facebook/start">
-    <input type="submit" value="Add Facebook">
-  </form>
-
-  <form method="post" action="/googleplus/start">
-    <input type="submit" value="Add Google+">
-  </form>
-
-  <form method="post" action="/twitter/start">
-    <input type="submit" value="Add Twitter">
-  </form>
-
-  <form method="post" action="/instagram/start">
-    <input type="submit" value="Add Instagram">
-  </form>
-</div>
 </div>
 
-<div id="bottom"></div>
-
-<div id="footer">
+<p id="footer" class="lead">
   <a href="http://snarfed.org/2012-01-08_bridgy_launched">About</a>
   | <a href="http://snarfed.org/about">Contact</a>
   | <a href="https://github.com/snarfed/bridgy">Source</a>
-  | <a href="http://code.google.com/appengine/">
-    <img src="/static/appengine_button_noborder.gif" /></a>
-</div>
+</p>
 
+</div>
+</main>
 </body>
 </html>
 
