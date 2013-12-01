@@ -88,9 +88,11 @@ class Site(KeyNameModel):
     if existing:
       logging.warning('Overwriting %s %s! Old version:\n%s',
                       existing.label(), new.key(), new.to_xml())
-      handler.messages.append('Updated existing %s' % existing.label())
+      new_msg = 'Updated existing %s' % existing.label()
     else:
-      handler.messages.append('Added %s' % new.label())
+      new_msg = 'Added %s' % new.label()
+
+    handler.messages.append(urllib.quote_plus(new_msg))
 
     # TODO: ugh, *all* of this should be transactional
     new.save()

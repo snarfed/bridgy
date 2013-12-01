@@ -34,8 +34,21 @@ class DashboardHandler(util.Handler):
     Args:
       msg: string, message to be displayed
     """
-    sources = itertools.chain(FacebookPage.all(), Twitter.all(),
-                              GooglePlusPage.all(), Instagram.all())
+    sources = {str(source.key()): source for source in
+               itertools.chain(FacebookPage.all(), Twitter.all(),
+                               GooglePlusPage.all(), Instagram.all())}
+
+    # manually update the source we just added or deleted to workaround
+    # inconsistent global queries.
+    added = self.request.get('added')
+    if added and added not in sources:
+      sources[added] = db.get(added)
+    deleted = self.request.get('deleted')
+    if deleted in sources:
+      del sources[deleted]
+
+    # sort sources by name
+    sources = sorted(sources.values(), key=lambda s: (s.DISPLAY_NAME, s.name))
 
     msgs = self.request.params.getall('msg')
     path = os.path.join(os.path.dirname(__file__), 'templates', 'dashboard.html')
@@ -59,11 +72,12 @@ class RegisterHandler(util.Handler):
 
 class DeleteHandler(util.Handler):
   def post(self):
-    source = db.get(util.get_required_param(self, 'key'))
+    key = util.get_required_param(self, 'key')
+    source = db.get(key)
     source.delete()
     # TODO: remove credentials, tasks, etc.
-    msg = 'Deleted %s' % source.label()
-    self.redirect('/?msg=' + msg)
+    msg = urllib.quote_plus('Deleted %s' % source.label())
+    self.redirect('/?deleted=%s&msg=%s' % (key, msg))
 
 
 application = webapp2.WSGIApplication(

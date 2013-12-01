@@ -102,8 +102,8 @@ class AddFacebookPage(oauth_facebook.CallbackHandler):
   messages = []
 
   def finish(self, auth_entity, state=None):
-    FacebookPage.create_new(self, auth_entity=auth_entity)
-    self.redirect('/')
+    fb = FacebookPage.create_new(self, auth_entity=auth_entity)
+    self.redirect('/?added=%s' % fb.key())
 
 
 application = webapp2.WSGIApplication([

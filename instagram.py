@@ -69,8 +69,8 @@ class AddInstagram(oauth_instagram.CallbackHandler):
   messages = []
 
   def finish(self, auth_entity, state=None):
-    Instagram.create_new(self, auth_entity=auth_entity)
-    self.redirect('/')
+    inst = Instagram.create_new(self, auth_entity=auth_entity)
+    self.redirect('/?added=%s' % inst.key())
 
 
 application = webapp2.WSGIApplication([
