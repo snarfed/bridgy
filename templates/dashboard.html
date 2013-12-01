@@ -3,12 +3,15 @@
 <head>
  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
  <title>Brid.gy</title>
- <meta name="viewport" content="width=device-width">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
  <!-- <link href="/static/style.css" rel="stylesheet" type="text/css" /> -->
 
  <!-- Bootstrap CSS -->
  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" />
  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-theme.min.css" />
+<meta name="mobile-web-app-capable" content="yes"/>
+<link rel="shortcut icon" href="/static/favicon.png">
+<link rel="apple-touch-icon" href="/static/favicon.png"/>
 
  <!-- google analytics -->
  <script type="text/javascript">
@@ -29,31 +32,36 @@
 <!-- Inline style -->
 <style type="text/css">
 body {
-  padding-top: 2em;
+  margin-top: 3em;
 }
-.tp-main {
-  padding-top: 6em;
+@media (min-height: 768px) {
+  body {
+    margin-top: 6em;
+  }
 }
-.tp-main h1 {
-  font-size: 4em;
+.lead {
+  font-size: 1.75em;
 }
-.tp-main .lead {
-  font-size: 2em;
-}
-#logo {
-  float: right;
-  width: 500px;
+@media (min-width: 768px) {
+  .lead {
+    font-size: 2em;
+  }
 }
 #title {
   font-weight: normal;
 }
-.header {
-  text-align: left;
+#messages {
+  position: fixed;
+  width: 100%;
+  top: .2em;
+  text-align: center !important;
+  z-index: 999;
 }
-#footer {
-  margin-top: 1.5em;
-  margin-bottom: 1em;
-  text-align: right;
+#messages > p {
+  display: inline;
+  background-color: #dd0;
+  color: #444;
+  padding: .5em;
 }
 form {
   display: inline;
@@ -67,10 +75,22 @@ form input {
 .col-md-3 {
   margin-bottom: 1em;
 }
-.messages {
-  position: fixed;
-  top: 0px;
-  text-align: center;
+#sources {
+  border-collapse: separate;
+  border-spacing: .3em;
+}
+.glyphicon-warning-sign { color: gold; }
+.glyphicon-remove { color: red !important; }
+#footer {
+  margin-top: 1.5em;
+  margin-bottom: 1em;
+  text-align: right;
+  font-size: 1.5em;
+}
+@media (min-width: 768px) {
+  #footer {
+    font-size: 1.75em;
+  }
 }
 </style>
 
@@ -80,18 +100,20 @@ form input {
 <body>
 
 {# TODO: javascript to set browser location to / so that reloads are harmless #}
-
-<div class="messages">
+<div id="messages">
 {% for msg in msgs %}
   <p>{{ msg }}</p>
 {% endfor %}
 </div>
 
-<main class="tp-main">
+<main class="tp-main lead">
  <div class="container">
-  <img id="logo" src="/static/bridgy_logo.jpg" />
+  <div id="logo" class="container col-xs-4 pull-right">
+   <img class="img-responsive" src="/static/bridgy_logo.jpg" />
+  </div>
 
-<p class="lead header">Got an <a href="http://indiewebcamp.com/why">Indieweb</a> site?
+<p class="header col-xs-8">
+Got an <a href="http://indiewebcamp.com/why">Indieweb</a> site?
 <br />
 <a href="http://indiewebcamp.com/POSSE">POSSE</a> your posts to the silos?
 <br />
@@ -121,43 +143,39 @@ site.</p>
 <br />
 
 <!-- Connected accounts -->
-<h3>Connected accounts</h3>
-<div class="section">
-  {# TODO: paging #}
-  <table id="sources">
-  {% for source in sources %}
-    <tr {% if source.status == "disabled" %}
-         title="This source was disconnected on {{ source.DISPLAY_NAME }}'s end. To fix this, delete and re-add it."
-       {% endif %}><td>
-        <a href="{{ source. }}">
-          <img class="source" src="{{ source.picture }}" /></a>
-      </td><td>
-        {% if source.status == "disabled" %}
-          <img src="static/warning.png" /></a>
-        {% endif %}
-        <a href="{{ source.url }}" class="source {{ source.status }}"
-           >{{ source.name }}</a>
-      </td><td>
-        ({{ source.DISPLAY_NAME }})
-      </td><td>
-        <!-- TODO: make this generic across source types. need unique id across
-             all source types, and way to look it up. (webfinger.) same w/dests.
-          -->
-        <form method="post" action="/delete">
-          <input name="key" type="hidden" value="{{ source.key }}" />
-          <input type="image" src="static/trash_can.png" title="Delete" />
-        </form>
-    </td></tr>
-  {% endfor %}
-  </table>
+<p>Registered accounts:</p>
 
-</div>
+{# TODO: paging #}
+<table id="sources">
+{% for source in sources %}
+  <tr {% if source.status == "disabled" %}
+       title="This source was disconnected on {{ source.DISPLAY_NAME }}'s end. To fix this, delete and re-add it."
+     {% endif %}><td>
+      <a href="{{ source. }}">
+        <img class="source" src="{{ source.picture }}" width="64px" /></a>
+    </td><td>
+      {% if source.status == "disabled" %}
+        <span class="glyphicon glyphicon-warning-sign"></span>
+      {% endif %}
+      <a href="{{ source.url }}" class="source {{ source.status }}"
+         >{{ source.name }}</a>
+    </td><td>
+      ({{ source.DISPLAY_NAME }})
+    </td><td>
+      <form method="post" action="/delete">
+        <input name="key" type="hidden" value="{{ source.key }}" />
+        <button type="submit" title="Delete" class="glyphicon glyphicon-remove"
+                style="border: none; background: none;" />
+      </form>
+  </td></tr>
+{% endfor %}
+</table>
 
-<p id="footer" class="lead">
+<div id="footer">
   <a href="http://snarfed.org/2012-01-08_bridgy_launched">About</a>
   | <a href="http://snarfed.org/about">Contact</a>
   | <a href="https://github.com/snarfed/bridgy">Source</a>
-</p>
+</div>
 
 </div>
 </main>
