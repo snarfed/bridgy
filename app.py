@@ -50,7 +50,7 @@ class DashboardHandler(util.Handler):
     # sort sources by name
     sources = sorted(sources.values(), key=lambda s: (s.DISPLAY_NAME, s.name))
 
-    msgs = self.request.params.getall('msg')
+    msgs = [urllib.unquote_plus(m) for m in self.request.params.getall('msg')]
     path = os.path.join(os.path.dirname(__file__), 'templates', 'dashboard.html')
 
     self.response.headers['Link'] = ('<%s/webmention>; rel="webmention"' %
