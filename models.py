@@ -5,6 +5,7 @@ import datetime
 import itertools
 import json
 import logging
+import urllib
 import urlparse
 
 import appengine_config
@@ -14,51 +15,6 @@ from webutil.models import KeyNameModel
 from google.appengine.api import taskqueue
 from google.appengine.api import users
 from google.appengine.ext import db
-
-
-class User(db.Model):
-  """A registered user.
-
-  The key name is either App Engine user_id or OpenID federated_identity.
-  """
-
-  @classmethod
-  def get_current_user(cls):
-    key_name = cls._current_user_key_name()
-    if key_name:
-      return cls.get_by_key_name(key_name)
-
-  @classmethod
-  @db.transactional
-  def get_or_insert_current_user(cls, handler):
-    """Returns the logged in user's User instance, creating it if necessary.
-
-    Implemented manually instead of via Model.get_or_insert() because we want to
-    know if we created the User object so we can add a message to the handler.
-
-    Args:
-      handler: the current RequestHandler
-    """
-    key_name = cls._current_user_key_name()
-    if key_name:
-      user = cls.get_by_key_name(key_name)
-      if not user:
-        user = cls(key_name=key_name)
-        user.save()
-        handler.messages.append('Registered new user.')
-
-      return user
-
-  @staticmethod
-  def _current_user_key_name():
-    """Returns a unique key name for the current user.
-
-    Returns: the user's OpenId identifier or App Engine user id or None if
-      they're not logged in
-    """
-    user = users.get_current_user()
-    if user:
-      return user.federated_identity() or user.user_id()
 
 
 class Site(KeyNameModel):

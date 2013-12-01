@@ -50,7 +50,6 @@ class Instagram(models.Source):
     user = json.loads(auth_entity.user_json)
     username = user['username']
     return Instagram(key_name=username,
-                     owner=models.User.get_current_user(),
                      auth_entity=auth_entity,
                      name=user['full_name'],
                      picture=user['profile_picture'],

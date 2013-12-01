@@ -23,15 +23,12 @@ class GooglePlusPageTest(testutil.ModelsTest):
 
   def setUp(self):
     super(GooglePlusPageTest, self).setUp()
-
-    self.user = models.User.get_or_insert_current_user(self.handler)
     self.handler.messages = []
 
     self.auth_entity = oauth_googleplus.GooglePlusAuth(
       key_name='x', creds_json='x', user_json='x')
     self.page = GooglePlusPage(key_name='2468',
                                auth_entity=self.auth_entity,
-                               owner=self.user,
                                name='my full name',
                                url='http://my.g+/url',
                                picture='http://my.pic/small',

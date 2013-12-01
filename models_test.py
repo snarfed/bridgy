@@ -3,7 +3,9 @@
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
-from models import Comment, Source, User
+import urllib
+
+from models import Comment, Source
 import testutil
 from testutil import FakeSource
 import util
@@ -40,30 +42,6 @@ class CommentTest(testutil.ModelsTest):
     self.assertEqual(1, len(tasks))
 
 
-class UserTest(testutil.ModelsTest):
-
-  def test_no_logged_in_user(self):
-    self.testbed.setup_env(user_id='', user_email='', overwrite=True)
-    self.assertEqual(None, users.get_current_user())
-    self.assertEqual(None, User.get_current_user())
-    self.assertEqual(None, User.get_or_insert_current_user(self.handler))
-
-  def test_user(self):
-    self.assertEqual(0, User.all().count())
-    self.assertEqual(None, User.get_current_user())
-
-    user = User.get_or_insert_current_user(self.handler)
-    self.assertEqual(self.current_user_id, user.key().name())
-    self.assertEqual(['Registered new user.'], self.handler.messages)
-    self.assert_entities_equal(user, User.get_by_key_name(self.current_user_id))
-
-    # get_or_insert_current_user() again shouldn't add a message
-    self.handler.messages = []
-    user = User.get_or_insert_current_user(self.handler)
-    self.assertEqual(self.current_user_id, user.key().name())
-    self.assertEqual([], self.handler.messages)
-
-
 class SourceTest(testutil.HandlerTest):
 
   def _test_create_new(self):
@@ -82,13 +60,14 @@ class SourceTest(testutil.HandlerTest):
   def test_create_new(self):
     self.assertEqual(0, FakeSource.all().count())
     self._test_create_new()
-    self.assertEqual(['Added FakeSource: fake'], self.handler.messages)
+    self.assertEqual([urllib.quote_plus('Added FakeSource: fake')],
+                     self.handler.messages)
 
   def test_create_new_already_exists(self):
     FakeSource.new(None).save()
     FakeSource.key_name_counter -= 1
     self._test_create_new()
-    self.assertEqual(['Updated existing FakeSource: fake'],
+    self.assertEqual([urllib.quote_plus('Updated existing FakeSource: fake')],
                      self.handler.messages)
 
   def test_get_post(self):

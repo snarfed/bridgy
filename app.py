@@ -58,18 +58,6 @@ class DashboardHandler(util.Handler):
     self.response.out.write(template.render(path, {'sources': sources, 'msgs': msgs}))
 
 
-class RegisterHandler(util.Handler):
-  """Registers the current user if they're not already registered.
-  """
-  def get(self):
-    self.post()
-
-  def post(self):
-    user = models.User.get_or_insert_current_user(self)
-    logging.info('Registered %s', user.key().name())
-    self.redirect('/')
-
-
 class DeleteHandler(util.Handler):
   def post(self):
     key = util.get_required_param(self, 'key')
@@ -82,7 +70,6 @@ class DeleteHandler(util.Handler):
 
 application = webapp2.WSGIApplication(
   [('/', DashboardHandler),
-   ('/register', RegisterHandler),
    ('/delete', DeleteHandler),
    ] + handlers.HOST_META_ROUTES,
   debug=appengine_config.DEBUG)

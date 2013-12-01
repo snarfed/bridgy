@@ -53,9 +53,7 @@ class TwitterSearch(models.Source):
       handler: the current RequestHandler
     """
     url = handler.request.params['url']
-    return TwitterSearch(key_name=url,
-                         url=url,
-                         owner=models.User.get_current_user())
+    return TwitterSearch(key_name=url, url=url)
 
   def get_posts(self):
     """Returns list of (JSON tweet, link url).

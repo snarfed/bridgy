@@ -57,7 +57,6 @@ class GooglePlusPage(models.Source):
     return GooglePlusPage(key_name=user['id'],
                           auth_entity=auth_entity,
                           url=user['url'],
-                          owner=models.User.get_current_user(),
                           name=user['displayName'],
                           picture=user['image']['url'],
                           type=type)
