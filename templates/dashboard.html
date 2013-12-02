@@ -1,102 +1,36 @@
 <!DOCTYPE html>
 <html>
 <head>
- <meta http-equiv="content-type" content="text/html; charset=utf-8" />
- <title>Brid.gy</title>
- <meta name="viewport" content="width=device-width, initial-scale=1.0">
- <!-- <link href="/static/style.css" rel="stylesheet" type="text/css" /> -->
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<title>Brid.gy</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
- <!-- Bootstrap CSS -->
- <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" />
- <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-theme.min.css" />
 <meta name="mobile-web-app-capable" content="yes"/>
 <link rel="shortcut icon" href="/static/favicon.png">
 <link rel="apple-touch-icon" href="/static/favicon.png"/>
 
- <!-- google analytics -->
- <script type="text/javascript">
+<!-- Bootstrap CSS -->
+<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" />
+<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-theme.min.css" />
+<!-- Include my stylesheet after so it overrides -->
+<link rel="stylesheet" href="/static/style.css" type="text/css" />
 
- var _gaq = _gaq || [];
- _gaq.push(['_setAccount', 'UA-11785301-2']);
- _gaq.push(['_trackPageview']);
+<!-- google analytics -->
+<script type="text/javascript">
+var _gaq = _gaq || [];
+_gaq.push(['_setAccount', 'UA-11785301-2']);
+_gaq.push(['_trackPageview']);
 
- (function() {
-   var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-   ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-   var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
- })();
+(function() {
+  var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+  ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+  var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+})();
+</script>
 
- </script>
 </head>
 
-<!-- Inline style -->
-<style type="text/css">
-body {
-  margin-top: 3em;
-}
-@media (min-height: 768px) {
-  body {
-    margin-top: 6em;
-  }
-}
-.lead {
-  font-size: 1.75em;
-}
-@media (min-width: 768px) {
-  .lead {
-    font-size: 2em;
-  }
-}
-#title {
-  font-weight: normal;
-}
-#messages {
-  position: fixed;
-  width: 100%;
-  top: .2em;
-  text-align: center !important;
-  z-index: 999;
-}
-#messages > p {
-  display: inline;
-  background-color: #dd0;
-  color: #444;
-  padding: .5em;
-}
-form {
-  display: inline;
-}
-form input {
-  vertical-align: middle;
-}
-.row {
-  text-align: center;
-}
-.col-md-3 {
-  margin-bottom: 1em;
-}
-#sources {
-  border-collapse: separate;
-  border-spacing: .3em;
-}
-.glyphicon-warning-sign { color: gold; }
-.glyphicon-remove { color: red !important; }
-#footer {
-  margin-top: 1.5em;
-  margin-bottom: 1em;
-  text-align: right;
-  font-size: 1.5em;
-}
-@media (min-width: 768px) {
-  #footer {
-    font-size: 1.75em;
-  }
-}
-</style>
-
-<!--
- -- Content starts here
- -->
+<!-- Content starts here -->
 <body>
 
 {# TODO: javascript to set browser location to / so that reloads are harmless #}
@@ -106,32 +40,55 @@ form input {
 {% endfor %}
 </div>
 
-<main class="tp-main lead">
- <div class="container">
-  <div id="logo" class="container col-xs-4 pull-right">
-   <img class="img-responsive" src="/static/bridgy_logo.jpg" />
-  </div>
+<main class="tp-main lead container">
 
-<p class="header col-xs-8">
+<div class="row">
+<div id="logo" class="col-sm-4">
+ <img class="img-responsive" style="vertical-align: bottom"
+      src="/static/bridgy_logo.jpg" />
+</div>
+
+<div id="header" class="col-sm-8">
+<p class="big">
 Got an <a href="http://indiewebcamp.com/why">Indieweb</a> site?
 <br />
 <a href="http://indiewebcamp.com/POSSE">POSSE</a> your posts to the silos?
 <br />
 <span id="title">Brid.gy</span>
-<a href="http://indiewebcamp.com/backfeed">backfeeds</a> comments to your
-site.</p>
+<a href="http://indiewebcamp.com/backfeed">backfeeds</a> comments to your site.
+<br />
+</p>
+<a href="#"
+   onclick="more.style.display = (more.style.display == 'none') ? 'block' : 'none';
+            return false;">
+ More...</a>
+</div>
+</div>
 
 <p class="clearfix" />
+<div id="more" style="display: none" />
+<p>Brid.gy is a service that sends
+<a href="http://webmention.org/">webmentions</a> for comments on Facebook,
+Twitter, Google+, and Instagram. Brid.gy polls your posts,
+discovers <a href="http://indiewebcamp.com/original-post-discovery">original
+post links</a>, and sends comments to those links as webmentions. It also serves
+each silo post and comment
+as <a href="http://microformats.org/wiki/microformats2">microformats2</a> for
+webmention targets to read.</p>
 
-<!-- Connect silo buttons -->
-<div class="row">
+<p>You can <a href="#users">see who's using Brid.gy</a> or click on a button
+below to try it yourself.</p>
+</div>
+
+<!-- Connect buttons -->
+<div id="connect" class="row">
 <div class="col-md-3 col-sm-6"><form method="post" action="/facebook/start">
   <input type="image" alt="Sign in with Facebook" src="/static/facebook_button.png" />
 </form></div>
 <div class="col-md-3 col-sm-6"><form method="post" action="/twitter/start">
   <input type="image" alt="Sign in with Twitter" src="/static/twitter_button.png" />
 </form></div>
-  <div class="clearfix visible-sm"></div>
+<div class="clearfix visible-xs"></div>
 <div class="col-md-3 col-sm-6"><form method="post" action="/googleplus/start">
   <input type="image" alt="Sign in with Google+" src="/static/google_plus_button.png" />
 </form></div>
@@ -142,8 +99,9 @@ site.</p>
 
 <br />
 
-<!-- Connected accounts -->
-<p>Registered accounts:</p>
+<!-- Users -->
+<div id="users" class="row">
+<p class="big">Registered accounts:</p>
 
 {# TODO: paging #}
 <table id="sources">
@@ -151,7 +109,7 @@ site.</p>
   <tr {% if source.status == "disabled" %}
        title="This source was disconnected on {{ source.DISPLAY_NAME }}'s end. To fix this, delete and re-add it."
      {% endif %}><td>
-      <a href="{{ source. }}">
+      <a href="{{ source.url }}">
         <img class="source" src="{{ source.picture }}" width="64px" /></a>
     </td><td>
       {% if source.status == "disabled" %}
@@ -162,17 +120,19 @@ site.</p>
     </td><td>
       ({{ source.DISPLAY_NAME }})
     </td><td>
-      <form method="post" action="/delete">
-        <input name="key" type="hidden" value="{{ source.key }}" />
-        <button type="submit" title="Delete" class="glyphicon glyphicon-remove"
-                style="border: none; background: none;" />
-      </form>
+      <!-- <form method="post" action="/delete"> -->
+      <!--   <input name="key" type="hidden" value="{{ source.key }}" /> -->
+      <!--   <button type="submit" title="Delete" class="glyphicon glyphicon-remove" -->
+      <!--           style="border: none; background: none;" /> -->
+      <!-- </form> -->
   </td></tr>
 {% endfor %}
 </table>
+</div>
 
 <div id="footer">
   <a href="http://snarfed.org/2012-01-08_bridgy_launched">About</a>
+  | <a href="#faq">FAQ</a>
   | <a href="http://snarfed.org/about">Contact</a>
   | <a href="https://github.com/snarfed/bridgy">Source</a>
 </div>

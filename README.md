@@ -48,5 +48,4 @@ TODOs
   http://indiewebcamp.com/irc/2013-11-11 , http://indiewebcamp.com/repost
 * allow deleting sources if you log in as them
 * flesh out this readme
-* redesign
 * clear toast messages
