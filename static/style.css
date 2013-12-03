@@ -74,3 +74,14 @@ form input {
     font-size: .8em;
   }
 }
+
+.shadow {
+  -moz-box-shadow: 2px 2px 2px rgba(0,0,0,0.4);
+  -webkit-box-shadow: 2px 2px 2px rgba(0,0,0,0.4);
+  /* CSS2 */
+  box-shadow: 2px 2px 2px rgba(0,0,0,0.4);
+  /* For IE 8 */
+  -ms-filter: progid:DXImageTransform.Microsoft.Shadow(Strength=2,Direction=135,Color='#666666');
+  /* For IE 5.5 - 7 */
+  filter: progid:DXImageTransform.Microsoft.Shadow(Strength=2,Direction=135,Color='#666666');
+}
