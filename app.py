@@ -4,6 +4,7 @@
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import itertools
+import json
 import logging
 import os
 import urllib
@@ -35,8 +36,8 @@ class DashboardHandler(util.Handler):
       msg: string, message to be displayed
     """
     sources = {str(source.key()): source for source in
-               itertools.chain(FacebookPage.all(), Twitter.all(),
-                               GooglePlusPage.all(), Instagram.all())}
+               itertools.chain(FacebookPage.all().run(), Twitter.all().run(),
+                               GooglePlusPage.all().run(), Instagram.all().run())}
 
     # manually update the source we just added or deleted to workaround
     # inconsistent global queries.
@@ -46,6 +47,16 @@ class DashboardHandler(util.Handler):
     deleted = self.request.get('deleted')
     if deleted in sources:
       del sources[deleted]
+
+    # kick off queries for recent comments for each source. all queries run
+    # async, in parallel.
+    for source in sources.values():
+      source.recent_comments = source.comment_set.order('-updated').run(limit=5)
+
+    # now wait on query results
+    for source in sources.values():
+      source.recent_comments = [json.loads(c.comment_json)
+                                for c in source.recent_comments]
 
     # sort sources by name
     sources = sorted(sources.values(), key=lambda s: (s.DISPLAY_NAME, s.name))

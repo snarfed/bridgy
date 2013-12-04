@@ -120,6 +120,11 @@ below to try it yourself.</p>
     </td><td>
       ({{ source.DISPLAY_NAME }})
     </td><td>
+      <ol>
+      {% for comment in source.recent_comments %}
+        <li>{{ comment.content }}</li>
+      {% endfor %}
+      </ol>
       <!-- <form method="post" action="/delete"> -->
       <!--   <input name="key" type="hidden" value="{{ source.key }}" /> -->
       <!--   <button type="submit" title="Delete" class="glyphicon glyphicon-remove" -->

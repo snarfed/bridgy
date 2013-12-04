@@ -152,6 +152,7 @@ class Comment(KeyNameModel):
   source = db.ReferenceProperty()
   status = db.StringProperty(choices=STATUSES, default='new')
   leased_until = db.DateTimeProperty()
+  updated = db.DateTimeProperty(auto_now=True)
 
   @db.transactional
   def get_or_save(self):
