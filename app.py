@@ -77,7 +77,8 @@ class DashboardHandler(util.Handler):
 
     self.response.headers['Link'] = ('<%s/webmention>; rel="webmention"' %
                                      self.request.host_url)
-    self.response.out.write(template.render(path, {'sources': sources, 'msgs': msgs}))
+    self.response.out.write(template.render(path, {
+          'sources': sources, 'msgs': msgs, 'epoch': util.EPOCH}))
 
 
 class DeleteHandler(util.Handler):

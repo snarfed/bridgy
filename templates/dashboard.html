@@ -126,7 +126,7 @@ below to try it yourself.</p>
 
   ({{ source.DISPLAY_NAME }})
 
-  {% if source.last_polled.utctimestamp == 0 %}
+  {% if source.last_polled == epoch %}
     Not polled yet
   {% else %}
     | Last polled
