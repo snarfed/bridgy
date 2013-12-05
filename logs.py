@@ -3,6 +3,7 @@
 
 import datetime
 import logging
+import re
 import urllib
 
 import appengine_config
@@ -43,8 +44,13 @@ class LogHandler(webapp2.RequestHandler):
         self.response.out.write(log.combined)
         self.response.out.write('\n\n')
         for a in log.app_logs:
+          message = a.message
+          # sanitize access tokens and Authorization headers
+          message = re.sub('(access_token=[^&=]{4})[^&=]+', r'\1...', message)
+          message = re.sub('(Populated Authorization header from access token: .{4}).+',
+                           r'\1...', message)
           self.response.out.write('%s %s %s\n' % (
-              datetime.datetime.utcfromtimestamp(a.time), LEVELS[a.level], a.message))
+              datetime.datetime.utcfromtimestamp(a.time), LEVELS[a.level], message))
         return
 
       offset = log.offset
