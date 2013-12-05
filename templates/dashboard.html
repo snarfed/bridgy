@@ -7,7 +7,7 @@
 
 <meta name="mobile-web-app-capable" content="yes"/>
 <link rel="shortcut icon" href="/static/favicon.png">
-<link rel="apple-touch-icon" href="/static/favicon.png"/>
+<link rel="apple-touch-icon-precomposed" href="/static/favicon.png"/>
 
 <!-- Bootstrap CSS -->
 <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" />
@@ -15,17 +15,21 @@
 <!-- Include my stylesheet after so it overrides -->
 <link rel="stylesheet" href="/static/style.css" type="text/css" />
 
-<!-- google analytics -->
 <script type="text/javascript">
+<!-- google analytics -->
 var _gaq = _gaq || [];
 _gaq.push(['_setAccount', 'UA-11785301-2']);
 _gaq.push(['_trackPageview']);
-
 (function() {
   var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
   ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
   var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
 })();
+
+function toggle(id) {
+  var elem = document.getElementById(id);
+  elem.style.display = (elem.style.display == "none") ? "block" : "none";
+}
 </script>
 
 </head>
@@ -58,7 +62,7 @@ Got an <a href="http://indiewebcamp.com/why">Indieweb</a> site?
 <br />
 </p>
 <a href="#"
-   onclick="more.style.display = (more.style.display == 'none') ? 'block' : 'none';
+   onclick="more.style.display = (more.style.display == 'block') ? 'block' : 'none';
             return false;">
  More...</a>
 </div>
@@ -105,43 +109,55 @@ below to try it yourself.</p>
 <p id="users" class="big row">Registered accounts:</p>
 
 {# TODO: paging #}
-<div id="sources" class="row">
+<div id="sources">
 {% for source in sources %}
- <tr {% if source.status == "disabled" %}
-      title="This source was disconnected on {{ source.DISPLAY_NAME }}'s end. To fix this, delete and re-add it."
-    {% endif %}><td>
-     <a href="{{ source.url }}">
-       <img class="source shadow" src="{{ source.picture }}" width="64px" /></a>
-   </td><td>
-     {% if source.status == "disabled" %}
-       <span class="glyphicon glyphicon-warning-sign"></span>
-     {% endif %}
-     <a href="{{ source.url }}" class="source {{ source.status }}"
-        >{{ source.name }}</a>
-   </td><td>
-     ({{ source.DISPLAY_NAME }})
-   </td><td>
-     <ul class="comments">
-     {% for comment in source.recent_comments %}
-     {% with comment.comment as c %}
-       <li>
-         <a href="c.author.url">
-           <img src="c.author.image.url" />{{ c.author.displayName }}</a>:
-         <a href="c.url">{{ c.content|truncatewords:6 }}</a>
-         <!-- {% with comment.activity as a %} -->
-         <!-- on <a href="a.url">{{ a.title|truncatewords:6 }}</a>, -->
-         <!-- {% endwith %} -->
-         {{ c.published|timesince }} ago
-       </li>
-     {% endwith %}
-     {% endfor %}
-     </ol>
-     <!-- <form method="post" action="/delete"> -->
-     <!--   <input name="key" type="hidden" value="{{ source.key }}" /> -->
-     <!--   <button type="submit" title="Delete" class="glyphicon glyphicon-remove" -->
-     <!--           style="border: none; background: none;" /> -->
-     <!-- </form> -->
- </td></tr>
+
+<div id="source-{{ source.key.name }}" class="row"
+ {% if source.status == "disabled" %}
+     title="This source was disconnected on {{ source.DISPLAY_NAME }}'s end. To fix this, delete and re-add it."
+   {% endif %}>
+    <a href="{{ source.url }}">
+      <img class="source" src="{{ source.picture }}" width="64px" /></a>
+    {% if source.status == "disabled" %}
+      <span class="glyphicon glyphicon-warning-sign"></span>
+    {% endif %}
+    <a href="{{ source.url }}" class="source {{ source.status }}"
+       >{{ source.name }}</a>
+
+  ({{ source.DISPLAY_NAME }})
+
+  {% if source.last_polled.utctimestamp == 0 %}
+    Never polled yet
+  {% else %}
+    | Last polled {{ source.last_polled|timesince }} ago
+  {% endif %}
+
+  | <a href="#" onclick="toggle('comments-{{ source.key.name }}'); return false;">
+    Recent comments...</a>
+    <!-- <form method="post" action="/delete"> -->
+    <!--   <input name="key" type="hidden" value="{{ source.key }}" /> -->
+    <!--   <button type="submit" title="Delete" class="glyphicon glyphicon-remove" -->
+    <!--           style="border: none; background: none;" /> -->
+    <!-- </form> -->
+</div>
+
+<ul id="comments-{{ source.key.name }}" class="comments">
+  {% for comment in source.recent_comments %}
+  {% with comment.comment as c %}
+  <li>
+    <a href="{{ c.author.url }}">
+      <img src="{{ c.author.image.url }}" width="32" />
+      {{ c.author.displayName }}</a>:
+    <a href="{{ c.url }}">{{ c.content|striptags|truncatewords:8 }}</a>
+    <!-- {% with comment.activity as a %} -->
+    <!-- on <a href="a.url">{{ a.title|truncatewords:6 }}</a>, -->
+    <!-- {% endwith %} -->
+    {{ c.published|timesince }} ago
+  </li>
+  {% endwith %}
+  {% endfor %}
+</ul>
+
 {% endfor %}
 </div>
 

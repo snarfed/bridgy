@@ -64,7 +64,12 @@ form input {
   text-align: center;
 }
 .comments {
+  display: none;
   font-size: .8em;
+  list-style: none;
+}
+.comments li {
+  margin: .5em;
 }
 #footer {
   margin-top: 1.5em;
@@ -78,7 +83,7 @@ form input {
   }
 }
 
-.shadow {
+.shadow, #connect input, #sources img {
   -moz-box-shadow: 2px 2px 2px rgba(0,0,0,0.4);
   -webkit-box-shadow: 2px 2px 2px rgba(0,0,0,0.4);
   /* CSS3 */
