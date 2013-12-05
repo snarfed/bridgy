@@ -149,7 +149,8 @@ class Propagate(webapp2.RequestHandler):
         if domain.startswith('www.'):
           domain = domain[4:]
         if domain in WEBMENTION_BLACKLIST:
-          logging.info('Skipping known unsupported domain %s', domain)
+          logging.info("Skipping %s ; we know %s doesn't support webmentions",
+                       target, domain)
           continue
 
         # send! and handle response or error
