@@ -113,13 +113,13 @@ below to try it yourself.</p>
  {% if source.status == "disabled" %}
      title="This source was disconnected on {{ source.DISPLAY_NAME }}'s end. To fix this, delete and re-add it."
    {% endif %}>
-    <a href="{{ source.url }}">
+    <a target="_blank" href="{{ source.url }}">
       <img class="source" src="{{ source.picture }}" width="64px" /></a>
     {% if source.status == "disabled" %}
       <span class="glyphicon glyphicon-warning-sign"></span>
     {% endif %}
-    <a href="{{ source.url }}" class="source {{ source.status }}"
-       >{{ source.name }}</a>
+    <a target="_blank" href="{{ source.url }}" class="source {{ source.status }}"
+       >{{ source.name|safe }}</a>
 
   ({{ source.DISPLAY_NAME }})
 
@@ -149,15 +149,16 @@ below to try it yourself.</p>
   {% for comment in source.recent_comments %}
   {% with comment.comment as c %}
   <li>
-    <a href="{{ c.author.url }}">
+    <a target="_blank" href="{{ c.author.url }}">
       <img src="{{ c.author.image.url }}" width="32" />
-      {{ c.author.displayName }}</a>:
-    <a href="{{ c.url }}">{{ c.content|striptags|truncatewords:8 }}</a>
-    <!-- {% with comment.activity as a %} -->
-    <!-- on <a href="a.url">{{ a.title|truncatewords:6 }}</a>, -->
-    <!-- {% endwith %} -->
+      <!-- {{ c.author.displayName }}</a>: -->
+    <a target="_blank" href="{{ c.url }}">{{ c.content|striptags|truncatewords:6|safe }}</a>
+    {% with comment.activity.object as a %}
+    on <a target="_blank" href="{{ a.url }}">{{ a.content|striptags|truncatewords:6|safe }}</a>
+    {% endwith %}
+    | processed
     <a href="/log?start_time={{ comment.updated|date:'U' }}&key={{ comment.key }}">
-      {{ c.published|timesince }} ago</a>
+      {{ comment.updated|timesince }} ago</a>
   </li>
   {% endwith %}
   {% endfor %}
