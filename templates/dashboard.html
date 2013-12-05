@@ -127,13 +127,18 @@ below to try it yourself.</p>
   ({{ source.DISPLAY_NAME }})
 
   {% if source.last_polled.utctimestamp == 0 %}
-    Never polled yet
+    Not polled yet
   {% else %}
-    | Last polled {{ source.last_polled|timesince }} ago
+    | Last polled
+    <a href="/log?start_time={{ source.last_polled|date:'U' }}&key={{ source.key }}">
+      {{ source.last_polled|timesince }} ago</a>
   {% endif %}
 
-  | <a href="#" onclick="toggle('comments-{{ source.key.name }}'); return false;">
-    Recent comments...</a>
+  {% if source.recent_comments %}
+    | <a href="#" onclick="toggle('comments-{{ source.key.name }}'); return false;">
+      Recent comments...</a>
+  {% endif %}
+
     <!-- <form method="post" action="/delete"> -->
     <!--   <input name="key" type="hidden" value="{{ source.key }}" /> -->
     <!--   <button type="submit" title="Delete" class="glyphicon glyphicon-remove" -->

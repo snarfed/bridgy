@@ -46,6 +46,10 @@ handlers:
   script: twitter.application
   secure: always
 
+- url: /log
+  script: logs.application
+  secure: always
+
 - url: /_ah/queue/.*
   script: tasks.application
   login: admin
