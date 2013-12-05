@@ -80,8 +80,10 @@ webmention targets to read.</p>
 below to try it yourself.</p>
 </div>
 
+
 <!-- Connect buttons -->
 <div id="connect" class="row">
+<p class="error row">Bridgy is alpha software. Use with caution!</p>
 <div class="col-md-3 col-sm-6"><form method="post" action="/facebook/start">
   <input type="image" alt="Sign in with Facebook" src="/static/facebook_button.png" />
 </form></div>
@@ -100,39 +102,47 @@ below to try it yourself.</p>
 <br />
 
 <!-- Users -->
-<div id="users" class="row">
-<p class="big">Registered accounts:</p>
+<p id="users" class="big row">Registered accounts:</p>
 
 {# TODO: paging #}
-<table id="sources">
+<div id="sources" class="row">
 {% for source in sources %}
-  <tr {% if source.status == "disabled" %}
-       title="This source was disconnected on {{ source.DISPLAY_NAME }}'s end. To fix this, delete and re-add it."
-     {% endif %}><td>
-      <a href="{{ source.url }}">
-        <img class="source shadow" src="{{ source.picture }}" width="64px" /></a>
-    </td><td>
-      {% if source.status == "disabled" %}
-        <span class="glyphicon glyphicon-warning-sign"></span>
-      {% endif %}
-      <a href="{{ source.url }}" class="source {{ source.status }}"
-         >{{ source.name }}</a>
-    </td><td>
-      ({{ source.DISPLAY_NAME }})
-    </td><td>
-      <ol>
-      {% for comment in source.recent_comments %}
-        <li>{{ comment.content }}</li>
-      {% endfor %}
-      </ol>
-      <!-- <form method="post" action="/delete"> -->
-      <!--   <input name="key" type="hidden" value="{{ source.key }}" /> -->
-      <!--   <button type="submit" title="Delete" class="glyphicon glyphicon-remove" -->
-      <!--           style="border: none; background: none;" /> -->
-      <!-- </form> -->
-  </td></tr>
+ <tr {% if source.status == "disabled" %}
+      title="This source was disconnected on {{ source.DISPLAY_NAME }}'s end. To fix this, delete and re-add it."
+    {% endif %}><td>
+     <a href="{{ source.url }}">
+       <img class="source shadow" src="{{ source.picture }}" width="64px" /></a>
+   </td><td>
+     {% if source.status == "disabled" %}
+       <span class="glyphicon glyphicon-warning-sign"></span>
+     {% endif %}
+     <a href="{{ source.url }}" class="source {{ source.status }}"
+        >{{ source.name }}</a>
+   </td><td>
+     ({{ source.DISPLAY_NAME }})
+   </td><td>
+     <ul class="comments">
+     {% for comment in source.recent_comments %}
+     {% with comment.comment as c %}
+       <li>
+         <a href="c.author.url">
+           <img src="c.author.image.url" />{{ c.author.displayName }}</a>:
+         <a href="c.url">{{ c.content|truncatewords:6 }}</a>
+         <!-- {% with comment.activity as a %} -->
+         <!-- on <a href="a.url">{{ a.title|truncatewords:6 }}</a>, -->
+         <!-- {% endwith %} -->
+         {{ c.published|timesince }} ago
+       </li>
+     {% endwith %}
+     {% endfor %}
+     </ol>
+     <!-- <form method="post" action="/delete"> -->
+     <!--   <input name="key" type="hidden" value="{{ source.key }}" /> -->
+     <!--   <button type="submit" title="Delete" class="glyphicon glyphicon-remove" -->
+     <!--           style="border: none; background: none;" /> -->
+     <!-- </form> -->
+ </td></tr>
 {% endfor %}
-</table>
 </div>
 
 <div id="footer">

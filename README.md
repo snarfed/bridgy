@@ -6,10 +6,10 @@ shared posts also showed up on your blog? Bridgy copies them back for you.
 
 http://brid.gy/
 
-_Bridgy is currently in flux._ The [current site](http://brid.gy/) only supports
-WordPress, but I'm updating the code to use
-[webmentions](http://www.webmention.org/) instead, so it will soon be a part of
-the [IndieWeb](http://indiewebcamp.com/) ecosystem. Stay tuned!
+_Bridgy is currently under construction._ I've recently updated it to use
+[webmentions](http://www.webmention.org/) instead, so that it's a part of
+the [IndieWeb](http://indiewebcamp.com/) ecosystem. I'm still debugging and
+polishing it, though, so I don't recommend you use it just yet. Stay tuned!
 
 License: This project is placed in the public domain.
 
@@ -49,3 +49,5 @@ TODOs
 * allow deleting sources if you log in as them
 * flesh out this readme
 * clear toast messages
+* use relative timestamps (moments ago, 4h, yesterday) when rendering recent
+  comments

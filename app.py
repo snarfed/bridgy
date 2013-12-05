@@ -55,11 +55,22 @@ class DashboardHandler(util.Handler):
 
     # now wait on query results
     for source in sources.values():
-      source.recent_comments = [json.loads(c.comment_json)
-                                for c in source.recent_comments]
+      source.recent_comments = list(source.recent_comments)
+      for c in source.recent_comments:
+        c.comment = json.loads(c.comment_json)
+        c.activity = json.loads(c.activity_json)
+        c.comment['published'] = util.parse_iso8601(c.comment['published'])
+
+    for source in sources.values():
+      logging.info('Comments for %s: %s', source.name,
+                   ' '.join(str(c.key()) for c in source.recent_comments))
 
     # sort sources by name
     sources = sorted(sources.values(), key=lambda s: (s.DISPLAY_NAME, s.name))
+
+    for source in sources:
+      logging.info('Comments for %s: %s', source.name,
+                   ' '.join(str(c.key()) for c in source.recent_comments))
 
     msgs = [urllib.unquote_plus(m) for m in self.request.params.getall('msg')]
     path = os.path.join(os.path.dirname(__file__), 'templates', 'dashboard.html')

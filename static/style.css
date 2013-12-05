@@ -63,6 +63,9 @@ form input {
 #users {
   text-align: center;
 }
+.comments {
+  font-size: .8em;
+}
 #footer {
   margin-top: 1.5em;
   margin-bottom: 1em;
@@ -84,4 +87,8 @@ form input {
   -ms-filter: progid:DXImageTransform.Microsoft.Shadow(Strength=2,Direction=135,Color='#666666');
   /* For IE 5.5 - 7 */
   filter: progid:DXImageTransform.Microsoft.Shadow(Strength=2,Direction=135,Color='#666666');
+}
+.error {
+  color: red;
+  font-style: italic;
 }
