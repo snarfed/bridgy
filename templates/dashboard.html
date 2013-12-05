@@ -126,17 +126,19 @@ below to try it yourself.</p>
 
   ({{ source.DISPLAY_NAME }})
 
-  {% if source.last_polled == epoch %}
+  | {% if source.last_polled == epoch %}
     Not polled yet
   {% else %}
-    | Last polled
+    Last polled
     <a href="/log?start_time={{ source.last_polled|date:'U' }}&key={{ source.key }}">
       {{ source.last_polled|timesince }} ago</a>
   {% endif %}
 
-  {% if source.recent_comments %}
-    | <a href="#" onclick="toggle('comments-{{ source.key.name }}'); return false;">
+  | {% if source.recent_comments %}
+    <a href="#" onclick="toggle('comments-{{ source.key.name }}'); return false;">
       Recent comments...</a>
+  {% else %}
+    No comments yet
   {% endif %}
 
     <!-- <form method="post" action="/delete"> -->
@@ -157,7 +159,8 @@ below to try it yourself.</p>
     <!-- {% with comment.activity as a %} -->
     <!-- on <a href="a.url">{{ a.title|truncatewords:6 }}</a>, -->
     <!-- {% endwith %} -->
-    {{ c.published|timesince }} ago
+    <a href="/log?start_time={{ comment.updated|date:'U' }}&key={{ comment.key }}">
+      {{ c.published|timesince }} ago</a>
   </li>
   {% endwith %}
   {% endfor %}
