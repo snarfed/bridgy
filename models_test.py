@@ -41,6 +41,9 @@ class CommentTest(testutil.ModelsTest):
     self.assertEqual(saved.source.key(), same.source.key())
     self.assertEqual(1, len(tasks))
 
+  def test_dom_id(self):
+    self.assertEqual('FakeSource-1', self.sources[0].dom_id())
+
 
 class SourceTest(testutil.HandlerTest):
 
@@ -60,15 +63,15 @@ class SourceTest(testutil.HandlerTest):
   def test_create_new(self):
     self.assertEqual(0, FakeSource.all().count())
     self._test_create_new()
-    self.assertEqual([urllib.quote_plus('Added FakeSource: fake')],
-                     self.handler.messages)
+    msg = "Added FakeSource: fake. Refresh to see what we've found!"
+    self.assert_equals(set([urllib.quote_plus(msg)]), self.handler.messages)
 
   def test_create_new_already_exists(self):
     FakeSource.new(None).save()
     FakeSource.key_name_counter -= 1
     self._test_create_new()
-    self.assertEqual([urllib.quote_plus('Updated existing FakeSource: fake')],
-                     self.handler.messages)
+    msg = "Updated FakeSource: fake. Refresh to see what's new!"
+    self.assert_equals(set([urllib.quote_plus(msg)]), self.handler.messages)
 
   def test_get_post(self):
     post = {'verb': 'post', 'object': {'objectType': 'note', 'content': 'asdf'}}

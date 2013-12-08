@@ -95,7 +95,8 @@ class AddGooglePlusPage(util.Handler):
 application = webapp2.WSGIApplication([
     ('/googleplus/start',
      oauth_googleplus.StartHandler.to('/googleplus/oauth2callback')),
-    ('/googleplus/oauth2callback',
-     oauth_googleplus.CallbackHandler.to('/googleplus/add')),
+    ('/googleplus/oauth2callback', oauth_googleplus.CallbackHandler.to('/googleplus/add')),
     ('/googleplus/add', AddGooglePlusPage),
+    ('/googleplus/delete/start', oauth_googleplus.StartHandler.to('/googleplus/finish')),
+    ('/googleplus/delete/finish', oauth_googleplus.CallbackHandler.to('/delete/finish')),
     ], debug=appengine_config.DEBUG)

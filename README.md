@@ -33,8 +33,6 @@ Related work
 
 TODOs
 ---
-* fix doubled G+ added source message
-* allow deleting sources if you log in as them
 * write FAQ:
   what, who, why
   what do you do with my email, personal details (oauth, scopes, no password, can revoke any time)

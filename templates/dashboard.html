@@ -36,7 +36,7 @@ window.onload = function() {
   var target = document.getElementById(id);
   if (target) {
     window.setTimeout(function() { target.style.backgroundColor = "white"; },
-                      5000 /* ms */);
+                      3000 /* ms */);
     toggle("comments-" + id);
   }
 }
@@ -119,7 +119,7 @@ below to try it yourself.</p>
 <div id="sources">
 {% for source in sources %}
 
-<div id="{{ source.DISPLAY_NAME }}-{{ source.key.name }}" class="row"
+<div id="{{ source.dom_id }}" class="row"
   {% if source.status == "disabled" %}
      title="This source was disconnected on {{ source.DISPLAY_NAME }}'s end.
             To fix this, delete and re-add it."
@@ -135,13 +135,13 @@ below to try it yourself.</p>
   {% if source.status != "enabled" %}
     <span class="glyphicon glyphicon-exclamation-sign"></span>
   {% endif %}
-  <a href="#{{ source.DISPLAY_NAME }}-{{ source.key.name }}">#</a>
+  <a href="#{{ source.dom_id }}" title="Link">#</a>
 
-  <!-- <form method="post" action="/delete"> -->
-  <!--   <input name="key" type="hidden" value="{{ source.key }}" /> -->
-  <!--   <button type="submit" title="Delete" class="glyphicon glyphicon-remove" -->
-  <!--           style="border: none; background: none;"></button> -->
-  <!-- </form> -->
+  <form method="post" action="/delete/start">
+    <input name="key" type="hidden" value="{{ source.key }}" />
+    <button type="submit" title="Delete" class="glyphicon glyphicon-remove"
+            style="border: none; background: none;"></button>
+  </form>
 
   | {% if source.last_polled == epoch %}
     Not polled yet
@@ -158,14 +158,14 @@ below to try it yourself.</p>
   <!-- </form> -->
 
   | {% if source.recent_comments %}
-    <a href="#" onclick="toggle('comments-{{ source.DISPLAY_NAME }}-{{ source.key.name }}'); return false;">
+    <a href="#" onclick="toggle('comments-{{ source.dom_id }}'); return false;">
       Recent comments...</a>
   {% else %}
     No comments yet
   {% endif %}
 </div>
 
-<ul id="comments-{{ source.DISPLAY_NAME }}-{{ source.key.name }}"
+<ul id="comments-{{ source.dom_id }}"
     class="comments" style="display: none" />
   {% for comment in source.recent_comments %}
   {% with comment.comment as c %}

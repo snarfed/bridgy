@@ -15,8 +15,7 @@ POLL_TASK_DATETIME_FORMAT = '%Y-%m-%d-%H-%M-%S'
 def added_source_redirect(handler, source):
   """Redirects to the dashboard after adding a source.
   """
-  uri = '/?added=%s#%s-%s' % (source.key(), source.DISPLAY_NAME,
-                                     source.key().name())
+  uri = '/?added=%s#%s' % (source.key(), source.dom_id())
   uri = add_query_params(uri, [('msg', msg) for msg in handler.messages])
   handler.redirect(uri)
 
@@ -41,7 +40,7 @@ class Handler(webapp2.RequestHandler):
 
   def __init__(self, *args, **kwargs):
     super(Handler, self).__init__(*args, **kwargs)
-    messages = set()
+    self.messages = set()
 
   def redirect(self, uri, **kwargs):
     """Adds self.messages to the uri as msg= query parameters.

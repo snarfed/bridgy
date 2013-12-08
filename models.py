@@ -54,6 +54,10 @@ class Site(KeyNameModel):
     new.save()
     return new
 
+  def dom_id(self):
+    """Returns the DOM element id for this site."""
+    return '%s-%s' % (self.DISPLAY_NAME, self.key().name())
+
 
 class Source(Site):
   """A silo account, e.g. a Facebook or Google+ account.

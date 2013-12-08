@@ -110,4 +110,5 @@ class AddFacebookPage(oauth_facebook.CallbackHandler):
 application = webapp2.WSGIApplication([
     ('/facebook/start', oauth_facebook.StartHandler.to('/facebook/add')),
     ('/facebook/add', AddFacebookPage),
+    ('/facebook/delete/finish', oauth_facebook.CallbackHandler.to('/delete/finish')),
     ], debug=appengine_config.DEBUG)

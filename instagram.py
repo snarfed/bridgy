@@ -65,15 +65,26 @@ class Instagram(models.Source):
     return self.as_source.get_activities(group_id=SELF, **kwargs)[1]
 
 
-class AddInstagram(oauth_instagram.CallbackHandler):
+class OAuthCallback(oauth_instagram.CallbackHandler):
+  """OAuth callback handler.
+
+  Both the add and delete flows have to share this because Instagram only allows
+  a single callback URL per app. :/
+  """
   messages = set()
 
   def finish(self, auth_entity, state=None):
-    inst = Instagram.create_new(self, auth_entity=auth_entity)
-    util.added_source_redirect(self, inst)
+    state = self.request.get('state')
+    # delete uses state, add doesn't
+    if state:
+      self.redirect('/delete/finish?auth_entity=%s&state=%s' %
+                    (auth_entity.key(), state))
+    else:
+      inst = Instagram.create_new(self, auth_entity=auth_entity)
+      util.added_source_redirect(self, inst)
 
 
 application = webapp2.WSGIApplication([
     ('/instagram/start', oauth_instagram.StartHandler.to('/instagram/oauth_callback')),
-    ('/instagram/oauth_callback', AddInstagram),
+    ('/instagram/oauth_callback', OAuthCallback),
     ], debug=appengine_config.DEBUG)

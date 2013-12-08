@@ -13,6 +13,10 @@ import urlparse
 # need to import modules with model class definitions, e.g. facebook, for
 # template rendering.
 import appengine_config
+from activitystreams.oauth_dropins import facebook as oauth_facebook
+from activitystreams.oauth_dropins import googleplus as oauth_googleplus
+from activitystreams.oauth_dropins import instagram as oauth_instagram
+from activitystreams.oauth_dropins import twitter as oauth_twitter
 from facebook import FacebookPage
 from googleplus import GooglePlusPage
 from instagram import Instagram
@@ -81,18 +85,50 @@ class DashboardHandler(util.Handler):
           'sources': sources, 'msgs': msgs, 'epoch': util.EPOCH}))
 
 
-class DeleteHandler(util.Handler):
+class DeleteStartHandler(util.Handler):
+  OAUTH_MODULES = {
+    'FacebookPage': oauth_facebook,
+    'GooglePlusPage': oauth_googleplus,
+    'Instagram': oauth_instagram,
+    'Twitter': oauth_twitter,
+    }
+
   def post(self):
     key = util.get_required_param(self, 'key')
     source = db.get(key)
-    source.delete()
-    # TODO: remove credentials, tasks, etc.
-    msg = urllib.quote_plus('Deleted %s' % source.label())
-    self.redirect('/?deleted=%s&msg=%s' % (key, msg))
+    module = self.OAUTH_MODULES[source.kind()]
+
+    if module is oauth_googleplus:
+      # Google+ doesn't support redirect_url() yet
+      self.redirect('/googleplus/delete/start?state=%s' % key)
+    else:
+      if module is oauth_instagram:
+        path = '/instagram/oauth_callback'
+      else:
+        path = '/%s/delete/finish' % source.SHORT_NAME
+      handler = module.StartHandler.to(path)(self.request, self.response)
+      self.redirect(handler.redirect_url(state=key))
+
+
+class DeleteFinishHandler(util.Handler):
+  def get(self):
+    logged_in_as = util.get_required_param(self, 'auth_entity')
+    source = db.get(util.get_required_param(self, 'state'))
+    source_auth_entity = models.Source.auth_entity.get_value_for_datastore(source)
+    if logged_in_as == str(source_auth_entity):
+      # TODO: remove credentials, tasks, etc.
+      source.delete()
+      self.messages.add('Deleted %s.' % source.label())
+      self.redirect('/?deleted=%s' % source.key())
+    else:
+      self.messages.add('Please log into %s as %s to delete it here.' %
+                        (source.DISPLAY_NAME, source.name))
+      self.redirect('/#%s' % source.dom_id())
 
 
 application = webapp2.WSGIApplication(
   [('/', DashboardHandler),
-   ('/delete', DeleteHandler),
+   ('/delete/start', DeleteStartHandler),
+   ('/delete/finish', DeleteFinishHandler),
    ] + handlers.HOST_META_ROUTES,
   debug=appengine_config.DEBUG)

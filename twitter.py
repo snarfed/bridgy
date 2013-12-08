@@ -130,4 +130,5 @@ class AddTwitter(oauth_twitter.CallbackHandler):
 application = webapp2.WSGIApplication([
     ('/twitter/start', oauth_twitter.StartHandler.to('/twitter/add')),
     ('/twitter/add', AddTwitter),
+    ('/twitter/delete/finish', oauth_twitter.CallbackHandler.to('/delete/finish')),
     ], debug=appengine_config.DEBUG)

@@ -54,7 +54,7 @@ handlers:
   script: tasks.application
   login: admin
 
-- url: /
+- url: /(delete/.*)?
   script: app.application
   secure: always
 
