@@ -25,7 +25,7 @@ class Site(KeyNameModel):
   DISPLAY_NAME = None
   # short name for this site type. used in URLs, ec.
   SHORT_NAME = None
-  STATUSES = ('enabled', 'disabled')
+  STATUSES = ('enabled', 'disabled', 'error')
 
   created = db.DateTimeProperty(auto_now_add=True, required=True)
   url = db.LinkProperty()

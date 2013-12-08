@@ -77,6 +77,10 @@ class Poll(webapp2.RequestHandler):
       source.save()
       logging.error('Disabling source!')
       # let this task complete successfully so that it's not retried.
+    except:
+      source.status = 'error'
+      source.save()
+      raise
 
   def do_post(self, source):
     logging.info('Polling %s %s', source.label(), source.key().name())

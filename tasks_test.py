@@ -76,6 +76,17 @@ class PollTest(TaskQueueTest):
     self.assertEqual(NOW.strftime(util.POLL_TASK_DATETIME_FORMAT),
                      params['last_polled'])
 
+  def test_poll_error(self):
+    """A normal poll task."""
+    self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities')
+    testutil.FakeSource.get_activities(count=mox.IgnoreArg(), fetch_replies=True
+                                       ).AndRaise(Exception('foo'))
+    self.mox.ReplayAll()
+
+    self.assertRaises(Exception, self.post_task)
+    source = db.get(self.sources[0].key())
+    self.assertEqual('error', source.status)
+
   def test_existing_comments(self):
     """Poll should be idempotent and not touch existing comment entities.
     """
