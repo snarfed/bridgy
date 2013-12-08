@@ -84,6 +84,8 @@ class GooglePlusPage(models.Source):
     return activities
 
 class AddGooglePlusPage(util.Handler):
+  messages = []
+
   def get(self):
     auth_entity = db.get(self.request.get('auth_entity'))
     gp = GooglePlusPage.create_new(self, auth_entity=auth_entity)

@@ -33,9 +33,8 @@ Related work
 
 TODOs
 ---
-* add welcome language to "added source" toast
-* HTML: back to table with colspan?
-* poll/propagate error icons, source update field
+* fix doubled G+ added source message
+* allow deleting sources if you log in as them
 * write FAQ:
   what, who, why
   what do you do with my email, personal details (oauth, scopes, no password, can revoke any time)
@@ -45,12 +44,13 @@ TODOs
   roadmap
   donate
   original post discovery algorithm
-* allow deleting sources if you log in as them
 * link to targets in recent comments?
+* HTML: back to table with colspan?
 * likes/favorites. based on http://indiewebcamp.com/like and
   http://indiewebcamp.com/responses, it looks like it's just u-like and a
   webmention, similar to a reply and may not even need a u-in-reply-to.
   http://indiewebcamp.com/irc/2013-11-11 , http://indiewebcamp.com/repost
+
 * detect updated comments and send new webmentions for them
 * only handle public posts? (need to add privacy/audience detection to
   activitystreams-unofficial)

@@ -48,7 +48,7 @@ class Site(KeyNameModel):
     else:
       new_msg = "Added %s. Refresh to see what we've found!" % new.label()
 
-    handler.messages.append(urllib.quote_plus(new_msg))
+    handler.messages = [urllib.quote_plus(new_msg)]
 
     # TODO: ugh, *all* of this should be transactional
     new.save()
