@@ -156,6 +156,16 @@ class PropagateTest(TaskQueueTest):
     self.post_task()
     self.assert_comment_is('complete', NOW + Propagate.LEASE_LENGTH)
 
+  def test_propagate_from_error(self):
+    """A normal propagate task, with a comment starting as 'error'."""
+    self.comments[0].status = 'error'
+    self.comments[0].save()
+
+    self.expect_webmention().AndReturn(True)
+    self.mox.ReplayAll()
+    self.post_task()
+    self.assert_comment_is('complete', NOW + Propagate.LEASE_LENGTH)
+
   def test_original_post_discovery(self):
     """Target URLs should be extracted from attachments, tags, and text."""
     activity = json.loads(self.comments[0].activity_json)
@@ -232,7 +242,7 @@ class PropagateTest(TaskQueueTest):
       logging.debug('Testing %s', code)
       expected_status = 200 if give_up else Propagate.ERROR_HTTP_RETURN_CODE
       self.post_task(expected_status=expected_status)
-      self.assert_comment_is('complete' if give_up else 'new')
+      self.assert_comment_is('complete' if give_up else 'error')
       self.mox.VerifyAll()
 
   def test_webmention_exception(self):
@@ -241,7 +251,7 @@ class PropagateTest(TaskQueueTest):
     self.mox.ReplayAll()
 
     self.post_task(expected_status=500)
-    self.assert_comment_is('new', None)
+    self.assert_comment_is('error', None)
 
   def test_lease_exception(self):
     """If leasing raises an exception, the lease should be released."""
@@ -260,4 +270,4 @@ class PropagateTest(TaskQueueTest):
     self.mox.ReplayAll()
 
     self.post_task(expected_status=500)
-    self.assert_comment_is('new', None)
+    self.assert_comment_is('error', None)

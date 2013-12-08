@@ -143,7 +143,7 @@ class Comment(KeyNameModel):
 
   The key name is the comment id as a tag URI.
   """
-  STATUSES = ('new', 'processing', 'complete')
+  STATUSES = ('new', 'processing', 'complete', 'error')
 
   # ActivityStreams JSON activity and comment. sources may store extra
   # source-specific properties.

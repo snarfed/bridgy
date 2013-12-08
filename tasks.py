@@ -118,9 +118,15 @@ class Propagate(webapp2.RequestHandler):
 
     try:
       comment = self.lease_comment()
-      if not comment:
-        return
+    except:
+      logging.exception('Could not lease comment')
+      self.release_comment('new')
+      raise
 
+    if not comment:
+      return
+
+    try:
       _, comment_id = util.parse_tag_uri(comment.key().name())
       logging.info('Starting %s comment %s',
                    comment.source.kind(), comment.key().name())
@@ -164,11 +170,11 @@ class Propagate(webapp2.RequestHandler):
             logging.info('Giving up this comment. %s', mention.error)
             self.complete_comment()
           else:
-            self.release_comment()
+            self.release_comment('error')
             self.fail('Error sending to endpoint: %s' % mention.error)
     except:
       logging.exception('Propagate task failed')
-      self.release_comment()
+      self.release_comment('error')
       raise
 
   @db.transactional
@@ -189,7 +195,7 @@ class Propagate(webapp2.RequestHandler):
     elif comment.status == 'processing' and now_fn() < comment.leased_until:
       self.fail('duplicate task is currently processing!')
     else:
-      assert comment.status in ('new', 'processing')
+      assert comment.status in ('new', 'processing', 'error')
       comment.status = 'processing'
       comment.leased_until = now_fn() + self.LEASE_LENGTH
       comment.save()
@@ -219,12 +225,12 @@ class Propagate(webapp2.RequestHandler):
     return False
 
   @db.transactional
-  def release_comment(self):
+  def release_comment(self, new_status):
     """Attempts to unlease the comment entity.
     """
     comment = db.get(self.request.params['comment_key'])
     if comment and comment.status == 'processing':
-      comment.status = 'new'
+      comment.status = new_status
       comment.leased_until = None
       comment.save()
 
