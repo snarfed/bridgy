@@ -83,20 +83,28 @@ class GooglePlusPage(models.Source):
 
     return activities
 
-class AddGooglePlusPage(util.Handler):
-  messages = set()
+class OAuthCallback(util.Handler):
+  """OAuth callback handler.
 
+  Both the add and delete flows have to share this because Google+'s
+  oauth-dropin doesn't yet allow multiple callback handlers. :/
+  """
   def get(self):
-    auth_entity = db.get(self.request.get('auth_entity'))
-    gp = GooglePlusPage.create_new(self, auth_entity=auth_entity)
-    util.added_source_redirect(self, gp)
+    auth_entity = util.get_required_param(self, 'auth_entity')
+    state = self.request.get('state')
+    # delete uses state, add doesn't
+    if state:
+      self.redirect('/delete/finish?auth_entity=%s&state=%s' % (auth_entity, state))
+    else:
+      auth_entity = db.get(auth_entity)
+      gp = GooglePlusPage.create_new(self, auth_entity=auth_entity)
+      util.added_source_redirect(self, gp)
 
 
 application = webapp2.WSGIApplication([
     ('/googleplus/start',
      oauth_googleplus.StartHandler.to('/googleplus/oauth2callback')),
     ('/googleplus/oauth2callback', oauth_googleplus.CallbackHandler.to('/googleplus/add')),
-    ('/googleplus/add', AddGooglePlusPage),
-    ('/googleplus/delete/start', oauth_googleplus.StartHandler.to('/googleplus/finish')),
-    ('/googleplus/delete/finish', oauth_googleplus.CallbackHandler.to('/delete/finish')),
+    ('/googleplus/add', OAuthCallback),
+    ('/googleplus/delete/start', oauth_googleplus.StartHandler.to('/googleplus/oauth2callback')),
     ], debug=appengine_config.DEBUG)
