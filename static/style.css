@@ -15,7 +15,7 @@ body {
 }
 #messages > p {
   display: inline;
-  background-color: #dd0;
+  background-color: gold;
   color: #444;
   padding: .5em;
 }
@@ -55,15 +55,19 @@ form input {
   border-collapse: separate;
   border-spacing: .3em;
   /* center horizontally */
-  margin-left: auto;
-  margin-right: auto;
+  /* margin-left: auto; */
+  /* margin-right: auto; */
+}
+#sources > .row:target {
+  background-color: gold;
+  transition: background-color 3s;
 }
 /* .glyphicon-warning-sign { color: gold; } */
 .glyphicon-ok-sign { color: green; }
 .glyphicon-exclamation-sign { color: gold; }
 .glyphicon-refresh { color: blue; }
 .glyphicon-remove { color: red !important; }
-.glyphicon-transfer { color: green; }
+.glyphicon-transfer { color: blue; }
 #users {
   text-align: center;
 }

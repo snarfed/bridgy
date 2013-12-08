@@ -30,6 +30,14 @@ function toggle(id) {
   var elem = document.getElementById(id);
   elem.style.display = (elem.style.display == "none") ? "block" : "none";
 }
+
+window.onload = function() {
+  target = document.getElementById(window.location.hash.substr(1));
+  if (target) {
+    window.setTimeout(function() { target.style.backgroundColor = "white"; },
+                      5000 /* ms */);
+  }
+}
 </script>
 
 </head>
@@ -109,7 +117,7 @@ below to try it yourself.</p>
 <div id="sources">
 {% for source in sources %}
 
-<div id="source-{{ source.key.name }}" class="row"
+<div id="source-{{ source.DISPLAY_NAME }}-{{ source.key.name }}" class="row"
   {% if source.status == "disabled" %}
      title="This source was disconnected on {{ source.DISPLAY_NAME }}'s end.
             To fix this, delete and re-add it."
@@ -118,8 +126,7 @@ below to try it yourself.</p>
   {% endif %}{% endif %}>
   <a target="_blank" href="{{ source.url }}">
     <img class="profile" src="{{ source.picture }}" width="64px" /></a>
-  <a target="_blank" href="{{ source.url }}" class="source {{ source.status }}"
-     >{{ source.name|safe }}</a>
+  <a target="_blank" href="{{ source.url }}" class="source">{{ source.name|safe }}</a>
 
   ({{ source.DISPLAY_NAME }})
 
