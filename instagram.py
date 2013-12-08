@@ -25,6 +25,7 @@ from activitystreams.oauth_dropins import instagram as oauth_instagram
 from activitystreams.source import SELF
 import appengine_config
 import models
+import util
 
 from google.appengine.ext import db
 import webapp2
@@ -69,7 +70,7 @@ class AddInstagram(oauth_instagram.CallbackHandler):
 
   def finish(self, auth_entity, state=None):
     inst = Instagram.create_new(self, auth_entity=auth_entity)
-    self.redirect('/?added=%s' % inst.key())
+    util.added_source_redirect(self, inst)
 
 
 application = webapp2.WSGIApplication([

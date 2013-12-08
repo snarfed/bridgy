@@ -124,7 +124,7 @@ class AddTwitter(oauth_twitter.CallbackHandler):
 
   def finish(self, auth_entity, state=None):
     tw = Twitter.create_new(self, auth_entity=auth_entity)
-    self.redirect('/?added=%s' % tw.key())
+    util.added_source_redirect(self, tw)
 
 
 application = webapp2.WSGIApplication([

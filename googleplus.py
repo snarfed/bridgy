@@ -87,7 +87,7 @@ class AddGooglePlusPage(util.Handler):
   def get(self):
     auth_entity = db.get(self.request.get('auth_entity'))
     gp = GooglePlusPage.create_new(self, auth_entity=auth_entity)
-    self.redirect('/?added=%s' % gp.key())
+    util.added_source_redirect(self, gp)
 
 
 application = webapp2.WSGIApplication([

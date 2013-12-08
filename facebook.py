@@ -47,6 +47,7 @@ from activitystreams.oauth_dropins import facebook as oauth_facebook
 from activitystreams.source import SELF
 import appengine_config
 import models
+import util
 
 from google.appengine.ext import db
 import webapp2
@@ -103,7 +104,7 @@ class AddFacebookPage(oauth_facebook.CallbackHandler):
 
   def finish(self, auth_entity, state=None):
     fb = FacebookPage.create_new(self, auth_entity=auth_entity)
-    self.redirect('/?added=%s' % fb.key())
+    util.added_source_redirect(self, fb)
 
 
 application = webapp2.WSGIApplication([
