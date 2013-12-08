@@ -199,6 +199,18 @@ class PropagateTest(TaskQueueTest):
 
     self.mox.ReplayAll()
     self.post_task()
+    self.assert_comment_is('complete', NOW + Propagate.LEASE_LENGTH)
+
+  def test_no_targets(self):
+    """No target URLs."""
+    activity = json.loads(self.comments[0].activity_json)
+    activity['object']['content'] = 'foo bar'
+    self.comments[0].activity_json = json.dumps(activity)
+    self.comments[0].save()
+
+    self.mox.ReplayAll()
+    self.post_task()
+    self.assert_comment_is('complete', NOW + Propagate.LEASE_LENGTH)
 
   def test_already_complete(self):
     """If the comment has already been propagated, do nothing."""
@@ -255,6 +267,26 @@ class PropagateTest(TaskQueueTest):
       self.post_task(expected_status=expected_status)
       self.assert_comment_is('complete' if give_up else 'error')
       self.mox.VerifyAll()
+
+  def test_webmention_fail_and_succeed(self):
+    """All webmentions should be attempted, but any failure sets error status."""
+    activity = json.loads(self.comments[0].activity_json)
+    activity['object']['content'] = 'http://first/ http://second/'
+    self.comments[0].activity_json = json.dumps(activity)
+    self.comments[0].save()
+
+    local_url = 'http://localhost/comment/fake/%s/000/1_2_a' % \
+        self.comments[0].source.key().name()
+    self.mock_webmention()
+    self.mock_send.error = {'code': 'FOO'}
+    send.WebmentionSend(local_url, 'http://first').AndReturn(self.mock_send)
+    self.mock_send.send(timeout=999).AndReturn(False)
+    send.WebmentionSend(local_url, 'http://second').AndReturn(self.mock_send)
+    self.mock_send.send(timeout=999).AndReturn(True)
+
+    self.mox.ReplayAll()
+    self.post_task(expected_status=Propagate.ERROR_HTTP_RETURN_CODE)
+    self.assert_comment_is('error', None)
 
   def test_webmention_exception(self):
     """If sending the webmention raises an exception, the lease should be released."""

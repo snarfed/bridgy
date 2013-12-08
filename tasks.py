@@ -150,6 +150,7 @@ class Propagate(webapp2.RequestHandler):
 
       # send each webmention
       logging.info('Discovered original post URLs: %s', targets)
+      error = False
       for target in targets:
         # When debugging locally, redirect my (snarfed.org) webmentions to localhost
         if appengine_config.DEBUG and target.startswith('http://snarfed.org/'):
@@ -168,14 +169,19 @@ class Propagate(webapp2.RequestHandler):
         logging.info('Sending webmention from %s to %s', local_comment_url, target)
         if mention.send(timeout=999):
           logging.info('Sent! %s', mention.response)
-          self.complete_comment()
         else:
           if mention.error['code'] == 'NO_ENDPOINT':
-            logging.info('Giving up this comment. %s', mention.error)
-            self.complete_comment()
+            logging.info('Giving up this target. %s', mention.error)
           else:
-            self.release_comment('error')
+            error = True
             self.fail('Error sending to endpoint: %s' % mention.error)
+
+      if error:
+        logging.error('Propagate task failed')
+        self.release_comment('error')
+      else:
+        self.complete_comment()
+
     except:
       logging.exception('Propagate task failed')
       self.release_comment('error')
