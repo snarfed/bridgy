@@ -1,5 +1,10 @@
 {% extends "base.html" %}
 
+{% block below_tagline %}
+<a href="#" onclick="toggle('more'); return false;">More...</a>
+{% endblock %}
+
+
 {% block content %}
 
 <div id="more" style="display: none" />

@@ -85,6 +85,11 @@ class DashboardHandler(util.Handler):
           'sources': sources, 'msgs': msgs, 'epoch': util.EPOCH}))
 
 
+class FaqHandler(handlers.TemplateHandler):
+  def template_file(self):
+    return os.path.join(os.path.dirname(__file__), 'templates', 'faq.html')
+
+
 class DeleteStartHandler(util.Handler):
   OAUTH_MODULES = {
     'FacebookPage': oauth_facebook,
@@ -128,6 +133,7 @@ class DeleteFinishHandler(util.Handler):
 
 application = webapp2.WSGIApplication(
   [('/', DashboardHandler),
+   ('/faq', FaqHandler),
    ('/delete/start', DeleteStartHandler),
    ('/delete/finish', DeleteFinishHandler),
    ] + handlers.HOST_META_ROUTES,
