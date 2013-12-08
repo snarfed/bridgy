@@ -76,7 +76,7 @@ class DashboardHandler(util.Handler):
       logging.info('Comments for %s: %s', source.name,
                    ' '.join(str(c.key()) for c in source.recent_comments))
 
-    msgs = [urllib.unquote_plus(m) for m in self.request.params.getall('msg')]
+    msgs = [urllib.unquote_plus(m) for m in set(self.request.params.getall('msg'))]
     path = os.path.join(os.path.dirname(__file__), 'templates', 'dashboard.html')
 
     self.response.headers['Link'] = ('<%s/webmention>; rel="webmention"' %
