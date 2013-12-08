@@ -66,7 +66,7 @@ class Instagram(models.Source):
 
 
 class AddInstagram(oauth_instagram.CallbackHandler):
-  messages = []
+  messages = set()
 
   def finish(self, auth_entity, state=None):
     inst = Instagram.create_new(self, auth_entity=auth_entity)

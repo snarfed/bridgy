@@ -100,7 +100,7 @@ class FacebookPage(models.Source):
 
 
 class AddFacebookPage(oauth_facebook.CallbackHandler):
-  messages = []
+  messages = set()
 
   def finish(self, auth_entity, state=None):
     fb = FacebookPage.create_new(self, auth_entity=auth_entity)

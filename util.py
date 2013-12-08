@@ -1,6 +1,8 @@
 """Misc utility constants and classes.
 """
 
+import urlparse
+
 from google.appengine.api import taskqueue
 
 import webapp2
@@ -39,10 +41,12 @@ class Handler(webapp2.RequestHandler):
 
   def __init__(self, *args, **kwargs):
     super(Handler, self).__init__(*args, **kwargs)
-    self.messages = []
+    messages = set()
 
   def redirect(self, uri, **kwargs):
     """Adds self.messages to the uri as msg= query parameters.
     """
-    uri = add_query_params(uri, [('msg', msg) for msg in self.messages])
+    params = urlparse.parse_qsl(urlparse.urlparse(uri).fragment)
+    if self.messages and 'msg' not in params:
+      uri = add_query_params(uri, [('msg', msg) for msg in self.messages])
     super(Handler, self).redirect(uri, **kwargs)

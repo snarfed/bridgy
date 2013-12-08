@@ -120,7 +120,7 @@ class Twitter(models.Source):
 
 
 class AddTwitter(oauth_twitter.CallbackHandler):
-  messages = []
+  messages = set()
 
   def finish(self, auth_entity, state=None):
     tw = Twitter.create_new(self, auth_entity=auth_entity)
