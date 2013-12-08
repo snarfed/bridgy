@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<title>Brid.gy</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="mobile-web-app-capable" content="yes"/>
+<link rel="shortcut icon" href="/static/favicon.png">
+<link rel="apple-touch-icon-precomposed" href="/static/favicon.png"/>
+
+<!-- Bootstrap CSS -->
+<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" />
+<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-theme.min.css" />
+<!-- Include my stylesheet after so it overrides -->
+<link rel="stylesheet" href="/static/style.css" type="text/css" />
+
+<script type="text/javascript">
+<!-- google analytics -->
+var _gaq = _gaq || [];
+_gaq.push(['_setAccount', 'UA-11785301-2']);
+_gaq.push(['_trackPageview']);
+(function() {
+  var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+  ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+  var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+})();
+
+function toggle(id) {
+  var elem = document.getElementById(id);
+  elem.style.display = (elem.style.display == "none") ? "block" : "none";
+}
+
+window.onload = function() {
+  var id = window.location.hash.substr(1);
+  var target = document.getElementById(id);
+  if (target) {
+    window.setTimeout(function() { target.style.backgroundColor = "white"; },
+                      3000 /* ms */);
+    toggle("comments-" + id);
+  }
+}
+</script>
+
+</head>
+
+<!-- Content starts here -->
+<body>
+
+{# TODO: javascript to set browser location to / so that reloads are harmless #}
+<div id="messages">
+{% for msg in msgs %}
+  <p>{{ msg }}</p>
+{% endfor %}
+</div>
+
+<main class="tp-main lead container">
+
+<div class="row">
+<div id="logo" class="col-sm-4">
+ <a href="/">
+   <img id="logo-img" class="img-responsive" src="/static/bridgy_logo.jpg" /></a>
+</div>
+
+<div id="header" class="col-sm-8">
+<p class="big">
+Got an <a href="http://indiewebcamp.com/why">Indieweb</a> site?
+<br />
+<a href="http://indiewebcamp.com/POSSE">POSSE</a> your posts to the silos?
+<br />
+<span id="title">Brid.gy</span>
+<a href="http://indiewebcamp.com/backfeed">backfeeds</a> comments to your site.
+<br />
+</p>
+<a href="#" onclick="toggle('more'); return false;">More...</a>
+</div>
+</div>
+
+<p class="clearfix" />
+
+{% block content %}
+{% endblock %}
+
+<div id="footer">
+  <a href="http://snarfed.org/2012-01-08_bridgy_launched">About</a>
+  | <a href="/faq">FAQ</a>
+  | <a href="http://snarfed.org/about">Contact</a>
+  | <a href="https://github.com/snarfed/bridgy">Source</a>
+</div>
+
+</div>
+</main>
+</body>
+</html>
+
