@@ -58,8 +58,12 @@ form input {
   margin-left: auto;
   margin-right: auto;
 }
-.glyphicon-warning-sign { color: gold; }
+/* .glyphicon-warning-sign { color: gold; } */
+.glyphicon-ok-sign { color: green; }
+.glyphicon-exclamation-sign { color: gold; }
+.glyphicon-refresh { color: blue; }
 .glyphicon-remove { color: red !important; }
+.glyphicon-transfer { color: green; }
 #users {
   text-align: center;
 }
@@ -82,7 +86,7 @@ form input {
   }
 }
 
-.shadow, #connect input, #sources img {
+.shadow, #connect input, .profile {
   -moz-box-shadow: 2px 2px 2px rgba(0,0,0,0.4);
   -webkit-box-shadow: 2px 2px 2px rgba(0,0,0,0.4);
   /* CSS3 */
