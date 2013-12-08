@@ -32,10 +32,12 @@ function toggle(id) {
 }
 
 window.onload = function() {
-  target = document.getElementById(window.location.hash.substr(1));
+  var id = window.location.hash.substr(1);
+  var target = document.getElementById(id);
   if (target) {
     window.setTimeout(function() { target.style.backgroundColor = "white"; },
                       5000 /* ms */);
+    toggle("comments-" + id);
   }
 }
 </script>
@@ -117,7 +119,7 @@ below to try it yourself.</p>
 <div id="sources">
 {% for source in sources %}
 
-<div id="source-{{ source.DISPLAY_NAME }}-{{ source.key.name }}" class="row"
+<div id="{{ source.DISPLAY_NAME }}-{{ source.key.name }}" class="row"
   {% if source.status == "disabled" %}
      title="This source was disconnected on {{ source.DISPLAY_NAME }}'s end.
             To fix this, delete and re-add it."
@@ -133,6 +135,7 @@ below to try it yourself.</p>
   {% if source.status != "enabled" %}
     <span class="glyphicon glyphicon-exclamation-sign"></span>
   {% endif %}
+  <a href="#{{ source.DISPLAY_NAME }}-{{ source.key.name }}">#</a>
 
   <!-- <form method="post" action="/delete"> -->
   <!--   <input name="key" type="hidden" value="{{ source.key }}" /> -->
@@ -155,14 +158,15 @@ below to try it yourself.</p>
   <!-- </form> -->
 
   | {% if source.recent_comments %}
-    <a href="#" onclick="toggle('comments-{{ source.key.name }}'); return false;">
+    <a href="#" onclick="toggle('comments-{{ source.DISPLAY_NAME }}-{{ source.key.name }}'); return false;">
       Recent comments...</a>
   {% else %}
     No comments yet
   {% endif %}
 </div>
 
-<ul id="comments-{{ source.key.name }}" class="comments" style="display: none" />
+<ul id="comments-{{ source.DISPLAY_NAME }}-{{ source.key.name }}"
+    class="comments" style="display: none" />
   {% for comment in source.recent_comments %}
   {% with comment.comment as c %}
   <li>
