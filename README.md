@@ -33,19 +33,29 @@ Related work
 
 TODOs
 ---
-* write FAQ
 * add welcome language to "added source" toast
+* HTML: back to table with colspan?
+* poll/propagate error icons, source update field
+* write FAQ:
+  what, who, why
+  what do you do with my email, personal details (oauth, scopes, no password, can revoke any time)
+  delete. revoke in silo for now
+  public vs private. only send webmention, no publishing. target does that.
+  stack? app engine, code in github
+  roadmap
+  donate
+  original post discovery algorithm
+* allow deleting sources if you log in as them
+* link to targets in recent comments?
+* likes/favorites. based on http://indiewebcamp.com/like and
+  http://indiewebcamp.com/responses, it looks like it's just u-like and a
+  webmention, similar to a reply and may not even need a u-in-reply-to.
+  http://indiewebcamp.com/irc/2013-11-11 , http://indiewebcamp.com/repost
+* detect updated comments and send new webmentions for them
 * only handle public posts? (need to add privacy/audience detection to
   activitystreams-unofficial)
 * cache some API calls with a short expiration, e.g. twitter mentions
 * cache webmention discovery
 * cache served MF2 HTML and JSON with a short expiration. ideally include the
   cache expiration in the content.
-* global s/comment/reply/
-* detect updated comments and send new webmentions for them
-* likes/favorites. based on http://indiewebcamp.com/like and
-  http://indiewebcamp.com/responses, it looks like it's just u-like and a
-  webmention, similar to a reply and may not even need a u-in-reply-to.
-  http://indiewebcamp.com/irc/2013-11-11 , http://indiewebcamp.com/repost
-* allow deleting sources if you log in as them
-* clear toast messages
+* clear toast messages?
