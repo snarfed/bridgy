@@ -56,8 +56,8 @@ below to try it yourself, or read <a href="/about">even more details.</a></p>
      title="Error"
   {% endif %}{% endif %}>
   <a target="_blank" href="{{ source.url }}">
-    <img class="profile" src="{{ source.picture }}" width="64px" /></a>
-  <a target="_blank" href="{{ source.url }}" class="source">{{ source.name|safe }}</a>
+    <img class="profile" src="{{ source.picture }}" width="64px" />
+    {{ source.name|safe }}</a>
 
   ({{ source.DISPLAY_NAME }})
 
@@ -101,8 +101,8 @@ below to try it yourself, or read <a href="/about">even more details.</a></p>
   {% with comment.comment as c %}
   <li>
     <a target="_blank" href="{{ c.author.url }}">
-      <img class="profile" src="{{ c.author.image.url }}" width="32" />
-      <!-- {{ c.author.displayName }}</a>: -->
+      <img class="profile" src="{{ c.author.image.url }}" width="32" /></a>
+      <!-- {{ c.author.displayName }} -->
     <a target="_blank" href="{{ c.url }}">{{ c.content|striptags|truncatewords:6|safe }}</a>
     {% with comment.activity.object as a %}
     on <a target="_blank" href="{{ a.url }}">{{ a.content|striptags|truncatewords:6|safe }}</a>
