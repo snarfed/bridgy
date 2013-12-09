@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div>
+</p><ul id="about">
+
+<li class="question">What is this?</li>
+<li class="answer">
+<p>Brid.gy is a service
+that <a href="http://indiewebcamp.com/backfeed">backfeeds</a> comments from
+social networks to your web site. If you post links on social networks to pages
+on your own site (aka <a href="http://indiewebcamp.com/POSSE">POSSE</a>ing to
+the <a href="http://indiewebcamp.com/silos">silos</a>), and people comment on
+those links inside the social networks, Brid.gy copies the comments back to the
+page on your site.
+</p>
+<p>The <a href="/2012-01-08_bridgy_launched">first version of Brid.gy</a> was
+released a couple years ago, but only supported backfeeding comments to
+<a href="http://wordpress.org/">WordPress</a>. This version is better, thanks to
+<a href="http://www.webmention.org/">webmentions</a> and the inspiration of the
+<a href="http://indiewebcamp.com/why">IndieWeb community</a>.
+</p>
+</li>
+
+<li class="question">Who are you? Why did you make this?</li>
+<li class="answer">
+<p>
+I'm <a class="h-card" href="http://snarfed.org/">Ryan Barrett</a>. I'm just a
+guy who <a href="http://snarfed.org/2012-07-25_why_i_have_my_own_web_site">likes
+the web</a> and <a href="http://indiewebcamp.com/why">owning his own
+data</a>.
+</p>
+</li>
+
+<li class="question">How does it work?</li>
+<li class="answer">
+<p>
+When you add one of your accounts, Brid.gy checks it periodically for posts and
+comments on those posts. When it finds a new comment on a post, it
+<a href="http://indiewebcamp.com/original-post-discovery">looks for links to
+your web site</a> in the post, then
+sends <a href="http://www.webmention.org/">webmentions</a> to those links. It
+also translates the comment
+to <a href="http://microformats.org/wiki/microformats2">microformats2 HTML</a>
+so that your web site can fetch and parse it.
+</p>
+<p>Brid.gy is <a href="https://github.com/snarfed/bridgy">open source</a>. It's
+written in Python and runs on
+<a href="http://appengine.google.com/">Google App Engine</a>. It uses
+<a href="https://github.com/snarfed/oauth-dropins">oauth-dropins</a> to let
+users connect to the silos,
+<a href="https://github.com/snarfed/activitystreams-unofficial">activitystreams-unofficial</a>
+to fetch data from the silos and convert it to a standard format, and
+<a href="https://github.com/vrypan/webmention-tools">webmention-tools</a> to
+send webmentions.
+</p>
+</li>
+
+<li class="question">How much does it cost?</li>
+<li class="answer">
+<p>Nothing! I have a <a href="http://quip.com/">great day job</a>, and Brid.gy
+is small, so thanks to <a href="http://appengine.google.com/">App Engine</a>, it
+doesn't (yet) cost anything to run. I don't need donations, promise.
+</p>
+<p>If you <em>really</em> want to
+contribute, <a href="https://github.com/snarfed/bridgy">jump into the code</a>
+and send me a pull request, or feel free to donate to the
+<a href="http://www.aspca.org/">ASPCA</a> or the
+<a href="https://www.eff.org/">EFF</a> in my name.
+</p></li>
+
+<li class="question">What do you do with my data?</li>
+<li class="answer">
+<p>
+Nothing! Brid.gy isn't a business, and never will be, so I don't have the same
+motivations to abuse your data that other services might. More concretely, I
+won't ever send you email, I store as little of your
+<a href="http://en.wikipedia.org/wiki/Personally_identifiable_information">PII</a>
+(personally identifiable information) as possible, and I <em>never</em> have
+access to any of your passwords.
+</p>
+</li>
+
+<li class="question">I found a bug! I have a feature request!</li>
+<li class="answer">
+<p>
+Great! Thank you! Feel free
+to <a href="https://github.com/snarfed/bridgy/issues">file it in GitHub</a>,
+or <a href="http://snarfed.org/about">send me an email</a>.
+</p>
+</li>
+
+<li class="question">Brid.gy? Really?</li>
+<li class="answer">
+<p>Yeah, I know. I'm not proud of the cutesy domain name either. Just go with it.
+</p>
+</li>
+
+</ul>
+
+</div>
+
+{% endblock %}

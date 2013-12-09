@@ -85,9 +85,9 @@ class DashboardHandler(util.Handler):
           'sources': sources, 'msgs': msgs, 'epoch': util.EPOCH}))
 
 
-class FaqHandler(handlers.TemplateHandler):
+class AboutHandler(handlers.TemplateHandler):
   def template_file(self):
-    return os.path.join(os.path.dirname(__file__), 'templates', 'faq.html')
+    return os.path.join(os.path.dirname(__file__), 'templates', 'about.html')
 
 
 class DeleteStartHandler(util.Handler):
@@ -133,7 +133,7 @@ class DeleteFinishHandler(util.Handler):
 
 application = webapp2.WSGIApplication(
   [('/', DashboardHandler),
-   ('/faq', FaqHandler),
+   ('/about', AboutHandler),
    ('/delete/start', DeleteStartHandler),
    ('/delete/finish', DeleteFinishHandler),
    ] + handlers.HOST_META_ROUTES,

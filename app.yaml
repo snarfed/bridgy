@@ -54,7 +54,7 @@ handlers:
   script: tasks.application
   login: admin
 
-- url: /(delete/.*|faq)?
+- url: /(delete/.*|about)?
   script: app.application
   secure: always
 

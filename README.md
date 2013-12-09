@@ -33,15 +33,6 @@ Related work
 
 TODOs
 ---
-* write FAQ:
-  what, who, why
-  what do you do with my email, personal details (oauth, scopes, no password, can revoke any time)
-  delete. revoke in silo for now
-  public vs private. only send webmention, no publishing. target does that.
-  stack? app engine, code in github
-  roadmap
-  donate
-  original post discovery algorithm
 * link to targets in recent comments?
 * HTML: back to table with colspan?
 * Google+ token refresh seems broken
