@@ -136,5 +136,4 @@ application = webapp2.WSGIApplication(
    ('/about', AboutHandler),
    ('/delete/start', DeleteStartHandler),
    ('/delete/finish', DeleteFinishHandler),
-   ] + handlers.HOST_META_ROUTES,
-  debug=appengine_config.DEBUG)
+   ], debug=appengine_config.DEBUG)
