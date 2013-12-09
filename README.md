@@ -1,8 +1,8 @@
-Brid.gy ![Brid.gy](https://raw.github.com/snarfed/bridgy/master/static/bridgy_logo.jpg)
+Brid.gy ![Brid.gy](https://raw.github.com/snarfed/bridgy/master/static/bridgy_logo_128.jpg)
 ===
 
-Got a blog? Share your blog posts on social networks? Wish comments on those
-shared posts also showed up on your blog? Bridgy copies them back for you.
+Got a web site? Post links to it on social networks? Wish comments showed up on
+your site too? Brid.gy copies them back for you.
 
 http://brid.gy/
 
@@ -41,7 +41,6 @@ TODOs
   http://indiewebcamp.com/responses, it looks like it's just u-like and a
   webmention, similar to a reply and may not even need a u-in-reply-to.
   http://indiewebcamp.com/irc/2013-11-11 , http://indiewebcamp.com/repost
-
 * detect updated comments and send new webmentions for them
 * only handle public posts? (need to add privacy/audience detection to
   activitystreams-unofficial)

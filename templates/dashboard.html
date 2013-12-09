@@ -61,10 +61,11 @@ below to try it yourself, or read <a href="/about">even more details.</a></p>
 
   ({{ source.DISPLAY_NAME }})
 
+  <a href="#{{ source.dom_id }}" title="Link">#</a>
+
   {% if source.status != "enabled" %}
     <span class="glyphicon glyphicon-exclamation-sign"></span>
   {% endif %}
-  <a href="#{{ source.dom_id }}" title="Link">#</a>
 
   <form method="post" action="/delete/start">
     <input name="key" type="hidden" value="{{ source.key }}" />
