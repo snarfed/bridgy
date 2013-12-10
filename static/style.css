@@ -17,6 +17,16 @@ body {
   padding: .5em;
 }
 
+@media (max-width: 600px) {
+  #logo {
+    float: left;
+  }
+  #header {
+    float: none;
+    width: 100%;
+  }
+}
+
 .big {
   font-size: 1.5em;
 }
