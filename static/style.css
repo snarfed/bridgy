@@ -2,12 +2,6 @@ body {
   margin-top: 3em;
 }
 
-@media (min-height: 600px) {
-  body {
-    margin-top: 6em;
-  }
-}
-
 #messages {
   position: fixed;
   width: 100%;
@@ -68,9 +62,6 @@ form input {
 #sources {
   border-collapse: separate;
   border-spacing: .3em;
-  /* center horizontally */
-  /* margin-left: auto; */
-  /* margin-right: auto; */
 }
 
 #sources > .row:target {
@@ -78,6 +69,23 @@ form input {
   transition: background-color 3s;
 }
 
+#sources > .row > .col-sm-4 {
+  padding: .2em;
+}
+
+@media (min-width: 768px) {
+  #sources > .row, .comments > .row {
+    display: table;
+    table-layout: fixed;
+  }
+
+  #sources > .row > .col-sm-4, .comments > .row > .col-sm-4 {
+    display: table-cell;
+    float: none;
+    text-align: left;
+    border-spacing: 0;
+  }
+}
 /* .glyphicon-warning-sign { color: gold; } */
 .glyphicon-ok-sign { color: green; }
 .glyphicon-exclamation-sign { color: gold; }
@@ -91,25 +99,15 @@ form input {
 .comments {
   font-size: .8em;
   list-style: none;
-}
-
-.comments li {
-  margin: .5em;
+  /* border: 1px solid lightgray; */
 }
 
 #footer {
   margin-top: 1.5em;
   margin-bottom: 1em;
   text-align: right;
-  font-size: .6em;
+  font-size: .8em;
 }
-
-@media (min-width: 768px) {
-  #footer {
-    font-size: .8em;
-  }
-}
-
 
 .shadow, #connect input, .profile {
   -moz-box-shadow: 2px 2px 2px rgba(0,0,0,0.4);

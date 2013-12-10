@@ -1,7 +1,8 @@
 {% extends "base.html" %}
 
 {% block below_tagline %}
-<a href="#" onclick="toggle('more'); return false;">More...</a>
+<a id="more-link" href="#"
+   onclick="toggle('more-link'); toggle('more'); return false;">More...</a>
 {% endblock %}
 
 
@@ -55,6 +56,7 @@ below to try it yourself, or read <a href="/about">even more details.</a></p>
   {% else %}{% if source.status == "error" %}
      title="Error"
   {% endif %}{% endif %}>
+ <div class="col-sm-4">
   <a target="_blank" href="{{ source.url }}">
     <img class="profile" src="{{ source.picture }}" width="64px" />
     {{ source.name|safe }}</a>
@@ -73,10 +75,11 @@ below to try it yourself, or read <a href="/about">even more details.</a></p>
             style="border: none; background: none;"></button>
   </form>
 
-  | {% if source.last_polled == epoch %}
+ </div><div class="col-sm-4">
+  {% if source.last_polled == epoch %}
     Not polled yet
   {% else %}
-    Last polled
+    Polled
     <a href="/log?start_time={{ source.last_polled|date:'U' }}&key={{ source.key }}">
       {{ source.last_polled|timesince }} ago</a>
   {% endif %}
@@ -87,27 +90,32 @@ below to try it yourself, or read <a href="/about">even more details.</a></p>
   <!--           style="border: none; background: none;"></button> -->
   <!-- </form> -->
 
-  | {% if source.recent_comments %}
+ </div><div class="col-sm-4">
+  {% if source.recent_comments %}
     <a href="#" onclick="toggle('comments-{{ source.dom_id }}'); return false;">
       Recent comments...</a>
   {% else %}
     No comments yet
   {% endif %}
+ </div>
 </div>
 
-<ul id="comments-{{ source.dom_id }}"
-    class="comments" style="display: none" />
+<ul id="comments-{{ source.dom_id }}" class="comments" style="display: none" />
   {% for comment in source.recent_comments %}
   {% with comment.comment as c %}
-  <li>
+  <li class="row">
+   <div class="col-sm-4">
     <a target="_blank" href="{{ c.author.url }}">
       <img class="profile" src="{{ c.author.image.url }}" width="32" /></a>
       <!-- {{ c.author.displayName }} -->
     <a target="_blank" href="{{ c.url }}">{{ c.content|striptags|truncatewords:6|safe }}</a>
+
+   </div><div class="col-sm-4">
     {% with comment.activity.object as a %}
     on <a target="_blank" href="{{ a.url }}">{{ a.content|striptags|truncatewords:6|safe }}</a>
     {% endwith %}
-    |
+
+   </div><div class="col-sm-4">
     <a href="/log?start_time={{ comment.updated|date:'U' }}&key={{ comment.key }}"
     {% if comment.status == 'complete' %}
        title="Completed"><span class="glyphicon glyphicon-ok-sign"></span>
@@ -118,6 +126,7 @@ below to try it yourself, or read <a href="/about">even more details.</a></p>
     {% else %}>
     {% endif %}{% endif %}{% endif %}
       {{ comment.updated|timesince }} ago</a>
+   </div>
   </li>
   {% endwith %}
   {% endfor %}
