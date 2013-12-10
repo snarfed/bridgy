@@ -31,14 +31,24 @@ Related work
 * http://indiewebcamp.com/Twitter#Why_permashortcitation_instead_of_a_link
 
 
-TODOs
+TODO
 ---
+
 * link to targets in recent comments?
 * some FB picture posts aren't working, e.g. https://www.facebook.com/10100863177122923
 * likes/favorites. based on http://indiewebcamp.com/like and
   http://indiewebcamp.com/responses, it looks like it's just u-like and a
   webmention, similar to a reply and may not even need a u-in-reply-to.
-  http://indiewebcamp.com/irc/2013-11-11 , http://indiewebcamp.com/repost
+  http://indiewebcamp.com/irc/2013-11-11 , http://indiewebcamp.com/repost .
+  test against sandeep.io! http://www.sandeep.io/39
+* reshares/reposts, e.g. retweets. http://indiewebcamp.com/repost .
+  looks like it's just a link with u-repost, e.g.
+      <a class="u-repost" href="http://www.sandeep.io/39">
+  e.g. http://sandeep.shetty.in/2013/06/indieweb-repost-test.html,
+  http://www.sandeep.io/35
+  also maybe test against http://barryfrost.com/how-to-comment
+
+lower priority:
 
 * detect updated comments and send new webmentions for them
 * only handle public posts? (need to add privacy/audience detection to
