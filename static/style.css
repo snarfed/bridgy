@@ -86,15 +86,24 @@ form input {
     border-spacing: 0;
   }
 }
+
+.delete {
+  border: none;
+  background: none;
+  font-weight: bold;
+  color: red;
+}
+
+.delete:hover {
+  color: darkred;
+}
+
 /* .glyphicon-warning-sign { color: gold; } */
 .glyphicon-ok-sign { color: green; }
 .glyphicon-exclamation-sign { color: gold; }
 .glyphicon-refresh { color: blue; }
 .glyphicon-remove { color: red !important; }
 .glyphicon-transfer { color: blue; }
-#users {
-  text-align: center;
-}
 
 .comments {
   font-size: .8em;
