@@ -7,6 +7,7 @@ import itertools
 import json
 import logging
 import os
+import re
 import urllib
 import urlparse
 
@@ -30,6 +31,14 @@ from google.appengine.api import users
 from google.appengine.ext import db
 from google.appengine.ext.webapp import template
 import webapp2
+
+
+def update_scheme(url):
+  # Instagram doesn't serve images over SSL, so switch to their S3 URL
+  # https://groups.google.com/d/msg/instagram-api-developers/fB4mwYXZF1c/q9n9gPO11JQJ
+  url = re.sub('^http://images\.(ak\.)instagram\.com',
+               'http://distillery.s3.amazonaws.com', url)
+  return util.update_scheme(url)
 
 
 class DashboardHandler(util.Handler):
@@ -59,11 +68,17 @@ class DashboardHandler(util.Handler):
 
     # now wait on query results
     for source in sources.values():
+      # convert image URL to https if we're serving over SSL
+      source.picture = update_scheme(source.picture)
       source.recent_comments = list(source.recent_comments)
       for c in source.recent_comments:
         c.comment = json.loads(c.comment_json)
         c.activity = json.loads(c.activity_json)
         c.comment['published'] = util.parse_iso8601(c.comment['published'])
+        # convert image URL to https if we're serving over SSL
+        image_url = c.comment['author'].setdefault('image', {}).get('url')
+        if image_url:
+          c.comment['author']['image']['url'] = update_scheme(image_url)
 
     for source in sources.values():
       logging.info('Comments for %s: %s', source.name,

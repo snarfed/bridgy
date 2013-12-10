@@ -34,7 +34,6 @@ Related work
 TODOs
 ---
 * link to targets in recent comments?
-* Google+ token refresh seems broken
 * some FB picture posts aren't working, e.g. https://www.facebook.com/10100863177122923
 * likes/favorites. based on http://indiewebcamp.com/like and
   http://indiewebcamp.com/responses, it looks like it's just u-like and a
