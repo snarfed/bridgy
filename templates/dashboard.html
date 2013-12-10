@@ -63,16 +63,16 @@ below to try it yourself, or read <a href="/about">even more details.</a></p>
 
   ({{ source.DISPLAY_NAME }})
 
+  <span class="source-buttons">
   <a href="#{{ source.dom_id }}" title="Link">#</a>
-
-  {% if source.status != "enabled" %}
+  {% if source.status != "disabled" %}
     <span class="glyphicon glyphicon-exclamation-sign"></span>
   {% endif %}
-
   <form method="post" action="/delete/start">
     <input name="key" type="hidden" value="{{ source.key }}" />
     <button type="submit" title="Delete" class="delete">&times;</button>
   </form>
+  </span>
 
  </div><div class="col-sm-4">
   {% if source.last_polled == epoch %}

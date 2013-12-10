@@ -97,6 +97,10 @@ form input {
   }
 }
 
+.source-buttons {
+  white-space: nowrap;
+}
+
 .delete {
   border: none;
   background: none;
