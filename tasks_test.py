@@ -87,7 +87,7 @@ class PollTest(TaskQueueTest):
     source = db.get(self.sources[0].key())
     self.assertEqual('error', source.status)
 
-  def test_poll_error(self):
+  def test_reset_status_to_enabled(self):
     """After a successful poll, the source status should be set to 'enabled'."""
     self.sources[0].status = 'error'
     self.sources[0].save()
@@ -95,6 +95,20 @@ class PollTest(TaskQueueTest):
     self.post_task()
     source = db.get(self.sources[0].key())
     self.assertEqual('enabled', source.status)
+
+  def test_original_post_discovery(self):
+    """Target URLs should be extracted from attachments, tags, and text."""
+    obj = self.activities[0]['object']
+    obj['tags'] = [{'objectType': 'article', 'url': 'http://tar.get/a'},
+                   {'objectType': 'person', 'url': 'http://pe.rs/on'},
+                   ]
+    obj['attachments'] = [{'objectType': 'article', 'url': 'http://tar.get/b'}]
+    obj['content'] = 'foo http://tar.get/c bar (tar.get d) baz'
+    self.sources[0].set_activities([self.activities[0]])
+
+    self.post_task()
+    expected = ['http://tar.get/%s' % i for i in 'a', 'b', 'c', 'd']
+    self.assertEquals(expected, db.get(self.comments[0].key()).unsent)
 
   def test_existing_comments(self):
     """Poll should be idempotent and not touch existing comment entities.
@@ -145,26 +159,34 @@ class PropagateTest(TaskQueueTest):
     super(PropagateTest, self).setUp()
     self.comments[0].save()
     self.task_params = {'comment_key': self.comments[0].key()}
+    self.local_url = 'http://localhost/comment/fake/%s/000/1_2_a' % \
+      self.comments[0].source.key().name()
+    self.mock_webmention()
 
-  def assert_comment_is(self, status, leased_until=False):
+  def mock_webmention(self):
+    self.mock_sends = []
+    for i in range(3):
+      ms = self.mox.CreateMock(send.WebmentionSend)
+      ms.receiver_endpoint = 'http://webmention/endpoint'
+      ms.response = 'used in logging'
+      self.mock_sends.append(ms)
+
+    self.mock_send = self.mock_sends[0]
+    self.mox.StubOutWithMock(send, 'WebmentionSend', use_mock_anything=True)
+
+  def assert_comment_is(self, status, leased_until=False, sent=[], error=[]):
     """Asserts that comments[0] has the given values in the datastore.
     """
     comment = db.get(self.comments[0].key())
     self.assertEqual(status, comment.status)
     if leased_until is not False:
       self.assertEqual(leased_until, comment.leased_until)
-
-  def mock_webmention(self):
-    self.mock_send = self.mox.CreateMock(send.WebmentionSend)
-    self.mock_send.receiver_endpoint = 'http://webmention/endpoint'
-    self.mock_send.response = 'used in logging'
-    self.mox.StubOutWithMock(send, 'WebmentionSend', use_mock_anything=True)
+    self.assert_equals([], comment.unsent)
+    self.assert_equals(sent, comment.sent)
+    self.assert_equals(error, comment.error)
 
   def expect_webmention(self, target_url='http://target1/post/url'):
-    self.mock_webmention()
-    local_url = 'http://localhost/comment/fake/%s/000/1_2_a' % \
-      self.comments[0].source.key().name()
-    send.WebmentionSend(local_url, target_url).AndReturn(self.mock_send)
+    send.WebmentionSend(self.local_url, target_url).InAnyOrder().AndReturn(self.mock_send)
     return self.mock_send.send(timeout=999)
 
   def test_propagate(self):
@@ -174,7 +196,8 @@ class PropagateTest(TaskQueueTest):
     self.expect_webmention().AndReturn(True)
     self.mox.ReplayAll()
     self.post_task()
-    self.assert_comment_is('complete', NOW + Propagate.LEASE_LENGTH)
+    self.assert_comment_is('complete', NOW + Propagate.LEASE_LENGTH,
+                           sent=['http://target1/post/url'])
 
   def test_propagate_from_error(self):
     """A normal propagate task, with a comment starting as 'error'."""
@@ -184,37 +207,32 @@ class PropagateTest(TaskQueueTest):
     self.expect_webmention().AndReturn(True)
     self.mox.ReplayAll()
     self.post_task()
-    self.assert_comment_is('complete', NOW + Propagate.LEASE_LENGTH)
+    self.assert_comment_is('complete', NOW + Propagate.LEASE_LENGTH,
+                           sent=['http://target1/post/url'])
 
-  def test_original_post_discovery(self):
-    """Target URLs should be extracted from attachments, tags, and text."""
-    activity = json.loads(self.comments[0].activity_json)
-    obj = activity['object']
-    obj['tags'] = [{'objectType': 'article', 'url': 'http://tar.get/a'},
-                   {'objectType': 'person', 'url': 'http://pe.rs/on'},
-                   ]
-    obj['attachments'] = [{'objectType': 'article', 'url': 'http://tar.get/b'}]
-    obj['content'] = 'foo http://tar.get/c bar (tar.get d) baz'
-    self.comments[0].activity_json = json.dumps(activity)
+  def test_multiple_targets(self):
+    """We should send webmentions to the unsent and error targets."""
+    self.comments[0].error = ['http://target2/x', 'http://target3/y']
+    self.comments[0].sent = ['http://target4/z']
     self.comments[0].save()
 
-    source_name = self.comments[0].source.key().name()
-    local_url = 'http://localhost/comment/fake/%s/000/1_2_a' % source_name
-    self.mock_webmention()
-    for i in 'a', 'b', 'c', 'd':
-      target = 'http://tar.get/%s' % i
-      send.WebmentionSend(local_url, target).InAnyOrder().AndReturn(self.mock_send)
-      self.mock_send.send(timeout=999).InAnyOrder().AndReturn(True)
+    self.expect_webmention('http://target1/post/url').InAnyOrder().AndReturn(True)
+    self.mock_send.error = {'code': 'RECEIVER_ERROR'}
+    self.expect_webmention('http://target2/x').InAnyOrder().AndReturn(False)
+    self.mock_send = self.mock_sends[1]
+    self.mock_send.error = {'code': 'NO_ENDPOINT'}
+    self.expect_webmention('http://target3/y').InAnyOrder().AndReturn(False)
 
     self.mox.ReplayAll()
-    self.post_task()
-    self.assert_comment_is('complete', NOW + Propagate.LEASE_LENGTH)
+    self.post_task(expected_status=Propagate.ERROR_HTTP_RETURN_CODE)
+    comment = db.get(self.comments[0].key())
+    self.assert_comment_is('error',
+                           sent=['http://target1/post/url', 'http://target4/z'],
+                           error=['http://target2/x'])
 
   def test_no_targets(self):
     """No target URLs."""
-    activity = json.loads(self.comments[0].activity_json)
-    activity['object']['content'] = 'foo bar'
-    self.comments[0].activity_json = json.dumps(activity)
+    self.comments[0].unsent = []
     self.comments[0].save()
 
     self.mox.ReplayAll()
@@ -252,7 +270,8 @@ class PropagateTest(TaskQueueTest):
     self.expect_webmention().AndReturn(True)
     self.mox.ReplayAll()
     self.post_task()
-    self.assert_comment_is('complete', NOW + Propagate.LEASE_LENGTH)
+    self.assert_comment_is('complete', NOW + Propagate.LEASE_LENGTH,
+                           sent=['http://target1/post/url'])
 
   def test_no_comment(self):
     """If the comment doesn't exist, the request should fail."""
@@ -267,6 +286,7 @@ class PropagateTest(TaskQueueTest):
       self.mox.UnsetStubs()
       self.comments[0].status = 'new'
       self.comments[0].save()
+      self.mock_webmention()
       self.expect_webmention().AndReturn(False)
       self.mock_send.error = {'code': code}
       self.mox.ReplayAll()
@@ -274,28 +294,24 @@ class PropagateTest(TaskQueueTest):
       logging.debug('Testing %s', code)
       expected_status = 200 if give_up else Propagate.ERROR_HTTP_RETURN_CODE
       self.post_task(expected_status=expected_status)
-      self.assert_comment_is('complete' if give_up else 'error')
+      if give_up:
+        self.assert_comment_is('complete')
+      else:
+        self.assert_comment_is('error', error=['http://target1/post/url'])
       self.mox.VerifyAll()
 
   def test_webmention_fail_and_succeed(self):
     """All webmentions should be attempted, but any failure sets error status."""
-    activity = json.loads(self.comments[0].activity_json)
-    activity['object']['content'] = 'http://first/ http://second/'
-    self.comments[0].activity_json = json.dumps(activity)
+    self.comments[0].unsent = ['http://first', 'http://second']
     self.comments[0].save()
-
-    local_url = 'http://localhost/comment/fake/%s/000/1_2_a' % \
-        self.comments[0].source.key().name()
-    self.mock_webmention()
     self.mock_send.error = {'code': 'FOO'}
-    send.WebmentionSend(local_url, 'http://first').AndReturn(self.mock_send)
-    self.mock_send.send(timeout=999).AndReturn(False)
-    send.WebmentionSend(local_url, 'http://second').AndReturn(self.mock_send)
-    self.mock_send.send(timeout=999).AndReturn(True)
+    self.expect_webmention('http://first').AndReturn(False)
+    self.expect_webmention('http://second').AndReturn(True)
 
     self.mox.ReplayAll()
     self.post_task(expected_status=Propagate.ERROR_HTTP_RETURN_CODE)
-    self.assert_comment_is('error', None)
+    self.assert_comment_is('error', None, error=['http://first'],
+                           sent=['http://second'])
 
   def test_webmention_exception(self):
     """If sending the webmention raises an exception, the lease should be released."""
@@ -322,4 +338,4 @@ class PropagateTest(TaskQueueTest):
     self.mox.ReplayAll()
 
     self.post_task(expected_status=500)
-    self.assert_comment_is('error', None)
+    self.assert_comment_is('error', None, sent=['http://target1/post/url'])

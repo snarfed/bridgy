@@ -88,16 +88,25 @@ class Poll(webapp2.RequestHandler):
     logging.info('Found %d activities', len(activities))
 
     for activity in activities:
+      # use original post discovery to find targets
+      source.as_source.original_post_discovery(activity)
+      targets = util.trim_nulls(
+        [t.get('url') for t in activity['object'].get('tags', [])
+         if t.get('objectType') == 'article'])
+      logging.info('Discovered original post URLs: %s', targets)
+
       # remove replies from activity JSON so we don't store them all in every
       # Comment entity.
       replies = activity['object'].pop('replies', {}).get('items', [])
       logging.info('Found %d comments for activity %s', len(replies),
                    activity.get('url'))
+
       for reply in replies:
         models.Comment(key_name=reply['id'],
                        source=source,
                        activity_json=json.dumps(activity),
                        comment_json=json.dumps(reply),
+                       unsent=targets,
                        ).get_or_save()
 
     source.last_polled = now_fn()
@@ -136,23 +145,17 @@ class Propagate(webapp2.RequestHandler):
       logging.info('Starting %s comment %s',
                    comment.source.kind(), comment.key().name())
 
-      # use original post discovery to find targets
-      activity = json.loads(comment.activity_json)
-      comment.source.as_source.original_post_discovery(activity)
-      targets = util.trim_nulls(
-        [t.get('url') for t in activity['object'].get('tags', [])
-         if t.get('objectType') == 'article'])
-
       # generate local comment URL
+      activity = json.loads(comment.activity_json)
       _, post_id = util.parse_tag_uri(activity['id'])
       local_comment_url = '%s/comment/%s/%s/%s/%s' % (
         self.request.host_url, comment.source.SHORT_NAME,
         comment.source.key().name(), post_id, comment_id)
 
       # send each webmention
-      logging.info('Discovered original post URLs: %s', targets)
-      error = False
-      for target in targets:
+      unsent = set(comment.unsent + comment.error)
+      comment.error = []
+      for target in unsent:
         # When debugging locally, redirect my (snarfed.org) webmentions to localhost
         if appengine_config.DEBUG and target.startswith('http://snarfed.org/'):
           target = target.replace('http://snarfed.org/', 'http://localhost/')
@@ -170,22 +173,24 @@ class Propagate(webapp2.RequestHandler):
         logging.info('Sending webmention from %s to %s', local_comment_url, target)
         if mention.send(timeout=999):
           logging.info('Sent! %s', mention.response)
+          comment.sent.append(target)
         else:
           if mention.error['code'] == 'NO_ENDPOINT':
             logging.info('Giving up this target. %s', mention.error)
           else:
-            error = True
             self.fail('Error sending to endpoint: %s' % mention.error)
+            comment.error.append(target)
 
-      if error:
+      comment.unsent = []
+      if comment.error:
         logging.error('Propagate task failed')
-        self.release_comment('error')
+        self.release_comment(comment, 'error')
       else:
-        self.complete_comment()
+        self.complete_comment(comment)
 
     except:
       logging.exception('Propagate task failed')
-      self.release_comment('error')
+      self.release_comment(comment, 'error')
       raise
 
   @db.transactional
@@ -213,34 +218,32 @@ class Propagate(webapp2.RequestHandler):
       return comment
 
   @db.transactional
-  def complete_comment(self):
+  def complete_comment(self, comment):
     """Attempts to mark the comment entity completed.
 
     Returns True on success, False otherwise.
     """
-    comment = db.get(self.request.params['comment_key'])
-
-    if comment is None:
+    existing = db.get(comment.key())
+    if existing is None:
       self.fail('comment entity disappeared!')
-    elif comment.status == 'complete':
+    elif existing.status == 'complete':
       # let this response return 200 and finish
       logging.warning('comment stolen and finished. did my lease expire?')
-    elif comment.status == 'new':
+      return False
+    elif existing.status == 'new':
       self.fail('comment went backward from processing to new!')
-    else:
-      assert comment.status == 'processing'
-      comment.status = 'complete'
-      comment.save()
-      return True
 
-    return False
+    assert comment.status == 'processing'
+    comment.status = 'complete'
+    comment.save()
+    return True
 
   @db.transactional
-  def release_comment(self, new_status):
+  def release_comment(self, comment, new_status):
     """Attempts to unlease the comment entity.
     """
-    comment = db.get(self.request.params['comment_key'])
-    if comment and comment.status == 'processing':
+    existing = db.get(comment.key())
+    if existing and existing.status == 'processing':
       comment.status = new_status
       comment.leased_until = None
       comment.save()

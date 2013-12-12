@@ -158,6 +158,11 @@ class Comment(KeyNameModel):
   leased_until = db.DateTimeProperty()
   updated = db.DateTimeProperty(auto_now=True)
 
+  # Original post links, ie webmention targets
+  sent = db.StringListProperty()
+  unsent = db.StringListProperty()
+  error = db.StringListProperty()
+
   @db.transactional
   def get_or_save(self):
     existing = db.get(self.key())

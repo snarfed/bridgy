@@ -125,4 +125,5 @@ class ModelsTest(HandlerTest):
       self.comments.append(Comment(key_name=comment['id'],
                                    activity_json=json.dumps(activity),
                                    comment_json=json.dumps(comment),
-                                   source=self.sources[0]))
+                                   source=self.sources[0],
+                                   unsent=['http://target1/post/url']))
