@@ -85,7 +85,7 @@ class DashboardHandler(util.Handler):
                    ' '.join(str(c.key()) for c in source.recent_comments))
 
     # sort sources by name
-    sources = sorted(sources.values(), key=lambda s: (s.name, s.DISPLAY_NAME))
+    sources = sorted(sources.values(), key=lambda s: (s.name.lower(), s.DISPLAY_NAME))
 
     for source in sources:
       logging.info('Comments for %s: %s', source.name,
