@@ -101,6 +101,7 @@ class Poll(webapp2.RequestHandler):
                        ).get_or_save()
 
     source.last_polled = now_fn()
+    source.status = 'enabled'
     util.add_poll_task(source, countdown=self.TASK_COUNTDOWN.seconds)
     source.save()
 

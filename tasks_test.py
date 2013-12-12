@@ -77,7 +77,7 @@ class PollTest(TaskQueueTest):
                      params['last_polled'])
 
   def test_poll_error(self):
-    """A normal poll task."""
+    """If anything goes wrong, the source status should be set to 'error'."""
     self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities')
     testutil.FakeSource.get_activities(count=mox.IgnoreArg(), fetch_replies=True
                                        ).AndRaise(Exception('foo'))
@@ -86,6 +86,15 @@ class PollTest(TaskQueueTest):
     self.assertRaises(Exception, self.post_task)
     source = db.get(self.sources[0].key())
     self.assertEqual('error', source.status)
+
+  def test_poll_error(self):
+    """After a successful poll, the source status should be set to 'enabled'."""
+    self.sources[0].status = 'error'
+    self.sources[0].save()
+
+    self.post_task()
+    source = db.get(self.sources[0].key())
+    self.assertEqual('enabled', source.status)
 
   def test_existing_comments(self):
     """Poll should be idempotent and not touch existing comment entities.

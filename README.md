@@ -34,7 +34,6 @@ Related work
 TODO
 ---
 
-* clear source error status on successful poll
 * link to targets in recent comments?
 * use app engine's app stats tracing to check that comments queries are parallelized
 * make front page sort case-independent
