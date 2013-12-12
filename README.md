@@ -34,8 +34,10 @@ Related work
 TODO
 ---
 
+* clear source error status on successful poll
 * link to targets in recent comments?
-* some FB picture posts aren't working, e.g. https://www.facebook.com/10100863177122923
+* use app engine's app stats tracing to check that comments queries are parallelized
+* make front page sort case-independent
 * likes/favorites. based on http://indiewebcamp.com/like and
   http://indiewebcamp.com/responses, it looks like it's just u-like and a
   webmention, similar to a reply and may not even need a u-in-reply-to.

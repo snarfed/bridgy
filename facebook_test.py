@@ -41,6 +41,9 @@ class FacebookPageTest(testutil.ModelsTest):
     self.expect_urlopen(
       'https://graph.facebook.com/212038/posts?offset=0&access_token=my_token',
       json.dumps({'data': [as_facebook_test.POST]}))
+    self.expect_urlopen(
+      'https://graph.facebook.com/me/photos/uploaded?access_token=my_token',
+      json.dumps({'data': []}))
     self.mox.ReplayAll()
 
     page = FacebookPage.new(self.handler, auth_entity=self.auth_entity)
