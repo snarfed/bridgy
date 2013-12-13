@@ -34,7 +34,6 @@ Related work
 TODO
 ---
 
-* link to targets in recent comments?
 * use app engine's app stats tracing to check that comments queries are parallelized
 * likes/favorites. based on http://indiewebcamp.com/like and
   http://indiewebcamp.com/responses, it looks like it's just u-like and a
@@ -48,13 +47,18 @@ TODO
   http://www.sandeep.io/35
   also maybe test against http://barryfrost.com/how-to-comment
 
-lower priority:
+Lower priority:
 
 * detect updated comments and send new webmentions for them
 * only handle public posts? (need to add privacy/audience detection to
   activitystreams-unofficial)
+* clear toast messages?
+
+Optimizations:
+
 * cache some API calls with a short expiration, e.g. twitter mentions
 * cache webmention discovery
 * cache served MF2 HTML and JSON with a short expiration. ideally include the
   cache expiration in the content.
-* clear toast messages?
+* ...and/or serve the comments (and activities?) directly from the datastore.
+  drawback is that we don't get updated content.

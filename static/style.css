@@ -89,7 +89,7 @@ form input {
     table-layout: fixed;
   }
 
-  #sources > .row > .col-sm-4, .comments > .row > .col-sm-4 {
+  #sources > .row > .col-sm-4, .comments > .row > .col-sm-3 {
     display: table-cell;
     float: none;
     text-align: left;
@@ -97,7 +97,7 @@ form input {
   }
 }
 
-.source-buttons {
+.source-buttons, .original-post {
   white-space: nowrap;
 }
 

@@ -75,10 +75,22 @@ class DashboardHandler(util.Handler):
         c.comment = json.loads(c.comment_json)
         c.activity = json.loads(c.activity_json)
         c.comment['published'] = util.parse_iso8601(c.comment['published'])
+
         # convert image URL to https if we're serving over SSL
         image_url = c.comment['author'].setdefault('image', {}).get('url')
         if image_url:
           c.comment['author']['image']['url'] = update_scheme(image_url)
+
+        # generate original post links
+        def link(url, glyphicon):
+          return ('<a target="_blank" class="original-post" href="%s">%s/...'
+                  '<span class="glyphicon glyphicon-%s"></span></a>' % (
+            url, util.domain_from_link(url), glyphicon))
+        c.links = (set(link(url, 'exclamation-sign') for url in c.error) |
+                   set(link(url, 'transfer') for url in c.unsent
+                             if url not in c.error) |
+                   set(link(url, 'ok-sign') for url in c.sent
+                       if url not in (c.error + c.unsent)))
 
     for source in sources.values():
       logging.info('Comments for %s: %s', source.name,
