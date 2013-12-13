@@ -34,6 +34,7 @@ Related work
 TODO
 ---
 
+* store and render 'skipped' targets. (test: http://instagram.com/p/hc1xLpp72X/)
 * use app engine's app stats tracing to check that comments queries are parallelized
 * likes/favorites. based on http://indiewebcamp.com/like and
   http://indiewebcamp.com/responses, it looks like it's just u-like and a
