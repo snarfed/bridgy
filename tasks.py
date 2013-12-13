@@ -166,6 +166,7 @@ class Propagate(webapp2.RequestHandler):
         if domain in WEBMENTION_BLACKLIST:
           logging.info("Skipping %s ; we know %s doesn't support webmentions",
                        target, domain)
+          comment.unsent.remove(target)
           continue
 
         # send! and handle response or error
@@ -181,7 +182,9 @@ class Propagate(webapp2.RequestHandler):
             self.fail('Error sending to endpoint: %s' % mention.error)
             comment.error.append(target)
 
-      comment.unsent = []
+        if target in comment.unsent:
+          comment.unsent.remove(target)
+
       if comment.error:
         logging.error('Propagate task failed')
         self.release_comment(comment, 'error')
