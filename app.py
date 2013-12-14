@@ -84,10 +84,15 @@ class DashboardHandler(util.Handler):
 
         # generate original post links
         def link(url, glyphicon=''):
+          parsed = urlparse.urlparse(url)
+          snippet = url[len(parsed.scheme) + 3:]  # strip scheme
+          max_len = max(20, len(parsed.netloc) + 1)
+          if len(snippet) > max_len + 3:
+            snippet = snippet[:max_len] + '...'
           if glyphicon:
             glyphicon = '<span class="glyphicon glyphicon-%s"></span>' % glyphicon
-          return ('<a target="_blank" class="original-post" href="%s">%s/... %s</a>'
-                  % (url, util.domain_from_link(url), glyphicon))
+          return ('<a target="_blank" class="original-post" href="%s">%s %s</a>'
+                  % (url, snippet, glyphicon))
 
         c.links = (
           set(link(url, 'exclamation-sign') for url in c.error) |
