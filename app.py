@@ -34,7 +34,8 @@ import webapp2
 
 
 def update_scheme(url):
-  # Instagram doesn't serve images over SSL, so switch to their S3 URL
+  # Instagram doesn't serve images over SSL, so switch to their S3 URL. (The
+  # http is converted to https by update_scheme()).
   # https://groups.google.com/d/msg/instagram-api-developers/fB4mwYXZF1c/q9n9gPO11JQJ
   url = re.sub('^http://images\.(ak\.)instagram\.com',
                'http://distillery.s3.amazonaws.com', url)
@@ -82,15 +83,16 @@ class DashboardHandler(util.Handler):
           c.comment['author']['image']['url'] = update_scheme(image_url)
 
         # generate original post links
-        def link(url, glyphicon):
-          return ('<a target="_blank" class="original-post" href="%s">%s/...'
-                  '<span class="glyphicon glyphicon-%s"></span></a>' % (
-            url, util.domain_from_link(url), glyphicon))
-        c.links = (set(link(url, 'exclamation-sign') for url in c.error) |
-                   set(link(url, 'transfer') for url in c.unsent
-                             if url not in c.error) |
-                   set(link(url, 'ok-sign') for url in c.sent
-                       if url not in (c.error + c.unsent)))
+        def link(url, glyphicon=''):
+          if glyphicon:
+            glyphicon = '<span class="glyphicon glyphicon-%s"></span>' % glyphicon
+          return ('<a target="_blank" class="original-post" href="%s">%s/... %s</a>'
+                  % (url, util.domain_from_link(url), glyphicon))
+
+        c.links = (
+          set(link(url, 'exclamation-sign') for url in c.error) |
+          set(link(url, 'transfer') for url in c.unsent if url not in c.error) |
+          set(link(url) for url in c.sent if url not in (c.error + c.unsent)))
 
     # sort sources by name
     sources = sorted(sources.values(), key=lambda s: (s.name.lower(), s.DISPLAY_NAME))

@@ -36,6 +36,7 @@ TODO
 
 * store and render 'skipped' targets. (test: http://instagram.com/p/hc1xLpp72X/)
 * use app engine's app stats tracing to check that comments queries are parallelized
+* replace t.co links with url entities
 * likes/favorites. based on http://indiewebcamp.com/like and
   http://indiewebcamp.com/responses, it looks like it's just u-like and a
   webmention, similar to a reply and may not even need a u-in-reply-to.
