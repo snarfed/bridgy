@@ -46,7 +46,7 @@ TODO
   looks like it's just a link with u-repost, e.g.
       <a class="u-repost" href="http://www.sandeep.io/39">
   e.g. http://sandeep.shetty.in/2013/06/indieweb-repost-test.html,
-  http://www.sandeep.io/35
+  http://www.sandeep.io/35, http://www.sandeep.io/34
   also maybe test against http://barryfrost.com/how-to-comment
 
 Lower priority:

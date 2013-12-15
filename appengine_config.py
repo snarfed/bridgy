@@ -10,3 +10,9 @@ from activitystreams.appengine_config import *
 # Called only if the current namespace is not set.
 # def namespace_manager_default_namespace_for_request():
 #   return 'webmention-dev'
+
+# uncomment for app stats
+# def webapp_add_wsgi_middleware(app):
+#   from google.appengine.ext.appstats import recording
+#   app = recording.appstats_wsgi_middleware(app)
+#   return app
