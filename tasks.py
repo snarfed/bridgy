@@ -31,11 +31,18 @@ import appengine_config
 
 # Known domains that don't support webmentions. Mainly just the silos.
 WEBMENTION_BLACKLIST = (
+  'amzn.com',
+  'amazon.com',
   'facebook.com',
+  'm.facebook.com',
   'instagram.com',
   'plus.google.com',
   'twitter.com',
+  # these come from the text of tweets. we also pull the expended URL
+  # from the tweet entities, so ignore these instead of resolving them.
   't.co',
+  'youtube.com',
+  'youtu.be',
   '', None,
   )
 
