@@ -92,7 +92,13 @@ below to try it yourself, or read <a href="/about">even more details.</a></p>
  </div><div class="col-sm-4">
   {% if source.recent_comments %}
     <a href="#" onclick="toggle('comments-{{ source.dom_id }}'); return false;">
-      Recent comments...</a>
+      Recent comments...
+    {% if source.recent_comment_status == "processing" %}
+     <span title="Processing" class="glyphicon glyphicon-transfer"></span>
+    {% else %}{% if source.recent_comment_status == "error" %}
+     <span title="Error" class="glyphicon glyphicon-exclamation-sign"></span>
+    {% endif %}{% endif %}
+    </a>
   {% else %}
     No comments yet
   {% endif %}

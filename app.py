@@ -72,6 +72,7 @@ class DashboardHandler(util.Handler):
       # convert image URL to https if we're serving over SSL
       source.picture = update_scheme(source.picture)
       source.recent_comments = list(source.recent_comments)
+      source.recent_comment_status = None
       for c in source.recent_comments:
         c.comment = json.loads(c.comment_json)
         c.activity = json.loads(c.activity_json)
@@ -98,6 +99,11 @@ class DashboardHandler(util.Handler):
           set(link(url, 'exclamation-sign') for url in c.error) |
           set(link(url, 'transfer') for url in c.unsent if url not in c.error) |
           set(link(url) for url in c.sent if url not in (c.error + c.unsent)))
+
+        if c.error:
+          source.recent_comment_status = 'error'
+        elif c.unsent and not source.recent_comment_status:
+          source.recent_comment_status = 'processing'
 
     # sort sources by name
     sources = sorted(sources.values(), key=lambda s: (s.name.lower(), s.DISPLAY_NAME))
