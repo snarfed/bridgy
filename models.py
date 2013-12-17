@@ -46,6 +46,7 @@ class Site(KeyNameModel):
                       existing.label(), new.key(), new.to_xml())
       new_msg = "Updated %s. Refresh to see what's new!" % existing.label()
     else:
+      logging.info('Added %s %s %s', new.label(), new.key().name(), new.key())
       new_msg = "Added %s. Refresh to see what we've found!" % new.label()
 
     handler.messages = set([urllib.quote_plus(new_msg)])
