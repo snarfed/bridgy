@@ -42,6 +42,7 @@ class Handler(webapp2.RequestHandler):
     target = util.get_required_param(self, 'target')
     url = util.add_query_params('http://pin13.net/mf2/', {'url': source})
     urllib2.urlopen(url, timeout=999)
+    self.abort(403, 'Sorry, not implemented yet.')
 
 
 application = webapp2.WSGIApplication([
