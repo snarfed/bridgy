@@ -10,7 +10,7 @@ import json
 import urlparse
 
 from activitystreams import source as as_source
-from models import Comment, Source
+from models import Response, Source
 from tasks import Poll, Propagate
 import util
 from webutil import testutil
@@ -46,10 +46,6 @@ class FakeBase(db.Model):
 
 
 class FakeSource(FakeBase, Source):
-  """Attributes:
-    comments: dict mapping FakeSource string key to list of activities to be
-      returned by get_activities()
-  """
   DISPLAY_NAME = 'FakeSource'
   SHORT_NAME = 'fake'
   # class attr. maps (string source key, type name) to object or list.
@@ -104,11 +100,11 @@ class HandlerTest(testutil.HandlerTest):
 
 
 class ModelsTest(HandlerTest):
-  """Sets up some test sources and comments.
+  """Sets up some test sources and responses.
 
   Attributes:
     sources: list of FakeSource
-    comments: list of unsaved Comment
+    responses: list of unsaved Response
     taskqueue_stub: the app engine task queue api proxy stub
   """
 
@@ -139,11 +135,12 @@ class ModelsTest(HandlerTest):
       } for id in ('a', 'b', 'c')]
     self.sources[0].set_activities(self.activities)
 
-    self.comments = []
+    self.responses = []
     for activity in self.activities:
       comment = activity['object']['replies']['items'][0]
-      self.comments.append(Comment(key_name=comment['id'],
-                                   activity_json=json.dumps(activity),
-                                   comment_json=json.dumps(comment),
-                                   source=self.sources[0],
-                                   unsent=['http://target1/post/url']))
+      self.responses.append(Response(key_name=comment['id'],
+                                     type='comment',
+                                     activity_json=json.dumps(activity),
+                                     response_json=json.dumps(comment),
+                                     source=self.sources[0],
+                                     unsent=['http://target1/post/url']))

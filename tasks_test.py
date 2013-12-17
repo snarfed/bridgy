@@ -51,17 +51,17 @@ class PollTest(TaskQueueTest):
     self.task_params = {'source_key': self.sources[0].key(),
                         'last_polled': '1970-01-01-00-00-00'}
 
-  def assert_comments(self):
-    """Asserts that all of self.comments are saved."""
-    self.assert_entities_equal(self.comments, models.Comment.all())
+  def assert_responses(self):
+    """Asserts that all of self.responses are saved."""
+    self.assert_entities_equal(self.responses, models.Response.all())
 
   def test_poll(self):
     """A normal poll task."""
-    self.assertEqual([], list(models.Comment.all()))
+    self.assertEqual([], list(models.Response.all()))
     self.assertEqual([], self.taskqueue_stub.GetTasks('poll'))
 
     self.post_task()
-    self.assert_comments()
+    self.assert_responses()
 
     source = db.get(self.sources[0].key())
     self.assertEqual(NOW, source.last_polled)
@@ -108,17 +108,17 @@ class PollTest(TaskQueueTest):
 
     self.post_task()
     expected = ['http://tar.get/%s' % i for i in 'a', 'b', 'c', 'd']
-    self.assertEquals(expected, db.get(self.comments[0].key()).unsent)
+    self.assertEquals(expected, db.get(self.responses[0].key()).unsent)
 
-  def test_existing_comments(self):
-    """Poll should be idempotent and not touch existing comment entities.
+  def test_existing_responses(self):
+    """Poll should be idempotent and not touch existing response entities.
     """
-    self.comments[0].status = 'complete'
-    self.comments[0].save()
+    self.responses[0].status = 'complete'
+    self.responses[0].save()
 
     self.post_task()
-    self.assert_comments()
-    self.assertEqual('complete', db.get(self.comments[0].key()).status)
+    self.assert_responses()
+    self.assertEqual('complete', db.get(self.responses[0].key()).status)
 
   def test_wrong_last_polled(self):
     """If the source doesn't have our last polled value, we should quit.
@@ -126,7 +126,7 @@ class PollTest(TaskQueueTest):
     self.sources[0].last_polled = datetime.datetime.utcfromtimestamp(3)
     self.sources[0].save()
     self.post_task()
-    self.assertEqual([], list(models.Comment.all()))
+    self.assertEqual([], list(models.Response.all()))
 
   def test_no_source(self):
     """If the source doesn't exist, do nothing and let the task die.
@@ -157,10 +157,10 @@ class PropagateTest(TaskQueueTest):
 
   def setUp(self):
     super(PropagateTest, self).setUp()
-    self.comments[0].save()
-    self.task_params = {'comment_key': self.comments[0].key()}
+    self.responses[0].save()
+    self.task_params = {'response_key': self.responses[0].key()}
     self.local_url = 'http://localhost/comment/fake/%s/000/1_2_a' % \
-      self.comments[0].source.key().name()
+      self.responses[0].source.key().name()
     self.mock_webmention()
 
   def mock_webmention(self):
@@ -174,16 +174,16 @@ class PropagateTest(TaskQueueTest):
     self.mock_send = self.mock_sends[0]
     self.mox.StubOutWithMock(send, 'WebmentionSend', use_mock_anything=True)
 
-  def assert_comment_is(self, status, leased_until=False, sent=[], error=[]):
-    """Asserts that comments[0] has the given values in the datastore.
+  def assert_response_is(self, status, leased_until=False, sent=[], error=[]):
+    """Asserts that responses[0] has the given values in the datastore.
     """
-    comment = db.get(self.comments[0].key())
-    self.assertEqual(status, comment.status)
+    response = db.get(self.responses[0].key())
+    self.assertEqual(status, response.status)
     if leased_until is not False:
-      self.assertEqual(leased_until, comment.leased_until)
-    self.assert_equals([], comment.unsent)
-    self.assert_equals(sent, comment.sent)
-    self.assert_equals(error, comment.error)
+      self.assertEqual(leased_until, response.leased_until)
+    self.assert_equals([], response.unsent)
+    self.assert_equals(sent, response.sent)
+    self.assert_equals(error, response.error)
 
   def expect_webmention(self, target_url='http://target1/post/url'):
     send.WebmentionSend(self.local_url, target_url).InAnyOrder().AndReturn(self.mock_send)
@@ -191,30 +191,30 @@ class PropagateTest(TaskQueueTest):
 
   def test_propagate(self):
     """A normal propagate task."""
-    self.assertEqual('new', self.comments[0].status)
+    self.assertEqual('new', self.responses[0].status)
 
     self.expect_webmention().AndReturn(True)
     self.mox.ReplayAll()
     self.post_task()
-    self.assert_comment_is('complete', NOW + Propagate.LEASE_LENGTH,
+    self.assert_response_is('complete', NOW + Propagate.LEASE_LENGTH,
                            sent=['http://target1/post/url'])
 
   def test_propagate_from_error(self):
-    """A normal propagate task, with a comment starting as 'error'."""
-    self.comments[0].status = 'error'
-    self.comments[0].save()
+    """A normal propagate task, with a response starting as 'error'."""
+    self.responses[0].status = 'error'
+    self.responses[0].save()
 
     self.expect_webmention().AndReturn(True)
     self.mox.ReplayAll()
     self.post_task()
-    self.assert_comment_is('complete', NOW + Propagate.LEASE_LENGTH,
+    self.assert_response_is('complete', NOW + Propagate.LEASE_LENGTH,
                            sent=['http://target1/post/url'])
 
   def test_multiple_targets(self):
     """We should send webmentions to the unsent and error targets."""
-    self.comments[0].error = ['http://target2/x', 'http://target3/y']
-    self.comments[0].sent = ['http://target4/z']
-    self.comments[0].save()
+    self.responses[0].error = ['http://target2/x', 'http://target3/y']
+    self.responses[0].sent = ['http://target4/z']
+    self.responses[0].save()
 
     self.expect_webmention('http://target1/post/url').InAnyOrder().AndReturn(True)
     self.mock_send.error = {'code': 'RECEIVER_ERROR'}
@@ -225,57 +225,57 @@ class PropagateTest(TaskQueueTest):
 
     self.mox.ReplayAll()
     self.post_task(expected_status=Propagate.ERROR_HTTP_RETURN_CODE)
-    comment = db.get(self.comments[0].key())
-    self.assert_comment_is('error',
+    response = db.get(self.responses[0].key())
+    self.assert_response_is('error',
                            sent=['http://target1/post/url', 'http://target4/z'],
                            error=['http://target2/x'])
 
   def test_no_targets(self):
     """No target URLs."""
-    self.comments[0].unsent = []
-    self.comments[0].save()
+    self.responses[0].unsent = []
+    self.responses[0].save()
 
     self.mox.ReplayAll()
     self.post_task()
-    self.assert_comment_is('complete', NOW + Propagate.LEASE_LENGTH)
+    self.assert_response_is('complete', NOW + Propagate.LEASE_LENGTH)
 
   def test_already_complete(self):
-    """If the comment has already been propagated, do nothing."""
-    self.comments[0].status = 'complete'
-    self.comments[0].save()
+    """If the response has already been propagated, do nothing."""
+    self.responses[0].status = 'complete'
+    self.responses[0].save()
 
     self.post_task()
-    self.assert_comment_is('complete')
+    self.assert_response_is('complete')
 
   def test_leased(self):
-    """If the comment is processing and the lease hasn't expired, do nothing."""
-    self.comments[0].status = 'processing'
+    """If the response is processing and the lease hasn't expired, do nothing."""
+    self.responses[0].status = 'processing'
     leased_until = NOW + datetime.timedelta(minutes=1)
-    self.comments[0].leased_until = leased_until
-    self.comments[0].save()
+    self.responses[0].leased_until = leased_until
+    self.responses[0].save()
 
     self.post_task(expected_status=Propagate.ERROR_HTTP_RETURN_CODE)
-    self.assert_comment_is('processing', leased_until)
+    self.assert_response_is('processing', leased_until)
 
-    comment = db.get(self.comments[0].key())
-    self.assertEqual('processing', comment.status)
-    self.assertEqual(leased_until, comment.leased_until)
+    response = db.get(self.responses[0].key())
+    self.assertEqual('processing', response.status)
+    self.assertEqual(leased_until, response.leased_until)
 
   def test_lease_expired(self):
-    """If the comment is processing but the lease has expired, process it."""
-    self.comments[0].status = 'processing'
-    self.comments[0].leased_until = NOW - datetime.timedelta(minutes=1)
-    self.comments[0].save()
+    """If the response is processing but the lease has expired, process it."""
+    self.responses[0].status = 'processing'
+    self.responses[0].leased_until = NOW - datetime.timedelta(minutes=1)
+    self.responses[0].save()
 
     self.expect_webmention().AndReturn(True)
     self.mox.ReplayAll()
     self.post_task()
-    self.assert_comment_is('complete', NOW + Propagate.LEASE_LENGTH,
+    self.assert_response_is('complete', NOW + Propagate.LEASE_LENGTH,
                            sent=['http://target1/post/url'])
 
-  def test_no_comment(self):
-    """If the comment doesn't exist, the request should fail."""
-    self.comments[0].delete()
+  def test_no_response(self):
+    """If the response doesn't exist, the request should fail."""
+    self.responses[0].delete()
     self.post_task(expected_status=Propagate.ERROR_HTTP_RETURN_CODE)
 
   def test_webmention_fail(self):
@@ -284,8 +284,8 @@ class PropagateTest(TaskQueueTest):
                           ('BAD_TARGET_URL', False),
                           ('RECEIVER_ERROR', False)):
       self.mox.UnsetStubs()
-      self.comments[0].status = 'new'
-      self.comments[0].save()
+      self.responses[0].status = 'new'
+      self.responses[0].save()
       self.mock_webmention()
       self.expect_webmention().AndReturn(False)
       self.mock_send.error = {'code': code}
@@ -295,22 +295,22 @@ class PropagateTest(TaskQueueTest):
       expected_status = 200 if give_up else Propagate.ERROR_HTTP_RETURN_CODE
       self.post_task(expected_status=expected_status)
       if give_up:
-        self.assert_comment_is('complete')
+        self.assert_response_is('complete')
       else:
-        self.assert_comment_is('error', error=['http://target1/post/url'])
+        self.assert_response_is('error', error=['http://target1/post/url'])
       self.mox.VerifyAll()
 
   def test_webmention_fail_and_succeed(self):
     """All webmentions should be attempted, but any failure sets error status."""
-    self.comments[0].unsent = ['http://first', 'http://second']
-    self.comments[0].save()
+    self.responses[0].unsent = ['http://first', 'http://second']
+    self.responses[0].save()
     self.mock_send.error = {'code': 'FOO'}
     self.expect_webmention('http://first').AndReturn(False)
     self.expect_webmention('http://second').AndReturn(True)
 
     self.mox.ReplayAll()
     self.post_task(expected_status=Propagate.ERROR_HTTP_RETURN_CODE)
-    self.assert_comment_is('error', None, error=['http://first'],
+    self.assert_response_is('error', None, error=['http://first'],
                            sent=['http://second'])
 
   def test_webmention_exception(self):
@@ -319,23 +319,23 @@ class PropagateTest(TaskQueueTest):
     self.mox.ReplayAll()
 
     self.post_task(expected_status=500)
-    self.assert_comment_is('error', None)
+    self.assert_response_is('error', None)
 
   def test_lease_exception(self):
     """If leasing raises an exception, the lease should be released."""
-    self.mox.StubOutWithMock(Propagate, 'lease_comment')
-    Propagate.lease_comment().AndRaise(Exception('foo'))
+    self.mox.StubOutWithMock(Propagate, 'lease_response')
+    Propagate.lease_response().AndRaise(Exception('foo'))
     self.mox.ReplayAll()
 
     self.post_task(expected_status=500)
-    self.assert_comment_is('new', None)
+    self.assert_response_is('new', None)
 
   def test_complete_exception(self):
     """If completing raises an exception, the lease should be released."""
     self.expect_webmention().AndReturn(True)
-    self.mox.StubOutWithMock(Propagate, 'complete_comment')
-    Propagate.complete_comment().AndRaise(Exception('foo'))
+    self.mox.StubOutWithMock(Propagate, 'complete_response')
+    Propagate.complete_response().AndRaise(Exception('foo'))
     self.mox.ReplayAll()
 
     self.post_task(expected_status=500)
-    self.assert_comment_is('error', None, sent=['http://target1/post/url'])
+    self.assert_response_is('error', None, sent=['http://target1/post/url'])

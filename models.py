@@ -149,17 +149,18 @@ class Source(Site):
     return new
 
 
-class Comment(KeyNameModel):
-  """A comment to be propagated.
+class Response(KeyNameModel):
+  """A comment, like, or repost to be propagated.
 
-  The key name is the comment id as a tag URI.
+  The key name is the commentobject id as a tag URI.
   """
+  TYPES = ('comment', 'like', 'repost')
   STATUSES = ('new', 'processing', 'complete', 'error')
 
-  # ActivityStreams JSON activity and comment. sources may store extra
-  # source-specific properties.
+  # ActivityStreams JSON activity and comment, like, or repost
+  type = db.StringProperty(choices=TYPES, default='comment')
   activity_json = db.TextProperty()
-  comment_json = db.TextProperty()
+  response_json = db.TextProperty()
   source = db.ReferenceProperty()
   status = db.StringProperty(choices=STATUSES, default='new')
   leased_until = db.DateTimeProperty()
@@ -174,7 +175,7 @@ class Comment(KeyNameModel):
   def get_or_save(self):
     existing = db.get(self.key())
     if existing:
-      # logging.debug('Deferring to existing comment %s.', existing.key().name())
+      # logging.debug('Deferring to existing response %s.', existing.key().name())
       # this might be a nice sanity check, but we'd need to hard code certain
       # properties (e.g. content) so others (e.g. status) aren't checked.
       # for prop in self.properties().values():
@@ -183,13 +184,19 @@ class Comment(KeyNameModel):
       #   assert new == existing, '%s: new %s, existing %s' % (prop, new, existing)
       return existing
 
-    obj = json.loads(self.comment_json)
-    logging.debug('New comment to propagate! %s %r %s',
-                  self.kind(), self.key().id_or_name(),
-                  obj.get('url', obj.get('id')))
-    taskqueue.add(queue_name='propagate', params={'comment_key': str(self.key())})
+    obj = json.loads(self.response_json)
+    self.type = obj.get('objectType')
+    if self.type == 'activity':
+      self.type = obj.get('verb')
+
+    logging.debug('New response to propagate! %s %r %s', self.type,
+                  self.key().id_or_name(), obj.get('url', obj.get('id')))
+    taskqueue.add(queue_name='propagate', params={'response_key': str(self.key())})
     self.save()
     return self
+
+
+Comment = Response  # backward compatibility. TODO: remove
 
 
 class DisableSource(Exception):

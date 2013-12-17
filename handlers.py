@@ -7,6 +7,12 @@ URL paths are:
 
 /comment/SITE/USER_ID/POST_ID/COMMENT_ID
   e.g. /comment/twitter/snarfed_org/10100823411094363/999999
+
+/like/SITE/USER_ID/POST_ID/LIKED_BY_USER_ID
+  e.g. /like/twitter/snarfed_org/10100823411094363/999999
+
+/repost/SITE/USER_ID/POST_ID/REPOSTED_BY_USER_ID
+  e.g. /repost/twitter/snarfed_org/10100823411094363/999999
 """
 
 import json
@@ -40,7 +46,7 @@ class ItemHandler(webapp2.RequestHandler):
   handle_exception = handlers.handle_exception
 
   def get_item(source, id):
-    """Fetches and returns a post or comment from the given source.
+    """Fetches and returns an object from the given source.
 
     To be implemented by subclasses.
 

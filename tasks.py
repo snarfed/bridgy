@@ -51,13 +51,13 @@ now_fn = datetime.datetime.now
 
 
 class Poll(webapp2.RequestHandler):
-  """Task handler that fetches and processes new comments from a single source.
+  """Task handler that fetches and processes new responses from a single source.
 
   Request parameters:
     source_key: string key of source entity
     last_polled: timestamp, YYYY-MM-DD-HH-MM-SS
 
-  Inserts a propagate task for each comment that hasn't been seen before.
+  Inserts a propagate task for each response that hasn't been seen before.
   """
 
   TASK_COUNTDOWN = datetime.timedelta(minutes=15)
@@ -103,18 +103,19 @@ class Poll(webapp2.RequestHandler):
       logging.info('Discovered original post URLs: %s', targets)
 
       # remove replies from activity JSON so we don't store them all in every
-      # Comment entity.
+      # Response entity.
       replies = activity['object'].pop('replies', {}).get('items', [])
-      logging.info('Found %d comments for activity %s', len(replies),
+      logging.info('Found %d responses for activity %s', len(replies),
                    activity.get('url'))
 
       for reply in replies:
-        models.Comment(key_name=reply['id'],
-                       source=source,
-                       activity_json=json.dumps(activity),
-                       comment_json=json.dumps(reply),
-                       unsent=targets,
-                       ).get_or_save()
+        models.Response(key_name=reply['id'],
+                        type='comment',
+                        source=source,
+                        activity_json=json.dumps(activity),
+                        response_json=json.dumps(reply),
+                        unsent=targets,
+                        ).get_or_save()
 
     source.last_polled = now_fn()
     source.status = 'enabled'
@@ -123,10 +124,10 @@ class Poll(webapp2.RequestHandler):
 
 
 class Propagate(webapp2.RequestHandler):
-  """Task handler that sends a webmention for a single comment.
+  """Task handler that sends a webmention for a single response.
 
   Request parameters:
-    comment_key: string key of comment entity
+    response_key: string key of response entity
   """
 
   # request deadline (10m) plus some padding
@@ -138,30 +139,30 @@ class Propagate(webapp2.RequestHandler):
     logging.debug('Params: %s', self.request.params)
 
     try:
-      comment = self.lease_comment()
+      response = self.lease_response()
     except:
-      logging.exception('Could not lease comment')
-      self.release_comment('new')
+      logging.exception('Could not lease response')
+      self.release_response('new')
       raise
 
-    if not comment:
+    if not response:
       return
 
     try:
-      _, comment_id = util.parse_tag_uri(comment.key().name())
-      logging.info('Starting %s comment %s',
-                   comment.source.kind(), comment.key().name())
+      _, response_id = util.parse_tag_uri(response.key().name())
+      logging.info('Starting %s response %s',
+                   response.source.kind(), response.key().name())
 
-      # generate local comment URL
-      activity = json.loads(comment.activity_json)
+      # generate local response URL
+      activity = json.loads(response.activity_json)
       _, post_id = util.parse_tag_uri(activity['id'])
-      local_comment_url = '%s/comment/%s/%s/%s/%s' % (
-        self.request.host_url, comment.source.SHORT_NAME,
-        comment.source.key().name(), post_id, comment_id)
+      local_response_url = '%s/%s/%s/%s/%s/%s' % (
+        self.request.host_url, response.type, response.source.SHORT_NAME,
+        response.source.key().name(), post_id, response_id)
 
       # send each webmention
-      unsent = set(comment.unsent + comment.error)
-      comment.error = []
+      unsent = set(response.unsent + response.error)
+      response.error = []
       for target in unsent:
         # When debugging locally, redirect my (snarfed.org) webmentions to localhost
         if appengine_config.DEBUG and target.startswith('http://snarfed.org/'):
@@ -173,90 +174,90 @@ class Propagate(webapp2.RequestHandler):
         if domain in WEBMENTION_BLACKLIST:
           logging.info("Skipping %s ; we know %s doesn't support webmentions",
                        target, domain)
-          comment.unsent.remove(target)
+          response.unsent.remove(target)
           continue
 
         # send! and handle response or error
-        mention = send.WebmentionSend(local_comment_url, target)
-        logging.info('Sending webmention from %s to %s', local_comment_url, target)
+        mention = send.WebmentionSend(local_response_url, target)
+        logging.info('Sending webmention from %s to %s', local_response_url, target)
         if mention.send(timeout=999):
           logging.info('Sent! %s', mention.response)
-          comment.sent.append(target)
+          response.sent.append(target)
         else:
           if mention.error['code'] == 'NO_ENDPOINT':
             logging.info('Giving up this target. %s', mention.error)
           else:
             self.fail('Error sending to endpoint: %s' % mention.error)
-            comment.error.append(target)
+            response.error.append(target)
 
-        if target in comment.unsent:
-          comment.unsent.remove(target)
+        if target in response.unsent:
+          response.unsent.remove(target)
 
-      if comment.error:
+      if response.error:
         logging.error('Propagate task failed')
-        self.release_comment(comment, 'error')
+        self.release_response(response, 'error')
       else:
-        self.complete_comment(comment)
+        self.complete_response(response)
 
     except:
       logging.exception('Propagate task failed')
-      self.release_comment(comment, 'error')
+      self.release_response(response, 'error')
       raise
 
   @db.transactional
-  def lease_comment(self):
-    """Attempts to acquire and lease the comment entity.
+  def lease_response(self):
+    """Attempts to acquire and lease the response entity.
 
-    Returns the Comment on success, otherwise None.
+    Returns the Response on success, otherwise None.
 
-    TODO: unify with complete_comment
+    TODO: unify with complete_response
     """
-    comment = db.get(self.request.params['comment_key'])
+    response = db.get(self.request.params['response_key'])
 
-    if comment is None:
-      self.fail('no comment entity!')
-    elif comment.status == 'complete':
+    if response is None:
+      self.fail('no response entity!')
+    elif response.status == 'complete':
       # let this response return 200 and finish
-      logging.warning('duplicate task already propagated comment')
-    elif comment.status == 'processing' and now_fn() < comment.leased_until:
+      logging.warning('duplicate task already propagated response')
+    elif response.status == 'processing' and now_fn() < response.leased_until:
       self.fail('duplicate task is currently processing!')
     else:
-      assert comment.status in ('new', 'processing', 'error')
-      comment.status = 'processing'
-      comment.leased_until = now_fn() + self.LEASE_LENGTH
-      comment.save()
-      return comment
+      assert response.status in ('new', 'processing', 'error')
+      response.status = 'processing'
+      response.leased_until = now_fn() + self.LEASE_LENGTH
+      response.save()
+      return response
 
   @db.transactional
-  def complete_comment(self, comment):
-    """Attempts to mark the comment entity completed.
+  def complete_response(self, response):
+    """Attempts to mark the response entity completed.
 
     Returns True on success, False otherwise.
     """
-    existing = db.get(comment.key())
+    existing = db.get(response.key())
     if existing is None:
-      self.fail('comment entity disappeared!')
+      self.fail('response entity disappeared!')
     elif existing.status == 'complete':
       # let this response return 200 and finish
-      logging.warning('comment stolen and finished. did my lease expire?')
+      logging.warning('response stolen and finished. did my lease expire?')
       return False
     elif existing.status == 'new':
-      self.fail('comment went backward from processing to new!')
+      self.fail('response went backward from processing to new!')
 
-    assert comment.status == 'processing'
-    comment.status = 'complete'
-    comment.save()
+    assert response.status == 'processing'
+    response.status = 'complete'
+    response.save()
     return True
 
   @db.transactional
-  def release_comment(self, comment, new_status):
-    """Attempts to unlease the comment entity.
+  def release_response(self, response, new_status):
+    """Attempts to unlease the response entity.
     """
-    existing = db.get(comment.key())
+    existing = db.get(response.key())
     if existing and existing.status == 'processing':
-      comment.status = new_status
-      comment.leased_until = None
-      comment.save()
+      response.status = new_status
+      response.leased_until = None
+      response.save()
 
   def fail(self, message):
     """Fills in an error response status code and message.

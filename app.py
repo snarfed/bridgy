@@ -63,26 +63,26 @@ class DashboardHandler(util.Handler):
     if deleted in sources:
       del sources[deleted]
 
-    # kick off queries for recent comments for each source. all queries run
+    # kick off queries for recent responses for each source. all queries run
     # async, in parallel.
     for source in sources.values():
-      source.recent_comments = source.comment_set.order('-updated').run(limit=5)
+      source.recent_responses = source.response_set.order('-updated').run(limit=5)
 
     # now wait on query results
     for source in sources.values():
       # convert image URL to https if we're serving over SSL
       source.picture = update_scheme(source.picture)
-      source.recent_comments = list(source.recent_comments)
-      source.recent_comment_status = None
-      for c in source.recent_comments:
-        c.comment = json.loads(c.comment_json)
+      source.recent_responses = list(source.recent_responses)
+      source.recent_response_status = None
+      for c in source.recent_responses:
+        c.response = json.loads(c.response_json)
         c.activity = json.loads(c.activity_json)
-        c.comment['published'] = util.parse_iso8601(c.comment['published'])
+        c.response['published'] = util.parse_iso8601(c.response['published'])
 
         # convert image URL to https if we're serving over SSL
-        image_url = c.comment['author'].setdefault('image', {}).get('url')
+        image_url = c.response['author'].setdefault('image', {}).get('url')
         if image_url:
-          c.comment['author']['image']['url'] = update_scheme(image_url)
+          c.response['author']['image']['url'] = update_scheme(image_url)
 
         # generate original post links
         def link(url, glyphicon=''):
@@ -102,9 +102,9 @@ class DashboardHandler(util.Handler):
           set(link(url) for url in c.sent if url not in (c.error + c.unsent)))
 
         if c.error:
-          source.recent_comment_status = 'error'
-        elif c.unsent and not source.recent_comment_status:
-          source.recent_comment_status = 'processing'
+          source.recent_response_status = 'error'
+        elif c.unsent and not source.recent_response_status:
+          source.recent_response_status = 'processing'
 
     # sort sources by name
     sources = sorted(sources.values(), key=lambda s: (s.name.lower(), s.DISPLAY_NAME))

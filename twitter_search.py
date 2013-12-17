@@ -233,7 +233,7 @@ class TwitterSearch(models.Source):
     return text
 
 
-class TwitterReply(models.Comment):
+class TwitterReply(models.Response):
   """Key name is the tweet (aka status) id.
   """
 

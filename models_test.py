@@ -5,7 +5,7 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import urllib
 
-from models import Comment, Source
+from models import Response, Source
 import testutil
 from testutil import FakeSource
 import util
@@ -15,25 +15,25 @@ from google.appengine.api import users
 from google.appengine.ext import testbed
 
 
-class CommentTest(testutil.ModelsTest):
+class ResponseTest(testutil.ModelsTest):
 
   def test_get_or_save(self):
     self.sources[0].save()
 
-    comment = self.comments[0]
-    self.assertEqual(0, Comment.all().count())
+    response = self.responses[0]
+    self.assertEqual(0, Response.all().count())
     self.assertEqual(0, len(self.taskqueue_stub.GetTasks('propagate')))
 
     # new. should add a propagate task.
-    saved = comment.get_or_save()
+    saved = response.get_or_save()
     self.assertTrue(saved.is_saved())
-    self.assertEqual(comment.key(), saved.key())
-    self.assertEqual(comment.source, saved.source)
+    self.assertEqual(response.key(), saved.key())
+    self.assertEqual(response.source, saved.source)
 
     tasks = self.taskqueue_stub.GetTasks('propagate')
     self.assertEqual(1, len(tasks))
-    self.assertEqual(str(comment.key()),
-                     testutil.get_task_params(tasks[0])['comment_key'])
+    self.assertEqual(str(response.key()),
+                     testutil.get_task_params(tasks[0])['response_key'])
     self.assertEqual('/_ah/queue/propagate', tasks[0]['url'])
 
     # existing. no new task.
@@ -42,7 +42,8 @@ class CommentTest(testutil.ModelsTest):
     self.assertEqual(1, len(tasks))
 
   def test_dom_id(self):
-    self.assertEqual('FakeSource-1', self.sources[0].dom_id())
+    self.assertEqual('FakeSource-%s' % self.sources[0].key().name(),
+                     self.sources[0].dom_id())
 
 
 class SourceTest(testutil.HandlerTest):
