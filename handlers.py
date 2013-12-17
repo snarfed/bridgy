@@ -58,8 +58,9 @@ class ItemHandler(webapp2.RequestHandler):
     """
     raise NotImplementedError()
 
-  def get(self, source_short_name, key_name, *ids):
-    logging.info('Fetching %s:%s object %s', source_short_name, key_name, ids)
+  def get(self, type, source_short_name, key_name, *ids):
+    label = '%s:%s %s %s' % (source_short_name, key_name, type, ids)
+    logging.info('Fetching %s', label)
 
     source_cls = SOURCES.get(source_short_name, '')
     key = db.Key.from_path(source_cls.kind(), key_name)
@@ -73,7 +74,7 @@ class ItemHandler(webapp2.RequestHandler):
 
     obj = self.get_item(source, *ids)
     if not obj:
-      self.abort(404, 'Object %s not found' % ids)
+      self.abort(404, label)
 
     self.response.headers['Access-Control-Allow-Origin'] = '*'
     if format == 'html':
@@ -81,7 +82,12 @@ class ItemHandler(webapp2.RequestHandler):
       self.response.out.write("""\
 <!DOCTYPE html>
 <html>
-<head><link rel="canonical" href="%s" /></head>
+<head>
+<link rel="canonical" href="%s" />
+<style type="text/css">
+.u-uid { display: none; }
+</style>
+</head>
 %s
 </html>
 """ % (obj.get('url', ''), microformats2.object_to_html(obj)))
@@ -132,17 +138,17 @@ class CommentHandler(ItemHandler):
 
 class LikeHandler(ItemHandler):
   def get_item(self, source, post_id, user_id):
-    return source.get_like(user_id, post_id)
+    return source.as_source.get_like(user_id, post_id)
 
 
 class RepostHandler(ItemHandler):
   def get_item(self, source, post_id, user_id):
-    return source.get_repost(user_id, post_id)
+    return source.as_source.get_repost(user_id, post_id)
 
 
 application = webapp2.WSGIApplication([
-    ('/post/(.+)/(.+)/(.+)', PostHandler),
-    ('/comment/(.+)/(.+)/(.+)/(.+)', CommentHandler),
-    ('/like/(.+)/(.+)/(.+)/(.+)', LikeHandler),
-    ('/repost/(.+)/(.+)/(.+)/(.+)', RepostHandler),
+    ('/(post)/(.+)/(.+)/(.+)', PostHandler),
+    ('/(comment)/(.+)/(.+)/(.+)/(.+)', CommentHandler),
+    ('/(like)/(.+)/(.+)/(.+)/(.+)', LikeHandler),
+    ('/(repost)/(.+)/(.+)/(.+)/(.+)', RepostHandler),
     ], debug=appengine_config.DEBUG)
