@@ -140,3 +140,34 @@ class HandlersTest(testutil.HandlerTest):
 </html>
 """, resp.body)
 
+  def test_get_repost_html(self):
+    self.source.set_repost({
+        'objectType': 'activity',
+        'verb': 'share',
+        'id': 'tag:fake.com,2013:111',
+        'object': {'url': 'http://example.com/original/post'},
+        })
+
+    resp = handlers.application.get_response('/repost/fake/%s/000/111' %
+                                             self.source.key().name())
+    self.assertEqual(200, resp.status_int, resp.body)
+    self.assert_equals("""\
+<!DOCTYPE html>
+<html>
+<head><link rel="canonical" href="" /></head>
+<article class="h-entry h-as-repost">
+<span class="u-uid">tag:fake.com,2013:111</span>
+
+<time class="dt-published" datetime=""></time>
+<time class="dt-updated" datetime=""></time>
+
+  <div class="e-content">
+  reposts <a class="u-repost" href="http://example.com/original/post">this</a>.
+
+  </div>
+
+</article>
+
+</html>
+""", resp.body)
+

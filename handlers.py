@@ -129,9 +129,14 @@ class LikeHandler(ItemHandler):
     return source.get_like(user_id, post_id)
 
 
+class RepostHandler(ItemHandler):
+  def get_item(self, source, post_id, user_id):
+    return source.get_repost(user_id, post_id)
+
+
 application = webapp2.WSGIApplication([
     ('/post/(.+)/(.+)/(.+)', PostHandler),
     ('/comment/(.+)/(.+)/(.+)/(.+)', CommentHandler),
     ('/like/(.+)/(.+)/(.+)/(.+)', LikeHandler),
-    # ('/repost/(.+)/(.+)/(.+)/(.+)', RepostHandler),
+    ('/repost/(.+)/(.+)/(.+)/(.+)', RepostHandler),
     ], debug=appengine_config.DEBUG)
