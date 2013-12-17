@@ -51,11 +51,12 @@ below to try it yourself, or read <a href="/about">even more details.</a></p>
 
 <div id="{{ source.dom_id }}" class="row">
  <div class="col-sm-4">
-  <a target="_blank" href="{{ source.url }}">
+  <a target="_blank" href="{{ source.url }}"
+     title="{{ source.DISPLAY_NAME }}: {{ source.name|safe }}">
     <img class="profile" src="{{ source.picture }}" width="64px" />
+    <img src="/static/{{ source.SHORT_NAME }}_icon.png"
+         alt="{{ source.DISPLAY_NAME }}" />
     {{ source.name|safe }}</a>
-
-  ({{ source.DISPLAY_NAME }})
 
   <span class="source-buttons">
   <a href="#{{ source.dom_id }}" title="Link">#</a>
