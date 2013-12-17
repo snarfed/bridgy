@@ -12,6 +12,7 @@ import appengine_config
 import util
 from webutil.models import KeyNameModel
 
+from google.appengine.api import mail
 from google.appengine.api import taskqueue
 from google.appengine.api import users
 from google.appengine.ext import db
@@ -48,6 +49,11 @@ class Site(KeyNameModel):
     else:
       logging.info('Added %s %s %s', new.label(), new.key().name(), new.key())
       new_msg = "Added %s. Refresh to see what we've found!" % new.label()
+      mail.send_mail(sender='add@brid-gy.appspotmail.com',
+                     to='webmaster@brid.gy',
+                     subject='Added Brid.gy user: %s %s' %
+                     (new.label(), new.key().name()),
+                     body='%s/#%s' % (handler.request.host_url, new.dom_id()))
 
     handler.messages = set([urllib.quote_plus(new_msg)])
 

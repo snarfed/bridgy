@@ -27,6 +27,7 @@ import models
 import util
 from webutil import handlers
 
+from google.appengine.api import mail
 from google.appengine.api import users
 from google.appengine.ext import db
 from google.appengine.ext.webapp import template
@@ -156,6 +157,11 @@ class DeleteFinishHandler(util.Handler):
       # TODO: remove credentials, tasks, etc.
       source.delete()
       self.messages.add('Deleted %s.' % source.label())
+      mail.send_mail(sender='delete@brid-gy.appspotmail.com',
+                     to='webmaster@brid.gy',
+                     subject='Deleted Brid.gy user: %s %s' %
+                     (source.label(), source.key().name()),
+                     body='%s/#%s' % (self.request.host_url, source.dom_id()))
       self.redirect('/?deleted=%s' % source.key())
     else:
       self.messages.add('Please log into %s as %s to delete it here.' %

@@ -63,6 +63,8 @@ TODO
     https://developers.google.com/+/api/latest/activities#resource
   * instagram: not a feature. third party apps fake it:
     http://www.geeksugar.com/How-Repost-Instagram-29828579
+* implement the other direction: convert incoming webmentions into API calls to
+  post them as comments, etc.
 
 Lower priority:
 

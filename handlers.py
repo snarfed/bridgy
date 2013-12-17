@@ -35,7 +35,7 @@ SOURCES = {cls.SHORT_NAME: cls for cls in
 
 
 class ItemHandler(webapp2.RequestHandler):
-  """Fetches a post or comment and serves it as microformat2 HTML or JSON.
+  """Fetches a post, repost, like, or comment and serves it as mf2 HTML or JSON.
   """
   handle_exception = handlers.handle_exception
 
