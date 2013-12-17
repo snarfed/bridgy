@@ -24,5 +24,5 @@ class WebmentionTest(testutil.HandlerTest):
       '/webmention', method='POST',
       body='source=http://foo.com/bar&target=http://facebook.com/123')
 
-    self.assertEqual(200, resp.status_int)
+    self.assertEqual(403, resp.status_int)
 
