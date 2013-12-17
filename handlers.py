@@ -97,26 +97,6 @@ class CommentHandler(ItemHandler):
     if not cmt:
       return None
 
-    # this is for deriving the post id from the comment data.
-    # TODO: assuming we stick with post id in the URL, drop this soon.
-    #
-    # fetch the post, perform original post discovery on it, and add the
-    # resulting links to the comment's inReplyTo.
-    #
-    # TODO: for twitter and other sites with threaded comments, the comment's
-    # inReplyTo won't point to the very first (original) post of the thread.
-    # figure out how to handle that, ideally without having to walk back each
-    # step in the thread.
-    # for in_reply_to in cmt.get('inReplyTo', []):
-    #   if 'id' in in_reply_to:
-    #     domain, post_id = util.parse_tag_uri(in_reply_to['id'])
-    #     if domain == source.as_source.DOMAIN:
-    #       break
-
-    # if not post_id:
-    #   logging.warning('Could not find source post in inReplyTo!')
-    #   return cmt
-
     post = None
     try:
       post = source.get_post(post_id)
@@ -144,7 +124,14 @@ class CommentHandler(ItemHandler):
     return cmt
 
 
+class LikeHandler(ItemHandler):
+  def get_item(self, source, post_iduser_id):
+    return source.get_like(user_id, post_id)
+
+
 application = webapp2.WSGIApplication([
     ('/post/(.+)/(.+)/(.+)', PostHandler),
     ('/comment/(.+)/(.+)/(.+)/(.+)', CommentHandler),
+    ('/like/(.+)/(.+)/(.+)/(.+)', LikeHandler),
+    # ('/repost/(.+)/(.+)/(.+)/(.+)', RepostHandler),
     ], debug=appengine_config.DEBUG)

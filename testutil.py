@@ -52,25 +52,30 @@ class FakeSource(FakeBase, Source):
   """
   DISPLAY_NAME = 'FakeSource'
   SHORT_NAME = 'fake'
-  activities = {}
-  comments = {}
+  # class attr. maps (string source key, type name) to object or list.
+  # can't use instance attrs because code fetches FakeSource instances from the
+  # datastore.
+  data = {}
   as_source = as_source.Source()
 
-  def set_activities(self, activities):
-    FakeSource.activities[str(self.key())] = activities
-
-  def get_activities(self, **kwargs):
-    return FakeSource.activities[str(self.key())]
+  set_activities = lambda self, val: self._set('activities', val)
+  def get_activities(self, fetch_replies=None, count=None):
+    return self._get('activities')
 
   def get_post(self, id):
     return self.get_activities()[int(id)]
 
-  def set_comment(self, comment):
-    FakeSource.comments[str(self.key())] = comment
+  set_comment = lambda self, val: self._set('comment', val)
 
   def get_comment(self, comment_id, activity_id=None):
-    comment = FakeSource.comments.get(str(self.key()))
+    comment = self._get('comment')
     return comment if comment else super(FakeSource, self).get_comment(comment_id)
+
+  def _set(self, name, val):
+    FakeSource.data[(str(self.key()), name)] = val
+
+  def _get(self, name):
+    return FakeSource.data.get((str(self.key()), name))
 
 
 class HandlerTest(testutil.HandlerTest):

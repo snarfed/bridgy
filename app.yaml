@@ -27,7 +27,7 @@ handlers:
 - url: /webmention
   script: webmention.application
 
-- url: /(post|comment)/.*
+- url: /(post|comment|like|repost)/.*
   script: handlers.application
   secure: always
 
