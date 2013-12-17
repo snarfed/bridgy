@@ -58,24 +58,33 @@ class FakeSource(FakeBase, Source):
   data = {}
   as_source = as_source.Source()
 
-  set_activities = lambda self, val: self._set('activities', val)
+  def _set(self, name, val):
+    FakeSource.data[(str(self.key()), name)] = val
+
+  def _get(self, name):
+    return FakeSource.data.get((str(self.key()), name))
+
+  def set_activities(self, val):
+    self._set('activities', val)
+
   def get_activities(self, fetch_replies=None, count=None):
     return self._get('activities')
 
   def get_post(self, id):
     return self.get_activities()[int(id)]
 
-  set_comment = lambda self, val: self._set('comment', val)
+  def set_comment(self, val):
+    self._set('comment', val)
 
   def get_comment(self, comment_id, activity_id=None):
     comment = self._get('comment')
     return comment if comment else super(FakeSource, self).get_comment(comment_id)
 
-  def _set(self, name, val):
-    FakeSource.data[(str(self.key()), name)] = val
+  def set_like(self, val):
+    self._set('like', val)
 
-  def _get(self, name):
-    return FakeSource.data.get((str(self.key()), name))
+  def get_like(self, like_id, activity_id=None):
+    return self._get('like')
 
 
 class HandlerTest(testutil.HandlerTest):

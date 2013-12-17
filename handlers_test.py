@@ -109,35 +109,34 @@ class HandlersTest(testutil.HandlerTest):
 </html>
 """, resp.body)
 
-#   def test_get_like_html(self):
-#     self.source.comment = {
-#         'id': 'tag:fake.com,2013:111',
-#         'content': 'qwert',
-#         'inReplyTo': [{'url': 'http://fake.com/000'}]
-#         }
+  def test_get_like_html(self):
+    self.source.set_like({
+        'objectType': 'activity',
+        'verb': 'like',
+        'id': 'tag:fake.com,2013:111',
+        'object': {'url': 'http://example.com/original/post'},
+        })
 
-#     resp = handlers.application.get_response('/comment/fake/%s/000/111' %
-#                                              self.source.key().name())
-#     self.assertEqual(200, resp.status_int, resp.body)
-#     self.assert_equals("""\
-# <!DOCTYPE html>
-# <html>
-# <head><link rel="canonical" href="" /></head>
-# <article class="h-entry">
-# <span class="u-uid">tag:fake.com,2013:111</span>
-# <div class="p-name">qwert</div>
-# <time class="dt-published" datetime=""></time>
-# <time class="dt-updated" datetime=""></time>
+    resp = handlers.application.get_response('/like/fake/%s/000/111' %
+                                             self.source.key().name())
+    self.assertEqual(200, resp.status_int, resp.body)
+    self.assert_equals("""\
+<!DOCTYPE html>
+<html>
+<head><link rel="canonical" href="" /></head>
+<article class="h-entry h-as-like">
+<span class="u-uid">tag:fake.com,2013:111</span>
 
-#   <div class="e-content">
-#   qwert
+<time class="dt-published" datetime=""></time>
+<time class="dt-updated" datetime=""></time>
 
-#   </div>
+  <div class="e-content">
+  likes <a class="u-like" href="http://example.com/original/post">this</a>.
 
-# <a class="u-in-reply-to" href="http://fake.com/000" />
+  </div>
 
-# </article>
+</article>
 
-# </html>
-# """, resp.body)
+</html>
+""", resp.body)
 

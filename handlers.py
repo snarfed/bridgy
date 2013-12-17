@@ -125,7 +125,7 @@ class CommentHandler(ItemHandler):
 
 
 class LikeHandler(ItemHandler):
-  def get_item(self, source, post_iduser_id):
+  def get_item(self, source, post_id, user_id):
     return source.get_like(user_id, post_id)
 
 
