@@ -15,3 +15,9 @@ indexes:
   - name: source
   - name: updated
     direction: desc
+
+- kind: Response
+  properties:
+  - name: source
+  - name: updated
+    direction: desc
