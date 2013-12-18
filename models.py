@@ -1,4 +1,25 @@
 """Datastore model classes.
+
+For the record, these are the remote_api_shell commands I used to do the schema
+migration from Comment to Response:
+
+~/google_appengine/remote_api_shell.py -s localhost:8080
+OR
+~/google_appengine/remote_api_shell.py brid-gy
+
+heaven@gmail.com
+...
+
+from models import Comment, Response
+
+for c in Comment.all():
+  props = db.to_dict(c)
+  props['response_json'] = props.pop('comment_json')
+  Response(key_name=c.key().name(), **props).save()
+
+# sanity check
+Comment.all().count()
+Response.all().count()
 """
 
 import datetime
@@ -196,7 +217,10 @@ class Response(KeyNameModel):
     return self
 
 
-Comment = Response  # backward compatibility. TODO: remove
+class Comment(Response):
+  """Backward compatibility. TODO: remove.
+  """
+  comment_json = db.TextProperty()
 
 
 class DisableSource(Exception):

@@ -91,12 +91,12 @@ below to try it yourself, or read <a href="/about">even more details.</a></p>
   <!-- </form> -->
 
  </div><div class="col-sm-4">
-  {% if source.recent_comments %}
-    <a href="#" onclick="toggle('comments-{{ source.dom_id }}'); return false;">
+  {% if source.recent_responses %}
+    <a href="#" onclick="toggle('responses-{{ source.dom_id }}'); return false;">
       Recent comments...
-    {% if source.recent_comment_status == "processing" %}
+    {% if source.recent_response_status == "processing" %}
      <span title="Processing" class="glyphicon glyphicon-transfer"></span>
-    {% else %}{% if source.recent_comment_status == "error" %}
+    {% else %}{% if source.recent_response_status == "error" %}
      <span title="Error" class="glyphicon glyphicon-exclamation-sign"></span>
     {% endif %}{% endif %}
     </a>
@@ -106,40 +106,40 @@ below to try it yourself, or read <a href="/about">even more details.</a></p>
  </div>
 </div>
 
-<ul id="comments-{{ source.dom_id }}" class="comments" style="display: none" />
-  {% for comment in source.recent_comments %}
+<ul id="responses-{{ source.dom_id }}" class="responses" style="display: none" />
+  {% for response in source.recent_responses %}
   <li class="row">
    <div class="col-sm-3">
-    {% with comment.comment as c %}
-    <a target="_blank" href="{{ c.author.url }}">
-      <img class="profile" src="{{ c.author.image.url }}" width="32" /></a>
-      <!-- {{ c.author.displayName }} -->
-      <a target="_blank" href="{{ c.url }}">
-        {{ c.content|default:"[comment]"|striptags|truncatewords:6|safe }}</a>
+    {% with response.response as r %}
+    <a target="_blank" href="{{ r.author.url }}">
+      <img class="profile" src="{{ r.author.image.url }}" width="32" /></a>
+      <!-- {{ r.author.displayName }} -->
+      <a target="_blank" href="{{ r.url }}">
+        {{ r.content|default:"[comment]"|striptags|truncatewords:6|safe }}</a>
     {% endwith %}
 
    </div><div class="col-sm-3">
-    {% with comment.activity.object as a %}
+    {% with response.activity.object as a %}
     on <a target="_blank" href="{{ a.url }}">
        {{ a.content|default:"[post]"|striptags|truncatewords:6|safe }}</a>
     {% endwith %}
 
    </div><div class="col-sm-3">
-    <a href="/log?start_time={{ comment.updated|date:'U' }}&key={{ comment.key }}">
-      {{ comment.updated|timesince }} ago
-      {% if comment.status == 'error' %}
+    <a href="/log?start_time={{ response.updated|date:'U' }}&key={{ response.key }}">
+      {{ response.updated|timesince }} ago
+      {% if response.status == 'error' %}
        <span title="Error" class="glyphicon glyphicon-exclamation-sign"></span>
-      {% else %}{% if comment.status == 'processing' %}
+      {% else %}{% if response.status == 'processing' %}
        <span title="Processing" class="glyphicon glyphicon-transfer"></span>
       {% endif %}{% endif %}
     </a>
 
    </div><div class="col-sm-3">
-    {% if comment.links %}
-     {% if comment.status == "complete" %} Sent {% else %} Sending {% endif %} to:
+    {% if response.links %}
+     {% if response.status == "complete" %} Sent {% else %} Sending {% endif %} to:
      <br />
-     {{ comment.links|safeseq|join:" <br /> " }}
-    {% else %}{% if comment.status == "complete" %}
+     {{ response.links|safeseq|join:" <br /> " }}
+    {% else %}{% if response.status == "complete" %}
      No post links found
     {% endif %}{% endif %}
    </div>

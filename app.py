@@ -65,15 +65,15 @@ class DashboardHandler(util.Handler):
       source.picture = self.update_scheme(source.picture)
       source.recent_responses = list(source.recent_responses)
       source.recent_response_status = None
-      for c in source.recent_responses:
-        c.response = json.loads(c.response_json)
-        c.activity = json.loads(c.activity_json)
-        c.response['published'] = util.parse_iso8601(c.response['published'])
+      for r in source.recent_responses:
+        r.response = json.loads(r.response_json)
+        r.activity = json.loads(r.activity_json)
+        r.response['published'] = util.parse_iso8601(r.response['published'])
 
         # convert image URL to https if we're serving over SSL
-        image_url = c.response['author'].setdefault('image', {}).get('url')
+        image_url = r.response['author'].setdefault('image', {}).get('url')
         if image_url:
-          c.response['author']['image']['url'] = self.update_scheme(image_url)
+          r.response['author']['image']['url'] = self.update_scheme(image_url)
 
         # generate original post links
         def link(url, glyphicon=''):
@@ -87,14 +87,14 @@ class DashboardHandler(util.Handler):
           return ('<a target="_blank" class="original-post" href="%s">%s %s</a>'
                   % (url, snippet, glyphicon))
 
-        c.links = (
-          set(link(url, 'exclamation-sign') for url in c.error) |
-          set(link(url, 'transfer') for url in c.unsent if url not in c.error) |
-          set(link(url) for url in c.sent if url not in (c.error + c.unsent)))
+        r.links = (
+          set(link(url, 'exclamation-sign') for url in r.error) |
+          set(link(url, 'transfer') for url in r.unsent if url not in r.error) |
+          set(link(url) for url in r.sent if url not in (r.error + r.unsent)))
 
-        if c.error:
+        if r.error:
           source.recent_response_status = 'error'
-        elif c.unsent and not source.recent_response_status:
+        elif r.unsent and not source.recent_response_status:
           source.recent_response_status = 'processing'
 
     # sort sources by name
