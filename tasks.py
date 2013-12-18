@@ -138,13 +138,7 @@ class Propagate(webapp2.RequestHandler):
   def post(self):
     logging.debug('Params: %s', self.request.params)
 
-    try:
-      response = self.lease_response()
-    except:
-      logging.exception('Could not lease response')
-      self.release_response('new')
-      raise
-
+    response = self.lease_response()
     if not response:
       return
 

@@ -321,15 +321,6 @@ class PropagateTest(TaskQueueTest):
     self.post_task(expected_status=500)
     self.assert_response_is('error', None)
 
-  def test_lease_exception(self):
-    """If leasing raises an exception, the lease should be released."""
-    self.mox.StubOutWithMock(Propagate, 'lease_response')
-    Propagate.lease_response().AndRaise(Exception('foo'))
-    self.mox.ReplayAll()
-
-    self.post_task(expected_status=500)
-    self.assert_response_is('new', None)
-
   def test_complete_exception(self):
     """If completing raises an exception, the lease should be released."""
     self.expect_webmention().AndReturn(True)
