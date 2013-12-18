@@ -7,6 +7,7 @@ import base64
 import collections
 import datetime
 import json
+import logging
 import urlparse
 
 from activitystreams import source as as_source
@@ -32,6 +33,16 @@ class FakeBase(db.Model):
   """
 
   key_name_counter = 1
+  # class attr. maps (string source key, type name) to object or list.
+  # can't use instance attrs because code fetches FakeSource instances from the
+  # datastore.
+  data = {}
+
+  def _set(self, name, val):
+    FakeBase.data[(str(self.key()), name)] = val
+
+  def _get(self, name):
+    return FakeBase.data.get((str(self.key()), name))
 
   @classmethod
   def new(cls, handler, **props):
@@ -44,21 +55,32 @@ class FakeBase(db.Model):
     return inst
 
 
+class FakeAsSource(FakeBase, as_source.Source):
+
+  def set_like(self, val):
+    self._set('like', val)
+
+  def get_like(self, user_id, activity_id):
+    got = self._get('like')
+    return got
+
+  def set_repost(self, val):
+    self._set('repost', val)
+
+  def get_repost(self, user_id, activity_id):
+    return self._get('repost')
+
 
 class FakeSource(FakeBase, Source):
   DISPLAY_NAME = 'FakeSource'
   SHORT_NAME = 'fake'
-  # class attr. maps (string source key, type name) to object or list.
-  # can't use instance attrs because code fetches FakeSource instances from the
-  # datastore.
-  data = {}
-  as_source = as_source.Source()
 
-  def _set(self, name, val):
-    FakeSource.data[(str(self.key()), name)] = val
+  as_source = FakeAsSource()
 
-  def _get(self, name):
-    return FakeSource.data.get((str(self.key()), name))
+  def __init__(self, *args, **kwargs):
+    super(FakeSource, self).__init__(*args, **kwargs)
+    if not FakeSource.as_source.is_saved():
+      FakeSource.as_source.save()
 
   def set_activities(self, val):
     self._set('activities', val)
@@ -75,18 +97,6 @@ class FakeSource(FakeBase, Source):
   def get_comment(self, comment_id, activity_id=None):
     comment = self._get('comment')
     return comment if comment else super(FakeSource, self).get_comment(comment_id)
-
-  def set_like(self, val):
-    self._set('like', val)
-
-  def get_like(self, user_id, activity_id):
-    return self._get('like')
-
-  def set_repost(self, val):
-    self._set('repost', val)
-
-  def get_repost(self, user_id, activity_id):
-    return self._get('repost')
 
 
 class HandlerTest(testutil.HandlerTest):

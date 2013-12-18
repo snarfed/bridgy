@@ -39,6 +39,18 @@ SOURCES = {cls.SHORT_NAME: cls for cls in
             instagram.Instagram,
             twitter.Twitter)}
 
+TEMPLATE = """\
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="canonical" href="%s" />
+<style type="text/css">
+.u-uid { display: none; }
+</style>
+</head>
+%s
+</html>
+"""
 
 class ItemHandler(webapp2.RequestHandler):
   """Fetches a post, repost, like, or comment and serves it as mf2 HTML or JSON.
@@ -79,18 +91,8 @@ class ItemHandler(webapp2.RequestHandler):
     self.response.headers['Access-Control-Allow-Origin'] = '*'
     if format == 'html':
       self.response.headers['Content-Type'] = 'text/html'
-      self.response.out.write("""\
-<!DOCTYPE html>
-<html>
-<head>
-<link rel="canonical" href="%s" />
-<style type="text/css">
-.u-uid { display: none; }
-</style>
-</head>
-%s
-</html>
-""" % (obj.get('url', ''), microformats2.object_to_html(obj)))
+      self.response.out.write(TEMPLATE % (obj.get('url', ''),
+                                          microformats2.object_to_html(obj)))
     elif format == 'json':
       self.response.headers['Content-Type'] = 'application/json'
       self.response.out.write(json.dumps(microformats2.object_to_json(obj),
