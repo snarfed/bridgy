@@ -149,7 +149,6 @@ class ModelsTest(HandlerTest):
     for activity in self.activities:
       comment = activity['object']['replies']['items'][0]
       self.responses.append(Response(key_name=comment['id'],
-                                     type='comment',
                                      activity_json=json.dumps(activity),
                                      response_json=json.dumps(comment),
                                      source=self.sources[0],

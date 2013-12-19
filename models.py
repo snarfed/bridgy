@@ -209,9 +209,11 @@ class Response(KeyNameModel):
       return existing
 
     obj = json.loads(self.response_json)
-    self.type = obj.get('objectType')
-    if self.type == 'activity':
-      self.type = obj.get('verb')
+    type = obj.get('objectType')
+    if type == 'activity':
+      type = obj.get('verb')
+    # default to comment. (e.g. Twitter replies technically have objectType note)
+    self.type = type if type in ('like', 'repost') else 'comment'
 
     logging.debug('New response to propagate! %s %r %s', self.type,
                   self.key().id_or_name(), obj.get('url', obj.get('id')))

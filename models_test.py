@@ -3,6 +3,7 @@
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
+import json
 import urllib
 
 from models import Response, Source
@@ -29,6 +30,7 @@ class ResponseTest(testutil.ModelsTest):
     self.assertTrue(saved.is_saved())
     self.assertEqual(response.key(), saved.key())
     self.assertEqual(response.source, saved.source)
+    self.assertEqual('comment', saved.type)
 
     tasks = self.taskqueue_stub.GetTasks('propagate')
     self.assertEqual(1, len(tasks))
@@ -40,6 +42,14 @@ class ResponseTest(testutil.ModelsTest):
     same = saved.get_or_save()
     self.assertEqual(saved.source.key(), same.source.key())
     self.assertEqual(1, len(tasks))
+
+  def test_get_or_save(self):
+    self.responses[0].response_json = json.dumps({
+      'objectType': 'note',
+      'id': 'tag:source.com,2013:1_2_%s' % id,
+      })
+    saved = self.responses[0].get_or_save()
+    self.assertEqual('comment', saved.type)
 
   def test_dom_id(self):
     self.assertEqual('FakeSource-%s' % self.sources[0].key().name(),
