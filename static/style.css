@@ -49,6 +49,10 @@ body {
   font-weight: normal;
 }
 
+#more-link {
+  font-size: .7em;
+}
+
 .row {
   text-align: center;
 }
