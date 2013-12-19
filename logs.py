@@ -35,7 +35,7 @@ class LogHandler(webapp2.RequestHandler):
     start_time = float(util.get_required_param(self, 'start_time'))
     key = urllib.unquote(util.get_required_param(self, 'key'))
     # Backward compatibility for logs created with Comment, not Response
-    comment_key = db.Key.from_path('Comment', db.Key(key).name())
+    comment_key = str(db.Key.from_path('Comment', db.Key(key).name()))
 
     self.response.headers['Content-Type'] = 'text/plain'
 

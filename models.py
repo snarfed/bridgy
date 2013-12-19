@@ -1,7 +1,8 @@
 """Datastore model classes.
 
 For the record, these are the remote_api_shell commands I used to do the schema
-migration from Comment to Response:
+migration from Comment to Response. *First*, temporarily drop the auto_now=True
+on the 'updated' property. Then:
 
 ~/google_appengine/remote_api_shell.py -s localhost:8080
 OR
@@ -20,6 +21,8 @@ for c in Comment.all():
 # sanity check
 Comment.all().count()
 Response.all().count()
+
+Now, add auto_now=True back to the 'updated' property.
 """
 
 import datetime
