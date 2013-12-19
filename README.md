@@ -34,7 +34,7 @@ Related work
 TODO
 ---
 
-* tone down logging in task handlers
+* fix error Poll links to go to error log, not previous successful log
 * store and render 'skipped' targets. (test: http://instagram.com/p/hc1xLpp72X/)
 * replace t.co links with url entities
 * likes/favorites. based on http://indiewebcamp.com/like and

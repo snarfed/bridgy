@@ -97,17 +97,24 @@ class Poll(webapp2.RequestHandler):
     for activity in activities:
       # use original post discovery to find targets
       source.as_source.original_post_discovery(activity)
-      targets = util.trim_nulls(
-        [t.get('url') for t in activity['object'].get('tags', [])
-         if t.get('objectType') == 'article'])
+      targets = set()
+      for tag in activity['object'].get('tags', []):
+        url = tag.get('url')
+        if tag.get('objectType') == 'article' and url:
+          domain = urlparse.urlparse(url).netloc
+          if domain.startswith('www.'):
+            domain = domain[4:]
+          if domain not in WEBMENTION_BLACKLIST:
+            targets.add(url)
 
       # remove replies from activity JSON so we don't store them all in every
       # Response entity.
       replies = activity['object'].pop('replies', {}).get('items', [])
 
       if targets or replies:
-        logging.info('Activity %s has %d response(s), %d original post URL(s): %s',
-                     activity.get('url'), len(replies), len(targets), targets)
+        logging.info('%s has %d response(s), %d original post URL(s): %s',
+                     activity.get('url'), len(replies), len(targets),
+                     ' '.join(targets))
 
       for reply in replies:
         models.Response(key_name=reply['id'],
@@ -115,7 +122,7 @@ class Poll(webapp2.RequestHandler):
                         source=source,
                         activity_json=json.dumps(activity),
                         response_json=json.dumps(reply),
-                        unsent=targets,
+                        unsent=list(targets),
                         ).get_or_save()
 
       # likes
@@ -165,15 +172,6 @@ class Propagate(webapp2.RequestHandler):
         # When debugging locally, redirect my (snarfed.org) webmentions to localhost
         if appengine_config.DEBUG and target.startswith('http://snarfed.org/'):
           target = target.replace('http://snarfed.org/', 'http://localhost/')
-
-        domain = urlparse.urlparse(target).netloc
-        if domain.startswith('www.'):
-          domain = domain[4:]
-        if domain in WEBMENTION_BLACKLIST:
-          logging.info("Skipping %s ; we know %s doesn't support webmentions",
-                       target, domain)
-          response.unsent.remove(target)
-          continue
 
         # send! and handle response or error
         mention = send.WebmentionSend(local_response_url, target)

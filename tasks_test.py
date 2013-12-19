@@ -108,7 +108,7 @@ class PollTest(TaskQueueTest):
 
     self.post_task()
     expected = ['http://tar.get/%s' % i for i in 'a', 'b', 'c', 'd']
-    self.assertEquals(expected, db.get(self.responses[0].key()).unsent)
+    self.assert_equals(expected, db.get(self.responses[0].key()).unsent)
 
   def test_existing_responses(self):
     """Poll should be idempotent and not touch existing response entities.
