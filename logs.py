@@ -10,6 +10,7 @@ import appengine_config
 import util
 
 from google.appengine.api import logservice
+from google.appengine.ext import db
 import webapp2
 
 
@@ -33,13 +34,16 @@ class LogHandler(webapp2.RequestHandler):
     """
     start_time = float(util.get_required_param(self, 'start_time'))
     key = urllib.unquote(util.get_required_param(self, 'key'))
+    # Backward compatibility for logs created with Comment, not Response
+    comment_key = db.Key.from_path('Comment', db.Key(key).name())
 
     self.response.headers['Content-Type'] = 'text/plain'
 
     offset = None
     for log in logservice.fetch(start_time=start_time, end_time=start_time + 120,
                                 offset=offset, include_app_logs=True):
-      if log.app_logs and key in log.app_logs[0].message:
+      if log.app_logs and (key in log.app_logs[0].message or
+                           comment_key in log.app_logs[0].message):
         # found it! render and return
         self.response.out.write(log.combined)
         self.response.out.write('\n\n')
