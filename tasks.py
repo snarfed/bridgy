@@ -100,13 +100,14 @@ class Poll(webapp2.RequestHandler):
       targets = util.trim_nulls(
         [t.get('url') for t in activity['object'].get('tags', [])
          if t.get('objectType') == 'article'])
-      logging.info('Discovered original post URLs: %s', targets)
 
       # remove replies from activity JSON so we don't store them all in every
       # Response entity.
       replies = activity['object'].pop('replies', {}).get('items', [])
-      logging.info('Found %d responses for activity %s', len(replies),
-                   activity.get('url'))
+
+      if targets or replies:
+        logging.info('Activity %s has %d response(s), %d original post URL(s): %s',
+                     activity.get('url'), len(replies), len(targets), targets)
 
       for reply in replies:
         models.Response(key_name=reply['id'],
