@@ -120,6 +120,7 @@ class CommentHandler(ItemHandler):
       logging.warning('Source post %s not found', post_id)
       return cmt
 
+    # add inReplyTo URLs for original post links
     source.as_source.original_post_discovery(post)
     in_reply_tos = cmt.setdefault('inReplyTo', [])
     in_reply_tos += [tag for tag in post['object'].get('tags', [])

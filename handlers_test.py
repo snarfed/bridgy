@@ -23,7 +23,7 @@ class HandlersTest(testutil.HandlerTest):
       [{'object': {
             'id': 'tag:fake.com,2013:000',
             'url': 'http://fake.com/000',
-            'content': 'asdf',
+            'content': 'asdf http://orig/post qwert',
             }}])
     self.source.save()
 
@@ -38,12 +38,12 @@ class HandlersTest(testutil.HandlerTest):
     self.check_response('/post/fake/%s/000', """\
 <article class="h-entry">
 <span class="u-uid">tag:fake.com,2013:000</span>
-<div class="p-name"><a class="u-url" href="http://fake.com/000">asdf</a></div>
+<div class="p-name"><a class="u-url" href="http://fake.com/000">asdf http://orig/post qwert</a></div>
 <time class="dt-published" datetime=""></time>
 <time class="dt-updated" datetime=""></time>
 
   <div class="e-content">
-  asdf
+  asdf http://orig/post qwert
 
   </div>
 
@@ -58,9 +58,11 @@ class HandlersTest(testutil.HandlerTest):
         'type': ['h-entry'],
         'properties': {
           'uid': ['tag:fake.com,2013:000'],
-          'name': ['asdf'],
+          'name': ['asdf http://orig/post qwert'],
           'url': ['http://fake.com/000'],
-          'content': [{ 'html': 'asdf', 'value': 'asdf'}],
+          'content': [{ 'html': 'asdf http://orig/post qwert',
+                        'value': 'asdf http://orig/post qwert',
+                        }],
           },
         },
         json.loads(resp.body))
@@ -75,10 +77,11 @@ class HandlersTest(testutil.HandlerTest):
     self.assertEqual(400, resp.status_int)
 
   def test_get_comment_html(self):
+    self.source.get_activities()[0]
     self.source.set_comment({
         'id': 'tag:fake.com,2013:111',
         'content': 'qwert',
-        'inReplyTo': [{'url': 'http://fake.com/000'}]
+        'inReplyTo': [{'url': 'http://fake.com/000'}],
         })
 
     self.check_response('/comment/fake/%s/000/111', """\
@@ -94,6 +97,7 @@ class HandlersTest(testutil.HandlerTest):
   </div>
 
 <a class="u-in-reply-to" href="http://fake.com/000" />
+<a class="u-in-reply-to" href="http://orig/post" />
 
 </article>
 """)
