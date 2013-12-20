@@ -107,21 +107,26 @@ class Poll(webapp2.RequestHandler):
           if domain not in WEBMENTION_BLACKLIST:
             targets.add(url)
 
-      # remove replies from activity JSON so we don't store them all in every
-      # Response entity.
-      replies = activity['object'].pop('replies', {}).get('items', [])
+      # extract replies, likes, and reposts.
+      obj = activity['object']
+      replies = obj.get('replies', {}).get('items', [])
+      tags = obj.get('tags', [])
+      likes = [t for t in tags if (t.get('objectType') == 'activity' and
+                                   t.get('verb') == 'like')]
+      reposts = [t for t in tags if t.get('objectType') == 'share']
 
-      if targets or replies:
-        logging.info('%s has %d response(s), %d original post URL(s): %s',
-                     activity.get('url'), len(replies), len(targets),
-                     ' '.join(targets))
+      responses = replies + likes + reposts
+      if targets or responses:
+        logging.info('%s has %d reply(ies), %d like(s), %d repost(s), and '
+                     '%d original post URL(s): %s',
+                     activity.get('url'), len(replies), len(likes), len(reposts),
+                     len(targets), ' '.join(targets))
 
-      for reply in replies:
-        models.Response(key_name=reply['id'],
-                        type='comment',
+      for resp in responses:
+        models.Response(key_name=resp['id'],
                         source=source,
                         activity_json=json.dumps(activity),
-                        response_json=json.dumps(reply),
+                        response_json=json.dumps(resp),
                         unsent=list(targets),
                         ).get_or_save()
 

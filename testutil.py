@@ -126,30 +126,43 @@ class ModelsTest(HandlerTest):
       entity.save()
 
     self.activities = [{
-      'id': 'tag:source.com,2013:000',
+      'id': 'tag:source.com:%s' % id,
       'object': {
         'objectType': 'note',
-        'id': 'tag:source.com,2013:000',
+        'id': 'tag:source.com:%s' % id,
         'url': 'http://source/post/url',
         'content': 'foo http://target1/post/url bar',
         'replies': {
           'items': [{
               'objectType': 'comment',
-              'id': 'tag:source.com,2013:1_2_%s' % id,
+              'id': 'tag:source.com:1_2_%s' % id,
               'url': 'http://source/comment/url',
               'content': 'foo bar',
               }],
           'totalItems': 1,
           },
-        }
+        'tags': [{
+              'objectType': 'activity',
+              'verb': 'like',
+              'id': 'tag:source.com:%s_liked_by_alice' % id,
+              'object': {'url': 'http://example.com/abc'},
+              'author': {'url': 'http://example.com/alice'},
+              }, {
+              'id': 'tag:source.com:%s_reposted_by_bob' % id,
+              'objectType': 'share',
+              'object': {'url': 'http://example.com/def'},
+              'author': {'url': 'http://example.com/bob'},
+              }],
+        },
       } for id in ('a', 'b', 'c')]
     self.sources[0].set_activities(self.activities)
 
     self.responses = []
     for activity in self.activities:
-      comment = activity['object']['replies']['items'][0]
-      self.responses.append(Response(key_name=comment['id'],
-                                     activity_json=json.dumps(activity),
-                                     response_json=json.dumps(comment),
-                                     source=self.sources[0],
-                                     unsent=['http://target1/post/url']))
+      obj = activity['object']
+      for response_obj in obj['replies']['items'] + obj['tags']:
+        self.responses.append(Response(key_name=response_obj['id'],
+                                       activity_json=json.dumps(activity),
+                                       response_json=json.dumps(response_obj),
+                                       source=self.sources[0],
+                                       unsent=['http://target1/post/url']))

@@ -215,8 +215,8 @@ class Response(KeyNameModel):
     # default to comment. (e.g. Twitter replies technically have objectType note)
     self.type = type if type in ('like', 'repost') else 'comment'
 
-    logging.debug('New response to propagate! %s %r %s', self.type,
-                  self.key().id_or_name(), obj.get('url', obj.get('id')))
+    logging.debug('New response to propagate! %s %s %s', self.type,
+                  self.key().id_or_name(), obj.get('url', '[no url]'))
     taskqueue.add(queue_name='propagate', params={'response_key': str(self.key())})
     self.save()
     return self

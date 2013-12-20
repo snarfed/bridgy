@@ -66,6 +66,8 @@ TODO
     http://www.geeksugar.com/How-Repost-Instagram-29828579
 * implement the other direction: convert incoming webmentions into API calls to
   post them as comments, etc.
+* move fetching replies (the fetch_replies kwarg to get_activities()) to
+  activitystreams-unofficial
 
 Lower priority:
 
