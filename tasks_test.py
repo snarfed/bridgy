@@ -159,7 +159,7 @@ class PropagateTest(TaskQueueTest):
     super(PropagateTest, self).setUp()
     self.responses[0].save()
     self.task_params = {'response_key': self.responses[0].key()}
-    self.local_url = 'http://localhost/comment/fake/%s/000/1_2_a' % \
+    self.local_url = 'http://localhost/comment/fake/%s/a/1_2_a' % \
       self.responses[0].source.key().name()
     self.mock_webmention()
 
@@ -325,7 +325,7 @@ class PropagateTest(TaskQueueTest):
     """If completing raises an exception, the lease should be released."""
     self.expect_webmention().AndReturn(True)
     self.mox.StubOutWithMock(Propagate, 'complete_response')
-    Propagate.complete_response().AndRaise(Exception('foo'))
+    Propagate.complete_response(mox.IgnoreArg()).AndRaise(Exception('foo'))
     self.mox.ReplayAll()
 
     self.post_task(expected_status=500)

@@ -126,16 +126,16 @@ class ModelsTest(HandlerTest):
       entity.save()
 
     self.activities = [{
-      'id': 'tag:source.com:%s' % id,
+      'id': 'tag:source.com,2013:%s' % id,
       'object': {
         'objectType': 'note',
-        'id': 'tag:source.com:%s' % id,
+        'id': 'tag:source.com,2013:%s' % id,
         'url': 'http://source/post/url',
         'content': 'foo http://target1/post/url bar',
         'replies': {
           'items': [{
               'objectType': 'comment',
-              'id': 'tag:source.com:1_2_%s' % id,
+              'id': 'tag:source.com,2013:1_2_%s' % id,
               'url': 'http://source/comment/url',
               'content': 'foo bar',
               }],
@@ -144,11 +144,11 @@ class ModelsTest(HandlerTest):
         'tags': [{
               'objectType': 'activity',
               'verb': 'like',
-              'id': 'tag:source.com:%s_liked_by_alice' % id,
+              'id': 'tag:source.com,2013:%s_liked_by_alice' % id,
               'object': {'url': 'http://example.com/abc'},
               'author': {'url': 'http://example.com/alice'},
               }, {
-              'id': 'tag:source.com:%s_reposted_by_bob' % id,
+              'id': 'tag:source.com,2013:%s_reposted_by_bob' % id,
               'objectType': 'share',
               'object': {'url': 'http://example.com/def'},
               'author': {'url': 'http://example.com/bob'},

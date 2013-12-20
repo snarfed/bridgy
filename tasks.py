@@ -123,7 +123,11 @@ class Poll(webapp2.RequestHandler):
                      len(targets), ' '.join(targets))
 
       for resp in responses:
-        models.Response(key_name=resp['id'],
+        id = resp.get('id')
+        if not id:
+          logging.error('Skipping response without id: %s', resp)
+          continue
+        models.Response(key_name=id,
                         source=source,
                         activity_json=json.dumps(activity),
                         response_json=json.dumps(resp),
