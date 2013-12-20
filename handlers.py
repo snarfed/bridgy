@@ -140,12 +140,12 @@ class CommentHandler(ItemHandler):
 
 class LikeHandler(ItemHandler):
   def get_item(self, source, post_id, user_id):
-    return source.as_source.get_like(user_id, post_id)
+    return source.as_source.get_like(source.key().name(), post_id, user_id)
 
 
 class RepostHandler(ItemHandler):
   def get_item(self, source, post_id, user_id):
-    return source.as_source.get_repost(user_id, post_id)
+    return source.as_source.get_repost(source.key().name(), post_id, user_id)
 
 
 application = webapp2.WSGIApplication([

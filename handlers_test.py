@@ -27,7 +27,7 @@ class HandlersTest(testutil.HandlerTest):
             }}])
     self.source.save()
 
-  def check_html(self, url_template, expected):
+  def check_response(self, url_template, expected):
     resp = handlers.application.get_response(url_template % self.source.key().name())
     self.assertEqual(200, resp.status_int, resp.body)
     header_lines = len(handlers.TEMPLATE.splitlines()) - 2
@@ -35,7 +35,7 @@ class HandlersTest(testutil.HandlerTest):
     self.assert_equals(expected, actual)
 
   def test_get_post_html(self):
-    self.check_html('/post/fake/%s/000', """\
+    self.check_response('/post/fake/%s/000', """\
 <article class="h-entry">
 <span class="u-uid">tag:fake.com,2013:000</span>
 <div class="p-name"><a class="u-url" href="http://fake.com/000">asdf</a></div>
@@ -81,7 +81,7 @@ class HandlersTest(testutil.HandlerTest):
         'inReplyTo': [{'url': 'http://fake.com/000'}]
         })
 
-    self.check_html('/comment/fake/%s/000/111', """\
+    self.check_response('/comment/fake/%s/000/111', """\
 <article class="h-entry">
 <span class="u-uid">tag:fake.com,2013:111</span>
 <div class="p-name">qwert</div>
@@ -106,7 +106,7 @@ class HandlersTest(testutil.HandlerTest):
         'object': {'url': 'http://example.com/original/post'},
         })
 
-    self.check_html('/like/fake/%s/000/111', """\
+    self.check_response('/like/fake/%s/000/111', """\
 <article class="h-entry h-as-like">
 <span class="u-uid">tag:fake.com,2013:111</span>
 
@@ -129,7 +129,7 @@ class HandlersTest(testutil.HandlerTest):
         'object': {'url': 'http://example.com/original/post'},
         })
 
-    self.check_html('/repost/fake/%s/000/111', """\
+    self.check_response('/repost/fake/%s/000/111', """\
 <article class="h-entry h-as-repost">
 <span class="u-uid">tag:fake.com,2013:111</span>
 

@@ -60,14 +60,14 @@ class FakeAsSource(FakeBase, as_source.Source):
   def set_like(self, val):
     self._set('like', val)
 
-  def get_like(self, user_id, activity_id):
+  def get_like(self, activity_user_id, activity_id, like_user_id):
     got = self._get('like')
     return got
 
   def set_repost(self, val):
     self._set('repost', val)
 
-  def get_repost(self, user_id, activity_id):
+  def get_repost(self, activity_user_id, activity_id, repost_user_id):
     return self._get('repost')
 
 
