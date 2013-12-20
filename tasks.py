@@ -134,9 +134,6 @@ class Poll(webapp2.RequestHandler):
                         unsent=list(targets),
                         ).get_or_save()
 
-      # likes
-      # reposts
-
     source.last_polled = now_fn()
     source.status = 'enabled'
     util.add_poll_task(source, countdown=self.TASK_COUNTDOWN.seconds)

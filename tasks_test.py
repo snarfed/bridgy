@@ -27,18 +27,16 @@ tasks.now_fn = lambda: NOW
 
 class TaskQueueTest(testutil.ModelsTest):
   """Attributes:
-    task_params: the query parameters passed in the task POST request
     post_url: the URL for post_task() to post to
   """
-  task_params = None
   post_url = None
 
-  def post_task(self, expected_status=200):
+  def post_task(self, expected_status=200, params={}):
     """Args:
       expected_status: integer, the expected HTTP return code
     """
     resp = tasks.application.get_response(self.post_url, method='POST',
-                                          body=urllib.urlencode(self.task_params))
+                                          body=urllib.urlencode(params))
     self.assertEqual(expected_status, resp.status_int)
 
 
@@ -46,10 +44,10 @@ class PollTest(TaskQueueTest):
 
   post_url = '/_ah/queue/poll'
 
-  def setUp(self):
-    super(PollTest, self).setUp()
-    self.task_params = {'source_key': self.sources[0].key(),
-                        'last_polled': '1970-01-01-00-00-00'}
+  def post_task(self, expected_status=200):
+    super(PollTest, self).post_task(expected_status=expected_status,
+                                    params={'source_key': self.sources[0].key(),
+                                            'last_polled': '1970-01-01-00-00-00'})
 
   def assert_responses(self):
     """Asserts that all of self.responses are saved."""
@@ -157,11 +155,15 @@ class PropagateTest(TaskQueueTest):
 
   def setUp(self):
     super(PropagateTest, self).setUp()
-    self.responses[0].save()
-    self.task_params = {'response_key': self.responses[0].key()}
-    self.local_url = 'http://localhost/comment/fake/%s/a/1_2_a' % \
-      self.responses[0].source.key().name()
+    for r in self.responses[:3]:
+      r.save()
     self.mock_webmention()
+
+  def post_task(self, expected_status=200, response=None):
+    if not response:
+      response = self.responses[0]
+    super(PropagateTest, self).post_task(expected_status=expected_status,
+                                         params={'response_key': response.key()})
 
   def mock_webmention(self):
     self.mock_sends = []
@@ -174,10 +176,13 @@ class PropagateTest(TaskQueueTest):
     self.mock_send = self.mock_sends[0]
     self.mox.StubOutWithMock(send, 'WebmentionSend', use_mock_anything=True)
 
-  def assert_response_is(self, status, leased_until=False, sent=[], error=[]):
+  def assert_response_is(self, status, leased_until=False, sent=[], error=[],
+                         response=None):
     """Asserts that responses[0] has the given values in the datastore.
     """
-    response = db.get(self.responses[0].key())
+    if response is None:
+      response = self.responses[0]
+    response = db.get(response.key())
     self.assertEqual(status, response.status)
     if leased_until is not False:
       self.assertEqual(leased_until, response.leased_until)
@@ -185,19 +190,29 @@ class PropagateTest(TaskQueueTest):
     self.assert_equals(sent, response.sent)
     self.assert_equals(error, response.error)
 
-  def expect_webmention(self, target_url='http://target1/post/url'):
-    send.WebmentionSend(self.local_url, target_url).InAnyOrder().AndReturn(self.mock_send)
+  def expect_webmention(self, source_url=None, target='http://target1/post/url'):
+    if not source_url:
+      source_url = 'http://localhost/comment/fake/%s/a/1_2_a' % \
+          self.sources[0].key().name()
+    send.WebmentionSend(source_url, target).InAnyOrder()\
+        .AndReturn(self.mock_send)
     return self.mock_send.send(timeout=999)
 
   def test_propagate(self):
-    """A normal propagate task."""
+    """Normal propagate tasks."""
     self.assertEqual('new', self.responses[0].status)
 
-    self.expect_webmention().AndReturn(True)
+    id = self.sources[0].key().name()
+    for url in ('http://localhost/comment/fake/%s/a/1_2_a' % id,
+                'http://localhost/comment/fake/%s/a/a_liked_by_alice' % id,
+                'http://localhost/comment/fake/%s/a/a_reposted_by_bob' % id):
+      self.expect_webmention(source_url=url).AndReturn(True)
     self.mox.ReplayAll()
-    self.post_task()
-    self.assert_response_is('complete', NOW + Propagate.LEASE_LENGTH,
-                           sent=['http://target1/post/url'])
+
+    for r in self.responses[:3]:
+      self.post_task(response=r)
+      self.assert_response_is('complete', NOW + Propagate.LEASE_LENGTH,
+                              sent=['http://target1/post/url'], response=r)
 
   def test_propagate_from_error(self):
     """A normal propagate task, with a response starting as 'error'."""
@@ -216,12 +231,13 @@ class PropagateTest(TaskQueueTest):
     self.responses[0].sent = ['http://target4/z']
     self.responses[0].save()
 
-    self.expect_webmention('http://target1/post/url').InAnyOrder().AndReturn(True)
+    self.expect_webmention(target='http://target1/post/url').InAnyOrder()\
+        .AndReturn(True)
     self.mock_send.error = {'code': 'RECEIVER_ERROR'}
-    self.expect_webmention('http://target2/x').InAnyOrder().AndReturn(False)
+    self.expect_webmention(target='http://target2/x').InAnyOrder().AndReturn(False)
     self.mock_send = self.mock_sends[1]
     self.mock_send.error = {'code': 'NO_ENDPOINT'}
-    self.expect_webmention('http://target3/y').InAnyOrder().AndReturn(False)
+    self.expect_webmention(target='http://target3/y').InAnyOrder().AndReturn(False)
 
     self.mox.ReplayAll()
     self.post_task(expected_status=Propagate.ERROR_HTTP_RETURN_CODE)
@@ -305,8 +321,8 @@ class PropagateTest(TaskQueueTest):
     self.responses[0].unsent = ['http://first', 'http://second']
     self.responses[0].save()
     self.mock_send.error = {'code': 'FOO'}
-    self.expect_webmention('http://first').AndReturn(False)
-    self.expect_webmention('http://second').AndReturn(True)
+    self.expect_webmention(target='http://first').AndReturn(False)
+    self.expect_webmention(target='http://second').AndReturn(True)
 
     self.mox.ReplayAll()
     self.post_task(expected_status=Propagate.ERROR_HTTP_RETURN_CODE)
