@@ -119,8 +119,8 @@ class HandlersTest(testutil.HandlerTest):
 
   <div class="e-content">
   likes
-  <a class="u-like" href="http://example.com/original/post">this</a>,
-  <a class="u-like" href="http://orig/post">this</a>.
+  <a class="u-like u-like-of" href="http://example.com/original/post">this</a>,
+  <a class="u-like u-like-of" href="http://orig/post">this</a>.
 
   </div>
 
@@ -144,8 +144,8 @@ class HandlersTest(testutil.HandlerTest):
 
   <div class="e-content">
   reposts
-  <a class="u-repost" href="http://example.com/original/post">this</a>,
-  <a class="u-repost" href="http://orig/post">this</a>.
+  <a class="u-repost u-repost-of" href="http://example.com/original/post">this</a>,
+  <a class="u-repost u-repost-of" href="http://orig/post">this</a>.
 
   </div>
 

@@ -68,6 +68,13 @@ TODO
   post them as comments, etc.
 * move fetching replies (the fetch_replies kwarg to get_activities()) to
   activitystreams-unofficial
+* inject user profile pictures into like and repost authors when the image URL
+  can be generated from the user id (facebook, etc)
+* picture post ids don't accept USERID_ prefix, but other posts require them
+  https://developers.facebook.com/tools/explorer?method=GET&path=10100866796434793
+  vs
+  https://developers.facebook.com/tools/explorer?method=GET&path=212038_10100861392249823
+  try both?
 
 Lower priority:
 
