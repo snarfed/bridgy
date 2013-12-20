@@ -26,6 +26,7 @@ handlers:
 # dynamic
 - url: /webmention
   script: webmention.application
+  secure: always
 
 - url: /(post|comment|like|repost)/.*
   script: handlers.application
@@ -54,6 +55,7 @@ handlers:
 - url: /_ah/queue/.*
   script: tasks.application
   login: admin
+  secure: always
 
 - url: /(delete/.*|about)?
   script: app.application
