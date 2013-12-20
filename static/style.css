@@ -88,12 +88,12 @@ form input {
 }
 
 @media (min-width: 768px) {
-  #sources > .row, .comments > .row {
+  #sources > .row, .responses > .row {
     display: table;
     table-layout: fixed;
   }
 
-  #sources > .row > .col-sm-4, .comments > .row > .col-sm-3 {
+  #sources > .row > .col-sm-4, .responses > .row > .col-sm-3 {
     display: table-cell;
     float: none;
     text-align: left;
@@ -123,7 +123,7 @@ form input {
 .glyphicon-remove { color: red !important; }
 .glyphicon-transfer { color: blue; }
 
-.comments {
+.responses {
   font-size: .8em;
   list-style: none;
   /* border: 1px solid lightgray; */

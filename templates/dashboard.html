@@ -120,8 +120,9 @@ below to try it yourself, or read <a href="/about">even more details.</a></p>
 
    </div><div class="col-sm-3">
     {% with response.activity.object as a %}
-    on <a target="_blank" href="{{ a.url }}">
-       {{ a.content|default:"[post]"|striptags|truncatewords:6|safe }}</a>
+    {% if response.type == "comment" %} on {% endif %}
+    <a target="_blank" href="{{ a.url }}">
+      {{ a.content|default:"[post]"|striptags|truncatewords:6|safe }}</a>
     {% endwith %}
 
    </div><div class="col-sm-3">
