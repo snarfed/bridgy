@@ -56,6 +56,7 @@ class ItemHandler(webapp2.RequestHandler):
   """Fetches a post, repost, like, or comment and serves it as mf2 HTML or JSON.
   """
   handle_exception = handlers.handle_exception
+  source = None
 
   def get_item(source, id):
     """Fetches and returns an object from the given source.
@@ -76,15 +77,15 @@ class ItemHandler(webapp2.RequestHandler):
 
     source_cls = SOURCES.get(source_short_name, '')
     key = db.Key.from_path(source_cls.kind(), key_name)
-    source = db.get(key)
-    if not source:
+    self.source = db.get(key)
+    if not self.source:
       self.abort(400, '%s not found' % key.to_path())
 
     format = self.request.get('format', 'html')
     if format not in ('html', 'json'):
       self.abort(400, 'Invalid format %s, expected html or json' % format)
 
-    obj = self.get_item(source, *ids)
+    obj = self.get_item(*ids)
     if not obj:
       self.abort(404, label)
 
@@ -98,55 +99,77 @@ class ItemHandler(webapp2.RequestHandler):
       self.response.out.write(json.dumps(microformats2.object_to_json(obj),
                                          indent=2))
 
+  def add_original_post_urls(self, post_id, obj, prop):
+    """Extracts original post URLs and adds them to an object, in place.
+
+    Args:
+      post_id: string post id
+      obj: ActivityStreams post object
+      prop: string property name in obj to add the original post URLs to
+    """
+    post = None
+    try:
+      post = self.source.get_post(post_id)
+    except:
+      logging.exception('Error fetching source post %s', post_id)
+      return
+    if not post:
+      logging.warning('Source post %s not found', post_id)
+      return
+
+    self.source.as_source.original_post_discovery(post)
+
+    if prop not in obj:
+      obj[prop] = []
+    elif not isinstance(obj[prop], list):
+      obj[prop] = [obj[prop]]
+    obj[prop] += [tag for tag in post['object'].get('tags', [])
+                  if 'url' in tag and tag['objectType'] == 'article']
+
+    # When debugging locally, replace my (snarfed.org) URLs with localhost
+    if appengine_config.DEBUG:
+      for url_obj in obj[prop]:
+        if url_obj.get('url', '').startswith('http://snarfed.org/'):
+          url_obj['url'] = url_obj['url'].replace('http://snarfed.org/',
+                                                  'http://localhost/')
+
+    post_urls = ', '.join(o.get('url', '[none]') for o in obj[prop])
+    logging.info('Original post discovery filled in %s URLs: %s', prop, post_urls)
+
 
 class PostHandler(ItemHandler):
-  def get_item(self, source, id):
-    activity = source.get_post(id)
+  def get_item(self, id):
+    activity = self.source.get_post(id)
     return activity['object'] if activity else None
 
 
 class CommentHandler(ItemHandler):
-  def get_item(self, source, post_id, id):
-    cmt = source.get_comment(id, activity_id=post_id)
+  def get_item(self, post_id, id):
+    cmt = self.source.get_comment(id, activity_id=post_id)
     if not cmt:
       return None
-
-    post = None
-    try:
-      post = source.get_post(post_id)
-    except:
-      logging.exception('Error fetching source post %s', post_id)
-    if not post:
-      logging.warning('Source post %s not found', post_id)
-      return cmt
-
-    # add inReplyTo URLs for original post links
-    source.as_source.original_post_discovery(post)
-    in_reply_tos = cmt.setdefault('inReplyTo', [])
-    in_reply_tos += [tag for tag in post['object'].get('tags', [])
-                     if 'url' in tag and tag['objectType'] == 'article']
-
-    # When debugging locally, replace my (snarfed.org) URLs with localhost
-    if appengine_config.DEBUG:
-      for obj in cmt['inReplyTo']:
-        if obj.get('url', '').startswith('http://snarfed.org/'):
-          obj['url'] = obj['url'].replace('http://snarfed.org/',
-                                          'http://localhost/')
-
-    logging.info('Original post discovery filled in inReplyTo URLs: %s',
-                 ', '.join(obj.get('url', 'none') for obj in cmt['inReplyTo']))
-
+    self.add_original_post_urls(post_id, cmt, 'inReplyTo')
     return cmt
 
 
 class LikeHandler(ItemHandler):
-  def get_item(self, source, post_id, user_id):
-    return source.as_source.get_like(source.key().name(), post_id, user_id)
+  def get_item(self, post_id, user_id):
+    like = self.source.as_source.get_like(self.source.key().name(), post_id,
+                                          user_id)
+    if not like:
+      return None
+    self.add_original_post_urls(post_id, like, 'object')
+    return like
 
 
 class RepostHandler(ItemHandler):
-  def get_item(self, source, post_id, user_id):
-    return source.as_source.get_repost(source.key().name(), post_id, user_id)
+  def get_item(self, post_id, user_id):
+    repost = self.source.as_source.get_repost(self.source.key().name(), post_id,
+                                              user_id)
+    if not repost:
+      return None
+    self.add_original_post_urls(post_id, repost, 'object')
+    return repost
 
 
 application = webapp2.WSGIApplication([
