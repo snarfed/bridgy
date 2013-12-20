@@ -156,7 +156,7 @@ class PropagateTest(TaskQueueTest):
   def setUp(self):
     super(PropagateTest, self).setUp()
     for r in self.responses[:3]:
-      r.save()
+      r.get_or_save()
     self.mock_webmention()
 
   def post_task(self, expected_status=200, response=None):
@@ -191,7 +191,7 @@ class PropagateTest(TaskQueueTest):
     self.assert_equals(error, response.error)
 
   def expect_webmention(self, source_url=None, target='http://target1/post/url'):
-    if not source_url:
+    if source_url is None:
       source_url = 'http://localhost/comment/fake/%s/a/1_2_a' % \
           self.sources[0].key().name()
     send.WebmentionSend(source_url, target).InAnyOrder()\
@@ -204,8 +204,8 @@ class PropagateTest(TaskQueueTest):
 
     id = self.sources[0].key().name()
     for url in ('http://localhost/comment/fake/%s/a/1_2_a' % id,
-                'http://localhost/comment/fake/%s/a/a_liked_by_alice' % id,
-                'http://localhost/comment/fake/%s/a/a_reposted_by_bob' % id):
+                'http://localhost/like/fake/%s/a/alice' % id,
+                'http://localhost/repost/fake/%s/a/bob' % id):
       self.expect_webmention(source_url=url).AndReturn(True)
     self.mox.ReplayAll()
 

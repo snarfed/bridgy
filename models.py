@@ -209,17 +209,24 @@ class Response(KeyNameModel):
       return existing
 
     obj = json.loads(self.response_json)
-    type = obj.get('objectType')
-    if type == 'activity':
-      type = obj.get('verb')
-    # default to comment. (e.g. Twitter replies technically have objectType note)
-    self.type = type if type in ('like', 'repost') else 'comment'
-
+    self.type = Response.get_type(obj)
     logging.debug('New response to propagate! %s %s %s', self.type,
                   self.key().id_or_name(), obj.get('url', '[no url]'))
     taskqueue.add(queue_name='propagate', params={'response_key': str(self.key())})
     self.save()
     return self
+
+  @staticmethod
+  def get_type(obj):
+    """Returns the response type for an ActivityStreams object."""
+    type = obj.get('objectType')
+    if type == 'activity' and obj.get('verb') == 'like':
+      return 'like'
+    elif type == 'share':
+      return 'repost'
+    else:
+      # default to comment. (e.g. Twitter replies technically have objectType note)
+      return 'comment'
 
 
 class Comment(Response):

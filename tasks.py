@@ -111,9 +111,8 @@ class Poll(webapp2.RequestHandler):
       obj = activity['object']
       replies = obj.get('replies', {}).get('items', [])
       tags = obj.get('tags', [])
-      likes = [t for t in tags if (t.get('objectType') == 'activity' and
-                                   t.get('verb') == 'like')]
-      reposts = [t for t in tags if t.get('objectType') == 'share']
+      likes = [t for t in tags if models.Response.get_type(t) == 'like']
+      reposts = [t for t in tags if models.Response.get_type(t) == 'repost']
 
       responses = replies + likes + reposts
       if targets or responses:
@@ -160,9 +159,12 @@ class Propagate(webapp2.RequestHandler):
       return
 
     try:
-      _, response_id = util.parse_tag_uri(response.key().name())
       logging.info('Starting %s response %s',
                    response.source.kind(), response.key().name())
+
+      _, response_id = util.parse_tag_uri(response.key().name())
+      if response.type in ('like', 'repost'):
+        response_id = response_id.split('_')[-1]
 
       # generate local response URL
       activity = json.loads(response.activity_json)
