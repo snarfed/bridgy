@@ -118,9 +118,9 @@ class HandlersTest(testutil.HandlerTest):
 <time class="dt-updated" datetime=""></time>
 
   <div class="e-content">
-  likes
-  <a class="u-like u-like-of" href="http://example.com/original/post">this</a>,
-  <a class="u-like u-like-of" href="http://orig/post">this</a>.
+  likes this.
+  <a class="u-like u-like-of" href="http://example.com/original/post" />
+  <a class="u-like u-like-of" href="http://orig/post" />
 
   </div>
 
@@ -143,9 +143,9 @@ class HandlersTest(testutil.HandlerTest):
 <time class="dt-updated" datetime=""></time>
 
   <div class="e-content">
-  reposts
-  <a class="u-repost u-repost-of" href="http://example.com/original/post">this</a>,
-  <a class="u-repost u-repost-of" href="http://orig/post">this</a>.
+  reposts this.
+  <a class="u-repost u-repost-of" href="http://example.com/original/post" />
+  <a class="u-repost u-repost-of" href="http://orig/post" />
 
   </div>
 

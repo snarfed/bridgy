@@ -91,7 +91,8 @@ class Poll(webapp2.RequestHandler):
 
   def do_post(self, source):
     logging.info('Polling %s %s', source.label(), source.key().name())
-    activities = source.get_activities(fetch_replies=True, count=20)
+    activities = source.get_activities(fetch_replies=True, fetch_likes=True,
+                                       count=20)
     logging.info('Found %d activities', len(activities))
 
     for activity in activities:
