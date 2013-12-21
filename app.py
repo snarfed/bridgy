@@ -57,7 +57,7 @@ class DashboardHandler(util.Handler):
     # kick off queries for recent responses for each source. all queries run
     # async, in parallel.
     for source in sources.values():
-      source.recent_responses = source.response_set.order('-updated').run(limit=5)
+      source.recent_responses = source.response_set.order('-updated').run(limit=10)
 
     # now wait on query results
     for source in sources.values():
