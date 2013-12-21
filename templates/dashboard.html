@@ -10,11 +10,10 @@
 
 <div id="more" style="display: none" />
 <p>Brid.gy sends
-<a href="http://webmention.org/">webmentions</a> for comments on Facebook,
-Twitter, Google+, and Instagram. Brid.gy polls your posts,
-discovers <a href="http://indiewebcamp.com/original-post-discovery">original
-post links</a>, and sends comments to those links as webmentions. It also serves
-each post and comment
+<a href="http://webmention.org/">webmentions</a> for comments and likes on
+Facebook, Twitter, Google+, and Instagram. Brid.gy notices when you post links,
+watches for comments on those posts, and sends those comments back as
+webmentions. It also serves each post and comment
 as <a href="http://microformats.org/wiki/microformats2">microformats2</a> for
 webmention targets to read.</p>
 
@@ -111,9 +110,8 @@ below to try it yourself, or read <a href="/about">even more details.</a></p>
   <li class="row">
    <div class="col-sm-3">
     {% with response.response as r %}
-    <a target="_blank" href="{{ r.author.url }}">
+    <a target="_blank" href="{{ r.author.url }}" title="{{ r.author.displayName }}">
       <img class="profile" src="{{ r.author.image.url }}" width="32" /></a>
-      <!-- {{ r.author.displayName }} -->
       <a target="_blank" href="{{ r.url }}">
         {{ r.content|default:"[comment]"|striptags|truncatewords:6|safe }}</a>
     {% endwith %}

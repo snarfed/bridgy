@@ -37,6 +37,9 @@ TODO
 * fix error Poll links to go to error log, not previous successful log
 * store and render 'skipped' targets. (test: http://instagram.com/p/hc1xLpp72X/)
 * replace t.co links with url entities
+* detect and skip non-HTML links before downloading, maybe with a HEAD request?
+  e.g. https://twitter.com/snarfed_org/status/414172539837874176 links to
+  https://research.microsoft.com/en-us/people/mickens/thesaddestmoment.pdf
 * likes/favorites. based on http://indiewebcamp.com/like and
   http://indiewebcamp.com/responses, it looks like it's just u-like and a
   webmention, similar to a reply and may not even need a u-in-reply-to.
@@ -68,8 +71,6 @@ TODO
   post them as comments, etc.
 * move fetching replies (the fetch_replies kwarg to get_activities()) to
   activitystreams-unofficial
-* inject user profile pictures into like and repost authors when the image URL
-  can be generated from the user id (facebook, etc)
 
 Lower priority:
 

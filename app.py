@@ -71,9 +71,9 @@ class DashboardHandler(util.Handler):
 
         if not r.response.get('content'):
           if r.type == 'like':
-            r.response['content'] = 'liked';
+            r.response['content'] = '%s liked' % r.response['author']['displayName'];
           elif r.type == 'repost':
-            r.response['content'] = 'reposted';
+            r.response['content'] = '%s reposted' % r.response['author']['displayName'];
 
         # convert image URL to https if we're serving over SSL
         image_url = r.response['author'].setdefault('image', {}).get('url')
