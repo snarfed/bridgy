@@ -128,7 +128,7 @@ class HandlersTest(testutil.HandlerTest):
 """)
 
   def test_get_repost_html(self):
-    self.source.as_source.set_repost({
+    self.source.as_source.set_share({
         'objectType': 'activity',
         'verb': 'share',
         'id': 'tag:fake.com,2013:111',
