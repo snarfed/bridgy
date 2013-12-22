@@ -179,7 +179,7 @@ class PropagateTest(TaskQueueTest):
     self.mox.StubOutWithMock(send, 'WebmentionSend', use_mock_anything=True)
 
   def assert_response_is(self, status, leased_until=False, sent=[], error=[],
-                         response=None):
+                         unsent=[], response=None):
     """Asserts that responses[0] has the given values in the datastore.
     """
     if response is None:
@@ -188,7 +188,7 @@ class PropagateTest(TaskQueueTest):
     self.assertEqual(status, response.status)
     if leased_until is not False:
       self.assertEqual(leased_until, response.leased_until)
-    self.assert_equals([], response.unsent)
+    self.assert_equals(unsent, response.unsent)
     self.assert_equals(sent, response.sent)
     self.assert_equals(error, response.error)
 
@@ -263,7 +263,7 @@ class PropagateTest(TaskQueueTest):
     self.responses[0].save()
 
     self.post_task()
-    self.assert_response_is('complete')
+    self.assert_response_is('complete', unsent=['http://target1/post/url'])
 
   def test_leased(self):
     """If the response is processing and the lease hasn't expired, do nothing."""
@@ -273,7 +273,8 @@ class PropagateTest(TaskQueueTest):
     self.responses[0].save()
 
     self.post_task(expected_status=Propagate.ERROR_HTTP_RETURN_CODE)
-    self.assert_response_is('processing', leased_until)
+    self.assert_response_is('processing', leased_until,
+                            unsent=['http://target1/post/url'])
 
     response = db.get(self.responses[0].key())
     self.assertEqual('processing', response.status)
@@ -337,7 +338,7 @@ class PropagateTest(TaskQueueTest):
     self.mox.ReplayAll()
 
     self.post_task(expected_status=500)
-    self.assert_response_is('error', None)
+    self.assert_response_is('error', None, unsent=['http://target1/post/url'])
 
   def test_complete_exception(self):
     """If completing raises an exception, the lease should be released."""

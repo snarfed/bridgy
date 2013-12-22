@@ -72,6 +72,8 @@ TODO
 * move fetching replies (the fetch_replies kwarg to get_activities()) to
   activitystreams-unofficial
 * handle 401 Unauthorized response from Twitter in Poll and disable source
+* link repost and like text (e.g. 'retweeted this') when a url is available
+  (e.g. no on FB likes, yes on twitter RTs)
 
 Lower priority:
 
