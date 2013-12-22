@@ -222,7 +222,7 @@ class Response(KeyNameModel):
     type = obj.get('objectType')
     if type == 'activity' and obj.get('verb') == 'like':
       return 'like'
-    elif type == 'share':
+    elif type == 'activity' and obj.get('verb') == 'share':
       return 'repost'
     else:
       # default to comment. (e.g. Twitter replies technically have objectType note)

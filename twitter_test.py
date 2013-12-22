@@ -37,7 +37,7 @@ class TwitterTest(testutil.ModelsTest):
 
   def test_get_activities(self):
     self.expect_urlopen('https://api.twitter.com/1.1/statuses/user_timeline.json?'
-                        'include_entities=true&count=100',
+                        'include_entities=true&count=0',
       json.dumps([as_twitter_test.TWEET]))
     self.mox.ReplayAll()
 

@@ -47,7 +47,7 @@ class Twitter(models.Source):
       self.as_source = as_twitter.Twitter(*self.auth_entity.access_token())
 
   def get_activities(self, fetch_replies=False, **kwargs):
-    kwargs.setdefault('count', 100)
+    # kwargs.setdefault('count', 100)
     activities = self.as_source.get_activities(
       group_id=SELF, user_id=self.key().name(), **kwargs)[1]
 

@@ -86,7 +86,7 @@ class FakeSource(FakeBase, Source):
     self._set('activities', val)
 
   def get_activities(self, fetch_replies=False, fetch_likes=False,
-                     fetch_reposts=False, count=None):
+                     fetch_shares=False, count=None):
     return self._get('activities')
 
   def get_post(self, id):
@@ -150,7 +150,8 @@ class ModelsTest(HandlerTest):
               'author': {'url': 'http://example.com/alice'},
               }, {
               'id': 'tag:source.com,2013:%s_reposted_by_bob' % id,
-              'objectType': 'share',
+              'objectType': 'activity',
+              'objectType': 'like',
               'object': {'url': 'http://example.com/def'},
               'author': {'url': 'http://example.com/bob'},
               }],
