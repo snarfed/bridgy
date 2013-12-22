@@ -151,7 +151,7 @@ class ModelsTest(HandlerTest):
               }, {
               'id': 'tag:source.com,2013:%s_reposted_by_bob' % id,
               'objectType': 'activity',
-              'objectType': 'like',
+              'verb': 'share',
               'object': {'url': 'http://example.com/def'},
               'author': {'url': 'http://example.com/bob'},
               }],
