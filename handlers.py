@@ -163,9 +163,9 @@ class LikeHandler(ItemHandler):
 
 
 class RepostHandler(ItemHandler):
-  def get_item(self, post_id, user_id):
-    repost = self.source.as_source.get_repost(self.source.key().name(), post_id,
-                                              user_id)
+  def get_item(self, post_id, share_id):
+    repost = self.source.as_source.get_share(self.source.key().name(), post_id,
+                                             share_id)
     if not repost:
       return None
     self.add_original_post_urls(post_id, repost, 'object')
