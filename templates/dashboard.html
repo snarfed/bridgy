@@ -12,9 +12,9 @@
 <p>Brid.gy sends
 <a href="http://webmention.org/">webmentions</a> for comments and likes on
 Facebook, Twitter, Google+, and Instagram. Brid.gy notices when you post links,
-watches for comments on those posts, and sends those comments back as
-webmentions. It also serves each post and comment
-as <a href="http://microformats.org/wiki/microformats2">microformats2</a> for
+watches for comments and likes on those posts, and sends them back to your site
+as webmentions. It also serves them as
+<a href="http://microformats.org/wiki/microformats2">microformats2</a> for
 webmention targets to read.</p>
 
 <p>You can <a href="#users">see who's using Brid.gy</a>, click on a button
@@ -92,7 +92,7 @@ below to try it yourself, or read <a href="/about">even more details.</a></p>
  </div><div class="col-sm-4">
   {% if source.recent_responses %}
     <a href="#" onclick="toggle('responses-{{ source.dom_id }}'); return false;">
-      Recent comments...
+      Recent responses...
     {% if source.recent_response_status == "processing" %}
      <span title="Processing" class="glyphicon glyphicon-transfer"></span>
     {% else %}{% if source.recent_response_status == "error" %}
@@ -100,7 +100,7 @@ below to try it yourself, or read <a href="/about">even more details.</a></p>
     {% endif %}{% endif %}
     </a>
   {% else %}
-    No comments yet
+    No responses yet
   {% endif %}
  </div>
 </div>
@@ -113,14 +113,14 @@ below to try it yourself, or read <a href="/about">even more details.</a></p>
     <a target="_blank" href="{{ r.author.url }}" title="{{ r.author.displayName }}">
       <img class="profile" src="{{ r.author.image.url }}" width="32" /></a>
       <a target="_blank" href="{{ r.url }}">
-        {{ r.content|default:"[comment]"|striptags|truncatewords:6|safe }}</a>
+        {{ r.content|default:"--"|striptags|truncatewords:6|safe }}</a>
     {% endwith %}
 
    </div><div class="col-sm-3">
     {% with response.activity.object as a %}
     {% if response.type == "comment" %} on {% endif %}
     <a target="_blank" href="{{ a.url }}">
-      {{ a.content|default:"[post]"|striptags|truncatewords:6|safe }}</a>
+      {{ a.content|default:"--"|striptags|truncatewords:6|safe }}</a>
     {% endwith %}
 
    </div><div class="col-sm-3">

@@ -85,6 +85,10 @@ class Twitter(models.Source):
         # this tweet. can't use statuses/mentions_timeline because i'd need to
         # auth as the user being mentioned.
         # https://dev.twitter.com/docs/api/1.1/get/statuses/mentions_timeline
+        #
+        # note that these HTTP requests are synchronous. you can make async
+        # requests by using urlfetch.fetch() directly, but not with urllib2.
+        # https://developers.google.com/appengine/docs/python/urlfetch/asynchronousrequests
         author = reply['actor']['username']
         if author not in mentions:
           resp = self.as_source.urlread(as_twitter.API_SEARCH_URL %

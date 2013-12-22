@@ -78,7 +78,8 @@ class PollTest(TaskQueueTest):
     """If anything goes wrong, the source status should be set to 'error'."""
     self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities')
     testutil.FakeSource.get_activities(count=mox.IgnoreArg(), fetch_replies=True,
-                                       fetch_likes=True).AndRaise(Exception('foo'))
+                                       fetch_likes=True, fetch_reposts=True
+                                       ).AndRaise(Exception('foo'))
     self.mox.ReplayAll()
 
     self.assertRaises(Exception, self.post_task)
@@ -139,7 +140,8 @@ class PollTest(TaskQueueTest):
     source = self.sources[0]
     self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities')
     testutil.FakeSource.get_activities(count=mox.IgnoreArg(), fetch_replies=True,
-                                       fetch_likes=True).AndRaise(models.DisableSource)
+                                       fetch_likes=True, fetch_reposts=True
+                                       ).AndRaise(models.DisableSource)
     self.mox.ReplayAll()
 
     source.status = 'enabled'
