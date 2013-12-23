@@ -72,14 +72,15 @@ class GooglePlusPage(models.Source):
 
     if fetch_replies:
       for activity in activities:
-        _, id = util.parse_tag_uri(activity['id'])
-        call = self.as_source.auth_entity.api().comments().list(
-          activityId=id, maxResults=500)
-        comments = call.execute(self.as_source.auth_entity.http())
-        for comment in comments['items']:
-          self.as_source.postprocess_comment(comment)
-
-        activity['object']['replies']['items'] = comments['items']
+        obj = activity['object']
+        if obj.get('replies', {}).get('totalItems', 0) > 0:
+          _, id = util.parse_tag_uri(activity['id'])
+          call = self.as_source.auth_entity.api().comments().list(
+            activityId=id, maxResults=500)
+          comments = call.execute(self.as_source.auth_entity.http())
+          for comment in comments['items']:
+            self.as_source.postprocess_comment(comment)
+          obj['replies']['items'] = comments['items']
 
     return activities
 
