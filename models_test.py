@@ -52,7 +52,7 @@ class ResponseTest(testutil.ModelsTest):
     self.assertEqual('comment', saved.type)
 
   def test_dom_id(self):
-    self.assertEqual('FakeSource-%s' % self.sources[0].key().name(),
+    self.assertEqual('fake-%s' % self.sources[0].key().name(),
                      self.sources[0].dom_id())
 
 

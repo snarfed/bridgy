@@ -87,7 +87,7 @@ class Site(KeyNameModel):
 
   def dom_id(self):
     """Returns the DOM element id for this site."""
-    return '%s-%s' % (self.DISPLAY_NAME, self.key().name())
+    return '%s-%s' % (self.SHORT_NAME, self.key().name())
 
 
 class Source(Site):
