@@ -11,10 +11,7 @@ import testutil
 from activitystreams import instagram_test as as_instagram_test
 from activitystreams.oauth_dropins import instagram as oauth_instagram
 from instagram import Instagram
-import models
 from webutil import util
-
-import webapp2
 
 
 class InstagramTest(testutil.ModelsTest):
