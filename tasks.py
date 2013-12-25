@@ -38,7 +38,7 @@ WEBMENTION_BLACKLIST = (
   'instagram.com',
   'plus.google.com',
   'twitter.com',
-  # these come from the text of tweets. we also pull the expended URL
+  # these come from the text of tweets. we also pull the expanded URL
   # from the tweet entities, so ignore these instead of resolving them.
   't.co',
   'youtube.com',
@@ -81,11 +81,13 @@ class Poll(webapp2.RequestHandler):
     except models.DisableSource:
       # the user deauthorized the bridgy app, so disable this source.
       source.status = 'disabled'
+      source.last_poll_attempt = now_fn()
       source.save()
       logging.error('Disabling source!')
       # let this task complete successfully so that it's not retried.
     except:
       source.status = 'error'
+      source.last_poll_attempt = now_fn()
       source.save()
       raise
 
@@ -134,7 +136,7 @@ class Poll(webapp2.RequestHandler):
                         unsent=list(targets),
                         ).get_or_save()
 
-    source.last_polled = now_fn()
+    source.last_polled = source.last_poll_attempt = now_fn()
     source.status = 'enabled'
     util.add_poll_task(source, countdown=self.TASK_COUNTDOWN.seconds)
     source.save()

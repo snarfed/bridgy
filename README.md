@@ -37,7 +37,6 @@ Related work
 TODO
 ---
 
-* fix error Poll links to go to error log, not previous successful log
 * store and render 'skipped' targets. (test: http://instagram.com/p/hc1xLpp72X/)
 * replace t.co links with url entities
 * move fetching replies (the fetch_replies kwarg to get_activities()) to

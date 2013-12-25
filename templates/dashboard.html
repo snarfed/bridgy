@@ -71,12 +71,12 @@ below to try it yourself, or read <a href="/about">even more details.</a></p>
   </span>
 
  </div><div class="col-sm-4">
-  {% if source.last_polled == epoch %}
+  {% if source.last_poll_attempt == epoch %}
     Not polled yet
   {% else %}
     Polled
-    <a href="/log?start_time={{ source.last_polled|date:'U' }}&key={{ source.key }}">
-      {{ source.last_polled|timesince }} ago
+    <a href="/log?start_time={{ source.last_poll_attempt|date:'U' }}&key={{ source.key }}">
+      {{ source.last_poll_attempt|timesince }} ago
     {% if source.status == "error" %}
      <span title="Error" class="glyphicon glyphicon-exclamation-sign"></span>
     {% endif %}

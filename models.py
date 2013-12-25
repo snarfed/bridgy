@@ -97,6 +97,7 @@ class Source(Site):
   """
 
   last_polled = db.DateTimeProperty(default=util.EPOCH)
+  last_poll_attempt = db.DateTimeProperty(default=util.EPOCH)
 
   # full human-readable name
   name = db.StringProperty()
