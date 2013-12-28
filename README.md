@@ -37,17 +37,24 @@ Related work
 TODO
 ---
 
+* add twitter favorites. looks like there are two options:
+  * use twitter's Streaming API + app engine backends + app engine socket API
+    https://dev.twitter.com/docs/streaming-apis/messages#Events_event
+    https://developers.google.com/appengine/docs/python/backends/
+    https://developers.google.com/appengine/docs/python/sockets/
+  * scrape twitter's HTML. it'd be the favorited_popup:
+    https://twitter.com/i/activity/favorited_popup?id=415371781264781312
 * store and render 'skipped' targets. (test: http://instagram.com/p/hc1xLpp72X/)
 * replace t.co links with url entities
 * move fetching replies (the fetch_replies kwarg to get_activities()) to
   activitystreams-unofficial
 * handle 401 Unauthorized response from Twitter in Poll and disable source
-* implement the other direction: convert incoming webmentions into API calls to
-  post them as comments, etc.
 
 Lower priority:
 
 * detect updated comments and send new webmentions for them
+* implement the other direction: convert incoming webmentions into API calls to
+  post them as comments, etc.
 * only handle public posts? (need to add privacy/audience detection to
   activitystreams-unofficial)
 * clear toast messages?

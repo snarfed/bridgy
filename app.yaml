@@ -13,6 +13,9 @@ libraries:
 - name: ssl
   version: latest
 
+env_variables:
+  GAE_USE_SOCKETS_HTTPLIB : 'true'
+
 handlers:
 
 # static
