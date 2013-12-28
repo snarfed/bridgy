@@ -14,6 +14,7 @@ import json
 import logging
 import urlparse
 
+from activitystreams.source import Source
 # need to import model class definitions since poll creates and saves entities.
 import facebook
 import googleplus
@@ -48,6 +49,27 @@ WEBMENTION_BLACKLIST = (
 
 # allows injecting timestamps in task_test.py
 now_fn = datetime.datetime.now
+
+
+def get_webmention_targets(activity):
+  """Returns a set of string target URLs to attempt to send webmentions to.
+
+  Side effect: runs the original post discovery algorithm on the activity and
+  adds the resulting URLs to the activity as tags, in place.
+  """
+  Source.original_post_discovery(activity)
+
+  targets = set()
+  for tag in activity['object'].get('tags', []):
+    url = tag.get('url')
+    if tag.get('objectType') == 'article' and url:
+      domain = urlparse.urlparse(url).netloc
+      if domain.startswith('www.'):
+        domain = domain[4:]
+      if domain not in WEBMENTION_BLACKLIST:
+        targets.add(url)
+
+  return targets
 
 
 class Poll(webapp2.RequestHandler):
@@ -98,17 +120,7 @@ class Poll(webapp2.RequestHandler):
     logging.info('Found %d activities', len(activities))
 
     for activity in activities:
-      # use original post discovery to find targets
-      source.as_source.original_post_discovery(activity)
-      targets = set()
-      for tag in activity['object'].get('tags', []):
-        url = tag.get('url')
-        if tag.get('objectType') == 'article' and url:
-          domain = urlparse.urlparse(url).netloc
-          if domain.startswith('www.'):
-            domain = domain[4:]
-          if domain not in WEBMENTION_BLACKLIST:
-            targets.add(url)
+      targets = get_webmention_targets(activity)
 
       # extract replies, likes, and reposts.
       obj = activity['object']
