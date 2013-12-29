@@ -14,7 +14,7 @@ libraries:
   version: latest
 
 env_variables:
-  GAE_USE_SOCKETS_HTTPLIB : 'true'
+  GAE_USE_SOCKETS_HTTPLIB: 'true'
 
 handlers:
 
