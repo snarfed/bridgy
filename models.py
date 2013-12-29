@@ -214,7 +214,7 @@ class Response(KeyNameModel):
     logging.debug('New response to propagate! %s %s %s', self.type,
                   self.key().id_or_name(), obj.get('url', '[no url]'))
     taskqueue.add(queue_name='propagate',
-                  params={'response_key': str(self.key())})
+                  params={'response_key': str(self.key())},
                   # tasks inserted from a backend (e.g. twitter_streaming) are
                   # sent to that backend by default, which doesn't work in the
                   # dev_appserver. setting the target version in queue.yaml

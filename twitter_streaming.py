@@ -52,9 +52,6 @@ USER_STREAM_URL = 'https://userstream.twitter.com/1.1/user.json?with=user'
 # How often to check for new/deleted sources, in seconds.
 POLL_FREQUENCY_S = 5 * 60
 
-# global. maps twitter.Twitter key to tweepy.streaming.Stream
-streams = {}
-
 
 class FavoriteListener(streaming.StreamListener):
   """A per-user streaming API connection that saves favorites as Responses.
@@ -76,6 +73,8 @@ class FavoriteListener(streaming.StreamListener):
 
   def on_data(self, raw_data):
     try:
+      # logging.debug('Received streaming message: %s...', raw_data[:100])
+
       data = json.loads(raw_data)
       if data.get('event') != 'favorite':
         # logging.debug('Discarding non-favorite message: %s', raw_data)
@@ -103,9 +102,10 @@ class FavoriteListener(streaming.StreamListener):
 
     return True
 
+
 class Start(webapp2.RequestHandler):
   def get(self):
-    global streams
+    streams = {}  # maps twitter.Twitter key to tweepy.streaming.Stream
 
     while True:
       query = twitter.Twitter.all().filter('status !=', 'disabled')
@@ -126,9 +126,9 @@ class Start(webapp2.RequestHandler):
       # TODO: if access is revoked on Twitter's end, the request will disconnect.
       # handle that.
       # https://dev.twitter.com/docs/streaming-apis/messages#Events_event
-      # for key in source_keys - stream_keys:
-      #   streams[key].stop()
-      #   del streams[key]
+      for key in stream_keys - source_keys:
+        streams[key].stop()
+        del streams[key]
 
       time.sleep(POLL_FREQUENCY_S)
 
