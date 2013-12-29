@@ -24,6 +24,7 @@ import appengine_config
 import facebook
 import googleplus
 import instagram
+import models
 import twitter
 import util
 import webapp2
@@ -154,8 +155,18 @@ class CommentHandler(ItemHandler):
 
 class LikeHandler(ItemHandler):
   def get_item(self, post_id, user_id):
-    like = self.source.as_source.get_like(self.source.key().name(), post_id,
-                                          user_id)
+    like = None
+
+    # Special case Twitter favorites since they're not exposed via the REST API.
+    # Fetch them from the datastore Response instead.
+    if isinstance(self.source, twitter.Twitter):
+      id = self.source.as_source.tag_uri('%s_favorited_by_%s' % (post_id, user_id))
+      resp = models.Response.get_by_key_name(id)
+      if resp:
+        like = json.loads(resp.response_json)
+    else:
+      like = self.source.as_source.get_like(self.source.key().name(), post_id,
+                                            user_id)
     if not like:
       return None
     self.add_original_post_urls(post_id, like, 'object')
