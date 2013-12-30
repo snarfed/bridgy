@@ -138,9 +138,20 @@ below to try it yourself, or read <a href="/about">even more details.</a></p>
      {% if response.status == "complete" %} Sent {% else %} Sending {% endif %} to:
      <br />
      {{ response.links|safeseq|join:" <br /> " }}
-    {% else %}{% if response.status == "complete" %}
-     No post links found
-    {% endif %}{% endif %}
+     <br />
+    {% endif %}
+
+    {% if response.links_skipped %}
+     No webmention support:<br />
+     {{ response.links_skipped|safeseq|join:" <br /> " }}
+     <br />
+    {% endif %}
+
+    {% if not response.links and not response.links_skipped %}
+     {% if response.status == "complete" %} No post links found
+     {% else %} Working...
+     {% endif %}
+    {% endif %}
    </div>
   </li>
   {% endfor %}

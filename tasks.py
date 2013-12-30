@@ -212,6 +212,7 @@ class Propagate(webapp2.RequestHandler):
         else:
           if mention.error['code'] == 'NO_ENDPOINT':
             logging.info('Giving up this target. %s', mention.error)
+            response.skipped.append(target)
           else:
             self.fail('Error sending to endpoint: %s' % mention.error)
             response.error.append(target)

@@ -179,7 +179,7 @@ class PropagateTest(TaskQueueTest):
     self.mox.StubOutWithMock(send, 'WebmentionSend', use_mock_anything=True)
 
   def assert_response_is(self, status, leased_until=False, sent=[], error=[],
-                         unsent=[], response=None):
+                         unsent=[], skipped=[], response=None):
     """Asserts that responses[0] has the given values in the datastore.
     """
     if response is None:
@@ -191,6 +191,7 @@ class PropagateTest(TaskQueueTest):
     self.assert_equals(unsent, response.unsent)
     self.assert_equals(sent, response.sent)
     self.assert_equals(error, response.error)
+    self.assert_equals(skipped, response.skipped)
 
   def expect_webmention(self, source_url=None, target='http://target1/post/url'):
     if source_url is None:
@@ -246,7 +247,7 @@ class PropagateTest(TaskQueueTest):
     response = db.get(self.responses[0].key())
     self.assert_response_is('error',
                            sent=['http://target1/post/url', 'http://target4/z'],
-                           error=['http://target2/x'])
+                           error=['http://target2/x'], skipped=['http://target3/y'])
 
   def test_no_targets(self):
     """No target URLs."""
@@ -314,7 +315,7 @@ class PropagateTest(TaskQueueTest):
       expected_status = 200 if give_up else Propagate.ERROR_HTTP_RETURN_CODE
       self.post_task(expected_status=expected_status)
       if give_up:
-        self.assert_response_is('complete')
+        self.assert_response_is('complete', skipped=['http://target1/post/url'])
       else:
         self.assert_response_is('error', error=['http://target1/post/url'])
       self.mox.VerifyAll()

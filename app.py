@@ -96,6 +96,7 @@ class DashboardHandler(util.Handler):
           set(link(url, 'exclamation-sign') for url in r.error) |
           set(link(url, 'transfer') for url in r.unsent if url not in r.error) |
           set(link(url) for url in r.sent if url not in (r.error + r.unsent)))
+        r.links_skipped = set(link(url) for url in r.skipped)
 
         if r.error:
           source.recent_response_status = 'error'

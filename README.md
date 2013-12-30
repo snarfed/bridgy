@@ -51,7 +51,6 @@ https://www.brid.gy/log?start_time=1388420220&key=aglzfmJyaWQtZ3lyRwsSCFJlc3Bvbn
   backend only serves one request at a time, and /_ah/start never returns)
 * test blacklist, both poll and propagate
 * twitter_streaming test
-* store and render 'skipped' targets. (test: http://instagram.com/p/hc1xLpp72X/)
 * replace t.co links with url entities
 * move fetching replies (the fetch_replies kwarg to get_activities()) to
   activitystreams-unofficial
