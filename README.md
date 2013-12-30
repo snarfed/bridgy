@@ -37,6 +37,8 @@ Related work
 TODO
 ---
 
+* fix /_ah/stop in twitter_streaming backend. (it serves a 500 because the
+  backend only serves one request at a time, and /_ah/start never returns)
 * twitter_streaming test
 * store and render 'skipped' targets. (test: http://instagram.com/p/hc1xLpp72X/)
 * replace t.co links with url entities

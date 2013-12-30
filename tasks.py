@@ -34,6 +34,8 @@ import appengine_config
 WEBMENTION_BLACKLIST = (
   'amzn.com',
   'amazon.com',
+  'brid.gy',
+  'brid-gy.appspot.com',
   'facebook.com',
   'm.facebook.com',
   'instagram.com',
