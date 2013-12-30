@@ -9,6 +9,7 @@ import testutil
 
 from activitystreams import twitter_test as as_twitter_test
 from activitystreams.oauth_dropins import twitter as oauth_twitter
+import models
 from twitter import Twitter
 
 
@@ -43,3 +44,18 @@ class TwitterTest(testutil.ModelsTest):
 
     tw = Twitter.new(self.handler, auth_entity=self.auth_entity)
     self.assert_equals([as_twitter_test.ACTIVITY], tw.get_activities())
+
+  def test_get_like(self):
+    """get_like() should use the Response stored in the datastore."""
+    like = {
+      'objectType': 'activity',
+      'verb': 'like',
+      'id': 'tag:twitter.com,2013:222',
+      'object': {'url': 'http://my/favorite'},
+      }
+    models.Response(key_name='tag:twitter.com,2013:000_favorited_by_222',
+                    response_json=json.dumps(like)).save()
+
+    tw = Twitter.new(self.handler, auth_entity=self.auth_entity)
+    self.assert_equals(like, tw.get_like('unused', '000', '222'))
+

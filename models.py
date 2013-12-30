@@ -124,6 +124,17 @@ class Source(Site):
     """Human-readable label for this site."""
     return '%s: %s' % (self.DISPLAY_NAME, self.name)
 
+  def get_activities(self, fetch_replies=False, **kwargs):
+    """Returns recent posts and embedded comments for this source.
+
+    To be implemented by subclasses. Keyword args should be passed through to
+    activitystreams-unofficial's Source.get_activities().
+
+    Returns: list of dicts, decoded JSON ActivityStreams activity objects
+      with comments in the 'replies' field, if any
+    """
+    raise NotImplementedError()
+
   def get_post(self, id):
     """Returns a post from this source.
 
@@ -140,7 +151,8 @@ class Source(Site):
   def get_comment(self, comment_id, activity_id=None):
     """Returns a comment from this source.
 
-    To be implemented by subclasses.
+    Passes through to activitystreams-unofficial by default. May be overridden
+    by subclasses.
 
     Args:
       comment_id: string, site-specific comment id
@@ -150,16 +162,31 @@ class Source(Site):
     """
     return self.as_source.get_comment(comment_id, activity_id=activity_id)
 
-  def get_activities(self, fetch_replies=False, **kwargs):
-    """Returns recent posts and embedded comments for this source.
+  def get_like(self, activity_user_id, activity_id, like_user_id):
+    """Returns an ActivityStreams 'like' activity object.
 
-    To be implemented by subclasses. Keyword args should be passed through to
-    activitystreams-unofficial's Source.get_activities().
+    Passes through to activitystreams-unofficial by default. May be overridden
+    by subclasses.
 
-    Returns: list of dicts, decoded JSON ActivityStreams activity objects
-      with comments in the 'replies' field, if any
+    Args:
+      activity_user_id: string id of the user who posted the original activity
+      activity_id: string activity id
+      like_user_id: string id of the user who liked the activity
     """
-    raise NotImplementedError()
+    return self.as_source.get_like(activity_user_id, activity_id, like_user_id)
+
+  def get_share(self, activity_user_id, activity_id, share_id):
+    """Returns an ActivityStreams 'share' activity object.
+
+    Passes through to activitystreams-unofficial by default. May be overridden
+    by subclasses.
+
+    Args:
+      activity_user_id: string id of the user who posted the original activity
+      activity_id: string activity id
+      share_id: string id of the share object or the user who shared it
+    """
+    return self.as_source.get_share(activity_user_id, activity_id, share_id)
 
   @classmethod
   def create_new(cls, handler, **kwargs):
