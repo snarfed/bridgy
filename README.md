@@ -37,19 +37,15 @@ Related work
 TODO
 ---
 
+* currently getting charged for the backend. switch to a module if it's still
+  free? https://appengine.google.com/dashboard?&app_id=s~brid-gy#ae-nav-billing
+  B1 backends get 9h free per day. *dynamic* modules get 28h free per day,
+  manual only 8h.
+  https://developers.google.com/appengine/kb/billing#free_quota_backends
+  https://developers.google.com/appengine/docs/python/modules/#scaling_types
 * target=DEFAULT_... uses brid-gy.appspot.com for source URLs, not www.brid.gy
-* catch this exception:
+* catch exceptions when sending individual webmentions, mark as error and continue
 https://www.brid.gy/log?start_time=1388420220&key=aglzfmJyaWQtZ3lyRwsSCFJlc3BvbnNlIjl0YWc6dHdpdHRlci5jb20sMjAxMzo0MTc2NzYzMDYxNTE5MTE0MjRfZmF2b3JpdGVkX2J5XzQ2NzcM
- File "/base/data/home/apps/s~brid-gy/2.372689861983840287/tasks.py", line 202, in post
-    if mention.send(timeout=999):
-  File "/base/data/home/apps/s~brid-gy/2.372689861983840287/webmentiontools/send.py", line 18, in send
-    r = self._discoverEndpoint()
-  File "/base/data/home/apps/s~brid-gy/2.372689861983840287/webmentiontools/send.py", line 24, in _discoverEndpoint
-    r = requests.get(self.target_url, **self.requests_kwargs)
-...
-File "/base/data/home/apps/s~brid-gy/2.372689861983840287/activitystreams/oauth_dropins/requests/adapters.py", line 372, in send
-    raise ConnectionError(e)
-ConnectionError: HTTPSConnectionPool(host='www.brid.gy', port=443): Max retries exceeded with url: / (Caused by <class 'google.appengine.api.remote_socket._remote_socket_error.error'>: [Errno 13] Permission denied)
 * only enable httplib socket API in backend.yaml, not in app?
 * fix /_ah/stop in twitter_streaming backend. (it serves a 500 because the
   backend only serves one request at a time, and /_ah/start never returns)
