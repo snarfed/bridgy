@@ -43,7 +43,7 @@ class ResponseTest(testutil.ModelsTest):
     self.assertEqual(saved.source.key(), same.source.key())
     self.assertEqual(1, len(tasks))
 
-  def test_get_or_save(self):
+  def test_get_or_save_objectType_note(self):
     self.responses[0].response_json = json.dumps({
       'objectType': 'note',
       'id': 'tag:source.com,2013:1_2_%s' % id,
