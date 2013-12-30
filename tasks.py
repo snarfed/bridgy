@@ -64,14 +64,18 @@ def get_webmention_targets(activity):
   targets = set()
   for tag in activity['object'].get('tags', []):
     url = tag.get('url')
-    if tag.get('objectType') == 'article' and url:
-      domain = urlparse.urlparse(url).netloc
-      if domain.startswith('www.'):
-        domain = domain[4:]
-      if domain not in WEBMENTION_BLACKLIST:
-        targets.add(url)
-
+    if (tag.get('objectType') == 'article' and url and
+        not in_webmention_blacklist(url)):
+      targets.add(url)
   return targets
+
+
+def in_webmention_blacklist(url):
+  """Returns true if the string url's domain is in the webmention blacklist."""
+  domain = urlparse.urlparse(url).netloc
+  if domain.startswith('www.'):
+    domain = domain[4:]
+  return domain in WEBMENTION_BLACKLIST
 
 
 class Poll(webapp2.RequestHandler):
@@ -191,7 +195,8 @@ class Propagate(webapp2.RequestHandler):
         response.source.key().name(), post_id, response_id)
 
       # send each webmention
-      unsent = set(response.unsent + response.error)
+      unsent = set(url for url in response.unsent + response.error
+                   if not in_webmention_blacklist(url))
       response.error = []
       for target in unsent:
         # When debugging locally, redirect my (snarfed.org) webmentions to localhost
