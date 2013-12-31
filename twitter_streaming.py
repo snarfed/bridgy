@@ -46,6 +46,7 @@ import time
 from activitystreams.oauth_dropins import twitter as oauth_twitter
 import appengine_config
 import models
+import tasks
 from tweepy import streaming
 import twitter
 import util
@@ -84,7 +85,6 @@ class FavoriteListener(streaming.StreamListener):
   def on_data(self, raw_data):
     try:
       # logging.debug('Received streaming message: %s...', raw_data[:100])
-
       data = json.loads(raw_data)
       if data.get('event') != 'favorite':
         # logging.debug('Discarding non-favorite message: %s', raw_data)

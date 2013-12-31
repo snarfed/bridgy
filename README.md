@@ -49,6 +49,7 @@ TODO
 
 Lower priority:
 
+* am i storing refreshed access tokens? or re-refreshing every time?
 * currently getting charged for the backend. switch to a module if it's still
   free? https://appengine.google.com/dashboard?&app_id=s~brid-gy#ae-nav-billing
   B1 backends get 9h free per day. *dynamic* modules get 28h free per day,
