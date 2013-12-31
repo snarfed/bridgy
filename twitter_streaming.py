@@ -123,7 +123,7 @@ def update_streams():
 
   while True:
     with streams_lock:
-      _update_streams_once()
+      update_streams_once()
     time.sleep(UPDATE_STREAMS_PERIOD_S)
 
 
