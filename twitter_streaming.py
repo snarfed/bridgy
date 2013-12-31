@@ -46,18 +46,22 @@ import time
 from activitystreams.oauth_dropins import twitter as oauth_twitter
 import appengine_config
 import models
-import tasks
 from tweepy import streaming
 import twitter
 import util
 
+from google.appengine.api import background_thread
 import webapp2
 
 
 USER_STREAM_URL = 'https://userstream.twitter.com/1.1/user.json?with=user'
 # How often to check for new/deleted sources, in seconds.
-POLL_FREQUENCY_S = 5 * 60
+UPDATE_STREAMS_PERIOD_S = 5 * 60
 
+# globals
+streams = {}  # maps twitter.Twitter key to tweepy.streaming.Stream
+streams_lock = threading.Lock()
+update_thread = None  # initialized in Start
 
 class FavoriteListener(streaming.StreamListener):
   """A per-user streaming API connection that saves favorites as Responses.
@@ -109,11 +113,20 @@ class FavoriteListener(streaming.StreamListener):
     return True
 
 
-class Start(webapp2.RequestHandler):
-  def get(self):
-    streams = {}  # maps twitter.Twitter key to tweepy.streaming.Stream
+def update_streams():
+  """Thread function that wakes up periodically and updates stream connections.
 
-    while True:
+  Connects new Twitter accounts, disconnects disabled and deleted ones,
+  sleeps for a while, and repeats.
+  """
+  global streams, streams_lock
+
+  while True:
+    with streams_lock:
+      if streams is None:
+        # we're currently stopped
+        continue
+
       query = twitter.Twitter.all().filter('status !=', 'disabled')
       sources = {t.key(): t for t in query}
       stream_keys = set(streams.keys())
@@ -121,34 +134,42 @@ class Start(webapp2.RequestHandler):
 
       # Connect to new accounts
       for key in source_keys - stream_keys:
-        logging.info('Connecting to %s %s', key.name(), key)
+        logging.info('Connecting %s %s', key.name(), key)
         source = sources[key]
         auth = oauth_twitter.TwitterAuth.tweepy_auth(
           *source.auth_entity.access_token())
         streams[key] = streaming.Stream(auth, FavoriteListener(source))
-        streams[key].userstream(async=True)  # async=True starts a thread
+        background_thread.start_new_background_thread(streams[key].userstream, [])
 
       # Disconnect from deleted or disabled accounts
-      # TODO: if access is revoked on Twitter's end, the request will disconnect.
-      # handle that.
-      # https://dev.twitter.com/docs/streaming-apis/messages#Events_event
       for key in stream_keys - source_keys:
         streams[key].stop()
         del streams[key]
 
-      time.sleep(POLL_FREQUENCY_S)
+    time.sleep(UPDATE_STREAMS_PERIOD_S)
+
+
+class Start(webapp2.RequestHandler):
+  def get(self):
+    global streams, streams_lock, update_thread
+    with streams_lock:
+      streams = {}
+      if update_thread is None:
+        update_thread = background_thread.start_new_background_thread(
+          update_streams, [])
 
 
 class Stop(webapp2.RequestHandler):
   def get(self):
-    logging.info('Stopping.')
-    # TODO
+    global streams, streams_lock
+    with streams_lock:
+      for key, stream in streams.items():
+        logging.info('Disconnecting %s %s', key.name(), key)
+        stream.disconnect()
+      streams = None
 
 
 application = webapp2.WSGIApplication([
     ('/_ah/start', Start),
     ('/_ah/stop', Stop),
-    # duplicate this task queue handler here since App Engine tries to run tasks
-    # inline first, in this backend, when they're inserted.
-    ('/_ah/queue/propagate', tasks.Propagate),
     ], debug=appengine_config.DEBUG)
