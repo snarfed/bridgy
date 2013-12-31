@@ -33,6 +33,11 @@ https://developers.google.com/appengine/docs/python/sockets/ssl_support
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
+# i originally set this in the env_variables section in app.yaml, but that makes
+# it apply to the frontend too, and i only want it to apply to this backend.
+import os
+os.environ['GAE_USE_SOCKETS_HTTPLIB'] = 'true'
+
 import json
 import logging
 import threading
@@ -47,6 +52,7 @@ import twitter
 import util
 
 import webapp2
+
 
 USER_STREAM_URL = 'https://userstream.twitter.com/1.1/user.json?with=user'
 # How often to check for new/deleted sources, in seconds.
