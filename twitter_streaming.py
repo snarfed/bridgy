@@ -119,34 +119,42 @@ def update_streams():
   Connects new Twitter accounts, disconnects disabled and deleted ones,
   sleeps for a while, and repeats.
   """
-  global streams, streams_lock
+  global streams_lock
 
   while True:
     with streams_lock:
-      if streams is None:
-        # we're currently stopped
-        continue
-
-      query = twitter.Twitter.all().filter('status !=', 'disabled')
-      sources = {t.key(): t for t in query}
-      stream_keys = set(streams.keys())
-      source_keys = set(sources.keys())
-
-      # Connect to new accounts
-      for key in source_keys - stream_keys:
-        logging.info('Connecting %s %s', key.name(), key)
-        source = sources[key]
-        auth = oauth_twitter.TwitterAuth.tweepy_auth(
-          *source.auth_entity.access_token())
-        streams[key] = streaming.Stream(auth, FavoriteListener(source))
-        background_thread.start_new_background_thread(streams[key].userstream, [])
-
-      # Disconnect from deleted or disabled accounts
-      for key in stream_keys - source_keys:
-        streams[key].stop()
-        del streams[key]
-
+      _update_streams_once()
     time.sleep(UPDATE_STREAMS_PERIOD_S)
+
+
+def update_streams_once():
+  """Connects new Twitter accounts and disconnects disabled and deleted ones.
+
+  Separated from update_streams() mainly for testing.
+  """
+  global streams
+  if streams is None:
+    # we're currently stopped
+    return
+
+  query = twitter.Twitter.all().filter('status !=', 'disabled')
+  sources = {t.key(): t for t in query}
+  stream_keys = set(streams.keys())
+  source_keys = set(sources.keys())
+
+  # Connect to new accounts
+  for key in source_keys - stream_keys:
+    logging.info('Connecting %s %s', key.name(), key)
+    source = sources[key]
+    auth = oauth_twitter.TwitterAuth.tweepy_auth(
+      *source.auth_entity.access_token())
+    streams[key] = streaming.Stream(auth, FavoriteListener(source))
+    background_thread.start_new_background_thread(streams[key].userstream, [])
+
+  # Disconnect from deleted or disabled accounts
+  for key in stream_keys - source_keys:
+    streams[key].disconnect()
+    del streams[key]
 
 
 class Start(webapp2.RequestHandler):
