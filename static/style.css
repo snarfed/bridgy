@@ -129,6 +129,11 @@ form input {
   /* border: 1px solid lightgray; */
 }
 
+.original-post-links {
+  list-style: none;
+  padding-left: 0;
+}
+
 #footer {
   margin-top: 1.5em;
   margin-bottom: 1em;

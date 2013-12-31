@@ -37,9 +37,6 @@ Related work
 TODO
 ---
 
-* DNS failure
-* catch exceptions when sending individual webmentions, mark as error and continue
-https://www.brid.gy/log?start_time=1388420220&key=aglzfmJyaWQtZ3lyRwsSCFJlc3BvbnNlIjl0YWc6dHdpdHRlci5jb20sMjAxMzo0MTc2NzYzMDYxNTE5MTE0MjRfZmF2b3JpdGVkX2J5XzQ2NzcM
 * target=DEFAULT_... uses brid-gy.appspot.com for source URLs, not www.brid.gy
 * only enable httplib socket API in backend.yaml, not in app?
 * fix /_ah/stop in twitter_streaming backend. (it serves a 500 because the

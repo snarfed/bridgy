@@ -134,24 +134,12 @@ below to try it yourself, or read <a href="/about">even more details.</a></p>
     </a>
 
    </div><div class="col-sm-3">
-    {% if response.links %}
-     {% if response.status == "complete" %} Sent {% else %} Sending {% endif %} to:
-     <br />
-     {{ response.links|safeseq|join:" <br /> " }}
-     <br />
-    {% endif %}
-
-    {% if response.links_skipped %}
-     No webmention support:<br />
-     {{ response.links_skipped|safeseq|join:" <br /> " }}
-     <br />
-    {% endif %}
-
-    {% if not response.links and not response.links_skipped %}
-     {% if response.status == "complete" %} No post links found
-     {% else %} Working...
-     {% endif %}
-    {% endif %}
+    {% for label, links in response.links.items %}
+      {{ label }}:
+      <ul class="original-post-links">{{ links|safeseq|unordered_list }}</ul>
+    {% empty %}
+      No post links found
+    {% endfor %}
    </div>
   </li>
   {% endfor %}
