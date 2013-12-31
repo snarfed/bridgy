@@ -38,6 +38,7 @@ WEBMENTION_BLACKLIST = (
   'brid-gy.appspot.com',
   'facebook.com',
   'm.facebook.com',
+  'instagr.am',
   'instagram.com',
   'plus.google.com',
   'twitter.com',
@@ -195,8 +196,11 @@ class Propagate(webapp2.RequestHandler):
         response.source.key().name(), post_id, response_id)
 
       # send each webmention
-      targets = set(url for url in response.unsent + response.error
-                    if not in_webmention_blacklist(url))
+      response.unsent = [url for url in response.unsent
+                         if not in_webmention_blacklist(url)]
+      response.error = [url for url in response.error
+                        if not in_webmention_blacklist(url)]
+      targets = set(url for url in response.unsent + response.error)
       response.error = []
       for target in targets:
         # When debugging locally, redirect my (snarfed.org) webmentions to localhost

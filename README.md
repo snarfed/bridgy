@@ -38,10 +38,6 @@ TODO
 ---
 
 * target=DEFAULT_... uses brid-gy.appspot.com for source URLs, not www.brid.gy
-* fix /_ah/stop in twitter_streaming backend. (it serves a 500 because the
-  backend only serves one request at a time, and /_ah/start never returns)
-* test blacklist, both poll and propagate
-* twitter_streaming test
 * replace t.co links with url entities
 * move fetching replies (the fetch_replies kwarg to get_activities()) to
   activitystreams-unofficial

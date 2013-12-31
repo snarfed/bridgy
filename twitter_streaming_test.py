@@ -58,6 +58,8 @@ class TwitterStreamingTest(testutil.ModelsTest):
     activity['object']['tags'].append(
       {'objectType': 'article', 'url': 'http://t.co/6J2EgYM'})
     self.assert_equals(activity, json.loads(resp.activity_json))
+    # all original post links are in the webmention blacklist
+    self.assert_equals([], resp.unsent)
 
   def test_update_streams_stopped(self):
     twitter_streaming.streams = None

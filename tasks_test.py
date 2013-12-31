@@ -109,6 +109,18 @@ class PollTest(TaskQueueTest):
     expected = ['http://tar.get/%s' % i for i in 'a', 'b', 'c', 'd']
     self.assert_equals(expected, db.get(self.responses[0].key()).unsent)
 
+  def test_webmention_blacklist(self):
+    """Target URLs with domains in the blacklist should be ignored."""
+    obj = self.activities[0]['object']
+    obj['tags'] = [{'objectType': 'article', 'url': 'http://tar.get/good'}]
+    obj['attachments'] = [{'objectType': 'article', 'url': 'http://t.co/bad'}]
+    obj['content'] = 'foo http://facebook.com/bad bar (brid.gy bad) baz'
+    self.sources[0].set_activities([self.activities[0]])
+
+    self.post_task()
+    self.assert_equals(['http://tar.get/good'],
+                       db.get(self.responses[0].key()).unsent)
+
   def test_existing_responses(self):
     """Poll should be idempotent and not touch existing response entities.
     """
@@ -253,6 +265,18 @@ class PropagateTest(TaskQueueTest):
     self.assert_response_is('error',
                             sent=['http://target1/post/url', 'http://target4/z'],
                             error=['http://target2/x'], skipped=['http://target3/y'])
+
+  def test_webmention_blacklist(self):
+    """Target URLs with domains in the blacklist should be ignored."""
+    self.responses[0].unsent = ['http://t.co/bad', 'http://foo/good']
+    self.responses[0].error = ['http://instagr.am/bad']
+    self.responses[0].save()
+
+    self.expect_webmention(target='http://foo/good').AndReturn(True)
+    self.mox.ReplayAll()
+
+    self.post_task()
+    self.assert_response_is('complete', sent=['http://foo/good'])
 
   def test_no_targets(self):
     """No target URLs."""
