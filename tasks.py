@@ -15,6 +15,7 @@ import logging
 import urlparse
 
 from activitystreams.source import Source
+import appengine_config
 # need to import model class definitions since poll creates and saves entities.
 import facebook
 import googleplus
@@ -191,9 +192,10 @@ class Propagate(webapp2.RequestHandler):
       # generate local response URL
       activity = json.loads(response.activity_json)
       _, post_id = util.parse_tag_uri(activity['id'])
-      local_response_url = '%s/%s/%s/%s/%s/%s' % (
-        self.request.host_url, response.type, response.source.SHORT_NAME,
-        response.source.key().name(), post_id, response_id)
+      local_response_url = '%s://%s/%s/%s/%s/%s/%s' % (
+        appengine_config.SCHEME, appengine_config.HOST, response.type,
+        response.source.SHORT_NAME, response.source.key().name(), post_id,
+        response_id)
 
       # send each webmention
       response.unsent = [url for url in response.unsent

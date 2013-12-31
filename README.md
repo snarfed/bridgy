@@ -37,7 +37,7 @@ Related work
 TODO
 ---
 
-* target=DEFAULT_... uses brid-gy.appspot.com for source URLs, not www.brid.gy
+* BackgroundThreadLimitReachedError :/
 * replace t.co links with url entities
 * move fetching replies (the fetch_replies kwarg to get_activities()) to
   activitystreams-unofficial
