@@ -159,15 +159,11 @@ class PropagateTest(TaskQueueTest):
     super(PropagateTest, self).setUp()
     for r in self.responses[:3]:
       r.get_or_save()
-    self.mock_webmention()
+    self.make_mocks()
 
-  def post_task(self, expected_status=200, response=None):
-    if not response:
-      response = self.responses[0]
-    super(PropagateTest, self).post_task(expected_status=expected_status,
-                                         params={'response_key': response.key()})
-
-  def mock_webmention(self):
+  def make_mocks(self):
+    # have to create mocks of the WebmentionSend class *before* we stub out the
+    # class's constructor itself.
     self.mock_sends = []
     for i in range(3):
       ms = self.mox.CreateMock(send.WebmentionSend)
@@ -175,8 +171,13 @@ class PropagateTest(TaskQueueTest):
       ms.response = 'used in logging'
       self.mock_sends.append(ms)
 
-    self.mock_send = self.mock_sends[0]
     self.mox.StubOutWithMock(send, 'WebmentionSend', use_mock_anything=True)
+
+  def post_task(self, expected_status=200, response=None):
+    if not response:
+      response = self.responses[0]
+    super(PropagateTest, self).post_task(expected_status=expected_status,
+                                         params={'response_key': response.key()})
 
   def assert_response_is(self, status, leased_until=False, sent=[], error=[],
                          unsent=[], skipped=[], response=None):
@@ -193,13 +194,18 @@ class PropagateTest(TaskQueueTest):
     self.assert_equals(error, response.error)
     self.assert_equals(skipped, response.skipped)
 
-  def expect_webmention(self, source_url=None, target='http://target1/post/url'):
+  def expect_webmention(self, source_url=None, target='http://target1/post/url',
+                        error=None):
     if source_url is None:
       source_url = 'http://localhost/comment/fake/%s/a/1_2_a' % \
           self.sources[0].key().name()
+    mock_send = self.mock_sends.pop()
     send.WebmentionSend(source_url, target).InAnyOrder()\
-        .AndReturn(self.mock_send)
-    return self.mock_send.send(timeout=999)
+        .AndReturn(mock_send)
+    mock_send.error = {}
+    if error:
+      mock_send.error['code'] = error
+    return mock_send.send(timeout=999)
 
   def test_propagate(self):
     """Normal propagate tasks."""
@@ -236,18 +242,17 @@ class PropagateTest(TaskQueueTest):
 
     self.expect_webmention(target='http://target1/post/url').InAnyOrder()\
         .AndReturn(True)
-    self.mock_send.error = {'code': 'RECEIVER_ERROR'}
-    self.expect_webmention(target='http://target2/x').InAnyOrder().AndReturn(False)
-    self.mock_send = self.mock_sends[1]
-    self.mock_send.error = {'code': 'NO_ENDPOINT'}
-    self.expect_webmention(target='http://target3/y').InAnyOrder().AndReturn(False)
+    self.expect_webmention(target='http://target2/x', error='RECEIVER_ERROR')\
+        .AndReturn(False)
+    self.expect_webmention(target='http://target3/y', error='NO_ENDPOINT')\
+        .AndReturn(False)
 
     self.mox.ReplayAll()
     self.post_task(expected_status=Propagate.ERROR_HTTP_RETURN_CODE)
     response = db.get(self.responses[0].key())
     self.assert_response_is('error',
-                           sent=['http://target1/post/url', 'http://target4/z'],
-                           error=['http://target2/x'], skipped=['http://target3/y'])
+                            sent=['http://target1/post/url', 'http://target4/z'],
+                            error=['http://target2/x'], skipped=['http://target3/y'])
 
   def test_no_targets(self):
     """No target URLs."""
@@ -304,11 +309,10 @@ class PropagateTest(TaskQueueTest):
                           ('BAD_TARGET_URL', False),
                           ('RECEIVER_ERROR', False)):
       self.mox.UnsetStubs()
+      self.make_mocks()
       self.responses[0].status = 'new'
       self.responses[0].save()
-      self.mock_webmention()
-      self.expect_webmention().AndReturn(False)
-      self.mock_send.error = {'code': code}
+      self.expect_webmention(error=code).AndReturn(False)
       self.mox.ReplayAll()
 
       logging.debug('Testing %s', code)
@@ -324,8 +328,7 @@ class PropagateTest(TaskQueueTest):
     """All webmentions should be attempted, but any failure sets error status."""
     self.responses[0].unsent = ['http://first', 'http://second']
     self.responses[0].save()
-    self.mock_send.error = {'code': 'FOO'}
-    self.expect_webmention(target='http://first').AndReturn(False)
+    self.expect_webmention(target='http://first', error='FOO').AndReturn(False)
     self.expect_webmention(target='http://second').AndReturn(True)
 
     self.mox.ReplayAll()
@@ -337,7 +340,6 @@ class PropagateTest(TaskQueueTest):
     """Exceptions on individual target URLs shouldn't stop the whole task."""
     self.responses[0].unsent = ['http://error', 'http://good']
     self.responses[0].save()
-    self.mock_send.error = {}
     self.expect_webmention(target='http://error').AndRaise(Exception('foo'))
     self.expect_webmention(target='http://good').AndReturn(True)
     self.mox.ReplayAll()
