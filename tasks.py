@@ -195,10 +195,10 @@ class Propagate(webapp2.RequestHandler):
         response.source.key().name(), post_id, response_id)
 
       # send each webmention
-      unsent = set(url for url in response.unsent + response.error
-                   if not in_webmention_blacklist(url))
+      targets = set(url for url in response.unsent + response.error
+                    if not in_webmention_blacklist(url))
       response.error = []
-      for target in unsent:
+      for target in targets:
         # When debugging locally, redirect my (snarfed.org) webmentions to localhost
         if appengine_config.DEBUG and target.startswith('http://snarfed.org/'):
           target = target.replace('http://snarfed.org/', 'http://localhost/')
@@ -206,7 +206,15 @@ class Propagate(webapp2.RequestHandler):
         # send! and handle response or error
         mention = send.WebmentionSend(local_response_url, target)
         logging.info('Sending webmention from %s to %s', local_response_url, target)
-        if mention.send(timeout=999):
+        sent = False
+        try:
+          sent = mention.send(timeout=999)
+        except:
+          logging.exception('')
+          if not getattr(mention, 'error', None):
+            mention.error = {'code': 'EXCEPTION'}
+
+        if sent:
           logging.info('Sent! %s', mention.response)
           response.sent.append(target)
         else:

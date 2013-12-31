@@ -334,12 +334,17 @@ class PropagateTest(TaskQueueTest):
                            sent=['http://second'])
 
   def test_webmention_exception(self):
-    """If sending the webmention raises an exception, the lease should be released."""
-    self.expect_webmention().AndRaise(Exception('foo'))
+    """Exceptions on individual target URLs shouldn't stop the whole task."""
+    self.responses[0].unsent = ['http://error', 'http://good']
+    self.responses[0].save()
+    self.mock_send.error = {}
+    self.expect_webmention(target='http://error').AndRaise(Exception('foo'))
+    self.expect_webmention(target='http://good').AndReturn(True)
     self.mox.ReplayAll()
 
-    self.post_task(expected_status=500)
-    self.assert_response_is('error', None, unsent=['http://target1/post/url'])
+    self.post_task(expected_status=417)
+    self.assert_response_is('error', None, error=['http://error'],
+                            sent=['http://good'])
 
   def test_complete_exception(self):
     """If completing raises an exception, the lease should be released."""

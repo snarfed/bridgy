@@ -37,15 +37,10 @@ Related work
 TODO
 ---
 
-* currently getting charged for the backend. switch to a module if it's still
-  free? https://appengine.google.com/dashboard?&app_id=s~brid-gy#ae-nav-billing
-  B1 backends get 9h free per day. *dynamic* modules get 28h free per day,
-  manual only 8h.
-  https://developers.google.com/appengine/kb/billing#free_quota_backends
-  https://developers.google.com/appengine/docs/python/modules/#scaling_types
-* target=DEFAULT_... uses brid-gy.appspot.com for source URLs, not www.brid.gy
+* DNS failure
 * catch exceptions when sending individual webmentions, mark as error and continue
 https://www.brid.gy/log?start_time=1388420220&key=aglzfmJyaWQtZ3lyRwsSCFJlc3BvbnNlIjl0YWc6dHdpdHRlci5jb20sMjAxMzo0MTc2NzYzMDYxNTE5MTE0MjRfZmF2b3JpdGVkX2J5XzQ2NzcM
+* target=DEFAULT_... uses brid-gy.appspot.com for source URLs, not www.brid.gy
 * only enable httplib socket API in backend.yaml, not in app?
 * fix /_ah/stop in twitter_streaming backend. (it serves a 500 because the
   backend only serves one request at a time, and /_ah/start never returns)
@@ -58,6 +53,12 @@ https://www.brid.gy/log?start_time=1388420220&key=aglzfmJyaWQtZ3lyRwsSCFJlc3Bvbn
 
 Lower priority:
 
+* currently getting charged for the backend. switch to a module if it's still
+  free? https://appengine.google.com/dashboard?&app_id=s~brid-gy#ae-nav-billing
+  B1 backends get 9h free per day. *dynamic* modules get 28h free per day,
+  manual only 8h.
+  https://developers.google.com/appengine/kb/billing#free_quota_backends
+  https://developers.google.com/appengine/docs/python/modules/#scaling_types
 * detect updated comments and send new webmentions for them
 * implement the other direction: convert incoming webmentions into API calls to
   post them as comments, etc.

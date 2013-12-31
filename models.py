@@ -216,6 +216,7 @@ class Response(KeyNameModel):
   source = db.ReferenceProperty()
   status = db.StringProperty(choices=STATUSES, default='new')
   leased_until = db.DateTimeProperty()
+  created = db.DateTimeProperty(auto_now_add=True)
   updated = db.DateTimeProperty(auto_now=True)
 
   # Original post links, ie webmention targets
