@@ -201,10 +201,15 @@ class Propagate(webapp2.RequestHandler):
       # generate local response URL
       activity = json.loads(response.activity_json)
       _, post_id = util.parse_tag_uri(activity['id'])
-      local_response_url = '%s://%s/%s/%s/%s/%s/%s' % (
-        appengine_config.SCHEME, appengine_config.HOST, response.type,
-        response.source.SHORT_NAME, response.source.key().name(), post_id,
-        response_id)
+      # prefer brid.gy to brid-gy.appspot.com
+      if self.request.host_url.endswith('brid-gy.appspot.com'):
+        host_url = 'https://www.brid.gy'
+      else:
+        host_url = self.request.host_url
+
+      local_response_url = '%s/%s/%s/%s/%s/%s' % (
+        host_url, response.type, response.source.SHORT_NAME,
+        response.source.key().name(), post_id, response_id)
 
       # send each webmention
       response.unsent = [url for url in response.unsent

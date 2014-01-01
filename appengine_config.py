@@ -5,11 +5,6 @@ from google.appengine.api import namespace_manager
 
 from activitystreams.appengine_config import *
 
-# prefer brid.gy to brid-gy.appspot.com
-if HOST and HOST.endswith('brid-gy.appspot.com'):
-  HOST = 'www.brid.gy'
-  SCHEME = 'https'
-
 # I used a namespace for a while when I had both versions deployed, but not any
 # more; I cleared out the old v1 datastore entities.
 # Called only if the current namespace is not set.

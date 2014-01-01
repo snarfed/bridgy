@@ -32,14 +32,14 @@ class TaskQueueTest(testutil.ModelsTest):
   """
   post_url = None
 
-  def post_task(self, expected_status=200, params={}):
+  def post_task(self, expected_status=200, params={}, **kwargs):
     """Args:
       expected_status: integer, the expected HTTP return code
     """
     resp = tasks.application.get_response(self.post_url, method='POST',
-                                          body=urllib.urlencode(params))
+                                          body=urllib.urlencode(params),
+                                          **kwargs)
     self.assertEqual(expected_status, resp.status_int)
-
 
 class PollTest(TaskQueueTest):
 
@@ -199,11 +199,12 @@ class PropagateTest(TaskQueueTest):
 
     self.mox.StubOutWithMock(send, 'WebmentionSend', use_mock_anything=True)
 
-  def post_task(self, expected_status=200, response=None):
+  def post_task(self, expected_status=200, response=None, **kwargs):
     if not response:
       response = self.responses[0]
     super(PropagateTest, self).post_task(expected_status=expected_status,
-                                         params={'response_key': response.key()})
+                                         params={'response_key': response.key()},
+                                         **kwargs)
 
   def assert_response_is(self, status, leased_until=False, sent=[], error=[],
                          unsent=[], skipped=[], response=None):
@@ -385,6 +386,23 @@ class PropagateTest(TaskQueueTest):
     self.post_task(expected_status=417)
     self.assert_response_is('error', None, error=['http://error'],
                             sent=['http://good'])
+
+  def test_translate_appspot_to_bridgy(self):
+    """Tasks on brid-gy.appspot.com should use brid.gy as the source URL."""
+    self.responses[0].unsent = ['http://good']
+    self.responses[0].save()
+    source_url = 'https://www.brid.gy/comment/fake/%s/a/1_2_a' % \
+        self.sources[0].key().name()
+    self.expect_webmention(source_url=source_url, target='http://good')\
+        .AndReturn(True)
+    self.mox.ReplayAll()
+
+    # self.request = webapp2.Request.blank(
+    #   '/', base_url='http://brid-gy.appspot.com')
+      #environ={'HTTP_HOST': 'http://brid-gy.appspot.com'})
+      # environ={'SERVER_NAME': 'brid-gy.appspot.com'})
+    # self.handler = webapp2.RequestHandler(self.request, self.response)
+    self.post_task(base_url='http://brid-gy.appspot.com')
 
   def test_complete_exception(self):
     """If completing raises an exception, the lease should be released."""
