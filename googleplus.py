@@ -10,7 +10,6 @@ import os
 
 from activitystreams import googleplus as as_googleplus
 from activitystreams.oauth_dropins import googleplus as oauth_googleplus
-from activitystreams.source import SELF
 from apiclient.errors import HttpError
 import appengine_config
 import models
@@ -66,23 +65,6 @@ class GooglePlusPage(models.Source):
     if self.auth_entity:
       self.as_source = as_googleplus.GooglePlus(auth_entity=self.auth_entity)
 
-  def get_activities(self, fetch_replies=False, **kwargs):
-    activities = self.as_source.get_activities(
-      group_id=SELF, user_id=self.key().name(), **kwargs)[1]
-
-    if fetch_replies:
-      for activity in activities:
-        obj = activity['object']
-        if obj.get('replies', {}).get('totalItems', 0) > 0:
-          _, id = util.parse_tag_uri(activity['id'])
-          call = self.as_source.auth_entity.api().comments().list(
-            activityId=id, maxResults=500)
-          comments = call.execute(self.as_source.auth_entity.http())
-          for comment in comments['items']:
-            self.as_source.postprocess_comment(comment)
-          obj['replies']['items'] = comments['items']
-
-    return activities
 
 class OAuthCallback(util.Handler):
   """OAuth callback handler.

@@ -61,9 +61,6 @@ class Instagram(models.Source):
     if self.auth_entity:
       self.as_source = as_instagram.Instagram(self.auth_entity.access_token())
 
-  def get_activities(self, fetch_replies=False, **kwargs):
-    return self.as_source.get_activities(group_id=SELF, **kwargs)[1]
-
 
 class OAuthCallback(oauth_instagram.CallbackHandler):
   """OAuth callback handler.

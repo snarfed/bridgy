@@ -32,6 +32,7 @@ import logging
 import urllib
 import urlparse
 
+from activitystreams.source import SELF
 import appengine_config
 import util
 from webutil.models import KeyNameModel
@@ -124,16 +125,16 @@ class Source(Site):
     """Human-readable label for this site."""
     return '%s: %s' % (self.DISPLAY_NAME, self.name)
 
-  def get_activities(self, fetch_replies=False, **kwargs):
+  def get_activities(self, **kwargs):
     """Returns recent posts and embedded comments for this source.
 
-    To be implemented by subclasses. Keyword args should be passed through to
-    activitystreams-unofficial's Source.get_activities().
+    Passes through to activitystreams-unofficial by default. May be overridden
+    by subclasses.
 
     Returns: list of dicts, decoded JSON ActivityStreams activity objects
       with comments in the 'replies' field, if any
     """
-    raise NotImplementedError()
+    return self.as_source.get_activities(group_id=SELF, **kwargs)[1]
 
   def get_post(self, id):
     """Returns a post from this source.
