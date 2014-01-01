@@ -38,11 +38,10 @@ TODO
 ---
 
 * fix year in tag URI :/
+* G+ tests for both bridgy and activitystreams-unofficial
+* test for activitystreams-unofficial Twitter.fetch_replies()
 * BackgroundThreadLimitReachedError :/
 * replace t.co links with url entities
-* move fetching replies (the fetch_replies kwarg to get_activities()) to
-  activitystreams-unofficial
-* G+ tests for both bridgy and activitystreams-unofficial
 
 Lower priority:
 

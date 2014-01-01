@@ -6,7 +6,6 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 import json
 import logging
 import re
-import urllib
 
 from activitystreams import twitter as as_twitter
 from activitystreams.oauth_dropins import twitter as oauth_twitter
@@ -46,70 +45,6 @@ class Twitter(models.Source):
     if self.auth_entity:
       self.as_source = as_twitter.Twitter(*self.auth_entity.access_token())
 
-  def get_activities(self, fetch_replies=False, **kwargs):
-    # kwargs.setdefault('count', 100)
-    activities = self.as_source.get_activities(
-      group_id=SELF, user_id=self.key().name(), **kwargs)[1]
-
-    if fetch_replies:
-      self.fetch_replies(activities)
-    return activities
-
-  def fetch_replies(self, activities):
-    """Fetches and injects replies into a list of activities, in place
-
-    This searches for @-mentions, matches them to the original tweets with
-    in_reply_to_status_id_str, and recurses until it's walked the entire tree.
-
-    Args:
-      activities: list of activity dicts
-
-    Returns:
-      same activities list
-    """
-
-    # cache searches for @-mentions for individual users. maps username to dict
-    # mapping tweet id to ActivityStreams reply object dict.
-    mentions = {}
-
-    # find replies
-    for activity in activities:
-      # list of ActivityStreams reply object dict and set of seen activity ids
-      # (tag URIs). seed with the original tweet; we'll filter it out later.
-      replies = [activity]
-      _, id = util.parse_tag_uri(activity['id'])
-      seen_ids = set([id])
-
-      for reply in replies:
-        # get mentions of this tweet's author so we can search them for replies to
-        # this tweet. can't use statuses/mentions_timeline because i'd need to
-        # auth as the user being mentioned.
-        # https://dev.twitter.com/docs/api/1.1/get/statuses/mentions_timeline
-        #
-        # note that these HTTP requests are synchronous. you can make async
-        # requests by using urlfetch.fetch() directly, but not with urllib2.
-        # https://developers.google.com/appengine/docs/python/urlfetch/asynchronousrequests
-        author = reply['actor']['username']
-        if author not in mentions:
-          resp = self.as_source.urlread(as_twitter.API_SEARCH_URL %
-                                        urllib.quote_plus('@' + author))
-          mentions[author] = json.loads(resp)['statuses']
-
-        # look for replies. add any we find to the end of replies. this makes us
-        # recursively follow reply chains to their end. (python supports
-        # appending to a sequence while you're iterating over it.)
-        for mention in mentions[author]:
-          id = mention['id_str']
-          if (mention.get('in_reply_to_status_id_str') in seen_ids and
-              id not in seen_ids):
-            replies.append(self.as_source.tweet_to_activity(mention))
-            seen_ids.add(id)
-
-      activity['object']['replies'] = {
-        'items': [r['object'] for r in replies[1:]],  # filter out seed activity
-        'totalItems': len(replies),
-        }
-
   def get_like(self, activity_user_id, activity_id, like_user_id):
     """Returns an ActivityStreams 'like' activity object for a favorite.
 
@@ -124,12 +59,6 @@ class Twitter(models.Source):
     id = self.as_source.tag_uri('%s_favorited_by_%s' % (activity_id, like_user_id))
     resp = models.Response.get_by_key_name(id)
     return json.loads(resp.response_json) if resp else None
-
-  @staticmethod
-  def tweet_url(user, id):
-    """Returns the URL of a tweet.
-    """
-    return 'http://twitter.com/%s/status/%d' % (user['screen_name'], id)
 
   @staticmethod
   def user_url(username):
