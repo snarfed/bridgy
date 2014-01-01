@@ -37,11 +37,11 @@ Related work
 TODO
 ---
 
+* fix year in tag URI :/
 * BackgroundThreadLimitReachedError :/
 * replace t.co links with url entities
 * move fetching replies (the fetch_replies kwarg to get_activities()) to
   activitystreams-unofficial
-* handle 401 Unauthorized response from Twitter in Poll and disable source
 
 Lower priority:
 

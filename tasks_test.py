@@ -8,6 +8,7 @@ import json
 import logging
 import mox
 import urllib
+import urllib2
 import urlparse
 
 import models
@@ -160,6 +161,19 @@ class PollTest(TaskQueueTest):
     source.save()
     self.post_task()
     source = db.get(source.key())
+    self.assertEqual('disabled', source.status)
+
+  def test_401_translates_to_disabled(self):
+    """An HTTP 401 error should disable the source."""
+    self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities')
+    err = urllib2.HTTPError('url', 401, 'msg', {}, None)
+    testutil.FakeSource.get_activities(count=mox.IgnoreArg(), fetch_replies=True,
+                                       fetch_likes=True, fetch_shares=True
+                                       ).AndRaise(err)
+    self.mox.ReplayAll()
+
+    self.post_task()
+    source = db.get(self.sources[0].key())
     self.assertEqual('disabled', source.status)
 
 

@@ -12,6 +12,7 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 import datetime
 import json
 import logging
+import urllib2
 import urlparse
 
 from activitystreams.source import Source
@@ -123,8 +124,16 @@ class Poll(webapp2.RequestHandler):
 
   def do_post(self, source):
     logging.info('Polling %s %s', source.label(), source.key().name())
-    activities = source.get_activities(fetch_replies=True, fetch_likes=True,
-                                       fetch_shares=True, count=20)
+    try:
+      activities = source.get_activities(fetch_replies=True, fetch_likes=True,
+                                         fetch_shares=True, count=20)
+    except urllib2.HTTPError, e:
+      if e.code == 401:
+        msg = 'Unauthorized error: %s' % e
+        logging.exception(msg)
+        raise models.DisableSource(msg)
+      else:
+        raise
     logging.info('Found %d activities', len(activities))
 
     for activity in activities:
