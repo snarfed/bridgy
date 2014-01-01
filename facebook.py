@@ -86,9 +86,8 @@ class FacebookPage(models.Source):
     if self.auth_entity:
       self.as_source = as_facebook.Facebook(self.auth_entity.access_token())
 
-  def get_activities(self, fetch_replies=False, **kwargs):
-    posts = self.as_source.get_activities(
-      group_id=SELF, user_id=self.key().name(), **kwargs)[1]
+  def get_activities(self, **kwargs):
+    posts = self.as_source.get_activities(group_id=SELF, **kwargs)[1]
 
     # also get uploaded photos manually since facebook sometimes collapses
     # multiple photos into albums, and the album post object won't have the post
