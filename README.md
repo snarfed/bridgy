@@ -37,11 +37,11 @@ Related work
 TODO
 ---
 
+* fix ssl mixed mode: https://www.brid.gy/like/twitter/aaronpk/418251719303495680/14447132
 * fix year in tag URI :/
+* BackgroundThreadLimitReachedError :/
 * G+ tests for both bridgy and activitystreams-unofficial
 * test for activitystreams-unofficial Twitter.fetch_replies()
-* BackgroundThreadLimitReachedError :/
-* replace t.co links with url entities
 
 Lower priority:
 

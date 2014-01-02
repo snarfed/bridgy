@@ -62,7 +62,7 @@ class DashboardHandler(util.Handler):
     # now wait on query results
     for source in sources.values():
       # convert image URL to https if we're serving over SSL
-      source.picture = self.update_scheme(source.picture)
+      source.picture = util.update_scheme(source.picture, self)
       source.recent_responses = list(source.recent_responses)
       source.recent_response_status = None
       for r in source.recent_responses:
@@ -78,7 +78,7 @@ class DashboardHandler(util.Handler):
         # convert image URL to https if we're serving over SSL
         image_url = r.response['author'].setdefault('image', {}).get('url')
         if image_url:
-          r.response['author']['image']['url'] = self.update_scheme(image_url)
+          r.response['author']['image']['url'] = util.update_scheme(image_url, self)
 
         # generate original post links
         def link(url, glyphicon=''):
@@ -116,14 +116,6 @@ class DashboardHandler(util.Handler):
                                      self.request.host_url)
     self.response.out.write(template.render(path, {
           'sources': sources, 'msgs': msgs, 'epoch': util.EPOCH}))
-
-  def update_scheme(self, url):
-    # Instagram doesn't serve images over SSL, so switch to their S3 URL. (The
-    # http is converted to https by update_scheme()).
-    # https://groups.google.com/d/msg/instagram-api-developers/fB4mwYXZF1c/q9n9gPO11JQJ
-    url = re.sub('^http://images\.(ak\.)instagram\.com',
-                 'http://distillery.s3.amazonaws.com', url)
-    return util.update_scheme(url, self)
 
 
 class AboutHandler(handlers.TemplateHandler):
