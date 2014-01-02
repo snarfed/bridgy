@@ -37,7 +37,6 @@ Related work
 TODO
 ---
 
-* fix ssl mixed mode: https://www.brid.gy/like/twitter/aaronpk/418251719303495680/14447132
 * fix year in tag URI :/
 * BackgroundThreadLimitReachedError :/
 * G+ tests for both bridgy and activitystreams-unofficial

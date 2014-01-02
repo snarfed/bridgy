@@ -90,6 +90,14 @@ class ItemHandler(webapp2.RequestHandler):
     if not obj:
       self.abort(404, label)
 
+    # use https for profile pictures so we don't cause SSL mixed mode errors
+    # when serving over https.
+    image = obj.get('author', {}).get('image', {})
+    url = image.get('url')
+    logging.info('@@ %s', self.request.scheme)
+    if url:
+      image['url'] = util.update_scheme(url, self)
+
     self.response.headers['Access-Control-Allow-Origin'] = '*'
     if format == 'html':
       self.response.headers['Content-Type'] = 'text/html'
