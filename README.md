@@ -37,8 +37,47 @@ Related work
 TODO
 ---
 
-* fix year in tag URI :/
-* BackgroundThreadLimitReachedError :/
+* BackgroundThreadLimitReachedError
+  * looks like the limit may be 10 started per request. the exception happens
+  before liveink is connected, but he still connects eventually and handles
+  events.
+  * try max_concurrent_requests in backends.yaml! jon says this may be it. per
+  instance or something.
+  https://developers.google.com/appengine/docs/go/config/backends?hl=en#Go_Backends_definitions
+  http://code.google.com/p/googleappengine/issues/detail?id=7927
+doesn't work in dev_appserver, but maybe prod?
+  http://stackoverflow.com/questions/4983808/task-scheduling-in-appengine-dev-appserver-py
+* also i see DeadlineExceededError on the sockets 1d after connecting them,
+  regardless of whether there's been activity on the socket. happens in
+  different places, so probably not socket but background thread deadline?
+* check that when a background thread dies, we notice and reconnect. check
+  stream.running bool in update_streams_once(), and implement on_close(). remove
+  in both?
+  odd, the existing code does reconnect, 1m later. is tweepy itself doing that?
+  still add my own fixes though?
+* same with updater thread, check that it's running
+* translate/linkify media (picture) mentions in tweets.
+  duplicate 'article' handling, starting at as/twitter.py:324. replace with
+  empty string, since it's already an attachment?
+  e.g. https://www.brid.gy/#twitter-liveink
+  https://twitter.com/liveink/status/418850182042615808
+  https://apigee.com/embed/console/twitter?req={%22resource%22%3A%22statuses_show%22%2C%22params%22%3A{%22query%22%3A{}%2C%22template%22%3A{%22id%22%3A%22418850182042615808%22}%2C%22headers%22%3A{}%2C%22body%22%3A{%22attachmentFormat%22%3A%22mime%22%2C%22attachmentContentDisposition%22%3A%22form-data%22}}%2C%22verb%22%3A%22get%22}
+  "media": [{
+    "id": 418850181618991100,
+    "id_str": "418850181618991104",
+    "indices": [
+      48,
+      70
+    ],
+    "media_url": "http://pbs.twimg.com/media/BdAOBWGCAAAsg-G.jpg",
+    "media_url_https": "https://pbs.twimg.com/media/BdAOBWGCAAAsg-G.jpg",
+    "url": "http://t.co/tCAEh0mdD3",
+    "display_url": "pic.twitter.com/tCAEh0mdD3",
+    "expanded_url": "http://twitter.com/liveink/status/418850182042615808/photo/1",
+    "type": "photo",
+    ...
+    }]
+
 * G+ tests for both bridgy and activitystreams-unofficial
 * test for activitystreams-unofficial Twitter.fetch_replies()
 
