@@ -395,13 +395,8 @@ class PropagateTest(TaskQueueTest):
         self.sources[0].key().name()
     self.expect_webmention(source_url=source_url, target='http://good')\
         .AndReturn(True)
-    self.mox.ReplayAll()
 
-    # self.request = webapp2.Request.blank(
-    #   '/', base_url='http://brid-gy.appspot.com')
-      #environ={'HTTP_HOST': 'http://brid-gy.appspot.com'})
-      # environ={'SERVER_NAME': 'brid-gy.appspot.com'})
-    # self.handler = webapp2.RequestHandler(self.request, self.response)
+    self.mox.ReplayAll()
     self.post_task(base_url='http://brid-gy.appspot.com')
 
   def test_complete_exception(self):
