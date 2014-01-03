@@ -45,8 +45,14 @@ TODO
   instance or something.
   https://developers.google.com/appengine/docs/go/config/backends?hl=en#Go_Backends_definitions
   http://code.google.com/p/googleappengine/issues/detail?id=7927
+  https://groups.google.com/d/msg/google-appengine/bvzpnoSmFkY/kLarB9sEkZoJ
 doesn't work in dev_appserver, but maybe prod?
   http://stackoverflow.com/questions/4983808/task-scheduling-in-appengine-dev-appserver-py
+  devappserver2 is hard-coded to max 10 background threads as of 1.8.8.
+  http://code.google.com/p/googleappengine/source/browse/trunk/python/google/appengine/tools/devappserver2/instance.py?r=404#449
+  http://code.google.com/p/googleappengine/source/browse/trunk/python/google/appengine/tools/devappserver2/python_runtime.py?r=404#61
+  http://code.google.com/p/googleappengine/source/browse/trunk/python/google/appengine/tools/devappserver2/go_runtime.py?r=404#99
+  http://code.google.com/p/googleappengine/source/browse/trunk/python/google/appengine/tools/devappserver2/java_runtime.py?r=404#61
 * also i see DeadlineExceededError on the sockets 1d after connecting them,
   regardless of whether there's been activity on the socket. happens in
   different places, so probably not socket but background thread deadline?
