@@ -106,3 +106,10 @@ class TwitterStreamingTest(testutil.ModelsTest):
                         ],
                        twitter_streaming.streams.keys())
 
+  # right now, to test this, uncomment it and check that the test hangs instead
+  # of exiting. TODO: do better. :P
+  # def test_update_streams_once_exception(self):
+  #   self.mox.StubOutWithMock(twitter_streaming, 'update_streams_once')
+  #   twitter_streaming.update_streams_once().AndRaise(Exception('foo'))
+  #   self.mox.ReplayAll()
+  #   twitter_streaming.update_streams()

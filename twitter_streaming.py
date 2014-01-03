@@ -122,8 +122,11 @@ def update_streams():
   global streams_lock
 
   while True:
-    with streams_lock:
-      update_streams_once()
+    try:
+      with streams_lock:
+        update_streams_once()
+    except:
+      logging.exception('Error updating streams')
     time.sleep(UPDATE_STREAMS_PERIOD_S)
 
 

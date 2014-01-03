@@ -39,9 +39,6 @@ TODO
 
 * switch to select on non-blocking sockets due to background thread limit of 10
   per backend. :/ http://stackoverflow.com/a/20896720/186123
-* odd, the existing code does reconnect, 1m later. is tweepy itself doing that?
-  still add my own fixes though?
-* same with updater thread, check that it's running
 * translate/linkify media (picture) mentions in tweets.
   duplicate 'article' handling, starting at as/twitter.py:324. replace with
   empty string, since it's already an attachment?
