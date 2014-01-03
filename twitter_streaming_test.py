@@ -4,6 +4,7 @@
 import copy
 import json
 import mox
+import threading
 
 from activitystreams import twitter_test
 from activitystreams.oauth_dropins import twitter as oauth_twitter
@@ -22,6 +23,8 @@ class TwitterStreamingTest(testutil.ModelsTest):
     super(TwitterStreamingTest, self).setUp()
     self.source = self.make_source('unused')
     twitter_streaming.streams = {}
+    twitter_streaming.UPDATE_STREAMS_PERIOD_S = .1
+
 
   def make_source(self, name):
     auth_entity = oauth_twitter.TwitterAuth(
@@ -56,11 +59,17 @@ class TwitterStreamingTest(testutil.ModelsTest):
     self.assert_equals(activity, json.loads(resp.activity_json))
     self.assert_equals(['http://first/link/'], resp.unsent)
 
-  def test_update_streams_stopped(self):
-    twitter_streaming.streams = None
-    self.mox.ReplayAll()
-    twitter_streaming.update_streams_once()  # shouldn't start any threads
-    self.assertIsNone(twitter_streaming.streams)
+  def test_update_streams_shutdown_exception(self):
+    orig_uso = twitter_streaming.update_streams_once
+    def new_uso():
+      raise twitter_streaming.ShutdownException()
+
+    try:
+      twitter_streaming.update_streams_once = new_uso
+      twitter_streaming.update_streams()
+      self.assertIsNone(twitter_streaming.update_thread)
+    finally:
+      twitter_streaming.update_streams_once = orig_uso
 
   def test_update_streams(self):
     sources = {name: self.make_source(name) for name in
@@ -97,10 +106,16 @@ class TwitterStreamingTest(testutil.ModelsTest):
                         ],
                        twitter_streaming.streams.keys())
 
-  # right now, to test this, uncomment it and check that the test hangs instead
-  # of exiting. TODO: do better. :P
-  # def test_update_streams_once_exception(self):
+  # def test_stop_update_streams_once_exception(self):
   #   self.mox.StubOutWithMock(twitter_streaming, 'update_streams_once')
+
+  #   # first call raises exception
   #   twitter_streaming.update_streams_once().AndRaise(Exception('foo'))
+
+  #   # second call stops thread
+  #   def stop_update_thread():
+  #     twitter_streaming.update_thread = None
+  #   twitter_streaming.update_streams_once().WithSideEffects(stop_update_thread)
+
   #   self.mox.ReplayAll()
   #   twitter_streaming.update_streams()

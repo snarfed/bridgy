@@ -51,6 +51,7 @@ from tweepy import streaming
 import twitter
 import util
 
+from google.appengine.api import apiproxy_stub_map
 from google.appengine.api import background_thread
 import webapp2
 
@@ -119,14 +120,18 @@ def update_streams():
   Connects new Twitter accounts, disconnects disabled and deleted ones,
   sleeps for a while, and repeats.
   """
-  global streams_lock
+  global streams_lock, update_thread
 
   while True:
-    try:
-      with streams_lock:
+    with streams_lock:
+      try:
         update_streams_once()
-    except:
-      logging.exception('Error updating streams')
+      except ShutdownException:
+        logging.info('Stopping update thread.')
+        update_thread = None
+        return
+      except:
+        logging.exception('Error updating streams')
     time.sleep(UPDATE_STREAMS_PERIOD_S)
 
 
@@ -136,9 +141,6 @@ def update_streams_once():
   Separated from update_streams() mainly for testing.
   """
   global streams
-  if streams is None:
-    # we're currently stopped
-    return
 
   # Delete closed streams. They'll be reconnected below.
   for key, stream in streams.items():
@@ -172,6 +174,8 @@ def update_streams_once():
 
 class Start(webapp2.RequestHandler):
   def get(self):
+    runtime.set_shutdown_hook(shutdown_hook)
+
     global streams, streams_lock, update_thread
     with streams_lock:
       streams = {}
@@ -180,17 +184,29 @@ class Start(webapp2.RequestHandler):
           update_streams, [])
 
 
-class Stop(webapp2.RequestHandler):
-  def get(self):
-    global streams, streams_lock
-    with streams_lock:
-      for key, stream in streams.items():
-        logging.info('Disconnecting %s %s', key.name(), key)
-        stream.disconnect()
-      streams = None
+def shutdown_hook():
+  """Runtime shutdown hook. Exceptions raised here are re-raised in all threads.
+
+  https://developers.google.com/appengine/docs/python/backends/#Python_Shutdown
+  https://developers.google.com/appengine/docs/python/backends/runtimeapi
+  """
+  logging.info('Shutting down!')
+
+  global streams, streams_lock
+  with streams_lock:
+    for key, stream in streams.items():
+      logging.info('Disconnecting %s %s', key.name(), key)
+      stream.disconnect()
+    streams = None
+
+  raise ShutdownException()
+
+
+class ShutdownException(Exception):
+  """Signals that the backend is shutting down."""
+  pass
 
 
 application = webapp2.WSGIApplication([
     ('/_ah/start', Start),
-    ('/_ah/stop', Stop),
     ], debug=appengine_config.DEBUG)
