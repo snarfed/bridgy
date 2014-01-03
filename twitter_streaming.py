@@ -137,6 +137,11 @@ def update_streams_once():
     # we're currently stopped
     return
 
+  # Delete closed streams
+  for key, stream in streams.items():
+    if not stream.running:
+      del streams[key]
+
   query = twitter.Twitter.all().filter('status !=', 'disabled')
   sources = {t.key(): t for t in query}
   stream_keys = set(streams.keys())

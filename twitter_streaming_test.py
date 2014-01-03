@@ -65,33 +65,35 @@ class TwitterStreamingTest(testutil.ModelsTest):
     self.assertIsNone(twitter_streaming.streams)
 
   def test_update_streams(self):
-    sources = {name: self.make_source(name)
-               for name in ('existing', 'new', 'disabled', 'error', 'deleted')}
+    sources = {name: self.make_source(name) for name in
+               ('existing', 'new', 'disabled', 'error', 'deleted', 'stopped')}
     sources['disabled'].status = 'disabled'
     sources['error'].status = 'error'
     for source in sources.values():
       source.save()
 
-    disabled_stream = self.mox.CreateMock(streaming.Stream)
-    deleted_stream = self.mox.CreateMock(streaming.Stream)
-    twitter_streaming.streams = {
-      sources['existing'].key(): None,  # these shouldn't be touched
-      sources['error'].key(): None,
-      sources['disabled'].key(): disabled_stream,
-      sources['deleted'].key(): deleted_stream,
-      }
+    for name in 'existing', 'error', 'disabled', 'deleted', 'stopped':
+      stream = self.mox.CreateMock(streaming.Stream)
+      stream.running = (name != 'stopped')
+      twitter_streaming.streams[sources[name].key()] = stream
 
     # expect connect and disconnects
-    def is_new_source(stream_method):
-      stream = stream_method.__self__
-      self.assertEquals('new', stream.listener.source.key().name())
-      self.assertEquals('new key', stream.auth.access_token.key)
-      self.assertEquals('new secret', stream.auth.access_token.secret)
-      return True
+    def is_source(name):
+      def check(stream_method):
+        stream = stream_method.__self__
+        self.assertEquals(name, stream.listener.source.key().name())
+        self.assertEquals(name + ' key', stream.auth.access_token.key)
+        self.assertEquals(name + ' secret', stream.auth.access_token.secret)
+        return True
+      return check
 
-    background_thread.start_new_background_thread(mox.Func(is_new_source), [])
-    disabled_stream.disconnect()
-    deleted_stream.disconnect()
+    background_thread.start_new_background_thread(
+      mox.Func(is_source('stopped')), [])
+    background_thread.start_new_background_thread(
+      mox.Func(is_source('new')), [])
+    for name in 'disabled', 'deleted':
+      twitter_streaming.streams[sources[name].key()].disconnect()
+
     self.mox.ReplayAll()
 
     sources['deleted'].delete()
@@ -99,6 +101,8 @@ class TwitterStreamingTest(testutil.ModelsTest):
 
     self.assert_equals([sources['existing'].key(),
                         sources['error'].key(),
-                        sources['new'].key()],
+                        sources['new'].key(),
+                        sources['stopped'].key(),
+                        ],
                        twitter_streaming.streams.keys())
 
