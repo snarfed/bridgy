@@ -39,27 +39,8 @@ TODO
 
 * switch to select on non-blocking sockets due to background thread limit of 10
   per backend. :/ http://stackoverflow.com/a/20896720/186123
-* translate/linkify media (picture) mentions in tweets.
-  duplicate 'article' handling, starting at as/twitter.py:324. replace with
-  empty string, since it's already an attachment?
+* replace twitter mentions in activities as well as responses
   e.g. https://www.brid.gy/#twitter-liveink
-  https://twitter.com/liveink/status/418850182042615808
-  https://apigee.com/embed/console/twitter?req={%22resource%22%3A%22statuses_show%22%2C%22params%22%3A{%22query%22%3A{}%2C%22template%22%3A{%22id%22%3A%22418850182042615808%22}%2C%22headers%22%3A{}%2C%22body%22%3A{%22attachmentFormat%22%3A%22mime%22%2C%22attachmentContentDisposition%22%3A%22form-data%22}}%2C%22verb%22%3A%22get%22}
-  "media": [{
-    "id": 418850181618991100,
-    "id_str": "418850181618991104",
-    "indices": [
-      48,
-      70
-    ],
-    "media_url": "http://pbs.twimg.com/media/BdAOBWGCAAAsg-G.jpg",
-    "media_url_https": "https://pbs.twimg.com/media/BdAOBWGCAAAsg-G.jpg",
-    "url": "http://t.co/tCAEh0mdD3",
-    "display_url": "pic.twitter.com/tCAEh0mdD3",
-    "expanded_url": "http://twitter.com/liveink/status/418850182042615808/photo/1",
-    "type": "photo",
-    ...
-    }]
 * G+ tests for both bridgy and activitystreams-unofficial
 * test for activitystreams-unofficial Twitter.fetch_replies()
 
