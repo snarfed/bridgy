@@ -140,7 +140,7 @@ def update_streams_once():
     # we're currently stopped
     return
 
-  # Delete closed streams
+  # Delete closed streams. They'll be reconnected below.
   for key, stream in streams.items():
     if not stream.running:
       del streams[key]
@@ -157,7 +157,12 @@ def update_streams_once():
     auth = oauth_twitter.TwitterAuth.tweepy_auth(
       *source.auth_entity.access_token())
     streams[key] = streaming.Stream(auth, FavoriteListener(source))
-    background_thread.start_new_background_thread(streams[key].userstream, [])
+    # run stream in *non*-background thread, since app engine backends have a
+    # fixed limit of 10 background threads per instance. normal threads are only
+    # limited by memory, and since we're starting them from a background thread,
+    # they're not bound to an HTTP request.
+    # http://stackoverflow.com/a/20896720/186123
+    streams[key].userstream(async=True)
 
   # Disconnect from deleted or disabled accounts
   for key in stream_keys - source_keys:

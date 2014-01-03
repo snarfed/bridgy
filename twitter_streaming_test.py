@@ -13,7 +13,6 @@ from tweepy import streaming
 import twitter
 import twitter_streaming
 
-from google.appengine.api import background_thread
 from google.appengine.ext import db
 
 
@@ -22,7 +21,6 @@ class TwitterStreamingTest(testutil.ModelsTest):
   def setUp(self):
     super(TwitterStreamingTest, self).setUp()
     self.source = self.make_source('unused')
-    self.mox.StubOutWithMock(background_thread, 'start_new_background_thread')
     twitter_streaming.streams = {}
 
   def make_source(self, name):
@@ -77,20 +75,13 @@ class TwitterStreamingTest(testutil.ModelsTest):
       stream.running = (name != 'stopped')
       twitter_streaming.streams[sources[name].key()] = stream
 
-    # expect connect and disconnects
-    def is_source(name):
-      def check(stream_method):
-        stream = stream_method.__self__
-        self.assertEquals(name, stream.listener.source.key().name())
-        self.assertEquals(name + ' key', stream.auth.access_token.key)
-        self.assertEquals(name + ' secret', stream.auth.access_token.secret)
-        return True
-      return check
-
-    background_thread.start_new_background_thread(
-      mox.Func(is_source('stopped')), [])
-    background_thread.start_new_background_thread(
-      mox.Func(is_source('new')), [])
+    # expect connects and disconnects
+    new_streams = [self.mox.CreateMock(streaming.Stream) for i in range(2)]
+    self.mox.StubOutWithMock(streaming, 'Stream')
+    for name, new_stream in (('stopped', self.mox.CreateMock(streaming.Stream)),
+                             ('new', self.mox.CreateMock(streaming.Stream))):
+      streaming.Stream(mox.IgnoreArg(), mox.IgnoreArg()).AndReturn(new_stream)
+      new_stream.userstream(async=True)
     for name in 'disabled', 'deleted':
       twitter_streaming.streams[sources[name].key()].disconnect()
 
