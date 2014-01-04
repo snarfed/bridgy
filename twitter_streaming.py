@@ -51,8 +51,8 @@ from tweepy import streaming
 import twitter
 import util
 
-from google.appengine.api import apiproxy_stub_map
 from google.appengine.api import background_thread
+from google.appengine.api import runtime
 import webapp2
 
 
