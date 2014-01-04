@@ -201,9 +201,11 @@ class Propagate(webapp2.RequestHandler):
       # generate local response URL
       activity = json.loads(response.activity_json)
       _, post_id = util.parse_tag_uri(activity['id'])
-      # prefer brid.gy to brid-gy.appspot.com
-      if self.request.host_url.endswith('brid-gy.appspot.com'):
-        host_url = 'https://www.brid.gy'
+      # prefer brid-gy.appspot.com to brid.gy because non-browsers (ie OpenSSL)
+      # currently have problems with brid.gy's SSL cert. details:
+      # https://github.com/snarfed/bridgy/issues/20
+      if self.request.host_url.endswith('brid.gy'):
+        host_url = 'https://brid-gy.appspot.com'
       else:
         host_url = self.request.host_url
 

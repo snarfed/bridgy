@@ -388,16 +388,16 @@ class PropagateTest(TaskQueueTest):
                             sent=['http://good'])
 
   def test_translate_appspot_to_bridgy(self):
-    """Tasks on brid-gy.appspot.com should use brid.gy as the source URL."""
+    """Tasks on brid.gy should use brid-gy.appspot.com as the source URL."""
     self.responses[0].unsent = ['http://good']
     self.responses[0].save()
-    source_url = 'https://www.brid.gy/comment/fake/%s/a/1_2_a' % \
+    source_url = 'https://brid-gy.appspot.com/comment/fake/%s/a/1_2_a' % \
         self.sources[0].key().name()
     self.expect_webmention(source_url=source_url, target='http://good')\
         .AndReturn(True)
 
     self.mox.ReplayAll()
-    self.post_task(base_url='http://brid-gy.appspot.com')
+    self.post_task(base_url='http://www.brid.gy')
 
   def test_complete_exception(self):
     """If completing raises an exception, the lease should be released."""
