@@ -37,15 +37,24 @@ Related work
 TODO
 ---
 
-* switch to select on non-blocking sockets due to background thread limit of 10
-  per backend. :/ http://stackoverflow.com/a/20896720/186123
+* move this todo list to issues :P
+* unicode. :/ maybe just need to centralize quote_plus(), etc into
+  util.add_query_params?
 * replace twitter mentions in activities as well as responses
   e.g. https://www.brid.gy/#twitter-liveink
+* use mox.StubOutClassWithMocks:
+  * streaming.Stream in twitter_streaming_test.test_update_stream
+  * send.WebmentionSend in tasks_test.PropagateTest.make_mocks
 * G+ tests for both bridgy and activitystreams-unofficial
 * test for activitystreams-unofficial Twitter.fetch_replies()
 
 Lower priority:
 
+* use rel=syndication links to distinguish official POSSE posts from other posts
+  that happen to mention a link, and maybe send webmentions for the latter.
+  details: http://indiewebcamp.com/original-post-discovery
+  i decided against this originally because rel=syndication adoption is low,
+  based on an unscientific survey. :P
 * am i storing refreshed access tokens? or re-refreshing every time?
 * currently getting charged for the backend. switch to a module if it's still
   free? https://appengine.google.com/dashboard?&app_id=s~brid-gy#ae-nav-billing
