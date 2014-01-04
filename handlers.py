@@ -94,7 +94,6 @@ class ItemHandler(webapp2.RequestHandler):
     # when serving over https.
     image = obj.get('author', {}).get('image', {})
     url = image.get('url')
-    logging.info('@@ %s', self.request.scheme)
     if url:
       image['url'] = util.update_scheme(url, self)
 
