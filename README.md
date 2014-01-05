@@ -32,11 +32,3 @@ Related work
 * http://indiewebcamp.com/original-post-discovery
 * http://indiewebcamp.com/permashortcitation
 * http://indiewebcamp.com/Twitter#Why_permashortcitation_instead_of_a_link
-
-
-TODO
----
-
-* use mox.StubOutClassWithMocks:
-  * streaming.Stream in twitter_streaming_test.test_update_stream
-  * send.WebmentionSend in tasks_test.PropagateTest.make_mocks
