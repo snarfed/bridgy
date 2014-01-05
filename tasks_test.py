@@ -399,6 +399,21 @@ class PropagateTest(TaskQueueTest):
     self.mox.ReplayAll()
     self.post_task(base_url='http://www.brid.gy')
 
+  def test_translate_http_to_https(self):
+    """Tasks on brid-gy.appspot.com should always use https in the source URL.
+
+    TODO: unify with test_translate_appspot_to_bridgy()
+    """
+    self.responses[0].unsent = ['http://good']
+    self.responses[0].save()
+    source_url = 'https://brid-gy.appspot.com/comment/fake/%s/a/1_2_a' % \
+        self.sources[0].key().name()
+    self.expect_webmention(source_url=source_url, target='http://good')\
+        .AndReturn(True)
+
+    self.mox.ReplayAll()
+    self.post_task(base_url='http://brid-gy.appspot.com')
+
   def test_complete_exception(self):
     """If completing raises an exception, the lease should be released."""
     self.expect_webmention().AndReturn(True)
