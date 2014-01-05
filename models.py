@@ -80,7 +80,7 @@ class Site(KeyNameModel):
                      (new.label(), new.key().name()),
                      body='%s/#%s' % (handler.request.host_url, new.dom_id()))
 
-    handler.messages = set([urllib.quote_plus(new_msg)])
+    handler.messages = {new_msg}
 
     # TODO: ugh, *all* of this should be transactional
     new.save()

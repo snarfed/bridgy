@@ -109,7 +109,10 @@ class DashboardHandler(util.Handler):
     # sort sources by name
     sources = sorted(sources.values(), key=lambda s: (s.name.lower(), s.DISPLAY_NAME))
 
-    msgs = [urllib.unquote_plus(m) for m in set(self.request.params.getall('msg'))]
+    # force UTF-8 since the msg parameters were encoded as UTF-8 by
+    # util.add_query_params().
+    self.request.charset = 'utf-8'
+    msgs = [m for m in set(self.request.params.getall('msg'))]
     path = os.path.join(os.path.dirname(__file__), 'templates', 'dashboard.html')
 
     self.response.headers['Link'] = ('<%s/webmention>; rel="webmention"' %
