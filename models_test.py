@@ -75,14 +75,14 @@ class SourceTest(testutil.HandlerTest):
     self.assertEqual(0, FakeSource.all().count())
     self._test_create_new()
     msg = "Added FakeSource: fake. Refresh to see what we've found!"
-    self.assert_equals(set([urllib.quote_plus(msg)]), self.handler.messages)
+    self.assert_equals({msg}, self.handler.messages)
 
   def test_create_new_already_exists(self):
     FakeSource.new(None).save()
     FakeSource.key_name_counter -= 1
     self._test_create_new()
     msg = "Updated FakeSource: fake. Refresh to see what's new!"
-    self.assert_equals(set([urllib.quote_plus(msg)]), self.handler.messages)
+    self.assert_equals({msg}, self.handler.messages)
 
   def test_get_post(self):
     post = {'verb': 'post', 'object': {'objectType': 'note', 'content': 'asdf'}}
