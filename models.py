@@ -141,12 +141,10 @@ class Source(Site):
 
     Args:
       id: string, site-specific post id
-      fetch_replies: boolean, if True does any extra API calls needed to fetch
-        replies/comments
 
     Returns: dict, decoded ActivityStreams activity, or None
     """
-    activities = self.get_activities(activity_id=id)
+    activities = self.get_activities(activity_id=id, user_id=self.key().name())
     return activities[0] if activities else None
 
   def get_comment(self, comment_id, activity_id=None):
