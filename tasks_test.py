@@ -383,7 +383,7 @@ class PropagateTest(TaskQueueTest):
     self.expect_webmention(target='http://good').AndReturn(True)
     self.mox.ReplayAll()
 
-    self.post_task(expected_status=417)
+    self.post_task(expected_status=Propagate.ERROR_HTTP_RETURN_CODE)
     self.assert_response_is('error', None, error=['http://error'],
                             sent=['http://good'])
 

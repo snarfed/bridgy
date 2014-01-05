@@ -181,7 +181,7 @@ class Propagate(webapp2.RequestHandler):
   # request deadline (10m) plus some padding
   LEASE_LENGTH = datetime.timedelta(minutes=12)
 
-  ERROR_HTTP_RETURN_CODE = 417  # Expectation Failed
+  ERROR_HTTP_RETURN_CODE = 306  # "Unused"
 
   def post(self):
     logging.debug('Params: %s', self.request.params)
