@@ -110,11 +110,15 @@ class PollTest(TaskQueueTest):
     expected = ['http://tar.get/%s' % i for i in 'a', 'b', 'c', 'd']
     self.assert_equals(expected, db.get(self.responses[0].key()).unsent)
 
-  def test_webmention_blacklist(self):
-    """Target URLs with domains in the blacklist should be ignored."""
+  def test_invalid_and_blacklisted_urls(self):
+    """Target URLs with domains in the blacklist should be ignored.
+
+    Same with invalid URLs that can't be parsed by urlparse.
+    """
     obj = self.activities[0]['object']
     obj['tags'] = [{'objectType': 'article', 'url': 'http://tar.get/good'}]
-    obj['attachments'] = [{'objectType': 'article', 'url': 'http://t.co/bad'}]
+    # urlparse('http://foo]') raises ValueError: Invalid IPv6 URL
+    obj['attachments'] = [{'objectType': 'article', 'url': 'http://foo]'}]
     obj['content'] = 'foo http://facebook.com/bad bar (brid.gy bad) baz'
     self.sources[0].set_activities([self.activities[0]])
 
@@ -270,9 +274,14 @@ class PropagateTest(TaskQueueTest):
                             error=['http://target2/x'], skipped=['http://target3/y'])
 
   def test_webmention_blacklist(self):
-    """Target URLs with domains in the blacklist should be ignored."""
+    """Target URLs with domains in the blacklist should be ignored.
+
+    TODO: also invalid URLs that can't be parsed by urlparse?
+    """
     self.responses[0].unsent = ['http://t.co/bad', 'http://foo/good']
     self.responses[0].error = ['http://instagr.am/bad']
+                               # urlparse raises ValueError: Invalid IPv6 URL
+                               # 'http://foo]']
     self.responses[0].save()
 
     self.expect_webmention(target='http://foo/good').AndReturn(True)
