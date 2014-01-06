@@ -76,7 +76,11 @@ class ItemHandler(webapp2.RequestHandler):
     label = '%s:%s %s %s' % (source_short_name, key_name, type, ids)
     logging.info('Fetching %s', label)
 
-    source_cls = SOURCES.get(source_short_name, '')
+    source_cls = SOURCES.get(source_short_name)
+    if not source_cls:
+      self.abort(400, "Source type '%s' not found. Known sources: %s" %
+                 (source_short_name, SOURCES))
+
     key = db.Key.from_path(source_cls.kind(), key_name)
     self.source = db.get(key)
     if not self.source:

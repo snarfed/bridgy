@@ -79,14 +79,24 @@ class HandlersTest(testutil.HandlerTest):
           },
         }, json.loads(resp.body))
 
-  def test_post_bad_user(self):
+  def test_bad_source_type(self):
+    resp = handlers.application.get_response('/post/not_a_type/%s/000' %
+                                             self.source.key().name())
+    self.assertEqual(400, resp.status_int)
+
+  def test_bad_user(self):
     resp = handlers.application.get_response('/post/fake/not_a_user/000')
     self.assertEqual(400, resp.status_int)
 
-  def test_post_bad_format(self):
+  def test_bad_format(self):
     resp = handlers.application.get_response('/post/fake/%s/000?format=asdf' %
                                              self.source.key().name())
     self.assertEqual(400, resp.status_int)
+
+  def test_ignore_unknown_query_params(self):
+    resp = handlers.application.get_response('/post/fake/%s/000?target=x/y/z' %
+                                             self.source.key().name())
+    self.assertEqual(200, resp.status_int)
 
   def test_get_comment_html(self):
     self.source.get_activities()[0]
