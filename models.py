@@ -47,8 +47,6 @@ class Site(KeyNameModel):
   """A web site for a single entity, e.g. Facebook profile or WordPress blog.
   """
 
-  # human-readable name for this site type. subclasses should override.
-  DISPLAY_NAME = None
   # short name for this site type. used in URLs, ec.
   SHORT_NAME = None
   STATUSES = ('enabled', 'disabled', 'error')
@@ -97,6 +95,7 @@ class Source(Site):
   Each concrete silo class should subclass this class.
   """
 
+  AS_CLASS = None  # the corresponding activitystreams-unofficial class
   last_polled = db.DateTimeProperty(default=util.EPOCH)
   last_poll_attempt = db.DateTimeProperty(default=util.EPOCH)
 
@@ -110,9 +109,8 @@ class Source(Site):
   # doesn't expire. details: http://developers.facebook.com/docs/authentication/
   auth_entity = db.ReferenceProperty()
 
-  # An activitystreams-unofficial source instance. Initialized in the ctor if
-  # self.auth_entity is set.
-  as_source = None
+  # as_source is *not* set to None by default here, since it needs to be unset
+  # for __getattr__ to run when it's accessed.
 
   def new(self, **kwargs):
     """Factory method. Creates and returns a new instance for the current user.
@@ -121,9 +119,20 @@ class Source(Site):
     """
     raise NotImplementedError()
 
+  def __getattr__(self, name):
+    """Lazily load the auth entity and instantiate self.as_source."""
+    if name == 'as_source' and self.auth_entity:
+      token = self.auth_entity.access_token()
+      if not isinstance(token, tuple):
+        token = (token,)
+      self.as_source = self.AS_CLASS(*token)
+      return self.as_source
+
+    return getattr(super(Source, self), name)
+
   def label(self):
     """Human-readable label for this site."""
-    return '%s: %s' % (self.DISPLAY_NAME, self.name)
+    return '%s: %s' % (self.AS_CLASS.NAME, self.name)
 
   def get_activities(self, **kwargs):
     """Returns recent posts and embedded comments for this source.

@@ -36,7 +36,7 @@ class GooglePlusPage(models.Source):
   The key name is the user id.
   """
 
-  DISPLAY_NAME = 'Google+'
+  AS_CLASS = as_googleplus.GooglePlus
   SHORT_NAME = 'googleplus'
 
   type = db.StringProperty(choices=('user', 'page'))
@@ -59,11 +59,6 @@ class GooglePlusPage(models.Source):
                           name=user['displayName'],
                           picture=user['image']['url'],
                           type=type)
-
-  def __init__(self, *args, **kwargs):
-    super(GooglePlusPage, self).__init__(*args, **kwargs)
-    if self.auth_entity:
-      self.as_source = as_googleplus.GooglePlus(auth_entity=self.auth_entity)
 
 
 class OAuthCallback(util.Handler):

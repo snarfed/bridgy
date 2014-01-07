@@ -23,7 +23,7 @@ class Twitter(models.Source):
   The key name is the username.
   """
 
-  DISPLAY_NAME = 'Twitter'
+  AS_CLASS = as_twitter.Twitter
   SHORT_NAME = 'twitter'
 
   @staticmethod
@@ -39,11 +39,6 @@ class Twitter(models.Source):
                    url=Twitter.user_url(user['screen_name']),
                    name=user['name'],
                    picture=user['profile_image_url'])
-
-  def __init__(self, *args, **kwargs):
-    super(Twitter, self).__init__(*args, **kwargs)
-    if self.auth_entity:
-      self.as_source = as_twitter.Twitter(*self.auth_entity.access_token())
 
   def get_like(self, activity_user_id, activity_id, like_user_id):
     """Returns an ActivityStreams 'like' activity object for a favorite.

@@ -56,6 +56,7 @@ class FakeBase(db.Model):
 
 
 class FakeAsSource(FakeBase, as_source.Source):
+  NAME = 'FakeSource'
 
   def set_like(self, val):
     self._set('like', val)
@@ -72,7 +73,7 @@ class FakeAsSource(FakeBase, as_source.Source):
 
 
 class FakeSource(FakeBase, Source):
-  DISPLAY_NAME = 'FakeSource'
+  AS_CLASS = FakeAsSource
   SHORT_NAME = 'fake'
 
   as_source = FakeAsSource()

@@ -59,7 +59,7 @@ class FacebookPage(models.Source):
   The key name is the facebook id.
   """
 
-  DISPLAY_NAME = 'Facebook'
+  AS_CLASS = as_facebook.Facebook
   SHORT_NAME = 'facebook'
 
   type = db.StringProperty(choices=('user', 'page'))
@@ -80,11 +80,6 @@ class FacebookPage(models.Source):
     picture = 'http://graph.facebook.com/%s/picture' % user.get('username', id)
     return FacebookPage(key_name=id, auth_entity=auth_entity, picture=picture,
                         url=url, **user) # **user populates type, name, username
-
-  def __init__(self, *args, **kwargs):
-    super(FacebookPage, self).__init__(*args, **kwargs)
-    if self.auth_entity:
-      self.as_source = as_facebook.Facebook(self.auth_entity.access_token())
 
   def get_activities(self, **kwargs):
     posts = self.as_source.get_activities(group_id=SELF, **kwargs)[1]

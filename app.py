@@ -107,7 +107,8 @@ class DashboardHandler(util.Handler):
           source.recent_response_status = 'processing'
 
     # sort sources by name
-    sources = sorted(sources.values(), key=lambda s: (s.name.lower(), s.DISPLAY_NAME))
+    sources = sorted(sources.values(),
+                     key=lambda s: (s.name.lower(), s.AS_CLASS.NAME))
 
     # force UTF-8 since the msg parameters were encoded as UTF-8 by
     # util.add_query_params().
@@ -168,7 +169,7 @@ class DeleteFinishHandler(util.Handler):
       self.redirect('/?deleted=%s' % source.key())
     else:
       self.messages.add('Please log into %s as %s to delete it here.' %
-                        (source.DISPLAY_NAME, source.name))
+                        (source.AS_CLASS.NAME, source.name))
       self.redirect('/#%s' % source.dom_id())
 
 

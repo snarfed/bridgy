@@ -37,7 +37,7 @@ class Instagram(models.Source):
   The key name is the username.
   """
 
-  DISPLAY_NAME = 'Instagram'
+  AS_CLASS = as_instagram.Instagram
   SHORT_NAME = 'instagram'
 
   @staticmethod
@@ -55,11 +55,6 @@ class Instagram(models.Source):
                      name=user['full_name'],
                      picture=user['profile_picture'],
                      url='http://instagram.com/' + username)
-
-  def __init__(self, *args, **kwargs):
-    super(Instagram, self).__init__(*args, **kwargs)
-    if self.auth_entity:
-      self.as_source = as_instagram.Instagram(self.auth_entity.access_token())
 
 
 class OAuthCallback(oauth_instagram.CallbackHandler):
