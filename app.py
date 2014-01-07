@@ -93,7 +93,7 @@ class DashboardHandler(util.Handler):
                   % (url, snippet, glyphicon))
 
         r.links = util.trim_nulls({
-          'Failed': set(link(url, 'exclamation-sign') for url in r.error),
+          'Failed': set(link(url, 'exclamation-sign') for url in r.error + r.failed),
           'Sending': set(link(url, 'transfer') for url in r.unsent
                          if url not in r.error),
           'Sent': set(link(url) for url in r.sent

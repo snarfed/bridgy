@@ -9,6 +9,7 @@ TODO: check HRD consistency guarantees and change as needed
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
+import copy
 import datetime
 import json
 import logging
@@ -217,14 +218,15 @@ class Propagate(webapp2.RequestHandler):
         host_url, response.type, response.source.SHORT_NAME,
         response.source.key().name(), post_id, response_id)
 
-      # send each webmention
-      response.unsent = [url for url in response.unsent
-                         if not in_webmention_blacklist(url)]
-      response.error = [url for url in response.error
-                        if not in_webmention_blacklist(url)]
-      targets = set(url for url in response.unsent + response.error)
+      # send each webmention. recheck the blacklist here so that we can add to
+      # it and have the additions apply to existing propagate tasks.
+      response.unsent = sorted(set(url for url in response.unsent + response.error
+                                   if not in_webmention_blacklist(url)))
       response.error = []
-      for target in targets:
+
+      while response.unsent:
+        target = response.unsent.pop(0)
+
         # When debugging locally, redirect my (snarfed.org) webmentions to localhost
         if appengine_config.DEBUG and target.startswith('http://snarfed.org/'):
           target = target.replace('http://snarfed.org/', 'http://localhost/')
@@ -247,6 +249,11 @@ class Propagate(webapp2.RequestHandler):
           if mention.error['code'] == 'NO_ENDPOINT':
             logging.info('Giving up this target. %s', mention.error)
             response.skipped.append(target)
+          elif (mention.error['code'] == 'BAD_TARGET_URL' and
+                mention.error['http_status'] / 100 == 4):
+            # Give up on 4XX errors; we don't expect later retries to succeed.
+            logging.info('Giving up this target. %s', mention.error)
+            response.failed.append(target)
           else:
             self.fail('Error sending to endpoint: %s' % mention.error)
             response.error.append(target)

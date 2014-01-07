@@ -222,6 +222,7 @@ class Response(KeyNameModel):
   sent = db.StringListProperty()
   unsent = db.StringListProperty()
   error = db.StringListProperty()
+  failed = db.StringListProperty()
   skipped = db.StringListProperty(default=[])
 
   @db.transactional
