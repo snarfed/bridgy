@@ -22,6 +22,11 @@ LEVELS = {
   logservice.LOG_LEVEL_CRITICAL: 'F',
   }
 
+def sanitize(msg):
+  """Sanitizes access tokens and Authorization headers."""
+  return re.sub('((?:oauth|access)?[ _]?(?:token|verifier|secret)[:= ])[^ &=]+', r'\1...',
+                msg)
+
 
 class LogHandler(webapp2.RequestHandler):
   """Searches for and renders the app logs for a single task queue request.
@@ -45,16 +50,12 @@ class LogHandler(webapp2.RequestHandler):
       if log.app_logs and (key in log.app_logs[0].message or
                            comment_key in log.app_logs[0].message):
         # found it! render and return
-        self.response.out.write(log.combined)
+        self.response.out.write(sanitize(log.combined))
         self.response.out.write('\n\n')
         for a in log.app_logs:
-          message = a.message
-          # sanitize access tokens and Authorization headers
-          message = re.sub('(access_token=[^&=]{4})[^&=]+', r'\1...', message)
-          message = re.sub('(Populated Authorization header from access token: .{4}).+',
-                           r'\1...', message)
-          self.response.out.write('%s %s %s\n' % (
-              datetime.datetime.utcfromtimestamp(a.time), LEVELS[a.level], message))
+          self.response.out.write('%s %s %s\n' %
+              (datetime.datetime.utcfromtimestamp(a.time), LEVELS[a.level],
+               sanitize(a.message)))
         return
 
       offset = log.offset
