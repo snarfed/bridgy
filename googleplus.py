@@ -60,6 +60,12 @@ class GooglePlusPage(models.Source):
                           picture=user['image']['url'],
                           type=type)
 
+  def __init__(self, *args, **kwargs):
+    """Overridden because as_googleplus.GooglePlus's ctor needs auth_entity."""
+    super(GooglePlusPage, self).__init__(*args, **kwargs)
+    if self.auth_entity:
+      self.as_source = as_googleplus.GooglePlus(auth_entity=self.auth_entity)
+
 
 class OAuthCallback(util.Handler):
   """OAuth callback handler.
