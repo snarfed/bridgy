@@ -31,7 +31,7 @@ function toggle(id) {
   elem.style.display = (elem.style.display == "none") ? "block" : "none";
 }
 
-function toggle_responses(source_id, source_key) {
+function toggle_responses(source_id) {
   var id = "responses-" + source_id;
   if (document.getElementById(id)) {
     toggle(id);
@@ -46,13 +46,13 @@ function toggle_responses(source_id, source_key) {
     stub.innerHTML = this.responseText;
   };
   req.onerror = function() { /* TODO */ }
-  req.open("get", "/responses?source=" + source_key, true /* async */);
+  req.open("get", "/responses?source=" + source_id, true /* async */);
   req.send();
 }
 
 window.onload = function() {
   var id = window.location.hash.substr(1);
-  var target = document.getElementById(id);
+  var target = id ? document.getElementById(id) : null;
   if (target) {
     window.setTimeout(function() { target.style.backgroundColor = "white"; },
                       3000 /* ms */);

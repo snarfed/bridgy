@@ -22,16 +22,22 @@ from facebook import FacebookPage
 from googleplus import GooglePlusPage
 from instagram import Instagram
 from twitter import Twitter
-from twitter_search import TwitterSearch
+import handlers
 import models
 import util
-from webutil import handlers
+from webutil.handlers import TemplateHandler
 
 from google.appengine.api import mail
 from google.appengine.api import users
 from google.appengine.ext import db
 from google.appengine.ext.webapp import template
 import webapp2
+
+
+def source_dom_id_to_key(id):
+  """Parses a string returned by Source.dom_id() and returns its db.Key."""
+  short_name, key_name = id.split('-', 1)
+  return db.Key.from_path(handlers.SOURCES.get(short_name).kind(), key_name)
 
 
 class DashboardHandler(util.Handler):
@@ -78,7 +84,7 @@ class ResponsesHandler(util.Handler):
   def get(self):
     """Renders a single source's recent responses as an HTML fragment.
     """
-    key = db.Key(util.get_required_param(self, 'source'))
+    key = source_dom_id_to_key(util.get_required_param(self, 'source'))
     responses = models.Response.all()\
         .filter('source =', key).order('-updated').fetch(10)
 
@@ -130,7 +136,7 @@ class ResponsesHandler(util.Handler):
     self.response.out.write(template.render(path, {'responses': responses}))
 
 
-class AboutHandler(handlers.TemplateHandler):
+class AboutHandler(TemplateHandler):
   def template_file(self):
     return os.path.join(os.path.dirname(__file__), 'templates', 'about.html')
 
