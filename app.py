@@ -81,12 +81,18 @@ class DashboardHandler(util.Handler):
 
 
 class ResponsesHandler(util.Handler):
+  NO_RESULTS_HTTP_STATUS = 204
+
   def get(self):
     """Renders a single source's recent responses as an HTML fragment.
     """
     key = source_dom_id_to_key(util.get_required_param(self, 'source'))
     responses = models.Response.all()\
         .filter('source =', key).order('-updated').fetch(10)
+
+    if not responses:
+      self.error(self.NO_RESULTS_HTTP_STATUS)
+      return
 
     for r in responses:
       r.response = json.loads(r.response_json)

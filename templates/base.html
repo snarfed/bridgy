@@ -42,10 +42,16 @@ function toggle_responses(source_id) {
 
   var req = new XMLHttpRequest();
   req.onload = function() {
-    stub.id = id;
-    stub.innerHTML = this.responseText;
+    if (this.status == 200) {
+      stub.id = id;
+      stub.innerHTML = this.responseText;
+    } else if (this.status == 204) {
+      stub.style.display = "none";
+      document.getElementById("link-" + id).innerHTML = "No responses yet";
+    } else {
+    }
   };
-  req.onerror = function() { /* TODO */ }
+  req.onerror = function() {}
   req.open("get", "/responses?source=" + source_id, true /* async */);
   req.send();
 }
