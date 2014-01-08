@@ -33,19 +33,19 @@ function toggle(id) {
 
 function toggle_responses(source_id, source_key) {
   var id = "responses-" + source_id;
-  var elem = document.getElementById(id);
-  if (elem) {
+  if (document.getElementById(id)) {
     toggle(id);
     return;
   }
+  var stub = document.getElementById("stub-" + id);
+  stub.style.display = "block";
 
   var req = new XMLHttpRequest();
   req.onload = function() {
-    var stub = document.getElementById("stub-" + id);
-    stub.id = id
-    stub.innerHTML = this.responseText
+    stub.id = id;
+    stub.innerHTML = this.responseText;
   };
-  req.onerror = function() { window.alert("error!"); }
+  req.onerror = function() { /* TODO */ }
   req.open("get", "/responses?source=" + source_key, true /* async */);
   req.send();
 }

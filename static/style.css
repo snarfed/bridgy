@@ -130,6 +130,10 @@ form input {
   /* border: 1px solid lightgray; */
 }
 
+.stub-responses {
+  text-align: center;
+}
+
 .original-post-links {
   list-style: none;
   padding-left: 0;

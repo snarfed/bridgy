@@ -106,7 +106,10 @@ below to try it yourself, or read <a href="/about">even more details.</a></p>
  </div>
 </div>
 
-<div id="stub-responses-{{ source.dom_id }}"></div> <!-- replaced via AJAX -->
+<div id="stub-responses-{{ source.dom_id }}" class="stub-responses"
+     style="display: none">
+<img src="/static/spinner.gif" /> <!-- filled in via AJAX -->
+</div>
 
 {% endfor %}
 </div>
