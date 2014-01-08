@@ -31,13 +31,32 @@ function toggle(id) {
   elem.style.display = (elem.style.display == "none") ? "block" : "none";
 }
 
+function toggle_responses(source_id, source_key) {
+  var id = "responses-" + source_id;
+  var elem = document.getElementById(id);
+  if (elem) {
+    toggle(id);
+    return;
+  }
+
+  var req = new XMLHttpRequest();
+  req.onload = function() {
+    var stub = document.getElementById("stub-" + id);
+    stub.id = id
+    stub.innerHTML = this.responseText
+  };
+  req.onerror = function() { window.alert("error!"); }
+  req.open("get", "/responses?source=" + source_key, true /* async */);
+  req.send();
+}
+
 window.onload = function() {
   var id = window.location.hash.substr(1);
   var target = document.getElementById(id);
   if (target) {
     window.setTimeout(function() { target.style.backgroundColor = "white"; },
                       3000 /* ms */);
-    toggle("responses-" + id);
+    toggle_responses(id);
   }
 }
 </script>

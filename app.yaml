@@ -57,7 +57,7 @@ handlers:
   login: admin
   secure: always
 
-- url: /(delete/.*|about)?
+- url: /(delete/.*|responses/about)?
   script: app.application
   secure: always
 

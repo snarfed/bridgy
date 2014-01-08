@@ -89,60 +89,24 @@ below to try it yourself, or read <a href="/about">even more details.</a></p>
   <!-- </form> -->
 
  </div><div class="col-sm-4">
-  {% if source.recent_responses %}
-    <a href="#" onclick="toggle('responses-{{ source.dom_id }}'); return false;">
-      Recent responses...
-    {% if source.recent_response_status == "processing" %}
-     <span title="Processing" class="glyphicon glyphicon-transfer"></span>
-    {% else %}{% if source.recent_response_status == "error" %}
-     <span title="Error" class="glyphicon glyphicon-exclamation-sign"></span>
-    {% endif %}{% endif %}
-    </a>
-  {% else %}
-    No responses yet
-  {% endif %}
+  <a href="#{{ source.dom_id }}"
+     onclick="toggle_responses('{{ source.dom_id }}', '{{ source.key }}');
+              return false;">
+    Recent responses...
+
+  {% comment %} <!-- Left over from when responses were fetched here. -->
+  {% if source.recent_response_status == "processing" %}
+   <span title="Processing" class="glyphicon glyphicon-transfer"></span>
+  {% else %}{% if source.recent_response_status == "error" %}
+   <span title="Error" class="glyphicon glyphicon-exclamation-sign"></span>
+  {% endif %}{% endif %}
+  {% endcomment %}
+
+  </a>
  </div>
 </div>
 
-<ul id="responses-{{ source.dom_id }}" class="responses" style="display: none" />
-  {% for response in source.recent_responses %}
-  <li class="row">
-   <div class="col-sm-3">
-    {% with response.response as r %}
-    <a target="_blank" href="{{ r.author.url }}" title="{{ r.author.displayName }}">
-      <img class="profile" src="{{ r.author.image.url }}" width="32" /></a>
-      <a target="_blank" href="{{ r.url }}">
-        {{ r.content|default:"--"|striptags|truncatewords:6|safe }}</a>
-    {% endwith %}
-
-   </div><div class="col-sm-3">
-    {% with response.activity.object as a %}
-    {% if response.type == "comment" %} on {% endif %}
-    <a target="_blank" href="{{ a.url }}">
-      {{ a.content|default:"--"|striptags|truncatewords:6|safe }}</a>
-    {% endwith %}
-
-   </div><div class="col-sm-3">
-    <a href="/log?start_time={{ response.updated|date:'U' }}&key={{ response.key }}">
-      {{ response.updated|timesince }} ago
-      {% if response.status == 'error' %}
-       <span title="Error" class="glyphicon glyphicon-exclamation-sign"></span>
-      {% else %}{% if response.status == 'processing' %}
-       <span title="Processing" class="glyphicon glyphicon-transfer"></span>
-      {% endif %}{% endif %}
-    </a>
-
-   </div><div class="col-sm-3">
-    {% for label, links in response.links.items %}
-      {{ label }}:
-      <ul class="original-post-links">{{ links|safeseq|unordered_list }}</ul>
-    {% empty %}
-      No post links found
-    {% endfor %}
-   </div>
-  </li>
-  {% endfor %}
-</ul>
+<div id="stub-responses-{{ source.dom_id }}"></div> <!-- replaced via AJAX -->
 
 {% endfor %}
 </div>

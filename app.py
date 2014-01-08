@@ -37,9 +37,6 @@ import webapp2
 class DashboardHandler(util.Handler):
   def get(self):
     """Renders the dashboard.
-
-    Args:
-      msg: string, message to be displayed
     """
     sources = {str(source.key()): source for source in
                itertools.chain(FacebookPage.all().run(), Twitter.all().run(),
@@ -54,59 +51,14 @@ class DashboardHandler(util.Handler):
     if deleted in sources:
       del sources[deleted]
 
-    # kick off queries for recent responses for each source. all queries run
-    # async, in parallel.
+    # convert image URLs to https if we're serving over SSL
     for source in sources.values():
-      source.recent_responses = source.response_set.order('-updated').run(limit=10)
-
-    # now wait on query results
-    for source in sources.values():
-      # convert image URL to https if we're serving over SSL
       source.picture = util.update_scheme(source.picture, self)
-      source.recent_responses = list(source.recent_responses)
-      source.recent_response_status = None
-      for r in source.recent_responses:
-        r.response = json.loads(r.response_json)
-        r.activity = json.loads(r.activity_json)
+      # ...left over from when responses were fetched in DashboardHandler.
+      # consider reviving it someday.
+      # source.recent_response_status = None
 
-        if not r.response.get('content'):
-          if r.type == 'like':
-            r.response['content'] = '%s liked' % r.response['author']['displayName'];
-          elif r.type == 'repost':
-            r.response['content'] = '%s reposted' % r.response['author']['displayName'];
-
-        # convert image URL to https if we're serving over SSL
-        image_url = r.response['author'].setdefault('image', {}).get('url')
-        if image_url:
-          r.response['author']['image']['url'] = util.update_scheme(image_url, self)
-
-        # generate original post links
-        def link(url, glyphicon=''):
-          parsed = urlparse.urlparse(url)
-          snippet = url[len(parsed.scheme) + 3:]  # strip scheme
-          max_len = max(20, len(parsed.netloc) + 1)
-          if len(snippet) > max_len + 3:
-            snippet = snippet[:max_len] + '...'
-          if glyphicon:
-            glyphicon = '<span class="glyphicon glyphicon-%s"></span>' % glyphicon
-          return ('<a target="_blank" class="original-post" href="%s">%s %s</a>'
-                  % (url, snippet, glyphicon))
-
-        r.links = util.trim_nulls({
-          'Failed': set(link(url, 'exclamation-sign') for url in r.error + r.failed),
-          'Sending': set(link(url, 'transfer') for url in r.unsent
-                         if url not in r.error),
-          'Sent': set(link(url) for url in r.sent
-                      if url not in (r.error + r.unsent)),
-          'No webmention support': set(link(url) for url in r.skipped),
-          })
-
-        if r.error:
-          source.recent_response_status = 'error'
-        elif r.unsent and not source.recent_response_status:
-          source.recent_response_status = 'processing'
-
-    # sort sources by name
+    # sort by name
     sources = sorted(sources.values(),
                      key=lambda s: (s.name.lower(), s.AS_CLASS.NAME))
 
@@ -116,10 +68,66 @@ class DashboardHandler(util.Handler):
     msgs = [m for m in set(self.request.params.getall('msg'))]
     path = os.path.join(os.path.dirname(__file__), 'templates', 'dashboard.html')
 
-    self.response.headers['Link'] = ('<%s/webmention>; rel="webmention"' %
-                                     self.request.host_url)
+    # self.response.headers['Link'] = ('<%s/webmention>; rel="webmention"' %
+    #                                  self.request.host_url)
     self.response.out.write(template.render(path, {
           'sources': sources, 'msgs': msgs, 'epoch': util.EPOCH}))
+
+
+class ResponsesHandler(util.Handler):
+  def get(self):
+    """Renders a single source's recent responses as an HTML fragment.
+    """
+    key = db.Key(util.get_required_param(self, 'source'))
+    responses = models.Response.all()\
+        .filter('source =', key).order('-updated').fetch(10)
+
+    for r in responses:
+      r.response = json.loads(r.response_json)
+      r.activity = json.loads(r.activity_json)
+
+      if not r.response.get('content'):
+        if r.type == 'like':
+          r.response['content'] = '%s liked' % r.response['author']['displayName'];
+        elif r.type == 'repost':
+          r.response['content'] = '%s reposted' % r.response['author']['displayName'];
+
+      # convert image URL to https if we're serving over SSL
+      image_url = r.response['author'].setdefault('image', {}).get('url')
+      if image_url:
+        r.response['author']['image']['url'] = util.update_scheme(image_url, self)
+
+      # generate original post links
+      def link(url, glyphicon=''):
+        parsed = urlparse.urlparse(url)
+        snippet = url[len(parsed.scheme) + 3:]  # strip scheme
+        max_len = max(20, len(parsed.netloc) + 1)
+        if len(snippet) > max_len + 3:
+          snippet = snippet[:max_len] + '...'
+        if glyphicon:
+          glyphicon = '<span class="glyphicon glyphicon-%s"></span>' % glyphicon
+        return ('<a target="_blank" class="original-post" href="%s">%s %s</a>'
+                % (url, snippet, glyphicon))
+
+      r.links = util.trim_nulls({
+        'Failed': set(link(url, 'exclamation-sign') for url in r.error + r.failed),
+        'Sending': set(link(url, 'transfer') for url in r.unsent
+                       if url not in r.error),
+        'Sent': set(link(url) for url in r.sent
+                    if url not in (r.error + r.unsent)),
+        'No webmention support': set(link(url) for url in r.skipped),
+        })
+
+      # ...left over from when responses were rendered in DashboardHandler.
+      # consider reviving it someday.
+      # if r.error:
+      #   source.recent_response_status = 'error'
+      # elif r.unsent and not source.recent_response_status:
+      #   source.recent_response_status = 'processing'
+
+    self.request.charset = 'utf-8'
+    path = os.path.join(os.path.dirname(__file__), 'templates', 'responses.html')
+    self.response.out.write(template.render(path, {'responses': responses}))
 
 
 class AboutHandler(handlers.TemplateHandler):
@@ -175,6 +183,7 @@ class DeleteFinishHandler(util.Handler):
 
 application = webapp2.WSGIApplication(
   [('/', DashboardHandler),
+   ('/responses', ResponsesHandler),
    ('/about', AboutHandler),
    ('/delete/start', DeleteStartHandler),
    ('/delete/finish', DeleteFinishHandler),
