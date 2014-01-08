@@ -283,7 +283,7 @@ class Propagate(webapp2.RequestHandler):
     response = db.get(self.request.params['response_key'])
 
     if response is None:
-      self.fail('no response entity!')
+      self.fail('no response entity!', level=logging.WARNING)
     elif response.status == 'complete':
       # let this response return 200 and finish
       logging.warning('duplicate task already propagated response')
@@ -327,11 +327,11 @@ class Propagate(webapp2.RequestHandler):
       response.leased_until = None
       response.save()
 
-  def fail(self, message):
+  def fail(self, message, level=logging.ERROR):
     """Fills in an error response status code and message.
     """
     self.error(self.ERROR_HTTP_RETURN_CODE)
-    logging.error(message)
+    logging.log(level, message)
     self.response.out.write(message)
 
 
