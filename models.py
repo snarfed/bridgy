@@ -252,6 +252,7 @@ class Response(KeyNameModel):
     logging.debug('New response to propagate! %s %s %s', self.type,
                   self.key().id_or_name(), obj.get('url', '[no url]'))
 
+    self.save()
     taskqueue.add(queue_name='propagate',
                   params={'response_key': str(self.key())},
                   # tasks inserted from a backend (e.g. twitter_streaming) are
@@ -264,7 +265,6 @@ class Response(KeyNameModel):
                   # prod instead of www.brid.gy, which breaks SSL because
                   # appspot.com doesn't have a third-level wildcard cert.)
                   target=taskqueue.DEFAULT_APP_VERSION)
-    self.save()
     return self
 
   @staticmethod
