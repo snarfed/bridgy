@@ -49,9 +49,13 @@ function toggle_responses(source_id) {
       stub.style.display = "none";
       document.getElementById("link-" + id).innerHTML = "No responses yet";
     } else {
+      this.onerror();
     }
   };
-  req.onerror = function() {}
+  req.onerror = function() {
+      stub.innerHTML = 'Error fetching responses ' + 
+        '<span title="Error" class="glyphicon glyphicon-exclamation-sign"></span>';
+  }
   req.open("get", "/responses?source=" + source_id, true /* async */);
   req.send();
 }
