@@ -88,8 +88,40 @@ realtime</a> in the future from more of the sites, but it will probably never
 be 100%.
 </p></li>
 
-<li class="question">Why does Brid.gy send webmentions with source URLs on
-brid-gy.appspot.com instead of brid.gy?</li>
+<li class="question">Brid.gy is ignoring one of my Twitter replies!</li>
+<li class="answer">
+<p>Does that reply include an
+<a href="https://support.twitter.com/articles/14023-what-are-replies-and-mentions">@-mention</a>
+of the user it's replying to? Twitter's API
+<a href="https://dev.twitter.com/discussions/10056">doesn't have a way to get a
+tweet's replies</a>, so Brid.gy searches for @-mentions of the tweet's author to
+find its replies. That means it can't find replies that omit the @-mention.
+</p></li>
+
+<li class="question">What are all these brid-gy.appspot.com links in the
+comments that Brid.gy sends to my site?</li>
+<li class="answer">
+<p>Short answer: your
+server's <a href="http://www.webmention.org/">webmention</a> code is probably
+rendering the webmention source URL. It should instead use the source
+page's <a href="http://microformats.org/wiki/h-entry#Properties">microformats2
+u-url property</a>. This is a common oversight, since they're usually the same,
+but Brid.gy is a special snowflake. :P You might want to file a bug against your
+server, or even fix it
+yourself. <a href="https://github.com/idno/idno/issues/160">Here's an example
+discussion.</a>
+</p>
+Longer answer: Webmentions</a> don't include the actual
+content of the comment or like or reshare, just a link to it. The recipient
+fetches that link and extracts the content and other data using
+<a href="http://microformats.org/wiki/microformats2">microformats2</a>. The
+social networks don't (yet) support microformats2, so Brid.gy translates their
+data to microformats2 HTML and serves those translations as webmention targets
+so that recipients can fetch and parse them.
+<p>
+</p></li>
+
+<li class="question">OK, fine. But why brid-gy.appspot.com instead of brid.gy?</li>
 <li class="answer">
 <p>It's an SSL thing. The <a href="https://www.brid.gy">brid.gy</a> domain fully
 supports and uses SSL, but it uses
@@ -102,17 +134,6 @@ server that receives it also needs to understand SNI,
 <a href="https://appspot.com/">appspot.com</a>'s SSL doesn't use SNI, so we use
 it for webmention sources in order to be as compatible as possible.
 </p></li>
-
-<li class="question">Brid.gy is ignoring one of my Twitter replies!</li>
-<li class="answer">
-<p>Does that reply include an
-<a href="https://support.twitter.com/articles/14023-what-are-replies-and-mentions">@-mention</a>
-of the user it's replying to? Twitter's API
-<a href="https://dev.twitter.com/discussions/10056">doesn't have a way to get a
-tweet's replies</a>, so Brid.gy searches for @-mentions of the tweet's author to
-find its replies. That means it can't find replies that omit the @-mention.
-</p>
-</li>
 
 <li class="question">I found a bug! I have a feature request!</li>
 <li class="answer">
