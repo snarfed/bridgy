@@ -7,13 +7,12 @@
 
 <li class="question">What is this?</li>
 <li class="answer">
-<p>Brid.gy copies comments, likes, and reposts from social networks to your web
+<p>Brid.gy copies comments, likes, and reshares from social networks to your web
 site. If you post links to your site on social networks
 (aka <a href="http://indiewebcamp.com/POSSE">POSSE</a>ing to
-the <a href="http://indiewebcamp.com/silos">silos</a>), and people comment on or
-interact with those links,
-Brid.gy <a href="http://indiewebcamp.com/backfeed">backfeeds</a> those comments
-and interactions to your site.
+the <a href="http://indiewebcamp.com/silos">silos</a>), and people interact with
+those links, Brid.gy <a href="http://indiewebcamp.com/backfeed">backfeeds</a>
+those interactions to your site.
 <a href="http://snarfed.org/2013-12-07_goodbye-penny-arcade-report#comments">You
 can see an example here.</a>
 </p>
@@ -54,7 +53,7 @@ send webmentions.
 <li class="answer">
 <p>Nothing! I have a <a href="http://quip.com/">great day job</a>, and Brid.gy
 is small, so thanks to <a href="http://appengine.google.com/">App Engine</a>, it
-doesn't (yet) cost anything to run. I don't need donations, promise.
+doesn't cost much to run. I don't need donations, promise.
 </p>
 <p>If you <em>really</em> want to
 contribute, <a href="https://github.com/snarfed/bridgy">jump into the code</a>
@@ -63,26 +62,46 @@ and send me a pull request, or feel free to donate to the
 <a href="https://www.eff.org/">EFF</a> in my name.
 </p></li>
 
-<li class="question">Who are you? Why did you make this?</li>
+<li class="question">Which things does Brid.gy send, specifically?</li>
 <li class="answer">
-<p>
-I'm <a class="h-card" href="http://snarfed.org/">Ryan Barrett</a>. I'm just a
-guy who <a href="http://snarfed.org/2012-07-25_why_i_have_my_own_web_site">likes
-the web</a> and likes <a href="http://indiewebcamp.com/why">owning his own
-data</a>.
-</p>
+<p>Brid.gy detects and sends webmentions for:</p>
+<ul>
+<li>Twitter @-replies, retweets, and favorites of your tweets.</li>
+<li><em>Your</em> Twitter favorites of other people's tweets.</li>
+<li>Facebook comments and likes on your posts...but not reshares of them,
+  unfortunately. I haven't yet found a way to get those from Facebook's
+  API.</li>
+<li>Google+ comments, +1s, and reshares of your posts.</li>
+<li>Instagram comments and likes on your pictures.</li>
+</ul>
 </li>
+</p></li>
 
-<li class="question">What do you do with my data?</li>
+<li class="question">Someone commented (or liked or reshared) my post, but
+  Brid.gy hasn't seen it yet!</li>
 <li class="answer">
-<p>Nothing! Brid.gy isn't a business, and never will be, so I don't have the same
-motivations to abuse your data that other services might. More concretely, I
-won't ever send you email, I store as little of your
-<a href="http://en.wikipedia.org/wiki/Personally_identifiable_information">PII</a>
-(personally identifiable information) as possible, and I <em>never</em> have
-access to any of your passwords.
-</p>
-</li>
+<p>Brid.gy doesn't work in realtime; it just checks your accounts for new
+activity every 15 minutes or so. Twitter favorites are the one exception;
+Brid.gy usually sees and handles those within seconds. It may expand to
+<a href="https://github.com/snarfed/bridgy/issues/18">handle more data in
+realtime</a> in the future from more of the sites, but it will probably never
+be 100%.
+</p></li>
+
+<li class="question">Why does Brid.gy send webmentions with source URLs on
+brid-gy.appspot.com instead of brid.gy?</li>
+<li class="answer">
+<p>It's an SSL thing. The <a href="https://www.brid.gy">brid.gy</a> domain fully
+supports and uses SSL, but it uses
+<a href="http://en.wikipedia.org/wiki/Server_Name_Indication">SNI</a>, a newer
+SSL feature that some older clients and libraries have trouble with. Modern
+browsers are generally fine, but when Brid.gy sends a webmention, the
+server that receives it also needs to understand SNI,
+<a href="https://github.com/snarfed/bridgy/issues/20">and some</a>
+<a href="https://github.com/aaronpk/webmention.io/issues/14">still don't</a>.
+<a href="https://appspot.com/">appspot.com</a>'s SSL doesn't use SNI, so we use
+it for webmention sources in order to be as compatible as possible.
+</p></li>
 
 <li class="question">Brid.gy is ignoring one of my Twitter replies!</li>
 <li class="answer">
@@ -100,6 +119,27 @@ find its replies. That means it can't find replies that omit the @-mention.
 <p>Great! Thank you! Feel free
 to <a href="https://github.com/snarfed/bridgy/issues">file it in GitHub</a>,
 or <a href="http://snarfed.org/about">send me an email</a>.
+</p>
+</li>
+
+<li class="question">What do you do with my data?</li>
+<li class="answer">
+<p>Nothing! Brid.gy isn't a business, and never will be, so I don't have the same
+motivations to abuse your data that other services might. More concretely, I
+won't ever send you email, I store as little of your
+<a href="http://en.wikipedia.org/wiki/Personally_identifiable_information">PII</a>
+(personally identifiable information) as possible, and I <em>never</em> have
+access to any of your passwords.
+</p>
+</li>
+
+<li class="question">Who are you? Why did you make this?</li>
+<li class="answer">
+<p>
+I'm <a class="h-card" href="http://snarfed.org/">Ryan Barrett</a>. I'm just a
+guy who <a href="http://snarfed.org/2012-07-25_why_i_have_my_own_web_site">likes
+the web</a> and likes <a href="http://indiewebcamp.com/why">owning his own
+data</a>.
 </p>
 </li>
 
