@@ -68,12 +68,16 @@ def get_webmention_targets(activity):
   targets = set()
   for tag in activity['object'].get('tags', []):
     url = tag.get('url')
-    try:
-      if (tag.get('objectType') == 'article' and url and
-          not in_webmention_blacklist(url)):
+
+    if url and tag.get('objectType') == 'article':
+      try:
+        urlparse.urlparse(url)
+      except Exception, e:
+        logging.warning('Dropping bad URL %s.', url)
+        continue
+      if not in_webmention_blacklist(url):
         targets.add(url)
-    except Exception, e:
-      logging.exception('Dropping bad URL %s. Activity:\n%s', url, activity)
+
   return targets
 
 
