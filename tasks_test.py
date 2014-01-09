@@ -350,6 +350,11 @@ class PropagateTest(TaskQueueTest):
     self.responses[0].delete()
     self.post_task(expected_status=Propagate.ERROR_HTTP_RETURN_CODE)
 
+  def test_no_source(self):
+    """If the source doesn't exist, the request should give up."""
+    self.sources[0].delete()
+    self.post_task(expected_status=200)
+
   def test_webmention_fail(self):
     """If sending the webmention fails, the lease should be released."""
     for code, give_up in (('NO_ENDPOINT', True),

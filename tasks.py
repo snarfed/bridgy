@@ -195,6 +195,12 @@ class Propagate(webapp2.RequestHandler):
       return
 
     try:
+      source = response.source
+    except db.ReferencePropertyResolveError:
+      logging.warning('Source not found! Dropping task.')
+      return
+
+    try:
       logging.info('Starting %s response %s',
                    response.source.kind(), response.key().name())
 
