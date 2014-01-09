@@ -109,6 +109,7 @@ class Poll(webapp2.RequestHandler):
     if not source:
       logging.warning('Source not found! Dropping task.')
       return
+    logging.info('Source: %s %s', source.label(), source.key().name())
 
     last_polled = self.request.params['last_polled']
     if last_polled != source.last_polled.strftime(util.POLL_TASK_DATETIME_FORMAT):
@@ -131,7 +132,6 @@ class Poll(webapp2.RequestHandler):
       raise
 
   def do_post(self, source):
-    logging.info('Polling %s %s', source.label(), source.key().name())
     try:
       activities = source.get_activities(fetch_replies=True, fetch_likes=True,
                                          fetch_shares=True, count=20)
@@ -203,6 +203,7 @@ class Propagate(webapp2.RequestHandler):
     except db.ReferencePropertyResolveError:
       logging.warning('Source not found! Dropping task.')
       return
+    logging.info('Source: %s %s', source.label(), source.key().name())
 
     try:
       logging.info('Starting %s response %s',
