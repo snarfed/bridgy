@@ -8,6 +8,7 @@ import json
 import logging
 import os
 
+from activitystreams.source import SELF
 from activitystreams import googleplus as as_googleplus
 from activitystreams.oauth_dropins import googleplus as oauth_googleplus
 from apiclient.errors import HttpError
@@ -65,6 +66,12 @@ class GooglePlusPage(models.Source):
     super(GooglePlusPage, self).__init__(*args, **kwargs)
     if self.auth_entity:
       self.as_source = as_googleplus.GooglePlus(auth_entity=self.auth_entity)
+
+  def get_activities(self, **kwargs):
+    """Overridden to cut down the number of activities requested.
+    """
+    kwargs['count'] = 5
+    return self.as_source.get_activities(group_id=SELF, **kwargs)[1]
 
 
 class OAuthCallback(util.Handler):
