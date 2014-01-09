@@ -122,7 +122,7 @@ class Poll(webapp2.RequestHandler):
       source.status = 'disabled'
       source.last_poll_attempt = now_fn()
       source.save()
-      logging.error('Disabling source!')
+      logging.warning('Disabling source!')
       # let this task complete successfully so that it's not retried.
     except:
       source.status = 'error'
@@ -272,7 +272,7 @@ class Propagate(webapp2.RequestHandler):
           response.unsent.remove(target)
 
       if response.error:
-        logging.error('Propagate task failed')
+        logging.warning('Propagate task failed')
         self.release_response(response, 'error')
       else:
         self.complete_response(response)
@@ -293,7 +293,7 @@ class Propagate(webapp2.RequestHandler):
     response = db.get(self.request.params['response_key'])
 
     if response is None:
-      self.fail('no response entity!', level=logging.WARNING)
+      self.fail('no response entity!')
     elif response.status == 'complete':
       # let this response return 200 and finish
       logging.warning('duplicate task already propagated response')
@@ -314,13 +314,14 @@ class Propagate(webapp2.RequestHandler):
     """
     existing = db.get(response.key())
     if existing is None:
-      self.fail('response entity disappeared!')
+      self.fail('response entity disappeared!', level=logging.ERROR)
     elif existing.status == 'complete':
       # let this response return 200 and finish
       logging.warning('response stolen and finished. did my lease expire?')
       return False
     elif existing.status == 'new':
-      self.fail('response went backward from processing to new!')
+      self.fail('response went backward from processing to new!',
+                level=logging.ERROR)
 
     assert response.status == 'processing'
     response.status = 'complete'
@@ -337,7 +338,7 @@ class Propagate(webapp2.RequestHandler):
       response.leased_until = None
       response.save()
 
-  def fail(self, message, level=logging.ERROR):
+  def fail(self, message, level=logging.WARNING):
     """Fills in an error response status code and message.
     """
     self.error(self.ERROR_HTTP_RETURN_CODE)
