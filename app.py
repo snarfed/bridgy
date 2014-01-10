@@ -41,6 +41,9 @@ def source_dom_id_to_key(id):
 
 
 class DashboardHandler(util.Handler):
+  def head(self):
+    """Return an empty 200 with no caching directives."""
+
   def get(self):
     """Renders the dashboard.
     """
