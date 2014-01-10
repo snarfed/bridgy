@@ -23,6 +23,10 @@ handlers:
   static_files: static/favicon.ico
   upload: static/favicon.ico
 
+- url: /robots.txt
+  static_files: static/robots.txt
+  upload: static/robots.txt
+
 # dynamic
 - url: /webmention
   script: webmention.application
