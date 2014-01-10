@@ -7,17 +7,17 @@
 
 <li class="question">What is this?</li>
 <li class="answer">
-<p>Brid.gy copies comments, likes, and reshares from social networks to your web
+<p>Bridgy copies comments, likes, and reshares from social networks to your web
 site. If you post links to your site on social networks
 (aka <a href="http://indiewebcamp.com/POSSE">POSSE</a>ing to
 the <a href="http://indiewebcamp.com/silos">silos</a>), and people interact with
-those links, Brid.gy <a href="http://indiewebcamp.com/backfeed">backfeeds</a>
+those links, Bridgy <a href="http://indiewebcamp.com/backfeed">backfeeds</a>
 those interactions to your site.
 <a href="http://snarfed.org/2013-12-07_goodbye-penny-arcade-report#comments">You
 can see an example here.</a>
 </p>
 <p>The <a href="http://snarfed.org/2012-01-08_bridgy_launched">first version of
-Brid.gy</a> was released a couple years ago, but only supported backfeeding
+Bridgy</a> was released a couple years ago, but only supported backfeeding
 comments to
 <a href="http://wordpress.org/">WordPress</a>. This version is better, thanks to
 <a href="http://www.webmention.org/">webmentions</a> and the inspiration of the
@@ -28,7 +28,7 @@ comments to
 <li class="question">How does it work?</li>
 <li class="answer">
 <p>
-When you add one of your accounts, Brid.gy checks it periodically for posts and
+When you add one of your accounts, Bridgy checks it periodically for posts and
 comments on those posts. When it finds a new comment on a post, it
 <a href="http://indiewebcamp.com/original-post-discovery">looks for links to
 your web site</a> in the post, then
@@ -37,7 +37,7 @@ also translates the comment
 to <a href="http://microformats.org/wiki/microformats2">microformats2 HTML</a>
 so that your web site can fetch and parse it.
 </p>
-<p>Brid.gy is <a href="https://github.com/snarfed/bridgy">open source</a>. It's
+<p>Bridgy is <a href="https://github.com/snarfed/bridgy">open source</a>. It's
 written in Python and runs on
 <a href="http://appengine.google.com/">Google App Engine</a>. It uses
 <a href="https://github.com/snarfed/oauth-dropins">oauth-dropins</a> to let
@@ -51,7 +51,7 @@ send webmentions.
 
 <li class="question">How much does it cost?</li>
 <li class="answer">
-<p>Nothing! I have a <a href="http://quip.com/">great day job</a>, and Brid.gy
+<p>Nothing! I have a <a href="http://quip.com/">great day job</a>, and Bridgy
 is small, so thanks to <a href="http://appengine.google.com/">App Engine</a>, it
 doesn't cost much to run. I don't need donations, promise.
 </p>
@@ -62,9 +62,9 @@ and send me a pull request, or feel free to donate to the
 <a href="https://www.eff.org/">EFF</a> in my name.
 </p></li>
 
-<li class="question">Which things does Brid.gy send, specifically?</li>
+<li class="question">Which things does Bridgy send, specifically?</li>
 <li class="answer">
-<p>Brid.gy detects and sends webmentions for:</p>
+<p>Bridgy detects and sends webmentions for:</p>
 <ul>
 <li>Twitter @-replies, retweets, and favorites of your tweets.</li>
 <li><em>Your</em> Twitter favorites of other people's tweets.</li>
@@ -78,35 +78,35 @@ and send me a pull request, or feel free to donate to the
 </p></li>
 
 <li class="question">Someone commented (or liked or reshared) my post, but
-  Brid.gy hasn't seen it yet!</li>
+  Bridgy hasn't seen it yet!</li>
 <li class="answer">
-<p>Brid.gy doesn't work in realtime; it just checks your accounts for new
+<p>Bridgy doesn't work in realtime; it just checks your accounts for new
 activity every 15 minutes or so. Twitter favorites are the one exception;
-Brid.gy usually sees and handles those within seconds. It may expand to
+Bridgy usually sees and handles those within seconds. It may expand to
 <a href="https://github.com/snarfed/bridgy/issues/18">handle more data in
 realtime</a> in the future from more of the sites, but it will probably never
 be 100%.
 </p></li>
 
-<li class="question">Brid.gy is ignoring one of my Twitter replies!</li>
+<li class="question">Bridgy is ignoring one of my Twitter replies!</li>
 <li class="answer">
 <p>Does that reply include an
 <a href="https://support.twitter.com/articles/14023-what-are-replies-and-mentions">@-mention</a>
 of the user it's replying to? Twitter's API
 <a href="https://dev.twitter.com/discussions/10056">doesn't have a way to get a
-tweet's replies</a>, so Brid.gy searches for @-mentions of the tweet's author to
+tweet's replies</a>, so Bridgy searches for @-mentions of the tweet's author to
 find its replies. That means it can't find replies that omit the @-mention.
 </p></li>
 
 <li class="question">What are all these brid-gy.appspot.com links in the
-comments that Brid.gy sends to my site?</li>
+comments that Bridgy sends to my site?</li>
 <li class="answer">
 <p>Short answer: your
 server's <a href="http://www.webmention.org/">webmention</a> code is probably
 rendering the webmention source URL. It should instead use the source
 page's <a href="http://microformats.org/wiki/h-entry#Properties">microformats2
 u-url property</a>. This is a common oversight, since they're usually the same,
-but Brid.gy is a special snowflake. :P You might want to file a bug against your
+but Bridgy is a special snowflake. :P You might want to file a bug against your
 server, or even fix it
 yourself. <a href="https://github.com/idno/idno/issues/160">Here's an example
 discussion.</a>
@@ -115,7 +115,7 @@ Longer answer: Webmentions</a> don't include the actual
 content of the comment or like or reshare, just a link to it. The recipient
 fetches that link and extracts the content and other data using
 <a href="http://microformats.org/wiki/microformats2">microformats2</a>. The
-social networks don't (yet) support microformats2, so Brid.gy translates their
+social networks don't (yet) support microformats2, so Bridgy translates their
 data to microformats2 HTML and serves those translations as webmention targets
 so that recipients can fetch and parse them.
 <p>
@@ -127,7 +127,7 @@ so that recipients can fetch and parse them.
 supports and uses SSL, but it uses
 <a href="http://en.wikipedia.org/wiki/Server_Name_Indication">SNI</a>, a newer
 SSL feature that some older clients and libraries have trouble with. Modern
-browsers are generally fine, but when Brid.gy sends a webmention, the
+browsers are generally fine, but when Bridgy sends a webmention, the
 server that receives it also needs to understand SNI,
 <a href="https://github.com/snarfed/bridgy/issues/20">and some</a>
 <a href="https://github.com/aaronpk/webmention.io/issues/14">still don't</a>.
@@ -145,7 +145,7 @@ or <a href="http://snarfed.org/about">send me an email</a>.
 
 <li class="question">What do you do with my data?</li>
 <li class="answer">
-<p>Nothing! Brid.gy isn't a business, and never will be, so I don't have the same
+<p>Nothing! Bridgy isn't a business, and never will be, so I don't have the same
 motivations to abuse your data that other services might. More concretely, I
 won't ever send you email, I store as little of your
 <a href="http://en.wikipedia.org/wiki/Personally_identifiable_information">PII</a>
@@ -164,7 +164,7 @@ data</a>.
 </p>
 </li>
 
-<li class="question">Brid.gy? Really?</li>
+<li class="question">Bridgy? Really?</li>
 <li class="answer">
 <p>Yeah, I know. I'm not proud of the cutesy domain name either. Just go with it.
 </p>
