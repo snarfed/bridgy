@@ -86,9 +86,9 @@ class FakeSource(FakeBase, Source):
   def set_activities(self, val):
     self._set('activities', val)
 
-  def get_activities(self, fetch_replies=False, fetch_likes=False,
-                     fetch_shares=False, count=None):
-    return self._get('activities')
+  def get_activities_response(self, fetch_replies=False, fetch_likes=False,
+                              fetch_shares=False, count=None):
+    return {'items': self._get('activities'), 'etag': self._get('etag')}
 
   def get_post(self, id):
     return self.get_activities()[int(id)]

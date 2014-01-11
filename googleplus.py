@@ -71,7 +71,7 @@ class GooglePlusPage(models.Source):
     """Overridden to cut down the number of activities requested.
     """
     kwargs['count'] = 5
-    return self.as_source.get_activities(group_id=SELF, **kwargs)[1]
+    return self.as_source.get_activities(group_id=SELF, **kwargs)
 
 
 class OAuthCallback(util.Handler):

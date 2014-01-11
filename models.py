@@ -109,6 +109,8 @@ class Source(Site):
   # doesn't expire. details: http://developers.facebook.com/docs/authentication/
   auth_entity = db.ReferenceProperty()
 
+  last_activities_etag = db.StringProperty()
+
   # as_source is *not* set to None by default here, since it needs to be unset
   # for __getattr__ to run when it's accessed.
 
@@ -134,16 +136,16 @@ class Source(Site):
     """Human-readable label for this site."""
     return '%s: %s' % (self.AS_CLASS.NAME, self.name)
 
-  def get_activities(self, **kwargs):
+  def get_activities_response(self, **kwargs):
     """Returns recent posts and embedded comments for this source.
 
     Passes through to activitystreams-unofficial by default. May be overridden
     by subclasses.
-
-    Returns: list of dicts, decoded JSON ActivityStreams activity objects
-      with comments in the 'replies' field, if any
     """
-    return self.as_source.get_activities(group_id=SELF, **kwargs)[1]
+    return self.as_source.get_activities_response(group_id=SELF, **kwargs)
+
+  def get_activities(self, *args, **kwargs):
+    return self.get_activities_response(*args, **kwargs)['items']
 
   def get_post(self, id):
     """Returns a post from this source.

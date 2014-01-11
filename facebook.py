@@ -82,13 +82,13 @@ class FacebookPage(models.Source):
                         url=url, **user) # **user populates type, name, username
 
   def get_activities(self, **kwargs):
-    posts = self.as_source.get_activities(group_id=SELF, **kwargs)[1]
+    posts = self.as_source.get_activities(group_id=SELF, **kwargs)
 
     # also get uploaded photos manually since facebook sometimes collapses
     # multiple photos into albums, and the album post object won't have the post
     # content, comments, etc. from the individual photo posts.
     # http://stackoverflow.com/questions/12785120
-    resp = self.as_source.urlread('https://graph.facebook.com/me/photos/uploaded')
+    resp = self.as_source.urlopen('https://graph.facebook.com/me/photos/uploaded').read()
     photos = [self.as_source.post_to_activity(p)
               for p in json.loads(resp).get('data', [])]
 

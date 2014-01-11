@@ -99,7 +99,6 @@ class HandlersTest(testutil.HandlerTest):
     self.assertEqual(200, resp.status_int)
 
   def test_get_comment_html(self):
-    self.source.get_activities()[0]
     self.source.set_comment({
         'id': 'tag:fake.com,2013:111',
         'content': 'qwert',
