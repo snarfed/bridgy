@@ -77,10 +77,11 @@ class PollTest(TaskQueueTest):
 
   def test_poll_error(self):
     """If anything goes wrong, the source status should be set to 'error'."""
-    self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities')
-    testutil.FakeSource.get_activities(count=mox.IgnoreArg(), fetch_replies=True,
-                                       fetch_likes=True, fetch_shares=True
-                                       ).AndRaise(Exception('foo'))
+    self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities_response')
+    testutil.FakeSource.get_activities_response(
+      count=mox.IgnoreArg(), fetch_replies=True,
+      fetch_likes=True, fetch_shares=True, etag=None,
+      ).AndRaise(Exception('foo'))
     self.mox.ReplayAll()
 
     self.assertRaises(Exception, self.post_task)
@@ -155,10 +156,11 @@ class PollTest(TaskQueueTest):
     """If the source raises DisableSource, disable it.
     """
     source = self.sources[0]
-    self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities')
-    testutil.FakeSource.get_activities(count=mox.IgnoreArg(), fetch_replies=True,
-                                       fetch_likes=True, fetch_shares=True
-                                       ).AndRaise(models.DisableSource)
+    self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities_response')
+    testutil.FakeSource.get_activities_response(
+      count=mox.IgnoreArg(), fetch_replies=True,
+      fetch_likes=True, fetch_shares=True, etag=None
+      ).AndRaise(models.DisableSource)
     self.mox.ReplayAll()
 
     source.status = 'enabled'
@@ -169,16 +171,36 @@ class PollTest(TaskQueueTest):
 
   def test_401_translates_to_disabled(self):
     """An HTTP 401 error should disable the source."""
-    self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities')
+    self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities_response')
     err = urllib2.HTTPError('url', 401, 'msg', {}, None)
-    testutil.FakeSource.get_activities(count=mox.IgnoreArg(), fetch_replies=True,
-                                       fetch_likes=True, fetch_shares=True
-                                       ).AndRaise(err)
+    testutil.FakeSource.get_activities_response(
+      count=mox.IgnoreArg(), fetch_replies=True, fetch_likes=True,
+      fetch_shares=True, etag=None,
+      ).AndRaise(err)
     self.mox.ReplayAll()
 
     self.post_task()
     source = db.get(self.sources[0].key())
     self.assertEqual('disabled', source.status)
+
+  def test_etag(self):
+    """If we see an ETag, we should send it with the next get_activities()."""
+    self.sources[0]._set('etag', '"my etag"')
+    self.post_task()
+
+    source = db.get(self.sources[0].key())
+    self.assertEqual('"my etag"', source.last_activities_etag)
+    source.last_polled = util.EPOCH
+    source.save()
+
+    self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities_response')
+    testutil.FakeSource.get_activities_response(
+      count=mox.IgnoreArg(), fetch_replies=True, fetch_likes=True,
+      fetch_shares=True, etag='"my etag"'
+      ).AndReturn({'items': []})
+
+    self.mox.ReplayAll()
+    self.post_task()
 
 
 class PropagateTest(TaskQueueTest):

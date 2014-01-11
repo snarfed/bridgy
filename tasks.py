@@ -133,8 +133,9 @@ class Poll(webapp2.RequestHandler):
 
   def do_post(self, source):
     try:
-      activities = source.get_activities(fetch_replies=True, fetch_likes=True,
-                                         fetch_shares=True, count=20)
+      response = source.get_activities_response(
+        fetch_replies=True, fetch_likes=True, fetch_shares=True, count=20,
+        etag=source.last_activities_etag)
     except urllib2.HTTPError, e:
       if e.code == 401:
         msg = 'Unauthorized error: %s' % e
@@ -142,6 +143,8 @@ class Poll(webapp2.RequestHandler):
         raise models.DisableSource(msg)
       else:
         raise
+
+    activities = response.get('items', [])
     logging.info('Found %d activities', len(activities))
 
     for activity in activities:
@@ -175,6 +178,7 @@ class Poll(webapp2.RequestHandler):
 
     source.last_polled = source.last_poll_attempt = now_fn()
     source.status = 'enabled'
+    source.last_activities_etag = response.get('etag')
     util.add_poll_task(source, countdown=self.TASK_COUNTDOWN.seconds)
     source.save()
 
