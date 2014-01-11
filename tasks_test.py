@@ -197,10 +197,13 @@ class PollTest(TaskQueueTest):
     testutil.FakeSource.get_activities_response(
       count=mox.IgnoreArg(), fetch_replies=True, fetch_likes=True,
       fetch_shares=True, etag='"my etag"'
-      ).AndReturn({'items': []})
+      ).AndReturn({'items': [], 'etag': '"new etag"'})
 
     self.mox.ReplayAll()
     self.post_task()
+
+    source = db.get(self.sources[0].key())
+    self.assertEqual('"new etag"', source.last_activities_etag)
 
 
 class PropagateTest(TaskQueueTest):
