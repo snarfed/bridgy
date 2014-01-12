@@ -132,8 +132,9 @@ class Poll(webapp2.RequestHandler):
       raise
 
   def do_post(self, source):
-    if source.last_activities_etag:
-      logging.debug('Using ETag: %s', source.last_activities_etag)
+    if source.last_activities_etag or source.last_activity_id:
+      logging.debug('Using ETag %s, last activity id %s',
+                    source.last_activities_etag, source.last_activity_id)
 
     try:
       response = source.get_activities_response(
@@ -149,7 +150,7 @@ class Poll(webapp2.RequestHandler):
 
     activities = response.get('items', [])
     logging.info('Found %d new activities', len(activities))
-    last_activity_id = None
+    last_activity_id = source.last_activity_id
 
     for activity in activities:
       targets = get_webmention_targets(activity)
@@ -185,15 +186,18 @@ class Poll(webapp2.RequestHandler):
         _, id = util.parse_tag_uri(id)
         try:
           # try numeric comparison first
-          greater = int(id) > int(source.last_activity_id)
-        except ValueError:
-          greater = id > source.last_activity_id
+          greater = int(id) > int(last_activity_id)
+        except (TypeError, ValueError):
+          greater = id > last_activity_id
         if greater:
-          source.last_activity_id = id
+          last_activity_id = id
 
     source.last_polled = source.last_poll_attempt = now_fn()
     source.status = 'enabled'
     etag = response.get('etag')
+    if last_activity_id:
+      logging.debug('Storing last activity id: %s', last_activity_id)
+      source.last_activity_id = last_activity_id
     if etag and etag != source.last_activities_etag:
       logging.debug('Storing new ETag: %s', etag)
       source.last_activities_etag = etag
