@@ -80,7 +80,7 @@ class PollTest(TaskQueueTest):
     self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities_response')
     testutil.FakeSource.get_activities_response(
       count=mox.IgnoreArg(), fetch_replies=True,
-      fetch_likes=True, fetch_shares=True, etag=None,
+      fetch_likes=True, fetch_shares=True, etag=None, min_id=None,
       ).AndRaise(Exception('foo'))
     self.mox.ReplayAll()
 
@@ -159,7 +159,7 @@ class PollTest(TaskQueueTest):
     self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities_response')
     testutil.FakeSource.get_activities_response(
       count=mox.IgnoreArg(), fetch_replies=True,
-      fetch_likes=True, fetch_shares=True, etag=None
+      fetch_likes=True, fetch_shares=True, etag=None, min_id=None,
       ).AndRaise(models.DisableSource)
     self.mox.ReplayAll()
 
@@ -175,7 +175,7 @@ class PollTest(TaskQueueTest):
     err = urllib2.HTTPError('url', 401, 'msg', {}, None)
     testutil.FakeSource.get_activities_response(
       count=mox.IgnoreArg(), fetch_replies=True, fetch_likes=True,
-      fetch_shares=True, etag=None,
+      fetch_shares=True, etag=None, min_id=None,
       ).AndRaise(err)
     self.mox.ReplayAll()
 
@@ -196,7 +196,7 @@ class PollTest(TaskQueueTest):
     self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities_response')
     testutil.FakeSource.get_activities_response(
       count=mox.IgnoreArg(), fetch_replies=True, fetch_likes=True,
-      fetch_shares=True, etag='"my etag"'
+      fetch_shares=True, etag='"my etag"', min_id='c',
       ).AndReturn({'items': [], 'etag': '"new etag"'})
 
     self.mox.ReplayAll()
@@ -204,6 +204,25 @@ class PollTest(TaskQueueTest):
 
     source = db.get(self.sources[0].key())
     self.assertEqual('"new etag"', source.last_activities_etag)
+
+  def test_last_activity_id(self):
+    """We should store the last activity id seen and then send it as min_id."""
+    self.sources[0].set_activities(list(reversed(self.activities)))
+    self.post_task()
+
+    source = db.get(self.sources[0].key())
+    self.assertEqual('c', source.last_activity_id)
+    source.last_polled = util.EPOCH
+    source.save()
+
+    self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities_response')
+    testutil.FakeSource.get_activities_response(
+      count=mox.IgnoreArg(), fetch_replies=True, fetch_likes=True,
+      fetch_shares=True, etag=None, min_id='c',
+      ).AndReturn({'items': []})
+
+    self.mox.ReplayAll()
+    self.post_task()
 
 
 class PropagateTest(TaskQueueTest):

@@ -99,7 +99,7 @@ class Poll(webapp2.RequestHandler):
   Inserts a propagate task for each response that hasn't been seen before.
   """
 
-  TASK_COUNTDOWN = datetime.timedelta(minutes=5)
+  TASK_COUNTDOWN = datetime.timedelta(minutes=15)
 
   def post(self):
     logging.debug('Params: %s', self.request.params)
@@ -138,7 +138,7 @@ class Poll(webapp2.RequestHandler):
     try:
       response = source.get_activities_response(
         fetch_replies=True, fetch_likes=True, fetch_shares=True, count=20,
-        etag=source.last_activities_etag)
+        etag=source.last_activities_etag, min_id=source.last_activity_id)
     except urllib2.HTTPError, e:
       if e.code == 401:
         msg = 'Unauthorized error: %s' % e
@@ -149,6 +149,7 @@ class Poll(webapp2.RequestHandler):
 
     activities = response.get('items', [])
     logging.info('Found %d new activities', len(activities))
+    last_activity_id = None
 
     for activity in activities:
       targets = get_webmention_targets(activity)
@@ -178,6 +179,17 @@ class Poll(webapp2.RequestHandler):
                         response_json=json.dumps(resp),
                         unsent=list(targets),
                         ).get_or_save()
+
+      id = activity.get('id')
+      if id:
+        _, id = util.parse_tag_uri(id)
+        try:
+          # try numeric comparison first
+          greater = int(id) > int(source.last_activity_id)
+        except ValueError:
+          greater = id > source.last_activity_id
+        if greater:
+          source.last_activity_id = id
 
     source.last_polled = source.last_poll_attempt = now_fn()
     source.status = 'enabled'

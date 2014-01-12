@@ -109,6 +109,7 @@ class Source(Site):
   # doesn't expire. details: http://developers.facebook.com/docs/authentication/
   auth_entity = db.ReferenceProperty()
 
+  last_activity_id = db.StringProperty()
   last_activities_etag = db.StringProperty()
 
   # as_source is *not* set to None by default here, since it needs to be unset
