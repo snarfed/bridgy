@@ -133,7 +133,7 @@ class Poll(webapp2.RequestHandler):
 
   def do_post(self, source):
     if source.last_activities_etag:
-      logging.debug('Using ETag: %s', etag)
+      logging.debug('Using ETag: %s', source.last_activities_etag)
 
     try:
       response = source.get_activities_response(
