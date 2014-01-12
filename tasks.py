@@ -99,7 +99,7 @@ class Poll(webapp2.RequestHandler):
   Inserts a propagate task for each response that hasn't been seen before.
   """
 
-  TASK_COUNTDOWN = datetime.timedelta(seconds=15)
+  TASK_COUNTDOWN = datetime.timedelta(minutes=5)
 
   def post(self):
     logging.debug('Params: %s', self.request.params)
@@ -132,6 +132,9 @@ class Poll(webapp2.RequestHandler):
       raise
 
   def do_post(self, source):
+    if source.last_activities_etag:
+      logging.debug('Using ETag: %s', etag)
+
     try:
       response = source.get_activities_response(
         fetch_replies=True, fetch_likes=True, fetch_shares=True, count=20,
@@ -145,7 +148,7 @@ class Poll(webapp2.RequestHandler):
         raise
 
     activities = response.get('items', [])
-    logging.info('Found %d activities', len(activities))
+    logging.info('Found %d new activities', len(activities))
 
     for activity in activities:
       targets = get_webmention_targets(activity)

@@ -67,12 +67,6 @@ class GooglePlusPage(models.Source):
     if self.auth_entity:
       self.as_source = as_googleplus.GooglePlus(auth_entity=self.auth_entity)
 
-  def get_activities(self, **kwargs):
-    """Overridden to cut down the number of activities requested.
-    """
-    kwargs['count'] = 5
-    return self.as_source.get_activities(group_id=SELF, **kwargs)
-
 
 class OAuthCallback(util.Handler):
   """OAuth callback handler.
