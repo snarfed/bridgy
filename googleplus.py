@@ -11,24 +11,12 @@ import os
 from activitystreams.source import SELF
 from activitystreams import googleplus as as_googleplus
 from activitystreams.oauth_dropins import googleplus as oauth_googleplus
-from apiclient.errors import HttpError
 import appengine_config
 import models
 import util
 
 from google.appengine.ext import db
 import webapp2
-
-
-def handle_exception(self, e, debug):
-  """Exception handler that disables the source on permission errors.
-  """
-  if isinstance(e, HttpError):
-    if e.resp.status in (403, 404):
-      logging.exception('Got %d, disabling source.', e.resp.status)
-      raise models.DisableSource()
-    else:
-      raise
 
 
 class GooglePlusPage(models.Source):
