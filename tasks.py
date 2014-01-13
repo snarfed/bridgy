@@ -90,8 +90,8 @@ class Poll(webapp2.RequestHandler):
 
     key = self.request.params['source_key']
     source = db.get(key)
-    if not source:
-      logging.warning('Source not found! Dropping task.')
+    if not source or source.status == 'disabled':
+      logging.error('Source not found or disabled. Dropping task.')
       return
     logging.info('Source: %s %s', source.label(), source.key().name())
 
