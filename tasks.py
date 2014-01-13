@@ -80,7 +80,7 @@ class Poll(webapp2.RequestHandler):
   Inserts a propagate task for each response that hasn't been seen before.
   """
 
-  TASK_COUNTDOWN = datetime.timedelta(minutes=5)
+  TASK_COUNTDOWN = datetime.timedelta(minutes=10)
 
   def post(self):
     logging.debug('Params: %s', self.request.params)
@@ -140,45 +140,18 @@ class Poll(webapp2.RequestHandler):
         # rate limiting errors. twitter returns 429, instagram 503, google+ 403.
         # TODO: facebook. it returns 200 and reports the error in the response.
         # https://developers.facebook.com/docs/reference/ads-api/api-rate-limiting/
-        logging.error('Rate limited. Marking as error and finishing task. %s', e)
+        logging.warning('Rate limited. Marking as error and finishing . %s', e)
         source.status = 'error'
         return
       else:
         raise
 
     activities = response.get('items', [])
-    logging.info('Found %d new activities', len(activities))
+    logging.info('Found %d activities', len(activities))
     last_activity_id = source.last_activity_id
 
     for activity in activities:
-      targets = get_webmention_targets(activity)
-
-      # extract replies, likes, and reposts.
-      obj = activity['object']
-      replies = obj.get('replies', {}).get('items', [])
-      tags = obj.get('tags', [])
-      likes = [t for t in tags if models.Response.get_type(t) == 'like']
-      reposts = [t for t in tags if models.Response.get_type(t) == 'repost']
-
-      responses = replies + likes + reposts
-      if targets or responses:
-        logging.info('%s has %d reply(ies), %d like(s), %d repost(s), and '
-                     '%d original post URL(s): %s',
-                     activity.get('url'), len(replies), len(likes), len(reposts),
-                     len(targets), ' '.join(targets))
-
-      for resp in responses:
-        id = resp.get('id')
-        if not id:
-          logging.error('Skipping response without id: %s', resp)
-          continue
-        models.Response(key_name=id,
-                        source=source,
-                        activity_json=json.dumps(activity),
-                        response_json=json.dumps(resp),
-                        unsent=list(targets),
-                        ).get_or_save()
-
+      # extract activity id and maybe replace stored last activity id
       id = activity.get('id')
       if id:
         _, id = util.parse_tag_uri(id)
@@ -189,6 +162,43 @@ class Poll(webapp2.RequestHandler):
           greater = id > last_activity_id
         if greater:
           last_activity_id = id
+
+      # extract replies, likes, and reposts.
+      obj = activity['object']
+      replies = obj.get('replies', {}).get('items', [])
+      tags = obj.get('tags', [])
+      likes = [t for t in tags if models.Response.get_type(t) == 'like']
+      reposts = [t for t in tags if models.Response.get_type(t) == 'repost']
+      responses = replies + likes + reposts
+
+      # drop existing responses
+      new_responses = []
+      for resp in responses:
+        id = resp.get('id')
+        if not id:
+          logging.error('Skipping response without id: %s', resp)
+        elif models.Response.get_by_key_name(id) is None:
+          new_responses.append(resp)
+
+      # short circuit to next activity if none are left to avoid unnecessary
+      # extra work resolving original post URLs, etc.
+      if not new_responses:
+        continue
+
+      targets = get_webmention_targets(activity)
+      if targets or new_responses:
+        logging.info('%s has %d reply(ies), %d like(s), %d repost(s), and '
+                     '%d original post URL(s): %s',
+                     activity.get('url'), len(replies), len(likes), len(reposts),
+                     len(targets), ' '.join(targets))
+
+      for resp in new_responses:
+        models.Response(key_name=resp['id'],
+                        source=source,
+                        activity_json=json.dumps(activity),
+                        response_json=json.dumps(resp),
+                        unsent=list(targets),
+                        ).get_or_save()
 
     source.last_polled = source.last_poll_attempt
     source.status = 'enabled'
