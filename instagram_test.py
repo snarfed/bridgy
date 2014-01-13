@@ -9,7 +9,6 @@ import logging
 import testutil
 
 from activitystreams import instagram_test as as_instagram_test
-from activitystreams import source
 from activitystreams.oauth_dropins import instagram as oauth_instagram
 from instagram import Instagram
 from webutil import util
@@ -43,4 +42,4 @@ class InstagramTest(testutil.ModelsTest):
     self.mox.StubOutWithMock(inst.as_source.api, 'user_recent_media')
     inst.as_source.api.user_recent_media('self').AndReturn(([], {}))
     self.mox.ReplayAll()
-    assert inst.get_activities_response(group_id=source.SELF, min_id='123')
+    assert inst.get_activities_response(min_id='123')
