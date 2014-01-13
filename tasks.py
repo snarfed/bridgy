@@ -140,7 +140,7 @@ class Poll(webapp2.RequestHandler):
         # rate limiting errors. twitter returns 429, instagram 503, google+ 403.
         # TODO: facebook. it returns 200 and reports the error in the response.
         # https://developers.facebook.com/docs/reference/ads-api/api-rate-limiting/
-        logging.warning('Rate limited. Marking as error and finishing . %s', e)
+        logging.warning('Rate limited. Marking as error and finishing. %s', e)
         source.status = 'error'
         return
       else:

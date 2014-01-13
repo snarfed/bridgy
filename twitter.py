@@ -9,7 +9,6 @@ import re
 
 from activitystreams import twitter as as_twitter
 from activitystreams.oauth_dropins import twitter as oauth_twitter
-from activitystreams.source import SELF
 import appengine_config
 import models
 import util
