@@ -81,18 +81,20 @@ class FacebookPage(models.Source):
     return FacebookPage(key_name=id, auth_entity=auth_entity, picture=picture,
                         url=url, **user) # **user populates type, name, username
 
-  def get_activities(self, **kwargs):
-    posts = self.as_source.get_activities(group_id=SELF, **kwargs)
+  def get_activities_response(self, **kwargs):
+    resp = self.as_source.get_activities_response(group_id=SELF, **kwargs)
 
     # also get uploaded photos manually since facebook sometimes collapses
     # multiple photos into albums, and the album post object won't have the post
     # content, comments, etc. from the individual photo posts.
     # http://stackoverflow.com/questions/12785120
-    resp = self.as_source.urlopen('https://graph.facebook.com/me/photos/uploaded').read()
-    photos = [self.as_source.post_to_activity(p)
-              for p in json.loads(resp).get('data', [])]
-
-    return posts + photos
+    #
+    # TODO: save and use ETag for this
+    photos = self.as_source.urlopen('https://graph.facebook.com/me/photos/uploaded').read()
+    items = resp.setdefault('items', [])
+    items += [self.as_source.post_to_activity(p)
+              for p in json.loads(photos).get('data', [])]
+    return resp
 
     # TODO: handle errors. (activitystreams-unofficial doesn't yet handle *or*
     # expose them.
