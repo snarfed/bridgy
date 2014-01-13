@@ -43,4 +43,4 @@ class InstagramTest(testutil.ModelsTest):
     self.mox.StubOutWithMock(inst.as_source.api, 'user_recent_media')
     inst.as_source.api.user_recent_media('self').AndReturn(([], {}))
     self.mox.ReplayAll()
-    inst.get_activities_response(group_id=source.SELF, min_id='123')
+    assert inst.get_activities_response(group_id=source.SELF, min_id='123')

@@ -60,7 +60,8 @@ class Instagram(models.Source):
     """Discard min_id because we still want new comments/likes on old photos."""
     if 'min_id' in kwargs:
       del kwargs['min_id']
-    resp = self.as_source.get_activities_response(*args, **kwargs)
+    return self.as_source.get_activities_response(*args, **kwargs)
+
 
 class OAuthCallback(oauth_instagram.CallbackHandler):
   """OAuth callback handler.
