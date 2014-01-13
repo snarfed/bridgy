@@ -285,7 +285,7 @@ class Propagate(webapp2.RequestHandler):
         try:
           sent = mention.send(timeout=999)
         except:
-          logging.exception('')
+          logging.warning('', exc_info=True)
           if not getattr(mention, 'error', None):
             mention.error = {'code': 'EXCEPTION'}
 
