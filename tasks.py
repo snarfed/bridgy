@@ -35,26 +35,6 @@ import webapp2
 
 import appengine_config
 
-# Known domains that don't support webmentions. Mainly just the silos.
-WEBMENTION_BLACKLIST = (
-  'amzn.com',
-  'amazon.com',
-  'brid.gy',
-  'brid-gy.appspot.com',
-  'facebook.com',
-  'm.facebook.com',
-  'instagr.am',
-  'instagram.com',
-  'plus.google.com',
-  'twitter.com',
-  # these come from the text of tweets. we also pull the expanded URL
-  # from the tweet entities, so ignore these instead of resolving them.
-  't.co',
-  'youtube.com',
-  'youtu.be',
-  '', None,
-  )
-
 # allows injecting timestamps in task_test.py
 now_fn = datetime.datetime.now
 
@@ -77,18 +57,17 @@ def get_webmention_targets(activity):
       except Exception, e:
         logging.warning('Dropping bad URL %s.', url)
         continue
-      if not in_webmention_blacklist(url):
-        targets.add(url)
+      if util.in_webmention_blacklist(url):
+        continue
+      resolved = util.follow_redirects(url)
+      if resolved != url:
+        logging.debug('Resolved %s to %s', url, resolved)
+        tag['url'] = resolved
+      if util.in_webmention_blacklist(resolved):
+        continue
+      targets.add(resolved)
 
   return targets
-
-
-def in_webmention_blacklist(url):
-  """Returns true if the string url's domain is in the webmention blacklist."""
-  domain = urlparse.urlparse(url).netloc
-  if domain.startswith('www.'):
-    domain = domain[4:]
-  return domain in WEBMENTION_BLACKLIST
 
 
 class Poll(webapp2.RequestHandler):
@@ -276,7 +255,7 @@ class Propagate(webapp2.RequestHandler):
       # send each webmention. recheck the blacklist here so that we can add to
       # it and have the additions apply to existing propagate tasks.
       response.unsent = sorted(set(url for url in response.unsent + response.error
-                                   if not in_webmention_blacklist(url)))
+                                   if not util.in_webmention_blacklist(url)))
       response.error = []
 
       while response.unsent:

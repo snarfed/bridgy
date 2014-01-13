@@ -35,6 +35,11 @@ class TaskQueueTest(testutil.ModelsTest):
   """
   post_url = None
 
+  def setUp(self):
+    super(TaskQueueTest, self).setUp()
+    # don't make actual HTTP requests to follow original post url redirects
+    util.follow_redirects = str
+
   def post_task(self, expected_status=200, params={}, **kwargs):
     """Args:
       expected_status: integer, the expected HTTP return code

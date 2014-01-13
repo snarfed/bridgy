@@ -7,6 +7,7 @@ import handlers
 import models
 import mox
 import testutil
+import util
 import webapp2
 
 from google.appengine.ext import db
@@ -19,15 +20,18 @@ class HandlersTest(testutil.HandlerTest):
     handlers.SOURCES['fake'] = testutil.FakeSource
 
     self.source = testutil.FakeSource.new(self.handler)
-    self.source.as_source.DOMAIN = 'fake.com'
+    self.source.as_source.DOMAIN = 'fa.ke'
     self.source.set_activities(
       [{'object': {
-            'id': 'tag:fake.com,2013:000',
-            'url': 'http://fake.com/000',
+            'id': 'tag:fa.ke,2013:000',
+            'url': 'http://fa.ke/000',
             'content': 'asdf http://orig/post qwert',
             'author': {'image': {'url': 'http://example.com/ryan/image'}},
             }}])
     self.source.save()
+
+    # don't make actual HTTP requests to follow original post url redirects
+    util.follow_redirects = str
 
   def check_response(self, url_template, expected):
     # use an HTTPS request so that URL schemes are converted
@@ -41,8 +45,8 @@ class HandlersTest(testutil.HandlerTest):
   def test_get_post_html(self):
     self.check_response('/post/fake/%s/000', """\
 <article class="h-entry">
-<span class="u-uid">tag:fake.com,2013:000</span>
-<div class="p-name"><a class="u-url" href="http://fake.com/000">asdf http://orig/post qwert</a></div>
+<span class="u-uid">tag:fa.ke,2013:000</span>
+<div class="p-name"><a class="u-url" href="http://fa.ke/000">asdf http://orig/post qwert</a></div>
 <time class="dt-published" datetime=""></time>
 <time class="dt-updated" datetime=""></time>
   <div class="h-card p-author">
@@ -66,9 +70,9 @@ class HandlersTest(testutil.HandlerTest):
     self.assert_equals({
         'type': ['h-entry'],
         'properties': {
-          'uid': ['tag:fake.com,2013:000'],
+          'uid': ['tag:fa.ke,2013:000'],
           'name': ['asdf http://orig/post qwert'],
-          'url': ['http://fake.com/000'],
+          'url': ['http://fa.ke/000'],
           'content': [{ 'html': 'asdf http://orig/post qwert',
                         'value': 'asdf http://orig/post qwert',
                         }],
@@ -100,15 +104,15 @@ class HandlersTest(testutil.HandlerTest):
 
   def test_get_comment_html(self):
     self.source.set_comment({
-        'id': 'tag:fake.com,2013:111',
+        'id': 'tag:fa.ke,2013:111',
         'content': 'qwert',
-        'inReplyTo': [{'url': 'http://fake.com/000'}],
+        'inReplyTo': [{'url': 'http://fa.ke/000'}],
         'author': {'image': {'url': 'http://example.com/ryan/image'}},
         })
 
     self.check_response('/comment/fake/%s/000/111', """\
 <article class="h-entry">
-<span class="u-uid">tag:fake.com,2013:111</span>
+<span class="u-uid">tag:fa.ke,2013:111</span>
 <div class="p-name">qwert</div>
 <time class="dt-published" datetime=""></time>
 <time class="dt-updated" datetime=""></time>
@@ -123,7 +127,7 @@ class HandlersTest(testutil.HandlerTest):
 
   </div>
 
-<a class="u-in-reply-to" href="http://fake.com/000" />
+<a class="u-in-reply-to" href="http://fa.ke/000" />
 <a class="u-in-reply-to" href="http://orig/post" />
 
 </article>
@@ -133,14 +137,14 @@ class HandlersTest(testutil.HandlerTest):
     self.source.as_source.set_like({
         'objectType': 'activity',
         'verb': 'like',
-        'id': 'tag:fake.com,2013:111',
+        'id': 'tag:fa.ke,2013:111',
         'object': {'url': 'http://example.com/original/post'},
         'author': {'image': {'url': 'http://example.com/ryan/image'}},
         })
 
     self.check_response('/like/fake/%s/000/111', """\
 <article class="h-entry h-as-like">
-<span class="u-uid">tag:fake.com,2013:111</span>
+<span class="u-uid">tag:fa.ke,2013:111</span>
 
 <time class="dt-published" datetime=""></time>
 <time class="dt-updated" datetime=""></time>
@@ -164,14 +168,14 @@ class HandlersTest(testutil.HandlerTest):
     self.source.as_source.set_share({
         'objectType': 'activity',
         'verb': 'share',
-        'id': 'tag:fake.com,2013:111',
+        'id': 'tag:fa.ke,2013:111',
         'object': {'url': 'http://example.com/original/post'},
         'author': {'image': {'url': 'http://example.com/ryan/image'}},
         })
 
     self.check_response('/repost/fake/%s/000/111', """\
 <article class="h-entry h-as-repost">
-<span class="u-uid">tag:fake.com,2013:111</span>
+<span class="u-uid">tag:fa.ke,2013:111</span>
 
 <time class="dt-published" datetime=""></time>
 <time class="dt-updated" datetime=""></time>

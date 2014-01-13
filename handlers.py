@@ -29,7 +29,6 @@ import twitter
 import util
 import webapp2
 from webutil import handlers
-from webutil import util
 
 from google.appengine.ext import db
 
@@ -138,12 +137,18 @@ class ItemHandler(webapp2.RequestHandler):
     obj[prop] += [tag for tag in post['object'].get('tags', [])
                   if 'url' in tag and tag['objectType'] == 'article']
 
-    # When debugging locally, replace my (snarfed.org) URLs with localhost
-    if appengine_config.DEBUG:
-      for url_obj in obj[prop]:
-        if url_obj.get('url', '').startswith('http://snarfed.org/'):
-          url_obj['url'] = url_obj['url'].replace('http://snarfed.org/',
-                                                  'http://localhost/')
+    for url_obj in obj[prop]:
+      url = url_obj.get('url', '')
+      if not util.in_webmention_blacklist(url):
+        # follow redirects
+        resolved = util.follow_redirects(url)
+        if resolved != url:
+          logging.debug('Resolved %s to %s', url, resolved)
+          url_obj['url'] = resolved
+      # When debugging locally, replace my (snarfed.org) URLs with localhost
+      if appengine_config.DEBUG:
+        if url.startswith('http://snarfed.org/'):
+          url_obj['url'] = url.replace('http://snarfed.org/', 'http://localhost/')
 
     post_urls = ', '.join(o.get('url', '[none]') for o in obj[prop])
     logging.info('Original post discovery filled in %s URLs: %s', prop, post_urls)
