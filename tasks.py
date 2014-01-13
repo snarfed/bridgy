@@ -80,7 +80,7 @@ class Poll(webapp2.RequestHandler):
   Inserts a propagate task for each response that hasn't been seen before.
   """
 
-  TASK_COUNTDOWN = datetime.timedelta(minutes=15)
+  TASK_COUNTDOWN = datetime.timedelta(minutes=5)
 
   def post(self):
     logging.debug('Params: %s', self.request.params)
