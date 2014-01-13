@@ -80,7 +80,10 @@ class Poll(webapp2.RequestHandler):
   Inserts a propagate task for each response that hasn't been seen before.
   """
 
-  TASK_COUNTDOWN = datetime.timedelta(minutes=10)
+  # TODO: parameterize on source type and drop to 5m for all except twitter,
+  # since their rate limiting window is currently 15m:
+  # https://dev.twitter.com/docs/rate-limiting/1.1/limits
+  TASK_COUNTDOWN = datetime.timedelta(minutes=15)
 
   def post(self):
     logging.debug('Params: %s', self.request.params)
