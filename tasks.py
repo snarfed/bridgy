@@ -101,6 +101,7 @@ class Poll(webapp2.RequestHandler):
 
     try:
       self.do_post(source)
+      util.add_poll_task(source, countdown=self.TASK_COUNTDOWN.seconds)
     except models.DisableSource:
       # the user deauthorized the bridgy app, so disable this source.
       # let the task complete successfully so that it's not retried.
@@ -198,7 +199,6 @@ class Poll(webapp2.RequestHandler):
     if etag and etag != source.last_activities_etag:
       logging.debug('Storing new ETag: %s', etag)
       source.last_activities_etag = etag
-    util.add_poll_task(source, countdown=self.TASK_COUNTDOWN.seconds)
     # source is saved in post()
 
 

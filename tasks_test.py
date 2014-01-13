@@ -212,6 +212,11 @@ class PollTest(TaskQueueTest):
         self.assertEqual('error', source.status)
         self.mox.VerifyAll()
 
+        # should have inserted a new poll task
+        tasks = self.taskqueue_stub.GetTasks('poll')
+        self.assertEqual(1, len(tasks))
+        self.assertEqual('/_ah/queue/poll', tasks[0]['url'])
+
     finally:
       self.mox.UnsetStubs()
 
