@@ -9,6 +9,7 @@ import logging
 import testutil
 
 from activitystreams import instagram_test as as_instagram_test
+from activitystreams import source
 from activitystreams.oauth_dropins import instagram as oauth_instagram
 from instagram import Instagram
 from webutil import util
@@ -36,10 +37,10 @@ class InstagramTest(testutil.ModelsTest):
     self.assertEqual('http://instagram.com/snarfed', inst.url)
     self.assertEqual('Ryan Barrett', inst.name)
 
-  def test_get_activities(self):
+  def test_get_activities_response(self):
+    """Check that min_id is discarded."""
     inst = Instagram.new(self.handler, auth_entity=self.auth_entity)
     self.mox.StubOutWithMock(inst.as_source.api, 'user_recent_media')
-    inst.as_source.api.user_recent_media('self').AndReturn(
-      ([as_instagram_test.MEDIA], {}))
+    inst.as_source.api.user_recent_media('self').AndReturn(([], {}))
     self.mox.ReplayAll()
-    self.assert_equals([as_instagram_test.ACTIVITY], inst.get_activities())
+    inst.get_activities_response(group_id=source.SELF, min_id='123')
