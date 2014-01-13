@@ -112,7 +112,7 @@ class PollTest(TaskQueueTest):
                    {'objectType': 'person', 'url': 'http://pe.rs/on'},
                    ]
     obj['attachments'] = [{'objectType': 'article', 'url': 'http://tar.get/b'}]
-    obj['content'] = 'foo http://tar.get/c bar (tar.get d) baz'
+    obj['content'] = 'foo http://tar.get/c bar (not.at endd) baz (tar.get d)'
     self.sources[0].set_activities([self.activities[0]])
 
     self.post_task()
@@ -128,7 +128,7 @@ class PollTest(TaskQueueTest):
     obj['tags'] = [{'objectType': 'article', 'url': 'http://tar.get/good'}]
     # urlparse('http://foo]') raises ValueError: Invalid IPv6 URL
     obj['attachments'] = [{'objectType': 'article', 'url': 'http://foo]'}]
-    obj['content'] = 'foo http://facebook.com/bad bar (brid.gy bad) baz'
+    obj['content'] = 'foo http://facebook.com/bad bar baz (brid.gy bad)'
     self.sources[0].set_activities([self.activities[0]])
 
     self.post_task()
