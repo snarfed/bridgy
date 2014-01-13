@@ -64,7 +64,7 @@ below to try it yourself, read <a href="/about">even more details</a>, or
   <a href="#{{ source.dom_id }}" title="Link">#</a>
   {% if source.status == "disabled" %}
     <span class="glyphicon glyphicon-pause"
-          title="This source was disconnected on {% firstof source.AS_CLASS.NAME source.kind %}'s end. To fix this, delete and re-add it."></span>
+          title="This account was disconnected on {% firstof source.AS_CLASS.NAME source.kind %}'s end. To fix this, delete and re-add it."></span>
   {% endif %}
   <form method="post" action="/delete/start">
     <input name="key" type="hidden" value="{{ source.key }}" />
