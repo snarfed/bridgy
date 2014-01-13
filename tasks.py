@@ -23,6 +23,8 @@ import facebook
 import googleplus
 import instagram
 import models
+from oauth_dropins.apiclient import errors
+from oauth_dropins.python_instagram.bind import InstagramAPIError
 import twitter
 import util
 from webmentiontools import send
@@ -116,20 +118,20 @@ class Poll(webapp2.RequestHandler):
       logging.warning('duplicate poll task! deferring to the other task.')
       return
 
+    source.last_poll_attempt = now_fn()
+
     try:
       self.do_post(source)
     except models.DisableSource:
       # the user deauthorized the bridgy app, so disable this source.
+      # let the task complete successfully so that it's not retried.
       source.status = 'disabled'
-      source.last_poll_attempt = now_fn()
-      source.save()
       logging.warning('Disabling source!')
-      # let this task complete successfully so that it's not retried.
     except:
       source.status = 'error'
-      source.last_poll_attempt = now_fn()
-      source.save()
       raise
+    finally:
+      source.save()
 
   def do_post(self, source):
     if source.last_activities_etag or source.last_activity_id:
@@ -140,13 +142,30 @@ class Poll(webapp2.RequestHandler):
       response = source.get_activities_response(
         fetch_replies=True, fetch_likes=True, fetch_shares=True, count=20,
         etag=source.last_activities_etag, min_id=source.last_activity_id)
-    except urllib2.HTTPError, e:
-      if e.code == 401:
+    except (urllib2.HTTPError, errors.HttpError), e:
+      code = e.code if isinstance(e, urllib2.HTTPError) else e.resp.status
+      if code == 401:
         msg = 'Unauthorized error: %s' % e
         logging.exception(msg)
         raise models.DisableSource(msg)
+      elif code in (403, 429, 503):
+        # rate limiting errors. twitter returns 429, instagram 503, google+ 403.
+        # TODO: facebook. it returns 200 and reports the error in the response.
+        # https://developers.facebook.com/docs/reference/ads-api/api-rate-limiting/
+        logging.error('Rate limited. Marking as error and finishing task. %s', e)
+        source.status = 'error'
+        return
       else:
         raise
+    except InstagramAPIError, e:
+      if e.status_code == '503':
+        logging.error('Rate limited. Marking as error and finishing task. %s', e)
+        source.status = 'error'
+        return
+      else:
+        raise
+    # except urllib2.HTTPError, e:
+    #   if e.code == 401:
 
     activities = response.get('items', [])
     logging.info('Found %d new activities', len(activities))
@@ -192,17 +211,17 @@ class Poll(webapp2.RequestHandler):
         if greater:
           last_activity_id = id
 
-    source.last_polled = source.last_poll_attempt = now_fn()
+    source.last_polled = source.last_poll_attempt
     source.status = 'enabled'
     etag = response.get('etag')
-    if last_activity_id:
-      logging.debug('Storing last activity id: %s', last_activity_id)
+    if last_activity_id and last_activity_id != source.last_activity_id:
+      logging.debug('Storing new last activity id: %s', last_activity_id)
       source.last_activity_id = last_activity_id
     if etag and etag != source.last_activities_etag:
       logging.debug('Storing new ETag: %s', etag)
       source.last_activities_etag = etag
     util.add_poll_task(source, countdown=self.TASK_COUNTDOWN.seconds)
-    source.save()
+    # source is saved in post()
 
 
 class Propagate(webapp2.RequestHandler):

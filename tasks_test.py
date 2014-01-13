@@ -11,6 +11,9 @@ import urllib
 import urllib2
 import urlparse
 
+from oauth_dropins.apiclient import errors
+from oauth_dropins import httplib2
+from oauth_dropins.python_instagram.bind import InstagramAPIError
 import models
 import models_test
 import tasks
@@ -182,6 +185,31 @@ class PollTest(TaskQueueTest):
     self.post_task()
     source = db.get(self.sources[0].key())
     self.assertEqual('disabled', source.status)
+
+  def test_rate_limiting_errors(self):
+    """Finish the task on rate limiting errors."""
+    try:
+      for err in (InstagramAPIError('503', 'Rate limited', '...'),
+                  errors.HttpError(httplib2.Response({'status': 429}), ''),
+                  urllib2.HTTPError('url', 403, 'msg', {}, None),
+                  urllib2.HTTPError('url', 503, 'msg', {}, None)):
+        self.mox.UnsetStubs()
+        self.setUp()
+
+        self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities_response')
+        testutil.FakeSource.get_activities_response(
+          count=mox.IgnoreArg(), fetch_replies=True, fetch_likes=True,
+          fetch_shares=True, etag=None, min_id=None,
+          ).AndRaise(err)
+        self.mox.ReplayAll()
+
+        self.post_task()
+        source = db.get(self.sources[0].key())
+        self.assertEqual('error', source.status)
+        self.mox.VerifyAll()
+
+    finally:
+      self.mox.UnsetStubs()
 
   def test_etag(self):
     """If we see an ETag, we should send it with the next get_activities()."""
