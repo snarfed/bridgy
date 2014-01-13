@@ -41,6 +41,7 @@ no field with picture id
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import json
+import urllib2
 
 from activitystreams import facebook as as_facebook
 from activitystreams.oauth_dropins import facebook as oauth_facebook
@@ -82,27 +83,36 @@ class FacebookPage(models.Source):
                         url=url, **user) # **user populates type, name, username
 
   def get_activities_response(self, **kwargs):
-    resp = self.as_source.get_activities_response(group_id=SELF, **kwargs)
+    try:
+      resp = self.as_source.get_activities_response(group_id=SELF, **kwargs)
+      # also get uploaded photos manually since facebook sometimes collapses
+      # multiple photos into albums, and the album post object won't have the
+      # post content, comments, etc. from the individual photo posts.
+      # http://stackoverflow.com/questions/12785120
+      #
+      # TODO: save and use ETag for this
+      photos = self.as_source.urlopen('https://graph.facebook.com/me/photos/uploaded').read()
+    except urllib2.HTTPError, e:
+      # Facebook API error details:
+      # https://developers.facebook.com/docs/graph-api/using-graph-api/
+      # https://developers.facebook.com/docs/graph-api/using-graph-api/#receiving-errorcodes
+      # https://developers.facebook.com/docs/reference/api/errors/
+      try:
+        body = json.loads(e.read())
+        error = body.get('error', {})
+        if error.get('code') in (102, 190) and error.get('error_subcode') == 458:
+          raise models.DisableSource()
+        else:
+          raise
+      except:
+        # ignore and re-raise the original exception
+        pass
+      raise
 
-    # also get uploaded photos manually since facebook sometimes collapses
-    # multiple photos into albums, and the album post object won't have the post
-    # content, comments, etc. from the individual photo posts.
-    # http://stackoverflow.com/questions/12785120
-    #
-    # TODO: save and use ETag for this
-    photos = self.as_source.urlopen('https://graph.facebook.com/me/photos/uploaded').read()
     items = resp.setdefault('items', [])
     items += [self.as_source.post_to_activity(p)
               for p in json.loads(photos).get('data', [])]
     return resp
-
-    # TODO: handle errors. (activitystreams-unofficial doesn't yet handle *or*
-    # expose them.
-    # Facebook API error details:
-    # https://developers.facebook.com/docs/reference/api/errors/
-    # if isinstance(data, dict) and data.get('error_code') in (102, 190):
-    #   raise models.DisableSource()
-    # assert 'error_code' not in data and 'error_msg' not in data
 
 
 class AddFacebookPage(oauth_facebook.CallbackHandler):

@@ -152,6 +152,10 @@ class Poll(webapp2.RequestHandler):
         source.status = 'error'
         return
       else:
+        if isinstance(e, urllib2.HTTPError):
+          body = e.read()
+          if body:
+            logging.error('Error response body: %s', body)
         raise
 
     activities = response.get('items', [])

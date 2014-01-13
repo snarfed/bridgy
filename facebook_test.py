@@ -5,10 +5,12 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import json
 import testutil
+import urllib2
 
 from activitystreams import facebook_test as as_facebook_test
 from activitystreams.oauth_dropins import facebook as oauth_facebook
 from facebook import FacebookPage
+import models
 
 import webapp2
 
@@ -48,3 +50,21 @@ class FacebookPageTest(testutil.ModelsTest):
 
     page = FacebookPage.new(self.handler, auth_entity=self.auth_entity)
     self.assert_equals([as_facebook_test.ACTIVITY], page.get_activities())
+
+  def test_revoked(self):
+    self.expect_urlopen(
+      'https://graph.facebook.com/me/posts?offset=0&access_token=my_token',
+      json.dumps({'error': {'code': 190, 'error_subcode': 458}}), status=400)
+    self.mox.ReplayAll()
+
+    page = FacebookPage.new(self.handler, auth_entity=self.auth_entity)
+    self.assertRaises(models.DisableSource, page.get_activities)
+
+  def test_other_error(self):
+    self.expect_urlopen(
+      'https://graph.facebook.com/me/posts?offset=0&access_token=my_token',
+      json.dumps({'error': {'code': 190, 'error_subcode': 789}}), status=400)
+    self.mox.ReplayAll()
+
+    page = FacebookPage.new(self.handler, auth_entity=self.auth_entity)
+    self.assertRaises(urllib2.HTTPError, page.get_activities)
