@@ -191,8 +191,7 @@ class PollTest(TaskQueueTest):
     try:
       for err in (InstagramAPIError('503', 'Rate limited', '...'),
                   errors.HttpError(httplib2.Response({'status': 429}), ''),
-                  urllib2.HTTPError('url', 403, 'msg', {}, None),
-                  urllib2.HTTPError('url', 503, 'msg', {}, None)):
+                  urllib2.HTTPError('url', 403, 'msg', {}, None)):
         self.mox.UnsetStubs()
         self.setUp()
 

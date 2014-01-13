@@ -142,13 +142,21 @@ class Poll(webapp2.RequestHandler):
       response = source.get_activities_response(
         fetch_replies=True, fetch_likes=True, fetch_shares=True, count=20,
         etag=source.last_activities_etag, min_id=source.last_activity_id)
-    except (urllib2.HTTPError, errors.HttpError), e:
-      code = e.code if isinstance(e, urllib2.HTTPError) else e.resp.status
-      if code == 401:
+    except (urllib2.HTTPError, errors.HttpError, InstagramAPIError), e:
+      if isinstance(e, urllib2.HTTPError):
+        code = e.code
+      elif isinstance(e, errors.HttpError):
+        code = e.resp.status
+      else:
+        assert isinstance(e, InstagramAPIError), e
+        code = e.status_code
+
+      code = str(code)
+      if code == '401':
         msg = 'Unauthorized error: %s' % e
         logging.exception(msg)
         raise models.DisableSource(msg)
-      elif code in (403, 429, 503):
+      elif code in ('403', '429', '503'):
         # rate limiting errors. twitter returns 429, instagram 503, google+ 403.
         # TODO: facebook. it returns 200 and reports the error in the response.
         # https://developers.facebook.com/docs/reference/ads-api/api-rate-limiting/
@@ -157,15 +165,6 @@ class Poll(webapp2.RequestHandler):
         return
       else:
         raise
-    except InstagramAPIError, e:
-      if e.status_code == '503':
-        logging.error('Rate limited. Marking as error and finishing task. %s', e)
-        source.status = 'error'
-        return
-      else:
-        raise
-    # except urllib2.HTTPError, e:
-    #   if e.code == 401:
 
     activities = response.get('items', [])
     logging.info('Found %d new activities', len(activities))
