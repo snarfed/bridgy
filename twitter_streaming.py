@@ -101,7 +101,8 @@ class Listener(streaming.StreamListener):
         tweet = data.get('target_object')
         activity = self.source.as_source.tweet_to_activity(tweet)
 
-      elif 'retweeted_status' in data:
+      elif (data.get('retweeted_status', {}).get('user', {}).get('screen_name') ==
+            self.source.key().name()):
         response = self.source.as_source.retweet_to_object(data)
         activity = self.source.as_source.tweet_to_activity(data['retweeted_status'])
 
