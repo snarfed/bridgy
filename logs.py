@@ -42,7 +42,7 @@ class LogHandler(webapp2.RequestHandler):
     # Backward compatibility for logs created with Comment, not Response
     comment_key = str(db.Key.from_path('Comment', db.Key(key).name()))
 
-    self.response.headers['Content-Type'] = 'text/plain'
+    self.response.headers['Content-Type'] = 'text/plain; charset=utf-8'
 
     offset = None
     for log in logservice.fetch(start_time=start_time, end_time=start_time + 120,

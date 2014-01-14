@@ -79,6 +79,7 @@ class DashboardHandler(util.Handler):
 
     # self.response.headers['Link'] = ('<%s/webmention>; rel="webmention"' %
     #                                  self.request.host_url)
+    self.response.headers['Content-Type'] = 'text/html; charset=utf-8'
     self.response.out.write(template.render(path, {
           'sources': sources, 'msgs': msgs, 'epoch': util.EPOCH}))
 
@@ -144,6 +145,7 @@ class ResponsesHandler(util.Handler):
 
     self.request.charset = 'utf-8'
     path = os.path.join(os.path.dirname(__file__), 'templates', 'responses.html')
+    self.response.headers['Content-Type'] = 'text/html; charset=utf-8'
     self.response.out.write(template.render(path, {'responses': responses}))
 
 

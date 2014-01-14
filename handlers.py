@@ -102,11 +102,11 @@ class ItemHandler(webapp2.RequestHandler):
 
     self.response.headers['Access-Control-Allow-Origin'] = '*'
     if format == 'html':
-      self.response.headers['Content-Type'] = 'text/html'
+      self.response.headers['Content-Type'] = 'text/html; charset=utf-8'
       self.response.out.write(TEMPLATE % (obj.get('url', ''),
                                           microformats2.object_to_html(obj)))
     elif format == 'json':
-      self.response.headers['Content-Type'] = 'application/json'
+      self.response.headers['Content-Type'] = 'application/json; charset=utf-8'
       self.response.out.write(json.dumps(microformats2.object_to_json(obj),
                                          indent=2))
 
