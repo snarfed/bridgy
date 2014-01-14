@@ -13,6 +13,7 @@ import testutil
 from tweepy import streaming
 import twitter
 import twitter_streaming
+import util
 
 from google.appengine.ext import db
 
@@ -21,12 +22,13 @@ class TwitterStreamingTest(testutil.ModelsTest):
 
   def setUp(self):
     super(TwitterStreamingTest, self).setUp()
-    self.source = self.make_source('unused')
+    self.source = self.make_source('snarfed_org')
+    self.listener = twitter_streaming.Listener(self.source)
     twitter_streaming.streams = {}
     twitter_streaming.UPDATE_STREAMS_PERIOD_S = .1
 
-    self.source = self.make_source('name')
-    self.listener = twitter_streaming.Listener(self.source)
+    # don't make actual HTTP requests to follow original post url redirects
+    util.follow_redirects = str
 
   def make_source(self, name):
     auth_entity = oauth_twitter.TwitterAuth(
@@ -65,6 +67,23 @@ class TwitterStreamingTest(testutil.ModelsTest):
     self.assertEqual(share['id'], resp.key().name())
     self.assert_equals(share, json.loads(resp.response_json))
     self.assert_equals(activity, json.loads(resp.activity_json))
+    self.assert_equals(['http://first/link/'], resp.unsent)
+
+  def test_reply(self):
+    tw_reply = copy.deepcopy(twitter_test.REPLIES_TO_SNARFED['statuses'][0])
+    as_reply = twitter_test.ACTIVITY_WITH_REPLIES['object']['replies']['items'][0]
+    as_reply['author']['id'] = 'tag:twitter.com,2013:alice'
+    self.expect_urlopen(
+      'https://api.twitter.com/1.1/statuses/show.json?id=100&include_entities=true',
+      json.dumps(twitter_test.TWEET))
+    self.mox.ReplayAll()
+
+    self.assertTrue(self.listener.on_data(json.dumps(tw_reply)))
+    self.assertEqual(1, models.Response.all().count())
+    resp = models.Response.all().get()
+    self.assertEqual(as_reply['id'], resp.key().name())
+    self.assert_equals(as_reply, json.loads(resp.response_json))
+    self.assert_equals(twitter_test.ACTIVITY, json.loads(resp.activity_json))
     self.assert_equals(['http://first/link/'], resp.unsent)
 
   def test_unhandled_event(self):

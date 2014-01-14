@@ -105,8 +105,14 @@ class Listener(streaming.StreamListener):
         response = self.source.as_source.retweet_to_object(data)
         activity = self.source.as_source.tweet_to_activity(data['retweeted_status'])
 
+      elif ('in_reply_to_status_id_str' in data and
+            data.get('in_reply_to_screen_name') == self.source.key().name()):
+        response = self.source.as_source.tweet_to_object(data)
+        activity = self.source.as_source.get_activities(
+          activity_id=data['in_reply_to_status_id_str'])[0]
+
       else:
-        # logging.debug('Discarding message we don't handle: %s', raw_data)
+        # logging.debug("Discarding message we don't handle: %s", data)
         return True
 
       targets = tasks.get_webmention_targets(activity)
