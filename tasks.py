@@ -80,11 +80,6 @@ class Poll(webapp2.RequestHandler):
   Inserts a propagate task for each response that hasn't been seen before.
   """
 
-  # TODO: parameterize on source type and drop to 5m for all except twitter,
-  # since their rate limiting window is currently 15m:
-  # https://dev.twitter.com/docs/rate-limiting/1.1/limits
-  TASK_COUNTDOWN = datetime.timedelta(minutes=15)
-
   def post(self):
     logging.debug('Params: %s', self.request.params)
 
@@ -104,7 +99,7 @@ class Poll(webapp2.RequestHandler):
 
     try:
       self.do_post(source)
-      util.add_poll_task(source, countdown=self.TASK_COUNTDOWN.seconds)
+      util.add_poll_task(source, countdown=source.POLL_FREQUENCY.seconds)
     except models.DisableSource:
       # the user deauthorized the bridgy app, so disable this source.
       # let the task complete successfully so that it's not retried.
