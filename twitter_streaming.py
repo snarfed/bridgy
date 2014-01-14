@@ -1,4 +1,8 @@
-"""Twitter Streaming API client for receiving and handling favorites.
+"""Twitter Streaming API client for handling Twitter responses in realtime.
+
+Tweets (including retweets and replies) are reported as individual, top-level
+tweet objects.
+https://dev.twitter.com/docs/platform-objects/tweets
 
 Favorites are reported via 'favorite' events:
 https://dev.twitter.com/docs/streaming-apis/messages#Events_event
@@ -58,15 +62,16 @@ import webapp2
 
 USER_STREAM_URL = 'https://userstream.twitter.com/1.1/user.json?with=user'
 # How often to check for new/deleted sources, in seconds.
-UPDATE_STREAMS_PERIOD_S = 5 * 60
+UPDATE_STREAMS_PERIOD_S = 1 * 60
 
 # globals
 streams = {}  # maps twitter.Twitter key to tweepy.streaming.Stream
 streams_lock = threading.Lock()
 update_thread = None  # initialized in Start
 
-class FavoriteListener(streaming.StreamListener):
-  """A per-user streaming API connection that saves favorites as Responses.
+
+class Listener(streaming.StreamListener):
+  """A per-user streaming API connection.
 
   I'd love to use non-blocking I/O on the HTTP connections instead of thread per
   connection, but tweepy's API is at a way higher level: its only options are
@@ -77,7 +82,7 @@ class FavoriteListener(streaming.StreamListener):
   def __init__(self, source):
     """Args: source: twitter.Twitter
     """
-    super(FavoriteListener, self).__init__()
+    super(Listener, self).__init__()
     self.source = source
 
   def on_connect(self):
@@ -87,29 +92,32 @@ class FavoriteListener(streaming.StreamListener):
     try:
       # logging.debug('Received streaming message: %s...', raw_data[:100])
       data = json.loads(raw_data)
-      if data.get('event') != 'favorite':
-        # logging.debug('Discarding non-favorite message: %s', raw_data)
+
+      if data.get('event') == 'favorite':
+        response = self.source.as_source.streaming_event_to_object(data)
+        if not response:
+          logging.warning('Discarding malformed favorite event: %s', raw_data)
+          return True
+        tweet = data.get('target_object')
+        activity = self.source.as_source.tweet_to_activity(tweet)
+
+      elif 'retweeted_status' in data:
+        response = self.source.as_source.retweet_to_object(data)
+        activity = self.source.as_source.tweet_to_activity(data['retweeted_status'])
+
+      else:
+        # logging.debug('Discarding message we don't handle: %s', raw_data)
         return True
 
-      like = self.source.as_source.streaming_event_to_object(data)
-      if not like:
-        logging.debug('Discarding malformed favorite event: %s', raw_data)
-        return True
-
-      tweet = data.get('target_object')
-      activity = self.source.as_source.tweet_to_activity(tweet)
       targets = tasks.get_webmention_targets(activity)
-      models.Response(key_name=like['id'],
+      models.Response(key_name=response['id'],
                       source=self.source,
                       activity_json=json.dumps(activity),
-                      response_json=json.dumps(like),
+                      response_json=json.dumps(response),
                       unsent=list(targets),
                       ).get_or_save()
-      # TODO: flush logs to generate a log per favorite event, so we can link
-      # to each one from the dashboard.
-      # https://developers.google.com/appengine/docs/python/backends/#Python_Periodic_logging
     except:
-      logging.exception('Error processing message: %s', raw_data)
+      logging.warning('Error processing message: %s', raw_data, exc_info=True)
 
     return True
 
@@ -158,7 +166,7 @@ def update_streams_once():
     source = sources[key]
     auth = oauth_twitter.TwitterAuth.tweepy_auth(
       *source.auth_entity.access_token())
-    streams[key] = streaming.Stream(auth, FavoriteListener(source))
+    streams[key] = streaming.Stream(auth, Listener(source))
     # run stream in *non*-background thread, since app engine backends have a
     # fixed limit of 10 background threads per instance. normal threads are only
     # limited by memory, and since we're starting them from a background thread,

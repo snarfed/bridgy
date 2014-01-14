@@ -25,6 +25,8 @@ class TwitterStreamingTest(testutil.ModelsTest):
     twitter_streaming.streams = {}
     twitter_streaming.UPDATE_STREAMS_PERIOD_S = .1
 
+    self.source = self.make_source('name')
+    self.listener = twitter_streaming.Listener(self.source)
 
   def make_source(self, name):
     auth_entity = oauth_twitter.TwitterAuth(
@@ -33,23 +35,13 @@ class TwitterStreamingTest(testutil.ModelsTest):
     auth_entity.save()
     return twitter.Twitter(key_name=name, auth_entity=auth_entity)
 
-  def test_favorite_listener(self):
-    source = self.make_source('name')
-    listener = twitter_streaming.FavoriteListener(source)
-
-    # not a favorite
-    self.assertTrue(listener.on_data(json.dumps({'event': 'foo'})))
-    self.assertEqual(0, models.Response.all().count())
-
+  def test_favorite(self):
     # missing data
-    self.assertTrue(listener.on_data(json.dumps({'event': 'favorite'})))
+    self.assertTrue(self.listener.on_data(json.dumps({'event': 'favorite'})))
     self.assertEqual(0, models.Response.all().count())
-
-    # exception
-    self.assertTrue(listener.on_data('not json'))
 
     # valid
-    self.assertTrue(listener.on_data(json.dumps(twitter_test.FAVORITE_EVENT)))
+    self.assertTrue(self.listener.on_data(json.dumps(twitter_test.FAVORITE_EVENT)))
     self.assertEqual(1, models.Response.all().count())
     resp = models.Response.all().get()
     self.assertEqual(twitter_test.LIKE['id'], resp.key().name())
@@ -58,6 +50,30 @@ class TwitterStreamingTest(testutil.ModelsTest):
     activity = copy.deepcopy(twitter_test.ACTIVITY)
     self.assert_equals(activity, json.loads(resp.activity_json))
     self.assert_equals(['http://first/link/'], resp.unsent)
+
+  def test_retweet(self):
+    retweet = copy.deepcopy(twitter_test.RETWEETS[0])
+    retweet['retweeted_status'] = twitter_test.TWEET
+    share = copy.deepcopy(twitter_test.SHARES[0])
+    share['author']['id'] = 'tag:twitter.com,2013:alizz'
+    activity = twitter_test.ACTIVITY
+    share['object']['url'] = activity['url']
+
+    self.assertTrue(self.listener.on_data(json.dumps(retweet)))
+    self.assertEqual(1, models.Response.all().count())
+    resp = models.Response.all().get()
+    self.assertEqual(share['id'], resp.key().name())
+    self.assert_equals(share, json.loads(resp.response_json))
+    self.assert_equals(activity, json.loads(resp.activity_json))
+    self.assert_equals(['http://first/link/'], resp.unsent)
+
+  def test_unhandled_event(self):
+    self.assertTrue(self.listener.on_data(json.dumps({'event': 'foo'})))
+    self.assertEqual(0, models.Response.all().count())
+
+  def test_not_json(self):
+    # bad json raises an exception inside on_data()
+    self.assertTrue(self.listener.on_data('not json'))
 
   def test_update_streams_shutdown_exception(self):
     orig_uso = twitter_streaming.update_streams_once
