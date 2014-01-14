@@ -141,12 +141,14 @@ class ItemHandler(webapp2.RequestHandler):
     for url_obj in obj[prop]:
       url = url_obj.get('url')
       if url and not util.in_webmention_blacklist(url):
-        # When debugging locally, replace my (snarfed.org) URLs with localhost
+        # when debugging locally, replace my (snarfed.org) URLs with localhost
         if appengine_config.DEBUG:
           if url.startswith('http://snarfed.org/'):
             url_obj['url'] = url = url.replace('http://snarfed.org/',
                                                'http://localhost/')
-        # Follow redirects
+        # follow redirects. add resolved URLs instead of replacing them because
+        # resolving may have failed during poll, in which case the webmention
+        # target is checking for the shorted URL, not the resolved one.
         resolved = util.follow_redirects(url)
         if resolved != url:
           logging.debug('Resolved %s to %s', url, resolved)
