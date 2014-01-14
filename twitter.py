@@ -3,6 +3,7 @@
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
+import datetime
 import json
 import logging
 import re
@@ -24,6 +25,12 @@ class Twitter(models.Source):
 
   AS_CLASS = as_twitter.Twitter
   SHORT_NAME = 'twitter'
+
+  # Twitter's rate limiting window is currently 15m. We handle replies,
+  # retweets, and favorites in twitter_streaming anyway, so this is mainly just
+  # for backup.
+  # https://dev.twitter.com/docs/rate-limiting/1.1/limits
+  POLL_FREQUENCY_S = datetime.timedelta(minutes=15)
 
   @staticmethod
   def new(handler, auth_entity=None):
