@@ -13,6 +13,7 @@ import copy
 import datetime
 import json
 import logging
+import random
 import urllib2
 import urlparse
 
@@ -99,7 +100,10 @@ class Poll(webapp2.RequestHandler):
 
     try:
       self.do_post(source)
-      util.add_poll_task(source, countdown=source.POLL_FREQUENCY.seconds)
+      # randomize task ETA to within +/- 20% of POLL_FREQUENCY to try to spread
+      # out tasks and prevent thundering herds.
+      countdown = source.POLL_FREQUENCY.seconds * random.uniform(.8, 1.2)
+      util.add_poll_task(source, countdown=countdown)
     except models.DisableSource:
       # the user deauthorized the bridgy app, so disable this source.
       # let the task complete successfully so that it's not retried.

@@ -30,7 +30,7 @@ class Twitter(models.Source):
   # retweets, and favorites in twitter_streaming anyway, so this is mainly just
   # for backup.
   # https://dev.twitter.com/docs/rate-limiting/1.1/limits
-  POLL_FREQUENCY_S = datetime.timedelta(minutes=15)
+  POLL_FREQUENCY = datetime.timedelta(minutes=15)
 
   @staticmethod
   def new(handler, auth_entity=None):
