@@ -1,13 +1,13 @@
 """Misc utility constants and classes.
 """
 
-import requests
 import urlparse
 
 from google.appengine.api import taskqueue
 
 import webapp2
 import activitystreams.webutil.util
+from activitystreams.oauth_dropins import requests
 import activitystreams.oauth_dropins.webutil.util
 import webutil.util
 from webutil.util import *
