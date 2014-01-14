@@ -137,18 +137,22 @@ class ItemHandler(webapp2.RequestHandler):
     obj[prop] += [tag for tag in post['object'].get('tags', [])
                   if 'url' in tag and tag['objectType'] == 'article']
 
+    resolved_urls = []
     for url_obj in obj[prop]:
-      url = url_obj.get('url', '')
-      if not util.in_webmention_blacklist(url):
-        # follow redirects
+      url = url_obj.get('url')
+      if url and not util.in_webmention_blacklist(url):
+        # When debugging locally, replace my (snarfed.org) URLs with localhost
+        if appengine_config.DEBUG:
+          if url.startswith('http://snarfed.org/'):
+            url_obj['url'] = url = url.replace('http://snarfed.org/',
+                                               'http://localhost/')
+        # Follow redirects
         resolved = util.follow_redirects(url)
         if resolved != url:
           logging.debug('Resolved %s to %s', url, resolved)
-          url_obj['url'] = resolved
-      # When debugging locally, replace my (snarfed.org) URLs with localhost
-      if appengine_config.DEBUG:
-        if url.startswith('http://snarfed.org/'):
-          url_obj['url'] = url.replace('http://snarfed.org/', 'http://localhost/')
+          resolved_urls.append(resolved)
+
+    obj[prop] += [{'url': url, 'objectType': 'article'} for url in resolved_urls]
 
     post_urls = ', '.join(o.get('url', '[none]') for o in obj[prop])
     logging.info('Original post discovery filled in %s URLs: %s', prop, post_urls)
