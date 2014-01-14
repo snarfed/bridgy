@@ -58,6 +58,9 @@ class ItemHandler(webapp2.RequestHandler):
   handle_exception = handlers.handle_exception
   source = None
 
+  def head(self, *args):
+    """Return an empty 200 with no caching directives."""
+
   def get_item(source, id):
     """Fetches and returns an object from the given source.
 
