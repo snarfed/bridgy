@@ -115,7 +115,9 @@ class ResponsesHandler(util.Handler):
       # generate original post links
       def link(url, glyphicon=''):
         parsed = urlparse.urlparse(url)
-        snippet = url[len(parsed.scheme) + 3:]  # strip scheme
+        snippet = url[len(parsed.scheme) + 3:]  # strip scheme and leading www
+        if snippet.startswith('www.'):
+          snippet = snippet[4:]
         max_len = max(20, len(parsed.netloc) + 1)
         if len(snippet) > max_len + 3:
           snippet = snippet[:max_len] + '...'
