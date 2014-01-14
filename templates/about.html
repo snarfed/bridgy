@@ -80,12 +80,10 @@ and send me a pull request, or feel free to donate to the
 <li class="question">Someone commented (or liked or reshared) my post, but
   Bridgy hasn't seen it yet!</li>
 <li class="answer">
-<p>Bridgy doesn't work in realtime; it just checks your accounts for new
-activity every 15 minutes or so. Twitter favorites are the one exception;
-Bridgy usually sees and handles those within seconds. It may expand to
-<a href="https://github.com/snarfed/bridgy/issues/18">handle more data in
-realtime</a> in the future from more of the sites, but it will probably never
-be 100%.
+<p>Bridgy doesn't work in realtime, it just checks your accounts for new
+activity every 5 minutes or so. Twitter is the one exception: Bridgy uses
+<a href="https://dev.twitter.com/docs/streaming-apis">Twitter's Streaming
+API</a>, so it usually sees Twitter responses within seconds.
 </p></li>
 
 <li class="question">Bridgy is ignoring one of my Twitter replies!</li>
@@ -95,7 +93,8 @@ be 100%.
 of the user it's replying to? Twitter's API
 <a href="https://dev.twitter.com/discussions/10056">doesn't have a way to get a
 tweet's replies</a>, so Bridgy searches for @-mentions of the tweet's author to
-find its replies. That means it can't find replies that omit the @-mention.
+find its replies. That means it can't always find replies that omit the
+@-mention.
 </p></li>
 
 <li class="question">What are all these brid-gy.appspot.com links in the
@@ -164,7 +163,7 @@ data</a>.
 </p>
 </li>
 
-<li class="question">Bridgy? Really?</li>
+<li class="question">Brid.gy? Really?</li>
 <li class="answer">
 <p>Yeah, I know. I'm not proud of the cutesy domain name either. Just go with it.
 </p>
