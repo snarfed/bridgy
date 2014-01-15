@@ -69,22 +69,23 @@ class TwitterStreamingTest(testutil.ModelsTest):
     self.assert_equals(activity, json.loads(resp.activity_json))
     self.assert_equals(['http://first/link/'], resp.unsent)
 
-  def test_reply(self):
-    tw_reply = copy.deepcopy(twitter_test.REPLIES_TO_SNARFED['statuses'][0])
-    as_reply = twitter_test.ACTIVITY_WITH_REPLIES['object']['replies']['items'][0]
-    as_reply['author']['id'] = 'tag:twitter.com,2013:alice'
-    self.expect_urlopen(
-      'https://api.twitter.com/1.1/statuses/show.json?id=100&include_entities=true',
-      json.dumps(twitter_test.TWEET))
-    self.mox.ReplayAll()
+  # disabled for now. see comment in twitter_streaming.py for details.
+  # def test_reply(self):
+  #   tw_reply = copy.deepcopy(twitter_test.REPLIES_TO_SNARFED['statuses'][0])
+  #   as_reply = twitter_test.ACTIVITY_WITH_REPLIES['object']['replies']['items'][0]
+  #   as_reply['author']['id'] = 'tag:twitter.com,2013:alice'
+  #   self.expect_urlopen(
+  #     'https://api.twitter.com/1.1/statuses/show.json?id=100&include_entities=true',
+  #     json.dumps(twitter_test.TWEET))
+  #   self.mox.ReplayAll()
 
-    self.assertTrue(self.listener.on_data(json.dumps(tw_reply)))
-    self.assertEqual(1, models.Response.all().count())
-    resp = models.Response.all().get()
-    self.assertEqual(as_reply['id'], resp.key().name())
-    self.assert_equals(as_reply, json.loads(resp.response_json))
-    self.assert_equals(twitter_test.ACTIVITY, json.loads(resp.activity_json))
-    self.assert_equals(['http://first/link/'], resp.unsent)
+  #   self.assertTrue(self.listener.on_data(json.dumps(tw_reply)))
+  #   self.assertEqual(1, models.Response.all().count())
+  #   resp = models.Response.all().get()
+  #   self.assertEqual(as_reply['id'], resp.key().name())
+  #   self.assert_equals(as_reply, json.loads(resp.response_json))
+  #   self.assert_equals(twitter_test.ACTIVITY, json.loads(resp.activity_json))
+  #   self.assert_equals(['http://first/link/'], resp.unsent)
 
   def test_unhandled_event(self):
     self.assertTrue(self.listener.on_data(json.dumps({'event': 'foo'})))

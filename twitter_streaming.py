@@ -106,11 +106,23 @@ class Listener(streaming.StreamListener):
         response = self.source.as_source.retweet_to_object(data)
         activity = self.source.as_source.tweet_to_activity(data['retweeted_status'])
 
-      elif ('in_reply_to_status_id_str' in data and
-            data.get('in_reply_to_screen_name') == self.source.key().name()):
-        response = self.source.as_source.tweet_to_object(data)
-        activity = self.source.as_source.get_activities(
-          activity_id=data['in_reply_to_status_id_str'])[0]
+      # not handling replies right now. i wish i could, but we only get the
+      # individual tweet that it's replying too, not the original root tweet that
+      # started the chain, which is the one that will have the original post
+      # links and should be used as the activity.
+      #
+      # worse, we store this as a response, even though it has the wrong
+      # activity, and so when the poll task later finds it and has the correct
+      # root tweet, it sees that the response has already been saved to the
+      # datastore and propagated, so it drops the good one on the floor.
+      #
+      # sigh. oh well.
+      #
+      # elif ('in_reply_to_status_id_str' in data and
+      #       data.get('in_reply_to_screen_name') == self.source.key().name()):
+      #   response = self.source.as_source.tweet_to_object(data)
+      #   activity = self.source.as_source.get_activities(
+      #     activity_id=data['in_reply_to_status_id_str'])[0]
 
       else:
         # logging.debug("Discarding message we don't handle: %s", data)
