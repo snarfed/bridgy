@@ -60,8 +60,11 @@ class DashboardHandler(util.Handler):
     if deleted in sources:
       del sources[deleted]
 
-    # convert image URLs to https if we're serving over SSL
+    # tweak some fields, including converting image URLs to https if we're
+    # serving over SSL
     for source in sources.values():
+      if not source.name:
+        source.name = source.key().name()
       source.picture = util.update_scheme(source.picture, self)
       # ...left over from when responses were fetched in DashboardHandler.
       # consider reviving it someday.
