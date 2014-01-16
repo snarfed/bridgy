@@ -28,6 +28,11 @@ class GooglePlusPage(models.Source):
   AS_CLASS = as_googleplus.GooglePlus
   SHORT_NAME = 'googleplus'
 
+  # We're currently close to the G+ API's daily limit of 10k requests per day.
+  # So low! :/ Usage history:
+  # https://code.google.com/apis/console/b/0/?pli=1#project:1029605954231:stats
+  POLL_FREQUENCY = datetime.timedelta(minutes=10)
+
   type = db.StringProperty(choices=('user', 'page'))
 
   @staticmethod
