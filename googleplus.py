@@ -30,7 +30,8 @@ class GooglePlusPage(models.Source):
 
   # We're currently close to the G+ API's daily limit of 10k requests per day.
   # So low! :/ Usage history:
-  # https://code.google.com/apis/console/b/0/?pli=1#project:1029605954231:stats
+  # QPS: https://cloud.google.com/console/project/1029605954231
+  # Totals by day: https://code.google.com/apis/console/b/0/?pli=1#project:1029605954231:stats
   POLL_FREQUENCY = datetime.timedelta(minutes=10)
 
   type = db.StringProperty(choices=('user', 'page'))
