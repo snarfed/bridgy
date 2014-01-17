@@ -40,11 +40,15 @@ class Twitter(models.Source):
       handler: the current RequestHandler
     """
     user = json.loads(auth_entity.user_json)
+    # use https picture url if available, and drop the '_normal' suffix, which
+    # gives us a higher res image, ~256x256 instead of ~48x48.
+    picture = user.get('profile_image_url_https') or user.get('profile_image_url')
+    picture = picture.replace('_normal.', '.', 1)
     return Twitter(key_name=user['screen_name'],
                    auth_entity=auth_entity,
                    url=Twitter.user_url(user['screen_name']),
                    name=user['name'],
-                   picture=user['profile_image_url'])
+                   picture=picture)
 
   def get_like(self, activity_user_id, activity_id, like_user_id):
     """Returns an ActivityStreams 'like' activity object for a favorite.

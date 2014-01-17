@@ -36,6 +36,15 @@ class TwitterTest(testutil.ModelsTest):
     self.assertEqual('http://pi.ct/ure', tw.picture)
     self.assertEqual('Ryan Barrett', tw.name)
 
+  def test_new_massages_profile_image(self):
+    """We should use profile_image_url_https and drop '_normal' if possible."""
+    user = json.loads(self.auth_entity.user_json)
+    user['profile_image_url_https'] = 'https://foo_normal.xyz'
+    self.auth_entity.user_json = json.dumps(user)
+
+    tw = Twitter.new(self.handler, auth_entity=self.auth_entity)
+    self.assertEqual('https://foo.xyz', tw.picture)
+
   def test_get_activities(self):
     self.expect_urlopen('https://api.twitter.com/1.1/statuses/user_timeline.json?'
                         'include_entities=true&count=0',
