@@ -156,10 +156,11 @@ class HandlersTest(testutil.HandlerTest):
 
   <div class="e-content">
   likes this.
-  <a class="u-like u-like-of" href="http://example.com/original/post" />
-  <a class="u-like u-like-of" href="http://orig/post" />
 
   </div>
+
+  <a class="u-like u-like-of" href="http://example.com/original/post" />
+  <a class="u-like u-like-of" href="http://orig/post" />
 
 </article>
 """)
@@ -187,10 +188,11 @@ class HandlersTest(testutil.HandlerTest):
 
   <div class="e-content">
   reposts this.
-  <a class="u-repost u-repost-of" href="http://example.com/original/post" />
-  <a class="u-repost u-repost-of" href="http://orig/post" />
 
   </div>
+
+  <a class="u-repost u-repost-of" href="http://example.com/original/post" />
+  <a class="u-repost u-repost-of" href="http://orig/post" />
 
 </article>
 """)
