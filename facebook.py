@@ -78,7 +78,8 @@ class FacebookPage(models.Source):
     user = json.loads(auth_entity.user_json)
     id = user['id']
     url = 'http://facebook.com/' + id
-    picture = 'http://graph.facebook.com/%s/picture' % user.get('username', id)
+    picture = ('http://graph.facebook.com/%s/picture?type=large' %
+               user.get('username', id))
     return FacebookPage(key_name=id, auth_entity=auth_entity, picture=picture,
                         url=url, **user) # **user populates type, name, username
 
