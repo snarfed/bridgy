@@ -105,16 +105,17 @@ class ResponsesHandler(util.Handler):
       r.response = json.loads(r.response_json)
       r.activity = json.loads(r.activity_json)
 
+      author = r.response.get('author', {})
       if not r.response.get('content'):
         if r.type == 'like':
-          r.response['content'] = '%s liked' % r.response['author']['displayName'];
+          r.response['content'] = '%s liked' % author.get('displayName', '-');
         elif r.type == 'repost':
-          r.response['content'] = '%s reposted' % r.response['author']['displayName'];
+          r.response['content'] = '%s reposted' % author.get('displayName', '-');
 
       # convert image URL to https if we're serving over SSL
-      image_url = r.response['author'].setdefault('image', {}).get('url')
+      image_url = author.setdefault('image', {}).get('url')
       if image_url:
-        r.response['author']['image']['url'] = util.update_scheme(image_url, self)
+        author['image']['url'] = util.update_scheme(image_url, self)
 
       # generate original post links
       def link(url, glyphicon=''):
