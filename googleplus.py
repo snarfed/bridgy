@@ -48,11 +48,17 @@ class GooglePlusPage(models.Source):
     # https://developers.google.com/+/api/latest/people#resource
     user = json.loads(auth_entity.user_json)
     type = 'user' if user.get('objectType', 'person') == 'person' else 'page'
+
+    # override the sz param to ask for a 128x128 image. if there's an existing
+    # sz query param (there usually is), the new one will come afterward and
+    # override it.
+    picture = util.add_query_params(user['image']['url'], {'sz': '128'})
+
     return GooglePlusPage(key_name=user['id'],
                           auth_entity=auth_entity,
                           url=user['url'],
                           name=user['displayName'],
-                          picture=user['image']['url'],
+                          picture=picture,
                           type=type)
 
   def __init__(self, *args, **kwargs):
