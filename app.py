@@ -185,13 +185,18 @@ class DeleteStartHandler(util.Handler):
 
 class DeleteFinishHandler(util.Handler):
   def get(self):
+    if self.request.get('declined'):
+      self.messages.add("OK, you're still signed up.")
+      self.redirect('/')
+      return
+
     logged_in_as = util.get_required_param(self, 'auth_entity')
     source = db.get(util.get_required_param(self, 'state'))
     source_auth_entity = models.Source.auth_entity.get_value_for_datastore(source)
     if logged_in_as == str(source_auth_entity):
       # TODO: remove credentials, tasks, etc.
       source.delete()
-      self.messages.add('Deleted %s.' % source.label())
+      self.messages.add('Deleted %s. Sorry to see you go!' % source.label())
       mail.send_mail(sender='delete@brid-gy.appspotmail.com',
                      to='webmaster@brid.gy',
                      subject='Deleted Brid.gy user: %s %s' %
