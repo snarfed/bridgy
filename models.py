@@ -136,7 +136,7 @@ class Source(Site):
 
   def label(self):
     """Human-readable label for this site."""
-    return '%s: %s' % (self.AS_CLASS.NAME, self.name)
+    return '%s (%s)' % (self.name, self.AS_CLASS.NAME)
 
   def get_activities_response(self, **kwargs):
     """Returns recent posts and embedded comments for this source.

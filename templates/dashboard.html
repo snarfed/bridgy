@@ -54,7 +54,7 @@ below to try it yourself, read <a href="/about">even more details</a>, or
   <a target="_blank" href="{{ source.url }}"
      {# oddly, source.AS_CLASS works for FB, G+, and Instagram, but not Twitter.
         only here; works fine in app.py. no clue why. use kind as fallback. %}
-     title="{% firstof source.AS_CLASS.NAME source.kind %}: {{ source.name|safe }}">
+     title="{{ source.name|safe }} ({% firstof source.AS_CLASS.NAME source.kind %})">
     <img class="profile" src="{{ source.picture }}" width="64px" />
     <img src="/static/{{ source.SHORT_NAME }}_icon.png"
          alt="{% firstof source.AS_CLASS.NAME source.kind %}" />
