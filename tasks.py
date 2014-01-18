@@ -124,17 +124,19 @@ class Poll(webapp2.RequestHandler):
       response = source.get_activities_response(
         fetch_replies=True, fetch_likes=True, fetch_shares=True, count=20,
         etag=source.last_activities_etag, min_id=source.last_activity_id)
-    except (urllib2.HTTPError, errors.HttpError, InstagramAPIError), e:
+    except Exception, e:
       if isinstance(e, urllib2.HTTPError):
         code = e.code
       elif isinstance(e, errors.HttpError):
         code = e.resp.status
-      else:
-        assert isinstance(e, InstagramAPIError), e
+      # TODO: fix when module importing is fixed
+      elif e.__class__.__name__ == 'InstagramAPIError':
         if e.error_type == 'OAuthAccessTokenException':
           code = '401'
         else:
           code = e.status_code
+      else:
+        raise
 
       code = str(code)
       if code == '401':
