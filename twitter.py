@@ -72,10 +72,13 @@ class Twitter(models.Source):
     return 'http://twitter.com/%s' % username
 
 
-class AddTwitter(oauth_twitter.CallbackHandler):
-  messages = set()
-
+class AddTwitter(oauth_twitter.CallbackHandler, util.Handler):
   def finish(self, auth_entity, state=None):
+    if not auth_entity:
+      self.messages.add("OK, you're not signed up. Hope you reconsider!")
+      self.redirect('/')
+      return
+
     tw = Twitter.create_new(self, auth_entity=auth_entity)
     util.added_source_redirect(self, tw)
 
