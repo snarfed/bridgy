@@ -131,7 +131,10 @@ class Poll(webapp2.RequestHandler):
         code = e.resp.status
       else:
         assert isinstance(e, InstagramAPIError), e
-        code = e.status_code
+        if e.error_type == 'OAuthAccessTokenException':
+          code = '401'
+        else:
+          code = e.status_code
 
       code = str(code)
       if code == '401':

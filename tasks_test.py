@@ -185,19 +185,27 @@ class PollTest(TaskQueueTest):
     source = db.get(source.key())
     self.assertEqual('disabled', source.status)
 
-  def test_401_translates_to_disabled(self):
-    """An HTTP 401 error should disable the source."""
-    self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities_response')
-    err = urllib2.HTTPError('url', 401, 'msg', {}, None)
-    testutil.FakeSource.get_activities_response(
-      count=mox.IgnoreArg(), fetch_replies=True, fetch_likes=True,
-      fetch_shares=True, etag=None, min_id=None,
-      ).AndRaise(err)
-    self.mox.ReplayAll()
+  def test_site_specific_disable_sources(self):
+    """HTTP 401 and 400 '' for Instagram should disable the source."""
+    try:
+      for err in (urllib2.HTTPError('url', 401, 'msg', {}, None),
+                  InstagramAPIError('400', 'OAuthAccessTokenException', 'foo')):
+        self.mox.UnsetStubs()
+        self.setUp()
 
-    self.post_task()
-    source = db.get(self.sources[0].key())
-    self.assertEqual('disabled', source.status)
+        self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities_response')
+        testutil.FakeSource.get_activities_response(
+          count=mox.IgnoreArg(), fetch_replies=True, fetch_likes=True,
+          fetch_shares=True, etag=None, min_id=None,
+          ).AndRaise(err)
+        self.mox.ReplayAll()
+
+        self.post_task()
+        source = db.get(self.sources[0].key())
+        self.assertEqual('disabled', source.status)
+
+    finally:
+      self.mox.UnsetStubs()
 
   def test_rate_limiting_errors(self):
     """Finish the task on rate limiting errors."""
