@@ -57,7 +57,6 @@ class HandlersTest(testutil.HandlerTest):
 
   <div class="e-content">
   asdf http://orig/post qwert
-
   </div>
 
 </article>
@@ -124,7 +123,6 @@ class HandlersTest(testutil.HandlerTest):
 
   <div class="e-content">
   qwert
-
   </div>
 
 <a class="u-in-reply-to" href="http://fa.ke/000" />
