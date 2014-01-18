@@ -116,10 +116,13 @@ class FacebookPage(models.Source):
     return resp
 
 
-class AddFacebookPage(oauth_facebook.CallbackHandler):
-  messages = set()
-
+class AddFacebookPage(oauth_facebook.CallbackHandler, util.Handler):
   def finish(self, auth_entity, state=None):
+    if not auth_entity:
+      self.messages.add("OK, you're not signed up. Hope you reconsider!")
+      self.redirect('/')
+      return
+
     fb = FacebookPage.create_new(self, auth_entity=auth_entity)
     util.added_source_redirect(self, fb)
 

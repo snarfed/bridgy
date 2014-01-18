@@ -63,21 +63,29 @@ class Instagram(models.Source):
     return self.as_source.get_activities_response(*args, group_id=SELF, **kwargs)
 
 
-class OAuthCallback(oauth_instagram.CallbackHandler):
+class OAuthCallback(oauth_instagram.CallbackHandler, util.Handler):
   """OAuth callback handler.
 
   Both the add and delete flows have to share this because Instagram only allows
   a single callback URL per app. :/
   """
-  messages = set()
 
   def finish(self, auth_entity, state=None):
     state = self.request.get('state')
-    # delete uses state, add doesn't
-    if state:
-      self.redirect('/delete/finish?auth_entity=%s&state=%s' %
-                    (auth_entity.key(), state))
-    else:
+
+    if state:  # this is a delete
+      if auth_entity:
+        self.redirect('/delete/finish?auth_entity=%s&state=%s' %
+                      (auth_entity.key(), state))
+      else:
+        self.messages.add("OK, you're still signed up.")
+        self.redirect('/')
+
+    else:  # this is an add
+      if not auth_entity:
+        self.messages.add("OK, you're not signed up. Hope you reconsider!")
+        self.redirect('/')
+        return
       inst = Instagram.create_new(self, auth_entity=auth_entity)
       util.added_source_redirect(self, inst)
 
