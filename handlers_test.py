@@ -47,11 +47,10 @@ class HandlersTest(testutil.HandlerTest):
 <article class="h-entry">
 <span class="u-uid">tag:fa.ke,2013:000</span>
 <div class="p-name"><a class="u-url" href="http://fa.ke/000">asdf http://orig/post qwert</a></div>
-<time class="dt-published" datetime=""></time>
-<time class="dt-updated" datetime=""></time>
+
   <div class="h-card p-author">
 
-    <img class="u-photo" src="https://example.com/ryan/image" />
+    <img class="u-photo" src="https://example.com/ryan/image" alt="" />
     <span class="u-uid"></span>
   </div>
 
@@ -113,11 +112,10 @@ class HandlersTest(testutil.HandlerTest):
 <article class="h-entry">
 <span class="u-uid">tag:fa.ke,2013:111</span>
 <div class="p-name">qwert</div>
-<time class="dt-published" datetime=""></time>
-<time class="dt-updated" datetime=""></time>
+
   <div class="h-card p-author">
 
-    <img class="u-photo" src="https://example.com/ryan/image" />
+    <img class="u-photo" src="https://example.com/ryan/image" alt="" />
     <span class="u-uid"></span>
   </div>
 
@@ -125,8 +123,8 @@ class HandlersTest(testutil.HandlerTest):
   qwert
   </div>
 
-<a class="u-in-reply-to" href="http://fa.ke/000" />
-<a class="u-in-reply-to" href="http://orig/post" />
+<a class="u-in-reply-to" href="http://fa.ke/000"></a>
+<a class="u-in-reply-to" href="http://orig/post"></a>
 
 </article>
 """)
@@ -144,11 +142,9 @@ class HandlersTest(testutil.HandlerTest):
 <article class="h-entry h-as-like">
 <span class="u-uid">tag:fa.ke,2013:111</span>
 
-<time class="dt-published" datetime=""></time>
-<time class="dt-updated" datetime=""></time>
   <div class="h-card p-author">
 
-    <img class="u-photo" src="https://example.com/ryan/image" />
+    <img class="u-photo" src="https://example.com/ryan/image" alt="" />
     <span class="u-uid"></span>
   </div>
 
@@ -157,8 +153,8 @@ class HandlersTest(testutil.HandlerTest):
 
   </div>
 
-  <a class="u-like u-like-of" href="http://example.com/original/post" />
-  <a class="u-like u-like-of" href="http://orig/post" />
+  <a class="u-like u-like-of" href="http://example.com/original/post"></a>
+  <a class="u-like u-like-of" href="http://orig/post"></a>
 
 </article>
 """)
@@ -176,11 +172,9 @@ class HandlersTest(testutil.HandlerTest):
 <article class="h-entry h-as-repost">
 <span class="u-uid">tag:fa.ke,2013:111</span>
 
-<time class="dt-published" datetime=""></time>
-<time class="dt-updated" datetime=""></time>
   <div class="h-card p-author">
 
-    <img class="u-photo" src="https://example.com/ryan/image" />
+    <img class="u-photo" src="https://example.com/ryan/image" alt="" />
     <span class="u-uid"></span>
   </div>
 
@@ -189,8 +183,8 @@ class HandlersTest(testutil.HandlerTest):
 
   </div>
 
-  <a class="u-repost u-repost-of" href="http://example.com/original/post" />
-  <a class="u-repost u-repost-of" href="http://orig/post" />
+  <a class="u-repost u-repost-of" href="http://example.com/original/post"></a>
+  <a class="u-repost u-repost-of" href="http://orig/post"></a>
 
 </article>
 """)

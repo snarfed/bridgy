@@ -43,6 +43,8 @@ TEMPLATE = """\
 <!DOCTYPE html>
 <html>
 <head>
+<meta charset="utf-8">
+<title>Bridgy Response</title>
 <link rel="canonical" href="%s" />
 <style type="text/css">
 .u-uid { display: none; }
