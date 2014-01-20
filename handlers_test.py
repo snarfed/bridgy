@@ -35,7 +35,7 @@ class HandlersTest(testutil.HandlerTest):
     resp = handlers.application.get_response(
       url_template % self.source.key().name(), scheme='https')
     self.assertEqual(200, resp.status_int, resp.body)
-    header_lines = len(handlers.TEMPLATE.splitlines()) - 2
+    header_lines = len(handlers.TEMPLATE.template.splitlines()) - 2
     actual = '\n'.join(resp.body.splitlines()[header_lines:-1])
     self.assert_equals(expected, actual)
 

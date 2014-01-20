@@ -17,6 +17,7 @@ URL paths are:
 
 import json
 import logging
+import string
 import urlparse
 
 from activitystreams import microformats2
@@ -39,20 +40,20 @@ SOURCES = {cls.SHORT_NAME: cls for cls in
             instagram.Instagram,
             twitter.Twitter)}
 
-TEMPLATE = """\
+TEMPLATE = string.Template("""\
 <!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8">
-<title>Bridgy Response</title>
-<link rel="canonical" href="%s" />
+<title>$title</title>
+<link rel="canonical" href="$url" />
 <style type="text/css">
 .u-uid { display: none; }
 </style>
 </head>
-%s
+$body
 </html>
-"""
+""")
 
 class ItemHandler(webapp2.RequestHandler):
   """Fetches a post, repost, like, or comment and serves it as mf2 HTML or JSON.
@@ -100,7 +101,8 @@ class ItemHandler(webapp2.RequestHandler):
 
     # use https for profile pictures so we don't cause SSL mixed mode errors
     # when serving over https.
-    image = obj.get('author', {}).get('image', {})
+    author = obj.get('author', {})
+    image = author.get('image', {})
     url = image.get('url')
     if url:
       image['url'] = util.update_scheme(url, self)
@@ -108,8 +110,11 @@ class ItemHandler(webapp2.RequestHandler):
     self.response.headers['Access-Control-Allow-Origin'] = '*'
     if format == 'html':
       self.response.headers['Content-Type'] = 'text/html; charset=utf-8'
-      self.response.out.write(TEMPLATE % (obj.get('url', ''),
-                                          microformats2.object_to_html(obj)))
+      self.response.out.write(TEMPLATE.substitute({
+            'url': obj.get('url', ''),
+            'body': microformats2.object_to_html(obj),
+            'title': obj.get('title', obj.get('content', 'Bridgy Response')),
+            }))
     elif format == 'json':
       self.response.headers['Content-Type'] = 'application/json; charset=utf-8'
       self.response.out.write(json.dumps(microformats2.object_to_json(obj),
