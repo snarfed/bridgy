@@ -63,9 +63,9 @@ def get_webmention_targets(activity):
       resolved = util.follow_redirects(url)
       if resolved.url != url:
         logging.debug('Resolved %s to %s', url, resolved)
-        tag['url'] = resolved
-      if (not resolved.headers.get('content-type').startswith('text/html') or
-          util.in_webmention_blacklist(resolved.url)):
+        tag['url'] = resolved.url
+      if (not resolved.headers.get('content-type', '').startswith('text/html')
+          or util.in_webmention_blacklist(resolved.url)):
         continue
       targets.add(resolved.url)
 

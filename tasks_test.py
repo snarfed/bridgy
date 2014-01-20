@@ -115,11 +115,8 @@ class PollTest(TaskQueueTest):
     expected = ['http://tar.get/%s' % i for i in 'a', 'b', 'c', 'd']
     self.assert_equals(expected, db.get(self.responses[0].key()).unsent)
 
-  def test_invalid_and_blacklisted_urls(self):
-    """Target URLs with domains in the blacklist should be ignored.
-
-    Same with invalid URLs that can't be parsed by urlparse.
-    """
+  def test_non_html_url(self):
+    """Target URLs that aren't HTML should be ignored."""
     obj = self.activities[0]['object']
     obj['tags'] = []
     obj['content'] = 'http://not/html'
@@ -135,11 +132,31 @@ class PollTest(TaskQueueTest):
     self.post_task()
     self.assert_equals([], db.get(self.responses[0].key()).unsent)
 
-  def test_non_html_url(self):
-    """Target URLs that aren't HTML should be ignored."""
+  def test_resolved_url(self):
+    """A URL that redirects should be resolved."""
+    obj = self.activities[0]['object']
+    obj['tags'] = []
+    obj['content'] = 'http://will/redirect'
+    self.sources[0].set_activities([self.activities[0]])
+
+    self.mox.StubOutWithMock(util, 'follow_redirects')
+    resp = requests.Response()
+    resp.url = 'http://final/url'
+    resp.headers['content-type'] = 'text/html'
+    util.follow_redirects('http://will/redirect').AndReturn(resp)
+
+    self.mox.ReplayAll()
+    self.post_task()
+    self.assert_equals(['http://final/url'],
+                       db.get(self.responses[0].key()).unsent)
+
+  def test_invalid_and_blacklisted_urls(self):
+    """Target URLs with domains in the blacklist should be ignored.
+
+    Same with invalid URLs that can't be parsed by urlparse.
+    """
     obj = self.activities[0]['object']
     obj['tags'] = [{'objectType': 'article', 'url': 'http://tar.get/good'}]
-    # urlparse('http://foo]') raises ValueError: Invalid IPv6 URL
     obj['attachments'] = [{'objectType': 'article', 'url': 'http://foo]'}]
     obj['content'] = 'foo http://facebook.com/bad bar baz (brid.gy bad)'
     self.sources[0].set_activities([self.activities[0]])
