@@ -8,6 +8,7 @@ import collections
 import datetime
 import json
 import logging
+import requests
 import urlparse
 
 from activitystreams import source as as_source
@@ -110,6 +111,14 @@ class HandlerTest(testutil.HandlerTest):
     self.handler = util.Handler(self.request, self.response)
     # TODO: remove this and don't depend on consistent global queries
     self.testbed.init_datastore_v3_stub(consistency_policy=None)
+
+    # don't make actual HTTP requests to follow original post url redirects
+    def dont_follow(url):
+      resp = requests.Response()
+      resp.url = url
+      resp.headers['content-type'] = 'text/html; charset=UTF-8'
+      return resp
+    util.follow_redirects = dont_follow
 
 
 class ModelsTest(HandlerTest):

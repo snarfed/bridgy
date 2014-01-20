@@ -30,9 +30,6 @@ class HandlersTest(testutil.HandlerTest):
             }}])
     self.source.save()
 
-    # don't make actual HTTP requests to follow original post url redirects
-    util.follow_redirects = str
-
   def check_response(self, url_template, expected):
     # use an HTTPS request so that URL schemes are converted
     resp = handlers.application.get_response(

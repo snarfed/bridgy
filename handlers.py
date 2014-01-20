@@ -154,7 +154,7 @@ class ItemHandler(webapp2.RequestHandler):
         # follow redirects. add resolved URLs instead of replacing them because
         # resolving may have failed during poll, in which case the webmention
         # target is checking for the shorted URL, not the resolved one.
-        resolved = util.follow_redirects(url)
+        resolved = util.follow_redirects(url).url
         if resolved != url:
           logging.debug('Resolved %s to %s', url, resolved)
           resolved_urls.append(resolved)

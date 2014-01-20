@@ -27,9 +27,6 @@ class TwitterStreamingTest(testutil.ModelsTest):
     twitter_streaming.streams = {}
     twitter_streaming.UPDATE_STREAMS_PERIOD_S = .1
 
-    # don't make actual HTTP requests to follow original post url redirects
-    util.follow_redirects = str
-
   def make_source(self, name):
     auth_entity = oauth_twitter.TwitterAuth(
       key_name=name, auth_code='my_code', token_key='%s key' % name,

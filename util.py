@@ -35,15 +35,22 @@ def add_poll_task(source, **kwargs):
 
 
 def follow_redirects(url):
-  """Fetches a URL, follows redirects, and returns the final string URL."""
+  """Fetches a URL, follows redirects, and returns the final response.
+
+  Args:
+    url: string
+
+  Returns:
+    requests.Response
+  """
   # can't use urllib2 since it uses GET on redirect requests, even if i specify
   # HEAD for the initial request.
   # http://stackoverflow.com/questions/9967632
   try:
-    return requests.head(url, allow_redirects=True).url
+    return requests.head(url, allow_redirects=True)
   except Exception, e:
     logging.warning("Couldn't resolve URL %s : %s", url, e)
-    return url
+    return requests.Response(url)
 
 
 # Wrap webutil.util.tag_uri and hard-code the year to 2013.

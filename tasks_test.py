@@ -7,6 +7,7 @@ import datetime
 import json
 import logging
 import mox
+import requests
 import urllib
 import urllib2
 import urlparse
@@ -34,11 +35,6 @@ class TaskQueueTest(testutil.ModelsTest):
     post_url: the URL for post_task() to post to
   """
   post_url = None
-
-  def setUp(self):
-    super(TaskQueueTest, self).setUp()
-    # don't make actual HTTP requests to follow original post url redirects
-    util.follow_redirects = str
 
   def post_task(self, expected_status=200, params={}, **kwargs):
     """Args:
@@ -124,6 +120,23 @@ class PollTest(TaskQueueTest):
 
     Same with invalid URLs that can't be parsed by urlparse.
     """
+    obj = self.activities[0]['object']
+    obj['tags'] = []
+    obj['content'] = 'http://not/html'
+    self.sources[0].set_activities([self.activities[0]])
+
+    self.mox.StubOutWithMock(util, 'follow_redirects')
+    resp = requests.Response()
+    resp.url = 'http://not/html'
+    resp.headers['content-type'] = 'application/pdf'
+    util.follow_redirects('http://not/html').AndReturn(resp)
+
+    self.mox.ReplayAll()
+    self.post_task()
+    self.assert_equals([], db.get(self.responses[0].key()).unsent)
+
+  def test_non_html_url(self):
+    """Target URLs that aren't HTML should be ignored."""
     obj = self.activities[0]['object']
     obj['tags'] = [{'objectType': 'article', 'url': 'http://tar.get/good'}]
     # urlparse('http://foo]') raises ValueError: Invalid IPv6 URL
