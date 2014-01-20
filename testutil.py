@@ -8,9 +8,9 @@ import collections
 import datetime
 import json
 import logging
-import requests
 import urlparse
 
+from activitystreams.oauth_dropins import requests
 from activitystreams import source as as_source
 from models import Response, Source
 from tasks import Poll, Propagate
@@ -113,12 +113,12 @@ class HandlerTest(testutil.HandlerTest):
     self.testbed.init_datastore_v3_stub(consistency_policy=None)
 
     # don't make actual HTTP requests to follow original post url redirects
-    def dont_follow(url):
+    def fake_head(url, allow_redirects=None):
       resp = requests.Response()
       resp.url = url
       resp.headers['content-type'] = 'text/html; charset=UTF-8'
       return resp
-    util.follow_redirects = dont_follow
+    self.mox.stubs.Set(requests, 'head', fake_head)
 
 
 class ModelsTest(HandlerTest):

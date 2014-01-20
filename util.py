@@ -50,7 +50,10 @@ def follow_redirects(url):
     return requests.head(url, allow_redirects=True)
   except Exception, e:
     logging.warning("Couldn't resolve URL %s : %s", url, e)
-    return requests.Response(url)
+    resp = requests.Response()
+    resp.url = url
+    resp.headers['content-type'] = 'text/html'
+    return resp
 
 
 # Wrap webutil.util.tag_uri and hard-code the year to 2013.

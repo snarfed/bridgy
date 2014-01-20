@@ -7,11 +7,11 @@ import datetime
 import json
 import logging
 import mox
-import requests
 import urllib
 import urllib2
 import urlparse
 
+from activitystreams.oauth_dropins import requests
 from oauth_dropins.apiclient import errors
 from oauth_dropins import httplib2
 from oauth_dropins.python_instagram.bind import InstagramAPIError
@@ -148,6 +148,24 @@ class PollTest(TaskQueueTest):
     self.mox.ReplayAll()
     self.post_task()
     self.assert_equals(['http://final/url'],
+                       db.get(self.responses[0].key()).unsent)
+
+  def test_resolve_url_fails(self):
+    """A URL that fails to resolve should still be handled ok."""
+    obj = self.activities[0]['object']
+    obj['tags'] = []
+    obj['content'] = 'http://fails/resolve'
+    self.sources[0].set_activities([self.activities[0]])
+
+    # util.follow_redirects = self.orig_follow_redirects
+    self.mox.stubs.UnsetAll()
+    self.mox.StubOutWithMock(util.requests, 'head')
+    util.requests.head('http://fails/resolve', allow_redirects=True)\
+        .AndRaise(Exception('foo'))
+
+    self.mox.ReplayAll()
+    self.post_task()
+    self.assert_equals(['http://fails/resolve'],
                        db.get(self.responses[0].key()).unsent)
 
   def test_invalid_and_blacklisted_urls(self):
