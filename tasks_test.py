@@ -74,7 +74,7 @@ class PollTest(TaskQueueTest):
     for task in tasks:
       self.assertEqual('/_ah/queue/propagate', task['url'])
     keys = set(db.Key(testutil.get_task_params(t)['response_key']) for t in tasks)
-    self.assertEqual(keys, set(r.key() for r in self.responses))
+    self.assert_equals(keys, set(r.key() for r in self.responses))
 
     tasks = self.taskqueue_stub.GetTasks('poll')
     self.assertEqual(1, len(tasks))
@@ -184,6 +184,18 @@ class PollTest(TaskQueueTest):
     self.post_task()
     self.assert_equals(['http://tar.get/good'],
                        db.get(self.responses[0].key()).unsent)
+
+  def test_non_public_posts(self):
+    """Only posts with to: @public should be propagated."""
+    del self.activities[0]['object']['to']
+    self.activities[1]['object']['to'] = [{'objectType':'group', 'alias':'@private'}]
+    self.activities[2]['object']['to'] = [{'objectType':'group', 'alias':'@public'}]
+
+    self.post_task()
+    for task in self.taskqueue_stub.GetTasks('propagate'):
+      resp = db.get(testutil.get_task_params(task)['response_key'])
+      self.assert_equals(self.activities[2]['id'],
+                         json.loads(resp.activity_json)['id'])
 
   def test_existing_responses(self):
     """Poll should be idempotent and not touch existing response entities.

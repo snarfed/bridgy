@@ -144,6 +144,7 @@ class ModelsTest(HandlerTest):
         'id': 'tag:source.com,2013:%s' % id,
         'url': 'http://source/post/url',
         'content': 'foo http://target1/post/url bar',
+        'to': [{'objectType':'group', 'alias':'@public'}],
         'replies': {
           'items': [{
               'objectType': 'comment',

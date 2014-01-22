@@ -180,8 +180,12 @@ class Poll(webapp2.RequestHandler):
         if greater:
           last_activity_id = id
 
-      # extract replies, likes, and reposts.
       obj = activity['object']
+      if '@public' not in set(to.get('alias') for to in obj.get('to', [])):
+        logging.info('Skipping non-public activity %s', id)
+        continue
+
+      # extract replies, likes, and reposts.
       replies = obj.get('replies', {}).get('items', [])
       tags = obj.get('tags', [])
       likes = [t for t in tags if models.Response.get_type(t) == 'like']
