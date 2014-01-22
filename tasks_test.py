@@ -45,6 +45,7 @@ class TaskQueueTest(testutil.ModelsTest):
                                           **kwargs)
     self.assertEqual(expected_status, resp.status_int)
 
+
 class PollTest(TaskQueueTest):
 
   post_url = '/_ah/queue/poll'
@@ -69,15 +70,17 @@ class PollTest(TaskQueueTest):
     source = db.get(self.sources[0].key())
     self.assertEqual(NOW, source.last_polled)
 
+    tasks = self.taskqueue_stub.GetTasks('propagate')
+    for task in tasks:
+      self.assertEqual('/_ah/queue/propagate', task['url'])
+    keys = set(db.Key(testutil.get_task_params(t)['response_key']) for t in tasks)
+    self.assertEqual(keys, set(r.key() for r in self.responses))
+
     tasks = self.taskqueue_stub.GetTasks('poll')
     self.assertEqual(1, len(tasks))
     self.assertEqual('/_ah/queue/poll', tasks[0]['url'])
-
     params = testutil.get_task_params(tasks[0])
-    self.assertEqual(str(source.key()),
-                     params['source_key'])
-    self.assertEqual(NOW.strftime(util.POLL_TASK_DATETIME_FORMAT),
-                     params['last_polled'])
+    self.assert_equals(str(source.key()), params['source_key'])
 
   def test_poll_error(self):
     """If anything goes wrong, the source status should be set to 'error'."""
@@ -157,7 +160,6 @@ class PollTest(TaskQueueTest):
     obj['content'] = 'http://fails/resolve'
     self.sources[0].set_activities([self.activities[0]])
 
-    # util.follow_redirects = self.orig_follow_redirects
     self.mox.stubs.UnsetAll()
     self.mox.StubOutWithMock(util.requests, 'head')
     util.requests.head('http://fails/resolve', allow_redirects=True)\
