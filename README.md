@@ -24,6 +24,10 @@ All dependencies are in git submodules. Be sure to run
 
 The tests require the App Engine SDK and python-mox.
 
+Deploy command:
+./alltests.py && cd activitystreams && ./alltests.py && cd .. && \
+  git push && ~/google_appengine/appcfg.py --oauth2 update .
+
 
 Related work
 ---
