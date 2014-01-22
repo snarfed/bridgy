@@ -1,4 +1,4 @@
-![Bridgy](https://raw.github.com/snarfed/bridgy/master/static/bridgy_logo_128.jpg) Bridgy
+![Bridgy](https://raw.github.com/snarfed/bridgy/master/static/bridgy_logo_thumb.jpg) Bridgy
 ===
 
 Got a web site? Post links to it on social networks? Wish
