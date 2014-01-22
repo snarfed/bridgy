@@ -2,10 +2,33 @@
 
 {% block content %}
 
-<div>
-</p><ul id="about">
+<ul class="about">
+<li><a href="#what">What is this?</a></li>
+<li><a href="#how">How does it work?</a></li>
+<li><a href="#how">How much does it cost?</a></li>
+<li><a href="#which">Which things does it send, specifically?</a></li>
+<li><a href="#privacy">What do you do with my data?</a></li>
+<li><a href="#who">Who are you? Why did you make this?</a></li>
+<li><a href="#realtime">Bridgy isn't seeing one of my comments or
+  likes or reshares!</a></li>
+<li><a href="#public">...but it's been a long time, and Bridgy
+  still hasn't seen it!</a></li>
+<li><a href="#twitter-replies">Bridgy isn't seeing one of my Twitter
+  replies!</li>
+<li><a href="#appspot">What are all these brid-gy.appspot.com links
+  in the comments that Bridgy sends to my site?</a></li>
+<li><a href="#sssl">OK, fine. But why brid-gy.appspot.com instead of
+  brid.gy?</a></li>
+<li><a href="#bug">I found a bug! I have a feature request!</a></li>
+<li><a href="#domain">Brid.gy? Really?</a></li>
+</ul>
 
-<li class="question">What is this?</li>
+<br />
+
+<div>
+</p><ul class="about">
+
+<li id="what" class="question">What is this?</li>
 <li class="answer">
 <p>Bridgy copies comments, likes, and reshares from social networks to your web
 site. If you post links to your site on social networks
@@ -25,7 +48,7 @@ comments to
 </p>
 </li>
 
-<li class="question">How does it work?</li>
+<li id="how" class="question">How does it work?</li>
 <li class="answer">
 <p>
 When you add one of your accounts, Bridgy checks it periodically for posts and
@@ -49,7 +72,7 @@ send webmentions.
 </p>
 </li>
 
-<li class="question">How much does it cost?</li>
+<li id="how" class="question">How much does it cost?</li>
 <li class="answer">
 <p>Nothing! I have a <a href="http://quip.com/">great day job</a>, and Bridgy
 is small, so thanks to <a href="http://appengine.google.com/">App Engine</a>, it
@@ -62,7 +85,7 @@ and send me a pull request, or feel free to donate to the
 <a href="https://www.eff.org/">EFF</a> in my name.
 </p></li>
 
-<li class="question">Which things does Bridgy send, specifically?</li>
+<li id="which" class="question">Which things does it send, specifically?</li>
 <li class="answer">
 <p>Bridgy detects and sends webmentions for:</p>
 <ul>
@@ -77,8 +100,29 @@ and send me a pull request, or feel free to donate to the
 </li>
 </p></li>
 
-<li class="question">Someone commented (or liked or reshared) my post, but
-  Bridgy hasn't seen it yet!</li>
+<li id="privacy" class="question">What do you do with my data?</li>
+<li class="answer">
+<p>Nothing! Bridgy isn't a business, and never will be, so I don't have the same
+motivations to abuse your data that other services might. More concretely, I
+won't ever send you email, I store as little of your
+<a href="http://en.wikipedia.org/wiki/Personally_identifiable_information">PII</a>
+(personally identifiable information) as possible, and I <em>never</em> have
+access to any of your passwords.
+</p>
+</li>
+
+<li id="who" class="question">Who are you? Why did you make this?</li>
+<li class="answer">
+<p>
+I'm <a class="h-card" href="http://snarfed.org/">Ryan Barrett</a>. I'm just a
+guy who <a href="http://snarfed.org/2012-07-25_why_i_have_my_own_web_site">likes
+the web</a> and likes <a href="http://indiewebcamp.com/why">owning his own
+data</a>.
+</p>
+</li>
+
+<li id="realtime" class="question">Bridgy isn't seeing one of my comments or
+  likes or reshares!</li>
 <li class="answer">
 <p>Bridgy doesn't work in realtime, it just checks your accounts for new
 activity periodically. Twitter favorites and retweets are the exception: Bridgy
@@ -87,7 +131,26 @@ handles them with
 API</a>, so it usually sees them within seconds.
 </p></li>
 
-<li class="question">Bridgy is ignoring one of my Twitter replies!</li>
+<li id="public" class="question">...but it's been a long time, and Bridgy
+  still hasn't seen it</li>
+<li class="answer">
+<p>Is the post fully public? And the comment (or tweet, etc.) too? Bridgy only
+shows and sends webmentions for fully public posts and comments. If your default
+Facebook audience is "friends" or "friends of friends," or your Twitter
+account
+is <a href="https://dev.twitter.com/docs/platform-objects/users#protected">protected</a>,
+or your Google+ post wasn't sent to "public," Bridgy won't see it.
+</p>
+<p>Instagram is the one exception. The Instagram API
+<a href="https://groups.google.com/forum/m/#!topic/instagram-api-developers/DAO7OriVFsw">doesn't
+expose</a> whether an account
+is <a href="http://help.instagram.com/448523408565555">private</a>, so Bridgy
+handles all Instagram photos and comments. If your Instagram account is private,
+don't sign up for Bridgy with it!
+</p></li>
+
+<li id="twitter-replies" class="question">Bridgy isn't seeing one of my Twitter
+  replies!</li>
 <li class="answer">
 <p>Does that reply include an
 <a href="https://support.twitter.com/articles/14023-what-are-replies-and-mentions">@-mention</a>
@@ -98,8 +161,8 @@ find its replies. That means it can't always find replies that omit the
 @-mention.
 </p></li>
 
-<li class="question">What are all these brid-gy.appspot.com links in the
-comments that Bridgy sends to my site?</li>
+<li id="appspot" class="question">What are all these brid-gy.appspot.com links
+in the comments that Bridgy sends to my site?</li>
 <li class="answer">
 <p>Short answer: your
 server's <a href="http://www.webmention.org/">webmention</a> code is probably
@@ -121,7 +184,8 @@ so that recipients can fetch and parse them.
 <p>
 </p></li>
 
-<li class="question">OK, fine. But why brid-gy.appspot.com instead of brid.gy?</li>
+<li id="sssl" class="question">OK, fine. But why brid-gy.appspot.com instead of
+brid.gy?</li>
 <li class="answer">
 <p>It's an SSL thing. The <a href="https://www.brid.gy">brid.gy</a> domain fully
 supports and uses SSL, but it uses
@@ -135,7 +199,7 @@ server that receives it also needs to understand SNI,
 it for webmention sources in order to be as compatible as possible.
 </p></li>
 
-<li class="question">I found a bug! I have a feature request!</li>
+<li id="bug" class="question">I found a bug! I have a feature request!</li>
 <li class="answer">
 <p>Great! Thank you! Feel free
 to <a href="https://github.com/snarfed/bridgy/issues">file it in GitHub</a>,
@@ -143,28 +207,7 @@ or <a href="http://snarfed.org/about">send me an email</a>.
 </p>
 </li>
 
-<li class="question">What do you do with my data?</li>
-<li class="answer">
-<p>Nothing! Bridgy isn't a business, and never will be, so I don't have the same
-motivations to abuse your data that other services might. More concretely, I
-won't ever send you email, I store as little of your
-<a href="http://en.wikipedia.org/wiki/Personally_identifiable_information">PII</a>
-(personally identifiable information) as possible, and I <em>never</em> have
-access to any of your passwords.
-</p>
-</li>
-
-<li class="question">Who are you? Why did you make this?</li>
-<li class="answer">
-<p>
-I'm <a class="h-card" href="http://snarfed.org/">Ryan Barrett</a>. I'm just a
-guy who <a href="http://snarfed.org/2012-07-25_why_i_have_my_own_web_site">likes
-the web</a> and likes <a href="http://indiewebcamp.com/why">owning his own
-data</a>.
-</p>
-</li>
-
-<li class="question">Brid.gy? Really?</li>
+<li id="domain" class="question">Brid.gy? Really?</li>
 <li class="answer">
 <p>Yeah, I know. I'm not proud of the cutesy domain name either. Just go with it.
 </p>
