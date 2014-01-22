@@ -355,7 +355,7 @@ class PropagateTest(TaskQueueTest):
     super(PropagateTest, self).tearDown()
 
   def post_task(self, expected_status=200, response=None, **kwargs):
-    if not response:
+    if response is None:
       response = self.responses[0]
     super(PropagateTest, self).post_task(expected_status=expected_status,
                                          params={'response_key': response.key()},
@@ -513,6 +513,26 @@ class PropagateTest(TaskQueueTest):
     """If the source doesn't exist, the request should give up."""
     self.sources[0].delete()
     self.post_task(expected_status=200)
+
+  def test_non_public_activity(self):
+    """If the activity is non-public, we should give up."""
+    activity = json.loads(self.responses[0].activity_json)
+    activity['to'] = [{'objectType':'group', 'alias':'@private'}]
+    self.responses[0].activity_json = json.dumps(activity)
+    self.responses[0].save()
+
+    self.post_task()
+    self.assert_response_is('complete', unsent=['http://target1/post/url'], sent=[])
+
+  def test_non_public_response(self):
+    """If the response is non-public, we should give up."""
+    resp = json.loads(self.responses[0].response_json)
+    resp['to'] = [{'objectType':'group', 'alias':'@private'}]
+    self.responses[0].response_json = json.dumps(resp)
+    self.responses[0].save()
+
+    self.post_task()
+    self.assert_response_is('complete', unsent=['http://target1/post/url'], sent=[])
 
   def test_webmention_fail(self):
     """If sending the webmention fails, the lease should be released."""

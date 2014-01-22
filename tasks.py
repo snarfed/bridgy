@@ -180,13 +180,12 @@ class Poll(webapp2.RequestHandler):
         if greater:
           last_activity_id = id
 
-      obj = activity['object']
-      tos = obj.get('to')
-      if tos and '@public' not in set(to.get('alias') for to in tos):
+      if not Source.is_public(activity):
         logging.info('Skipping non-public activity %s', id)
         continue
 
       # extract replies, likes, and reposts.
+      obj = activity['object']
       replies = obj.get('replies', {}).get('items', [])
       tags = obj.get('tags', [])
       likes = [t for t in tags if models.Response.get_type(t) == 'like']
@@ -253,10 +252,17 @@ class Propagate(webapp2.RequestHandler):
     if not response:
       return
 
+    activity = json.loads(response.activity_json)
+    response_obj = json.loads(response.response_json)
+    if not Source.is_public(response_obj) or not Source.is_public(activity):
+      logging.info('Response or activity is non-public. Dropping.')
+      self.complete_response(response)
+      return
+
     try:
       source = response.source
     except db.ReferencePropertyResolveError:
-      logging.warning('Source not found! Dropping task.')
+      logging.warning('Source not found! Dropping response.')
       return
     logging.info('Source: %s %s', source.label(), source.key().name())
 
@@ -269,7 +275,6 @@ class Propagate(webapp2.RequestHandler):
         response_id = response_id.split('_')[-1]
 
       # generate local response URL
-      activity = json.loads(response.activity_json)
       _, post_id = util.parse_tag_uri(activity['id'])
       # prefer brid-gy.appspot.com to brid.gy because non-browsers (ie OpenSSL)
       # currently have problems with brid.gy's SSL cert. details:
