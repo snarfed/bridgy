@@ -181,7 +181,8 @@ class Poll(webapp2.RequestHandler):
           last_activity_id = id
 
       obj = activity['object']
-      if '@public' not in set(to.get('alias') for to in obj.get('to', [])):
+      tos = obj.get('to')
+      if tos and '@public' not in set(to.get('alias') for to in tos):
         logging.info('Skipping non-public activity %s', id)
         continue
 

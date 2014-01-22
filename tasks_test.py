@@ -192,10 +192,10 @@ class PollTest(TaskQueueTest):
     self.activities[2]['object']['to'] = [{'objectType':'group', 'alias':'@public'}]
 
     self.post_task()
-    for task in self.taskqueue_stub.GetTasks('propagate'):
-      resp = db.get(testutil.get_task_params(task)['response_key'])
-      self.assert_equals(self.activities[2]['id'],
-                         json.loads(resp.activity_json)['id'])
+    ids = set(json.loads(db.get(testutil.get_task_params(task)['response_key'])
+                         .activity_json)['id']
+              for task in self.taskqueue_stub.GetTasks('propagate'))
+    self.assert_equals(ids, set([self.activities[0]['id'], self.activities[2]['id']]))
 
   def test_existing_responses(self):
     """Poll should be idempotent and not touch existing response entities.
