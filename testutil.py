@@ -72,6 +72,12 @@ class FakeAsSource(FakeBase, as_source.Source):
   def get_share(self, activity_user_id, activity_id, repost_user_id):
     return self._get('repost')
 
+  def set_rsvp(self, val):
+    self._set('rsvp', val)
+
+  def get_rsvp(self, activity_user_id, event_id, rsvp_user_id):
+    return self._get('rsvp')
+
 
 class FakeSource(FakeBase, Source):
   AS_CLASS = FakeAsSource

@@ -200,9 +200,19 @@ class RepostHandler(ItemHandler):
     return repost
 
 
+class RsvpHandler(ItemHandler):
+  def get_item(self, event_id, user_id):
+    rsvp = self.source.get_rsvp(self.source.key().name(), event_id, user_id)
+    if not rsvp:
+      return None
+    self.add_original_post_urls(event_id, rsvp, 'inReplyTo')
+    return rsvp
+
+
 application = webapp2.WSGIApplication([
     ('/(post)/(.+)/(.+)/(.+)', PostHandler),
     ('/(comment)/(.+)/(.+)/(.+)/(.+)', CommentHandler),
     ('/(like)/(.+)/(.+)/(.+)/(.+)', LikeHandler),
     ('/(repost)/(.+)/(.+)/(.+)/(.+)', RepostHandler),
+    ('/(rsvp)/(.+)/(.+)/(.+)/(.+)', RsvpHandler),
     ], debug=appengine_config.DEBUG)

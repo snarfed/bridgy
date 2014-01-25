@@ -200,6 +200,19 @@ class Source(Site):
     """
     return self.as_source.get_share(activity_user_id, activity_id, share_id)
 
+  def get_rsvp(self, activity_user_id, event_id, user_id):
+    """Returns an ActivityStreams 'rsvp-*' activity object.
+
+    Passes through to activitystreams-unofficial by default. May be overridden
+    by subclasses.
+
+    Args:
+      activity_user_id: string id of the user who posted the original activity
+      event_id: string event id
+      user_id: string id of the user object or the user who RSVPed
+    """
+    return self.as_source.get_rsvp(activity_user_id, event_id, user_id)
+
   @classmethod
   def create_new(cls, handler, **kwargs):
     """Creates and saves a new Source and adds a poll task for it.

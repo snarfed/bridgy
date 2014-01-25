@@ -39,7 +39,7 @@ class HandlersTest(testutil.HandlerTest):
     actual = '\n'.join(resp.body.splitlines()[header_lines:-1])
     self.assert_equals(expected, actual)
 
-  def test_get_post_html(self):
+  def test_post_html(self):
     self.check_response('/post/fake/%s/000', """\
 <article class="h-entry">
 <span class="u-uid">tag:fa.ke,2013:000</span>
@@ -58,7 +58,7 @@ class HandlersTest(testutil.HandlerTest):
 </article>
 """)
 
-  def test_get_post_json(self):
+  def test_post_json(self):
     resp = handlers.application.get_response(
       '/post/fake/%s/000?format=json' % self.source.key().name(), scheme='https')
     self.assertEqual(200, resp.status_int, resp.body)
@@ -97,7 +97,7 @@ class HandlersTest(testutil.HandlerTest):
                                              self.source.key().name())
     self.assertEqual(200, resp.status_int)
 
-  def test_get_comment_html(self):
+  def test_comment(self):
     self.source.set_comment({
         'id': 'tag:fa.ke,2013:111',
         'content': 'qwert',
@@ -126,7 +126,7 @@ class HandlersTest(testutil.HandlerTest):
 </article>
 """)
 
-  def test_get_like_html(self):
+  def test_like(self):
     self.source.as_source.set_like({
         'objectType': 'activity',
         'verb': 'like',
@@ -156,7 +156,7 @@ class HandlersTest(testutil.HandlerTest):
 </article>
 """)
 
-  def test_get_repost_html(self):
+  def test_repost(self):
     self.source.as_source.set_share({
         'objectType': 'activity',
         'verb': 'share',
@@ -182,6 +182,35 @@ class HandlersTest(testutil.HandlerTest):
 
   <a class="u-repost u-repost-of" href="http://example.com/original/post"></a>
   <a class="u-repost u-repost-of" href="http://orig/post"></a>
+
+</article>
+""")
+
+  def test_rsvp(self):
+    self.source.as_source.set_rsvp({
+        'objectType': 'activity',
+        'verb': 'rsvp-no',
+        'id': 'tag:fa.ke,2013:111',
+        'object': {'url': 'http://example.com/event'},
+        'author': {'image': {'url': 'http://example.com/ryan/image'}},
+        })
+
+    self.check_response('/rsvp/fake/%s/000/111', """\
+<article class="h-entry h-as-rsvp">
+<span class="u-uid">tag:fa.ke,2013:111</span>
+
+  <div class="h-card p-author">
+
+    <img class="u-photo" src="https://example.com/ryan/image" alt="" />
+    <span class="u-uid"></span>
+  </div>
+
+  <div class="e-content">
+  <data class="p-rsvp" value="no">is not attending.</data>
+  </div>
+
+  <a class="u-in-reply-to" href="http://orig/post"></a>
+  <a class="u-in-reply-to" href="http://example.com/event"></a>
 
 </article>
 """)

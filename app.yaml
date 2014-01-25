@@ -32,7 +32,7 @@ handlers:
   script: webmention.application
   secure: always
 
-- url: /(post|comment|like|repost)/.*
+- url: /(post|comment|like|repost|rsvp)/.*
   script: handlers.application
   secure: always
 
