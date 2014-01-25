@@ -46,11 +46,23 @@ class FacebookPageTest(testutil.ModelsTest):
       json.dumps({'data': [as_facebook_test.POST]}))
     self.expect_urlopen(
       'https://graph.facebook.com/me/photos/uploaded?access_token=my_token',
-      json.dumps({'data': []}))
+      json.dumps({'data': [as_facebook_test.POST]}))
+    self.expect_urlopen(
+      'https://graph.facebook.com/me/events?access_token=my_token',
+      json.dumps({'data': [as_facebook_test.EVENT]}))
+    self.expect_urlopen(
+      'https://graph.facebook.com/145304994?access_token=my_token',
+      json.dumps(as_facebook_test.EVENT))
+    self.expect_urlopen(
+      'https://graph.facebook.com/145304994/invited?access_token=my_token',
+      json.dumps({'data': as_facebook_test.RSVPS}))
     self.mox.ReplayAll()
 
     page = FacebookPage.new(self.handler, auth_entity=self.auth_entity)
-    self.assert_equals([as_facebook_test.ACTIVITY], page.get_activities())
+    self.assert_equals([as_facebook_test.ACTIVITY,
+                        as_facebook_test.ACTIVITY,
+                        as_facebook_test.EVENT_ACTIVITY_WITH_ATTENDEES,
+                        ], page.get_activities())
 
   def test_revoked(self):
     self.expect_urlopen(

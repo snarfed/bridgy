@@ -49,7 +49,8 @@ def get_webmention_targets(activity):
   Source.original_post_discovery(activity)
 
   targets = set()
-  for tag in activity['object'].get('tags', []):
+  obj = activity.get('object') or activity
+  for tag in obj.get('tags', []):
     url = tag.get('url')
     if url and tag.get('objectType') == 'article':
       url, send = util.get_webmention_target(url)
@@ -172,13 +173,14 @@ class Poll(webapp2.RequestHandler):
         logging.info('Skipping non-public activity %s', id)
         continue
 
-      # extract replies, likes, and reposts.
-      obj = activity['object']
+      # extract replies, likes, reposts, and rsvps
+      obj = activity.get('object') or activity
       replies = obj.get('replies', {}).get('items', [])
       tags = obj.get('tags', [])
       likes = [t for t in tags if models.Response.get_type(t) == 'like']
       reposts = [t for t in tags if models.Response.get_type(t) == 'repost']
-      responses = replies + likes + reposts
+      rsvps = Source.get_rsvps_from_event(obj)
+      responses = replies + likes + reposts + rsvps
 
       # drop existing responses
       new_responses = []
@@ -259,7 +261,7 @@ class Propagate(webapp2.RequestHandler):
                    response.source.kind(), response.key().name())
 
       _, response_id = util.parse_tag_uri(response.key().name())
-      if response.type in ('like', 'repost'):
+      if response.type in ('like', 'repost', 'rsvp'):
         response_id = response_id.split('_')[-1]
 
       # generate local response URL

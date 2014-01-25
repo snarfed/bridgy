@@ -20,22 +20,6 @@ Example comment ID and links
   API URL: https://graph.facebook.com/10100823411094363_10069288
   Permalink: https://www.facebook.com/10100823411094363&comment_id=10069288
   Local handler path: /comment/facebook/212038/10100823411094363_10069288
-
-
-ongoing research, many posts have different types w/different ids, so the same
-post id isn't necessarily used for comments:
-
-212038_10100826987043133
-picture id
-'type': 'photo'
-'object_id': '10100826986998223'
-url needs user id
-
-10100826986998223
-post
-used as comment id prefix: 10100826987043133_10077197
-may also have user id: 212038_10100826987043133_10077197
-no field with picture id
 """
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
@@ -47,11 +31,18 @@ from activitystreams import facebook as as_facebook
 from activitystreams.oauth_dropins import facebook as oauth_facebook
 from activitystreams.source import SELF
 import appengine_config
+import logging
 import models
 import util
 
 from google.appengine.ext import db
 import webapp2
+
+API_PHOTOS_URL = 'https://graph.facebook.com/me/photos/uploaded'
+API_USER_RSVPS_URL = 'https://graph.facebook.com/me/events'  # returns yes and maybe
+API_USER_RSVPS_DECLINED_URL = 'https://graph.facebook.com/me/events/declined'
+API_USER_RSVPS_NOT_REPLIED_URL = 'https://graph.facebook.com/me/events/not_replied'
+API_EVENT_RSVPS_URL = 'https://graph.facebook.com/%s/invited'
 
 
 class FacebookPage(models.Source):
@@ -83,16 +74,40 @@ class FacebookPage(models.Source):
     return FacebookPage(key_name=id, auth_entity=auth_entity, picture=picture,
                         url=url, **user) # **user populates type, name, username
 
+  def get(self, url):
+    """Simple wrapper around urlopen(). Returns decoded JSON dict."""
+    return json.loads(self.as_source.urlopen(url).read())
+
+  def get_data(self, url):
+    """Variant of get() that returns 'data' list."""
+    return self.get(url).get('data', [])
+
   def get_activities_response(self, **kwargs):
+    # TODO: use batch API to get photos, events, etc in one request
+    # https://developers.facebook.com/docs/graph-api/making-multiple-requests
     try:
       resp = self.as_source.get_activities_response(group_id=SELF, **kwargs)
+
       # also get uploaded photos manually since facebook sometimes collapses
       # multiple photos into albums, and the album post object won't have the
       # post content, comments, etc. from the individual photo posts.
       # http://stackoverflow.com/questions/12785120
       #
-      # TODO: save and use ETag for this
-      photos = self.as_source.urlopen('https://graph.facebook.com/me/photos/uploaded').read()
+      # TODO: save and use ETag for all of these extra calls
+      photos = self.get_data(API_PHOTOS_URL)
+
+      # also get events and RSVPs
+      # https://developers.facebook.com/docs/graph-api/reference/user/events/
+      # https://developers.facebook.com/docs/graph-api/reference/event#edges
+      # TODO: also fetch and use API_USER_RSVPS_DECLINED_URL
+      user_rsvps = self.get_data(API_USER_RSVPS_URL)
+      event_ids = util.trim_nulls([r.get('id') for r in user_rsvps])
+      # have to re-fetch the event because the user rsvps response doesn't
+      # include the event description, which we need for original post links.
+      events_and_rsvps = [(self.get(as_facebook.API_OBJECT_URL % id),
+                           self.get_data(API_EVENT_RSVPS_URL % id))
+                          for id in event_ids]
+
     except urllib2.HTTPError, e:
       # Facebook API error details:
       # https://developers.facebook.com/docs/graph-api/using-graph-api/
@@ -111,8 +126,9 @@ class FacebookPage(models.Source):
       raise
 
     items = resp.setdefault('items', [])
-    items += [self.as_source.post_to_activity(p)
-              for p in json.loads(photos).get('data', [])]
+    items += [self.as_source.post_to_activity(p) for p in photos]
+    items += [self.as_source.event_to_activity(e, rsvps=r)
+              for e, r in events_and_rsvps]
     return resp
 
 
