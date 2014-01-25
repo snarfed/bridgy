@@ -32,7 +32,7 @@ import logging
 import urllib
 import urlparse
 
-from activitystreams.source import SELF
+from activitystreams import source as as_source
 import appengine_config
 import util
 from webutil.models import KeyNameModel
@@ -144,7 +144,7 @@ class Source(Site):
     Passes through to activitystreams-unofficial by default. May be overridden
     by subclasses.
     """
-    return self.as_source.get_activities_response(group_id=SELF, **kwargs)
+    return self.as_source.get_activities_response(group_id=as_source.SELF, **kwargs)
 
   def get_activities(self, *args, **kwargs):
     return self.get_activities_response(*args, **kwargs)['items']
@@ -231,7 +231,7 @@ class Response(KeyNameModel):
 
   The key name is the commentobject id as a tag URI.
   """
-  TYPES = ('comment', 'like', 'repost')
+  TYPES = ('comment', 'like', 'repost', 'rsvp')
   STATUSES = ('new', 'processing', 'complete', 'error')
 
   # ActivityStreams JSON activity and comment, like, or repost
@@ -288,10 +288,13 @@ class Response(KeyNameModel):
   def get_type(obj):
     """Returns the response type for an ActivityStreams object."""
     type = obj.get('objectType')
-    if type == 'activity' and obj.get('verb') == 'like':
-      return 'like'
-    elif type == 'activity' and obj.get('verb') == 'share':
+    verb = obj.get('verb')
+    if type == 'activity' and verb == 'share':
       return 'repost'
+    elif verb in Response.TYPES:
+      return verb
+    elif verb in as_source.RSVP_TO_EVENT:
+      return 'rsvp'
     else:
       # default to comment. (e.g. Twitter replies technically have objectType note)
       return 'comment'

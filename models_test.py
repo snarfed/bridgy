@@ -55,6 +55,13 @@ class ResponseTest(testutil.ModelsTest):
     self.assertEqual('fake-%s' % self.sources[0].key().name(),
                      self.sources[0].dom_id())
 
+  def test_get_type(self):
+    self.assertEqual('repost', Response.get_type(
+        {'objectType': 'activity', 'verb': 'share'}))
+    self.assertEqual('rsvp', Response.get_type({'verb': 'rsvp-no'}))
+    self.assertEqual('rsvp', Response.get_type({'verb': 'invited'}))
+    self.assertEqual('comment', Response.get_type({'objectType': 'other'}))
+
 
 class SourceTest(testutil.HandlerTest):
 
