@@ -86,12 +86,33 @@ WEBMENTION_BLACKLIST = (
   '', None,
   )
 
-def in_webmention_blacklist(url):
-  """Returns true if the string url's domain is in the webmention blacklist."""
+def get_webmention_target(url):
+  """Resolves a URL and decides whether we should try to send it a webmention.
+
+  Returns: (string url, boolean) tuple. The boolean is True if we should send a
+  webmention, False otherwise, e.g. if it 's a bad URL, not text/html, or in the
+  blacklist.
+  """
+  try:
+    urlparse.urlparse(url)
+  except Exception, e:
+    logging.warning('Dropping bad URL %s.', url)
+    return (url, False)
+
   domain = urlparse.urlparse(url).netloc
   if domain.startswith('www.'):
     domain = domain[4:]
-  return domain in WEBMENTION_BLACKLIST
+  if domain in WEBMENTION_BLACKLIST:
+    return (url, False)
+
+  resolved = follow_redirects(url)
+  if resolved.url != url:
+    logging.debug('Resolved %s to %s', url, resolved)
+    url = resolved.url
+  if not resolved.headers.get('content-type', '').startswith('text/html'):
+    return (url, False)
+
+  return (url, True)
 
 
 class Handler(webapp2.RequestHandler):

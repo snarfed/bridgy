@@ -147,22 +147,19 @@ class ItemHandler(webapp2.RequestHandler):
     obj[prop] += [tag for tag in post['object'].get('tags', [])
                   if 'url' in tag and tag['objectType'] == 'article']
 
-    resolved_urls = []
+    resolved_urls = set()
     for url_obj in obj[prop]:
       url = url_obj.get('url')
-      if url and not util.in_webmention_blacklist(url):
-        # when debugging locally, replace my (snarfed.org) URLs with localhost
-        if appengine_config.DEBUG:
-          if url.startswith('http://snarfed.org/'):
-            url_obj['url'] = url = url.replace('http://snarfed.org/',
-                                               'http://localhost/')
-        # follow redirects. add resolved URLs instead of replacing them because
-        # resolving may have failed during poll, in which case the webmention
-        # target is checking for the shorted URL, not the resolved one.
-        resolved = util.follow_redirects(url).url
-        if resolved != url:
-          logging.debug('Resolved %s to %s', url, resolved)
-          resolved_urls.append(resolved)
+      if not url:
+        continue
+      # when debugging locally, replace my (snarfed.org) URLs with localhost
+      if appengine_config.DEBUG:
+        if url.startswith('http://snarfed.org/'):
+          url_obj['url'] = url = url.replace('http://snarfed.org/',
+                                             'http://localhost/')
+      resolved, send = util.get_webmention_target(url)
+      if send and resolved != url:
+        resolved_urls.add(resolved)
 
     obj[prop] += [{'url': url, 'objectType': 'article'} for url in resolved_urls]
 

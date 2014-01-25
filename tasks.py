@@ -51,23 +51,11 @@ def get_webmention_targets(activity):
   targets = set()
   for tag in activity['object'].get('tags', []):
     url = tag.get('url')
-
     if url and tag.get('objectType') == 'article':
-      try:
-        urlparse.urlparse(url)
-      except Exception, e:
-        logging.warning('Dropping bad URL %s.', url)
-        continue
-      if util.in_webmention_blacklist(url):
-        continue
-      resolved = util.follow_redirects(url)
-      if resolved.url != url:
-        logging.debug('Resolved %s to %s', url, resolved)
-        tag['url'] = resolved.url
-      if (not resolved.headers.get('content-type', '').startswith('text/html')
-          or util.in_webmention_blacklist(resolved.url)):
-        continue
-      targets.add(resolved.url)
+      url, send = util.get_webmention_target(url)
+      tag['url'] = url
+      if send:
+        targets.add(url)
 
   return targets
 
@@ -289,10 +277,14 @@ class Propagate(webapp2.RequestHandler):
         host_url, response.type, response.source.SHORT_NAME,
         response.source.key().name(), post_id, response_id)
 
-      # send each webmention. recheck the blacklist here so that we can add to
-      # it and have the additions apply to existing propagate tasks.
-      response.unsent = sorted(set(url for url in response.unsent + response.error
-                                   if not util.in_webmention_blacklist(url)))
+      # send each webmention. recheck the url here since the checks may have failed
+      # during the poll or streaming add.
+      unsent = set()
+      for url in response.unsent + response.error:
+        url, ok = util.get_webmention_target(url)
+        if ok:
+          unsent.add(url)
+      response.unsent = sorted(unsent)
       response.error = []
 
       while response.unsent:

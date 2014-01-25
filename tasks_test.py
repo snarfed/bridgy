@@ -125,11 +125,11 @@ class PollTest(TaskQueueTest):
     obj['content'] = 'http://not/html'
     self.sources[0].set_activities([self.activities[0]])
 
-    self.mox.StubOutWithMock(util, 'follow_redirects')
+    self.mox.StubOutWithMock(util.requests, 'head')
     resp = requests.Response()
     resp.url = 'http://not/html'
     resp.headers['content-type'] = 'application/pdf'
-    util.follow_redirects('http://not/html').AndReturn(resp)
+    util.requests.head('http://not/html', allow_redirects=True).AndReturn(resp)
 
     self.mox.ReplayAll()
     self.post_task()
@@ -459,6 +459,10 @@ class PropagateTest(TaskQueueTest):
 
     self.post_task()
     self.assert_response_is('complete', sent=['http://foo/good'])
+
+  def test_non_html_url(self):
+    """Target URLs that aren't HTML should be ignored."""
+    # TODO
 
   def test_no_targets(self):
     """No target URLs."""
