@@ -142,11 +142,11 @@ class PollTest(TaskQueueTest):
     obj['content'] = 'http://will/redirect'
     self.sources[0].set_activities([self.activities[0]])
 
-    self.mox.StubOutWithMock(util, 'follow_redirects')
+    self.mox.StubOutWithMock(util.requests, 'head')
     resp = requests.Response()
     resp.url = 'http://final/url'
     resp.headers['content-type'] = 'text/html'
-    util.follow_redirects('http://will/redirect').AndReturn(resp)
+    util.requests.head('http://will/redirect', allow_redirects=True).AndReturn(resp)
 
     self.mox.ReplayAll()
     self.post_task()
@@ -449,9 +449,9 @@ class PropagateTest(TaskQueueTest):
     TODO: also invalid URLs that can't be parsed by urlparse?
     """
     self.responses[0].unsent = ['http://t.co/bad', 'http://foo/good']
-    self.responses[0].error = ['http://instagr.am/bad']
+    self.responses[0].error = ['http://instagr.am/bad',
                                # urlparse raises ValueError: Invalid IPv6 URL
-                               # 'http://foo]']
+                               'http://foo]']
     self.responses[0].save()
 
     self.expect_webmention(target='http://foo/good').AndReturn(True)
@@ -462,7 +462,18 @@ class PropagateTest(TaskQueueTest):
 
   def test_non_html_url(self):
     """Target URLs that aren't HTML should be ignored."""
-    # TODO
+    self.responses[0].unsent = ['http://not/html']
+    self.responses[0].save()
+
+    self.mox.StubOutWithMock(util.requests, 'head')
+    resp = requests.Response()
+    resp.url = 'http://not/html'
+    resp.headers['content-type'] = 'application/mpeg'
+    util.requests.head('http://not/html', allow_redirects=True).AndReturn(resp)
+
+    self.mox.ReplayAll()
+    self.post_task()
+    self.assert_response_is('complete')
 
   def test_no_targets(self):
     """No target URLs."""
