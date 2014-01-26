@@ -38,6 +38,10 @@ import util
 from google.appengine.ext import db
 import webapp2
 
+
+# https://developers.facebook.com/docs/reference/login/
+OAUTH_SCOPES = ('offline_access', 'user_status', 'user_photos', 'user_events')
+
 API_PHOTOS_URL = 'https://graph.facebook.com/me/photos/uploaded'
 API_USER_RSVPS_URL = 'https://graph.facebook.com/me/events'  # returns yes and maybe
 API_USER_RSVPS_DECLINED_URL = 'https://graph.facebook.com/me/events/declined'
@@ -144,7 +148,8 @@ class AddFacebookPage(oauth_facebook.CallbackHandler, util.Handler):
 
 
 application = webapp2.WSGIApplication([
-    ('/facebook/start', oauth_facebook.StartHandler.to('/facebook/add')),
+    ('/facebook/start',oauth_facebook.StartHandler.to('/facebook/add',
+                                                      scopes=OAUTH_SCOPES)),
     ('/facebook/add', AddFacebookPage),
     ('/facebook/delete/finish', oauth_facebook.CallbackHandler.to('/delete/finish')),
     ], debug=appengine_config.DEBUG)
