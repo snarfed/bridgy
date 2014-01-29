@@ -14,6 +14,7 @@ from webutil.util import *
 
 EPOCH = datetime.datetime.utcfromtimestamp(0)
 POLL_TASK_DATETIME_FORMAT = '%Y-%m-%d-%H-%M-%S'
+RETRY_TASK_HTTP_STATUS = 306  # "Unused"
 
 
 def added_source_redirect(handler, source):
@@ -107,7 +108,7 @@ def get_webmention_target(url):
 
   resolved = follow_redirects(url)
   if resolved.url != url:
-    logging.debug('Resolved %s to %s', url, resolved)
+    logging.debug('Resolved %s to %s', url, resolved.url)
     url = resolved.url
   if not resolved.headers.get('content-type', '').startswith('text/html'):
     return (url, False)

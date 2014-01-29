@@ -11,3 +11,9 @@ queue:
     task_retry_limit: 30
     task_age_limit: 3d
     min_backoff_seconds: 30
+
+- name: twitter-streaming
+  max_concurrent_requests: 1
+  rate: 1/s
+  retry_parameters:
+    max_backoff_seconds: 1
