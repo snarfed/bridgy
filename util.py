@@ -14,7 +14,6 @@ from webutil.util import *
 
 EPOCH = datetime.datetime.utcfromtimestamp(0)
 POLL_TASK_DATETIME_FORMAT = '%Y-%m-%d-%H-%M-%S'
-RETRY_TASK_HTTP_STATUS = 306  # "Unused"
 
 
 def added_source_redirect(handler, source):

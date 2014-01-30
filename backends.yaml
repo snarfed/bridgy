@@ -1,0 +1,5 @@
+backends:
+- name: twitter-streaming
+  instances: 1
+  start: twitter_streaming.application
+  class: B1

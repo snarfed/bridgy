@@ -13,9 +13,6 @@ libraries:
 - name: ssl
   version: latest
 
-env_variables:
-  GAE_USE_SOCKETS_HTTPLIB : 'anyvalue'
-
 handlers:
 
 # static
@@ -59,13 +56,8 @@ handlers:
   script: logs.application
   secure: always
 
-- url: /_ah/queue/(poll|propagate)
+- url: /_ah/queue/.*
   script: tasks.application
-  login: admin
-  secure: always
-
-- url: /_ah/queue/twitter-streaming
-  script: twitter_streaming.application
   login: admin
   secure: always
 
@@ -82,4 +74,4 @@ skip_files:
 - ^(.*/)?.*/RCS/.*
 - ^(.*/)?\..*
 - ^(.*/)?.*\.bak$
-- ^(.*/)?(debian|doc|pydoc|python3|ref|sample|test)s?/.*
+- ^(.*/)?(debian|doc|docs|pydocs|python3|ref|samples|tests)/.*

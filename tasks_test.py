@@ -435,7 +435,7 @@ class PropagateTest(TaskQueueTest):
         .InAnyOrder().AndReturn(False)
 
     self.mox.ReplayAll()
-    self.post_task(expected_status=util.RETRY_TASK_HTTP_STATUS)
+    self.post_task(expected_status=Propagate.ERROR_HTTP_RETURN_CODE)
     response = db.get(self.responses[0].key())
     self.assert_response_is('error',
                             sent=['http://6', 'http://1'],
@@ -499,7 +499,7 @@ class PropagateTest(TaskQueueTest):
     self.responses[0].leased_until = leased_until
     self.responses[0].save()
 
-    self.post_task(expected_status=util.RETRY_TASK_HTTP_STATUS)
+    self.post_task(expected_status=Propagate.ERROR_HTTP_RETURN_CODE)
     self.assert_response_is('processing', leased_until,
                             unsent=['http://target1/post/url'])
 
@@ -522,7 +522,7 @@ class PropagateTest(TaskQueueTest):
   def test_no_response(self):
     """If the response doesn't exist, the request should fail."""
     self.responses[0].delete()
-    self.post_task(expected_status=util.RETRY_TASK_HTTP_STATUS)
+    self.post_task(expected_status=Propagate.ERROR_HTTP_RETURN_CODE)
 
   def test_no_source(self):
     """If the source doesn't exist, the request should give up."""
@@ -563,7 +563,7 @@ class PropagateTest(TaskQueueTest):
       self.mox.ReplayAll()
 
       logging.debug('Testing %s', code)
-      expected_status = 200 if give_up else util.RETRY_TASK_HTTP_STATUS
+      expected_status = 200 if give_up else Propagate.ERROR_HTTP_RETURN_CODE
       self.post_task(expected_status=expected_status)
       if give_up:
         self.assert_response_is('complete', skipped=['http://target1/post/url'])
@@ -580,7 +580,7 @@ class PropagateTest(TaskQueueTest):
     self.expect_webmention(target='http://second').AndReturn(True)
 
     self.mox.ReplayAll()
-    self.post_task(expected_status=util.RETRY_TASK_HTTP_STATUS)
+    self.post_task(expected_status=Propagate.ERROR_HTTP_RETURN_CODE)
     self.assert_response_is('error', None, error=['http://first'],
                            sent=['http://second'])
 
@@ -592,7 +592,7 @@ class PropagateTest(TaskQueueTest):
     self.expect_webmention(target='http://good').AndReturn(True)
     self.mox.ReplayAll()
 
-    self.post_task(expected_status=util.RETRY_TASK_HTTP_STATUS)
+    self.post_task(expected_status=Propagate.ERROR_HTTP_RETURN_CODE)
     self.assert_response_is('error', None, error=['http://error'],
                             sent=['http://good'])
 

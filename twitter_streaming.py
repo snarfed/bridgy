@@ -33,13 +33,6 @@ Background:
 http://stackoverflow.com/a/16937668/186123
 http://code.google.com/p/googleappengine/issues/detail?id=9246
 https://developers.google.com/appengine/docs/python/sockets/ssl_support
-
-Here's how to insert the single task queue task to kick this off:
-
-~/google_appengine/remote_api_shell.py --secure brid-gy
-...
-from google.appengine.api import taskqueue
-taskqueue.add(queue_name='twitter-streaming')
 """
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
@@ -63,9 +56,7 @@ import twitter
 import util
 
 from google.appengine.api import background_thread
-from google.appengine.api import logservice
 from google.appengine.api import runtime
-from google.appengine.runtime import DeadlineExceededError
 import webapp2
 
 
@@ -158,20 +149,17 @@ def update_streams():
   """
   global streams_lock, update_thread
 
-  try:
-    while True:
+  while True:
+    with streams_lock:
       try:
-        with streams_lock:
-          update_streams_once()
-      except (ShutdownException, DeadlineExceededError):
-        raise
+        update_streams_once()
+      except ShutdownException:
+        logging.info('Stopping update thread.')
+        update_thread = None
+        return
       except:
         logging.exception('Error updating streams')
-      time.sleep(UPDATE_STREAMS_PERIOD_S)
-
-  except (ShutdownException, DeadlineExceededError):
-    logging.info('Stopping update thread.')
-    update_thread = None
+    time.sleep(UPDATE_STREAMS_PERIOD_S)
 
 
 def update_streams_once():
@@ -207,37 +195,20 @@ def update_streams_once():
 
   # Disconnect from deleted or disabled accounts
   for key in stream_keys - source_keys:
-    logging.info('Disconnecting %s %s', key.name(), key)
     streams[key].disconnect()
     del streams[key]
-
-  logservice.flush()
 
 
 class Start(webapp2.RequestHandler):
   def get(self):
-    return self.post()
-
-  def post(self):
     runtime.set_shutdown_hook(shutdown_hook)
 
     global streams, streams_lock, update_thread
     with streams_lock:
       streams = {}
-      if update_thread is not None:
-        return
-
-    # TODO: if moving to frontend works, drop update_thread and do update
-    # loop here in request.
-    update_thread = threading.Thread(target=update_streams)
-    update_thread.start()
-    update_thread.join()
-
-    # for backend
-    # update_thread = background_thread.start_new_background_thread(
-    #   update_streams, [])
-
-    self.error(util.RETRY_TASK_HTTP_STATUS)
+      if update_thread is None:
+        update_thread = background_thread.start_new_background_thread(
+          update_streams, [])
 
 
 def shutdown_hook():
@@ -265,5 +236,4 @@ class ShutdownException(Exception):
 
 application = webapp2.WSGIApplication([
     ('/_ah/start', Start),
-    ('/_ah/queue/twitter-streaming', Start),
     ], debug=appengine_config.DEBUG)

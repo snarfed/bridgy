@@ -233,6 +233,8 @@ class Propagate(webapp2.RequestHandler):
   # request deadline (10m) plus some padding
   LEASE_LENGTH = datetime.timedelta(minutes=12)
 
+  ERROR_HTTP_RETURN_CODE = 306  # "Unused"
+
   def post(self):
     logging.debug('Params: %s', self.request.params)
 
@@ -394,7 +396,7 @@ class Propagate(webapp2.RequestHandler):
   def fail(self, message, level=logging.WARNING):
     """Fills in an error response status code and message.
     """
-    self.error(util.RETRY_TASK_HTTP_STATUS)
+    self.error(self.ERROR_HTTP_RETURN_CODE)
     logging.log(level, message)
     self.response.out.write(message)
 
