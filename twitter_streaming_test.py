@@ -15,7 +15,7 @@ import twitter
 import twitter_streaming
 import util
 
-from google.appengine.ext import db
+from google.appengine.ext import ndb
 
 
 class TwitterStreamingTest(testutil.ModelsTest):
@@ -29,21 +29,21 @@ class TwitterStreamingTest(testutil.ModelsTest):
 
   def make_source(self, name):
     auth_entity = oauth_twitter.TwitterAuth(
-      key_name=name, auth_code='my_code', token_key='%s key' % name,
-      token_secret='%s secret' % name, user_json='{}')
-    auth_entity.save()
-    return twitter.Twitter(key_name=name, auth_entity=auth_entity)
+      id=name, token_key='%s key' % name, token_secret='%s secret' % name,
+      user_json='{}')
+    auth_entity.put()
+    return twitter.Twitter(id=name, auth_entity=auth_entity.key)
 
   def test_favorite(self):
     # missing data
     self.assertTrue(self.listener.on_data(json.dumps({'event': 'favorite'})))
-    self.assertEqual(0, models.Response.all().count())
+    self.assertEqual(0, models.Response.query().count())
 
     # valid
     self.assertTrue(self.listener.on_data(json.dumps(twitter_test.FAVORITE_EVENT)))
-    self.assertEqual(1, models.Response.all().count())
-    resp = models.Response.all().get()
-    self.assertEqual(twitter_test.LIKE['id'], resp.key().name())
+    self.assertEqual(1, models.Response.query().count())
+    resp = models.Response.query().get()
+    self.assertEqual(twitter_test.LIKE['id'], resp.key.string_id())
     self.assert_equals(twitter_test.LIKE, json.loads(resp.response_json))
 
     activity = copy.deepcopy(twitter_test.ACTIVITY)
@@ -59,9 +59,9 @@ class TwitterStreamingTest(testutil.ModelsTest):
     share['object']['url'] = activity['url']
 
     self.assertTrue(self.listener.on_data(json.dumps(retweet)))
-    self.assertEqual(1, models.Response.all().count())
-    resp = models.Response.all().get()
-    self.assertEqual(share['id'], resp.key().name())
+    self.assertEqual(1, models.Response.query().count())
+    resp = models.Response.query().get()
+    self.assertEqual(share['id'], resp.key.string_id())
     self.assert_equals(share, json.loads(resp.response_json))
     self.assert_equals(activity, json.loads(resp.activity_json))
     self.assert_equals(['http://first/link/'], resp.unsent)
@@ -77,16 +77,16 @@ class TwitterStreamingTest(testutil.ModelsTest):
   #   self.mox.ReplayAll()
 
   #   self.assertTrue(self.listener.on_data(json.dumps(tw_reply)))
-  #   self.assertEqual(1, models.Response.all().count())
-  #   resp = models.Response.all().get()
-  #   self.assertEqual(as_reply['id'], resp.key().name())
+  #   self.assertEqual(1, models.Response.query().count())
+  #   resp = models.Response.query().get()
+  #   self.assertEqual(as_reply['id'], resp.key.string_id())
   #   self.assert_equals(as_reply, json.loads(resp.response_json))
   #   self.assert_equals(twitter_test.ACTIVITY, json.loads(resp.activity_json))
   #   self.assert_equals(['http://first/link/'], resp.unsent)
 
   def test_unhandled_event(self):
     self.assertTrue(self.listener.on_data(json.dumps({'event': 'foo'})))
-    self.assertEqual(0, models.Response.all().count())
+    self.assertEqual(0, models.Response.query().count())
 
   def test_not_json(self):
     # bad json raises an exception inside on_data()
@@ -110,29 +110,29 @@ class TwitterStreamingTest(testutil.ModelsTest):
     sources['disabled'].status = 'disabled'
     sources['error'].status = 'error'
     for source in sources.values():
-      source.save()
+      source.put()
 
     for name in 'existing', 'error', 'disabled', 'deleted', 'stopped':
       stream = self.mox.CreateMock(streaming.Stream)
       stream.running = (name != 'stopped')
-      twitter_streaming.streams[sources[name].key()] = stream
+      twitter_streaming.streams[sources[name].key] = stream
 
     # expect connects and disconnects
     self.mox.StubOutClassWithMocks(streaming, 'Stream')
     for name in 'stopped', 'new':
       streaming.Stream(mox.IgnoreArg(), mox.IgnoreArg()).userstream(async=True)
     for name in 'disabled', 'deleted':
-      twitter_streaming.streams[sources[name].key()].disconnect()
+      twitter_streaming.streams[sources[name].key].disconnect()
 
     self.mox.ReplayAll()
 
-    sources['deleted'].delete()
+    sources['deleted'].key.delete()
     twitter_streaming.update_streams_once()
 
-    self.assert_equals([sources['existing'].key(),
-                        sources['error'].key(),
-                        sources['new'].key(),
-                        sources['stopped'].key(),
+    self.assert_equals([sources['existing'].key,
+                        sources['error'].key,
+                        sources['new'].key,
+                        sources['stopped'].key,
                         ],
                        twitter_streaming.streams.keys())
 

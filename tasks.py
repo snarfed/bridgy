@@ -30,7 +30,7 @@ import twitter
 import util
 from webmentiontools import send
 
-from google.appengine.ext import db
+from google.appengine.ext import ndb
 from google.appengine.api import taskqueue
 import webapp2
 
@@ -75,11 +75,11 @@ class Poll(webapp2.RequestHandler):
     logging.debug('Params: %s', self.request.params)
 
     key = self.request.params['source_key']
-    source = db.get(key)
+    source = ndb.Key(urlsafe=key).get()
     if not source or source.status == 'disabled':
       logging.error('Source not found or disabled. Dropping task.')
       return
-    logging.info('Source: %s %s', source.label(), source.key().name())
+    logging.info('Source: %s %s', source.label(), source.key.string_id())
 
     last_polled = self.request.params['last_polled']
     if last_polled != source.last_polled.strftime(util.POLL_TASK_DATETIME_FORMAT):
@@ -103,7 +103,7 @@ class Poll(webapp2.RequestHandler):
       source.status = 'error'
       raise
     finally:
-      source.save()
+      source.put()
 
   def do_post(self, source):
     if source.last_activities_etag or source.last_activity_id:
@@ -188,7 +188,7 @@ class Poll(webapp2.RequestHandler):
         id = resp.get('id')
         if not id:
           logging.error('Skipping response without id: %s', resp)
-        elif models.Response.get_by_key_name(id) is None:
+        elif models.Response.get_by_id(id) is None:
           new_responses.append(resp)
 
       # short circuit to next activity if none are left to avoid unnecessary
@@ -204,7 +204,7 @@ class Poll(webapp2.RequestHandler):
                      len(targets), ' '.join(targets))
 
       for resp in new_responses:
-        models.Response(key_name=resp['id'],
+        models.Response(id=resp['id'],
                         source=source,
                         activity_json=json.dumps(activity),
                         response_json=json.dumps(resp),
@@ -249,18 +249,17 @@ class Propagate(webapp2.RequestHandler):
       self.complete_response(response)
       return
 
-    try:
-      source = response.source
-    except db.ReferencePropertyResolveError:
+    source = response.source.get()
+    if not source:
       logging.warning('Source not found! Dropping response.')
       return
-    logging.info('Source: %s %s', source.label(), source.key().name())
+    logging.info('Source: %s %s', source.label(), source.key.string_id())
 
     try:
       logging.info('Starting %s response %s',
-                   response.source.kind(), response.key().name())
+                   response.source.kind(), response.key.string_id())
 
-      _, response_id = util.parse_tag_uri(response.key().name())
+      _, response_id = util.parse_tag_uri(response.key.string_id())
       if response.type in ('like', 'repost', 'rsvp'):
         response_id = response_id.split('_')[-1]
 
@@ -277,7 +276,7 @@ class Propagate(webapp2.RequestHandler):
 
       local_response_url = '%s/%s/%s/%s/%s/%s' % (
         host_url, response.type, response.source.SHORT_NAME,
-        response.source.key().name(), post_id, response_id)
+        response.source.key.string_id(), post_id, response_id)
 
       # send each webmention. recheck the url here since the checks may have failed
       # during the poll or streaming add.
@@ -337,7 +336,7 @@ class Propagate(webapp2.RequestHandler):
       self.release_response(response, 'error')
       raise
 
-  @db.transactional
+  @ndb.transactional
   def lease_response(self):
     """Attempts to acquire and lease the response entity.
 
@@ -345,7 +344,7 @@ class Propagate(webapp2.RequestHandler):
 
     TODO: unify with complete_response
     """
-    response = db.get(self.request.params['response_key'])
+    response = ndb.Key(urlsafe=self.request.params['response_key']).get()
 
     if response is None:
       self.fail('no response entity!')
@@ -358,16 +357,19 @@ class Propagate(webapp2.RequestHandler):
       assert response.status in ('new', 'processing', 'error')
       response.status = 'processing'
       response.leased_until = now_fn() + self.LEASE_LENGTH
-      response.save()
+      response.put()
       return response
 
-  @db.transactional
+  @ndb.transactional
   def complete_response(self, response):
     """Attempts to mark the response entity completed.
 
     Returns True on success, False otherwise.
+
+    Args:
+      response: models.Response
     """
-    existing = db.get(response.key())
+    existing = ndb.Key(urlsafe=response.key.get())
     if existing is None:
       self.fail('response entity disappeared!', level=logging.ERROR)
     elif existing.status == 'complete':
@@ -380,18 +382,22 @@ class Propagate(webapp2.RequestHandler):
 
     assert response.status == 'processing'
     response.status = 'complete'
-    response.save()
+    response.put()
     return True
 
-  @db.transactional
+  @ndb.transactional
   def release_response(self, response, new_status):
     """Attempts to unlease the response entity.
+
+    Args:
+      response: models.Response
+      new_status: string
     """
-    existing = db.get(response.key())
+    existing = response.key.get()
     if existing and existing.status == 'processing':
       response.status = new_status
       response.leased_until = None
-      response.save()
+      response.put()
 
   def fail(self, message, level=logging.WARNING):
     """Fills in an error response status code and message.

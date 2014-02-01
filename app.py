@@ -29,15 +29,15 @@ from webutil.handlers import TemplateHandler
 
 from google.appengine.api import mail
 from google.appengine.api import users
-from google.appengine.ext import db
+from google.appengine.ext import ndb
 from google.appengine.ext.webapp import template
 import webapp2
 
 
 def source_dom_id_to_key(id):
-  """Parses a string returned by Source.dom_id() and returns its db.Key."""
-  short_name, key_name = id.split('-', 1)
-  return db.Key.from_path(handlers.SOURCES.get(short_name).kind(), key_name)
+  """Parses a string returned by Source.dom_id() and returns its ndb.Key."""
+  short_name, string_id = id.split('-', 1)
+  return ndb.Key.from_path(handlers.SOURCES.get(short_name).kind(), string_id)
 
 
 class DashboardHandler(util.Handler):
@@ -47,15 +47,15 @@ class DashboardHandler(util.Handler):
   def get(self):
     """Renders the dashboard.
     """
-    sources = {str(source.key()): source for source in
-               itertools.chain(FacebookPage.all().run(), Twitter.all().run(),
-                               GooglePlusPage.all().run(), Instagram.all().run())}
+    sources = {source.key.urlsafe(): source for source in
+               itertools.chain(FacebookPage.query().iter(), Twitter.query().iter(),
+                               GooglePlusPage.query().iter(), Instagram.query().iter())}
 
     # manually update the source we just added or deleted to workaround
     # inconsistent global queries.
     added = self.request.get('added')
     if added and added not in sources:
-      sources[added] = db.get(added)
+      sources[added] = ndb.Key(urlsafe=added).get()
     deleted = self.request.get('deleted')
     if deleted in sources:
       del sources[deleted]
@@ -64,7 +64,7 @@ class DashboardHandler(util.Handler):
     # serving over SSL
     for source in sources.values():
       if not source.name:
-        source.name = source.key().name()
+        source.name = source.key.string_id()
       source.picture = util.update_scheme(source.picture, self)
       # ...left over from when responses were fetched in DashboardHandler.
       # consider reviving it someday.
@@ -94,7 +94,7 @@ class ResponsesHandler(util.Handler):
     """Renders a single source's recent responses as an HTML fragment.
     """
     key = source_dom_id_to_key(util.get_required_param(self, 'source'))
-    responses = models.Response.all()\
+    responses = models.Response.query()\
         .filter('source =', key).order('-updated').fetch(10)
 
     if not responses:
@@ -168,7 +168,7 @@ class DeleteStartHandler(util.Handler):
 
   def post(self):
     key = util.get_required_param(self, 'key')
-    source = db.get(key)
+    source = ndb.Key(urlsafe=key).get()
     module = self.OAUTH_MODULES[source.kind()]
 
     if module is oauth_googleplus:
@@ -191,18 +191,17 @@ class DeleteFinishHandler(util.Handler):
       return
 
     logged_in_as = util.get_required_param(self, 'auth_entity')
-    source = db.get(util.get_required_param(self, 'state'))
-    source_auth_entity = models.Source.auth_entity.get_value_for_datastore(source)
-    if logged_in_as == str(source_auth_entity):
+    source = ndb.Key(urlsafe=util.get_required_param(self, 'state').get())
+    if logged_in_as == models.Source.auth_entity.urlsafe():
       # TODO: remove credentials, tasks, etc.
-      source.delete()
+      source.key.delete()
       self.messages.add('Deleted %s. Sorry to see you go!' % source.label())
       mail.send_mail(sender='delete@brid-gy.appspotmail.com',
                      to='webmaster@brid.gy',
                      subject='Deleted Brid.gy user: %s %s' %
-                     (source.label(), source.key().name()),
+                     (source.label(), source.key.string_id()),
                      body='%s/#%s' % (self.request.host_url, source.dom_id()))
-      self.redirect('/?deleted=%s' % source.key())
+      self.redirect('/?deleted=%s' % source.key)
     else:
       self.messages.add('Please log into %s as %s to delete it here.' %
                         (source.AS_CLASS.NAME, source.name))

@@ -13,14 +13,14 @@ heaven@gmail.com
 
 from models import Comment, Response
 
-for c in Comment.all():
+for c in Comment.query():
   props = db.to_dict(c)
   props['response_json'] = props.pop('comment_json')
-  Response(key_name=c.key().name(), **props).save()
+  Response(id=c.key().string_id(), **props).save()
 
 # sanity check
-Comment.all().count()
-Response.all().count()
+Comment.query().count()
+Response.query().count()
 
 Now, add auto_now=True back to the 'updated' property.
 """
@@ -35,15 +35,15 @@ import urlparse
 from activitystreams import source as as_source
 import appengine_config
 import util
-from webutil.models import KeyNameModel
+from webutil.models import StringIdModel
 
 from google.appengine.api import mail
 from google.appengine.api import taskqueue
 from google.appengine.api import users
-from google.appengine.ext import db
+from google.appengine.ext import ndb
 
 
-class Site(KeyNameModel):
+class Site(StringIdModel):
   """A web site for a single entity, e.g. Facebook profile or WordPress blog.
   """
 
@@ -52,9 +52,9 @@ class Site(KeyNameModel):
   STATUSES = ('enabled', 'disabled', 'error')
   POLL_FREQUENCY = datetime.timedelta(minutes=5)
 
-  created = db.DateTimeProperty(auto_now_add=True, required=True)
-  url = db.LinkProperty()
-  status = db.StringProperty(choices=STATUSES, default='enabled')
+  created = ndb.DateTimeProperty(auto_now_add=True, required=True)
+  url = ndb.StringProperty()
+  status = ndb.StringProperty(choices=STATUSES, default='enabled')
 
   @classmethod
   def create_new(cls, handler, **kwargs):
@@ -65,29 +65,29 @@ class Site(KeyNameModel):
       **kwargs: passed to new()
     """
     new = cls.new(handler, **kwargs)
-    existing = db.get(new.key())
+    existing = new.key.get()
     if existing:
       logging.warning('Overwriting %s %s! Old version:\n%s',
-                      existing.label(), new.key(), new.to_xml())
+                      existing.label(), existing.key, existing.to_dict())
       new_msg = "Updated %s. Refresh to see what's new!" % existing.label()
     else:
-      logging.info('Added %s %s %s', new.label(), new.key().name(), new.key())
+      logging.info('Added %s %s %s', new.label(), new.key.string_id(), new.key)
       new_msg = "Added %s. Refresh to see what we've found!" % new.label()
       mail.send_mail(sender='add@brid-gy.appspotmail.com',
                      to='webmaster@brid.gy',
                      subject='Added Brid.gy user: %s %s' %
-                     (new.label(), new.key().name()),
+                     (new.label(), new.key.string_id()),
                      body='%s/#%s' % (handler.request.host_url, new.dom_id()))
 
     handler.messages = {new_msg}
 
     # TODO: ugh, *all* of this should be transactional
-    new.save()
+    new.put()
     return new
 
   def dom_id(self):
     """Returns the DOM element id for this site."""
-    return '%s-%s' % (self.SHORT_NAME, self.key().name())
+    return '%s-%s' % (self.SHORT_NAME, self.key.string_id())
 
 
 class Source(Site):
@@ -97,21 +97,21 @@ class Source(Site):
   """
 
   AS_CLASS = None  # the corresponding activitystreams-unofficial class
-  last_polled = db.DateTimeProperty(default=util.EPOCH)
-  last_poll_attempt = db.DateTimeProperty(default=util.EPOCH)
+  last_polled = ndb.DateTimeProperty(default=util.EPOCH)
+  last_poll_attempt = ndb.DateTimeProperty(default=util.EPOCH)
 
   # full human-readable name
-  name = db.StringProperty()
-  picture = db.LinkProperty()
+  name = ndb.StringProperty()
+  picture = ndb.StringProperty()
 
   # points to an oauth-dropins auth entity. The model class should be a subclass
   # of oauth_dropins.BaseAuth.
   # the token should be generated with the offline_access scope so that it
   # doesn't expire. details: http://developers.facebook.com/docs/authentication/
-  auth_entity = db.ReferenceProperty()
+  auth_entity = ndb.KeyProperty()
 
-  last_activity_id = db.StringProperty()
-  last_activities_etag = db.StringProperty()
+  last_activity_id = ndb.StringProperty()
+  last_activities_etag = ndb.StringProperty()
 
   # as_source is *not* set to None by default here, since it needs to be unset
   # for __getattr__ to run when it's accessed.
@@ -126,7 +126,7 @@ class Source(Site):
   def __getattr__(self, name):
     """Lazily load the auth entity and instantiate self.as_source."""
     if name == 'as_source' and self.auth_entity:
-      token = self.auth_entity.access_token()
+      token = self.auth_entity.get().access_token()
       if not isinstance(token, tuple):
         token = (token,)
       self.as_source = self.AS_CLASS(*token)
@@ -157,7 +157,7 @@ class Source(Site):
 
     Returns: dict, decoded ActivityStreams activity, or None
     """
-    activities = self.get_activities(activity_id=id, user_id=self.key().name())
+    activities = self.get_activities(activity_id=id, user_id=self.key.string_id())
     return activities[0] if activities else None
 
   def get_comment(self, comment_id, activity_id=None):
@@ -226,36 +226,36 @@ class Source(Site):
     return new
 
 
-class Response(KeyNameModel):
+class Response(StringIdModel):
   """A comment, like, or repost to be propagated.
 
-  The key name is the commentobject id as a tag URI.
+  The key name is the comment object id as a tag URI.
   """
   TYPES = ('comment', 'like', 'repost', 'rsvp')
   STATUSES = ('new', 'processing', 'complete', 'error')
 
   # ActivityStreams JSON activity and comment, like, or repost
-  type = db.StringProperty(choices=TYPES, default='comment')
-  activity_json = db.TextProperty()
-  response_json = db.TextProperty()
-  source = db.ReferenceProperty()
-  status = db.StringProperty(choices=STATUSES, default='new')
-  leased_until = db.DateTimeProperty()
-  created = db.DateTimeProperty(auto_now_add=True)
-  updated = db.DateTimeProperty(auto_now=True)
+  type = ndb.StringProperty(choices=TYPES, default='comment')
+  activity_json = ndb.TextProperty()
+  response_json = ndb.TextProperty()
+  source = ndb.KeyProperty()
+  status = ndb.StringProperty(choices=STATUSES, default='new')
+  leased_until = ndb.DateTimeProperty()
+  created = ndb.DateTimeProperty(auto_now_add=True)
+  updated = ndb.DateTimeProperty(auto_now=True)
 
   # Original post links, ie webmention targets
-  sent = db.StringListProperty()
-  unsent = db.StringListProperty()
-  error = db.StringListProperty()
-  failed = db.StringListProperty()
-  skipped = db.StringListProperty(default=[])
+  sent = ndb.StringProperty(repeated=True)
+  unsent = ndb.StringProperty(repeated=True)
+  error = ndb.StringProperty(repeated=True)
+  failed = ndb.StringProperty(repeated=True)
+  skipped = ndb.StringProperty(repeated=True)
 
-  @db.transactional
+  @ndb.transactional
   def get_or_save(self):
-    existing = db.get(self.key())
+    existing = self.key.get()
     if existing:
-      # logging.debug('Deferring to existing response %s.', existing.key().name())
+      # logging.debug('Deferring to existing response %s.', existing.key.string_id())
       # this might be a nice sanity check, but we'd need to hard code certain
       # properties (e.g. content) so others (e.g. status) aren't checked.
       # for prop in self.properties().values():
@@ -267,11 +267,12 @@ class Response(KeyNameModel):
     obj = json.loads(self.response_json)
     self.type = Response.get_type(obj)
     logging.debug('New response to propagate! %s %s %s', self.type,
-                  self.key().id_or_name(), obj.get('url', '[no url]'))
+                  self.key.id(),  # returns either string name or integer id
+                  obj.get('url', '[no url]'))
 
-    self.save()
+    self.put()
     taskqueue.add(queue_name='propagate',
-                  params={'response_key': str(self.key())},
+                  params={'response_key': str(self.key)},
                   # tasks inserted from a backend (e.g. twitter_streaming) are
                   # sent to that backend by default, which doesn't work in the
                   # dev_appserver. setting the target version to 'default' in
@@ -303,7 +304,7 @@ class Response(KeyNameModel):
 class Comment(Response):
   """Backward compatibility. TODO: remove.
   """
-  comment_json = db.TextProperty()
+  comment_json = ndb.TextProperty()
 
 
 class DisableSource(Exception):

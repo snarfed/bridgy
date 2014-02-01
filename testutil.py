@@ -18,7 +18,7 @@ import util
 from webutil import testutil
 
 from google.appengine.datastore import datastore_stub_util
-from google.appengine.ext import db
+from google.appengine.ext import ndb
 
 
 def get_task_params(task):
@@ -29,21 +29,21 @@ def get_task_params(task):
   return params
 
 
-class FakeBase(db.Model):
+class FakeBase(ndb.Model):
   """Not thread safe.
   """
 
-  key_name_counter = 1
+  string_id_counter = 1
   # class attr. maps (string source key, type name) to object or list.
   # can't use instance attrs because code fetches FakeSource instances from the
   # datastore.
   data = {}
 
   def _set(self, name, val):
-    FakeBase.data[(str(self.key()), name)] = val
+    FakeBase.data[(str(self.key), name)] = val
 
   def _get(self, name):
-    return FakeBase.data.get((str(self.key()), name))
+    return FakeBase.data.get((str(self.key), name))
 
   @classmethod
   def new(cls, handler, **props):
@@ -51,8 +51,8 @@ class FakeBase(db.Model):
       props['url'] = 'http://fake/url'
     if 'name' not in props:
       props['name'] = 'fake'
-    inst = cls(key_name=str(cls.key_name_counter), **props)
-    cls.key_name_counter += 1
+    inst = cls(id=str(cls.string_id_counter), **props)
+    cls.string_id_counter += 1
     return inst
 
 
@@ -87,8 +87,7 @@ class FakeSource(FakeBase, Source):
 
   def __init__(self, *args, **kwargs):
     super(FakeSource, self).__init__(*args, **kwargs)
-    if not FakeSource.as_source.is_saved():
-      FakeSource.as_source.save()
+    FakeSource.as_source.put()
 
   def set_activities(self, val):
     self._set('activities', val)
@@ -141,7 +140,7 @@ class ModelsTest(HandlerTest):
 
     self.sources = [FakeSource.new(None), FakeSource.new(None)]
     for entity in self.sources:
-      entity.save()
+      entity.put()
 
     self.activities = [{
       'id': 'tag:source.com,2013:%s' % id,
@@ -181,8 +180,8 @@ class ModelsTest(HandlerTest):
     for activity in self.activities:
       obj = activity['object']
       for response_obj in obj['replies']['items'] + obj['tags']:
-        self.responses.append(Response(key_name=response_obj['id'],
+        self.responses.append(Response(id=response_obj['id'],
                                        activity_json=json.dumps(activity),
                                        response_json=json.dumps(response_obj),
-                                       source=self.sources[0],
+                                       source=self.sources[0].key,
                                        unsent=['http://target1/post/url']))

@@ -52,7 +52,7 @@ import appengine_config
 import models
 import tasks
 from tweepy import streaming
-import twitter
+from twitter import Twitter
 import util
 
 from google.appengine.api import background_thread
@@ -65,7 +65,7 @@ USER_STREAM_URL = 'https://userstream.twitter.com/1.1/user.json?with=user'
 UPDATE_STREAMS_PERIOD_S = 1 * 60
 
 # globals
-streams = {}  # maps twitter.Twitter key to tweepy.streaming.Stream
+streams = {}  # maps Twitter key to tweepy.streaming.Stream
 streams_lock = threading.Lock()
 update_thread = None  # initialized in Start
 
@@ -80,13 +80,13 @@ class Listener(streaming.StreamListener):
   """
 
   def __init__(self, source):
-    """Args: source: twitter.Twitter
+    """Args: source: Twitter
     """
     super(Listener, self).__init__()
     self.source = source
 
   def on_connect(self):
-    logging.info('Connected! (%s)', self.source.key().name())
+    logging.info('Connected! (%s)', self.source.key.string_id())
 
   def on_data(self, raw_data):
     try:
@@ -102,7 +102,7 @@ class Listener(streaming.StreamListener):
         activity = self.source.as_source.tweet_to_activity(tweet)
 
       elif (data.get('retweeted_status', {}).get('user', {}).get('screen_name') ==
-            self.source.key().name()):
+            self.source.key.string_id()):
         response = self.source.as_source.retweet_to_object(data)
         activity = self.source.as_source.tweet_to_activity(data['retweeted_status'])
 
@@ -119,7 +119,7 @@ class Listener(streaming.StreamListener):
       # sigh. oh well.
       #
       # elif ('in_reply_to_status_id_str' in data and
-      #       data.get('in_reply_to_screen_name') == self.source.key().name()):
+      #       data.get('in_reply_to_screen_name') == self.source.key.string_id()):
       #   response = self.source.as_source.tweet_to_object(data)
       #   activity = self.source.as_source.get_activities(
       #     activity_id=data['in_reply_to_status_id_str'])[0]
@@ -129,7 +129,7 @@ class Listener(streaming.StreamListener):
         return True
 
       targets = tasks.get_webmention_targets(activity)
-      models.Response(key_name=response['id'],
+      models.Response(id=response['id'],
                       source=self.source,
                       activity_json=json.dumps(activity),
                       response_json=json.dumps(response),
@@ -174,17 +174,18 @@ def update_streams_once():
     if not stream.running:
       del streams[key]
 
-  query = twitter.Twitter.all().filter('status !=', 'disabled')
-  sources = {t.key(): t for t in query}
+  query = Twitter.query(Twitter.status != 'disabled')
+  sources = {t.key: t for t in query.iter()}
   stream_keys = set(streams.keys())
   source_keys = set(sources.keys())
 
   # Connect to new accounts
-  for key in source_keys - stream_keys:
-    logging.info('Connecting %s %s', key.name(), key)
+  to_connect = source_keys - stream_keys
+  logging.info('Connecting %d streams', len(to_connect))
+  for key in to_connect:
     source = sources[key]
     auth = oauth_twitter.TwitterAuth.tweepy_auth(
-      *source.auth_entity.access_token())
+      *source.auth_entity.get().access_token())
     streams[key] = streaming.Stream(auth, Listener(source))
     # run stream in *non*-background thread, since app engine backends have a
     # fixed limit of 10 background threads per instance. normal threads are only
@@ -194,7 +195,9 @@ def update_streams_once():
     streams[key].userstream(async=True)
 
   # Disconnect from deleted or disabled accounts
-  for key in stream_keys - source_keys:
+  to_disconnect = stream_keys - source_keys
+  logging.info('Disconnecting %d streams', len(to_disconnect))
+  for key in to_disconnect:
     streams[key].disconnect()
     del streams[key]
 
@@ -222,7 +225,7 @@ def shutdown_hook():
   global streams, streams_lock
   with streams_lock:
     for key, stream in streams.items():
-      logging.info('Disconnecting %s %s', key.name(), key)
+      logging.info('Disconnecting %s %s', key.string_id(), key)
       stream.disconnect()
     streams = None
 

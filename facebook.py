@@ -35,7 +35,7 @@ import logging
 import models
 import util
 
-from google.appengine.ext import db
+from google.appengine.ext import ndb
 import webapp2
 
 
@@ -58,9 +58,9 @@ class FacebookPage(models.Source):
   AS_CLASS = as_facebook.Facebook
   SHORT_NAME = 'facebook'
 
-  type = db.StringProperty(choices=('user', 'page'))
+  type = ndb.StringProperty(choices=('user', 'page'))
   # unique name used in fb URLs, e.g. facebook.com/[username]
-  username = db.StringProperty()
+  username = ndb.StringProperty()
 
   @staticmethod
   def new(handler, auth_entity=None):
@@ -75,8 +75,9 @@ class FacebookPage(models.Source):
     url = 'http://facebook.com/' + id
     picture = ('http://graph.facebook.com/%s/picture?type=large' %
                user.get('username', id))
-    return FacebookPage(key_name=id, auth_entity=auth_entity, picture=picture,
-                        url=url, **user) # **user populates type, name, username
+    return FacebookPage(id=id, type=user['type'], name=user['name'],
+                        username=user['username'],
+                        auth_entity=auth_entity.key, picture=picture, url=url)
 
   def get(self, url):
     """Simple wrapper around urlopen(). Returns decoded JSON dict."""
@@ -143,7 +144,8 @@ class AddFacebookPage(oauth_facebook.CallbackHandler, util.Handler):
       self.redirect('/')
       return
 
-    fb = FacebookPage.create_new(self, auth_entity=auth_entity)
+    fb = FacebookPage.create_new(
+      self, auth_entity=ndb.Key.from_old_key(auth_entity.key()))
     util.added_source_redirect(self, fb)
 
 

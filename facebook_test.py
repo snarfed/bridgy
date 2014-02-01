@@ -21,19 +21,20 @@ class FacebookPageTest(testutil.ModelsTest):
     super(FacebookPageTest, self).setUp()
     self.handler.messages = []
     self.auth_entity = oauth_facebook.FacebookAuth(
-      key_name='my_key_name', auth_code='my_code', access_token_str='my_token',
+      id='my_string_id', auth_code='my_code', access_token_str='my_token',
       user_json=json.dumps({'id': '212038',
                             'name': 'Ryan Barrett',
                             'username': 'snarfed.org',
                             'bio': 'something about me',
                             'type': 'user',
                             }))
+    self.auth_entity.put()
 
   def test_new(self):
     page = FacebookPage.new(self.handler, auth_entity=self.auth_entity)
-    self.assertEqual(self.auth_entity, page.auth_entity)
+    self.assertEqual(self.auth_entity, page.auth_entity.get())
     self.assertEqual('my_token', page.as_source.access_token)
-    self.assertEqual('212038', page.key().name())
+    self.assertEqual('212038', page.key.id())
     self.assertEqual('http://graph.facebook.com/snarfed.org/picture?type=large',
                      page.picture)
     self.assertEqual('Ryan Barrett', page.name)

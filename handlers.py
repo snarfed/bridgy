@@ -31,7 +31,7 @@ import util
 import webapp2
 from webutil import handlers
 
-from google.appengine.ext import db
+from google.appengine.ext import ndb
 
 
 SOURCES = {cls.SHORT_NAME: cls for cls in
@@ -77,8 +77,8 @@ class ItemHandler(webapp2.RequestHandler):
     """
     raise NotImplementedError()
 
-  def get(self, type, source_short_name, key_name, *ids):
-    label = '%s:%s %s %s' % (source_short_name, key_name, type, ids)
+  def get(self, type, source_short_name, string_id, *ids):
+    label = '%s:%s %s %s' % (source_short_name, string_id, type, ids)
     logging.info('Fetching %s', label)
 
     source_cls = SOURCES.get(source_short_name)
@@ -86,8 +86,8 @@ class ItemHandler(webapp2.RequestHandler):
       self.abort(400, "Source type '%s' not found. Known sources: %s" %
                  (source_short_name, SOURCES))
 
-    key = db.Key.from_path(source_cls.kind(), key_name)
-    self.source = db.get(key)
+    key = ndb.Key.from_path(source_cls.kind(), string_id)
+    self.source = key.get()
     if not self.source:
       self.abort(400, '%s not found' % key.to_path())
 
@@ -184,7 +184,7 @@ class CommentHandler(ItemHandler):
 
 class LikeHandler(ItemHandler):
   def get_item(self, post_id, user_id):
-    like = self.source.get_like(self.source.key().name(), post_id, user_id)
+    like = self.source.get_like(self.source.key.string_id(), post_id, user_id)
     if not like:
       return None
     self.add_original_post_urls(post_id, like, 'object')
@@ -193,7 +193,7 @@ class LikeHandler(ItemHandler):
 
 class RepostHandler(ItemHandler):
   def get_item(self, post_id, share_id):
-    repost = self.source.get_share(self.source.key().name(), post_id, share_id)
+    repost = self.source.get_share(self.source.key.string_id(), post_id, share_id)
     if not repost:
       return None
     self.add_original_post_urls(post_id, repost, 'object')
@@ -202,7 +202,7 @@ class RepostHandler(ItemHandler):
 
 class RsvpHandler(ItemHandler):
   def get_item(self, event_id, user_id):
-    rsvp = self.source.get_rsvp(self.source.key().name(), event_id, user_id)
+    rsvp = self.source.get_rsvp(self.source.key.string_id(), event_id, user_id)
     if not rsvp:
       return None
     self.add_original_post_urls(event_id, rsvp, 'inReplyTo')

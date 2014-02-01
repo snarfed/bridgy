@@ -15,7 +15,7 @@ import appengine_config
 import models
 import util
 
-from google.appengine.ext import db
+from google.appengine.ext import ndb
 import webapp2
 
 
@@ -35,7 +35,7 @@ class GooglePlusPage(models.Source):
   # Daily total usage: https://code.google.com/apis/console/b/0/?pli=1#project:1029605954231:stats
   POLL_FREQUENCY = datetime.timedelta(minutes=15)
 
-  type = db.StringProperty(choices=('user', 'page'))
+  type = ndb.StringProperty(choices=('user', 'page'))
 
   @staticmethod
   def new(handler, auth_entity=None):
@@ -55,8 +55,8 @@ class GooglePlusPage(models.Source):
     # override it.
     picture = util.add_query_params(user['image']['url'], {'sz': '128'})
 
-    return GooglePlusPage(key_name=user['id'],
-                          auth_entity=auth_entity,
+    return GooglePlusPage(id=user['id'],
+                          auth_entity=auth_entity.key,
                           url=user['url'],
                           name=user['displayName'],
                           picture=picture,
@@ -82,7 +82,7 @@ class OAuthCallback(util.Handler):
     if state:  # this is a delete
       if auth_entity:
         self.redirect('/delete/finish?auth_entity=%s&state=%s' %
-                      (auth_entity.key(), state))
+                      (auth_entity.key, state))
       else:
         self.messages.add("OK, you're still signed up.")
         self.redirect('/')
@@ -92,7 +92,7 @@ class OAuthCallback(util.Handler):
         self.messages.add("OK, you're not signed up. Hope you reconsider!")
         self.redirect('/')
         return
-      auth_entity = db.get(auth_entity)
+      auth_entity = ndb.Key(urlsafe=auth_entity).get()
       gp = GooglePlusPage.create_new(self, auth_entity=auth_entity)
       util.added_source_redirect(self, gp)
 

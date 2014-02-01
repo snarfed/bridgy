@@ -10,7 +10,7 @@ import appengine_config
 import util
 
 from google.appengine.api import logservice
-from google.appengine.ext import db
+from google.appengine.ext import ndb
 import webapp2
 
 
@@ -40,7 +40,7 @@ class LogHandler(webapp2.RequestHandler):
     start_time = float(util.get_required_param(self, 'start_time'))
     key = urllib.unquote(util.get_required_param(self, 'key'))
     # Backward compatibility for logs created with Comment, not Response
-    comment_key = str(db.Key.from_path('Comment', db.Key(key).name()))
+    comment_key = str(ndb.Key.from_path('Comment', ndb.Key(key).string_id()))
 
     self.response.headers['Content-Type'] = 'text/plain; charset=utf-8'
 

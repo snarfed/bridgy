@@ -44,8 +44,8 @@ class Twitter(models.Source):
     # gives us a higher res image, ~256x256 instead of ~48x48.
     picture = user.get('profile_image_url_https') or user.get('profile_image_url')
     picture = picture.replace('_normal.', '.', 1)
-    return Twitter(key_name=user['screen_name'],
-                   auth_entity=auth_entity,
+    return Twitter(id=user['screen_name'],
+                   auth_entity=auth_entity.key,
                    url=Twitter.user_url(user['screen_name']),
                    name=user['name'],
                    picture=picture)
@@ -62,7 +62,7 @@ class Twitter(models.Source):
       like_user_id: string id of the user who liked the activity
     """
     id = self.as_source.tag_uri('%s_favorited_by_%s' % (activity_id, like_user_id))
-    resp = models.Response.get_by_key_name(id)
+    resp = models.Response.get_by_id(id)
     return json.loads(resp.response_json) if resp else None
 
   @staticmethod

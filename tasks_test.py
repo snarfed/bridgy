@@ -23,7 +23,7 @@ import testutil
 import util
 from webmentiontools import send
 
-from google.appengine.ext import db
+from google.appengine.ext import ndb
 import webapp2
 
 NOW = datetime.datetime.now()
@@ -52,35 +52,35 @@ class PollTest(TaskQueueTest):
 
   def post_task(self, expected_status=200):
     super(PollTest, self).post_task(expected_status=expected_status,
-                                    params={'source_key': self.sources[0].key(),
+                                    params={'source_key': self.sources[0].key,
                                             'last_polled': '1970-01-01-00-00-00'})
 
   def assert_responses(self):
     """Asserts that all of self.responses are saved."""
-    self.assert_entities_equal(self.responses, models.Response.all())
+    self.assert_entities_equal(self.responses, models.Response.query())
 
   def test_poll(self):
     """A normal poll task."""
-    self.assertEqual([], list(models.Response.all()))
+    self.assertEqual([], list(models.Response.query()))
     self.assertEqual([], self.taskqueue_stub.GetTasks('poll'))
 
     self.post_task()
     self.assert_responses()
 
-    source = db.get(self.sources[0].key())
+    source = self.sources[0].key.get()
     self.assertEqual(NOW, source.last_polled)
 
     tasks = self.taskqueue_stub.GetTasks('propagate')
     for task in tasks:
       self.assertEqual('/_ah/queue/propagate', task['url'])
-    keys = set(db.Key(testutil.get_task_params(t)['response_key']) for t in tasks)
-    self.assert_equals(keys, set(r.key() for r in self.responses))
+    keys = set(ndb.Key(testutil.get_task_params(t)['response_key']) for t in tasks)
+    self.assert_equals(keys, set(r.key for r in self.responses))
 
     tasks = self.taskqueue_stub.GetTasks('poll')
     self.assertEqual(1, len(tasks))
     self.assertEqual('/_ah/queue/poll', tasks[0]['url'])
     params = testutil.get_task_params(tasks[0])
-    self.assert_equals(str(source.key()), params['source_key'])
+    self.assert_equals(str(source.key), params['source_key'])
 
   def test_poll_error(self):
     """If anything goes wrong, the source status should be set to 'error'."""
@@ -92,16 +92,16 @@ class PollTest(TaskQueueTest):
     self.mox.ReplayAll()
 
     self.assertRaises(Exception, self.post_task)
-    source = db.get(self.sources[0].key())
+    source = self.sources[0].key.get()
     self.assertEqual('error', source.status)
 
   def test_reset_status_to_enabled(self):
     """After a successful poll, the source status should be set to 'enabled'."""
     self.sources[0].status = 'error'
-    self.sources[0].save()
+    self.sources[0].put()
 
     self.post_task()
-    source = db.get(self.sources[0].key())
+    source = self.sources[0].key.get()
     self.assertEqual('enabled', source.status)
 
   def test_original_post_discovery(self):
@@ -116,7 +116,7 @@ class PollTest(TaskQueueTest):
 
     self.post_task()
     expected = ['http://tar.get/%s' % i for i in 'a', 'b', 'c', 'd']
-    self.assert_equals(expected, db.get(self.responses[0].key()).unsent)
+    self.assert_equals(expected, self.responses[0].key.get().unsent)
 
   def test_non_html_url(self):
     """Target URLs that aren't HTML should be ignored."""
@@ -133,7 +133,7 @@ class PollTest(TaskQueueTest):
 
     self.mox.ReplayAll()
     self.post_task()
-    self.assert_equals([], db.get(self.responses[0].key()).unsent)
+    self.assert_equals([], self.responses[0].key.get().unsent)
 
   def test_resolved_url(self):
     """A URL that redirects should be resolved."""
@@ -150,8 +150,7 @@ class PollTest(TaskQueueTest):
 
     self.mox.ReplayAll()
     self.post_task()
-    self.assert_equals(['http://final/url'],
-                       db.get(self.responses[0].key()).unsent)
+    self.assert_equals(['http://final/url'], self.responses[0].key.get().unsent)
 
   def test_resolve_url_fails(self):
     """A URL that fails to resolve should still be handled ok."""
@@ -168,7 +167,7 @@ class PollTest(TaskQueueTest):
     self.mox.ReplayAll()
     self.post_task()
     self.assert_equals(['http://fails/resolve'],
-                       db.get(self.responses[0].key()).unsent)
+                       self.responses[0].key.get().unsent)
 
   def test_invalid_and_blacklisted_urls(self):
     """Target URLs with domains in the blacklist should be ignored.
@@ -183,7 +182,7 @@ class PollTest(TaskQueueTest):
 
     self.post_task()
     self.assert_equals(['http://tar.get/good'],
-                       db.get(self.responses[0].key()).unsent)
+                       self.responses[0].key.get().unsent)
 
   def test_non_public_posts(self):
     """Only posts with to: @public should be propagated."""
@@ -192,7 +191,7 @@ class PollTest(TaskQueueTest):
     self.activities[2]['object']['to'] = [{'objectType':'group', 'alias':'@public'}]
 
     self.post_task()
-    ids = set(json.loads(db.get(testutil.get_task_params(task)['response_key'])
+    ids = set(json.loads(ndb.Key(urlsafe=testutil.get_task_params(task).get()['response_key'])
                          .activity_json)['id']
               for task in self.taskqueue_stub.GetTasks('propagate'))
     self.assert_equals(ids, set([self.activities[0]['id'], self.activities[2]['id']]))
@@ -201,24 +200,24 @@ class PollTest(TaskQueueTest):
     """Poll should be idempotent and not touch existing response entities.
     """
     self.responses[0].status = 'complete'
-    self.responses[0].save()
+    self.responses[0].put()
 
     self.post_task()
     self.assert_responses()
-    self.assertEqual('complete', db.get(self.responses[0].key()).status)
+    self.assertEqual('complete', self.responses[0].key.get().status)
 
   def test_wrong_last_polled(self):
     """If the source doesn't have our last polled value, we should quit.
     """
     self.sources[0].last_polled = datetime.datetime.utcfromtimestamp(3)
-    self.sources[0].save()
+    self.sources[0].put()
     self.post_task()
-    self.assertEqual([], list(models.Response.all()))
+    self.assertEqual([], list(models.Response.query()))
 
   def test_no_source(self):
     """If the source doesn't exist, do nothing and let the task die.
     """
-    self.sources[0].delete()
+    self.sources[0].key.delete()
     self.post_task()
     self.assertEqual([], self.taskqueue_stub.GetTasks('poll'))
 
@@ -226,7 +225,7 @@ class PollTest(TaskQueueTest):
     """If the source is disabled, do nothing and let the task die.
     """
     self.sources[0].status = 'disabled'
-    self.sources[0].save()
+    self.sources[0].put()
     self.post_task()
     self.assertEqual([], self.taskqueue_stub.GetTasks('poll'))
 
@@ -242,9 +241,9 @@ class PollTest(TaskQueueTest):
     self.mox.ReplayAll()
 
     source.status = 'enabled'
-    source.save()
+    source.put()
     self.post_task()
-    source = db.get(source.key())
+    source = source.key.get()
     self.assertEqual('disabled', source.status)
 
   def test_site_specific_disable_sources(self):
@@ -263,7 +262,7 @@ class PollTest(TaskQueueTest):
         self.mox.ReplayAll()
 
         self.post_task()
-        source = db.get(self.sources[0].key())
+        source = self.sources[0].key.get()
         self.assertEqual('disabled', source.status)
 
     finally:
@@ -286,7 +285,7 @@ class PollTest(TaskQueueTest):
         self.mox.ReplayAll()
 
         self.post_task()
-        source = db.get(self.sources[0].key())
+        source = self.sources[0].key.get()
         self.assertEqual('error', source.status)
         self.mox.VerifyAll()
 
@@ -303,10 +302,10 @@ class PollTest(TaskQueueTest):
     self.sources[0]._set('etag', '"my etag"')
     self.post_task()
 
-    source = db.get(self.sources[0].key())
+    source = self.sources[0].key.get()
     self.assertEqual('"my etag"', source.last_activities_etag)
     source.last_polled = util.EPOCH
-    source.save()
+    source.put()
 
     self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities_response')
     testutil.FakeSource.get_activities_response(
@@ -317,7 +316,7 @@ class PollTest(TaskQueueTest):
     self.mox.ReplayAll()
     self.post_task()
 
-    source = db.get(self.sources[0].key())
+    source = self.sources[0].key.get()
     self.assertEqual('"new etag"', source.last_activities_etag)
 
   def test_last_activity_id(self):
@@ -325,10 +324,10 @@ class PollTest(TaskQueueTest):
     self.sources[0].set_activities(list(reversed(self.activities)))
     self.post_task()
 
-    source = db.get(self.sources[0].key())
+    source = self.sources[0].key.get()
     self.assertEqual('c', source.last_activity_id)
     source.last_polled = util.EPOCH
-    source.save()
+    source.put()
 
     self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities_response')
     testutil.FakeSource.get_activities_response(
@@ -358,7 +357,7 @@ class PropagateTest(TaskQueueTest):
     if response is None:
       response = self.responses[0]
     super(PropagateTest, self).post_task(expected_status=expected_status,
-                                         params={'response_key': response.key()},
+                                         params={'response_key': response.key},
                                          **kwargs)
 
   def assert_response_is(self, status, leased_until=False, sent=[], error=[],
@@ -367,7 +366,7 @@ class PropagateTest(TaskQueueTest):
     """
     if response is None:
       response = self.responses[0]
-    response = db.get(response.key())
+    response = response.key.get()
     self.assertEqual(status, response.status)
     if leased_until is not False:
       self.assertEqual(leased_until, response.leased_until)
@@ -381,7 +380,7 @@ class PropagateTest(TaskQueueTest):
                         error={}):
     if source_url is None:
       source_url = 'http://localhost/comment/fake/%s/a/1_2_a' % \
-          self.sources[0].key().name()
+          self.sources[0].key.string_id()
     mock_send = send.WebmentionSend(source_url, target)
     mock_send.receiver_endpoint = 'http://webmention/endpoint'
     mock_send.response = 'used in logging'
@@ -392,7 +391,7 @@ class PropagateTest(TaskQueueTest):
     """Normal propagate tasks."""
     self.assertEqual('new', self.responses[0].status)
 
-    id = self.sources[0].key().name()
+    id = self.sources[0].key.string_id()
     for url in ('http://localhost/comment/fake/%s/a/1_2_a' % id,
                 'http://localhost/like/fake/%s/a/alice' % id,
                 'http://localhost/repost/fake/%s/a/bob' % id):
@@ -407,7 +406,7 @@ class PropagateTest(TaskQueueTest):
   def test_propagate_from_error(self):
     """A normal propagate task, with a response starting as 'error'."""
     self.responses[0].status = 'error'
-    self.responses[0].save()
+    self.responses[0].put()
 
     self.expect_webmention().AndReturn(True)
     self.mox.ReplayAll()
@@ -420,7 +419,7 @@ class PropagateTest(TaskQueueTest):
     self.responses[0].unsent = ['http://1', 'http://2']
     self.responses[0].error = ['http://3', 'http://4', 'http://5']
     self.responses[0].sent = ['http://6']
-    self.responses[0].save()
+    self.responses[0].put()
 
     self.expect_webmention(target='http://1').InAnyOrder().AndReturn(True)
     self.expect_webmention(target='http://2', error={'code': 'NO_ENDPOINT'})\
@@ -436,7 +435,7 @@ class PropagateTest(TaskQueueTest):
 
     self.mox.ReplayAll()
     self.post_task(expected_status=Propagate.ERROR_HTTP_RETURN_CODE)
-    response = db.get(self.responses[0].key())
+    response = self.responses[0].key.get()
     self.assert_response_is('error',
                             sent=['http://6', 'http://1'],
                             error=['http://3', 'http://5'],
@@ -452,7 +451,7 @@ class PropagateTest(TaskQueueTest):
     self.responses[0].error = ['http://instagr.am/bad',
                                # urlparse raises ValueError: Invalid IPv6 URL
                                'http://foo]']
-    self.responses[0].save()
+    self.responses[0].put()
 
     self.expect_webmention(target='http://foo/good').AndReturn(True)
     self.mox.ReplayAll()
@@ -463,7 +462,7 @@ class PropagateTest(TaskQueueTest):
   def test_non_html_url(self):
     """Target URLs that aren't HTML should be ignored."""
     self.responses[0].unsent = ['http://not/html']
-    self.responses[0].save()
+    self.responses[0].put()
 
     self.mox.StubOutWithMock(util.requests, 'head')
     resp = requests.Response()
@@ -478,7 +477,7 @@ class PropagateTest(TaskQueueTest):
   def test_no_targets(self):
     """No target URLs."""
     self.responses[0].unsent = []
-    self.responses[0].save()
+    self.responses[0].put()
 
     self.mox.ReplayAll()
     self.post_task()
@@ -487,7 +486,7 @@ class PropagateTest(TaskQueueTest):
   def test_already_complete(self):
     """If the response has already been propagated, do nothing."""
     self.responses[0].status = 'complete'
-    self.responses[0].save()
+    self.responses[0].put()
 
     self.post_task()
     self.assert_response_is('complete', unsent=['http://target1/post/url'])
@@ -497,13 +496,13 @@ class PropagateTest(TaskQueueTest):
     self.responses[0].status = 'processing'
     leased_until = NOW + datetime.timedelta(minutes=1)
     self.responses[0].leased_until = leased_until
-    self.responses[0].save()
+    self.responses[0].put()
 
     self.post_task(expected_status=Propagate.ERROR_HTTP_RETURN_CODE)
     self.assert_response_is('processing', leased_until,
                             unsent=['http://target1/post/url'])
 
-    response = db.get(self.responses[0].key())
+    response = self.responses[0].key.get()
     self.assertEqual('processing', response.status)
     self.assertEqual(leased_until, response.leased_until)
 
@@ -511,7 +510,7 @@ class PropagateTest(TaskQueueTest):
     """If the response is processing but the lease has expired, process it."""
     self.responses[0].status = 'processing'
     self.responses[0].leased_until = NOW - datetime.timedelta(minutes=1)
-    self.responses[0].save()
+    self.responses[0].put()
 
     self.expect_webmention().AndReturn(True)
     self.mox.ReplayAll()
@@ -521,12 +520,12 @@ class PropagateTest(TaskQueueTest):
 
   def test_no_response(self):
     """If the response doesn't exist, the request should fail."""
-    self.responses[0].delete()
+    self.responses[0].key.delete()
     self.post_task(expected_status=Propagate.ERROR_HTTP_RETURN_CODE)
 
   def test_no_source(self):
     """If the source doesn't exist, the request should give up."""
-    self.sources[0].delete()
+    self.sources[0].key.delete()
     self.post_task(expected_status=200)
 
   def test_non_public_activity(self):
@@ -534,7 +533,7 @@ class PropagateTest(TaskQueueTest):
     activity = json.loads(self.responses[0].activity_json)
     activity['to'] = [{'objectType':'group', 'alias':'@private'}]
     self.responses[0].activity_json = json.dumps(activity)
-    self.responses[0].save()
+    self.responses[0].put()
 
     self.post_task()
     self.assert_response_is('complete', unsent=['http://target1/post/url'], sent=[])
@@ -544,7 +543,7 @@ class PropagateTest(TaskQueueTest):
     resp = json.loads(self.responses[0].response_json)
     resp['to'] = [{'objectType':'group', 'alias':'@private'}]
     self.responses[0].response_json = json.dumps(resp)
-    self.responses[0].save()
+    self.responses[0].put()
 
     self.post_task()
     self.assert_response_is('complete', unsent=['http://target1/post/url'], sent=[])
@@ -557,7 +556,7 @@ class PropagateTest(TaskQueueTest):
       self.mox.UnsetStubs()
       self.setUp()
       self.responses[0].status = 'new'
-      self.responses[0].save()
+      self.responses[0].put()
       self.expect_webmention(error={'code': code, 'http_status': 500})\
           .AndReturn(False)
       self.mox.ReplayAll()
@@ -574,7 +573,7 @@ class PropagateTest(TaskQueueTest):
   def test_webmention_fail_and_succeed(self):
     """All webmentions should be attempted, but any failure sets error status."""
     self.responses[0].unsent = ['http://first', 'http://second']
-    self.responses[0].save()
+    self.responses[0].put()
     self.expect_webmention(target='http://first', error={'code': 'FOO'})\
         .AndReturn(False)
     self.expect_webmention(target='http://second').AndReturn(True)
@@ -587,7 +586,7 @@ class PropagateTest(TaskQueueTest):
   def test_webmention_exception(self):
     """Exceptions on individual target URLs shouldn't stop the whole task."""
     self.responses[0].unsent = ['http://error', 'http://good']
-    self.responses[0].save()
+    self.responses[0].put()
     self.expect_webmention(target='http://error').AndRaise(Exception('foo'))
     self.expect_webmention(target='http://good').AndReturn(True)
     self.mox.ReplayAll()
@@ -599,9 +598,9 @@ class PropagateTest(TaskQueueTest):
   def test_translate_appspot_to_bridgy(self):
     """Tasks on brid.gy should use brid-gy.appspot.com as the source URL."""
     self.responses[0].unsent = ['http://good']
-    self.responses[0].save()
+    self.responses[0].put()
     source_url = 'https://brid-gy.appspot.com/comment/fake/%s/a/1_2_a' % \
-        self.sources[0].key().name()
+        self.sources[0].key.string_id()
     self.expect_webmention(source_url=source_url, target='http://good')\
         .AndReturn(True)
 
@@ -614,9 +613,9 @@ class PropagateTest(TaskQueueTest):
     TODO: unify with test_translate_appspot_to_bridgy()
     """
     self.responses[0].unsent = ['http://good']
-    self.responses[0].save()
+    self.responses[0].put()
     source_url = 'https://brid-gy.appspot.com/comment/fake/%s/a/1_2_a' % \
-        self.sources[0].key().name()
+        self.sources[0].key.string_id()
     self.expect_webmention(source_url=source_url, target='http://good')\
         .AndReturn(True)
 

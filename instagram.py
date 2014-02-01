@@ -27,7 +27,7 @@ import appengine_config
 import models
 import util
 
-from google.appengine.ext import db
+from google.appengine.ext import ndb
 import webapp2
 
 
@@ -50,8 +50,8 @@ class Instagram(models.Source):
     """
     user = json.loads(auth_entity.user_json)
     username = user['username']
-    return Instagram(key_name=username,
-                     auth_entity=auth_entity,
+    return Instagram(id=username,
+                     auth_entity=auth_entity.key,
                      name=user['full_name'],
                      picture=user['profile_picture'],
                      url='http://instagram.com/' + username)
@@ -76,7 +76,7 @@ class OAuthCallback(oauth_instagram.CallbackHandler, util.Handler):
     if state:  # this is a delete
       if auth_entity:
         self.redirect('/delete/finish?auth_entity=%s&state=%s' %
-                      (auth_entity.key(), state))
+                      (auth_entity.key, state))
       else:
         self.messages.add("OK, you're still signed up.")
         self.redirect('/')

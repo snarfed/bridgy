@@ -19,28 +19,27 @@ from google.appengine.ext import testbed
 class ResponseTest(testutil.ModelsTest):
 
   def test_get_or_save(self):
-    self.sources[0].save()
+    self.sources[0].put()
 
     response = self.responses[0]
-    self.assertEqual(0, Response.all().count())
+    self.assertEqual(0, Response.query().count())
     self.assertEqual(0, len(self.taskqueue_stub.GetTasks('propagate')))
 
     # new. should add a propagate task.
     saved = response.get_or_save()
-    self.assertTrue(saved.is_saved())
-    self.assertEqual(response.key(), saved.key())
+    self.assertEqual(response.key, saved.key)
     self.assertEqual(response.source, saved.source)
     self.assertEqual('comment', saved.type)
 
     tasks = self.taskqueue_stub.GetTasks('propagate')
     self.assertEqual(1, len(tasks))
-    self.assertEqual(str(response.key()),
+    self.assertEqual(str(response.key),
                      testutil.get_task_params(tasks[0])['response_key'])
     self.assertEqual('/_ah/queue/propagate', tasks[0]['url'])
 
     # existing. no new task.
     same = saved.get_or_save()
-    self.assertEqual(saved.source.key(), same.source.key())
+    self.assertEqual(saved.source, same.source)
     self.assertEqual(1, len(tasks))
 
   def test_get_or_save_objectType_note(self):
@@ -52,7 +51,7 @@ class ResponseTest(testutil.ModelsTest):
     self.assertEqual('comment', saved.type)
 
   def test_dom_id(self):
-    self.assertEqual('fake-%s' % self.sources[0].key().name(),
+    self.assertEqual('fake-%s' % self.sources[0].key.string_id(),
                      self.sources[0].dom_id())
 
   def test_get_type(self):
@@ -67,33 +66,33 @@ class SourceTest(testutil.HandlerTest):
 
   def _test_create_new(self):
     FakeSource.create_new(self.handler)
-    self.assertEqual(1, FakeSource.all().count())
+    self.assertEqual(1, FakeSource.query().count())
 
     tasks = self.taskqueue_stub.GetTasks('poll')
     self.assertEqual(1, len(tasks))
-    source = FakeSource.all().get()
+    source = FakeSource.query().get()
     self.assertEqual('/_ah/queue/poll', tasks[0]['url'])
     params = testutil.get_task_params(tasks[0])
-    self.assertEqual(str(source.key()), params['source_key'])
+    self.assertEqual(str(source.key), params['source_key'])
     self.assertEqual('1970-01-01-00-00-00',
                      params['last_polled'])
 
   def test_create_new(self):
-    self.assertEqual(0, FakeSource.all().count())
+    self.assertEqual(0, FakeSource.query().count())
     self._test_create_new()
     msg = "Added fake (FakeSource). Refresh to see what we've found!"
     self.assert_equals({msg}, self.handler.messages)
 
   def test_create_new_already_exists(self):
-    FakeSource.new(None).save()
-    FakeSource.key_name_counter -= 1
+    FakeSource.new(None).put()
+    FakeSource.string_id_counter -= 1
     self._test_create_new()
     msg = "Updated fake (FakeSource). Refresh to see what's new!"
     self.assert_equals({msg}, self.handler.messages)
 
   def test_get_post(self):
     post = {'verb': 'post', 'object': {'objectType': 'note', 'content': 'asdf'}}
-    source = Source(key_name='x')
+    source = Source(id='x')
     self.mox.StubOutWithMock(source, 'get_activities')
     source.get_activities(activity_id='123', user_id='x').AndReturn([post])
 

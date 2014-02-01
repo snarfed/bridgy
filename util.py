@@ -19,7 +19,7 @@ POLL_TASK_DATETIME_FORMAT = '%Y-%m-%d-%H-%M-%S'
 def added_source_redirect(handler, source):
   """Redirects to the dashboard after adding a source.
   """
-  uri = '/?added=%s#%s' % (source.key(), source.dom_id())
+  uri = '/?added=%s#%s' % (source.key, source.dom_id())
   uri = add_query_params(uri, [('msg', msg) for msg in handler.messages])
   handler.redirect(uri)
 
@@ -29,7 +29,7 @@ def add_poll_task(source, **kwargs):
   """
   last_polled_str = source.last_polled.strftime(POLL_TASK_DATETIME_FORMAT)
   taskqueue.add(queue_name='poll',
-                params={'source_key': str(source.key()),
+                params={'source_key': str(source.key),
                         'last_polled': last_polled_str},
                 **kwargs)
 

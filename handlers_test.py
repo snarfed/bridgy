@@ -10,7 +10,7 @@ import testutil
 import util
 import webapp2
 
-from google.appengine.ext import db
+from google.appengine.ext import ndb
 
 
 class HandlersTest(testutil.HandlerTest):
@@ -28,12 +28,12 @@ class HandlersTest(testutil.HandlerTest):
             'content': 'asdf http://orig/post qwert',
             'author': {'image': {'url': 'http://example.com/ryan/image'}},
             }}])
-    self.source.save()
+    self.source.put()
 
   def check_response(self, url_template, expected):
     # use an HTTPS request so that URL schemes are converted
     resp = handlers.application.get_response(
-      url_template % self.source.key().name(), scheme='https')
+      url_template % self.source.key.string_id(), scheme='https')
     self.assertEqual(200, resp.status_int, resp.body)
     header_lines = len(handlers.TEMPLATE.template.splitlines()) - 2
     actual = '\n'.join(resp.body.splitlines()[header_lines:-1])
@@ -60,7 +60,7 @@ class HandlersTest(testutil.HandlerTest):
 
   def test_post_json(self):
     resp = handlers.application.get_response(
-      '/post/fake/%s/000?format=json' % self.source.key().name(), scheme='https')
+      '/post/fake/%s/000?format=json' % self.source.key.string_id(), scheme='https')
     self.assertEqual(200, resp.status_int, resp.body)
     self.assert_equals({
         'type': ['h-entry'],
@@ -80,7 +80,7 @@ class HandlersTest(testutil.HandlerTest):
 
   def test_bad_source_type(self):
     resp = handlers.application.get_response('/post/not_a_type/%s/000' %
-                                             self.source.key().name())
+                                             self.source.key.string_id())
     self.assertEqual(400, resp.status_int)
 
   def test_bad_user(self):
@@ -89,12 +89,12 @@ class HandlersTest(testutil.HandlerTest):
 
   def test_bad_format(self):
     resp = handlers.application.get_response('/post/fake/%s/000?format=asdf' %
-                                             self.source.key().name())
+                                             self.source.key.string_id())
     self.assertEqual(400, resp.status_int)
 
   def test_ignore_unknown_query_params(self):
     resp = handlers.application.get_response('/post/fake/%s/000?target=x/y/z' %
-                                             self.source.key().name())
+                                             self.source.key.string_id())
     self.assertEqual(200, resp.status_int)
 
   def test_comment(self):

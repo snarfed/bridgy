@@ -19,20 +19,21 @@ class TwitterTest(testutil.ModelsTest):
     super(TwitterTest, self).setUp()
     self.handler.messages = []
     self.auth_entity = oauth_twitter.TwitterAuth(
-      key_name='my_key_name', auth_code='my_code',
+      id='my_string_id',
       token_key='my_key', token_secret='my_secret',
       user_json=json.dumps({'name': 'Ryan Barrett',
                             'screen_name': 'snarfed_org',
                             'description': 'something about me',
                             'profile_image_url': 'http://pi.ct/ure',
                             }))
+    self.auth_entity.put()
 
   def test_new(self):
     tw = Twitter.new(self.handler, auth_entity=self.auth_entity)
     self.assertEqual(self.auth_entity, tw.auth_entity)
     self.assertEqual('my_key', tw.as_source.access_token_key)
     self.assertEqual('my_secret', tw.as_source.access_token_secret)
-    self.assertEqual('snarfed_org', tw.key().name())
+    self.assertEqual('snarfed_org', tw.key.string_id())
     self.assertEqual('http://pi.ct/ure', tw.picture)
     self.assertEqual('Ryan Barrett', tw.name)
 
@@ -62,8 +63,8 @@ class TwitterTest(testutil.ModelsTest):
       'id': 'tag:twitter.com,2013:222',
       'object': {'url': 'http://my/favorite'},
       }
-    models.Response(key_name='tag:twitter.com,2013:000_favorited_by_222',
-                    response_json=json.dumps(like)).save()
+    models.Response(id='tag:twitter.com,2013:000_favorited_by_222',
+                    response_json=json.dumps(like)).put()
 
     tw = Twitter.new(self.handler, auth_entity=self.auth_entity)
     self.assert_equals(like, tw.get_like('unused', '000', '222'))
