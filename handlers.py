@@ -86,10 +86,9 @@ class ItemHandler(webapp2.RequestHandler):
       self.abort(400, "Source type '%s' not found. Known sources: %s" %
                  (source_short_name, SOURCES))
 
-    key = ndb.Key.from_path(source_cls.kind(), string_id)
-    self.source = key.get()
+    self.source = source_cls.get_by_id(string_id)
     if not self.source:
-      self.abort(400, '%s not found' % key.to_path())
+      self.abort(400, '%s %s not found' % (source_short_name, string_id))
 
     format = self.request.get('format', 'html')
     if format not in ('html', 'json'):
