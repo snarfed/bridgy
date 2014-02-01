@@ -30,7 +30,7 @@ class TwitterTest(testutil.ModelsTest):
 
   def test_new(self):
     tw = Twitter.new(self.handler, auth_entity=self.auth_entity)
-    self.assertEqual(self.auth_entity, tw.auth_entity)
+    self.assertEqual(self.auth_entity, tw.auth_entity.get())
     self.assertEqual('my_key', tw.as_source.access_token_key)
     self.assertEqual('my_secret', tw.as_source.access_token_secret)
     self.assertEqual('snarfed_org', tw.key.string_id())
