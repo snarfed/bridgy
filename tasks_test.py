@@ -58,6 +58,9 @@ class PollTest(TaskQueueTest):
 
   def assert_responses(self):
     """Asserts that all of self.responses are saved."""
+    # ndb's auto_now=True only happens when an entity is saved
+    for resp in self.responses:
+      resp.put()
     self.assert_entities_equal(self.responses, models.Response.query())
 
   def test_poll(self):
