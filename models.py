@@ -124,7 +124,11 @@ class Source(Site):
     raise NotImplementedError()
 
   def __getattr__(self, name):
-    """Lazily load the auth entity and instantiate self.as_source."""
+    """Lazily load the auth entity and instantiate self.as_source.
+
+    Once self.as_source is set, this method will *not* be called; the as_source
+    attribute will be returned normally.
+    """
     if name == 'as_source' and self.auth_entity:
       token = self.auth_entity.get().access_token()
       if not isinstance(token, tuple):

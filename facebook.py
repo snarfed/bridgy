@@ -75,9 +75,11 @@ class FacebookPage(models.Source):
     url = 'http://facebook.com/' + id
     picture = ('http://graph.facebook.com/%s/picture?type=large' %
                user.get('username', id))
-    return FacebookPage(id=id, type=user['type'], name=user['name'],
-                        username=user['username'],
-                        auth_entity=auth_entity.key, picture=picture, url=url)
+    return FacebookPage(id=id, type=user.get('type'),
+                        name=user.get('name'),
+                        username=user.get('username'),
+                        auth_entity=auth_entity.key,
+                        picture=picture, url=url)
 
   def get(self, url):
     """Simple wrapper around urlopen(). Returns decoded JSON dict."""
@@ -144,8 +146,7 @@ class AddFacebookPage(oauth_facebook.CallbackHandler, util.Handler):
       self.redirect('/')
       return
 
-    fb = FacebookPage.create_new(
-      self, auth_entity=ndb.Key.from_old_key(auth_entity.key()))
+    fb = FacebookPage.create_new(self, auth_entity=auth_entity)
     util.added_source_redirect(self, fb)
 
 

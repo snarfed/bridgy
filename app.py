@@ -23,7 +23,7 @@ from googleplus import GooglePlusPage
 from instagram import Instagram
 from twitter import Twitter
 import handlers
-import models
+from models import Response, Source
 import util
 from webutil.handlers import TemplateHandler
 
@@ -37,7 +37,7 @@ import webapp2
 def source_dom_id_to_key(id):
   """Parses a string returned by Source.dom_id() and returns its ndb.Key."""
   short_name, string_id = id.split('-', 1)
-  return ndb.Key.from_path(handlers.SOURCES.get(short_name).kind(), string_id)
+  return ndb.Key(handlers.SOURCES.get(short_name), string_id)
 
 
 class DashboardHandler(util.Handler):
@@ -94,9 +94,9 @@ class ResponsesHandler(util.Handler):
     """Renders a single source's recent responses as an HTML fragment.
     """
     key = source_dom_id_to_key(util.get_required_param(self, 'source'))
-    responses = models.Response.query()\
-        .filter('source =', key).order('-updated').fetch(10)
-
+    responses = Response.query().filter(Response.source == key)\
+                                .order(-Response.updated)\
+                                .fetch(10)
     if not responses:
       self.error(self.NO_RESULTS_HTTP_STATUS)
       return
@@ -192,7 +192,7 @@ class DeleteFinishHandler(util.Handler):
 
     logged_in_as = util.get_required_param(self, 'auth_entity')
     source = ndb.Key(urlsafe=util.get_required_param(self, 'state').get())
-    if logged_in_as == models.Source.auth_entity.urlsafe():
+    if logged_in_as == Source.auth_entity.urlsafe():
       # TODO: remove credentials, tasks, etc.
       source.key.delete()
       self.messages.add('Deleted %s. Sorry to see you go!' % source.label())

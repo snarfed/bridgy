@@ -62,11 +62,13 @@ class GooglePlusPage(models.Source):
                           picture=picture,
                           type=type)
 
-  def __init__(self, *args, **kwargs):
-    """Overridden because as_googleplus.GooglePlus's ctor needs auth_entity."""
-    super(GooglePlusPage, self).__init__(*args, **kwargs)
-    if self.auth_entity:
-      self.as_source = as_googleplus.GooglePlus(auth_entity=self.auth_entity)
+  def __getattr__(self, name):
+    """Overridden to pass auth_entity to as_googleplus.GooglePlus's ctor."""
+    if name == 'as_source' and self.auth_entity:
+      self.as_source = as_googleplus.GooglePlus(auth_entity=self.auth_entity.get())
+      return self.as_source
+
+    return getattr(super(Source, self), name)
 
 
 class OAuthCallback(util.Handler):
@@ -82,7 +84,7 @@ class OAuthCallback(util.Handler):
     if state:  # this is a delete
       if auth_entity:
         self.redirect('/delete/finish?auth_entity=%s&state=%s' %
-                      (auth_entity.key, state))
+                      (auth_entity, state))
       else:
         self.messages.add("OK, you're still signed up.")
         self.redirect('/')
@@ -92,8 +94,8 @@ class OAuthCallback(util.Handler):
         self.messages.add("OK, you're not signed up. Hope you reconsider!")
         self.redirect('/')
         return
-      auth_entity = ndb.Key(urlsafe=auth_entity).get()
-      gp = GooglePlusPage.create_new(self, auth_entity=auth_entity)
+      gp = GooglePlusPage.create_new(
+        self, auth_entity=ndb.Key(urlsafe=auth_entity).get())
       util.added_source_redirect(self, gp)
 
 

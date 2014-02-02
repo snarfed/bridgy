@@ -19,7 +19,7 @@ POLL_TASK_DATETIME_FORMAT = '%Y-%m-%d-%H-%M-%S'
 def added_source_redirect(handler, source):
   """Redirects to the dashboard after adding a source.
   """
-  uri = '/?added=%s#%s' % (source.key, source.dom_id())
+  uri = '/?added=%s#%s' % (source.key.urlsafe(), source.dom_id())
   uri = add_query_params(uri, [('msg', msg) for msg in handler.messages])
   handler.redirect(uri)
 
