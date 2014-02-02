@@ -198,6 +198,7 @@ class HandlersTest(testutil.HandlerTest):
     self.check_response('/rsvp/fake/%s/000/111', """\
 <article class="h-entry h-as-rsvp">
 <span class="u-uid">tag:fa.ke,2013:111</span>
+<div class="p-name">Unknown is not attending</div>
 
   <div class="h-card p-author">
 
