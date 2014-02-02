@@ -272,7 +272,7 @@ class Response(StringIdModel):
 
     self.put()
     taskqueue.add(queue_name='propagate',
-                  params={'response_key': str(self.key)},
+                  params={'response_key': self.key.urlsafe()},
                   # tasks inserted from a backend (e.g. twitter_streaming) are
                   # sent to that backend by default, which doesn't work in the
                   # dev_appserver. setting the target version to 'default' in

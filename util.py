@@ -29,7 +29,7 @@ def add_poll_task(source, **kwargs):
   """
   last_polled_str = source.last_polled.strftime(POLL_TASK_DATETIME_FORMAT)
   taskqueue.add(queue_name='poll',
-                params={'source_key': str(source.key),
+                params={'source_key': source.key.urlsafe(),
                         'last_polled': last_polled_str},
                 **kwargs)
 

@@ -33,7 +33,7 @@ class ResponseTest(testutil.ModelsTest):
 
     tasks = self.taskqueue_stub.GetTasks('propagate')
     self.assertEqual(1, len(tasks))
-    self.assertEqual(str(response.key),
+    self.assertEqual(response.key.urlsafe(),
                      testutil.get_task_params(tasks[0])['response_key'])
     self.assertEqual('/_ah/queue/propagate', tasks[0]['url'])
 
@@ -73,7 +73,7 @@ class SourceTest(testutil.HandlerTest):
     source = FakeSource.query().get()
     self.assertEqual('/_ah/queue/poll', tasks[0]['url'])
     params = testutil.get_task_params(tasks[0])
-    self.assertEqual(str(source.key), params['source_key'])
+    self.assertEqual(source.key.urlsafe(), params['source_key'])
     self.assertEqual('1970-01-01-00-00-00',
                      params['last_polled'])
 

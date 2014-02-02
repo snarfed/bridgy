@@ -31,7 +31,6 @@ import util
 from webmentiontools import send
 
 from google.appengine.ext import ndb
-from google.appengine.api import taskqueue
 import webapp2
 
 import appengine_config
@@ -205,7 +204,7 @@ class Poll(webapp2.RequestHandler):
 
       for resp in new_responses:
         models.Response(id=resp['id'],
-                        source=source,
+                        source=source.key,
                         activity_json=json.dumps(activity),
                         response_json=json.dumps(resp),
                         unsent=list(targets),

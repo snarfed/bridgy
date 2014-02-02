@@ -51,9 +51,10 @@ class PollTest(TaskQueueTest):
   post_url = '/_ah/queue/poll'
 
   def post_task(self, expected_status=200):
-    super(PollTest, self).post_task(expected_status=expected_status,
-                                    params={'source_key': self.sources[0].key,
-                                            'last_polled': '1970-01-01-00-00-00'})
+    super(PollTest, self).post_task(
+      expected_status=expected_status,
+      params={'source_key': self.sources[0].key.urlsafe(),
+              'last_polled': '1970-01-01-00-00-00'})
 
   def assert_responses(self):
     """Asserts that all of self.responses are saved."""
@@ -80,7 +81,7 @@ class PollTest(TaskQueueTest):
     self.assertEqual(1, len(tasks))
     self.assertEqual('/_ah/queue/poll', tasks[0]['url'])
     params = testutil.get_task_params(tasks[0])
-    self.assert_equals(str(source.key), params['source_key'])
+    self.assert_equals(source.key.urlsafe(), params['source_key'])
 
   def test_poll_error(self):
     """If anything goes wrong, the source status should be set to 'error'."""
@@ -191,9 +192,10 @@ class PollTest(TaskQueueTest):
     self.activities[2]['object']['to'] = [{'objectType':'group', 'alias':'@public'}]
 
     self.post_task()
-    ids = set(json.loads(ndb.Key(urlsafe=testutil.get_task_params(task).get()['response_key'])
-                         .activity_json)['id']
-              for task in self.taskqueue_stub.GetTasks('propagate'))
+    ids = set()
+    for task in self.taskqueue_stub.GetTasks('propagate'):
+      resp_key = ndb.Key(urlsafe=testutil.get_task_params(task)['response_key'])
+      ids.add(json.loads(resp_key.get().activity_json)['id'])
     self.assert_equals(ids, set([self.activities[0]['id'], self.activities[2]['id']]))
 
   def test_existing_responses(self):

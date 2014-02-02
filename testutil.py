@@ -40,10 +40,10 @@ class FakeBase(ndb.Model):
   data = {}
 
   def _set(self, name, val):
-    FakeBase.data[(str(self.key), name)] = val
+    FakeBase.data[(self.key.urlsafe(), name)] = val
 
   def _get(self, name):
-    return FakeBase.data.get((str(self.key), name))
+    return FakeBase.data.get((self.key.urlsafe(), name))
 
   @classmethod
   def new(cls, handler, **props):
