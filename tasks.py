@@ -78,7 +78,6 @@ class Poll(webapp2.RequestHandler):
     if not source or source.status == 'disabled':
       logging.error('Source not found or disabled. Dropping task.')
       return
-    logging.info('@ %s', source.auth_entity)
     logging.info('Source: %s %s', source.label(), source.key.string_id())
 
     last_polled = self.request.params['last_polled']
