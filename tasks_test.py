@@ -281,8 +281,6 @@ class PollTest(TaskQueueTest):
                   errors.HttpError(httplib2.Response({'status': 429}), ''),
                   urllib2.HTTPError('url', 403, 'msg', {}, None)):
         self.mox.UnsetStubs()
-        self.setUp()
-
         self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities_response')
         testutil.FakeSource.get_activities_response(
           count=mox.IgnoreArg(), fetch_replies=True, fetch_likes=True,
@@ -299,6 +297,8 @@ class PollTest(TaskQueueTest):
         tasks = self.taskqueue_stub.GetTasks('poll')
         self.assertEqual(1, len(tasks))
         self.assertEqual('/_ah/queue/poll', tasks[0]['url'])
+
+        tasks = self.taskqueue_stub.FlushQueue('poll')
 
     finally:
       self.mox.UnsetStubs()
