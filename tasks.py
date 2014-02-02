@@ -274,8 +274,8 @@ class Propagate(webapp2.RequestHandler):
         host_url = self.request.host_url
 
       local_response_url = '%s/%s/%s/%s/%s/%s' % (
-        host_url, response.type, response.source.SHORT_NAME,
-        response.source.key.string_id(), post_id, response_id)
+        host_url, response.type, response.source.get().SHORT_NAME,
+        response.source.string_id(), post_id, response_id)
 
       # send each webmention. recheck the url here since the checks may have failed
       # during the poll or streaming add.
@@ -368,7 +368,7 @@ class Propagate(webapp2.RequestHandler):
     Args:
       response: models.Response
     """
-    existing = ndb.Key(urlsafe=response.key.get())
+    existing = response.key.get()
     if existing is None:
       self.fail('response entity disappeared!', level=logging.ERROR)
     elif existing.status == 'complete':

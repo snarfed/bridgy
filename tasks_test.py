@@ -74,7 +74,8 @@ class PollTest(TaskQueueTest):
     tasks = self.taskqueue_stub.GetTasks('propagate')
     for task in tasks:
       self.assertEqual('/_ah/queue/propagate', task['url'])
-    keys = set(ndb.Key(testutil.get_task_params(t)['response_key']) for t in tasks)
+    keys = set(ndb.Key(urlsafe=testutil.get_task_params(t)['response_key'])
+               for t in tasks)
     self.assert_equals(keys, set(r.key for r in self.responses))
 
     tasks = self.taskqueue_stub.GetTasks('poll')
@@ -358,9 +359,10 @@ class PropagateTest(TaskQueueTest):
   def post_task(self, expected_status=200, response=None, **kwargs):
     if response is None:
       response = self.responses[0]
-    super(PropagateTest, self).post_task(expected_status=expected_status,
-                                         params={'response_key': response.key},
-                                         **kwargs)
+    super(PropagateTest, self).post_task(
+      expected_status=expected_status,
+      params={'response_key': response.key.urlsafe()},
+      **kwargs)
 
   def assert_response_is(self, status, leased_until=False, sent=[], error=[],
                          unsent=[], skipped=[], failed=[], response=None):
