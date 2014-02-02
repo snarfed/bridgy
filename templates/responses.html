@@ -18,7 +18,7 @@
     {% endwith %}
 
    </div><div class="col-sm-3">
-    <a href="/log?start_time={{ response.updated|date:'U' }}&key={{ response.key }}">
+    <a href="/log?start_time={{ response.updated|date:'U' }}&key={{ response.key.urlsafe }}">
       {{ response.updated|timesince }} ago
       {% if response.status == 'error' %}
        <span title="Error" class="glyphicon glyphicon-exclamation-sign"></span>

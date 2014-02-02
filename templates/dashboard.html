@@ -67,7 +67,7 @@ below to try it yourself, read <a href="/about">even more details</a>, or
           title="This account was disconnected on {% firstof source.AS_CLASS.NAME source.kind %}'s end. To fix this, delete and re-add it."></span>
   {% endif %}
   <form method="post" action="/delete/start">
-    <input name="key" type="hidden" value="{{ source.key }}" />
+    <input name="key" type="hidden" value="{{ source.key.urlsafe }}" />
     <button type="submit" title="Delete" class="delete">&times;</button>
   </form>
   </span>
@@ -77,7 +77,7 @@ below to try it yourself, read <a href="/about">even more details</a>, or
     Not polled yet
   {% else %}
     Polled
-    <a href="/log?start_time={{ source.last_poll_attempt|date:'U' }}&key={{ source.key }}">
+    <a href="/log?start_time={{ source.last_poll_attempt|date:'U' }}&key={{ source.key.urlsafe }}">
       {{ source.last_poll_attempt|timesince }} ago
     {% if source.status == "error" %}
      <span title="Error" class="glyphicon glyphicon-exclamation-sign"></span>
@@ -86,7 +86,7 @@ below to try it yourself, read <a href="/about">even more details</a>, or
   {% endif %}
 
   <!-- <form method="post" action="/poll"> -->
-  <!--   <input name="key" type="hidden" value="{{ source.key }}" /> -->
+  <!--   <input name="key" type="hidden" value="{{ source.key.urlsafe }}" /> -->
   <!--   <button type="submit" title="Poll now" class="glyphicon glyphicon-refresh" -->
   <!--           style="border: none; background: none;"></button> -->
   <!-- </form> -->
