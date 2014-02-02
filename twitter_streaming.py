@@ -85,8 +85,9 @@ class Listener(streaming.StreamListener):
     super(Listener, self).__init__()
     self.source = source
 
-  def on_connect(self):
-    logging.info('Connected! (%s)', self.source.key.string_id())
+  # this is too noisy
+  # def on_connect(self):
+  #   logging.info('Connected! (%s)', self.source.key.string_id())
 
   def on_data(self, raw_data):
     try:
@@ -226,8 +227,9 @@ def shutdown_hook():
 
   global streams, streams_lock
   with streams_lock:
+    if streams:
+      logging.info('Disconnecting %d streams', len(streams))
     for key, stream in streams.items():
-      logging.info('Disconnecting %s %s', key.string_id(), key)
       stream.disconnect()
     streams = None
 
