@@ -181,7 +181,8 @@ def update_streams_once():
 
   # Connect to new accounts
   to_connect = source_keys - stream_keys
-  logging.info('Connecting %d streams', len(to_connect))
+  if to_connect:
+    logging.info('Connecting %d streams', len(to_connect))
   for key in to_connect:
     source = sources[key]
     auth = oauth_twitter.TwitterAuth.tweepy_auth(
@@ -196,7 +197,8 @@ def update_streams_once():
 
   # Disconnect from deleted or disabled accounts
   to_disconnect = stream_keys - source_keys
-  logging.info('Disconnecting %d streams', len(to_disconnect))
+  if to_disconnect:
+    logging.info('Disconnecting %d streams', len(to_disconnect))
   for key in to_disconnect:
     streams[key].disconnect()
     del streams[key]
