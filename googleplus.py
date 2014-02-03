@@ -68,7 +68,7 @@ class GooglePlusPage(models.Source):
       self.as_source = as_googleplus.GooglePlus(auth_entity=self.auth_entity.get())
       return self.as_source
 
-    return getattr(super(Source, self), name)
+    return getattr(super(GooglePlusPage, self), name)
 
 
 class OAuthCallback(util.Handler):

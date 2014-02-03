@@ -167,20 +167,19 @@ class DeleteStartHandler(util.Handler):
     }
 
   def post(self):
-    key = util.get_required_param(self, 'key')
-    source = ndb.Key(urlsafe=key).get()
-    module = self.OAUTH_MODULES[source.kind()]
+    key = ndb.Key(urlsafe=util.get_required_param(self, 'key'))
+    module = self.OAUTH_MODULES[key.kind()]
 
     if module is oauth_googleplus:
       # Google+ doesn't support redirect_url() yet
-      self.redirect('/googleplus/delete/start?state=%s' % key)
+      self.redirect('/googleplus/delete/start?state=%s' % key.urlsafe())
     else:
       if module is oauth_instagram:
         path = '/instagram/oauth_callback'
       else:
-        path = '/%s/delete/finish' % source.SHORT_NAME
+        path = '/%s/delete/finish' % key.get().SHORT_NAME
       handler = module.StartHandler.to(path)(self.request, self.response)
-      self.redirect(handler.redirect_url(state=key))
+      self.redirect(handler.redirect_url(state=key.urlsafe()))
 
 
 class DeleteFinishHandler(util.Handler):
@@ -191,8 +190,8 @@ class DeleteFinishHandler(util.Handler):
       return
 
     logged_in_as = util.get_required_param(self, 'auth_entity')
-    source = ndb.Key(urlsafe=util.get_required_param(self, 'state').get())
-    if logged_in_as == Source.auth_entity.urlsafe():
+    source = ndb.Key(urlsafe=util.get_required_param(self, 'state')).get()
+    if logged_in_as == source.auth_entity.urlsafe():
       # TODO: remove credentials, tasks, etc.
       source.key.delete()
       self.messages.add('Deleted %s. Sorry to see you go!' % source.label())
@@ -201,7 +200,7 @@ class DeleteFinishHandler(util.Handler):
                      subject='Deleted Brid.gy user: %s %s' %
                      (source.label(), source.key.string_id()),
                      body='%s/#%s' % (self.request.host_url, source.dom_id()))
-      self.redirect('/?deleted=%s' % source.key)
+      self.redirect('/?deleted=%s' % source.key.urlsafe())
     else:
       self.messages.add('Please log into %s as %s to delete it here.' %
                         (source.AS_CLASS.NAME, source.name))
