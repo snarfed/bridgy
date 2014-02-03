@@ -193,12 +193,14 @@ class HandlersTest(testutil.HandlerTest):
         'id': 'tag:fa.ke,2013:111',
         'object': {'url': 'http://example.com/event'},
         'author': {'image': {'url': 'http://example.com/ryan/image'}},
+        'displayName': 'Alice is not attending.',
+        'content': '<data class="p-rsvp" value="no">is not attending.</data>',
         })
 
     self.check_response('/rsvp/fake/%s/000/111', """\
 <article class="h-entry h-as-rsvp">
 <span class="u-uid">tag:fa.ke,2013:111</span>
-<div class="p-name">Unknown is not attending</div>
+<div class="p-name">Alice is not attending.</div>
 
   <div class="h-card p-author">
 

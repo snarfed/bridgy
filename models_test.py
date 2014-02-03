@@ -58,7 +58,7 @@ class ResponseTest(testutil.ModelsTest):
     self.assertEqual('repost', Response.get_type(
         {'objectType': 'activity', 'verb': 'share'}))
     self.assertEqual('rsvp', Response.get_type({'verb': 'rsvp-no'}))
-    self.assertEqual('rsvp', Response.get_type({'verb': 'invited'}))
+    self.assertEqual('rsvp', Response.get_type({'verb': 'invite'}))
     self.assertEqual('comment', Response.get_type({'objectType': 'other'}))
 
 
