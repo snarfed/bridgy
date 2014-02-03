@@ -76,7 +76,7 @@ class OAuthCallback(oauth_instagram.CallbackHandler, util.Handler):
     if state:  # this is a delete
       if auth_entity:
         self.redirect('/delete/finish?auth_entity=%s&state=%s' %
-                      (auth_entity.key, state))
+                      (auth_entity.key.urlsafe(), state))
       else:
         self.messages.add("OK, you're still signed up.")
         self.redirect('/')

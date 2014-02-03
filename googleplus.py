@@ -78,24 +78,24 @@ class OAuthCallback(util.Handler):
   oauth-dropin doesn't yet allow multiple callback handlers. :/
   """
   def get(self):
-    auth_entity = util.get_required_param(self, 'auth_entity')
+    auth_entity_str_key = util.get_required_param(self, 'auth_entity')
     state = self.request.get('state')
 
     if state:  # this is a delete
-      if auth_entity:
+      if auth_entity_str_key:
         self.redirect('/delete/finish?auth_entity=%s&state=%s' %
-                      (auth_entity, state))
+                      (auth_entity_str_key, state))
       else:
         self.messages.add("OK, you're still signed up.")
         self.redirect('/')
 
     else:  # this is an add
-      if not auth_entity:
+      if not auth_entity_str_key:
         self.messages.add("OK, you're not signed up. Hope you reconsider!")
         self.redirect('/')
         return
       gp = GooglePlusPage.create_new(
-        self, auth_entity=ndb.Key(urlsafe=auth_entity).get())
+        self, auth_entity=ndb.Key(urlsafe=auth_entity_str_key).get())
       util.added_source_redirect(self, gp)
 
 
