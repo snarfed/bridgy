@@ -57,6 +57,7 @@ import util
 
 from google.appengine.api import background_thread
 from google.appengine.api import runtime
+from google.appengine.ext import ndb
 import webapp2
 
 
@@ -85,9 +86,12 @@ class Listener(streaming.StreamListener):
     super(Listener, self).__init__()
     self.source = source
 
-  # this is too noisy
-  # def on_connect(self):
-  #   logging.info('Connected! (%s)', self.source.key.string_id())
+  def on_connect(self):
+    # turn off ndb's in-process cache. i'd love to use it, but the backend was
+    # hitting the memory cap and dying with it on.
+    ndb.get_context().set_cache_policy(False)
+    # this is too noisy
+    # logging.info('Connected! (%s)', self.source.key.string_id())
 
   def on_data(self, raw_data):
     try:
@@ -149,6 +153,9 @@ def update_streams():
   sleeps for a while, and repeats.
   """
   global streams_lock, update_thread
+  # turn off ndb's in-process cache. i'd love to use it, but the backend was
+  # hitting the memory cap and dying with it on.
+  ndb.get_context().set_cache_policy(False)
 
   while True:
     with streams_lock:
@@ -208,6 +215,9 @@ def update_streams_once():
 class Start(webapp2.RequestHandler):
   def get(self):
     runtime.set_shutdown_hook(shutdown_hook)
+    # turn off ndb's in-process cache. i'd love to use it, but the backend was
+    # hitting the memory cap and dying with it on.
+    ndb.get_context().set_cache_policy(False)
 
     global streams, streams_lock, update_thread
     with streams_lock:
