@@ -3,9 +3,9 @@
   <li class="row">
    <div class="col-sm-3">
     {% with response.response as r %}
-    <a target="_blank" href="{{ r.author.url }}"
-       title="{{ r.author.displayName }}">
-      <img class="profile" src="{{ r.author.image.url }}" width="32" /></a>
+    <a target="_blank" href="{{ response.actor.url }}"
+       title="{{ response.actor.displayName }}">
+      <img class="profile" src="{{ response.actor.image.url }}" width="32" /></a>
       <a target="_blank" href="{{ r.url }}">
         {{ r.content|default:"--"|striptags|truncatewords:6|safe }}</a>
     {% endwith %}
