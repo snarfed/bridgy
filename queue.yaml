@@ -1,7 +1,7 @@
 # queue handlers are defined in tasks.py
 queue:
 - name: poll
-  rate: 12/m  # one every 5s
+  max_concurrent_requests: 1
   retry_parameters:
     min_backoff_seconds: 120
 
