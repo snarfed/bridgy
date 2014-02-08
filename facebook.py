@@ -33,6 +33,8 @@ from activitystreams.source import SELF
 import appengine_config
 import logging
 import models
+import urllib
+import urllib2
 import util
 
 from google.appengine.ext import ndb
@@ -47,6 +49,7 @@ API_USER_RSVPS_URL = 'https://graph.facebook.com/me/events'  # returns yes and m
 API_USER_RSVPS_DECLINED_URL = 'https://graph.facebook.com/me/events/declined'
 API_USER_RSVPS_NOT_REPLIED_URL = 'https://graph.facebook.com/me/events/not_replied'
 API_EVENT_RSVPS_URL = 'https://graph.facebook.com/%s/invited'
+API_NOTIFICATION_URL = 'https://graph.facebook.com/%s/notifications'
 
 
 class FacebookPage(models.Source):
@@ -117,16 +120,19 @@ class FacebookPage(models.Source):
 
     except urllib2.HTTPError, e:
       # Facebook API error details:
-      # https://developers.facebook.com/docs/graph-api/using-graph-api/
       # https://developers.facebook.com/docs/graph-api/using-graph-api/#receiving-errorcodes
       # https://developers.facebook.com/docs/reference/api/errors/
       try:
         body = json.loads(e.read())
         error = body.get('error', {})
-        if error.get('code') in (102, 190) and error.get('error_subcode') == 458:
-          raise models.DisableSource()
-        else:
-          raise
+        if error.get('code') in (102, 190):
+          subcode = error.get('error_subcode')
+          if subcode == 458:  # revoked
+            raise models.DisableSource()
+          elif subcode in (463, 460):  # expired, changed password
+            self.notify_expired()
+            return
+            raise models.DisableSource()
       except:
         # ignore and re-raise the original exception
         pass
@@ -138,6 +144,26 @@ class FacebookPage(models.Source):
               for e, r in events_and_rsvps]
     return resp
 
+  def notify_expired(self):
+    """Sends the user a Facebook notification that asks them to reauthenticate.
+
+    Uses the Notifications API (beta):
+    https://developers.facebook.com/docs/games/notifications/#impl
+
+    Raises: urllib2.HTPPError
+    """
+    logging.info('Facebook access token expired! Sending notification to user.')
+    params = {
+      'template': "Brid.gy's access to your account has expired. Click here to renew it now!",
+      'href': 'https://www.brid.gy/facebook/start',
+      # this is a synthetic app access token.
+      # https://developers.facebook.com/docs/facebook-login/access-tokens/#apptokens
+      'access_token': '%s|%s' % (appengine_config.FACEBOOK_APP_ID,
+                                 appengine_config.FACEBOOK_APP_SECRET),
+      }
+    url = API_NOTIFICATION_URL % self.key.id()
+    resp = urllib2.urlopen(url, data=urllib.urlencode(params))
+    logging.info('Response: %s %s' % (resp.getcode(), resp.read()))
 
 class AddFacebookPage(oauth_facebook.CallbackHandler, util.Handler):
   def finish(self, auth_entity, state=None):
