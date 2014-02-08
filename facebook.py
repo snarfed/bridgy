@@ -131,7 +131,6 @@ class FacebookPage(models.Source):
             raise models.DisableSource()
           elif subcode in (463, 460):  # expired, changed password
             self.notify_expired()
-            return
             raise models.DisableSource()
       except:
         # ignore and re-raise the original exception
@@ -162,7 +161,8 @@ class FacebookPage(models.Source):
                                  appengine_config.FACEBOOK_APP_SECRET),
       }
     url = API_NOTIFICATION_URL % self.key.id()
-    resp = urllib2.urlopen(url, data=urllib.urlencode(params))
+    resp = urllib2.urlopen(urllib2.Request(url, data=urllib.urlencode(params)),
+                           timeout=999)
     logging.info('Response: %s %s' % (resp.getcode(), resp.read()))
 
 class AddFacebookPage(oauth_facebook.CallbackHandler, util.Handler):

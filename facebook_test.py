@@ -5,10 +5,12 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import json
 import testutil
+import urllib
 import urllib2
 
 from activitystreams import facebook_test as as_facebook_test
 from activitystreams.oauth_dropins import facebook as oauth_facebook
+import appengine_config
 from facebook import FacebookPage
 import models
 
@@ -19,6 +21,8 @@ class FacebookPageTest(testutil.ModelsTest):
 
   def setUp(self):
     super(FacebookPageTest, self).setUp()
+    appengine_config.FACEBOOK_APP_ID = 'my_app_id'
+    appengine_config.FACEBOOK_APP_SECRET = 'my_app_secret'
     self.handler.messages = []
     self.auth_entity = oauth_facebook.FacebookAuth(
       id='my_string_id', auth_code='my_code', access_token_str='my_token',
@@ -69,6 +73,23 @@ class FacebookPageTest(testutil.ModelsTest):
     self.expect_urlopen(
       'https://graph.facebook.com/me/posts?offset=0&access_token=my_token',
       json.dumps({'error': {'code': 190, 'error_subcode': 458}}), status=400)
+    self.mox.ReplayAll()
+
+    page = FacebookPage.new(self.handler, auth_entity=self.auth_entity)
+    self.assertRaises(models.DisableSource, page.get_activities)
+
+  def test_expired_sends_notification(self):
+    self.expect_urlopen(
+      'https://graph.facebook.com/me/posts?offset=0&access_token=my_token',
+      json.dumps({'error': {'code': 190, 'error_subcode': 463}}), status=400)
+
+    params = {
+      'template': "Brid.gy's access to your account has expired. Click here to renew it now!",
+       'href': 'https://www.brid.gy/facebook/start',
+      'access_token': 'my_app_id|my_app_secret',
+      }
+    self.expect_urlopen('https://graph.facebook.com/212038/notifications', '',
+                        data=urllib.urlencode(params))
     self.mox.ReplayAll()
 
     page = FacebookPage.new(self.handler, auth_entity=self.auth_entity)
