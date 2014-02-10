@@ -25,17 +25,21 @@ below to try it yourself, read <a href="/about">even more details</a>, or
 
 <!-- Connect buttons -->
 <div id="connect" class="row">
-<div class="col-md-3 col-sm-6"><form method="post" action="/facebook/start">
-    <input type="image" alt="Sign in with Facebook" src="/static/facebook_button.png" />
+<div class="col-md-3 col-sm-6">
+ <form method="post" name="facebook-start" action="/facebook/start">
+  <input type="image" alt="Sign in with Facebook" src="/static/facebook_button.png" />
 </form></div>
-<div class="col-md-3 col-sm-6"><form method="post" action="/twitter/start">
+<div class="col-md-3 col-sm-6">
+ <form method="post" name="twitter-start" action="/twitter/start">
   <input type="image" alt="Sign in with Twitter" src="/static/twitter_button.png" />
 </form></div>
 <div class="clearfix visible-xs"></div>
-<div class="col-md-3 col-sm-6"><form method="post" action="/googleplus/start">
+<div class="col-md-3 col-sm-6">
+ <form method="post" name="googleplus-start" action="/googleplus/start">
   <input type="image" alt="Sign in with Google+" src="/static/google_plus_button.png" />
 </form></div>
-<div class="col-md-3 col-sm-6"><form method="post" action="/instagram/start">
+<div class="col-md-3 col-sm-6">
+ <form method="post" name="instagram-start" action="/instagram/start">
   <input type="image" alt="Sign in with Instagram" src="/static/instagram_button.png" />
 </form></div>
 </div>
@@ -57,14 +61,17 @@ below to try it yourself, read <a href="/about">even more details</a>, or
      title="{{ source.name|safe }} ({% firstof source.AS_CLASS.NAME source.kind %})">
     <img class="profile" src="{{ source.picture }}" width="64px" />
     <img src="/static/{{ source.SHORT_NAME }}_icon.png"
-         alt="{% firstof source.AS_CLASS.NAME source.kind %}" />
+         alt="{% firstof source.AS_CLASS.NAME source.key.kind %}" />
     {{ source.name|safe }}</a>
 
   <span class="source-buttons">
   <a href="#{{ source.dom_id }}" title="Link">#</a>
   {% if source.status == "disabled" %}
-    <span class="glyphicon glyphicon-pause"
-          title="This account was disconnected on {% firstof source.AS_CLASS.NAME source.kind %}'s end. To fix this, delete and re-add it."></span>
+    <a href="#" onclick="document.forms['{{ source.SHORT_NAME }}-start'].submit();
+                         return false;">
+      <span class="glyphicon glyphicon-pause"
+            title="This account was disconnected on {% firstof source.AS_CLASS.NAME source.key.kind %}'s end. Click to reconnect it!">
+    </span></a>
   {% endif %}
   <form method="post" action="/delete/start">
     <input name="key" type="hidden" value="{{ source.key.urlsafe }}" />
