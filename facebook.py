@@ -27,10 +27,11 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 import json
 import urllib2
 
+import appengine_config
+
 from activitystreams import facebook as as_facebook
 from activitystreams.oauth_dropins import facebook as oauth_facebook
 from activitystreams.source import SELF
-import appengine_config
 import logging
 import models
 import urllib

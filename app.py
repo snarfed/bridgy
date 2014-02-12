@@ -11,9 +11,10 @@ import re
 import urllib
 import urlparse
 
+import appengine_config
+
 # need to import modules with model class definitions, e.g. facebook, for
 # template rendering.
-import appengine_config
 from activitystreams.oauth_dropins import facebook as oauth_facebook
 from activitystreams.oauth_dropins import googleplus as oauth_googleplus
 from activitystreams.oauth_dropins import instagram as oauth_instagram
@@ -25,7 +26,7 @@ from twitter import Twitter
 import handlers
 from models import Response, Source
 import util
-from webutil.handlers import TemplateHandler
+from activitystreams.oauth_dropins.webutil.handlers import TemplateHandler
 
 from google.appengine.api import mail
 from google.appengine.api import users

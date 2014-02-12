@@ -32,10 +32,11 @@ import logging
 import urllib
 import urlparse
 
-from activitystreams import source as as_source
 import appengine_config
+
+from activitystreams import source as as_source
+from activitystreams.oauth_dropins.webutil.models import StringIdModel
 import util
-from webutil.models import StringIdModel
 
 from google.appengine.api import mail
 from google.appengine.api import taskqueue

@@ -47,11 +47,12 @@ import logging
 import threading
 import time
 
-from activitystreams.oauth_dropins import twitter as oauth_twitter
 import appengine_config
+
+from activitystreams.oauth_dropins.tweepy import streaming
+from activitystreams.oauth_dropins import twitter as oauth_twitter
 import models
 import tasks
-from tweepy import streaming
 from twitter import Twitter
 import util
 

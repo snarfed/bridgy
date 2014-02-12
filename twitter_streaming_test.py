@@ -8,9 +8,9 @@ import threading
 
 from activitystreams import twitter_test
 from activitystreams.oauth_dropins import twitter as oauth_twitter
+from activitystreams.oauth_dropins.tweepy import streaming
 import models
 import testutil
-from tweepy import streaming
 import twitter
 import twitter_streaming
 import util

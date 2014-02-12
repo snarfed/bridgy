@@ -6,11 +6,8 @@ import urlparse
 from google.appengine.api import taskqueue
 
 import webapp2
-import activitystreams.webutil.util
 from activitystreams.oauth_dropins import requests
-import activitystreams.oauth_dropins.webutil.util
-import webutil.util
-from webutil.util import *
+from activitystreams.oauth_dropins.webutil.util import *
 
 EPOCH = datetime.datetime.utcfromtimestamp(0)
 POLL_TASK_DATETIME_FORMAT = '%Y-%m-%d-%H-%M-%S'
@@ -60,10 +57,9 @@ def follow_redirects(url):
 #
 # Needed because I originally generated tag URIs with the current year, which
 # resulted in different URIs for the same objects when the year changed. :/
-_orig_tag_uri = webutil.util.tag_uri
-webutil.util.tag_uri = lambda domain, name: _orig_tag_uri(domain, name, year=2013)
-activitystreams.webutil.util.tag_uri = webutil.util.tag_uri
-activitystreams.oauth_dropins.webutil.util = webutil.util.tag_uri
+from activitystreams.oauth_dropins.webutil import util
+_orig_tag_uri = tag_uri
+util.tag_uri = lambda domain, name: _orig_tag_uri(domain, name, year=2013)
 
 
 # Known domains that don't support webmentions. Mainly just the silos.

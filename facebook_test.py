@@ -8,9 +8,10 @@ import testutil
 import urllib
 import urllib2
 
+import appengine_config
+
 from activitystreams import facebook_test as as_facebook_test
 from activitystreams.oauth_dropins import facebook as oauth_facebook
-import appengine_config
 from facebook import FacebookPage
 import models
 

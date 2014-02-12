@@ -24,8 +24,9 @@ import logging
 import urllib2
 
 import appengine_config
+
 import webapp2
-from webutil import util
+from activitystreams.oauth_dropins.webutil import util
 
 
 class Handler(webapp2.RequestHandler):

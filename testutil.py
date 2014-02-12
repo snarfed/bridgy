@@ -15,7 +15,7 @@ from activitystreams import source as as_source
 from models import Response, Source
 from tasks import Poll, Propagate
 import util
-from webutil import testutil
+from activitystreams.oauth_dropins.webutil import testutil
 
 from google.appengine.datastore import datastore_stub_util
 from google.appengine.ext import ndb

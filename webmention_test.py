@@ -7,8 +7,8 @@ import json
 import mox
 import urllib
 
+from activitystreams.oauth_dropins.webutil import testutil
 import webmention
-from webutil import testutil
 import webapp2
 
 

@@ -8,10 +8,11 @@ import json
 import logging
 import os
 
+import appengine_config
+
 from activitystreams.source import SELF
 from activitystreams import googleplus as as_googleplus
 from activitystreams.oauth_dropins import googleplus as oauth_googleplus
-import appengine_config
 import models
 import util
 

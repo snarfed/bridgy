@@ -20,8 +20,10 @@ import logging
 import string
 import urlparse
 
-from activitystreams import microformats2
 import appengine_config
+
+from activitystreams import microformats2
+from activitystreams.oauth_dropins.webutil import handlers
 import facebook
 import googleplus
 import instagram
@@ -29,7 +31,6 @@ import models
 import twitter
 import util
 import webapp2
-from webutil import handlers
 
 from google.appengine.ext import ndb
 

@@ -20,10 +20,11 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import json
 
+import appengine_config
+
 from activitystreams import instagram as as_instagram
 from activitystreams.oauth_dropins import instagram as oauth_instagram
 from activitystreams.source import SELF
-import appengine_config
 import models
 import util
 

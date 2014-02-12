@@ -11,10 +11,10 @@ import urllib
 import urllib2
 import urlparse
 
+from activitystreams.oauth_dropins import httplib2
 from activitystreams.oauth_dropins import requests
-from oauth_dropins.apiclient import errors
-from oauth_dropins import httplib2
-from oauth_dropins.python_instagram.bind import InstagramAPIError
+from activitystreams.oauth_dropins.apiclient import errors
+from activitystreams.oauth_dropins.python_instagram.bind import InstagramAPIError
 import models
 import models_test
 import tasks
