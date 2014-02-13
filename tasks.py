@@ -117,8 +117,7 @@ class Poll(webapp2.RequestHandler):
         code = e.code
       elif isinstance(e, errors.HttpError):
         code = e.resp.status
-      # TODO: fix when module importing is fixed
-      elif e.__class__.__name__ == 'InstagramAPIError':
+      elif isinstance(e, InstagramAPIError):
         if e.error_type == 'OAuthAccessTokenException':
           code = '401'
         else:
