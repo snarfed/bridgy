@@ -281,7 +281,9 @@ class PollTest(TaskQueueTest):
     """Finish the task on rate limiting errors."""
     try:
       for err in (InstagramAPIError('503', 'Rate limited', '...'),
-                  errors.HttpError(httplib2.Response({'status': 429}), ''),
+                  # use tasks.errors to work around import module aliasing.
+                  # evidently i didn't fix them all. :/
+                  tasks.errors.HttpError(httplib2.Response({'status': 429}), ''),
                   urllib2.HTTPError('url', 403, 'msg', {}, None)):
         self.mox.UnsetStubs()
         self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities_response')
@@ -297,11 +299,10 @@ class PollTest(TaskQueueTest):
         self.mox.VerifyAll()
 
         # should have inserted a new poll task
-        tasks = self.taskqueue_stub.GetTasks('poll')
-        self.assertEqual(1, len(tasks))
-        self.assertEqual('/_ah/queue/poll', tasks[0]['url'])
-
-        tasks = self.taskqueue_stub.FlushQueue('poll')
+        polls = self.taskqueue_stub.GetTasks('poll')
+        self.assertEqual(1, len(polls))
+        self.assertEqual('/_ah/queue/poll', polls[0]['url'])
+        polls = self.taskqueue_stub.FlushQueue('poll')
 
     finally:
       self.mox.UnsetStubs()
