@@ -42,7 +42,7 @@ class Handler(webapp2.RequestHandler):
     source = util.get_required_param(self, 'source')
     target = util.get_required_param(self, 'target')
     url = util.add_query_params('http://pin13.net/mf2/', {'url': source})
-    urllib2.urlopen(url, timeout=999)
+    urllib2.urlopen(url, timeout=appengine_config.HTTP_TIMEOUT)
     self.abort(403, 'Sorry, not implemented yet.')
 
 

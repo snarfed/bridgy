@@ -4,10 +4,11 @@
 import urlparse
 
 from google.appengine.api import taskqueue
-
 import webapp2
+
 from activitystreams.oauth_dropins import requests
 from activitystreams.oauth_dropins.webutil.util import *
+from appengine_config import HTTP_TIMEOUT
 
 EPOCH = datetime.datetime.utcfromtimestamp(0)
 POLL_TASK_DATETIME_FORMAT = '%Y-%m-%d-%H-%M-%S'
@@ -44,7 +45,7 @@ def follow_redirects(url):
   # HEAD for the initial request.
   # http://stackoverflow.com/questions/9967632
   try:
-    return requests.head(url, allow_redirects=True)
+    return requests.head(url, allow_redirects=True, timeout=HTTP_TIMEOUT)
   except Exception, e:
     logging.warning("Couldn't resolve URL %s : %s", url, e)
     resp = requests.Response()

@@ -163,7 +163,7 @@ class FacebookPage(models.Source):
       }
     url = API_NOTIFICATION_URL % self.key.id()
     resp = urllib2.urlopen(urllib2.Request(url, data=urllib.urlencode(params)),
-                           timeout=999)
+                           timeout=appengine_config.HTTP_TIMEOUT)
     logging.info('Response: %s %s' % (resp.getcode(), resp.read()))
 
 class AddFacebookPage(oauth_facebook.CallbackHandler, util.Handler):

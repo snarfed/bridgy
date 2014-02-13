@@ -15,6 +15,7 @@ from activitystreams.oauth_dropins import httplib2
 from activitystreams.oauth_dropins import requests
 from activitystreams.oauth_dropins.apiclient import errors
 from activitystreams.oauth_dropins.python_instagram.bind import InstagramAPIError
+from appengine_config import HTTP_TIMEOUT
 import models
 import models_test
 import tasks
@@ -130,11 +131,12 @@ class PollTest(TaskQueueTest):
     obj['content'] = 'http://not/html'
     self.sources[0].set_activities([self.activities[0]])
 
-    self.mox.StubOutWithMock(util.requests, 'head')
+    self.mox.StubOutWithMock(requests, 'head', use_mock_anything=True)
     resp = requests.Response()
     resp.url = 'http://not/html'
     resp.headers['content-type'] = 'application/pdf'
-    util.requests.head('http://not/html', allow_redirects=True).AndReturn(resp)
+    requests.head('http://not/html', allow_redirects=True, timeout=HTTP_TIMEOUT
+                  ).AndReturn(resp)
 
     self.mox.ReplayAll()
     self.post_task()
@@ -147,11 +149,12 @@ class PollTest(TaskQueueTest):
     obj['content'] = 'http://will/redirect'
     self.sources[0].set_activities([self.activities[0]])
 
-    self.mox.StubOutWithMock(util.requests, 'head')
+    self.mox.StubOutWithMock(requests, 'head', use_mock_anything=True)
     resp = requests.Response()
     resp.url = 'http://final/url'
     resp.headers['content-type'] = 'text/html'
-    util.requests.head('http://will/redirect', allow_redirects=True).AndReturn(resp)
+    requests.head('http://will/redirect', allow_redirects=True, timeout=HTTP_TIMEOUT
+                  ).AndReturn(resp)
 
     self.mox.ReplayAll()
     self.post_task()
@@ -165,9 +168,9 @@ class PollTest(TaskQueueTest):
     self.sources[0].set_activities([self.activities[0]])
 
     self.mox.stubs.UnsetAll()
-    self.mox.StubOutWithMock(util.requests, 'head')
-    util.requests.head('http://fails/resolve', allow_redirects=True)\
-        .AndRaise(Exception('foo'))
+    self.mox.StubOutWithMock(requests, 'head', use_mock_anything=True)
+    requests.head('http://fails/resolve', allow_redirects=True, timeout=HTTP_TIMEOUT
+                  ).AndRaise(Exception('foo'))
 
     self.mox.ReplayAll()
     self.post_task()
@@ -471,11 +474,12 @@ class PropagateTest(TaskQueueTest):
     self.responses[0].unsent = ['http://not/html']
     self.responses[0].put()
 
-    self.mox.StubOutWithMock(util.requests, 'head')
+    self.mox.StubOutWithMock(requests, 'head', use_mock_anything=True)
     resp = requests.Response()
     resp.url = 'http://not/html'
     resp.headers['content-type'] = 'application/mpeg'
-    util.requests.head('http://not/html', allow_redirects=True).AndReturn(resp)
+    requests.head('http://not/html', allow_redirects=True, timeout=HTTP_TIMEOUT
+                  ).AndReturn(resp)
 
     self.mox.ReplayAll()
     self.post_task()

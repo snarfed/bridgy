@@ -1,8 +1,6 @@
 """Bridgy App Engine config.
 """
 
-import socket
-
 from activitystreams.appengine_config import *
 
 # turn off ndb's in-process cache. i'd love to use it, but the frontends
@@ -11,11 +9,6 @@ from activitystreams.appengine_config import *
 from google.appengine.ext import ndb
 ndb.Context.default_cache_policy = ndb.Context._cache_policy = \
     lambda ctx, key: False
-
-# default network timeout to 60s. the G+ and Instagram APIs use httplib2, which
-# honors this:
-# https://github.com/jcgregorio/httplib2/blob/master/python2/httplib2/__init__.py#L853
-socket.setdefaulttimeout(60)
 
 # I used a namespace for a while when I had both versions deployed, but not any
 # more; I cleared out the old v1 datastore entities.
