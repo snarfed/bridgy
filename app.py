@@ -45,6 +45,13 @@ class DashboardHandler(util.Handler):
   def head(self):
     """Return an empty 200 with no caching directives."""
 
+  def post(self):
+    """Facebook uses a POST instead of a GET when it renders us in Canvas.
+
+    http://stackoverflow.com/a/5353413/186123
+    """
+    return self.get()
+
   def get(self):
     """Renders the dashboard.
     """
