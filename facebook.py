@@ -43,7 +43,8 @@ import webapp2
 
 
 # https://developers.facebook.com/docs/reference/login/
-OAUTH_SCOPES = ('offline_access', 'user_status', 'user_photos', 'user_events')
+OAUTH_SCOPES = ('offline_access', 'user_status', 'user_photos', 'user_events',
+                'read_stream')
 
 API_PHOTOS_URL = 'https://graph.facebook.com/me/photos/uploaded'
 API_USER_RSVPS_URL = 'https://graph.facebook.com/me/events'  # returns yes and maybe
