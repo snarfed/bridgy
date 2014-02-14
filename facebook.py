@@ -166,6 +166,7 @@ class FacebookPage(models.Source):
                            timeout=appengine_config.HTTP_TIMEOUT)
     logging.info('Response: %s %s' % (resp.getcode(), resp.read()))
 
+
 class AddFacebookPage(oauth_facebook.CallbackHandler, util.Handler):
   def finish(self, auth_entity, state=None):
     if not auth_entity:
