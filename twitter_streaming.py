@@ -14,8 +14,11 @@ https://developers.google.com/appengine/docs/python/backends/
 It also (automatically) uses App Engine's Sockets API:
 https://developers.google.com/appengine/docs/python/sockets/
 
-An alternative to Twitter's Streaming API would be to scrape the HTML, e.g.:
-https://twitter.com/i/activity/favorited_popup?id=415371781264781312
+An alternative to Twitter's Streaming API would be to scrape the HTML. Options:
+* favorited_popup returns JSON with the first (last?) 25 favoriters in a single
+  top-level htmlUsers field:
+  https://twitter.com/i/activity/favorited_popup?id=434753879708672001
+* ...any others?
 
 I originally used the requests library, which is great, but tweepy handles more
 logic that's specific to Twitter's Streaming API, e.g. backoff for HTTP 420 rate
@@ -189,7 +192,7 @@ def update_streams_once():
     source = sources[key]
     auth = oauth_twitter.TwitterAuth.tweepy_auth(
       *source.auth_entity.get().access_token())
-    streams[key] = streaming.Stream(auth, Listener(source))
+    streams[key] = streaming.Stream(auth, Listener(source), secure=True)
     # run stream in *non*-background thread, since app engine backends have a
     # fixed limit of 10 background threads per instance. normal threads are only
     # limited by memory, and since we're starting them from a background thread,

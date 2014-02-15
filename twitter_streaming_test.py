@@ -120,7 +120,8 @@ class TwitterStreamingTest(testutil.ModelsTest):
     # expect connects and disconnects
     self.mox.StubOutClassWithMocks(streaming, 'Stream')
     for name in 'stopped', 'new':
-      streaming.Stream(mox.IgnoreArg(), mox.IgnoreArg()).userstream(async=True)
+      streaming.Stream(mox.IgnoreArg(), mox.IgnoreArg(), secure=True
+                       ).userstream(async=True)
     for name in 'disabled', 'deleted':
       twitter_streaming.streams[sources[name].key].disconnect()
 
