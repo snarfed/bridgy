@@ -111,7 +111,7 @@ class Poll(webapp2.RequestHandler):
 
     try:
       response = source.get_activities_response(
-        fetch_replies=True, fetch_likes=True, fetch_shares=True, count=20,
+        fetch_replies=True, fetch_likes=True, fetch_shares=True, count=50,
         etag=source.last_activities_etag, min_id=source.last_activity_id)
     except Exception, e:
       if isinstance(e, urllib2.HTTPError):
