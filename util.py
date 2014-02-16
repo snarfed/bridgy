@@ -4,9 +4,9 @@
 import urlparse
 
 from google.appengine.api import taskqueue
+import requests
 import webapp2
 
-from activitystreams.oauth_dropins import requests
 from activitystreams.oauth_dropins.webutil.util import *
 from appengine_config import HTTP_TIMEOUT
 

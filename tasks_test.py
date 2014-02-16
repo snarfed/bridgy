@@ -11,10 +11,12 @@ import urllib
 import urllib2
 import urlparse
 
-from activitystreams.oauth_dropins import httplib2
-from activitystreams.oauth_dropins import requests
-from activitystreams.oauth_dropins.apiclient import errors
-from activitystreams.oauth_dropins.python_instagram.bind import InstagramAPIError
+from apiclient import errors
+from google.appengine.ext import ndb
+import httplib2
+from python_instagram.bind import InstagramAPIError
+import requests
+
 from appengine_config import HTTP_TIMEOUT
 import models
 import models_test
@@ -24,8 +26,6 @@ import testutil
 import util
 from webmentiontools import send
 
-from google.appengine.ext import ndb
-import webapp2
 
 NOW = datetime.datetime.now()
 tasks.now_fn = lambda: NOW

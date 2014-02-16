@@ -8,14 +8,14 @@ import json
 import logging
 import re
 
+import webapp2
+
 import appengine_config
 
 from activitystreams import twitter as as_twitter
 from activitystreams.oauth_dropins import twitter as oauth_twitter
 import models
 import util
-
-import webapp2
 
 
 class Twitter(models.Source):

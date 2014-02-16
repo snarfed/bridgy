@@ -10,15 +10,15 @@ import json
 import logging
 import urlparse
 
-from activitystreams.oauth_dropins import requests
+from google.appengine.datastore import datastore_stub_util
+from google.appengine.ext import ndb
+import requests
+
 from activitystreams import source as as_source
 from models import Response, Source
 from tasks import Poll, Propagate
 import util
 from activitystreams.oauth_dropins.webutil import testutil
-
-from google.appengine.datastore import datastore_stub_util
-from google.appengine.ext import ndb
 
 
 def get_task_params(task):

@@ -3,6 +3,22 @@
 
 from activitystreams.appengine_config import *
 
+# Add library modules directories to sys.path so they can be imported.
+#
+# I used to use symlinks and munge sys.modules, but both of those ended up in
+# duplicate instances of modules, which caused problems. Background in
+# https://github.com/snarfed/bridgy/issues/31
+for path in (
+  'webmention-tools',
+  ):
+  path = os.path.join(os.path.dirname(__file__), path)
+  if path not in sys.path:
+    sys.path.append(path)
+
+# bridgy.util overrides tag_uri() from webutil.tag_uri(). import it here so we
+# know that happens everywhere tag_uri() might be used.
+import util
+
 # turn off ndb's in-process cache. i'd love to use it, but the frontends
 # constantly hit the memory cap and get killed with it on.
 # https://developers.google.com/appengine/docs/python/ndb/cache

@@ -17,10 +17,14 @@ import random
 import urllib2
 import urlparse
 
+from apiclient import errors
+from google.appengine.ext import ndb
+from python_instagram.bind import InstagramAPIError
+import webapp2
+from webmentiontools import send
+
 import appengine_config
 
-from activitystreams.oauth_dropins.apiclient import errors
-from activitystreams.oauth_dropins.python_instagram.bind import InstagramAPIError
 from activitystreams.source import Source
 # need to import model class definitions since poll creates and saves entities.
 import facebook
@@ -29,10 +33,7 @@ import instagram
 import models
 import twitter
 import util
-from webmentiontools import send
 
-from google.appengine.ext import ndb
-import webapp2
 
 # allows injecting timestamps in task_test.py
 now_fn = datetime.datetime.now

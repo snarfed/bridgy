@@ -50,18 +50,18 @@ import logging
 import threading
 import time
 
+from google.appengine.api import background_thread
+from google.appengine.api import runtime
+from tweepy import streaming
+import webapp2
+
 import appengine_config
 
-from activitystreams.oauth_dropins.tweepy import streaming
 from activitystreams.oauth_dropins import twitter as oauth_twitter
 import models
 import tasks
 from twitter import Twitter
 import util
-
-from google.appengine.api import background_thread
-from google.appengine.api import runtime
-import webapp2
 
 
 USER_STREAM_URL = 'https://userstream.twitter.com/1.1/user.json?with=user'

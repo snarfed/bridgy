@@ -24,8 +24,8 @@ import logging
 import urllib2
 
 import appengine_config
-
 import webapp2
+
 from activitystreams.oauth_dropins.webutil import util
 
 

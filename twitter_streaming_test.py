@@ -6,16 +6,16 @@ import json
 import mox
 import threading
 
+from google.appengine.ext import ndb
+from tweepy import streaming
+
 from activitystreams import twitter_test
 from activitystreams.oauth_dropins import twitter as oauth_twitter
-from activitystreams.oauth_dropins.tweepy import streaming
 import models
 import testutil
 import twitter
 import twitter_streaming
 import util
-
-from google.appengine.ext import ndb
 
 
 class TwitterStreamingTest(testutil.ModelsTest):
@@ -43,8 +43,8 @@ class TwitterStreamingTest(testutil.ModelsTest):
     self.assertTrue(self.listener.on_data(json.dumps(twitter_test.FAVORITE_EVENT)))
     self.assertEqual(1, models.Response.query().count())
     resp = models.Response.query().get()
-    self.assertEqual(twitter_test.LIKE['id'], resp.key.string_id())
-    self.assert_equals(twitter_test.LIKE, json.loads(resp.response_json))
+    self.assertEqual(twitter_test.LIKE_FROM_EVENT['id'], resp.key.string_id())
+    self.assert_equals(twitter_test.LIKE_FROM_EVENT, json.loads(resp.response_json))
 
     activity = copy.deepcopy(twitter_test.ACTIVITY)
     self.assert_equals(activity, json.loads(resp.activity_json))
