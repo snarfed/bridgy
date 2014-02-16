@@ -13,9 +13,6 @@
 [submodule "activitystreams"]
 	path = activitystreams
 	url = git@github.com:snarfed/activitystreams-unofficial.git
-[submodule "beautifulsoup"]
-	path = beautifulsoup
-	url = git@github.com:JinnLynn/beautifulsoup.git
 [submodule "webmention-tools"]
 	path = webmention-tools
 	url = git@github.com:snarfed/webmention-tools.git
