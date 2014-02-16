@@ -1,5 +1,6 @@
 backends:
-- name: twitter-streaming
-  instances: 1
-  start: twitter_streaming.application
-  class: B1
+# disabled. I now get favorites by scraping HTML.
+# - name: twitter-streaming
+#   instances: 1
+#   start: twitter_streaming.application
+#   class: B1
