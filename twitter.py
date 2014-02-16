@@ -54,8 +54,9 @@ class Twitter(models.Source):
   def get_like(self, activity_user_id, activity_id, like_user_id):
     """Returns an ActivityStreams 'like' activity object for a favorite.
 
-    Twitter doesn't expose favorites in their REST API, so fetch it from the
-    Response in the datastore.
+    We get Twitter favorites by scraping HTML, and we only get the first page,
+    which only has 25. So, use a Response in the datastore first, if we have
+    one, and only re-scrape HTML as a fallback.
 
     Args:
       activity_user_id: string id of the user who posted the original activity
@@ -64,7 +65,11 @@ class Twitter(models.Source):
     """
     id = self.as_source.tag_uri('%s_favorited_by_%s' % (activity_id, like_user_id))
     resp = models.Response.get_by_id(id)
-    return json.loads(resp.response_json) if resp else None
+    if resp:
+      return json.loads(resp.response_json)
+    else:
+      return super(Twitter, self).get_like(activity_user_id, activity_id,
+                                           like_user_id)
 
   @staticmethod
   def user_url(username):

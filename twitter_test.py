@@ -3,6 +3,7 @@
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
+import copy
 import datetime
 import json
 import testutil
@@ -69,3 +70,18 @@ class TwitterTest(testutil.ModelsTest):
     tw = Twitter.new(self.handler, auth_entity=self.auth_entity)
     self.assert_equals(like, tw.get_like('unused', '000', '222'))
 
+  def test_get_like_fallback(self):
+    """If there's no Response in the datastore, fall back to get_activities."""
+    tweet = copy.deepcopy(as_twitter_test.TWEET)
+    tweet['favorite_count'] = 1
+
+    self.expect_urlopen(
+      'https://api.twitter.com/1.1/statuses/show.json?id=100&include_entities=true',
+      json.dumps(tweet))
+    self.expect_urlopen('https://twitter.com/i/activity/favorited_popup?id=100',
+      json.dumps({'htmlUsers': as_twitter_test.FAVORITES_HTML}))
+
+    self.mox.ReplayAll()
+    tw = Twitter.new(self.handler, auth_entity=self.auth_entity)
+    self.assert_equals(as_twitter_test.LIKES_FROM_HTML[0],
+                       tw.get_like('unused', '100', '353'))
