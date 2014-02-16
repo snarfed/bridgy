@@ -46,7 +46,7 @@ def follow_redirects(url):
   # http://stackoverflow.com/questions/9967632
   try:
     return requests.head(url, allow_redirects=True, timeout=HTTP_TIMEOUT)
-  except Exception, e:
+  except BaseException, e:
     logging.warning("Couldn't resolve URL %s : %s", url, e)
     resp = requests.Response()
     resp.url = url
@@ -87,12 +87,12 @@ def get_webmention_target(url):
   """Resolves a URL and decides whether we should try to send it a webmention.
 
   Returns: (string url, boolean) tuple. The boolean is True if we should send a
-  webmention, False otherwise, e.g. if it 's a bad URL, not text/html, or in the
-  blacklist.
+  webmention, False otherwise, e.g. if it 's a bad URL, not text/html, in the
+  blacklist, or can't be fetched.
   """
   try:
     urlparse.urlparse(url)
-  except Exception, e:
+  except BaseException, e:
     logging.warning('Dropping bad URL %s.', url)
     return (url, False)
 
