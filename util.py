@@ -45,7 +45,7 @@ def follow_redirects(url):
   Returns:
     requests.Response
   """
-  resolved = memcache.get(url)
+  resolved = memcache.get('R ' + url)
   if resolved is not None:
     return resolved
 
@@ -63,7 +63,7 @@ def follow_redirects(url):
     resolved.status_code = 499  # not standard. i made this up.
     cache_time = FAILED_RESOLVE_URL_CACHE_TIME
 
-  memcache.set(url, resolved, time=cache_time)
+  memcache.set('R ' + url, resolved, time=cache_time)
   return resolved
 
 
