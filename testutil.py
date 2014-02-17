@@ -118,7 +118,7 @@ class HandlerTest(testutil.HandlerTest):
     self.testbed.init_datastore_v3_stub(consistency_policy=None)
 
     # don't make actual HTTP requests to follow original post url redirects
-    def fake_head(url, allow_redirects=None):
+    def fake_head(url, **kwargs):
       resp = requests.Response()
       resp.url = url
       resp.headers['content-type'] = 'text/html; charset=UTF-8'
