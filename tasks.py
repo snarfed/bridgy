@@ -18,6 +18,7 @@ import urllib2
 import urlparse
 
 from apiclient import errors
+from google.appengine.api import memcache
 from google.appengine.ext import ndb
 from python_instagram.bind import InstagramAPIError
 import webapp2
@@ -291,8 +292,12 @@ class Propagate(webapp2.RequestHandler):
         if appengine_config.DEBUG and target.startswith('http://snarfed.org/'):
           target = target.replace('http://snarfed.org/', 'http://localhost/')
 
+        endpoint_key = 'W ' + urlparse.urlparse(target).netloc
+        endpoint = memcache.get(endpoint_key)  # may be None
+        # TODO: cache errors
+
         # send! and handle response or error
-        mention = send.WebmentionSend(local_response_url, target)
+        mention = send.WebmentionSend(local_response_url, target, endpoint=endpoint)
         logging.info('Sending webmention from %s to %s', local_response_url, target)
         sent = False
         try:
@@ -305,6 +310,7 @@ class Propagate(webapp2.RequestHandler):
         if sent:
           logging.info('Sent! %s', mention.response)
           response.sent.append(target)
+          memcache.add(endpoint_key, mention.receiver_endpoint)
         else:
           if mention.error['code'] == 'NO_ENDPOINT':
             logging.info('Giving up this target. %s', mention.error)

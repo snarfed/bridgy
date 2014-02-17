@@ -12,6 +12,7 @@ import urllib2
 import urlparse
 
 from apiclient import errors
+from google.appengine.api import memcache
 from google.appengine.ext import ndb
 import httplib2
 from python_instagram.bind import InstagramAPIError
@@ -388,12 +389,13 @@ class PropagateTest(TaskQueueTest):
     self.assert_equals(failed, response.failed)
 
   def expect_webmention(self, source_url=None, target='http://target1/post/url',
-                        error={}):
+                        error={}, endpoint=None):
     if source_url is None:
       source_url = 'http://localhost/comment/fake/%s/a/1_2_a' % \
           self.sources[0].key.string_id()
-    mock_send = send.WebmentionSend(source_url, target)
-    mock_send.receiver_endpoint = 'http://webmention/endpoint'
+    mock_send = send.WebmentionSend(source_url, target, endpoint=endpoint)
+    mock_send.receiver_endpoint = (endpoint if endpoint
+                                   else 'http://webmention/endpoint')
     mock_send.response = 'used in logging'
     mock_send.error = error
     return mock_send.send(timeout=999)
@@ -413,6 +415,7 @@ class PropagateTest(TaskQueueTest):
       self.post_task(response=r)
       self.assert_response_is('complete', NOW + Propagate.LEASE_LENGTH,
                               sent=['http://target1/post/url'], response=r)
+      memcache.flush_all()
 
   def test_propagate_from_error(self):
     """A normal propagate task, with a response starting as 'error'."""
@@ -452,6 +455,18 @@ class PropagateTest(TaskQueueTest):
                             error=['http://3', 'http://5'],
                             failed=['http://4'],
                             skipped=['http://2'])
+
+  def test_cached_webmention_discovery(self):
+    """Webmention endpoints should be cached."""
+    self.expect_webmention().AndReturn(True)
+    # second webmention should use the cached endpoint
+    self.expect_webmention(endpoint='http://webmention/endpoint').AndReturn(True)
+
+    self.mox.ReplayAll()
+    self.post_task()
+    self.responses[0].status = 'new'
+    self.responses[0].put()
+    self.post_task()
 
   def test_webmention_blacklist(self):
     """Target URLs with domains in the blacklist should be ignored.
