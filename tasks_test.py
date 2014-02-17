@@ -389,7 +389,7 @@ class PropagateTest(TaskQueueTest):
     self.assert_equals(failed, response.failed)
 
   def expect_webmention(self, source_url=None, target='http://target1/post/url',
-                        error={}, endpoint=None):
+                        error=None, endpoint=None):
     if source_url is None:
       source_url = 'http://localhost/comment/fake/%s/a/1_2_a' % \
           self.sources[0].key.string_id()
@@ -397,7 +397,8 @@ class PropagateTest(TaskQueueTest):
     mock_send.receiver_endpoint = (endpoint if endpoint
                                    else 'http://webmention/endpoint')
     mock_send.response = 'used in logging'
-    mock_send.error = error
+    if error is not None:
+      mock_send.error = error
     return mock_send.send(timeout=999)
 
   def test_propagate(self):
@@ -464,9 +465,24 @@ class PropagateTest(TaskQueueTest):
 
     self.mox.ReplayAll()
     self.post_task()
+
     self.responses[0].status = 'new'
     self.responses[0].put()
     self.post_task()
+
+  def test_cached_webmention_discovery_error(self):
+    """Failed webmention discovery should be cached too."""
+    self.expect_webmention(error={'code': 'NO_ENDPOINT'}).AndReturn(False)
+    # second time shouldn't try to send a webmention
+
+    self.mox.ReplayAll()
+    self.post_task()
+    self.assert_response_is('complete', skipped=['http://target1/post/url'])
+
+    self.responses[0].status = 'new'
+    self.responses[0].put()
+    self.post_task()
+    self.assert_response_is('complete', skipped=['http://target1/post/url'])
 
   def test_webmention_blacklist(self):
     """Target URLs with domains in the blacklist should be ignored.

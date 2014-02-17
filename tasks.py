@@ -35,6 +35,7 @@ import models
 import twitter
 import util
 
+WEBMENTION_DISCOVERY_FAILED_CACHE_TIME = 60 * 24 * 24  # a day
 
 # allows injecting timestamps in task_test.py
 now_fn = datetime.datetime.now
@@ -292,36 +293,47 @@ class Propagate(webapp2.RequestHandler):
         if appengine_config.DEBUG and target.startswith('http://snarfed.org/'):
           target = target.replace('http://snarfed.org/', 'http://localhost/')
 
+        # see if we've cached webmention discovery for this domain. the cache
+        # value is a string URL endpoint if discovery succeeded, a
+        # WebmentionSend error dict if it failed (semi-)permanently, or None.
         endpoint_key = 'W ' + urlparse.urlparse(target).netloc
-        endpoint = memcache.get(endpoint_key)  # may be None
-        # TODO: cache errors
+        cached = memcache.get(endpoint_key)
 
         # send! and handle response or error
-        mention = send.WebmentionSend(local_response_url, target, endpoint=endpoint)
-        logging.info('Sending webmention from %s to %s', local_response_url, target)
-        sent = False
-        try:
-          sent = mention.send(timeout=999)
-        except:
-          logging.warning('', exc_info=True)
-          if not getattr(mention, 'error', None):
-            mention.error = {'code': 'EXCEPTION'}
+        error = None
+        if isinstance(cached, dict):
+          error = cached
+          logging.info('Using cached webmention endpoint discovery error...')
+        else:
+          mention = send.WebmentionSend(local_response_url, target, endpoint=cached)
+          logging.info('Sending webmention from %s to %s', local_response_url, target)
+          try:
+            if not mention.send(timeout=999):
+              error = mention.error
+          except:
+            logging.warning('', exc_info=True)
+            error = (mention.error if hasattr(mention, 'error')
+                     else {'code': 'EXCEPTION'})
 
-        if sent:
+        if error is None:
           logging.info('Sent! %s', mention.response)
           response.sent.append(target)
           memcache.add(endpoint_key, mention.receiver_endpoint)
         else:
-          if mention.error['code'] == 'NO_ENDPOINT':
-            logging.info('Giving up this target. %s', mention.error)
+          if error['code'] == 'NO_ENDPOINT':
+            logging.info('Giving up this target. %s', error)
             response.skipped.append(target)
-          elif (mention.error['code'] == 'BAD_TARGET_URL' and
-                mention.error['http_status'] / 100 == 4):
+            memcache.add(endpoint_key, error,
+                         time=WEBMENTION_DISCOVERY_FAILED_CACHE_TIME)
+          elif (error['code'] == 'BAD_TARGET_URL' and
+                error['http_status'] / 100 == 4):
             # Give up on 4XX errors; we don't expect later retries to succeed.
-            logging.info('Giving up this target. %s', mention.error)
+            logging.info('Giving up this target. %s', error)
             response.failed.append(target)
+            memcache.add(endpoint_key, error,
+                         time=WEBMENTION_DISCOVERY_FAILED_CACHE_TIME)
           else:
-            self.fail('Error sending to endpoint: %s' % mention.error)
+            self.fail('Error sending to endpoint: %s' % error)
             response.error.append(target)
 
         if target in response.unsent:
