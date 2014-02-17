@@ -13,7 +13,7 @@ from google.appengine.api import taskqueue
 
 EPOCH = datetime.datetime.utcfromtimestamp(0)
 POLL_TASK_DATETIME_FORMAT = '%Y-%m-%d-%H-%M-%S'
-FAILED_RESOLVE_URL_CACHE_TIME = 60 * 24 * 24  # a day
+FAILED_RESOLVE_URL_CACHE_TIME = 60 * 60 * 24  # a day
 
 
 def added_source_redirect(handler, source):
@@ -45,7 +45,8 @@ def follow_redirects(url):
   Returns:
     requests.Response
   """
-  resolved = memcache.get('R ' + url)
+  cache_key = 'R ' + url
+  resolved = memcache.get(cache_key)
   if resolved is not None:
     return resolved
 
@@ -63,7 +64,7 @@ def follow_redirects(url):
     resolved.status_code = 499  # not standard. i made this up.
     cache_time = FAILED_RESOLVE_URL_CACHE_TIME
 
-  memcache.set('R ' + url, resolved, time=cache_time)
+  memcache.set(cache_key, resolved, time=cache_time)
   return resolved
 
 
