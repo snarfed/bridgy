@@ -293,6 +293,8 @@ class Propagate(webapp2.RequestHandler):
         if appengine_config.DEBUG and target.startswith('http://snarfed.org/'):
           target = target.replace('http://snarfed.org/', 'http://localhost/')
 
+          logging.info('Webmention from %s to %s...', local_response_url, target)
+
         # see if we've cached webmention discovery for this domain. the cache
         # value is a string URL endpoint if discovery succeeded, a
         # WebmentionSend error dict if it failed (semi-)permanently, or None.
@@ -306,7 +308,7 @@ class Propagate(webapp2.RequestHandler):
           logging.info('Using cached webmention endpoint discovery error...')
         else:
           mention = send.WebmentionSend(local_response_url, target, endpoint=cached)
-          logging.info('Sending webmention from %s to %s', local_response_url, target)
+          logging.info('Sending...')
           try:
             if not mention.send(timeout=999):
               error = mention.error
