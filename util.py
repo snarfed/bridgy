@@ -3,12 +3,13 @@
 
 import urlparse
 
-from google.appengine.api import taskqueue
 import requests
 import webapp2
 
 from activitystreams.oauth_dropins.webutil.util import *
 from appengine_config import HTTP_TIMEOUT
+from google.appengine.api import memcache
+from google.appengine.api import taskqueue
 
 EPOCH = datetime.datetime.utcfromtimestamp(0)
 POLL_TASK_DATETIME_FORMAT = '%Y-%m-%d-%H-%M-%S'
@@ -35,23 +36,32 @@ def add_poll_task(source, **kwargs):
 def follow_redirects(url):
   """Fetches a URL, follows redirects, and returns the final response.
 
+  Caches resolved URLs in memcache.
+
   Args:
     url: string
 
   Returns:
     requests.Response
   """
+  resolved = memcache.get(url)
+  if resolved is not None:
+    return resolved
+
   # can't use urllib2 since it uses GET on redirect requests, even if i specify
   # HEAD for the initial request.
   # http://stackoverflow.com/questions/9967632
   try:
-    return requests.head(url, allow_redirects=True, timeout=HTTP_TIMEOUT)
+    resolved = requests.head(url, allow_redirects=True, timeout=HTTP_TIMEOUT)
   except BaseException, e:
     logging.warning("Couldn't resolve URL %s : %s", url, e)
     resp = requests.Response()
     resp.url = url
     resp.headers['content-type'] = 'text/html'
     return resp
+
+  memcache.set(url, resolved)
+  return resolved
 
 
 # Wrap webutil.util.tag_uri and hard-code the year to 2013.
