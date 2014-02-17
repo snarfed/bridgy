@@ -312,8 +312,9 @@ class Propagate(webapp2.RequestHandler):
               error = mention.error
           except:
             logging.warning('', exc_info=True)
-            error = (mention.error if hasattr(mention, 'error')
-                     else {'code': 'EXCEPTION'})
+            error = getattr(mention, 'error', None)
+            if not error:
+              error = {'code': 'EXCEPTION'}
 
         if error is None:
           logging.info('Sent! %s', mention.response)

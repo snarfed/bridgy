@@ -397,8 +397,7 @@ class PropagateTest(TaskQueueTest):
     mock_send.receiver_endpoint = (endpoint if endpoint
                                    else 'http://webmention/endpoint')
     mock_send.response = 'used in logging'
-    if error is not None:
-      mock_send.error = error
+    mock_send.error = error
     return mock_send.send(timeout=999)
 
   def test_propagate(self):
