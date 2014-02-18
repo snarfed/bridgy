@@ -324,21 +324,20 @@ class Propagate(webapp2.RequestHandler):
           response.sent.append(target)
           memcache.set(endpoint_key, mention.receiver_endpoint)
         else:
-          if error['code'] == 'NO_ENDPOINT':
+          if (error['code'] == 'NO_ENDPOINT' or
+              (error['code'] in ('BAD_TARGET_URL', 'RECEIVER_ERROR') and
+               error['http_status'] / 100 == 4)):
             logging.info('Giving up this target. %s', error)
-            response.skipped.append(target)
-          elif (error['code'] == 'BAD_TARGET_URL' and
-                error['http_status'] / 100 == 4):
-            # Give up on 4XX errors; we don't expect later retries to succeed.
-            logging.info('Giving up this target. %s', error)
-            response.failed.append(target)
+            add_to = (response.skipped if error['code'] == 'NO_ENDPOINT'
+                      else response.failed)
+            add_to.append(target)
+            if 'body' in error:
+              del error['body']
+            memcache.set(endpoint_key, error,
+                         time=WEBMENTION_DISCOVERY_FAILED_CACHE_TIME)
           else:
             self.fail('Error sending to endpoint: %s' % error)
             response.error.append(target)
-
-          if error['code'] not in ('EXCEPTION', 'BAD_TARGET_URL'):
-            memcache.set(endpoint_key, error,
-                         time=WEBMENTION_DISCOVERY_FAILED_CACHE_TIME)
 
         if target in response.unsent:
           response.unsent.remove(target)
