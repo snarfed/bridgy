@@ -298,10 +298,11 @@ class Propagate(webapp2.RequestHandler):
         # see if we've cached webmention discovery for this domain. the cache
         # value is a string URL endpoint if discovery succeeded, a
         # WebmentionSend error dict if it failed (semi-)permanently, or None.
-        endpoint_key = 'W ' + urlparse.urlparse(target).netloc
-        cached = memcache.get(endpoint_key)
+        domain = urlparse.urlparse(target).netloc
+        cached = memcache.get('W ' + domain)
         if cached:
-          logging.info('Using cached webmention endpoint: %s', cached)
+          logging.info('Using cached webmention endpoint for %s: %s',
+                       domain, cached)
 
         # send! and handle response or error
         error = None
@@ -322,16 +323,18 @@ class Propagate(webapp2.RequestHandler):
         if error is None:
           logging.info('Sent! %s', mention.response)
           response.sent.append(target)
-          memcache.set(endpoint_key, mention.receiver_endpoint)
+          memcache.set('W ' + domain, mention.receiver_endpoint)
         else:
-          if (error['code'] == 'NO_ENDPOINT' or
-              (error['code'] == 'BAD_TARGET_URL' and error['http_status'] / 100 == 4)):
+          if error['code'] == 'NO_ENDPOINT':
             logging.info('Giving up this target. %s', error)
-            add_to = (response.skipped if error['code'] == 'NO_ENDPOINT'
-                      else response.failed)
-            add_to.append(target)
-            memcache.set(endpoint_key, error,
+            response.skipped.append(target)
+            memcache.set('W ' + domain, error,
                          time=WEBMENTION_DISCOVERY_FAILED_CACHE_TIME)
+          elif (error['code'] == 'BAD_TARGET_URL' and
+                error['http_status'] / 100 == 4):
+            # Give up on 4XX errors; we don't expect later retries to succeed.
+            logging.info('Giving up this target. %s', error)
+            response.failed.append(target)
           else:
             self.fail('Error sending to endpoint: %s' % error)
             response.error.append(target)
