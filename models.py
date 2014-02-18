@@ -105,6 +105,8 @@ class Source(Site):
   name = ndb.StringProperty()
   picture = ndb.StringProperty()
 
+  features = ndb.StringProperty(repeated=True, choices=('publish',))
+
   # points to an oauth-dropins auth entity. The model class should be a subclass
   # of oauth_dropins.BaseAuth.
   # the token should be generated with the offline_access scope so that it

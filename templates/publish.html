@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<!-- Connect buttons -->
+<div id="connect" class="row">
+<div class="col-md-4 col-sm-8">
+ <form method="post" name="facebook-start" action="/facebook/start">
+  <input name="scope" type="hidden" value="publish_actions" />
+  <input type="image" alt="Sign in with Facebook" src="/static/facebook_button.png" />
+</form></div>
+<div class="col-md-4 col-sm-8">
+ <form method="post" name="twitter-start" action="/twitter/start">
+  <input type="image" alt="Sign in with Twitter" src="/static/twitter_button.png" />
+</form></div>
+<div class="col-md-4 col-sm-8">
+ <form method="post" name="instagram-start" action="/instagram/start">
+  <input type="image" alt="Sign in with Instagram" src="/static/instagram_button.png" />
+</form></div>
+</div>
+
+<br />
+
+<!-- Users -->
+<p id="users" class="big row">Registered accounts:</p>
+
+{# TODO: paging #}
+<div id="sources">
+{% for source in sources %}
+
+<div id="{{ source.dom_id }}" class="row">
+ <div class="col-sm-4">
+  <a target="_blank" href="{{ source.url }}"
+     {# oddly, source.AS_CLASS works for FB, G+, and Instagram, but not Twitter.
+        only here; works fine in app.py. no clue why. use kind as fallback. %}
+     title="{{ source.name|safe }} ({% firstof source.AS_CLASS.NAME source.key.kind %})">
+    <img class="profile" src="{{ source.picture }}" width="64px" />
+    <img src="/static/{{ source.SHORT_NAME }}_icon.png"
+         alt="{% firstof source.AS_CLASS.NAME source.key.kind %}" />
+    {{ source.name|safe }}</a>
+
+  <span class="source-buttons">
+  <a href="#{{ source.dom_id }}" title="Link">#</a>
+  {% if source.status == "disabled" %}
+    <a href="#" onclick="document.forms['{{ source.SHORT_NAME }}-start'].submit();
+                         return false;">
+      <span class="glyphicon glyphicon-pause"
+            title="This account was disconnected on {% firstof source.AS_CLASS.NAME source.key.kind %}'s end. Click to reconnect it!">
+    </span></a>
+  {% endif %}
+  <form method="post" action="/delete/start">
+    <input name="key" type="hidden" value="{{ source.key.urlsafe }}" />
+    <button type="submit" title="Delete" class="delete">&times;</button>
+  </form>
+  </span>
+
+ </div><div class="col-sm-4">
+  {% if source.last_poll_attempt == epoch %}
+    Not polled yet
+  {% else %}
+    Polled
+    <a href="/log?start_time={{ source.last_poll_attempt|date:'U' }}&key={{ source.key.urlsafe }}">
+      {{ source.last_poll_attempt|timesince }} ago
+    {% if source.status == "error" %}
+     <span title="Error" class="glyphicon glyphicon-exclamation-sign"></span>
+    {% endif %}
+    </a>
+  {% endif %}
+
+  <!-- <form method="post" action="/poll"> -->
+  <!--   <input name="key" type="hidden" value="{{ source.key.urlsafe }}" /> -->
+  <!--   <button type="submit" title="Poll now" class="glyphicon glyphicon-refresh" -->
+  <!--           style="border: none; background: none;"></button> -->
+  <!-- </form> -->
+
+ </div><div class="col-sm-4" id="link-responses-{{ source.dom_id }}">
+  <a href="#{{ source.dom_id }}"
+     onclick="toggle_responses('{{ source.dom_id }}'); return false;">
+    Recent responses...
+
+  {% comment %} <!-- Left over from when responses were fetched here. -->
+  {% if source.recent_response_status == "processing" %}
+   <span title="Processing" class="glyphicon glyphicon-transfer"></span>
+  {% else %}{% if source.recent_response_status == "error" %}
+   <span title="Error" class="glyphicon glyphicon-exclamation-sign"></span>
+  {% endif %}{% endif %}
+  {% endcomment %}
+
+  </a>
+ </div>
+</div>
+
+<div id="stub-responses-{{ source.dom_id }}" class="stub-responses"
+     style="display: none">
+  <img src="/static/spinner.gif" width="30" /> <!-- filled in via AJAX -->
+</div>
+
+{% endfor %}
+</div>
+
+{% endblock %}

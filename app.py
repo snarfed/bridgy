@@ -41,7 +41,7 @@ def source_dom_id_to_key(id):
   return ndb.Key(handlers.SOURCES.get(short_name), string_id)
 
 
-class DashboardHandler(util.Handler):
+class DashboardHandler(TemplateHandler):
   def head(self):
     """Return an empty 200 with no caching directives."""
 
@@ -52,9 +52,10 @@ class DashboardHandler(util.Handler):
     """
     return self.get()
 
-  def get(self):
-    """Renders the dashboard.
-    """
+  def content_type(self):
+    return 'text/html; charset=utf-8'
+
+  def template_vars(self):
     sources = {source.key.urlsafe(): source for source in
                itertools.chain(FacebookPage.query().iter(), Twitter.query().iter(),
                                GooglePlusPage.query().iter(), Instagram.query().iter())}
@@ -74,9 +75,6 @@ class DashboardHandler(util.Handler):
       if not source.name:
         source.name = source.key.string_id()
       source.picture = util.update_scheme(source.picture, self)
-      # ...left over from when responses were fetched in DashboardHandler.
-      # consider reviving it someday.
-      # source.recent_response_status = None
 
     # sort by name
     sources = sorted(sources.values(),
@@ -86,28 +84,36 @@ class DashboardHandler(util.Handler):
     # util.add_query_params().
     self.request.charset = 'utf-8'
     msgs = [m for m in set(self.request.params.getall('msg'))]
-    path = os.path.join(os.path.dirname(__file__), 'templates', 'dashboard.html')
 
     # self.response.headers['Link'] = ('<%s/webmention>; rel="webmention"' %
     #                                  self.request.host_url)
-    self.response.headers['Content-Type'] = 'text/html; charset=utf-8'
-    self.response.out.write(template.render(path, {
-          'sources': sources, 'msgs': msgs, 'epoch': util.EPOCH}))
+    return {'sources': sources, 'msgs': msgs, 'epoch': util.EPOCH}
 
 
-class ResponsesHandler(util.Handler):
+class ListenHandler(DashboardHandler):
+  def template_file(self):
+    return 'templates/listen.html'
+
+
+class PublishHandler(DashboardHandler):
+  def template_file(self):
+    return 'templates/publish.html'
+
+
+class ResponsesHandler(TemplateHandler):
   NO_RESULTS_HTTP_STATUS = 204
 
-  def get(self):
-    """Renders a single source's recent responses as an HTML fragment.
-    """
+  def template_file(self):
+    return 'templates/responses.html'
+
+  def template_vars(self):
     key = source_dom_id_to_key(util.get_required_param(self, 'source'))
     responses = Response.query().filter(Response.source == key)\
                                 .order(-Response.updated)\
                                 .fetch(10)
     if not responses:
       self.error(self.NO_RESULTS_HTTP_STATUS)
-      return
+      return {}
 
     for r in responses:
       r.response = json.loads(r.response_json)
@@ -156,14 +162,12 @@ class ResponsesHandler(util.Handler):
       #   source.recent_response_status = 'processing'
 
     self.request.charset = 'utf-8'
-    path = os.path.join(os.path.dirname(__file__), 'templates', 'responses.html')
-    self.response.headers['Content-Type'] = 'text/html; charset=utf-8'
-    self.response.out.write(template.render(path, {'responses': responses}))
+    return {'responses': responses}
 
 
 class AboutHandler(TemplateHandler):
   def template_file(self):
-    return os.path.join(os.path.dirname(__file__), 'templates', 'about.html')
+    return 'templates/about.html'
 
 
 class DeleteStartHandler(util.Handler):
@@ -216,7 +220,8 @@ class DeleteFinishHandler(util.Handler):
 
 
 application = webapp2.WSGIApplication(
-  [('/', DashboardHandler),
+  [('/', ListenHandler),
+   ('/publish', PublishHandler),
    ('/responses', ResponsesHandler),
    ('/about', AboutHandler),
    ('/delete/start', DeleteStartHandler),
