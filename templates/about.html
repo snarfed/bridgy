@@ -93,7 +93,6 @@ and send me a pull request, or feel free to donate to the
 <p>Bridgy detects and sends webmentions for:</p>
 <ul>
 <li>Twitter @-replies, retweets, and favorites of your tweets.</li>
-<li>Your Twitter favorites of other people's tweets.</li>
 <li>Facebook comments and likes on your posts...but not reshares of them,
   unfortunately. I haven't yet found a way to get those from Facebook's
   API.</li>
@@ -129,10 +128,10 @@ data</a>.
   likes or reshares!</li>
 <li class="answer">
 <p>Bridgy doesn't work in realtime, it just checks your accounts for new
-activity periodically, every 5 to 20 minutes depending on the site. Twitter
-favorites and retweets used to be an exception, while Bridgy used
+activity periodically, every 5 to 20 minutes or so depending on the site.
+Twitter favorites and retweets used to be an exception, since Bridgy used
 <a href="https://dev.twitter.com/docs/streaming-apis">Twitter's Streaming
-API</a> for a while - but
+API</a> for a while, but
 <a href="https://github.com/snarfed/bridgy/issues/57">not any more</a>.
 </p></li>
 
@@ -153,7 +152,7 @@ or your Google+ post wasn't sent to "public," Bridgy won't see it.
 expose</a> whether an account
 is <a href="http://help.instagram.com/448523408565555">private</a>, so Bridgy
 handles all Instagram photos and comments. If your Instagram account is private,
-don't sign up for Bridgy with it!
+don't sign it up for Bridgy!
 </p></li>
 
 <li id="twitter-replies" class="question">Bridgy isn't seeing one of my Twitter
@@ -174,8 +173,8 @@ find its replies. That means it can't always find replies that omit the
 <span class="glyphicon glyphicon-pause"></span> icon next to it? If so, Bridgy
 has lost access to your account. This can happen when you change your password,
 when Bridgy's access expires or is revoked, or for other reasons.</p>
-<p>To fix this, go to the <a href="/">front page</a> and log into your account
-again.
+<p>To fix this, just click on the <span class="glyphicon
+glyphicon-pause"></span> icon next to your account.
 </p></li>
 
 <li id="facebook-expired" class="question">Why does Bridgy's access to my
