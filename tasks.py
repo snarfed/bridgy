@@ -325,14 +325,11 @@ class Propagate(webapp2.RequestHandler):
           memcache.set(endpoint_key, mention.receiver_endpoint)
         else:
           if (error['code'] == 'NO_ENDPOINT' or
-              (error['code'] in ('BAD_TARGET_URL', 'RECEIVER_ERROR') and
-               error['http_status'] / 100 == 4)):
+              (error['code'] == 'BAD_TARGET_URL' and error['http_status'] / 100 == 4)):
             logging.info('Giving up this target. %s', error)
             add_to = (response.skipped if error['code'] == 'NO_ENDPOINT'
                       else response.failed)
             add_to.append(target)
-            if 'body' in error:
-              del error['body']
             memcache.set(endpoint_key, error,
                          time=WEBMENTION_DISCOVERY_FAILED_CACHE_TIME)
           else:

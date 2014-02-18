@@ -430,26 +430,20 @@ class PropagateTest(TaskQueueTest):
 
   def test_success_and_errors(self):
     """We should send webmentions to the unsent and error targets."""
-    self.responses[0].unsent = ['http://1', 'http://2', 'http://6']
+    self.responses[0].unsent = ['http://1', 'http://2']
     self.responses[0].error = ['http://3', 'http://4', 'http://5']
-    self.responses[0].sent = ['http://7']
+    self.responses[0].sent = ['http://6']
     self.responses[0].put()
 
     self.expect_webmention(target='http://1').InAnyOrder().AndReturn(True)
     self.expect_webmention(target='http://2', error={'code': 'NO_ENDPOINT'})\
         .InAnyOrder().AndReturn(False)
-    # 4XX should go into 'failed'
-    self.expect_webmention(target='http://3',
-                           error={'code': 'RECEIVER_ERROR', 'http_status': 404})\
+    self.expect_webmention(target='http://3', error={'code': 'RECEIVER_ERROR'})\
         .InAnyOrder().AndReturn(False)
-    self.expect_webmention(target='http://4',
+    self.expect_webmention(target='http://4',  # 4XX should go into 'failed'
                            error={'code': 'BAD_TARGET_URL', 'http_status': 404})\
         .InAnyOrder().AndReturn(False)
-    # 5XX should go into 'error'
-    self.expect_webmention(target='http://5',
-                           error={'code': 'RECEIVER_ERROR', 'http_status': 500})\
-        .InAnyOrder().AndReturn(False)
-    self.expect_webmention(target='http://6',
+    self.expect_webmention(target='http://5',  # 5XX should go into 'error'
                            error={'code': 'BAD_TARGET_URL', 'http_status': 500})\
         .InAnyOrder().AndReturn(False)
 
@@ -457,9 +451,9 @@ class PropagateTest(TaskQueueTest):
     self.post_task(expected_status=Propagate.ERROR_HTTP_RETURN_CODE)
     response = self.responses[0].key.get()
     self.assert_response_is('error',
-                            sent=['http://1', 'http://7'],
-                            error=['http://5', 'http://6'],
-                            failed=['http://3', 'http://4'],
+                            sent=['http://6', 'http://1'],
+                            error=['http://3', 'http://5'],
+                            failed=['http://4'],
                             skipped=['http://2'])
 
   def test_cached_webmention_discovery(self):
