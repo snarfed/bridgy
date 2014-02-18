@@ -129,10 +129,11 @@ data</a>.
   likes or reshares!</li>
 <li class="answer">
 <p>Bridgy doesn't work in realtime, it just checks your accounts for new
-activity periodically. Twitter favorites and retweets are the exception: Bridgy
-handles them with
+activity periodically, every 5 to 20 minutes depending on the site. Twitter
+favorites and retweets used to be an exception, while Bridgy used
 <a href="https://dev.twitter.com/docs/streaming-apis">Twitter's Streaming
-API</a>, so it usually sees them within seconds.
+API</a> for a while - but
+<a href="https://github.com/snarfed/bridgy/issues/57">not any more</a>.
 </p></li>
 
 <li id="public" class="question">...but it's been a long time, and Bridgy
