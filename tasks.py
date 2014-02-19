@@ -114,7 +114,8 @@ class Poll(webapp2.RequestHandler):
     try:
       response = source.get_activities_response(
         fetch_replies=True, fetch_likes=True, fetch_shares=True, count=50,
-        etag=source.last_activities_etag, min_id=source.last_activity_id)
+        etag=source.last_activities_etag, min_id=source.last_activity_id,
+        cache=memcache)
     except Exception, e:
       if isinstance(e, urllib2.HTTPError):
         code = e.code
@@ -299,7 +300,8 @@ class Propagate(webapp2.RequestHandler):
         # value is a string URL endpoint if discovery succeeded, a
         # WebmentionSend error dict if it failed (semi-)permanently, or None.
         domain = urlparse.urlparse(target).netloc
-        cached = memcache.get('W ' + domain)
+        cache_key = 'W ' + domain
+        cached = memcache.get(cache_key)
         if cached:
           logging.info('Using cached webmention endpoint for %s: %s',
                        domain, cached)
@@ -323,13 +325,12 @@ class Propagate(webapp2.RequestHandler):
         if error is None:
           logging.info('Sent! %s', mention.response)
           response.sent.append(target)
-          memcache.set('W ' + domain, mention.receiver_endpoint)
+          memcache.set(cache_key, mention.receiver_endpoint)
         else:
           if error['code'] == 'NO_ENDPOINT':
             logging.info('Giving up this target. %s', error)
             response.skipped.append(target)
-            memcache.set('W ' + domain, error,
-                         time=WEBMENTION_DISCOVERY_FAILED_CACHE_TIME)
+            memcache.set(cache_key, error, time=WEBMENTION_DISCOVERY_FAILED_CACHE_TIME)
           elif (error['code'] == 'BAD_TARGET_URL' and
                 error['http_status'] / 100 == 4):
             # Give up on 4XX errors; we don't expect later retries to succeed.

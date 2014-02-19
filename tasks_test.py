@@ -93,8 +93,8 @@ class PollTest(TaskQueueTest):
     """If anything goes wrong, the source status should be set to 'error'."""
     self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities_response')
     testutil.FakeSource.get_activities_response(
-      count=mox.IgnoreArg(), fetch_replies=True,
-      fetch_likes=True, fetch_shares=True, etag=None, min_id=None,
+      count=mox.IgnoreArg(), fetch_replies=True, fetch_likes=True,
+      fetch_shares=True, etag=None, min_id=None, cache=mox.IgnoreArg(),
       ).AndRaise(Exception('foo'))
     self.mox.ReplayAll()
 
@@ -245,8 +245,8 @@ class PollTest(TaskQueueTest):
     source = self.sources[0]
     self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities_response')
     testutil.FakeSource.get_activities_response(
-      count=mox.IgnoreArg(), fetch_replies=True,
-      fetch_likes=True, fetch_shares=True, etag=None, min_id=None,
+      count=mox.IgnoreArg(), fetch_replies=True, fetch_likes=True,
+      fetch_shares=True, etag=None, min_id=None, cache=mox.IgnoreArg(),
       ).AndRaise(models.DisableSource)
     self.mox.ReplayAll()
 
@@ -267,7 +267,7 @@ class PollTest(TaskQueueTest):
         self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities_response')
         testutil.FakeSource.get_activities_response(
           count=mox.IgnoreArg(), fetch_replies=True, fetch_likes=True,
-          fetch_shares=True, etag=None, min_id=None,
+          fetch_shares=True, etag=None, min_id=None, cache=mox.IgnoreArg(),
           ).AndRaise(err)
         self.mox.ReplayAll()
 
@@ -290,7 +290,7 @@ class PollTest(TaskQueueTest):
         self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities_response')
         testutil.FakeSource.get_activities_response(
           count=mox.IgnoreArg(), fetch_replies=True, fetch_likes=True,
-          fetch_shares=True, etag=None, min_id=None,
+          fetch_shares=True, etag=None, min_id=None, cache=mox.IgnoreArg(),
           ).AndRaise(err)
         self.mox.ReplayAll()
 
@@ -321,7 +321,7 @@ class PollTest(TaskQueueTest):
     self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities_response')
     testutil.FakeSource.get_activities_response(
       count=mox.IgnoreArg(), fetch_replies=True, fetch_likes=True,
-      fetch_shares=True, etag='"my etag"', min_id='c',
+      fetch_shares=True, etag='"my etag"', min_id='c', cache=mox.IgnoreArg(),
       ).AndReturn({'items': [], 'etag': '"new etag"'})
 
     self.mox.ReplayAll()
@@ -343,7 +343,7 @@ class PollTest(TaskQueueTest):
     self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities_response')
     testutil.FakeSource.get_activities_response(
       count=mox.IgnoreArg(), fetch_replies=True, fetch_likes=True,
-      fetch_shares=True, etag=None, min_id='c',
+      fetch_shares=True, etag=None, min_id='c', cache=mox.IgnoreArg(),
       ).AndReturn({'items': []})
 
     self.mox.ReplayAll()
