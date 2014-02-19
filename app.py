@@ -209,7 +209,7 @@ class DeleteFinishHandler(util.Handler):
       self.messages.add('Deleted %s. Sorry to see you go!' % source.label())
       mail.send_mail(sender='delete@brid-gy.appspotmail.com',
                      to='webmaster@brid.gy',
-                     subject='Deleted Brid.gy user: %s %s' %
+                     subject='Deleted Bridgy user: %s %s' %
                      (source.label(), source.key.string_id()),
                      body='%s/#%s' % (self.request.host_url, source.dom_id()))
       self.redirect('/?deleted=%s' % source.key.urlsafe())

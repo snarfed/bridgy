@@ -65,26 +65,28 @@ class Site(StringIdModel):
       handler: the current RequestHandler
       **kwargs: passed to new()
     """
-    new = cls.new(handler, **kwargs)
-    existing = new.key.get()
+    site = cls.new(handler, **kwargs)
+    existing = site.key.get()
     if existing:
-      logging.warning('Overwriting %s %s! Old version:\n%s',
-                      existing.label(), existing.key, existing.to_dict())
-      new_msg = "Updated %s. Refresh to see what's new!" % existing.label()
+      site = existing
+      verb = 'Updated'
+      msg = "Updated %s. Refresh to see what's new!"
     else:
-      logging.info('Added %s %s %s', new.label(), new.key.string_id(), new.key)
-      new_msg = "Added %s. Refresh to see what we've found!" % new.label()
-      mail.send_mail(sender='add@brid-gy.appspotmail.com',
-                     to='webmaster@brid.gy',
-                     subject='Added Brid.gy user: %s %s' %
-                     (new.label(), new.key.string_id()),
-                     body='%s/#%s' % (handler.request.host_url, new.dom_id()))
+      verb = 'Added'
+      msg = "Added %s. Refresh to see what we've found!"
 
-    handler.messages = {new_msg}
+    logging.info('%s %s %s %s', verb, site.label(), site.key.string_id(), site.key)
+    mail.send_mail(sender='add@brid-gy.appspotmail.com',
+                   to='webmaster@brid.gy',
+                   subject='%s Bridgy user: %s %s' %
+                   (verb, site.label(), site.key.string_id()),
+                   body='%s/#%s' % (handler.request.host_url, site.dom_id()))
+
+    handler.messages = {msg % site.label()}
 
     # TODO: ugh, *all* of this should be transactional
-    new.put()
-    return new
+    site.put()
+    return site
 
   def dom_id(self):
     """Returns the DOM element id for this site."""
