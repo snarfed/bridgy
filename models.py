@@ -51,7 +51,7 @@ class Site(StringIdModel):
   # short name for this site type. used in URLs, ec.
   SHORT_NAME = None
   STATUSES = ('enabled', 'disabled', 'error')
-  POLL_FREQUENCY = datetime.timedelta(minutes=5)
+  POLL_FREQUENCY = datetime.timedelta(minutes=10)
 
   created = ndb.DateTimeProperty(auto_now_add=True, required=True)
   url = ndb.StringProperty()
