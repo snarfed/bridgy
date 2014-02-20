@@ -93,8 +93,8 @@ class HandlersTest(testutil.HandlerTest):
     self.assertEqual(400, resp.status_int)
 
   def test_bad_id(self):
-    for url in ('/post/fake/%s/x-1', '/comment/fake/%s/123/y_2',
-                '/like/fake/%s/abc/z@3'):
+    for url in ('/post/fake/%s/x"1', '/comment/fake/%s/123/y(2',
+                '/like/fake/%s/abc/z$3'):
       resp = handlers.application.get_response(url % self.source.key.string_id())
       self.assertEqual(404, resp.status_int)
 
@@ -105,15 +105,15 @@ class HandlersTest(testutil.HandlerTest):
 
   def test_comment(self):
     self.source.set_comment({
-        'id': 'tag:fa.ke,2013:111',
+        'id': 'tag:fa.ke,2013:a1-b2.c3',  # test alphanumeric id (like G+)
         'content': 'qwert',
         'inReplyTo': [{'url': 'http://fa.ke/000'}],
         'author': {'image': {'url': 'http://example.com/ryan/image'}},
         })
 
-    self.check_response('/comment/fake/%s/000/111', """\
+    self.check_response('/comment/fake/%s/000/a1-b2.c3', """\
 <article class="h-entry">
-<span class="u-uid">tag:fa.ke,2013:111</span>
+<span class="u-uid">tag:fa.ke,2013:a1-b2.c3</span>
 <div class="p-name">qwert</div>
 
   <div class="h-card p-author">

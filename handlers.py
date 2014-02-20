@@ -17,6 +17,7 @@ URL paths are:
 
 import json
 import logging
+import re
 import string
 import urlparse
 
@@ -62,6 +63,8 @@ class ItemHandler(webapp2.RequestHandler):
   handle_exception = handlers.handle_exception
   source = None
 
+  VALID_ID = re.compile(r'^[\w.+:@-]+$')
+
   def head(self, *args):
     """Return an empty 200 with no caching directives."""
 
@@ -96,7 +99,7 @@ class ItemHandler(webapp2.RequestHandler):
       self.abort(400, 'Invalid format %s, expected html or json' % format)
 
     for id in ids:
-      if not id.isalnum():
+      if not self.VALID_ID.match(id):
         self.abort(404, 'Non-numeric id %s' % id)
 
     obj = self.get_item(*ids)
