@@ -82,9 +82,6 @@ class ItemHandler(webapp2.RequestHandler):
     raise NotImplementedError()
 
   def get(self, type, source_short_name, string_id, *ids):
-    label = '%s:%s %s %s' % (source_short_name, string_id, type, ids)
-    logging.info('Fetching %s', label)
-
     source_cls = SOURCES.get(source_short_name)
     if not source_cls:
       self.abort(400, "Source type '%s' not found. Known sources: %s" %
@@ -102,6 +99,8 @@ class ItemHandler(webapp2.RequestHandler):
       if not self.VALID_ID.match(id):
         self.abort(404, 'Non-numeric id %s' % id)
 
+    label = '%s:%s %s %s' % (source_short_name, string_id, type, ids)
+    logging.info('Fetching %s', label)
     obj = self.get_item(*ids)
     if not obj:
       self.abort(404, label)
