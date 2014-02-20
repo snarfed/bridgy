@@ -95,6 +95,10 @@ class ItemHandler(webapp2.RequestHandler):
     if format not in ('html', 'json'):
       self.abort(400, 'Invalid format %s, expected html or json' % format)
 
+    for id in ids:
+      if not id.isalnum():
+        self.abort(404, 'Non-numeric id %s' % id)
+
     obj = self.get_item(*ids)
     if not obj:
       self.abort(404, label)

@@ -92,6 +92,12 @@ class HandlersTest(testutil.HandlerTest):
                                              self.source.key.string_id())
     self.assertEqual(400, resp.status_int)
 
+  def test_bad_id(self):
+    for url in ('/post/fake/%s/x-1', '/comment/fake/%s/123/y_2',
+                '/like/fake/%s/abc/z@3'):
+      resp = handlers.application.get_response(url % self.source.key.string_id())
+      self.assertEqual(404, resp.status_int)
+
   def test_ignore_unknown_query_params(self):
     resp = handlers.application.get_response('/post/fake/%s/000?target=x/y/z' %
                                              self.source.key.string_id())
