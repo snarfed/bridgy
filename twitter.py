@@ -27,11 +27,11 @@ class Twitter(models.Source):
   AS_CLASS = as_twitter.Twitter
   SHORT_NAME = 'twitter'
 
-  # Twitter's rate limiting window is currently 15m. We handle replies,
-  # retweets, and favorites in twitter_streaming anyway, so this is mainly just
-  # for backup.
+  # Twitter's rate limiting window is currently 15m. A normal poll with nothing
+  # new hits /statuses/user_timeline and /search/tweets once each. Both
+  # allow 180 calls per window before they're rate limited.
   # https://dev.twitter.com/docs/rate-limiting/1.1/limits
-  POLL_FREQUENCY = datetime.timedelta(minutes=20)
+  POLL_FREQUENCY = datetime.timedelta(minutes=5)
 
   @staticmethod
   def new(handler, auth_entity=None):
