@@ -31,7 +31,7 @@ class Twitter(models.Source):
   # new hits /statuses/user_timeline and /search/tweets once each. Both
   # allow 180 calls per window before they're rate limited.
   # https://dev.twitter.com/docs/rate-limiting/1.1/limits
-  POLL_FREQUENCY = datetime.timedelta(minutes=5)
+  POLL_FREQUENCY = datetime.timedelta(minutes=10)
 
   @staticmethod
   def new(handler, auth_entity=None):
