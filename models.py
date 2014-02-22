@@ -68,6 +68,8 @@ class Site(StringIdModel):
     site = cls.new(handler, **kwargs)
     existing = site.key.get()
     if existing:
+      # merge some fields
+      site.features = set(site.features + existing.features)
       verb = 'Updated'
       msg = "Updated %s. Refresh to see what's new!"
     else:

@@ -84,12 +84,12 @@ class SourceTest(testutil.HandlerTest):
     self.assert_equals({msg}, self.handler.messages)
 
   def test_create_new_already_exists(self):
-    FakeSource.new(None).put()
-    self.assert_equals([], FakeSource.query().get().features)
+    FakeSource.new(None, features=['listen']).put()
+    self.assert_equals(['listen'], FakeSource.query().get().features)
 
     FakeSource.string_id_counter -= 1
-    self._test_create_new(features=('publish',))
-    self.assert_equals(['publish'], FakeSource.query().get().features)
+    self._test_create_new(features=['publish'])
+    self.assert_equals(['listen', 'publish'], FakeSource.query().get().features)
     self.assert_equals({"Updated fake (FakeSource). Refresh to see what's new!"},
                        self.handler.messages)
 
