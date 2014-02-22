@@ -34,7 +34,7 @@ class Twitter(models.Source):
   POLL_FREQUENCY = datetime.timedelta(minutes=10)
 
   @staticmethod
-  def new(handler, auth_entity=None):
+  def new(handler, auth_entity=None, **kwargs):
     """Creates and returns a Twitter entity.
 
     Args:
@@ -49,7 +49,8 @@ class Twitter(models.Source):
                    auth_entity=auth_entity.key,
                    url=Twitter.user_url(user['screen_name']),
                    name=user['name'],
-                   picture=picture)
+                   picture=picture,
+                   **kwargs)
 
   def get_like(self, activity_user_id, activity_id, like_user_id):
     """Returns an ActivityStreams 'like' activity object for a favorite.

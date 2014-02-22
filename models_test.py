@@ -64,8 +64,8 @@ class ResponseTest(testutil.ModelsTest):
 
 class SourceTest(testutil.HandlerTest):
 
-  def _test_create_new(self):
-    FakeSource.create_new(self.handler)
+  def _test_create_new(self, **kwargs):
+    FakeSource.create_new(self.handler, **kwargs)
     self.assertEqual(1, FakeSource.query().count())
 
     tasks = self.taskqueue_stub.GetTasks('poll')
@@ -85,10 +85,13 @@ class SourceTest(testutil.HandlerTest):
 
   def test_create_new_already_exists(self):
     FakeSource.new(None).put()
+    self.assert_equals([], FakeSource.query().get().features)
+
     FakeSource.string_id_counter -= 1
-    self._test_create_new()
-    msg = "Updated fake (FakeSource). Refresh to see what's new!"
-    self.assert_equals({msg}, self.handler.messages)
+    self._test_create_new(features=('publish',))
+    self.assert_equals(['publish'], FakeSource.query().get().features)
+    self.assert_equals({"Updated fake (FakeSource). Refresh to see what's new!"},
+                       self.handler.messages)
 
   def test_get_post(self):
     post = {'verb': 'post', 'object': {'objectType': 'note', 'content': 'asdf'}}

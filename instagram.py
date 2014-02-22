@@ -42,7 +42,7 @@ class Instagram(models.Source):
   SHORT_NAME = 'instagram'
 
   @staticmethod
-  def new(handler, auth_entity=None):
+  def new(handler, auth_entity=None, **kwargs):
     """Creates and returns a InstagramPage for the logged in user.
 
     Args:
@@ -55,7 +55,8 @@ class Instagram(models.Source):
                      auth_entity=auth_entity.key,
                      name=user['full_name'],
                      picture=user['profile_picture'],
-                     url='http://instagram.com/' + username)
+                     url='http://instagram.com/' + username,
+                     **kwargs)
 
   def get_activities_response(self, *args, **kwargs):
     """Discard min_id because we still want new comments/likes on old photos."""

@@ -68,7 +68,6 @@ class Site(StringIdModel):
     site = cls.new(handler, **kwargs)
     existing = site.key.get()
     if existing:
-      site = existing
       verb = 'Updated'
       msg = "Updated %s. Refresh to see what's new!"
     else:
@@ -107,7 +106,7 @@ class Source(Site):
   name = ndb.StringProperty()
   picture = ndb.StringProperty()
 
-  features = ndb.StringProperty(repeated=True, choices=('publish',))
+  features = ndb.StringProperty(repeated=True, choices=('listen', 'publish'))
 
   # points to an oauth-dropins auth entity. The model class should be a subclass
   # of oauth_dropins.BaseAuth.

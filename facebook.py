@@ -1,10 +1,6 @@
 """Facebook API code and datastore model classes.
 
-Permissions needed:
-read_stream for links posted by user
-offline_access for, uh, offline access
-
-TODO: use third_party_id if we ever need to store an fb user id anywhere else.
+TODO: use third_party_id if we ever need to store an FB user id anywhere else.
 
 Example post ID and links
   id: 212038_10100823411129293  [USER-ID]_[POST-ID]
@@ -43,8 +39,10 @@ import webapp2
 
 
 # https://developers.facebook.com/docs/reference/login/
-OAUTH_SCOPES = ('offline_access', 'user_status', 'user_photos', 'user_events',
-                'read_stream')
+LISTEN_OAUTH_SCOPES = ('offline_access', 'user_status', 'user_photos',
+                       'user_events', 'read_stream')
+PUBLISH_OAUTH_SCOPES = ('offline_access', 'publish_actions', 'create_event ',
+                        'rsvp_event')
 
 API_PHOTOS_URL = 'https://graph.facebook.com/me/photos/uploaded'
 API_USER_RSVPS_URL = 'https://graph.facebook.com/me/events'  # returns yes and maybe
@@ -68,12 +66,13 @@ class FacebookPage(models.Source):
   username = ndb.StringProperty()
 
   @staticmethod
-  def new(handler, auth_entity=None):
+  def new(handler, auth_entity=None, **kwargs):
     """Creates and returns a FacebookPage for the logged in user.
 
     Args:
       handler: the current RequestHandler
       auth_entity: oauth_dropins.facebook.FacebookAuth
+      kwargs: property values
     """
     user = json.loads(auth_entity.user_json)
     id = user['id']
@@ -84,7 +83,8 @@ class FacebookPage(models.Source):
                         name=user.get('name'),
                         username=user.get('username'),
                         auth_entity=auth_entity.key,
-                        picture=picture, url=url)
+                        picture=picture, url=url,
+                        **kwargs)
 
   def get(self, url):
     """Simple wrapper around urlopen(). Returns decoded JSON dict."""
@@ -181,7 +181,7 @@ class AddFacebookPage(oauth_facebook.CallbackHandler, util.Handler):
 
 application = webapp2.WSGIApplication([
     ('/facebook/start',oauth_facebook.StartHandler.to('/facebook/add',
-                                                      scopes=OAUTH_SCOPES)),
+                                                      scopes=LISTEN_OAUTH_SCOPES)),
     ('/facebook/add', AddFacebookPage),
     ('/facebook/delete/finish', oauth_facebook.CallbackHandler.to('/delete/finish')),
     ], debug=appengine_config.DEBUG)

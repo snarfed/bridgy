@@ -39,7 +39,7 @@ class GooglePlusPage(models.Source):
   type = ndb.StringProperty(choices=('user', 'page'))
 
   @staticmethod
-  def new(handler, auth_entity=None):
+  def new(handler, auth_entity=None, **kwargs):
     """Creates and returns a GooglePlusPage for the logged in user.
 
     Args:
@@ -61,7 +61,8 @@ class GooglePlusPage(models.Source):
                           url=user['url'],
                           name=user['displayName'],
                           picture=picture,
-                          type=type)
+                          type=type,
+                          **kwargs)
 
   def __getattr__(self, name):
     """Overridden to pass auth_entity to as_googleplus.GooglePlus's ctor."""

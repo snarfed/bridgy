@@ -6,15 +6,18 @@
 <div id="connect" class="row">
 <div class="col-md-4 col-sm-8">
  <form method="post" name="facebook-start" action="/facebook/start">
-  <input name="scope" type="hidden" value="publish_actions" />
+  <input name="scope" type="hidden" value="publish_actions,create_event,rsvp_event" />
+  <input name="state" type="hidden" value="publish" />
   <input type="image" alt="Sign in with Facebook" src="/static/facebook_button.png" />
 </form></div>
 <div class="col-md-4 col-sm-8">
  <form method="post" name="twitter-start" action="/twitter/start">
+  <input name="state" type="hidden" value="publish" />
   <input type="image" alt="Sign in with Twitter" src="/static/twitter_button.png" />
 </form></div>
 <div class="col-md-4 col-sm-8">
  <form method="post" name="instagram-start" action="/instagram/start">
+  <input name="state" type="hidden" value="publish" />
   <input type="image" alt="Sign in with Instagram" src="/static/instagram_button.png" />
 </form></div>
 </div>
