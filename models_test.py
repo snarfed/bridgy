@@ -79,7 +79,7 @@ class SourceTest(testutil.HandlerTest):
 
   def test_create_new(self):
     self.assertEqual(0, FakeSource.query().count())
-    self._test_create_new()
+    self._test_create_new(features=['listen'])
     msg = "Added fake (FakeSource). Refresh to see what we've found!"
     self.assert_equals({msg}, self.handler.messages)
 
@@ -92,6 +92,11 @@ class SourceTest(testutil.HandlerTest):
     self.assert_equals(['listen', 'publish'], FakeSource.query().get().features)
     self.assert_equals({"Updated fake (FakeSource). Refresh to see what's new!"},
                        self.handler.messages)
+
+  def test_create_new_publish(self):
+    """If a source is publish only, we shouldn't insert a poll task."""
+    FakeSource.create_new(self.handler, features=['publish'])
+    self.assertEqual(0, len(self.taskqueue_stub.GetTasks('poll')))
 
   def test_get_post(self):
     post = {'verb': 'post', 'object': {'objectType': 'note', 'content': 'asdf'}}

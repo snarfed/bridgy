@@ -232,7 +232,8 @@ class Source(Site):
       **kwargs: passed to new()
     """
     new = super(Source, cls).create_new(handler, **kwargs)
-    util.add_poll_task(new)
+    if 'listen' in new.features:
+      util.add_poll_task(new)
     return new
 
 
