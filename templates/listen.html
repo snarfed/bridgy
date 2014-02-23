@@ -28,19 +28,28 @@ below to try it yourself, read <a href="/about">even more details</a>, or
 <div class="col-md-3 col-sm-6">
  <form method="post" name="facebook-start" action="/facebook/start">
   <input type="image" alt="Sign in with Facebook" src="/static/facebook_button.png" />
+  <input name="state" type="hidden" value="listen" />
+  <!-- https://developers.facebook.com/docs/reference/login/ -->
+  <input name="scope" type="hidden"
+         value="offline_access,user_status,user_photos,user_events,read_stream">
 </form></div>
 <div class="col-md-3 col-sm-6">
  <form method="post" name="twitter-start" action="/twitter/start">
   <input type="image" alt="Sign in with Twitter" src="/static/twitter_button.png" />
+  <input name="state" type="hidden" value="listen" />
 </form></div>
 <div class="clearfix visible-xs"></div>
 <div class="col-md-3 col-sm-6">
  <form method="post" name="googleplus-start" action="/googleplus/start">
   <input type="image" alt="Sign in with Google+" src="/static/google_plus_button.png" />
+  <input name="state" type="hidden" value="listen" />
+  <!-- https://developers.google.com/+/api/oauth#scopes -->
+  <input name="scope" type="hidden" value="https://www.googleapis.com/auth/plus.login"
 </form></div>
 <div class="col-md-3 col-sm-6">
  <form method="post" name="instagram-start" action="/instagram/start">
   <input type="image" alt="Sign in with Instagram" src="/static/instagram_button.png" />
+  <input name="state" type="hidden" value="listen" />
 </form></div>
 </div>
 

@@ -16,12 +16,11 @@ POLL_TASK_DATETIME_FORMAT = '%Y-%m-%d-%H-%M-%S'
 FAILED_RESOLVE_URL_CACHE_TIME = 60 * 60 * 24  # a day
 
 
-def added_source_redirect(handler, source):
+def added_source_redirect(handler, source, uri):
   """Redirects to the dashboard after adding a source.
   """
-  uri = '/?added=%s#%s' % (source.key.urlsafe(), source.dom_id())
-  uri = add_query_params(uri, [('msg', msg) for msg in handler.messages])
-  handler.redirect(uri)
+  params = [('added', source.key.urlsafe())] + [('msg', m) for m in handler.messages]
+  handler.redirect('/%s#%s' % (add_query_params(uri, params), source.dom_id()))
 
 
 def add_poll_task(source, **kwargs):

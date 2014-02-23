@@ -221,6 +221,7 @@ class DeleteFinishHandler(util.Handler):
 
 application = webapp2.WSGIApplication(
   [('/', ListenHandler),
+   ('/listen', ListenHandler),
    ('/publish', PublishHandler),
    ('/responses', ResponsesHandler),
    ('/about', AboutHandler),

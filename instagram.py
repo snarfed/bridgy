@@ -73,23 +73,21 @@ class OAuthCallback(oauth_instagram.CallbackHandler, util.Handler):
   """
 
   def finish(self, auth_entity, state=None):
-    state = self.request.get('state')
+    if state in (None, 'listen', 'publish'):  # this is an add/update
+      if not auth_entity:
+        self.messages.add("OK, you're not signed up. Hope you reconsider!")
+        self.redirect('/')
+        return
+      inst = Instagram.create_new(self, auth_entity=auth_entity, features=[state])
+      util.added_source_redirect(self, inst, state)
 
-    if state:  # this is a delete
+    else:  # this is a delete
       if auth_entity:
         self.redirect('/delete/finish?auth_entity=%s&state=%s' %
                       (auth_entity.key.urlsafe(), state))
       else:
         self.messages.add("OK, you're still signed up.")
         self.redirect('/')
-
-    else:  # this is an add
-      if not auth_entity:
-        self.messages.add("OK, you're not signed up. Hope you reconsider!")
-        self.redirect('/')
-        return
-      inst = Instagram.create_new(self, auth_entity=auth_entity)
-      util.added_source_redirect(self, inst)
 
 
 application = webapp2.WSGIApplication([

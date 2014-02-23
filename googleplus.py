@@ -81,9 +81,19 @@ class OAuthCallback(util.Handler):
   """
   def get(self):
     auth_entity_str_key = util.get_required_param(self, 'auth_entity')
-    state = self.request.get('state')
+    state = self.request.get('state', '')
 
-    if state:  # this is a delete
+    if state in ('', 'listen', 'publish'):  # this is an add/update
+      if not auth_entity_str_key:
+        self.messages.add("OK, you're not signed up. Hope you reconsider!")
+        self.redirect('/')
+        return
+
+      auth_entity = ndb.Key(urlsafe=auth_entity_str_key).get()
+      gp = GooglePlusPage.create_new(self, auth_entity=auth_entity, features=[state])
+      util.added_source_redirect(self, gp, state)
+
+    else:  # this is a delete
       if auth_entity_str_key:
         self.redirect('/delete/finish?auth_entity=%s&state=%s' %
                       (auth_entity_str_key, state))
@@ -91,19 +101,10 @@ class OAuthCallback(util.Handler):
         self.messages.add("OK, you're still signed up.")
         self.redirect('/')
 
-    else:  # this is an add
-      if not auth_entity_str_key:
-        self.messages.add("OK, you're not signed up. Hope you reconsider!")
-        self.redirect('/')
-        return
-      gp = GooglePlusPage.create_new(
-        self, auth_entity=ndb.Key(urlsafe=auth_entity_str_key).get())
-      util.added_source_redirect(self, gp)
-
 
 application = webapp2.WSGIApplication([
-    ('/googleplus/start',
-     oauth_googleplus.StartHandler.to('/googleplus/oauth2callback')),
+    # OAuth scopes are set in listen.html and publish.html
+    ('/googleplus/start', oauth_googleplus.StartHandler.to('/googleplus/oauth2callback')),
     ('/googleplus/oauth2callback', oauth_googleplus.CallbackHandler.to('/googleplus/add')),
     ('/googleplus/add', OAuthCallback),
     ('/googleplus/delete/start', oauth_googleplus.StartHandler.to('/googleplus/oauth2callback')),

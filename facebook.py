@@ -37,13 +37,6 @@ import util
 from google.appengine.ext import ndb
 import webapp2
 
-
-# https://developers.facebook.com/docs/reference/login/
-LISTEN_OAUTH_SCOPES = ('offline_access', 'user_status', 'user_photos',
-                       'user_events', 'read_stream')
-PUBLISH_OAUTH_SCOPES = ('offline_access', 'publish_actions', 'create_event ',
-                        'rsvp_event')
-
 API_PHOTOS_URL = 'https://graph.facebook.com/me/photos/uploaded'
 API_USER_RSVPS_URL = 'https://graph.facebook.com/me/events'  # returns yes and maybe
 API_USER_RSVPS_DECLINED_URL = 'https://graph.facebook.com/me/events/declined'
@@ -175,13 +168,13 @@ class AddFacebookPage(oauth_facebook.CallbackHandler, util.Handler):
       self.redirect('/')
       return
 
-    fb = FacebookPage.create_new(self, auth_entity=auth_entity)
-    util.added_source_redirect(self, fb)
+    fb = FacebookPage.create_new(self, auth_entity=auth_entity, features=[state])
+    util.added_source_redirect(self, fb, state)
 
 
 application = webapp2.WSGIApplication([
-    ('/facebook/start',oauth_facebook.StartHandler.to('/facebook/add',
-                                                      scopes=LISTEN_OAUTH_SCOPES)),
+    # OAuth scopes are set in listen.html and publish.html
+    ('/facebook/start', oauth_facebook.StartHandler.to('/facebook/add')),
     ('/facebook/add', AddFacebookPage),
     ('/facebook/delete/finish', oauth_facebook.CallbackHandler.to('/delete/finish')),
     ], debug=appengine_config.DEBUG)
