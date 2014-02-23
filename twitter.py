@@ -81,14 +81,7 @@ class Twitter(models.Source):
 
 class AddTwitter(oauth_twitter.CallbackHandler, util.Handler):
   def finish(self, auth_entity, state=None):
-    if not auth_entity:
-      self.messages.add("OK, you're not signed up. Hope you reconsider!")
-      self.redirect('/')
-      return
-
-    tw = Twitter.create_new(self, auth_entity=auth_entity, features=[state])
-    util.added_source_redirect(self, tw, state)
-
+    self.maybe_add_or_delete_source(Twitter, auth_entity, state)
 
 application = webapp2.WSGIApplication([
     ('/twitter/start', oauth_twitter.StartHandler.to('/twitter/add')),

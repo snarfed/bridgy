@@ -8,6 +8,7 @@ import webapp2
 
 from activitystreams.oauth_dropins.webutil.util import *
 from appengine_config import HTTP_TIMEOUT
+
 from google.appengine.api import memcache
 from google.appengine.api import taskqueue
 
@@ -144,3 +145,30 @@ class Handler(webapp2.RequestHandler):
     if self.messages and 'msg' not in params:
       uri = add_query_params(uri, [('msg', msg) for msg in self.messages])
     super(Handler, self).redirect(uri, **kwargs)
+
+  def maybe_add_or_delete_source(self, source_cls, auth_entity, state):
+    """Adds or deletes a source if auth_entity is not None.
+
+    Used in each source's oauth-dropins CallbackHandler finish() and get()
+    methods, respectively.
+
+    Args:
+      source_cls: source class, e.g. Instagram
+      auth_entity: ouath-dropins auth entity
+      state: 'listen' or 'publish' or empty
+    """
+    if state in (None, '', 'listen', 'publish'):  # this is an add/update
+      if not auth_entity:
+        self.messages.add("OK, you're not signed up. Hope you reconsider!")
+        self.redirect('/')
+        return
+      source = source_cls.create_new(self, auth_entity=auth_entity, features=[state])
+      added_source_redirect(self, source, state)
+
+    else:  # this is a delete
+      if auth_entity:
+        self.redirect('/delete/finish?auth_entity=%s&state=%s' %
+                      (auth_entity.key.urlsafe(), state))
+      else:
+        self.messages.add("OK, you're still signed up.")
+        self.redirect('/')

@@ -163,13 +163,7 @@ class FacebookPage(models.Source):
 
 class AddFacebookPage(oauth_facebook.CallbackHandler, util.Handler):
   def finish(self, auth_entity, state=None):
-    if not auth_entity:
-      self.messages.add("OK, you're not signed up. Hope you reconsider!")
-      self.redirect('/')
-      return
-
-    fb = FacebookPage.create_new(self, auth_entity=auth_entity, features=[state])
-    util.added_source_redirect(self, fb, state)
+    self.maybe_add_or_delete_source(FacebookPage, auth_entity, state)
 
 
 application = webapp2.WSGIApplication([
