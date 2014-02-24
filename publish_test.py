@@ -1,4 +1,4 @@
-"""Unit tests for webmention.py.
+"""Unit tests for publish.py.
 """
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
@@ -8,20 +8,20 @@ import mox
 import urllib
 
 from activitystreams.oauth_dropins.webutil import testutil
-import webmention
+import publish
 import webapp2
 
 
-class WebmentionTest(testutil.HandlerTest):
+class PublishTest(testutil.HandlerTest):
 
-  def test_webmention(self):
+  def test_publish(self):
     self.expect_urlopen('http://pin13.net/mf2/?url=%s' %
                         urllib.quote_plus('http://foo.com/bar'),
                         json.dumps({}))
     self.mox.ReplayAll()
 
-    resp = webmention.application.get_response(
-      '/webmention', method='POST',
+    resp = publish.application.get_response(
+      '/publish', method='POST',
       body='source=http://foo.com/bar&target=http://facebook.com/123')
 
     self.assertEqual(403, resp.status_int)

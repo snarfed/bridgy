@@ -1,4 +1,4 @@
-"""Propagates webmentions into Facebook, Twitter, and Google+.
+"""Publishes webmentions into the silos.
 
 Webmention spec: http://webmention.org/
 
