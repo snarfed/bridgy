@@ -1,27 +1,4 @@
 """Datastore model classes.
-
-For the record, these are the remote_api_shell commands I used to do the schema
-migration from Comment to Response. *First*, temporarily drop the auto_now=True
-on the 'updated' property. Then:
-
-~/google_appengine/remote_api_shell.py -s localhost:8080
-OR
-~/google_appengine/remote_api_shell.py brid-gy
-
-...
-
-from models import Comment, Response
-
-for c in Comment.query():
-  props = db.to_dict(c)
-  props['response_json'] = props.pop('comment_json')
-  Response(id=c.key().string_id(), **props).save()
-
-# sanity check
-Comment.query().count()
-Response.query().count()
-
-Now, add auto_now=True back to the 'updated' property.
 """
 
 import datetime
@@ -310,12 +287,6 @@ class Response(StringIdModel):
     else:
       # default to comment. (e.g. Twitter replies technically have objectType note)
       return 'comment'
-
-
-class Comment(Response):
-  """Backward compatibility. TODO: remove.
-  """
-  comment_json = ndb.TextProperty()
 
 
 class DisableSource(Exception):
