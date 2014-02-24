@@ -20,6 +20,7 @@ import urlparse
 from apiclient import errors
 from google.appengine.api import memcache
 from google.appengine.ext import ndb
+from oauth2client.client import AccessTokenRefreshError
 from python_instagram.bind import InstagramAPIError
 import webapp2
 from webmentiontools import send
@@ -126,6 +127,8 @@ class Poll(webapp2.RequestHandler):
           code = '401'
         else:
           code = e.status_code
+      elif isinstance(e, AccessTokenRefreshError) and str(e) == 'invalid_grant':
+        code = '401'
       else:
         raise
 

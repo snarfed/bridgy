@@ -15,6 +15,7 @@ from apiclient import errors
 from google.appengine.api import memcache
 from google.appengine.ext import ndb
 import httplib2
+from oauth2client.client import AccessTokenRefreshError
 from python_instagram.bind import InstagramAPIError
 import requests
 
@@ -260,7 +261,9 @@ class PollTest(TaskQueueTest):
     """HTTP 401 and 400 '' for Instagram should disable the source."""
     try:
       for err in (urllib2.HTTPError('url', 401, 'msg', {}, None),
-                  InstagramAPIError('400', 'OAuthAccessTokenException', 'foo')):
+                  InstagramAPIError('400', 'OAuthAccessTokenException', 'foo'),
+                  AccessTokenRefreshError('invalid_grant'),
+                  ):
         self.mox.UnsetStubs()
         self.setUp()
 
