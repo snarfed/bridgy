@@ -8,7 +8,6 @@ on the 'updated' property. Then:
 OR
 ~/google_appengine/remote_api_shell.py brid-gy
 
-heaven@gmail.com
 ...
 
 from models import Comment, Response
@@ -99,6 +98,7 @@ class Source(Site):
 
   Each concrete silo class should subclass this class.
   """
+  FEATURES = ('listen', 'publish')
 
   AS_CLASS = None  # the corresponding activitystreams-unofficial class
   last_polled = ndb.DateTimeProperty(default=util.EPOCH)
@@ -108,7 +108,7 @@ class Source(Site):
   name = ndb.StringProperty()
   picture = ndb.StringProperty()
 
-  features = ndb.StringProperty(repeated=True, choices=('listen', 'publish'))
+  features = ndb.StringProperty(repeated=True, choices=FEATURES)
 
   # points to an oauth-dropins auth entity. The model class should be a subclass
   # of oauth_dropins.BaseAuth.

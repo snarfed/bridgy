@@ -42,6 +42,15 @@ def source_dom_id_to_key(id):
 
 
 class DashboardHandler(TemplateHandler):
+  """Base handler for both /listen and /publish."""
+
+  def feature(self):
+    """Returns either 'listen' or 'publish'.
+
+    Subclasses should override.
+    """
+    raise NotImplementedError()
+
   def head(self):
     """Return an empty 200 with no caching directives."""
 
@@ -52,13 +61,17 @@ class DashboardHandler(TemplateHandler):
     """
     return self.get()
 
+  def template_file(self):
+    assert self.feature() in Source.FEATURES
+    return 'templates/%s.html' % self.feature()
+
   def content_type(self):
     return 'text/html; charset=utf-8'
 
   def template_vars(self):
-    sources = {source.key.urlsafe(): source for source in
-               itertools.chain(FacebookPage.query().iter(), Twitter.query().iter(),
-                               GooglePlusPage.query().iter(), Instagram.query().iter())}
+    queries = [cls.query().filter(Source.features == self.feature()).iter()
+               for cls in (FacebookPage, Twitter, GooglePlusPage, Instagram)]
+    sources = {source.key.urlsafe(): source for source in itertools.chain(*queries)}
 
     # manually update the source we just added or deleted to workaround
     # inconsistent global queries.
@@ -91,13 +104,13 @@ class DashboardHandler(TemplateHandler):
 
 
 class ListenHandler(DashboardHandler):
-  def template_file(self):
-    return 'templates/listen.html'
+  def feature(self):
+    return 'listen'
 
 
 class PublishHandler(DashboardHandler):
-  def template_file(self):
-    return 'templates/publish.html'
+  def feature(self):
+    return 'publish'
 
 
 class ResponsesHandler(TemplateHandler):
