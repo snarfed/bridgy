@@ -84,6 +84,7 @@ class Source(Site):
   # full human-readable name
   name = ndb.StringProperty()
   picture = ndb.StringProperty()
+  domain = ndb.StringProperty()
 
   features = ndb.StringProperty(repeated=True, choices=FEATURES)
 
@@ -209,8 +210,21 @@ class Source(Site):
       **kwargs: passed to new()
     """
     new = super(Source, cls).create_new(handler, **kwargs)
+
+    # extract domain from the URL set on the user's profile, if any
+    user_json = new.auth_entity and new.auth_entity.get().user_json
+    if user_json:
+      actor = new.as_source.user_to_actor(json.loads(user_json))
+      url = actor.get('url')
+      if url:
+        try:
+          new.domain = urlparse.urlparse(url).netloc
+        except BaseException, e:
+          logging.error("Not setting domain; could not parse URL %s . %s", url, e)
+
     if 'listen' in new.features:
       util.add_poll_task(new)
+
     return new
 
 

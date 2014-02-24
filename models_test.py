@@ -98,6 +98,34 @@ class SourceTest(testutil.HandlerTest):
     FakeSource.create_new(self.handler, features=['publish'])
     self.assertEqual(0, len(self.taskqueue_stub.GetTasks('poll')))
 
+  def test_create_new_domain(self):
+    """If the source has a URL set, extract its domain."""
+
+    # no auth entity
+    source = FakeSource.create_new(self.handler)
+    self.assertIsNone(source.domain)
+
+    # no URL
+    auth_entity = testutil.FakeAuthEntity(id='x', user_json='{}')
+    auth_entity.put()
+    source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
+    self.assertIsNone(source.domain)
+
+    # bad URL
+    auth_entity.user_json = '{"url": "not a url"}'
+    auth_entity.put()
+    source = FakeSource.create_new(self.handler, auth_entity=testutil.FakeAuthEntity())
+    self.assertIsNone(source.domain)
+
+    # good URL
+    auth_entity.user_json = '{"url": "https://foo.com/bar"}'
+    auth_entity.put()
+    source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
+    self.assertEquals('foo.com', source.domain)
+
+    # URL redirects to another domain
+    # TODO
+
   def test_get_post(self):
     post = {'verb': 'post', 'object': {'objectType': 'note', 'content': 'asdf'}}
     source = Source(id='x')

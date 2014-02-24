@@ -18,6 +18,7 @@ from activitystreams import source as as_source
 from models import Response, Source
 from tasks import Poll, Propagate
 import util
+from activitystreams.oauth_dropins.models import BaseAuth
 from activitystreams.oauth_dropins.webutil import testutil
 
 
@@ -27,6 +28,10 @@ def get_task_params(task):
   params = urlparse.parse_qs(base64.b64decode(task['body']))
   params = dict((key, val[0]) for key, val in params.items())
   return params
+
+
+class FakeAuthEntity(BaseAuth):
+  user_json = ndb.TextProperty()
 
 
 class FakeBase(ndb.Model):
@@ -51,6 +56,9 @@ class FakeBase(ndb.Model):
       props['url'] = 'http://fake/url'
     if 'name' not in props:
       props['name'] = 'fake'
+    auth_entity = props.get('auth_entity')
+    if auth_entity:
+      props['auth_entity'] = auth_entity.key
     inst = cls(id=str(cls.string_id_counter), **props)
     cls.string_id_counter += 1
     return inst
@@ -77,6 +85,9 @@ class FakeAsSource(FakeBase, as_source.Source):
 
   def get_rsvp(self, activity_user_id, event_id, rsvp_user_id):
     return self._get('rsvp')
+
+  def user_to_actor(self, user):
+    return user
 
 
 class FakeSource(FakeBase, Source):
