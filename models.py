@@ -215,6 +215,8 @@ class Source(Site):
     user_json = new.auth_entity and new.auth_entity.get().user_json
     if user_json:
       actor = new.as_source.user_to_actor(json.loads(user_json))
+      # TODO: G+ has a multiply-valued 'urls' field. ignoring for now because
+      # we're not implementing publish for G+
       url = actor.get('url')
       if url:
         try:

@@ -157,13 +157,18 @@ class Handler(webapp2.RequestHandler):
       auth_entity: ouath-dropins auth entity
       state: 'listen' or 'publish' or empty
     """
-    if state in (None, '', 'listen', 'publish'):  # this is an add/update
+    if state is None:
+      state = ''
+    if state in ('', 'listen', 'publish'):  # this is an add/update
       if not auth_entity:
         self.messages.add("OK, you're not signed up. Hope you reconsider!")
         self.redirect('/')
         return
-      source = source_cls.create_new(self, auth_entity=auth_entity, features=[state])
+
+      source = source_cls.create_new(self, auth_entity=auth_entity,
+                                     features=[state] if state else [])
       added_source_redirect(self, source, state)
+      return source
 
     else:  # this is a delete
       if auth_entity:
