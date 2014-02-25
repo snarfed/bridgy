@@ -76,4 +76,4 @@ skip_files:
 - ^(.*/)?.*/RCS/.*
 - ^(.*/)?\..*
 - ^(.*/)?.*\.bak$
-- ^(.*/)?(debian|doc|docs|pydocs|python3|ref|samples|tests)/.*
+- ^(.*/)?(debian|docs?|examples?|pydocs?|python3|ref|samples?|tests?)/.*
