@@ -20,71 +20,30 @@ from google.appengine.api import users
 from google.appengine.ext import ndb
 
 
-class Site(StringIdModel):
-  """A web site for a single entity, e.g. Facebook profile or WordPress blog.
+class Source(StringIdModel):
+  """A silo account, e.g. a Facebook or Google+ account.
+
+  Each concrete silo class should subclass this class.
   """
+  STATUSES = ('enabled', 'disabled', 'error')
+  FEATURES = ('listen', 'publish')
 
   # short name for this site type. used in URLs, ec.
   SHORT_NAME = None
-  STATUSES = ('enabled', 'disabled', 'error')
+  # the corresponding activitystreams-unofficial class
+  AS_CLASS = None
   POLL_FREQUENCY = datetime.timedelta(minutes=10)
 
   created = ndb.DateTimeProperty(auto_now_add=True, required=True)
   url = ndb.StringProperty()
   status = ndb.StringProperty(choices=STATUSES, default='enabled')
-
-  @classmethod
-  def create_new(cls, handler, **kwargs):
-    """Creates and saves a new Site.
-
-    Args:
-      handler: the current RequestHandler
-      **kwargs: passed to new()
-    """
-    site = cls.new(handler, **kwargs)
-    existing = site.key.get()
-    if existing:
-      # merge some fields
-      site.features = set(site.features + existing.features)
-      verb = 'Updated'
-      msg = "Updated %s. Refresh to see what's new!"
-    else:
-      verb = 'Added'
-      msg = "Added %s. Refresh to see what we've found!"
-
-    logging.info('%s %s %s %s', verb, site.label(), site.key.string_id(), site.key)
-    mail.send_mail(sender='add@brid-gy.appspotmail.com',
-                   to='webmaster@brid.gy',
-                   subject='%s Bridgy user: %s %s' %
-                   (verb, site.label(), site.key.string_id()),
-                   body='%s/#%s' % (handler.request.host_url, site.dom_id()))
-
-    handler.messages = {msg % site.label()}
-
-    return site
-
-  def dom_id(self):
-    """Returns the DOM element id for this site."""
-    return '%s-%s' % (self.SHORT_NAME, self.key.string_id())
-
-
-class Source(Site):
-  """A silo account, e.g. a Facebook or Google+ account.
-
-  Each concrete silo class should subclass this class.
-  """
-  FEATURES = ('listen', 'publish')
-
-  AS_CLASS = None  # the corresponding activitystreams-unofficial class
-  last_polled = ndb.DateTimeProperty(default=util.EPOCH)
-  last_poll_attempt = ndb.DateTimeProperty(default=util.EPOCH)
-
-  # full human-readable name
-  name = ndb.StringProperty()
+  name = ndb.StringProperty()  # full human-readable name
   picture = ndb.StringProperty()
   domain = ndb.StringProperty()
-
   features = ndb.StringProperty(repeated=True, choices=FEATURES)
+
+  last_polled = ndb.DateTimeProperty(default=util.EPOCH)
+  last_poll_attempt = ndb.DateTimeProperty(default=util.EPOCH)
 
   # points to an oauth-dropins auth entity. The model class should be a subclass
   # of oauth_dropins.BaseAuth.
@@ -119,6 +78,10 @@ class Source(Site):
       return self.as_source
 
     return getattr(super(Source, self), name)
+
+  def dom_id(self):
+    """Returns the DOM element id for this site."""
+    return '%s-%s' % (self.SHORT_NAME, self.key.string_id())
 
   def label(self):
     """Human-readable label for this site."""
@@ -207,28 +170,46 @@ class Source(Site):
       handler: the current RequestHandler
       **kwargs: passed to new()
     """
-    new = super(Source, cls).create_new(handler, **kwargs)
+    source = cls.new(handler, **kwargs)
+    existing = source.key.get()
+    if existing:
+      # merge some fields
+      source.features = set(source.features + existing.features)
+      verb = 'Updated'
+      msg = "Updated %s. Refresh to see what's new!"
+    else:
+      verb = 'Added'
+      msg = "Added %s. Refresh to see what we've found!"
+
+    handler.messages = {msg % source.label()}
+    logging.info('%s %s %s %s', verb, source.label(), source.key.string_id(),
+                 source.key)
+    mail.send_mail(sender='add@brid-gy.appspotmail.com',
+                   to='webmaster@brid.gy',
+                   subject='%s Bridgy user: %s %s' %
+                   (verb, source.label(), source.key.string_id()),
+                   body='%s/#%s' % (handler.request.host_url, source.dom_id()))
 
     # extract domain from the URL set on the user's profile, if any
     auth_entity = kwargs.get('auth_entity')
     if auth_entity and auth_entity.user_json:
-      actor = new.as_source.user_to_actor(json.loads(auth_entity.user_json))
+      actor = source.as_source.user_to_actor(json.loads(auth_entity.user_json))
       # TODO: G+ has a multiply-valued 'urls' field. ignoring for now because
       # we're not implementing publish for G+
       url = actor.get('url')
       if url:
         try:
-          new.domain = urlparse.urlparse(url).netloc
+          source.domain = urlparse.urlparse(url).netloc
         except BaseException, e:
           logging.error("Not setting domain; could not parse URL %s . %s", url, e)
 
     # TODO: ugh, *all* of this should be transactional
-    new.put()
+    source.put()
 
-    if 'listen' in new.features:
-      util.add_poll_task(new)
+    if 'listen' in source.features:
+      util.add_poll_task(source)
 
-    return new
+    return source
 
 
 class Response(StringIdModel):
