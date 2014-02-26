@@ -61,8 +61,6 @@ class Site(StringIdModel):
 
     handler.messages = {msg % site.label()}
 
-    # TODO: ugh, *all* of this should be transactional
-    site.put()
     return site
 
   def dom_id(self):
@@ -212,9 +210,9 @@ class Source(Site):
     new = super(Source, cls).create_new(handler, **kwargs)
 
     # extract domain from the URL set on the user's profile, if any
-    user_json = new.auth_entity and new.auth_entity.get().user_json
-    if user_json:
-      actor = new.as_source.user_to_actor(json.loads(user_json))
+    auth_entity = kwargs.get('auth_entity')
+    if auth_entity and auth_entity.user_json:
+      actor = new.as_source.user_to_actor(json.loads(auth_entity.user_json))
       # TODO: G+ has a multiply-valued 'urls' field. ignoring for now because
       # we're not implementing publish for G+
       url = actor.get('url')
@@ -223,6 +221,9 @@ class Source(Site):
           new.domain = urlparse.urlparse(url).netloc
         except BaseException, e:
           logging.error("Not setting domain; could not parse URL %s . %s", url, e)
+
+    # TODO: ugh, *all* of this should be transactional
+    new.put()
 
     if 'listen' in new.features:
       util.add_poll_task(new)
