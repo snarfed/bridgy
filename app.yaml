@@ -58,6 +58,10 @@ handlers:
   script: logs.application
   secure: always
 
+- url: /publish(/.*)?
+  script: publish.application
+  secure: always
+
 - url: /_ah/queue/.*
   script: tasks.application
   login: admin
