@@ -58,7 +58,7 @@ handlers:
   script: logs.application
   secure: always
 
-- url: /publish(/.*)?
+- url: /publish/.*
   script: publish.application
   secure: always
 

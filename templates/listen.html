@@ -42,13 +42,17 @@ below to try it yourself, read <a href="/about">even more details</a>, or
 <div class="col-md-3 col-sm-6">
  <form method="post" name="googleplus-start" action="/googleplus/start">
   <input type="image" alt="Sign in with Google+" src="/static/google_plus_button.png" />
+  <!-- The state param doesn't actually work for G+. Not sure why. Doesn't
+       matter for now since we don't support publish for G+. -->
   <input name="state" type="hidden" value="listen" />
   <!-- https://developers.google.com/+/api/oauth#scopes -->
-  <input name="scope" type="hidden" value="https://www.googleapis.com/auth/plus.login"
+  <input name="scope" type="hidden"
+         value="https://www.googleapis.com/auth/plus.login" />
 </form></div>
 <div class="col-md-3 col-sm-6">
  <form method="post" name="instagram-start" action="/instagram/start">
-  <input type="image" alt="Sign in with Instagram" src="/static/instagram_button.png" />
+  <input type="image" alt="Sign in with Instagram"
+         src="/static/instagram_button.png" />
   <input name="state" type="hidden" value="listen" />
 </form></div>
 </div>

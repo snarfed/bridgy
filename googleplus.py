@@ -82,6 +82,10 @@ class OAuthCallback(util.Handler):
   def get(self):
     auth_entity_str_key = util.get_required_param(self, 'auth_entity')
     state = self.request.get('state')
+    if not state:
+      # state doesn't currently come through for G+. not sure why. doesn't
+      # matter for now since we don't plan to implement publish for G+.
+      state = 'listen'
     auth_entity = ndb.Key(urlsafe=auth_entity_str_key).get()
     self.maybe_add_or_delete_source(GooglePlusPage, auth_entity, state)
 
