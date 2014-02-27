@@ -52,6 +52,7 @@ class HandlersTest(testutil.HandlerTest):
   </div>
 
   <div class="e-content">
+
   asdf http://orig/post qwert
   </div>
 
@@ -123,6 +124,7 @@ class HandlersTest(testutil.HandlerTest):
   </div>
 
   <div class="e-content">
+
   qwert
   </div>
 
@@ -152,6 +154,7 @@ class HandlersTest(testutil.HandlerTest):
   </div>
 
   <div class="e-content">
+
   likes this.
 
   </div>
@@ -182,6 +185,7 @@ class HandlersTest(testutil.HandlerTest):
   </div>
 
   <div class="e-content">
+
   reposts this.
 
   </div>
@@ -215,6 +219,7 @@ class HandlersTest(testutil.HandlerTest):
   </div>
 
   <div class="e-content">
+
   <data class="p-rsvp" value="no">is not attending.</data>
   </div>
 
