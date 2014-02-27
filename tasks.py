@@ -294,15 +294,15 @@ class Propagate(webapp2.RequestHandler):
         target = response.unsent.pop(0)
 
         # When debugging locally, redirect my (snarfed.org) webmentions to localhost
-        if appengine_config.DEBUG and target.startswith('http://snarfed.org/'):
-          target = target.replace('http://snarfed.org/', 'http://localhost/')
+        domain = urlparse.urlparse(target).netloc
+        if appengine_config.DEBUG and domain == 'snarfed.org':
+          target = target.replace('snarfed.org/', 'localhost/')
 
         logging.info('Webmention from %s to %s', local_response_url, target)
 
         # see if we've cached webmention discovery for this domain. the cache
         # value is a string URL endpoint if discovery succeeded, a
         # WebmentionSend error dict if it failed (semi-)permanently, or None.
-        domain = urlparse.urlparse(target).netloc
         cache_key = 'W ' + domain
         cached = memcache.get(cache_key)
         if cached:
