@@ -14,7 +14,7 @@ import webapp2
 
 class PublishTest(testutil.HandlerTest):
 
-  def test_publish(self):
+  def _test_publish(self):
     self.expect_urlopen('http://pin13.net/mf2/?url=%s' %
                         urllib.quote_plus('http://foo.com/bar'),
                         json.dumps({}))
