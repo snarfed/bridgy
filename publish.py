@@ -119,27 +119,41 @@ class WebmentionHandler(webapp2.RequestHandler):
 
     # TODO: fetch myself? mf2py doesn't work when I give it a StringIO though.
     data = parser.Parser(source_url).to_dict()
-    logging.info('@ %s', data)
     items = data.get('items', [])
     if not items or not items[0]:
       self.error('No mf2 data found in %s. Found: %s', source_url, data)
 
-    contents = items[0].get('properties', {}).get('content', [])
-    if not contents or not contents[0] or not contents[0].get('value'):
-      self.error('Could not find e-content in %s. Found: %s' % (source_url, data))
-
     obj = microformats2.json_to_object(items[0])
+
+    # posts and comments need content
+    if obj.get('objectType') in ('note', 'article', 'comment'):
+      contents = items[0].get('properties', {}).get('content', [])
+      if not contents or not contents[0] or not contents[0].get('value'):
+        self.error('Could not find any content.', data=data)
+
+    # add original post link to end of content
     # TODO: make prettier?
-    obj['content'] += '\n\n%s' % source_url
-    logging.info('@ %s', obj)
+    if obj.get('content'):
+      obj['content'] += '\n\n(%s)' % source_url
 
-    # resp = source.as_source.create(obj)
-    # self.response.write(json.dumps(resp))
+    try:
+      resp = source.as_source.create(obj)
+    except NotImplementedError:
+      return self.error("%s doesn't support type(s) %s." %
+                        (source_cls.AS_CLASS.NAME, items[0].get('type')),
+                        data=data, log_exception=False)
 
-  def error(self, error, status=400):
-    logging.error(error, exc_info=sys.exc_info())
+    self.response.write(json.dumps(resp))
+
+  def error(self, error, status=400, data=None, log_exception=True):
+    logging.error(error, exc_info=sys.exc_info() if log_exception else None)
     self.response.set_status(status)
-    self.response.write(json.dumps({'error': error}))
+
+    resp = {'error': error}
+    if data:
+      resp['parsed'] = data
+
+    self.response.write(json.dumps(resp))
 
 
 application = webapp2.WSGIApplication([
