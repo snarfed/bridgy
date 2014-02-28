@@ -52,6 +52,7 @@ SOURCES = {cls.SHORT_NAME: cls for cls in
             googleplus.GooglePlusPage,
             instagram.Instagram,
             twitter.Twitter)}
+SUPPORTED_SOURCES = {facebook.FacebookPage, twitter.Twitter}
 
 
 class WebmentionHandler(webapp2.RequestHandler):
@@ -87,16 +88,19 @@ class WebmentionHandler(webapp2.RequestHandler):
         path_parts[0] != '/publish' or not source_cls):
       return self.error('Target must be brid.gy/publish/{facebook,twitter}')
 
-    if source_cls not in (facebook.FacebookPage, twitter.Twitter):
+    if source_cls not in SUPPORTED_SOURCES:
       return self.error('Sorry, %s is not yet supported.' % source_cls.AS_CLASS.NAME)
 
     # validate, fetch, and parse source
     try:
       parsed = urlparse.urlparse(source_url)
     except BaseException:
-      return self.error(msg, 'Could not parse source URL %s' % source)
+      return self.error('Could not parse source URL %s' % source_url)
 
     domain = parsed.netloc
+    if not domain:
+      return self.error('Could not parse source URL %s' % source_url)
+
     # When debugging locally, use snarfed.org for localhost webmentions
     if appengine_config.DEBUG and domain == 'localhost':
       domain = 'snarfed.org'
@@ -106,8 +110,8 @@ class WebmentionHandler(webapp2.RequestHandler):
     if not source:
       return self.error(
         "Could not find %(type)s account for %(domain)s. Check that you're signed up "
-        "for Bridgy and that your %(type)s account has %(domain)s in in its profile's "
-        "'web site' or 'link' field ." %
+        "for Bridgy and that your %(type)s account has %(domain)s in its profile's "
+        "'web site' or 'link' field." %
         {'type': source_cls.AS_CLASS.NAME, 'domain': domain})
 
     # try:
@@ -121,7 +125,8 @@ class WebmentionHandler(webapp2.RequestHandler):
     data = parser.Parser(source_url).to_dict()
     items = data.get('items', [])
     if not items or not items[0]:
-      self.error('No mf2 data found in %s. Found: %s', source_url, data)
+      return self.error('No microformats2 data found in %s' % source_url,
+                        data=data)
 
     obj = microformats2.json_to_object(items[0])
 
@@ -129,7 +134,7 @@ class WebmentionHandler(webapp2.RequestHandler):
     if obj.get('objectType') in ('note', 'article', 'comment'):
       contents = items[0].get('properties', {}).get('content', [])
       if not contents or not contents[0] or not contents[0].get('value'):
-        self.error('Could not find any content.', data=data)
+        return self.error('Could not find e-content in %s' % source_url, data=data)
 
     # add original post link to end of content
     # TODO: make prettier?

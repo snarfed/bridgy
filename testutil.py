@@ -118,6 +118,10 @@ class FakeSource(FakeBase, Source):
     comment = self._get('comment')
     return comment if comment else super(FakeSource, self).get_comment(comment_id)
 
+  def create(self, obj):
+    if obj.get('verb') == 'like':
+      raise NotImplementedError()
+
 
 class HandlerTest(testutil.HandlerTest):
   """Base test class.
