@@ -89,6 +89,13 @@ class FakeAsSource(FakeBase, as_source.Source):
   def user_to_actor(self, user):
     return user
 
+  def create(self, obj):
+    logging.info('@ %s', obj)
+    if obj.get('verb') == 'like':
+      raise NotImplementedError()
+
+    return {'FakeAsSource content': obj['content']}
+
 
 class FakeSource(FakeBase, Source):
   AS_CLASS = FakeAsSource
@@ -117,10 +124,6 @@ class FakeSource(FakeBase, Source):
   def get_comment(self, comment_id, activity_id=None):
     comment = self._get('comment')
     return comment if comment else super(FakeSource, self).get_comment(comment_id)
-
-  def create(self, obj):
-    if obj.get('verb') == 'like':
-      raise NotImplementedError()
 
 
 class HandlerTest(testutil.HandlerTest):
