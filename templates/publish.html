@@ -18,13 +18,6 @@
   <input name="state" type="hidden" value="publish" />
 </form></div>
 <!-- <div class="col-md-4 col-sm-8"> -->
-<!--  <form method="post" name="googleplus-start" action="/googleplus/start"> -->
-<!--   <input type="image" alt="Sign in with Google+" src="/static/googleplus_button.png" /> -->
-<!--   <input name="state" type="hidden" value="publish" /> -->
-<!--   <\!-- https://developers.google.com/+/api/oauth#scopes -\-> -->
-<!--   <input name="scope" type="hidden" value="https://www.googleapis.com/auth/plus.login" /> -->
-<!-- </form></div> -->
-<!-- <div class="col-md-4 col-sm-8"> -->
 <!--  <form method="post" name="instagram-start" action="/instagram/start"> -->
 <!--   <input type="image" alt="Sign in with Instagram" src="/static/instagram_button.png" /> -->
 <!--   <input name="state" type="hidden" value="publish" /> -->
@@ -67,6 +60,7 @@
   </span>
 
  </div><div class="col-sm-4">
+  <a href="{{ source.domain_url }}">{{ source.domain }}</a>
 
  </div><div class="col-sm-4" id="link-publishes-{{ source.dom_id }}">
   <a href="#{{ source.dom_id }}"
