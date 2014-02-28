@@ -14,15 +14,18 @@ import webapp2
 
 class PublishTest(testutil.HandlerTest):
 
-  def _test_publish(self):
-    self.expect_urlopen('http://pin13.net/mf2/?url=%s' %
-                        urllib.quote_plus('http://foo.com/bar'),
-                        json.dumps({}))
-    self.mox.ReplayAll()
-
+  def assert_error(self, expected_error, source='http://source',
+                   target='http://brid.gy/publish/facebook'):
     resp = publish.application.get_response(
-      '/publish', method='POST',
-      body='source=http://foo.com/bar&target=http://facebook.com/123')
+      '/publish/webmention', method='POST',
+      body='source=%s&target=%s' % (source, target))
+    self.assertEquals(400, resp.status_int)
+    self.assertEquals(expected_error, json.loads(resp.body)['error'])
 
-    self.assertEqual(403, resp.status_int)
+  def test_bad_target_url(self):
+    self.assert_error('Target must be brid.gy/publish/{facebook,twitter}',
+                        target='foo')
 
+  def test_unsupported_source(self):
+    self.assert_error('Sorry, Instagram is not yet supported.',
+                      target='http://brid.gy/publish/instagram')
