@@ -19,7 +19,7 @@ Example response:
 
 Test cmd line:
 
-curl -d 'source=http://localhost/bridgy_fb_post.html&target=http://brid.gy/publish/facebook' http://localhost:8080/publish/webmention
+curl -d 'source=http://localhost/bridgy_publish.html&target=http://brid.gy/publish/twitter' http://localhost:8080/publish/webmention
 """
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
@@ -67,10 +67,7 @@ class WebmentionHandler(webapp2.RequestHandler):
     """
     self.response.headers['Content-Type'] = 'application/json'
     logging.info('Params: %s', self.request.params)
-    mail.send_mail(sender='publish@brid-gy.appspotmail.com',
-                   to='webmaster@brid.gy',
-                   subject='Bridgy publish: %s' % self.request.get('target'),
-                   body=str(self.request.params))
+    self.source = None  # only used in mail_me()
 
     source_url = util.get_required_param(self, 'source')
     target_url = util.get_required_param(self, 'target')
@@ -106,7 +103,7 @@ class WebmentionHandler(webapp2.RequestHandler):
       domain = 'snarfed.org'
 
     # look up source by domain
-    source = source_cls.query().filter(source_cls.domain == domain).get()
+    source = self.source = source_cls.query().filter(source_cls.domain == domain).get()
     if not source:
       return self.error(
         "Could not find %(type)s account for %(domain)s. Check that you're signed up "
@@ -148,6 +145,7 @@ class WebmentionHandler(webapp2.RequestHandler):
                         (source_cls.AS_CLASS.NAME, items[0].get('type')),
                         data=data, log_exception=False)
 
+    self.mail_me(resp, True)
     self.response.write(json.dumps(resp))
 
   def error(self, error, status=400, data=None, log_exception=True):
@@ -158,7 +156,22 @@ class WebmentionHandler(webapp2.RequestHandler):
     if data:
       resp['parsed'] = data
 
+    self.mail_me(resp, False)
     self.response.write(json.dumps(resp))
+
+  def mail_me(self, resp, success):
+    subject = 'Bridgy publish %s' % ('succeeded' if success else 'failed')
+    body = 'Request:\n%s\n\nResponse:\n%s' % \
+        (self.request.params, json.dumps(resp))
+
+    if self.source:
+      prefix = 'Source: %s/publish#%s\n\n' % (self.request.host_url,
+                                              self.source.dom_id())
+      body = prefix + body
+      subject += ': %s' % self.source.label()
+
+    mail.send_mail(sender='publish@brid-gy.appspotmail.com',
+                   to='webmaster@brid.gy', subject=subject, body=body)
 
 
 application = webapp2.WSGIApplication([
