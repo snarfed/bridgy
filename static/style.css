@@ -88,12 +88,14 @@ form input {
 }
 
 @media (min-width: 768px) {
-  #sources > .row, .responses > .row {
+  #sources > .row, .responses > .row, .publishes > .row {
     display: table;
     table-layout: fixed;
   }
 
-  #sources > .row > .col-sm-4, .responses > .row > .col-sm-3 {
+  #sources > .row > .col-sm-4,
+  .responses > .row > .col-sm-3,
+  .publishes > .row > .col-sm-4 {
     display: table-cell;
     float: none;
     text-align: left;
@@ -124,13 +126,13 @@ form input {
 .glyphicon-remove { color: red !important; }
 .glyphicon-transfer { color: blue; }
 
-.responses {
+.responses, .publishes {
   font-size: .8em;
   list-style: none;
   /* border: 1px solid lightgray; */
 }
 
-.stub-responses {
+.stub-responses, .stub-publishes {
   text-align: center;
 }
 

@@ -24,7 +24,7 @@ from googleplus import GooglePlusPage
 from instagram import Instagram
 from twitter import Twitter
 import handlers
-from models import Response, Source
+from models import Publish, Response, Source
 import util
 from activitystreams.oauth_dropins.webutil.handlers import TemplateHandler
 
@@ -33,6 +33,8 @@ from google.appengine.api import users
 from google.appengine.ext import ndb
 from google.appengine.ext.webapp import template
 import webapp2
+
+NO_RESULTS_HTTP_STATUS = 204
 
 
 def source_dom_id_to_key(id):
@@ -114,8 +116,6 @@ class PublishHandler(DashboardHandler):
 
 
 class ResponsesHandler(TemplateHandler):
-  NO_RESULTS_HTTP_STATUS = 204
-
   def template_file(self):
     return 'templates/responses.html'
 
@@ -125,7 +125,7 @@ class ResponsesHandler(TemplateHandler):
                                 .order(-Response.updated)\
                                 .fetch(10)
     if not responses:
-      self.error(self.NO_RESULTS_HTTP_STATUS)
+      self.error(NO_RESULTS_HTTP_STATUS)
       return {}
 
     for r in responses:
@@ -165,6 +165,30 @@ class ResponsesHandler(TemplateHandler):
 
     self.request.charset = 'utf-8'
     return {'responses': responses}
+
+
+class PublishesHandler(TemplateHandler):
+  def template_file(self):
+    return 'templates/publishes.html'
+
+  def template_vars(self):
+    key = source_dom_id_to_key(util.get_required_param(self, 'source'))
+    publishes = Publish.query().filter(Publish.source == key)\
+                               .order(-Publish.updated)\
+                               .fetch(10)
+    if not publishes:
+      self.error(NO_RESULTS_HTTP_STATUS)
+      return {}
+
+    for p in publishes:
+      # glyphicons = {'new': 'transfer', 'failed': 'exclamation-sign'}
+      p.pretty_page = util.pretty_link(p.key.parent().id(),
+                                       # glyphicon=glyphicons.get(p.status),
+                                       a_class='original-post', new_tab=True,
+                                       max_length=30)
+
+    self.request.charset = 'utf-8'
+    return {'publishes': publishes}
 
 
 class AboutHandler(TemplateHandler):
@@ -226,6 +250,7 @@ application = webapp2.WSGIApplication(
    ('/listen', ListenHandler),
    ('/publish', PublishHandler),
    ('/responses', ResponsesHandler),
+   ('/publishes', PublishesHandler),
    ('/about', AboutHandler),
    ('/delete/start', DeleteStartHandler),
    ('/delete/finish', DeleteFinishHandler),
