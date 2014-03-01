@@ -15,12 +15,12 @@
     </a>
 
    </div><div class="col-sm-4">
-    {% if publish.type %}
      {% if publish.published.url %}
-       <a href="{{ publish.published.url }}">{{ publish.type }}</a>
-     {% else %}
-       {{ publish.type|capfirst }}
+       <a href="{{ publish.published.url }}">
      {% endif %}
+       {{ publish.type|capfirst }}
+     {% if publish.published.url %}
+       </a>
     {% endif %}
 
   </li>

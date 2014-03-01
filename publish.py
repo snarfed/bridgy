@@ -154,6 +154,8 @@ class WebmentionHandler(webapp2.RequestHandler):
                         data=data, log_exception=False)
 
     # write results to datastore
+    if 'url' not in self.publish.published:
+      self.publish.published['url'] = obj.get('url')
     self.publish.status = 'complete'
     # TODO
     self.publish.type = models.get_type(obj)
