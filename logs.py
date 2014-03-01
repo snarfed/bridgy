@@ -44,8 +44,9 @@ class LogHandler(webapp2.RequestHandler):
     offset = None
     for log in logservice.fetch(start_time=start_time, end_time=start_time + 120,
                                 offset=offset, include_app_logs=True):
-      if log.app_logs and (key in log.app_logs[0].message or
-                           key in log.app_logs[1].message):
+      first_lines = '\n'.join([line.message.decode('utf-8') for line in
+                               log.app_logs[:min(2, len(log.app_logs))]])
+      if log.app_logs and key in first_lines:
         # found it! render and return
         self.response.out.write(sanitize(log.combined))
         self.response.out.write('\n\n')
