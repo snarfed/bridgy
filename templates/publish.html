@@ -2,6 +2,18 @@
 
 {% block content %}
 
+<!-- Manual UI -->
+<div id="manual" class="row">
+ <form method="post" name="webmention" action="/publish/webmention">
+  <input name="source" type="text" alt="Source URL"></input>
+  <br />
+  <button type="submit" name="target" value="http://brid.gy/publish/facebook">
+    Facebook</button>
+  <button type="submit" name="target" value="http://brid.gy/publish/twitter">
+    Twitter</button>
+ </form>
+</div>
+
 <!-- Connect buttons -->
 <div id="connect" class="row">
 <div class="col-md-6 col-sm-12">
