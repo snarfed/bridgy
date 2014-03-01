@@ -320,7 +320,6 @@ class Publish(ndb.Model):
   status = ndb.StringProperty(choices=STATUSES, default='new')
   source = ndb.KeyProperty()
   html = ndb.TextProperty()  # raw HTML fetched from source
-  published_id = ndb.StringProperty()
-  published_url = ndb.StringProperty()
+  published = ndb.JsonProperty(compressed=True)
   created = ndb.DateTimeProperty(auto_now_add=True)
   updated = ndb.DateTimeProperty(auto_now=True)

@@ -147,7 +147,7 @@ class WebmentionHandler(webapp2.RequestHandler):
       obj['content'] += '\n\n(%s)' % source_url
 
     try:
-      resp = source.as_source.create(obj)
+      self.publish.published = source.as_source.create(obj)
     except NotImplementedError:
       return self.error("%s doesn't support type(s) %s." %
                         (source_cls.AS_CLASS.NAME, items[0].get('type')),
@@ -158,12 +158,11 @@ class WebmentionHandler(webapp2.RequestHandler):
     # TODO
     self.publish.type = models.get_type(obj)
     self.publish.html = 'TODO'
-    self.publish.published_id = resp.get('id')
-    self.publish.published_url = resp.get('url')
     self.publish.put()
 
+    resp = json.dumps(self.publish.published, indent=2)
     self.mail_me(resp, True)
-    self.response.write(json.dumps(resp))
+    self.response.write(resp)
 
   def error(self, error, status=400, data=None, log_exception=True):
     logging.error(error, exc_info=sys.exc_info() if log_exception else None)
@@ -178,13 +177,13 @@ class WebmentionHandler(webapp2.RequestHandler):
     if data:
       resp['parsed'] = data
 
+    resp = json.dumps(resp, indent=2)
     self.mail_me(resp, False)
-    self.response.write(json.dumps(resp))
+    self.response.write(resp)
 
   def mail_me(self, resp, success):
     subject = 'Bridgy publish %s' % ('succeeded' if success else 'failed')
-    body = 'Request:\n%s\n\nResponse:\n%s' % \
-        (self.request.params, json.dumps(resp))
+    body = 'Request:\n%s\n\nResponse:\n%s' % (self.request.params, resp)
 
     if self.source:
       prefix = 'Source: %s/publish#%s\n\n' % (self.request.host_url,

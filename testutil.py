@@ -93,8 +93,7 @@ class FakeAsSource(FakeBase, as_source.Source):
     if obj.get('verb') == 'like':
       raise NotImplementedError()
 
-    return {'id': 'fake id', 'url': 'http://fake/url',
-            'FakeAsSource content': obj['content']}
+    return {'id': 'fake id', 'url': 'http://fake/url', 'content': obj['content']}
 
 
 class FakeSource(FakeBase, Source):

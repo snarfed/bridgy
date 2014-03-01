@@ -50,8 +50,7 @@ class PublishTest(testutil.HandlerTest):
 
     resp = self.get_response()
     self.assertEquals(200, resp.status_int, resp.body)
-    self.assertEquals('foo\n\n(http://foo.com/)',
-                      json.loads(resp.body)['FakeAsSource content'])
+    self.assertEquals('foo\n\n(http://foo.com/)', json.loads(resp.body)['content'])
 
     self.assertTrue(models.PublishedPage.get_by_id('http://foo.com/'))
     publish = models.Publish.query().get()
@@ -60,8 +59,9 @@ class PublishTest(testutil.HandlerTest):
     self.assertEquals('post', publish.type)
     # TODO
     # self.assertEquals(html, publish.html)
-    self.assertEquals('fake id', publish.published_id)
-    self.assertEquals('http://fake/url', publish.published_url)
+    self.assertEquals({'id': 'fake id', 'url': 'http://fake/url',
+                       'content': 'foo\n\n(http://foo.com/)'},
+                      publish.published)
 
   def test_bad_target_url(self):
     self.assert_error('Target must be brid.gy/publish/{facebook,twitter}',
