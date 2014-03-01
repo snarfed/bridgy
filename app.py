@@ -145,26 +145,15 @@ class ResponsesHandler(TemplateHandler):
         r.actor['image']['url'] = util.update_scheme(image_url, self)
 
       # generate original post links
-      def link(url, glyphicon=''):
-        parsed = urlparse.urlparse(url)
-        snippet = url[len(parsed.scheme) + 3:]  # strip scheme and leading www
-        if snippet.startswith('www.'):
-          snippet = snippet[4:]
-        max_len = max(20, len(parsed.netloc) + 1)
-        if len(snippet) > max_len + 3:
-          snippet = snippet[:max_len] + '...'
-        if glyphicon:
-          glyphicon = '<span class="glyphicon glyphicon-%s"></span>' % glyphicon
-        return ('<a target="_blank" class="original-post" href="%s">%s %s</a>'
-                % (url, snippet, glyphicon))
-
+      link = lambda url, g: util.pretty_link(
+        url, glyphicon=g, a_class='original-post', new_tab=True)
       r.links = util.trim_nulls({
         'Failed': set(link(url, 'exclamation-sign') for url in r.error + r.failed),
         'Sending': set(link(url, 'transfer') for url in r.unsent
                        if url not in r.error),
-        'Sent': set(link(url) for url in r.sent
+        'Sent': set(link(url, None) for url in r.sent
                     if url not in (r.error + r.unsent)),
-        'No webmention support': set(link(url) for url in r.skipped),
+        'No webmention support': set(link(url, None) for url in r.skipped),
         })
 
       # ...left over from when responses were rendered in DashboardHandler.
