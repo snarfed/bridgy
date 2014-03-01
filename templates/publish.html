@@ -72,11 +72,11 @@
   </span>
 
  </div><div class="col-sm-4">
-  <a href="{{ source.domain_url }}">{{ source.domain }}</a>
+  <a href="{{ source.domain_url }}" class="publish-domain">{{ source.domain }}</a>
 
  </div><div class="col-sm-4" id="link-publishes-{{ source.dom_id }}">
   <a href="#{{ source.dom_id }}"
-     onclick="toggle_publishes('{{ source.dom_id }}'); return false;">
+     onclick="toggle_ajax('publishes', '{{ source.dom_id }}'); return false;">
     Recently published...
   </a>
  </div>

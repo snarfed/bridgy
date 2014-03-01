@@ -113,17 +113,8 @@ below to try it yourself, read <a href="/about">even more details</a>, or
 
  </div><div class="col-sm-4" id="link-responses-{{ source.dom_id }}">
   <a href="#{{ source.dom_id }}"
-     onclick="toggle_responses('{{ source.dom_id }}'); return false;">
+     onclick="toggle_ajax('responses', '{{ source.dom_id }}'); return false;">
     Recent responses...
-
-  {% comment %} <!-- Left over from when responses were fetched here. -->
-  {% if source.recent_response_status == "processing" %}
-   <span title="Processing" class="glyphicon glyphicon-transfer"></span>
-  {% else %}{% if source.recent_response_status == "error" %}
-   <span title="Error" class="glyphicon glyphicon-exclamation-sign"></span>
-  {% endif %}{% endif %}
-  {% endcomment %}
-
   </a>
  </div>
 </div>

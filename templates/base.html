@@ -34,8 +34,8 @@ function toggle(id) {
   elem.style.display = (elem.style.display == "none") ? "block" : "none";
 }
 
-function toggle_responses(source_id) {
-  var id = "responses-" + source_id;
+function toggle_ajax(section, source_id) {
+  var id = section + "-" + source_id;
   if (document.getElementById(id)) {
     toggle(id);
     return;
@@ -50,16 +50,16 @@ function toggle_responses(source_id) {
       stub.innerHTML = this.responseText;
     } else if (this.status == 204) {
       stub.style.display = "none";
-      document.getElementById("link-" + id).innerHTML = "No responses yet";
+      document.getElementById("link-" + id).innerHTML = "No " + section + " yet";
     } else {
       this.onerror();
     }
   };
   req.onerror = function() {
-      stub.innerHTML = 'Error fetching responses ' +
-        '<span title="Error" class="glyphicon glyphicon-exclamation-sign"></span>';
+      stub.innerHTML = "Error fetching " + section +
+        " <span title='Error' class='glyphicon glyphicon-exclamation-sign'></span>";
   }
-  req.open("get", "/responses?source=" + source_id, true /* async */);
+  req.open("get", "/" + section + "?source=" + source_id, true /* async */);
   req.send();
 }
 
@@ -69,7 +69,8 @@ window.onload = function() {
   if (target) {
     window.setTimeout(function() { target.style.backgroundColor = "white"; },
                       3000 /* ms */);
-    toggle_responses(id);
+    var path = window.location.pathname;
+    toggle_ajax(path == "/publish" ? "publishes" : "responses", id);
   }
 }
 </script>
