@@ -41,11 +41,13 @@ import facebook
 import googleplus
 import instagram
 from mf2py import parser
+import models
 import requests
 import twitter
 import webapp2
 
 from google.appengine.api import mail
+from google.appengine.ext import ndb
 
 SOURCES = {cls.SHORT_NAME: cls for cls in
            (facebook.FacebookPage,
@@ -111,6 +113,8 @@ class WebmentionHandler(webapp2.RequestHandler):
         "'web site' or 'link' field." %
         {'type': source_cls.AS_CLASS.NAME, 'domain': domain})
 
+    self.add_publish_entity(source_url)
+
     # try:
     #   resp = requests.get(source, allow_redirects=True, timeout=HTTP_TIMEOUT)
     # except BaseException:
@@ -174,6 +178,17 @@ class WebmentionHandler(webapp2.RequestHandler):
 
     mail.send_mail(sender='publish@brid-gy.appspotmail.com',
                    to='webmaster@brid.gy', subject=subject, body=body)
+
+  @ndb.transactional
+  def add_publish_entity(self, source_url):
+    """Creates and stores Publish and (if necessary) PublishedPage entities.
+
+    Args:
+      source_url: string
+    """
+    page = models.PublishedPage.get_or_insert(source_url)
+    self.publish = models.Publish(parent=page.key, source=self.source.key)
+    self.publish.put()
 
 
 application = webapp2.WSGIApplication([

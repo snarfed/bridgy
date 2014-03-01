@@ -9,6 +9,7 @@ import urllib
 import appengine_config
 import requests
 
+import models
 import publish
 import testutil
 
@@ -71,6 +72,9 @@ class PublishTest(testutil.HandlerTest):
     self.expect_requests_get('http://foo.com/', '')
     self.mox.ReplayAll()
     self.assert_error('No microformats2 data found in http://foo.com/')
+
+    self.assertTrue(models.PublishedPage.get_by_id('http://foo.com/'))
+    self.assertEquals(1, models.Publish.query().count())
 
   def test_no_content(self):
     self.expect_requests_get('http://foo.com/',

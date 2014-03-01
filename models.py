@@ -20,6 +20,11 @@ from google.appengine.api import users
 from google.appengine.ext import ndb
 
 
+class DisableSource(Exception):
+  """Raised when a user has deauthorized our app inside a given platform.
+  """
+
+
 class Source(StringIdModel):
   """A silo account, e.g. a Facebook or Google+ account.
 
@@ -287,6 +292,28 @@ class Response(StringIdModel):
       return 'comment'
 
 
-class DisableSource(Exception):
-  """Raised when a user has deauthorized our app inside a given platform.
+
+class PublishedPage(StringIdModel):
+  """Minimal root entity for Publish children entities with the same source URL.
+
+  Key id is the string source URL.
   """
+  pass
+
+
+class Publish(ndb.Model):
+  """A comment, like, repost, or RSVP published into a silo.
+
+  Child of a PublishedPage entity.
+  """
+  TYPES = ('post', 'comment', 'like', 'repost', 'rsvp')
+  STATUSES = ('new', 'complete', 'failed')
+
+  type = ndb.StringProperty(choices=TYPES)
+  status = ndb.StringProperty(choices=STATUSES, default='new')
+  source = ndb.KeyProperty()
+  html = ndb.TextProperty()  # raw HTML fetched from source
+  published_id = ndb.StringProperty()
+  published_url = ndb.StringProperty()
+  created = ndb.DateTimeProperty(auto_now_add=True)
+  updated = ndb.DateTimeProperty(auto_now=True)
