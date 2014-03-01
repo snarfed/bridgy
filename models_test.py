@@ -121,6 +121,7 @@ class SourceTest(testutil.HandlerTest):
     auth_entity.user_json = '{"url": "https://foo.com/bar"}'
     auth_entity.put()
     source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
+    self.assertEquals('https://foo.com/bar', source.key.get().domain_url)
     self.assertEquals('foo.com', source.key.get().domain)
 
     # URL redirects to another domain

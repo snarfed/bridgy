@@ -64,6 +64,7 @@ class Source(StringIdModel):
   name = ndb.StringProperty()  # full human-readable name
   picture = ndb.StringProperty()
   domain = ndb.StringProperty()
+  domain_url = ndb.StringProperty()
   features = ndb.StringProperty(repeated=True, choices=FEATURES)
 
   last_polled = ndb.DateTimeProperty(default=util.EPOCH)
@@ -222,6 +223,7 @@ class Source(StringIdModel):
       # we're not implementing publish for G+
       url = actor.get('url')
       if url:
+        source.domain_url = url
         try:
           source.domain = urlparse.urlparse(url).netloc
         except BaseException, e:
