@@ -44,7 +44,8 @@ class LogHandler(webapp2.RequestHandler):
     offset = None
     for log in logservice.fetch(start_time=start_time, end_time=start_time + 120,
                                 offset=offset, include_app_logs=True):
-      if log.app_logs and key in log.app_logs[0].message:
+      if log.app_logs and (key in log.app_logs[0].message or
+                           key in log.app_logs[1].message):
         # found it! render and return
         self.response.out.write(sanitize(log.combined))
         self.response.out.write('\n\n')

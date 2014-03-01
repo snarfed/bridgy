@@ -206,6 +206,7 @@ class WebmentionHandler(webapp2.RequestHandler):
     page = models.PublishedPage.get_or_insert(source_url)
     self.publish = models.Publish(parent=page.key, source=self.source.key)
     self.publish.put()
+    logging.debug('Publish entity: %s', self.publish.key.urlsafe())
 
 
 application = webapp2.WSGIApplication([
