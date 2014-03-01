@@ -67,9 +67,11 @@ class WebmentionHandler(webapp2.RequestHandler):
     Request path is of the form /user_id/group_id/app_id/activity_id , where
     each element is an optional string object id.
     """
+    self.source = None
+    self.publish = None
+
     self.response.headers['Content-Type'] = 'application/json'
     logging.info('Params: %s', self.request.params)
-    self.source = None  # only used in mail_me()
 
     source_url = util.get_required_param(self, 'source')
     target_url = util.get_required_param(self, 'target')
@@ -151,13 +153,27 @@ class WebmentionHandler(webapp2.RequestHandler):
                         (source_cls.AS_CLASS.NAME, items[0].get('type')),
                         data=data, log_exception=False)
 
+    # write results to datastore
+    self.publish.status = 'complete'
+    # TODO
+    self.publish.type = models.get_type(obj)
+    self.publish.html = 'TODO'
+    self.publish.published_id = resp.get('id')
+    self.publish.published_url = resp.get('url')
+    self.publish.put()
+
     self.mail_me(resp, True)
     self.response.write(json.dumps(resp))
 
   def error(self, error, status=400, data=None, log_exception=True):
     logging.error(error, exc_info=sys.exc_info() if log_exception else None)
-    self.response.set_status(status)
 
+    if self.publish:
+      # TODO: more details
+      self.publish.status = 'failed'
+      self.publish.put()
+
+    self.response.set_status(status)
     resp = {'error': error}
     if data:
       resp['parsed'] = data

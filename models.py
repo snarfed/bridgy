@@ -20,6 +20,25 @@ from google.appengine.api import users
 from google.appengine.ext import ndb
 
 
+VERB_TYPES = ('comment', 'like', 'repost', 'rsvp')
+TYPES = VERB_TYPES + ('post',)
+
+def get_type(obj):
+  """Returns the Response or Publish type for an ActivityStreams object."""
+  type = obj.get('objectType')
+  verb = obj.get('verb')
+  if type == 'activity' and verb == 'share':
+    return 'repost'
+  elif verb in VERB_TYPES:
+    return verb
+  elif verb in as_source.RSVP_TO_EVENT:
+    return 'rsvp'
+  elif type == 'comment':
+    return 'comment'
+  else:
+    return 'post'
+
+
 class DisableSource(Exception):
   """Raised when a user has deauthorized our app inside a given platform.
   """
@@ -222,11 +241,10 @@ class Response(StringIdModel):
 
   The key name is the comment object id as a tag URI.
   """
-  TYPES = ('comment', 'like', 'repost', 'rsvp')
   STATUSES = ('new', 'processing', 'complete', 'error')
 
   # ActivityStreams JSON activity and comment, like, or repost
-  type = ndb.StringProperty(choices=TYPES, default='comment')
+  type = ndb.StringProperty(choices=VERB_TYPES, default='comment')
   activity_json = ndb.TextProperty()
   response_json = ndb.TextProperty()
   source = ndb.KeyProperty()
@@ -278,18 +296,8 @@ class Response(StringIdModel):
 
   @staticmethod
   def get_type(obj):
-    """Returns the response type for an ActivityStreams object."""
-    type = obj.get('objectType')
-    verb = obj.get('verb')
-    if type == 'activity' and verb == 'share':
-      return 'repost'
-    elif verb in Response.TYPES:
-      return verb
-    elif verb in as_source.RSVP_TO_EVENT:
-      return 'rsvp'
-    else:
-      # default to comment. (e.g. Twitter replies technically have objectType note)
-      return 'comment'
+    type = get_type(obj)
+    return type if type in VERB_TYPES else 'comment'
 
 
 
@@ -306,7 +314,6 @@ class Publish(ndb.Model):
 
   Child of a PublishedPage entity.
   """
-  TYPES = ('post', 'comment', 'like', 'repost', 'rsvp')
   STATUSES = ('new', 'complete', 'failed')
 
   type = ndb.StringProperty(choices=TYPES)

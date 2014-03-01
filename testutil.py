@@ -90,11 +90,11 @@ class FakeAsSource(FakeBase, as_source.Source):
     return user
 
   def create(self, obj):
-    logging.info('@ %s', obj)
     if obj.get('verb') == 'like':
       raise NotImplementedError()
 
-    return {'FakeAsSource content': obj['content']}
+    return {'id': 'fake id', 'url': 'http://fake/url',
+            'FakeAsSource content': obj['content']}
 
 
 class FakeSource(FakeBase, Source):

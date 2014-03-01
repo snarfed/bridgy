@@ -20,7 +20,8 @@ class PublishTest(testutil.HandlerTest):
     super(PublishTest, self).setUp()
     publish.SOURCES['fake'] = testutil.FakeSource
     publish.SUPPORTED_SOURCES.add(testutil.FakeSource)
-    testutil.FakeSource(id='foo.com', domain='foo.com').put()
+    self.source = testutil.FakeSource(id='foo.com', domain='foo.com')
+    self.source.put()
 
   def expect_requests_get(self, url, response):
     self.mox.StubOutWithMock(requests, 'get', use_mock_anything=True)
@@ -43,15 +44,24 @@ class PublishTest(testutil.HandlerTest):
     self.assertEquals(expected_error, json.loads(resp.body)['error'])
 
   def test_success(self):
-    self.expect_requests_get(
-      'http://foo.com/',
-      '<article class="h-entry"><p class="e-content">foo</p></article>')
+    html = '<article class="h-entry"><p class="e-content">foo</p></article>'
+    self.expect_requests_get('http://foo.com/', html)
     self.mox.ReplayAll()
 
     resp = self.get_response()
     self.assertEquals(200, resp.status_int, resp.body)
-    self.assertEquals({'FakeAsSource content': 'foo\n\n(http://foo.com/)'},
-                      json.loads(resp.body))
+    self.assertEquals('foo\n\n(http://foo.com/)',
+                      json.loads(resp.body)['FakeAsSource content'])
+
+    self.assertTrue(models.PublishedPage.get_by_id('http://foo.com/'))
+    publish = models.Publish.query().get()
+    self.assertEquals(self.source.key, publish.source)
+    self.assertEquals('complete', publish.status)
+    self.assertEquals('post', publish.type)
+    # TODO
+    # self.assertEquals(html, publish.html)
+    self.assertEquals('fake id', publish.published_id)
+    self.assertEquals('http://fake/url', publish.published_url)
 
   def test_bad_target_url(self):
     self.assert_error('Target must be brid.gy/publish/{facebook,twitter}',
@@ -74,7 +84,9 @@ class PublishTest(testutil.HandlerTest):
     self.assert_error('No microformats2 data found in http://foo.com/')
 
     self.assertTrue(models.PublishedPage.get_by_id('http://foo.com/'))
-    self.assertEquals(1, models.Publish.query().count())
+    publish = models.Publish.query().get()
+    self.assertEquals('failed', publish.status)
+    self.assertEquals(self.source.key, publish.source)
 
   def test_no_content(self):
     self.expect_requests_get('http://foo.com/',
@@ -83,6 +95,7 @@ class PublishTest(testutil.HandlerTest):
 
     testutil.FakeSource(id='foo.com', domain='foo.com').put()
     self.assert_error('Could not find e-content in http://foo.com/')
+    self.assertEquals('failed', models.Publish.query().get().status)
 
   def test_type_not_implemented(self):
     self.expect_requests_get('http://foo.com/',
@@ -92,4 +105,5 @@ class PublishTest(testutil.HandlerTest):
     # FakeSource.create() raises NotImplementedError on likes
     testutil.FakeSource(id='foo.com', domain='foo.com').put()
     self.assert_error("FakeSource doesn't support type(s) ['h-entry', 'h-as-like'].")
+    self.assertEquals('failed', models.Publish.query().get().status)
 
