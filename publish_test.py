@@ -19,7 +19,6 @@ class PublishTest(testutil.HandlerTest):
   def setUp(self):
     super(PublishTest, self).setUp()
     publish.SOURCES['fake'] = testutil.FakeSource
-    publish.SUPPORTED_SOURCES.add(testutil.FakeSource)
     self.source = testutil.FakeSource(id='foo.com', domain='foo.com')
     self.source.put()
 
@@ -64,12 +63,13 @@ class PublishTest(testutil.HandlerTest):
                       publish.published)
 
   def test_bad_target_url(self):
-    self.assert_error('Target must be brid.gy/publish/{facebook,twitter}',
-                      target='foo')
+    self.assert_error(
+      'Target must be brid.gy/publish/{twitter,facebook,instagram,fake}',
+      target='foo')
 
   def test_unsupported_source_class(self):
-    self.assert_error('Sorry, Instagram is not yet supported.',
-                      target='http://brid.gy/publish/instagram')
+    self.assert_error('Sorry, Google+ is not yet supported.',
+                      target='http://brid.gy/publish/googleplus')
 
   def test_bad_source_url(self):
     self.assert_error('Could not parse source URL foo', source='foo')

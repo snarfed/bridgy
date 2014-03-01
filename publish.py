@@ -50,11 +50,7 @@ from google.appengine.api import mail
 from google.appengine.ext import ndb
 
 SOURCES = {cls.SHORT_NAME: cls for cls in
-           (facebook.FacebookPage,
-            googleplus.GooglePlusPage,
-            instagram.Instagram,
-            twitter.Twitter)}
-SUPPORTED_SOURCES = {facebook.FacebookPage, twitter.Twitter}
+           (facebook.FacebookPage, twitter.Twitter, instagram.Instagram)}
 
 
 class WebmentionHandler(webapp2.RequestHandler):
@@ -84,13 +80,14 @@ class WebmentionHandler(webapp2.RequestHandler):
 
     domain = parsed.netloc
     path_parts = parsed.path.rsplit('/', 1)
-    source_cls = SOURCES.get(path_parts[-1])
+    source_name = path_parts[-1]
+    if source_name == 'googleplus':
+      return self.error('Sorry, Google+ is not yet supported.')
+
+    source_cls = SOURCES.get(source_name)
     if (domain not in ('brid.gy', 'www.brid.gy') or len(path_parts) != 2 or
         path_parts[0] != '/publish' or not source_cls):
-      return self.error('Target must be brid.gy/publish/{facebook,twitter}')
-
-    if source_cls not in SUPPORTED_SOURCES:
-      return self.error('Sorry, %s is not yet supported.' % source_cls.AS_CLASS.NAME)
+      return self.error('Target must be brid.gy/publish/{%s}' % ','.join(SOURCES))
 
     # validate, fetch, and parse source
     try:
