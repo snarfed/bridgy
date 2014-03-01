@@ -120,12 +120,14 @@ class WebmentionHandler(webapp2.RequestHandler):
 
     # TODO: fetch myself? mf2py doesn't work when I give it a StringIO though.
     data = parser.Parser(source_url).to_dict()
+    logging.debug('Parsed microformats2: %s', data)
     items = data.get('items', [])
     if not items or not items[0]:
       return self.error('No microformats2 data found in %s' % source_url,
                         data=data)
 
     obj = microformats2.json_to_object(items[0])
+    logging.debug('Converted to ActivityStreams object: %s', obj)
 
     # posts and comments need content
     if obj.get('objectType') in ('note', 'article', 'comment'):
