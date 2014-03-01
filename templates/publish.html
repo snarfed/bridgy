@@ -16,7 +16,7 @@
 
 <!-- Connect buttons -->
 <div id="connect" class="row">
-<div class="col-md-6 col-sm-12">
+<div class="col-md-3 col-md-offset-3 col-sm-6">
  <form method="post" name="facebook-start" action="/facebook/start">
   <input type="image" alt="Sign in with Facebook" src="/static/facebook_button.png" />
   <input name="state" type="hidden" value="publish" />
@@ -24,15 +24,17 @@
   <input name="scope" type="hidden"
          value="offline_access,user_website,publish_actions,create_event,rsvp_event" />
 </form></div>
-<div class="col-md-6 col-sm-12">
+<div class="col-md-3 col-sm-6">
  <form method="post" name="twitter-start" action="/twitter/start">
   <input type="image" alt="Sign in with Twitter" src="/static/twitter_button.png" />
   <input name="state" type="hidden" value="publish" />
 </form></div>
-<!-- <div class="col-md-4 col-sm-8"> -->
+<!-- <div class="col-md-3 col-sm-6"> -->
 <!--  <form method="post" name="instagram-start" action="/instagram/start"> -->
 <!--   <input type="image" alt="Sign in with Instagram" src="/static/instagram_button.png" /> -->
 <!--   <input name="state" type="hidden" value="publish" /> -->
+<!--   <\!-- http://instagram.com/developer/authentication/#scope -\-> -->
+<!--   <input name="scope" type="hidden" value="comments+likes" /> -->
 <!-- </form></div> -->
 </div>
 
