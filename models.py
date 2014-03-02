@@ -216,13 +216,14 @@ class Source(StringIdModel):
     if source.features and source.features[0] == 'publish':
       err = None
       if not source.domain_url or source.domain == cls.AS_CLASS.DOMAIN:
-        err = ("Your %s profile is missing the website field. "
-               "Please add it and try again!")
+        handler.messages = {"Your %s profile is missing the website field. "
+                            "Please add it and try again!" % cls.AS_CLASS.NAME}
+        handler.messages_error = 'error'
+        return None
       elif not source.domain:
-        err = ("Could not parse the web site in your %s profile: %s\n"
-               "Please update it and try again!")
-      if err:
-        handler.messages = {err % cls.AS_CLASS.NAME}
+        handler.messages = {"Could not parse the web site in your %s profile: "
+                            "%s\n Please update it and try again!" %
+                            (cls.AS_CLASS.NAME, source.domain_url)}
         handler.messages_error = 'error'
         return None
 

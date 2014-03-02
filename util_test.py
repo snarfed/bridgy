@@ -1,11 +1,13 @@
 """Unit tests for util.py.
 """
 
+import json
+
 import requests
 
 from appengine_config import HTTP_TIMEOUT
 import testutil
-from testutil import FakeSource
+from testutil import FakeAuthEntity, FakeSource
 import util
 
 
@@ -28,9 +30,16 @@ class UtilTest(testutil.HandlerTest):
                        util.follow_redirects('http://will/redirect').url)
 
   def test_maybe_add_or_delete_source(self):
-    auth_entity = testutil.FakeAuthEntity(id='x', user_json='{}')
-    auth_entity.put()
+    # profile url with valid domain is required for publish
+    for bad_url in None, 'not a url', 'http://fa.ke/xyz':
+      auth_entity = FakeAuthEntity(id='x', user_json=json.dumps({'url': bad_url}))
+      auth_entity.put()
+      self.assertIsNone(self.handler.maybe_add_or_delete_source(
+          FakeSource, auth_entity, 'publish'))
 
+    auth_entity = FakeAuthEntity(id='x',
+                                 user_json=json.dumps({'url': 'http://foo.com/'}))
+    auth_entity.put()
     src = self.handler.maybe_add_or_delete_source(FakeSource, auth_entity, 'publish')
     self.assertEquals(['publish'], src.features)
 

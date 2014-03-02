@@ -88,7 +88,10 @@ class SourceTest(testutil.HandlerTest):
     self.assert_equals(['listen'], FakeSource.query().get().features)
 
     FakeSource.string_id_counter -= 1
-    self._test_create_new(features=['publish'])
+    auth_entity = testutil.FakeAuthEntity(
+      id='x', user_json=json.dumps({'url': 'http://foo.com/'}))
+    auth_entity.put()
+    self._test_create_new(auth_entity=auth_entity, features=['publish'])
     self.assert_equals(['listen', 'publish'], FakeSource.query().get().features)
     self.assert_equals({"Updated fake (FakeSource). Refresh to see what's new!"},
                        self.handler.messages)

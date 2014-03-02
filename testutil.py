@@ -66,6 +66,7 @@ class FakeBase(ndb.Model):
 
 class FakeAsSource(FakeBase, as_source.Source):
   NAME = 'FakeSource'
+  DOMAIN = 'fa.ke'
 
   def set_like(self, val):
     self._set('like', val)

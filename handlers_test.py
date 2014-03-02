@@ -20,7 +20,6 @@ class HandlersTest(testutil.HandlerTest):
     handlers.SOURCES['fake'] = testutil.FakeSource
 
     self.source = testutil.FakeSource.new(self.handler)
-    self.source.as_source.DOMAIN = 'fa.ke'
     self.source.set_activities(
       [{'object': {
             'id': 'tag:fa.ke,2013:000',
