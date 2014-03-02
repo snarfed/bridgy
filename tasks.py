@@ -78,7 +78,7 @@ class Poll(webapp2.RequestHandler):
 
     key = self.request.params['source_key']
     source = ndb.Key(urlsafe=key).get()
-    if not source or source.status == 'disabled':
+    if not source or source.status == 'disabled' or 'listen' not in source.features:
       logging.error('Source not found or disabled. Dropping task.')
       return
     logging.info('Source: %s %s', source.label(), source.key.string_id())

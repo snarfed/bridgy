@@ -158,6 +158,7 @@ class ModelsTest(HandlerTest):
 
     self.sources = [FakeSource.new(None), FakeSource.new(None)]
     for entity in self.sources:
+      entity.features = ['listen']
       entity.put()
 
     self.activities = [{

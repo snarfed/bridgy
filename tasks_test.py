@@ -240,6 +240,14 @@ class PollTest(TaskQueueTest):
     self.post_task()
     self.assertEqual([], self.taskqueue_stub.GetTasks('poll'))
 
+  def test_source_without_listen_feature(self):
+    """If the source doesn't have the listen feature, let the task die.
+    """
+    self.sources[0].features = []
+    self.sources[0].put()
+    self.post_task()
+    self.assertEqual([], self.taskqueue_stub.GetTasks('poll'))
+
   def test_disable_source_on_deauthorized(self):
     """If the source raises DisableSource, disable it.
     """
