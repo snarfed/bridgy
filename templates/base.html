@@ -83,7 +83,7 @@ window.onload = function() {
 {# TODO: javascript to set browser location to / so that reloads are harmless #}
 <div id="messages">
 {% for msg in msgs %}
-  <p>{{ msg }}</p>
+  <p class="{{ msg_error }}">{{ msg }}</p>
 {% endfor %}
 </div>
 

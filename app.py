@@ -102,7 +102,8 @@ class DashboardHandler(TemplateHandler):
 
     # self.response.headers['Link'] = ('<%s/webmention>; rel="webmention"' %
     #                                  self.request.host_url)
-    return {'sources': sources, 'msgs': msgs, 'epoch': util.EPOCH}
+    return {'sources': sources, 'msgs': msgs, 'epoch': util.EPOCH,
+            'msg_error': self.request.get('msg_error')}
 
 
 class ListenHandler(DashboardHandler):

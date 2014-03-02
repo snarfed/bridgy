@@ -182,7 +182,7 @@ form input {
 }
 
 .error {
-  color: red;
+  background-color: tomato !important;
   font-style: italic;
 }
 

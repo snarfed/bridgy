@@ -137,13 +137,18 @@ class Handler(webapp2.RequestHandler):
   def __init__(self, *args, **kwargs):
     super(Handler, self).__init__(*args, **kwargs)
     self.messages = set()
+    self.messages_error = ''
 
   def redirect(self, uri, **kwargs):
     """Adds self.messages to the uri as msg= query parameters.
     """
     params = urlparse.parse_qsl(urlparse.urlparse(uri).fragment)
     if self.messages and 'msg' not in params:
-      uri = add_query_params(uri, [('msg', msg) for msg in self.messages])
+      params += [('msg', msg) for msg in self.messages]
+    if self.messages_error:
+      params.append(('msg_error', self.messages_error))
+
+    uri = add_query_params(uri, params)
     super(Handler, self).redirect(uri, **kwargs)
 
   def maybe_add_or_delete_source(self, source_cls, auth_entity, state):
@@ -167,7 +172,10 @@ class Handler(webapp2.RequestHandler):
 
       source = source_cls.create_new(self, auth_entity=auth_entity,
                                      features=[state] if state else [])
-      added_source_redirect(self, source, state)
+      if source:
+        added_source_redirect(self, source, state)
+      else:
+        self.redirect('/')
       return source
 
     else:  # this is a delete
