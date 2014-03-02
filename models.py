@@ -196,6 +196,37 @@ class Source(StringIdModel):
       **kwargs: passed to new()
     """
     source = cls.new(handler, **kwargs)
+
+    # extract domain from the URL set on the user's profile, if any
+    auth_entity = kwargs.get('auth_entity')
+    if auth_entity and auth_entity.user_json:
+      actor = source.as_source.user_to_actor(json.loads(auth_entity.user_json))
+      # TODO: G+ has a multiply-valued 'urls' field. ignoring for now because
+      # we're not implementing publish for G+
+      url = actor.get('url')
+      if url:
+        source.domain_url = url
+        try:
+          source.domain = urlparse.urlparse(url).netloc
+        except BaseException, e:
+          source.domain = None
+          logging.error("Not setting domain; could not parse URL %s . %s", url, e)
+
+    # web site domain is required for publish
+    if source.features and source.features[0] == 'publish':
+      err = None
+      if not source.domain_url or source.domain == cls.AS_CLASS.DOMAIN:
+        err = ("Your %s profile is missing the website field. "
+               "Please add it and try again!")
+      elif not source.domain:
+        err = ("Could not parse the web site in your %s profile: %s\n"
+               "Please update it and try again!")
+      if err:
+        handler.messages = {err % cls.AS_CLASS.NAME}
+        handler.messages_error = 'error'
+        return None
+
+    # check if this source already exists
     existing = source.key.get()
     if existing:
       # merge some fields
@@ -214,20 +245,6 @@ class Source(StringIdModel):
                    subject='%s Bridgy user: %s %s' %
                    (verb, source.label(), source.key.string_id()),
                    body='%s/#%s' % (handler.request.host_url, source.dom_id()))
-
-    # extract domain from the URL set on the user's profile, if any
-    auth_entity = kwargs.get('auth_entity')
-    if auth_entity and auth_entity.user_json:
-      actor = source.as_source.user_to_actor(json.loads(auth_entity.user_json))
-      # TODO: G+ has a multiply-valued 'urls' field. ignoring for now because
-      # we're not implementing publish for G+
-      url = actor.get('url')
-      if url:
-        source.domain_url = url
-        try:
-          source.domain = urlparse.urlparse(url).netloc
-        except BaseException, e:
-          logging.error("Not setting domain; could not parse URL %s . %s", url, e)
 
     # TODO: ugh, *all* of this should be transactional
     source.put()
