@@ -113,15 +113,15 @@ class WebmentionHandler(webapp2.RequestHandler):
 
     self.add_publish_entity(source_url)
 
-    # try:
-    #   resp = requests.get(source, allow_redirects=True, timeout=HTTP_TIMEOUT)
-    # except BaseException:
-    #   return self.error(msg, 'Could not fetch source URL %s' % source)
-    # TODO(timeout)
-    # data = parser.Parser(file=StringIO.StringIO(resp.text)).to_dict()
+    # fetch source URL
+    try:
+      resp = requests.get(source_url, allow_redirects=True, timeout=HTTP_TIMEOUT)
+      self.publish.html = resp.text
+    except BaseException:
+      return self.error('Could not fetch source URL %s' % source)
 
-    # TODO: fetch myself? mf2py doesn't work when I give it a StringIO though.
-    data = parser.Parser(source_url).to_dict()
+    # parse microformats, convert to ActivityStreams
+    data = parser.Parser(doc=self.publish.html).to_dict()
     logging.debug('Parsed microformats2: %s', data)
     items = data.get('items', [])
     if not items or not items[0]:
@@ -138,7 +138,6 @@ class WebmentionHandler(webapp2.RequestHandler):
         return self.error('Could not find e-content in %s' % source_url, data=data)
 
     # add original post link to end of content
-    # TODO: make prettier?
     if obj.get('content'):
       obj['content'] += '\n\n(%s)' % source_url
 
@@ -153,9 +152,7 @@ class WebmentionHandler(webapp2.RequestHandler):
     if 'url' not in self.publish.published:
       self.publish.published['url'] = obj.get('url')
     self.publish.status = 'complete'
-    # TODO
     self.publish.type = models.get_type(obj)
-    self.publish.html = 'TODO'
     self.publish.put()
 
     resp = json.dumps(self.publish.published, indent=2)
@@ -166,7 +163,6 @@ class WebmentionHandler(webapp2.RequestHandler):
     logging.error(error, exc_info=sys.exc_info() if log_exception else None)
 
     if self.publish:
-      # TODO: more details
       self.publish.status = 'failed'
       self.publish.put()
 

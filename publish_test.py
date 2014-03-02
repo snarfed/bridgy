@@ -7,6 +7,7 @@ import json
 import urllib
 
 import appengine_config
+from appengine_config import HTTP_TIMEOUT
 import requests
 
 import models
@@ -26,7 +27,7 @@ class PublishTest(testutil.HandlerTest):
     self.mox.StubOutWithMock(requests, 'get', use_mock_anything=True)
     resp = requests.Response()
     resp._content = response
-    requests.get(url).AndReturn(resp)
+    requests.get(url, allow_redirects=True, timeout=HTTP_TIMEOUT).AndReturn(resp)
 
   def get_response(self, source=None, target=None):
     if source is None:
@@ -56,8 +57,7 @@ class PublishTest(testutil.HandlerTest):
     self.assertEquals(self.source.key, publish.source)
     self.assertEquals('complete', publish.status)
     self.assertEquals('post', publish.type)
-    # TODO
-    # self.assertEquals(html, publish.html)
+    self.assertEquals(html, publish.html)
     self.assertEquals({'id': 'fake id', 'url': 'http://fake/url',
                        'content': 'foo\n\n(http://foo.com/)'},
                       publish.published)
