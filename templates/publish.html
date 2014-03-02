@@ -2,18 +2,6 @@
 
 {% block content %}
 
-<!-- Manual UI -->
-<div id="manual" class="row">
- <form method="post" name="webmention" action="/publish/webmention">
-  <input name="source" type="text" alt="Source URL"></input>
-  <br />
-  <button type="submit" name="target" value="http://brid.gy/publish/facebook">
-    Facebook</button>
-  <button type="submit" name="target" value="http://brid.gy/publish/twitter">
-    Twitter</button>
- </form>
-</div>
-
 <!-- Connect buttons -->
 <div id="connect" class="row">
 <div class="col-md-3 col-md-offset-3 col-sm-6">
@@ -39,6 +27,18 @@
 </div>
 
 <br />
+
+<!-- Manual UI -->
+<div id="manual" class="row">
+ <form method="post" name="webmention" action="/publish/webmention">
+  <input name="source" type="text" alt="Source URL"></input>
+  <br />
+  <button type="submit" name="target" value="http://brid.gy/publish/facebook">
+    Facebook</button>
+  <button type="submit" name="target" value="http://brid.gy/publish/twitter">
+    Twitter</button>
+ </form>
+</div>
 
 <!-- Users -->
 <p id="users" class="big row">Registered accounts:</p>
