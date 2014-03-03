@@ -162,7 +162,7 @@ class Handler(webapp2.RequestHandler):
       auth_entity: ouath-dropins auth entity
       state: string, OAuth callback state parameter. For adds, this is just a
         feature ('listen' or 'publish') or empty. For deletes, it's
-        FEATURE,AUTH_ENTITY_KEY.
+        [FEATURE]-[SOURCE KEY].
     """
     if state is None:
       state = ''

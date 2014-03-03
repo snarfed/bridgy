@@ -208,7 +208,7 @@ class DeleteStartHandler(util.Handler):
   def post(self):
     key = ndb.Key(urlsafe=util.get_required_param(self, 'key'))
     module = self.OAUTH_MODULES[key.kind()]
-    state = '%s,%s' % (util.get_required_param(self, 'feature'), key.urlsafe())
+    state = '%s-%s' % (util.get_required_param(self, 'feature'), key.urlsafe())
 
     if module is oauth_googleplus:
       # Google+ doesn't support redirect_url() yet
@@ -224,10 +224,10 @@ class DeleteStartHandler(util.Handler):
 
 class DeleteFinishHandler(util.Handler):
   def get(self):
-    parts = util.get_required_param(self, 'state').split(',', 1)
+    parts = util.get_required_param(self, 'state').split('-', 1)
     feature = parts[0]
     if len(parts) != 2 or feature not in ('listen', 'publish'):
-      self.error(400, 'state query parameter must be {listen,publish},[KEY]')
+      self.error(400, 'state query parameter must be [FEATURE]-[SOURCE KEY]')
 
     if self.request.get('declined'):
       self.messages.add("OK, you're still signed up.")
