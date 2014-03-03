@@ -53,24 +53,24 @@ SOURCES = {cls.SHORT_NAME: cls for cls in
            (FacebookPage, Twitter, Instagram, GooglePlusPage)}
 
 
-class WebmentionHandler(webapp2.RequestHandler):
-  """Accepts webmentions and translates them to site-specific API calls.
+class Handler(webapp2.RequestHandler):
+  """Base handler for both previews and webmentions.
+
+  Subclasses must set the PREVIEW attribute to True or False.
   """
+  PREVIEW = None
 
   def post(self):
-    """Handles an API GET.
-
-    Request path is of the form /user_id/group_id/app_id/activity_id , where
-    each element is an optional string object id.
-    """
     self.source = None
     self.publish = None
-
-    self.response.headers['Content-Type'] = 'application/json'
     logging.info('Params: %s', self.request.params)
 
     source_url = util.get_required_param(self, 'source')
     target_url = util.get_required_param(self, 'target')
+
+    assert self.PREVIEW in (True, False)
+    if not self.PREVIEW:
+      self.response.headers['Content-Type'] = 'application/json'
 
     # parse and validate target URL
     try:
@@ -103,25 +103,27 @@ class WebmentionHandler(webapp2.RequestHandler):
       domain = 'snarfed.org'
 
     # look up source by domain
-    source = self.source = source_cls.query().filter(source_cls.domain == domain).get()
-    if not source:
+    self.source = source_cls.query().filter(source_cls.domain == domain).get()
+    if not self.source:
       return self.error(
         "Could not find %(type)s account for %(domain)s. Check that you're signed up "
         "for Bridgy and that your %(type)s account has %(domain)s in its profile's "
         "'web site' or 'link' field." %
         {'type': source_cls.AS_CLASS.NAME, 'domain': domain})
 
-    self.add_publish_entity(source_url)
+    if not self.PREVIEW:
+      self.add_publish_entity(source_url)
 
     # fetch source URL
     try:
       resp = requests.get(source_url, allow_redirects=True, timeout=HTTP_TIMEOUT)
-      self.publish.html = resp.text
     except BaseException:
-      return self.error('Could not fetch source URL %s' % source)
+      return self.error('Could not fetch source URL %s' % source_url)
 
     # parse microformats, convert to ActivityStreams
-    data = parser.Parser(doc=self.publish.html).to_dict()
+    if not self.PREVIEW:
+      self.publish.html = resp.text
+    data = parser.Parser(doc=resp.text).to_dict()
     logging.debug('Parsed microformats2: %s', data)
     items = data.get('items', [])
     if not items or not items[0]:
@@ -142,13 +144,19 @@ class WebmentionHandler(webapp2.RequestHandler):
       obj['content'] += '\n\n(%s)' % source_url
 
     try:
-      self.publish.published = source.as_source.create(obj)
+      if self.PREVIEW:
+        self.response.write(self.source.as_source.preview_create(obj))
+      else:
+        self.publish.published = self.source.as_source.create(obj)
     except NotImplementedError:
       return self.error("%s doesn't support type(s) %s." %
                         (source_cls.AS_CLASS.NAME, items[0].get('type')),
                         data=data, log_exception=False)
 
-    # write results to datastore
+    if self.PREVIEW:
+      return
+
+    # we've actually created something in the silo. write results to datastore.
     if 'url' not in self.publish.published:
       self.publish.published['url'] = obj.get('url')
     self.publish.status = 'complete'
@@ -158,6 +166,35 @@ class WebmentionHandler(webapp2.RequestHandler):
     resp = json.dumps(self.publish.published, indent=2)
     self.mail_me(resp, True)
     self.response.write(resp)
+
+  def error(self, error, status=400, data=None, log_exception=True):
+    logging.error(error, exc_info=sys.exc_info() if log_exception else None)
+    self.response.set_status(status)
+    self.response.write(error)
+
+  @ndb.transactional
+  def add_publish_entity(self, source_url):
+    """Creates and stores Publish and (if necessary) PublishedPage entities.
+
+    Args:
+      source_url: string
+    """
+    page = models.PublishedPage.get_or_insert(source_url)
+    self.publish = models.Publish(parent=page.key, source=self.source.key)
+    self.publish.put()
+    logging.debug('Publish entity: %s', self.publish.key.urlsafe())
+
+
+class PreviewHandler(Handler):
+  """Renders a preview HTML snippet of how a webmention would be handled.
+  """
+  PREVIEW = True
+
+
+class WebmentionHandler(Handler):
+  """Accepts webmentions and translates them to site-specific API calls.
+  """
+  PREVIEW = False
 
   def error(self, error, status=400, data=None, log_exception=True):
     logging.error(error, exc_info=sys.exc_info() if log_exception else None)
@@ -188,20 +225,9 @@ class WebmentionHandler(webapp2.RequestHandler):
     mail.send_mail(sender='publish@brid-gy.appspotmail.com',
                    to='webmaster@brid.gy', subject=subject, body=body)
 
-  @ndb.transactional
-  def add_publish_entity(self, source_url):
-    """Creates and stores Publish and (if necessary) PublishedPage entities.
-
-    Args:
-      source_url: string
-    """
-    page = models.PublishedPage.get_or_insert(source_url)
-    self.publish = models.Publish(parent=page.key, source=self.source.key)
-    self.publish.put()
-    logging.debug('Publish entity: %s', self.publish.key.urlsafe())
-
 
 application = webapp2.WSGIApplication([
     ('/publish/webmention', WebmentionHandler),
+    ('/publish/preview', PreviewHandler),
     ],
   debug=appengine_config.DEBUG)
