@@ -29,13 +29,13 @@ class PublishTest(testutil.HandlerTest):
     resp._content = response
     requests.get(url, allow_redirects=True, timeout=HTTP_TIMEOUT).AndReturn(resp)
 
-  def get_response(self, source=None, target=None):
+  def get_response(self, source=None, target=None, endpoint='/publish/webmention'):
     if source is None:
       source = 'http://foo.com/'
     if target is None:
       target = 'http://brid.gy/publish/fake'
     return publish.application.get_response(
-      '/publish/webmention', method='POST',
+      endpoint, method='POST',
       body='source=%s&target=%s' % (source, target))
 
   def assert_error(self, expected_error, source=None, target=None):
@@ -92,7 +92,6 @@ class PublishTest(testutil.HandlerTest):
                              '<article class="h-entry h-as-note"></article>')
     self.mox.ReplayAll()
 
-    testutil.FakeSource(id='foo.com', domain='foo.com').put()
     self.assert_error('Could not find e-content in http://foo.com/')
     self.assertEquals('failed', models.Publish.query().get().status)
 
@@ -102,7 +101,17 @@ class PublishTest(testutil.HandlerTest):
     self.mox.ReplayAll()
 
     # FakeSource.create() raises NotImplementedError on likes
-    testutil.FakeSource(id='foo.com', domain='foo.com').put()
     self.assert_error("FakeSource doesn't support type(s) ['h-entry', 'h-as-like'].")
     self.assertEquals('failed', models.Publish.query().get().status)
+
+  def test_preview(self):
+    html = '<article class="h-entry"><p class="e-content">foo</p></article>'
+    self.expect_requests_get('http://foo.com/', html)
+    # make sure create() isn't called
+    self.mox.StubOutWithMock(self.source.as_source, 'create', use_mock_anything=True)
+    self.mox.ReplayAll()
+
+    resp = self.get_response(endpoint='/publish/preview')
+    self.assertEquals(200, resp.status_int, resp.body)
+    self.assertEquals('preview of foo\n\n(http://foo.com/)', resp.body)
 

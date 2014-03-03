@@ -93,8 +93,12 @@ class FakeAsSource(FakeBase, as_source.Source):
   def create(self, obj):
     if obj.get('verb') == 'like':
       raise NotImplementedError()
-
     return {'id': 'fake id', 'url': 'http://fake/url', 'content': obj['content']}
+
+  def preview_create(self, obj):
+    if obj.get('verb') == 'like':
+      raise NotImplementedError()
+    return 'preview of ' + obj['content']
 
 
 class FakeSource(FakeBase, Source):
