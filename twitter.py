@@ -83,6 +83,7 @@ class AddTwitter(oauth_twitter.CallbackHandler, util.Handler):
   def finish(self, auth_entity, state=None):
     self.maybe_add_or_delete_source(Twitter, auth_entity, state)
 
+
 application = webapp2.WSGIApplication([
     ('/twitter/start', oauth_twitter.StartHandler.to('/twitter/add')),
     ('/twitter/add', AddTwitter),

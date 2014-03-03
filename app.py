@@ -208,42 +208,50 @@ class DeleteStartHandler(util.Handler):
   def post(self):
     key = ndb.Key(urlsafe=util.get_required_param(self, 'key'))
     module = self.OAUTH_MODULES[key.kind()]
+    state = '%s,%s' % (util.get_required_param(self, 'feature'), key.urlsafe())
 
     if module is oauth_googleplus:
       # Google+ doesn't support redirect_url() yet
-      self.redirect('/googleplus/delete/start?state=%s' % key.urlsafe())
+      self.redirect('/googleplus/delete/start?state=%s' % state)
     else:
       if module is oauth_instagram:
         path = '/instagram/oauth_callback'
       else:
         path = '/%s/delete/finish' % key.get().SHORT_NAME
       handler = module.StartHandler.to(path)(self.request, self.response)
-      self.redirect(handler.redirect_url(state=key.urlsafe()))
+      self.redirect(handler.redirect_url(state=state))
 
 
 class DeleteFinishHandler(util.Handler):
   def get(self):
+    parts = util.get_required_param(self, 'state').split(',', 1)
+    feature = parts[0]
+    if len(parts) != 2 or feature not in ('listen', 'publish'):
+      self.error(400, 'state query parameter must be {listen,publish},[KEY]')
+
     if self.request.get('declined'):
       self.messages.add("OK, you're still signed up.")
-      self.redirect('/')
+      self.redirect('/' + feature)
       return
 
     logged_in_as = util.get_required_param(self, 'auth_entity')
-    source = ndb.Key(urlsafe=util.get_required_param(self, 'state')).get()
+    source = ndb.Key(urlsafe=parts[1]).get()
     if logged_in_as == source.auth_entity.urlsafe():
-      # TODO: remove credentials, tasks, etc.
-      source.key.delete()
+      # TODO: remove credentials
+      if feature in source.features:
+        source.features.remove(feature)
+        source.put()
       self.messages.add('Deleted %s. Sorry to see you go!' % source.label())
       mail.send_mail(sender='delete@brid-gy.appspotmail.com',
                      to='webmaster@brid.gy',
-                     subject='Deleted Bridgy user: %s %s' %
-                     (source.label(), source.key.string_id()),
+                     subject='Deleted Bridgy %s user: %s %s' %
+                     (feature, source.label(), source.key.string_id()),
                      body='%s/#%s' % (self.request.host_url, source.dom_id()))
-      self.redirect('/?deleted=%s' % source.key.urlsafe())
+      self.redirect('/%s?deleted=%s' % (feature, source.key.urlsafe()))
     else:
       self.messages.add('Please log into %s as %s to delete it here.' %
                         (source.AS_CLASS.NAME, source.name))
-      self.redirect('/#%s' % source.dom_id())
+      self.redirect('/%s#%s' % (feature, source.dom_id()))
 
 
 application = webapp2.WSGIApplication(

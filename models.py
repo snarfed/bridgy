@@ -196,6 +196,7 @@ class Source(StringIdModel):
       **kwargs: passed to new()
     """
     source = cls.new(handler, **kwargs)
+    feature = source.features[0] if source.features else 'listen'
 
     # extract domain from the URL set on the user's profile, if any
     auth_entity = kwargs.get('auth_entity')
@@ -213,7 +214,7 @@ class Source(StringIdModel):
           logging.error("Not setting domain; could not parse URL %s . %s", url, e)
 
     # web site domain is required for publish
-    if source.features and source.features[0] == 'publish':
+    if feature == 'publish':
       err = None
       if not source.domain_url or source.domain == cls.AS_CLASS.DOMAIN:
         handler.messages = {"Your %s profile is missing the website field. "
@@ -243,8 +244,8 @@ class Source(StringIdModel):
                  source.key)
     mail.send_mail(sender='add@brid-gy.appspotmail.com',
                    to='webmaster@brid.gy',
-                   subject='%s Bridgy user: %s %s' %
-                   (verb, source.label(), source.key.string_id()),
+                   subject='%s Bridgy %s user: %s %s' %
+                   (verb, feature, source.label(), source.key.string_id()),
                    body='%s/#%s' % (handler.request.host_url, source.dom_id()))
 
     # TODO: ugh, *all* of this should be transactional

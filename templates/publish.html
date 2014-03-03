@@ -69,6 +69,7 @@
   {% endif %}
   <form method="post" action="/delete/start">
     <input name="key" type="hidden" value="{{ source.key.urlsafe }}" />
+    <input name="feature" type="hidden" value="publish" />
     <button type="submit" title="Delete" class="delete">&times;</button>
   </form>
   </span>

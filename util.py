@@ -160,14 +160,16 @@ class Handler(webapp2.RequestHandler):
     Args:
       source_cls: source class, e.g. Instagram
       auth_entity: ouath-dropins auth entity
-      state: 'listen' or 'publish' or empty
+      state: string, OAuth callback state parameter. For adds, this is just a
+        feature ('listen' or 'publish') or empty. For deletes, it's
+        FEATURE,AUTH_ENTITY_KEY.
     """
     if state is None:
       state = ''
     if state in ('', 'listen', 'publish'):  # this is an add/update
       if not auth_entity:
         self.messages.add("OK, you're not signed up. Hope you reconsider!")
-        self.redirect('/')
+        self.redirect('/' + state)
         return
 
       source = source_cls.create_new(self, auth_entity=auth_entity,
@@ -175,7 +177,7 @@ class Handler(webapp2.RequestHandler):
       if source:
         added_source_redirect(self, source, state)
       else:
-        self.redirect('/')
+        self.redirect('/' + state)
       return source
 
     else:  # this is a delete
@@ -184,4 +186,4 @@ class Handler(webapp2.RequestHandler):
                       (auth_entity.key.urlsafe(), state))
       else:
         self.messages.add("OK, you're still signed up.")
-        self.redirect('/')
+        self.redirect('/' + state)
