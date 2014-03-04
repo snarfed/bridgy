@@ -101,7 +101,7 @@ class PublishTest(testutil.HandlerTest):
     self.mox.ReplayAll()
 
     # FakeSource.create() raises NotImplementedError on likes
-    self.assert_error("FakeSource doesn't support type(s) ['h-entry', 'h-as-like'].")
+    self.assert_error("FakeSource doesn't support type(s) h-as-like.")
     self.assertEquals('failed', models.Publish.query().get().status)
 
   def test_preview(self):

@@ -149,8 +149,11 @@ class Handler(webapp2.RequestHandler):
       else:
         self.publish.published = self.source.as_source.create(obj)
     except NotImplementedError:
+      types = items[0].get('type', [])
+      if 'h-entry' in types:
+        types.remove('h-entry')
       return self.error("%s doesn't support type(s) %s." %
-                        (source_cls.AS_CLASS.NAME, items[0].get('type')),
+                        (source_cls.AS_CLASS.NAME, ' + '.join(types)),
                         data=data, log_exception=False)
 
     if self.PREVIEW:
