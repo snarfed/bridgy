@@ -26,17 +26,51 @@
 <!-- </form></div> -->
 </div>
 
+<!-- Manual UI Preview AJAX -->
+<script type="text/javascript">
+function do_preview(site) {
+  var url = document.getElementById("source-url").value.trim();
+  if (url.length == 0) {
+    window.alert("Please enter a URL.");
+    return;
+  }
+
+  var req = new XMLHttpRequest();
+  req.onload = function() {
+    if (this.status == 200) {
+      document.getElementById("preview").innerHTML = this.responseText;
+    } else {
+      this.onerror();
+    }
+  };
+  req.onerror = function() {
+      var preview = document.getElementById("preview");
+      preview.innerHTML =
+        "<span title='Error' class='glyphicon glyphicon-exclamation-sign'></span> " +
+        this.responseText;
+      preview.class = "error";
+  }
+  req.open("post", "/publish/preview?source=" + url +
+           "&target=http://brid.gy/publish/" + site);
+  req.send();
+}
+</script>
+
 <!-- Manual UI -->
 <div id="manual" class="row">
  <form method="post" name="preview" action="/publish/preview">
-  <input name="source" type="text" alt="Source URL"></input>
-  <br />
-  <button type="submit" name="target" value="http://brid.gy/publish/facebook">
+  <label for="source">Enter a URL to preview and publish it:</label>
+  <input id="source-url" name="source" type="text" alt="Source URL"></input>
+  <button type="submit" name="target" value="http://brid.gy/publish/facebook"
+          onclick="do_preview('facebook'); return false;">
     Facebook</button>
-  <button type="submit" name="target" value="http://brid.gy/publish/twitter">
+  <button type="submit" name="target" value="http://brid.gy/publish/twitter"
+          onclick="do_preview('twitter'); return false;">
     Twitter</button>
  </form>
 </div>
+
+<div id="preview" class="row"></div>
 
 <br />
 
