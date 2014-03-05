@@ -16,6 +16,28 @@ EPOCH = datetime.datetime.utcfromtimestamp(0)
 POLL_TASK_DATETIME_FORMAT = '%Y-%m-%d-%H-%M-%S'
 FAILED_RESOLVE_URL_CACHE_TIME = 60 * 60 * 24  # a day
 
+# Known domains that don't support webmentions. Mainly just the silos.
+WEBMENTION_BLACKLIST = (
+  'amzn.com',
+  'amazon.com',
+  'brid.gy',
+  'brid-gy.appspot.com',
+  'facebook.com',
+  'm.facebook.com',
+  'instagr.am',
+  'instagram.com',
+  'plus.google.com',
+  'twitter.com',
+  # these come from the text of tweets. we also pull the expanded URL
+  # from the tweet entities, so ignore these instead of resolving them.
+  't.co',
+  'youtube.com',
+  'youtu.be',
+  '', None,
+  # individual web sites that fail to fetch on app engine
+  'djtymenathanscot.com',
+  )
+
 
 def added_source_redirect(handler, source, uri):
   """Redirects to the dashboard after adding a source.
@@ -76,26 +98,6 @@ from activitystreams.oauth_dropins.webutil import util
 _orig_tag_uri = tag_uri
 util.tag_uri = lambda domain, name: _orig_tag_uri(domain, name, year=2013)
 
-
-# Known domains that don't support webmentions. Mainly just the silos.
-WEBMENTION_BLACKLIST = (
-  'amzn.com',
-  'amazon.com',
-  'brid.gy',
-  'brid-gy.appspot.com',
-  'facebook.com',
-  'm.facebook.com',
-  'instagr.am',
-  'instagram.com',
-  'plus.google.com',
-  'twitter.com',
-  # these come from the text of tweets. we also pull the expanded URL
-  # from the tweet entities, so ignore these instead of resolving them.
-  't.co',
-  'youtube.com',
-  'youtu.be',
-  '', None,
-  )
 
 def get_webmention_target(url):
   """Resolves a URL and decides whether we should try to send it a webmention.
