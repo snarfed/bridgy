@@ -141,6 +141,14 @@ form input {
   padding-left: 0;
 }
 
+label {
+  font-weight: 200;
+}
+
+#preview .verb {
+  font-weight: bold;
+}
+
 #footer {
   margin-top: 1.5em;
   margin-bottom: 1em;

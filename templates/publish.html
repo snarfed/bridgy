@@ -35,6 +35,7 @@ function do_preview(site) {
     return;
   }
 
+  var preview = document.getElementById("preview");
   var req = new XMLHttpRequest();
   req.onload = function() {
     if (this.status == 200) {
@@ -44,12 +45,13 @@ function do_preview(site) {
     }
   };
   req.onerror = function() {
-      var preview = document.getElementById("preview");
       preview.innerHTML =
         "<span title='Error' class='glyphicon glyphicon-exclamation-sign'></span> " +
         this.responseText;
       preview.class = "error";
   }
+
+  preview.innerHTML = "<img src='/static/spinner.gif' width='30' />";
   req.open("post", "/publish/preview?source=" + url +
            "&target=http://brid.gy/publish/" + site);
   req.send();
@@ -70,9 +72,9 @@ function do_preview(site) {
  </form>
 </div>
 
+<br />
 <div id="preview" class="row"></div>
 
-<br />
 
 <!-- Users -->
 <p id="users" class="big row">Users</p>
