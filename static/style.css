@@ -149,6 +149,11 @@ label {
   font-weight: bold;
 }
 
+/* Override the inline display:block which makes it align left instead of center. */
+iframe#twitter-widget-0 {
+  display: inline !important;
+}
+
 #footer {
   margin-top: 1.5em;
   margin-bottom: 1em;
