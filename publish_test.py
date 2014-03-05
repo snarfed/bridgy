@@ -124,6 +124,7 @@ class PublishTest(testutil.HandlerTest):
 
     resp = self.get_response(endpoint='/publish/preview')
     self.assertEquals(200, resp.status_int, resp.body)
-    self.assertTrue(resp.body.endswith('preview of foo\n\n(http://foo.com/)'),
+    self.assertTrue(resp.body.endswith(
+        'preview of foo\n\n(<a href="http://foo.com/">http://foo.com/</a>)'),
                     resp.body)
 

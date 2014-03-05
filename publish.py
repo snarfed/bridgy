@@ -160,9 +160,10 @@ class Handler(webapp2.RequestHandler):
 
     try:
       if self.PREVIEW:
+        preview_text = self.source.as_source.preview_create(obj)
         vars = {'source': self.source, 'feature': 'publish', 'compact': True}
         self.response.write(template.render('templates/source.html', vars) +
-                            self.source.as_source.preview_create(obj))
+                            util.linkify(preview_text))
       else:
         self.publish.published = self.source.as_source.create(obj)
     except NotImplementedError:
@@ -190,6 +191,8 @@ class Handler(webapp2.RequestHandler):
   def error(self, error, status=400, data=None, log_exception=True):
     logging.error(error, exc_info=sys.exc_info() if log_exception else None)
     self.response.set_status(status)
+    if self.PREVIEW:
+      error = util.linkify(error)
     self.response.write(error)
 
   @ndb.transactional
