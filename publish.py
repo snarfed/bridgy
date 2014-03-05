@@ -162,10 +162,13 @@ class Handler(webapp2.RequestHandler):
     try:
       if self.PREVIEW:
         preview_text = self.source.as_source.preview_create(obj)
+        endpoint = '%s://%s/publish/webmention' % (appengine_config.SCHEME,
+                                                   appengine_config.HOST)
         vars = {'source': self.source,
                 'preview': preview_text,
                 'source_url': source_url,
                 'target_url': target_url,
+                'webmention_endpoint': endpoint,
                 }
         self.response.write(template.render('templates/preview.html', vars))
       else:
