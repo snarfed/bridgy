@@ -162,9 +162,12 @@ class Handler(webapp2.RequestHandler):
     try:
       if self.PREVIEW:
         preview_text = self.source.as_source.preview_create(obj)
-        vars = {'source': self.source, 'feature': 'publish', 'compact': True}
-        self.response.write(template.render('templates/source.html', vars) +
-                            util.linkify(preview_text))
+        vars = {'source': self.source,
+                'preview': preview_text,
+                'source_url': source_url,
+                'target_url': target_url,
+                }
+        self.response.write(template.render('templates/preview.html', vars))
       else:
         self.publish.published = self.source.as_source.create(obj)
     except NotImplementedError:

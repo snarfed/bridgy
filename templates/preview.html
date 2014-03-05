@@ -1,0 +1,57 @@
+{% with "True" as compact %}
+  {% include "source.html" %}
+{% endwith %}
+
+<!-- AJAX to send this preview -->
+<script type="text/javascript">
+function send_preview() {
+  var sent = document.getElementById("sent");
+  var glyph = "<span title='Error' class='glyphicon glyphicon-exclamation-sign'></span> ";
+  var req = new XMLHttpRequest();
+
+  req.onload = function() {
+    if (this.status == 200) {
+      sent.innerHTML = "Sent! <a href='" + JSON.parse(this.responseText).url +
+                       "'>Click here to view.</a>";
+    } else if (this.status == 400) {
+      sent.innerHTML = glyph + JSON.parse(this.responseText).error;
+    } else {
+      this.onerror();
+    }
+  };
+  req.onerror = function() {
+    sent.innerHTML = glyph + this.responseText;
+  }
+
+  preview.innerHTML = "<img src='/static/spinner.gif' width='30' />";
+  req.open("post",
+           "/publish/webmention?source={{ source_url }}&target={{ target_url }}");
+  req.send();
+}
+</script>
+
+<!-- Preview text and optional post embed-->
+{{ preview|safe }}
+
+<br />
+
+<form method="post" action="/publish/webmention" style="float: right">
+ <input type="hidden" name="source" value="source_url" />
+ <input type="hidden" name="target" value="target_url" />
+ <input type="submit" value="Send" onclick="send_preview(); return false" />
+</form>
+
+<br />
+
+<!-- Send results stub -->
+<br />
+<div id="sent" class="row"></div>
+<br />
+
+<!-- Equivalent webmention command line -->
+<p>Webmention:
+<br />
+<pre>curl -d 'source={{ source_url }}&target={{ target_url }}' \
+  https://www.brid.gy/publish/webmention
+</pre>
+</p>

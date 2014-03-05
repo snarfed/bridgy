@@ -2,6 +2,17 @@
 
 {% block content %}
 
+<!-- For embeds -->
+<script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/all.js#xfbml=1&appId=318683258228687";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
 <!-- Connect buttons -->
 <div id="connect" class="row">
 <div class="col-md-3 col-md-offset-3 col-sm-6">
@@ -40,6 +51,11 @@ function do_preview(site) {
   req.onload = function() {
     if (this.status == 200) {
       document.getElementById("preview").innerHTML = this.responseText;
+      /* trigger re-renders of twitter and facebook embeds */
+      twttr.widgets.load();
+      if (typeof(FB) != "undefined") {
+        FB.XFBML.parse();
+      }
     } else {
       this.onerror();
     }
