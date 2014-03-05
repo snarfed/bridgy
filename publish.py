@@ -90,14 +90,14 @@ class Handler(webapp2.RequestHandler):
                         source_cls.AS_CLASS.NAME)
 
     # validate, fetch, and parse source
+    msg = 'Could not parse source URL %s' % source_url
     try:
       parsed = urlparse.urlparse(source_url)
     except BaseException:
-      return self.error('Could not parse source URL %s' % source_url)
-
+      return self.error(msg)
     domain = parsed.netloc
     if not domain:
-      return self.error('Could not parse source URL %s' % source_url)
+      return self.error(msg)
 
     # When debugging locally, use snarfed.org for localhost webmentions
     if appengine_config.DEBUG and domain == 'localhost':
@@ -139,6 +139,20 @@ class Handler(webapp2.RequestHandler):
       contents = items[0].get('properties', {}).get('content', [])
       if not contents or not contents[0] or not contents[0].get('value'):
         return self.error('Could not find e-content in %s' % source_url, data=data)
+
+    # if we're responding to a silo object, it should match the requested silo
+    _, base_url = self.source.as_source.base_object(obj)
+    if base_url:
+      try:
+        domain = urlparse.urlparse(base_url).netloc
+        if domain.startswith('www.'):
+          domain = domain[4:]
+        if domain != self.source.AS_CLASS.DOMAIN:
+          return self.error('Could not find %s link.' % self.source.AS_CLASS.NAME)
+      except BaseException:
+        msg = 'Could not parse link %s' % base_url
+        logging.exception(msg)
+        return self.error(msg)
 
     # add original post link to end of content
     if obj.get('content'):

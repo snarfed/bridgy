@@ -104,6 +104,17 @@ class PublishTest(testutil.HandlerTest):
     self.assert_error("FakeSource doesn't support type(s) h-as-like.")
     self.assertEquals('failed', models.Publish.query().get().status)
 
+  def test_in_reply_to_domain_mismatch(self):
+    self.expect_requests_get('http://foo.com/', """
+<article class="h-entry h-as-reply">
+<p class="e-content">
+<a class="u-in-reply-to" href="http://other/silo">foo</a>
+</p></article>""")
+    self.mox.ReplayAll()
+
+    self.assert_error("Could not find FakeSource link.")
+    self.assertEquals('failed', models.Publish.query().get().status)
+
   def test_preview(self):
     html = '<article class="h-entry"><p class="e-content">foo</p></article>'
     self.expect_requests_get('http://foo.com/', html)
