@@ -1,0 +1,24 @@
+<a target="_blank" href="{{ source.url }}"
+   {# oddly, source.AS_CLASS works for FB, G+, and Instagram, but not Twitter.
+      only here; works fine in app.py. no clue why. use kind as fallback. %}
+   title="{{ source.name|safe }} ({% firstof source.AS_CLASS.NAME source.key.kind %})">
+  <img class="profile" src="{{ source.picture }}" width="64px" />
+  <img src="/static/{{ source.SHORT_NAME }}_icon.png"
+       alt="{% firstof source.AS_CLASS.NAME source.key.kind %}" />
+  {{ source.name|safe }}</a>
+
+<span class="source-buttons">
+<a href="#{{ source.dom_id }}" title="Link">#</a>
+{% if source.status == "disabled" %}
+  <a href="#" onclick="document.forms['{{ source.SHORT_NAME }}-start'].submit();
+                       return false;">
+    <span class="glyphicon glyphicon-pause"
+          title="This account was disconnected on {% firstof source.AS_CLASS.NAME source.key.kind %}'s end. Click to reconnect it!">
+  </span></a>
+{% endif %}
+<form method="post" action="/delete/start">
+  <input name="key" type="hidden" value="{{ source.key.urlsafe }}" />
+  <input name="feature" type="hidden" value="{{ feature }}" />
+  <button type="submit" title="Delete" class="delete">&times;</button>
+</form>
+</span>
