@@ -112,7 +112,7 @@ class PublishTest(testutil.HandlerTest):
 </p></article>""")
     self.mox.ReplayAll()
 
-    self.assert_error("Could not find FakeSource link.")
+    self.assert_error("Could not find FakeSource link in http://foo.com/")
     self.assertEquals('failed', models.Publish.query().get().status)
 
   def test_preview(self):

@@ -148,7 +148,8 @@ class Handler(webapp2.RequestHandler):
         if domain.startswith('www.'):
           domain = domain[4:]
         if domain != self.source.AS_CLASS.DOMAIN:
-          return self.error('Could not find %s link.' % self.source.AS_CLASS.NAME)
+          return self.error('Could not find %s link in %s' %
+                            (self.source.AS_CLASS.NAME, source_url))
       except BaseException:
         msg = 'Could not parse link %s' % base_url
         logging.exception(msg)
