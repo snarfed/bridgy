@@ -48,6 +48,7 @@ import webapp2
 
 from google.appengine.api import mail
 from google.appengine.ext import ndb
+from google.appengine.ext.webapp import template
 
 SOURCES = {cls.SHORT_NAME: cls for cls in
            (FacebookPage, Twitter, Instagram, GooglePlusPage)}
@@ -145,7 +146,9 @@ class Handler(webapp2.RequestHandler):
 
     try:
       if self.PREVIEW:
-        self.response.write(self.source.as_source.preview_create(obj))
+        vars = {'source': self.source, 'feature': 'publish', 'compact': True}
+        self.response.write(template.render('templates/source.html', vars) +
+                            self.source.as_source.preview_create(obj))
       else:
         self.publish.published = self.source.as_source.create(obj)
     except NotImplementedError:
