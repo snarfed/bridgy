@@ -269,7 +269,7 @@ class WebmentionLinkHandler(webapp2.RequestHandler):
       '<%s/publish/webmention>; rel="webmention"' % self.request.host_url)
 
   def get(self, site):
-    self.head()
+    self.head(site)
     self.response.out.write("""\
 <!DOCTYPE html>
 <html><head>
