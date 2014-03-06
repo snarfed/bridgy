@@ -36,7 +36,6 @@ import appengine_config
 from appengine_config import HTTP_TIMEOUT
 
 from activitystreams import microformats2
-from activitystreams.oauth_dropins.webutil import util
 from facebook import FacebookPage
 from googleplus import GooglePlusPage
 from instagram import Instagram
@@ -44,6 +43,7 @@ from mf2py import parser
 import models
 import requests
 from twitter import Twitter
+import util
 import webapp2
 
 from google.appengine.api import mail
@@ -54,7 +54,7 @@ SOURCES = {cls.SHORT_NAME: cls for cls in
            (FacebookPage, Twitter, Instagram, GooglePlusPage)}
 
 
-class Handler(webapp2.RequestHandler):
+class Handler(util.Handler):
   """Base handler for both previews and webmentions.
 
   Subclasses must set the PREVIEW attribute to True or False.
@@ -165,7 +165,7 @@ class Handler(webapp2.RequestHandler):
     try:
       if self.PREVIEW:
         preview_text = self.source.as_source.preview_create(obj)
-        vars = {'source': self.source,
+        vars = {'source': self.preprocess_source(self.source),
                 'preview': preview_text,
                 'source_url': source_url,
                 'target_url': target_url,

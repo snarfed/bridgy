@@ -43,7 +43,7 @@ def source_dom_id_to_key(id):
   return ndb.Key(handlers.SOURCES.get(short_name), string_id)
 
 
-class DashboardHandler(TemplateHandler):
+class DashboardHandler(TemplateHandler, util.Handler):
   """Base handler for both /listen and /publish."""
 
   def feature(self):
@@ -84,15 +84,8 @@ class DashboardHandler(TemplateHandler):
     if deleted in sources:
       del sources[deleted]
 
-    # tweak some fields, including converting image URLs to https if we're
-    # serving over SSL
-    for source in sources.values():
-      if not source.name:
-        source.name = source.key.string_id()
-      source.picture = util.update_scheme(source.picture, self)
-
-    # sort by name
-    sources = sorted(sources.values(),
+    # preprocess sources, sort by name
+    sources = sorted([self.preprocess_source(s) for s in sources.values()],
                      key=lambda s: (s.name.lower(), s.AS_CLASS.NAME))
 
     # force UTF-8 since the msg parameters were encoded as UTF-8 by

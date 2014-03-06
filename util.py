@@ -189,3 +189,18 @@ class Handler(webapp2.RequestHandler):
       else:
         self.messages.add("OK, you're still signed up.")
         self.redirect('/' + state)
+
+  def preprocess_source(self, source):
+    """Prepares a source entity for rendering in the source.html template.
+
+    - use id as name if name isn't provided
+    - convert image URLs to https if we're serving over SSL
+
+    Args:
+      source: Source entity
+    """
+    if not source.name:
+      source.name = source.key.string_id()
+    if source.picture:
+      source.picture = util.update_scheme(source.picture, self)
+    return source
