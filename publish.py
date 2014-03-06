@@ -259,8 +259,29 @@ class WebmentionHandler(Handler):
                    to='webmaster@brid.gy', subject=subject, body=body)
 
 
+class WebmentionLinkHandler(webapp2.RequestHandler):
+  """Returns the Base handler for both previews and webmentions.
+
+  Subclasses must set the PREVIEW attribute to True or False.
+  """
+  def head(self, site):
+    self.response.headers['Link'] = (
+      '<%s/publish/webmention>; rel="webmention"' % self.request.host_url)
+
+  def get(self, site):
+    self.head()
+    self.response.out.write("""\
+<!DOCTYPE html>
+<html><head>
+<link rel="webmention" href="%s/publish/webmention">
+</head>
+<body>Nothing here! Try <a href="%s/publish">%s/publish</a>.</body>
+<html>""" % (self.request.host_url, self.request.host_url, appengine_config.HOST))
+
+
 application = webapp2.WSGIApplication([
     ('/publish/webmention', WebmentionHandler),
     ('/publish/preview', PreviewHandler),
+    ('/publish/(facebook|twitter)', WebmentionLinkHandler),
     ],
   debug=appengine_config.DEBUG)

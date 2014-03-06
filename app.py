@@ -100,8 +100,6 @@ class DashboardHandler(TemplateHandler):
     self.request.charset = 'utf-8'
     msgs = [m for m in set(self.request.params.getall('msg'))]
 
-    # self.response.headers['Link'] = ('<%s/webmention>; rel="webmention"' %
-    #                                  self.request.host_url)
     return {'sources': sources, 'msgs': msgs, 'epoch': util.EPOCH,
             'msg_error': self.request.get('msg_error')}
 
