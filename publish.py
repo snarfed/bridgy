@@ -64,7 +64,7 @@ class Handler(util.Handler):
   def post(self):
     self.source = None
     self.publish = None
-    logging.info('Params: %s', self.request.params)
+    logging.info('Params: %self', self.request.params.items())
 
     source_url = util.get_required_param(self, 'source')
     target_url = util.get_required_param(self, 'target')
@@ -245,7 +245,7 @@ class WebmentionHandler(Handler):
 
   def mail_me(self, resp, success):
     subject = 'Bridgy publish %s' % ('succeeded' if success else 'failed')
-    body = 'Request:\n%s\n\nResponse:\n%s' % (self.request.params, resp)
+    body = 'Request:\n%s\n\nResponse:\n%s' % (self.request.params.items(), resp)
 
     if self.source:
       prefix = 'Source: %s/publish#%s\n\n' % (self.request.host_url,
