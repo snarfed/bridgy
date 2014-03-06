@@ -5,39 +5,17 @@
 <!-- For embeds -->
 <script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
 <div id="fb-root"></div>
-<script>(function(d, s, id) {
+<script>
+(function(d, s, id) {
   var js, fjs = d.getElementsByTagName(s)[0];
   if (d.getElementById(id)) return;
   js = d.createElement(s); js.id = id;
   js.src = "//connect.facebook.net/en_US/all.js#xfbml=1&appId=318683258228687";
   fjs.parentNode.insertBefore(js, fjs);
-}(document, 'script', 'facebook-jssdk'));</script>
+}(document, 'script', 'facebook-jssdk'));
+</script>
 
-<!-- Connect buttons -->
-<div id="connect" class="row">
-<div class="col-md-3 col-md-offset-3 col-sm-6">
- <form method="post" name="facebook-start" action="/facebook/start">
-  <input type="image" alt="Sign in with Facebook" src="/static/facebook_button.png" />
-  <input name="state" type="hidden" value="publish" />
-  <!-- https://developers.facebook.com/docs/reference/login/ -->
-  <input name="scope" type="hidden"
-         value="offline_access,user_website,publish_actions,create_event,rsvp_event" />
-</form></div>
-<div class="col-md-3 col-sm-6">
- <form method="post" name="twitter-start" action="/twitter/start">
-  <input type="image" alt="Sign in with Twitter" src="/static/twitter_button.png" />
-  <input name="state" type="hidden" value="publish" />
-</form></div>
-<!-- <div class="col-md-3 col-sm-6"> -->
-<!--  <form method="post" name="instagram-start" action="/instagram/start"> -->
-<!--   <input type="image" alt="Sign in with Instagram" src="/static/instagram_button.png" /> -->
-<!--   <input name="state" type="hidden" value="publish" /> -->
-<!--   <\!-- http://instagram.com/developer/authentication/#scope -\-> -->
-<!--   <input name="scope" type="hidden" value="comments+likes" /> -->
-<!-- </form></div> -->
-</div>
-
-<!-- Manual UI Preview AJAX -->
+<!-- Preview AJAX -->
 <script type="text/javascript">
 function do_preview(site) {
   var url = document.getElementById("source-url").value.trim();
@@ -98,18 +76,48 @@ function send_preview(url) {
 }
 </script>
 
-<!-- Manual UI -->
-<div id="manual" class="row">
- <form method="post" name="preview" action="/publish/preview">
-  <label for="source">Enter a URL to preview and publish it:</label>
-  <input id="source-url" name="source" type="text" alt="Source URL"></input>
-  <button type="submit" name="target" value="http://brid.gy/publish/facebook"
-          onclick="do_preview('facebook'); return false;">
-    Facebook</button>
-  <button type="submit" name="target" value="http://brid.gy/publish/twitter"
-          onclick="do_preview('twitter'); return false;">
-    Twitter</button>
- </form>
+
+<div id="connect" class="row">
+ <!-- Connect buttons -->
+ <div class="col-md-6 col-sm-12">
+  <p class="big">Step 1: sign up</p>
+ <br />
+  <form method="post" name="facebook-start" action="/facebook/start">
+   <input type="image" alt="Sign in with Facebook" src="/static/facebook_button.png" />
+   <input name="state" type="hidden" value="publish" />
+   <!-- https://developers.facebook.com/docs/reference/login/ -->
+   <input name="scope" type="hidden"
+          value="offline_access,user_website,publish_actions,create_event,rsvp_event" />
+  </form>
+ <br />
+  <form method="post" name="twitter-start" action="/twitter/start">
+   <input type="image" alt="Sign in with Twitter" src="/static/twitter_button.png" />
+   <input name="state" type="hidden" value="publish" />
+  </form>
+ </div>
+
+<!--  <form method="post" name="instagram-start" action="/instagram/start"> -->
+<!--   <input type="image" alt="Sign in with Instagram" src="/static/instagram_button.png" /> -->
+<!--   <input name="state" type="hidden" value="publish" /> -->
+<!--   <\!-- http://instagram.com/developer/authentication/#scope -\-> -->
+<!--   <input name="scope" type="hidden" value="comments+likes" /> -->
+<!-- </form> -->
+
+ <!-- Preview UI -->
+ <div class="col-md-6 col-sm-12">
+   <p class="big">Step 2: enter an original post URL</p>
+  <br />
+  <form method="post" name="preview" action="/publish/preview">
+   <input id="source-url" name="source" type="text" alt="Source URL"></input>
+   <br />
+   <button type="submit" name="target" value="http://brid.gy/publish/facebook"
+           onclick="do_preview('facebook'); return false;">
+     Facebook</button>
+   <button type="submit" name="target" value="http://brid.gy/publish/twitter"
+           onclick="do_preview('twitter'); return false;">
+     Twitter</button>
+  </form>
+ </div>
 </div>
 
 <br />

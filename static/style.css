@@ -149,6 +149,11 @@ label {
   font-weight: bold;
 }
 
+#source-url {
+  width: 80%;
+  border: 1px solid black;
+}
+
 /* Override the inline display:block which makes it align left instead of center. */
 iframe#twitter-widget-0 {
   display: inline !important;
