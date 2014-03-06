@@ -104,7 +104,10 @@ class Handler(webapp2.RequestHandler):
       domain = 'snarfed.org'
 
     # look up source by domain
-    self.source = source_cls.query().filter(source_cls.domain == domain).get()
+    self.source = (source_cls.query()
+                   .filter(source_cls.domain == domain)
+                   .filter(source_cls.features == 'publish')
+                   .get())
     if not self.source:
       return self.error(
         "Could not find %(type)s account for %(domain)s. Check that you're signed up "

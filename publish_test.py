@@ -20,7 +20,8 @@ class PublishTest(testutil.HandlerTest):
   def setUp(self):
     super(PublishTest, self).setUp()
     publish.SOURCES['fake'] = testutil.FakeSource
-    self.source = testutil.FakeSource(id='foo.com', domain='foo.com')
+    self.source = testutil.FakeSource(id='foo.com', domain='foo.com',
+                                      features=['publish'])
     self.source.put()
 
   def expect_requests_get(self, url, response):
@@ -74,8 +75,16 @@ class PublishTest(testutil.HandlerTest):
     self.assert_error('Could not parse source URL foo', source='foo')
 
   def test_source_domain_not_found(self):
-    testutil.FakeSource.get_by_id('foo.com').key.delete()
-    self.assert_error("Could not find FakeSource account for foo.com. Check that you're signed up for Bridgy and that your FakeSource account has foo.com in its profile's 'web site' or 'link' field.")
+    msg = "Could not find FakeSource account for foo.com. Check that you're signed up for Bridgy and that your FakeSource account has foo.com in its profile's 'web site' or 'link' field."
+
+    # no source
+    self.source.key.delete()
+    self.assert_error(msg)
+
+    # source without publish feature
+    self.source.features = ['listen']
+    self.source.put()
+    self.assert_error(msg)
 
   def test_source_missing_mf2(self):
     self.expect_requests_get('http://foo.com/', '')
