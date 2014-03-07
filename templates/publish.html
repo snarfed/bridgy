@@ -79,11 +79,12 @@ function send_preview(url) {
 
 <div id="connect" class="row">
  <!-- Connect buttons -->
- <div class="col-md-6 col-sm-12">
+ <div class="col-md-4 col-sm-8">
   <p class="big">Step 1: sign up</p>
  <br />
   <form method="post" name="facebook-start" action="/facebook/start">
-   <input type="image" alt="Sign in with Facebook" src="/static/facebook_button.png" />
+   <input type="image" alt="Sign in with Facebook"
+          src="/static/facebook_button_signin.png" />
    <input name="state" type="hidden" value="publish" />
    <!-- https://developers.facebook.com/docs/reference/login/ -->
    <input name="scope" type="hidden"
@@ -91,31 +92,33 @@ function send_preview(url) {
   </form>
  <br />
   <form method="post" name="twitter-start" action="/twitter/start">
-   <input type="image" alt="Sign in with Twitter" src="/static/twitter_button.png" />
+   <input type="image" alt="Sign in with Twitter"
+          src="/static/twitter_button_signin.png" />
    <input name="state" type="hidden" value="publish" />
   </form>
  </div>
 
 <!--  <form method="post" name="instagram-start" action="/instagram/start"> -->
-<!--   <input type="image" alt="Sign in with Instagram" src="/static/instagram_button.png" /> -->
+<!--   <input type="image" alt="Sign in with Instagram" src="/static/instagram_button_signin.png" /> -->
 <!--   <input name="state" type="hidden" value="publish" /> -->
 <!--   <\!-- http://instagram.com/developer/authentication/#scope -\-> -->
 <!--   <input name="scope" type="hidden" value="comments+likes" /> -->
 <!-- </form> -->
 
  <!-- Preview UI -->
- <div class="col-md-6 col-sm-12">
-   <p class="big">Step 2: enter an original post URL</p>
+ <div class="col-md-8 col-sm-16">
+   <p class="big">Step 2: enter a post URL, click to preview</p>
   <br />
   <form method="post" name="preview" action="/publish/preview" class="preview-ui">
    <input id="source-url" name="source" type="text" alt="Source URL"></input>
    <br />
-   <button type="submit" name="target" value="http://brid.gy/publish/facebook"
-           onclick="do_preview('facebook'); return false;">
-     Facebook</button>
-   <button type="submit" name="target" value="http://brid.gy/publish/twitter"
-           onclick="do_preview('twitter'); return false;">
-     Twitter</button>
+   <!-- <span class="big">Click to preview:</span> -->
+   <input type="image" name="target" value="http://brid.gy/publish/facebook"
+          src="/static/facebook_button.png"
+          onclick="do_preview('facebook'); return false;" />
+   <input type="image" name="target" value="http://brid.gy/publish/twitter"
+          src="/static/twitter_button.png"
+          onclick="do_preview('twitter'); return false;" />
   </form>
  </div>
 </div>
