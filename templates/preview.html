@@ -7,11 +7,10 @@
 
 <br />
 
-<form method="post" action="/publish/webmention">
+<form method="post" action="/publish/webmention" class="preview-ui">
  <input type="hidden" name="source" value="{{ source_url }}" />
  <input type="hidden" name="target" value="{{ target_url }}" />
- <input type="submit" value="Send"
-        onclick="send_preview('/publish/webmention?source={{ source_url }}&target={{ target_url }}'); return false" />
+ <button type="submit" onclick="send_preview('/publish/webmention?source={{ source_url }}&target={{ target_url }}'); return false">Send</button>
 </form>
 
 <br />
