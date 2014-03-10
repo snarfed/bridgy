@@ -109,10 +109,7 @@ class Handler(util.Handler):
                    .filter(source_cls.features == 'publish')
                    .get())
     if not self.source:
-      return self.error(
-        "Could not find %(type)s account for %(domain)s. Check that you're signed up "
-        "for Bridgy and that your %(type)s account has %(domain)s in its profile's "
-        "'web site' or 'link' field." %
+      return self.error("Could not find %(type)s account for %(domain)s. Check that you're signed up for Bridgy Publish and that your %(type)s account has %(domain)s in its profile's 'web site' or 'link' field." %
         {'type': source_cls.AS_CLASS.NAME, 'domain': domain})
 
     if not self.PREVIEW:

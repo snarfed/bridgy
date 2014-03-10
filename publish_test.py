@@ -78,7 +78,7 @@ class PublishTest(testutil.HandlerTest):
     self.assert_error('Could not parse source URL foo', source='foo')
 
   def test_source_domain_not_found(self):
-    msg = "Could not find FakeSource account for foo.com. Check that you're signed up for Bridgy and that your FakeSource account has foo.com in its profile's 'web site' or 'link' field."
+    msg = "Could not find FakeSource account for foo.com. Check that you're signed up for Bridgy Publish and that your FakeSource account has foo.com in its profile's 'web site' or 'link' field."
 
     # no source
     self.source.key.delete()
