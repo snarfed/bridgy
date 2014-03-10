@@ -165,13 +165,6 @@ class Handler(util.Handler):
     try:
       if self.PREVIEW:
         preview_text = self.source.as_source.preview_create(obj)
-        vars = {'source': self.preprocess_source(self.source),
-                'preview': preview_text,
-                'source_url': source_url,
-                'target_url': target_url,
-                'webmention_endpoint': self.request.host_url + '/publish/webmention',
-                }
-        self.response.write(template.render('templates/preview.html', vars))
       else:
         self.publish.published = self.source.as_source.create(obj)
     except NotImplementedError:
@@ -181,8 +174,18 @@ class Handler(util.Handler):
       return self.error("%s doesn't support type(s) %s." %
                         (source_cls.AS_CLASS.NAME, ' + '.join(types)),
                         data=data, log_exception=False)
+    except BaseException, e:
+      return self.error('Error: %s' % e, status=500)
 
     if self.PREVIEW:
+      vars = {'source': self.preprocess_source(self.source),
+              'preview': preview_text,
+              'source_url': source_url,
+              'target_url': target_url,
+              'webmention_endpoint': self.request.host_url + '/publish/webmention',
+              }
+      self.response.write(template.render('templates/preview.html', vars))
+      self.mail_me(preview_text, 'preview succeeded')
       return
 
     # we've actually created something in the silo. write results to datastore.
@@ -193,15 +196,31 @@ class Handler(util.Handler):
     self.publish.put()
 
     resp = json.dumps(self.publish.published, indent=2)
-    self.mail_me(resp, True)
+    self.mail_me(resp, 'succeeded')
     self.response.write(resp)
 
   def error(self, error, status=400, data=None, log_exception=True):
     logging.error(error, exc_info=sys.exc_info() if log_exception else None)
     self.response.set_status(status)
+    label = 'failed'
     if self.PREVIEW:
       error = util.linkify(error)
+      label = 'preview failed'
     self.response.write(error)
+    self.mail_me(error, label)
+
+  def mail_me(self, resp, result):
+    subject = 'Bridgy publish %s' % result
+    body = 'Request:\n%s\n\nResponse:\n%s' % (self.request.params.items(), resp)
+
+    if self.source:
+      prefix = 'Source: %s/publish#%s\n\n' % (self.request.host_url,
+                                              self.source.dom_id())
+      body = prefix + body
+      subject += ': %s' % self.source.label()
+
+    mail.send_mail(sender='publish@brid-gy.appspotmail.com',
+                   to='webmaster@brid.gy', subject=subject, body=body)
 
   @ndb.transactional
   def add_publish_entity(self, source_url):
@@ -240,21 +259,8 @@ class WebmentionHandler(Handler):
       resp['parsed'] = data
 
     resp = json.dumps(resp, indent=2)
-    self.mail_me(resp, False)
+    self.mail_me(resp, 'preview failed' if self.PREVIEW else 'failed')
     self.response.write(resp)
-
-  def mail_me(self, resp, success):
-    subject = 'Bridgy publish %s' % ('succeeded' if success else 'failed')
-    body = 'Request:\n%s\n\nResponse:\n%s' % (self.request.params.items(), resp)
-
-    if self.source:
-      prefix = 'Source: %s/publish#%s\n\n' % (self.request.host_url,
-                                              self.source.dom_id())
-      body = prefix + body
-      subject += ': %s' % self.source.label()
-
-    mail.send_mail(sender='publish@brid-gy.appspotmail.com',
-                   to='webmaster@brid.gy', subject=subject, body=body)
 
 
 class WebmentionLinkHandler(webapp2.RequestHandler):

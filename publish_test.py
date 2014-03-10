@@ -4,6 +4,7 @@
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import json
+import mox
 import urllib
 
 import appengine_config
@@ -14,6 +15,8 @@ import models
 import publish
 import testutil
 
+from google.appengine.api import mail
+
 
 class PublishTest(testutil.HandlerTest):
 
@@ -23,9 +26,9 @@ class PublishTest(testutil.HandlerTest):
     self.source = testutil.FakeSource(id='foo.com', domain='foo.com',
                                       features=['publish'])
     self.source.put()
+    self.mox.StubOutWithMock(requests, 'get', use_mock_anything=True)
 
   def expect_requests_get(self, url, response):
-    self.mox.StubOutWithMock(requests, 'get', use_mock_anything=True)
     resp = requests.Response()
     resp._content = response
     requests.get(url, allow_redirects=True, timeout=HTTP_TIMEOUT).AndReturn(resp)
@@ -39,9 +42,9 @@ class PublishTest(testutil.HandlerTest):
       endpoint, method='POST',
       body='source=%s&target=%s' % (source, target))
 
-  def assert_error(self, expected_error, source=None, target=None):
-    resp = self.get_response(source=source, target=target)
-    self.assertEquals(400, resp.status_int)
+  def assert_error(self, expected_error, status=400, **kwargs):
+    resp = self.get_response(**kwargs)
+    self.assertEquals(status, resp.status_int)
     self.assertEquals(expected_error, json.loads(resp.body)['error'])
 
   def test_success(self):
@@ -124,6 +127,30 @@ class PublishTest(testutil.HandlerTest):
     self.assert_error("Could not find FakeSource link in http://foo.com/")
     self.assertEquals('failed', models.Publish.query().get().status)
 
+  def test_all_errors_email(self):
+    """Should send me email on *any* error from create() or preview_create()."""
+    html = '<article class="h-entry"><p class="e-content">foo</p></article>'
+    for i in range(2):
+      self.expect_requests_get('http://foo.com/', html)
+
+    self.mox.StubOutWithMock(mail, 'send_mail')
+    for subject in ('Bridgy publish failed: None (FakeSource)',
+                    'Bridgy publish preview failed: None (FakeSource)'):
+      mail.send_mail(subject=subject, body=mox.IgnoreArg(),
+                     sender=mox.IgnoreArg(), to=mox.IgnoreArg())
+
+    self.mox.StubOutWithMock(self.source.as_source, 'create',
+                             use_mock_anything=True)
+    self.source.as_source.create(mox.IgnoreArg()).AndRaise(Exception('foo'))
+
+    self.mox.StubOutWithMock(self.source.as_source, 'preview_create',
+                             use_mock_anything=True)
+    self.source.as_source.preview_create(mox.IgnoreArg()).AndRaise(Exception('bar'))
+
+    self.mox.ReplayAll()
+    self.assert_error('Error: foo', status=500)
+    self.assertEquals(500, self.get_response(endpoint='/publish/preview').status_int)
+
   def test_preview(self):
     html = '<article class="h-entry"><p class="e-content">foo</p></article>'
     self.expect_requests_get('http://foo.com/', html)
@@ -134,4 +161,3 @@ class PublishTest(testutil.HandlerTest):
     resp = self.get_response(endpoint='/publish/preview')
     self.assertEquals(200, resp.status_int, resp.body)
     self.assertTrue('preview of foo\n\n(http://foo.com/)' in resp.body, resp.body)
-
