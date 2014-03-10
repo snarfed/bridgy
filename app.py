@@ -247,11 +247,11 @@ class DeleteFinishHandler(util.Handler):
 
 application = webapp2.WSGIApplication(
   [('/', ListenHandler),
-   ('/listen', ListenHandler),
-   ('/publish', PublishHandler),
+   ('/listen/?', ListenHandler),
+   ('/publish/?', PublishHandler),
    ('/responses', ResponsesHandler),
    ('/publishes', PublishesHandler),
-   ('/about', AboutHandler),
+   ('/about/?', AboutHandler),
    ('/delete/start', DeleteStartHandler),
    ('/delete/finish', DeleteFinishHandler),
    ], debug=appengine_config.DEBUG)
