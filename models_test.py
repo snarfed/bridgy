@@ -1,3 +1,4 @@
+# coding=utf-8
 """Unit tests for models.py.
 """
 
@@ -103,7 +104,6 @@ class SourceTest(testutil.HandlerTest):
 
   def test_create_new_domain(self):
     """If the source has a URL set, extract its domain."""
-
     # no auth entity
     source = FakeSource.create_new(self.handler)
     self.assertIsNone(source.domain)
@@ -117,7 +117,7 @@ class SourceTest(testutil.HandlerTest):
     # bad URL
     auth_entity.user_json = '{"url": "not a url"}'
     auth_entity.put()
-    source = FakeSource.create_new(self.handler, auth_entity=testutil.FakeAuthEntity())
+    source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
     self.assertIsNone(source.key.get().domain)
 
     # good URL
@@ -129,6 +129,11 @@ class SourceTest(testutil.HandlerTest):
 
     # URL redirects to another domain
     # TODO
+
+  def test_create_new_unicode_chars(self):
+    """We should handle unusual unicode chars in the source's name ok."""
+    # the invisible character in the middle is an unusual unicode character
+    source = FakeSource.create_new(self.handler, name=u'a ✁ b')
 
   def test_get_post(self):
     post = {'verb': 'post', 'object': {'objectType': 'note', 'content': 'asdf'}}

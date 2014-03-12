@@ -91,7 +91,7 @@ class DashboardHandler(TemplateHandler, util.Handler):
     # force UTF-8 since the msg parameters were encoded as UTF-8 by
     # util.add_query_params().
     self.request.charset = 'utf-8'
-    msgs = [m for m in set(self.request.params.getall('msg'))]
+    msgs = set(m for m in set(self.request.params.getall('msg')))
 
     return {'sources': sources, 'msgs': msgs, 'epoch': util.EPOCH,
             'msg_error': self.request.get('msg_error')}

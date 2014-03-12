@@ -208,7 +208,7 @@ class Source(StringIdModel):
       if url:
         source.domain_url = url
         try:
-          source.domain = urlparse.urlparse(url).netloc
+          source.domain = urlparse.urlparse(url).netloc or None
         except BaseException, e:
           source.domain = None
           logging.error("Not setting domain; could not parse URL %s . %s", url, e)

@@ -54,11 +54,13 @@ class FakeBase(ndb.Model):
   def new(cls, handler, **props):
     if 'url' not in props:
       props['url'] = 'http://fake/url'
-    if 'name' not in props:
-      props['name'] = 'fake'
     auth_entity = props.get('auth_entity')
     if auth_entity:
       props['auth_entity'] = auth_entity.key
+      if auth_entity.user_json and 'name' not in props:
+        props['name'] = json.loads(auth_entity.user_json).get('name')
+    if not props.get('name'):
+      props['name'] = 'fake'
     inst = cls(id=str(cls.string_id_counter), **props)
     cls.string_id_counter += 1
     return inst

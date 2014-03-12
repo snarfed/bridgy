@@ -1,7 +1,9 @@
+# coding=utf-8
 """Unit tests for util.py.
 """
 
 import json
+import urlparse
 
 import requests
 
@@ -10,8 +12,11 @@ import testutil
 from testutil import FakeAuthEntity, FakeSource
 import util
 
+# the invisible character in the middle is an unusual unicode character
+UNICODE_STR = u'a ✁ b'
 
-class UtilTest(testutil.HandlerTest):
+
+class UtilTest(testutil.ModelsTest):
 
   def test_follow_redirects(self):
     self.mox.StubOutWithMock(requests, 'head', use_mock_anything=True)
@@ -37,11 +42,16 @@ class UtilTest(testutil.HandlerTest):
       self.assertIsNone(self.handler.maybe_add_or_delete_source(
           FakeSource, auth_entity, 'publish'))
 
-    auth_entity = FakeAuthEntity(id='x',
-                                 user_json=json.dumps({'url': 'http://foo.com/'}))
+    auth_entity = FakeAuthEntity(id='x', user_json=json.dumps(
+        {'url': 'http://foo.com/', 'name': UNICODE_STR}))
     auth_entity.put()
     src = self.handler.maybe_add_or_delete_source(FakeSource, auth_entity, 'publish')
     self.assertEquals(['publish'], src.features)
+
+    self.assertEquals(302, self.handler.response.status_int)
+    params = urlparse.parse_qs(urlparse.urlparse(
+        self.handler.response.headers['Location']).query)
+    self.assertIn(UNICODE_STR, params['msg'][0].decode('utf-8'))
 
     for feature in None, '':
       src = self.handler.maybe_add_or_delete_source(FakeSource, auth_entity, feature)
