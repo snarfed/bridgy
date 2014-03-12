@@ -157,7 +157,8 @@ class Handler(util.Handler):
 
     # add original post link to end of content
     if obj.get('content'):
-      obj['content'] += '\n\n(%s)' % source_url
+      obj['content'] += ((' %s' if source_cls == Twitter else '\n\n(%s)') %
+                         source_url)
 
     try:
       if self.PREVIEW:
