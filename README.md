@@ -32,6 +32,35 @@ Deploy command:
 ```
 
 
+Misc
+---
+Here are
+[remote_api_shell](https://developers.google.com/appengine/articles/remote_api)
+and shell commands for generating the statistics published at
+[brid.gy/about#stats](http://brid.gy/about#stats):
+
+```py
+# remote_api_shell
+from models import Response
+cursor = None
+with open('sent_urls', 'w') as sent, open('unsent_urls', 'w') as unsent:
+  while True:
+    results, cursor, _ = Response.query(
+      projection=[Response.sent,Response.skipped,Response.error,Response.failed]
+      ).fetch_page(100, start_cursor=cursor)
+    if not results:
+      break
+    for r in results:
+      print >> sent, '\n'.join(r.sent)
+      print >> unsent, '\n'.join(r.skipped + r.error + r.failed)
+
+# shell
+sort sent_urls  | uniq > sent_uniq
+cut -f3 -d/ sent_uniq | sed 's/^www\.//' | sort --ignore-case | uniq -i > sent_domains
+wc sent_urls sent_uniq sent_domains
+```
+
+
 Related work
 ---
 * http://webmention.io/
