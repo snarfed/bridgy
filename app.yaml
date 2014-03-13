@@ -18,8 +18,15 @@ libraries:
 handlers:
 
 # static
+- url: /(static/bootstrap.*\.css)
+  static_files: activitystreams/oauth_dropins/\1
+  upload: activitystreams/oauth_dropins/static/bootstrap.*\.css
+
 - url: /static
   static_dir: static
+
+- url: /fonts
+  static_dir: activitystreams/oauth_dropins/fonts
 
 - url: /favicon.ico
   static_files: static/favicon.ico
