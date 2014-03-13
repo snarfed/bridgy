@@ -92,15 +92,17 @@ class FakeAsSource(FakeBase, as_source.Source):
   def user_to_actor(self, user):
     return user
 
-  def create(self, obj):
+  def create(self, obj, include_link=False):
     if obj.get('verb') == 'like':
       raise NotImplementedError()
-    return {'id': 'fake id', 'url': 'http://fake/url', 'content': obj['content']}
+    content = obj['content'] + (' - http://foo.com/' if include_link else '')
+    return {'id': 'fake id', 'url': 'http://fake/url', 'content': content}
 
-  def preview_create(self, obj):
+  def preview_create(self, obj, include_link=False):
     if obj.get('verb') == 'like':
       raise NotImplementedError()
-    return 'preview of ' + obj['content']
+    return 'preview of ' + obj['content'] + (
+      ' - http://foo.com/' if include_link else '')
 
 
 class FakeSource(FakeBase, Source):

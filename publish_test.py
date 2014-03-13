@@ -54,7 +54,7 @@ class PublishTest(testutil.HandlerTest):
 
     resp = self.get_response()
     self.assertEquals(200, resp.status_int, resp.body)
-    self.assertEquals('foo\n\n(http://foo.com/)', json.loads(resp.body)['content'])
+    self.assertEquals('foo - http://foo.com/', json.loads(resp.body)['content'])
 
     self.assertTrue(models.PublishedPage.get_by_id('http://foo.com/'))
     publish = models.Publish.query().get()
@@ -63,7 +63,7 @@ class PublishTest(testutil.HandlerTest):
     self.assertEquals('post', publish.type)
     self.assertEquals(html, publish.html)
     self.assertEquals({'id': 'fake id', 'url': 'http://fake/url',
-                       'content': 'foo\n\n(http://foo.com/)'},
+                       'content': 'foo - http://foo.com/'},
                       publish.published)
 
   def test_bad_target_url(self):
@@ -141,11 +141,13 @@ class PublishTest(testutil.HandlerTest):
 
     self.mox.StubOutWithMock(self.source.as_source, 'create',
                              use_mock_anything=True)
-    self.source.as_source.create(mox.IgnoreArg()).AndRaise(Exception('foo'))
+    self.source.as_source.create(mox.IgnoreArg(), include_link=True
+                                 ).AndRaise(Exception('foo'))
 
     self.mox.StubOutWithMock(self.source.as_source, 'preview_create',
                              use_mock_anything=True)
-    self.source.as_source.preview_create(mox.IgnoreArg()).AndRaise(Exception('bar'))
+    self.source.as_source.preview_create(mox.IgnoreArg(), include_link=True
+                                         ).AndRaise(Exception('bar'))
 
     self.mox.ReplayAll()
     self.assert_error('Error: foo', status=500)
@@ -160,4 +162,4 @@ class PublishTest(testutil.HandlerTest):
 
     resp = self.get_response(endpoint='/publish/preview')
     self.assertEquals(200, resp.status_int, resp.body)
-    self.assertTrue('preview of foo\n\n(http://foo.com/)' in resp.body, resp.body)
+    self.assertTrue('preview of foo - http://foo.com/' in resp.body, resp.body)

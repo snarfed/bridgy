@@ -132,6 +132,8 @@ class Handler(util.Handler):
                         data=data)
 
     obj = microformats2.json_to_object(items[0])
+    if 'url' not in obj:
+      obj['url'] = source_url
     logging.debug('Converted to ActivityStreams object: %s', obj)
 
     # posts and comments need content
@@ -155,16 +157,11 @@ class Handler(util.Handler):
         logging.exception(msg)
         return self.error(msg)
 
-    # add original post link to end of content
-    if obj.get('content'):
-      obj['content'] += ((' %s' if source_cls == Twitter else '\n\n(%s)') %
-                         source_url)
-
     try:
       if self.PREVIEW:
-        preview_text = self.source.as_source.preview_create(obj)
+        preview_text = self.source.as_source.preview_create(obj, include_link=True)
       else:
-        self.publish.published = self.source.as_source.create(obj)
+        self.publish.published = self.source.as_source.create(obj, include_link=True)
     except NotImplementedError:
       types = items[0].get('type', [])
       if 'h-entry' in types:
