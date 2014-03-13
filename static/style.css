@@ -136,6 +136,12 @@ form input {
   text-align: center;
 }
 
+code {
+  font-family: none;
+  color: black;
+  background-color: white !important;
+}
+
 .original-post-links {
   list-style: none;
   padding-left: 0;

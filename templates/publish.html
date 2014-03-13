@@ -1,6 +1,33 @@
 {% extends "base.html" %}
 
+{% block below_tagline %}
+<a id="more-link" href="#"
+   onclick="toggle('more-link'); toggle('more'); return false;">More...</a>
+{% endblock %}
+
 {% block content %}
+
+<div id="more" style="display: none" />
+<p>Bridgy lets you publish to Facebook or Twitter from your own web site. Just
+include a link to a tweet or Facebook post and use
+<a href="http://microformats.org/wiki/microformats2">microformats2</a> to mark
+it as
+<code>u-in-reply-to</code> for a comment or @-reply,
+<code>u-like-of</code> for a like or favorite,
+<code>u-repost-of</code> for a retweet, or
+<code>p-rsvp</code> for an event RSVP.</p>
+
+<p>You can use the interface below to preview and publish manually, or you can
+send a <a href="http://webmention.org/">webmention</a>
+to <code>brid.gy/publish/webmention</code> with
+target <code>brid.gy/publish/facebook</code> or
+<code>brid.gy/publish/twitter</code> to publish automatically.</p>
+
+<p>You can <a href="#users">see who's using Bridgy Publish</a>, click on a
+button below to try it yourself, read <a href="/about">even more details</a>, or
+<a href="http://indiewebcamp.com/">learn about the Indieweb</a>.</p>
+</div>
+
 
 <!-- For embeds -->
 <script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
