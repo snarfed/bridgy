@@ -116,16 +116,18 @@ class PublishTest(testutil.HandlerTest):
     self.assert_error("FakeSource doesn't support type(s) h-as-like.")
     self.assertEquals('failed', models.Publish.query().get().status)
 
-  def test_in_reply_to_domain_mismatch(self):
+  def test_returned_type_overrides(self):
+    # FakeSource returns type 'post' when it sees 'rsvp'
     self.expect_requests_get('http://foo.com/', """
-<article class="h-entry h-as-reply">
+<article class="h-entry h-as-rsvp">
 <p class="e-content">
-<a class="u-in-reply-to" href="http://other/silo">foo</a>
+<data class="p-rsvp" value="yes"></data>
 </p></article>""")
     self.mox.ReplayAll()
 
-    self.assert_error("Could not find FakeSource link in http://foo.com/")
-    self.assertEquals('failed', models.Publish.query().get().status)
+    resp = self.get_response()
+    self.assertEquals(200, resp.status_int, resp.body)
+    self.assertEquals('post', models.Publish.query().get().type)
 
   def test_in_reply_to_domain_ignores_subdomains(self):
     for subdomain in 'www.', 'mobile.', '':

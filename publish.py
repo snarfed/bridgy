@@ -142,22 +142,6 @@ class Handler(util.Handler):
       if not contents or not contents[0] or not contents[0].get('value'):
         return self.error('Could not find e-content in %s' % source_url, data=data)
 
-    # if we're responding to a silo object, it should match the requested silo
-    _, base_url = self.source.as_source.base_object(obj)
-    if base_url:
-      try:
-        domain = urlparse.urlparse(base_url).netloc
-        for subdomain in 'www.', 'mobile.':
-          if domain.startswith(subdomain):
-            domain = domain[len(subdomain):]
-        if domain != self.source.AS_CLASS.DOMAIN:
-          return self.error('Could not find %s link in %s' %
-                            (self.source.AS_CLASS.NAME, source_url))
-      except BaseException:
-        msg = 'Could not parse link %s' % base_url
-        logging.exception(msg)
-        return self.error(msg)
-
     try:
       if self.PREVIEW:
         preview_text = self.source.as_source.preview_create(obj, include_link=True)
@@ -188,7 +172,7 @@ class Handler(util.Handler):
     if 'url' not in self.publish.published:
       self.publish.published['url'] = obj.get('url')
     self.publish.status = 'complete'
-    self.publish.type = models.get_type(obj)
+    self.publish.type = self.publish.published.get('type') or models.get_type(obj)
     self.publish.put()
 
     resp = json.dumps(self.publish.published, indent=2)

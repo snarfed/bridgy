@@ -93,10 +93,15 @@ class FakeAsSource(FakeBase, as_source.Source):
     return user
 
   def create(self, obj, include_link=False):
-    if obj.get('verb') == 'like':
+    verb = obj.get('verb')
+    if verb == 'like':
       raise NotImplementedError()
+
     content = obj['content'] + (' - http://foo.com/' if include_link else '')
-    return {'id': 'fake id', 'url': 'http://fake/url', 'content': content}
+    ret = {'id': 'fake id', 'url': 'http://fake/url', 'content': content}
+    if verb == 'rsvp-yes':
+      ret['type'] = 'post'
+    return ret
 
   def preview_create(self, obj, include_link=False):
     if obj.get('verb') == 'like':
