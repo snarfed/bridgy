@@ -147,8 +147,9 @@ class Handler(util.Handler):
     if base_url:
       try:
         domain = urlparse.urlparse(base_url).netloc
-        if domain.startswith('www.'):
-          domain = domain[4:]
+        for subdomain in 'www.', 'mobile.':
+          if domain.startswith(subdomain):
+            domain = domain[len(subdomain):]
         if domain != self.source.AS_CLASS.DOMAIN:
           return self.error('Could not find %s link in %s' %
                             (self.source.AS_CLASS.NAME, source_url))

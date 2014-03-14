@@ -127,6 +127,18 @@ class PublishTest(testutil.HandlerTest):
     self.assert_error("Could not find FakeSource link in http://foo.com/")
     self.assertEquals('failed', models.Publish.query().get().status)
 
+  def test_in_reply_to_domain_ignores_subdomains(self):
+    for subdomain in 'www.', 'mobile.', '':
+      self.expect_requests_get('http://foo.com/', """
+<div class="h-entry"><p class="e-content">
+<a class="u-in-reply-to" href="http://%sfa.ke/a/b/d">foo</a>
+</p></div>""" % subdomain)
+    self.mox.ReplayAll()
+
+    for i in range(3):
+      resp = self.get_response()
+      self.assertEquals(200, resp.status_int, resp.body)
+
   def test_all_errors_email(self):
     """Should send me email on *any* error from create() or preview_create()."""
     html = '<article class="h-entry"><p class="e-content">foo</p></article>'
