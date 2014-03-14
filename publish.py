@@ -173,6 +173,7 @@ class Handler(util.Handler):
       self.publish.published['url'] = obj.get('url')
     self.publish.status = 'complete'
     self.publish.type = self.publish.published.get('type') or models.get_type(obj)
+    self.publish.type_label = source_cls.TYPE_LABELS.get(self.publish.type)
     self.publish.put()
 
     resp = json.dumps(self.publish.published, indent=2)

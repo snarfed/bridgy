@@ -113,6 +113,7 @@ class FakeAsSource(FakeBase, as_source.Source):
 class FakeSource(FakeBase, Source):
   AS_CLASS = FakeAsSource
   SHORT_NAME = 'fake'
+  TYPE_LABELS = {'post': 'FakeSource post label'}
 
   as_source = FakeAsSource()
 

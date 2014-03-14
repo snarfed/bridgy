@@ -57,6 +57,9 @@ class Source(StringIdModel):
   # the corresponding activitystreams-unofficial class
   AS_CLASS = None
   POLL_FREQUENCY = datetime.timedelta(minutes=10)
+  # Maps Publish.type (e.g. 'like') to source-specific human readable type label
+  # (e.g. 'favorite'). Subclasses should override this.
+  TYPE_LABELS = {}
 
   created = ndb.DateTimeProperty(auto_now_add=True, required=True)
   url = ndb.StringProperty()
@@ -338,6 +341,7 @@ class Publish(ndb.Model):
   STATUSES = ('new', 'complete', 'failed')
 
   type = ndb.StringProperty(choices=TYPES)
+  type_label = ndb.StringProperty()  # source-specific type, e.g. 'favorite'
   status = ndb.StringProperty(choices=STATUSES, default='new')
   source = ndb.KeyProperty()
   html = ndb.TextProperty()  # raw HTML fetched from source

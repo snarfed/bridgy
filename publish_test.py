@@ -61,6 +61,7 @@ class PublishTest(testutil.HandlerTest):
     self.assertEquals(self.source.key, publish.source)
     self.assertEquals('complete', publish.status)
     self.assertEquals('post', publish.type)
+    self.assertEquals('FakeSource post label', publish.type_label)
     self.assertEquals(html, publish.html)
     self.assertEquals({'id': 'fake id', 'url': 'http://fake/url',
                        'content': 'foo - http://foo.com/'},

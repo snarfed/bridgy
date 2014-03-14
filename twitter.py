@@ -26,6 +26,11 @@ class Twitter(models.Source):
 
   AS_CLASS = as_twitter.Twitter
   SHORT_NAME = 'twitter'
+  TYPE_LABELS = {'post': 'tweet',
+                 'comment': '@-reply',
+                 'repost': 'retweet',
+                 'like': 'favorite',
+                 }
 
   # Twitter's rate limiting window is currently 15m. A normal poll with nothing
   # new hits /statuses/user_timeline and /search/tweets once each. Both

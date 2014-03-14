@@ -18,7 +18,7 @@
      {% if publish.published.url %}
        <a href="{{ publish.published.url }}">
      {% endif %}
-       {{ publish.type|capfirst }}
+       {% firstof publish.type_label publish.type %}
      {% if publish.published.url %}
        </a>
     {% endif %}
