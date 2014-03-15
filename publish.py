@@ -70,8 +70,6 @@ class Handler(util.Handler):
     target_url = util.get_required_param(self, 'target')
 
     assert self.PREVIEW in (True, False)
-    if not self.PREVIEW:
-      self.response.headers['Content-Type'] = 'application/json'
 
     # parse and validate target URL
     try:
@@ -112,8 +110,7 @@ class Handler(util.Handler):
       return self.error("Could not find %(type)s account for %(domain)s. Check that you're signed up for Bridgy Publish and that your %(type)s account has %(domain)s in its profile's 'web site' or 'link' field." %
         {'type': source_cls.AS_CLASS.NAME, 'domain': domain})
 
-    if not self.PREVIEW:
-      self.add_publish_entity(source_url)
+    self.add_publish_entity(source_url)
 
     # fetch source URL
     try:
@@ -122,8 +119,7 @@ class Handler(util.Handler):
       return self.error('Could not fetch source URL %s' % source_url)
 
     # parse microformats, convert to ActivityStreams
-    if not self.PREVIEW:
-      self.publish.html = resp.text
+    self.publish.html = resp.text
     data = parser.Parser(doc=resp.text).to_dict()
     logging.debug('Parsed microformats2: %s', data)
     items = data.get('items', [])
@@ -144,9 +140,24 @@ class Handler(util.Handler):
 
     try:
       if self.PREVIEW:
-        preview_text = self.source.as_source.preview_create(obj, include_link=True)
+        preview = self.source.as_source.preview_create(obj, include_link=True)
+        resp = template.render('templates/preview.html', {
+            'source': self.preprocess_source(self.source),
+            'preview': preview,
+            'source_url': source_url,
+            'target_url': target_url,
+            'webmention_endpoint': self.request.host_url + '/publish/webmention',
+            })
       else:
         self.publish.published = self.source.as_source.create(obj, include_link=True)
+        if 'url' not in self.publish.published:
+          self.publish.published['url'] = obj.get('url')
+        self.publish.type = self.publish.published.get('type') or models.get_type(obj)
+        self.publish.type_label = source_cls.TYPE_LABELS.get(self.publish.type)
+
+        self.response.headers['Content-Type'] = 'application/json'
+        resp = json.dumps(self.publish.published, indent=2)
+
     except NotImplementedError:
       types = items[0].get('type', [])
       if 'h-entry' in types:
@@ -157,41 +168,25 @@ class Handler(util.Handler):
     except BaseException, e:
       return self.error('Error: %s' % e, status=500)
 
-    if self.PREVIEW:
-      vars = {'source': self.preprocess_source(self.source),
-              'preview': preview_text,
-              'source_url': source_url,
-              'target_url': target_url,
-              'webmention_endpoint': self.request.host_url + '/publish/webmention',
-              }
-      self.response.write(template.render('templates/preview.html', vars))
-      self.mail_me(preview_text, 'preview succeeded')
-      return
-
-    # we've actually created something in the silo. write results to datastore.
-    if 'url' not in self.publish.published:
-      self.publish.published['url'] = obj.get('url')
+    # write results to datastore
     self.publish.status = 'complete'
-    self.publish.type = self.publish.published.get('type') or models.get_type(obj)
-    self.publish.type_label = source_cls.TYPE_LABELS.get(self.publish.type)
     self.publish.put()
 
-    resp = json.dumps(self.publish.published, indent=2)
-    self.mail_me(resp, 'succeeded')
     self.response.write(resp)
+    self.mail_me(resp)
 
   def error(self, error, status=400, data=None, log_exception=True):
     logging.error(error, exc_info=sys.exc_info() if log_exception else None)
     self.response.set_status(status)
-    label = 'failed'
     if self.PREVIEW:
       error = util.linkify(error)
-      label = 'preview failed'
     self.response.write(error)
-    self.mail_me(error, label)
+    self.mail_me(error)
 
-  def mail_me(self, resp, result):
-    subject = 'Bridgy publish %s' % result
+  def mail_me(self, resp):
+    subject = 'Bridgy publish %s %s' % (
+      'preview' if self.PREVIEW else '',
+      self.publish.status if self.publish else 'failed')
     body = 'Request:\n%s\n\nResponse:\n%s' % (self.request.params.items(), resp)
 
     if self.source:
@@ -212,6 +207,8 @@ class Handler(util.Handler):
     """
     page = models.PublishedPage.get_or_insert(source_url)
     self.publish = models.Publish(parent=page.key, source=self.source.key)
+    if self.PREVIEW:
+      self.publish.type = 'preview'
     self.publish.put()
     logging.debug('Publish entity: %s', self.publish.key.urlsafe())
 
@@ -240,7 +237,7 @@ class WebmentionHandler(Handler):
       resp['parsed'] = data
 
     resp = json.dumps(resp, indent=2)
-    self.mail_me(resp, 'preview failed' if self.PREVIEW else 'failed')
+    self.mail_me(resp)
     self.response.write(resp)
 
 

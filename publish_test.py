@@ -149,7 +149,7 @@ class PublishTest(testutil.HandlerTest):
       self.expect_requests_get('http://foo.com/', html)
 
     self.mox.StubOutWithMock(mail, 'send_mail')
-    for subject in ('Bridgy publish failed: None (FakeSource)',
+    for subject in ('Bridgy publish  failed: None (FakeSource)',
                     'Bridgy publish preview failed: None (FakeSource)'):
       mail.send_mail(subject=subject, body=mox.IgnoreArg(),
                      sender=mox.IgnoreArg(), to=mox.IgnoreArg())
@@ -178,3 +178,9 @@ class PublishTest(testutil.HandlerTest):
     resp = self.get_response(endpoint='/publish/preview')
     self.assertEquals(200, resp.status_int, resp.body)
     self.assertTrue('preview of foo - http://foo.com/' in resp.body, resp.body)
+
+    publish = models.Publish.query().get()
+    self.assertEquals(self.source.key, publish.source)
+    self.assertEquals('complete', publish.status)
+    self.assertEquals('preview', publish.type)
+    self.assertEquals(html, publish.html)

@@ -21,7 +21,7 @@ from google.appengine.ext import ndb
 
 
 VERB_TYPES = ('comment', 'like', 'repost', 'rsvp')
-TYPES = VERB_TYPES + ('post',)
+TYPES = VERB_TYPES + ('post', 'preview')
 
 def get_type(obj):
   """Returns the Response or Publish type for an ActivityStreams object."""
