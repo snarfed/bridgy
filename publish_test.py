@@ -11,7 +11,7 @@ import appengine_config
 from appengine_config import HTTP_TIMEOUT
 import requests
 
-import models
+from models import Publish, PublishedPage
 import publish
 import testutil
 
@@ -56,8 +56,8 @@ class PublishTest(testutil.HandlerTest):
     self.assertEquals(200, resp.status_int, resp.body)
     self.assertEquals('foo - http://foo.com/', json.loads(resp.body)['content'])
 
-    self.assertTrue(models.PublishedPage.get_by_id('http://foo.com/'))
-    publish = models.Publish.query().get()
+    self.assertTrue(PublishedPage.get_by_id('http://foo.com/'))
+    publish = Publish.query().get()
     self.assertEquals(self.source.key, publish.source)
     self.assertEquals('complete', publish.status)
     self.assertEquals('post', publish.type)
@@ -66,6 +66,28 @@ class PublishTest(testutil.HandlerTest):
     self.assertEquals({'id': 'fake id', 'url': 'http://fake/url',
                        'content': 'foo - http://foo.com/'},
                       publish.published)
+
+  def test_already_published(self):
+    """We shouldn't allow duplicating an existing, *completed* publish."""
+    page = PublishedPage(id='http://foo.com/')
+
+    # these are all fine
+    Publish(parent=page.key, source=self.source.key, status='new').put()
+    Publish(parent=page.key, source=self.source.key, status='failed').put()
+    Publish(parent=page.key, source=self.source.key, type='preview').put()
+
+    html = '<article class="h-entry"><p class="e-content">foo</p></article>'
+    self.expect_requests_get('http://foo.com/', html)
+    self.mox.ReplayAll()
+
+    # first attempt should work
+    self.assertEquals(200, self.get_response().status_int)
+    publishes = Publish.query().fetch()
+    self.assertEquals(4, len(publishes))
+    self.assertIn('complete', [p.status for p in publishes])
+
+    # now that there's a complete Publish entity, another attempt should fail
+    self.assert_error("Sorry, you've already published that page, and Bridgy Publish doesn't yet support updating or deleting existing posts. Ping Ryan if you want that feature!")
 
   def test_bad_target_url(self):
     self.assert_error('Target must be brid.gy/publish/{facebook,twitter}',
@@ -95,8 +117,8 @@ class PublishTest(testutil.HandlerTest):
     self.mox.ReplayAll()
     self.assert_error('No microformats2 data found in http://foo.com/')
 
-    self.assertTrue(models.PublishedPage.get_by_id('http://foo.com/'))
-    publish = models.Publish.query().get()
+    self.assertTrue(PublishedPage.get_by_id('http://foo.com/'))
+    publish = Publish.query().get()
     self.assertEquals('failed', publish.status)
     self.assertEquals(self.source.key, publish.source)
 
@@ -106,7 +128,7 @@ class PublishTest(testutil.HandlerTest):
     self.mox.ReplayAll()
 
     self.assert_error('Could not find e-content in http://foo.com/')
-    self.assertEquals('failed', models.Publish.query().get().status)
+    self.assertEquals('failed', Publish.query().get().status)
 
   def test_type_not_implemented(self):
     self.expect_requests_get('http://foo.com/',
@@ -115,7 +137,7 @@ class PublishTest(testutil.HandlerTest):
 
     # FakeSource.create() raises NotImplementedError on likes
     self.assert_error("FakeSource doesn't support type(s) h-as-like.")
-    self.assertEquals('failed', models.Publish.query().get().status)
+    self.assertEquals('failed', Publish.query().get().status)
 
   def test_returned_type_overrides(self):
     # FakeSource returns type 'post' when it sees 'rsvp'
@@ -128,18 +150,19 @@ class PublishTest(testutil.HandlerTest):
 
     resp = self.get_response()
     self.assertEquals(200, resp.status_int, resp.body)
-    self.assertEquals('post', models.Publish.query().get().type)
+    self.assertEquals('post', Publish.query().get().type)
 
   def test_in_reply_to_domain_ignores_subdomains(self):
-    for subdomain in 'www.', 'mobile.', '':
-      self.expect_requests_get('http://foo.com/', """
-<div class="h-entry"><p class="e-content">
+    subdomains = 'www.', 'mobile.', ''
+    for i, subdomain in enumerate(subdomains):
+      self.expect_requests_get('http://foo.com/%d' % i,
+"""<div class="h-entry"><p class="e-content">
 <a class="u-in-reply-to" href="http://%sfa.ke/a/b/d">foo</a>
 </p></div>""" % subdomain)
     self.mox.ReplayAll()
 
-    for i in range(3):
-      resp = self.get_response()
+    for i in range(len(subdomains)):
+      resp = self.get_response(source='http://foo.com/%d' % i)
       self.assertEquals(200, resp.status_int, resp.body)
 
   def test_all_errors_email(self):
@@ -179,7 +202,7 @@ class PublishTest(testutil.HandlerTest):
     self.assertEquals(200, resp.status_int, resp.body)
     self.assertTrue('preview of foo - http://foo.com/' in resp.body, resp.body)
 
-    publish = models.Publish.query().get()
+    publish = Publish.query().get()
     self.assertEquals(self.source.key, publish.source)
     self.assertEquals('complete', publish.status)
     self.assertEquals('preview', publish.type)

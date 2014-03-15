@@ -41,6 +41,7 @@ from googleplus import GooglePlusPage
 from instagram import Instagram
 from mf2py import parser
 import models
+from models import Publish
 import requests
 from twitter import Twitter
 import util
@@ -110,7 +111,9 @@ class Handler(util.Handler):
       return self.error("Could not find %(type)s account for %(domain)s. Check that you're signed up for Bridgy Publish and that your %(type)s account has %(domain)s in its profile's 'web site' or 'link' field." %
         {'type': source_cls.AS_CLASS.NAME, 'domain': domain})
 
-    self.add_publish_entity(source_url)
+    self.publish = self.get_or_add_publish_entity(source_url)
+    if self.publish.status == 'complete':
+      return self.error("Sorry, you've already published that page, and Bridgy Publish doesn't yet support updating or deleting existing posts. Ping Ryan if you want that feature!")
 
     # fetch source URL
     try:
@@ -199,18 +202,23 @@ class Handler(util.Handler):
                    to='webmaster@brid.gy', subject=subject, body=body)
 
   @ndb.transactional
-  def add_publish_entity(self, source_url):
+  def get_or_add_publish_entity(self, source_url):
     """Creates and stores Publish and (if necessary) PublishedPage entities.
 
     Args:
       source_url: string
     """
     page = models.PublishedPage.get_or_insert(source_url)
-    self.publish = models.Publish(parent=page.key, source=self.source.key)
+    complete = Publish.query(Publish.status == 'complete', ancestor=page.key).get()
+    if complete:
+      return complete
+
+    entity = Publish(parent=page.key, source=self.source.key)
     if self.PREVIEW:
-      self.publish.type = 'preview'
-    self.publish.put()
-    logging.debug('Publish entity: %s', self.publish.key.urlsafe())
+      entity.type = 'preview'
+    entity.put()
+    logging.debug('Publish entity: %s', entity.key.urlsafe())
+    return entity
 
 
 class PreviewHandler(Handler):
