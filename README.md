@@ -19,16 +19,23 @@ License: This project is placed in the public domain.
 
 Development
 ---
-All dependencies are in git submodules. Be sure to run
-`git submodule init; git submodule update` after you clone the repo.
+Most dependencies are in git submodules. Be sure to run
+`git submodule update --init --recursive` after you clone the repo.
 
-The tests require the App Engine SDK and python-mox.
+Requires the [App Engine SDK](https://developers.google.com/appengine/downloads)
+and expects that it's in `~/google_appengine`. (A symlink is fine.) Sorry about
+the hard-coded path; if it annoys you, feel free to send a pull request that
+makes it configurable!
 
-Deploy command:
+The tests require [python-mox](http://code.google.com/p/pymox/).
+
+This command runs the tests, pushes any changes in your local repo(s), and
+deploys to App Engine:
 
 ```shell
 ./alltests.py && cd activitystreams && ./alltests.py && cd .. && \
-  git push && ~/google_appengine/appcfg.py --oauth2 update .
+  git push --recurse-submodules=on-demand && \
+  ~/google_appengine/appcfg.py --oauth2 update .
 ```
 
 
@@ -61,7 +68,7 @@ wc sent_urls sent_uniq sent_domains
 ```
 
 
-Related work
+Related projects and docs
 ---
 * http://webmention.io/
 * https://github.com/vrypan/webmention-tools
