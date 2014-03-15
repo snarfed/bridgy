@@ -137,7 +137,7 @@ class Source(StringIdModel):
     activities = self.get_activities(activity_id=id, user_id=self.key.string_id())
     return activities[0] if activities else None
 
-  def get_comment(self, comment_id, activity_id=None):
+  def get_comment(self, comment_id, activity_id=None, activity_author_id=None):
     """Returns a comment from this source.
 
     Passes through to activitystreams-unofficial by default. May be overridden
@@ -146,10 +146,12 @@ class Source(StringIdModel):
     Args:
       comment_id: string, site-specific comment id
       activity_id: string, site-specific activity id
+      activity_author_id: string, site-specific activity author id, optional
 
     Returns: dict, decoded ActivityStreams comment object, or None
     """
-    return self.as_source.get_comment(comment_id, activity_id=activity_id)
+    return self.as_source.get_comment(comment_id, activity_id=activity_id,
+                                      activity_author_id=activity_author_id)
 
   def get_like(self, activity_user_id, activity_id, like_user_id):
     """Returns an ActivityStreams 'like' activity object.

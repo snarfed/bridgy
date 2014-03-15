@@ -181,7 +181,8 @@ class PostHandler(ItemHandler):
 
 class CommentHandler(ItemHandler):
   def get_item(self, post_id, id):
-    cmt = self.source.get_comment(id, activity_id=post_id)
+    cmt = self.source.get_comment(id, activity_id=post_id,
+                                  activity_author_id=self.source.key.id())
     if not cmt:
       return None
     self.add_original_post_urls(post_id, cmt, 'inReplyTo')

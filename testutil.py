@@ -135,7 +135,7 @@ class FakeSource(FakeBase, Source):
   def set_comment(self, val):
     self._set('comment', val)
 
-  def get_comment(self, comment_id, activity_id=None):
+  def get_comment(self, comment_id, activity_id=None, activity_author_id=None):
     comment = self._get('comment')
     return comment if comment else super(FakeSource, self).get_comment(comment_id)
 

@@ -148,7 +148,8 @@ class SourceTest(testutil.HandlerTest):
     comment_obj = {'objectType': 'comment', 'content': 'qwert'}
     source = FakeSource.new(None)
     source.as_source = self.mox.CreateMock(as_source.Source)
-    source.as_source.get_comment('123', activity_id=None).AndReturn(comment_obj)
+    source.as_source.get_comment('123', activity_id=None, activity_author_id=None
+                                 ).AndReturn(comment_obj)
 
     self.mox.ReplayAll()
     self.assert_equals(comment_obj, source.get_comment('123'))
