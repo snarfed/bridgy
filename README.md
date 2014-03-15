@@ -27,7 +27,9 @@ and expects that it's in `~/google_appengine`. (A symlink is fine.) Sorry about
 the hard-coded path; if it annoys you, feel free to send a pull request that
 makes it configurable!
 
-The tests require [python-mox](http://code.google.com/p/pymox/).
+The unit tests require [python-mox](http://code.google.com/p/pymox/). You can
+run them with `alltests.py`. If you send a pull request, please include (or
+update) a test for the new functionality if possible!
 
 This command runs the tests, pushes any changes in your local repo(s), and
 deploys to App Engine:
