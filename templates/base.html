@@ -90,36 +90,28 @@ window.onload = function() {
 
 <main class="tp-main lead container">
 
-<div class="row">
+<div id="top" class="row">
 <div id="logo" class="col-xs-4">
  <a href="/">
    <img id="logo-img" class="img-responsive" src="/static/bridgy_logo.jpg" /></a>
 <br />
-  <table id="tabs"><tr>
-  <td id="left-of-tabs">&nbsp;</td>
+
+<ul class="nav nav-pills nav-justified">
+  <li></li>
   {% for p in pages %}
-    <td
-    {% if p != page %}class="tab not-current"><a href="/{{ p }}">
-        {% else %}class="tab">{% endif %}
-      {{ p|capfirst }}
-    {% if p != page %}</a>{% endif %}
-    </td>
+    <li {% if p == page %}class="active"{% endif %}>
+      <a href="/{{ p }}">{{ p|capfirst }}</a>
+    </li>
   {% endfor %}
-  <!-- <td id="right-of-tabs">&nbsp;</td> -->
-  </tr><tr id="ghost-row">
-    <td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
-    <td id="right-of-tabs">&nbsp;</td>
-  </tr><tr id="bottom-row">
-    <td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
-  </tr></table>
+</ul>
 </div>
 
 <div id="header" class="col-xs-8">
 <p class="big">
 Got a web site?<br />
-Post links to your site on social networks?<br />
-Wish comments and likes showed up on your site?<br />
-<a id="title" href="/">Bridgy</a> copies them back for you.
+Want to publish your posts to social networks?<br />
+Want comments and likes to show up on your site?<br />
+<a id="title" href="/">Bridgy</a> is for you.
 {% block below_tagline %}
 {% endblock %}
 </p>
