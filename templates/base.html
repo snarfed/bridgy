@@ -94,24 +94,6 @@ window.onload = function() {
 <div id="logo" class="col-xs-4">
  <a href="/">
    <img id="logo-img" class="img-responsive" src="/static/bridgy_logo.jpg" /></a>
-<br />
-  <table id="tabs"><tr>
-  <td id="left-of-tabs">&nbsp;</td>
-  {% for p in pages %}
-    <td
-    {% if p != page %}class="tab not-current"><a href="/{{ p }}">
-        {% else %}class="tab">{% endif %}
-      {{ p|capfirst }}
-    {% if p != page %}</a>{% endif %}
-    </td>
-  {% endfor %}
-  <!-- <td id="right-of-tabs">&nbsp;</td> -->
-  </tr><tr id="ghost-row">
-    <td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
-    <td id="right-of-tabs">&nbsp;</td>
-  </tr><tr id="bottom-row">
-    <td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
-  </tr></table>
 </div>
 
 <div id="header" class="col-xs-8">

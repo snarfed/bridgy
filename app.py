@@ -35,7 +35,6 @@ from google.appengine.ext.webapp import template
 import webapp2
 
 NO_RESULTS_HTTP_STATUS = 204
-PAGES = ('listen', 'publish', 'about')
 
 
 def source_dom_id_to_key(id):
@@ -95,8 +94,7 @@ class DashboardHandler(TemplateHandler, util.Handler):
     msgs = set(m for m in set(self.request.params.getall('msg')))
 
     return {'sources': sources, 'msgs': msgs, 'epoch': util.EPOCH,
-            'msg_error': self.request.get('msg_error'),
-            'page': self.feature(), 'pages': PAGES}
+            'msg_error': self.request.get('msg_error')}
 
 
 class ListenHandler(DashboardHandler):
@@ -188,9 +186,6 @@ class PublishesHandler(TemplateHandler):
 class AboutHandler(TemplateHandler):
   def template_file(self):
     return 'templates/about.html'
-
-  def template_vars(self):
-    return {'page': 'about', 'pages': PAGES}
 
 
 class DeleteStartHandler(util.Handler):
