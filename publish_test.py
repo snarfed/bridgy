@@ -74,7 +74,8 @@ class PublishTest(testutil.HandlerTest):
     # these are all fine
     Publish(parent=page.key, source=self.source.key, status='new').put()
     Publish(parent=page.key, source=self.source.key, status='failed').put()
-    Publish(parent=page.key, source=self.source.key, type='preview').put()
+    Publish(parent=page.key, source=self.source.key, status='complete',
+            type='preview').put()
 
     html = '<article class="h-entry"><p class="e-content">foo</p></article>'
     self.expect_requests_get('http://foo.com/', html)
@@ -82,9 +83,8 @@ class PublishTest(testutil.HandlerTest):
 
     # first attempt should work
     self.assertEquals(200, self.get_response().status_int)
-    publishes = Publish.query().fetch()
-    self.assertEquals(4, len(publishes))
-    self.assertIn('complete', [p.status for p in publishes])
+    self.assertEquals(4, Publish.query().count())
+    self.assertEquals(2, Publish.query(Publish.status == 'complete').count())
 
     # now that there's a complete Publish entity, another attempt should fail
     self.assert_error("Sorry, you've already published that page, and Bridgy Publish doesn't yet support updating or deleting existing posts. Ping Ryan if you want that feature!")

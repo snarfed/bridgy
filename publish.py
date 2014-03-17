@@ -112,7 +112,7 @@ class Handler(util.Handler):
         {'type': source_cls.AS_CLASS.NAME, 'domain': domain})
 
     self.publish = self.get_or_add_publish_entity(source_url)
-    if self.publish.status == 'complete':
+    if self.publish.status == 'complete' and self.publish.type != 'preview':
       return self.error("Sorry, you've already published that page, and Bridgy Publish doesn't yet support updating or deleting existing posts. Ping Ryan if you want that feature!")
 
     # fetch source URL
@@ -209,7 +209,9 @@ class Handler(util.Handler):
       source_url: string
     """
     page = models.PublishedPage.get_or_insert(source_url)
-    complete = Publish.query(Publish.status == 'complete', ancestor=page.key).get()
+    complete = Publish.query(
+      Publish.status == 'complete', Publish.type != 'preview',
+      ancestor=page.key).get()
     if complete:
       return complete
 
