@@ -34,7 +34,7 @@ class GooglePlusPage(models.Source):
   # QPS: https://cloud.google.com/console/project/1029605954231
   # Today's quota usage: https://code.google.com/apis/console/b/0/?noredirect#project:1029605954231:quotas
   # Daily total usage: https://code.google.com/apis/console/b/0/?pli=1#project:1029605954231:stats
-  POLL_FREQUENCY = datetime.timedelta(minutes=15)
+  POLL_FREQUENCY = datetime.timedelta(minutes=20)
 
   type = ndb.StringProperty(choices=('user', 'page'))
 
