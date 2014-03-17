@@ -108,7 +108,7 @@ class Handler(util.Handler):
                    .filter(source_cls.features == 'publish')
                    .get())
     if not self.source:
-      return self.error("Could not find %(type)s account for %(domain)s. Check that you're signed up for Bridgy Publish and that your %(type)s account has %(domain)s in its profile's 'web site' or 'link' field." %
+      return self.error("Could not find <b>%(type)s</b> account for <b>%(domain)s</b>. Check that your %(type)s profile has %(domain)s in its <em>web site</em> or <em>link</em> field, then try signing up again." %
         {'type': source_cls.AS_CLASS.NAME, 'domain': domain})
 
     self.publish = self.get_or_add_publish_entity(source_url)

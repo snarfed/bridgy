@@ -45,7 +45,7 @@ class PublishTest(testutil.HandlerTest):
   def assert_error(self, expected_error, status=400, **kwargs):
     resp = self.get_response(**kwargs)
     self.assertEquals(status, resp.status_int)
-    self.assertEquals(expected_error, json.loads(resp.body)['error'])
+    self.assertIn(expected_error, json.loads(resp.body)['error'])
 
   def test_success(self):
     html = '<article class="h-entry"><p class="e-content">foo</p></article>'
@@ -87,7 +87,7 @@ class PublishTest(testutil.HandlerTest):
     self.assertEquals(2, Publish.query(Publish.status == 'complete').count())
 
     # now that there's a complete Publish entity, another attempt should fail
-    self.assert_error("Sorry, you've already published that page, and Bridgy Publish doesn't yet support updating or deleting existing posts. Ping Ryan if you want that feature!")
+    self.assert_error("Sorry, you've already published that page")
 
   def test_bad_target_url(self):
     self.assert_error('Target must be brid.gy/publish/{facebook,twitter}',
@@ -101,7 +101,7 @@ class PublishTest(testutil.HandlerTest):
     self.assert_error('Could not parse source URL foo', source='foo')
 
   def test_source_domain_not_found(self):
-    msg = "Could not find FakeSource account for foo.com. Check that you're signed up for Bridgy Publish and that your FakeSource account has foo.com in its profile's 'web site' or 'link' field."
+    msg = 'Could not find <b>FakeSource</b> account for <b>foo.com</b>.'
 
     # no source
     self.source.key.delete()
