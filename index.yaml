@@ -16,6 +16,12 @@ indexes:
   - name: updated
     direction: desc
 
+- kind: Publish
+  ancestor: yes
+  properties:
+  - name: status
+  - name: type
+
 - kind: Response
   properties:
   - name: source
