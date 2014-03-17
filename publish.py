@@ -123,7 +123,7 @@ class Handler(util.Handler):
 
     # parse microformats, convert to ActivityStreams
     self.publish.html = resp.text
-    data = parser.Parser(doc=resp.text).to_dict()
+    data = parser.Parser(doc=resp.text, url=source_url).to_dict()
     logging.debug('Parsed microformats2: %s', data)
     items = data.get('items', [])
     if not items or not items[0]:

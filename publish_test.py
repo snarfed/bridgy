@@ -165,6 +165,19 @@ class PublishTest(testutil.HandlerTest):
       resp = self.get_response(source='http://foo.com/%d' % i)
       self.assertEquals(200, resp.status_int, resp.body)
 
+  def test_relative_u_url(self):
+    """mf2py expands urls; this just check that we give it the source URL."""
+    html = """<article class="h-entry">
+<a class="u-url" href="/foo/bar"></a>
+<p class="e-content">foo</p></article>"""
+    self.expect_requests_get('http://foo.com/', html)
+    self.mox.ReplayAll()
+
+    resp = self.get_response()
+    self.assertEquals(200, resp.status_int, resp.body)
+    self.assertEquals('foo - http://foo.com/foo/bar',
+                      json.loads(resp.body)['content'])
+
   def test_all_errors_email(self):
     """Should send me email on *any* error from create() or preview_create()."""
     html = '<article class="h-entry"><p class="e-content">foo</p></article>'

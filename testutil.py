@@ -97,7 +97,7 @@ class FakeAsSource(FakeBase, as_source.Source):
     if verb == 'like':
       raise NotImplementedError()
 
-    content = obj['content'] + (' - http://foo.com/' if include_link else '')
+    content = obj['content'] + (' - %s' % obj['url'] if include_link else '')
     ret = {'id': 'fake id', 'url': 'http://fake/url', 'content': content}
     if verb == 'rsvp-yes':
       ret['type'] = 'post'
@@ -107,7 +107,7 @@ class FakeAsSource(FakeBase, as_source.Source):
     if obj.get('verb') == 'like':
       raise NotImplementedError()
     return 'preview of ' + obj['content'] + (
-      ' - http://foo.com/' if include_link else '')
+      ' - %s' % obj['url'] if include_link else '')
 
 
 class FakeSource(FakeBase, Source):
