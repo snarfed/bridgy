@@ -68,48 +68,16 @@ below to try it yourself, read <a href="/about">even more details</a>, or
 <!-- Users -->
 <p id="users" class="big row">Users</p>
 
-{# TODO: paging #}
-<div id="sources">
+<div id="sources" class="row">
+
 {% for source in sources %}
-
-<div id="{{ source.dom_id }}" class="row">
- <div class="col-sm-4">
-  {% with "listen" as feature %}
-    {% include "source.html" %}
-  {% endwith %}
-
- </div><div class="col-sm-4">
-  {% if source.last_poll_attempt == epoch %}
-    Not polled yet
-  {% else %}
-    Polled
-    <a href="/log?start_time={{ source.last_poll_attempt|date:'U' }}&key={{ source.key.urlsafe }}">
-      {{ source.last_poll_attempt|timesince }} ago
-    {% if source.status == "error" %}
-     <span title="Error" class="glyphicon glyphicon-exclamation-sign"></span>
-    {% endif %}
-    </a>
-  {% endif %}
-
-  <!-- <form method="post" action="/poll"> -->
-  <!--   <input name="key" type="hidden" value="{{ source.key.urlsafe }}" /> -->
-  <!--   <button type="submit" title="Poll now" class="glyphicon glyphicon-refresh" -->
-  <!--           style="border: none; background: none;"></button> -->
-  <!-- </form> -->
-
- </div><div class="col-sm-4" id="link-responses-{{ source.dom_id }}">
-  <a href="#{{ source.dom_id }}"
-     onclick="toggle_ajax('responses', '{{ source.dom_id }}'); return false;">
-    Recent responses...
-  </a>
- </div>
-</div>
-
-<div id="stub-responses-{{ source.dom_id }}" class="stub-responses"
-     style="display: none">
-  <img src="/static/spinner.gif" width="30" /> <!-- filled in via AJAX -->
-</div>
-
+{% spaceless %}
+<a href="{{ source.dom_id }}"
+   {# oddly, source.AS_CLASS doesn't work for Twitter. use kind as fallback. #}
+   title="{{ source.name|safe }} ({% firstof source.AS_CLASS.NAME source.key.kind %})">
+  <img class="profile" src="{{ source.picture }}" width="64px" />
+</a>
+{% endspaceless %}
 {% endfor %}
 </div>
 
