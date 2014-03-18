@@ -47,7 +47,6 @@ from twitter import Twitter
 import util
 import webapp2
 
-from google.appengine.api import mail
 from google.appengine.ext import ndb
 from google.appengine.ext.webapp import template
 
@@ -198,8 +197,7 @@ class Handler(util.Handler):
       body = prefix + body
       subject += ': %s' % self.source.label()
 
-    mail.send_mail(sender='publish@brid-gy.appspotmail.com',
-                   to='webmaster@brid.gy', subject=subject, body=body)
+    util.email_me(subject=subject, body=body)
 
   @ndb.transactional
   def get_or_add_publish_entity(self, source_url):

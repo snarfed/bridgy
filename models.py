@@ -14,7 +14,6 @@ from activitystreams import source as as_source
 from activitystreams.oauth_dropins.webutil.models import StringIdModel
 import util
 
-from google.appengine.api import mail
 from google.appengine.api import taskqueue
 from google.appengine.api import users
 from google.appengine.ext import ndb
@@ -247,11 +246,9 @@ class Source(StringIdModel):
     handler.messages = {msg % source.label()}
     logging.info('%s %s %s %s', verb, source.label(), source.key.string_id(),
                  source.key)
-    mail.send_mail(sender='add@brid-gy.appspotmail.com',
-                   to='webmaster@brid.gy',
-                   subject='%s Bridgy %s user: %s %s' %
-                   (verb, feature, source.label(), source.key.string_id()),
-                   body='%s/#%s' % (handler.request.host_url, source.dom_id()))
+    util.email_me(subject='%s Bridgy %s user: %s %s' %
+                  (verb, feature, source.label(), source.key.string_id()),
+                  body='%s/#%s' % (handler.request.host_url, source.dom_id()))
 
     # TODO: ugh, *all* of this should be transactional
     source.put()

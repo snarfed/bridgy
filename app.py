@@ -28,7 +28,6 @@ from models import Publish, Response, Source
 import util
 from activitystreams.oauth_dropins.webutil.handlers import TemplateHandler
 
-from google.appengine.api import mail
 from google.appengine.api import users
 from google.appengine.ext import ndb
 from google.appengine.ext.webapp import template
@@ -233,11 +232,9 @@ class DeleteFinishHandler(util.Handler):
         source.features.remove(feature)
         source.put()
       self.messages.add('Deleted %s. Sorry to see you go!' % source.label())
-      mail.send_mail(sender='delete@brid-gy.appspotmail.com',
-                     to='webmaster@brid.gy',
-                     subject='Deleted Bridgy %s user: %s %s' %
-                     (feature, source.label(), source.key.string_id()),
-                     body='%s/#%s' % (self.request.host_url, source.dom_id()))
+      util.email_me(subject='Deleted Bridgy %s user: %s %s' %
+                    (feature, source.label(), source.key.string_id()),
+                    body='%s/#%s' % (self.request.host_url, source.dom_id()))
       self.redirect('/%s?deleted=%s' % (feature, source.key.urlsafe()))
     else:
       self.messages.add('Please log into %s as %s to delete it here.' %

@@ -9,6 +9,7 @@ import webapp2
 from activitystreams.oauth_dropins.webutil.util import *
 from appengine_config import HTTP_TIMEOUT
 
+from google.appengine.api import mail
 from google.appengine.api import memcache
 from google.appengine.api import taskqueue
 
@@ -54,6 +55,14 @@ def add_poll_task(source, **kwargs):
                 params={'source_key': source.key.urlsafe(),
                         'last_polled': last_polled_str},
                 **kwargs)
+
+def email_me(**kwargs):
+  """Thin wrapper around mail.send_mail() that handles errors."""
+  try:
+    mail.send_mail(sender='admin@brid-gy.appspotmail.com',
+                   to='webmaster@brid.gy', **kwargs)
+  except mail.Error, e:
+    logging.exception('Error sending notification email', e)
 
 
 def follow_redirects(url):
