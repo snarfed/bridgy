@@ -94,6 +94,16 @@ window.onload = function() {
 <div id="logo" class="col-xs-4">
  <a href="/">
    <img id="logo-img" class="img-responsive" src="/static/bridgy_logo.jpg" /></a>
+<br />
+
+<ul class="nav nav-pills nav-justified">
+  <li></li>
+  {% for p in pages %}
+    <li {% if p == page %} class="active" {% endif %} >
+      <a href="/{{ p }}">{{ p|capfirst }}</a>
+    </li>
+  {% endfor %}
+</ul>
 </div>
 
 <div id="header" class="col-xs-8">

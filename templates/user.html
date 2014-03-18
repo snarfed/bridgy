@@ -1,0 +1,318 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<!-- JS for embedding Facebook posts and Twitter tweets -->
+<script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
+<div id="fb-root"></div>
+<script>
+(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/all.js#xfbml=1&appId=318683258228687";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));
+</script>
+
+
+<!-- Preview AJAX -->
+<script type="text/javascript">
+function do_preview(site) {
+  var url = document.getElementById("source-url").value.trim();
+  if (url.length == 0) {
+    window.alert("Please enter a URL.");
+    return;
+  }
+
+  var preview = document.getElementById("preview");
+  var req = new XMLHttpRequest();
+  req.onload = function() {
+    if (this.status == 200) {
+      document.getElementById("preview").innerHTML = this.responseText;
+      /* trigger re-renders of twitter and facebook embeds */
+      twttr.widgets.load();
+      if (typeof(FB) != "undefined") {
+        FB.XFBML.parse();
+      }
+    } else {
+      this.onerror();
+    }
+  };
+  req.onerror = function() {
+      preview.innerHTML =
+        "<span title='Error' class='glyphicon glyphicon-exclamation-sign'></span> " +
+        this.responseText;
+      preview.class = "error";
+  }
+
+  preview.innerHTML = "<img src='/static/spinner.gif' width='30' />";
+  req.open("post", "/publish/preview?source=" + url +
+           "&target=http://brid.gy/publish/" + site);
+  req.send();
+}
+
+function send_preview(url) {
+  var sent = document.getElementById("sent");
+  var glyph = "<span title='Error' class='glyphicon glyphicon-exclamation-sign'></span> ";
+  var req = new XMLHttpRequest();
+
+  req.onload = function() {
+    if (this.status == 200) {
+      sent.innerHTML = "Sent! <a href='" + JSON.parse(this.responseText).url +
+                       "'>Click here to view.</a>";
+    } else if (this.status == 400) {
+      sent.innerHTML = glyph + JSON.parse(this.responseText).error;
+    } else {
+      this.onerror();
+    }
+  };
+  req.onerror = function() {
+    sent.innerHTML = glyph + this.responseText;
+  }
+
+  sent.innerHTML = "<img src='/static/spinner.gif' width='30' />";
+  req.open("post", url);
+  req.send();
+}
+</script>
+
+
+<!-- Header: name and picture -->
+<h1 class="row">
+<a target="_blank" href="{{ source.url }}"
+   {# oddly, source.AS_CLASS doesn't work for Twitter. use kind as fallback. #}
+   title="{{ source.name|safe }} ({% firstof source.AS_CLASS.NAME source.key.kind %})">
+  <img class="profile" src="{{ source.picture }}" width="64px" />
+  <img src="/static/{{ source.SHORT_NAME }}_icon.png"
+       alt="{% firstof source.AS_CLASS.NAME source.key.kind %}" />
+  {{ source.name|safe }}</a>
+
+{% if source.domain %}
+  | <a href="{{ source.domain_url }}" class="publish-domain">{{ source.domain }}</a>
+{% endif %}
+
+{% if not compact %}
+<span class="source-buttons">
+{% if source.status == "disabled" %}
+  <a href="#" onclick="document.forms['{{ source.SHORT_NAME }}-start'].submit();
+                       return false;">
+    <span class="glyphicon glyphicon-pause"
+          title="This account was disconnected on {% firstof source.AS_CLASS.NAME source.key.kind %}'s end. Click to reconnect it!">
+  </span></a>
+{% endif %}
+{% endif %}
+</h1>
+
+
+<div class="row">
+<div class="col-md-6">
+
+
+<!-- Publish preview UI -->
+{% if "publish" in source.features %}
+
+<p class="big">Step 2: enter a post URL, click to preview</p>
+<br />
+<form method="post" name="preview" action="/publish/preview" class="preview-ui">
+ <input id="source-url" name="source" type="text" alt="Source URL"></input>
+ <br />
+ <input type="image" name="target" value="http://brid.gy/publish/facebook"
+        src="/static/facebook_button.png"
+        onclick="do_preview('facebook'); return false;" />
+ <input type="image" name="target" value="http://brid.gy/publish/twitter"
+        src="/static/twitter_button.png"
+        onclick="do_preview('twitter'); return false;" />
+</form>
+
+<br />
+<div id="preview" class="row"></div>
+<br />
+
+
+<!-- Publish signup buttons -->
+{% else %}
+<form method="post" name="facebook-start" action="/facebook/start">
+ <input type="image" alt="Sign in with Facebook"
+        src="/static/facebook_button_signin.png" />
+ <input name="state" type="hidden" value="publish" />
+ <!-- https://developers.facebook.com/docs/reference/login/ -->
+ <input name="scope" type="hidden"
+        value="offline_access,user_website,publish_actions,create_event,rsvp_event" />
+</form>
+
+<form method="post" name="twitter-start" action="/twitter/start">
+ <input type="image" alt="Sign in with Twitter"
+        src="/static/twitter_button_signin.png" />
+ <input name="state" type="hidden" value="publish" />
+</form>
+
+<!--  <form method="post" name="instagram-start" action="/instagram/start"> -->
+<!--   <input type="image" alt="Sign in with Instagram" src="/static/instagram_button_signin.png" /> -->
+<!--   <input name="state" type="hidden" value="publish" /> -->
+<!--   <\!-- http://instagram.com/developer/authentication/#scope -\-> -->
+<!--   <input name="scope" type="hidden" value="comments+likes" /> -->
+<!-- </form> -->
+
+{% endif %}
+
+
+</div>
+<div class="col-md-6">
+
+
+<!-- Listen UI -->
+{% if "listen" in source.features %}
+<p class="big">Listening for responses.</p>
+
+{% if source.last_poll_attempt == epoch %}
+  Not polled yet
+{% else %}
+  Polled
+  <a href="/log?start_time={{ source.last_poll_attempt|date:'U' }}&key={{ source.key.urlsafe }}">
+    {{ source.last_poll_attempt|timesince }} ago
+  {% if source.status == "error" %}
+   <span title="Error" class="glyphicon glyphicon-exclamation-sign"></span>
+  {% endif %}
+  </a>
+{% endif %}
+
+<!-- <form method="post" action="/poll"> -->
+<!--   <input name="key" type="hidden" value="{{ source.key.urlsafe }}" /> -->
+<!--   <button type="submit" title="Poll now" class="glyphicon glyphicon-refresh" -->
+<!--           style="border: none; background: none;"></button> -->
+<!-- </form> -->
+
+<form method="post" action="/delete/start">
+  <input name="key" type="hidden" value="{{ source.key.urlsafe }}" />
+  <input name="feature" type="hidden" value="{{ feature }}" />
+  <button type="submit" class="btn btn-danger">Disable</button>
+</form>
+</div>
+
+
+<!-- Listen signup buttons -->
+{% else %}
+<div id="connect" class="row">
+<div class="col-md-3 col-sm-6">
+ <form method="post" name="facebook-start" action="/facebook/start">
+  <input type="image" alt="Sign in with Facebook"
+         src="/static/facebook_button_signin.png" />
+  <input name="state" type="hidden" value="listen" />
+  <!-- https://developers.facebook.com/docs/reference/login/ -->
+  <input name="scope" type="hidden"
+         value="offline_access,user_website,user_status,user_photos,user_events,read_stream">
+</form></div>
+<div class="col-md-3 col-sm-6">
+ <form method="post" name="twitter-start" action="/twitter/start">
+  <input type="image" alt="Sign in with Twitter"
+         src="/static/twitter_button_signin.png" />
+  <input name="state" type="hidden" value="listen" />
+</form></div>
+<div class="clearfix visible-xs"></div>
+<div class="col-md-3 col-sm-6">
+ <form method="post" name="googleplus-start" action="/googleplus/start">
+  <input type="image" alt="Sign in with Google+"
+         src="/static/googleplus_button_signin.png" />
+  <!-- The state param doesn't actually work for G+. Not sure why. Doesn't
+       matter for now since we don't support publish for G+. -->
+  <input name="state" type="hidden" value="listen" />
+  <!-- https://developers.google.com/+/api/oauth#scopes -->
+  <input name="scope" type="hidden"
+         value="https://www.googleapis.com/auth/plus.login" />
+</form></div>
+<div class="col-md-3 col-sm-6">
+ <form method="post" name="instagram-start" action="/instagram/start">
+  <input type="image" alt="Sign in with Instagram"
+         src="/static/instagram_button_signin.png" />
+  <input name="state" type="hidden" value="listen" />
+</form></div>
+</div>
+
+{% endif %}
+
+</div>
+</div>
+
+<div class="row">
+<div class="col-md-6">
+
+<!-- Publishes -->
+<ul class="publishes">
+  {% for publish in publishes %}
+  <li class="row">
+   <div class="col-sm-4">
+     {{ publish.pretty_page|safe }}
+
+   </div><div class="col-sm-4">
+    <a href="/log?start_time={{ publish.updated|date:'U' }}&key={{ publish.key.urlsafe }}">
+      {{ publish.updated|timesince }} ago
+      {% if publish.status == 'failed' %}
+       <span title="Error" class="glyphicon glyphicon-exclamation-sign"></span>
+      {% else %}{% if publish.status == 'new' %}
+       <span title="Processing" class="glyphicon glyphicon-transfer"></span>
+      {% endif %}{% endif %}
+    </a>
+
+   </div><div class="col-sm-4">
+     {% if publish.published.url %}
+       <a href="{{ publish.published.url }}">
+     {% endif %}
+       {% firstof publish.type_label publish.type %}
+     {% if publish.published.url %}
+       </a>
+    {% endif %}
+
+  </li>
+  {% endfor %}
+</ul>
+
+</div>
+<div class="col-md-6">
+
+<!-- Responses -->
+<ul class="responses">
+  {% for response in responses %}
+  <li class="row">
+   <div class="col-sm-3">
+    {% with response.response as r %}
+    <a target="_blank" href="{{ response.actor.url }}"
+       title="{{ response.actor.displayName }}">
+      <img class="profile" src="{{ response.actor.image.url }}" width="32" /></a>
+      <a target="_blank" href="{{ r.url }}">
+        {{ r.content|default:"--"|striptags|truncatewords:6|safe }}</a>
+    {% endwith %}
+
+   </div><div class="col-sm-3">
+    {% with response.activity.object as a %}
+    {% if response.type == "comment" %} on {% endif %}
+    <a target="_blank" href="{{ a.url }}">
+      {{ a.content|default:"--"|striptags|truncatewords:6|safe }}</a>
+    {% endwith %}
+
+   </div><div class="col-sm-3">
+    <a href="/log?start_time={{ response.updated|date:'U' }}&key={{ response.key.urlsafe }}">
+      {{ response.updated|timesince }} ago
+      {% if response.status == 'error' %}
+       <span title="Error" class="glyphicon glyphicon-exclamation-sign"></span>
+      {% else %}{% if response.status == 'processing' %}
+       <span title="Processing" class="glyphicon glyphicon-transfer"></span>
+      {% endif %}{% endif %}
+    </a>
+
+   </div><div class="col-sm-3">
+    {% for label, links in response.links.items %}
+      {{ label }}:
+      <ul class="original-post-links">{{ links|safeseq|unordered_list }}</ul>
+    {% empty %}
+      No post links found
+    {% endfor %}
+   </div>
+  </li>
+  {% endfor %}
+</ul>
+
+</div>
+</div>
+
+{% endblock %}

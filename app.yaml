@@ -41,19 +41,19 @@ handlers:
   script: handlers.application
   secure: always
 
-- url: /facebook/.+
+- url: /facebook/(start|add|delete)(/.*)?
   script: facebook.application
   secure: always
 
-- url: /googleplus/.+
+- url: /googleplus/(start|add|delete|oauth2callback)(/.*)?
   script: googleplus.application
   secure: always
 
-- url: /instagram/.+
+- url: /instagram/(start|add|delete|oauth_callback)(/.*)?
   script: instagram.application
   secure: always
 
-- url: /twitter/.+
+- url: /twitter/(start|add|delete)(/.*)?
   script: twitter.application
   secure: always
 

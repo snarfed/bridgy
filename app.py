@@ -1,4 +1,4 @@
-"""Bridgy front page/dashboard.
+"""Bridgy user-facing handlers: front page, user pages, and delete POSTs.
 """
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
@@ -33,96 +33,76 @@ from google.appengine.ext import ndb
 from google.appengine.ext.webapp import template
 import webapp2
 
-NO_RESULTS_HTTP_STATUS = 204
-
-
-def source_dom_id_to_key(id):
-  """Parses a string returned by Source.dom_id() and returns its ndb.Key."""
-  short_name, string_id = id.split('-', 1)
-  return ndb.Key(handlers.SOURCES.get(short_name), string_id)
-
 
 class DashboardHandler(TemplateHandler, util.Handler):
-  """Base handler for both /listen and /publish."""
-
-  def feature(self):
-    """Returns either 'listen' or 'publish'.
-
-    Subclasses should override.
-    """
-    raise NotImplementedError()
+  """Base handler for both the front page and user pages."""
 
   def head(self):
     """Return an empty 200 with no caching directives."""
 
-  def post(self):
+  def post(self, *args, **kwargs):
     """Facebook uses a POST instead of a GET when it renders us in Canvas.
 
     http://stackoverflow.com/a/5353413/186123
     """
-    return self.get()
-
-  def template_file(self):
-    assert self.feature() in Source.FEATURES
-    return 'templates/%s.html' % self.feature()
+    return self.get(*args, **kwargs)
 
   def content_type(self):
     return 'text/html; charset=utf-8'
 
   def template_vars(self):
-    queries = [cls.query().filter(Source.features == self.feature()).iter()
-               for cls in (FacebookPage, Twitter, GooglePlusPage, Instagram)]
-    sources = {source.key.urlsafe(): source for source in itertools.chain(*queries)}
+    vars = super(DashboardHandler, self).template_vars()
 
-    # manually update the source we just added or deleted to workaround
-    # inconsistent global queries.
-    added = self.request.get('added')
-    if added and added not in sources:
-      sources[added] = ndb.Key(urlsafe=added).get()
-    deleted = self.request.get('deleted')
-    if deleted in sources:
-      del sources[deleted]
+    # add messages. force UTF-8 since the msg parameters were encoded as UTF-8
+    # by util.add_query_params().
+    self.request.charset = 'utf-8'
+    vars.update({
+        'msgs': set(m for m in set(self.request.params.getall('msg'))),
+        'msg_error': set(m for m in set(self.request.params.getall('msg_error'))),
+        })
+    return vars
+
+
+class FrontPageHandler(DashboardHandler):
+  """Handler for the front page."""
+
+  def template_file(self):
+    return 'templates/index.html'
+
+  def template_vars(self):
+    queries = [cls.query() for cls in (FacebookPage, Twitter, GooglePlusPage,
+                                       Instagram)]
+    sources = {source.key.urlsafe(): source for source in itertools.chain(*queries)}
 
     # preprocess sources, sort by name
     sources = sorted([self.preprocess_source(s) for s in sources.values()],
                      key=lambda s: (s.name.lower(), s.AS_CLASS.NAME))
 
-    # force UTF-8 since the msg parameters were encoded as UTF-8 by
-    # util.add_query_params().
-    self.request.charset = 'utf-8'
-    msgs = set(m for m in set(self.request.params.getall('msg')))
-
-    return {'sources': sources, 'msgs': msgs, 'epoch': util.EPOCH,
-            'msg_error': self.request.get('msg_error')}
+    return {'sources': sources, 'epoch': util.EPOCH}
 
 
-class ListenHandler(DashboardHandler):
-  def feature(self):
-    return 'listen'
+class UserHandler(DashboardHandler):
+  """Handler for a user page."""
 
+  def get(self, source_short_name, id):
+    self.source = ndb.Key(handlers.SOURCES[source_short_name], id).get()
+    if not self.source:
+      self.response.status_int = 404
 
-class PublishHandler(DashboardHandler):
-  def feature(self):
-    return 'publish'
+    super(UserHandler, self).get()
 
-
-class ResponsesHandler(TemplateHandler):
   def template_file(self):
-    return 'templates/responses.html'
+    return 'templates/user.html' if self.source else 'templates/user_not_found.html'
 
   def template_vars(self):
-    key = source_dom_id_to_key(util.get_required_param(self, 'source'))
-    responses = Response.query().filter(Response.source == key)\
-                                .order(-Response.updated)\
-                                .fetch(10)
-    if not responses:
-      self.error(NO_RESULTS_HTTP_STATUS)
+    if not self.source:
       return {}
 
+    responses = Response.query().filter(Response.source == self.source.key)\
+                                .order(-Response.updated)\
+                                .fetch(10)
     for r in responses:
       r.response = json.loads(r.response_json)
-      r.activity = json.loads(r.activity_json)
-
       r.actor = r.response.get('author') or r.response.get('actor', {})
       if not r.response.get('content'):
         if r.type == 'like':
@@ -154,32 +134,18 @@ class ResponsesHandler(TemplateHandler):
       # elif r.unsent and not source.recent_response_status:
       #   source.recent_response_status = 'processing'
 
-    self.request.charset = 'utf-8'
-    return {'responses': responses}
-
-
-class PublishesHandler(TemplateHandler):
-  def template_file(self):
-    return 'templates/publishes.html'
-
-  def template_vars(self):
-    key = source_dom_id_to_key(util.get_required_param(self, 'source'))
-    publishes = Publish.query().filter(Publish.source == key)\
+    publishes = Publish.query().filter(Publish.source == self.source.key)\
                                .order(-Publish.updated)\
                                .fetch(10)
-    if not publishes:
-      self.error(NO_RESULTS_HTTP_STATUS)
-      return {}
-
     for p in publishes:
-      # glyphicons = {'new': 'transfer', 'failed': 'exclamation-sign'}
       p.pretty_page = util.pretty_link(p.key.parent().id(),
-                                       # glyphicon=glyphicons.get(p.status),
                                        a_class='original-post', new_tab=True,
                                        max_length=30)
 
-    self.request.charset = 'utf-8'
-    return {'publishes': publishes}
+    return {'source': self.source,
+            'responses': responses,
+            'publishes': publishes,
+            }
 
 
 class AboutHandler(TemplateHandler):
@@ -243,11 +209,8 @@ class DeleteFinishHandler(util.Handler):
 
 
 application = webapp2.WSGIApplication(
-  [('/', ListenHandler),
-   ('/listen/?', ListenHandler),
-   ('/publish/?', PublishHandler),
-   ('/responses', ResponsesHandler),
-   ('/publishes', PublishesHandler),
+  [('/?', FrontPageHandler),
+   ('/(facebook|googleplus|instagram|twitter)/(.+)/?', UserHandler),
    ('/about/?', AboutHandler),
    ('/delete/start', DeleteStartHandler),
    ('/delete/finish', DeleteFinishHandler),
