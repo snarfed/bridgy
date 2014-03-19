@@ -4,4 +4,4 @@ cron:
   schedule: every 1 hours
 - description: update changed twitter profile pictures
   url: /cron/update_twitter_pictures
-  schedule: every 2 hours
+  schedule: every 1 hours
