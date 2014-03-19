@@ -9,7 +9,6 @@ TODO: check HRD consistency guarantees and change as needed
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
-import copy
 import datetime
 import json
 import logging

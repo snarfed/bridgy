@@ -1,0 +1,4 @@
+cron:
+- description: replace missing poll tasks
+  url: /cron/replace_poll_tasks
+  schedule: every 1 hours
