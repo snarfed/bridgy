@@ -61,7 +61,7 @@ def email_me(**kwargs):
   try:
     mail.send_mail(sender='admin@brid-gy.appspotmail.com',
                    to='webmaster@brid.gy', **kwargs)
-  except mail.Error, e:
+  except BaseException, e:
     logging.exception('Error sending notification email', e)
 
 
