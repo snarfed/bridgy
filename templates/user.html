@@ -79,7 +79,7 @@ function send_preview(url) {
 
 
 <!-- Header: name and picture -->
-<h1 id="user" class="row">
+<div id="user" class="row big">
 <a target="_blank" href="{{ source.url }}"
    {# oddly, source.AS_CLASS doesn't work for Twitter. use kind as fallback. #}
    title="{{ source.name|safe }} ({% firstof source.AS_CLASS.NAME source.key.kind %})">
@@ -88,50 +88,48 @@ function send_preview(url) {
        alt="{% firstof source.AS_CLASS.NAME source.key.kind %}" />
   {{ source.name|safe }}</a>
 
-{% if source.domain %}
-  | <a href="{{ source.domain_url }}" class="publish-domain">{{ source.domain }}</a>
-{% endif %}
-
-<span class="source-buttons">
 {% if source.status == "disabled" %}
-  <a href="#" onclick="document.forms['{{ source.SHORT_NAME }}-start'].submit();
-                       return false;">
-    <span class="glyphicon glyphicon-pause"
-          title="This account was disconnected on {% firstof source.AS_CLASS.NAME source.key.kind %}'s end. Click to reconnect it!">
-  </span></a>
+<a href="#" onclick="document.forms['{{ source.SHORT_NAME }}-start'].submit();
+                     return false;">
+  <span class="glyphicon glyphicon-pause"
+        title="This account was disconnected on {% firstof source.AS_CLASS.NAME source.key.kind %}'s end. Click to reconnect it!">
+</span></a>
 {% endif %}
 
-<form method="post" action="/delete/start">
-  <input name="key" type="hidden" value="{{ source.key.urlsafe }}" />
-  <button type="submit" class="btn btn-danger">Delete</button>
-</form>
-</h1>
-
+({% spaceless %}{% if source.domain %}
+  <a href="{{ source.domain_url }}" class="publish-domain">{{ source.domain }}</a>
+{% else %}
+no domain
+{% endif %}
+{% endspaceless %})
+</div>
 
 <div class="row">
-<div class="col-md-6">
 
 
 <!-- Publish preview UI -->
 {% if "publish" in source.features %}
+<div class="col-sm-6">
+<form method="post" action="/delete/start">
+<p id="publishing-label" class="big">Ready to <span class="verb">publish</span>.
+  <input name="key" type="hidden" value="{{ source.key.urlsafe }}" />
+  <input name="feature" type="hidden" value="publish" />
+  <button id="delete-button" type="submit" class="btn btn-default">Disable</button>
+</p>
+</form>
 
-<p class="big">Ready to publish.</p>
-<p class="big">Enter a post URL, click to preview:</p>
-<form method="post" name="preview" action="/publish/preview" class="preview-ui">
+<p class="big">Enter a post URL:</p>
+<form id="preview-ui" method="post" name="preview" action="/publish/preview">
  <input id="source-url" name="source" type="text" alt="Source URL"></input>
  <br />
- <input type="image" name="target" value="http://brid.gy/publish/facebook"
-        src="/static/facebook_button.png"
-        onclick="do_preview('facebook'); return false;" />
- <input type="image" name="target" value="http://brid.gy/publish/twitter"
-        src="/static/twitter_button.png"
-        onclick="do_preview('twitter'); return false;" />
+  <button id="preview-button" type="submit" class="btn btn-default">Preview</button>
 </form>
 
 <br />
 <div id="preview" class="row"></div>
 <br />
 
+</div>
 
 <!-- Publish signup buttons -->
 {% else %}
@@ -139,35 +137,33 @@ function send_preview(url) {
 {% endif %}
 
 
-</div>
-<div class="col-md-6">
-
-
 <!-- Listen UI -->
 {% if "listen" in source.features %}
-<p class="big">Listening for responses.</p>
+<div id="listen-ui" class="col-sm-6 big">
+<form method="post" action="/delete/start">
+<p id="listening-label"><span class="verb">Listening</span> for responses.
+  <input name="key" type="hidden" value="{{ source.key.urlsafe }}" />
+  <input name="feature" type="hidden" value="listen" />
+  <button id="delete-button" type="submit" class="btn btn-default">Disable</button>
+</p>
+</form>
 
 {% if source.last_poll_attempt == epoch %}
   Not polled yet
 {% else %}
   Polled
+  {% spaceless %}
   <a href="/log?start_time={{ source.last_poll_attempt|date:'U' }}&key={{ source.key.urlsafe }}">
     {{ source.last_poll_attempt|timesince }} ago
   {% if source.status == "error" %}
    <span title="Error" class="glyphicon glyphicon-exclamation-sign"></span>
   {% endif %}
-  </a>
+  {% endspaceless %}</a>.
 {% endif %}
-
-<!-- <form method="post" action="/poll"> -->
-<!--   <input name="key" type="hidden" value="{{ source.key.urlsafe }}" /> -->
-<!--   <button type="submit" title="Poll now" class="glyphicon glyphicon-refresh" -->
-<!--           style="border: none; background: none;"></button> -->
-<!-- </form> -->
 
 <form method="post" action="/poll_now">
   <input name="key" type="hidden" value="{{ source.key.urlsafe }}" />
-  <button type="submit" class="btn btn-primary">Poll now</button>
+  <button id="poll-now-button" type="submit" class="btn btn-default">Poll now</button>
 </form>
 </div>
 
@@ -178,12 +174,15 @@ function send_preview(url) {
 {% endif %}
 
 </div>
-</div>
+
 
 <div class="row">
-<div class="col-md-6">
 
 <!-- Publishes -->
+<div class="col-md-6">
+{% if "publish" in source.features %}
+{% if publishes %}
+<p class="big">Recently published:
 <ul class="publishes">
   {% for publish in publishes %}
   <li class="row">
@@ -213,10 +212,18 @@ function send_preview(url) {
   {% endfor %}
 </ul>
 
+{% else %}
+<p class="big">Nothing published yet.</p>
+{% endif %}
+{% endif %}
 </div>
-<div class="col-md-6">
+
 
 <!-- Responses -->
+<div class="col-md-6">
+{% if "listen" in source.features %}
+{% if responses %}
+<p class="big">Recent responses:
 <ul class="responses">
   {% for response in responses %}
   <li class="row">
@@ -258,7 +265,13 @@ function send_preview(url) {
   {% endfor %}
 </ul>
 
+{% else %}
+<p class="big">No responses yet.</p>
+{% endif %}
+
+{% endif %}
 </div>
+
 </div>
 
 {% endblock %}

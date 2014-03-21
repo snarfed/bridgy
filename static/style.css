@@ -61,17 +61,27 @@ body {
   margin-bottom: 1em;
 }
 
-#listen-signup, #publish-signup {
+.signup,  #user {
   margin-top: 2em;
 }
 
+#listening-label, #publishing-label {
+  margin-bottom: 1em;
+}
+
 @media (min-width: 768px) {
-  #listen-signup {
+  #listen-signup, #listen-ui {
     border-left: 1px solid lightgray;
   }
 }
+@media (max-width: 767px) {
+  #listen-signup, #listen-ui {
+    border-top: 1px solid lightgray;
+  }
+}
 
-#signup input {
+
+.signup input {
   margin: .5em;
 }
 
@@ -176,9 +186,31 @@ button {
   border-radius: 2px;
 }
 
-.preview-ui button:hover,
-.preview-ui button:focus {
+#source-url {
+  margin-top: 1em;
+}
+
+#preview-ui button:hover,
+#preview-ui button:focus {
   background-color: #4a74a6;
+}
+
+#delete-button {
+  border-color: red;
+  color: red;
+}
+
+#delete-button:hover {
+  background-color: #FCC;
+}
+
+#preview-button, #poll-now-button {
+  border-color: blue;
+  color: blue;
+}
+
+#poll-now-button:hover {
+  background-color: #CCF;
 }
 
 #preview .verb {
@@ -190,6 +222,7 @@ button {
   padding-left: .3em;
   padding-right: .3em;
   border: 1px solid black;
+  margin-bottom: 1em;
 }
 
 #sent pre {
@@ -208,7 +241,7 @@ iframe#twitter-widget-0 {
   font-size: .8em;
 }
 
-.shadow, #signup input, .profile {
+.shadow, .signup input, .profile {
   -moz-box-shadow: 2px 2px 2px rgba(0,0,0,0.4);
   -webkit-box-shadow: 2px 2px 2px rgba(0,0,0,0.4);
   /* CSS3 */
@@ -219,7 +252,7 @@ iframe#twitter-widget-0 {
   filter: progid:DXImageTransform.Microsoft.Shadow(Strength=2,Direction=135,Color='#666666');
 }
 
-.shadow, #signup input, .profile {
+.shadow, .signup input, .profile {
   -moz-box-shadow: 2px 2px 2px rgba(0,0,0,0.4);
   -webkit-box-shadow: 2px 2px 2px rgba(0,0,0,0.4);
   /* CSS3 */
@@ -230,7 +263,7 @@ iframe#twitter-widget-0 {
   filter: progid:DXImageTransform.Microsoft.Shadow(Strength=2,Direction=135,Color='#666666');
 }
 
-.shadow:hover, #signup input:hover, .profile:hover {
+.shadow:hover, .signup input:hover, .profile:hover {
   -moz-box-shadow: 2px 2px 2px #049;
   -webkit-box-shadow: 2px 2px 2px #049;
   /* CSS3 */
