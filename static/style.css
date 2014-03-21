@@ -57,11 +57,25 @@ body {
   text-align: center;
 }
 
-#connect {
-  margin-top: 3em;
+#top {
+  margin-bottom: 1em;
 }
 
-#connect input {
+#listen-signup, #publish-signup {
+  margin-top: 2em;
+}
+
+@media (min-width: 768px) {
+  #listen-signup {
+    border-left: 1px solid lightgray;
+  }
+}
+
+#signup input {
+  margin: .5em;
+}
+
+#user {
   margin-bottom: 2em;
 }
 
@@ -73,14 +87,13 @@ form input {
   vertical-align: middle;
 }
 
+#sources-label {
+  margin-top: 2em;
+}
+
 #sources {
   border-collapse: separate;
   border-spacing: .3em;
-}
-
-#sources > .row:target {
-  background-color: gold;
-  transition: background-color 3s;
 }
 
 #sources > .row > .col-sm-4 {
@@ -195,7 +208,7 @@ iframe#twitter-widget-0 {
   font-size: .8em;
 }
 
-.shadow, #connect input, .profile {
+.shadow, #signup input, .profile {
   -moz-box-shadow: 2px 2px 2px rgba(0,0,0,0.4);
   -webkit-box-shadow: 2px 2px 2px rgba(0,0,0,0.4);
   /* CSS3 */
@@ -206,7 +219,7 @@ iframe#twitter-widget-0 {
   filter: progid:DXImageTransform.Microsoft.Shadow(Strength=2,Direction=135,Color='#666666');
 }
 
-.shadow, #connect input, .profile {
+.shadow, #signup input, .profile {
   -moz-box-shadow: 2px 2px 2px rgba(0,0,0,0.4);
   -webkit-box-shadow: 2px 2px 2px rgba(0,0,0,0.4);
   /* CSS3 */
@@ -217,7 +230,7 @@ iframe#twitter-widget-0 {
   filter: progid:DXImageTransform.Microsoft.Shadow(Strength=2,Direction=135,Color='#666666');
 }
 
-.shadow:hover, #connect input:hover, .profile:hover {
+.shadow:hover, #signup input:hover, .profile:hover {
   -moz-box-shadow: 2px 2px 2px #049;
   -webkit-box-shadow: 2px 2px 2px #049;
   /* CSS3 */

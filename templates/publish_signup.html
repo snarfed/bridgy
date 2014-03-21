@@ -1,0 +1,23 @@
+<div class="row">
+<form method="post" name="facebook-start" action="/facebook/start">
+ <input type="image" alt="Sign in with Facebook"
+        src="/static/facebook_button_signin.png" />
+ <input name="state" type="hidden" value="publish" />
+ <!-- https://developers.facebook.com/docs/reference/login/ -->
+ <input name="scope" type="hidden"
+        value="offline_access,user_website,publish_actions,create_event,rsvp_event" />
+</form>
+
+<form method="post" name="twitter-start" action="/twitter/start">
+ <input type="image" alt="Sign in with Twitter"
+        src="/static/twitter_button_signin.png" />
+ <input name="state" type="hidden" value="publish" />
+</form>
+</div>
+
+<!--  <form method="post" name="instagram-start" action="/instagram/start"> -->
+<!--   <input type="image" alt="Sign in with Instagram" src="/static/instagram_button_signin.png" /> -->
+<!--   <input name="state" type="hidden" value="publish" /> -->
+<!--   <\!-- http://instagram.com/developer/authentication/#scope -\-> -->
+<!--   <input name="scope" type="hidden" value="comments+likes" /> -->
+<!-- </form> -->

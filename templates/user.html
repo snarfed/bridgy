@@ -79,7 +79,7 @@ function send_preview(url) {
 
 
 <!-- Header: name and picture -->
-<h1 class="row">
+<h1 id="user" class="row">
 <a target="_blank" href="{{ source.url }}"
    {# oddly, source.AS_CLASS doesn't work for Twitter. use kind as fallback. #}
    title="{{ source.name|safe }} ({% firstof source.AS_CLASS.NAME source.key.kind %})">
@@ -92,7 +92,6 @@ function send_preview(url) {
   | <a href="{{ source.domain_url }}" class="publish-domain">{{ source.domain }}</a>
 {% endif %}
 
-{% if not compact %}
 <span class="source-buttons">
 {% if source.status == "disabled" %}
   <a href="#" onclick="document.forms['{{ source.SHORT_NAME }}-start'].submit();
@@ -101,7 +100,11 @@ function send_preview(url) {
           title="This account was disconnected on {% firstof source.AS_CLASS.NAME source.key.kind %}'s end. Click to reconnect it!">
   </span></a>
 {% endif %}
-{% endif %}
+
+<form method="post" action="/delete/start">
+  <input name="key" type="hidden" value="{{ source.key.urlsafe }}" />
+  <button type="submit" class="btn btn-danger">Delete</button>
+</form>
 </h1>
 
 
@@ -112,8 +115,8 @@ function send_preview(url) {
 <!-- Publish preview UI -->
 {% if "publish" in source.features %}
 
-<p class="big">Step 2: enter a post URL, click to preview</p>
-<br />
+<p class="big">Ready to publish.</p>
+<p class="big">Enter a post URL, click to preview:</p>
 <form method="post" name="preview" action="/publish/preview" class="preview-ui">
  <input id="source-url" name="source" type="text" alt="Source URL"></input>
  <br />
@@ -132,28 +135,7 @@ function send_preview(url) {
 
 <!-- Publish signup buttons -->
 {% else %}
-<form method="post" name="facebook-start" action="/facebook/start">
- <input type="image" alt="Sign in with Facebook"
-        src="/static/facebook_button_signin.png" />
- <input name="state" type="hidden" value="publish" />
- <!-- https://developers.facebook.com/docs/reference/login/ -->
- <input name="scope" type="hidden"
-        value="offline_access,user_website,publish_actions,create_event,rsvp_event" />
-</form>
-
-<form method="post" name="twitter-start" action="/twitter/start">
- <input type="image" alt="Sign in with Twitter"
-        src="/static/twitter_button_signin.png" />
- <input name="state" type="hidden" value="publish" />
-</form>
-
-<!--  <form method="post" name="instagram-start" action="/instagram/start"> -->
-<!--   <input type="image" alt="Sign in with Instagram" src="/static/instagram_button_signin.png" /> -->
-<!--   <input name="state" type="hidden" value="publish" /> -->
-<!--   <\!-- http://instagram.com/developer/authentication/#scope -\-> -->
-<!--   <input name="scope" type="hidden" value="comments+likes" /> -->
-<!-- </form> -->
-
+{% include "publish_signup.html" %}
 {% endif %}
 
 
@@ -183,52 +165,16 @@ function send_preview(url) {
 <!--           style="border: none; background: none;"></button> -->
 <!-- </form> -->
 
-<form method="post" action="/delete/start">
+<form method="post" action="/poll_now">
   <input name="key" type="hidden" value="{{ source.key.urlsafe }}" />
-  <input name="feature" type="hidden" value="{{ feature }}" />
-  <button type="submit" class="btn btn-danger">Disable</button>
+  <button type="submit" class="btn btn-primary">Poll now</button>
 </form>
 </div>
 
 
 <!-- Listen signup buttons -->
 {% else %}
-<div id="connect" class="row">
-<div class="col-md-3 col-sm-6">
- <form method="post" name="facebook-start" action="/facebook/start">
-  <input type="image" alt="Sign in with Facebook"
-         src="/static/facebook_button_signin.png" />
-  <input name="state" type="hidden" value="listen" />
-  <!-- https://developers.facebook.com/docs/reference/login/ -->
-  <input name="scope" type="hidden"
-         value="offline_access,user_website,user_status,user_photos,user_events,read_stream">
-</form></div>
-<div class="col-md-3 col-sm-6">
- <form method="post" name="twitter-start" action="/twitter/start">
-  <input type="image" alt="Sign in with Twitter"
-         src="/static/twitter_button_signin.png" />
-  <input name="state" type="hidden" value="listen" />
-</form></div>
-<div class="clearfix visible-xs"></div>
-<div class="col-md-3 col-sm-6">
- <form method="post" name="googleplus-start" action="/googleplus/start">
-  <input type="image" alt="Sign in with Google+"
-         src="/static/googleplus_button_signin.png" />
-  <!-- The state param doesn't actually work for G+. Not sure why. Doesn't
-       matter for now since we don't support publish for G+. -->
-  <input name="state" type="hidden" value="listen" />
-  <!-- https://developers.google.com/+/api/oauth#scopes -->
-  <input name="scope" type="hidden"
-         value="https://www.googleapis.com/auth/plus.login" />
-</form></div>
-<div class="col-md-3 col-sm-6">
- <form method="post" name="instagram-start" action="/instagram/start">
-  <input type="image" alt="Sign in with Instagram"
-         src="/static/instagram_button_signin.png" />
-  <input name="state" type="hidden" value="listen" />
-</form></div>
-</div>
-
+{% include "listen_signup.html" %}
 {% endif %}
 
 </div>

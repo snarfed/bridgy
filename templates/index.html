@@ -9,7 +9,25 @@
 {% block content %}
 
 <div id="more" style="display: none" />
-<p>Bridgy sends
+<p>Bridgy lets you publish to Facebook and Twitter from your own web site!
+Just link to a tweet or post with
+<a href="http://microformats.org/wiki/microformats2">microformats2</a> class
+<a href="http://indiewebcamp.com/comment">u-in-reply-to</a>
+for a comment or @-reply,
+<a href="http://indiewebcamp.com/like">u-like-of</a>
+for a like or favorite,
+<a href="http://indiewebcamp.com/repost">u-repost-of</a>
+for a retweet, or
+<a href="http://indiewebcamp.com/rsvp">p-rsvp</a>
+for an event RSVP. Or omit the link to publish a new post or tweet.</p>
+
+<p>You can use the interface below to preview and publish manually, or you can
+send a <a href="http://webmention.org/">webmention</a>
+to <code>brid.gy/publish/webmention</code> with
+target <code>brid.gy/publish/facebook</code> or
+<code>brid.gy/publish/twitter</code> to publish automatically.</p>
+
+<p>Bridgy also sends
 <a href="http://webmention.org/">webmentions</a> for comments, likes, and
 reshares on Facebook, Twitter, Google+, and Instagram. Bridgy notices when you
 post links, watches for activity on those posts, and sends them back to your
@@ -23,56 +41,29 @@ below to try it yourself, read <a href="/about">even more details</a>, or
 </div>
 
 
-<div id="connect" class="row">
+<!-- Signup buttons -->
+<div id="signup" class="row">
 
-<!-- Publish signup -->
-
-<!-- Listen signup -->
-<div class="col-md-3 col-sm-6">
- <form method="post" name="facebook-start" action="/facebook/start">
-  <input type="image" alt="Sign in with Facebook"
-         src="/static/facebook_button_signin.png" />
-  <input name="state" type="hidden" value="listen" />
-  <!-- https://developers.facebook.com/docs/reference/login/ -->
-  <input name="scope" type="hidden"
-         value="offline_access,user_website,user_status,user_photos,user_events,read_stream">
-</form></div>
-<div class="col-md-3 col-sm-6">
- <form method="post" name="twitter-start" action="/twitter/start">
-  <input type="image" alt="Sign in with Twitter"
-         src="/static/twitter_button_signin.png" />
-  <input name="state" type="hidden" value="listen" />
-</form></div>
-<div class="clearfix visible-xs"></div>
-<div class="col-md-3 col-sm-6">
- <form method="post" name="googleplus-start" action="/googleplus/start">
-  <input type="image" alt="Sign in with Google+"
-         src="/static/googleplus_button_signin.png" />
-  <!-- The state param doesn't actually work for G+. Not sure why. Doesn't
-       matter for now since we don't support publish for G+. -->
-  <input name="state" type="hidden" value="listen" />
-  <!-- https://developers.google.com/+/api/oauth#scopes -->
-  <input name="scope" type="hidden"
-         value="https://www.googleapis.com/auth/plus.login" />
-</form></div>
-<div class="col-md-3 col-sm-6">
- <form method="post" name="instagram-start" action="/instagram/start">
-  <input type="image" alt="Sign in with Instagram"
-         src="/static/instagram_button_signin.png" />
-  <input name="state" type="hidden" value="listen" />
-</form></div>
+<div id="publish-signup" class="col-sm-4">
+<p class="big">Want to publish?</p>
+{% include "publish_signup.html" %}
 </div>
 
-<br />
+<div id="listen-signup" class="col-sm-7 col-sm-offset-1">
+<p class="big">Want to pull responses back?</p>
+{% include "listen_signup.html" %}
+</div>
+</div>
+
 
 <!-- Users -->
-<p id="users" class="big row">Users</p>
+<p id="sources-label" class="big row">Users</p>
 
 <div id="sources" class="row">
 
 {% for source in sources %}
 {% spaceless %}
-<a href="{{ source.dom_id }}"
+<a href="/{{ source.SHORT_NAME }}/{{ source.key.id }}" class="{{ source.SHORT_NAME }}"
    {# oddly, source.AS_CLASS doesn't work for Twitter. use kind as fallback. #}
    title="{{ source.name|safe }} ({% firstof source.AS_CLASS.NAME source.key.kind %})">
   <img class="profile" src="{{ source.picture }}" width="64px" />
