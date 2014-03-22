@@ -178,7 +178,7 @@ class Handler(webapp2.RequestHandler):
 
       source = source_cls.create_new(self, auth_entity=auth_entity,
                                      features=[state] if state else [])
-      self.redirect(source.bridgy_url(self))
+      self.redirect(source.bridgy_url(self) if source else '/')
       return source
 
     else:  # this is a delete

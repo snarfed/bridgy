@@ -31,7 +31,7 @@ class ReplacePollTasks(webapp2.RequestHandler):
       age = now - source.last_polled
       if age > TOO_OLD:
         logging.info('%s last polled %s ago. Adding new poll task.',
-                     source.bridgy_url(), age)
+                     source.bridgy_url(self), age)
         util.add_poll_task(source)
 
 
@@ -53,7 +53,7 @@ class UpdateTwitterPictures(webapp2.RequestHandler):
       new_pic = Twitter.get_picture(user)
       if source.picture != new_pic:
         logging.info('Updating profile picture for %s from %s to %s',
-                     source.bridgy_url(), source.picture, new_pic)
+                     source.bridgy_url(self), source.picture, new_pic)
         source.picture = new_pic
         source.put()
 

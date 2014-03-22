@@ -52,7 +52,7 @@ class ResponseTest(testutil.ModelsTest):
     self.assertEqual('comment', saved.type)
 
   def test_url(self):
-    self.assertEqual('http://localhost/fake-%s' % self.sources[0].key.string_id(),
+    self.assertEqual('http://localhost/fake/%s' % self.sources[0].key.string_id(),
                      self.sources[0].bridgy_url(self.handler))
 
   def test_get_type(self):
