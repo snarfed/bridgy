@@ -9,7 +9,7 @@
 
 {% if not compact %}
   <span class="source-buttons">
-  <a href="#{{ source.dom_id }}" title="Link">#</a>
+  <a href="/{{ source.path }}" title="Link">#</a>
   {% if source.status == "disabled" %}
     <a href="#" onclick="document.forms['{{ source.SHORT_NAME }}-start'].submit();
                          return false;">

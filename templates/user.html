@@ -96,29 +96,28 @@ function send_preview(url) {
 </span></a>
 {% endif %}
 
-({% spaceless %}{% if source.domain %}
-  <a href="{{ source.domain_url }}" class="publish-domain">{{ source.domain }}</a>
+{% if source.domain %}
+  (<a href="{{ source.domain_url }}" class="publish-domain">{{ source.domain }}</a>)
 {% else %}
-no domain
+<!-- no domain -->
 {% endif %}
-{% endspaceless %})
 </div>
 
-<div class="row">
 
+<div class="row big">
 
 <!-- Publish preview UI -->
 {% if "publish" in source.features %}
-<div class="col-sm-6">
+<div id="publish-ui" class="col-sm-6">
 <form method="post" action="/delete/start">
-<p id="publishing-label" class="big">Ready to <span class="verb">publish</span>.
+<p id="publishing-label">Ready to <span class="verb">publish</span>.
   <input name="key" type="hidden" value="{{ source.key.urlsafe }}" />
   <input name="feature" type="hidden" value="publish" />
   <button id="delete-button" type="submit" class="btn btn-default">Disable</button>
 </p>
 </form>
 
-<p class="big">Enter a post URL:</p>
+<p>Enter a post URL:</p>
 <form id="preview-ui" method="post" name="preview" action="/publish/preview">
  <input id="source-url" name="source" type="text" alt="Source URL"></input>
  <br />
@@ -139,7 +138,7 @@ no domain
 
 <!-- Listen UI -->
 {% if "listen" in source.features %}
-<div id="listen-ui" class="col-sm-6 big">
+<div id="listen-ui" class="col-sm-6">
 <form method="post" action="/delete/start">
 <p id="listening-label"><span class="verb">Listening</span> for responses.
   <input name="key" type="hidden" value="{{ source.key.urlsafe }}" />
@@ -179,11 +178,11 @@ no domain
 <div class="row">
 
 <!-- Publishes -->
-<div class="col-md-6">
+<div id="publishes" class="col-md-6">
 {% if "publish" in source.features %}
 {% if publishes %}
-<p class="big">Recently published:
-<ul class="publishes">
+<p class="big">Recently published:</p>
+  <ul class="publishes">
   {% for publish in publishes %}
   <li class="row">
    <div class="col-sm-4">
@@ -220,10 +219,10 @@ no domain
 
 
 <!-- Responses -->
-<div class="col-md-6">
+<div id="responses" class="col-md-6">
 {% if "listen" in source.features %}
 {% if responses %}
-<p class="big">Recent responses:
+<p class="big">Recent responses:</p>
 <ul class="responses">
   {% for response in responses %}
   <li class="row">

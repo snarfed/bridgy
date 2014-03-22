@@ -192,9 +192,7 @@ class Handler(util.Handler):
     body = 'Request:\n%s\n\nResponse:\n%s' % (self.request.params.items(), resp)
 
     if self.source:
-      prefix = 'Source: %s/publish#%s\n\n' % (self.request.host_url,
-                                              self.source.dom_id())
-      body = prefix + body
+      body = 'Source: %s\n\n%s' % (self.source.bridgy_url(self), body)
       subject += ': %s' % self.source.label()
 
     util.email_me(subject=subject, body=body)

@@ -27,6 +27,10 @@ body {
   }
 }
 
+#signups {
+  margin-top: 2em;
+}
+
 .big {
   font-size: 1.5em;
 }
@@ -57,15 +61,11 @@ body {
   text-align: center;
 }
 
-#top {
-  margin-bottom: 1em;
-}
-
-.signup,  #user {
+#publishes, #responses, #user {
   margin-top: 2em;
 }
 
-#listening-label, #publishing-label {
+#top, #listening-label, #publishing-label {
   margin-bottom: 1em;
 }
 
@@ -80,12 +80,11 @@ body {
   }
 }
 
-
 .signup input {
   margin: .5em;
 }
 
-#user {
+.header, #user {
   margin-bottom: 2em;
 }
 
@@ -190,10 +189,10 @@ button {
   margin-top: 1em;
 }
 
-#preview-ui button:hover,
-#preview-ui button:focus {
-  background-color: #4a74a6;
-}
+/* #preview-ui button:hover, */
+/* #preview-ui button:focus { */
+/*   background-color: #4a74a6; */
+/* } */
 
 #delete-button {
   border-color: red;

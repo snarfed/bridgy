@@ -40,13 +40,6 @@ WEBMENTION_BLACKLIST = (
   )
 
 
-def added_source_redirect(handler, source, uri):
-  """Redirects to the dashboard after adding a source.
-  """
-  params = [('added', source.key.urlsafe())] + [('msg', m) for m in handler.messages]
-  handler.redirect('/%s#%s' % (add_query_params(uri, params), source.dom_id()))
-
-
 def add_poll_task(source, **kwargs):
   """Adds a poll task for the given source entity.
   """
@@ -180,15 +173,12 @@ class Handler(webapp2.RequestHandler):
     if state in ('', 'listen', 'publish'):  # this is an add/update
       if not auth_entity:
         self.messages.add("OK, you're not signed up. Hope you reconsider!")
-        self.redirect('/' + state)
+        self.redirect('/')
         return
 
       source = source_cls.create_new(self, auth_entity=auth_entity,
                                      features=[state] if state else [])
-      if source:
-        added_source_redirect(self, source, state)
-      else:
-        self.redirect('/' + state)
+      self.redirect(source.bridgy_url(self))
       return source
 
     else:  # this is a delete
@@ -197,7 +187,7 @@ class Handler(webapp2.RequestHandler):
                       (auth_entity.key.urlsafe(), state))
       else:
         self.messages.add("OK, you're still signed up.")
-        self.redirect('/' + state)
+        self.redirect(source.bridgy_url(self))
 
   def preprocess_source(self, source):
     """Prepares a source entity for rendering in the source.html template.

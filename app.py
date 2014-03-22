@@ -70,15 +70,13 @@ class FrontPageHandler(DashboardHandler):
     return 'templates/index.html'
 
   def template_vars(self):
-    queries = [cls.query() for cls in (FacebookPage, Twitter, GooglePlusPage,
-                                       Instagram)]
+    queries = [cls.query() for cls in handlers.SOURCES.values()]
     sources = {source.key.urlsafe(): source for source in itertools.chain(*queries)}
 
     # preprocess sources, sort by name
     sources = sorted([self.preprocess_source(s) for s in sources.values()],
                      key=lambda s: (s.name.lower(), s.AS_CLASS.NAME))
-
-    return {'sources': sources, 'epoch': util.EPOCH}
+    return {'sources': sources}
 
 
 class UserHandler(DashboardHandler):
@@ -86,9 +84,10 @@ class UserHandler(DashboardHandler):
 
   def get(self, source_short_name, id):
     self.source = ndb.Key(handlers.SOURCES[source_short_name], id).get()
-    if not self.source:
+    if self.source:
+      self.source = self.preprocess_source(self.source)
+    else:
       self.response.status_int = 404
-
     super(UserHandler, self).get()
 
   def template_file(self):
@@ -98,6 +97,7 @@ class UserHandler(DashboardHandler):
     if not self.source:
       return {}
 
+    # Responses
     responses = Response.query().filter(Response.source == self.source.key)\
                                 .order(-Response.updated)\
                                 .fetch(10)
@@ -117,7 +117,7 @@ class UserHandler(DashboardHandler):
 
       # generate original post links
       link = lambda url, g: util.pretty_link(
-        url, glyphicon=g, a_class='original-post', new_tab=True)
+        url, glyphicon=g, a_class='original-post', new_tab=True, max_length=30)
       r.links = util.trim_nulls({
         'Failed': set(link(url, 'exclamation-sign') for url in r.error + r.failed),
         'Sending': set(link(url, 'transfer') for url in r.unsent
@@ -127,24 +127,18 @@ class UserHandler(DashboardHandler):
         'No webmention support': set(link(url, None) for url in r.skipped),
         })
 
-      # ...left over from when responses were rendered in DashboardHandler.
-      # consider reviving it someday.
-      # if r.error:
-      #   source.recent_response_status = 'error'
-      # elif r.unsent and not source.recent_response_status:
-      #   source.recent_response_status = 'processing'
-
+    # Publishes
     publishes = Publish.query().filter(Publish.source == self.source.key)\
                                .order(-Publish.updated)\
                                .fetch(10)
     for p in publishes:
-      p.pretty_page = util.pretty_link(p.key.parent().id(),
-                                       a_class='original-post', new_tab=True,
-                                       max_length=30)
+      p.pretty_page = util.pretty_link(
+        p.key.parent().id(), a_class='original-post', new_tab=True, max_length=30)
 
     return {'source': self.source,
             'responses': responses,
             'publishes': publishes,
+            'epoch': util.EPOCH,
             }
 
 
@@ -187,7 +181,7 @@ class DeleteFinishHandler(util.Handler):
 
     if self.request.get('declined'):
       self.messages.add("OK, you're still signed up.")
-      self.redirect('/' + feature)
+      self.redirect('/')
       return
 
     logged_in_as = util.get_required_param(self, 'auth_entity')
@@ -200,12 +194,12 @@ class DeleteFinishHandler(util.Handler):
       self.messages.add('Deleted %s. Sorry to see you go!' % source.label())
       util.email_me(subject='Deleted Bridgy %s user: %s %s' %
                     (feature, source.label(), source.key.string_id()),
-                    body='%s/#%s' % (self.request.host_url, source.dom_id()))
-      self.redirect('/%s?deleted=%s' % (feature, source.key.urlsafe()))
+                    body=source.bridgy_url(self))
     else:
       self.messages.add('Please log into %s as %s to delete it here.' %
                         (source.AS_CLASS.NAME, source.name))
-      self.redirect('/%s#%s' % (feature, source.dom_id()))
+
+    self.redirect(source.bridgy_url(self))
 
 
 application = webapp2.WSGIApplication(
