@@ -51,9 +51,9 @@ class ResponseTest(testutil.ModelsTest):
     saved = self.responses[0].get_or_save()
     self.assertEqual('comment', saved.type)
 
-  def test_dom_id(self):
-    self.assertEqual('fake-%s' % self.sources[0].key.string_id(),
-                     self.sources[0].dom_id())
+  def test_url(self):
+    self.assertEqual('http://localhost/fake-%s' % self.sources[0].key.string_id(),
+                     self.sources[0].bridgy_url(self.handler))
 
   def test_get_type(self):
     self.assertEqual('repost', Response.get_type(
@@ -104,24 +104,18 @@ class SourceTest(testutil.HandlerTest):
 
   def test_create_new_domain(self):
     """If the source has a URL set, extract its domain."""
-    # no auth entity
-    source = FakeSource.create_new(self.handler)
-    self.assertIsNone(source.domain)
-
-    # no URL
-    auth_entity = testutil.FakeAuthEntity(id='x', user_json='{}')
-    auth_entity.put()
-    source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
-    self.assertIsNone(source.key.get().domain)
-
-    # bad URL
-    auth_entity.user_json = '{"url": "not a url"}'
-    auth_entity.put()
-    source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
-    self.assertIsNone(source.key.get().domain)
+    for user_json in None, {}, {'url': 'not a url'}, {'url': 'http://t.co/foo'}:
+      auth_entity = None
+      if user_json is not None:
+        auth_entity = testutil.FakeAuthEntity(id='x', user_json=json.dumps(user_json))
+        auth_entity.put()
+      source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
+      self.assertIsNone(source.domain)
+      self.assertIsNone(source.domain_url)
 
     # good URL
-    auth_entity.user_json = '{"url": "https://foo.com/bar"}'
+    auth_entity = testutil.FakeAuthEntity(
+      id='x', user_json=json.dumps({'url': 'https://foo.com/bar'}))
     auth_entity.put()
     source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
     self.assertEquals('https://foo.com/bar', source.key.get().domain_url)

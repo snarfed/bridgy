@@ -106,9 +106,10 @@ class Source(StringIdModel):
 
     return getattr(super(Source, self), name)
 
-  def dom_id(self):
-    """Returns the DOM element id for this site."""
-    return '%s-%s' % (self.SHORT_NAME, self.key.string_id())
+  def bridgy_url(self, handler):
+    """Returns the Bridgy page URL for this source."""
+    return '%s/%s/%s' % (handler.request.host_url, self.SHORT_NAME,
+                         self.key.string_id())
 
   def label(self):
     """Human-readable label for this site."""
@@ -210,11 +211,12 @@ class Source(StringIdModel):
       # we're not implementing publish for G+
       url = actor.get('url')
       if url:
-        source.domain_url = url
         try:
-          source.domain = urlparse.urlparse(url).netloc or None
+          domain = urlparse.urlparse(url).netloc
+          if domain and domain not in util.WEBMENTION_BLACKLIST:
+            source.domain = domain
+            source.domain_url = url
         except BaseException, e:
-          source.domain = None
           logging.error("Not setting domain; could not parse URL %s . %s", url, e)
 
     # web site domain is required for publish
@@ -244,11 +246,11 @@ class Source(StringIdModel):
       msg = "Added %s. Refresh to see what we've found!"
 
     handler.messages = {msg % source.label()}
-    logging.info('%s %s %s %s', verb, source.label(), source.key.string_id(),
-                 source.key)
-    util.email_me(subject='%s Bridgy %s user: %s %s' %
-                  (verb, feature, source.label(), source.key.string_id()),
-                  body='%s/#%s' % (handler.request.host_url, source.dom_id()))
+
+    log_msg = '%s %s %s %s' % (verb, source.label(), source.key.string_id(),
+                               source.key)
+    logging.info(log_msg)
+    util.email_me(subject=log_msg, body=source.bridgy_url(handler))
 
     # TODO: ugh, *all* of this should be transactional
     source.put()
