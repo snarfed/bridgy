@@ -158,7 +158,7 @@ function send_preview(url) {
   {% endspaceless %}</a>.
 {% endif %}
 
-<form method="post" action="/poll_now">
+<form method="post" action="/poll-now">
   <input name="key" type="hidden" value="{{ source.key.urlsafe }}" />
   <button id="poll-now-button" type="submit" class="btn btn-default">Poll now</button>
 </form>

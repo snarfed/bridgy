@@ -76,7 +76,9 @@ class FrontPageHandler(DashboardHandler):
     # preprocess sources, sort by name
     sources = sorted([self.preprocess_source(s) for s in sources.values()],
                      key=lambda s: (s.name.lower(), s.AS_CLASS.NAME))
-    return {'sources': sources}
+    vars = super(FrontPageHandler, self).template_vars()
+    vars['sources'] = sources
+    return vars
 
 
 class UserHandler(DashboardHandler):
@@ -135,11 +137,13 @@ class UserHandler(DashboardHandler):
       p.pretty_page = util.pretty_link(
         p.key.parent().id(), a_class='original-post', new_tab=True, max_length=30)
 
-    return {'source': self.source,
-            'responses': responses,
-            'publishes': publishes,
-            'epoch': util.EPOCH,
-            }
+    vars = super(UserHandler, self).template_vars()
+    vars.update({'source': self.source,
+                 'responses': responses,
+                 'publishes': publishes,
+                 'epoch': util.EPOCH,
+                 })
+    return vars
 
 
 class AboutHandler(TemplateHandler):
@@ -202,10 +206,22 @@ class DeleteFinishHandler(util.Handler):
     self.redirect(source.bridgy_url(self))
 
 
+class PollNowHandler(util.Handler):
+  def post(self):
+    source = ndb.Key(urlsafe=util.get_required_param(self, 'key')).get()
+    if not source:
+      self.error(400, 'source not found')
+
+    util.add_poll_task(source)
+    self.messages.add("Polling now. Refresh to see what's new!")
+    self.redirect(source.bridgy_url(self))
+
+
 application = webapp2.WSGIApplication(
   [('/?', FrontPageHandler),
    ('/(facebook|googleplus|instagram|twitter)/(.+)/?', UserHandler),
    ('/about/?', AboutHandler),
    ('/delete/start', DeleteStartHandler),
    ('/delete/finish', DeleteFinishHandler),
+   ('/poll-now', PollNowHandler),
    ], debug=appengine_config.DEBUG)
