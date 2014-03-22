@@ -62,7 +62,8 @@ body {
 }
 
 #publishes, #responses, #user {
-  margin-top: 2em;
+  margin-top: 1em;
+  margin-bottom: 1em;
 }
 
 #top, #listening-label, #publishing-label {
@@ -72,11 +73,7 @@ body {
 @media (min-width: 768px) {
   #listen-signup, #listen-ui {
     border-left: 1px solid lightgray;
-  }
-}
-@media (max-width: 767px) {
-  #listen-signup, #listen-ui {
-    border-top: 1px solid lightgray;
+    /* border-top: 1px solid lightgray; */
   }
 }
 
@@ -105,19 +102,13 @@ form input {
   border-spacing: .3em;
 }
 
-#sources > .row > .col-sm-4 {
-  padding: .2em;
-}
-
 @media (min-width: 768px) {
-  #sources > .row, .responses > .row, .publishes > .row {
+  .responses > .row {
     display: table;
-    table-layout: fixed;
+    table-layout: fixed !important;
   }
 
-  #sources > .row > .col-sm-4,
-  .responses > .row > .col-sm-3,
-  .publishes > .row > .col-sm-4 {
+  .responses > .row > .col-sm-3 {
     display: table-cell;
     float: none;
     text-align: left;
@@ -151,11 +142,6 @@ form input {
 .responses, .publishes {
   font-size: .8em;
   list-style: none;
-  /* border: 1px solid lightgray; */
-}
-
-.stub-responses, .stub-publishes {
-  text-align: center;
 }
 
 code {
@@ -175,7 +161,7 @@ label {
 
 button {
   border: 0;
-  background-color: #2a6496;  /* same color as links */
+  background-color: #428BCA;  /* same color as links */
   color: white;
   font-weight: 200;
   padding-top: .2em;
@@ -184,15 +170,6 @@ button {
   padding-right: .5em;
   border-radius: 2px;
 }
-
-#source-url {
-  margin-top: 1em;
-}
-
-/* #preview-ui button:hover, */
-/* #preview-ui button:focus { */
-/*   background-color: #4a74a6; */
-/* } */
 
 #delete-button {
   border-color: red;
@@ -203,13 +180,13 @@ button {
   background-color: #FCC;
 }
 
-#preview-button, #poll-now-button {
-  border-color: blue;
-  color: blue;
+#preview-button, #poll-now-button, #send-button {
+  border-color: #428BCA;
+  color: #428BCA;
 }
 
-#poll-now-button:hover {
-  background-color: #CCF;
+#preview-button:hover, #poll-now-button:hover, #send-button:hover {
+  background-color: #BDE;
 }
 
 #preview .verb {
@@ -217,11 +194,12 @@ button {
 }
 
 #source-url {
-  width: 80%;
+  margin-top: 1em;
+  margin-bottom: 1em;
   padding-left: .3em;
   padding-right: .3em;
   border: 1px solid black;
-  margin-bottom: 1em;
+  font-size: 1em;
 }
 
 #sent pre {
@@ -234,7 +212,7 @@ iframe#twitter-widget-0 {
 }
 
 #footer {
-  margin-top: 1.5em;
+  margin-top: 2em;
   margin-bottom: 1em;
   text-align: right;
   font-size: .8em;
