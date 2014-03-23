@@ -78,7 +78,7 @@ window.onload = function() {
 </head>
 
 <!-- Content starts here -->
-<body>
+<body class="{% block body_class %}{% endblock %}">
 
 {# TODO: javascript to set browser location to / so that reloads are harmless #}
 <div id="messages">
@@ -108,16 +108,47 @@ window.onload = function() {
 <div id="header" class="col-xs-8">
 <p class="big">
 Got a web site?<br />
-Post links to your site on social networks?<br />
-Wish comments and likes showed up on your site?<br />
-<a id="title" href="/">Bridgy</a> copies them back for you.
-{% block below_tagline %}
-{% endblock %}
-</p>
+Want to publish your posts to social networks?<br />
+Want to see comments and likes on your site?<br />
+<a id="title" href="/">Bridgy</a> is for you.
+<a id="more-link" href="#"
+   onclick="toggle('more-link'); toggle('more'); return false;">More...</a>
 </div>
 </div>
 
 <p class="clearfix" />
+
+<div id="more" style="display: none" />
+<p>Bridgy lets you publish to Facebook and Twitter from your own web site!
+Just link to a tweet or post with
+<a href="http://microformats.org/wiki/microformats2">microformats2</a> class
+<a href="http://indiewebcamp.com/comment">u-in-reply-to</a>
+for a comment or @-reply,
+<a href="http://indiewebcamp.com/like">u-like-of</a>
+for a like or favorite,
+<a href="http://indiewebcamp.com/repost">u-repost-of</a>
+for a retweet, or
+<a href="http://indiewebcamp.com/rsvp">p-rsvp</a>
+for an event RSVP. Or omit the link to publish a new post or tweet.</p>
+
+<p>You can use the interface below to preview and publish manually, or you can
+send a <a href="http://webmention.org/">webmention</a>
+to <code>brid.gy/publish/webmention</code> with
+target <code>brid.gy/publish/facebook</code> or
+<code>brid.gy/publish/twitter</code> to publish automatically.</p>
+
+<p>Bridgy also sends
+<a href="http://webmention.org/">webmentions</a> for comments, likes, and
+reshares on Facebook, Twitter, Google+, and Instagram. Bridgy notices when you
+post links, watches for activity on those posts, and sends them back to your
+site as webmentions. It also serves them as
+<a href="http://microformats.org/wiki/microformats2">microformats2</a> for
+webmention targets to read.</p>
+
+<p>You can <a href="/#sources-label">see who's using Bridgy</a>, click on a button
+below to try it yourself, read <a href="/about">even more details</a>, or
+<a href="http://indiewebcamp.com/">learn about the Indieweb</a>.</p>
+</div>
 
 {% block content %}
 {% endblock %}

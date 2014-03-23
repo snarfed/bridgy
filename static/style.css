@@ -57,6 +57,10 @@ body {
   font-size: .7em;
 }
 
+body.about #more-link {
+  display: none;
+}
+
 .row {
   text-align: center;
 }
@@ -103,11 +107,14 @@ form input {
 }
 
 @media (min-width: 768px) {
+  .publishes > .row,
   .responses > .row {
     display: table;
     table-layout: fixed !important;
+    width: 100%;
   }
 
+  .publishes > .row > .col-sm-4,
   .responses > .row > .col-sm-3 {
     display: table-cell;
     float: none;
@@ -139,7 +146,7 @@ form input {
 .glyphicon-remove { color: red !important; }
 .glyphicon-transfer { color: blue; }
 
-.responses, .publishes {
+.publishes, .responses {
   font-size: .8em;
   list-style: none;
 }
@@ -180,6 +187,10 @@ button {
   background-color: #FCC;
 }
 
+#preview-button {
+  margin-top: -.3em;
+}
+
 #preview-button, #poll-now-button, #send-button {
   border-color: #428BCA;
   color: #428BCA;
@@ -194,7 +205,6 @@ button {
 }
 
 #source-url {
-  margin-top: 1em;
   margin-bottom: 1em;
   padding-left: .3em;
   padding-right: .3em;

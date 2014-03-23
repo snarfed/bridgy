@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 
+{% block body_class %} user {% endblock %}
+
 {% block content %}
 
 <!-- JS for embedding Facebook posts and Twitter tweets -->
@@ -111,20 +113,24 @@ function send_preview(url) {
 <div id="publish-ui" class="col-sm-6">
 
 <form id="preview-ui" method="post" name="preview" action="/publish/preview">
- <p id="publishing-label" class="big">
-  <label for="source"> Ready to <span class="verb">publish</span>. Enter post URL:
-  </label></p>
+ <p class="big" id="publishing-label">
+  Ready to <span class="verb">publish</span>.
+  <form method="post" action="/delete/start">
+    <input name="key" type="hidden" value="{{ source.key.urlsafe }}" />
+    <input name="feature" type="hidden" value="publish" />
+    <button id="delete-button" type="submit" class="btn btn-default"
+      title="Disable publishing for this account. (Won't delete posts you've already published.)"
+      >Disable</button>
+  </form>
+ </p>
+
+ <p><label for="source" class="big">Enter post URL:</label>
  <input id="source-url" name="source" type="text" alt="Source URL"></input>
  <input name="target" type="hidden"
         value="http://brid.gy/publish/{{ source.SHORT_NAME }}"></input>
  <button id="preview-button" type="submit" class="btn btn-default"
          onclick="do_preview('{{ source.SHORT_NAME }}'); return false;"
          >Preview</button>
-</form>
-<form method="post" action="/delete/start">
-  <input name="key" type="hidden" value="{{ source.key.urlsafe }}" />
-  <input name="feature" type="hidden" value="publish" />
-  <button id="delete-button" type="submit" class="btn btn-default">Disable</button>
 </form>
 </div>
 
@@ -141,7 +147,9 @@ function send_preview(url) {
 <p id="listening-label"><span class="verb">Listening</span> for responses.
   <input name="key" type="hidden" value="{{ source.key.urlsafe }}" />
   <input name="feature" type="hidden" value="listen" />
-  <button id="delete-button" type="submit" class="btn btn-default">Disable</button>
+  <button id="delete-button" type="submit" class="btn btn-default"
+    title="Disable sending responses for this account. (Won't delete responses you've already received.)"
+    >Disable</button>
 </p>
 </form>
 
@@ -240,10 +248,10 @@ function send_preview(url) {
 <ul class="publishes">
   {% for publish in publishes %}
   <li class="row">
-   <div class="col-xs-4">
+   <div class="col-sm-4">
      {{ publish.pretty_page|safe }}
 
-   </div><div class="col-xs-4">
+   </div><div class="col-sm-4">
     <a href="/log?start_time={{ publish.updated|date:'U' }}&key={{ publish.key.urlsafe }}">
       {{ publish.updated|timesince }} ago
       {% if publish.status == 'failed' %}
@@ -253,7 +261,7 @@ function send_preview(url) {
       {% endif %}{% endif %}
     </a>
 
-   </div><div class="col-xs-4">
+   </div><div class="col-sm-4">
      {% if publish.published.url %}
        <a href="{{ publish.published.url }}">
      {% endif %}
@@ -261,6 +269,9 @@ function send_preview(url) {
      {% if publish.published.url %}
        </a>
      {% endif %}
+
+   </div><div class="col-sm-4">
+     foo
    </div>
   </li>
   {% endfor %}
