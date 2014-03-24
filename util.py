@@ -16,6 +16,7 @@ from google.appengine.api import taskqueue
 EPOCH = datetime.datetime.utcfromtimestamp(0)
 POLL_TASK_DATETIME_FORMAT = '%Y-%m-%d-%H-%M-%S'
 FAILED_RESOLVE_URL_CACHE_TIME = 60 * 60 * 24  # a day
+FRONT_PAGE_MEMCACHE_KEY = '_front_page'
 
 # Known domains that don't support webmentions. Mainly just the silos.
 WEBMENTION_BLACKLIST = (
@@ -176,6 +177,7 @@ class Handler(webapp2.RequestHandler):
         self.redirect('/')
         return
 
+      memcache.delete(FRONT_PAGE_MEMCACHE_KEY)
       source = source_cls.create_new(self, auth_entity=auth_entity,
                                      features=[state] if state else [])
       self.redirect(source.bridgy_url(self) if source else '/')

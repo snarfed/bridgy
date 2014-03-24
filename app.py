@@ -28,6 +28,7 @@ from models import Publish, Response, Source
 import util
 from activitystreams.oauth_dropins.webutil.handlers import TemplateHandler
 
+from google.appengine.api import memcache
 from google.appengine.api import users
 from google.appengine.ext import ndb
 from google.appengine.ext.webapp import template
@@ -70,6 +71,10 @@ class FrontPageHandler(DashboardHandler):
     return 'templates/index.html'
 
   def template_vars(self):
+    cached = memcache.get(util.FRONT_PAGE_MEMCACHE_KEY)
+    if cached:
+      return cached
+
     queries = [cls.query() for cls in handlers.SOURCES.values()]
     sources = {source.key.urlsafe(): source for source in itertools.chain(*queries)}
 
@@ -78,6 +83,8 @@ class FrontPageHandler(DashboardHandler):
                      key=lambda s: (s.name.lower(), s.AS_CLASS.NAME))
     vars = super(FrontPageHandler, self).template_vars()
     vars['sources'] = sources
+    memcache.set(util.FRONT_PAGE_MEMCACHE_KEY, vars)
+
     return vars
 
 

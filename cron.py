@@ -16,6 +16,8 @@ from twitter import Twitter
 import util
 import webapp2
 
+from google.appengine.api import memcache
+
 TWITTER_API_USER_LOOKUP = 'https://api.twitter.com/1.1/users/lookup.json?screen_name=%s'
 TOO_OLD = datetime.timedelta(hours=2)
 
@@ -54,6 +56,7 @@ class UpdateTwitterPictures(webapp2.RequestHandler):
       if source.picture != new_pic:
         logging.info('Updating profile picture for %s from %s to %s',
                      source.bridgy_url(self), source.picture, new_pic)
+        memcache.delete(util.FRONT_PAGE_MEMCACHE_KEY)
         source.picture = new_pic
         source.put()
 
