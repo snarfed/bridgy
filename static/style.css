@@ -77,7 +77,6 @@ body.about #more-link {
 @media (min-width: 768px) {
   #listen-signup, #listen-ui {
     border-left: 1px solid lightgray;
-    /* border-top: 1px solid lightgray; */
   }
 }
 
@@ -170,6 +169,7 @@ code {
 }
 
 label {
+  /* override Bootstrap style */
   font-weight: 200;
 }
 
@@ -185,6 +185,10 @@ button {
   border-radius: 2px;
 }
 
+#preview-ui > * {
+  vertical-align: middle;
+}
+
 #delete-button {
   border-color: red;
   color: red;
@@ -192,10 +196,6 @@ button {
 
 #delete-button:hover {
   background-color: #FCC;
-}
-
-#preview-button {
-  margin-top: -.3em;
 }
 
 #preview-button, #poll-now-button, #send-button {
@@ -212,7 +212,6 @@ button {
 }
 
 #source-url {
-  margin-bottom: 1em;
   padding-left: .3em;
   padding-right: .3em;
   border: 1px solid black;

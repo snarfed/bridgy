@@ -112,25 +112,27 @@ function send_preview(url) {
 {% if "publish" in source.features %}
 <div id="publish-ui" class="col-sm-6">
 
-<form id="preview-ui" method="post" name="preview" action="/publish/preview">
- <p class="big" id="publishing-label">
-  Ready to <span class="verb">publish</span>.
-  <form method="post" action="/delete/start">
-    <input name="key" type="hidden" value="{{ source.key.urlsafe }}" />
-    <input name="feature" type="hidden" value="publish" />
-    <button id="delete-button" type="submit" class="btn btn-default"
-      title="Disable publishing for this account. (Won't delete posts you've already published.)"
-      >Disable</button>
-  </form>
- </p>
+<form method="post" action="/delete/start">
+<p class="big" id="publishing-label">
+ Ready to publish.
+   <input name="key" type="hidden" value="{{ source.key.urlsafe }}" />
+   <input name="feature" type="hidden" value="publish" />
+   <button id="delete-button" type="submit" class="btn btn-default"
+     title="Disable publishing for this account. (Won't delete posts you've already published.)"
+     >Disable</button>
+</p>
+</form>
 
- <p><label for="source" class="big">Enter post URL:</label>
+<form method="post" name="preview" action="/publish/preview">
+<p id="preview-ui">
+ <label id="source-label" for="source" class="big">Enter post URL:</label>
  <input id="source-url" name="source" type="text" alt="Source URL"></input>
  <input name="target" type="hidden"
         value="http://brid.gy/publish/{{ source.SHORT_NAME }}"></input>
  <button id="preview-button" type="submit" class="btn btn-default"
          onclick="do_preview('{{ source.SHORT_NAME }}'); return false;"
          >Preview</button>
+</p>
 </form>
 </div>
 
@@ -144,7 +146,7 @@ function send_preview(url) {
 {% if "listen" in source.features %}
 <div id="listen-ui" class="col-sm-6 big">
 <form method="post" action="/delete/start">
-<p id="listening-label"><span class="verb">Listening</span> for responses.
+<p id="listening-label">Listening for responses.
   <input name="key" type="hidden" value="{{ source.key.urlsafe }}" />
   <input name="feature" type="hidden" value="listen" />
   <button id="delete-button" type="submit" class="btn btn-default"
@@ -153,22 +155,24 @@ function send_preview(url) {
 </p>
 </form>
 
-{% if source.last_poll_attempt == epoch %}
-  Not polled yet.
-{% else %}
-  {% if source.status == "error" %}
-   <span title="Error" class="glyphicon glyphicon-exclamation-sign"></span>
-  {% endif %}
-  Polled
-  {% spaceless %}
-  <a href="/log?start_time={{ source.last_poll_attempt|date:'U' }}&key={{ source.key.urlsafe }}">
-    {{ source.last_poll_attempt|timesince }} ago
-  {% endspaceless %}</a>.
-{% endif %}
-
 <form method="post" action="/poll-now">
+<p>
+  {% if source.last_poll_attempt == epoch %}
+    Not polled yet.
+  {% else %}
+    {% if source.status == "error" %}
+     <span title="Error" class="glyphicon glyphicon-exclamation-sign"></span>
+    {% endif %}
+    Polled
+    {% spaceless %}
+    <a href="/log?start_time={{ source.last_poll_attempt|date:'U' }}&key={{ source.key.urlsafe }}">
+      {{ source.last_poll_attempt|timesince }} ago
+    {% endspaceless %}</a>.
+  {% endif %}
+
   <input name="key" type="hidden" value="{{ source.key.urlsafe }}" />
   <button id="poll-now-button" type="submit" class="btn btn-default">Poll now</button>
+</p>
 </form>
 </div>
 

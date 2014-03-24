@@ -203,7 +203,8 @@ class DeleteFinishHandler(util.Handler):
       if feature in source.features:
         source.features.remove(feature)
         source.put()
-      self.messages.add('Deleted %s. Sorry to see you go!' % source.label())
+      self.messages.add('Disabled %sing for %s. Sorry to see you go!' %
+                        (feature, source.label()))
       util.email_me(subject='Deleted Bridgy %s user: %s %s' %
                     (feature, source.label(), source.key.string_id()),
                     body=source.bridgy_url(self))
