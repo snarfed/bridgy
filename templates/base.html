@@ -33,46 +33,6 @@ function toggle(id) {
   var elem = document.getElementById(id);
   elem.style.display = (elem.style.display == "none") ? "block" : "none";
 }
-
-function toggle_ajax(section, source_id) {
-  var id = section + "-" + source_id;
-  if (document.getElementById(id)) {
-    toggle(id);
-    return;
-  }
-  var stub = document.getElementById("stub-" + id);
-  stub.style.display = "block";
-
-  var req = new XMLHttpRequest();
-  req.onload = function() {
-    if (this.status == 200) {
-      stub.id = id;
-      stub.innerHTML = this.responseText;
-    } else if (this.status == 204) {
-      stub.style.display = "none";
-      document.getElementById("link-" + id).innerHTML = "No " + section + " yet";
-    } else {
-      this.onerror();
-    }
-  };
-  req.onerror = function() {
-      stub.innerHTML = "Error fetching " + section +
-        " <span title='Error' class='glyphicon glyphicon-exclamation-sign'></span>";
-  }
-  req.open("get", "/" + section + "?source=" + source_id, true /* async */);
-  req.send();
-}
-
-window.onload = function() {
-  var id = window.location.hash.substr(1);
-  var target = id ? document.getElementById(id) : null;
-  if (target) {
-    window.setTimeout(function() { target.style.backgroundColor = "white"; },
-                      3000 /* ms */);
-    var path = window.location.pathname;
-    toggle_ajax(path == "/publish" ? "publishes" : "responses", id);
-  }
-}
 </script>
 
 </head>
