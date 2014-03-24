@@ -123,6 +123,13 @@ form input {
   }
 }
 
+@media (max-width: 767px) {
+  .publishes > .row,
+  .responses > .row {
+    margin-bottom: 1em;
+  }
+}
+
 .source-buttons, .original-post {
   white-space: nowrap;
 }
