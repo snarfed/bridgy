@@ -94,8 +94,9 @@ class SourceTest(testutil.HandlerTest):
     auth_entity.put()
     self._test_create_new(auth_entity=auth_entity, features=['publish'])
     self.assert_equals(['listen', 'publish'], FakeSource.query().get().features)
-    self.assert_equals({"Updated fake (FakeSource). Refresh to see what's new!"},
-                       self.handler.messages)
+    self.assert_equals(
+      {"Updated fake (FakeSource). Try previewing a post from your web site!"},
+      self.handler.messages)
 
   def test_create_new_publish(self):
     """If a source is publish only, we shouldn't insert a poll task."""

@@ -243,17 +243,15 @@ class Source(StringIdModel):
       # merge some fields
       source.features = set(source.features + existing.features)
       verb = 'Updated'
-      msg = "Updated %s. Refresh to see what's new!"
     else:
       verb = 'Added'
-      msg = "Added %s. Refresh to see what we've found!"
 
-    handler.messages = {msg % source.label()}
-
-    log_msg = '%s %s %s %s' % (verb, source.label(), source.key.string_id(),
-                               source.key)
-    logging.info(log_msg)
-    util.email_me(subject=log_msg, body=source.bridgy_url(handler))
+    blurb = '%s %s' % (verb, source.label())
+    handler.messages = {
+          ("%s. Refresh to see what we've found!" if feature == 'listen' else
+           '%s. Try previewing a post from your web site!') % blurb}
+    logging.info('%s %s', blurb, source.bridgy_url(handler))
+    util.email_me(subject=blurb, body=source.bridgy_url(handler))
 
     # TODO: ugh, *all* of this should be transactional
     source.put()
