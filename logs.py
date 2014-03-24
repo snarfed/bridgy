@@ -43,7 +43,8 @@ class LogHandler(webapp2.RequestHandler):
 
     offset = None
     for log in logservice.fetch(start_time=start_time, end_time=start_time + 120,
-                                offset=offset, include_app_logs=True):
+                                offset=offset, include_app_logs=True,
+                                version_ids=['2', '3', '4', '5', '6', '7']):
       first_lines = '\n'.join([line.message.decode('utf-8') for line in
                                log.app_logs[:min(2, len(log.app_logs))]])
       if log.app_logs and key in first_lines:
