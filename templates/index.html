@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 
+{% block title %}Bridgy{% endblock %}
+
 {% block body_class %} index {% endblock %}
 
 {% block content %}
@@ -18,9 +20,8 @@
 
 {% for source in sources %}
 {% spaceless %}
-<a href="/{{ source.SHORT_NAME }}/{{ source.key.id }}" class="{{ source.SHORT_NAME }}"
-   {# oddly, source.AS_CLASS doesn't work for Twitter. use kind as fallback. #}
-   title="{{ source.name|safe }} ({% firstof source.AS_CLASS.NAME source.key.kind %})">
+<a href="{{ source.bridgy_path }}" class="{{ source.SHORT_NAME }}"
+   title="{{ source.label|safe }}">
   <img class="profile" src="{{ source.picture }}" width="64px" />
 </a>
 {% endspaceless %}

@@ -106,10 +106,13 @@ class Source(StringIdModel):
 
     return getattr(super(Source, self), name)
 
+  def bridgy_path(self):
+    """Returns the Bridgy page URL path for this source."""
+    return '/%s/%s' % (self.SHORT_NAME,self.key.string_id())
+
   def bridgy_url(self, handler):
     """Returns the Bridgy page URL for this source."""
-    return '%s/%s/%s' % (handler.request.host_url, self.SHORT_NAME,
-                         self.key.string_id())
+    return handler.request.host_url + self.bridgy_path()
 
   def label(self):
     """Human-readable label for this site."""

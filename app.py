@@ -225,6 +225,15 @@ class PollNowHandler(util.Handler):
     self.redirect(source.bridgy_url(self))
 
 
+class RedirectToFrontPageHandler(util.Handler):
+  def get(self, feature):
+    """Redirect to the front page."""
+    self.redirect(util.add_query_params('/', self.request.params.items()),
+                  permanent=True)
+
+  head = get
+
+
 application = webapp2.WSGIApplication(
   [('/?', FrontPageHandler),
    ('/(facebook|googleplus|instagram|twitter)/(.+)/?', UserHandler),
@@ -232,4 +241,5 @@ application = webapp2.WSGIApplication(
    ('/delete/start', DeleteStartHandler),
    ('/delete/finish', DeleteFinishHandler),
    ('/poll-now', PollNowHandler),
+   ('/(listen|publish)/?', RedirectToFrontPageHandler),
    ], debug=appengine_config.DEBUG)
