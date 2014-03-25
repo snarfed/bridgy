@@ -15,32 +15,51 @@
 <li><a href="#who">Who are you? Why did you make this?</a></li>
 <li><a href="#history">How long has this been around?</a></li>
 <li><a href="#stats">How big is this?</a></li>
+<li><a href="#disconnected">Bridgy stopped working for me!</a></li>
+<li><a href="#facebook-expired">Bridgy used to work with my Facebook account,
+  but now it doesn't!</a></li>
+<li><a href="#bug">I found a bug! I have a feature request!</a></li>
+<li><a href="#domain">Brid.gy? Really?</a></li>
+
+<br />
+<p><em>Pulling back responses</em></p>
 <li><a href="#realtime">Bridgy isn't seeing one of my comments or
   likes or reshares!</a></li>
 <li><a href="#public">...but it's been a long time, and Bridgy
   still hasn't seen it!</a></li>
 <li><a href="#twitter-replies">Bridgy isn't seeing one of my Twitter
   replies!</li>
-<li><a href="#disconnected">Bridgy stopped working for me!</a></li>
-<li><a href="#facebook-expired">Bridgy used to work with my Facebook account,
-  but now it doesn't!</a></li>
 <li><a href="#appspot">What are all these brid-gy.appspot.com links
   in the comments that Bridgy sends to my site?</a></li>
 <li><a href="#ssl">OK, fine. But why brid-gy.appspot.com instead of
   brid.gy?</a></li>
-<li><a href="#bug">I found a bug! I have a feature request!</a></li>
-<li><a href="#domain">Brid.gy? Really?</a></li>
+
+<br />
+<p><em>Publishing</em></p>
+<li><a href="#publishing">What do you mean, <em>publishing</em>?</a></li>
+<li><a href="#microformats">How does it decide which parts of my web
+  page to include?</a></li>
+<li><a href="#webmentions">Can I do this automatically, whenever
+  I post something new on my web site?</a></li>
+<li><a href="#reply">How do I comment on a Facebook post or reply
+  to a Twitter tweet from my web site?</a></li>
+<li><a href="#like">How do I like a Facebook post, favorite or
+  retweet a tweet, or RSVP to an event from my web site?</a></li>
+<li><a href="#silos">Why only Facebook and Twitter? Why not Google+ or
+   Instagram?</li>
 </ul>
 
 <br />
-
 <div>
-</p><ul class="about">
 
+<ul class="about">
+
+
+<!-- General -->
 <li id="what" class="question">What is this?</li>
 <li class="answer">
-<p>Bridgy copies comments, likes, and reshares from social networks to your web
-site. If you post links to your site on social networks
+<p>Bridgy copies comments, likes, reshares, and event RSVPs from social networks
+to your web site. If you post links to your site on social networks
 (aka <a href="http://indiewebcamp.com/POSSE">POSSE</a>ing to
 the <a href="http://indiewebcamp.com/silos">silos</a>), and people interact with
 those links, Bridgy <a href="http://indiewebcamp.com/backfeed">backfeeds</a>
@@ -151,6 +170,49 @@ not very polished. I launched the current version with webmention support on Dec
 </ul></p>
 </li>
 
+<li id="disconnected" class="question">Bridgy stopped working for me!</li>
+<li class="answer">
+<p>Does your Bridgy user page have a
+<span class="glyphicon glyphicon-pause"></span> icon on it? If so, Bridgy has
+lost access to your account. This can happen when you change your password, when
+Bridgy's access expires or is revoked, or for other reasons.</p>
+<p>To fix this, just click on the
+<span class="glyphicon glyphicon-pause"></span> icon on your user page.
+</p></li>
+
+<li id="facebook-expired" class="question">Bridgy used to work with my Facebook
+  account, but now it doesn't!</li>
+<li class="answer">
+<p>Facebook <a href="https://developers.facebook.com/docs/roadmap/completed-changes/offline-access-removal/">only
+lets apps access your account for two months at a time</a>. That time period
+automatically extends when you interact with an app yourself, but Bridgy works
+in the background, without user interaction. So, you'll need to come back every
+two months and log into Facebook again to renew its access to your account.</p>
+
+<p>Don't worry! You don't need to remember to do this yourself. Bridgy will send
+you a notification on Facebook when you need to renew. Just click on the
+notification, and you'll be set for another two months.
+</p></li>
+
+<li id="bug" class="question">I found a bug! I have a feature request!</li>
+<li class="answer">
+<p>Great! Thank you! Feel free
+to <a href="https://github.com/snarfed/bridgy/issues">file it in GitHub</a>,
+or <a href="https://snarfed.org/about">send me an email</a>.
+</p>
+</li>
+
+<li id="domain" class="question">Brid.gy? Really?</li>
+<li class="answer">
+<p>Yeah, I know. I'm not proud of the cutesy domain name either. Just go with it.
+</p>
+</li>
+
+
+<!-- Listen -->
+<br />
+<h3 id="listen">Pulling back responses</h3>
+
 <li id="realtime" class="question">Bridgy isn't seeing one of my comments or
   likes or reshares!</li>
 <li class="answer">
@@ -194,30 +256,6 @@ find its replies. That means it can't always find replies that omit the
 @-mention.
 </p></li>
 
-<li id="disconnected" class="question">Bridgy stopped working for me!</li>
-<li class="answer">
-<p>Find your account on the <a href="/">front page</a>. Does it have a
-<span class="glyphicon glyphicon-pause"></span> icon next to it? If so, Bridgy
-has lost access to your account. This can happen when you change your password,
-when Bridgy's access expires or is revoked, or for other reasons.</p>
-<p>To fix this, just click on the <span class="glyphicon
-glyphicon-pause"></span> icon next to your account.
-</p></li>
-
-<li id="facebook-expired" class="question">Why does Bridgy's access to my
-Facebook account expire after two months?</li>
-<li class="answer">
-<p>Facebook <a href="https://developers.facebook.com/docs/roadmap/completed-changes/offline-access-removal/">only
-lets apps access your account for two months at a time</a>. That time period
-automatically extends when you interact with an app yourself, but Bridgy works
-in the background, without user interaction. So, you'll need to come back every
-two months and log into Facebook again to renew its access to your account.</p>
-
-<p>Don't worry! You don't need to remember to do this yourself. Bridgy will send
-you a notification on Facebook when you need to renew. Just click on the
-notification, and you'll be set for another two months.
-</p></li>
-
 <li id="appspot" class="question">What are all these brid-gy.appspot.com links
 in the responses that Bridgy sends to my site?</li>
 <li class="answer">
@@ -256,19 +294,153 @@ server that receives it also needs to understand SNI,
 it for webmention sources in order to be as compatible as possible.
 </p></li>
 
-<li id="bug" class="question">I found a bug! I have a feature request!</li>
+
+<!-- Publish -->
+<br />
+<h3 id="publish">Publishing</h3>
+
+<li id="publishing" class="question">What do you mean, <em>publishing</em>?</li>
 <li class="answer">
-<p>Great! Thank you! Feel free
-to <a href="https://github.com/snarfed/bridgy/issues">file it in GitHub</a>,
-or <a href="https://snarfed.org/about">send me an email</a>.
+<p>People often post something on their web site, then post a link to it on
+Facebook or Twitter so that other people will see it. The
+<a href="http://indiewebcamp.com/">IndieWeb</a> community calls this
+<a href="http://indiewebcamp.com/POSSE">POSSE</a>. There are
+<a href="http://indiewebcamp.com/why">lots of different reasons</a> to do this,
+but one of the biggest is <em>owning your data</em>. Bridgy lets you do this
+faster, more effectively, and even automatically!</p>
+<p>You can try it right now. Once you're signed up to publish, plug the URL for
+one of your posts into the text box on your Bridgy user page, then hit
+the <em>Preview</em> button. You'll see a preview of what your post would look
+like as a Facebook post or Twitter tweet. If you like it, click <em>Send</em>
+and Bridgy will post it for you.</p>
+<p>It's not just for posts or tweets, either! You can use Bridgy to publish
+Twitter <a href="#reply">@-replies</a>,
+<a href="#repost">retweets</a>, and
+<a href="#like">favorites</a> and Facebook
+<a href="#reply">comments</a>,
+<a href="#like">likes</a>, and even
+<a href="#rsvp">event RSVPs</a>!
+</li>
+
+<li id="microformats" class="question">How does it decide which parts of my web
+  page to include?</li>
+<li class="answer">
+<p>Magic! Most major blog engines and CMSes are supported out of the box, no
+setup necessary. Specifically, Bridgy looks for
+<a href="http://microformats.org/">microformats</a> in your HTML, first
+the
+<a href="http://microformats.org/wiki/microformats2">microformats2</a>
+<code>e-content</code> class and then the legacy <code>entry-content</code>
+class. It also understands more advanced microformats2 classes like
+<a href="http://microformats.org/wiki/rel-in-reply-to"><code>in-reply-to</code></a>,
+<a href="http://indiewebcamp.com/like"><code>u-like-of</code></a>, and
+<a href="http://indiewebcamp.com/rsvp"><code>p-rsvp</code></a>. Details below.
+</p>
+<p>Here's an example:
+
+<pre>&lt;div class="h-entry"&gt;&lt;p class="e-content"&gt;
+  Two naked tags walk into a bar. The bartender exclaims, "Hey, you can't come in here without microformats, this is a classy joint!"
+&lt;/p&gt;&lt;/div&gt;
+</pre>
 </p>
 </li>
 
-<li id="domain" class="question">Brid.gy? Really?</li>
+<li id="webmentions" class="question">Can I do this automatically, whenever
+  I post something new on my web site?</li>
 <li class="answer">
-<p>Yeah, I know. I'm not proud of the cutesy domain name either. Just go with it.
+<p>Definitely! Just send a <a href="http://www.webmention.org/">webmention</a>.
+Your server may already be able to do it automatically. Webmentions are pretty
+new, but <a href="http://indiewebcamp.com/webmention#Publishing_Software">more
+and more web servers</a> are adding support for them. If you're not sure whether
+your server can send webmentions, feel free
+to <a href="http://indiewebcamp.com/IRC">ask on #indiewebcamp</a>, or you can
+even write a script to
+<a href="http://indiewebcamp.com/webmention#How_to_Test_Webmentions">send them
+yourself</a>. It's just a single HTTP request!
+</p>
+<p>Bridgy has two webmention endpoints: <code>brid.gy/publish/facebook</code> and
+<code>brid.gy/publish/twitter</code>. You can use one or both, depending on
+which social network you want to publish to. If your server sends webmentions,
+just include one or both of these invisible links in your post to publish
+automatically!
+<pre>&lt;a href="http://brid.gy/publish/facebook"&gt;&lt;/a&gt;
+&lt;a href="http://brid.gy/publish/twitter"&gt;&lt;/a&gt;
+</pre>
 </p>
 </li>
+
+<li id="reply" class="question">How do I comment on a Facebook post or reply
+  to a Twitter tweet from my web site?</li>
+<li class="answer">
+<p>
+Easy! Put the comment or reply in a new post on your web site, and include a
+link to the post or tweet you're replying to with class
+<code><a href="http://microformats.org/wiki/rel-in-reply-to">
+u-in-reply-to</a></code>, as if you were publishing a normal
+<a href="http://indiewebcamp.com/comment">IndieWeb reply</a>. For example:
+
+<pre>&lt;div class="h-entry"&gt;
+  &lt;p class="e-content"&gt;@schnarfed Highly entertaining. Please subscribe me to your newsletter.&lt;/p&gt;
+  &lt;a class="u-in-reply-to" href="https://twitter.com/schnarfed/status/448205453911015425"&gt;&lt;/a&gt;
+&lt;/div&gt;
+</pre>
+
+The link doesn't need to have any visible text in it. However, if you're replying to a
+tweet, you do need to
+<a href="https://support.twitter.com/articles/14023-what-are-replies-and-mentions">@-mention</a>
+its author. Then publish your post via the Bridgy UI or a webmention like
+normal!
+</p>
+</li>
+
+<li id="like" class="question">How do I like a Facebook post, favorite or
+  retweet a tweet, or RSVP to an event from my web site?</li>
+<li class="answer">
+<p>
+Liking, RSVPing, favoriting, and retweeting are almost exactly the
+<a href="#reply">same as replying</a>. The only difference is that you use
+<code><a href="http://indiewebcamp.com/like">u-like-of</a></code>
+for a like or favorite,
+<code><a href="http://indiewebcamp.com/repost">u-repost-of</a></code> for a
+retweet,
+or <code><a href="http://indiewebcamp.com/rsvp">p-rsvp</a></code> for an
+RSVP.
+
+<pre>
+&lt;a class="u-like-of" href="https://www.facebook.com/snarfed.org/posts/10100971276366173"&gt;&lt;/a&gt;
+</pre>
+
+<pre>
+&lt;a class="u-repost-of" href="https://twitter.com/schnarfed/status/448205453911015425"&gt;&lt;/a&gt;
+</pre>
+
+<pre>
+&lt;data class="p-rsvp" value="yes"&gt;I'm in!&lt;/data&gt;
+&lt;a class="u-in-reply-to" href="https://www.facebook.com/events/1409507205977978/"&gt;&lt;/a&gt;
+</pre>
+</p>
+</li>
+
+<li id="silos" class="question">Why only Facebook and Twitter? Why not Google+ or
+   Instagram?</li>
+<li class="answer">
+<p>Sadly, <a href="https://developers.google.com/+/api/">Google+'s API</a>
+doesn't support posting or commenting, and
+<a href="http://instagram.com/developer/endpoints/comments/#post_media_comments">Instagram's API</a>
+requires
+<a href="https://docs.google.com/spreadsheet/viewform?formkey=dFNydmNsUUlEUGdySWFWbGpQczdmWnc6MQ">manual approval</a>
+for commenting and liking. Shameless plug: check out
+<a href="http://ownyourgram.com/">#OwnYourGram</a> for an Instagram alternative!
+</p>
+</li>
+<!-- <a href="https://support.twitter.com/articles/14023-what-are-replies-and-mentions">Twitter @-reply</a>, -->
+<!-- <a href="https://www.facebook.com/help/499181503442334/">Facebook comment</a>, -->
+<!-- <a href="https://support.twitter.com/articles/77606-faqs-about-retweets-rt">Twitter retweets</a>, -->
+<!-- and -->
+<!-- <a href="https://support.twitter.com/articles/20169874-favoriting-a-tweet#">Twitter favorite</a> -->
+<!-- and  -->
+<!-- <a href="https://www.facebook.com/help/www/452446998120360">Facebook like</a>, and even -->
+<!-- <a href="https://www.facebook.com/help/201140859928818">Facebook event RSVP</a>! -->
 
 </ul>
 
