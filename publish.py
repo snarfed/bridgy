@@ -263,8 +263,8 @@ class WebmentionLinkHandler(webapp2.RequestHandler):
 <html><head>
 <link rel="webmention" href="%s/publish/webmention">
 </head>
-<body>Nothing here! Try <a href="%s">%s</a>.</body>
-<html>""" % (self.request.host_url, self.request.host_url, appengine_config.HOST))
+<body>Nothing here! <a href="/about#publish">Try the docs instead.</a></body>
+<html>""" % self.request.host_url)
 
 
 application = webapp2.WSGIApplication([
