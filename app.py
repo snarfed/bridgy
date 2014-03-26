@@ -73,6 +73,7 @@ class FrontPageHandler(DashboardHandler):
   def template_vars(self):
     cached = memcache.get(util.FRONT_PAGE_MEMCACHE_KEY)
     if cached:
+      logging.info('Using cached template variables')
       return cached
 
     queries = [cls.query() for cls in handlers.SOURCES.values()]
@@ -83,6 +84,7 @@ class FrontPageHandler(DashboardHandler):
                      key=lambda s: (s.name.lower(), s.AS_CLASS.NAME))
     vars = super(FrontPageHandler, self).template_vars()
     vars['sources'] = sources
+    logging.info('Computed template variables, storing them in memcache')
     memcache.set(util.FRONT_PAGE_MEMCACHE_KEY, vars)
 
     return vars
