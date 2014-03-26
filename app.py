@@ -157,6 +157,9 @@ class UserHandler(DashboardHandler):
 
 
 class AboutHandler(TemplateHandler):
+  def head(self):
+    """Return an empty 200 with no caching directives."""
+
   def template_file(self):
     return 'templates/about.html'
 
