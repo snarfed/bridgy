@@ -269,6 +269,11 @@ class Response(StringIdModel):
   """
   STATUSES = ('new', 'processing', 'complete', 'error')
 
+  # Temporary turn off memcache caching for Response entities.
+  # TODO: re-enable once I've trimmed activity_json.
+  # https://github.com/snarfed/bridgy/issues/68
+  _use_memcache = False
+
   # ActivityStreams JSON activity and comment, like, or repost
   type = ndb.StringProperty(choices=VERB_TYPES, default='comment')
   activity_json = ndb.TextProperty()
