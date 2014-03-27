@@ -164,7 +164,7 @@ class Poll(webapp2.RequestHandler):
     #
     # Step 2: extract responses, store activity in response['activity']
     #
-    responses = []
+    responses = {}
     for activity in activities:
       # extract activity id and maybe replace stored last activity id
       id = activity.get('id')
@@ -192,28 +192,33 @@ class Poll(webapp2.RequestHandler):
 
       # drop responses without ids
       for resp in replies + likes + reposts + rsvps:
-        if resp.get('id'):
+        id = resp.get('id')
+        if id:
           resp['activity'] = activity
-          responses.append(resp)
+          responses[id] = resp
         else:
           logging.error('Skipping response without id: %s', resp)
 
     #
     # Step 3: filter out existing responses
     #
-    # this is a batch datastore call to see which responses already exist in
-    # the datastore. get_multi() returns full entities, which i'd rather
-    # avoid. an alternative would be a keys only query with a filter on key:
-    # http://stackoverflow.com/a/11104457/186123 ...but for small entities,
-    # fetching the full entity data is basically free once the datastore has
-    # seeked to the key.
-    existing = ndb.get_multi(ndb.Key(Response, r['id']) for r in responses)
-    new_responses = [r for r, e in zip(responses, existing) if e is None]
+    # this is a batch datastore call to see which responses already exist in the
+    # datastore. get_multi() returns full entities, which i'd rather avoid, even
+    # if for small entities, fetching the full entity data is basically free
+    # once the datastore has seeked to the key.
+    #
+    # insteaad, use a keys only query with a filter on key:
+    # http://stackoverflow.com/a/11104457/186123
+    if responses:
+      for existing in Response.query(
+        Response._key.IN([ndb.Key(Response, id) for id in responses])
+        ).iter(keys_only=True):
+        del responses[existing.id()]
 
     #
     # Step 4: attempt to send webmentions for new responses
     #
-    for resp in new_responses:
+    for id, resp in responses.items():
       activity = resp.pop('activity')
       targets = activity.get('targets')
       if targets is None:
@@ -221,7 +226,7 @@ class Poll(webapp2.RequestHandler):
         logging.info('%s has %d original post URL(s): %s', activity.get('url'),
                      len(targets), ' '.join(targets))
 
-      Response(id=resp['id'],
+      Response(id=id,
                source=source.key,
                activity_json=json.dumps(util.prune_activity(activity)),
                response_json=json.dumps(resp),
