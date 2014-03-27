@@ -112,6 +112,9 @@ class Poll(webapp2.RequestHandler):
       logging.debug('Using ETag %s, last activity id %s',
                     source.last_activities_etag, source.last_activity_id)
 
+    #
+    # Step 1: fetch activities
+    #
     try:
       response = source.get_activities_response(
         fetch_replies=True, fetch_likes=True, fetch_shares=True, count=50,
@@ -158,6 +161,10 @@ class Poll(webapp2.RequestHandler):
     logging.info('Found %d activities', len(activities))
     last_activity_id = source.last_activity_id
 
+    #
+    # Step 2: extract responses, store activity in response['activity']
+    #
+    responses = []
     for activity in activities:
       # extract activity id and maybe replace stored last activity id
       id = activity.get('id')
@@ -184,40 +191,42 @@ class Poll(webapp2.RequestHandler):
       rsvps = Source.get_rsvps_from_event(obj)
 
       # drop responses without ids
-      responses = []
       for resp in replies + likes + reposts + rsvps:
         if resp.get('id'):
+          resp['activity'] = activity
           responses.append(resp)
         else:
           logging.error('Skipping response without id: %s', resp)
 
-      # this is a batch datastore call to see which responses already exist in
-      # the datastore. get_multi() returns full entities, which i'd rather
-      # avoid. an alternative would be a keys only query with a filter on key:
-      # http://stackoverflow.com/a/11104457/186123 ...but for small entities,
-      # fetching the full entity data is basically free once the datastore has
-      # seeked to the key.
-      existing = ndb.get_multi(ndb.Key(Response, r['id']) for r in responses)
-      new_responses = [r for r, e in zip(responses, existing) if e is None]
+    #
+    # Step 3: filter out existing responses
+    #
+    # this is a batch datastore call to see which responses already exist in
+    # the datastore. get_multi() returns full entities, which i'd rather
+    # avoid. an alternative would be a keys only query with a filter on key:
+    # http://stackoverflow.com/a/11104457/186123 ...but for small entities,
+    # fetching the full entity data is basically free once the datastore has
+    # seeked to the key.
+    existing = ndb.get_multi(ndb.Key(Response, r['id']) for r in responses)
+    new_responses = [r for r, e in zip(responses, existing) if e is None]
 
-      # short circuit to next activity if none are left to avoid unnecessary
-      # extra work resolving original post URLs, etc.
-      if not new_responses:
-        continue
+    #
+    # Step 4: attempt to send webmentions for new responses
+    #
+    for resp in new_responses:
+      activity = resp.pop('activity')
+      targets = activity.get('targets')
+      if targets is None:
+        targets = activity['targets'] = get_webmention_targets(activity)
+        logging.info('%s has %d original post URL(s): %s', activity.get('url'),
+                     len(targets), ' '.join(targets))
 
-      targets = get_webmention_targets(activity)
-      logging.info('%s has %d reply(ies), %d like(s), %d repost(s), and '
-                   '%d original post URL(s): %s',
-                   activity.get('url'), len(replies), len(likes), len(reposts),
-                   len(targets), ' '.join(targets))
-
-      for resp in new_responses:
-        Response(id=resp['id'],
-                 source=source.key,
-                 activity_json=json.dumps(activity),
-                 response_json=json.dumps(resp),
-                 unsent=list(targets),
-                 ).get_or_save()
+      Response(id=resp['id'],
+               source=source.key,
+               activity_json=json.dumps(util.prune_activity(activity)),
+               response_json=json.dumps(resp),
+               unsent=list(targets),
+               ).get_or_save()
 
     source.last_polled = source.last_poll_attempt
     source.status = 'enabled'

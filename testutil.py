@@ -212,9 +212,19 @@ class ModelsTest(HandlerTest):
     self.responses = []
     for activity in self.activities:
       obj = activity['object']
+      pruned_activity = {
+        'id': activity['id'],
+        'object': {
+          'objectType': 'note',
+          'id': obj['id'],
+          'url': 'http://source/post/url',
+          'content': 'foo http://target1/post/url bar',
+          'to': [{'objectType':'group', 'alias':'@public'}],
+          }
+        }
       for response_obj in obj['replies']['items'] + obj['tags']:
         self.responses.append(Response(id=response_obj['id'],
-                                       activity_json=json.dumps(activity),
+                                       activity_json=json.dumps(pruned_activity),
                                        response_json=json.dumps(response_obj),
                                        source=self.sources[0].key,
                                        unsent=['http://target1/post/url']))

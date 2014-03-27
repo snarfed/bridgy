@@ -131,6 +131,24 @@ def get_webmention_target(url):
   return (url, True)
 
 
+def prune_activity(activity):
+  """Returns an activity dict with just the id, url, content, and to fields.
+
+  Also preserves the object field, if it exists, and prunes it down to the same
+  fields.
+
+  Args:
+    activity: ActivityStreams activity dict
+
+  Returns: pruned activity dict
+  """
+  pruned = {k: activity.get(k) for k in ('id', 'url', 'content')}
+  obj = activity.get('object')
+  if obj:
+    pruned['object'] = prune_activity(obj)
+  return trim_nulls(pruned)
+
+
 class Handler(webapp2.RequestHandler):
   """Includes misc request handler utilities.
 
