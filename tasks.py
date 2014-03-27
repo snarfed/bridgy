@@ -32,6 +32,7 @@ import facebook
 import googleplus
 import instagram
 import models
+from models import Response
 import twitter
 import util
 
@@ -178,19 +179,26 @@ class Poll(webapp2.RequestHandler):
       obj = activity.get('object') or activity
       replies = obj.get('replies', {}).get('items', [])
       tags = obj.get('tags', [])
-      likes = [t for t in tags if models.Response.get_type(t) == 'like']
-      reposts = [t for t in tags if models.Response.get_type(t) == 'repost']
+      likes = [t for t in tags if Response.get_type(t) == 'like']
+      reposts = [t for t in tags if Response.get_type(t) == 'repost']
       rsvps = Source.get_rsvps_from_event(obj)
-      responses = replies + likes + reposts + rsvps
 
-      # drop existing responses
-      new_responses = []
-      for resp in responses:
-        id = resp.get('id')
-        if not id:
+      # drop responses without ids
+      responses = []
+      for resp in replies + likes + reposts + rsvps:
+        if resp.get('id'):
+          responses.append(resp)
+        else:
           logging.error('Skipping response without id: %s', resp)
-        elif models.Response.get_by_id(id) is None:
-          new_responses.append(resp)
+
+      # this is a batch datastore call to see which responses already exist in
+      # the datastore. get_multi() returns full entities, which i'd rather
+      # avoid. an alternative would be a keys only query with a filter on key:
+      # http://stackoverflow.com/a/11104457/186123 ...but for small entities,
+      # fetching the full entity data is basically free once the datastore has
+      # seeked to the key.
+      existing = ndb.get_multi(ndb.Key(Response, r['id']) for r in responses)
+      new_responses = [r for r, e in zip(responses, existing) if e is None]
 
       # short circuit to next activity if none are left to avoid unnecessary
       # extra work resolving original post URLs, etc.
@@ -198,19 +206,18 @@ class Poll(webapp2.RequestHandler):
         continue
 
       targets = get_webmention_targets(activity)
-      if targets or new_responses:
-        logging.info('%s has %d reply(ies), %d like(s), %d repost(s), and '
-                     '%d original post URL(s): %s',
-                     activity.get('url'), len(replies), len(likes), len(reposts),
-                     len(targets), ' '.join(targets))
+      logging.info('%s has %d reply(ies), %d like(s), %d repost(s), and '
+                   '%d original post URL(s): %s',
+                   activity.get('url'), len(replies), len(likes), len(reposts),
+                   len(targets), ' '.join(targets))
 
       for resp in new_responses:
-        models.Response(id=resp['id'],
-                        source=source.key,
-                        activity_json=json.dumps(activity),
-                        response_json=json.dumps(resp),
-                        unsent=list(targets),
-                        ).get_or_save()
+        Response(id=resp['id'],
+                 source=source.key,
+                 activity_json=json.dumps(activity),
+                 response_json=json.dumps(resp),
+                 unsent=list(targets),
+                 ).get_or_save()
 
     source.last_polled = source.last_poll_attempt
     source.status = 'enabled'
@@ -387,7 +394,7 @@ class Propagate(webapp2.RequestHandler):
     Returns True on success, False otherwise.
 
     Args:
-      response: models.Response
+      response: Response
     """
     existing = response.key.get()
     if existing is None:
@@ -410,7 +417,7 @@ class Propagate(webapp2.RequestHandler):
     """Attempts to unlease the response entity.
 
     Args:
-      response: models.Response
+      response: Response
       new_status: string
     """
     existing = response.key.get()
