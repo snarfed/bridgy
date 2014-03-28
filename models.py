@@ -215,6 +215,7 @@ class Source(StringIdModel):
       url = actor.get('url')
       ok = False
       if url:
+        url = url.split()[0]
         resolved, domain, ok = util.get_webmention_target(url)
         if ok:
           source.domain = domain
