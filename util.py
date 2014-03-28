@@ -74,8 +74,8 @@ def email_me(**kwargs):
   try:
     mail.send_mail(sender='admin@brid-gy.appspotmail.com',
                    to='webmaster@brid.gy', **kwargs)
-  except BaseException, e:
-    logging.exception('Error sending notification email', e)
+  except BaseException:
+    logging.exception('Error sending notification email')
 
 
 def follow_redirects(url):

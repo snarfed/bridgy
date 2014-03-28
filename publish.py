@@ -87,10 +87,16 @@ class Handler(util.Handler):
       return self.error('Sorry, %s is not yet supported.' %
                         source_cls.AS_CLASS.NAME)
 
-    # validate, fetch, and parse source
-    msg = 'Could not parse source URL %s' % source_url
+    # fetch source URL
     try:
-      parsed = urlparse.urlparse(source_url)
+      fetched = requests.get(source_url, allow_redirects=True, timeout=HTTP_TIMEOUT)
+    except BaseException:
+      return self.error('Could not fetch source URL %s' % source_url)
+
+    # validate, fetch, and parse source
+    msg = 'Could not parse source URL %s' % fetched.url
+    try:
+      parsed = urlparse.urlparse(fetched.url)
     except BaseException:
       return self.error(msg)
     domain = parsed.netloc
@@ -110,35 +116,29 @@ class Handler(util.Handler):
       return self.error("Could not find <b>%(type)s</b> account for <b>%(domain)s</b>. Check that your %(type)s profile has %(domain)s in its <em>web site</em> or <em>link</em> field, then try signing up again." %
         {'type': source_cls.AS_CLASS.NAME, 'domain': domain})
 
-    self.publish = self.get_or_add_publish_entity(source_url)
+    self.publish = self.get_or_add_publish_entity(fetched.url)
     if self.publish.status == 'complete' and self.publish.type != 'preview':
       return self.error("Sorry, you've already published that page, and Bridgy Publish doesn't yet support updating or deleting existing posts. Ping Ryan if you want that feature!")
 
-    # fetch source URL
-    try:
-      resp = requests.get(source_url, allow_redirects=True, timeout=HTTP_TIMEOUT)
-    except BaseException:
-      return self.error('Could not fetch source URL %s' % source_url)
-
     # parse microformats, convert to ActivityStreams
-    self.publish.html = resp.text
-    data = parser.Parser(doc=resp.text, url=source_url).to_dict()
+    self.publish.html = fetched.text
+    data = parser.Parser(doc=fetched.text, url=fetched.url).to_dict()
     logging.debug('Parsed microformats2: %s', data)
     items = data.get('items', [])
     if not items or not items[0]:
-      return self.error('No microformats2 data found in %s' % source_url,
+      return self.error('No microformats2 data found in %s' % fetched.url,
                         data=data)
 
     obj = microformats2.json_to_object(items[0])
     if 'url' not in obj:
-      obj['url'] = source_url
+      obj['url'] = fetched.url
     logging.debug('Converted to ActivityStreams object: %s', obj)
 
     # posts and comments need content
     if obj.get('objectType') in ('note', 'article', 'comment'):
       contents = items[0].get('properties', {}).get('content', [])
       if not contents or not contents[0] or not contents[0].get('value'):
-        return self.error('Could not find e-content in %s' % source_url, data=data)
+        return self.error('Could not find e-content in %s' % fetched.url, data=data)
 
     try:
       if self.PREVIEW:
@@ -146,7 +146,7 @@ class Handler(util.Handler):
         resp = template.render('templates/preview.html', {
             'source': self.preprocess_source(self.source),
             'preview': preview,
-            'source_url': source_url,
+            'source_url': fetched.url,
             'target_url': target_url,
             'webmention_endpoint': self.request.host_url + '/publish/webmention',
             })

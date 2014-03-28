@@ -28,9 +28,10 @@ class PublishTest(testutil.HandlerTest):
     self.source.put()
     self.mox.StubOutWithMock(requests, 'get', use_mock_anything=True)
 
-  def expect_requests_get(self, url, response):
+  def expect_requests_get(self, url, response, redirects_to=None):
     resp = requests.Response()
     resp._content = response
+    resp.url = redirects_to if redirects_to is not None else url
     requests.get(url, allow_redirects=True, timeout=HTTP_TIMEOUT).AndReturn(resp)
 
   def get_response(self, source=None, target=None, endpoint='/publish/webmention'):
@@ -78,7 +79,8 @@ class PublishTest(testutil.HandlerTest):
             type='preview').put()
 
     html = '<article class="h-entry"><p class="e-content">foo</p></article>'
-    self.expect_requests_get('http://foo.com/', html)
+    for i in range(2):
+      self.expect_requests_get('http://foo.com/', html)
     self.mox.ReplayAll()
 
     # first attempt should work
@@ -98,12 +100,24 @@ class PublishTest(testutil.HandlerTest):
                       target='http://brid.gy/publish/googleplus')
 
   def test_bad_source_url(self):
-    self.assert_error('Could not parse source URL foo', source='foo')
+    self.expect_requests_get('foo.com', 'x')
+    self.mox.ReplayAll()
+    self.assert_error('Could not fetch source URL foo', source='foo')
+
+  def test_source_url_redirects(self):
+    html = '<article class="h-entry"><p class="e-content">foo</p></article>'
+    self.expect_requests_get('http://bar.com', html, redirects_to='http://foo.com')
+    self.mox.ReplayAll()
+    resp = self.get_response(source='http://bar.com')
+    self.assertEquals(200, resp.status_int, resp.body)
 
   def test_source_domain_not_found(self):
-    msg = 'Could not find <b>FakeSource</b> account for <b>foo.com</b>.'
+    for i in range(2):
+      self.expect_requests_get('http://foo.com/', '')
+    self.mox.ReplayAll()
 
     # no source
+    msg = 'Could not find <b>FakeSource</b> account for <b>foo.com</b>.'
     self.source.key.delete()
     self.assert_error(msg)
 
