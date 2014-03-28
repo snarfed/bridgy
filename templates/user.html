@@ -224,6 +224,14 @@ function send_preview(url) {
       {% endif %}{% endif %}
     </a>
 
+    {% if response.status == 'error' %}
+    <form method="post" action="/retry-response">
+      <input name="key" type="hidden" value="{{ response.key.urlsafe }}" />
+      <button id="retry-response-button" type="submit" class="btn btn-default">
+        Retry</button>
+    </form>
+    {% endif %}
+
    </div><div class="col-sm-3">
     {% for label, links in response.links.items %}
       {{ label }}:

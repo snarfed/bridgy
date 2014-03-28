@@ -271,7 +271,7 @@ class Response(StringIdModel):
   # Temporary turn off memcache caching for Response entities.
   # TODO: re-enable once I've trimmed activity_json.
   # https://github.com/snarfed/bridgy/issues/68
-  # _use_memcache = False
+  _use_memcache = False
 
   # ActivityStreams JSON activity and comment, like, or repost
   type = ndb.StringProperty(choices=VERB_TYPES, default='comment')
@@ -310,18 +310,7 @@ class Response(StringIdModel):
                   obj.get('url', '[no url]'))
 
     self.put()
-    taskqueue.add(queue_name='propagate',
-                  params={'response_key': self.key.urlsafe()},
-                  # tasks inserted from a backend (e.g. twitter_streaming) are
-                  # sent to that backend by default, which doesn't work in the
-                  # dev_appserver. setting the target version to 'default' in
-                  # queue.yaml doesn't work either, but setting it here does.
-                  #
-                  # (note the constant. the string 'default' works in
-                  # dev_appserver, but routes to default.brid-gy.appspot.com in
-                  # prod instead of www.brid.gy, which breaks SSL because
-                  # appspot.com doesn't have a third-level wildcard cert.)
-                  target=taskqueue.DEFAULT_APP_VERSION)
+    util.add_propagate_task(self)
     return self
 
   @staticmethod

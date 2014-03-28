@@ -224,11 +224,22 @@ class PollNowHandler(util.Handler):
   def post(self):
     source = ndb.Key(urlsafe=util.get_required_param(self, 'key')).get()
     if not source:
-      self.error(400, 'source not found')
+      self.abort(400, 'source not found')
 
     util.add_poll_task(source)
     self.messages.add("Polling now. Refresh in a minute to see what's new!")
     self.redirect(source.bridgy_url(self))
+
+
+class RetryResponseHandler(util.Handler):
+  def post(self):
+    response = ndb.Key(urlsafe=util.get_required_param(self, 'key')).get()
+    if not response:
+      self.abort(400, 'response not found')
+
+    util.add_propagate_task(response)
+    self.messages.add('Retrying. Refresh in a minute to see the results!')
+    self.redirect(response.source.get().bridgy_url(self))
 
 
 class RedirectToFrontPageHandler(util.Handler):
@@ -247,5 +258,6 @@ application = webapp2.WSGIApplication(
    ('/delete/start', DeleteStartHandler),
    ('/delete/finish', DeleteFinishHandler),
    ('/poll-now', PollNowHandler),
+   ('/retry-response', RetryResponseHandler),
    ('/(listen|publish)/?', RedirectToFrontPageHandler),
    ], debug=appengine_config.DEBUG)

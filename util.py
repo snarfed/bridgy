@@ -51,6 +51,24 @@ def add_poll_task(source, **kwargs):
                         'last_polled': last_polled_str},
                 **kwargs)
 
+
+def add_propagate_task(response, **kwargs):
+  """Adds a propagate task for the given response entity.
+  """
+  taskqueue.add(queue_name='propagate',
+                params={'response_key': response.key.urlsafe()},
+                # tasks inserted from a backend (e.g. twitter_streaming) are
+                # sent to that backend by default, which doesn't work in the
+                # dev_appserver. setting the target version to 'default' in
+                # queue.yaml doesn't work either, but setting it here does.
+                #
+                # (note the constant. the string 'default' works in
+                # dev_appserver, but routes to default.brid-gy.appspot.com in
+                # prod instead of www.brid.gy, which breaks SSL because
+                # appspot.com doesn't have a third-level wildcard cert.)
+                target=taskqueue.DEFAULT_APP_VERSION)
+
+
 def email_me(**kwargs):
   """Thin wrapper around mail.send_mail() that handles errors."""
   try:

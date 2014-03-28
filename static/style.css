@@ -205,12 +205,13 @@ button {
   background-color: #FCC;
 }
 
-#preview-button, #poll-now-button, #send-button {
+#preview-button, #poll-now-button, #retry-response-button, #send-button {
   border-color: #428BCA;
   color: #428BCA;
 }
 
-#preview-button:hover, #poll-now-button:hover, #send-button:hover {
+#preview-button:hover, #poll-now-button:hover, #retry-response-button:hover,
+#send-button:hover {
   background-color: #BDE;
 }
 
