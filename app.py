@@ -38,7 +38,7 @@ import webapp2
 class DashboardHandler(TemplateHandler, util.Handler):
   """Base handler for both the front page and user pages."""
 
-  def head(self):
+  def head(self, *args, **kwargs):
     """Return an empty 200 with no caching directives."""
 
   def post(self, *args, **kwargs):
