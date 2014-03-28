@@ -55,7 +55,7 @@ def get_webmention_targets(activity):
   for tag in obj.get('tags', []):
     url = tag.get('url')
     if url and tag.get('objectType') == 'article':
-      url, send = util.get_webmention_target(url)
+      url, domain, send = util.get_webmention_target(url)
       tag['url'] = url
       if send:
         targets.add(url)
@@ -304,7 +304,7 @@ class Propagate(webapp2.RequestHandler):
       # during the poll or streaming add.
       unsent = set()
       for url in response.unsent + response.error:
-        url, ok = util.get_webmention_target(url)
+        url, _, ok = util.get_webmention_target(url)
         if ok:
           unsent.add(url)
       response.unsent = sorted(unsent)

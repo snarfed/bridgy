@@ -20,7 +20,7 @@ FAILED_RESOLVE_URL_CACHE_TIME = 60 * 60 * 24  # a day
 FRONT_PAGE_MEMCACHE_KEY = '_front_page'
 
 # Known domains that don't support webmentions. Mainly just the silos.
-WEBMENTION_BLACKLIST = (
+WEBMENTION_BLACKLIST = {
   'amzn.com',
   'amazon.com',
   'brid.gy',
@@ -39,7 +39,7 @@ WEBMENTION_BLACKLIST = (
   '', None,
   # individual web sites that fail to fetch on app engine
   'djtymenathanscot.com',
-  )
+  }
 
 
 def add_poll_task(source, **kwargs):
@@ -106,30 +106,29 @@ util.tag_uri = lambda domain, name: _orig_tag_uri(domain, name, year=2013)
 def get_webmention_target(url):
   """Resolves a URL and decides whether we should try to send it a webmention.
 
-  Returns: (string url, boolean) tuple. The boolean is True if we should send a
-  webmention, False otherwise, e.g. if it 's a bad URL, not text/html, in the
-  blacklist, or can't be fetched.
+  Returns: (string url, string pretty domain, boolean) tuple. The boolean is
+    True if we should send a webmention, False otherwise, e.g. if it 's a bad
+    URL, not text/html, in the blacklist, or can't be fetched.
   """
   try:
     urlparse.urlparse(url)
   except BaseException, e:
     logging.warning('Dropping bad URL %s.', url)
-    return (url, False)
+    return (url, None, False)
 
   domain = urlparse.urlparse(url).netloc
   if domain.startswith('www.'):
     domain = domain[4:]
   if domain in WEBMENTION_BLACKLIST:
-    return (url, False)
+    return (url, domain, False)
 
   resolved = follow_redirects(url)
   if resolved.url != url:
     logging.debug('Resolved %s to %s', url, resolved.url)
     url = resolved.url
-  if not resolved.headers.get('content-type', '').startswith('text/html'):
-    return (url, False)
+  is_html = resolved.headers.get('content-type', '').startswith('text/html')
 
-  return (url, True)
+  return (url, domain, is_html)
 
 
 def prune_activity(activity):

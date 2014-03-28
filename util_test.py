@@ -18,6 +18,10 @@ UNICODE_STR = u'a ✁ b'
 
 class UtilTest(testutil.ModelsTest):
 
+  def setUp(self):
+    super(testutil.ModelsTest, self).setUp()
+    util.WEBMENTION_BLACKLIST.add('fa.ke')
+
   def test_follow_redirects(self):
     self.mox.StubOutWithMock(requests, 'head', use_mock_anything=True)
     resp = requests.Response()

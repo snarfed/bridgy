@@ -163,7 +163,7 @@ class ItemHandler(webapp2.RequestHandler):
         if url.startswith('http://snarfed.org/'):
           url_obj['url'] = url = url.replace('http://snarfed.org/',
                                              'http://localhost/')
-      resolved, send = util.get_webmention_target(url)
+      resolved, _, send = util.get_webmention_target(url)
       if send and resolved != url:
         resolved_urls.add(resolved)
 

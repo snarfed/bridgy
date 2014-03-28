@@ -213,27 +213,25 @@ class Source(StringIdModel):
       # TODO: G+ has a multiply-valued 'urls' field. ignoring for now because
       # we're not implementing publish for G+
       url = actor.get('url')
+      ok = False
       if url:
-        try:
-          domain = urlparse.urlparse(url).netloc
-          if domain and domain not in util.WEBMENTION_BLACKLIST:
-            source.domain = domain
-            source.domain_url = url
-        except BaseException, e:
-          logging.error("Not setting domain; could not parse URL %s . %s", url, e)
+        resolved, domain, ok = util.get_webmention_target(url)
+        if ok:
+          source.domain = domain
+          source.domain_url = resolved
 
-    # web site domain is required for publish
-    if feature == 'publish':
-      err = None
-      if not source.domain_url or source.domain == cls.AS_CLASS.DOMAIN:
-        handler.messages = {"Your %s profile is missing the website field. "
-                            "Please add it and try again!" % cls.AS_CLASS.NAME}
-        handler.messages_error = 'error'
-        return None
-      elif not source.domain:
-        handler.messages = {"Could not parse the web site in your %s profile: "
-                            "%s\n Please update it and try again!" %
-                            (cls.AS_CLASS.NAME, source.domain_url)}
+      if feature == 'publish' and not ok:
+        if not url:
+          handler.messages = {'Your %s profile is missing the website field. '
+                              'Please add it and try again!' % cls.AS_CLASS.NAME}
+        elif not domain:
+          handler.messages = {'Could not parse the web site in your %s profile: '
+                              '%s\n Please update it and try again!' %
+                              (cls.AS_CLASS.NAME, url)}
+        else:
+          handler.messages = {"Could not connect to the web site in your %s profile: "
+                              "%s\n Please update it and try again!" %
+                              (cls.AS_CLASS.NAME, url)}
         handler.messages_error = 'error'
         return None
 
