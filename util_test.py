@@ -56,3 +56,15 @@ class UtilTest(testutil.ModelsTest):
     for feature in None, '':
       src = self.handler.maybe_add_or_delete_source(FakeSource, auth_entity, feature)
       self.assertEquals([], src.features)
+
+  def test_prune_activity(self):
+    for orig, expected in (
+      ({'id': 1, 'content': 'X', 'foo': 'bar'}, {'id': 1, 'content': 'X'}),
+      ({'id': 1, 'object': {'objectType': 'note'}}, {'id': 1}),
+      ({'id': 1, 'object': {'url': 'http://xyz'}},) * 2,  # no change
+      ({'to': [{'objectType': 'group', 'alias': '@public'}]}, {}),
+      ({'object': {'to': [{'objectType': 'group', 'alias': '@private'}]}},) * 2,
+      ({'id': 1, 'object': {'id': 1}}, {'id': 1}),
+      ({'id': 1, 'object': {'id': 2}},) * 2,
+      ):
+      self.assert_equals(expected, util.prune_activity(orig))

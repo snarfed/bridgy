@@ -7,6 +7,7 @@ import requests
 import webapp2
 
 from activitystreams.oauth_dropins.webutil.util import *
+from activitystreams import source
 from appengine_config import HTTP_TIMEOUT
 
 from google.appengine.api import mail
@@ -132,20 +133,33 @@ def get_webmention_target(url):
 
 
 def prune_activity(activity):
-  """Returns an activity dict with just the id, url, content, and to fields.
+  """Returns an activity dict with just id, url, content, to, and object.
 
-  Also preserves the object field, if it exists, and prunes it down to the same
-  fields.
+  If the object field exists, it's pruned down to the same fields. Any fields
+  duplicated in both the activity and the object are removed from the object.
+
+  Note that this only prunes the to field if it says the activity is public,
+  since activitystreams.Source.is_public() defaults to saying an activity is
+  public if the to field is missing. If that ever changes, we'll need to
+  start preserving the to field here.
 
   Args:
     activity: ActivityStreams activity dict
 
   Returns: pruned activity dict
   """
-  pruned = {k: activity.get(k) for k in ('id', 'url', 'content')}
+  keep = ['id', 'url', 'content']
+  if not source.Source.is_public(activity):
+    keep += ['to']
+  pruned = {f: activity.get(f) for f in keep}
+
   obj = activity.get('object')
   if obj:
-    pruned['object'] = prune_activity(obj)
+    obj = pruned['object'] = prune_activity(obj)
+    for k, v in obj.items():
+      if pruned.get(k) == v:
+        del obj[k]
+
   return trim_nulls(pruned)
 
 
