@@ -10,7 +10,6 @@
 <li><a href="#what">What is this?</a></li>
 <li><a href="#how">How does it work?</a></li>
 <li><a href="#how">How much does it cost?</a></li>
-<li><a href="#which">Which things does it send, specifically?</a></li>
 <li><a href="#privacy">What do you do with my data?</a></li>
 <li><a href="#who">Who are you? Why did you make this?</a></li>
 <li><a href="#history">How long has this been around?</a></li>
@@ -23,6 +22,7 @@
 
 <br />
 <p><em>Pulling back responses</em></p>
+<li><a href="#which">Which things does it send, specifically?</a></li>
 <li><a href="#realtime">Bridgy isn't seeing one of my comments or
   likes or reshares!</a></li>
 <li><a href="#public">...but it's been a long time, and Bridgy
@@ -58,14 +58,17 @@
 <!-- General -->
 <li id="what" class="question">What is this?</li>
 <li class="answer">
-<p>Bridgy copies comments, likes, reshares, and event RSVPs from social networks
-to your web site. If you post links to your site on social networks
-(aka <a href="http://indiewebcamp.com/POSSE">POSSE</a>ing to
-the <a href="http://indiewebcamp.com/silos">silos</a>), and people interact with
-those links, Bridgy <a href="http://indiewebcamp.com/backfeed">backfeeds</a>
-those interactions to your site.
-<a href="https://snarfed.org/2013-12-07_goodbye-penny-arcade-report#comments">You
-can see an example here.</a>
+
+<p>Bridgy lets you post, comment, like, reshare, and more on social networks
+from your own web site. It also pulls other people's comments, likes, and
+reshares of your posts back to your site. In
+<a href="http://indiewebcamp.com/why">IndieWeb</a> lingo, Bridgy lets you
+<a href="http://indiewebcamp.com/POSSE">POSSE</a> to
+the <a href="http://indiewebcamp.com/silos">silos</a> easily and
+<a href="http://indiewebcamp.com/backfeed">backfeed</a> the responses
+automatically.
+<a href="https://snarfed.org/2013-12-07_goodbye-penny-arcade-report#comments">Check
+out this example!</a>
 </p>
 <p>The <a href="https://snarfed.org/2012-01-08_bridgy_launched">first version of
 Bridgy</a> was released a couple years ago, but only supported backfeeding
@@ -79,14 +82,17 @@ comments to
 <li id="how" class="question">How does it work?</li>
 <li class="answer">
 <p>
-When you add one of your accounts, Bridgy checks it periodically for posts and
-responses to those posts. When it finds a new response, it
-<a href="http://indiewebcamp.com/original-post-discovery">looks for links to
-your web site</a> in the post, then
-sends <a href="http://www.webmention.org/">webmentions</a> to those links. It
-also translates the comment
-to <a href="http://microformats.org/wiki/microformats2">microformats2 HTML</a>
-so that your web site can fetch and parse it.
+When you ask Bridgy to publish a post from your web site, it fetches the post,
+looks for <a href="http://microformats.org/wiki/microformats2">microformats2</a>
+to determine what it is, then publishes it using the social networks' APIs.
+</p>
+<p>
+When you sign up to pull back responses, Bridgy periodically checks your posts
+for
+<a href="http://indiewebcamp.com/original-post-discovery">links to your web
+site</a> and new responses, then sends those responses
+as <a href="http://www.webmention.org/">webmentions</a>. Bridgy also translates
+the responses to microformats2 so that your web site can fetch and parse them.
 </p>
 <p>Bridgy is <a href="https://github.com/snarfed/bridgy">open source</a>. It's
 written in Python and runs on
@@ -111,21 +117,6 @@ contribute, <a href="https://github.com/snarfed/bridgy">jump into the code</a>
 and send me a pull request, or feel free to donate to the
 <a href="http://www.aspca.org/">ASPCA</a> or the
 <a href="https://www.eff.org/">EFF</a> in my name.
-</p></li>
-
-<li id="which" class="question">Which things does it send, specifically?</li>
-<li class="answer">
-<p>Bridgy detects and sends webmentions for:</p>
-<ul>
-<li>Twitter @-replies, retweets, and favorites of your tweets.</li>
-<li>Facebook comments and likes on your posts...but not reshares of them,
-  unfortunately. I haven't yet found a way to get those from Facebook's
-  API.</li>
-<li>Facebook event RSVPs. <a href="http://indiewebcamp.com/rsvp">Details.</a></li>
-<li>Google+ comments, +1s, and reshares of your posts.</li>
-<li>Instagram comments and likes on your pictures.</li>
-</ul>
-</li>
 </p></li>
 
 <li id="privacy" class="question">What do you do with my data?</li>
@@ -212,6 +203,21 @@ or <a href="https://snarfed.org/about">send me an email</a>.
 <!-- Listen -->
 <br />
 <h3 id="listen">Pulling back responses</h3>
+
+<li id="which" class="question">Which things does it send, specifically?</li>
+<li class="answer">
+<p>Bridgy detects and sends webmentions for:</p>
+<ul>
+<li>Twitter @-replies, retweets, and favorites of your tweets.</li>
+<li>Facebook comments and likes on your posts...but not reshares of them,
+  unfortunately. I haven't yet found a way to get those from Facebook's
+  API.</li>
+<li>Facebook event RSVPs. <a href="http://indiewebcamp.com/rsvp">Details.</a></li>
+<li>Google+ comments, +1s, and reshares of your posts.</li>
+<li>Instagram comments and likes on your pictures.</li>
+</ul>
+</li>
+</p></li>
 
 <li id="realtime" class="question">Bridgy isn't seeing one of my comments or
   likes or reshares!</li>
