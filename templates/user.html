@@ -208,10 +208,15 @@ function send_preview(url) {
     {% endwith %}
 
    </div><div class="col-sm-3">
-    {% with response.activity.object as a %}
+    {% with response.activity as a %}
     {% if response.type == "comment" %} on {% endif %}
-    <a target="_blank" href="{{ a.url }}">
-      {{ a.content|default:"--"|striptags|truncatewords:6|safe }}</a>
+    <a target="_blank" href="{% firstof a.url a.object.url %}">
+      {% if a.content %}
+        {{ a.content|striptags|truncatewords:6|safe }}
+      {% else %}
+        {{ a.object.content|default:"--"|striptags|truncatewords:6|safe }}
+      {% endif %}
+    </a>
     {% endwith %}
 
    </div><div class="col-sm-3">
