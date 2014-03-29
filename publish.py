@@ -205,16 +205,16 @@ class Handler(util.Handler):
       source_url: string
     """
     page = models.PublishedPage.get_or_insert(source_url)
-    complete = Publish.query(
+    entity = Publish.query(
       Publish.status == 'complete', Publish.type != 'preview',
       ancestor=page.key).get()
-    if complete:
-      return complete
 
-    entity = Publish(parent=page.key, source=self.source.key)
-    if self.PREVIEW:
-      entity.type = 'preview'
-    entity.put()
+    if not entity:
+      entity = Publish(parent=page.key, source=self.source.key)
+      if self.PREVIEW:
+        entity.type = 'preview'
+      entity.put()
+
     logging.debug('Publish entity: %s', entity.key.urlsafe())
     return entity
 
