@@ -56,7 +56,7 @@ class UpdateTwitterPictures(webapp2.RequestHandler):
       if source.picture != new_pic:
         logging.info('Updating profile picture for %s from %s to %s',
                      source.bridgy_url(self), source.picture, new_pic)
-        memcache.delete(util.FRONT_PAGE_MEMCACHE_KEY)
+        util.CachedFrontPage.invalidate()
         source.picture = new_pic
         source.put()
 

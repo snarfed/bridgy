@@ -70,12 +70,16 @@ class FrontPageHandler(DashboardHandler):
   def template_file(self):
     return 'templates/index.html'
 
-  def template_vars(self):
-    cached = memcache.get(util.FRONT_PAGE_MEMCACHE_KEY)
+  def get(self):
+    self.response.headers['Content-Type'] = self.content_type()
+    cached = util.CachedFrontPage.load()
     if cached:
-      logging.info('Using cached template variables')
-      return cached
+      self.response.write(cached.html)
+    else:
+      super(DashboardHandler, self).get()
+      util.CachedFrontPage.store(self.response.body)
 
+  def template_vars(self):
     queries = [cls.query() for cls in handlers.SOURCES.values()]
     sources = {source.key.urlsafe(): source for source in itertools.chain(*queries)}
 
@@ -84,9 +88,6 @@ class FrontPageHandler(DashboardHandler):
                      key=lambda s: (s.name.lower(), s.AS_CLASS.NAME))
     vars = super(FrontPageHandler, self).template_vars()
     vars['sources'] = sources
-    logging.info('Computed template variables, storing them in memcache')
-    memcache.set(util.FRONT_PAGE_MEMCACHE_KEY, vars)
-
     return vars
 
 

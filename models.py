@@ -314,7 +314,6 @@ class Response(StringIdModel):
     return type if type in VERB_TYPES else 'comment'
 
 
-
 class PublishedPage(StringIdModel):
   """Minimal root entity for Publish children entities with the same source URL.
 

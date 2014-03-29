@@ -13,11 +13,11 @@ from appengine_config import HTTP_TIMEOUT
 from google.appengine.api import mail
 from google.appengine.api import memcache
 from google.appengine.api import taskqueue
+from google.appengine.ext import ndb
 
 EPOCH = datetime.datetime.utcfromtimestamp(0)
 POLL_TASK_DATETIME_FORMAT = '%Y-%m-%d-%H-%M-%S'
 FAILED_RESOLVE_URL_CACHE_TIME = 60 * 60 * 24  # a day
-FRONT_PAGE_MEMCACHE_KEY = '_front_page'
 
 # Known domains that don't support webmentions. Mainly just the silos.
 WEBMENTION_BLACKLIST = {
@@ -226,7 +226,7 @@ class Handler(webapp2.RequestHandler):
         self.redirect('/')
         return
 
-      memcache.delete(FRONT_PAGE_MEMCACHE_KEY)
+      CachedFrontPage.invalidate()
       source = source_cls.create_new(self, auth_entity=auth_entity,
                                      features=[state] if state else [])
       self.redirect(source.bridgy_url(self) if source else '/')
@@ -254,3 +254,31 @@ class Handler(webapp2.RequestHandler):
     if source.picture:
       source.picture = util.update_scheme(source.picture, self)
     return source
+
+
+class CachedFrontPage(ndb.Model):
+  """Cached HTML for the front page, since it changes rarely.
+
+  Stored in the datastore since datastore entities in memcache (mostly
+  Responses) are requested way more often, so it would get evicted
+  out of memcache easily.
+  """
+  ID = 'singleton'
+  html = ndb.TextProperty()
+
+  @classmethod
+  def load(cls):
+    cached = CachedFrontPage.get_by_id(cls.ID)
+    if cached:
+      logging.info('Found cached front page')
+    return cached
+
+  @classmethod
+  def store(cls, html):
+    logging.info('Storing new front page in cache')
+    CachedFrontPage(id=cls.ID, html=html).put()
+
+  @classmethod
+  def invalidate(cls):
+    logging.info('Deleting cached front page')
+    CachedFrontPage(id=cls.ID).key.delete()
