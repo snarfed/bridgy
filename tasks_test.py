@@ -207,6 +207,17 @@ class PollTest(TaskQueueTest):
       ids.add(json.loads(resp_key.get().activity_json)['id'])
     self.assert_equals(ids, set([self.activities[0]['id'], self.activities[2]['id']]))
 
+  def test_no_responses(self):
+    """Handle activities without responses ok.
+    """
+    activities = self.sources[0].get_activities()
+    for a in activities:
+      a['object'].update({'replies': {}, 'tags': []})
+    self.sources[0].set_activities(activities)
+
+    self.post_task()
+    self.assert_equals([], list(models.Response.query()))
+
   def test_existing_responses(self):
     """Poll should be idempotent and not touch existing response entities.
     """

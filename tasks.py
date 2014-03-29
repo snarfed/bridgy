@@ -207,17 +207,23 @@ class Poll(webapp2.RequestHandler):
     # this uses a batch datastore call to see which responses already exist in
     # the datastore. get_multi() returns full entities, which i'd rather
     # avoid.
-    existing = ndb.get_multi(ndb.Key(Response, id) for id in responses.iterkeys())
-    responses = dict(i for i, e in zip(responses.iteritems(), existing) if e is None)
+    # existing = ndb.get_multi(ndb.Key(Response, id) for id in responses.iterkeys())
+    # responses = dict(i for i, e in zip(responses.iteritems(), existing) if e is None)
 
-    # here's an alternative: a keys only query with a filter on key. won't use
+    # here's an alternative: cache existing response ids in memcache, fall back
+    # to datastore keys only query with a filter on key. won't use
     # memcache, since ndb doesn't cache query results, but uses less memory.
     # http://stackoverflow.com/a/11104457/186123
-    # if responses:
-    #   for existing in Response.query(
-    #     Response._key.IN([ndb.Key(Response, id) for id in responses])
-    #     ).iter(keys_only=True):
-    #     del responses[existing.id()]
+    if responses:
+      existing_ids = memcache.get('AR ' + source.bridgy_path())
+      if existing_ids is None:
+        existing = Response.query(
+          Response._key.IN([ndb.Key(Response, id) for id in responses])
+          ).fetch(len(responses), keys_only=True)
+        existing_ids = [util.parse_tag_uri(key.id())[1] for key in existing]
+
+      for id in existing_ids:
+        responses.pop(source.as_source.tag_uri(id), None)
 
     #
     # Step 4: attempt to send webmentions for new responses
@@ -236,6 +242,11 @@ class Poll(webapp2.RequestHandler):
                response_json=json.dumps(resp),
                unsent=list(targets),
                ).get_or_save()
+
+    if responses:
+      # cache newly seen response ids
+      memcache.set('AR ' + source.bridgy_path(),
+          existing_ids + [util.parse_tag_uri(id)[1] for id in responses])
 
     source.last_polled = source.last_poll_attempt
     source.status = 'enabled'
