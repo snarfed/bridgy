@@ -75,6 +75,11 @@ handlers:
   login: admin
   secure: always
 
+- url: /mapreduce(/.*)?
+  script: mapreduce.main.APP
+  login: admin
+  secure: always
+
 - url: .*
   script: app.application
   secure: always
