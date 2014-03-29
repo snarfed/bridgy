@@ -25,5 +25,11 @@ indexes:
 - kind: Response
   properties:
   - name: source
+  - name: created
+    direction: desc
+
+- kind: Response
+  properties:
+  - name: source
   - name: updated
     direction: desc

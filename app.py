@@ -110,7 +110,7 @@ class UserHandler(DashboardHandler):
 
     # Responses
     responses = Response.query().filter(Response.source == self.source.key)\
-                                .order(-Response.updated)\
+                                .order(-Response.created)\
                                 .fetch(10)
     for r in responses:
       r.response = json.loads(r.response_json)
