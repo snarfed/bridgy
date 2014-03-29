@@ -202,18 +202,20 @@ class Poll(webapp2.RequestHandler):
     #
     # Step 3: filter out existing responses
     #
-    # this is a batch datastore call to see which responses already exist in the
-    # datastore. get_multi() returns full entities, which i'd rather avoid, even
-    # if for small entities, fetching the full entity data is basically free
-    # once the datastore has seeked to the key.
-    #
-    # insteaad, use a keys only query with a filter on key:
+    # this uses a batch datastore call to see which responses already exist in
+    # the datastore. get_multi() returns full entities, which i'd rather
+    # avoid.
+    existing = ndb.get_multi(ndb.Key(Response, id) for id in responses.iterkeys())
+    responses = dict(i for i, e in zip(responses.iteritems(), existing) if e is None)
+
+    # here's an alternative: a keys only query with a filter on key. won't use
+    # memcache, since ndb doesn't cache query results, but uses less memory.
     # http://stackoverflow.com/a/11104457/186123
-    if responses:
-      for existing in Response.query(
-        Response._key.IN([ndb.Key(Response, id) for id in responses])
-        ).iter(keys_only=True):
-        del responses[existing.id()]
+    # if responses:
+    #   for existing in Response.query(
+    #     Response._key.IN([ndb.Key(Response, id) for id in responses])
+    #     ).iter(keys_only=True):
+    #     del responses[existing.id()]
 
     #
     # Step 4: attempt to send webmentions for new responses
