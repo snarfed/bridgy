@@ -10,6 +10,7 @@ TODO: check HRD consistency guarantees and change as needed
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import datetime
+import gc
 import json
 import logging
 import random
@@ -105,6 +106,7 @@ class Poll(webapp2.RequestHandler):
       source.status = 'error'
       raise
     finally:
+      gc.collect()  # might help avoid hitting the instance memory limit
       source.put()
 
   def do_post(self, source):
