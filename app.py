@@ -51,18 +51,6 @@ class DashboardHandler(TemplateHandler, util.Handler):
   def content_type(self):
     return 'text/html; charset=utf-8'
 
-  def template_vars(self):
-    vars = super(DashboardHandler, self).template_vars()
-
-    # add messages. force UTF-8 since the msg parameters were encoded as UTF-8
-    # by util.add_query_params().
-    self.request.charset = 'utf-8'
-    vars.update({
-        'msgs': set(m for m in set(self.request.params.getall('msg'))),
-        'msg_error': set(m for m in set(self.request.params.getall('msg_error'))),
-        })
-    return vars
-
 
 class FrontPageHandler(DashboardHandler):
   """Handler for the front page."""

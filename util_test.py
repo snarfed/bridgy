@@ -3,6 +3,7 @@
 """
 
 import json
+import urllib
 import urlparse
 
 import requests
@@ -53,9 +54,8 @@ class UtilTest(testutil.ModelsTest):
     self.assertEquals(['publish'], src.features)
 
     self.assertEquals(302, self.handler.response.status_int)
-    params = urlparse.parse_qs(urlparse.urlparse(
-        self.handler.response.headers['Location']).query)
-    self.assertIn(UNICODE_STR, params['msg'][0].decode('utf-8'))
+    parsed = urlparse.urlparse(self.handler.response.headers['Location'])
+    self.assertIn(UNICODE_STR, urllib.unquote_plus(parsed.fragment).decode('utf-8'))
 
     for feature in None, '':
       src = self.handler.maybe_add_or_delete_source(FakeSource, auth_entity, feature)

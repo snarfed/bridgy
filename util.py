@@ -1,6 +1,7 @@
 """Misc utility constants and classes.
 """
 
+import urllib
 import urlparse
 
 import requests
@@ -191,18 +192,14 @@ class Handler(webapp2.RequestHandler):
   def __init__(self, *args, **kwargs):
     super(Handler, self).__init__(*args, **kwargs)
     self.messages = set()
-    self.messages_error = ''
 
   def redirect(self, uri, **kwargs):
-    """Adds self.messages to the uri as msg= query parameters.
+    """Adds self.messages to the fragment, separated by newlines.
     """
-    params = urlparse.parse_qsl(urlparse.urlparse(uri).fragment)
-    if self.messages and 'msg' not in params:
-      params += [('msg', msg) for msg in self.messages]
-    if self.messages_error:
-      params.append(('msg_error', self.messages_error))
-
-    uri = add_query_params(uri, params)
+    parts = list(urlparse.urlparse(uri))
+    if self.messages and not parts[5]:  # parts[5] is fragment
+      parts[5] = '!' + urllib.quote('\n'.join(self.messages).encode('utf-8'))
+    uri = urlparse.urlunparse(parts)
     super(Handler, self).redirect(uri, **kwargs)
 
   def maybe_add_or_delete_source(self, source_cls, auth_entity, state):

@@ -11,7 +11,7 @@ body {
 }
 
 #messages > p {
-  display: inline;
+  display: none;
   background-color: gold;
   color: #444;
   padding: .5em;

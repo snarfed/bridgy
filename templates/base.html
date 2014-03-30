@@ -33,6 +33,19 @@ function toggle(id) {
   var elem = document.getElementById(id);
   elem.style.display = (elem.style.display == "none") ? "block" : "none";
 }
+
+// Extract messages from the hash and render them
+window.onload = function () {
+  if (window.location.hash.substr(0, 2) == "#!") {
+    var p = document.getElementById("message");
+    p.style.display = "inline";
+    p.innerHTML = decodeURIComponent(
+      window.location.hash.substr(2))  // strip leading #!
+        .replace("\n", "<br />");
+    window.location.hash = "";
+  }
+}
+
 </script>
 
 </head>
@@ -42,9 +55,7 @@ function toggle(id) {
 
 {# TODO: javascript to set browser location to / so that reloads are harmless #}
 <div id="messages">
-{% for msg in msgs %}
-  <p class="{{ msg_error }}">{{ msg }}</p>
-{% endfor %}
+  <p id="message"></p>
 </div>
 
 <main class="tp-main lead container">

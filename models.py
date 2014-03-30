@@ -233,7 +233,6 @@ class Source(StringIdModel):
           handler.messages = {"Could not connect to the web site in your %s profile: "
                               "%s\n Please update it and try again!" %
                               (cls.AS_CLASS.NAME, url)}
-        handler.messages_error = 'error'
         return None
 
     # check if this source already exists
