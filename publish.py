@@ -117,7 +117,8 @@ class Handler(util.Handler):
         {'type': source_cls.AS_CLASS.NAME, 'domain': domain})
 
     self.publish = self.get_or_add_publish_entity(fetched.url)
-    if self.publish.status == 'complete' and self.publish.type != 'preview':
+    if (self.publish.status == 'complete' and self.publish.type != 'preview' and
+        not appengine_config.DEBUG):
       return self.error("Sorry, you've already published that page, and Bridgy Publish doesn't yet support updating or deleting existing posts. Ping Ryan if you want that feature!")
 
     # parse microformats, convert to ActivityStreams
