@@ -112,6 +112,8 @@ class PublishTest(testutil.HandlerTest):
 
     resp = self.get_response(source='http://will/redirect')
     self.assertEquals(200, resp.status_int, resp.body)
+    # check that we include the original link, not the resolved one
+    self.assertEquals('foo - http://will/redirect', json.loads(resp.body)['content'])
 
   def test_source_url_redirects_with_refresh_header(self):
     self.mox.StubOutWithMock(requests, 'head', use_mock_anything=True)
@@ -126,6 +128,8 @@ class PublishTest(testutil.HandlerTest):
 
     resp = self.get_response(source='http://will/redirect')
     self.assertEquals(200, resp.status_int, resp.body)
+    # check that we include the original link, not the resolved one
+    self.assertEquals('foo - http://will/redirect', json.loads(resp.body)['content'])
 
   def test_source_domain_not_found(self):
     # no source

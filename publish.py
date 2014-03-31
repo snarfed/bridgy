@@ -128,7 +128,12 @@ class Handler(util.Handler):
                         data=data)
 
     obj = microformats2.json_to_object(items[0])
-    if 'url' not in obj:
+    # which original post URL to include? if the source URL redirected, use the
+    # (pre-redirect) source URL, since it might be a short URL. otherwise, use
+    # u-url if it's set. finally, fall back to the actual fetched URL
+    if source_url != fetched.url:
+      obj['url'] = source_url
+    elif 'url' not in obj:
       obj['url'] = fetched.url
     logging.debug('Converted to ActivityStreams object: %s', obj)
 
