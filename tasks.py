@@ -204,23 +204,27 @@ class Poll(webapp2.RequestHandler):
     #
     # Step 3: filter out existing responses
     #
-    # this uses a batch datastore call to see which responses already exist in
-    # the datastore. get_multi() returns full entities, which i'd rather
-    # avoid.
-    # existing = ndb.get_multi(ndb.Key(Response, id) for id in responses.iterkeys())
-    # responses = dict(i for i, e in zip(responses.iteritems(), existing) if e is None)
-
-    # here's an alternative: cache existing response ids in memcache, fall back
-    # to datastore keys only query with a filter on key. won't use
-    # memcache, since ndb doesn't cache query results, but uses less memory.
-    # http://stackoverflow.com/a/11104457/186123
+    # existing response ids for each source are cached in memcache (as raw ids,
+    # ie *not* tag URIs, to save space). look there first, then fall back to a
+    # datastore batch get. it returns full entities, which isn't ideal, so tell
+    # it not to cache them to (maybe?) avoid memcache churn.
+    #
+    # more background: http://stackoverflow.com/questions/11509368
     if responses:
       existing_ids = memcache.get('AR ' + source.bridgy_path())
       if existing_ids is None:
-        existing = Response.query(
-          Response._key.IN([ndb.Key(Response, id) for id in responses])
-          ).fetch(len(responses), keys_only=True)
-        existing_ids = [util.parse_tag_uri(key.id())[1] for key in existing]
+        # batch get from datastore.
+        #
+        # ideally i'd use a keys only query with an IN filter on key, below, but
+        # that results in a separate query per key, and those queries run in
+        # serial (!). http://stackoverflow.com/a/11104457/186123
+        #
+        # existing = Response.query(
+        #   Response._key.IN([ndb.Key(Response, id) for id in responses])
+        #   ).fetch(len(responses), keys_only=True)
+        existing = ndb.get_multi((ndb.Key(Response, id) for id in responses.iterkeys()),
+                                 use_memcache=False)
+        existing_ids = [util.parse_tag_uri(e.key.id())[1] for e in existing if e]
 
       for id in existing_ids:
         responses.pop(source.as_source.tag_uri(id), None)
