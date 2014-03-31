@@ -46,7 +46,7 @@ class LogHandler(webapp2.RequestHandler):
                                 offset=offset, include_app_logs=True,
                                 version_ids=['2', '3', '4', '5', '6', '7']):
       first_lines = '\n'.join([line.message.decode('utf-8') for line in
-                               log.app_logs[:min(2, len(log.app_logs))]])
+                               log.app_logs[:min(5, len(log.app_logs))]])
       if log.app_logs and key in first_lines:
         # found it! render and return
         self.response.out.write(sanitize(log.combined))
