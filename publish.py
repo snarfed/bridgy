@@ -176,7 +176,9 @@ class Handler(util.Handler):
     self.publish.put()
 
     self.response.write(resp)
-    self.mail_me(resp)
+    # don't mail me about my own successful publishes, just the errors
+    if domain != 'snarfed.org':
+      self.mail_me(resp)
 
   def error(self, error, status=400, data=None, log_exception=True):
     logging.error(error, exc_info=sys.exc_info() if log_exception else None)
