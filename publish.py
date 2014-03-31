@@ -136,10 +136,17 @@ class Handler(util.Handler):
     logging.debug('Converted to ActivityStreams object: %s', obj)
 
     # posts and comments need content
-    if obj.get('objectType') in ('note', 'article', 'comment'):
+    obj_type = obj.get('objectType')
+    if obj_type in ('note', 'article', 'comment'):
       contents = items[0].get('properties', {}).get('content', [])
       if not contents or not contents[0] or not contents[0].get('value'):
         return self.error('Could not find e-content in %s' % fetched.url, data=data)
+
+    # special case for me: don't allow posts, just comments, likes, and reposts
+    verb = obj.get('verb', '')
+    if (domain == 'snarfed.org' and obj_type in ('note', 'article') and
+        verb not in ('like', 'share') and not verb.startswith('rsvp-')):
+      return self.error('Not posting for snarfed.org')
 
     try:
       if self.PREVIEW:
