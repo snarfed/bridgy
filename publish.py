@@ -87,21 +87,12 @@ class Handler(util.Handler):
       return self.error('Sorry, %s is not yet supported.' %
                         source_cls.AS_CLASS.NAME)
 
-    # fetch source URL
-    try:
-      fetched = requests.get(source_url, allow_redirects=True, timeout=HTTP_TIMEOUT)
-    except BaseException:
-      return self.error('Could not fetch source URL %s' % source_url)
-
-    # validate, fetch, and parse source
-    msg = 'Could not parse source URL %s' % fetched.url
-    try:
-      parsed = urlparse.urlparse(fetched.url)
-    except BaseException:
-      return self.error(msg)
-    domain = parsed.netloc
-    if not domain:
-      return self.error(msg)
+    # resolve source URL
+    url, domain, ok = util.get_webmention_target(source_url)
+    if not ok:
+      return self.error('Unsupported source URL %s' % url)
+    elif not domain:
+      return self.error('Could not parse source URL %s' % url)
 
     # When debugging locally, use snarfed.org for localhost webmentions
     if appengine_config.DEBUG and domain == 'localhost':
@@ -116,10 +107,16 @@ class Handler(util.Handler):
       return self.error("Could not find <b>%(type)s</b> account for <b>%(domain)s</b>. Check that your %(type)s profile has %(domain)s in its <em>web site</em> or <em>link</em> field, then try signing up again." %
         {'type': source_cls.AS_CLASS.NAME, 'domain': domain})
 
-    self.publish = self.get_or_add_publish_entity(fetched.url)
+    self.publish = self.get_or_add_publish_entity(url)
     if (self.publish.status == 'complete' and self.publish.type != 'preview' and
         not appengine_config.DEBUG):
       return self.error("Sorry, you've already published that page, and Bridgy Publish doesn't yet support updating or deleting existing posts. Ping Ryan if you want that feature!")
+
+    # fetch source URL
+    try:
+      fetched = requests.get(url, allow_redirects=True, timeout=HTTP_TIMEOUT)
+    except BaseException:
+      return self.error('Could not fetch source URL %s' % url)
 
     # parse microformats, convert to ActivityStreams
     self.publish.html = fetched.text

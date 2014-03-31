@@ -109,6 +109,12 @@ def follow_redirects(url):
     resolved.status_code = 499  # not standard. i made this up.
     cache_time = FAILED_RESOLVE_URL_CACHE_TIME
 
+  refresh = resolved.headers.get('refresh')
+  if refresh:
+    for part in refresh.split(';'):
+      if part.strip().startswith('url='):
+        return follow_redirects(part.strip()[4:])
+
   memcache.set(cache_key, resolved, time=cache_time)
   return resolved
 
@@ -130,14 +136,11 @@ def get_webmention_target(url):
     URL, not text/html, in the blacklist, or can't be fetched.
   """
   try:
-    urlparse.urlparse(url)
+    domain = domain_from_link(url)
   except BaseException, e:
     logging.warning('Dropping bad URL %s.', url)
     return (url, None, False)
 
-  domain = urlparse.urlparse(url).netloc
-  if domain.startswith('www.'):
-    domain = domain[4:]
   if domain in WEBMENTION_BLACKLIST:
     return (url, domain, False)
 
@@ -145,8 +148,9 @@ def get_webmention_target(url):
   if resolved.url != url:
     logging.debug('Resolved %s to %s', url, resolved.url)
     url = resolved.url
-  is_html = resolved.headers.get('content-type', '').startswith('text/html')
+    domain = domain_from_link(url)
 
+  is_html = resolved.headers.get('content-type', '').startswith('text/html')
   return (url, domain, is_html)
 
 

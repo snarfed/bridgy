@@ -39,6 +39,22 @@ class UtilTest(testutil.ModelsTest):
     self.assert_equals('http://final/url',
                        util.follow_redirects('http://will/redirect').url)
 
+  def test_follow_redirects_with_refresh_header(self):
+    self.mox.StubOutWithMock(requests, 'head', use_mock_anything=True)
+    resp = requests.Response()
+    resp.headers['refresh'] = '0; url=http://refresh'
+    requests.head('http://will/redirect', allow_redirects=True, timeout=HTTP_TIMEOUT
+                  ).AndReturn(resp)
+
+    resp = requests.Response()
+    resp.url = 'http://final'
+    requests.head('http://refresh', allow_redirects=True, timeout=HTTP_TIMEOUT
+                  ).AndReturn(resp)
+
+    self.mox.ReplayAll()
+    self.assert_equals('http://final',
+                       util.follow_redirects('http://will/redirect').url)
+
   def test_maybe_add_or_delete_source(self):
     # profile url with valid domain is required for publish
     for bad_url in None, 'not a url', 'http://fa.ke/xyz':

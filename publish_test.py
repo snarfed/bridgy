@@ -28,10 +28,10 @@ class PublishTest(testutil.HandlerTest):
     self.source.put()
     self.mox.StubOutWithMock(requests, 'get', use_mock_anything=True)
 
-  def expect_requests_get(self, url, response, redirects_to=None):
+  def expect_requests_get(self, url, response):
     resp = requests.Response()
     resp._content = response
-    resp.url = redirects_to if redirects_to is not None else url
+    resp.url = url
     requests.get(url, allow_redirects=True, timeout=HTTP_TIMEOUT).AndReturn(resp)
 
   def get_response(self, source=None, target=None, endpoint='/publish/webmention'):
@@ -79,8 +79,7 @@ class PublishTest(testutil.HandlerTest):
             type='preview').put()
 
     html = '<article class="h-entry"><p class="e-content">foo</p></article>'
-    for i in range(2):
-      self.expect_requests_get('http://foo.com/', html)
+    self.expect_requests_get('http://foo.com/', html)
     self.mox.ReplayAll()
 
     # first attempt should work
@@ -99,23 +98,36 @@ class PublishTest(testutil.HandlerTest):
     self.assert_error('Sorry, Google+ is not yet supported.',
                       target='http://brid.gy/publish/googleplus')
 
-  def test_bad_source_url(self):
-    self.expect_requests_get('foo.com', 'x')
-    self.mox.ReplayAll()
-    self.assert_error('Could not fetch source URL foo', source='foo')
-
   def test_source_url_redirects(self):
+    self.mox.StubOutWithMock(requests, 'head', use_mock_anything=True)
+    resp = requests.Response()
+    resp.url = 'http://foo.com'
+    resp.headers['content-type'] = 'text/html'
+    requests.head('http://will/redirect', allow_redirects=True, timeout=HTTP_TIMEOUT
+                  ).AndReturn(resp)
+
     html = '<article class="h-entry"><p class="e-content">foo</p></article>'
-    self.expect_requests_get('http://bar.com', html, redirects_to='http://foo.com')
+    self.expect_requests_get('http://foo.com', html)
     self.mox.ReplayAll()
-    resp = self.get_response(source='http://bar.com')
+
+    resp = self.get_response(source='http://will/redirect')
+    self.assertEquals(200, resp.status_int, resp.body)
+
+  def test_source_url_redirects_with_refresh_header(self):
+    self.mox.StubOutWithMock(requests, 'head', use_mock_anything=True)
+    resp = requests.Response()
+    resp.headers['refresh'] = '0; url=http://foo.com'
+    requests.head('http://will/redirect', allow_redirects=True, timeout=HTTP_TIMEOUT
+                  ).AndReturn(resp)
+
+    html = '<article class="h-entry"><p class="e-content">foo</p></article>'
+    self.expect_requests_get('http://foo.com', html)
+    self.mox.ReplayAll()
+
+    resp = self.get_response(source='http://will/redirect')
     self.assertEquals(200, resp.status_int, resp.body)
 
   def test_source_domain_not_found(self):
-    for i in range(2):
-      self.expect_requests_get('http://foo.com/', '')
-    self.mox.ReplayAll()
-
     # no source
     msg = 'Could not find <b>FakeSource</b> account for <b>foo.com</b>.'
     self.source.key.delete()

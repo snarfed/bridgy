@@ -153,7 +153,10 @@ class HandlerTest(testutil.HandlerTest):
     def fake_head(url, **kwargs):
       resp = requests.Response()
       resp.url = url
-      resp.headers['content-type'] = 'text/html; charset=UTF-8'
+      if '.' in url or url.startswith('http'):
+        resp.headers['content-type'] = 'text/html; charset=UTF-8'
+      else:
+        resp.status_int = 404
       return resp
     self.mox.stubs.Set(requests, 'head', fake_head)
 

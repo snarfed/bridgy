@@ -415,9 +415,12 @@ class PropagateTest(TaskQueueTest):
     if source_url is None:
       source_url = 'http://localhost/comment/fake/%s/a/1_2_a' % \
           self.sources[0].key.string_id()
+    # if endpoint is None:
+    #   endpoint = 'http://webmention/endpoint'
     mock_send = send.WebmentionSend(source_url, target, endpoint=endpoint)
     mock_send.receiver_endpoint = (endpoint if endpoint
                                    else 'http://webmention/endpoint')
+    # mock_send.receiver_endpoint = endpoint
     mock_send.response = 'used in logging'
     mock_send.error = error
     return mock_send.send(timeout=999)
