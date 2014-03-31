@@ -37,7 +37,7 @@ from models import Response
 import twitter
 import util
 
-WEBMENTION_DISCOVERY_FAILED_CACHE_TIME = 60 * 60 * 24  # a day
+WEBMENTION_DISCOVERY_CACHE_TIME = 60 * 60 * 24  # a day
 
 # allows injecting timestamps in task_test.py
 now_fn = datetime.datetime.now
@@ -367,12 +367,13 @@ class Propagate(webapp2.RequestHandler):
         if error is None:
           logging.info('Sent! %s', mention.response)
           response.sent.append(target)
-          memcache.set(cache_key, mention.receiver_endpoint)
+          memcache.set(cache_key, mention.receiver_endpoint,
+                       time=WEBMENTION_DISCOVERY_CACHE_TIME)
         else:
           if error['code'] == 'NO_ENDPOINT':
             logging.info('Giving up this target. %s', error)
             response.skipped.append(target)
-            memcache.set(cache_key, error, time=WEBMENTION_DISCOVERY_FAILED_CACHE_TIME)
+            memcache.set(cache_key, error, time=WEBMENTION_DISCOVERY_CACHE_TIME)
           elif (error['code'] == 'BAD_TARGET_URL' and
                 error['http_status'] / 100 == 4):
             # Give up on 4XX errors; we don't expect later retries to succeed.
