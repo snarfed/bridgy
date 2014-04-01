@@ -15,7 +15,6 @@ import json
 import logging
 import random
 import urllib2
-import urlparse
 
 from apiclient import errors
 from google.appengine.api import memcache

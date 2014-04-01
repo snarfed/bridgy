@@ -99,6 +99,10 @@ def follow_redirects(url):
   # HEAD for the initial request.
   # http://stackoverflow.com/questions/9967632
   try:
+    # default scheme to http
+    parsed = urlparse.urlparse(url)
+    if not parsed.scheme:
+      url = 'http://' + url
     resolved = requests.head(url, allow_redirects=True, timeout=HTTP_TIMEOUT)
     cache_time = 0  # forever
   except BaseException, e:

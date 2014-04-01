@@ -105,7 +105,7 @@ class SourceTest(testutil.HandlerTest):
 
   def test_create_new_domain(self):
     """If the source has a URL set, extract its domain."""
-    for user_json in None, {}, {'url': 'not a url'}, {'url': 'http://t.co/foo'}:
+    for user_json in None, {}, {'url': 'not<a>url'}, {'url': 'http://t.co/foo'}:
       auth_entity = None
       if user_json is not None:
         auth_entity = testutil.FakeAuthEntity(id='x', user_json=json.dumps(user_json))
