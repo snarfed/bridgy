@@ -118,7 +118,7 @@ class UserHandler(DashboardHandler):
 
       # generate original post links
       link = lambda url, g: util.pretty_link(
-        url, glyphicon=g, a_class='original-post', new_tab=True, max_length=30)
+        url, glyphicon=g, a_class='original-post', new_tab=True)
       r.links = util.trim_nulls({
         'Failed': set(link(url, 'exclamation-sign') for url in r.error + r.failed),
         'Sending': set(link(url, 'transfer') for url in r.unsent
@@ -134,7 +134,7 @@ class UserHandler(DashboardHandler):
                                .fetch(10)
     for p in publishes:
       p.pretty_page = util.pretty_link(
-        p.key.parent().id(), a_class='original-post', new_tab=True, max_length=30)
+        p.key.parent().id(), a_class='original-post', new_tab=True)
 
     vars = super(UserHandler, self).template_vars()
     vars.update({'source': self.source,
