@@ -147,8 +147,9 @@ class Handler(util.Handler):
 
     # special case for me: don't allow posts, just comments, likes, and reposts
     verb = obj.get('verb', '')
-    if (domain == 'snarfed.org' and obj_type in ('note', 'article') and
-        verb not in ('like', 'share') and not verb.startswith('rsvp-')):
+    if (not self.PREVIEW and domain == 'snarfed.org' and
+        obj_type in ('note', 'article') and verb not in ('like', 'share') and
+        not verb.startswith('rsvp-')):
       return self.error('Not posting for snarfed.org')
 
     try:
