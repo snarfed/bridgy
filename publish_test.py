@@ -79,7 +79,8 @@ class PublishTest(testutil.HandlerTest):
             type='preview').put()
 
     html = '<article class="h-entry"><p class="e-content">foo</p></article>'
-    self.expect_requests_get('http://foo.com/', html)
+    for i in range(2):
+      self.expect_requests_get('http://foo.com/', html)
     self.mox.ReplayAll()
 
     # first attempt should work
@@ -87,8 +88,15 @@ class PublishTest(testutil.HandlerTest):
     self.assertEquals(4, Publish.query().count())
     self.assertEquals(2, Publish.query(Publish.status == 'complete').count())
 
-    # now that there's a complete Publish entity, another attempt should fail
+    # now that there's a complete Publish entity, more attempts should fail
     self.assert_error("Sorry, you've already published that page")
+    # try again to test for a bug we had where a second try would succeed
+    self.assert_error("Sorry, you've already published that page")
+
+    # should still be able to preview though
+    resp = self.get_response(endpoint='/publish/preview')
+    self.assertEquals(200, resp.status_int, resp.body)
+    self.assertIn('foo - http://foo.com/', resp.body, resp.body)
 
   def test_bad_target_url(self):
     self.assert_error('Target must be brid.gy/publish/{facebook,twitter}',
@@ -243,7 +251,7 @@ class PublishTest(testutil.HandlerTest):
 
     resp = self.get_response(endpoint='/publish/preview')
     self.assertEquals(200, resp.status_int, resp.body)
-    self.assertTrue('preview of foo - http://foo.com/' in resp.body, resp.body)
+    self.assertIn('preview of foo - http://foo.com/', resp.body, resp.body)
 
     publish = Publish.query().get()
     self.assertEquals(self.source.key, publish.source)

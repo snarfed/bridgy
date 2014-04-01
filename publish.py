@@ -41,7 +41,7 @@ from googleplus import GooglePlusPage
 from instagram import Instagram
 from mf2py import parser
 import models
-from models import Publish
+from models import Publish, PublishedPage
 import requests
 from twitter import Twitter
 import util
@@ -107,10 +107,11 @@ class Handler(util.Handler):
       return self.error("Could not find <b>%(type)s</b> account for <b>%(domain)s</b>. Check that your %(type)s profile has %(domain)s in its <em>web site</em> or <em>link</em> field, then try signing up again." %
         {'type': source_cls.AS_CLASS.NAME, 'domain': domain})
 
-    self.publish = self.get_or_add_publish_entity(url)
-    if (self.publish.status == 'complete' and self.publish.type != 'preview' and
-        not appengine_config.DEBUG):
+    entity = self.get_or_add_publish_entity(url)
+    if (entity.status == 'complete' and entity.type != 'preview' and
+        not self.PREVIEW and not appengine_config.DEBUG):
       return self.error("Sorry, you've already published that page, and Bridgy Publish doesn't yet support updating or deleting existing posts. Ping Ryan if you want that feature!")
+    self.publish = entity
 
     # fetch source URL
     try:
@@ -216,12 +217,12 @@ class Handler(util.Handler):
     Args:
       source_url: string
     """
-    page = models.PublishedPage.get_or_insert(source_url)
+    page = PublishedPage.get_or_insert(source_url)
     entity = Publish.query(
       Publish.status == 'complete', Publish.type != 'preview',
       ancestor=page.key).get()
 
-    if not entity:
+    if entity is None:
       entity = Publish(parent=page.key, source=self.source.key)
       if self.PREVIEW:
         entity.type = 'preview'
