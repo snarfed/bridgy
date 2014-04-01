@@ -185,23 +185,15 @@ class Handler(util.Handler):
     self.publish.status = 'complete'
     self.publish.put()
 
-    self.response.write(resp)
+    self.response.write(preview if self.PREVIEW else resp)
     # don't mail me about my own successful publishes, just the errors
     if domain != 'snarfed.org':
       self.mail_me(resp)
 
-  def error(self, error, status=400, data=None, log_exception=True):
-    logging.error(error, exc_info=sys.exc_info() if log_exception else None)
-    self.response.set_status(status)
-    if self.PREVIEW:
-      error = util.linkify(error)
-    self.response.write(error)
-    self.mail_me(error)
-
   def mail_me(self, resp):
     subject = 'Bridgy publish %s %s' % (
       'preview' if self.PREVIEW else '',
-      self.publish.status if self.publish else 'failed')
+      'complete' if self.publish and self.publish.status == 'complete' else 'failed')
     body = 'Request:\n%s\n\nResponse:\n%s' % (self.request.params.items(), resp)
 
     if self.source:
@@ -236,6 +228,14 @@ class PreviewHandler(Handler):
   """Renders a preview HTML snippet of how a webmention would be handled.
   """
   PREVIEW = True
+
+  def error(self, error, status=400, data=None, log_exception=True):
+    logging.error(error, exc_info=sys.exc_info() if log_exception else None)
+    self.response.set_status(status)
+    if self.PREVIEW:
+      error = util.linkify(error)
+    self.response.write(error)
+    self.mail_me(error)
 
 
 class WebmentionHandler(Handler):
