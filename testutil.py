@@ -218,16 +218,34 @@ class ModelsTest(HandlerTest):
       pruned_activity = {
         'id': activity['id'],
         'object': {
-          'objectType': 'note',
-          'id': obj['id'],
           'url': 'http://source/post/url',
           'content': 'foo http://target1/post/url bar',
-          'to': [{'objectType':'group', 'alias':'@public'}],
           }
         }
-      for response_obj in obj['replies']['items'] + obj['tags']:
-        self.responses.append(Response(id=response_obj['id'],
-                                       activity_json=json.dumps(pruned_activity),
-                                       response_json=json.dumps(response_obj),
-                                       source=self.sources[0].key,
-                                       unsent=['http://target1/post/url']))
+
+      comment = obj['replies']['items'][0]
+      self.responses.append(Response(
+          id=comment['id'],
+          activity_json=json.dumps(pruned_activity),
+          response_json=json.dumps(comment),
+          type='comment',
+          source=self.sources[0].key,
+          unsent=['http://target1/post/url']))
+
+      like = obj['tags'][0]
+      self.responses.append(Response(
+          id=like['id'],
+          activity_json=json.dumps(pruned_activity),
+          response_json=json.dumps(like),
+          type='like',
+          source=self.sources[0].key,
+          unsent=['http://target1/post/url']))
+
+      share = obj['tags'][1]
+      self.responses.append(Response(
+          id=share['id'],
+          activity_json=json.dumps(pruned_activity),
+          response_json=json.dumps(share),
+          type='repost',
+          source=self.sources[0].key,
+          unsent=['http://target1/post/url']))

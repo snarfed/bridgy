@@ -61,17 +61,20 @@ class PollTest(TaskQueueTest):
 
   def assert_responses(self):
     """Asserts that all of self.responses are saved."""
-    # ndb's auto_now=True only happens when an entity is saved
-    for resp in self.responses:
-      resp.put()
-    self.assert_entities_equal(self.responses, models.Response.query())
+    # sort fields in json properties since they're compared as strings
+    stored = list(models.Response.query())
+    for resp in self.responses + stored:
+      resp.activity_json = json.dumps(json.loads(resp.activity_json), sort_keys=True)
+      resp.response_json = json.dumps(json.loads(resp.response_json), sort_keys=True)
+    self.assert_entities_equal(self.responses, stored, ignore=('created', 'updated'))
 
   def test_poll(self):
     """A normal poll task."""
-    self.assertEqual([], list(models.Response.query()))
+    self.assertEqual(0, models.Response.query().count())
     self.assertEqual([], self.taskqueue_stub.GetTasks('poll'))
 
     self.post_task()
+    self.assertEqual(9, models.Response.query().count())
     self.assert_responses()
 
     source = self.sources[0].key.get()
