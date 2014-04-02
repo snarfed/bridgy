@@ -267,13 +267,12 @@ class Response(StringIdModel):
   """
   STATUSES = ('new', 'processing', 'complete', 'error')
 
-  # Temporarily turn off instance memcache caching for Response entities.
-  # Attempting to improve memcache hit rate since app engine is only giving me
-  # 1MB right now. :/ Not sure if/how much this will hurt.
+  # Turn off instance and memcache caching. Main reason is to improve memcache
+  # hit rate since app engine only gives me 1MB right now. :/ Background:
   # https://github.com/snarfed/bridgy/issues/68
   #
-  # XXX: if you remove _use_cache, MAKE SURE YOU re-enable the global ban on
-  # instance caching in appengine_config.py.
+  # If you re-enable caching, MAKE SURE YOU re-enable the global ban on instance
+  # caching in appengine_config.py.
   _use_cache = False
   _use_memcache = False
 
@@ -337,6 +336,15 @@ class Publish(ndb.Model):
   Child of a PublishedPage entity.
   """
   STATUSES = ('new', 'complete', 'failed')
+
+  # Turn off instance and memcache caching. Main reason is to improve memcache
+  # hit rate since app engine only gives me 1MB right now. :/ Background:
+  # https://github.com/snarfed/bridgy/issues/68
+  #
+  # If you re-enable caching, MAKE SURE YOU re-enable the global ban on instance
+  # caching in appengine_config.py.
+  _use_cache = False
+  _use_memcache = False
 
   type = ndb.StringProperty(choices=TYPES)
   type_label = ndb.StringProperty()  # source-specific type, e.g. 'favorite'
