@@ -186,10 +186,10 @@ class Handler(util.Handler):
     self.publish.status = 'complete'
     self.publish.put()
 
-    self.response.write(preview if self.PREVIEW else resp)
+    self.response.write(resp)
     # don't mail me about my own successful publishes, just the errors
     if domain != 'snarfed.org':
-      self.mail_me(resp)
+      self.mail_me(preview if self.PREVIEW else resp)
 
   def mail_me(self, resp):
     subject = 'Bridgy publish %s %s' % (
