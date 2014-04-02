@@ -267,10 +267,14 @@ class Response(StringIdModel):
   """
   STATUSES = ('new', 'processing', 'complete', 'error')
 
-  # Temporarily turn off memcache caching for Response entities.
+  # Temporarily turn off instance memcache caching for Response entities.
   # Attempting to improve memcache hit rate since app engine is only giving me
   # 1MB right now. :/ Not sure if/how much this will hurt.
   # https://github.com/snarfed/bridgy/issues/68
+  #
+  # XXX: if you remove _use_cache, MAKE SURE YOU re-enable the global ban on
+  # instance caching in appengine_config.py.
+  _use_cache = False
   _use_memcache = False
 
   # ActivityStreams JSON activity and comment, like, or repost
