@@ -168,6 +168,16 @@ class PublishTest(testutil.HandlerTest):
     self.assert_error('Could not find e-content in http://foo.com/')
     self.assertEquals('failed', Publish.query().get().status)
 
+  def test_multiple_items_chooses_first_that_works(self):
+    self.expect_requests_get('http://foo.com/', """
+<a class="h-card" href="http://michael.limiero.com/">Michael Limiero</a>
+<article class="h-entry"><p class="e-content">foo bar</article></p>""")
+    self.mox.ReplayAll()
+
+    resp = self.get_response()
+    self.assertEquals(200, resp.status_int, resp.body)
+    self.assertEquals('foo bar - http://foo.com/', json.loads(resp.body)['content'])
+
   def test_type_not_implemented(self):
     self.expect_requests_get('http://foo.com/',
                              '<article class="h-entry h-as-like"></article>')

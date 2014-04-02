@@ -94,7 +94,7 @@ class FakeAsSource(FakeBase, as_source.Source):
 
   def create(self, obj, include_link=False):
     verb = obj.get('verb')
-    if verb == 'like':
+    if verb == 'like' or 'content' not in obj:
       raise NotImplementedError()
 
     content = obj['content'] + (' - %s' % obj['url'] if include_link else '')

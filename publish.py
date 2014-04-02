@@ -66,16 +66,16 @@ class Handler(util.Handler):
     self.publish = None
     logging.info('Params: %self', self.request.params.items())
 
-    source_url = util.get_required_param(self, 'source')
-    target_url = util.get_required_param(self, 'target')
+    self.source_url = util.get_required_param(self, 'source')
+    self.target_url = util.get_required_param(self, 'target')
 
     assert self.PREVIEW in (True, False)
 
     # parse and validate target URL
     try:
-      parsed = urlparse.urlparse(target_url)
+      parsed = urlparse.urlparse(self.target_url)
     except BaseException:
-      return self.error(msg, 'Could not parse target URL %s' % target_url)
+      return self.error(msg, 'Could not parse target URL %s' % self.target_url)
 
     domain = parsed.netloc
     path_parts = parsed.path.rsplit('/', 1)
@@ -88,7 +88,7 @@ class Handler(util.Handler):
                         source_cls.AS_CLASS.NAME)
 
     # resolve source URL
-    url, domain, ok = util.get_webmention_target(source_url)
+    url, domain, ok = util.get_webmention_target(self.source_url)
     if not ok:
       return self.error('Unsupported source URL %s' % url)
     elif not domain:
@@ -115,72 +115,48 @@ class Handler(util.Handler):
 
     # fetch source URL
     try:
-      fetched = requests.get(url, allow_redirects=True, timeout=HTTP_TIMEOUT)
+      self.fetched = requests.get(url, allow_redirects=True, timeout=HTTP_TIMEOUT)
     except BaseException:
       return self.error('Could not fetch source URL %s' % url)
 
     # parse microformats, convert to ActivityStreams
-    self.publish.html = fetched.text
-    data = parser.Parser(doc=fetched.text, url=fetched.url).to_dict()
+    self.publish.html = self.fetched.text
+    data = parser.Parser(doc=self.fetched.text, url=self.fetched.url).to_dict()
     logging.debug('Parsed microformats2: %s', data)
     items = data.get('items', [])
     if not items or not items[0]:
-      return self.error('No microformats2 data found in %s' % fetched.url,
+      return self.error('No microformats2 data found in %s' % self.fetched.url,
                         data=data)
 
-    obj = microformats2.json_to_object(items[0])
-    # which original post URL to include? if the source URL redirected, use the
-    # (pre-redirect) source URL, since it might be a short URL. otherwise, use
-    # u-url if it's set. finally, fall back to the actual fetched URL
-    if source_url != fetched.url:
-      obj['url'] = source_url
-    elif 'url' not in obj:
-      obj['url'] = fetched.url
-    logging.debug('Converted to ActivityStreams object: %s', obj)
 
-    # posts and comments need content
-    obj_type = obj.get('objectType')
-    if obj_type in ('note', 'article', 'comment'):
-      contents = items[0].get('properties', {}).get('content', [])
-      if not contents or not contents[0] or not contents[0].get('value'):
-        return self.error('Could not find e-content in %s' % fetched.url, data=data)
-
-    # special case for me: don't allow posts, just comments, likes, and reposts
-    verb = obj.get('verb', '')
-    if (not self.PREVIEW and domain == 'snarfed.org' and
-        obj_type in ('note', 'article') and verb not in ('like', 'share') and
-        not verb.startswith('rsvp-')):
-      return self.error('Not posting for snarfed.org')
-
-    try:
-      if self.PREVIEW:
-        preview = self.source.as_source.preview_create(obj, include_link=True)
-        resp = template.render('templates/preview.html', {
-            'source': self.preprocess_source(self.source),
-            'preview': preview,
-            'source_url': fetched.url,
-            'target_url': target_url,
-            'webmention_endpoint': self.request.host_url + '/publish/webmention',
-            })
-      else:
-        self.publish.published = self.source.as_source.create(obj, include_link=True)
-        if 'url' not in self.publish.published:
-          self.publish.published['url'] = obj.get('url')
-        self.publish.type = self.publish.published.get('type') or models.get_type(obj)
-        self.publish.type_label = source_cls.TYPE_LABELS.get(self.publish.type)
-
-        self.response.headers['Content-Type'] = 'application/json'
-        resp = json.dumps(self.publish.published, indent=2)
-
-    except NotImplementedError:
-      types = items[0].get('type', [])
+    # loop through each item and try to preview/create it. if it fails, try the
+    # next one. break after the first one that works.
+    types = set()
+    for item in items:
+      try:
+        resp = self.attempt_single_item(item)
+        if resp:
+          break
+        else:
+          # None return value means this item was valid but caused an error,
+          # which has already been written to the response.
+          return
+      except NotImplementedError:
+        # try the next item
+        item_types = item.get('type')
+        logging.error('Object type %s not supported; trying next.', item_types)
+        types = types.union(item_types)
+      except BaseException, e:
+        return self.error('Error: %s' % e, status=500)
+    else:
       if 'h-entry' in types:
         types.remove('h-entry')
-      return self.error("%s doesn't support type(s) %s." %
-                        (source_cls.AS_CLASS.NAME, ' + '.join(types)),
-                        data=data, log_exception=False)
-    except BaseException, e:
-      return self.error('Error: %s' % e, status=500)
+      if types:
+        msg = ("%s doesn't support type(s) %s." %
+               (source_cls.AS_CLASS.NAME, ' + '.join(types)))
+      else:
+        msg = "Could not find h-entry or other content to publish!"
+      return self.error(msg, data=data, log_exception=False)
 
     # write results to datastore
     self.publish.status = 'complete'
@@ -189,7 +165,64 @@ class Handler(util.Handler):
     self.response.write(resp)
     # don't mail me about my own successful publishes, just the errors
     if domain != 'snarfed.org':
-      self.mail_me(preview if self.PREVIEW else resp)
+      self.mail_me(self.publish.published if self.PREVIEW else resp)
+
+  def attempt_single_item(self, item):
+    """Attempts to preview or publish a single mf2 item.
+
+    Args:
+      item: mf2 item dict from mf2py
+
+    Returns: string HTTP response on success, otherwise None
+
+    Raises:
+      NotImplementedError if the source doesn't support this item type
+    """
+    obj = microformats2.json_to_object(item)
+    # which original post URL to include? if the source URL redirected, use the
+    # (pre-redirect) source URL, since it might be a short URL. otherwise, use
+    # u-url if it's set. finally, fall back to the actual fetched URL
+    if self.source_url != self.fetched.url:
+      obj['url'] = self.source_url
+    elif 'url' not in obj:
+      obj['url'] = self.fetched.url
+    logging.debug('Converted to ActivityStreams object: %s', obj)
+
+    # posts and comments need content
+    obj_type = obj.get('objectType')
+    if obj_type in ('note', 'article', 'comment'):
+      contents = item.get('properties', {}).get('content', [])
+      if not contents or not contents[0] or not contents[0].get('value'):
+        self.error('Could not find e-content in %s' % self.fetched.url, data=item)
+        return None
+
+    # special case for me: don't allow posts, just comments, likes, and reposts
+    verb = obj.get('verb', '')
+    if (not self.PREVIEW and self.source.domain == 'snarfed.org' and
+        obj_type in ('note', 'article') and verb not in ('like', 'share') and
+        not verb.startswith('rsvp-')):
+      self.error('Not posting for snarfed.org')
+      return None
+
+    if self.PREVIEW:
+      self.publish.published = self.source.as_source.preview_create(
+        obj, include_link=True)
+      return template.render('templates/preview.html', {
+          'source': self.preprocess_source(self.source),
+          'preview': self.publish.published,
+          'source_url': self.fetched.url,
+          'target_url': self.target_url,
+          'webmention_endpoint': self.request.host_url + '/publish/webmention',
+          })
+    else:
+      self.publish.published = self.source.as_source.create(obj, include_link=True)
+      if 'url' not in self.publish.published:
+        self.publish.published['url'] = obj.get('url')
+      self.publish.type = self.publish.published.get('type') or models.get_type(obj)
+      self.publish.type_label = self.source.TYPE_LABELS.get(self.publish.type)
+
+      self.response.headers['Content-Type'] = 'application/json'
+      return json.dumps(self.publish.published, indent=2)
 
   def mail_me(self, resp):
     subject = 'Bridgy publish %s %s' % (
