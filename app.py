@@ -3,6 +3,7 @@
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
+import datetime
 import itertools
 import json
 import logging
@@ -127,6 +128,17 @@ class UserHandler(DashboardHandler):
                     if url not in (r.error + r.unsent)),
         'No webmention support': set(link(url, None) for url in r.skipped),
         })
+
+      # XXX horrible hack: use created time as updated time if updated time is
+      # before 2014-03-28 evening...
+      #
+      # ...to band-aid the fact that a data migration accidentally set all
+      # responses' updated time to then. :/ details in
+      # https://github.com/snarfed/bridgy/issues/68
+      if r.updated <= datetime.datetime(2014, 3, 29):
+        r.updated = r.created
+
+    responses.sort(key=lambda r: r.updated, reverse=True)
 
     # Publishes
     publishes = Publish.query().filter(Publish.source == self.source.key)\
