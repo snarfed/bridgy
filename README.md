@@ -1,18 +1,13 @@
-![Bridgy](https://raw.github.com/snarfed/bridgy/master/static/bridgy_logo_thumb.jpg) Bridgy
+![Bridgy](https://raw.github.com/snarfed/bridgy/master/static/bridgy_logo_thumb.jpg) [Bridgy](http://brid.gy/)
 ===
 
-Got a web site? Post links to it on social networks? Wish
-[comments/replies](http://indiewebcamp.com/comment),
-[likes](http://indiewebcamp.com/like), and
-[reshares](http://indiewebcamp.com/repost) showed up on your site too? Bridgy
-copies them back for you.
+Got a web site? Want to publish your posts to social networks? Want to see
+comments, likes, and more on your site? [Bridgy](http://brid.gy/) copies them
+back for you.
 
 http://brid.gy/
 
-Bridgy uses [webmentions](http://www.webmention.org/), which are a part of the
-[IndieWeb](http://indiewebcamp.com/) ecosystem, so your site will need to accept
-webmentions for Bridgy to work with it. Check out some of the
-[existing implementations](http://indiewebcamp.com/webmention#Implementations)!
+[See the docs](https://www.brid.gy/about) for more details.
 
 License: This project is placed in the public domain.
 
