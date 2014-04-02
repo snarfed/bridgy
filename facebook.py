@@ -106,12 +106,19 @@ class FacebookPage(models.Source):
       # https://developers.facebook.com/docs/graph-api/reference/event#edges
       # TODO: also fetch and use API_USER_RSVPS_DECLINED_URL
       user_rsvps = self.get_data(API_USER_RSVPS_URL)
-      event_ids = util.trim_nulls([r.get('id') for r in user_rsvps])
-      # have to re-fetch the event because the user rsvps response doesn't
+
+      # have to re-fetch the events because the user rsvps response doesn't
       # include the event description, which we need for original post links.
-      events_and_rsvps = [(self.get(as_facebook.API_OBJECT_URL % id),
-                           self.get_data(API_EVENT_RSVPS_URL % id))
-                          for id in event_ids]
+      events = [self.get(as_facebook.API_OBJECT_URL % r['id'])
+                for r in user_rsvps if r.get('id')]
+
+      # also, only process events that the user is the owner of. avoids (but
+      # doesn't prevent) processing big non-indieweb events with tons of
+      # attendees that put us over app engine's instance memory limit. details:
+      # https://github.com/snarfed/bridgy/issues/77
+      events_and_rsvps = [(e, self.get_data(API_EVENT_RSVPS_URL % e['id']))
+                          for e in events
+                          if e.get('owner', {}).get('id') == self.key.id()]
 
     except urllib2.HTTPError, e:
       # Facebook API error details:

@@ -3,6 +3,7 @@
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
+import copy
 import json
 import urllib
 import urllib2
@@ -46,6 +47,9 @@ class FacebookPageTest(testutil.ModelsTest):
     self.assertEqual('user', page.type)
 
   def test_get_activities(self):
+    owned_event = copy.deepcopy(as_facebook_test.EVENT)
+    owned_event['id'] = '888'
+    owned_event['owner']['id'] = '212038'
     self.expect_urlopen(
       'https://graph.facebook.com/me/posts?offset=0&access_token=my_token',
       json.dumps({'data': [as_facebook_test.POST]}))
@@ -54,19 +58,25 @@ class FacebookPageTest(testutil.ModelsTest):
       json.dumps({'data': [as_facebook_test.POST]}))
     self.expect_urlopen(
       'https://graph.facebook.com/me/events?access_token=my_token',
-      json.dumps({'data': [as_facebook_test.EVENT]}))
+      json.dumps({'data': [as_facebook_test.EVENT, owned_event]}))
     self.expect_urlopen(
       'https://graph.facebook.com/145304994?access_token=my_token',
       json.dumps(as_facebook_test.EVENT))
     self.expect_urlopen(
-      'https://graph.facebook.com/145304994/invited?access_token=my_token',
+      'https://graph.facebook.com/888?access_token=my_token',
+      json.dumps(owned_event))
+    self.expect_urlopen(
+      'https://graph.facebook.com/888/invited?access_token=my_token',
       json.dumps({'data': as_facebook_test.RSVPS}))
     self.mox.ReplayAll()
 
     page = FacebookPage.new(self.handler, auth_entity=self.auth_entity)
+    event_activity = page.as_source.event_to_activity(owned_event)
+    for k in 'attending', 'notAttending', 'maybeAttending', 'invited':
+      event_activity['object'][k] = as_facebook_test.EVENT_OBJ_WITH_ATTENDEES[k]
     self.assert_equals([as_facebook_test.ACTIVITY,
                         as_facebook_test.ACTIVITY,
-                        as_facebook_test.EVENT_ACTIVITY_WITH_ATTENDEES,
+                        event_activity,
                         ], page.get_activities())
 
   def test_revoked(self):
