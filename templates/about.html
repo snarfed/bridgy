@@ -45,6 +45,8 @@
   to a Twitter tweet from my web site?</a></li>
 <li><a href="#like">How do I like a Facebook post, favorite or
   retweet a tweet, or RSVP to an event from my web site?</a></li>
+<li><a href="#response">How does Bridgy respond to webmentions?</a></li>
+<li><a href="#error-response">How about error responses?</a></li>
 <li><a href="#silos">Why only Facebook and Twitter? Why not Google+ or
    Instagram?</a></li>
 </ul>
@@ -342,8 +344,8 @@ class. It also understands more advanced microformats2 classes like
 <a href="http://indiewebcamp.com/like"><code>u-like-of</code></a>, and
 <a href="http://indiewebcamp.com/rsvp"><code>p-rsvp</code></a>. Here's an example:
 
-<pre>&lt;div class="<span class='mf2-keyword'>h-entry</span>"&gt;&lt;p class="<span class='mf2-keyword'>e-content</span>"&gt;
-  <span class='mf2-content'>Two naked tags walk into a bar. The bartender exclaims, "Hey, you can't come in here without microformats, this is a classy joint!"</span>
+<pre>&lt;div class="<span class='keyword'>h-entry</span>"&gt;&lt;p class="<span class='keyword'>e-content</span>"&gt;
+  <span class='value'>Two naked tags walk into a bar. The bartender exclaims, "Hey, you can't come in here without microformats, this is a classy joint!"</span>
 &lt;/p&gt;&lt;/div&gt;
 </pre>
 </p>
@@ -362,7 +364,8 @@ even write a script to
 <a href="http://indiewebcamp.com/webmention#How_to_Test_Webmentions">send them
 yourself</a>. It's just a single HTTP request!
 </p>
-<p>Bridgy has two webmention endpoints, <code>brid.gy/publish/facebook</code> and
+<p>Bridgy's webmention endpoint is <code>brid.gy/publish/webmention</code>, and
+the target URL should be <code>brid.gy/publish/facebook</code> or
 <code>brid.gy/publish/twitter</code>. You can use one or both, depending on
 which social network you want to publish to. If your server sends webmentions,
 just include one or both of these invisible links in your post to publish
@@ -383,9 +386,9 @@ link to the post or tweet you're replying to with class
 u-in-reply-to</a></code>, as if you were publishing a normal
 <a href="http://indiewebcamp.com/comment">IndieWeb reply</a>. For example:
 
-<pre>&lt;div class="<span class='mf2-keyword'>h-entry</span>"&gt;
-  &lt;p class="<span class='mf2-keyword'>e-content</span>"&gt;<span class='mf2-content'>@schnarfed Highly entertaining. Please subscribe me to your newsletter.</span>&lt;/p&gt;
-  &lt;a class="<span class='mf2-keyword'>u-in-reply-to</span>" href="<a href='https://twitter.com/schnarfed/status/448205453911015425'>https://twitter.com/schnarfed/status/448205453911015425</a>"&gt;&lt;/a&gt;
+<pre>&lt;div class="<span class='keyword'>h-entry</span>"&gt;
+  &lt;p class="<span class='keyword'>e-content</span>"&gt;<span class='value'>@schnarfed Highly entertaining. Please subscribe me to your newsletter.</span>&lt;/p&gt;
+  &lt;a class="<span class='keyword'>u-in-reply-to</span>" href="<a href='https://twitter.com/schnarfed/status/448205453911015425'>https://twitter.com/schnarfed/status/448205453911015425</a>"&gt;&lt;/a&gt;
 &lt;/div&gt;
 </pre>
 
@@ -411,18 +414,79 @@ or <code><a href="http://indiewebcamp.com/rsvp">p-rsvp</a></code> for an
 RSVP.
 
 <pre>
-&lt;a class="<span class='mf2-keyword'>u-like-of</span></span>" href="<a href='https://www.facebook.com/snarfed.org/posts/10100971276366173'>https://www.facebook.com/snarfed.org/posts/10100971276366173</a>"&gt;&lt;/a&gt;
+&lt;a class="<span class='keyword'>u-like-of</span></span>" href="<a href='https://www.facebook.com/snarfed.org/posts/10100971276366173'>https://www.facebook.com/snarfed.org/posts/10100971276366173</a>"&gt;&lt;/a&gt;
 </pre>
 
 <pre>
-&lt;a class="<span class='mf2-keyword'>u-repost-of</span>" href="<a href='https://twitter.com/schnarfed/status/448205453911015425'>https://twitter.com/schnarfed/status/448205453911015425</a>"&gt;&lt;/a&gt;
+&lt;a class="<span class='keyword'>u-repost-of</span>" href="<a href='https://twitter.com/schnarfed/status/448205453911015425'>https://twitter.com/schnarfed/status/448205453911015425</a>"&gt;&lt;/a&gt;
 </pre>
 
 <pre>
-&lt;data class="<span class='mf2-keyword'>p-rsvp</span>" value="<span class='mf2-keyword'>yes</span>"&gt;<span class='mf2-content'>I'm in!</span>&lt;/data&gt;
-&lt;a class="<span class='mf2-keyword'>u-in-reply-to</span>" href="<a href='https://www.facebook.com/events/1409507205977978/'>https://www.facebook.com/events/1409507205977978/</a>"&gt;&lt;/a&gt;
+&lt;data class="<span class='keyword'>p-rsvp</span>" value="<span class='keyword'>yes</span>"&gt;<span class='value'>I'm in!</span>&lt;/data&gt;
+&lt;a class="<span class='keyword'>u-in-reply-to</span>" href="<a href='https://www.facebook.com/events/1409507205977978/'>https://www.facebook.com/events/1409507205977978/</a>"&gt;&lt;/a&gt;
 </pre>
 </p>
+</li>
+
+<li id="response" class="question">How does Bridgy respond to webmentions?</li>
+<li class="answer">
+<p>Bridgy handles webmentions synchronously, so it knows the result when it
+responds. A <code>POST</code> to
+<code>http://brid.gy/publish/webmention</code> will return
+<code>200 OK</code> on success with a JSON response containing at least
+a <code>url</code> field that points to the silo object that it operated on. For
+Twitter favorites and Facebook likes and event RSVPs, this is the tweet, post,
+or event. If a new object was created, e.g. a Facebook post or comment or
+Twitter tweet, @-reply, or retweet, there will also be an <code>id</code> field
+with the silo id of that object.
+</p>
+<p>For example, this request for an original post:
+</p>
+<pre>POST <span class="keyword">source</span>=<span class="link">https://example.com/posts/123</span>
+     &<span class="keyword">target</span>=<a href="https://www.brid.gy/publish/facebook">https://www.brid.gy/publish/facebook</a></pre>
+<p>will receive <code>200 OK</code> with this response:
+</p>
+<pre>{
+  "<span class='keyword'>url</span>": "<span class='value'>http://facebook.com/456_789</span>",
+  "<span class='keyword'>type</span>": "<span class='value'>post</span>",
+  "<span class='keyword'>id</span>": "<span class='value'>456_789</span>"
+}</pre>
+<p>Pro tip: Twitter responses that create new tweets actually return the entire
+newly
+created <a href="https://dev.twitter.com/docs/platform-objects/tweets">tweet
+object</a>. The more you know!
+</p>
+</li>
+
+<li id="error-response" class="question">How about error responses?</li>
+<li class="answer">
+<p><code>400 Bad Request</code> is the most common error response. Other status
+codes may be returned when a Facebook or Twitter API call error is propagated
+back to you. For example, Facebook often <code>500</code>s API requests.
+</p>
+<p>
+Like successful responses, error response bodies are JSON. All error responses
+will contain an <code>error</code> field with a human-readable error message.
+Most will also contain a <code>data</code> field with the
+parsed <a href="http://microformats.org/wiki/microformats2">microformats2</a>
+data from your original post, which is often helpful for debugging.
+</p>
+<p>For example, a webmention for this source markup:
+</p>
+<pre>&lt;a class="<span class='keyword'>h-card</span>" href="<a href='https://snarfed.org/'>https://snarfed.org/</a>"&gt;Ryan Barrett&lt;/a&gt;
+</pre>
+<p>will receive <code>400 Bad Request</code> with this response:
+</p>
+<pre>{
+  "<span class='keyword'>error</span>": "<span class='value'>Twitter doesn't support type(s) h-card.</span>",
+  "<span class='keyword'>data</span>": {"<span class='keyword'>items</span>": [{
+    "<span class='keyword'>type</span>": ["<span class='keyword'>h-card</span>"],
+    "<span class='keyword'>properties</span>": {
+      "<span class='keyword'>url</span>": ["<a href='https://snarfed.org/'>https://snarfed.org/</a>"],
+      "<span class='keyword'>content</span>": [{"<span class='keyword'>value</span>": "<span class='value'>Ryan Barrett</span>"}],
+    }
+  }]}
+}</pre>
 </li>
 
 <li id="silos" class="question">Why only Facebook and Twitter? Why not Google+ or
@@ -437,15 +501,6 @@ for commenting and liking. Shameless plug: check out
 <a href="http://ownyourgram.com/">#OwnYourGram</a> for an Instagram alternative!
 </p>
 </li>
-
-<!-- <a href="https://support.twitter.com/articles/14023-what-are-replies-and-mentions">Twitter @-reply</a>, -->
-<!-- <a href="https://www.facebook.com/help/499181503442334/">Facebook comment</a>, -->
-<!-- <a href="https://support.twitter.com/articles/77606-faqs-about-retweets-rt">Twitter retweets</a>, -->
-<!-- and -->
-<!-- <a href="https://support.twitter.com/articles/20169874-favoriting-a-tweet#">Twitter favorite</a> -->
-<!-- and  -->
-<!-- <a href="https://www.facebook.com/help/www/452446998120360">Facebook like</a>, and even -->
-<!-- <a href="https://www.facebook.com/help/201140859928818">Facebook event RSVP</a>! -->
 
 </ul>
 

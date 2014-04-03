@@ -266,8 +266,7 @@ class PreviewHandler(Handler):
   def error(self, error, status=400, data=None, log_exception=True):
     logging.error(error, exc_info=sys.exc_info() if log_exception else None)
     self.response.set_status(status)
-    if self.PREVIEW:
-      error = util.linkify(error)
+    error = util.linkify(error)
     self.response.write(error)
     self.mail_me(error)
 

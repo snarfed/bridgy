@@ -61,12 +61,16 @@ body.about #more-link {
   display: none;
 }
 
-.mf2-keyword {
+pre .keyword {
   color: green;
 }
 
-.mf2-content {
+pre .value {
   color: chocolate;
+}
+
+pre .link {
+  color: #428BCA;
 }
 
 .row {
@@ -285,5 +289,6 @@ iframe#twitter-widget-0 {
 }
 
 .question {
+  margin-top: 2em;
   font-weight: bold;
 }
