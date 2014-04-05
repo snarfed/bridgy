@@ -52,7 +52,8 @@ class UpdateTwitterPictures(webapp2.RequestHandler):
 
     for user in json.loads(users.read()):
       source = sources[user['screen_name']]
-      new_pic = Twitter.get_picture(user)
+      new_actor = auther.as_source.user_to_actor(user)
+      new_pic = new_actor.get('image', {}).get('url')
       if source.picture != new_pic:
         logging.info('Updating profile picture for %s from %s to %s',
                      source.bridgy_url(self), source.picture, new_pic)
