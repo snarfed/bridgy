@@ -46,24 +46,14 @@ class Twitter(models.Source):
       handler: the current RequestHandler
     """
     user = json.loads(auth_entity.user_json)
+    as_source = as_twitter.Twitter(*auth_entity.access_token())
+    actor = as_source.user_to_actor(user)
     return Twitter(id=user['screen_name'],
                    auth_entity=auth_entity.key,
-                   url=Twitter.user_url(user['screen_name']),
-                   name=user['name'],
-                   picture=Twitter.get_picture(user),
+                   url=actor.get('url'),
+                   name=actor.get('displayName'),
+                   picture=actor.get('image', {}).get('url'),
                    **kwargs)
-
-  @staticmethod
-  def get_picture(user):
-    """Returns a profile picture URL from a JSON-decoded Twitter user object.
-
-    Use https picture url if available, and drop the '_normal' suffix, which
-    gives us a higher res image, ~256x256 instead of ~48x48.
-    """
-    url = user.get('profile_image_url_https') or user.get('profile_image_url')
-    if url:
-      url = url.replace('_normal.', '.', 1)
-    return url
 
   def get_like(self, activity_user_id, activity_id, like_user_id):
     """Returns an ActivityStreams 'like' activity object for a favorite.
@@ -84,12 +74,6 @@ class Twitter(models.Source):
     else:
       return super(Twitter, self).get_like(activity_user_id, activity_id,
                                            like_user_id)
-
-  @staticmethod
-  def user_url(username):
-    """Returns a user's URL.
-    """
-    return 'http://twitter.com/%s' % username
 
 
 class AddTwitter(oauth_twitter.CallbackHandler, util.Handler):

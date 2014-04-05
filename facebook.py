@@ -68,15 +68,14 @@ class FacebookPage(models.Source):
       kwargs: property values
     """
     user = json.loads(auth_entity.user_json)
-    id = user['id']
-    url = 'http://facebook.com/' + id
-    picture = ('http://graph.facebook.com/%s/picture?type=large' %
-               user.get('username', id))
-    return FacebookPage(id=id, type=user.get('type'),
-                        name=user.get('name'),
-                        username=user.get('username'),
+    as_source = as_facebook.Facebook(auth_entity.access_token())
+    actor = as_source.user_to_actor(user)
+    return FacebookPage(id=user['id'], type=user.get('type'),
                         auth_entity=auth_entity.key,
-                        picture=picture, url=url,
+                        name=actor.get('displayName'),
+                        username=actor.get('username'),
+                        picture=actor.get('image', {}).get('url'),
+                        url=actor.get('url'),
                         **kwargs)
 
   def get(self, url):
