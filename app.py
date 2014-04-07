@@ -196,15 +196,15 @@ class DeleteStartHandler(util.Handler):
 
 class DeleteFinishHandler(util.Handler):
   def get(self):
-    parts = util.get_required_param(self, 'state').split('-', 1)
-    feature = parts[0]
-    if len(parts) != 2 or feature not in ('listen', 'publish'):
-      self.error(400, 'state query parameter must be [FEATURE]-[SOURCE KEY]')
-
     if self.request.get('declined'):
       self.messages.add("OK, you're still signed up.")
       self.redirect('/')
       return
+
+    parts = util.get_required_param(self, 'state').split('-', 1)
+    feature = parts[0]
+    if len(parts) != 2 or feature not in ('listen', 'publish'):
+      self.error(400, 'state query parameter must be [FEATURE]-[SOURCE KEY]')
 
     logged_in_as = util.get_required_param(self, 'auth_entity')
     source = ndb.Key(urlsafe=parts[1]).get()
