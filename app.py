@@ -60,6 +60,10 @@ class FrontPageHandler(DashboardHandler):
     return 'templates/index.html'
 
   def get(self):
+    if appengine_config.DEBUG:
+      # don't cache front page when running in in dev_appserver
+      super(DashboardHandler, self).get()
+
     self.response.headers['Content-Type'] = self.content_type()
     cached = util.CachedFrontPage.load()
     if cached:
