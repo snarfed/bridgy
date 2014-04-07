@@ -19,69 +19,6 @@
 }(document, 'script', 'facebook-jssdk'));
 </script>
 
-
-<!-- Preview AJAX -->
-<script type="text/javascript">
-function do_preview(site) {
-  var url = document.getElementById("source-url").value.trim();
-  if (url.length == 0) {
-    window.alert("Please enter a URL.");
-    return;
-  }
-
-  var preview = document.getElementById("preview");
-  var req = new XMLHttpRequest();
-  req.onload = function() {
-    if (this.status == 200) {
-      document.getElementById("preview").innerHTML = this.responseText;
-      /* trigger re-renders of twitter and facebook embeds */
-      twttr.widgets.load();
-      if (typeof(FB) != "undefined") {
-        FB.XFBML.parse();
-      }
-    } else {
-      this.onerror();
-    }
-  };
-  req.onerror = function() {
-      preview.innerHTML =
-        "<span title='Error' class='glyphicon glyphicon-exclamation-sign'></span> " +
-        this.responseText;
-      preview.class = "error";
-  }
-
-  preview.innerHTML = "<img src='/static/spinner.gif' width='30' />";
-  req.open("post", "/publish/preview?source=" + url +
-           "&target=http://brid.gy/publish/" + site);
-  req.send();
-}
-
-function send_preview(url) {
-  var sent = document.getElementById("sent");
-  var glyph = "<span title='Error' class='glyphicon glyphicon-exclamation-sign'></span> ";
-  var req = new XMLHttpRequest();
-
-  req.onload = function() {
-    if (this.status == 200) {
-      sent.innerHTML = "Sent! <a href='" + JSON.parse(this.responseText).url +
-                       "'>Click here to view.</a>";
-    } else if (this.status == 400) {
-      sent.innerHTML = glyph + JSON.parse(this.responseText).error;
-    } else {
-      this.onerror();
-    }
-  };
-  req.onerror = function() {
-    sent.innerHTML = glyph + this.responseText;
-  }
-
-  sent.innerHTML = "<img src='/static/spinner.gif' width='30' />";
-  req.open("post", url);
-  req.send();
-}
-</script>
-
-
 <!-- Header: name and picture -->
 <div id="user" class="row big">
 <a target="_blank" href="{{ source.url }}" title="{{ source.label|safe }}">

@@ -28,25 +28,8 @@ _gaq.push(['_trackPageview']);
   ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
   var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
 })();
-
-function toggle(id) {
-  var elem = document.getElementById(id);
-  elem.style.display = (elem.style.display == "none") ? "block" : "none";
-}
-
-// Extract messages from the hash and render them
-window.onload = function () {
-  if (window.location.hash.substr(0, 2) == "#!") {
-    var p = document.getElementById("message");
-    p.style.display = "inline";
-    p.innerHTML = decodeURIComponent(
-      window.location.hash.substr(2))  // strip leading #!
-        .replace("\n", "<br />");
-    window.location.hash = "";
-  }
-}
-
 </script>
+<script async src="/static/bridgy.js"></script>
 
 </head>
 
@@ -82,8 +65,7 @@ Got a web site?<br />
 Want to publish your posts to social networks?<br />
 Want to see comments and likes on your site?<br />
 <a id="title" href="/">Bridgy</a> is for you.
-<a id="more-link" href="#"
-   onclick="toggle('more-link'); toggle('more'); return false;">More...</a>
+<a id="more-link" href="#" onclick="toggle('more'); return false;">More...</a>
 </div>
 </div>
 
