@@ -125,8 +125,14 @@ class Handler(util.Handler):
     logging.debug('Parsed microformats2: %s', data)
     items = data.get('items', [])
     if not items or not items[0]:
-      return self.error('No microformats2 data found in %s' % self.fetched.url,
-                        data=data)
+      msg = ("""
+No <a href="http://microformats.org/wiki/microformats2">microformats2</a> data
+found in <a href="%s">%s</a>! See <a href="http://indiewebify.me/">indiewebify.me</a>
+for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
+""" % (self.fetched.url, util.pretty_link(self.fetched.url))
+             if self.PREVIEW else
+             'No microformats2 data found in %s' % self.fetched.url)
+      return self.error(msg, data=data)
 
 
     # loop through each item and try to preview/create it. if it fails, try the
