@@ -99,6 +99,7 @@ class Handler(util.Handler):
       domain = 'snarfed.org'
 
     # look up source by domain
+    domain = domain.lower()
     self.source = (source_cls.query()
                    .filter(source_cls.domain == domain)
                    .filter(source_cls.features == 'publish')

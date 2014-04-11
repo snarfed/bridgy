@@ -114,9 +114,11 @@ class SourceTest(testutil.HandlerTest):
       self.assertIsNone(source.domain)
       self.assertIsNone(source.domain_url)
 
-    # good URL
+    # good URLs
     for url in ('http://foo.com/bar', 'https://www.foo.com/bar',
-                'http://foo.com/\nhttp://baz.com/'):
+                'http://foo.com/\nhttp://baz.com/',
+                'http://FoO.cOm',  # should be normalized to lowercase
+                ):
       auth_entity = testutil.FakeAuthEntity(
         id='x', user_json=json.dumps({'url': url}))
       auth_entity.put()

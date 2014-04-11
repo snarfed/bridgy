@@ -68,6 +68,15 @@ class PublishTest(testutil.HandlerTest):
                        'content': 'foo - http://foo.com/'},
                       publish.published)
 
+  def test_success_domain_translates_to_lowercase(self):
+    html = '<article class="h-entry"><p class="e-content">foo</p></article>'
+    self.expect_requests_get('http://FoO.cOm/', html)
+    self.mox.ReplayAll()
+
+    resp = self.get_response(source='http://FoO.cOm/')
+    self.assertEquals(200, resp.status_int, resp.body)
+    self.assertEquals('foo - http://FoO.cOm/', json.loads(resp.body)['content'])
+
   def test_already_published(self):
     """We shouldn't allow duplicating an existing, *completed* publish."""
     page = PublishedPage(id='http://foo.com/')

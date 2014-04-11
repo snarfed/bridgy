@@ -218,7 +218,7 @@ class Source(StringIdModel):
         url = url.split()[0]
         resolved, domain, ok = util.get_webmention_target(url)
         if ok:
-          source.domain = domain
+          source.domain = domain.lower()
           source.domain_url = resolved
 
       if feature == 'publish' and not ok:
