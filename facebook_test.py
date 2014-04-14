@@ -79,6 +79,21 @@ class FacebookPageTest(testutil.ModelsTest):
                         event_activity,
                         ], page.get_activities())
 
+  def test_get_activities_post_and_photo_duplicates(self):
+    self.expect_urlopen(
+      'https://graph.facebook.com/me/posts?offset=0&access_token=my_token',
+      json.dumps({'data': [as_facebook_test.POST]}))
+    self.expect_urlopen(
+      'https://graph.facebook.com/me/photos/uploaded?access_token=my_token',
+      json.dumps({'data': [as_facebook_test.PHOTO]}))
+    self.expect_urlopen(
+      'https://graph.facebook.com/me/events?access_token=my_token',
+      json.dumps({}))
+    self.mox.ReplayAll()
+
+    page = FacebookPage.new(self.handler, auth_entity=self.auth_entity)
+    self.assert_equals([as_facebook_test.ACTIVITY], page.get_activities())
+
   def test_revoked(self):
     self.expect_urlopen(
       'https://graph.facebook.com/me/posts?offset=0&access_token=my_token',
