@@ -143,8 +143,6 @@ class FacebookPage(models.Source):
     # only add photos that we don't already have activities for
     fb_object_ids = util.trim_nulls(set(
         i.get('object', {}).get('fb_object_id') for i in items))
-    logging.info('@ %s %s', fb_object_ids,
-                 [p.get('id') for p in photos])
     items += [self.as_source.post_to_activity(p) for p in photos
               if p.get('id') not in fb_object_ids]
 
