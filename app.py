@@ -258,7 +258,8 @@ class RedirectToFrontPageHandler(util.Handler):
 
 application = webapp2.WSGIApplication(
   [('/?', FrontPageHandler),
-   ('/(facebook|googleplus|instagram|twitter)/(.+)/?', UserHandler),
+   ('/(blogger|facebook|googleplus|instagram|tumblr|twitter|wordpress)/(.+)/?',
+    UserHandler),
    ('/about/?', AboutHandler),
    ('/delete/start', DeleteStartHandler),
    ('/delete/finish', DeleteFinishHandler),

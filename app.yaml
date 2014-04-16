@@ -62,6 +62,10 @@ handlers:
   script: twitter.application
   secure: always
 
+- url: /wordpress/(start|add|delete)(/.*)?
+  script: wordpress_rest.application
+  secure: always
+
 - url: /log
   script: logs.application
   secure: always

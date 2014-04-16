@@ -33,6 +33,7 @@ import models
 import twitter
 import util
 import webapp2
+import wordpress_rest
 
 from google.appengine.ext import ndb
 
@@ -41,7 +42,9 @@ SOURCES = {cls.SHORT_NAME: cls for cls in
            (facebook.FacebookPage,
             googleplus.GooglePlusPage,
             instagram.Instagram,
-            twitter.Twitter)}
+            twitter.Twitter,
+            wordpress_rest.WordPress,
+            )}
 
 TEMPLATE = string.Template("""\
 <!DOCTYPE html>

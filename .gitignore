@@ -11,7 +11,13 @@ instagram_client_id_local
 instagram_client_secret_local
 mapreduce
 private_notes
+tumblr_app_key
+tumblr_app_secret
 twitter_access_token_key
 twitter_access_token_secret
 twitter_app_key
 twitter_app_secret
+wordpress.com_client_id
+wordpress.com_client_secret
+wordpress.com_client_id_local
+wordpress.com_client_secret_local

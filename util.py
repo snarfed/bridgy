@@ -226,7 +226,7 @@ class Handler(webapp2.RequestHandler):
     """
     if state is None:
       state = ''
-    if state in ('', 'listen', 'publish'):  # this is an add/update
+    if state in ('', 'listen', 'publish', 'webmention'):  # this is an add/update
       if not auth_entity:
         self.messages.add("OK, you're not signed up. Hope you reconsider!")
         self.redirect('/')
