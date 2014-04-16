@@ -1,0 +1,31 @@
+<div id="blog-signup" class="signup col-sm-4">
+<p class="big">Want to add webmentions to your blog?</p>
+
+<div class="row">
+<form method="post" name="blogger-start" action="/blogger/start">
+ <input type="image" alt="Sign in with Blogger"
+        src="/static/blogger_button_signin.png" />
+ <input name="state" type="hidden" value="webmention" />
+ <!-- Blogger only has one OAuth scope. oauth-dropins fills it in. -->
+</form>
+</div>
+
+<div class="row">
+<form method="post" name="tumblr-start" action="/tumblr/start">
+ <input type="image" alt="Sign in with Tumblr"
+        src="/static/tumblr_button_signin.png" />
+ <input name="state" type="hidden" value="webmention" />
+ <!-- Tumblr doesn't seem to use scope -->
+</form>
+</div>
+
+<div class="row">
+<form method="post" name="wordpress-start" action="/wordpress/start">
+ <input type="image" alt="Sign in with WordPress.com"
+        src="/static/wordpress_button_signin.png" />
+ <input name="state" type="hidden" value="webmention" />
+ <!-- wp.com doesn't seem to use scope -->
+</form>
+</div>
+
+</div>

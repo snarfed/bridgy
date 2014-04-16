@@ -49,7 +49,7 @@ class Source(StringIdModel):
   Each concrete silo class should subclass this class.
   """
   STATUSES = ('enabled', 'disabled', 'error')
-  FEATURES = ('listen', 'publish')
+  FEATURES = ('listen', 'publish', 'webmention')
 
   # short name for this site type. used in URLs, ec.
   SHORT_NAME = None
@@ -213,18 +213,7 @@ class Source(StringIdModel):
     # extract domain from the URL set on the user's profile, if any
     auth_entity = kwargs.get('auth_entity')
     if auth_entity and auth_entity.user_json:
-      actor = source.as_source.user_to_actor(json.loads(auth_entity.user_json))
-      # TODO: G+ has a multiply-valued 'urls' field. ignoring for now because
-      # we're not implementing publish for G+
-      url = actor.get('url')
-      ok = False
-      if url:
-        url = url.split()[0]
-        resolved, domain, ok = util.get_webmention_target(url)
-        if ok:
-          source.domain = domain.lower()
-          source.domain_url = resolved
-
+      url, domain, ok = source._url_and_domain(auth_entity)
       if feature == 'publish' and not ok:
         if not url:
           handler.messages = {'Your %s profile is missing the website field. '
@@ -238,6 +227,10 @@ class Source(StringIdModel):
                               "%s\n Please update it and try again!" %
                               (cls.AS_CLASS.NAME, url)}
         return None
+
+      if ok:
+        source.domain_url = url
+        source.domain = domain
 
     # check if this source already exists
     existing = source.key.get()
@@ -262,6 +255,32 @@ class Source(StringIdModel):
       util.add_poll_task(source)
 
     return source
+
+  def _url_and_domain(self, auth_entity):
+    """Returns this source's URL and domain.
+
+    Uses the auth entity user_json 'url' field by default. May be overridden
+    by subclasses.
+
+    Args:
+      auth_entity: oauth_dropins.models.BaseAuth
+
+    Returns: (string url, string domain, boolean ok) tuple
+    """
+    actor = self.as_source.user_to_actor(json.loads(auth_entity.user_json))
+    # TODO: G+ has a multiply-valued 'urls' field. ignoring for now because
+    # we're not implementing publish for G+
+    domain = None
+    ok = False
+
+    url = actor.get('url')
+    if url:
+      url = url.split()[0]
+      url, domain, ok = util.get_webmention_target(url)
+      if ok:
+        domain = domain.lower()
+
+    return url, domain, ok
 
 
 class Response(StringIdModel):
