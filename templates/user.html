@@ -235,4 +235,46 @@
 {% endif %}
 </div>
 
+
+<!-- Blog webmentions -->
+<div class="row">
+{% if "webmention" in source.features %}
+{% if webmentions %}
+<p id="webmentions" class="big">Recently webmentioned:</p>
+<ul class="webmentions">
+  {% for wm in webmentions %}
+  <li class="row">
+   <div class="col-sm-4">
+     {{ wm.pretty_page|safe }}
+
+   </div><div class="col-sm-4">
+    <a href="/log?start_time={{ wm.updated|date:'U' }}&key={{ wm.key.urlsafe }}">
+      {{ wm.updated|timesince }} ago
+      {% if wm.status == 'failed' %}
+       <span title="Error" class="glyphicon glyphicon-exclamation-sign"></span>
+      {% else %}{% if wm.status == 'new' %}
+       <span title="Processing" class="glyphicon glyphicon-transfer"></span>
+      {% endif %}{% endif %}
+    </a>
+
+   </div><div class="col-sm-4">
+     {% if wm.webmentioned.url %}
+       <a href="{{ wm.webmentioned.url }}">
+     {% endif %}
+       {% firstof wm.type_label wm.type %}
+     {% if wm.webmentioned.url %}
+       </a>
+     {% endif %}
+
+   </div>
+  </li>
+  {% endfor %}
+</ul>
+
+{% else %}
+<!-- <p class="big">Nothing webmentioned yet.</p> -->
+{% endif %}
+{% endif %}
+</div>
+
 {% endblock %}
