@@ -8,6 +8,8 @@ import urlparse
 import requests
 import webapp2
 
+from mf2py.parser import Parser as Mf2Parser
+
 from activitystreams.oauth_dropins.webutil.util import *
 from activitystreams import source
 from appengine_config import HTTP_TIMEOUT, DEBUG
@@ -188,6 +190,117 @@ def prune_activity(activity):
         del obj[k]
 
   return trim_nulls(pruned)
+
+
+_PERMASHORTCITATION_RE = re.compile(r'\(([^:\s)]+\.[^\s)]{2,})[ /]([^\s)]+)\)$')
+
+
+def original_post_discovery(activity):
+  """Discovers original post links and stores them as tags, in place.
+
+  This is a variation on http://indiewebcamp.com/original-post-discovery . It
+  differs in that it finds multiple candidate links instead of one, and it
+  doesn't bother looking for MF2 (etc) markup because the silos don't let you
+  input it.
+
+  Args:
+    activity: activity dict
+  """
+  obj = activity.get('object') or activity
+  content = obj.get('content', '').strip()
+
+  def article_urls(field):
+    return set(util.trim_nulls(a.get('url') for a in obj.get(field, [])
+                               if a['objectType'] == 'article'))
+  attachments = article_urls('attachments')
+  tags = article_urls('tags')
+  urls = attachments | set(util.extract_links(content))
+
+  # reverse lookup by searching the author's h-feed for u-syndication links
+  ppdurl = _posse_post_discovery(obj)
+  if ppdurl:
+    urls.add(ppdurl)
+
+  # Permashortcitations are short references to canonical copies of a given
+  # (usually syndicated) post, of the form (DOMAIN PATH). Details:
+  # http://indiewebcamp.com/permashortcitation
+  for match in _PERMASHORTCITATION_RE.finditer(content):
+    http = match.expand(r'http://\1/\2')
+    https = match.expand(r'https://\1/\2')
+    existing = urls | tags
+    if http not in existing and https not in existing:
+      urls.add(http)
+
+  obj.setdefault('tags', []).extend(
+    {'objectType': 'article', 'url': u} for u in urls
+    # heuristic: ellipsized URLs are probably incomplete, so omit them.
+    if not u.endswith('...') and not u.endswith(u'…'))
+  return activity
+
+
+def _posse_post_discovery(activity):
+  def process_feed(feeditems):
+    permalinks = set()
+    for child in feeditems:
+      if 'h-entry' in child['type']:
+        permalinks.update(child['properties'].get('url', []))
+
+    original_url = None
+    for permalink in permalinks:
+      logging.debug("parsing permalink: %s", permalink)
+      syndlinks = process_entry(permalink)
+      if syndication_url in syndlinks:
+        # found it! might as well process the other permalinks while we're here
+        original_url = permalink
+
+    return original_url
+
+  def process_entry(permalink):
+    d = Mf2Parser(url=permalink).to_dict()
+    result = set()
+    relsynd = d.get('rels').get('syndication', [])
+    logging.debug("rel-syndication links: %s", relsynd)
+    result.update(relsynd)
+
+    hentry = next((item for item in d['items']
+                   if 'h-entry' in item['type']), None)
+    if hentry:
+      usynd = hentry.get('properties', {}).get('syndication', [])
+      logging.debug("u-syndication links: %s", usynd)
+      result.update(usynd)
+
+    # TODO store original -> syndicated, and syndicated -> original in DB
+    return result
+
+  logging.info("!!!posse post discovery!!!")
+  author = activity.get('author', {})
+  author_url = activity.get('author', {}).get('url')
+  syndication_url = activity.get('url')
+
+  logging.debug("with author %s and syndication url %s", author,
+                syndication_url)
+  if not author_url or not syndication_url:
+    return None
+
+  d = Mf2Parser(url=author_url).to_dict()
+
+  # look for canonical feed url (if it isn't this one) using
+  # rel='feed', type='text/html'
+  canonical = next(iter(d.get('rels').get('feed', [])), None)
+  if canonical and canonical != author_url:
+    d = Mf2Parser(url=canonical).to_dict()
+
+  hfeed = next((item for item in d['items']
+                if 'h-feed' in item['type']), None)
+
+  if hfeed:
+    feeditems = hfeed['children']
+  else:
+    logging.debug("no h-feed found, faking it")
+    feeditems = d['items']
+
+  original_url = process_feed(feeditems)
+  return original_url
 
 
 class Handler(webapp2.RequestHandler):

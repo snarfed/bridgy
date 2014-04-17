@@ -148,7 +148,7 @@ class ItemHandler(webapp2.RequestHandler):
       logging.warning('Source post %s not found', post_id)
       return
 
-    original_post_discovery.discover(self.source, post, fetch_hfeed=False)
+    util.original_post_discovery(post)
 
     if prop not in obj:
       obj[prop] = []
