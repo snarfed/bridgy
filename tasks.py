@@ -48,7 +48,7 @@ def get_webmention_targets(activity):
   Side effect: runs the original post discovery algorithm on the activity and
   adds the resulting URLs to the activity as tags, in place.
   """
-  Source.original_post_discovery(activity)
+  util.original_post_discovery(activity)
 
   targets = set()
   obj = activity.get('object') or activity
