@@ -354,3 +354,23 @@ class Publish(ndb.Model):
   published = ndb.JsonProperty(compressed=True)
   created = ndb.DateTimeProperty(auto_now_add=True)
   updated = ndb.DateTimeProperty(auto_now=True)
+
+
+class SyndicatedPost(ndb.Model):
+  """Represents a syndicated post and its discovered original (or not
+  if we found no original post).  We discover the relationship by
+  following rel=syndication links on the author's h-feed.
+
+  See util._posse_post_discovery
+
+  """
+  syndication = ndb.StringProperty()
+  original = ndb.StringProperty()
+
+  @classmethod
+  def query_by_original(cls, url):
+    return cls.query().filter(cls.original == url).get()
+
+  @classmethod
+  def query_by_syndication(cls, url):
+    return cls.query().filter(cls.syndication == url).get()

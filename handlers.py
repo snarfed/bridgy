@@ -144,7 +144,7 @@ class ItemHandler(webapp2.RequestHandler):
       logging.warning('Source post %s not found', post_id)
       return
 
-    util.original_post_discovery(post)
+    util.original_post_discovery(self.source, post)
 
     if prop not in obj:
       obj[prop] = []
@@ -163,6 +163,10 @@ class ItemHandler(webapp2.RequestHandler):
         if url.startswith('http://snarfed.org/'):
           url_obj['url'] = url = url.replace('http://snarfed.org/',
                                              'http://localhost/')
+        elif url.startswith('http://kylewm.com'):
+          url_obj['url'] = url = url.replace('http://kylewm.com/',
+                                             'http://localhost/')
+
       resolved, _, send = util.get_webmention_target(url)
       if send and resolved != url:
         resolved_urls.add(resolved)
