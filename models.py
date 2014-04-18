@@ -114,6 +114,10 @@ class Source(StringIdModel):
     """Returns the Bridgy page URL for this source."""
     return handler.request.host_url + self.bridgy_path()
 
+  def silo_url(self, handler):
+    """Returns the silo account URL.g. https://twitter.com/foo."""
+    raise NotImplementedError()
+
   def label(self):
     """Human-readable label for this site."""
     return '%s (%s)' % (self.name, self.AS_CLASS.NAME)

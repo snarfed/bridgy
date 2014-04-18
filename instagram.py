@@ -58,6 +58,10 @@ class Instagram(models.Source):
                      url='http://instagram.com/' + username,
                      **kwargs)
 
+  def silo_url(self):
+    """Returns the Instagram account URL, e.g. https://instagram.com/foo."""
+    return self.url
+
   def get_activities_response(self, *args, **kwargs):
     """Discard min_id because we still want new comments/likes on old photos."""
     if 'min_id' in kwargs:
