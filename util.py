@@ -192,115 +192,194 @@ def prune_activity(activity):
   return trim_nulls(pruned)
 
 
-_PERMASHORTCITATION_RE = re.compile(r'\(([^:\s)]+\.[^\s)]{2,})[ /]([^\s)]+)\)$')
-
-
-def original_post_discovery(activity):
-  """Discovers original post links and stores them as tags, in place.
-
-  This is a variation on http://indiewebcamp.com/original-post-discovery . It
-  differs in that it finds multiple candidate links instead of one, and it
-  doesn't bother looking for MF2 (etc) markup because the silos don't let you
-  input it.
+def original_post_discovery(account, activity):
+  """Augments the standard original_post_discovery algorithm with a
+  reverse lookup that supports posts without a backlink or citation.
 
   Args:
+    account: bridgy.Source subclass
     activity: activity dict
+
   """
+  source.Source.original_post_discovery(activity)
+
   obj = activity.get('object') or activity
-  content = obj.get('content', '').strip()
+  original = _posse_post_discovery(account, obj)
+  if original:
+    obj.setdefault('tags', []).append({
+        'objectType': 'article',
+        'url': original
+      })
 
-  def article_urls(field):
-    return set(util.trim_nulls(a.get('url') for a in obj.get(field, [])
-                               if a['objectType'] == 'article'))
-  attachments = article_urls('attachments')
-  tags = article_urls('tags')
-  urls = attachments | set(util.extract_links(content))
-
-  # reverse lookup by searching the author's h-feed for u-syndication links
-  ppdurl = _posse_post_discovery(obj)
-  if ppdurl:
-    urls.add(ppdurl)
-
-  # Permashortcitations are short references to canonical copies of a given
-  # (usually syndicated) post, of the form (DOMAIN PATH). Details:
-  # http://indiewebcamp.com/permashortcitation
-  for match in _PERMASHORTCITATION_RE.finditer(content):
-    http = match.expand(r'http://\1/\2')
-    https = match.expand(r'https://\1/\2')
-    existing = urls | tags
-    if http not in existing and https not in existing:
-      urls.add(http)
-
-  obj.setdefault('tags', []).extend(
-    {'objectType': 'article', 'url': u} for u in urls
-    # heuristic: ellipsized URLs are probably incomplete, so omit them.
-    if not u.endswith('...') and not u.endswith(u'…'))
   return activity
 
 
-def _posse_post_discovery(activity):
+def _posse_post_discovery(account, activity):
+  """Supports original-post-discovery for syndicated content without a
+  link to the original.
+
+  Performs a reverse-lookup that scans the activity's author's h-feed
+  for posts with rel=syndication links. As we find syndicated copies,
+  save the relationship.  If we find the original pos for the activity
+  in question, return the original's URL.
+
+  See http://indiewebcamp.com/posse-post-discovery for more detail.
+
+  Args:
+    activity: the dict representing the syndicated post
+
+  """
+  from models import SyndicatedPost
+
+  def process_author(author_url):
+    # for now use whether the url is a valid webmention target
+    # as a proxy for whether it's worth searching it.
+    # TODO skip sites we know don't have microformats2 markup
+    _, _, is_valid_target = get_webmention_target(author_url)
+    if not is_valid_target:
+      return
+
+    try:
+      author_resp = requests.get(author_url, allow_redirects=True,
+                                 timeout=HTTP_TIMEOUT)
+    except BaseException:
+      # TODO limit allowed failures, cache the author's h-feed url
+      # or the # of times we've failed to fetch it
+      logging.error("Could not fetch author url %s", author_url)
+      return None
+
+    author_parsed = Mf2Parser(url=author_url, doc=author_resp.text).to_dict()
+
+    # look for canonical feed url (if it isn't this one) using
+    # rel='feed', type='text/html'
+    canonical = next(iter(author_parsed.get('rels').get('feed', [])), None)
+    if canonical and canonical != author_url:
+      try:
+        canonical_resp = requests.get(
+          canonical, allow_redirects=True, timeout=HTTP_TIMEOUT)
+        author_parsed = Mf2Parser(
+          url=canonical, doc=canonical_resp.text).to_dict()
+      except BaseException:
+        logging.exception(
+          "Could not fetch h-feed url %s. Falling back on author url.",
+          canonical)
+
+    hfeed = next((item for item in author_parsed['items']
+                  if 'h-feed' in item['type']), None)
+    if hfeed:
+      feeditems = hfeed['children']
+    else:
+      logging.warning("No h-feed found. Checking for top-level h-entrys.")
+      feeditems = d['items']
+
+    process_feed(feeditems)
+
   def process_feed(feeditems):
-    permalinks = set()
+    """process each h-feed entry that has not been encountered before
+
+    Args:
+      feeditems: a list of mf2 dicts
+    """
+    permalinks = []  # an ordered set would be better
     for child in feeditems:
       if 'h-entry' in child['type']:
-        permalinks.update(child['properties'].get('url', []))
+        for permalink in child['properties'].get('url', []):
+          if not permalink in permalinks:
+            permalinks.append(permalink)
 
     original_url = None
-    for permalink in permalinks:
-      logging.debug("parsing permalink: %s", permalink)
-      syndlinks = process_entry(permalink)
-      if syndication_url in syndlinks:
-        # found it! might as well process the other permalinks while we're here
-        original_url = permalink
+    for permalink in permalinks:  # TODO maybe limit to first ~30 entries?
 
-    return original_url
+      relationship = SyndicatedPost.query_by_original(permalink)
+      # if the post hasn't already been processed
+      if not relationship:
+        logging.debug("parsing permalink: %s", permalink)
+        process_entry(permalink)
 
   def process_entry(permalink):
-    d = Mf2Parser(url=permalink).to_dict()
-    result = set()
-    relsynd = d.get('rels').get('syndication', [])
-    logging.debug("rel-syndication links: %s", relsynd)
-    result.update(relsynd)
+    """Fetch and process an h-hentry, saving a new SyndicatedPost
+    to the DB if successful.
 
-    hentry = next((item for item in d['items']
+    Args:
+      permalink: the url of the unprocessed post
+    """
+    try:
+      resp = requests.get(permalink, allow_redirects=True,
+                          timeout=HTTP_TIMEOUT)
+      parsed = Mf2Parser(url=permalink, doc=resp.text).to_dict()
+    except BaseException:
+      # TODO limit the number of allowed failures
+      logger.error("Could not fetch permalink %s", permalink)
+      return
+
+    syndurls = set()
+    relsynd = parsed.get('rels').get('syndication', [])
+    logging.debug("rel-syndication links: %s", relsynd)
+    syndurls.update(relsynd)
+
+    hentry = next((item for item in parsed['items']
                    if 'h-entry' in item['type']), None)
     if hentry:
       usynd = hentry.get('properties', {}).get('syndication', [])
       logging.debug("u-syndication links: %s", usynd)
-      result.update(usynd)
+      syndurls.update(usynd)
 
-    # TODO store original -> syndicated, and syndicated -> original in DB
-    return result
+    # remember the relationships so we don't have to re-process this permalink
+    if syndurls:
+      for syndurl in syndurls:
+        # follow redirects to give us the canonical syndication url --
+        # gives the best chance of finding a match.
+        syndurl = follow_redirects(syndurl).url
+        relationship = SyndicatedPost()
+        relationship.original = permalink
+        relationship.syndication = syndurl
+        relationship.put()
+    else:
+      # remember that this post doesn't have syndication links
+      relationship = SyndicatedPost()
+      relationship.original = permalink
+      relationship.put()
 
-  logging.info("!!!posse post discovery!!!")
-  author = activity.get('author', {})
-  author_url = activity.get('author', {}).get('url')
+  # use account.domain_url instead of trusting the activity to have an
+  # embedded author website
+  # author_url = activity.get('author', {}).get('url')
+  author_url = account.domain_url
   syndication_url = activity.get('url')
 
-  logging.debug("with author %s and syndication url %s", author,
-                syndication_url)
   if not author_url or not syndication_url:
     return None
 
-  d = Mf2Parser(url=author_url).to_dict()
+  if DEBUG:
+    if author_url.startswith('http://snarfed.org'):
+      author_url = author_url.replace('snarfed.org', 'localhost')
+    elif author_url.startswith('http://kylewm.com'):
+      author_url = author_url.replace('kylewm.com', 'localhost')
 
-  # look for canonical feed url (if it isn't this one) using
-  # rel='feed', type='text/html'
-  canonical = next(iter(d.get('rels').get('feed', [])), None)
-  if canonical and canonical != author_url:
-    d = Mf2Parser(url=canonical).to_dict()
+  # use the canonical syndication url on both sides, so that we have
+  # the best chance of finding a match. Some silos allow several
+  # different permalink formats to point to the same place (e.g.,
+  # facebook user id instead of user name)
+  syndication_url = follow_redirects(syndication_url).url
 
-  hfeed = next((item for item in d['items']
-                if 'h-feed' in item['type']), None)
+  logging.debug("posse post discovery with author %s and syndicated %s",
+                author_url, syndication_url)
 
-  if hfeed:
-    feeditems = hfeed['children']
-  else:
-    logging.debug("no h-feed found, faking it")
-    feeditems = d['items']
+  relationship = SyndicatedPost.query_by_syndication(syndication_url)
+  if not relationship:
+    # a silo post we haven't seen before! fetch the author's h-feed to
+    # see if we can find it.
+    process_author(author_url)
+    relationship = SyndicatedPost.query_by_syndication(syndication_url)
 
-  original_url = process_feed(feeditems)
-  return original_url
+  if not relationship:
+    # No relationship was found. Remember that we've seen this silo
+    # post to avoid reprocessing it every time
+    relationship = SyndicatedPost()
+    relationship.syndication = syndication_url
+    relationship.put()
+    return None
+
+  return relationship.original
 
 
 class Handler(webapp2.RequestHandler):

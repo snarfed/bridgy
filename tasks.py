@@ -53,7 +53,7 @@ def get_webmention_targets(source, activity):
    source: models.Source subclass
    activity: activity dict
   """
-  util.original_post_discovery(activity)
+  util.original_post_discovery(source, activity)
 
   targets = set()
   obj = activity.get('object') or activity
