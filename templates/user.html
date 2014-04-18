@@ -21,7 +21,7 @@
 
 <!-- Header: name and picture -->
 <div id="user" class="row big">
-<a target="_blank" href="{{ source.url }}" title="{{ source.label|safe }}">
+<a target="_blank" href="{{ source.silo_url }}" title="{{ source.label|safe }}">
   <img class="profile" src="{{ source.picture }}" width="64px" />
   <img src="/static/{{ source.SHORT_NAME }}_icon.png"
        alt="{% firstof source.AS_CLASS.NAME source.key.kind %}" />
@@ -219,7 +219,7 @@
      {% if publish.published.url %}
        <a href="{{ publish.published.url }}">
      {% endif %}
-       {% firstof publish.type_label publish.type %}
+     {% firstof publish.type_label publish.type %}
      {% if publish.published.url %}
        </a>
      {% endif %}

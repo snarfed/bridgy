@@ -55,6 +55,10 @@ class Twitter(models.Source):
                    picture=actor.get('image', {}).get('url'),
                    **kwargs)
 
+  def silo_url(self):
+    """Returns the Twitter account URL, e.g. https://twitter.com/foo."""
+    return self.as_source.user_url(self.key.id())
+
   def get_like(self, activity_user_id, activity_id, like_user_id):
     """Returns an ActivityStreams 'like' activity object for a favorite.
 

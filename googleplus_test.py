@@ -31,3 +31,5 @@ class GooglePlusTest(testutil.ModelsTest):
     self.assertEqual('987', gp.key.string_id())
     self.assertEqual('http://pi.ct/ure?sz=50&sz=128', gp.picture)  # overridden sz
     self.assertEqual('Mr. G P', gp.name)
+    self.assertEqual('http://mr/g/p', gp.url)
+    self.assertEqual('http://mr/g/p', gp.silo_url())

@@ -35,6 +35,7 @@ class InstagramTest(testutil.ModelsTest):
     self.assertEqual('snarfed', inst.key.string_id())
     self.assertEqual('http://pic.ture/url', inst.picture)
     self.assertEqual('http://instagram.com/snarfed', inst.url)
+    self.assertEqual('http://instagram.com/snarfed', inst.silo_url())
     self.assertEqual('Ryan Barrett', inst.name)
 
   def test_get_activities_response(self):

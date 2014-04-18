@@ -64,6 +64,10 @@ class GooglePlusPage(models.Source):
                           type=type,
                           **kwargs)
 
+  def silo_url(self):
+    """Returns the Google+ account URL, e.g. https://plus.google.com/+Foo."""
+    return self.url
+
   def __getattr__(self, name):
     """Overridden to pass auth_entity to as_googleplus.GooglePlus's ctor."""
     if name == 'as_source' and self.auth_entity:

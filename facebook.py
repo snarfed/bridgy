@@ -78,6 +78,10 @@ class FacebookPage(models.Source):
                         url=actor.get('url'),
                         **kwargs)
 
+  def silo_url(self):
+    """Returns the Facebook account URL, e.g. https://facebook.com/foo."""
+    return 'https://facebook.com/' + (self.username or self.key.id())
+
   def get(self, url):
     """Simple wrapper around urlopen(). Returns decoded JSON dict."""
     return json.loads(self.as_source.urlopen(url).read())
