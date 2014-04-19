@@ -240,8 +240,7 @@ def _posse_post_discovery(account, activity):
       return
 
     try:
-      author_resp = requests.get(author_url, allow_redirects=True,
-                                 timeout=HTTP_TIMEOUT)
+      author_resp = requests.get(author_url, timeout=HTTP_TIMEOUT)
     except BaseException:
       # TODO limit allowed failures, cache the author's h-feed url
       # or the # of times we've failed to fetch it
@@ -255,8 +254,7 @@ def _posse_post_discovery(account, activity):
     canonical = next(iter(author_parsed.get('rels').get('feed', [])), None)
     if canonical and canonical != author_url:
       try:
-        canonical_resp = requests.get(
-          canonical, allow_redirects=True, timeout=HTTP_TIMEOUT)
+        canonical_resp = requests.get(canonical, timeout=HTTP_TIMEOUT)
         author_parsed = Mf2Parser(
           url=canonical, doc=canonical_resp.text).to_dict()
       except BaseException:
@@ -264,13 +262,13 @@ def _posse_post_discovery(account, activity):
           "Could not fetch h-feed url %s. Falling back on author url.",
           canonical)
 
-    hfeed = next((item for item in author_parsed['items']
+    feeditems = author_parsed['items']
+    hfeed = next((item for item in feeditems
                   if 'h-feed' in item['type']), None)
     if hfeed:
       feeditems = hfeed['children']
     else:
-      logging.warning("No h-feed found. Checking for top-level h-entrys.")
-      feeditems = d['items']
+      logging.info("No h-feed found, fallback to top-level h-entrys.")
 
     process_feed(feeditems)
 
@@ -304,12 +302,11 @@ def _posse_post_discovery(account, activity):
       permalink: the url of the unprocessed post
     """
     try:
-      resp = requests.get(permalink, allow_redirects=True,
-                          timeout=HTTP_TIMEOUT)
+      resp = requests.get(permalink, timeout=HTTP_TIMEOUT)
       parsed = Mf2Parser(url=permalink, doc=resp.text).to_dict()
     except BaseException:
       # TODO limit the number of allowed failures
-      logger.error("Could not fetch permalink %s", permalink)
+      logging.error("Could not fetch permalink %s", permalink)
       return
 
     syndurls = set()
