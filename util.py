@@ -244,7 +244,7 @@ def _posse_post_discovery(account, activity):
     except BaseException:
       # TODO limit allowed failures, cache the author's h-feed url
       # or the # of times we've failed to fetch it
-      logging.error("Could not fetch author url %s", author_url)
+      logging.exception("Could not fetch author url %s", author_url)
       return None
 
     author_parsed = Mf2Parser(url=author_url, doc=author_resp.text).to_dict()
