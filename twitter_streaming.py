@@ -135,7 +135,7 @@ class Listener(streaming.StreamListener):
         # logging.debug("Discarding message we don't handle: %s", data)
         return True
 
-      targets = tasks.get_webmention_targets(activity)
+      targets = tasks.get_webmention_targets(self.source, activity)
       models.Response(id=response['id'],
                       source=self.source.key,
                       activity_json=json.dumps(activity),
