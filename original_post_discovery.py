@@ -1,82 +1,50 @@
-"""Augments the standard original_post_discovery algorithm with a
-reverse lookup that supports posts without a backlink or citation.
-
-Performs a reverse-lookup that scans the activity's author's h-feed
-for posts with rel=syndication links. As we find syndicated copies,
-save the relationship.  If we find the original post for the activity
-in question, return the original's URL.
-
-See http://indiewebcamp.com/posse-post-discovery for more detail.
-
-This feature adds costs in terms of HTTP requests and database
-lookups in the following primary cases:
-
-- Author's domain is known to be invalid or blacklisted, there will
-  be 0 requests and 0 DB lookups.
-
-- For a syndicated post has been seen previously (regardless of
-  whether discovery was successful), there will be 0 requests and 1
-  DB lookup.
-
-- The first time a syndicated post has been seen:
-  - 1 to 2 HTTP requests to get and parse the h-feed plus 1 additional
-    request for *each* post permalink that has not been seen before.
-  - 1 DB query for the initial check plus 1 additional DB query for
-    *each* post permalink.
-"""
-
 import logging
 import requests
-import urlparse
-import util
+
+from util import get_webmention_target, follow_redirects
+from models import SyndicatedPost
 
 from activitystreams import source as as_source
 from appengine_config import HTTP_TIMEOUT, DEBUG
-from google.appengine.ext import ndb
 from mf2py.parser import Parser as Mf2Parser
-from models import SyndicatedPost
 
 
-def discover(source, activity, fetch_hfeed=True):
+def original_post_discovery(source, activity):
   """Augments the standard original_post_discovery algorithm with a
   reverse lookup that supports posts without a backlink or citation.
 
-  If fetch_feed is False, then we will check the db for previously
-  found SyndicatedPosts but will not do posse-post-discovery to find
-  new ones.
+  Performs a reverse-lookup that scans the activity's author's h-feed
+  for posts with rel=syndication links. As we find syndicated copies,
+  save the relationship.  If we find the original pos for the activity
+  in question, return the original's URL.
+
+  See http://indiewebcamp.com/posse-post-discovery for more detail.
+
 
   Args:
     source: models.Source subclass
     activity: activity dict
-    fetch_hfeed: boolean
 
-  Return:
-    the activity, updated with original post urls if any are found
   """
+
   as_source.Source.original_post_discovery(activity)
 
-  # TODO possible optimization: if we've discovered a backlink to a
-  # post on the author's domain (i.e., it included a link or
-  # citation), then skip the rest of this.
+  note = activity.get('object', {})
 
-  # Use source.domain_url for now; it seems more reliable than the
-  # activity.actor.url (which depends on getting the right data back
-  # from various APIs). Consider using the actor's url, with
-  # domain_url as the fallback in the future to support content from
-  # non-Bridgy users.
-  # author_url = activity.get('actor', {}).get('url')
-  obj = activity.get('object') or activity
+  # use source.domain_url instead of trusting the activity to have an
+  # embedded author website
+  # author_url = activity.get('author', {}).get('url')
   author_url = source.domain_url
-  syndication_url = obj.get('url')
+  syndication_url = note.get('url')
 
   if not author_url:
-    logging.debug('no author url, cannot find h-feed %s', author_url)
-    return activity
+    logging.debug("no author url, cannot find h-feed %s", author_url)
+    return None
 
   if not syndication_url:
-    logging.debug('no syndication url, cannot process h-entries %s',
+    logging.debug("no syndication url, cannot process h-entries %s",
                   syndication_url)
-    return activity
+    return None
 
   if DEBUG:
     if author_url.startswith('http://snarfed.org'):
@@ -88,212 +56,145 @@ def discover(source, activity, fetch_hfeed=True):
   # the best chance of finding a match. Some silos allow several
   # different permalink formats to point to the same place (e.g.,
   # facebook user id instead of user name)
-  syndication_url = util.follow_redirects(syndication_url).url
-  return _posse_post_discovery(source, activity,
-                               author_url, syndication_url)
+  syndication_url = follow_redirects(syndication_url).url
 
-
-# TODO narrow the scope of this transaction. With a large h-feed,
-# we could easily go over the 60s tx limit.
-@ndb.transactional
-def _posse_post_discovery(source, activity, author_url, syndication_url):
-  """Performs the actual meat of the posse-post-discover. It was split
-  out from discover() so that it can be done inside of a transaction.
-
-  Args:
-    source: models.Source subclass
-    activity: activity dict
-    author_url: author's url configured in their silo profile
-    syndication_url: url of the syndicated copy for which we are
-                     trying to find an original
-
-  Return:
-    the activity, updated with original post urls if any are found
-  """
-  logging.debug('starting posse post discovery with author %s and syndicated %s',
+  logging.debug("posse post discovery with author %s and syndicated %s",
                 author_url, syndication_url)
 
-  relationship = SyndicatedPost.query_by_syndication(source, syndication_url)
+  relationship = SyndicatedPost.query_by_syndication(syndication_url)
   if not relationship:
-    # a syndicated post we haven't seen before! fetch the author's
-    # h-feed to see if we can find it.
-    results = _process_author(source, author_url)
-    relationship = results.get(syndication_url, None)
+    # a silo post we haven't seen before! fetch the author's h-feed to
+    # see if we can find it.
+    _process_author(author_url)
+    relationship = SyndicatedPost.query_by_syndication(syndication_url)
 
   if not relationship:
-    # No relationship was found. Remember that we've seen this
-    # syndicated post to avoid reprocessing it every time
-    logging.debug('posse post discovery found no relationship for %s',
-                  syndication_url)
-    SyndicatedPost(parent=source.key, original=None,
-                   syndication=syndication_url).put()
-    return activity
+    # No relationship was found. Remember that we've seen this silo
+    # post to avoid reprocessing it every time
+    relationship = SyndicatedPost()
+    relationship.syndication = syndication_url
+    relationship.put()
+    return None
 
-  logging.debug('posse post discovery found relationship %s -> %s',
-                syndication_url, relationship.original)
+  original = relationship.original
 
-  if relationship.original:
-    obj = activity.get('object') or activity
-    # if an original was discovered by regular original-post-discovery,
-    # then this will create a duplicate. this is ok because duplicates are
-    # cleaned up later in tasks.get_webmention_targets
-    obj.setdefault('tags', []).append({
-      'objectType': 'article',
-      'url': relationship.original,
-    })
+  if original:
+    note.setdefault('tags', []).append({
+        'objectType': 'article',
+        'url': original
+      })
 
   return activity
 
 
-def _process_author(source, author_url):
+def _process_author(author_url):
   """Fetch the author's domain URL, and look for syndicated posts.
-
-  Args:
-    source: a subclass of models.Source
-    author_url: the author's homepage URL
-
-  Return:
-    a dict of syndicated_url to models.SyndicatedPost
   """
+
   # for now use whether the url is a valid webmention target
   # as a proxy for whether it's worth searching it.
   # TODO skip sites we know don't have microformats2 markup
-  _, _, ok = util.get_webmention_target(author_url)
-  if not ok:
-    return {}
+  _, _, is_valid_target = get_webmention_target(author_url)
+  if not is_valid_target:
+    return
 
   try:
-    logging.debug('fetching author domain %s', author_url)
+    logging.debug("fetching author domain %s", author_url)
     author_resp = requests.get(author_url, timeout=HTTP_TIMEOUT)
   except BaseException:
     # TODO limit allowed failures, cache the author's h-feed url
     # or the # of times we've failed to fetch it
-    logging.exception('Could not fetch author url %s', author_url)
-    return {}
-
-  # TODO for error codes that indicate a temporary error, should we make
-  # a certain number of retries before giving up forever?
-  if author_resp.status_code != 200:
-    logging.warning('Received unexpected response fetching author url %s -> %s',
-                    author_url, author_resp)
-    return {}
+    logging.exception("Could not fetch author url %s", author_url)
+    return None
 
   author_parsed = Mf2Parser(url=author_url, doc=author_resp.text).to_dict()
 
   # look for canonical feed url (if it isn't this one) using
   # rel='feed', type='text/html'
-  canonical = next(iter(author_parsed['rels'].get('feed', [])), None)
+  canonical = next(iter(author_parsed.get('rels').get('feed', [])), None)
   if canonical and canonical != author_url:
     try:
-      logging.debug('fetching author\'s canonical full feed %s', canonical)
+      logging.debug("fetching author's canonical full feed %s", canonical)
       canonical_resp = requests.get(canonical, timeout=HTTP_TIMEOUT)
-      if canonical_resp.status_code == 200:
-        author_parsed = Mf2Parser(
-          url=canonical, doc=canonical_resp.text).to_dict()
-      else:
-        logging.warning('Received unexpected response fetching canonical h-feed url %s -> %s',
-                        canonical, canonical_resp)
+      author_parsed = Mf2Parser(
+        url=canonical, doc=canonical_resp.text).to_dict()
     except BaseException:
       logging.exception(
-        'Could not fetch h-feed url %s. Falling back on author url.',
+        "Could not fetch h-feed url %s. Falling back on author url.",
         canonical)
 
   feeditems = author_parsed['items']
   hfeed = next((item for item in feeditems
                 if 'h-feed' in item['type']), None)
   if hfeed:
-    feeditems = hfeed.get('children', [])
+    feeditems = hfeed['children']
   else:
-    logging.info('No h-feed found, fallback to top-level h-entrys.')
+    logging.info("No h-feed found, fallback to top-level h-entrys.")
 
-  permalinks = set()
-  for child in feeditems:
-    if 'h-entry' in child['type']:
-      # TODO if this h-entry in the h-feed has u-syndication links, we
-      # can just use it without fetching its permalink page
-      # TODO maybe limit to first ~30 entries? (do that here rather than,
-      # below because we want the *first* n entries)
-      for permalink in child['properties'].get('url', []):
-        permalinks.add(permalink)
-
-  results = {}
-  for permalink in permalinks:
-    # TODO replace this with one query for the Source as a
-    # whole. querying each permalink individually is expensive.
-    relationship = SyndicatedPost.query_by_original(source, permalink)
-    # if the post hasn't already been processed
-    if not relationship:
-      logging.debug('processing permalink: %s', permalink)
-      results.update(_process_entry(source, permalink))
-
-  return results
+  _process_feed(feeditems)
 
 
-def _process_entry(source, permalink):
-  """Fetch and process an h-hentry, saving a new SyndicatedPost to the
-  DB if successful.
+def _process_feed(feeditems):
+  """process each h-feed entry that has not been encountered before
 
   Args:
-    permalink: url of the unprocessed post
-    syndication_url: url of the syndicated content
-
-  Return:
-    a map from syndicated url to new models.SyndicatedPosts
+    feeditems: a list of mf2 dicts
   """
-  syndication_urls = set()
-  results = {}
-  parsed = None
+  permalinks = []  # an ordered set would be better
+  for child in feeditems:
+    if 'h-entry' in child['type']:
+      for permalink in child['properties'].get('url', []):
+        if not permalink in permalinks:
+          permalinks.append(permalink)
+
+  for permalink in permalinks:  # TODO maybe limit to first ~30 entries?
+    relationship = SyndicatedPost.query_by_original(permalink)
+    # if the post hasn't already been processed
+    if not relationship:
+      logging.debug("processing permalink: %s", permalink)
+      _process_entry(permalink)
+
+
+def _process_entry(permalink):
+  """Fetch and process an h-hentry, saving a new SyndicatedPost
+  to the DB if successful.
+
+  Args:
+    permalink: the url of the unprocessed post
+  """
   try:
-    logging.debug('fetching post permalink %s', permalink)
+    logging.debug("fetching post permalink %s", permalink)
     resp = requests.get(permalink, timeout=HTTP_TIMEOUT)
-    if resp.status_code == 200:
-      parsed = Mf2Parser(url=permalink, doc=resp.text).to_dict()
-    else:
-      logging.warning('Received unexpected response fetching post permalink %s -> %s',
-                      permalink, resp)
+    parsed = Mf2Parser(url=permalink, doc=resp.text).to_dict()
   except BaseException:
     # TODO limit the number of allowed failures
-    logging.exception('Could not fetch permalink %s', permalink)
+    logging.error("Could not fetch permalink %s", permalink)
+    return
 
-  if parsed:
-    relsynd = parsed.get('rels').get('syndication', [])
-    logging.debug('rel-syndication links: %s', relsynd)
-    syndication_urls.update(relsynd)
+  syndurls = set()
+  relsynd = parsed.get('rels').get('syndication', [])
+  logging.debug("rel-syndication links: %s", relsynd)
+  syndurls.update(relsynd)
 
-    # there should only be one h-entry on a permalink page, but
-    # we'll check all of them just in case.
-    for hentry in (item for item in parsed['items']
-                   if 'h-entry' in item['type']):
-      usynd = hentry.get('properties', {}).get('syndication', [])
-      logging.debug('u-syndication links: %s', usynd)
-      syndication_urls.update(usynd)
+  hentry = next((item for item in parsed['items']
+                 if 'h-entry' in item['type']), None)
+  if hentry:
+    usynd = hentry.get('properties', {}).get('syndication', [])
+    logging.debug("u-syndication links: %s", usynd)
+    syndurls.update(usynd)
 
-  # save the results (or lack thereof) to the db, and put them in a
-  # map for immediate use
-  for syndication_url in syndication_urls:
-    # follow redirects to give us the canonical syndication url --
-    # gives the best chance of finding a match.
-    syndication_url = util.follow_redirects(syndication_url).url
-    # check that the syndicated url belongs to this source
-    # TODO save future lookups by saving results for other sources
-    # too (note: query the appropriate source subclass by
-    # author.domain, rather than author.domain_url)
-    parsed = urlparse.urlparse(syndication_url)
-    if parsed.netloc == source.AS_CLASS.DOMAIN:
-      logging.debug('saving discovered relationship %s -> %s',
-                    syndication_url, permalink)
-      relationship = SyndicatedPost(parent=source.key, original=permalink,
-                                    syndication=syndication_url)
+  # remember the relationships so we don't have to re-process this permalink
+  if syndurls:
+    for syndurl in syndurls:
+      # follow redirects to give us the canonical syndication url --
+      # gives the best chance of finding a match.
+      syndurl = follow_redirects(syndurl).url
+      relationship = SyndicatedPost()
+      relationship.original = permalink
+      relationship.syndication = syndurl
       relationship.put()
-      results[syndication_url] = relationship
-
-  if not results:
-    logging.debug('no syndication links from %s to current source %s. '
-                  'saving empty relationship so that it will not be '
-                  'searched again', permalink, source)
-    # remember that this post doesn't have syndication links for this
-    # particular source
-    SyndicatedPost(parent=source.key, original=permalink,
-                   syndication=None).put()
-
-  return results
+  else:
+    # remember that this post doesn't have syndication links
+    relationship = SyndicatedPost()
+    relationship.original = permalink
+    relationship.put()
