@@ -8,24 +8,17 @@ from testutil import FakeSource
 import requests
 import logging
 import testutil
+import json
 from original_post_discovery import original_post_discovery
 
 
 class OriginalPostDiscoveryTest(testutil.ModelsTest):
 
-  def test_original_post_discovery(self):
+  def test_original_with_two_syndications(self):
     # Test that original post discovery does the reverse lookup
     # to scan author's h-feed for rel=syndication links
-    activity = {
-      'id': 'tag:source.com,2014:a',
-      'object': {
-        'objectType': 'note',
-        'id': 'tag:source.com,2014:a',
-        'url': 'http://source/post/url',
-        'content': 'post content without links',
-        'to': [{'objectType': 'group', 'alias': '@public'}],
-        },
-      }
+    activity = self.activities[0]
+    activity['object']['content'] = 'post content without backlink'
 
     source = FakeSource()
     source.domain_url = 'http://author'
@@ -61,39 +54,31 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.mox.ReplayAll()
     logging.debug("Original post discovery %s -> %s", source, activity)
     original_post_discovery(source, activity)
-    self.assertEquals(1, len(activity['object']['tags']))
+
+    # tags = 2 original + 1 discovered
+    self.assertEquals(3, len(activity['object']['tags']))
     self.assertEquals({'url': 'http://author/post/permalink',
                        'objectType': 'article'},
-                      activity['object']['tags'][0])
+                      activity['object']['tags'][2])
 
-    origurls = list(r.original for r in SyndicatedPost.query().filter(
-      SyndicatedPost.syndication == 'http://source/post/url'))
-    self.assertEquals([u'http://author/post/permalink'], origurls)
+    origurls = set(r.original for r in SyndicatedPost.query())
+    self.assertEquals(set([u'http://author/post/permalink']), origurls)
 
-    syndurls = list(r.syndication for r in SyndicatedPost.query().filter(
-      SyndicatedPost.original == 'http://author/post/permalink'))
+    syndurls = list(r.syndication for r in SyndicatedPost.query())
     self.assertEquals(2, len(syndurls))
     self.assertEquals(set([u'http://source/post/url',
                            u'http://anotherSource/statuses/postid']),
                       set(syndurls))
 
-    self.mox.VerifyAll()
-
-  def test_original_post_discovery_no_rework(self):
+  def test_additional_requests_do_not_require_rework(self):
     # Test that original post discovery fetches and stores all entries
     # up front so that it does not have to reparse the author's h-feed
     # for every new post Test that original post discovery does the
     # reverse lookup to scan author's h-feed for rel=syndication links
-    activities = [{
-      'id': 'tag:source.com,2014:a',
-      'object': {
-        'objectType': 'note',
-        'id': 'tag:source.com,2014:%d' % idx,
-        'url': 'http://source/post/url%d' % idx,
-        'content': 'post content without links',
-        'to': [{'objectType': 'group', 'alias': '@public'}],
-        },
-      } for idx in (1, 2, 3)]
+
+    for idx, activity in enumerate(self.activities):
+        activity['object']['content'] = 'post content without backlinks'
+        activity['object']['url'] = 'http://source/post/url%d' % (idx + 1)
 
     author_feed = """
     <html class="h-feed">
@@ -129,7 +114,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     </div>"""
 
     requests.get('http://author/post/permalink1',
-                 timeout=HTTP_TIMEOUT).AndReturn(resp)
+                 timeout=HTTP_TIMEOUT).InAnyOrder().AndReturn(resp)
 
     # second post is syndicated
     resp = requests.Response()
@@ -141,7 +126,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     </div>"""
 
     requests.get('http://author/post/permalink2',
-                 timeout=HTTP_TIMEOUT).AndReturn(resp)
+                 timeout=HTTP_TIMEOUT).InAnyOrder().AndReturn(resp)
 
     # third post is not syndicated
     resp = requests.Response()
@@ -152,7 +137,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     </div>"""
 
     requests.get('http://author/post/permalink3',
-                 timeout=HTTP_TIMEOUT).AndReturn(resp)
+                 timeout=HTTP_TIMEOUT).InAnyOrder().AndReturn(resp)
 
     # the second activity lookup should not make any HTTP requests
 
@@ -165,10 +150,10 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
 
     self.mox.ReplayAll()
     # first activity should trigger all the lookups and storage
-    original_post_discovery(source, activities[0])
+    original_post_discovery(source, self.activities[0])
 
     self.assertEquals('http://author/post/permalink1',
-                      activities[0]['object']['tags'][0]['url'])
+                      self.activities[0]['object']['tags'][2]['url'])
 
     # make sure things are where we want them
     r = SyndicatedPost.query_by_original('http://author/post/permalink1')
@@ -186,17 +171,18 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
 
     # second lookup should require no additional HTTP requests.
     # the second syndicated post should be linked up to the second permalink.
-    original_post_discovery(source, activities[1])
+    original_post_discovery(source, self.activities[1])
     self.assertEquals('http://author/post/permalink2',
-                      activities[1]['object']['tags'][0]['url'])
+                      self.activities[1]['object']['tags'][2]['url'])
 
     # third activity lookup.
     # since we didn't find a back-link for the third syndicated post,
     # it should fetch the author's feed again, but seeing no new
     # posts, it should not follow any of the permalinks
 
-    original_post_discovery(source, activities[2])
-    self.assertFalse(activities[2]['object'].get('tags'))
+    original_post_discovery(source, self.activities[2])
+    # should have found no new tags
+    self.assertEquals(2, len(self.activities[2]['object'].get('tags')))
 
     # should have saved a blank to prevent subsequent checks of this
     # syndicated post from fetching the h-feed again
@@ -205,7 +191,9 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
 
     # confirm that we do not fetch the h-feed again for the same
     # syndicated post
-    original_post_discovery(source, activities[2])
-    self.assertFalse(activities[2]['object'].get('tags'))
+    original_post_discovery(source, self.activities[2])
+    # should be no new tags
+    self.assertEquals(2, len(self.activities[2]['object'].get('tags')))
 
-    self.mox.VerifyAll()
+  def test_ensure_no_duplicate_links(self):
+    pass # todo

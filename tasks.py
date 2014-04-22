@@ -48,6 +48,10 @@ def get_webmention_targets(source, activity):
 
   Side effect: runs the original post discovery algorithm on the activity and
   adds the resulting URLs to the activity as tags, in place.
+
+  Args:
+   source: models.Source subclass
+   activity: activity dict
   """
   original_post_discovery(source, activity)
 
