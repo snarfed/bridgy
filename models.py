@@ -405,11 +405,13 @@ class SyndicatedPost(ndb.Model):
   if we found no original post).  We discover the relationship by
   following rel=syndication links on the author's h-feed.
 
-  See util._posse_post_discovery
+  See original_post_discovery
 
   """
   syndication = ndb.StringProperty()
   original = ndb.StringProperty()
+  created = ndb.DateTimeProperty(auto_now_add=True)
+  updated = ndb.DateTimeProperty(auto_now=True)
 
   @classmethod
   def query_by_original(cls, url):
