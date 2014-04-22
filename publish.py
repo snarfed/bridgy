@@ -2,6 +2,8 @@
 
 Webmention spec: http://webmention.org/
 
+Bridgy request and response details: http://www.brid.gy/about#response
+
 Example request:
 
     POST /webmention HTTP/1.1
@@ -13,24 +15,21 @@ Example request:
 
 Example response:
 
-    HTTP/1.1 202 Accepted
+    HTTP/1.1 200 OK
 
-    http://brid.gy/webmentions/222
-
-Test cmd line:
-
-curl -d 'source=http://localhost/bridgy_publish.html&target=http://brid.gy/publish/twitter' http://localhost:8080/publish/webmention
+    {
+      "url": "http://facebook.com/456_789",
+      "type": "post",
+      "id": "456_789"
+    }
 """
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import logging
 import json
-import StringIO
 import sys
-import urllib2
 import urlparse
-from webob import exc
 
 import appengine_config
 from appengine_config import HTTP_TIMEOUT
@@ -39,13 +38,13 @@ from activitystreams import microformats2
 from facebook import FacebookPage
 from googleplus import GooglePlusPage
 from instagram import Instagram
-from mf2py import parser
 import models
 from models import Publish, PublishedPage
 import requests
 from twitter import Twitter
 import util
 import webapp2
+import webmention
 
 from google.appengine.ext import ndb
 from google.appengine.ext.webapp import template
@@ -54,21 +53,22 @@ SOURCES = {cls.SHORT_NAME: cls for cls in
            (FacebookPage, Twitter, Instagram, GooglePlusPage)}
 
 
-class Handler(util.Handler):
-  """Base handler for both previews and webmentions.
+class Handler(webmention.WebmentionHandler):
+  """Base handler for both previews and publishes.
 
   Subclasses must set the PREVIEW attribute to True or False.
+
+  Attributes:
+    source_url: string
+    target_url: string
+    fetched: requests.Response from fetching source_url
   """
   PREVIEW = None
 
   def post(self):
-    self.source = None
-    self.publish = None
     logging.info('Params: %self', self.request.params.items())
-
     self.source_url = util.get_required_param(self, 'source')
     self.target_url = util.get_required_param(self, 'target')
-
     assert self.PREVIEW in (True, False)
 
     # parse and validate target URL
@@ -112,34 +112,19 @@ class Handler(util.Handler):
     if (entity.status == 'complete' and entity.type != 'preview' and
         not self.PREVIEW and not appengine_config.DEBUG):
       return self.error("Sorry, you've already published that page, and Bridgy Publish doesn't yet support updating or deleting existing posts. Ping Ryan if you want that feature!")
-    self.publish = entity
+    self.entity = entity
 
-    # fetch source URL
-    try:
-      self.fetched = requests.get(url, allow_redirects=True, timeout=HTTP_TIMEOUT)
-    except BaseException:
-      return self.error('Could not fetch source URL %s' % url)
-
-    # parse microformats, convert to ActivityStreams
-    self.publish.html = self.fetched.text
-    data = parser.Parser(doc=self.fetched.text, url=self.fetched.url).to_dict()
-    logging.debug('Parsed microformats2: %s', data)
-    items = data.get('items', [])
-    if not items or not items[0]:
-      msg = ("""
-No <a href="http://microformats.org/wiki/microformats2">microformats2</a> data
-found in <a href="%s">%s</a>! See <a href="http://indiewebify.me/">indiewebify.me</a>
-for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
-""" % (self.fetched.url, util.pretty_link(self.fetched.url))
-             if self.PREVIEW else
-             'No microformats2 data found in %s' % self.fetched.url)
-      return self.error(msg, data=data)
-
+    # fetch source page
+    resp = self.fetch_mf2(url)
+    if resp:
+      self.fetched, data = resp
+    else:
+      return
 
     # loop through each item and try to preview/create it. if it fails, try the
     # next one. break after the first one that works.
     types = set()
-    for item in items:
+    for item in data.get('items', []):
       try:
         resp = self.attempt_single_item(item)
         if resp:
@@ -166,13 +151,13 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
       return self.error(msg, data=data, log_exception=False)
 
     # write results to datastore
-    self.publish.status = 'complete'
-    self.publish.put()
+    self.entity.status = 'complete'
+    self.entity.put()
 
     self.response.write(resp)
     # don't mail me about my own successful publishes, just the errors
     if domain != 'snarfed.org':
-      self.mail_me(self.publish.published if self.PREVIEW else resp)
+      self.mail_me(self.entity.published if self.PREVIEW else resp)
 
   def attempt_single_item(self, item):
     """Attempts to preview or publish a single mf2 item.
@@ -213,36 +198,24 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
       return None
 
     if self.PREVIEW:
-      self.publish.published = self.source.as_source.preview_create(
+      self.entity.published = self.source.as_source.preview_create(
         obj, include_link=True)
       return template.render('templates/preview.html', {
           'source': self.preprocess_source(self.source),
-          'preview': self.publish.published,
+          'preview': self.entity.published,
           'source_url': self.fetched.url,
           'target_url': self.target_url,
           'webmention_endpoint': self.request.host_url + '/publish/webmention',
           })
     else:
-      self.publish.published = self.source.as_source.create(obj, include_link=True)
-      if 'url' not in self.publish.published:
-        self.publish.published['url'] = obj.get('url')
-      self.publish.type = self.publish.published.get('type') or models.get_type(obj)
-      self.publish.type_label = self.source.TYPE_LABELS.get(self.publish.type)
+      self.entity.published = self.source.as_source.create(obj, include_link=True)
+      if 'url' not in self.entity.published:
+        self.entity.published['url'] = obj.get('url')
+      self.entity.type = self.entity.published.get('type') or models.get_type(obj)
+      self.entity.type_label = self.source.TYPE_LABELS.get(self.entity.type)
 
       self.response.headers['Content-Type'] = 'application/json'
-      return json.dumps(self.publish.published, indent=2)
-
-  def mail_me(self, resp):
-    subject = 'Bridgy publish %s %s' % (
-      'preview' if self.PREVIEW else '',
-      'complete' if self.publish and self.publish.status == 'complete' else 'failed')
-    body = 'Request:\n%s\n\nResponse:\n%s' % (self.request.params.items(), resp)
-
-    if self.source:
-      body = 'Source: %s\n\n%s' % (self.source.bridgy_url(self), body)
-      subject += ': %s' % self.source.label()
-
-    util.email_me(subject=subject, body=body)
+      return json.dumps(self.entity.published, indent=2)
 
   @ndb.transactional
   def get_or_add_publish_entity(self, source_url):
@@ -271,59 +244,23 @@ class PreviewHandler(Handler):
   """
   PREVIEW = True
 
-  def error(self, error, status=400, data=None, log_exception=True):
+  def error(self, error, html=None, status=400, data=None, log_exception=True):
     logging.error(error, exc_info=sys.exc_info() if log_exception else None)
     self.response.set_status(status)
-    error = util.linkify(error)
+    error = util.linkify(html if html else error)
     self.response.write(error)
     self.mail_me(error)
 
 
-class WebmentionHandler(Handler):
+class PublishHandler(Handler):
   """Accepts webmentions and translates them to site-specific API calls.
   """
   PREVIEW = False
 
-  def error(self, error, status=400, data=None, log_exception=True):
-    logging.error(error, exc_info=sys.exc_info() if log_exception else None)
-
-    if self.publish:
-      self.publish.status = 'failed'
-      self.publish.put()
-
-    self.response.set_status(status)
-    resp = {'error': error}
-    if data:
-      resp['parsed'] = data
-
-    resp = json.dumps(resp, indent=2)
-    self.mail_me(resp)
-    self.response.write(resp)
-
-
-class WebmentionLinkHandler(webapp2.RequestHandler):
-  """Returns the Base handler for both previews and webmentions.
-
-  Subclasses must set the PREVIEW attribute to True or False.
-  """
-  def head(self, site):
-    self.response.headers['Link'] = (
-      '<%s/publish/webmention>; rel="webmention"' % self.request.host_url)
-
-  def get(self, site):
-    self.head(site)
-    self.response.out.write("""\
-<!DOCTYPE html>
-<html><head>
-<link rel="webmention" href="%s/publish/webmention">
-</head>
-<body>Nothing here! <a href="/about#publish">Try the docs instead.</a></body>
-<html>""" % self.request.host_url)
-
 
 application = webapp2.WSGIApplication([
-    ('/publish/webmention', WebmentionHandler),
+    ('/publish/webmention', PublishHandler),
     ('/publish/preview', PreviewHandler),
-    ('/publish/(facebook|twitter)', WebmentionLinkHandler),
+    ('/publish/(facebook|twitter)', webmention.WebmentionGetHandler),
     ],
   debug=appengine_config.DEBUG)

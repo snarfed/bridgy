@@ -242,8 +242,8 @@ class PublishTest(testutil.HandlerTest):
       self.expect_requests_get('http://foo.com/', html)
 
     self.mox.StubOutWithMock(mail, 'send_mail')
-    for subject in ('Bridgy publish  failed: None (FakeSource)',
-                    'Bridgy publish preview failed: None (FakeSource)'):
+    for subject in ('PublishHandler None failed: None (FakeSource)',
+                    'PreviewHandler None failed: None (FakeSource)'):
       mail.send_mail(subject=subject, body=mox.IgnoreArg(),
                      sender=mox.IgnoreArg(), to=mox.IgnoreArg())
 
