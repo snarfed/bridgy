@@ -10,6 +10,8 @@ import json
 import logging
 import urlparse
 
+from appengine_config import HTTP_TIMEOUT
+
 from google.appengine.datastore import datastore_stub_util
 from google.appengine.ext import ndb
 import requests
@@ -149,6 +151,8 @@ class HandlerTest(testutil.HandlerTest):
     # TODO: remove this and don't depend on consistent global queries
     self.testbed.init_datastore_v3_stub(consistency_policy=None)
 
+    self.mox.StubOutWithMock(requests, 'get', use_mock_anything=True)
+
     # don't make actual HTTP requests to follow original post url redirects
     def fake_head(url, **kwargs):
       resp = requests.Response()
@@ -159,6 +163,12 @@ class HandlerTest(testutil.HandlerTest):
         resp.status_int = 404
       return resp
     self.mox.stubs.Set(requests, 'head', fake_head)
+
+  def expect_requests_get(self, url, response):
+    resp = requests.Response()
+    resp._content = response
+    resp.url = url
+    requests.get(url, allow_redirects=True, timeout=HTTP_TIMEOUT).AndReturn(resp)
 
 
 class ModelsTest(HandlerTest):

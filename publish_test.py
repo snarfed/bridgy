@@ -7,7 +7,6 @@ import json
 import mox
 import urllib
 
-import appengine_config
 from appengine_config import HTTP_TIMEOUT
 import requests
 
@@ -26,13 +25,6 @@ class PublishTest(testutil.HandlerTest):
     self.source = testutil.FakeSource(id='foo.com', domain='foo.com',
                                       features=['publish'])
     self.source.put()
-    self.mox.StubOutWithMock(requests, 'get', use_mock_anything=True)
-
-  def expect_requests_get(self, url, response):
-    resp = requests.Response()
-    resp._content = response
-    resp.url = url
-    requests.get(url, allow_redirects=True, timeout=HTTP_TIMEOUT).AndReturn(resp)
 
   def get_response(self, source=None, target=None, endpoint='/publish/webmention'):
     if source is None:
