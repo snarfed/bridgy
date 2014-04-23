@@ -116,10 +116,9 @@ class Handler(webmention.WebmentionHandler):
 
     # fetch source page
     resp = self.fetch_mf2(url)
-    if resp:
-      self.fetched, data = resp
-    else:
+    if not resp:
       return
+    self.fetched, data = resp
 
     # loop through each item and try to preview/create it. if it fails, try the
     # next one. break after the first one that works.
