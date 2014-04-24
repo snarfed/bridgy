@@ -1,5 +1,6 @@
 import logging
 import requests
+import urlparse
 
 from util import get_webmention_target, follow_redirects
 from models import SyndicatedPost
@@ -60,37 +61,45 @@ def original_post_discovery(source, activity):
   # facebook user id instead of user name)
   syndication_url = follow_redirects(syndication_url).url
 
-  logging.debug("posse post discovery with author %s and syndicated %s",
+  logging.debug("starting posse post discovery with author %s and syndicated %s",
                 author_url, syndication_url)
 
-  relationship = SyndicatedPost.query_by_syndication(syndication_url)
+  relationship = SyndicatedPost.query_by_syndication(source, syndication_url)
   if not relationship:
     # a syndicated post we haven't seen before! fetch the author's
     # h-feed to see if we can find it.
-    results = _process_author(author_url)
+    results = _process_author(source, author_url)
     relationship = results.get(syndication_url, None)
 
   if not relationship:
     # No relationship was found. Remember that we've seen this
     # syndicated post to avoid reprocessing it every time
-    relationship = SyndicatedPost()
-    relationship.syndication = syndication_url
+    logging.debug("posse post discovery found no relationship for %s",
+                  syndication_url)
+    relationship = SyndicatedPost(parent=source.key,
+                                  syndication=syndication_url)
     relationship.put()
     return None
 
+  logging.debug("posse post discovery found relationship %s -> %s",
+                syndication_url, relationship.original)
   original = relationship.original
 
   if original:
     note.setdefault('tags', []).append({
-        'objectType': 'article',
-        'url': original,
-      })
+      'objectType': 'article',
+      'url': original,
+    })
 
   return activity
 
 
-def _process_author(author_url):
+def _process_author(source, author_url):
   """Fetch the author's domain URL, and look for syndicated posts.
+
+  Args:
+    source: a subclass of models.Source
+    author_url: the author's homepage URL
 
   Return:
     a map from syndicated_url to models.SyndicatedPost
@@ -136,39 +145,28 @@ def _process_author(author_url):
   else:
     logging.info("No h-feed found, fallback to top-level h-entrys.")
 
-  return _process_feed(feeditems)
-
-
-def _process_feed(feeditems):
-  """process each h-feed entry that has not been encountered before
-
-  Args:
-    feeditems: a list of mf2 dicts
-
-  Return:
-    a map from syndicated url to new models.SyndicatedPosts
-
-  """
   permalinks = set()
   for child in feeditems:
     if 'h-entry' in child['type']:
       # TODO if this h-entry in the h-feed has u-syndication links, we
       # can just use it without fetching its permalink page
+      # TODO maybe limit to first ~30 entries? (do that here rather than,
+      # below because we want the *first* n entries)
       for permalink in child['properties'].get('url', []):
         permalinks.add(permalink)
 
   results = {}
-  for permalink in permalinks:  # TODO maybe limit to first ~30 entries?
-    relationship = SyndicatedPost.query_by_original(permalink)
+  for permalink in permalinks:
+    relationship = SyndicatedPost.query_by_original(source, permalink)
     # if the post hasn't already been processed
     if not relationship:
       logging.debug("processing permalink: %s", permalink)
-      results.update(_process_entry(permalink))
+      results.update(_process_entry(source, permalink))
 
   return results
 
 
-def _process_entry(permalink):
+def _process_entry(source, permalink):
   """Fetch and process an h-hentry, saving a new SyndicatedPost to the
   DB if successful.
 
@@ -189,34 +187,47 @@ def _process_entry(permalink):
     logging.exception("Could not fetch permalink %s", permalink)
     return {}
 
-  syndurls = set()
+  syndication_urls = set()
   relsynd = parsed.get('rels').get('syndication', [])
   logging.debug("rel-syndication links: %s", relsynd)
-  syndurls.update(relsynd)
+  syndication_urls.update(relsynd)
 
   hentry = next((item for item in parsed['items']
                  if 'h-entry' in item['type']), None)
   if hentry:
     usynd = hentry.get('properties', {}).get('syndication', [])
     logging.debug("u-syndication links: %s", usynd)
-    syndurls.update(usynd)
+    syndication_urls.update(usynd)
 
   # save the results (or lack thereof) to the db, and put them in a
   # map for immediate use
   results = {}
-  if syndurls:
-    for syndurl in syndurls:
+
+  if syndication_urls:
+    for syndication_url in syndication_urls:
       # follow redirects to give us the canonical syndication url --
       # gives the best chance of finding a match.
-      syndurl = follow_redirects(syndurl).url
-      logging.debug("saving discovered relationship %s -> %s", syndurl, permalink)
-      relationship = SyndicatedPost(original=permalink,
-                                    syndication=syndurl)
-      relationship.put()
-      results[syndurl] = relationship
-  else:
-    # remember that this post doesn't have syndication links
-    relationship = SyndicatedPost(original=permalink)
+      syndication_url = follow_redirects(syndication_url).url
+      # check that the syndicated url belongs to this source
+      # TODO save future lookups by saving results for other sources
+      # too (note: query the appropriate source subclass by
+      # author.domain, rather than author.domain_url)
+      parsed = urlparse.urlparse(syndication_url)
+      if parsed.netloc == source.AS_CLASS.DOMAIN:
+        logging.debug("saving discovered relationship %s -> %s",
+                      syndication_url, permalink)
+        relationship = SyndicatedPost(parent=source.key, original=permalink,
+                                      syndication=syndication_url)
+        relationship.put()
+        results[syndication_url] = relationship
+
+  if not results:
+    logging.debug("no syndication links from %s to current source %s. "
+                  "saving empty relationship so that it will not be "
+                  "searched again", permalink, source)
+    # remember that this post doesn't have syndication links for this
+    # particular source
+    relationship = SyndicatedPost(parent=source.key, original=permalink)
     relationship.put()
 
   return results
