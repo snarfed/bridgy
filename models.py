@@ -374,9 +374,11 @@ class SyndicatedPost(ndb.Model):
   updated = ndb.DateTimeProperty(auto_now=True)
 
   @classmethod
-  def query_by_original(cls, url):
-    return cls.query().filter(cls.original == url).get()
+  def query_by_original(cls, source, url):
+    return cls.query(cls.original == url,
+                     ancestor=source.key).get()
 
   @classmethod
-  def query_by_syndication(cls, url):
-    return cls.query().filter(cls.syndication == url).get()
+  def query_by_syndication(cls, source, url):
+    return cls.query(cls.syndication == url,
+                     ancestor=source.key).get()
