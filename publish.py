@@ -203,11 +203,12 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
         self.error('Could not find e-content in %s' % self.fetched.url, data=item)
         return None
 
-    # special case for me: don't allow posts, just comments, likes, and reposts
+    # special case for me: don't allow posts in live app, just comments, likes,
+    # and reposts
     verb = obj.get('verb', '')
-    if (not self.PREVIEW and self.source.domain == 'snarfed.org' and
-        obj_type in ('note', 'article') and verb not in ('like', 'share') and
-        not verb.startswith('rsvp-')):
+    if (not appengine_config.DEBUG and self.source.domain == 'snarfed.org' and
+        not self.PREVIEW and obj_type in ('note', 'article') and
+        verb not in ('like', 'share') and not verb.startswith('rsvp-')):
       self.error('Not posting for snarfed.org')
       return None
 
