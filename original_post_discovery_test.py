@@ -226,8 +226,8 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
         <a class="u-url" href="%s"></a>
       </div>
     </html>""" % original
-    requests.get('http://target1',
-                 timeout=HTTP_TIMEOUT).AndReturn(resp)
+    requests.get('http://target1', timeout=HTTP_TIMEOUT)\
+            .AndReturn(resp)
 
     resp = requests.Response()
     resp.status_code = 200
@@ -237,8 +237,8 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
       <a class="u-syndication" href="%s"></a>
     </div>""" % (original, syndicated)
 
-    requests.get(original,
-                 timeout=HTTP_TIMEOUT).AndReturn(resp)
+    requests.get(original, timeout=HTTP_TIMEOUT)\
+            .AndReturn(resp)
 
     self.mox.ReplayAll()
     logging.debug("Original post discovery %s -> %s", source, activity)
@@ -280,8 +280,8 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
         <link rel="alternate" type="application/xml" href="nor_this.html">
       </head>
     </html>"""
-    requests.get('http://author',
-                 timeout=HTTP_TIMEOUT).AndReturn(resp)
+    requests.get('http://author', timeout=HTTP_TIMEOUT)\
+            .AndReturn(resp)
 
     resp = requests.Response()
     resp.status_code = 200
@@ -291,8 +291,8 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
         <div class="h-entry">Hi</div>
       </body>
     </html>"""
-    requests.get('http://author/try_this.html',
-                 timeout=HTTP_TIMEOUT).AndReturn(resp)
+    requests.get('http://author/try_this.html', timeout=HTTP_TIMEOUT)\
+            .AndReturn(resp)
 
     self.mox.ReplayAll()
     logging.debug("Original post discovery %s -> %s", source, activity)
@@ -319,8 +319,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     <html class="h-feed">
     <p>under construction</p>
     </html>"""
-    requests.get('http://author',
-                 timeout=HTTP_TIMEOUT).AndReturn(resp)
+    requests.get('http://author', timeout=HTTP_TIMEOUT).AndReturn(resp)
 
     self.mox.ReplayAll()
     logging.debug("Original post discovery %s -> %s", source, activity)
@@ -388,8 +387,87 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
       [(relationship.original, relationship.syndication)
        for relationship in SyndicatedPost.query(ancestor=source.key)])
 
+  def test_failed_domain_url_fetch(self):
+    """Make sure something reasonable happens when the author's domain url
+    gives an unexpected response
 
-#TODO failed domain_url fetch
-#TODO failed post permalink fetch
-#TODO no author url
-#TODO activity with existing responses, make sure they're merged right
+    """
+    source = self.sources[0]
+    source.domain_url = 'http://author'
+    activity = self.activities[0]
+    activity['object']['url'] = 'http://fa.ke/post/url'
+    activity['object']['content'] = 'content without links'
+
+    self.mox.StubOutWithMock(requests, 'get')
+    response = requests.Response()
+    response.status_code = 404
+    requests.get('http://author', timeout=HTTP_TIMEOUT).AndReturn(response)
+
+    self.mox.ReplayAll()
+    original_post_discovery(source, activity)
+
+    # nothing attempted, but we should have saved a placeholder to prevent us
+    # from trying again
+    self.assert_equals(
+      [(None, 'http://fa.ke/post/url')],
+      [(relationship.original, relationship.syndication)
+       for relationship in SyndicatedPost.query(ancestor=source.key)])
+
+  def test_failed_post_permalink_fetch(self):
+    """Make sure something reasonable happens when we're unable to fetch
+    the permalink of an entry linked in the h-feed
+
+    """
+    source = self.sources[0]
+    source.domain_url = 'http://author'
+    activity = self.activities[0]
+    activity['object']['url'] = 'http://fa.ke/post/url'
+    activity['object']['content'] = 'content without links'
+
+    self.mox.StubOutWithMock(requests, 'get')
+    response = requests.Response()
+    response.status_code = 200
+    response._content = """
+    <html class="h-feed">
+      <article class="h-entry">
+        <a class="u-url" href="nonexistent.html"></a>
+      </article>
+    </html>
+    """
+    requests.get('http://author', timeout=HTTP_TIMEOUT).AndReturn(response)
+
+    response = requests.Response()
+    response.status_code = 410
+    requests.get('http://author/nonexistent.html', timeout=HTTP_TIMEOUT)\
+            .AndReturn(response)
+
+    self.mox.ReplayAll()
+    original_post_discovery(source, activity)
+
+    # we should have saved placeholders to prevent us from trying the
+    # syndication url or permalink again
+    self.assert_equals(
+      set([('http://author/nonexistent.html', None), (None, 'http://fa.ke/post/url')]),
+      set((relationship.original, relationship.syndication)
+          for relationship in SyndicatedPost.query(ancestor=source.key)))
+
+  #TODO no author ur
+  def test_no_author_url(self):
+    """Make sure something reasonable happens when the author doesn't have
+    a url at all.
+
+    """
+    source = self.sources[0]
+    source.domain_url = None
+    activity = self.activities[0]
+    activity['object']['url'] = 'http://fa.ke/post/url'
+    activity['object']['content'] = 'content without links'
+
+    self.mox.StubOutWithMock(requests, 'get')
+    self.mox.ReplayAll()
+    original_post_discovery(source, activity)
+
+    # nothing attempted, and no SyndicatedPost saved
+    self.assertFalse(SyndicatedPost.query(ancestor=source.key).get())
+
+  #TODO activity with existing responses, make sure they're merged right
