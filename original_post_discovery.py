@@ -125,6 +125,13 @@ def _process_author(source, author_url):
     logging.exception("Could not fetch author url %s", author_url)
     return {}
 
+  # TODO for error codes that indicate a temporary error, should we make
+  # a certain number of retries before giving up forever?
+  if author_resp.status_code != 200:
+    logging.warning("Received unexpected response fetching author url %s -> %s",
+                    author_url, author_resp)
+    return {}
+
   author_parsed = Mf2Parser(url=author_url, doc=author_resp.text).to_dict()
 
   # look for canonical feed url (if it isn't this one) using
@@ -134,8 +141,12 @@ def _process_author(source, author_url):
     try:
       logging.debug("fetching author's canonical full feed %s", canonical)
       canonical_resp = requests.get(canonical, timeout=HTTP_TIMEOUT)
-      author_parsed = Mf2Parser(
-        url=canonical, doc=canonical_resp.text).to_dict()
+      if canonical_resp.status_code == 200:
+        author_parsed = Mf2Parser(
+          url=canonical, doc=canonical_resp.text).to_dict()
+      else:
+        logging.warning("Received unexpected response fetching canonical h-feed url %s -> %s",
+                        canonical, canonical_resp)
     except BaseException:
       logging.exception(
         "Could not fetch h-feed url %s. Falling back on author url.",
@@ -184,31 +195,36 @@ def _process_entry(source, permalink):
     a map from syndicated url to new models.SyndicatedPosts
 
   """
+
+  syndication_urls = set()
+  results = {}
+  parsed = None
   try:
     logging.debug("fetching post permalink %s", permalink)
     resp = requests.get(permalink, timeout=HTTP_TIMEOUT)
-    parsed = Mf2Parser(url=permalink, doc=resp.text).to_dict()
+    if resp.status_code == 200:
+      parsed = Mf2Parser(url=permalink, doc=resp.text).to_dict()
+    else:
+      logging.warning("Received unexpected response fetching post permalink %s -> %s",
+                      permalink, resp)
   except BaseException:
     # TODO limit the number of allowed failures
     logging.exception("Could not fetch permalink %s", permalink)
-    return {}
 
-  syndication_urls = set()
-  relsynd = parsed.get('rels').get('syndication', [])
-  logging.debug("rel-syndication links: %s", relsynd)
-  syndication_urls.update(relsynd)
+  if parsed:
+    relsynd = parsed.get('rels').get('syndication', [])
+    logging.debug("rel-syndication links: %s", relsynd)
+    syndication_urls.update(relsynd)
 
-  hentry = next((item for item in parsed['items']
-                 if 'h-entry' in item['type']), None)
-  if hentry:
-    usynd = hentry.get('properties', {}).get('syndication', [])
-    logging.debug("u-syndication links: %s", usynd)
-    syndication_urls.update(usynd)
+    hentry = next((item for item in parsed['items']
+                   if 'h-entry' in item['type']), None)
+    if hentry:
+      usynd = hentry.get('properties', {}).get('syndication', [])
+      logging.debug("u-syndication links: %s", usynd)
+      syndication_urls.update(usynd)
 
   # save the results (or lack thereof) to the db, and put them in a
   # map for immediate use
-  results = {}
-
   if syndication_urls:
     for syndication_url in syndication_urls:
       # follow redirects to give us the canonical syndication url --
