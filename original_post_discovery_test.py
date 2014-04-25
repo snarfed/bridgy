@@ -8,17 +8,17 @@ from testutil import FakeSource
 import requests
 import logging
 import testutil
-import json
 from original_post_discovery import original_post_discovery
 import tasks
-import handlers
-from activitystreams import microformats2
+
 
 class OriginalPostDiscoveryTest(testutil.ModelsTest):
 
   def test_single_post(self):
-    # Test that original post discovery does the reverse lookup
-    # to scan author's h-feed for rel=syndication links
+    """Test that original post discovery does the reverse lookup to scan
+    author's h-feed for rel=syndication links
+
+    """
     activity = self.activities[0]
     activity['object']['content'] = 'post content without backlink'
     activity['object']['url'] = 'http://fa.ke/post/url'
@@ -75,10 +75,12 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.assertEquals([u'http://fa.ke/post/url'], syndurls)
 
   def test_additional_requests_do_not_require_rework(self):
-    # Test that original post discovery fetches and stores all entries
-    # up front so that it does not have to reparse the author's h-feed
-    # for every new post Test that original post discovery does the
-    # reverse lookup to scan author's h-feed for rel=syndication links
+    """Test that original post discovery fetches and stores all entries up
+    front so that it does not have to reparse the author's h-feed for
+    every new post Test that original post discovery does the reverse
+    lookup to scan author's h-feed for rel=syndication links
+
+    """
 
     for idx, activity in enumerate(self.activities):
         activity['object']['content'] = 'post content without backlinks'
@@ -200,6 +202,10 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.assertEquals(2, len(self.activities[2]['object'].get('tags')))
 
   def test_no_duplicate_links(self):
+    """Make sure that a link found by both original-post-discovery and
+    posse-post-discovery will not result in two webmentions being sent
+
+    """
     source = self.sources[0]
     source.domain_url = 'http://target1'
 
@@ -223,7 +229,6 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     requests.get('http://target1',
                  timeout=HTTP_TIMEOUT).AndReturn(resp)
 
-    # syndicated to two places
     resp = requests.Response()
     resp.status_code = 200
     resp._content = """
@@ -247,8 +252,144 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     # webmention targets converts to a set to remove duplicates
     self.assertEquals(set([original]), wmtargets)
 
-    # TODO ensure that handlers.add_original_post_urls doesn't create duplicate links
-    #handler = handlers.ItemHandler()
-    #handler.source = source
-    #handler.add_original_post_urls(0, activity, 'inReplyTo')
-    #activity_json = microformats2.object_to_json(activity)
+    # TODO ensure that handlers.add_original_post_urls doesn't create
+    #  duplicate links
+    # handler = handlers.ItemHandler()
+    # handler.source = source
+    # handler.add_original_post_urls(0, activity, 'inReplyTo')
+    # activity_json = microformats2.object_to_json(activity)
+
+  def test_rel_feed_link(self):
+    """Check that we follow the rel=feed link when looking for the
+    author's full feed URL
+
+    """
+    source = self.sources[0]
+    source.domain_url = 'http://author'
+    activity = self.activities[0]
+
+    self.mox.StubOutWithMock(requests, 'get')
+
+    resp = requests.Response()
+    resp.status_code = 200
+    resp._content = """
+    <html>
+      <head>
+        <link rel="feed" type="text/html" href="try_this.html">
+        <link rel="alternate" type="application/xml" href="not_this.html">
+        <link rel="alternate" type="application/xml" href="nor_this.html">
+      </head>
+    </html>"""
+    requests.get('http://author',
+                 timeout=HTTP_TIMEOUT).AndReturn(resp)
+
+    resp = requests.Response()
+    resp.status_code = 200
+    resp._content = """
+    <html class="h-feed">
+      <body>
+        <div class="h-entry">Hi</div>
+      </body>
+    </html>"""
+    requests.get('http://author/try_this.html',
+                 timeout=HTTP_TIMEOUT).AndReturn(resp)
+
+    self.mox.ReplayAll()
+    logging.debug("Original post discovery %s -> %s", source, activity)
+    original_post_discovery(source, activity)
+
+  def test_no_h_entries(self):
+    """Make sure nothing bad happens when fetching a feed without
+    h-entries
+
+    """
+    activity = self.activities[0]
+    activity['object']['content'] = 'post content without backlink'
+    activity['object']['url'] = 'http://fa.ke/post/url'
+
+    # silo domain is fa.ke
+    source = FakeSource()
+    source.domain_url = 'http://author'
+
+    self.mox.StubOutWithMock(requests, 'get')
+
+    resp = requests.Response()
+    resp.status_code = 200
+    resp._content = """
+    <html class="h-feed">
+    <p>under construction</p>
+    </html>"""
+    requests.get('http://author',
+                 timeout=HTTP_TIMEOUT).AndReturn(resp)
+
+    self.mox.ReplayAll()
+    logging.debug("Original post discovery %s -> %s", source, activity)
+    original_post_discovery(source, activity)
+
+    self.assert_equals(
+      [(None, 'http://fa.ke/post/url')],
+      [(relationship.original, relationship.syndication)
+       for relationship in SyndicatedPost.query(ancestor=source.key)])
+
+  def test_existing_syndicated_posts(self):
+    """Confirm that no additional requests are made if we already have a
+    SyndicatedPost in the DB.
+
+    """
+    original_url = 'http://author/notes/2014/04/24/1'
+    syndication_url = 'http://fa.ke/post/url'
+
+    source = self.sources[0]
+    source.domain_url = 'http://author'
+    activity = self.activities[0]
+    activity['object']['url'] = syndication_url
+    activity['object']['content'] = 'content without links'
+
+    # save the syndicated post ahead of time (as if it had been
+    # discovered previously)
+    SyndicatedPost(parent=source.key, original=original_url,
+                   syndication=syndication_url).put()
+
+    self.mox.StubOutWithMock(requests, 'get')
+    self.mox.ReplayAll()
+
+    logging.debug("Original post discovery %s -> %s", source, activity)
+    original_post_discovery(source, activity)
+
+    # should append the author note url, with no addt'l requests
+    self.assert_equals([None, None, original_url],
+                       [tag.get('url') for tag in activity['object']['tags']])
+
+  def test_invalid_webmention_target(self):
+    """Confirm that no additional requests are made if the author url is
+    an invalid webmention target. Right now this pretty much just
+    means they're on the blacklist. Eventually we want to filter out
+    targets that don't have certain features, like a webmention
+    endpoint or microformats.
+
+    """
+
+    source = self.sources[0]
+    source.domain_url = 'http://amazon.com'
+    activity = self.activities[0]
+    activity['object']['url'] = 'http://fa.ke/post/url'
+    activity['object']['content'] = 'content without links'
+
+    self.mox.StubOutWithMock(requests, 'get')
+    self.mox.ReplayAll()
+
+    logging.debug("Original post discovery %s -> %s", source, activity)
+    original_post_discovery(source, activity)
+
+    # nothing attempted, but we should have saved a placeholder to prevent us
+    # from trying again
+    self.assert_equals(
+      [(None, 'http://fa.ke/post/url')],
+      [(relationship.original, relationship.syndication)
+       for relationship in SyndicatedPost.query(ancestor=source.key)])
+
+
+#TODO failed domain_url fetch
+#TODO failed post permalink fetch
+#TODO no author url
+#TODO activity with existing responses, make sure they're merged right

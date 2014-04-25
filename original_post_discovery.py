@@ -29,12 +29,16 @@ def original_post_discovery(source, activity):
 
   as_source.Source.original_post_discovery(activity)
 
+  # TODO possible optimization: if we've discovered a backlink to a
+  # post on the author's domain (i.e., it included a link or
+  # citation), then skip the rest of this.
+
   note = activity.get('object', {})
 
   # Use source.domain_url for now; it seems more reliable than the
   # activity.actor.url (which depends on getting the right data back
   # from various APIs). Consider using the actor's url, with
-  # domain_url as the fallback) in the future to support content from
+  # domain_url as the fallback in the future to support content from
   # non-Bridgy users.
   # author_url = activity.get('actor', {}).get('url')
   author_url = source.domain_url
@@ -141,7 +145,7 @@ def _process_author(source, author_url):
   hfeed = next((item for item in feeditems
                 if 'h-feed' in item['type']), None)
   if hfeed:
-    feeditems = hfeed.get('children')
+    feeditems = hfeed.get('children', [])
   else:
     logging.info("No h-feed found, fallback to top-level h-entrys.")
 
@@ -157,6 +161,8 @@ def _process_author(source, author_url):
 
   results = {}
   for permalink in permalinks:
+    # TODO replace this with one query for the Source as a
+    # whole. querying each permalink individually is expensive.
     relationship = SyndicatedPost.query_by_original(source, permalink)
     # if the post hasn't already been processed
     if not relationship:
