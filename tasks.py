@@ -33,7 +33,7 @@ import googleplus
 import instagram
 import models
 from models import Response
-from original_post_discovery import original_post_discovery
+import original_post_discovery
 import twitter
 import util
 
@@ -53,7 +53,7 @@ def get_webmention_targets(source, activity):
    source: models.Source subclass
    activity: activity dict
   """
-  original_post_discovery(source, activity)
+  original_post_discovery.discover(source, activity)
 
   targets = set()
   obj = activity.get('object') or activity

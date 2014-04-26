@@ -25,7 +25,7 @@ import appengine_config
 
 from activitystreams import microformats2
 from activitystreams.oauth_dropins.webutil import handlers
-from original_post_discovery import original_post_discovery
+import original_post_discovery
 import facebook
 import googleplus
 import instagram
@@ -145,7 +145,7 @@ class ItemHandler(webapp2.RequestHandler):
       logging.warning('Source post %s not found', post_id)
       return
 
-    original_post_discovery(self.source, post)
+    original_post_discovery.discover(self.source, post)
 
     if prop not in obj:
       obj[prop] = []

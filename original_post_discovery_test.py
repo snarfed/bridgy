@@ -1,15 +1,15 @@
 # coding=utf-8
 """Unit tests for original_post_discovery.py
 """
+import logging
+import original_post_discovery
+import requests
+import tasks
+import testutil
 
 from appengine_config import HTTP_TIMEOUT
 from models import SyndicatedPost
 from testutil import FakeSource
-import requests
-import logging
-import testutil
-from original_post_discovery import original_post_discovery
-import tasks
 
 
 class OriginalPostDiscoveryTest(testutil.ModelsTest):
@@ -24,7 +24,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     activity['object']['url'] = 'http://fa.ke/post/url'
 
     # silo domain is fa.ke
-    source = FakeSource()
+    source = self.sources[0]
     source.domain_url = 'http://author'
 
     self.mox.StubOutWithMock(requests, 'get')
@@ -57,7 +57,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
 
     self.mox.ReplayAll()
     logging.debug("Original post discovery %s -> %s", source, activity)
-    original_post_discovery(source, activity)
+    original_post_discovery.discover(source, activity)
 
     # tags = 2 original + 1 discovered
     self.assertEquals(3, len(activity['object']['tags']))
@@ -99,7 +99,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
       </div>
     </html>"""
 
-    source = FakeSource()
+    source = self.sources[0]
     source.domain_url = 'http://author'
 
     self.mox.StubOutWithMock(requests, 'get')
@@ -156,7 +156,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
 
     self.mox.ReplayAll()
     # first activity should trigger all the lookups and storage
-    original_post_discovery(source, self.activities[0])
+    original_post_discovery.discover(source, self.activities[0])
 
     self.assertEquals('http://author/post/permalink1',
                       self.activities[0]['object']['tags'][2]['url'])
@@ -177,7 +177,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
 
     # second lookup should require no additional HTTP requests.
     # the second syndicated post should be linked up to the second permalink.
-    original_post_discovery(source, self.activities[1])
+    original_post_discovery.discover(source, self.activities[1])
     self.assertEquals('http://author/post/permalink2',
                       self.activities[1]['object']['tags'][2]['url'])
 
@@ -186,7 +186,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     # it should fetch the author's feed again, but seeing no new
     # posts, it should not follow any of the permalinks
 
-    original_post_discovery(source, self.activities[2])
+    original_post_discovery.discover(source, self.activities[2])
     # should have found no new tags
     self.assertEquals(2, len(self.activities[2]['object'].get('tags')))
 
@@ -197,7 +197,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
 
     # confirm that we do not fetch the h-feed again for the same
     # syndicated post
-    original_post_discovery(source, self.activities[2])
+    original_post_discovery.discover(source, self.activities[2])
     # should be no new tags
     self.assertEquals(2, len(self.activities[2]['object'].get('tags')))
 
@@ -296,7 +296,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
 
     self.mox.ReplayAll()
     logging.debug("Original post discovery %s -> %s", source, activity)
-    original_post_discovery(source, activity)
+    original_post_discovery.discover(source, activity)
 
   def test_no_h_entries(self):
     """Make sure nothing bad happens when fetching a feed without
@@ -308,7 +308,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     activity['object']['url'] = 'http://fa.ke/post/url'
 
     # silo domain is fa.ke
-    source = FakeSource()
+    source = self.sources[0]
     source.domain_url = 'http://author'
 
     self.mox.StubOutWithMock(requests, 'get')
@@ -323,7 +323,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
 
     self.mox.ReplayAll()
     logging.debug("Original post discovery %s -> %s", source, activity)
-    original_post_discovery(source, activity)
+    original_post_discovery.discover(source, activity)
 
     self.assert_equals(
       [(None, 'http://fa.ke/post/url')],
@@ -353,7 +353,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.mox.ReplayAll()
 
     logging.debug("Original post discovery %s -> %s", source, activity)
-    original_post_discovery(source, activity)
+    original_post_discovery.discover(source, activity)
 
     # should append the author note url, with no addt'l requests
     self.assert_equals([None, None, original_url],
@@ -378,7 +378,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.mox.ReplayAll()
 
     logging.debug("Original post discovery %s -> %s", source, activity)
-    original_post_discovery(source, activity)
+    original_post_discovery.discover(source, activity)
 
     # nothing attempted, but we should have saved a placeholder to prevent us
     # from trying again
@@ -404,7 +404,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     requests.get('http://author', timeout=HTTP_TIMEOUT).AndReturn(response)
 
     self.mox.ReplayAll()
-    original_post_discovery(source, activity)
+    original_post_discovery.discover(source, activity)
 
     # nothing attempted, but we should have saved a placeholder to prevent us
     # from trying again
@@ -442,7 +442,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
             .AndReturn(response)
 
     self.mox.ReplayAll()
-    original_post_discovery(source, activity)
+    original_post_discovery.discover(source, activity)
 
     # we should have saved placeholders to prevent us from trying the
     # syndication url or permalink again
@@ -451,7 +451,6 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
       set((relationship.original, relationship.syndication)
           for relationship in SyndicatedPost.query(ancestor=source.key)))
 
-  #TODO no author ur
   def test_no_author_url(self):
     """Make sure something reasonable happens when the author doesn't have
     a url at all.
@@ -465,7 +464,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
 
     self.mox.StubOutWithMock(requests, 'get')
     self.mox.ReplayAll()
-    original_post_discovery(source, activity)
+    original_post_discovery.discover(source, activity)
 
     # nothing attempted, and no SyndicatedPost saved
     self.assertFalse(SyndicatedPost.query(ancestor=source.key).get())
