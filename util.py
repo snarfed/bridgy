@@ -1,3 +1,4 @@
+# coding=utf-8
 """Misc utility constants and classes.
 """
 
@@ -9,7 +10,7 @@ import webapp2
 
 from activitystreams.oauth_dropins.webutil.util import *
 from activitystreams import source
-from appengine_config import HTTP_TIMEOUT
+from appengine_config import HTTP_TIMEOUT, DEBUG
 
 from google.appengine.api import mail
 from google.appengine.api import memcache

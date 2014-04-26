@@ -33,6 +33,7 @@ import googleplus
 import instagram
 import models
 from models import Response
+import original_post_discovery
 import twitter
 import util
 
@@ -42,13 +43,17 @@ WEBMENTION_DISCOVERY_CACHE_TIME = 60 * 60 * 24  # a day
 now_fn = datetime.datetime.now
 
 
-def get_webmention_targets(activity):
+def get_webmention_targets(source, activity):
   """Returns a set of string target URLs to attempt to send webmentions to.
 
   Side effect: runs the original post discovery algorithm on the activity and
   adds the resulting URLs to the activity as tags, in place.
+
+  Args:
+   source: models.Source subclass
+   activity: activity dict
   """
-  Source.original_post_discovery(activity)
+  original_post_discovery.discover(source, activity)
 
   targets = set()
   obj = activity.get('object') or activity
@@ -235,7 +240,7 @@ class Poll(webapp2.RequestHandler):
       activity = resp.pop('activity')
       targets = activity.get('targets')
       if targets is None:
-        targets = activity['targets'] = get_webmention_targets(activity)
+        targets = activity['targets'] = get_webmention_targets(source, activity)
         logging.info('%s has %d original post URL(s): %s', activity.get('url'),
                      len(targets), ' '.join(targets))
 
@@ -325,8 +330,11 @@ class Propagate(webapp2.RequestHandler):
         url, domain, ok = util.get_webmention_target(url)
         if ok:
           # When debugging locally, redirect my (snarfed.org) webmentions to localhost
-          if appengine_config.DEBUG and domain == 'snarfed.org':
-            url = url.replace('snarfed.org/', 'localhost/')
+          if appengine_config.DEBUG:
+            if domain == 'snarfed.org':
+              url = url.replace('snarfed.org/', 'localhost/')
+            elif domain == 'kylewm.com':
+              url = url.replace('kylewm.com/', 'localhost/')
           unsent.add(url)
       response.unsent = sorted(unsent)
       response.error = []
