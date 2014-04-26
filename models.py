@@ -433,7 +433,7 @@ class SyndicatedPost(ndb.Model):
                      ancestor=source.key).get()
 
 
-class Webmention(Publish):
+class BlogWebmention(Publish):
   """Datastore entity for webmentions for hosted blog providers.
 
   Subclassed from Publish just to use a different kind (Webmention vs Publish).
