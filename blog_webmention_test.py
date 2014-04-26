@@ -37,10 +37,10 @@ class BlogWebmentionTest(testutil.HandlerTest):
       '/webmention/fake', method='POST',
       body='source=%s&target=%s' % (source, target))
 
-  # def assert_error(self, expected_error, status=400, **kwargs):
-  #   resp = self.get_response(**kwargs)
-  #   self.assertEquals(status, resp.status_int)
-  #   self.assertIn(expected_error, json.loads(resp.body)['error'])
+  def assert_error(self, expected_error, status=400, **kwargs):
+    resp = self.get_response(**kwargs)
+    self.assertEquals(status, resp.status_int)
+    self.assertIn(expected_error, json.loads(resp.body)['error'])
 
   def test_success(self):
     html = """
@@ -73,3 +73,14 @@ i hereby reply
     # self.assertEquals({'id': 'fake id', 'url': 'http://fake/url',
     #                    'content': 'foo - http://foo.com/'},
     #                   publish.published)
+
+  def test_source_domain_not_found(self):
+    # no source
+    msg = 'Could not find FakeSource account for foo.com.'
+    self.source.key.delete()
+    self.assert_error(msg)
+
+    # source without webmention feature
+    self.source.features = ['listen']
+    self.source.put()
+    self.assert_error(msg)

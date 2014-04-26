@@ -50,8 +50,9 @@ class Handler(webmention.WebmentionHandler):
                    .filter(source_cls.features == 'webmention')
                    .get())
     if not self.source:
-      return self.error('Could not find %(type)s account for %(domain)s. Is it registered with Bridgy?',
-        {'type': source_cls.AS_CLASS.NAME, 'domain': domain})
+      return self.error(
+        'Could not find %s account for %s. Is it registered with Bridgy?' %
+        (source_cls.AS_CLASS.NAME, target_domain))
 
     # fetch source page
     resp = self.fetch_mf2(self.source_url)
