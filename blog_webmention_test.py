@@ -95,3 +95,9 @@ i hereby reply
 
     resp = self.get_response(target='http://FoO.cOm/post/1')
     self.assertEquals(200, resp.status_int, resp.body)
+
+  def test_source_link_not_found(self):
+    html = '<article class="h-entry"></article>'
+    self.expect_requests_get('http://bar.com/reply', html)
+    self.mox.ReplayAll()
+    self.assert_error('Could not find target URL')
