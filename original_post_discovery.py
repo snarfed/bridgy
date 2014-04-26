@@ -1,29 +1,53 @@
+"""Augments the standard original_post_discovery algorithm with a
+reverse lookup that supports posts without a backlink or citation.
+
+Performs a reverse-lookup that scans the activity's author's h-feed
+for posts with rel=syndication links. As we find syndicated copies,
+save the relationship.  If we find the original post for the activity
+in question, return the original's URL.
+
+See http://indiewebcamp.com/posse-post-discovery for more detail.
+
+This feature adds costs in terms of HTTP requests and database
+lookups in the following primary cases:
+
+- Author's domain is known to be invalid or blacklisted, there will
+  be 0 requests and 0 DB lookups.
+
+- For a syndicated post has been seen previously (regardless of
+  whether discovery was successful), there will be 0 requests and 1
+  DB lookup.
+
+- The first time a syndicated post has been seen:
+  - 1 to 2 HTTP requests to get and parse the h-feed plus 1 additional
+    request for *each* post permalink that has not been seen before.
+  - 1 DB query for the initial check plus 1 additional DB query for
+    *each* post permalink.
+
+"""
+
 import logging
 import requests
 import urlparse
-
-from util import get_webmention_target, follow_redirects
-from models import SyndicatedPost
+import util
 
 from activitystreams import source as as_source
 from appengine_config import HTTP_TIMEOUT, DEBUG
+from google.appengine.ext import ndb
 from mf2py.parser import Parser as Mf2Parser
+from models import SyndicatedPost
 
 
-def original_post_discovery(source, activity):
+def discover(source, activity):
   """Augments the standard original_post_discovery algorithm with a
   reverse lookup that supports posts without a backlink or citation.
-
-  Performs a reverse-lookup that scans the activity's author's h-feed
-  for posts with rel=syndication links. As we find syndicated copies,
-  save the relationship.  If we find the original pos for the activity
-  in question, return the original's URL.
-
-  See http://indiewebcamp.com/posse-post-discovery for more detail.
 
   Args:
     source: models.Source subclass
     activity: activity dict
+
+  Return:
+    the activity, updated with original post urls if any are found
 
   """
 
@@ -33,25 +57,24 @@ def original_post_discovery(source, activity):
   # post on the author's domain (i.e., it included a link or
   # citation), then skip the rest of this.
 
-  note = activity.get('object', {})
-
   # Use source.domain_url for now; it seems more reliable than the
   # activity.actor.url (which depends on getting the right data back
   # from various APIs). Consider using the actor's url, with
   # domain_url as the fallback in the future to support content from
   # non-Bridgy users.
   # author_url = activity.get('actor', {}).get('url')
+  obj = activity.get('object') or activity
   author_url = source.domain_url
-  syndication_url = note.get('url')
+  syndication_url = obj.get('url')
 
   if not author_url:
     logging.debug("no author url, cannot find h-feed %s", author_url)
-    return None
+    return activity
 
   if not syndication_url:
     logging.debug("no syndication url, cannot process h-entries %s",
                   syndication_url)
-    return None
+    return activity
 
   if DEBUG:
     if author_url.startswith('http://snarfed.org'):
@@ -63,8 +86,27 @@ def original_post_discovery(source, activity):
   # the best chance of finding a match. Some silos allow several
   # different permalink formats to point to the same place (e.g.,
   # facebook user id instead of user name)
-  syndication_url = follow_redirects(syndication_url).url
+  syndication_url = util.follow_redirects(syndication_url).url
+  return _posse_post_discovery(source, activity,
+                               author_url, syndication_url)
 
+
+@ndb.transactional
+def _posse_post_discovery(source, activity, author_url, syndication_url):
+  """Performs the actual meat of the posse-post-discover. It was split
+  out from discover() so that it can be done inside of a transaction.
+
+  Args:
+    source: models.Source subclass
+    activity: activity dict
+    author_url: author's url configured in their silo profile
+    syndication_url: url of the syndicated copy for which we are
+                     trying to find an original
+
+  Return:
+    the activity, updated with original post urls if any are found
+
+  """
   logging.debug("starting posse post discovery with author %s and syndicated %s",
                 author_url, syndication_url)
 
@@ -80,19 +122,18 @@ def original_post_discovery(source, activity):
     # syndicated post to avoid reprocessing it every time
     logging.debug("posse post discovery found no relationship for %s",
                   syndication_url)
-    relationship = SyndicatedPost(parent=source.key,
-                                  syndication=syndication_url)
-    relationship.put()
-    return None
+    SyndicatedPost(parent=source.key, original=None,
+                   syndication=syndication_url).put()
+    return activity
 
   logging.debug("posse post discovery found relationship %s -> %s",
                 syndication_url, relationship.original)
-  original = relationship.original
 
-  if original:
-    note.setdefault('tags', []).append({
+  if relationship.original:
+    obj = activity.get('object') or activity
+    obj.setdefault('tags', []).append({
       'objectType': 'article',
-      'url': original,
+      'url': relationship.original,
     })
 
   return activity
@@ -106,14 +147,14 @@ def _process_author(source, author_url):
     author_url: the author's homepage URL
 
   Return:
-    a map from syndicated_url to models.SyndicatedPost
+    a dict of syndicated_url to models.SyndicatedPost
 
   """
   # for now use whether the url is a valid webmention target
   # as a proxy for whether it's worth searching it.
   # TODO skip sites we know don't have microformats2 markup
-  _, _, is_valid_target = get_webmention_target(author_url)
-  if not is_valid_target:
+  _, _, ok = util.get_webmention_target(author_url)
+  if not ok:
     return {}
 
   try:
@@ -229,7 +270,7 @@ def _process_entry(source, permalink):
     for syndication_url in syndication_urls:
       # follow redirects to give us the canonical syndication url --
       # gives the best chance of finding a match.
-      syndication_url = follow_redirects(syndication_url).url
+      syndication_url = util.follow_redirects(syndication_url).url
       # check that the syndicated url belongs to this source
       # TODO save future lookups by saving results for other sources
       # too (note: query the appropriate source subclass by
@@ -249,7 +290,7 @@ def _process_entry(source, permalink):
                   "searched again", permalink, source)
     # remember that this post doesn't have syndication links for this
     # particular source
-    relationship = SyndicatedPost(parent=source.key, original=permalink)
-    relationship.put()
+    SyndicatedPost(parent=source.key, original=permalink,
+                   syndication=None).put()
 
   return results
