@@ -74,7 +74,7 @@ i hereby reply
     #                    'content': 'foo - http://foo.com/'},
     #                   publish.published)
 
-  def test_source_domain_not_found(self):
+  def test_domain_not_found(self):
     # no source
     msg = 'Could not find FakeSource account for foo.com.'
     self.source.key.delete()
@@ -84,3 +84,14 @@ i hereby reply
     self.source.features = ['listen']
     self.source.put()
     self.assert_error(msg)
+
+  def test_domain_translates_to_lowercase(self):
+    html = '<article class="h-entry"><p class="e-content">X http://FoO.cOm/post/1</p></article>'
+    self.expect_requests_get('http://bar.com/reply', html)
+
+    testutil.FakeSource.create_comment(
+      'http://FoO.cOm/post/1', 'foo.com', 'http://foo.com/', 'X http://FoO.cOm/post/1')
+    self.mox.ReplayAll()
+
+    resp = self.get_response(target='http://FoO.cOm/post/1')
+    self.assertEquals(200, resp.status_int, resp.body)

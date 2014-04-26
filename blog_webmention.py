@@ -39,20 +39,21 @@ class Handler(webmention.WebmentionHandler):
     self.target_url = util.get_required_param(self, 'target')
 
     # parse and validate target URL
-    target_domain = util.domain_from_link(self.target_url)
-    if not target_domain:
+    domain = util.domain_from_link(self.target_url)
+    if not domain:
       return self.error(msg, 'Could not parse target URL %s' % self.target_url)
 
     # look up source by domain
     source_cls = SOURCES[source_short_name]
+    domain = domain.lower()
     self.source = (source_cls.query()
-                   .filter(source_cls.domain == target_domain)
+                   .filter(source_cls.domain == domain)
                    .filter(source_cls.features == 'webmention')
                    .get())
     if not self.source:
       return self.error(
         'Could not find %s account for %s. Is it registered with Bridgy?' %
-        (source_cls.AS_CLASS.NAME, target_domain))
+        (source_cls.AS_CLASS.NAME, domain))
 
     # fetch source page
     resp = self.fetch_mf2(self.source_url)
@@ -70,8 +71,8 @@ class Handler(webmention.WebmentionHandler):
                         data=data, log_exception=False)
 
     # default author to target domain
-    author_name = target_domain
-    author_url = 'http://%s/' % target_domain
+    author_name = domain
+    author_url = 'http://%s/' % domain
 
     # extract author name and URL from h-card, if any
     props = item['properties']
@@ -108,14 +109,14 @@ class Handler(webmention.WebmentionHandler):
         if self.target_url in props.get(type, []):
           # found the target!
           if not text:
-            content['value'] = {'in-reply-to': 'replied to this.',
-                                'like-of': 'liked this.',
-                                'repost-of': 'reposted this.',
-                                'mention': 'mentioned this.',
-                                }[type]
+            text = content['value'] = {'in-reply-to': 'replied to this.',
+                                       'like-of': 'liked this.',
+                                       'repost-of': 'reposted this.',
+                                       'mention': 'mentioned this.',
+                                       }[type]
           return item
 
-      if self.target_url in text:
+      if text and self.target_url in text:
         return item  # a normal mention
 
     return None
