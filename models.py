@@ -406,8 +406,17 @@ class SyndicatedPost(ndb.Model):
   following rel=syndication links on the author's h-feed.
 
   See original_post_discovery
-
   """
+
+  # Turn off instance and memcache caching. Main reason is to improve memcache
+  # hit rate since app engine only gives me 1MB right now. :/ Background:
+  # https://github.com/snarfed/bridgy/issues/68
+  #
+  # If you re-enable caching, MAKE SURE YOU re-enable the global ban on instance
+  # caching in appengine_config.py.
+  _use_cache = False
+  _use_memcache = False
+
   syndication = ndb.StringProperty()
   original = ndb.StringProperty()
   created = ndb.DateTimeProperty(auto_now_add=True)
