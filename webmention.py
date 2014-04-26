@@ -1,6 +1,6 @@
-"""Handles webmentions for blog providers: Blogger, Tumblr, and WP.com.
+"""Base handler class and common utilities for handling webmentions.
 
-Also includes common code for handling webmentions that's reused in publish.py.
+Used in publish.py and blog_webmention.py.
 
 Webmention spec: http://webmention.org/
 """
@@ -25,11 +25,11 @@ import webapp2
 class WebmentionGetHandler(util.Handler):
   """Renders a simple placeholder HTTP page for GETs to webmention endpoints.
   """
-  def head(self, site):
+  def head(self, site=None):
     self.response.headers['Link'] = (
       '<%s/publish/webmention>; rel="webmention"' % self.request.host_url)
 
-  def get(self, site):
+  def get(self, site=None):
     self.head(site)
     self.response.out.write("""\
 <!DOCTYPE html>
@@ -120,9 +120,3 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
       subject += ': %s' % self.source.label()
 
     util.email_me(subject=subject, body=body)
-
-
-application = webapp2.WSGIApplication([
-    ('/blog/webmention', WebmentionHandler),
-    ],
-  debug=appengine_config.DEBUG)

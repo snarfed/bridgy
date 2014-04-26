@@ -199,6 +199,19 @@ class Source(StringIdModel):
     """
     return self.as_source.get_rsvp(activity_user_id, event_id, user_id)
 
+  def create_comment(self, post_url, author_name, author_url, content):
+    """Creates a new comment in the source silo.
+
+    Must be implemented by subclasses.
+
+    Args:
+      post_url: string
+      author_name: string
+      author_url: string
+      content: string
+    """
+    raise NotImplementedError()
+
   @classmethod
   def create_new(cls, handler, **kwargs):
     """Creates and saves a new Source and adds a poll task for it.
@@ -379,7 +392,7 @@ class Publish(ndb.Model):
   updated = ndb.DateTimeProperty(auto_now=True)
 
 
-class Webmention(Publish):
+class BlogWebmention(Publish):
   """Datastore entity for webmentions for hosted blog providers.
 
   Subclassed from Publish just to use a different kind (Webmention vs Publish).
