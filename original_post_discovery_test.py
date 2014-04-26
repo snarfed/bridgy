@@ -9,15 +9,13 @@ import testutil
 
 from appengine_config import HTTP_TIMEOUT
 from models import SyndicatedPost
-from testutil import FakeSource
-
+from requests.exceptions import HTTPError
 
 class OriginalPostDiscoveryTest(testutil.ModelsTest):
 
   def test_single_post(self):
     """Test that original post discovery does the reverse lookup to scan
     author's h-feed for rel=syndication links
-
     """
     activity = self.activities[0]
     activity['object']['content'] = 'post content without backlink'
@@ -29,6 +27,8 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
 
     self.mox.StubOutWithMock(requests, 'get')
 
+    # TODO replace with self.expect_requests_get() when it is merged
+    # in from the blogs branch.
     resp = requests.Response()
     resp.status_code = 200
     resp._content = """
@@ -48,15 +48,13 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     <link rel="syndication" href="http://fa.ke/post/url">
     <div class="h-entry">
       <a class="u-url" href="http://author/post/permalink"></a>
-      <a class="u-syndication" href="http://fa.ke/post/url"></a>
-      <a class="u-syndication" href="http://not.real/statuses/postid"></a>
     </div>"""
 
     requests.get('http://author/post/permalink',
                  timeout=HTTP_TIMEOUT).AndReturn(resp)
 
     self.mox.ReplayAll()
-    logging.debug("Original post discovery %s -> %s", source, activity)
+    logging.debug('Original post discovery %s -> %s', source, activity)
     original_post_discovery.discover(source, activity)
 
     # tags = 2 original + 1 discovered
@@ -77,11 +75,9 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
   def test_additional_requests_do_not_require_rework(self):
     """Test that original post discovery fetches and stores all entries up
     front so that it does not have to reparse the author's h-feed for
-    every new post Test that original post discovery does the reverse
+    every new post. Test that original post discovery does the reverse
     lookup to scan author's h-feed for rel=syndication links
-
     """
-
     for idx, activity in enumerate(self.activities):
         activity['object']['content'] = 'post content without backlinks'
         activity['object']['url'] = 'http://fa.ke/post/url%d' % (idx + 1)
@@ -204,14 +200,13 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
   def test_no_duplicate_links(self):
     """Make sure that a link found by both original-post-discovery and
     posse-post-discovery will not result in two webmentions being sent
-
     """
     source = self.sources[0]
     source.domain_url = 'http://target1'
 
     activity = self.activities[0]
-    activity['object']['content'] = "with a backlink http://target1/post/url"
-    activity['object']['url'] = "http://fa.ke/post/url"
+    activity['object']['content'] = 'with a backlink http://target1/post/url'
+    activity['object']['url'] = 'http://fa.ke/post/url'
 
     original = 'http://target1/post/url'
     syndicated = 'http://fa.ke/post/url'
@@ -241,7 +236,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
             .AndReturn(resp)
 
     self.mox.ReplayAll()
-    logging.debug("Original post discovery %s -> %s", source, activity)
+    logging.debug('Original post discovery %s -> %s', source, activity)
 
     wmtargets = tasks.get_webmention_targets(source, activity)
     # activity *will* have a duplicate tag for the original post, one
@@ -252,17 +247,9 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     # webmention targets converts to a set to remove duplicates
     self.assertEquals(set([original]), wmtargets)
 
-    # TODO ensure that handlers.add_original_post_urls doesn't create
-    #  duplicate links
-    # handler = handlers.ItemHandler()
-    # handler.source = source
-    # handler.add_original_post_urls(0, activity, 'inReplyTo')
-    # activity_json = microformats2.object_to_json(activity)
-
   def test_rel_feed_link(self):
     """Check that we follow the rel=feed link when looking for the
     author's full feed URL
-
     """
     source = self.sources[0]
     source.domain_url = 'http://author'
@@ -295,13 +282,12 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
             .AndReturn(resp)
 
     self.mox.ReplayAll()
-    logging.debug("Original post discovery %s -> %s", source, activity)
+    logging.debug('Original post discovery %s -> %s', source, activity)
     original_post_discovery.discover(source, activity)
 
   def test_no_h_entries(self):
     """Make sure nothing bad happens when fetching a feed without
     h-entries
-
     """
     activity = self.activities[0]
     activity['object']['content'] = 'post content without backlink'
@@ -322,7 +308,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     requests.get('http://author', timeout=HTTP_TIMEOUT).AndReturn(resp)
 
     self.mox.ReplayAll()
-    logging.debug("Original post discovery %s -> %s", source, activity)
+    logging.debug('Original post discovery %s -> %s', source, activity)
     original_post_discovery.discover(source, activity)
 
     self.assert_equals(
@@ -333,7 +319,6 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
   def test_existing_syndicated_posts(self):
     """Confirm that no additional requests are made if we already have a
     SyndicatedPost in the DB.
-
     """
     original_url = 'http://author/notes/2014/04/24/1'
     syndication_url = 'http://fa.ke/post/url'
@@ -352,7 +337,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.mox.StubOutWithMock(requests, 'get')
     self.mox.ReplayAll()
 
-    logging.debug("Original post discovery %s -> %s", source, activity)
+    logging.debug('Original post discovery %s -> %s', source, activity)
     original_post_discovery.discover(source, activity)
 
     # should append the author note url, with no addt'l requests
@@ -365,9 +350,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     means they're on the blacklist. Eventually we want to filter out
     targets that don't have certain features, like a webmention
     endpoint or microformats.
-
     """
-
     source = self.sources[0]
     source.domain_url = 'http://amazon.com'
     activity = self.activities[0]
@@ -377,7 +360,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.mox.StubOutWithMock(requests, 'get')
     self.mox.ReplayAll()
 
-    logging.debug("Original post discovery %s -> %s", source, activity)
+    logging.debug('Original post discovery %s -> %s', source, activity)
     original_post_discovery.discover(source, activity)
 
     # nothing attempted, but we should have saved a placeholder to prevent us
@@ -387,10 +370,9 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
       [(relationship.original, relationship.syndication)
        for relationship in SyndicatedPost.query(ancestor=source.key)])
 
-  def test_failed_domain_url_fetch(self):
+  def _test_failed_domain_url_fetch(self, raise_exception):
     """Make sure something reasonable happens when the author's domain url
     gives an unexpected response
-
     """
     source = self.sources[0]
     source.domain_url = 'http://author'
@@ -399,9 +381,14 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     activity['object']['content'] = 'content without links'
 
     self.mox.StubOutWithMock(requests, 'get')
-    response = requests.Response()
-    response.status_code = 404
-    requests.get('http://author', timeout=HTTP_TIMEOUT).AndReturn(response)
+
+    request = requests.get('http://author', timeout=HTTP_TIMEOUT)
+    if raise_exception:
+      request.AndRaise(HTTPError())
+    else:
+      response = requests.Response()
+      response.status_code = 404
+      request.AndReturn(response)
 
     self.mox.ReplayAll()
     original_post_discovery.discover(source, activity)
@@ -413,10 +400,77 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
       [(relationship.original, relationship.syndication)
        for relationship in SyndicatedPost.query(ancestor=source.key)])
 
-  def test_failed_post_permalink_fetch(self):
+  def test_domain_url_not_found(self):
+    """Make sure something reasonable happens when the author's domain url
+    returns a 404 status code
+    """
+    self._test_failed_domain_url_fetch(raise_exception=False)
+
+  def test_domain_url_error(self):
+    """Make sure something reasonable happens when fetching the author's
+    domain url raises an exception
+    """
+    self._test_failed_domain_url_fetch(raise_exception=True)
+
+  def _test_failed_rel_feed_link_fetch(self, raise_exception):
+    """An author page with an invalid rel=feed link. We should recover and
+    use any h-entries on the main url as a fallback.
+    """
+    source = self.sources[0]
+    source.domain_url = 'http://author'
+    activity = self.activities[0]
+
+    self.mox.StubOutWithMock(requests, 'get')
+
+    resp = requests.Response()
+    resp.status_code = 200
+    resp._content = """
+    <html>
+      <head>
+        <link rel="feed" type="text/html" href="try_this.html">
+        <link rel="alternate" type="application/xml" href="not_this.html">
+        <link rel="alternate" type="application/xml" href="nor_this.html">
+      </head>
+      <body>
+        <div class="h-entry">
+          <a class="u-url" href="recover_and_fetch_this.html"></a>
+        </div>
+      </body>
+    </html>"""
+    requests.get('http://author', timeout=HTTP_TIMEOUT)\
+            .AndReturn(resp)
+
+    # try to do this and fail
+    call = requests.get('http://author/try_this.html', timeout=HTTP_TIMEOUT)
+    if raise_exception:
+      call.AndRaise(HTTPError())
+    else:
+      resp = requests.Response()
+      resp.status_code = 404
+      call.AndReturn(resp)
+
+    # despite the error, should fallback on the main page's h-entries and
+    # check the permalink
+    requests.get('http://author/recover_and_fetch_this.html',
+                 timeout=HTTP_TIMEOUT)
+
+    self.mox.ReplayAll()
+    logging.debug('Original post discovery %s -> %s', source, activity)
+    original_post_discovery.discover(source, activity)
+
+  def test_rel_feed_link_not_found(self):
+    """Author page has an h-feed link that is 404 not found. We should
+    recover and use the main page's h-entries as a fallback."""
+    self._test_failed_rel_feed_link_fetch(raise_exception=False)
+
+  def test_rel_feed_link_error(self):
+    """Author page has an h-feed link that raises an exception. We should
+    recover and use the main page's h-entries as a fallback."""
+    self._test_failed_rel_feed_link_fetch(raise_exception=True)
+
+  def _test_failed_post_permalink_fetch(self, raise_exception):
     """Make sure something reasonable happens when we're unable to fetch
     the permalink of an entry linked in the h-feed
-
     """
     source = self.sources[0]
     source.domain_url = 'http://author'
@@ -436,10 +490,13 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     """
     requests.get('http://author', timeout=HTTP_TIMEOUT).AndReturn(response)
 
-    response = requests.Response()
-    response.status_code = 410
-    requests.get('http://author/nonexistent.html', timeout=HTTP_TIMEOUT)\
-            .AndReturn(response)
+    call = requests.get('http://author/nonexistent.html', timeout=HTTP_TIMEOUT)
+    if raise_exception:
+      call.AndRaise(HTTPError())
+    else:
+      response = requests.Response()
+      response.status_code = 410
+      call.AndReturn(response)
 
     self.mox.ReplayAll()
     original_post_discovery.discover(source, activity)
@@ -451,10 +508,21 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
       set((relationship.original, relationship.syndication)
           for relationship in SyndicatedPost.query(ancestor=source.key)))
 
+  def test_post_permalink_not_found(self):
+    """Make sure something reasonable happens when the permalink of an
+    entry returns a 404 not found
+    """
+    self._test_failed_post_permalink_fetch(raise_exception=False)
+
+  def test_post_permalink_error(self):
+    """Make sure something reasonable happens when fetching the permalink
+    of an entry raises an exception
+    """
+    self._test_failed_post_permalink_fetch(raise_exception=True)
+
   def test_no_author_url(self):
     """Make sure something reasonable happens when the author doesn't have
     a url at all.
-
     """
     source = self.sources[0]
     source.domain_url = None
