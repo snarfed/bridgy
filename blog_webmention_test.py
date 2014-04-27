@@ -76,11 +76,13 @@ i hereby reply
     msg = 'Could not find FakeSource account for foo.com.'
     self.source.key.delete()
     self.assert_error(msg)
+    self.assertEquals(0, BlogWebmention.query().count())
 
     # source without webmention feature
     self.source.features = ['listen']
     self.source.put()
     self.assert_error(msg)
+    self.assertEquals(0, BlogWebmention.query().count())
 
   def test_domain_translates_to_lowercase(self):
     html = '<article class="h-entry"><p class="e-content">X http://FoO.cOm/post/1</p></article>'
@@ -92,14 +94,17 @@ i hereby reply
 
     resp = self.get_response(target='http://FoO.cOm/post/1')
     self.assertEquals(200, resp.status_int, resp.body)
+    self.assertEquals('complete', BlogWebmention.get_by_id('http://bar.com/reply').status)
 
   def test_source_link_not_found(self):
     html = '<article class="h-entry"></article>'
     self.expect_requests_get('http://bar.com/reply', html)
     self.mox.ReplayAll()
     self.assert_error('Could not find target URL')
+    self.assertEquals('failed', BlogWebmention.get_by_id('http://bar.com/reply').status)
 
   def test_source_missing_mf2(self):
     self.expect_requests_get('http://bar.com/reply', '')
     self.mox.ReplayAll()
     self.assert_error('No microformats2 data found')
+    self.assertEquals('failed', BlogWebmention.get_by_id('http://bar.com/reply').status)
