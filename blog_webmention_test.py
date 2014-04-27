@@ -101,3 +101,8 @@ i hereby reply
     self.expect_requests_get('http://bar.com/reply', html)
     self.mox.ReplayAll()
     self.assert_error('Could not find target URL')
+
+  def test_source_missing_mf2(self):
+    self.expect_requests_get('http://bar.com/reply', '')
+    self.mox.ReplayAll()
+    self.assert_error('No microformats2 data found')
