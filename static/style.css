@@ -89,7 +89,8 @@ pre .link {
 @media (min-width: 768px) {
   #listen-signup, #listen-ui {
     border-left: 1px solid lightgray;
-    border-right: 1px solid lightgray;
+    /* TODO: uncomment for blog-webmention */
+    /* border-right: 1px solid lightgray; */
   }
 }
 
