@@ -108,3 +108,36 @@ i hereby reply
     self.mox.ReplayAll()
     self.assert_error('No microformats2 data found')
     self.assertEquals('failed', BlogWebmention.get_by_id('http://bar.com/reply').status)
+
+  def test_repeated(self):
+    # 1) first a failure
+    self.expect_requests_get('http://bar.com/reply', '')
+
+    # 2) should allow retrying, this one will succeed
+    self.expect_requests_get('http://bar.com/reply', """
+<article class="h-entry"><a class="u-repost-of" href="http://foo.com/post/1"></a></article>""")
+    testutil.FakeSource.create_comment('http://foo.com/post/1', 'foo.com',
+                                       'http://foo.com/', 'reposted this.')
+
+    # 3) after success, another is a noop and returns 200
+    # TODO: check for "updates not supported" message
+    self.mox.ReplayAll()
+
+    # now the webmention requests. 1) failure
+    self.assert_error('No microformats2 data found')
+    self.assertEquals('failed',
+                      BlogWebmention.get_by_id('http://bar.com/reply').status)
+
+    # 2) success
+    resp = self.get_response()
+    self.assertEquals(200, resp.status_int, resp.body)
+    entity = BlogWebmention.get_by_id('http://bar.com/reply')
+    self.assertEquals('complete', entity.status)
+    self.assertEquals('repost', entity.type)
+
+    # 3) noop repeated success
+    # source without webmention feature
+    resp = self.get_response()
+    self.assertEquals(200, resp.status_int, resp.body)
+    self.assertEquals('complete',
+                      BlogWebmention.get_by_id('http://bar.com/reply').status)
