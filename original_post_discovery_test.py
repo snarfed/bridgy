@@ -25,33 +25,20 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     source = self.sources[0]
     source.domain_url = 'http://author'
 
-    self.mox.StubOutWithMock(requests, 'get')
-
-    # TODO replace with self.expect_requests_get() when it is merged
-    # in from the blogs branch.
-    resp = requests.Response()
-    resp.status_code = 200
-    resp._content = """
+    self.expect_requests_get('http://author', """
     <html class="h-feed">
       <div class="h-entry">
         <a class="u-url" href="http://author/post/permalink"></a>
       </div>
-    </html>"""
-    requests.get('http://author',
-                 timeout=HTTP_TIMEOUT).AndReturn(resp)
+    </html>""")
 
     # syndicated to two places
-    resp = requests.Response()
-    resp.status_code = 200
-    resp._content = """
+    self.expect_requests_get('http://author/post/permalink', """
     <link rel="syndication" href="http://not.real/statuses/postid">
     <link rel="syndication" href="http://fa.ke/post/url">
     <div class="h-entry">
       <a class="u-url" href="http://author/post/permalink"></a>
-    </div>"""
-
-    requests.get('http://author/post/permalink',
-                 timeout=HTTP_TIMEOUT).AndReturn(resp)
+    </div>""")
 
     self.mox.ReplayAll()
     logging.debug('Original post discovery %s -> %s', source, activity)
@@ -98,59 +85,35 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     source = self.sources[0]
     source.domain_url = 'http://author'
 
-    self.mox.StubOutWithMock(requests, 'get')
-
-    resp = requests.Response()
-    resp.status_code = 200
-    resp._content = author_feed
-    requests.get('http://author',
-                 timeout=HTTP_TIMEOUT).AndReturn(resp)
+    self.expect_requests_get('http://author', author_feed)
 
     # first post is syndicated
-    resp = requests.Response()
-    resp.status_code = 200
-    resp._content = """
+    self.expect_requests_get('http://author/post/permalink1', """
     <div class="h-entry">
       <a class="u-url" href="http://author/post/permalink1"></a>
       <a class="u-syndication" href="http://fa.ke/post/url1"></a>
-    </div>"""
-
-    requests.get('http://author/post/permalink1',
-                 timeout=HTTP_TIMEOUT).InAnyOrder().AndReturn(resp)
+    </div>""").InAnyOrder()
 
     # second post is syndicated
-    resp = requests.Response()
-    resp.status_code = 200
-    resp._content = """
+    self.expect_requests_get('http://author/post/permalink2', """
     <div class="h-entry">
       <a class="u-url" href="http://author/post/permalink2"></a>
       <a class="u-syndication" href="http://fa.ke/post/url2"></a>
-    </div>"""
-
-    requests.get('http://author/post/permalink2',
-                 timeout=HTTP_TIMEOUT).InAnyOrder().AndReturn(resp)
+    </div>""").InAnyOrder()
 
     # third post is not syndicated
-    resp = requests.Response()
-    resp.status_code = 200
-    resp._content = """
+    self.expect_requests_get('http://author/post/permalink3', """
     <div class="h-entry">
       <a class="u-url" href="http://author/post/permalink3"></a>
-    </div>"""
-
-    requests.get('http://author/post/permalink3',
-                 timeout=HTTP_TIMEOUT).InAnyOrder().AndReturn(resp)
+    </div>""").InAnyOrder()
 
     # the second activity lookup should not make any HTTP requests
 
     # the third activity lookup will fetch the author's h-feed one more time
-
-    resp = requests.Response()
-    resp.status_code = 200
-    resp._content = author_feed
-    requests.get('http://author', timeout=HTTP_TIMEOUT).AndReturn(resp)
+    self.expect_requests_get('http://author', author_feed).InAnyOrder()
 
     self.mox.ReplayAll()
+
     # first activity should trigger all the lookups and storage
     original_post_discovery.discover(source, self.activities[0])
 
@@ -211,29 +174,17 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     original = 'http://target1/post/url'
     syndicated = 'http://fa.ke/post/url'
 
-    self.mox.StubOutWithMock(requests, 'get')
-
-    resp = requests.Response()
-    resp.status_code = 200
-    resp._content = """
+    self.expect_requests_get('http://target1', """
     <html class="h-feed">
       <div class="h-entry">
         <a class="u-url" href="%s"></a>
       </div>
-    </html>""" % original
-    requests.get('http://target1', timeout=HTTP_TIMEOUT)\
-            .AndReturn(resp)
-
-    resp = requests.Response()
-    resp.status_code = 200
-    resp._content = """
+    </html>""" % original)
+    self.expect_requests_get(original, """
     <div class="h-entry">
       <a class="u-url" href="%s"></a>
       <a class="u-syndication" href="%s"></a>
-    </div>""" % (original, syndicated)
-
-    requests.get(original, timeout=HTTP_TIMEOUT)\
-            .AndReturn(resp)
+    </div>""" % (original, syndicated))
 
     self.mox.ReplayAll()
     logging.debug('Original post discovery %s -> %s', source, activity)
@@ -255,31 +206,21 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     source.domain_url = 'http://author'
     activity = self.activities[0]
 
-    self.mox.StubOutWithMock(requests, 'get')
-
-    resp = requests.Response()
-    resp.status_code = 200
-    resp._content = """
+    self.expect_requests_get('http://author', """
     <html>
       <head>
         <link rel="feed" type="text/html" href="try_this.html">
         <link rel="alternate" type="application/xml" href="not_this.html">
         <link rel="alternate" type="application/xml" href="nor_this.html">
       </head>
-    </html>"""
-    requests.get('http://author', timeout=HTTP_TIMEOUT)\
-            .AndReturn(resp)
+    </html>""")
 
-    resp = requests.Response()
-    resp.status_code = 200
-    resp._content = """
+    self.expect_requests_get('http://author/try_this.html', """
     <html class="h-feed">
       <body>
         <div class="h-entry">Hi</div>
       </body>
-    </html>"""
-    requests.get('http://author/try_this.html', timeout=HTTP_TIMEOUT)\
-            .AndReturn(resp)
+    </html>""")
 
     self.mox.ReplayAll()
     logging.debug('Original post discovery %s -> %s', source, activity)
@@ -297,15 +238,10 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     source = self.sources[0]
     source.domain_url = 'http://author'
 
-    self.mox.StubOutWithMock(requests, 'get')
-
-    resp = requests.Response()
-    resp.status_code = 200
-    resp._content = """
+    self.expect_requests_get('http://author', """
     <html class="h-feed">
     <p>under construction</p>
-    </html>"""
-    requests.get('http://author', timeout=HTTP_TIMEOUT).AndReturn(resp)
+    </html>""")
 
     self.mox.ReplayAll()
     logging.debug('Original post discovery %s -> %s', source, activity)
@@ -334,7 +270,6 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     SyndicatedPost(parent=source.key, original=original_url,
                    syndication=syndication_url).put()
 
-    self.mox.StubOutWithMock(requests, 'get')
     self.mox.ReplayAll()
 
     logging.debug('Original post discovery %s -> %s', source, activity)
@@ -357,7 +292,6 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     activity['object']['url'] = 'http://fa.ke/post/url'
     activity['object']['content'] = 'content without links'
 
-    self.mox.StubOutWithMock(requests, 'get')
     self.mox.ReplayAll()
 
     logging.debug('Original post discovery %s -> %s', source, activity)
@@ -380,15 +314,10 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     activity['object']['url'] = 'http://fa.ke/post/url'
     activity['object']['content'] = 'content without links'
 
-    self.mox.StubOutWithMock(requests, 'get')
-
-    request = requests.get('http://author', timeout=HTTP_TIMEOUT)
     if raise_exception:
-      request.AndRaise(HTTPError())
+      self.expect_requests_get('http://author').AndRaise(HTTPError())
     else:
-      response = requests.Response()
-      response.status_code = 404
-      request.AndReturn(response)
+      self.expect_requests_get('http://author', status_code=404)
 
     self.mox.ReplayAll()
     original_post_discovery.discover(source, activity)
@@ -420,11 +349,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     source.domain_url = 'http://author'
     activity = self.activities[0]
 
-    self.mox.StubOutWithMock(requests, 'get')
-
-    resp = requests.Response()
-    resp.status_code = 200
-    resp._content = """
+    self.expect_requests_get('http://author', """
     <html>
       <head>
         <link rel="feed" type="text/html" href="try_this.html">
@@ -436,23 +361,17 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
           <a class="u-url" href="recover_and_fetch_this.html"></a>
         </div>
       </body>
-    </html>"""
-    requests.get('http://author', timeout=HTTP_TIMEOUT)\
-            .AndReturn(resp)
+    </html>""")
 
     # try to do this and fail
-    call = requests.get('http://author/try_this.html', timeout=HTTP_TIMEOUT)
     if raise_exception:
-      call.AndRaise(HTTPError())
+      self.expect_requests_get('http://author/try_this.html').AndRaise(HTTPError())
     else:
-      resp = requests.Response()
-      resp.status_code = 404
-      call.AndReturn(resp)
+      self.expect_requests_get('http://author/try_this.html', status_code=404)
 
     # despite the error, should fallback on the main page's h-entries and
     # check the permalink
-    requests.get('http://author/recover_and_fetch_this.html',
-                 timeout=HTTP_TIMEOUT)
+    self.expect_requests_get('http://author/recover_and_fetch_this.html')
 
     self.mox.ReplayAll()
     logging.debug('Original post discovery %s -> %s', source, activity)
@@ -478,25 +397,18 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     activity['object']['url'] = 'http://fa.ke/post/url'
     activity['object']['content'] = 'content without links'
 
-    self.mox.StubOutWithMock(requests, 'get')
-    response = requests.Response()
-    response.status_code = 200
-    response._content = """
+    self.expect_requests_get('http://author', """
     <html class="h-feed">
       <article class="h-entry">
         <a class="u-url" href="nonexistent.html"></a>
       </article>
     </html>
-    """
-    requests.get('http://author', timeout=HTTP_TIMEOUT).AndReturn(response)
+    """)
 
-    call = requests.get('http://author/nonexistent.html', timeout=HTTP_TIMEOUT)
     if raise_exception:
-      call.AndRaise(HTTPError())
+      self.expect_requests_get('http://author/nonexistent.html').AndRaise(HTTPError())
     else:
-      response = requests.Response()
-      response.status_code = 410
-      call.AndReturn(response)
+      self.expect_requests_get('http://author/nonexistent.html', status_code=410)
 
     self.mox.ReplayAll()
     original_post_discovery.discover(source, activity)
@@ -530,7 +442,6 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     activity['object']['url'] = 'http://fa.ke/post/url'
     activity['object']['content'] = 'content without links'
 
-    self.mox.StubOutWithMock(requests, 'get')
     self.mox.ReplayAll()
     original_post_discovery.discover(source, activity)
 

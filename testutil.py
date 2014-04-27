@@ -164,11 +164,14 @@ class HandlerTest(testutil.HandlerTest):
       return resp
     self.mox.stubs.Set(requests, 'head', fake_head)
 
-  def expect_requests_get(self, url, response):
+  def expect_requests_get(self, url, response='', status_code=200):
     resp = requests.Response()
     resp._content = response
     resp.url = url
-    requests.get(url, allow_redirects=True, timeout=HTTP_TIMEOUT).AndReturn(resp)
+    resp.status_code = status_code
+    call = requests.get(url, allow_redirects=True, timeout=HTTP_TIMEOUT)
+    call.AndReturn(resp)
+    return call
 
 
 class ModelsTest(HandlerTest):
