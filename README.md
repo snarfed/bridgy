@@ -18,9 +18,8 @@ Most dependencies are in git submodules. Be sure to run
 `git submodule update --init --recursive` after you clone the repo.
 
 Requires the [App Engine SDK](https://developers.google.com/appengine/downloads)
-and expects that it's in `~/google_appengine`. A symlink is fine. Sorry about
-the hard-coded path; if it annoys you, feel free to send a pull request that
-makes it configurable!
+and looks for it in the `GAE_SDK_ROOT` environment variable,
+`/usr/local/google_appengine`, or `~/google_appengine`, in that order.
 
 You can run the unit tests with `alltests.py`. If you send a pull request,
 please include (or update) a test for the new functionality if possible!
