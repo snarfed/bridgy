@@ -164,7 +164,8 @@ def _process_author(source, author_url):
 
   try:
     logging.debug('fetching author domain %s', author_url)
-    author_resp = requests.get(author_url, timeout=HTTP_TIMEOUT)
+    author_resp = requests.get(author_url, allow_redirects=True,
+                               timeout=HTTP_TIMEOUT)
   except BaseException:
     # TODO limit allowed failures, cache the author's h-feed url
     # or the # of times we've failed to fetch it
@@ -186,7 +187,8 @@ def _process_author(source, author_url):
   if canonical and canonical != author_url:
     try:
       logging.debug('fetching author\'s canonical full feed %s', canonical)
-      canonical_resp = requests.get(canonical, timeout=HTTP_TIMEOUT)
+      canonical_resp = requests.get(canonical, allow_redirects=True,
+                                    timeout=HTTP_TIMEOUT)
       if canonical_resp.status_code == 200:
         author_parsed = Mf2Parser(
           url=canonical, doc=canonical_resp.text).to_dict()
@@ -245,7 +247,7 @@ def _process_entry(source, permalink):
   parsed = None
   try:
     logging.debug('fetching post permalink %s', permalink)
-    resp = requests.get(permalink, timeout=HTTP_TIMEOUT)
+    resp = requests.get(permalink, allow_redirects=True, timeout=HTTP_TIMEOUT)
     if resp.status_code == 200:
       parsed = Mf2Parser(url=permalink, doc=resp.text).to_dict()
     else:
