@@ -303,7 +303,7 @@ class Response(StringIdModel):
   """
   STATUSES = ('new', 'processing', 'complete', 'error')
 
-  # Turn off instance and memcache caching. Main reason is to improve memcache
+  # Turn off NDB instance and memcache caching. Main reason is to improve memcache
   # hit rate since app engine only gives me 1MB right now. :/ Background:
   # https://github.com/snarfed/bridgy/issues/68
   #
@@ -373,12 +373,7 @@ class Publish(ndb.Model):
   """
   STATUSES = ('new', 'complete', 'failed')
 
-  # Turn off instance and memcache caching. Main reason is to improve memcache
-  # hit rate since app engine only gives me 1MB right now. :/ Background:
-  # https://github.com/snarfed/bridgy/issues/68
-  #
-  # If you re-enable caching, MAKE SURE YOU re-enable the global ban on instance
-  # caching in appengine_config.py.
+  # Turn off instance and memcache caching. See Response for details.
   _use_cache = False
   _use_memcache = False
 
@@ -392,10 +387,12 @@ class Publish(ndb.Model):
   updated = ndb.DateTimeProperty(auto_now=True)
 
 
-class BlogWebmention(Publish):
+class BlogWebmention(Publish, StringIdModel):
   """Datastore entity for webmentions for hosted blog providers.
 
-  Subclassed from Publish just to use a different kind (Webmention vs Publish).
+  Key id is the string source URL.
+
+  Reuses most of Publish's fields, but otherwise unrelated.
   """
   pass
 
@@ -408,12 +405,7 @@ class SyndicatedPost(ndb.Model):
   See original_post_discovery
   """
 
-  # Turn off instance and memcache caching. Main reason is to improve memcache
-  # hit rate since app engine only gives me 1MB right now. :/ Background:
-  # https://github.com/snarfed/bridgy/issues/68
-  #
-  # If you re-enable caching, MAKE SURE YOU re-enable the global ban on instance
-  # caching in appengine_config.py.
+  # Turn off instance and memcache caching. See Response for details.
   _use_cache = False
   _use_memcache = False
 
