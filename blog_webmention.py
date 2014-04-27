@@ -115,21 +115,31 @@ class Handler(webmention.WebmentionHandler):
       content = props.setdefault('content', [{}])[0]
       text = content.get('html') or content.get('value')
 
-      for type in 'in-reply-to', 'like-of', 'repost-of':
+      for type in 'in-reply-to', 'like', 'like-of', 'repost', 'repost-of':
         if self.target_url in props.get(type, []):
-          # found the target!
-          if not text:
-            text = content['value'] = {'in-reply-to': 'replied to this.',
-                                       'like-of': 'liked this.',
-                                       'repost-of': 'reposted this.',
-                                       'mention': 'mentioned this.',
-                                       }[type]
-          # TODO
-          # self.entity.type = self.entity.published.get('type') or models.get_type(obj)
-          return item
+          break
+      else:
+        type = 'post' if text and self.target_url in text else None
 
-      if text and self.target_url in text:
-        return item  # a normal mention
+      if type:
+        # found the target!
+        rsvp = next(iter(props.get('rsvp', [])), None)
+        if rsvp:
+          self.entity.type = 'rsvp'
+          if not text:
+            content['value'] = 'RSVPed %s.' % rsvp
+        else:
+          self.entity.type = {'in-reply-to': 'comment',
+                              'like-of': 'like',
+                              'repost-of': 'repost',
+                              }.get(type, type)
+          if not text:
+            content['value'] = {'comment': 'replied to this.',
+                                'like': 'liked this.',
+                                'repost': 'reposted this.',
+                                'post': 'mentioned this.'
+                                }[self.entity.type]
+        return item
 
     return None
 

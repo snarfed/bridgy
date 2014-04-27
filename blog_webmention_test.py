@@ -65,7 +65,7 @@ i hereby reply
     entity = BlogWebmention.get_by_id('http://bar.com/reply')
     self.assertEquals(self.source.key, entity.source)
     self.assertEquals('complete', entity.status)
-    # self.assertEquals('reply', entity.type)
+    self.assertEquals('comment', entity.type)
     self.assertEquals(html, entity.html)
     # self.assertEquals({'id': 'fake id', 'url': 'http://fake/url',
     #                    'content': 'foo - http://foo.com/'},
