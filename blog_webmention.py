@@ -55,14 +55,17 @@ class Handler(webmention.WebmentionHandler):
         'Could not find %s account for %s. Is it registered with Bridgy?' %
         (source_cls.AS_CLASS.NAME, domain))
 
+    # create BlogWebmention entity
+    self.entity = BlogWebmention.get_or_insert(self.source_url, source=self.source.key)
+    if self.entity.status == 'complete':
+      # TODO: response message saying update isn't supported
+      return
+
     # fetch source page
     resp = self.fetch_mf2(self.source_url)
     if not resp:
       return
     self.fetched, data = resp
-
-    # TODO
-    # self.entity = self.get_or_add_publish_entity(url)
 
     item = self.find_mention_item(data)
     if not item:
@@ -87,7 +90,14 @@ class Handler(webmention.WebmentionHandler):
 
     content = props['content'][0]  # find_mention_item() guaranteed this is here
     text = (content.get('html') or content.get('value')).strip()
-    self.source.create_comment(self.target_url, author_name, author_url, text)
+    try:
+      self.source.create_comment(self.target_url, author_name, author_url, text)
+    except BaseException, e:
+      return self.error('Error: %s' % e, status=500)
+
+    # write results to datastore
+    self.entity.status = 'complete'
+    self.entity.put()
 
   def find_mention_item(self, data):
     """Returns the mf2 item that mentions (or replies to, likes, etc) the target.
@@ -114,6 +124,8 @@ class Handler(webmention.WebmentionHandler):
                                        'repost-of': 'reposted this.',
                                        'mention': 'mentioned this.',
                                        }[type]
+          # TODO
+          # self.entity.type = self.entity.published.get('type') or models.get_type(obj)
           return item
 
       if text and self.target_url in text:

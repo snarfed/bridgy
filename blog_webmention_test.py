@@ -10,7 +10,7 @@ import urllib
 import appengine_config
 from appengine_config import HTTP_TIMEOUT
 
-from models import Publish, PublishedPage
+from models import BlogWebmention, Publish, PublishedPage
 import blog_webmention
 import testutil
 
@@ -62,14 +62,11 @@ i hereby reply
     # TODO
     # self.assertEquals('{"id": "..."}', json.loads(resp.body))
 
-    # TODO
-    # self.assertTrue(BlogWebmentionTest.get_by_id('http://foo.com/'))
-    # publish = Publish.query().get()
-    # self.assertEquals(self.source.key, publish.source)
-    # self.assertEquals('complete', publish.status)
-    # self.assertEquals('post', publish.type)
-    # self.assertEquals('FakeSource post label', publish.type_label)
-    # self.assertEquals(html, publish.html)
+    entity = BlogWebmention.get_by_id('http://bar.com/reply')
+    self.assertEquals(self.source.key, entity.source)
+    self.assertEquals('complete', entity.status)
+    # self.assertEquals('reply', entity.type)
+    self.assertEquals(html, entity.html)
     # self.assertEquals({'id': 'fake id', 'url': 'http://fake/url',
     #                    'content': 'foo - http://foo.com/'},
     #                   publish.published)
