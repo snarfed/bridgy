@@ -431,11 +431,3 @@ class SyndicatedPost(ndb.Model):
   def query_by_syndication(cls, source, url):
     return cls.query(cls.syndication == url,
                      ancestor=source.key).get()
-
-
-class BlogWebmention(Publish):
-  """Datastore entity for webmentions for hosted blog providers.
-
-  Subclassed from Publish just to use a different kind (Webmention vs Publish).
-  """
-  pass
