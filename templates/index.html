@@ -10,7 +10,9 @@
 <div id="signups" class="row">
 {% include "publish_signup.html" %}
 {% include "listen_signup.html" %}
-{# {% include "webmention_signup.html" %} #}
+{% if not DEBUG %}
+  {% include "webmention_signup.html" %}
+{% endif %}
 </div>
 
 

@@ -52,6 +52,9 @@ class DashboardHandler(TemplateHandler, util.Handler):
   def content_type(self):
     return 'text/html; charset=utf-8'
 
+  def template_vars(self):
+    return {'DEBUG': appengine_config.DEBUG}
+
 
 class FrontPageHandler(DashboardHandler):
   """Handler for the front page."""
