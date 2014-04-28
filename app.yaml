@@ -66,6 +66,10 @@ handlers:
   script: wordpress_rest.application
   secure: always
 
+- url: /webmention/(wordpress)
+  script: blog_webmention.application
+  secure: always
+
 - url: /log
   script: logs.application
   secure: always
