@@ -64,7 +64,11 @@ class CronTest(ModelsTest):
                       'profile_image_url_https': 'http://new/pic_normal.jpg',
                       'profile_image_url': 'http://bad/http',
                   }]
-    self.expect_urlopen(cron.TWITTER_API_USER_LOOKUP % 'a,c,b',
+
+    cron.USERS_PER_LOOKUP = 2
+    self.expect_urlopen(cron.TWITTER_API_USER_LOOKUP % 'a,c',
+                        json.dumps(user_objs))
+    self.expect_urlopen(cron.TWITTER_API_USER_LOOKUP % 'b',
                         json.dumps(user_objs))
     self.mox.ReplayAll()
 

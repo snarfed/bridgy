@@ -19,6 +19,7 @@ import webapp2
 from google.appengine.api import memcache
 
 TWITTER_API_USER_LOOKUP = 'https://api.twitter.com/1.1/users/lookup.json?screen_name=%s'
+USERS_PER_LOOKUP = 100  # max # of users per API call
 TOO_OLD = datetime.timedelta(hours=2)
 
 
@@ -47,10 +48,13 @@ class UpdateTwitterPictures(webapp2.RequestHandler):
 
     # just auth as me or the first user. TODO: use app-ony auth instead.
     auther = sources.get('schnarfed') or sources.values()[0]
-    users = auther.as_source.urlopen(
-      TWITTER_API_USER_LOOKUP % ','.join(sources))
+    usernames = sources.keys()
+    users = []
+    for i in range(0, len(usernames), USERS_PER_LOOKUP):
+      url = TWITTER_API_USER_LOOKUP % ','.join(usernames[i:i + USERS_PER_LOOKUP])
+      users += json.loads(auther.as_source.urlopen(url).read())
 
-    for user in json.loads(users.read()):
+    for user in users:
       source = sources[user['screen_name']]
       new_actor = auther.as_source.user_to_actor(user)
       new_pic = new_actor.get('image', {}).get('url')
