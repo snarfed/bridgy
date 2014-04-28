@@ -52,15 +52,13 @@ import webapp2
 API_CREATE_COMMENT_URL = 'https://public-api.wordpress.com/rest/v1/sites/%s/posts/%d/replies/new?pretty=true'
 API_POST_SLUG_URL = 'https://public-api.wordpress.com/rest/v1/sites/%s/posts/slug:%s?pretty=true'
 
-FakeAsClass = collections.namedtuple('FakeAsClass', ('NAME',))
-
 
 class WordPress(models.Source):
   """A WordPress blog.
 
-  The key name is the base URL.
+  The key name is the blog hostname.
   """
-  AS_CLASS = FakeAsClass(NAME='WordPress.com')
+  AS_CLASS = collections.namedtuple('FakeAsClass', ('NAME',))(NAME='WordPress.com')
   SHORT_NAME = 'wordpress'
 
   @staticmethod
@@ -130,7 +128,6 @@ class AddWordPress(oauth_wordpress.CallbackHandler, util.Handler):
 
 
 application = webapp2.WSGIApplication([
-    # OAuth scopes are set in listen.html and publish.html
     ('/wordpress/start', oauth_wordpress.StartHandler.to('/wordpress/add')),
     ('/wordpress/add', AddWordPress),
     ('/wordpress/delete/start', oauth_wordpress.CallbackHandler.to('/delete/finish')),

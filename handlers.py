@@ -25,9 +25,10 @@ import appengine_config
 
 from activitystreams import microformats2
 from activitystreams.oauth_dropins.webutil import handlers
-import original_post_discovery
+import blogger
 import facebook
 import googleplus
+import original_post_discovery
 import instagram
 import models
 import twitter
@@ -39,7 +40,8 @@ from google.appengine.ext import ndb
 
 
 SOURCES = {cls.SHORT_NAME: cls for cls in
-           (facebook.FacebookPage,
+           (blogger.Blogger,
+            facebook.FacebookPage,
             googleplus.GooglePlusPage,
             instagram.Instagram,
             twitter.Twitter,
