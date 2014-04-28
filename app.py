@@ -25,7 +25,7 @@ from googleplus import GooglePlusPage
 from instagram import Instagram
 from twitter import Twitter
 import handlers
-from models import Publish, Response, Source
+from models import BlogWebmention, Publish, Response, Source
 import util
 from activitystreams.oauth_dropins.webutil.handlers import TemplateHandler
 
@@ -102,62 +102,87 @@ class UserHandler(DashboardHandler):
     if not self.source:
       return {}
 
-    # Responses
-    responses = Response.query().filter(Response.source == self.source.key)\
-                                .order(-Response.created)\
-                                .fetch(10)
-    for r in responses:
-      r.response = json.loads(r.response_json)
-      r.activity = json.loads(r.activity_json)
-      r.actor = r.response.get('author') or r.response.get('actor', {})
-      if not r.response.get('content'):
-        if r.type == 'like':
-          r.response['content'] = '%s liked' % r.actor.get('displayName', '-');
-        elif r.type == 'repost':
-          r.response['content'] = '%s reposted' % r.actor.get('displayName', '-');
-
-      # convert image URL to https if we're serving over SSL
-      image_url = r.actor.setdefault('image', {}).get('url')
-      if image_url:
-        r.actor['image']['url'] = util.update_scheme(image_url, self)
-
-      # generate original post links
-      link = lambda url, g: util.pretty_link(
-        url, glyphicon=g, a_class='original-post', new_tab=True)
-      r.links = util.trim_nulls({
-        'Failed': set(link(url, 'exclamation-sign') for url in r.error + r.failed),
-        'Sending': set(link(url, 'transfer') for url in r.unsent
-                       if url not in r.error),
-        'Sent': set(link(url, None) for url in r.sent
-                    if url not in (r.error + r.unsent)),
-        'No webmention support': set(link(url, None) for url in r.skipped),
+    vars = super(UserHandler, self).template_vars()
+    vars.update({
+        'source': self.source,
+        'epoch': util.EPOCH,
         })
 
-      # XXX horrible hack: use created time as updated time if updated time is
-      # before 2014-03-28 evening...
-      #
-      # ...to band-aid the fact that a data migration accidentally set all
-      # responses' updated time to then. :/ details in
-      # https://github.com/snarfed/bridgy/issues/68
-      if r.updated <= datetime.datetime(2014, 3, 29):
-        r.updated = r.created
+    # Responses
+    if 'listen' in self.source.features:
+      responses = Response.query().filter(Response.source == self.source.key)\
+                                  .order(-Response.created)\
+                                  .fetch(10)
+      for r in responses:
+        r.response = json.loads(r.response_json)
+        r.activity = json.loads(r.activity_json)
+        r.actor = r.response.get('author') or r.response.get('actor', {})
+        if not r.response.get('content'):
+          if r.type == 'like':
+            r.response['content'] = '%s liked' % r.actor.get('displayName', '-');
+          elif r.type == 'repost':
+            r.response['content'] = '%s reposted' % r.actor.get('displayName', '-');
 
-    responses.sort(key=lambda r: r.updated, reverse=True)
+        # convert image URL to https if we're serving over SSL
+        image_url = r.actor.setdefault('image', {}).get('url')
+        if image_url:
+          r.actor['image']['url'] = util.update_scheme(image_url, self)
+
+        # generate original post links
+        link = lambda url, g: util.pretty_link(
+          url, glyphicon=g, a_class='original-post', new_tab=True)
+        r.links = util.trim_nulls({
+          'Failed': set(link(url, 'exclamation-sign') for url in r.error + r.failed),
+          'Sending': set(link(url, 'transfer') for url in r.unsent
+                         if url not in r.error),
+          'Sent': set(link(url, None) for url in r.sent
+                      if url not in (r.error + r.unsent)),
+          'No webmention support': set(link(url, None) for url in r.skipped),
+          })
+
+        # XXX horrible hack: use created time as updated time if updated time is
+        # before 2014-03-28 evening...
+        #
+        # ...to band-aid the fact that a data migration accidentally set all
+        # responses' updated time to then. :/ details in
+        # https://github.com/snarfed/bridgy/issues/68
+        if r.updated <= datetime.datetime(2014, 3, 29):
+          r.updated = r.created
+
+      responses.sort(key=lambda r: r.updated, reverse=True)
+
+      vars['responses'] = responses
 
     # Publishes
-    publishes = Publish.query().filter(Publish.source == self.source.key)\
-                               .order(-Publish.updated)\
-                               .fetch(10)
-    for p in publishes:
-      p.pretty_page = util.pretty_link(
-        p.key.parent().id(), a_class='original-post', new_tab=True)
+    if 'publish' in self.source.features:
+      publishes = Publish.query().filter(Publish.source == self.source.key)\
+                                 .order(-Publish.updated)\
+                                 .fetch(10)
+      for p in publishes:
+        p.pretty_page = util.pretty_link(
+          p.key.parent().id(), a_class='original-post', new_tab=True)
 
-    vars = super(UserHandler, self).template_vars()
-    vars.update({'source': self.source,
-                 'responses': responses,
-                 'publishes': publishes,
-                 'epoch': util.EPOCH,
-                 })
+      vars['publishes'] = publishes
+
+
+    # Blog webmentions
+    if 'webmention' in self.source.features:
+      webmentions = BlogWebmention.query()\
+          .filter(BlogWebmention.source == self.source.key)\
+          .order(-BlogWebmention.updated)\
+          .fetch(10)
+      for w in webmentions:
+        w.pretty_source = util.pretty_link(w.key.id(), a_class='original-post',
+                                           new_tab=True)
+        try:
+          target_is_source = urlparse.urlparse(w.target).netloc == self.source.domain
+        except BaseException:
+          target_is_source = False
+        w.pretty_target = util.pretty_link(w.target, a_class='original-post',
+                                           new_tab=True, keep_host=target_is_source)
+
+      vars['webmentions'] = webmentions
+
     return vars
 
 

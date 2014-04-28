@@ -166,7 +166,7 @@ form input {
 .glyphicon-remove { color: red !important; }
 .glyphicon-transfer { color: blue; }
 
-.publishes, .responses {
+.publishes, .responses, .webmentions {
   font-size: .8em;
   list-style: none;
 }

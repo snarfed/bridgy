@@ -6,6 +6,7 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 import logging
 import json
 import sys
+import urllib2
 import urlparse
 
 import appengine_config
@@ -97,6 +98,8 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
       self.entity.published = self.source.create_comment(
         self.target_url, author_name, author_url, text)
     except BaseException, e:
+      if isinstance(e, urllib2.HTTPError):
+        logging.error('Error response body: %r', e.read())
       return self.error('Error: %s' % e, status=500)
 
     # write results to datastore
