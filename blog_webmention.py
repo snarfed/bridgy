@@ -27,7 +27,7 @@ SOURCES = {cls.SHORT_NAME: cls for cls in
             )}
 
 
-class Handler(webmention.WebmentionHandler):
+class BlogWebmentionHandler(webmention.WebmentionHandler):
   """Base handler for both previews and publishes.
 
   Subclasses must set the PREVIEW attribute to True or False.
@@ -56,9 +56,12 @@ class Handler(webmention.WebmentionHandler):
         (source_cls.AS_CLASS.NAME, domain))
 
     # create BlogWebmention entity
-    self.entity = BlogWebmention.get_or_insert(self.source_url, source=self.source.key)
+    self.entity = BlogWebmention.get_or_insert(self.source_url,
+                                               source=self.source.key,
+                                               target=self.target_url)
     if self.entity.status == 'complete':
       # TODO: response message saying update isn't supported
+      self.response.write(self.entity.published)
       return
 
     # fetch source page
@@ -91,13 +94,17 @@ class Handler(webmention.WebmentionHandler):
     content = props['content'][0]  # find_mention_item() guaranteed this is here
     text = (content.get('html') or content.get('value')).strip()
     try:
-      self.source.create_comment(self.target_url, author_name, author_url, text)
+      self.entity.published = self.source.create_comment(
+        self.target_url, author_name, author_url, text)
     except BaseException, e:
       return self.error('Error: %s' % e, status=500)
 
     # write results to datastore
     self.entity.status = 'complete'
     self.entity.put()
+
+    self.response.write(json.dumps(self.entity.published))
+    self.mail_me(self.entity.published)
 
   def find_mention_item(self, data):
     """Returns the mf2 item that mentions (or replies to, likes, etc) the target.
@@ -145,6 +152,6 @@ class Handler(webmention.WebmentionHandler):
 
 
 application = webapp2.WSGIApplication([
-    ('/webmention/(fake|wordpress)', Handler),
+    ('/webmention/(fake|wordpress)', BlogWebmentionHandler),
     ],
   debug=appengine_config.DEBUG)

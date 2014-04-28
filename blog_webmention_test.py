@@ -54,22 +54,21 @@ i hereby reply
 
     testutil.FakeSource.create_comment(
       'http://foo.com/post/1', 'my name', 'http://foo.com/',
-      'i hereby reply\n<a class="u-in-reply-to" href="http://foo.com/post/1"></a>')
+      'i hereby reply\n<a class="u-in-reply-to" href="http://foo.com/post/1"></a>'
+      ).AndReturn({'id': 'fake id'})
     self.mox.ReplayAll()
 
     resp = self.get_response()
     self.assertEquals(200, resp.status_int, resp.body)
-    # TODO
-    # self.assertEquals('{"id": "..."}', json.loads(resp.body))
+    self.assertEquals({'id': 'fake id'}, json.loads(resp.body))
 
     entity = BlogWebmention.get_by_id('http://bar.com/reply')
     self.assertEquals(self.source.key, entity.source)
+    self.assertEquals('http://foo.com/post/1', entity.target)
     self.assertEquals('complete', entity.status)
     self.assertEquals('comment', entity.type)
     self.assertEquals(html, entity.html)
-    # self.assertEquals({'id': 'fake id', 'url': 'http://fake/url',
-    #                    'content': 'foo - http://foo.com/'},
-    #                   publish.published)
+    self.assertEquals({'id': 'fake id'}, entity.published)
 
   def test_domain_not_found(self):
     # no source

@@ -209,6 +209,8 @@ class Source(StringIdModel):
       author_name: string
       author_url: string
       content: string
+
+    Returns: response dict with at least 'id' field
     """
     raise NotImplementedError()
 
@@ -254,10 +256,13 @@ class Source(StringIdModel):
     else:
       verb = 'Added'
 
-    blurb = '%s %s' % (verb, source.label())
-    handler.messages = {
-          ("%s. Refresh to see what we've found!" if feature == 'listen' else
-           '%s. Try previewing a post from your web site!') % blurb}
+    blurb = '%s %s. %s' % (verb, source.label(), {
+      'listen': "Refresh to see what we've found!",
+      'publish': 'Try previewing a post from your web site!',
+      'webmention': 'Try <a href="http://indiewebify.me/send-webmentions/?url=%s>'
+                    'sending yourself a webmention</a>!' % source.domain_url,
+      }.get(feature, ''))
+    handler.messages = {blurb}
     logging.info('%s %s', blurb, source.bridgy_url(handler))
     util.email_me(subject=blurb, body=source.bridgy_url(handler))
 
@@ -390,11 +395,12 @@ class Publish(ndb.Model):
 class BlogWebmention(Publish, StringIdModel):
   """Datastore entity for webmentions for hosted blog providers.
 
-  Key id is the string source URL.
+  Child of Source. Key id is the string source URL.
 
   Reuses most of Publish's fields, but otherwise unrelated.
   """
-  pass
+
+  target = ndb.StringProperty()  # URL
 
 
 class SyndicatedPost(ndb.Model):
@@ -402,7 +408,7 @@ class SyndicatedPost(ndb.Model):
   if we found no original post).  We discover the relationship by
   following rel=syndication links on the author's h-feed.
 
-  See original_post_discovery
+  See original_post_discovery.
   """
 
   # Turn off instance and memcache caching. See Response for details.
