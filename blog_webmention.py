@@ -94,6 +94,9 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
 
     content = props['content'][0]  # find_mention_item() guaranteed this is here
     text = (content.get('html') or content.get('value')).strip()
+    text += '<br /><a href="%s">via %s</a>' % (
+      self.source_url, util.domain_from_link(self.source_url))
+
     try:
       self.entity.published = self.source.create_comment(
         self.target_url, author_name, author_url, text)

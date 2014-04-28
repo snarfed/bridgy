@@ -55,6 +55,7 @@ i hereby reply
     testutil.FakeSource.create_comment(
       'http://foo.com/post/1', 'my name', 'http://foo.com/',
       'i hereby reply\n<a class="u-in-reply-to" href="http://foo.com/post/1"></a>'
+      '<br /><a href="http://bar.com/reply">via bar.com</a>'
       ).AndReturn({'id': 'fake id'})
     self.mox.ReplayAll()
 
@@ -88,7 +89,8 @@ i hereby reply
     self.expect_requests_get('http://bar.com/reply', html)
 
     testutil.FakeSource.create_comment(
-      'http://FoO.cOm/post/1', 'foo.com', 'http://foo.com/', 'X http://FoO.cOm/post/1')
+      'http://FoO.cOm/post/1', 'foo.com', 'http://foo.com/',
+      'X http://FoO.cOm/post/1<br /><a href="http://bar.com/reply">via bar.com</a>')
     self.mox.ReplayAll()
 
     resp = self.get_response(target='http://FoO.cOm/post/1')
@@ -115,8 +117,9 @@ i hereby reply
     # 2) should allow retrying, this one will succeed
     self.expect_requests_get('http://bar.com/reply', """
 <article class="h-entry"><a class="u-repost-of" href="http://foo.com/post/1"></a></article>""")
-    testutil.FakeSource.create_comment('http://foo.com/post/1', 'foo.com',
-                                       'http://foo.com/', 'reposted this.')
+    testutil.FakeSource.create_comment(
+      'http://foo.com/post/1', 'foo.com', 'http://foo.com/',
+      'reposted this.<br /><a href="http://bar.com/reply">via bar.com</a>')
 
     # 3) after success, another is a noop and returns 200
     # TODO: check for "updates not supported" message

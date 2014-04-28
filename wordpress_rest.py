@@ -117,8 +117,7 @@ class WordPress(models.Source):
 
     # create the comment
     url = API_CREATE_COMMENT_URL % (auth_entity.key.id(), post_id)
-    data = {'content': '<a href="%s">%s</a>: %s\n\n<a href="">via foo</a>' %
-            (author_url, author_name, content)}
+    data = {'content': '<a href="%s">%s</a>: %s' % (author_url, author_name, content)}
     resp = auth_entity.urlopen(url, data=urllib.urlencode(data)).read()
     resp = json.loads(resp)
     resp['id'] = resp.pop('ID', None)
