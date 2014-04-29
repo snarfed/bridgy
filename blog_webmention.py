@@ -15,7 +15,7 @@ from appengine_config import HTTP_TIMEOUT
 from blogger import Blogger
 import models
 from models import BlogWebmention
-import requests
+from tumblr import Tumblr
 import util
 import webapp2
 import webmention
@@ -24,9 +24,7 @@ from wordpress_rest import WordPress
 from google.appengine.ext import ndb
 from google.appengine.ext.webapp import template
 
-SOURCES = {cls.SHORT_NAME: cls for cls in
-           (Blogger, WordPress, # ...
-            )}
+SOURCES = {cls.SHORT_NAME: cls for cls in (Blogger, WordPress, Tumblr)}
 
 
 class BlogWebmentionHandler(webmention.WebmentionHandler):
