@@ -231,7 +231,7 @@ class DeleteFinishHandler(util.Handler):
 
     parts = util.get_required_param(self, 'state').split('-', 1)
     feature = parts[0]
-    if len(parts) != 2 or feature not in ('listen', 'publish'):
+    if len(parts) != 2 or feature not in (Source.FEATURES):
       self.error(400, 'state query parameter must be [FEATURE]-[SOURCE KEY]')
 
     logged_in_as = util.get_required_param(self, 'auth_entity')

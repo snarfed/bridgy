@@ -12,6 +12,7 @@ import urlparse
 import appengine_config
 from appengine_config import HTTP_TIMEOUT
 
+from blogger import Blogger
 import models
 from models import BlogWebmention
 import requests
@@ -24,7 +25,7 @@ from google.appengine.ext import ndb
 from google.appengine.ext.webapp import template
 
 SOURCES = {cls.SHORT_NAME: cls for cls in
-           (WordPress, # ...
+           (Blogger, WordPress, # ...
             )}
 
 
@@ -159,6 +160,6 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
 
 
 application = webapp2.WSGIApplication([
-    ('/webmention/(fake|wordpress)', BlogWebmentionHandler),
+    ('/webmention/(blogger|fake|wordpress)', BlogWebmentionHandler),
     ],
   debug=appengine_config.DEBUG)

@@ -10,7 +10,7 @@ https://github.com/disqus/DISQUS-API-Recipes/blob/master/snippets/php/create-gue
 http://help.disqus.com/customer/portal/articles/466253-what-html-tags-are-allowed-within-comments-
 create returns id, can lookup by id w/getContext?
 
-test:
+test command line:
 curl localhost:8080/webmention/wordpress \
   -d 'source=http://localhost/response.html&target=http://ryandc.wordpress.com/2013/03/24/mac-os-x/'
 
@@ -102,6 +102,7 @@ class WordPress(models.Source):
     auth_entity = self.auth_entity.get()
 
     # extract the post's slug and look up its post id
+    logging.info('Looking up WordPress.com post id for %s', post_url)
     path = urlparse.urlparse(post_url).path
     if path.endswith('/'):
       path = path[:-1]
@@ -111,7 +112,10 @@ class WordPress(models.Source):
     except ValueError:
       url = API_POST_SLUG_URL % (auth_entity.key.id(), slug)
       resp = auth_entity.urlopen(url).read()
-      post_id = json.loads(resp)['ID']
+
+    post_id = json.loads(resp).get('ID')
+    if not post_id:
+      return self.error('Could not find WordPress.com post for slug %s' % slug)
 
     # create the comment
     url = API_CREATE_COMMENT_URL % (auth_entity.key.id(), post_id)

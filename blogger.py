@@ -4,6 +4,10 @@ https://developers.google.com/blogger/docs/2.0/developers_guide_protocol
 https://support.google.com/blogger/answer/42064?hl=en
 create comment:
 https://developers.google.com/blogger/docs/2.0/developers_guide_protocol#CreatingComments
+
+test command line:
+curl localhost:8080/webmention/blogger \
+  -d 'source=http://localhost/response.html&target=http://freedom-io-2.blogspot.com/2014/04/blog-post.html'
 """
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
@@ -20,6 +24,7 @@ import appengine_config
 from appengine_config import HTTP_TIMEOUT
 
 from activitystreams.oauth_dropins import blogger_v2 as oauth_blogger
+import gdata.blogger.client
 import models
 import util
 
@@ -30,7 +35,7 @@ import webapp2
 class Blogger(models.Source):
   """A Blogger blog.
 
-  The key name is the blog hostname.
+  The key name is the blog id.
   """
   AS_CLASS = collections.namedtuple('FakeAsClass', ('NAME',))(NAME='Blogger')
   SHORT_NAME = 'blogger'
@@ -48,7 +53,13 @@ class Blogger(models.Source):
       handler.messages = {'No Blogger blogs found. Please create one first!'}
       return None
 
-    return Blogger(id=domain,
+    for id, hostname in zip(auth_entity.blog_ids, auth_entity.blog_hostnames):
+      if domain == hostname:
+        break
+    else:
+      return self.error("Internal error, shouldn't happen")
+
+    return Blogger(id=id,
                    auth_entity=auth_entity.key,
                    url=url,
                    name=auth_entity.user_display_name(),
@@ -65,9 +76,8 @@ class Blogger(models.Source):
 
     Returns: (string url, string domain, True)
     """
-    # TODO: if they have multiple blogs (in the auth_entity.hostnames field),
-    # let them choose which one to sign up.
-    domain = next(iter(auth_entity.hostnames), None)
+    # TODO: if they have multiple blogs, let them choose which one to sign up.
+    domain = next(iter(auth_entity.blog_hostnames), None)
     if not domain:
       return None, None, False
     return 'http://%s/' % domain, domain, True
@@ -85,26 +95,26 @@ class Blogger(models.Source):
 
     Returns: JSON response dict with 'id' and other fields
     """
-    auth_entity = self.auth_entity.get()
+    client = self.auth_entity.get().api()
 
-    # extract the post's slug and look up its post id
+    # extract the post's path and look up its post id
     path = urlparse.urlparse(post_url).path
-    if path.endswith('/'):
-      path = path[:-1]
-    slug = path.split('/')[-1]
-    try:
-      post_id = int(slug)
-    except ValueError:
-      url = API_POST_SLUG_URL % (auth_entity.key.id(), slug)
-      resp = auth_entity.urlopen(url).read()
-      post_id = json.loads(resp)['ID']
+    logging.info('Looking up post id for %s', path)
+    feed = client.get_posts(self.key.id(), query=gdata.blogger.client.Query(path=path))
+
+    if not feed.entry:
+      return self.error('Could not find Blogger post %s' % post_url)
+    elif len(feed.entry) > 1:
+      logging.warning('Found %d Blogger posts for path %s , expected 1', path)
+    post_id = feed.entry[0].get_post_id()
 
     # create the comment
-    url = API_CREATE_COMMENT_URL % (auth_entity.key.id(), post_id)
-    data = {'content': '<a href="%s">%s</a>: %s' % (author_url, author_name, content)}
-    resp = auth_entity.urlopen(url, data=urllib.urlencode(data)).read()
-    resp = json.loads(resp)
-    resp['id'] = resp.pop('ID', None)
+    content = '<a href="%s">%s</a>: %s' % (author_url, author_name, content)
+    logging.info('Creating comment on blog %s, post %s: %s', self.key.id(),
+                 post_id, content)
+    resp = client.add_comment(self.key.id(), post_id, content)
+    STATE: need json
+    logging.info('Response: %s', resp)
     return resp
 
 

@@ -74,7 +74,7 @@ handlers:
   script: wordpress_rest.application
   secure: always
 
-- url: /webmention/(blogger|wordpress)
+- url: /webmention/(blogger|tumblr|wordpress)
   script: blog_webmention.application
   secure: always
 
