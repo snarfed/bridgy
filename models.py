@@ -223,11 +223,14 @@ class Source(StringIdModel):
       **kwargs: passed to new()
     """
     source = cls.new(handler, **kwargs)
+    if source is None:
+      return None
+
     feature = source.features[0] if source.features else 'listen'
 
     # extract domain from the URL set on the user's profile, if any
     auth_entity = kwargs.get('auth_entity')
-    if auth_entity and auth_entity.user_json:
+    if auth_entity and hasattr(auth_entity, 'user_json'):
       url, domain, ok = source._url_and_domain(auth_entity)
       if feature == 'publish' and not ok:
         if not url:

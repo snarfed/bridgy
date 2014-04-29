@@ -43,14 +43,21 @@ class Blogger(models.Source):
       handler: the current RequestHandler
       auth_entity: oauth_dropins.blogger.BloggerV2Auth
     """
-    url, domain, ok = self._url_and_domain(auth_entity)
-    return Blogger(id=domain if ok else auth_entity.key.id(),
+    url, domain, ok = Blogger._url_and_domain(auth_entity)
+    if not ok:
+      handler.messages = {'No Blogger blogs found. Please create one first!'}
+      return None
+
+    return Blogger(id=domain,
                    auth_entity=auth_entity.key,
-                   url=auth_entity.blog_url,
+                   url=url,
                    name=auth_entity.user_display_name(),
+                   domain=domain,
+                   domain_url=url,
                    **kwargs)
 
-  def _url_and_domain(self, auth_entity):
+  @staticmethod
+  def _url_and_domain(auth_entity):
     """Returns an auth entity's URL and domain.
 
     Args:
@@ -106,8 +113,26 @@ class AddBlogger(oauth_blogger.CallbackHandler, util.Handler):
     self.maybe_add_or_delete_source(Blogger, auth_entity, state)
 
 
+class OAuthCallback(util.Handler):
+  """OAuth callback handler.
+
+  Both the add and delete flows have to share this because Blogger's
+  oauth-dropin doesn't yet allow multiple callback handlers. :/
+  """
+  def get(self):
+    auth_entity_str_key = util.get_required_param(self, 'auth_entity')
+    state = self.request.get('state')
+    if not state:
+      # state doesn't currently come through for Blogger. not sure why. doesn't
+      # matter for now since we don't plan to implement listen or publish.
+      state = 'webmentino'
+    auth_entity = ndb.Key(urlsafe=auth_entity_str_key).get()
+    self.maybe_add_or_delete_source(Blogger, auth_entity, state)
+
+
 application = webapp2.WSGIApplication([
-    ('/blogger/start', oauth_blogger.StartHandler.to('/blogger/add')),
-    ('/blogger/add', AddBlogger),
-    ('/blogger/delete/start', oauth_blogger.CallbackHandler.to('/delete/finish')),
+    ('/blogger/start', oauth_blogger.StartHandler.to('/blogger/oauth2callback')),
+    ('/blogger/oauth2callback', oauth_blogger.CallbackHandler.to('/blogger/add')),
+    ('/blogger/add', OAuthCallback),
+    ('/blogger/delete/start', oauth_blogger.StartHandler.to('/blogger/oauth2callback')),
     ], debug=appengine_config.DEBUG)
