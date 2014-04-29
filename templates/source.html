@@ -11,8 +11,9 @@
   <span class="source-buttons">
   <a href="/{{ source.path }}" title="Link">#</a>
   {% if source.status == "disabled" %}
-    <a href="#" onclick="document.forms['{{ source.SHORT_NAME }}-start'].submit();
-                         return false;">
+    <a href="#"
+       onclick="document.forms['listen-{{ source.SHORT_NAME }}-start'].submit();
+                return false;">
       <span class="glyphicon glyphicon-pause"
             title="This account was disconnected on {% firstof source.AS_CLASS.NAME source.key.kind %}'s end. Click to reconnect it!">
     </span></a>

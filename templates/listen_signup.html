@@ -4,7 +4,7 @@
 
 <div class="row">
 <div class="col-xs-12">
- <form method="post" name="facebook-start" action="/facebook/start">
+ <form method="post" name="listen-facebook-start" action="/facebook/start">
   <input type="image" alt="Sign in with Facebook"
          src="/static/facebook_button_signin.png" />
   <input name="state" type="hidden" value="listen" />
@@ -12,7 +12,7 @@
   <input name="scope" type="hidden"
          value="offline_access,user_website,user_status,user_photos,user_events,read_stream">
 </form>
- <form method="post" name="twitter-start" action="/twitter/start">
+ <form method="post" name="listen-twitter-start" action="/twitter/start">
   <input type="image" alt="Sign in with Twitter"
          src="/static/twitter_button_signin.png" />
   <input name="state" type="hidden" value="listen" />
@@ -21,7 +21,7 @@
 <div class="clearfix visible-xs"></div>
 
 <div class="col-xs-12">
- <form method="post" name="googleplus-start" action="/googleplus/start">
+ <form method="post" name="listen-googleplus-start" action="/googleplus/start">
   <input type="image" alt="Sign in with Google+"
          src="/static/googleplus_button_signin.png" />
   <!-- The state param doesn't actually work for G+. Not sure why. Doesn't
@@ -31,7 +31,7 @@
   <input name="scope" type="hidden"
          value="https://www.googleapis.com/auth/plus.login" />
 </form>
- <form method="post" name="instagram-start" action="/instagram/start">
+ <form method="post" name="listen-instagram-start" action="/instagram/start">
   <input type="image" alt="Sign in with Instagram"
          src="/static/instagram_button_signin.png" />
   <input name="state" type="hidden" value="listen" />

@@ -28,7 +28,7 @@
   {{ source.name|safe }}</a>
 
 {% if source.status == "disabled" %}
-<a href="#" onclick="document.forms['{{ source.SHORT_NAME }}-start'].submit();
+<a href="#" onclick="document.forms['listen-{{ source.SHORT_NAME }}-start'].submit();
                      return false;">
   <span class="glyphicon glyphicon-pause"
         title="This account was disconnected on {% firstof source.AS_CLASS.NAME source.key.kind %}'s end. Click to reconnect it!">
@@ -46,7 +46,7 @@
 <div class="row">
 
 <!-- Publish UI -->
-{% if "publish" in source.features %}
+{% if "publish" in source.features and source.status != "disabled" %}
 <div id="publish-ui" class="col-sm-6">
 
 <form method="post" action="/delete/start">
@@ -80,7 +80,7 @@
 
 
 <!-- Listen UI -->
-{% if "listen" in source.features %}
+{% if "listen" in source.features and source.status != "disabled" %}
 <div id="listen-ui" class="col-sm-6 big">
 <form method="post" action="/delete/start">
 <p id="listening-label">Listening for responses.
@@ -230,7 +230,7 @@
 </ul>
 
 {% else %}
-<!-- <p class="big">Nothing published yet.</p> -->
+<p class="big">Nothing published yet.</p>
 {% endif %}
 {% endif %}
 </div>
@@ -240,7 +240,8 @@
 <div class="row">
 {% if "webmention" in source.features %}
 {% if webmentions %}
-<p id="webmentions" class="big">Recent webmentions:</p>
+<p id="webmentions" class="big">Recent
+  <a href="http://indiewebify.me/#send-webmentions">webmentions</a>:</p>
 <ul class="webmentions">
   {% for wm in webmentions %}
   <li class="row">
@@ -275,7 +276,8 @@
 </ul>
 
 {% else %}
-<p class="big">No webmentions yet.</p>
+<p class="big">No
+  <a href="http://indiewebify.me/#send-webmentions">webmentions</a> yet.</p>
 {% endif %}
 {% endif %}
 </div>
