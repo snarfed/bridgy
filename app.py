@@ -140,7 +140,8 @@ class UserHandler(DashboardHandler):
                          if url not in r.error),
           'Sent': set(link(url, None) for url in r.sent
                       if url not in (r.error + r.unsent)),
-          'No webmention support': set(link(url, None) for url in r.skipped),
+          'No <a href="http://indiewebify.me/#send-webmentions">webmention</a> '
+            'support': set(link(url, None) for url in r.skipped),
           })
 
         # XXX horrible hack: use created time as updated time if updated time is
