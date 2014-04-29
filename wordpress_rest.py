@@ -32,10 +32,8 @@ http://documentation.superfeedr.com/schema.html
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import collections
-import datetime
 import json
 import logging
-import os
 import urllib
 import urlparse
 
@@ -45,8 +43,6 @@ from appengine_config import HTTP_TIMEOUT
 from activitystreams.oauth_dropins import wordpress_rest as oauth_wordpress
 import models
 import util
-
-from google.appengine.ext import ndb
 import webapp2
 
 API_CREATE_COMMENT_URL = 'https://public-api.wordpress.com/rest/v1/sites/%s/posts/%d/replies/new?pretty=true'

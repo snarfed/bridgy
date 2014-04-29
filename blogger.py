@@ -13,11 +13,8 @@ curl localhost:8080/webmention/blogger \
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import collections
-import datetime
 import json
 import logging
-import os
-import urllib
 import urlparse
 
 import appengine_config
@@ -27,8 +24,6 @@ from activitystreams.oauth_dropins import blogger_v2 as oauth_blogger
 import gdata.blogger.client
 import models
 import util
-
-from google.appengine.ext import ndb
 import webapp2
 
 
@@ -74,7 +69,7 @@ class Blogger(models.Source):
     Args:
       auth_entity: oauth_dropins.blogger.BloggerV2Auth
 
-    Returns: (string url, string domain, True)
+    Returns: (string url, string domain, boolean ok)
     """
     # TODO: if they have multiple blogs, let them choose which one to sign up.
     domain = next(iter(auth_entity.blog_hostnames), None)
@@ -113,7 +108,7 @@ class Blogger(models.Source):
     logging.info('Creating comment on blog %s, post %s: %s', self.key.id(),
                  post_id, content)
     resp = client.add_comment(self.key.id(), post_id, content)
-    STATE: need json
+    # STATE: need json
     logging.info('Response: %s', resp)
     return resp
 
