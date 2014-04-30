@@ -17,7 +17,7 @@ https://disqus.com/api/docs/forums/listThreads/
 
 test command line:
 curl localhost:8080/webmention/tumblr \
-  -d 'source=http://localhost/response.html&target=http://snarfed.tumblr.com/post/60428995188/glen-canyon-http-t-co-fzc4ehiydp'
+  -d 'source=http://localhost/response.html&target=http://snarfed.tumblr.com/post/60428995188/glen-canyon-http-t-co-fzc4ehiydp?foo=bar#baz'
 """
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
@@ -125,11 +125,21 @@ class Tumblr(models.Source):
 
     Returns: JSON response dict with 'id' and other fields
     """
+    # strip slug, query and fragment from post url
+    parsed = urlparse.urlparse(post_url)
+    path = parsed.path.split('/')
+    try:
+      tumblr_post_id = int(path[-1])
+    except ValueError:
+      path.pop(-1)
+    post_url = urlparse.urlunparse(parsed[:2] + ('/'.join(path), '', '', ''))
+
     # get the disqus thread id. details on thread queries:
     # http://stackoverflow.com/questions/4549282/disqus-api-adding-comment
     # https://disqus.com/api/docs/threads/details/
     resp = self.disqus_call(requests.get, DISQUS_API_THREAD_DETAILS_URL, {
         'forum': self.disqus_shortname,
+        # ident:[tumblr_post_id] should also work, but doesn't :/
         'thread': 'link:%s' % post_url,
         })
     thread_id = resp['id']
