@@ -64,6 +64,7 @@ class WebmentionHandler(WebmentionGetHandler):
     """
     try:
       fetched = requests.get(url, allow_redirects=True, timeout=HTTP_TIMEOUT)
+      fetched.raise_for_status()
     except BaseException:
       return self.error('Could not fetch source URL %s' % url)
 
