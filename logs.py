@@ -23,7 +23,7 @@ LEVELS = {
 
 def sanitize(msg):
   """Sanitizes access tokens and Authorization headers."""
-  return re.sub('((?:oauth|access)?[ _]?(?:token|verifier|secret)[:= ])[^ &=]+', r'\1...',
+  return re.sub('((?:oauth|access|api)?[ _]?(?:key|token|verifier|secret)[:= ])[^ &=]+', r'\1...',
                 msg)
 
 
