@@ -15,6 +15,7 @@ from appengine_config import HTTP_TIMEOUT
 from blogger import Blogger
 import models
 from models import BlogWebmention
+import requests
 from tumblr import Tumblr
 import util
 import webapp2
@@ -100,9 +101,13 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
     try:
       self.entity.published = self.source.create_comment(
         self.target_url, author_name, author_url, text)
+    except urllib2.HTTPError, e:
+      logging.error('Error response body: %r', e.read())
+      return self.error('Error: %s' % e, status=e.code)
+    except requests.HTTPError, e:
+      logging.error('Error response body: %r', e.response.text)
+      return self.error('Error: %s' % e, status=e.response.status_code)
     except BaseException, e:
-      if isinstance(e, urllib2.HTTPError):
-        logging.error('Error response body: %r', e.read())
       return self.error('Error: %s' % e, status=500)
 
     # write results to datastore
@@ -158,6 +163,6 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
 
 
 application = webapp2.WSGIApplication([
-    ('/webmention/(blogger|fake|wordpress)', BlogWebmentionHandler),
+    ('/webmention/(blogger|fake|tumblr|wordpress)', BlogWebmentionHandler),
     ],
   debug=appengine_config.DEBUG)

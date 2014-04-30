@@ -3,6 +3,10 @@
 
 from activitystreams.appengine_config import *
 
+DISQUS_ACCESS_TOKEN = read('disqus_access_token')
+DISQUS_API_KEY = read('disqus_api_key')
+DISQUS_API_SECRET = read('disqus_api_secret')
+
 # Add library modules directories to sys.path so they can be imported.
 #
 # I used to use symlinks and munge sys.modules, but both of those ended up in

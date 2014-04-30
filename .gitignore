@@ -1,4 +1,7 @@
 datastore.dat*
+disqus_access_token
+disqus_api_key
+disqus_api_secret
 facebook_app_id
 facebook_app_secret
 facebook_app_id_local
