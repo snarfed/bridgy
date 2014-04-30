@@ -179,26 +179,52 @@ def _process_author(source, author_url):
                     author_url, author_resp)
     return {}
 
-  author_parsed = Mf2Parser(url=author_url, doc=author_resp.text).to_dict()
+  author_parser = Mf2Parser(url=author_url, doc=author_resp.text)
+  author_parsed = author_parser.to_dict()
 
   # look for canonical feed url (if it isn't this one) using
   # rel='feed', type='text/html'
-  canonical = next(iter(author_parsed['rels'].get('feed', [])), None)
-  if canonical and canonical != author_url:
+  rel_feed_nodes = author_parser.__doc__.find_all('link', rel='feed')
+  for rel_feed_node in rel_feed_nodes:
+    feed_url = rel_feed_node.get('href')
+    if not feed_url:
+      continue
+
+    feed_url = urlparse.urljoin(author_url, feed_url)
+    feed_type = rel_feed_node.get('type')
+    if not feed_type:
+      feed_resolved = util.follow_redirects(feed_url)
+      feed_type = feed_resolved.headers.get('content-type', '')
+      feed_type_ok = feed_type.startswith('text/html')
+      feed_url = feed_resolved.url
+      logging.debug('head request to %s determined content type %s',
+                    feed_url, feed_type)
+    else:
+      feed_type_ok = feed_type == 'text/html'
+
+    if feed_url == author_url:
+      logging.debug('author url is the feed url, proceeding')
+      break
+    elif not feed_type_ok:
+      logging.debug('skipping feed of type %s', feed_type)
+      continue
+
     try:
-      logging.debug('fetching author\'s canonical full feed %s', canonical)
-      canonical_resp = requests.get(canonical, allow_redirects=True,
-                                    timeout=HTTP_TIMEOUT)
-      if canonical_resp.status_code == 200:
+      logging.debug('fetching author\'s h-feed %s', feed_url)
+      feed_resp = requests.get(
+        feed_url, allow_redirects=True, timeout=HTTP_TIMEOUT)
+      if feed_resp.status_code == 200:
+        logging.debug('author\'s h-feed fetched successfully %s', feed_url)
         author_parsed = Mf2Parser(
-          url=canonical, doc=canonical_resp.text).to_dict()
-      else:
-        logging.warning('Received unexpected response fetching canonical h-feed url %s -> %s',
-                        canonical, canonical_resp)
+          url=feed_url, doc=feed_resp.text).to_dict()
+        break
+      logging.warning(
+        'unexpected response fetching author\'s h-feed url %s -> %s',
+        feed_url, feed_resp)
+    except AssertionError:
+      raise  # reraise assertions for unit tests
     except BaseException:
-      logging.exception(
-        'Could not fetch h-feed url %s. Falling back on author url.',
-        canonical)
+      logging.exception('Could not fetch h-feed url %s.', feed_url)
 
   feeditems = author_parsed['items']
   hfeed = next((item for item in feeditems

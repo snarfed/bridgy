@@ -448,4 +448,99 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     # nothing attempted, and no SyndicatedPost saved
     self.assertFalse(SyndicatedPost.query(ancestor=source.key).get())
 
+  def test_feed_type_application_xml(self):
+    """Confirm that we don't follow rel=feeds explicitly marked as
+    application/xml.
+    """
+    source = self.sources[0]
+    source.domain_url = 'http://author'
+    activity = self.activities[0]
+    activity['object']['url'] = 'http://fa.ke/post/url'
+    activity['object']['content'] = 'content without links'
+
+    self.expect_requests_get('http://author', """
+    <html>
+      <head>
+        <link rel="feed" type="application/xml" href="/updates.atom">
+      </head>
+    </html>
+    """)
+
+    self.mox.ReplayAll()
+    original_post_discovery.discover(source, activity)
+
+  def test_feed_type_unknown(self):
+    """Confirm that we look for an h-feed with type=text/html even when
+    the type is not given in <link>, and keep looking until we find one.
+    """
+    source = self.sources[0]
+    source.domain_url = 'http://author'
+    activity = self.activities[0]
+    activity['object']['url'] = 'http://fa.ke/post/url'
+    activity['object']['content'] = 'content without links'
+
+    self.mox.StubOutWithMock(requests, 'head', use_mock_anything=True)
+
+    self.expect_requests_get('http://author', """
+    <html>
+      <head>
+        <link rel="feed" href="/updates.atom">
+        <link rel="feed" href="/updates.html">
+        <link rel="feed" href="/updates.rss">
+      </head>
+    </html>""")
+
+    # head request to follow redirects on the post url
+    resp = requests.Response()
+    resp.status_code = 200
+    resp.url = activity['object']['url']
+    resp.headers['content-type'] = 'text/html'
+    requests.head(activity['object']['url'], allow_redirects=True,
+                  timeout=HTTP_TIMEOUT).AndReturn(resp)
+
+    # and for the author url
+    resp = requests.Response()
+    resp.status_code = 200
+    resp.url = source.domain_url
+    resp.headers['content-type'] = 'text/html'
+    requests.head(source.domain_url, allow_redirects=True,
+                  timeout=HTTP_TIMEOUT).AndReturn(resp)
+
+
+    # try to get the atom feed first
+    resp = requests.Response()
+    resp.status_code = 200
+    resp.headers['content-type'] = 'application/xml'
+    resp.url = 'http://author/updates.atom'
+    requests.head('http://author/updates.atom', allow_redirects=True,
+                  timeout=HTTP_TIMEOUT).AndReturn(resp)
+
+    # keep looking for an html feed
+    resp = requests.Response()
+    resp.status_code = 200
+    resp.headers['content-type'] = 'text/html'
+    resp.url = 'http://author/updates.html'
+    requests.head('http://author/updates.html', allow_redirects=True,
+                  timeout=HTTP_TIMEOUT).AndReturn(resp)
+
+    # now fetch the html feed
+    self.expect_requests_get('http://author/updates.html', """
+    <html class="h-feed">
+      <article class="h-entry">
+        <a class="u-url" href="/permalink">should follow this</a>
+      </article>
+    </html>""")
+
+    # should not try to get the rss feed at this point
+    # but we will follow the post permalink
+
+    # keep looking for an html feed
+    self.expect_requests_get('http://author/permalink', """
+    <html class="h-entry">
+      <p class="p-name">Title</p>
+    </html>""")
+
+    self.mox.ReplayAll()
+    original_post_discovery.discover(source, activity)
+
   #TODO activity with existing responses, make sure they're merged right

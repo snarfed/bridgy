@@ -106,6 +106,8 @@ def follow_redirects(url):
       url = 'http://' + url
     resolved = requests.head(url, allow_redirects=True, timeout=HTTP_TIMEOUT)
     cache_time = 0  # forever
+  except AssertionError:
+    raise
   except BaseException, e:
     logging.warning("Couldn't resolve URL %s : %s", url, e)
     resolved = requests.Response()
