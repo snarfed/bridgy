@@ -469,6 +469,57 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.mox.ReplayAll()
     original_post_discovery.discover(source, activity)
 
+  def test_feed_head_request_failed(self):
+    """Confirm that we don't follow rel=feeds explicitly marked as
+    application/xml.
+    """
+    source = self.sources[0]
+    source.domain_url = 'http://author'
+    activity = self.activities[0]
+    activity['object']['url'] = 'http://fa.ke/post/url'
+    activity['object']['content'] = 'content without links'
+
+    self.mox.StubOutWithMock(requests, 'head', use_mock_anything=True)
+
+    self.expect_requests_get('http://author', """
+    <html>
+      <head>
+        <link rel="feed" href="/updates">
+      </head>
+      <body>
+        <article class="h-entry">
+          <a class="u-url" href="permalink"></a>
+        </article>
+      </body>
+    </html>
+    """)
+
+    # head request to follow redirects on the post url
+    resp = requests.Response()
+    resp.status_code = 200
+    resp.url = activity['object']['url']
+    resp.headers['content-type'] = 'text/html'
+    requests.head(activity['object']['url'], allow_redirects=True,
+                  timeout=HTTP_TIMEOUT).AndReturn(resp)
+
+    # and for the author url
+    resp = requests.Response()
+    resp.status_code = 200
+    resp.url = source.domain_url
+    resp.headers['content-type'] = 'text/html'
+    requests.head(source.domain_url, allow_redirects=True,
+                  timeout=HTTP_TIMEOUT).AndReturn(resp)
+
+    # try and fail to get the feed
+    requests.head('http://author/updates', allow_redirects=True,
+                  timeout=HTTP_TIMEOUT).AndRaise(HTTPError())
+
+    # fall back on the original page, and fetch the post permalink
+    self.expect_requests_get('http://author/permalink', '<html></html>')
+
+    self.mox.ReplayAll()
+    original_post_discovery.discover(source, activity)
+
   def test_feed_type_unknown(self):
     """Confirm that we look for an h-feed with type=text/html even when
     the type is not given in <link>, and keep looking until we find one.

@@ -166,17 +166,15 @@ def _process_author(source, author_url):
     logging.debug('fetching author domain %s', author_url)
     author_resp = requests.get(author_url, allow_redirects=True,
                                timeout=HTTP_TIMEOUT)
+    # TODO for error codes that indicate a temporary error, should we make
+    # a certain number of retries before giving up forever?
+    author_resp.raise_for_status()
+  except AssertionError:
+    raise  # for unit tests
   except BaseException:
     # TODO limit allowed failures, cache the author's h-feed url
     # or the # of times we've failed to fetch it
     logging.exception('Could not fetch author url %s', author_url)
-    return {}
-
-  # TODO for error codes that indicate a temporary error, should we make
-  # a certain number of retries before giving up forever?
-  if author_resp.status_code != 200:
-    logging.warning('Received unexpected response fetching author url %s -> %s',
-                    author_url, author_resp)
     return {}
 
   author_parser = Mf2Parser(url=author_url, doc=author_resp.text)
@@ -184,8 +182,8 @@ def _process_author(source, author_url):
 
   # look for canonical feed url (if it isn't this one) using
   # rel='feed', type='text/html'
-  rel_feed_nodes = author_parser.__doc__.find_all('link', rel='feed')
-  for rel_feed_node in rel_feed_nodes:
+  # TODO clean up this private reference when mf2py is updated
+  for rel_feed_node in author_parser.__doc__.find_all('link', rel='feed'):
     feed_url = rel_feed_node.get('href')
     if not feed_url:
       continue
@@ -194,10 +192,15 @@ def _process_author(source, author_url):
     feed_type = rel_feed_node.get('type')
     if not feed_type:
       feed_resolved = util.follow_redirects(feed_url)
+      if feed_resolved.status_code != 200:
+        logging.debug(
+          'follow_redirects for %s returned unxpected status code %d',
+          feed_url, feed_resolved.status_code)
+        continue
       feed_type = feed_resolved.headers.get('content-type', '')
       feed_type_ok = feed_type.startswith('text/html')
       feed_url = feed_resolved.url
-      logging.debug('head request to %s determined content type %s',
+      logging.debug('follow_redirects for %s determined content type %s',
                     feed_url, feed_type)
     else:
       feed_type_ok = feed_type == 'text/html'
@@ -210,17 +213,14 @@ def _process_author(source, author_url):
       continue
 
     try:
-      logging.debug('fetching author\'s h-feed %s', feed_url)
+      logging.debug("fetching author's h-feed %s", feed_url)
       feed_resp = requests.get(
         feed_url, allow_redirects=True, timeout=HTTP_TIMEOUT)
-      if feed_resp.status_code == 200:
-        logging.debug('author\'s h-feed fetched successfully %s', feed_url)
-        author_parsed = Mf2Parser(
-          url=feed_url, doc=feed_resp.text).to_dict()
-        break
-      logging.warning(
-        'unexpected response fetching author\'s h-feed url %s -> %s',
-        feed_url, feed_resp)
+      feed_resp.raise_for_status()
+      logging.debug("author's h-feed fetched successfully %s", feed_url)
+      author_parsed = Mf2Parser(
+        url=feed_url, doc=feed_resp.text).to_dict()
+      break
     except AssertionError:
       raise  # reraise assertions for unit tests
     except BaseException:
@@ -274,11 +274,8 @@ def _process_entry(source, permalink):
   try:
     logging.debug('fetching post permalink %s', permalink)
     resp = requests.get(permalink, allow_redirects=True, timeout=HTTP_TIMEOUT)
-    if resp.status_code == 200:
-      parsed = Mf2Parser(url=permalink, doc=resp.text).to_dict()
-    else:
-      logging.warning('Received unexpected response fetching post permalink %s -> %s',
-                      permalink, resp)
+    resp.raise_for_status()
+    parsed = Mf2Parser(url=permalink, doc=resp.text).to_dict()
   except BaseException:
     # TODO limit the number of allowed failures
     logging.exception('Could not fetch permalink %s', permalink)
