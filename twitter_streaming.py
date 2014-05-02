@@ -140,6 +140,7 @@ class Listener(streaming.StreamListener):
                       source=self.source.key,
                       activity_json=json.dumps(activity),
                       response_json=json.dumps(response),
+                      type = models.Response.get_type(response),
                       unsent=list(targets),
                       ).get_or_save()
     except:

@@ -248,6 +248,7 @@ class Poll(webapp2.RequestHandler):
                source=source.key,
                activity_json=json.dumps(util.prune_activity(activity)),
                response_json=json.dumps(resp),
+               type = Response.get_type(resp),
                unsent=list(targets),
                ).get_or_save()
 
@@ -269,7 +270,7 @@ class Poll(webapp2.RequestHandler):
 
 
 class Propagate(webapp2.RequestHandler):
-  """Task handler that sends a webmention for a single response.
+  """Task handler that sends webmentions for a single response.
 
   Request parameters:
     response_key: string key of response entity

@@ -68,6 +68,7 @@ class Source(StringIdModel):
   domain = ndb.StringProperty()
   domain_url = ndb.StringProperty()
   features = ndb.StringProperty(repeated=True, choices=FEATURES)
+  superfeedr_secret = ndb.StringProperty()
 
   last_polled = ndb.DateTimeProperty(default=util.EPOCH)
   last_poll_attempt = ndb.DateTimeProperty(default=util.EPOCH)
@@ -304,10 +305,10 @@ class Source(StringIdModel):
     return url, domain, ok
 
 
-class Response(StringIdModel):
-  """A comment, like, or repost to be propagated.
+class Webmentions(StringIdModel):
+  """A bundle of links to send webmentions for.
 
-  The key name is the comment object id as a tag URI.
+  Use the Response and BlogPost concrete subclasses below.
   """
   STATUSES = ('new', 'processing', 'complete', 'error')
 
@@ -320,10 +321,6 @@ class Response(StringIdModel):
   _use_cache = False
   _use_memcache = False
 
-  # ActivityStreams JSON activity and comment, like, or repost
-  type = ndb.StringProperty(choices=VERB_TYPES, default='comment')
-  activity_json = ndb.TextProperty()
-  response_json = ndb.TextProperty()
   source = ndb.KeyProperty()
   status = ndb.StringProperty(choices=STATUSES, default='new')
   leased_until = ndb.DateTimeProperty()
@@ -336,6 +333,13 @@ class Response(StringIdModel):
   error = ndb.StringProperty(repeated=True)
   failed = ndb.StringProperty(repeated=True)
   skipped = ndb.StringProperty(repeated=True)
+
+  def label(self):
+    """Returns a human-readable string description for use in log messages.
+
+    To be implemented by subclasses.
+    """
+    raise NotImplementedError()
 
   @ndb.transactional
   def get_or_save(self):
@@ -350,12 +354,7 @@ class Response(StringIdModel):
       #   assert new == existing, '%s: new %s, existing %s' % (prop, new, existing)
       return existing
 
-    obj = json.loads(self.response_json)
-    self.type = Response.get_type(obj)
-    logging.debug('New response to propagate! %s %s %s', self.type,
-                  self.key.id(),  # returns either string name or integer id
-                  obj.get('url', '[no url]'))
-
+    logging.debug('New webmentions to propagate! %s', self.label())
     self.put()
     util.add_propagate_task(self)
     return self
@@ -364,6 +363,35 @@ class Response(StringIdModel):
   def get_type(obj):
     type = get_type(obj)
     return type if type in VERB_TYPES else 'comment'
+
+
+class Response(Webmentions):
+  """A comment, like, or repost to be propagated.
+
+  The key name is the comment object id as a tag URI.
+  """
+  # ActivityStreams JSON activity and comment, like, or repost
+  type = ndb.StringProperty(choices=VERB_TYPES, default='comment')
+  activity_json = ndb.TextProperty()
+  response_json = ndb.TextProperty()
+
+  def label(self):
+    return ' '.join((self.key.kind(), self.type, self.key.id(),
+                     json.loads(self.response_json).get('url', '[no url]')))
+
+
+class BlogPost(Webmentions):
+  """A blog post to be processed for links to send webmentions to.
+
+  The key name is the XXX.
+  """
+  # from SuperFeedr
+  feed_item_json = ndb.TextProperty()
+
+  def label(self):
+    return ' '.join((self.key.kind(), self.key.id(),
+                     # TODO
+                     json.loads(self.feed_item_json).get('url', '[no url]')))
 
 
 class PublishedPage(StringIdModel):
