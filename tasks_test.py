@@ -12,7 +12,7 @@ import urllib
 import urllib2
 import urlparse
 
-from apiclient import errors
+import apiclient
 from google.appengine.api import memcache
 from google.appengine.ext import ndb
 import httplib2
@@ -308,9 +308,7 @@ class PollTest(TaskQueueTest):
     """Finish the task on rate limiting errors."""
     try:
       for err in (InstagramAPIError('503', 'Rate limited', '...'),
-                  # use tasks.errors to work around import module aliasing.
-                  # evidently i didn't fix them all. :/
-                  tasks.errors.HttpError(httplib2.Response({'status': 429}), ''),
+                  apiclient.errors.HttpError(httplib2.Response({'status': 429}), ''),
                   urllib2.HTTPError('url', 403, 'msg', {}, None)):
         self.mox.UnsetStubs()
         self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities_response')
