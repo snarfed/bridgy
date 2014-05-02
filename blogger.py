@@ -60,6 +60,7 @@ class Blogger(models.Source):
                    name=auth_entity.user_display_name(),
                    domain=domain,
                    domain_url=url,
+                   superfeedr_secret=util.generate_secret(),
                    **kwargs)
 
   @staticmethod

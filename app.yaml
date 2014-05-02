@@ -66,6 +66,10 @@ handlers:
   script: tumblr.application
   secure: always
 
+- url: /superfeedr//notify/(blogger|tumblr|wordpress)/.+
+  script: superfeedr.application
+  secure: always
+
 - url: /twitter/(start|add|delete)(/.*)?
   script: twitter.application
   secure: always

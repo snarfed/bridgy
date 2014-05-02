@@ -6,6 +6,8 @@ from activitystreams.appengine_config import *
 DISQUS_ACCESS_TOKEN = read('disqus_access_token')
 DISQUS_API_KEY = read('disqus_api_key')
 DISQUS_API_SECRET = read('disqus_api_secret')
+SUPERFEEDR_TOKEN = read('superfeedr_token')
+SUPERFEEDR_USERNAME = read('superfeedr_username')
 
 # Add library modules directories to sys.path so they can be imported.
 #

@@ -46,6 +46,7 @@ import webapp2
 DISQUS_API_CREATE_POST_URL = 'https://disqus.com/api/3.0/posts/create.json'
 DISQUS_API_THREAD_DETAILS_URL = 'http://disqus.com/api/3.0/threads/details.json'
 
+
 class Tumblr(models.Source):
   """A Tumblr blog.
 
@@ -91,6 +92,7 @@ class Tumblr(models.Source):
                   domain_url=url,
                   name=auth_entity.user_display_name(),
                   disqus_shortname=match.group(1),
+                  superfeedr_secret=util.generate_secret(),
                   **kwargs)
 
   @staticmethod

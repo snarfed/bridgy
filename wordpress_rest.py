@@ -3,30 +3,9 @@
 https://developer.wordpress.com/docs/api/
 create returns id, can lookup by id
 
-disqus for tumblr
-http://disqus.com/api/docs/
-http://disqus.com/api/docs/posts/create/
-https://github.com/disqus/DISQUS-API-Recipes/blob/master/snippets/php/create-guest-comment.php
-http://help.disqus.com/customer/portal/articles/466253-what-html-tags-are-allowed-within-comments-
-create returns id, can lookup by id w/getContext?
-
 test command line:
 curl localhost:8080/webmention/wordpress \
   -d 'source=http://localhost/response.html&target=http://ryandc.wordpress.com/2013/03/24/mac-os-x/'
-
-
-blogger
-https://developers.google.com/blogger/docs/2.0/developers_guide_protocol
-https://support.google.com/blogger/answer/42064?hl=en
-create comment:
-https://developers.google.com/blogger/docs/2.0/developers_guide_protocol#CreatingComments
-
-
-
-superfeedr:
-https://superfeedr.com/users/snarfed
-http://documentation.superfeedr.com/subscribers.html
-http://documentation.superfeedr.com/schema.html
 """
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
@@ -69,6 +48,7 @@ class WordPress(models.Source):
                      auth_entity=auth_entity.key,
                      url=auth_entity.blog_url,
                      name=auth_entity.user_display_name(),
+                     superfeedr_secret=util.generate_secret(),
                      **kwargs)
 
   def _url_and_domain(self, auth_entity):
