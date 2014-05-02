@@ -127,10 +127,19 @@ class Poll(webapp2.RequestHandler):
         etag=source.last_activities_etag, min_id=source.last_activity_id,
         cache=memcache)
     except Exception, e:
+      # note that activitystreams-unofficial doesn't use requests (yet!), so no
+      # need to catch requests.HTTPError.
+      body = None
       if isinstance(e, urllib2.HTTPError):
         code = e.code
+        try:
+          body = e.read()
+        except AttributeError:
+          # no response body
+          pass
       elif isinstance(e, errors.HttpError):
         code = e.resp.status
+        body = e.content
       elif isinstance(e, InstagramAPIError):
         if e.error_type == 'OAuthAccessTokenException':
           code = '401'
@@ -140,6 +149,9 @@ class Poll(webapp2.RequestHandler):
         code = '401'
       else:
         raise
+
+      if body:
+        logging.error('Error response body: %s', body)
 
       code = str(code)
       if code == '401':
@@ -159,8 +171,6 @@ class Poll(webapp2.RequestHandler):
         source.status = 'error'
         return
       else:
-        if isinstance(e, urllib2.HTTPError):
-          logging.error('Error response body: %r', e.read())
         raise
 
     activities = response.get('items', [])

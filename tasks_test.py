@@ -7,6 +7,7 @@ import datetime
 import json
 import logging
 import mox
+import StringIO
 import urllib
 import urllib2
 import urlparse
@@ -282,7 +283,7 @@ class PollTest(TaskQueueTest):
   def test_site_specific_disable_sources(self):
     """HTTP 401 and 400 '' for Instagram should disable the source."""
     try:
-      for err in (urllib2.HTTPError('url', 401, 'msg', {}, None),
+      for err in (urllib2.HTTPError('url', 401, 'msg', {},  StringIO.StringIO('body')),
                   InstagramAPIError('400', 'OAuthAccessTokenException', 'foo'),
                   AccessTokenRefreshError('invalid_grant'),
                   ):
