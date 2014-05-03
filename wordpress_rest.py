@@ -49,7 +49,7 @@ class WordPress(models.Source):
                      auth_entity=auth_entity.key,
                      url=auth_entity.blog_url,
                      name=auth_entity.user_display_name(),
-                     picture=user_json.get('avatar_URL')
+                     picture=user_json.get('avatar_URL'),
                      superfeedr_secret=util.generate_secret(),
                      **kwargs)
 
