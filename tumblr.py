@@ -43,6 +43,7 @@ import util
 from google.appengine.ext import ndb
 import webapp2
 
+TUMBLR_AVATAR_URL = 'http://api.tumblr.com/v2/blog/%s/avatar/512'
 DISQUS_API_CREATE_POST_URL = 'https://disqus.com/api/3.0/posts/create.json'
 DISQUS_API_THREAD_DETAILS_URL = 'http://disqus.com/api/3.0/threads/details.json'
 
@@ -96,6 +97,7 @@ class Tumblr(models.Source):
                   domain_url=url,
                   name=auth_entity.user_display_name(),
                   disqus_shortname=match.group(1),
+                  picture=TUMBLR_AVATAR_URL % domain,
                   superfeedr_secret=util.generate_secret(),
                   **kwargs)
 

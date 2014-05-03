@@ -39,6 +39,7 @@ some stuff
     self.assertEquals('http://primary/', t.domain_url)
     self.assertEquals('primary', t.domain)
     self.assertEquals('my-disqus-name', t.disqus_shortname)
+    self.assertEquals('http://api.tumblr.com/v2/blog/primary/avatar/512', t.picture)
 
   def test_new_no_primary_blog(self):
     self.auth_entity.user_json = json.dumps({'user': {'blogs': [{'url': 'foo'}]}})
