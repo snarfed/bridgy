@@ -44,11 +44,12 @@ def subscribe(source, handler):
       handler.request.host_url, source.SHORT_NAME, source.domain),
     # TODO
     'hub.secret': 'xxx',
-    'hub.verify': 'sync',
+    # 'hub.verify': 'sync',
     'format': 'json',
     'retrieve': 'true',
     }
 
+  logging.info('Adding SuperFeedr subscription: %s', data)
   resp = requests.post(PUSH_API_URL, data=data,
                        auth=HTTPBasicAuth(appengine_config.SUPERFEEDR_USERNAME,
                                           appengine_config.SUPERFEEDR_TOKEN))
@@ -68,10 +69,12 @@ def handle_feed(feed, source):
     source: Blogger, Tumblr, or WordPress
   """
   for item in feed.get('items', []):
+    links = util.extract_links(item.get('content') or item.get('summary', ''))
+    logging.info('Found links: %s', links)
     models.BlogPost(id=item.get('permalinkUrl'),
                     source=source.key,
                     feed_item=item,
-                    unsent=util.extract_links(item.get('content', '')),
+                    unsent=links,
                     ).get_or_save()
 
 
