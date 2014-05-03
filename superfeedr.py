@@ -96,9 +96,9 @@ class NotifyHandler(webapp2.RequestHandler):
     logging.info('Params: %s', self.request.params)
     logging.info('Body: %s', self.request.body)
     source = SOURCES[shortname].get_by_id(key_id)
-    handle_feed(json.loads(self.request.body))
+    handle_feed(json.loads(self.request.body), source)
 
 
 application = webapp2.WSGIApplication([
-    ('/superfeedr/notify/(blogger|tumblr|wordpress)/(.+)', NotifyHandler),
+    ('/superfeedr/notify/(blogger|fake|tumblr|wordpress)/(.+)', NotifyHandler),
     ], debug=appengine_config.DEBUG)

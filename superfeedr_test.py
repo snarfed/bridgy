@@ -53,3 +53,23 @@ class SuperfeedrTest(testutil.HandlerTest):
     self.assert_equals([{'key': posts[0].key.urlsafe()},
                         {'key': posts[1].key.urlsafe()}],
                        [testutil.get_task_params(t) for t in tasks])
+
+  def test_notify(self):
+    item_a = {'permalinkUrl': 'A', 'content': 'a http://a.com a'}
+    resp = superfeedr.application.get_response(
+      '/superfeedr/notify/fake/foo.com', method='POST',
+      body=json.dumps({'items': [item_a]}),
+      content_type='application/json')
+    self.assertEqual(200, resp.status_int)
+
+    posts = list(BlogPost.query())
+    self.assert_entities_equal(
+      [BlogPost(id='A', source=self.source.key, feed_item=item_a,
+                unsent=['http://a.com'])],
+      posts,
+      ignore=('created', 'updated'))
+
+    tasks = self.taskqueue_stub.GetTasks('propagate-blogpost')
+    self.assertEqual(1, len(tasks))
+    self.assert_equals(posts[0].key.urlsafe(),
+                       testutil.get_task_params(tasks[0])['key'])
