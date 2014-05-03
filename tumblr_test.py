@@ -38,3 +38,14 @@ some stuff
     self.assertEquals('primary', tumblr.domain)
     self.assertEquals('my-disqus-name', tumblr.disqus_shortname)
 
+  def test_new_no_primary_blog(self):
+    self.auth_entity.user_json = json.dumps({'user': {'blogs': [{'url': 'foo'}]}})
+    self.assertIsNone(Tumblr.new(self.handler, auth_entity=self.auth_entity))
+    self.assertIn('No primary Tumblr blog', next(iter(self.handler.messages)))
+
+  def test_new_without_disqus(self):
+    self.expect_requests_get('http://primary/', 'no disqus here!')
+    self.mox.ReplayAll()
+
+    self.assertIsNone(Tumblr.new(self.handler, auth_entity=self.auth_entity))
+    self.assertIn('install Disqus', next(iter(self.handler.messages)))
