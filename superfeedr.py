@@ -39,26 +39,28 @@ def subscribe(source, handler):
   """
   data = {
     'hub.mode': 'subscribe',
-    'hub.topic': url,
+    'hub.topic': source.feed_url(),
     'hub.callback': '%s/superfeedr/notify/%s/%s' % (
-      handler.request.host_url, source.SHORT_NAME, source.domain),
+      handler.request.host_url, source.SHORT_NAME, source.key.id()),
     # TODO
     'hub.secret': 'xxx',
+    # TODO?
     # 'hub.verify': 'sync',
     'format': 'json',
     'retrieve': 'true',
     }
 
-  logging.info('Adding SuperFeedr subscription: %s', data)
+  logging.info('Adding Superfeedr subscription: %s', data)
   resp = requests.post(PUSH_API_URL, data=data,
                        auth=HTTPBasicAuth(appengine_config.SUPERFEEDR_USERNAME,
-                                          appengine_config.SUPERFEEDR_TOKEN))
-  resp.raise_as_status()
-  handle_feed(resp.json())
+                                          appengine_config.SUPERFEEDR_TOKEN),
+                       timeout=HTTP_TIMEOUT)
+  resp.raise_for_status()
+  handle_feed(resp.json(), source)
 
 
 def handle_feed(feed, source):
-  """Handles a SuperFeedr JSON feed.
+  """Handles a Superfeedr JSON feed.
 
   Creates BlogPost entities and adds propagate_blogpost tasks for new items.
 
@@ -69,9 +71,15 @@ def handle_feed(feed, source):
     source: Blogger, Tumblr, or WordPress
   """
   for item in feed.get('items', []):
+    # TODO: extract_links currently has a bug that makes it drop trailing
+    # slashes. ugh. fix that.
     links = util.extract_links(item.get('content') or item.get('summary', ''))
     logging.info('Found links: %s', links)
-    models.BlogPost(id=item.get('permalinkUrl'),
+    url = item.get('permalinkUrl') or item.get('id')
+    if not url:
+      logging.error('Dropping feed item without permalinkUrl or id!')
+      continue
+    models.BlogPost(id=url,
                     source=source.key,
                     feed_item=item,
                     unsent=links,
@@ -79,7 +87,7 @@ def handle_feed(feed, source):
 
 
 class NotifyHandler(webapp2.RequestHandler):
-  """Handles a SuperFeedr notification.
+  """Handles a Superfeedr notification.
 
   http://documentation.superfeedr.com/subscribers.html#pubsubhubbubnotifications
   """
@@ -88,7 +96,7 @@ class NotifyHandler(webapp2.RequestHandler):
     logging.info('Params: %s', self.request.params)
     logging.info('Body: %s', self.request.body)
     source = SOURCES[shortname].get_by_id(key_id)
-    # handle_feed(json.loads(self.request.body)
+    handle_feed(json.loads(self.request.body))
 
 
 application = webapp2.WSGIApplication([

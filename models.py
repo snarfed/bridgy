@@ -405,12 +405,12 @@ class BlogPost(Webmentions):
 
   The key name is the URL.
   """
-  feed_item = ndb.JsonProperty(compressed=True)  # from SuperFeedr
+  feed_item = ndb.JsonProperty(compressed=True)  # from Superfeedr
 
   def label(self):
     return ' '.join((self.key.kind(), self.key.id(),
                      # TODO
-                     json.loads(self.feed_item_json).get('url', '[no url]')))
+                     self.feed_item.get('url', '[no url]')))
 
   def add_task(self):
     util.add_propagate_blogpost_task(self)

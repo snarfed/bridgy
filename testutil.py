@@ -140,6 +140,9 @@ class FakeSource(FakeBase, Source):
     comment = self._get('comment')
     return comment if comment else super(FakeSource, self).get_comment(comment_id)
 
+  def feed_url(self):
+    return 'fake feed url'
+
 
 class HandlerTest(testutil.HandlerTest):
   """Base test class.
@@ -150,7 +153,8 @@ class HandlerTest(testutil.HandlerTest):
     # TODO: remove this and don't depend on consistent global queries
     self.testbed.init_datastore_v3_stub(consistency_policy=None)
 
-    self.mox.StubOutWithMock(requests, 'get', use_mock_anything=True)
+    for method in ('get', 'head', 'post'):
+      self.mox.StubOutWithMock(requests, method, use_mock_anything=True)
 
     # don't make actual HTTP requests to follow original post url redirects
     def fake_head(url, **kwargs):
@@ -163,14 +167,26 @@ class HandlerTest(testutil.HandlerTest):
       return resp
     self.mox.stubs.Set(requests, 'head', fake_head)
 
-  def expect_requests_get(self, url, response='', status_code=200,
-                          content_type='text/html'):
+  def expect_requests_get(self, *args, **kwargs):
+    return self._expect_requests_call(*args, method=requests.get, **kwargs)
+
+  def expect_requests_post(self, *args, **kwargs):
+    return self._expect_requests_call(*args, method=requests.post, **kwargs)
+
+  def _expect_requests_call(self, url, response='', status_code=200,
+                            content_type='text/html', method=requests.get,
+                            **kwargs):
     resp = requests.Response()
     resp._content = response
     resp.url = url
     resp.status_code = status_code
     resp.headers['content-type'] = content_type
-    call = requests.get(url, allow_redirects=True, timeout=HTTP_TIMEOUT)
+
+    kwargs['timeout'] = HTTP_TIMEOUT
+    if method is requests.get:
+      kwargs['allow_redirects'] = True
+
+    call = method(url, **kwargs)
     call.AndReturn(resp)
     return call
 
