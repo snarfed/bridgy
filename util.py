@@ -54,20 +54,28 @@ def add_poll_task(source, **kwargs):
                 **kwargs)
 
 
-def add_propagate_task(response, **kwargs):
+def add_propagate_task(entity, **kwargs):
   """Adds a propagate task for the given response entity.
+
+  Tasks inserted from a backend (e.g. twitter_streaming) are sent to that
+  backend by default, which doesn't work in the dev_appserver. Setting the
+  target version to 'default' in queue.yaml doesn't work either, but setting it
+  here does.
+
+  Note the constant. The string 'default' works in dev_appserver, but routes to
+  default.brid-gy.appspot.com in prod instead of www.brid.gy, which breaks SSL
+  because appspot.com doesn't have a third-level wildcard cert.
   """
   taskqueue.add(queue_name='propagate',
-                params={'response_key': response.key.urlsafe()},
-                # tasks inserted from a backend (e.g. twitter_streaming) are
-                # sent to that backend by default, which doesn't work in the
-                # dev_appserver. setting the target version to 'default' in
-                # queue.yaml doesn't work either, but setting it here does.
-                #
-                # (note the constant. the string 'default' works in
-                # dev_appserver, but routes to default.brid-gy.appspot.com in
-                # prod instead of www.brid.gy, which breaks SSL because
-                # appspot.com doesn't have a third-level wildcard cert.)
+                params={'response_key': entity.key.urlsafe()},
+                target=taskqueue.DEFAULT_APP_VERSION)
+
+
+def add_propagate_blogpost_task(entity, **kwargs):
+  """Adds a propagate_blogpost task for the given response entity.
+  """
+  taskqueue.add(queue_name='propagate_blogpost',
+                params={'key': entity.key.urlsafe()},
                 target=taskqueue.DEFAULT_APP_VERSION)
 
 

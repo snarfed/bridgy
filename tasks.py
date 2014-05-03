@@ -261,7 +261,7 @@ class Poll(webapp2.RequestHandler):
                source=source.key,
                activity_json=json.dumps(util.prune_activity(activity)),
                response_json=json.dumps(resp),
-               type = Response.get_type(resp),
+               type=Response.get_type(resp),
                unsent=list(targets),
                ).get_or_save()
 
@@ -297,9 +297,13 @@ class SendWebmentions(webapp2.RequestHandler):
   def send_webmentions(self, source_url):
     """Tries to send each unsent webmention in self.entity.
 
+    self.lease() *must* be called before this!
+
     Args:
       source_url: string
     """
+    logging.info('Starting %s', self.entity.label())
+
     try:
       unsent = set()
       for url in self.entity.unsent + self.entity.error:
@@ -447,16 +451,15 @@ class SendWebmentions(webapp2.RequestHandler):
     self.response.out.write(message)
 
 
-class Propagate(SendWebmentions):
-  """Task handler that sends webmentions for a single response.
+class PropagateResponse(SendWebmentions):
+  """Task handler that sends webmentions for a Response.
 
   Request parameters:
-    response_key: string key of response entity
+    response_key: string key of Response entity
   """
 
   def post(self):
     logging.debug('Params: %s', self.request.params)
-
     if not self.lease(ndb.Key(urlsafe=self.request.params['response_key'])):
       return
 
@@ -472,9 +475,6 @@ class Propagate(SendWebmentions):
       logging.warning('Source not found! Dropping response.')
       return
     logging.info('Source: %s %s', source.label(), source.key.string_id())
-
-    logging.info('Starting %s response %s',
-                 self.entity.source.kind(), self.entity.label())
 
     _, response_id = util.parse_tag_uri(self.entity.key.string_id())
     if self.entity.type in ('like', 'repost', 'rsvp'):
@@ -498,7 +498,23 @@ class Propagate(SendWebmentions):
     self.send_webmentions(local_response_url)
 
 
+class PropagateBlogPost(SendWebmentions):
+  """Task handler that sends webmentions for a BlogPost.
+
+  Request parameters:
+    key: string key of BlogPost entity
+  """
+
+  def post(self):
+    logging.debug('Params: %s', self.request.params)
+    if not self.lease(ndb.Key(urlsafe=self.request.params['key'])):
+      return
+
+    self.send_webmentions(local_response_url)
+
+
 application = webapp2.WSGIApplication([
     ('/_ah/queue/poll', Poll),
-    ('/_ah/queue/propagate', Propagate),
+    ('/_ah/queue/propagate', PropagateResponse),
+    ('/_ah/queue/propagate_blogpost', PropagateBlogPost),
     ], debug=appengine_config.DEBUG)

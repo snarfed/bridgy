@@ -24,14 +24,16 @@ from appengine_config import HTTP_TIMEOUT
 import models
 import models_test
 import tasks
-from tasks import Poll, Propagate
+from tasks import PropagateResponse
 import testutil
 import util
 from webmentiontools import send
 
-
 NOW = datetime.datetime.now()
 tasks.now_fn = lambda: NOW
+
+ERROR_HTTP_RETURN_CODE = tasks.SendWebmentions.ERROR_HTTP_RETURN_CODE
+LEASE_LENGTH = tasks.SendWebmentions.LEASE_LENGTH
 
 
 class TaskQueueTest(testutil.ModelsTest):
@@ -440,7 +442,7 @@ class PropagateTest(TaskQueueTest):
 
     for r in self.responses[:3]:
       self.post_task(response=r)
-      self.assert_response_is('complete', NOW + Propagate.LEASE_LENGTH,
+      self.assert_response_is('complete', NOW + LEASE_LENGTH,
                               sent=['http://target1/post/url'], response=r)
       memcache.flush_all()
 
@@ -452,8 +454,8 @@ class PropagateTest(TaskQueueTest):
     self.expect_webmention().AndReturn(True)
     self.mox.ReplayAll()
     self.post_task()
-    self.assert_response_is('complete', NOW + Propagate.LEASE_LENGTH,
-                           sent=['http://target1/post/url'])
+    self.assert_response_is('complete', NOW + LEASE_LENGTH,
+                            sent=['http://target1/post/url'])
 
   def test_success_and_errors(self):
     """We should send webmentions to the unsent and error targets."""
@@ -475,7 +477,7 @@ class PropagateTest(TaskQueueTest):
         .InAnyOrder().AndReturn(False)
 
     self.mox.ReplayAll()
-    self.post_task(expected_status=Propagate.ERROR_HTTP_RETURN_CODE)
+    self.post_task(expected_status=ERROR_HTTP_RETURN_CODE)
     response = self.responses[0].key.get()
     self.assert_response_is('error',
                             sent=['http://6', 'http://1'],
@@ -550,7 +552,7 @@ class PropagateTest(TaskQueueTest):
 
     self.mox.ReplayAll()
     self.post_task()
-    self.assert_response_is('complete', NOW + Propagate.LEASE_LENGTH)
+    self.assert_response_is('complete', NOW + LEASE_LENGTH)
 
   def test_already_complete(self):
     """If the response has already been propagated, do nothing."""
@@ -567,7 +569,7 @@ class PropagateTest(TaskQueueTest):
     self.responses[0].leased_until = leased_until
     self.responses[0].put()
 
-    self.post_task(expected_status=Propagate.ERROR_HTTP_RETURN_CODE)
+    self.post_task(expected_status=ERROR_HTTP_RETURN_CODE)
     self.assert_response_is('processing', leased_until,
                             unsent=['http://target1/post/url'])
 
@@ -584,13 +586,13 @@ class PropagateTest(TaskQueueTest):
     self.expect_webmention().AndReturn(True)
     self.mox.ReplayAll()
     self.post_task()
-    self.assert_response_is('complete', NOW + Propagate.LEASE_LENGTH,
+    self.assert_response_is('complete', NOW + LEASE_LENGTH,
                            sent=['http://target1/post/url'])
 
   def test_no_response(self):
     """If the response doesn't exist, the request should fail."""
     self.responses[0].key.delete()
-    self.post_task(expected_status=Propagate.ERROR_HTTP_RETURN_CODE)
+    self.post_task(expected_status=ERROR_HTTP_RETURN_CODE)
 
   def test_no_source(self):
     """If the source doesn't exist, the request should give up."""
@@ -631,7 +633,7 @@ class PropagateTest(TaskQueueTest):
       self.mox.ReplayAll()
 
       logging.debug('Testing %s', code)
-      expected_status = 200 if give_up else Propagate.ERROR_HTTP_RETURN_CODE
+      expected_status = 200 if give_up else ERROR_HTTP_RETURN_CODE
       self.post_task(expected_status=expected_status)
       if give_up:
         self.assert_response_is('complete', skipped=['http://target1/post/url'])
@@ -648,7 +650,7 @@ class PropagateTest(TaskQueueTest):
     self.expect_webmention(target='http://second').AndReturn(True)
 
     self.mox.ReplayAll()
-    self.post_task(expected_status=Propagate.ERROR_HTTP_RETURN_CODE)
+    self.post_task(expected_status=ERROR_HTTP_RETURN_CODE)
     self.assert_response_is('error', None, error=['http://first'],
                            sent=['http://second'])
 
@@ -660,7 +662,7 @@ class PropagateTest(TaskQueueTest):
     self.expect_webmention(target='http://good').AndReturn(True)
     self.mox.ReplayAll()
 
-    self.post_task(expected_status=Propagate.ERROR_HTTP_RETURN_CODE)
+    self.post_task(expected_status=ERROR_HTTP_RETURN_CODE)
     self.assert_response_is('error', None, error=['http://error'],
                             sent=['http://good'])
 
@@ -694,8 +696,8 @@ class PropagateTest(TaskQueueTest):
   def test_complete_exception(self):
     """If completing raises an exception, the lease should be released."""
     self.expect_webmention().AndReturn(True)
-    self.mox.StubOutWithMock(Propagate, 'complete')
-    Propagate.complete().AndRaise(Exception('foo'))
+    self.mox.StubOutWithMock(PropagateResponse, 'complete')
+    PropagateResponse.complete().AndRaise(Exception('foo'))
     self.mox.ReplayAll()
 
     self.post_task(expected_status=500)

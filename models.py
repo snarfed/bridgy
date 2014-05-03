@@ -383,10 +383,9 @@ class Response(Webmentions):
 class BlogPost(Webmentions):
   """A blog post to be processed for links to send webmentions to.
 
-  The key name is the XXX.
+  The key name is the URL.
   """
-  # from SuperFeedr
-  feed_item_json = ndb.TextProperty()
+  feed_item_json = ndb.JsonProperty(compressed=True)  # from SuperFeedr
 
   def label(self):
     return ' '.join((self.key.kind(), self.key.id(),
@@ -426,11 +425,11 @@ class Publish(ndb.Model):
 class BlogWebmention(Publish, StringIdModel):
   """Datastore entity for webmentions for hosted blog providers.
 
-  Child of Source. Key id is the string source URL.
+  Child of Source. Key id is the source URL and target URL concated with a
+  space, ie 'SOURCE TARGET'.
 
-  Reuses most of Publish's fields, but otherwise unrelated.
+  Reuses Publish's fields, but otherwise unrelated.
   """
-
   target = ndb.StringProperty()  # URL
 
 

@@ -18,7 +18,6 @@ import requests
 
 from activitystreams import source as as_source
 from models import Response, Source
-from tasks import Poll, Propagate
 import util
 from activitystreams.oauth_dropins.models import BaseAuth
 from activitystreams.oauth_dropins.webutil import testutil
