@@ -51,6 +51,10 @@ class WordPress(models.Source):
                      superfeedr_secret=util.generate_secret(),
                      **kwargs)
 
+  def feed_url(self):
+    # http://en.support.wordpress.com/feeds/
+    return urlparse.urljoin(self.domain_url, '/feed/')
+
   def _url_and_domain(self, auth_entity):
     """Returns this blog's URL and domain.
 

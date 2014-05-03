@@ -57,6 +57,10 @@ class Tumblr(models.Source):
 
   disqus_shortname = ndb.StringProperty(required=True)
 
+  def feed_url(self):
+    # http://www.tumblr.com/help  (search for feed)
+    return urlparse.urljoin(self.domain_url, '/rss')
+
   @staticmethod
   def new(handler, auth_entity=None, **kwargs):
     """Creates and returns a Tumblr for the logged in user.

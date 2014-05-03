@@ -35,6 +35,10 @@ class Blogger(models.Source):
   AS_CLASS = collections.namedtuple('FakeAsClass', ('NAME',))(NAME='Blogger')
   SHORT_NAME = 'blogger'
 
+  def feed_url(self):
+    # https://support.google.com/blogger/answer/97933?hl=en
+    return urlparse.urljoin(self.domain_url, '/feeds/posts/default')  # Atom
+
   @staticmethod
   def new(handler, auth_entity=None, **kwargs):
     """Creates and returns a Blogger for the logged in user.
