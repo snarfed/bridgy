@@ -694,8 +694,8 @@ class PropagateTest(TaskQueueTest):
   def test_complete_exception(self):
     """If completing raises an exception, the lease should be released."""
     self.expect_webmention().AndReturn(True)
-    self.mox.StubOutWithMock(Propagate, 'complete_response')
-    Propagate.complete_response(mox.IgnoreArg()).AndRaise(Exception('foo'))
+    self.mox.StubOutWithMock(Propagate, 'complete')
+    Propagate.complete().AndRaise(Exception('foo'))
     self.mox.ReplayAll()
 
     self.post_task(expected_status=500)

@@ -39,6 +39,9 @@ import util
 
 WEBMENTION_DISCOVERY_CACHE_TIME = 60 * 60 * 24  # a day
 
+# when running in dev_appserver, replace these domains in links with localhost
+LOCALHOST_TEST_DOMAINS = frozenset(('kylewm', 'snarfed.org'))
+
 # allows injecting timestamps in task_test.py
 now_fn = datetime.datetime.now
 
@@ -279,11 +282,11 @@ class Poll(webapp2.RequestHandler):
     # source is saved in post()
 
 
-class Propagate(webapp2.RequestHandler):
-  """Task handler that sends webmentions for a single response.
+class SendWebmentions(webapp2.RequestHandler):
+  """Abstract base task handler that can send webmentions.
 
-  Request parameters:
-    response_key: string key of response entity
+  Attributes:
+    entity: Webmentions subclass. Set in lease_entity.
   """
 
   # request deadline (10m) plus some padding
@@ -291,69 +294,29 @@ class Propagate(webapp2.RequestHandler):
 
   ERROR_HTTP_RETURN_CODE = 306  # "Unused"
 
-  def post(self):
-    logging.debug('Params: %s', self.request.params)
+  def send_webmentions(self, source_url):
+    """Tries to send each unsent webmention in self.entity.
 
-    response = self.lease_response()
-    if not response:
-      return
-
-    activity = json.loads(response.activity_json)
-    response_obj = json.loads(response.response_json)
-    if not Source.is_public(response_obj) or not Source.is_public(activity):
-      logging.info('Response or activity is non-public. Dropping.')
-      self.complete_response(response)
-      return
-
-    source = response.source.get()
-    if not source:
-      logging.warning('Source not found! Dropping response.')
-      return
-    logging.info('Source: %s %s', source.label(), source.key.string_id())
-
+    Args:
+      source_url: string
+    """
     try:
-      logging.info('Starting %s response %s',
-                   response.source.kind(), response.key.string_id())
-
-      _, response_id = util.parse_tag_uri(response.key.string_id())
-      if response.type in ('like', 'repost', 'rsvp'):
-        response_id = response_id.split('_')[-1]
-
-      # generate local response URL
-      _, post_id = util.parse_tag_uri(activity['id'])
-      # prefer brid-gy.appspot.com to brid.gy because non-browsers (ie OpenSSL)
-      # currently have problems with brid.gy's SSL cert. details:
-      # https://github.com/snarfed/bridgy/issues/20
-      if (self.request.host_url.endswith('brid.gy') or
-          self.request.host_url.endswith('brid-gy.appspot.com')):
-        host_url = 'https://brid-gy.appspot.com'
-      else:
-        host_url = self.request.host_url
-
-      local_response_url = '%s/%s/%s/%s/%s/%s' % (
-        host_url, response.type, response.source.get().SHORT_NAME,
-        response.source.string_id(), post_id, response_id)
-
-      # send each webmention. recheck the url here since the checks may have failed
-      # during the poll or streaming add.
       unsent = set()
-      for url in response.unsent + response.error:
+      for url in self.entity.unsent + self.entity.error:
+        # recheck the url here since the checks may have failed during the poll
+        # or streaming add.
         url, domain, ok = util.get_webmention_target(url)
         if ok:
-          # When debugging locally, redirect my (snarfed.org) webmentions to localhost
-          if appengine_config.DEBUG:
-            if domain == 'snarfed.org':
-              url = url.replace('snarfed.org/', 'localhost/')
-            elif domain == 'kylewm.com':
-              url = url.replace('kylewm.com/', 'localhost/')
+          # When debugging locally, redirect our own webmentions to localhost
+          if appengine_config.DEBUG and domain in LOCALHOST_TEST_DOMAINS:
+              url = url.replace(domain, 'localhost')
           unsent.add(url)
-      response.unsent = sorted(unsent)
-      response.error = []
+      self.entity.unsent = sorted(unsent)
+      self.entity.error = []
 
-      while response.unsent:
-        target = response.unsent.pop(0)
-
-        logging.info('Webmention from %s to %s', local_response_url, target)
+      while self.entity.unsent:
+        target = self.entity.unsent.pop(0)
+        logging.info('Webmention from %s to %s', source_url, target)
 
         # see if we've cached webmention discovery for this domain. the cache
         # value is a string URL endpoint if discovery succeeded, a
@@ -370,7 +333,7 @@ class Propagate(webapp2.RequestHandler):
         if isinstance(cached, dict):
           error = cached
         else:
-          mention = send.WebmentionSend(local_response_url, target, endpoint=cached)
+          mention = send.WebmentionSend(source_url, target, endpoint=cached)
           logging.info('Sending...')
           try:
             if not mention.send(timeout=999):
@@ -383,99 +346,98 @@ class Propagate(webapp2.RequestHandler):
 
         if error is None:
           logging.info('Sent! %s', mention.response)
-          response.sent.append(target)
+          self.entity.sent.append(target)
           memcache.set(cache_key, mention.receiver_endpoint,
                        time=WEBMENTION_DISCOVERY_CACHE_TIME)
         else:
           if error['code'] == 'NO_ENDPOINT':
             logging.info('Giving up this target. %s', error)
-            response.skipped.append(target)
+            self.entity.skipped.append(target)
             memcache.set(cache_key, error, time=WEBMENTION_DISCOVERY_CACHE_TIME)
           elif (error['code'] == 'BAD_TARGET_URL' and
                 error['http_status'] / 100 == 4):
             # Give up on 4XX errors; we don't expect later retries to succeed.
             logging.info('Giving up this target. %s', error)
-            response.failed.append(target)
+            self.entity.failed.append(target)
           else:
             self.fail('Error sending to endpoint: %s' % error)
-            response.error.append(target)
+            self.entity.error.append(target)
 
-        if target in response.unsent:
-          response.unsent.remove(target)
+        if target in self.entity.unsent:
+          self.entity.unsent.remove(target)
 
-      if response.error:
+      if self.entity.error:
         logging.warning('Propagate task failed')
-        self.release_response(response, 'error')
+        self.release('error')
       else:
-        self.complete_response(response)
+        self.complete()
 
     except:
       logging.exception('Propagate task failed')
-      self.release_response(response, 'error')
+      self.release('error')
       raise
 
   @ndb.transactional
-  def lease_response(self):
-    """Attempts to acquire and lease the response entity.
+  def lease(self, key):
+    """Attempts to acquire and lease the Webmentions entity.
 
-    Returns the Response on success, otherwise None.
+    Returns True on success, False or None otherwise.
 
-    TODO: unify with complete_response
-    """
-    response = ndb.Key(urlsafe=self.request.params['response_key']).get()
-
-    if response is None:
-      self.fail('no response entity!')
-    elif response.status == 'complete':
-      # let this response return 200 and finish
-      logging.warning('duplicate task already propagated response')
-    elif response.status == 'processing' and now_fn() < response.leased_until:
-      self.fail('duplicate task is currently processing!')
-    else:
-      assert response.status in ('new', 'processing', 'error')
-      response.status = 'processing'
-      response.leased_until = now_fn() + self.LEASE_LENGTH
-      response.put()
-      return response
-
-  @ndb.transactional
-  def complete_response(self, response):
-    """Attempts to mark the response entity completed.
-
-    Returns True on success, False otherwise.
+    TODO: unify with complete()
 
     Args:
-      response: Response
+      key: ndb.Key
     """
-    existing = response.key.get()
+    self.entity = key.get()
+
+    if self.entity is None:
+      self.fail('no entity!')
+    elif self.entity.status == 'complete':
+      # let this task return 200 and finish
+      logging.warning('duplicate task already propagated this')
+    elif self.entity.status == 'processing' and now_fn() < self.entity.leased_until:
+      self.fail('duplicate task is currently processing!')
+    else:
+      assert self.entity.status in ('new', 'processing', 'error')
+      self.entity.status = 'processing'
+      self.entity.leased_until = now_fn() + self.LEASE_LENGTH
+      self.entity.put()
+      return True
+
+  @ndb.transactional
+  def complete(self):
+    """Attempts to mark the Webmentions entity completed.
+
+    Returns True on success, False otherwise.
+    """
+    existing = self.entity.key.get()
     if existing is None:
-      self.fail('response entity disappeared!', level=logging.ERROR)
+      self.fail('entity disappeared!', level=logging.ERROR)
     elif existing.status == 'complete':
-      # let this response return 200 and finish
-      logging.warning('response stolen and finished. did my lease expire?')
+      # let this task return 200 and finish
+      logging.warning('another task stole and finished this. did my lease expire?')
       return False
     elif existing.status == 'new':
-      self.fail('response went backward from processing to new!',
+      self.fail('went backward from processing to new!',
                 level=logging.ERROR)
 
-    assert response.status == 'processing'
-    response.status = 'complete'
-    response.put()
+    assert self.entity.status == 'processing'
+    self.entity.status = 'complete'
+    self.entity.put()
     return True
 
   @ndb.transactional
-  def release_response(self, response, new_status):
-    """Attempts to unlease the response entity.
+  def release(self, new_status):
+    """Attempts to unlease the Webmentions entity.
 
     Args:
-      response: Response
       new_status: string
     """
-    existing = response.key.get()
+    existing = self.entity.key.get()
     if existing and existing.status == 'processing':
-      response.status = new_status
-      response.leased_until = None
-      response.put()
+      self.entity.status = new_status
+      self.entity.leased_until = None
+      self.entity.put()
 
   def fail(self, message, level=logging.WARNING):
     """Fills in an error response status code and message.
@@ -483,6 +445,57 @@ class Propagate(webapp2.RequestHandler):
     self.error(self.ERROR_HTTP_RETURN_CODE)
     logging.log(level, message)
     self.response.out.write(message)
+
+
+class Propagate(SendWebmentions):
+  """Task handler that sends webmentions for a single response.
+
+  Request parameters:
+    response_key: string key of response entity
+  """
+
+  def post(self):
+    logging.debug('Params: %s', self.request.params)
+
+    if not self.lease(ndb.Key(urlsafe=self.request.params['response_key'])):
+      return
+
+    activity = json.loads(self.entity.activity_json)
+    response_obj = json.loads(self.entity.response_json)
+    if not Source.is_public(response_obj) or not Source.is_public(activity):
+      logging.info('Response or activity is non-public. Dropping.')
+      self.complete()
+      return
+
+    source = self.entity.source.get()
+    if not source:
+      logging.warning('Source not found! Dropping response.')
+      return
+    logging.info('Source: %s %s', source.label(), source.key.string_id())
+
+    logging.info('Starting %s response %s',
+                 self.entity.source.kind(), self.entity.label())
+
+    _, response_id = util.parse_tag_uri(self.entity.key.string_id())
+    if self.entity.type in ('like', 'repost', 'rsvp'):
+      response_id = response_id.split('_')[-1]
+
+    # generate local response URL
+    _, post_id = util.parse_tag_uri(activity['id'])
+    # prefer brid-gy.appspot.com to brid.gy because non-browsers (ie OpenSSL)
+    # currently have problems with brid.gy's SSL cert. details:
+    # https://github.com/snarfed/bridgy/issues/20
+    if (self.request.host_url.endswith('brid.gy') or
+        self.request.host_url.endswith('brid-gy.appspot.com')):
+      host_url = 'https://brid-gy.appspot.com'
+    else:
+      host_url = self.request.host_url
+
+    local_response_url = '%s/%s/%s/%s/%s/%s' % (
+      host_url, self.entity.type, self.entity.source.get().SHORT_NAME,
+      self.entity.source.string_id(), post_id, response_id)
+
+    self.send_webmentions(local_response_url)
 
 
 application = webapp2.WSGIApplication([
