@@ -6,10 +6,12 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 import json
 import mox
 
+import appengine_config
 from appengine_config import HTTP_TIMEOUT
 from models import BlogPost
 
 from activitystreams.oauth_dropins import tumblr as oauth_tumblr
+import tumblr
 from tumblr import Tumblr
 import testutil
 
@@ -31,12 +33,12 @@ some stuff
 </body></html>""")
     self.mox.ReplayAll()
 
-    tumblr = Tumblr.new(self.handler, auth_entity=self.auth_entity)
-    self.assertEquals(self.auth_entity.key, tumblr.auth_entity)
-    self.assertEquals('name', tumblr.name)
-    self.assertEquals('http://primary/', tumblr.domain_url)
-    self.assertEquals('primary', tumblr.domain)
-    self.assertEquals('my-disqus-name', tumblr.disqus_shortname)
+    t = Tumblr.new(self.handler, auth_entity=self.auth_entity)
+    self.assertEquals(self.auth_entity.key, t.auth_entity)
+    self.assertEquals('name', t.name)
+    self.assertEquals('http://primary/', t.domain_url)
+    self.assertEquals('primary', t.domain)
+    self.assertEquals('my-disqus-name', t.disqus_shortname)
 
   def test_new_no_primary_blog(self):
     self.auth_entity.user_json = json.dumps({'user': {'blogs': [{'url': 'foo'}]}})
@@ -49,3 +51,35 @@ some stuff
 
     self.assertIsNone(Tumblr.new(self.handler, auth_entity=self.auth_entity))
     self.assertIn('install Disqus', next(iter(self.handler.messages)))
+
+  def test_create_comment(self):
+    appengine_config.DISQUS_API_KEY = 'my key'
+    appengine_config.DISQUS_API_SECRET = 'my secret'
+    appengine_config.DISQUS_ACCESS_TOKEN = 'my token'
+
+    self.expect_requests_get(
+      tumblr.DISQUS_API_THREAD_DETAILS_URL,
+      json.dumps({'response': {'id': '87654'}}),
+      params={'forum': 'my-disqus-name',
+              'thread':'link:http://primary/post/123999',
+              'api_key': 'my key',
+              'api_secret': 'my secret',
+              'access_token': 'my token',
+              })
+
+    self.expect_requests_post(
+      tumblr.DISQUS_API_CREATE_POST_URL,
+      json.dumps({'response': {'ok': 'sgtm'}}),
+      params={'thread': '87654',
+              'message': '<a href="http://who">who</a>: foo bar',
+              'api_key': 'my key',
+              'api_secret': 'my secret',
+              'access_token': 'my token',
+              })
+
+    self.mox.ReplayAll()
+
+    t = Tumblr(disqus_shortname='my-disqus-name')
+    resp = t.create_comment('http://primary/post/123999/xyz_abc?asdf',
+                            'who', 'http://who', 'foo bar')
+    self.assertEquals({'ok': 'sgtm'}, resp)

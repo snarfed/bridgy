@@ -143,40 +143,43 @@ class Tumblr(models.Source):
     # get the disqus thread id. details on thread queries:
     # http://stackoverflow.com/questions/4549282/disqus-api-adding-comment
     # https://disqus.com/api/docs/threads/details/
-    resp = self.disqus_call(requests.get, DISQUS_API_THREAD_DETAILS_URL, {
-        'forum': self.disqus_shortname,
-        # ident:[tumblr_post_id] should also work, but doesn't :/
-        'thread': 'link:%s' % post_url,
-        })
+    resp = self.disqus_call(requests.get, DISQUS_API_THREAD_DETAILS_URL,
+                            {'forum': self.disqus_shortname,
+                             # ident:[tumblr_post_id] should work, but doesn't :/
+                             'thread': 'link:%s' % post_url,
+                             },
+                            allow_redirects=True)
     thread_id = resp['id']
 
     # create the comment
-    resp = self.disqus_call(requests.post, DISQUS_API_CREATE_POST_URL, {
-        'thread': thread_id,
-        'message': '<a href="%s">%s</a>: %s' % (author_url, author_name, content),
-        # only allowed when authed as moderator/owner
-        # 'state': 'approved',
-        })
+    message = '<a href="%s">%s</a>: %s' % (author_url, author_name, content)
+    resp = self.disqus_call(requests.post, DISQUS_API_CREATE_POST_URL,
+                            {'thread': thread_id,
+                             'message': message,
+                             # only allowed when authed as moderator/owner
+                             # 'state': 'approved',
+                             })
     return resp
 
   @staticmethod
-  def disqus_call(method, url, data):
+  def disqus_call(method, url, params, **kwargs):
     """Makes a Disqus API call.
 
     Args:
       method: requests function to use, e.g. requests.get
       url: string
-      data: dict
+      params: query parameters
+      kwargs: passed through to method
 
     Returns: dict, JSON response
     """
-    logging.info('Calling Disqus %s with %s', url.split('/')[-2:], data)
-    data.update({
+    logging.info('Calling Disqus %s with %s', url.split('/')[-2:], params)
+    params.update({
         'api_key': appengine_config.DISQUS_API_KEY,
         'api_secret': appengine_config.DISQUS_API_SECRET,
         'access_token': appengine_config.DISQUS_ACCESS_TOKEN,
         })
-    resp = method(url, params=data, timeout=HTTP_TIMEOUT)
+    resp = method(url, timeout=HTTP_TIMEOUT, params=params, **kwargs)
     resp.raise_for_status()
     resp = resp.json()['response']
     logging.info('Response: %s', resp)
