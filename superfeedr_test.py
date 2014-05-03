@@ -73,3 +73,9 @@ class SuperfeedrTest(testutil.HandlerTest):
     self.assertEqual(1, len(tasks))
     self.assert_equals(posts[0].key.urlsafe(),
                        testutil.get_task_params(tasks[0])['key'])
+
+
+  def test_handle_feed_no_items(self):
+    superfeedr.handle_feed({}, self.source)
+    self.assertEquals(0, BlogPost.query().count())
+    self.assertEquals(0, len(self.taskqueue_stub.GetTasks('propagate-blogpost')))
