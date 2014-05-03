@@ -215,6 +215,16 @@ class Source(StringIdModel):
     """
     raise NotImplementedError()
 
+  def feed_url(self):
+    """Returns the RSS or Atom (or similar) feed URL for this source.
+
+    Must be implemented by subclasses. Currently only implemented by Blogger,
+    Tumlbr, and WordPress.
+
+    Returns: string URL
+    """
+    raise NotImplementedError()
+
   @classmethod
   def create_new(cls, handler, **kwargs):
     """Creates and saves a new Source and adds a poll task for it.
@@ -341,6 +351,13 @@ class Webmentions(StringIdModel):
     """
     raise NotImplementedError()
 
+  def add_task(self):
+    """Adds a propagate task for this entity.
+
+    To be implemented by subclasses.
+    """
+    raise NotImplementedError()
+
   @ndb.transactional
   def get_or_save(self):
     existing = self.key.get()
@@ -356,13 +373,8 @@ class Webmentions(StringIdModel):
 
     logging.debug('New webmentions to propagate! %s', self.label())
     self.put()
-    util.add_propagate_task(self)
+    self.add_task()
     return self
-
-  @staticmethod
-  def get_type(obj):
-    type = get_type(obj)
-    return type if type in VERB_TYPES else 'comment'
 
 
 class Response(Webmentions):
@@ -379,18 +391,29 @@ class Response(Webmentions):
     return ' '.join((self.key.kind(), self.type, self.key.id(),
                      json.loads(self.response_json).get('url', '[no url]')))
 
+  def add_task(self):
+    util.add_propagate_task(self)
+
+  @staticmethod
+  def get_type(obj):
+    type = get_type(obj)
+    return type if type in VERB_TYPES else 'comment'
+
 
 class BlogPost(Webmentions):
   """A blog post to be processed for links to send webmentions to.
 
   The key name is the URL.
   """
-  feed_item_json = ndb.JsonProperty(compressed=True)  # from SuperFeedr
+  feed_item = ndb.JsonProperty(compressed=True)  # from SuperFeedr
 
   def label(self):
     return ' '.join((self.key.kind(), self.key.id(),
                      # TODO
                      json.loads(self.feed_item_json).get('url', '[no url]')))
+
+  def add_task(self):
+    util.add_propagate_blogpost_task(self)
 
 
 class PublishedPage(StringIdModel):
