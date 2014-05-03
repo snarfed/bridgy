@@ -64,6 +64,7 @@ class Blogger(models.Source):
                    name=auth_entity.user_display_name(),
                    domain=domain,
                    domain_url=url,
+                   picture=auth_entity.picture_url,
                    superfeedr_secret=util.generate_secret(),
                    **kwargs)
 
