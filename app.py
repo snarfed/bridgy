@@ -25,7 +25,7 @@ from googleplus import GooglePlusPage
 from instagram import Instagram
 from twitter import Twitter
 import handlers
-from models import BlogWebmention, Publish, Response, Source
+from models import BlogPost, BlogWebmention, Publish, Response, Source
 import util
 from activitystreams.oauth_dropins.webutil.handlers import TemplateHandler
 
@@ -160,8 +160,8 @@ class UserHandler(DashboardHandler):
 
     if 'webmention' in self.source.features:
       # Blog posts
-      blogposts = Response.query().filter(Response.source == self.source.key)\
-                                  .order(-Response.created)\
+      blogposts = BlogPost.query().filter(BlogPost.source == self.source.key)\
+                                  .order(-BlogPost.created)\
                                   .fetch(10)
       for b in blogposts:
         b.links = self.process_webmention_links(b)
@@ -195,7 +195,7 @@ class UserHandler(DashboardHandler):
     """
     link = lambda url, g: util.pretty_link(
       url, glyphicon=g, a_class='original-post', new_tab=True)
-    e.links = util.trim_nulls({
+    return util.trim_nulls({
         'Failed': set(link(url, 'exclamation-sign') for url in e.error + e.failed),
         'Sending': set(link(url, 'transfer') for url in e.unsent
                        if url not in e.error),

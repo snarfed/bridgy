@@ -77,7 +77,7 @@ pre .link {
   text-align: center;
 }
 
-#publishes, #responses, #user {
+#blogposts, #publishes, #responses, #webmentions, #user {
   margin-top: 1em;
   margin-bottom: 1em;
 }
@@ -120,15 +120,14 @@ form input {
 }
 
 @media (min-width: 768px) {
-  .publishes > .row,
-  .responses > .row {
+  .user-items > .row {
     display: table;
     table-layout: fixed !important;
     width: 100%;
   }
 
-  .publishes > .row > .col-sm-4,
-  .responses > .row > .col-sm-3 {
+  .user-items > .row > .col-sm-3,
+  .user-items > .row > .col-sm-4 {
     display: table-cell;
     float: none;
     text-align: left;
@@ -137,8 +136,7 @@ form input {
 }
 
 @media (max-width: 767px) {
-  .publishes > .row,
-  .responses > .row {
+  .user-items > .row {
     margin-bottom: 1em;
   }
 }
@@ -166,7 +164,7 @@ form input {
 .glyphicon-remove { color: red !important; }
 .glyphicon-transfer { color: blue; }
 
-.publishes, .responses, .webmentions {
+.user-items {
   font-size: .8em;
   list-style: none;
 }
@@ -211,12 +209,12 @@ button {
   background-color: #FCC;
 }
 
-#preview-button, #poll-now-button, #retry-response-button, #send-button {
+#preview-button, #poll-now-button, #retry-button, #send-button {
   border-color: #428BCA;
   color: #428BCA;
 }
 
-#preview-button:hover, #poll-now-button:hover, #retry-response-button:hover,
+#preview-button:hover, #poll-now-button:hover, #retry-button:hover,
 #send-button:hover {
   background-color: #BDE;
 }

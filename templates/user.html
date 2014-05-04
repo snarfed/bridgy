@@ -132,7 +132,7 @@
 {% if "listen" in source.features %}
 {% if responses %}
 <p id="responses" class="big">Recent responses:</p>
-<ul class="responses">
+<ul class="user-items">
   {% for response in responses %}
   <li class="row">
    <div class="col-sm-3">
@@ -169,7 +169,7 @@
     {% if response.status == 'error' or response.error %}
     <form method="post" action="/retry-response">
       <input name="key" type="hidden" value="{{ response.key.urlsafe }}" />
-      <button id="retry-response-button" type="submit" class="btn btn-default">
+      <button id="retry-button" type="submit" class="btn btn-default">
         Retry</button>
     </form>
     {% endif %}
@@ -199,7 +199,7 @@
 {% if "publish" in source.features %}
 {% if publishes %}
 <p id="publishes" class="big">Recently published:</p>
-<ul class="publishes">
+<ul class="user-items">
   {% for publish in publishes %}
   <li class="row">
    <div class="col-sm-4">
@@ -236,16 +236,16 @@
 </div>
 
 
-<!-- Outgoing blog webmentions -->
+<!-- Blog posts -->
 <div class="row">
 {% if "webmention" in source.features %}
 {% if blogposts %}
 <p id="blogposts" class="big">Recent blog posts:</p>
-<ul class="blogposts">
+<ul class="user-items">
   {% for blogpost in blogposts %}
   <li class="row">
-   </div><div class="col-sm-4">
-    {{ blogpost.pretty_url }}
+   <div class="col-sm-4">
+    {{ blogpost.pretty_url|safe }}
 
    </div><div class="col-sm-4">
     <a href="/log?start_time={{ blogpost.updated|date:'U' }}&key={{ blogpost.key.urlsafe }}">
@@ -260,7 +260,7 @@
     {% if blogpost.status == 'error' or blogpost.error %}
     <form method="post" action="/retry-blogpost">
       <input name="key" type="hidden" value="{{ blogpost.key.urlsafe }}" />
-      <button id="retry-blogpost-button" type="submit" class="btn btn-default">
+      <button id="retry-button" type="submit" class="btn btn-default">
         Retry</button>
     </form>
     {% endif %}
@@ -270,7 +270,7 @@
       {{ label|safe }}:
       <ul class="original-post-links">{{ links|safeseq|unordered_list }}</ul>
     {% empty %}
-      No post links found
+      No links found
     {% endfor %}
    </div>
   </li>
@@ -291,7 +291,7 @@
 {% if webmentions %}
 <p id="webmentions" class="big">Recent
   <a href="http://indiewebify.me/#send-webmentions">webmentions</a>:</p>
-<ul class="webmentions">
+<ul class="user-items">
   {% for wm in webmentions %}
   <li class="row">
    <div class="col-sm-3">
