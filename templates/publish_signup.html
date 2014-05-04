@@ -1,11 +1,10 @@
- <!-- TODO: col-sm-4 for blog-webmention -->
-<div id="publish-signup" class="signup col-sm-6">
+<div id="publish-signup" class="signup col-sm-4">
 <p class="big">Want to publish?</p>
 
 <div class="row">
 <form method="post" name="publish-facebook-start" action="/facebook/start">
  <input type="image" alt="Sign in with Facebook"
-        src="/static/facebook_button_signin.png" />
+        src="/activitystreams/oauth_dropins/static/facebook.png" />
  <input name="state" type="hidden" value="publish" />
  <!-- https://developers.facebook.com/docs/reference/login/ -->
  <input name="scope" type="hidden"
@@ -14,7 +13,7 @@
 
 <form method="post" name="publish-twitter-start" action="/twitter/start">
  <input type="image" alt="Sign in with Twitter"
-        src="/static/twitter_button_signin.png" />
+        src="/activitystreams/oauth_dropins/static/twitter.png" />
  <input name="state" type="hidden" value="publish" />
 </form>
 

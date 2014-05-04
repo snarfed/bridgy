@@ -30,6 +30,9 @@ handlers:
   upload: static/style.css
   expiration: 1d
 
+- url: /activitystreams/oauth_dropins/static
+  static_dir: activitystreams/oauth_dropins/static
+
 - url: /fonts
   static_dir: activitystreams/oauth_dropins/fonts
 

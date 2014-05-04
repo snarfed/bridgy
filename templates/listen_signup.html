@@ -1,12 +1,11 @@
- <!-- TODO: col-sm-4 for blog-webmention -->
-<div id="listen-signup" class="signup col-sm-6">
-<p class="big">Want to pull responses back?</p>
+<div id="listen-signup" class="signup col-sm-4">
+<p class="big">Want comments and likes?</p>
 
 <div class="row">
 <div class="col-xs-12">
  <form method="post" name="listen-facebook-start" action="/facebook/start">
   <input type="image" alt="Sign in with Facebook"
-         src="/static/facebook_button_signin.png" />
+         src="/activitystreams/oauth_dropins/static/facebook.png" />
   <input name="state" type="hidden" value="listen" />
   <!-- https://developers.facebook.com/docs/reference/login/ -->
   <input name="scope" type="hidden"
@@ -14,7 +13,7 @@
 </form>
  <form method="post" name="listen-twitter-start" action="/twitter/start">
   <input type="image" alt="Sign in with Twitter"
-         src="/static/twitter_button_signin.png" />
+         src="/activitystreams/oauth_dropins/static/twitter.png" />
   <input name="state" type="hidden" value="listen" />
 </form></div>
 
@@ -23,7 +22,7 @@
 <div class="col-xs-12">
  <form method="post" name="listen-googleplus-start" action="/googleplus/start">
   <input type="image" alt="Sign in with Google+"
-         src="/static/googleplus_button_signin.png" />
+         src="/activitystreams/oauth_dropins/static/google_plus.png" />
   <!-- The state param doesn't actually work for G+. Not sure why. Doesn't
        matter for now since we don't support publish for G+. -->
   <input name="state" type="hidden" value="listen" />
@@ -33,7 +32,7 @@
 </form>
  <form method="post" name="listen-instagram-start" action="/instagram/start">
   <input type="image" alt="Sign in with Instagram"
-         src="/static/instagram_button_signin.png" />
+         src="/activitystreams/oauth_dropins/static/instagram.png" />
   <input name="state" type="hidden" value="listen" />
 </form></div>
 </div>

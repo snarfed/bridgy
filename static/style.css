@@ -86,13 +86,13 @@ pre .link {
   margin-bottom: 1em;
 }
 
-@media (min-width: 768px) {
-  #listen-signup, #listen-ui {
-    border-left: 1px solid lightgray;
-    /* TODO: uncomment for blog-webmention */
-    /* border-right: 1px solid lightgray; */
-  }
-}
+/* tentatively removed since it didn't look great with webmention signups */
+/* @media (min-width: 768px) { */
+/*   #listen-signup, #listen-ui { */
+/*     border-left: 1px solid lightgray; */
+/*     border-right: 1px solid lightgray; */
+/*   } */
+/* } */
 
 .signup input {
   margin: .5em;
@@ -138,6 +138,10 @@ form input {
 @media (max-width: 767px) {
   .user-items > .row {
     margin-bottom: 1em;
+  }
+
+  #signups .signup, #signups .signup > p {
+    margin-top: 1em;
   }
 }
 
@@ -246,7 +250,7 @@ iframe#twitter-widget-0 {
   font-size: .8em;
 }
 
-.shadow, .signup input, .profile {
+.shadow, .profile {
   -moz-box-shadow: 2px 2px 2px rgba(0,0,0,0.4);
   -webkit-box-shadow: 2px 2px 2px rgba(0,0,0,0.4);
   /* CSS3 */
@@ -257,7 +261,7 @@ iframe#twitter-widget-0 {
   filter: progid:DXImageTransform.Microsoft.Shadow(Strength=2,Direction=135,Color='#666666');
 }
 
-.shadow, .signup input, .profile {
+.shadow, .profile {
   -moz-box-shadow: 2px 2px 2px rgba(0,0,0,0.4);
   -webkit-box-shadow: 2px 2px 2px rgba(0,0,0,0.4);
   /* CSS3 */
@@ -268,7 +272,7 @@ iframe#twitter-widget-0 {
   filter: progid:DXImageTransform.Microsoft.Shadow(Strength=2,Direction=135,Color='#666666');
 }
 
-.shadow:hover, .signup input:hover, .profile:hover {
+.shadow:hover, .profile:hover {
   -moz-box-shadow: 2px 2px 2px #049;
   -webkit-box-shadow: 2px 2px 2px #049;
   /* CSS3 */
