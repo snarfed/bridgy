@@ -1,5 +1,10 @@
 """Blogger API 2.0 hosted blog implementation.
 
+To use, go to your Blogger blog's dashboard, click Template, Edit HTML, then
+put this in the head section:
+
+<link rel="webmention" href="https://www.brid.gy/webmention/blogger"></link>
+
 https://developers.google.com/blogger/docs/2.0/developers_guide_protocol
 https://support.google.com/blogger/answer/42064?hl=en
 create comment:
