@@ -507,10 +507,8 @@ class PropagateBlogPost(SendWebmentions):
 
   def post(self):
     logging.debug('Params: %s', self.request.params)
-    if not self.lease(ndb.Key(urlsafe=self.request.params['key'])):
-      return
-
-    self.send_webmentions(local_response_url)
+    if self.lease(ndb.Key(urlsafe=self.request.params['key'])):
+      self.send_webmentions(self.entity.key.id())
 
 
 application = webapp2.WSGIApplication([
