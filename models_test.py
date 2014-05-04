@@ -4,6 +4,7 @@
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
+import datetime
 import json
 import urllib
 
@@ -87,7 +88,8 @@ class SourceTest(testutil.HandlerTest):
     self.assert_equals({msg}, self.handler.messages)
 
   def test_create_new_already_exists(self):
-    FakeSource.new(None, features=['listen']).put()
+    created = datetime.datetime(year=1901, month=2, day=3)
+    FakeSource.new(None, features=['listen'],created=created).put()
     self.assert_equals(['listen'], FakeSource.query().get().features)
 
     FakeSource.string_id_counter -= 1
@@ -95,7 +97,10 @@ class SourceTest(testutil.HandlerTest):
       id='x', user_json=json.dumps({'url': 'http://foo.com/'}))
     auth_entity.put()
     self._test_create_new(auth_entity=auth_entity, features=['publish'])
-    self.assert_equals(['listen', 'publish'], FakeSource.query().get().features)
+
+    source = FakeSource.query().get()
+    self.assert_equals(['listen', 'publish'], source.features)
+    self.assert_equals(created, source.created)
     self.assert_equals(
       {"Updated fake (FakeSource). Try previewing a post from your web site!"},
       self.handler.messages)

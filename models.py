@@ -267,6 +267,7 @@ class Source(StringIdModel):
     if existing:
       # merge some fields
       source.features = set(source.features + existing.features)
+      source.created = existing.created
       verb = 'Updated'
     else:
       verb = 'Added'
