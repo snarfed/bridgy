@@ -57,7 +57,6 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
         (source_cls.AS_CLASS.NAME, domain))
 
     # create BlogWebmention entity
-    # TODO: use source url + target url as key name
     self.entity = BlogWebmention.get_or_insert(self.source_url,
                                                source=self.source.key,
                                                target=self.target_url)

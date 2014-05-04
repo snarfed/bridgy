@@ -278,6 +278,9 @@ class CachedFrontPage(ndb.Model):
   Stored in the datastore since datastore entities in memcache (mostly
   Responses) are requested way more often, so it would get evicted
   out of memcache easily.
+
+  NDB memcache key, useful for clearing after deleting front page:
+  NDB9:aglzfmJyaWQtZ3lyHgsSD0NhY2hlZEZyb250UGFnZSIJc2luZ2xldG9uDA
   """
   ID = 'singleton'
   html = ndb.TextProperty()

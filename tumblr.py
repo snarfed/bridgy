@@ -1,5 +1,10 @@
 """Tumblr + Disqus blog webmention implementation.
 
+To use, go to your Tumblr dashboard, click Customize, Edit HTML, then put this
+in the head section:
+
+<link rel="webmention" href="https://www.brid.gy/webmention/tumblr">
+
 http://disqus.com/api/docs/
 http://disqus.com/api/docs/posts/create/
 https://github.com/disqus/DISQUS-API-Recipes/blob/master/snippets/php/create-guest-comment.php
