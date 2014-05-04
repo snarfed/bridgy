@@ -236,7 +236,56 @@
 </div>
 
 
-<!-- Blog webmentions -->
+<!-- Outgoing blog webmentions -->
+<div class="row">
+{% if "webmention" in source.features %}
+{% if blogposts %}
+<p id="blogposts" class="big">Recent blog posts:</p>
+<ul class="blogposts">
+  {% for blogpost in blogposts %}
+  <li class="row">
+   </div><div class="col-sm-4">
+    {{ blogpost.pretty_url }}
+
+   </div><div class="col-sm-4">
+    <a href="/log?start_time={{ blogpost.updated|date:'U' }}&key={{ blogpost.key.urlsafe }}">
+      {{ blogpost.updated|timesince }} ago
+      {% if blogpost.status == 'error' %}
+       <span title="Error" class="glyphicon glyphicon-exclamation-sign"></span>
+      {% else %}{% if blogpost.status == 'processing' %}
+       <span title="Processing" class="glyphicon glyphicon-transfer"></span>
+      {% endif %}{% endif %}
+    </a>
+
+    {% if blogpost.status == 'error' or blogpost.error %}
+    <form method="post" action="/retry-blogpost">
+      <input name="key" type="hidden" value="{{ blogpost.key.urlsafe }}" />
+      <button id="retry-blogpost-button" type="submit" class="btn btn-default">
+        Retry</button>
+    </form>
+    {% endif %}
+
+   </div><div class="col-sm-4">
+    {% for label, links in blogpost.links.items %}
+      {{ label|safe }}:
+      <ul class="original-post-links">{{ links|safeseq|unordered_list }}</ul>
+    {% empty %}
+      No post links found
+    {% endfor %}
+   </div>
+  </li>
+  {% endfor %}
+</ul>
+
+{% else %}
+<p class="big">No blog posts yet.</p>
+{% endif %}
+
+{% endif %}
+</div>
+
+
+<!-- Incoming blog webmentions -->
 <div class="row">
 {% if "webmention" in source.features %}
 {% if webmentions %}
@@ -277,7 +326,7 @@
 
 {% else %}
 <p class="big">No
-  <a href="http://indiewebify.me/#send-webmentions">webmentions</a> yet.</p>
+  <a href="http://indiewebify.me/#send-webmentions">webmentions</a> received yet.</p>
 {% endif %}
 {% endif %}
 </div>

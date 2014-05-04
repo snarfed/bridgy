@@ -62,7 +62,7 @@ def subscribe(source, handler):
 def handle_feed(feed, source):
   """Handles a Superfeedr JSON feed.
 
-  Creates BlogPost entities and adds propagate_blogpost tasks for new items.
+  Creates BlogPost entities and adds propagate-blogpost tasks for new items.
 
   http://documentation.superfeedr.com/schema.html#json
 

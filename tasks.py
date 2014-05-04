@@ -516,5 +516,5 @@ class PropagateBlogPost(SendWebmentions):
 application = webapp2.WSGIApplication([
     ('/_ah/queue/poll', Poll),
     ('/_ah/queue/propagate', PropagateResponse),
-    ('/_ah/queue/propagate_blogpost', PropagateBlogPost),
+    ('/_ah/queue/propagate-blogpost', PropagateBlogPost),
     ], debug=appengine_config.DEBUG)

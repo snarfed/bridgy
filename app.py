@@ -132,17 +132,7 @@ class UserHandler(DashboardHandler):
           r.actor['image']['url'] = util.update_scheme(image_url, self)
 
         # generate original post links
-        link = lambda url, g: util.pretty_link(
-          url, glyphicon=g, a_class='original-post', new_tab=True)
-        r.links = util.trim_nulls({
-          'Failed': set(link(url, 'exclamation-sign') for url in r.error + r.failed),
-          'Sending': set(link(url, 'transfer') for url in r.unsent
-                         if url not in r.error),
-          'Sent': set(link(url, None) for url in r.sent
-                      if url not in (r.error + r.unsent)),
-          'No <a href="http://indiewebify.me/#send-webmentions">webmention</a> '
-            'support': set(link(url, None) for url in r.skipped),
-          })
+        r.links = self.process_webmention_links(r)
 
         # XXX horrible hack: use created time as updated time if updated time is
         # before 2014-03-28 evening...
@@ -168,9 +158,17 @@ class UserHandler(DashboardHandler):
 
       vars['publishes'] = publishes
 
-
-    # Blog webmentions
     if 'webmention' in self.source.features:
+      # Blog posts
+      blogposts = Response.query().filter(Response.source == self.source.key)\
+                                  .order(-Response.created)\
+                                  .fetch(10)
+      for b in blogposts:
+        b.links = self.process_webmention_links(b)
+        b.pretty_url = util.pretty_link(b.key.id(), a_class='original-post',
+                                        new_tab=True)
+
+      # Blog webmentions
       webmentions = BlogWebmention.query()\
           .filter(BlogWebmention.source == self.source.key)\
           .order(-BlogWebmention.updated)\
@@ -185,9 +183,23 @@ class UserHandler(DashboardHandler):
         w.pretty_target = util.pretty_link(w.target, a_class='original-post',
                                            new_tab=True, keep_host=target_is_source)
 
-      vars['webmentions'] = webmentions
+      vars.update({'blogposts': blogposts, 'webmentions': webmentions})
 
     return vars
+
+  def process_webmention_links(self, entity):
+    """Generates pretty HTML for the links in a BlogWebmention entity."""
+    link = lambda url, g: util.pretty_link(
+      url, glyphicon=g, a_class='original-post', new_tab=True)
+    r.links = util.trim_nulls({
+        'Failed': set(link(url, 'exclamation-sign') for url in r.error + r.failed),
+        'Sending': set(link(url, 'transfer') for url in r.unsent
+                       if url not in r.error),
+        'Sent': set(link(url, None) for url in r.sent
+                    if url not in (r.error + r.unsent)),
+        'No <a href="http://indiewebify.me/#send-webmentions">webmention</a> '
+        'support': set(link(url, None) for url in r.skipped),
+        })
 
 
 class AboutHandler(TemplateHandler):

@@ -72,7 +72,7 @@ def add_propagate_task(entity, **kwargs):
 
 
 def add_propagate_blogpost_task(entity, **kwargs):
-  """Adds a propagate_blogpost task for the given response entity.
+  """Adds a propagate-blogpost task for the given response entity.
   """
   taskqueue.add(queue_name='propagate-blogpost',
                 params={'key': entity.key.urlsafe()},
