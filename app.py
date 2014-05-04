@@ -187,18 +187,22 @@ class UserHandler(DashboardHandler):
 
     return vars
 
-  def process_webmention_links(self, entity):
-    """Generates pretty HTML for the links in a BlogWebmention entity."""
+  def process_webmention_links(self, e):
+    """Generates pretty HTML for the links in a BlogWebmention entity.
+
+    Args:
+      e: BlogWebmention subclass (Response or BlogPost)
+    """
     link = lambda url, g: util.pretty_link(
       url, glyphicon=g, a_class='original-post', new_tab=True)
-    r.links = util.trim_nulls({
-        'Failed': set(link(url, 'exclamation-sign') for url in r.error + r.failed),
-        'Sending': set(link(url, 'transfer') for url in r.unsent
-                       if url not in r.error),
-        'Sent': set(link(url, None) for url in r.sent
-                    if url not in (r.error + r.unsent)),
+    e.links = util.trim_nulls({
+        'Failed': set(link(url, 'exclamation-sign') for url in e.error + e.failed),
+        'Sending': set(link(url, 'transfer') for url in e.unsent
+                       if url not in e.error),
+        'Sent': set(link(url, None) for url in e.sent
+                    if url not in (e.error + e.unsent)),
         'No <a href="http://indiewebify.me/#send-webmentions">webmention</a> '
-        'support': set(link(url, None) for url in r.skipped),
+        'support': set(link(url, None) for url in e.skipped),
         })
 
 
