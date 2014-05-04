@@ -146,9 +146,21 @@ class OAuthCallback(util.Handler):
     self.maybe_add_or_delete_source(Blogger, auth_entity, state)
 
 
+class SuperfeedrNotifyHandler(webapp2.RequestHandler):
+  """Handles a Superfeedr notification.
+
+  http://documentation.superfeedr.com/subscribers.html#pubsubhubbubnotifications
+  """
+  def post(self, id):
+    source = Blogger.get_by_id()
+    if source and 'webmention' in source.features:
+      superfeedr.handle_feed(self.request.body, source)
+
+
 application = webapp2.WSGIApplication([
     ('/blogger/start', oauth_blogger.StartHandler.to('/blogger/oauth2callback')),
     ('/blogger/oauth2callback', oauth_blogger.CallbackHandler.to('/blogger/add')),
     ('/blogger/add', OAuthCallback),
     ('/blogger/delete/start', oauth_blogger.StartHandler.to('/blogger/oauth2callback')),
+    ('/blogger/notify/(.+)', SuperfeedrNotifyHandler),
     ], debug=appengine_config.DEBUG)

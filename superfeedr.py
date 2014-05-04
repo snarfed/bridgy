@@ -14,16 +14,11 @@ import logging
 import appengine_config
 from appengine_config import HTTP_TIMEOUT
 
-from blogger import Blogger
 import models
 import requests
 from requests.auth import HTTPBasicAuth
 import util
-from tumblr import Tumblr
-import webapp2
-from wordpress_rest import WordPress
 
-SOURCES = {cls.SHORT_NAME: cls for cls in (Blogger, WordPress, Tumblr)}
 PUSH_API_URL = 'https://push.superfeedr.com'
 
 
@@ -36,11 +31,12 @@ def subscribe(source, handler):
 
   Args:
     source: Blogger, Tumblr, or WordPress
+    handler: webapp2.RequestHandler
   """
   data = {
     'hub.mode': 'subscribe',
     'hub.topic': source.feed_url(),
-    'hub.callback': '%s/superfeedr/notify/%s/%s' % (
+    'hub.callback': '%s/%s/notify/%s' % (
       handler.request.host_url, source.SHORT_NAME, source.key.id()),
     # TODO
     # 'hub.secret': 'xxx',
@@ -54,7 +50,7 @@ def subscribe(source, handler):
                                           appengine_config.SUPERFEEDR_TOKEN),
                        timeout=HTTP_TIMEOUT)
   resp.raise_for_status()
-  handle_feed(resp.json(), source)
+  handle_feed(resp.text, source)
 
 
 def handle_feed(feed, source):
@@ -63,12 +59,14 @@ def handle_feed(feed, source):
   Creates BlogPost entities and adds propagate-blogpost tasks for new items.
 
   http://documentation.superfeedr.com/schema.html#json
+  http://documentation.superfeedr.com/subscribers.html#pubsubhubbubnotifications
 
   Args:
-    feed: SuperFeeder JSON feed object
+    feed: string, SuperFeeder JSON feed
     source: Blogger, Tumblr, or WordPress
   """
-  for item in feed.get('items', []):
+  logging.info('Raw feed: %s', feed)
+  for item in json.loads(feed).get('items', []):
     # TODO: extract_links currently has a bug that makes it drop trailing
     # slashes. ugh. fix that.
     links = util.extract_links(item.get('content') or item.get('summary', ''))
@@ -82,21 +80,3 @@ def handle_feed(feed, source):
                     feed_item=item,
                     unsent=links,
                     ).get_or_save()
-
-
-class NotifyHandler(webapp2.RequestHandler):
-  """Handles a Superfeedr notification.
-
-  http://documentation.superfeedr.com/subscribers.html#pubsubhubbubnotifications
-  """
-
-  def post(self, shortname, key_id):
-    logging.info('Params: %s', self.request.params)
-    logging.info('Body: %s', self.request.body)
-    source = SOURCES[shortname].get_by_id(key_id)
-    handle_feed(json.loads(self.request.body), source)
-
-
-application = webapp2.WSGIApplication([
-    ('/superfeedr/notify/(blogger|fake|tumblr|wordpress)/(.+)', NotifyHandler),
-    ], debug=appengine_config.DEBUG)

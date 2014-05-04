@@ -17,7 +17,6 @@ class SuperfeedrTest(testutil.HandlerTest):
 
   def setUp(self):
     super(SuperfeedrTest, self).setUp()
-    superfeedr.SOURCES['fake'] = testutil.FakeSource
     self.source = testutil.FakeSource(id='foo.com', domain='foo.com',
                                       features=['webmention'])
     self.source.put()
@@ -26,8 +25,7 @@ class SuperfeedrTest(testutil.HandlerTest):
     expected = {
       'hub.mode': 'subscribe',
       'hub.topic': 'fake feed url',
-      'hub.callback': 'http://localhost/superfeedr/notify/fake/foo.com',
-      'hub.secret': 'xxx',
+      'hub.callback': 'http://localhost/fake/notify/foo.com',
       'format': 'json',
       'retrieve': 'true',
       }
@@ -54,13 +52,9 @@ class SuperfeedrTest(testutil.HandlerTest):
                         {'key': posts[1].key.urlsafe()}],
                        [testutil.get_task_params(t) for t in tasks])
 
-  def test_notify(self):
+  def test_handle_feed(self):
     item_a = {'permalinkUrl': 'A', 'content': 'a http://a.com a'}
-    resp = superfeedr.application.get_response(
-      '/superfeedr/notify/fake/foo.com', method='POST',
-      body=json.dumps({'items': [item_a]}),
-      content_type='application/json')
-    self.assertEqual(200, resp.status_int)
+    superfeedr.handle_feed(json.dumps({'items': [item_a]}), self.source)
 
     posts = list(BlogPost.query())
     self.assert_entities_equal(
@@ -76,6 +70,6 @@ class SuperfeedrTest(testutil.HandlerTest):
 
 
   def test_handle_feed_no_items(self):
-    superfeedr.handle_feed({}, self.source)
+    superfeedr.handle_feed('{}', self.source)
     self.assertEquals(0, BlogPost.query().count())
     self.assertEquals(0, len(self.taskqueue_stub.GetTasks('propagate-blogpost')))

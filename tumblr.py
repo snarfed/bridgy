@@ -192,8 +192,20 @@ class AddTumblr(oauth_tumblr.CallbackHandler, util.Handler):
     self.maybe_add_or_delete_source(Tumblr, auth_entity, state)
 
 
+class SuperfeedrNotifyHandler(webapp2.RequestHandler):
+  """Handles a Superfeedr notification.
+
+  http://documentation.superfeedr.com/subscribers.html#pubsubhubbubnotifications
+  """
+  def post(self, id):
+    source = Tumblr.get_by_id()
+    if source and 'webmention' in source.features:
+      superfeedr.handle_feed(self.request.body, source)
+
+
 application = webapp2.WSGIApplication([
     ('/tumblr/start', oauth_tumblr.StartHandler.to('/tumblr/add')),
     ('/tumblr/add', AddTumblr),
     ('/tumblr/delete/start', oauth_tumblr.CallbackHandler.to('/delete/finish')),
+    ('/tumblr/notify/(.+)', SuperfeedrNotifyHandler),
     ], debug=appengine_config.DEBUG)
