@@ -43,9 +43,7 @@ def subscribe(source, handler):
     'hub.callback': '%s/superfeedr/notify/%s/%s' % (
       handler.request.host_url, source.SHORT_NAME, source.key.id()),
     # TODO
-    'hub.secret': 'xxx',
-    # TODO?
-    # 'hub.verify': 'sync',
+    # 'hub.secret': 'xxx',
     'format': 'json',
     'retrieve': 'true',
     }
