@@ -10,7 +10,7 @@ import appengine_config
 from appengine_config import HTTP_TIMEOUT
 from models import BlogPost
 
-from activitystreams.oauth_dropins import tumblr as oauth_tumblr
+from activitystreams.oauth_dropins.tumblr import TumblrAuth
 import tumblr
 from tumblr import Tumblr
 import testutil
@@ -20,7 +20,7 @@ class TumblrTest(testutil.HandlerTest):
 
   def setUp(self):
     super(TumblrTest, self).setUp()
-    self.auth_entity = oauth_tumblr.TumblrAuth(id='name', user_json=json.dumps({
+    self.auth_entity = TumblrAuth(id='name', user_json=json.dumps({
           'user': {'blogs': [{'url': 'other'},
                              {'url': 'http://primary/', 'primary': True}]}}))
 

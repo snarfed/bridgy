@@ -10,7 +10,7 @@ import appengine_config
 from appengine_config import HTTP_TIMEOUT
 from models import BlogPost
 
-from activitystreams.oauth_dropins import blogger_v2 as oauth_blogger
+from activitystreams.oauth_dropins.blogger_v2 import BloggerV2Auth
 import blogger
 from blogger import Blogger
 from gdata.blogger import data
@@ -23,11 +23,10 @@ class BloggerTest(testutil.HandlerTest):
 
   def setUp(self):
     super(BloggerTest, self).setUp()
-    self.auth_entity = oauth_blogger.BloggerV2Auth(
-      name='name',
-      blog_ids=['111'],
-      blog_hostnames=['my.blawg'],
-      picture_url='http://pic')
+    self.auth_entity = BloggerV2Auth(name='name',
+                                     blog_ids=['111'],
+                                     blog_hostnames=['my.blawg'],
+                                     picture_url='http://pic')
     self.client = self.mox.CreateMock(BloggerClient)
 
   def test_new(self):

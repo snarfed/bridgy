@@ -44,14 +44,21 @@ class WordPress(models.Source):
       handler: the current RequestHandler
       auth_entity: oauth_dropins.wordpress.WordPressAuth
     """
-    user_json = json.loads(auth_entity.user_json)
-    return WordPress(id=auth_entity.key.id(),
-                     auth_entity=auth_entity.key,
-                     url=auth_entity.blog_url,
-                     name=auth_entity.user_display_name(),
-                     picture=user_json.get('avatar_URL'),
-                     superfeedr_secret=util.generate_secret(),
-                     **kwargs)
+    avatar = (json.loads(auth_entity.user_json).get('avatar_URL')
+              if auth_entity.user_json else None)
+    wp = WordPress(id=auth_entity.key.id(),
+                   auth_entity=auth_entity.key,
+                   name=auth_entity.user_display_name(),
+                   picture=avatar,
+                   superfeedr_secret=util.generate_secret(),
+                   **kwargs)
+
+    url, domain, _ = wp._url_and_domain(auth_entity)
+    wp.url = url
+    wp.domain_url = url
+    wp.domain = domain
+
+    return wp
 
   def feed_url(self):
     # http://en.support.wordpress.com/feeds/

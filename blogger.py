@@ -26,6 +26,8 @@ import models
 import util
 import webapp2
 
+from google.appengine.ext import ndb
+
 
 class Blogger(models.Source):
   """A Blogger blog.
