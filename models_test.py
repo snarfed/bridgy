@@ -8,6 +8,8 @@ import json
 import urllib
 
 from models import Response, Source
+import mox
+import superfeedr
 import testutil
 from testutil import FakeSource
 import util
@@ -102,6 +104,13 @@ class SourceTest(testutil.HandlerTest):
     """If a source is publish only, we shouldn't insert a poll task."""
     FakeSource.create_new(self.handler, features=['publish'])
     self.assertEqual(0, len(self.taskqueue_stub.GetTasks('poll')))
+
+  def test_create_new_webmention(self):
+    """We should subscribe to webmention sources in Superfeedr."""
+    self.mox.StubOutWithMock(superfeedr, 'subscribe')#, use_mock_anything=True)
+    superfeedr.subscribe(mox.IsA(FakeSource), self.handler)
+    self.mox.ReplayAll()
+    FakeSource.create_new(self.handler, features=['webmention'])
 
   def test_create_new_domain(self):
     """If the source has a URL set, extract its domain."""

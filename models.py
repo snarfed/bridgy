@@ -12,6 +12,7 @@ import appengine_config
 
 from activitystreams import source as as_source
 from activitystreams.oauth_dropins.webutil.models import StringIdModel
+import superfeedr
 import util
 
 from google.appengine.api import taskqueue
@@ -285,6 +286,8 @@ class Source(StringIdModel):
 
     if 'listen' in source.features:
       util.add_poll_task(source)
+    if 'webmention' in source.features:
+      superfeedr.subscribe(source, handler)
 
     return source
 
