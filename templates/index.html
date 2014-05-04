@@ -8,9 +8,11 @@
 
 <!-- Signup buttons -->
 <div id="signups" class="row">
+{% with "col-sm-4" as width %}
 {% include "publish_signup.html" %}
 {% include "listen_signup.html" %}
 {% include "webmention_signup.html" %}
+{% endwith %}
 </div>
 
 

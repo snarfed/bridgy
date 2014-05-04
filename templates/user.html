@@ -75,7 +75,9 @@
 
 <!-- Publish signup buttons -->
 {% else %}
-{% include "publish_signup.html" %}
+{% with "col-sm-6" as width %}
+  {% include "publish_signup.html" %}
+{% endwith %}
 {% endif %}
 
 
@@ -116,7 +118,9 @@
 
 <!-- Listen signup buttons -->
 {% else %}
-{% include "listen_signup.html" %}
+{% with "col-sm-6" as width %}
+  {% include "listen_signup.html" %}
+{% endwith %}
 {% endif %}
 
 </div>
