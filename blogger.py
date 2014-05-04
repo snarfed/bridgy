@@ -21,7 +21,7 @@ import appengine_config
 from appengine_config import HTTP_TIMEOUT
 
 from activitystreams.oauth_dropins import blogger_v2 as oauth_blogger
-import gdata.blogger.client
+from gdata.blogger.client import Query
 import models
 import util
 import webapp2
@@ -83,7 +83,7 @@ class Blogger(models.Source):
       return None, None, False
     return 'http://%s/' % domain, domain, True
 
-  def create_comment(self, post_url, author_name, author_url, content):
+  def create_comment(self, post_url, author_name, author_url, content, client=None):
     """Creates a new comment in the source silo.
 
     Must be implemented by subclasses.
@@ -93,15 +93,18 @@ class Blogger(models.Source):
       author_name: string
       author_url: string
       content: string
+      client: gdata.blogger.client.BloggerClient. If None, one will be created
+        from auth_entity. Used for dependency injection in the unit test.
 
     Returns: JSON response dict with 'id' and other fields
     """
-    client = self.auth_entity.get().api()
+    if client is None:
+      client = self.auth_entity.get().api()
 
     # extract the post's path and look up its post id
     path = urlparse.urlparse(post_url).path
     logging.info('Looking up post id for %s', path)
-    feed = client.get_posts(self.key.id(), query=gdata.blogger.client.Query(path=path))
+    feed = client.get_posts(self.key.id(), query=Query(path=path))
 
     if not feed.entry:
       return self.error('Could not find Blogger post %s' % post_url)
@@ -136,7 +139,7 @@ class OAuthCallback(util.Handler):
     if not state:
       # state doesn't currently come through for Blogger. not sure why. doesn't
       # matter for now since we don't plan to implement listen or publish.
-      state = 'webmentino'
+      state = 'webmention'
     auth_entity = ndb.Key(urlsafe=auth_entity_str_key).get()
     self.maybe_add_or_delete_source(Blogger, auth_entity, state)
 
