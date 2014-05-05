@@ -452,12 +452,16 @@ class Publish(ndb.Model):
 class BlogWebmention(Publish, StringIdModel):
   """Datastore entity for webmentions for hosted blog providers.
 
-  Child of Source. Key id is the source URL and target URL concated with a
-  space, ie 'SOURCE TARGET'.
+  Key id is the source URL and target URL concated with a space, ie
+  'SOURCE TARGET'.
 
   Reuses Publish's fields, but otherwise unrelated.
   """
-  target = ndb.StringProperty()  # URL
+  def source_url(self):
+    return self.key.id().split()[0]
+
+  def target_url(self):
+    return self.key.id().split()[1]
 
 
 class SyndicatedPost(ndb.Model):

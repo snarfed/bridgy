@@ -63,13 +63,12 @@ i hereby reply
     self.assertEquals(200, resp.status_int, resp.body)
     self.assertEquals({'id': 'fake id'}, json.loads(resp.body))
 
-    entity = BlogWebmention.get_by_id('http://bar.com/reply')
-    self.assertEquals(self.source.key, entity.source)
-    self.assertEquals('http://foo.com/post/1', entity.target)
-    self.assertEquals('complete', entity.status)
-    self.assertEquals('comment', entity.type)
-    self.assertEquals(html, entity.html)
-    self.assertEquals({'id': 'fake id'}, entity.published)
+    bw = BlogWebmention.get_by_id('http://bar.com/reply http://foo.com/post/1')
+    self.assertEquals(self.source.key, bw.source)
+    self.assertEquals('complete', bw.status)
+    self.assertEquals('comment', bw.type)
+    self.assertEquals(html, bw.html)
+    self.assertEquals({'id': 'fake id'}, bw.published)
 
   def test_domain_not_found(self):
     # no source
@@ -95,20 +94,23 @@ i hereby reply
 
     resp = self.get_response(target='http://FoO.cOm/post/1')
     self.assertEquals(200, resp.status_int, resp.body)
-    self.assertEquals('complete', BlogWebmention.get_by_id('http://bar.com/reply').status)
+    bw = BlogWebmention.get_by_id('http://bar.com/reply http://FoO.cOm/post/1')
+    self.assertEquals('complete', bw.status)
 
   def test_source_link_not_found(self):
     html = '<article class="h-entry"></article>'
     self.expect_requests_get('http://bar.com/reply', html)
     self.mox.ReplayAll()
     self.assert_error('Could not find target URL')
-    self.assertEquals('failed', BlogWebmention.get_by_id('http://bar.com/reply').status)
+    bw = BlogWebmention.get_by_id('http://bar.com/reply http://foo.com/post/1')
+    self.assertEquals('failed', bw.status)
 
   def test_source_missing_mf2(self):
     self.expect_requests_get('http://bar.com/reply', '')
     self.mox.ReplayAll()
     self.assert_error('No microformats2 data found')
-    self.assertEquals('failed', BlogWebmention.get_by_id('http://bar.com/reply').status)
+    bw = BlogWebmention.get_by_id('http://bar.com/reply http://foo.com/post/1')
+    self.assertEquals('failed', bw.status)
 
   def test_repeated(self):
     # 1) first a failure
@@ -127,19 +129,19 @@ i hereby reply
 
     # now the webmention requests. 1) failure
     self.assert_error('No microformats2 data found')
-    self.assertEquals('failed',
-                      BlogWebmention.get_by_id('http://bar.com/reply').status)
+    bw = BlogWebmention.get_by_id('http://bar.com/reply http://foo.com/post/1')
+    self.assertEquals('failed', bw.status)
 
     # 2) success
     resp = self.get_response()
     self.assertEquals(200, resp.status_int, resp.body)
-    entity = BlogWebmention.get_by_id('http://bar.com/reply')
-    self.assertEquals('complete', entity.status)
-    self.assertEquals('repost', entity.type)
+    bw = BlogWebmention.get_by_id('http://bar.com/reply http://foo.com/post/1')
+    self.assertEquals('complete', bw.status)
+    self.assertEquals('repost', bw.type)
 
     # 3) noop repeated success
     # source without webmention feature
     resp = self.get_response()
     self.assertEquals(200, resp.status_int, resp.body)
-    self.assertEquals('complete',
-                      BlogWebmention.get_by_id('http://bar.com/reply').status)
+    bw = BlogWebmention.get_by_id('http://bar.com/reply http://foo.com/post/1')
+    self.assertEquals('complete', bw.status)

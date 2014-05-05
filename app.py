@@ -174,13 +174,14 @@ class UserHandler(DashboardHandler):
           .order(-BlogWebmention.updated)\
           .fetch(10)
       for w in webmentions:
-        w.pretty_source = util.pretty_link(w.key.id(), a_class='original-post',
+        w.pretty_source = util.pretty_link(w.source_url(), a_class='original-post',
                                            new_tab=True)
         try:
-          target_is_source = urlparse.urlparse(w.target).netloc == self.source.domain
+          target_is_source = (urlparse.urlparse(w.target_url()).netloc ==
+                              self.source.domain)
         except BaseException:
           target_is_source = False
-        w.pretty_target = util.pretty_link(w.target, a_class='original-post',
+        w.pretty_target = util.pretty_link(w.target_url(), a_class='original-post',
                                            new_tab=True, keep_host=target_is_source)
 
       vars.update({'blogposts': blogposts, 'webmentions': webmentions})

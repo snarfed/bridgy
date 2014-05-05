@@ -57,9 +57,8 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
         (source_cls.AS_CLASS.NAME, domain))
 
     # create BlogWebmention entity
-    self.entity = BlogWebmention.get_or_insert(self.source_url,
-                                               source=self.source.key,
-                                               target=self.target_url)
+    id = '%s %s' % (self.source_url, self.target_url)
+    self.entity = BlogWebmention.get_or_insert(id, source=self.source.key)
     if self.entity.status == 'complete':
       # TODO: response message saying update isn't supported
       self.response.write(self.entity.published)
