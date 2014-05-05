@@ -28,6 +28,7 @@ from appengine_config import HTTP_TIMEOUT
 from activitystreams.oauth_dropins import blogger_v2 as oauth_blogger
 from gdata.blogger.client import Query
 import models
+import superfeedr
 import util
 import webapp2
 

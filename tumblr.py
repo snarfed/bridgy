@@ -43,6 +43,7 @@ from appengine_config import HTTP_TIMEOUT
 from activitystreams.oauth_dropins import tumblr as oauth_tumblr
 import models
 import requests
+import superfeedr
 import util
 
 from google.appengine.ext import ndb

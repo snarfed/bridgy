@@ -29,6 +29,7 @@ from appengine_config import HTTP_TIMEOUT
 
 from activitystreams.oauth_dropins import wordpress_rest as oauth_wordpress
 import models
+import superfeedr
 import util
 import webapp2
 
