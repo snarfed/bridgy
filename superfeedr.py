@@ -65,6 +65,7 @@ def handle_feed(feed, source):
     feed: string, SuperFeeder JSON feed
     source: Blogger, Tumblr, or WordPress
   """
+  logging.info('Source: %s %s', source.label(), source.key.string_id())
   logging.info('Raw feed: %s', feed)
   for item in json.loads(feed).get('items', []):
     # TODO: extract_links currently has a bug that makes it drop trailing
