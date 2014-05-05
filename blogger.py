@@ -171,4 +171,3 @@ application = webapp2.WSGIApplication([
     ('/blogger/delete/start', oauth_blogger.StartHandler.to('/blogger/oauth2callback')),
     ('/blogger/notify/(.+)', SuperfeedrNotifyHandler),
     ], debug=appengine_config.DEBUG)
-6

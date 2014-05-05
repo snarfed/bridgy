@@ -84,3 +84,14 @@ some stuff
     resp = t.create_comment('http://primary/post/123999/xyz_abc?asdf',
                             'who', 'http://who', 'foo bar')
     self.assertEquals({'ok': 'sgtm'}, resp)
+
+  def test_superfeedr_notify(self):
+    """Smoke test. Just check that we make it all the way through."""
+    self.expect_requests_get('http://primary/',
+                             'http://disqus.com/forums/my-disqus-name/')
+    self.mox.ReplayAll()
+
+    Tumblr.new(self.handler, auth_entity=self.auth_entity).put()
+    resp = tumblr.application.get_response(
+      '/tumblr/notify/primary', method='POST', body=json.dumps({'items': []}))
+    self.assertEquals(200, resp.status_int)

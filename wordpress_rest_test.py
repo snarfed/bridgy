@@ -12,7 +12,7 @@ from appengine_config import HTTP_TIMEOUT
 from models import BlogPost
 
 from activitystreams.oauth_dropins.wordpress_rest import WordPressAuth
-# import wordpress_rest
+import wordpress_rest
 from wordpress_rest import WordPress
 import testutil
 
@@ -58,3 +58,10 @@ class WordPressTest(testutil.HandlerTest):
     resp = wp.create_comment('http://primary/post/123999/the-slug?asdf',
                              'who', 'http://who', 'foo bar')
     self.assertEquals({'id': 789, 'ok': 'sgtm'}, resp)
+
+  def test_superfeedr_notify(self):
+    """Smoke test. Just check that we make it all the way through."""
+    WordPress.new(self.handler, auth_entity=self.auth_entity).put()
+    resp = wordpress_rest.application.get_response(
+      '/wordpress/notify/111', method='POST', body=json.dumps({'items': []}))
+    self.assertEquals(200, resp.status_int)
