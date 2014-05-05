@@ -134,7 +134,7 @@ class SuperfeedrNotifyHandler(webapp2.RequestHandler):
   http://documentation.superfeedr.com/subscribers.html#pubsubhubbubnotifications
   """
   def post(self, id):
-    source = WordPress.get_by_id()
+    source = WordPress.get_by_id(id)
     if source and 'webmention' in source.features:
       superfeedr.handle_feed(self.request.body, source)
 
