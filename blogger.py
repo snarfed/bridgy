@@ -123,8 +123,9 @@ class Blogger(models.Source):
     content = '<a href="%s">%s</a>: %s' % (author_url, author_name, content)
     logging.info('Creating comment on blog %s, post %s: %s', self.key.id(),
                  post_id, content)
-    resp = client.add_comment(self.key.id(), post_id, content)
-    # STATE: need json
+    comment = client.add_comment(self.key.id(), post_id, content)
+
+    resp = {'id': comment.get_comment_id(), 'response': comment.to_string()}
     logging.info('Response: %s', resp)
     return resp
 
@@ -169,3 +170,4 @@ application = webapp2.WSGIApplication([
     ('/blogger/delete/start', oauth_blogger.StartHandler.to('/blogger/oauth2callback')),
     ('/blogger/notify/(.+)', SuperfeedrNotifyHandler),
     ], debug=appengine_config.DEBUG)
+6

@@ -53,10 +53,16 @@ class BloggerTest(testutil.HandlerTest):
 
     self.client.get_posts('111', query=mox.Func(check_path)
                           ).AndReturn(feed)
+
+    comment = data.Comment()
+    comment.id = util.Struct(text='tag:blogger.com,1999:blog-111.post-222.comment-333')
+    comment.to_string = lambda: '<foo></foo>'
+
     self.client.add_comment('111', '222', '<a href="http://who">who</a>: foo bar'
-                            ).AndReturn({})
+                            ).AndReturn(comment)
     self.mox.ReplayAll()
 
     b = Blogger.new(self.handler, auth_entity=self.auth_entity)
-    b.create_comment('http://blawg/path/to/post', 'who', 'http://who', 'foo bar',
-                     client=self.client)
+    resp = b.create_comment('http://blawg/path/to/post', 'who', 'http://who',
+                            'foo bar', client=self.client)
+    self.assert_equals({'id': '333', 'response': '<foo></foo>'}, resp)
