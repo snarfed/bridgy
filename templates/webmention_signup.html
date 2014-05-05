@@ -6,7 +6,9 @@
  <input type="image" alt="Sign in with Blogger"
         src="/activitystreams/oauth_dropins/static/blogger.png" />
  <input name="state" type="hidden" value="webmention" />
- <!-- Blogger only has one OAuth scope. oauth-dropins fills it in. -->
+ <!-- Blogger only has one OAuth scope. oauth-dropins fills it in.
+   https://developers.google.com/blogger/docs/2.0/developers_guide_protocol#OAuth2Authorizing
+   -->
 </form>
 </div>
 
@@ -15,7 +17,8 @@
  <input type="image" alt="Sign in with Tumblr"
         src="/activitystreams/oauth_dropins/static/tumblr.png" />
  <input name="state" type="hidden" value="webmention" />
- <!-- Tumblr doesn't seem to use scope -->
+ <!-- Tumblr doesn't seem to use scope
+   http://www.tumblr.com/docs/en/api/v2#oauth -->
 </form>
 </div>
 
@@ -24,7 +27,8 @@
  <input type="image" alt="Sign in with WordPress.com"
         src="/activitystreams/oauth_dropins/static/wordpress.png" />
  <input name="state" type="hidden" value="webmention" />
- <!-- wp.com doesn't seem to use scope -->
+ <!-- wordpress.com doesn't seem to use scope
+   https://developer.wordpress.com/docs/oauth2/ -->
 </form>
 </div>
 
