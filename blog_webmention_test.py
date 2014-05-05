@@ -70,6 +70,29 @@ i hereby reply
     self.assertEquals(html, bw.html)
     self.assertEquals({'id': 'fake id'}, bw.published)
 
+  def test_reply_outside_e_content(self):
+    html = """
+<article class="h-entry">
+<p class="p-author">my name</p>
+<p class="p-in-reply-to h-cite"><a href="http://foo.com/post/1"></a></p>
+<div class="e-content">
+i hereby reply
+</div></article>"""
+    self.expect_requests_get('http://bar.com/reply', html)
+
+    testutil.FakeSource.create_comment(
+      'http://foo.com/post/1', 'my name', 'http://foo.com/',
+      'i hereby reply<br /><a href="http://bar.com/reply">via bar.com</a>'
+      ).AndReturn({'id': 'fake id'})
+    self.mox.ReplayAll()
+
+    resp = self.get_response()
+    self.assertEquals(200, resp.status_int, resp.body)
+
+    bw = BlogWebmention.get_by_id('http://bar.com/reply http://foo.com/post/1')
+    self.assertEquals('complete', bw.status)
+    self.assertEquals({'id': 'fake id'}, bw.published)
+
   def test_domain_not_found(self):
     # no source
     msg = 'Could not find FakeSource account for foo.com.'

@@ -12,6 +12,7 @@ import urlparse
 import appengine_config
 from appengine_config import HTTP_TIMEOUT
 
+from activitystreams import microformats2
 from blogger import Blogger
 import models
 from models import BlogWebmention
@@ -132,7 +133,7 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
       text = content.get('html') or content.get('value')
 
       for type in 'in-reply-to', 'like', 'like-of', 'repost', 'repost-of':
-        if self.target_url in props.get(type, []):
+        if self.target_url in microformats2.get_string_urls(props.get(type, [])):
           break
       else:
         type = 'post' if text and self.target_url in text else None
