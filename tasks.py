@@ -247,7 +247,7 @@ class Poll(webapp2.RequestHandler):
         responses.pop(source.as_source.tag_uri(id), None)
 
     #
-    # Step 4: attempt to send webmentions for new responses
+    # Step 4: store new responses and enqueue propagate tasks
     #
     for id, resp in responses.items():
       activity = resp.pop('activity')
