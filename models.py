@@ -275,8 +275,8 @@ class Source(StringIdModel):
     blurb = '%s %s. %s' % (verb, source.label(), {
       'listen': "Refresh to see what we've found!",
       'publish': 'Try previewing a post from your web site!',
-      'webmention': 'Try <a href="http://indiewebify.me/send-webmentions/?url=%s>'
-                    'sending yourself a webmention</a>!' % source.domain_url,
+      'webmention': '<a href="http://indiewebify.me/send-webmentions/?url=%s">'
+                    'Try a webmention!</a>' % source.domain_url,
       }.get(feature, ''))
     handler.messages = {blurb}
     logging.info('%s %s', blurb, source.bridgy_url(handler))
