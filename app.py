@@ -165,8 +165,8 @@ class UserHandler(DashboardHandler):
                                   .fetch(10)
       for b in blogposts:
         b.links = self.process_webmention_links(b)
-        b.pretty_url = util.pretty_link(b.key.id(), a_class='original-post',
-                                        new_tab=True)
+        b.pretty_url = util.pretty_link(b.key.id(), text=b.feed_item.get('title'),
+                                        a_class='original-post', new_tab=True)
 
       # Blog webmentions
       webmentions = BlogWebmention.query()\
