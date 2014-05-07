@@ -53,7 +53,10 @@ class DashboardHandler(TemplateHandler, util.Handler):
     return 'text/html; charset=utf-8'
 
   def template_vars(self):
-    return {'DEBUG': appengine_config.DEBUG}
+    return {
+      'request': self.request,
+      'DEBUG': appengine_config.DEBUG,
+      }
 
 
 class FrontPageHandler(DashboardHandler):
@@ -94,6 +97,9 @@ class UserHandler(DashboardHandler):
     self.source = ndb.Key(handlers.SOURCES[source_short_name], id).get()
     if self.source:
       self.source = self.preprocess_source(self.source)
+      if ('webmention' in self.source.features and
+          not self.source.has_webmention_endpoint):
+        self.source.discover_webmention()
     else:
       self.response.status_int = 404
     super(UserHandler, self).get()

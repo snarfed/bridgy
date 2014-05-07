@@ -44,7 +44,7 @@
 
 
 <!-- Banner for blogs that aren't yet advertising the webmention endpoint -->
-{% if "webmention" in source.features and source.has_webmention_endpoint %}
+{% if "webmention" in source.features and not source.has_webmention_endpoint %}
 <div class="row big undiscovered">
   {% if source.key.kind == "Blogger" %}
   <p>Next step: go to the <a href="https://www.blogger.com/home">Blogger
@@ -72,6 +72,10 @@
   <a href="http://en.support.wordpress.com/widgets/text-widget/">
     More details.</a>
   {% endif %}
+
+  <form method="get" action="{{ request.url }}">
+    <button type="submit" class="btn btn-default">Done!</button>
+  </form>
 </div>
 <br />
 

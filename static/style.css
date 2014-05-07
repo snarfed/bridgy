@@ -204,6 +204,17 @@ button {
   vertical-align: middle;
 }
 
+.btn-default {
+  border-color: #428BCA;
+  color: #428BCA;
+}
+
+.btn-default:hover {
+  background-color: #BDE;
+  border-color: #428BCA;
+  color: #428BCA;
+}
+
 #delete-button {
   border-color: red;
   color: red;
@@ -211,16 +222,6 @@ button {
 
 #delete-button:hover {
   background-color: #FCC;
-}
-
-#preview-button, #poll-now-button, #retry-button, #send-button {
-  border-color: #428BCA;
-  color: #428BCA;
-}
-
-#preview-button:hover, #poll-now-button:hover, #retry-button:hover,
-#send-button:hover {
-  background-color: #BDE;
 }
 
 #preview .verb {
