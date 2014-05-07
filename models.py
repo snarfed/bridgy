@@ -9,11 +9,13 @@ import urllib
 import urlparse
 
 import appengine_config
+from appengine_config import HTTP_TIMEOUT
 
 from activitystreams import source as as_source
 from activitystreams.oauth_dropins.webutil.models import StringIdModel
 import superfeedr
 import util
+from webmentiontools import send
 
 from google.appengine.api import taskqueue
 from google.appengine.api import users
@@ -70,6 +72,7 @@ class Source(StringIdModel):
   domain_url = ndb.StringProperty()
   features = ndb.StringProperty(repeated=True, choices=FEATURES)
   superfeedr_secret = ndb.StringProperty()
+  has_webmention_endpoint = ndb.DateTimeProperty()
 
   last_polled = ndb.DateTimeProperty(default=util.EPOCH)
   last_poll_attempt = ndb.DateTimeProperty(default=util.EPOCH)
@@ -268,6 +271,7 @@ class Source(StringIdModel):
       # merge some fields
       source.features = set(source.features + existing.features)
       source.created = existing.created
+      source.has_webmention_endpoint = existing.has_webmention_endpoint
       verb = 'Updated'
     else:
       verb = 'Added'
@@ -282,15 +286,41 @@ class Source(StringIdModel):
     logging.info('%s %s', blurb, source.bridgy_url(handler))
     util.email_me(subject=blurb, body=source.bridgy_url(handler))
 
+    if 'webmention' in source.features:
+      superfeedr.subscribe(source, handler)
+      if not source.has_webmention_endpoint:
+        source.discover_webmention()
+
     # TODO: ugh, *all* of this should be transactional
     source.put()
 
     if 'listen' in source.features:
       util.add_poll_task(source)
-    if 'webmention' in source.features:
-      superfeedr.subscribe(source, handler)
 
     return source
+
+  def discover_webmention(self):
+    """Runs webmention discovery on this source's URL.
+
+    Stores the result in has_webmention_endpoint.
+    """
+    logging.info('Attempting to discover webmention endpoint on %s', self.domain_url)
+    mention = send.WebmentionSend('https://www.brid.gy/', self.domain_url)
+    mention.requests_kwargs = {'timeout': HTTP_TIMEOUT}
+    try:
+      mention._discoverEndpoint()
+    except BaseException:
+      logging.warning('', exc_info=True)
+      mention.error = {'code': 'EXCEPTION'}
+
+    error = getattr(mention, 'error', None)
+    endpoint = getattr(mention, 'receiver_endpoint', None)
+    if error or not endpoint:
+      logging.error("No webmention endpoint found: %s %r", error, endpoint)
+      self.has_webmention_endpoint = None
+    else:
+      logging.info("Discovered webmention endpoint %s", endpoint)
+      self.has_webmention_endpoint = datetime.datetime.now()
 
   def _url_and_domain(self, auth_entity):
     """Returns this source's URL and domain.
