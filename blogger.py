@@ -47,6 +47,9 @@ class Blogger(models.Source):
     # https://support.google.com/blogger/answer/97933?hl=en
     return urlparse.urljoin(self.domain_url, '/feeds/posts/default')  # Atom
 
+  def edit_template_url(self):
+    return 'https://www.blogger.com/blogger.g?blogID=%s#template' % self.key.id()
+
   @staticmethod
   def new(handler, auth_entity=None, **kwargs):
     """Creates and returns a Blogger for the logged in user.

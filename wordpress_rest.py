@@ -45,6 +45,13 @@ class WordPress(models.Source):
   AS_CLASS = collections.namedtuple('FakeAsClass', ('NAME',))(NAME='WordPress.com')
   SHORT_NAME = 'wordpress'
 
+  def feed_url(self):
+    # http://en.support.wordpress.com/feeds/
+    return urlparse.urljoin(self.domain_url, 'feed/')
+
+  def edit_template_url(self):
+    return urlparse.urljoin(self.domain_url, 'wp-admin/widgets.php')
+
   @staticmethod
   def new(handler, auth_entity=None, **kwargs):
     """Creates and returns a WordPress for the logged in user.
@@ -68,10 +75,6 @@ class WordPress(models.Source):
     wp.domain = domain
 
     return wp
-
-  def feed_url(self):
-    # http://en.support.wordpress.com/feeds/
-    return urlparse.urljoin(self.domain_url, '/feed/')
 
   def _url_and_domain(self, auth_entity):
     """Returns this blog's URL and domain.

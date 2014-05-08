@@ -229,6 +229,16 @@ class Source(StringIdModel):
     """
     raise NotImplementedError()
 
+  def edit_template_url(self):
+    """Returns the URL for editing this blog's template HTML.
+
+    Must be implemented by subclasses. Currently only implemented by Blogger,
+    Tumlbr, and WordPress.
+
+    Returns: string URL
+    """
+    raise NotImplementedError()
+
   @classmethod
   def create_new(cls, handler, **kwargs):
     """Creates and saves a new Source and adds a poll task for it.

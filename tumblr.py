@@ -68,6 +68,9 @@ class Tumblr(models.Source):
     # http://www.tumblr.com/help  (search for feed)
     return urlparse.urljoin(self.domain_url, '/rss')
 
+  def edit_template_url(self):
+    return 'http://www.tumblr.com/customize/%s' % self.auth_entity.key.id()
+
   @staticmethod
   def new(handler, auth_entity=None, **kwargs):
     """Creates and returns a Tumblr for the logged in user.
