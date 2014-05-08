@@ -273,7 +273,7 @@ iframe#twitter-widget-0 {
   filter: progid:DXImageTransform.Microsoft.Shadow(Strength=2,Direction=135,Color='#666666');
 }
 
-.shadow:hover, .profile:hover {
+.shadow:hover, .profile:hover { /* TODO .signup input:hover { */
   -moz-box-shadow: 2px 2px 2px #049;
   -webkit-box-shadow: 2px 2px 2px #049;
   /* CSS3 */
