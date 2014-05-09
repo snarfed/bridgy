@@ -15,6 +15,9 @@ libraries:
 - name: ssl
   version: latest
 
+inbound_services:
+- warmup
+
 handlers:
 
 # static
