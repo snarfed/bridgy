@@ -164,8 +164,7 @@ def _process_author(source, author_url):
 
   try:
     logging.debug('fetching author domain %s', author_url)
-    author_resp = requests.get(author_url, allow_redirects=True,
-                               timeout=HTTP_TIMEOUT)
+    author_resp = requests.get(author_url, timeout=HTTP_TIMEOUT)
     # TODO for error codes that indicate a temporary error, should we make
     # a certain number of retries before giving up forever?
     author_resp.raise_for_status()
@@ -214,8 +213,7 @@ def _process_author(source, author_url):
 
     try:
       logging.debug("fetching author's h-feed %s", feed_url)
-      feed_resp = requests.get(
-        feed_url, allow_redirects=True, timeout=HTTP_TIMEOUT)
+      feed_resp = requests.get(feed_url, timeout=HTTP_TIMEOUT)
       feed_resp.raise_for_status()
       logging.debug("author's h-feed fetched successfully %s", feed_url)
       author_parsed = Mf2Parser(
@@ -273,7 +271,7 @@ def _process_entry(source, permalink):
   parsed = None
   try:
     logging.debug('fetching post permalink %s', permalink)
-    resp = requests.get(permalink, allow_redirects=True, timeout=HTTP_TIMEOUT)
+    resp = requests.get(permalink, timeout=HTTP_TIMEOUT)
     resp.raise_for_status()
     parsed = Mf2Parser(url=permalink, doc=resp.text).to_dict()
   except BaseException:

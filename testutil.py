@@ -183,9 +183,6 @@ class HandlerTest(testutil.HandlerTest):
     resp.headers['content-type'] = content_type
 
     kwargs['timeout'] = HTTP_TIMEOUT
-    if method is requests.get:
-      kwargs['allow_redirects'] = True
-
     call = method(url, **kwargs)
     call.AndReturn(resp)
     return call

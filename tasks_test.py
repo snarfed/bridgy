@@ -38,13 +38,13 @@ LEASE_LENGTH = tasks.SendWebmentions.LEASE_LENGTH
 
 class TaskQueueTest(testutil.ModelsTest):
   """Attributes:
-    post_url: the URL for post_task() to post to
+  post_url: the URL for post_task() to post to
   """
   post_url = None
 
   def post_task(self, expected_status=200, params={}, **kwargs):
     """Args:
-      expected_status: integer, the expected HTTP return code
+    expected_status: integer, the expected HTTP return code
     """
     resp = tasks.application.get_response(self.post_url, method='POST',
                                           body=urllib.urlencode(params),
@@ -143,8 +143,7 @@ class PollTest(TaskQueueTest):
     resp = requests.Response()
     resp.url = 'http://not/html'
     resp.headers['content-type'] = 'application/pdf'
-    requests.head('http://not/html', allow_redirects=True, timeout=HTTP_TIMEOUT
-                  ).AndReturn(resp)
+    requests.head('http://not/html', timeout=HTTP_TIMEOUT).AndReturn(resp)
 
     self.mox.ReplayAll()
     self.post_task()
@@ -161,8 +160,7 @@ class PollTest(TaskQueueTest):
     resp = requests.Response()
     resp.url = 'http://final/url'
     resp.headers['content-type'] = 'text/html'
-    requests.head('http://will/redirect', allow_redirects=True, timeout=HTTP_TIMEOUT
-                  ).AndReturn(resp)
+    requests.head('http://will/redirect', timeout=HTTP_TIMEOUT).AndReturn(resp)
 
     self.mox.ReplayAll()
     self.post_task()
@@ -177,7 +175,7 @@ class PollTest(TaskQueueTest):
 
     self.mox.stubs.UnsetAll()
     self.mox.StubOutWithMock(requests, 'head', use_mock_anything=True)
-    requests.head('http://fails/resolve', allow_redirects=True, timeout=HTTP_TIMEOUT
+    requests.head('http://fails/resolve', timeout=HTTP_TIMEOUT
                   ).AndRaise(Exception('foo'))
 
     self.mox.ReplayAll()
@@ -538,7 +536,7 @@ class PropagateTest(TaskQueueTest):
     resp = requests.Response()
     resp.url = 'http://not/html'
     resp.headers['content-type'] = 'application/mpeg'
-    requests.head('http://not/html', allow_redirects=True, timeout=HTTP_TIMEOUT
+    requests.head('http://not/html', timeout=HTTP_TIMEOUT
                   ).AndReturn(resp)
 
     self.mox.ReplayAll()

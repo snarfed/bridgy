@@ -28,8 +28,7 @@ class UtilTest(testutil.ModelsTest):
     resp = requests.Response()
     resp.url = 'http://final/url'
     resp.headers['content-type'] = 'text/html'
-    requests.head('http://will/redirect', allow_redirects=True, timeout=HTTP_TIMEOUT
-                  ).AndReturn(resp)
+    requests.head('http://will/redirect', timeout=HTTP_TIMEOUT).AndReturn(resp)
 
     self.mox.ReplayAll()
     self.assert_equals('http://final/url',
@@ -44,13 +43,11 @@ class UtilTest(testutil.ModelsTest):
     self.mox.StubOutWithMock(requests, 'head', use_mock_anything=True)
     resp = requests.Response()
     resp.headers['refresh'] = '0; url=http://refresh'
-    requests.head('http://will/redirect', allow_redirects=True, timeout=HTTP_TIMEOUT
-                  ).AndReturn(resp)
+    requests.head('http://will/redirect', timeout=HTTP_TIMEOUT).AndReturn(resp)
 
     resp = requests.Response()
     resp.url = 'http://final'
-    requests.head('http://refresh', allow_redirects=True, timeout=HTTP_TIMEOUT
-                  ).AndReturn(resp)
+    requests.head('http://refresh', timeout=HTTP_TIMEOUT).AndReturn(resp)
 
     self.mox.ReplayAll()
     self.assert_equals('http://final',
@@ -60,8 +57,7 @@ class UtilTest(testutil.ModelsTest):
     self.mox.StubOutWithMock(requests, 'head', use_mock_anything=True)
     resp = requests.Response()
     resp.url = 'http://final'
-    requests.head('http://foo/bar', allow_redirects=True, timeout=HTTP_TIMEOUT
-                  ).AndReturn(resp)
+    requests.head('http://foo/bar', timeout=HTTP_TIMEOUT).AndReturn(resp)
 
     self.mox.ReplayAll()
     self.assert_equals('http://final', util.follow_redirects('foo/bar').url)

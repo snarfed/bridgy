@@ -165,8 +165,7 @@ class Tumblr(models.Source):
                             {'forum': self.disqus_shortname,
                              # ident:[tumblr_post_id] should work, but doesn't :/
                              'thread': 'link:%s' % post_url,
-                             },
-                            allow_redirects=True)
+                             })
     thread_id = resp['id']
 
     # create the comment

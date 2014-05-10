@@ -112,8 +112,7 @@ class PublishTest(testutil.HandlerTest):
     resp = requests.Response()
     resp.url = 'http://foo.com'
     resp.headers['content-type'] = 'text/html'
-    requests.head('http://will/redirect', allow_redirects=True, timeout=HTTP_TIMEOUT
-                  ).AndReturn(resp)
+    requests.head('http://will/redirect', timeout=HTTP_TIMEOUT).AndReturn(resp)
 
     html = '<article class="h-entry"><p class="e-content">foo</p></article>'
     self.expect_requests_get('http://foo.com', html)
@@ -128,14 +127,12 @@ class PublishTest(testutil.HandlerTest):
     self.mox.StubOutWithMock(requests, 'head', use_mock_anything=True)
     resp = requests.Response()
     resp.headers['refresh'] = '0; url=http://foo.com'
-    requests.head('http://will/redirect', allow_redirects=True, timeout=HTTP_TIMEOUT
-                  ).AndReturn(resp)
+    requests.head('http://will/redirect', timeout=HTTP_TIMEOUT).AndReturn(resp)
 
     resp = requests.Response()
     resp.url = 'http://foo.com'
     resp.headers['content-type'] = 'text/html'
-    requests.head('http://foo.com', allow_redirects=True, timeout=HTTP_TIMEOUT
-                ).AndReturn(resp)
+    requests.head('http://foo.com', timeout=HTTP_TIMEOUT).AndReturn(resp)
 
     html = '<article class="h-entry"><p class="e-content">foo</p></article>'
     self.expect_requests_get('http://foo.com', html)
