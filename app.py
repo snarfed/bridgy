@@ -96,10 +96,8 @@ class UserHandler(DashboardHandler):
   def get(self, source_short_name, id):
     self.source = ndb.Key(handlers.SOURCES[source_short_name], id).get()
     if self.source:
+      self.source.verify()
       self.source = self.preprocess_source(self.source)
-      if ('webmention' in self.source.features and
-          not self.source.has_webmention_endpoint):
-        self.source.discover_webmention()
     else:
       self.response.status_int = 404
     super(UserHandler, self).get()

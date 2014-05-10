@@ -292,14 +292,15 @@ class Source(StringIdModel):
       'webmention': '<a href="http://indiewebify.me/send-webmentions/?url=%s">'
                     'Try a webmention!</a>' % source.domain_url,
       }.get(feature, ''))
-    handler.messages = {blurb}
     logging.info('%s %s', blurb, source.bridgy_url(handler))
     util.email_me(subject=blurb, body=source.bridgy_url(handler))
 
+    source.verify()
+    if source.verified():
+      handler.messages = {blurb}
+
     if 'webmention' in source.features:
       superfeedr.subscribe(source, handler)
-      if not source.has_webmention_endpoint:
-        source.discover_webmention()
 
     # TODO: ugh, *all* of this should be transactional
     source.put()
@@ -309,11 +310,30 @@ class Source(StringIdModel):
 
     return source
 
-  def discover_webmention(self):
-    """Runs webmention discovery on this source's URL.
+  def verified(self):
+    """Returns True if this source is ready to be used, false otherwise.
 
-    Stores the result in has_webmention_endpoint.
+    See verify() for details. May be overridden by subclasses, e.g. Tumblr.
     """
+    return not ('webmention' in self.features and not self.has_webmention_endpoint)
+
+  def verify(self, force=False):
+    """Checks that this source is ready to be used.
+
+    For blog sources, this fetches their front page HTML and checks that they're
+    advertising the Bridgy webmention endpoint. For other kinds of sources, this
+    currently does nothing.
+
+    May be overridden by subclasses, e.g. Tumblr.
+
+    Args:
+      force: if True, fully verifies (e.g. re-fetches the blog's HTML and looks
+        perform webmention discovery) even we already think this source is
+        verified.
+    """
+    if self.verified() and not force:
+      return
+
     logging.info('Attempting to discover webmention endpoint on %s', self.domain_url)
     mention = send.WebmentionSend('https://www.brid.gy/', self.domain_url)
     mention.requests_kwargs = {'timeout': HTTP_TIMEOUT}
@@ -323,6 +343,7 @@ class Source(StringIdModel):
       logging.warning('', exc_info=True)
       mention.error = {'code': 'EXCEPTION'}
 
+    self._fetched_html = getattr(mention, 'html', None)
     error = getattr(mention, 'error', None)
     endpoint = getattr(mention, 'receiver_endpoint', None)
     if error or not endpoint:
@@ -331,6 +352,8 @@ class Source(StringIdModel):
     else:
       logging.info("Discovered webmention endpoint %s", endpoint)
       self.has_webmention_endpoint = datetime.datetime.now()
+
+    self.put()
 
   def _url_and_domain(self, auth_entity):
     """Returns this source's URL and domain.

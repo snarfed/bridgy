@@ -62,14 +62,14 @@ class Tumblr(models.Source):
   AS_CLASS = collections.namedtuple('FakeAsClass', ('NAME',))(NAME='Tumblr')
   SHORT_NAME = 'tumblr'
 
-  disqus_shortname = ndb.StringProperty(required=True)
+  disqus_shortname = ndb.StringProperty()
 
   def feed_url(self):
     # http://www.tumblr.com/help  (search for feed)
     return urlparse.urljoin(self.domain_url, '/rss')
 
   def edit_template_url(self):
-    return 'http://www.tumblr.com/customize/%s' % self.auth_entity.key.id()
+    return 'http://www.tumblr.com/customize/%s' % self.auth_entity.id()
 
   @staticmethod
   def new(handler, auth_entity=None, **kwargs):
@@ -84,28 +84,11 @@ class Tumblr(models.Source):
       handler.messages = {'No primary Tumblr blog found. Please create one first!'}
       return None
 
-    # scrape the disqus shortname out of the Tumblr page
-    try:
-      resp = requests.get(url, allow_redirects=True, timeout=HTTP_TIMEOUT)
-      resp.raise_for_status()
-    except BaseException:
-      msg = 'Could not fetch %s' % domain
-      logging.exception(msg)
-      handler.messages = {msg}
-      return None
-
-    match = re.search('http://disqus.com/forums/([^/"\' ]+)', resp.text)
-    if not match:
-      handler.messages = {
-        'Please <a href="http://disqus.com/admin/create/">install Disqus</a> first!'}
-      return None
-
     return Tumblr(id=domain,
                   auth_entity=auth_entity.key,
                   domain=domain,
                   domain_url=url,
                   name=auth_entity.user_display_name(),
-                  disqus_shortname=match.group(1),
                   picture=TUMBLR_AVATAR_URL % domain,
                   superfeedr_secret=util.generate_secret(),
                   **kwargs)
@@ -128,6 +111,30 @@ class Tumblr(models.Source):
         return blog['url'], util.domain_from_link(blog['url']), True
     else:
       return None, None, False
+
+  def verified(self):
+    """Returns True if we've found the webmention endpoint and Disqus."""
+    return self.has_webmention_endpoint and self.disqus_shortname
+
+  def verify(self):
+    """Checks that Disqus is installed as well as the webmention endpoint.
+
+    Stores the result in has_webmention_endpoint. Expects that Source.verify
+    sets the self._fetched_html attr.
+    """
+    if self.verified():
+      return
+
+    super(Tumblr, self).verify(force=True)
+
+    if not self.disqus_shortname and self._fetched_html:
+      # scrape the disqus shortname out of the page
+      logging.info("Looking for Disqus shortname in fetched HTML")
+      match = re.search('http://disqus.com/forums/([^/"\' ]+)', self._fetched_html)
+      if match:
+        self.disqus_shortname = match.group(1)
+        logging.info("Found Disqus shortname %s", self.disqus_shortname)
+        self.put()
 
   def create_comment(self, post_url, author_name, author_url, content):
     """Creates a new comment in the source silo.
