@@ -49,8 +49,16 @@
 <li><a href="#error-response">How about error responses?</a></li>
 <li><a href="#silos">Why only Facebook and Twitter? Why not Google+ or
    Instagram?</a></li>
-</ul>
 
+<br />
+<p><em>Webmentions for blogs</em></p>
+<li><a href="#blogs">What's this part?</a></li>
+<li><a href="#outgoing">What outgoing webmentions does it send from my
+  blog?</a></li>
+<li><a href="#incoming">What does it do with incoming webmentions send to my
+  blog?</a></li>
+
+</ul>
 <br />
 <div>
 
@@ -510,8 +518,43 @@ for commenting and liking. Shameless plug: check out
 </p>
 </li>
 
-</ul>
+<!-- Blog webmentions -->
+<br />
+<h3 id="blogs">Webmentions for blogs</h3>
 
+<li class="question">What's this part?</li>
+<li class="answer">
+<p><a href="http://indiewebify.me/#send-webmentions">Webmentions</a> are a core
+part of both the <a href="http://indiewebcamp.com/">IndieWeb</a> and Bridgy
+itself. The <a href="http://www.webmention.org/">webmention protocol</a> is
+growing fast, but it's still pretty new, so many large hosted blog providers
+don't yet support it. This feature adds webmention support (both incoming and
+outgoing) to three of the largest providers:
+<a href="https://www.blogger.com/">Blogger</a>,
+<a href="http://www.tumblr.com/">Tumblr</a>, and
+<a href="http://wordpress.com/">WordPress.com</a>.</p>
+</li>
+
+<li><a href="#outgoing"></a></li>
+<li><a href="#incoming"></a></li>
+
+<li id="outgoing" class="question">What outgoing webmentions does it send from
+my blog?</li>
+<li class="answer">
+<p>When you publish a new post on your blog, Bridgy attempts to send a
+webmention to each link in your post.</p>
+</li>
+
+<li id="incoming" class="question">What does it do with incoming webmentions
+that my blog receives?</li>
+<li class="answer">
+<p>When Bridgy receives a webmention for a post on your blog, it runs some
+validation on the source page, in particular checking that it links to your blog
+post. Then, Bridgy reformats the source page and posts it as a comment on your
+post.</p>
+</li>
+
+</ul>
 </div>
 
 {% endblock %}
