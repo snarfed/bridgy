@@ -72,7 +72,7 @@ class Source(StringIdModel):
   domain_url = ndb.StringProperty()
   features = ndb.StringProperty(repeated=True, choices=FEATURES)
   superfeedr_secret = ndb.StringProperty()
-  has_webmention_endpoint = ndb.DateTimeProperty()
+  webmention_endpoint = ndb.StringProperty()
 
   last_polled = ndb.DateTimeProperty(default=util.EPOCH)
   last_poll_attempt = ndb.DateTimeProperty(default=util.EPOCH)
@@ -281,7 +281,7 @@ class Source(StringIdModel):
       # merge some fields
       source.features = set(source.features + existing.features)
       source.created = existing.created
-      source.has_webmention_endpoint = existing.has_webmention_endpoint
+      source.webmention_endpoint = existing.webmention_endpoint
       verb = 'Updated'
     else:
       verb = 'Added'
@@ -315,7 +315,7 @@ class Source(StringIdModel):
 
     See verify() for details. May be overridden by subclasses, e.g. Tumblr.
     """
-    return not ('webmention' in self.features and not self.has_webmention_endpoint)
+    return not ('webmention' in self.features and not self.webmention_endpoint)
 
   def verify(self, force=False):
     """Checks that this source is ready to be used.
@@ -348,10 +348,10 @@ class Source(StringIdModel):
     endpoint = getattr(mention, 'receiver_endpoint', None)
     if error or not endpoint:
       logging.error("No webmention endpoint found: %s %r", error, endpoint)
-      self.has_webmention_endpoint = None
+      self.webmention_endpoint = None
     else:
       logging.info("Discovered webmention endpoint %s", endpoint)
-      self.has_webmention_endpoint = datetime.datetime.now()
+      self.webmention_endpoint = endpoint
 
     self.put()
 

@@ -114,12 +114,12 @@ class Tumblr(models.Source):
 
   def verified(self):
     """Returns True if we've found the webmention endpoint and Disqus."""
-    return self.has_webmention_endpoint and self.disqus_shortname
+    return self.webmention_endpoint and self.disqus_shortname
 
   def verify(self):
     """Checks that Disqus is installed as well as the webmention endpoint.
 
-    Stores the result in has_webmention_endpoint. Expects that Source.verify
+    Stores the result in webmention_endpoint. Expects that Source.verify
     sets the self._fetched_html attr.
     """
     if self.verified():

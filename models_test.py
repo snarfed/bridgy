@@ -112,10 +112,14 @@ class SourceTest(testutil.HandlerTest):
 
   def test_create_new_webmention(self):
     """We should subscribe to webmention sources in Superfeedr."""
-    self.mox.StubOutWithMock(superfeedr, 'subscribe')#, use_mock_anything=True)
+    self.expect_requests_get('http://primary/', 'no webmention endpoint',
+                             verify=False)
+    self.mox.StubOutWithMock(superfeedr, 'subscribe')
     superfeedr.subscribe(mox.IsA(FakeSource), self.handler)
+
     self.mox.ReplayAll()
-    FakeSource.create_new(self.handler, features=['webmention'])
+    source = FakeSource.create_new(self.handler, features=['webmention'],
+                                   domain_url='http://primary/')
 
   def test_create_new_domain(self):
     """If the source has a URL set, extract its domain."""
@@ -144,6 +148,29 @@ class SourceTest(testutil.HandlerTest):
     """We should handle unusual unicode chars in the source's name ok."""
     # the invisible character in the middle is an unusual unicode character
     source = FakeSource.create_new(self.handler, name=u'a ✁ b')
+
+  def test_verify(self):
+    # this requests.get is called by webmention-tools
+    self.expect_requests_get('http://primary/', """
+<html><meta>
+<link rel="webmention" href="http://web.ment/ion">
+</meta></html>""", verify=False)
+    self.mox.ReplayAll()
+
+    source = FakeSource.new(self.handler, features=['webmention'],
+                            domain_url='http://primary/')
+    source.verify()
+    self.assertEquals('http://web.ment/ion', source.webmention_endpoint)
+
+  def test_verify_without_webmention_endpoint(self):
+    self.expect_requests_get('http://primary/', 'no webmention endpoint here!',
+                             verify=False)
+    self.mox.ReplayAll()
+
+    source = FakeSource.new(self.handler, features=['webmention'],
+                            domain_url='http://primary/')
+    source.verify()
+    self.assertIsNone(source.webmention_endpoint)
 
   def test_get_post(self):
     post = {'verb': 'post', 'object': {'objectType': 'note', 'content': 'asdf'}}

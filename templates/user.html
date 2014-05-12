@@ -65,7 +65,7 @@
       comments.) Follow the instructions to add it to this Tumblr blog.</li>
     {% endif %}
 
-    {% if not source.has_webmention_endpoint %}
+    {% if not source.webmention_endpoint %}
     <li><a target="_blank" href="{{ source.edit_template_url }}">Click here to
       customize your blog</a>, click <em>Edit HTML,</em> and add this line
       after <code>&lt;head&gt;</code>:</p>
