@@ -167,22 +167,36 @@ class HandlerTest(testutil.HandlerTest):
       return resp
     self.mox.stubs.Set(requests, 'head', fake_head)
 
+    self._is_head_mocked = False  # expect_requests_head() sets this to True
+
   def expect_requests_get(self, *args, **kwargs):
     return self._expect_requests_call(*args, method=requests.get, **kwargs)
+
+  def expect_requests_head(self, *args, **kwargs):
+    if not self._is_head_mocked:
+      self.mox.StubOutWithMock(requests, 'head', use_mock_anything=True)
+      self._is_head_mocked = True
+    return self._expect_requests_call(*args, method=requests.head, **kwargs)
 
   def expect_requests_post(self, *args, **kwargs):
     return self._expect_requests_call(*args, method=requests.post, **kwargs)
 
   def _expect_requests_call(self, url, response='', status_code=200,
                             content_type='text/html', method=requests.get,
+                            redirected_url = None, response_headers=None,
                             **kwargs):
     resp = requests.Response()
     resp._content = response
-    resp.url = url
+    resp.url = url if redirected_url is None else redirected_url
     resp.status_code = status_code
     resp.headers['content-type'] = content_type
+    if response_headers is not None:
+      resp.headers.update(response_headers)
 
     kwargs['timeout'] = HTTP_TIMEOUT
+    if method is requests.head:
+      kwargs['allow_redirects'] = True
+
     call = method(url, **kwargs)
     call.AndReturn(resp)
     return call

@@ -495,21 +495,13 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     """)
 
     # head request to follow redirects on the post url
-    resp = requests.Response()
-    resp.status_code = 200
-    resp.url = activity['object']['url']
-    resp.headers['content-type'] = 'text/html'
-    requests.head(activity['object']['url'], timeout=HTTP_TIMEOUT).AndReturn(resp)
+    self.expect_requests_head(activity['object']['url'])
 
     # and for the author url
-    resp = requests.Response()
-    resp.status_code = 200
-    resp.url = source.domain_url
-    resp.headers['content-type'] = 'text/html'
-    requests.head(source.domain_url, timeout=HTTP_TIMEOUT).AndReturn(resp)
+    self.expect_requests_head(source.domain_url)
 
     # try and fail to get the feed
-    requests.head('http://author/updates', timeout=HTTP_TIMEOUT).AndRaise(HTTPError())
+    self.expect_requests_head('http://author/updates', status_code=400)
 
     # fall back on the original page, and fetch the post permalink
     self.expect_requests_get('http://author/permalink', '<html></html>')
@@ -539,33 +531,17 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     </html>""")
 
     # head request to follow redirects on the post url
-    resp = requests.Response()
-    resp.status_code = 200
-    resp.url = activity['object']['url']
-    resp.headers['content-type'] = 'text/html'
-    requests.head(activity['object']['url'], timeout=HTTP_TIMEOUT).AndReturn(resp)
+    self.expect_requests_head(activity['object']['url'])
 
     # and for the author url
-    resp = requests.Response()
-    resp.status_code = 200
-    resp.url = source.domain_url
-    resp.headers['content-type'] = 'text/html'
-    requests.head(source.domain_url, timeout=HTTP_TIMEOUT).AndReturn(resp)
-
+    self.expect_requests_head(source.domain_url)
 
     # try to get the atom feed first
-    resp = requests.Response()
-    resp.status_code = 200
-    resp.headers['content-type'] = 'application/xml'
-    resp.url = 'http://author/updates.atom'
-    requests.head('http://author/updates.atom', timeout=HTTP_TIMEOUT).AndReturn(resp)
+    self.expect_requests_head('http://author/updates.atom',
+                              content_type='application/xml')
 
     # keep looking for an html feed
-    resp = requests.Response()
-    resp.status_code = 200
-    resp.headers['content-type'] = 'text/html'
-    resp.url = 'http://author/updates.html'
-    requests.head('http://author/updates.html', timeout=HTTP_TIMEOUT).AndReturn(resp)
+    self.expect_requests_head('http://author/updates.html')
 
     # now fetch the html feed
     self.expect_requests_get('http://author/updates.html', """

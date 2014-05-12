@@ -24,12 +24,8 @@ class UtilTest(testutil.ModelsTest):
     util.WEBMENTION_BLACKLIST.add('fa.ke')
 
   def test_follow_redirects(self):
-    self.mox.StubOutWithMock(requests, 'head', use_mock_anything=True)
-    resp = requests.Response()
-    resp.url = 'http://final/url'
-    resp.headers['content-type'] = 'text/html'
-    requests.head('http://will/redirect', timeout=HTTP_TIMEOUT).AndReturn(resp)
-
+    self.expect_requests_head('http://will/redirect',
+                              redirected_url='http://final/url')
     self.mox.ReplayAll()
     self.assert_equals('http://final/url',
                        util.follow_redirects('http://will/redirect').url)
@@ -40,25 +36,16 @@ class UtilTest(testutil.ModelsTest):
 
 
   def test_follow_redirects_with_refresh_header(self):
-    self.mox.StubOutWithMock(requests, 'head', use_mock_anything=True)
-    resp = requests.Response()
-    resp.headers['refresh'] = '0; url=http://refresh'
-    requests.head('http://will/redirect', timeout=HTTP_TIMEOUT).AndReturn(resp)
-
-    resp = requests.Response()
-    resp.url = 'http://final'
-    requests.head('http://refresh', timeout=HTTP_TIMEOUT).AndReturn(resp)
+    self.expect_requests_head('http://will/redirect',
+                              response_headers={'refresh': '0; url=http://refresh'})
+    self.expect_requests_head('http://refresh', redirected_url='http://final')
 
     self.mox.ReplayAll()
     self.assert_equals('http://final',
                        util.follow_redirects('http://will/redirect').url)
 
   def test_follow_redirects_defaults_scheme_to_http(self):
-    self.mox.StubOutWithMock(requests, 'head', use_mock_anything=True)
-    resp = requests.Response()
-    resp.url = 'http://final'
-    requests.head('http://foo/bar', timeout=HTTP_TIMEOUT).AndReturn(resp)
-
+    self.expect_requests_head('http://foo/bar', redirected_url='http://final')
     self.mox.ReplayAll()
     self.assert_equals('http://final', util.follow_redirects('foo/bar').url)
 

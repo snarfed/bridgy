@@ -38,13 +38,13 @@ LEASE_LENGTH = tasks.SendWebmentions.LEASE_LENGTH
 
 class TaskQueueTest(testutil.ModelsTest):
   """Attributes:
-  post_url: the URL for post_task() to post to
+    post_url: the URL for post_task() to post to
   """
   post_url = None
 
   def post_task(self, expected_status=200, params={}, **kwargs):
     """Args:
-    expected_status: integer, the expected HTTP return code
+      expected_status: integer, the expected HTTP return code
     """
     resp = tasks.application.get_response(self.post_url, method='POST',
                                           body=urllib.urlencode(params),
@@ -139,11 +139,7 @@ class PollTest(TaskQueueTest):
     obj['content'] = 'http://not/html'
     self.sources[0].set_activities([self.activities[0]])
 
-    self.mox.StubOutWithMock(requests, 'head', use_mock_anything=True)
-    resp = requests.Response()
-    resp.url = 'http://not/html'
-    resp.headers['content-type'] = 'application/pdf'
-    requests.head('http://not/html', timeout=HTTP_TIMEOUT).AndReturn(resp)
+    self.expect_requests_head('http://not/html', content_type='application/pdf')
 
     self.mox.ReplayAll()
     self.post_task()
@@ -156,11 +152,7 @@ class PollTest(TaskQueueTest):
     obj['content'] = 'http://will/redirect'
     self.sources[0].set_activities([self.activities[0]])
 
-    self.mox.StubOutWithMock(requests, 'head', use_mock_anything=True)
-    resp = requests.Response()
-    resp.url = 'http://final/url'
-    resp.headers['content-type'] = 'text/html'
-    requests.head('http://will/redirect', timeout=HTTP_TIMEOUT).AndReturn(resp)
+    self.expect_requests_head('http://will/redirect', redirected_url='http://final/url')
 
     self.mox.ReplayAll()
     self.post_task()
@@ -173,10 +165,7 @@ class PollTest(TaskQueueTest):
     obj['content'] = 'http://fails/resolve'
     self.sources[0].set_activities([self.activities[0]])
 
-    self.mox.stubs.UnsetAll()
-    self.mox.StubOutWithMock(requests, 'head', use_mock_anything=True)
-    requests.head('http://fails/resolve', timeout=HTTP_TIMEOUT
-                  ).AndRaise(Exception('foo'))
+    self.expect_requests_head('http://fails/resolve', status_code=400)
 
     self.mox.ReplayAll()
     self.post_task()
@@ -532,12 +521,7 @@ class PropagateTest(TaskQueueTest):
     self.responses[0].unsent = ['http://not/html']
     self.responses[0].put()
 
-    self.mox.StubOutWithMock(requests, 'head', use_mock_anything=True)
-    resp = requests.Response()
-    resp.url = 'http://not/html'
-    resp.headers['content-type'] = 'application/mpeg'
-    requests.head('http://not/html', timeout=HTTP_TIMEOUT
-                  ).AndReturn(resp)
+    self.expect_requests_head('http://not/html', content_type='application/mpeg')
 
     self.mox.ReplayAll()
     self.post_task()

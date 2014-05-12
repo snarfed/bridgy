@@ -112,7 +112,7 @@ def follow_redirects(url):
     parsed = urlparse.urlparse(url)
     if not parsed.scheme:
       url = 'http://' + url
-    resolved = requests.head(url, timeout=HTTP_TIMEOUT)
+    resolved = requests.head(url, allow_redirects=True, timeout=HTTP_TIMEOUT)
     cache_time = 0  # forever
   except AssertionError:
     raise

@@ -108,11 +108,7 @@ class PublishTest(testutil.HandlerTest):
                       target='http://brid.gy/publish/googleplus')
 
   def test_source_url_redirects(self):
-    self.mox.StubOutWithMock(requests, 'head', use_mock_anything=True)
-    resp = requests.Response()
-    resp.url = 'http://foo.com'
-    resp.headers['content-type'] = 'text/html'
-    requests.head('http://will/redirect', timeout=HTTP_TIMEOUT).AndReturn(resp)
+    self.expect_requests_head('http://will/redirect', redirected_url='http://foo.com')
 
     html = '<article class="h-entry"><p class="e-content">foo</p></article>'
     self.expect_requests_get('http://foo.com', html)
@@ -125,14 +121,9 @@ class PublishTest(testutil.HandlerTest):
 
   def test_source_url_redirects_with_refresh_header(self):
     self.mox.StubOutWithMock(requests, 'head', use_mock_anything=True)
-    resp = requests.Response()
-    resp.headers['refresh'] = '0; url=http://foo.com'
-    requests.head('http://will/redirect', timeout=HTTP_TIMEOUT).AndReturn(resp)
-
-    resp = requests.Response()
-    resp.url = 'http://foo.com'
-    resp.headers['content-type'] = 'text/html'
-    requests.head('http://foo.com', timeout=HTTP_TIMEOUT).AndReturn(resp)
+    self.expect_requests_head('http://will/redirect',
+                              response_headers={'refresh': '0; url=http://foo.com'})
+    self.expect_requests_head('http://foo.com')
 
     html = '<article class="h-entry"><p class="e-content">foo</p></article>'
     self.expect_requests_get('http://foo.com', html)
@@ -238,7 +229,7 @@ class PublishTest(testutil.HandlerTest):
 
     self.mox.StubOutWithMock(mail, 'send_mail')
     for subject in ('PublishHandler None failed: None (FakeSource)',
-                    'PreviewHandler None failed: None (FakeSource)'):
+                    'PreviewHandler preview new: None (FakeSource)'):
       mail.send_mail(subject=subject, body=mox.IgnoreArg(),
                      sender=mox.IgnoreArg(), to=mox.IgnoreArg())
 
