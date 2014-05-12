@@ -25,20 +25,11 @@ class TumblrTest(testutil.HandlerTest):
                              {'url': 'http://primary/', 'primary': True}]}}))
 
   def test_new(self):
-    # based on http://snarfed.tumblr.com/
-    self.expect_requests_get('http://primary/', """
-<html><body>
-some stuff
-<script charset="utf-8" type="text/javascript" src="http://disqus.com/forums/my-disqus-name/get_num_replies.js?url131=...&amp;"></script>
-</body></html>""")
-    self.mox.ReplayAll()
-
     t = Tumblr.new(self.handler, auth_entity=self.auth_entity)
     self.assertEquals(self.auth_entity.key, t.auth_entity)
     self.assertEquals('name', t.name)
     self.assertEquals('http://primary/', t.domain_url)
     self.assertEquals('primary', t.domain)
-    self.assertEquals('my-disqus-name', t.disqus_shortname)
     self.assertEquals('http://api.tumblr.com/v2/blog/primary/avatar/512', t.picture)
 
   def test_new_no_primary_blog(self):
@@ -46,12 +37,27 @@ some stuff
     self.assertIsNone(Tumblr.new(self.handler, auth_entity=self.auth_entity))
     self.assertIn('No primary Tumblr blog', next(iter(self.handler.messages)))
 
-  def test_new_without_disqus(self):
-    self.expect_requests_get('http://primary/', 'no disqus here!')
+  def test_verify(self):
+    # based on http://snarfed.tumblr.com/
+    # this requests.get is called by webmention-tools
+    self.expect_requests_get('http://primary/', """
+<html><body>
+some stuff
+<script charset="utf-8" type="text/javascript" src="http://disqus.com/forums/my-disqus-name/get_num_replies.js?url131=...&amp;"></script>
+</body></html>""", verify=False)
     self.mox.ReplayAll()
 
-    self.assertIsNone(Tumblr.new(self.handler, auth_entity=self.auth_entity))
-    self.assertIn('install Disqus', next(iter(self.handler.messages)))
+    t = Tumblr.new(self.handler, auth_entity=self.auth_entity)
+    t.verify()
+    self.assertEquals('my-disqus-name', t.disqus_shortname)
+
+  def test_verify_without_disqus(self):
+    self.expect_requests_get('http://primary/', 'no disqus here!', verify=False)
+    self.mox.ReplayAll()
+
+    t = Tumblr.new(self.handler, auth_entity=self.auth_entity)
+    t.verify()
+    self.assertIsNone(t.disqus_shortname)
 
   def test_create_comment(self):
     appengine_config.DISQUS_API_KEY = 'my key'
@@ -87,10 +93,6 @@ some stuff
 
   def test_superfeedr_notify(self):
     """Smoke test. Just check that we make it all the way through."""
-    self.expect_requests_get('http://primary/',
-                             'http://disqus.com/forums/my-disqus-name/')
-    self.mox.ReplayAll()
-
     Tumblr.new(self.handler, auth_entity=self.auth_entity).put()
     resp = tumblr.application.get_response(
       '/tumblr/notify/primary', method='POST', body=json.dumps({'items': []}))
