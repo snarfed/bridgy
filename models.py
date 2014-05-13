@@ -475,9 +475,10 @@ class BlogPost(Webmentions):
   feed_item = ndb.JsonProperty(compressed=True)  # from Superfeedr
 
   def label(self):
-    return ' '.join((self.key.kind(), self.key.id(),
-                     # TODO
-                     self.feed_item.get('url', '[no url]')))
+    url = None
+    if self.feed_item:
+      url = self.feed_item.get('permalinkUrl')
+    return ' '.join((self.key.kind(), self.key.id(), url or '[no url]'))
 
   def add_task(self):
     util.add_propagate_blogpost_task(self)

@@ -8,7 +8,7 @@ import datetime
 import json
 import urllib
 
-from models import Response, Source
+from models import BlogPost, Response, Source
 import mox
 import superfeedr
 import testutil
@@ -190,3 +190,16 @@ class SourceTest(testutil.HandlerTest):
 
     self.mox.ReplayAll()
     self.assert_equals(comment_obj, source.get_comment('123'))
+
+
+class BlogPostTest(testutil.ModelsTest):
+
+  def test_label(self):
+    for feed_item in None, {}:
+      bp = BlogPost(id='x')
+      bp.put()
+      self.assertEquals('BlogPost x [no url]', bp.label())
+
+    bp = BlogPost(id='x', feed_item={'permalinkUrl': 'http://perma/link'})
+    bp.put()
+    self.assertEquals('BlogPost x http://perma/link', bp.label())
