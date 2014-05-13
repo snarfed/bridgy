@@ -26,6 +26,7 @@ import models_test
 import tasks
 from tasks import PropagateResponse
 import testutil
+from testutil import FakeSource
 import util
 from webmentiontools import send
 
@@ -98,8 +99,8 @@ class PollTest(TaskQueueTest):
 
   def test_poll_error(self):
     """If anything goes wrong, the source status should be set to 'error'."""
-    self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities_response')
-    testutil.FakeSource.get_activities_response(
+    self.mox.StubOutWithMock(FakeSource, 'get_activities_response')
+    FakeSource.get_activities_response(
       count=mox.IgnoreArg(), fetch_replies=True, fetch_likes=True,
       fetch_shares=True, etag=None, min_id=None, cache=mox.IgnoreArg(),
       ).AndRaise(Exception('foo'))
@@ -256,8 +257,8 @@ class PollTest(TaskQueueTest):
     """If the source raises DisableSource, disable it.
     """
     source = self.sources[0]
-    self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities_response')
-    testutil.FakeSource.get_activities_response(
+    self.mox.StubOutWithMock(FakeSource, 'get_activities_response')
+    FakeSource.get_activities_response(
       count=mox.IgnoreArg(), fetch_replies=True, fetch_likes=True,
       fetch_shares=True, etag=None, min_id=None, cache=mox.IgnoreArg(),
       ).AndRaise(models.DisableSource)
@@ -279,8 +280,8 @@ class PollTest(TaskQueueTest):
         self.mox.UnsetStubs()
         self.setUp()
 
-        self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities_response')
-        testutil.FakeSource.get_activities_response(
+        self.mox.StubOutWithMock(FakeSource, 'get_activities_response')
+        FakeSource.get_activities_response(
           count=mox.IgnoreArg(), fetch_replies=True, fetch_likes=True,
           fetch_shares=True, etag=None, min_id=None, cache=mox.IgnoreArg(),
           ).AndRaise(err)
@@ -300,8 +301,8 @@ class PollTest(TaskQueueTest):
                   apiclient.errors.HttpError(httplib2.Response({'status': 429}), ''),
                   urllib2.HTTPError('url', 403, 'msg', {}, None)):
         self.mox.UnsetStubs()
-        self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities_response')
-        testutil.FakeSource.get_activities_response(
+        self.mox.StubOutWithMock(FakeSource, 'get_activities_response')
+        FakeSource.get_activities_response(
           count=mox.IgnoreArg(), fetch_replies=True, fetch_likes=True,
           fetch_shares=True, etag=None, min_id=None, cache=mox.IgnoreArg(),
           ).AndRaise(err)
@@ -331,8 +332,8 @@ class PollTest(TaskQueueTest):
     source.last_polled = util.EPOCH
     source.put()
 
-    self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities_response')
-    testutil.FakeSource.get_activities_response(
+    self.mox.StubOutWithMock(FakeSource, 'get_activities_response')
+    FakeSource.get_activities_response(
       count=mox.IgnoreArg(), fetch_replies=True, fetch_likes=True,
       fetch_shares=True, etag='"my etag"', min_id='c', cache=mox.IgnoreArg(),
       ).AndReturn({'items': [], 'etag': '"new etag"'})
@@ -353,8 +354,8 @@ class PollTest(TaskQueueTest):
     source.last_polled = util.EPOCH
     source.put()
 
-    self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities_response')
-    testutil.FakeSource.get_activities_response(
+    self.mox.StubOutWithMock(FakeSource, 'get_activities_response')
+    FakeSource.get_activities_response(
       count=mox.IgnoreArg(), fetch_replies=True, fetch_likes=True,
       fetch_shares=True, etag=None, min_id='c', cache=mox.IgnoreArg(),
       ).AndReturn({'items': []})
@@ -406,12 +407,9 @@ class PropagateTest(TaskQueueTest):
     if source_url is None:
       source_url = 'http://localhost/comment/fake/%s/a/1_2_a' % \
           self.sources[0].key.string_id()
-    # if endpoint is None:
-    #   endpoint = 'http://webmention/endpoint'
     mock_send = send.WebmentionSend(source_url, target, endpoint=endpoint)
     mock_send.receiver_endpoint = (endpoint if endpoint
                                    else 'http://webmention/endpoint')
-    # mock_send.receiver_endpoint = endpoint
     mock_send.response = 'used in logging'
     mock_send.error = error
     return mock_send.send(timeout=999)
@@ -684,3 +682,22 @@ class PropagateTest(TaskQueueTest):
 
     self.post_task(expected_status=500)
     self.assert_response_is('error', None, sent=['http://target1/post/url'])
+
+  def test_propagate_blogpost(self):
+    """Blog post propagate task."""
+    source_key = FakeSource.new(None, domain='fake').put()
+    links = ['http://fake/post', 'http://ok/one.png', 'http://ok/two']
+    blogpost = models.BlogPost(id='x', source=source_key, unsent=links)
+    blogpost.put()
+
+    self.expect_requests_head('http://ok/one.png', content_type='image/png')
+    self.expect_requests_head('http://ok/two')
+    self.expect_webmention(source_url='x', target='http://ok/two').AndReturn(True)
+    self.mox.ReplayAll()
+
+    self.post_url = '/_ah/queue/propagate-blogpost'
+    super(PropagateTest, self).post_task(
+      expected_status=200,
+      params={'key': blogpost.key.urlsafe()})
+    self.assert_response_is('complete', NOW + LEASE_LENGTH,
+                            sent=['http://ok/two'], response=blogpost)
