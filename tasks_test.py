@@ -686,13 +686,15 @@ class PropagateTest(TaskQueueTest):
   def test_propagate_blogpost(self):
     """Blog post propagate task."""
     source_key = FakeSource.new(None, domain='fake').put()
-    links = ['http://fake/post', 'http://ok/one.png', 'http://ok/two']
+    links = ['http://fake/post', '/no/domain', 'http://ok/one.png',
+             'http://ok/two', 'http://ok/two', # repeated
+             ]
     blogpost = models.BlogPost(id='x', source=source_key, unsent=links)
     blogpost.put()
 
-    self.expect_requests_head('http://ok/one.png', content_type='image/png')
     self.expect_requests_head('http://ok/two')
     self.expect_webmention(source_url='x', target='http://ok/two').AndReturn(True)
+    self.expect_requests_head('http://ok/one.png', content_type='image/png')
     self.mox.ReplayAll()
 
     self.post_url = '/_ah/queue/propagate-blogpost'
