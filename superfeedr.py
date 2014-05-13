@@ -62,7 +62,7 @@ def handle_feed(feed, source):
   http://documentation.superfeedr.com/subscribers.html#pubsubhubbubnotifications
 
   Args:
-    feed: string, SuperFeeder JSON feed
+    feed: string, Superfeedr JSON feed
     source: Blogger, Tumblr, or WordPress
   """
   logging.info('Source: %s %s', source.label(), source.key.string_id())
