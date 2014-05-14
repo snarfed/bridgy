@@ -1,35 +1,7 @@
 <div id="webmentions-signup" class="signup {{ width }}">
 <p class="big">Want <a href="http://indiewebify.me/#send-webmentions">webmentions</a>?</p>
 
-<div class="row">
-<form method="post" name="blogger-start" action="/blogger/start">
- <input type="image" alt="Sign in with Blogger"
-        src="/activitystreams/oauth_dropins/static/blogger.png" />
- <input name="state" type="hidden" value="webmention" />
- <!-- Blogger only has one OAuth scope. oauth-dropins fills it in.
-   https://developers.google.com/blogger/docs/2.0/developers_guide_protocol#OAuth2Authorizing
-   -->
-</form>
-</div>
-
-<div class="row">
-<form method="post" name="tumblr-start" action="/tumblr/start">
- <input type="image" alt="Sign in with Tumblr"
-        src="/activitystreams/oauth_dropins/static/tumblr.png" />
- <input name="state" type="hidden" value="webmention" />
- <!-- Tumblr doesn't seem to use scope
-   http://www.tumblr.com/docs/en/api/v2#oauth -->
-</form>
-</div>
-
-<div class="row">
-<form method="post" name="wordpress-start" action="/wordpress/start">
- <input type="image" alt="Sign in with WordPress.com"
-        src="/activitystreams/oauth_dropins/static/wordpress_com.png" />
- <input name="state" type="hidden" value="webmention" />
- <!-- wordpress.com doesn't seem to use scope
-   https://developer.wordpress.com/docs/oauth2/ -->
-</form>
-</div>
-
+{% include "blogger_signup.html" %}
+{% include "tumblr_signup.html" %}
+{% include "wordpress_signup.html" %}
 </div>

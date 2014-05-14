@@ -98,8 +98,8 @@ pre .link {
   margin: .5em;
 }
 
-.header, #user {
-  margin-bottom: 2em;
+.header, #user, #blog-promo, #undiscovered {
+  margin-bottom: 1em;
 }
 
 form {

@@ -45,7 +45,7 @@
 
 <!-- Banner for blogs that aren't yet advertising the webmention endpoint -->
 {% if "webmention" in source.features and not source.verified %}
-<div class="row big undiscovered">
+<div id="undiscovered" class="row big">
   {% if source.key.kind == "Blogger" %}
   <p>Next step: <a target="_blank" href="{{ source.edit_template_url }}">click
       here to open your blog's template</a>, click <em>Edit HTML</em>, and add
@@ -101,6 +101,26 @@
   <!--   Try a webmention!</a> -->
 </p></div>
 <br />
+
+{% else %}
+
+<div id="blog-promo" class="row big">
+{% if blogger_promo %}
+Looks like you're on Blogger! Click here to add webmentions:
+{% include "blogger_signup.html" %}
+{% endif %}
+
+{% if tumblr_promo %}
+Looks like you're on Tumblr! Click here to add webmentions:
+{% include "tumblr_signup.html" %}
+{% endif %}
+
+{% if wordpress_promo %}
+Looks like you're on WordPress.com! Click here to add webmentions:
+{% include "wordpress_signup.html" %}
+{% endif %}
+</div>
+
 {% endif %}
 
 <div class="row">

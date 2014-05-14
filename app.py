@@ -115,6 +115,15 @@ class UserHandler(DashboardHandler):
         'epoch': util.EPOCH,
         })
 
+    # Blog webmention promos
+    if self.source.domain and 'webmention' not in self.source.features:
+      if '.blogspot.' in self.source.domain:  # Blogger uses country TLDs
+        vars['blogger_promo'] = True
+      elif self.source.domain.endswith('tumblr.com'):
+        vars['tumblr_promo'] = True
+      elif self.source.domain.endswith('wordpress.com'):
+        vars['wordpress_promo'] = True
+
     # Responses
     if 'listen' in self.source.features:
       responses = Response.query().filter(Response.source == self.source.key)\
