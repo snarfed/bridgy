@@ -127,6 +127,11 @@ class Source(StringIdModel):
     """Human-readable label for this site."""
     return '%s (%s)' % (self.name, self.AS_CLASS.NAME)
 
+  @classmethod
+  def bridgy_webmention_endpoint(cls):
+    """Returns the Bridgy webmention endpoint for this source type."""
+    return 'https://www.brid.gy/webmention/' + cls.SHORT_NAME
+
   def get_activities_response(self, **kwargs):
     """Returns recent posts and embedded comments for this source.
 

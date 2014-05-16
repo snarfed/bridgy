@@ -289,6 +289,16 @@ iframe#twitter-widget-0 {
   font-style: italic;
 }
 
+.warning {
+  background-color: khaki !important;
+  font-style: italic;
+}
+
+.error code, .warning code {
+  font-style: normal;
+  background-color: inherit !important;
+}
+
 .about {
   list-style: none;
 }
