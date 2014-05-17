@@ -47,7 +47,7 @@ class Blogger(models.Source):
     # https://support.google.com/blogger/answer/97933?hl=en
     return urlparse.urljoin(self.domain_url, '/feeds/posts/default')  # Atom
 
-  def silo_url(self, handler):
+  def silo_url(self):
     return self.domain_url
 
   def edit_template_url(self):
