@@ -68,6 +68,9 @@ class Tumblr(models.Source):
     # http://www.tumblr.com/help  (search for feed)
     return urlparse.urljoin(self.domain_url, '/rss')
 
+  def silo_url(self, handler):
+    return self.domain_url
+
   def edit_template_url(self):
     return 'http://www.tumblr.com/customize/%s' % self.auth_entity.id()
 
