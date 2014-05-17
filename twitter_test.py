@@ -37,8 +37,8 @@ class TwitterTest(testutil.ModelsTest):
     self.assertEqual('snarfed_org', tw.key.string_id())
     self.assertEqual('http://pi.ct/ure', tw.picture)
     self.assertEqual('Ryan Barrett', tw.name)
-    self.assertEqual('http://twitter.com/snarfed_org', tw.url)
-    self.assertEqual('http://twitter.com/snarfed_org', tw.silo_url())
+    self.assertEqual('https://twitter.com/snarfed_org', tw.url)
+    self.assertEqual('https://twitter.com/snarfed_org', tw.silo_url())
 
   def test_new_massages_profile_image(self):
     """We should use profile_image_url_https and drop '_normal' if possible."""
