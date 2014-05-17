@@ -24,6 +24,7 @@ import urlparse
 import appengine_config
 
 from activitystreams import microformats2
+from activitystreams.microformats2 import first_props
 from activitystreams.oauth_dropins.webutil import handlers
 import blogger
 import facebook
@@ -121,18 +122,30 @@ class ItemHandler(webapp2.RequestHandler):
     if url:
       image['url'] = util.update_scheme(url, self)
 
+    mf2_json = microformats2.object_to_json(obj)
+
+    # try to include the author's silo profile url
+    author = first_props(mf2_json['properties']).get('author', {})
+    author_uid = first_props(author['properties']).get('uid', '')
+    if author_uid:
+      _, id = util.parse_tag_uri(author_uid)
+      silo_url = self.source.as_source.user_url(id)
+      urls = author.get('properties', {}).setdefault('url', [])
+      if silo_url not in microformats2.get_string_urls(urls):
+        urls.append(silo_url)
+
+    # write the response!
     self.response.headers['Access-Control-Allow-Origin'] = '*'
     if format == 'html':
       self.response.headers['Content-Type'] = 'text/html; charset=utf-8'
       self.response.out.write(TEMPLATE.substitute({
             'url': obj.get('url', ''),
-            'body': microformats2.object_to_html(obj),
+            'body': microformats2.json_to_html(mf2_json),
             'title': obj.get('title', obj.get('content', 'Bridgy Response')),
             }))
     elif format == 'json':
       self.response.headers['Content-Type'] = 'application/json; charset=utf-8'
-      self.response.out.write(json.dumps(microformats2.object_to_json(obj),
-                                         indent=2))
+      self.response.out.write(json.dumps(mf2_json, indent=2))
 
   def add_original_post_urls(self, post_id, obj, prop):
     """Extracts original post URLs and adds them to an object, in place.

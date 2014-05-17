@@ -25,7 +25,10 @@ class HandlersTest(testutil.HandlerTest):
             'id': 'tag:fa.ke,2013:000',
             'url': 'http://fa.ke/000',
             'content': 'asdf http://orig/post qwert',
-            'author': {'image': {'url': 'http://example.com/ryan/image'}},
+            'author': {
+              'id': 'tag:fa.ke,2013:author_id',
+              'image': {'url': 'http://example.com/ryan/image'},
+              },
             }}])
     self.source.put()
 
@@ -45,9 +48,9 @@ class HandlersTest(testutil.HandlerTest):
 <div class="p-name"><a class="u-url" href="http://fa.ke/000">asdf http://orig/post qwert</a></div>
 
   <div class="h-card p-author">
-
-    <img class="u-photo" src="https://example.com/ryan/image" alt="" />
-    <span class="u-uid"></span>
+    <a class="u-url" href="http://fa.ke/author_id"></a>
+    <img class="u-photo" src="https://example.com/ryan/image" alt="-" />
+    <span class="u-uid">tag:fa.ke,2013:author_id</span>
   </div>
 
   <div class="e-content">
@@ -73,7 +76,11 @@ class HandlersTest(testutil.HandlerTest):
                         }],
           'author': [{
               'type': ['h-card'],
-              'properties': {'photo': ['https://example.com/ryan/image']},
+              'properties': {
+                'uid': ['tag:fa.ke,2013:author_id'],
+                'url': ['http://fa.ke/author_id'],
+                'photo': ['https://example.com/ryan/image'],
+                },
               }],
           },
         }, json.loads(resp.body))
@@ -118,7 +125,7 @@ class HandlersTest(testutil.HandlerTest):
 
   <div class="h-card p-author">
 
-    <img class="u-photo" src="https://example.com/ryan/image" alt="" />
+    <img class="u-photo" src="https://example.com/ryan/image" alt="-" />
     <span class="u-uid"></span>
   </div>
 
@@ -148,7 +155,7 @@ class HandlersTest(testutil.HandlerTest):
 
   <div class="h-card p-author">
 
-    <img class="u-photo" src="https://example.com/ryan/image" alt="" />
+    <img class="u-photo" src="https://example.com/ryan/image" alt="-" />
     <span class="u-uid"></span>
   </div>
 
@@ -170,7 +177,11 @@ class HandlersTest(testutil.HandlerTest):
         'verb': 'share',
         'id': 'tag:fa.ke,2013:111',
         'object': {'url': 'http://example.com/original/post'},
-        'author': {'image': {'url': 'http://example.com/ryan/image'}},
+        'author': {
+          'id': 'tag:fa.ke,2013:reposter_id',
+          'url': 'http://personal.domain/',
+          'image': {'url': 'http://example.com/ryan/image'},
+          },
         })
 
     self.check_response('/repost/fake/%s/000/111', """\
@@ -178,9 +189,10 @@ class HandlersTest(testutil.HandlerTest):
 <span class="u-uid">tag:fa.ke,2013:111</span>
 
   <div class="h-card p-author">
-
-    <img class="u-photo" src="https://example.com/ryan/image" alt="" />
-    <span class="u-uid"></span>
+    <a class="u-url" href="http://personal.domain/"></a>
+    <a class="u-url" href="http://fa.ke/reposter_id"></a>
+    <img class="u-photo" src="https://example.com/ryan/image" alt="-" />
+    <span class="u-uid">tag:fa.ke,2013:reposter_id</span>
   </div>
 
   <div class="e-content">
@@ -201,7 +213,11 @@ class HandlersTest(testutil.HandlerTest):
         'verb': 'rsvp-no',
         'id': 'tag:fa.ke,2013:111',
         'object': {'url': 'http://example.com/event'},
-        'author': {'image': {'url': 'http://example.com/ryan/image'}},
+        'author': {
+          'id': 'tag:fa.ke,2013:rsvper_id',
+          'url': 'http://fa.ke/rsvper_id',  # same URL as FakeSource.user_url()
+          'image': {'url': 'http://example.com/ryan/image'},
+          },
         'displayName': 'Alice is not attending.',
         'content': '<data class="p-rsvp" value="no">is not attending.</data>',
         })
@@ -212,9 +228,9 @@ class HandlersTest(testutil.HandlerTest):
 <div class="p-name">Alice is not attending.</div>
 
   <div class="h-card p-author">
-
-    <img class="u-photo" src="https://example.com/ryan/image" alt="" />
-    <span class="u-uid"></span>
+    <a class="u-url" href="http://fa.ke/rsvper_id"></a>
+    <img class="u-photo" src="https://example.com/ryan/image" alt="-" />
+    <span class="u-uid">tag:fa.ke,2013:rsvper_id</span>
   </div>
 
   <div class="e-content">

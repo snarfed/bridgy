@@ -80,7 +80,7 @@ class FacebookPage(models.Source):
 
   def silo_url(self):
     """Returns the Facebook account URL, e.g. https://facebook.com/foo."""
-    return 'https://facebook.com/' + (self.username or self.key.id())
+    return self.as_source.user_url(self.username or self.key.id())
 
   def get(self, url):
     """Simple wrapper around urlopen(). Returns decoded JSON dict."""

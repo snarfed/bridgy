@@ -71,6 +71,9 @@ class FakeAsSource(FakeBase, as_source.Source):
   NAME = 'FakeSource'
   DOMAIN = 'fa.ke'
 
+  def user_url(self, id):
+    return 'http://fa.ke/' + id
+
   def set_like(self, val):
     self._set('like', val)
 
@@ -121,6 +124,9 @@ class FakeSource(FakeBase, Source):
   def __init__(self, *args, **kwargs):
     super(FakeSource, self).__init__(*args, **kwargs)
     FakeSource.as_source.put()
+
+  def silo_url(self):
+    return 'http://fa.ke/profile/url'
 
   def set_activities(self, val):
     self._set('activities', val)
