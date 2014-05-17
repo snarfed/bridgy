@@ -134,8 +134,12 @@ class Handler(webmention.WebmentionHandler):
           return
       except NotImplementedError:
         # try the next item
-        item_types = item.get('type')
-        logging.error('Object type %s not supported; trying next.', item_types)
+        item_types = set(item.get('type'))
+        for embedded in ('rsvp', 'invitee', 'repost', 'repost-of', 'like',
+                         'like-of', 'in-reply-to'):
+          if embedded in item.get('properties', []):
+            item_types.add(embedded)
+        logging.error('Object type(s) %s not supported; trying next.', item_types)
         types = types.union(item_types)
       except BaseException, e:
         return self.error('Error: %s' % e, status=500)

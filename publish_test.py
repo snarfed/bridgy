@@ -182,6 +182,19 @@ class PublishTest(testutil.HandlerTest):
     self.assert_error("FakeSource doesn't support type(s) h-as-like.")
     self.assertEquals('failed', Publish.query().get().status)
 
+  def test_embedded_type_not_implemented(self):
+    self.expect_requests_get('http://foo.com/', """
+<article class="h-entry">
+  <div class="p-like-of">
+    foo <a class="u-url" href="http://url">bar</a>
+  </div>
+</article>""")
+    self.mox.ReplayAll()
+
+    # FakeSource.create() raises NotImplementedError on likes
+    self.assert_error("FakeSource doesn't support type(s) like-of.")
+    self.assertEquals('failed', Publish.query().get().status)
+
   def test_returned_type_overrides(self):
     # FakeSource returns type 'post' when it sees 'rsvp'
     self.expect_requests_get('http://foo.com/', """
