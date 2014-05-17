@@ -35,6 +35,9 @@ class FacebookPageTest(testutil.ModelsTest):
                             }))
     self.auth_entity.put()
 
+    self.post_activity = copy.deepcopy(as_facebook_test.ACTIVITY)
+    self.post_activity['id'] = 'tag:facebook.com,2013:222' # this is fb_object_id
+
   def test_new(self):
     page = FacebookPage.new(self.handler, auth_entity=self.auth_entity)
     self.assertEqual(self.auth_entity, page.auth_entity.get())
@@ -75,12 +78,12 @@ class FacebookPageTest(testutil.ModelsTest):
     event_activity = page.as_source.event_to_activity(owned_event)
     for k in 'attending', 'notAttending', 'maybeAttending', 'invited':
       event_activity['object'][k] = as_facebook_test.EVENT_OBJ_WITH_ATTENDEES[k]
-    self.assert_equals([as_facebook_test.ACTIVITY,
-                        as_facebook_test.ACTIVITY,
-                        event_activity,
-                        ], page.get_activities())
+    self.assert_equals([self.post_activity, as_facebook_test.ACTIVITY, event_activity],
+                       page.get_activities())
 
   def test_get_activities_post_and_photo_duplicates(self):
+    self.assertEqual(as_facebook_test.POST['object_id'],
+                        as_facebook_test.PHOTO['id'])
     self.expect_urlopen(
       'https://graph.facebook.com/me/posts?offset=0&access_token=my_token',
       json.dumps({'data': [as_facebook_test.POST]}))
@@ -93,7 +96,7 @@ class FacebookPageTest(testutil.ModelsTest):
     self.mox.ReplayAll()
 
     page = FacebookPage.new(self.handler, auth_entity=self.auth_entity)
-    self.assert_equals([as_facebook_test.ACTIVITY], page.get_activities())
+    self.assert_equals([self.post_activity], page.get_activities())
 
   def test_revoked(self):
     self.expect_urlopen(

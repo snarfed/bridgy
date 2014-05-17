@@ -142,14 +142,22 @@ class FacebookPage(models.Source):
         pass
       raise
 
+    # add photos. they show up as both a post and a photo, each with a separate
+    # id. the post's object_id field points to the photo's id. de-dupe by
+    # switching the post to use the object_id when it's provided.
     items = resp.setdefault('items', [])
+    object_ids = set()
+    for item in items:
+      obj_id = item.get('object', {}).get('fb_object_id')
+      if obj_id:
+        object_ids.add(obj_id)
+        item['id'] = self.as_source.tag_uri(obj_id)
 
-    # only add photos that we don't already have activities for
-    fb_object_ids = util.trim_nulls(set(
-        i.get('object', {}).get('fb_object_id') for i in items))
+    ids = set((i['id'] for i in items))
     items += [self.as_source.post_to_activity(p) for p in photos
-              if p.get('id') not in fb_object_ids]
+              if p.get('id') not in object_ids]
 
+    # add events
     items += [self.as_source.event_to_activity(e, rsvps=r)
               for e, r in events_and_rsvps]
     return resp
