@@ -125,8 +125,8 @@ class ItemHandler(webapp2.RequestHandler):
     mf2_json = microformats2.object_to_json(obj)
 
     # try to include the author's silo profile url
-    author = first_props(mf2_json['properties']).get('author', {})
-    author_uid = first_props(author['properties']).get('uid', '')
+    author = first_props(mf2_json.get('properties', {})).get('author', {})
+    author_uid = first_props(author.get('properties', {})).get('uid', '')
     if author_uid:
       _, id = util.parse_tag_uri(author_uid)
       silo_url = self.source.as_source.user_url(id)
