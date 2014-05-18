@@ -51,7 +51,8 @@ function do_preview(site) {
 
   preview.innerHTML = '<img src="/static/spinner.gif" width="30" />';
   req.open('post', '/publish/preview?source=' + url +
-           '&target=http://brid.gy/publish/' + site);
+    '&target=http://brid.gy/publish/' + site +
+    '&link_to_post=' + document.getElementById('link-to-post-checked').checked);
   req.send();
 }
 

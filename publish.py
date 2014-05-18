@@ -218,6 +218,7 @@ class Handler(webmention.WebmentionHandler):
           'preview': self.entity.published,
           'source_url': self.fetched.url,
           'target_url': self.target_url,
+          'link_to_post': self.link_to_post,
           'webmention_endpoint': self.request.host_url + '/publish/webmention',
           })
     else:

@@ -155,13 +155,24 @@ Looks like you're on WordPress.com! Click here to add webmentions:
 
 <form method="post" name="preview" action="/publish/preview">
 <p id="preview-ui">
- <label id="source-label" for="source" class="big">Enter post URL:</label>
+ <label id="source-label" for="source-url" class="big">Enter post URL:</label>
  <input id="source-url" name="source" type="text" alt="Source URL"></input>
  <input name="target" type="hidden"
         value="http://brid.gy/publish/{{ source.SHORT_NAME }}"></input>
+
+ <nobr>
+ <!-- use a hidden input before the checkbox with the same name to set the value
+      to be sent when the checkbox is unchecked. -->
+ <input id="link-to-post-unchecked" name="link_to_post" type="hidden"
+        value="false"></input>
+ <input id="link-to-post-checked" name="link_to_post" type="checkbox"
+        value="true" checked></input>
+ <label id="link-to-post-label" for="link-to-post-checked">Include link</label>
+ &nbsp;
  <button id="preview-button" type="submit" class="btn btn-default"
          onclick="do_preview('{{ source.SHORT_NAME }}'); return false;"
          >Preview</button>
+ </nobr>
 </p>
 </form>
 </div>
