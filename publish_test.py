@@ -26,14 +26,17 @@ class PublishTest(testutil.HandlerTest):
                                       features=['publish'])
     self.source.put()
 
-  def get_response(self, source=None, target=None, endpoint='/publish/webmention'):
-    if source is None:
-      source = 'http://foo.com/'
-    if target is None:
-      target = 'http://brid.gy/publish/fake'
-    return publish.application.get_response(
-      endpoint, method='POST',
-      body='source=%s&target=%s' % (source, target))
+  def get_response(self, source=None, target=None, endpoint='/publish/webmention',
+                   link_to_post=None):
+    params = {
+      'source': source or 'http://foo.com/',
+      'target': target or 'http://brid.gy/publish/fake',
+      }
+    if link_to_post is not None:
+      params['link_to_post'] = link_to_post
+
+    return publish.application.get_response(endpoint, method='POST',
+                                            body=urllib.urlencode(params))
 
   def assert_error(self, expected_error, status=400, **kwargs):
     resp = self.get_response(**kwargs)
@@ -276,3 +279,13 @@ class PublishTest(testutil.HandlerTest):
     self.assertEquals('complete', publish.status)
     self.assertEquals('preview', publish.type)
     self.assertEquals(html, publish.html)
+
+  def test_link_to_post_false(self):
+    html = '<article class="h-entry"><p class="e-content">foo</p></article>'
+    self.expect_requests_get('http://foo.com/', html)
+    self.mox.ReplayAll()
+
+    resp = self.get_response(link_to_post='False')
+    self.assertEquals(200, resp.status_int, resp.body)
+    self.assertEquals('foo', json.loads(resp.body)['content'])
+

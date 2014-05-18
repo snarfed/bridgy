@@ -69,6 +69,16 @@ class Handler(webmention.WebmentionHandler):
     logging.info('Params: %self', self.request.params.items())
     self.source_url = util.get_required_param(self, 'source')
     self.target_url = util.get_required_param(self, 'target')
+
+    self.link_to_post = self.request.get('link_to_post', 'true')
+    if self.link_to_post.lower() == 'true':
+      self.link_to_post = True
+    elif self.link_to_post.lower() == 'false':
+      self.link_to_post = False
+    else:
+      self.abort(400, 'Unexpected link_to post value %r; expected true or false'
+                 % self.link_to_post)
+
     assert self.PREVIEW in (True, False)
 
     # parse and validate target URL
@@ -202,7 +212,7 @@ class Handler(webmention.WebmentionHandler):
 
     if self.PREVIEW:
       self.entity.published = self.source.as_source.preview_create(
-        obj, include_link=True)
+        obj, include_link=self.link_to_post)
       return template.render('templates/preview.html', {
           'source': self.preprocess_source(self.source),
           'preview': self.entity.published,
@@ -211,7 +221,8 @@ class Handler(webmention.WebmentionHandler):
           'webmention_endpoint': self.request.host_url + '/publish/webmention',
           })
     else:
-      self.entity.published = self.source.as_source.create(obj, include_link=True)
+      self.entity.published = self.source.as_source.create(
+        obj, include_link=self.link_to_post)
       if 'url' not in self.entity.published:
         self.entity.published['url'] = obj.get('url')
       self.entity.type = self.entity.published.get('type') or models.get_type(obj)
