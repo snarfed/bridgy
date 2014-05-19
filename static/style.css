@@ -251,33 +251,22 @@ iframe#twitter-widget-0 {
   font-size: .8em;
 }
 
-.shadow, .profile {
-  -moz-box-shadow: 2px 2px 2px rgba(0,0,0,0.4);
-  -webkit-box-shadow: 2px 2px 2px rgba(0,0,0,0.4);
+.shadow, .profile, .signup input {
+  -moz-box-shadow: 2px 2px 4px rgba(0,0,0,0.4);
+  -webkit-box-shadow: 2px 2px 4px rgba(0,0,0,0.4);
   /* CSS3 */
-  box-shadow: 2px 2px 2px rgba(0,0,0,0.4);
+  box-shadow: 2px 2px 4px rgba(0,0,0,0.4);
   /* For IE 8 */
   -ms-filter: progid:DXImageTransform.Microsoft.Shadow(Strength=2,Direction=135,Color='#666666');
   /* For IE 5.5 - 7 */
   filter: progid:DXImageTransform.Microsoft.Shadow(Strength=2,Direction=135,Color='#666666');
 }
 
-.shadow, .profile {
-  -moz-box-shadow: 2px 2px 2px rgba(0,0,0,0.4);
-  -webkit-box-shadow: 2px 2px 2px rgba(0,0,0,0.4);
+.shadow:hover, .profile:hover, .signup input:hover {
+  -moz-box-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+  -webkit-box-shadow: 2px 2px 4px rgba(0,0,0,0.8);
   /* CSS3 */
-  box-shadow: 2px 2px 2px rgba(0,0,0,0.4);
-  /* For IE 8 */
-  -ms-filter: progid:DXImageTransform.Microsoft.Shadow(Strength=2,Direction=135,Color='#666666');
-  /* For IE 5.5 - 7 */
-  filter: progid:DXImageTransform.Microsoft.Shadow(Strength=2,Direction=135,Color='#666666');
-}
-
-.shadow:hover, .profile:hover { /* TODO .signup input:hover { */
-  -moz-box-shadow: 2px 2px 2px #049;
-  -webkit-box-shadow: 2px 2px 2px #049;
-  /* CSS3 */
-  box-shadow: 2px 2px 2px #049;
+  box-shadow: 2px 2px 4px rgba(0,0,0,0.8);
   /* For IE 8 */
   -ms-filter: progid:DXImageTransform.Microsoft.Shadow(Strength=2,Direction=135,Color='#222222');
   /* For IE 5.5 - 7 */
