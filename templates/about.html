@@ -46,6 +46,7 @@
   to a Twitter tweet from my web site?</a></li>
 <li><a href="#like">How do I like a Facebook post, favorite or
   retweet a tweet, or RSVP to an event from my web site?</a></li>
+<li><a href="#omit-link">Can I disable the link back to my post?</a></li>
 <li><a href="#response">How does Bridgy respond to webmentions?</a></li>
 <li><a href="#error-response">How about error responses?</a></li>
 <li><a href="#silos">Why only Facebook and Twitter? Why not Google+ or
@@ -453,6 +454,16 @@ RSVP.
 &lt;a class="<span class='keyword'>u-in-reply-to</span>" href="<a href='https://www.facebook.com/events/1409507205977978/'>https://www.facebook.com/events/1409507205977978/</a>"&gt;&lt;/a&gt;
 </pre>
 </p>
+</li>
+
+<li id="omit-link" class="question">Can I disable the link back to my post?</li>
+<li class="answer">
+<p>Sure! By default, Bridgy includes a link back to your post. If you're using
+the form on your user page, you can uncheck the <em>Include link</em> checkbox
+to disable this. If you're sending a webmention, you can disable it by adding
+the query parameter <code>bridgy_omit_link=true</code> to your webmention HTTP
+request, or by adding the <code>u-bridgy-omit-link</code> class to a link in
+your post.
 </li>
 
 <li id="response" class="question">How does Bridgy respond to webmentions?</li>
