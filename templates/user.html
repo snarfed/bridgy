@@ -163,11 +163,12 @@ Looks like you're on WordPress.com! Click here to add webmentions:
  <nobr>
  <!-- use a hidden input before the checkbox with the same name to set the value
       to be sent when the checkbox is unchecked. -->
- <input id="link-to-post-unchecked" name="link_to_post" type="hidden"
-        value="false"></input>
- <input id="link-to-post-checked" name="link_to_post" type="checkbox"
-        value="true" checked></input>
- <label id="link-to-post-label" for="link-to-post-checked">Include link</label>
+ &nbsp;
+ <input id="include-link-unchecked" name="bridgy_omit_link" type="hidden"
+        value="true"></input>
+ <input id="include-link-checked" name="bridgy_omit_link" type="checkbox"
+        value="false" checked></input>
+ <label id="include-link-label" for="include-link-checked">Include link</label>
  &nbsp;
  <button id="preview-button" type="submit" class="btn btn-default"
          onclick="do_preview('{{ source.SHORT_NAME }}'); return false;"

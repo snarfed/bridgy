@@ -69,16 +69,6 @@ class Handler(webmention.WebmentionHandler):
     logging.info('Params: %self', self.request.params.items())
     self.source_url = util.get_required_param(self, 'source')
     self.target_url = util.get_required_param(self, 'target')
-
-    self.link_to_post = self.request.get('link_to_post', 'true')
-    if self.link_to_post.lower() == 'true':
-      self.link_to_post = True
-    elif self.link_to_post.lower() == 'false':
-      self.link_to_post = False
-    else:
-      self.abort(400, 'Unexpected link_to post value %r; expected true or false'
-                 % self.link_to_post)
-
     assert self.PREVIEW in (True, False)
 
     # parse and validate target URL
@@ -194,9 +184,10 @@ class Handler(webmention.WebmentionHandler):
     logging.debug('Converted to ActivityStreams object: %s', obj)
 
     # posts and comments need content
+    props = item.get('properties', {})
     obj_type = obj.get('objectType')
     if obj_type in ('note', 'article', 'comment'):
-      contents = item.get('properties', {}).get('content', [])
+      contents = props.get('content', [])
       if not contents or not contents[0] or not contents[0].get('value'):
         self.error('Could not find e-content in %s' % self.fetched.url, data=item)
         return None
@@ -210,20 +201,27 @@ class Handler(webmention.WebmentionHandler):
       self.error('Not posting for snarfed.org')
       return None
 
+    # whether to include link to original post. bridgy_omit_link query param
+    # (any value) takes precedence, then u-bridgy-omit-link mf2 class.
+    if 'bridgy_omit_link' in self.request.params:
+      omit_link = self.request.get('bridgy_omit_link').lower() in ('', 'true')
+    else:
+      omit_link = 'bridgy-omit-link' in props
+
     if self.PREVIEW:
       self.entity.published = self.source.as_source.preview_create(
-        obj, include_link=self.link_to_post)
+        obj, include_link=not omit_link)
       return template.render('templates/preview.html', {
           'source': self.preprocess_source(self.source),
           'preview': self.entity.published,
           'source_url': self.fetched.url,
           'target_url': self.target_url,
-          'link_to_post': self.link_to_post,
+          'bridgy_omit_link': omit_link,
           'webmention_endpoint': self.request.host_url + '/publish/webmention',
           })
     else:
       self.entity.published = self.source.as_source.create(
-        obj, include_link=self.link_to_post)
+        obj, include_link=not omit_link)
       if 'url' not in self.entity.published:
         self.entity.published['url'] = obj.get('url')
       self.entity.type = self.entity.published.get('type') or models.get_type(obj)

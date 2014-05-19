@@ -27,13 +27,13 @@ class PublishTest(testutil.HandlerTest):
     self.source.put()
 
   def get_response(self, source=None, target=None, endpoint='/publish/webmention',
-                   link_to_post=None):
+                   bridgy_omit_link=None):
     params = {
       'source': source or 'http://foo.com/',
       'target': target or 'http://brid.gy/publish/fake',
       }
-    if link_to_post is not None:
-      params['link_to_post'] = link_to_post
+    if bridgy_omit_link is not None:
+      params['bridgy_omit_link'] = bridgy_omit_link
 
     return publish.application.get_response(endpoint, method='POST',
                                             body=urllib.urlencode(params))
@@ -280,12 +280,25 @@ class PublishTest(testutil.HandlerTest):
     self.assertEquals('preview', publish.type)
     self.assertEquals(html, publish.html)
 
-  def test_link_to_post_false(self):
+  def test_bridgy_omit_link_query_param(self):
     html = '<article class="h-entry"><p class="e-content">foo</p></article>'
     self.expect_requests_get('http://foo.com/', html)
     self.mox.ReplayAll()
 
-    resp = self.get_response(link_to_post='False')
+    resp = self.get_response(bridgy_omit_link='True')
+    self.assertEquals(200, resp.status_int, resp.body)
+    self.assertEquals('foo', json.loads(resp.body)['content'])
+
+  def test_bridgy_omit_link_mf2(self):
+    html = """\
+<article class="h-entry">
+<p class="e-content">foo</p>
+<a class="u-bridgy-omit-link" href=""></a>
+</article>"""
+    self.expect_requests_get('http://foo.com/', html)
+    self.mox.ReplayAll()
+
+    resp = self.get_response()
     self.assertEquals(200, resp.status_int, resp.body)
     self.assertEquals('foo', json.loads(resp.body)['content'])
 
