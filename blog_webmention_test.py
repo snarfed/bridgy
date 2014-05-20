@@ -135,13 +135,43 @@ i hereby reply
     bw = BlogWebmention.get_by_id('http://bar.com/reply http://foo.com/post/1')
     self.assertEquals('failed', bw.status)
 
+  def test_u_url(self):
+    html = """
+<article class="h-entry">
+<p class="p-author">my name</p>
+<p class="e-content">
+i hereby mention
+<a href="http://foo.com/post/1"></a>
+<a class="u-url" href="http://barzz.com/u/url"></a>
+</p></article>"""
+    self.expect_requests_get('http://bar.com/reply', html)
+
+    testutil.FakeSource.create_comment(
+      'http://foo.com/post/1', 'my name', 'http://foo.com/', """\
+i hereby mention
+<a href="http://foo.com/post/1"></a>
+<a class="u-url" href="http://barzz.com/u/url"></a><br /><a href="http://barzz.com/u/url">via barzz.com</a>"""
+      ).AndReturn({'id': 'fake id'})
+    self.mox.ReplayAll()
+
+    resp = self.get_response()
+    self.assertEquals(200, resp.status_int, resp.body)
+    bw = BlogWebmention.get_by_id('http://bar.com/reply http://foo.com/post/1')
+    self.assertEquals('complete', bw.status)
+    self.assertEquals('post', bw.type)
+    self.assertEquals('http://barzz.com/u/url', bw.u_url)
+    self.assertEquals('http://barzz.com/u/url', bw.source_url())
+
   def test_repeated(self):
     # 1) first a failure
     self.expect_requests_get('http://bar.com/reply', '')
 
     # 2) should allow retrying, this one will succeed
     self.expect_requests_get('http://bar.com/reply', """
-<article class="h-entry"><a class="u-repost-of" href="http://foo.com/post/1"></a></article>""")
+<article class="h-entry">
+<a class="u-url" href="http://bar.com/reply"></a>
+<a class="u-repost-of" href="http://foo.com/post/1"></a>
+</article>""")
     testutil.FakeSource.create_comment(
       'http://foo.com/post/1', 'foo.com', 'http://foo.com/',
       'reposted this.<br /><a href="http://bar.com/reply">via bar.com</a>')

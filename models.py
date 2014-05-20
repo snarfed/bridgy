@@ -521,13 +521,18 @@ class Publish(ndb.Model):
 class BlogWebmention(Publish, StringIdModel):
   """Datastore entity for webmentions for hosted blog providers.
 
-  Key id is the source URL and target URL concated with a space, ie
-  'SOURCE TARGET'.
+  Key id is the source URL and target URL concated with a space, ie 'SOURCE
+  TARGET'. The source URL is *always* the URL given in the webmention HTTP
+  request. If the source page has a u-url, that's stored in the u_url property.
 
   Reuses Publish's fields, but otherwise unrelated.
   """
+  # If the source page has a u-url, it's stored here and overrides the source
+  # URL in the key id.
+  u_url = ndb.StringProperty()
+
   def source_url(self):
-    return self.key.id().split()[0]
+    return self.u_url or self.key.id().split()[0]
 
   def target_url(self):
     return self.key.id().split()[1]
