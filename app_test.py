@@ -27,7 +27,7 @@ class AppTest(testutil.ModelsTest):
     self.responses[0].put()
     key = self.responses[0].key.urlsafe()
     resp = app.application.get_response(
-      '/retry-response', method='POST', body='key=' + key)
+      '/retry', method='POST', body='key=' + key)
     self.assertEquals(302, resp.status_int)
     self.assertEquals(self.sources[0].bridgy_url(self.handler),
                       resp.headers['Location'].split('#')[0])
@@ -35,7 +35,7 @@ class AppTest(testutil.ModelsTest):
     self.assertEqual(key, params['response_key'])
 
   def test_poll_now_and_retry_response_missing_key(self):
-    for endpoint in '/poll-now', '/retry-response':
+    for endpoint in '/poll-now', '/retry':
       for body in '', 'key=' + self.responses[0].key.urlsafe():  # hasn't been stored
         resp = app.application.get_response(endpoint, method='POST', body=body)
         self.assertEquals(400, resp.status_int)

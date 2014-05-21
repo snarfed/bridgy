@@ -295,15 +295,21 @@ class PollNowHandler(util.Handler):
     self.redirect(source.bridgy_url(self))
 
 
-class RetryResponseHandler(util.Handler):
+class RetryHandler(util.Handler):
   def post(self):
-    response = ndb.Key(urlsafe=util.get_required_param(self, 'key')).get()
-    if not response:
-      self.abort(400, 'response not found')
+    entity = ndb.Key(urlsafe=util.get_required_param(self, 'key')).get()
+    if not entity:
+      self.abort(400, 'key not found')
 
-    util.add_propagate_task(response)
+    if entity.key.kind() == 'Response':
+      util.add_propagate_task(entity)
+    elif entity.key.kind() == 'BlogPost':
+      util.add_propagate_blogpost_task(entity)
+    else:
+      self.abort(400, 'Unexpected key kind %s', entity.key.kind())
+
     self.messages.add('Retrying. Refresh in a minute to see the results!')
-    self.redirect(response.source.get().bridgy_url(self))
+    self.redirect(entity.source.get().bridgy_url(self))
 
 
 class RedirectToFrontPageHandler(util.Handler):
@@ -323,6 +329,6 @@ application = webapp2.WSGIApplication(
    ('/delete/start', DeleteStartHandler),
    ('/delete/finish', DeleteFinishHandler),
    ('/poll-now', PollNowHandler),
-   ('/retry-response', RetryResponseHandler),
+   ('/retry', RetryHandler),
    ('/(listen|publish)/?', RedirectToFrontPageHandler),
    ], debug=appengine_config.DEBUG)
