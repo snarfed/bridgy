@@ -20,10 +20,13 @@ from activitystreams.oauth_dropins import facebook as oauth_facebook
 from activitystreams.oauth_dropins import googleplus as oauth_googleplus
 from activitystreams.oauth_dropins import instagram as oauth_instagram
 from activitystreams.oauth_dropins import twitter as oauth_twitter
+from blogger import Blogger
 from facebook import FacebookPage
 from googleplus import GooglePlusPage
 from instagram import Instagram
+from tumblr import Tumblr
 from twitter import Twitter
+from wordpress_rest import WordPress
 import handlers
 from models import BlogPost, BlogWebmention, Publish, Response, Source
 import util
@@ -116,12 +119,16 @@ class UserHandler(DashboardHandler):
         })
 
     # Blog webmention promos
-    if self.source.domain and 'webmention' not in self.source.features:
-      if '.blogspot.' in self.source.domain:  # Blogger uses country TLDs
+    domain = self.source.domain
+    if domain and 'webmention' not in self.source.features:
+      if ('.blogspot.' in domain and  # Blogger uses country TLDs
+          not Blogger.query(Blogger.domain == domain).get()):
         vars['blogger_promo'] = True
-      elif self.source.domain.endswith('tumblr.com'):
+      elif (domain.endswith('tumblr.com') and
+            not Tumblr.query(Tumblr.domain == domain).get()):
         vars['tumblr_promo'] = True
-      elif self.source.domain.endswith('wordpress.com'):
+      elif (domain.endswith('wordpress.com') and
+            not WordPress.query(WordPress.domain == domain).get()):
         vars['wordpress_promo'] = True
 
     # Responses
