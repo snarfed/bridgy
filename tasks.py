@@ -191,7 +191,9 @@ class Poll(webapp2.RequestHandler):
       # extract activity id and maybe replace stored last activity id
       id = activity.get('id')
       if id:
-        _, id = util.parse_tag_uri(id)
+        parsed = util.parse_tag_uri(id)
+        if parsed:
+          id = parsed[1]
         try:
           # try numeric comparison first
           greater = int(id) > int(last_activity_id)
@@ -244,6 +246,7 @@ class Poll(webapp2.RequestHandler):
         #   ).fetch(len(responses), keys_only=True)
         existing = ndb.get_multi((ndb.Key(Response, id) for id in responses.iterkeys()),
                                  use_memcache=False)
+        # (we know Response key ids are always tag URIs)
         existing_ids = [util.parse_tag_uri(e.key.id())[1] for e in existing if e]
 
       for id in existing_ids:
@@ -271,6 +274,7 @@ class Poll(webapp2.RequestHandler):
     if responses:
       # cache newly seen response ids
       memcache.set('AR ' + source.bridgy_path(),
+          # (we know Response key ids are always tag URIs)
           existing_ids + [util.parse_tag_uri(id)[1] for id in responses])
 
     source.last_polled = source.last_poll_attempt
@@ -479,12 +483,14 @@ class PropagateResponse(SendWebmentions):
       return
     logging.info('Source: %s %s', source.label(), source.key.string_id())
 
+    # (we know Response key ids are always tag URIs)
     _, response_id = util.parse_tag_uri(self.entity.key.string_id())
     if self.entity.type in ('like', 'repost', 'rsvp'):
       response_id = response_id.split('_')[-1]
 
     # generate local response URL
-    _, post_id = util.parse_tag_uri(activity['id'])
+    parsed = util.parse_tag_uri(activity['id'])
+    post_id = parsed[1] if parsed else activity['id']
     # prefer brid-gy.appspot.com to brid.gy because non-browsers (ie OpenSSL)
     # currently have problems with brid.gy's SSL cert. details:
     # https://github.com/snarfed/bridgy/issues/20

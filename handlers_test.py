@@ -105,6 +105,15 @@ class HandlersTest(testutil.HandlerTest):
       resp = handlers.application.get_response(url % self.source.key.string_id())
       self.assertEqual(404, resp.status_int)
 
+  def test_author_uid_not_tag_uri(self):
+    self.source.get_activities()[0]['object']['author']['id'] = 'not a tag uri'
+    resp = handlers.application.get_response(
+      '/post/fake/%s/000?format=json' % self.source.key.string_id())
+    self.assertEqual(200, resp.status_int, resp.body)
+    props = json.loads(resp.body)['properties']['author'][0]['properties']
+    self.assert_equals(['not a tag uri'], props['uid'])
+    self.assertNotIn('url', props)
+
   def test_ignore_unknown_query_params(self):
     resp = handlers.application.get_response('/post/fake/%s/000?target=x/y/z' %
                                              self.source.key.string_id())

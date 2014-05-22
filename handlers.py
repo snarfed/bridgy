@@ -128,11 +128,12 @@ class ItemHandler(webapp2.RequestHandler):
     author = first_props(mf2_json.get('properties', {})).get('author', {})
     author_uid = first_props(author.get('properties', {})).get('uid', '')
     if author_uid:
-      _, id = util.parse_tag_uri(author_uid)
-      silo_url = self.source.as_source.user_url(id)
-      urls = author.get('properties', {}).setdefault('url', [])
-      if silo_url not in microformats2.get_string_urls(urls):
-        urls.append(silo_url)
+      parsed = util.parse_tag_uri(author_uid)
+      if parsed:
+        silo_url = self.source.as_source.user_url(parsed[1])
+        urls = author.get('properties', {}).setdefault('url', [])
+        if silo_url not in microformats2.get_string_urls(urls):
+          urls.append(silo_url)
 
     # write the response!
     self.response.headers['Access-Control-Allow-Origin'] = '*'

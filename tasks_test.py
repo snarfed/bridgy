@@ -363,6 +363,16 @@ class PollTest(TaskQueueTest):
     self.mox.ReplayAll()
     self.post_task()
 
+  def test_last_activity_id_not_tag_uri(self):
+    self.activities[0]['id'] = 'a'
+    self.activities[1]['id'] = 'b'
+    self.activities[2]['id'] = 'c'
+    self.sources[0].set_activities(list(reversed(self.activities)))
+    self.post_task()
+
+    source = self.sources[0].key.get()
+    self.assertEqual('c', source.last_activity_id)
+
 
 class PropagateTest(TaskQueueTest):
 
@@ -672,6 +682,23 @@ class PropagateTest(TaskQueueTest):
 
     self.mox.ReplayAll()
     self.post_task(base_url='http://brid-gy.appspot.com')
+
+  def test_activity_id_not_tag_uri(self):
+    """If the activity id isn't a tag uri, we should just use it verbatim."""
+    activity = json.loads(self.responses[0].activity_json)
+    activity['id'] = 'AAA'
+    self.responses[0].activity_json = json.dumps(activity)
+
+    self.responses[0].unsent = ['http://good']
+    self.responses[0].put()
+
+    source_url = 'https://brid-gy.appspot.com/comment/fake/%s/AAA/1_2_a' % \
+        self.sources[0].key.string_id()
+    self.expect_webmention(source_url=source_url, target='http://good')\
+        .AndReturn(True)
+
+    self.mox.ReplayAll()
+    self.post_task(base_url='http://www.brid.gy')
 
   def test_complete_exception(self):
     """If completing raises an exception, the lease should be released."""
