@@ -1,5 +1,5 @@
 blacklist:
 
 # background: https://twitter.com/jkphl/status/463818470820311041
-# - subnet: 85.114.145.198
-#   description: jkphl server with a rogue cron job
+- subnet: 85.114.145.198
+  description: jkphl server with a rogue cron job
