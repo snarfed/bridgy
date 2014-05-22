@@ -11,6 +11,7 @@
   <span class="source-buttons">
   <a href="/{{ source.path }}" title="Link">#</a>
   {% if source.status == "disabled" %}
+  <!-- TODO: make this work without javascript too -->
     <a href="#"
        onclick="document.forms['listen-{{ source.SHORT_NAME }}-start'].submit();
                 return false;">
