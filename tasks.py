@@ -28,14 +28,17 @@ import appengine_config
 
 from activitystreams.source import Source
 # need to import model class definitions since poll creates and saves entities.
+import blogger
 import facebook
 import googleplus
 import instagram
 import models
 from models import Response
 import original_post_discovery
+import tumblr
 import twitter
 import util
+import wordpress_rest
 
 WEBMENTION_DISCOVERY_CACHE_TIME = 60 * 60 * 24  # a day
 
