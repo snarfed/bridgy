@@ -128,6 +128,22 @@ i hereby reply
     bw = BlogWebmention.get_by_id('http://bar.com/reply http://foo.com/post/1')
     self.assertEquals('failed', bw.status)
 
+  def test_source_link_check_ignores_fragment(self):
+    html = """\
+<article class="h-entry"><p class="e-content">
+<a href="http://foo.com/post/1"></a>
+</p></article>"""
+    self.expect_requests_get('http://bar.com/reply', html)
+    testutil.FakeSource.create_comment(
+      'http://foo.com/post/1', 'foo.com', 'http://foo.com/',
+      '<a href="http://foo.com/post/1"></a><br /><a href="http://bar.com/reply">via bar.com</a>')
+    self.mox.ReplayAll()
+
+    resp = self.get_response()
+    self.assertEquals(200, resp.status_int, resp.body)
+    bw = BlogWebmention.get_by_id('http://bar.com/reply http://foo.com/post/1')
+    self.assertEquals('complete', bw.status)
+
   def test_source_missing_mf2(self):
     self.expect_requests_get('http://bar.com/reply', '')
     self.mox.ReplayAll()

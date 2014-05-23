@@ -37,8 +37,9 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
 
   def post(self, source_short_name):
     logging.info('Params: %self', self.request.params.items())
-    self.source_url = util.get_required_param(self, 'source')
-    self.target_url = util.get_required_param(self, 'target')
+    # strip fragments from source and target url
+    self.source_url = urlparse.urldefrag(util.get_required_param(self, 'source'))[0]
+    self.target_url = urlparse.urldefrag(util.get_required_param(self, 'target'))[0]
 
     # parse and validate target URL
     domain = util.domain_from_link(self.target_url)
@@ -140,7 +141,9 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
       text = content.get('html') or content.get('value')
 
       for type in 'in-reply-to', 'like', 'like-of', 'repost', 'repost-of':
-        if self.target_url in microformats2.get_string_urls(props.get(type, [])):
+        urls = [urlparse.urldefrag(u)[0] for u in
+                microformats2.get_string_urls(props.get(type, []))]
+        if self.target_url in urls:
           break
       else:
         type = 'post' if text and self.target_url in text else None
