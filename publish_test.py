@@ -22,14 +22,15 @@ class PublishTest(testutil.HandlerTest):
   def setUp(self):
     super(PublishTest, self).setUp()
     publish.SOURCES['fake'] = testutil.FakeSource
-    self.source = testutil.FakeSource(id='foo.com', domain='foo.com',
-                                      features=['publish'])
+    self.source = testutil.FakeSource(
+      id='foo.com', features=['publish'], domain='foo.com',
+      domain_url='http://foo.com/')
     self.source.put()
 
   def get_response(self, source=None, target=None, endpoint='/publish/webmention',
                    bridgy_omit_link=None):
     params = {
-      'source': source or 'http://foo.com/',
+      'source': source or 'http://foo.com/bar',
       'target': target or 'http://brid.gy/publish/fake',
       }
     if bridgy_omit_link is not None:
@@ -45,14 +46,14 @@ class PublishTest(testutil.HandlerTest):
 
   def test_success(self):
     html = '<article class="h-entry"><p class="e-content">foo</p></article>'
-    self.expect_requests_get('http://foo.com/', html)
+    self.expect_requests_get('http://foo.com/bar', html)
     self.mox.ReplayAll()
 
     resp = self.get_response()
     self.assertEquals(200, resp.status_int, resp.body)
-    self.assertEquals('foo - http://foo.com/', json.loads(resp.body)['content'])
+    self.assertEquals('foo - http://foo.com/bar', json.loads(resp.body)['content'])
 
-    self.assertTrue(PublishedPage.get_by_id('http://foo.com/'))
+    self.assertTrue(PublishedPage.get_by_id('http://foo.com/bar'))
     publish = Publish.query().get()
     self.assertEquals(self.source.key, publish.source)
     self.assertEquals('complete', publish.status)
@@ -60,21 +61,21 @@ class PublishTest(testutil.HandlerTest):
     self.assertEquals('FakeSource post label', publish.type_label)
     self.assertEquals(html, publish.html)
     self.assertEquals({'id': 'fake id', 'url': 'http://fake/url',
-                       'content': 'foo - http://foo.com/'},
+                       'content': 'foo - http://foo.com/bar'},
                       publish.published)
 
   def test_success_domain_translates_to_lowercase(self):
     html = '<article class="h-entry"><p class="e-content">foo</p></article>'
-    self.expect_requests_get('http://FoO.cOm/', html)
+    self.expect_requests_get('http://FoO.cOm/Bar', html)
     self.mox.ReplayAll()
 
-    resp = self.get_response(source='http://FoO.cOm/')
+    resp = self.get_response(source='http://FoO.cOm/Bar')
     self.assertEquals(200, resp.status_int, resp.body)
-    self.assertEquals('foo - http://FoO.cOm/', json.loads(resp.body)['content'])
+    self.assertEquals('foo - http://FoO.cOm/Bar', json.loads(resp.body)['content'])
 
   def test_already_published(self):
     """We shouldn't allow duplicating an existing, *completed* publish."""
-    page = PublishedPage(id='http://foo.com/')
+    page = PublishedPage(id='http://foo.com/bar')
 
     # these are all fine
     Publish(parent=page.key, source=self.source.key, status='new').put()
@@ -84,7 +85,7 @@ class PublishTest(testutil.HandlerTest):
 
     html = '<article class="h-entry"><p class="e-content">foo</p></article>'
     for i in range(2):
-      self.expect_requests_get('http://foo.com/', html)
+      self.expect_requests_get('http://foo.com/bar', html)
     self.mox.ReplayAll()
 
     # first attempt should work
@@ -149,17 +150,17 @@ class PublishTest(testutil.HandlerTest):
     self.assert_error(msg)
 
   def test_source_missing_mf2(self):
-    self.expect_requests_get('http://foo.com/', '')
+    self.expect_requests_get('http://foo.com/bar', '')
     self.mox.ReplayAll()
     self.assert_error('No microformats2 data found in http://foo.com/')
 
-    self.assertTrue(PublishedPage.get_by_id('http://foo.com/'))
+    self.assertTrue(PublishedPage.get_by_id('http://foo.com/bar'))
     publish = Publish.query().get()
     self.assertEquals('failed', publish.status)
     self.assertEquals(self.source.key, publish.source)
 
   def test_no_content(self):
-    self.expect_requests_get('http://foo.com/',
+    self.expect_requests_get('http://foo.com/bar',
                              '<article class="h-entry h-as-note"></article>')
     self.mox.ReplayAll()
 
@@ -167,17 +168,17 @@ class PublishTest(testutil.HandlerTest):
     self.assertEquals('failed', Publish.query().get().status)
 
   def test_multiple_items_chooses_first_that_works(self):
-    self.expect_requests_get('http://foo.com/', """
+    self.expect_requests_get('http://foo.com/bar', """
 <a class="h-card" href="http://michael.limiero.com/">Michael Limiero</a>
 <article class="h-entry"><p class="e-content">foo bar</article></p>""")
     self.mox.ReplayAll()
 
     resp = self.get_response()
     self.assertEquals(200, resp.status_int, resp.body)
-    self.assertEquals('foo bar - http://foo.com/', json.loads(resp.body)['content'])
+    self.assertEquals('foo bar - http://foo.com/bar', json.loads(resp.body)['content'])
 
   def test_type_not_implemented(self):
-    self.expect_requests_get('http://foo.com/',
+    self.expect_requests_get('http://foo.com/bar',
                              '<article class="h-entry h-as-like"></article>')
     self.mox.ReplayAll()
 
@@ -185,8 +186,12 @@ class PublishTest(testutil.HandlerTest):
     self.assert_error("FakeSource doesn't support type(s) h-as-like.")
     self.assertEquals('failed', Publish.query().get().status)
 
+  def test_source_url_is_domain_url(self):
+    self.source.put()
+    self.assert_error("Looks like that's your home page.", source='https://foo.com#')
+
   def test_embedded_type_not_implemented(self):
-    self.expect_requests_get('http://foo.com/', """
+    self.expect_requests_get('http://foo.com/bar', """
 <article class="h-entry">
   <div class="p-like-of">
     foo <a class="u-url" href="http://url">bar</a>
@@ -200,7 +205,7 @@ class PublishTest(testutil.HandlerTest):
 
   def test_returned_type_overrides(self):
     # FakeSource returns type 'post' when it sees 'rsvp'
-    self.expect_requests_get('http://foo.com/', """
+    self.expect_requests_get('http://foo.com/bar', """
 <article class="h-entry h-as-rsvp">
 <p class="e-content">
 <data class="p-rsvp" value="yes"></data>
@@ -229,7 +234,7 @@ class PublishTest(testutil.HandlerTest):
     html = """<article class="h-entry">
 <a class="u-url" href="/foo/bar"></a>
 <p class="e-content">foo</p></article>"""
-    self.expect_requests_get('http://foo.com/', html)
+    self.expect_requests_get('http://foo.com/bar', html)
     self.mox.ReplayAll()
 
     resp = self.get_response()
@@ -241,7 +246,7 @@ class PublishTest(testutil.HandlerTest):
     """Should send me email on *any* error from create() or preview_create()."""
     html = '<article class="h-entry"><p class="e-content">foo</p></article>'
     for i in range(2):
-      self.expect_requests_get('http://foo.com/', html)
+      self.expect_requests_get('http://foo.com/bar', html)
 
     self.mox.StubOutWithMock(mail, 'send_mail')
     for subject in ('PublishHandler None failed: None (FakeSource)',
@@ -265,7 +270,7 @@ class PublishTest(testutil.HandlerTest):
 
   def test_preview(self):
     html = '<article class="h-entry"><p class="e-content">foo</p></article>'
-    self.expect_requests_get('http://foo.com/', html)
+    self.expect_requests_get('http://foo.com/bar', html)
     # make sure create() isn't called
     self.mox.StubOutWithMock(self.source.as_source, 'create', use_mock_anything=True)
     self.mox.ReplayAll()
@@ -282,7 +287,7 @@ class PublishTest(testutil.HandlerTest):
 
   def test_bridgy_omit_link_query_param(self):
     html = '<article class="h-entry"><p class="e-content">foo</p></article>'
-    self.expect_requests_get('http://foo.com/', html)
+    self.expect_requests_get('http://foo.com/bar', html)
     self.mox.ReplayAll()
 
     resp = self.get_response(bridgy_omit_link='True')
@@ -295,10 +300,9 @@ class PublishTest(testutil.HandlerTest):
 <p class="e-content">foo</p>
 <a class="u-bridgy-omit-link" href=""></a>
 </article>"""
-    self.expect_requests_get('http://foo.com/', html)
+    self.expect_requests_get('http://foo.com/bar', html)
     self.mox.ReplayAll()
 
     resp = self.get_response()
     self.assertEquals(200, resp.status_int, resp.body)
     self.assertEquals('foo', json.loads(resp.body)['content'])
-

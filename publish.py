@@ -108,6 +108,16 @@ class Handler(webmention.WebmentionHandler):
       return self.error("Could not find <b>%(type)s</b> account for <b>%(domain)s</b>. Check that your %(type)s profile has %(domain)s in its <em>web site</em> or <em>link</em> field, then try signing up again." %
         {'type': source_cls.AS_CLASS.NAME, 'domain': domain})
 
+    # show nice error message if they're trying to publish their home page
+    domain_url_parts = urlparse.urlparse(self.source.domain_url)
+    source_url_parts = urlparse.urlparse(self.source_url)
+    if (source_url_parts.netloc == domain_url_parts.netloc and
+        source_url_parts.path.strip('/') == domain_url_parts.path.strip('/')):
+      return self.error(
+        "Looks like that's your home page. Try entering pone of your posts instead!")
+
+    # done with the sanity checks, ready to fetch the source url. create the
+    # Publish entity so we can store the result.
     entity = self.get_or_add_publish_entity(url)
     if (entity.status == 'complete' and entity.type != 'preview' and
         not self.PREVIEW and not appengine_config.DEBUG):
