@@ -5,6 +5,8 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import json
 import mox
+import urllib
+import urlparse
 
 import appengine_config
 from appengine_config import HTTP_TIMEOUT
@@ -36,6 +38,18 @@ class BloggerTest(testutil.HandlerTest):
     self.assertEquals('http://my.blawg/', b.domain_url)
     self.assertEquals('my.blawg', b.domain)
     self.assertEquals('http://pic', b.picture)
+
+  def test_new_oauth_dropins_error(self):
+    """Blogger is special cased in oauth-dropins: when login succeeds but then
+    an authenticated API call fails, it returns an empty auth entity key, which
+    we can differentiate from a user decline because oauth-dropins can't
+    currently intercept Blogger declines.
+    """
+    resp = blogger.application.get_response('/blogger/add')
+    self.assertIn("Couldn't fetch your blogs",
+        urllib.unquote(urlparse.urlparse(resp.headers['Location']).fragment))
+    self.assertEquals(0, BloggerV2Auth.query().count())
+    self.assertEquals(0, Blogger.query().count())
 
   def test_new_no_blogs(self):
     self.auth_entity.blog_hostnames = []

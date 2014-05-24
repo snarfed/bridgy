@@ -149,13 +149,20 @@ class OAuthCallback(util.Handler):
   oauth-dropin doesn't yet allow multiple callback handlers. :/
   """
   def get(self):
-    auth_entity_str_key = util.get_required_param(self, 'auth_entity')
+    auth_entity_str_key = self.request.get('auth_entity')
+    if auth_entity_str_key:
+      auth_entity = ndb.Key(urlsafe=auth_entity_str_key).get()
+    else:
+      auth_entity = None
+      self.messages.add(
+        "Couldn't fetch your blogs. Maybe you're not a Blogger user?")
+
     state = self.request.get('state')
     if not state:
       # state doesn't currently come through for Blogger. not sure why. doesn't
       # matter for now since we don't plan to implement listen or publish.
       state = 'webmention'
-    auth_entity = ndb.Key(urlsafe=auth_entity_str_key).get()
+
     self.maybe_add_or_delete_source(Blogger, auth_entity, state)
 
 
