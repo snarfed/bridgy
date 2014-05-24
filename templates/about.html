@@ -254,7 +254,12 @@ API</a> for a while, but
 does your web site's post have a
 <a href="http://indiewebcamp.com/rel-syndication">rel-syndication link</a> to
 the social network post? Bridgy needs at least one or the other so it can
-connect the two posts. (See the
+connect the two posts.</p>
+<p>Rel-syndication lookup fetches the site configured in your social
+network bio. It will follow each h-entry to its post permalink page and look there for
+rel-syndication or u-syndication links. If you publish an unfiltered
+h-feed somewhere other than your homepage, you can point Bridgy to it by including
+&lt;link rel="feed"> on the homepage. (See the
 <a href="http://indiewebcamp.com/original-post-discovery">original post
 discovery</a> and <a href="http://indiewebcamp.com/posse-post-discovery">posse
 post discovery</a> algorithms for all the gory details.)</p>
