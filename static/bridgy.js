@@ -26,6 +26,8 @@ function do_preview(site) {
   if (url.length == 0) {
     window.alert('Please enter a URL.');
     return;
+  } else if (!url.startsWith('http')) {
+    url = 'http://' + url;
   }
 
   var preview = document.getElementById('preview');
@@ -50,7 +52,7 @@ function do_preview(site) {
   }
 
   preview.innerHTML = '<img src="/static/spinner.gif" width="30" />';
-  req.open('post', '/publish/preview?source=' + url +
+  req.open('post', '/publish/preview?source=' + encodeURIComponent(url) +
     '&target=http://brid.gy/publish/' + site + '&bridgy_omit_link=' +
     !document.getElementById('include-link-checked').checked);
   req.send();
@@ -78,4 +80,17 @@ function send_preview(url) {
   sent.innerHTML = '<img src="/static/spinner.gif" width="30" />';
   req.open('post', url);
   req.send();
+}
+
+// Polyfill String.startsWith() since it's only supported in Firefox right now.
+if (!String.prototype.startsWith) {
+  Object.defineProperty(String.prototype, 'startsWith', {
+    enumerable: false,
+    configurable: false,
+    writable: false,
+    value: function (searchString, position) {
+      position = position || 0;
+      return this.indexOf(searchString, position) === position;
+    }
+  });
 }
