@@ -22,6 +22,26 @@ indexes:
   - name: updated
     direction: desc
 
+- kind: Blogger
+  properties:
+  - name: status
+  - name: features
+
+- kind: FacebookPage
+  properties:
+  - name: status
+  - name: features
+
+- kind: GooglePlusPage
+  properties:
+  - name: status
+  - name: features
+
+- kind: Instagram
+  properties:
+  - name: status
+  - name: features
+
 - kind: Publish
   properties:
   - name: source
@@ -45,3 +65,18 @@ indexes:
   - name: source
   - name: updated
     direction: desc
+
+- kind: Tumblr
+  properties:
+  - name: status
+  - name: features
+
+- kind: Twitter
+  properties:
+  - name: status
+  - name: features
+
+- kind: WordPress
+  properties:
+  - name: status
+  - name: features

@@ -82,7 +82,11 @@ class FrontPageHandler(DashboardHandler):
       util.CachedFrontPage.store(self.response.body)
 
   def template_vars(self):
-    queries = [cls.query() for cls in handlers.SOURCES.values()]
+    # only show enabled users with at least one feature on. cutting down on
+    # number of users on front page as a temporary mitigation for
+    # https://github.com/snarfed/bridgy/issues/149
+    queries = [cls.query(cls.status=='enabled', cls.features > None)
+               for cls in handlers.SOURCES.values()]
     sources = {source.key.urlsafe(): source for source in itertools.chain(*queries)}
 
     # preprocess sources, sort by name
