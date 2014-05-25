@@ -1,6 +1,7 @@
 # coding=utf-8
 """Unit tests for original_post_discovery.py
 """
+import copy
 import logging
 import original_post_discovery
 import requests
@@ -197,6 +198,30 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
                       [tag.get('url') for tag in activity['object']['tags']])
     # webmention targets converts to a set to remove duplicates
     self.assertEquals(set([original]), wmtargets)
+
+  def test_strip_www_when_comparing_domains(self):
+    """We should ignore leading www when comparing syndicated URL domains."""
+    source = self.sources[0]
+    source.domain_url = 'http://target1'
+    activity = copy.deepcopy(self.activities[0])
+    activity['object']['tags'] = []
+
+    self.expect_requests_get('http://target1', """
+    <html class="h-feed">
+      <div class="h-entry">
+        <a class="u-url" href="http://target1/post/url"></a>
+      </div>
+    </html>""")
+    self.expect_requests_get('http://target1/post/url', """
+    <div class="h-entry">
+      <a class="u-syndication" href="http://www.fa.ke/post/url"></a>
+    </div>""")
+    self.mox.ReplayAll()
+
+    original_post_discovery.discover(self.sources[0], activity)
+    self.assertEquals([{'url': 'http://target1/post/url',
+                       'objectType': 'article',
+                       }], activity['object']['tags'])
 
   def test_rel_feed_link(self):
     """Check that we follow the rel=feed link when looking for the

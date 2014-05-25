@@ -302,7 +302,7 @@ def _process_entry(source, permalink):
     # too (note: query the appropriate source subclass by
     # author.domain, rather than author.domain_url)
     parsed = urlparse.urlparse(syndication_url)
-    if parsed.netloc == source.AS_CLASS.DOMAIN:
+    if util.domain_from_link(parsed.netloc) == source.AS_CLASS.DOMAIN:
       logging.debug('saving discovered relationship %s -> %s',
                     syndication_url, permalink)
       relationship = SyndicatedPost(parent=source.key, original=permalink,
