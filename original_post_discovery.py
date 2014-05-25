@@ -79,7 +79,7 @@ def discover(source, activity, fetch_hfeed=True):
     return activity
 
   if DEBUG:
-    if author_url.startswith('http://snarfed.org'):
+    if author_url.startswith('https://snarfed.org'):
       author_url = author_url.replace('snarfed.org', 'localhost')
     elif author_url.startswith('http://kylewm.com'):
       author_url = author_url.replace('kylewm.com', 'localhost')

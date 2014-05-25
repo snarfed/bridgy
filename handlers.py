@@ -182,8 +182,8 @@ class ItemHandler(webapp2.RequestHandler):
         continue
       # when debugging locally, replace my (snarfed.org) URLs with localhost
       if appengine_config.DEBUG:
-        if url.startswith('http://snarfed.org/'):
-          url_obj['url'] = url = url.replace('http://snarfed.org/',
+        if url.startswith('https://snarfed.org/'):
+          url_obj['url'] = url = url.replace('https://snarfed.org/',
                                              'http://localhost/')
         elif url.startswith('http://kylewm.com'):
           url_obj['url'] = url = url.replace('http://kylewm.com/',
