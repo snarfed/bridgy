@@ -298,7 +298,8 @@ class Source(StringIdModel):
                     'Try a webmention!</a>' % source.domain_url,
       }.get(feature, ''))
     logging.info('%s %s', blurb, source.bridgy_url(handler))
-    util.email_me(subject=blurb, body=source.bridgy_url(handler))
+    if not existing:
+      util.email_me(subject=blurb, body=source.bridgy_url(handler))
 
     source.verify()
     if source.verified():
