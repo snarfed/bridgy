@@ -134,13 +134,7 @@ def _posse_post_discovery(source, activity, author_url, syndication_url):
 
   if relationship.original:
     obj = activity.get('object') or activity
-    # if an original was discovered by regular original-post-discovery,
-    # then this will create a duplicate. this is ok because duplicates are
-    # cleaned up later in tasks.get_webmention_targets
-    obj.setdefault('tags', []).append({
-      'objectType': 'article',
-      'url': relationship.original,
-    })
+    obj.setdefault('upstreamDuplicates', []).append(relationship.original)
 
   return activity
 

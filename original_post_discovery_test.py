@@ -19,8 +19,11 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     author's h-feed for rel=syndication links
     """
     activity = self.activities[0]
-    activity['object']['content'] = 'post content without backlink'
-    activity['object']['url'] = 'http://fa.ke/post/url'
+    activity['object'].update({
+        'content': 'post content without backlink',
+        'url': 'http://fa.ke/post/url',
+        'upstreamDuplicates': ['existing uD'],
+        })
 
     # silo domain is fa.ke
     source = self.sources[0]
@@ -45,11 +48,9 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     logging.debug('Original post discovery %s -> %s', source, activity)
     original_post_discovery.discover(source, activity)
 
-    # tags = 2 original + 1 discovered
-    self.assertEquals(3, len(activity['object']['tags']))
-    self.assertEquals({'url': 'http://author/post/permalink',
-                       'objectType': 'article'},
-                      activity['object']['tags'][2])
+    # upstreamDuplicates = 1 original + 1 discovered
+    self.assertEquals(['existing uD', 'http://author/post/permalink'],
+                      activity['object']['upstreamDuplicates'])
 
     origurls = [r.original for r in SyndicatedPost.query(ancestor=source.key)]
     self.assertEquals([u'http://author/post/permalink'], origurls)
@@ -118,8 +119,8 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     # first activity should trigger all the lookups and storage
     original_post_discovery.discover(source, self.activities[0])
 
-    self.assertEquals('http://author/post/permalink1',
-                      self.activities[0]['object']['tags'][2]['url'])
+    self.assertEquals(['http://author/post/permalink1'],
+                      self.activities[0]['object']['upstreamDuplicates'])
 
     # make sure things are where we want them
     r = SyndicatedPost.query_by_original(source, 'http://author/post/permalink1')
@@ -138,8 +139,8 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     # second lookup should require no additional HTTP requests.
     # the second syndicated post should be linked up to the second permalink.
     original_post_discovery.discover(source, self.activities[1])
-    self.assertEquals('http://author/post/permalink2',
-                      self.activities[1]['object']['tags'][2]['url'])
+    self.assertEquals(['http://author/post/permalink2'],
+                      self.activities[1]['object']['upstreamDuplicates'])
 
     # third activity lookup.
     # since we didn't find a back-link for the third syndicated post,
@@ -147,8 +148,8 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     # posts, it should not follow any of the permalinks
 
     original_post_discovery.discover(source, self.activities[2])
-    # should have found no new tags
-    self.assertEquals(2, len(self.activities[2]['object'].get('tags')))
+    # should have found no new syndication link
+    self.assertNotIn('upstreamDuplicates', self.activities[2]['object'])
 
     # should have saved a blank to prevent subsequent checks of this
     # syndicated post from fetching the h-feed again
@@ -158,19 +159,21 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     # confirm that we do not fetch the h-feed again for the same
     # syndicated post
     original_post_discovery.discover(source, self.activities[2])
-    # should be no new tags
-    self.assertEquals(2, len(self.activities[2]['object'].get('tags')))
+    # should be no new syndication link
+    self.assertNotIn('upstreamDuplicates', self.activities[2]['object'])
 
   def test_no_duplicate_links(self):
     """Make sure that a link found by both original-post-discovery and
-    posse-post-discovery will not result in two webmentions being sent
+    posse-post-discovery will not result in two webmentions being sent.
     """
     source = self.sources[0]
     source.domain_url = 'http://target1'
 
     activity = self.activities[0]
-    activity['object']['content'] = 'with a backlink http://target1/post/url'
-    activity['object']['url'] = 'http://fa.ke/post/url'
+    activity['object'].update({
+          'content': 'with a backlink http://target1/post/url',
+          'url': 'http://fa.ke/post/url',
+          })
 
     original = 'http://target1/post/url'
     syndicated = 'http://fa.ke/post/url'
@@ -191,20 +194,15 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     logging.debug('Original post discovery %s -> %s', source, activity)
 
     wmtargets = tasks.get_webmention_targets(source, activity)
-    # activity *will* have a duplicate tag for the original post, one
-    # discovered in the post content, one from the rel=syndication
-    # lookup.
-    self.assertEquals([None, None, original, original],
-                      [tag.get('url') for tag in activity['object']['tags']])
-    # webmention targets converts to a set to remove duplicates
+    self.assertEquals([original], activity['object']['upstreamDuplicates'])
     self.assertEquals(set([original]), wmtargets)
 
   def test_strip_www_when_comparing_domains(self):
     """We should ignore leading www when comparing syndicated URL domains."""
     source = self.sources[0]
     source.domain_url = 'http://target1'
-    activity = copy.deepcopy(self.activities[0])
-    activity['object']['tags'] = []
+    activity = self.activities[0]
+    activity['object']['url'] = 'http://www.fa.ke/post/url'
 
     self.expect_requests_get('http://target1', """
     <html class="h-feed">
@@ -218,10 +216,9 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     </div>""")
     self.mox.ReplayAll()
 
-    original_post_discovery.discover(self.sources[0], activity)
-    self.assertEquals([{'url': 'http://target1/post/url',
-                       'objectType': 'article',
-                       }], activity['object']['tags'])
+    original_post_discovery.discover(source, activity)
+    self.assertEquals(['http://target1/post/url'],
+                      activity['object']['upstreamDuplicates'])
 
   def test_rel_feed_link(self):
     """Check that we follow the rel=feed link when looking for the
@@ -301,8 +298,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     original_post_discovery.discover(source, activity)
 
     # should append the author note url, with no addt'l requests
-    self.assert_equals([None, None, original_url],
-                       [tag.get('url') for tag in activity['object']['tags']])
+    self.assertEquals([original_url], activity['object']['upstreamDuplicates'])
 
   def test_invalid_webmention_target(self):
     """Confirm that no additional requests are made if the author url is
