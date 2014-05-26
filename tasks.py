@@ -63,6 +63,7 @@ def get_webmention_targets(source, activity):
 
   targets = set()
   obj = activity.get('object') or activity
+
   for tag in obj.get('tags', []):
     url = tag.get('url')
     if url and tag.get('objectType') == 'article':
@@ -70,6 +71,11 @@ def get_webmention_targets(source, activity):
       tag['url'] = url
       if send:
         targets.add(url)
+
+  for url in obj.get('upstreamDuplicates', []):
+    url, domain, send = util.get_webmention_target(url)
+    if send:
+      targets.add(url)
 
   return targets
 

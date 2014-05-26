@@ -24,11 +24,12 @@ class HandlersTest(testutil.HandlerTest):
       [{'object': {
             'id': 'tag:fa.ke,2013:000',
             'url': 'http://fa.ke/000',
-            'content': 'asdf http://orig/post qwert',
+            'content': 'asdf http://other/link qwert',
             'author': {
               'id': 'tag:fa.ke,2013:author_id',
               'image': {'url': 'http://example.com/ryan/image'},
               },
+            'upstreamDuplicates': ['http://or.ig/post'],
             }}])
     self.source.put()
 
@@ -45,7 +46,7 @@ class HandlersTest(testutil.HandlerTest):
     self.check_response('/post/fake/%s/000', """\
 <article class="h-entry">
 <span class="u-uid">tag:fa.ke,2013:000</span>
-<div class="p-name"><a class="u-url" href="http://fa.ke/000">asdf http://orig/post qwert</a></div>
+<div class="p-name"><a class="u-url" href="http://fa.ke/000">asdf http://other/link qwert</a></div>
 
   <div class="h-card p-author">
     <a class="u-url" href="http://fa.ke/author_id"></a>
@@ -55,7 +56,7 @@ class HandlersTest(testutil.HandlerTest):
 
   <div class="e-content">
 
-  asdf http://orig/post qwert
+  asdf http://other/link qwert
   </div>
 
 </article>
@@ -69,10 +70,10 @@ class HandlersTest(testutil.HandlerTest):
         'type': ['h-entry'],
         'properties': {
           'uid': ['tag:fa.ke,2013:000'],
-          'name': ['asdf http://orig/post qwert'],
+          'name': ['asdf http://other/link qwert'],
           'url': ['http://fa.ke/000'],
-          'content': [{ 'html': 'asdf http://orig/post qwert',
-                        'value': 'asdf http://orig/post qwert',
+          'content': [{ 'html': 'asdf http://other/link qwert',
+                        'value': 'asdf http://other/link qwert',
                         }],
           'author': [{
               'type': ['h-card'],
@@ -141,10 +142,11 @@ class HandlersTest(testutil.HandlerTest):
   <div class="e-content">
 
   qwert
+  <p class="u-mention"><a href="http://other/link"></a></p>
   </div>
 
 <a class="u-in-reply-to" href="http://fa.ke/000"></a>
-<a class="u-in-reply-to" href="http://orig/post"></a>
+<a class="u-in-reply-to" href="http://or.ig/post"></a>
 
 </article>
 """)
@@ -170,12 +172,11 @@ class HandlersTest(testutil.HandlerTest):
 
   <div class="e-content">
 
-  likes this.
-
+  <p class="u-mention"><a href="http://other/link"></a></p>
   </div>
 
   <a class="u-like u-like-of" href="http://example.com/original/post"></a>
-  <a class="u-like u-like-of" href="http://orig/post"></a>
+  <a class="u-like u-like-of" href="http://or.ig/post"></a>
 
 </article>
 """)
@@ -206,12 +207,11 @@ class HandlersTest(testutil.HandlerTest):
 
   <div class="e-content">
 
-  reposts this.
-
+  <p class="u-mention"><a href="http://other/link"></a></p>
   </div>
 
   <a class="u-repost u-repost-of" href="http://example.com/original/post"></a>
-  <a class="u-repost u-repost-of" href="http://orig/post"></a>
+  <a class="u-repost u-repost-of" href="http://or.ig/post"></a>
 
 </article>
 """)
@@ -245,9 +245,10 @@ class HandlersTest(testutil.HandlerTest):
   <div class="e-content">
 
   <data class="p-rsvp" value="no">is not attending.</data>
+  <p class="u-mention"><a href="http://other/link"></a></p>
   </div>
 
-  <a class="u-in-reply-to" href="http://orig/post"></a>
+  <a class="u-in-reply-to" href="http://or.ig/post"></a>
   <a class="u-in-reply-to" href="http://example.com/event"></a>
 
 </article>

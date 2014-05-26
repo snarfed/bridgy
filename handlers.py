@@ -151,6 +151,10 @@ class ItemHandler(webapp2.RequestHandler):
   def add_original_post_urls(self, post_id, obj, prop):
     """Extracts original post URLs and adds them to an object, in place.
 
+    If the post object has upstreamDuplicates, *only* they are considered
+    original post URLs and added as tags with objectType 'article', and the
+    post's own links and 'article' tags are added with objectType 'mention'.
+
     Args:
       post_id: string post id
       obj: ActivityStreams post object
@@ -167,27 +171,31 @@ class ItemHandler(webapp2.RequestHandler):
       return
 
     original_post_discovery.discover(self.source, post, fetch_hfeed=False)
+    tags = [tag for tag in post['object'].get('tags', [])
+            if 'url' in tag and tag['objectType'] == 'article']
+    upstreams = post['object'].get('upstreamDuplicates', [])
 
-    if prop not in obj:
-      obj[prop] = []
-    elif not isinstance(obj[prop], list):
+    if not isinstance(obj.setdefault(prop, []), list):
       obj[prop] = [obj[prop]]
-    obj[prop] += [tag for tag in post['object'].get('tags', [])
-                  if 'url' in tag and tag['objectType'] == 'article']
+    if upstreams:
+      obj[prop] += [{'url': url, 'objectType': 'article'} for url in upstreams]
+      obj.setdefault('tags', []).extend(
+        [{'url': tag['url'], 'objectType': 'mention'} for url in tags])
+    else:
+      obj[prop] += tags
 
+    # check for redirects, and if there are any follow them and add final urls
+    # in addition to the initial urls.
     resolved_urls = set()
     for url_obj in obj[prop]:
       url = url_obj.get('url')
-      if not url:
+      if not url or url_obj.get('objectType') == 'mention':
         continue
       # when debugging locally, replace my (snarfed.org) URLs with localhost
       if appengine_config.DEBUG:
-        if url.startswith('https://snarfed.org/'):
-          url_obj['url'] = url = url.replace('https://snarfed.org/',
-                                             'http://localhost/')
-        elif url.startswith('http://kylewm.com'):
-          url_obj['url'] = url = url.replace('http://kylewm.com/',
-                                             'http://localhost/')
+        for special in 'https://snarfed.org/', 'http://kylewm.com/':
+          if url.startswith(special):
+            url_obj['url'] = url = url.replace(special, 'http://localhost/')
 
       resolved, _, send = util.get_webmention_target(url)
       if send and resolved != url:
