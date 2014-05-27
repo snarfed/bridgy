@@ -35,6 +35,7 @@ from activitystreams.oauth_dropins.webutil.handlers import TemplateHandler
 from google.appengine.api import memcache
 from google.appengine.api import users
 from google.appengine.ext import ndb
+from google.appengine.ext.ndb.stats import KindStat, KindPropertyNameStat
 from google.appengine.ext.webapp import template
 import webapp2
 
@@ -82,7 +83,29 @@ class FrontPageHandler(DashboardHandler):
       util.CachedFrontPage.store(self.response.body)
 
   def template_vars(self):
-    return {}
+    def count(query):
+      stat = query.get()
+      return stat.count if stat else 0  # no datastore stats in dev_appserver
+
+    def kind_count(kind):
+      return count(KindStat.query(KindStat.kind_name == kind))
+
+    num_users = sum(kind_count(cls.__name__) for cls in handlers.SOURCES.values())
+    link_counts = {
+      property: count(KindPropertyNameStat.query(
+          KindPropertyNameStat.kind_name.IN(('BlogPost', 'Response')),
+          KindPropertyNameStat.property_name == property))
+      for property in ('sent', 'unsent', 'error', 'failed', 'skipped')}
+    num_blogposts = kind_count('BlogPost')
+    return {
+      'users': num_users,
+      'responses': kind_count('Response'),
+      'links': sum(link_counts.values()),
+      'webmentions': link_counts['sent'] + num_blogposts,
+      'publishes': kind_count('Publish'),
+      'blogposts': kind_count('BlogPost'),
+      # 'webmentions_received': kind_count('BlogWebmention'),
+      }
 
 
 class UsersHandler(DashboardHandler):

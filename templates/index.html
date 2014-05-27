@@ -15,9 +15,19 @@
 {% endwith %}
 </div>
 
-<p class="row big">Already signed up? <a href="/users">Find your user page here.</a></p>
+<br />
+<p class="row big">
+  Already signed up? <a href="/users">Find your user page here.</a></p>
 
 <!-- Stats -->
-TODO
+<br />
+<p class="row big">
+<a href="/users">{{ users }} users</a>,
+{{ responses }} responses handled,
+{{ links }} links analyzed,
+{{ webmentions }} webmentions sent,
+{{ publishes }} posts published,
+{{ blogposts }} blog posts processed, and counting...
+</p>
 
 {% endblock %}
