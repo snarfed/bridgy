@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load humanize %}
 
 {% block title %}Bridgy{% endblock %}
 
@@ -23,11 +24,11 @@
 <br />
 <p class="row big">
 <a href="/users">{{ users }} users</a>,
-{{ responses }} responses handled,
-{{ links }} links analyzed,
-{{ webmentions }} webmentions sent,
-{{ publishes }} posts published,
-{{ blogposts }} blog posts processed, and counting...
+{{ responses|intcomma }} responses handled,
+{{ links|intcomma }} links analyzed,
+{{ webmentions|intcomma }} webmentions sent,
+{{ publishes|intcomma }} posts published,
+{{ blogposts|intcomma }} blog posts processed and counting...
 </p>
 
 {% endblock %}
