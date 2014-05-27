@@ -33,6 +33,10 @@ def subscribe(source, handler):
     source: Blogger, Tumblr, or WordPress
     handler: webapp2.RequestHandler
   """
+  if appengine_config.DEBUG:
+    logging.info('Running in dev_appserver, not subscribing to Superfeedr')
+    return
+
   data = {
     'hub.mode': 'subscribe',
     'hub.topic': source.feed_url(),
