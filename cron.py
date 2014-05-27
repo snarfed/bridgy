@@ -61,7 +61,7 @@ class UpdateTwitterPictures(webapp2.RequestHandler):
       if source.picture != new_pic:
         logging.info('Updating profile picture for %s from %s to %s',
                      source.bridgy_url(self), source.picture, new_pic)
-        util.CachedFrontPage.invalidate()
+        util.CachedPage.invalidate('/users')
         source.picture = new_pic
         source.put()
 

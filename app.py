@@ -63,24 +63,28 @@ class DashboardHandler(TemplateHandler, util.Handler):
       }
 
 
-class FrontPageHandler(DashboardHandler):
-  """Handler for the front page."""
-
-  def template_file(self):
-    return 'templates/index.html'
+class CachedPageHandler(DashboardHandler):
+  """Handle a page that may be cached with CachedPage."""
 
   def get(self):
-    if appengine_config.DEBUG:
-      # don't cache front page when running in in dev_appserver
-      return super(DashboardHandler, self).get()
+    # if appengine_config.DEBUG:
+    #   # don't cache when running in in dev_appserver
+    #   return super(DashboardHandler, self).get()
 
     self.response.headers['Content-Type'] = self.content_type()
-    cached = util.CachedFrontPage.load()
+    cached = util.CachedPage.load(self.request.path)
     if cached:
       self.response.write(cached.html)
     else:
       super(DashboardHandler, self).get()
-      util.CachedFrontPage.store(self.response.body)
+      util.CachedPage.store(self.request.path, self.response.body)
+
+
+class FrontPageHandler(CachedPageHandler):
+  """Handler for the front page."""
+
+  def template_file(self):
+    return 'templates/index.html'
 
   def template_vars(self):
     def count(query):
@@ -108,7 +112,7 @@ class FrontPageHandler(DashboardHandler):
       }
 
 
-class UsersHandler(DashboardHandler):
+class UsersHandler(CachedPageHandler):
   """Handler for /users."""
 
   def template_file(self):

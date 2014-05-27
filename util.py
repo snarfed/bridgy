@@ -8,6 +8,7 @@ import urlparse
 import requests
 import webapp2
 
+from activitystreams.oauth_dropins.webutil.models import StringIdModel
 from activitystreams.oauth_dropins.webutil.util import *
 from activitystreams import source
 from appengine_config import HTTP_TIMEOUT, DEBUG
@@ -243,7 +244,7 @@ class Handler(webapp2.RequestHandler):
         self.redirect('/')
         return
 
-      CachedFrontPage.invalidate()
+      CachedPage.invalidate('/users')
       source = source_cls.create_new(self, auth_entity=auth_entity,
                                      features=[state] if state else [])
       self.redirect(source.bridgy_url(self) if source else '/')
@@ -273,32 +274,29 @@ class Handler(webapp2.RequestHandler):
     return source
 
 
-class CachedFrontPage(ndb.Model):
-  """Cached HTML for the front page, since it changes rarely.
+class CachedPage(StringIdModel):
+  """Cached HTML for pages that changes rarely. Key id is path.
 
   Stored in the datastore since datastore entities in memcache (mostly
   Responses) are requested way more often, so it would get evicted
   out of memcache easily.
-
-  NDB memcache key, useful for clearing after deleting front page:
-  NDB9:aglzfmJyaWQtZ3lyHgsSD0NhY2hlZEZyb250UGFnZSIJc2luZ2xldG9uDA
   """
-  ID = 'singleton'
   html = ndb.TextProperty()
+  expires = ndb.DateTimeProperty()  # TODO
 
   @classmethod
-  def load(cls):
-    cached = CachedFrontPage.get_by_id(cls.ID)
+  def load(cls, path):
+    cached = CachedPage.get_by_id(path)
     if cached:
-      logging.info('Found cached front page')
+      logging.info('Found cached page for %s', path)
     return cached
 
   @classmethod
-  def store(cls, html):
-    logging.info('Storing new front page in cache')
-    CachedFrontPage(id=cls.ID, html=html).put()
+  def store(cls, path, html):
+    logging.info('Storing new page in cache for %s', path)
+    CachedPage(id=path, html=html).put()
 
   @classmethod
-  def invalidate(cls):
-    logging.info('Deleting cached front page')
-    CachedFrontPage(id=cls.ID).key.delete()
+  def invalidate(cls, path):
+    logging.info('Deleting cached page for %s', path)
+    CachedPage(id=path).key.delete()
