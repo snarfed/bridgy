@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Bridgy{% endblock %}
+
+{% block body_class %} index {% endblock %}
+
+{% block content %}
+
+<p id="users-label" class="row big">Users</p>
+
+<ul id="users">
+<li class="row">
+{% with compact as True %}
+{% for source in sources %}
+  <div class="source col-xs-6 col-sm-4 col-md-3">
+    <a href="{{ source.bridgy_path }}" title="{{ source.label|safe }}">
+      <img class="profile" width="48px" src="{{ source.picture }}"/>
+      <img src="/static/{{ source.SHORT_NAME }}_icon.png" />
+      {{ source.name|safe }}</a>
+  </div>
+  {% cycle "" "" "" "</li><li class='row'>" %}
+{% endfor %}
+{% endwith %}
+</li>
+</ul>
+
+{% endblock %}

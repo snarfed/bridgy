@@ -15,20 +15,9 @@
 {% endwith %}
 </div>
 
+<p class="row big">Already signed up? <a href="/users">Find your user page here.</a></p>
 
-<!-- Users -->
-<p id="sources-label" class="row big">Users</p>
-
-<div id="sources" class="row">
-
-{% for source in sources %}
-{% spaceless %}
-<a href="{{ source.bridgy_path }}" class="{{ source.SHORT_NAME }}"
-   title="{{ source.label|safe }}">
-  <img class="profile" src="{{ source.picture }}" width="64px" />
-</a>
-{% endspaceless %}
-{% endfor %}
-</div>
+<!-- Stats -->
+TODO
 
 {% endblock %}

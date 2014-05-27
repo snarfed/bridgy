@@ -110,13 +110,17 @@ form input {
   vertical-align: middle;
 }
 
-#sources-label {
-  margin-top: 2em;
+#users-label {
+  margin-top: 1em;
 }
 
-#sources {
-  border-collapse: separate;
-  border-spacing: .3em;
+#users {
+  list-style: none;
+}
+
+.source {
+  text-align: left;
+  margin-top: .5em;
 }
 
 @media (min-width: 768px) {

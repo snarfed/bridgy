@@ -82,8 +82,18 @@ class FrontPageHandler(DashboardHandler):
       util.CachedFrontPage.store(self.response.body)
 
   def template_vars(self):
+    return {}
+
+
+class UsersHandler(DashboardHandler):
+  """Handler for /users."""
+
+  def template_file(self):
+    return 'templates/users.html'
+
+  def template_vars(self):
     # only show enabled users with at least one feature on. cutting down on
-    # number of users on front page as a temporary mitigation for
+    # number of users as a temporary mitigation for
     # https://github.com/snarfed/bridgy/issues/149
     queries = [cls.query(cls.status=='enabled', cls.features > None)
                for cls in handlers.SOURCES.values()]
@@ -92,7 +102,7 @@ class FrontPageHandler(DashboardHandler):
     # preprocess sources, sort by name
     sources = sorted([self.preprocess_source(s) for s in sources.values()],
                      key=lambda s: (s.name.lower(), s.AS_CLASS.NAME))
-    vars = super(FrontPageHandler, self).template_vars()
+    vars = super(UsersHandler, self).template_vars()
     vars['sources'] = sources
     return vars
 
@@ -335,6 +345,7 @@ class RedirectToFrontPageHandler(util.Handler):
 
 application = webapp2.WSGIApplication(
   [('/?', FrontPageHandler),
+   ('/users/?', UsersHandler),
    ('/(blogger|facebook|googleplus|instagram|tumblr|twitter|wordpress)/(.+)/?',
     UserHandler),
    ('/about/?', AboutHandler),
