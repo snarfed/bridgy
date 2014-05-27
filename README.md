@@ -48,7 +48,7 @@ cursor = None
 with open('sent_urls', 'w') as sent, open('unsent_urls', 'w') as unsent:
   while True:
     results, cursor, _ = Response.query(
-      projection=[Response.sent,Response.skipped,Response.error,Response.failed]
+#      projection=[Response.sent,Response.skipped,Response.error,Response.failed]
       ).fetch_page(100, start_cursor=cursor)
     if not results:
       break
