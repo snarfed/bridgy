@@ -67,9 +67,9 @@ class CachedPageHandler(DashboardHandler):
   """Handle a page that may be cached with CachedPage."""
 
   def get(self):
-    # if appengine_config.DEBUG:
-    #   # don't cache when running in in dev_appserver
-    #   return super(DashboardHandler, self).get()
+    if appengine_config.DEBUG:
+      # don't cache when running in in dev_appserver
+      return super(DashboardHandler, self).get()
 
     self.response.headers['Content-Type'] = self.content_type()
     cached = util.CachedPage.load(self.request.path)
@@ -119,11 +119,7 @@ class UsersHandler(CachedPageHandler):
     return 'templates/users.html'
 
   def template_vars(self):
-    # only show enabled users with at least one feature on. cutting down on
-    # number of users as a temporary mitigation for
-    # https://github.com/snarfed/bridgy/issues/149
-    queries = [cls.query(cls.status=='enabled', cls.features > None)
-               for cls in handlers.SOURCES.values()]
+    queries = [cls.query(cls.features > None) for cls in handlers.SOURCES.values()]
     sources = {source.key.urlsafe(): source for source in itertools.chain(*queries)}
 
     # preprocess sources, sort by name
