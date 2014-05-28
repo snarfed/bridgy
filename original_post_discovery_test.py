@@ -523,6 +523,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
 
     # try and fail to get the feed
     self.expect_requests_head('http://author/updates', status_code=400)
+    self.expect_requests_get('http://author/updates', status_code=400)
 
     # fall back on the original page, and fetch the post permalink
     self.expect_requests_head('http://author/permalink')

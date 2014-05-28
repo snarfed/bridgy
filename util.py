@@ -135,32 +135,6 @@ def follow_redirects(url):
   return resolved
 
 
-def ensure_content_type(url, content_type):
-  """Uses follow_redirects to make a HEAD request to URL, and confirms
-  that the returned Content-Type matches the expected content type
-  argument. Returns a tuple containing the HEAD response, and a
-  Boolean indicating success.
-
-  Args:
-    url: string
-    content_type: string
-
-  Returns:
-    requests.Response, Boolean
-  """
-  resolved = follow_redirects(url)
-  if resolved.status_code != 200:
-    logging.debug(
-      'follow_redirects for %s returned unexpected status code %d',
-      url, resolved.status_code)
-    return resolved, False
-  resolved_type = resolved.headers.get('content-type', '')
-  type_ok = resolved_type.startswith(content_type)
-  logging.debug('follow_redirects for %s determined content type %s',
-                url, resolved_type)
-  return resolved, type_ok
-
-
 # Wrap webutil.util.tag_uri and hard-code the year to 2013.
 #
 # Needed because I originally generated tag URIs with the current year, which

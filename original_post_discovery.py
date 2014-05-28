@@ -153,19 +153,13 @@ def _process_author(source, author_url):
   # for now use whether the url is a valid webmention target
   # as a proxy for whether it's worth searching it.
   # TODO skip sites we know don't have microformats2 markup
-  _, _, ok = util.get_webmention_target(author_url)
+  author_url, _, ok = util.get_webmention_target(author_url)
   if not ok:
     return {}
 
   try:
     logging.debug('fetching author domain %s', author_url)
-    author_resolved, author_type_ok = util.ensure_content_type(
-      author_url, 'text/html')
-    if not author_type_ok:
-      logging.warning('Could not fetch author url %s. Unexpected content-type %s',
-                      author_url, author_resolved.headers.get('content-type'))
-      return {}
-    author_resp = requests.get(author_resolved.url, timeout=HTTP_TIMEOUT)
+    author_resp = requests.get(author_url, timeout=HTTP_TIMEOUT)
     # TODO for error codes that indicate a temporary error, should we make
     # a certain number of retries before giving up forever?
     author_resp.raise_for_status()
@@ -192,9 +186,8 @@ def _process_author(source, author_url):
     feed_url = urlparse.urljoin(author_url, feed_url)
     feed_type = rel_feed_node.get('type')
     if not feed_type:
-      feed_resolved, feed_type_ok = util.ensure_content_type(
-        feed_url, 'text/html')
-      feed_url = feed_resolved.url
+      # type is not specified, use this to confirm that it's text/html
+      feed_url, _, feed_type_ok = util.get_webmention_target(feed_url)
     else:
       feed_type_ok = feed_type == 'text/html'
 
@@ -265,9 +258,9 @@ def _process_entry(source, permalink):
   parsed = None
   try:
     logging.debug('fetching post permalink %s', permalink)
-    resolved, type_ok = util.ensure_content_type(permalink, 'text/html')
+    permalink, _, type_ok = util.get_webmention_target(permalink)
     if type_ok:
-      resp = requests.get(resolved.url, timeout=HTTP_TIMEOUT)
+      resp = requests.get(permalink, timeout=HTTP_TIMEOUT)
       resp.raise_for_status()
       parsed = mf2py.Parser(url=permalink, doc=resp.text).to_dict()
   except BaseException:
