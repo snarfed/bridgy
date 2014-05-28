@@ -30,9 +30,7 @@ SOURCES = {cls.SHORT_NAME: cls for cls in (Blogger, WordPress, Tumblr)}
 
 
 class BlogWebmentionHandler(webmention.WebmentionHandler):
-  """Base handler for both previews and publishes.
-
-  Subclasses must set the PREVIEW attribute to True or False.
+  """Handler for incoming webmentions against blog providers.
   """
 
   def post(self, source_short_name):
