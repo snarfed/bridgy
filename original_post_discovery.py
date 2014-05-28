@@ -26,14 +26,15 @@ lookups in the following primary cases:
 """
 
 import logging
+import mf2py
 import requests
 import urlparse
 import util
 
 from activitystreams import source as as_source
 from appengine_config import HTTP_TIMEOUT, DEBUG
+from bs4 import BeautifulSoup
 from google.appengine.ext import ndb
-from mf2py.parser import Parser as Mf2Parser
 from models import SyndicatedPost
 
 
@@ -170,13 +171,14 @@ def _process_author(source, author_url):
     logging.exception('Could not fetch author url %s', author_url)
     return {}
 
-  author_parser = Mf2Parser(url=author_url, doc=author_resp.text)
+  author_dom = BeautifulSoup(author_resp.text)
+  author_parser = mf2py.Parser(url=author_url, doc=author_dom)
   author_parsed = author_parser.to_dict()
 
   # look for canonical feed url (if it isn't this one) using
   # rel='feed', type='text/html'
   # TODO clean up this private reference when mf2py is updated
-  for rel_feed_node in author_parser.__doc__.find_all('link', rel='feed'):
+  for rel_feed_node in author_dom.find_all('link', rel='feed'):
     feed_url = rel_feed_node.get('href')
     if not feed_url:
       continue
@@ -210,7 +212,7 @@ def _process_author(source, author_url):
       feed_resp = requests.get(feed_url, timeout=HTTP_TIMEOUT)
       feed_resp.raise_for_status()
       logging.debug("author's h-feed fetched successfully %s", feed_url)
-      author_parsed = Mf2Parser(
+      author_parsed = mf2py.Parser(
         url=feed_url, doc=feed_resp.text).to_dict()
       break
     except AssertionError:
@@ -267,7 +269,7 @@ def _process_entry(source, permalink):
     logging.debug('fetching post permalink %s', permalink)
     resp = requests.get(permalink, timeout=HTTP_TIMEOUT)
     resp.raise_for_status()
-    parsed = Mf2Parser(url=permalink, doc=resp.text).to_dict()
+    parsed = mf2py.Parser(url=permalink, doc=resp.text).to_dict()
   except BaseException:
     # TODO limit the number of allowed failures
     logging.exception('Could not fetch permalink %s', permalink)
