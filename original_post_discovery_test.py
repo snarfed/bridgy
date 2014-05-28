@@ -523,8 +523,10 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
 
     # try and fail to get the feed
     self.expect_requests_head('http://author/updates', status_code=400)
+    self.expect_requests_get('http://author/updates', status_code=400)
 
     # fall back on the original page, and fetch the post permalink
+    self.expect_requests_head('http://author/permalink')
     self.expect_requests_get('http://author/permalink', '<html></html>')
 
     self.mox.ReplayAll()
@@ -576,6 +578,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     # but we will follow the post permalink
 
     # keep looking for an html feed
+    self.expect_requests_head('http://author/permalink')
     self.expect_requests_get('http://author/permalink', """
     <html class="h-entry">
       <p class="p-name">Title</p>
@@ -585,3 +588,59 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     original_post_discovery.discover(source, activity)
 
   #TODO activity with existing responses, make sure they're merged right
+
+  def test_avoid_author_page_with_bad_content_type(self):
+    """Confirm that we check the author page's content type before
+    fetching and parsing it
+    """
+    source = self.sources[0]
+    source.domain_url = 'http://author'
+    activity = self.activities[0]
+    activity['object']['url'] = 'http://fa.ke/post/url'
+    activity['object']['content'] = 'content without links'
+
+    # head request to follow redirects on the post url
+    self.expect_requests_head(activity['object']['url'])
+    self.expect_requests_head(source.domain_url, response_headers={
+      'content-type': 'application/xml'
+    })
+
+    # give up
+
+    self.mox.ReplayAll()
+    original_post_discovery.discover(source, activity)
+
+  def test_avoid_permalink_with_bad_content_type(self):
+    """Confirm that we don't follow u-url's that lead to anything that
+    isn't text/html (e.g., PDF)
+    """
+    source = self.sources[0]
+    source.domain_url = 'http://author'
+    activity = self.activities[0]
+    activity['object']['url'] = 'http://fa.ke/post/url'
+    activity['object']['content'] = 'content without links'
+
+    # head request to follow redirects on the post url
+    self.expect_requests_head(activity['object']['url'])
+
+    self.expect_requests_head(source.domain_url)
+    self.expect_requests_get(source.domain_url, """
+    <html>
+      <body>
+        <div class="h-entry">
+          <a href="http://scholarly.com/paper.pdf">An interesting paper</a>
+        </div>
+      </body>
+    </html>
+    """)
+
+    # and to check the content-type of the article
+    self.expect_requests_head('http://scholarly.com/paper.pdf',
+                              response_headers={
+                                'content-type': 'application/pdf'
+                              })
+
+    # call to requests.get for permalink should be skipped
+
+    self.mox.ReplayAll()
+    original_post_discovery.discover(source, activity)

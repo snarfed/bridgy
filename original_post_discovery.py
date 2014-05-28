@@ -26,14 +26,15 @@ lookups in the following primary cases:
 """
 
 import logging
+import mf2py
 import requests
 import urlparse
 import util
 
 from activitystreams import source as as_source
 from appengine_config import HTTP_TIMEOUT, DEBUG
+from bs4 import BeautifulSoup
 from google.appengine.ext import ndb
-from mf2py.parser import Parser as Mf2Parser
 from models import SyndicatedPost
 
 
@@ -152,7 +153,7 @@ def _process_author(source, author_url):
   # for now use whether the url is a valid webmention target
   # as a proxy for whether it's worth searching it.
   # TODO skip sites we know don't have microformats2 markup
-  _, _, ok = util.get_webmention_target(author_url)
+  author_url, _, ok = util.get_webmention_target(author_url)
   if not ok:
     return {}
 
@@ -170,13 +171,14 @@ def _process_author(source, author_url):
     logging.exception('Could not fetch author url %s', author_url)
     return {}
 
-  author_parser = Mf2Parser(url=author_url, doc=author_resp.text)
+  author_dom = BeautifulSoup(author_resp.text)
+  author_parser = mf2py.Parser(url=author_url, doc=author_dom)
   author_parsed = author_parser.to_dict()
 
   # look for canonical feed url (if it isn't this one) using
   # rel='feed', type='text/html'
   # TODO clean up this private reference when mf2py is updated
-  for rel_feed_node in author_parser.__doc__.find_all('link', rel='feed'):
+  for rel_feed_node in author_dom.find_all('link', rel='feed'):
     feed_url = rel_feed_node.get('href')
     if not feed_url:
       continue
@@ -184,17 +186,8 @@ def _process_author(source, author_url):
     feed_url = urlparse.urljoin(author_url, feed_url)
     feed_type = rel_feed_node.get('type')
     if not feed_type:
-      feed_resolved = util.follow_redirects(feed_url)
-      if feed_resolved.status_code != 200:
-        logging.debug(
-          'follow_redirects for %s returned unxpected status code %d',
-          feed_url, feed_resolved.status_code)
-        continue
-      feed_type = feed_resolved.headers.get('content-type', '')
-      feed_type_ok = feed_type.startswith('text/html')
-      feed_url = feed_resolved.url
-      logging.debug('follow_redirects for %s determined content type %s',
-                    feed_url, feed_type)
+      # type is not specified, use this to confirm that it's text/html
+      feed_url, _, feed_type_ok = util.get_webmention_target(feed_url)
     else:
       feed_type_ok = feed_type == 'text/html'
 
@@ -210,7 +203,7 @@ def _process_author(source, author_url):
       feed_resp = requests.get(feed_url, timeout=HTTP_TIMEOUT)
       feed_resp.raise_for_status()
       logging.debug("author's h-feed fetched successfully %s", feed_url)
-      author_parsed = Mf2Parser(
+      author_parsed = mf2py.Parser(
         url=feed_url, doc=feed_resp.text).to_dict()
       break
     except AssertionError:
@@ -265,9 +258,11 @@ def _process_entry(source, permalink):
   parsed = None
   try:
     logging.debug('fetching post permalink %s', permalink)
-    resp = requests.get(permalink, timeout=HTTP_TIMEOUT)
-    resp.raise_for_status()
-    parsed = Mf2Parser(url=permalink, doc=resp.text).to_dict()
+    permalink, _, type_ok = util.get_webmention_target(permalink)
+    if type_ok:
+      resp = requests.get(permalink, timeout=HTTP_TIMEOUT)
+      resp.raise_for_status()
+      parsed = mf2py.Parser(url=permalink, doc=resp.text).to_dict()
   except BaseException:
     # TODO limit the number of allowed failures
     logging.exception('Could not fetch permalink %s', permalink)
