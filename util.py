@@ -91,15 +91,17 @@ def email_me(**kwargs):
 
 
 def follow_redirects(url):
-  """Fetches a URL, follows redirects, and returns the final response.
+  """Fetches a URL with HEAD, repeating if necessary to follow redirects.
 
-  Caches resolved URLs in memcache.
+  Caches resolved URLs in memcache. *Does not* raise an exception if any of the
+  HTTP requests fail, just returns the failed response. If you care, be sure to
+  check the returned response's status code!
 
   Args:
     url: string
 
   Returns:
-    requests.Response
+    the requests.Response for the final request
   """
   cache_key = 'R ' + url
   resolved = memcache.get(cache_key)
@@ -148,9 +150,12 @@ util.tag_uri = lambda domain, name: _orig_tag_uri(domain, name, year=2013)
 def get_webmention_target(url):
   """Resolves a URL and decides whether we should try to send it a webmention.
 
+  Note that this ignores failed HTTP requests, ie the boolean in the returned
+  tuple will be true! TODO: check callers and reconsider this.
+
   Returns: (string url, string pretty domain, boolean) tuple. The boolean is
     True if we should send a webmention, False otherwise, e.g. if it 's a bad
-    URL, not text/html, in the blacklist, or can't be fetched.
+    URL, not text/html, or in the blacklist.
   """
   try:
     domain = domain_from_link(url)
