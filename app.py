@@ -66,6 +66,8 @@ class DashboardHandler(TemplateHandler, util.Handler):
 class CachedPageHandler(DashboardHandler):
   """Handle a page that may be cached with CachedPage."""
 
+  EXPIRES = None  # subclasses can override
+
   def get(self):
     if appengine_config.DEBUG:
       # don't cache when running in in dev_appserver
@@ -77,11 +79,14 @@ class CachedPageHandler(DashboardHandler):
       self.response.write(cached.html)
     else:
       super(DashboardHandler, self).get()
-      util.CachedPage.store(self.request.path, self.response.body)
+      util.CachedPage.store(self.request.path, self.response.body,
+                            expires=self.EXPIRES)
 
 
 class FrontPageHandler(CachedPageHandler):
   """Handler for the front page."""
+
+  EXPIRES = datetime.timedelta(days=1)
 
   def template_file(self):
     return 'templates/index.html'
