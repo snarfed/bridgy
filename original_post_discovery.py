@@ -159,7 +159,13 @@ def _process_author(source, author_url):
 
   try:
     logging.debug('fetching author domain %s', author_url)
-    author_resp = requests.get(author_url, timeout=HTTP_TIMEOUT)
+    author_resolved, author_type_ok = util.ensure_content_type(
+      author_url, 'text/html')
+    if not author_type_ok:
+      logging.warning('Could not fetch author url %s. Unexpected content-type %s',
+                      author_url, author_resolved.headers.get('content-type'))
+      return {}
+    author_resp = requests.get(author_resolved.url, timeout=HTTP_TIMEOUT)
     # TODO for error codes that indicate a temporary error, should we make
     # a certain number of retries before giving up forever?
     author_resp.raise_for_status()
@@ -186,17 +192,9 @@ def _process_author(source, author_url):
     feed_url = urlparse.urljoin(author_url, feed_url)
     feed_type = rel_feed_node.get('type')
     if not feed_type:
-      feed_resolved = util.follow_redirects(feed_url)
-      if feed_resolved.status_code != 200:
-        logging.debug(
-          'follow_redirects for %s returned unxpected status code %d',
-          feed_url, feed_resolved.status_code)
-        continue
-      feed_type = feed_resolved.headers.get('content-type', '')
-      feed_type_ok = feed_type.startswith('text/html')
+      feed_resolved, feed_type_ok = util.ensure_content_type(
+        feed_url, 'text/html')
       feed_url = feed_resolved.url
-      logging.debug('follow_redirects for %s determined content type %s',
-                    feed_url, feed_type)
     else:
       feed_type_ok = feed_type == 'text/html'
 
@@ -267,9 +265,11 @@ def _process_entry(source, permalink):
   parsed = None
   try:
     logging.debug('fetching post permalink %s', permalink)
-    resp = requests.get(permalink, timeout=HTTP_TIMEOUT)
-    resp.raise_for_status()
-    parsed = mf2py.Parser(url=permalink, doc=resp.text).to_dict()
+    resolved, type_ok = util.ensure_content_type(permalink, 'text/html')
+    if type_ok:
+      resp = requests.get(resolved.url, timeout=HTTP_TIMEOUT)
+      resp.raise_for_status()
+      parsed = mf2py.Parser(url=permalink, doc=resp.text).to_dict()
   except BaseException:
     # TODO limit the number of allowed failures
     logging.exception('Could not fetch permalink %s', permalink)

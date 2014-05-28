@@ -168,8 +168,9 @@ class HandlerTest(testutil.HandlerTest):
       resp.url = url
       if '.' in url or url.startswith('http'):
         resp.headers['content-type'] = 'text/html; charset=UTF-8'
+        resp.status_code = 200
       else:
-        resp.status_int = 404
+        resp.status_code = 404
       return resp
     self.mox.stubs.Set(requests, 'head', fake_head)
 
