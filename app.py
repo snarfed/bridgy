@@ -87,18 +87,23 @@ class FrontPageHandler(CachedPageHandler):
     return 'templates/index.html'
 
   def template_vars(self):
+    """Use datastore stats to show stats for various things.
+
+    https://developers.google.com/appengine/docs/python/ndb/admin#Statistics_queries
+    """
     def count(query):
-      stat = query.get()
-      return stat.count if stat else 0  # no datastore stats in dev_appserver
+      stat = query.get()  # no datastore stats in dev_appserver
+      return '{:,}'.format(stat.count) if stat else 0  # comma thousand separator
 
     def kind_count(kind):
       return count(KindStat.query(KindStat.kind_name == kind))
 
     num_users = sum(kind_count(cls.__name__) for cls in handlers.SOURCES.values())
     link_counts = {
-      property: count(KindPropertyNameStat.query(
-          KindPropertyNameStat.kind_name.IN(('BlogPost', 'Response')),
+      property: sum(count(KindPropertyNameStat.query(
+          KindPropertyNameStat.kind_name == kind,
           KindPropertyNameStat.property_name == property))
+                    for kind in ('BlogPost', 'Response'))
       for property in ('sent', 'unsent', 'error', 'failed', 'skipped')}
     num_blogposts = kind_count('BlogPost')
     return {
@@ -108,7 +113,7 @@ class FrontPageHandler(CachedPageHandler):
       'webmentions': link_counts['sent'] + num_blogposts,
       'publishes': kind_count('Publish'),
       'blogposts': kind_count('BlogPost'),
-      # 'webmentions_received': kind_count('BlogWebmention'),
+      'webmentions_received': kind_count('BlogWebmention'),
       }
 
 
