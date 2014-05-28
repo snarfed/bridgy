@@ -280,6 +280,10 @@ class CachedPage(StringIdModel):
   Stored in the datastore since datastore entities in memcache (mostly
   Responses) are requested way more often, so it would get evicted
   out of memcache easily.
+
+  Keys, useful for deleting from memcache:
+  /: aglzfmJyaWQtZ3lyEQsSCkNhY2hlZFBhZ2UiAS8M
+  /users: aglzfmJyaWQtZ3lyFgsSCkNhY2hlZFBhZ2UiBi91c2Vycww
   """
   html = ndb.TextProperty()
   expires = ndb.DateTimeProperty()  # TODO

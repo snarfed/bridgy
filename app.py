@@ -93,7 +93,7 @@ class FrontPageHandler(CachedPageHandler):
     """
     def count(query):
       stat = query.get()  # no datastore stats in dev_appserver
-      return '{:,}'.format(stat.count) if stat else 0  # comma thousand separator
+      return stat.count if stat else 0
 
     def kind_count(kind):
       return count(KindStat.query(KindStat.kind_name == kind))
@@ -105,16 +105,18 @@ class FrontPageHandler(CachedPageHandler):
           KindPropertyNameStat.property_name == property))
                     for kind in ('BlogPost', 'Response'))
       for property in ('sent', 'unsent', 'error', 'failed', 'skipped')}
-    num_blogposts = kind_count('BlogPost')
-    return {
+    vars = {
       'users': num_users,
       'responses': kind_count('Response'),
       'links': sum(link_counts.values()),
-      'webmentions': link_counts['sent'] + num_blogposts,
+      'webmentions': link_counts['sent'] + kind_count('BlogPost'),
       'publishes': kind_count('Publish'),
       'blogposts': kind_count('BlogPost'),
       'webmentions_received': kind_count('BlogWebmention'),
       }
+
+    # add comma separator between thousands
+    return {k: '{:,}'.format(v) for k, v in vars.items()}
 
 
 class UsersHandler(CachedPageHandler):
