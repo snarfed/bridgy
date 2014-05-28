@@ -2,6 +2,7 @@
 """Misc utility constants and classes.
 """
 
+import datetime
 import urllib
 import urlparse
 
@@ -286,19 +287,28 @@ class CachedPage(StringIdModel):
   /users: aglzfmJyaWQtZ3lyFgsSCkNhY2hlZFBhZ2UiBi91c2Vycww
   """
   html = ndb.TextProperty()
-  expires = ndb.DateTimeProperty()  # TODO
+  expires = ndb.DateTimeProperty()
 
   @classmethod
   def load(cls, path):
     cached = CachedPage.get_by_id(path)
     if cached:
-      logging.info('Found cached page for %s', path)
+      if cached.expires and datetime.datetime.now() > cached.expires:
+        logging.info('Deleting expired cached page for %s', path)
+        cached.key.delete()
+        return None
+      else:
+        logging.info('Found cached page for %s', path)
     return cached
 
   @classmethod
-  def store(cls, path, html):
+  def store(cls, path, html, expires=None):
+    """path and html are strings, expires is a datetime.timedelta."""
     logging.info('Storing new page in cache for %s', path)
-    CachedPage(id=path, html=html).put()
+    if expires is not None:
+      logging.info('  (expires in %s)', expires)
+      expires = datetime.datetime.now() + expires
+    CachedPage(id=path, html=html, expires=expires).put()
 
   @classmethod
   def invalidate(cls, path):
