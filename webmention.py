@@ -107,7 +107,10 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
       resp['parsed'] = data
 
     resp = json.dumps(resp, indent=2)
-    self.mail_me(resp)
+    if not (self.source and self.source.key.kind() == 'WordPress'):
+      # temporarily disable emailing about wordpress.com failures until
+      # https://github.com/snarfed/bridgy/issues/161 is fixed.
+      self.mail_me(resp)
     self.response.write(resp)
 
   def mail_me(self, resp):
