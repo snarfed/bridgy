@@ -93,7 +93,10 @@ class WordPress(models.Source):
   def create_comment(self, post_url, author_name, author_url, content):
     """Creates a new comment in the source silo.
 
-    Must be implemented by subclasses.
+    If the last part of the post URL is numeric, e.g. http://site/post/123999,
+    it's used as the post id. Otherwise, we extract the last part of
+    the path as the slug, e.g. http: / / site / post / the-slug,
+    and look up the post id via the API.
 
     Args:
       post_url: string
@@ -104,9 +107,9 @@ class WordPress(models.Source):
     Returns: JSON response dict with 'id' and other fields
     """
     auth_entity = self.auth_entity.get()
+    logging.info('Determining WordPress.com post id for %s', post_url)
 
     # extract the post's slug and look up its post id
-    logging.info('Looking up WordPress.com post id for %s', post_url)
     path = urlparse.urlparse(post_url).path
     if path.endswith('/'):
       path = path[:-1]
@@ -114,16 +117,19 @@ class WordPress(models.Source):
     try:
       post_id = int(slug)
     except ValueError:
-      url = API_POST_SLUG_URL % (auth_entity.key.id(), slug)
+      logging.info('Looking up post id for slug %s', slug)
+      url = API_POST_SLUG_URL % (auth_entity.key.id(), slug.encode('utf-8'))
       resp = auth_entity.urlopen(url).read()
+      post_id = json.loads(resp).get('ID')
+      if not post_id:
+        return self.error('Could not find post id')
 
-    post_id = json.loads(resp).get('ID')
-    if not post_id:
-      return self.error('Could not find WordPress.com post for slug %s' % slug)
+    logging.info('Post id is %d', post_id)
 
     # create the comment
     url = API_CREATE_COMMENT_URL % (auth_entity.key.id(), post_id)
-    data = {'content': '<a href="%s">%s</a>: %s' % (author_url, author_name, content)}
+    content = u'<a href="%s">%s</a>: %s' % (author_url, author_name, content)
+    data = {'content': content.encode('utf-8')}
     resp = auth_entity.urlopen(url, data=urllib.urlencode(data)).read()
     resp = json.loads(resp)
     resp['id'] = resp.pop('ID', None)
