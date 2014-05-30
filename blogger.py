@@ -127,9 +127,9 @@ class Blogger(models.Source):
     post_id = feed.entry[0].get_post_id()
 
     # create the comment
-    content = '<a href="%s">%s</a>: %s' % (author_url, author_name, content)
+    content = u'<a href="%s">%s</a>: %s' % (author_url, author_name, content)
     logging.info('Creating comment on blog %s, post %s: %s', self.key.id(),
-                 post_id, content)
+                 post_id, content.encode('utf-8'))
     comment = client.add_comment(self.key.id(), post_id, content)
 
     resp = {'id': comment.get_comment_id(), 'response': comment.to_string()}

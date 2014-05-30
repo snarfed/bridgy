@@ -1,3 +1,4 @@
+# coding=utf-8
 """Unit tests for wordpress_rest.py.
 """
 
@@ -58,6 +59,21 @@ class WordPressTest(testutil.HandlerTest):
     resp = wp.create_comment('http://primary/post/123999/the-slug?asdf',
                              'who', 'http://who', 'foo bar')
     self.assertEquals({'id': 789, 'ok': 'sgtm'}, resp)
+
+  def test_create_comment_with_unicode_chars(self):
+    self.expect_urlopen(
+      'https://public-api.wordpress.com/rest/v1/sites/my.wp.com/posts/'
+      '123/replies/new?pretty=true',
+      json.dumps({}),
+      data=urllib.urlencode({
+          'content': '<a href="http://who">Degenève</a>: foo Degenève bar'}))
+
+    self.mox.ReplayAll()
+
+    self.auth_entity.put()
+    wp = WordPress.new(self.handler, auth_entity=self.auth_entity)
+    resp = wp.create_comment('http://primary/post/123', u'Degenève',
+                             'http://who', u'foo Degenève bar')
 
   def test_superfeedr_notify(self):
     """Smoke test. Just check that we make it all the way through."""

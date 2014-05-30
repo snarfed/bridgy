@@ -1,3 +1,4 @@
+# coding=utf-8
 """Unit tests for blogger.py.
 """
 
@@ -31,6 +32,22 @@ class BloggerTest(testutil.HandlerTest):
                                      picture_url='http://pic')
     self.client = self.mox.CreateMock(BloggerClient)
 
+    self.comment = data.Comment()
+    self.comment.id = util.Struct(
+      text='tag:blogger.com,1999:blog-111.post-222.comment-333')
+    self.comment.to_string = lambda: '<foo></foo>'
+
+  def expect_get_posts(self):
+    post = data.BlogPost()
+    post.id = util.Struct(text='tag:blogger.com,1999:blog-111.post-222')
+    feed = data.BlogFeed()
+    feed.entry = [post]
+
+    def check_path(query):
+      return query.custom_parameters['path'] == '/path/to/post'
+
+    self.client.get_posts('111', query=mox.Func(check_path)).AndReturn(feed)
+
   def test_new(self):
     b = Blogger.new(self.handler, auth_entity=self.auth_entity)
     self.assertEquals(self.auth_entity.key, b.auth_entity)
@@ -57,29 +74,28 @@ class BloggerTest(testutil.HandlerTest):
     self.assertIn('No Blogger blogs found', next(iter(self.handler.messages)))
 
   def test_create_comment(self):
-    post = data.BlogPost()
-    post.id = util.Struct(text='tag:blogger.com,1999:blog-111.post-222')
-    feed = data.BlogFeed()
-    feed.entry = [post]
-
-    def check_path(query):
-      return query.custom_parameters['path'] == '/path/to/post'
-
-    self.client.get_posts('111', query=mox.Func(check_path)
-                          ).AndReturn(feed)
-
-    comment = data.Comment()
-    comment.id = util.Struct(text='tag:blogger.com,1999:blog-111.post-222.comment-333')
-    comment.to_string = lambda: '<foo></foo>'
-
+    self.expect_get_posts()
     self.client.add_comment('111', '222', '<a href="http://who">who</a>: foo bar'
-                            ).AndReturn(comment)
+                            ).AndReturn(self.comment)
     self.mox.ReplayAll()
 
     b = Blogger.new(self.handler, auth_entity=self.auth_entity)
     resp = b.create_comment('http://blawg/path/to/post', 'who', 'http://who',
                             'foo bar', client=self.client)
     self.assert_equals({'id': '333', 'response': '<foo></foo>'}, resp)
+
+  def test_create_comment_with_unicode_chars(self):
+    # TODO: this just checks the arguments passed to client.add_comment(). we
+    # should test that the blogger client itself encodes as UTF-8.
+    self.expect_get_posts()
+    self.client.add_comment(
+      '111', '222', u'<a href="http://who">Degenève</a>: foo Degenève bar'
+      ).AndReturn(self.comment)
+    self.mox.ReplayAll()
+
+    b = Blogger.new(self.handler, auth_entity=self.auth_entity)
+    resp = b.create_comment('http://blawg/path/to/post', u'Degenève', 'http://who',
+                            u'foo Degenève bar', client=self.client)
 
   def test_superfeedr_notify(self):
     """Smoke test. Just check that we make it all the way through."""
