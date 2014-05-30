@@ -172,10 +172,10 @@ class Tumblr(models.Source):
     thread_id = resp['id']
 
     # create the comment
-    message = '<a href="%s">%s</a>: %s' % (author_url, author_name, content)
+    message = u'<a href="%s">%s</a>: %s' % (author_url, author_name, content)
     resp = self.disqus_call(requests.post, DISQUS_API_CREATE_POST_URL,
                             {'thread': thread_id,
-                             'message': message,
+                             'message': message.encode('utf-8'),
                              # only allowed when authed as moderator/owner
                              # 'state': 'approved',
                              })
@@ -201,7 +201,7 @@ class Tumblr(models.Source):
         })
     resp = method(url, timeout=HTTP_TIMEOUT, params=params, **kwargs)
     resp.raise_for_status()
-    resp = resp.json()['response']
+    resp = resp.json().get('response', {})
     logging.info('Response: %s', resp)
     return resp
 

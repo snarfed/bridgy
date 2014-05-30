@@ -1,3 +1,4 @@
+# coding=utf-8
 """Unit tests for tumblr.py.
 """
 
@@ -23,6 +24,26 @@ class TumblrTest(testutil.HandlerTest):
     self.auth_entity = TumblrAuth(id='name', user_json=json.dumps({
           'user': {'blogs': [{'url': 'other'},
                              {'url': 'http://primary/', 'primary': True}]}}))
+    self.tumblr = Tumblr(disqus_shortname='my-disqus-name')
+
+    appengine_config.DISQUS_API_KEY = 'my key'
+    appengine_config.DISQUS_API_SECRET = 'my secret'
+    appengine_config.DISQUS_ACCESS_TOKEN = 'my token'
+
+  def disqus_params(self, params):
+    params.update({
+        'api_key': 'my key',
+        'api_secret': 'my secret',
+        'access_token': 'my token',
+        })
+    return params
+
+  def expect_thread_details(self):
+    self.expect_requests_get(
+      tumblr.DISQUS_API_THREAD_DETAILS_URL,
+      json.dumps({'response': {'id': '87654'}}),
+      params=self.disqus_params({'forum': 'my-disqus-name',
+                                 'thread':'link:http://primary/post/123999'}))
 
   def test_new(self):
     t = Tumblr.new(self.handler, auth_entity=self.auth_entity)
@@ -60,36 +81,31 @@ some stuff
     self.assertIsNone(t.disqus_shortname)
 
   def test_create_comment(self):
-    appengine_config.DISQUS_API_KEY = 'my key'
-    appengine_config.DISQUS_API_SECRET = 'my secret'
-    appengine_config.DISQUS_ACCESS_TOKEN = 'my token'
-
-    self.expect_requests_get(
-      tumblr.DISQUS_API_THREAD_DETAILS_URL,
-      json.dumps({'response': {'id': '87654'}}),
-      params={'forum': 'my-disqus-name',
-              'thread':'link:http://primary/post/123999',
-              'api_key': 'my key',
-              'api_secret': 'my secret',
-              'access_token': 'my token',
-              })
-
+    self.expect_thread_details()
     self.expect_requests_post(
       tumblr.DISQUS_API_CREATE_POST_URL,
       json.dumps({'response': {'ok': 'sgtm'}}),
-      params={'thread': '87654',
-              'message': '<a href="http://who">who</a>: foo bar',
-              'api_key': 'my key',
-              'api_secret': 'my secret',
-              'access_token': 'my token',
-              })
-
+      params=self.disqus_params({
+            'thread': '87654',
+            'message': '<a href="http://who">who</a>: foo bar'}))
     self.mox.ReplayAll()
 
-    t = Tumblr(disqus_shortname='my-disqus-name')
-    resp = t.create_comment('http://primary/post/123999/xyz_abc?asdf',
-                            'who', 'http://who', 'foo bar')
+    resp = self.tumblr.create_comment('http://primary/post/123999/xyz_abc?asdf',
+                                      'who', 'http://who', 'foo bar')
     self.assertEquals({'ok': 'sgtm'}, resp)
+
+  def test_create_comment_with_unicode_chars(self):
+    self.expect_thread_details()
+    self.expect_requests_post(
+      tumblr.DISQUS_API_CREATE_POST_URL,
+      json.dumps({}),
+      params=self.disqus_params({
+            'thread': '87654',
+            'message': '<a href="http://who">Degenève</a>: foo Degenève bar'}))
+    self.mox.ReplayAll()
+
+    resp = self.tumblr.create_comment('http://primary/post/123999/xyz_abc',
+                                      u'Degenève', 'http://who', u'foo Degenève bar')
 
   def test_superfeedr_notify(self):
     """Smoke test. Just check that we make it all the way through."""
