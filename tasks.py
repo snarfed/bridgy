@@ -105,14 +105,18 @@ class Poll(webapp2.RequestHandler):
       logging.warning('duplicate poll task! deferring to the other task.')
       return
 
-    source.last_poll_attempt = now_fn()
-
+    now = now_fn()
+    source.last_poll_attempt = now
+    task_countdown = (source.SLOW_POLL
+                      if (now > source.created + source.FAST_POLL_GRACE_PERIOD
+                          and not source.last_webmention_sent)
+                      else source.FAST_POLL
+                      # randomize task ETA to within +/- 20% of FAST_POLL to try
+                      # to spread out tasks and prevent thundering herds.
+                      ).total_seconds() * random.uniform(.8, 1.2)
     try:
       self.do_post(source)
-      # randomize task ETA to within +/- 20% of POLL_FREQUENCY to try to spread
-      # out tasks and prevent thundering herds.
-      countdown = source.POLL_FREQUENCY.seconds * random.uniform(.8, 1.2)
-      util.add_poll_task(source, countdown=countdown)
+      util.add_poll_task(source, countdown=task_countdown)
     except models.DisableSource:
       # the user deauthorized the bridgy app, so disable this source.
       # let the task complete successfully so that it's not retried.

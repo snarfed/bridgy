@@ -72,6 +72,16 @@ class PollTest(TaskQueueTest):
       resp.response_json = json.dumps(json.loads(resp.response_json), sort_keys=True)
     self.assert_entities_equal(self.responses, stored, ignore=('created', 'updated'))
 
+  def assert_task_eta(self, countdown):
+    """Checks the current poll task's eta. Handles the random range.
+
+    Args:
+      delta: datetime.timedelta
+    """
+    task = self.taskqueue_stub.GetTasks('poll')[0]
+    delta = datetime.timedelta(seconds=countdown.total_seconds() * .2)
+    self.assertAlmostEqual(NOW + countdown, testutil.get_task_eta(task), delta=delta)
+
   def test_poll(self):
     """A normal poll task."""
     self.assertEqual(0, models.Response.query().count())
@@ -94,9 +104,7 @@ class PollTest(TaskQueueTest):
     tasks = self.taskqueue_stub.GetTasks('poll')
     self.assertEqual(1, len(tasks))
     self.assertEqual('/_ah/queue/poll', tasks[0]['url'])
-    self.assertAlmostEqual(NOW + FakeSource.POLL_FREQUENCY,
-                           testutil.get_task_eta(tasks[0]),
-                           delta=FakeSource.POLL_FREQUENCY)
+    self.assert_task_eta(FakeSource.FAST_POLL)
     params = testutil.get_task_params(tasks[0])
     self.assert_equals(source.key.urlsafe(), params['source_key'])
 
@@ -375,6 +383,28 @@ class PollTest(TaskQueueTest):
 
     source = self.sources[0].key.get()
     self.assertEqual('c', source.last_activity_id)
+
+  def test_slow_poll(self):
+    # grace period has passed, hasn't sent webmention
+    self.sources[0].created = NOW - (FakeSource.FAST_POLL_GRACE_PERIOD +
+                                     datetime.timedelta(minutes=1))
+    self.sources[0].put()
+    self.post_task()
+    self.assert_task_eta(FakeSource.SLOW_POLL)
+
+  def test_fast_poll_grace_period(self):
+    self.sources[0].created = NOW - datetime.timedelta(minutes=1)
+    self.sources[0].put()
+    self.post_task()
+    self.assert_task_eta(FakeSource.FAST_POLL)
+
+  def test_fast_poll_has_sent_webmention(self):
+    self.sources[0].created = NOW - (FakeSource.FAST_POLL_GRACE_PERIOD +
+                                     datetime.timedelta(minutes=1))
+    self.sources[0].last_webmention_sent = NOW - datetime.timedelta(days=100)
+    self.sources[0].put()
+    self.post_task()
+    self.assert_task_eta(FakeSource.FAST_POLL)
 
 
 class PropagateTest(TaskQueueTest):
