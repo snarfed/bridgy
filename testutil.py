@@ -22,13 +22,9 @@ import util
 from activitystreams.oauth_dropins.models import BaseAuth
 from activitystreams.oauth_dropins.webutil import testutil
 
-
-def get_task_params(task):
-  """Parses a task's POST body and returns the query params in a dict.
-  """
-  params = urlparse.parse_qs(base64.b64decode(task['body']))
-  params = dict((key, val[0]) for key, val in params.items())
-  return params
+# mirror some methods from webutil.testutil
+from activitystreams.oauth_dropins.webutil.testutil import get_task_eta
+from activitystreams.oauth_dropins.webutil.testutil import get_task_params
 
 
 class FakeAuthEntity(BaseAuth):

@@ -30,7 +30,7 @@ from testutil import FakeSource
 import util
 from webmentiontools import send
 
-NOW = datetime.datetime.now()
+NOW = datetime.datetime.utcnow()
 tasks.now_fn = lambda: NOW
 
 ERROR_HTTP_RETURN_CODE = tasks.SendWebmentions.ERROR_HTTP_RETURN_CODE
@@ -94,6 +94,9 @@ class PollTest(TaskQueueTest):
     tasks = self.taskqueue_stub.GetTasks('poll')
     self.assertEqual(1, len(tasks))
     self.assertEqual('/_ah/queue/poll', tasks[0]['url'])
+    self.assertAlmostEqual(NOW + FakeSource.POLL_FREQUENCY,
+                           testutil.get_task_eta(tasks[0]),
+                           delta=FakeSource.POLL_FREQUENCY)
     params = testutil.get_task_params(tasks[0])
     self.assert_equals(source.key.urlsafe(), params['source_key'])
 
