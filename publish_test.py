@@ -164,7 +164,8 @@ class PublishTest(testutil.HandlerTest):
                              '<article class="h-entry h-as-note"></article>')
     self.mox.ReplayAll()
 
-    self.assert_error('Could not find e-content in http://foo.com/')
+    self.assert_error('Could not find <a href="http://microformats.org/">'
+                      'e-content</a> in http://foo.com/')
     self.assertEquals('failed', Publish.query().get().status)
 
   def test_multiple_items_chooses_first_that_works(self):

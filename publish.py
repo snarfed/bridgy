@@ -160,7 +160,7 @@ class Handler(webmention.WebmentionHandler):
         msg = ("%s doesn't support type(s) %s." %
                (source_cls.AS_CLASS.NAME, ' + '.join(types)))
       else:
-        msg = "Could not find h-entry or other content to publish!"
+        msg = 'Could not find <a href="http://microformats.org/">h-entry</a> or other content to publish!'
       return self.error(msg, data=data, log_exception=False)
 
     # write results to datastore
@@ -199,7 +199,7 @@ class Handler(webmention.WebmentionHandler):
     if obj_type in ('note', 'article', 'comment'):
       contents = props.get('content', [])
       if not contents or not contents[0] or not contents[0].get('value'):
-        self.error('Could not find e-content in %s' % self.fetched.url, data=item)
+        self.error('Could not find <a href="http://microformats.org/">e-content</a> in %s' % self.fetched.url, data=item)
         return None
 
     # special case for me: don't allow posts in live app, just comments, likes,
