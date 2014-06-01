@@ -322,81 +322,83 @@ class SendWebmentions(webapp2.RequestHandler):
     logging.info('Starting %s', self.entity.label())
 
     try:
-      unsent = set()
-      for url in self.entity.unsent + self.entity.error:
-        # recheck the url here since the checks may have failed during the poll
-        # or streaming add.
-        url, domain, ok = util.get_webmention_target(url)
-        if ok:
-          # When debugging locally, redirect our own webmentions to localhost
-          if appengine_config.DEBUG and domain in LOCALHOST_TEST_DOMAINS:
-              url = url.replace(domain, 'localhost')
-          unsent.add(url)
-      self.entity.unsent = sorted(unsent)
-      self.entity.error = []
-
-      while self.entity.unsent:
-        target = self.entity.unsent.pop(0)
-        logging.info('Webmention from %s to %s', source_url, target)
-
-        # see if we've cached webmention discovery for this domain. the cache
-        # value is a string URL endpoint if discovery succeeded, a
-        # WebmentionSend error dict if it failed (semi-)permanently, or None.
-        domain = util.domain_from_link(target)
-        cache_key = 'W ' + domain
-        cached = memcache.get(cache_key)
-        if cached:
-          logging.info('Using cached webmention endpoint for %s: %s',
-                       domain, cached)
-
-        # send! and handle response or error
-        error = None
-        if isinstance(cached, dict):
-          error = cached
-        else:
-          mention = send.WebmentionSend(source_url, target, endpoint=cached)
-          logging.info('Sending...')
-          try:
-            if not mention.send(timeout=999):
-              error = mention.error
-          except:
-            logging.warning('', exc_info=True)
-            error = getattr(mention, 'error', None)
-            if not error:
-              error = {'code': 'EXCEPTION'}
-
-        if error is None:
-          logging.info('Sent! %s', mention.response)
-          self.entity.sent.append(target)
-          memcache.set(cache_key, mention.receiver_endpoint,
-                       time=WEBMENTION_DISCOVERY_CACHE_TIME)
-        else:
-          if error['code'] == 'NO_ENDPOINT':
-            logging.info('Giving up this target. %s', error)
-            self.entity.skipped.append(target)
-            memcache.set(cache_key, error, time=WEBMENTION_DISCOVERY_CACHE_TIME)
-          elif (error['code'] == 'BAD_TARGET_URL' and
-                error['http_status'] / 100 == 4):
-            # Give up on 4XX errors; we don't expect later retries to succeed.
-            logging.info('Giving up this target. %s', error)
-            self.entity.failed.append(target)
-          else:
-            self.fail('Error sending to endpoint: %s' % error)
-            self.entity.error.append(target)
-
-        if target in self.entity.unsent:
-          self.entity.unsent.remove(target)
-
-      if self.entity.error:
-        logging.warning('Propagate task failed')
-        self.release('error')
-      else:
-        self.complete()
-
+      self.do_send_webmentions(source_url)
     except:
       logging.exception('Propagate task failed')
       self.release('error')
       raise
+
+  def do_send_webmentions(self, source_url):
+    unsent = set()
+    for url in self.entity.unsent + self.entity.error:
+      # recheck the url here since the checks may have failed during the poll
+      # or streaming add.
+      url, domain, ok = util.get_webmention_target(url)
+      if ok:
+        # When debugging locally, redirect our own webmentions to localhost
+        if appengine_config.DEBUG and domain in LOCALHOST_TEST_DOMAINS:
+            url = url.replace(domain, 'localhost')
+        unsent.add(url)
+    self.entity.unsent = sorted(unsent)
+    self.entity.error = []
+
+    while self.entity.unsent:
+      target = self.entity.unsent.pop(0)
+      logging.info('Webmention from %s to %s', source_url, target)
+
+      # see if we've cached webmention discovery for this domain. the cache
+      # value is a string URL endpoint if discovery succeeded, a
+      # WebmentionSend error dict if it failed (semi-)permanently, or None.
+      domain = util.domain_from_link(target)
+      cache_key = 'W ' + domain
+      cached = memcache.get(cache_key)
+      if cached:
+        logging.info('Using cached webmention endpoint for %s: %s',
+                     domain, cached)
+
+      # send! and handle response or error
+      error = None
+      if isinstance(cached, dict):
+        error = cached
+      else:
+        mention = send.WebmentionSend(source_url, target, endpoint=cached)
+        logging.info('Sending...')
+        try:
+          if not mention.send(timeout=999):
+            error = mention.error
+        except:
+          logging.warning('', exc_info=True)
+          error = getattr(mention, 'error', None)
+          if not error:
+            error = {'code': 'EXCEPTION'}
+
+      if error is None:
+        logging.info('Sent! %s', mention.response)
+        self.entity.sent.append(target)
+        memcache.set(cache_key, mention.receiver_endpoint,
+                     time=WEBMENTION_DISCOVERY_CACHE_TIME)
+      else:
+        if error['code'] == 'NO_ENDPOINT':
+          logging.info('Giving up this target. %s', error)
+          self.entity.skipped.append(target)
+          memcache.set(cache_key, error, time=WEBMENTION_DISCOVERY_CACHE_TIME)
+        elif (error['code'] == 'BAD_TARGET_URL' and
+              error['http_status'] / 100 == 4):
+          # Give up on 4XX errors; we don't expect later retries to succeed.
+          logging.info('Giving up this target. %s', error)
+          self.entity.failed.append(target)
+        else:
+          self.fail('Error sending to endpoint: %s' % error)
+          self.entity.error.append(target)
+
+      if target in self.entity.unsent:
+        self.entity.unsent.remove(target)
+
+    if self.entity.error:
+      logging.warning('Propagate task failed')
+      self.release('error')
+    else:
+      self.complete()
 
   @ndb.transactional
   def lease(self, key):
