@@ -474,6 +474,8 @@ class PropagateTest(TaskQueueTest):
                               sent=['http://target1/post/url'], response=r)
       memcache.flush_all()
 
+    self.assert_equals(NOW, self.sources[0].key.get().last_webmention_sent)
+
   def test_propagate_from_error(self):
     """A normal propagate task, with a response starting as 'error'."""
     self.responses[0].status = 'error'
@@ -484,6 +486,7 @@ class PropagateTest(TaskQueueTest):
     self.post_task()
     self.assert_response_is('complete', NOW + LEASE_LENGTH,
                             sent=['http://target1/post/url'])
+    self.assert_equals(NOW, self.sources[0].key.get().last_webmention_sent)
 
   def test_success_and_errors(self):
     """We should send webmentions to the unsent and error targets."""
@@ -512,6 +515,7 @@ class PropagateTest(TaskQueueTest):
                             error=['http://3', 'http://5'],
                             failed=['http://4'],
                             skipped=['http://2'])
+    self.assertIsNone(self.sources[0].key.get().last_webmention_sent)
 
   def test_cached_webmention_discovery(self):
     """Webmention endpoints should be cached."""
@@ -676,6 +680,7 @@ class PropagateTest(TaskQueueTest):
     self.post_task(expected_status=ERROR_HTTP_RETURN_CODE)
     self.assert_response_is('error', None, error=['http://first'],
                            sent=['http://second'])
+    self.assert_equals(NOW, self.sources[0].key.get().last_webmention_sent)
 
   def test_webmention_exception(self):
     """Exceptions on individual target URLs shouldn't stop the whole task."""
@@ -688,6 +693,7 @@ class PropagateTest(TaskQueueTest):
     self.post_task(expected_status=ERROR_HTTP_RETURN_CODE)
     self.assert_response_is('error', None, error=['http://error'],
                             sent=['http://good'])
+    self.assert_equals(NOW, self.sources[0].key.get().last_webmention_sent)
 
   def test_translate_appspot_to_bridgy(self):
     """Tasks on brid.gy should use brid-gy.appspot.com as the source URL."""
@@ -763,3 +769,4 @@ class PropagateTest(TaskQueueTest):
       params={'key': blogpost.key.urlsafe()})
     self.assert_response_is('complete', NOW + LEASE_LENGTH,
                             sent=['http://ok/two'], response=blogpost)
+    self.assert_equals(NOW, source_key.get().last_webmention_sent)

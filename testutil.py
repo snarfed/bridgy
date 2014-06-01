@@ -119,7 +119,8 @@ class FakeSource(FakeBase, Source):
 
   def __init__(self, *args, **kwargs):
     super(FakeSource, self).__init__(*args, **kwargs)
-    FakeSource.as_source.put()
+    ndb.transaction(FakeSource.as_source.put,
+                    propagation=ndb.TransactionOptions.INDEPENDENT)
 
   def silo_url(self):
     return 'http://fa.ke/profile/url'

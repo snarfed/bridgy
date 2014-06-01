@@ -374,6 +374,8 @@ class SendWebmentions(webapp2.RequestHandler):
 
       if error is None:
         logging.info('Sent! %s', mention.response)
+        if not self.entity.sent:
+          self.set_last_webmention_sent()
         self.entity.sent.append(target)
         memcache.set(cache_key, mention.receiver_endpoint,
                      time=WEBMENTION_DISCOVERY_CACHE_TIME)
@@ -469,6 +471,13 @@ class SendWebmentions(webapp2.RequestHandler):
     logging.log(level, message)
     self.response.out.write(message)
 
+  @ndb.transactional
+  def set_last_webmention_sent(self):
+    """Sets this entity's source's last_webmention_sent property to now."""
+    source = self.entity.source.get()
+    logging.info('Setting last_webmention_sent')
+    source.last_webmention_sent = now_fn()
+    source.put()
 
 class PropagateResponse(SendWebmentions):
   """Task handler that sends webmentions for a Response.

@@ -84,7 +84,7 @@ class Source(StringIdModel):
 
   last_polled = ndb.DateTimeProperty(default=util.EPOCH)
   last_poll_attempt = ndb.DateTimeProperty(default=util.EPOCH)
-  last_webmention_sent = ndb.DateTimeProperty()  # currrently only used for listen
+  last_webmention_sent = ndb.DateTimeProperty()  # currently only used for listen
 
   # points to an oauth-dropins auth entity. The model class should be a subclass
   # of oauth_dropins.BaseAuth.
