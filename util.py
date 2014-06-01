@@ -48,16 +48,6 @@ WEBMENTION_BLACKLIST = {
 
 def add_poll_task(source, **kwargs):
   """Adds a poll task for the given source entity.
-  """
-  last_polled_str = source.last_polled.strftime(POLL_TASK_DATETIME_FORMAT)
-  taskqueue.add(queue_name='poll',
-                params={'source_key': source.key.urlsafe(),
-                        'last_polled': last_polled_str},
-                **kwargs)
-
-
-def add_propagate_task(entity, **kwargs):
-  """Adds a propagate task for the given response entity.
 
   Tasks inserted from a backend (e.g. twitter_streaming) are sent to that
   backend by default, which doesn't work in the dev_appserver. Setting the
@@ -68,17 +58,30 @@ def add_propagate_task(entity, **kwargs):
   default.brid-gy.appspot.com in prod instead of www.brid.gy, which breaks SSL
   because appspot.com doesn't have a third-level wildcard cert.
   """
-  taskqueue.add(queue_name='propagate',
-                params={'response_key': entity.key.urlsafe()},
-                target=taskqueue.DEFAULT_APP_VERSION)
+  last_polled_str = source.last_polled.strftime(POLL_TASK_DATETIME_FORMAT)
+  task = taskqueue.add(queue_name='poll',
+                       params={'source_key': source.key.urlsafe(),
+                               'last_polled': last_polled_str},
+                       **kwargs)
+  logging.info('Added poll task with %s: %s', kwargs, task.name)
 
 
-def add_propagate_blogpost_task(entity, **kwargs):
+def add_propagate_task(entity):
+  """Adds a propagate task for the given response entity.
+  """
+  task = taskqueue.add(queue_name='propagate',
+                       params={'response_key': entity.key.urlsafe()},
+                       target=taskqueue.DEFAULT_APP_VERSION)
+  logging.info('Added propagate task with %s: %s', task.name)
+
+
+def add_propagate_blogpost_task(entity):
   """Adds a propagate-blogpost task for the given response entity.
   """
-  taskqueue.add(queue_name='propagate-blogpost',
-                params={'key': entity.key.urlsafe()},
-                target=taskqueue.DEFAULT_APP_VERSION)
+  task = taskqueue.add(queue_name='propagate-blogpost',
+                       params={'key': entity.key.urlsafe()},
+                       target=taskqueue.DEFAULT_APP_VERSION)
+  logging.info('Added propagate-blogpost task with %s: %s', task.name)
 
 
 def email_me(**kwargs):
