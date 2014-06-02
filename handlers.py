@@ -106,7 +106,7 @@ class ItemHandler(webapp2.RequestHandler):
 
     for id in ids:
       if not self.VALID_ID.match(id):
-        self.abort(404, 'Non-numeric id %s' % id)
+        self.abort(404, 'Invalid id %s' % id)
 
     label = '%s:%s %s %s' % (source_short_name, string_id, type, ids)
     logging.info('Fetching %s', label)
