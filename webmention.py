@@ -105,11 +105,12 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
     resp = {'error': error}
     if data:
       resp['parsed'] = data
-
     resp = json.dumps(resp, indent=2)
-    if not (self.source and self.source.key.kind() == 'WordPress'):
-      # temporarily disable emailing about wordpress.com failures until
-      # https://github.com/snarfed/bridgy/issues/161 is fixed.
+
+    # don't email about specific known failures:
+    # https://github.com/snarfed/bridgy/issues/161
+    # https://github.com/snarfed/bridgy/issues/175
+    if '"error": "invalid_input"' not in error and 'bX-2i87au' not in error:
       self.mail_me(resp)
     self.response.write(resp)
 
