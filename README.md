@@ -43,6 +43,19 @@ dependencies, make sure the patches are included!
 
 Misc
 ---
+I've made manual datastore backups, but we don't yet have automated backup set
+up. Bridgy isn't the canonical source of any actual user data, so it's not as
+important as for other services, but at minimum, the registered users and their
+OAuth tokens would be bad to lose. We should probably figure out a real backup
+system.
+
+The most likely candidate is
+[Datastore Admin](https://developers.google.com/appengine/docs/adminconsole/datastoreadmin),
+which I've used for the manual backups. There's even an easy way to
+[run them on a schedule](https://developers.google.com/appengine/articles/scheduled_backups).
+Definitely a TODO.
+
+
 Here are
 [remote_api_shell](https://developers.google.com/appengine/articles/remote_api)
 and shell commands for generating the statistics published at
