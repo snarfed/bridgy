@@ -267,6 +267,9 @@ class Poll(webapp2.RequestHandler):
     #
     for id, resp in responses.items():
       activity = resp.pop('activity')
+      # we'll usually have multiple responses for the same activity, and the
+      # resp['activity'] objects are shared, so cache each activity's discovered
+      # webmention targets inside the activity object.
       targets = activity.get('targets')
       if targets is None:
         targets = activity['targets'] = get_webmention_targets(source, activity)
