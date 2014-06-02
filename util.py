@@ -72,7 +72,7 @@ def add_propagate_task(entity):
   task = taskqueue.add(queue_name='propagate',
                        params={'response_key': entity.key.urlsafe()},
                        target=taskqueue.DEFAULT_APP_VERSION)
-  logging.info('Added propagate task with %s: %s', task.name)
+  logging.info('Added propagate task: %s', task.name)
 
 
 def add_propagate_blogpost_task(entity):
@@ -81,7 +81,7 @@ def add_propagate_blogpost_task(entity):
   task = taskqueue.add(queue_name='propagate-blogpost',
                        params={'key': entity.key.urlsafe()},
                        target=taskqueue.DEFAULT_APP_VERSION)
-  logging.info('Added propagate-blogpost task with %s: %s', task.name)
+  logging.info('Added propagate-blogpost task: %s', task.name)
 
 
 def email_me(**kwargs):
