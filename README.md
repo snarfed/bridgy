@@ -33,6 +33,13 @@ deploys to App Engine:
   ~/google_appengine/appcfg.py --oauth2 update .
 ```
 
+Most dependencies are clean, but we've made patches to some that we haven't
+(yet) tried to push upstream. If we ever switch submodule repos for those
+dependencies, make sure the patches are included!
+
+* snarfed/gdata-python-client@fabb6227361612ac4fcb8bef4438719cb00eaa2b
+* snarfed/gdata-python-client@8453e3388d152ac650e22d219fae36da56d9a85d
+
 
 Misc
 ---
