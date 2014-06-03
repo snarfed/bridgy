@@ -18,6 +18,7 @@ import blogger
 from blogger import Blogger
 from gdata.blogger import data
 from gdata.blogger.client import BloggerClient, Query
+from gdata.client import RequestError
 import util
 import testutil
 
@@ -96,6 +97,19 @@ class BloggerTest(testutil.HandlerTest):
     b = Blogger.new(self.handler, auth_entity=self.auth_entity)
     resp = b.create_comment('http://blawg/path/to/post', u'Degenève', 'http://who',
                             u'foo Degenève bar', client=self.client)
+
+  def test_create_comment_gives_up_on_internal_error_bX2i87au(self):
+    # see https://github.com/snarfed/bridgy/issues/175
+    self.expect_get_posts()
+    self.client.add_comment('111', '222', '<a href="http://who">who</a>: foo bar'
+                            ).AndRaise(RequestError('500, Internal error: bX-2i87au'))
+    self.mox.ReplayAll()
+
+    b = Blogger.new(self.handler, auth_entity=self.auth_entity)
+    resp = b.create_comment('http://blawg/path/to/post', 'who', 'http://who',
+                            'foo bar', client=self.client)
+    # the key point is that create_comment doesn't raise an exception
+    self.assert_equals({'error': '500, Internal error: bX-2i87au'}, resp)
 
   def test_superfeedr_notify(self):
     """Smoke test. Just check that we make it all the way through."""

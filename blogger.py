@@ -27,6 +27,7 @@ from appengine_config import HTTP_TIMEOUT
 
 from activitystreams.oauth_dropins import blogger_v2 as oauth_blogger
 from gdata.blogger.client import Query
+from gdata.client import RequestError
 import models
 import superfeedr
 import util
@@ -130,7 +131,13 @@ class Blogger(models.Source):
     content = u'<a href="%s">%s</a>: %s' % (author_url, author_name, content)
     logging.info('Creating comment on blog %s, post %s: %s', self.key.id(),
                  post_id, content.encode('utf-8'))
-    comment = client.add_comment(self.key.id(), post_id, content)
+    try:
+      comment = client.add_comment(self.key.id(), post_id, content)
+    except RequestError, e:
+      msg = str(e)
+      if 'bX-2i87au' in msg or 'bX-at8zpb' in msg:
+        # known error: https://github.com/snarfed/bridgy/issues/175
+        return {'error': msg}
 
     resp = {'id': comment.get_comment_id(), 'response': comment.to_string()}
     logging.info('Response: %s', resp)
