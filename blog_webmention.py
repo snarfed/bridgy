@@ -121,9 +121,7 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
     # write results to datastore
     self.entity.status = 'complete'
     self.entity.put()
-
     self.response.write(json.dumps(self.entity.published))
-    self.mail_me(self.entity.published)
 
   def find_mention_item(self, data):
     """Returns the mf2 item that mentions (or replies to, likes, etc) the target.

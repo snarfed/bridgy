@@ -166,11 +166,7 @@ class Handler(webmention.WebmentionHandler):
     # write results to datastore
     self.entity.status = 'complete'
     self.entity.put()
-
     self.response.write(resp)
-    # don't mail me about my own successful publishes, just the errors
-    if domain != 'snarfed.org':
-      self.mail_me(self.entity.published if self.PREVIEW else resp)
 
   def attempt_single_item(self, item):
     """Attempts to preview or publish a single mf2 item.
