@@ -22,6 +22,7 @@ import collections
 import json
 import logging
 import urllib
+import urllib2
 import urlparse
 
 import appengine_config
@@ -130,7 +131,15 @@ class WordPress(models.Source):
     url = API_CREATE_COMMENT_URL % (auth_entity.key.id(), post_id)
     content = u'<a href="%s">%s</a>: %s' % (author_url, author_name, content)
     data = {'content': content.encode('utf-8')}
-    resp = auth_entity.urlopen(url, data=urllib.urlencode(data)).read()
+    try:
+      resp = auth_entity.urlopen(url, data=urllib.urlencode(data)).read()
+    except urllib2.HTTPError, e:
+      body = e.read()
+      parsed = json.loads(body) if body else {}
+      if e.code == 400 and parsed.get('error') == 'invalid_input':
+        return parsed  # known error: https://github.com/snarfed/bridgy/issues/161
+      raise
+
     resp = json.loads(resp)
     resp['id'] = resp.pop('ID', None)
     return resp
