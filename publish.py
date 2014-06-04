@@ -26,6 +26,7 @@ Example response:
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
+import collections
 import logging
 import json
 import sys
@@ -130,10 +131,13 @@ class Handler(webmention.WebmentionHandler):
       return
     self.fetched, data = resp
 
-    # loop through each item and try to preview/create it. if it fails, try the
-    # next one. break after the first one that works.
+    # loop through each item and its children and try to preview/create it. if
+    # it fails, try the next one. break after the first one that works.
+    resp = None
     types = set()
-    for item in data.get('items', []):
+    queue = collections.deque(data.get('items', []))
+    while queue:
+      item = queue.popleft()
       try:
         resp = self.attempt_single_item(item)
         if resp:
@@ -151,13 +155,15 @@ class Handler(webmention.WebmentionHandler):
             item_types.add(embedded)
         logging.error('Object type(s) %s not supported; trying next.', item_types)
         types = types.union(item_types)
+        queue.extend(item.get('children', []))
       except BaseException, e:
         return self.error('Error: %s' % e, status=500)
-    else:
-      if 'h-entry' in types:
-        types.remove('h-entry')
+
+    if not resp:  # tried all the items
+      types.discard('h-entry')
+      types.discard('h-note')
       if types:
-        msg = ("%s doesn't support type(s) %s." %
+        msg = ("%s doesn't support type(s) %s, or no content was found.." %
                (source_cls.AS_CLASS.NAME, ' + '.join(types)))
       else:
         msg = 'Could not find <a href="http://microformats.org/">h-entry</a> or other content to publish!'
@@ -195,8 +201,7 @@ class Handler(webmention.WebmentionHandler):
     if obj_type in ('note', 'article', 'comment'):
       contents = props.get('content', [])
       if not contents or not contents[0] or not contents[0].get('value'):
-        self.error('Could not find <a href="http://microformats.org/">e-content</a> in %s' % self.fetched.url, data=item)
-        return None
+        raise NotImplementedError('Could not find <a href="http://microformats.org/">content</a> in %s' % self.fetched.url)
 
     # special case for me: don't allow posts in live app, just comments, likes,
     # and reposts

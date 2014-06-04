@@ -164,8 +164,7 @@ class PublishTest(testutil.HandlerTest):
                              '<article class="h-entry h-as-note"></article>')
     self.mox.ReplayAll()
 
-    self.assert_error('Could not find <a href="http://microformats.org/">'
-                      'e-content</a> in http://foo.com/')
+    self.assert_error('or no content was found')
     self.assertEquals('failed', Publish.query().get().status)
 
   def test_multiple_items_chooses_first_that_works(self):
@@ -184,7 +183,7 @@ class PublishTest(testutil.HandlerTest):
     self.mox.ReplayAll()
 
     # FakeSource.create() raises NotImplementedError on likes
-    self.assert_error("FakeSource doesn't support type(s) h-as-like.")
+    self.assert_error("FakeSource doesn't support type(s) h-as-like")
     self.assertEquals('failed', Publish.query().get().status)
 
   def test_source_url_is_domain_url(self):
@@ -201,7 +200,7 @@ class PublishTest(testutil.HandlerTest):
     self.mox.ReplayAll()
 
     # FakeSource.create() raises NotImplementedError on likes
-    self.assert_error("FakeSource doesn't support type(s) like-of.")
+    self.assert_error("FakeSource doesn't support type(s) like-of")
     self.assertEquals('failed', Publish.query().get().status)
 
   def test_mf1_backward_compatibility_inside_hfeed(self):
@@ -217,7 +216,7 @@ this is my article
 
     resp = self.get_response()
     self.assertEquals(200, resp.status_int, resp.body)
-    self.assertEquals('this is my article - http://foo.com/bar',
+    self.assertEquals('\nthis is my article\n - http://foo.com/bar',
                       json.loads(resp.body)['content'])
 
   def test_returned_type_overrides(self):
