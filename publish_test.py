@@ -204,6 +204,22 @@ class PublishTest(testutil.HandlerTest):
     self.assert_error("FakeSource doesn't support type(s) like-of.")
     self.assertEquals('failed', Publish.query().get().status)
 
+  def test_mf1_backward_compatibility_inside_hfeed(self):
+    """This is based on Blogger's default markup, e.g.
+    http://daisystanton.blogspot.com/2014/06/so-elections.html """
+    self.expect_requests_get('http://foo.com/bar', """
+<div class="blog-posts hfeed">
+<div class="post hentry uncustomized-post-template">
+<div class="post-body entry-content">
+this is my article
+</div></div></div>""")
+    self.mox.ReplayAll()
+
+    resp = self.get_response()
+    self.assertEquals(200, resp.status_int, resp.body)
+    self.assertEquals('this is my article - http://foo.com/bar',
+                      json.loads(resp.body)['content'])
+
   def test_returned_type_overrides(self):
     # FakeSource returns type 'post' when it sees 'rsvp'
     self.expect_requests_get('http://foo.com/bar', """
