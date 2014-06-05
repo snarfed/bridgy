@@ -79,8 +79,11 @@ class PollTest(TaskQueueTest):
       delta: datetime.timedelta
     """
     task = self.taskqueue_stub.GetTasks('poll')[0]
-    delta = datetime.timedelta(seconds=(countdown.total_seconds() * .2) + 1)
-    self.assertAlmostEqual(NOW + countdown, testutil.get_task_eta(task), delta=delta)
+    # 10s padding
+    delta = datetime.timedelta(seconds=(countdown.total_seconds() * .2) + 10)
+    # use actual current time, not NOW, because the app engine SDK does
+    self.assertAlmostEqual(datetime.datetime.utcnow() + countdown,
+                           testutil.get_task_eta(task), delta=delta)
 
   def test_poll(self):
     """A normal poll task."""
