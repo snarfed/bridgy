@@ -256,17 +256,8 @@ API</a> for a while, but
 <li class="answer">
 <p>Does the social network post have a link to your web site's post? If not,
 does your web site's post have a
-<a href="http://indiewebcamp.com/rel-syndication">rel-syndication link</a> to
-the social network post? Bridgy needs at least one or the other so it can
-connect the two posts.</p>
-<p>Rel-syndication lookup fetches the site configured in your social
-network bio. It will follow each h-entry to its post permalink page and look there for
-rel-syndication or u-syndication links. If you publish an unfiltered
-h-feed somewhere other than your homepage, you can point Bridgy to it by including
-&lt;link rel="feed"> on the homepage. (See the
-<a href="http://indiewebcamp.com/original-post-discovery">original post
-discovery</a> and <a href="http://indiewebcamp.com/posse-post-discovery">posse
-post discovery</a> algorithms for all the gory details.)</p>
+<a href="#rel-syndication">rel-syndication link</a> to the social network post?
+Bridgy needs at least one or the other so it can connect the two posts.</p>
 <p>Did you write the original post yourself? Bridgy doesn't crawl other people's
 posts, even if they have links to your web site. It only sends back responses
 to <em>your</em> posts.</p>
@@ -282,6 +273,22 @@ expose</a> whether an account
 is <a href="http://help.instagram.com/448523408565555">private</a>, so Bridgy
 handles all Instagram photos and comments. If your Instagram account is private,
 don't sign it up for Bridgy!
+</p></li>
+
+<li id="public" class="question">Do my posts really need to link my web site?</li>
+<li class="answer">
+<p>Nope! You can
+use <a href="http://indiewebcamp.com/rel-syndication">rel-syndication</a> lookup
+instead. It fetches the web site field in your social network profile and
+follows each
+<a href="http://microformats.org/wiki/h-entry">h-entry</a> to its post permalink
+page and look there for rel-syndication or u-syndication links. If you publish
+an unfiltered <a href="http://microformats.org/wiki/h-feed">h-feed</a> somewhere
+other than your homepage, you can point Bridgy to it by including <code>&lt;link
+rel="feed"&gt;</code> on the homepage. See the
+<a href="http://indiewebcamp.com/original-post-discovery">original post
+discovery</a> and <a href="http://indiewebcamp.com/posse-post-discovery">posse
+post discovery</a> algorithms for all the gory details.
 </p></li>
 
 <li id="facebook-rsvps" class="question">Bridgy isn't seeing my Facebook
