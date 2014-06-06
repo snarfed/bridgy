@@ -20,7 +20,6 @@ from google.appengine.api import memcache
 
 TWITTER_API_USER_LOOKUP = 'https://api.twitter.com/1.1/users/lookup.json?screen_name=%s'
 USERS_PER_LOOKUP = 100  # max # of users per API call
-TOO_OLD = datetime.timedelta(hours=2)
 
 
 class ReplacePollTasks(webapp2.RequestHandler):
@@ -32,7 +31,7 @@ class ReplacePollTasks(webapp2.RequestHandler):
                for cls in handlers.SOURCES.values()]
     for source in itertools.chain(*queries):
       age = now - source.last_polled
-      if age > TOO_OLD:
+      if age > source.poll_period() * 4:
         logging.info('%s last polled %s ago. Adding new poll task.',
                      source.bridgy_url(self), age)
         util.add_poll_task(source)

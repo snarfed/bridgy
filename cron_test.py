@@ -31,12 +31,26 @@ class CronTest(ModelsTest):
 
     # a bunch of sources, one needs a new poll task
     five_min_ago = now - datetime.timedelta(minutes=5)
+    three_days_ago = now - datetime.timedelta(days=3)
+    month_ago = now - datetime.timedelta(days=30)
+    defaults = {
+      'features': ['listen'],
+      'last_webmention_sent': three_days_ago,
+      }
     sources = [
-      FakeSource.new(None).put(),  # not signed up for listen
-      FakeSource.new(None, features=['listen'], last_polled=now).put(),
-      FakeSource.new(None, features=['listen'], last_polled=five_min_ago).put(),
-      FakeSource.new(None, features=['listen'], status='disabled').put(),
-      FakeSource.new(None, features=['listen']).put(),  # needs a new poll task
+      # doesn't need a new poll task
+      FakeSource.new(None, last_polled=now, **defaults).put(),
+      FakeSource.new(None, last_polled=five_min_ago, **defaults).put(),
+      FakeSource.new(None, status='disabled', **defaults).put(),
+      FakeSource.new(None, status='disabled', **defaults).put(),
+      # needs a new poll task
+      FakeSource.new(None, **defaults).put(),
+      # not signed up for listen
+      FakeSource.new(None, last_webmention_sent=three_days_ago).put(),
+      # never sent a webmention, past grace period. last polled is older than 4x
+      # fast poll, but within slow poll.
+      FakeSource.new(None, features=['listen'], created=month_ago,
+                     last_polled=three_days_ago).put(),
       ]
     resp = cron.application.get_response('/cron/replace_poll_tasks')
     self.assertEqual(200, resp.status_int)

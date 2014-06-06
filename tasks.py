@@ -107,13 +107,9 @@ class Poll(webapp2.RequestHandler):
 
     now = now_fn()
     source.last_poll_attempt = now
-    task_countdown = (source.SLOW_POLL
-                      if (now > source.created + source.FAST_POLL_GRACE_PERIOD
-                          and not source.last_webmention_sent)
-                      else source.FAST_POLL
-                      # randomize task ETA to within +/- 20% of FAST_POLL to try
-                      # to spread out tasks and prevent thundering herds.
-                      ).total_seconds() * random.uniform(.8, 1.2)
+    # randomize task ETA to within +/- 20% to try to spread out tasks and
+    # prevent thundering herds.
+    task_countdown = source.poll_period().total_seconds() * random.uniform(.8, 1.2)
     try:
       self.do_post(source)
       util.add_poll_task(source, countdown=task_countdown)

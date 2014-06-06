@@ -136,6 +136,18 @@ class Source(StringIdModel):
     """Human-readable label for this site."""
     return '%s (%s)' % (self.name, self.AS_CLASS.NAME)
 
+  def poll_period(self):
+    """Returns the poll frequency for this source.
+
+    Defaults to ~15m, depending on silo. If we've never sent a webmention for
+    this source, after a grace period we drop them down to ~1d.
+    """
+    now = datetime.datetime.now()
+    return (self.SLOW_POLL
+            if (now > self.created + self.FAST_POLL_GRACE_PERIOD and
+                not self.last_webmention_sent)
+            else self.FAST_POLL)
+
   @classmethod
   def bridgy_webmention_endpoint(cls):
     """Returns the Bridgy webmention endpoint for this source type."""
