@@ -248,6 +248,35 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     logging.debug('Original post discovery %s -> %s', source, activity)
     original_post_discovery.discover(source, activity)
 
+  def test_rel_feed_anchor(self):
+    """Check that we follow the rel=feed when it's in an <a> tag instead of <link>
+    """
+    source = self.sources[0]
+    source.domain_url = 'http://author'
+    activity = self.activities[0]
+
+    self.expect_requests_get('http://author', """
+    <html>
+      <head>
+        <link rel="alternate" type="application/xml" href="not_this.html">
+        <link rel="alternate" type="application/xml" href="nor_this.html">
+      </head>
+      <body>
+        <a href="try_this.html" rel="feed">full unfiltered feed</a>
+      </body>
+    </html>""")
+
+    self.expect_requests_get('http://author/try_this.html', """
+    <html class="h-feed">
+      <body>
+        <div class="h-entry">Hi</div>
+      </body>
+    </html>""")
+
+    self.mox.ReplayAll()
+    logging.debug('Original post discovery %s -> %s', source, activity)
+    original_post_discovery.discover(source, activity)
+
   def test_no_h_entries(self):
     """Make sure nothing bad happens when fetching a feed without
     h-entries

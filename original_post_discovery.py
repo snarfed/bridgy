@@ -178,7 +178,8 @@ def _process_author(source, author_url):
   # look for canonical feed url (if it isn't this one) using
   # rel='feed', type='text/html'
   # TODO clean up this private reference when mf2py is updated
-  for rel_feed_node in author_dom.find_all('link', rel='feed'):
+  for rel_feed_node in author_dom.find_all('link', rel='feed') \
+      + author_dom.find_all('a', rel='feed'):
     feed_url = rel_feed_node.get('href')
     if not feed_url:
       continue
