@@ -15,6 +15,7 @@ import urllib2
 import appengine_config
 from appengine_config import HTTP_TIMEOUT
 
+from bs4 import BeautifulSoup
 from mf2py import parser
 import models
 import requests
@@ -71,8 +72,22 @@ class WebmentionHandler(WebmentionGetHandler):
     if self.entity:
       self.entity.html = fetched.text
 
+    doc = BeautifulSoup(fetched.text)
+
+    # special case tumblr's markup: div#content > div.post > div.copy
+    # convert to mf2.
+    contents = doc.find_all('div', id='content')
+    if contents:
+      post = contents[0].find_next('div', class_='post')
+      if post:
+        copy = post.find_next('div', class_='copy')
+        if copy:
+          post['class'] = 'h-entry'
+          copy['class'] = 'e-content'
+          doc = unicode(post)
+
     # parse microformats, convert to ActivityStreams
-    data = parser.Parser(doc=fetched.text, url=fetched.url).to_dict()
+    data = parser.Parser(doc=doc, url=fetched.url).to_dict()
     logging.debug('Parsed microformats2: %s', data)
     items = data.get('items', [])
     if not items or not items[0]:

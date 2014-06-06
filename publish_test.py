@@ -205,7 +205,8 @@ class PublishTest(testutil.HandlerTest):
 
   def test_mf1_backward_compatibility_inside_hfeed(self):
     """This is based on Blogger's default markup, e.g.
-    http://daisystanton.blogspot.com/2014/06/so-elections.html """
+    http://daisystanton.blogspot.com/2014/06/so-elections.html
+    """
     self.expect_requests_get('http://foo.com/bar', """
 <div class="blog-posts hfeed">
 <div class="post hentry uncustomized-post-template">
@@ -217,6 +218,27 @@ this is my article
     resp = self.get_response()
     self.assertEquals(200, resp.status_int, resp.body)
     self.assertEquals('\nthis is my article\n - http://foo.com/bar',
+                      json.loads(resp.body)['content'])
+
+  def test_tumblr_markup(self):
+    """This is based on Tumblr's default markup, e.g.
+    http://snarfed.tumblr.com/post/84623272717/stray-cat
+    """
+    self.expect_requests_get('http://foo.com/bar', """
+<body>
+<div id="content">
+  <div class="post">
+    <div class="copy"><p>this is my article</p></div>
+    <div class="footer for_permalink"></div>
+  </div>
+</div>
+</body>
+""")
+    self.mox.ReplayAll()
+
+    resp = self.get_response()
+    self.assertEquals(200, resp.status_int, resp.body)
+    self.assertEquals('this is my article - http://foo.com/bar',
                       json.loads(resp.body)['content'])
 
   def test_returned_type_overrides(self):
