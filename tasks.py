@@ -478,6 +478,7 @@ class SendWebmentions(webapp2.RequestHandler):
     source.last_webmention_sent = now_fn()
     source.put()
 
+
 class PropagateResponse(SendWebmentions):
   """Task handler that sends webmentions for a Response.
 
