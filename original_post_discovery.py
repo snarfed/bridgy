@@ -42,7 +42,7 @@ def discover(source, activity, fetch_hfeed=True):
   """Augments the standard original_post_discovery algorithm with a
   reverse lookup that supports posts without a backlink or citation.
 
-  If fetch_feed is False, then we will check the db for previously
+  If fetch_hfeed is False, then we will check the db for previously
   found SyndicatedPosts but will not do posse-post-discovery to find
   new ones.
 
@@ -91,13 +91,15 @@ def discover(source, activity, fetch_hfeed=True):
   # facebook user id instead of user name)
   syndication_url = util.follow_redirects(syndication_url).url
   return _posse_post_discovery(source, activity,
-                               author_url, syndication_url)
+                               author_url, syndication_url,
+                               fetch_hfeed)
 
 
 # TODO narrow the scope of this transaction. With a large h-feed,
 # we could easily go over the 60s tx limit.
 @ndb.transactional
-def _posse_post_discovery(source, activity, author_url, syndication_url):
+def _posse_post_discovery(source, activity, author_url, syndication_url,
+                          fetch_hfeed):
   """Performs the actual meat of the posse-post-discover. It was split
   out from discover() so that it can be done inside of a transaction.
 
@@ -107,6 +109,9 @@ def _posse_post_discovery(source, activity, author_url, syndication_url):
     author_url: author's url configured in their silo profile
     syndication_url: url of the syndicated copy for which we are
                      trying to find an original
+    fetch_hfeed: boolean, whether or not to fetch and parse the
+                 author's feed if we don't have a previously stored
+                 relationship.
 
   Return:
     the activity, updated with original post urls if any are found
@@ -115,7 +120,7 @@ def _posse_post_discovery(source, activity, author_url, syndication_url):
                 author_url, syndication_url)
 
   relationship = SyndicatedPost.query_by_syndication(source, syndication_url)
-  if not relationship:
+  if not relationship and fetch_hfeed:
     # a syndicated post we haven't seen before! fetch the author's
     # h-feed to see if we can find it.
     results = _process_author(source, author_url)
@@ -177,7 +182,6 @@ def _process_author(source, author_url):
 
   # look for canonical feed url (if it isn't this one) using
   # rel='feed', type='text/html'
-  # TODO clean up this private reference when mf2py is updated
   for rel_feed_node in author_dom.find_all('link', rel='feed') \
       + author_dom.find_all('a', rel='feed'):
     feed_url = rel_feed_node.get('href')
