@@ -673,3 +673,17 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
 
     self.mox.ReplayAll()
     original_post_discovery.discover(source, activity)
+
+  def test_do_not_fetch_hfeed(self):
+    """Confirms behavior of discover() when fetch_hfeed=False.
+    Discovery should only check the database for previously discovered matches.
+    It should not make any GET requests"""
+
+    source = self.sources[0]
+    source.domain_url = 'http://author'
+    activity = self.activities[0]
+    activity['object']['url'] = 'http://fa.ke/post/url'
+    activity['object']['content'] = 'content without links'
+
+    self.mox.ReplayAll()
+    original_post_discovery.discover(source, activity, fetch_hfeed=False)
