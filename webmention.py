@@ -100,7 +100,8 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
 
     return fetched, data
 
-  def error(self, error, html=None, status=400, data=None, log_exception=True):
+  def error(self, error, html=None, status=400, data=None, log_exception=True,
+            mail=True):
     """Handle an error. May be overridden by subclasses.
 
     Args:
@@ -109,6 +110,7 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
       status: int HTTP response status code
       data: mf2 data dict parsed from source page
       log_exception: boolean, whether to include a stack trace in the log msg
+      mail: boolean, whether to email me
     """
     logging.error(error, exc_info=sys.exc_info() if log_exception else None)
 
@@ -125,7 +127,7 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
     # don't email about specific known failures:
     # https://github.com/snarfed/bridgy/issues/161
     # https://github.com/snarfed/bridgy/issues/175
-    if '"error": "invalid_input"' not in error and 'bX-2i87au' not in error:
+    if mail and '"error": "invalid_input"' not in error and 'bX-2i87au' not in error:
       self.mail_me(resp)
     self.response.write(resp)
 
