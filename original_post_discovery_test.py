@@ -2,6 +2,7 @@
 """Unit tests for original_post_discovery.py
 """
 import copy
+import facebook_test
 import logging
 import original_post_discovery
 import requests
@@ -10,6 +11,7 @@ import testutil
 
 from appengine_config import HTTP_TIMEOUT
 from models import SyndicatedPost
+from facebook import FacebookPage
 from requests.exceptions import HTTPError
 
 class OriginalPostDiscoveryTest(testutil.ModelsTest):
@@ -677,7 +679,8 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
   def test_do_not_fetch_hfeed(self):
     """Confirms behavior of discover() when fetch_hfeed=False.
     Discovery should only check the database for previously discovered matches.
-    It should not make any GET requests"""
+    It should not make any GET requests
+    """
 
     source = self.sources[0]
     source.domain_url = 'http://author'
@@ -687,3 +690,42 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
 
     self.mox.ReplayAll()
     original_post_discovery.discover(source, activity, fetch_hfeed=False)
+
+class OriginalPostDiscoveryFacebookTest(facebook_test.FacebookPageTest):
+
+  def test_match_facebook_username_url(self):
+    """Facebook URLs use username and user id interchangeably, and one
+    does not redirect to the other. Make sure we can still find the
+    relationship if author's publish syndication links using their
+    username
+    """
+
+    source = FacebookPage.new(self.handler, auth_entity=self.auth_entity)
+    source.id = '0123456789'
+    source.username = 'user.name'
+
+    source.domain_url = 'http://author'
+    activity = self.activities[0]
+    # facebook activity comes to us with the numeric id
+    activity['object']['url'] = 'http://facebook.com/0123456789/posts/314159'
+    activity['object']['content'] = 'content without links'
+
+    self.expect_requests_get('http://author', """
+    <html class="h-feed">
+      <div class="h-entry">
+        <a class="u-url" href="http://author/post/permalink"></a>
+      </div>
+    </html>""")
+
+    # user sensibly publishes syndication link using their name
+    self.expect_requests_get('http://author/post/permalink', """
+    <html class="h-entry">
+      <a class="u-url" href="http://author/post/permalink"></a>
+      <a class="u-syndication" href="http://facebook.com/user.name/posts/314159"></a>
+    </html>""")
+
+    self.mox.ReplayAll()
+    original_post_discovery.discover(source, activity)
+
+    self.assertEquals(['http://author/post/permalink'],
+                      activity['object']['upstreamDuplicates'])
