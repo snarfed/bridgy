@@ -196,7 +196,7 @@ class FacebookPage(models.Source):
     """
     if self.username:
       syndication_url = syndication_url.replace(
-        'facebook.com/%s/' % self.username, 'facebook.com/%s/' % self.id)
+        'facebook.com/%s/' % self.username, 'facebook.com/%s/' % self.key.id())
     return syndication_url
 
 

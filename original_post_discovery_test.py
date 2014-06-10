@@ -691,6 +691,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.mox.ReplayAll()
     original_post_discovery.discover(source, activity, fetch_hfeed=False)
 
+
 class OriginalPostDiscoveryFacebookTest(facebook_test.FacebookPageTest):
 
   def test_match_facebook_username_url(self):
@@ -699,15 +700,11 @@ class OriginalPostDiscoveryFacebookTest(facebook_test.FacebookPageTest):
     relationship if author's publish syndication links using their
     username
     """
-
     source = FacebookPage.new(self.handler, auth_entity=self.auth_entity)
-    source.id = '0123456789'
-    source.username = 'user.name'
-
     source.domain_url = 'http://author'
     activity = self.activities[0]
     # facebook activity comes to us with the numeric id
-    activity['object']['url'] = 'http://facebook.com/0123456789/posts/314159'
+    activity['object']['url'] = 'http://facebook.com/212038/posts/314159'
     activity['object']['content'] = 'content without links'
 
     self.expect_requests_get('http://author', """
@@ -721,7 +718,7 @@ class OriginalPostDiscoveryFacebookTest(facebook_test.FacebookPageTest):
     self.expect_requests_get('http://author/post/permalink', """
     <html class="h-entry">
       <a class="u-url" href="http://author/post/permalink"></a>
-      <a class="u-syndication" href="http://facebook.com/user.name/posts/314159"></a>
+      <a class="u-syndication" href="http://facebook.com/snarfed.org/posts/314159"></a>
     </html>""")
 
     self.mox.ReplayAll()
