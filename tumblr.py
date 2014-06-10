@@ -241,8 +241,6 @@ class AddTumblr(util.Handler):
       blog_name=util.get_required_param(self, 'blog'),
       )
 
-  get = post
-
 
 class SuperfeedrNotifyHandler(webapp2.RequestHandler):
   """Handles a Superfeedr notification.

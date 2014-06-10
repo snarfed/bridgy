@@ -52,7 +52,7 @@ handlers:
   script: handlers.application
   secure: always
 
-- url: /blogger/(start|add|delete|notify|oauth2callback|choose_blog)(/.*)?
+- url: /blogger/(start|add|notify|oauth2callback|oauth_handler)(/.*)?
   script: blogger.application
   secure: always
 

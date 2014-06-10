@@ -34,6 +34,7 @@ import util
 import webapp2
 
 from google.appengine.ext import ndb
+from google.appengine.ext.webapp import template
 
 
 class Blogger(models.Source):
@@ -55,25 +56,20 @@ class Blogger(models.Source):
     return 'https://www.blogger.com/blogger.g?blogID=%s#template' % self.key.id()
 
   @staticmethod
-  def new(handler, auth_entity=None, **kwargs):
+  def new(handler, auth_entity=None, blog_id=None, **kwargs):
     """Creates and returns a Blogger for the logged in user.
 
     Args:
       handler: the current RequestHandler
       auth_entity: oauth_dropins.blogger.BloggerV2Auth
+      blog_id: which blog. optional. if not provided, uses the first available.
     """
-    url, domain, ok = Blogger._url_and_domain(auth_entity)
+    url, domain, ok = Blogger._url_and_domain(auth_entity, blog_id=blog_id)
     if not ok:
-      handler.messages = {'No Blogger blogs found. Please create one first!'}
+      handler.messages = {'Blogger blog not found. Please create one first!'}
       return None
 
-    for id, hostname in zip(auth_entity.blog_ids, auth_entity.blog_hostnames):
-      if domain == hostname:
-        break
-    else:
-      return self.error("Internal error, shouldn't happen")
-
-    return Blogger(id=id,
+    return Blogger(id=blog_id,
                    auth_entity=auth_entity.key,
                    url=url,
                    name=auth_entity.user_display_name(),
@@ -84,19 +80,20 @@ class Blogger(models.Source):
                    **kwargs)
 
   @staticmethod
-  def _url_and_domain(auth_entity):
+  def _url_and_domain(auth_entity, blog_id=None):
     """Returns an auth entity's URL and domain.
 
     Args:
       auth_entity: oauth_dropins.blogger.BloggerV2Auth
+      blog_id: which blog. optional. if not provided, uses the first available.
 
     Returns: (string url, string domain, boolean ok)
     """
-    # TODO: if they have multiple blogs, let them choose which one to sign up.
-    domain = next(iter(auth_entity.blog_hostnames), None)
-    if not domain:
-      return None, None, False
-    return 'http://%s/' % domain, domain, True
+    for id, host in zip(auth_entity.blog_ids, auth_entity.blog_hostnames):
+      if blog_id == id or (not blog_id and host):
+        return 'http://%s/' % host, host, True
+
+    return None, None, False
 
   def create_comment(self, post_url, author_name, author_url, content, client=None):
     """Creates a new comment in the source silo.
@@ -144,12 +141,7 @@ class Blogger(models.Source):
     return resp
 
 
-class AddBlogger(oauth_blogger.CallbackHandler, util.Handler):
-  def finish(self, auth_entity, state=None):
-    self.maybe_add_or_delete_source(Blogger, auth_entity, state)
-
-
-class OAuthCallback(util.Handler):
+class OAuthHandler(util.Handler):
   """OAuth callback handler.
 
   Both the add and delete flows have to share this because Blogger's
@@ -160,9 +152,9 @@ class OAuthCallback(util.Handler):
     if auth_entity_str_key:
       auth_entity = ndb.Key(urlsafe=auth_entity_str_key).get()
     else:
-      auth_entity = None
       self.messages.add(
         "Couldn't fetch your blogs. Maybe you're not a Blogger user?")
+      return
 
     state = self.request.get('state')
     if not state:
@@ -170,7 +162,34 @@ class OAuthCallback(util.Handler):
       # matter for now since we don't plan to implement listen or publish.
       state = 'webmention'
 
-    self.maybe_add_or_delete_source(Blogger, auth_entity, state)
+    if not auth_entity:
+      self.maybe_add_or_delete_source(Blogger, auth_entity, state)
+      return
+
+    vars = {
+      'action': '/blogger/add',
+      'state': state,
+      'auth_entity_key': auth_entity.key.urlsafe(),
+      'blogs': [{'id': id, 'title': title, 'domain': host}
+                for id, title, host in zip(auth_entity.blog_ids,
+                                           auth_entity.blog_titles,
+                                           auth_entity.blog_hostnames)],
+      }
+    logging.info('Rendering choose_blog.html with %s', vars)
+
+    self.response.headers['Content-Type'] = 'text/html'
+    self.response.out.write(template.render('templates/choose_blog.html', vars))
+
+
+class AddBlogger(util.Handler):
+  def post(self):
+    auth_entity_key = util.get_required_param(self, 'auth_entity_key')
+    self.maybe_add_or_delete_source(
+      Blogger,
+      ndb.Key(urlsafe=auth_entity_key).get(),
+      util.get_required_param(self, 'state'),
+      blog_id=util.get_required_param(self, 'blog'),
+      )
 
 
 class SuperfeedrNotifyHandler(webapp2.RequestHandler):
@@ -186,8 +205,9 @@ class SuperfeedrNotifyHandler(webapp2.RequestHandler):
 
 application = webapp2.WSGIApplication([
     ('/blogger/start', oauth_blogger.StartHandler.to('/blogger/oauth2callback')),
-    ('/blogger/oauth2callback', oauth_blogger.CallbackHandler.to('/blogger/add')),
-    ('/blogger/add', OAuthCallback),
     ('/blogger/delete/start', oauth_blogger.StartHandler.to('/blogger/oauth2callback')),
+    ('/blogger/oauth2callback', oauth_blogger.CallbackHandler.to('/blogger/oauth_handler')),
+    ('/blogger/oauth_handler', OAuthHandler),
+    ('/blogger/add', AddBlogger),
     ('/blogger/notify/(.+)', SuperfeedrNotifyHandler),
     ], debug=appengine_config.DEBUG)

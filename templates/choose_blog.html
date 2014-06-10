@@ -6,9 +6,10 @@
 
 {% block content %}
 
+<br />
 <p class="row big">Which blog do you want to sign up?</p>
 
-<form id="choose-blog" class="row big" action="{{ action }}">
+<form id="choose-blog" class="row big" action="{{ action }}" method="post">
   <ul>
     {% for blog in blogs %}
     <li>
