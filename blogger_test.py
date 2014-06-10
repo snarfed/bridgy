@@ -63,7 +63,7 @@ class BloggerTest(testutil.HandlerTest):
     we can differentiate from a user decline because oauth-dropins can't
     currently intercept Blogger declines.
     """
-    resp = blogger.application.get_response('/blogger/add')
+    resp = blogger.application.get_response('/blogger/oauth_handler')
     self.assertIn("Couldn't fetch your blogs",
         urllib.unquote(urlparse.urlparse(resp.headers['Location']).fragment))
     self.assertEquals(0, BloggerV2Auth.query().count())
@@ -72,7 +72,7 @@ class BloggerTest(testutil.HandlerTest):
   def test_new_no_blogs(self):
     self.auth_entity.blog_hostnames = []
     self.assertIsNone(Blogger.new(self.handler, auth_entity=self.auth_entity))
-    self.assertIn('No Blogger blogs found', next(iter(self.handler.messages)))
+    self.assertIn('Blogger blog not found', next(iter(self.handler.messages)))
 
   def test_create_comment(self):
     self.expect_get_posts()

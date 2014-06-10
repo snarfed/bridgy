@@ -69,6 +69,13 @@ class Blogger(models.Source):
       handler.messages = {'Blogger blog not found. Please create one first!'}
       return None
 
+    if blog_id is None:
+      for blog_id, hostname in zip(auth_entity.blog_ids, auth_entity.blog_hostnames):
+        if domain == hostname:
+          break
+      else:
+        return self.error("Internal error, shouldn't happen")
+
     return Blogger(id=blog_id,
                    auth_entity=auth_entity.key,
                    url=url,
@@ -152,9 +159,9 @@ class OAuthHandler(util.Handler):
     if auth_entity_str_key:
       auth_entity = ndb.Key(urlsafe=auth_entity_str_key).get()
     else:
+      auth_entity = None
       self.messages.add(
         "Couldn't fetch your blogs. Maybe you're not a Blogger user?")
-      return
 
     state = self.request.get('state')
     if not state:
