@@ -56,7 +56,17 @@ class TumblrTest(testutil.HandlerTest):
   def test_new_no_primary_blog(self):
     self.auth_entity.user_json = json.dumps({'user': {'blogs': [{'url': 'foo'}]}})
     self.assertIsNone(Tumblr.new(self.handler, auth_entity=self.auth_entity))
-    self.assertIn('No primary Tumblr blog', next(iter(self.handler.messages)))
+    self.assertIn('Tumblr blog not found', next(iter(self.handler.messages)))
+
+  def test_new_with_blog_name(self):
+    self.auth_entity.user_json = json.dumps({
+        'user': {'blogs': [{'url': 'foo'},
+                           {'name': 'bar', 'url': 'baz'},
+                           {'name': 'biff', 'url': 'http://boff/'},
+                           ]}})
+    got = Tumblr.new(self.handler, auth_entity=self.auth_entity, blog_name='biff')
+    self.assertEquals('http://boff/', got.domain_url)
+    self.assertEquals('boff', got.domain)
 
   def test_verify(self):
     # based on http://snarfed.tumblr.com/

@@ -123,6 +123,10 @@ form input {
   margin-top: .5em;
 }
 
+#choose-blog > ul {
+  list-style: none;
+}
+
 @media (min-width: 768px) {
   .user-items > .row {
     display: table;

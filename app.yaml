@@ -52,7 +52,7 @@ handlers:
   script: handlers.application
   secure: always
 
-- url: /blogger/(start|add|delete|notify|oauth2callback)(/.*)?
+- url: /blogger/(start|add|delete|notify|oauth2callback|choose_blog)(/.*)?
   script: blogger.application
   secure: always
 
@@ -68,7 +68,7 @@ handlers:
   script: instagram.application
   secure: always
 
-- url: /tumblr/(start|add|delete|notify)(/.*)?
+- url: /tumblr/(start|add|delete|notify|choose_blog)(/.*)?
   script: tumblr.application
   secure: always
 

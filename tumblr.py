@@ -47,6 +47,7 @@ import superfeedr
 import util
 
 from google.appengine.ext import ndb
+from google.appengine.ext.webapp import template
 import webapp2
 
 TUMBLR_AVATAR_URL = 'http://api.tumblr.com/v2/blog/%s/avatar/512'
@@ -75,16 +76,17 @@ class Tumblr(models.Source):
     return 'http://www.tumblr.com/customize/%s' % self.auth_entity.id()
 
   @staticmethod
-  def new(handler, auth_entity=None, **kwargs):
+  def new(handler, auth_entity=None, blog_name=None, **kwargs):
     """Creates and returns a Tumblr for the logged in user.
 
     Args:
       handler: the current RequestHandler
       auth_entity: oauth_dropins.tumblr.TumblrAuth
+      blog_name: which blog. optional. passed to _url_and_domain.
     """
-    url, domain, ok = Tumblr._url_and_domain(auth_entity)
+    url, domain, ok = Tumblr._url_and_domain(auth_entity, blog_name=blog_name)
     if not ok:
-      handler.messages = {'No primary Tumblr blog found. Please create one first!'}
+      handler.messages = {'Tumblr blog not found. Please create one first!'}
       return None
 
     return Tumblr(id=domain,
@@ -97,23 +99,22 @@ class Tumblr(models.Source):
                   **kwargs)
 
   @staticmethod
-  def _url_and_domain(auth_entity):
-    """Returns this user's primary blog URL and domain.
+  def _url_and_domain(auth_entity, blog_name=None):
+    """Returns the blog URL and domain.
 
     Args:
       auth_entity: oauth_dropins.tumblr.TumblrAuth
+      blog_name: which blog. optional. matches the 'name' field for one of the
+        blogs in auth_entity.user_json['user']['blogs'].
 
     Returns: (string url, string domain, boolean ok)
     """
-    # TODO: if they have multiple blogs, let them choose which one to sign up.
-    #
-    # user_json is the user/info response:
-    # http://www.tumblr.com/docs/en/api/v2#user-methods
     for blog in json.loads(auth_entity.user_json).get('user', {}).get('blogs', []):
-      if blog.get('primary'):
+      if ((blog_name and blog_name == blog.get('name')) or
+          (not blog_name and blog.get('primary'))):
         return blog['url'], util.domain_from_link(blog['url']), True
-    else:
-      return None, None, False
+
+    return None, None, False
 
   def verified(self):
     """Returns True if we've found the webmention endpoint and Disqus."""
@@ -205,9 +206,42 @@ class Tumblr(models.Source):
     logging.info('Response: %s', resp)
     return resp
 
-class AddTumblr(oauth_tumblr.CallbackHandler, util.Handler):
+
+class ChooseBlog(oauth_tumblr.CallbackHandler, util.Handler):
   def finish(self, auth_entity, state=None):
-    self.maybe_add_or_delete_source(Tumblr, auth_entity, state)
+    if not auth_entity:
+      self.maybe_add_or_delete_source(Tumblr, auth_entity, state)
+      return
+
+    vars = {
+      'action': '/tumblr/add',
+      'state': state,
+      'auth_entity_key': auth_entity.key.urlsafe(),
+      'blogs': [{'id': b['name'],
+                 'title': b.get('title', ''),
+                 'domain': util.domain_from_link(b['url'])}
+                # user_json is the user/info response:
+                # http://www.tumblr.com/docs/en/api/v2#user-methods
+                for b in json.loads(auth_entity.user_json)['user']['blogs']
+                if b.get('name') and b.get('url')],
+      }
+    logging.info('Rendering choose_blog.html with %s', vars)
+
+    self.response.headers['Content-Type'] = 'text/html'
+    self.response.out.write(template.render('templates/choose_blog.html', vars))
+
+
+class AddTumblr(util.Handler):
+  def post(self):
+    auth_entity_key = util.get_required_param(self, 'auth_entity_key')
+    self.maybe_add_or_delete_source(
+      Tumblr,
+      ndb.Key(urlsafe=auth_entity_key).get(),
+      util.get_required_param(self, 'state'),
+      blog_name=util.get_required_param(self, 'blog'),
+      )
+
+  get = post
 
 
 class SuperfeedrNotifyHandler(webapp2.RequestHandler):
@@ -222,7 +256,8 @@ class SuperfeedrNotifyHandler(webapp2.RequestHandler):
 
 
 application = webapp2.WSGIApplication([
-    ('/tumblr/start', oauth_tumblr.StartHandler.to('/tumblr/add')),
+    ('/tumblr/start', oauth_tumblr.StartHandler.to('/tumblr/choose_blog')),
+    ('/tumblr/choose_blog', ChooseBlog),
     ('/tumblr/add', AddTumblr),
     ('/tumblr/delete/start', oauth_tumblr.CallbackHandler.to('/delete/finish')),
     ('/tumblr/notify/(.+)', SuperfeedrNotifyHandler),

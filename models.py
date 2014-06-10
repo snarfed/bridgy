@@ -279,27 +279,28 @@ class Source(StringIdModel):
 
     feature = source.features[0] if source.features else 'listen'
 
-    # extract domain from the URL set on the user's profile, if any
-    auth_entity = kwargs.get('auth_entity')
-    if auth_entity and hasattr(auth_entity, 'user_json'):
-      url, domain, ok = source._url_and_domain(auth_entity)
-      if feature == 'publish' and not ok:
-        if not url:
-          handler.messages = {'Your %s profile is missing the website field. '
-                              'Please add it and try again!' % cls.AS_CLASS.NAME}
-        elif not domain:
-          handler.messages = {'Could not parse the web site in your %s profile: '
-                              '%s\n Please update it and try again!' %
-                              (cls.AS_CLASS.NAME, url)}
-        else:
-          handler.messages = {"Could not connect to the web site in your %s profile: "
-                              "%s\n Please update it and try again!" %
-                              (cls.AS_CLASS.NAME, url)}
-        return None
+    if not source.domain_url and not source.domain_url:
+      # extract domain from the URL set on the user's profile, if any
+      auth_entity = kwargs.get('auth_entity')
+      if auth_entity and hasattr(auth_entity, 'user_json'):
+        url, domain, ok = source._url_and_domain(auth_entity)
+        if feature == 'publish' and not ok:
+          if not url:
+            handler.messages = {'Your %s profile is missing the website field. '
+                                'Please add it and try again!' % cls.AS_CLASS.NAME}
+          elif not domain:
+            handler.messages = {'Could not parse the web site in your %s profile: '
+                                '%s\n Please update it and try again!' %
+                                (cls.AS_CLASS.NAME, url)}
+          else:
+            handler.messages = {"Could not connect to the web site in your %s profile: "
+                                "%s\n Please update it and try again!" %
+                                (cls.AS_CLASS.NAME, url)}
+          return None
 
-      if ok:
-        source.domain_url = url
-        source.domain = domain
+        if ok:
+          source.domain_url = url
+          source.domain = domain
 
     # check if this source already exists
     existing = source.key.get()

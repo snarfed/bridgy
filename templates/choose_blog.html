@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Choose blog - Bridgy{% endblock %}
+
+{% block body_class %} choose_blog {% endblock %}
+
+{% block content %}
+
+<p class="row big">Which blog do you want to sign up?</p>
+
+<form id="choose-blog" class="row big" action="{{ action }}">
+  <ul>
+    {% for blog in blogs %}
+    <li>
+      <input type="radio" name="blog" id="{{ blog.id }}" value="{{ blog.id }}">
+      <label for="{{ blog.id }}"> {{ blog.title }}
+        (<a target="_blank" href="http://{{ blog.domain }}/">{{ blog.domain }}</a>)
+      </label>
+    </li>
+    {% endfor %}
+  </ul>
+
+  <input type="hidden" name="auth_entity_key" value="{{ auth_entity_key }}" />
+  <input type="hidden" name="state" value="{{ state }}" />
+  <p class="row big"><input type="submit" class="btn btn-default" value="OK" /></p>
+</form>
+
+{% endblock %}

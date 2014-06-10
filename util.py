@@ -231,7 +231,7 @@ class Handler(webapp2.RequestHandler):
     uri = urlparse.urlunparse(parts)
     super(Handler, self).redirect(uri, **kwargs)
 
-  def maybe_add_or_delete_source(self, source_cls, auth_entity, state):
+  def maybe_add_or_delete_source(self, source_cls, auth_entity, state, **kwargs):
     """Adds or deletes a source if auth_entity is not None.
 
     Used in each source's oauth-dropins CallbackHandler finish() and get()
@@ -243,6 +243,7 @@ class Handler(webapp2.RequestHandler):
       state: string, OAuth callback state parameter. For adds, this is just a
         feature ('listen' or 'publish') or empty. For deletes, it's
         [FEATURE]-[SOURCE KEY].
+      kwargs: passed through to the source_cls constructor
     """
     if state is None:
       state = ''
@@ -254,8 +255,11 @@ class Handler(webapp2.RequestHandler):
         return
 
       CachedPage.invalidate('/users')
+      logging.info('%s.create_new with %s', source_cls.__class__.__name__,
+                   (auth_entity.key, state, kwargs))
       source = source_cls.create_new(self, auth_entity=auth_entity,
-                                     features=[state] if state else [])
+                                     features=[state] if state else [],
+                                     **kwargs)
       self.redirect(source.bridgy_url(self) if source else '/')
       return source
 
