@@ -86,7 +86,7 @@ class Handler(webmention.WebmentionHandler):
       return self.error('Target must be brid.gy/publish/{facebook,twitter}')
     elif source_cls in (Instagram, GooglePlusPage):
       return self.error('Sorry, %s is not yet supported.' %
-                        source_cls.AS_CLASS.NAME)
+                        source_cls.AS_CLASS.NAME, mail=False)
 
     # resolve source URL
     url, domain, ok = util.get_webmention_target(self.source_url)
@@ -115,14 +115,16 @@ class Handler(webmention.WebmentionHandler):
     if (source_url_parts.netloc == domain_url_parts.netloc and
         source_url_parts.path.strip('/') == domain_url_parts.path.strip('/')):
       return self.error(
-        "Looks like that's your home page. Try one of your posts instead!")
+        "Looks like that's your home page. Try one of your posts instead!",
+        mail=False)
 
     # done with the sanity checks, ready to fetch the source url. create the
     # Publish entity so we can store the result.
     entity = self.get_or_add_publish_entity(url)
     if (entity.status == 'complete' and entity.type != 'preview' and
         not self.PREVIEW and not appengine_config.DEBUG):
-      return self.error("Sorry, you've already published that page, and Bridgy Publish doesn't yet support updating or deleting existing posts. Ping Ryan if you want that feature!")
+      return self.error("Sorry, you've already published that page, and Bridgy Publish doesn't yet support updating or deleting existing posts. Ping Ryan if you want that feature!",
+                        mail=False)
     self.entity = entity
 
     # fetch source page
@@ -268,12 +270,14 @@ class PreviewHandler(Handler):
   """
   PREVIEW = True
 
-  def error(self, error, html=None, status=400, data=None, log_exception=True):
+  def error(self, error, html=None, status=400, data=None, log_exception=True,
+            mail=True):
     logging.error(error, exc_info=sys.exc_info() if log_exception else None)
     self.response.set_status(status)
     error = util.linkify(html if html else error)
     self.response.write(error)
-    self.mail_me(error)
+    if mail:
+      self.mail_me(error)
 
 
 class PublishHandler(Handler):
