@@ -132,3 +132,21 @@ class FacebookPageTest(testutil.ModelsTest):
 
     page = FacebookPage.new(self.handler, auth_entity=self.auth_entity)
     self.assertRaises(urllib2.HTTPError, page.get_activities)
+
+  def test_canonicalize_syndication_url(self):
+    page = FacebookPage.new(self.handler, auth_entity=self.auth_entity)
+    page.id = '0123456789'
+    page.username = 'user.name'
+
+    self.assertEqual(
+      'http://www.facebook.com/0123456789/posts/314159',
+      page.canonicalize_syndication_url('http://www.facebook.com/user.name/posts/314159'))
+
+    self.assertEqual(
+      'http://www.facebook.com/0123456789/photos/314159',
+      page.canonicalize_syndication_url('http://www.facebook.com/user.name/photos/314159'))
+
+    # make sure we don't touch user.name when it appears elsewhere in the url
+    self.assertEqual(
+      'http://www.facebook.com/25624/posts/user.name',
+      page.canonicalize_syndication_url('http://www.facebook.com/25624/posts/user.name'))

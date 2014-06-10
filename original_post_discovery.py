@@ -127,7 +127,6 @@ def _posse_post_discovery(source, activity, author_url, syndication_url,
     results = _process_author(source, author_url)
     relationship = results.get(syndication_url, None)
 
-
   if not relationship:
     # No relationship was found. Remember that we've seen this
     # syndicated post to avoid reprocessing it every time
@@ -295,7 +294,7 @@ def _process_entry(source, permalink):
     syndication_url = util.follow_redirects(syndication_url).url
     # source-specific logic to standardize the URL. (e.g., replace facebook
     # username with numeric id)
-    syndication_url = _canonicalize_syndication_url(source, syndication_url)
+    syndication_url = source.canonicalize_syndication_url(syndication_url)
     # check that the syndicated url belongs to this source
     # TODO save future lookups by saving results for other sources
     # too (note: query the appropriate source subclass by
@@ -319,24 +318,3 @@ def _process_entry(source, permalink):
                    syndication=None).put()
 
   return results
-
-
-def _canonicalize_syndication_url(source, syndication_url):
-  """Perform source-specific transforms to the syndication URL
-  for cases where multiple silo URLs can point to the same content.
-  By standardizing on one format, we stand the best chance of
-  finding the relationship between the original and its syndicated
-  copies.
-
-  Args:
-    source: models.Source subclass
-    syndication_url: a string, the url of the syndicated content
-
-  Return:
-    a string, the canonical form of the syndication url
-  """
-  if isinstance(source, FacebookPage):
-    # replace facebook.com/user.name/ with facebook.com/0123456789/
-    syndication_url = syndication_url.replace(
-      'facebook.com/%s/' % source.username, 'facebook.com/%s/' % source.id)
-  return syndication_url

@@ -408,6 +408,22 @@ class Source(StringIdModel):
 
     return url, domain, ok
 
+  def canonicalize_syndication_url(self, syndication_url):
+    """Perform source-specific transforms to the syndication URL for cases
+    where multiple silo URLs can point to the same content.  By
+    standardizing on one format, original_post_discovery stands the
+    best chance of finding the relationship between the original and
+    its syndicated copies.
+
+    Args:
+      syndication_url: a string, the url of the syndicated content
+
+    Return:
+      a string, the canonical form of the syndication url
+
+    """
+    return syndication_url
+
 
 class Webmentions(StringIdModel):
   """A bundle of links to send webmentions for.

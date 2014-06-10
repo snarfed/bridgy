@@ -184,6 +184,21 @@ class FacebookPage(models.Source):
                            timeout=appengine_config.HTTP_TIMEOUT)
     logging.info('Response: %s %s' % (resp.getcode(), resp.read()))
 
+  def canonicalize_syndication_url(self, syndication_url):
+    """Facebook-specific standardization of syndicated urls. Replaces
+    facebook.com/user.name with facebook.com/0123456789
+
+    Args:
+      syndication_url: a string, the url of the syndicated content
+
+    Return:
+      a string, the canonical form of the syndication url
+    """
+    if self.username:
+      syndication_url = syndication_url.replace(
+        'facebook.com/%s/' % self.username, 'facebook.com/%s/' % self.id)
+    return syndication_url
+
 
 class AddFacebookPage(oauth_facebook.CallbackHandler, util.Handler):
   def finish(self, auth_entity, state=None):
