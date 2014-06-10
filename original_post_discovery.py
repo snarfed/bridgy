@@ -36,6 +36,7 @@ from appengine_config import HTTP_TIMEOUT, DEBUG
 from bs4 import BeautifulSoup
 from google.appengine.ext import ndb
 from models import SyndicatedPost
+from facebook import FacebookPage
 
 
 def discover(source, activity, fetch_hfeed=True):
@@ -291,6 +292,9 @@ def _process_entry(source, permalink):
     # follow redirects to give us the canonical syndication url --
     # gives the best chance of finding a match.
     syndication_url = util.follow_redirects(syndication_url).url
+    # source-specific logic to standardize the URL. (e.g., replace facebook
+    # username with numeric id)
+    syndication_url = source.canonicalize_syndication_url(syndication_url)
     # check that the syndicated url belongs to this source
     # TODO save future lookups by saving results for other sources
     # too (note: query the appropriate source subclass by
