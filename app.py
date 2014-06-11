@@ -68,8 +68,8 @@ class CachedPageHandler(DashboardHandler):
 
   EXPIRES = None  # subclasses can override
 
-  def get(self):
-    if appengine_config.DEBUG:
+  def get(self, cache=True):
+    if appengine_config.DEBUG or not cache:
       # don't cache when running in in dev_appserver
       return super(DashboardHandler, self).get()
 
@@ -125,7 +125,20 @@ class FrontPageHandler(CachedPageHandler):
 
 
 class UsersHandler(CachedPageHandler):
-  """Handler for /users."""
+  """Handler for /users.
+
+  TODO: instead of paging with an offset, use a cursor per source type. The
+  problem is, I sort by name across source types, so I'd need a cursor per
+  source class query, and I'd need to iterate over the queries and merge sort
+  manually. Ugh.
+  https://developers.google.com/appengine/docs/python/ndb/queries#cursors
+  """
+
+  PAGE_SIZE = 100
+
+  def get(self):
+    # only cache the first page
+    return super(UsersHandler, self).get(cache='offset' not in self.request.params)
 
   def template_file(self):
     return 'templates/users.html'
@@ -137,8 +150,21 @@ class UsersHandler(CachedPageHandler):
     # preprocess sources, sort by name
     sources = sorted([self.preprocess_source(s) for s in sources.values()],
                      key=lambda s: (s.name.lower(), s.AS_CLASS.NAME))
+
+    try:
+      offset = int(self.request.get('offset', 0))
+    except ValueError:
+      self.abort(400, 'offset parameter must be an integer')
+    next_offset = offset + self.PAGE_SIZE
+    prev_offset = offset - self.PAGE_SIZE
+
     vars = super(UsersHandler, self).template_vars()
-    vars['sources'] = sources
+    vars['sources'] = sources[offset:next_offset]
+    if next_offset < len(sources):
+      vars['next_offset'] = next_offset
+    if prev_offset >= 0:
+      vars['prev_offset'] = prev_offset
+
     return vars
 
 
@@ -320,7 +346,7 @@ class DeleteFinishHandler(util.Handler):
     parts = util.get_required_param(self, 'state').split('-', 1)
     feature = parts[0]
     if len(parts) != 2 or feature not in (Source.FEATURES):
-      self.error(400, 'state query parameter must be [FEATURE]-[SOURCE KEY]')
+      self.abort(400, 'state query parameter must be [FEATURE]-[SOURCE KEY]')
 
     logged_in_as = util.get_required_param(self, 'auth_entity')
     source = ndb.Key(urlsafe=parts[1]).get()

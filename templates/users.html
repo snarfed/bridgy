@@ -24,4 +24,14 @@
 </li>
 </ul>
 
+<p id="users-paging" class="row">
+  {% if prev_offset != None %}
+    <a href="?offset={{ prev_offset }}">« Prev</a>
+  {% endif %}
+  &nbsp;
+  {% if next_offset %}
+    <a href="?offset={{ next_offset }}">Next »</a>
+  {% endif %}
+</p>
+
 {% endblock %}
