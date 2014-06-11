@@ -691,6 +691,69 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.mox.ReplayAll()
     original_post_discovery.discover(source, activity, fetch_hfeed=False)
 
+  def test_refetch_hfeed(self):
+    """refetch should grab resources again, even if they were previously
+    marked with a blank SyndicatedPost
+    """
+    source = self.sources[0]
+    source.domain_url = 'http://author'
+
+    # refetch 1 and 3 to see if they've been updated, 2 has already
+    # been resolved for this source
+    SyndicatedPost(parent=source.key,
+                   original='http://author/permalink1',
+                   syndication=None).put()
+
+    SyndicatedPost(parent=source.key,
+                   original='http://author/permalink2',
+                   syndication='http://fa.ke/post/url2').put()
+
+    SyndicatedPost(parent=source.key,
+                   original='http://author/permalink3',
+                   syndication=None).put()
+
+    self.expect_requests_get('http://author', """
+      <html class="h-feed">
+        <a class="h-entry" href="/permalink1"></a>
+        <a class="h-entry" href="/permalink2"></a>
+        <a class="h-entry" href="/permalink3"></a>
+      </html>""")
+
+    # yay, permalink1 has an updated syndication url
+    self.expect_requests_get('http://author/permalink1', """
+      <html class="h-entry">
+        <a class="u-url" href="/permalink1"></a>
+        <a class="u-syndication" href="http://fa.ke/post/url1"></a>
+      </html>""").InAnyOrder()
+
+    # permalink3 hasn't changed since we first checked it
+    self.expect_requests_get('http://author/permalink3', """
+      <html class="h-entry">
+        <a class="u-url" href="/permalink3"></a>
+      </html>""").InAnyOrder()
+
+    self.mox.ReplayAll()
+    original_post_discovery.refetch(source)
+
+    relationship1 = SyndicatedPost.query_by_original(
+      source, 'http://author/permalink1')
+
+    self.assertIsNotNone(relationship1)
+    self.assertEquals('http://fa.ke/post/url1', relationship1.syndication)
+
+    relationship2 = SyndicatedPost.query_by_original(
+      source, 'http://author/permalink2')
+
+    # this shouldn't have changed
+    self.assertIsNotNone(relationship2)
+    self.assertEquals('http://fa.ke/post/url2', relationship2.syndication)
+
+    relationship3 = SyndicatedPost.query_by_original(
+      source, 'http://author/permalink3')
+
+    self.assertIsNotNone(relationship3)
+    self.assertIsNone(relationship3.syndication)
+
 
 class OriginalPostDiscoveryFacebookTest(facebook_test.FacebookPageTest):
 

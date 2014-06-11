@@ -25,8 +25,10 @@ lookups in the following primary cases:
     *each* post permalink.
 """
 
+import datetime
 import logging
 import mf2py
+import re
 import requests
 import urlparse
 import util
@@ -36,7 +38,10 @@ from appengine_config import HTTP_TIMEOUT, DEBUG
 from bs4 import BeautifulSoup
 from google.appengine.ext import ndb
 from models import SyndicatedPost
-from facebook import FacebookPage
+from tasks import LOCALHOST_TEST_DOMAINS
+
+# alias allows unit tests to mock the function
+now_fn = datetime.datetime.now
 
 
 def discover(source, activity, fetch_hfeed=True):
@@ -68,7 +73,7 @@ def discover(source, activity, fetch_hfeed=True):
   # non-Bridgy users.
   # author_url = activity.get('actor', {}).get('url')
   obj = activity.get('object') or activity
-  author_url = source.domain_url
+  author_url = _get_author_url(source)
   syndication_url = obj.get('url')
 
   if not author_url:
@@ -80,12 +85,6 @@ def discover(source, activity, fetch_hfeed=True):
                   syndication_url)
     return activity
 
-  if DEBUG:
-    if author_url.startswith('https://snarfed.org'):
-      author_url = author_url.replace('snarfed.org', 'localhost')
-    elif author_url.startswith('http://kylewm.com'):
-      author_url = author_url.replace('kylewm.com', 'localhost')
-
   # use the canonical syndication url on both sides, so that we have
   # the best chance of finding a match. Some silos allow several
   # different permalink formats to point to the same place (e.g.,
@@ -96,9 +95,27 @@ def discover(source, activity, fetch_hfeed=True):
                                fetch_hfeed)
 
 
-# TODO narrow the scope of this transaction. With a large h-feed,
-# we could easily go over the 60s tx limit.
-@ndb.transactional
+def refetch(source):
+  """Refetch the author's url and look for new or updated syndication
+  links that might not have been there the first time we looked.
+
+  Args:
+    source: a models.Source subclass
+
+  Return:
+    a dict of syndicated_url to models.SyndicatedPost
+  """
+
+  logging.debug('attempting to refetch h-feed for %s', source.label())
+  author_url = _get_author_url(source)
+
+  if not author_url:
+    logging.debug('no author url, cannot find h-feed %s', author_url)
+    return {}
+
+  return _process_author(source, author_url, refetch_blanks=True)
+
+
 def _posse_post_discovery(source, activity, author_url, syndication_url,
                           fetch_hfeed):
   """Performs the actual meat of the posse-post-discover. It was split
@@ -132,8 +149,7 @@ def _posse_post_discovery(source, activity, author_url, syndication_url,
     # syndicated post to avoid reprocessing it every time
     logging.debug('posse post discovery found no relationship for %s',
                   syndication_url)
-    SyndicatedPost(parent=source.key, original=None,
-                   syndication=syndication_url).put()
+    _insert_blank_for_syndication_url(source, syndication_url)
     return activity
 
   logging.debug('posse post discovery found relationship %s -> %s',
@@ -146,12 +162,14 @@ def _posse_post_discovery(source, activity, author_url, syndication_url,
   return activity
 
 
-def _process_author(source, author_url):
+def _process_author(source, author_url, refetch_blanks=False):
   """Fetch the author's domain URL, and look for syndicated posts.
 
   Args:
     source: a subclass of models.Source
     author_url: the author's homepage URL
+    refetch_blanks: boolean, if true, refetch SyndicatedPosts that have
+      previously been marked as not having a rel=syndication link
 
   Return:
     a dict of syndicated_url to models.SyndicatedPost
@@ -237,18 +255,23 @@ def _process_author(source, author_url):
 
   results = {}
   for permalink in permalinks:
-    # TODO replace this with one query for the Source as a
-    # whole. querying each permalink individually is expensive.
-    relationship = SyndicatedPost.query_by_original(source, permalink)
-    # if the post hasn't already been processed
-    if not relationship:
-      logging.debug('processing permalink: %s', permalink)
-      results.update(_process_entry(source, permalink))
+    logging.debug('processing permalink: %s', permalink)
+    results.update(_process_entry(source, permalink, refetch_blanks))
+
+  if results:
+    # keep track of the last time we've seen rel=syndication urls for
+    # this author. this helps us decide whether to refetch periodically
+    # and look for updates.
+    # Source will be saved at the end of each round of polling
+    now = now_fn()
+    logging.debug('updating source.last_syndication_url %s', now)
+    source.last_syndication_url = now
 
   return results
 
 
-def _process_entry(source, permalink):
+@ndb.transactional
+def _process_entry(source, permalink, refetch_blanks):
   """Fetch and process an h-hentry, saving a new SyndicatedPost to the
   DB if successful.
 
@@ -259,8 +282,25 @@ def _process_entry(source, permalink):
   Return:
     a map from syndicated url to new models.SyndicatedPosts
   """
-  syndication_urls = set()
   results = {}
+
+  # TODO replace this with one query for the Source as a
+  # whole. querying each permalink individually is expensive.
+  preexisting_relationship = SyndicatedPost.query_by_original(source, permalink)
+
+  # refetching to look for SyndicatedPosts that didn't have
+  # a rel=syndication url the first time we checked
+  if refetch_blanks and preexisting_relationship \
+     and not preexisting_relationship.syndication:
+    preexisting_relationship.key.delete()
+    preexisting_relationship = None
+
+  # if the post has already been processed. do not add to the results
+  # since this method only returns *newly* discovered relationships
+  if preexisting_relationship:
+    return results
+
+  syndication_urls = set()
   parsed = None
   try:
     logging.debug('fetching post permalink %s', permalink)
@@ -311,10 +351,45 @@ def _process_entry(source, permalink):
   if not results:
     logging.debug('no syndication links from %s to current source %s. '
                   'saving empty relationship so that it will not be '
-                  'searched again', permalink, source)
+                  'searched again', permalink, source.label())
     # remember that this post doesn't have syndication links for this
     # particular source
     SyndicatedPost(parent=source.key, original=permalink,
                    syndication=None).put()
 
   return results
+
+
+@ndb.transactional
+def _insert_blank_for_syndication_url(source, syndication_url):
+  """If not, Insert a blank relationship from syndication-url -> None,
+  to remember that we've already tried posse-post-discovery on this
+  silo post.
+
+  This does a check-and-set inside a transaction to avoid putting
+  duplicates in the database.
+
+  Args:
+    source: models.Source subclass
+    syndication_url: string
+  """
+  if not SyndicatedPost.query_by_syndication(source, syndication_url):
+    SyndicatedPost(parent=source.key, original=None,
+                   syndication=syndication_url).put()
+
+
+def _get_author_url(source):
+  """Determine the author url for a particular source.
+  In debug mode, replace test domains with localhost
+
+  Args:
+    source: models.Source subclass
+
+  Return:
+    a string, the author's url or None
+  """
+  author_url = source.domain_url
+  if author_url and DEBUG:
+    for test_domain in LOCALHOST_TEST_DOMAINS:
+      author_url = re.sub('https?://' + test_domain, 'http://localhost', author_url)
+  return author_url

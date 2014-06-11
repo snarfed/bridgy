@@ -66,6 +66,8 @@ class Source(StringIdModel):
   # how long to wait after signup for a successful webmention before dropping to
   # the lower frequency poll
   FAST_POLL_GRACE_PERIOD = datetime.timedelta(days=7)
+  # refetch author url to look for updated syndication links
+  REFETCH_PERIOD = datetime.timedelta(hours=2)
 
   # Maps Publish.type (e.g. 'like') to source-specific human readable type label
   # (e.g. 'favorite'). Subclasses should override this.
@@ -85,6 +87,15 @@ class Source(StringIdModel):
   last_polled = ndb.DateTimeProperty(default=util.EPOCH)
   last_poll_attempt = ndb.DateTimeProperty(default=util.EPOCH)
   last_webmention_sent = ndb.DateTimeProperty()  # currently only used for listen
+
+  # the last time we re-fetched the author's url looking for updated
+  # syndication links
+  last_hfeed_fetch = ndb.DateTimeProperty(default=util.EPOCH)
+
+  # the last time we've seen a rel=syndication link for this Source.
+  # we won't spend the time to re-fetch and look for updates if there's
+  # never been one
+  last_syndication_url = ndb.DateTimeProperty()
 
   # points to an oauth-dropins auth entity. The model class should be a subclass
   # of oauth_dropins.BaseAuth.
@@ -147,6 +158,13 @@ class Source(StringIdModel):
             if (now > self.created + self.FAST_POLL_GRACE_PERIOD and
                 not self.last_webmention_sent)
             else self.FAST_POLL)
+
+  def refetch_period(self):
+    """Returns the refetch frequency for this source.
+
+    Defaults to ~1h. Note that refetch will only kick in if certain
+    conditions are met"""
+    return self.REFETCH_PERIOD
 
   @classmethod
   def bridgy_webmention_endpoint(cls):

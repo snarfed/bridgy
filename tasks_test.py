@@ -409,6 +409,98 @@ class PollTest(TaskQueueTest):
     self.post_task()
     self.assert_task_eta(FakeSource.FAST_POLL)
 
+  def test_do_not_refetch_hfeed(self):
+    """Only 1 hour has passed since we last re-fetched the user's h-feed. Make
+    Sure it is not fetched again"""
+    self.sources[0].domain_url = 'http://author'
+    self.sources[0].AS_CLASS.DOMAIN = 'source'
+    self.sources[0].last_syndication_url = NOW - datetime.timedelta(minutes=10)
+    # too recent to fetch again
+    self.sources[0].last_hfeed_fetch = NOW - datetime.timedelta(hours=1)
+    self.sources[0].put()
+
+    # pretend we've already done posse-post-discovery for the source
+    # and checked this permalink and found no back-links
+    models.SyndicatedPost(parent=self.sources[0].key, original=None,
+                          syndication='http://source/post/url').put()
+    models.SyndicatedPost(parent=self.sources[0].key,
+                          original='http://author/permalink',
+                          syndication=None).put()
+
+    # and all the status have already been sent
+    for r in self.responses:
+      r.status = 'complete'
+      r.put()
+
+    self.mox.ReplayAll()
+    self.post_task()
+
+    # should still be a blank SyndicatedPost
+    relationship = models.SyndicatedPost.query_by_original(
+        self.sources[0], 'http://author/permalink')
+    self.assertIsNotNone(relationship)
+    self.assertIsNone(relationship.syndication)
+
+    # should not repropagate any responses
+    self.assertEquals(0, len(self.taskqueue_stub.GetTasks('propagate')))
+
+  def test_do_refetch_hfeed(self):
+    """Emulate a situation where we've done posse-post-discovery earlier and
+    found no rel=syndication relationships for a particular silo URL. Every
+    two hours or so, we should refetch the author's page and check to see if
+    any new syndication links have been added or updated.
+    """
+    self.sources[0].domain_url = 'http://author'
+    self.sources[0].AS_CLASS.DOMAIN = 'source'
+    self.sources[0].last_syndication_url = NOW - datetime.timedelta(minutes=10)
+    self.sources[0].last_hfeed_fetch = NOW - datetime.timedelta(hours=2,
+                                                                minutes=10)
+    self.sources[0].put()
+
+    # pretend we've already done posse-post-discovery for the source
+    # and checked this permalink and found no back-links
+    models.SyndicatedPost(parent=self.sources[0].key, original=None,
+                          syndication='http://source/post/url').put()
+    models.SyndicatedPost(parent=self.sources[0].key,
+                          original='http://author/permalink',
+                          syndication=None).put()
+
+    # and all the status have already been sent
+    for r in self.responses:
+      r.status = 'complete'
+      r.put()
+
+    self.expect_requests_get('http://author', """
+    <html class="h-feed">
+      <a class="h-entry" href="/permalink"></a>
+    </html>""")
+
+    self.expect_requests_get('http://author/permalink', """
+    <html class="h-entry">
+      <a class="u-url" href="http://author/permalink"></a>
+      <a class="u-syndication" href="http://source/post/url"></a>
+    </html>""")
+
+    self.mox.ReplayAll()
+    self.post_task()
+
+    # should have a new SyndicatedPost
+    relationship = models.SyndicatedPost.query_by_original(
+      self.sources[0], 'http://author/permalink')
+    self.assertIsNotNone(relationship)
+    self.assertEquals('http://source/post/url', relationship.syndication)
+
+    # should repropagate all 9 responses
+    tasks = self.taskqueue_stub.GetTasks('propagate')
+    self.assertEquals(9, len(tasks))
+
+    # and they should be in reverse creation order
+    response_keys = [resp.key.urlsafe() for resp in self.responses]
+    response_keys.reverse()
+    task_keys = [testutil.get_task_params(task)['response_key']
+                 for task in tasks]
+    self.assertEquals(response_keys, task_keys)
+
 
 class PropagateTest(TaskQueueTest):
 
