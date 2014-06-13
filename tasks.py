@@ -42,9 +42,6 @@ import wordpress_rest
 
 WEBMENTION_DISCOVERY_CACHE_TIME = 60 * 60 * 24  # a day
 
-# when running in dev_appserver, replace these domains in links with localhost
-LOCALHOST_TEST_DOMAINS = frozenset(('kylewm.com', 'snarfed.org'))
-
 # allows injecting timestamps in task_test.py
 now_fn = datetime.datetime.now
 
@@ -298,14 +295,15 @@ class Poll(webapp2.RequestHandler):
     # source is saved in post()
 
     #
-    # Step 5. possibly enqueue task to refetch updated syndication urls
+    # Step 5. possibly refetch updated syndication urls
     #
     # if the author has added syndication urls since the first time
     # original_post_discovery ran, we'll miss them. this cleanup task
     # will periodically check for updated urls. only kicks in if the author
     # has *ever* published a rel=syndication url
-    if source.last_syndication_url and\
-       source.last_hfeed_fetch + source.refetch_period() <= source.last_poll_attempt:
+    if (source.last_syndication_url and
+        source.last_hfeed_fetch + source.refetch_period()
+            <= source.last_poll_attempt):
       self.refetch_hfeed(source)
       source.last_hfeed_fetch = source.last_poll_attempt
     else:
@@ -319,14 +317,9 @@ class Poll(webapp2.RequestHandler):
     new or updated syndication urls that we may have missed the first
     time we looked for them.
     """
-    # can't query by the silo url of a Response because it's
-    # inside activity_json, so instead, check against the n most recent
-    # responses.
-    # TODO it might make more sense to limit based on the date of the
-    # response rather than a fixed count. a popular post could easily get
-    # 100s of likes while waiting for the poller to come back around.
-    RESPONSES_TO_CHECK_ON_REFETCH = 100
-
+    # TODO this method only checks for new syndication urls on
+    # originals that have never had one (for *this* source). it
+    # would be even better to check all posts to support updates.
     logging.debug('refetching h-feed for source %s', source.label())
     relationships = original_post_discovery.refetch(source)
     if not relationships:
@@ -335,14 +328,15 @@ class Poll(webapp2.RequestHandler):
     logging.debug('refetch h-feed found %d new rel=syndication relationships',
                   len(relationships))
 
-    # grab the n most recent Responses and see if any of them have a
-    # a syndication url matching one of the newly discovered relationships
-    responses = Response.query(Response.source == source.key)\
-                        .order(-Response.created)\
-                        .fetch(RESPONSES_TO_CHECK_ON_REFETCH)
-
-    for response in responses:
-      logging.debug(
+    # grab the Responses and see if any of them have a a syndication
+    # url matching one of the newly discovered relationships. We'll
+    # check each response until we've seen all of them or until
+    # the 60s timer runs out.
+    # TODO maybe add a (canonicalized) url field to Response so we can
+    # query by it instead of iterating over all of them
+    for response in (Response.query(Response.source == source.key)
+                     .order(-Response.created)):
+      logging.info(
           'refetch h-feed checking previously propagated response %s',
           response.label())
 
@@ -352,7 +346,8 @@ class Poll(webapp2.RequestHandler):
       if not activity_url:
         continue
 
-      activity_url = util.follow_redirects(activity_url).url
+      activity_url = source.canonicalize_syndication_url(
+          util.follow_redirects(activity_url).url)
       # look for activity url in the newly discovered list of relationships
       relationship = relationships.get(activity_url)
       if not relationship:
@@ -363,20 +358,20 @@ class Poll(webapp2.RequestHandler):
       # won't re-propagate if the discovered link is already among
       # these well-known upstream duplicates
       if relationship.original in obj.get('upstreamDuplicates', []):
-        logging.debug(
+        logging.info(
             '%s found a new rel=syndication link %s -> %s, but the '
             'relationship had already been discovered by another method',
             response.label(), relationship.original,
             relationship.syndication)
       else:
-        logging.debug(
+        logging.info(
             '%s found a new rel=syndication link %s -> %s, and '
             'will be repropagated with a new target!',
             response.label(), relationship.original,
             relationship.syndication)
 
         # re-open a previously 'complete' propagate task
-        response.status = 'error'
+        response.status = 'new'
         response.unsent = [relationship.original]
         response.put()
         response.add_task()
@@ -419,7 +414,7 @@ class SendWebmentions(webapp2.RequestHandler):
       url, domain, ok = util.get_webmention_target(url)
       if ok:
         # When debugging locally, redirect our own webmentions to localhost
-        if appengine_config.DEBUG and domain in LOCALHOST_TEST_DOMAINS:
+        if appengine_config.DEBUG and domain in util.LOCALHOST_TEST_DOMAINS:
             url = url.replace(domain, 'localhost')
         unsent.add(url)
     self.entity.unsent = sorted(unsent)

@@ -5,11 +5,12 @@ import datetime
 import itertools
 import json
 import logging
+import re
 import urllib
 import urlparse
 
 import appengine_config
-from appengine_config import HTTP_TIMEOUT
+from appengine_config import HTTP_TIMEOUT, DEBUG
 
 from activitystreams import source as as_source
 from activitystreams.oauth_dropins.webutil.models import StringIdModel
@@ -162,14 +163,29 @@ class Source(StringIdModel):
   def refetch_period(self):
     """Returns the refetch frequency for this source.
 
-    Defaults to ~1h. Note that refetch will only kick in if certain
-    conditions are met"""
+    Note that refetch will only kick in if certain conditions are
+    met.
+    """
     return self.REFETCH_PERIOD
 
   @classmethod
   def bridgy_webmention_endpoint(cls):
     """Returns the Bridgy webmention endpoint for this source type."""
     return 'https://www.brid.gy/webmention/' + cls.SHORT_NAME
+
+  def get_author_url(self):
+    """Determine the author url for a particular source.
+    In debug mode, replace test domains with localhost
+
+    Return:
+      a string, the author's url or None
+    """
+    author_url = self.domain_url
+    if author_url and DEBUG:
+      for test_domain in util.LOCALHOST_TEST_DOMAINS:
+        author_url = re.sub('https?://' + test_domain,
+                            'http://localhost', author_url)
+    return author_url
 
   def get_activities_response(self, **kwargs):
     """Returns recent posts and embedded comments for this source.
@@ -621,3 +637,32 @@ class SyndicatedPost(ndb.Model):
   def query_by_syndication(cls, source, url):
     return cls.query(cls.syndication == url,
                      ancestor=source.key).get()
+
+  @classmethod
+  @ndb.transactional
+  def get_or_insert_by_syndication_url(cls, source, syndication,
+                                       original):
+    """Insert a relationship from syndication-url -> original.
+
+    This does a check-and-set inside a transaction to avoid putting
+    duplicates in the database because we assume each syndicated post
+    can only have one original.
+
+    Args:
+      source: models.Source subclass
+      syndication: string
+      original: string
+    """
+    relationship = cls.query_by_syndication(source, syndication)
+
+    # replace blank relationships with newly discovered ones
+    if relationship and original and not relationship.original:
+      relationship.key.delete()
+      relationship = None
+
+    if not relationship:
+      relationship = cls(parent=source.key, original=original,
+                         syndication=syndication)
+      relationship.put()
+
+    return relationship
