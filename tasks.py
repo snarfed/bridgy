@@ -372,7 +372,7 @@ class Poll(webapp2.RequestHandler):
 
         # re-open a previously 'complete' propagate task
         response.status = 'new'
-        response.unsent = [relationship.original]
+        response.unsent.append(relationship.original)
         response.put()
         response.add_task()
 
