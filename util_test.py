@@ -12,6 +12,7 @@ from appengine_config import HTTP_TIMEOUT
 import testutil
 from testutil import FakeAuthEntity, FakeSource
 import util
+from webmentiontools import send
 
 # the invisible character in the middle is an unusual unicode character
 UNICODE_STR = u'a ✁ b'
@@ -82,3 +83,25 @@ class UtilTest(testutil.ModelsTest):
       ({'id': 1, 'object': {'id': 2}},) * 2,
       ):
       self.assert_equals(expected, util.prune_activity(orig))
+
+  def test_webmention_tools_relative_webmention_endpoint_in_body(self):
+    self.expect_requests_get('http://target/', """
+<html><meta>
+<link rel="webmention" href="/endpoint">
+</meta></html>""", verify=False)
+    self.mox.ReplayAll()
+
+    mention = send.WebmentionSend('http://source/', 'http://target/')
+    mention.requests_kwargs = {'timeout': HTTP_TIMEOUT}
+    mention._discoverEndpoint()
+    self.assertEquals('http://target/endpoint', mention.receiver_endpoint)
+
+  def test_webmention_tools_relative_webmention_endpoint_in_header(self):
+    self.expect_requests_get('http://target/', '', verify=False,
+        response_headers={'Link': '</endpoint>; rel="webmention"'})
+    self.mox.ReplayAll()
+
+    mention = send.WebmentionSend('http://source/', 'http://target/')
+    mention.requests_kwargs = {'timeout': HTTP_TIMEOUT}
+    mention._discoverEndpoint()
+    self.assertEquals('http://target/endpoint', mention.receiver_endpoint)
