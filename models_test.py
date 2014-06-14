@@ -8,7 +8,7 @@ import datetime
 import json
 import urllib
 
-from models import BlogPost, Response, Source
+from models import BlogPost, Response, Source, SyndicatedPost
 import mox
 import superfeedr
 import testutil
@@ -203,3 +203,85 @@ class BlogPostTest(testutil.ModelsTest):
     bp = BlogPost(id='x', feed_item={'permalinkUrl': 'http://perma/link'})
     bp.put()
     self.assertEquals('BlogPost x http://perma/link', bp.label())
+
+
+class SyndicatedPostTest(testutil.ModelsTest):
+
+  def setUp(self):
+    super(SyndicatedPostTest, self).setUp()
+
+    self.source = FakeSource.new(None)
+    self.source.put()
+
+    self.relationships = []
+    self.relationships.append(
+        SyndicatedPost(parent=self.source.key,
+                       original='http://original/post/url',
+                       syndication='http://silo/post/url'))
+    self.relationships.append(
+        SyndicatedPost(parent=self.source.key,
+                       original=None,
+                       syndication='http://silo/no-original'))
+    self.relationships.append(
+        SyndicatedPost(parent=self.source.key,
+                       original='http://original/no-syndication',
+                       syndication=None))
+
+    for r in self.relationships:
+      r.put()
+
+  def test_query_by_syndication_url(self):
+    """Simply testing the query helper"""
+    r = SyndicatedPost.query_by_syndication(
+        self.source, 'http://silo/post/url')
+    self.assertIsNotNone(r)
+    self.assertEquals('http://original/post/url', r.original)
+
+    r = SyndicatedPost.query_by_syndication(
+        self.source, 'http://silo/no-original')
+    self.assertIsNotNone(r)
+    self.assertIsNone(r.original)
+
+  def test_query_by_original_url(self):
+    """Simply testing the query helper"""
+    r = SyndicatedPost.query_by_original(
+        self.source, 'http://original/post/url')
+    self.assertIsNotNone(r)
+    self.assertEquals('http://silo/post/url', r.syndication)
+
+    r = SyndicatedPost.query_by_original(
+        self.source, 'http://original/no-syndication')
+    self.assertIsNotNone(r)
+    self.assertIsNone(r.syndication)
+
+  def test_get_or_insert_by_syndication_replace(self):
+    """Make sure we replace original=None with original=something
+    when it is discovered"""
+    r = SyndicatedPost.get_or_insert_by_syndication_url(
+        self.source, 'http://silo/no-original',
+        'http://original/newly-discovered')
+    self.assertIsNotNone(r)
+    self.assertEquals('http://original/newly-discovered', r.original)
+
+    # make sure it's in NDB
+    r = SyndicatedPost.query_by_syndication(
+        self.source, 'http://silo/no-original')
+    self.assertIsNotNone(r)
+    self.assertEquals('http://original/newly-discovered', r.original)
+
+  def test_get_or_insert_by_syndication_do_not_replace(self):
+    """Make sure we don't replace original=something with
+    original=something else (in practice, that would mean another task
+    is running discovery concurrently and found a different url)
+    """
+    r = SyndicatedPost.get_or_insert_by_syndication_url(
+        self.source, 'http://silo/post/url',
+        'http://original/different/url')
+    self.assertIsNotNone(r)
+    self.assertEquals('http://original/post/url', r.original)
+
+    # make sure it's unchanged in NDB
+    r = SyndicatedPost.query_by_syndication(
+        self.source, 'http://silo/post/url')
+    self.assertIsNotNone(r)
+    self.assertEquals('http://original/post/url', r.original)
