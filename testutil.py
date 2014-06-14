@@ -258,6 +258,8 @@ class ModelsTest(HandlerTest):
     self.sources[0].set_activities(self.activities)
 
     self.responses = []
+    created = datetime.datetime.utcnow() - datetime.timedelta(days=10)
+
     for activity in self.activities:
       obj = activity['object']
       pruned_activity = {
@@ -275,7 +277,10 @@ class ModelsTest(HandlerTest):
           response_json=json.dumps(comment),
           type='comment',
           source=self.sources[0].key,
-          unsent=['http://target1/post/url']))
+          unsent=['http://target1/post/url'],
+          created=created))
+
+      created += datetime.timedelta(hours=1)
 
       like = obj['tags'][0]
       self.responses.append(Response(
@@ -284,7 +289,10 @@ class ModelsTest(HandlerTest):
           response_json=json.dumps(like),
           type='like',
           source=self.sources[0].key,
-          unsent=['http://target1/post/url']))
+          unsent=['http://target1/post/url'],
+          created=created))
+
+      created += datetime.timedelta(hours=1)
 
       share = obj['tags'][1]
       self.responses.append(Response(
@@ -293,4 +301,7 @@ class ModelsTest(HandlerTest):
           response_json=json.dumps(share),
           type='repost',
           source=self.sources[0].key,
-          unsent=['http://target1/post/url']))
+          unsent=['http://target1/post/url'],
+          created=created))
+
+      created += datetime.timedelta(hours=1)

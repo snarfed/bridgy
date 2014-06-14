@@ -19,6 +19,9 @@ from google.appengine.api import memcache
 from google.appengine.api import taskqueue
 from google.appengine.ext import ndb
 
+# when running in dev_appserver, replace these domains in links with localhost
+LOCALHOST_TEST_DOMAINS = frozenset(('kylewm.com', 'snarfed.org'))
+
 EPOCH = datetime.datetime.utcfromtimestamp(0)
 POLL_TASK_DATETIME_FORMAT = '%Y-%m-%d-%H-%M-%S'
 FAILED_RESOLVE_URL_CACHE_TIME = 60 * 60 * 24  # a day
