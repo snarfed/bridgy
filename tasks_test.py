@@ -409,6 +409,41 @@ class PollTest(TaskQueueTest):
     self.post_task()
     self.assert_task_eta(FakeSource.FAST_POLL)
 
+  def test_set_last_syndication_url(self):
+    """A successful posse-post-discovery round should set
+    Source.last_syndication_url to approximately the current time.
+    """
+    self.sources[0].domain_url = 'http://author'
+    self.sources[0].AS_CLASS.DOMAIN = 'source'
+    self.sources[0].last_syndication_url = None
+    self.sources[0].put()
+
+    for r in self.responses:
+      r.status = 'complete'
+      r.put()
+
+    self.expect_requests_get('http://author', """
+    <html class="h-feed">
+      <a class="h-entry" href="/permalink"></a>
+    </html>""")
+
+    self.expect_requests_get('http://author/permalink', """
+    <html class="h-entry">
+      <a class="u-url" href="http://author/permalink"></a>
+      <a class="u-syndication" href="http://source/post/url"></a>
+    </html>""")
+
+    # refetch h-feed now that last_syndication_url should be set
+    self.expect_requests_get('http://author', '')
+
+    self.mox.ReplayAll()
+    self.post_task()
+
+    # query source
+    source = self.sources[0].key.get()
+    self.assertIsNotNone(source)
+    self.assertIsNotNone(source.last_syndication_url)
+
   def test_do_not_refetch_hfeed(self):
     """Only 1 hour has passed since we last re-fetched the user's h-feed. Make
     Sure it is not fetched again"""
