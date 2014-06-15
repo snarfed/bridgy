@@ -124,10 +124,15 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
       resp['parsed'] = data
     resp = json.dumps(resp, indent=2)
 
-    # don't email about specific known failures:
-    # https://github.com/snarfed/bridgy/issues/161
-    # https://github.com/snarfed/bridgy/issues/175
-    if mail and '"error": "invalid_input"' not in error and 'bX-2i87au' not in error:
+    # don't email about specific known failures
+    if (mail and
+        # https://github.com/snarfed/bridgy/issues/161
+        '"error": "invalid_input"' not in error and
+        # https://github.com/snarfed/bridgy/issues/175
+        'bX-2i87au' not in error and
+        # https://github.com/snarfed/bridgy/issues/177
+        "Invalid argument, 'thread': Unable to find thread" not in error
+        ):
       self.mail_me(resp)
     self.response.write(resp)
 

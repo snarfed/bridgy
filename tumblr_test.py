@@ -38,12 +38,15 @@ class TumblrTest(testutil.HandlerTest):
         })
     return params
 
-  def expect_thread_details(self):
+  def expect_thread_details(self, resp=None, **kwargs):
+    if resp is None:
+      resp = {'response': {'id': '87654'}}
     self.expect_requests_get(
       tumblr.DISQUS_API_THREAD_DETAILS_URL,
-      json.dumps({'response': {'id': '87654'}}),
+      json.dumps(resp),
       params=self.disqus_params({'forum': 'my-disqus-name',
-                                 'thread':'link:http://primary/post/123999'}))
+                                 'thread':'link:http://primary/post/123999'}),
+      **kwargs)
 
   def test_new(self):
     t = Tumblr.new(self.handler, auth_entity=self.auth_entity)
@@ -116,6 +119,20 @@ some stuff
 
     resp = self.tumblr.create_comment('http://primary/post/123999/xyz_abc',
                                       u'Degenève', 'http://who', u'foo Degenève bar')
+
+  # not implemented yet. see https://github.com/snarfed/bridgy/issues/177.
+  # currently handled in webmention.error().
+  # def test_create_comment_thread_lookup_fails(self):
+  #   error = {
+  #     'code':2,
+  #     'response': "Invalid argument, 'thread': Unable to find thread 'link:xyz'",
+  #     }
+  #   self.expect_thread_details(status_code=400, resp=error)
+  #   self.mox.ReplayAll()
+
+  #   resp = self.tumblr.create_comment('http://primary/post/123999/xyz_abc',
+  #                                     'who', 'http://who', 'foo bar')
+  #   self.assert_equals(error, resp)
 
   def test_superfeedr_notify(self):
     """Smoke test. Just check that we make it all the way through."""
