@@ -3,6 +3,7 @@
 """
 
 import datetime
+import re
 import urllib
 import urlparse
 
@@ -211,6 +212,22 @@ def prune_activity(activity):
         del obj[k]
 
   return trim_nulls(pruned)
+
+
+def replace_test_domains_with_localhost(url):
+  """Replace domains in LOCALHOST_TEST_DOMAINS with localhost for local
+  testing when in DEBUG mode.
+
+  Args:
+    url: a string
+
+  Returns: a string with certain well-known domains replaced by localhost
+  """
+  if url and DEBUG:
+    for test_domain in LOCALHOST_TEST_DOMAINS:
+      url = re.sub('https?://' + test_domain,
+                   'http://localhost', url)
+  return url
 
 
 class Handler(webapp2.RequestHandler):

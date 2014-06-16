@@ -225,6 +225,7 @@ class ModelsTest(HandlerTest):
 
     self.activities = [{
       'id': 'tag:source.com,2013:%s' % id,
+      'url': 'http://source/post/url',
       'object': {
         'objectType': 'note',
         'id': 'tag:source.com,2013:%s' % id,
@@ -264,8 +265,8 @@ class ModelsTest(HandlerTest):
       obj = activity['object']
       pruned_activity = {
         'id': activity['id'],
+        'url': 'http://source/post/url',
         'object': {
-          'url': 'http://source/post/url',
           'content': 'foo http://target1/post/url bar',
           }
         }

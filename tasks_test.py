@@ -3,6 +3,7 @@
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
+import copy
 import datetime
 import json
 import logging
@@ -57,10 +58,10 @@ class PollTest(TaskQueueTest):
 
   post_url = '/_ah/queue/poll'
 
-  def post_task(self, expected_status=200):
+  def post_task(self, expected_status=200, source=None):
     super(PollTest, self).post_task(
       expected_status=expected_status,
-      params={'source_key': self.sources[0].key.urlsafe(),
+      params={'source_key': (source or self.sources[0]).key.urlsafe(),
               'last_polled': '1970-01-01-00-00-00'})
 
   def assert_responses(self):
@@ -535,6 +536,144 @@ class PollTest(TaskQueueTest):
     task_keys = [testutil.get_task_params(task)['response_key']
                  for task in tasks]
     self.assertEquals(response_keys, task_keys)
+
+  def test_no_duplicate_syndicated_posts(self):
+    def assert_syndicated_posts(syndicated_posts, original, syndication):
+      logging.debug('checking syndicated posts [%s -> %s] = %s',
+                    original, syndication, syndicated_posts)
+      self.assertEquals(1, len(syndicated_posts))
+      self.assertEquals(original, syndicated_posts[0].original)
+      self.assertEquals(syndication, syndicated_posts[0].syndication)
+
+    class FakeAsSource_Instagram(testutil.FakeAsSource):
+      DOMAIN = 'instagram'
+
+    self.sources[0].domain_url = 'http://author'
+    self.sources[0].AS_CLASS = FakeAsSource_Instagram
+    self.sources[0].last_syndication_url = util.EPOCH
+    self.sources[0].last_hfeed_fetch = NOW
+
+    for act in self.activities:
+      act['object']['url'] = 'http://instagram/post/url'
+      act['object']['content'] = 'instagram post'
+
+    self.sources[0].put()
+
+    class FakeAsSource_Twitter(testutil.FakeAsSource):
+      DOMAIN = 'twitter'
+
+    self.sources[1].domain_url = 'http://author'
+    self.sources[1].AS_CLASS = FakeAsSource_Twitter
+    self.sources[1].last_syndication_url = util.EPOCH
+    self.sources[1].last_hfeed_fetch = NOW
+    twitter_acts = copy.deepcopy(self.activities)
+    self.sources[1].set_activities(twitter_acts)
+
+    for act in twitter_acts:
+      act['object']['url'] = 'http://twitter/post/url'
+      act['object']['content'] = 'twitter post'
+
+    self.sources[1].put()
+
+    for _ in range(2):
+      self.expect_requests_get('http://author', """
+      <html class="h-feed">
+        <a class="h-entry" href="/permalink"></a>
+      </html>""")
+
+      self.expect_requests_get('http://author/permalink', """
+      <html class="h-entry">
+        <a class="u-url" href="http://author/permalink"></a>
+        <a class="u-syndication" href="http://instagram/post/url"></a>
+      </html>""")
+
+    self.mox.ReplayAll()
+    for source in self.sources:
+      self.post_task(source=source)
+
+    assert_syndicated_posts(
+      models.SyndicatedPost.query(
+        models.SyndicatedPost.original == 'http://author/permalink',
+        ancestor=self.sources[0].key).fetch(),
+      'http://author/permalink', 'http://instagram/post/url')
+
+    assert_syndicated_posts(
+      models.SyndicatedPost.query(
+        models.SyndicatedPost.syndication == 'http://instagram/post/url',
+        ancestor=self.sources[0].key).fetch(),
+      'http://author/permalink', 'http://instagram/post/url')
+
+    assert_syndicated_posts(
+      models.SyndicatedPost.query(
+        models.SyndicatedPost.original == 'http://author/permalink',
+        ancestor=self.sources[1].key).fetch(),
+      'http://author/permalink', None)
+
+    assert_syndicated_posts(
+      models.SyndicatedPost.query(
+        models.SyndicatedPost.syndication == 'http://twitter/post/url',
+        ancestor=self.sources[1].key).fetch(),
+      None, 'http://twitter/post/url')
+
+    self.mox.UnsetStubs()
+    self.mox.VerifyAll()
+
+    for method in ('get', 'head', 'post'):
+      self.mox.StubOutWithMock(requests, method, use_mock_anything=True)
+
+    # force refetch h-feed to find the twitter link
+    for source in self.sources:
+      source.last_polled = util.EPOCH
+      source.last_hfeed_fetch = NOW - datetime.timedelta(days=1)
+      source.put()
+
+    # instagram source won't refetch the permalink. nothing new to find
+    self.expect_requests_get('http://author', """
+    <html class="h-feed">
+      <a class="h-entry" href="/permalink"></a>
+    </html>""")
+
+    # refetch should find a twitter link this time
+    self.expect_requests_get('http://author', """
+    <html class="h-feed">
+      <a class="h-entry" href="/permalink"></a>
+    </html>""")
+
+    self.expect_requests_get('http://author/permalink', """
+    <html class="h-entry">
+      <a class="u-url" href="http://author/permalink"></a>
+      <a class="u-syndication" href="http://instagram/post/url"></a>
+      <a class="u-syndication" href="http://twitter/post/url"></a>
+    </html>""")
+
+    self.mox.ReplayAll()
+    for source in self.sources:
+      self.post_task(source=source)
+
+    assert_syndicated_posts(
+      models.SyndicatedPost.query(
+        models.SyndicatedPost.original == 'http://author/permalink',
+        ancestor=self.sources[0].key).fetch(),
+      'http://author/permalink', 'http://instagram/post/url')
+
+    assert_syndicated_posts(
+      models.SyndicatedPost.query(
+        models.SyndicatedPost.syndication == 'http://instagram/post/url',
+        ancestor=self.sources[0].key).fetch(),
+      'http://author/permalink', 'http://instagram/post/url')
+
+    assert_syndicated_posts(
+      models.SyndicatedPost.query(
+        models.SyndicatedPost.original == 'http://author/permalink',
+        ancestor=self.sources[1].key).fetch(),
+      'http://author/permalink', 'http://twitter/post/url')
+
+    assert_syndicated_posts(
+      models.SyndicatedPost.query(
+        models.SyndicatedPost.syndication == 'http://twitter/post/url',
+        ancestor=self.sources[1].key).fetch(),
+      'http://author/permalink', 'http://twitter/post/url')
+
 
 
 class PropagateTest(TaskQueueTest):
