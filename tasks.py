@@ -336,14 +336,12 @@ class Poll(webapp2.RequestHandler):
     # query by it instead of iterating over all of them
     for response in (Response.query(Response.source == source.key)
                      .order(-Response.created)):
-      logging.info(
-          'refetch h-feed checking previously propagated response %s',
-          response.label())
+      logging.debug('refetch h-feed rechecking response %s', response.label())
 
       activity = json.loads(response.activity_json)
-      obj = activity.get('object') or activity
-      activity_url = obj.get('url')
+      activity_url = activity.get('url')
       if not activity_url:
+        logging.warning('activity has no url %s', response.activity_json)
         continue
 
       activity_url = source.canonicalize_syndication_url(
@@ -357,7 +355,7 @@ class Poll(webapp2.RequestHandler):
 
       # won't re-propagate if the discovered link is already among
       # these well-known upstream duplicates
-      if relationship.original in obj.get('upstreamDuplicates', []):
+      if response.sent and relationship.original in response.sent:
         logging.info(
             '%s found a new rel=syndication link %s -> %s, but the '
             'relationship had already been discovered by another method',

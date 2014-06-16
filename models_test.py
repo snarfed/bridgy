@@ -264,10 +264,13 @@ class SyndicatedPostTest(testutil.ModelsTest):
     self.assertEquals('http://original/newly-discovered', r.original)
 
     # make sure it's in NDB
-    r = SyndicatedPost.query_by_syndication(
-        self.source, 'http://silo/no-original')
-    self.assertIsNotNone(r)
-    self.assertEquals('http://original/newly-discovered', r.original)
+    rs = SyndicatedPost.query(
+        SyndicatedPost.syndication == 'http://silo/no-original',
+        ancestor=self.source.key
+    ).fetch()
+    self.assertEquals(1, len(rs))
+    self.assertEquals('http://original/newly-discovered', rs[0].original)
+    self.assertEquals('http://silo/no-original', rs[0].syndication)
 
   def test_get_or_insert_by_syndication_do_not_replace(self):
     """Make sure we don't replace original=something with
@@ -281,7 +284,11 @@ class SyndicatedPostTest(testutil.ModelsTest):
     self.assertEquals('http://original/post/url', r.original)
 
     # make sure it's unchanged in NDB
-    r = SyndicatedPost.query_by_syndication(
-        self.source, 'http://silo/post/url')
-    self.assertIsNotNone(r)
-    self.assertEquals('http://original/post/url', r.original)
+    rs = SyndicatedPost.query(
+        SyndicatedPost.syndication == 'http://silo/post/url',
+        ancestor=self.source.key
+    ).fetch()
+
+    self.assertEquals(1, len(rs))
+    self.assertEquals('http://original/post/url', rs[0].original)
+    self.assertEquals('http://silo/post/url', rs[0].syndication)
