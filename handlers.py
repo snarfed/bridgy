@@ -192,10 +192,9 @@ class ItemHandler(webapp2.RequestHandler):
       if not url or url_obj.get('objectType') == 'mention':
         continue
       # when debugging locally, replace my (snarfed.org) URLs with localhost
-      if appengine_config.DEBUG:
-        for special in 'https://snarfed.org/', 'https://kylewm.com/':
-          if url.startswith(special):
-            url_obj['url'] = url = url.replace(special, 'http://localhost/')
+      local_url = util.replace_test_domains_with_localhost(url)
+      if local_url != url:
+        url_obj['url'] = url = local_url
 
       resolved, _, send = util.get_webmention_target(url)
       if send and resolved != url:

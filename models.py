@@ -180,12 +180,7 @@ class Source(StringIdModel):
     Return:
       a string, the author's url or None
     """
-    author_url = self.domain_url
-    if author_url and DEBUG:
-      for test_domain in util.LOCALHOST_TEST_DOMAINS:
-        author_url = re.sub('https?://' + test_domain,
-                            'http://localhost', author_url)
-    return author_url
+    return util.replace_test_domains_with_localhost(self.domain_url)
 
   def get_activities_response(self, **kwargs):
     """Returns recent posts and embedded comments for this source.
