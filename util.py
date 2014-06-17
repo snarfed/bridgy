@@ -47,6 +47,9 @@ WEBMENTION_BLACKLIST = {
   '', None,
   # individual web sites that fail to fetch on app engine
   'djtymenathanscot.com',
+  # temporary. tom's webmention handler is broken, and he knows about it.
+  # TODO: remove once he's fixed it.
+  'tommorris.org',
   }
 
 
