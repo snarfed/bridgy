@@ -25,8 +25,9 @@
 <li><a href="#which">Which things does it send, specifically?</a></li>
 <li><a href="#realtime">Bridgy isn't seeing one of my comments or
   likes or reshares!</a></li>
-<li><a href="#public">...but it's been a long time, and Bridgy
+<li><a href="#missing">...but it's been a long time, and Bridgy
   still hasn't seen it!</a></li>
+<li><a href="#link">Do my posts really need to link my web site?</a></li>
 <li><a href="#facebook-rsvps">Bridgy isn't seeing my Facebook RSVPs!</li>
 <li><a href="#twitter-replies">Bridgy isn't seeing one of my Twitter
   replies!</li>
@@ -34,6 +35,8 @@
   in the comments that Bridgy sends to my site?</a></li>
 <li><a href="#ssl">OK, fine. But why brid-gy.appspot.com instead of
   brid.gy?</a></li>
+<li><a href="#source-urls">What's the format for Bridgy's webmention
+  source URLs?</a></li>
 
 <br />
 <p><em>Publishing</em></p>
@@ -251,10 +254,11 @@ API</a> for a while, but
 <a href="https://github.com/snarfed/bridgy/issues/57">not any more</a>.
 </p></li>
 
-<li id="public" class="question">...but it's been a long time, and Bridgy
+<li id="missing" class="question">...but it's been a long time, and Bridgy
   still hasn't seen it!</li>
 <li class="answer">
-<p>Does the social network post have a link to your web site's post? If not,
+<p>This can happen for a few different reasons. First,
+Does the social network post have a link to your web site's post? If not,
 does your web site's post have a
 <a href="#rel-syndication">rel-syndication link</a> to the social network post?
 Bridgy needs at least one or the other so it can connect the two posts.</p>
@@ -267,15 +271,30 @@ audience is "friends" or "friends of friends," or your Twitter account
 is <a href="https://dev.twitter.com/docs/platform-objects/users#protected">protected</a>,
 or your Google+ post wasn't sent to "public," Bridgy won't see it.
 </p>
-<p>Instagram is the one exception. The Instagram API
+<p>(Instagram is the one exception. The Instagram API
 <a href="https://groups.google.com/forum/m/#!topic/instagram-api-developers/DAO7OriVFsw">doesn't
 expose</a> whether an account
 is <a href="http://help.instagram.com/448523408565555">private</a>, so Bridgy
 handles all Instagram photos and comments. If your Instagram account is private,
-don't sign it up for Bridgy!
+don't sign it up for Bridgy!)
+</p>
+<p>Is it on an older post? Bridgy only looks at your 50 most recent posts. (It
+doesn't go back arbitrarily far because that doesn't scale.) You can get around
+this for an individual response by
+<a href="http://indiewebcamp.com/webmention#How_to_Test_Webmentions">sending a
+webmention manually</a>. <a href="#source-urls">Here's how to
+construct the source URL.</a>
+</p>
+<p>Finally, is it a tweet with more than 25 favorites? Twitter favorites are
+<a href="https://github.com/snarfed/bridgy/issues/73">currently limited to 25
+per tweet</a>. This is an unfortunate result of the fact that
+<a href="https://dev.twitter.com/discussions/661">Twitter's API doesn't expose
+favorites by tweet</a>. Bridgy gets around that by
+<a href="https://github.com/snarfed/bridgy/issues/61">scraping them from the
+tweet's HTML</a>, which works okay, but only for the first 25. Sadface.
 </p></li>
 
-<li id="public" class="question">Do my posts really need to link my web site?</li>
+<li id="link" class="question">Do my posts really need to link my web site?</li>
 <li class="answer">
 <p>Nope! You can
 use <a href="http://indiewebcamp.com/rel-syndication">rel-syndication</a> lookup
@@ -347,6 +366,66 @@ server that receives it also needs to understand SNI,
 <a href="https://appspot.com/">appspot.com</a>'s SSL doesn't use SNI, so we use
 it for webmention sources in order to be as compatible as possible.
 </p></li>
+
+<li id="source-urls" class="question">What's the format for Bridgy's webmention
+  source URLs?</li>
+<li class="answer">
+<p>If you're missing a response (<a href="#missing">it can happen</a>), you can
+fill it in by
+<a href="http://indiewebcamp.com/webmention#How_to_Test_Webmentions">sending a
+webmention manually</a>. Here's how to construct Bridgy's source URLs:
+</p>
+
+<pre>/comment/<span class='keyword'>SITE</span>/<span class='keyword'>USER_ID</span>/<span class='value'>POST_ID</span>/<span class='value'>COMMENT_ID</span>
+/like/<span class='keyword'>SITE</span>/<span class='keyword'>USER_ID</span>/<span class='value'>POST_ID</span>/<span class='value'>LIKED_BY_USER_ID</span>
+/repost/<span class='keyword'>SITE</span>/<span class='keyword'>USER_ID</span>/<span class='value'>POST_ID</span>/<span class='value'>SHARE_POST_ID</span>
+/rsvp/facebook/<span class='keyword'>USER_ID</span>/<span class='value'>EVENT_ID</span>/<span class='value'>RSVP_USER_ID</span>
+</pre>
+
+<p>Examples:</p>
+<ul>
+<li><a href="https://www.brid.gy/comment/instagram/caseorganic/745317887583248368_5792358/745746409237831003">
+  /comment/instagram/caseorganic/745317887583248368_5792358/745746409237831003
+</a></li>
+<li><a href="https://www.brid.gy/like/googleplus/103651231634018158746/z12ctz3xpyjlilkc422wif14hsagevxyj04/109885715467340555570">
+  /like/googleplus/103651231634018158746/z12ctz3xpyjlilkc422wif14hsagevxyj04/109885715467340555570
+</a></li>
+<li><a href="https://www.brid.gy/repost/twitter/schnarfed/478564735265157120/478788580504899584">
+  /repost/twitter/schnarfed/478564735265157120/478788580504899584
+</a></li>
+<li><a href="https://www.brid.gy/rsvp/facebook/212038/675481332531191/724885424">
+  /rsvp/facebook/212038/675481332531191/724885424
+</a></li>
+</ul>
+<br />
+
+<p>Details:</p>
+<ul>
+<li><code class='keyword'>SITE</code> is either <code>facebook</code>,
+  <code>googleplus</code>, <code>instagram</code>, or <code>twitter</code>.
+</li>
+<li>For Twitter and Instagram, <code class='keyword'>USER_ID</code> is your
+  username, but for Facebook and Google+, it's your numeric user id.
+  <code class='value'>LIKED_BY_USER_ID</code> is always a numeric user id. You
+  can get numeric user ids from the API consoles
+  (<a href="https://developers.facebook.com/tools/explorer">Facebook</a>,
+   <a href="https://developers.google.com/+/api/latest/people/get#try-it">Google+</a>,
+   <a href="https://apigee.com/embed/console/twitter">Twitter</a>) or
+  from <a href="https://github.com/snarfed/activitystreams-unofficial">activitystreams-unofficial</a>
+  (<a href="http://facebook-activitystreams.appspot.com/">Facebook</a>,
+  <a href="http://instagram-activitystreams.appspot.com/">Instagram</a>,
+  <a href="http://twitter-activitystreams.appspot.com/">Twitter</a>).
+</li>
+<li>For Instagram, <code class='value'>POST_ID</code> is a numeric id,
+  <em>not</em> the alphanumeric id in the photo's web URL. You can get a numeric
+  id from
+  <a href="http://instagram-activitystreams.appspot.com/">instagram-activitystreams</a>.
+</li>
+<li>If your webmention target complains about <code>brid.gy</code>'s SSL, try
+<code>brid-gy.appspot.com</code> instead. <a href="#ssl">More details.</a>
+</li>
+</ul>
+</li>
 
 
 <!-- Publish -->

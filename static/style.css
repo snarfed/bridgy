@@ -61,15 +61,15 @@ body.about #more-link {
   display: none;
 }
 
-pre .keyword {
+pre .keyword, code.keyword {
   color: green;
 }
 
-pre .value {
+pre .value, code.value {
   color: chocolate;
 }
 
-pre .link {
+pre .link, code.link {
   color: #428BCA;
 }
 
