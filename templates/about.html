@@ -376,7 +376,8 @@ fill it in by
 webmention manually</a>. Here's how to construct Bridgy's source URLs:
 </p>
 
-<pre>/comment/<span class='keyword'>SITE</span>/<span class='keyword'>USER_ID</span>/<span class='value'>POST_ID</span>/<span class='value'>COMMENT_ID</span>
+<pre>/post/<span class='keyword'>SITE</span>/<span class='keyword'>USER_ID</span>/<span class='value'>POST_ID</span>
+/comment/<span class='keyword'>SITE</span>/<span class='keyword'>USER_ID</span>/<span class='value'>POST_ID</span>/<span class='value'>COMMENT_ID</span>
 /like/<span class='keyword'>SITE</span>/<span class='keyword'>USER_ID</span>/<span class='value'>POST_ID</span>/<span class='value'>LIKED_BY_USER_ID</span>
 /repost/<span class='keyword'>SITE</span>/<span class='keyword'>USER_ID</span>/<span class='value'>POST_ID</span>/<span class='value'>SHARE_POST_ID</span>
 /rsvp/facebook/<span class='keyword'>USER_ID</span>/<span class='value'>EVENT_ID</span>/<span class='value'>RSVP_USER_ID</span>
@@ -384,6 +385,9 @@ webmention manually</a>. Here's how to construct Bridgy's source URLs:
 
 <p>Examples:</p>
 <ul>
+<li><a href="https://www.brid.gy/post/twitter/schnarfed/476408043819659264">
+  /post/twitter/schnarfed/476408043819659264
+</a></li>
 <li><a href="https://www.brid.gy/comment/instagram/caseorganic/745317887583248368_5792358/745746409237831003">
   /comment/instagram/caseorganic/745317887583248368_5792358/745746409237831003
 </a></li>
@@ -403,6 +407,10 @@ webmention manually</a>. Here's how to construct Bridgy's source URLs:
 <ul>
 <li><code class='keyword'>SITE</code> is either <code>facebook</code>,
   <code>googleplus</code>, <code>instagram</code>, or <code>twitter</code>.
+</li>
+<li><code>/post/...</code> URLs aren't currently used by Bridgy itself, but
+  they're fun to play with if you want to convert silo posts to
+  microformats2.
 </li>
 <li>For Twitter and Instagram, <code class='keyword'>USER_ID</code> is your
   username, but for Facebook and Google+, it's your numeric user id.
