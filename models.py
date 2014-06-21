@@ -336,8 +336,9 @@ class Source(StringIdModel):
     if existing:
       # merge some fields
       source.features = set(source.features + existing.features)
-      source.created = existing.created
-      source.webmention_endpoint = existing.webmention_endpoint
+      source.populate(**existing.to_dict(include=(
+            'created', 'last_hfeed_fetch', 'last_poll_attempt', 'last_polled',
+            'last_syndication_url', 'last_webmention_sent', 'superfeedr_secret')))
       verb = 'Updated'
     else:
       verb = 'Added'

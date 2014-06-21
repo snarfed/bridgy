@@ -76,10 +76,8 @@ class SourceTest(testutil.HandlerTest):
     self.assertEqual(1, len(tasks))
     source = FakeSource.query().get()
     self.assertEqual('/_ah/queue/poll', tasks[0]['url'])
-    params = testutil.get_task_params(tasks[0])
-    self.assertEqual(source.key.urlsafe(), params['source_key'])
-    self.assertEqual('1970-01-01-00-00-00',
-                     params['last_polled'])
+    self.assertEqual(source.key.urlsafe(),
+                     testutil.get_task_params(tasks[0])['source_key'])
 
   def test_create_new(self):
     self.assertEqual(0, FakeSource.query().count())
@@ -87,9 +85,20 @@ class SourceTest(testutil.HandlerTest):
     msg = "Added fake (FakeSource). Refresh to see what we've found!"
     self.assert_equals({msg}, self.handler.messages)
 
+    task_params = testutil.get_task_params(self.taskqueue_stub.GetTasks('poll')[0])
+    self.assertEqual('1970-01-01-00-00-00', task_params['last_polled'])
+
   def test_create_new_already_exists(self):
-    created = datetime.datetime(year=1901, month=2, day=3)
-    FakeSource.new(None, features=['listen'],created=created).put()
+    long_ago = datetime.datetime(year=1901, month=2, day=3)
+    props = {
+      'created': long_ago,
+      'last_webmention_sent': long_ago + datetime.timedelta(days=1),
+      'last_polled': long_ago + datetime.timedelta(days=2),
+      'last_hfeed_fetch': long_ago + datetime.timedelta(days=3),
+      'last_syndication_url': long_ago + datetime.timedelta(days=4),
+      'superfeedr_secret': 'asdfqwert',
+      }
+    FakeSource.new(None, features=['listen'], **props).put()
     self.assert_equals(['listen'], FakeSource.query().get().features)
 
     FakeSource.string_id_counter -= 1
@@ -100,10 +109,15 @@ class SourceTest(testutil.HandlerTest):
 
     source = FakeSource.query().get()
     self.assert_equals(['listen', 'publish'], source.features)
-    self.assert_equals(created, source.created)
+    for prop, value in props.items():
+      self.assert_equals(value, getattr(source, prop), prop)
+
     self.assert_equals(
       {"Updated fake (FakeSource). Try previewing a post from your web site!"},
       self.handler.messages)
+
+    task_params = testutil.get_task_params(self.taskqueue_stub.GetTasks('poll')[0])
+    self.assertEqual('1901-02-05-00-00-00', task_params['last_polled'])
 
   def test_create_new_publish(self):
     """If a source is publish only, we shouldn't insert a poll task."""
