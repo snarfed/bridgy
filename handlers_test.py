@@ -181,7 +181,18 @@ class HandlersTest(testutil.HandlerTest):
 </article>
 """)
 
-  def test_repost(self):
+  def test_repost_with_syndicated_post_and_mentions(self):
+    self.source.get_activities()[0]['object']['content'] += ' http://another/mention'
+
+    models.SyndicatedPost(
+      parent=self.source.key,
+      original='http://or.ig/post',
+      syndication='http://example.com/original/post').put()
+
+    # needed to make original_post_discovery use the SyndicatedPost
+    self.source.domain_url = 'http://unused'
+    self.source.put()
+
     self.source.as_source.set_share({
         'objectType': 'activity',
         'verb': 'share',
@@ -207,7 +218,8 @@ class HandlersTest(testutil.HandlerTest):
 
   <div class="e-content">
 
-  <p class="u-mention"><a href="http://other/link"></a></p>
+  <p class="u-mention"><a href="http://another/mention"></a>
+  <a href="http://other/link"></a></p>
   </div>
 
   <a class="u-repost u-repost-of" href="http://example.com/original/post"></a>

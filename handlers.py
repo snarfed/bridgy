@@ -180,7 +180,7 @@ class ItemHandler(webapp2.RequestHandler):
     if upstreams:
       obj[prop] += [{'url': url, 'objectType': 'article'} for url in upstreams]
       obj.setdefault('tags', []).extend(
-        [{'url': tag['url'], 'objectType': 'mention'} for url in tags])
+        [{'url': tag.get('url'), 'objectType': 'mention'} for tag in tags])
     else:
       obj[prop] += tags
 
