@@ -252,10 +252,16 @@ def _process_author(source, author_url, refetch_blanks=False):
       for permalink in child['properties'].get('url', []):
         permalinks.add(permalink)
 
+  # query all preexisting permalinks at once, instead of once per link
+  preexisting = {}
+  for relationship in SyndicatedPost.query_by_originals(source, permalinks):
+    preexisting[relationship.original] = relationship
+
   results = {}
   for permalink in permalinks:
     logging.debug('processing permalink: %s', permalink)
-    results.update(_process_entry(source, permalink, refetch_blanks))
+    results.update(_process_entry(source, permalink, refetch_blanks,
+                                  preexisting))
 
   if results:
     # keep track of the last time we've seen rel=syndication urls for
@@ -269,36 +275,29 @@ def _process_author(source, author_url, refetch_blanks=False):
   return results
 
 
-def _process_entry(source, permalink, refetch_blanks):
+def _process_entry(source, permalink, refetch_blanks, preexisting):
   """Fetch and process an h-hentry, saving a new SyndicatedPost to the
   DB if successful.
 
   Args:
     permalink: url of the unprocessed post
     syndication_url: url of the syndicated content
+    preexisting: dict of original url to SyndicatedPost
 
   Return:
-    a map from syndicated url to new models.SyndicatedPosts
+    a dict from syndicated url to new models.SyndicatedPosts
   """
   results = {}
+  preexisting_relationship = preexisting.get(permalink)
 
-  # TODO replace this with one query for the Source as a
-  # whole. querying each permalink individually is expensive.
-  preexisting_relationship = SyndicatedPost.query_by_original(source, permalink)
-
-  # refetching to look for SyndicatedPosts that didn't have
-  # a rel=syndication url the first time we checked
-  if (refetch_blanks and preexisting_relationship
-      and not preexisting_relationship.syndication):
-    logging.debug('deleting blank SyndicatedPost for original %s',
-                  permalink)
-    preexisting_relationship.key.delete()
-    preexisting_relationship = None
-
-  # if the post has already been processed. do not add to the results
-  # since this method only returns *newly* discovered relationships
+  # if the post has already been processed, do not add to the results
+  # since this method only returns *newly* discovered relationships.
   if preexisting_relationship:
-    return results
+    # if we're refetching blanks and this one is blank, do not return
+    if refetch_blanks and not preexisting_relationship.syndication:
+      logging.debug('ignoring blank relationship for original %s', permalink)
+    else:
+      return results
 
   syndication_urls = set()
   parsed = None

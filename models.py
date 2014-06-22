@@ -630,6 +630,14 @@ class SyndicatedPost(ndb.Model):
                      ancestor=source.key).get()
 
   @classmethod
+  def query_by_originals(cls, source, urls):
+    # cannot/should not query with an empty list
+    if not urls:
+      return []
+    return cls.query(cls.original.IN(urls),
+                     ancestor=source.key)
+
+  @classmethod
   def query_by_syndication(cls, source, url):
     return cls.query(cls.syndication == url,
                      ancestor=source.key).get()
@@ -638,7 +646,8 @@ class SyndicatedPost(ndb.Model):
   @ndb.transactional
   def get_or_insert_by_syndication_url(cls, source, syndication,
                                        original):
-    """Insert a relationship from syndication-url -> original.
+    """Insert a relationship from syndication-url -> original, replacing
+    blank placeholder relationships if they exist.
 
     This does a check-and-set inside a transaction to avoid putting
     duplicates in the database because we assume each syndicated post
@@ -651,10 +660,16 @@ class SyndicatedPost(ndb.Model):
     """
     relationship = cls.query_by_syndication(source, syndication)
 
-    # replace blank relationships with newly discovered ones
+    # replace blank syndication->None relationships with newly discovered ones
     if relationship and original and not relationship.original:
       relationship.key.delete()
       relationship = None
+
+    # replace blank original->None relationships too
+    if original:
+      rel_by_original = cls.query_by_original(source, original)
+      if rel_by_original and syndication and not rel_by_original.syndication:
+        rel_by_original.key.delete()
 
     if not relationship:
       relationship = cls(parent=source.key, original=original,
