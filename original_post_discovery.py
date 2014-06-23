@@ -253,9 +253,8 @@ def _process_author(source, author_url, refetch_blanks=False):
         permalinks.add(permalink)
 
   # query all preexisting permalinks at once, instead of once per link
-  preexisting = {}
-  for relationship in SyndicatedPost.query_by_originals(source, permalinks):
-    preexisting[relationship.original] = relationship
+  preexisting = {r.original: r for r in
+                 SyndicatedPost.query_by_originals(source, permalinks)}
 
   results = {}
   for permalink in permalinks:

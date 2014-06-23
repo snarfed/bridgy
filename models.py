@@ -631,11 +631,11 @@ class SyndicatedPost(ndb.Model):
 
   @classmethod
   def query_by_originals(cls, source, urls):
-    # cannot/should not query with an empty list
-    if not urls:
-      return []
-    return cls.query(cls.original.IN(urls),
-                     ancestor=source.key)
+    # 30 item limit for IN queries, chain together multiple queries
+    urls = list(urls)
+    return itertools.chain.from_iterable(
+        cls.query(cls.original.IN(urls[i:i + 30]), ancestor=source.key)
+        for i in xrange(0, len(urls), 30))
 
   @classmethod
   def query_by_syndication(cls, source, url):
