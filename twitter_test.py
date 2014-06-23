@@ -87,3 +87,13 @@ class TwitterTest(testutil.ModelsTest):
     tw = Twitter.new(self.handler, auth_entity=self.auth_entity)
     self.assert_equals(as_twitter_test.LIKES_FROM_HTML[0],
                        tw.get_like('unused', '100', '353'))
+
+  def test_canonicalize_syndication_url(self):
+    tw = Twitter.new(self.handler, auth_entity=self.auth_entity)
+    for url in (
+        'http://www.twitter.com/username/012345',
+        'https://www.twitter.com/username/012345',
+        'http://twitter.com/username/012345',
+    ):
+      self.assertEqual('https://twitter.com/username/012345',
+                       tw.canonicalize_syndication_url(url))

@@ -68,6 +68,13 @@ class Instagram(models.Source):
       del kwargs['min_id']
     return self.as_source.get_activities_response(*args, group_id=SELF, **kwargs)
 
+  def canonicalize_syndication_url(self, syndication_url):
+    """Instagram-specific standardization of syndicated urls. Canonical form
+    is http://instagram.com
+    """
+    return super(Instagram, self).canonicalize_syndication_url(
+      syndication_url, scheme='http')
+
 
 class OAuthCallback(oauth_instagram.CallbackHandler, util.Handler):
   """OAuth callback handler.

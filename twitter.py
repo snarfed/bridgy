@@ -6,7 +6,6 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 import datetime
 import json
 import logging
-import re
 
 import webapp2
 

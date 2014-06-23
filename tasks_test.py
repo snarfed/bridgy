@@ -458,7 +458,7 @@ class PollTest(TaskQueueTest):
     # pretend we've already done posse-post-discovery for the source
     # and checked this permalink and found no back-links
     models.SyndicatedPost(parent=self.sources[0].key, original=None,
-                          syndication='http://source/post/url').put()
+                          syndication='https://source/post/url').put()
     models.SyndicatedPost(parent=self.sources[0].key,
                           original='http://author/permalink',
                           syndication=None).put()
@@ -496,7 +496,7 @@ class PollTest(TaskQueueTest):
     # pretend we've already done posse-post-discovery for the source
     # and checked this permalink and found no back-links
     models.SyndicatedPost(parent=self.sources[0].key, original=None,
-                          syndication='http://source/post/url').put()
+                          syndication='https://source/post/url').put()
     models.SyndicatedPost(parent=self.sources[0].key,
                           original='http://author/permalink',
                           syndication=None).put()
@@ -524,7 +524,7 @@ class PollTest(TaskQueueTest):
     relationship = models.SyndicatedPost.query_by_original(
       self.sources[0], 'http://author/permalink')
     self.assertIsNotNone(relationship)
-    self.assertEquals('http://source/post/url', relationship.syndication)
+    self.assertEquals('https://source/post/url', relationship.syndication)
 
     # should repropagate all 9 responses
     tasks = self.taskqueue_stub.GetTasks('propagate')
@@ -595,13 +595,13 @@ class PollTest(TaskQueueTest):
       models.SyndicatedPost.query(
         models.SyndicatedPost.original == 'http://author/permalink',
         ancestor=self.sources[0].key).fetch(),
-      'http://author/permalink', 'http://instagram/post/url')
+      'http://author/permalink', 'https://instagram/post/url')
 
     assert_syndicated_posts(
       models.SyndicatedPost.query(
-        models.SyndicatedPost.syndication == 'http://instagram/post/url',
+        models.SyndicatedPost.syndication == 'https://instagram/post/url',
         ancestor=self.sources[0].key).fetch(),
-      'http://author/permalink', 'http://instagram/post/url')
+      'http://author/permalink', 'https://instagram/post/url')
 
     assert_syndicated_posts(
       models.SyndicatedPost.query(
@@ -611,9 +611,9 @@ class PollTest(TaskQueueTest):
 
     assert_syndicated_posts(
       models.SyndicatedPost.query(
-        models.SyndicatedPost.syndication == 'http://twitter/post/url',
+        models.SyndicatedPost.syndication == 'https://twitter/post/url',
         ancestor=self.sources[1].key).fetch(),
-      None, 'http://twitter/post/url')
+      None, 'https://twitter/post/url')
 
     self.mox.UnsetStubs()
     self.mox.VerifyAll()
@@ -654,26 +654,25 @@ class PollTest(TaskQueueTest):
       models.SyndicatedPost.query(
         models.SyndicatedPost.original == 'http://author/permalink',
         ancestor=self.sources[0].key).fetch(),
-      'http://author/permalink', 'http://instagram/post/url')
+      'http://author/permalink', 'https://instagram/post/url')
 
     assert_syndicated_posts(
       models.SyndicatedPost.query(
-        models.SyndicatedPost.syndication == 'http://instagram/post/url',
+        models.SyndicatedPost.syndication == 'https://instagram/post/url',
         ancestor=self.sources[0].key).fetch(),
-      'http://author/permalink', 'http://instagram/post/url')
+      'http://author/permalink', 'https://instagram/post/url')
 
     assert_syndicated_posts(
       models.SyndicatedPost.query(
         models.SyndicatedPost.original == 'http://author/permalink',
         ancestor=self.sources[1].key).fetch(),
-      'http://author/permalink', 'http://twitter/post/url')
+      'http://author/permalink', 'https://twitter/post/url')
 
     assert_syndicated_posts(
       models.SyndicatedPost.query(
-        models.SyndicatedPost.syndication == 'http://twitter/post/url',
+        models.SyndicatedPost.syndication == 'https://twitter/post/url',
         ancestor=self.sources[1].key).fetch(),
-      'http://author/permalink', 'http://twitter/post/url')
-
+      'http://author/permalink', 'https://twitter/post/url')
 
 
 class PropagateTest(TaskQueueTest):

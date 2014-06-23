@@ -45,3 +45,15 @@ class InstagramTest(testutil.ModelsTest):
     inst.as_source.api.user_recent_media('self').AndReturn(([], {}))
     self.mox.ReplayAll()
     assert inst.get_activities_response(min_id='123')
+
+  def test_canonicalize_syndication_url(self):
+    inst = Instagram.new(self.handler, auth_entity=self.auth_entity)
+
+    for url in (
+        'http://www.instagram.com/p/abcd',
+        'https://www.instagram.com/p/abcd',
+        'https://instagram.com/p/abcd',
+    ):
+      self.assertEqual(
+        'http://instagram.com/p/abcd',
+        inst.canonicalize_syndication_url(url))
