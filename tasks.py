@@ -95,7 +95,8 @@ class Poll(webapp2.RequestHandler):
     if not source or source.status == 'disabled' or 'listen' not in source.features:
       logging.error('Source not found or disabled. Dropping task.')
       return
-    logging.info('Source: %s %s', source.label(), source.key.string_id())
+    logging.info('Source: %s %s, %s', source.label(), source.key.string_id(),
+                 source.bridgy_url(self))
 
     last_polled = self.request.params['last_polled']
     if last_polled != source.last_polled.strftime(util.POLL_TASK_DATETIME_FORMAT):
@@ -578,7 +579,8 @@ class PropagateResponse(SendWebmentions):
     if not source:
       logging.warning('Source not found! Dropping response.')
       return
-    logging.info('Source: %s %s', source.label(), source.key.string_id())
+    logging.info('Source: %s %s, %s', source.label(), source.key.string_id(),
+                 source.bridgy_url(self))
 
     # (we know Response key ids are always tag URIs)
     _, response_id = util.parse_tag_uri(self.entity.key.string_id())
