@@ -4,7 +4,7 @@
 connections. Details in https://github.com/snarfed/bridgy/issues/57 .
 
 Tweets (including retweets and replies) are reported as individual,
-top-level tweet objects. https: / / dev.twitter.com / docs / platform-objects / tweets
+top-level tweet objects. https://dev.twitter.com/docs/platform-objects/tweets
 
 Favorites are reported via 'favorite' events:
 https://dev.twitter.com/docs/streaming-apis/messages#Events_event
