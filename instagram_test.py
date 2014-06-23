@@ -48,14 +48,12 @@ class InstagramTest(testutil.ModelsTest):
 
   def test_canonicalize_syndication_url(self):
     inst = Instagram.new(self.handler, auth_entity=self.auth_entity)
-    self.assertEqual(
-      'http://instagram.com/p/abcd',
-      inst.canonicalize_syndication_url('http://www.instagram.com/p/abcd'))
 
-    self.assertEqual(
-      'http://instagram.com/p/abcd',
-      inst.canonicalize_syndication_url('https://www.instagram.com/p/abcd'))
-
-    self.assertEqual(
-      'http://instagram.com/p/abcd',
-      inst.canonicalize_syndication_url('https://instagram.com/p/abcd'))
+    for url in (
+        'http://www.instagram.com/p/abcd',
+        'https://www.instagram.com/p/abcd',
+        'https://instagram.com/p/abcd',
+    ):
+      self.assertEqual(
+        'http://instagram.com/p/abcd',
+        inst.canonicalize_syndication_url(url))

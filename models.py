@@ -448,6 +448,7 @@ class Source(StringIdModel):
 
     Args:
       syndication_url: a string, the url of the syndicated content
+      scheme: a string, the canonical scheme for this source (https by default)
 
     Return:
       a string, the canonical form of the syndication url
