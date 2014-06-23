@@ -281,6 +281,8 @@ def _process_entry(source, permalink, refetch_blanks, preexisting):
   Args:
     permalink: url of the unprocessed post
     syndication_url: url of the syndicated content
+    refetch_blanks: boolean whether we should ignore blank preexisting
+      SyndicatedPosts
     preexisting: dict of original url to SyndicatedPost
 
   Return:

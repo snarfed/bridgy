@@ -650,8 +650,18 @@ class SyndicatedPost(ndb.Model):
     blank placeholder relationships if they exist.
 
     This does a check-and-set inside a transaction to avoid putting
-    duplicates in the database because we assume each syndicated post
-    can only have one original.
+    duplicates in the database because we assume each syndication URL
+    can only have one original. If there is already a non-blank
+    SyndicatedPost for this syndication URL, this function will return
+    without saving anything.
+
+    If there is a pre-existing non-blank SyndicationPost for this
+    original, this function will add another relationship for the same
+    original.
+
+    If there are pre-existing syndication->None or original->None
+    relationships, this function will remove them before adding a
+    new non-blank relationship.
 
     Args:
       source: models.Source subclass
@@ -660,20 +670,22 @@ class SyndicatedPost(ndb.Model):
     """
     relationship = cls.query_by_syndication(source, syndication)
 
-    # replace blank syndication->None relationships with newly discovered ones
-    if relationship and original and not relationship.original:
-      relationship.key.delete()
-      relationship = None
+    # do not overwrite a preexisting relationship
+    if relationship and relationship.original:
+      return relationship
 
-    # replace blank original->None relationships too
-    if original:
+    # if this is a non-blank relationship, remove pre-existing blanks
+    if original and syndication:
+      # remove syndication->None relationships
+      if relationship and not relationship.original:
+        relationship.key.delete()
+
+      # remove original->None relationships too
       rel_by_original = cls.query_by_original(source, original)
-      if rel_by_original and syndication and not rel_by_original.syndication:
+      if rel_by_original and not rel_by_original.syndication:
         rel_by_original.key.delete()
 
-    if not relationship:
-      relationship = cls(parent=source.key, original=original,
-                         syndication=syndication)
-      relationship.put()
-
+    relationship = cls(parent=source.key, original=original,
+                       syndication=syndication)
+    relationship.put()
     return relationship
