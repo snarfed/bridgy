@@ -33,3 +33,9 @@ class GooglePlusTest(testutil.ModelsTest):
     self.assertEqual('Mr. G P', gp.name)
     self.assertEqual('http://mr/g/p', gp.url)
     self.assertEqual('http://mr/g/p', gp.silo_url())
+
+  def test_canonicalize_syndication_url(self):
+    gp = GooglePlusPage.new(self.handler, auth_entity=self.auth_entity)
+    self.assertEqual(
+      'https://plus.google.com/first.last/1234',
+      gp.canonicalize_syndication_url('http://plus.google.com/first.last/1234'))

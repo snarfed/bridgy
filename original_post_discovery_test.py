@@ -61,7 +61,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     syndurls = list(r.syndication for r
                     in SyndicatedPost.query(ancestor=source.key))
 
-    self.assertEquals([u'http://fa.ke/post/url'], syndurls)
+    self.assertEquals([u'https://fa.ke/post/url'], syndurls)
 
   def test_additional_requests_do_not_require_rework(self):
     """Test that original post discovery fetches and stores all entries up
@@ -126,13 +126,13 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
 
     # make sure things are where we want them
     r = SyndicatedPost.query_by_original(source, 'http://author/post/permalink1')
-    self.assertEquals('http://fa.ke/post/url1', r.syndication)
-    r = SyndicatedPost.query_by_syndication(source, 'http://fa.ke/post/url1')
+    self.assertEquals('https://fa.ke/post/url1', r.syndication)
+    r = SyndicatedPost.query_by_syndication(source, 'https://fa.ke/post/url1')
     self.assertEquals('http://author/post/permalink1', r.original)
 
     r = SyndicatedPost.query_by_original(source, 'http://author/post/permalink2')
-    self.assertEquals('http://fa.ke/post/url2', r.syndication)
-    r = SyndicatedPost.query_by_syndication(source, 'http://fa.ke/post/url2')
+    self.assertEquals('https://fa.ke/post/url2', r.syndication)
+    r = SyndicatedPost.query_by_syndication(source, 'https://fa.ke/post/url2')
     self.assertEquals('http://author/post/permalink2', r.original)
 
     r = SyndicatedPost.query_by_original(source, 'http://author/post/permalink3')
@@ -155,7 +155,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
 
     # should have saved a blank to prevent subsequent checks of this
     # syndicated post from fetching the h-feed again
-    r = SyndicatedPost.query_by_syndication(source, 'http://fa.ke/post/url3')
+    r = SyndicatedPost.query_by_syndication(source, 'https://fa.ke/post/url3')
     self.assertEquals(None, r.original)
 
     # confirm that we do not fetch the h-feed again for the same
@@ -301,7 +301,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     original_post_discovery.discover(source, activity)
 
     self.assert_equals(
-      [(None, 'http://fa.ke/post/url')],
+      [(None, 'https://fa.ke/post/url')],
       [(relationship.original, relationship.syndication)
        for relationship in SyndicatedPost.query(ancestor=source.key)])
 
@@ -310,7 +310,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     SyndicatedPost in the DB.
     """
     original_url = 'http://author/notes/2014/04/24/1'
-    syndication_url = 'http://fa.ke/post/url'
+    syndication_url = 'https://fa.ke/post/url'
 
     source = self.sources[0]
     source.domain_url = 'http://author'
@@ -352,7 +352,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     # nothing attempted, but we should have saved a placeholder to prevent us
     # from trying again
     self.assert_equals(
-      [(None, 'http://fa.ke/post/url')],
+      [(None, 'https://fa.ke/post/url')],
       [(relationship.original, relationship.syndication)
        for relationship in SyndicatedPost.query(ancestor=source.key)])
 
@@ -377,7 +377,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     # nothing attempted, but we should have saved a placeholder to prevent us
     # from trying again
     self.assert_equals(
-      [(None, 'http://fa.ke/post/url')],
+      [(None, 'https://fa.ke/post/url')],
       [(relationship.original, relationship.syndication)
        for relationship in SyndicatedPost.query(ancestor=source.key)])
 
@@ -468,7 +468,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     # we should have saved placeholders to prevent us from trying the
     # syndication url or permalink again
     self.assert_equals(
-      set([('http://author/nonexistent.html', None), (None, 'http://fa.ke/post/url')]),
+      set([('http://author/nonexistent.html', None), (None, 'https://fa.ke/post/url')]),
       set((relationship.original, relationship.syndication)
           for relationship in SyndicatedPost.query(ancestor=source.key)))
 
@@ -706,7 +706,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
 
     SyndicatedPost(parent=source.key,
                    original='http://author/permalink2',
-                   syndication='http://fa.ke/post/url2').put()
+                   syndication='https://fa.ke/post/url2').put()
 
     SyndicatedPost(parent=source.key,
                    original='http://author/permalink3',
@@ -739,14 +739,14 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
       source, 'http://author/permalink1')
 
     self.assertIsNotNone(relationship1)
-    self.assertEquals('http://fa.ke/post/url1', relationship1.syndication)
+    self.assertEquals('https://fa.ke/post/url1', relationship1.syndication)
 
     relationship2 = SyndicatedPost.query_by_original(
       source, 'http://author/permalink2')
 
     # this shouldn't have changed
     self.assertIsNotNone(relationship2)
-    self.assertEquals('http://fa.ke/post/url2', relationship2.syndication)
+    self.assertEquals('https://fa.ke/post/url2', relationship2.syndication)
 
     relationship3 = SyndicatedPost.query_by_original(
       source, 'http://author/permalink3')

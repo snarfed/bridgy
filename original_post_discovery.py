@@ -86,7 +86,9 @@ def discover(source, activity, fetch_hfeed=True):
   # the best chance of finding a match. Some silos allow several
   # different permalink formats to point to the same place (e.g.,
   # facebook user id instead of user name)
-  syndication_url = util.follow_redirects(syndication_url).url
+  syndication_url = source.canonicalize_syndication_url(
+    util.follow_redirects(syndication_url).url)
+
   return _posse_post_discovery(source, activity,
                                author_url, syndication_url,
                                fetch_hfeed)

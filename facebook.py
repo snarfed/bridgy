@@ -185,8 +185,8 @@ class FacebookPage(models.Source):
     logging.info('Response: %s %s' % (resp.getcode(), resp.read()))
 
   def canonicalize_syndication_url(self, syndication_url):
-    """Facebook-specific standardization of syndicated urls. Replaces
-    facebook.com/user.name with facebook.com/0123456789
+    """Facebook-specific standardization of syndicated urls. Canonical form is
+    https://facebook.com/0123456789
 
     Args:
       syndication_url: a string, the url of the syndicated content
@@ -197,7 +197,7 @@ class FacebookPage(models.Source):
     if self.username:
       syndication_url = syndication_url.replace(
         'facebook.com/%s/' % self.username, 'facebook.com/%s/' % self.key.id())
-    return syndication_url
+    return super(FacebookPage, self).canonicalize_syndication_url(syndication_url)
 
 
 class AddFacebookPage(oauth_facebook.CallbackHandler, util.Handler):

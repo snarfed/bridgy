@@ -439,7 +439,7 @@ class Source(StringIdModel):
 
     return url, domain, ok
 
-  def canonicalize_syndication_url(self, syndication_url):
+  def canonicalize_syndication_url(self, syndication_url, scheme='https'):
     """Perform source-specific transforms to the syndication URL for cases
     where multiple silo URLs can point to the same content.  By
     standardizing on one format, original_post_discovery stands the
@@ -451,9 +451,8 @@ class Source(StringIdModel):
 
     Return:
       a string, the canonical form of the syndication url
-
     """
-    return syndication_url
+    return re.sub('^https?://(www\.)?', scheme + '://', syndication_url)
 
 
 class Webmentions(StringIdModel):
