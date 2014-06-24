@@ -21,6 +21,7 @@ Example comment ID and links
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import json
+import re
 import urllib2
 
 import appengine_config
@@ -184,20 +185,23 @@ class FacebookPage(models.Source):
                            timeout=appengine_config.HTTP_TIMEOUT)
     logging.info('Response: %s %s' % (resp.getcode(), resp.read()))
 
-  def canonicalize_syndication_url(self, syndication_url):
+  def canonicalize_syndication_url(self, url):
     """Facebook-specific standardization of syndicated urls. Canonical form is
     https://facebook.com/0123456789
 
     Args:
-      syndication_url: a string, the url of the syndicated content
+      url: a string, the url of the syndicated content
 
     Return:
       a string, the canonical form of the syndication url
     """
+    url = re.sub(
+      r'facebook.com/permalink\.php\?story_fbid=([^&]+)&(?:amp;)?id=([^&]+)$',
+      r'facebook.com/\2/posts/\1', url)
     if self.username:
-      syndication_url = syndication_url.replace(
-        'facebook.com/%s/' % self.username, 'facebook.com/%s/' % self.key.id())
-    return super(FacebookPage, self).canonicalize_syndication_url(syndication_url)
+      url = url.replace('facebook.com/%s/' % self.username,
+                        'facebook.com/%s/' % self.key.id())
+    return super(FacebookPage, self).canonicalize_syndication_url(url)
 
 
 class AddFacebookPage(oauth_facebook.CallbackHandler, util.Handler):

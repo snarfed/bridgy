@@ -136,15 +136,16 @@ class FacebookPageTest(testutil.ModelsTest):
   def test_canonicalize_syndication_url(self):
     page = FacebookPage.new(self.handler, auth_entity=self.auth_entity)
 
-    self.assertEqual(
-      'https://facebook.com/212038/posts/314159',
-      page.canonicalize_syndication_url('http://facebook.com/snarfed.org/posts/314159'))
-
-    self.assertEqual(
-      'https://facebook.com/212038/photos.php?fbid=314159',
-      page.canonicalize_syndication_url('https://www.facebook.com/snarfed.org/photos.php?fbid=314159'))
-
-    # make sure we don't touch user.name when it appears elsewhere in the url
-    self.assertEqual(
-      'https://facebook.com/25624/posts/snarfed.org',
-      page.canonicalize_syndication_url('http://www.facebook.com/25624/posts/snarfed.org'))
+    for expected, input in (
+      ('https://facebook.com/212038/posts/314159',
+       'http://facebook.com/snarfed.org/posts/314159'),
+      ('https://facebook.com/212038/photos.php?fbid=314159',
+       'https://www.facebook.com/snarfed.org/photos.php?fbid=314159'),
+      ('https://facebook.com/212038/posts/314159',
+       'https://facebook.com/permalink.php?story_fbid=314159&id=212038'),
+      ('https://facebook.com/212038/posts/314159',
+       'https://facebook.com/permalink.php?story_fbid=314159&amp;id=212038'),
+      # make sure we don't touch user.name when it appears elsewhere in the url
+      ('https://facebook.com/25624/posts/snarfed.org',
+       'http://www.facebook.com/25624/posts/snarfed.org')):
+      self.assertEqual(expected, page.canonicalize_syndication_url(input))
