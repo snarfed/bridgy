@@ -93,8 +93,9 @@ class WebmentionHandler(WebmentionGetHandler):
     if not items or not items[0]:
       return self.error('No microformats2 data found in ' + fetched.url,
                         data=data, html="""
-No <a href="http://microformats.org/wiki/microformats2">microformats2</a> data
-found in <a href="%s">%s</a>! See <a href="http://indiewebify.me/">indiewebify.me</a>
+No <a href="http://microformats.org/get-started">microformats</a> or
+<a href="http://microformats.org/wiki/microformats2">microformats2</a> found in
+<a href="%s">%s</a>! See <a href="http://indiewebify.me/">indiewebify.me</a>
 for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
 """ % (fetched.url, util.pretty_link(fetched.url)))
 
