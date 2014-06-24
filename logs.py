@@ -60,9 +60,10 @@ class LogHandler(webapp2.RequestHandler):
         self.response.out.write(sanitize(log.combined))
         self.response.out.write('<br /><br />')
         for a in log.app_logs:
+          msg = a.message.decode('utf-8')
           # don't sanitize poll task URLs since they have a key= query param
-          msg = util.linkify(a.message if a.message.startswith('Created by this poll:')
-                             else sanitize(a.message))
+          msg = util.linkify(msg if msg.startswith('Created by this poll:')
+                             else sanitize(msg))
           self.response.out.write('%s %s %s' %
               (datetime.datetime.utcfromtimestamp(a.time), LEVELS[a.level], msg))
           self.response.out.write('<br />\n')
