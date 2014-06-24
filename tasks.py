@@ -1,14 +1,9 @@
 """Task queue handlers.
-
-TODO: cron job to find sources without seed poll tasks.
-TODO: think about how to determine stopping point. can all sources return
-comments in strict descending timestamp order? can we require/generate
-monotonically increasing comment ids for all sources?
-TODO: check HRD consistency guarantees and change as needed
 """
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
+import calendar
 import datetime
 import gc
 import json
@@ -581,6 +576,10 @@ class PropagateResponse(SendWebmentions):
       return
     logging.info('Source: %s %s, %s', source.label(), source.key.string_id(),
                  source.bridgy_url(self))
+    logging.info('Created by this poll: %s/log?start_time=%s&key=%s',
+                 self.request.host_url,
+                 calendar.timegm(self.entity.created.utctimetuple()) - 61,
+                 source.key.urlsafe())
 
     # (we know Response key ids are always tag URIs)
     _, response_id = util.parse_tag_uri(self.entity.key.string_id())

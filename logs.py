@@ -26,8 +26,8 @@ LEVELS = {
 
 
 def sanitize(msg):
-  """Sanitizes access tokens and Authorization headers, then linkifies links."""
-  return util.linkify(SANITIZE_RE.sub(r'\1...', msg))
+  """Sanitizes access tokens and Authorization headers."""
+  return SANITIZE_RE.sub(r'\1...', msg)
 
 
 class LogHandler(webapp2.RequestHandler):
@@ -42,6 +42,10 @@ class LogHandler(webapp2.RequestHandler):
     start_time = float(util.get_required_param(self, 'start_time'))
     key = urllib.unquote(util.get_required_param(self, 'key'))
 
+    # the propagate task logs the poll task's URL, which includes the source
+    # entity key as a query param. exclude that with this heuristic.
+    key_re = re.compile('[^=]' + key)
+
     self.response.headers['Content-Type'] = 'text/html; charset=utf-8'
 
     offset = None
@@ -50,15 +54,17 @@ class LogHandler(webapp2.RequestHandler):
                                 version_ids=['2', '3', '4', '5', '6', '7']):
       first_lines = '\n'.join([line.message.decode('utf-8') for line in
                                log.app_logs[:min(5, len(log.app_logs))]])
-      if log.app_logs and key in first_lines:
+      if log.app_logs and key_re.search(first_lines):
         # found it! render and return
         self.response.out.write('<html>\n<body style="font-family: monospace">\n')
         self.response.out.write(sanitize(log.combined))
         self.response.out.write('<br /><br />')
         for a in log.app_logs:
+          # don't sanitize poll task URLs since they have a key= query param
+          msg = util.linkify(a.message if a.message.startswith('Created by this poll:')
+                             else sanitize(a.message))
           self.response.out.write('%s %s %s' %
-              (datetime.datetime.utcfromtimestamp(a.time), LEVELS[a.level],
-               sanitize(a.message)))
+              (datetime.datetime.utcfromtimestamp(a.time), LEVELS[a.level], msg))
           self.response.out.write('<br />\n')
         self.response.out.write('</body>\n</html>')
         return
