@@ -302,5 +302,10 @@ iframe#twitter-widget-0 {
 
 .question {
   margin-top: 2em;
+  margin-bottom: .5em;
   font-weight: bold;
+}
+
+.answer li {
+  margin-bottom: .5em;
 }
