@@ -265,3 +265,32 @@ class HandlersTest(testutil.HandlerTest):
 
 </article>
 """)
+
+  def test_original_post_urls_follow_redirects(self):
+    self.source.as_source.set_share({
+        'objectType': 'activity',
+        'verb': 'share',
+        })
+
+    self.expect_requests_head('http://or.ig/post',
+                              redirected_url='http://or.ig/post/redirect')
+    self.expect_requests_head('http://other/link',
+                              redirected_url='http://other/link/redirect')
+    self.mox.ReplayAll()
+
+    self.check_response('/repost/fake/%s/000/111', """\
+<article class="h-entry h-as-repost">
+<span class="u-uid"></span>
+
+  <div class="e-content">
+
+  <p class="u-mention"><a href="http://other/link"></a>
+  <a href="http://other/link/redirect"></a></p>
+  </div>
+
+  <a class="u-repost u-repost-of" href="http://or.ig/post"></a>
+  <a class="u-repost u-repost-of" href="http://or.ig/post/redirect"></a>
+
+</article>
+""")
+

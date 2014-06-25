@@ -13,6 +13,9 @@ URL paths are:
 
 /repost/SITE/USER_ID/POST_ID/REPOSTED_BY_USER_ID
   e.g. /repost/twitter/snarfed_org/10100823411094363/999999
+
+/rsvp/SITE/USER_ID/EVENT_ID/RSVP_USER_ID
+  e.g. /rsvp/facebook/212038/12345/67890
 """
 
 import json
@@ -186,22 +189,21 @@ class ItemHandler(webapp2.RequestHandler):
 
     # check for redirects, and if there are any follow them and add final urls
     # in addition to the initial urls.
-    resolved_urls = set()
-    for url_obj in obj[prop]:
-      url = url_obj.get('url')
-      if not url or url_obj.get('objectType') == 'mention':
-        continue
-      # when debugging locally, replace my (snarfed.org) URLs with localhost
-      url_obj['url'] = url = util.replace_test_domains_with_localhost(url)
+    seen = set()
+    for url_list in obj[prop], obj.get('tags', []):
+      for url_obj in url_list:
+        url = url_obj.get('url')
+        if not url or url in seen:
+          continue
+        seen.add(url)
+        # when debugging locally, replace my (snarfed.org) URLs with localhost
+        url_obj['url'] = url = util.replace_test_domains_with_localhost(url)
+        resolved, _, send = util.get_webmention_target(url)
+        if send and resolved != url and resolved not in seen:
+          seen.add(resolved)
+          url_list.append({'url': resolved, 'objectType': url_obj.get('objectType')})
 
-      resolved, _, send = util.get_webmention_target(url)
-      if send and resolved != url:
-        resolved_urls.add(resolved)
-
-    obj[prop] += [{'url': url, 'objectType': 'article'} for url in resolved_urls]
-
-    post_urls = ', '.join(o.get('url', '[none]') for o in obj[prop])
-    logging.info('Original post discovery filled in %s URLs: %s', prop, post_urls)
+    logging.info('After original post discovery, urls are: %s', seen)
 
 
 class PostHandler(ItemHandler):
