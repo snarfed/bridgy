@@ -51,7 +51,6 @@ class HandlersTest(testutil.HandlerTest):
   <div class="h-card p-author">
     <a class="u-url" href="http://fa.ke/author_id"></a>
     <img class="u-photo" src="https://example.com/ryan/image" alt="-" />
-    <span class="u-uid">tag:fa.ke,2013:author_id</span>
   </div>
 
   <div class="e-content">
@@ -136,7 +135,6 @@ class HandlersTest(testutil.HandlerTest):
   <div class="h-card p-author">
 
     <img class="u-photo" src="https://example.com/ryan/image" alt="-" />
-    <span class="u-uid"></span>
   </div>
 
   <div class="e-content">
@@ -167,7 +165,6 @@ class HandlersTest(testutil.HandlerTest):
   <div class="h-card p-author">
 
     <img class="u-photo" src="https://example.com/ryan/image" alt="-" />
-    <span class="u-uid"></span>
   </div>
 
   <div class="e-content">
@@ -213,7 +210,6 @@ class HandlersTest(testutil.HandlerTest):
     <a class="u-url" href="http://personal.domain/"></a>
     <a class="u-url" href="http://fa.ke/reposter_id"></a>
     <img class="u-photo" src="https://example.com/ryan/image" alt="-" />
-    <span class="u-uid">tag:fa.ke,2013:reposter_id</span>
   </div>
 
   <div class="e-content">
@@ -251,7 +247,6 @@ class HandlersTest(testutil.HandlerTest):
   <div class="h-card p-author">
     <a class="u-url" href="http://fa.ke/rsvper_id"></a>
     <img class="u-photo" src="https://example.com/ryan/image" alt="-" />
-    <span class="u-uid">tag:fa.ke,2013:rsvper_id</span>
   </div>
 
   <div class="e-content">
