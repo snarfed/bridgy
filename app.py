@@ -16,10 +16,12 @@ import appengine_config
 
 # need to import modules with model class definitions, e.g. facebook, for
 # template rendering.
+from activitystreams import source as as_source
 from activitystreams.oauth_dropins import facebook as oauth_facebook
 from activitystreams.oauth_dropins import googleplus as oauth_googleplus
 from activitystreams.oauth_dropins import instagram as oauth_instagram
 from activitystreams.oauth_dropins import twitter as oauth_twitter
+from activitystreams.oauth_dropins.webutil.handlers import TemplateHandler
 from blogger import Blogger
 from facebook import FacebookPage
 from googleplus import GooglePlusPage
@@ -30,7 +32,6 @@ from wordpress_rest import WordPress
 import handlers
 from models import BlogPost, BlogWebmention, Publish, Response, Source
 import util
-from activitystreams.oauth_dropins.webutil.handlers import TemplateHandler
 
 from google.appengine.api import memcache
 from google.appengine.api import users
@@ -217,9 +218,11 @@ class UserHandler(DashboardHandler):
         r.actor = r.response.get('author') or r.response.get('actor', {})
         if not r.response.get('content'):
           if r.type == 'like':
-            r.response['content'] = '%s liked' % r.actor.get('displayName', '-');
+            r.response['content'] = '%s liked' % r.actor.get('displayName', '-')
           elif r.type == 'repost':
-            r.response['content'] = '%s reposted' % r.actor.get('displayName', '-');
+            r.response['content'] = '%s reposted' % r.actor.get('displayName', '-')
+          elif r.type == 'rsvp':
+            r.response['content'] = as_source.RSVP_CONTENTS.get(r.response.get('verb'))
 
         # convert image URL to https if we're serving over SSL
         image_url = r.actor.setdefault('image', {}).get('url')
