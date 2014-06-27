@@ -43,8 +43,9 @@ class CronTest(ModelsTest):
       FakeSource.new(None, last_polled=five_min_ago, **defaults).put(),
       FakeSource.new(None, status='disabled', **defaults).put(),
       FakeSource.new(None, status='disabled', **defaults).put(),
-      # needs a new poll task
-      FakeSource.new(None, **defaults).put(),
+      # need a new poll task
+      FakeSource.new(None, status='enabled', **defaults).put(),
+      FakeSource.new(None, status='error', **defaults).put(),
       # not signed up for listen
       FakeSource.new(None, last_webmention_sent=three_days_ago).put(),
       # never sent a webmention, past grace period. last polled is older than 4x
@@ -56,9 +57,11 @@ class CronTest(ModelsTest):
     self.assertEqual(200, resp.status_int)
 
     tasks = self.taskqueue_stub.GetTasks('poll')
-    self.assertEqual(1, len(tasks))
-    params = testutil.get_task_params(tasks[0])
-    self.assert_equals(sources[4].urlsafe(), params['source_key'])
+    self.assertEqual(2, len(tasks))
+    self.assert_equals(sources[4].urlsafe(),
+                       testutil.get_task_params(tasks[0])['source_key'])
+    self.assert_equals(sources[5].urlsafe(),
+                       testutil.get_task_params(tasks[1])['source_key'])
 
   def test_update_twitter_pictures(self):
     sources = []
