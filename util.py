@@ -42,6 +42,7 @@ WEBMENTION_BLACKLIST = {
   # these come from the text of tweets. we also pull the expanded URL
   # from the tweet entities, so ignore these instead of resolving them.
   't.co',
+  'twitpic.com',
   'youtube.com',
   'youtu.be',
   '', None,
