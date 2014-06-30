@@ -192,7 +192,7 @@ class ItemHandler(webapp2.RequestHandler):
     seen = set()
     for url_list in obj[prop], obj.get('tags', []):
       for url_obj in url_list:
-        url = url_obj.get('url')
+        url = util.clean_webmention_url(url_obj.get('url', ''))
         if not url or url in seen:
           continue
         seen.add(url)

@@ -289,3 +289,24 @@ class HandlersTest(testutil.HandlerTest):
 </article>
 """)
 
+  def test_strip_utm_query_params(self):
+    self.source.get_activities()[0]['object'].update({
+        'content': 'asdf http://other/link?utm_source=x&utm_medium=y&a=b qwert',
+        'upstreamDuplicates': ['http://or.ig/post?utm_campaign=123'],
+        })
+    self.source.as_source.set_share({'objectType': 'activity', 'verb': 'share'})
+    self.mox.ReplayAll()
+
+    self.check_response('/repost/fake/%s/000/111', """\
+<article class="h-entry h-as-repost">
+<span class="u-uid"></span>
+
+  <div class="e-content">
+
+  <p class="u-mention"><a href="http://other/link?a=b"></a></p>
+  </div>
+
+  <a class="u-repost u-repost-of" href="http://or.ig/post"></a>
+
+</article>
+""")
