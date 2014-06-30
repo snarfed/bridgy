@@ -210,7 +210,7 @@ class UserHandler(DashboardHandler):
     # Responses
     if 'listen' in self.source.features:
       responses = Response.query().filter(Response.source == self.source.key)\
-                                  .order(-Response.created)\
+                                  .order(-Response.updated)\
                                   .fetch(10)
       for r in responses:
         r.response = json.loads(r.response_json)
@@ -231,17 +231,6 @@ class UserHandler(DashboardHandler):
 
         # generate original post links
         r.links = self.process_webmention_links(r)
-
-        # XXX horrible hack: use created time as updated time if updated time is
-        # before 2014-03-28 evening...
-        #
-        # ...to band-aid the fact that a data migration accidentally set all
-        # responses' updated time to then. :/ details in
-        # https://github.com/snarfed/bridgy/issues/68
-        if r.updated <= datetime.datetime(2014, 3, 29):
-          r.updated = r.created
-
-      responses.sort(key=lambda r: r.updated, reverse=True)
 
       vars['responses'] = responses
 
