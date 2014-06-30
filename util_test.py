@@ -105,3 +105,11 @@ class UtilTest(testutil.ModelsTest):
     mention.requests_kwargs = {'timeout': HTTP_TIMEOUT}
     mention._discoverEndpoint()
     self.assertEquals('http://target/endpoint', mention.receiver_endpoint)
+
+  def test_clean_webmention_target(self):
+    cwt = util.clean_webmention_target
+    for unchanged in 'http://foo', 'http://foo#bar', 'http://foo?x=y&z=w':
+      self.assertEquals(unchanged, cwt(unchanged))
+
+    self.assertEquals('http://foo', cwt('http://foo?utm_source=x&utm_campaign=y'))
+    self.assertEquals('http://foo?a=b&c=d', cwt('http://foo?a=b&utm_source=x&c=d'))
