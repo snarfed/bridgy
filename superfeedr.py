@@ -72,6 +72,7 @@ def handle_feed(feed, source):
   logging.info('Source: %s %s', source.label(), source.key.string_id())
   logging.info('Raw feed: %s', feed)
   for item in json.loads(feed).get('items', []):
+    source.preprocess_superfeedr_item(item)
     # TODO: extract_links currently has a bug that makes it drop trailing
     # slashes. ugh. fix that.
     links = util.extract_links(item.get('content') or item.get('summary', ''))

@@ -68,8 +68,19 @@ class SuperfeedrTest(testutil.HandlerTest):
     self.assert_equals(posts[0].key.urlsafe(),
                        testutil.get_task_params(tasks[0])['key'])
 
-
   def test_handle_feed_no_items(self):
     superfeedr.handle_feed('{}', self.source)
     self.assertEquals(0, BlogPost.query().count())
     self.assertEquals(0, len(self.taskqueue_stub.GetTasks('propagate-blogpost')))
+
+  def test_preprocess_superfeedr_item(self):
+    self.mox.StubOutWithMock(self.source, 'preprocess_superfeedr_item')
+    items = [{'permalinkUrl': 'A', 'content': 'a b'}]
+
+    def add_link(item):
+      item['content'] += '\nhttp://added/by/preprocess'
+    self.source.preprocess_superfeedr_item(items[0]).WithSideEffects(add_link)
+
+    self.mox.ReplayAll()
+    superfeedr.handle_feed(json.dumps({'items': items}), self.source)
+    self.assertEquals(['http://added/by/preprocess'], BlogPost.query().get().unsent)

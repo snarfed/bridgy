@@ -455,6 +455,19 @@ class Source(StringIdModel):
     """
     return re.sub('^https?://(www\.)?', scheme + '://', syndication_url)
 
+  def preprocess_superfeedr_item(self, item):
+    """Process a Superfeeder item field before extracting links from it.
+
+    The item is modified in place. Default is noop. Indivudal sources can
+    override this with source-specific logic, e.g. WordPress removes category
+    and tag links from content.
+
+    Args:
+      item: dict, a JSON Superfeedr feed item. Details:
+            http://documentation.superfeedr.com/schema.html#json
+    """
+    pass
+
 
 class Webmentions(StringIdModel):
   """A bundle of links to send webmentions for.
