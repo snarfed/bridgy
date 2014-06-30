@@ -203,6 +203,20 @@ class PollTest(TaskQueueTest):
     self.assert_equals(['http://tar.get/good'],
                        self.responses[0].key.get().unsent)
 
+  def test_strip_utm_query_params(self):
+    """utm_* query params should be stripped from target URLs."""
+    obj = self.activities[0]['object']
+    obj.update({'content': '',
+                'attachments': [],
+                'tags': [{'objectType': 'article',
+                          'url': 'http://foo/bar?a=b&utm_medium=x&utm_source=y'}],
+                })
+    self.sources[0].set_activities([self.activities[0]])
+
+    self.post_task()
+    self.assert_equals(['http://foo/bar?a=b'],
+                       self.responses[0].key.get().unsent)
+
   def test_non_public_posts(self):
     """Only posts with to: @public should be propagated."""
     del self.activities[0]['object']['to']

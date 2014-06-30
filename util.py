@@ -177,6 +177,7 @@ def get_webmention_target(url):
   if domain in WEBMENTION_BLACKLIST:
     return (url, domain, False)
 
+  url = clean_webmention_url(url)
   resolved = follow_redirects(url)
   if resolved.url != url:
     logging.debug('Resolved %s to %s', url, resolved.url)
@@ -187,7 +188,7 @@ def get_webmention_target(url):
   return (url, domain, is_html)
 
 
-def clean_webmention_target(url):
+def clean_webmention_url(url):
   """Removes transient query params (e.g. utm_*) from a webmention target URL.
 
   The utm_* (Urchin Tracking Metrics?) params come from Google Analytics.

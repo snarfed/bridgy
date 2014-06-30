@@ -39,6 +39,9 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
     self.source_url = urlparse.urldefrag(util.get_required_param(self, 'source'))[0]
     self.target_url = urlparse.urldefrag(util.get_required_param(self, 'target'))[0]
 
+    # clean target url (strip utm_* query params)
+    self.target_url = util.clean_webmention_url(self.target_url)
+
     # parse and validate target URL
     domain = util.domain_from_link(self.target_url)
     if not domain:

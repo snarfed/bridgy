@@ -26,7 +26,7 @@ class BlogWebmentionTest(testutil.HandlerTest):
                                       features=['webmention'])
     self.source.put()
 
-    self.mox.StubOutWithMock(testutil.FakeSource, 'create_comment')#, use_mock_anything=True)
+    self.mox.StubOutWithMock(testutil.FakeSource, 'create_comment')
 
   def get_response(self, source=None, target=None):
     if source is None:
@@ -127,6 +127,21 @@ i hereby reply
     self.assert_error('Could not find target URL')
     bw = BlogWebmention.get_by_id('http://bar.com/reply http://foo.com/post/1')
     self.assertEquals('failed', bw.status)
+
+  def test_strip_utm_query_params(self):
+    """utm_* query params should be stripped from target URLs."""
+    html = '<article class="h-entry"><p class="e-content">http://foo.com/post/1</p></article>'
+    self.expect_requests_get('http://bar.com/reply', html)
+    testutil.FakeSource.create_comment(
+      'http://foo.com/post/1', 'foo.com', 'http://foo.com/',
+      'http://foo.com/post/1<br /><a href="http://bar.com/reply">via bar.com</a>')
+    self.mox.ReplayAll()
+
+    resp = self.get_response(target=urllib.quote(
+        'http://foo.com/post/1?utm_source=x&utm_medium=y'))
+    self.assertEquals(200, resp.status_int, resp.body)
+    bw = BlogWebmention.get_by_id('http://bar.com/reply http://foo.com/post/1')
+    self.assertEquals('complete', bw.status)
 
   def test_source_link_check_ignores_fragment(self):
     html = """\

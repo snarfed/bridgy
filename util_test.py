@@ -106,8 +106,8 @@ class UtilTest(testutil.ModelsTest):
     mention._discoverEndpoint()
     self.assertEquals('http://target/endpoint', mention.receiver_endpoint)
 
-  def test_clean_webmention_target(self):
-    cwt = util.clean_webmention_target
+  def test_clean_webmention_url(self):
+    cwt = util.clean_webmention_url
     for unchanged in 'http://foo', 'http://foo#bar', 'http://foo?x=y&z=w':
       self.assertEquals(unchanged, cwt(unchanged))
 
