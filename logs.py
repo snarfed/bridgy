@@ -1,6 +1,7 @@
 """Handlers and utilities for exposing app logs to users.
 """
 
+import cgi
 import datetime
 import logging
 import re
@@ -62,8 +63,9 @@ class LogHandler(webapp2.RequestHandler):
         for a in log.app_logs:
           msg = a.message.decode('utf-8')
           # don't sanitize poll task URLs since they have a key= query param
-          msg = util.linkify(msg if msg.startswith('Created by this poll:')
-                             else sanitize(msg))
+          msg = util.linkify(cgi.escape(
+              msg if msg.startswith('Created by this poll:') else sanitize(msg)),
+              simple=True)
           self.response.out.write('%s %s %s' %
               (datetime.datetime.utcfromtimestamp(a.time), LEVELS[a.level], msg))
           self.response.out.write('<br />\n')
