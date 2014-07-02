@@ -34,7 +34,7 @@ class WordPressTest(testutil.HandlerTest):
     self.wp = WordPress(id='my.wp.com',
                         auth_entity=self.auth_entity.key,
                         url='http://my.wp.com/',
-                        domain=['my.wp.com'])
+                        domains=['my.wp.com'])
 
   def test_new(self):
     self.expect_urlopen(
@@ -46,8 +46,8 @@ class WordPressTest(testutil.HandlerTest):
     self.assertEquals(self.auth_entity.key, w.auth_entity)
     self.assertEquals('my.wp.com', w.key.id())
     self.assertEquals('Ryan', w.name)
-    self.assertEquals('http://my.wp.com/', w.domain_url)
-    self.assertEquals(['my.wp.com'], w.domain)
+    self.assertEquals(['http://my.wp.com/'], w.domain_urls)
+    self.assertEquals(['my.wp.com'], w.domains)
     self.assertEquals('http://ava/tar', w.picture)
 
   def test_new_with_site_domain(self):
@@ -59,8 +59,9 @@ class WordPressTest(testutil.HandlerTest):
     w = WordPress.new(self.handler, auth_entity=self.auth_entity)
     self.assertEquals('vanity.domain', w.key.id())
     self.assertEquals('https://vanity.domain/', w.url)
-    self.assertEquals('https://vanity.domain/', w.domain_url)
-    self.assertEquals(['vanity.domain', 'my.wp.com'], w.domain)
+    self.assertEquals(['https://vanity.domain/', 'http://my.wp.com/'],
+                      w.domain_urls)
+    self.assertEquals(['vanity.domain', 'my.wp.com'], w.domains)
 
   def test_create_comment_with_slug_lookup(self):
     self.expect_urlopen(

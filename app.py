@@ -196,15 +196,15 @@ class UserHandler(DashboardHandler):
 
     # Blog webmention promos
     if 'webmention' not in self.source.features:
-      for domain in self.source.domain:
+      for domain in self.source.domains:
         if ('.blogspot.' in domain and  # Blogger uses country TLDs
-            not Blogger.query(Blogger.domain == domain).get()):
+            not Blogger.query(Blogger.domains == domain).get()):
           vars['blogger_promo'] = True
         elif (domain.endswith('tumblr.com') and
-              not Tumblr.query(Tumblr.domain == domain).get()):
+              not Tumblr.query(Tumblr.domains == domain).get()):
           vars['tumblr_promo'] = True
         elif (domain.endswith('wordpress.com') and
-              not WordPress.query(WordPress.domain == domain).get()):
+              not WordPress.query(WordPress.domains == domain).get()):
           vars['wordpress_promo'] = True
 
     # Responses
@@ -266,7 +266,7 @@ class UserHandler(DashboardHandler):
                                            new_tab=True)
         try:
           target_is_source = (urlparse.urlparse(w.target_url()).netloc in
-                              self.source.domain)
+                              self.source.domains)
         except BaseException:
           target_is_source = False
         w.pretty_target = util.pretty_link(w.target_url(), a_class='original-post',

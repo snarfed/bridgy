@@ -29,7 +29,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
 
     # silo domain is fa.ke
     source = self.sources[0]
-    source.domain_url = 'http://author'
+    source.domain_urls = ['http://author']
 
     self.expect_requests_get('http://author', """
     <html class="h-feed">
@@ -87,7 +87,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     </html>"""
 
     source = self.sources[0]
-    source.domain_url = 'http://author'
+    source.domain_urls = ['http://author']
 
     self.expect_requests_get('http://author', author_feed)
 
@@ -169,7 +169,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     posse-post-discovery will not result in two webmentions being sent.
     """
     source = self.sources[0]
-    source.domain_url = 'http://target1'
+    source.domain_urls = ['http://target1']
 
     activity = self.activities[0]
     activity['object'].update({
@@ -202,7 +202,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
   def test_strip_www_when_comparing_domains(self):
     """We should ignore leading www when comparing syndicated URL domains."""
     source = self.sources[0]
-    source.domain_url = 'http://target1'
+    source.domain_urls = ['http://target1']
     activity = self.activities[0]
     activity['object']['url'] = 'http://www.fa.ke/post/url'
 
@@ -227,7 +227,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     author's full feed URL
     """
     source = self.sources[0]
-    source.domain_url = 'http://author'
+    source.domain_urls = ['http://author']
     activity = self.activities[0]
 
     self.expect_requests_get('http://author', """
@@ -254,7 +254,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     """Check that we follow the rel=feed when it's in an <a> tag instead of <link>
     """
     source = self.sources[0]
-    source.domain_url = 'http://author'
+    source.domain_urls = ['http://author']
     activity = self.activities[0]
 
     self.expect_requests_get('http://author', """
@@ -289,7 +289,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
 
     # silo domain is fa.ke
     source = self.sources[0]
-    source.domain_url = 'http://author'
+    source.domain_urls = ['http://author']
 
     self.expect_requests_get('http://author', """
     <html class="h-feed">
@@ -313,7 +313,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     syndication_url = 'https://fa.ke/post/url'
 
     source = self.sources[0]
-    source.domain_url = 'http://author'
+    source.domain_urls = ['http://author']
     activity = self.activities[0]
     activity['object']['url'] = syndication_url
     activity['object']['content'] = 'content without links'
@@ -339,7 +339,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     endpoint or microformats.
     """
     source = self.sources[0]
-    source.domain_url = 'http://amazon.com'
+    source.domain_urls = ['http://amazon.com']
     activity = self.activities[0]
     activity['object']['url'] = 'http://fa.ke/post/url'
     activity['object']['content'] = 'content without links'
@@ -361,7 +361,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     gives an unexpected response
     """
     source = self.sources[0]
-    source.domain_url = 'http://author'
+    source.domain_urls = ['http://author']
     activity = self.activities[0]
     activity['object']['url'] = 'http://fa.ke/post/url'
     activity['object']['content'] = 'content without links'
@@ -398,7 +398,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     use any h-entries on the main url as a fallback.
     """
     source = self.sources[0]
-    source.domain_url = 'http://author'
+    source.domain_urls = ['http://author']
     activity = self.activities[0]
 
     self.expect_requests_get('http://author', """
@@ -444,7 +444,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     the permalink of an entry linked in the h-feed
     """
     source = self.sources[0]
-    source.domain_url = 'http://author'
+    source.domain_urls = ['http://author']
     activity = self.activities[0]
     activity['object']['url'] = 'http://fa.ke/post/url'
     activity['object']['content'] = 'content without links'
@@ -489,7 +489,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     a url at all.
     """
     source = self.sources[0]
-    source.domain_url = None
+    source.domain_urls = []
     activity = self.activities[0]
     activity['object']['url'] = 'http://fa.ke/post/url'
     activity['object']['content'] = 'content without links'
@@ -505,7 +505,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     application/xml.
     """
     source = self.sources[0]
-    source.domain_url = 'http://author'
+    source.domain_urls = ['http://author']
     activity = self.activities[0]
     activity['object']['url'] = 'http://fa.ke/post/url'
     activity['object']['content'] = 'content without links'
@@ -526,7 +526,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     application/xml.
     """
     source = self.sources[0]
-    source.domain_url = 'http://author'
+    source.domain_urls = ['http://author']
     activity = self.activities[0]
     activity['object']['url'] = 'http://fa.ke/post/url'
     activity['object']['content'] = 'content without links'
@@ -550,7 +550,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.expect_requests_head(activity['object']['url'])
 
     # and for the author url
-    self.expect_requests_head(source.domain_url)
+    self.expect_requests_head('http://author')
 
     # try and fail to get the feed
     self.expect_requests_head('http://author/updates', status_code=400)
@@ -568,7 +568,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     the type is not given in <link>, and keep looking until we find one.
     """
     source = self.sources[0]
-    source.domain_url = 'http://author'
+    source.domain_urls = ['http://author']
     activity = self.activities[0]
     activity['object']['url'] = 'http://fa.ke/post/url'
     activity['object']['content'] = 'content without links'
@@ -588,7 +588,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.expect_requests_head(activity['object']['url'])
 
     # and for the author url
-    self.expect_requests_head(source.domain_url)
+    self.expect_requests_head('http://author')
 
     # try to get the atom feed first
     self.expect_requests_head('http://author/updates.atom',
@@ -625,14 +625,14 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     fetching and parsing it
     """
     source = self.sources[0]
-    source.domain_url = 'http://author'
+    source.domain_urls = ['http://author']
     activity = self.activities[0]
     activity['object']['url'] = 'http://fa.ke/post/url'
     activity['object']['content'] = 'content without links'
 
     # head request to follow redirects on the post url
     self.expect_requests_head(activity['object']['url'])
-    self.expect_requests_head(source.domain_url, response_headers={
+    self.expect_requests_head('http://author', response_headers={
       'content-type': 'application/xml'
     })
 
@@ -646,7 +646,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     isn't text/html (e.g., PDF)
     """
     source = self.sources[0]
-    source.domain_url = 'http://author'
+    source.domain_urls = ['http://author']
     activity = self.activities[0]
     activity['object']['url'] = 'http://fa.ke/post/url'
     activity['object']['content'] = 'content without links'
@@ -654,8 +654,8 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     # head request to follow redirects on the post url
     self.expect_requests_head(activity['object']['url'])
 
-    self.expect_requests_head(source.domain_url)
-    self.expect_requests_get(source.domain_url, """
+    self.expect_requests_head('http://author')
+    self.expect_requests_get('http://author', """
     <html>
       <body>
         <div class="h-entry">
@@ -683,7 +683,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     """
 
     source = self.sources[0]
-    source.domain_url = 'http://author'
+    source.domain_urls = ['http://author']
     activity = self.activities[0]
     activity['object']['url'] = 'http://fa.ke/post/url'
     activity['object']['content'] = 'content without links'
@@ -696,7 +696,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     marked with a blank SyndicatedPost
     """
     source = self.sources[0]
-    source.domain_url = 'http://author'
+    source.domain_urls = ['http://author']
 
     # refetch 1 and 3 to see if they've been updated, 2 has already
     # been resolved for this source
@@ -764,7 +764,7 @@ class OriginalPostDiscoveryFacebookTest(facebook_test.FacebookPageTest):
     username
     """
     source = FacebookPage.new(self.handler, auth_entity=self.auth_entity)
-    source.domain_url = 'http://author'
+    source.domain_urls = ['http://author']
     activity = self.activities[0]
     # facebook activity comes to us with the numeric id
     activity['object']['url'] = 'http://facebook.com/212038/posts/314159'

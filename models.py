@@ -79,8 +79,8 @@ class Source(StringIdModel):
   status = ndb.StringProperty(choices=STATUSES, default='enabled')
   name = ndb.StringProperty()  # full human-readable name
   picture = ndb.StringProperty()
-  domain = ndb.StringProperty(repeated=True)
-  domain_url = ndb.StringProperty()
+  domains = ndb.StringProperty(repeated=True)
+  domain_urls = ndb.StringProperty(repeated=True)
   features = ndb.StringProperty(repeated=True, choices=FEATURES)
   superfeedr_secret = ndb.StringProperty()
   webmention_endpoint = ndb.StringProperty()
@@ -180,7 +180,8 @@ class Source(StringIdModel):
     Return:
       a string, the author's url or None
     """
-    return util.replace_test_domains_with_localhost(self.domain_url)
+    return (util.replace_test_domains_with_localhost(self.domain_urls[0])
+            if self.domain_urls else None)
 
   def get_activities_response(self, **kwargs):
     """Returns recent posts and embedded comments for this source.
@@ -308,7 +309,7 @@ class Source(StringIdModel):
 
     feature = source.features[0] if source.features else 'listen'
 
-    if not source.domain_url and not source.domain_url:
+    if not source.domain_urls:
       # extract domain from the URL set on the user's profile, if any
       auth_entity = kwargs.get('auth_entity')
       if auth_entity and hasattr(auth_entity, 'user_json'):
@@ -328,10 +329,10 @@ class Source(StringIdModel):
           return None
 
         if ok:
-          if not source.domain_url:
-            source.domain_url = url
-          if not source.domain:
-            source.domain = [domain]
+          if not source.domain_urls:
+            source.domain_urls = [url]
+          if not source.domains:
+            source.domains = [domain]
 
     # check if this source already exists
     existing = source.key.get()
@@ -345,11 +346,12 @@ class Source(StringIdModel):
     else:
       verb = 'Added'
 
+    link = ('http://indiewebify.me/send-webmentions/?url=' + source.domain_urls[0]
+            if source.domain_urls else 'http://indiewebify.me/#send-webmentions')
     blurb = '%s %s. %s' % (verb, source.label(), {
       'listen': "Refresh to see what we've found!",
       'publish': 'Try previewing a post from your web site!',
-      'webmention': '<a href="http://indiewebify.me/send-webmentions/?url=%s">'
-                    'Try a webmention!</a>' % source.domain_url,
+      'webmention': '<a href="%s">Try a webmention!</a>' % link,
       }.get(feature, ''))
     logging.info('%s %s', blurb, source.bridgy_url(handler))
     if not existing:
@@ -394,8 +396,9 @@ class Source(StringIdModel):
     if self.verified() and not force:
       return
 
-    logging.info('Attempting to discover webmention endpoint on %s', self.domain_url)
-    mention = send.WebmentionSend('https://www.brid.gy/', self.domain_url)
+    logging.info('Attempting to discover webmention endpoint on %s',
+                 self.domain_urls[0])
+    mention = send.WebmentionSend('https://www.brid.gy/', self.domain_urls[0])
     mention.requests_kwargs = {'timeout': HTTP_TIMEOUT}
     try:
       mention._discoverEndpoint()

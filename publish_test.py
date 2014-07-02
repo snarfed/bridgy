@@ -23,8 +23,8 @@ class PublishTest(testutil.HandlerTest):
     super(PublishTest, self).setUp()
     publish.SOURCES['fake'] = testutil.FakeSource
     self.source = testutil.FakeSource(
-      id='foo.com', features=['publish'], domain=['foo.com'],
-      domain_url='http://foo.com/')
+      id='foo.com', features=['publish'], domains=['foo.com'],
+      domain_urls=['http://foo.com/'])
     self.source.put()
 
   def get_response(self, source=None, target=None, endpoint='/publish/webmention',

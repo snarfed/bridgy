@@ -51,7 +51,7 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
     source_cls = SOURCES[source_short_name]
     domain = domain.lower()
     self.source = (source_cls.query()
-                   .filter(source_cls.domain == domain)
+                   .filter(source_cls.domains == domain)
                    .filter(source_cls.features == 'webmention')
                    .get())
     if not self.source:

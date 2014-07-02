@@ -428,7 +428,7 @@ class PollTest(TaskQueueTest):
     """A successful posse-post-discovery round should set
     Source.last_syndication_url to approximately the current time.
     """
-    self.sources[0].domain_url = 'http://author'
+    self.sources[0].domain_urls = ['http://author']
     self.sources[0].AS_CLASS.DOMAIN = 'source'
     self.sources[0].last_syndication_url = None
     self.sources[0].put()
@@ -462,7 +462,7 @@ class PollTest(TaskQueueTest):
   def test_do_not_refetch_hfeed(self):
     """Only 1 hour has passed since we last re-fetched the user's h-feed. Make
     Sure it is not fetched again"""
-    self.sources[0].domain_url = 'http://author'
+    self.sources[0].domain_urls = ['http://author']
     self.sources[0].AS_CLASS.DOMAIN = 'source'
     self.sources[0].last_syndication_url = NOW - datetime.timedelta(minutes=10)
     # too recent to fetch again
@@ -500,7 +500,7 @@ class PollTest(TaskQueueTest):
     two hours or so, we should refetch the author's page and check to see if
     any new syndication links have been added or updated.
     """
-    self.sources[0].domain_url = 'http://author'
+    self.sources[0].domain_urls = ['http://author']
     self.sources[0].AS_CLASS.DOMAIN = 'source'
     self.sources[0].last_syndication_url = NOW - datetime.timedelta(minutes=10)
     self.sources[0].last_hfeed_fetch = NOW - datetime.timedelta(hours=2,
@@ -562,7 +562,7 @@ class PollTest(TaskQueueTest):
     class FakeAsSource_Instagram(testutil.FakeAsSource):
       DOMAIN = 'instagram'
 
-    self.sources[0].domain_url = 'http://author'
+    self.sources[0].domain_urls = ['http://author']
     self.sources[0].AS_CLASS = FakeAsSource_Instagram
     self.sources[0].last_syndication_url = util.EPOCH
     self.sources[0].last_hfeed_fetch = NOW
@@ -576,7 +576,7 @@ class PollTest(TaskQueueTest):
     class FakeAsSource_Twitter(testutil.FakeAsSource):
       DOMAIN = 'twitter'
 
-    self.sources[1].domain_url = 'http://author'
+    self.sources[1].domain_urls = ['http://author']
     self.sources[1].AS_CLASS = FakeAsSource_Twitter
     self.sources[1].last_syndication_url = util.EPOCH
     self.sources[1].last_hfeed_fetch = NOW
@@ -1033,7 +1033,7 @@ class PropagateTest(TaskQueueTest):
 
   def test_propagate_blogpost(self):
     """Blog post propagate task."""
-    source_key = FakeSource.new(None, domain=['fake']).put()
+    source_key = FakeSource.new(None, domains=['fake']).put()
     links = ['http://fake/post', '/no/domain', 'http://ok/one.png',
              'http://ok/two', 'http://ok/two', # repeated
              ]

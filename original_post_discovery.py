@@ -63,11 +63,11 @@ def discover(source, activity, fetch_hfeed=True):
   # post on the author's domain (i.e., it included a link or
   # citation), then skip the rest of this.
 
-  # Use source.domain_url for now; it seems more reliable than the
-  # activity.actor.url (which depends on getting the right data back
-  # from various APIs). Consider using the actor's url, with
-  # domain_url as the fallback in the future to support content from
-  # non-Bridgy users.
+  # Use source.domain_urls for now; it seems more reliable than the
+  # activity.actor.url (which depends on getting the right data back from
+  # various APIs). Consider using the actor's url, with domain_urls as the
+  # fallback in the future to support content from non-Bridgy users.
+  #
   # author_url = activity.get('actor', {}).get('url')
   obj = activity.get('object') or activity
   author_url = source.get_author_url()
@@ -337,10 +337,10 @@ def _process_entry(source, permalink, refetch_blanks, preexisting):
     # source-specific logic to standardize the URL. (e.g., replace facebook
     # username with numeric id)
     syndication_url = source.canonicalize_syndication_url(syndication_url)
-    # check that the syndicated url belongs to this source
-    # TODO save future lookups by saving results for other sources
-    # too (note: query the appropriate source subclass by
-    # author.domain, rather than author.domain_url)
+    # check that the syndicated url belongs to this source TODO save future
+    # lookups by saving results for other sources too (note: query the
+    # appropriate source subclass by author.domains, rather than
+    # author.domain_urls)
     parsed = urlparse.urlparse(syndication_url)
     if util.domain_from_link(parsed.netloc) == source.AS_CLASS.DOMAIN:
       logging.debug('saving discovered relationship %s -> %s',

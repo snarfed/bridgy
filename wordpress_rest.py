@@ -55,13 +55,13 @@ class WordPress(models.Source):
 
   def feed_url(self):
     # http://en.support.wordpress.com/feeds/
-    return urlparse.urljoin(self.domain_url, 'feed/')
+    return urlparse.urljoin(self.domain_urls[0], 'feed/')
 
   def silo_url(self):
-    return self.domain_url
+    return self.domain_urls[0]
 
   def edit_template_url(self):
-    return urlparse.urljoin(self.domain_url, 'wp-admin/widgets.php')
+    return urlparse.urljoin(self.domain_urls[0], 'wp-admin/widgets.php')
 
   @staticmethod
   def new(handler, auth_entity=None, **kwargs):
@@ -77,10 +77,10 @@ class WordPress(models.Source):
     site_url = site_info.get('URL')
     if site_url:
       domains = [util.domain_from_link(site_url), auth_domain]
-      url = site_url
+      urls = [site_url, auth_entity.blog_url]
     else:
       domains = [auth_domain]
-      url = auth_entity.blog_url
+      urls = [auth_entity.blog_url]
 
     avatar = (json.loads(auth_entity.user_json).get('avatar_URL')
               if auth_entity.user_json else None)
@@ -89,9 +89,9 @@ class WordPress(models.Source):
                      name=auth_entity.user_display_name(),
                      picture=avatar,
                      superfeedr_secret=util.generate_secret(),
-                     url=url,
-                     domain_url=url,
-                     domain=domains,
+                     url=urls[0],
+                     domain_urls=urls,
+                     domains=domains,
                      site_info=site_info,
                      **kwargs)
 

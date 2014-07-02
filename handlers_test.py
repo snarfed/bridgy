@@ -187,7 +187,7 @@ class HandlersTest(testutil.HandlerTest):
       syndication='http://example.com/original/post').put()
 
     # needed to make original_post_discovery use the SyndicatedPost
-    self.source.domain_url = 'http://unused'
+    self.source.domain_urls = ['http://unused']
     self.source.put()
 
     self.source.as_source.set_share({

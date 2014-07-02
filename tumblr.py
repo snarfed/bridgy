@@ -67,10 +67,10 @@ class Tumblr(models.Source):
 
   def feed_url(self):
     # http://www.tumblr.com/help  (search for feed)
-    return urlparse.urljoin(self.domain_url, '/rss')
+    return urlparse.urljoin(self.domain_urls[0], '/rss')
 
   def silo_url(self):
-    return self.domain_url
+    return self.domain_urls[0]
 
   def edit_template_url(self):
     return 'http://www.tumblr.com/customize/%s' % self.auth_entity.id()
@@ -91,8 +91,8 @@ class Tumblr(models.Source):
 
     return Tumblr(id=domain,
                   auth_entity=auth_entity.key,
-                  domain=[domain],
-                  domain_url=url,
+                  domains=[domain],
+                  domain_urls=[url],
                   name=auth_entity.user_display_name(),
                   picture=TUMBLR_AVATAR_URL % domain,
                   superfeedr_secret=util.generate_secret(),

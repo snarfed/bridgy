@@ -47,10 +47,10 @@ class Blogger(models.Source):
 
   def feed_url(self):
     # https://support.google.com/blogger/answer/97933?hl=en
-    return urlparse.urljoin(self.domain_url, '/feeds/posts/default')  # Atom
+    return urlparse.urljoin(self.domain_urls[0], '/feeds/posts/default')  # Atom
 
   def silo_url(self):
-    return self.domain_url
+    return self.domain_urls[0]
 
   def edit_template_url(self):
     return 'https://www.blogger.com/blogger.g?blogID=%s#template' % self.key.id()
@@ -80,8 +80,8 @@ class Blogger(models.Source):
                    auth_entity=auth_entity.key,
                    url=url,
                    name=auth_entity.user_display_name(),
-                   domain=[domain],
-                   domain_url=url,
+                   domains=[domain],
+                   domain_urls=[url],
                    picture=auth_entity.picture_url,
                    superfeedr_secret=util.generate_secret(),
                    **kwargs)

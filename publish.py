@@ -102,7 +102,7 @@ class Handler(webmention.WebmentionHandler):
     # look up source by domain
     domain = domain.lower()
     self.source = (source_cls.query()
-                   .filter(source_cls.domain == domain)
+                   .filter(source_cls.domains == domain)
                    .filter(source_cls.features == 'publish')
                    .get())
     if not self.source:
@@ -110,13 +110,14 @@ class Handler(webmention.WebmentionHandler):
         {'type': source_cls.AS_CLASS.NAME, 'domain': domain})
 
     # show nice error message if they're trying to publish their home page
-    domain_url_parts = urlparse.urlparse(self.source.domain_url)
-    source_url_parts = urlparse.urlparse(self.source_url)
-    if (source_url_parts.netloc == domain_url_parts.netloc and
-        source_url_parts.path.strip('/') == domain_url_parts.path.strip('/')):
-      return self.error(
-        "Looks like that's your home page. Try one of your posts instead!",
-        mail=False)
+    for domain_url in self.source.domain_urls:
+      domain_url_parts = urlparse.urlparse(domain_url)
+      source_url_parts = urlparse.urlparse(self.source_url)
+      if (source_url_parts.netloc == domain_url_parts.netloc and
+          source_url_parts.path.strip('/') == domain_url_parts.path.strip('/')):
+        return self.error(
+          "Looks like that's your home page. Try one of your posts instead!",
+          mail=False)
 
     # done with the sanity checks, ready to fetch the source url. create the
     # Publish entity so we can store the result.
@@ -208,7 +209,7 @@ class Handler(webmention.WebmentionHandler):
     # special case for me: don't allow posts in live app, just comments, likes,
     # and reposts
     verb = obj.get('verb', '')
-    if (not appengine_config.DEBUG and 'snarfed.org' in self.source.domain and
+    if (not appengine_config.DEBUG and 'snarfed.org' in self.source.domains and
         not self.PREVIEW and obj_type in ('note', 'article') and
         verb not in ('like', 'share') and not verb.startswith('rsvp-')):
       self.error('Not posting for snarfed.org')

@@ -616,7 +616,7 @@ class PropagateBlogPost(SendWebmentions):
     logging.debug('Params: %s', self.request.params)
     if self.lease(ndb.Key(urlsafe=self.request.params['key'])):
       # skip "self" links to this blog's domain
-      source_domains = self.entity.source.get().domain
+      source_domains = self.entity.source.get().domains
       to_send = set()
       for url in self.entity.unsent:
         link_domain = util.domain_from_link(url)

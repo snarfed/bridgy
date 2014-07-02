@@ -23,7 +23,7 @@ class BlogWebmentionTest(testutil.HandlerTest):
     super(BlogWebmentionTest, self).setUp()
     blog_webmention.SOURCES['fake'] = testutil.FakeSource
     self.source = testutil.FakeSource(id='foo.com',
-                                      domain=['x.com', 'foo.com', 'y.com'],
+                                      domains=['x.com', 'foo.com', 'y.com'],
                                       features=['webmention'])
     self.source.put()
 
@@ -109,7 +109,7 @@ i hereby reply
 
     # source without domain
     self.source.features = ['webmention']
-    self.source.domain = ['asdfoo.com', 'foo.comedy']
+    self.source.domains = ['asdfoo.com', 'foo.comedy']
     self.source.put()
     self.assert_error(msg)
     self.assertEquals(0, BlogWebmention.query().count())

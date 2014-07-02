@@ -133,7 +133,7 @@ class SourceTest(testutil.HandlerTest):
 
     self.mox.ReplayAll()
     source = FakeSource.create_new(self.handler, features=['webmention'],
-                                   domain_url='http://primary/')
+                                   domain_urls=['http://primary/'])
 
   def test_create_new_domain(self):
     """If the source has a URL set, extract its domain."""
@@ -143,8 +143,8 @@ class SourceTest(testutil.HandlerTest):
         auth_entity = testutil.FakeAuthEntity(id='x', user_json=json.dumps(user_json))
         auth_entity.put()
       source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
-      self.assertEqual([], source.domain)
-      self.assertIsNone(source.domain_url)
+      self.assertEqual([], source.domains)
+      self.assertEqual([], source.domain_urls)
 
     # good URLs
     for url in ('http://foo.com/bar', 'https://www.foo.com/bar',
@@ -155,8 +155,8 @@ class SourceTest(testutil.HandlerTest):
         id='x', user_json=json.dumps({'url': url}))
       auth_entity.put()
       source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
-      self.assertEquals(url.split('\n')[0], source.key.get().domain_url)
-      self.assertEquals(['foo.com'], source.key.get().domain)
+      self.assertEquals([url.split('\n')[0]], source.key.get().domain_urls)
+      self.assertEquals(['foo.com'], source.key.get().domains)
 
   def test_create_new_unicode_chars(self):
     """We should handle unusual unicode chars in the source's name ok."""
@@ -172,7 +172,7 @@ class SourceTest(testutil.HandlerTest):
     self.mox.ReplayAll()
 
     source = FakeSource.new(self.handler, features=['webmention'],
-                            domain_url='http://primary/')
+                            domain_urls=['http://primary/'])
     source.verify()
     self.assertEquals('http://web.ment/ion', source.webmention_endpoint)
 
@@ -182,7 +182,7 @@ class SourceTest(testutil.HandlerTest):
     self.mox.ReplayAll()
 
     source = FakeSource.new(self.handler, features=['webmention'],
-                            domain_url='http://primary/')
+                            domain_urls=['http://primary/'])
     source.verify()
     self.assertIsNone(source.webmention_endpoint)
 
