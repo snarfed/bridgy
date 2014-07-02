@@ -79,7 +79,7 @@ class Source(StringIdModel):
   status = ndb.StringProperty(choices=STATUSES, default='enabled')
   name = ndb.StringProperty()  # full human-readable name
   picture = ndb.StringProperty()
-  domain = ndb.StringProperty()
+  domain = ndb.StringProperty(repeated=True)
   domain_url = ndb.StringProperty()
   features = ndb.StringProperty(repeated=True, choices=FEATURES)
   superfeedr_secret = ndb.StringProperty()
@@ -328,8 +328,10 @@ class Source(StringIdModel):
           return None
 
         if ok:
-          source.domain_url = url
-          source.domain = domain
+          if not source.domain_url:
+            source.domain_url = url
+          if not source.domain:
+            source.domain = [domain]
 
     # check if this source already exists
     existing = source.key.get()

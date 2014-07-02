@@ -208,7 +208,7 @@ class Handler(webmention.WebmentionHandler):
     # special case for me: don't allow posts in live app, just comments, likes,
     # and reposts
     verb = obj.get('verb', '')
-    if (not appengine_config.DEBUG and self.source.domain == 'snarfed.org' and
+    if (not appengine_config.DEBUG and 'snarfed.org' in self.source.domain and
         not self.PREVIEW and obj_type in ('note', 'article') and
         verb not in ('like', 'share') and not verb.startswith('rsvp-')):
       self.error('Not posting for snarfed.org')

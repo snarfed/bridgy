@@ -17,7 +17,7 @@ class SuperfeedrTest(testutil.HandlerTest):
 
   def setUp(self):
     super(SuperfeedrTest, self).setUp()
-    self.source = testutil.FakeSource(id='foo.com', domain='foo.com',
+    self.source = testutil.FakeSource(id='foo.com', domain=['foo.com'],
                                       features=['webmention'])
     self.source.put()
 

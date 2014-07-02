@@ -91,7 +91,7 @@ class Tumblr(models.Source):
 
     return Tumblr(id=domain,
                   auth_entity=auth_entity.key,
-                  domain=domain,
+                  domain=[domain],
                   domain_url=url,
                   name=auth_entity.user_display_name(),
                   picture=TUMBLR_AVATAR_URL % domain,

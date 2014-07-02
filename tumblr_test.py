@@ -53,7 +53,7 @@ class TumblrTest(testutil.HandlerTest):
     self.assertEquals(self.auth_entity.key, t.auth_entity)
     self.assertEquals('name', t.name)
     self.assertEquals('http://primary/', t.domain_url)
-    self.assertEquals('primary', t.domain)
+    self.assertEquals(['primary'], t.domain)
     self.assertEquals('http://api.tumblr.com/v2/blog/primary/avatar/512', t.picture)
 
   def test_new_no_primary_blog(self):
@@ -69,7 +69,7 @@ class TumblrTest(testutil.HandlerTest):
                            ]}})
     got = Tumblr.new(self.handler, auth_entity=self.auth_entity, blog_name='biff')
     self.assertEquals('http://boff/', got.domain_url)
-    self.assertEquals('boff', got.domain)
+    self.assertEquals(['boff'], got.domain)
 
   def test_verify(self):
     # based on http://snarfed.tumblr.com/

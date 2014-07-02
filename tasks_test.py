@@ -1033,7 +1033,7 @@ class PropagateTest(TaskQueueTest):
 
   def test_propagate_blogpost(self):
     """Blog post propagate task."""
-    source_key = FakeSource.new(None, domain='fake').put()
+    source_key = FakeSource.new(None, domain=['fake']).put()
     links = ['http://fake/post', '/no/domain', 'http://ok/one.png',
              'http://ok/two', 'http://ok/two', # repeated
              ]

@@ -80,7 +80,7 @@ class Blogger(models.Source):
                    auth_entity=auth_entity.key,
                    url=url,
                    name=auth_entity.user_display_name(),
-                   domain=domain,
+                   domain=[domain],
                    domain_url=url,
                    picture=auth_entity.picture_url,
                    superfeedr_secret=util.generate_secret(),

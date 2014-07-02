@@ -23,7 +23,7 @@ class PublishTest(testutil.HandlerTest):
     super(PublishTest, self).setUp()
     publish.SOURCES['fake'] = testutil.FakeSource
     self.source = testutil.FakeSource(
-      id='foo.com', features=['publish'], domain='foo.com',
+      id='foo.com', features=['publish'], domain=['foo.com'],
       domain_url='http://foo.com/')
     self.source.put()
 

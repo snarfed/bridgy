@@ -22,7 +22,7 @@ class BlogWebmentionTest(testutil.HandlerTest):
   def setUp(self):
     super(BlogWebmentionTest, self).setUp()
     blog_webmention.SOURCES['fake'] = testutil.FakeSource
-    self.source = testutil.FakeSource(id='foo.com', domain='foo.com',
+    self.source = testutil.FakeSource(id='foo.com', domain=['foo.com'],
                                       features=['webmention'])
     self.source.put()
 

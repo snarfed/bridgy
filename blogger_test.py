@@ -54,7 +54,7 @@ class BloggerTest(testutil.HandlerTest):
     self.assertEquals(self.auth_entity.key, b.auth_entity)
     self.assertEquals('name', b.name)
     self.assertEquals('http://my.blawg/', b.domain_url)
-    self.assertEquals('my.blawg', b.domain)
+    self.assertEquals(['my.blawg'], b.domain)
     self.assertEquals('http://pic', b.picture)
 
   def test_new_oauth_dropins_error(self):
