@@ -35,8 +35,12 @@ import superfeedr
 import util
 import webapp2
 
+from google.appengine.ext import ndb
+
+
 API_CREATE_COMMENT_URL = 'https://public-api.wordpress.com/rest/v1/sites/%s/posts/%d/replies/new?pretty=true'
 API_POST_SLUG_URL = 'https://public-api.wordpress.com/rest/v1/sites/%s/posts/slug:%s?pretty=true'
+API_SITE_URL = 'https://public-api.wordpress.com/rest/v1/sites/%s?pretty=true'
 
 
 class WordPress(models.Source):
@@ -46,6 +50,8 @@ class WordPress(models.Source):
   """
   AS_CLASS = collections.namedtuple('FakeAsClass', ('NAME',))(NAME='WordPress.com')
   SHORT_NAME = 'wordpress'
+
+  site_info = ndb.JsonProperty(compressed=True)  # from /sites/$site API call
 
   def feed_url(self):
     # http://en.support.wordpress.com/feeds/
@@ -65,31 +71,39 @@ class WordPress(models.Source):
       handler: the current RequestHandler
       auth_entity: oauth_dropins.wordpress.WordPressAuth
     """
+    # Fetch blog's site info
+    auth_domain = auth_entity.key.id()
+    site_info = json.loads(auth_entity.urlopen(API_SITE_URL % auth_domain).read())
+    site_url = site_info.get('URL')
+    if site_url:
+      domains = [util.domain_from_link(site_url), auth_domain]
+      url = site_url
+    else:
+      domains = [auth_domain]
+      url = auth_entity.blog_url
+
     avatar = (json.loads(auth_entity.user_json).get('avatar_URL')
               if auth_entity.user_json else None)
-    wp = WordPress(id=auth_entity.key.id(),
-                   auth_entity=auth_entity.key,
-                   name=auth_entity.user_display_name(),
-                   picture=avatar,
-                   superfeedr_secret=util.generate_secret(),
-                   **kwargs)
-
-    url, domain, _ = wp._url_and_domain(auth_entity)
-    wp.url = url
-    wp.domain_url = url
-    wp.domain = domain
-
-    return wp
+    return WordPress(id=domains[0],
+                     auth_entity=auth_entity.key,
+                     name=auth_entity.user_display_name(),
+                     picture=avatar,
+                     superfeedr_secret=util.generate_secret(),
+                     url=url,
+                     domain_url=url,
+                     domain=domains,
+                     site_info=site_info,
+                     **kwargs)
 
   def _url_and_domain(self, auth_entity):
     """Returns this blog's URL and domain.
 
     Args:
-      auth_entity: oauth_dropins.wordpress_rest.WordPressAuth
+      auth_entity: oauth_dropins.wordpress_rest.WordPressAuth, unused
 
     Returns: (string url, string domain, True)
     """
-    return auth_entity.blog_url, auth_entity.key.id(), True
+    return self.url, self.key.id()
 
 
   def create_comment(self, post_url, author_name, author_url, content):

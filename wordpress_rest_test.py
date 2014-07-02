@@ -30,15 +30,37 @@ class WordPressTest(testutil.HandlerTest):
                                      blog_id='123',
                                      blog_url='http://my.wp.com/',
                                      access_token_str='my token')
+    self.auth_entity.put()
+    self.wp = WordPress(id='my.wp.com',
+                        auth_entity=self.auth_entity.key,
+                        url='http://my.wp.com/',
+                        domain=['my.wp.com'])
 
   def test_new(self):
+    self.expect_urlopen(
+      'https://public-api.wordpress.com/rest/v1/sites/my.wp.com?pretty=true',
+      json.dumps({}))
+    self.mox.ReplayAll()
+
     w = WordPress.new(self.handler, auth_entity=self.auth_entity)
     self.assertEquals(self.auth_entity.key, w.auth_entity)
     self.assertEquals('my.wp.com', w.key.id())
     self.assertEquals('Ryan', w.name)
     self.assertEquals('http://my.wp.com/', w.domain_url)
-    self.assertEquals('my.wp.com', w.domain)
+    self.assertEquals(['my.wp.com'], w.domain)
     self.assertEquals('http://ava/tar', w.picture)
+
+  def test_new_with_site_domain(self):
+    self.expect_urlopen(
+      'https://public-api.wordpress.com/rest/v1/sites/my.wp.com?pretty=true',
+      json.dumps({'ID': 123, 'URL': 'https://vanity.domain/'}))
+    self.mox.ReplayAll()
+
+    w = WordPress.new(self.handler, auth_entity=self.auth_entity)
+    self.assertEquals('vanity.domain', w.key.id())
+    self.assertEquals('https://vanity.domain/', w.url)
+    self.assertEquals('https://vanity.domain/', w.domain_url)
+    self.assertEquals(['vanity.domain', 'my.wp.com'], w.domain)
 
   def test_create_comment_with_slug_lookup(self):
     self.expect_urlopen(
@@ -52,10 +74,8 @@ class WordPressTest(testutil.HandlerTest):
       data=urllib.urlencode({'content': '<a href="http://who">who</a>: foo bar'}))
     self.mox.ReplayAll()
 
-    self.auth_entity.put()
-    wp = WordPress.new(self.handler, auth_entity=self.auth_entity)
-    resp = wp.create_comment('http://primary/post/123999/the-slug?asdf',
-                             'who', 'http://who', 'foo bar')
+    resp = self.wp.create_comment('http://primary/post/123999/the-slug?asdf',
+                                  'who', 'http://who', 'foo bar')
     self.assertEquals({'id': 789, 'ok': 'sgtm'}, resp)
 
   def test_create_comment_with_unicode_chars(self):
@@ -67,10 +87,8 @@ class WordPressTest(testutil.HandlerTest):
           'content': '<a href="http://who">Degenève</a>: foo Degenève bar'}))
     self.mox.ReplayAll()
 
-    self.auth_entity.put()
-    wp = WordPress.new(self.handler, auth_entity=self.auth_entity)
-    resp = wp.create_comment('http://primary/post/123', u'Degenève',
-                             'http://who', u'foo Degenève bar')
+    resp = self.wp.create_comment('http://primary/post/123', u'Degenève',
+                                  'http://who', u'foo Degenève bar')
 
   def test_create_comment_gives_up_on_invalid_input_error(self):
     # see https://github.com/snarfed/bridgy/issues/161
@@ -82,25 +100,21 @@ class WordPressTest(testutil.HandlerTest):
       data=urllib.urlencode({'content': '<a href="http://who">name</a>: foo'}))
     self.mox.ReplayAll()
 
-    self.auth_entity.put()
-    wp = WordPress.new(self.handler, auth_entity=self.auth_entity)
-    resp = wp.create_comment('http://primary/post/123', 'name', 'http://who', 'foo')
+    resp = self.wp.create_comment('http://primary/post/123', 'name',
+                                  'http://who', 'foo')
     # shouldn't raise an exception
     self.assertEquals({'error': 'invalid_input'}, resp)
 
   def test_superfeedr_notify(self):
     """Smoke test. Just check that we make it all the way through."""
-    WordPress.new(self.handler, auth_entity=self.auth_entity).put()
     resp = wordpress_rest.application.get_response(
       '/wordpress/notify/111', method='POST', body=json.dumps({'items': []}))
     self.assertEquals(200, resp.status_int)
 
   def test_preprocess_superfeedr_item(self):
-    wp = WordPress.new(self.handler, auth_entity=self.auth_entity)
-
     def test(expected, input):
       item = {'content': input}
-      wp.preprocess_superfeedr_item(item)
+      self.wp.preprocess_superfeedr_item(item)
       self.assert_equals(expected, item['content'])
 
     for unchanged in ('', 'a b c', 'a http://foo b',
