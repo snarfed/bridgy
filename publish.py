@@ -114,7 +114,8 @@ class Handler(webmention.WebmentionHandler):
       domain_url_parts = urlparse.urlparse(domain_url)
       source_url_parts = urlparse.urlparse(self.source_url)
       if (source_url_parts.netloc == domain_url_parts.netloc and
-          source_url_parts.path.strip('/') == domain_url_parts.path.strip('/')):
+          source_url_parts.path.strip('/') == domain_url_parts.path.strip('/') and
+          not source_url_parts.query):
         return self.error(
           "Looks like that's your home page. Try one of your posts instead!",
           mail=False)

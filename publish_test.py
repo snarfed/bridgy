@@ -190,6 +190,13 @@ class PublishTest(testutil.HandlerTest):
     self.source.put()
     self.assert_error("Looks like that's your home page.", source='https://foo.com#')
 
+    # query params alone shouldn't trigger this
+    html = '<article class="h-entry"><p class="e-content">foo</p></article>'
+    self.expect_requests_get('http://foo.com/?p=123', html)
+    self.mox.ReplayAll()
+    resp = self.get_response(source='http://foo.com/?p=123')
+    self.assertEquals(200, resp.status_int, resp.body)
+
   def test_embedded_type_not_implemented(self):
     self.expect_requests_get('http://foo.com/bar', """
 <article class="h-entry">
