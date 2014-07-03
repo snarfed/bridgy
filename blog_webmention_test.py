@@ -56,7 +56,7 @@ i hereby reply
     testutil.FakeSource.create_comment(
       'http://foo.com/post/1', 'my name', 'http://foo.com/',
       'i hereby reply\n<a class="u-in-reply-to" href="http://foo.com/post/1"></a>'
-      '<br /><a href="http://bar.com/reply">via bar.com</a>'
+      ' <br /> <a href="http://bar.com/reply">via bar.com</a>'
       ).AndReturn({'id': 'fake id'})
     self.mox.ReplayAll()
 
@@ -83,7 +83,7 @@ i hereby reply
 
     testutil.FakeSource.create_comment(
       'http://foo.com/post/1', 'my name', 'http://foo.com/',
-      'i hereby reply<br /><a href="http://bar.com/reply">via bar.com</a>'
+      'i hereby reply <br /> <a href="http://bar.com/reply">via bar.com</a>'
       ).AndReturn({'id': 'fake id'})
     self.mox.ReplayAll()
 
@@ -120,7 +120,7 @@ i hereby reply
 
     testutil.FakeSource.create_comment(
       'http://FoO.cOm/post/1', 'foo.com', 'http://foo.com/',
-      'X http://FoO.cOm/post/1<br /><a href="http://bar.com/reply">via bar.com</a>')
+      'X http://FoO.cOm/post/1 <br /> <a href="http://bar.com/reply">via bar.com</a>')
     self.mox.ReplayAll()
 
     resp = self.get_response(target='http://FoO.cOm/post/1')
@@ -142,7 +142,7 @@ i hereby reply
     self.expect_requests_get('http://bar.com/reply', html)
     testutil.FakeSource.create_comment(
       'http://foo.com/post/1', 'foo.com', 'http://foo.com/',
-      'http://foo.com/post/1<br /><a href="http://bar.com/reply">via bar.com</a>')
+      'http://foo.com/post/1 <br /> <a href="http://bar.com/reply">via bar.com</a>')
     self.mox.ReplayAll()
 
     resp = self.get_response(target=urllib.quote(
@@ -159,7 +159,7 @@ i hereby reply
     self.expect_requests_get('http://bar.com/reply', html)
     testutil.FakeSource.create_comment(
       'http://foo.com/post/1', 'foo.com', 'http://foo.com/',
-      '<a href="http://foo.com/post/1"></a><br /><a href="http://bar.com/reply">via bar.com</a>')
+      '<a href="http://foo.com/post/1"></a> <br /> <a href="http://bar.com/reply">via bar.com</a>')
     self.mox.ReplayAll()
 
     resp = self.get_response()
@@ -189,7 +189,7 @@ i hereby mention
       'http://foo.com/post/1', 'my name', 'http://foo.com/', """\
 i hereby mention
 <a href="http://foo.com/post/1"></a>
-<a class="u-url" href="http://barzz.com/u/url"></a><br /><a href="http://barzz.com/u/url">via barzz.com</a>"""
+<a class="u-url" href="http://barzz.com/u/url"></a> <br /> <a href="http://barzz.com/u/url">via barzz.com</a>"""
       ).AndReturn({'id': 'fake id'})
     self.mox.ReplayAll()
 
@@ -213,7 +213,7 @@ i hereby mention
 </article>""")
     testutil.FakeSource.create_comment(
       'http://foo.com/post/1', 'foo.com', 'http://foo.com/',
-      'reposted this.<br /><a href="http://bar.com/reply">via bar.com</a>')
+      'reposted this. <br /> <a href="http://bar.com/reply">via bar.com</a>')
 
     # 3) after success, another is a noop and returns 200
     # TODO: check for "updates not supported" message
