@@ -1,7 +1,0 @@
-User-agent: *
-Disallow: /comment
-Disallow: /like
-Disallow: /log
-Disallow: /post
-Disallow: /repost
-Disallow: /rsvp
