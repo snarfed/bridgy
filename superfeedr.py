@@ -72,15 +72,20 @@ def handle_feed(feed, source):
   logging.info('Source: %s %s', source.label(), source.key.string_id())
   logging.info('Raw feed: %s', feed)
   for item in json.loads(feed).get('items', []):
-    source.preprocess_superfeedr_item(item)
-    # TODO: extract_links currently has a bug that makes it drop trailing
-    # slashes. ugh. fix that.
-    links = util.extract_links(item.get('content') or item.get('summary', ''))
-    logging.info('Found links: %s', links)
     url = item.get('permalinkUrl') or item.get('id')
     if not url:
       logging.error('Dropping feed item without permalinkUrl or id!')
       continue
+
+    source.preprocess_superfeedr_item(item)
+    # extract links from content, discarding self links.
+    # TODO: extract_links currently has a bug that makes it drop trailing
+    # slashes. ugh. fix that.
+    content = item.get('content') or item.get('summary', '')
+    links = [l for l in util.extract_links(content)
+             if util.domain_from_link(l) not in source.domains]
+
+    logging.info('Found links: %s', links)
     models.BlogPost(id=url,
                     source=source.key,
                     feed_item=item,

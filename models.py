@@ -464,8 +464,13 @@ class Source(StringIdModel):
     """Process a Superfeeder item field before extracting links from it.
 
     The item is modified in place. Default is noop. Indivudal sources can
-    override this with source-specific logic, e.g. WordPress removes category
-    and tag links from content.
+    override this with source-specific logic.
+
+    I used to use this to remove WordPress.com category and tag links from
+    content, but I ended up just filtering out all self-links instead. Details
+    in https://github.com/snarfed/bridgy/issues/207.
+
+    TODO: remove this if it ends up unused
 
     Args:
       item: dict, a JSON Superfeedr feed item. Details:

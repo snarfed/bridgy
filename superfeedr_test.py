@@ -53,13 +53,14 @@ class SuperfeedrTest(testutil.HandlerTest):
                        [testutil.get_task_params(t) for t in tasks])
 
   def test_handle_feed(self):
-    item_a = {'permalinkUrl': 'A', 'content': 'a http://a.com a'}
+    item_a = {'permalinkUrl': 'A',
+              'content': 'a http://a.com http://foo.com/self/link b'}
     superfeedr.handle_feed(json.dumps({'items': [item_a]}), self.source)
 
     posts = list(BlogPost.query())
     self.assert_entities_equal(
       [BlogPost(id='A', source=self.source.key, feed_item=item_a,
-                unsent=['http://a.com'])],
+                unsent=['http://a.com'])],  # self link should be discarded
       posts,
       ignore=('created', 'updated'))
 

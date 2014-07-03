@@ -111,21 +111,3 @@ class WordPressTest(testutil.HandlerTest):
     resp = wordpress_rest.application.get_response(
       '/wordpress/notify/111', method='POST', body=json.dumps({'items': []}))
     self.assertEquals(200, resp.status_int)
-
-  def test_preprocess_superfeedr_item(self):
-    def test(expected, input):
-      item = {'content': input}
-      self.wp.preprocess_superfeedr_item(item)
-      self.assert_equals(expected, item['content'])
-
-    for unchanged in ('', 'a b c', 'a http://foo b',
-                      ' Filed under: foo', ' Tagged under: bar',
-                      'stagged: <a href=x">', 'profiled under: <a href=x">'):
-      test(unchanged, unchanged)
-
-    for clear in (' Filed under: <a href="foo"></a>',
-                  ' Tagged: <a href="bar"></a>'):
-      test(' ', clear)
-
-    test('a http://foo ',
-         'a http://foo Filed under: <a href="foo"></a> Tagged: <a href="bar"></a>')

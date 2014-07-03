@@ -46,8 +46,10 @@ WEBMENTION_BLACKLIST = {
   'youtube.com',
   'youtu.be',
   '', None,
-  # individual web sites that fail to fetch on app engine
-  'djtymenathanscot.com',
+  # these show up in the categories and tags sections of wordpress.com blog
+  # posts. superfeedr doesn't filter them out of its 'content' field.
+  'feeds.wordpress.com',
+  'stats.wordpress.com',
   # temporary. tom's webmention handler is broken, and he knows about it.
   # TODO: remove once he's fixed it.
   'tommorris.org',

@@ -159,17 +159,6 @@ class WordPress(models.Source):
     resp['id'] = resp.pop('ID', None)
     return resp
 
-  def preprocess_superfeedr_item(self, item):
-    """Removes category and tag links from the content field.
-
-    Args:
-      item: dict, a JSON Superfeedr feed item. Details:
-            http://documentation.superfeedr.com/schema.html#json
-    """
-    if item.get('content'):
-      item['content'] = re.sub(r'(\W)(Tagged|Filed under): <a.+', r'\1',
-                               item['content'])
-
 
 class AddWordPress(oauth_wordpress.CallbackHandler, util.Handler):
   def finish(self, auth_entity, state=None):
