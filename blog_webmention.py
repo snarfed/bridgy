@@ -53,6 +53,7 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
     self.source = (source_cls.query()
                    .filter(source_cls.domains == domain)
                    .filter(source_cls.features == 'webmention')
+                   .filter(source_cls.status == 'enabled')
                    .get())
     if not self.source:
       return self.error(

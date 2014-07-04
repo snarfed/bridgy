@@ -114,6 +114,13 @@ i hereby reply
     self.assert_error(msg)
     self.assertEquals(0, BlogWebmention.query().count())
 
+    # source is disabled
+    self.source.domains = ['foo.com']
+    self.source.status = 'disabled'
+    self.source.put()
+    self.assert_error(msg)
+    self.assertEquals(0, BlogWebmention.query().count())
+
   def test_domain_translates_to_lowercase(self):
     html = '<article class="h-entry"><p class="e-content">X http://FoO.cOm/post/1</p></article>'
     self.expect_requests_get('http://bar.com/reply', html)
