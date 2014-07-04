@@ -18,6 +18,7 @@ import models
 import requests
 from requests.auth import HTTPBasicAuth
 import util
+import webapp2
 
 PUSH_API_URL = 'https://push.superfeedr.com'
 
@@ -71,6 +72,14 @@ def handle_feed(feed, source):
   """
   logging.info('Source: %s %s', source.label(), source.key.string_id())
   logging.info('Raw feed: %s', feed)
+
+  if source.status != 'enabled':
+    logging.warning('Dropping because source is %s', source.status)
+    return
+  elif 'webmention' not in source.features:
+    logging.warning("Dropping because source doesn't have webmention feature")
+    return
+
   for item in json.loads(feed).get('items', []):
     url = item.get('permalinkUrl') or item.get('id')
     if not url:
@@ -91,3 +100,18 @@ def handle_feed(feed, source):
                     feed_item=item,
                     unsent=links,
                     ).get_or_save()
+
+
+class NotifyHandler(webapp2.RequestHandler):
+  """Handles a Superfeedr notification.
+
+  Abstract; subclasses must set the SOURCE_CLS attr.
+
+  http://documentation.superfeedr.com/subscribers.html#pubsubhubbubnotifications
+  """
+  SOURCE_CLS = None
+
+  def post(self, id):
+    source = self.SOURCE_CLS.get_by_id(id)
+    if source:
+      handle_feed(self.request.body, source)

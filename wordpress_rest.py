@@ -165,20 +165,12 @@ class AddWordPress(oauth_wordpress.CallbackHandler, util.Handler):
     self.maybe_add_or_delete_source(WordPress, auth_entity, state)
 
 
-class SuperfeedrNotifyHandler(webapp2.RequestHandler):
-  """Handles a Superfeedr notification.
-
-  http://documentation.superfeedr.com/subscribers.html#pubsubhubbubnotifications
-  """
-  def post(self, id):
-    source = WordPress.get_by_id(id)
-    if source and 'webmention' in source.features:
-      superfeedr.handle_feed(self.request.body, source)
+class SuperfeedrNotifyHandler(superfeedr.NotifyHandler):
+  SOURCE_CLS = WordPress
 
 
 application = webapp2.WSGIApplication([
     ('/wordpress/start', oauth_wordpress.StartHandler.to('/wordpress/add')),
     ('/wordpress/add', AddWordPress),
     ('/wordpress/delete/start', oauth_wordpress.CallbackHandler.to('/delete/finish')),
-    ('/wordpress/notify/(.+)', SuperfeedrNotifyHandler),
     ], debug=appengine_config.DEBUG)

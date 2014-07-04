@@ -7,10 +7,14 @@ import json
 import mox
 
 from appengine_config import HTTP_TIMEOUT
-from models import BlogPost
 
+from blogger import Blogger
+from models import BlogPost
+from tumblr import Tumblr
+from wordpress_rest import WordPress
 import superfeedr
 import testutil
+import webapp2
 
 
 class SuperfeedrTest(testutil.HandlerTest):
@@ -20,6 +24,12 @@ class SuperfeedrTest(testutil.HandlerTest):
     self.source = testutil.FakeSource(id='foo.com', domains=['foo.com'],
                                       features=['webmention'])
     self.source.put()
+    self.item = {'id': 'A', 'content': 'B'}
+    self.feed = json.dumps({'items': [self.item]})
+
+  def assert_blogposts(self, count):
+    self.assertEquals(count, BlogPost.query().count())
+    self.assertEquals(count, len(self.taskqueue_stub.GetTasks('propagate-blogpost')))
 
   def test_subscribe(self):
     expected = {
@@ -71,17 +81,37 @@ class SuperfeedrTest(testutil.HandlerTest):
 
   def test_handle_feed_no_items(self):
     superfeedr.handle_feed('{}', self.source)
-    self.assertEquals(0, BlogPost.query().count())
-    self.assertEquals(0, len(self.taskqueue_stub.GetTasks('propagate-blogpost')))
+    self.assert_blogposts(0)
+
+  def test_handle_feed_disabled_source(self):
+    self.source.status = 'disabled'
+    self.source.put()
+    superfeedr.handle_feed(self.feed, self.source)
+    self.assert_blogposts(0)
+
+  def test_handle_feed_source_missing_webmention_feature(self):
+    self.source.features = ['listen']
+    self.source.put()
+    superfeedr.handle_feed(self.feed, self.source)
+    self.assert_blogposts(0)
 
   def test_preprocess_superfeedr_item(self):
     self.mox.StubOutWithMock(self.source, 'preprocess_superfeedr_item')
-    items = [{'permalinkUrl': 'A', 'content': 'a b'}]
 
     def add_link(item):
       item['content'] += '\nhttp://added/by/preprocess'
-    self.source.preprocess_superfeedr_item(items[0]).WithSideEffects(add_link)
+    self.source.preprocess_superfeedr_item(self.item).WithSideEffects(add_link)
 
     self.mox.ReplayAll()
-    superfeedr.handle_feed(json.dumps({'items': items}), self.source)
+    superfeedr.handle_feed(self.feed, self.source)
     self.assertEquals(['http://added/by/preprocess'], BlogPost.query().get().unsent)
+
+  def test_notify_handler(self):
+    class Handler(superfeedr.NotifyHandler):
+      SOURCE_CLS = testutil.FakeSource
+
+    app = webapp2.WSGIApplication([('/notify/(.+)', Handler)], debug=True)
+    resp = app.get_response('/notify/foo.com', method='POST', body=self.feed)
+
+    self.assertEquals(200, resp.status_int)
+    self.assert_blogposts(1)

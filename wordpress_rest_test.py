@@ -105,9 +105,3 @@ class WordPressTest(testutil.HandlerTest):
                                   'http://who', 'foo')
     # shouldn't raise an exception
     self.assertEquals({'error': 'invalid_input'}, resp)
-
-  def test_superfeedr_notify(self):
-    """Smoke test. Just check that we make it all the way through."""
-    resp = wordpress_rest.application.get_response(
-      '/wordpress/notify/111', method='POST', body=json.dumps({'items': []}))
-    self.assertEquals(200, resp.status_int)

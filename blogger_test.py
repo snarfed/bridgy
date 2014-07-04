@@ -110,10 +110,3 @@ class BloggerTest(testutil.HandlerTest):
                             'foo bar', client=self.client)
     # the key point is that create_comment doesn't raise an exception
     self.assert_equals({'error': '500, Internal error: bX-2i87au'}, resp)
-
-  def test_superfeedr_notify(self):
-    """Smoke test. Just check that we make it all the way through."""
-    Blogger.new(self.handler, auth_entity=self.auth_entity).put()
-    resp = blogger.application.get_response(
-      '/blogger/notify/111', method='POST', body=json.dumps({'items': []}))
-    self.assertEquals(200, resp.status_int)

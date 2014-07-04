@@ -199,15 +199,8 @@ class AddBlogger(util.Handler):
       )
 
 
-class SuperfeedrNotifyHandler(webapp2.RequestHandler):
-  """Handles a Superfeedr notification.
-
-  http://documentation.superfeedr.com/subscribers.html#pubsubhubbubnotifications
-  """
-  def post(self, id):
-    source = Blogger.get_by_id(id)
-    if source and 'webmention' in source.features:
-      superfeedr.handle_feed(self.request.body, source)
+class SuperfeedrNotifyHandler(superfeedr.NotifyHandler):
+  SOURCE_CLS = Blogger
 
 
 application = webapp2.WSGIApplication([
