@@ -117,6 +117,13 @@ If you want Bridgy to handle your blog's webmentions, change it to
   {{ source.bridgy_webmention_endpoint }}</a></code>.
 </p>
 {% endif %}
+
+<form method="post" action="/delete/start">
+  <input name="key" type="hidden" value="{{ source.key.urlsafe }}" />
+  <input name="feature" type="hidden" value="webmention" />
+  <button id="delete-button" type="submit" class="btn btn-default"
+          title="Disable this account. (Won't delete webmentions you've already sent or received.)">Disable</button>
+</form>
 </div>
 <br />
 

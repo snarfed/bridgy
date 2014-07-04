@@ -172,5 +172,5 @@ class SuperfeedrNotifyHandler(superfeedr.NotifyHandler):
 application = webapp2.WSGIApplication([
     ('/wordpress/start', oauth_wordpress.StartHandler.to('/wordpress/add')),
     ('/wordpress/add', AddWordPress),
-    ('/wordpress/delete/start', oauth_wordpress.CallbackHandler.to('/delete/finish')),
+    ('/wordpress/delete/finish', oauth_wordpress.CallbackHandler.to('/delete/finish')),
     ], debug=appengine_config.DEBUG)

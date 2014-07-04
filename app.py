@@ -17,10 +17,13 @@ import appengine_config
 # need to import modules with model class definitions, e.g. facebook, for
 # template rendering.
 from activitystreams import source as as_source
+from activitystreams.oauth_dropins import blogger_v2 as oauth_blogger_v2
 from activitystreams.oauth_dropins import facebook as oauth_facebook
 from activitystreams.oauth_dropins import googleplus as oauth_googleplus
 from activitystreams.oauth_dropins import instagram as oauth_instagram
+from activitystreams.oauth_dropins import tumblr as oauth_tumblr
 from activitystreams.oauth_dropins import twitter as oauth_twitter
+from activitystreams.oauth_dropins import wordpress_rest as oauth_wordpress_rest
 from activitystreams.oauth_dropins.webutil.handlers import TemplateHandler
 from blogger import Blogger
 from facebook import FacebookPage
@@ -196,16 +199,19 @@ class UserHandler(DashboardHandler):
 
     # Blog webmention promos
     if 'webmention' not in self.source.features:
-      for domain in self.source.domains:
-        if ('.blogspot.' in domain and  # Blogger uses country TLDs
-            not Blogger.query(Blogger.domains == domain).get()):
-          vars['blogger_promo'] = True
-        elif (domain.endswith('tumblr.com') and
-              not Tumblr.query(Tumblr.domains == domain).get()):
-          vars['tumblr_promo'] = True
-        elif (domain.endswith('wordpress.com') and
-              not WordPress.query(WordPress.domains == domain).get()):
-          vars['wordpress_promo'] = True
+      if self.source.SHORT_NAME in ('blogger', 'tumblr', 'wordpress'):
+        vars[self.source.SHORT_NAME + '_promo'] = True
+      else:
+        for domain in self.source.domains:
+          if ('.blogspot.' in domain and  # Blogger uses country TLDs
+              not Blogger.query(Blogger.domains == domain).get()):
+            vars['blogger_promo'] = True
+          elif (domain.endswith('tumblr.com') and
+                not Tumblr.query(Tumblr.domains == domain).get()):
+            vars['tumblr_promo'] = True
+          elif (domain.endswith('wordpress.com') and
+                not WordPress.query(WordPress.domains == domain).get()):
+            vars['wordpress_promo'] = True
 
     # Responses
     if 'listen' in self.source.features:
@@ -305,10 +311,13 @@ class AboutHandler(TemplateHandler):
 
 class DeleteStartHandler(util.Handler):
   OAUTH_MODULES = {
+    'Blogger': oauth_blogger_v2,
     'FacebookPage': oauth_facebook,
     'GooglePlusPage': oauth_googleplus,
     'Instagram': oauth_instagram,
+    'Tumblr': oauth_tumblr,
     'Twitter': oauth_twitter,
+    'WordPress': oauth_wordpress_rest,
     }
 
   def post(self):
@@ -316,14 +325,14 @@ class DeleteStartHandler(util.Handler):
     module = self.OAUTH_MODULES[key.kind()]
     state = '%s-%s' % (util.get_required_param(self, 'feature'), key.urlsafe())
 
+    # Google+ and Blogger don't support redirect_url() yet
     if module is oauth_googleplus:
-      # Google+ doesn't support redirect_url() yet
       self.redirect('/googleplus/delete/start?state=%s' % state)
+    elif module is oauth_blogger_v2:
+      self.redirect('/blogger/delete/start?state=%s' % state)
     else:
-      if module is oauth_instagram:
-        path = '/instagram/oauth_callback'
-      else:
-        path = '/%s/delete/finish' % key.get().SHORT_NAME
+      path = ('/instagram/oauth_callback' if module is oauth_instagram
+              else '/%s/delete/finish' % key.get().SHORT_NAME)
       handler = module.StartHandler.to(path)(self.request, self.response)
       self.redirect(handler.redirect_url(state=state))
 
@@ -347,13 +356,14 @@ class DeleteFinishHandler(util.Handler):
       if feature in source.features:
         source.features.remove(feature)
         source.put()
-      self.messages.add('Disabled %sing for %s. Sorry to see you go!' %
-                        (feature, source.label()))
+      noun = 'webmentions' if feature == 'webmention' else feature + 'ing'
+      self.messages.add('Disabled %s for %s. Sorry to see you go!' %
+                        (noun, source.label()))
       # util.email_me(subject='Deleted Bridgy %s user: %s %s' %
       #               (feature, source.label(), source.key.string_id()),
       #               body=source.bridgy_url(self))
     else:
-      self.messages.add('Please log into %s as %s to delete it here.' %
+      self.messages.add('Please log into %s as %s to disable it here.' %
                         (source.AS_CLASS.NAME, source.name))
 
     self.redirect(source.bridgy_url(self))
