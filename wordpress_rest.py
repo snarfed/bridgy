@@ -174,4 +174,5 @@ application = webapp2.WSGIApplication([
     # This handles both add and delete. (WordPress.com only allows a single
     # OAuth redirect URL.)
     ('/wordpress/add', AddWordPress),
+    ('/wordpress/notify/(.+)', SuperfeedrNotifyHandler),
     ], debug=appengine_config.DEBUG)
