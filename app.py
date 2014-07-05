@@ -332,6 +332,7 @@ class DeleteStartHandler(util.Handler):
       self.redirect('/blogger/delete/start?state=%s' % state)
     else:
       path = ('/instagram/oauth_callback' if module is oauth_instagram
+              else '/wordpress/add' if module is oauth_wordpress_rest
               else '/%s/delete/finish' % key.get().SHORT_NAME)
       handler = module.StartHandler.to(path)(self.request, self.response)
       self.redirect(handler.redirect_url(state=state))
