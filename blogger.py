@@ -148,7 +148,7 @@ class Blogger(models.Source):
     return resp
 
 
-class OAuthHandler(util.Handler):
+class OAuthCallback(util.Handler):
   """OAuth callback handler.
 
   Both the add and delete flows have to share this because Blogger's
@@ -206,7 +206,7 @@ class SuperfeedrNotifyHandler(superfeedr.NotifyHandler):
 application = webapp2.WSGIApplication([
     ('/blogger/start', oauth_blogger.StartHandler.to('/blogger/oauth2callback')),
     ('/blogger/oauth2callback', oauth_blogger.CallbackHandler.to('/blogger/oauth_handler')),
-    ('/blogger/oauth_handler', OAuthHandler),
+    ('/blogger/oauth_handler', OAuthCallback),
     ('/blogger/add', AddBlogger),
     ('/blogger/delete/start', oauth_blogger.StartHandler.to('/blogger/oauth2callback')),
     ('/blogger/notify/(.+)', SuperfeedrNotifyHandler),
