@@ -17,12 +17,16 @@
 <li><a href="#disconnected">Bridgy stopped working for me!</a></li>
 <li><a href="#facebook-expired">Bridgy used to work with my Facebook account,
   but now it doesn't!</a></li>
+<li><a href="#security">It looks like anyone can poll or disable my
+account or publish as me. Isn't that a security hole?</a></li>
 <li><a href="#bug">I found a bug! I have a feature request!</a></li>
 <li><a href="#domain">Brid.gy? Really?</a></li>
 
 <br />
 <p><em>Pulling back responses</em></p>
 <li><a href="#which">Which things does it send, specifically?</a></li>
+<li><a href="#accept">How can I get my web site to accept
+  webmentions?</a></li>
 <li><a href="#realtime">Bridgy isn't seeing one of my comments or
   likes or reshares!</a></li>
 <li><a href="#missing">...but it's been a while, and Bridgy
@@ -62,6 +66,10 @@
 <li><a href="#endpoint">Why do I have to add that line of HTML to
   my blog?</a></li>
 <li><a href="#disqus">I'm on Tumblr. Why do I have to install Disqus?</a></li>
+<li><a href="#moderation">I received a webmention, but it's not
+  showing up on my blog.</a></li>
+<li><a href="#user">All the comments for incoming webmentions come from me.
+That's ugly.</a></li>
 
 </ul>
 <br />
@@ -206,6 +214,15 @@ you a notification on Facebook when you need to renew. Just click on the
 notification, and you'll be set for another two months.
 </p></li>
 
+<li id="security" class="question">It looks like anyone can poll or disable my
+account or publish as me. Isn't that a security hole?</li>
+<li class="answer">
+<p>Yeah, those do seem dangerous, but fortunately they're protected. Polling is
+harmless; Bridgy does it automatically anyway. We recheck your account login
+when you click the disable button. And finally, we only let you publish posts
+that you've already posted on your own web site.</p>
+</li>
+
 <li id="bug" class="question">I found a bug! I have a feature request!</li>
 <li class="answer">
 <p>Great! Thank you! Feel free
@@ -238,6 +255,18 @@ or <a href="https://snarfed.org/about">send me an email</a>.
 <li>Instagram comments and likes on your pictures.</li>
 </ul>
 </li>
+</p></li>
+
+<li id="accept" class="question">How can I get my web site to accept
+  webmentions?</li>
+<li class="answer">
+<p>Webmentions are pretty new, but many web servers already support them. If
+you're on Blogger, Tumblr, or WordPress.com, <a href="/">you can sign your blog
+up with Bridgy</a> to accept webmentions. If you're on self-hosted WordPress,
+<a href="http://wordpress.org/plugins/indieweb/">install the Indieweb
+plugin</a>. Otherwise,
+<a href="http://indiewebcamp.com/webmention#Publishing_Software">check out the
+Indiewebcamp wiki</a> for a list of options.
 </p></li>
 
 <li id="realtime" class="question">Bridgy isn't seeing one of my comments or
@@ -663,9 +692,6 @@ outgoing) to three of the largest providers:
 <a href="http://wordpress.com/">WordPress.com</a>.</p>
 </li>
 
-<li><a href="#outgoing"></a></li>
-<li><a href="#incoming"></a></li>
-
 <li id="outgoing" class="question">What outgoing webmentions does it send from
 my blog?</li>
 <li class="answer">
@@ -705,6 +731,27 @@ format. We know Disqus isn't for everyone, though, and we're open to
 alternatives. Feel free
 to <a href="https://github.com/snarfed/bridgy/issues">file suggestions on
 GitHub</a>!</p>
+</li>
+
+<li id="moderation" class="question">I received a webmention, but it's not
+  showing up on my blog.</li>
+<li class="answer">
+<p>Check your comment moderation queue, especially if you're on WordPress.com.
+Bridgy includes a couple links in the comments it creates for webmentions, which
+can trigger some comment spam filters.</p>
+</li>
+
+<li id="user" class="question">All the comments for incoming webmentions
+come from me. That's ugly.</li>
+<li class="answer">
+<p>Yeah, that's an unfortunate side effect of the way the blog APIs handle
+authentication and authorization. It's the most reliable way to get
+comments past rate limits, spam filters, etc. and have the best chance of
+actually showing up.</p>
+<p>One workaround is to create a new user with a different name, add it to your
+blog as a contributor, and sign your blog up for Bridgy again under that
+user. <a href="/wordpress/likeiwassayingblog.wordpress.com">Here's an
+example.</a></p>
 </li>
 
 </ul>
