@@ -13,7 +13,8 @@
   <ul>
     {% for blog in blogs %}
     <li>
-      <input type="radio" name="blog" id="{{ blog.id }}" value="{{ blog.id }}">
+      <input type="radio" name="blog" id="{{ blog.id }}" value="{{ blog.id }}"
+             {% if forloop.first %} checked {% endif %}>
       <label for="{{ blog.id }}"> {{ blog.title }}
         (<a target="_blank" href="http://{{ blog.domain }}/">{{ blog.domain }}</a>)
       </label>
