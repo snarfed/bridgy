@@ -59,7 +59,7 @@ import webapp2
 
 import appengine_config
 
-from activitystreams.oauth_dropins import twitter as oauth_twitter
+from activitystreams.oauth_dropins import twitter_auth
 import models
 import tasks
 from twitter import Twitter
@@ -193,8 +193,7 @@ def update_streams_once():
     logging.info('Connecting %d streams', len(to_connect))
   for key in to_connect:
     source = sources[key]
-    auth = oauth_twitter.TwitterAuth.tweepy_auth(
-      *source.auth_entity.get().access_token())
+    auth = twitter_auth.tweepy_auth(*source.auth_entity.get().access_token())
     streams[key] = streaming.Stream(auth, Listener(source), secure=True)
     # run stream in *non*-background thread, since app engine backends have a
     # fixed limit of 10 background threads per instance. normal threads are only
