@@ -204,8 +204,8 @@ class Handler(webmention.WebmentionHandler):
     props = item.get('properties', {})
     obj_type = obj.get('objectType')
     if obj_type in ('note', 'article', 'comment'):
-      contents = props.get('content', [])
-      if not contents or not contents[0] or not contents[0].get('value'):
+      if (not obj.get('content') and not obj.get('summary') and
+          not obj.get('displayName')):
         raise NotImplementedError('Could not find <a href="http://microformats.org/">content</a> in %s' % self.fetched.url)
 
     # special case for me: don't allow posts in live app, just comments, likes,
