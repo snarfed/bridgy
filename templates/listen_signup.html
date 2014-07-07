@@ -1,8 +1,6 @@
-<div id="listen-signup" class="signup {{ width }}">
-<p class="big">Want comments and likes?</p>
+<div id="listen-signup signup" class="row signup">
+<p class="big">Get started:</p>
 
-<div class="row">
-<div class="col-xs-12">
  <form method="post" name="listen-facebook-start" action="/facebook/start">
   <input type="image" alt="Sign in with Facebook"
          src="/activitystreams/oauth_dropins/static/facebook.png" />
@@ -15,11 +13,8 @@
   <input type="image" alt="Sign in with Twitter"
          src="/activitystreams/oauth_dropins/static/twitter.png" />
   <input name="state" type="hidden" value="listen" />
-</form></div>
+</form>
 
-<div class="clearfix visible-xs"></div>
-
-<div class="col-xs-12">
  <form method="post" name="listen-googleplus-start" action="/googleplus/start">
   <input type="image" alt="Sign in with Google+"
          src="/activitystreams/oauth_dropins/static/google_plus.png" />
@@ -34,7 +29,6 @@
   <input type="image" alt="Sign in with Instagram"
          src="/activitystreams/oauth_dropins/static/instagram.png" />
   <input name="state" type="hidden" value="listen" />
-</form></div>
-</div>
+</form>
 
 </div>

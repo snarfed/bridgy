@@ -7,22 +7,17 @@
 {% block content %}
 
 <!-- Signup buttons -->
-<div id="signups" class="row">
-{% with "col-sm-5" as width %}
+<div id="signups">
+{% with "col-sm-7" as width %}
 {% include "listen_signup.html" %}
 {% endwith %}
 
-{% with "col-sm-3" as width %}
-{% include "publish_signup.html" %}
-{% endwith %}
-
-{% with "col-sm-4" as width %}
+{% with "col-sm-5" as width %}
 {% include "webmention_signup.html" %}
 {% endwith %}
 </div>
 
-<br />
-<p class="row big">
+<p class="row big signup">
   Already signed up? <a href="/users">Find your user page here.</a></p>
 
 <!-- Stats -->
