@@ -103,6 +103,7 @@ class Handler(webmention.WebmentionHandler):
     domain = domain.lower()
     self.source = (source_cls.query()
                    .filter(source_cls.domains == domain)
+                   .filter(source_cls.status == 'enabled')
                    .filter(source_cls.features == 'publish')
                    .get())
     if not self.source:

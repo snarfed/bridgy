@@ -138,7 +138,7 @@ class PublishTest(testutil.HandlerTest):
     # check that we include the original link, not the resolved one
     self.assertEquals('foo - http://will/redirect', json.loads(resp.body)['content'])
 
-  def test_source_domain_not_found(self):
+  def test_bad_source(self):
     # no source
     msg = 'Could not find <b>FakeSource</b> account for <b>foo.com</b>.'
     self.source.key.delete()
@@ -146,6 +146,12 @@ class PublishTest(testutil.HandlerTest):
 
     # source without publish feature
     self.source.features = ['listen']
+    self.source.put()
+    self.assert_error(msg)
+
+    # status disabled
+    self.source.features = ['publish']
+    self.source.status = 'disabled'
     self.source.put()
     self.assert_error(msg)
 
