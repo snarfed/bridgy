@@ -1,0 +1,9 @@
+<!-- Facebook listen signup -->
+<form method="post" name="listen-facebook-start" action="/facebook/start">
+  <input type="image" alt="Sign in with Facebook"
+         src="/activitystreams/oauth_dropins/static/facebook.png" />
+  <input name="state" type="hidden" value="listen" />
+  <!-- https://developers.facebook.com/docs/reference/login/ -->
+  <input name="scope" type="hidden"
+         value="offline_access,user_website,user_status,user_photos,user_events,read_stream">
+</form>

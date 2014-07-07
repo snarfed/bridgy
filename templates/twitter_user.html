@@ -1,0 +1,14 @@
+{% extends "social_user.html" %}
+
+{% block listen-signup %}
+{% include "twitter_signup.html" %}
+{% endblock %}
+
+{% block publish-signup %}
+Click to enable <a href="/about#publish">publishing</a>:
+<form method="post" name="publish-twitter-start" action="/twitter/start">
+ <input type="image" alt="Sign in with Twitter"
+        src="/activitystreams/oauth_dropins/static/twitter.png" />
+ <input name="state" type="hidden" value="publish" />
+</form>
+{% endblock %}

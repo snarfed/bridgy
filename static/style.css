@@ -259,7 +259,7 @@ iframe#twitter-widget-0 {
   font-size: .8em;
 }
 
-.shadow, .profile, .signup input {
+.shadow, .profile, .signup input, #publish-signup input, #listen-signup input {
   -moz-box-shadow: 2px 2px 4px rgba(0,0,0,0.4);
   -webkit-box-shadow: 2px 2px 4px rgba(0,0,0,0.4);
   /* CSS3 */

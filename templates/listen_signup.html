@@ -1,34 +1,7 @@
 <div id="listen-signup signup" class="row signup">
 <p class="big">Get started:</p>
-
- <form method="post" name="listen-facebook-start" action="/facebook/start">
-  <input type="image" alt="Sign in with Facebook"
-         src="/activitystreams/oauth_dropins/static/facebook.png" />
-  <input name="state" type="hidden" value="listen" />
-  <!-- https://developers.facebook.com/docs/reference/login/ -->
-  <input name="scope" type="hidden"
-         value="offline_access,user_website,user_status,user_photos,user_events,read_stream">
-</form>
- <form method="post" name="listen-twitter-start" action="/twitter/start">
-  <input type="image" alt="Sign in with Twitter"
-         src="/activitystreams/oauth_dropins/static/twitter.png" />
-  <input name="state" type="hidden" value="listen" />
-</form>
-
- <form method="post" name="listen-googleplus-start" action="/googleplus/start">
-  <input type="image" alt="Sign in with Google+"
-         src="/activitystreams/oauth_dropins/static/google_plus.png" />
-  <!-- The state param doesn't actually work for G+. Not sure why. Doesn't
-       matter for now since we don't support publish for G+. -->
-  <input name="state" type="hidden" value="listen" />
-  <!-- https://developers.google.com/+/api/oauth#scopes -->
-  <input name="scope" type="hidden"
-         value="https://www.googleapis.com/auth/plus.login" />
-</form>
- <form method="post" name="listen-instagram-start" action="/instagram/start">
-  <input type="image" alt="Sign in with Instagram"
-         src="/activitystreams/oauth_dropins/static/instagram.png" />
-  <input name="state" type="hidden" value="listen" />
-</form>
-
+{% include "facebook_signup.html" %}
+{% include "twitter_signup.html" %}
+{% include "googleplus_signup.html" %}
+{% include "instagram_signup.html" %}
 </div>

@@ -1,0 +1,140 @@
+{% extends "user.html" %}
+
+{% block ui %}
+<!-- Banner for blogs that aren't yet advertising the webmention endpoint -->
+{% if not source.verified %}
+<div id="undiscovered" class="row big">
+  {% block undiscovered %}
+  {% endblock %}
+  <form method="get" action="">
+  <button type="submit" class="btn btn-default" onclick="document.location.reload()">
+    Done!</button>
+  </form>
+</div>
+<br />
+{% else %}
+
+<div class="row">
+{% if source.webmention_endpoint == source.bridgy_webmention_endpoint %}
+<p class="big">You're all set! Check out your recent
+<a href="#blogposts">blog posts</a> and <a href="#webmentions">webmentions</a>.
+  <!-- This currently 500s :/ -->
+  <!-- <a href="http://indiewebify.me/send-webmentions/?url={{ source.domain_url }}"> -->
+  <!--   Try a webmention!</a> -->
+</p>
+{% else %}
+<p class="warning">Warning: your blog's current
+<a href="https://github.com/converspace/webmention/blob/master/README.md#sender-discovers-receiver-endpoint">webmention endpoint</a>
+is
+<code><a href="{{ source.webmention_endpoint }}">
+  {{ source.webmention_endpoint }}</a></code>.
+If you want Bridgy to handle your blog's webmentions, change it to
+<code><a href="{{ source.bridgy_webmention_endpoint }}">
+  {{ source.bridgy_webmention_endpoint }}</a></code>.
+</p>
+{% endif %}
+
+<form method="post" action="/delete/start">
+  <input name="key" type="hidden" value="{{ source.key.urlsafe }}" />
+  <input name="feature" type="hidden" value="webmention" />
+  <button id="delete-button" type="submit" class="btn btn-default"
+          title="Disable this account. (Won't delete webmentions you've already sent or received.)">Disable</button>
+</form>
+</div>
+{% endif %}
+
+{% endblock %}
+
+
+{% block recent %}
+<!-- Blog posts -->
+<div class="row">
+{% if blogposts %}
+<p id="blogposts" class="big">Recent blog posts:</p>
+<ul class="user-items">
+  {% for blogpost in blogposts %}
+  <li class="row">
+   <div class="col-sm-4">
+    {{ blogpost.pretty_url|safe }}
+
+   </div><div class="col-sm-4">
+    <a href="/log?start_time={{ blogpost.updated|date:'U' }}&key={{ blogpost.key.urlsafe }}">
+      {{ blogpost.updated|timesince }} ago
+      {% if blogpost.status == 'error' %}
+       <span title="Error" class="glyphicon glyphicon-exclamation-sign"></span>
+      {% else %}{% if blogpost.status == 'processing' %}
+       <span title="Processing" class="glyphicon glyphicon-transfer"></span>
+      {% endif %}{% endif %}
+    </a>
+
+    {% if blogpost.status == 'error' or blogpost.error %}
+    <form method="post" action="/retry">
+      <input name="key" type="hidden" value="{{ blogpost.key.urlsafe }}" />
+      <button id="retry-button" type="submit" class="btn btn-default">
+        Retry</button>
+    </form>
+    {% endif %}
+
+   </div><div class="col-sm-4">
+    {% for label, links in blogpost.links.items %}
+      {{ label|safe }}:
+      <ul class="original-post-links">{{ links|safeseq|unordered_list }}</ul>
+    {% empty %}
+      No links found
+    {% endfor %}
+   </div>
+  </li>
+  {% endfor %}
+</ul>
+
+{% else %}
+<p class="big">No blog posts yet.</p>
+{% endif %}
+</div>
+
+
+<!-- Incoming blog webmentions -->
+<div class="row">
+{% if webmentions %}
+<p id="webmentions" class="big">Recent
+  <a href="http://indiewebify.me/#send-webmentions">webmentions</a>:</p>
+<ul class="user-items">
+  {% for wm in webmentions %}
+  <li class="row">
+   <div class="col-sm-3">
+     {{ wm.pretty_source|safe }}
+
+   </div><div class="col-sm-4">
+     {{ wm.pretty_target|safe }}
+
+   </div><div class="col-sm-3">
+    <a href="/log?start_time={{ wm.updated|date:'U' }}&key={{ wm.key.urlsafe }}">
+      {{ wm.updated|timesince }} ago
+      {% if wm.status == 'failed' %}
+       <span title="Error" class="glyphicon glyphicon-exclamation-sign"></span>
+      {% else %}{% if wm.status == 'new' %}
+       <span title="Processing" class="glyphicon glyphicon-transfer"></span>
+      {% endif %}{% endif %}
+    </a>
+
+   </div><div class="col-sm-2">
+     {% if wm.published.url %}
+       <a href="{{ wm.published.url }}">
+     {% endif %}
+       {{ wm.type }}
+     {% if wm.published.url %}
+       </a>
+     {% endif %}
+
+   </div>
+  </li>
+  {% endfor %}
+</ul>
+
+{% else %}
+<p class="big">No
+  <a href="http://indiewebify.me/#send-webmentions">webmentions</a> received yet.</p>
+{% endif %}
+</div>
+
+{% endblock %}

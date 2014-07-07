@@ -1,0 +1,23 @@
+{% extends "blog_user.html" %}
+
+{% block undiscovered %}
+<p>Next steps:</p>
+<ul>
+  {% if not source.disqus_shortname %}
+  <li><a target="_blank" href="http://disqus.com/admin/create/">Click here to
+    install Disqus</a>. (Bridgy uses it to post incoming webmentions as
+    comments.) Follow the instructions to add it to this Tumblr blog.</li>
+  {% endif %}
+
+  {% if not source.webmention_endpoint %}
+  <li><a target="_blank" href="{{ source.edit_template_url }}">Click here to
+    customize your blog</a>, click <em>Edit HTML,</em> and add this line
+    after <code>&lt;head&gt;</code>:</p>
+    <pre>&lt;link rel="webmention" href="https://www.brid.gy/webmention/tumblr" /&gt;</pre>
+  <p>Then click <em>Update Preview</em>, then <em>Save</em>.</p>
+    <!-- <a href="http://www.tumblr.com/docs/en/blog_customization#customhtml"> -->
+    <!--   More details.</a> -->
+  </li>
+  {% endif %}
+</ul>
+{% endblock %}

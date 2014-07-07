@@ -185,7 +185,8 @@ class UserHandler(DashboardHandler):
     super(UserHandler, self).get()
 
   def template_file(self):
-    return 'templates/user.html' if self.source else 'templates/user_not_found.html'
+    return ('templates/%s_user.html' % self.source.SHORT_NAME if self.source
+            else 'templates/user_not_found.html')
 
   def template_vars(self):
     if not self.source:

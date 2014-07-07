@@ -1,0 +1,237 @@
+{% extends "user.html" %}
+
+{% block ui %}
+
+<div id="blog-promo" class="row big signup">
+{% if blogger_promo %}
+Looks like you're on Blogger! Click here to add webmentions:
+{% include "blogger_signup.html" %}
+{% endif %}
+
+{% if tumblr_promo %}
+Looks like you're on Tumblr! Click here to add webmentions:
+{% include "tumblr_signup.html" %}
+{% endif %}
+
+{% if wordpress_promo %}
+Looks like you're on WordPress.com! Click here to add webmentions:
+{% include "wordpress_signup.html" %}
+{% endif %}
+</div>
+
+
+<div class="row">
+
+<!-- Listen UI -->
+<div id="listen-ui" class="{% if source.SHORT_NAME == 'facebook' or source.SHORT_NAME == 'twitter' %}col-sm-6{% endif %} big">
+
+{% if "listen" in source.features and source.status != "disabled" %}
+<form method="post" action="/delete/start">
+<p id="listening-label">Listening for responses.
+  <input name="key" type="hidden" value="{{ source.key.urlsafe }}" />
+  <input name="feature" type="hidden" value="listen" />
+  <button id="delete-button" type="submit" class="btn btn-default"
+    title="Disable sending responses for this account. (Won't delete responses you've already received.)"
+    >Disable</button>
+</p>
+</form>
+
+<form method="post" action="/poll-now">
+<p>
+  {% if source.last_poll_attempt == epoch %}
+    Not polled yet.
+  {% else %}
+    {% if source.status == "error" %}
+     <span title="Error" class="glyphicon glyphicon-exclamation-sign"></span>
+    {% endif %}
+    Polled
+    {% spaceless %}
+    <a href="/log?start_time={{ source.last_poll_attempt|date:'U' }}&key={{ source.key.urlsafe }}">
+      {{ source.last_poll_attempt|timesince }} ago
+    {% endspaceless %}</a>.
+  {% endif %}
+
+  <input name="key" type="hidden" value="{{ source.key.urlsafe }}" />
+  <button id="poll-now-button" type="submit" class="btn btn-default">Poll now</button>
+</p>
+</form>
+
+
+<!-- Listen signup buttons -->
+{% else %}
+Click to enable <a href="/about#listen">listening</a>:
+{% block listen-signup %}
+{% endblock %}
+{% endif %}
+
+</div>
+
+
+<!-- Publish UI -->
+<div id="publish-ui" class="col-sm-6">
+
+{% if "publish" in source.features and source.status != "disabled" %}
+<form method="post" action="/delete/start">
+<p id="publishing-label" class="big">
+ Ready to publish.
+   <input name="key" type="hidden" value="{{ source.key.urlsafe }}" />
+   <input name="feature" type="hidden" value="publish" />
+   <button id="delete-button" type="submit" class="btn btn-default"
+     title="Disable publishing for this account. (Won't delete posts you've already published.)"
+     >Disable</button>
+</p>
+</form>
+
+<form method="post" name="preview" action="/publish/preview">
+<p id="preview-ui">
+ <label id="source-label" for="source-url">Enter post URL:</label>
+ <input id="source-url" name="source" type="text" alt="Source URL"></input>
+ <input name="target" type="hidden"
+        value="http://brid.gy/publish/{{ source.SHORT_NAME }}"></input>
+
+ <nobr>
+ <!-- use a hidden input before the checkbox with the same name to set the value
+      to be sent when the checkbox is unchecked. -->
+ &nbsp;
+ <input id="include-link-unchecked" name="bridgy_omit_link" type="hidden"
+        value="true"></input>
+ <input id="include-link-checked" name="bridgy_omit_link" type="checkbox"
+        value="false" checked></input>
+ <label id="include-link-label" for="include-link-checked">Include link</label>
+ &nbsp;
+ <button id="preview-button" type="submit" class="btn btn-default"
+         onclick="do_preview('{{ source.SHORT_NAME }}'); return false;"
+         >Preview</button>
+ </nobr>
+</p>
+</form>
+
+<!-- Publish signup buttons -->
+{% else %}
+<span class="big">
+{% block publish-signup %}
+{% endblock %}
+</span>
+{% endif %}
+
+</div>
+
+</div>
+
+
+<!-- Publish preview UI -->
+<br />
+<div id="preview" class="row"></div>
+{% endblock %}
+
+
+{% block recent %}
+<!-- Responses -->
+<div class="row">
+{% if "listen" in source.features %}
+{% if responses %}
+<p id="responses" class="big">Recent responses:</p>
+<ul class="user-items">
+  {% for response in responses %}
+  <li class="row">
+   <div class="col-sm-3">
+    {% with response.response as r %}
+    <a target="_blank" href="{{ response.actor.url }}"
+       title="{{ response.actor.displayName }}">
+      <img class="profile" src="{{ response.actor.image.url }}" width="32" /></a>
+      <a target="_blank" href="{{ r.url }}">
+        {{ r.content|default:"--"|striptags|truncatewords:6|safe }}</a>
+    {% endwith %}
+
+   </div><div class="col-sm-3">
+    {% with response.activity as a %}
+    {% if response.type == "comment" %} on {% endif %}
+    <a target="_blank" href="{% firstof a.url a.object.url %}">
+      {% if a.content %}
+        {{ a.content|striptags|truncatewords:6|safe }}
+      {% else %}
+        {{ a.object.content|default:"--"|striptags|truncatewords:6|safe }}
+      {% endif %}
+    </a>
+    {% endwith %}
+
+   </div><div class="col-sm-3">
+    <a href="/log?start_time={{ response.updated|date:'U' }}&key={{ response.key.urlsafe }}">
+      {{ response.updated|timesince }} ago
+      {% if response.status == 'error' %}
+       <span title="Error" class="glyphicon glyphicon-exclamation-sign"></span>
+      {% else %}{% if response.status == 'processing' %}
+       <span title="Processing" class="glyphicon glyphicon-transfer"></span>
+      {% endif %}{% endif %}
+    </a>
+
+    {% if response.status == 'error' or response.error %}
+    <form method="post" action="/retry">
+      <input name="key" type="hidden" value="{{ response.key.urlsafe }}" />
+      <button id="retry-button" type="submit" class="btn btn-default">
+        Retry</button>
+    </form>
+    {% endif %}
+
+   </div><div class="col-sm-3">
+    {% for label, links in response.links.items %}
+      {{ label|safe }}:
+      <ul class="original-post-links">{{ links|safeseq|unordered_list }}</ul>
+    {% empty %}
+      No post links found
+    {% endfor %}
+   </div>
+  </li>
+  {% endfor %}
+</ul>
+
+{% else %}
+<p class="big">No responses yet.</p>
+{% endif %}
+
+{% endif %}
+</div>
+
+
+<!-- Publishes -->
+<div class="row">
+{% if "publish" in source.features %}
+{% if publishes %}
+<p id="publishes" class="big">Recently published:</p>
+<ul class="user-items">
+  {% for publish in publishes %}
+  <li class="row">
+   <div class="col-sm-4">
+     {{ publish.pretty_page|safe }}
+
+   </div><div class="col-sm-4">
+    <a href="/log?start_time={{ publish.updated|date:'U' }}&key={{ publish.key.urlsafe }}">
+      {{ publish.updated|timesince }} ago
+      {% if publish.status == 'failed' %}
+       <span title="Error" class="glyphicon glyphicon-exclamation-sign"></span>
+      {% else %}{% if publish.status == 'new' %}
+       <span title="Processing" class="glyphicon glyphicon-transfer"></span>
+      {% endif %}{% endif %}
+    </a>
+
+   </div><div class="col-sm-4">
+     {% if publish.published.url %}
+       <a href="{{ publish.published.url }}">
+     {% endif %}
+     {% firstof publish.type_label publish.type %}
+     {% if publish.published.url %}
+       </a>
+     {% endif %}
+
+   </div>
+  </li>
+  {% endfor %}
+</ul>
+
+{% else %}
+<p class="big">Nothing published yet.</p>
+{% endif %}
+{% endif %}
+</div>
+
+{% endblock %}
