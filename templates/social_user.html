@@ -2,23 +2,47 @@
 
 {% block ui %}
 
-<div id="blog-promo" class="row big signup">
-{% if blogger_promo %}
-Looks like you're on Blogger! Click here to add webmentions:
-{% include "blogger_signup.html" %}
-{% endif %}
+<!-- Promos to get fully up and running -->
 
-{% if tumblr_promo %}
-Looks like you're on Tumblr! Click here to add webmentions:
-{% include "tumblr_signup.html" %}
-{% endif %}
-
-{% if wordpress_promo %}
-Looks like you're on WordPress.com! Click here to add webmentions:
-{% include "wordpress_signup.html" %}
-{% endif %}
+{% if source.features and not source.verified %}
+{% if not source.domains or not source.domain_urls %}
+<div class="row promo warning">
+<p>First things first: what's your web site? Add it to your
+{{ source.AS_CLASS.NAME }} profile's <em>web site</em> or <em>link</em> field,
+then try <a href="/">signing up again</a>.</p>
 </div>
 
+{% else %}
+{% if not source.webmention_endpoint %}
+<div class="row promo warning">
+You
+{% if "listen" in source.features %} need {% else %} might want {% endif %}
+<a href='http://indiewebify.me/#send-webmentions'>webmention</a> support.
+
+{% if blogger_promo or tumblr_promo or wordpress_promo %}
+Click here to add it:
+{% if blogger_promo %}
+{% include "blogger_signup.html" %}
+{% endif %}
+{% if tumblr_promo %}
+{% include "tumblr_signup.html" %}
+{% endif %}
+{% if wordpress_promo %}
+{% include "wordpress_signup.html" %}
+{% endif %}
+
+{% else %}
+<a href="http://indiewebcamp.com/webmention#Publishing_Software">Here are some
+resources.</a> If you're on
+WordPress, <a href="http://wordpress.org/plugins/indieweb/">try the IndieWeb
+bundle plugin</a>. If you're on Blogger, Tumblr, or
+WordPress.com, <a href="/">sign up here!</a>
+
+{% endif %}
+{% endif %}
+</div>
+{% endif %}
+{% endif %}
 
 <div class="row">
 
@@ -59,9 +83,11 @@ Looks like you're on WordPress.com! Click here to add webmentions:
 
 <!-- Listen signup buttons -->
 {% else %}
+<span class="signup">
 Click to enable <a href="/about#listen">listening</a>:
 {% block listen-signup %}
 {% endblock %}
+</span>
 {% endif %}
 
 </div>
@@ -108,7 +134,7 @@ Click to enable <a href="/about#listen">listening</a>:
 
 <!-- Publish signup buttons -->
 {% else %}
-<span class="big">
+<span class="signup big">
 {% block publish-signup %}
 {% endblock %}
 </span>

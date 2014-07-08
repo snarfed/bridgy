@@ -377,23 +377,31 @@ class Source(StringIdModel):
 
     See verify() for details. May be overridden by subclasses, e.g. Tumblr.
     """
-    return not ('webmention' in self.features and not self.webmention_endpoint)
+    if not self.domains or not self.domain_urls:
+      return False
+    if (('listen' in self.features or 'webmention' in self.features) and
+        not self.webmention_endpoint):
+      return False
+    return True
 
   def verify(self, force=False):
     """Checks that this source is ready to be used.
 
-    For blog sources, this fetches their front page HTML and checks that they're
-    advertising the Bridgy webmention endpoint. For other kinds of sources, this
-    currently does nothing.
+    For blog and listen sources, this fetches their front page HTML and checks
+    that they're advertising the Bridgy webmention endpoint. For publish
+    sources, this checks that they have a domain.
 
     May be overridden by subclasses, e.g. Tumblr.
 
     Args:
-      force: if True, fully verifies (e.g. re-fetches the blog's HTML and looks
-        perform webmention discovery) even we already think this source is
+      force: if True, fully verifies (e.g. re-fetches the blog's HTML and
+        performs webmention discovery) even we already think this source is
         verified.
     """
     if self.verified() and not force:
+      return
+    elif (self.status == 'disabled' or not self.features or
+          not self.domains or not self.domain_urls):
       return
 
     logging.info('Attempting to discover webmention endpoint on %s',

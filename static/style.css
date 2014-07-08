@@ -27,7 +27,7 @@ body {
   }
 }
 
-.signup {
+#signups {
   margin-top: 2em;
 }
 
@@ -79,7 +79,6 @@ pre .link, code.link {
 
 #blogposts, #publishes, #responses, #webmentions, #user {
   margin-top: 1em;
-  margin-bottom: 1em;
 }
 
 #top, #listening-label, #publishing-label {
@@ -94,11 +93,11 @@ pre .link, code.link {
 /*   } */
 /* } */
 
-.signup input {
+#listen-signups input, #webmention-signups input {
   margin: .5em;
 }
 
-.header, #user, #blog-promo, #undiscovered {
+.header, #user, .promo, #listen-signups, #webmention-signups {
   margin-bottom: 1em;
 }
 
@@ -259,7 +258,7 @@ iframe#twitter-widget-0 {
   font-size: .8em;
 }
 
-.shadow, .profile, .signup input, #publish-signup input, #listen-signup input {
+.shadow, .profile, .signup input {
   -moz-box-shadow: 2px 2px 4px rgba(0,0,0,0.4);
   -webkit-box-shadow: 2px 2px 4px rgba(0,0,0,0.4);
   /* CSS3 */
@@ -287,7 +286,8 @@ iframe#twitter-widget-0 {
 }
 
 .warning {
-  background-color: khaki !important;
+  padding: .2em;
+  background-color: gold !important;
   font-style: italic;
 }
 
