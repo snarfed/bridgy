@@ -143,6 +143,11 @@ class Handler(webmention.WebmentionHandler):
     queue = collections.deque(data.get('items', []))
     while queue:
       item = queue.popleft()
+      item_types = set(item.get('type'))
+      if 'h-feed' in item_types and 'h-entry' not in item_types:
+        queue.extend(item.get('children', []))
+        continue
+
       try:
         resp = self.attempt_single_item(item)
         if resp:
@@ -153,7 +158,6 @@ class Handler(webmention.WebmentionHandler):
           return
       except NotImplementedError:
         # try the next item
-        item_types = set(item.get('type'))
         for embedded in ('rsvp', 'invitee', 'repost', 'repost-of', 'like',
                          'like-of', 'in-reply-to'):
           if embedded in item.get('properties', []):
