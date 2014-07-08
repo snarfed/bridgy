@@ -4,7 +4,7 @@
 
 <!-- Promos to get fully up and running -->
 
-{% if source.features and not source.verified %}
+{% if not source.verified and source.status != "disabled" and source.features %}
 {% if not source.domains or not source.domain_urls %}
 <div class="row promo warning">
 <p>First things first: what's your web site? Add it to your
