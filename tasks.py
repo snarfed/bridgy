@@ -262,9 +262,9 @@ class Poll(webapp2.RequestHandler):
       targets = activity.get('targets')
       if targets is None:
         targets = activity['targets'] = get_webmention_targets(source, activity)
-        logging.info('%s has %d original post URL(s): %s', activity.get('url'),
-                     len(targets), ' '.join(targets))
 
+      logging.info('%s has %d original post URL(s): %s', activity.get('url'),
+                   len(targets), ' '.join(targets))
       Response(id=id,
                source=source.key,
                activity_json=json.dumps(util.prune_activity(activity)),
