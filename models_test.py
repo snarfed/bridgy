@@ -69,7 +69,10 @@ class ResponseTest(testutil.ModelsTest):
 class SourceTest(testutil.HandlerTest):
 
   def _test_create_new(self, **kwargs):
-    FakeSource.create_new(self.handler, **kwargs)
+    FakeSource.create_new(self.handler, domains=['foo'],
+                          domain_urls=['http://foo.com'],
+                          webmention_endpoint='http://x/y',
+                          **kwargs)
     self.assertEqual(1, FakeSource.query().count())
 
     tasks = self.taskqueue_stub.GetTasks('poll')
@@ -133,6 +136,7 @@ class SourceTest(testutil.HandlerTest):
 
     self.mox.ReplayAll()
     source = FakeSource.create_new(self.handler, features=['webmention'],
+                                   domains=['primary/'],
                                    domain_urls=['http://primary/'])
 
   def test_create_new_domain(self):
@@ -172,7 +176,7 @@ class SourceTest(testutil.HandlerTest):
     self.mox.ReplayAll()
 
     source = FakeSource.new(self.handler, features=['webmention'],
-                            domain_urls=['http://primary/'])
+                            domain_urls=['http://primary/'], domains=['primary'])
     source.verify()
     self.assertEquals('http://web.ment/ion', source.webmention_endpoint)
 
@@ -182,7 +186,7 @@ class SourceTest(testutil.HandlerTest):
     self.mox.ReplayAll()
 
     source = FakeSource.new(self.handler, features=['webmention'],
-                            domain_urls=['http://primary/'])
+                            domain_urls=['http://primary/'], domains=['primary'])
     source.verify()
     self.assertIsNone(source.webmention_endpoint)
 

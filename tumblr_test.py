@@ -80,16 +80,14 @@ some stuff
 <script charset="utf-8" type="text/javascript" src="http://disqus.com/forums/my-disqus-name/get_num_replies.js?url131=...&amp;"></script>
 </body></html>""", verify=False)
     self.mox.ReplayAll()
-
-    t = Tumblr.new(self.handler, auth_entity=self.auth_entity)
+    t = Tumblr.new(self.handler, auth_entity=self.auth_entity, features=['webmention'])
     t.verify()
     self.assertEquals('my-disqus-name', t.disqus_shortname)
 
   def test_verify_without_disqus(self):
     self.expect_requests_get('http://primary/', 'no disqus here!', verify=False)
     self.mox.ReplayAll()
-
-    t = Tumblr.new(self.handler, auth_entity=self.auth_entity)
+    t = Tumblr.new(self.handler, auth_entity=self.auth_entity, features=['webmention'])
     t.verify()
     self.assertIsNone(t.disqus_shortname)
 
