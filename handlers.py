@@ -113,7 +113,19 @@ class ItemHandler(webapp2.RequestHandler):
 
     label = '%s:%s %s %s' % (source_short_name, string_id, type, ids)
     logging.info('Fetching %s', label)
-    obj = self.get_item(*ids)
+    try:
+      obj = self.get_item(*ids)
+    except Exception, e:
+      code, body = util.interpret_http_exception(e)
+      if code in util.HTTP_RATE_LIMIT_CODES:
+        logging.warning('Rate limited, passsing through error', exc_info=True)
+        self.response.status_int = int(code)
+        self.response.write('Rate limited by %s:\n%s' %
+                            (self.source.AS_CLASS.NAME, body))
+        return
+      else:
+        raise
+
     if not obj:
       self.abort(404, label)
 

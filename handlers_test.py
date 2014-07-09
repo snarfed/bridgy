@@ -2,6 +2,8 @@
 """
 
 import json
+import StringIO
+import urllib2
 
 import handlers
 import models
@@ -118,6 +120,17 @@ class HandlersTest(testutil.HandlerTest):
     resp = handlers.application.get_response('/post/fake/%s/000?target=x/y/z' %
                                              self.source.key.string_id())
     self.assertEqual(200, resp.status_int)
+
+  def test_pass_through_rate_limiting_errors(self):
+    self.mox.StubOutWithMock(testutil.FakeSource, 'get_post')
+    testutil.FakeSource.get_post('000').AndRaise(
+      urllib2.HTTPError('url', 429, 'msg', {}, StringIO.StringIO('too bad')))
+    self.mox.ReplayAll()
+
+    resp = handlers.application.get_response('/post/fake/%s/000' %
+                                             self.source.key.string_id())
+    self.assertEqual(429, resp.status_int)
+    self.assertEqual('Rate limited by FakeSource:\ntoo bad', resp.body)
 
   def test_comment(self):
     self.source.set_comment({

@@ -165,7 +165,7 @@ def interpret_http_exception(exception):
 
   Args:
     exception: urllib2.HTTPError, InstagramAPIError, apiclient.errors.HttpError,
-      or oauth2client.client.AccessTokenRefreshError
+      requests.HTTPError, or oauth2client.client.AccessTokenRefreshError
 
   Returns: (string status code or None, string response body or None)
   """
@@ -199,8 +199,8 @@ def interpret_http_exception(exception):
 
   if code:
     code = str(code)
-  if body:
-    logging.error('Error response body: %s', body)
+  if code or body:
+    logging.warning('Error %s, response body: %s', code, body)
 
   return code, body
 
