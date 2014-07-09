@@ -437,20 +437,25 @@ class Source(StringIdModel):
 
     Returns: (string url, string domain, boolean ok) tuple
     """
-    actor = self.as_source.user_to_actor(json.loads(auth_entity.user_json))
-    # TODO: G+ has a multiply-valued 'urls' field. ignoring for now because
-    # we're not implementing publish for G+
-    domain = None
-    ok = False
+    user_json = json.loads(auth_entity.user_json)
+    actor = self.as_source.user_to_actor(user_json)
+    urls = util.trim_nulls([actor.get('url')] +
+                           # also look at G+'s urls field
+                           [u.get('value') for u in user_json.get('urls', [])])
 
-    url = actor.get('url')
-    if url:
-      url = url.split()[0]
-      url, domain, ok = util.get_webmention_target(url)
-      if ok:
-        domain = domain.lower()
+    first_url = first_domain = None
+    for url in urls:
+      # TODO: fully support multiple urls
+      for url in url.split():
+        url, domain, ok = util.get_webmention_target(url)
+        if ok:
+          domain = domain.lower()
+          return url, domain, True
+        elif not first_url:
+          first_url = url
+          first_domain = domain
 
-    return url, domain, ok
+    return first_url, first_domain, False
 
   def canonicalize_syndication_url(self, syndication_url, scheme='https'):
     """Perform source-specific transforms to the syndication URL for cases

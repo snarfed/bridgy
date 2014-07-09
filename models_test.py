@@ -159,8 +159,18 @@ class SourceTest(testutil.HandlerTest):
         id='x', user_json=json.dumps({'url': url}))
       auth_entity.put()
       source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
-      self.assertEquals([url.split('\n')[0]], source.key.get().domain_urls)
-      self.assertEquals(['foo.com'], source.key.get().domains)
+      self.assertEquals([url.split('\n')[0]], source.domain_urls)
+      self.assertEquals(['foo.com'], source.domains)
+
+    # also look in urls field
+    auth_entity = testutil.FakeAuthEntity(id='x', user_json=json.dumps(
+        {'url': 'not<a>url',
+         'urls': [{'value': 'also<not>'}, {'value': 'http://foo.com/'}],
+         }))
+    auth_entity.put()
+    source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
+    self.assertEquals(['http://foo.com/'], source.domain_urls)
+    self.assertEquals(['foo.com'], source.domains)
 
   def test_create_new_unicode_chars(self):
     """We should handle unusual unicode chars in the source's name ok."""
