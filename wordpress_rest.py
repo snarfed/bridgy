@@ -73,7 +73,8 @@ class WordPress(models.Source):
     """
     # Fetch blog's site info
     auth_domain = auth_entity.key.id()
-    site_info = json.loads(auth_entity.urlopen(API_SITE_URL % auth_domain).read())
+    site_info = json.loads(auth_entity.urlopen(
+        API_SITE_URL % auth_entity.blog_id).read())
     site_url = site_info.get('URL')
     if site_url:
       domains = [util.domain_from_link(site_url), auth_domain]
@@ -134,7 +135,7 @@ class WordPress(models.Source):
       post_id = int(slug)
     except ValueError:
       logging.info('Looking up post id for slug %s', slug)
-      url = API_POST_SLUG_URL % (auth_entity.key.id(), slug.encode('utf-8'))
+      url = API_POST_SLUG_URL % (auth_entity.blog_id, slug.encode('utf-8'))
       resp = auth_entity.urlopen(url).read()
       post_id = json.loads(resp).get('ID')
       if not post_id:
@@ -143,7 +144,7 @@ class WordPress(models.Source):
     logging.info('Post id is %d', post_id)
 
     # create the comment
-    url = API_CREATE_COMMENT_URL % (auth_entity.key.id(), post_id)
+    url = API_CREATE_COMMENT_URL % (auth_entity.blog_id, post_id)
     content = u'<a href="%s">%s</a>: %s' % (author_url, author_name, content)
     data = {'content': content.encode('utf-8')}
     try:

@@ -38,7 +38,7 @@ class WordPressTest(testutil.HandlerTest):
 
   def test_new(self):
     self.expect_urlopen(
-      'https://public-api.wordpress.com/rest/v1/sites/my.wp.com?pretty=true',
+      'https://public-api.wordpress.com/rest/v1/sites/123?pretty=true',
       json.dumps({}))
     self.mox.ReplayAll()
 
@@ -52,7 +52,7 @@ class WordPressTest(testutil.HandlerTest):
 
   def test_new_with_site_domain(self):
     self.expect_urlopen(
-      'https://public-api.wordpress.com/rest/v1/sites/my.wp.com?pretty=true',
+      'https://public-api.wordpress.com/rest/v1/sites/123?pretty=true',
       json.dumps({'ID': 123, 'URL': 'https://vanity.domain/'}))
     self.mox.ReplayAll()
 
@@ -65,11 +65,11 @@ class WordPressTest(testutil.HandlerTest):
 
   def test_create_comment_with_slug_lookup(self):
     self.expect_urlopen(
-      'https://public-api.wordpress.com/rest/v1/sites/my.wp.com/posts/'
+      'https://public-api.wordpress.com/rest/v1/sites/123/posts/'
       'slug:the-slug?pretty=true',
       json.dumps({'ID': 456}))
     self.expect_urlopen(
-      'https://public-api.wordpress.com/rest/v1/sites/my.wp.com/posts/'
+      'https://public-api.wordpress.com/rest/v1/sites/123/posts/'
       '456/replies/new?pretty=true',
       json.dumps({'ID': 789, 'ok': 'sgtm'}),
       data=urllib.urlencode({'content': '<a href="http://who">who</a>: foo bar'}))
@@ -81,7 +81,7 @@ class WordPressTest(testutil.HandlerTest):
 
   def test_create_comment_with_unicode_chars(self):
     self.expect_urlopen(
-      'https://public-api.wordpress.com/rest/v1/sites/my.wp.com/posts/'
+      'https://public-api.wordpress.com/rest/v1/sites/123/posts/'
       '123/replies/new?pretty=true',
       json.dumps({}),
       data=urllib.urlencode({
@@ -94,7 +94,7 @@ class WordPressTest(testutil.HandlerTest):
   def test_create_comment_gives_up_on_invalid_input_error(self):
     # see https://github.com/snarfed/bridgy/issues/161
     self.expect_urlopen(
-      'https://public-api.wordpress.com/rest/v1/sites/my.wp.com/posts/'
+      'https://public-api.wordpress.com/rest/v1/sites/123/posts/'
       '123/replies/new?pretty=true',
       json.dumps({'error': 'invalid_input'}),
       status=400,
