@@ -32,7 +32,7 @@ import util
 # where the date is today or tomorrow (because of UTC)
 import logging
 from google.appengine.ext import ereporter
-ereporter.register_logger()
+ereporter_logging_handler = ereporter.register_logger()
 
 # temporarily disabled:
 # turn off ndb's in-process cache. i'd love to use it, but the frontends

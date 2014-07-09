@@ -9,13 +9,9 @@ import gc
 import json
 import logging
 import random
-import urllib2
 
-from apiclient import errors
 from google.appengine.api import memcache
 from google.appengine.ext import ndb
-from oauth2client.client import AccessTokenRefreshError
-from python_instagram.bind import InstagramAPIError
 import webapp2
 from webmentiontools import send
 
@@ -132,33 +128,7 @@ class Poll(webapp2.RequestHandler):
         etag=source.last_activities_etag, min_id=source.last_activity_id,
         cache=memcache)
     except Exception, e:
-      # note that activitystreams-unofficial doesn't use requests (yet!), so no
-      # need to catch requests.HTTPError.
-      body = None
-      if isinstance(e, urllib2.HTTPError):
-        code = e.code
-        try:
-          body = e.read()
-        except AttributeError:
-          # no response body
-          pass
-      elif isinstance(e, errors.HttpError):
-        code = e.resp.status
-        body = e.content
-      elif isinstance(e, InstagramAPIError):
-        if e.error_type == 'OAuthAccessTokenException':
-          code = '401'
-        else:
-          code = e.status_code
-      elif isinstance(e, AccessTokenRefreshError) and str(e) == 'invalid_grant':
-        code = '401'
-      else:
-        raise
-
-      if body:
-        logging.error('Error response body: %s', body)
-
-      code = str(code)
+      code, body = util.interpret_http_exception(e)
       if code == '401':
         # TODO: also interpret oauth2client.AccessTokenRefreshError with
         # {'error': 'invalid_grant'} as disabled? it can mean the user revoked
@@ -168,10 +138,7 @@ class Poll(webapp2.RequestHandler):
         msg = 'Unauthorized error: %s' % e
         logging.exception(msg)
         raise models.DisableSource(msg)
-      elif code in ('403', '429', '503'):
-        # rate limiting errors. twitter returns 429, instagram 503, google+ 403.
-        # TODO: facebook. it returns 200 and reports the error in the response.
-        # https://developers.facebook.com/docs/reference/ads-api/api-rate-limiting/
+      elif code in util.HTTP_RATE_LIMIT_CODES:
         logging.warning('Rate limited. Marking as error and finishing. %s', e)
         source.status = 'error'
         return

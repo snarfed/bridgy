@@ -10,7 +10,7 @@ import json
 import logging
 import urlparse
 
-from appengine_config import HTTP_TIMEOUT
+import appengine_config
 
 from google.appengine.datastore import datastore_stub_util
 from google.appengine.ext import ndb
@@ -153,6 +153,7 @@ class HandlerTest(testutil.HandlerTest):
   def setUp(self):
     super(HandlerTest, self).setUp()
     self.handler = util.Handler(self.request, self.response)
+    logging.getLogger().removeHandler(appengine_config.ereporter_logging_handler)
     # TODO: remove this and don't depend on consistent global queries
     self.testbed.init_datastore_v3_stub(consistency_policy=None)
 
@@ -197,7 +198,7 @@ class HandlerTest(testutil.HandlerTest):
     if response_headers is not None:
       resp.headers.update(response_headers)
 
-    kwargs['timeout'] = HTTP_TIMEOUT
+    kwargs['timeout'] = appengine_config.HTTP_TIMEOUT
     if method is requests.head:
       kwargs['allow_redirects'] = True
 
