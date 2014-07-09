@@ -1,7 +1,14 @@
+# timezone defaults to UTC
+
 cron:
 - description: replace missing poll tasks
   url: /cron/replace_poll_tasks
   schedule: every 1 hours
+
 - description: update changed twitter profile pictures
   url: /cron/update_twitter_pictures
   schedule: every 1 hours
+
+- description: ereporter exception report
+  url: /_ereporter?sender=admin@brid-gy.appspotmail.com&to=ryan@brid.gy
+  schedule: every day 00:00

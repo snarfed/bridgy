@@ -25,6 +25,15 @@ for path in (
 # know that happens everywhere tag_uri() might be used.
 import util
 
+# ereporter records exceptions and emails them to me.
+# https://developers.google.com/appengine/articles/python/recording_exceptions_with_ereporter
+# to test, open this path:
+# http://localhost:8080/_ereporter?sender=ryan@brid.gy&to=ryan@brid.gy&debug=true&date=YYYY-MM-DD
+# where the date is today or tomorrow (because of UTC)
+import logging
+from google.appengine.ext import ereporter
+ereporter.register_logger()
+
 # temporarily disabled:
 # turn off ndb's in-process cache. i'd love to use it, but the frontends
 # constantly hit the memory cap and get killed with it on.
