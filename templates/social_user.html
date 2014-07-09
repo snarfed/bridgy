@@ -9,7 +9,12 @@
 <div class="row promo warning">
 <p>First things first: what's your web site? Add it to your
 {{ source.AS_CLASS.NAME }} profile's <em>web site</em> or <em>link</em> field,
-then try <a href="/">signing up again</a>.</p>
+then click:
+<span style="float: right">
+{% block listen-signup-2 %}
+{% endblock %}
+</span>
+</p>
 </div>
 
 {% else %}
