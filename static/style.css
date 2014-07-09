@@ -146,10 +146,6 @@ form input {
   .user-items > .row {
     margin-bottom: 1em;
   }
-
-  #signups .signup, #signups .signup > p {
-    margin-top: 1em;
-  }
 }
 
 .source-buttons, .original-post {
@@ -258,7 +254,7 @@ iframe#twitter-widget-0 {
   font-size: .8em;
 }
 
-.shadow, .profile, .signup input {
+.shadow, .profile, form.signup input {
   -moz-box-shadow: 2px 2px 4px rgba(0,0,0,0.4);
   -webkit-box-shadow: 2px 2px 4px rgba(0,0,0,0.4);
   /* CSS3 */
@@ -269,7 +265,7 @@ iframe#twitter-widget-0 {
   filter: progid:DXImageTransform.Microsoft.Shadow(Strength=2,Direction=135,Color='#666666');
 }
 
-.shadow:hover, .profile:hover, .signup input:hover {
+.shadow:hover, .profile:hover, form.signup input:hover {
   -moz-box-shadow: 2px 2px 4px rgba(0,0,0,0.8);
   -webkit-box-shadow: 2px 2px 4px rgba(0,0,0,0.8);
   /* CSS3 */

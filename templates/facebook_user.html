@@ -9,8 +9,8 @@
 {% endblock %}
 
 {% block publish-signup %}
-Click to enable <a href="/about#publish">publishing</a>:
-<form method="post" name="publish-facebook-start" action="/facebook/start">
+<span class="big">Click to enable <a href="/about#publish">publishing</a>:</span>
+<form method="post" name="publish-facebook-start" action="/facebook/start" class="signup">
  <input type="image" alt="Sign in with Facebook"
         src="/activitystreams/oauth_dropins/static/facebook.png" />
  <input name="state" type="hidden" value="publish" />
