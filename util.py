@@ -193,6 +193,7 @@ def interpret_http_exception(exception):
       code = '401'
     else:
       code = e.status_code
+    body = '%s: %s' % (e.error_type, e.error_message)
 
   elif isinstance(e, AccessTokenRefreshError) and str(e) == 'invalid_grant':
     code = '401'

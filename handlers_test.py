@@ -3,11 +3,11 @@
 
 import json
 import StringIO
-import urllib2
 
 import handlers
 import models
 import mox
+from python_instagram.bind import InstagramAPIError
 import testutil
 import util
 import webapp2
@@ -121,16 +121,17 @@ class HandlersTest(testutil.HandlerTest):
                                              self.source.key.string_id())
     self.assertEqual(200, resp.status_int)
 
-  def test_pass_through_rate_limiting_errors(self):
+  def test_pass_through_source_errors(self):
     self.mox.StubOutWithMock(testutil.FakeSource, 'get_post')
     testutil.FakeSource.get_post('000').AndRaise(
-      urllib2.HTTPError('url', 429, 'msg', {}, StringIO.StringIO('too bad')))
+      InstagramAPIError('410', 'my type', 'so sad'))
     self.mox.ReplayAll()
 
     resp = handlers.application.get_response('/post/fake/%s/000' %
                                              self.source.key.string_id())
-    self.assertEqual(429, resp.status_int)
-    self.assertEqual('Rate limited by FakeSource:\ntoo bad', resp.body)
+    self.assertEqual(410, resp.status_int)
+    self.assertEqual('text/plain', resp.headers['Content-Type'])
+    self.assertEqual('FakeSource error:\nmy type: so sad', resp.body)
 
   def test_comment(self):
     self.source.set_comment({

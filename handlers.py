@@ -116,12 +116,12 @@ class ItemHandler(webapp2.RequestHandler):
     try:
       obj = self.get_item(*ids)
     except Exception, e:
+      # pass through all API HTTP errors if we can identify them
       code, body = util.interpret_http_exception(e)
-      if code in util.HTTP_RATE_LIMIT_CODES:
-        logging.warning('Rate limited, passsing through error', exc_info=True)
+      if code:
         self.response.status_int = int(code)
-        self.response.write('Rate limited by %s:\n%s' %
-                            (self.source.AS_CLASS.NAME, body))
+        self.response.headers['Content-Type'] = 'text/plain'
+        self.response.write('%s error:\n%s' % (self.source.AS_CLASS.NAME, body))
         return
       else:
         raise
