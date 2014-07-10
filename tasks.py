@@ -299,7 +299,6 @@ class Poll(webapp2.RequestHandler):
     # query by it instead of iterating over all of them
     for response in (Response.query(Response.source == source.key)
                      .order(-Response.created)):
-      logging.debug('refetch h-feed rechecking response %s', response.label())
 
       activity = json.loads(response.activity_json)
       activity_url = activity.get('url') or activity.get('object', {}).get('url')
@@ -311,8 +310,6 @@ class Poll(webapp2.RequestHandler):
       # look for activity url in the newly discovered list of relationships
       relationship = relationships.get(activity_url)
       if not relationship:
-        logging.debug('no new relationships found for response %s',
-                      response.label())
         continue
 
       # won't re-propagate if the discovered link is already among
