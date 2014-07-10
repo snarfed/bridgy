@@ -418,7 +418,7 @@ class Source(StringIdModel):
     error = getattr(mention, 'error', None)
     endpoint = getattr(mention, 'receiver_endpoint', None)
     if error or not endpoint:
-      logging.error("No webmention endpoint found: %s %r", error, endpoint)
+      logging.warning("No webmention endpoint found: %s %r", error, endpoint)
       self.webmention_endpoint = None
     else:
       logging.info("Discovered webmention endpoint %s", endpoint)
