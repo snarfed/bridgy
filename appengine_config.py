@@ -28,11 +28,16 @@ import util
 # ereporter records exceptions and emails them to me.
 # https://developers.google.com/appengine/articles/python/recording_exceptions_with_ereporter
 # to test, open this path:
-# http://localhost:8080/_ereporter?sender=ryan@brid.gy&to=ryan@brid.gy&debug=true&date=YYYY-MM-DD
+# http://localhost:8080/_ereporter?sender=ryan@brid.gy&to=ryan@brid.gy&debug=true&delete=false&date=2014-07-09
 # where the date is today or tomorrow (because of UTC)
 import logging
 from google.appengine.ext import ereporter
 ereporter_logging_handler = ereporter.register_logger()
+
+# monkey patch ereporter to combine exceptions from different versions and dates
+ereporter.ExceptionRecord.get_key_name = \
+    classmethod(lambda cls, signature, version, date=None: signature)
+
 
 # temporarily disabled:
 # turn off ndb's in-process cache. i'd love to use it, but the frontends
