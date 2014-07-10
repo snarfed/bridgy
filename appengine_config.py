@@ -55,6 +55,7 @@ ereporter.ExceptionRecord.get_key_name = \
 #   return 'webmention-dev'
 
 # uncomment for app stats
+# appstats_CALC_RPC_COSTS = True
 # def webapp_add_wsgi_middleware(app):
 #   from google.appengine.ext.appstats import recording
 #   app = recording.appstats_wsgi_middleware(app)
