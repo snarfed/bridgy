@@ -111,6 +111,7 @@ class SuperfeedrTest(testutil.HandlerTest):
       SOURCE_CLS = testutil.FakeSource
 
     app = webapp2.WSGIApplication([('/notify/(.+)', Handler)], debug=True)
+    self.feed = json.dumps({'items': [{'id': 'X', 'content': 'a http://x/y z'}]})
     resp = app.get_response('/notify/foo.com', method='POST', body=self.feed)
 
     self.assertEquals(200, resp.status_int)

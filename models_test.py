@@ -58,6 +58,11 @@ class ResponseTest(testutil.ModelsTest):
     self.assertEqual('http://localhost/fake/%s' % self.sources[0].key.string_id(),
                      self.sources[0].bridgy_url(self.handler))
 
+  def test_get_or_save_empty_unsent_no_task(self):
+    self.responses[0].unsent = []
+    self.responses[0].get_or_save()
+    self.assertEqual(0, len(self.taskqueue_stub.GetTasks('propagate')))
+
   def test_get_type(self):
     self.assertEqual('repost', Response.get_type(
         {'objectType': 'activity', 'verb': 'share'}))
