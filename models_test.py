@@ -60,7 +60,8 @@ class ResponseTest(testutil.ModelsTest):
 
   def test_get_or_save_empty_unsent_no_task(self):
     self.responses[0].unsent = []
-    self.responses[0].get_or_save()
+    saved = self.responses[0].get_or_save()
+    self.assertEqual('complete', saved.status)
     self.assertEqual(0, len(self.taskqueue_stub.GetTasks('propagate')))
 
   def test_get_type(self):

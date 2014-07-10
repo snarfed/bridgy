@@ -548,12 +548,13 @@ class Webmentions(StringIdModel):
       #   assert new == existing, '%s: new %s, existing %s' % (prop, new, existing)
       return existing
 
-    self.put()
-
     if self.unsent or self.error:
       logging.debug('New webmentions to propagate! %s', self.label())
       self.add_task()
+    else:
+      self.status = 'complete'
 
+    self.put()
     return self
 
 
