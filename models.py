@@ -585,6 +585,8 @@ class Response(Webmentions):
     type = get_type(obj)
     return type if type in VERB_TYPES else 'comment'
 
+  # Hook for converting activity_json to activities_json. Unfortunately
+  # _post_get_hook doesn't run on query results. :/
   @classmethod
   def _post_get_hook(cls, key, future):
     """Handle old entities with activity_json instead of activities_json."""

@@ -312,6 +312,9 @@ class Poll(webapp2.RequestHandler):
     # query by it instead of iterating over all of them
     for response in (Response.query(Response.source == source.key)
                      .order(-Response.created)):
+      if response.activity_json:  # handle old entities
+        response.activities_json.append(response.activity_json)
+
       new_orig_urls = set()
       for activity_json in response.activities_json:
         activity = json.loads(activity_json)

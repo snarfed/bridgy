@@ -221,6 +221,8 @@ class UserHandler(DashboardHandler):
                                   .fetch(10)
       for r in responses:
         r.response = json.loads(r.response_json)
+        if r.activity_json:  # handle old entities
+          r.activities_json.append(r.activity_json)
         r.activities = [json.loads(a) for a in r.activities_json]
         r.actor = r.response.get('author') or r.response.get('actor', {})
         if not r.response.get('content'):
