@@ -312,37 +312,40 @@ class Poll(webapp2.RequestHandler):
     # query by it instead of iterating over all of them
     for response in (Response.query(Response.source == source.key)
                      .order(-Response.created)):
+      new_orig_urls = set()
+      for activity_json in response.activities_json:
+        activity = json.loads(activity_json)
+        activity_url = activity.get('url') or activity.get('object', {}).get('url')
+        if not activity_url:
+          logging.warning('activity has no url %s', activity)
+          continue
 
-      activity = json.loads(response.activities_json[0])
-      activity_url = activity.get('url') or activity.get('object', {}).get('url')
-      if not activity_url:
-        logging.warning('activity has no url %s', response.activities_json[0])
-        continue
+        activity_url = source.canonicalize_syndication_url(activity_url)
+        # look for activity url in the newly discovered list of relationships
+        relationship = relationships.get(activity_url)
+        if not relationship:
+          continue
 
-      activity_url = source.canonicalize_syndication_url(activity_url)
-      # look for activity url in the newly discovered list of relationships
-      relationship = relationships.get(activity_url)
-      if not relationship:
-        continue
+        # won't re-propagate if the discovered link is already among
+        # these well-known upstream duplicates
+        if relationship.original in response.sent:
+          logging.info(
+              '%s found a new rel=syndication link %s -> %s, but the '
+              'relationship had already been discovered by another method',
+              response.label(), relationship.original,
+              relationship.syndication)
+        else:
+          logging.info(
+              '%s found a new rel=syndication link %s -> %s, and '
+              'will be repropagated with a new target!',
+              response.label(), relationship.original,
+              relationship.syndication)
+          new_orig_urls.add(relationship.original)
 
-      # won't re-propagate if the discovered link is already among
-      # these well-known upstream duplicates
-      if relationship.original in response.sent:
-        logging.info(
-            '%s found a new rel=syndication link %s -> %s, but the '
-            'relationship had already been discovered by another method',
-            response.label(), relationship.original,
-            relationship.syndication)
-      else:
-        logging.info(
-            '%s found a new rel=syndication link %s -> %s, and '
-            'will be repropagated with a new target!',
-            response.label(), relationship.original,
-            relationship.syndication)
-
+      if new_orig_urls:
         # re-open a previously 'complete' propagate task
         response.status = 'new'
-        response.unsent.append(relationship.original)
+        response.unsent.extend(list(new_orig_urls))
         response.put()
         response.add_task()
 
@@ -540,9 +543,10 @@ class PropagateResponse(SendWebmentions):
     if not self.lease(ndb.Key(urlsafe=self.request.params['response_key'])):
       return
 
-    activity = json.loads(self.entity.activities_json[0])
+    activities = [json.loads(a) for a in self.entity.activities_json]
     response_obj = json.loads(self.entity.response_json)
-    if not Source.is_public(response_obj) or not Source.is_public(activity):
+    if (not Source.is_public(response_obj) or
+        not all(Source.is_public(a) for a in activities)):
       logging.info('Response or activity is non-public. Dropping.')
       self.complete()
       return
@@ -564,8 +568,9 @@ class PropagateResponse(SendWebmentions):
       response_id = response_id.split('_')[-1]
 
     # generate local response URL
-    parsed = util.parse_tag_uri(activity['id'])
-    post_id = parsed[1] if parsed else activity['id']
+    id = activities[0]['id']
+    parsed = util.parse_tag_uri(id)
+    post_id = parsed[1] if parsed else id
     # prefer brid-gy.appspot.com to brid.gy because non-browsers (ie OpenSSL)
     # currently have problems with brid.gy's SSL cert. details:
     # https://github.com/snarfed/bridgy/issues/20
