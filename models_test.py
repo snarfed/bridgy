@@ -71,6 +71,18 @@ class ResponseTest(testutil.ModelsTest):
     self.assertEqual('rsvp', Response.get_type({'verb': 'invite'}))
     self.assertEqual('comment', Response.get_type({'objectType': 'other'}))
 
+  def test_hooks(self):
+    resp = Response(id='x', activity_json='{"foo": "bar"}')
+    self.assertRaises(AssertionError, resp.put)
+
+    pre_put = Response._pre_put_hook
+    del Response._pre_put_hook
+    resp.put()
+    Response._pre_put_hook = pre_put
+    got = resp.key.get()
+    self.assertEqual(['{"foo": "bar"}'], got.activities_json)
+    self.assertIsNone(got.activity_json)
+
 
 class SourceTest(testutil.HandlerTest):
 

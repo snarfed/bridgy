@@ -570,6 +570,9 @@ class Response(Webmentions):
   activities_json = ndb.TextProperty(repeated=True)
   response_json = ndb.TextProperty()
 
+  # DEPRECATED, DO NOT USE!
+  activity_json = ndb.TextProperty()
+
   def label(self):
     return ' '.join((self.key.kind(), self.type, self.key.id(),
                      json.loads(self.response_json).get('url', '[no url]')))
@@ -581,6 +584,18 @@ class Response(Webmentions):
   def get_type(obj):
     type = get_type(obj)
     return type if type in VERB_TYPES else 'comment'
+
+  @classmethod
+  def _post_get_hook(cls, key, future):
+    """Handle old entities with activity_json instead of activities_json."""
+    resp = future.get_result()
+    if resp and resp.activity_json:
+      resp.activities_json.append(resp.activity_json)
+      resp.activity_json = None
+
+  def _pre_put_hook(self):
+    """Don't allow storing new entities with activity_json."""
+    assert self.activity_json is None
 
 
 class BlogPost(Webmentions):
