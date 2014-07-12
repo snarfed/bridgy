@@ -170,7 +170,9 @@ Click to enable <a href="/about#listen">listening</a>:
     {% endwith %}
 
    </div><div class="col-sm-3">
-    {% with response.activity as a %}
+    <ul class="original-post-links">
+    {% for a in response.activities %}
+    <li>
     {% if response.type == "comment" %} on {% endif %}
     <a target="_blank" href="{% firstof a.url a.object.url %}">
       {% if a.content %}
@@ -178,8 +180,9 @@ Click to enable <a href="/about#listen">listening</a>:
       {% else %}
         {{ a.object.content|default:"--"|striptags|truncatewords:6|safe }}
       {% endif %}
-    </a>
-    {% endwith %}
+    </a></li>
+    {% endfor %}
+    </ul>
 
    </div><div class="col-sm-3">
     <a href="/log?start_time={{ response.updated|date:'U' }}&key={{ response.key.urlsafe }}">

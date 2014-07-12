@@ -275,7 +275,7 @@ class ModelsTest(HandlerTest):
       comment = obj['replies']['items'][0]
       self.responses.append(Response(
           id=comment['id'],
-          activity_json=json.dumps(pruned_activity),
+          activities_json=[json.dumps(pruned_activity)],
           response_json=json.dumps(comment),
           type='comment',
           source=self.sources[0].key,
@@ -287,7 +287,7 @@ class ModelsTest(HandlerTest):
       like = obj['tags'][0]
       self.responses.append(Response(
           id=like['id'],
-          activity_json=json.dumps(pruned_activity),
+          activities_json=[json.dumps(pruned_activity)],
           response_json=json.dumps(like),
           type='like',
           source=self.sources[0].key,
@@ -299,7 +299,7 @@ class ModelsTest(HandlerTest):
       share = obj['tags'][1]
       self.responses.append(Response(
           id=share['id'],
-          activity_json=json.dumps(pruned_activity),
+          activities_json=[json.dumps(pruned_activity)],
           response_json=json.dumps(share),
           type='repost',
           source=self.sources[0].key,

@@ -138,7 +138,7 @@ class Listener(streaming.StreamListener):
       targets = tasks.get_webmention_targets(self.source, activity)
       models.Response(id=response['id'],
                       source=self.source.key,
-                      activity_json=json.dumps(activity),
+                      activities_json=[json.dumps(activity)],
                       response_json=json.dumps(response),
                       type = models.Response.get_type(response),
                       unsent=list(targets),

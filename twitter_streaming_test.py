@@ -47,7 +47,7 @@ class TwitterStreamingTest(testutil.ModelsTest):
     self.assert_equals(twitter_test.LIKE_FROM_EVENT, json.loads(resp.response_json))
 
     activity = copy.deepcopy(twitter_test.ACTIVITY)
-    self.assert_equals(activity, json.loads(resp.activity_json))
+    self.assert_equals(activity, json.loads(resp.activities_json[0]))
     self.assert_equals(['http://first/link/'], resp.unsent)
 
   def test_retweet(self):
@@ -63,7 +63,7 @@ class TwitterStreamingTest(testutil.ModelsTest):
     resp = models.Response.query().get()
     self.assertEqual(share['id'], resp.key.string_id())
     self.assert_equals(share, json.loads(resp.response_json))
-    self.assert_equals(activity, json.loads(resp.activity_json))
+    self.assert_equals(activity, json.loads(resp.activities_json[0]))
     self.assert_equals(['http://first/link/'], resp.unsent)
 
   # disabled for now. see comment in twitter_streaming.py for details.
@@ -81,7 +81,7 @@ class TwitterStreamingTest(testutil.ModelsTest):
   #   resp = models.Response.query().get()
   #   self.assertEqual(as_reply['id'], resp.key.string_id())
   #   self.assert_equals(as_reply, json.loads(resp.response_json))
-  #   self.assert_equals(twitter_test.ACTIVITY, json.loads(resp.activity_json))
+  #   self.assert_equals(twitter_test.ACTIVITY, json.loads(resp.activities_json[0]))
   #   self.assert_equals(['http://first/link/'], resp.unsent)
 
   def test_unhandled_event(self):

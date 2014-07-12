@@ -69,7 +69,8 @@ class PollTest(TaskQueueTest):
     # sort fields in json properties since they're compared as strings
     stored = list(models.Response.query())
     for resp in self.responses + stored:
-      resp.activity_json = json.dumps(json.loads(resp.activity_json), sort_keys=True)
+      resp.activities_json = [json.dumps(json.loads(a), sort_keys=True)
+                              for a in resp.activities_json]
       resp.response_json = json.dumps(json.loads(resp.response_json), sort_keys=True)
     self.assert_entities_equal(self.responses, stored, ignore=('created', 'updated'))
 
@@ -227,7 +228,7 @@ class PollTest(TaskQueueTest):
     ids = set()
     for task in self.taskqueue_stub.GetTasks('propagate'):
       resp_key = ndb.Key(urlsafe=testutil.get_task_params(task)['response_key'])
-      ids.add(json.loads(resp_key.get().activity_json)['id'])
+      ids.update(json.loads(a)['id'] for a in resp_key.get().activities_json)
     self.assert_equals(ids, set([self.activities[0]['id'], self.activities[2]['id']]))
 
   def test_no_responses(self):
@@ -910,9 +911,9 @@ class PropagateTest(TaskQueueTest):
 
   def test_non_public_activity(self):
     """If the activity is non-public, we should give up."""
-    activity = json.loads(self.responses[0].activity_json)
+    activity = json.loads(self.responses[0].activities_json[0])
     activity['to'] = [{'objectType':'group', 'alias':'@private'}]
-    self.responses[0].activity_json = json.dumps(activity)
+    self.responses[0].activities_json = [json.dumps(activity)]
     self.responses[0].put()
 
     self.post_task()
@@ -1006,9 +1007,9 @@ class PropagateTest(TaskQueueTest):
 
   def test_activity_id_not_tag_uri(self):
     """If the activity id isn't a tag uri, we should just use it verbatim."""
-    activity = json.loads(self.responses[0].activity_json)
+    activity = json.loads(self.responses[0].activities_json[0])
     activity['id'] = 'AAA'
-    self.responses[0].activity_json = json.dumps(activity)
+    self.responses[0].activities_json = [json.dumps(activity)]
 
     self.responses[0].unsent = ['http://good']
     self.responses[0].put()

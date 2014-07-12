@@ -565,7 +565,7 @@ class Response(Webmentions):
   """
   # ActivityStreams JSON activity and comment, like, or repost
   type = ndb.StringProperty(choices=VERB_TYPES, default='comment')
-  activity_json = ndb.TextProperty()
+  activities_json = ndb.TextProperty(repeated=True)
   response_json = ndb.TextProperty()
 
   def label(self):

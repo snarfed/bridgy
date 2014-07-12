@@ -152,7 +152,7 @@ class Poll(webapp2.RequestHandler):
     #
     # Step 2: extract responses, store activity in response['activity']
     #
-    responses = {}
+    responses = {}  # key is response id
     for activity in activities:
       # extract activity id and maybe replace stored last activity id
       id = activity.get('id')
@@ -234,7 +234,7 @@ class Poll(webapp2.RequestHandler):
                    len(targets), ' '.join(targets))
       Response(id=id,
                source=source.key,
-               activity_json=json.dumps(util.prune_activity(activity)),
+               activities_json=[json.dumps(util.prune_activity(activity))],
                response_json=json.dumps(resp),
                type=Response.get_type(resp),
                unsent=list(targets),
@@ -300,10 +300,10 @@ class Poll(webapp2.RequestHandler):
     for response in (Response.query(Response.source == source.key)
                      .order(-Response.created)):
 
-      activity = json.loads(response.activity_json)
+      activity = json.loads(response.activities_json[0])
       activity_url = activity.get('url') or activity.get('object', {}).get('url')
       if not activity_url:
-        logging.warning('activity has no url %s', response.activity_json)
+        logging.warning('activity has no url %s', response.activities_json[0])
         continue
 
       activity_url = source.canonicalize_syndication_url(activity_url)
@@ -527,7 +527,7 @@ class PropagateResponse(SendWebmentions):
     if not self.lease(ndb.Key(urlsafe=self.request.params['response_key'])):
       return
 
-    activity = json.loads(self.entity.activity_json)
+    activity = json.loads(self.entity.activities_json[0])
     response_obj = json.loads(self.entity.response_json)
     if not Source.is_public(response_obj) or not Source.is_public(activity):
       logging.info('Response or activity is non-public. Dropping.')
