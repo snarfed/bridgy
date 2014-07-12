@@ -150,7 +150,7 @@ class Poll(webapp2.RequestHandler):
     last_activity_id = source.last_activity_id
 
     #
-    # Step 2: extract responses, store activity in response['activity']
+    # Step 2: extract responses, store their activities in response['activities']
     #
     responses = {}  # key is response id
     for activity in activities:
@@ -180,14 +180,24 @@ class Poll(webapp2.RequestHandler):
       reposts = [t for t in tags if Response.get_type(t) == 'repost']
       rsvps = Source.get_rsvps_from_event(obj)
 
-      # drop responses without ids
+      # coalesce responses. drop any without ids
       for resp in replies + likes + reposts + rsvps:
         id = resp.get('id')
-        if id:
-          resp['activity'] = activity
-          responses[id] = resp
-        else:
+        if not id:
           logging.error('Skipping response without id: %s', resp)
+          continue
+
+        existing = responses.get(id)
+        if existing:
+          if (existing.get('url') != resp.get('url') or
+              existing.get('content') != resp.get('content')):
+            logging.error(
+              'Two responses with same id but different URLs or content!\n%s\n%s',
+              existing, resp)
+          resp = existing
+        else:
+          responses[id] = resp
+        resp.setdefault('activities', []).append(activity)
 
     #
     # Step 3: filter out existing responses
@@ -222,22 +232,25 @@ class Poll(webapp2.RequestHandler):
     # Step 4: store new responses and enqueue propagate tasks
     #
     for id, resp in responses.items():
-      activity = resp.pop('activity')
-      # we'll usually have multiple responses for the same activity, and the
-      # resp['activity'] objects are shared, so cache each activity's discovered
-      # webmention targets inside the activity object.
-      targets = activity.get('targets')
-      if targets is None:
-        targets = activity['targets'] = get_webmention_targets(source, activity)
+      activities = resp.pop('activities', [])
+      all_targets = set()
+      for activity in activities:
+        # we'll usually have multiple responses for the same activity, and the
+        # objects in resp['activities'] are shared, so cache each activity's
+        # discovered webmention targets inside its object.
+        targets = activity.get('targets')
+        if targets is None:
+          targets = activity['targets'] = get_webmention_targets(source, activity)
+        logging.info('%s has %d original post URL(s): %s', activity.get('url'),
+                     len(targets), ' '.join(targets))
+        all_targets.update(targets)
 
-      logging.info('%s has %d original post URL(s): %s', activity.get('url'),
-                   len(targets), ' '.join(targets))
       Response(id=id,
                source=source.key,
-               activities_json=[json.dumps(util.prune_activity(activity))],
+               activities_json=[json.dumps(util.prune_activity(a)) for a in activities],
                response_json=json.dumps(resp),
                type=Response.get_type(resp),
-               unsent=list(targets),
+               unsent=list(all_targets),
                ).get_or_save()
 
     if responses:

@@ -252,6 +252,35 @@ class PollTest(TaskQueueTest):
     self.assert_responses()
     self.assertEqual('complete', self.responses[0].key.get().status)
 
+  def test_same_response_for_multiple_activities(self):
+    """Should combine the original post URLs from all of them.
+    """
+    for a in self.activities:
+      a['object']['replies']['items'][0]['id'] = 'tag:source.com,2013:only_reply'
+      a['object']['tags'] = []
+      del a['object']['url']  # prevent posse post discovery (except 2, below)
+    self.activities[1]['object']['attachments'] = [
+      {'objectType': 'article', 'url': 'http://from/tag'}]
+    self.activities[2]['object']['url'] = 'https://activ/2'
+    self.sources[0].set_activities(self.activities)
+
+    # trigger posse post discovery
+    self.sources[0].domain_urls = ['http://author']
+    self.sources[0].put()
+    models.SyndicatedPost(parent=self.sources[0].key,
+                          original='http://from/synd/post',
+                          syndication='https://activ/2').put()
+
+    self.post_task()
+    self.assertEquals(1, len(self.taskqueue_stub.GetTasks('propagate')))
+    self.assertEquals(1, models.Response.query().count())
+    resp = models.Response.query().get()
+    self.assert_equals(['tag:source.com,2013:%s' % id for id in 'a', 'b', 'c'],
+                       [json.loads(a)['id'] for a in resp.activities_json])
+    self.assert_equals(
+      ['http://from/tag', 'http://from/synd/post', 'http://target1/post/url'],
+      models.Response.get_by_id('tag:source.com,2013:only_reply').unsent)
+
   def test_wrong_last_polled(self):
     """If the source doesn't have our last polled value, we should quit.
     """

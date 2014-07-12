@@ -565,6 +565,8 @@ class Response(Webmentions):
   """
   # ActivityStreams JSON activity and comment, like, or repost
   type = ndb.StringProperty(choices=VERB_TYPES, default='comment')
+  # These are TextProperty, and not JsonProperty, so that their plain text is
+  # visible in the App Engine admin console. (JsonProperty uses a blob. :/)
   activities_json = ndb.TextProperty(repeated=True)
   response_json = ndb.TextProperty()
 
