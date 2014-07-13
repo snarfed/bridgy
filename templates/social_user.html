@@ -7,11 +7,8 @@
 {% if not source.verified and source.status != "disabled" and source.features %}
 {% if not source.domains or not source.domain_urls %}
 <div class="row promo warning">
-<p>First things first: what's your web site? Add it to your
-{# source.AS_CLASS doesn't work for Twitter. use kind as fallback. #}
-{% firstof source.AS_CLASS.NAME source.key.kind %} profile's <em>web site</em>
-or <em>link</em> field, then click here:
-{% block listen-signup-2 %}
+<p id="edit-profile">First things first: what's your web site?
+{% block edit-profile %}
 {% endblock %}
 </p>
 </div>

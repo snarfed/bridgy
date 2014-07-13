@@ -1,11 +1,14 @@
 {% extends "social_user.html" %}
 
 {% block listen-signup %}
-{% comment %} Silly workaround since you can't use a block more than once.
-  https://code.djangoproject.com/ticket/4529#comment:4 {% endcomment %}
-{% block listen-signup-2 %}
 {% include "facebook_signup.html" %}
 {% endblock %}
+
+{% block edit-profile %}
+<a href="https://www.facebook.com/me?sk=info&edit=eduwork#pagelet_contact"
+   target="_blank">Edit your Facebook profile</a>,
+enter it in the <em>Website</em> field, then click here:
+{% include "facebook_signup.html" %}
 {% endblock %}
 
 {% block publish-signup %}

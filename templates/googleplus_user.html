@@ -1,9 +1,14 @@
 {% extends "social_user.html" %}
 
 {% block listen-signup %}
-{% comment %} Silly workaround since you can't use a block more than once.
-  https://code.djangoproject.com/ticket/4529#comment:4 {% endcomment %}
-{% block listen-signup-2 %}
 {% include "googleplus_signup.html" %}
 {% endblock %}
+
+{% block edit-profile %}
+Open your
+<a href="https://plus.google.com/me/about" target="_blank">
+  Google+ profile's <em>Links</em> section</a>, click the <em>Edit</em> link,
+and add your web site as the first link under <em>Other profiles</em>. Then
+click here:
+{% include "googleplus_signup.html" %}
 {% endblock %}

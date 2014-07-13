@@ -106,6 +106,10 @@ pre .link, code.link {
   margin-bottom: 1em;
 }
 
+#edit-profile em {
+  font-style: normal;
+}
+
 form {
    display: inline;
 }
