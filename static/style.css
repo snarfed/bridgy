@@ -31,6 +31,11 @@ body {
   margin-top: 2em;
 }
 
+#signups hr {
+  width: 50%;
+  border-color: lightgray;
+}
+
 .big {
   font-size: 1.5em;
 }
