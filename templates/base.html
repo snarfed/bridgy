@@ -36,7 +36,6 @@ _gaq.push(['_trackPageview']);
 <!-- Content starts here -->
 <body class="{% block body_class %}{% endblock %}">
 
-{# TODO: javascript to set browser location to / so that reloads are harmless #}
 <div id="messages">
   <p id="message"></p>
 </div>
@@ -65,25 +64,11 @@ Got a web site?<br />
 Want to publish your posts to social networks?<br />
 Want to see comments and likes on your site?<br />
 <a id="title" href="/">Bridgy</a> is for you.
-<a id="more-link" href="/about" onclick="toggle('more'); return false;">More...</a>
+<a id="more-link" href="/about">More...</a>
 </div>
 </div>
 
 <p class="clearfix" />
-
-<div id="more" style="display: none" />
-<p>Bridgy lets you post to social networks - and comment, like, reshare, and
-more - from your own web site. It also pulls other people's comments, likes, and
-reshares of your posts back to your site. In
-<a href="http://indiewebcamp.com/why">IndieWeb</a> lingo, Bridgy lets you
-<a href="http://indiewebcamp.com/POSSE">POSSE</a> to
-the <a href="http://indiewebcamp.com/silos">silos</a> easily and
-<a href="http://indiewebcamp.com/backfeed">backfeed</a> the responses
-automatically.
-<a href="https://snarfed.org/2013-12-07_goodbye-penny-arcade-report#comments">Check
-out this example</a>, or <a href="/about">see the docs for more details</a>.
-</p>
-</div>
 
 {% block content %}
 {% endblock %}
@@ -92,7 +77,7 @@ out this example</a>, or <a href="/about">see the docs for more details</a>.
   <a href="/about">About / FAQ</a>
   | <a href="https://snarfed.org/about">Contact</a>
   | <a href="https://github.com/snarfed/bridgy">Source</a>
-  | <a href="http://indiewebcamp.com/">#Indieweb</a>
+  | <a href="http://indiewebcamp.com/">#IndieWeb</a>
 </div>
 
 </div>

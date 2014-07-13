@@ -6,8 +6,44 @@
 
 {% block content %}
 
+<li id="what" class="question">What is this?</li>
+<li class="answer">
+<p>Bridgy is a service that pulls comments, likes, and reshares on social
+networks back to your web site. You can also use it to post to social
+networks - or comment, like, reshare, or even RSVP - from your own web site.
+</p>
+
+<p>A picture is worth a thousand words, so here's a screenshot of comments,
+likes, etc. that Bridgy sent to a
+<a href="https://snarfed.org/2014-01-15_a-new-kingdom#comments"
+   target="_blank">post on my own site</a>:
+</p>
+
+<br />
+<p>
+<a href="https://snarfed.org/2014-01-15_a-new-kingdom#comments" target="_blank">
+ <img id="screenshot" src="/static/example_post_screenshot.png"
+      style="border: 1px solid lightgray; max-width: 100%" />
+</a></p>
+<br />
+
+<p>Bridgy is part of the
+<a href="http://indiewebcamp.com/">IndieWeb</a> ecosystem. In IndieWeb lingo,
+Bridgy offers
+<a href="http://indiewebcamp.com/backfeed">backfeed</a>,
+<a href="http://indiewebcamp.com/POSSE">POSSE</a>, and
+<a href="http://indiewebify.me/#send-webmentions">webmention</a> support as a
+service.</a>
+</p>
+
+<p>Read on for more details, or
+<a href="/">head to the front page</a> to sign up and get started!</p>
+</li>
+
+
+<br />
 <ul class="about">
-<li><a href="#what">What is this?</a></li>
+<p><em>General</em></p>
 <li><a href="#how">How does it work?</a></li>
 <li><a href="#cost">How much does it cost?</a></li>
 <li><a href="#privacy">What do you do with my data?</a></li>
@@ -79,45 +115,22 @@ That's ugly.</a></li>
 
 
 <!-- General -->
-<li id="what" class="question">What is this?</li>
-<li class="answer">
-
-<p>Bridgy lets you post, comment, like, reshare, and more on social networks
-from your own web site. It also pulls other people's comments, likes, and
-reshares of your posts back to your site. In
-<a href="http://indiewebcamp.com/why">IndieWeb</a> lingo, Bridgy lets you
-<a href="http://indiewebcamp.com/POSSE">POSSE</a> to
-the <a href="http://indiewebcamp.com/silos">silos</a> easily and
-<a href="http://indiewebcamp.com/backfeed">backfeed</a> the responses
-automatically.
-<a href="https://snarfed.org/2013-12-07_goodbye-penny-arcade-report#comments">Check
-out this example!</a>
-</p>
-<p>The <a href="https://snarfed.org/2012-01-08_bridgy_launched">first version of
-Bridgy</a> was released a couple years ago, but only supported backfeeding
-comments to
-<a href="http://wordpress.org/">WordPress</a>. This version is better, thanks to
-<a href="http://indiewebify.me/#send-webmentions">webmentions</a> and the
-inspiration of the
-<a href="http://indiewebcamp.com/why">IndieWeb community</a>.
-</p>
-</li>
-
 <li id="how" class="question">How does it work?</li>
 <li class="answer">
-<p>
-When you ask Bridgy to publish a post from your web site, it fetches the post,
-looks for <a href="http://microformats.org/wiki/microformats2">microformats2</a>
-to determine what it is, then publishes it using the social networks' APIs.
-</p>
 <p>
 When you sign up to pull back responses, Bridgy periodically checks your posts
 for
 <a href="http://indiewebcamp.com/original-post-discovery">links to your web
 site</a> and new responses, then sends those responses
 as <a href="http://indiewebify.me/#send-webmentions">webmentions</a>. Bridgy
-also translates the responses to microformats2 so that your web site can fetch
-and parse them.
+also translates the responses
+to <a href="http://microformats.org/">microformats</a> so that your web site can
+fetch and parse them.
+</p>
+<p>
+When you ask Bridgy to publish a post from your web site, it fetches the post,
+looks for microformats to determine what it is, then publishes it using the
+social networks' APIs.
 </p>
 <p>Bridgy is <a href="https://github.com/snarfed/bridgy">open source</a>. It's
 written in Python and runs on
@@ -167,11 +180,17 @@ data</a>.
 
 <li id="history" class="question">How long has this been around?</li>
 <li class="answer">
-<p>
-I started working on Bridgy in the summer of 2011 and launched the first version
-on Jan. 8 2012, which never got much adoption because it was WordPress only and
-not very polished. I launched the current version with webmention support on Dec.
-9 2013.
+<p>I started working on Bridgy in the summer of 2011
+and <a href="https://snarfed.org/2012-01-08_bridgy_launched">launched the first
+version</a> on Jan. 8 2012. It only
+supported <a href="http://wordpress.org/">WordPress</a>, wasn't very
+polished, so it never got much adoption.
+</p>
+<p>I launched the current version on Dec. 9, 2013. It's been more successful,
+thanks in large part to
+<a href="http://indiewebify.me/#send-webmentions">webmentions</a> and the
+inspiration of the
+<a href="http://indiewebcamp.com/why">IndieWeb community</a>.
 </p>
 </li>
 
