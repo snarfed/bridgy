@@ -252,7 +252,7 @@ class Poll(webapp2.RequestHandler):
         response_json=json.dumps(resp),
         type=Response.get_type(resp),
         unsent=list(urls_to_activity.keys()))
-      if len(activities) > 1:
+      if urls_to_activity and len(activities) > 1:
         resp.urls_to_activity=json.dumps(urls_to_activity)
       resp.get_or_save()
 
@@ -592,10 +592,15 @@ class PropagateResponse(SendWebmentions):
     if self.entity.type in ('like', 'repost', 'rsvp'):
       response_id = response_id.split('_')[-1]
 
+    # determine which activity to use
+    activity = self.activities[0]
+    if self.entity.urls_to_activity:
+      urls_to_activity = json.loads(self.entity.urls_to_activity)
+      if urls_to_activity:
+        activity = self.activities[urls_to_activity[target_url]]
+
     # generate source URL
-    activity_index = (json.loads(self.entity.urls_to_activity)[target_url]
-                      if self.entity.urls_to_activity else 0)
-    id = self.activities[activity_index]['id']
+    id = activity['id']
     parsed = util.parse_tag_uri(id)
     post_id = parsed[1] if parsed else id
     # prefer brid-gy.appspot.com to brid.gy because non-browsers (ie OpenSSL)

@@ -290,6 +290,22 @@ class PollTest(TaskQueueTest):
                         'http://target1/post/url': 0},
                        json.loads(resp.urls_to_activity))
 
+  def test_multiple_activities_no_target_urls(self):
+    """Response.urls_to_activity should be left unset.
+    """
+    for a in self.activities:
+      a['object']['replies']['items'][0]['id'] = 'tag:source.com,2013:only_reply'
+      a['object']['tags'] = []
+      del a['object']['url']  # prevent posse post discovery
+      del a['object']['content']
+    self.sources[0].set_activities(self.activities)
+
+    self.post_task()
+    resp = models.Response.query().get()
+    self.assert_equals([], resp.unsent)
+    self.assert_equals('complete', resp.status)
+    self.assertIsNone(resp.urls_to_activity)
+
   def test_wrong_last_polled(self):
     """If the source doesn't have our last polled value, we should quit.
     """
