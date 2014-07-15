@@ -233,8 +233,8 @@ class Poll(webapp2.RequestHandler):
     #
     for id, resp in responses.items():
       activities = resp.pop('activities', [])
-      all_targets = set()
-      for activity in activities:
+      urls_to_activity = {}
+      for i, activity in enumerate(activities):
         # we'll usually have multiple responses for the same activity, and the
         # objects in resp['activities'] are shared, so cache each activity's
         # discovered webmention targets inside its object.
@@ -243,15 +243,18 @@ class Poll(webapp2.RequestHandler):
           targets = activity['targets'] = get_webmention_targets(source, activity)
         logging.info('%s has %d original post URL(s): %s', activity.get('url'),
                      len(targets), ' '.join(targets))
-        all_targets.update(targets)
+        urls_to_activity.update({t: i for t in targets})
 
-      Response(id=id,
-               source=source.key,
-               activities_json=[json.dumps(util.prune_activity(a)) for a in activities],
-               response_json=json.dumps(resp),
-               type=Response.get_type(resp),
-               unsent=list(all_targets),
-               ).get_or_save()
+      resp = Response(
+        id=id,
+        source=source.key,
+        activities_json=[json.dumps(util.prune_activity(a)) for a in activities],
+        response_json=json.dumps(resp),
+        type=Response.get_type(resp),
+        unsent=list(urls_to_activity.keys()))
+      if len(activities) > 1:
+        resp.urls_to_activity=json.dumps(urls_to_activity)
+      resp.get_or_save()
 
     if responses:
       # cache newly seen response ids
@@ -366,24 +369,35 @@ class SendWebmentions(webapp2.RequestHandler):
 
   ERROR_HTTP_RETURN_CODE = 306  # "Unused"
 
-  def send_webmentions(self, source_url):
-    """Tries to send each unsent webmention in self.entity.
+  def source_url(self, target_url):
+    """Return the source URL to use for a given target URL.
 
-    self.lease() *must* be called before this!
+    Subclasses must implement.
 
     Args:
-      source_url: string
+      target_url: string
+
+    Returns: string
+    """
+    raise NotImplementedError()
+
+  def send_webmentions(self):
+    """Tries to send each unsent webmention in self.entity.
+
+    Uses source_url() to determine the source parameter for each webmention.
+
+    self.lease() *must* be called before this!
     """
     logging.info('Starting %s', self.entity.label())
 
     try:
-      self.do_send_webmentions(source_url)
+      self.do_send_webmentions()
     except:
       logging.exception('Propagate task failed')
       self.release('error')
       raise
 
-  def do_send_webmentions(self, source_url):
+  def do_send_webmentions(self):
     unsent = set()
     for url in self.entity.unsent + self.entity.error:
       # recheck the url here since the checks may have failed during the poll
@@ -399,6 +413,7 @@ class SendWebmentions(webapp2.RequestHandler):
 
     while self.entity.unsent:
       target = self.entity.unsent.pop(0)
+      source_url = self.source_url(target)
       logging.info('Webmention from %s to %s', source_url, target)
 
       # see if we've cached webmention discovery for this domain. the cache
@@ -538,6 +553,9 @@ class SendWebmentions(webapp2.RequestHandler):
 class PropagateResponse(SendWebmentions):
   """Task handler that sends webmentions for a Response.
 
+  Attributes:
+    activities: parsed Response.activities_json list
+
   Request parameters:
     response_key: string key of Response entity
   """
@@ -547,10 +565,10 @@ class PropagateResponse(SendWebmentions):
     if not self.lease(ndb.Key(urlsafe=self.request.params['response_key'])):
       return
 
-    activities = [json.loads(a) for a in self.entity.activities_json]
+    self.activities = [json.loads(a) for a in self.entity.activities_json]
     response_obj = json.loads(self.entity.response_json)
     if (not Source.is_public(response_obj) or
-        not all(Source.is_public(a) for a in activities)):
+        not all(Source.is_public(a) for a in self.activities)):
       logging.info('Response or activity is non-public. Dropping.')
       self.complete()
       return
@@ -566,13 +584,18 @@ class PropagateResponse(SendWebmentions):
                  calendar.timegm(self.entity.created.utctimetuple()) - 61,
                  source.key.urlsafe())
 
-    # (we know Response key ids are always tag URIs)
+    self.send_webmentions()
+
+  def source_url(self, target_url):
+    # parse the response id. (we know Response key ids are always tag URIs)
     _, response_id = util.parse_tag_uri(self.entity.key.string_id())
     if self.entity.type in ('like', 'repost', 'rsvp'):
       response_id = response_id.split('_')[-1]
 
-    # generate local response URL
-    id = activities[0]['id']
+    # generate source URL
+    activity_index = (json.loads(self.entity.urls_to_activity)[target_url]
+                      if self.entity.urls_to_activity else 0)
+    id = self.activities[activity_index]['id']
     parsed = util.parse_tag_uri(id)
     post_id = parsed[1] if parsed else id
     # prefer brid-gy.appspot.com to brid.gy because non-browsers (ie OpenSSL)
@@ -584,11 +607,9 @@ class PropagateResponse(SendWebmentions):
     else:
       host_url = self.request.host_url
 
-    local_response_url = '%s/%s/%s/%s/%s/%s' % (
+    return '%s/%s/%s/%s/%s/%s' % (
       host_url, self.entity.type, self.entity.source.get().SHORT_NAME,
       self.entity.source.string_id(), post_id, response_id)
-
-    self.send_webmentions(local_response_url)
 
 
 class PropagateBlogPost(SendWebmentions):
@@ -609,7 +630,10 @@ class PropagateBlogPost(SendWebmentions):
         if link_domain and link_domain not in source_domains:
           to_send.add(url)
       self.entity.unsent = list(to_send)
-      self.send_webmentions(self.entity.key.id())
+      self.send_webmentions()
+
+  def source_url(self, target_url):
+    return self.entity.key.id()
 
 
 application = webapp2.WSGIApplication([

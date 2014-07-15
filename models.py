@@ -569,8 +569,11 @@ class Response(Webmentions):
   # visible in the App Engine admin console. (JsonProperty uses a blob. :/)
   activities_json = ndb.TextProperty(repeated=True)
   response_json = ndb.TextProperty()
+  # JSON dict mapping original post url to activity index in activities_json.
+  # only set when there's more than one activity.
+  urls_to_activity = ndb.TextProperty()
 
-  # DEPRECATED, DO NOT USE!
+  # DEPRECATED, DO NOT USE! see https://github.com/snarfed/bridgy/issues/217
   activity_json = ndb.TextProperty()
 
   def label(self):

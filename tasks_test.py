@@ -259,9 +259,14 @@ class PollTest(TaskQueueTest):
       a['object']['replies']['items'][0]['id'] = 'tag:source.com,2013:only_reply'
       a['object']['tags'] = []
       del a['object']['url']  # prevent posse post discovery (except 2, below)
-    self.activities[1]['object']['attachments'] = [
-      {'objectType': 'article', 'url': 'http://from/tag'}]
-    self.activities[2]['object']['url'] = 'https://activ/2'
+
+    self.activities[1]['object'].update({
+        'content': '',
+        'attachments': [{'objectType': 'article', 'url': 'http://from/tag'}]})
+    self.activities[2]['object'].update({
+        'content': '',
+        'url': 'https://activ/2'})
+
     self.sources[0].set_activities(self.activities)
 
     # trigger posse post discovery
@@ -279,7 +284,11 @@ class PollTest(TaskQueueTest):
                        [json.loads(a)['id'] for a in resp.activities_json])
     self.assert_equals(
       ['http://from/tag', 'http://from/synd/post', 'http://target1/post/url'],
-      models.Response.get_by_id('tag:source.com,2013:only_reply').unsent)
+      resp.unsent)
+    self.assert_equals({'http://from/tag': 1,
+                        'http://from/synd/post': 2,
+                        'http://target1/post/url': 0},
+                       json.loads(resp.urls_to_activity))
 
   def test_wrong_last_polled(self):
     """If the source doesn't have our last polled value, we should quit.
@@ -1046,6 +1055,28 @@ class PropagateTest(TaskQueueTest):
     source_url = 'https://brid-gy.appspot.com/comment/fake/%s/AAA/1_2_a' % \
         self.sources[0].key.string_id()
     self.expect_webmention(source_url=source_url, target='http://good')\
+        .AndReturn(True)
+
+    self.mox.ReplayAll()
+    self.post_task(base_url='http://www.brid.gy')
+
+  def test_response_with_multiple_activities(self):
+    """Should use Response.urls_to_activity to generate the source URLs.
+    """
+    self.responses[0].activities_json = [
+      '{"id": "000"}', '{"id": "111"}', '{"id": "222"}']
+    self.responses[0].unsent = ['http://AAA', 'http://BBB', 'http://CCC']
+    self.responses[0].urls_to_activity = json.dumps(
+      {'http://AAA': 0, 'http://BBB': 1, 'http://CCC': 2})
+    self.responses[0].put()
+
+    source_url = 'https://brid-gy.appspot.com/comment/fake/%s/%%s/1_2_a' % \
+        self.sources[0].key.string_id()
+    self.expect_webmention(source_url=source_url % '000', target='http://AAA')\
+        .AndReturn(True)
+    self.expect_webmention(source_url=source_url % '111', target='http://BBB')\
+        .AndReturn(True)
+    self.expect_webmention(source_url=source_url % '222', target='http://CCC')\
         .AndReturn(True)
 
     self.mox.ReplayAll()
