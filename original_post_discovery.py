@@ -193,7 +193,7 @@ def _process_author(source, author_url, refetch_blanks=False):
   except BaseException:
     # TODO limit allowed failures, cache the author's h-feed url
     # or the # of times we've failed to fetch it
-    logging.exception('Could not fetch author url %s', author_url)
+    logging.warning('Could not fetch author url %s', author_url, exc_info=True)
     return {}
 
   author_dom = BeautifulSoup(author_resp.text)
@@ -234,7 +234,7 @@ def _process_author(source, author_url, refetch_blanks=False):
     except AssertionError:
       raise  # reraise assertions for unit tests
     except BaseException:
-      logging.exception('Could not fetch h-feed url %s.', feed_url)
+      logging.warning('Could not fetch h-feed url %s.', feed_url, exc_info=True)
 
   feeditems = author_parsed['items']
   hfeed = next((item for item in feeditems
@@ -313,7 +313,7 @@ def _process_entry(source, permalink, refetch_blanks, preexisting):
       parsed = mf2py.Parser(url=permalink, doc=resp.text).to_dict()
   except BaseException:
     # TODO limit the number of allowed failures
-    logging.exception('Could not fetch permalink %s', permalink)
+    logging.warning('Could not fetch permalink %s', permalink, exc_info=True)
 
   if parsed:
     relsynd = parsed.get('rels').get('syndication', [])
