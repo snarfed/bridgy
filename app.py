@@ -216,14 +216,18 @@ class UserHandler(DashboardHandler):
 
     # Responses
     if 'listen' in self.source.features:
-      responses = Response.query().filter(Response.source == self.source.key)\
-                                  .order(-Response.updated)\
-                                  .fetch(10)
-      for r in responses:
+      vars['responses'] = []
+      for r in Response.query().filter(Response.source == self.source.key)\
+                               .order(-Response.updated):
         r.response = json.loads(r.response_json)
         if r.activity_json:  # handle old entities
           r.activities_json.append(r.activity_json)
         r.activities = [json.loads(a) for a in r.activities_json]
+
+        if (not as_source.Source.is_public(r.response) or
+            not all(as_source.Source.is_public(a) for a in r.activities)):
+          continue
+
         r.actor = r.response.get('author') or r.response.get('actor', {})
         if not r.response.get('content'):
           if r.type == 'like':
@@ -241,7 +245,7 @@ class UserHandler(DashboardHandler):
         # generate original post links
         r.links = self.process_webmention_links(r)
 
-      vars['responses'] = responses
+        vars['responses'].append(r)
 
     # Publishes
     if 'publish' in self.source.features:
