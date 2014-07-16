@@ -246,6 +246,8 @@ class UserHandler(DashboardHandler):
         r.links = self.process_webmention_links(r)
 
         vars['responses'].append(r)
+        if len(vars['responses']) >= 10:
+          break
 
     # Publishes
     if 'publish' in self.source.features:
