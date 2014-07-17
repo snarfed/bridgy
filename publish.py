@@ -81,8 +81,8 @@ class Handler(webmention.WebmentionHandler):
     domain = parsed.netloc
     path_parts = parsed.path.rsplit('/', 1)
     source_cls = SOURCES.get(path_parts[-1])
-    if (domain not in ('brid.gy', 'www.brid.gy') or len(path_parts) != 2 or
-        path_parts[0] != '/publish' or not source_cls):
+    if (domain not in ('brid.gy', 'www.brid.gy', 'localhost:8080') or
+        len(path_parts) != 2 or path_parts[0] != '/publish' or not source_cls):
       return self.error('Target must be brid.gy/publish/{facebook,twitter}')
     elif source_cls in (Instagram, GooglePlusPage):
       return self.error('Sorry, %s is not yet supported.' %
