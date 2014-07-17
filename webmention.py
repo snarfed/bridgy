@@ -38,7 +38,7 @@ class WebmentionGetHandler(util.Handler):
 <link rel="webmention" href="%s/publish/webmention">
 </head>
 <body>Nothing here! <a href="/about">Try the docs instead.</a></body>
-<html>""" % self.request.host_url)
+</html>""" % self.request.host_url)
 
 
 class WebmentionHandler(WebmentionGetHandler):
