@@ -218,8 +218,19 @@ class Handler(webmention.WebmentionHandler):
     if (not appengine_config.DEBUG and 'snarfed.org' in self.source.domains and
         not self.PREVIEW and obj_type in ('note', 'article') and
         verb not in ('like', 'share') and not verb.startswith('rsvp-')):
-      self.error('Not posting for snarfed.org')
-      return None
+      return self.error('Not posting for snarfed.org')
+
+    # RSVPs need in-reply-to
+    _, url = self.source.as_source.base_object(obj)
+    if (verb.startswith('rsvp-') or verb == 'invite') and not url:
+      return self.error(
+        "This looks like an RSVP, but it's missing an in-reply-to link to the "
+          "%s event." % self.source.AS_CLASS.NAME,
+        html="This looks like an <a href='http://indiewebcamp.com/rsvp'>RSVP</a>, "
+        "but it's missing an <a href='http://indiewebcamp.com/comment'>in-reply-to</a> "
+        "link to the %s event." % self.source.AS_CLASS.NAME,
+        data=item)
+
 
     # whether to include link to original post. bridgy_omit_link query param
     # (any value) takes precedence, then u-bridgy-omit-link mf2 class.

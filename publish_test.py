@@ -205,6 +205,16 @@ class PublishTest(testutil.HandlerTest):
     self.assert_error("FakeSource doesn't support type(s) like-of")
     self.assertEquals('failed', Publish.query().get().status)
 
+  def test_rsvp_without_in_reply_to(self):
+    self.expect_requests_get('http://foo.com/bar', """
+<article class="h-entry">
+<p class="e-content">
+<data class="p-rsvp" value="yes">I'm in!</data>
+</p></article>""")
+    self.mox.ReplayAll()
+    self.assert_error("looks like an RSVP, but it's missing an in-reply-to link")
+    self.assertEquals('failed', Publish.query().get().status)
+
   def test_mf1_backward_compatibility_inside_hfeed(self):
     """This is based on Blogger's default markup, e.g.
     http://daisystanton.blogspot.com/2014/06/so-elections.html
@@ -265,6 +275,7 @@ this is my article
 <article class="h-entry h-as-rsvp">
 <p class="e-content">
 <data class="p-rsvp" value="yes"></data>
+<a class="u-in-reply-to" href="http://fa.ke/event"></a>
 </p></article>""")
     self.mox.ReplayAll()
     self.assert_success('')

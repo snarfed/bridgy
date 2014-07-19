@@ -27,7 +27,7 @@ import models_test
 import tasks
 from tasks import PropagateResponse
 import testutil
-from testutil import FakeSource
+from testutil import FakeSource, FakeAsSource
 import util
 from webmentiontools import send
 
@@ -57,6 +57,14 @@ class TaskQueueTest(testutil.ModelsTest):
 class PollTest(TaskQueueTest):
 
   post_url = '/_ah/queue/poll'
+
+  def setUp(self):
+    super(PollTest, self).setUp()
+    FakeAsSource.DOMAIN = 'source'
+
+  def tearDown(self):
+    FakeAsSource.DOMAIN = 'fa.ke'
+    super(PollTest, self).tearDown()
 
   def post_task(self, expected_status=200, source=None):
     super(PollTest, self).post_task(
@@ -484,7 +492,7 @@ class PollTest(TaskQueueTest):
     Source.last_syndication_url to approximately the current time.
     """
     self.sources[0].domain_urls = ['http://author']
-    self.sources[0].AS_CLASS.DOMAIN = 'source'
+    FakeAsSource.DOMAIN = 'source'
     self.sources[0].last_syndication_url = None
     self.sources[0].put()
 
@@ -518,7 +526,7 @@ class PollTest(TaskQueueTest):
     """Only 1 hour has passed since we last re-fetched the user's h-feed. Make
     Sure it is not fetched again"""
     self.sources[0].domain_urls = ['http://author']
-    self.sources[0].AS_CLASS.DOMAIN = 'source'
+    FakeAsSource.DOMAIN = 'source'
     self.sources[0].last_syndication_url = NOW - datetime.timedelta(minutes=10)
     # too recent to fetch again
     self.sources[0].last_hfeed_fetch = NOW - datetime.timedelta(hours=1)
@@ -556,7 +564,7 @@ class PollTest(TaskQueueTest):
     any new syndication links have been added or updated.
     """
     self.sources[0].domain_urls = ['http://author']
-    self.sources[0].AS_CLASS.DOMAIN = 'source'
+    FakeAsSource.DOMAIN = 'source'
     self.sources[0].last_syndication_url = NOW - datetime.timedelta(minutes=10)
     self.sources[0].last_hfeed_fetch = NOW - datetime.timedelta(hours=2,
                                                                 minutes=10)
