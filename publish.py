@@ -212,6 +212,10 @@ class Handler(webmention.WebmentionHandler):
           not obj.get('displayName')):
         raise NotImplementedError('Could not find <a href="http://microformats.org/">content</a> in %s' % self.fetched.url)
 
+    # expand inReplyTo or object urls by fetching the original and
+    # searching for rel=syndication
+    self.expand_in_reply_to(obj)
+
     # special case for me: don't allow posts in live app, just comments, likes,
     # and reposts
     verb = obj.get('verb', '')
@@ -249,6 +253,65 @@ class Handler(webmention.WebmentionHandler):
 
       self.response.headers['Content-Type'] = 'application/json'
       return json.dumps(self.entity.published, indent=2)
+
+  def expand_in_reply_to(self, activity):
+    """Expand the inReplyTo or object fields of an ActivityStreams object
+    by fetching the original and looking for rel=syndication URLs.
+
+    This method modifies the dict in place.
+
+    Args:
+      activity: an ActivityStreams dict of the activity being published
+    """
+    for field in ('inReplyTo', 'object'):
+      objs = activity.get(field, [])
+      if isinstance(objs, dict):
+        objs = [objs]
+
+      augmented = list(objs)
+      for obj in objs:
+        url = obj.get('url')
+        if not url:
+          continue
+
+        # get_webmention_target weeds out silos and non-HTML targets
+        # that we wouldn't want to download and parse
+        url, _, ok = util.get_webmention_target(url)
+        if not ok:
+          continue
+
+        logging.debug('expand_in_reply_to fetching mf2 for field=%s, url=%s', field, url)
+        resp = self.fetch_mf2(url)
+        if not resp:
+          continue
+
+        _, data = resp
+        synd_urls = data.get('rels', {}).get('syndication', [])
+
+        # look for syndication urls in the first h-entry
+        queue = collections.deque(data.get('items', []))
+        while queue:
+          item = queue.popleft()
+          item_types = set(item.get('type', []))
+          if 'h-entry' in item_types:
+            # these can be urls or h-cites
+            for synd_value in item.get('properties', {}).get('syndication', []):
+              if isinstance(synd_value, dict):
+                synd_urls += synd_value.get('properties', {}).get('url', [])
+              else:
+                synd_urls.append(synd_value)
+            break
+          if 'h-feed' in item_types:
+            queue.extend(item.get('children', []))
+
+        if synd_urls:
+          logging.debug('expand_in_reply_to found rel=syndication for url=%s: %s', url, synd_urls)
+        else:
+          logging.debug('expand_in_reply_to found no additional rel=syndication urls for url=%s', url)
+
+        augmented += [{'url': u} for u in synd_urls]
+
+      activity[field] = augmented
 
   @ndb.transactional
   def get_or_add_publish_entity(self, source_url):
