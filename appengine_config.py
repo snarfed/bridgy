@@ -30,13 +30,39 @@ import util
 # to test, open this path:
 # http://localhost:8080/_ereporter?sender=ryan@brid.gy&to=ryan@brid.gy&debug=true&delete=false&date=2014-07-09
 # where the date is today or tomorrow (because of UTC)
-import logging
 from google.appengine.ext import ereporter
-ereporter_logging_handler = ereporter.register_logger()
+import traceback
 
 # monkey patch ereporter to combine exceptions from different versions and dates
 ereporter.ExceptionRecord.get_key_name = \
     classmethod(lambda cls, signature, version, date=None: signature)
+
+# monkey patch ereporter to blacklist some exceptions
+class BlacklistingHandler(ereporter.ExceptionRecordingHandler):
+  """An ereporter handler that ignores exceptions in a blacklist."""
+  # Exception message prefixes to ignore
+  BLACKLIST = (
+    'ConnectionError: HTTPConnectionPool',
+    'ConnectionError: HTTPSConnectionPool',
+    'DeadlineExceededError: The API call taskqueue.BulkAdd() took too long',
+    'error: An error occured while connecting to the server: Unable to fetch URL:',
+    'HTTPError: 404 Client Error:',
+    'HttpError: <HttpError 500 when requesting',
+    'TransientError',
+    )
+
+  def emit(self, record):
+    if record and record.exc_info:
+      type_and_msg = traceback.format_exception_only(*record.exc_info[:2])[-1]
+      for prefix in self.BLACKLIST:
+        if type_and_msg.startswith(prefix):
+          return
+    return super(BlacklistingHandler, self).emit(record)
+
+
+ereporter_logging_handler = BlacklistingHandler()
+import logging
+logging.getLogger().addHandler(ereporter_logging_handler)
 
 
 # temporarily disabled:
