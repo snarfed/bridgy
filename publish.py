@@ -31,6 +31,7 @@ import logging
 import json
 import sys
 import urlparse
+import mf2py
 
 import appengine_config
 from appengine_config import HTTP_TIMEOUT
@@ -264,7 +265,10 @@ class Handler(webmention.WebmentionHandler):
       activity: an ActivityStreams dict of the activity being published
     """
     for field in ('inReplyTo', 'object'):
-      objs = activity.get(field, [])
+      objs = activity.get(field)
+      if not objs:
+        continue
+
       if isinstance(objs, dict):
         objs = [objs]
 
@@ -280,12 +284,22 @@ class Handler(webmention.WebmentionHandler):
         if not ok:
           continue
 
-        logging.debug('expand_in_reply_to fetching mf2 for field=%s, url=%s', field, url)
-        resp = self.fetch_mf2(url)
-        if not resp:
+        # fetch_mf2 raises a fuss if it can't fetch a mf2 document;
+        # easier to just grab this ourselves than add a bunch of
+        # special-cases to that method
+        logging.debug('expand_in_reply_to fetching field=%s, url=%s', field, url)
+        try:
+          resp = requests.get(url, timeout=HTTP_TIMEOUT)
+          resp.raise_for_status()
+        except AssertionError:
+          raise  # for unit tests
+        except BaseException:
+          # it's not a big deal if we can't fetch an in-reply-to url
+          logging.warn('expand_in_reply_to could not fetch field=%s, url=%s', field, url,
+                       exc_info=sys.exc_info())
           continue
 
-        _, data = resp
+        data = mf2py.Parser(url=url, doc=resp.text).to_dict()
         synd_urls = data.get('rels', {}).get('syndication', [])
 
         # look for syndication urls in the first h-entry
@@ -293,16 +307,16 @@ class Handler(webmention.WebmentionHandler):
         while queue:
           item = queue.popleft()
           item_types = set(item.get('type', []))
-          if 'h-entry' in item_types:
-            # these can be urls or h-cites
-            for synd_value in item.get('properties', {}).get('syndication', []):
-              if isinstance(synd_value, dict):
-                synd_urls += synd_value.get('properties', {}).get('url', [])
-              else:
-                synd_urls.append(synd_value)
-            break
-          if 'h-feed' in item_types:
+          if 'h-feed' in item_types and 'h-entry' not in item_types:
             queue.extend(item.get('children', []))
+            continue
+
+          # these can be urls or h-cites
+          for synd_value in item.get('properties', {}).get('syndication', []):
+            if isinstance(synd_value, dict):
+              synd_urls += synd_value.get('properties', {}).get('url', [])
+            else:
+              synd_urls.append(synd_value)
 
         if synd_urls:
           logging.debug('expand_in_reply_to found rel=syndication for url=%s: %s', url, synd_urls)
