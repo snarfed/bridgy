@@ -31,6 +31,7 @@ import logging
 import json
 import sys
 import urlparse
+import mf2py
 
 import appengine_config
 from appengine_config import HTTP_TIMEOUT
@@ -212,6 +213,10 @@ class Handler(webmention.WebmentionHandler):
           not obj.get('displayName')):
         raise NotImplementedError('Could not find <a href="http://microformats.org/">content</a> in %s' % self.fetched.url)
 
+    # expand inReplyTo or object urls by fetching the original and
+    # searching for rel=syndication
+    self.expand_target_urls(obj)
+
     # special case for me: don't allow posts in live app, just comments, likes,
     # and reposts
     verb = obj.get('verb', '')
@@ -260,6 +265,72 @@ class Handler(webmention.WebmentionHandler):
 
       self.response.headers['Content-Type'] = 'application/json'
       return json.dumps(self.entity.published, indent=2)
+
+  def expand_target_urls(self, activity):
+    """Expand the inReplyTo or object fields of an ActivityStreams object
+    by fetching the original and looking for rel=syndication URLs.
+
+    This method modifies the dict in place.
+
+    Args:
+      activity: an ActivityStreams dict of the activity being published
+    """
+    for field in ('inReplyTo', 'object'):
+      # microformats2.json_to_object de-dupes, no need to do it here
+      objs = activity.get(field)
+      if not objs:
+        continue
+
+      if isinstance(objs, dict):
+        objs = [objs]
+
+      augmented = list(objs)
+      for obj in objs:
+        url = obj.get('url')
+        if not url:
+          continue
+
+        # get_webmention_target weeds out silos and non-HTML targets
+        # that we wouldn't want to download and parse
+        url, _, ok = util.get_webmention_target(url)
+        if not ok:
+          continue
+
+        # fetch_mf2 raises a fuss if it can't fetch a mf2 document;
+        # easier to just grab this ourselves than add a bunch of
+        # special-cases to that method
+        logging.debug('expand_target_urls fetching field=%s, url=%s', field, url)
+        try:
+          resp = requests.get(url, timeout=HTTP_TIMEOUT)
+          resp.raise_for_status()
+          data = mf2py.Parser(url=url, doc=resp.text).to_dict()
+        except AssertionError:
+          raise  # for unit tests
+        except BaseException:
+          # it's not a big deal if we can't fetch an in-reply-to url
+          logging.warn('expand_target_urls could not fetch field=%s, url=%s', field, url,
+                       exc_info=True)
+          continue
+
+        synd_urls = data.get('rels', {}).get('syndication', [])
+
+        # look for syndication urls in the first h-entry
+        queue = collections.deque(data.get('items', []))
+        while queue:
+          item = queue.popleft()
+          item_types = set(item.get('type', []))
+          if 'h-feed' in item_types and 'h-entry' not in item_types:
+            queue.extend(item.get('children', []))
+            continue
+
+          # these can be urls or h-cites
+          synd_urls += microformats2.get_string_urls(
+            item.get('properties', {}).get('syndication', []))
+
+        logging.debug('expand_target_urls found rel=syndication for url=%s: %r', url, synd_urls)
+        augmented += [{'url': u} for u in synd_urls]
+
+      activity[field] = augmented
 
   @ndb.transactional
   def get_or_add_publish_entity(self, source_url):

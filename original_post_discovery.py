@@ -277,7 +277,7 @@ def _process_author(source, author_url, refetch_blanks=False):
 
 
 def _process_entry(source, permalink, refetch_blanks, preexisting):
-  """Fetch and process an h-hentry, saving a new SyndicatedPost to the
+  """Fetch and process an h-entry, saving a new SyndicatedPost to the
   DB if successful.
 
   Args:

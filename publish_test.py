@@ -1,3 +1,4 @@
+# coding=utf-8
 """Unit tests for publish.py.
 """
 
@@ -309,6 +310,8 @@ this is my article
 """<div class="h-entry"><p class="e-content">
 <a class="u-in-reply-to" href="http://%sfa.ke/a/b/d">foo</a>
 </p></div>""" % subdomain)
+      self.expect_requests_get('http://%sfa.ke/a/b/d' % subdomain,
+                               '<html/>')
     self.mox.ReplayAll()
 
     for i in range(len(subdomains)):
@@ -379,3 +382,242 @@ this is my article
     self.expect_requests_get('http://foo.com/bar', html)
     self.mox.ReplayAll()
     self.assert_success('foo', bridgy_omit_link='True')
+
+  def test_expand_target_urls_u_syndication(self):
+    """Comment on a post with a u-syndication value
+    """
+    self.mox.StubOutWithMock(self.source.as_source, 'create',
+                             use_mock_anything=True)
+
+    self.expect_requests_get('http://foo.com/bar', """
+    <article class="h-entry">
+      <a class="u-in-reply-to" href="http://orig.domain/baz">In reply to<a/>
+    </article>
+    """)
+
+    self.expect_requests_get('http://orig.domain/baz', """
+    <article class="h-entry">
+      <span class="p-name e-content">Original post</span>
+      <a class="u-syndication" href="https://fa.ke/a/b">syndicated</a>
+    </article>
+    """)
+
+    self.source.as_source.create({
+      'inReplyTo': [{'url': 'http://orig.domain/baz'},
+                    {'url': 'https://fa.ke/a/b'}],
+      'displayName': 'In reply to',
+      'url': 'http://foo.com/bar',
+      'objectType': 'comment',
+    }, include_link=True).AndReturn({
+      'url': 'http://fake/url',
+      'id': 'http://fake/url',
+      'content': 'This is a reply',
+    })
+
+    self.mox.ReplayAll()
+    self.assert_success('')
+
+  def test_expand_target_urls_rel_syndication(self):
+    """Publishing a like of a post with two rel=syndication values
+    """
+
+    self.mox.StubOutWithMock(self.source.as_source, 'create',
+                             use_mock_anything=True)
+
+    self.expect_requests_get('http://foo.com/bar', """
+    <article class="h-entry">
+      <a class="u-like-of" href="http://orig.domain/baz">liked this<a/>
+    </article>
+    """)
+
+    self.expect_requests_get('http://orig.domain/baz', """
+    <link rel="syndication" href="https://fa.ke/a/b">
+    <link rel="syndication" href="https://flic.kr/c/d">
+    <article class="h-entry">
+      <span class="p-name e-content">Original post</span>
+    </article>
+    """)
+
+    self.source.as_source.create({
+      'verb': 'like',
+      'displayName': 'liked this',
+      'url': 'http://foo.com/bar',
+      'object': [{'url': 'http://orig.domain/baz'},
+                 {'url': 'https://fa.ke/a/b'},
+                 {'url': 'https://flic.kr/c/d'}],
+      'objectType': 'activity',
+    }, include_link=True).AndReturn({
+      'url': 'http://fake/url',
+      'id': 'http://fake/url',
+      'content': 'liked this',
+    })
+
+    self.mox.ReplayAll()
+    self.assert_success('')
+
+  def test_expand_target_urls_h_cite(self):
+    """Repost a post with a p-syndication h-cite value (syndication
+    property is a dict rather than a string)
+    """
+    self.mox.StubOutWithMock(self.source.as_source, 'create',
+                             use_mock_anything=True)
+
+    self.expect_requests_get('http://foo.com/bar', """
+    <article class="h-entry">
+      <a class="u-repost-of" href="http://orig.domain/baz">reposted this<a/>
+    </article>
+    """)
+
+    self.expect_requests_get('http://orig.domain/baz', """
+    <article class="h-entry">
+      <span class="p-name e-content">Original post</span>
+      <a class="p-syndication h-cite" href="https://fa.ke/a/b">On Fa.ke</a>
+    </article>
+    """)
+
+    self.source.as_source.create({
+      'verb': 'share',
+      'displayName': 'reposted this',
+      'url': 'http://foo.com/bar',
+      'object': [{'url': 'http://orig.domain/baz'},
+                 {'url': 'https://fa.ke/a/b'}],
+      'objectType': 'activity',
+    }, include_link=True).AndReturn({
+      'url': 'http://fake/url',
+      'id': 'http://fake/url',
+      'content': 'reposted this',
+    })
+
+    self.mox.ReplayAll()
+    self.assert_success('')
+
+  def test_expand_target_urls_h_event_in_h_feed(self):
+    """RSVP to an event is a single element inside an h-feed; we should handle
+    it just like a normal post permalink page.
+    """
+    self.mox.StubOutWithMock(self.source.as_source, 'create',
+                             use_mock_anything=True)
+
+    self.expect_requests_get('http://foo.com/bar', """
+    <article class="h-entry">
+      <a class="u-in-reply-to" href="http://orig.domain/baz"><a/>
+      <span class="p-rsvp">yes</span>
+    </article>
+    """)
+
+    self.expect_requests_get('http://orig.domain/baz', """
+    <html class="h-feed">
+      <article class="h-event">
+        <span class="p-name e-content">Original post</span>
+        <a class="u-syndication" href="https://fa.ke/a/b">On Fa.ke</a>
+      </article>
+    </html>
+    """)
+
+    self.source.as_source.create({
+      'url': 'http://foo.com/bar',
+      'verb': 'rsvp-yes',
+      'displayName': 'yes',
+      'object': [{'url': 'http://orig.domain/baz'},
+                 {'url': 'https://fa.ke/a/b'}],
+      'objectType': 'activity',
+    }, include_link=True).AndReturn({
+      'url': 'http://fake/url',
+      'id': 'http://fake/url',
+      'content': 'RSVPd yes',
+    })
+
+    self.mox.ReplayAll()
+    self.assert_success('')
+
+  def test_expand_target_urls_fetch_failure(self):
+    """Fetching the in-reply-to URL fails, but that shouldn't prevent us
+    from publishing the post itself.
+    """
+    self.mox.StubOutWithMock(self.source.as_source, 'create',
+                             use_mock_anything=True)
+
+    self.expect_requests_get('http://foo.com/bar', """
+    <article class="h-entry">
+      <a class="u-in-reply-to" href="http://orig.domain/baz">In reply to<a/>
+    </article>
+    """)
+
+    self.expect_requests_get('http://orig.domain/baz', '', status_code=404)
+
+    self.source.as_source.create({
+      'inReplyTo': [{'url': 'http://orig.domain/baz'}],
+      'displayName': 'In reply to',
+      'url': 'http://foo.com/bar',
+      'objectType': 'comment',
+    }, include_link=True).AndReturn({
+      'url': 'http://fake/url',
+      'id': 'http://fake/url',
+      'content': 'This is a reply',
+    })
+
+    self.mox.ReplayAll()
+    self.assert_success('')
+
+  def test_expand_target_urls_no_microformats(self):
+    """Publishing a like of a post that has no microformats; should have no
+    problems posting the like anyway.
+    """
+
+    self.mox.StubOutWithMock(self.source.as_source, 'create',
+                             use_mock_anything=True)
+
+    self.expect_requests_get('http://foo.com/bar', """
+    <article class="h-entry">
+      <a class="u-like-of" href="http://orig.domain/baz">liked this<a/>
+    </article>
+    """)
+
+    self.expect_requests_get('http://orig.domain/baz', """
+    <article>
+      A fantastically well-written article
+    </article>
+    """)
+
+    self.source.as_source.create({
+      'verb': 'like',
+      'displayName': 'liked this',
+      'url': 'http://foo.com/bar',
+      'object': [{'url': 'http://orig.domain/baz'}],
+      'objectType': 'activity',
+    }, include_link=True).AndReturn({
+      'url': 'http://fake/url',
+      'id': 'http://fake/url',
+      'content': 'liked this',
+    })
+
+    self.mox.ReplayAll()
+    self.assert_success('')
+
+  def test_expand_target_urls_blacklisted_target(self):
+    """RSVP to a facebook event should not trigger a fetch since the silo is blacklisted
+    """
+    self.mox.StubOutWithMock(self.source.as_source, 'create',
+                             use_mock_anything=True)
+
+    self.expect_requests_get('http://foo.com/bar', """
+    <article class="h-entry">
+      <a class="u-in-reply-to" href="http://www.facebook.com/homebrew-website-club"><a/>
+      <span class="p-rsvp">yes</span>
+    </article>
+    """)
+
+    self.source.as_source.create({
+      'url': 'http://foo.com/bar',
+      'verb': 'rsvp-yes',
+      'displayName': 'yes',
+      'object': [{'url': 'http://www.facebook.com/homebrew-website-club'}],
+      'objectType': 'activity',
+    }, include_link=True).AndReturn({
+      'url': 'http://fake/url',
+      'id': 'http://fake/url',
+      'content': 'RSVPd yes',
+    })
+
+    self.mox.ReplayAll()
+    self.assert_success('')
