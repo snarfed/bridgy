@@ -271,6 +271,7 @@ class Handler(webmention.WebmentionHandler):
     page = PublishedPage.get_or_insert(source_url)
     entity = Publish.query(
       Publish.status == 'complete', Publish.type != 'preview',
+      Publish.source == self.source.key,
       ancestor=page.key).get()
 
     if entity is None:

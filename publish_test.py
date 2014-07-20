@@ -101,6 +101,27 @@ class PublishTest(testutil.HandlerTest):
     # should still be able to preview though
     self.assert_success('foo - http://foo.com/', preview=True)
 
+  def test_more_than_one_silo(self):
+    """POSSE to more than one silo should not trip the
+    'already published' check"""
+
+    class FauxSource(testutil.FakeSource):
+      SHORT_NAME = 'faux'
+
+    publish.SOURCES['faux'] = FauxSource
+    FauxSource(
+      id='foo.com', features=['publish'], domains=['foo.com'],
+      domain_urls=['http://foo.com/']).put()
+
+    html = '<article class="h-entry"><p class="e-content">foo</p></article>'
+    for i in range(2):
+      self.expect_requests_get('http://foo.com/bar', html)
+
+    self.mox.ReplayAll()
+
+    self.assert_success('')
+    self.assert_success('', target='http://brid.gy/publish/faux')
+
   def test_bad_target_url(self):
     self.assert_error('Target must be brid.gy/publish/{facebook,twitter}',
                       target='foo')
