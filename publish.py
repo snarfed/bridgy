@@ -215,7 +215,7 @@ class Handler(webmention.WebmentionHandler):
 
     # expand inReplyTo or object urls by fetching the original and
     # searching for rel=syndication
-    self.expand_in_reply_to(obj)
+    self.expand_target_urls(obj)
 
     # special case for me: don't allow posts in live app, just comments, likes,
     # and reposts
@@ -255,7 +255,7 @@ class Handler(webmention.WebmentionHandler):
       self.response.headers['Content-Type'] = 'application/json'
       return json.dumps(self.entity.published, indent=2)
 
-  def expand_in_reply_to(self, activity):
+  def expand_target_urls(self, activity):
     """Expand the inReplyTo or object fields of an ActivityStreams object
     by fetching the original and looking for rel=syndication URLs.
 
@@ -265,6 +265,7 @@ class Handler(webmention.WebmentionHandler):
       activity: an ActivityStreams dict of the activity being published
     """
     for field in ('inReplyTo', 'object'):
+      # microformats2.json_to_object de-dupes, no need to do it here
       objs = activity.get(field)
       if not objs:
         continue
@@ -287,19 +288,19 @@ class Handler(webmention.WebmentionHandler):
         # fetch_mf2 raises a fuss if it can't fetch a mf2 document;
         # easier to just grab this ourselves than add a bunch of
         # special-cases to that method
-        logging.debug('expand_in_reply_to fetching field=%s, url=%s', field, url)
+        logging.debug('expand_target_urls fetching field=%s, url=%s', field, url)
         try:
           resp = requests.get(url, timeout=HTTP_TIMEOUT)
           resp.raise_for_status()
+          data = mf2py.Parser(url=url, doc=resp.text).to_dict()
         except AssertionError:
           raise  # for unit tests
         except BaseException:
           # it's not a big deal if we can't fetch an in-reply-to url
-          logging.warn('expand_in_reply_to could not fetch field=%s, url=%s', field, url,
-                       exc_info=sys.exc_info())
+          logging.warn('expand_target_urls could not fetch field=%s, url=%s', field, url,
+                       exc_info=True)
           continue
 
-        data = mf2py.Parser(url=url, doc=resp.text).to_dict()
         synd_urls = data.get('rels', {}).get('syndication', [])
 
         # look for syndication urls in the first h-entry
@@ -312,17 +313,10 @@ class Handler(webmention.WebmentionHandler):
             continue
 
           # these can be urls or h-cites
-          for synd_value in item.get('properties', {}).get('syndication', []):
-            if isinstance(synd_value, dict):
-              synd_urls += synd_value.get('properties', {}).get('url', [])
-            else:
-              synd_urls.append(synd_value)
+          synd_urls += microformats2.get_string_urls(
+            item.get('properties', {}).get('syndication', []))
 
-        if synd_urls:
-          logging.debug('expand_in_reply_to found rel=syndication for url=%s: %s', url, synd_urls)
-        else:
-          logging.debug('expand_in_reply_to found no additional rel=syndication urls for url=%s', url)
-
+        logging.debug('expand_target_urls found rel=syndication for url=%s: %r', url, synd_urls)
         augmented += [{'url': u} for u in synd_urls]
 
       activity[field] = augmented

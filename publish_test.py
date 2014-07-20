@@ -351,7 +351,7 @@ this is my article
     self.mox.ReplayAll()
     self.assert_success('foo', bridgy_omit_link='True')
 
-  def test_expand_in_reply_to_u_syndication(self):
+  def test_expand_target_urls_u_syndication(self):
     """Comment on a post with a u-syndication value
     """
     self.mox.StubOutWithMock(self.source.as_source, 'create',
@@ -385,7 +385,7 @@ this is my article
     self.mox.ReplayAll()
     self.assert_success('')
 
-  def test_expand_in_reply_to_rel_syndication(self):
+  def test_expand_target_urls_rel_syndication(self):
     """Publishing a like of a post with two rel=syndication values
     """
 
@@ -423,7 +423,7 @@ this is my article
     self.mox.ReplayAll()
     self.assert_success('')
 
-  def test_expand_in_reply_to_h_cite(self):
+  def test_expand_target_urls_h_cite(self):
     """Repost a post with a p-syndication h-cite value (syndication
     property is a dict rather than a string)
     """
@@ -459,7 +459,7 @@ this is my article
     self.mox.ReplayAll()
     self.assert_success('')
 
-  def test_expand_in_reply_to_h_event_in_h_feed(self):
+  def test_expand_target_urls_h_event_in_h_feed(self):
     """RSVP to an event is a single element inside an h-feed; we should handle
     it just like a normal post permalink page.
     """
@@ -498,7 +498,7 @@ this is my article
     self.mox.ReplayAll()
     self.assert_success('')
 
-  def test_expand_in_reply_to_fetch_failure(self):
+  def test_expand_target_urls_fetch_failure(self):
     """Fetching the in-reply-to URL fails, but that shouldn't prevent us
     from publishing the post itself.
     """
@@ -527,7 +527,7 @@ this is my article
     self.mox.ReplayAll()
     self.assert_success('')
 
-  def test_expand_in_reply_to_no_microformats(self):
+  def test_expand_target_urls_no_microformats(self):
     """Publishing a like of a post that has no microformats; should have no
     problems posting the like anyway.
     """
@@ -562,7 +562,7 @@ this is my article
     self.mox.ReplayAll()
     self.assert_success('')
 
-  def test_expand_in_reply_to_blacklisted_target(self):
+  def test_expand_target_urls_blacklisted_target(self):
     """RSVP to a facebook event should not trigger a fetch since the silo is blacklisted
     """
     self.mox.StubOutWithMock(self.source.as_source, 'create',
