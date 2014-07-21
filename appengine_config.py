@@ -51,6 +51,8 @@ class BlacklistingHandler(ereporter.ExceptionRecordingHandler):
     'HTTPError: 404 Client Error:',
     'HTTPError: 500 Server Error: Internal Server Error',
     'HttpError: <HttpError 500 when requesting',
+    'HTTPException: Deadline exceeded while waiting for HTTP response from URL:',
+    'InternalError: server is not responding',  # usually datastore
     'TransientError',
     )
 
