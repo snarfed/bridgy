@@ -303,15 +303,14 @@ this is my article
     self.assert_success('')
     self.assertEquals('post', Publish.query().get().type)
 
-  def test_in_reply_to_domain_ignores_subdomains(self):
+  def test_in_reply_to_domain_allows_subdomains(self):
+    """(The code that handles this is in activitystreams.Source.base_object.)"""
     subdomains = 'www.', 'mobile.', ''
     for i, subdomain in enumerate(subdomains):
       self.expect_requests_get('http://foo.com/%d' % i,
 """<div class="h-entry"><p class="e-content">
 <a class="u-in-reply-to" href="http://%sfa.ke/a/b/d">foo</a>
 </p></div>""" % subdomain)
-      self.expect_requests_get('http://%sfa.ke/a/b/d' % subdomain,
-                               '<html/>')
     self.mox.ReplayAll()
 
     for i in range(len(subdomains)):
@@ -595,15 +594,17 @@ this is my article
     self.assert_success('')
 
   def test_expand_target_urls_blacklisted_target(self):
-    """RSVP to a facebook event should not trigger a fetch since the silo is blacklisted
+    """RSVP to a domain in the webmention blacklist should not trigger a fetch.
     """
     self.mox.StubOutWithMock(self.source.as_source, 'create',
                              use_mock_anything=True)
 
     self.expect_requests_get('http://foo.com/bar', """
-    <article class="h-entry">
-      <a class="u-in-reply-to" href="http://www.facebook.com/homebrew-website-club"><a/>
-      <span class="p-rsvp">yes</span>
+    <article class="h-entry h-as-rsvp">
+     <div class="e-content">
+      <span class="p-rsvp" value="yes">yes</span>
+      <a class="u-in-reply-to" href="http://fa.ke/homebrew-website-club"></a>
+     </div>
     </article>
     """)
 
@@ -611,8 +612,9 @@ this is my article
       'url': 'http://foo.com/bar',
       'verb': 'rsvp-yes',
       'displayName': 'yes',
-      'object': [{'url': 'http://www.facebook.com/homebrew-website-club'}],
+      'object': [{'url': 'http://fa.ke/homebrew-website-club'}],
       'objectType': 'activity',
+      'content': '\nyes\n\n',
     }, include_link=True).AndReturn({
       'url': 'http://fake/url',
       'id': 'http://fake/url',

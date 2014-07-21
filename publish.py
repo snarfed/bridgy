@@ -236,7 +236,6 @@ class Handler(webmention.WebmentionHandler):
         "link to the %s event." % self.source.AS_CLASS.NAME,
         data=item)
 
-
     # whether to include link to original post. bridgy_omit_link query param
     # (any value) takes precedence, then u-bridgy-omit-link mf2 class.
     if 'bridgy_omit_link' in self.request.params:

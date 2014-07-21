@@ -20,10 +20,6 @@ UNICODE_STR = u'a ✁ b'
 
 class UtilTest(testutil.ModelsTest):
 
-  def setUp(self):
-    super(testutil.ModelsTest, self).setUp()
-    util.WEBMENTION_BLACKLIST.add('fa.ke')
-
   def test_follow_redirects(self):
     self.expect_requests_head('http://will/redirect',
                               redirected_url='http://final/url')

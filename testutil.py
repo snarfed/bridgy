@@ -157,6 +157,8 @@ class HandlerTest(testutil.HandlerTest):
     # TODO: remove this and don't depend on consistent global queries
     self.testbed.init_datastore_v3_stub(consistency_policy=None)
 
+    util.WEBMENTION_BLACKLIST.add('fa.ke')  # for FakeSource
+
     for method in ('get', 'head', 'post'):
       self.mox.StubOutWithMock(requests, method, use_mock_anything=True)
 

@@ -231,6 +231,8 @@ def get_webmention_target(url):
     logging.warning('Dropping bad URL %s.', url)
     return (url, None, False)
 
+  if domain and domain.startswith('mobile.'):
+    domain = domain[len('mobile.'):]
   if domain in WEBMENTION_BLACKLIST:
     return (url, domain, False)
 
