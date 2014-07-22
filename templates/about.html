@@ -306,7 +306,7 @@ API</a> for a while, but
 <ul>
 <li>Does the social network post have a link to your web site's post? If not,
 does your web site's post have a
-<a href="#rel-syndication">rel-syndication link</a> to the social network post?
+<a href="#link">rel-syndication link</a> to the social network post?
 Bridgy needs at least one or the other so it can connect the two posts.
 </li>
 <li>Did you write the original post yourself? Bridgy doesn't crawl other people's
@@ -356,6 +356,11 @@ miss it. Sadface.
 <li>Is it a Facebook RSVP? If you signed up for Bridgy before RSVP support was
 added, your Facebook account access may not include events and RSVPs. Try
 <a href="/">signing up with Facebook</a> again.
+</li>
+<li>Are you using a <a href="#link">syndication link</a>? If so, Bridgy may have
+fetched your post before you added that link. When that happens, Bridgy waits up
+to two hours before it refetches your post and reloads syndication links, even
+if you manually poll before then. Check back in two hours or so.
 </li>
 </ul>
 </li>
