@@ -25,6 +25,10 @@ for path in (
 # know that happens everywhere tag_uri() might be used.
 import util
 
+# Twitter returns HTTP 429 for rate limiting, which webob doesn't know. Tell it.
+import webob
+webob.util.status_reasons[429] = 'Twitter rate limited'
+
 # ereporter records exceptions and emails them to me.
 # https://developers.google.com/appengine/articles/python/recording_exceptions_with_ereporter
 # to test, open this path:
@@ -52,6 +56,7 @@ class BlacklistingHandler(ereporter.ExceptionRecordingHandler):
     'HTTPError: 500 Server Error: Internal Server Error',
     'HttpError: <HttpError 500 when requesting',
     'HTTPException: Deadline exceeded while waiting for HTTP response from URL:',
+    'InstagramClientError: Unable to parse response, not valid JSON:',
     'InternalError: server is not responding',  # usually datastore
     'TransientError',
     )
