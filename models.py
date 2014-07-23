@@ -493,6 +493,18 @@ class Source(StringIdModel):
     """
     pass
 
+  def check_can_publish(self, obj):
+    """Basic sanity-checking as to whether this source can publish this
+    type of object. If not, return a helpful error message.
+
+    Args:
+      obj: an activitystreams object
+
+    Return:
+      a tuple, (boolean, plain text error, html-formatted error)
+    """
+    return True, None, None
+
 
 class Webmentions(StringIdModel):
   """A bundle of links to send webmentions for.

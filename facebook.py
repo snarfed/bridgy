@@ -203,6 +203,26 @@ class FacebookPage(models.Source):
                         'facebook.com/%s/' % self.key.id())
     return super(FacebookPage, self).canonicalize_syndication_url(url)
 
+  def check_can_publish(self, obj):
+    """The Facebook API does not let us post shares. Give a helpful error
+    message if the user tries to.
+
+    Args:
+      obj: an activitystreams object
+
+    Return:
+      a tuple, (boolean, plain-text error, html-formatted error)
+    """
+    verb = obj.get('verb', '')
+    if verb == 'share':
+      return (
+        False, 'Cannot publish shares on Facebook.',
+        'Cannot publish <a href="http://indiewebcamp.com/repost">shares</a> on Facebook. '
+        'This limitation is imposed by the '
+        '<a href="https://developers.facebook.com/docs/graph-api/reference/v2.0/object/sharedposts/#publish">Facebook Graph API</a>.'
+      )
+    return super(FacebookPage, self).check_can_publish(obj)
+
 
 class AddFacebookPage(oauth_facebook.CallbackHandler, util.Handler):
   def finish(self, auth_entity, state=None):

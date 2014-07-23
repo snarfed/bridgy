@@ -225,6 +225,11 @@ class Handler(webmention.WebmentionHandler):
         verb not in ('like', 'share') and not verb.startswith('rsvp-')):
       return self.error('Not posting for snarfed.org')
 
+    # Some sources just don't allow some post types
+    can_publish, err_plain, err_html = self.source.check_can_publish(obj)
+    if not can_publish:
+      return self.error(err_plain, html=err_html, data=item)
+
     # check that responses have a target url
     _, url = self.source.as_source.base_object(obj)
     if not url:
