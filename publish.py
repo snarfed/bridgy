@@ -225,16 +225,65 @@ class Handler(webmention.WebmentionHandler):
         verb not in ('like', 'share') and not verb.startswith('rsvp-')):
       return self.error('Not posting for snarfed.org')
 
-    # RSVPs need in-reply-to
+    # check that responses have a target url
     _, url = self.source.as_source.base_object(obj)
-    if (verb.startswith('rsvp-') or verb == 'invite') and not url:
-      return self.error(
-        "This looks like an RSVP, but it's missing an in-reply-to link to the "
-          "%s event." % self.source.AS_CLASS.NAME,
-        html="This looks like an <a href='http://indiewebcamp.com/rsvp'>RSVP</a>, "
-        "but it's missing an <a href='http://indiewebcamp.com/comment'>in-reply-to</a> "
-        "link to the %s event." % self.source.AS_CLASS.NAME,
-        data=item)
+    if not url:
+      error_template = (
+        'This looks like %(reply_type)s, but Bridgy could not find '
+        'the %(source)s %(target_type)s that it refers to. Ensure '
+        'that the original has %(link_type)s link to the '
+        'target %(target_type)s.')
+
+      # RSVPs need in-reply-to
+      if verb.startswith('rsvp-') or verb == 'invite':
+        return self.error(
+          error_template % {
+            'reply_type': 'an RSVP',
+            'link_type': 'an in-reply-to',
+            'source': self.source.AS_CLASS.NAME,
+            'target_type': 'event',
+          },
+          html=error_template % {
+            'reply_type': 'an <a href="http://indiewebcamp.com/rsvp">RSVP</a>',
+            'link_type': 'an <a href="http://indiewebcamp.com/comment">in-reply-to</a>',
+            'source': self.source.AS_CLASS.NAME,
+            'target_type': 'event',
+          },
+          data=item)
+
+      # likes need a like-of
+      elif verb == 'like':
+        return self.error(
+          error_template % {
+            'reply_type': 'a like',
+            'link_type': 'a like-of',
+            'source': self.source.AS_CLASS.NAME,
+            'target_type': 'post',
+          },
+          html=error_template % {
+            'reply_type': 'a <a href="http://indiewebcamp.com/like">like</a>',
+            'link_type': 'a <a href="http://indiewebcamp.com/like#mark_up_and_post_a_like">like-of</a>',
+            'source': self.source.AS_CLASS.NAME,
+            'target_type': 'post',
+            },
+          data=item)
+
+      # reposts need a repost-of
+      elif verb == 'share':
+        return self.error(
+          error_template % {
+            'reply_type': 'a repost',
+            'link_type': 'a repost-of',
+            'source': self.source.AS_CLASS.NAME,
+            'target_type': 'post',
+            },
+          html=error_template % {
+            'reply_type': 'a <a href="http://indiewebcamp.com/repost">repost</a>',
+            'link_type': 'a <a href="http://indiewebcamp.com/repost#How_to_Publish">repost-of</a>',
+            'source': self.source.AS_CLASS.NAME,
+            'target_type': 'post',
+            },
+          data=item)
 
     # whether to include link to original post. bridgy_omit_link query param
     # (any value) takes precedence, then u-bridgy-omit-link mf2 class.
