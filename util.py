@@ -62,6 +62,8 @@ WEBMENTION_BLACKLIST = {
   # temporary. tom's webmention handler is broken, and he knows about it.
   # TODO: remove once he's fixed it.
   'tommorris.org',
+  # these are users' home pages that return 401 or 403
+  'localhero.biz',  # http://brid.gy/twitter/localherodotbiz
   }
 
 
