@@ -465,10 +465,17 @@ class PollTest(TaskQueueTest):
     source = self.sources[0].key.get()
     self.assertEqual('c', source.last_activity_id)
 
-  def test_slow_poll(self):
-    # grace period has passed, hasn't sent webmention
+  def test_slow_poll_never_sent_webmention(self):
     self.sources[0].created = NOW - (FakeSource.FAST_POLL_GRACE_PERIOD +
                                      datetime.timedelta(minutes=1))
+    self.sources[0].put()
+    self.post_task()
+    self.assert_task_eta(FakeSource.SLOW_POLL)
+
+  def test_slow_poll_sent_webmention_over_month_ago(self):
+    self.sources[0].created = NOW - (FakeSource.FAST_POLL_GRACE_PERIOD +
+                                     datetime.timedelta(minutes=1))
+    self.sources[0].last_webmention_sent = NOW - datetime.timedelta(days=32)
     self.sources[0].put()
     self.post_task()
     self.assert_task_eta(FakeSource.SLOW_POLL)
@@ -482,7 +489,7 @@ class PollTest(TaskQueueTest):
   def test_fast_poll_has_sent_webmention(self):
     self.sources[0].created = NOW - (FakeSource.FAST_POLL_GRACE_PERIOD +
                                      datetime.timedelta(minutes=1))
-    self.sources[0].last_webmention_sent = NOW - datetime.timedelta(days=100)
+    self.sources[0].last_webmention_sent = NOW - datetime.timedelta(days=1)
     self.sources[0].put()
     self.post_task()
     self.assert_task_eta(FakeSource.FAST_POLL)

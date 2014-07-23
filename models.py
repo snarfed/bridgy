@@ -152,12 +152,14 @@ class Source(StringIdModel):
     """Returns the poll frequency for this source.
 
     Defaults to ~15m, depending on silo. If we've never sent a webmention for
-    this source, after a grace period we drop them down to ~1d.
+    this source, or the last one we sent was over a month ago, we drop them down
+    to ~1d after a week long grace period.
     """
     now = datetime.datetime.now()
     return (self.SLOW_POLL
             if (now > self.created + self.FAST_POLL_GRACE_PERIOD and
-                not self.last_webmention_sent)
+                (not self.last_webmention_sent or
+                 self.last_webmention_sent < now - datetime.timedelta(days=30)))
             else self.FAST_POLL)
 
   def refetch_period(self):

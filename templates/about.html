@@ -292,11 +292,16 @@ Indiewebcamp wiki</a> for a list of options.
   likes or reshares!</li>
 <li class="answer">
 <p>Bridgy doesn't work immediately. It checks your accounts for new activity
-periodically, every 5 to 20 minutes or so depending on the site. Twitter
-favorites and retweets used to be an exception, since Bridgy used
+periodically, every 5 to 30 minutes or so depending on the site. This drops down
+to once a day if you've been signed up for over a week and we haven't
+successfully sent you a webmention yet, or the last one we sent was over a month
+ago.
+</p>
+<p>(Twitter favorites and retweets used to be an
+exception, since Bridgy used
 <a href="https://dev.twitter.com/docs/streaming-apis">Twitter's Streaming
 API</a> for a while, but
-<a href="https://github.com/snarfed/bridgy/issues/57">not any more</a>.
+<a href="https://github.com/snarfed/bridgy/issues/57">not any more</a>.)
 </p></li>
 
 <li id="missing" class="question">...but it's been a while, and Bridgy
