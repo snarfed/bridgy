@@ -43,17 +43,24 @@ dependencies, make sure the patches are included!
 
 Misc
 ---
-I've made manual datastore backups, but we don't yet have automated backup set
-up. Bridgy isn't the canonical source of any actual user data, so it's not as
-important as for other services, but at minimum, the registered users and their
-OAuth tokens would be bad to lose. We should probably figure out a real backup
-system.
+The datastore is automatically backed up by a
+[cron job](https://developers.google.com/appengine/articles/scheduled_backups)
+that runs
+[Datastore Admin backup](https://developers.google.com/appengine/docs/adminconsole/datastoreadmin#backup_and_restore)
+and stores the results in
+[Cloud Storage](https://developers.google.com/storage/docs/), in the
+[brid-gy.appspot.com bucket](https://console.developers.google.com/project/apps~brid-gy/storage/brid-gy.appspot.com/).
+It backs up all entities weekly, and all entities except `Response` and
+`SyndicatedPost` daily, since they make up 92% of all entities by size and
+they aren't as critical to keep.
 
-The most likely candidate is
-[Datastore Admin](https://developers.google.com/appengine/docs/adminconsole/datastoreadmin),
-which I've used for the manual backups. There's even an easy way to
-[run them on a schedule](https://developers.google.com/appengine/articles/scheduled_backups).
-Definitely a TODO.
+We use this command to set a
+[Cloud Storage lifecycle policy](https://developers.google.com/storage/docs/lifecycle)
+on that bucket that deletes all files over 30 days old:
+
+```
+gsutil lifecycle set cloud_storage_lifecycle.json gs://brid-gy.appspot.com
+```
 
 
 Here are
