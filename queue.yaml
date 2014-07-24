@@ -21,3 +21,7 @@ queue:
     task_retry_limit: 30
     task_age_limit: 3d
     min_backoff_seconds: 30
+
+- name: datastore-backup
+  rate: 10/s
+  max_concurrent_requests: 1
