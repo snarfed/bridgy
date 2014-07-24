@@ -52,12 +52,15 @@ class BlacklistingHandler(ereporter.ExceptionRecordingHandler):
     'error: An error occured while connecting to the server: Unable to fetch URL:',
     'HTTPError: HTTP Error 400: Bad Request:',
     'HTTPError: HTTP Error 500: Internal Server Error',
+    'HTTPError: 400 Client Error: Bad Request',
     'HTTPError: 404 Client Error:',
     'HTTPError: 500 Server Error: Internal Server Error',
     'HttpError: <HttpError 500 when requesting',
+    'HttpError: <HttpError 404 when requesting',
     'HTTPException: Deadline exceeded while waiting for HTTP response from URL:',
     'InstagramClientError: Unable to parse response, not valid JSON:',
     'InternalError: server is not responding',  # usually datastore
+    'InternalError: Server is not responding',
     'TransientError',
     )
 
