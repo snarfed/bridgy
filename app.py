@@ -416,6 +416,15 @@ class RedirectToFrontPageHandler(util.Handler):
   head = get
 
 
+class WarmupHandler(util.Handler):
+  """Warmup requests. Noop.
+
+  https://developers.google.com/appengine/docs/python/config/appconfig#Python_app_yaml_Warmup_requests
+  """
+  def get(self):
+    pass
+
+
 application = webapp2.WSGIApplication(
   [('/?', FrontPageHandler),
    ('/users/?', UsersHandler),
@@ -427,4 +436,5 @@ application = webapp2.WSGIApplication(
    ('/poll-now', PollNowHandler),
    ('/retry', RetryHandler),
    ('/(listen|publish)/?', RedirectToFrontPageHandler),
+   ('/_ah/warmup', WarmupHandler),
    ], debug=appengine_config.DEBUG)
