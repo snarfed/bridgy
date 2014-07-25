@@ -530,7 +530,7 @@ class Webmentions(StringIdModel):
     """
     raise NotImplementedError()
 
-  def add_task(self):
+  def add_task(self, **kwargs):
     """Adds a propagate task for this entity.
 
     To be implemented by subclasses.
@@ -552,7 +552,7 @@ class Webmentions(StringIdModel):
 
     if self.unsent or self.error:
       logging.debug('New webmentions to propagate! %s', self.label())
-      self.add_task()
+      self.add_task(transactional=True)
     else:
       self.status = 'complete'
 
@@ -582,8 +582,8 @@ class Response(Webmentions):
     return ' '.join((self.key.kind(), self.type, self.key.id(),
                      json.loads(self.response_json).get('url', '[no url]')))
 
-  def add_task(self):
-    util.add_propagate_task(self)
+  def add_task(self, **kwargs):
+    util.add_propagate_task(self, **kwargs)
 
   @staticmethod
   def get_type(obj):
@@ -618,8 +618,8 @@ class BlogPost(Webmentions):
       url = self.feed_item.get('permalinkUrl')
     return ' '.join((self.key.kind(), self.key.id(), url or '[no url]'))
 
-  def add_task(self):
-    util.add_propagate_blogpost_task(self)
+  def add_task(self, **kwargs):
+    util.add_propagate_blogpost_task(self, **kwargs)
 
 
 class PublishedPage(StringIdModel):

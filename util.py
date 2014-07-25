@@ -88,21 +88,23 @@ def add_poll_task(source, **kwargs):
   logging.info('Added poll task with %s: %s', kwargs, task.name)
 
 
-def add_propagate_task(entity):
+def add_propagate_task(entity, **kwargs):
   """Adds a propagate task for the given response entity.
   """
   task = taskqueue.add(queue_name='propagate',
                        params={'response_key': entity.key.urlsafe()},
-                       target=taskqueue.DEFAULT_APP_VERSION)
+                       target=taskqueue.DEFAULT_APP_VERSION,
+                       **kwargs)
   logging.info('Added propagate task: %s', task.name)
 
 
-def add_propagate_blogpost_task(entity):
+def add_propagate_blogpost_task(entity, **kwargs):
   """Adds a propagate-blogpost task for the given response entity.
   """
   task = taskqueue.add(queue_name='propagate-blogpost',
                        params={'key': entity.key.urlsafe()},
-                       target=taskqueue.DEFAULT_APP_VERSION)
+                       target=taskqueue.DEFAULT_APP_VERSION,
+                       **kwargs)
   logging.info('Added propagate-blogpost task: %s', task.name)
 
 
