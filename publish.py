@@ -234,13 +234,28 @@ class Handler(webmention.WebmentionHandler):
     _, url = self.source.as_source.base_object(obj)
     if not url:
       error_template = (
-        'This looks like %(reply_type)s, but Bridgy could not find '
-        'the %(source)s %(target_type)s that it refers to. Ensure '
-        'that the original has %(link_type)s link to the '
-        'target %(target_type)s.')
+        "This looks like %(reply_type)s, but it's missing "
+        "%(link_type)s link to the %(source)s %(target_type)s."
+      )
+
+      if obj_type == 'comment':
+        return self.error(
+          error_template % {
+            'reply_type': 'a reply',
+            'link_type': 'an in-reply-to',
+            'source': self.source.AS_CLASS.NAME,
+            'target_type': 'post',
+          },
+          html=error_template % {
+            'reply_type': 'a <a href="http://indiewebcamp.com/reply">reply</a>',
+            'link_type': 'an <a href="http://indiewebcamp.com/comment">in-reply-to</a>',
+            'source': self.source.AS_CLASS.NAME,
+            'target_type': 'post',
+          },
+          data=item)
 
       # RSVPs need in-reply-to
-      if verb.startswith('rsvp-') or verb == 'invite':
+      elif verb.startswith('rsvp-') or verb == 'invite':
         return self.error(
           error_template % {
             'reply_type': 'an RSVP',
