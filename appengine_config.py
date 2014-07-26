@@ -49,6 +49,7 @@ class BlacklistingHandler(ereporter.ExceptionRecordingHandler):
     'ConnectionError: HTTPConnectionPool',
     'ConnectionError: HTTPSConnectionPool',
     'DeadlineExceededError: The API call taskqueue.BulkAdd() took too long',
+    'DeadlineExceededError: The API call datastore_v3.Get() took too long',
     'error: An error occured while connecting to the server: Unable to fetch URL:',
     'HTTPError: HTTP Error 400: Bad Request:',
     'HTTPError: HTTP Error 500: Internal Server Error',
