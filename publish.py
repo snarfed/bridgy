@@ -234,22 +234,18 @@ class Handler(webmention.WebmentionHandler):
     _, url = self.source.as_source.base_object(obj)
     if not url:
       error_template = (
-        "This looks like %(reply_type)s, but it's missing "
-        "%(link_type)s link to the %(source)s %(target_type)s."
+        "This looks like %(reply_type)s, but it's missing %(link_type)s link to the "
+        + self.source.AS_CLASS.NAME + " %(target_type)s."
       )
 
       if obj_type == 'comment':
         return self.error(
           error_template % {
-            'reply_type': 'a reply',
-            'link_type': 'an in-reply-to',
-            'source': self.source.AS_CLASS.NAME,
-            'target_type': 'post',
+            'reply_type': 'a reply', 'link_type': 'an in-reply-to', 'target_type': 'post',
           },
           html=error_template % {
             'reply_type': 'a <a href="http://indiewebcamp.com/reply">reply</a>',
             'link_type': 'an <a href="http://indiewebcamp.com/comment">in-reply-to</a>',
-            'source': self.source.AS_CLASS.NAME,
             'target_type': 'post',
           },
           data=item)
@@ -258,15 +254,11 @@ class Handler(webmention.WebmentionHandler):
       elif verb.startswith('rsvp-') or verb == 'invite':
         return self.error(
           error_template % {
-            'reply_type': 'an RSVP',
-            'link_type': 'an in-reply-to',
-            'source': self.source.AS_CLASS.NAME,
-            'target_type': 'event',
+            'reply_type': 'an RSVP', 'link_type': 'an in-reply-to', 'target_type': 'event',
           },
           html=error_template % {
             'reply_type': 'an <a href="http://indiewebcamp.com/rsvp">RSVP</a>',
             'link_type': 'an <a href="http://indiewebcamp.com/comment">in-reply-to</a>',
-            'source': self.source.AS_CLASS.NAME,
             'target_type': 'event',
           },
           data=item)
@@ -275,15 +267,11 @@ class Handler(webmention.WebmentionHandler):
       elif verb == 'like':
         return self.error(
           error_template % {
-            'reply_type': 'a like',
-            'link_type': 'a like-of',
-            'source': self.source.AS_CLASS.NAME,
-            'target_type': 'post',
+            'reply_type': 'a like', 'link_type': 'a like-of', 'target_type': 'post',
           },
           html=error_template % {
             'reply_type': 'a <a href="http://indiewebcamp.com/like">like</a>',
             'link_type': 'a <a href="http://indiewebcamp.com/like#mark_up_and_post_a_like">like-of</a>',
-            'source': self.source.AS_CLASS.NAME,
             'target_type': 'post',
             },
           data=item)
@@ -292,15 +280,11 @@ class Handler(webmention.WebmentionHandler):
       elif verb == 'share':
         return self.error(
           error_template % {
-            'reply_type': 'a repost',
-            'link_type': 'a repost-of',
-            'source': self.source.AS_CLASS.NAME,
-            'target_type': 'post',
+            'reply_type': 'a repost', 'link_type': 'a repost-of', 'target_type': 'post',
             },
           html=error_template % {
             'reply_type': 'a <a href="http://indiewebcamp.com/repost">repost</a>',
             'link_type': 'a <a href="http://indiewebcamp.com/repost#How_to_Publish">repost-of</a>',
-            'source': self.source.AS_CLASS.NAME,
             'target_type': 'post',
             },
           data=item)
