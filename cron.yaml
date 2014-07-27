@@ -17,11 +17,11 @@ cron:
 # weekly backups include everything.
 # https://developers.google.com/appengine/articles/scheduled_backups#Specifying_Backups_in_a_Cron_File
 - description: daily datastore backup, just user account data
-  url: /_ah/datastore_admin/backup.create?filesystem=gs&gs_bucket_name=brid-gy.appspot.com/daily&queue=datastore-backup&kind=BlogPost&kind=BlogWebmention&kind=Blogger&kind=BloggerV2Auth&kind=CredentialsModel&kind=CredentialsModel_Blogger&kind=FacebookAuth&kind=FacebookPage&kind=GooglePlusAuth&kind=GooglePlusPage&kind=Instagram&kind=InstagramAuth&kind=OAuthRequestToken&kind=Publish&kind=PublishedPage&kind=SiteXsrfSecretKey&kind=Tumblr&kind=TumblrAuth&kind=Twitter&kind=TwitterAuth&kind=WordPress&kind=WordPressAuth
+  url: /_ah/datastore_admin/backup.create?filesystem=gs&gs_bucket_name=brid-gy.appspot.com/daily&queue=datastore-backup&name=partial&kind=BlogPost&kind=BlogWebmention&kind=Blogger&kind=BloggerV2Auth&kind=CredentialsModel&kind=CredentialsModel_Blogger&kind=FacebookAuth&kind=FacebookPage&kind=GooglePlusAuth&kind=GooglePlusPage&kind=Instagram&kind=InstagramAuth&kind=OAuthRequestToken&kind=Publish&kind=PublishedPage&kind=SiteXsrfSecretKey&kind=Tumblr&kind=TumblrAuth&kind=Twitter&kind=TwitterAuth&kind=WordPress&kind=WordPressAuth
   schedule: every day 10:00  # 3am pst
   target: ah-builtin-python-bundle
 
 - description: weekly datastore backup, everything
-  url: /_ah/datastore_admin/backup.create?filesystem=gs&gs_bucket_name=brid-gy.appspot.com/weekly&queue=datastore-backup&kind=BlogPost&kind=BlogWebmention&kind=Blogger&kind=BloggerV2Auth&kind=CredentialsModel&kind=CredentialsModel_Blogger&kind=FacebookAuth&kind=FacebookPage&kind=GooglePlusAuth&kind=GooglePlusPage&kind=Instagram&kind=InstagramAuth&kind=OAuthRequestToken&kind=Publish&kind=PublishedPage&kind=SiteXsrfSecretKey&kind=Tumblr&kind=TumblrAuth&kind=Twitter&kind=TwitterAuth&kind=WordPress&kind=WordPressAuth&kind=Response&kind=SyndicatedPost
+  url: /_ah/datastore_admin/backup.create?filesystem=gs&gs_bucket_name=brid-gy.appspot.com/weekly&queue=datastore-backup&name=full&kind=BlogPost&kind=BlogWebmention&kind=Blogger&kind=BloggerV2Auth&kind=CredentialsModel&kind=CredentialsModel_Blogger&kind=FacebookAuth&kind=FacebookPage&kind=GooglePlusAuth&kind=GooglePlusPage&kind=Instagram&kind=InstagramAuth&kind=OAuthRequestToken&kind=Publish&kind=PublishedPage&kind=SiteXsrfSecretKey&kind=Tumblr&kind=TumblrAuth&kind=Twitter&kind=TwitterAuth&kind=WordPress&kind=WordPressAuth&kind=Response&kind=SyndicatedPost
   schedule: every sunday 11:00  # 4am pst
   target: ah-builtin-python-bundle
