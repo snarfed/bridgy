@@ -42,10 +42,13 @@ WEBMENTION_BLACKLIST = {
   'amazon.com',
   'brid.gy',
   'brid-gy.appspot.com',
+  'example.com',
   'facebook.com',
   'm.facebook.com',
+  'google.com',
   'instagr.am',
   'instagram.com',
+  'ipv4.google.com',
   'plus.google.com',
   'twitter.com',
   # these come from the text of tweets. we also pull the expanded URL
