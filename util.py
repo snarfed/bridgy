@@ -64,8 +64,9 @@ WEBMENTION_BLACKLIST = {
   # TODO: remove once he's fixed it.
   'tommorris.org',
   # these are users' home pages that return 401 or 403
-  'localhero.biz',  # http://brid.gy/twitter/localherodotbiz
-  'cssigniter.com', # http://www.brid.gy/twitter/tsiger
+  'brandoncollins.org', # http://brid.gy/facebook/541818556, /twitter/wolbrandon
+  'cssigniter.com',     # http://www.brid.gy/twitter/tsiger
+  'localhero.biz',      # http://brid.gy/twitter/localherodotbiz
   }
 
 
