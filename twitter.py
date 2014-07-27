@@ -78,24 +78,6 @@ class Twitter(models.Source):
       return super(Twitter, self).get_like(activity_user_id, activity_id,
                                            like_user_id)
 
-  def check_can_publish(self, obj):
-    """Twitter cannot publish event rsvps. Give a helpful error message if
-    the user tries to.
-
-    Args:
-      obj: an activitystreams object
-
-    Return:
-      a tuple, (boolean, plain-text error, html-formatted error)
-    """
-    verb = obj.get('verb', '')
-    if verb.startswith('rsvp-'):
-      return (
-        False, 'Cannot publish RSVPs to Twitter.',
-        'Cannot publish <a href="http://indiewebcamp.com/rsvp">RSVPs</a> to Twitter.'
-      )
-    return super(Twitter, self).check_can_publish(obj)
-
 
 class AddTwitter(oauth_twitter.CallbackHandler, util.Handler):
   def finish(self, auth_entity, state=None):

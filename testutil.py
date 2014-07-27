@@ -94,10 +94,17 @@ class FakeAsSource(FakeBase, as_source.Source):
 
   def create(self, obj, include_link=False):
     verb = obj.get('verb')
-    if verb == 'like' or 'content' not in obj:
+    if verb in ('like', 'share'):
+      return {
+        'id': 'fake id', 'url': 'http://fake_url',
+        'content': '%s of %s' % (verb, obj['object'][0]['url'])
+      }
+
+    if 'content' not in obj:
       raise NotImplementedError()
 
-    content = obj['content'] + (' - %s' % obj['url'] if include_link else '')
+    content = obj.get('content', 'no content') + (
+      ' - %s' % obj['url'] if include_link else '')
     ret = {'id': 'fake id', 'url': 'http://fake/url', 'content': content}
     if verb == 'rsvp-yes':
       ret['type'] = 'post'
@@ -105,8 +112,12 @@ class FakeAsSource(FakeBase, as_source.Source):
 
   def preview_create(self, obj, include_link=False):
     if obj.get('verb') == 'like':
-      raise NotImplementedError()
-    return 'preview of ' + obj['content'] + (
+      return 'like of %s' % obj['object'][0]['url']
+
+    elif obj.get('verb') == 'share':
+      return 'share of %s' % obj['object'][0]['url']
+
+    return 'preview of ' + obj.get('content', 'no content') + (
       ' - %s' % obj['url'] if include_link else '')
 
 

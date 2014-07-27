@@ -226,7 +226,7 @@ class Handler(webmention.WebmentionHandler):
       return self.error('Not posting for snarfed.org')
 
     # Some sources just don't allow some post types
-    can_publish, err_plain, err_html = self.source.check_can_publish(obj)
+    can_publish, err_plain, err_html = self.source.as_source.can_create(obj)
     if not can_publish:
       return self.error(err_plain, html=err_html, data=item)
 
