@@ -11,11 +11,27 @@ import urllib
 from appengine_config import HTTP_TIMEOUT
 import requests
 
+from activitystreams import source as as_source
 from models import Publish, PublishedPage
 import publish
 import testutil
 
 from google.appengine.api import mail
+
+
+class NoLikeAsSource(testutil.FakeAsSource):
+  def preview_create(self, obj, include_link=False):
+    verb = obj.get('verb')
+    if verb == 'like':
+      raise as_source.CannotPublishTypeError(
+        'NoLikeSource cannot publish likes.',
+        'NoLikeSource cannot publish <a href="http://indiewebcamp.com/like">likes</a>.')
+    return super(NoLikeAsSource, self).preview_create(obj, include_link)
+
+
+class NoLikeSource(testutil.FakeSource):
+  AS_CLASS = NoLikeAsSource
+  as_source = NoLikeAsSource()
 
 
 class PublishTest(testutil.HandlerTest):
@@ -27,6 +43,13 @@ class PublishTest(testutil.HandlerTest):
       id='foo.com', features=['publish'], domains=['foo.com'],
       domain_urls=['http://foo.com/'])
     self.source.put()
+
+    publish.SOURCES['no-like'] = NoLikeSource
+    self.no_like_source = NoLikeSource(
+      id='foo.com', features=['publish'], domains=['foo.com'],
+      domain_urls=['http://foo.com/'])
+    self.no_like_source.put()
+
 
   def get_response(self, source=None, target=None, preview=False,
                    bridgy_omit_link=None):
@@ -196,11 +219,11 @@ class PublishTest(testutil.HandlerTest):
 
   def test_type_not_implemented(self):
     self.expect_requests_get('http://foo.com/bar',
-                             '<article class="h-entry h-as-like"></article>')
+                             '<article class="h-product">Swiffer</article>')
     self.mox.ReplayAll()
 
     # FakeSource.create() raises NotImplementedError on likes
-    self.assert_error("FakeSource doesn't support type(s) h-as-like")
+    self.assert_error("FakeSource doesn't support type(s) h-product")
     self.assertEquals('failed', Publish.query().get().status)
 
   def test_source_url_is_domain_url(self):
@@ -217,14 +240,14 @@ class PublishTest(testutil.HandlerTest):
   def test_embedded_type_not_implemented(self):
     self.expect_requests_get('http://foo.com/bar', """
 <article class="h-entry">
-  <div class="p-like-of">
-    foo <a class="u-url" href="http://url">bar</a>
+  <div class="p-invitee h-cite">
+    foo <a class="u-url" href="http://fa.ke">bar</a>
   </div>
 </article>""")
     self.mox.ReplayAll()
 
-    # FakeSource.create() raises NotImplementedError on likes
-    self.assert_error("FakeSource doesn't support type(s) like-of")
+    # FakeSource.create() raises NotImplementedError on events with invitees
+    self.assert_error("FakeSource doesn't support type(s) invitee")
     self.assertEquals('failed', Publish.query().get().status)
 
   def test_rsvp_without_in_reply_to(self):
@@ -338,13 +361,22 @@ this is my article
       mail.send_mail(subject=subject, body=mox.IgnoreArg(),
                      sender=mox.IgnoreArg(), to=mox.IgnoreArg())
 
+    self.mox.StubOutWithMock(self.source.as_source, 'can_create',
+                             use_mock_anything=True)
+    self.source.as_source.can_create(mox.IgnoreArg()
+                                     ).AndReturn((True, None, None))
+
     self.mox.StubOutWithMock(self.source.as_source, 'create',
                              use_mock_anything=True)
     self.source.as_source.create(mox.IgnoreArg(), include_link=True
                                  ).AndRaise(Exception('foo'))
 
+    self.source.as_source.can_create(mox.IgnoreArg()
+                                     ).AndReturn((True, None, None))
+
     self.mox.StubOutWithMock(self.source.as_source, 'preview_create',
                              use_mock_anything=True)
+
     self.source.as_source.preview_create(mox.IgnoreArg(), include_link=True
                                          ).AndRaise(Exception('bar'))
 
@@ -531,36 +563,42 @@ this is my article
 
   def test_expand_target_urls_fetch_failure(self):
     """Fetching the in-reply-to URL fails, but that shouldn't prevent us
-    from publishing the post itself.
+    from publishing the post itself as long as a silo URL is provided.
     """
     self.mox.StubOutWithMock(self.source.as_source, 'create',
                              use_mock_anything=True)
 
     self.expect_requests_get('http://foo.com/bar', """
     <article class="h-entry">
-      <a class="u-in-reply-to" href="http://orig.domain/baz">In reply to<a/>
+      <a class="u-in-reply-to" href="http://orig.domain/baz">In reply to original<a/>
+      <a class="u-in-reply-to" href="http://fa.ke/baz">In reply to silo<a/>
+      <span class="p-name">this is a reply</span>
     </article>
     """)
 
     self.expect_requests_get('http://orig.domain/baz', '', status_code=404)
 
     self.source.as_source.create({
-      'inReplyTo': [{'url': 'http://orig.domain/baz'}],
-      'displayName': 'In reply to',
+      'inReplyTo': [
+        {'url': 'http://orig.domain/baz'},
+        {'url': 'http://fa.ke/baz'},
+      ],
+      'displayName': 'this is a reply',
       'url': 'http://foo.com/bar',
       'objectType': 'comment',
     }, include_link=True).AndReturn({
       'url': 'http://fake/url',
       'id': 'http://fake/url',
-      'content': 'This is a reply',
+      'content': 'this is a reply',
     })
 
     self.mox.ReplayAll()
     self.assert_success('')
 
   def test_expand_target_urls_no_microformats(self):
-    """Publishing a like of a post that has no microformats; should have no
-    problems posting the like anyway.
+    """Publishing a like of a post that has no microformats. As long as a
+    silo url is also provided, we should have no problems posting the
+    like anyway.
     """
 
     self.mox.StubOutWithMock(self.source.as_source, 'create',
@@ -568,7 +606,9 @@ this is my article
 
     self.expect_requests_get('http://foo.com/bar', """
     <article class="h-entry">
-      <a class="u-like-of" href="http://orig.domain/baz">liked this<a/>
+      <a class="u-like-of" href="http://orig.domain/baz">liked original<a/>
+      <a class="u-like-of" href="http://fa.ke/baz">liked silo<a/>
+      <span class="p-name">liked this</span>
     </article>
     """)
 
@@ -582,7 +622,12 @@ this is my article
       'verb': 'like',
       'displayName': 'liked this',
       'url': 'http://foo.com/bar',
-      'object': [{'url': 'http://orig.domain/baz'}],
+      'object': [
+        # TODO I'm not sure why these are out of order w/r/t the
+        # order above
+        {'url': 'http://fa.ke/baz'},
+        {'url': 'http://orig.domain/baz'},
+      ],
       'objectType': 'activity',
     }, include_link=True).AndReturn({
       'url': 'http://fake/url',
@@ -623,3 +668,99 @@ this is my article
 
     self.mox.ReplayAll()
     self.assert_success('')
+
+  def test_in_reply_to_no_target(self):
+    """in-reply-to an original that does not syndicate to the silo should
+    fail with a helpful error message.
+    """
+
+    self.expect_requests_get('http://foo.com/bar', """
+    <article class="h-entry">
+      In reply to a post on <a class="u-in-reply-to" href="http://original.domain/baz">original</a>
+      <div class="p-name e-content">
+        Great post about an important subject
+      </div>
+    </article>
+    """)
+
+    self.expect_requests_get('http://original.domain/baz', """
+    <article class="h-entry">
+      <div class="p-name e-content">
+        boop
+      </div>
+      <a class="u-syndication" href="http://not-fake/2014">syndicated here</a>
+    </article>
+    """)
+
+    self.mox.ReplayAll()
+
+    self.assert_error(
+      "looks like a reply, but it's missing an in-reply-to link to the "
+      "FakeSource post")
+
+  def test_like_of_with_no_target(self):
+    """Publishing a like of a post that has no microformats means we
+    cannot find anything to like. Fail with a helpful error message.
+    """
+
+    self.expect_requests_get('http://foo.com/bar', """
+    <article class="h-entry">
+      <a class="u-like-of" href="http://orig.domain/baz">liked this<a/>
+    </article>
+    """)
+
+    self.expect_requests_get('http://orig.domain/baz', """
+    <article>
+      A fantastically well-written article
+    </article>
+    """)
+
+    self.mox.ReplayAll()
+    self.assert_error(
+      "looks like a like, but it's missing a like-of link to the "
+      "FakeSource post")
+
+  def test_repost_of_no_target(self):
+    """repost-of an original that does not syndicate to the silo should
+    fail with a helpful error message.
+    """
+
+    self.expect_requests_get('http://foo.com/bar', """
+    <article class="h-entry">
+      Repost a post on <span class="p-repost-of h-cite">
+        <a class="u-url" href="http://original.domain/baz">original</a>
+      </span>
+      <div class="p-name">
+        reposted this
+      </div>
+    </article>
+    """)
+
+    self.expect_requests_get('http://original.domain/baz', """
+    <article class="h-entry">
+      <span class="p-name">boop</span>
+      <a class="u-syndication" href="http://not-fake/2014">syndicated here</a>
+    </article>
+    """)
+
+    self.mox.ReplayAll()
+
+    self.assert_error(
+      "looks like a repost, but it's missing a repost-of link to the "
+      "FakeSource post")
+
+  def test_check_can_publish(self):
+    """Create a source that does not accept likes, and make sure that it
+    gives an error message if we try.
+    """
+
+    html = """<article class="h-entry">
+      <a class="u-like-of" href="http://fa.ke/baz">liked this</a>
+      <p class="p-name">foo</p>
+    </article>"""
+    self.expect_requests_get('http://foo.com/bar', html)
+
+    self.mox.ReplayAll()
+
+    self.assert_error('NoLikeSource cannot publish likes.',
+                      target='http://brid.gy/publish/no-like')
