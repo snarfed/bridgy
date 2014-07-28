@@ -94,9 +94,15 @@ logging.getLogger().addHandler(ereporter_logging_handler)
 # def namespace_manager_default_namespace_for_request():
 #   return 'webmention-dev'
 
-# uncomment for app stats
-# appstats_CALC_RPC_COSTS = True
-# def webapp_add_wsgi_middleware(app):
-#   from google.appengine.ext.appstats import recording
-#   app = recording.appstats_wsgi_middleware(app)
-#   return app
+
+def webapp_add_wsgi_middleware(app):
+  # # uncomment for app stats
+  # appstats_CALC_RPC_COSTS = True
+  # from google.appengine.ext.appstats import recording
+  # app = recording.appstats_wsgi_middleware(app)
+
+  # uncomment for instance_info concurrent requests recording
+  from activitystreams.oauth_dropins.webutil import instance_info
+  app = instance_info.concurrent_requests_wsgi_middleware(app)
+
+  return app
