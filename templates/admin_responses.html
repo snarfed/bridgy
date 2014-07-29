@@ -11,6 +11,7 @@
 
 <body>
 <h2>Active responses</h2>
+<form method="post" action="/admin/mark_complete">
 <table>
   <tr>
     <th>Source</th>
@@ -19,6 +20,7 @@
     <th>Last attempt</th>
     <th>Created</th>
     <th>Error URLs</th>
+    <th class="hidden">Mark complete</th>
   </tr>
 
   {% for r in responses %}
@@ -42,8 +44,15 @@
     <td>{{ r.created|timesince }} ago</td>
 
     <td>{{ r.links|safeseq|unordered_list }}</td>
+
+    <td class="hidden">
+      <input name="key" value="{{ r.key.urlsafe }}" type="checkbox" />
+    </td>
   </tr>
   {% endfor %}
 </table>
+
+<div style="text-align: right"><input type="submit" value="Mark complete" /></div>
+</form>
 </body>
 </html>

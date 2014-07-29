@@ -15,6 +15,8 @@ from models import Response
 import instagram
 import twitter
 import util
+
+from google.appengine.ext import ndb
 import webapp2
 
 
@@ -32,7 +34,7 @@ class ResponsesHandler(handlers.TemplateHandler):
       if (len(responses) >= self.NUM_RESPONSES or
           r.updated < datetime.datetime.now() - datetime.timedelta(hours=3)):
         break
-      elif not r.error:
+      elif not r.error or r.status == 'complete':
         continue
 
       # r.source = r.source.get()
@@ -46,8 +48,19 @@ class ResponsesHandler(handlers.TemplateHandler):
     return {'responses': responses}
 
 
+class MarkCompleteHandler(util.Handler):
+  def post(self):
+    responses = ndb.get_multi(ndb.Key(urlsafe=u)
+                              for u in self.request.params.getall('key'))
+    for r in responses:
+      r.status = 'complete'
+    ndb.put_multi(responses)
+    self.redirect('/admin/responses')
+
+
 application = webapp2.WSGIApplication([
     ('/admin/responses', ResponsesHandler),
+    ('/admin/mark_complete', MarkCompleteHandler),
     ], debug=appengine_config.DEBUG)
 
 
