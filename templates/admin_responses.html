@@ -1,15 +1,27 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Bridgy: Active responses</title>
-  <style type="text/css">
-    table { border-spacing: .5em; }
-    th, td { border: none; }
-    li { list-style: none; }
-  </style>
+<title>Bridgy: Active responses</title>
+<style type="text/css">
+  table { border-spacing: .5em; }
+  th, td { border: none; }
+  li { list-style: none; }
+  input { display: none; }
+</style>
+
+<script type="text/javascript">
+function maybeShowInputs(event) {
+  if (String.fromCharCode(event.charCode) == "x") {
+    elems = document.getElementsByTagName("input");
+    for (i = 0; i < elems.length; i++) {
+      elems[i].style.display = "inline";
+    }
+  }
+}
+</script>
 </head>
 
-<body>
+<body onkeypress="maybeShowInputs(event)">
 <h2>Active responses</h2>
 <form method="post" action="/admin/mark_complete">
 <table>
@@ -20,7 +32,6 @@
     <th>Last attempt</th>
     <th>Created</th>
     <th>Error URLs</th>
-    <th class="hidden">Mark complete</th>
   </tr>
 
   {% for r in responses %}
