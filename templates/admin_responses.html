@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Bridgy: Active responses</title>
+  <style type="text/css">
+    table { border-spacing: .5em; }
+    th, td { border: none; }
+    li { list-style: none; }
+  </style>
+</head>
+
+<body>
+<h2>Active responses</h2>
+<table>
+  <tr>
+    <th>Source</th>
+    <th>Response</th>
+    <th>Activity</th>
+    <th>Last attempt</th>
+    <th>Created</th>
+    <th>Error URLs</th>
+  </tr>
+
+  {% for r in responses %}
+  <tr>
+    <td><a target="_blank" href="{{ r.source.get.bridgy_url }}">{{ r.source.get.label }}
+    </a></td>
+
+    <td><a target="_blank" href="{{ r.url }}">
+      {{ r.response.content|default:"--"|striptags|truncatewords:6|safe }}</a></td>
+
+    <td>{% for a in r.activities %}
+      on <a target="_blank" href="{% firstof a.url a.object.url %}">
+        {{ a.object.content|default:"--"|striptags|truncatewords:6|safe }}
+      </a>
+    {% endfor %}</td>
+
+    <td><a target="_blank"
+           href="/log?start_time={{ r.updated|date:'U' }}&key={{ r.key.urlsafe }}">
+        {{ r.updated|timesince }} ago</a></td>
+
+    <td>{{ r.created|timesince }} ago</td>
+
+    <td>{{ r.links|safeseq|unordered_list }}</td>
+  </tr>
+  {% endfor %}
+</table>
+</body>
+</html>

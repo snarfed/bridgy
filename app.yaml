@@ -115,6 +115,10 @@ handlers:
   script: activitystreams.oauth_dropins.webutil.instance_info.application
   secure: always
 
+- url: /admin/.*
+  script: admin.application
+  secure: always
+
 - url: .*
   script: app.application
   secure: always
