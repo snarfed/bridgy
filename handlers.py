@@ -60,7 +60,6 @@ TEMPLATE = string.Template("""\
 <head>
 <meta charset="utf-8">
 <title>$title</title>
-<link rel="canonical" href="$url" />
 <style type="text/css">
 .u-uid { display: none; }
 </style>
