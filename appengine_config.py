@@ -49,10 +49,10 @@ class BlacklistingHandler(ereporter.ExceptionRecordingHandler):
   """An ereporter handler that ignores exceptions in a blacklist."""
   # Exception message prefixes to ignore
   BLACKLIST = (
+    'AccessTokenRefreshError: internal_failure',
     'ConnectionError: HTTPConnectionPool',
     'ConnectionError: HTTPSConnectionPool',
-    'DeadlineExceededError: The API call taskqueue.BulkAdd() took too long',
-    'DeadlineExceededError: The API call datastore_v3.Get() took too long',
+    'DeadlineExceededError',
     'error: An error occured while connecting to the server: Unable to fetch URL:',
     'HTTPError: HTTP Error 400: Bad Request:',
     'HTTPError: HTTP Error 500: Internal Server Error',
