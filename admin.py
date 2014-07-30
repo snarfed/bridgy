@@ -32,7 +32,7 @@ class ResponsesHandler(handlers.TemplateHandler):
     # Find the most recently propagated responses with error URLs
     for r in Response.query().order(-Response.updated):
       if (len(responses) >= self.NUM_RESPONSES or
-          r.updated < datetime.datetime.now() - datetime.timedelta(hours=3)):
+          r.updated < datetime.datetime.now() - datetime.timedelta(hours=1)):
         break
       elif not r.error or r.status == 'complete':
         continue
