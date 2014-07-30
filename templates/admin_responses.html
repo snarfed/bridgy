@@ -36,10 +36,12 @@ function maybeShowInputs(event) {
 
   {% for r in responses %}
   <tr>
-    <td><a target="_blank" href="{{ r.source.get.bridgy_url }}">{{ r.source.get.label }}
+    {% with r.source.get as source %}
+    <td><a target="_blank" href="{{ source.bridgy_path }}">{{ source.label }}
     </a></td>
+    {% endwith %}
 
-    <td><a target="_blank" href="{{ r.url }}">
+    <td><a target="_blank" href="{{ r.response.url }}">
       {{ r.response.content|default:"--"|striptags|truncatewords:6|safe }}</a></td>
 
     <td>{% for a in r.activities %}
