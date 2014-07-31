@@ -121,13 +121,33 @@ i hereby reply
     self.assert_error(msg)
     self.assertEquals(0, BlogWebmention.query().count())
 
+  def test_mention(self):
+    html = """\
+<article class="h-entry"><p class="e-content">
+<span class="p-name">my post</span>
+foo
+<a href="http://foo.com/post/1">this post</a>
+</p></article>"""
+    self.expect_requests_get('http://bar.com/reply', html)
+    testutil.FakeSource.create_comment(
+      'http://foo.com/post/1', 'foo.com', 'http://foo.com/',
+      'mentioned this in <a href="http://foo.com/post/1">my post</a>. <br /> <a href="http://bar.com/reply">via bar.com</a>')
+    self.mox.ReplayAll()
+
+    resp = self.get_response()
+    self.assertEquals(200, resp.status_int, resp.body)
+
   def test_domain_translates_to_lowercase(self):
-    html = '<article class="h-entry"><p class="e-content">X http://FoO.cOm/post/1</p></article>'
+    html = """\
+<article class="h-entry"><p class="e-content">
+<span class="p-name">my post</span>
+X http://FoO.cOm/post/1
+</p></article>"""
     self.expect_requests_get('http://bar.com/reply', html)
 
     testutil.FakeSource.create_comment(
       'http://FoO.cOm/post/1', 'foo.com', 'http://foo.com/',
-      'X http://FoO.cOm/post/1 <br /> <a href="http://bar.com/reply">via bar.com</a>')
+      'mentioned this in <a href="http://FoO.cOm/post/1">my post</a>. <br /> <a href="http://bar.com/reply">via bar.com</a>')
     self.mox.ReplayAll()
 
     resp = self.get_response(target='http://FoO.cOm/post/1')
@@ -145,11 +165,15 @@ i hereby reply
 
   def test_strip_utm_query_params(self):
     """utm_* query params should be stripped from target URLs."""
-    html = '<article class="h-entry"><p class="e-content">http://foo.com/post/1</p></article>'
+    html = """\
+<article class="h-entry"><p class="e-content">
+<span class="p-name">my post</span>
+http://foo.com/post/1
+</p></article>"""
     self.expect_requests_get('http://bar.com/reply', html)
     testutil.FakeSource.create_comment(
       'http://foo.com/post/1', 'foo.com', 'http://foo.com/',
-      'http://foo.com/post/1 <br /> <a href="http://bar.com/reply">via bar.com</a>')
+      'mentioned this in <a href="http://foo.com/post/1">my post</a>. <br /> <a href="http://bar.com/reply">via bar.com</a>')
     self.mox.ReplayAll()
 
     resp = self.get_response(target=urllib.quote(
@@ -161,12 +185,13 @@ i hereby reply
   def test_source_link_check_ignores_fragment(self):
     html = """\
 <article class="h-entry"><p class="e-content">
+<span class="p-name">my post</span>
 <a href="http://foo.com/post/1"></a>
 </p></article>"""
     self.expect_requests_get('http://bar.com/reply', html)
     testutil.FakeSource.create_comment(
       'http://foo.com/post/1', 'foo.com', 'http://foo.com/',
-      '<a href="http://foo.com/post/1"></a> <br /> <a href="http://bar.com/reply">via bar.com</a>')
+      'mentioned this in <a href="http://foo.com/post/1">my post</a>. <br /> <a href="http://bar.com/reply">via bar.com</a>')
     self.mox.ReplayAll()
 
     resp = self.get_response()
@@ -184,6 +209,7 @@ i hereby reply
   def test_u_url(self):
     html = """
 <article class="h-entry">
+<p class="p-name"></p> <!-- empty -->
 <p class="p-author">my name</p>
 <p class="e-content">
 i hereby mention
@@ -193,10 +219,7 @@ i hereby mention
     self.expect_requests_get('http://bar.com/reply', html)
 
     testutil.FakeSource.create_comment(
-      'http://foo.com/post/1', 'my name', 'http://foo.com/', """\
-i hereby mention
-<a href="http://foo.com/post/1"></a>
-<a class="u-url" href="http://barzz.com/u/url"></a> <br /> <a href="http://barzz.com/u/url">via barzz.com</a>"""
+      'http://foo.com/post/1', 'my name', 'http://foo.com/', """mentioned this in <a href="http://barzz.com/u/url">barzz.com/u/url</a>. <br /> <a href="http://barzz.com/u/url">via barzz.com</a>"""
       ).AndReturn({'id': 'fake id'})
     self.mox.ReplayAll()
 

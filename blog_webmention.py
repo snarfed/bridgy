@@ -29,6 +29,11 @@ from google.appengine.ext.webapp import template
 SOURCES = {cls.SHORT_NAME: cls for cls in (Blogger, WordPress, Tumblr)}
 
 
+
+def first_value(props, name):
+  return next(iter(props.get(name, [])), None)
+
+
 class BlogWebmentionHandler(webmention.WebmentionHandler):
   """Handler for incoming webmentions against blog providers.
   """
@@ -88,17 +93,17 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
 
     # extract author name and URL from h-card, if any
     props = item['properties']
-    author = next(iter(props.get('author', [])), None)
+    author = first_value(props, 'author')
     if author:
       if isinstance(author, basestring):
         author_name = author
       else:
         author_props = author.get('properties', {})
-        author_name = next(iter(author_props.get('name', [])), None)
-        author_url = next(iter(author_props.get('url', [])), None)
+        author_name = first_value(author_props, 'name')
+        author_url = first_value(author_props, 'url')
 
     # if present, u-url overrides source url
-    u_url = next(iter(props.get('url', [])), None)
+    u_url = first_value(props, 'url')
     if u_url:
       self.entity.u_url = u_url
 
@@ -131,6 +136,9 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
   def find_mention_item(self, data):
     """Returns the mf2 item that mentions (or replies to, likes, etc) the target.
 
+    May modify the data arg, e.g. may set or replace content.html or
+    content.value.
+
     Args:
       data mf2 data dict
 
@@ -150,11 +158,17 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
         if self.target_url in urls:
           break
       else:
-        type = 'post' if text and self.target_url in text else None
+        if not text or self.target_url not in text:
+          continue
+        type = 'post'
+        url = first_value(props, 'url') or self.target_url
+        name = first_value(props, 'name') or first_value(props, 'summary')
+        text = content['html'] = ('mentioned this in %s.' %
+                                  util.pretty_link(url, text=name))
 
       if type:
         # found the target!
-        rsvp = next(iter(props.get('rsvp', [])), None)
+        rsvp = first_value(props, 'rsvp')
         if rsvp:
           self.entity.type = 'rsvp'
           if not text:
@@ -168,7 +182,6 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
             content['value'] = {'comment': 'replied to this.',
                                 'like': 'liked this.',
                                 'repost': 'reposted this.',
-                                'post': 'mentioned this.'
                                 }[self.entity.type]
         return item
 
