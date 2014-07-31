@@ -36,6 +36,11 @@ import webapp2
 from google.appengine.ext import ndb
 from google.appengine.ext.webapp import template
 
+# Blogger says it's 4096 in an error message. (Couldn't find it in their docs.)
+# We include some padding.
+# Background: https://github.com/snarfed/bridgy/issues/242
+MAX_COMMENT_LENGTH = 4000
+
 
 class Blogger(models.Source):
   """A Blogger blog.
@@ -133,6 +138,8 @@ class Blogger(models.Source):
 
     # create the comment
     content = u'<a href="%s">%s</a>: %s' % (author_url, author_name, content)
+    if len(content) > MAX_COMMENT_LENGTH:
+      content = content[:MAX_COMMENT_LENGTH - 3] + '...'
     logging.info('Creating comment on blog %s, post %s: %s', self.key.id(),
                  post_id, content.encode('utf-8'))
     try:
@@ -142,6 +149,8 @@ class Blogger(models.Source):
       if 'bX-2i87au' in msg or 'bX-at8zpb' in msg:
         # known error: https://github.com/snarfed/bridgy/issues/175
         return {'error': msg}
+      else:
+        raise
 
     resp = {'id': comment.get_comment_id(), 'response': comment.to_string()}
     logging.info('Response: %s', resp)

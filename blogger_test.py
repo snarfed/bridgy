@@ -89,6 +89,19 @@ class BloggerTest(testutil.HandlerTest):
     # TODO: this just checks the arguments passed to client.add_comment(). we
     # should test that the blogger client itself encodes as UTF-8.
     self.expect_get_posts()
+
+    prefix = u'<a href="http://who">Degenève</a>: '
+    content = prefix + 'x' * (blogger.MAX_COMMENT_LENGTH - len(prefix) - 3) + '...'
+    self.client.add_comment('111', '222', content).AndReturn(self.comment)
+    self.mox.ReplayAll()
+
+    b = Blogger.new(self.handler, auth_entity=self.auth_entity)
+    resp = b.create_comment('http://blawg/path/to/post', u'Degenève', 'http://who',
+                            'x' * blogger.MAX_COMMENT_LENGTH, client=self.client)
+
+  def test_create_too_long_comment(self):
+    """Blogger caps totally HTML comment length at 4096 chars."""
+    self.expect_get_posts()
     self.client.add_comment(
       '111', '222', u'<a href="http://who">Degenève</a>: foo Degenève bar'
       ).AndReturn(self.comment)
