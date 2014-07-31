@@ -161,7 +161,7 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
         if not text or self.target_url not in text:
           continue
         type = 'post'
-        url = first_value(props, 'url') or self.target_url
+        url = first_value(props, 'url') or self.source_url
         name = first_value(props, 'name') or first_value(props, 'summary')
         text = content['html'] = ('mentioned this in %s.' %
                                   util.pretty_link(url, text=name))

@@ -131,7 +131,7 @@ foo
     self.expect_requests_get('http://bar.com/reply', html)
     testutil.FakeSource.create_comment(
       'http://foo.com/post/1', 'foo.com', 'http://foo.com/',
-      'mentioned this in <a href="http://foo.com/post/1">my post</a>. <br /> <a href="http://bar.com/reply">via bar.com</a>')
+      'mentioned this in <a href="http://bar.com/reply">my post</a>. <br /> <a href="http://bar.com/reply">via bar.com</a>')
     self.mox.ReplayAll()
 
     resp = self.get_response()
@@ -147,7 +147,7 @@ X http://FoO.cOm/post/1
 
     testutil.FakeSource.create_comment(
       'http://FoO.cOm/post/1', 'foo.com', 'http://foo.com/',
-      'mentioned this in <a href="http://FoO.cOm/post/1">my post</a>. <br /> <a href="http://bar.com/reply">via bar.com</a>')
+      'mentioned this in <a href="http://bar.com/reply">my post</a>. <br /> <a href="http://bar.com/reply">via bar.com</a>')
     self.mox.ReplayAll()
 
     resp = self.get_response(target='http://FoO.cOm/post/1')
@@ -173,7 +173,7 @@ http://foo.com/post/1
     self.expect_requests_get('http://bar.com/reply', html)
     testutil.FakeSource.create_comment(
       'http://foo.com/post/1', 'foo.com', 'http://foo.com/',
-      'mentioned this in <a href="http://foo.com/post/1">my post</a>. <br /> <a href="http://bar.com/reply">via bar.com</a>')
+      'mentioned this in <a href="http://bar.com/reply">my post</a>. <br /> <a href="http://bar.com/reply">via bar.com</a>')
     self.mox.ReplayAll()
 
     resp = self.get_response(target=urllib.quote(
@@ -191,7 +191,7 @@ http://foo.com/post/1
     self.expect_requests_get('http://bar.com/reply', html)
     testutil.FakeSource.create_comment(
       'http://foo.com/post/1', 'foo.com', 'http://foo.com/',
-      'mentioned this in <a href="http://foo.com/post/1">my post</a>. <br /> <a href="http://bar.com/reply">via bar.com</a>')
+      'mentioned this in <a href="http://bar.com/reply">my post</a>. <br /> <a href="http://bar.com/reply">via bar.com</a>')
     self.mox.ReplayAll()
 
     resp = self.get_response()
