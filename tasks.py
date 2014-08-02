@@ -454,8 +454,8 @@ class SendWebmentions(webapp2.RequestHandler):
           logging.info('Giving up this target. %s', error)
           self.entity.skipped.append(target)
           memcache.set(cache_key, error, time=WEBMENTION_DISCOVERY_CACHE_TIME)
-        elif (error['code'] == 'BAD_TARGET_URL' and
-              error['http_status'] / 100 == 4):
+        elif (error['code'] in ('BAD_TARGET_URL', 'RECEIVER_ERROR') and
+              error.get('http_status', 0) / 100 == 4):
           # Give up on 4XX errors; we don't expect later retries to succeed.
           logging.info('Giving up this target. %s', error)
           self.entity.failed.append(target)
