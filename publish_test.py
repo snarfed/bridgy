@@ -22,7 +22,8 @@ class PublishTest(testutil.HandlerTest):
 
   def setUp(self):
     super(PublishTest, self).setUp()
-    publish.SOURCES['fake'] = testutil.FakeSource
+    publish.SOURCE_NAMES['fake'] = testutil.FakeSource
+    publish.SOURCE_DOMAINS['fa.ke'] = testutil.FakeSource
     self.source = testutil.FakeSource(
       id='foo.com', features=['publish'], domains=['foo.com'],
       domain_urls=['http://foo.com/'])
@@ -109,7 +110,7 @@ class PublishTest(testutil.HandlerTest):
     class FauxSource(testutil.FakeSource):
       SHORT_NAME = 'faux'
 
-    publish.SOURCES['faux'] = FauxSource
+    publish.SOURCE_NAMES['faux'] = FauxSource
     FauxSource(
       id='foo.com', features=['publish'], domains=['foo.com'],
       domain_urls=['http://foo.com/']).put()
@@ -213,6 +214,15 @@ class PublishTest(testutil.HandlerTest):
     self.mox.ReplayAll()
     self.assert_success('foo - http://foo.com/?p=123',
                         source='http://foo.com/?p=123')
+
+  def test_source_url_is_silo(self):
+    self.source.put()
+    self.assert_error(
+      "Looks like that's a FakeSource URL. Try one from your web site instead!",
+      source='http://fa.ke/post/123')
+    self.assert_error(
+      "Looks like that's a Facebook URL. Try one from your web site instead!",
+      source='http://facebook.com/post/123')
 
   def test_embedded_type_not_implemented(self):
     self.expect_requests_get('http://foo.com/bar', """

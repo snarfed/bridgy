@@ -51,8 +51,12 @@ import webmention
 from google.appengine.ext import ndb
 from google.appengine.ext.webapp import template
 
-SOURCES = {cls.SHORT_NAME: cls for cls in
-           (FacebookPage, Twitter, Instagram, GooglePlusPage)}
+SOURCE_NAMES = {
+  cls.SHORT_NAME: cls for cls in
+  (FacebookPage, Twitter, Instagram, GooglePlusPage)}
+SOURCE_DOMAINS = {
+  cls.AS_CLASS.DOMAIN: cls for cls in
+  (FacebookPage, Twitter, Instagram, GooglePlusPage)}
 
 
 class Handler(webmention.WebmentionHandler):
@@ -81,7 +85,7 @@ class Handler(webmention.WebmentionHandler):
 
     domain = parsed.netloc
     path_parts = parsed.path.rsplit('/', 1)
-    source_cls = SOURCES.get(path_parts[-1])
+    source_cls = SOURCE_NAMES.get(path_parts[-1])
     if (domain not in ('brid.gy', 'www.brid.gy', 'localhost:8080') or
         len(path_parts) != 2 or path_parts[0] != '/publish' or not source_cls):
       return self.error('Target must be brid.gy/publish/{facebook,twitter}')
@@ -91,7 +95,12 @@ class Handler(webmention.WebmentionHandler):
 
     # resolve source URL
     url, domain, ok = util.get_webmention_target(self.source_url)
-    if not ok:
+    # show nice error message if they're trying to publish a silo post
+    if domain in SOURCE_DOMAINS:
+      return self.error(
+        "Looks like that's a %s URL. Try one from your web site instead!" %
+        SOURCE_DOMAINS[domain].AS_CLASS.NAME)
+    elif not ok:
       return self.error('Unsupported source URL %s' % url)
     elif not domain:
       return self.error('Could not parse source URL %s' % url)
