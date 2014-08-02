@@ -177,7 +177,7 @@ class Handler(webmention.WebmentionHandler):
                (source_cls.AS_CLASS.NAME, ' + '.join(types)))
       else:
         msg = 'Could not find <a href="http://microformats.org/">h-entry</a> or other content to publish!'
-      return self.error(msg, data=data, log_exception=False)
+      return self.error(msg, data=data)
 
     # write results to datastore
     self.entity.status = 'complete'
@@ -359,9 +359,8 @@ class PreviewHandler(Handler):
   """
   PREVIEW = True
 
-  def error(self, error, html=None, status=400, data=None, log_exception=True,
-            mail=True):
-    logging.error(error, exc_info=sys.exc_info() if log_exception else None)
+  def error(self, error, html=None, status=400, data=None, mail=True):
+    logging.error(error, exc_info=True)
     self.response.set_status(status)
     error = util.linkify(html if html else error)
     self.response.write(error)
