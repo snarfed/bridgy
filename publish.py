@@ -37,6 +37,7 @@ import appengine_config
 from appengine_config import HTTP_TIMEOUT
 
 from activitystreams import microformats2
+from activitystreams.source import CreationFailure
 from facebook import FacebookPage
 from googleplus import GooglePlusPage
 from instagram import Instagram
@@ -159,22 +160,27 @@ class Handler(webmention.WebmentionHandler):
         continue
 
       try:
-        resp = self.attempt_single_item(item)
+        resp, failure = self.attempt_single_item(item)
         if resp:
           break
+        elif failure:
+          if failure.abort:
+            return self.error(failure.plain, html=failure.html, data=item)
+          # try the next item
+          for embedded in ('rsvp', 'invitee', 'repost', 'repost-of', 'like',
+                           'like-of', 'in-reply-to'):
+            if embedded in item.get('properties', []):
+              item_types.add(embedded)
+            logging.error(
+              'Object type(s) %s not supported; failure=%s; trying next.',
+              failure, item_types)
+          types = types.union(item_types)
+          queue.extend(item.get('children', []))
         else:
-          # None return value means this item was valid but caused an error,
-          # which has already been written to the response.
+          # if both values are None it means this item was valid but
+          # caused an error, which has already been written to the
+          # response.
           return
-      except NotImplementedError:
-        # try the next item
-        for embedded in ('rsvp', 'invitee', 'repost', 'repost-of', 'like',
-                         'like-of', 'in-reply-to'):
-          if embedded in item.get('properties', []):
-            item_types.add(embedded)
-        logging.error('Object type(s) %s not supported; trying next.', item_types)
-        types = types.union(item_types)
-        queue.extend(item.get('children', []))
       except BaseException, e:
         return self.error('Error: %s' % e, status=500)
 
@@ -199,10 +205,12 @@ class Handler(webmention.WebmentionHandler):
     Args:
       item: mf2 item dict from mf2py
 
-    Returns: string HTTP response on success, otherwise None
+    Returns:
+      (string HTTP response, a CreationFailure object) a tuple,
+      either can be None
 
-    Raises:
-      NotImplementedError if the source doesn't support this item type
+      CreationFailure will be non-None if the source doesn't support
+      this item type.
     """
     obj = microformats2.json_to_object(item)
     # which original post URL to include? if the source URL redirected, use the
@@ -220,7 +228,9 @@ class Handler(webmention.WebmentionHandler):
     if obj_type in ('note', 'article', 'comment'):
       if (not obj.get('content') and not obj.get('summary') and
           not obj.get('displayName')):
-        raise NotImplementedError('Could not find <a href="http://microformats.org/">content</a> in %s' % self.fetched.url)
+        return None, CreationFailure(
+          abort=False, plain='Could not find content in %s' % self.fetched.url,
+          html='Could not find <a href="http://microformats.org/">content</a> in %s' % self.fetched.url)
 
     # expand inReplyTo or object urls by fetching the original and
     # searching for rel=syndication
@@ -232,18 +242,9 @@ class Handler(webmention.WebmentionHandler):
     if (not appengine_config.DEBUG and 'snarfed.org' in self.source.domains and
         not self.PREVIEW and obj_type in ('note', 'article') and
         verb not in ('like', 'share') and not verb.startswith('rsvp-')):
-      return self.error('Not posting for snarfed.org')
-
-    # RSVPs need in-reply-to
-    _, url = self.source.as_source.base_object(obj)
-    if (verb.startswith('rsvp-') or verb == 'invite') and not url:
-      return self.error(
-        "This looks like an RSVP, but it's missing an in-reply-to link to the "
-          "%s event." % self.source.AS_CLASS.NAME,
-        html="This looks like an <a href='http://indiewebcamp.com/rsvp'>RSVP</a>, "
-        "but it's missing an <a href='http://indiewebcamp.com/comment'>in-reply-to</a> "
-        "link to the %s event." % self.source.AS_CLASS.NAME,
-        data=item)
+      return None, CreationFailure(
+        abort=True, plain='Not posting for snarfed.org',
+        html='Not posting for snarfed.org',)
 
     # whether to include link to original post. bridgy_omit_link query param
     # (any value) takes precedence, then u-bridgy-omit-link mf2 class.
@@ -253,26 +254,34 @@ class Handler(webmention.WebmentionHandler):
       omit_link = 'bridgy-omit-link' in props
 
     if self.PREVIEW:
-      self.entity.published = self.source.as_source.preview_create(
+      self.entity.published, failure = self.source.as_source.preview_create(
         obj, include_link=not omit_link)
-      return template.render('templates/preview.html', {
+      if failure:
+        preview = None
+      else:
+        preview = template.render('templates/preview.html', {
           'source': self.preprocess_source(self.source),
           'preview': self.entity.published,
           'source_url': self.fetched.url,
           'target_url': self.target_url,
           'bridgy_omit_link': omit_link,
           'webmention_endpoint': self.request.host_url + '/publish/webmention',
-          })
-    else:
-      self.entity.published = self.source.as_source.create(
-        obj, include_link=not omit_link)
-      if 'url' not in self.entity.published:
-        self.entity.published['url'] = obj.get('url')
-      self.entity.type = self.entity.published.get('type') or models.get_type(obj)
-      self.entity.type_label = self.source.TYPE_LABELS.get(self.entity.type)
+        })
+      return preview, failure
 
-      self.response.headers['Content-Type'] = 'application/json'
-      return json.dumps(self.entity.published, indent=2)
+    else:
+      self.entity.published, failure = self.source.as_source.create(
+        obj, include_link=not omit_link)
+
+      response = None
+      if not failure:
+        if 'url' not in self.entity.published:
+          self.entity.published['url'] = obj.get('url')
+        self.entity.type = self.entity.published.get('type') or models.get_type(obj)
+        self.entity.type_label = self.source.TYPE_LABELS.get(self.entity.type)
+        self.response.headers['Content-Type'] = 'application/json'
+        response = json.dumps(self.entity.published, indent=2)
+      return response, failure
 
   def expand_target_urls(self, activity):
     """Expand the inReplyTo or object fields of an ActivityStreams object
