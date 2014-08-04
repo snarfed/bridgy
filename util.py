@@ -271,9 +271,9 @@ def clean_webmention_url(url):
   utm_params = set(('utm_campaign', 'utm_content', 'utm_medium', 'utm_source',
                     'utm_term'))
   parts = list(urlparse.urlparse(url))
-  # parts[4] is the query
-  params = [(name, value) for name, value in urlparse.parse_qsl(parts[4])
-              if name not in utm_params]
+  query = urllib.unquote_plus(parts[4].encode('utf-8'))
+  params = [(name, value) for name, value in urlparse.parse_qsl(query)
+            if name not in utm_params]
   parts[4] = urllib.urlencode(params)
   return urlparse.urlunparse(parts)
 

@@ -1,3 +1,4 @@
+# coding=utf-8
 """Unit tests for tasks.py.
 """
 
@@ -935,6 +936,20 @@ class PropagateTest(TaskQueueTest):
     self.mox.ReplayAll()
     self.post_task()
     self.assert_response_is('complete', NOW + LEASE_LENGTH)
+
+  def test_unicode_in_target_url(self):
+    """Target URLs with escaped unicode chars should work ok.
+    Background: https://github.com/snarfed/bridgy/issues/248
+    """
+    url = 'https://maps/?q=' + urllib.quote_plus('3 Cours de la République')
+    self.responses[0].unsent = [url]
+    self.responses[0].put()
+
+    self.expect_webmention(target=url).AndReturn(True)
+    self.mox.ReplayAll()
+
+    self.post_task()
+    self.assert_response_is('complete', sent=[url])
 
   def test_already_complete(self):
     """If the response has already been propagated, do nothing."""
