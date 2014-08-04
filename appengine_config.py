@@ -50,6 +50,7 @@ class BlacklistingHandler(ereporter.ExceptionRecordingHandler):
   # Exception message prefixes to ignore
   BLACKLIST = (
     'AccessTokenRefreshError: internal_failure',
+    'AccessTokenRefreshError: Invalid response 502.',
     'ConnectionError: HTTPConnectionPool',
     'ConnectionError: HTTPSConnectionPool',
     'DeadlineExceededError',
