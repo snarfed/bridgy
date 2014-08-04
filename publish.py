@@ -173,7 +173,7 @@ class Handler(webmention.WebmentionHandler):
               item_types.add(embedded)
             logging.error(
               'Object type(s) %s not supported; failure=%s; trying next.',
-              failure, item_types)
+              item_types, failure)
           types = types.union(item_types)
           queue.extend(item.get('children', []))
         else:
