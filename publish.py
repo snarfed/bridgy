@@ -371,7 +371,7 @@ class PreviewHandler(Handler):
   def error(self, error, html=None, status=400, data=None, mail=True):
     logging.error(error, exc_info=True)
     self.response.set_status(status)
-    error = util.linkify(html if html else error)
+    error = html if html else util.linkify(error)
     self.response.write(error)
     if mail:
       self.mail_me(error)
