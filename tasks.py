@@ -361,7 +361,8 @@ class SendWebmentions(webapp2.RequestHandler):
   """Abstract base task handler that can send webmentions.
 
   Attributes:
-    entity: Webmentions subclass. Set in lease_entity.
+    entity: Webmentions subclass instance (set in lease_entity)
+    source: Source entity (set in send_webmentions)
   """
 
   # request deadline (10m) plus some padding
@@ -390,6 +391,7 @@ class SendWebmentions(webapp2.RequestHandler):
     """
     logging.info('Starting %s', self.entity.label())
 
+    self.source = self.entity.source.get()
     try:
       self.do_send_webmentions()
     except:
@@ -444,8 +446,7 @@ class SendWebmentions(webapp2.RequestHandler):
 
       if error is None:
         logging.info('Sent! %s', mention.response)
-        if not self.entity.sent:
-          self.set_last_webmention_sent()
+        self.record_source_webmention(mention)
         self.entity.sent.append(target)
         memcache.set(cache_key, mention.receiver_endpoint,
                      time=WEBMENTION_DISCOVERY_CACHE_TIME)
@@ -542,12 +543,26 @@ class SendWebmentions(webapp2.RequestHandler):
     self.response.out.write(message)
 
   @ndb.transactional
-  def set_last_webmention_sent(self):
-    """Sets this entity's source's last_webmention_sent property to now."""
-    source = self.entity.source.get()
+  def record_source_webmention(self, mention):
+    """Sets this source's last_webmention_sent and maybe webmention_endpoint.
+
+    Args:
+      mention: webmentiontools.send.WebmentionSend
+    """
+    if self.source.last_webmention_sent and self.source.webmention_endpoint:
+      return  # nothing to do
+
+    self.source = self.source.key.get()
     logging.info('Setting last_webmention_sent')
-    source.last_webmention_sent = now_fn()
-    source.put()
+    self.source.last_webmention_sent = now_fn()
+
+    if (not self.source.webmention_endpoint and
+        util.domain_from_link(mention.target_url) in self.source.domains):
+      logging.info('Also setting webmention_endpoint to %s (from %s )',
+                   mention.receiver_endpoint, mention.target_url)
+      self.source.webmention_endpoint = mention.receiver_endpoint
+
+    self.source.put()
 
 
 class PropagateResponse(SendWebmentions):

@@ -799,12 +799,15 @@ class PropagateTest(TaskQueueTest):
     self.assert_equals(failed, response.failed)
 
   def expect_webmention(self, source_url=None, target='http://target1/post/url',
-                        error=None, endpoint=None):
+                        error=None, input_endpoint=None, discovered_endpoint=None):
     if source_url is None:
       source_url = 'http://localhost/comment/fake/%s/a/1_2_a' % \
           self.sources[0].key.string_id()
-    mock_send = send.WebmentionSend(source_url, target, endpoint=endpoint)
-    mock_send.receiver_endpoint = (endpoint if endpoint
+    mock_send = send.WebmentionSend(source_url, target, endpoint=input_endpoint)
+    mock_send.source_url = source_url
+    mock_send.target_url = target
+    mock_send.receiver_endpoint = (discovered_endpoint if discovered_endpoint
+                                   else input_endpoint if input_endpoint
                                    else 'http://webmention/endpoint')
     mock_send.response = 'used in logging'
     mock_send.error = error
@@ -871,13 +874,14 @@ class PropagateTest(TaskQueueTest):
                             error=['http://3', 'http://6'],
                             failed=['http://4', 'http://5'],
                             skipped=['http://2'])
-    self.assertIsNone(self.sources[0].key.get().last_webmention_sent)
+    self.assertEquals(NOW, self.sources[0].key.get().last_webmention_sent)
 
   def test_cached_webmention_discovery(self):
     """Webmention endpoints should be cached."""
     self.expect_webmention().AndReturn(True)
     # second webmention should use the cached endpoint
-    self.expect_webmention(endpoint='http://webmention/endpoint').AndReturn(True)
+    self.expect_webmention(input_endpoint='http://webmention/endpoint'
+                           ).AndReturn(True)
 
     self.mox.ReplayAll()
     self.post_task()
@@ -958,6 +962,26 @@ class PropagateTest(TaskQueueTest):
 
     self.post_task()
     self.assert_response_is('complete', unsent=['http://target1/post/url'])
+
+  def test_set_webmention_endpoint(self):
+    """Should set Source.webmention_endpoint if it's unset."""
+    self.responses[0].unsent = ['http://bar/1', 'http://foo/2']
+    self.responses[0].put()
+
+    self.assertIsNone(self.sources[0].webmention_endpoint)
+    self.sources[0].domains = ['foo']
+    self.sources[0].put()
+
+    # target isn't in source.domains
+    self.expect_webmention(target='http://bar/1', discovered_endpoint='no'
+                           ).AndReturn(True)
+    # target is in source.domains
+    self.expect_webmention(target='http://foo/2', discovered_endpoint='yes'
+                           ).AndReturn(True)
+
+    self.mox.ReplayAll()
+    self.post_task()
+    self.assert_equals('yes', self.sources[0].key.get().webmention_endpoint)
 
   def test_leased(self):
     """If the response is processing and the lease hasn't expired, do nothing."""
