@@ -96,35 +96,36 @@ class FakeAsSource(FakeBase, as_source.Source):
     verb = obj.get('verb')
     type = obj.get('objectType')
     if verb == 'like':
-      return None, as_source.CreationFailure(
-        abort=True, plain='Cannot publish likes',
-        html='Cannot publish likes')
+      return as_source.creation_result(
+        abort=True, error_plain='Cannot publish likes',
+        error_html='Cannot publish likes')
     if 'content' not in obj:
-      return None, as_source.CreationFailure(
-        abort=False, plain='No content',
-        html='No content')
+      return as_source.creation_result(
+        abort=False, error_plain='No content',
+        error_html='No content')
 
     if type == 'comment':
       base_id, base_url = self.base_object(obj)
       if not base_url:
-        return None, as_source.CreationFailure(
+        return as_source.creation_result(
           abort=True,
-          plain='no %s url to reply to' % self.DOMAIN,
-          html='no %s url to reply to' % self.DOMAIN)
+          error_plain='no %s url to reply to' % self.DOMAIN,
+          error_html='no %s url to reply to' % self.DOMAIN)
 
     content = obj['content'] + (' - %s' % obj['url'] if include_link else '')
     ret = {'id': 'fake id', 'url': 'http://fake/url', 'content': content}
     if verb == 'rsvp-yes':
       ret['type'] = 'post'
-    return ret, None
+    return as_source.creation_result(ret)
 
   def preview_create(self, obj, include_link=False):
     if obj.get('verb') == 'like':
-      return None, as_source.CreationFailure(
-        abort=True, plain='Cannot publish likes',
-        html='Cannot publish likes')
-    return 'preview of ' + obj['content'] + (
-      ' - %s' % obj['url'] if include_link else ''), None
+      return as_source.creation_result(
+        abort=True, error_plain='Cannot publish likes',
+        error_html='Cannot publish likes')
+    return as_source.creation_result(
+      'preview of ' + obj['content']
+      + (' - %s' % obj['url'] if include_link else ''))
 
 
 class FakeSource(FakeBase, Source):

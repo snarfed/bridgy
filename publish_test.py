@@ -11,6 +11,7 @@ import urllib
 from appengine_config import HTTP_TIMEOUT
 import requests
 
+from activitystreams import source as as_source
 from models import Publish, PublishedPage
 import publish
 import testutil
@@ -407,11 +408,11 @@ this is my article
       'displayName': 'In reply to',
       'url': 'http://foo.com/bar',
       'objectType': 'comment',
-    }, include_link=True).AndReturn(({
+    }, include_link=True).AndReturn(as_source.creation_result({
       'url': 'http://fake/url',
       'id': 'http://fake/url',
       'content': 'This is a reply',
-    }, None))
+    }))
 
     self.mox.ReplayAll()
     self.assert_success('')
@@ -445,11 +446,11 @@ this is my article
                  {'url': 'https://fa.ke/a/b'},
                  {'url': 'https://flic.kr/c/d'}],
       'objectType': 'activity',
-    }, include_link=True).AndReturn(({
+    }, include_link=True).AndReturn(as_source.creation_result({
       'url': 'http://fake/url',
       'id': 'http://fake/url',
       'content': 'liked this',
-    }, None))
+    }))
 
     self.mox.ReplayAll()
     self.assert_success('')
@@ -481,11 +482,11 @@ this is my article
       'object': [{'url': 'http://orig.domain/baz'},
                  {'url': 'https://fa.ke/a/b'}],
       'objectType': 'activity',
-    }, include_link=True).AndReturn(({
+    }, include_link=True).AndReturn(as_source.creation_result({
       'url': 'http://fake/url',
       'id': 'http://fake/url',
       'content': 'reposted this',
-    }, None))
+    }))
 
     self.mox.ReplayAll()
     self.assert_success('')
@@ -520,11 +521,11 @@ this is my article
       'object': [{'url': 'http://orig.domain/baz'},
                  {'url': 'https://fa.ke/a/b'}],
       'objectType': 'activity',
-    }, include_link=True).AndReturn(({
+    }, include_link=True).AndReturn(as_source.creation_result({
       'url': 'http://fake/url',
       'id': 'http://fake/url',
       'content': 'RSVPd yes',
-    }, None))
+    }))
 
     self.mox.ReplayAll()
     self.assert_success('')
@@ -549,11 +550,11 @@ this is my article
       'displayName': 'In reply to',
       'url': 'http://foo.com/bar',
       'objectType': 'comment',
-    }, include_link=True).AndReturn(({
+    }, include_link=True).AndReturn(as_source.creation_result({
       'url': 'http://fake/url',
       'id': 'http://fake/url',
       'content': 'This is a reply',
-    }, None))
+    }))
 
     self.mox.ReplayAll()
     self.assert_success('')
@@ -584,11 +585,11 @@ this is my article
       'url': 'http://foo.com/bar',
       'object': [{'url': 'http://orig.domain/baz'}],
       'objectType': 'activity',
-    }, include_link=True).AndReturn(({
+    }, include_link=True).AndReturn(as_source.creation_result({
       'url': 'http://fake/url',
       'id': 'http://fake/url',
       'content': 'liked this',
-    }, None))
+    }))
 
     self.mox.ReplayAll()
     self.assert_success('')
@@ -615,11 +616,11 @@ this is my article
       'object': [{'url': 'http://fa.ke/homebrew-website-club'}],
       'objectType': 'activity',
       'content': '\nyes\n\n',
-    }, include_link=True).AndReturn(({
+    }, include_link=True).AndReturn(as_source.creation_result({
       'url': 'http://fake/url',
       'id': 'http://fake/url',
       'content': 'RSVPd yes',
-    }, None))
+    }))
 
     self.mox.ReplayAll()
     self.assert_success('')

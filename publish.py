@@ -160,31 +160,25 @@ class Handler(webmention.WebmentionHandler):
         continue
 
       try:
-        resp, failure = self.attempt_single_item(item)
-        if resp:
+        resp = self.attempt_single_item(item)
+        if resp.content:
           break
-        elif failure:
-          if failure.abort:
-            return self.error(failure.plain, html=failure.html, data=item)
-          # try the next item
-          for embedded in ('rsvp', 'invitee', 'repost', 'repost-of', 'like',
-                           'like-of', 'in-reply-to'):
-            if embedded in item.get('properties', []):
-              item_types.add(embedded)
-            logging.error(
-              'Object type(s) %s not supported; failure=%s; trying next.',
-              item_types, failure)
-          types = types.union(item_types)
-          queue.extend(item.get('children', []))
-        else:
-          # if both values are None it means this item was valid but
-          # caused an error, which has already been written to the
-          # response.
-          return
+        if resp.abort:
+          return self.error(resp.error_plain, html=resp.error_html, data=item)
+        # try the next item
+        for embedded in ('rsvp', 'invitee', 'repost', 'repost-of', 'like',
+                         'like-of', 'in-reply-to'):
+          if embedded in item.get('properties', []):
+            item_types.add(embedded)
+        logging.error(
+          'Object type(s) %s not supported; error=%s; trying next.',
+          item_types, resp.error_plain)
+        types = types.union(item_types)
+        queue.extend(item.get('children', []))
       except BaseException, e:
         return self.error('Error: %s' % e, status=500)
 
-    if not resp:  # tried all the items
+    if not resp.content:  # tried all the items
       types.discard('h-entry')
       types.discard('h-note')
       if types:
@@ -197,7 +191,7 @@ class Handler(webmention.WebmentionHandler):
     # write results to datastore
     self.entity.status = 'complete'
     self.entity.put()
-    self.response.write(resp)
+    self.response.write(resp.content)
 
   def attempt_single_item(self, item):
     """Attempts to preview or publish a single mf2 item.
@@ -206,11 +200,8 @@ class Handler(webmention.WebmentionHandler):
       item: mf2 item dict from mf2py
 
     Returns:
-      (string HTTP response, a CreationFailure object) a tuple,
-      either can be None
-
-      CreationFailure will be non-None if the source doesn't support
-      this item type.
+      a CreationResult object, where content is the string HTTP
+      response or None if the source cannot publish this item type.
     """
     obj = microformats2.json_to_object(item)
     # which original post URL to include? if the source URL redirected, use the
@@ -228,9 +219,10 @@ class Handler(webmention.WebmentionHandler):
     if obj_type in ('note', 'article', 'comment'):
       if (not obj.get('content') and not obj.get('summary') and
           not obj.get('displayName')):
-        return None, as_source.CreationFailure(
-          abort=False, plain='Could not find content in %s' % self.fetched.url,
-          html='Could not find <a href="http://microformats.org/">content</a> in %s' % self.fetched.url)
+        return as_source.creation_result(
+          abort=False,
+          error_plain='Could not find content in %s' % self.fetched.url,
+          error_html='Could not find <a href="http://microformats.org/">content</a> in %s' % self.fetched.url)
 
     # expand inReplyTo or object urls by fetching the original and
     # searching for rel=syndication
@@ -242,9 +234,9 @@ class Handler(webmention.WebmentionHandler):
     if (not appengine_config.DEBUG and 'snarfed.org' in self.source.domains and
         not self.PREVIEW and obj_type in ('note', 'article') and
         verb not in ('like', 'share') and not verb.startswith('rsvp-')):
-      return None, as_source.CreationFailure(
-        abort=True, plain='Not posting for snarfed.org',
-        html='Not posting for snarfed.org',)
+      return as_source.creation_result(
+        abort=True, error_plain='Not posting for snarfed.org',
+        error_html='Not posting for snarfed.org')
 
     # whether to include link to original post. bridgy_omit_link query param
     # (any value) takes precedence, then u-bridgy-omit-link mf2 class.
@@ -254,34 +246,33 @@ class Handler(webmention.WebmentionHandler):
       omit_link = 'bridgy-omit-link' in props
 
     if self.PREVIEW:
-      self.entity.published, failure = self.source.as_source.preview_create(
+      result = self.source.as_source.preview_create(
         obj, include_link=not omit_link)
-      if failure:
-        preview = None
-      else:
-        preview = template.render('templates/preview.html', {
+      self.entity.published = result.content
+      if not result.content:
+        return result  # there was an error
+      return as_source.creation_result(
+        template.render('templates/preview.html', {
           'source': self.preprocess_source(self.source),
           'preview': self.entity.published,
           'source_url': self.fetched.url,
           'target_url': self.target_url,
           'bridgy_omit_link': omit_link,
           'webmention_endpoint': self.request.host_url + '/publish/webmention',
-        })
-      return preview, failure
+        }))
 
     else:
-      self.entity.published, failure = self.source.as_source.create(
-        obj, include_link=not omit_link)
-
-      response = None
-      if not failure:
-        if 'url' not in self.entity.published:
-          self.entity.published['url'] = obj.get('url')
-        self.entity.type = self.entity.published.get('type') or models.get_type(obj)
-        self.entity.type_label = self.source.TYPE_LABELS.get(self.entity.type)
-        self.response.headers['Content-Type'] = 'application/json'
-        response = json.dumps(self.entity.published, indent=2)
-      return response, failure
+      result = self.source.as_source.create(obj, include_link=not omit_link)
+      self.entity.published = result.content
+      if not result.content:
+        return result  # there was an error
+      if 'url' not in self.entity.published:
+        self.entity.published['url'] = obj.get('url')
+      self.entity.type = self.entity.published.get('type') or models.get_type(obj)
+      self.entity.type_label = self.source.TYPE_LABELS.get(self.entity.type)
+      self.response.headers['Content-Type'] = 'application/json'
+      return as_source.creation_result(
+        json.dumps(self.entity.published, indent=2))
 
   def expand_target_urls(self, activity):
     """Expand the inReplyTo or object fields of an ActivityStreams object
