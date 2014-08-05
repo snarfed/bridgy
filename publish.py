@@ -37,6 +37,7 @@ import appengine_config
 from appengine_config import HTTP_TIMEOUT
 
 from activitystreams import microformats2
+from activitystreams import source as as_source
 from facebook import FacebookPage
 from googleplus import GooglePlusPage
 from instagram import Instagram
@@ -160,25 +161,24 @@ class Handler(webmention.WebmentionHandler):
 
       try:
         resp = self.attempt_single_item(item)
-        if resp:
+        if resp.content:
           break
-        else:
-          # None return value means this item was valid but caused an error,
-          # which has already been written to the response.
-          return
-      except NotImplementedError:
+        if resp.abort:
+          return self.error(resp.error_plain, html=resp.error_html, data=item)
         # try the next item
         for embedded in ('rsvp', 'invitee', 'repost', 'repost-of', 'like',
                          'like-of', 'in-reply-to'):
           if embedded in item.get('properties', []):
             item_types.add(embedded)
-        logging.error('Object type(s) %s not supported; trying next.', item_types)
+        logging.error(
+          'Object type(s) %s not supported; error=%s; trying next.',
+          item_types, resp.error_plain)
         types = types.union(item_types)
         queue.extend(item.get('children', []))
       except BaseException, e:
         return self.error('Error: %s' % e, status=500)
 
-    if not resp:  # tried all the items
+    if not resp.content:  # tried all the items
       types.discard('h-entry')
       types.discard('h-note')
       if types:
@@ -191,7 +191,7 @@ class Handler(webmention.WebmentionHandler):
     # write results to datastore
     self.entity.status = 'complete'
     self.entity.put()
-    self.response.write(resp)
+    self.response.write(resp.content)
 
   def attempt_single_item(self, item):
     """Attempts to preview or publish a single mf2 item.
@@ -199,10 +199,9 @@ class Handler(webmention.WebmentionHandler):
     Args:
       item: mf2 item dict from mf2py
 
-    Returns: string HTTP response on success, otherwise None
-
-    Raises:
-      NotImplementedError if the source doesn't support this item type
+    Returns:
+      a CreationResult object, where content is the string HTTP
+      response or None if the source cannot publish this item type.
     """
     obj = microformats2.json_to_object(item)
     # which original post URL to include? if the source URL redirected, use the
@@ -220,7 +219,10 @@ class Handler(webmention.WebmentionHandler):
     if obj_type in ('note', 'article', 'comment'):
       if (not obj.get('content') and not obj.get('summary') and
           not obj.get('displayName')):
-        raise NotImplementedError('Could not find <a href="http://microformats.org/">content</a> in %s' % self.fetched.url)
+        return as_source.creation_result(
+          abort=False,
+          error_plain='Could not find content in %s' % self.fetched.url,
+          error_html='Could not find <a href="http://microformats.org/">content</a> in %s' % self.fetched.url)
 
     # expand inReplyTo or object urls by fetching the original and
     # searching for rel=syndication
@@ -232,18 +234,9 @@ class Handler(webmention.WebmentionHandler):
     if (not appengine_config.DEBUG and 'snarfed.org' in self.source.domains and
         not self.PREVIEW and obj_type in ('note', 'article') and
         verb not in ('like', 'share') and not verb.startswith('rsvp-')):
-      return self.error('Not posting for snarfed.org')
-
-    # RSVPs need in-reply-to
-    _, url = self.source.as_source.base_object(obj)
-    if (verb.startswith('rsvp-') or verb == 'invite') and not url:
-      return self.error(
-        "This looks like an RSVP, but it's missing an in-reply-to link to the "
-          "%s event." % self.source.AS_CLASS.NAME,
-        html="This looks like an <a href='http://indiewebcamp.com/rsvp'>RSVP</a>, "
-        "but it's missing an <a href='http://indiewebcamp.com/comment'>in-reply-to</a> "
-        "link to the %s event." % self.source.AS_CLASS.NAME,
-        data=item)
+      return as_source.creation_result(
+        abort=True, error_plain='Not posting for snarfed.org',
+        error_html='Not posting for snarfed.org')
 
     # whether to include link to original post. bridgy_omit_link query param
     # (any value) takes precedence, then u-bridgy-omit-link mf2 class.
@@ -253,26 +246,33 @@ class Handler(webmention.WebmentionHandler):
       omit_link = 'bridgy-omit-link' in props
 
     if self.PREVIEW:
-      self.entity.published = self.source.as_source.preview_create(
+      result = self.source.as_source.preview_create(
         obj, include_link=not omit_link)
-      return template.render('templates/preview.html', {
+      self.entity.published = result.content
+      if not result.content:
+        return result  # there was an error
+      return as_source.creation_result(
+        template.render('templates/preview.html', {
           'source': self.preprocess_source(self.source),
           'preview': self.entity.published,
           'source_url': self.fetched.url,
           'target_url': self.target_url,
           'bridgy_omit_link': omit_link,
           'webmention_endpoint': self.request.host_url + '/publish/webmention',
-          })
+        }))
+
     else:
-      self.entity.published = self.source.as_source.create(
-        obj, include_link=not omit_link)
+      result = self.source.as_source.create(obj, include_link=not omit_link)
+      self.entity.published = result.content
+      if not result.content:
+        return result  # there was an error
       if 'url' not in self.entity.published:
         self.entity.published['url'] = obj.get('url')
       self.entity.type = self.entity.published.get('type') or models.get_type(obj)
       self.entity.type_label = self.source.TYPE_LABELS.get(self.entity.type)
-
       self.response.headers['Content-Type'] = 'application/json'
-      return json.dumps(self.entity.published, indent=2)
+      return as_source.creation_result(
+        json.dumps(self.entity.published, indent=2))
 
   def expand_target_urls(self, activity):
     """Expand the inReplyTo or object fields of an ActivityStreams object
