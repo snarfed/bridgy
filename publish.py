@@ -37,7 +37,7 @@ import appengine_config
 from appengine_config import HTTP_TIMEOUT
 
 from activitystreams import microformats2
-from activitystreams.source import CreationFailure
+from activitystreams import source as as_source
 from facebook import FacebookPage
 from googleplus import GooglePlusPage
 from instagram import Instagram
@@ -228,7 +228,7 @@ class Handler(webmention.WebmentionHandler):
     if obj_type in ('note', 'article', 'comment'):
       if (not obj.get('content') and not obj.get('summary') and
           not obj.get('displayName')):
-        return None, CreationFailure(
+        return None, as_source.CreationFailure(
           abort=False, plain='Could not find content in %s' % self.fetched.url,
           html='Could not find <a href="http://microformats.org/">content</a> in %s' % self.fetched.url)
 
@@ -242,7 +242,7 @@ class Handler(webmention.WebmentionHandler):
     if (not appengine_config.DEBUG and 'snarfed.org' in self.source.domains and
         not self.PREVIEW and obj_type in ('note', 'article') and
         verb not in ('like', 'share') and not verb.startswith('rsvp-')):
-      return None, CreationFailure(
+      return None, as_source.CreationFailure(
         abort=True, plain='Not posting for snarfed.org',
         html='Not posting for snarfed.org',)
 
