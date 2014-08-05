@@ -19,8 +19,8 @@ import requests
 from activitystreams import source as as_source
 from models import Response, Source
 import util
+from activitystreams import testutil as as_testutil
 from activitystreams.oauth_dropins.models import BaseAuth
-from activitystreams.oauth_dropins.webutil import testutil
 
 # mirror some methods from webutil.testutil
 from activitystreams.oauth_dropins.webutil.testutil import get_task_eta
@@ -165,7 +165,7 @@ class FakeSource(FakeBase, Source):
     return 'fake feed url'
 
 
-class HandlerTest(testutil.HandlerTest):
+class HandlerTest(as_testutil.TestCase):
   """Base test class.
   """
   def setUp(self):
@@ -174,11 +174,7 @@ class HandlerTest(testutil.HandlerTest):
     logging.getLogger().removeHandler(appengine_config.ereporter_logging_handler)
     # TODO: remove this and don't depend on consistent global queries
     self.testbed.init_datastore_v3_stub(consistency_policy=None)
-
     util.WEBMENTION_BLACKLIST.add('fa.ke')  # for FakeSource
-
-    for method in ('get', 'head', 'post'):
-      self.mox.StubOutWithMock(requests, method, use_mock_anything=True)
 
     # don't make actual HTTP requests to follow original post url redirects
     def fake_head(url, **kwargs):
@@ -194,37 +190,11 @@ class HandlerTest(testutil.HandlerTest):
 
     self._is_head_mocked = False  # expect_requests_head() sets this to True
 
-  def expect_requests_get(self, *args, **kwargs):
-    return self._expect_requests_call(*args, method=requests.get, **kwargs)
-
   def expect_requests_head(self, *args, **kwargs):
     if not self._is_head_mocked:
       self.mox.StubOutWithMock(requests, 'head', use_mock_anything=True)
       self._is_head_mocked = True
-    return self._expect_requests_call(*args, method=requests.head, **kwargs)
-
-  def expect_requests_post(self, *args, **kwargs):
-    return self._expect_requests_call(*args, method=requests.post, **kwargs)
-
-  def _expect_requests_call(self, url, response='', status_code=200,
-                            content_type='text/html', method=requests.get,
-                            redirected_url = None, response_headers=None,
-                            **kwargs):
-    resp = requests.Response()
-    resp._content = response
-    resp.url = url if redirected_url is None else redirected_url
-    resp.status_code = status_code
-    resp.headers['content-type'] = content_type
-    if response_headers is not None:
-      resp.headers.update(response_headers)
-
-    kwargs['timeout'] = appengine_config.HTTP_TIMEOUT
-    if method is requests.head:
-      kwargs['allow_redirects'] = True
-
-    call = method(url, **kwargs)
-    call.AndReturn(resp)
-    return call
+    return super(HandlerTest, self).expect_requests_head(*args, **kwargs)
 
 
 class ModelsTest(HandlerTest):
