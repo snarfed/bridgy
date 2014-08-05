@@ -57,7 +57,10 @@ class LogHandler(webapp2.RequestHandler):
                                log.app_logs[:min(5, len(log.app_logs))]])
       if log.app_logs and key_re.search(first_lines):
         # found it! render and return
-        self.response.out.write('<html>\n<body style="font-family: monospace">\n')
+        self.response.out.write("""\
+<html>
+<body style="font-family: monospace; white-space: pre">
+""")
         self.response.out.write(sanitize(log.combined))
         self.response.out.write('<br /><br />')
         for a in log.app_logs:
@@ -66,9 +69,9 @@ class LogHandler(webapp2.RequestHandler):
           msg = util.linkify(cgi.escape(
               msg if msg.startswith('Created by this poll:') else sanitize(msg)),
               simple=True)
-          self.response.out.write('%s %s %s' %
-              (datetime.datetime.utcfromtimestamp(a.time), LEVELS[a.level], msg))
-          self.response.out.write('<br />\n')
+          self.response.out.write('%s %s %s<br />' %
+              (datetime.datetime.utcfromtimestamp(a.time), LEVELS[a.level],
+               msg.replace('\n', '<br />')))
         self.response.out.write('</body>\n</html>')
         return
 
