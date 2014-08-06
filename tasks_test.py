@@ -1089,6 +1089,18 @@ class PropagateTest(TaskQueueTest):
                             sent=['http://good'])
     self.assert_equals(NOW, self.sources[0].key.get().last_webmention_sent)
 
+  def test_dns_failure(self):
+    """If DNS lookup fails for a URL, we should give up.
+    https://github.com/snarfed/bridgy/issues/254
+    """
+    self.responses[0].put()
+    self.expect_webmention().AndRaise(requests.exceptions.ConnectionError(
+        'Max retries exceeded: DNS lookup failed for URL: foo'))
+    self.mox.ReplayAll()
+
+    self.post_task()
+    self.assert_response_is('complete', failed=['http://target1/post/url'])
+
   def test_translate_appspot_to_bridgy(self):
     """Tasks on brid.gy should use brid-gy.appspot.com as the source URL."""
     self.responses[0].unsent = ['http://good']

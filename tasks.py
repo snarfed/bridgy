@@ -438,11 +438,13 @@ class SendWebmentions(webapp2.RequestHandler):
         try:
           if not mention.send(timeout=999):
             error = mention.error
-        except:
+        except BaseException, e:
           logging.warning('', exc_info=True)
-          error = getattr(mention, 'error', None)
+          error = getattr(mention, 'error')
           if not error:
-            error = {'code': 'EXCEPTION'}
+            error = ({'code': 'BAD_TARGET_URL', 'http_status': 499}
+                     if 'DNS lookup failed for URL:' in str(e)
+                     else {'code': 'EXCEPTION'})
 
       if error is None:
         logging.info('Sent! %s', mention.response)
