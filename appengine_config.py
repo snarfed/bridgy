@@ -58,11 +58,18 @@ class BlacklistingHandler(ereporter.ExceptionRecordingHandler):
     'HTTPError: HTTP Error 400: Bad Request:',
     'HTTPError: HTTP Error 404: Not Found',
     'HTTPError: HTTP Error 500: Internal Server Error',
+    'HTTPError: HTTP Error 502: Bad Gateway',
+    'HTTPError: HTTP Error 503: Service Unavailable',
     'HTTPError: 400 Client Error: Bad Request',
-    'HTTPError: 404 Client Error:',
+    'HTTPError: 404 Client Error: Not Found',
     'HTTPError: 500 Server Error: Internal Server Error',
-    'HttpError: <HttpError 500 when requesting',
+    'HTTPError: 502 Server Error: Bad Gateway'
+    'HTTPError: 503 Server Error: Service Unavailable'
+    'HttpError: <HttpError 400 when requesting',
     'HttpError: <HttpError 404 when requesting',
+    'HttpError: <HttpError 500 when requesting',
+    'HttpError: <HttpError 502 when requesting',
+    'HttpError: <HttpError 503 when requesting',
     'HTTPException: Deadline exceeded while waiting for HTTP response from URL:',
     'InstagramClientError: Unable to parse response, not valid JSON:',
     'InternalError: server is not responding',  # usually datastore
