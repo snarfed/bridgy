@@ -25,6 +25,7 @@ lookups in the following primary cases:
     *each* post permalink.
 """
 
+import collections
 import datetime
 import logging
 import mf2py
@@ -137,15 +138,15 @@ def _posse_post_discovery(source, activity, author_url, syndication_url,
       'starting posse post discovery with author %s and syndicated %s',
       author_url, syndication_url)
 
-  relationship = SyndicatedPost.query_by_syndication(source, syndication_url)
-  if not relationship and fetch_hfeed:
+  relationships = SyndicatedPost.query_by_syndication(source, syndication_url)
+  if not relationships and fetch_hfeed:
     # a syndicated post we haven't seen before! fetch the author's
     # h-feed to see if we can find it.
     results = _process_author(source, author_url)
-    relationship = results.get(syndication_url, None)
+    relationships = results.get(syndication_url)
 
-  if not relationship:
-    # No relationship was found. Remember that we've seen this
+  if not relationships:
+    # No relationships were found. Remember that we've seen this
     # syndicated post to avoid reprocessing it every time
     logging.debug('posse post discovery found no relationship for %s',
                   syndication_url)
@@ -153,12 +154,14 @@ def _posse_post_discovery(source, activity, author_url, syndication_url,
         source, syndication_url, None)
     return activity
 
-  logging.debug('posse post discovery found relationship %s -> %s',
-                syndication_url, relationship.original)
+  logging.debug('posse post discovery found relationship(s) %s -> %s',
+                syndication_url,
+                '; '.join(str(r.original) for r in relationships))
 
-  if relationship.original:
+  new_originals = [r.original for r in relationships if r.original]
+  if new_originals:
     obj = activity.get('object') or activity
-    obj.setdefault('upstreamDuplicates', []).append(relationship.original)
+    obj.setdefault('upstreamDuplicates', []).extend(new_originals)
 
   return activity
 
@@ -173,7 +176,7 @@ def _process_author(source, author_url, refetch_blanks=False):
       previously been marked as not having a rel=syndication link
 
   Return:
-    a dict of syndicated_url to models.SyndicatedPost
+    a dict of syndicated_url to a list of models.SyndicatedPost
   """
   # for now use whether the url is a valid webmention target
   # as a proxy for whether it's worth searching it.
@@ -255,14 +258,17 @@ def _process_author(source, author_url, refetch_blanks=False):
         permalinks.add(permalink)
 
   # query all preexisting permalinks at once, instead of once per link
-  preexisting = {r.original: r for r in
-                 SyndicatedPost.query_by_originals(source, permalinks)}
+  preexisting = collections.defaultdict(list)
+  for r in SyndicatedPost.query_by_originals(source, permalinks):
+    preexisting[r.original].append(r)
 
-  results = {}
+  results = collections.defaultdict(list)
   for permalink in permalinks:
     logging.debug('processing permalink: %s', permalink)
-    results.update(_process_entry(source, permalink, refetch_blanks,
-                                  preexisting))
+    entry_results = _process_entry(source, permalink, refetch_blanks,
+                                   preexisting)
+    for key, value in entry_results.iteritems():
+      results[key].extend(value)
 
   if results:
     # keep track of the last time we've seen rel=syndication urls for
@@ -290,14 +296,14 @@ def _process_entry(source, permalink, refetch_blanks, preexisting):
   Return:
     a dict from syndicated url to new models.SyndicatedPosts
   """
-  results = {}
-  preexisting_relationship = preexisting.get(permalink)
+  results = collections.defaultdict(list)
+  preexisting_relationships = preexisting.get(permalink)
 
   # if the post has already been processed, do not add to the results
   # since this method only returns *newly* discovered relationships.
-  if preexisting_relationship:
+  if preexisting_relationships:
     # if we're refetching blanks and this one is blank, do not return
-    if refetch_blanks and not preexisting_relationship.syndication:
+    if refetch_blanks and not preexisting_relationships[0].syndication:
       logging.debug('ignoring blank relationship for original %s', permalink)
     else:
       return results
@@ -347,12 +353,12 @@ def _process_entry(source, permalink, refetch_blanks, preexisting):
                     syndication_url, permalink)
       relationship = SyndicatedPost.get_or_insert_by_syndication_url(
           source, syndication=syndication_url, original=permalink)
-      results[syndication_url] = relationship
+      results[syndication_url].append(relationship)
 
   if not results:
     logging.debug('no syndication links from %s to current source %s.',
                   permalink, source.label())
-    if not preexisting_relationship:
+    if not preexisting_relationships:
       # remember that this post doesn't have syndication links for this
       # particular source
       logging.debug('saving empty relationship so that it %s will not be '
@@ -360,6 +366,6 @@ def _process_entry(source, permalink, refetch_blanks, preexisting):
       SyndicatedPost(parent=source.key, original=permalink,
                      syndication=None).put()
 
-  logging.debug('discovered relationships %s', results)
+  logging.debug('discovered relationships %s', dict(results))
 
   return results

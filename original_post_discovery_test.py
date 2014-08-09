@@ -125,18 +125,18 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
                       self.activities[0]['object']['upstreamDuplicates'])
 
     # make sure things are where we want them
-    r = SyndicatedPost.query_by_original(source, 'http://author/post/permalink1')
-    self.assertEquals('https://fa.ke/post/url1', r.syndication)
-    r = SyndicatedPost.query_by_syndication(source, 'https://fa.ke/post/url1')
-    self.assertEquals('http://author/post/permalink1', r.original)
+    rs = SyndicatedPost.query_by_original(source, 'http://author/post/permalink1')
+    self.assertEquals('https://fa.ke/post/url1', rs[0].syndication)
+    rs = SyndicatedPost.query_by_syndication(source, 'https://fa.ke/post/url1')
+    self.assertEquals('http://author/post/permalink1', rs[0].original)
 
-    r = SyndicatedPost.query_by_original(source, 'http://author/post/permalink2')
-    self.assertEquals('https://fa.ke/post/url2', r.syndication)
-    r = SyndicatedPost.query_by_syndication(source, 'https://fa.ke/post/url2')
-    self.assertEquals('http://author/post/permalink2', r.original)
+    rs = SyndicatedPost.query_by_original(source, 'http://author/post/permalink2')
+    self.assertEquals('https://fa.ke/post/url2', rs[0].syndication)
+    rs = SyndicatedPost.query_by_syndication(source, 'https://fa.ke/post/url2')
+    self.assertEquals('http://author/post/permalink2', rs[0].original)
 
-    r = SyndicatedPost.query_by_original(source, 'http://author/post/permalink3')
-    self.assertEquals(None, r.syndication)
+    rs = SyndicatedPost.query_by_original(source, 'http://author/post/permalink3')
+    self.assertEquals(None, rs[0].syndication)
 
     # second lookup should require no additional HTTP requests.
     # the second syndicated post should be linked up to the second permalink.
@@ -155,8 +155,8 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
 
     # should have saved a blank to prevent subsequent checks of this
     # syndicated post from fetching the h-feed again
-    r = SyndicatedPost.query_by_syndication(source, 'https://fa.ke/post/url3')
-    self.assertEquals(None, r.original)
+    rs = SyndicatedPost.query_by_syndication(source, 'https://fa.ke/post/url3')
+    self.assertIsNone(rs[0].original)
 
     # confirm that we do not fetch the h-feed again for the same
     # syndicated post
@@ -735,24 +735,24 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.mox.ReplayAll()
     original_post_discovery.refetch(source)
 
-    relationship1 = SyndicatedPost.query_by_original(
+    relationships1 = SyndicatedPost.query_by_original(
       source, 'http://author/permalink1')
 
-    self.assertIsNotNone(relationship1)
-    self.assertEquals('https://fa.ke/post/url1', relationship1.syndication)
+    self.assertTrue(relationships1)
+    self.assertEquals('https://fa.ke/post/url1', relationships1[0].syndication)
 
-    relationship2 = SyndicatedPost.query_by_original(
+    relationships2 = SyndicatedPost.query_by_original(
       source, 'http://author/permalink2')
 
     # this shouldn't have changed
-    self.assertIsNotNone(relationship2)
-    self.assertEquals('https://fa.ke/post/url2', relationship2.syndication)
+    self.assertTrue(relationships2)
+    self.assertEquals('https://fa.ke/post/url2', relationships2[0].syndication)
 
-    relationship3 = SyndicatedPost.query_by_original(
+    relationships3 = SyndicatedPost.query_by_original(
       source, 'http://author/permalink3')
 
-    self.assertIsNotNone(relationship3)
-    self.assertIsNone(relationship3.syndication)
+    self.assertTrue(relationships3)
+    self.assertIsNone(relationships3[0].syndication)
 
   def test_refetch_multiple_responses_same_activity(self):
     """Ensure that refetching a post that has several replies does not
@@ -867,6 +867,162 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.assertEquals(1, len(relations))
     self.assertEquals('http://author/permalink', relations[0].original)
     self.assertEquals('https://fa.ke/post/url', relations[0].syndication)
+
+  def test_refetch_two_permalinks_same_syndication(self):
+    """
+    This causes a problem if refetch assumes that syndication-url is
+    unique under a given source.
+    """
+    source = self.sources[0]
+    source.domain_urls = ['http://author']
+
+    self.activities[0]['object'].update({
+      'content': 'post content without backlinks',
+      'url': 'https://fa.ke/post/url',
+    })
+
+    hfeed = """<html class="h-feed">
+    <a class="h-entry" href="/post1"></a>
+    <a class="h-entry" href="/post2"></a>
+    </html>"""
+
+    self.expect_requests_get('http://author', hfeed)
+
+    for i in range(2):
+      self.expect_requests_get(
+        'http://author/post%d' % (i + 1),
+        """<html class="h-entry">
+        <a class="u-url" href="/post%d"></a>
+        <a class="u-syndication" href="https://fa.ke/post/url"></a>
+        </html>""" % (i + 1))
+
+    # refetch should only grab the feed
+    self.expect_requests_get('http://author', hfeed)
+
+    self.mox.ReplayAll()
+    activity = original_post_discovery.discover(source, self.activities[0])
+    self.assertItemsEqual(['http://author/post1', 'http://author/post2'],
+                          activity['object'].get('upstreamDuplicates'))
+
+    relations = SyndicatedPost.query(ancestor=source.key).fetch()
+    self.assertItemsEqual([('http://author/post1', 'https://fa.ke/post/url'),
+                           ('http://author/post2', 'https://fa.ke/post/url')],
+                          [(relation.original, relation.syndication)
+                           for relation in relations])
+
+    # discover should have already handled all relationships, refetch should
+    # not find anything
+    refetch_result = original_post_discovery.refetch(source)
+    self.assertFalse(refetch_result)
+
+  def test_refetch_permalink_with_two_syndications(self):
+    """Test one permalink with two syndicated posts. Make sure that
+    refetch doesn't have a problem with two entries for the same
+    original URL.
+    """
+    source = self.sources[0]
+    source.domain_urls = ['http://author']
+
+    for idx, activity in enumerate(self.activities):
+      activity['object'].update({
+        'content': 'post content without backlinks',
+        'url': 'https://fa.ke/post/url%d' % (idx + 1),
+      })
+
+    hfeed = """<html class="h-feed">
+    <a class="h-entry" href="/permalink"></a>
+    </html>"""
+
+    self.expect_requests_get('http://author', hfeed)
+    self.expect_requests_get('http://author/permalink', """
+    <html class="h-entry">
+    <a class="u-url" href="/permalink"/>
+    <a class="u-syndication" href="https://fa.ke/post/url1"/>
+    <a class="u-syndication" href="https://fa.ke/post/url3"/>
+    <a class="u-syndication" href="https://fa.ke/post/url5"/>
+    </html>""")
+
+    self.expect_requests_get('http://author', hfeed)  # refetch
+
+    self.mox.ReplayAll()
+
+    original_post_discovery.discover(source, self.activities[0])
+    relations = SyndicatedPost.query(
+      SyndicatedPost.original == 'http://author/permalink',
+      ancestor=source.key).fetch()
+    self.assertItemsEqual(
+      [('http://author/permalink', 'https://fa.ke/post/url1'),
+       ('http://author/permalink', 'https://fa.ke/post/url3'),
+       ('http://author/permalink', 'https://fa.ke/post/url5')],
+      [(r.original, r.syndication) for r in relations])
+
+    results = original_post_discovery.refetch(source)
+    self.assertFalse(results)
+
+  def test_refetch_with_updated_permalink(self):
+    """Permalinks can change (e.g., if a stub is added or modified).
+
+    This causes a problem if refetch assumes that syndication-url is
+    unique under a given source.
+    """
+    source = self.sources[0]
+    source.domain_urls = ['http://author']
+
+    self.activities[0]['object'].update({
+      'content': 'post content without backlinks',
+      'url': 'https://fa.ke/post/url',
+    })
+
+    # first attempt, no stub yet
+    self.expect_requests_get('http://author', """
+    <html class="h-feed">
+    <a class="h-entry" href="/2014/08/09"></a>
+    </html>""")
+    self.expect_requests_get('http://author/2014/08/09', """
+    <html class="h-entry">
+    <a class="u-url" href="/2014/08/09"></a>
+    <a class="u-syndication" href="https://fa.ke/post/url"></a>
+    </html>""")
+
+    # refetch, permalink has a stub now
+    self.expect_requests_get('http://author', """
+    <html class="h-feed">
+    <a class="h-entry" href="/2014/08/09/this-is-a-stub"></a>
+    </html>""")
+
+    self.expect_requests_get('http://author/2014/08/09/this-is-a-stub', """
+    <html class="h-entry">
+    <a class="u-url" href="/2014/08/09/this-is-a-stub"></a>
+    <a class="u-syndication" href="https://fa.ke/post/url"></a>
+    </html>""")
+
+    # refetch again (feed-only this time)
+    self.expect_requests_get('http://author', """
+    <html class="h-feed">
+    <a class="h-entry" href="/2014/08/09/this-is-a-stub"></a>
+    </html>""")
+
+    self.mox.ReplayAll()
+    activity = original_post_discovery.discover(source, self.activities[0])
+
+    # modified activity should have /2014/08/09 as an upstreamDuplicate now
+    self.assertEquals(['http://author/2014/08/09'],
+                      activity['object']['upstreamDuplicates'])
+
+    # refetch should find the updated original url -> syndication url.
+    # it should *not* find the previously discovered relationship.
+    first_results = original_post_discovery.refetch(source)
+    self.assertEquals(1, len(first_results))
+    new_relations = first_results.get('https://fa.ke/post/url')
+    self.assertEquals(1, len(new_relations))
+    self.assertEquals('https://fa.ke/post/url', new_relations[0].syndication)
+    self.assertEquals('http://author/2014/08/09/this-is-a-stub',
+                      new_relations[0].original)
+
+    # second refetch should find nothing because nothing has changed
+    # since the previous refetch.
+    second_results = original_post_discovery.refetch(source)
+    self.assertFalse(second_results)
 
 
 class OriginalPostDiscoveryFacebookTest(facebook_test.FacebookPageTest):

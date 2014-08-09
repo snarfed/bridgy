@@ -557,10 +557,10 @@ class PollTest(TaskQueueTest):
     self.post_task()
 
     # should still be a blank SyndicatedPost
-    relationship = models.SyndicatedPost.query_by_original(
+    relationships = models.SyndicatedPost.query_by_original(
         self.sources[0], 'http://author/permalink')
-    self.assertIsNotNone(relationship)
-    self.assertIsNone(relationship.syndication)
+    self.assertEqual(1, len(relationships))
+    self.assertIsNone(relationships[0].syndication)
 
     # should not repropagate any responses
     self.assertEquals(0, len(self.taskqueue_stub.GetTasks('propagate')))
@@ -606,10 +606,10 @@ class PollTest(TaskQueueTest):
     self.post_task()
 
     # should have a new SyndicatedPost
-    relationship = models.SyndicatedPost.query_by_original(
+    relationships = models.SyndicatedPost.query_by_original(
       self.sources[0], 'http://author/permalink')
-    self.assertIsNotNone(relationship)
-    self.assertEquals('https://source/post/url', relationship.syndication)
+    self.assertEquals(1, len(relationships))
+    self.assertEquals('https://source/post/url', relationships[0].syndication)
 
     # should repropagate all 9 responses
     tasks = self.taskqueue_stub.GetTasks('propagate')

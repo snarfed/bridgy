@@ -329,25 +329,22 @@ class Poll(webapp2.RequestHandler):
 
         activity_url = source.canonicalize_syndication_url(activity_url)
         # look for activity url in the newly discovered list of relationships
-        relationship = relationships.get(activity_url)
-        if not relationship:
-          continue
-
-        # won't re-propagate if the discovered link is already among
-        # these well-known upstream duplicates
-        if relationship.original in response.sent:
-          logging.info(
+        for relationship in relationships.get(activity_url, []):
+          # won't re-propagate if the discovered link is already among
+          # these well-known upstream duplicates
+          if relationship.original in response.sent:
+            logging.info(
               '%s found a new rel=syndication link %s -> %s, but the '
               'relationship had already been discovered by another method',
               response.label(), relationship.original,
               relationship.syndication)
-        else:
-          logging.info(
+          else:
+            logging.info(
               '%s found a new rel=syndication link %s -> %s, and '
               'will be repropagated with a new target!',
               response.label(), relationship.original,
               relationship.syndication)
-          new_orig_urls.add(relationship.original)
+            new_orig_urls.add(relationship.original)
 
       if new_orig_urls:
         # re-open a previously 'complete' propagate task

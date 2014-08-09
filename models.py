@@ -690,11 +690,25 @@ class SyndicatedPost(ndb.Model):
 
   @classmethod
   def query_by_original(cls, source, url):
+    """Retrieve all SyndicatdPost objects for a particular original post URL.
+    Args:
+      source: models.Source subclass
+      url: a string
+    Return:
+      a list of SyndicatedPosts
+    """
     return cls.query(cls.original == url,
-                     ancestor=source.key).get()
+                     ancestor=source.key).fetch()
 
   @classmethod
   def query_by_originals(cls, source, urls):
+    """Collect all SyndicatedPost entries across many original URLs.
+    Args:
+      source: models.Source subclass
+      urls: a sequence of strings
+    Return:
+      a sequence of SyndicatedPosts
+    """
     # 30 item limit for IN queries, chain together multiple queries
     urls = list(urls)
     return itertools.chain.from_iterable(
@@ -703,53 +717,65 @@ class SyndicatedPost(ndb.Model):
 
   @classmethod
   def query_by_syndication(cls, source, url):
+    """Retrieve all SyndicatdPost objects for a particular syndication URL.
+    Args:
+      source: models.Source subclass
+      url: a string
+    Return:
+      a list of SyndicatedPosts
+    """
     return cls.query(cls.syndication == url,
-                     ancestor=source.key).get()
+                     ancestor=source.key).fetch()
 
   @classmethod
   @ndb.transactional
   def get_or_insert_by_syndication_url(cls, source, syndication,
                                        original):
-    """Insert a relationship from syndication-url -> original, replacing
-    blank placeholder relationships if they exist.
+    """Insert a new syndication -> original relationship.
 
-    This does a check-and-set inside a transaction to avoid putting
-    duplicates in the database because we assume each syndication URL
-    can only have one original. If there is already a non-blank
-    SyndicatedPost for this syndication URL, this function will return
-    without saving anything.
+    If blank entries exists for the syndication or original URL
+    (i.e. syndication -> None or original -> None), they will first be
+    removed. If non-blank relationships exist, they will be retained.
 
-    If there is a pre-existing non-blank SyndicationPost for this
-    original, this function will add another relationship for the same
-    original.
-
-    If there are pre-existing syndication->None or original->None
-    relationships, this function will remove them before adding a
-    new non-blank relationship.
+    This method does a check-and-set within transaction to avoid
+    including duplicate relationships.
 
     Args:
       source: models.Source subclass
       syndication: string
       original: string
+
+    Return:
+      the new SyndicatedPost or a preexisting one if it exists
     """
-    relationship = cls.query_by_syndication(source, syndication)
+    preexistings = cls.query_by_syndication(source, syndication)
 
-    # do not overwrite a preexisting relationship
-    if relationship and (relationship.original
-                         # or a blank with another blank
-                         or not original):
-      return relationship
+    # inserting a blank entry
+    if not original:
+      # give up if there is already any relationship (even a blank
+      # one) for this syndication url
+      if preexistings:
+        return preexistings[0]
 
-    # if this is a non-blank relationship, remove pre-existing blanks
-    if original:
-      # remove syndication->None relationships
-      if relationship and not relationship.original:
-        relationship.key.delete()
+    # inserting a non-blank entry
+    else:
+      # give up if this relationship is already represented
+      preexisting = next((r for r in preexistings if r.original == original),
+                         None)
+      if preexisting:
+        return preexisting
+
+      # first remove blank entries
+      for relationship in preexistings:
+        # remove syndication->None relationships
+        if not relationship.original:
+          relationship.key.delete()
 
       # remove original->None relationships too
-      rel_by_original = cls.query_by_original(source, original)
-      if rel_by_original and not rel_by_original.syndication:
-        rel_by_original.key.delete()
+      rels_by_original = cls.query_by_original(source, original)
+      for relationship in rels_by_original:
+        if not relationship.syndication:
+          relationship.key.delete()
 
     relationship = cls(parent=source.key, original=original,
                        syndication=syndication)

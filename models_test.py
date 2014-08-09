@@ -264,6 +264,16 @@ class SyndicatedPostTest(testutil.ModelsTest):
         SyndicatedPost(parent=self.source.key,
                        original='http://original/post/url',
                        syndication='http://silo/post/url'))
+    # two syndication for the same original
+    self.relationships.append(
+        SyndicatedPost(parent=self.source.key,
+                       original='http://original/post/url',
+                       syndication='http://silo/another/url'))
+    # two originals for the same syndication
+    self.relationships.append(
+        SyndicatedPost(parent=self.source.key,
+                       original='http://original/another/post',
+                       syndication='http://silo/post/url'))
     self.relationships.append(
         SyndicatedPost(parent=self.source.key,
                        original=None,
@@ -278,27 +288,30 @@ class SyndicatedPostTest(testutil.ModelsTest):
 
   def test_query_by_syndication_url(self):
     """Simply testing the query helper"""
-    r = SyndicatedPost.query_by_syndication(
+    rs = SyndicatedPost.query_by_syndication(
         self.source, 'http://silo/post/url')
-    self.assertIsNotNone(r)
-    self.assertEquals('http://original/post/url', r.original)
+    self.assertTrue(rs)
+    self.assertItemsEqual(['http://original/post/url',
+                           'http://original/another/post'],
+                          [r.original for r in rs])
 
-    r = SyndicatedPost.query_by_syndication(
+    rs = SyndicatedPost.query_by_syndication(
         self.source, 'http://silo/no-original')
-    self.assertIsNotNone(r)
-    self.assertIsNone(r.original)
+    self.assertTrue(rs)
+    self.assertItemsEqual([None], [r.original for r in rs])
 
   def test_query_by_original_url(self):
     """Simply testing the query helper"""
-    r = SyndicatedPost.query_by_original(
-        self.source, 'http://original/post/url')
-    self.assertIsNotNone(r)
-    self.assertEquals('http://silo/post/url', r.syndication)
+    rs = SyndicatedPost.query_by_original(
+      self.source, 'http://original/post/url')
+    self.assertTrue(rs)
+    self.assertItemsEqual(['http://silo/post/url', 'http://silo/another/url'],
+                          [r.syndication for r in rs])
 
-    r = SyndicatedPost.query_by_original(
+    rs = SyndicatedPost.query_by_original(
         self.source, 'http://original/no-syndication')
-    self.assertIsNotNone(r)
-    self.assertIsNone(r.syndication)
+    self.assertTrue(rs)
+    self.assertItemsEqual([None], [r.syndication for r in rs])
 
   def test_get_or_insert_by_syndication_replace(self):
     """Make sure we replace original=None with original=something
@@ -318,28 +331,28 @@ class SyndicatedPostTest(testutil.ModelsTest):
     self.assertEquals('http://original/newly-discovered', rs[0].original)
     self.assertEquals('http://silo/no-original', rs[0].syndication)
 
-  def test_get_or_insert_by_syndication_do_not_replace(self):
-    """Make sure we don't replace original=something with
-    original=something else (in practice, that would mean another task
-    is running discovery concurrently and found a different url)
+  def test_get_or_insert_by_syndication_augument_existing(self):
+    """Make sure we add newly discovered urls for a given syndication url,
+    rather than overwrite them
     """
     r = SyndicatedPost.get_or_insert_by_syndication_url(
         self.source, 'http://silo/post/url',
         'http://original/different/url')
     self.assertIsNotNone(r)
-    self.assertEquals('http://original/post/url', r.original)
+    self.assertEquals('http://original/different/url', r.original)
 
-    # make sure it's unchanged in NDB
+    # make sure they're both in the DB
     rs = SyndicatedPost.query(
         SyndicatedPost.syndication == 'http://silo/post/url',
         ancestor=self.source.key
     ).fetch()
 
-    self.assertEquals(1, len(rs))
-    self.assertEquals('http://original/post/url', rs[0].original)
-    self.assertEquals('http://silo/post/url', rs[0].syndication)
+    self.assertItemsEqual(['http://original/post/url',
+                           'http://original/another/post',
+                           'http://original/different/url'],
+                          [rel.original for rel in rs])
 
-  def test_get_or_insert_by_syndication_do_not_duplicate(self):
+  def test_get_or_insert_by_syndication_do_not_duplicate_blanks(self):
     """Make sure we don't insert duplicate blank entries"""
 
     r = SyndicatedPost.get_or_insert_by_syndication_url(
@@ -353,5 +366,21 @@ class SyndicatedPostTest(testutil.ModelsTest):
         ancestor=self.source.key
     ).fetch()
 
-    self.assertEquals(1, len(rs))
-    self.assertIsNone(rs[0].original)
+    self.assertItemsEqual([None], [rel.original for rel in rs])
+
+  def test_get_or_insert_by_syndication_do_not_duplicates(self):
+    """Make sure we don't insert duplicate entries"""
+
+    r = SyndicatedPost.get_or_insert_by_syndication_url(
+      self.source, 'http://silo/post/url', 'http://original/post/url')
+    self.assertIsNotNone(r)
+    self.assertEqual('http://original/post/url', r.original)
+
+    # make sure there's only one in the DB
+    rs = SyndicatedPost.query(
+      SyndicatedPost.syndication == 'http://silo/post/url',
+      SyndicatedPost.original == 'http://original/post/url',
+      ancestor=self.source.key
+    ).fetch()
+
+    self.assertEqual(1, len(rs))
