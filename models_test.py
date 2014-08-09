@@ -338,3 +338,20 @@ class SyndicatedPostTest(testutil.ModelsTest):
     self.assertEquals(1, len(rs))
     self.assertEquals('http://original/post/url', rs[0].original)
     self.assertEquals('http://silo/post/url', rs[0].syndication)
+
+  def test_get_or_insert_by_syndication_do_not_duplicate(self):
+    """Make sure we don't insert duplicate blank entries"""
+
+    r = SyndicatedPost.get_or_insert_by_syndication_url(
+      self.source, 'http://silo/no-original', None)
+    self.assertIsNotNone(r)
+    self.assertIsNone(r.original)
+
+    # make sure there's only one in the DB
+    rs = SyndicatedPost.query(
+        SyndicatedPost.syndication == 'http://silo/no-original',
+        ancestor=self.source.key
+    ).fetch()
+
+    self.assertEquals(1, len(rs))
+    self.assertIsNone(rs[0].original)

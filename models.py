@@ -735,11 +735,13 @@ class SyndicatedPost(ndb.Model):
     relationship = cls.query_by_syndication(source, syndication)
 
     # do not overwrite a preexisting relationship
-    if relationship and relationship.original:
+    if relationship and (relationship.original
+                         # or a blank with another blank
+                         or not original):
       return relationship
 
     # if this is a non-blank relationship, remove pre-existing blanks
-    if original and syndication:
+    if original:
       # remove syndication->None relationships
       if relationship and not relationship.original:
         relationship.key.delete()
