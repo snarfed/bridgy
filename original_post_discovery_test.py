@@ -23,7 +23,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     activity = self.activities[0]
     activity['object'].update({
         'content': 'post content without backlink',
-        'url': 'http://fa.ke/post/url',
+        'url': 'https://fa.ke/post/url',
         'upstreamDuplicates': ['existing uD'],
         })
 
@@ -41,7 +41,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     # syndicated to two places
     self.expect_requests_get('http://author/post/permalink', """
     <link rel="syndication" href="http://not.real/statuses/postid">
-    <link rel="syndication" href="http://fa.ke/post/url">
+    <link rel="syndication" href="https://fa.ke/post/url">
     <div class="h-entry">
       <a class="u-url" href="http://author/post/permalink"></a>
     </div>""")
@@ -71,7 +71,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     """
     for idx, activity in enumerate(self.activities):
         activity['object']['content'] = 'post content without backlinks'
-        activity['object']['url'] = 'http://fa.ke/post/url%d' % (idx + 1)
+        activity['object']['url'] = 'https://fa.ke/post/url%d' % (idx + 1)
 
     author_feed = """
     <html class="h-feed">
@@ -95,14 +95,14 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.expect_requests_get('http://author/post/permalink1', """
     <div class="h-entry">
       <a class="u-url" href="http://author/post/permalink1"></a>
-      <a class="u-syndication" href="http://fa.ke/post/url1"></a>
+      <a class="u-syndication" href="https://fa.ke/post/url1"></a>
     </div>""").InAnyOrder()
 
     # second post is syndicated
     self.expect_requests_get('http://author/post/permalink2', """
     <div class="h-entry">
       <a class="u-url" href="http://author/post/permalink2"></a>
-      <a class="u-syndication" href="http://fa.ke/post/url2"></a>
+      <a class="u-syndication" href="https://fa.ke/post/url2"></a>
     </div>""").InAnyOrder()
 
     # third post is not syndicated
@@ -174,11 +174,11 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     activity = self.activities[0]
     activity['object'].update({
           'content': 'with a backlink http://target1/post/url',
-          'url': 'http://fa.ke/post/url',
+          'url': 'https://fa.ke/post/url',
           })
 
     original = 'http://target1/post/url'
-    syndicated = 'http://fa.ke/post/url'
+    syndicated = 'https://fa.ke/post/url'
 
     self.expect_requests_get('http://target1', """
     <html class="h-feed">
@@ -285,7 +285,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     """
     activity = self.activities[0]
     activity['object']['content'] = 'post content without backlink'
-    activity['object']['url'] = 'http://fa.ke/post/url'
+    activity['object']['url'] = 'https://fa.ke/post/url'
 
     # silo domain is fa.ke
     source = self.sources[0]
@@ -341,7 +341,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     source = self.sources[0]
     source.domain_urls = ['http://amazon.com']
     activity = self.activities[0]
-    activity['object']['url'] = 'http://fa.ke/post/url'
+    activity['object']['url'] = 'https://fa.ke/post/url'
     activity['object']['content'] = 'content without links'
 
     self.mox.ReplayAll()
@@ -363,7 +363,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     source = self.sources[0]
     source.domain_urls = ['http://author']
     activity = self.activities[0]
-    activity['object']['url'] = 'http://fa.ke/post/url'
+    activity['object']['url'] = 'https://fa.ke/post/url'
     activity['object']['content'] = 'content without links'
 
     if raise_exception:
@@ -446,7 +446,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     source = self.sources[0]
     source.domain_urls = ['http://author']
     activity = self.activities[0]
-    activity['object']['url'] = 'http://fa.ke/post/url'
+    activity['object']['url'] = 'https://fa.ke/post/url'
     activity['object']['content'] = 'content without links'
 
     self.expect_requests_get('http://author', """
@@ -491,7 +491,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     source = self.sources[0]
     source.domain_urls = []
     activity = self.activities[0]
-    activity['object']['url'] = 'http://fa.ke/post/url'
+    activity['object']['url'] = 'https://fa.ke/post/url'
     activity['object']['content'] = 'content without links'
 
     self.mox.ReplayAll()
@@ -507,7 +507,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     source = self.sources[0]
     source.domain_urls = ['http://author']
     activity = self.activities[0]
-    activity['object']['url'] = 'http://fa.ke/post/url'
+    activity['object']['url'] = 'https://fa.ke/post/url'
     activity['object']['content'] = 'content without links'
 
     self.expect_requests_get('http://author', """
@@ -528,7 +528,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     source = self.sources[0]
     source.domain_urls = ['http://author']
     activity = self.activities[0]
-    activity['object']['url'] = 'http://fa.ke/post/url'
+    activity['object']['url'] = 'https://fa.ke/post/url'
     activity['object']['content'] = 'content without links'
 
     self.mox.StubOutWithMock(requests, 'head', use_mock_anything=True)
@@ -570,7 +570,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     source = self.sources[0]
     source.domain_urls = ['http://author']
     activity = self.activities[0]
-    activity['object']['url'] = 'http://fa.ke/post/url'
+    activity['object']['url'] = 'https://fa.ke/post/url'
     activity['object']['content'] = 'content without links'
 
     self.mox.StubOutWithMock(requests, 'head', use_mock_anything=True)
@@ -627,7 +627,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     source = self.sources[0]
     source.domain_urls = ['http://author']
     activity = self.activities[0]
-    activity['object']['url'] = 'http://fa.ke/post/url'
+    activity['object']['url'] = 'https://fa.ke/post/url'
     activity['object']['content'] = 'content without links'
 
     # head request to follow redirects on the post url
@@ -648,7 +648,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     source = self.sources[0]
     source.domain_urls = ['http://author']
     activity = self.activities[0]
-    activity['object']['url'] = 'http://fa.ke/post/url'
+    activity['object']['url'] = 'https://fa.ke/post/url'
     activity['object']['content'] = 'content without links'
 
     # head request to follow redirects on the post url
@@ -685,7 +685,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     source = self.sources[0]
     source.domain_urls = ['http://author']
     activity = self.activities[0]
-    activity['object']['url'] = 'http://fa.ke/post/url'
+    activity['object']['url'] = 'https://fa.ke/post/url'
     activity['object']['content'] = 'content without links'
 
     self.mox.ReplayAll()
@@ -723,7 +723,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.expect_requests_get('http://author/permalink1', """
       <html class="h-entry">
         <a class="u-url" href="/permalink1"></a>
-        <a class="u-syndication" href="http://fa.ke/post/url1"></a>
+        <a class="u-syndication" href="https://fa.ke/post/url1"></a>
       </html>""").InAnyOrder()
 
     # permalink3 hasn't changed since we first checked it
@@ -753,6 +753,120 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
 
     self.assertIsNotNone(relationship3)
     self.assertIsNone(relationship3.syndication)
+
+  def test_refetch_multiple_responses_same_activity(self):
+    """Ensure that refetching a post that has several replies does not
+    generate duplicate original -> None blank entries in the
+    database. See https://github.com/snarfed/bridgy/issues/259 for
+    details
+    """
+    source = self.sources[0]
+    source.domain_urls = ['http://author']
+
+    for activity in self.activities:
+        activity['object']['content'] = 'post content without backlinks'
+        activity['object']['url'] = 'https://fa.ke/post/url'
+
+    author_feed = """
+    <html class="h-feed">
+      <div class="h-entry">
+        <a class="u-url" href="http://author/post/permalink"></a>
+      </div>
+    </html>"""
+
+    author_entry = """
+    <html class="h-entry">
+      <a class="u-url" href="http://author/post/permalink"></a>
+    </html>"""
+
+    # original
+    self.expect_requests_get('http://author', author_feed)
+    self.expect_requests_get('http://author/post/permalink', author_entry)
+    # refetch
+    self.expect_requests_get('http://author', author_feed)
+    self.expect_requests_get('http://author/post/permalink', author_entry)
+    self.mox.ReplayAll()
+
+    for activity in self.activities:
+      original_post_discovery.discover(source, activity)
+
+    original_post_discovery.refetch(source)
+
+    rels_by_original = list(
+      SyndicatedPost.query(SyndicatedPost.original == 'http://author/post/permalink',
+                           ancestor=source.key).fetch())
+
+    self.assertEquals(1, len(rels_by_original))
+    self.assertIsNone(rels_by_original[0].syndication)
+
+    rels_by_syndication = list(
+      SyndicatedPost.query(SyndicatedPost.syndication == 'https://fa.ke/post/url',
+                           ancestor=source.key).fetch())
+
+    self.assertEquals(1, len(rels_by_syndication))
+    self.assertIsNone(rels_by_syndication[0].original)
+
+  def test_multiple_refetches(self):
+    """Ensure that multiple refetches of the same post (with and without
+    u-syndication) does not generate duplicate blank entries in the
+    database. See https://github.com/snarfed/bridgy/issues/259 for details
+    """
+    source = self.sources[0]
+    source.domain_urls = ['http://author']
+
+    self.activities[0]['object'].update({
+      'content': 'post content without backlinks',
+      'url': 'https://fa.ke/post/url',
+    })
+
+    hfeed = """<html class="h-feed">
+    <a class="h-entry" href="/permalink"></a>
+    </html>"""
+
+    unsyndicated = """<html class="h-entry">
+    <a class="u-url" href="/permalink"></a>
+    </html>"""
+
+    syndicated = """<html class="h-entry">
+    <a class="u-url" href="/permalink"></a>
+    <a class="u-syndication" href="https://fa.ke/post/url"></a>
+    </html>"""
+
+    # first attempt, no syndication url yet
+    self.expect_requests_get('http://author', hfeed)
+    self.expect_requests_get('http://author/permalink', unsyndicated)
+
+    # refetch, still no syndication url
+    self.expect_requests_get('http://author', hfeed)
+    self.expect_requests_get('http://author/permalink', unsyndicated)
+
+    # second refetch, has a syndication url this time
+    self.expect_requests_get('http://author', hfeed)
+    self.expect_requests_get('http://author/permalink', syndicated)
+
+    self.mox.ReplayAll()
+    original_post_discovery.discover(source, self.activities[0])
+    original_post_discovery.refetch(source)
+
+    relations = list(
+      SyndicatedPost.query(
+        SyndicatedPost.original == 'http://author/permalink',
+        ancestor=source.key).fetch())
+
+    self.assertEquals(1, len(relations))
+    self.assertEquals('http://author/permalink', relations[0].original)
+    self.assertIsNone(relations[0].syndication)
+
+    original_post_discovery.refetch(source)
+
+    relations = list(
+      SyndicatedPost.query(
+        SyndicatedPost.original == 'http://author/permalink',
+        ancestor=source.key).fetch())
+
+    self.assertEquals(1, len(relations))
+    self.assertEquals('http://author/permalink', relations[0].original)
+    self.assertEquals('https://fa.ke/post/url', relations[0].syndication)
 
 
 class OriginalPostDiscoveryFacebookTest(facebook_test.FacebookPageTest):

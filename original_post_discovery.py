@@ -350,13 +350,15 @@ def _process_entry(source, permalink, refetch_blanks, preexisting):
       results[syndication_url] = relationship
 
   if not results:
-    logging.debug('no syndication links from %s to current source %s. '
-                  'saving empty relationship so that it will not be '
-                  'searched again', permalink, source.label())
-    # remember that this post doesn't have syndication links for this
-    # particular source
-    SyndicatedPost(parent=source.key, original=permalink,
-                   syndication=None).put()
+    logging.debug('no syndication links from %s to current source %s.',
+                  permalink, source.label())
+    if not preexisting_relationship:
+      # remember that this post doesn't have syndication links for this
+      # particular source
+      logging.debug('saving empty relationship so that it %s will not be '
+                    'searched again', permalink)
+      SyndicatedPost(parent=source.key, original=permalink,
+                     syndication=None).put()
 
   logging.debug('discovered relationships %s', results)
 
