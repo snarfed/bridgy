@@ -557,8 +557,9 @@ class PollTest(TaskQueueTest):
     self.post_task()
 
     # should still be a blank SyndicatedPost
-    relationships = models.SyndicatedPost.query_by_original(
-        self.sources[0], 'http://author/permalink')
+    relationships = models.SyndicatedPost.query(
+      models.SyndicatedPost.original == 'http://author/permalink',
+      ancestor=self.sources[0].key).fetch()
     self.assertEqual(1, len(relationships))
     self.assertIsNone(relationships[0].syndication)
 
@@ -606,8 +607,9 @@ class PollTest(TaskQueueTest):
     self.post_task()
 
     # should have a new SyndicatedPost
-    relationships = models.SyndicatedPost.query_by_original(
-      self.sources[0], 'http://author/permalink')
+    relationships = models.SyndicatedPost.query(
+      models.SyndicatedPost.original == 'http://author/permalink',
+      ancestor=self.sources[0].key).fetch()
     self.assertEquals(1, len(relationships))
     self.assertEquals('https://source/post/url', relationships[0].syndication)
 

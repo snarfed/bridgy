@@ -286,37 +286,25 @@ class SyndicatedPostTest(testutil.ModelsTest):
     for r in self.relationships:
       r.put()
 
-  def test_query_by_syndication_url(self):
-    """Simply testing the query helper"""
-    rs = SyndicatedPost.query_by_syndication(
-        self.source, 'http://silo/post/url')
-    self.assertTrue(rs)
-    self.assertItemsEqual(['http://original/post/url',
-                           'http://original/another/post'],
-                          [r.original for r in rs])
-
-    rs = SyndicatedPost.query_by_syndication(
-        self.source, 'http://silo/no-original')
-    self.assertTrue(rs)
-    self.assertItemsEqual([None], [r.original for r in rs])
-
-  def test_query_by_original_url(self):
-    """Simply testing the query helper"""
-    rs = SyndicatedPost.query_by_original(
-      self.source, 'http://original/post/url')
-    self.assertTrue(rs)
-    self.assertItemsEqual(['http://silo/post/url', 'http://silo/another/url'],
-                          [r.syndication for r in rs])
-
-    rs = SyndicatedPost.query_by_original(
-        self.source, 'http://original/no-syndication')
-    self.assertTrue(rs)
-    self.assertItemsEqual([None], [r.syndication for r in rs])
-
-  def test_get_or_insert_by_syndication_replace(self):
+  def test_insert_replaces_blanks(self):
     """Make sure we replace original=None with original=something
     when it is discovered"""
-    r = SyndicatedPost.get_or_insert_by_syndication_url(
+
+    # add a blank for the original too
+    SyndicatedPost.insert_original_blank(
+      self.source, 'http://original/newly-discovered')
+
+    self.assertTrue(
+      SyndicatedPost.query(
+        SyndicatedPost.syndication == 'http://silo/no-original',
+        SyndicatedPost.original == None, ancestor=self.source.key).get())
+
+    self.assertTrue(
+      SyndicatedPost.query(
+        SyndicatedPost.original == 'http://original/newly-discovered',
+        SyndicatedPost.syndication == None, ancestor=self.source.key).get())
+
+    r = SyndicatedPost.insert(
         self.source, 'http://silo/no-original',
         'http://original/newly-discovered')
     self.assertIsNotNone(r)
@@ -331,11 +319,22 @@ class SyndicatedPostTest(testutil.ModelsTest):
     self.assertEquals('http://original/newly-discovered', rs[0].original)
     self.assertEquals('http://silo/no-original', rs[0].syndication)
 
-  def test_get_or_insert_by_syndication_augument_existing(self):
+    # and the blanks have been removed
+    self.assertFalse(
+      SyndicatedPost.query(
+        SyndicatedPost.syndication == 'http://silo/no-original',
+        SyndicatedPost.original == None, ancestor=self.source.key).get())
+
+    self.assertFalse(
+      SyndicatedPost.query(
+        SyndicatedPost.original == 'http://original/newly-discovered',
+        SyndicatedPost.syndication == None, ancestor=self.source.key).get())
+
+  def test_insert_auguments_existing(self):
     """Make sure we add newly discovered urls for a given syndication url,
     rather than overwrite them
     """
-    r = SyndicatedPost.get_or_insert_by_syndication_url(
+    r = SyndicatedPost.insert(
         self.source, 'http://silo/post/url',
         'http://original/different/url')
     self.assertIsNotNone(r)
@@ -355,10 +354,8 @@ class SyndicatedPostTest(testutil.ModelsTest):
   def test_get_or_insert_by_syndication_do_not_duplicate_blanks(self):
     """Make sure we don't insert duplicate blank entries"""
 
-    r = SyndicatedPost.get_or_insert_by_syndication_url(
-      self.source, 'http://silo/no-original', None)
-    self.assertIsNotNone(r)
-    self.assertIsNone(r.original)
+    SyndicatedPost.insert_syndication_blank(
+      self.source, 'http://silo/no-original')
 
     # make sure there's only one in the DB
     rs = SyndicatedPost.query(
@@ -368,10 +365,10 @@ class SyndicatedPostTest(testutil.ModelsTest):
 
     self.assertItemsEqual([None], [rel.original for rel in rs])
 
-  def test_get_or_insert_by_syndication_do_not_duplicates(self):
+  def test_insert_no_duplicates(self):
     """Make sure we don't insert duplicate entries"""
 
-    r = SyndicatedPost.get_or_insert_by_syndication_url(
+    r = SyndicatedPost.insert(
       self.source, 'http://silo/post/url', 'http://original/post/url')
     self.assertIsNotNone(r)
     self.assertEqual('http://original/post/url', r.original)

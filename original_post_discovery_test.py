@@ -125,17 +125,27 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
                       self.activities[0]['object']['upstreamDuplicates'])
 
     # make sure things are where we want them
-    rs = SyndicatedPost.query_by_original(source, 'http://author/post/permalink1')
+    rs = SyndicatedPost.query(
+      SyndicatedPost.original == 'http://author/post/permalink1',
+      ancestor=source.key).fetch()
     self.assertEquals('https://fa.ke/post/url1', rs[0].syndication)
-    rs = SyndicatedPost.query_by_syndication(source, 'https://fa.ke/post/url1')
+    rs = SyndicatedPost.query(
+      SyndicatedPost.syndication == 'https://fa.ke/post/url1',
+      ancestor=source.key).fetch()
     self.assertEquals('http://author/post/permalink1', rs[0].original)
 
-    rs = SyndicatedPost.query_by_original(source, 'http://author/post/permalink2')
+    rs = SyndicatedPost.query(
+      SyndicatedPost.original == 'http://author/post/permalink2',
+      ancestor=source.key).fetch()
     self.assertEquals('https://fa.ke/post/url2', rs[0].syndication)
-    rs = SyndicatedPost.query_by_syndication(source, 'https://fa.ke/post/url2')
+    rs = SyndicatedPost.query(
+      SyndicatedPost.syndication == 'https://fa.ke/post/url2',
+      ancestor=source.key).fetch()
     self.assertEquals('http://author/post/permalink2', rs[0].original)
 
-    rs = SyndicatedPost.query_by_original(source, 'http://author/post/permalink3')
+    rs = SyndicatedPost.query(
+      SyndicatedPost.original == 'http://author/post/permalink3',
+      ancestor=source.key).fetch()
     self.assertEquals(None, rs[0].syndication)
 
     # second lookup should require no additional HTTP requests.
@@ -155,7 +165,9 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
 
     # should have saved a blank to prevent subsequent checks of this
     # syndicated post from fetching the h-feed again
-    rs = SyndicatedPost.query_by_syndication(source, 'https://fa.ke/post/url3')
+    rs = SyndicatedPost.query(
+      SyndicatedPost.syndication == 'https://fa.ke/post/url3',
+      ancestor=source.key).fetch()
     self.assertIsNone(rs[0].original)
 
     # confirm that we do not fetch the h-feed again for the same
@@ -735,21 +747,24 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.mox.ReplayAll()
     original_post_discovery.refetch(source)
 
-    relationships1 = SyndicatedPost.query_by_original(
-      source, 'http://author/permalink1')
+    relationships1 = SyndicatedPost.query(
+      SyndicatedPost.original == 'http://author/permalink1',
+      ancestor=source.key).fetch()
 
     self.assertTrue(relationships1)
     self.assertEquals('https://fa.ke/post/url1', relationships1[0].syndication)
 
-    relationships2 = SyndicatedPost.query_by_original(
-      source, 'http://author/permalink2')
+    relationships2 = SyndicatedPost.query(
+      SyndicatedPost.original == 'http://author/permalink2',
+      ancestor=source.key).fetch()
 
     # this shouldn't have changed
     self.assertTrue(relationships2)
     self.assertEquals('https://fa.ke/post/url2', relationships2[0].syndication)
 
-    relationships3 = SyndicatedPost.query_by_original(
-      source, 'http://author/permalink3')
+    relationships3 = SyndicatedPost.query(
+      SyndicatedPost.original == 'http://author/permalink3',
+      ancestor=source.key).fetch()
 
     self.assertTrue(relationships3)
     self.assertIsNone(relationships3[0].syndication)
