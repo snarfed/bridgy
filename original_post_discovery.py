@@ -35,6 +35,7 @@ import util
 
 from activitystreams import source as as_source
 from appengine_config import HTTP_TIMEOUT
+from google.appengine.api.datastore import MAX_ALLOWABLE_QUERIES
 from bs4 import BeautifulSoup
 from models import SyndicatedPost
 
@@ -159,10 +160,9 @@ def _posse_post_discovery(source, activity, author_url, syndication_url,
                 syndication_url,
                 '; '.join(str(r.original) for r in relationships))
 
-  new_originals = [r.original for r in relationships if r.original]
-  if new_originals:
-    obj = activity.get('object') or activity
-    obj.setdefault('upstreamDuplicates', []).extend(new_originals)
+  obj = activity.get('object') or activity
+  obj.setdefault('upstreamDuplicates', []).extend(
+    r.original for r in relationships if r.original)
 
   return activity
 
@@ -261,11 +261,12 @@ def _process_author(source, author_url, refetch_blanks=False):
 
   # query all preexisting permalinks at once, instead of once per link
   permalinks_list = list(permalinks)
-  # fetch 30 entries (the ndb limit) at a time
+  # fetch the maximum allowed entries (currently 30) at a time
   preexisting_list = itertools.chain.from_iterable(
-    SyndicatedPost.query(SyndicatedPost.original.IN(permalinks_list[i:i + 30]),
-                         ancestor=source.key)
-    for i in xrange(0, len(permalinks_list), 30))
+    SyndicatedPost.query(
+      SyndicatedPost.original.IN(permalinks_list[i:i + MAX_ALLOWABLE_QUERIES]),
+      ancestor=source.key)
+    for i in xrange(0, len(permalinks_list), MAX_ALLOWABLE_QUERIES))
   preexisting = {}
   for r in preexisting_list:
     preexisting.setdefault(r.original, []).append(r)
@@ -273,8 +274,10 @@ def _process_author(source, author_url, refetch_blanks=False):
   results = {}
   for permalink in permalinks:
     logging.debug('processing permalink: %s', permalink)
-    _process_entry(source, permalink, refetch_blanks,
-                   preexisting.get(permalink, []), results)
+    new_results = _process_entry(source, permalink, refetch_blanks,
+                                 preexisting.get(permalink, []))
+    for key, value in new_results.iteritems():
+      results.setdefault(key, []).extend(value)
 
   if results:
     # keep track of the last time we've seen rel=syndication urls for
@@ -288,8 +291,7 @@ def _process_author(source, author_url, refetch_blanks=False):
   return results
 
 
-def _process_entry(source, permalink, refetch_blanks, preexisting,
-                   out_results):
+def _process_entry(source, permalink, refetch_blanks, preexisting):
   """Fetch and process an h-entry, saving a new SyndicatedPost to the
   DB if successful.
 
@@ -300,17 +302,22 @@ def _process_entry(source, permalink, refetch_blanks, preexisting,
       SyndicatedPosts
     preexisting: a list of previously discovered models.SyndicatedPosts
       for this permalink
-    out_result: a dict from syndicated url to a list of new
-      models.SyndicatedPosts
+
+  Returns:
+    a dict from syndicated url to a list of new models.SyndicatedPosts
   """
+  results = {}
+
   # if the post has already been processed, do not add to the results
   # since this method only returns *newly* discovered relationships.
   if preexisting:
-    # if we're refetching blanks and this one is blank, do not return
-    if refetch_blanks and not preexisting[0].syndication:
+    # if we're refetching blanks and this one is blank, do not return.
+    # if there is a blank entry, it should be the one and only entry,
+    # but go ahead and check 'all' of them to be safe.
+    if refetch_blanks and all(not p.syndication for p in preexisting):
       logging.debug('ignoring blank relationship for original %s', permalink)
     else:
-      return
+      return results
 
   syndication_urls = set()
   parsed = None
@@ -340,7 +347,6 @@ def _process_entry(source, permalink, refetch_blanks, preexisting,
 
   # save the results (or lack thereof) to the db, and put them in a
   # map for immediate use
-  new_results = {}
   for syndication_url in syndication_urls:
     # follow redirects to give us the canonical syndication url --
     # gives the best chance of finding a match.
@@ -358,9 +364,9 @@ def _process_entry(source, permalink, refetch_blanks, preexisting,
                     syndication_url, permalink)
       relationship = SyndicatedPost.insert(
         source, syndication=syndication_url, original=permalink)
-      new_results.setdefault(syndication_url, []).append(relationship)
+      results.setdefault(syndication_url, []).append(relationship)
 
-  if not new_results:
+  if not results:
     logging.debug('no syndication links from %s to current source %s.',
                   permalink, source.label())
     if not preexisting:
@@ -370,6 +376,5 @@ def _process_entry(source, permalink, refetch_blanks, preexisting,
                     'searched again', permalink)
       SyndicatedPost.insert_original_blank(source, permalink)
 
-  logging.debug('discovered relationships %s', new_results)
-  for key, value in new_results.iteritems():
-    out_results.setdefault(key, []).extend(value)
+  logging.debug('discovered relationships %s', results)
+  return results

@@ -161,7 +161,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
 
     original_post_discovery.discover(source, self.activities[2])
     # should have found no new syndication link
-    self.assertNotIn('upstreamDuplicates', self.activities[2]['object'])
+    self.assertFalse(self.activities[2]['object'].get('upstreamDuplicates'))
 
     # should have saved a blank to prevent subsequent checks of this
     # syndicated post from fetching the h-feed again
@@ -174,7 +174,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     # syndicated post
     original_post_discovery.discover(source, self.activities[2])
     # should be no new syndication link
-    self.assertNotIn('upstreamDuplicates', self.activities[2]['object'])
+    self.assertFalse(self.activities[2]['object'].get('upstreamDuplicates'))
 
   def test_no_duplicate_links(self):
     """Make sure that a link found by both original-post-discovery and
