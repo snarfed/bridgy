@@ -689,69 +689,70 @@ class SyndicatedPost(ndb.Model):
   updated = ndb.DateTimeProperty(auto_now=True)
 
   @classmethod
-  def query_by_original(cls, source, url):
-    return cls.query(cls.original == url,
-                     ancestor=source.key).get()
-
-  @classmethod
-  def query_by_originals(cls, source, urls):
-    # 30 item limit for IN queries, chain together multiple queries
-    urls = list(urls)
-    return itertools.chain.from_iterable(
-        cls.query(cls.original.IN(urls[i:i + 30]), ancestor=source.key)
-        for i in xrange(0, len(urls), 30))
-
-  @classmethod
-  def query_by_syndication(cls, source, url):
-    return cls.query(cls.syndication == url,
-                     ancestor=source.key).get()
-
-  @classmethod
   @ndb.transactional
-  def get_or_insert_by_syndication_url(cls, source, syndication,
-                                       original):
-    """Insert a relationship from syndication-url -> original, replacing
-    blank placeholder relationships if they exist.
-
-    This does a check-and-set inside a transaction to avoid putting
-    duplicates in the database because we assume each syndication URL
-    can only have one original. If there is already a non-blank
-    SyndicatedPost for this syndication URL, this function will return
-    without saving anything.
-
-    If there is a pre-existing non-blank SyndicationPost for this
-    original, this function will add another relationship for the same
-    original.
-
-    If there are pre-existing syndication->None or original->None
-    relationships, this function will remove them before adding a
-    new non-blank relationship.
+  def insert_original_blank(cls, source, original):
+    """Insert a new original -> None relationship. Does a check-and-set to
+    make sure no previous relationship exists for this original. If
+    there is, nothing will be added.
 
     Args:
       source: models.Source subclass
-      syndication: string
       original: string
     """
-    relationship = cls.query_by_syndication(source, syndication)
+    if cls.query(cls.original == original, ancestor=source.key).get():
+      return
+    cls(parent=source.key, original=original, syndication=None).put()
 
-    # do not overwrite a preexisting relationship
-    if relationship and (relationship.original
-                         # or a blank with another blank
-                         or not original):
-      return relationship
+  @classmethod
+  @ndb.transactional
+  def insert_syndication_blank(cls, source, syndication):
+    """Insert a new syndication -> None relationship. Does a check-and-set
+    to make sure no previous relationship exists for this
+    syndication. If there is, nothing will be added.
 
-    # if this is a non-blank relationship, remove pre-existing blanks
-    if original:
-      # remove syndication->None relationships
-      if relationship and not relationship.original:
-        relationship.key.delete()
+    Args:
+      source: models.Source subclass
+      original: string
+    """
 
-      # remove original->None relationships too
-      rel_by_original = cls.query_by_original(source, original)
-      if rel_by_original and not rel_by_original.syndication:
-        rel_by_original.key.delete()
+    if cls.query(cls.syndication == syndication, ancestor=source.key).get():
+      return
+    cls(parent=source.key, original=None, syndication=syndication).put()
 
-    relationship = cls(parent=source.key, original=original,
-                       syndication=syndication)
-    relationship.put()
-    return relationship
+  @classmethod
+  @ndb.transactional
+  def insert(cls, source, syndication, original):
+    """Insert a new (non-blank) syndication -> original relationship.
+
+    This method does a check-and-set within transaction to avoid
+    including duplicate relationships.
+
+    If blank entries exists for the syndication or original URL
+    (i.e. syndication -> None or original -> None), they will first be
+    removed. If non-blank relationships exist, they will be retained.
+
+    Args:
+      source: models.Source subclass
+      syndication: string (not None)
+      original: string (not None)
+
+    Return:
+      the new SyndicatedPost or a preexisting one if it exists
+    """
+    # check for an exact match
+    duplicate = cls.query(cls.syndication == syndication,
+                          cls.original == original,
+                          ancestor=source.key).get()
+    if duplicate:
+      return duplicate
+
+    # delete blanks (expect at most 1 of each)
+    ndb.delete_multi(
+      cls.query(ndb.OR(
+        ndb.AND(cls.syndication == syndication, cls.original == None),
+        ndb.AND(cls.original == original, cls.syndication == None)),
+                ancestor=source.key).fetch(keys_only=True))
+
+    r = cls(parent=source.key, original=original, syndication=syndication)
+    r.put()
+    return r
