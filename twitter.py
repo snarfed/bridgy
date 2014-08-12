@@ -84,8 +84,23 @@ class AddTwitter(oauth_twitter.CallbackHandler, util.Handler):
     self.maybe_add_or_delete_source(Twitter, auth_entity, state)
 
 
+class StartHandler(util.Handler):
+  """Custom OAuth start handler so we can use access_type=read for state=listen.
+
+  Tweepy converts access_type to x_auth_access_type for Twitter's
+  oauth/request_token endpoint. Details:
+  https://dev.twitter.com/docs/api/1/post/oauth/request_token
+  """
+  def post(self):
+    access_type = ('read' if util.get_required_param(self, 'state') == 'listen'
+                   else None)
+    handler = oauth_twitter.StartHandler.to(
+      '/twitter/add', access_type=access_type)(self.request, self.response)
+    return handler.post()
+
+
 application = webapp2.WSGIApplication([
-    ('/twitter/start', oauth_twitter.StartHandler.to('/twitter/add')),
+    ('/twitter/start', StartHandler),
     ('/twitter/add', AddTwitter),
     ('/twitter/delete/finish', oauth_twitter.CallbackHandler.to('/delete/finish')),
     ], debug=appengine_config.DEBUG)
