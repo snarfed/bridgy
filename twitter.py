@@ -92,8 +92,11 @@ class StartHandler(util.Handler):
   https://dev.twitter.com/docs/api/1/post/oauth/request_token
   """
   def post(self):
+    # pass explicit 'write' instead of None for publish so that oauth-dropins
+    # (and tweepy) don't use signin_with_twitter ie /authorize. this works
+    # around a twitter API bug: https://dev.twitter.com/discussions/21281
     access_type = ('read' if util.get_required_param(self, 'state') == 'listen'
-                   else None)
+                   else 'write')
     handler = oauth_twitter.StartHandler.to(
       '/twitter/add', access_type=access_type)(self.request, self.response)
     return handler.post()
