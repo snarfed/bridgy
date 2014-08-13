@@ -74,6 +74,7 @@ class BlacklistingHandler(ereporter.ExceptionRecordingHandler):
     'InstagramClientError: Unable to parse response, not valid JSON:',
     'InternalError: server is not responding',  # usually datastore
     'InternalError: Server is not responding',
+    'InternalTransientError'
     'Timeout: The datastore operation timed out',
     'TransientError',
     )
