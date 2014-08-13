@@ -63,8 +63,8 @@ class BlacklistingHandler(ereporter.ExceptionRecordingHandler):
     'HTTPError: 400 Client Error: Bad Request',
     'HTTPError: 404 Client Error: Not Found',
     'HTTPError: 500 Server Error: Internal Server Error',
-    'HTTPError: 502 Server Error: Bad Gateway'
-    'HTTPError: 503 Server Error: Service Unavailable'
+    'HTTPError: 502 Server Error: Bad Gateway',
+    'HTTPError: 503 Server Error: Service Unavailable',
     'HttpError: <HttpError 400 when requesting',
     'HttpError: <HttpError 404 when requesting',
     'HttpError: <HttpError 500 when requesting',
