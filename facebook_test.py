@@ -133,6 +133,16 @@ class FacebookPageTest(testutil.ModelsTest):
     page = FacebookPage.new(self.handler, auth_entity=self.auth_entity)
     self.assertRaises(urllib2.HTTPError, page.get_activities)
 
+  def test_other_error_not_json(self):
+    """If an error body isn't JSON, we should raise the original exception."""
+    self.expect_urlopen(
+      'https://graph.facebook.com/me/posts?offset=0&access_token=my_token',
+      'not json', status=400)
+    self.mox.ReplayAll()
+
+    page = FacebookPage.new(self.handler, auth_entity=self.auth_entity)
+    self.assertRaises(urllib2.HTTPError, page.get_activities)
+
   def test_canonicalize_syndication_url(self):
     page = FacebookPage.new(self.handler, auth_entity=self.auth_entity)
 
