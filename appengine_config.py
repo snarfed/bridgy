@@ -38,6 +38,7 @@ except:
 # http://localhost:8080/_ereporter?sender=ryan@brid.gy&to=ryan@brid.gy&debug=true&delete=false&date=2014-07-09
 # where the date is today or tomorrow (because of UTC)
 from google.appengine.ext import ereporter
+import logging
 import traceback
 
 # monkey patch ereporter to combine exceptions from different versions and dates
@@ -74,18 +75,19 @@ class BlacklistingHandler(ereporter.ExceptionRecordingHandler):
     'InstagramClientError: Unable to parse response, not valid JSON:',
     'InternalError: server is not responding',  # usually datastore
     'InternalError: Server is not responding',
-    'InternalTransientError'
+    'InternalTransientError',
     'Timeout: The datastore operation timed out',
     'TransientError',
     )
 
   def emit(self, record):
-    if record and record.exc_info:
+    # don't report warning or lower levels
+    if record and record.exc_info and record.levelno >= logging.ERROR:
       type_and_msg = traceback.format_exception_only(*record.exc_info[:2])[-1]
       for prefix in self.BLACKLIST:
         if type_and_msg.startswith(prefix):
           return
-    return super(BlacklistingHandler, self).emit(record)
+      return super(BlacklistingHandler, self).emit(record)
 
 
 ereporter_logging_handler = BlacklistingHandler()

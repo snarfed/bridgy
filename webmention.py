@@ -113,7 +113,7 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
       log_exception: boolean, whether to include a stack trace in the log msg
       mail: boolean, whether to email me
     """
-    logging.error(error, exc_info=sys.exc_info() if log_exception else None)
+    logging.warning(error, exc_info=log_exception)
 
     if self.entity:
       self.entity.status = 'failed'

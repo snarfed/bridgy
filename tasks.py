@@ -136,7 +136,7 @@ class Poll(webapp2.RequestHandler):
         # account, or even other things.
         # http://code.google.com/p/google-api-python-client/issues/detail?id=187#c1
         msg = 'Unauthorized error: %s' % e
-        logging.exception(msg)
+        logging.warning(msg, exc_info=True)
         raise models.DisableSource(msg)
       elif code in util.HTTP_RATE_LIMIT_CODES:
         logging.warning('Rate limited. Marking as error and finishing. %s', e)
@@ -392,7 +392,7 @@ class SendWebmentions(webapp2.RequestHandler):
     try:
       self.do_send_webmentions()
     except:
-      logging.exception('Propagate task failed')
+      logging.warning('Propagate task failed', exc_info=True)
       self.release('error')
       raise
 

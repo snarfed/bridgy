@@ -178,7 +178,7 @@ class ItemHandler(webapp2.RequestHandler):
     try:
       post = self.source.get_post(post_id)
     except:
-      logging.exception('Error fetching source post %s', post_id)
+      logging.warning('Error fetching source post %s', post_id, exc_info=True)
       return
     if not post:
       logging.warning('Source post %s not found', post_id)

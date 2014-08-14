@@ -166,7 +166,7 @@ def update_streams():
         update_thread = None
         return
       except:
-        logging.exception('Error updating streams')
+        logging.warning('Error updating streams', exc_info=True)
     time.sleep(UPDATE_STREAMS_PERIOD_S)
 
 
