@@ -332,19 +332,25 @@ class DeleteStartHandler(util.Handler):
   def post(self):
     key = ndb.Key(urlsafe=util.get_required_param(self, 'key'))
     module = self.OAUTH_MODULES[key.kind()]
-    state = '%s-%s' % (util.get_required_param(self, 'feature'), key.urlsafe())
+    feature = util.get_required_param(self, 'feature')
+    state = '%s-%s' % (feature, key.urlsafe())
 
     # Google+ and Blogger don't support redirect_url() yet
     if module is oauth_googleplus:
-      self.redirect('/googleplus/delete/start?state=%s' % state)
-    elif module is oauth_blogger_v2:
-      self.redirect('/blogger/delete/start?state=%s' % state)
-    else:
-      path = ('/instagram/oauth_callback' if module is oauth_instagram
-              else '/wordpress/add' if module is oauth_wordpress_rest
-              else '/%s/delete/finish' % key.get().SHORT_NAME)
-      handler = module.StartHandler.to(path)(self.request, self.response)
-      self.redirect(handler.redirect_url(state=state))
+      return self.redirect('/googleplus/delete/start?state=%s' % state)
+
+    if module is oauth_blogger_v2:
+      return self.redirect('/blogger/delete/start?state=%s' % state)
+
+    path = ('/instagram/oauth_callback' if module is oauth_instagram
+            else '/wordpress/add' if module is oauth_wordpress_rest
+            else '/%s/delete/finish' % key.get().SHORT_NAME)
+    kwargs = {}
+    if module is oauth_twitter:
+      kwargs['access_type'] = 'read' if feature == 'listen' else 'write'
+
+    handler = module.StartHandler.to(path, **kwargs)(self.request, self.response)
+    self.redirect(handler.redirect_url(state=state))
 
 
 class DeleteFinishHandler(util.Handler):
