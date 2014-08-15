@@ -188,6 +188,10 @@ class UserHandler(DashboardHandler):
     return ('templates/%s_user.html' % self.source.SHORT_NAME if self.source
             else 'templates/user_not_found.html')
 
+  def headers(self):
+    """Override the default and omit Cache-Control."""
+    return {'Access-Control-Allow-Origin': '*'}
+
   def template_vars(self):
     if not self.source:
       return {}
