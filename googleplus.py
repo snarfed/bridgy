@@ -54,12 +54,13 @@ class GooglePlusPage(models.Source):
     # override the sz param to ask for a 128x128 image. if there's an existing
     # sz query param (there usually is), the new one will come afterward and
     # override it.
-    picture = util.add_query_params(user['image']['url'], {'sz': '128'})
+    picture = user.get('image', {}).get('url')
+    picture = util.add_query_params(picture, {'sz': '128'})
 
     return GooglePlusPage(id=user['id'],
                           auth_entity=auth_entity.key,
-                          url=user['url'],
-                          name=user['displayName'],
+                          url=user.get('url'),
+                          name=user.get('displayName'),
                           picture=picture,
                           type=type,
                           **kwargs)
