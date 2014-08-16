@@ -76,7 +76,7 @@ handlers:
   script: twitter.application
   secure: always
 
-- url: /wordpress/(start|add|delete|notify)(/.*)?
+- url: /wordpress/(start|add|delete|notify|confirm)(/.*)?
   script: wordpress_rest.application
   secure: always
 

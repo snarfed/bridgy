@@ -227,13 +227,22 @@ button {
   color: #428BCA;
 }
 
-#delete-button {
+#delete-button, #bad-button {
   border-color: red;
   color: red;
 }
 
-#delete-button:hover {
+#delete-button:hover, #bad-button:hover {
   background-color: #FCC;
+}
+
+#good-button {
+  border-color: green;
+  color: green;
+}
+
+#good-button:hover {
+  background-color: #DED;
 }
 
 #preview .verb {

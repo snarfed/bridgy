@@ -30,6 +30,7 @@ import appengine_config
 from appengine_config import HTTP_TIMEOUT
 
 from activitystreams.oauth_dropins import wordpress_rest as oauth_wordpress
+from activitystreams.oauth_dropins.webutil.handlers import TemplateHandler
 import models
 import superfeedr
 import util
@@ -161,6 +162,11 @@ class WordPress(models.Source):
     return resp
 
 
+class ConfirmSelfHosted(TemplateHandler):
+  def template_file(self):
+    return 'templates/confirm_self_hosted_wordpress.html'
+
+
 class AddWordPress(oauth_wordpress.CallbackHandler, util.Handler):
   def finish(self, auth_entity, state=None):
     self.maybe_add_or_delete_source(WordPress, auth_entity, state)
@@ -176,4 +182,5 @@ application = webapp2.WSGIApplication([
     # OAuth redirect URL.)
     ('/wordpress/add', AddWordPress),
     ('/wordpress/notify/(.+)', SuperfeedrNotifyHandler),
+    ('/wordpress/confirm', ConfirmSelfHosted),
     ], debug=appengine_config.DEBUG)

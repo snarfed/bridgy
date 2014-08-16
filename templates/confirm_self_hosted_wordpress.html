@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Self-hosted WordPress - Bridgy{% endblock %}
+
+{% block content %}
+
+<br />
+<p class="row big">
+Looks like your blog is on
+<a href="">self-hosted WordPress</a>, not
+<a href="http://wordpress.com/">WordPress.com</a>. Great!
+</p>
+
+<p class="row big">
+<a href="http://wordpress.org/plugins/indieweb/">The IndieWeb plugin</a> is
+probably better for you, and you can still get social network responses from
+Bridgy with it.
+</p>
+
+<div class="row">
+<form method="get" action="http://wordpress.org/plugins/indieweb/">
+  <input type="submit" id="good-button" class="btn btn-default big"
+         value="Try it!" />
+</form>
+&nbsp;&nbsp;
+<form method="post" action="/wordpress/add">
+  <input type="submit" id="bad-button", class="btn btn-default"
+         value="I know what I'm doing. Onward." />
+</form>
+</div>
+
+{% endblock %}
