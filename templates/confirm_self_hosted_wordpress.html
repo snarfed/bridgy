@@ -23,9 +23,11 @@ Bridgy with it.
          value="Try it!" />
 </form>
 &nbsp;&nbsp;
-<form method="post" action="/wordpress/add">
-  <input type="submit" id="bad-button", class="btn btn-default"
-         value="I know what I'm doing. Onward." />
+<form method="post" action="/wordpress/confirm">
+  <input type="submit" id="bad-button" class="btn btn-default"
+         value="No thanks, I know what I'm doing." />
+  <input type="hidden" name="auth_entity_key" value="{{ auth_entity_key }}" />
+  <input type="hidden" name="state" value="{{ state }}" />
 </form>
 </div>
 

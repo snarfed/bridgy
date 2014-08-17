@@ -37,6 +37,7 @@ import util
 import webapp2
 
 from google.appengine.ext import ndb
+from google.appengine.ext.webapp import template
 
 
 API_CREATE_COMMENT_URL = 'https://public-api.wordpress.com/rest/v1/sites/%s/posts/%d/replies/new?pretty=true'
@@ -162,14 +163,30 @@ class WordPress(models.Source):
     return resp
 
 
-class ConfirmSelfHosted(TemplateHandler):
-  def template_file(self):
-    return 'templates/confirm_self_hosted_wordpress.html'
-
-
 class AddWordPress(oauth_wordpress.CallbackHandler, util.Handler):
   def finish(self, auth_entity, state=None):
+    # Check if this is a self-hosted WordPress blog
+    if auth_entity:
+      site_info = json.loads(auth_entity.urlopen(
+          API_SITE_URL % auth_entity.blog_id).read())
+      if site_info.get('jetpack'):
+        logging.info('This is a self-hosted WordPress blog! %s %s',
+                     auth_entity.key.id(), auth_entity.blog_id)
+        self.response.headers['Content-Type'] = 'text/html'
+        self.response.out.write(template.render(
+            'templates/confirm_self_hosted_wordpress.html',
+            {'auth_entity_key': auth_entity.key.urlsafe(), 'state': state}))
+        return
+
     self.maybe_add_or_delete_source(WordPress, auth_entity, state)
+
+
+class ConfirmSelfHosted(util.Handler):
+  def post(self):
+    self.maybe_add_or_delete_source(
+      WordPress,
+      ndb.Key(urlsafe=util.get_required_param(self, 'auth_entity_key')).get(),
+      util.get_required_param(self, 'state'))
 
 
 class SuperfeedrNotifyHandler(superfeedr.NotifyHandler):
@@ -178,9 +195,9 @@ class SuperfeedrNotifyHandler(superfeedr.NotifyHandler):
 
 application = webapp2.WSGIApplication([
     ('/wordpress/start', oauth_wordpress.StartHandler.to('/wordpress/add')),
+    ('/wordpress/confirm', ConfirmSelfHosted),
     # This handles both add and delete. (WordPress.com only allows a single
     # OAuth redirect URL.)
     ('/wordpress/add', AddWordPress),
     ('/wordpress/notify/(.+)', SuperfeedrNotifyHandler),
-    ('/wordpress/confirm', ConfirmSelfHosted),
     ], debug=appengine_config.DEBUG)
