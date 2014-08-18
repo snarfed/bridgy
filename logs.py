@@ -15,7 +15,12 @@ import webapp2
 
 
 SANITIZE_RE = re.compile(
-  '((?:oauth|access|api)?[ _]?(?:key|token|verifier|secret)[:= ])[^ &=]+')
+  r"""((?:access|api|oauth)?[ _]?
+       (?:consumer)?[ _]?
+       (?:key|nonce|secret|signature|token|verifier)
+       (?:=|:|\ |',\ u?'|%3D)\ *)
+      [^ &=']+""",
+  flags=re.VERBOSE | re.IGNORECASE)
 
 LEVELS = {
   logservice.LOG_LEVEL_DEBUG:    'D',
