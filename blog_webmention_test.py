@@ -6,6 +6,7 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 import json
 import mox
 import urllib
+import urllib2
 
 import appengine_config
 from appengine_config import HTTP_TIMEOUT
@@ -267,3 +268,20 @@ i hereby mention
     self.assertEquals(200, resp.status_int, resp.body)
     bw = BlogWebmention.get_by_id('http://bar.com/reply http://foo.com/post/1')
     self.assertEquals('complete', bw.status)
+
+  def test_create_comment_exception(self):
+    html = """\
+<article class="h-entry"><p class="e-content">
+<span class="p-name">my post</span>
+http://foo.com/post/1
+</p></article>"""
+    self.expect_requests_get('http://bar.com/reply', html)
+    testutil.FakeSource.create_comment(
+      'http://foo.com/post/1', 'foo.com', 'http://foo.com/', mox.IgnoreArg()
+      ).AndRaise(urllib2.HTTPError('url', 402, 'msg', {}, None))
+    self.mox.ReplayAll()
+
+    resp = self.get_response()
+    self.assertEquals(402, resp.status_int, resp.body)
+    bw = BlogWebmention.get_by_id('http://bar.com/reply http://foo.com/post/1')
+    self.assertEquals('failed', bw.status)

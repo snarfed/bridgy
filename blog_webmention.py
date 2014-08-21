@@ -117,16 +117,12 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
     try:
       self.entity.published = self.source.create_comment(
         self.target_url, author_name, author_url, text)
-    except urllib2.HTTPError, e:
-      body = e.read()
-      logging.error('Error response body: %r', body)
-      return self.error('Error: %s; %s' % (e, body), status=e.code)
-    except requests.HTTPError, e:
-      logging.error('Error response body: %r', e.response.text)
-      return self.error('Error: %s; %s' % (e, e.response.text),
-                        status=e.response.status_code)
-    except BaseException, e:
-      return self.error('Error: %s' % e, status=500)
+    except Exception, e:
+      code, body = util.interpret_http_exception(e)
+      if code or body:
+        return self.error('Error: %s; %s' % (e, body), status=e.code)
+      else:
+        raise
 
     # write results to datastore
     self.entity.status = 'complete'
