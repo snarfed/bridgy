@@ -120,7 +120,7 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
     except Exception, e:
       code, body = util.interpret_http_exception(e)
       if code or body:
-        return self.error('Error: %s; %s' % (e, body), status=e.code)
+        return self.error('Error: %s %s; %s' % (code, e, body), status=code)
       else:
         raise
 
