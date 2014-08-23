@@ -76,7 +76,7 @@ class BlacklistingHandler(ereporter.ExceptionRecordingHandler):
     'InternalError: server is not responding',  # usually datastore
     'InternalError: Server is not responding',
     'InternalTransientError',
-    'Timeout: The datastore operation timed out',
+    'Timeout',
     'TransientError',
     )
 
