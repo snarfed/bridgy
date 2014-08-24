@@ -94,6 +94,7 @@ i hereby reply
     bw = BlogWebmention.get_by_id('http://bar.com/reply http://foo.com/post/1')
     self.assertEquals('complete', bw.status)
     self.assertEquals({'id': 'fake id'}, bw.published)
+    self.assertEquals(html, bw.html)
 
   def test_domain_not_found(self):
     # no source
@@ -163,6 +164,7 @@ X http://FoO.cOm/post/1
     self.assert_error('Could not find target URL')
     bw = BlogWebmention.get_by_id('http://bar.com/reply http://foo.com/post/1')
     self.assertEquals('failed', bw.status)
+    self.assertEquals(html, bw.html)
 
   def test_strip_utm_query_params(self):
     """utm_* query params should be stripped from target URLs."""
@@ -201,11 +203,13 @@ http://foo.com/post/1
     self.assertEquals('complete', bw.status)
 
   def test_source_missing_mf2(self):
-    self.expect_requests_get('http://bar.com/reply', '')
+    html = 'no microformats here, run along'
+    self.expect_requests_get('http://bar.com/reply', html)
     self.mox.ReplayAll()
     self.assert_error('No microformats2 data found')
     bw = BlogWebmention.get_by_id('http://bar.com/reply http://foo.com/post/1')
     self.assertEquals('failed', bw.status)
+    self.assertEquals(html, bw.html)
 
   def test_u_url(self):
     html = """
@@ -285,3 +289,4 @@ http://foo.com/post/1
     self.assertEquals(402, resp.status_int, resp.body)
     bw = BlogWebmention.get_by_id('http://bar.com/reply http://foo.com/post/1')
     self.assertEquals('failed', bw.status)
+    self.assertEquals(html, bw.html)
