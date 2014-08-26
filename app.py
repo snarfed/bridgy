@@ -131,44 +131,40 @@ class FrontPageHandler(CachedPageHandler):
 class UsersHandler(CachedPageHandler):
   """Handler for /users.
 
-  TODO: instead of paging with an offset, use a cursor per source type. The
-  problem is, I sort by name across source types, so I'd need a cursor per
-  source class query, and I'd need to iterate over the queries and merge sort
-  manually. Ugh.
-  https://developers.google.com/appengine/docs/python/ndb/queries#cursors
+  Semi-optimized. Pages by source name. Queries each source type for results
+  with name greater than the start_name query param, then merge sorts the
+  results and truncates at PAGE_SIZE.
+
+  The start_name param is expected to be capitalized because capital letters
+  sort lexicographically before lower case letters. An alternative would be to
+  store a lower cased version of the name in another property and query on that.
   """
 
   PAGE_SIZE = 100
 
   def get(self):
     # only cache the first page
-    return super(UsersHandler, self).get(cache='offset' not in self.request.params)
+    return super(UsersHandler, self).get(cache=not self.request.params)
 
   def template_file(self):
     return 'templates/users.html'
 
   def template_vars(self):
-    queries = [cls.query(cls.features > None) for cls in handlers.SOURCES.values()]
-    sources = {source.key.urlsafe(): source for source in itertools.chain(*queries)}
+    start_name = self.request.get('start_name')
+    queries = [cls.query(cls.name >= start_name).fetch_async(self.PAGE_SIZE)
+               for cls in handlers.SOURCES.values()]
 
-    # preprocess sources, sort by name
-    sources = sorted([self.preprocess_source(s) for s in sources.values()],
+    sources = sorted(itertools.chain(*[q.get_result() for q in queries]),
                      key=lambda s: (s.name.lower(), s.AS_CLASS.NAME))
-
-    try:
-      offset = int(self.request.get('offset', 0))
-    except ValueError:
-      self.abort(400, 'offset parameter must be an integer')
-    next_offset = offset + self.PAGE_SIZE
-    prev_offset = offset - self.PAGE_SIZE
+    sources = [self.preprocess_source(s) for s in sources
+               if s.name.lower() > start_name.lower() and s.features
+               ][:self.PAGE_SIZE]
 
     vars = super(UsersHandler, self).template_vars()
-    vars['sources'] = sources[offset:next_offset]
-    if next_offset < len(sources):
-      vars['next_offset'] = next_offset
-    if prev_offset >= 0:
-      vars['prev_offset'] = prev_offset
-
+    vars.update({
+        'sources': sources,
+        'PAGE_SIZE': self.PAGE_SIZE,
+        })
     return vars
 
 
