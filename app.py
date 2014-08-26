@@ -157,7 +157,7 @@ class UsersHandler(CachedPageHandler):
     sources = sorted(itertools.chain(*[q.get_result() for q in queries]),
                      key=lambda s: (s.name.lower(), s.AS_CLASS.NAME))
     sources = [self.preprocess_source(s) for s in sources
-               if s.name.lower() > start_name.lower() and s.features
+               if s.name.lower() >= start_name.lower() and s.features
                ][:self.PAGE_SIZE]
 
     vars = super(UsersHandler, self).template_vars()
