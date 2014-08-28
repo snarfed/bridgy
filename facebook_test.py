@@ -10,7 +10,7 @@ import urllib2
 
 import appengine_config
 
-
+import activitystreams
 from activitystreams import facebook_test as as_facebook_test
 from activitystreams.oauth_dropins import facebook as oauth_facebook
 from facebook import FacebookPage
@@ -108,13 +108,16 @@ class FacebookPageTest(testutil.ModelsTest):
     self.assertRaises(models.DisableSource, page.get_activities)
 
   def test_expired_sends_notification(self):
+    activitystreams.appengine_config.FACEBOOK_APP_ID = 'my_app_id'
+    activitystreams.appengine_config.FACEBOOK_APP_SECRET = 'my_app_secret'
+
     self.expect_urlopen(
       'https://graph.facebook.com/me/posts?offset=0&access_token=my_token',
       json.dumps({'error': {'code': 190, 'error_subcode': 463}}), status=400)
 
     params = {
       'template': "Brid.gy's access to your account has expired. Click here to renew it now!",
-       'href': 'https://www.brid.gy/facebook/start',
+      'href': 'https://www.brid.gy/facebook/start',
       'access_token': 'my_app_id|my_app_secret',
       }
     self.expect_urlopen('https://graph.facebook.com/212038/notifications', '',
