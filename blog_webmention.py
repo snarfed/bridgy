@@ -65,6 +65,11 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
         'Could not find %s account for %s. Is it registered with Bridgy?' %
         (source_cls.AS_CLASS.NAME, domain),
         mail=False)
+    elif not self.source.verified():
+      return self.error(
+        "Bridgy account for %s isn't fully set up. See %s for details." %
+        (self.source.label(), self.source.bridgy_url(self)),
+        mail=False)
 
     # create BlogWebmention entity
     id = '%s %s' % (self.source_url, self.target_url)

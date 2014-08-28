@@ -16,16 +16,24 @@ import blog_webmention
 import testutil
 
 from google.appengine.api import mail
+from google.appengine.ext import ndb
+
+
+class VerifiableSource(testutil.FakeSource):
+  fake_verified = ndb.BooleanProperty(default=True)
+
+  def verified(self):
+    return self.fake_verified
 
 
 class BlogWebmentionTest(testutil.HandlerTest):
 
   def setUp(self):
     super(BlogWebmentionTest, self).setUp()
-    blog_webmention.SOURCES['fake'] = testutil.FakeSource
-    self.source = testutil.FakeSource(id='foo.com',
-                                      domains=['x.com', 'foo.com', 'y.com'],
-                                      features=['webmention'])
+    blog_webmention.SOURCES['fake'] = VerifiableSource
+    self.source = VerifiableSource(id='foo.com',
+                                   domains=['x.com', 'foo.com', 'y.com'],
+                                   features=['webmention'])
     self.source.put()
 
     self.mox.StubOutWithMock(testutil.FakeSource, 'create_comment')
@@ -121,6 +129,12 @@ i hereby reply
     self.source.status = 'disabled'
     self.source.put()
     self.assert_error(msg)
+    self.assertEquals(0, BlogWebmention.query().count())
+
+  def test_source_not_verified(self):
+    self.source.fake_verified = False
+    self.source.put()
+    self.assert_error("isn't fully set up")
     self.assertEquals(0, BlogWebmention.query().count())
 
   def test_mention(self):
