@@ -548,17 +548,15 @@ class SendWebmentions(webapp2.RequestHandler):
     Args:
       mention: webmentiontools.send.WebmentionSend
     """
-    if self.source.last_webmention_sent and self.source.webmention_endpoint:
-      return  # nothing to do
-
     self.source = self.source.key.get()
     logging.info('Setting last_webmention_sent')
     self.source.last_webmention_sent = now_fn()
 
-    if (not self.source.webmention_endpoint and
+    if (mention.receiver_endpoint != self.source.webmention_endpoint and
         util.domain_from_link(mention.target_url) in self.source.domains):
-      logging.info('Also setting webmention_endpoint to %s (from %s )',
-                   mention.receiver_endpoint, mention.target_url)
+      logging.info('Also setting webmention_endpoint to %s (discovered in %s; was %s)',
+                   mention.receiver_endpoint, mention.target_url,
+                   self.source.webmention_endpoint)
       self.source.webmention_endpoint = mention.receiver_endpoint
 
     self.source.put()

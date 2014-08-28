@@ -827,12 +827,13 @@ class PropagateTest(TaskQueueTest):
     self.mox.ReplayAll()
 
     for r in self.responses[:3]:
+      global NOW
+      NOW += datetime.timedelta(hours=1)
       self.post_task(response=r)
       self.assert_response_is('complete', NOW + LEASE_LENGTH,
                               sent=['http://target1/post/url'], response=r)
+      self.assert_equals(NOW, self.sources[0].key.get().last_webmention_sent)
       memcache.flush_all()
-
-    self.assert_equals(NOW, self.sources[0].key.get().last_webmention_sent)
 
   def test_propagate_from_error(self):
     """A normal propagate task, with a response starting as 'error'."""
