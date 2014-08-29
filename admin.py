@@ -34,10 +34,9 @@ class ResponsesHandler(handlers.TemplateHandler):
       if (len(responses) >= self.NUM_RESPONSES or
           r.updated < datetime.datetime.now() - datetime.timedelta(hours=1)):
         break
-      elif not r.error or r.status == 'complete':
+      elif (not r.error and not r.unsent) or r.status == 'complete':
         continue
 
-      # r.source = r.source.get()
       r.links = [util.pretty_link(u, new_tab=True) for u in r.error + r.failed]
       r.response = json.loads(r.response_json)
       r.activities = [json.loads(a) for a in r.activities_json]
