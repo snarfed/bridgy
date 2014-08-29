@@ -198,6 +198,17 @@ class PollTest(TaskQueueTest):
     self.assert_equals(['http://fails/resolve'],
                        self.responses[0].key.get().unsent)
 
+  def test_non_html_file_extension(self):
+    """If our HEAD request fails, we should infer type from file extension."""
+    self.activities[0]['object'].update({'tags': [], 'content': 'http://a.zip'})
+    self.sources[0].set_activities([self.activities[0]])
+
+    self.expect_requests_head('http://a.zip', status_code=405, content_type=None)
+
+    self.mox.ReplayAll()
+    self.post_task()
+    self.assert_equals([], self.responses[0].key.get().unsent)
+
   def test_invalid_and_blacklisted_urls(self):
     """Target URLs with domains in the blacklist should be ignored.
 
@@ -930,6 +941,18 @@ class PropagateTest(TaskQueueTest):
     self.responses[0].put()
 
     self.expect_requests_head('http://not/html', content_type='application/mpeg')
+
+    self.mox.ReplayAll()
+    self.post_task()
+    self.assert_response_is('complete')
+
+  def test_non_html_file_extension(self):
+    """If our HEAD request fails, we should infer type from file extension."""
+    self.responses[0].unsent = ['http://this/is/a.pdf']
+    self.responses[0].put()
+
+    self.expect_requests_head('http://this/is/a.pdf', status_code=405,
+                              content_type=None)
 
     self.mox.ReplayAll()
     self.post_task()

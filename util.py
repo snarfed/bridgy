@@ -3,6 +3,7 @@
 """
 
 import datetime
+import mimetypes
 import re
 import urllib
 import urllib2
@@ -156,9 +157,13 @@ def follow_redirects(url):
     logging.warning("Couldn't resolve URL %s : %s", url, e)
     resolved = requests.Response()
     resolved.url = url
-    resolved.headers['content-type'] = 'text/html'
     resolved.status_code = 499  # not standard. i made this up.
     cache_time = FAILED_RESOLVE_URL_CACHE_TIME
+
+  content_type = resolved.headers.get('content-type')
+  if not content_type:
+    type, _ = mimetypes.guess_type(resolved.url)
+    resolved.headers['content-type'] = type or 'text/html'
 
   refresh = resolved.headers.get('refresh')
   if refresh:
