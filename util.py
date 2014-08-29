@@ -150,6 +150,7 @@ def follow_redirects(url):
     if not parsed.scheme:
       url = 'http://' + url
     resolved = requests.head(url, allow_redirects=True, timeout=HTTP_TIMEOUT)
+    resolved.raise_for_status()
     cache_time = 0  # forever
   except AssertionError:
     raise

@@ -203,7 +203,9 @@ class PollTest(TaskQueueTest):
     self.activities[0]['object'].update({'tags': [], 'content': 'http://a.zip'})
     self.sources[0].set_activities([self.activities[0]])
 
-    self.expect_requests_head('http://a.zip', status_code=405, content_type=None)
+    self.expect_requests_head('http://a.zip', status_code=405,
+                              # we should ignore an error response's content type
+                              content_type='text/html')
 
     self.mox.ReplayAll()
     self.post_task()
@@ -952,7 +954,8 @@ class PropagateTest(TaskQueueTest):
     self.responses[0].put()
 
     self.expect_requests_head('http://this/is/a.pdf', status_code=405,
-                              content_type=None)
+                              # we should ignore an error response's content type
+                              content_type='text/html')
 
     self.mox.ReplayAll()
     self.post_task()
