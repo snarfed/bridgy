@@ -16,8 +16,7 @@ import webapp2
 
 SANITIZE_RE = re.compile(
   r"""((?:access|api|oauth)?[ _]?
-       (?:consumer)?[ _]?
-       (?:key|nonce|secret|signature|token|verifier)
+       (?:consumer_key|consumer_secret|nonce|secret|signature|token|verifier)
        (?:=|:|\ |',\ u?'|%3D)\ *)
       [^ &=']+""",
   flags=re.VERBOSE | re.IGNORECASE)
