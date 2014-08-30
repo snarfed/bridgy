@@ -1039,6 +1039,31 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     second_results = original_post_discovery.refetch(source)
     self.assertFalse(second_results)
 
+  def test_malformed_url_property(self):
+    """Non string-like url values (i.e. dicts) used to cause an unhashable
+    type exception while processing the h-feed. Make sure that we
+    ignore them.
+    """
+    source = self.sources[0]
+    source.domain_urls = ['http://author']
+
+    self.activities[0]['object'].update({
+      'content': 'post content without backlinks',
+      'url': 'https://fa.ke/post/url',
+    })
+
+    # malformed u-url, should skip it without an unhashable dict error
+    self.expect_requests_get('http://author', """
+<html class="h-feed">
+  <div class="h-entry">
+    <a class="u-url h-cite" href="/permalink">this is a strange permalink</a>
+  </div>
+</html>""")
+
+    self.mox.ReplayAll()
+    activity = original_post_discovery.discover(source, self.activities[0])
+    self.assertFalse(activity['object'].get('upstreamDuplicates'))
+
 
 class OriginalPostDiscoveryFacebookTest(facebook_test.FacebookPageTest):
 

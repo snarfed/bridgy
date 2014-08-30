@@ -257,7 +257,10 @@ def _process_author(source, author_url, refetch_blanks=False):
       # TODO maybe limit to first ~30 entries? (do that here rather than,
       # below because we want the *first* n entries)
       for permalink in child['properties'].get('url', []):
-        permalinks.add(permalink)
+        if isinstance(permalink, basestring):
+          permalinks.add(permalink)
+        else:
+          logging.warn('unexpected non-string "url" property: %s', permalink)
 
   # query all preexisting permalinks at once, instead of once per link
   permalinks_list = list(permalinks)
