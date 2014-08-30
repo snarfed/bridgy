@@ -105,7 +105,7 @@ class FakeAsSource(FakeBase, as_source.Source):
         error_html='No content')
 
     if type == 'comment':
-      base_id, base_url = self.base_object(obj)
+      base_url = self.base_object(obj).get('url')
       if not base_url:
         return as_source.creation_result(
           abort=True,
