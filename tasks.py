@@ -94,30 +94,50 @@ class Poll(webapp2.RequestHandler):
       logging.warning('duplicate poll task! deferring to the other task.')
       return
 
-    now = now_fn()
-    source.last_poll_attempt = now
-    # randomize task ETA to within +/- 20% to try to spread out tasks and
-    # prevent thundering herds.
-    task_countdown = source.poll_period().total_seconds() * random.uniform(.8, 1.2)
+    # dict with source property names and values to update
+    source.last_poll_attempt = now_fn()
+    source_updates = {'last_poll_attempt': source.last_poll_attempt}
+
     try:
-      self.do_post(source)
-      util.add_poll_task(source, countdown=task_countdown)
+      source_updates.update(self.poll(source))
     except models.DisableSource:
       # the user deauthorized the bridgy app, so disable this source.
       # let the task complete successfully so that it's not retried.
-      source.status = 'disabled'
+      source_updates['status'] = 'disabled'
       logging.warning('Disabling source!')
     except:
-      source.status = 'error'
+      source_updates['status'] = 'error'
       raise
     finally:
-      gc.collect()  # might help avoid hitting the instance memory limit
-      source.put()
+      gc.collect()  # might help avoid hitting the instance memory limit?
+      self.finish(source, source_updates)
 
-  def do_post(self, source):
+  @ndb.transactional
+  def finish(self, source, updates):
+    """Updates the source entity and adds a new poll task.
+
+    Args:
+      updates: dict mapping source property names to updated values
+    """
+    source = source.key.get()
+    for name, val in updates.items():
+      setattr(source, name, val)
+    source.put()
+
+    # add new poll task. randomize task ETA to within +/- 20% to try to spread
+    # out tasks and prevent thundering herds.
+    task_countdown = source.poll_period().total_seconds() * random.uniform(.8, 1.2)
+    util.add_poll_task(source, countdown=task_countdown)
+
+  def poll(self, source):
+    """Actually runs the poll.
+
+    Returns: dict of source property names and values to update (transactionally)
+    """
     if source.last_activities_etag or source.last_activity_id:
       logging.debug('Using ETag %s, last activity id %s',
                     source.last_activities_etag, source.last_activity_id)
+    source_updates = {}
 
     #
     # Step 1: fetch activities
@@ -140,8 +160,8 @@ class Poll(webapp2.RequestHandler):
         raise models.DisableSource(msg)
       elif code in util.HTTP_RATE_LIMIT_CODES:
         logging.warning('Rate limited. Marking as error and finishing. %s', e)
-        source.status = 'error'
-        return
+        source_updates['status'] = 'error'
+        return source_updates
       else:
         raise
 
@@ -241,6 +261,7 @@ class Poll(webapp2.RequestHandler):
         targets = activity.get('targets')
         if targets is None:
           targets = activity['targets'] = get_webmention_targets(source, activity)
+          source_updates['last_syndication_url'] = source.last_syndication_url
         logging.info('%s has %d original post URL(s): %s', activity.get('url'),
                      len(targets), ' '.join(targets))
         urls_to_activity.update({t: i for t in targets})
@@ -262,34 +283,36 @@ class Poll(webapp2.RequestHandler):
           # (we know Response key ids are always tag URIs)
           existing_ids + [util.parse_tag_uri(id)[1] for id in responses])
 
-    source.last_polled = source.last_poll_attempt
-    source.status = 'enabled'
+    source_updates.update({'last_polled': source.last_poll_attempt,
+                           'status': 'enabled'})
     etag = response.get('etag')
     if last_activity_id and last_activity_id != source.last_activity_id:
       logging.debug('Storing new last activity id: %s', last_activity_id)
-      source.last_activity_id = last_activity_id
+      source_updates['last_activity_id'] = last_activity_id
     if etag and etag != source.last_activities_etag:
       logging.debug('Storing new ETag: %s', etag)
-      source.last_activities_etag = etag
-    # source is saved in post()
+      source_updates['last_activities_etag'] = etag
 
     #
     # Step 5. possibly refetch updated syndication urls
     #
     # if the author has added syndication urls since the first time
-    # original_post_discovery ran, we'll miss them. this cleanup task
-    # will periodically check for updated urls. only kicks in if the author
-    # has *ever* published a rel=syndication url
+    # original_post_discovery ran, we'll miss them. this cleanup task will
+    # periodically check for updated urls. only kicks in if the author has
+    # *ever* published a rel=syndication url
     if (source.last_syndication_url and
         source.last_hfeed_fetch + source.refetch_period()
             <= source.last_poll_attempt):
       self.refetch_hfeed(source)
-      source.last_hfeed_fetch = source.last_poll_attempt
+      source_updates['last_syndication_url'] = source.last_syndication_url
+      source_updates['last_hfeed_fetch'] = source.last_poll_attempt
     else:
       logging.debug(
           'skipping refetch h-feed. last-syndication-url seen: %s, '
           'last-hfeed-fetch: %s',
           source.last_syndication_url, source.last_hfeed_fetch)
+
+    return source_updates
 
   def refetch_hfeed(self, source):
     """refetch and reprocess the author's url, looking for

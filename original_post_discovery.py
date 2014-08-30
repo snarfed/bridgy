@@ -52,7 +52,9 @@ def discover(source, activity, fetch_hfeed=True):
   new ones.
 
   Args:
-    source: models.Source subclass
+    source: models.Source subclass. (Immutable! At least mostly. Changes to
+      property values will *not* automatically be stored back in the datastore.
+      last_syndication_url is special-cased in tasks.Poll.)
     activity: activity dict
     fetch_hfeed: boolean
 
@@ -101,7 +103,9 @@ def refetch(source):
   links that might not have been there the first time we looked.
 
   Args:
-    source: a models.Source subclass
+    source: models.Source subclass. (Immutable! At least mostly. Changes to
+      property values will *not* automatically be stored back in the datastore.
+      last_syndication_url is special-cased in tasks.Poll.)
 
   Return:
     a dict of syndicated_url to a list of new models.SyndicatedPosts
