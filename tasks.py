@@ -11,6 +11,7 @@ import logging
 import random
 
 from google.appengine.api import memcache
+from google.appengine.api.datastore_types import _MAX_STRING_LENGTH
 from google.appengine.ext import ndb
 import webapp2
 from webmentiontools import send
@@ -253,6 +254,7 @@ class Poll(webapp2.RequestHandler):
     #
     for id, resp in responses.items():
       activities = resp.pop('activities', [])
+      too_long = set()
       urls_to_activity = {}
       for i, activity in enumerate(activities):
         # we'll usually have multiple responses for the same activity, and the
@@ -264,7 +266,12 @@ class Poll(webapp2.RequestHandler):
           source_updates['last_syndication_url'] = source.last_syndication_url
         logging.info('%s has %d original post URL(s): %s', activity.get('url'),
                      len(targets), ' '.join(targets))
-        urls_to_activity.update({t: i for t in targets})
+        for t in targets:
+          if len(t) <= _MAX_STRING_LENGTH:
+            urls_to_activity[t] = i
+          else:
+            logging.warning('Giving up on target URL over 500 chars! %s', t)
+            too_long.add(t[:_MAX_STRING_LENGTH - 4] + '...')
 
       resp = Response(
         id=id,
@@ -272,7 +279,8 @@ class Poll(webapp2.RequestHandler):
         activities_json=[json.dumps(util.prune_activity(a)) for a in activities],
         response_json=json.dumps(resp),
         type=Response.get_type(resp),
-        unsent=list(urls_to_activity.keys()))
+        unsent=list(urls_to_activity.keys()),
+        failed=list(too_long))
       if urls_to_activity and len(activities) > 1:
         resp.urls_to_activity=json.dumps(urls_to_activity)
       resp.get_or_save()

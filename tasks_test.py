@@ -240,6 +240,20 @@ class PollTest(TaskQueueTest):
     self.assert_equals(['http://foo/bar?a=b'],
                        self.responses[0].key.get().unsent)
 
+  def test_url_over_500_chars(self):
+    """URLs over 500 chars should be truncated and skipped."""
+    self.activities[0]['object'].update({'tags': [], 'content': 'http://first'})
+    self.sources[0].set_activities([self.activities[0]])
+
+    too_long = 'http://' + 'x' * 500
+    self.expect_requests_head('http://first', redirected_url=too_long)
+
+    self.mox.ReplayAll()
+    self.post_task()
+    resp = self.responses[0].key.get()
+    self.assert_equals([], resp.unsent)
+    self.assert_equals([too_long[:496] + '...'], resp.failed)
+
   def test_non_public_posts(self):
     """Only posts with to: @public should be propagated."""
     del self.activities[0]['object']['to']
