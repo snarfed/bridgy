@@ -18,6 +18,14 @@ function maybeShowInputs(event) {
     }
   }
 }
+
+function selectAll() {
+  checked = document.getElementById("all").checked;
+  elems = document.getElementsByTagName("input");
+  for (i = 0; i < elems.length; i++) {
+    elems[i].checked = checked;
+  }
+}
 </script>
 </head>
 
@@ -32,6 +40,7 @@ function maybeShowInputs(event) {
     <th>Last attempt</th>
     <th>Created</th>
     <th>Error URLs</th>
+    <th><input id="all" type="checkbox" onclick="selectAll()" /></th>
   </tr>
 
   {% for r in responses %}
