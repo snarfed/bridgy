@@ -88,6 +88,11 @@ def handle_feed(feed, source):
 
     source.preprocess_superfeedr_item(item)
     # extract links from content, discarding self links.
+    #
+    # i don't use get_webmention_target[s]() here because they follows redirects
+    # and fetch link contents, and this handler should be small and fast and try
+    # to return a response to superfeedr successfully.
+    #
     # TODO: extract_links currently has a bug that makes it drop trailing
     # slashes. ugh. fix that.
     content = item.get('content') or item.get('summary', '')
