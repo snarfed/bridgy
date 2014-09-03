@@ -132,6 +132,15 @@ class Source(StringIdModel):
 
     return getattr(super(Source, self), name)
 
+  @classmethod
+  def lookup(cls, id):
+    """Returns the entity with the given id.
+
+    By default, interprets id as just the key id. Subclasses may extend this to
+    support usernames, etc.
+    """
+    return ndb.Key(cls, id).get()
+
   def bridgy_path(self):
     """Returns the Bridgy page URL path for this source."""
     return '/%s/%s' % (self.SHORT_NAME,self.key.string_id())

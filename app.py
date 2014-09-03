@@ -172,7 +172,7 @@ class UserHandler(DashboardHandler):
   """Handler for a user page."""
 
   def get(self, source_short_name, id):
-    self.source = ndb.Key(handlers.SOURCES[source_short_name], id).get()
+    self.source = handlers.SOURCES[source_short_name].lookup(id)
     if self.source:
       self.source.verify()
       self.source = self.preprocess_source(self.source)

@@ -79,6 +79,11 @@ class FacebookPage(models.Source):
                         url=actor.get('url'),
                         **kwargs)
 
+  @classmethod
+  def lookup(cls, id):
+    """Returns the entity with the given id or username."""
+    return ndb.Key(cls, id).get() or cls.query(cls.username == id).get()
+
   def silo_url(self):
     """Returns the Facebook account URL, e.g. https://facebook.com/foo."""
     return self.as_source.user_url(self.username or self.key.id())
