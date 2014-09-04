@@ -52,6 +52,7 @@ class BlacklistingHandler(ereporter.ExceptionRecordingHandler):
   BLACKLIST = (
     'AccessTokenRefreshError: internal_failure',
     'AccessTokenRefreshError: Invalid response 502.',
+    'BadRequestError: The referenced transaction has expired',
     'ConnectionError: HTTPConnectionPool',
     'ConnectionError: HTTPSConnectionPool',
     'DeadlineExceededError',
