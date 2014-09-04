@@ -7,6 +7,7 @@ import json
 import mox
 import urllib
 import urllib2
+from webob import exc
 
 import appengine_config
 from appengine_config import HTTP_TIMEOUT
@@ -282,7 +283,7 @@ http://foo.com/post/1
     self.expect_requests_get('http://bar.com/reply', html)
     testutil.FakeSource.create_comment(
       'http://foo.com/post/1', 'foo.com', 'http://foo.com/', mox.IgnoreArg()
-      ).AndRaise(urllib2.HTTPError('url', 402, 'msg', {}, None))
+      ).AndRaise(exc.HTTPPaymentRequired())
     self.mox.ReplayAll()
 
     resp = self.get_response()

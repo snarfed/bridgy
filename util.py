@@ -11,6 +11,7 @@ import urlparse
 
 import requests
 import webapp2
+from webob import exc
 
 from activitystreams.oauth_dropins.webutil.models import StringIdModel
 from activitystreams.oauth_dropins.webutil.util import *
@@ -188,7 +189,11 @@ def interpret_http_exception(exception):
   e = exception
   code = body = None
 
-  if isinstance(e, urllib2.HTTPError):
+  if isinstance(e, exc.WSGIHTTPException):
+    code = e.code
+    body = e.explanation
+
+  elif isinstance(e, urllib2.HTTPError):
     code = e.code
     try:
       body = e.read()

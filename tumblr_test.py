@@ -6,6 +6,7 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import json
 import mox
+from webob import exc
 
 import appengine_config
 from appengine_config import HTTP_TIMEOUT
@@ -117,6 +118,13 @@ some stuff
 
     resp = self.tumblr.create_comment('http://primary/post/123999/xyz_abc',
                                       u'Degenève', 'http://who', u'foo Degenève bar')
+
+  def test_create_comment_without_disqus_shortname(self):
+    self.tumblr.disqus_shortname = None
+    self.assertRaises(
+      exc.HTTPBadRequest,#("Bridgy hasn't found your Disqus account yet. "
+                         #"See http://localhost/tumblr/name for details."),
+      self.tumblr.create_comment, 'http://primary/post', '', '', '')
 
   # not implemented yet. see https://github.com/snarfed/bridgy/issues/177.
   # currently handled in webmention.error().

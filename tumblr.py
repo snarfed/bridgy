@@ -36,6 +36,7 @@ import re
 import requests
 import urllib
 import urlparse
+from webob import exc
 
 import appengine_config
 from appengine_config import HTTP_TIMEOUT
@@ -153,6 +154,10 @@ class Tumblr(models.Source):
 
     Returns: JSON response dict with 'id' and other fields
     """
+    if not self.disqus_shortname:
+      raise exc.HTTPBadRequest("Your Bridgy account isn't fully set up yet: "
+                               "we haven't found your Disqus account.")
+
     # strip slug, query and fragment from post url
     parsed = urlparse.urlparse(post_url)
     path = parsed.path.split('/')
