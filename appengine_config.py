@@ -79,6 +79,7 @@ class BlacklistingHandler(ereporter.ExceptionRecordingHandler):
     'InternalTransientError',
     'Timeout',
     'TransientError',
+    'TweepError: HTTPSConnectionPool',
     )
 
   def emit(self, record):
