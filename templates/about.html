@@ -87,6 +87,7 @@ account or publish as me. Isn't that a security hole?</a></li>
 <li><a href="#like">How do I like a Facebook post, favorite or
   retweet a tweet, or RSVP to an event from my web site?</a></li>
 <li><a href="#omit-link">Can I disable the link back to my post?</a></li>
+<li><a href="#short-link">Can I include a short link instead of the full link?</a></li>
 <li><a href="#response">How does Bridgy respond to webmentions?</a></li>
 <li><a href="#error-response">How about error responses?</a></li>
 <li><a href="#silos">Why only Facebook and Twitter? Why not Google+ or
@@ -636,6 +637,13 @@ to disable this. If you're sending a webmention, you can disable it by adding
 the query parameter <code>bridgy_omit_link=true</code> to your webmention HTTP
 request, or by adding the <code>u-bridgy-omit-link</code> class to a link in
 your post.
+</li>
+
+<li id="short-link" class="question">Can I include a short link instead of the full link?</li>
+<li class="answer">
+<p>Sure! Just enter the short link in the URL text box. Or if you're
+<a href="#webmentions">using a webmention</a> instead of the web form, pass the
+short link as the webmention's <code>source</code> parameter.
 </li>
 
 <li id="response" class="question">How does Bridgy respond to webmentions?</li>
