@@ -156,13 +156,13 @@ class PublishTest(testutil.HandlerTest):
 
   def test_bad_source(self):
     # no source
-    msg = 'Could not find <b>FakeSource</b> account for <b>foo.com</b>.'
     self.source.key.delete()
-    self.assert_error(msg)
+    self.assert_error('Could not find <b>FakeSource</b> account for <b>foo.com</b>.')
 
     # source without publish feature
     self.source.features = ['listen']
     self.source.put()
+    msg = 'Publish is not enabled'
     self.assert_error(msg)
 
     # status disabled
