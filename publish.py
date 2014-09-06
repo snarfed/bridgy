@@ -178,7 +178,8 @@ class Handler(webmention.WebmentionHandler):
         types = types.union(item_types)
         queue.extend(item.get('children', []))
       except BaseException, e:
-        return self.error('Error: %s' % e, status=500)
+        code, body = util.interpret_http_exception(e)
+        return self.error('Error: %s %s' % (body or '', e), status=code or 500)
 
     if not resp.content:  # tried all the items
       types.discard('h-entry')

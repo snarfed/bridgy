@@ -10,6 +10,7 @@ import urllib
 
 from appengine_config import HTTP_TIMEOUT
 import requests
+from webob import exc
 
 from activitystreams import source as as_source
 from models import Publish, PublishedPage
@@ -341,8 +342,9 @@ this is my article
 
     self.mox.StubOutWithMock(self.source.as_source, 'create',
                              use_mock_anything=True)
-    self.source.as_source.create(mox.IgnoreArg(), include_link=True
-                                 ).AndRaise(Exception('foo'))
+    self.source.as_source.create(
+      mox.IgnoreArg(), include_link=True
+      ).AndRaise(exc.HTTPPaymentRequired('fooey', explanation='my exp'))
 
     self.mox.StubOutWithMock(self.source.as_source, 'preview_create',
                              use_mock_anything=True)
@@ -350,7 +352,7 @@ this is my article
                                          ).AndRaise(Exception('bar'))
 
     self.mox.ReplayAll()
-    self.assert_error('Error: foo', status=500)
+    self.assert_error('Error: my exp fooey', status=402)
     self.assertEquals(500, self.get_response(preview=True).status_int)
 
   def test_preview(self):
