@@ -81,8 +81,13 @@ class Twitter(models.Source):
 
 class AddTwitter(oauth_twitter.CallbackHandler, util.Handler):
   def finish(self, auth_entity, state=None):
-    self.maybe_add_or_delete_source(Twitter, auth_entity, state)
-
+    source = self.maybe_add_or_delete_source(Twitter, auth_entity, state)
+    if source is not None and state == 'listen' and 'publish' in source.features:
+      # if we were already signed up for publish, we had a read/write token.
+      # when we sign up for listen, we use x_auth_access_type=read to request
+      # just read permissions, which *demotes* us to a read only token! ugh.
+      source.features.remove('publish')
+      source.put()
 
 class StartHandler(util.Handler):
   """Custom OAuth start handler so we can use access_type=read for state=listen.

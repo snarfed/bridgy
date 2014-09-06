@@ -370,6 +370,9 @@ class Handler(webapp2.RequestHandler):
         feature ('listen' or 'publish') or empty. For deletes, it's
         [FEATURE]-[SOURCE KEY].
       kwargs: passed through to the source_cls constructor
+
+    Returns:
+      source entity if it was created or updated, otherwise None
     """
     if state is None:
       state = ''
