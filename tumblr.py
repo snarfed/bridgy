@@ -55,6 +55,15 @@ TUMBLR_AVATAR_URL = 'http://api.tumblr.com/v2/blog/%s/avatar/512'
 DISQUS_API_CREATE_POST_URL = 'https://disqus.com/api/3.0/posts/create.json'
 DISQUS_API_THREAD_DETAILS_URL = 'http://disqus.com/api/3.0/threads/details.json'
 
+# Tumblr has no single standard markup or JS for integrating Disqus. It does
+# have a default way, but themes often do it themselves, differently. Sigh.
+# Details in https://github.com/snarfed/bridgy/issues/278
+DISQUS_SHORTNAME_RE = re.compile("""
+    (?:http://disqus.com/forums|disqus[ -_]?(?:user|short)?name)
+    \ *[=:/]\ *['"]?
+    ([^/"\' ]+)     # the actual shortname
+    """,
+  re.IGNORECASE | re.VERBOSE)
 
 class Tumblr(models.Source):
   """A Tumblr blog.
@@ -135,7 +144,7 @@ class Tumblr(models.Source):
     if not self.disqus_shortname and self._fetched_html:
       # scrape the disqus shortname out of the page
       logging.info("Looking for Disqus shortname in fetched HTML")
-      match = re.search('http://disqus.com/forums/([^/"\' ]+)', self._fetched_html)
+      match = DISQUS_SHORTNAME_RE.search(self._fetched_html)
       if match:
         self.disqus_shortname = match.group(1)
         logging.info("Found Disqus shortname %s", self.disqus_shortname)

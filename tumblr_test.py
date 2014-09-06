@@ -72,14 +72,22 @@ class TumblrTest(testutil.HandlerTest):
     self.assertEquals(['http://boff/'], got.domain_urls)
     self.assertEquals(['boff'], got.domains)
 
-  def test_verify(self):
+  def test_verify_default(self):
     # based on http://snarfed.tumblr.com/
+    self._test_verify_finds_disqus('<script src="http://disqus.com/forums/my-disqus-name/get_num_replies.js?url131=...&amp;"></script>')
+
+  def test_verify_inspirewell_theme_1(self):
+      # based on http://circusriot.tumblr.com/
+    self._test_verify_finds_disqus("  var disqus_shortname = 'my-disqus-name';")
+
+  def test_verify_inspirewell_theme_2(self):
+      # based on http://circusriot.tumblr.com/
+    self._test_verify_finds_disqus('  disqusUsername = "my-disqus-name";')
+
+  def _test_verify_finds_disqus(self, snippet):
     # this requests.get is called by webmention-tools
-    self.expect_requests_get('http://primary/', """
-<html><body>
-some stuff
-<script charset="utf-8" type="text/javascript" src="http://disqus.com/forums/my-disqus-name/get_num_replies.js?url131=...&amp;"></script>
-</body></html>""", verify=False)
+    self.expect_requests_get(
+      'http://primary/', '<html>\nstuff\n%s\n</html>' % snippet, verify=False)
     self.mox.ReplayAll()
     t = Tumblr.new(self.handler, auth_entity=self.auth_entity, features=['webmention'])
     t.verify()
