@@ -402,6 +402,10 @@ class RetryHandler(util.Handler):
     if not entity:
       self.abort(400, 'key not found')
 
+    if entity.status == 'complete':
+      entity.status = 'new'
+      entity.put()
+
     if entity.key.kind() == 'Response':
       util.add_propagate_task(entity)
     elif entity.key.kind() == 'BlogPost':

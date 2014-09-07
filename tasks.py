@@ -429,7 +429,7 @@ class SendWebmentions(webapp2.RequestHandler):
 
   def do_send_webmentions(self):
     unsent = set()
-    for url in self.entity.unsent + self.entity.error:
+    for url in self.entity.unsent + self.entity.error + self.entity.failed:
       # recheck the url here since the checks may have failed during the poll
       # or streaming add.
       url, domain, ok = util.get_webmention_target(url)
@@ -440,6 +440,7 @@ class SendWebmentions(webapp2.RequestHandler):
         unsent.add(url)
     self.entity.unsent = sorted(unsent)
     self.entity.error = []
+    self.entity.failed = []
 
     while self.entity.unsent:
       target = self.entity.unsent.pop(0)
