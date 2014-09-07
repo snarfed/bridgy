@@ -172,6 +172,23 @@ class PublishTest(testutil.HandlerTest):
     self.source.put()
     self.assert_error(msg)
 
+    # two bad sources with same domain
+    source_2 = self.source = testutil.FakeSource(id='z', **self.source.to_dict())
+    source_2.status = 'enabled'
+    source_2.features = ['listen']
+    source_2.put()
+    self.assert_error(msg)
+
+    # one bad source, one good source, same domain. should automatically use the
+    # good source.
+    source_2.features.append('publish')
+    source_2.put()
+    self.expect_requests_get('http://foo.com/bar', """
+<article class="h-entry"><p class="e-content">xyz</p></article>""")
+    self.mox.ReplayAll()
+    self.assert_success('xyz - http://foo.com/bar')
+    self.assertEquals(source_2.key, Publish.query().get().source)
+
   def test_source_missing_mf2(self):
     self.expect_requests_get('http://foo.com/bar', '')
     self.mox.ReplayAll()
@@ -192,7 +209,7 @@ class PublishTest(testutil.HandlerTest):
 
   def test_multiple_items_chooses_first_that_works(self):
     self.expect_requests_get('http://foo.com/bar', """
-<a class="h-card" href="http://michael.limiero.com/">Michael Limiero</a>
+<a class="h-card" href="http://mic.lim.com/">Mic Lim</a>
 <article class="h-entry"><p class="e-content">foo bar</article></p>""")
     self.mox.ReplayAll()
     self.assert_success('foo bar - http://foo.com/bar')

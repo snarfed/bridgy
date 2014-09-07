@@ -112,16 +112,21 @@ class Handler(webmention.WebmentionHandler):
 
     # look up source by domain
     domain = domain.lower()
-    self.source = (source_cls.query().filter(source_cls.domains == domain).get())
-    if not self.source:
+    sources = source_cls.query().filter(source_cls.domains == domain).fetch(100)
+    if not sources:
       return self.error("Could not find <b>%(type)s</b> account for <b>%(domain)s</b>. Check that your %(type)s profile has %(domain)s in its <em>web site</em> or <em>link</em> field, then try signing up again." %
         {'type': source_cls.AS_CLASS.NAME, 'domain': domain})
-    elif self.source.status != 'enabled' or 'publish' not in self.source.features:
-      logging.info('features %s, status %s' %
-                   (self.source.features, self.source.status))
+
+    for source in sources:
+      logging.info('Source: %s , features %s, status %s' %
+                   (source.bridgy_url(self), source.features, source.status))
+      if source.status == 'enabled' and 'publish' in source.features:
+        self.source = source
+        break
+    else:
       return self.error(
-        'Publish is not enabled for your account. Please visit %s and sign up!' %
-        self.source.bridgy_url(self))
+        'Publish is not enabled for your account(s). Please visit %s and sign up!' %
+        ' or '.join(s.bridgy_url(self) for s in sources))
 
     # show nice error message if they're trying to publish their home page
     for domain_url in self.source.domain_urls:
