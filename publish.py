@@ -258,7 +258,7 @@ class Handler(webmention.WebmentionHandler):
         template.render('templates/preview.html', {
           'source': self.preprocess_source(self.source),
           'preview': self.entity.published,
-          'source_url': self.fetched.url,
+          'source_url': self.source_url,
           'target_url': self.target_url,
           'bridgy_omit_link': omit_link,
           'webmention_endpoint': self.request.host_url + '/publish/webmention',
