@@ -62,6 +62,13 @@ on that bucket that deletes all files over 30 days old:
 gsutil lifecycle set cloud_storage_lifecycle.json gs://brid-gy.appspot.com
 ```
 
+So far, this has kept us within the
+[5GB free quota](https://developers.google.com/appengine/docs/quotas#Default_Gcs_Bucket).
+Run this command to see how much space we're currently using:
+
+```
+gsutil du -hsc gs://brid-gy.appspot.com/\*
+```
 
 Here are
 [remote_api_shell](https://developers.google.com/appengine/articles/remote_api)
