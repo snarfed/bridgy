@@ -5,13 +5,14 @@ haven't completed yet.
 """
 
 import datetime
+import itertools
 import json
 
 import appengine_config
 from activitystreams.oauth_dropins.webutil import handlers
 import facebook
 import googleplus
-from models import Response
+from models import BlogPost, Response
 import instagram
 import twitter
 import util
@@ -29,30 +30,34 @@ class ResponsesHandler(handlers.TemplateHandler):
   def template_vars(self):
     responses = []
 
-    # Find the most recently propagated responses with error URLs
-    for r in Response.query().order(-Response.updated):
+    # Find the most recently attempted responses and blog posts with error URLs
+    for e in itertools.chain(*(cls.query().order(-cls.updated)
+                               for cls in (BlogPost, Response))):
       if (len(responses) >= self.NUM_RESPONSES or
-          r.updated < datetime.datetime.now() - datetime.timedelta(hours=1)):
+          e.updated < datetime.datetime.now() - datetime.timedelta(hours=1)):
         break
-      elif (not r.error and not r.unsent) or r.status == 'complete':
+      elif (not e.error and not e.unsent) or e.status == 'complete':
         continue
 
-      r.links = [util.pretty_link(u, new_tab=True) for u in r.error + r.failed]
-      r.response = json.loads(r.response_json)
-      r.activities = [json.loads(a) for a in r.activities_json]
+      e.links = [util.pretty_link(u, new_tab=True) for u in e.error + e.failed]
+      if e.key.kind() == 'Response':
+        e.response = json.loads(e.response_json)
+        e.activities = [json.loads(a) for a in e.activities_json]
+      else:
+        e.activities = [{'url': e.key.id()}]
 
-      responses.append(r)
+      responses.append(e)
 
-    responses.sort(key=lambda r: (r.source, r.activities, r.response))
+    responses.sort(key=lambda e: (e.source, e.activities, e.response))
     return {'responses': responses}
 
 
 class MarkCompleteHandler(util.Handler):
   def post(self):
-    responses = ndb.get_multi(ndb.Key(urlsafe=u)
-                              for u in self.request.params.getall('key'))
-    for r in responses:
-      r.status = 'complete'
+    entities = ndb.get_multi(ndb.Key(urlsafe=u)
+                             for u in self.request.params.getall('key'))
+    for e in entities:
+      e.status = 'complete'
     ndb.put_multi(responses)
     self.redirect('/admin/responses')
 

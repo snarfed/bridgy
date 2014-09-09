@@ -55,7 +55,7 @@ function selectAll() {
 
     <td>{% for a in r.activities %}
       on <a target="_blank" href="{% firstof a.url a.object.url %}">
-        {{ a.object.content|default:"--"|striptags|truncatewords:6|safe }}
+        {{ a.object.content|default:a.url|striptags|truncatewords:6|safe }}
       </a>
     {% endfor %}</td>
 
