@@ -28,8 +28,9 @@ This command runs the tests, pushes any changes in your local repo(s), and
 deploys to App Engine:
 
 ```shell
-./alltests.py && cd activitystreams && ./alltests.py && cd .. && \
-  git push --recurse-submodules=on-demand && \
+./alltests.py && cd activitystreams && ./alltests.py && \
+  cd oauth_dropins && ./alltests.py && \
+  cd ../.. && git push --recurse-submodules=on-demand && \
   ~/google_appengine/appcfg.py --oauth2 update .
 ```
 
