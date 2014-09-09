@@ -6,20 +6,15 @@ import datetime
 import mimetypes
 import re
 import urllib
-import urllib2
 import urlparse
 
 import requests
 import webapp2
-from webob import exc
 
 from activitystreams.oauth_dropins.webutil.models import StringIdModel
 from activitystreams.oauth_dropins.webutil.util import *
 from activitystreams import source
-import apiclient
 from appengine_config import HTTP_TIMEOUT, DEBUG
-from oauth2client.client import AccessTokenRefreshError
-from python_instagram.bind import InstagramAPIError
 
 from google.appengine.api import mail
 from google.appengine.api import memcache
@@ -175,56 +170,6 @@ def follow_redirects(url):
 
   memcache.set(cache_key, resolved, time=cache_time)
   return resolved
-
-
-def interpret_http_exception(exception):
-  """Extracts the status code and response from different HTTP exception types.
-
-  Args:
-    exception: urllib2.HTTPError, InstagramAPIError, apiclient.errors.HttpError,
-      requests.HTTPError, or oauth2client.client.AccessTokenRefreshError
-
-  Returns: (string status code or None, string response body or None)
-  """
-  e = exception
-  code = body = None
-
-  if isinstance(e, exc.WSGIHTTPException):
-    code = e.code
-    body = e.explanation
-
-  elif isinstance(e, urllib2.HTTPError):
-    code = e.code
-    try:
-      body = e.read()
-    except AttributeError:
-      # no response body
-      pass
-
-  elif isinstance(e, requests.HTTPError):
-    code = e.response.status_code
-    body = e.response.text
-
-  elif isinstance(e, apiclient.errors.HttpError):
-    code = e.resp.status
-    body = e.content
-
-  elif isinstance(e, InstagramAPIError):
-    if e.error_type == 'OAuthAccessTokenException':
-      code = '401'
-    else:
-      code = e.status_code
-    body = '%s: %s' % (e.error_type, e.error_message)
-
-  elif isinstance(e, AccessTokenRefreshError) and str(e) == 'invalid_grant':
-    code = '401'
-
-  if code:
-    code = str(code)
-  if code or body:
-    logging.warning('Error %s, response body: %s', code, body)
-
-  return code, body
 
 
 # Wrap webutil.util.tag_uri and hard-code the year to 2013.

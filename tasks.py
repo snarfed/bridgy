@@ -18,6 +18,7 @@ from webmentiontools import send
 
 import appengine_config
 
+from activitystreams.oauth_dropins import handlers
 from activitystreams.source import Source
 # need to import model class definitions since poll creates and saves entities.
 import blogger
@@ -149,7 +150,7 @@ class Poll(webapp2.RequestHandler):
         etag=source.last_activities_etag, min_id=source.last_activity_id,
         cache=memcache)
     except Exception, e:
-      code, body = util.interpret_http_exception(e)
+      code, body = handlers.interpret_http_exception(e)
       if code == '401':
         # TODO: also interpret oauth2client.AccessTokenRefreshError with
         # {'error': 'invalid_grant'} as disabled? it can mean the user revoked

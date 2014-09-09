@@ -7,7 +7,7 @@ import StringIO
 import handlers
 import models
 import mox
-from python_instagram.bind import InstagramAPIError
+from activitystreams.oauth_dropins.python_instagram.bind import InstagramAPIError
 import testutil
 import util
 import webapp2

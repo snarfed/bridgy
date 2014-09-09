@@ -19,7 +19,7 @@ from google.appengine.api import memcache
 from google.appengine.ext import ndb
 import httplib2
 from oauth2client.client import AccessTokenRefreshError
-from python_instagram.bind import InstagramAPIError
+from activitystreams.oauth_dropins.python_instagram.bind import InstagramAPIError
 import requests
 
 from appengine_config import HTTP_TIMEOUT

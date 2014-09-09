@@ -359,9 +359,8 @@ this is my article
 
     self.mox.StubOutWithMock(self.source.as_source, 'create',
                              use_mock_anything=True)
-    self.source.as_source.create(
-      mox.IgnoreArg(), include_link=True
-      ).AndRaise(exc.HTTPPaymentRequired('fooey', explanation='my exp'))
+    self.source.as_source.create(mox.IgnoreArg(), include_link=True
+                                 ).AndRaise(exc.HTTPPaymentRequired('fooey'))
 
     self.mox.StubOutWithMock(self.source.as_source, 'preview_create',
                              use_mock_anything=True)
@@ -369,7 +368,7 @@ this is my article
                                          ).AndRaise(Exception('bar'))
 
     self.mox.ReplayAll()
-    self.assert_error('Error: my exp fooey', status=402)
+    self.assert_error('fooey', status=402)
     self.assertEquals(500, self.get_response(preview=True).status_int)
 
   def test_preview(self):

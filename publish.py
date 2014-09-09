@@ -38,6 +38,7 @@ from appengine_config import HTTP_TIMEOUT
 
 from activitystreams import microformats2
 from activitystreams import source as as_source
+from activitystreams.oauth_dropins import handlers
 from facebook import FacebookPage
 from googleplus import GooglePlusPage
 from instagram import Instagram
@@ -183,7 +184,7 @@ class Handler(webmention.WebmentionHandler):
         types = types.union(item_types)
         queue.extend(item.get('children', []))
       except BaseException, e:
-        code, body = util.interpret_http_exception(e)
+        code, body = handlers.interpret_http_exception(e)
         return self.error('Error: %s %s' % (body or '', e), status=code or 500)
 
     if not resp.content:  # tried all the items

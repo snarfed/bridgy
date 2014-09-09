@@ -29,6 +29,7 @@ import appengine_config
 from activitystreams import microformats2
 from activitystreams.microformats2 import first_props
 from activitystreams.oauth_dropins.webutil import handlers
+from activitystreams.oauth_dropins.handlers import interpret_http_exception
 import blogger
 import facebook
 import googleplus
@@ -116,7 +117,7 @@ class ItemHandler(webapp2.RequestHandler):
       obj = self.get_item(*ids)
     except Exception, e:
       # pass through all API HTTP errors if we can identify them
-      code, body = util.interpret_http_exception(e)
+      code, body = interpret_http_exception(e)
       if code:
         self.response.status_int = int(code)
         self.response.headers['Content-Type'] = 'text/plain'

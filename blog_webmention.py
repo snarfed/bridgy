@@ -13,6 +13,7 @@ import appengine_config
 from appengine_config import HTTP_TIMEOUT
 
 from activitystreams import microformats2
+from activitystreams.oauth_dropins import handlers
 from blogger import Blogger
 import models
 from models import BlogWebmention
@@ -118,7 +119,7 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
       self.entity.published = self.source.create_comment(
         self.target_url, author_name, author_url, text)
     except Exception, e:
-      code, body = util.interpret_http_exception(e)
+      code, body = handlers.interpret_http_exception(e)
       if code or body:
         return self.error('Error: %s %s; %s' % (code, e, body), status=code)
       else:
