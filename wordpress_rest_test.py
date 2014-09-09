@@ -7,6 +7,7 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 import json
 import mox
 import urllib
+import urllib2
 
 import appengine_config
 from appengine_config import HTTP_TIMEOUT
@@ -62,6 +63,14 @@ class WordPressTest(testutil.HandlerTest):
     self.assertEquals(['https://vanity.domain/', 'http://my.wp.com/'],
                       w.domain_urls)
     self.assertEquals(['vanity.domain', 'my.wp.com'], w.domains)
+
+  def test_site_lookup_fails(self):
+    self.expect_urlopen(
+      'https://public-api.wordpress.com/rest/v1/sites/123?pretty=true',
+      'my resp body', status=402)
+    self.mox.ReplayAll()
+    self.assertRaises(urllib2.HTTPError, WordPress.new, self.handler,
+                      auth_entity=self.auth_entity)
 
   def test_create_comment_with_slug_lookup(self):
     self.expect_urlopen(

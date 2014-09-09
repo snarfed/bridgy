@@ -14,6 +14,9 @@ create returns id, can lookup by id
 test command line:
 curl localhost:8080/webmention/wordpress \
   -d 'source=http://localhost/response.html&target=http://ryandc.wordpress.com/2013/03/24/mac-os-x/'
+
+making an API call with an access token from the command line:
+curl -H 'Authorization: Bearer [TOKEN]' URL...
 """
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
@@ -30,6 +33,7 @@ import appengine_config
 from appengine_config import HTTP_TIMEOUT
 
 from activitystreams.oauth_dropins import wordpress_rest as oauth_wordpress
+from activitystreams.oauth_dropins.handlers import interpret_http_exception
 from activitystreams.oauth_dropins.webutil.handlers import TemplateHandler
 import models
 import superfeedr
@@ -108,7 +112,6 @@ class WordPress(models.Source):
     """
     return self.url, self.key.id()
 
-
   def create_comment(self, post_url, author_name, author_url, content):
     """Creates a new comment in the source silo.
 
@@ -152,9 +155,9 @@ class WordPress(models.Source):
     try:
       resp = auth_entity.urlopen(url, data=urllib.urlencode(data)).read()
     except urllib2.HTTPError, e:
-      body = e.read()
+      code, body = interpret_http_exception(e)
       parsed = json.loads(body) if body else {}
-      if e.code == 400 and parsed.get('error') == 'invalid_input':
+      if code == '400' and parsed.get('error') == 'invalid_input':
         return parsed  # known error: https://github.com/snarfed/bridgy/issues/161
       raise
 
