@@ -876,7 +876,7 @@ class PropagateTest(TaskQueueTest):
 
   def test_success_and_errors(self):
     """We should send webmentions to the unsent and error targets."""
-    self.responses[0].unsent = ['http://1', 'http://2', 'http://3']
+    self.responses[0].unsent = ['http://1', 'http://2', 'http://3', 'http://8']
     self.responses[0].error = ['http://4', 'http://5', 'http://6']
     self.responses[0].sent = ['http://7']
     self.responses[0].put()
@@ -895,6 +895,9 @@ class PropagateTest(TaskQueueTest):
     self.expect_webmention(target='http://6',  # 5XX should go into 'error'
                            error={'code': 'BAD_TARGET_URL', 'http_status': 500})\
         .InAnyOrder().AndReturn(False)
+    self.expect_webmention(target='http://8',  # 204 should go into 'skipped'
+                           error={'code': 'BAD_TARGET_URL', 'http_status': 204})\
+        .InAnyOrder().AndReturn(False)
 
     self.mox.ReplayAll()
     self.post_task(expected_status=ERROR_HTTP_RETURN_CODE)
@@ -903,7 +906,7 @@ class PropagateTest(TaskQueueTest):
                             sent=['http://7', 'http://1'],
                             error=['http://3', 'http://6'],
                             failed=['http://4', 'http://5'],
-                            skipped=['http://2'])
+                            skipped=['http://2', 'http://8'])
     self.assertEquals(NOW, self.sources[0].key.get().last_webmention_sent)
 
   def test_cached_webmention_discovery(self):
