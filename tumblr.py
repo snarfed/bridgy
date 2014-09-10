@@ -142,13 +142,16 @@ class Tumblr(models.Source):
     super(Tumblr, self).verify(force=True)
 
     if not self.disqus_shortname and self._fetched_html:
-      # scrape the disqus shortname out of the page
-      logging.info("Looking for Disqus shortname in fetched HTML")
-      match = DISQUS_SHORTNAME_RE.search(self._fetched_html)
-      if match:
-        self.disqus_shortname = match.group(1)
-        logging.info("Found Disqus shortname %s", self.disqus_shortname)
-        self.put()
+      self.discover_disqus_shortname(self._fetched_html)
+
+  def discover_disqus_shortname(self, html):
+    # scrape the disqus shortname out of the page
+    logging.info("Looking for Disqus shortname in fetched HTML")
+    match = DISQUS_SHORTNAME_RE.search(html)
+    if match:
+      self.disqus_shortname = match.group(1)
+      logging.info("Found Disqus shortname %s", self.disqus_shortname)
+      self.put()
 
   def create_comment(self, post_url, author_name, author_url, content):
     """Creates a new comment in the source silo.
@@ -164,8 +167,12 @@ class Tumblr(models.Source):
     Returns: JSON response dict with 'id' and other fields
     """
     if not self.disqus_shortname:
-      raise exc.HTTPBadRequest("Your Bridgy account isn't fully set up yet: "
-                               "we haven't found your Disqus account.")
+      resp = requests.get(post_url, timeout=HTTP_TIMEOUT)
+      resp.raise_for_status()
+      self.discover_disqus_shortname(resp.text)
+      if not self.disqus_shortname:
+        raise exc.HTTPBadRequest("Your Bridgy account isn't fully set up yet: "
+                                 "we haven't found your Disqus account.")
 
     # strip slug, query and fragment from post url
     parsed = urlparse.urlparse(post_url)

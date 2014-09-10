@@ -25,7 +25,7 @@ class TumblrTest(testutil.HandlerTest):
     self.auth_entity = TumblrAuth(id='name', user_json=json.dumps({
           'user': {'blogs': [{'url': 'other'},
                              {'url': 'http://primary/', 'primary': True}]}}))
-    self.tumblr = Tumblr(disqus_shortname='my-disqus-name')
+    self.tumblr = Tumblr(id='my id', disqus_shortname='my-disqus-name')
 
     appengine_config.DISQUS_API_KEY = 'my key'
     appengine_config.DISQUS_API_SECRET = 'my secret'
@@ -77,11 +77,11 @@ class TumblrTest(testutil.HandlerTest):
     self._test_verify_finds_disqus('<script src="http://disqus.com/forums/my-disqus-name/get_num_replies.js?url131=...&amp;"></script>')
 
   def test_verify_inspirewell_theme_1(self):
-      # based on http://circusriot.tumblr.com/
+    # based on http://circusriot.tumblr.com/
     self._test_verify_finds_disqus("  var disqus_shortname = 'my-disqus-name';")
 
   def test_verify_inspirewell_theme_2(self):
-      # based on http://circusriot.tumblr.com/
+    # based on http://circusriot.tumblr.com/
     self._test_verify_finds_disqus('  disqusUsername = "my-disqus-name";')
 
   def _test_verify_finds_disqus(self, snippet):
@@ -127,12 +127,29 @@ class TumblrTest(testutil.HandlerTest):
     resp = self.tumblr.create_comment('http://primary/post/123999/xyz_abc',
                                       u'Degenève', 'http://who', u'foo Degenève bar')
 
-  def test_create_comment_without_disqus_shortname(self):
+  def test_create_comment_finds_disqus_shortname(self):
     self.tumblr.disqus_shortname = None
+
+    self.expect_requests_get('http://primary/post/123999',
+                             "fooo var disqus_shortname = 'my-disqus-name';")
+    self.expect_thread_details()
+    self.expect_requests_post(tumblr.DISQUS_API_CREATE_POST_URL,
+                              json.dumps({}), params=mox.IgnoreArg())
+    self.mox.ReplayAll()
+
+    self.tumblr.create_comment('http://primary/post/123999', '', '', '')
+    self.assertEquals('my-disqus-name', self.tumblr.key.get().disqus_shortname)
+
+  def test_create_comment_doesnt_find_disqus_shortname(self):
+    self.tumblr.disqus_shortname = None
+
+    self.expect_requests_get('http://primary/post/123999', 'no shortname here')
+    self.mox.ReplayAll()
+
     self.assertRaises(
       exc.HTTPBadRequest,#("Bridgy hasn't found your Disqus account yet. "
                          #"See http://localhost/tumblr/name for details."),
-      self.tumblr.create_comment, 'http://primary/post', '', '', '')
+      self.tumblr.create_comment, 'http://primary/post/123999', '', '', '')
 
   # not implemented yet. see https://github.com/snarfed/bridgy/issues/177.
   # currently handled in webmention.error().
