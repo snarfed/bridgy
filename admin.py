@@ -44,6 +44,7 @@ class ResponsesHandler(handlers.TemplateHandler):
         e.response = json.loads(e.response_json)
         e.activities = [json.loads(a) for a in e.activities_json]
       else:
+        e.response = {'content': '[BlogPost]'}
         e.activities = [{'url': e.key.id()}]
 
       responses.append(e)
