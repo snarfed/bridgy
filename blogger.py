@@ -146,8 +146,9 @@ class Blogger(models.Source):
       comment = client.add_comment(self.key.id(), post_id, content)
     except RequestError, e:
       msg = str(e)
-      if 'bX-2i87au' in msg or 'bX-at8zpb' in msg:
+      if 'bX-2i87au' in msg or 'bX-at8zpb' in msg or 'bX-lg3e05' in msg:
         # known error: https://github.com/snarfed/bridgy/issues/175
+        # https://groups.google.com/d/topic/bloggerdev/szGkT5xA9CE/discussion
         return {'error': msg}
       else:
         raise
