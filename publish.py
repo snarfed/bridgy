@@ -260,15 +260,16 @@ class Handler(webmention.WebmentionHandler):
       self.entity.published = result.content
       if not result.content:
         return result  # there was an error
+      vars = {'source': self.preprocess_source(self.source),
+              'preview': self.entity.published,
+              'source_url': self.source_url,
+              'target_url': self.target_url,
+              'bridgy_omit_link': omit_link,
+              'webmention_endpoint': self.request.host_url + '/publish/webmention',
+              }
+      logging.info('Rendering preview with template vars %s', vars)
       return as_source.creation_result(
-        template.render('templates/preview.html', {
-          'source': self.preprocess_source(self.source),
-          'preview': self.entity.published,
-          'source_url': self.source_url,
-          'target_url': self.target_url,
-          'bridgy_omit_link': omit_link,
-          'webmention_endpoint': self.request.host_url + '/publish/webmention',
-        }))
+        template.render('templates/preview.html', vars))
 
     else:
       result = self.source.as_source.create(obj, include_link=not omit_link)
@@ -280,6 +281,7 @@ class Handler(webmention.WebmentionHandler):
       self.entity.type = self.entity.published.get('type') or models.get_type(obj)
       self.entity.type_label = self.source.TYPE_LABELS.get(self.entity.type)
       self.response.headers['Content-Type'] = 'application/json'
+      logging.info('Returning %s', self.entity.published)
       return as_source.creation_result(
         json.dumps(self.entity.published, indent=2))
 
