@@ -35,6 +35,7 @@ HTTP_RATE_LIMIT_CODES = frozenset(('403', '429', '503'))
 
 # Known domains that don't support webmentions. Mainly just the silos.
 WEBMENTION_BLACKLIST = {
+  'about.me',
   'amzn.com',
   'amazon.com',
   'brid.gy',
@@ -46,6 +47,7 @@ WEBMENTION_BLACKLIST = {
   'instagr.am',
   'instagram.com',
   'ipv4.google.com',
+  'linkedin.com',
   'plus.google.com',
   'twitter.com',
   # these come from the text of tweets. we also pull the expanded URL
