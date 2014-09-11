@@ -34,6 +34,7 @@ FAILED_RESOLVE_URL_CACHE_TIME = 60 * 60 * 24  # a day
 HTTP_RATE_LIMIT_CODES = frozenset(('403', '429', '503'))
 
 # Known domains that don't support webmentions. Mainly just the silos.
+# Subdomains are automatically blacklisted too.
 WEBMENTION_BLACKLIST = {
   'about.me',
   'amzn.com',
@@ -42,13 +43,11 @@ WEBMENTION_BLACKLIST = {
   'brid-gy.appspot.com',
   'example.com',
   'facebook.com',
-  'm.facebook.com',
+  'ggpht.com',
   'google.com',
   'instagr.am',
   'instagram.com',
-  'ipv4.google.com',
   'linkedin.com',
-  'plus.google.com',
   'twitter.com',
   # these come from the text of tweets. we also pull the expanded URL
   # from the tweet entities, so ignore these instead of resolving them.
@@ -65,10 +64,6 @@ WEBMENTION_BLACKLIST = {
   # temporary. tom's webmention handler is broken, and he knows about it.
   # TODO: remove once he's fixed it.
   'tommorris.org',
-  # these are users' home pages that return 401 or 403
-  'brandoncollins.org', # http://brid.gy/facebook/541818556, /twitter/wolbrandon
-  'cssigniter.com',     # http://www.brid.gy/twitter/tsiger
-  'localhero.biz',      # http://brid.gy/twitter/localherodotbiz
   }
 
 
@@ -190,7 +185,7 @@ def get_webmention_target(url):
   tuple will be true! TODO: check callers and reconsider this.
 
   Returns: (string url, string pretty domain, boolean) tuple. The boolean is
-    True if we should send a webmention, False otherwise, e.g. if it 's a bad
+    True if we should send a webmention, False otherwise, e.g. if it's a bad
     URL, not text/html, or in the blacklist.
   """
   try:
@@ -199,9 +194,9 @@ def get_webmention_target(url):
     logging.warning('Dropping bad URL %s.', url)
     return (url, None, False)
 
-  if domain and domain.startswith('mobile.'):
-    domain = domain[len('mobile.'):]
-  if domain in WEBMENTION_BLACKLIST:
+  if (domain in WEBMENTION_BLACKLIST or
+      # strip subdomain and check again
+      (domain and '.'.join(domain.split('.')[-2:]) in WEBMENTION_BLACKLIST)):
     return (url, domain, False)
 
   url = clean_webmention_url(url)

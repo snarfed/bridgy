@@ -109,3 +109,11 @@ class UtilTest(testutil.ModelsTest):
 
     self.assertEquals('http://foo', cwt('http://foo?utm_source=x&utm_campaign=y'))
     self.assertEquals('http://foo?a=b&c=d', cwt('http://foo?a=b&utm_source=x&c=d'))
+
+  def test_get_webmention_target_blacklisted_urls(self):
+    gwt = util.get_webmention_target
+    for bad in ('http://facebook.com/x', 'https://www.facebook.com/y',
+                'http://sub.dom.ain.facebook.com/z'):
+      self.assertFalse(util.get_webmention_target(bad)[2], bad)
+
+    self.assertTrue(util.get_webmention_target('http://good.com/a')[2])
