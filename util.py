@@ -345,7 +345,13 @@ class Handler(webapp2.RequestHandler):
                       (auth_entity.key.urlsafe(), state))
       else:
         self.messages.add("OK, you're still signed up.")
-        self.redirect(source.bridgy_url(self))
+        redirect_to = '/'
+        split = state.split('-', 1)
+        if split:
+          source = ndb.Key(urlsafe=split[1]).get()
+          if source:
+            redirect_to = source.bridgy_url(self)
+        self.redirect(redirect_to)
 
   def preprocess_source(self, source):
     """Prepares a source entity for rendering in the source.html template.
