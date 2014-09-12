@@ -168,8 +168,13 @@ class WordPress(models.Source):
 
 class AddWordPress(oauth_wordpress.CallbackHandler, util.Handler):
   def finish(self, auth_entity, state=None):
-    # Check if this is a self-hosted WordPress blog
     if auth_entity:
+      if int(auth_entity.blog_id) == 0:
+        self.messages.add(
+          'Please try again and choose a blog before clicking Authorize.')
+        return self.redirect_home_or_user_page(state)
+
+      # Check if this is a self-hosted WordPress blog
       site_info = json.loads(auth_entity.urlopen(
           API_SITE_URL % auth_entity.blog_id).read())
       if site_info.get('jetpack'):
