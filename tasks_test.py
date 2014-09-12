@@ -993,6 +993,31 @@ class PropagateTest(TaskQueueTest):
     self.post_task()
     self.assert_response_is('complete')
 
+  def test_content_type_html_with_charset(self):
+    """We should handle Content-Type: text/html; charset=... ok."""
+    self.mox.UnsetStubs()  # drop WebmentionSend mock; let it run
+    super(PropagateTest, self).setUp()
+
+    self.responses[0].unsent = ['http://html/charset']
+    self.responses[0].put()
+    self.expect_requests_head('http://html/charset', status_code=405)
+    self.expect_requests_get(
+      'http://html/charset',
+      content_type='text/html; charset=utf-8',
+      response_headers={'Link': '<http://my/endpoint>; rel="webmention"'},
+      timeout=999, verify=False)
+
+    source_url = ('http://localhost/comment/fake/%s/a/1_2_a' %
+                  self.sources[0].key.string_id())
+    self.expect_requests_post(
+      'http://my/endpoint',
+      data={'source': source_url, 'target': 'http://html/charset'},
+      timeout=999, verify=False)
+
+    self.mox.ReplayAll()
+    self.post_task()
+    self.assert_response_is('complete', sent=['http://html/charset'])
+
   def test_no_targets(self):
     """No target URLs."""
     self.responses[0].unsent = []
