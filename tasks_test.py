@@ -965,8 +965,23 @@ class PropagateTest(TaskQueueTest):
     self.post_task()
     self.assert_response_is('complete')
 
+  def test_non_html_file(self):
+    """If our HEAD fails, we should still require content-type text/html."""
+    self.mox.UnsetStubs()  # drop WebmentionSend mock; let it run
+    super(PropagateTest, self).setUp()
+
+    self.responses[0].unsent = ['http://not/html']
+    self.responses[0].put()
+    self.expect_requests_head('http://not/html', status_code=405)
+    self.expect_requests_get('http://not/html', content_type='image/gif',
+                             timeout=999, verify=False)
+
+    self.mox.ReplayAll()
+    self.post_task()
+    self.assert_response_is('complete', skipped=['http://not/html'])
+
   def test_non_html_file_extension(self):
-    """If our HEAD request fails, we should infer type from file extension."""
+    """If our HEAD fails, we should infer type from file extension."""
     self.responses[0].unsent = ['http://this/is/a.pdf']
     self.responses[0].put()
 
