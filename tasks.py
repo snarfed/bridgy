@@ -645,7 +645,12 @@ class PropagateResponse(SendWebmentions):
     if self.entity.urls_to_activity:
       urls_to_activity = json.loads(self.entity.urls_to_activity)
       if urls_to_activity:
-        activity = self.activities[urls_to_activity[target_url]]
+        try:
+          activity = self.activities[urls_to_activity[target_url]]
+        except KeyError:
+          logging.error('activities: %s', self.activities)
+          logging.error('urls_to_activity: %s', urls_to_activity)
+          raise
 
     # generate source URL
     id = activity['id']
