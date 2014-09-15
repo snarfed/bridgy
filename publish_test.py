@@ -189,6 +189,17 @@ class PublishTest(testutil.HandlerTest):
     self.assert_success('xyz - http://foo.com/bar')
     self.assertEquals(source_2.key, Publish.query().get().source)
 
+  def test_source_with_multiple_domains(self):
+    """Publish domain is second in source's domains list."""
+    self.source.domains = ['baj.com', 'foo.com']
+    self.source.domain_urls = ['http://baj.com/', 'http://foo.com/']
+    self.source.put()
+    self.expect_requests_get('http://foo.com/bar', """
+<article class="h-entry"><p class="e-content">xyz</p></article>""")
+    self.mox.ReplayAll()
+    self.assert_success('xyz - http://foo.com/bar')
+    self.assertEquals(self.source.key, Publish.query().get().source)
+
   def test_source_missing_mf2(self):
     self.expect_requests_get('http://foo.com/bar', '')
     self.mox.ReplayAll()
