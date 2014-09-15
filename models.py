@@ -55,7 +55,7 @@ class Source(StringIdModel):
   STATUSES = ('enabled', 'disabled', 'error')
   FEATURES = ('listen', 'publish', 'webmention')
 
-  # short name for this site type. used in URLs, ec.
+  # short name for this site type. used in URLs, etc.
   SHORT_NAME = None
   # the corresponding activitystreams-unofficial class
   AS_CLASS = None

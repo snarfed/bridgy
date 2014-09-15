@@ -356,7 +356,7 @@ class DeleteStartHandler(util.Handler):
 class DeleteFinishHandler(util.Handler):
   def get(self):
     if self.request.get('declined'):
-      self.messages.add("OK, you're still signed up.")
+      self.messages.add('If you want to disable, please approve the prompt.')
       self.redirect('/')
       return
 

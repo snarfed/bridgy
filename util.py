@@ -339,7 +339,8 @@ class Handler(webapp2.RequestHandler):
         self.redirect('/delete/finish?auth_entity=%s&state=%s' %
                       (auth_entity.key.urlsafe(), state))
       else:
-        self.messages.add("OK, you're still signed up.")
+        self.messages.add('If you want to disable, please approve the %s prompt.' %
+                          source_cls.AS_CLASS.NAME)
         self.redirect_home_or_user_page(state)
 
   def redirect_home_or_user_page(self, state):
