@@ -29,9 +29,10 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 import collections
 import logging
 import json
+import mf2py
+import pprint
 import sys
 import urlparse
-import mf2py
 
 import appengine_config
 from appengine_config import HTTP_TIMEOUT
@@ -220,7 +221,7 @@ class Handler(webmention.WebmentionHandler):
       obj['url'] = self.source_url
     elif 'url' not in obj:
       obj['url'] = self.fetched.url
-    logging.debug('Converted to ActivityStreams object: %s', obj)
+    logging.debug('Converted to ActivityStreams object: %s', pprint.pformat(obj))
 
     # posts and comments need content
     props = item.get('properties', {})
@@ -267,7 +268,7 @@ class Handler(webmention.WebmentionHandler):
               'bridgy_omit_link': omit_link,
               'webmention_endpoint': self.request.host_url + '/publish/webmention',
               }
-      logging.info('Rendering preview with template vars %s', vars)
+      logging.info('Rendering preview with template vars %s', pprint.pformat(vars))
       return as_source.creation_result(
         template.render('templates/preview.html', vars))
 
@@ -281,7 +282,7 @@ class Handler(webmention.WebmentionHandler):
       self.entity.type = self.entity.published.get('type') or models.get_type(obj)
       self.entity.type_label = self.source.TYPE_LABELS.get(self.entity.type)
       self.response.headers['Content-Type'] = 'application/json'
-      logging.info('Returning %s', self.entity.published)
+      logging.info('Returning %s', pprint.pformat(self.entity.published))
       return as_source.creation_result(
         json.dumps(self.entity.published, indent=2))
 
