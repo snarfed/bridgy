@@ -69,7 +69,7 @@ class Blogger(models.Source):
       auth_entity: oauth_dropins.blogger.BloggerV2Auth
       blog_id: which blog. optional. if not provided, uses the first available.
     """
-    url, domain, ok = Blogger._url_and_domain(auth_entity, blog_id=blog_id)
+    url, domain, ok = Blogger._urls_and_domains(auth_entity, blog_id=blog_id)[0]
     if not ok:
       handler.messages = {'Blogger blog not found. Please create one first!'}
       return None
@@ -92,7 +92,7 @@ class Blogger(models.Source):
                    **kwargs)
 
   @staticmethod
-  def _url_and_domain(auth_entity, blog_id=None):
+  def _urls_and_domains(auth_entity, blog_id=None):
     """Returns an auth entity's URL and domain.
 
     Args:
@@ -103,9 +103,9 @@ class Blogger(models.Source):
     """
     for id, host in zip(auth_entity.blog_ids, auth_entity.blog_hostnames):
       if blog_id == id or (not blog_id and host):
-        return 'http://%s/' % host, host, True
+        return [('http://%s/' % host, host, True)]
 
-    return None, None, False
+    return [(None, None, False)]
 
   def create_comment(self, post_url, author_name, author_url, content, client=None):
     """Creates a new comment in the source silo.

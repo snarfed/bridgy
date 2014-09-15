@@ -324,8 +324,14 @@ class Source(StringIdModel):
       # extract domain from the URL set on the user's profile, if any
       auth_entity = kwargs.get('auth_entity')
       if auth_entity and hasattr(auth_entity, 'user_json'):
-        url, domain, ok = source._url_and_domain(auth_entity)
-        if feature == 'publish' and not ok:
+        urls_and_domains = source._urls_and_domains(auth_entity)
+        ok = urls_and_domains[0][2]
+
+        if ok:
+          source.domain_urls = [u for u, d, _ in urls_and_domains]
+          source.domains = [d for u, d, _ in urls_and_domains]
+        elif feature == 'publish':
+          url, domain, _ = urls_and_domains[0]
           if not url:
             handler.messages = {'Your %s profile is missing the website field. '
                                 'Please add it and try again!' % cls.AS_CLASS.NAME}
@@ -338,12 +344,6 @@ class Source(StringIdModel):
                                 "%s\n Please update it and try again!" %
                                 (cls.AS_CLASS.NAME, url)}
           return None
-
-        if ok:
-          if not source.domain_urls:
-            source.domain_urls = [url]
-          if not source.domains:
-            source.domains = [domain]
 
     # check if this source already exists
     existing = source.key.get()
@@ -437,8 +437,8 @@ class Source(StringIdModel):
 
     self.put()
 
-  def _url_and_domain(self, auth_entity):
-    """Returns this source's URL and domain.
+  def _urls_and_domains(self, auth_entity):
+    """Returns this user's valid URLs and domains.
 
     Uses the auth entity user_json 'url' field by default. May be overridden
     by subclasses.
@@ -446,7 +446,7 @@ class Source(StringIdModel):
     Args:
       auth_entity: oauth_dropins.models.BaseAuth
 
-    Returns: (string url, string domain, boolean ok) tuple
+    Returns: [(string url, string domain, boolean ok), ...]
     """
     user_json = json.loads(auth_entity.user_json)
     actor = self.as_source.user_to_actor(user_json)
@@ -454,19 +454,11 @@ class Source(StringIdModel):
                            # also look at G+'s urls field
                            [u.get('value') for u in user_json.get('urls', [])])
 
-    first_url = first_domain = None
-    for url in urls:
-      # TODO: fully support multiple urls
-      for url in url.split():
-        url, domain, ok = util.get_webmention_target(url)
-        if ok:
-          domain = domain.lower()
-          return url, domain, True
-        elif not first_url:
-          first_url = url
-          first_domain = domain
-
-    return first_url, first_domain, False
+    targets = [util.get_webmention_target(u) for u in urls]
+    good = [(u, d, ok) for u, d, ok in targets if ok]
+    return (good if good else
+            targets if targets else
+            [(None, None, False)])
 
   def canonicalize_syndication_url(self, syndication_url, scheme='https'):
     """Perform source-specific transforms to the syndication URL for cases

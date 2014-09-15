@@ -159,7 +159,10 @@ class SourceTest(testutil.HandlerTest):
 
   def test_create_new_domain(self):
     """If the source has a URL set, extract its domain."""
-    for user_json in None, {}, {'url': 'not<a>url'}, {'url': 'http://t.co/foo'}:
+    # bad URLs
+    for user_json in (None, {}, {'url': 'not<a>url'},
+                      # t.co is in the webmention blacklist
+                      {'url': 'http://t.co/foo'}):
       auth_entity = None
       if user_json is not None:
         auth_entity = testutil.FakeAuthEntity(id='x', user_json=json.dumps(user_json))
@@ -170,25 +173,34 @@ class SourceTest(testutil.HandlerTest):
 
     # good URLs
     for url in ('http://foo.com/bar', 'https://www.foo.com/bar',
-                'http://foo.com/\nhttp://baz.com/',
                 'http://FoO.cOm',  # should be normalized to lowercase
                 ):
       auth_entity = testutil.FakeAuthEntity(
         id='x', user_json=json.dumps({'url': url}))
       auth_entity.put()
       source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
-      self.assertEquals([url.split('\n')[0]], source.domain_urls)
+      self.assertEquals([url], source.domain_urls)
       self.assertEquals(['foo.com'], source.domains)
+
+    # multiple good URLs
+    auth_entity = testutil.FakeAuthEntity(id='x', user_json=json.dumps({
+          'url': 'http://foo',
+          'urls': [{'value': 'http://bar'}, {'value': 'http://baz'}],
+          }))
+    auth_entity.put()
+    source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
+    self.assertEquals(['http://foo', 'http://bar', 'http://baz'], source.domain_urls)
+    self.assertEquals(['foo', 'bar', 'baz'], source.domains)
 
     # also look in urls field
     auth_entity = testutil.FakeAuthEntity(id='x', user_json=json.dumps(
-        {'url': 'not<a>url',
+        {'url': 'http://biff.com/',
          'urls': [{'value': 'also<not>'}, {'value': 'http://foo.com/'}],
          }))
     auth_entity.put()
     source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
-    self.assertEquals(['http://foo.com/'], source.domain_urls)
-    self.assertEquals(['foo.com'], source.domains)
+    self.assertEquals(['http://biff.com/', 'http://foo.com/'], source.domain_urls)
+    self.assertEquals(['biff.com', 'foo.com'], source.domains)
 
   def test_create_new_unicode_chars(self):
     """We should handle unusual unicode chars in the source's name ok."""

@@ -102,15 +102,15 @@ class WordPress(models.Source):
                      site_info=site_info,
                      **kwargs)
 
-  def _url_and_domain(self, auth_entity):
+  def _urls_and_domains(self, auth_entity):
     """Returns this blog's URL and domain.
 
     Args:
       auth_entity: oauth_dropins.wordpress_rest.WordPressAuth, unused
 
-    Returns: (string url, string domain, True)
+    Returns: [(string url, string domain, True)]
     """
-    return self.url, self.key.id()
+    return [self.url, self.key.id(), True]
 
   def create_comment(self, post_url, author_name, author_url, content):
     """Creates a new comment in the source silo.

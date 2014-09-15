@@ -92,9 +92,9 @@ class Tumblr(models.Source):
     Args:
       handler: the current RequestHandler
       auth_entity: oauth_dropins.tumblr.TumblrAuth
-      blog_name: which blog. optional. passed to _url_and_domain.
+      blog_name: which blog. optional. passed to _urls_and_domains.
     """
-    url, domain, ok = Tumblr._url_and_domain(auth_entity, blog_name=blog_name)
+    url, domain, ok = Tumblr._urls_and_domains(auth_entity, blog_name=blog_name)[0]
     if not ok:
       handler.messages = {'Tumblr blog not found. Please create one first!'}
       return None
@@ -109,22 +109,22 @@ class Tumblr(models.Source):
                   **kwargs)
 
   @staticmethod
-  def _url_and_domain(auth_entity, blog_name=None):
-    """Returns the blog URL and domain.
+  def _urls_and_domains(auth_entity, blog_name=None):
+    """Returns this blog's URL and domain.
 
     Args:
       auth_entity: oauth_dropins.tumblr.TumblrAuth
       blog_name: which blog. optional. matches the 'name' field for one of the
         blogs in auth_entity.user_json['user']['blogs'].
 
-    Returns: (string url, string domain, boolean ok)
+    Returns: [(string url, string domain, boolean ok)]
     """
     for blog in json.loads(auth_entity.user_json).get('user', {}).get('blogs', []):
       if ((blog_name and blog_name == blog.get('name')) or
           (not blog_name and blog.get('primary'))):
-        return blog['url'], util.domain_from_link(blog['url']), True
+        return [(blog['url'], util.domain_from_link(blog['url']), True)]
 
-    return None, None, False
+    return [(None, None, False)]
 
   def verified(self):
     """Returns True if we've found the webmention endpoint and Disqus."""

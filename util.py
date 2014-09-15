@@ -189,7 +189,7 @@ def get_webmention_target(url):
     URL, not text/html, or in the blacklist.
   """
   try:
-    domain = domain_from_link(url)
+    domain = domain_from_link(url).lower()
   except BaseException, e:
     logging.warning('Dropping bad URL %s.', url)
     return (url, None, False)
