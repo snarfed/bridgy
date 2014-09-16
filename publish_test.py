@@ -47,8 +47,11 @@ class PublishTest(testutil.HandlerTest):
   def assert_success(self, expected, preview=False, **kwargs):
     resp = self.get_response(preview=preview, **kwargs)
     self.assertEquals(200, resp.status_int)
-    body = resp.body if preview else json.loads(resp.body)['content']
-    self.assertIn(expected, body)
+    if preview:
+      self.assertIn(expected, resp.body)
+      self.assertIn('FakeAsSource preview description', resp.body)
+    else:
+      self.assertIn(expected, json.loads(resp.body)['content'])
 
   def assert_error(self, expected, status=400, **kwargs):
     resp = self.get_response(**kwargs)

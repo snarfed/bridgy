@@ -5,9 +5,10 @@
        alt="{% firstof source.AS_CLASS.NAME source.key.kind %}" />
   {{ source.name|safe }}</a>
 
-<!-- Preview text and optional post embed-->
-{{ preview|safe }}
-
+<!-- Preview description (may include embedded silo post) and text content -->
+will {{ description|safe }}
+<br />
+<pre id="preview-text">{{ preview|safe }}</pre>
 <br />
 
 <form method="post" action="/publish/webmention" class="preview-ui">

@@ -249,6 +249,15 @@ button {
   font-weight: bold;
 }
 
+#preview-text {
+  display: inline-block;
+  margin-top: 1em;
+  text-align: left;
+  white-space: pre-wrap;
+  font-family: inherit;
+  font-size: inherit;
+}
+
 #source-url {
   padding-left: .3em;
   padding-right: .3em;

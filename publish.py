@@ -263,6 +263,7 @@ class Handler(webmention.WebmentionHandler):
         return result  # there was an error
       vars = {'source': self.preprocess_source(self.source),
               'preview': self.entity.published,
+              'description': result.description,
               'source_url': self.source_url,
               'target_url': self.target_url,
               'bridgy_omit_link': omit_link,
