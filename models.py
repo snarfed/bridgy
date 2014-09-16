@@ -440,8 +440,8 @@ class Source(StringIdModel):
   def _urls_and_domains(self, auth_entity):
     """Returns this user's valid URLs and domains.
 
-    Uses the auth entity user_json 'url' field by default. May be overridden
-    by subclasses.
+    Converts the auth entity's user_json to an ActivityStreams actor and uses
+    its 'urls' and 'url' fields. May be overridden by subclasses.
 
     Args:
       auth_entity: oauth_dropins.models.BaseAuth
@@ -450,9 +450,8 @@ class Source(StringIdModel):
     """
     user_json = json.loads(auth_entity.user_json)
     actor = self.as_source.user_to_actor(user_json)
-    urls = util.trim_nulls([actor.get('url')] +
-                           # also look at G+'s urls field
-                           [u.get('value') for u in user_json.get('urls', [])])
+    urls = util.trim_nulls(util.uniquify(
+        [actor.get('url')] + [u.get('value') for u in actor.get('urls', [])]))
 
     targets = [util.get_webmention_target(u) for u in urls]
     good = [(u, d, ok) for u, d, ok in targets if ok]
