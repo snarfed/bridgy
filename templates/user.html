@@ -36,9 +36,12 @@
         title="This account was disconnected on {% firstof source.AS_CLASS.NAME source.key.kind %}'s end. Click to reconnect it!">
 </span></a>
 {% endif %}
-
+-
 {% if source.domains %}
-  (<a href="{{ source.domain_urls.0 }}" class="publish-domain">{{ source.domains.0 }}</a>)
+  {# all one line to get whitespace right. spaceless doesn't work; not sure why. :/ #}
+  {% for w in source.websites %}
+    <a href="{{ w.url }}" class="publish-domain">{{ w.domain }}</a>
+  {% endfor %}
 {% else %}
 <!-- no domain -->
 {% endif %}

@@ -2,6 +2,7 @@
 """Misc utility constants and classes.
 """
 
+import collections
 import datetime
 import mimetypes
 import re
@@ -65,6 +66,9 @@ WEBMENTION_BLACKLIST = {
   # TODO: remove once he's fixed it.
   'tommorris.org',
   }
+
+
+Website = collections.namedtuple('Website', ('url', 'domain'))
 
 
 def add_poll_task(source, **kwargs):
@@ -357,6 +361,8 @@ class Handler(webapp2.RequestHandler):
 
     - use id as name if name isn't provided
     - convert image URLs to https if we're serving over SSL
+    - zip domain_urls and domains into website field, list of Website
+      namedtuples with url and domain fields
 
     Args:
       source: Source entity
@@ -365,6 +371,8 @@ class Handler(webapp2.RequestHandler):
       source.name = source.key.string_id()
     if source.picture:
       source.picture = util.update_scheme(source.picture, self)
+    source.websites = [Website(url=u, domain=d) for u, d in
+                       zip(source.domain_urls, source.domains)]
     return source
 
 
