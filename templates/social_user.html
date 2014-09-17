@@ -14,7 +14,7 @@
 </div>
 
 {% else %}
-{% if not source.webmention_endpoint and not last_webmention_sent %}
+{% if not source.webmention_endpoint and not source.last_webmention_sent %}
 <div class="row promo warning">
 You
 {% if "listen" in source.features %} need {% else %} might want {% endif %}
