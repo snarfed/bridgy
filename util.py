@@ -198,9 +198,7 @@ def get_webmention_target(url):
     logging.warning('Dropping bad URL %s.', url)
     return (url, None, False)
 
-  if (domain in WEBMENTION_BLACKLIST or
-      # strip subdomain and check again
-      (domain and '.'.join(domain.split('.')[-2:]) in WEBMENTION_BLACKLIST)):
+  if not domain or in_webmention_blacklist(domain):
     return (url, domain, False)
 
   url = clean_webmention_url(url)
@@ -212,6 +210,13 @@ def get_webmention_target(url):
 
   is_html = resolved.headers.get('content-type', '').startswith('text/html')
   return (url, domain, is_html)
+
+
+def in_webmention_blacklist(domain):
+  """Returns True if the domain or its root domain is in WEBMENTION_BLACKLIST."""
+  return (domain in WEBMENTION_BLACKLIST or
+          # strip subdomain and check again
+          (domain and '.'.join(domain.split('.')[-2:]) in WEBMENTION_BLACKLIST))
 
 
 def clean_webmention_url(url):
