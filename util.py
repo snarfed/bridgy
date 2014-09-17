@@ -120,23 +120,25 @@ def email_me(**kwargs):
     logging.warning('Error sending notification email', exc_info=True)
 
 
-def follow_redirects(url):
+def follow_redirects(url, cache=True):
   """Fetches a URL with HEAD, repeating if necessary to follow redirects.
 
-  Caches resolved URLs in memcache. *Does not* raise an exception if any of the
-  HTTP requests fail, just returns the failed response. If you care, be sure to
-  check the returned response's status code!
+  Caches resolved URLs in memcache by default. *Does not* raise an exception if
+  any of the HTTP requests fail, just returns the failed response. If you care,
+  be sure to check the returned response's status code!
 
   Args:
     url: string
+    cache: whether to read/write memcache
 
   Returns:
     the requests.Response for the final request
   """
-  cache_key = 'R ' + url
-  resolved = memcache.get(cache_key)
-  if resolved is not None:
-    return resolved
+  if cache:
+    cache_key = 'R ' + url
+    resolved = memcache.get(cache_key)
+    if resolved is not None:
+      return resolved
 
   # can't use urllib2 since it uses GET on redirect requests, even if i specify
   # HEAD for the initial request.
@@ -169,7 +171,8 @@ def follow_redirects(url):
       if part.strip().startswith('url='):
         return follow_redirects(part.strip()[4:])
 
-  memcache.set(cache_key, resolved, time=cache_time)
+  if cache:
+    memcache.set(cache_key, resolved, time=cache_time)
   return resolved
 
 
@@ -182,11 +185,15 @@ _orig_tag_uri = tag_uri
 util.tag_uri = lambda domain, name: _orig_tag_uri(domain, name, year=2013)
 
 
-def get_webmention_target(url):
+def get_webmention_target(url, cache=True):
   """Resolves a URL and decides whether we should try to send it a webmention.
 
   Note that this ignores failed HTTP requests, ie the boolean in the returned
   tuple will be true! TODO: check callers and reconsider this.
+
+  Args:
+    url: string
+    cache: whether to use memcache when following redirects
 
   Returns: (string url, string pretty domain, boolean) tuple. The boolean is
     True if we should send a webmention, False otherwise, e.g. if it's a bad
@@ -202,7 +209,7 @@ def get_webmention_target(url):
     return (url, domain, False)
 
   url = clean_webmention_url(url)
-  resolved = follow_redirects(url)
+  resolved = follow_redirects(url, cache=cache)
   if resolved.url != url:
     logging.debug('Resolved %s to %s', url, resolved.url)
     url = resolved.url
