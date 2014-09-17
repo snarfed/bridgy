@@ -13,8 +13,9 @@
 {% with compact as True %}
 {% for source in sources %}
   <div class="source col-xs-6 col-sm-4 col-md-3">
-    <a href="{{ source.bridgy_path }}" title="{{ source.label|safe }}">
-      <img class="profile" width="48px" src="{{ source.picture }}"/>
+    <a href="{{ source.bridgy_path }}" title="{{ source.label|safe }}"
+       class="h-card">
+      <img class="profile u-photo" width="48px" src="{{ source.picture }}"/>
       <img src="/static/{{ source.SHORT_NAME }}_icon.png" />
       {{ source.name|safe }}</a>
   </div>

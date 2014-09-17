@@ -20,13 +20,14 @@
 </script>
 
 <!-- Header: name and picture -->
-<div id="user" class="row big">
-<a target="_blank" href="{{ source.silo_url }}" title="{{ source.label|safe }}">
-  <img class="profile" src="{{ source.picture }}" width="64px" />
+<div id="user" class="row big h-card">
+<a target="_blank" href="{{ source.silo_url }}" title="{{ source.label|safe }}"
+   class="u-url">
+  <img class="profile u-photo" src="{{ source.picture }}" width="64px" />
   <img src="/static/{{ source.SHORT_NAME }}_icon.png"
        {# oddly, source.AS_CLASS doesn't work for Twitter. use kind as fallback. #}
        alt="{% firstof source.AS_CLASS.NAME source.key.kind %}" />
-  {{ source.name|safe }}</a>
+  <span class="p-name">{{ source.name|safe }}</span></a>
 
 {% if source.status == "disabled" %}
 <!-- TODO: make this work without javascript too -->
@@ -38,7 +39,8 @@
 {% endif %}
 
 {% for w in source.websites %}
-  &middot; <a href="{{ w.url }}" class="publish-domain">{{ w.domain }}</a>
+  &middot;
+  <a href="{{ w.url }}" class="publish-domain u-url">{{ w.domain }}</a>
 {% endfor %}
 </div>
 
