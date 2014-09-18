@@ -166,11 +166,16 @@ class Source(StringIdModel):
     to ~1d after a week long grace period.
     """
     now = datetime.datetime.now()
-    return (self.SLOW_POLL
-            if (now > self.created + self.FAST_POLL_GRACE_PERIOD and
-                (not self.last_webmention_sent or
-                 self.last_webmention_sent < now - datetime.timedelta(days=30)))
-            else self.FAST_POLL)
+    if now < self.created + self.FAST_POLL_GRACE_PERIOD:
+      return self.FAST_POLL
+    elif not self.last_webmention_sent:
+      return self.SLOW_POLL
+    elif self.last_webmention_sent > now - datetime.timedelta(days=7):
+      return self.FAST_POLL
+    elif self.last_webmention_sent > now - datetime.timedelta(days=30):
+      return self.FAST_POLL * 10
+    else:
+      return self.SLOW_POLL
 
   def refetch_period(self):
     """Returns the refetch frequency for this source.
