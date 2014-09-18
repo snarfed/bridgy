@@ -61,13 +61,13 @@ class WordPress(models.Source):
 
   def feed_url(self):
     # http://en.support.wordpress.com/feeds/
-    return urlparse.urljoin(self.domain_urls[0], 'feed/')
+    return urlparse.urljoin(self.silo_url(), 'feed/')
 
   def silo_url(self):
     return self.domain_urls[0]
 
   def edit_template_url(self):
-    return urlparse.urljoin(self.domain_urls[0], 'wp-admin/widgets.php')
+    return urlparse.urljoin(self.silo_url(), 'wp-admin/widgets.php')
 
   @staticmethod
   def new(handler, auth_entity=None, **kwargs):
@@ -108,9 +108,9 @@ class WordPress(models.Source):
     Args:
       auth_entity: oauth_dropins.wordpress_rest.WordPressAuth, unused
 
-    Returns: [(string url, string domain, True)]
+    Returns: ([string url], [string domain])
     """
-    return [self.url, self.key.id(), True]
+    return [self.url], [self.key.id()]
 
   def create_comment(self, post_url, author_name, author_url, content):
     """Creates a new comment in the source silo.

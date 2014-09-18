@@ -52,10 +52,10 @@ class Blogger(models.Source):
 
   def feed_url(self):
     # https://support.google.com/blogger/answer/97933?hl=en
-    return urlparse.urljoin(self.domain_urls[0], '/feeds/posts/default')  # Atom
+    return urlparse.urljoin(self.url, '/feeds/posts/default')  # Atom
 
   def silo_url(self):
-    return self.domain_urls[0]
+    return self.url
 
   def edit_template_url(self):
     return 'https://www.blogger.com/blogger.g?blogID=%s#template' % self.key.id()
@@ -69,24 +69,24 @@ class Blogger(models.Source):
       auth_entity: oauth_dropins.blogger.BloggerV2Auth
       blog_id: which blog. optional. if not provided, uses the first available.
     """
-    url, domain, ok = Blogger._urls_and_domains(auth_entity, blog_id=blog_id)[0]
-    if not ok:
+    urls, domains = Blogger._urls_and_domains(auth_entity, blog_id=blog_id)
+    if not urls or not domains:
       handler.messages = {'Blogger blog not found. Please create one first!'}
       return None
 
     if blog_id is None:
       for blog_id, hostname in zip(auth_entity.blog_ids, auth_entity.blog_hostnames):
-        if domain == hostname:
+        if domains[0] == hostname:
           break
       else:
         return self.error("Internal error, shouldn't happen")
 
     return Blogger(id=blog_id,
                    auth_entity=auth_entity.key,
-                   url=url,
+                   url=urls[0],
                    name=auth_entity.user_display_name(),
-                   domains=[domain],
-                   domain_urls=[url],
+                   domains=domains,
+                   domain_urls=urls,
                    picture=auth_entity.picture_url,
                    superfeedr_secret=util.generate_secret(),
                    **kwargs)
@@ -99,13 +99,13 @@ class Blogger(models.Source):
       auth_entity: oauth_dropins.blogger.BloggerV2Auth
       blog_id: which blog. optional. if not provided, uses the first available.
 
-    Returns: (string url, string domain, boolean ok)
+    Returns: ([string url], [string domain])
     """
     for id, host in zip(auth_entity.blog_ids, auth_entity.blog_hostnames):
       if blog_id == id or (not blog_id and host):
-        return [('http://%s/' % host, host, True)]
+        return ['http://%s/' % host], [host]
 
-    return [(None, None, False)]
+    return [], []
 
   def create_comment(self, post_url, author_name, author_url, content, client=None):
     """Creates a new comment in the source silo.

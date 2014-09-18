@@ -182,30 +182,38 @@ class SourceTest(testutil.HandlerTest):
       self.assertEquals([url], source.domain_urls)
       self.assertEquals(['foo.com'], source.domains)
 
-    # multiple good URLs
+    # multiple good URLs, a bad URL, and a good URL that returns fails a HEAD
+    # request.
     auth_entity = testutil.FakeAuthEntity(id='x', user_json=json.dumps({
-          'url': 'http://foo',
-          'urls': [{'value': 'http://bar'}, {'value': 'http://baz'}],
+          'url': 'http://foo.org',
+          'urls': [{'value': u} for u in
+                   'http://bar.com', 'http://t.co/x', 'http://baz'],
           }))
     auth_entity.put()
     source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
-    self.assertEquals(['http://foo', 'http://bar', 'http://baz'], source.domain_urls)
-    self.assertEquals(['foo', 'bar', 'baz'], source.domains)
-
-    # also look in urls field
-    auth_entity = testutil.FakeAuthEntity(id='x', user_json=json.dumps(
-        {'url': 'http://biff.com/',
-         'urls': [{'value': 'also<not>'}, {'value': 'http://foo.com/'}],
-         }))
-    auth_entity.put()
-    source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
-    self.assertEquals(['http://biff.com/', 'http://foo.com/'], source.domain_urls)
-    self.assertEquals(['biff.com', 'foo.com'], source.domains)
+    self.assertEquals(['http://foo.org', 'http://bar.com', 'http://baz'],
+                      source.domain_urls)
+    self.assertEquals(['foo.org', 'bar.com', 'baz'], source.domains)
 
   def test_create_new_unicode_chars(self):
     """We should handle unusual unicode chars in the source's name ok."""
     # the invisible character in the middle is an unusual unicode character
     source = FakeSource.create_new(self.handler, name=u'a ✁ b')
+
+  def test_create_new_rereads_domains(self):
+    FakeSource.new(None, features=['listen'],
+                   domain_urls=['http://foo'], domains=['foo']).put()
+
+    FakeSource.string_id_counter -= 1
+    auth_entity = testutil.FakeAuthEntity(id='x', user_json=json.dumps(
+        {'urls': [{'value': 'http://bar'}, {'value': 'http://baz'}]}))
+    self.expect_requests_get('http://bar', 'no webmention endpoint',
+                             verify=False)
+
+    self.mox.ReplayAll()
+    source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
+    self.assertEquals(['http://bar', 'http://baz'], source.domain_urls)
+    self.assertEquals(['bar', 'baz'], source.domains)
 
   def test_verify(self):
     # this requests.get is called by webmention-tools

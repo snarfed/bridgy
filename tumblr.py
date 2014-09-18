@@ -77,7 +77,7 @@ class Tumblr(models.Source):
 
   def feed_url(self):
     # http://www.tumblr.com/help  (search for feed)
-    return urlparse.urljoin(self.domain_urls[0], '/rss')
+    return urlparse.urljoin(self.silo_url(), '/rss')
 
   def silo_url(self):
     return self.domain_urls[0]
@@ -94,17 +94,18 @@ class Tumblr(models.Source):
       auth_entity: oauth_dropins.tumblr.TumblrAuth
       blog_name: which blog. optional. passed to _urls_and_domains.
     """
-    url, domain, ok = Tumblr._urls_and_domains(auth_entity, blog_name=blog_name)[0]
-    if not ok:
+    urls, domains = Tumblr._urls_and_domains(auth_entity, blog_name=blog_name)
+    if not urls or not domains:
       handler.messages = {'Tumblr blog not found. Please create one first!'}
       return None
 
-    return Tumblr(id=domain,
+    id = domains[0]
+    return Tumblr(id=id,
                   auth_entity=auth_entity.key,
-                  domains=[domain],
-                  domain_urls=[url],
+                  domains=domains,
+                  domain_urls=urls,
                   name=auth_entity.user_display_name(),
-                  picture=TUMBLR_AVATAR_URL % domain,
+                  picture=TUMBLR_AVATAR_URL % id,
                   superfeedr_secret=util.generate_secret(),
                   **kwargs)
 
@@ -117,14 +118,14 @@ class Tumblr(models.Source):
       blog_name: which blog. optional. matches the 'name' field for one of the
         blogs in auth_entity.user_json['user']['blogs'].
 
-    Returns: [(string url, string domain, boolean ok)]
+    Returns: ([string url], [string domain])
     """
     for blog in json.loads(auth_entity.user_json).get('user', {}).get('blogs', []):
       if ((blog_name and blog_name == blog.get('name')) or
           (not blog_name and blog.get('primary'))):
-        return [(blog['url'], util.domain_from_link(blog['url']), True)]
+        return [blog['url']], [util.domain_from_link(blog['url']).lower()]
 
-    return [(None, None, False)]
+    return [], []
 
   def verified(self):
     """Returns True if we've found the webmention endpoint and Disqus."""

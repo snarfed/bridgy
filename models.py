@@ -5,6 +5,7 @@ import datetime
 import itertools
 import json
 import logging
+import pprint
 import re
 import urllib
 import urlparse
@@ -320,29 +321,15 @@ class Source(StringIdModel):
 
     feature = source.features[0] if source.features else 'listen'
 
-    if not source.domain_urls:
-      # extract domain from the URL set on the user's profile, if any
+    if not source.domain_urls:  # defer to the source if it already set this
       auth_entity = kwargs.get('auth_entity')
       if auth_entity and hasattr(auth_entity, 'user_json'):
-        urls_and_domains = source._urls_and_domains(auth_entity)
-        ok = urls_and_domains[0][2]
-
-        if ok:
-          source.domain_urls = [u for u, d, _ in urls_and_domains]
-          source.domains = [d for u, d, _ in urls_and_domains]
-        elif feature == 'publish':
-          url, domain, _ = urls_and_domains[0]
-          if not url:
-            handler.messages = {'Your %s profile is missing the website field. '
-                                'Please add it and try again!' % cls.AS_CLASS.NAME}
-          elif not domain:
-            handler.messages = {'Could not parse the web site in your %s profile: '
-                                '%s\n Please update it and try again!' %
-                                (cls.AS_CLASS.NAME, url)}
-          else:
-            handler.messages = {"Could not connect to the web site in your %s profile: "
-                                "%s\n Please update it and try again!" %
-                                (cls.AS_CLASS.NAME, url)}
+        source.domain_urls, source.domains = source._urls_and_domains(auth_entity)
+        logging.debug('URLs/domains: %s %s', source.domain_urls, source.domains)
+        if (feature == 'publish' and
+            (not source.domain_urls or not source.domains)):
+          handler.messages = {'No valid web sites found in your %s profile. '
+                              'Please update it and try again!' % cls.AS_CLASS.NAME}
           return None
 
     # check if this source already exists
@@ -357,7 +344,7 @@ class Source(StringIdModel):
     else:
       verb = 'Added'
 
-    link = ('http://indiewebify.me/send-webmentions/?url=' + source.domain_urls[0]
+    link = ('http://indiewebify.me/send-webmentions/?url=' + source.get_author_url()
             if source.domain_urls else 'http://indiewebify.me/#send-webmentions')
     blurb = '%s %s. %s' % (verb, source.label(), {
       'listen': "Refresh to see what we've found!",
@@ -409,15 +396,13 @@ class Source(StringIdModel):
         performs webmention discovery) even we already think this source is
         verified.
     """
-    if self.verified() and not force:
-      return
-    elif (self.status == 'disabled' or not self.features or
-          not self.domains or not self.domain_urls):
+    author_url = self.get_author_url()
+    if ((self.verified() and not force) or self.status == 'disabled' or
+        not self.features or not author_url):
       return
 
-    logging.info('Attempting to discover webmention endpoint on %s',
-                 self.domain_urls[0])
-    mention = send.WebmentionSend('https://www.brid.gy/', self.domain_urls[0])
+    logging.info('Attempting to discover webmention endpoint on %s', author_url)
+    mention = send.WebmentionSend('https://www.brid.gy/', author_url)
     mention.requests_kwargs = {'timeout': HTTP_TIMEOUT}
     try:
       mention._discoverEndpoint()
@@ -438,7 +423,7 @@ class Source(StringIdModel):
     self.put()
 
   def _urls_and_domains(self, auth_entity):
-    """Returns this user's valid URLs and domains.
+    """Returns this user's valid (not webmention-blacklisted) URLs and domains.
 
     Converts the auth entity's user_json to an ActivityStreams actor and uses
     its 'urls' and 'url' fields. May be overridden by subclasses.
@@ -446,18 +431,21 @@ class Source(StringIdModel):
     Args:
       auth_entity: oauth_dropins.models.BaseAuth
 
-    Returns: [(string url, string domain, boolean ok), ...]
+    Returns: ([string url, ...], [string domain, ...])
     """
-    user_json = json.loads(auth_entity.user_json)
-    actor = self.as_source.user_to_actor(user_json)
-    urls = util.trim_nulls(util.uniquify(
-        [actor.get('url')] + [u.get('value') for u in actor.get('urls', [])]))
+    actor = self.as_source.user_to_actor(json.loads(auth_entity.user_json))
+    logging.debug('Converted to actor: %s', pprint.pformat(actor))
 
-    targets = [util.get_webmention_target(u) for u in urls]
-    good = [(u, d, ok) for u, d, ok in targets if ok]
-    return (good if good else
-            targets if targets else
-            [(None, None, False)])
+    urls = []
+    domains = []
+    for url in util.trim_nulls(util.uniquify(
+        [actor.get('url')] + [u.get('value') for u in actor.get('urls', [])])):
+      domain = util.domain_from_link(url)
+      if domain and not util.in_webmention_blacklist(domain.lower()):
+        urls.append(url)
+        domains.append(domain.lower())
+
+    return urls, domains
 
   def canonicalize_syndication_url(self, syndication_url, scheme='https'):
     """Perform source-specific transforms to the syndication URL for cases

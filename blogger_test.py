@@ -123,3 +123,8 @@ class BloggerTest(testutil.HandlerTest):
                             'foo bar', client=self.client)
     # the key point is that create_comment doesn't raise an exception
     self.assert_equals({'error': '500, Internal error: bX-2i87au'}, resp)
+
+  def test_feed_url(self):
+    self.assertEquals(
+      'http://my.blawg/feeds/posts/default',
+      Blogger.new(self.handler, auth_entity=self.auth_entity).feed_url())
