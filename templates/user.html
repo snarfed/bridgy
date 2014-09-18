@@ -39,9 +39,18 @@
 {% endif %}
 
 {% for w in source.websites %}
+  {% if forloop.counter0 == 3 %}
+    <span id="more-websites" style="display: none">
+  {% endif %}
   &middot;
   <a href="{{ w.url }}" class="publish-domain u-url">{{ w.domain }}</a>
 {% endfor %}
+{% if source.websites|length > 3 %}
+  </span>
+  <a onclick="toggle('more-websites'); toggle('show-more-websites'); return false"
+     id="show-more-websites" href="#" />...</a>
+{% endif %}
+
 </div>
 
 {% block ui %}
