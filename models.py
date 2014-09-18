@@ -382,8 +382,10 @@ class Source(StringIdModel):
     """
     if not self.domains or not self.domain_urls:
       return False
-    if (('listen' in self.features or 'webmention' in self.features) and
-        not self.webmention_endpoint):
+    if 'webmention' in self.features and not self.webmention_endpoint:
+      return False
+    if ('listen' in self.features and
+        not (self.webmention_endpoint or self.last_webmention_sent)):
       return False
     return True
 
