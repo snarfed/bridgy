@@ -81,8 +81,9 @@ class WordPress(models.Source):
     auth_domain = auth_entity.key.id()
     site_info = json.loads(auth_entity.urlopen(
         API_SITE_URL % auth_entity.blog_id).read())
+
     site_url = site_info.get('URL')
-    if site_url:
+    if site_url and site_url != auth_entity.blog_url:
       domains = [util.domain_from_link(site_url), auth_domain]
       urls = [site_url, auth_entity.blog_url]
     else:
