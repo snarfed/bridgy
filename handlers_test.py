@@ -48,14 +48,14 @@ class HandlersTest(testutil.HandlerTest):
     self.check_response('/post/fake/%s/000', """\
 <article class="h-entry">
 <span class="u-uid">tag:fa.ke,2013:000</span>
-<div class="p-name"><a class="u-url" href="http://fa.ke/000">asdf http://other/link qwert</a></div>
+<a class="u-url" href="http://fa.ke/000"></a>
 
   <div class="h-card p-author">
     <a class="u-url" href="http://fa.ke/author_id"></a>
     <img class="u-photo" src="https://example.com/ryan/image" alt="-" />
   </div>
 
-  <div class="e-content">
+  <div class="e-content p-name">
 
   asdf http://other/link qwert
   </div>
@@ -71,7 +71,6 @@ class HandlersTest(testutil.HandlerTest):
         'type': ['h-entry'],
         'properties': {
           'uid': ['tag:fa.ke,2013:000'],
-          'name': ['asdf http://other/link qwert'],
           'url': ['http://fa.ke/000'],
           'content': [{ 'html': 'asdf http://other/link qwert',
                         'value': 'asdf http://other/link qwert',
@@ -144,14 +143,13 @@ class HandlersTest(testutil.HandlerTest):
     self.check_response('/comment/fake/%s/000/a1-b2.c3', """\
 <article class="h-entry">
 <span class="u-uid">tag:fa.ke,2013:a1-b2.c3</span>
-<div class="p-name">qwert</div>
 
   <div class="h-card p-author">
 
     <img class="u-photo" src="https://example.com/ryan/image" alt="-" />
   </div>
 
-  <div class="e-content">
+  <div class="e-content p-name">
 
   qwert
   <p class="u-mention"><a href="http://other/link"></a></p>
@@ -181,7 +179,7 @@ class HandlersTest(testutil.HandlerTest):
     <img class="u-photo" src="https://example.com/ryan/image" alt="-" />
   </div>
 
-  <div class="e-content">
+  <div class="e-content p-name">
 
   <p class="u-mention"><a href="http://other/link"></a></p>
   </div>
@@ -226,7 +224,7 @@ class HandlersTest(testutil.HandlerTest):
     <img class="u-photo" src="https://example.com/ryan/image" alt="-" />
   </div>
 
-  <div class="e-content">
+  <div class="e-content p-name">
 
   <p class="u-mention"><a href="http://another/mention"></a>
   <a href="http://other/link"></a></p>
@@ -291,7 +289,7 @@ class HandlersTest(testutil.HandlerTest):
 <article class="h-entry h-as-repost">
 <span class="u-uid"></span>
 
-  <div class="e-content">
+  <div class="e-content p-name">
 
   <p class="u-mention"><a href="http://other/link"></a>
   <a href="http://other/link/redirect"></a></p>
@@ -315,7 +313,7 @@ class HandlersTest(testutil.HandlerTest):
 <article class="h-entry h-as-repost">
 <span class="u-uid"></span>
 
-  <div class="e-content">
+  <div class="e-content p-name">
 
   <p class="u-mention"><a href="http://other/link?a=b"></a></p>
   </div>
