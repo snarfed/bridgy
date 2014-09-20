@@ -42,6 +42,7 @@ from activitystreams import source as as_source
 from activitystreams.oauth_dropins import handlers
 from facebook import FacebookPage
 from googleplus import GooglePlusPage
+import html2text
 from instagram import Instagram
 import models
 from models import Publish, PublishedPage
@@ -234,9 +235,7 @@ class Handler(webmention.WebmentionHandler):
           error_plain='Could not find content in %s' % self.fetched.url,
           error_html='Could not find <a href="http://microformats.org/">content</a> in %s' % self.fetched.url)
 
-    # expand inReplyTo or object urls by fetching the original and
-    # searching for rel=syndication
-    self.expand_target_urls(obj)
+    self.preprocess_activity(obj)
 
     # special case for me: don't allow posts in live app, just comments, likes,
     # and reposts
@@ -286,6 +285,31 @@ class Handler(webmention.WebmentionHandler):
       logging.info('Returning %s', pprint.pformat(self.entity.published))
       return as_source.creation_result(
         json.dumps(self.entity.published, indent=2))
+
+  def preprocess_activity(self, activity):
+    """Preprocesses an item before trying to publish it.
+
+    Specifically:
+    * Expands inReplyTo/object URLs with rel=syndication URLs.
+    * Renders the HTML content to text using html2text so that whitespace is
+      formatted like in the browser.
+
+    Args:
+      activity: an ActivityStreams dict of the activity being published
+    """
+    self.expand_target_urls(activity)
+
+    content = activity.get('content')
+    if content:
+      h = html2text.HTML2Text()
+      h.unicode_snob = True
+      h.body_width = 0  # don't wrap lines
+      h.ignore_links = True
+      h.ignore_images = True
+      activity['content'] = '\n'.join(
+        # strip trailing whitespace that html2text adds to ends of some lines
+        line.rstrip() for line in h.handle(content).splitlines())
+      logging.info('Rendered content to:\n%s', activity['content'])
 
   def expand_target_urls(self, activity):
     """Expand the inReplyTo or object fields of an ActivityStreams object

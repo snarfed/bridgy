@@ -48,7 +48,8 @@ class PublishTest(testutil.HandlerTest):
     resp = self.get_response(preview=preview, **kwargs)
     self.assertEquals(200, resp.status_int)
     if preview:
-      self.assertIn(expected, resp.body)
+      self.assertIn(expected, resp.body,
+                    '%r\n\n=== vs ===\n\n%r' % (expected, resp.body))
       self.assertIn('FakeAsSource preview description', resp.body)
     else:
       self.assertIn(expected, json.loads(resp.body)['content'])
@@ -294,7 +295,7 @@ this is my article
 this is my article
 </div></div></div>""")
     self.mox.ReplayAll()
-    self.assert_success('\nthis is my article\n - http://foo.com/bar')
+    self.assert_success('this is my article - http://foo.com/bar')
 
   def test_ignore_hfeed_contents(self):
     """Background in https://github.com/snarfed/bridgy/issues/219"""
@@ -647,7 +648,7 @@ this is my article
       'displayName': 'yes',
       'object': [{'url': 'http://fa.ke/homebrew-website-club'}],
       'objectType': 'activity',
-      'content': '\nyes\n\n',
+      'content': 'yes',
     }, include_link=True).AndReturn(as_source.creation_result({
       'url': 'http://fake/url',
       'id': 'http://fake/url',
@@ -684,3 +685,30 @@ this is my article
     self.mox.ReplayAll()
 
     self.assert_error('no fa.ke url to reply to')
+
+  def test_html2text(self):
+    """Test that using html2text renders whitespace ok in publish content."""
+    # based on https://snarfed.org/2014-01-15_homebrew-website-club-tonight
+    for i in range(2):
+      self.expect_requests_get('http://foo.com/bar', """\
+    <article class="h-entry"><div class="e-content">
+      <p class="h-event">
+      <a class="u-url p-name" href="http://h.w/c">
+        Homebrew Website Club</a>
+      is <em>tonight</em>!
+      <img class="shadow" src="/pour_over_coffee_stand.jpg" /></p>
+      <time class="dt-start">6:30pm PST</time> at
+
+      <a href="https://wiki.mozilla.org/SF">Mozilla SF</a> and
+      <a href="https://twitter.com/esripdx">Esri Portland</a>.<br />Join us!
+    </p></div></article>
+    """)
+
+    self.mox.ReplayAll()
+    expected = """\
+Homebrew Website Club is _tonight_!
+
+6:30pm PST at Mozilla SF and Esri Portland.
+Join us! - http://foo.com/bar"""
+    self.assert_success(expected, preview=True)
+    self.assert_success(expected, preview=False)
