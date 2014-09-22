@@ -144,11 +144,15 @@ class Poll(webapp2.RequestHandler):
     #
     # Step 1: fetch activities
     #
+    cache = util.CacheDict()
+    if source.last_activities_cache_json:
+      cache.update(json.loads(source.last_activities_cache_json))
+
     try:
       response = source.get_activities_response(
         fetch_replies=True, fetch_likes=True, fetch_shares=True, count=50,
         etag=source.last_activities_etag, min_id=source.last_activity_id,
-        cache=memcache)
+        cache=cache)
     except Exception, e:
       code, body = handlers.interpret_http_exception(e)
       if code == '401':
@@ -170,6 +174,7 @@ class Poll(webapp2.RequestHandler):
     activities = response.get('items', [])
     logging.info('Found %d activities', len(activities))
     last_activity_id = source.last_activity_id
+    source_updates['last_activities_cache_json'] = json.dumps(cache)
 
     #
     # Step 2: extract responses, store their activities in response['activities']

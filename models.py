@@ -107,6 +107,7 @@ class Source(StringIdModel):
 
   last_activity_id = ndb.StringProperty()
   last_activities_etag = ndb.StringProperty()
+  last_activities_cache_json = ndb.TextProperty()
 
   # as_source is *not* set to None by default here, since it needs to be unset
   # for __getattr__ to run when it's accessed.
