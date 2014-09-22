@@ -69,6 +69,11 @@ class GooglePlusPage(models.Source):
     """Returns the Google+ account URL, e.g. https://plus.google.com/+Foo."""
     return self.url
 
+  def get_activities_response(self, **kwargs):
+    kwargs.pop('cache', None)
+    kwargs['since_response'] = self.last_activities_response
+    return super(GooglePlusPage, self).get_activities_response(**kwargs)
+
   def __getattr__(self, name):
     """Overridden to pass auth_entity to as_googleplus.GooglePlus's ctor."""
     if name == 'as_source' and self.auth_entity:

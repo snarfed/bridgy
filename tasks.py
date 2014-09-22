@@ -124,7 +124,11 @@ class Poll(webapp2.RequestHandler):
     source = source.key.get()
     for name, val in updates.items():
       setattr(source, name, val)
-    source.put()
+    try:
+      source.put()
+    except:
+      logging.warning('@ %s', json.dumps(source.last_activities_response, indent=2))
+      raise
 
     # add new poll task. randomize task ETA to within +/- 20% to try to spread
     # out tasks and prevent thundering herds.
