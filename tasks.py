@@ -145,7 +145,7 @@ class Poll(webapp2.RequestHandler):
     # Step 1: fetch activities
     #
     try:
-      get_activities_response = source.get_activities_response(
+      response = source.get_activities_response(
         fetch_replies=True, fetch_likes=True, fetch_shares=True, count=50,
         etag=source.last_activities_etag, min_id=source.last_activity_id,
         cache=memcache)
@@ -167,7 +167,7 @@ class Poll(webapp2.RequestHandler):
       else:
         raise
 
-    activities = get_activities_response.get('items', [])
+    activities = response.get('items', [])
     logging.info('Found %d activities', len(activities))
     last_activity_id = source.last_activity_id
 
@@ -263,7 +263,7 @@ class Poll(webapp2.RequestHandler):
         # discovered webmention targets inside its object.
         targets = activity.get('targets')
         if targets is None:
-          targets = activity['targets'] = list(get_webmention_targets(source, activity))
+          targets = activity['targets'] = get_webmention_targets(source, activity)
           source_updates['last_syndication_url'] = source.last_syndication_url
         logging.info('%s has %d original post URL(s): %s', activity.get('url'),
                      len(targets), ' '.join(targets))
@@ -293,10 +293,8 @@ class Poll(webapp2.RequestHandler):
           existing_ids + [util.parse_tag_uri(id)[1] for id in responses])
 
     source_updates.update({'last_polled': source.last_poll_attempt,
-                           'status': 'enabled',
-                           'last_activities_response': get_activities_response,
-                           })
-    etag = get_activities_response.get('etag')
+                           'status': 'enabled'})
+    etag = response.get('etag')
     if last_activity_id and last_activity_id != source.last_activity_id:
       logging.debug('Storing new last activity id: %s', last_activity_id)
       source_updates['last_activity_id'] = last_activity_id

@@ -107,8 +107,6 @@ class PollTest(TaskQueueTest):
 
     source = self.sources[0].key.get()
     self.assertEqual(NOW, source.last_polled)
-    self.assert_equals(source.get_activities_response(),
-                       source.last_activities_response)
 
     tasks = self.taskqueue_stub.GetTasks('propagate')
     for task in tasks:
@@ -136,7 +134,6 @@ class PollTest(TaskQueueTest):
     self.assertRaises(Exception, self.post_task)
     source = self.sources[0].key.get()
     self.assertEqual('error', source.status)
-    self.assertIsNone(source.last_activities_response)
 
   def test_reset_status_to_enabled(self):
     """After a successful poll, the source status should be set to 'enabled'."""

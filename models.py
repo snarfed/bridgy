@@ -105,8 +105,6 @@ class Source(StringIdModel):
   # doesn't expire. details: http://developers.facebook.com/docs/authentication/
   auth_entity = ndb.KeyProperty()
 
-  last_activities_response = ndb.JsonProperty()
-  # TODO: drop these and use last_activities_response instead
   last_activity_id = ndb.StringProperty()
   last_activities_etag = ndb.StringProperty()
 
