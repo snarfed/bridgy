@@ -29,8 +29,8 @@ deploys to App Engine:
 
 ```shell
 ./alltests.py && cd activitystreams && ./alltests.py && \
-  cd oauth_dropins && ./alltests.py && \
-  cd ../.. && git push --recurse-submodules=on-demand && \
+  cd oauth_dropins && ./alltests.py && cd webutil && ./alltests.py && \
+  cd ../../.. && git push --recurse-submodules=on-demand && \
   ~/google_appengine/appcfg.py --oauth2 update .
 ```
 
