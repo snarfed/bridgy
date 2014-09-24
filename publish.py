@@ -196,7 +196,7 @@ class Handler(webmention.WebmentionHandler):
         msg = ("%s doesn't support type(s) %s, or no content was found.." %
                (source_cls.AS_CLASS.NAME, ' + '.join(types)))
       else:
-        msg = 'Could not find <a href="http://microformats.org/">h-entry</a> or other content to publish!'
+        msg = 'Could not find content in <a href="http://microformats.org/wiki/h-entry">h-entry</a> or any other element!'
       return self.error(msg, data=data)
 
     # write results to datastore

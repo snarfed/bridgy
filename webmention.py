@@ -77,15 +77,20 @@ class WebmentionHandler(WebmentionGetHandler):
 
     # special case tumblr's markup: div#content > div.post > div.copy
     # convert to mf2.
-    contents = doc.find_all('div', id='content')
+    contents = doc.find_all(id='content')
     if contents:
-      post = contents[0].find_next('div', class_='post')
+      post = contents[0].find_next(class_='post')
       if post:
-        copy = post.find_next('div', class_='copy')
+        post['class'] = 'h-entry'
+        copy = post.find_next(class_='copy')
         if copy:
-          post['class'] = 'h-entry'
           copy['class'] = 'e-content'
-          doc = unicode(post)
+        photo = post.find_next(class_='photo-wrapper')
+        if photo:
+          img = photo.find_next('img')
+          if img:
+            img['class'] = 'u-photo'
+        doc = unicode(post)
 
     # parse microformats, convert to ActivityStreams
     data = parser.Parser(doc=doc, url=fetched.url).to_dict()

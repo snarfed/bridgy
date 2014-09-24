@@ -326,6 +326,29 @@ this is my article
     self.mox.ReplayAll()
     self.assert_success('this is my article - http://foo.com/bar')
 
+  def test_tumblr_markup_with_photo(self):
+    """A tumblr post with a picture but no text.
+    Based on http://require.aorcsik.com/post/98159554316/whitenoisegirl-the-clayprofessor-chris """
+    self.expect_requests_get('http://foo.com/bar', """
+<body>
+<section id="content">
+  <section class="post">
+    <figure>
+      <div class="photo-wrapper">
+        <div class="photo-wrapper-inner">
+          <a href="http://my/photo/download">
+            <img src="http://my/photo/url">
+          </a>
+        </div>
+      </div>
+    </figure>
+  </section>
+</section>
+</body>
+""")
+    self.mox.ReplayAll()
+    self.assert_error('Could not find content')
+
   def test_returned_type_overrides(self):
     # FakeSource returns type 'post' when it sees 'rsvp'
     self.expect_requests_get('http://foo.com/bar', """
