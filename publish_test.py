@@ -53,6 +53,7 @@ class PublishTest(testutil.HandlerTest):
       self.assertIn('FakeAsSource preview description', resp.body)
     else:
       self.assertIn(expected, json.loads(resp.body)['content'])
+    return resp
 
   def assert_error(self, expected, status=400, **kwargs):
     resp = self.get_response(**kwargs)
@@ -710,5 +711,7 @@ Homebrew Website Club is _tonight_!
 
 6:30pm PST at Mozilla SF and Esri Portland.
 Join us! - http://foo.com/bar"""
+
     self.assert_success(expected, preview=True)
-    self.assert_success(expected, preview=False)
+    resp = self.assert_success(expected, preview=False)
+    self.assertEquals(expected, json.loads(resp.body)['content'])
