@@ -58,12 +58,14 @@ DISQUS_API_THREAD_DETAILS_URL = 'http://disqus.com/api/3.0/threads/details.json'
 # Tumblr has no single standard markup or JS for integrating Disqus. It does
 # have a default way, but themes often do it themselves, differently. Sigh.
 # Details in https://github.com/snarfed/bridgy/issues/278
-DISQUS_SHORTNAME_RE = re.compile("""
+DISQUS_SHORTNAME_RES = (
+  re.compile("""
     (?:http://disqus.com/forums|disqus[ -_]?(?:user|short)?name)
     \ *[=:/]\ *['"]?
     ([^/"\' ]+)     # the actual shortname
-    """,
-  re.IGNORECASE | re.VERBOSE)
+    """, re.IGNORECASE | re.VERBOSE),
+  re.compile('http://([^./"\' ]+).disqus.com/embed.js'),
+  )
 
 class Tumblr(models.Source):
   """A Tumblr blog.
@@ -148,11 +150,12 @@ class Tumblr(models.Source):
   def discover_disqus_shortname(self, html):
     # scrape the disqus shortname out of the page
     logging.info("Looking for Disqus shortname in fetched HTML")
-    match = DISQUS_SHORTNAME_RE.search(html)
-    if match:
-      self.disqus_shortname = match.group(1)
-      logging.info("Found Disqus shortname %s", self.disqus_shortname)
-      self.put()
+    for regex in DISQUS_SHORTNAME_RES:
+      match = regex.search(html)
+      if match:
+        self.disqus_shortname = match.group(1)
+        logging.info("Found Disqus shortname %s", self.disqus_shortname)
+        self.put()
 
   def create_comment(self, post_url, author_name, author_url, content):
     """Creates a new comment in the source silo.

@@ -84,6 +84,11 @@ class TumblrTest(testutil.HandlerTest):
     # based on http://circusriot.tumblr.com/
     self._test_verify_finds_disqus('  disqusUsername = "my-disqus-name";')
 
+  def test_verify_require_aorcsik_theme(self):
+    # based on http://require.aorcsik.com/
+    self._test_verify_finds_disqus(
+      '  dsq.src = "http://my-disqus-name.disqus.com/embed.js";')
+
   def _test_verify_finds_disqus(self, snippet):
     # this requests.get is called by webmention-tools
     self.expect_requests_get(
