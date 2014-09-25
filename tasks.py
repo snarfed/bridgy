@@ -173,13 +173,10 @@ class Poll(webapp2.RequestHandler):
 
     activities = response.get('items', [])
     logging.info('Found %d activities', len(activities))
-    last_activity_id = source.last_activity_id
-    source_updates['last_activities_cache_json'] = json.dumps(cache)
 
-    #
-    # Step 2: extract responses, store their activities in response['activities']
-    #
-    responses = {}  # key is response id
+    # extract silo activity ids, update last_activity_id
+    silo_activity_ids = set()
+    last_activity_id = source.last_activity_id
     for activity in activities:
       # extract activity id and maybe replace stored last activity id
       id = activity.get('id')
@@ -187,6 +184,7 @@ class Poll(webapp2.RequestHandler):
         parsed = util.parse_tag_uri(id)
         if parsed:
           id = parsed[1]
+        silo_activity_ids.add(id)
         try:
           # try numeric comparison first
           greater = int(id) > int(last_activity_id)
@@ -195,6 +193,21 @@ class Poll(webapp2.RequestHandler):
         if greater:
           last_activity_id = id
 
+    if last_activity_id and last_activity_id != source.last_activity_id:
+      source_updates['last_activity_id'] = last_activity_id
+      logging.debug('Storing new last activity id: %s', last_activity_id)
+
+    # trim cache to just the returned activity ids, so that it doesn't grow
+    # without bound. (WARNING: depends on get_activities_response()'s cache key
+    # format, e.g. 'PREFIX ACTIVITY_ID'!
+    source_updates['last_activities_cache_json'] = json.dumps(
+      {k: v for k, v in cache.items() if k.split()[-1] in silo_activity_ids})
+
+    #
+    # Step 2: extract responses, store their activities in response['activities']
+    #
+    responses = {}  # key is response id
+    for activity in activities:
       if not Source.is_public(activity):
         logging.info('Skipping non-public activity %s', id)
         continue
@@ -300,9 +313,6 @@ class Poll(webapp2.RequestHandler):
     source_updates.update({'last_polled': source.last_poll_attempt,
                            'status': 'enabled'})
     etag = response.get('etag')
-    if last_activity_id and last_activity_id != source.last_activity_id:
-      logging.debug('Storing new last activity id: %s', last_activity_id)
-      source_updates['last_activity_id'] = last_activity_id
     if etag and etag != source.last_activities_etag:
       logging.debug('Storing new ETag: %s', etag)
       source_updates['last_activities_etag'] = etag

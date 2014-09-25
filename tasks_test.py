@@ -493,6 +493,15 @@ class PollTest(TaskQueueTest):
     source = self.sources[0].key.get()
     self.assertEqual('c', source.last_activity_id)
 
+  def test_cache_trims_to_returned_activity_ids(self):
+    """We should trim last_activities_cache_json to just the returned activity ids."""
+    self.sources[0].last_activities_cache_json = json.dumps(
+      {1: 2, 'x': 'y', 'prefix x': 1, 'prefix b': 0})
+    self.post_task()
+
+    source = self.sources[0].key.get()
+    self.assert_equals({'prefix b': 0}, json.loads(source.last_activities_cache_json))
+
   def test_slow_poll_never_sent_webmention(self):
     self.sources[0].created = NOW - (FakeSource.FAST_POLL_GRACE_PERIOD +
                                      datetime.timedelta(minutes=1))
