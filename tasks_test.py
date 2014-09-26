@@ -240,6 +240,31 @@ class PollTest(TaskQueueTest):
     self.assert_equals(['http://foo/bar?a=b'],
                        self.responses[0].key.get().unsent)
 
+  def test_strip_utm_query_params_after_redirect(self):
+    """utm_* query params should also be stripped after redirects."""
+    for a in self.activities:
+      a['object']['tags'][0]['id'] = 'tag:source.com,2013:only_reply'
+      del a['object']['tags'][1], a['object']['replies']
+
+    # test with two activities so we can check urls_to_activity.
+    # https://github.com/snarfed/bridgy/issues/237
+    self.activities[0]['object'].update({'content': 'http://redir/0'})
+    self.activities[1]['object'].update({'content': 'http://redir/1'})
+    self.sources[0].set_activities(self.activities[0:2])
+
+    self.expect_requests_head('http://redir/0',
+                              redirected_url='http://first?utm_medium=x')
+    self.expect_requests_head('http://redir/1',
+                              redirected_url='http://second?utm_source=Twitter')
+    self.mox.ReplayAll()
+    self.post_task()
+
+    self.assertEquals(1, models.Response.query().count())
+    resp = models.Response.query().get()
+    self.assert_equals(['http://first', 'http://second'], resp.unsent)
+    self.assert_equals({'http://first': 0, 'http://second': 1},
+                       json.loads(resp.urls_to_activity))
+
   def test_url_over_500_chars(self):
     """URLs over 500 chars should be truncated and skipped."""
     self.activities[0]['object'].update({'tags': [], 'content': 'http://first'})

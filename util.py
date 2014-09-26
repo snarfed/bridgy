@@ -208,7 +208,6 @@ def get_webmention_target(url, cache=True):
   if not domain or in_webmention_blacklist(domain):
     return (url, domain, False)
 
-  url = clean_webmention_url(url)
   resolved = follow_redirects(url, cache=cache)
   if resolved.url != url:
     logging.debug('Resolved %s to %s', url, resolved.url)
@@ -216,7 +215,7 @@ def get_webmention_target(url, cache=True):
     domain = domain_from_link(url)
 
   is_html = resolved.headers.get('content-type', '').startswith('text/html')
-  return (url, domain, is_html)
+  return (clean_webmention_url(url), domain, is_html)
 
 
 def in_webmention_blacklist(domain):

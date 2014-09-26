@@ -117,3 +117,10 @@ class UtilTest(testutil.ModelsTest):
       self.assertFalse(util.get_webmention_target(bad)[2], bad)
 
     self.assertTrue(util.get_webmention_target('http://good.com/a')[2])
+
+  def test_get_webmention_cleans_redirected_urls(self):
+    self.expect_requests_head('http://foo/bar',
+                              redirected_url='http://final?utm_source=x')
+    self.mox.ReplayAll()
+    self.assert_equals(('http://final', 'final', True),
+                       util.get_webmention_target('http://foo/bar'))
