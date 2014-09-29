@@ -48,7 +48,9 @@ WEBMENTION_BLACKLIST = {
   'google.com',
   'instagr.am',
   'instagram.com',
+  'last.fm',
   'linkedin.com',
+  'myspace.com',
   'twitter.com',
   # these come from the text of tweets. we also pull the expanded URL
   # from the tweet entities, so ignore these instead of resolving them.
