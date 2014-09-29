@@ -34,31 +34,49 @@ FAILED_RESOLVE_URL_CACHE_TIME = 60 * 60 * 24  # a day
 # https://developers.facebook.com/docs/reference/ads-api/api-rate-limiting/
 HTTP_RATE_LIMIT_CODES = frozenset(('403', '429', '503'))
 
-# Known domains that don't support webmentions. Mainly just the silos.
+# Domains that don't support webmentions. Mainly just the silos.
 # Subdomains are automatically blacklisted too.
+#
+# We also check this when a user sign up and we extract the web site links from
+# their profile. We automatically omit links to these domains.
 WEBMENTION_BLACKLIST = {
   'about.me',
-  'amzn.com',
   'amazon.com',
-  'brid.gy',
+  'amzn.com',
   'brid-gy.appspot.com',
+  'brid.gy',
+  'disqus.com',
   'example.com',
   'facebook.com',
+  'flickr.com',
+  'foursquare.com',
+  'friendfeed.com',
+  'getsatisfaction.com',
   'ggpht.com',
+  'goodreads.com',
   'google.com',
   'instagr.am',
   'instagram.com',
+  'intensedebate.com',
   'last.fm',
   'linkedin.com',
   'myspace.com',
+  'openstreetmap.org',
+  'quora.com',
+  'stackexchange.com',
+  'stackoverflow.com',
+  'stumbleupon.com',
   'twitter.com',
+  'typepad.com',
+  'wikipedia.org',
+  'ycombinator.com',
+  'youtu.be',
+  'youtube.com',
   # these come from the text of tweets. we also pull the expanded URL
   # from the tweet entities, so ignore these instead of resolving them.
   't.co',
   't',
   'twitpic.com',
-  'youtube.com',
-  'youtu.be',
   '', None,
   # these show up in the categories and tags sections of wordpress.com blog
   # posts. superfeedr doesn't filter them out of its 'content' field.
