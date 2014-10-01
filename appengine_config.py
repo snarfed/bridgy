@@ -57,7 +57,7 @@ class BlacklistingHandler(ereporter.ExceptionRecordingHandler):
     'ConnectionError: HTTPSConnectionPool',
     'DeadlineExceededError',
     'error: An error occured while connecting to the server: Unable to fetch URL:',
-    'HTTPError: HTTP Error 400: Bad Request:',
+    'HTTPError: HTTP Error 400: Bad Request',
     'HTTPError: HTTP Error 404: Not Found',
     'HTTPError: HTTP Error 500: Internal Server Error',
     'HTTPError: HTTP Error 502: Bad Gateway',
