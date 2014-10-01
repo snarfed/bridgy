@@ -256,6 +256,11 @@ button {
   white-space: pre-wrap;
   font-family: inherit;
   font-size: inherit;
+  max-width: 98%;
+}
+
+#preview-text img {
+  max-width: 100%;
 }
 
 #source-url {
