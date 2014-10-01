@@ -237,16 +237,6 @@ class Handler(webmention.WebmentionHandler):
 
     self.preprocess_activity(obj)
 
-    # special case for me: don't allow posts in live app, just comments, likes,
-    # and reposts
-    verb = obj.get('verb', '')
-    if (not appengine_config.DEBUG and 'snarfed.org' in self.source.domains and
-        not self.PREVIEW and obj_type in ('note', 'article') and
-        verb not in ('like', 'share') and not verb.startswith('rsvp-')):
-      return as_source.creation_result(
-        abort=True, error_plain='Not posting for snarfed.org',
-        error_html='Not posting for snarfed.org')
-
     # whether to include link to original post. bridgy_omit_link query param
     # (any value) takes precedence, then u-bridgy-omit-link mf2 class.
     if 'bridgy_omit_link' in self.request.params:
