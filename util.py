@@ -43,8 +43,6 @@ WEBMENTION_BLACKLIST = {
   'about.me',
   'amazon.com',
   'amzn.com',
-  'brid-gy.appspot.com',
-  'brid.gy',
   'disqus.com',
   'example.com',
   'facebook.com',

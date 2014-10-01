@@ -219,7 +219,7 @@ class PollTest(TaskQueueTest):
     obj = self.activities[0]['object']
     obj['tags'] = [{'objectType': 'article', 'url': 'http://tar.get/good'}]
     obj['attachments'] = [{'objectType': 'article', 'url': 'http://foo]'}]
-    obj['content'] = 'foo http://facebook.com/bad bar baz (brid.gy bad)'
+    obj['content'] = 'foo http://facebook.com/bad bar baz (t.co bad)'
     self.sources[0].set_activities([self.activities[0]])
 
     self.post_task()
@@ -1312,9 +1312,26 @@ class PropagateTest(TaskQueueTest):
     self.mox.ReplayAll()
 
     self.post_url = '/_ah/queue/propagate-blogpost'
-    super(PropagateTest, self).post_task(
-      expected_status=200,
-      params={'key': blogpost.key.urlsafe()})
+    super(PropagateTest, self).post_task(params={'key': blogpost.key.urlsafe()})
     self.assert_response_is('complete', NOW + LEASE_LENGTH,
                             sent=['http://ok/two'], response=blogpost)
     self.assert_equals(NOW, source_key.get().last_webmention_sent)
+
+  def test_propagate_blogpost_allows_bridgy_publish_links(self):
+    source_key = FakeSource.new(None, domains=['fake']).put()
+    blogpost = models.BlogPost(id='x', source=source_key,
+                               unsent=['https://www.brid.gy/publish/facebook'])
+    blogpost.put()
+
+    self.expect_requests_head('https://www.brid.gy/publish/facebook')
+    self.expect_webmention(
+      source_url='x',
+      target='https://www.brid.gy/publish/facebook',
+      discovered_endpoint='https://www.brid.gy/publish/webmention',
+      ).AndReturn(True)
+    self.mox.ReplayAll()
+
+    self.post_url = '/_ah/queue/propagate-blogpost'
+    super(PropagateTest, self).post_task(params={'key': blogpost.key.urlsafe()})
+    self.assert_response_is('complete', response=blogpost,
+                            sent=['https://www.brid.gy/publish/facebook'])
