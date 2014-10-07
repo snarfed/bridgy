@@ -448,7 +448,8 @@ this is my article
 
     self.expect_requests_get('http://foo.com/bar', """
     <article class="h-entry">
-      <a class="u-in-reply-to" href="http://orig.domain/baz">In reply to<a/>
+      <a class="u-url" href="http://foo.com/bar"></a>
+      <a class="u-in-reply-to" href="http://orig.domain/baz">In reply to</a>
     </article>
     """)
 
@@ -483,7 +484,8 @@ this is my article
 
     self.expect_requests_get('http://foo.com/bar', """
     <article class="h-entry">
-      <a class="u-like-of" href="http://orig.domain/baz">liked this<a/>
+      <a class="u-url" href="http://foo.com/bar"></a>
+      <a class="u-like-of" href="http://orig.domain/baz">liked this</a>
     </article>
     """)
 
@@ -521,7 +523,8 @@ this is my article
 
     self.expect_requests_get('http://foo.com/bar', """
     <article class="h-entry">
-      <a class="u-repost-of" href="http://orig.domain/baz">reposted this<a/>
+      <a class="u-url" href="http://foo.com/bar"></a>
+      <a class="u-repost-of" href="http://orig.domain/baz">reposted this</a>
     </article>
     """)
 
@@ -557,7 +560,8 @@ this is my article
 
     self.expect_requests_get('http://foo.com/bar', """
     <article class="h-entry">
-      <a class="u-in-reply-to" href="http://orig.domain/baz"><a/>
+      <a class="u-url" href="http://foo.com/bar"></a>
+      <a class="u-in-reply-to" href="http://orig.domain/baz"></a>
       <span class="p-rsvp">yes</span>
     </article>
     """)
@@ -596,7 +600,8 @@ this is my article
 
     self.expect_requests_get('http://foo.com/bar', """
     <article class="h-entry">
-      <a class="u-in-reply-to" href="http://orig.domain/baz">In reply to<a/>
+      <a class="u-url" href="http://foo.com/bar"></a>
+      <a class="u-in-reply-to" href="http://orig.domain/baz">In reply to</a>
     </article>
     """)
 
@@ -626,7 +631,8 @@ this is my article
 
     self.expect_requests_get('http://foo.com/bar', """
     <article class="h-entry">
-      <a class="u-like-of" href="http://orig.domain/baz">liked this<a/>
+      <a class="u-url" href="http://foo.com/bar"></a>
+      <a class="u-like-of" href="http://orig.domain/baz">liked this</a>
     </article>
     """)
 
@@ -663,6 +669,7 @@ this is my article
       <span class="p-rsvp" value="yes">yes</span>
       <a class="u-in-reply-to" href="http://fa.ke/homebrew-website-club"></a>
      </div>
+      <a class="u-url" href="http://foo.com/bar"></a>
     </article>
     """)
 
@@ -690,6 +697,7 @@ this is my article
 
     self.expect_requests_get('http://foo.com/bar', """
     <article class="h-entry">
+      <a class="u-url" href="http://foo.com/bar"></a>
       In reply to a post on <a class="u-in-reply-to" href="http://original.domain/baz">original</a>
       <div class="p-name e-content">
         Great post about an important subject
