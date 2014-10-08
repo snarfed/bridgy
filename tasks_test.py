@@ -1052,6 +1052,21 @@ class PropagateTest(TaskQueueTest):
     self.post_task()
     self.assert_response_is('complete', sent=['http://html/charset'])
 
+  def test_no_content_type_header(self):
+    """If the Content-Type header is missing, we should assume text/html."""
+    self.mox.UnsetStubs()  # drop WebmentionSend mock; let it run
+    super(PropagateTest, self).setUp()
+
+    self.responses[0].unsent = ['http://unknown/type']
+    self.responses[0].put()
+    self.expect_requests_head('http://unknown/type', status_code=405)
+    self.expect_requests_get('http://unknown/type', content_type=None,
+                             timeout=999, verify=False)
+
+    self.mox.ReplayAll()
+    self.post_task()
+    self.assert_response_is('complete', skipped=['http://unknown/type'])
+
   def test_no_targets(self):
     """No target URLs."""
     self.responses[0].unsent = []
