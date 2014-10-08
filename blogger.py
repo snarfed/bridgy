@@ -177,7 +177,7 @@ class OAuthCallback(util.Handler):
     if not state:
       # state doesn't currently come through for Blogger. not sure why. doesn't
       # matter for now since we don't plan to implement listen or publish.
-      state = 'webmention'
+      state = self.construct_state_param_for_add(feature='webmention')
 
     if not auth_entity:
       self.maybe_add_or_delete_source(Blogger, auth_entity, state)
@@ -198,6 +198,14 @@ class OAuthCallback(util.Handler):
     self.response.out.write(template.render('templates/choose_blog.html', vars))
 
 
+class StartBlogger(oauth_blogger.StartHandler, util.Handler):
+  """Handler to start the Blogger authentication process
+  """
+  def redirect_url(self, state=None):
+    return super(StartBlogger, self).redirect_url(
+      self.construct_state_param_for_add(state))
+
+
 class AddBlogger(util.Handler):
   def post(self):
     auth_entity_key = util.get_required_param(self, 'auth_entity_key')
@@ -214,7 +222,7 @@ class SuperfeedrNotifyHandler(superfeedr.NotifyHandler):
 
 
 application = webapp2.WSGIApplication([
-    ('/blogger/start', oauth_blogger.StartHandler.to('/blogger/oauth2callback')),
+    ('/blogger/start', StartBlogger.to('/blogger/oauth2callback')),
     ('/blogger/oauth2callback', oauth_blogger.CallbackHandler.to('/blogger/oauth_handler')),
     ('/blogger/oauth_handler', OAuthCallback),
     ('/blogger/add', AddBlogger),

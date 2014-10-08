@@ -14,6 +14,7 @@ import activitystreams
 from activitystreams import facebook_test as as_facebook_test
 from activitystreams.oauth_dropins import facebook as oauth_facebook
 from facebook import FacebookPage
+import facebook
 import models
 import testutil
 
@@ -22,8 +23,11 @@ class FacebookPageTest(testutil.ModelsTest):
 
   def setUp(self):
     super(FacebookPageTest, self).setUp()
-    appengine_config.FACEBOOK_APP_ID = 'my_app_id'
-    appengine_config.FACEBOOK_APP_SECRET = 'my_app_secret'
+    for config in (appengine_config, activitystreams.appengine_config,
+                   activitystreams.oauth_dropins.appengine_config):
+      setattr(config, 'FACEBOOK_APP_ID', 'my_app_id')
+      setattr(config, 'FACEBOOK_APP_SECRET', 'my_app_secret')
+
     self.handler.messages = []
     self.auth_entity = oauth_facebook.FacebookAuth(
       id='my_string_id', auth_code='my_code', access_token_str='my_token',
@@ -108,9 +112,6 @@ class FacebookPageTest(testutil.ModelsTest):
     self.assertRaises(models.DisableSource, page.get_activities)
 
   def test_expired_sends_notification(self):
-    activitystreams.appengine_config.FACEBOOK_APP_ID = 'my_app_id'
-    activitystreams.appengine_config.FACEBOOK_APP_SECRET = 'my_app_secret'
-
     self.expect_urlopen(
       'https://graph.facebook.com/me/posts?offset=0&access_token=my_token',
       json.dumps({'error': {'code': 190, 'error_subcode': 463}}), status=400)
@@ -162,3 +163,52 @@ class FacebookPageTest(testutil.ModelsTest):
       ('https://facebook.com/25624/posts/snarfed.org',
        'http://www.facebook.com/25624/posts/snarfed.org')):
       self.assertEqual(expected, page.canonicalize_syndication_url(input))
+
+  def test_registration_callback(self):
+    """Run through an authorization back and forth and make sure that
+    the callback makes it all the way through.
+    """
+    encoded_state = urllib.quote_plus(
+      '{"callback":"http://withknown.com/bridgy_callback",'
+      '"feature":"publish","operation":"add"}')
+
+    self.expect_urlopen(oauth_facebook.GET_ACCESS_TOKEN_URL % {
+      'auth_code': 'fake-code',
+      'client_id': appengine_config.FACEBOOK_APP_ID,
+      'client_secret': appengine_config.FACEBOOK_APP_SECRET,
+      'redirect_uri': urllib.quote_plus(
+        'http://localhost/facebook/add?state=' + encoded_state)
+    }, response='access_token=fake-access-token')
+
+    self.expect_urlopen(
+      oauth_facebook.API_USER_URL + '?access_token=fake-access-token',
+      response=json.dumps(as_facebook_test.USER))
+
+    self.mox.ReplayAll()
+
+    resp = facebook.application.get_response(
+      '/facebook/start', method='POST', body=urllib.urlencode({
+        'feature': 'publish',
+        'callback': 'http://withknown.com/bridgy_callback',
+      }))
+
+    self.assert_equals(302, resp.status_code)
+    self.assert_equals(oauth_facebook.GET_AUTH_CODE_URL % {
+      'scope': '',
+      'client_id': appengine_config.FACEBOOK_APP_ID,
+      'redirect_uri': urllib.quote_plus(
+        'http://localhost/facebook/add?state=' + encoded_state),
+    }, resp.headers['location'])
+
+    resp = facebook.application.get_response(
+      '/facebook/add?state=' + encoded_state +
+      '&code=fake-code')
+
+    self.assert_equals(302, resp.status_code)
+    self.assert_equals('http://withknown.com/bridgy_callback',
+                       resp.headers['location'])
+
+    fb = FacebookPage.query().get()
+    self.assert_(fb)
+    self.assert_equals(as_facebook_test.USER['name'], fb.name)
+    self.assert_equals([u'publish'], fb.features)

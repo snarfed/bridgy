@@ -333,7 +333,11 @@ class DeleteStartHandler(util.Handler):
     key = ndb.Key(urlsafe=util.get_required_param(self, 'key'))
     module = self.OAUTH_MODULES[key.kind()]
     feature = util.get_required_param(self, 'feature')
-    state = '%s-%s' % (feature, key.urlsafe())
+    state = self.encode_state_parameter({
+      'operation': 'delete',
+      'feature': feature,
+      'source': key.urlsafe(),
+    })
 
     # Google+ and Blogger don't support redirect_url() yet
     if module is oauth_googleplus:
@@ -360,13 +364,17 @@ class DeleteFinishHandler(util.Handler):
       self.redirect('/')
       return
 
-    parts = util.get_required_param(self, 'state').split('-', 1)
-    feature = parts[0]
-    if len(parts) != 2 or feature not in (Source.FEATURES):
-      self.abort(400, 'state query parameter must be [FEATURE]-[SOURCE KEY]')
+    parts = self.decode_state_parameter(util.get_required_param(self, 'state'))
+    if (not isinstance(parts, dict) or 'feature' not in parts
+        or 'source' not in parts):
+      self.abort(400, 'state query parameter must include "feature" and "source"')
+
+    feature = parts['feature']
+    if feature not in (Source.FEATURES):
+      self.abort(400, 'cannot delete unknown feature %s' % feature)
 
     logged_in_as = util.get_required_param(self, 'auth_entity')
-    source = ndb.Key(urlsafe=parts[1]).get()
+    source = ndb.Key(urlsafe=parts['source']).get()
     if logged_in_as == source.auth_entity.urlsafe():
       # TODO: remove credentials
       if feature in source.features:

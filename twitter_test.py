@@ -7,10 +7,14 @@ import copy
 import datetime
 import json
 import testutil
+import urllib
 
 from activitystreams import twitter_test as as_twitter_test
 from activitystreams.oauth_dropins import twitter as oauth_twitter
+import appengine_config
 import models
+import twitter
+import tweepy
 from twitter import Twitter
 
 
@@ -97,3 +101,70 @@ class TwitterTest(testutil.ModelsTest):
     ):
       self.assertEqual('https://twitter.com/username/012345',
                        tw.canonicalize_syndication_url(url))
+
+  def test_registration_callback(self):
+    """Run through an authorization back and forth and make sure that
+    the callback makes it all the way through.
+    """
+    class FakeAuthHandler:
+      def __init__(self):
+        self.request_token = {
+          'oauth_token': 'fake-oauth-token',
+          'oauth_token_secret': 'fake-oauth-token-secret',
+        }
+
+      def get_authorization_url(self, *args, **kwargs):
+        return 'http://fake/auth/url'
+
+      def get_access_token(self, *args, **kwargs):
+        return 'fake-access-token', 'fake-access-token-secret'
+
+    self.mox.StubOutWithMock(tweepy, 'OAuthHandler')
+
+    encoded_state = urllib.quote_plus(
+      '{"callback":"http://withknown.com/bridgy_callback",'
+      '"feature":"listen","operation":"add"}')
+
+    tweepy.OAuthHandler(
+      appengine_config.TWITTER_APP_KEY,
+      appengine_config.TWITTER_APP_SECRET,
+      'http://localhost/twitter/add?state=' + encoded_state
+    ).AndReturn(FakeAuthHandler())
+
+    tweepy.OAuthHandler(
+      appengine_config.TWITTER_APP_KEY,
+      appengine_config.TWITTER_APP_SECRET
+    ).AndReturn(FakeAuthHandler())
+
+    self.expect_urlopen(
+      u'https://api.twitter.com/1.1/account/verify_credentials.json',
+      json.dumps(as_twitter_test.USER))
+
+    self.expect_requests_get(
+      u'https://snarfed.org/',
+      response='<html><link rel="webmention" href="/webmention"></html>',
+      verify=False)
+
+    self.mox.ReplayAll()
+
+    resp = twitter.application.get_response(
+      '/twitter/start', method='POST', body=urllib.urlencode({
+        'feature': 'listen',
+        'callback': 'http://withknown.com/bridgy_callback',
+      }))
+
+    self.assert_equals(302, resp.status_code)
+    self.assert_equals('http://fake/auth/url', resp.headers['location'])
+
+    resp = twitter.application.get_response(
+      '/twitter/add?state=' + encoded_state +
+      '&oauth_token=fake-oauth-token&oauth_token_secret=fake-oauth-token-secret')
+
+    self.assert_equals(302, resp.status_code)
+    self.assert_equals('http://withknown.com/bridgy_callback',
+                       resp.headers['location'])
+
+    tw = Twitter.query().get()
+    self.assert_(tw)
+    self.assert_equals(as_twitter_test.USER['name'], tw.name)
+    self.assert_equals([u'listen'], tw.features)

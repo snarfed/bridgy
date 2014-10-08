@@ -78,6 +78,14 @@ class GooglePlusPage(models.Source):
     return getattr(super(GooglePlusPage, self), name)
 
 
+class StartHandler(oauth_googleplus.StartHandler, util.Handler):
+  """Handler to start the G+ authentication process
+  """
+  def redirect_url(self, state=None):
+    return super(StartHandler, self).redirect_url(
+      self.construct_state_param_for_add(state))
+
+
 class OAuthCallback(util.Handler):
   """OAuth callback handler.
 
@@ -90,14 +98,14 @@ class OAuthCallback(util.Handler):
     if not state:
       # state doesn't currently come through for G+. not sure why. doesn't
       # matter for now since we don't plan to implement publish for G+.
-      state = 'listen'
+      state = self.construct_state_param_for_add(feature='listen')
     auth_entity = ndb.Key(urlsafe=auth_entity_str_key).get()
     self.maybe_add_or_delete_source(GooglePlusPage, auth_entity, state)
 
 
 application = webapp2.WSGIApplication([
     # OAuth scopes are set in listen.html and publish.html
-    ('/googleplus/start', oauth_googleplus.StartHandler.to('/googleplus/oauth2callback')),
+    ('/googleplus/start', StartHandler.to('/googleplus/oauth2callback')),
     ('/googleplus/oauth2callback', oauth_googleplus.CallbackHandler.to('/googleplus/add')),
     ('/googleplus/add', OAuthCallback),
     ('/googleplus/delete/start', oauth_googleplus.StartHandler.to('/googleplus/oauth2callback')),

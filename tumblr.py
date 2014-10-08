@@ -256,6 +256,14 @@ class ChooseBlog(oauth_tumblr.CallbackHandler, util.Handler):
     self.response.out.write(template.render('templates/choose_blog.html', vars))
 
 
+class StartTumblr(oauth_tumblr.StartHandler, util.Handler):
+  """Handler to start the Tumblr authentication process
+  """
+  def redirect_url(self, state=None):
+    return super(StartTumblr, self).redirect_url(
+      self.construct_state_param_for_add(state))
+
+
 class AddTumblr(util.Handler):
   def post(self):
     auth_entity_key = util.get_required_param(self, 'auth_entity_key')
@@ -272,7 +280,7 @@ class SuperfeedrNotifyHandler(superfeedr.NotifyHandler):
 
 
 application = webapp2.WSGIApplication([
-    ('/tumblr/start', oauth_tumblr.StartHandler.to('/tumblr/choose_blog')),
+    ('/tumblr/start', StartTumblr.to('/tumblr/choose_blog')),
     ('/tumblr/choose_blog', ChooseBlog),
     ('/tumblr/add', AddTumblr),
     ('/tumblr/delete/finish', oauth_tumblr.CallbackHandler.to('/delete/finish')),

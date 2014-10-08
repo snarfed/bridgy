@@ -52,12 +52,15 @@ class UtilTest(testutil.ModelsTest):
       auth_entity = FakeAuthEntity(id='x', user_json=json.dumps({'url': bad_url}))
       auth_entity.put()
       self.assertIsNone(self.handler.maybe_add_or_delete_source(
-          FakeSource, auth_entity, 'publish'))
+        FakeSource, auth_entity,
+        self.handler.construct_state_param_for_add(feature='publish')))
 
     auth_entity = FakeAuthEntity(id='x', user_json=json.dumps(
         {'url': 'http://foo.com/', 'name': UNICODE_STR}))
     auth_entity.put()
-    src = self.handler.maybe_add_or_delete_source(FakeSource, auth_entity, 'publish')
+    src = self.handler.maybe_add_or_delete_source(
+      FakeSource, auth_entity,
+      self.handler.construct_state_param_for_add(feature='publish'))
     self.assertEquals(['publish'], src.features)
 
     self.assertEquals(302, self.handler.response.status_int)
@@ -65,7 +68,9 @@ class UtilTest(testutil.ModelsTest):
     self.assertIn(UNICODE_STR, urllib.unquote_plus(parsed.fragment).decode('utf-8'))
 
     for feature in None, '':
-      src = self.handler.maybe_add_or_delete_source(FakeSource, auth_entity, feature)
+      src = self.handler.maybe_add_or_delete_source(
+        FakeSource, auth_entity,
+        self.handler.construct_state_param_for_add(feature))
       self.assertEquals([], src.features)
 
   def test_prune_activity(self):

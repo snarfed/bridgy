@@ -4,6 +4,7 @@
 
 import collections
 import datetime
+import json
 import mimetypes
 import re
 import urllib
@@ -341,17 +342,20 @@ class Handler(webapp2.RequestHandler):
     Args:
       source_cls: source class, e.g. Instagram
       auth_entity: ouath-dropins auth entity
-      state: string, OAuth callback state parameter. For adds, this is just a
-        feature ('listen' or 'publish') or empty. For deletes, it's
-        [FEATURE]-[SOURCE KEY].
+      state: string, OAuth callback state parameter. For adds, this is usually
+        just a feature ('listen' or 'publish') or empty, but can also be a JSON
+        encoded dict with an optional callback URL. For deletes, it's always an
+        encoded dict with the feature, source key, and the operation 'delete'.
       kwargs: passed through to the source_cls constructor
 
     Returns:
       source entity if it was created or updated, otherwise None
     """
-    if state is None:
-      state = ''
-    if state in ('', 'listen', 'publish', 'webmention'):  # this is an add/update
+    state_obj = self.decode_state_parameter(state)
+    operation = state_obj.get('operation', 'add')
+    feature = state_obj.get('feature')
+
+    if operation == 'add':  # this is an add/update
       if not auth_entity:
         if not self.messages:
           self.messages.add("OK, you're not signed up. Hope you reconsider!")
@@ -362,9 +366,13 @@ class Handler(webapp2.RequestHandler):
       logging.info('%s.create_new with %s', source_cls.__class__.__name__,
                    (auth_entity.key, state, kwargs))
       source = source_cls.create_new(self, auth_entity=auth_entity,
-                                     features=[state] if state else [],
+                                     features=[feature] if feature else [],
                                      **kwargs)
-      self.redirect(source.bridgy_url(self) if source else '/')
+      if 'callback' in state_obj:
+        # call super.redirect so the callback url is unmodified
+        super(Handler, self).redirect(str(state_obj['callback']))
+      else:
+        self.redirect(source.bridgy_url(self) if source else '/')
       return source
 
     else:  # this is a delete
@@ -375,6 +383,43 @@ class Handler(webapp2.RequestHandler):
         self.messages.add('If you want to disable, please approve the %s prompt.' %
                           source_cls.AS_CLASS.NAME)
         self.redirect_home_or_user_page(state)
+
+  def construct_state_param_for_add(self, state=None, feature=None,
+                                    callback=None):
+    """Construct the state parameter if one isn't explicitly passed in
+    """
+    if not state:
+      state = self.encode_state_parameter({
+        'operation': 'add',
+        'feature': feature or self.request.get('feature'),
+        'callback': callback or self.request.get('callback'),
+      })
+    return state
+
+  def encode_state_parameter(self, obj):
+    """The state parameter is passed to various source authorization
+    endpoints and returned in a callback. This encodes a JSON object
+    so that it can be safely included as a query string parameter.
+
+    Args:
+      obj: a JSON-serializable dict
+
+    Returns: a string
+    """
+    return json.dumps(trim_nulls(obj), separators=(',',':'), sort_keys=True)
+
+  def decode_state_parameter(self, state):
+    """The state parameter is passed to various source authorization
+    endpoints and returned in a callback. This decodes a
+    JSON-serialized string and returns a dict.
+
+    Args:
+      state: a string (JSON-serialized dict)
+
+    Returns: a dict containing operation, feature, and possibly other fields
+    """
+    logging.debug('decoding state "%s"' % state)
+    return json.loads(state) if state else {}
 
   def redirect_home_or_user_page(self, state):
     redirect_to = '/'
@@ -403,6 +448,18 @@ class Handler(webapp2.RequestHandler):
     source.websites = [Website(url=u, domain=d) for u, d in
                        zip(source.domain_urls, source.domains)]
     return source
+
+
+class StartHandler(Handler):
+  def __init__(self, oauth_handler_cls):
+    self.oauth_handler_cls = oauth_handler_cls
+
+  def get_oauth_handler(self):
+    return self.oauth_handler_cls(self.request, self.response)
+
+  def post(self):
+    return self.get_oauth_handler().post()
+
 
 
 class CachedPage(StringIdModel):
