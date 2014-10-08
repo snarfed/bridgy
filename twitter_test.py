@@ -165,6 +165,57 @@ class TwitterTest(testutil.ModelsTest):
                        resp.headers['location'])
 
     tw = Twitter.query().get()
-    self.assert_(tw)
+    self.assertTrue(tw)
     self.assert_equals(as_twitter_test.USER['name'], tw.name)
     self.assert_equals([u'listen'], tw.features)
+
+  def test_registration_decline(self):
+    """Run through an authorization back and forth in the case of a
+    decline and make sure that the callback makes it all the way
+    through.
+    """
+    class FakeAuthHandler:
+      def __init__(self):
+        self.request_token = {
+          'oauth_token': 'fake-oauth-token',
+          'oauth_token_secret': 'fake-oauth-token-secret',
+        }
+
+      def get_authorization_url(self, *args, **kwargs):
+        return 'http://fake/auth/url'
+
+      def get_access_token(self, *args, **kwargs):
+        return None, None
+
+    self.mox.StubOutWithMock(tweepy, 'OAuthHandler')
+
+    encoded_state = urllib.quote_plus(
+      '{"callback":"http://withknown.com/bridgy_callback",'
+      '"feature":"listen","operation":"add"}')
+
+    tweepy.OAuthHandler(
+      appengine_config.TWITTER_APP_KEY,
+      appengine_config.TWITTER_APP_SECRET,
+      'http://localhost/twitter/add?state=' + encoded_state
+    ).AndReturn(FakeAuthHandler())
+
+    self.mox.ReplayAll()
+
+    resp = twitter.application.get_response(
+      '/twitter/start', method='POST', body=urllib.urlencode({
+        'feature': 'listen',
+        'callback': 'http://withknown.com/bridgy_callback',
+      }))
+
+    self.assert_equals(302, resp.status_code)
+    self.assert_equals('http://fake/auth/url', resp.headers['location'])
+
+    resp = twitter.application.get_response(
+      '/twitter/add?state=%s&denied=1' % encoded_state)
+
+    self.assert_equals(302, resp.status_code)
+    self.assert_equals('http://withknown.com/bridgy_callback?result=declined',
+                       resp.headers['location'])
+
+    tw = Twitter.query().get()
+    self.assertFalse(tw)

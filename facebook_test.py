@@ -209,6 +209,42 @@ class FacebookPageTest(testutil.ModelsTest):
                        resp.headers['location'])
 
     fb = FacebookPage.query().get()
-    self.assert_(fb)
+    self.assertTrue(fb)
     self.assert_equals(as_facebook_test.USER['name'], fb.name)
     self.assert_equals([u'publish'], fb.features)
+
+  def test_registration_declined(self):
+    """Run through an authorization back and forth when authorization is
+    declind, and make sure that the callback makes it all the way
+    through.
+    """
+    encoded_state = urllib.quote_plus(
+      '{"callback":"http://withknown.com/bridgy_callback",'
+      '"feature":"publish","operation":"add"}')
+
+    self.mox.ReplayAll()
+
+    resp = facebook.application.get_response(
+      '/facebook/start', method='POST', body=urllib.urlencode({
+        'feature': 'publish',
+        'callback': 'http://withknown.com/bridgy_callback',
+      }))
+
+    self.assert_equals(302, resp.status_code)
+    self.assert_equals(oauth_facebook.GET_AUTH_CODE_URL % {
+      'scope': '',
+      'client_id': appengine_config.FACEBOOK_APP_ID,
+      'redirect_uri': urllib.quote_plus(
+        'http://localhost/facebook/add?state=' + encoded_state),
+    }, resp.headers['location'])
+
+    resp = facebook.application.get_response(
+      '/facebook/add?state=' + encoded_state +
+      '&error=access_denied&error_reason=user_denied')
+
+    self.assert_equals(302, resp.status_code)
+    self.assert_equals('http://withknown.com/bridgy_callback?result=declined',
+                       resp.headers['location'])
+
+    fb = FacebookPage.query().get()
+    self.assertFalse(fb)

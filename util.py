@@ -342,10 +342,9 @@ class Handler(webapp2.RequestHandler):
     Args:
       source_cls: source class, e.g. Instagram
       auth_entity: ouath-dropins auth entity
-      state: string, OAuth callback state parameter. For adds, this is usually
-        just a feature ('listen' or 'publish') or empty, but can also be a JSON
-        encoded dict with an optional callback URL. For deletes, it's always an
-        encoded dict with the feature, source key, and the operation 'delete'.
+      state: string, OAuth callback state parameter. a JSON serialized dict
+        with operation, feature, and an optional callback URL. For deletes,
+        it will also include the source key
       kwargs: passed through to the source_cls constructor
 
     Returns:
@@ -354,12 +353,25 @@ class Handler(webapp2.RequestHandler):
     state_obj = self.decode_state_parameter(state)
     operation = state_obj.get('operation', 'add')
     feature = state_obj.get('feature')
+    callback = state_obj.get('callback')
+
+    logging.debug(
+      'maybe_add_or_delete_source with operation=%s, feature=%s, callback=%s',
+      operation, feature, callback)
 
     if operation == 'add':  # this is an add/update
       if not auth_entity:
         if not self.messages:
           self.messages.add("OK, you're not signed up. Hope you reconsider!")
-        self.redirect('/')
+        if callback:
+          callback = util.add_query_params(callback, {'result': 'declined'})
+          logging.debug(
+            'user declined adding source, redirect to external callback %s',
+            callback)
+          # call super.redirect so the callback url is unmodified
+          super(Handler, self).redirect(str(callback))
+        else:
+          self.redirect('/')
         return
 
       CachedPage.invalidate('/users')
@@ -368,9 +380,11 @@ class Handler(webapp2.RequestHandler):
       source = source_cls.create_new(self, auth_entity=auth_entity,
                                      features=[feature] if feature else [],
                                      **kwargs)
-      if 'callback' in state_obj:
+      if callback:
+        logging.debug(
+          'finished adding source, redirect to external callback %s', callback)
         # call super.redirect so the callback url is unmodified
-        super(Handler, self).redirect(str(state_obj['callback']))
+        super(Handler, self).redirect(str(callback))
       else:
         self.redirect(source.bridgy_url(self) if source else '/')
       return source
@@ -401,17 +415,29 @@ class Handler(webapp2.RequestHandler):
     endpoints and returned in a callback. This encodes a JSON object
     so that it can be safely included as a query string parameter.
 
+    The following keys are common:
+      - operation: 'add' or 'delete'
+      - feature: 'listen', 'publish', or 'webmention'
+      - callback: an optional external callback, that we will redirect to at
+                  the end of the authorization handshake
+      - source: the source key, only applicable to deletes
+
     Args:
       obj: a JSON-serializable dict
 
     Returns: a string
     """
-    return json.dumps(trim_nulls(obj), separators=(',',':'), sort_keys=True)
+    # pass in custom separators to cut down on whitespace, and sort keys for
+    # unit test consistency
+    return json.dumps(trim_nulls(obj), separators=(',', ':'), sort_keys=True)
 
   def decode_state_parameter(self, state):
     """The state parameter is passed to various source authorization
     endpoints and returned in a callback. This decodes a
     JSON-serialized string and returns a dict.
+
+    See encode_state_parameter for a list of common state parameter
+    keys.
 
     Args:
       state: a string (JSON-serialized dict)
@@ -448,18 +474,6 @@ class Handler(webapp2.RequestHandler):
     source.websites = [Website(url=u, domain=d) for u, d in
                        zip(source.domain_urls, source.domains)]
     return source
-
-
-class StartHandler(Handler):
-  def __init__(self, oauth_handler_cls):
-    self.oauth_handler_cls = oauth_handler_cls
-
-  def get_oauth_handler(self):
-    return self.oauth_handler_cls(self.request, self.response)
-
-  def post(self):
-    return self.get_oauth_handler().post()
-
 
 
 class CachedPage(StringIdModel):
