@@ -314,11 +314,13 @@ class Source(StringIdModel):
     raise NotImplementedError()
 
   @classmethod
-  def create_new(cls, handler, **kwargs):
+  def create_new(cls, handler, user_url=None, **kwargs):
     """Creates and saves a new Source and adds a poll task for it.
 
     Args:
       handler: the current RequestHandler
+      user_url: a string, optional. if provided, supersedes other urls when
+        determining the author_url
       **kwargs: passed to new()
     """
     source = cls.new(handler, **kwargs)
@@ -330,7 +332,8 @@ class Source(StringIdModel):
     if not source.domain_urls:  # defer to the source if it already set this
       auth_entity = kwargs.get('auth_entity')
       if auth_entity and hasattr(auth_entity, 'user_json'):
-        source.domain_urls, source.domains = source._urls_and_domains(auth_entity)
+        source.domain_urls, source.domains = source._urls_and_domains(
+          auth_entity, user_url)
         logging.debug('URLs/domains: %s %s', source.domain_urls, source.domains)
         if (feature == 'publish' and
             (not source.domain_urls or not source.domains)):
@@ -430,7 +433,7 @@ class Source(StringIdModel):
 
     self.put()
 
-  def _urls_and_domains(self, auth_entity):
+  def _urls_and_domains(self, auth_entity, user_url):
     """Returns this user's valid (not webmention-blacklisted) URLs and domains.
 
     Converts the auth entity's user_json to an ActivityStreams actor and uses
@@ -438,6 +441,7 @@ class Source(StringIdModel):
 
     Args:
       auth_entity: oauth_dropins.models.BaseAuth
+      user_url: string, optional URL passed in when authorizing
 
     Returns: ([string url, ...], [string domain, ...])
     """
@@ -447,7 +451,8 @@ class Source(StringIdModel):
     urls = []
     domains = []
     for url in util.trim_nulls(util.uniquify(
-        [actor.get('url')] + [u.get('value') for u in actor.get('urls', [])])):
+        [user_url] + [actor.get('url')] +
+        [u.get('value') for u in actor.get('urls', [])])):
       domain = util.domain_from_link(url)
       if domain and not util.in_webmention_blacklist(domain.lower()):
         urls.append(url)

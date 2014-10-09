@@ -43,6 +43,8 @@ class Twitter(models.Source):
 
     Args:
       handler: the current RequestHandler
+      auth_entity: oauth-dropins.twitter.TwitterAuth
+      kwargs: property values
     """
     user = json.loads(auth_entity.user_json)
     as_source = as_twitter.Twitter(*auth_entity.access_token())

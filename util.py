@@ -354,6 +354,7 @@ class Handler(webapp2.RequestHandler):
     operation = state_obj.get('operation', 'add')
     feature = state_obj.get('feature')
     callback = state_obj.get('callback')
+    user_url = state_obj.get('user_url')
 
     logging.debug(
       'maybe_add_or_delete_source with operation=%s, feature=%s, callback=%s',
@@ -379,7 +380,7 @@ class Handler(webapp2.RequestHandler):
                    (auth_entity.key, state, kwargs))
       source = source_cls.create_new(self, auth_entity=auth_entity,
                                      features=[feature] if feature else [],
-                                     **kwargs)
+                                     user_url=user_url, **kwargs)
       if callback:
         logging.debug(
           'finished adding source, redirect to external callback %s', callback)
@@ -398,15 +399,15 @@ class Handler(webapp2.RequestHandler):
                           source_cls.AS_CLASS.NAME)
         self.redirect_home_or_user_page(state)
 
-  def construct_state_param_for_add(self, state=None, feature=None,
-                                    callback=None):
+  def construct_state_param_for_add(self, state=None, **kwargs):
     """Construct the state parameter if one isn't explicitly passed in
     """
     if not state:
       state = self.encode_state_parameter({
         'operation': 'add',
-        'feature': feature or self.request.get('feature'),
-        'callback': callback or self.request.get('callback'),
+        'feature': kwargs.get('feature') or self.request.get('feature'),
+        'callback': kwargs.get('callback') or self.request.get('callback'),
+        'user_url': kwargs.get('user_url') or self.request.get('user_url'),
       })
     return state
 
