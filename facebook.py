@@ -21,8 +21,10 @@ Example comment ID and links
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import json
+import logging
 import re
 import sys
+import urllib
 import urllib2
 
 import appengine_config
@@ -30,10 +32,7 @@ import appengine_config
 from activitystreams import facebook as as_facebook
 from activitystreams.oauth_dropins import facebook as oauth_facebook
 from activitystreams.source import SELF
-import logging
 import models
-import urllib
-import urllib2
 import util
 
 from google.appengine.ext import ndb
