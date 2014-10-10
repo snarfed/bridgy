@@ -167,11 +167,6 @@ class WordPress(models.Source):
     return resp
 
 
-class StartWordPress(util.AddStateToRedirect, oauth_wordpress.StartHandler):
-  """OAuth start handler that populates the state param."""
-  pass
-
-
 class AddWordPress(oauth_wordpress.CallbackHandler, util.Handler):
   def finish(self, auth_entity, state=None):
     if auth_entity:
@@ -208,7 +203,7 @@ class SuperfeedrNotifyHandler(superfeedr.NotifyHandler):
 
 
 application = webapp2.WSGIApplication([
-    ('/wordpress/start', StartWordPress.to('/wordpress/add')),
+    ('/wordpress/start', util.oauth_starter(oauth_wordpress).to('/wordpress/add')),
     ('/wordpress/confirm', ConfirmSelfHosted),
     # This handles both add and delete. (WordPress.com only allows a single
     # OAuth redirect URL.)

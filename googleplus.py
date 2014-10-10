@@ -78,11 +78,6 @@ class GooglePlusPage(models.Source):
     return getattr(super(GooglePlusPage, self), name)
 
 
-class StartHandler(util.AddStateToRedirect, oauth_googleplus.StartHandler):
-  """OAuth start handler that populates the state param."""
-  pass
-
-
 class OAuthCallback(util.Handler):
   """OAuth callback handler.
 
@@ -102,7 +97,7 @@ class OAuthCallback(util.Handler):
 
 application = webapp2.WSGIApplication([
     # OAuth scopes are set in listen.html and publish.html
-    ('/googleplus/start', StartHandler.to('/googleplus/oauth2callback')),
+    ('/googleplus/start', util.oauth_starter(oauth_googleplus).to('/googleplus/oauth2callback')),
     ('/googleplus/oauth2callback', oauth_googleplus.CallbackHandler.to('/googleplus/add')),
     ('/googleplus/add', OAuthCallback),
     ('/googleplus/delete/start', oauth_googleplus.StartHandler.to('/googleplus/oauth2callback')),

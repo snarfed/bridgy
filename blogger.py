@@ -198,11 +198,6 @@ class OAuthCallback(util.Handler):
     self.response.out.write(template.render('templates/choose_blog.html', vars))
 
 
-class StartBlogger(util.AddStateToRedirect, oauth_blogger.StartHandler):
-  """OAuth start handler that populates the state param."""
-  pass
-
-
 class AddBlogger(util.Handler):
   def post(self):
     auth_entity_key = util.get_required_param(self, 'auth_entity_key')
@@ -219,7 +214,7 @@ class SuperfeedrNotifyHandler(superfeedr.NotifyHandler):
 
 
 application = webapp2.WSGIApplication([
-    ('/blogger/start', StartBlogger.to('/blogger/oauth2callback')),
+    ('/blogger/start', util.oauth_starter(oauth_blogger).to('/blogger/oauth2callback')),
     ('/blogger/oauth2callback', oauth_blogger.CallbackHandler.to('/blogger/oauth_handler')),
     ('/blogger/oauth_handler', OAuthCallback),
     ('/blogger/add', AddBlogger),

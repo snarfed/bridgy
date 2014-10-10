@@ -76,11 +76,6 @@ class Instagram(models.Source):
       syndication_url, scheme='http')
 
 
-class StartInstagram(util.AddStateToRedirect, oauth_instagram.StartHandler):
-  """OAuth start handler that populates the state param."""
-  pass
-
-
 class OAuthCallback(oauth_instagram.CallbackHandler, util.Handler):
   """OAuth callback handler.
 
@@ -93,6 +88,6 @@ class OAuthCallback(oauth_instagram.CallbackHandler, util.Handler):
 
 
 application = webapp2.WSGIApplication([
-    ('/instagram/start', StartInstagram.to('/instagram/oauth_callback')),
+    ('/instagram/start', util.oauth_starter(oauth_instagram).to('/instagram/oauth_callback')),
     ('/instagram/oauth_callback', OAuthCallback),
     ], debug=appengine_config.DEBUG)

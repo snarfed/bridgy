@@ -256,11 +256,6 @@ class ChooseBlog(oauth_tumblr.CallbackHandler, util.Handler):
     self.response.out.write(template.render('templates/choose_blog.html', vars))
 
 
-class StartTumblr(util.AddStateToRedirect, oauth_tumblr.StartHandler):
-  """OAuth start handler that populates the state param."""
-  pass
-
-
 class AddTumblr(util.Handler):
   def post(self):
     auth_entity_key = util.get_required_param(self, 'auth_entity_key')
@@ -277,7 +272,7 @@ class SuperfeedrNotifyHandler(superfeedr.NotifyHandler):
 
 
 application = webapp2.WSGIApplication([
-    ('/tumblr/start', StartTumblr.to('/tumblr/choose_blog')),
+    ('/tumblr/start', util.oauth_starter(oauth_tumblr).to('/tumblr/choose_blog')),
     ('/tumblr/choose_blog', ChooseBlog),
     ('/tumblr/add', AddTumblr),
     ('/tumblr/delete/finish', oauth_tumblr.CallbackHandler.to('/delete/finish')),

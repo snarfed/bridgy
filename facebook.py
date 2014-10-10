@@ -194,11 +194,6 @@ class FacebookPage(models.Source):
     return super(FacebookPage, self).canonicalize_syndication_url(url)
 
 
-class StartFacebookPage(util.AddStateToRedirect, oauth_facebook.StartHandler):
-  """OAuth start handler that populates the state param."""
-  pass
-
-
 class AddFacebookPage(oauth_facebook.CallbackHandler, util.Handler):
   def finish(self, auth_entity, state=None):
     self.maybe_add_or_delete_source(FacebookPage, auth_entity, state)
@@ -206,7 +201,7 @@ class AddFacebookPage(oauth_facebook.CallbackHandler, util.Handler):
 
 application = webapp2.WSGIApplication([
     # OAuth scopes are set in listen.html and publish.html
-    ('/facebook/start', StartFacebookPage.to('/facebook/add')),
+    ('/facebook/start', util.oauth_starter(oauth_facebook).to('/facebook/add')),
     ('/facebook/add', AddFacebookPage),
     ('/facebook/delete/finish', oauth_facebook.CallbackHandler.to('/delete/finish')),
     ], debug=appengine_config.DEBUG)
