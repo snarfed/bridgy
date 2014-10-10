@@ -272,7 +272,8 @@ class SuperfeedrNotifyHandler(superfeedr.NotifyHandler):
 
 
 application = webapp2.WSGIApplication([
-    ('/tumblr/start', util.oauth_starter(oauth_tumblr).to('/tumblr/choose_blog')),
+    ('/tumblr/start', util.oauth_starter(oauth_tumblr.StartHandler).to(
+      '/tumblr/choose_blog')),
     ('/tumblr/choose_blog', ChooseBlog),
     ('/tumblr/add', AddTumblr),
     ('/tumblr/delete/finish', oauth_tumblr.CallbackHandler.to('/delete/finish')),

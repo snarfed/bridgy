@@ -9,6 +9,7 @@ import datetime
 import json
 import logging
 import urlparse
+import webapp2
 
 import appengine_config
 
@@ -25,6 +26,7 @@ from activitystreams.oauth_dropins.models import BaseAuth
 # mirror some methods from webutil.testutil
 from activitystreams.oauth_dropins.webutil.testutil import get_task_eta
 from activitystreams.oauth_dropins.webutil.testutil import get_task_params
+from activitystreams.oauth_dropins import handlers as oauth_handlers
 
 
 class FakeAuthEntity(BaseAuth):
@@ -49,18 +51,23 @@ class FakeBase(ndb.Model):
 
   @classmethod
   def new(cls, handler, **props):
+    id = None
     if 'url' not in props:
       props['url'] = 'http://fake/url'
     auth_entity = props.get('auth_entity')
     if auth_entity:
       props['auth_entity'] = auth_entity.key
-      if auth_entity.user_json and 'name' not in props:
-        props['name'] = json.loads(auth_entity.user_json).get('name')
+      if auth_entity.user_json:
+        user_obj = json.loads(auth_entity.user_json)
+        if 'name' not in props:
+          props['name'] = user_obj.get('name')
+        id = user_obj.get('id')
     if not props.get('name'):
       props['name'] = 'fake'
-    inst = cls(id=str(cls.string_id_counter), **props)
-    cls.string_id_counter += 1
-    return inst
+    if not id:
+      id = str(cls.string_id_counter)
+      cls.string_id_counter += 1
+    return cls(id=id, **props)
 
 
 class FakeAsSource(FakeBase, as_source.Source):
@@ -298,3 +305,35 @@ class ModelsTest(HandlerTest):
           created=created))
 
       created += datetime.timedelta(hours=1)
+
+
+class OAuthStartHandler(oauth_handlers.StartHandler):
+  """Stand-in for the oauth-dropins StartHandler, redirects to
+  a made-up silo url
+  """
+  def redirect_url(self, state=None):
+    logging.debug('oauth handler redirect')
+    return 'http://fake/auth/url'
+
+
+FakeStartHandler = util.oauth_starter(OAuthStartHandler).to('/fakesource/add')
+
+
+class FakeAddHandler(util.Handler):
+  """Handles the authorization callback when handling a fake source
+  """
+  auth_entity = FakeAuthEntity(user_json=json.dumps({
+    'id': '0123456789',
+    'name': 'Fake User',
+    'url': 'http://fakeuser.com/',
+  }))
+
+  @staticmethod
+  def with_auth(auth):
+    class HandlerWithAuth(FakeAddHandler):
+      auth_entity = auth
+    return HandlerWithAuth
+
+  def get(self):
+    self.maybe_add_or_delete_source(FakeSource, self.auth_entity,
+                                    self.request.get('state'))

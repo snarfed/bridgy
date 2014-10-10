@@ -477,13 +477,14 @@ class Handler(webapp2.RequestHandler):
     return source
 
 
-def oauth_starter(oauth_module):
+def oauth_starter(oauth_start_handler):
   """Returns an oauth-dropins start handler that injects the state param.
 
   Args:
-    oauth_module: oauth-dropins module to use, e.g. oauth_dropins.twitter.
+    oauth_start_handler: oauth-dropins StartHandler to use,
+      e.g. oauth_dropins.twitter.StartHandler.
   """
-  class StartHandler(oauth_module.StartHandler, Handler):
+  class StartHandler(oauth_start_handler, Handler):
     def redirect_url(self, state=None):
       return super(StartHandler, self).redirect_url(
         self.construct_state_param_for_add(state))

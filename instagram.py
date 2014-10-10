@@ -88,6 +88,7 @@ class OAuthCallback(oauth_instagram.CallbackHandler, util.Handler):
 
 
 application = webapp2.WSGIApplication([
-    ('/instagram/start', util.oauth_starter(oauth_instagram).to('/instagram/oauth_callback')),
+    ('/instagram/start', util.oauth_starter(oauth_instagram.StartHandler).to(
+      '/instagram/oauth_callback')),
     ('/instagram/oauth_callback', OAuthCallback),
     ], debug=appengine_config.DEBUG)

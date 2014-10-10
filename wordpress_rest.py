@@ -203,7 +203,8 @@ class SuperfeedrNotifyHandler(superfeedr.NotifyHandler):
 
 
 application = webapp2.WSGIApplication([
-    ('/wordpress/start', util.oauth_starter(oauth_wordpress).to('/wordpress/add')),
+    ('/wordpress/start', util.oauth_starter(oauth_wordpress.StartHandler).to(
+      '/wordpress/add')),
     ('/wordpress/confirm', ConfirmSelfHosted),
     # This handles both add and delete. (WordPress.com only allows a single
     # OAuth redirect URL.)

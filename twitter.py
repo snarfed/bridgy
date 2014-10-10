@@ -107,7 +107,7 @@ class StartHandler(util.Handler):
     # around a twitter API bug: https://dev.twitter.com/discussions/21281
     access_type = ('read' if util.get_required_param(self, 'feature')
                    == 'listen' else 'write')
-    handler = util.oauth_starter(oauth_twitter).to(
+    handler = util.oauth_starter(oauth_twitter.StartHandler).to(
       '/twitter/add', access_type=access_type)(self.request, self.response)
     return handler.post()
 

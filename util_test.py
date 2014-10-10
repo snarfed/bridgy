@@ -2,17 +2,19 @@
 """Unit tests for util.py.
 """
 
-import json
-import urllib
-import urlparse
-
-import requests
 
 from appengine_config import HTTP_TIMEOUT
-import testutil
 from testutil import FakeAuthEntity, FakeSource
-import util
 from webmentiontools import send
+
+import json
+import logging
+import requests
+import testutil
+import urllib
+import urlparse
+import util
+import webapp2
 
 # the invisible character in the middle is an unusual unicode character
 UNICODE_STR = u'a ✁ b'
@@ -129,3 +131,121 @@ class UtilTest(testutil.ModelsTest):
     self.mox.ReplayAll()
     self.assert_equals(('http://final', 'final', True),
                        util.get_webmention_target('http://foo/bar'))
+
+  def test_registration_callback(self):
+    """Run through an authorization back and forth and make sure that
+    the external callback makes it all the way through.
+    """
+    encoded_state = urllib.quote_plus(
+      '{"callback":"http://withknown.com/bridgy_callback",'
+      '"feature":"listen","operation":"add"}')
+
+    application = webapp2.WSGIApplication([
+      ('/fakesource/start', testutil.FakeStartHandler),
+      ('/fakesource/add', testutil.FakeAddHandler),
+    ])
+
+    self.expect_requests_get(
+      u'http://fakeuser.com/',
+      response='<html><link rel="webmention" href="/webmention"></html>',
+      verify=False)
+
+    self.mox.ReplayAll()
+
+    resp = application.get_response(
+      '/fakesource/start', method='POST', body=urllib.urlencode({
+        'feature': 'listen',
+        'callback': 'http://withknown.com/bridgy_callback',
+      }))
+
+    self.assert_equals(302, resp.status_code)
+    self.assert_equals('http://fake/auth/url', resp.headers['location'])
+
+    resp = application.get_response(
+      '/fakesource/add?state=' + encoded_state +
+      '&oauth_token=fake-token&oauth_token_secret=fake-secret')
+
+    self.assert_equals(302, resp.status_code)
+    self.assert_equals('http://withknown.com/bridgy_callback',
+                       resp.headers['location'])
+
+    source = FakeSource.get_by_id('0123456789')
+    self.assertTrue(source)
+    self.assert_equals('Fake User', source.name)
+    self.assert_equals(['listen'], source.features)
+
+  def test_registration_with_user_url(self):
+    """Run through an authorization back and forth with a custom user url
+    provided to the auth mechanism
+    """
+    encoded_state = urllib.quote_plus(
+      '{"callback":"http://withknown.com/bridgy_callback","feature":"listen",'
+      '"operation":"add","user_url":"https://kylewm.com"}')
+
+    application = webapp2.WSGIApplication([
+      ('/fakesource/start', testutil.FakeStartHandler),
+      ('/fakesource/add', testutil.FakeAddHandler),
+    ])
+
+    self.expect_requests_get(
+      'https://kylewm.com',
+      response='<html><link rel="webmention" href="/webmention"></html>',
+      verify=False)
+
+    self.mox.ReplayAll()
+
+    resp = application.get_response(
+      '/fakesource/start', method='POST', body=urllib.urlencode({
+        'feature': 'listen',
+        'callback': 'http://withknown.com/bridgy_callback',
+        'user_url': 'https://kylewm.com',
+      }))
+
+    self.assert_equals(302, resp.status_code)
+    self.assert_equals('http://fake/auth/url', resp.headers['location'])
+
+    resp = application.get_response(
+      '/fakesource/add?state=' + encoded_state +
+      '&oauth_token=fake-token&oauth_token_secret=fake-secret')
+
+    self.assert_equals(302, resp.status_code)
+    self.assert_equals('http://withknown.com/bridgy_callback',
+                       resp.headers['location'])
+
+    source = FakeSource.get_by_id('0123456789')
+    self.assertTrue(source)
+    self.assert_equals('Fake User', source.name)
+    self.assert_equals(['listen'], source.features)
+    self.assert_equals(['https://kylewm.com', 'http://fakeuser.com/'],
+                       source.domain_urls)
+    self.assert_equals(['kylewm.com', 'fakeuser.com'], source.domains)
+
+  def test_registration_decline(self):
+    """Run through an authorization back and forth in the case of a
+    decline and make sure that the callback makes it all the way
+    through.
+    """
+    encoded_state = urllib.quote_plus(
+      '{"callback":"http://withknown.com/bridgy_callback",'
+      '"feature":"listen","operation":"add"}')
+
+    application = webapp2.WSGIApplication([
+      ('/fakesource/start', testutil.FakeStartHandler),
+      ('/fakesource/add', testutil.FakeAddHandler.with_auth(None)),
+    ])
+
+    self.mox.ReplayAll()
+
+    resp = application.get_response(
+      '/fakesource/start', method='POST', body=urllib.urlencode({
+        'feature': 'publish',
+        'callback': 'http://withknown.com/bridgy_callback',
+      }))
+    self.assert_equals(302, resp.status_code)
+    self.assert_equals('http://fake/auth/url', resp.headers['location'])
+
+    resp = application.get_response(
+      '/fakesource/add?state=%s&denied=1' % encoded_state)
+    self.assert_equals(302, resp.status_code)
+    self.assert_equals('http://withknown.com/bridgy_callback?result=declined',
+                       resp.headers['location'])

@@ -97,7 +97,8 @@ class OAuthCallback(util.Handler):
 
 application = webapp2.WSGIApplication([
     # OAuth scopes are set in listen.html and publish.html
-    ('/googleplus/start', util.oauth_starter(oauth_googleplus).to('/googleplus/oauth2callback')),
+    ('/googleplus/start', util.oauth_starter(oauth_googleplus.StartHandler).to(
+      '/googleplus/oauth2callback')),
     ('/googleplus/oauth2callback', oauth_googleplus.CallbackHandler.to('/googleplus/add')),
     ('/googleplus/add', OAuthCallback),
     ('/googleplus/delete/start', oauth_googleplus.StartHandler.to('/googleplus/oauth2callback')),

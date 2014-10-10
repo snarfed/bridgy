@@ -214,7 +214,8 @@ class SuperfeedrNotifyHandler(superfeedr.NotifyHandler):
 
 
 application = webapp2.WSGIApplication([
-    ('/blogger/start', util.oauth_starter(oauth_blogger).to('/blogger/oauth2callback')),
+    ('/blogger/start', util.oauth_starter(oauth_blogger.StartHandler).to(
+      '/blogger/oauth2callback')),
     ('/blogger/oauth2callback', oauth_blogger.CallbackHandler.to('/blogger/oauth_handler')),
     ('/blogger/oauth_handler', OAuthCallback),
     ('/blogger/add', AddBlogger),
