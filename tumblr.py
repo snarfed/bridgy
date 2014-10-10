@@ -256,12 +256,9 @@ class ChooseBlog(oauth_tumblr.CallbackHandler, util.Handler):
     self.response.out.write(template.render('templates/choose_blog.html', vars))
 
 
-class StartTumblr(oauth_tumblr.StartHandler, util.Handler):
-  """Handler to start the Tumblr authentication process
-  """
-  def redirect_url(self, state=None):
-    return super(StartTumblr, self).redirect_url(
-      self.construct_state_param_for_add(state))
+class StartTumblr(util.AddStateToRedirect, oauth_tumblr.StartHandler):
+  """OAuth start handler that populates the state param."""
+  pass
 
 
 class AddTumblr(util.Handler):

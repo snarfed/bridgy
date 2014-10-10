@@ -476,6 +476,21 @@ class Handler(webapp2.RequestHandler):
     return source
 
 
+class AddStateToRedirect(Handler):
+  """Mixin for oauth-dropins start handlers that injects the state param.
+
+  Subclass from this class, then the oauth-dropins start handler class (e.g.
+  oauth_dropins.twitter.StartHandler), *in that order*. Order matters because it
+  determines method resolution order, and this class calls super.redirect_url(),
+  which Python needs to find in the oauth-dropins start handler class.
+
+  Background: https://www.python.org/download/releases/2.3/mro/
+  """
+  def redirect_url(self, state=None):
+    return super(AddStateToRedirect, self).redirect_url(
+      self.construct_state_param_for_add(state))
+
+
 class CachedPage(StringIdModel):
   """Cached HTML for pages that changes rarely. Key id is path.
 

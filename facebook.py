@@ -194,12 +194,9 @@ class FacebookPage(models.Source):
     return super(FacebookPage, self).canonicalize_syndication_url(url)
 
 
-class StartFacebookPage(oauth_facebook.StartHandler, util.Handler):
-  """Handler to start the Facebook authentication process
-  """
-  def redirect_url(self, state=None):
-    return super(StartFacebookPage, self).redirect_url(
-      self.construct_state_param_for_add(state))
+class StartFacebookPage(util.AddStateToRedirect, oauth_facebook.StartHandler):
+  """OAuth start handler that populates the state param."""
+  pass
 
 
 class AddFacebookPage(oauth_facebook.CallbackHandler, util.Handler):

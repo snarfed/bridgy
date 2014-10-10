@@ -76,12 +76,9 @@ class Instagram(models.Source):
       syndication_url, scheme='http')
 
 
-class StartInstagram(oauth_instagram.StartHandler, util.Handler):
-  """Handler to start the Instagram authentication process
-  """
-  def redirect_url(self, state=None):
-    return super(StartInstagram, self).redirect_url(
-      self.construct_state_param_for_add(state))
+class StartInstagram(util.AddStateToRedirect, oauth_instagram.StartHandler):
+  """OAuth start handler that populates the state param."""
+  pass
 
 
 class OAuthCallback(oauth_instagram.CallbackHandler, util.Handler):

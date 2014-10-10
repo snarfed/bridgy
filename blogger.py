@@ -198,12 +198,9 @@ class OAuthCallback(util.Handler):
     self.response.out.write(template.render('templates/choose_blog.html', vars))
 
 
-class StartBlogger(oauth_blogger.StartHandler, util.Handler):
-  """Handler to start the Blogger authentication process
-  """
-  def redirect_url(self, state=None):
-    return super(StartBlogger, self).redirect_url(
-      self.construct_state_param_for_add(state))
+class StartBlogger(util.AddStateToRedirect, oauth_blogger.StartHandler):
+  """OAuth start handler that populates the state param."""
+  pass
 
 
 class AddBlogger(util.Handler):

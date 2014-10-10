@@ -167,12 +167,9 @@ class WordPress(models.Source):
     return resp
 
 
-class StartWordPress(oauth_wordpress.StartHandler, util.Handler):
-  """Handler to start the Wordpress authentication process
-  """
-  def redirect_url(self, state=None):
-    return super(StartWordPress, self).redirect_url(
-      self.construct_state_param_for_add(state))
+class StartWordPress(util.AddStateToRedirect, oauth_wordpress.StartHandler):
+  """OAuth start handler that populates the state param."""
+  pass
 
 
 class AddWordPress(oauth_wordpress.CallbackHandler, util.Handler):
