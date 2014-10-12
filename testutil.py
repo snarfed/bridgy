@@ -132,8 +132,7 @@ class FakeAsSource(FakeBase, as_source.Source):
         error_html='Cannot publish likes')
     content = 'preview of ' + obj['content'] + (' - %s' % obj['url']
                                                 if include_link else '')
-    return as_source.creation_result(
-      content=content, description='FakeAsSource preview description')
+    return as_source.creation_result(description=content)
 
 
 class FakeSource(FakeBase, Source):

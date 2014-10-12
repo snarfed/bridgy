@@ -50,7 +50,6 @@ class PublishTest(testutil.HandlerTest):
     if preview:
       self.assertIn(expected, resp.body,
                     '%r\n\n=== vs ===\n\n%r' % (expected, resp.body))
-      self.assertIn('FakeAsSource preview description', resp.body)
     else:
       self.assertIn(expected, json.loads(resp.body)['content'])
     return resp

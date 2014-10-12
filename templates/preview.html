@@ -8,8 +8,10 @@
 <!-- Preview description (may include embedded silo post) and text content -->
 will {{ description|safe }}
 <br />
-<pre id="preview-text">{{ preview|safe }}</pre>
-<br />
+{% if preview %}
+  <pre id="preview-text">{{ preview|safe }}</pre>
+  <br />
+{% endif %}
 
 <form method="post" action="/publish/webmention" class="preview-ui">
  <input type="hidden" name="source" value="{{ source_url }}" />

@@ -171,7 +171,7 @@ class Handler(webmention.WebmentionHandler):
 
       try:
         resp = self.attempt_single_item(item)
-        if resp.content:
+        if self.entity.published:
           break
         if resp.abort:
           return self.error(resp.error_plain, html=resp.error_html, data=item)
@@ -189,7 +189,7 @@ class Handler(webmention.WebmentionHandler):
         code, body = handlers.interpret_http_exception(e)
         return self.error('Error: %s %s' % (body or '', e), status=code or 500)
 
-    if not resp.content:  # tried all the items
+    if not self.entity.published:  # tried all the items
       types.discard('h-entry')
       types.discard('h-note')
       if types:
@@ -247,11 +247,11 @@ class Handler(webmention.WebmentionHandler):
     if self.PREVIEW:
       result = self.source.as_source.preview_create(
         obj, include_link=not omit_link)
-      self.entity.published = result.content
-      if not result.content:
+      self.entity.published = result.content or result.description
+      if not self.entity.published:
         return result  # there was an error
       vars = {'source': self.preprocess_source(self.source),
-              'preview': self.entity.published,
+              'preview': result.content,
               'description': result.description,
               'source_url': self.source_url,
               'target_url': self.target_url,
