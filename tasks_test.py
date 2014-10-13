@@ -1321,9 +1321,10 @@ class PropagateTest(TaskQueueTest):
     blogpost = models.BlogPost(id='x', source=source_key, unsent=links)
     blogpost.put()
 
+    self.expect_requests_head('http://fake/post')
+    self.expect_requests_head('http://ok/one.png', content_type='image/png')
     self.expect_requests_head('http://ok/two')
     self.expect_webmention(source_url='x', target='http://ok/two').AndReturn(True)
-    self.expect_requests_head('http://ok/one.png', content_type='image/png')
     self.mox.ReplayAll()
 
     self.post_url = '/_ah/queue/propagate-blogpost'
@@ -1350,3 +1351,17 @@ class PropagateTest(TaskQueueTest):
     super(PropagateTest, self).post_task(params={'key': blogpost.key.urlsafe()})
     self.assert_response_is('complete', response=blogpost,
                             sent=['https://www.brid.gy/publish/facebook'])
+
+  def test_propagate_blogpost_follows_redirects_before_checking_self_link(self):
+    source_key = FakeSource.new(None, domains=['fake']).put()
+    blogpost = models.BlogPost(id='x', source=source_key,
+                               unsent=['http://will/redirect'])
+    blogpost.put()
+
+    self.expect_requests_head('http://will/redirect',
+                              redirected_url='http://www.fake/self/link')
+    self.mox.ReplayAll()
+
+    self.post_url = '/_ah/queue/propagate-blogpost'
+    super(PropagateTest, self).post_task(params={'key': blogpost.key.urlsafe()})
+    self.assert_response_is('complete', response=blogpost)
