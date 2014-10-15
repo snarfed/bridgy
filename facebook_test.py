@@ -153,8 +153,10 @@ class FacebookPageTest(testutil.ModelsTest):
     for expected, input in (
       ('https://facebook.com/212038/posts/314159',
        'http://facebook.com/snarfed.org/posts/314159'),
-      ('https://facebook.com/212038/photos.php?fbid=314159',
+      ('https://facebook.com/212038/posts/314159',
        'https://www.facebook.com/snarfed.org/photos.php?fbid=314159'),
+      ('https://facebook.com/212038/posts/10101299919362973',
+       'https://www.facebook.com/photo.php?fbid=10101299919362973&set=a.995695740593.2393090.212038&type=1&theater'),
       ('https://facebook.com/212038/posts/314159',
        'https://facebook.com/permalink.php?story_fbid=314159&id=212038'),
       ('https://facebook.com/212038/posts/314159',

@@ -26,6 +26,7 @@ import re
 import sys
 import urllib
 import urllib2
+import urlparse
 
 import appengine_config
 
@@ -185,12 +186,20 @@ class FacebookPage(models.Source):
     Return:
       a string, the canonical form of the syndication url
     """
-    url = re.sub(
-      r'facebook.com/permalink\.php\?story_fbid=([^&]+)&(?:amp;)?id=([^&]+)$',
-      r'facebook.com/\2/posts/\1', url)
+    parsed = urlparse.urlparse(url)
+
+    if (parsed.path.endswith('/permalink.php') or
+        parsed.path.endswith('/photo.php') or
+        parsed.path.endswith('/photos.php')):
+      params = urlparse.parse_qs(parsed.query)
+      ids = params.get('story_fbid') or params.get('fbid')
+      if ids:
+        url = 'https://facebook.com/%s/posts/%s' % (self.key.id(), ids[0])
+
     if self.username:
       url = url.replace('facebook.com/%s/' % self.username,
                         'facebook.com/%s/' % self.key.id())
+
     return super(FacebookPage, self).canonicalize_syndication_url(url)
 
 
