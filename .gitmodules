@@ -16,3 +16,6 @@
 [submodule "webmention-tools"]
 	path = webmention-tools
 	url = git@github.com:snarfed/webmention-tools.git
+[submodule "html2text_module"]
+	path = html2text_module
+	url = git@github.com:Alir3z4/html2text.git
