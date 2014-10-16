@@ -9,6 +9,7 @@ import json
 import testutil
 import urllib
 
+from activitystreams import oauth_dropins
 from activitystreams import twitter_test as as_twitter_test
 from activitystreams.oauth_dropins import twitter as oauth_twitter
 import appengine_config
@@ -22,6 +23,8 @@ class TwitterTest(testutil.ModelsTest):
 
   def setUp(self):
     super(TwitterTest, self).setUp()
+    oauth_dropins.appengine_config.TWITTER_APP_KEY = 'my_app_key'
+    oauth_dropins.appengine_config.TWITTER_APP_SECRET = 'my_app_secret'
     self.handler.messages = []
     self.auth_entity = oauth_twitter.TwitterAuth(
       id='my_string_id',

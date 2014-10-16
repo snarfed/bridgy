@@ -9,6 +9,7 @@ import threading
 from google.appengine.ext import ndb
 from tweepy import streaming
 
+from activitystreams import oauth_dropins
 from activitystreams import twitter_test
 from activitystreams.oauth_dropins import twitter as oauth_twitter
 import models
@@ -22,6 +23,8 @@ class TwitterStreamingTest(testutil.ModelsTest):
 
   def setUp(self):
     super(TwitterStreamingTest, self).setUp()
+    oauth_dropins.appengine_config.TWITTER_APP_KEY = 'my_app_key'
+    oauth_dropins.appengine_config.TWITTER_APP_SECRET = 'my_app_secret'
     self.source = self.make_source('snarfed_org')
     self.listener = twitter_streaming.Listener(self.source)
     twitter_streaming.streams = {}

@@ -7,6 +7,7 @@ import datetime
 import json
 import mox
 
+from activitystreams import oauth_dropins
 from activitystreams.oauth_dropins import twitter as oauth_twitter
 import cron
 import handlers
@@ -19,6 +20,8 @@ class CronTest(ModelsTest):
 
   def setUp(self):
     super(ModelsTest, self).setUp()
+    oauth_dropins.appengine_config.TWITTER_APP_KEY = 'my_app_key'
+    oauth_dropins.appengine_config.TWITTER_APP_SECRET = 'my_app_secret'
     handlers.SOURCES['fake'] = FakeSource
 
   def tearDown(self):
