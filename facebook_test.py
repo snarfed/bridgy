@@ -38,6 +38,7 @@ class FacebookPageTest(testutil.ModelsTest):
                             'type': 'user',
                             }))
     self.auth_entity.put()
+    self.fb = FacebookPage.new(self.handler, auth_entity=self.auth_entity)
 
     self.post_activity = copy.deepcopy(as_facebook_test.ACTIVITY)
     fb_id_and_url = {
@@ -48,16 +49,15 @@ class FacebookPageTest(testutil.ModelsTest):
     self.post_activity['object'].update(fb_id_and_url)
 
   def test_new(self):
-    page = FacebookPage.new(self.handler, auth_entity=self.auth_entity)
-    self.assertEqual(self.auth_entity, page.auth_entity.get())
-    self.assertEqual('my_token', page.as_source.access_token)
-    self.assertEqual('212038', page.key.id())
+    self.assertEqual(self.auth_entity, self.fb.auth_entity.get())
+    self.assertEqual('my_token', self.fb.as_source.access_token)
+    self.assertEqual('212038', self.fb.key.id())
     self.assertEqual('http://graph.facebook.com/snarfed.org/picture?type=large',
-                     page.picture)
-    self.assertEqual('Ryan Barrett', page.name)
-    self.assertEqual('snarfed.org', page.username)
-    self.assertEqual('user', page.type)
-    self.assertEqual('https://facebook.com/snarfed.org', page.silo_url())
+                     self.fb.picture)
+    self.assertEqual('Ryan Barrett', self.fb.name)
+    self.assertEqual('snarfed.org', self.fb.username)
+    self.assertEqual('user', self.fb.type)
+    self.assertEqual('https://facebook.com/snarfed.org', self.fb.silo_url())
 
   def test_get_activities(self):
     owned_event = copy.deepcopy(as_facebook_test.EVENT)
@@ -83,12 +83,11 @@ class FacebookPageTest(testutil.ModelsTest):
       json.dumps({'data': as_facebook_test.RSVPS}))
     self.mox.ReplayAll()
 
-    page = FacebookPage.new(self.handler, auth_entity=self.auth_entity)
-    event_activity = page.as_source.event_to_activity(owned_event)
+    event_activity = self.fb.as_source.event_to_activity(owned_event)
     for k in 'attending', 'notAttending', 'maybeAttending', 'invited':
       event_activity['object'][k] = as_facebook_test.EVENT_OBJ_WITH_ATTENDEES[k]
     self.assert_equals([self.post_activity, as_facebook_test.ACTIVITY, event_activity],
-                       page.get_activities())
+                       self.fb.get_activities())
 
   def test_get_activities_post_and_photo_duplicates(self):
     self.assertEqual(as_facebook_test.POST['object_id'],
@@ -104,8 +103,7 @@ class FacebookPageTest(testutil.ModelsTest):
       json.dumps({}))
     self.mox.ReplayAll()
 
-    page = FacebookPage.new(self.handler, auth_entity=self.auth_entity)
-    self.assert_equals([self.post_activity], page.get_activities())
+    self.assert_equals([self.post_activity], self.fb.get_activities())
 
   def test_revoked(self):
     self.expect_urlopen(
@@ -113,8 +111,7 @@ class FacebookPageTest(testutil.ModelsTest):
       json.dumps({'error': {'code': 190, 'error_subcode': 458}}), status=400)
     self.mox.ReplayAll()
 
-    page = FacebookPage.new(self.handler, auth_entity=self.auth_entity)
-    self.assertRaises(models.DisableSource, page.get_activities)
+    self.assertRaises(models.DisableSource, self.fb.get_activities)
 
   def test_expired_sends_notification(self):
     self.expect_urlopen(
@@ -130,8 +127,7 @@ class FacebookPageTest(testutil.ModelsTest):
                         data=urllib.urlencode(params))
     self.mox.ReplayAll()
 
-    page = FacebookPage.new(self.handler, auth_entity=self.auth_entity)
-    self.assertRaises(models.DisableSource, page.get_activities)
+    self.assertRaises(models.DisableSource, self.fb.get_activities)
 
   def test_other_error(self):
     self.expect_urlopen(
@@ -139,8 +135,7 @@ class FacebookPageTest(testutil.ModelsTest):
       json.dumps({'error': {'code': 190, 'error_subcode': 789}}), status=400)
     self.mox.ReplayAll()
 
-    page = FacebookPage.new(self.handler, auth_entity=self.auth_entity)
-    self.assertRaises(urllib2.HTTPError, page.get_activities)
+    self.assertRaises(urllib2.HTTPError, self.fb.get_activities)
 
   def test_other_error_not_json(self):
     """If an error body isn't JSON, we should raise the original exception."""
@@ -149,12 +144,9 @@ class FacebookPageTest(testutil.ModelsTest):
       'not json', status=400)
     self.mox.ReplayAll()
 
-    page = FacebookPage.new(self.handler, auth_entity=self.auth_entity)
-    self.assertRaises(urllib2.HTTPError, page.get_activities)
+    self.assertRaises(urllib2.HTTPError, self.fb.get_activities)
 
   def test_canonicalize_syndication_url(self):
-    page = FacebookPage.new(self.handler, auth_entity=self.auth_entity)
-
     for expected, input in (
       ('https://facebook.com/212038/posts/314159',
        'http://facebook.com/snarfed.org/posts/314159'),
@@ -169,4 +161,4 @@ class FacebookPageTest(testutil.ModelsTest):
       # make sure we don't touch user.name when it appears elsewhere in the url
       ('https://facebook.com/25624/posts/snarfed.org',
        'http://www.facebook.com/25624/posts/snarfed.org')):
-      self.assertEqual(expected, page.canonicalize_syndication_url(input))
+      self.assertEqual(expected, self.fb.canonicalize_syndication_url(input))
