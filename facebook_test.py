@@ -40,7 +40,12 @@ class FacebookPageTest(testutil.ModelsTest):
     self.auth_entity.put()
 
     self.post_activity = copy.deepcopy(as_facebook_test.ACTIVITY)
-    self.post_activity['id'] = 'tag:facebook.com,2013:222' # this is fb_object_id
+    fb_id_and_url = {
+      'id': 'tag:facebook.com,2013:222', # this is fb_object_id
+      'url': 'https://facebook.com/212038/posts/222',
+      }
+    self.post_activity.update(fb_id_and_url)
+    self.post_activity['object'].update(fb_id_and_url)
 
   def test_new(self):
     page = FacebookPage.new(self.handler, auth_entity=self.auth_entity)

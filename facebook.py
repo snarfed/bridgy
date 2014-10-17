@@ -158,22 +158,29 @@ class FacebookPage(models.Source):
 
     # add photos. they show up as both a post and a photo, each with a separate
     # id. the post's object_id field points to the photo's id. de-dupe by
-    # switching the post to use the object_id when it's provided.
-    items = resp.setdefault('items', [])
-    object_ids = set()
-    for item in items:
-      obj_id = item.get('object', {}).get('fb_object_id')
-      if obj_id:
-        object_ids.add(obj_id)
-        item['id'] = self.as_source.tag_uri(obj_id)
+    # switching the post to use the fb_object_id when it's provided.
+    activities = resp.setdefault('items', [])
+    fb_ids = set()
+    for activity in activities:
+      obj = activity.get('object', {})
+      fb_id = obj.get('fb_object_id')
+      if not fb_id:
+        continue
 
-    ids = set((i['id'] for i in items))
-    items += [self.as_source.post_to_activity(p) for p in photos
-              if p.get('id') not in object_ids]
+      fb_ids.add(fb_id)
+      for x in activity, obj:
+        parsed = util.parse_tag_uri(x.get('id', ''))
+        if parsed:
+          _, orig_id = parsed
+          x['id'] = self.as_source.tag_uri(fb_id)
+          x['url'] = x.get('url', '').replace(orig_id, fb_id)
+
+    activities += [self.as_source.post_to_activity(p) for p in photos
+                   if p.get('id') not in fb_ids]
 
     # add events
-    items += [self.as_source.event_to_activity(e, rsvps=r)
-              for e, r in events_and_rsvps]
+    activities += [self.as_source.event_to_activity(e, rsvps=r)
+                   for e, r in events_and_rsvps]
     return resp
 
   def canonicalize_syndication_url(self, url):
