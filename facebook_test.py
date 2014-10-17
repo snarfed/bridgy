@@ -4,6 +4,7 @@
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import copy
+import datetime
 import json
 import urllib
 import urllib2
@@ -16,6 +17,7 @@ from activitystreams.oauth_dropins import facebook as oauth_facebook
 from facebook import FacebookPage
 import facebook
 import models
+import tasks
 import testutil
 
 
@@ -38,7 +40,9 @@ class FacebookPageTest(testutil.ModelsTest):
                             'type': 'user',
                             }))
     self.auth_entity.put()
-    self.fb = FacebookPage.new(self.handler, auth_entity=self.auth_entity)
+    self.fb = FacebookPage.new(self.handler, auth_entity=self.auth_entity,
+                               features=['listen'])
+    self.fb.put()
 
     self.post_activity = copy.deepcopy(as_facebook_test.ACTIVITY)
     fb_id_and_url = {
@@ -162,3 +166,47 @@ class FacebookPageTest(testutil.ModelsTest):
       ('https://facebook.com/25624/posts/snarfed.org',
        'http://www.facebook.com/25624/posts/snarfed.org')):
       self.assertEqual(expected, self.fb.canonicalize_syndication_url(input))
+
+  def test_photo_syndication_url(self):
+    """End to end test with syndication URL with FB object id instead of post id.
+
+    Background in https://github.com/snarfed/bridgy/issues/189
+    """
+    self.fb.domain_urls=['http://author/url']
+    self.fb.last_hfeed_fetch = datetime.datetime.utcnow()
+    self.fb.put()
+
+    # Facebook API calls
+    self.expect_urlopen(
+      'https://graph.facebook.com/me/posts?offset=0&limit=50&access_token=my_token',
+      json.dumps({'data': [as_facebook_test.POST]}))
+    self.expect_urlopen(
+      'https://graph.facebook.com/me/photos/uploaded?access_token=my_token', '{}')
+    self.expect_urlopen(
+      'https://graph.facebook.com/me/events?access_token=my_token', '{}')
+
+    # posse post discovery
+    self.expect_requests_get('http://author/url', """
+    <html>
+      <div class="h-entry">
+        <a class="u-url" href="http://my.orig/post"></a>
+      </div>
+    </html>""")
+
+    self.assertNotIn('222', as_facebook_test.POST['id'])
+    self.assertEquals('222', as_facebook_test.POST['object_id'])
+    self.expect_requests_get('http://my.orig/post', """
+    <html class="h-entry">
+      <a class="u-syndication" href="https://www.facebook.com/photo.php?fbid=222&set=a.995695740593.2393090.212038&type=1&theater'"></a>
+    </html>""")
+
+    self.mox.ReplayAll()
+
+    resp = tasks.application.get_response(
+      '/_ah/queue/poll', method='POST', body=urllib.urlencode({
+          'source_key': self.fb.key.urlsafe(),
+          'last_polled': '1970-01-01-00-00-00',
+          }))
+    self.assertEqual(200, resp.status_int)
+    for resp in models.Response.query():
+      self.assertEqual(['http://my.orig/post'], resp.unsent)
