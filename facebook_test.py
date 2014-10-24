@@ -6,6 +6,7 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 import copy
 import datetime
 import json
+import re
 import urllib
 import urllib2
 
@@ -77,10 +78,10 @@ class FacebookPageTest(testutil.ModelsTest):
       'https://graph.facebook.com/me/events?access_token=my_token',
       json.dumps({'data': [as_facebook_test.EVENT, owned_event]}))
     self.expect_urlopen(
-      'https://graph.facebook.com/145304994?access_token=my_token',
+      re.compile('^https://graph.facebook.com/145304994.+'),
       json.dumps(as_facebook_test.EVENT))
     self.expect_urlopen(
-      'https://graph.facebook.com/888?access_token=my_token',
+      re.compile('^https://graph.facebook.com/888\?.+'),
       json.dumps(owned_event))
     self.expect_urlopen(
       'https://graph.facebook.com/888/invited?access_token=my_token',

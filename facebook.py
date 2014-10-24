@@ -43,6 +43,10 @@ API_PHOTOS_URL = 'https://graph.facebook.com/me/photos/uploaded'
 API_USER_RSVPS_URL = 'https://graph.facebook.com/me/events'  # returns yes and maybe
 API_USER_RSVPS_DECLINED_URL = 'https://graph.facebook.com/me/events/declined'
 API_USER_RSVPS_NOT_REPLIED_URL = 'https://graph.facebook.com/me/events/not_replied'
+# Ideally this fields arg would just be [default fields plus comments], but
+# there's no way to ask for that. :/
+# https://developers.facebook.com/docs/graph-api/using-graph-api/v2.1#fields
+API_EVENT_URL = 'https://graph.facebook.com/%s?fields=comments,description,end_time,id,name,owner,picture,privacy,start_time,timezone,updated_time,venue'
 API_EVENT_RSVPS_URL = 'https://graph.facebook.com/%s/invited'
 
 
@@ -118,7 +122,7 @@ class FacebookPage(models.Source):
 
       # have to re-fetch the events because the user rsvps response doesn't
       # include the event description, which we need for original post links.
-      events = [self.get(as_facebook.API_OBJECT_URL % r['id'])
+      events = [self.get(API_EVENT_URL % r['id'])
                 for r in user_rsvps if r.get('id')]
 
       # also, only process events that the user is the owner of. avoids (but
