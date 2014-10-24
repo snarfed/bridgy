@@ -229,11 +229,11 @@ class Poll(webapp2.RequestHandler):
 
         existing = responses.get(id)
         if existing:
-          if (existing.get('url') != resp.get('url') or
-              existing.get('content') != resp.get('content')):
-            logging.error(
-              'Two responses with same id but different URLs or content!\n%s\n%s',
-              existing, resp)
+          for field in 'url', 'content':
+            old = existing.get(field)
+            new = resp.get(field)
+            if old != new:
+              logging.error('Response %s changed %s! %s => %s', id, field, old, new)
           resp = existing
         else:
           responses[id] = resp
