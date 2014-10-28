@@ -96,7 +96,7 @@ class FacebookPageTest(testutil.ModelsTest):
 
   def test_get_activities_post_and_photo_duplicates(self):
     self.assertEqual(as_facebook_test.POST['object_id'],
-                        as_facebook_test.PHOTO['id'])
+                     as_facebook_test.PHOTO['id'])
     self.expect_urlopen(
       'https://graph.facebook.com/me/posts?offset=0&access_token=my_token',
       json.dumps({'data': [as_facebook_test.POST]}))
@@ -115,6 +115,24 @@ class FacebookPageTest(testutil.ModelsTest):
     self.assertEquals('https://facebook.com/212038/posts/222', obj['url'])
     self.assertEquals(3, len(obj['replies']['items']))
     self.assertEquals(3, len([t for t in obj['tags'] if t.get('verb') == 'like']))
+
+  def test_get_activities_catches_comment_ids_with_colons(self):
+    # Background: https://github.com/snarfed/bridgy/issues/305
+    post = copy.deepcopy(as_facebook_test.POST)
+    post['comments']['data'][1]['id'] = '123:456'
+    self.expect_urlopen(
+      'https://graph.facebook.com/me/posts?offset=0&access_token=my_token',
+      json.dumps({'data': [post]}))
+    self.expect_urlopen(
+      'https://graph.facebook.com/me/photos/uploaded?access_token=my_token',
+      json.dumps({'data': []}))
+    self.expect_urlopen(
+      'https://graph.facebook.com/me/events?access_token=my_token',
+      json.dumps({}))
+    self.mox.ReplayAll()
+
+    self.assertRaisesRegexp(AssertionError, 'Cowardly refusing id with colon',
+                            self.fb.get_activities)
 
   def test_revoked(self):
     self.expect_urlopen(

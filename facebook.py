@@ -179,7 +179,7 @@ class FacebookPage(models.Source):
           x['id'] = self.as_source.tag_uri(fb_id)
           x['url'] = x.get('url', '').replace(orig_id, fb_id)
 
-
+    # merge comments and likes from existing photo objects, and add new ones.
     for photo in photos:
       photo_activity = self.as_source.post_to_activity(photo)
       existing = activities_by_fb_id.get(photo.get('id'))
@@ -195,6 +195,17 @@ class FacebookPage(models.Source):
     # add events
     activities += [self.as_source.event_to_activity(e, rsvps=r)
                    for e, r in events_and_rsvps]
+
+    # check that no ids have colons in them. Background:
+    # https://github.com/snarfed/bridgy/issues/305
+    for a in activities:
+      obj = a.get('object', {})
+      for o in ([a, obj] + obj.get('tags', []) +
+                obj.get('replies', {}).get('items', [])):
+        id = util.parse_tag_uri(o.get('id'))
+        if id:
+          assert ':' not in id[1], 'Cowardly refusing id with colon: %s' % id[1]
+
     return resp
 
   def canonicalize_syndication_url(self, url):
