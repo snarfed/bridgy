@@ -202,7 +202,7 @@ class FacebookPage(models.Source):
       obj = a.get('object', {})
       for o in ([a, obj] + obj.get('tags', []) +
                 obj.get('replies', {}).get('items', [])):
-        id = util.parse_tag_uri(o.get('id'))
+        id = util.parse_tag_uri(o.get('id', ''))
         if id:
           assert ':' not in id[1], 'Cowardly refusing id with colon: %s' % id[1]
 
