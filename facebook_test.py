@@ -108,7 +108,13 @@ class FacebookPageTest(testutil.ModelsTest):
       json.dumps({}))
     self.mox.ReplayAll()
 
-    self.assert_equals([self.post_activity], self.fb.get_activities())
+    got = self.fb.get_activities()
+    self.assertEquals(1, len(got))
+    obj = got[0]['object']
+    self.assertEquals('tag:facebook.com,2013:222', obj['id'])
+    self.assertEquals('https://facebook.com/212038/posts/222', obj['url'])
+    self.assertEquals(3, len(obj['replies']['items']))
+    self.assertEquals(3, len([t for t in obj['tags'] if t.get('verb') == 'like']))
 
   def test_revoked(self):
     self.expect_urlopen(

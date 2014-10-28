@@ -164,14 +164,14 @@ class FacebookPage(models.Source):
     # id. the post's object_id field points to the photo's id. de-dupe by
     # switching the post to use the fb_object_id when it's provided.
     activities = resp.setdefault('items', [])
-    fb_ids = set()
+    activities_by_fb_id = {}
     for activity in activities:
       obj = activity.get('object', {})
       fb_id = obj.get('fb_object_id')
       if not fb_id:
         continue
 
-      fb_ids.add(fb_id)
+      activities_by_fb_id[fb_id] = activity
       for x in activity, obj:
         parsed = util.parse_tag_uri(x.get('id', ''))
         if parsed:
@@ -179,8 +179,18 @@ class FacebookPage(models.Source):
           x['id'] = self.as_source.tag_uri(fb_id)
           x['url'] = x.get('url', '').replace(orig_id, fb_id)
 
-    activities += [self.as_source.post_to_activity(p) for p in photos
-                   if p.get('id') not in fb_ids]
+
+    for photo in photos:
+      photo_activity = self.as_source.post_to_activity(photo)
+      existing = activities_by_fb_id.get(photo.get('id'))
+      if existing:
+        existing['object'].setdefault('replies', {}).setdefault('items', []).extend(
+          photo_activity['object'].get('replies', {}).get('items', []))
+        existing['object'].setdefault('tags', []).extend(
+            [t for t in photo_activity['object'].get('tags', [])
+             if t.get('verb') == 'like'])
+      else:
+        activities.append(photo_activity)
 
     # add events
     activities += [self.as_source.event_to_activity(e, rsvps=r)
