@@ -1,5 +1,11 @@
 """Blogger API 2.0 hosted blog implementation.
 
+Blogger API docs:
+https://developers.google.com/blogger/docs/2.0/developers_guide_protocol
+
+Python GData API docs:
+http://gdata-python-client.googlecode.com/hg/pydocs/gdata.blogger.data.html
+
 To use, go to your Blogger blog's dashboard, click Template, Edit HTML, then
 put this in the head section:
 
