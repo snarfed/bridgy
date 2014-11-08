@@ -205,8 +205,7 @@ def _process_author(source, author_url, refetch_blanks=False):
     return {}
 
   author_dom = BeautifulSoup(author_resp.text)
-  author_parser = mf2py.Parser(url=author_url, doc=author_dom)
-  author_parsed = author_parser.to_dict()
+  feeditems = _find_feed_items(author_url, author_dom)
 
   # look for canonical feed url (if it isn't this one) using
   # rel='feed', type='text/html'
@@ -232,26 +231,18 @@ def _process_author(source, author_url, refetch_blanks=False):
       continue
 
     try:
-      logging.debug("fetching author's h-feed %s", feed_url)
+      logging.debug("fetching author's rel-feed %s", feed_url)
       feed_resp = requests.get(feed_url, timeout=HTTP_TIMEOUT)
       feed_resp.raise_for_status()
-      logging.debug("author's h-feed fetched successfully %s", feed_url)
-      author_parsed = mf2py.Parser(
-        url=feed_url, doc=feed_resp.text).to_dict()
+      logging.debug("author's rel-feed fetched successfully %s", feed_url)
+      feeditems = _merge_hfeeds(feeditems,
+                                _find_feed_items(feed_url, feed_resp.text))
       break
     except AssertionError:
       raise  # reraise assertions for unit tests
     except BaseException:
       logging.warning('Could not fetch h-feed url %s.', feed_url,
                       exc_info=True)
-
-  feeditems = author_parsed['items']
-  hfeed = next((item for item in feeditems
-                if 'h-feed' in item['type']), None)
-  if hfeed:
-    feeditems = hfeed.get('children', [])
-  else:
-    logging.info('No h-feed found, fallback to top-level h-entrys.')
 
   permalinks = set()
   for child in feeditems:
@@ -296,6 +287,51 @@ def _process_author(source, author_url, refetch_blanks=False):
     source.last_syndication_url = now
 
   return results
+
+
+def _merge_hfeeds(feed1, feed2):
+  """Merge items from two h-feeds into a composite feed. Skips items in
+  feed2 that are already represented in feed1, based on the "url" property.
+
+  Args:
+    feed1: a list of dicts
+    feed2: a list of dicts
+
+  Returns:
+    a list of dicts
+  """
+  seen = set()
+  for item in feed1:
+    for url in item.get('properties', {}).get('url', []):
+      if isinstance(url, basestring):
+        seen.add(url)
+
+  return feed1 + [item for item in feed2 if all(
+    url not in seen for url in item.get('properties', {}).get('url', []))]
+
+
+def _find_feed_items(feed_url, feed_doc):
+  """Extract feed items from a given URL and document. If the top-level
+  h-* item is an h-feed, return its children. Otherwise, returns the
+  top-level items.
+
+  Args:
+    feed_url: a string. the URL passed to mf2py parser
+    feed_doc: a string or BeautifulSoup object. document is passed to
+      mf2py parser
+
+  Returns:
+    a list of dicts, each one representing an mf2 h-* item
+  """
+  parsed = mf2py.Parser(url=feed_url, doc=feed_doc).to_dict()
+  feeditems = parsed['items']
+  hfeed = next((item for item in feeditems
+                if 'h-feed' in item['type']), None)
+  if hfeed:
+    feeditems = hfeed.get('children', [])
+  else:
+    logging.debug('No h-feed found, fallback to top-level h-entrys.')
+  return feeditems
 
 
 def _process_entry(source, permalink, refetch_blanks, preexisting):

@@ -14,6 +14,7 @@ from models import SyndicatedPost
 from facebook import FacebookPage
 from requests.exceptions import HTTPError
 
+
 class OriginalPostDiscoveryTest(testutil.ModelsTest):
 
   def test_single_post(self):
@@ -1063,6 +1064,65 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.mox.ReplayAll()
     activity = original_post_discovery.discover(source, self.activities[0])
     self.assertFalse(activity['object'].get('upstreamDuplicates'))
+
+  def test_merge_front_page_and_h_feed(self):
+    """Make sure we are correctly merging the front page and rel-feed by
+    checking that we visit h-entries that are only the front page or
+    only the rel-feed page.
+    """
+    activity = self.activities[0]
+    activity['object'].update({
+        'content': 'post content without backlink',
+        'url': 'https://fa.ke/post/url',
+        'upstreamDuplicates': ['existing uD'],
+    })
+
+    # silo domain is fa.ke
+    source = self.sources[0]
+    source.domain_urls = ['http://author']
+
+    self.expect_requests_get('http://author', """
+    <link rel="feed" href="/feed">
+    <html class="h-feed">
+      <div class="h-entry">
+        <a class="u-url" href="http://author/only-on-frontpage"></a>
+      </div>
+      <div class="h-entry">
+        <a class="u-url" href="http://author/on-both"></a>
+      </div>
+    </html>""")
+
+    self.expect_requests_get('http://author/feed', """
+    <link rel="feed" href="/feed">
+    <html class="h-feed">
+      <div class="h-entry">
+        <a class="u-url" href="http://author/on-both"></a>
+      </div>
+      <div class="h-entry">
+        <a class="u-url" href="http://author/only-on-feed"></a>
+      </div>
+    </html>""")
+
+    for orig in ('/only-on-frontpage', '/on-both', '/only-on-feed'):
+      self.expect_requests_get('http://author%s' % orig,
+                               """<div class="h-entry">
+                                 <a class="u-url" href="%s"></a>
+                               </div>""" % orig).InAnyOrder()
+
+    self.mox.ReplayAll()
+    logging.debug('Original post discovery %s -> %s', source, activity)
+    original_post_discovery.discover(source, activity)
+
+    # should be three blank SyndicatedPosts now
+    for orig in ('http://author/only-on-frontpage',
+                 'http://author/on-both',
+                 'http://author/only-on-feed'):
+      logging.debug('checking %s', orig)
+      sp = SyndicatedPost.query(
+        SyndicatedPost.original == orig,
+        ancestor=source.key).get()
+      self.assertTrue(sp)
+      self.assertIsNone(sp.syndication)
 
 
 class OriginalPostDiscoveryFacebookTest(facebook_test.FacebookPageTest):
