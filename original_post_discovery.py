@@ -244,21 +244,19 @@ def _process_author(source, author_url, refetch_blanks=False):
       logging.warning('Could not fetch h-feed url %s.', feed_url,
                       exc_info=True)
 
-  permalinks = set()
+  permalink_to_entry = {}
   for child in feeditems:
     if 'h-entry' in child['type']:
-      # TODO if this h-entry in the h-feed has u-syndication links, we
-      # can just use it without fetching its permalink page
       # TODO maybe limit to first ~30 entries? (do that here rather than,
       # below because we want the *first* n entries)
       for permalink in child['properties'].get('url', []):
         if isinstance(permalink, basestring):
-          permalinks.add(permalink)
+          permalink_to_entry[permalink] = child
         else:
           logging.warn('unexpected non-string "url" property: %s', permalink)
 
   # query all preexisting permalinks at once, instead of once per link
-  permalinks_list = list(permalinks)
+  permalinks_list = list(permalink_to_entry.keys())
   # fetch the maximum allowed entries (currently 30) at a time
   preexisting_list = itertools.chain.from_iterable(
     SyndicatedPost.query(
@@ -270,9 +268,9 @@ def _process_author(source, author_url, refetch_blanks=False):
     preexisting.setdefault(r.original, []).append(r)
 
   results = {}
-  for permalink in permalinks:
+  for permalink, entry in permalink_to_entry.iteritems():
     logging.debug('processing permalink: %s', permalink)
-    new_results = _process_entry(source, permalink, refetch_blanks,
+    new_results = _process_entry(source, permalink, entry, refetch_blanks,
                                  preexisting.get(permalink, []))
     for key, value in new_results.iteritems():
       results.setdefault(key, []).extend(value)
@@ -334,13 +332,15 @@ def _find_feed_items(feed_url, feed_doc):
   return feeditems
 
 
-def _process_entry(source, permalink, refetch_blanks, preexisting):
+def _process_entry(source, permalink, feed_entry, refetch_blanks, preexisting):
   """Fetch and process an h-entry, saving a new SyndicatedPost to the
   DB if successful.
 
   Args:
+    source:
     permalink: url of the unprocessed post
-    syndication_url: url of the syndicated content
+    feed_entry: the h-feed version of the h-entry dict, often contains
+      a partial version of the h-entry at the permalink
     refetch_blanks: boolean whether we should ignore blank preexisting
       SyndicatedPosts
     preexisting: a list of previously discovered models.SyndicatedPosts
@@ -362,32 +362,71 @@ def _process_entry(source, permalink, refetch_blanks, preexisting):
     else:
       return results
 
-  syndication_urls = set()
-  parsed = None
-  try:
-    logging.debug('fetching post permalink %s', permalink)
-    permalink, _, type_ok = util.get_webmention_target(permalink)
-    if type_ok:
-      resp = requests.get(permalink, timeout=HTTP_TIMEOUT)
-      resp.raise_for_status()
-      parsed = mf2py.Parser(url=permalink, doc=resp.text).to_dict()
-  except BaseException:
-    # TODO limit the number of allowed failures
-    logging.warning('Could not fetch permalink %s', permalink, exc_info=True)
+  # first try with the h-entry from the h-feed. if we find the syndication url
+  # we're looking for, we don't have to fetch the permalink
+  usynd = feed_entry.get('properties', {}).get('syndication', [])
+  logging.debug('u-syndication links on the h-feed h-entry: %s', usynd)
+  results = _process_syndication_urls(source, permalink, set(
+    url for url in usynd if isinstance(url, basestring)))
 
-  if parsed:
-    relsynd = parsed.get('rels').get('syndication', [])
-    logging.debug('rel-syndication links: %s', relsynd)
-    syndication_urls.update(relsynd)
+  # fetch the full permalink page, which often has more detailed information
+  if not results:
+    parsed = None
+    try:
+      logging.debug('fetching post permalink %s', permalink)
+      permalink, _, type_ok = util.get_webmention_target(permalink)
+      if type_ok:
+        resp = requests.get(permalink, timeout=HTTP_TIMEOUT)
+        resp.raise_for_status()
+        parsed = mf2py.Parser(url=permalink, doc=resp.text).to_dict()
+    except BaseException:
+      # TODO limit the number of allowed failures
+      logging.warning('Could not fetch permalink %s', permalink, exc_info=True)
 
-    # there should only be one h-entry on a permalink page, but
-    # we'll check all of them just in case.
-    for hentry in (item for item in parsed['items']
-                   if 'h-entry' in item['type']):
-      usynd = hentry.get('properties', {}).get('syndication', [])
-      logging.debug('u-syndication links: %s', usynd)
-      syndication_urls.update(usynd)
+    if parsed:
+      syndication_urls = set()
+      relsynd = parsed.get('rels').get('syndication', [])
+      logging.debug('rel-syndication links: %s', relsynd)
+      syndication_urls.update(url for url in relsynd
+                              if isinstance(url, basestring))
+      # there should only be one h-entry on a permalink page, but
+      # we'll check all of them just in case.
+      for hentry in (item for item in parsed['items']
+                     if 'h-entry' in item['type']):
+        usynd = hentry.get('properties', {}).get('syndication', [])
+        logging.debug('u-syndication links: %s', usynd)
+        syndication_urls.update(url for url in usynd
+                                if isinstance(url, basestring))
+      results = _process_syndication_urls(source, permalink,
+                                          syndication_urls)
 
+  if not results:
+    logging.debug('no syndication links from %s to current source %s.',
+                  permalink, source.label())
+    if not preexisting:
+      # remember that this post doesn't have syndication links for this
+      # particular source
+      logging.debug('saving empty relationship so that it %s will not be '
+                    'searched again', permalink)
+      SyndicatedPost.insert_original_blank(source, permalink)
+
+  logging.debug('discovered relationships %s', results)
+  return results
+
+
+def _process_syndication_urls(source, permalink, syndication_urls):
+  """Process a list of syndication URLs looking for one that matches the
+  current source.  If one is found, stores a new SyndicatedPost in the
+  db.
+
+  Args:
+    source: a models.Source subclass
+    permalink: a string. the current h-entry permalink
+    syndication_urls: a collection of strings. the unfitered list
+      of syndication_urls
+  """
+
+  results = {}
   # save the results (or lack thereof) to the db, and put them in a
   # map for immediate use
   for syndication_url in syndication_urls:
@@ -401,23 +440,10 @@ def _process_entry(source, permalink, refetch_blanks, preexisting):
     # lookups by saving results for other sources too (note: query the
     # appropriate source subclass by author.domains, rather than
     # author.domain_urls)
-    parsed = urlparse.urlparse(syndication_url)
-    if util.domain_from_link(parsed.netloc) == source.AS_CLASS.DOMAIN:
+    if util.domain_from_link(syndication_url) == source.AS_CLASS.DOMAIN:
       logging.debug('saving discovered relationship %s -> %s',
                     syndication_url, permalink)
       relationship = SyndicatedPost.insert(
         source, syndication=syndication_url, original=permalink)
       results.setdefault(syndication_url, []).append(relationship)
-
-  if not results:
-    logging.debug('no syndication links from %s to current source %s.',
-                  permalink, source.label())
-    if not preexisting:
-      # remember that this post doesn't have syndication links for this
-      # particular source
-      logging.debug('saving empty relationship so that it %s will not be '
-                    'searched again', permalink)
-      SyndicatedPost.insert_original_blank(source, permalink)
-
-  logging.debug('discovered relationships %s', results)
   return results

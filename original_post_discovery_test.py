@@ -23,10 +23,10 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     """
     activity = self.activities[0]
     activity['object'].update({
-        'content': 'post content without backlink',
-        'url': 'https://fa.ke/post/url',
-        'upstreamDuplicates': ['existing uD'],
-        })
+      'content': 'post content without backlink',
+      'url': 'https://fa.ke/post/url',
+      'upstreamDuplicates': ['existing uD'],
+    })
 
     # silo domain is fa.ke
     source = self.sources[0]
@@ -46,6 +46,47 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     <div class="h-entry">
       <a class="u-url" href="http://author/post/permalink"></a>
     </div>""")
+
+    self.mox.ReplayAll()
+    logging.debug('Original post discovery %s -> %s', source, activity)
+    original_post_discovery.discover(source, activity)
+
+    # upstreamDuplicates = 1 original + 1 discovered
+    self.assertEquals(['existing uD', 'http://author/post/permalink'],
+                      activity['object']['upstreamDuplicates'])
+
+    origurls = [r.original for r in SyndicatedPost.query(ancestor=source.key)]
+    self.assertEquals([u'http://author/post/permalink'], origurls)
+
+    # for now only syndicated posts belonging to this source are stored
+    syndurls = list(r.syndication for r
+                    in SyndicatedPost.query(ancestor=source.key))
+
+    self.assertEquals([u'https://fa.ke/post/url'], syndurls)
+
+  def test_syndication_url_in_hfeed(self):
+    """Like test_single_post, but because the syndication URL is given in
+    the h-feed we skip fetching the permalink. New behavior as of
+    2014-11-08
+    """
+    activity = self.activities[0]
+    activity['object'].update({
+      'content': 'post content without backlink',
+      'url': 'https://fa.ke/post/url',
+      'upstreamDuplicates': ['existing uD'],
+    })
+
+    # silo domain is fa.ke
+    source = self.sources[0]
+    source.domain_urls = ['http://author']
+
+    self.expect_requests_get('http://author', """
+    <html class="h-feed">
+      <div class="h-entry">
+        <a class="u-url" href="http://author/post/permalink"></a>
+        <a class="u-syndication" href="http://fa.ke/post/url">
+      </div>
+    </html>""")
 
     self.mox.ReplayAll()
     logging.debug('Original post discovery %s -> %s', source, activity)
