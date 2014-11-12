@@ -77,10 +77,10 @@ class WordPress(models.Source):
       handler: the current RequestHandler
       auth_entity: oauth_dropins.wordpress.WordPressAuth
     """
-    # Fetch blog's site info
     auth_domain = auth_entity.key.id()
-    site_info = json.loads(auth_entity.urlopen(
-        API_SITE_URL % auth_entity.blog_id).read())
+    site_info = WordPress.get_site_info(handler, auth_entity)
+    if site_info is None:
+      return
 
     site_url = site_info.get('URL')
     if site_url and site_url != auth_entity.blog_url:
@@ -166,6 +166,30 @@ class WordPress(models.Source):
     resp['id'] = resp.pop('ID', None)
     return resp
 
+  @staticmethod
+  def get_site_info(handler, auth_entity):
+    """Fetches the site info from the API.
+
+    Args:
+      handler: the current RequestHandler
+      auth_entity: oauth_dropins.wordpress.WordPressAuth
+
+    Returns: site info dict, or None if API calls are disabled for this blog
+    """
+    try:
+      return json.loads(auth_entity.urlopen(
+        API_SITE_URL % auth_entity.blog_id).read())
+    except urllib2.HTTPError, e:
+      code, body = interpret_http_exception(e)
+      if (code == '403' and '"API calls to this blog have been disabled."' in body):
+        handler.messages.add(
+          'You need to <a href="http://jetpack.me/support/json-api/">enable '
+          'the Jetpack JSON API</a> in %s\'s WordPress admin console.' %
+          util.pretty_link(auth_entity.blog_url))
+        handler.redirect('/')
+        return None
+      raise
+
 
 class AddWordPress(oauth_wordpress.CallbackHandler, util.Handler):
   def finish(self, auth_entity, state=None):
@@ -176,8 +200,7 @@ class AddWordPress(oauth_wordpress.CallbackHandler, util.Handler):
         return self.redirect_home_or_user_page(state)
 
       # Check if this is a self-hosted WordPress blog
-      site_info = json.loads(auth_entity.urlopen(
-          API_SITE_URL % auth_entity.blog_id).read())
+      site_info = WordPress.get_site_info(self, auth_entity)
       if site_info.get('jetpack'):
         logging.info('This is a self-hosted WordPress blog! %s %s',
                      auth_entity.key.id(), auth_entity.blog_id)

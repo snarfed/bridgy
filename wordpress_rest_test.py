@@ -82,6 +82,18 @@ class WordPressTest(testutil.HandlerTest):
     self.assertRaises(urllib2.HTTPError, WordPress.new, self.handler,
                       auth_entity=self.auth_entity)
 
+  def test_site_lookup_api_disabled_error(self):
+    self.expect_urlopen(
+      'https://public-api.wordpress.com/rest/v1/sites/123?pretty=true',
+      '{"error": "unauthorized",'
+      ' "message": "API calls to this blog have been disabled."}',
+      status=403)
+    self.mox.ReplayAll()
+
+    self.assertIsNone(WordPress.new(self.handler, auth_entity=self.auth_entity))
+    self.assertIsNone(WordPress.query().get())
+    self.assertIn('enable the Jetpack JSON API', next(iter(self.handler.messages)))
+
   def test_create_comment_with_slug_lookup(self):
     self.expect_urlopen(
       'https://public-api.wordpress.com/rest/v1/sites/123/posts/'
