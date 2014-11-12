@@ -79,6 +79,7 @@ class BlacklistingHandler(ereporter.ExceptionRecordingHandler):
     'InternalError: Server is not responding',
     'InternalTransientError',
     'JointException: taskqueue.DatastoreError',
+    "KeyError: u'http://www.nytimes.com/",
     'Timeout',
     'TransientError',
     'TweepError: HTTPSConnectionPool',
