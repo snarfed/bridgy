@@ -58,6 +58,10 @@ class TwitterStreamingTest(testutil.ModelsTest):
     retweet['retweeted_status'] = twitter_test.TWEET
     share = copy.deepcopy(twitter_test.SHARES[0])
     share['author']['id'] = 'tag:twitter.com,2013:alizz'
+    share.update({
+      'attachments': twitter_test.OBJECT['attachments'],
+      'image': {u'url': u'http://p.twimg.com/picture1'},
+      })
     activity = twitter_test.ACTIVITY
     share['object']['url'] = activity['url']
 
