@@ -124,6 +124,11 @@ i hereby reply
     self.assert_error(msg)
     self.assertEquals(0, BlogWebmention.query().count())
 
+  def test_target_is_home_page(self):
+    self.assert_error('Home page webmentions are not currently supported.',
+                      target='http://foo.com/')
+    self.assertEquals(0, BlogWebmention.query().count())
+
   def test_mention(self):
     html = """\
 <article class="h-entry"><p class="e-content">

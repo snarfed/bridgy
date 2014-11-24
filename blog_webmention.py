@@ -51,7 +51,7 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
     # parse and validate target URL
     domain = util.domain_from_link(self.target_url)
     if not domain:
-      return self.error(msg, 'Could not parse target URL %s' % self.target_url)
+      return self.error('Could not parse target URL %s' % self.target_url)
 
     # look up source by domain
     source_cls = SOURCES[source_short_name]
@@ -66,6 +66,9 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
         'Could not find %s account for %s. Is it registered with Bridgy?' %
         (source_cls.AS_CLASS.NAME, domain),
         mail=False)
+
+    if urlparse.urlparse(self.target_url).path in ('', '/'):
+      return self.error('Home page webmentions are not currently supported.')
 
     # create BlogWebmention entity
     id = '%s %s' % (self.source_url, self.target_url)
