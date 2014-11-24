@@ -109,6 +109,10 @@ class Source(StringIdModel):
   last_activities_etag = ndb.StringProperty()
   last_activities_cache_json = ndb.TextProperty()
 
+  # this is set temporarily, in memory only, by the poll task when we get rate
+  # limited. it can be used e.g. to modify the poll period.
+  rate_limited = False
+
   # as_source is *not* set to None by default here, since it needs to be unset
   # for __getattr__ to run when it's accessed.
 
@@ -160,7 +164,7 @@ class Source(StringIdModel):
     return '%s (%s)' % (self.name, self.AS_CLASS.NAME)
 
   def poll_period(self):
-    """Returns the poll frequency for this source.
+    """Returns the poll frequency for this source, as a datetime.timedelta.
 
     Defaults to ~15m, depending on silo. If we've never sent a webmention for
     this source, or the last one we sent was over a month ago, we drop them down

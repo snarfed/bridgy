@@ -35,6 +35,9 @@ class GooglePlusPage(models.Source):
   # Today's quota usage: https://code.google.com/apis/console/b/0/?noredirect#project:1029605954231:quotas
   # Daily total usage: https://code.google.com/apis/console/b/0/?pli=1#project:1029605954231:stats
   FAST_POLL = datetime.timedelta(minutes=20)
+  # API quotas are refilled daily. Use 30h to make sure we're over a day even
+  # after the randomized task ETA.
+  RATE_LIMITED_POLL = datetime.timedelta(hours=30)
 
   type = ndb.StringProperty(choices=('user', 'page'))
 
@@ -77,6 +80,10 @@ class GooglePlusPage(models.Source):
 
     return getattr(super(GooglePlusPage, self), name)
 
+  def poll_period(self):
+    """Returns the poll frequency for this source."""
+    return (self.RATE_LIMITED_POLL if self.rate_limited
+            else super(GooglePlusPage, self).poll_period())
 
 class OAuthCallback(util.Handler):
   """OAuth callback handler.

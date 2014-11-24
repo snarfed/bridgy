@@ -139,6 +139,7 @@ class FakeSource(FakeBase, Source):
   AS_CLASS = FakeAsSource
   SHORT_NAME = 'fake'
   TYPE_LABELS = {'post': 'FakeSource post label'}
+  RATE_LIMITED_POLL = datetime.timedelta(hours=30)
 
   as_source = FakeAsSource()
 
@@ -170,6 +171,10 @@ class FakeSource(FakeBase, Source):
 
   def feed_url(self):
     return 'fake feed url'
+
+  def poll_period(self):
+    return (self.RATE_LIMITED_POLL if self.rate_limited
+            else super(FakeSource, self).poll_period())
 
 
 class HandlerTest(as_testutil.TestCase):

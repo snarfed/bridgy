@@ -87,7 +87,7 @@ class PollTest(TaskQueueTest):
     """Checks the current poll task's eta. Handles the random range.
 
     Args:
-      delta: datetime.timedelta
+      countdown: datetime.timedelta
     """
     task = self.taskqueue_stub.GetTasks('poll')[0]
     # 10s padding
@@ -462,6 +462,7 @@ class PollTest(TaskQueueTest):
         polls = self.taskqueue_stub.GetTasks('poll')
         self.assertEqual(1, len(polls))
         self.assertEqual('/_ah/queue/poll', polls[0]['url'])
+        self.assert_task_eta(FakeSource.RATE_LIMITED_POLL)
         polls = self.taskqueue_stub.FlushQueue('poll')
 
     finally:

@@ -24,18 +24,23 @@ class GooglePlusTest(testutil.ModelsTest):
                             'image': {'url': 'http://pi.ct/ure?sz=50'},
                             }))
     self.auth_entity.put()
+    self.gp = GooglePlusPage.new(self.handler, auth_entity=self.auth_entity)
 
   def test_new(self):
-    gp = GooglePlusPage.new(self.handler, auth_entity=self.auth_entity)
-    self.assertEqual(self.auth_entity, gp.auth_entity.get())
-    self.assertEqual('987', gp.key.string_id())
-    self.assertEqual('http://pi.ct/ure?sz=50&sz=128', gp.picture)  # overridden sz
-    self.assertEqual('Mr. G P', gp.name)
-    self.assertEqual('http://mr/g/p', gp.url)
-    self.assertEqual('http://mr/g/p', gp.silo_url())
+    self.assertEqual(self.auth_entity, self.gp.auth_entity.get())
+    self.assertEqual('987', self.gp.key.string_id())
+    self.assertEqual('http://pi.ct/ure?sz=50&sz=128', self.gp.picture)  # overridden sz
+    self.assertEqual('Mr. G P', self.gp.name)
+    self.assertEqual('http://mr/g/p', self.gp.url)
+    self.assertEqual('http://mr/g/p', self.gp.silo_url())
 
   def test_canonicalize_syndication_url(self):
-    gp = GooglePlusPage.new(self.handler, auth_entity=self.auth_entity)
     self.assertEqual(
       'https://plus.google.com/first.last/1234',
-      gp.canonicalize_syndication_url('http://plus.google.com/first.last/1234'))
+      self.gp.canonicalize_syndication_url('http://plus.google.com/first.last/1234'))
+
+  def test_poll_period(self):
+    self.gp.put()
+    self.assertEqual(GooglePlusPage.FAST_POLL, self.gp.poll_period())
+    self.gp.rate_limited = True
+    self.assertEqual(GooglePlusPage.RATE_LIMITED_POLL, self.gp.poll_period())

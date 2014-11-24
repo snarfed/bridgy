@@ -166,7 +166,7 @@ class Poll(webapp2.RequestHandler):
         raise models.DisableSource(msg)
       elif code in util.HTTP_RATE_LIMIT_CODES:
         logging.warning('Rate limited. Marking as error and finishing. %s', e)
-        source_updates['status'] = 'error'
+        source_updates.update({'status': 'error', 'rate_limited': True})
         return source_updates
       else:
         raise
