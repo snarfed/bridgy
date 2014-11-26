@@ -112,11 +112,16 @@ class Poll(webapp2.RequestHandler):
       raise
     finally:
       gc.collect()  # might help avoid hitting the instance memory limit?
-      self.finish(source, source_updates)
+      source = self.update_source(source, source_updates)
+
+    # add new poll task. randomize task ETA to within +/- 20% to try to spread
+    # out tasks and prevent thundering herds.
+    task_countdown = source.poll_period().total_seconds() * random.uniform(.8, 1.2)
+    util.add_poll_task(source, countdown=task_countdown)
 
   @ndb.transactional
-  def finish(self, source, updates):
-    """Updates the source entity and adds a new poll task.
+  def update_source(self, source, updates):
+    """Merges updated fields into the source entity.
 
     Args:
       updates: dict mapping source property names to updated values
@@ -125,11 +130,7 @@ class Poll(webapp2.RequestHandler):
     for name, val in updates.items():
       setattr(source, name, val)
     source.put()
-
-    # add new poll task. randomize task ETA to within +/- 20% to try to spread
-    # out tasks and prevent thundering herds.
-    task_countdown = source.poll_period().total_seconds() * random.uniform(.8, 1.2)
-    util.add_poll_task(source, countdown=task_countdown)
+    return source
 
   def poll(self, source):
     """Actually runs the poll.
