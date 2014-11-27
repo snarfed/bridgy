@@ -95,7 +95,7 @@ class Handler(webmention.WebmentionHandler):
       return self.error('Target must be brid.gy/publish/{facebook,twitter}')
     elif source_cls in (Instagram, GooglePlusPage):
       return self.error('Sorry, %s is not yet supported.' %
-                        source_cls.AS_CLASS.NAME, mail=False)
+                        source_cls.AS_CLASS.NAME)
 
     # resolve source URL
     url, domain, ok = util.get_webmention_target(self.source_url)
@@ -139,16 +139,14 @@ class Handler(webmention.WebmentionHandler):
           source_url_parts.path.strip('/') == domain_url_parts.path.strip('/') and
           not source_url_parts.query):
         return self.error(
-          "Looks like that's your home page. Try one of your posts instead!",
-          mail=False)
+          "Looks like that's your home page. Try one of your posts instead!")
 
     # done with the sanity checks, ready to fetch the source url. create the
     # Publish entity so we can store the result.
     entity = self.get_or_add_publish_entity(url)
     if (entity.status == 'complete' and entity.type != 'preview' and
         not self.PREVIEW and not appengine_config.DEBUG):
-      return self.error("Sorry, you've already published that page, and Bridgy Publish doesn't yet support updating or deleting existing posts. Ping Ryan if you want that feature!",
-                        mail=False)
+      return self.error("Sorry, you've already published that page, and Bridgy Publish doesn't yet support updating or deleting existing posts. Ping Ryan if you want that feature!")
     self.entity = entity
 
     # fetch source page
@@ -174,7 +172,8 @@ class Handler(webmention.WebmentionHandler):
         if self.entity.published:
           break
         if resp.abort:
-          return self.error(resp.error_plain, html=resp.error_html, data=item)
+          return self.error(resp.error_plain, html=resp.error_html, data=item,
+                            mail=True)
         # try the next item
         for embedded in ('rsvp', 'invitee', 'repost', 'repost-of', 'like',
                          'like-of', 'in-reply-to'):
@@ -187,13 +186,14 @@ class Handler(webmention.WebmentionHandler):
         queue.extend(item.get('children', []))
       except BaseException, e:
         code, body = handlers.interpret_http_exception(e)
-        return self.error('Error: %s %s' % (body or '', e), status=code or 500)
+        return self.error('Error: %s %s' % (body or '', e), status=code or 500,
+                          mail=True)
 
     if not self.entity.published:  # tried all the items
       types.discard('h-entry')
       types.discard('h-note')
       if types:
-        msg = ("%s doesn't support type(s) %s, or no content was found.." %
+        msg = ("%s doesn't support type(s) %s, or no content was found." %
                (source_cls.AS_CLASS.NAME, ' + '.join(types)))
       else:
         msg = 'Could not find content in <a href="http://microformats.org/wiki/h-entry">h-entry</a> or any other element!'
@@ -395,7 +395,7 @@ class PreviewHandler(Handler):
   """
   PREVIEW = True
 
-  def error(self, error, html=None, status=400, data=None, mail=True):
+  def error(self, error, html=None, status=400, data=None, mail=False):
     logging.warning(error, exc_info=True)
     self.response.set_status(status)
     error = html if html else util.linkify(error)
