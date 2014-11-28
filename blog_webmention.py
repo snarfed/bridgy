@@ -64,8 +64,7 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
     if not self.source:
       return self.error(
         'Could not find %s account for %s. Is it registered with Bridgy?' %
-        (source_cls.AS_CLASS.NAME, domain),
-        mail=False)
+        (source_cls.AS_CLASS.NAME, domain))
 
     if urlparse.urlparse(self.target_url).path in ('', '/'):
       return self.error('Home page webmentions are not currently supported.')
@@ -124,7 +123,7 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
     except Exception, e:
       code, body = handlers.interpret_http_exception(e)
       if code or body:
-        return self.error('Error: %s %s; %s' % (code, e, body), status=code)
+        return self.error('Error: %s %s; %s' % (code, e, body), status=code, mail=True)
       else:
         raise
 

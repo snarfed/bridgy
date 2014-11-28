@@ -108,7 +108,7 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
     return fetched, data
 
   def error(self, error, html=None, status=400, data=None, log_exception=True,
-            mail=True):
+            mail=False):
     """Handle an error. May be overridden by subclasses.
 
     Args:
