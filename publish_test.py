@@ -37,6 +37,8 @@ class PublishTest(testutil.HandlerTest):
       'source': source or 'http://foo.com/bar',
       'target': target or 'http://brid.gy/publish/fake',
       }
+    if preview and (bridgy_omit_link is None):
+      bridgy_omit_link = False
     if bridgy_omit_link is not None:
       params['bridgy_omit_link'] = bridgy_omit_link
 

@@ -239,7 +239,7 @@ class Handler(webmention.WebmentionHandler):
 
     # whether to include link to original post. bridgy_omit_link query param
     # (any value) takes precedence, then u-bridgy-omit-link mf2 class.
-    if 'bridgy_omit_link' in self.request.params:
+    if self.PREVIEW or 'bridgy_omit_link' in self.request.params:
       omit_link = self.request.get('bridgy_omit_link').lower() in ('', 'true')
     else:
       omit_link = 'bridgy-omit-link' in props
