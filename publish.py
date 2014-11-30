@@ -172,8 +172,7 @@ class Handler(webmention.WebmentionHandler):
         if self.entity.published:
           break
         if resp.abort:
-          return self.error(resp.error_plain, html=resp.error_html, data=item,
-                            mail=True)
+          return self.error(resp.error_plain, html=resp.error_html, data=item)
         # try the next item
         for embedded in ('rsvp', 'invitee', 'repost', 'repost-of', 'like',
                          'like-of', 'in-reply-to'):
