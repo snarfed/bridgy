@@ -3,7 +3,6 @@
 
 import cgi
 import datetime
-import logging
 import re
 import urllib
 

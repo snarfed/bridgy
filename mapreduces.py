@@ -12,7 +12,6 @@ import json
 
 from mapreduce import operation as op
 import util
-import webapp2
 
 
 def prune_activity_json(response):

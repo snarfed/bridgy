@@ -1,7 +1,6 @@
 # coding=utf-8
 """Unit tests for original_post_discovery.py
 """
-import copy
 import facebook_test
 import logging
 import original_post_discovery
@@ -9,7 +8,6 @@ import requests
 import tasks
 import testutil
 
-from appengine_config import HTTP_TIMEOUT
 from models import SyndicatedPost
 from facebook import FacebookPage
 from requests.exceptions import HTTPError

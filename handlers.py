@@ -22,7 +22,6 @@ import json
 import logging
 import re
 import string
-import urlparse
 
 import appengine_config
 
@@ -35,15 +34,11 @@ import facebook
 import googleplus
 import original_post_discovery
 import instagram
-import models
 import tumblr
 import twitter
 import util
 import webapp2
 import wordpress_rest
-
-from google.appengine.ext import ndb
-
 
 SOURCES = {cls.SHORT_NAME: cls for cls in
            (blogger.Blogger,

@@ -3,17 +3,12 @@
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
-import base64
-import collections
 import datetime
 import json
 import logging
-import urlparse
-import webapp2
 
 import appengine_config
 
-from google.appengine.datastore import datastore_stub_util
 from google.appengine.ext import ndb
 import requests
 

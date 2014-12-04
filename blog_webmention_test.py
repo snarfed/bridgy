@@ -6,17 +6,12 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 import json
 import mox
 import urllib
-import urllib2
 from webob import exc
 
 import appengine_config
-from appengine_config import HTTP_TIMEOUT
-
-from models import BlogWebmention, Publish, PublishedPage
+from models import BlogWebmention
 import blog_webmention
 import testutil
-
-from google.appengine.api import mail
 
 
 class BlogWebmentionTest(testutil.HandlerTest):

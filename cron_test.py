@@ -5,7 +5,6 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import datetime
 import json
-import mox
 
 from activitystreams import oauth_dropins
 from activitystreams.oauth_dropins import twitter as oauth_twitter

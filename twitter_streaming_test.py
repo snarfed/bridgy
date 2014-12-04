@@ -4,9 +4,7 @@
 import copy
 import json
 import mox
-import threading
 
-from google.appengine.ext import ndb
 from tweepy import streaming
 
 from activitystreams import oauth_dropins
@@ -16,7 +14,6 @@ import models
 import testutil
 import twitter
 import twitter_streaming
-import util
 
 
 class TwitterStreamingTest(testutil.ModelsTest):

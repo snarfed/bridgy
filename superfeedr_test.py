@@ -6,12 +6,7 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 import json
 import mox
 
-from appengine_config import HTTP_TIMEOUT
-
-from blogger import Blogger
 from models import BlogPost
-from tumblr import Tumblr
-from wordpress_rest import WordPress
 import superfeedr
 import testutil
 import webapp2

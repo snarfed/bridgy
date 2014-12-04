@@ -6,18 +6,14 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import datetime
 import json
-import urllib
 
 from models import BlogPost, Response, Source, SyndicatedPost
 import mox
 import superfeedr
 import testutil
 from testutil import FakeSource
-import util
 
 from activitystreams import source as as_source
-from google.appengine.api import users
-from google.appengine.ext import testbed
 
 
 class ResponseTest(testutil.ModelsTest):
@@ -153,9 +149,8 @@ class SourceTest(testutil.HandlerTest):
     superfeedr.subscribe(mox.IsA(FakeSource), self.handler)
 
     self.mox.ReplayAll()
-    source = FakeSource.create_new(self.handler, features=['webmention'],
-                                   domains=['primary/'],
-                                   domain_urls=['http://primary/'])
+    FakeSource.create_new(self.handler, features=['webmention'],
+                          domains=['primary/'], domain_urls=['http://primary/'])
 
   def test_create_new_domain(self):
     """If the source has a URL set, extract its domain."""
@@ -198,7 +193,7 @@ class SourceTest(testutil.HandlerTest):
   def test_create_new_unicode_chars(self):
     """We should handle unusual unicode chars in the source's name ok."""
     # the invisible character in the middle is an unusual unicode character
-    source = FakeSource.create_new(self.handler, name=u'a ✁ b')
+    FakeSource.create_new(self.handler, name=u'a ✁ b')
 
   def test_create_new_rereads_domains(self):
     FakeSource.new(None, features=['listen'],

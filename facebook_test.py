@@ -16,7 +16,6 @@ import activitystreams
 from activitystreams import facebook_test as as_facebook_test
 from activitystreams.oauth_dropins import facebook as oauth_facebook
 from facebook import FacebookPage
-import facebook
 import models
 import tasks
 import testutil

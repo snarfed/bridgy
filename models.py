@@ -2,16 +2,13 @@
 """
 
 import datetime
-import itertools
 import json
 import logging
 import pprint
 import re
-import urllib
-import urlparse
 
 import appengine_config
-from appengine_config import HTTP_TIMEOUT, DEBUG
+from appengine_config import HTTP_TIMEOUT
 
 from activitystreams import source as as_source
 from activitystreams.oauth_dropins.webutil.models import StringIdModel
@@ -19,8 +16,6 @@ import superfeedr
 import util
 from webmentiontools import send
 
-from google.appengine.api import taskqueue
-from google.appengine.api import users
 from google.appengine.ext import ndb
 
 

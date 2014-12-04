@@ -28,13 +28,10 @@ curl localhost:8080/webmention/tumblr \
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import collections
-import datetime
 import json
 import logging
-import os
 import re
 import requests
-import urllib
 import urlparse
 from webob import exc
 
@@ -43,7 +40,6 @@ from appengine_config import HTTP_TIMEOUT
 
 from activitystreams.oauth_dropins import tumblr as oauth_tumblr
 import models
-import requests
 import superfeedr
 import util
 

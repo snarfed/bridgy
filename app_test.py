@@ -1,11 +1,8 @@
 """Unit tests for app.py.
 """
 
-import urlparse
-
 import app
 import testutil
-import util
 
 
 class AppTest(testutil.ModelsTest):

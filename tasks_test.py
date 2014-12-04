@@ -12,7 +12,6 @@ import mox
 import StringIO
 import urllib
 import urllib2
-import urlparse
 
 import apiclient
 from google.appengine.api import memcache
@@ -22,9 +21,7 @@ from oauth2client.client import AccessTokenRefreshError
 from activitystreams.oauth_dropins.python_instagram.bind import InstagramAPIError
 import requests
 
-from appengine_config import HTTP_TIMEOUT
 import models
-import models_test
 import tasks
 from tasks import PropagateResponse
 import testutil
@@ -937,7 +934,6 @@ class PropagateTest(TaskQueueTest):
 
     self.mox.ReplayAll()
     self.post_task(expected_status=ERROR_HTTP_RETURN_CODE)
-    response = self.responses[0].key.get()
     self.assert_response_is('error',
                             sent=['http://7', 'http://1'],
                             error=['http://3', 'http://6'],

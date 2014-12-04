@@ -10,18 +10,14 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 import logging
 import json
 import pprint
-import sys
-import urllib2
 
 import appengine_config
 from appengine_config import HTTP_TIMEOUT
 
 from bs4 import BeautifulSoup
 from mf2py import parser
-import models
 import requests
 import util
-import webapp2
 
 
 class WebmentionGetHandler(util.Handler):

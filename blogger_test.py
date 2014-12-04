@@ -4,20 +4,16 @@
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
-import json
 import mox
 import urllib
 import urlparse
 
 import appengine_config
-from appengine_config import HTTP_TIMEOUT
-from models import BlogPost
-
 from activitystreams.oauth_dropins.blogger_v2 import BloggerV2Auth
 import blogger
 from blogger import Blogger
 from gdata.blogger import data
-from gdata.blogger.client import BloggerClient, Query
+from gdata.blogger.client import BloggerClient
 from gdata.client import RequestError
 import util
 import testutil
@@ -98,9 +94,10 @@ class BloggerTest(testutil.HandlerTest):
     b = Blogger.new(self.handler, auth_entity=self.auth_entity)
     resp = b.create_comment('http://blawg/path/to/post', u'Degenève', 'http://who',
                             'x' * blogger.MAX_COMMENT_LENGTH, client=self.client)
+    self.assert_equals({'id': '333', 'response': '<foo></foo>'}, resp)
 
   def test_create_too_long_comment(self):
-    """Blogger caps totally HTML comment length at 4096 chars."""
+    """Blogger caps HTML comment length at 4096 chars."""
     self.expect_get_posts()
     self.client.add_comment(
       '111', '222', u'<a href="http://who">Degenève</a>: foo Degenève bar'
@@ -110,6 +107,7 @@ class BloggerTest(testutil.HandlerTest):
     b = Blogger.new(self.handler, auth_entity=self.auth_entity)
     resp = b.create_comment('http://blawg/path/to/post', u'Degenève', 'http://who',
                             u'foo Degenève bar', client=self.client)
+    self.assert_equals({'id': '333', 'response': '<foo></foo>'}, resp)
 
   def test_create_comment_gives_up_on_internal_error_bX2i87au(self):
     # see https://github.com/snarfed/bridgy/issues/175

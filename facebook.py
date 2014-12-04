@@ -21,10 +21,7 @@ Example comment ID and links
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import json
-import logging
-import re
 import sys
-import urllib
 import urllib2
 import urlparse
 

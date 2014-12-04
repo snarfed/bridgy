@@ -5,16 +5,12 @@
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import json
-import mox
 import urllib
 import urllib2
 
 import appengine_config
-from appengine_config import HTTP_TIMEOUT
-from models import BlogPost
 
 from activitystreams.oauth_dropins.wordpress_rest import WordPressAuth
-import wordpress_rest
 from wordpress_rest import WordPress
 import testutil
 
@@ -121,6 +117,7 @@ class WordPressTest(testutil.HandlerTest):
 
     resp = self.wp.create_comment('http://primary/post/123', u'Degenève',
                                   'http://who', u'foo Degenève bar')
+    self.assertEquals({'id': None}, resp)
 
   def test_create_comment_gives_up_on_invalid_input_error(self):
     # see https://github.com/snarfed/bridgy/issues/161

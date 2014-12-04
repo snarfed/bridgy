@@ -5,30 +5,21 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import logging
 import json
-import sys
-import urllib2
 import urlparse
 
 import appengine_config
-from appengine_config import HTTP_TIMEOUT
 
 from activitystreams import microformats2
 from activitystreams.oauth_dropins import handlers
 from blogger import Blogger
-import models
 from models import BlogWebmention
-import requests
 from tumblr import Tumblr
 import util
 import webapp2
 import webmention
 from wordpress_rest import WordPress
 
-from google.appengine.ext import ndb
-from google.appengine.ext.webapp import template
-
 SOURCES = {cls.SHORT_NAME: cls for cls in (Blogger, WordPress, Tumblr)}
-
 
 
 def first_value(props, name):

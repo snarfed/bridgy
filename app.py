@@ -6,10 +6,6 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 import datetime
 import itertools
 import json
-import logging
-import os
-import re
-import urllib
 import urlparse
 
 import appengine_config
@@ -26,21 +22,14 @@ from activitystreams.oauth_dropins import twitter as oauth_twitter
 from activitystreams.oauth_dropins import wordpress_rest as oauth_wordpress_rest
 from activitystreams.oauth_dropins.webutil.handlers import TemplateHandler
 from blogger import Blogger
-from facebook import FacebookPage
-from googleplus import GooglePlusPage
-from instagram import Instagram
 from tumblr import Tumblr
-from twitter import Twitter
 from wordpress_rest import WordPress
 import handlers
 from models import BlogPost, BlogWebmention, Publish, Response, Source
 import util
 
-from google.appengine.api import memcache
-from google.appengine.api import users
 from google.appengine.ext import ndb
 from google.appengine.ext.ndb.stats import KindStat, KindPropertyNameStat
-from google.appengine.ext.webapp import template
 import webapp2
 
 

@@ -3,14 +3,10 @@
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
-import datetime
 import json
-import logging
 import testutil
 
-from activitystreams import instagram_test as as_instagram_test
 from activitystreams.oauth_dropins import instagram as oauth_instagram
-from activitystreams.oauth_dropins.webutil import util
 from instagram import Instagram
 
 

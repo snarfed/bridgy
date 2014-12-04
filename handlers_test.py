@@ -2,17 +2,11 @@
 """
 
 import json
-import StringIO
 
 import handlers
 import models
-import mox
 from activitystreams.oauth_dropins.python_instagram.bind import InstagramAPIError
 import testutil
-import util
-import webapp2
-
-from google.appengine.ext import ndb
 
 
 class HandlersTest(testutil.HandlerTest):

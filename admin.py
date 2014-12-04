@@ -5,16 +5,11 @@ haven't completed yet.
 """
 
 import datetime
-import itertools
 import json
 
 import appengine_config
 from activitystreams.oauth_dropins.webutil import handlers
-import facebook
-import googleplus
 from models import BlogPost, Response
-import instagram
-import twitter
 import util
 
 from google.appengine.ext import ndb
@@ -67,7 +62,3 @@ application = webapp2.WSGIApplication([
     ('/admin/responses', ResponsesHandler),
     ('/admin/mark_complete', MarkCompleteHandler),
     ], debug=appengine_config.DEBUG)
-
-
-if __name__ == '__main__':
-  main()

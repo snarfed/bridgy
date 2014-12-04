@@ -24,12 +24,10 @@ curl localhost:8080/webmention/blogger \
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import collections
-import json
 import logging
 import urlparse
 
 import appengine_config
-from appengine_config import HTTP_TIMEOUT
 
 from activitystreams.oauth_dropins import blogger_v2 as oauth_blogger
 from gdata.blogger.client import Query
@@ -85,7 +83,7 @@ class Blogger(models.Source):
         if domains[0] == hostname:
           break
       else:
-        return self.error("Internal error, shouldn't happen")
+        assert False, "Internal error, shouldn't happen"
 
     return Blogger(id=blog_id,
                    auth_entity=auth_entity.key,

@@ -24,17 +24,14 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 import collections
 import json
 import logging
-import re
 import urllib
 import urllib2
 import urlparse
 
 import appengine_config
-from appengine_config import HTTP_TIMEOUT
 
 from activitystreams.oauth_dropins import wordpress_rest as oauth_wordpress
 from activitystreams.oauth_dropins.handlers import interpret_http_exception
-from activitystreams.oauth_dropins.webutil.handlers import TemplateHandler
 import models
 import superfeedr
 import util

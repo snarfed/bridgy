@@ -28,7 +28,6 @@ from activitystreams.source import SELF
 import models
 import util
 
-from google.appengine.ext import ndb
 import webapp2
 
 

@@ -31,7 +31,6 @@ import logging
 import json
 import mf2py
 import pprint
-import sys
 import urlparse
 
 import appengine_config
@@ -85,7 +84,7 @@ class Handler(webmention.WebmentionHandler):
     try:
       parsed = urlparse.urlparse(self.target_url)
     except BaseException:
-      return self.error(msg, 'Could not parse target URL %s' % self.target_url)
+      return self.error('Could not parse target URL %s' % self.target_url)
 
     domain = parsed.netloc
     path_parts = parsed.path.rsplit('/', 1)

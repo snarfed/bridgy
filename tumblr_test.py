@@ -9,8 +9,6 @@ import mox
 from webob import exc
 
 import appengine_config
-from appengine_config import HTTP_TIMEOUT
-from models import BlogPost
 
 from activitystreams.oauth_dropins.tumblr import TumblrAuth
 import tumblr
@@ -131,6 +129,7 @@ class TumblrTest(testutil.HandlerTest):
 
     resp = self.tumblr.create_comment('http://primary/post/123999/xyz_abc',
                                       u'Degenève', 'http://who', u'foo Degenève bar')
+    self.assertEquals({}, resp)
 
   def test_create_comment_finds_disqus_shortname(self):
     self.tumblr.disqus_shortname = None

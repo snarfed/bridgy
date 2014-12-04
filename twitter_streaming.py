@@ -63,7 +63,6 @@ from activitystreams.oauth_dropins import twitter_auth
 import models
 import tasks
 from twitter import Twitter
-import util
 
 
 USER_STREAM_URL = 'https://userstream.twitter.com/1.1/user.json?with=user'
