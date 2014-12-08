@@ -51,8 +51,8 @@ def get_webmention_targets(source, activity):
   """
   original_post_discovery.discover(source, activity)
 
-  targets = set()
   obj = activity.get('object') or activity
+  urls = []
 
   for tag in obj.get('tags', []):
     url = tag.get('url')
@@ -60,11 +60,20 @@ def get_webmention_targets(source, activity):
       url, domain, send = util.get_webmention_target(url)
       tag['url'] = url
       if send:
-        targets.add(url)
+        urls.append(url)
 
   for url in obj.get('upstreamDuplicates', []):
     url, domain, send = util.get_webmention_target(url)
     if send:
+      urls.append(url)
+
+  # de-dupe, ignoring scheme (http vs https)
+  targets = set()
+  schemeless_targets = set()
+  for url in urls:
+    schemeless = util.schemeless(url)
+    if schemeless not in schemeless_targets:
+      schemeless_targets.add(schemeless)
       targets.add(url)
 
   return targets

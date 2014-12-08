@@ -156,6 +156,17 @@ class PollTest(TaskQueueTest):
     expected = ['http://tar.get/%s' % i for i in 'a', 'b', 'c', 'd']
     self.assert_equals(expected, self.responses[0].key.get().unsent)
 
+  def test_original_post_discovery_dedupes(self):
+    """Target URLs should be deduped, ignoring scheme (http vs https)."""
+    obj = self.activities[0]['object']
+    obj['tags'] = [{'objectType': 'article', 'url': 'https://tar.get/a'}]
+    obj['attachments'] = [{'objectType': 'article', 'url': 'http://tar.get/a'}]
+    obj['content'] = 'foo https://tar.get/a bar (tar.get a)'
+    self.sources[0].set_activities([self.activities[0]])
+
+    self.post_task()
+    self.assert_equals(['https://tar.get/a'], self.responses[0].key.get().unsent)
+
   def test_non_html_url(self):
     """Target URLs that aren't HTML should be ignored."""
     obj = self.activities[0]['object']
