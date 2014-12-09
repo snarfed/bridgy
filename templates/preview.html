@@ -29,7 +29,7 @@ will {{ description|safe }}
 <!-- Equivalent webmention command line -->
 <p>Or use this command line:
 <br />
-<pre>curl -d 'source={{ source_url }}&target={{ target_url }}' \
+<pre>curl -d 'source={{ source_url }}&target={{ target_url }}&bridgy_omit_link={{ bridgy_omit_link }}' \
   {{ webmention_endpoint }}
 </pre>
 </p>
