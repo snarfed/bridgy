@@ -218,11 +218,11 @@ class ItemHandler(webapp2.RequestHandler):
     #
     # TODO: for links that came from resolving redirects above, this doesn't
     # also catch the initial pre-redirect link. ah well.
-    prop_schemeful = set(tag['url'] for tag in obj[prop])
+    prop_schemeful = set(tag['url'] for tag in obj[prop] if tag.get('url'))
     prop_schemeless = set(util.schemeless(url) for url in prop_schemeful)
 
     for url_obj in copy.copy(tags):
-      url = url_obj['url']
+      url = url_obj.get('url', '')
       schemeless = util.schemeless(url)
       if schemeless in prop_schemeless and url not in prop_schemeful:
         obj[prop].append(url_obj)
