@@ -18,6 +18,7 @@ URL paths are:
   e.g. /rsvp/facebook/212038/12345/67890
 """
 
+import copy
 import json
 import logging
 import re
@@ -197,7 +198,8 @@ class ItemHandler(webapp2.RequestHandler):
     # check for redirects, and if there are any follow them and add final urls
     # in addition to the initial urls.
     seen = set()
-    for url_list in obj[prop], obj.get('tags', []):
+    tags = obj.get('tags', [])
+    for url_list in obj[prop], tags:
       for url_obj in url_list:
         url = util.clean_webmention_url(url_obj.get('url', ''))
         if not url or url in seen:
@@ -209,6 +211,23 @@ class ItemHandler(webapp2.RequestHandler):
         if send and resolved != url and resolved not in seen:
           seen.add(resolved)
           url_list.append({'url': resolved, 'objectType': url_obj.get('objectType')})
+
+    # if the http version of a link is in upstreams but the https one is just a
+    # mention, or vice versa, promote them both to upstream.
+    # https://github.com/snarfed/bridgy/issues/290
+    #
+    # TODO: for links that came from resolving redirects above, this doesn't
+    # also catch the initial pre-redirect link. ah well.
+    prop_schemeful = set(tag['url'] for tag in obj[prop])
+    prop_schemeless = set(util.schemeless(url) for url in prop_schemeful)
+
+    for url_obj in copy.copy(tags):
+      url = url_obj['url']
+      schemeless = util.schemeless(url)
+      if schemeless in prop_schemeless and url not in prop_schemeful:
+        obj[prop].append(url_obj)
+        tags.remove(url_obj)
+        prop_schemeful.add(url)
 
     logging.info('After original post discovery, urls are: %s', seen)
 

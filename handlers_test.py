@@ -316,3 +316,43 @@ class HandlersTest(testutil.HandlerTest):
 
 </article>
 """)
+
+  def test_dedupe_http_and_https(self):
+    self.source.get_activities()[0]['object'].update({
+      'content': 'X http://mention/only Y https://reply Z https://upstream '
+                 'W http://all',
+      'upstreamDuplicates': ['http://upstream/only',
+                             'http://upstream',
+                             'http://all',
+                           ],
+      })
+
+    self.source.set_comment({
+      'inReplyTo': [{'url': 'https://reply/only'},
+                    {'url': 'http://reply'},
+                    {'url': 'https://all'},
+                  ],
+    })
+    self.mox.ReplayAll()
+
+    self.check_response('/comment/fake/%s/000/111', """\
+<article class="h-entry">
+<span class="u-uid"></span>
+
+  <div class="e-content p-name">
+
+  <p class="u-mention"><a href="http://mention/only"></a>
+  <a href="http://all"></a></p>
+  </div>
+
+  <a class="u-in-reply-to" href="https://reply/only"></a>
+  <a class="u-in-reply-to" href="http://reply"></a>
+  <a class="u-in-reply-to" href="https://all"></a>
+  <a class="u-in-reply-to" href="http://upstream/only"></a>
+  <a class="u-in-reply-to" href="http://upstream"></a>
+  <a class="u-in-reply-to" href="http://all"></a>
+  <a class="u-in-reply-to" href="https://reply"></a>
+  <a class="u-in-reply-to" href="https://upstream"></a>
+
+</article>
+""")
