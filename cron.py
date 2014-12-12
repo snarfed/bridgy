@@ -8,16 +8,18 @@ import itertools
 import json
 import logging
 
+from google.appengine.ext import ndb
 import appengine_config
 
 import handlers
 from models import Source
+from instagram import Instagram
 from twitter import Twitter
 import util
 import webapp2
 
 TWITTER_API_USER_LOOKUP = 'https://api.twitter.com/1.1/users/lookup.json?screen_name=%s'
-USERS_PER_LOOKUP = 100  # max # of users per API call
+TWITTER_USERS_PER_LOOKUP = 100  # max # of users per API call
 
 
 class ReplacePollTasks(webapp2.RequestHandler):
@@ -44,27 +46,48 @@ class UpdateTwitterPictures(webapp2.RequestHandler):
     if not sources:
       return
 
-    # just auth as me or the first user. TODO: use app-ony auth instead.
+    # just auth as me or the first user. TODO: use app-only auth instead.
     auther = sources.get('schnarfed') or sources.values()[0]
     usernames = sources.keys()
     users = []
-    for i in range(0, len(usernames), USERS_PER_LOOKUP):
-      url = TWITTER_API_USER_LOOKUP % ','.join(usernames[i:i + USERS_PER_LOOKUP])
+    for i in range(0, len(usernames), TWITTER_USERS_PER_LOOKUP):
+      url = TWITTER_API_USER_LOOKUP % ','.join(
+        usernames[i:i + TWITTER_USERS_PER_LOOKUP])
       users += json.loads(auther.as_source.urlopen(url).read())
 
     for user in users:
       source = sources[user['screen_name']]
       new_actor = auther.as_source.user_to_actor(user)
-      new_pic = new_actor.get('image', {}).get('url')
-      if source.picture != new_pic:
-        logging.info('Updating profile picture for %s from %s to %s',
-                     source.bridgy_url(self), source.picture, new_pic)
-        util.CachedPage.invalidate('/users')
-        source.picture = new_pic
-        source.put()
+      maybe_update_picture(source, new_actor, self)
+
+
+class UpdateInstagramPictures(webapp2.RequestHandler):
+  """Finds Instagram sources whose profile pictures have changed and updates them."""
+
+  def get(self):
+    for source in Instagram.query():
+      maybe_update_picture(source, source.as_source.get_actor(), self)
+
+
+def maybe_update_picture(source, new_actor, handler):
+  new_pic = new_actor.get('image', {}).get('url')
+  if not new_pic or source.picture == new_pic:
+    return
+
+  @ndb.transactional
+  def update():
+    src = source.key.get()
+    src.picture = new_pic
+    src.put()
+
+  logging.info('Updating profile picture for %s from %s to %s',
+               source.bridgy_url(handler), source.picture, new_pic)
+  update()
+  util.CachedPage.invalidate('/users')
 
 
 application = webapp2.WSGIApplication([
     ('/cron/replace_poll_tasks', ReplacePollTasks),
     ('/cron/update_twitter_pictures', UpdateTwitterPictures),
+    ('/cron/update_instagram_pictures', UpdateInstagramPictures),
     ], debug=appengine_config.DEBUG)

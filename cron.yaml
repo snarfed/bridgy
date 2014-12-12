@@ -9,6 +9,10 @@ cron:
   url: /cron/update_twitter_pictures
   schedule: every 4 hours
 
+- description: update changed instagram profile pictures
+  url: /cron/update_instagram_pictures
+  schedule: every day 09:00  # 2am pst
+
 - description: ereporter exception report
   url: /_ereporter?sender=admin@brid-gy.appspotmail.com&to=ryan@brid.gy
   schedule: every day 00:00  # 5pm pst

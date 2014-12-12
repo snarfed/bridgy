@@ -7,8 +7,13 @@ import datetime
 import json
 
 from activitystreams import oauth_dropins
+from activitystreams import instagram as as_instagram
+from activitystreams.oauth_dropins import instagram as oauth_instagram
 from activitystreams.oauth_dropins import twitter as oauth_twitter
+from activitystreams.oauth_dropins.webutil.util import Struct
 import cron
+import instagram
+from instagram import Instagram
 import handlers
 import testutil
 from testutil import FakeSource, ModelsTest
@@ -84,7 +89,7 @@ class CronTest(ModelsTest):
                       'profile_image_url': 'http://bad/http',
                   }]
 
-    cron.USERS_PER_LOOKUP = 2
+    cron.TWITTER_USERS_PER_LOOKUP = 2
     self.expect_urlopen(cron.TWITTER_API_USER_LOOKUP % 'a,c',
                         json.dumps(user_objs))
     self.expect_urlopen(cron.TWITTER_API_USER_LOOKUP % 'b',
@@ -96,3 +101,30 @@ class CronTest(ModelsTest):
 
     self.assertEquals('http://pi.ct/ure', sources[0].get().picture)
     self.assertEquals('http://new/pic.jpg', sources[1].get().picture)
+
+  def test_update_instagram_pictures(self):
+    api = self.mox.CreateMockAnything()
+    as_instagram.InstagramAPI = lambda **kwargs: api
+    for username in 'a', 'b':
+      api.user('self').AndReturn(Struct(id=username,
+                                        username=username,
+                                        full_name='Ryan Barrett',
+                                        profile_picture='http://new/pic'))
+    self.mox.ReplayAll()
+
+    sources = []
+    for username in 'a', 'b':
+      auth_entity = oauth_instagram.InstagramAuth(
+        id=username, auth_code='code', access_token_str='token',
+        user_json=json.dumps({'username': username,
+                              'full_name': 'Ryan Barrett',
+                              'profile_picture': 'http://old/pic',
+                            }))
+      auth_entity.put()
+      sources.append(Instagram.new(None, auth_entity=auth_entity).put())
+
+    resp = cron.application.get_response('/cron/update_instagram_pictures')
+    self.assertEqual(200, resp.status_int)
+
+    self.assertEquals('http://new/pic', sources[0].get().picture)
+    self.assertEquals('http://new/pic', sources[1].get().picture)
