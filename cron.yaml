@@ -11,7 +11,7 @@ cron:
 
 - description: update changed instagram profile pictures
   url: /cron/update_instagram_pictures
-  schedule: every 30 minutes  # 2am pst
+  schedule: every day 09:00  # 2am pst
 
 - description: ereporter exception report
   url: /_ereporter?sender=admin@brid-gy.appspotmail.com&to=ryan@brid.gy
