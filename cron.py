@@ -66,7 +66,8 @@ class UpdateInstagramPictures(webapp2.RequestHandler):
 
   def get(self):
     for source in Instagram.query():
-      maybe_update_picture(source, source.as_source.get_actor(), self)
+      if source.status != 'disabled':
+        maybe_update_picture(source, source.as_source.get_actor(), self)
 
 
 def maybe_update_picture(source, new_actor, handler):
