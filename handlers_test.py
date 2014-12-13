@@ -146,7 +146,7 @@ class HandlersTest(testutil.HandlerTest):
   <div class="e-content p-name">
 
   qwert
-  <p class="u-mention"><a href="http://other/link"></a></p>
+  <a class="u-mention" href="http://other/link"></a>
   </div>
 
 <a class="u-in-reply-to" href="http://fa.ke/000"></a>
@@ -175,7 +175,7 @@ class HandlersTest(testutil.HandlerTest):
 
   <div class="e-content p-name">
 
-  <p class="u-mention"><a href="http://other/link"></a></p>
+  <a class="u-mention" href="http://other/link"></a>
   </div>
 
   <a class="u-like u-like-of" href="http://example.com/original/post"></a>
@@ -220,8 +220,8 @@ class HandlersTest(testutil.HandlerTest):
 
   <div class="e-content p-name">
 
-  <p class="u-mention"><a href="http://another/mention"></a>
-  <a href="http://other/link"></a></p>
+  <a class="u-mention" href="http://another/mention"></a>
+  <a class="u-mention" href="http://other/link"></a>
   </div>
 
   <a class="u-repost u-repost-of" href="http://example.com/original/post"></a>
@@ -258,7 +258,7 @@ class HandlersTest(testutil.HandlerTest):
   <div class="e-content">
 
   <data class="p-rsvp" value="no">is not attending.</data>
-  <p class="u-mention"><a href="http://other/link"></a></p>
+  <a class="u-mention" href="http://other/link"></a>
   </div>
 
   <a class="u-in-reply-to" href="http://or.ig/post"></a>
@@ -285,8 +285,8 @@ class HandlersTest(testutil.HandlerTest):
 
   <div class="e-content p-name">
 
-  <p class="u-mention"><a href="http://other/link"></a>
-  <a href="http://other/link/redirect"></a></p>
+  <a class="u-mention" href="http://other/link"></a>
+  <a class="u-mention" href="http://other/link/redirect"></a>
   </div>
 
   <a class="u-repost u-repost-of" href="http://or.ig/post"></a>
@@ -309,7 +309,7 @@ class HandlersTest(testutil.HandlerTest):
 
   <div class="e-content p-name">
 
-  <p class="u-mention"><a href="http://other/link?a=b"></a></p>
+  <a class="u-mention" href="http://other/link?a=b"></a>
   </div>
 
   <a class="u-repost u-repost-of" href="http://or.ig/post"></a>
@@ -341,8 +341,8 @@ class HandlersTest(testutil.HandlerTest):
 
   <div class="e-content p-name">
 
-  <p class="u-mention"><a href="http://mention/only"></a>
-  <a href="http://all"></a></p>
+  <a class="u-mention" href="http://mention/only"></a>
+  <a class="u-mention" href="http://all"></a>
   </div>
 
   <a class="u-in-reply-to" href="https://reply/only"></a>
