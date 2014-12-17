@@ -267,6 +267,50 @@ class HandlersTest(testutil.HandlerTest):
 </article>
 """)
 
+  def test_invite(self):
+    self.source.as_source.set_rsvp({
+      'id': 'tag:fa.ke,2013:111',
+      'objectType': 'activity',
+      'verb': 'invite',
+      'displayName': 'Ms. Guest is invited.',
+      'content': 'is invited.',
+      'url': 'http://fa.ke/event',
+      'actor': {
+        'displayName': 'Mrs. Host',
+        'url': 'http://fa.ke/host',
+      },
+      'object': {
+        'objectType': 'person',
+        'displayName': 'Ms. Guest',
+        'url': 'http://fa.ke/guest',
+      },
+    })
+
+    self.check_response('/rsvp/fake/%s/000/111', """\
+<article class="h-entry">
+<span class="u-uid">tag:fa.ke,2013:111</span>
+<div class="p-name"><a class="u-url" href="http://fa.ke/event">Ms. Guest is invited.</a></div>
+
+  <div class="h-card p-author">
+    <div class="p-name"><a class="u-url" href="http://fa.ke/host">Mrs. Host</a></div>
+
+  </div>
+
+  <div class="e-content">
+  <div class="h-card p-invitee">
+    <div class="p-name"><a class="u-url" href="http://fa.ke/guest">Ms. Guest</a></div>
+
+  </div>
+
+  is invited.
+  <a class="u-mention" href="http://other/link"></a>
+  </div>
+
+  <a class="u-in-reply-to" href="http://or.ig/post"></a>
+
+</article>
+""")
+
   def test_original_post_urls_follow_redirects(self):
     self.source.as_source.set_share({
         'objectType': 'activity',
