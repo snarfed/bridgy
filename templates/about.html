@@ -537,6 +537,19 @@ class. It also understands more advanced microformats2 classes like
 &lt;/p&gt;&lt;/div&gt;
 </pre>
 </p>
+
+<p>In general, Bridgy prefers to use <code>p-summary</code> if available, then
+the full <code>e-content</code>, and finally <code>p-name</code>, in that order.
+The one exception is original tweets (not <a href="#reply">@-replies</a>) on
+Twitter: for those, it prefers <code>p-name</code> before <code>e-content</code>.
+<a href="https://github.com/snarfed/bridgy/issues/228">Background</a>
+<a href="https://github.com/snarfed/bridgy/issues/219">discussion</a>.
+</p>
+
+<p>Bridgy also tries to preserve some formatting and whitespace, notably
+newlines and lists, when converting your post's HTML to plain text. Try
+previewing a post to see how it will look!
+</p>
 </li>
 
 <li id="webmentions" class="question">Can I do this automatically, whenever
