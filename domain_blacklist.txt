@@ -111,7 +111,6 @@ viddler.com
 vimeo.com
 vodspot.tv
 wikipedia.org
-wordpress.com
 xfire.com
 xing.com
 yahoo.com
