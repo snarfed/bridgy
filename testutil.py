@@ -181,7 +181,7 @@ class HandlerTest(as_testutil.TestCase):
     logging.getLogger().removeHandler(appengine_config.ereporter_logging_handler)
     # TODO: remove this and don't depend on consistent global queries
     self.testbed.init_datastore_v3_stub(consistency_policy=None)
-    util.WEBMENTION_BLACKLIST.add('fa.ke')  # for FakeSource
+    util.BLACKLIST.add('fa.ke')  # for FakeSource
 
     # don't make actual HTTP requests to follow original post url redirects
     def fake_head(url, **kwargs):

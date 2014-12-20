@@ -40,52 +40,9 @@ HTTP_RATE_LIMIT_CODES = frozenset(('403', '429', '503'))
 #
 # We also check this when a user sign up and we extract the web site links from
 # their profile. We automatically omit links to these domains.
-WEBMENTION_BLACKLIST = {
-  'about.me',
-  'amazon.com',
-  'amzn.com',
-  'disqus.com',
-  'example.com',
-  'facebook.com',
-  'flickr.com',
-  'foursquare.com',
-  'friendfeed.com',
-  'getsatisfaction.com',
-  'ggpht.com',
-  'goodreads.com',
-  'google.com',
-  'instagr.am',
-  'instagram.com',
-  'intensedebate.com',
-  'last.fm',
-  'linkedin.com',
-  'myspace.com',
-  'openstreetmap.org',
-  'quora.com',
-  'stackexchange.com',
-  'stackoverflow.com',
-  'stumbleupon.com',
-  'twitter.com',
-  'typepad.com',
-  'wikipedia.org',
-  'ycombinator.com',
-  'youtu.be',
-  'youtube.com',
-  # these come from the text of tweets. we also pull the expanded URL
-  # from the tweet entities, so ignore these instead of resolving them.
-  't.co',
-  't',
-  'twitpic.com',
-  '', None,
-  # these show up in the categories and tags sections of wordpress.com blog
-  # posts. superfeedr doesn't filter them out of its 'content' field.
-  'feeds.wordpress.com',
-  'stats.wordpress.com',
-  # temporary. tom's webmention handler is broken, and he knows about it.
-  # TODO: remove once he's fixed it.
-  'tommorris.org',
-  }
-
+with open('domain_blacklist.txt') as f:
+  BLACKLIST = {l.strip() for l in f
+               if l.strip() and not l.strip().startswith('#')}
 
 Website = collections.namedtuple('Website', ('url', 'domain'))
 
@@ -238,10 +195,10 @@ def get_webmention_target(url, cache=True):
 
 
 def in_webmention_blacklist(domain):
-  """Returns True if the domain or its root domain is in WEBMENTION_BLACKLIST."""
-  return (domain in WEBMENTION_BLACKLIST or
+  """Returns True if the domain or its root domain is in BLACKLIST."""
+  return (domain in BLACKLIST or
           # strip subdomain and check again
-          (domain and '.'.join(domain.split('.')[-2:]) in WEBMENTION_BLACKLIST))
+          (domain and '.'.join(domain.split('.')[-2:]) in BLACKLIST))
 
 
 def clean_webmention_url(url):

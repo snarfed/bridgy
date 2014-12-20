@@ -1,0 +1,48 @@
+# Domains that don't support webmentions. Mainly just the silos.
+# Subdomains are automatically blacklisted too.
+
+# these come from the text of tweets. we also pull the expanded URL
+# from the tweet entities, so ignore these instead of resolving them.
+t.co
+t
+twitpic.com
+
+# these show up in the categories and tags sections of wordpress.com blog
+# posts. superfeedr doesn't filter them out of its 'content' field.
+feeds.wordpress.com
+stats.wordpress.com
+
+# temporary. tom's webmention handler is broken, and he knows about it.
+# last checked 12/20/2014. TODO: remove once he's fixed it.
+tommorris.org
+
+about.me
+amazon.com
+amzn.com
+disqus.com
+example.com
+facebook.com
+flickr.com
+foursquare.com
+friendfeed.com
+getsatisfaction.com
+ggpht.com
+goodreads.com
+google.com
+instagr.am
+instagram.com
+intensedebate.com
+last.fm
+linkedin.com
+myspace.com
+openstreetmap.org
+quora.com
+stackexchange.com
+stackoverflow.com
+stumbleupon.com
+twitter.com
+typepad.com
+wikipedia.org
+ycombinator.com
+youtu.be
+youtube.com
