@@ -2,12 +2,14 @@
 """Unit tests for original_post_discovery.py
 """
 import facebook_test
+import json
 import logging
 import original_post_discovery
 import requests
 import tasks
 import testutil
 
+from activitystreams.oauth_dropins import facebook as oauth_facebook
 from models import SyndicatedPost
 from facebook import FacebookPage
 from requests.exceptions import HTTPError
@@ -1163,16 +1165,18 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
       self.assertTrue(sp)
       self.assertIsNone(sp.syndication)
 
-
-class OriginalPostDiscoveryFacebookTest(facebook_test.FacebookPageTest):
-
   def test_match_facebook_username_url(self):
     """Facebook URLs use username and user id interchangeably, and one
     does not redirect to the other. Make sure we can still find the
     relationship if author's publish syndication links using their
     username
     """
-    source = FacebookPage.new(self.handler, auth_entity=self.auth_entity)
+    auth_entity = oauth_facebook.FacebookAuth(
+      id='my_string_id', auth_code='my_code', access_token_str='my_token',
+      user_json=json.dumps({'id': '212038', 'username': 'snarfed.org'}))
+    auth_entity.put()
+
+    source = FacebookPage.new(self.handler, auth_entity=auth_entity)
     source.domain_urls = ['http://author']
     activity = self.activities[0]
     # facebook activity comes to us with the numeric id
