@@ -149,7 +149,7 @@ def _posse_post_discovery(source, activity, author_url, syndication_url,
   if not relationships and fetch_hfeed:
     # a syndicated post we haven't seen before! fetch the author's
     # h-feed to see if we can find it.
-    results = _process_author(source, author_url)
+    results = _process_author(source, author_url, store_blanks=fetch_hfeed)
     relationships = results.get(syndication_url)
 
   if not relationships:
@@ -157,7 +157,8 @@ def _posse_post_discovery(source, activity, author_url, syndication_url,
     # syndicated post to avoid reprocessing it every time
     logging.debug('posse post discovery found no relationship for %s',
                   syndication_url)
-    SyndicatedPost.insert_syndication_blank(source, syndication_url)
+    if fetch_hfeed:
+      SyndicatedPost.insert_syndication_blank(source, syndication_url)
     return activity
 
   logging.debug('posse post discovery found relationship(s) %s -> %s',
@@ -171,7 +172,7 @@ def _posse_post_discovery(source, activity, author_url, syndication_url,
   return activity
 
 
-def _process_author(source, author_url, refetch_blanks=False):
+def _process_author(source, author_url, refetch_blanks=False, store_blanks=True):
   """Fetch the author's domain URL, and look for syndicated posts.
 
   Args:
@@ -179,6 +180,8 @@ def _process_author(source, author_url, refetch_blanks=False):
     author_url: the author's homepage URL
     refetch_blanks: boolean, if true, refetch SyndicatedPosts that have
       previously been marked as not having a rel=syndication link
+    store_blanks: boolean, whether we should store blank SyndicatedPosts when
+      we don't find a relationship
 
   Return:
     a dict of syndicated_url to a list of new models.SyndicatedPost
@@ -270,8 +273,9 @@ def _process_author(source, author_url, refetch_blanks=False):
   results = {}
   for permalink, entry in permalink_to_entry.iteritems():
     logging.debug('processing permalink: %s', permalink)
-    new_results = _process_entry(source, permalink, entry, refetch_blanks,
-                                 preexisting.get(permalink, []))
+    new_results = _process_entry(
+      source, permalink, entry, refetch_blanks, preexisting.get(permalink, []),
+      store_blanks=store_blanks)
     for key, value in new_results.iteritems():
       results.setdefault(key, []).extend(value)
 
@@ -332,7 +336,8 @@ def _find_feed_items(feed_url, feed_doc):
   return feeditems
 
 
-def _process_entry(source, permalink, feed_entry, refetch_blanks, preexisting):
+def _process_entry(source, permalink, feed_entry, refetch_blanks, preexisting,
+                   store_blanks=True):
   """Fetch and process an h-entry, saving a new SyndicatedPost to the
   DB if successful.
 
@@ -345,6 +350,8 @@ def _process_entry(source, permalink, feed_entry, refetch_blanks, preexisting):
       SyndicatedPosts
     preexisting: a list of previously discovered models.SyndicatedPosts
       for this permalink
+    store_blanks: boolean, whether we should store blank SyndicatedPosts when
+      we don't find a relationship
 
   Returns:
     a dict from syndicated url to a list of new models.SyndicatedPosts
@@ -403,7 +410,7 @@ def _process_entry(source, permalink, feed_entry, refetch_blanks, preexisting):
   if not results:
     logging.debug('no syndication links from %s to current source %s.',
                   permalink, source.label())
-    if not preexisting:
+    if store_blanks and not preexisting:
       # remember that this post doesn't have syndication links for this
       # particular source
       logging.debug('saving empty relationship so that it %s will not be '

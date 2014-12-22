@@ -628,6 +628,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     It should not make any GET requests
     """
     original_post_discovery.discover(self.source, self.activity, fetch_hfeed=False)
+    self.assertFalse(SyndicatedPost.query(ancestor=self.source.key).get())
 
   def test_refetch_hfeed(self):
     """refetch should grab resources again, even if they were previously
