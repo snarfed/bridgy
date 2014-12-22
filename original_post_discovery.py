@@ -135,7 +135,7 @@ def _posse_post_discovery(source, activity, syndication_url, fetch_hfeed):
     # fallback in the future to support content from non-Bridgy users.
     results = {}
     for url in source.get_author_urls():
-      results.update(_process_author(source, url, store_blanks=fetch_hfeed))
+      results.update(_process_author(source, url))
     relationships = results.get(syndication_url)
 
   if not relationships:
