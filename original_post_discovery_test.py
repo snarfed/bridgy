@@ -28,6 +28,11 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
       'content': 'content without links',
       })
 
+  def assert_syndicated_posts(self, *expected):
+    self.assertItemsEqual(expected,
+                          [(r.original, r.syndication) for r in
+                           SyndicatedPost.query(ancestor=self.source.key)])
+
   def test_single_post(self):
     """Test that original post discovery does the reverse lookup to scan
     author's h-feed for rel=syndication links
@@ -317,11 +322,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.mox.ReplayAll()
     logging.debug('Original post discovery %s -> %s', self.source, self.activity)
     original_post_discovery.discover(self.source, self.activity)
-
-    self.assert_equals(
-      [(None, 'https://fa.ke/post/url')],
-      [(relationship.original, relationship.syndication)
-       for relationship in SyndicatedPost.query(ancestor=self.source.key)])
+    self.assert_syndicated_posts((None, 'https://fa.ke/post/url'))
 
   def test_existing_syndicated_posts(self):
     """Confirm that no additional requests are made if we already have a
@@ -355,10 +356,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
 
     # nothing attempted, but we should have saved a placeholder to prevent us
     # from trying again
-    self.assert_equals(
-      [(None, 'https://fa.ke/post/url')],
-      [(relationship.original, relationship.syndication)
-       for relationship in SyndicatedPost.query(ancestor=self.source.key)])
+    self.assert_syndicated_posts((None, 'https://fa.ke/post/url'))
 
   def _test_failed_domain_url_fetch(self, raise_exception):
     """Make sure something reasonable happens when the author's domain url
@@ -374,10 +372,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
 
     # nothing attempted, but we should have saved a placeholder to prevent us
     # from trying again
-    self.assert_equals(
-      [(None, 'https://fa.ke/post/url')],
-      [(relationship.original, relationship.syndication)
-       for relationship in SyndicatedPost.query(ancestor=self.source.key)])
+    self.assert_syndicated_posts((None, 'https://fa.ke/post/url'))
 
   def test_domain_url_not_found(self):
     """Make sure something reasonable happens when the author's domain url
@@ -390,6 +385,33 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     domain url raises an exception
     """
     self._test_failed_domain_url_fetch(raise_exception=True)
+
+  def test_multiple_domain_urls(self):
+    """We should fetch and process all of a source's URLs.
+    """
+    self.source.domain_urls = ['http://author1', 'http://author2', 'http://author3']
+    self.activity['object']['url'] = 'http://fa.ke/A'
+    self.expect_requests_get('http://author1', """
+    <html class="h-feed">
+      <div class="h-entry">
+        <a class="u-url" href="http://author1/A" />
+        <a class="u-syndication" href="http://fa.ke/A" />
+      </div>
+    </html>""")
+    self.expect_requests_get('http://author2').AndRaise(HTTPError())
+    self.expect_requests_get('http://author3', """
+    <html class="h-feed">
+      <div class="h-entry">
+        <a class="u-url" href="http://author3/B" />
+        <a class="u-syndication" href="http://fa.ke/B" />
+      </div>
+    </html>""")
+
+    self.mox.ReplayAll()
+    result = original_post_discovery.discover(self.source, self.activity)
+    self.assert_equals(['http://author1/A'], result['object']['upstreamDuplicates'])
+    self.assert_syndicated_posts(('http://author1/A', 'https://fa.ke/A'),
+                                 ('http://author3/B', 'https://fa.ke/B'))
 
   def _test_failed_rel_feed_link_fetch(self, raise_exception):
     """An author page with an invalid rel=feed link. We should recover and
@@ -455,10 +477,8 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
 
     # we should have saved placeholders to prevent us from trying the
     # syndication url or permalink again
-    self.assert_equals(
-      set([('http://author/nonexistent.html', None), (None, 'https://fa.ke/post/url')]),
-      set((relationship.original, relationship.syndication)
-          for relationship in SyndicatedPost.query(ancestor=self.source.key)))
+    self.assert_syndicated_posts(('http://author/nonexistent.html', None),
+                                 (None, 'https://fa.ke/post/url'))
 
   def test_post_permalink_not_found(self):
     """Make sure something reasonable happens when the permalink of an
@@ -834,11 +854,8 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.assertItemsEqual(['http://author/post1', 'http://author/post2'],
                           activity['object'].get('upstreamDuplicates'))
 
-    relations = SyndicatedPost.query(ancestor=self.source.key).fetch()
-    self.assertItemsEqual([('http://author/post1', 'https://fa.ke/post/url'),
-                           ('http://author/post2', 'https://fa.ke/post/url')],
-                          [(relation.original, relation.syndication)
-                           for relation in relations])
+    self.assert_syndicated_posts(('http://author/post1', 'https://fa.ke/post/url'),
+                                 ('http://author/post2', 'https://fa.ke/post/url'))
 
     # discover should have already handled all relationships, refetch should
     # not find anything

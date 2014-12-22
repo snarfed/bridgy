@@ -190,15 +190,14 @@ class Source(StringIdModel):
     """Returns the Bridgy webmention endpoint for this source type."""
     return 'https://www.brid.gy/webmention/' + cls.SHORT_NAME
 
-  def get_author_url(self):
-    """Determine the author url for a particular source.
-    In debug mode, replace test domains with localhost
+  def get_author_urls(self):
+    """Determine the author urls for a particular source.
+    In debug mode, replace test domains with localhost.
 
     Return:
-      a string, the author's url or None
+      a list of string URLs, possibly empty
     """
-    return (util.replace_test_domains_with_localhost(self.domain_urls[0])
-            if self.domain_urls else None)
+    return [util.replace_test_domains_with_localhost(u) for u in self.domain_urls]
 
   def get_activities_response(self, **kwargs):
     """Returns recent posts and embedded comments for this source.
@@ -352,8 +351,9 @@ class Source(StringIdModel):
     else:
       verb = 'Added'
 
-    link = ('http://indiewebify.me/send-webmentions/?url=' + source.get_author_url()
-            if source.domain_urls else 'http://indiewebify.me/#send-webmentions')
+    author_urls = source.get_author_urls()
+    link = ('http://indiewebify.me/send-webmentions/?url=' + author_urls[0]
+            if author_urls else 'http://indiewebify.me/#send-webmentions')
     blurb = '%s %s. %s' % (verb, source.label(), {
       'listen': "Refresh to see what we've found!",
       'publish': 'Try previewing a post from your web site!',
@@ -406,11 +406,12 @@ class Source(StringIdModel):
         performs webmention discovery) even we already think this source is
         verified.
     """
-    author_url = self.get_author_url()
+    author_urls = self.get_author_urls()
     if ((self.verified() and not force) or self.status == 'disabled' or
-        not self.features or not author_url):
+        not self.features or not author_urls):
       return
 
+    author_url = author_urls[0]
     logging.info('Attempting to discover webmention endpoint on %s', author_url)
     mention = send.WebmentionSend('https://www.brid.gy/', author_url)
     mention.requests_kwargs = {'timeout': HTTP_TIMEOUT}

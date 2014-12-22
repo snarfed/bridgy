@@ -66,19 +66,11 @@ def discover(source, activity, fetch_hfeed=True):
   # TODO possible optimization: if we've discovered a backlink to a
   # post on the author's domain (i.e., it included a link or
   # citation), then skip the rest of this.
-
-  # Use source.domain_urls for now; it seems more reliable than the
-  # activity.actor.url (which depends on getting the right data back from
-  # various APIs). Consider using the actor's url, with domain_urls as the
-  # fallback in the future to support content from non-Bridgy users.
-  #
-  # author_url = activity.get('actor', {}).get('url')
   obj = activity.get('object') or activity
-  author_url = source.get_author_url()
   syndication_url = obj.get('url')
 
-  if not author_url:
-    logging.debug('no author url, cannot find h-feed %s', author_url)
+  if not source.get_author_urls():
+    logging.debug('no author url(s), cannot find h-feed')
     return activity
 
   if not syndication_url:
@@ -93,13 +85,11 @@ def discover(source, activity, fetch_hfeed=True):
   syndication_url = source.canonicalize_syndication_url(
     util.follow_redirects(syndication_url).url)
 
-  return _posse_post_discovery(source, activity,
-                               author_url, syndication_url,
-                               fetch_hfeed)
+  return _posse_post_discovery(source, activity, syndication_url, fetch_hfeed)
 
 
 def refetch(source):
-  """Refetch the author's url and look for new or updated syndication
+  """Refetch the author's URLs and look for new or updated syndication
   links that might not have been there the first time we looked.
 
   Args:
@@ -110,26 +100,18 @@ def refetch(source):
   Return:
     a dict of syndicated_url to a list of new models.SyndicatedPosts
   """
-
   logging.debug('attempting to refetch h-feed for %s', source.label())
-  author_url = source.get_author_url()
-
-  if not author_url:
-    logging.debug('no author url, cannot find h-feed %s', author_url)
-    return {}
-
-  return _process_author(source, author_url, refetch_blanks=True)
+  for url in source.get_author_urls():
+    return _process_author(source, url, refetch_blanks=True)
 
 
-def _posse_post_discovery(source, activity, author_url, syndication_url,
-                          fetch_hfeed):
+def _posse_post_discovery(source, activity, syndication_url, fetch_hfeed):
   """Performs the actual meat of the posse-post-discover. It was split
   out from discover() so that it can be done inside of a transaction.
 
   Args:
     source: models.Source subclass
     activity: activity dict
-    author_url: author's url configured in their silo profile
     syndication_url: url of the syndicated copy for which we are
                      trying to find an original
     fetch_hfeed: boolean, whether or not to fetch and parse the
@@ -139,17 +121,21 @@ def _posse_post_discovery(source, activity, author_url, syndication_url,
   Return:
     the activity, updated with original post urls if any are found
   """
-  logging.info(
-      'starting posse post discovery with author %s and syndicated %s',
-      author_url, syndication_url)
-
+  logging.info('starting posse post discovery with syndicated %s', syndication_url)
   relationships = SyndicatedPost.query(
     SyndicatedPost.syndication == syndication_url,
     ancestor=source.key).fetch()
   if not relationships and fetch_hfeed:
-    # a syndicated post we haven't seen before! fetch the author's
-    # h-feed to see if we can find it.
-    results = _process_author(source, author_url, store_blanks=fetch_hfeed)
+    # a syndicated post we haven't seen before! fetch the author's URLs to see
+    # if we can find it.
+    #
+    # Use source.domain_urls for now; it seems more reliable than the
+    # activity.actor.url (which depends on getting the right data back from
+    # various APIs). Consider using the actor's url, with domain_urls as the
+    # fallback in the future to support content from non-Bridgy users.
+    results = {}
+    for url in source.get_author_urls():
+      results.update(_process_author(source, url, store_blanks=fetch_hfeed))
     relationships = results.get(syndication_url)
 
   if not relationships:
@@ -194,7 +180,7 @@ def _process_author(source, author_url, refetch_blanks=False, store_blanks=True)
     return {}
 
   try:
-    logging.debug('fetching author domain %s', author_url)
+    logging.debug('fetching author url %s', author_url)
     author_resp = requests.get(author_url, timeout=HTTP_TIMEOUT)
     # TODO for error codes that indicate a temporary error, should we make
     # a certain number of retries before giving up forever?
