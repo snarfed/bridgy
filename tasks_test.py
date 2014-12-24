@@ -773,8 +773,8 @@ class PollTest(TaskQueueTest):
         ancestor=self.sources[1].key).fetch(),
       None, 'https://twitter/post/url')
 
-    self.mox.UnsetStubs()
     self.mox.VerifyAll()
+    self.mox.UnsetStubs()
 
     for method in ('get', 'head', 'post'):
       self.mox.StubOutWithMock(requests, method, use_mock_anything=True)
@@ -785,10 +785,15 @@ class PollTest(TaskQueueTest):
       source.last_hfeed_fetch = NOW - datetime.timedelta(days=1)
       source.put()
 
-    # instagram source won't refetch the permalink. nothing new to find
+    # instagram source fetches
     self.expect_requests_get('http://author', """
     <html class="h-feed">
       <a class="h-entry" href="/permalink"></a>
+    </html>""")
+
+    self.expect_requests_get('http://author/permalink', """
+    <html class="h-entry">
+      <a class="u-syndication" href="http://instagram/post/url"></a>
     </html>""")
 
     # refetch should find a twitter link this time

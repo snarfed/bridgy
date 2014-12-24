@@ -102,7 +102,7 @@ def refetch(source):
   """
   logging.debug('attempting to refetch h-feed for %s', source.label())
   for url in source.get_author_urls():
-    return _process_author(source, url, refetch_blanks=True)
+    return _process_author(source, url, refetch=True)
 
 
 def _posse_post_discovery(source, activity, syndication_url, fetch_hfeed):
@@ -158,14 +158,13 @@ def _posse_post_discovery(source, activity, syndication_url, fetch_hfeed):
   return activity
 
 
-def _process_author(source, author_url, refetch_blanks=False, store_blanks=True):
+def _process_author(source, author_url, refetch=False, store_blanks=True):
   """Fetch the author's domain URL, and look for syndicated posts.
 
   Args:
     source: a subclass of models.Source
     author_url: the author's homepage URL
-    refetch_blanks: boolean, if true, refetch SyndicatedPosts that have
-      previously been marked as not having a rel=syndication link
+    refetch: boolean, whether to refetch and process entries we've seen before
     store_blanks: boolean, whether we should store blank SyndicatedPosts when
       we don't find a relationship
 
@@ -260,7 +259,7 @@ def _process_author(source, author_url, refetch_blanks=False, store_blanks=True)
   for permalink, entry in permalink_to_entry.iteritems():
     logging.debug('processing permalink: %s', permalink)
     new_results = _process_entry(
-      source, permalink, entry, refetch_blanks, preexisting.get(permalink, []),
+      source, permalink, entry, refetch, preexisting.get(permalink, []),
       store_blanks=store_blanks)
     for key, value in new_results.iteritems():
       results.setdefault(key, []).extend(value)
@@ -322,7 +321,7 @@ def _find_feed_items(feed_url, feed_doc):
   return feeditems
 
 
-def _process_entry(source, permalink, feed_entry, refetch_blanks, preexisting,
+def _process_entry(source, permalink, feed_entry, refetch, preexisting,
                    store_blanks=True):
   """Fetch and process an h-entry, saving a new SyndicatedPost to the
   DB if successful.
@@ -332,8 +331,7 @@ def _process_entry(source, permalink, feed_entry, refetch_blanks, preexisting,
     permalink: url of the unprocessed post
     feed_entry: the h-feed version of the h-entry dict, often contains
       a partial version of the h-entry at the permalink
-    refetch_blanks: boolean whether we should ignore blank preexisting
-      SyndicatedPosts
+    refetch: boolean, whether to refetch and process entries we've seen before
     preexisting: a list of previously discovered models.SyndicatedPosts
       for this permalink
     store_blanks: boolean, whether we should store blank SyndicatedPosts when
@@ -342,18 +340,17 @@ def _process_entry(source, permalink, feed_entry, refetch_blanks, preexisting,
   Returns:
     a dict from syndicated url to a list of new models.SyndicatedPosts
   """
-  results = {}
-
   # if the post has already been processed, do not add to the results
   # since this method only returns *newly* discovered relationships.
   if preexisting:
-    # if we're refetching blanks and this one is blank, do not return.
+    # if we're refetching and this one is blank, do not return.
     # if there is a blank entry, it should be the one and only entry,
     # but go ahead and check 'all' of them to be safe.
-    if refetch_blanks and all(not p.syndication for p in preexisting):
-      logging.debug('ignoring blank relationship for original %s', permalink)
+    if refetch:
+      logging.debug('previously found relationship(s) for original %s: %s',
+                    permalink, [s.syndication for s in preexisting])
     else:
-      return results
+      return {}
 
   # first try with the h-entry from the h-feed. if we find the syndication url
   # we're looking for, we don't have to fetch the permalink
@@ -375,6 +372,7 @@ def _process_entry(source, permalink, feed_entry, refetch_blanks, preexisting,
     except BaseException:
       # TODO limit the number of allowed failures
       logging.warning('Could not fetch permalink %s', permalink, exc_info=True)
+      results = None  # signal that either the fetch or the parse failed
 
     if parsed:
       syndication_urls = set()
@@ -393,9 +391,19 @@ def _process_entry(source, permalink, feed_entry, refetch_blanks, preexisting,
       results = _process_syndication_urls(source, permalink,
                                           syndication_urls)
 
+  # detect and delete SyndicatedPosts that were removed from the site
+  if results is not None:  # fetch and parse succeeded
+    result_syndposts = itertools.chain(*results.values())
+    for syndpost in list(preexisting):
+      if syndpost not in result_syndposts:
+        logging.info('deleting relationship that disappeared: %s', syndpost)
+        syndpost.key.delete()
+        preexisting.remove(syndpost)
+
   if not results:
     logging.debug('no syndication links from %s to current source %s.',
                   permalink, source.label())
+    results = {}
     if store_blanks and not preexisting:
       # remember that this post doesn't have syndication links for this
       # particular source
@@ -416,7 +424,9 @@ def _process_syndication_urls(source, permalink, syndication_urls):
     source: a models.Source subclass
     permalink: a string. the current h-entry permalink
     syndication_urls: a collection of strings. the unfitered list
-      of syndication_urls
+      of syndication urls
+
+  Returns: dict mapping string syndication url to list of SyndicatedPost
   """
 
   results = {}

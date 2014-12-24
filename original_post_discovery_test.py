@@ -965,6 +965,46 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     second_results = original_post_discovery.refetch(self.source)
     self.assertFalse(second_results)
 
+  def test_refetch_changed_syndication(self):
+    """Update syndication links that have changed since our last fetch."""
+    SyndicatedPost(parent=self.source.key,
+                   original='http://author/permalink',
+                   syndication='https://fa.ke/post/url').put()
+    self.expect_requests_get('http://author', """
+    <html class="h-feed">
+      <div class="h-entry">
+        <a class="u-url" href="/permalink" />
+        <a class="u-syndication" href="http://fa.ke/changed/url" />
+      </div>
+    </html>""")
+
+    self.mox.ReplayAll()
+    results = original_post_discovery.refetch(self.source)
+    self.assert_syndicated_posts(('http://author/permalink',
+                                  'https://fa.ke/changed/url'))
+    self.assert_equals({'https://fa.ke/changed/url': list(SyndicatedPost.query())},
+                       results)
+
+  def test_refetch_deleted_syndication(self):
+    """Deleted syndication links that have disappeared since our last fetch."""
+    SyndicatedPost(parent=self.source.key,
+                   original='http://author/permalink',
+                   syndication='https://fa.ke/post/url').put()
+    self.expect_requests_get('http://author', """
+    <html class="h-feed">
+      <div class="h-entry">
+        <a class="u-url" href="/permalink" />
+      </div>
+    </html>""")
+    self.expect_requests_get('http://author/permalink', """
+      <html class="h-entry">
+        <a class="u-url" href="/permalink"></a>
+      </html>""")
+
+    self.mox.ReplayAll()
+    self.assert_equals({}, original_post_discovery.refetch(self.source))
+    self.assert_syndicated_posts(('http://author/permalink', None))
+
   def test_malformed_url_property(self):
     """Non string-like url values (i.e. dicts) used to cause an unhashable
     type exception while processing the h-feed. Make sure that we
