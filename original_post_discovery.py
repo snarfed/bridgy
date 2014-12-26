@@ -101,8 +101,10 @@ def refetch(source):
     a dict of syndicated_url to a list of new models.SyndicatedPosts
   """
   logging.debug('attempting to refetch h-feed for %s', source.label())
+  results = {}
   for url in source.get_author_urls():
-    return _process_author(source, url, refetch=True)
+    results.update(_process_author(source, url, refetch=True))
+  return results
 
 
 def _posse_post_discovery(source, activity, syndication_url, fetch_hfeed):

@@ -9,6 +9,8 @@ import requests
 import tasks
 import testutil
 
+from google.appengine.ext import ndb
+
 from activitystreams.oauth_dropins import facebook as oauth_facebook
 from models import SyndicatedPost
 from facebook import FacebookPage
@@ -386,9 +388,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     """
     self._test_failed_domain_url_fetch(raise_exception=True)
 
-  def test_multiple_domain_urls(self):
-    """We should fetch and process all of a source's URLs.
-    """
+  def _expect_multiple_domain_url_fetches(self):
     self.source.domain_urls = ['http://author1', 'http://author2', 'http://author3']
     self.activity['object']['url'] = 'http://fa.ke/A'
     self.expect_requests_get('http://author1', """
@@ -406,10 +406,21 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
         <a class="u-syndication" href="http://fa.ke/B" />
       </div>
     </html>""")
-
     self.mox.ReplayAll()
+
+  def test_discover_multiple_domain_urls(self):
+    """We should fetch and process all of a source's URLs."""
+    self._expect_multiple_domain_url_fetches()
     result = original_post_discovery.discover(self.source, self.activity)
     self.assert_equals(['http://author1/A'], result['object']['upstreamDuplicates'])
+    self.assert_syndicated_posts(('http://author1/A', 'https://fa.ke/A'),
+                                 ('http://author3/B', 'https://fa.ke/B'))
+
+  def test_refetch_multiple_domain_urls(self):
+    """We should refetch all of a source's URLs."""
+    self._expect_multiple_domain_url_fetches()
+    result = original_post_discovery.refetch(self.source)
+    self.assert_equals(['https://fa.ke/A' ,'https://fa.ke/B'], result.keys())
     self.assert_syndicated_posts(('http://author1/A', 'https://fa.ke/A'),
                                  ('http://author3/B', 'https://fa.ke/B'))
 
