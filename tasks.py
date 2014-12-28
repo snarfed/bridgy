@@ -312,7 +312,7 @@ class Poll(webapp2.RequestHandler):
         failed=list(too_long))
       if urls_to_activity and len(activities) > 1:
         resp.urls_to_activity=json.dumps(urls_to_activity)
-      resp.get_or_save()
+      resp.get_or_save(source)
 
     if responses:
       # cache newly seen response ids

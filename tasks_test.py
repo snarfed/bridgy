@@ -845,7 +845,7 @@ class PropagateTest(TaskQueueTest):
   def setUp(self):
     super(PropagateTest, self).setUp()
     for r in self.responses[:3]:
-      r.get_or_save()
+      r.put()
     self.mox.StubOutClassWithMocks(send, 'WebmentionSend')
 
   def tearDown(self):

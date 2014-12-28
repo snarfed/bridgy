@@ -542,13 +542,6 @@ class Webmentions(StringIdModel):
   def get_or_save(self):
     existing = self.key.get()
     if existing:
-      # logging.debug('Deferring to existing response %s.', existing.key.string_id())
-      # this might be a nice sanity check, but we'd need to hard code certain
-      # properties (e.g. content) so others (e.g. status) aren't checked.
-      # for prop in self.properties().values():
-      #   new = prop.get_value_for_datastore(self)
-      #   existing = prop.get_value_for_datastore(existing)
-      #   assert new == existing, '%s: new %s, existing %s' % (prop, new, existing)
       return existing
 
     if self.unsent or self.error:
@@ -572,6 +565,10 @@ class Response(Webmentions):
   # visible in the App Engine admin console. (JsonProperty uses a blob. :/)
   activities_json = ndb.TextProperty(repeated=True)
   response_json = ndb.TextProperty()
+  # Old values for response_json. Populated when the silo reports that the
+  # response has changed, e.g. the user edited a comment or changed their RSVP
+  # to an event.
+  old_response_jsons = ndb.TextProperty(repeated=True)
   # JSON dict mapping original post url to activity index in activities_json.
   # only set when there's more than one activity.
   urls_to_activity = ndb.TextProperty()
@@ -590,6 +587,23 @@ class Response(Webmentions):
   def get_type(obj):
     type = get_type(obj)
     return type if type in VERB_TYPES else 'comment'
+
+  @ndb.transactional
+  def get_or_save(self, source):
+    resp = super(Response, self).get_or_save()
+
+    if source.as_source.activity_changed(json.loads(resp.response_json),
+                                         json.loads(self.response_json)):
+      logging.info('Response changed! Re-propagating. Original: %s' % resp)
+      resp.status = 'new'
+      resp.unsent += resp.sent + resp.error + resp.failed + resp.skipped
+      resp.sent = resp.error = resp.failed = resp.skipped = []
+      resp.old_response_jsons.append(resp.response_json)
+      resp.response_json = self.response_json
+      resp.put()
+      self.add_task(transactional=True)
+
+    return resp
 
   # Hook for converting activity_json to activities_json. Unfortunately
   # _post_get_hook doesn't run on query results. :/

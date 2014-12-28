@@ -141,7 +141,7 @@ class Listener(streaming.StreamListener):
                       response_json=json.dumps(response),
                       type = models.Response.get_type(response),
                       unsent=list(targets),
-                      ).get_or_save()
+                      ).get_or_save(self.source)
     except:
       logging.warning('Error processing message: %s', raw_data, exc_info=True)
 

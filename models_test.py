@@ -18,36 +18,84 @@ from activitystreams import source as as_source
 
 class ResponseTest(testutil.ModelsTest):
 
-  def test_get_or_save(self):
-    self.sources[0].put()
+  def assert_propagate_task(self):
+    tasks = self.taskqueue_stub.GetTasks('propagate')
+    self.assertEqual(1, len(tasks))
+    self.assertEqual(self.responses[0].key.urlsafe(),
+                     testutil.get_task_params(tasks[0])['response_key'])
+    self.assertEqual('/_ah/queue/propagate', tasks[0]['url'])
+    self.taskqueue_stub.FlushQueue('propagate')
 
-    response = self.responses[0]
-    self.assertEqual(0, Response.query().count())
+  def assert_no_propagate_task(self):
     self.assertEqual(0, len(self.taskqueue_stub.GetTasks('propagate')))
 
+  def test_get_or_save(self):
+    response = self.responses[0]
+    self.assertEqual(0, Response.query().count())
+    self.assert_no_propagate_task()
+
     # new. should add a propagate task.
-    saved = response.get_or_save()
+    saved = response.get_or_save(self.sources[0])
     self.assertEqual(response.key, saved.key)
     self.assertEqual(response.source, saved.source)
     self.assertEqual('comment', saved.type)
-
-    tasks = self.taskqueue_stub.GetTasks('propagate')
-    self.assertEqual(1, len(tasks))
-    self.assertEqual(response.key.urlsafe(),
-                     testutil.get_task_params(tasks[0])['response_key'])
-    self.assertEqual('/_ah/queue/propagate', tasks[0]['url'])
+    self.assertEqual([], saved.old_response_jsons)
+    self.assert_propagate_task()
 
     # existing. no new task.
-    same = saved.get_or_save()
-    self.assertEqual(saved.source, same.source)
-    self.assertEqual(1, len(tasks))
+    same = saved.get_or_save(self.sources[0])
+    self.assert_entities_equal(saved, same)
+    self.assert_no_propagate_task()
+
+  def test_get_or_save_activity_changed(self):
+    """If the response activity has changed, we should update and resend."""
+    # original response
+    response = self.responses[0]
+    response.put()
+    self.assert_no_propagate_task()
+
+    # change response content
+    old_resp_json = response.response_json
+    new_resp_json = json.loads(old_resp_json)
+    new_resp_json['content'] = 'new content'
+    response.response_json = json.dumps(new_resp_json)
+
+    response = response.get_or_save(self.sources[0])
+    self.assert_equals(json.dumps(new_resp_json), response.response_json)
+    self.assert_equals([old_resp_json], response.old_response_jsons)
+    self.assert_propagate_task()
+
+    # mark response completed, change content again
+    response.unsent = []
+    response.sent = ['http://sent']
+    response.error = ['http://error']
+    response.failed = ['http://failed']
+    response.skipped = ['http://skipped']
+    response.status = 'complete'
+    response.put()
+
+    newer_resp_json = json.loads(response.response_json)
+    newer_resp_json['content'] = 'newer content'
+    response.response_json = json.dumps(newer_resp_json)
+
+    response = response.get_or_save(self.sources[0])
+    self.assert_equals(json.dumps(newer_resp_json), response.response_json)
+    self.assert_equals([old_resp_json, json.dumps(new_resp_json)],
+                       response.old_response_jsons)
+    self.assertEqual('new', response.status)
+    self.assertItemsEqual(
+      ['http://sent', 'http://error', 'http://failed', 'http://skipped'],
+      response.unsent)
+    for field in response.sent, response.error, response.failed, response.skipped:
+      self.assertEqual([], field)
+    self.assert_propagate_task()
 
   def test_get_or_save_objectType_note(self):
     self.responses[0].response_json = json.dumps({
       'objectType': 'note',
       'id': 'tag:source.com,2013:1_2_%s' % id,
       })
-    saved = self.responses[0].get_or_save()
+    saved = self.responses[0].get_or_save(self.sources[0])
     self.assertEqual('comment', saved.type)
 
   def test_url(self):
@@ -56,9 +104,9 @@ class ResponseTest(testutil.ModelsTest):
 
   def test_get_or_save_empty_unsent_no_task(self):
     self.responses[0].unsent = []
-    saved = self.responses[0].get_or_save()
+    saved = self.responses[0].get_or_save(self.sources[0])
     self.assertEqual('complete', saved.status)
-    self.assertEqual(0, len(self.taskqueue_stub.GetTasks('propagate')))
+    self.assert_no_propagate_task()
 
   def test_get_type(self):
     self.assertEqual('repost', Response.get_type(
