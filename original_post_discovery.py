@@ -360,6 +360,7 @@ def _process_entry(source, permalink, feed_entry, refetch, preexisting,
   logging.debug('u-syndication links on the h-feed h-entry: %s', usynd)
   results = _process_syndication_urls(source, permalink, set(
     url for url in usynd if isinstance(url, basestring)))
+  success = True
 
   # fetch the full permalink page, which often has more detailed information
   if not results:
@@ -374,7 +375,7 @@ def _process_entry(source, permalink, feed_entry, refetch, preexisting,
     except BaseException:
       # TODO limit the number of allowed failures
       logging.warning('Could not fetch permalink %s', permalink, exc_info=True)
-      results = None  # signal that either the fetch or the parse failed
+      success = False
 
     if parsed:
       syndication_urls = set()
@@ -394,7 +395,7 @@ def _process_entry(source, permalink, feed_entry, refetch, preexisting,
                                           syndication_urls)
 
   # detect and delete SyndicatedPosts that were removed from the site
-  if results is not None:  # fetch and parse succeeded
+  if success:
     result_syndposts = itertools.chain(*results.values())
     for syndpost in list(preexisting):
       if syndpost.syndication and syndpost not in result_syndposts:
