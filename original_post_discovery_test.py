@@ -1020,7 +1020,8 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     """We should preserve blank SyndicatedPosts during refetches."""
     blank = SyndicatedPost(parent=self.source.key,
                            original='http://author/permalink',
-                           syndication=None).put()
+                           syndication=None)
+    blank.put()
     self.expect_requests_get('http://author', """
     <html class="h-feed">
       <div class="h-entry">
@@ -1035,10 +1036,25 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.mox.ReplayAll()
     self.assert_equals({}, original_post_discovery.refetch(self.source))
     self.assert_syndicated_posts(('http://author/permalink', None))
+    self.assert_entities_equal([blank], list(SyndicatedPost.query()))
 
-    synds = list(SyndicatedPost.query())
-    self.assertEquals(1, len(synds))
-    self.assertEquals(blank, synds[0].key)
+  def test_refetch_unchanged_syndication(self):
+    """We should preserve unchanged SyndicatedPosts during refetches."""
+    synd = SyndicatedPost(parent=self.source.key,
+                          original='http://author/permalink',
+                          syndication='https://fa.ke/post/url')
+    synd.put()
+    self.expect_requests_get('http://author', """
+    <html class="h-feed">
+      <div class="h-entry">
+        <a class="u-url" href="/permalink" />
+        <a class="u-syndication" href="https://fa.ke/post/url" />
+      </div>
+    </html>""")
+
+    self.mox.ReplayAll()
+    original_post_discovery.refetch(self.source)
+    self.assert_entities_equal([synd], list(SyndicatedPost.query()))
 
   def test_malformed_url_property(self):
     """Non string-like url values (i.e. dicts) used to cause an unhashable
