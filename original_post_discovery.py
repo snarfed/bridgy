@@ -397,7 +397,7 @@ def _process_entry(source, permalink, feed_entry, refetch, preexisting,
   if results is not None:  # fetch and parse succeeded
     result_syndposts = itertools.chain(*results.values())
     for syndpost in list(preexisting):
-      if syndpost not in result_syndposts:
+      if syndpost.syndication and syndpost not in result_syndposts:
         logging.info('deleting relationship that disappeared: %s', syndpost)
         syndpost.key.delete()
         preexisting.remove(syndpost)

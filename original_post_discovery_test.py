@@ -1016,6 +1016,30 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.assert_equals({}, original_post_discovery.refetch(self.source))
     self.assert_syndicated_posts(('http://author/permalink', None))
 
+  def test_refetch_blank_syndication(self):
+    """We should preserve blank SyndicatedPosts during refetches."""
+    blank = SyndicatedPost(parent=self.source.key,
+                           original='http://author/permalink',
+                           syndication=None).put()
+    self.expect_requests_get('http://author', """
+    <html class="h-feed">
+      <div class="h-entry">
+        <a class="u-url" href="/permalink" />
+      </div>
+    </html>""")
+    self.expect_requests_get('http://author/permalink', """
+      <html class="h-entry">
+        <a class="u-url" href="/permalink"></a>
+      </html>""")
+
+    self.mox.ReplayAll()
+    self.assert_equals({}, original_post_discovery.refetch(self.source))
+    self.assert_syndicated_posts(('http://author/permalink', None))
+
+    synds = list(SyndicatedPost.query())
+    self.assertEquals(1, len(synds))
+    self.assertEquals(blank, synds[0].key)
+
   def test_malformed_url_property(self):
     """Non string-like url values (i.e. dicts) used to cause an unhashable
     type exception while processing the h-feed. Make sure that we
