@@ -472,7 +472,7 @@ class PollTest(TaskQueueTest):
         self.assertEqual(1, len(polls))
         self.assertEqual('/_ah/queue/poll', polls[0]['url'])
         self.assert_task_eta(FakeSource.RATE_LIMITED_POLL)
-        polls = self.taskqueue_stub.FlushQueue('poll')
+        self.taskqueue_stub.FlushQueue('poll')
 
     finally:
       self.mox.UnsetStubs()
@@ -836,6 +836,48 @@ class PollTest(TaskQueueTest):
         models.SyndicatedPost.syndication == 'https://twitter/post/url',
         ancestor=self.sources[1].key).fetch(),
       'http://author/permalink', 'https://twitter/post/url')
+
+  def test_response_changed(self):
+    """If a response changes, we should repropagate it from scratch.
+    """
+    # just one response: self.responses[0]
+    del self.activities[0]['object']['tags']
+    self.sources[0].set_activities([self.activities[0]])
+
+    # first change to response
+    self._change_response_and_poll()
+
+    # second change to response. response id will be cached in memcache.
+    source = self.sources[0].key.get()
+    source.last_polled = util.EPOCH
+    source.put()
+    self._change_response_and_poll()
+
+  def _change_response_and_poll(self):
+    resp = self.responses[0].key.get() or self.responses[0]
+    old_resp_jsons = resp.old_response_jsons + [resp.response_json]
+    targets = resp.sent = resp.unsent
+    resp.unsent = []
+    resp.status = 'complete'
+    resp.put()
+
+    reply = self.activities[0]['object']['replies']['items'][0]
+    reply['content'] += ' xyz'
+    new_resp_json = json.dumps(reply)
+    self.post_task()
+
+    resp = resp.key.get()
+    self.assertEqual(new_resp_json, resp.response_json)
+    self.assertEqual(old_resp_jsons, resp.old_response_jsons)
+    self.assertEqual('new', resp.status)
+    self.assertEqual(targets, resp.unsent)
+    self.assertEqual([], resp.sent)
+
+    tasks = self.taskqueue_stub.GetTasks('propagate')
+    self.assertEquals(1, len(tasks))
+    self.assertEquals(resp.key.urlsafe(),
+                      testutil.get_task_params(tasks[0])['response_key'])
+    self.taskqueue_stub.FlushQueue('propagate')
 
 
 class PropagateTest(TaskQueueTest):

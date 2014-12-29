@@ -250,33 +250,35 @@ class Poll(webapp2.RequestHandler):
         resp.setdefault('activities', []).append(activity)
 
     #
-    # Step 3: filter out existing responses
+    # Step 3: filter out responses we've already seen
     #
-    # existing response ids for each source are cached in memcache (as raw ids,
+    # seen response ids for each source are cached in memcache (as raw ids,
     # ie *not* tag URIs, to save space). look there first, then fall back to a
     # datastore batch get. it returns full entities, which isn't ideal, so tell
     # it not to cache them to (maybe?) avoid memcache churn.
     #
     # more background: http://stackoverflow.com/questions/11509368
     if responses:
-      existing_ids = memcache.get('AR ' + source.bridgy_path())
-      if existing_ids is None:
+      seen_ids = memcache.get('AR ' + source.bridgy_path())
+      if seen_ids is None:
         # batch get from datastore.
         #
         # ideally i'd use a keys only query with an IN filter on key, below, but
         # that results in a separate query per key, and those queries run in
         # serial (!). http://stackoverflow.com/a/11104457/186123
         #
-        # existing = Response.query(
+        # seen = Response.query(
         #   Response._key.IN([ndb.Key(Response, id) for id in responses])
         #   ).fetch(len(responses), keys_only=True)
-        existing = ndb.get_multi((ndb.Key(Response, id) for id in responses.iterkeys()),
-                                 use_memcache=False)
-        # (we know Response key ids are always tag URIs)
-        existing_ids = [util.parse_tag_uri(e.key.id())[1] for e in existing if e]
-
-      for id in existing_ids:
-        responses.pop(source.as_source.tag_uri(id), None)
+        #
+        seen_ids = []
+        keys = [ndb.Key(Response, id) for id in responses]
+        for id, resp, seen in zip(responses.keys(), responses.values(),
+                                  ndb.get_multi(keys, use_memcache=False)):
+          if seen and not source.as_source.activity_changed(
+              json.loads(seen.response_json), resp):
+            responses.pop(id)
+            seen_ids.append(util.parse_tag_uri(id))
 
     #
     # Step 4: store new responses and enqueue propagate tasks
@@ -318,7 +320,7 @@ class Poll(webapp2.RequestHandler):
       # cache newly seen response ids
       memcache.set('AR ' + source.bridgy_path(),
           # (we know Response key ids are always tag URIs)
-          existing_ids + [util.parse_tag_uri(id)[1] for id in responses])
+          seen_ids + [util.parse_tag_uri(id)[1] for id in responses])
 
     source_updates.update({'last_polled': source.last_poll_attempt,
                            'status': 'enabled'})
