@@ -359,7 +359,7 @@ def _process_entry(source, permalink, feed_entry, refetch, preexisting,
   usynd = feed_entry.get('properties', {}).get('syndication', [])
   logging.debug('u-syndication links on the h-feed h-entry: %s', usynd)
   results = _process_syndication_urls(source, permalink, set(
-    url for url in usynd if isinstance(url, basestring)))
+    url for url in usynd if isinstance(url, basestring)), preexisting)
   success = True
 
   # fetch the full permalink page, which often has more detailed information
@@ -372,6 +372,8 @@ def _process_entry(source, permalink, feed_entry, refetch, preexisting,
         resp = requests.get(permalink, timeout=HTTP_TIMEOUT)
         resp.raise_for_status()
         parsed = mf2py.Parser(url=permalink, doc=resp.text).to_dict()
+    except AssertionError:
+      raise  # for unit tests
     except BaseException:
       # TODO limit the number of allowed failures
       logging.warning('Could not fetch permalink %s', permalink, exc_info=True)
@@ -391,8 +393,8 @@ def _process_entry(source, permalink, feed_entry, refetch, preexisting,
         logging.debug('u-syndication links: %s', usynd)
         syndication_urls.update(url for url in usynd
                                 if isinstance(url, basestring))
-      results = _process_syndication_urls(source, permalink,
-                                          syndication_urls)
+      results = _process_syndication_urls(
+        source, permalink, syndication_urls, preexisting)
 
   # detect and delete SyndicatedPosts that were removed from the site
   if success:
@@ -414,11 +416,19 @@ def _process_entry(source, permalink, feed_entry, refetch, preexisting,
                     'searched again', permalink)
       SyndicatedPost.insert_original_blank(source, permalink)
 
-  logging.debug('discovered relationships %s', results)
-  return results
+  # only return results that are not in the preexisting list
+  new_results = {}
+  for syndurl, syndposts_for_url in results.iteritems():
+    for syndpost in syndposts_for_url:
+      if syndpost not in preexisting:
+        new_results.setdefault(syndurl, []).append(syndpost)
+
+  logging.debug('discovered relationships %s', new_results)
+  return new_results
 
 
-def _process_syndication_urls(source, permalink, syndication_urls):
+def _process_syndication_urls(source, permalink, syndication_urls,
+                              preexisting):
   """Process a list of syndication URLs looking for one that matches the
   current source.  If one is found, stores a new SyndicatedPost in the
   db.
@@ -428,6 +438,7 @@ def _process_syndication_urls(source, permalink, syndication_urls):
     permalink: a string. the current h-entry permalink
     syndication_urls: a collection of strings. the unfitered list
       of syndication urls
+    preexisting: a list of previously discovered SyndicatedPosts
 
   Returns: dict mapping string syndication url to list of SyndicatedPost
   """
@@ -447,9 +458,15 @@ def _process_syndication_urls(source, permalink, syndication_urls):
     # appropriate source subclass by author.domains, rather than
     # author.domain_urls)
     if util.domain_from_link(syndication_url) == source.AS_CLASS.DOMAIN:
-      logging.debug('saving discovered relationship %s -> %s',
-                    syndication_url, permalink)
-      relationship = SyndicatedPost.insert(
-        source, syndication=syndication_url, original=permalink)
+      # we may have already seen this relationship, save a DB lookup by
+      # finding it in the preexisting list
+      relationship = next((sp for sp in preexisting
+                           if sp.syndication == syndication_url
+                           and sp.original == permalink), None)
+      if not relationship:
+        logging.debug('saving discovered relationship %s -> %s',
+                      syndication_url, permalink)
+        relationship = SyndicatedPost.insert(
+          source, syndication=syndication_url, original=permalink)
       results.setdefault(syndication_url, []).append(relationship)
   return results

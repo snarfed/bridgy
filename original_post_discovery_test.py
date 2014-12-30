@@ -693,6 +693,13 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
         <a class="u-syndication" href="https://fa.ke/post/url1"></a>
       </html>""").InAnyOrder()
 
+    # permalink2 hasn't changed since we first checked it
+    self.expect_requests_get('http://author/permalink2', """
+      <html class="h-entry">
+        <a class="u-url" href="/permalink2"></a>
+        <a class="u-syndication" href="https://fa.ke/post/url2"></a>
+      </html>""").InAnyOrder()
+
     # permalink3 hasn't changed since we first checked it
     self.expect_requests_get('http://author/permalink3', """
       <html class="h-entry">
@@ -847,18 +854,22 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     <a class="h-entry" href="/post2"></a>
     </html>"""
 
-    self.expect_requests_get('http://author', hfeed)
+    hentries = [
+      ('http://author/post%d' % (i + 1),
+       """<html class="h-entry">
+       <a class="u-url" href="/post%d"></a>
+       <a class="u-syndication" href="https://fa.ke/post/url"></a>
+       </html>""" % (i + 1)) for i in range(2)
+    ]
 
-    for i in range(2):
-      self.expect_requests_get(
-        'http://author/post%d' % (i + 1),
-        """<html class="h-entry">
-        <a class="u-url" href="/post%d"></a>
-        <a class="u-syndication" href="https://fa.ke/post/url"></a>
-        </html>""" % (i + 1))
-
-    # refetch should only grab the feed
     self.expect_requests_get('http://author', hfeed)
+    for permalink, content in hentries:
+      self.expect_requests_get(permalink, content)
+
+    # refetch
+    self.expect_requests_get('http://author', hfeed)
+    for permalink, content in hentries:
+      self.expect_requests_get(permalink, content)
 
     self.mox.ReplayAll()
     activity = original_post_discovery.discover(self.source, self.activities[0])
@@ -887,17 +898,21 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     hfeed = """<html class="h-feed">
     <a class="h-entry" href="/permalink"></a>
     </html>"""
-
-    self.expect_requests_get('http://author', hfeed)
-    self.expect_requests_get('http://author/permalink', """
-    <html class="h-entry">
+    hentry = """<html class="h-entry">
     <a class="u-url" href="/permalink"/>
     <a class="u-syndication" href="https://fa.ke/post/url1"/>
     <a class="u-syndication" href="https://fa.ke/post/url3"/>
     <a class="u-syndication" href="https://fa.ke/post/url5"/>
-    </html>""")
+    </html>"""
 
-    self.expect_requests_get('http://author', hfeed)  # refetch
+    self.expect_requests_get('http://author', hfeed)
+    self.expect_requests_get('http://author/permalink', hentry)
+
+    # refetch
+    self.expect_requests_get('http://author', hfeed)
+    # refetch grabs posts that it's seen before in case there have
+    # been updates
+    self.expect_requests_get('http://author/permalink', hentry)
 
     self.mox.ReplayAll()
 
@@ -948,10 +963,17 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     <a class="u-syndication" href="https://fa.ke/post/url"></a>
     </html>""")
 
-    # refetch again (feed-only this time)
+    # refetch again
     self.expect_requests_get('http://author', """
     <html class="h-feed">
     <a class="h-entry" href="/2014/08/09/this-is-a-stub"></a>
+    </html>""")
+
+    # permalink hasn't changed
+    self.expect_requests_get('http://author/2014/08/09/this-is-a-stub', """
+    <html class="h-entry">
+    <a class="u-url" href="/2014/08/09/this-is-a-stub"></a>
+    <a class="u-syndication" href="https://fa.ke/post/url"></a>
     </html>""")
 
     self.mox.ReplayAll()
