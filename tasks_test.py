@@ -575,7 +575,8 @@ class PollTest(TaskQueueTest):
     self.sources[0].last_syndication_url = None
     self.sources[0].put()
 
-    for r in self.responses:
+    # leave at least one new response to trigger PPD
+    for r in self.responses[:-1]:
       r.status = 'complete'
       r.put()
 
@@ -730,6 +731,7 @@ class PollTest(TaskQueueTest):
     for act in twitter_acts:
       act['object']['url'] = 'http://twitter/post/url'
       act['object']['content'] = 'twitter post'
+      act['object']['replies']['items'][0]['content'] = '@-reply'
 
     self.sources[1].put()
 

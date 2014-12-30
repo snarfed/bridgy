@@ -266,8 +266,10 @@ class Poll(webapp2.RequestHandler):
         seen_resps = [json.loads(r.response_json) for r in ndb.get_multi(keys) if r]
 
       for seen in seen_resps:
+        id = seen['id']
+        resp = responses.get(id)
         if not source.as_source.activity_changed(seen, resp):
-          responses.pop(seen['id'])
+          del responses[id]
 
     #
     # Step 4: store new responses and enqueue propagate tasks
