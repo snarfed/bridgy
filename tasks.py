@@ -353,9 +353,6 @@ class Poll(webapp2.RequestHandler):
     new or updated syndication urls that we may have missed the first
     time we looked for them.
     """
-    # TODO this method only checks for new syndication urls on
-    # originals that have never had one (for *this* source). it
-    # would be even better to check all posts to support updates.
     logging.debug('refetching h-feed for source %s', source.label())
     relationships = original_post_discovery.refetch(source)
     if not relationships:
