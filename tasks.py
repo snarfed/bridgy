@@ -252,33 +252,22 @@ class Poll(webapp2.RequestHandler):
     #
     # Step 3: filter out responses we've already seen
     #
-    # seen response ids for each source are cached in memcache (as raw ids,
-    # ie *not* tag URIs, to save space). look there first, then fall back to a
-    # datastore batch get. it returns full entities, which isn't ideal, so tell
-    # it not to cache them to (maybe?) avoid memcache churn.
-    #
-    # more background: http://stackoverflow.com/questions/11509368
+    # seen responses (JSON objects) for each source are cached in memcache. look
+    # there first, then fall back to a datastore batch get.
     if responses:
-      seen_ids = memcache.get('AR ' + source.bridgy_path())
-      if seen_ids is None:
+      seen_resps = memcache.get('AR ' + source.bridgy_path())
+      if seen_resps is None:
         # batch get from datastore.
         #
-        # ideally i'd use a keys only query with an IN filter on key, below, but
-        # that results in a separate query per key, and those queries run in
-        # serial (!). http://stackoverflow.com/a/11104457/186123
-        #
-        # seen = Response.query(
-        #   Response._key.IN([ndb.Key(Response, id) for id in responses])
-        #   ).fetch(len(responses), keys_only=True)
-        #
-        seen_ids = []
+        # ideally i'd use a keys only query with an IN filter on key, but that
+        # results in a separate query per key, and those queries run in serial!
+        # http://stackoverflow.com/a/11104457/186123
         keys = [ndb.Key(Response, id) for id in responses]
-        for id, resp, seen in zip(responses.keys(), responses.values(),
-                                  ndb.get_multi(keys, use_memcache=False)):
-          if seen and not source.as_source.activity_changed(
-              json.loads(seen.response_json), resp):
-            responses.pop(id)
-            seen_ids.append(util.parse_tag_uri(id))
+        seen_resps = [json.loads(r.response_json) for r in ndb.get_multi(keys) if r]
+
+      for seen in seen_resps:
+        if not source.as_source.activity_changed(seen, resp):
+          responses.pop(seen['id'])
 
     #
     # Step 4: store new responses and enqueue propagate tasks
@@ -317,10 +306,12 @@ class Poll(webapp2.RequestHandler):
       resp.get_or_save(source)
 
     if responses:
-      # cache newly seen response ids
-      memcache.set('AR ' + source.bridgy_path(),
-          # (we know Response key ids are always tag URIs)
-          seen_ids + [util.parse_tag_uri(id)[1] for id in responses])
+      # cache newly seen responses
+      seen_resps = {s['id']: s for s in seen_resps}
+      for r in responses.values():
+        r.pop('activities', None)
+      seen_resps.update(responses)
+      memcache.set('AR ' + source.bridgy_path(), seen_resps.values())
 
     source_updates.update({'last_polled': source.last_poll_attempt,
                            'status': 'enabled'})
