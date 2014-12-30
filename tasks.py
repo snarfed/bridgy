@@ -268,7 +268,7 @@ class Poll(webapp2.RequestHandler):
       for seen in seen_resps:
         id = seen['id']
         resp = responses.get(id)
-        if not source.as_source.activity_changed(seen, resp):
+        if resp and not source.as_source.activity_changed(seen, resp):
           del responses[id]
 
     #

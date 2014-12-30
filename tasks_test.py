@@ -843,6 +843,7 @@ class PollTest(TaskQueueTest):
     """If a response changes, we should repropagate it from scratch.
     """
     # just one response: self.responses[0]
+    tags = self.activities[0]['object']['tags']
     del self.activities[0]['object']['tags']
     self.sources[0].set_activities([self.activities[0]])
 
@@ -850,12 +851,26 @@ class PollTest(TaskQueueTest):
     self._change_response_and_poll()
 
     # second change to response. response id will be cached in memcache.
+    self._change_response_and_poll()
+
+    # new responses that don't include existing response. cache will have
+    # existing response.
+    del self.activities[0]['object']['replies']
+    self.activities[0]['object']['tags'] = tags
+    self.sources[0].set_activities([self.activities[0]])
+
     source = self.sources[0].key.get()
     source.last_polled = util.EPOCH
     source.put()
-    self._change_response_and_poll()
+    self.post_task()
+    self.assert_equals([r.key for r in self.responses[:3]],
+                       list(models.Response.query().iter(keys_only=True)))
 
   def _change_response_and_poll(self):
+    source = self.sources[0].key.get()
+    source.last_polled = util.EPOCH
+    source.put()
+
     resp = self.responses[0].key.get() or self.responses[0]
     old_resp_jsons = resp.old_response_jsons + [resp.response_json]
     targets = resp.sent = resp.unsent
