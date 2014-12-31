@@ -4,6 +4,7 @@
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
+import bz2
 import copy
 import datetime
 import json
@@ -866,7 +867,9 @@ class PollTest(TaskQueueTest):
 
     self.assert_equals([r.key for r in self.responses[:3]],
                        list(models.Response.query().iter(keys_only=True)))
-    self.assert_equals(tags, memcache.get('AR ' + self.sources[0].bridgy_path()))
+    self.assert_equals(
+      tags, json.loads(bz2.decompress(
+        memcache.get('AR ' + self.sources[0].bridgy_path()))))
 
   def _change_response_and_poll(self):
     source = self.sources[0].key.get()
@@ -898,7 +901,9 @@ class PollTest(TaskQueueTest):
                       testutil.get_task_params(tasks[0])['response_key'])
     self.taskqueue_stub.FlushQueue('propagate')
 
-    self.assert_equals([reply], memcache.get('AR ' + self.sources[0].bridgy_path()))
+    self.assert_equals(
+      [reply], json.loads(bz2.decompress(
+        memcache.get('AR ' + self.sources[0].bridgy_path()))))
 
 
 class PropagateTest(TaskQueueTest):

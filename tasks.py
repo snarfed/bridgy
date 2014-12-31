@@ -3,6 +3,7 @@
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
+import bz2
 import calendar
 import datetime
 import gc
@@ -256,7 +257,9 @@ class Poll(webapp2.RequestHandler):
     # there first, then fall back to a datastore batch get.
     if responses:
       seen_resps = memcache.get('AR ' + source.bridgy_path())
-      if seen_resps is None:
+      if seen_resps is not None:
+        seen_resps = json.loads(bz2.decompress(seen_resps))
+      else:
         # batch get from datastore.
         #
         # ideally i'd use a keys only query with an IN filter on key, but that
@@ -309,7 +312,8 @@ class Poll(webapp2.RequestHandler):
 
     # update cache
     if responses:
-      memcache.set('AR ' + source.bridgy_path(), responses.values())
+      memcache.set('AR ' + source.bridgy_path(),
+                   bz2.compress(json.dumps(responses.values())))
 
     source_updates.update({'last_polled': source.last_poll_attempt,
                            'status': 'enabled'})
