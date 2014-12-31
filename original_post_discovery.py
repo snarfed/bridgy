@@ -108,8 +108,7 @@ def refetch(source):
 
 
 def _posse_post_discovery(source, activity, syndication_url, fetch_hfeed):
-  """Performs the actual meat of the posse-post-discover. It was split
-  out from discover() so that it can be done inside of a transaction.
+  """Performs the actual meat of the posse-post-discover.
 
   Args:
     source: models.Source subclass
