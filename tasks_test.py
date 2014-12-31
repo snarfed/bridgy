@@ -863,8 +863,10 @@ class PollTest(TaskQueueTest):
     source.last_polled = util.EPOCH
     source.put()
     self.post_task()
+
     self.assert_equals([r.key for r in self.responses[:3]],
                        list(models.Response.query().iter(keys_only=True)))
+    self.assert_equals(tags, memcache.get('AR ' + self.sources[0].bridgy_path()))
 
   def _change_response_and_poll(self):
     source = self.sources[0].key.get()
@@ -895,6 +897,8 @@ class PollTest(TaskQueueTest):
     self.assertEquals(resp.key.urlsafe(),
                       testutil.get_task_params(tasks[0])['response_key'])
     self.taskqueue_stub.FlushQueue('propagate')
+
+    self.assert_equals([reply], memcache.get('AR ' + self.sources[0].bridgy_path()))
 
 
 class PropagateTest(TaskQueueTest):

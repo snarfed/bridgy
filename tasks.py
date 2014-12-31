@@ -307,13 +307,9 @@ class Poll(webapp2.RequestHandler):
         resp.urls_to_activity=json.dumps(urls_to_activity)
       resp.get_or_save(source)
 
+    # update cache
     if responses:
-      # cache newly seen responses
-      seen_resps = {s['id']: s for s in seen_resps}
-      for r in responses.values():
-        r.pop('activities', None)
-      seen_resps.update(responses)
-      memcache.set('AR ' + source.bridgy_path(), seen_resps.values())
+      memcache.set('AR ' + source.bridgy_path(), responses.values())
 
     source_updates.update({'last_polled': source.last_poll_attempt,
                            'status': 'enabled'})
