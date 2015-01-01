@@ -271,6 +271,24 @@ class SourceTest(testutil.HandlerTest):
     source.verify()
     self.assertEquals('http://web.ment/ion', source.webmention_endpoint)
 
+  def test_verify_unicode_characters(self):
+    """Older versions of BS4 had an issue where it would check short HTML
+    documents to make sure the user wasn't accidentally passing a URL,
+    but converting the utf-8 document to ascii caused exceptions in some cases.
+    """
+    # this requests.get is called by webmention-tools
+    self.expect_requests_get(
+      'http://primary/', """\xef\xbb\xbf<html><head>
+<link rel="webmention" href="http://web.ment/ion"></head>
+</html>""", verify=False)
+    self.mox.ReplayAll()
+
+    source = FakeSource.new(self.handler, features=['webmention'],
+                            domain_urls=['http://primary/'],
+                            domains=['primary'])
+    source.verify()
+    self.assertEquals('http://web.ment/ion', source.webmention_endpoint)
+
   def test_verify_without_webmention_endpoint(self):
     self.expect_requests_get('http://primary/', 'no webmention endpoint here!',
                              verify=False)
