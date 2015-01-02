@@ -255,6 +255,10 @@ class Poll(webapp2.RequestHandler):
     #
     # seen responses (JSON objects) for each source are cached in memcache. look
     # there first, then fall back to a datastore batch get.
+    #
+    # TODO: consider moving this into the Source entity instead, like
+    # last_activities_cache_json. background:
+    # https://github.com/snarfed/bridgy/issues/330#issuecomment-68550909
     if responses:
       seen_resps = memcache.get('AR ' + source.bridgy_path())
       if seen_resps is not None:
