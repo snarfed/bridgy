@@ -30,16 +30,13 @@ class PublishTest(testutil.HandlerTest):
       domain_urls=['http://foo.com/'])
     self.source.put()
 
-  def get_response(self, source=None, target=None, preview=False,
-                   bridgy_omit_link=None):
-    params = {
+  def get_response(self, source=None, target=None, preview=False, params=None):
+    if params is None:
+      params = {}
+    params.update({
       'source': source or 'http://foo.com/bar',
       'target': target or 'http://brid.gy/publish/fake',
-      }
-    if preview and (bridgy_omit_link is None):
-      bridgy_omit_link = False
-    if bridgy_omit_link is not None:
-      params['bridgy_omit_link'] = bridgy_omit_link
+      })
 
     return publish.application.get_response(
       '/publish/preview' if preview else '/publish/webmention',
@@ -415,17 +412,36 @@ this is my article
     html = '<article class="h-entry"><p class="e-content">foo</p></article>'
     self.expect_requests_get('http://foo.com/bar', html)
     self.mox.ReplayAll()
-    self.assert_success('foo', bridgy_omit_link='True')
+    self.assert_success('foo', params={'bridgy_omit_link': 'True'})
 
   def test_bridgy_omit_link_mf2(self):
     html = """\
 <article class="h-entry">
-<p class="e-content">foo</p>
+<div class="e-content">
+foo<br /> <blockquote></blockquote>
+</div>
 <a class="u-bridgy-omit-link" href=""></a>
 </article>"""
     self.expect_requests_get('http://foo.com/bar', html)
     self.mox.ReplayAll()
-    self.assert_success('foo', bridgy_omit_link='True')
+    self.assert_success('foo')
+
+  def test_bridgy_ignore_formatting_query_param(self):
+    self.expect_requests_get('http://foo.com/bar', """\
+<article class="h-entry"><div class="e-content">
+foo<br /> <blockquote>bar</blockquote>
+</div></article>""")
+    self.mox.ReplayAll()
+    self.assert_success('foo bar', params={'bridgy_ignore_formatting': ''})
+
+  def test_bridgy_ignore_formatting_mf2(self):
+    self.expect_requests_get('http://foo.com/bar', """\
+<article class="h-entry"><div class="e-content">
+foo<br /> <blockquote>bar</blockquote>
+<a class="u-bridgy-ignore-formatting" href=""></a>
+</div></article>""")
+    self.mox.ReplayAll()
+    self.assert_success('foo bar')
 
   def test_expand_target_urls_u_syndication(self):
     """Comment on a post with a u-syndication value

@@ -212,7 +212,14 @@ class Handler(webmention.WebmentionHandler):
       a CreationResult object, where content is the string HTTP
       response or None if the source cannot publish this item type.
     """
+    props = item.get('properties', {})
+    ignore_formatting = self.param_or_prop('bridgy_ignore_formatting', props)
+
     obj = microformats2.json_to_object(item)
+    if ignore_formatting:
+      prop = microformats2.first_props(props)
+      obj['content'] = prop.get('content', {}).get('value').strip()
+
     # which original post URL to include? if the source URL redirected, use the
     # (pre-redirect) source URL, since it might be a short URL. otherwise, use
     # u-url if it's set. finally, fall back to the actual fetched URL
@@ -223,7 +230,6 @@ class Handler(webmention.WebmentionHandler):
     logging.debug('Converted to ActivityStreams object: %s', pprint.pformat(obj))
 
     # posts and comments need content
-    props = item.get('properties', {})
     obj_type = obj.get('objectType')
     if obj_type in ('note', 'article', 'comment'):
       if (not obj.get('content') and not obj.get('summary') and
@@ -233,15 +239,9 @@ class Handler(webmention.WebmentionHandler):
           error_plain='Could not find content in %s' % self.fetched.url,
           error_html='Could not find <a href="http://microformats.org/">content</a> in %s' % self.fetched.url)
 
-    self.preprocess_activity(obj)
+    self.preprocess_activity(obj, ignore_formatting=ignore_formatting)
 
-    # whether to include link to original post. bridgy_omit_link query param
-    # (any value) takes precedence, then u-bridgy-omit-link mf2 class.
-    if self.PREVIEW or 'bridgy_omit_link' in self.request.params:
-      omit_link = self.request.get('bridgy_omit_link').lower() in ('', 'true')
-    else:
-      omit_link = 'bridgy-omit-link' in props
-
+    omit_link = self.param_or_prop('bridgy_omit_link', props)
     if self.PREVIEW:
       result = self.source.as_source.preview_create(
         obj, include_link=not omit_link)
@@ -274,7 +274,7 @@ class Handler(webmention.WebmentionHandler):
       return as_source.creation_result(
         json.dumps(self.entity.published, indent=2))
 
-  def preprocess_activity(self, activity):
+  def preprocess_activity(self, activity, ignore_formatting=False):
     """Preprocesses an item before trying to publish it.
 
     Specifically:
@@ -284,11 +284,13 @@ class Handler(webmention.WebmentionHandler):
 
     Args:
       activity: an ActivityStreams dict of the activity being published
+      ignore_formatting: whether to use content text as is, instead of
+        converting its HTML to plain text styling (newlines, etc.)
     """
     self.expand_target_urls(activity)
 
     content = activity.get('content')
-    if content:
+    if content and not ignore_formatting:
       h = html2text.HTML2Text()
       h.unicode_snob = True
       h.body_width = 0  # don't wrap lines
@@ -386,6 +388,13 @@ class Handler(webmention.WebmentionHandler):
 
     logging.debug('Publish entity: %s', entity.key.urlsafe())
     return entity
+
+  def param_or_prop(self, name, props):
+    assert name
+    if name in self.request.params:
+      return self.request.get(name).lower() in ('', 'true')
+    else:
+      return name.replace('_', '-') in props
 
 
 class PreviewHandler(Handler):
