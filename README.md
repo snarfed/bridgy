@@ -1,12 +1,12 @@
 ![Bridgy](https://raw.github.com/snarfed/bridgy/master/static/bridgy_logo_thumb.jpg) [Bridgy](http://brid.gy/)
 ===
 
-Got a web site? Want to publish your posts to social networks? Want to see
-comments, likes, and more on your site? [Bridgy](http://brid.gy/) copies them
-back for you.
+Got a web site? Want social network replies and likes on your site? Want to post and tweet from your site? Bridgy is for you.
 
 http://brid.gy/
 
+Bridgy pulls comments and likes from social networks back to your web site. You
+can also use it to publish your posts to those networks.
 [See the docs](https://www.brid.gy/about) for more details.
 
 License: This project is placed in the public domain.
