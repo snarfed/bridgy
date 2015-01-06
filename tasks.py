@@ -254,24 +254,8 @@ class Poll(webapp2.RequestHandler):
     #
     # seen responses (JSON objects) for each source are cached in memcache. look
     # there first, then fall back to a datastore batch get.
-    #
-    # TODO: consider moving this into the Source entity instead, like
-    # last_activities_cache_json. background:
-    # https://github.com/snarfed/bridgy/issues/330#issuecomment-68550909
-    if responses:
-      seen_resps = memcache.get('AR ' + source.bridgy_path())
-      if seen_resps is not None:
-        seen_resps = json.loads(bz2.decompress(seen_resps))
-      else:
-        # batch get from datastore.
-        #
-        # ideally i'd use a keys only query with an IN filter on key, but that
-        # results in a separate query per key, and those queries run in serial!
-        # http://stackoverflow.com/a/11104457/186123
-        keys = [ndb.Key(Response, id) for id in responses]
-        seen_resps = [json.loads(r.response_json) for r in ndb.get_multi(keys) if r]
-
-      for seen in seen_resps:
+    if source.seen_responses_cache_json:
+      for seen in json.loads(source.seen_responses_cache_json):
         id = seen['id']
         resp = responses.get(id)
         if resp and not source.as_source.activity_changed(seen, resp):
@@ -315,8 +299,7 @@ class Poll(webapp2.RequestHandler):
 
     # update cache
     if responses:
-      memcache.set('AR ' + source.bridgy_path(),
-                   bz2.compress(json.dumps(responses.values())))
+      source_updates['seen_responses_cache_json'] = json.dumps(responses.values())
 
     source_updates.update({'last_polled': source.last_poll_attempt,
                            'status': 'enabled'})

@@ -103,6 +103,7 @@ class Source(StringIdModel):
   last_activity_id = ndb.StringProperty()
   last_activities_etag = ndb.StringProperty()
   last_activities_cache_json = ndb.TextProperty()
+  seen_responses_cache_json = ndb.TextProperty(compressed=True)
 
   # this is set temporarily, in memory only, by the poll task when we get rate
   # limited. it can be used e.g. to modify the poll period.

@@ -64,10 +64,18 @@ class PollTest(TaskQueueTest):
     FakeAsSource.DOMAIN = 'fa.ke'
     super(PollTest, self).tearDown()
 
-  def post_task(self, expected_status=200, source=None):
+  def post_task(self, expected_status=200, source=None, reset=False):
+    if source is None:
+      source = self.sources[0]
+
+    if reset:
+      source = source.key.get()
+      source.last_polled = util.EPOCH
+      source.put()
+
     super(PollTest, self).post_task(
       expected_status=expected_status,
-      params={'source_key': (source or self.sources[0]).key.urlsafe(),
+      params={'source_key': source.key.urlsafe(),
               'last_polled': '1970-01-01-00-00-00'})
 
   def assert_responses(self):
@@ -867,22 +875,13 @@ class PollTest(TaskQueueTest):
     self.activities[0]['object']['tags'] = tags
     self.sources[0].set_activities([self.activities[0]])
 
-    source = self.sources[0].key.get()
-    source.last_polled = util.EPOCH
-    source.put()
-    self.post_task()
-
+    self.post_task(reset=True)
     self.assert_equals([r.key for r in self.responses[:3]],
                        list(models.Response.query().iter(keys_only=True)))
-    self.assert_equals(
-      tags, json.loads(bz2.decompress(
-        memcache.get('AR ' + self.sources[0].bridgy_path()))))
+    source = self.sources[0].key.get()
+    self.assert_equals(tags, json.loads(source.seen_responses_cache_json))
 
   def _change_response_and_poll(self):
-    source = self.sources[0].key.get()
-    source.last_polled = util.EPOCH
-    source.put()
-
     resp = self.responses[0].key.get() or self.responses[0]
     old_resp_jsons = resp.old_response_jsons + [resp.response_json]
     targets = resp.sent = resp.unsent
@@ -893,7 +892,7 @@ class PollTest(TaskQueueTest):
     reply = self.activities[0]['object']['replies']['items'][0]
     reply['content'] += ' xyz'
     new_resp_json = json.dumps(reply)
-    self.post_task()
+    self.post_task(reset=True)
 
     resp = resp.key.get()
     self.assertEqual(new_resp_json, resp.response_json)
@@ -908,9 +907,8 @@ class PollTest(TaskQueueTest):
                       testutil.get_task_params(tasks[0])['response_key'])
     self.taskqueue_stub.FlushQueue('propagate')
 
-    self.assert_equals(
-      [reply], json.loads(bz2.decompress(
-        memcache.get('AR ' + self.sources[0].bridgy_path()))))
+    source = self.sources[0].key.get()
+    self.assert_equals([reply], json.loads(source.seen_responses_cache_json))
 
 
 class PropagateTest(TaskQueueTest):
