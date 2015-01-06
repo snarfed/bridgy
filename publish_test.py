@@ -11,6 +11,7 @@ import urllib
 import requests
 from webob import exc
 
+import appengine_config
 from activitystreams import source as as_source
 from models import Publish, PublishedPage
 import publish
@@ -759,3 +760,23 @@ Join us! - http://foo.com/bar"""
 
     for preview in False, True:
       self.assert_success(text, preview=preview, params={'bridgy_omit_link': ''})
+
+  def test_charset_in_meta_tag(self):
+    """Test that we support charset in meta tag as well as HTTP header."""
+    text = u'Démo pour les développeur. Je suis navrée de ce problème.'
+
+    resp = requests.Response()
+    resp._content = u"""
+<html>
+<head><meta charset="utf-8"></head>
+<body><article class="h-entry"><p class="e-content">%s</p></article></body>
+</html>
+""" % text
+    resp._text = "shouldn't use this!"
+    resp.url = 'http://foo.com/bar'
+    resp.status_code = 200
+    requests.get(resp.url, timeout=appengine_config.HTTP_TIMEOUT).AndReturn(resp)
+    self.mox.ReplayAll()
+
+    # for preview in False, True:
+    self.assert_success(text, params={'bridgy_omit_link': ''})

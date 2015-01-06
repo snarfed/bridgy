@@ -66,10 +66,15 @@ class WebmentionHandler(WebmentionGetHandler):
     except BaseException:
       return self.error('Could not fetch source URL %s' % url)
 
+    # .text is decoded unicode string, .content is raw bytes. if the HTTP
+    # headers didn't specify a charset, pass raw bytes to BeautifulSoup so it
+    # can look for a <meta> tag with a charset and decode.
+    text = (fetched.text if 'charset' in fetched.headers.get('content-type', '')
+            else fetched.content)
     if self.entity:
-      self.entity.html = fetched.text
+      self.entity.html = text
 
-    doc = BeautifulSoup(fetched.text)
+    doc = BeautifulSoup(text)
 
     # special case tumblr's markup: div#content > div.post > div.copy
     # convert to mf2.
