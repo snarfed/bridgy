@@ -48,7 +48,7 @@ WordPress.com, <a href="/">sign up here!</a>
 <div class="row">
 
 <!-- Listen UI -->
-<div id="listen-ui" class="{% if source.SHORT_NAME == 'facebook' or source.SHORT_NAME == 'twitter' %}col-sm-6{% endif %} big">
+<div id="listen-ui" class="{% if source.SHORT_NAME == 'facebook' or source.SHORT_NAME == 'twitter' or source.SHORT_NAME == 'instagram' %}col-sm-6{% endif %} big">
 
 {% if "listen" in source.features and source.status != "disabled" %}
 <form method="post" action="/delete/start">

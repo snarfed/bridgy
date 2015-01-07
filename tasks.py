@@ -109,7 +109,6 @@ class Poll(webapp2.RequestHandler):
     # dict with source property names and values to update
     source.last_poll_attempt = now_fn()
     source_updates = {'last_poll_attempt': source.last_poll_attempt}
-
     try:
       source_updates.update(self.poll(source))
     except models.DisableSource:

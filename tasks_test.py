@@ -19,7 +19,6 @@ from google.appengine.api import memcache
 from google.appengine.ext import ndb
 import httplib2
 from oauth2client.client import AccessTokenRefreshError
-from activitystreams.oauth_dropins.python_instagram.bind import InstagramAPIError
 import requests
 
 import models
@@ -428,10 +427,12 @@ class PollTest(TaskQueueTest):
   def test_site_specific_disable_sources(self):
     """HTTP 401 and 400 '' for Instagram should disable the source."""
     try:
-      for err in (urllib2.HTTPError('url', 401, 'msg', {},  StringIO.StringIO('body')),
-                  InstagramAPIError('400', 'OAuthAccessTokenException', 'foo'),
-                  AccessTokenRefreshError('invalid_grant'),
-                  ):
+      for err in (
+          urllib2.HTTPError('url', 401, 'msg', {}, StringIO.StringIO('body')),
+          urllib2.HTTPError('url', 400, 'foo', {}, StringIO.StringIO(
+            '{"meta":{"error_type":"OAuthAccessTokenException"}}')),
+          AccessTokenRefreshError('invalid_grant'),
+      ):
         self.mox.UnsetStubs()
         self.setUp()
 
@@ -452,9 +453,15 @@ class PollTest(TaskQueueTest):
   def test_rate_limiting_errors(self):
     """Finish the task on rate limiting errors."""
     try:
-      for err in (InstagramAPIError('503', 'Rate limited', '...'),
-                  apiclient.errors.HttpError(httplib2.Response({'status': 429}), ''),
-                  urllib2.HTTPError('url', 403, 'msg', {}, None)):
+      error_body = json.dumps({"meta": {
+        "code": 429, "error_message": "The maximum number of requests...",
+        "error_type": "OAuthRateLimitException"}})
+      for err in (
+          urllib2.HTTPError('url', 429, 'Rate limited', {},
+                            StringIO.StringIO(error_body)),
+          apiclient.errors.HttpError(httplib2.Response({'status': 429}), ''),
+          urllib2.HTTPError('url', 403, 'msg', {}, None)
+      ):
         self.mox.UnsetStubs()
         self.mox.StubOutWithMock(FakeSource, 'get_activities_response')
         FakeSource.get_activities_response(
