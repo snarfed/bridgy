@@ -103,13 +103,14 @@ class CronTest(ModelsTest):
     self.assertEquals('http://new/pic.jpg', sources[1].get().picture)
 
   def test_update_instagram_pictures(self):
-    api = self.mox.CreateMockAnything()
-    as_instagram.InstagramAPI = lambda **kwargs: api
     for username in 'a', 'b':
-      api.user('self').AndReturn(Struct(id=username,
-                                        username=username,
-                                        full_name='Ryan Barrett',
-                                        profile_picture='http://new/pic'))
+      self.expect_urlopen(
+        'https://api.instagram.com/v1/users/self',
+        json.dumps({'data': {'id': username,
+                             'username': username,
+                             'full_name': 'Ryan Barrett',
+                             'profile_picture': 'http://new/pic',
+                           }}))
     self.mox.ReplayAll()
 
     sources = []

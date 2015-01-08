@@ -5,8 +5,9 @@ import json
 
 import handlers
 import models
-from activitystreams.oauth_dropins.python_instagram.bind import InstagramAPIError
 import testutil
+import urllib2
+import StringIO
 
 
 class HandlersTest(testutil.HandlerTest):
@@ -116,15 +117,15 @@ class HandlersTest(testutil.HandlerTest):
 
   def test_pass_through_source_errors(self):
     self.mox.StubOutWithMock(testutil.FakeSource, 'get_post')
-    testutil.FakeSource.get_post('000').AndRaise(
-      InstagramAPIError('410', 'my type', 'so sad'))
+    testutil.FakeSource.get_post('000').AndRaise(urllib2.HTTPError(
+      'url', 410, 'Gone', {}, StringIO.StringIO('Gone baby gone')))
     self.mox.ReplayAll()
 
     resp = handlers.application.get_response('/post/fake/%s/000' %
                                              self.source.key.string_id())
     self.assertEqual(410, resp.status_int)
     self.assertEqual('text/plain', resp.headers['Content-Type'])
-    self.assertEqual('FakeSource error:\nmy type: so sad', resp.body)
+    self.assertEqual('FakeSource error:\nGone baby gone', resp.body)
 
   def test_comment(self):
     self.source.set_comment({

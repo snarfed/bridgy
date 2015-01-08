@@ -40,6 +40,9 @@ function do_preview(site) {
       if (typeof(FB) != 'undefined') {
         FB.XFBML.parse();
       }
+      if (typeof(instgrm) != 'undefined') {
+        instgrm.Embeds.process()
+      }
     } else {
       this.onerror();
     }
