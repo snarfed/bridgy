@@ -420,6 +420,6 @@ class PublishHandler(Handler):
 application = webapp2.WSGIApplication([
     ('/publish/webmention', PublishHandler),
     ('/publish/preview', PreviewHandler),
-    ('/publish/(facebook|twitter)', webmention.WebmentionGetHandler),
+    ('/publish/(facebook|twitter|instagram)', webmention.WebmentionGetHandler),
     ],
   debug=appengine_config.DEBUG)
