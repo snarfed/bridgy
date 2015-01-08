@@ -92,7 +92,7 @@ class Handler(webmention.WebmentionHandler):
     if (domain not in ('brid.gy', 'www.brid.gy', 'localhost:8080') or
         len(path_parts) != 2 or path_parts[0] != '/publish' or not source_cls):
       return self.error('Target must be brid.gy/publish/{facebook,twitter}')
-    elif source_cls in (GooglePlusPage,):
+    elif source_cls == GooglePlusPage:
       return self.error('Sorry, %s is not yet supported.' %
                         source_cls.AS_CLASS.NAME)
 

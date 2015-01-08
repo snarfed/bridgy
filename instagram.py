@@ -57,14 +57,6 @@ class Instagram(models.Source):
                      url='http://instagram.com/' + username,
                      **kwargs)
 
-  def __getattr__(self, name):
-    """Overridden to disable comment creation in a-u.Instagram."""
-    if name == 'as_source' and self.auth_entity:
-      token = self.auth_entity.get().access_token()
-      self.as_source = self.AS_CLASS(token, allow_comment_creation=False)
-      return self.as_source
-    return getattr(super(Instagram, self), name)
-
   def silo_url(self):
     """Returns the Instagram account URL, e.g. https://instagram.com/foo."""
     return self.url
