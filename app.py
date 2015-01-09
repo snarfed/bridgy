@@ -256,7 +256,11 @@ class UserHandler(DashboardHandler):
                                   .fetch(10)
       for b in blogposts:
         b.links = self.process_webmention_links(b)
-        b.pretty_url = util.pretty_link(b.key.id(), text=b.feed_item.get('title'),
+        try:
+          text = b.feed_item.get('title')
+        except ValueError:
+          text = None
+        b.pretty_url = util.pretty_link(b.key.id(), text=text,
                                         a_class='original-post', max_length=40,
                                         new_tab=True)
 
