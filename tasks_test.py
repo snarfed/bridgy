@@ -858,28 +858,39 @@ class PollTest(TaskQueueTest):
   def test_response_changed(self):
     """If a response changes, we should repropagate it from scratch.
     """
+    source = self.sources[0]
+    activity = self.activities[0]
+
     # just one response: self.responses[0]
-    tags = self.activities[0]['object']['tags']
-    del self.activities[0]['object']['tags']
-    self.sources[0].set_activities([self.activities[0]])
+    tags = activity['object']['tags']
+    del activity['object']['tags']
+    source.set_activities([activity])
 
     # first change to response
     self._change_response_and_poll()
 
-    # second change to response. response id will be cached in memcache.
+    # second change to response
     self._change_response_and_poll()
+
+    # return new response *and* existing response. both should be stored in
+    # Source.seen_responses_cache_json
+    replies = activity['object']['replies']['items']
+    replies.append(self.activities[1]['object']['replies']['items'][0])
+
+    self.post_task(reset=True)
+    del replies[0]['activities']
+    self.assert_equals(replies, json.loads(source.key.get().seen_responses_cache_json))
+    self.responses[3].key.delete()
 
     # new responses that don't include existing response. cache will have
     # existing response.
-    del self.activities[0]['object']['replies']
-    self.activities[0]['object']['tags'] = tags
-    self.sources[0].set_activities([self.activities[0]])
+    del activity['object']['replies']
+    activity['object']['tags'] = tags
 
     self.post_task(reset=True)
     self.assert_equals([r.key for r in self.responses[:3]],
                        list(models.Response.query().iter(keys_only=True)))
-    source = self.sources[0].key.get()
-    self.assert_equals(tags, json.loads(source.seen_responses_cache_json))
+    self.assert_equals(tags, json.loads(source.key.get().seen_responses_cache_json))
 
   def _change_response_and_poll(self):
     resp = self.responses[0].key.get() or self.responses[0]

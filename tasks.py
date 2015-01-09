@@ -254,11 +254,13 @@ class Poll(webapp2.RequestHandler):
     #
     # seen responses (JSON objects) for each source are cached in memcache. look
     # there first, then fall back to a datastore batch get.
+    unchanged_responses = []
     if source.seen_responses_cache_json:
       for seen in json.loads(source.seen_responses_cache_json):
         id = seen['id']
         resp = responses.get(id)
         if resp and not source.as_source.activity_changed(seen, resp):
+          unchanged_responses.append(seen)
           del responses[id]
 
     #
@@ -299,7 +301,8 @@ class Poll(webapp2.RequestHandler):
 
     # update cache
     if responses:
-      source_updates['seen_responses_cache_json'] = json.dumps(responses.values())
+      source_updates['seen_responses_cache_json'] = json.dumps(
+        responses.values() + unchanged_responses)
 
     source_updates.update({'last_polled': source.last_poll_attempt,
                            'status': 'enabled'})
