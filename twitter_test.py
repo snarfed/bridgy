@@ -38,7 +38,8 @@ class TwitterTest(testutil.ModelsTest):
     self.assertEqual('my_key', tw.as_source.access_token_key)
     self.assertEqual('my_secret', tw.as_source.access_token_secret)
     self.assertEqual('snarfed_org', tw.key.string_id())
-    self.assertEqual('http://pi.ct/ure', tw.picture)
+    self.assertEqual('https://twitter.com/snarfed_org/profile_image?size=original',
+                     tw.picture)
     self.assertEqual('Ryan Barrett', tw.name)
     self.assertEqual('https://twitter.com/snarfed_org', tw.url)
     self.assertEqual('https://twitter.com/snarfed_org', tw.silo_url())
@@ -50,7 +51,9 @@ class TwitterTest(testutil.ModelsTest):
     self.auth_entity.user_json = json.dumps(user)
 
     tw = Twitter.new(self.handler, auth_entity=self.auth_entity)
-    self.assertEqual('https://foo.xyz', tw.picture)
+    # self.assertEqual('https://foo.xyz', tw.picture)
+    self.assertEqual('https://twitter.com/snarfed_org/profile_image?size=original',
+                     tw.picture)
 
   def test_get_activities(self):
     self.expect_urlopen('https://api.twitter.com/1.1/statuses/user_timeline.json?'

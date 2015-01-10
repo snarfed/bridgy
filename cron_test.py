@@ -99,8 +99,12 @@ class CronTest(ModelsTest):
     resp = cron.application.get_response('/cron/update_twitter_pictures')
     self.assertEqual(200, resp.status_int)
 
-    self.assertEquals('http://pi.ct/ure', sources[0].get().picture)
-    self.assertEquals('http://new/pic.jpg', sources[1].get().picture)
+    # self.assertEquals('http://pi.ct/ure', sources[0].get().picture)
+    # self.assertEquals('http://new/pic.jpg', sources[1].get().picture)
+    self.assertEquals('https://twitter.com/a/profile_image?size=original',
+                      sources[0].get().picture)
+    self.assertEquals('https://twitter.com/b/profile_image?size=original',
+                      sources[1].get().picture)
 
   def test_update_instagram_pictures(self):
     for username in 'a', 'b':
