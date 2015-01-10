@@ -133,3 +133,15 @@ class WordPressTest(testutil.HandlerTest):
                                   'http://who', 'foo')
     # shouldn't raise an exception
     self.assertEquals({'error': 'invalid_input'}, resp)
+
+  def test_create_comment_returns_non_json(self):
+    self.expect_urlopen(
+      'https://public-api.wordpress.com/rest/v1/sites/123/posts/'
+      '123/replies/new?pretty=true',
+      'Forbidden',
+      status=403,
+      data=urllib.urlencode({'content': '<a href="http://who">name</a>: foo'}))
+    self.mox.ReplayAll()
+
+    self.assertRaises(urllib2.HTTPError, self.wp.create_comment,
+                      'http://primary/post/123', 'name', 'http://who', 'foo')

@@ -154,10 +154,13 @@ class WordPress(models.Source):
       resp = auth_entity.urlopen(url, data=urllib.urlencode(data)).read()
     except urllib2.HTTPError, e:
       code, body = interpret_http_exception(e)
-      parsed = json.loads(body) if body else {}
-      if code == '400' and parsed.get('error') == 'invalid_input':
-        return parsed  # known error: https://github.com/snarfed/bridgy/issues/161
-      raise
+      try:
+        parsed = json.loads(body) if body else {}
+        if code == '400' and parsed.get('error') == 'invalid_input':
+          return parsed  # known error: https://github.com/snarfed/bridgy/issues/161
+      except ValueError:
+        pass # fall through
+      raise e
 
     resp = json.loads(resp)
     resp['id'] = resp.pop('ID', None)
