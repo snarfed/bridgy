@@ -391,7 +391,9 @@ class Handler(webmention.WebmentionHandler):
 
   def param_or_prop(self, name, props):
     assert name
-    if name in self.request.params:
+    if (name in self.request.params or
+        # for preview, always use query param because there's a checkbox in the UI
+        (name == 'bridgy_omit_link' and self.PREVIEW)):
       return self.request.get(name).lower() in ('', 'true')
     else:
       return name.replace('_', '-') in props

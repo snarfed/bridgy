@@ -106,7 +106,7 @@ class PublishTest(testutil.HandlerTest):
     # try again to test for a bug we had where a second try would succeed
     self.assert_error("Sorry, you've already published that page")
     # should still be able to preview though
-    self.assert_success('foo - http://foo.com/', preview=True)
+    self.assert_success('preview of foo', preview=True)
 
   def test_more_than_one_silo(self):
     """POSSE to more than one silo should not trip the
@@ -401,7 +401,7 @@ this is my article
     # make sure create() isn't called
     self.mox.StubOutWithMock(self.source.as_source, 'create', use_mock_anything=True)
     self.mox.ReplayAll()
-    self.assert_success('preview of foo - http://foo.com/bar', preview=True)
+    self.assert_success('preview of foo', preview=True)
 
     publish = Publish.query().get()
     self.assertEquals(self.source.key, publish.source)
@@ -426,6 +426,27 @@ foo<br /> <blockquote></blockquote>
     self.expect_requests_get('http://foo.com/bar', html)
     self.mox.ReplayAll()
     self.assert_success('foo')
+
+  def test_preview_omit_link_no_query_param_overrides_mf2(self):
+    html = """\
+<article class="h-entry">
+<div class="e-content">foo</div>
+</article>"""
+    self.expect_requests_get('http://foo.com/bar', html)
+    self.mox.ReplayAll()
+    self.assert_success('preview of foo', preview=True)
+
+  def test_preview_omit_link_query_param_overrides_mf2(self):
+    html = """\
+<article class="h-entry">
+<div class="e-content">foo</div>
+<a class="u-bridgy-omit-link" href=""></a>
+</article>"""
+    self.expect_requests_get('http://foo.com/bar', html)
+    self.mox.ReplayAll()
+    self.assert_success('preview of foo - http://foo.com/bar',
+                        preview=True,
+                        params={'bridgy_omit_link': 'false'})
 
   def test_bridgy_ignore_formatting_query_param(self):
     self.expect_requests_get('http://foo.com/bar', """\
@@ -744,9 +765,10 @@ foo<br /> <blockquote>bar</blockquote>
 Homebrew Website Club is _tonight_!
 
 6:30pm PST at Mozilla SF and Esri Portland.
-Join us! - http://foo.com/bar"""
+Join us!"""
 
     self.assert_success(expected, preview=True)
+    expected += ' - http://foo.com/bar'
     resp = self.assert_success(expected, preview=False)
     self.assertEquals(expected, json.loads(resp.body)['content'])
 
