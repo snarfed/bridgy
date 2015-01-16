@@ -82,6 +82,15 @@ class GooglePlusPage(models.Source):
     return (self.RATE_LIMITED_POLL if self.rate_limited
             else super(GooglePlusPage, self).poll_period())
 
+  def canonicalize_syndication_url(self, url):
+    """Follow redirects to find and use profile nicknames instead of ids.
+
+    ...e.g. +RyanBarrett in https://plus.google.com/+RyanBarrett/posts/JPpA8mApAv2.
+    """
+    return super(GooglePlusPage, self).canonicalize_syndication_url(
+      util.follow_redirects(url).url)
+
+
 class OAuthCallback(util.Handler):
   """OAuth callback handler.
 
