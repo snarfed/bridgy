@@ -68,22 +68,22 @@ class FacebookPageTest(testutil.ModelsTest):
     owned_event['id'] = '888'
     owned_event['owner']['id'] = '212038'
     self.expect_urlopen(
-      'https://graph.facebook.com/me/posts?offset=0&access_token=my_token',
+      'https://graph.facebook.com/v2.2/me/posts?offset=0&access_token=my_token',
       json.dumps({'data': [as_facebook_test.POST]}))
     self.expect_urlopen(
-      'https://graph.facebook.com/me/photos/uploaded?access_token=my_token',
+      'https://graph.facebook.com/v2.2/me/photos/uploaded?access_token=my_token',
       json.dumps({'data': [as_facebook_test.POST]}))
     self.expect_urlopen(
-      'https://graph.facebook.com/me/events?access_token=my_token',
+      'https://graph.facebook.com/v2.2/me/events?access_token=my_token',
       json.dumps({'data': [as_facebook_test.EVENT, owned_event]}))
     self.expect_urlopen(
-      re.compile('^https://graph.facebook.com/145304994.+'),
+      re.compile('^https://graph.facebook.com/v2.2/145304994.+'),
       json.dumps(as_facebook_test.EVENT))
     self.expect_urlopen(
-      re.compile('^https://graph.facebook.com/888\?.+'),
+      re.compile('^https://graph.facebook.com/v2.2/888\?.+'),
       json.dumps(owned_event))
     self.expect_urlopen(
-      'https://graph.facebook.com/888/invited?access_token=my_token',
+      'https://graph.facebook.com/v2.2/888/invited?access_token=my_token',
       json.dumps({'data': as_facebook_test.RSVPS}))
     self.mox.ReplayAll()
 
@@ -97,13 +97,13 @@ class FacebookPageTest(testutil.ModelsTest):
     self.assertEqual(as_facebook_test.POST['object_id'],
                      as_facebook_test.PHOTO['id'])
     self.expect_urlopen(
-      'https://graph.facebook.com/me/posts?offset=0&access_token=my_token',
+      'https://graph.facebook.com/v2.2/me/posts?offset=0&access_token=my_token',
       json.dumps({'data': [as_facebook_test.POST]}))
     self.expect_urlopen(
-      'https://graph.facebook.com/me/photos/uploaded?access_token=my_token',
+      'https://graph.facebook.com/v2.2/me/photos/uploaded?access_token=my_token',
       json.dumps({'data': [as_facebook_test.PHOTO]}))
     self.expect_urlopen(
-      'https://graph.facebook.com/me/events?access_token=my_token',
+      'https://graph.facebook.com/v2.2/me/events?access_token=my_token',
       json.dumps({}))
     self.mox.ReplayAll()
 
@@ -120,13 +120,13 @@ class FacebookPageTest(testutil.ModelsTest):
     post = copy.deepcopy(as_facebook_test.POST)
     post['comments']['data'][1]['id'] = '123:456'
     self.expect_urlopen(
-      'https://graph.facebook.com/me/posts?offset=0&access_token=my_token',
+      'https://graph.facebook.com/v2.2/me/posts?offset=0&access_token=my_token',
       json.dumps({'data': [post]}))
     self.expect_urlopen(
-      'https://graph.facebook.com/me/photos/uploaded?access_token=my_token',
+      'https://graph.facebook.com/v2.2/me/photos/uploaded?access_token=my_token',
       json.dumps({'data': []}))
     self.expect_urlopen(
-      'https://graph.facebook.com/me/events?access_token=my_token',
+      'https://graph.facebook.com/v2.2/me/events?access_token=my_token',
       json.dumps({}))
     self.mox.ReplayAll()
 
@@ -135,7 +135,7 @@ class FacebookPageTest(testutil.ModelsTest):
 
   def test_revoked(self):
     self.expect_urlopen(
-      'https://graph.facebook.com/me/posts?offset=0&access_token=my_token',
+      'https://graph.facebook.com/v2.2/me/posts?offset=0&access_token=my_token',
       json.dumps({'error': {'code': 190, 'error_subcode': 458}}), status=400)
     self.mox.ReplayAll()
 
@@ -143,7 +143,7 @@ class FacebookPageTest(testutil.ModelsTest):
 
   def test_expired_sends_notification(self):
     self.expect_urlopen(
-      'https://graph.facebook.com/me/posts?offset=0&access_token=my_token',
+      'https://graph.facebook.com/v2.2/me/posts?offset=0&access_token=my_token',
       json.dumps({'error': {'code': 190, 'error_subcode': 463}}), status=400)
 
     params = {
@@ -151,7 +151,7 @@ class FacebookPageTest(testutil.ModelsTest):
       'href': 'https://www.brid.gy/facebook/start',
       'access_token': 'my_app_id|my_app_secret',
       }
-    self.expect_urlopen('https://graph.facebook.com/212038/notifications', '',
+    self.expect_urlopen('https://graph.facebook.com/v2.2/212038/notifications', '',
                         data=urllib.urlencode(params))
     self.mox.ReplayAll()
 
@@ -159,7 +159,7 @@ class FacebookPageTest(testutil.ModelsTest):
 
   def test_other_error(self):
     self.expect_urlopen(
-      'https://graph.facebook.com/me/posts?offset=0&access_token=my_token',
+      'https://graph.facebook.com/v2.2/me/posts?offset=0&access_token=my_token',
       json.dumps({'error': {'code': 190, 'error_subcode': 789}}), status=400)
     self.mox.ReplayAll()
 
@@ -168,7 +168,7 @@ class FacebookPageTest(testutil.ModelsTest):
   def test_other_error_not_json(self):
     """If an error body isn't JSON, we should raise the original exception."""
     self.expect_urlopen(
-      'https://graph.facebook.com/me/posts?offset=0&access_token=my_token',
+      'https://graph.facebook.com/v2.2/me/posts?offset=0&access_token=my_token',
       'not json', status=400)
     self.mox.ReplayAll()
 
@@ -202,12 +202,12 @@ class FacebookPageTest(testutil.ModelsTest):
 
     # Facebook API calls
     self.expect_urlopen(
-      'https://graph.facebook.com/me/posts?offset=0&limit=50&access_token=my_token',
+      'https://graph.facebook.com/v2.2/me/posts?offset=0&limit=50&access_token=my_token',
       json.dumps({'data': [as_facebook_test.POST]}))
     self.expect_urlopen(
-      'https://graph.facebook.com/me/photos/uploaded?access_token=my_token', '{}')
+      'https://graph.facebook.com/v2.2/me/photos/uploaded?access_token=my_token', '{}')
     self.expect_urlopen(
-      'https://graph.facebook.com/me/events?access_token=my_token', '{}')
+      'https://graph.facebook.com/v2.2/me/events?access_token=my_token', '{}')
 
     # posse post discovery
     self.expect_requests_get('http://author/url', """

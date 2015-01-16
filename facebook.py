@@ -36,15 +36,16 @@ import util
 from google.appengine.ext import ndb
 import webapp2
 
-API_PHOTOS_URL = 'https://graph.facebook.com/me/photos/uploaded'
-API_USER_RSVPS_URL = 'https://graph.facebook.com/me/events'  # returns yes and maybe
-API_USER_RSVPS_DECLINED_URL = 'https://graph.facebook.com/me/events/declined'
-API_USER_RSVPS_NOT_REPLIED_URL = 'https://graph.facebook.com/me/events/not_replied'
+API_PHOTOS_URL = 'https://graph.facebook.com/v2.2/me/photos/uploaded'
+# returns yes and maybe
+API_USER_RSVPS_URL = 'https://graph.facebook.com/v2.2/me/events'
+API_USER_RSVPS_DECLINED_URL = 'https://graph.facebook.com/v2.2/me/events/declined'
+API_USER_RSVPS_NOT_REPLIED_URL = 'https://graph.facebook.com/v2.2/me/events/not_replied'
 # Ideally this fields arg would just be [default fields plus comments], but
 # there's no way to ask for that. :/
 # https://developers.facebook.com/docs/graph-api/using-graph-api/v2.1#fields
-API_EVENT_URL = 'https://graph.facebook.com/%s?fields=comments,description,end_time,id,likes,name,owner,picture,privacy,start_time,timezone,updated_time,venue'
-API_EVENT_RSVPS_URL = 'https://graph.facebook.com/%s/invited'
+API_EVENT_URL = 'https://graph.facebook.com/v2.2/%s?fields=comments,description,end_time,id,likes,name,owner,picture,privacy,start_time,timezone,updated_time,venue'
+API_EVENT_RSVPS_URL = 'https://graph.facebook.com/v2.2/%s/invited'
 
 
 class FacebookPage(models.Source):
