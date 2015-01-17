@@ -638,6 +638,26 @@ class PropagateResponse(SendWebmentions):
                  calendar.timegm(self.entity.created.utctimetuple()) - 61,
                  source.key.urlsafe())
 
+    # mitigate dupes caused by https://github.com/snarfed/bridgy/issues/339
+    if isinstance(source, facebook.FacebookPage):
+      published = response_obj.get('published')
+      if not published:
+        id = self.activities[0]['id']
+        parsed = util.parse_tag_uri(id)
+        if parsed:
+          id = parsed[1]
+        activities = source.as_source.get_activities(activity_id=id)
+        if activities:
+          published = (activities[0].get('published') or
+                       activities[0].get('object', {}).get('published'))
+
+      if published:
+        pub = util.parse_iso8601(published)
+        if pub < datetime.datetime.now(pub.tzinfo) - datetime.timedelta(days=1):
+          logging.info('Skipping probable duplicate. :( (issue #339)')
+          self.complete()
+          return
+
     self.send_webmentions()
 
   def source_url(self, target_url):
