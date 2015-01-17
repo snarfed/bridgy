@@ -106,6 +106,11 @@ class Poll(webapp2.RequestHandler):
       logging.warning('duplicate poll task! deferring to the other task.')
       return
 
+    logging.info('Last poll: %s/log?start_time=%s&key=%s',
+                 self.request.host_url,
+                 calendar.timegm(source.last_poll_attempt.utctimetuple()),
+                 source.key.urlsafe())
+
     # dict with source property names and values to update
     source.last_poll_attempt = now_fn()
     source_updates = {'last_poll_attempt': source.last_poll_attempt}
