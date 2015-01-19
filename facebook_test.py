@@ -47,7 +47,7 @@ class FacebookPageTest(testutil.ModelsTest):
     self.post_activity = copy.deepcopy(as_facebook_test.ACTIVITY)
     fb_id_and_url = {
       'id': 'tag:facebook.com,2013:222', # this is fb_object_id
-      'url': 'https://facebook.com/212038/posts/222',
+      'url': 'https://www.facebook.com/212038/posts/222',
       }
     self.post_activity.update(fb_id_and_url)
     self.post_activity['object'].update(fb_id_and_url)
@@ -61,7 +61,7 @@ class FacebookPageTest(testutil.ModelsTest):
     self.assertEqual('Ryan Barrett', self.fb.name)
     self.assertEqual('snarfed.org', self.fb.username)
     self.assertEqual('user', self.fb.type)
-    self.assertEqual('https://facebook.com/snarfed.org', self.fb.silo_url())
+    self.assertEqual('https://www.facebook.com/snarfed.org', self.fb.silo_url())
 
   def test_get_activities(self):
     owned_event = copy.deepcopy(as_facebook_test.EVENT)
@@ -111,7 +111,7 @@ class FacebookPageTest(testutil.ModelsTest):
     self.assertEquals(1, len(got))
     obj = got[0]['object']
     self.assertEquals('tag:facebook.com,2013:222', obj['id'])
-    self.assertEquals('https://facebook.com/212038/posts/222', obj['url'])
+    self.assertEquals('https://www.facebook.com/212038/posts/222', obj['url'])
     self.assertEquals(3, len(obj['replies']['items']))
     self.assertEquals(3, len([t for t in obj['tags'] if t.get('verb') == 'like']))
 
@@ -176,18 +176,18 @@ class FacebookPageTest(testutil.ModelsTest):
 
   def test_canonicalize_syndication_url(self):
     for expected, input in (
-      ('https://facebook.com/212038/posts/314159',
+      ('https://www.facebook.com/212038/posts/314159',
        'http://facebook.com/snarfed.org/posts/314159'),
-      ('https://facebook.com/212038/posts/314159',
-       'https://www.facebook.com/snarfed.org/photos.php?fbid=314159'),
-      ('https://facebook.com/212038/posts/10101299919362973',
+      ('https://www.facebook.com/212038/posts/314159',
+       'https://facebook.com/snarfed.org/photos.php?fbid=314159'),
+      ('https://www.facebook.com/212038/posts/10101299919362973',
        'https://www.facebook.com/photo.php?fbid=10101299919362973&set=a.995695740593.2393090.212038&type=1&theater'),
-      ('https://facebook.com/212038/posts/314159',
+      ('https://www.facebook.com/212038/posts/314159',
        'https://facebook.com/permalink.php?story_fbid=314159&id=212038'),
-      ('https://facebook.com/212038/posts/314159',
+      ('https://www.facebook.com/212038/posts/314159',
        'https://facebook.com/permalink.php?story_fbid=314159&amp;id=212038'),
       # make sure we don't touch user.name when it appears elsewhere in the url
-      ('https://facebook.com/25624/posts/snarfed.org',
+      ('https://www.facebook.com/25624/posts/snarfed.org',
        'http://www.facebook.com/25624/posts/snarfed.org')):
       self.assertEqual(expected, self.fb.canonicalize_syndication_url(input))
 
@@ -201,13 +201,14 @@ class FacebookPageTest(testutil.ModelsTest):
     self.fb.put()
 
     # Facebook API calls
+    post = as_facebook_test.POST
     self.expect_urlopen(
       'https://graph.facebook.com/v2.2/me/posts?offset=0&limit=50&access_token=my_token',
-      json.dumps({'data': [as_facebook_test.POST]}))
-    self.expect_urlopen(
-      'https://graph.facebook.com/v2.2/me/photos/uploaded?access_token=my_token', '{}')
-    self.expect_urlopen(
-      'https://graph.facebook.com/v2.2/me/events?access_token=my_token', '{}')
+      json.dumps({'data': [post]}))
+    self.expect_urlopen('https://graph.facebook.com/v2.2/10100176064482163/sharedposts',
+                        '{}')
+    self.expect_urlopen('https://graph.facebook.com/v2.2/me/photos/uploaded', '{}')
+    self.expect_urlopen('https://graph.facebook.com/v2.2/me/events', '{}')
 
     # posse post discovery
     self.expect_requests_get('http://author/url', """

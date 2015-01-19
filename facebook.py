@@ -21,6 +21,7 @@ Example comment ID and links
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import json
+import re
 import sys
 import urllib2
 import urlparse
@@ -224,13 +225,15 @@ class FacebookPage(models.Source):
       params = urlparse.parse_qs(parsed.query)
       ids = params.get('story_fbid') or params.get('fbid')
       if ids:
-        url = 'https://facebook.com/%s/posts/%s' % (self.key.id(), ids[0])
+        url = 'https://www.facebook.com/%s/posts/%s' % (self.key.id(), ids[0])
 
     if self.username:
       url = url.replace('facebook.com/%s/' % self.username,
                         'facebook.com/%s/' % self.key.id())
 
-    return super(FacebookPage, self).canonicalize_syndication_url(url)
+    # facebook always uses https and www
+    return re.sub('^https?://(www\.)?facebook.com/', 'https://www.facebook.com/',
+                  url)
 
 
 class AddFacebookPage(oauth_facebook.CallbackHandler, util.Handler):
