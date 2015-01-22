@@ -91,13 +91,9 @@ class FacebookPage(models.Source):
     """Returns the Facebook account URL, e.g. https://facebook.com/foo."""
     return self.as_source.user_url(self.username or self.key.id())
 
-  def get(self, url):
-    """Simple wrapper around urlopen(). Returns decoded JSON dict."""
-    return json.loads(self.as_source.urlopen(url).read())
-
   def get_data(self, url):
-    """Variant of get() that returns 'data' list."""
-    return self.get(url).get('data', [])
+    """Simple wrapper around as_source.urlopen() that returns 'data' list."""
+    return self.as_source.urlopen(url).get('data', [])
 
   def get_activities_response(self, **kwargs):
     # TODO: use batch API to get photos, events, etc in one request
@@ -121,7 +117,7 @@ class FacebookPage(models.Source):
 
       # have to re-fetch the events because the user rsvps response doesn't
       # include the event description, which we need for original post links.
-      events = [self.get(API_EVENT_URL % r['id'])
+      events = [self.as_source.urlopen(API_EVENT_URL % r['id'])
                 for r in user_rsvps if r.get('id')]
 
       # also, only process events that the user is the owner of. avoids (but
