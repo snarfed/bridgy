@@ -95,7 +95,7 @@ class WebmentionHandler(WebmentionGetHandler):
 
     # parse microformats, convert to ActivityStreams
     data = parser.Parser(doc=doc, url=fetched.url).to_dict()
-    logging.debug('Parsed microformats2: %s', pprint.pformat(data))
+    logging.debug('Parsed microformats2: %s', json.dumps(data, indent=2))
     items = data.get('items', [])
     if not items or not items[0]:
       return self.error('No microformats2 data found in ' + fetched.url,

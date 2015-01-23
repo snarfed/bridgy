@@ -447,7 +447,7 @@ class Source(StringIdModel):
     Returns: ([string url, ...], [string domain, ...])
     """
     actor = self.as_source.user_to_actor(json.loads(auth_entity.user_json))
-    logging.debug('Converted to actor: %s', pprint.pformat(actor))
+    logging.debug('Converted to actor: %s', json.dumps(actor, indent=2))
 
     urls = []
     domains = []

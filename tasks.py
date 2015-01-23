@@ -239,7 +239,7 @@ class Poll(webapp2.RequestHandler):
       for resp in replies + likes + reposts + rsvps:
         id = resp.get('id')
         if not id:
-          logging.error('Skipping response without id: %s', resp)
+          logging.error('Skipping response without id: %s', json.dumps(resp, indent=2))
           continue
 
         existing = responses.get(id)
@@ -367,7 +367,7 @@ class Poll(webapp2.RequestHandler):
         activity = json.loads(activity_json)
         activity_url = activity.get('url') or activity.get('object', {}).get('url')
         if not activity_url:
-          logging.warning('activity has no url %s', activity)
+          logging.warning('activity has no url %s', activity_json)
           continue
 
         activity_url = source.canonicalize_syndication_url(activity_url)
