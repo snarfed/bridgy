@@ -13,13 +13,6 @@ from google.appengine.api import logservice
 import webapp2
 
 
-SANITIZE_RE = re.compile(
-  r"""((?:access|api|oauth)?[ _]?
-       (?:consumer_key|consumer_secret|nonce|secret|signature|token|verifier)
-       (?:=|:|\ |',\ u?'|%3D)\ *)
-      [^ &=']+""",
-  flags=re.VERBOSE | re.IGNORECASE)
-
 LEVELS = {
   logservice.LOG_LEVEL_DEBUG:    'D',
   logservice.LOG_LEVEL_INFO:     'I',
@@ -29,9 +22,28 @@ LEVELS = {
   }
 
 
+SANITIZE_RE = re.compile(
+  r"""((?:access|api|oauth)?[ _]?
+       (?:consumer_key|consumer_secret|nonce|secret|signature|token|verifier)
+       (?:=|:|\ |',\ u?'|%3D)\ *)
+      [^ &=']+""",
+  flags=re.VERBOSE | re.IGNORECASE)
+
 def sanitize(msg):
   """Sanitizes access tokens and Authorization headers."""
   return SANITIZE_RE.sub(r'\1...', msg)
+
+
+# datastore string keys are url-safe-base64 of, say, at least 40(ish) chars.
+# https://cloud.google.com/appengine/docs/python/ndb/keyclass#Key_urlsafe
+# http://tools.ietf.org/html/rfc3548.html#section-4
+DATASTORE_KEY_RE = re.compile("'(([A-Za-z0-9-_=]{8})[A-Za-z0-9-_=]{32,})'")
+
+def linkify_datastore_keys(msg):
+  """Converts string datastore keys to links to the admin console viewer."""
+  return DATASTORE_KEY_RE.sub(
+    r"'<a title='\1' href='https://appengine.google.com/datastore/edit?app_id=s~brid-gy&key=\1'>\2...</a>'",
+    msg)
 
 
 class LogHandler(webapp2.RequestHandler):
@@ -69,8 +81,8 @@ class LogHandler(webapp2.RequestHandler):
         for a in log.app_logs:
           msg = a.message.decode('utf-8')
           # don't sanitize poll task URLs since they have a key= query param
-          msg = util.linkify(cgi.escape(
-              msg if msg.startswith('Created by this poll:') else sanitize(msg)))
+          msg = util.linkify(linkify_datastore_keys(cgi.escape(
+              msg if msg.startswith('Created by this poll:') else sanitize(msg))))
           self.response.out.write('%s %s %s<br />' %
               (datetime.datetime.utcfromtimestamp(a.time), LEVELS[a.level],
                msg.replace('\n', '<br />')))
