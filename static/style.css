@@ -131,7 +131,7 @@ form input {
   margin-top: .5em;
 }
 
-#choose-blog > ul {
+#choose-blog > ul, #choose-facebook > ul  {
   list-style: none;
 }
 

@@ -56,7 +56,7 @@ handlers:
   script: blogger.application
   secure: always
 
-- url: /facebook/(start|add|delete)(/.*)?
+- url: /facebook/(start|oauth_handler|add|delete)(/.*)?
   script: facebook.application
   secure: always
 

@@ -21,6 +21,7 @@ Example comment ID and links
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import json
+import logging
 import re
 import sys
 import urllib2
@@ -35,6 +36,7 @@ import models
 import util
 
 from google.appengine.ext import ndb
+from google.appengine.ext.webapp import template
 import webapp2
 
 API_PHOTOS_URL = 'https://graph.facebook.com/v2.2/me/photos/uploaded'
@@ -47,6 +49,7 @@ API_USER_RSVPS_NOT_REPLIED_URL = 'https://graph.facebook.com/v2.2/me/events/not_
 # https://developers.facebook.com/docs/graph-api/using-graph-api/v2.1#fields
 API_EVENT_URL = 'https://graph.facebook.com/v2.2/%s?fields=comments,description,end_time,id,likes,name,owner,picture,privacy,start_time,timezone,updated_time,venue'
 API_EVENT_RSVPS_URL = 'https://graph.facebook.com/v2.2/%s/invited'
+API_PAGES_URL = 'https://graph.facebook.com/v2.2/%s/accounts'
 
 
 class FacebookPage(models.Source):
@@ -232,15 +235,44 @@ class FacebookPage(models.Source):
                   url)
 
 
-class AddFacebookPage(oauth_facebook.CallbackHandler, util.Handler):
+class OAuthCallback(oauth_facebook.CallbackHandler, util.Handler):
+  """OAuth callback handler."""
   def finish(self, auth_entity, state=None):
+    if not auth_entity:
+      self.maybe_add_or_delete_source(FacebookPage, auth_entity, state)
+      return
+
+    pages = json.loads(auth_entity.urlopen(API_PAGES_URL % 'me').read()).get('data')
+    if not pages:
+      self.maybe_add_or_delete_source(FacebookPage, auth_entity, state)
+      return
+
+    logging.info('Found pages: ' + ','.join([' '.join((p['id'], p['name']))
+                                             for p in pages]))
+    user = json.loads(auth_entity.user_json)
+    vars = {
+      'action': '/facebook/add',
+      'state': state,
+      'auth_entity_key': auth_entity.key.urlsafe(),
+      'choices': [user] + pages,
+      }
+    logging.info('Rendering choose_facebook.html with %s', vars)
+
+    self.response.headers['Content-Type'] = 'text/html'
+    self.response.out.write(
+      template.render('templates/choose_facebook.html', vars))
+
+
+class AddFacebookPage(util.Handler):
+  def post(self, auth_entity, state=None):
     self.maybe_add_or_delete_source(FacebookPage, auth_entity, state)
 
 
 application = webapp2.WSGIApplication([
     # OAuth scopes are set in listen.html and publish.html
     ('/facebook/start', util.oauth_starter(oauth_facebook.StartHandler).to(
-      '/facebook/add')),
+      '/facebook/oauth_handler')),
+    ('/facebook/oauth_handler', OAuthCallback),
     ('/facebook/add', AddFacebookPage),
     ('/facebook/delete/finish', oauth_facebook.CallbackHandler.to('/delete/finish')),
     ], debug=appengine_config.DEBUG)
