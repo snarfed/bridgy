@@ -169,11 +169,14 @@ class OAuthCallback(util.Handler):
   oauth-dropin doesn't yet allow multiple callback handlers. :/
   """
   def get(self):
+    auth_entity = None
     auth_entity_str_key = self.request.get('auth_entity')
     if auth_entity_str_key:
       auth_entity = ndb.Key(urlsafe=auth_entity_str_key).get()
-    else:
-      auth_entity = None
+      if not auth_entity.blog_ids or not auth_entity.blog_hostnames:
+        auth_entity = None
+
+    if not auth_entity:
       self.messages.add(
         "Couldn't fetch your blogs. Maybe you're not a Blogger user?")
 

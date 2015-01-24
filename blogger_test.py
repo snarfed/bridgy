@@ -60,10 +60,24 @@ class BloggerTest(testutil.HandlerTest):
     currently intercept Blogger declines.
     """
     resp = blogger.application.get_response('/blogger/oauth_handler')
-    self.assertIn("Couldn't fetch your blogs",
-        urllib.unquote(urlparse.urlparse(resp.headers['Location']).fragment))
+    self.assertEquals(302, resp.status_int)
+    location = urlparse.urlparse(resp.headers['Location'])
+    self.assertEquals('/', location.path)
+    self.assertIn("Couldn't fetch your blogs", urllib.unquote(location.fragment))
     self.assertEquals(0, BloggerV2Auth.query().count())
     self.assertEquals(0, Blogger.query().count())
+
+  def test_oauth_handler_no_blogs(self):
+    self.auth_entity = BloggerV2Auth(id='123', name='name', picture_url='pic',
+                                     blogs_atom='x', user_atom='y', creds_json='z')
+    self.auth_entity.put()
+
+    resp = blogger.application.get_response(
+      '/blogger/oauth_handler?auth_entity=%s' % self.auth_entity.key.urlsafe())
+    self.assertEquals(302, resp.status_int)
+    location = urlparse.urlparse(resp.headers['Location'])
+    self.assertEquals('/', location.path)
+    self.assertIn("Couldn't fetch your blogs", urllib.unquote(location.fragment))
 
   def test_new_no_blogs(self):
     self.auth_entity.blog_hostnames = []
