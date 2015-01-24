@@ -39,7 +39,15 @@ class ReplacePollTasks(webapp2.RequestHandler):
 
 
 class UpdateTwitterPictures(webapp2.RequestHandler):
-  """Finds Twitter sources whose profile pictures have changed and updates them."""
+  """Finds Twitter sources whose profile pictures have changed and updates them.
+
+  *This is currently unused!!!* We switched to the unofficial "evergreen"
+  Twitter profile picture URLs, https://twitter.com/USER/profile_image , which
+  always redirect to the current image.
+
+  https://github.com/snarfed/activitystreams-unofficial/commit/dfc3d406a20965a5ed14c9705e3d3c2223c8c3ff
+  http://indiewebcamp.com/Twitter#Profile_Image_URLs
+  """
 
   def get(self):
     sources = {source.key.id(): source for source in Twitter.query()}
