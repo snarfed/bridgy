@@ -11,7 +11,7 @@
   <ul>
     {% for obj in choices %}
     <li>
-      <input type="radio" name="choice" id="{{ obj.id }}" value="{{ obj.id }}"
+      <input type="radio" name="id" id="{{ obj.id }}" value="{{ obj.id }}"
              {% if forloop.first %} checked {% endif %}>
       <label for="{{ obj.id }}">
         <a target="_blank" href="https://www.facebook.com/{{ obj.id }}">

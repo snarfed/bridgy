@@ -49,7 +49,6 @@ API_USER_RSVPS_NOT_REPLIED_URL = 'https://graph.facebook.com/v2.2/me/events/not_
 # https://developers.facebook.com/docs/graph-api/using-graph-api/v2.1#fields
 API_EVENT_URL = 'https://graph.facebook.com/v2.2/%s?fields=comments,description,end_time,id,likes,name,owner,picture,privacy,start_time,timezone,updated_time,venue'
 API_EVENT_RSVPS_URL = 'https://graph.facebook.com/v2.2/%s/invited'
-API_PAGES_URL = 'https://graph.facebook.com/v2.2/%s/accounts'
 
 
 class FacebookPage(models.Source):
@@ -242,19 +241,12 @@ class OAuthCallback(oauth_facebook.CallbackHandler, util.Handler):
       self.maybe_add_or_delete_source(FacebookPage, auth_entity, state)
       return
 
-    pages = json.loads(auth_entity.urlopen(API_PAGES_URL % 'me').read()).get('data')
-    if not pages:
-      self.maybe_add_or_delete_source(FacebookPage, auth_entity, state)
-      return
-
-    logging.info('Found pages: ' + ','.join([' '.join((p['id'], p['name']))
-                                             for p in pages]))
-    user = json.loads(auth_entity.user_json)
+    choices = [json.loads(auth_entity.user_json)] + json.loads(auth_entity.pages_json)
     vars = {
       'action': '/facebook/add',
       'state': state,
       'auth_entity_key': auth_entity.key.urlsafe(),
-      'choices': [user] + pages,
+      'choices': choices,
       }
     logging.info('Rendering choose_facebook.html with %s', vars)
 
@@ -264,8 +256,18 @@ class OAuthCallback(oauth_facebook.CallbackHandler, util.Handler):
 
 
 class AddFacebookPage(util.Handler):
-  def post(self, auth_entity, state=None):
-    self.maybe_add_or_delete_source(FacebookPage, auth_entity, state)
+  def post(self):
+    state = util.get_required_param(self, 'state')
+    id = util.get_required_param(self, 'id')
+
+    auth_entity_key = util.get_required_param(self, 'auth_entity_key')
+    auth_entity = ndb.Key(urlsafe=auth_entity_key).get()
+
+    if id != auth_entity.key.id():
+      auth_entity = auth_entity.for_page(id)
+      auth_entity.put()
+
+    self.maybe_add_or_delete_source(FacebookPage, auth_entity)
 
 
 application = webapp2.WSGIApplication([
