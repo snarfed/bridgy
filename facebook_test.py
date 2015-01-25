@@ -56,7 +56,7 @@ class FacebookPageTest(testutil.ModelsTest):
     self.assertEqual(self.auth_entity, self.fb.auth_entity.get())
     self.assertEqual('my_token', self.fb.as_source.access_token)
     self.assertEqual('212038', self.fb.key.id())
-    self.assertEqual('http://graph.facebook.com/snarfed.org/picture?type=large',
+    self.assertEqual('https://graph.facebook.com/v2.2/212038/picture?type=large',
                      self.fb.picture)
     self.assertEqual('Ryan Barrett', self.fb.name)
     self.assertEqual('snarfed.org', self.fb.username)
