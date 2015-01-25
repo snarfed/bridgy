@@ -267,7 +267,7 @@ class AddFacebookPage(util.Handler):
       auth_entity = auth_entity.for_page(id)
       auth_entity.put()
 
-    self.maybe_add_or_delete_source(FacebookPage, auth_entity)
+    self.maybe_add_or_delete_source(FacebookPage, auth_entity, state)
 
 
 application = webapp2.WSGIApplication([
