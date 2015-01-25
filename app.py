@@ -162,7 +162,7 @@ class UserHandler(DashboardHandler):
 
   def get(self, source_short_name, id):
     self.source = handlers.SOURCES[source_short_name].lookup(id)
-    if self.source:
+    if self.source and self.source.features:
       self.source.verify()
       self.source = self.preprocess_source(self.source)
     else:
@@ -170,7 +170,8 @@ class UserHandler(DashboardHandler):
     super(UserHandler, self).get()
 
   def template_file(self):
-    return ('templates/%s_user.html' % self.source.SHORT_NAME if self.source
+    return ('templates/%s_user.html' % self.source.SHORT_NAME
+            if self.source and self.source.features
             else 'templates/user_not_found.html')
 
   def headers(self):
@@ -439,7 +440,7 @@ class WarmupHandler(util.Handler):
 application = webapp2.WSGIApplication(
   [('/?', FrontPageHandler),
    ('/users/?', UsersHandler),
-   ('/(blogger|facebook|googleplus|instagram|tumblr|twitter|wordpress)/(.+)/?',
+   ('/(blogger|facebook|fake|googleplus|instagram|tumblr|twitter|wordpress)/(.+)/?',
     UserHandler),
    ('/about/?', AboutHandler),
    ('/delete/start', DeleteStartHandler),

@@ -36,3 +36,14 @@ class AppTest(testutil.ModelsTest):
       for body in '', 'key=' + self.responses[0].key.urlsafe():  # hasn't been stored
         resp = app.application.get_response(endpoint, method='POST', body=body)
         self.assertEquals(400, resp.status_int)
+
+  def test_user_page(self):
+    resp = app.application.get_response(self.sources[0].bridgy_path())
+    self.assertEquals(200, resp.status_int)
+
+  def test_user_page_with_no_features_404s(self):
+    self.sources[0].features = []
+    self.sources[0].put()
+
+    resp = app.application.get_response(self.sources[0].bridgy_path())
+    self.assertEquals(404, resp.status_int)
