@@ -12,10 +12,6 @@ twitpic.com
 feeds.wordpress.com
 stats.wordpress.com
 
-# temporary. tom's webmention handler is broken, and he knows about it.
-# last checked 12/20/2014. TODO: remove once he's fixed it.
-tommorris.org
-
 about.me
 ador.com
 amazon.com
