@@ -39,16 +39,16 @@ from google.appengine.ext import ndb
 from google.appengine.ext.webapp import template
 import webapp2
 
-API_PHOTOS_URL = 'https://graph.facebook.com/v2.2/me/photos/uploaded'
+API_PHOTOS = 'me/photos/uploaded'
 # returns yes and maybe
-API_USER_RSVPS_URL = 'https://graph.facebook.com/v2.2/me/events'
-API_USER_RSVPS_DECLINED_URL = 'https://graph.facebook.com/v2.2/me/events/declined'
-API_USER_RSVPS_NOT_REPLIED_URL = 'https://graph.facebook.com/v2.2/me/events/not_replied'
+API_USER_RSVPS = 'me/events'
+API_USER_RSVPS_DECLINED = 'me/events/declined'
+API_USER_RSVPS_NOT_REPLIED = 'me/events/not_replied'
 # Ideally this fields arg would just be [default fields plus comments], but
 # there's no way to ask for that. :/
 # https://developers.facebook.com/docs/graph-api/using-graph-api/v2.1#fields
-API_EVENT_URL = 'https://graph.facebook.com/v2.2/%s?fields=comments,description,end_time,id,likes,name,owner,picture,privacy,start_time,timezone,updated_time,venue'
-API_EVENT_RSVPS_URL = 'https://graph.facebook.com/v2.2/%s/invited'
+API_EVENT = '%s?fields=comments,description,end_time,id,likes,name,owner,picture,privacy,start_time,timezone,updated_time,venue'
+API_EVENT_RSVPS = '%s/invited'
 
 
 class FacebookPage(models.Source):
@@ -109,24 +109,24 @@ class FacebookPage(models.Source):
       # http://stackoverflow.com/questions/12785120
       #
       # TODO: save and use ETag for all of these extra calls
-      photos = self.get_data(API_PHOTOS_URL)
+      photos = self.get_data(API_PHOTOS)
 
       # also get events and RSVPs
       # https://developers.facebook.com/docs/graph-api/reference/user/events/
       # https://developers.facebook.com/docs/graph-api/reference/event#edges
-      # TODO: also fetch and use API_USER_RSVPS_DECLINED_URL
-      user_rsvps = self.get_data(API_USER_RSVPS_URL)
+      # TODO: also fetch and use API_USER_RSVPS_DECLINED
+      user_rsvps = self.get_data(API_USER_RSVPS)
 
       # have to re-fetch the events because the user rsvps response doesn't
       # include the event description, which we need for original post links.
-      events = [self.as_source.urlopen(API_EVENT_URL % r['id'])
+      events = [self.as_source.urlopen(API_EVENT % r['id'])
                 for r in user_rsvps if r.get('id')]
 
       # also, only process events that the user is the owner of. avoids (but
       # doesn't prevent) processing big non-indieweb events with tons of
       # attendees that put us over app engine's instance memory limit. details:
       # https://github.com/snarfed/bridgy/issues/77
-      events_and_rsvps = [(e, self.get_data(API_EVENT_RSVPS_URL % e['id']))
+      events_and_rsvps = [(e, self.get_data(API_EVENT_RSVPS % e['id']))
                           for e in events
                           if e.get('owner', {}).get('id') == self.key.id()]
 
