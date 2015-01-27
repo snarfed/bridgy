@@ -205,7 +205,7 @@ class FacebookPageTest(testutil.ModelsTest):
     self.expect_urlopen(
       'https://graph.facebook.com/v2.2/me/posts?offset=0&limit=50&access_token=my_token',
       json.dumps({'data': [post]}))
-    self.expect_urlopen('https://graph.facebook.com/v2.2/10100176064482163/sharedposts',
+    self.expect_urlopen('https://graph.facebook.com/v2.2/sharedposts?ids=10100176064482163',
                         '{}')
     self.expect_urlopen('https://graph.facebook.com/v2.2/me/photos/uploaded', '{}')
     self.expect_urlopen('https://graph.facebook.com/v2.2/me/events', '{}')
