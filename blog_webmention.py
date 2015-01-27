@@ -36,8 +36,10 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
     self.source_url = urlparse.urldefrag(util.get_required_param(self, 'source'))[0]
     self.target_url = urlparse.urldefrag(util.get_required_param(self, 'target'))[0]
 
-    # clean target url (strip utm_* query params)
-    self.target_url = util.clean_webmention_url(self.target_url)
+    # follow target url through any redirects, strip utm_* query params
+    resp = util.follow_redirects(self.target_url)
+    redirected_target_urls = [r.url for r in resp.history]
+    self.target_url = util.clean_webmention_url(resp.url)
 
     # parse and validate target URL
     domain = util.domain_from_link(self.target_url)
@@ -62,7 +64,8 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
 
     # create BlogWebmention entity
     id = '%s %s' % (self.source_url, self.target_url)
-    self.entity = BlogWebmention.get_or_insert(id, source=self.source.key)
+    self.entity = BlogWebmention.get_or_insert(
+      id, source=self.source.key, redirected_target_urls=redirected_target_urls)
     if self.entity.status == 'complete':
       # TODO: response message saying update isn't supported
       self.response.write(self.entity.published)
@@ -145,10 +148,10 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
       for type in 'in-reply-to', 'like', 'like-of', 'repost', 'repost-of':
         urls = [urlparse.urldefrag(u)[0] for u in
                 microformats2.get_string_urls(props.get(type, []))]
-        if self.target_url in urls:
+        if self.any_target_in(urls):
           break
       else:
-        if not text or self.target_url not in text:
+        if not text or not self.any_target_in(text):
           continue
         type = 'post'
         url = first_value(props, 'url') or self.source_url
@@ -176,6 +179,14 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
         return item
 
     return None
+
+  def any_target_in(self, haystack):
+    """Returns true if any target URL (including redirects) is in haystack."""
+    for target in self.entity.redirected_target_urls + [self.target_url]:
+      if target in haystack:
+        return True
+    return False
+
 
 
 application = webapp2.WSGIApplication([

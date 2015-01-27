@@ -186,6 +186,24 @@ http://foo.com/post/1
     bw = BlogWebmention.get_by_id('http://bar.com/reply http://foo.com/post/1')
     self.assertEquals('complete', bw.status)
 
+  def test_target_redirects(self):
+    html = """\
+<article class="h-entry"><p class="e-content">
+http://second/
+</p></article>"""
+    redirects = ['http://second/', 'http://foo.com/final']
+    self.expect_requests_head('http://first/', redirected_url=redirects)
+    self.expect_requests_get('http://bar.com/reply', html)
+    testutil.FakeSource.create_comment(
+      'http://foo.com/final', 'foo.com', 'http://foo.com/', mox.IgnoreArg())
+    self.mox.ReplayAll()
+
+    resp = self.get_response(target='http://first/')
+    self.assertEquals(200, resp.status_int, resp.body)
+    bw = BlogWebmention.get_by_id('http://bar.com/reply http://foo.com/final')
+    self.assertEquals('complete', bw.status)
+    self.assertEquals(['http://first/', 'http://second/'], bw.redirected_target_urls)
+
   def test_source_link_check_ignores_fragment(self):
     html = """\
 <article class="h-entry"><p class="e-content">

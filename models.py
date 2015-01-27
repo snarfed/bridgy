@@ -673,12 +673,17 @@ class BlogWebmention(Publish, StringIdModel):
   Key id is the source URL and target URL concated with a space, ie 'SOURCE
   TARGET'. The source URL is *always* the URL given in the webmention HTTP
   request. If the source page has a u-url, that's stored in the u_url property.
+  The target URL is always the final URL, after any redirects.
 
   Reuses Publish's fields, but otherwise unrelated.
   """
   # If the source page has a u-url, it's stored here and overrides the source
   # URL in the key id.
   u_url = ndb.StringProperty()
+
+  # Any initial target URLs that redirected to the final target URL, in redirect
+  # order.
+  redirected_target_urls = ndb.StringProperty(repeated=True)
 
   def source_url(self):
     return self.u_url or self.key.id().split()[0]
