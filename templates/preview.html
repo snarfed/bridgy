@@ -13,12 +13,9 @@ will {{ description|safe }}
   <br />
 {% endif %}
 
-<form method="post" action="/publish/webmention" class="preview-ui">
- <input type="hidden" name="source" value="{{ source_url }}" />
- <input type="hidden" name="target" value="{{ target_url }}" />
- <input type="hidden" name="bridgy_omit_link" value="{{ bridgy_omit_link }}"></input>
- <button id="send-button" type="submit" class="btn btn-default"
-         onclick="send_preview('/publish/webmention?source={{ source_url }}&target={{ target_url }}&bridgy_omit_link={{ bridgy_omit_link }}'); return false">Send</button>
+<form method="post" action="/{{ source.SHORT_NAME }}/start_publish" class="preview-ui">
+ <input type="hidden" name="state" value="{{ state }}" />
+ <button id="send-button" type="submit" class="btn btn-default">Send</button>
 </form>
 
 <br />

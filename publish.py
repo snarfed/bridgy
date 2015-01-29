@@ -65,26 +65,40 @@ SOURCE_DOMAINS = {
 class Handler(webmention.WebmentionHandler):
   """Base handler for both previews and publishes.
 
-  Subclasses must set the PREVIEW attribute to True or False.
+  Subclasses must set the PREVIEW attribute to True or False. They may override
+  the source_url(), target_url(), omit_link(), and ignore_formatting() methods.
 
   Attributes:
-    source_url: string
-    target_url: string
     fetched: requests.Response from fetching source_url
   """
   PREVIEW = None
 
+  def source_url(self):
+    return util.get_required_param(self, 'source')
+
+  def target_url(self):
+    return util.get_required_param(self, 'target')
+
+  def omit_link(self):
+    return self._bool_or_none('bridgy_omit_link')
+
+  def ignore_formatting(self):
+    return self._bool_or_none('bridgy_ignore_formatting')
+
+  def _bool_or_none(self, param):
+    if param in self.request.params:
+      return self.request.get(param).lower() in ('', 'true')
+    return None
+
   def post(self):
-    logging.info('Params: %self', self.request.params.items())
-    self.source_url = util.get_required_param(self, 'source')
-    self.target_url = util.get_required_param(self, 'target')
+    logging.info('Params: %s', self.request.params.items())
     assert self.PREVIEW in (True, False)
 
     # parse and validate target URL
     try:
-      parsed = urlparse.urlparse(self.target_url)
+      parsed = urlparse.urlparse(self.target_url())
     except BaseException:
-      return self.error('Could not parse target URL %s' % self.target_url)
+      return self.error('Could not parse target URL %s' % self.target_url())
 
     domain = parsed.netloc
     path_parts = parsed.path.rsplit('/', 1)
@@ -97,7 +111,7 @@ class Handler(webmention.WebmentionHandler):
                         source_cls.AS_CLASS.NAME)
 
     # resolve source URL
-    url, domain, ok = util.get_webmention_target(self.source_url)
+    url, domain, ok = util.get_webmention_target(self.source_url())
     # show nice error message if they're trying to publish a silo post
     if domain in SOURCE_DOMAINS:
       return self.error(
@@ -133,7 +147,7 @@ class Handler(webmention.WebmentionHandler):
     # show nice error message if they're trying to publish their home page
     for domain_url in self.source.domain_urls:
       domain_url_parts = urlparse.urlparse(domain_url)
-      source_url_parts = urlparse.urlparse(self.source_url)
+      source_url_parts = urlparse.urlparse(self.source_url())
       if (source_url_parts.netloc == domain_url_parts.netloc and
           source_url_parts.path.strip('/') == domain_url_parts.path.strip('/') and
           not source_url_parts.query):
@@ -213,7 +227,9 @@ class Handler(webmention.WebmentionHandler):
       response or None if the source cannot publish this item type.
     """
     props = item.get('properties', {})
-    ignore_formatting = self.param_or_prop('bridgy_ignore_formatting', props)
+    ignore_formatting = self.ignore_formatting()
+    if ignore_formatting is None:
+      ignore_formatting = 'bridgy-ignore-formatting' in props
 
     obj = microformats2.json_to_object(item)
     if ignore_formatting:
@@ -223,8 +239,8 @@ class Handler(webmention.WebmentionHandler):
     # which original post URL to include? if the source URL redirected, use the
     # (pre-redirect) source URL, since it might be a short URL. otherwise, use
     # u-url if it's set. finally, fall back to the actual fetched URL
-    if self.source_url != self.fetched.url:
-      obj['url'] = self.source_url
+    if self.source_url() != self.fetched.url:
+      obj['url'] = self.source_url()
     elif 'url' not in obj:
       obj['url'] = self.fetched.url
     logging.debug('Converted to ActivityStreams object: %s', json.dumps(obj, indent=2))
@@ -241,7 +257,10 @@ class Handler(webmention.WebmentionHandler):
 
     self.preprocess_activity(obj, ignore_formatting=ignore_formatting)
 
-    omit_link = self.param_or_prop('bridgy_omit_link', props)
+    omit_link = self.omit_link()
+    if omit_link is None:
+      omit_link = 'bridgy-omit-link' in props
+
     if self.PREVIEW:
       result = self.source.as_source.preview_create(
         obj, include_link=not omit_link)
@@ -251,10 +270,12 @@ class Handler(webmention.WebmentionHandler):
       vars = {'source': self.preprocess_source(self.source),
               'preview': result.content,
               'description': result.description,
-              'source_url': self.source_url,
-              'target_url': self.target_url,
-              'bridgy_omit_link': omit_link,
               'webmention_endpoint': self.request.host_url + '/publish/webmention',
+              'state': self.encode_state_parameter({
+                'source': self.source_url(),
+                'target': self.target_url(),
+                'omit_link': omit_link,
+                }),
               }
       logging.info('Rendering preview with template vars %s', pprint.pformat(vars))
       return as_source.creation_result(
@@ -389,20 +410,15 @@ class Handler(webmention.WebmentionHandler):
     logging.debug('Publish entity: %s', entity.key.urlsafe())
     return entity
 
-  def param_or_prop(self, name, props):
-    assert name
-    if (name in self.request.params or
-        # for preview, always use query param because there's a checkbox in the UI
-        (name == 'bridgy_omit_link' and self.PREVIEW)):
-      return self.request.get(name).lower() in ('', 'true')
-    else:
-      return name.replace('_', '-') in props
-
 
 class PreviewHandler(Handler):
   """Renders a preview HTML snippet of how a webmention would be handled.
   """
   PREVIEW = True
+
+  def omit_link(self):
+    # always use query param because there's a checkbox in the UI
+    return self.request.get('bridgy_omit_link') in ('', 'true')
 
   def error(self, error, html=None, status=400, data=None, mail=False):
     logging.warning(error, exc_info=True)
@@ -413,15 +429,37 @@ class PreviewHandler(Handler):
       self.mail_me(error)
 
 
-class PublishHandler(Handler):
-  """Accepts webmentions and translates them to site-specific API calls.
+class SendHandler(Handler):
+  """Interactive publish handler. Redirected to after each silo's OAuth dance.
+
+  Note that this is GET, not POST, since HTTP redirects always GET.
+  """
+  PREVIEW = False
+
+  def get(self):
+    self.state = self.decode_state_parameter(util.get_required_param(self, 'state'))
+    return self.post()
+
+  def source_url(self):
+    return self.state['source']
+
+  def target_url(self):
+    return self.state['target']
+
+  def bridgy_omit_link(self):
+    return self.state['omit_link']
+
+
+class WebmentionHandler(Handler):
+  """Accepts webmentions and translates them to publish requests.
   """
   PREVIEW = False
 
 
 application = webapp2.WSGIApplication([
-    ('/publish/webmention', PublishHandler),
     ('/publish/preview', PreviewHandler),
+    ('/publish/send', SendHandler),
+    ('/publish/webmention', WebmentionHandler),
     ('/publish/(facebook|twitter|instagram)', webmention.WebmentionGetHandler),
     ],
   debug=appengine_config.DEBUG)

@@ -56,7 +56,7 @@ handlers:
   script: blogger.application
   secure: always
 
-- url: /facebook/(start|oauth_handler|add|delete)(/.*)?
+- url: /facebook/(start|oauth_handler|add|delete|start_publish)(/.*)?
   script: facebook.application
   secure: always
 
@@ -64,7 +64,7 @@ handlers:
   script: googleplus.application
   secure: always
 
-- url: /instagram/(start|add|delete|oauth_callback)(/.*)?
+- url: /instagram/(start|add|delete|oauth_callback|start_publish)(/.*)?
   script: instagram.application
   secure: always
 
@@ -72,7 +72,7 @@ handlers:
   script: tumblr.application
   secure: always
 
-- url: /twitter/(start|add|delete)(/.*)?
+- url: /twitter/(start|add|delete|start_publish)(/.*)?
   script: twitter.application
   secure: always
 
