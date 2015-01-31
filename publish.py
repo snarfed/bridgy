@@ -76,6 +76,13 @@ class Handler(webmention.WebmentionHandler):
   """
   PREVIEW = None
 
+  def authorize(self):
+    """Returns True if the current user is authorized for this request.
+
+    Otherwise, should call self.error() to provide an appropriate error message.
+    """
+    return True
+
   def source_url(self):
     return util.get_required_param(self, 'source')
 
@@ -189,7 +196,9 @@ class Handler(webmention.WebmentionHandler):
         if self.entity.published:
           break
         if result.abort:
-          return self.error(result.error_plain, html=result.error_html, data=item)
+          if result.error_plain:
+            self.error(result.error_plain, html=result.error_html, data=item)
+          return
         # try the next item
         for embedded in ('rsvp', 'invitee', 'repost', 'repost-of', 'like',
                          'like-of', 'in-reply-to'):
@@ -264,6 +273,9 @@ class Handler(webmention.WebmentionHandler):
     omit_link = self.omit_link()
     if omit_link is None:
       omit_link = 'bridgy-omit-link' in props
+
+    if not self.authorize():
+      return as_source.creation_result(abort=True)
 
     if self.PREVIEW:
       result = self.source.as_source.preview_create(
@@ -425,8 +437,17 @@ class PreviewHandler(Handler):
 
   def post(self):
     result = self._run()
-    if result:
+    if result and result.content:
       self.response.write(result.content)
+
+  def authorize(self):
+    from_source = ndb.Key(urlsafe=util.get_required_param(self, 'source_key'))
+    if from_source != self.source.key:
+      self.error('Try publishing that page from <a href="%s">%s</a> instead.' %
+                 (self.source.bridgy_path(), self.source.label()))
+      return False
+
+    return True
 
   def omit_link(self):
     # always use query param because there's a checkbox in the UI

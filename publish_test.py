@@ -38,6 +38,7 @@ class PublishTest(testutil.HandlerTest):
     params.update({
       'source': source or 'http://foo.com/bar',
       'target': target or 'http://brid.gy/publish/fake',
+      'source_key': self.source.key.urlsafe(),
       })
 
     return publish.application.get_response(

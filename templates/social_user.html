@@ -112,6 +112,7 @@ Click to enable <a href="/about#listen">listening</a>:
 <p id="preview-ui">
  <label id="source-label" for="source-url">Enter post URL:</label>
  <input id="source-url" name="source" type="url" required alt="Source URL"></input>
+ <input id="source_key" name="source_key" type="hidden" value="{{ source.key.urlsafe }}" />
  <input name="target" type="hidden"
         value="http://brid.gy/publish/{{ source.SHORT_NAME }}"></input>
 
