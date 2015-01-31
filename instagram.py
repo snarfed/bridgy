@@ -78,18 +78,24 @@ class Instagram(models.Source):
 class OAuthCallback(oauth_instagram.CallbackHandler, util.Handler):
   """OAuth callback handler.
 
-  Both the add and delete flows have to share this because Instagram only allows
-  a single callback URL per app. :/
+  The add, delete, and interactive publish flows have to share this because
+  Instagram only allows a single callback URL per app. :/
   """
 
   def finish(self, auth_entity, state=None):
+    if 'target_url' in self.decode_state_parameter(state):
+      # this is an interactive publish
+      return self.redirect(util.add_query_params(
+        '/publish/instagram/finish',
+        util.trim_nulls({'auth_entity': auth_entity.key.urlsafe(), 'state': state})))
+
     self.maybe_add_or_delete_source(Instagram, auth_entity, state)
 
 
 application = webapp2.WSGIApplication([
     ('/instagram/start', util.oauth_starter(oauth_instagram.StartHandler).to(
       '/instagram/oauth_callback')),
-    ('/instagram/oauth_callback', OAuthCallback),
     ('/instagram/publish/start', oauth_instagram.StartHandler.to(
-      '/publish/instagram/finish')),
+      '/instagram/oauth_callback')),
+    ('/instagram/oauth_callback', OAuthCallback),
     ], debug=appengine_config.DEBUG)

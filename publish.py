@@ -483,16 +483,22 @@ class SendHandler(Handler):
       self.mail_me(error)
 
 
-# CallbackHandler comes first in the inheritance order here so that its get()
-# method takes priority.
+# We want CallbackHandler.get() and SendHandler.finish(), so put CallbackHandler
+# first and override finish.
 class FacebookSendHandler(oauth_facebook.CallbackHandler, SendHandler):
-  finish = SendHandler.finish
-
-class InstagramSendHandler(oauth_instagram.CallbackHandler, SendHandler):
   finish = SendHandler.finish
 
 class TwitterSendHandler(oauth_twitter.CallbackHandler, SendHandler):
   finish = SendHandler.finish
+
+# Instagram only allows a single OAuth callback URL, so that's handled in
+# instagram.py and it redirects here for publishes.
+class InstagramSendHandler(SendHandler):
+  def get(self):
+    auth_entity = self.request.get('auth_entity') or None
+    if auth_entity:
+      auth_entity = ndb.Key(urlsafe=auth_entity).get()
+    return self.finish(auth_entity, self.request.get('state'))
 
 
 class WebmentionHandler(Handler):
