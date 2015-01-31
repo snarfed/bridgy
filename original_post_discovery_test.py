@@ -7,6 +7,7 @@ import logging
 import original_post_discovery
 import requests
 import tasks
+import util
 import testutil
 
 from google.appengine.ext import ndb

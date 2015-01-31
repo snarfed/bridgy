@@ -86,7 +86,7 @@ class UtilTest(testutil.ModelsTest):
       self.assert_equals(expected, util.prune_activity(orig))
 
   def test_webmention_tools_relative_webmention_endpoint_in_body(self):
-    self.expect_requests_get('http://target/', """
+    super(testutil.HandlerTest, self).expect_requests_get('http://target/', """
 <html><meta>
 <link rel="webmention" href="/endpoint">
 </meta></html>""", verify=False)
@@ -98,8 +98,9 @@ class UtilTest(testutil.ModelsTest):
     self.assertEquals('http://target/endpoint', mention.receiver_endpoint)
 
   def test_webmention_tools_relative_webmention_endpoint_in_header(self):
-    self.expect_requests_get('http://target/', '', verify=False,
-        response_headers={'Link': '</endpoint>; rel="webmention"'})
+    super(testutil.HandlerTest, self).expect_requests_get(
+      'http://target/', '', verify=False,
+      response_headers={'Link': '</endpoint>; rel="webmention"'})
     self.mox.ReplayAll()
 
     mention = send.WebmentionSend('http://source/', 'http://target/')

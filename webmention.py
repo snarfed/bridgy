@@ -61,7 +61,7 @@ class WebmentionHandler(WebmentionGetHandler):
       (requests.Response, mf2 data dict) on success, None on failure
     """
     try:
-      fetched = requests.get(url, timeout=HTTP_TIMEOUT)
+      fetched = util.requests_get(url)
       fetched.raise_for_status()
     except BaseException:
       return self.error('Could not fetch source URL %s' % url)

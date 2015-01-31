@@ -201,10 +201,19 @@ class HandlerTest(as_testutil.TestCase):
 
     self._is_head_mocked = False  # expect_requests_head() sets this to True
 
+  def expect_requests_get(self, *args, **kwargs):
+    kwargs.setdefault('headers', {}).update(util.USER_AGENT_HEADER)
+    return super(HandlerTest, self).expect_requests_get(*args, **kwargs)
+
+  def expect_requests_post(self, *args, **kwargs):
+    kwargs.setdefault('headers', {}).update(util.USER_AGENT_HEADER)
+    return super(HandlerTest, self).expect_requests_post(*args, **kwargs)
+
   def expect_requests_head(self, *args, **kwargs):
     if not self._is_head_mocked:
       self.mox.StubOutWithMock(requests, 'head', use_mock_anything=True)
       self._is_head_mocked = True
+    kwargs.setdefault('headers', {}).update(util.USER_AGENT_HEADER)
     return super(HandlerTest, self).expect_requests_head(*args, **kwargs)
 
 

@@ -477,7 +477,7 @@ class SendWebmentions(webapp2.RequestHandler):
         mention = send.WebmentionSend(source_url, target, endpoint=cached)
         logging.info('Sending...')
         try:
-          if not mention.send(timeout=999):
+          if not mention.send(timeout=999, headers=util.USER_AGENT_HEADER):
             error = mention.error
         except BaseException, e:
           logging.warning('', exc_info=True)

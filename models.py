@@ -415,7 +415,8 @@ class Source(StringIdModel):
     author_url = author_urls[0]
     logging.info('Attempting to discover webmention endpoint on %s', author_url)
     mention = send.WebmentionSend('https://www.brid.gy/', author_url)
-    mention.requests_kwargs = {'timeout': HTTP_TIMEOUT}
+    mention.requests_kwargs = {'timeout': HTTP_TIMEOUT,
+                               'headers': util.USER_AGENT_HEADER}
     try:
       mention._discoverEndpoint()
     except BaseException:

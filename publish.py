@@ -364,7 +364,7 @@ class Handler(webmention.WebmentionHandler):
         # special-cases to that method
         logging.debug('expand_target_urls fetching field=%s, url=%s', field, url)
         try:
-          resp = requests.get(url, timeout=HTTP_TIMEOUT)
+          resp = util.requests_get(url)
           resp.raise_for_status()
           data = mf2py.Parser(url=url, doc=resp.text).to_dict()
         except AssertionError:

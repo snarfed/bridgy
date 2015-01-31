@@ -35,6 +35,8 @@ FAILED_RESOLVE_URL_CACHE_TIME = 60 * 60 * 24  # a day
 # https://developers.facebook.com/docs/reference/ads-api/api-rate-limiting/
 HTTP_RATE_LIMIT_CODES = frozenset(('403', '429', '503'))
 
+USER_AGENT_HEADER = {'User-Agent': 'Bridgy (http://brid.gy/about)'}
+
 # Domains that don't support webmentions. Mainly just the silos.
 # Subdomains are automatically blacklisted too.
 #
@@ -96,6 +98,13 @@ def email_me(**kwargs):
     logging.warning('Error sending notification email', exc_info=True)
 
 
+def requests_get(url, **kwargs):
+  """Wraps requests.get and injects our timeout and user agent."""
+  kwargs.setdefault('headers', {}).update(USER_AGENT_HEADER)
+  kwargs.setdefault('timeout', HTTP_TIMEOUT)
+  return requests.get(url, **kwargs)
+
+
 def follow_redirects(url, cache=True):
   """Fetches a URL with HEAD, repeating if necessary to follow redirects.
 
@@ -124,7 +133,8 @@ def follow_redirects(url, cache=True):
     parsed = urlparse.urlparse(url)
     if not parsed.scheme:
       url = 'http://' + url
-    resolved = requests.head(url, allow_redirects=True, timeout=HTTP_TIMEOUT)
+    resolved = requests.head(url, allow_redirects=True, timeout=HTTP_TIMEOUT,
+                             headers=USER_AGENT_HEADER)
     resolved.raise_for_status()
     cache_time = 0  # forever
   except AssertionError:

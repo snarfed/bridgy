@@ -167,7 +167,7 @@ class Tumblr(models.Source):
     Returns: JSON response dict with 'id' and other fields
     """
     if not self.disqus_shortname:
-      resp = requests.get(post_url, timeout=HTTP_TIMEOUT)
+      resp = util.requests_get(post_url)
       resp.raise_for_status()
       self.discover_disqus_shortname(resp.text)
       if not self.disqus_shortname:
@@ -221,6 +221,7 @@ class Tumblr(models.Source):
         'api_secret': appengine_config.DISQUS_API_SECRET,
         'access_token': appengine_config.DISQUS_ACCESS_TOKEN,
         })
+    kwargs.setdefault('headers', {}).update(util.USER_AGENT_HEADER)
     resp = method(url, timeout=HTTP_TIMEOUT, params=params, **kwargs)
     resp.raise_for_status()
     resp = resp.json().get('response', {})

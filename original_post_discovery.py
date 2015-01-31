@@ -34,7 +34,6 @@ import urlparse
 import util
 
 from activitystreams import source as as_source
-from appengine_config import HTTP_TIMEOUT
 from google.appengine.api.datastore import MAX_ALLOWABLE_QUERIES
 from bs4 import BeautifulSoup
 from models import SyndicatedPost
@@ -181,7 +180,7 @@ def _process_author(source, author_url, refetch=False, store_blanks=True):
 
   try:
     logging.debug('fetching author url %s', author_url)
-    author_resp = requests.get(author_url, timeout=HTTP_TIMEOUT)
+    author_resp = util.requests_get(author_url)
     # TODO for error codes that indicate a temporary error, should we make
     # a certain number of retries before giving up forever?
     author_resp.raise_for_status()
@@ -221,7 +220,7 @@ def _process_author(source, author_url, refetch=False, store_blanks=True):
 
     try:
       logging.debug("fetching author's rel-feed %s", feed_url)
-      feed_resp = requests.get(feed_url, timeout=HTTP_TIMEOUT)
+      feed_resp = util.requests_get(feed_url)
       feed_resp.raise_for_status()
       logging.debug("author's rel-feed fetched successfully %s", feed_url)
       feeditems = _merge_hfeeds(feeditems,
@@ -368,7 +367,7 @@ def _process_entry(source, permalink, feed_entry, refetch, preexisting,
       logging.debug('fetching post permalink %s', permalink)
       permalink, _, type_ok = util.get_webmention_target(permalink)
       if type_ok:
-        resp = requests.get(permalink, timeout=HTTP_TIMEOUT)
+        resp = util.requests_get(permalink)
         resp.raise_for_status()
         parsed = mf2py.Parser(url=permalink, doc=resp.text).to_dict()
     except AssertionError:

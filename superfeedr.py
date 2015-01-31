@@ -53,7 +53,8 @@ def subscribe(source, handler):
   resp = requests.post(PUSH_API_URL, data=data,
                        auth=HTTPBasicAuth(appengine_config.SUPERFEEDR_USERNAME,
                                           appengine_config.SUPERFEEDR_TOKEN),
-                       timeout=HTTP_TIMEOUT)
+                       timeout=HTTP_TIMEOUT,
+                       headers=util.USER_AGENT_HEADER)
   resp.raise_for_status()
   handle_feed(resp.text, source)
 
