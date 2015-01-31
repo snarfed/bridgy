@@ -16,6 +16,7 @@ from activitystreams import source as as_source
 from models import Publish, PublishedPage
 import publish
 import testutil
+import util
 
 from google.appengine.api import mail
 
@@ -130,7 +131,7 @@ class PublishTest(testutil.HandlerTest):
     self.assert_success('', target='http://brid.gy/publish/faux')
 
   def test_bad_target_url(self):
-    self.assert_error('Target must be brid.gy/publish/{facebook,twitter}',
+    self.assert_error('Target must be brid.gy/publish/{facebook,twitter,instagram}',
                       target='foo')
 
   def test_unsupported_source_class(self):
@@ -797,7 +798,8 @@ Join us!"""
     resp._text = "shouldn't use this!"
     resp.url = 'http://foo.com/bar'
     resp.status_code = 200
-    requests.get(resp.url, timeout=appengine_config.HTTP_TIMEOUT).AndReturn(resp)
+    requests.get(resp.url, timeout=appengine_config.HTTP_TIMEOUT,
+                 headers=util.USER_AGENT_HEADER).AndReturn(resp)
     self.mox.ReplayAll()
 
     # for preview in False, True:
