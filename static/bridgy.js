@@ -61,30 +61,6 @@ function do_preview(site) {
   req.send();
 }
 
-function send_preview(url) {
-  var sent = document.getElementById('sent');
-  var glyph = '<span title="Error" class="glyphicon glyphicon-exclamation-sign"></span> ';
-  var req = new XMLHttpRequest();
-
-  req.onload = function() {
-    if (this.status == 200) {
-      sent.innerHTML = 'Sent! <a href="' + JSON.parse(this.responseText).url +
-                       '">Click here to view.</a>';
-    } else if (this.status == 400) {
-      sent.innerHTML = glyph + JSON.parse(this.responseText).error;
-    } else {
-      this.onerror();
-    }
-  };
-  req.onerror = function() {
-    sent.innerHTML = glyph + this.responseText;
-  }
-
-  sent.innerHTML = '<img src="/static/spinner.gif" width="30" />';
-  req.open('post', url);
-  req.send();
-}
-
 // Polyfill String.startsWith() since it's only supported in Firefox right now.
 if (!String.prototype.startsWith) {
   Object.defineProperty(String.prototype, 'startsWith', {

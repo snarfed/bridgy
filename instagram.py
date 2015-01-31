@@ -90,4 +90,6 @@ application = webapp2.WSGIApplication([
     ('/instagram/start', util.oauth_starter(oauth_instagram.StartHandler).to(
       '/instagram/oauth_callback')),
     ('/instagram/oauth_callback', OAuthCallback),
+    ('/instagram/publish/start', oauth_instagram.StartHandler.to(
+      '/publish/instagram/finish')),
     ], debug=appengine_config.DEBUG)

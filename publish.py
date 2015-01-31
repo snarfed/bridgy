@@ -39,6 +39,9 @@ from appengine_config import HTTP_TIMEOUT
 from activitystreams import microformats2
 from activitystreams import source as as_source
 from activitystreams.oauth_dropins import handlers
+from activitystreams.oauth_dropins import facebook as oauth_facebook
+from activitystreams.oauth_dropins import instagram as oauth_instagram
+from activitystreams.oauth_dropins import twitter as oauth_twitter
 from facebook import FacebookPage
 from googleplus import GooglePlusPage
 import html2text
@@ -65,8 +68,8 @@ SOURCE_DOMAINS = {
 class Handler(webmention.WebmentionHandler):
   """Base handler for both previews and publishes.
 
-  Subclasses must set the PREVIEW attribute to True or False. They may override
-  the source_url(), target_url(), omit_link(), and ignore_formatting() methods.
+  Subclasses must set the PREVIEW attribute to True or False. They may also
+  override other methods.
 
   Attributes:
     fetched: requests.Response from fetching source_url
@@ -90,7 +93,8 @@ class Handler(webmention.WebmentionHandler):
       return self.request.get(param).lower() in ('', 'true')
     return None
 
-  def post(self):
+  def _run(self):
+    """Returns CreationResult on success, None otherwise."""
     logging.info('Params: %s', self.request.params.items())
     assert self.PREVIEW in (True, False)
 
@@ -105,7 +109,7 @@ class Handler(webmention.WebmentionHandler):
     source_cls = SOURCE_NAMES.get(path_parts[-1])
     if (domain not in ('brid.gy', 'www.brid.gy', 'localhost:8080') or
         len(path_parts) != 2 or path_parts[0] != '/publish' or not source_cls):
-      return self.error('Target must be brid.gy/publish/{facebook,twitter}')
+      return self.error('Target must be brid.gy/publish/{facebook,twitter,instagram}')
     elif source_cls == GooglePlusPage:
       return self.error('Sorry, %s is not yet supported.' %
                         source_cls.AS_CLASS.NAME)
@@ -181,11 +185,11 @@ class Handler(webmention.WebmentionHandler):
         continue
 
       try:
-        resp = self.attempt_single_item(item)
+        result = self.attempt_single_item(item)
         if self.entity.published:
           break
-        if resp.abort:
-          return self.error(resp.error_plain, html=resp.error_html, data=item)
+        if result.abort:
+          return self.error(result.error_plain, html=result.error_html, data=item)
         # try the next item
         for embedded in ('rsvp', 'invitee', 'repost', 'repost-of', 'like',
                          'like-of', 'in-reply-to'):
@@ -193,7 +197,7 @@ class Handler(webmention.WebmentionHandler):
             item_types.add(embedded)
         logging.error(
           'Object type(s) %s not supported; error=%s; trying next.',
-          item_types, resp.error_plain)
+          item_types, result.error_plain)
         types = types.union(item_types)
         queue.extend(item.get('children', []))
       except BaseException, e:
@@ -214,7 +218,7 @@ class Handler(webmention.WebmentionHandler):
     # write results to datastore
     self.entity.status = 'complete'
     self.entity.put()
-    self.response.write(resp.content)
+    return result
 
   def attempt_single_item(self, item):
     """Attempts to preview or publish a single mf2 item.
@@ -267,16 +271,19 @@ class Handler(webmention.WebmentionHandler):
       self.entity.published = result.content or result.description
       if not self.entity.published:
         return result  # there was an error
+      state = {
+        'source_key': self.source.key.urlsafe(),
+        'source_url': self.source_url(),
+        'target_url': self.target_url(),
+        'omit_link': omit_link,
+      }
       vars = {'source': self.preprocess_source(self.source),
               'preview': result.content,
               'description': result.description,
               'webmention_endpoint': self.request.host_url + '/publish/webmention',
-              'state': self.encode_state_parameter({
-                'source': self.source_url(),
-                'target': self.target_url(),
-                'omit_link': omit_link,
-                }),
+              'state': self.encode_state_parameter(state),
               }
+      vars.update(state)
       logging.info('Rendering preview with template vars %s', pprint.pformat(vars))
       return as_source.creation_result(
         template.render('templates/preview.html', vars))
@@ -416,6 +423,11 @@ class PreviewHandler(Handler):
   """
   PREVIEW = True
 
+  def post(self):
+    result = self._run()
+    if result:
+      self.response.write(result.content)
+
   def omit_link(self):
     # always use query param because there's a checkbox in the UI
     return self.request.get('bridgy_omit_link') in ('', 'true')
@@ -436,18 +448,51 @@ class SendHandler(Handler):
   """
   PREVIEW = False
 
-  def get(self):
-    self.state = self.decode_state_parameter(util.get_required_param(self, 'state'))
-    return self.post()
+  def finish(self, auth_entity, state=None):
+    self.state = self.decode_state_parameter(state)
+    source = ndb.Key(urlsafe=self.state['source_key']).get()
+
+    if auth_entity is None:
+      self.error('If you want to publish, please approve the prompt.')
+    elif auth_entity.key != source.auth_entity:
+      self.error('Please log into %s as %s to publish that page.' %
+                 (source.AS_CLASS.NAME, source.name))
+    else:
+      result = self._run()
+      if result and result.content:
+        self.messages.add('Done! <a href="%s">Click here to view.</a>' %
+                          self.entity.published.get('url'))
+      # otherwise error() added an error message
+
+    return self.redirect(source.bridgy_url(self))
 
   def source_url(self):
-    return self.state['source']
+    return self.state['source_url']
 
   def target_url(self):
-    return self.state['target']
+    return self.state['target_url']
 
   def bridgy_omit_link(self):
     return self.state['omit_link']
+
+  def error(self, error, html=None, status=400, data=None, mail=False):
+    logging.warning(error, exc_info=True)
+    error = html if html else util.linkify(error)
+    self.messages.add('%s' % error)
+    if mail:
+      self.mail_me(error)
+
+
+# CallbackHandler comes first in the inheritance order here so that its get()
+# method takes priority.
+class FacebookSendHandler(oauth_facebook.CallbackHandler, SendHandler):
+  finish = SendHandler.finish
+
+class InstagramSendHandler(oauth_instagram.CallbackHandler, SendHandler):
+  finish = SendHandler.finish
+
+class TwitterSendHandler(oauth_twitter.CallbackHandler, SendHandler):
+  finish = SendHandler.finish
 
 
 class WebmentionHandler(Handler):
@@ -455,11 +500,18 @@ class WebmentionHandler(Handler):
   """
   PREVIEW = False
 
+  def post(self):
+    result = self._run()
+    if result:
+      self.response.write(result.content)
+
 
 application = webapp2.WSGIApplication([
     ('/publish/preview', PreviewHandler),
-    ('/publish/send', SendHandler),
     ('/publish/webmention', WebmentionHandler),
     ('/publish/(facebook|twitter|instagram)', webmention.WebmentionGetHandler),
+    ('/publish/facebook/finish', FacebookSendHandler),
+    ('/publish/instagram/finish', InstagramSendHandler),
+    ('/publish/twitter/finish', TwitterSendHandler),
     ],
   debug=appengine_config.DEBUG)

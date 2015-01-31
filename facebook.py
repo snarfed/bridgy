@@ -277,6 +277,6 @@ application = webapp2.WSGIApplication([
     ('/facebook/oauth_handler', OAuthCallback),
     ('/facebook/add', AddFacebookPage),
     ('/facebook/delete/finish', oauth_facebook.CallbackHandler.to('/delete/finish')),
-    ('/facebook/start_publish', util.oauth_starter(oauth_facebook.StartHandler).to(
-      '/publish/send')),
+    ('/facebook/publish/start', oauth_facebook.StartHandler.to(
+      '/publish/facebook/finish')),
     ], debug=appengine_config.DEBUG)
