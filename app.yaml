@@ -31,7 +31,12 @@ handlers:
 - url: /static/style.css
   static_files: static/style.css
   upload: static/style.css
-  expiration: 1d
+  expiration: 1h
+
+- url: /static/bridgy.js
+  static_files: static/bridgy.js
+  upload: static/bridgy.js
+  expiration: 1h
 
 - url: /activitystreams/oauth_dropins/static
   static_dir: activitystreams/oauth_dropins/static
