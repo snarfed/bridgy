@@ -10,6 +10,7 @@ import urllib
 
 import requests
 from webob import exc
+import webapp2
 
 import appengine_config
 from activitystreams import source as as_source
@@ -20,21 +21,30 @@ import util
 
 from google.appengine.api import mail
 
-
 class PublishTest(testutil.HandlerTest):
 
   def setUp(self):
     super(PublishTest, self).setUp()
     publish.SOURCE_NAMES['fake'] = testutil.FakeSource
     publish.SOURCE_DOMAINS['fa.ke'] = testutil.FakeSource
+
+    self.auth_entity = testutil.FakeAuthEntity(id='0123456789')
     self.source = testutil.FakeSource(
       id='foo.com', features=['publish'], domains=['foo.com'],
-      domain_urls=['http://foo.com/'])
+      domain_urls=['http://foo.com/'], auth_entity=self.auth_entity.key)
     self.source.put()
+
+    self.oauth_state = {
+      'source_url': 'http://foo.com/bar',
+      'target_url': 'http://brid.gy/publish/fake',
+      'source_key': self.source.key.urlsafe(),
+      'omit_link': False,
+    }
     self.post_html = '<article class="h-entry"><p class="e-content">%s</p></article>'
     self.backlink = '\n<a href="http://localhost/publish/fake"></a>'
 
-  def get_response(self, source=None, target=None, preview=False, params=None):
+  def get_response(self, source=None, target=None, preview=False,
+                   interactive=False, params=None):
     if params is None:
       params = {}
     params.update({
@@ -43,7 +53,16 @@ class PublishTest(testutil.HandlerTest):
       'source_key': self.source.key.urlsafe(),
       })
 
-    return publish.application.get_response(
+    app = publish.application
+    assert not (preview and interactive)
+    if interactive:
+      class FakeSendHandler(publish.SendHandler):
+        def post(fsh_self):
+          fsh_self.finish(self.auth_entity,
+                          self.handler.encode_state_parameter(self.oauth_state))
+      app = webapp2.WSGIApplication([('.*', FakeSendHandler)])
+
+    return app.get_response(
       '/publish/preview' if preview else '/publish/webmention',
       method='POST', body=urllib.urlencode(params))
 
@@ -67,22 +86,61 @@ class PublishTest(testutil.HandlerTest):
     self.assertEquals(status, resp.status_int)
     self.assertIn(expected, json.loads(resp.body)['error'])
 
-  def test_success(self):
-    html = self.post_html % 'foo'
-    self.expect_requests_get('http://foo.com/bar', html)
+  def test_webmention_success(self):
+    self.expect_requests_get('http://foo.com/bar', self.post_html % 'foo')
     self.mox.ReplayAll()
-    self.assert_success('foo - http://foo.com/bar')
+    self.assert_success('foo - http://foo.com/bar', interactive=False)
+    self._check_entity()
 
+  def test_interactive_success(self):
+    self.expect_requests_get('http://foo.com/bar', self.post_html % 'foo')
+    self.mox.ReplayAll()
+
+    resp = self.get_response(interactive=True)
+    self.assertEquals(302, resp.status_int)
+    self.assertEquals(
+      'http://localhost/fake/foo.com#!'
+        'Done! <a href="http://fake/url">Click here to view.</a>',
+      urllib.unquote_plus(resp.headers['Location']))
+    self._check_entity()
+
+  def _check_entity(self):
     self.assertTrue(PublishedPage.get_by_id('http://foo.com/bar'))
     publish = Publish.query().get()
     self.assertEquals(self.source.key, publish.source)
     self.assertEquals('complete', publish.status)
     self.assertEquals('post', publish.type)
     self.assertEquals('FakeSource post label', publish.type_label)
-    self.assertEquals(html + self.backlink, publish.html)
+    expected_html = (self.post_html % 'foo') + self.backlink
+    self.assertEquals(expected_html, publish.html)
     self.assertEquals({'id': 'fake id', 'url': 'http://fake/url',
                        'content': 'foo - http://foo.com/bar'},
                       publish.published)
+
+  def test_interactive_from_wrong_user_page(self):
+    other_source = testutil.FakeSource.new(None).put()
+    self.oauth_state['source_key'] = other_source.urlsafe()
+
+    resp = self.get_response(interactive=True)
+    self.assertEquals(302, resp.status_int)
+    self.assertEquals(
+      'http://localhost/fake/%s#!'
+        'Please log into FakeSource as fake to publish that page.' %
+        other_source.id(),
+      urllib.unquote_plus(resp.headers['Location']))
+
+    self.assertIsNone(Publish.query().get())
+
+  def test_interactive_from_wrong_user_page(self):
+    self.auth_entity = None
+    resp = self.get_response(interactive=True)
+    self.assertEquals(302, resp.status_int)
+    self.assertEquals(
+      'http://localhost/fake/foo.com#!'
+        'If you want to publish, please approve the prompt.',
+      urllib.unquote_plus(resp.headers['Location']))
+
+    self.assertIsNone(Publish.query().get())
 
   def test_success_domain_translates_to_lowercase(self):
     self.expect_requests_get('http://FoO.cOm/Bar', self.post_html % 'foo')
@@ -803,7 +861,6 @@ Join us!"""
     self.mox.ReplayAll()
 
     self.assert_success(text, params={'bridgy_omit_link': ''})
-
 
   def test_missing_backlink(self):
     # use super to avoid this class's override that adds backlink
