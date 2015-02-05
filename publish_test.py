@@ -31,6 +31,8 @@ class PublishTest(testutil.HandlerTest):
       id='foo.com', features=['publish'], domains=['foo.com'],
       domain_urls=['http://foo.com/'])
     self.source.put()
+    self.post_html = '<article class="h-entry"><p class="e-content">%s</p></article>'
+    self.backlink = '\n<a href="http://localhost/publish/fake"></a>'
 
   def get_response(self, source=None, target=None, preview=False, params=None):
     if params is None:
@@ -44,6 +46,11 @@ class PublishTest(testutil.HandlerTest):
     return publish.application.get_response(
       '/publish/preview' if preview else '/publish/webmention',
       method='POST', body=urllib.urlencode(params))
+
+  def expect_requests_get(self, url, body='', backlink=None, **kwargs):
+    body += backlink or self.backlink
+    resp = super(PublishTest, self).expect_requests_get(url, body, **kwargs)
+    return resp
 
   def assert_success(self, expected, preview=False, **kwargs):
     resp = self.get_response(preview=preview, **kwargs)
@@ -61,7 +68,7 @@ class PublishTest(testutil.HandlerTest):
     self.assertIn(expected, json.loads(resp.body)['error'])
 
   def test_success(self):
-    html = '<article class="h-entry"><p class="e-content">foo</p></article>'
+    html = self.post_html % 'foo'
     self.expect_requests_get('http://foo.com/bar', html)
     self.mox.ReplayAll()
     self.assert_success('foo - http://foo.com/bar')
@@ -72,14 +79,13 @@ class PublishTest(testutil.HandlerTest):
     self.assertEquals('complete', publish.status)
     self.assertEquals('post', publish.type)
     self.assertEquals('FakeSource post label', publish.type_label)
-    self.assertEquals(html, publish.html)
+    self.assertEquals(html + self.backlink, publish.html)
     self.assertEquals({'id': 'fake id', 'url': 'http://fake/url',
                        'content': 'foo - http://foo.com/bar'},
                       publish.published)
 
   def test_success_domain_translates_to_lowercase(self):
-    html = '<article class="h-entry"><p class="e-content">foo</p></article>'
-    self.expect_requests_get('http://FoO.cOm/Bar', html)
+    self.expect_requests_get('http://FoO.cOm/Bar', self.post_html % 'foo')
     self.mox.ReplayAll()
     self.assert_success('foo - http://FoO.cOm/Bar', source='http://FoO.cOm/Bar')
 
@@ -93,9 +99,8 @@ class PublishTest(testutil.HandlerTest):
     Publish(parent=page.key, source=self.source.key, status='complete',
             type='preview').put()
 
-    html = '<article class="h-entry"><p class="e-content">foo</p></article>'
     for i in range(2):
-      self.expect_requests_get('http://foo.com/bar', html)
+      self.expect_requests_get('http://foo.com/bar', self.post_html % 'foo')
     self.mox.ReplayAll()
 
     # first attempt should work
@@ -122,9 +127,10 @@ class PublishTest(testutil.HandlerTest):
       id='foo.com', features=['publish'], domains=['foo.com'],
       domain_urls=['http://foo.com/']).put()
 
-    html = '<article class="h-entry"><p class="e-content">foo</p></article>'
-    for i in range(2):
-      self.expect_requests_get('http://foo.com/bar', html)
+    html = self.post_html % 'foo'
+    self.expect_requests_get('http://foo.com/bar', html)
+    self.expect_requests_get('http://foo.com/bar', html,
+                             backlink='\n<a href="http://localhost/publish/faux"></a>')
 
     self.mox.ReplayAll()
 
@@ -142,8 +148,7 @@ class PublishTest(testutil.HandlerTest):
   def test_source_url_redirects(self):
     self.expect_requests_head('http://will/redirect', redirected_url='http://foo.com')
 
-    html = '<article class="h-entry"><p class="e-content">foo</p></article>'
-    self.expect_requests_get('http://foo.com', html)
+    self.expect_requests_get('http://foo.com', self.post_html % 'foo')
     self.mox.ReplayAll()
     # check that we include the original link, not the resolved one
     self.assert_success('foo - http://will/redirect', source='http://will/redirect')
@@ -154,8 +159,7 @@ class PublishTest(testutil.HandlerTest):
                               response_headers={'refresh': '0; url=http://foo.com'})
     self.expect_requests_head('http://foo.com')
 
-    html = '<article class="h-entry"><p class="e-content">foo</p></article>'
-    self.expect_requests_get('http://foo.com', html)
+    self.expect_requests_get('http://foo.com', self.post_html % 'foo')
     self.mox.ReplayAll()
     # check that we include the original link, not the resolved one
     self.assert_success('foo - http://will/redirect', source='http://will/redirect')
@@ -188,8 +192,7 @@ class PublishTest(testutil.HandlerTest):
     # good source.
     source_2.features.append('publish')
     source_2.put()
-    self.expect_requests_get('http://foo.com/bar', """
-<article class="h-entry"><p class="e-content">xyz</p></article>""")
+    self.expect_requests_get('http://foo.com/bar', self.post_html % 'xyz')
     self.mox.ReplayAll()
     self.assert_success('xyz - http://foo.com/bar')
     self.assertEquals(source_2.key, Publish.query().get().source)
@@ -199,8 +202,7 @@ class PublishTest(testutil.HandlerTest):
     self.source.domains = ['baj.com', 'foo.com']
     self.source.domain_urls = ['http://baj.com/', 'http://foo.com/']
     self.source.put()
-    self.expect_requests_get('http://foo.com/bar', """
-<article class="h-entry"><p class="e-content">xyz</p></article>""")
+    self.expect_requests_get('http://foo.com/bar', self.post_html % 'xyz')
     self.mox.ReplayAll()
     self.assert_success('xyz - http://foo.com/bar')
     self.assertEquals(self.source.key, Publish.query().get().source)
@@ -224,11 +226,11 @@ class PublishTest(testutil.HandlerTest):
     self.assertEquals('failed', Publish.query().get().status)
 
   def test_multiple_items_chooses_first_that_works(self):
-    self.expect_requests_get('http://foo.com/bar', """
-<a class="h-card" href="http://mic.lim.com/">Mic Lim</a>
-<article class="h-entry"><p class="e-content">foo bar</article></p>""")
+    html = ('<a class="h-card" href="http://mic.lim.com/">Mic Lim</a>\n' +
+            self.post_html % 'foo')
+    self.expect_requests_get('http://foo.com/bar', html)
     self.mox.ReplayAll()
-    self.assert_success('foo bar - http://foo.com/bar')
+    self.assert_success('foo - http://foo.com/bar')
 
   def test_type_not_implemented(self):
     self.expect_requests_get('http://foo.com/bar',
@@ -244,8 +246,7 @@ class PublishTest(testutil.HandlerTest):
     self.assert_error("Looks like that's your home page.", source='https://foo.com#')
 
     # query params alone shouldn't trigger this
-    html = '<article class="h-entry"><p class="e-content">foo</p></article>'
-    self.expect_requests_get('http://foo.com/?p=123', html)
+    self.expect_requests_get('http://foo.com/?p=123', self.post_html % 'foo')
     self.mox.ReplayAll()
     self.assert_success('foo - http://foo.com/?p=123',
                         source='http://foo.com/?p=123')
@@ -373,9 +374,8 @@ this is my article
 
   def test_all_errors_email(self):
     """Should send me email on *any* error from create() or preview_create()."""
-    html = '<article class="h-entry"><p class="e-content">foo</p></article>'
     for i in range(2):
-      self.expect_requests_get('http://foo.com/bar', html)
+      self.expect_requests_get('http://foo.com/bar', self.post_html % 'foo')
 
     self.mox.StubOutWithMock(mail, 'send_mail')
     for subject in ('PublishHandler None failed: None (FakeSource)',
@@ -398,7 +398,7 @@ this is my article
     self.assertEquals(500, self.get_response(preview=True).status_int)
 
   def test_preview(self):
-    html = '<article class="h-entry"><p class="e-content">foo</p></article>'
+    html = self.post_html % 'foo'
     self.expect_requests_get('http://foo.com/bar', html)
     # make sure create() isn't called
     self.mox.StubOutWithMock(self.source.as_source, 'create', use_mock_anything=True)
@@ -409,11 +409,10 @@ this is my article
     self.assertEquals(self.source.key, publish.source)
     self.assertEquals('complete', publish.status)
     self.assertEquals('preview', publish.type)
-    self.assertEquals(html, publish.html)
+    self.assertEquals(html + self.backlink, publish.html)
 
   def test_bridgy_omit_link_query_param(self):
-    html = '<article class="h-entry"><p class="e-content">foo</p></article>'
-    self.expect_requests_get('http://foo.com/bar', html)
+    self.expect_requests_get('http://foo.com/bar', self.post_html % 'foo')
     self.mox.ReplayAll()
     self.assert_success('foo', params={'bridgy_omit_link': 'True'})
 
@@ -434,7 +433,7 @@ foo<br /> <blockquote></blockquote>
 <article class="h-entry">
 <div class="e-content">foo</div>
 </article>"""
-    self.expect_requests_get('http://foo.com/bar', html)
+    self.expect_requests_get('http://foo.com/bar', self.post_html % 'foo')
     self.mox.ReplayAll()
     self.assert_success('preview of foo', preview=True)
 
@@ -777,9 +776,8 @@ Join us!"""
   def test_unicode(self):
     """Test that we pass through unicode chars correctly."""
     text = u'Démo pour les développeur. Je suis navrée de ce problème.'
-    html = u'<article class="h-entry"><p class="e-content">%s</p></article>' % text
     for i in range(2):
-      self.expect_requests_get('http://foo.com/bar', html)
+      self.expect_requests_get('http://foo.com/bar', self.post_html % text)
     self.mox.ReplayAll()
 
     for preview in False, True:
@@ -794,6 +792,7 @@ Join us!"""
 <html>
 <head><meta charset="utf-8"></head>
 <body><article class="h-entry"><p class="e-content">%s</p></article></body>
+<a href="http://localhost/publish/fake"></a>
 </html>
 """ % text
     resp._text = "shouldn't use this!"
@@ -803,5 +802,12 @@ Join us!"""
                  headers=util.USER_AGENT_HEADER).AndReturn(resp)
     self.mox.ReplayAll()
 
-    # for preview in False, True:
     self.assert_success(text, params={'bridgy_omit_link': ''})
+
+
+  def test_missing_backlink(self):
+    # use super to avoid this class's override that adds backlink
+    super(PublishTest, self).expect_requests_get('http://foo.com/bar',
+                                                 self.post_html % 'foo')
+    self.mox.ReplayAll()
+    self.assert_error("Couldn't find link to http://localhost/publish/fake")

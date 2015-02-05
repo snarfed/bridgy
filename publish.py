@@ -532,6 +532,16 @@ class WebmentionHandler(Handler):
     if result:
       self.response.write(result.content)
 
+  def authorize(self):
+    """Check for a backlink to brid.gy/publish/SILO."""
+    expected = '%s/publish/%s' % (self.request.host_url, self.source.SHORT_NAME)
+
+    if self.entity.html and expected in self.entity.html:
+      return True
+
+    self.error("Couldn't find link to %s" % expected)
+    return False
+
 
 application = webapp2.WSGIApplication([
     ('/publish/preview', PreviewHandler),
