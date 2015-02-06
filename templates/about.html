@@ -236,6 +236,16 @@ notification, and you'll be set for another two months.
 choose that page during signup.</p>
 </li>
 
+<li id="security" class="question">It looks like anyone can poll or disable my
+account or publish as me. Isn't that a security hole?</li>
+<li class="answer">
+<p>Yeah, those do seem dangerous. Fortunately, polling is harmless - Bridgy does
+it automatically anyway - and we recheck your account login when you try to
+disable your account or publish a post. If you <a href="#webmentions">publish via
+webmention</a>, we require the corresponding Bridgy Publish backlink in your post.
+</p>
+</li>
+
 <li id="bug" class="question">I found a bug! I have a feature request!</li>
 <li class="answer">
 <p>Great! Thank you! Feel free
@@ -566,11 +576,14 @@ yourself</a>. It's just a single HTTP request!
 </p>
 <p>Bridgy's webmention endpoint
 is <code>https://www.brid.gy/publish/webmention</code>, and the target URL
-should be <code>brid.gy/publish/facebook</code> or
-<code>brid.gy/publish/twitter</code>. You can use one or both, depending on
-where you want to publish. If your server sends webmentions, just include one or
-both of these invisible links in your post to publish automatically!
+should be <code>brid.gy/publish/facebook</code>,
+<code>brid.gy/publish/instagram</code> or
+<code>brid.gy/publish/twitter</code>. Your post HTML must also include that same
+target URL to verify your intent to publish. If your server sends webmentions,
+just include any of these invisible links in your post to publish automatically!
+
 <pre>&lt;a href="<a href='https://www.brid.gy/publish/facebook'>https://www.brid.gy/publish/facebook</a>"&gt;&lt;/a&gt;
+&lt;a href="<a href='https://www.brid.gy/publish/instagram'>https://www.brid.gy/publish/instagram</a>"&gt;&lt;/a&gt;
 &lt;a href="<a href='https://www.brid.gy/publish/twitter'>https://www.brid.gy/publish/twitter</a>"&gt;&lt;/a&gt;
 </pre>
 </p>
