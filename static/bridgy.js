@@ -36,7 +36,9 @@ function do_preview(site) {
     if (this.status == 200) {
       document.getElementById('preview').innerHTML = this.responseText;
       // trigger re-renders of twitter and facebook embeds
-      twttr.widgets.load();
+      if (typeof(twttr) != 'undefined') {
+        twttr.widgets.load();
+      }
       if (typeof(FB) != 'undefined') {
         FB.XFBML.parse();
       }
