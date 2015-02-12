@@ -43,8 +43,8 @@ class TwitterStreamingTest(testutil.ModelsTest):
     self.assertTrue(self.listener.on_data(json.dumps(twitter_test.FAVORITE_EVENT)))
     self.assertEqual(1, models.Response.query().count())
     resp = models.Response.query().get()
-    self.assertEqual(twitter_test.LIKE_FROM_EVENT['id'], resp.key.string_id())
-    self.assert_equals(twitter_test.LIKE_FROM_EVENT, json.loads(resp.response_json))
+    self.assertEqual(twitter_test.LIKE_OBJ['id'], resp.key.string_id())
+    self.assert_equals(twitter_test.LIKE_OBJ, json.loads(resp.response_json))
 
     activity = copy.deepcopy(twitter_test.ACTIVITY)
     self.assert_equals(activity, json.loads(resp.activities_json[0]))

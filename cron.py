@@ -61,7 +61,7 @@ class UpdateTwitterPictures(webapp2.RequestHandler):
     for i in range(0, len(usernames), TWITTER_USERS_PER_LOOKUP):
       url = TWITTER_API_USER_LOOKUP % ','.join(
         usernames[i:i + TWITTER_USERS_PER_LOOKUP])
-      users += json.loads(auther.as_source.urlopen(url).read())
+      users += auther.as_source.urlopen(url)
 
     for user in users:
       source = sources[user['screen_name']]
