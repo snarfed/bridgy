@@ -14,6 +14,7 @@ import webapp2
 
 import appengine_config
 from activitystreams import source as as_source
+import facebook
 from models import Publish, PublishedPage
 import publish
 import testutil
@@ -71,20 +72,22 @@ class PublishTest(testutil.HandlerTest):
     resp = super(PublishTest, self).expect_requests_get(url, body, **kwargs)
     return resp
 
-  def assert_success(self, expected, preview=False, **kwargs):
+  def assert_response(self, expected, status=None, preview=False, **kwargs):
     resp = self.get_response(preview=preview, **kwargs)
-    self.assertEquals(200, resp.status_int)
+    self.assertEquals(status, resp.status_int)
     if preview:
       self.assertIn(expected, resp.body.decode('utf-8'),
                     '%r\n\n=== vs ===\n\n%r' % (expected, resp.body))
     else:
-      self.assertIn(expected, json.loads(resp.body)['content'])
+      self.assertIn(expected, json.loads(resp.body)[
+        'content' if status == 200 else 'error'])
     return resp
 
+  def assert_success(self, expected, **kwargs):
+    return self.assert_response(expected, status=200, **kwargs)
+
   def assert_error(self, expected, status=400, **kwargs):
-    resp = self.get_response(**kwargs)
-    self.assertEquals(status, resp.status_int)
-    self.assertIn(expected, json.loads(resp.body)['error'])
+    return self.assert_response(expected, status=status, **kwargs)
 
   def test_webmention_success(self):
     self.expect_requests_get('http://foo.com/bar', self.post_html % 'foo')
@@ -868,3 +871,31 @@ Join us!"""
                                                  self.post_html % 'foo')
     self.mox.ReplayAll()
     self.assert_error("Couldn't find link to http://localhost/publish/fake")
+
+  def test_facebook_comment_and_like_disabled(self):
+    self.source = facebook.FacebookPage(id='789', features=['publish'],
+                                        domains=['mr.x'])
+    self.source.put()
+    # self.oauth_state['source_key'] = key.urlsafe()
+
+    self.expect_requests_get('http://mr.x/like', """
+    <article class="h-entry">
+      <a class="u-like-of" href="http://facebook.com/789/posts/456">liked this</a>
+      <a href="http://localhost/publish/facebook"></a>
+    </article>""")
+    self.expect_requests_get('http://mr.x/comment', """
+    <article class="h-entry">
+      <a class="u-in-reply-to" href="http://facebook.com/789/posts/456">reply</a>
+      <a href="http://localhost/publish/facebook"></a>
+    </article>""")
+    self.mox.ReplayAll()
+
+    self.assert_error('Facebook comments and likes are no longer supported',
+                      source='http://mr.x/like',
+                      target='http://brid.gy/publish/facebook')
+    self.assertEquals('failed', Publish.query().get().status)
+
+    self.assert_error('Facebook comments and likes are no longer supported',
+                      source='http://mr.x/comment',
+                      target='http://brid.gy/publish/facebook',
+                      preview=True)

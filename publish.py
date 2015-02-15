@@ -277,6 +277,15 @@ class Handler(webmention.WebmentionHandler):
     if not self.authorize():
       return as_source.creation_result(abort=True)
 
+    # RIP Facebook comments/likes. https://github.com/snarfed/bridgy/issues/350
+    if (isinstance(self.source, FacebookPage) and
+        (obj_type == 'comment' or obj.get('verb') == 'like')):
+      return as_source.creation_result(
+        abort=True,
+        error_plain='Facebook comments and likes are no longer supported. :(',
+        error_html='<a href="https://github.com/snarfed/bridgy/issues/350">'
+                   'Facebook comments and likes are no longer supported.</a> :(')
+
     if self.PREVIEW:
       result = self.source.as_source.preview_create(
         obj, include_link=not omit_link)
