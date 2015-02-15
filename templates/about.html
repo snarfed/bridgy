@@ -83,10 +83,9 @@ service.</a>
   page to include?</a></li>
 <li><a href="#webmentions">Can I do this automatically, whenever
   I post something new on my web site?</a></li>
-<li><a href="#reply">How do I comment on a Facebook post or reply
-  to a Twitter tweet from my web site?</a></li>
-<li><a href="#like">How do I like a Facebook post, favorite or
-  retweet a tweet, or RSVP to an event from my web site?</a></li>
+<li><a href="#reply">How do I reply to a tweet from my web site?</a></li>
+<li><a href="#like">How do I favorite or retweet a tweet, like an Instagram
+  photo, or RSVP to a Facebook event from my web site?</a></li>
 <li><a href="#picture">How do I post a picture?</a></li>
 <li><a href="#omit-link">Can I disable the link back to my post?</a></li>
 <li><a href="#ignore-formatting">Can I disable the plain text whitespace and
@@ -520,10 +519,9 @@ and Bridgy will post it for you.</p>
 <p>It's not just for posts or tweets, either! You can use Bridgy to publish
 Twitter <a href="#reply">@-replies</a>,
 <a href="#repost">retweets</a>, and
-<a href="#like">favorites</a> and Facebook
-<a href="#reply">comments</a>,
-<a href="#like">likes</a>, and even
-<a href="#like">event RSVPs</a>!
+<a href="#like">favorites</a>,
+Facebook <a href="#like">event RSVPs</a>, and
+Instagram <a href="#like">likes</a>!
 </li>
 
 <li id="microformats" class="question">How does it decide which parts of my web
@@ -589,12 +587,12 @@ just include any of these invisible links in your post to publish automatically!
 </p>
 </li>
 
-<li id="reply" class="question">How do I comment on a Facebook post or reply
-  to a Twitter tweet from my web site?</li>
+<li id="reply" class="question">How do I reply to a Twitter tweet from my web
+  site?</li>
 <li class="answer">
 <p>
-Easy! Put the comment or reply in a new post on your web site, and include a
-link to the post or tweet you're replying to with class
+Easy! Put the reply in a new post on your web site, and include a link to the
+tweet you're replying to with class
 <code><a href="http://microformats.org/wiki/rel-in-reply-to">
 u-in-reply-to</a></code>, as if you were publishing a normal
 <a href="http://indiewebcamp.com/comment">IndieWeb reply</a>. For example:
@@ -616,8 +614,8 @@ links in the other post to find the appropriate silo copy to reply to.
 </p>
 </li>
 
-<li id="like" class="question">How do I like a Facebook post or comment,
-  favorite or retweet a tweet, or RSVP to an event from my web site?</li>
+<li id="like" class="question">How do I favorite or retweet a tweet, like an
+Instagram photo, or RSVP to a Facebook event from my web site?</li>
 <li class="answer">
 <p>
 Liking, RSVPing, favoriting, and retweeting are almost exactly the
@@ -630,7 +628,7 @@ or <code><a href="http://indiewebcamp.com/rsvp">p-rsvp</a></code> for an
 RSVP.
 
 <pre>
-&lt;a class="<span class='keyword'>u-like-of</span>" href="<a href='https://www.facebook.com/snarfed.org/posts/10100971276366173'>https://www.facebook.com/snarfed.org/posts/10100971276366173</a>"&gt;&lt;/a&gt;
+&lt;a class="<span class='keyword'>u-like-of</span>" href="<a href='http://instagram.com/p/yoMSzRsqDZ/'>http://instagram.com/p/yoMSzRsqDZ/</a>"&gt;&lt;/a&gt;
 </pre>
 
 <pre>
@@ -700,10 +698,10 @@ responds. A <code>POST</code> to
 <code>http://brid.gy/publish/webmention</code> will return
 <code>200 OK</code> on success with a JSON response containing at least
 a <code>url</code> field that points to the silo object that it operated on. For
-Twitter favorites and Facebook likes and event RSVPs, this is the tweet, post,
-or event. If a new object was created, e.g. a Facebook post or comment or
-Twitter tweet, @-reply, or retweet, there will also be an <code>id</code> field
-with the silo id of that object.
+Twitter favorites and Facebook event RSVPs, this is the tweet, post, or event.
+If a new object was created, e.g. a Facebook post or Twitter tweet, @-reply, or
+retweet, there will also be an <code>id</code> field with the silo id of that
+object.
 </p>
 <p>For example, this request for an original post:
 </p>
@@ -760,9 +758,9 @@ data from your original post, which is often helpful for debugging.
 <p>Sadly, <a href="https://developers.google.com/+/api/">Google+'s API</a>
 doesn't support posting or commenting, and
 <a href="http://instagram.com/developer/endpoints/comments/#post_media_comments">Instagram's API</a>
-requires
+allows liking, but requires
 <a href="https://docs.google.com/spreadsheet/viewform?formkey=dFNydmNsUUlEUGdySWFWbGpQczdmWnc6MQ">manual approval</a>
-for commenting and liking. Shameless plug: check out
+for commenting. Shameless plug: check out
 <a href="http://ownyourgram.com/">#OwnYourGram</a> for an Instagram alternative!
 </p>
 </li>
