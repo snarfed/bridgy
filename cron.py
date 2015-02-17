@@ -31,7 +31,7 @@ class ReplacePollTasks(webapp2.RequestHandler):
                          Source.status.IN(('enabled', 'error')))
                for cls in handlers.SOURCES.values()]
     for source in itertools.chain(*queries):
-      age = now - source.last_polled
+      age = now - source.last_poll_attempt
       if age > source.poll_period() * 2:
         logging.info('%s last polled %s ago. Adding new poll task.',
                      source.bridgy_url(self), age)

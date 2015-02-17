@@ -46,8 +46,8 @@ class CronTest(ModelsTest):
       }
     sources = [
       # doesn't need a new poll task
-      FakeSource.new(None, last_polled=now, **defaults).put(),
-      FakeSource.new(None, last_polled=five_min_ago, **defaults).put(),
+      FakeSource.new(None, last_poll_attempt=now, **defaults).put(),
+      FakeSource.new(None, last_poll_attempt=five_min_ago, **defaults).put(),
       FakeSource.new(None, status='disabled', **defaults).put(),
       FakeSource.new(None, status='disabled', **defaults).put(),
       # need a new poll task
@@ -58,7 +58,7 @@ class CronTest(ModelsTest):
       # never sent a webmention, past grace period. last polled is older than 2x
       # fast poll, but within 2x slow poll.
       FakeSource.new(None, features=['listen'], created=month_ago,
-                     last_polled=day_and_half_ago).put(),
+                     last_poll_attempt=day_and_half_ago).put(),
       ]
     resp = cron.application.get_response('/cron/replace_poll_tasks')
     self.assertEqual(200, resp.status_int)
