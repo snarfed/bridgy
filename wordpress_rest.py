@@ -139,8 +139,7 @@ class WordPress(models.Source):
     except ValueError:
       logging.info('Looking up post id for slug %s', slug)
       url = API_POST_SLUG_URL % (auth_entity.blog_id, slug.encode('utf-8'))
-      resp = auth_entity.urlopen(url).read()
-      post_id = json.loads(resp).get('ID')
+      post_id = self.urlopen(auth_entity, url).get('ID')
       if not post_id:
         return self.error('Could not find post id')
 
@@ -151,7 +150,7 @@ class WordPress(models.Source):
     content = u'<a href="%s">%s</a>: %s' % (author_url, author_name, content)
     data = {'content': content.encode('utf-8')}
     try:
-      resp = auth_entity.urlopen(url, data=urllib.urlencode(data)).read()
+      resp = self.urlopen(auth_entity, url, data=urllib.urlencode(data))
     except urllib2.HTTPError, e:
       code, body = interpret_http_exception(e)
       try:
@@ -162,12 +161,11 @@ class WordPress(models.Source):
         pass # fall through
       raise e
 
-    resp = json.loads(resp)
     resp['id'] = resp.pop('ID', None)
     return resp
 
-  @staticmethod
-  def get_site_info(handler, auth_entity):
+  @classmethod
+  def get_site_info(cls, handler, auth_entity):
     """Fetches the site info from the API.
 
     Args:
@@ -177,8 +175,7 @@ class WordPress(models.Source):
     Returns: site info dict, or None if API calls are disabled for this blog
     """
     try:
-      return json.loads(auth_entity.urlopen(
-        API_SITE_URL % auth_entity.blog_id).read())
+      return cls.urlopen(auth_entity, API_SITE_URL % auth_entity.blog_id)
     except urllib2.HTTPError, e:
       code, body = interpret_http_exception(e)
       if (code == '403' and '"API calls to this blog have been disabled."' in body):
@@ -189,6 +186,12 @@ class WordPress(models.Source):
         handler.redirect('/')
         return None
       raise
+
+  @staticmethod
+  def urlopen(auth_entity, url, **kwargs):
+    resp = auth_entity.urlopen(url, **kwargs).read()
+    logging.debug(resp)
+    return json.loads(resp)
 
 
 class AddWordPress(oauth_wordpress.CallbackHandler, util.Handler):
