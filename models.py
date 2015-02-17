@@ -595,7 +595,8 @@ class Response(Webmentions):
     resp = super(Response, self).get_or_save()
 
     if source.as_source.activity_changed(json.loads(resp.response_json),
-                                         json.loads(self.response_json)):
+                                         json.loads(self.response_json),
+                                         log=True):
       logging.info('Response changed! Re-propagating. Original: %s' % resp)
       resp.status = 'new'
       resp.unsent += resp.sent + resp.error + resp.failed + resp.skipped
