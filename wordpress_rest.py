@@ -79,13 +79,9 @@ class WordPress(models.Source):
     if site_info is None:
       return
 
-    site_url = site_info.get('URL')
-    if site_url and site_url != auth_entity.blog_url:
-      domains = [util.domain_from_link(site_url), auth_domain]
-      urls = [site_url, auth_entity.blog_url]
-    else:
-      domains = [auth_domain]
-      urls = [auth_entity.blog_url]
+    urls = util.dedupe_urls(util.trim_nulls(
+      [site_info.get('URL'), auth_entity.blog_url]))
+    domains = [util.domain_from_link(u) for u in urls]
 
     avatar = (json.loads(auth_entity.user_json).get('avatar_URL')
               if auth_entity.user_json else None)

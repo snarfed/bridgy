@@ -451,15 +451,15 @@ class Source(StringIdModel):
     logging.debug('Converted to actor: %s', json.dumps(actor, indent=2))
 
     urls = []
-    domains = []
     for url in util.trim_nulls(util.uniquify(
         [user_url] + [actor.get('url')] +
         [u.get('value') for u in actor.get('urls', [])])):
       domain = util.domain_from_link(url)
       if domain and not util.in_webmention_blacklist(domain.lower()):
         urls.append(url)
-        domains.append(domain.lower())
 
+    urls = util.dedupe_urls(urls)
+    domains = [util.domain_from_link(url).lower() for url in urls]
     return urls, domains
 
   def canonicalize_syndication_url(self, syndication_url, scheme='https'):

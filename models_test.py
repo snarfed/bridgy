@@ -258,6 +258,18 @@ class SourceTest(testutil.HandlerTest):
     self.assertEquals(['http://bar', 'http://baz'], source.domain_urls)
     self.assertEquals(['bar', 'baz'], source.domains)
 
+  def test_create_new_dedupes_domains(self):
+    auth_entity = testutil.FakeAuthEntity(id='x', user_json=json.dumps(
+        {'urls': [{'value': 'http://foo'},
+                  {'value': 'https://foo/'},
+                  {'value': 'http://foo/'},
+                  {'value': 'http://foo'},
+                ]}))
+    self.mox.ReplayAll()
+    source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
+    self.assertEquals(['https://foo/'], source.domain_urls)
+    self.assertEquals(['foo'], source.domains)
+
   def test_verify(self):
     # this requests.get is called by webmention-tools
     self.expect_requests_get('http://primary/', """
