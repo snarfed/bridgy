@@ -87,6 +87,8 @@ service.</a>
 <li><a href="#like">How do I favorite or retweet a tweet, like an Instagram
   photo, or RSVP to a Facebook event from my web site?</a></li>
 <li><a href="#picture">How do I post a picture?</a></li>
+<li><a href="#facebook-publish">What happened to publishing Facebook
+  comments and likes?</li>
 <li><a href="#omit-link">Can I disable the link back to my post?</a></li>
 <li><a href="#ignore-formatting">Can I disable the plain text whitespace and
 formatting?</a></li>
@@ -663,6 +665,28 @@ I love scotch. Scotchy scotchy scotch.
 </pre>
 </p>
 </li>
+
+<li id="facebook-publish" class="question">What happened to publishing Facebook
+  comments and likes?</li>
+<li class="answer">
+<p>
+Bridgy Publish supported Facebook likes and comments for almost a
+year, <a href="https://snarfed.org/2014-03-25_bridgy-publish">from its
+launch</a> on March 24
+2014 <a href="https://github.com/snarfed/bridgy/commit/0e44fe28c1df5026b2b237d2c094a0a0ed9c8c00">until
+February 14 2015</a>.
+<a href="https://developers.facebook.com/docs/apps/changelog#v2_0_graph_api">Facebook's
+v2.x API</a>
+<a href="https://developers.facebook.com/docs/apps/upgrading#upgrading_v2_0_graph_api">makes
+it much harder</a> to map backward from a Facebook post's URL to its API object
+id, and even when you can, the API usually won't let you read the post or like
+or comment on it. You need
+the <a href="https://developers.facebook.com/docs/facebook-login/permissions/v2.2#reference-read_stream"><code>read_stream</code>
+permission</a>, which Facebook only gives out in very rare circumstances.</p>
+
+<p><a href="https://github.com/snarfed/bridgy/issues/350">Lots more gory details
+here.</a> <a href="https://snarfed.org/2015-02-14_13259">RIP Facebook liking and
+commenting</a>, we'll miss you!</p>
 
 <li id="omit-link" class="question">Can I disable the link back to my post?</li>
 <li class="answer">
