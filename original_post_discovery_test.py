@@ -243,7 +243,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
 
     wmtargets = tasks.get_webmention_targets(self.source, self.activity)
     self.assertEquals([original], self.activity['object']['upstreamDuplicates'])
-    self.assertEquals(set([original]), wmtargets)
+    self.assertEquals([original], wmtargets)
 
   def test_strip_www_when_comparing_domains(self):
     """We should ignore leading www when comparing syndicated URL domains."""

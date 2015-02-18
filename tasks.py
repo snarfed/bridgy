@@ -68,16 +68,7 @@ def get_webmention_targets(source, activity):
     if send:
       urls.append(url)
 
-  # de-dupe, ignoring scheme (http vs https)
-  targets = set()
-  schemeless_targets = set()
-  for url in urls:
-    schemeless = util.schemeless(url)
-    if schemeless not in schemeless_targets:
-      schemeless_targets.add(schemeless)
-      targets.add(url)
-
-  return targets
+  return util.dedupe_urls(urls)
 
 
 class Poll(webapp2.RequestHandler):
