@@ -361,8 +361,9 @@ class Source(StringIdModel):
       'webmention': '<a href="%s">Try a webmention!</a>' % link,
       }.get(feature, ''))
     logging.info('%s %s', blurb, source.bridgy_url(handler))
-    if not existing:
-      util.email_me(subject=blurb, body=source.bridgy_url(handler))
+    # uncomment to send email notification for each new user
+    # if not existing:
+    #   util.email_me(subject=blurb, body=source.bridgy_url(handler))
 
     source.verify()
     if source.verified():
