@@ -11,7 +11,7 @@ import logging
 from google.appengine.ext import ndb
 import appengine_config
 
-import handlers
+import models
 from models import Source
 from instagram import Instagram
 from twitter import Twitter
@@ -29,7 +29,7 @@ class ReplacePollTasks(webapp2.RequestHandler):
     now = datetime.datetime.now()
     queries = [cls.query(Source.features == 'listen',
                          Source.status.IN(('enabled', 'error')))
-               for cls in handlers.SOURCES.values()]
+               for cls in models.sources.values()]
     for source in itertools.chain(*queries):
       age = now - source.last_poll_attempt
       if age > source.poll_period() * 2:

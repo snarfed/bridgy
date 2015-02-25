@@ -13,7 +13,6 @@ from google.appengine.ext import ndb
 import requests
 
 from activitystreams import source as as_source
-import handlers
 from models import Response, Source
 import util
 from activitystreams import testutil as as_testutil
@@ -184,7 +183,6 @@ class HandlerTest(as_testutil.TestCase):
     self.testbed.init_datastore_v3_stub(consistency_policy=None)
 
     # add FakeSource everywhere necessary
-    handlers.SOURCES[FakeSource.SHORT_NAME] = FakeSource
     util.BLACKLIST.add('fa.ke')
 
     # don't make actual HTTP requests to follow original post url redirects

@@ -7,10 +7,18 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 import datetime
 import json
 
+import models
 from models import BlogPost, Response, Source, SyndicatedPost
+import facebook
+import blogger
+import googleplus
+import instagram
 import mox
 import superfeedr
 import testutil
+import tumblr
+import twitter
+import wordpress_rest
 from testutil import FakeSource
 
 from activitystreams import source as as_source
@@ -129,6 +137,15 @@ class ResponseTest(testutil.ModelsTest):
 
 
 class SourceTest(testutil.HandlerTest):
+
+  def test_sources_global(self):
+    self.assertEquals(blogger.Blogger, models.sources['blogger'])
+    self.assertEquals(facebook.FacebookPage, models.sources['facebook'])
+    self.assertEquals(googleplus.GooglePlusPage, models.sources['googleplus'])
+    self.assertEquals(instagram.Instagram, models.sources['instagram'])
+    self.assertEquals(tumblr.Tumblr, models.sources['tumblr'])
+    self.assertEquals(twitter.Twitter, models.sources['twitter'])
+    self.assertEquals(wordpress_rest.WordPress, models.sources['wordpress'])
 
   def _test_create_new(self, **kwargs):
     FakeSource.create_new(self.handler, domains=['foo'],

@@ -11,15 +11,11 @@ import appengine_config
 
 from activitystreams import microformats2
 from activitystreams.oauth_dropins import handlers
-from blogger import Blogger
+import models
 from models import BlogWebmention
-from tumblr import Tumblr
 import util
 import webapp2
 import webmention
-from wordpress_rest import WordPress
-
-SOURCES = {cls.SHORT_NAME: cls for cls in (Blogger, WordPress, Tumblr)}
 
 
 def first_value(props, name):
@@ -47,7 +43,7 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
       return self.error('Could not parse target URL %s' % self.target_url)
 
     # look up source by domain
-    source_cls = SOURCES[source_short_name]
+    source_cls = models.sources[source_short_name]
     domain = domain.lower()
     self.source = (source_cls.query()
                    .filter(source_cls.domains == domain)

@@ -30,26 +30,10 @@ from activitystreams import microformats2
 from activitystreams.microformats2 import first_props
 from activitystreams.oauth_dropins.webutil import handlers
 from activitystreams.oauth_dropins.handlers import interpret_http_exception
-import blogger
-import facebook
-import googleplus
+import models
 import original_post_discovery
-import instagram
-import tumblr
-import twitter
 import util
 import webapp2
-import wordpress_rest
-
-SOURCES = {cls.SHORT_NAME: cls for cls in
-           (blogger.Blogger,
-            facebook.FacebookPage,
-            googleplus.GooglePlusPage,
-            instagram.Instagram,
-            tumblr.Tumblr,
-            twitter.Twitter,
-            wordpress_rest.WordPress,
-            )}
 
 TEMPLATE = string.Template("""\
 <!DOCTYPE html>
@@ -90,10 +74,10 @@ class ItemHandler(webapp2.RequestHandler):
     raise NotImplementedError()
 
   def get(self, type, source_short_name, string_id, *ids):
-    source_cls = SOURCES.get(source_short_name)
+    source_cls = models.sources.get(source_short_name)
     if not source_cls:
       self.abort(400, "Source type '%s' not found. Known sources: %s" %
-                 (source_short_name, SOURCES))
+                 (source_short_name, models.sources))
 
     self.source = source_cls.get_by_id(string_id)
     if not self.source:

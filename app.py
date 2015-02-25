@@ -24,7 +24,7 @@ from activitystreams.oauth_dropins.webutil import handlers as webutil_handlers
 from blogger import Blogger
 from tumblr import Tumblr
 from wordpress_rest import WordPress
-import handlers
+import models
 from models import BlogPost, BlogWebmention, Publish, Response, Source
 import util
 
@@ -100,7 +100,7 @@ class FrontPageHandler(CachedPageHandler):
     def kind_count(kind):
       return count(KindStat.query(KindStat.kind_name == kind))
 
-    num_users = sum(kind_count(cls.__name__) for cls in handlers.SOURCES.values())
+    num_users = sum(kind_count(cls.__name__) for cls in models.sources.values())
     link_counts = {
       property: sum(count(KindPropertyNameStat.query(
           KindPropertyNameStat.kind_name == kind,
@@ -146,7 +146,7 @@ class UsersHandler(CachedPageHandler):
   def template_vars(self):
     start_name = self.request.get('start_name')
     queries = [cls.query(cls.name >= start_name).fetch_async(self.PAGE_SIZE)
-               for cls in handlers.SOURCES.values()]
+               for cls in models.sources.values()]
 
     sources = sorted(itertools.chain(*[q.get_result() for q in queries]),
                      key=lambda s: (s.name.lower(), s.AS_CLASS.NAME))
@@ -167,7 +167,7 @@ class UserHandler(DashboardHandler):
 
   @canonicalize_domain
   def get(self, source_short_name, id):
-    self.source = handlers.SOURCES[source_short_name].lookup(id)
+    self.source = models.sources[source_short_name].lookup(id)
     if self.source and self.source.features:
       self.source.verify()
       self.source = self.preprocess_source(self.source)

@@ -14,7 +14,6 @@ from activitystreams.oauth_dropins.webutil.util import Struct
 import cron
 import instagram
 from instagram import Instagram
-import handlers
 import testutil
 from testutil import FakeSource, ModelsTest
 from twitter import Twitter
@@ -26,11 +25,6 @@ class CronTest(ModelsTest):
     super(ModelsTest, self).setUp()
     oauth_dropins.appengine_config.TWITTER_APP_KEY = 'my_app_key'
     oauth_dropins.appengine_config.TWITTER_APP_SECRET = 'my_app_secret'
-    handlers.SOURCES['fake'] = FakeSource
-
-  def tearDown(self):
-    del handlers.SOURCES['fake']
-    super(ModelsTest, self).tearDown()
 
   def test_replace_poll_tasks(self):
     self.assertEqual([], self.taskqueue_stub.GetTasks('poll'))

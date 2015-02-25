@@ -14,8 +14,6 @@ class HandlersTest(testutil.HandlerTest):
 
   def setUp(self):
     super(HandlersTest, self).setUp()
-    handlers.SOURCES['fake'] = testutil.FakeSource
-
     self.source = testutil.FakeSource.new(self.handler)
     self.source.set_activities(
       [{'object': {

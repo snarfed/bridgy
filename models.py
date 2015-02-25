@@ -22,6 +22,10 @@ from google.appengine.ext import ndb
 VERB_TYPES = ('comment', 'like', 'repost', 'rsvp')
 TYPES = VERB_TYPES + ('post', 'preview')
 
+# maps string short name to Source subclass. populated by SourceMeta.
+sources = {}
+
+
 def get_type(obj):
   """Returns the Response or Publish type for an ActivityStreams object."""
   type = obj.get('objectType')
@@ -43,11 +47,21 @@ class DisableSource(Exception):
   """
 
 
+class SourceMeta(ndb.MetaModel):
+  """Source metaclass. Registers all source classes in the sources global."""
+  def __new__(meta, name, bases, class_dict):
+    cls = ndb.MetaModel.__new__(meta, name, bases, class_dict)
+    sources[cls.SHORT_NAME] = cls
+    return cls
+
+
 class Source(StringIdModel):
   """A silo account, e.g. a Facebook or Google+ account.
 
   Each concrete silo class should subclass this class.
   """
+  __metaclass__ = SourceMeta
+
   STATUSES = ('enabled', 'disabled', 'error')
   FEATURES = ('listen', 'publish', 'webmention')
 
