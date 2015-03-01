@@ -28,6 +28,14 @@ import models
 from models import BlogPost, BlogWebmention, Publish, Response, Source
 import util
 
+import facebook
+import blogger
+import googleplus
+import instagram
+import tumblr
+import twitter
+import wordpress_rest
+
 from google.appengine.ext import ndb
 from google.appengine.ext.ndb.stats import KindStat, KindPropertyNameStat
 import webapp2
