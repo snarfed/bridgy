@@ -11,11 +11,14 @@ import appengine_config
 
 from activitystreams import microformats2
 from activitystreams.oauth_dropins import handlers
+import blogger
 import models
 from models import BlogWebmention
 import util
+import tumblr
 import webapp2
 import webmention
+import wordpress_rest
 
 
 def first_value(props, name):

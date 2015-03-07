@@ -9,6 +9,7 @@ import urllib
 from webob import exc
 
 import appengine_config
+import models
 from models import BlogWebmention
 import blog_webmention
 import testutil
@@ -308,3 +309,8 @@ http://foo.com/post/1
     bw = BlogWebmention.get_by_id('http://bar.com/reply http://foo.com/post/1')
     self.assertEquals('failed', bw.status)
     self.assertEquals(html, bw.html)
+
+  def test_sources_global(self):
+    self.assertIsNotNone(models.sources['blogger'])
+    self.assertIsNotNone(models.sources['tumblr'])
+    self.assertIsNotNone(models.sources['wordpress'])
