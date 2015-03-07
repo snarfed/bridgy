@@ -74,8 +74,8 @@ class CachedPageHandler(DashboardHandler):
 
   @canonicalize_domain
   def get(self, cache=True):
-    if appengine_config.DEBUG or not cache:
-      # don't cache when running in in dev_appserver
+    # don't cache when running in in dev_appserver or if there are query params
+    if not cache or appengine_config.DEBUG or self.request.params:
       return super(DashboardHandler, self).get()
 
     self.response.headers['Content-Type'] = self.content_type()
