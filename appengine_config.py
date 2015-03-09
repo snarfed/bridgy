@@ -80,6 +80,7 @@ class BlacklistingHandler(ereporter.ExceptionRecordingHandler):
     'InternalTransientError',
     'JointException: taskqueue.DatastoreError',
     "KeyError: u'http://www.nytimes.com/",
+    'RequestError: Server responded with: 503',  # gdata.client.RequestError
     'Timeout',
     'TransientError',
     'TweepError: HTTPSConnectionPool',
