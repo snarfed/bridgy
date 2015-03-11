@@ -41,13 +41,13 @@ class HandlersTest(testutil.HandlerTest):
     self.check_response('/post/fake/%s/000', """\
 <article class="h-entry">
 <span class="u-uid">tag:fa.ke,2013:000</span>
-<a class="u-url" href="http://fa.ke/000"></a>
 
   <div class="h-card p-author">
     <a class="u-url" href="http://fa.ke/author_id"></a>
     <img class="u-photo" src="https://example.com/ryan/image" alt="" />
   </div>
 
+<a class="u-url" href="http://fa.ke/000"></a>
   <div class="e-content p-name">
 
   asdf http://other/link qwert
@@ -172,7 +172,8 @@ class HandlersTest(testutil.HandlerTest):
     <img class="u-photo" src="https://example.com/ryan/image" alt="" />
   </div>
 
-  <div class="e-content p-name">
+  <div class="p-name">likes this.</div>
+  <div class="e-content">
 
   <a class="u-mention" href="http://other/link"></a>
   </div>
@@ -217,7 +218,8 @@ class HandlersTest(testutil.HandlerTest):
     <img class="u-photo" src="https://example.com/ryan/image" alt="" />
   </div>
 
-  <div class="e-content p-name">
+  <div class="p-name">reposts this.</div>
+  <div class="e-content">
 
   <a class="u-mention" href="http://another/mention"></a>
   <a class="u-mention" href="http://other/link"></a>
@@ -247,13 +249,13 @@ class HandlersTest(testutil.HandlerTest):
     self.check_response('/rsvp/fake/%s/000/111', """\
 <article class="h-entry h-as-rsvp">
 <span class="u-uid">tag:fa.ke,2013:111</span>
-<div class="p-name">Alice is not attending.</div>
 
   <div class="h-card p-author">
     <a class="u-url" href="http://fa.ke/rsvper_id"></a>
     <img class="u-photo" src="https://example.com/ryan/image" alt="" />
   </div>
 
+  <div class="p-name">Alice is not attending.</div>
   <div class="e-content">
 
   <data class="p-rsvp" value="no">is not attending.</data>
@@ -288,13 +290,13 @@ class HandlersTest(testutil.HandlerTest):
     self.check_response('/rsvp/fake/%s/000/111', """\
 <article class="h-entry">
 <span class="u-uid">tag:fa.ke,2013:111</span>
-<div class="p-name"><a class="u-url" href="http://fa.ke/event">Ms. Guest is invited.</a></div>
 
   <div class="h-card p-author">
     <div class="p-name"><a class="u-url" href="http://fa.ke/host">Mrs. Host</a></div>
 
   </div>
 
+<div class="p-name"><a class="u-url" href="http://fa.ke/event">Ms. Guest is invited.</a></div>
   <div class="e-content">
   <div class="h-card p-invitee">
     <div class="p-name"><a class="u-url" href="http://fa.ke/guest">Ms. Guest</a></div>
@@ -326,7 +328,8 @@ class HandlersTest(testutil.HandlerTest):
 <article class="h-entry h-as-repost">
 <span class="u-uid"></span>
 
-  <div class="e-content p-name">
+  <div class="p-name">reposts this.</div>
+  <div class="e-content">
 
   <a class="u-mention" href="http://other/link"></a>
   <a class="u-mention" href="http://other/link/redirect"></a>
@@ -350,7 +353,8 @@ class HandlersTest(testutil.HandlerTest):
 <article class="h-entry h-as-repost">
 <span class="u-uid"></span>
 
-  <div class="e-content p-name">
+  <div class="p-name">reposts this.</div>
+  <div class="e-content">
 
   <a class="u-mention" href="http://other/link?a=b"></a>
   </div>
