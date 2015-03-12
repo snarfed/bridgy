@@ -234,12 +234,17 @@ class UserHandler(DashboardHandler):
 
         r.actor = r.response.get('author') or r.response.get('actor', {})
         if not r.response.get('content'):
-          if r.type == 'like':
-            r.response['content'] = '%s liked' % r.actor.get('displayName', '-')
-          elif r.type == 'repost':
-            r.response['content'] = '%s reposted' % r.actor.get('displayName', '-')
-          elif r.type == 'rsvp':
-            r.response['content'] = as_source.RSVP_CONTENTS.get(r.response.get('verb'))
+          phrases = {
+            'like': 'liked this',
+            'repost': 'reposted this',
+            'rsvp-yes': 'is attending',
+            'rsvp-no': 'is not attending',
+            'rsvp-maybe': 'might attend',
+            'invite': 'is invited',
+          }
+          r.response['content'] = '%s %s.' % (
+            r.actor.get('displayName') or '',
+            phrases.get(r.type) or phrases.get(r.response.get('verb')))
 
         # convert image URL to https if we're serving over SSL
         image_url = r.actor.setdefault('image', {}).get('url')
