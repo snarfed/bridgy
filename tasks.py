@@ -248,8 +248,7 @@ class Poll(webapp2.RequestHandler):
     #
     # Step 3: filter out responses we've already seen
     #
-    # seen responses (JSON objects) for each source are cached in memcache. look
-    # there first, then fall back to a datastore batch get.
+    # seen responses (JSON objects) for each source are stored in its entity.
     unchanged_responses = []
     if source.seen_responses_cache_json:
       for seen in json.loads(source.seen_responses_cache_json):
