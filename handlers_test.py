@@ -242,8 +242,6 @@ class HandlersTest(testutil.HandlerTest):
           'url': 'http://fa.ke/rsvper_id',  # same URL as FakeSource.user_url()
           'image': {'url': 'http://example.com/ryan/image'},
           },
-        'displayName': 'Alice is not attending.',
-        'content': '<data class="p-rsvp" value="no">is not attending.</data>',
         })
 
     self.check_response('/rsvp/fake/%s/000/111', """\
@@ -255,10 +253,9 @@ class HandlersTest(testutil.HandlerTest):
     <img class="u-photo" src="https://example.com/ryan/image" alt="" />
   </div>
 
-  <div class="p-name">Alice is not attending.</div>
+  <div class="p-name"><data class="p-rsvp" value="no">is not attending.</data></div>
   <div class="e-content">
 
-  <data class="p-rsvp" value="no">is not attending.</data>
   <a class="u-mention" href="http://other/link"></a>
   </div>
 
@@ -273,8 +270,6 @@ class HandlersTest(testutil.HandlerTest):
       'id': 'tag:fa.ke,2013:111',
       'objectType': 'activity',
       'verb': 'invite',
-      'displayName': 'Ms. Guest is invited.',
-      'content': 'is invited.',
       'url': 'http://fa.ke/event',
       'actor': {
         'displayName': 'Mrs. Host',
@@ -296,14 +291,13 @@ class HandlersTest(testutil.HandlerTest):
 
   </div>
 
-<div class="p-name"><a class="u-url" href="http://fa.ke/event">Ms. Guest is invited.</a></div>
+<div class="p-name"><a class="u-url" href="http://fa.ke/event">invited</a></div>
   <div class="e-content">
   <div class="h-card p-invitee">
     <div class="p-name"><a class="u-url" href="http://fa.ke/guest">Ms. Guest</a></div>
 
   </div>
 
-  is invited.
   <a class="u-mention" href="http://other/link"></a>
   </div>
 
