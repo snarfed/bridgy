@@ -254,9 +254,8 @@ class Poll(webapp2.RequestHandler):
       for seen in json.loads(source.seen_responses_cache_json):
         id = seen['id']
         resp = responses.get(id)
-        # TEMPORARILY discard changed responses. see #374. TODO(ryan): revert
-        if resp:  # and not source.as_source.activity_changed(seen, resp, log=True):
-          unchanged_responses.append(resp)
+        if resp and not source.as_source.activity_changed(seen, resp, log=True):
+          unchanged_responses.append(seen)
           del responses[id]
 
     #
