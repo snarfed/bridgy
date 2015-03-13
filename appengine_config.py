@@ -82,6 +82,7 @@ class BlacklistingHandler(ereporter.ExceptionRecordingHandler):
     "KeyError: u'http://www.nytimes.com/",
     'RequestError: Server responded with: 503',  # gdata.client.RequestError
     'Timeout',
+    'TransactionFailedError: The transaction could not be committed.',
     'TransientError',
     'TweepError: HTTPSConnectionPool',
     )
