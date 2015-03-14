@@ -621,11 +621,6 @@ class PropagateResponse(SendWebmentions):
       logging.info('Response or activity is non-public. Dropping.')
       self.complete()
       return
-    # TEMPORARILY skip old responses due to #374. TODO(ryan): revert
-    elif datetime.datetime.now() - self.entity.created > datetime.timedelta(days=2):
-      logging.warning('Dropping dupe webmention caused by issue #374')
-      self.complete()
-      return
 
     source = self.entity.source.get()
     if not source:
