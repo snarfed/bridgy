@@ -38,7 +38,7 @@ class InstagramTest(testutil.ModelsTest):
     """Check that min_id is discarded."""
     inst = Instagram.new(self.handler, auth_entity=self.auth_entity)
     self.expect_urlopen(
-      'https://api.instagram.com/v1/users/self/media/recent',
+      'https://api.instagram.com/v1/users/self/media/recent?access_token=my_token',
       '{"data":[]}')
     self.mox.ReplayAll()
     assert inst.get_activities_response(min_id='123')

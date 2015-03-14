@@ -103,7 +103,7 @@ class CronTest(ModelsTest):
   def test_update_instagram_pictures(self):
     for username in 'a', 'b':
       self.expect_urlopen(
-        'https://api.instagram.com/v1/users/self',
+        'https://api.instagram.com/v1/users/self?access_token=token',
         json.dumps({'data': {'id': username,
                              'username': username,
                              'full_name': 'Ryan Barrett',

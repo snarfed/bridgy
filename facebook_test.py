@@ -77,7 +77,7 @@ class FacebookPageTest(testutil.ModelsTest):
       'https://graph.facebook.com/v2.2/me/events?access_token=my_token',
       json.dumps({'data': [as_facebook_test.EVENT, owned_event]}))
     self.expect_urlopen(
-      re.compile('^https://graph.facebook.com/v2.2/145304994.+'),
+      re.compile('^https://graph.facebook.com/v2.2/145304994\?.+'),
       json.dumps(as_facebook_test.EVENT))
     self.expect_urlopen(
       re.compile('^https://graph.facebook.com/v2.2/888\?.+'),
@@ -205,10 +205,9 @@ class FacebookPageTest(testutil.ModelsTest):
     self.expect_urlopen(
       'https://graph.facebook.com/v2.2/me/posts?offset=0&limit=50&access_token=my_token',
       json.dumps({'data': [post]}))
-    self.expect_urlopen('https://graph.facebook.com/v2.2/sharedposts?ids=10100176064482163',
-                        '{}')
-    self.expect_urlopen('https://graph.facebook.com/v2.2/me/photos/uploaded', '{}')
-    self.expect_urlopen('https://graph.facebook.com/v2.2/me/events', '{}')
+    self.expect_urlopen('https://graph.facebook.com/v2.2/sharedposts?ids=10100176064482163&access_token=my_token', '{}')
+    self.expect_urlopen('https://graph.facebook.com/v2.2/me/photos/uploaded?access_token=my_token', '{}')
+    self.expect_urlopen('https://graph.facebook.com/v2.2/me/events?access_token=my_token', '{}')
 
     # posse post discovery
     self.expect_requests_get('http://author/url', """
