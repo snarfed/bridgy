@@ -430,19 +430,25 @@ class SendWebmentions(webapp2.RequestHandler):
       raise
 
   def do_send_webmentions(self):
+    urls = self.entity.unsent + self.entity.error + self.entity.failed
     unsent = set()
-    for url in self.entity.unsent + self.entity.error + self.entity.failed:
+    self.entity.error = []
+    self.entity.failed = []
+
+    for orig_url in urls:
       # recheck the url here since the checks may have failed during the poll
       # or streaming add.
-      url, domain, ok = util.get_webmention_target(url)
+      url, domain, ok = util.get_webmention_target(orig_url)
       if ok:
         # When debugging locally, redirect our own webmentions to localhost
         if appengine_config.DEBUG and domain in util.LOCALHOST_TEST_DOMAINS:
-            url = url.replace(domain, 'localhost')
-        unsent.add(url)
+          url = url.replace(domain, 'localhost')
+        if len(url) <= _MAX_STRING_LENGTH:
+          unsent.add(url)
+        else:
+          logging.warning('Giving up on target URL over 500 chars! %s', url)
+          self.entity.failed.append(orig_url)
     self.entity.unsent = sorted(unsent)
-    self.entity.error = []
-    self.entity.failed = []
 
     while self.entity.unsent:
       target = self.entity.unsent.pop(0)

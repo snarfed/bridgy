@@ -283,7 +283,10 @@ class PollTest(TaskQueueTest):
                        json.loads(resp.urls_to_activity))
 
   def test_url_over_500_chars(self):
-    """URLs over 500 chars should be truncated and skipped."""
+    """URLs over 500 chars should be truncated and skipped.
+
+    https://github.com/snarfed/bridgy/issues/273
+    """
     self.activities[0]['object'].update({'tags': [], 'content': 'http://first'})
     self.sources[0].set_activities([self.activities[0]])
 
@@ -1329,6 +1332,18 @@ class PropagateTest(TaskQueueTest):
     self.responses[0].put()
     self.expect_webmention().AndRaise(requests.exceptions.ConnectionError(
         'Max retries exceeded: DNS lookup failed for URL: foo'))
+    self.mox.ReplayAll()
+
+    self.post_task()
+    self.assert_response_is('complete', failed=['http://target1/post/url'])
+
+  def test_redirects_to_over_500_chars(self):
+    """If a URL redirects to one over 500 chars, we should skip it.
+
+    https://github.com/snarfed/bridgy/issues/273
+    """
+    too_long = 'http://' + 'x' * 500
+    self.expect_requests_head('http://target1/post/url', redirected_url=too_long)
     self.mox.ReplayAll()
 
     self.post_task()
