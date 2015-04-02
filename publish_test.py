@@ -150,6 +150,15 @@ class PublishTest(testutil.HandlerTest):
     self.mox.ReplayAll()
     self.assert_success('foo - http://FoO.cOm/Bar', source='http://FoO.cOm/Bar')
 
+  def test_success_source_status_error(self):
+    """Sources in status 'error' should still be able to publish."""
+    self.source.status = 'error'
+    self.source.put()
+
+    self.expect_requests_get('http://foo.com/bar', self.post_html % 'foo')
+    self.mox.ReplayAll()
+    self.assert_success('foo - http://foo.com/bar')
+
   def test_already_published(self):
     """We shouldn't allow duplicating an existing, *completed* publish."""
     page = PublishedPage(id='http://foo.com/bar')
