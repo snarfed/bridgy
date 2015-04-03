@@ -112,7 +112,7 @@ class CronTest(ModelsTest):
     self.mox.ReplayAll()
 
     sources = []
-    for username in 'a', 'b', 'c':
+    for username in 'a', 'b', 'c', 'd':
       auth_entity = oauth_instagram.InstagramAuth(
         id=username, auth_code='code', access_token_str='token',
         user_json=json.dumps({'username': username,
@@ -120,10 +120,12 @@ class CronTest(ModelsTest):
                               'profile_picture': 'http://old/pic',
                             }))
       auth_entity.put()
-      source = Instagram.new(None, auth_entity=auth_entity)
+      source = Instagram.new(None, auth_entity=auth_entity, features=['listen'])
+      # test that we skip disabled and deleted sources
       if username == 'c':
-        # test that we skip disabled sources
         source.status = 'disabled'
+      elif username == 'd':
+        source.features = []
       sources.append(source.put())
 
     resp = cron.application.get_response('/cron/update_instagram_pictures')
@@ -132,3 +134,4 @@ class CronTest(ModelsTest):
     self.assertEquals('http://new/pic', sources[0].get().picture)
     self.assertEquals('http://new/pic', sources[1].get().picture)
     self.assertEquals('http://old/pic', sources[2].get().picture)
+    self.assertEquals('http://old/pic', sources[3].get().picture)
