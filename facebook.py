@@ -196,6 +196,9 @@ class FacebookPage(models.Source):
     # discard objects with ids with colons in them. Background:
     # https://github.com/snarfed/bridgy/issues/305
     def remove_bad_ids(objs, label):
+      if not objs:
+        return objs
+
       ret = []
       for o in objs:
         id = util.parse_tag_uri(o.get('id') or o.get('object', {}).get('id') or '')
@@ -206,10 +209,11 @@ class FacebookPage(models.Source):
       return ret
 
     resp['items'] = remove_bad_ids(activities, 'activity')
-    for a in resp['items']:
-      obj['tags'] = remove_bad_ids(obj.get('tags', []), 'tag/like')
+    for activity in resp['items']:
+      obj = activity.get('object', {})
+      obj['tags'] = remove_bad_ids(obj.get('tags'), 'tag/like')
       replies = obj.setdefault('replies', {})
-      replies['items'] = remove_bad_ids(replies.get('items', []), 'comment')
+      replies['items'] = remove_bad_ids(replies.get('items'), 'comment')
       replies['totalItems'] = len(replies['items'])
 
     return resp
