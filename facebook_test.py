@@ -115,13 +115,22 @@ class FacebookPageTest(testutil.ModelsTest):
     self.assertEquals(3, len(obj['replies']['items']))
     self.assertEquals(3, len([t for t in obj['tags'] if t.get('verb') == 'like']))
 
-  def test_get_activities_catches_comment_ids_with_colons(self):
+  def test_get_activities_ignores_comment_ids_with_colons(self):
     # Background: https://github.com/snarfed/bridgy/issues/305
-    post = copy.deepcopy(as_facebook_test.POST)
-    post['comments']['data'][1]['id'] = '123:456'
+    post_with_bad_comment_and_like = copy.deepcopy(as_facebook_test.POST)
+    comment = copy.deepcopy(as_facebook_test.COMMENTS[0])
+    comment['id'] = '12:34'
+    post_with_bad_comment_and_like['comments']['data'].append(comment)
+    post_with_bad_comment_and_like['likes']['data'].append(
+      {'id': '56:78', 'name': 'Bad'})
+
+    bad_post = copy.deepcopy(as_facebook_test.POST)
+    bad_post['id'] = '90:90'
+    del bad_post['object_id']
+
     self.expect_urlopen(
       'https://graph.facebook.com/v2.2/me/posts?offset=0&access_token=my_token',
-      json.dumps({'data': [post]}))
+      json.dumps({'data': [bad_post, post_with_bad_comment_and_like]}))
     self.expect_urlopen(
       'https://graph.facebook.com/v2.2/me/photos/uploaded?access_token=my_token',
       json.dumps({'data': []}))
@@ -130,8 +139,9 @@ class FacebookPageTest(testutil.ModelsTest):
       json.dumps({}))
     self.mox.ReplayAll()
 
-    self.assertRaisesRegexp(AssertionError, 'Cowardly refusing id with colon',
-                            self.fb.get_activities)
+    # should only get the base activity, without the extra comment, and not the
+    # bad activity at all
+    self.assert_equals([self.post_activity], self.fb.get_activities())
 
   def test_revoked(self):
     self.expect_urlopen(

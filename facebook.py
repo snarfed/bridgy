@@ -193,15 +193,24 @@ class FacebookPage(models.Source):
     activities += [self.as_source.event_to_activity(e, rsvps=r)
                    for e, r in events_and_rsvps]
 
-    # check that no ids have colons in them. Background:
+    # discard objects with ids with colons in them. Background:
     # https://github.com/snarfed/bridgy/issues/305
-    for a in activities:
-      obj = a.get('object', {})
-      for o in ([a, obj] + obj.get('tags', []) +
-                obj.get('replies', {}).get('items', [])):
-        id = util.parse_tag_uri(o.get('id', ''))
-        if id:
-          assert ':' not in id[1], 'Cowardly refusing id with colon: %s' % id[1]
+    def remove_bad_ids(objs, label):
+      ret = []
+      for o in objs:
+        id = util.parse_tag_uri(o.get('id') or o.get('object', {}).get('id') or '')
+        if id and ':' in id[1]:
+          logging.warning('Cowardly ignoring %s with bad id: %s', label,  id[1])
+        else:
+          ret.append(o)
+      return ret
+
+    resp['items'] = remove_bad_ids(activities, 'activity')
+    for a in resp['items']:
+      obj['tags'] = remove_bad_ids(obj.get('tags', []), 'tag/like')
+      replies = obj.setdefault('replies', {})
+      replies['items'] = remove_bad_ids(replies.get('items', []), 'comment')
+      replies['totalItems'] = len(replies['items'])
 
     return resp
 
