@@ -390,7 +390,8 @@ class Source(StringIdModel):
     source.put()
 
     if 'listen' in source.features:
-      util.add_poll_task(source)
+      util.add_poll_task(source, now=True)
+      util.add_poll_task(source, countdown=source.poll_period().total_seconds())
 
     return source
 

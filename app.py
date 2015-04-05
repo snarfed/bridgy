@@ -412,7 +412,7 @@ class PollNowHandler(util.Handler):
     if not source:
       self.abort(400, 'source not found')
 
-    util.add_poll_task(source)
+    util.add_poll_task(source, now=True)
     self.messages.add("Polling now. Refresh in a minute to see what's new!")
     self.redirect(source.bridgy_url(self))
 

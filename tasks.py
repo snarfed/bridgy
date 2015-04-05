@@ -81,7 +81,7 @@ class Poll(webapp2.RequestHandler):
   Inserts a propagate task for each response that hasn't been seen before.
   """
 
-  def post(self):
+  def post(self, *path_args):
     logging.debug('Params: %s', self.request.params)
 
     key = self.request.params['source_key']
@@ -704,7 +704,7 @@ class PropagateBlogPost(SendWebmentions):
 
 
 application = webapp2.WSGIApplication([
-    ('/_ah/queue/poll', Poll),
+    ('/_ah/queue/poll(-now)?', Poll),
     ('/_ah/queue/propagate', PropagateResponse),
     ('/_ah/queue/propagate-blogpost', PropagateBlogPost),
     ], debug=appengine_config.DEBUG)

@@ -6,6 +6,10 @@ queue:
   retry_parameters:
     min_backoff_seconds: 120
 
+- name: poll-now
+  rate: 1/s
+  max_concurrent_requests: 1
+
 - name: propagate
   rate: 1/s
   max_concurrent_requests: 1

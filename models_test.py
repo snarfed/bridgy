@@ -167,8 +167,9 @@ class SourceTest(testutil.HandlerTest):
     msg = "Added fake (FakeSource). Refresh to see what we've found!"
     self.assert_equals({msg}, self.handler.messages)
 
-    task_params = testutil.get_task_params(self.taskqueue_stub.GetTasks('poll')[0])
-    self.assertEqual('1970-01-01-00-00-00', task_params['last_polled'])
+    for queue in 'poll', 'poll-now':
+      task_params = testutil.get_task_params(self.taskqueue_stub.GetTasks(queue)[0])
+      self.assertEqual('1970-01-01-00-00-00', task_params['last_polled'])
 
   def test_create_new_already_exists(self):
     long_ago = datetime.datetime(year=1901, month=2, day=3)
@@ -205,6 +206,7 @@ class SourceTest(testutil.HandlerTest):
     """If a source is publish only, we shouldn't insert a poll task."""
     FakeSource.create_new(self.handler, features=['publish'])
     self.assertEqual(0, len(self.taskqueue_stub.GetTasks('poll')))
+    self.assertEqual(0, len(self.taskqueue_stub.GetTasks('poll-now')))
 
   def test_create_new_webmention(self):
     """We should subscribe to webmention sources in Superfeedr."""
