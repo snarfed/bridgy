@@ -195,10 +195,10 @@ class FacebookPage(models.Source):
 
     # discard objects with ids with colons in them. Background:
     # https://github.com/snarfed/bridgy/issues/305
-    def remove_bad_ids(objs, label):
-      if not objs:
-        return objs
+    if self.key.id() in ('212038', '12802152'):
+      return resp
 
+    def remove_bad_ids(objs, label):
       ret = []
       for o in objs:
         id = util.parse_tag_uri(o.get('id') or o.get('object', {}).get('id') or '')
@@ -211,14 +211,14 @@ class FacebookPage(models.Source):
     resp['items'] = remove_bad_ids(activities, 'activity')
     for activity in resp['items']:
       obj = activity.get('object', {})
-      obj['tags'] = remove_bad_ids(obj.get('tags'), 'tag/like')
+      obj['tags'] = remove_bad_ids(obj.setdefault('tags', []), 'tag/like')
       replies = obj.get('replies', {})
       items = replies.get('items')
       if items:
         replies['items'] = remove_bad_ids(items, 'comment')
         replies['totalItems'] = len(replies['items'])
 
-    return resp
+    return util.trim_nulls(resp)
 
   def canonicalize_syndication_url(self, url):
     """Facebook-specific standardization of syndicated urls. Canonical form is
