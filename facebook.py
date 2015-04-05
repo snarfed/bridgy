@@ -212,9 +212,11 @@ class FacebookPage(models.Source):
     for activity in resp['items']:
       obj = activity.get('object', {})
       obj['tags'] = remove_bad_ids(obj.get('tags'), 'tag/like')
-      replies = obj.setdefault('replies', {})
-      replies['items'] = remove_bad_ids(replies.get('items'), 'comment')
-      replies['totalItems'] = len(replies['items'])
+      replies = obj.get('replies', {})
+      items = replies.get('items')
+      if items:
+        replies['items'] = remove_bad_ids(items, 'comment')
+        replies['totalItems'] = len(replies['items'])
 
     return resp
 
