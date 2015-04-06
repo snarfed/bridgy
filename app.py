@@ -221,8 +221,9 @@ class UserHandler(DashboardHandler):
     # Responses
     if 'listen' in self.source.features:
       vars['responses'] = []
-      for r in Response.query().filter(Response.source == self.source.key)\
-                               .order(-Response.updated):
+      for i, r in enumerate(Response.query()
+                              .filter(Response.source == self.source.key)\
+                              .order(-Response.updated)):
         r.response = json.loads(r.response_json)
         if r.activity_json:  # handle old entities
           r.activities_json.append(r.activity_json)
@@ -255,7 +256,7 @@ class UserHandler(DashboardHandler):
         r.links = self.process_webmention_links(r)
 
         vars['responses'].append(r)
-        if len(vars['responses']) >= 10:
+        if len(vars['responses']) >= 10 or i > 200:
           break
 
     # Publishes
