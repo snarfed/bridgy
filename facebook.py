@@ -195,9 +195,6 @@ class FacebookPage(models.Source):
 
     # discard objects with ids with colons in them. Background:
     # https://github.com/snarfed/bridgy/issues/305
-    if self.key.id() in ('212038', '12802152'):
-      return resp
-
     def remove_bad_ids(objs, label):
       ret = []
       for o in objs:
