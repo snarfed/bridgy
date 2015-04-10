@@ -18,7 +18,6 @@ from webmentiontools import send
 
 from google.appengine.ext import ndb
 
-
 VERB_TYPES = ('comment', 'like', 'repost', 'rsvp')
 TYPES = VERB_TYPES + ('post', 'preview')
 
@@ -617,7 +616,7 @@ class Response(Webmentions):
       resp.status = 'new'
       resp.unsent += resp.sent + resp.error + resp.failed + resp.skipped
       resp.sent = resp.error = resp.failed = resp.skipped = []
-      resp.old_response_jsons.append(resp.response_json)
+      resp.old_response_jsons = resp.old_response_jsons[:10] + [resp.response_json]
       resp.response_json = self.response_json
       resp.put()
       self.add_task(transactional=True)
