@@ -16,6 +16,7 @@ import urllib2
 
 import apiclient
 from google.appengine.api import memcache
+from google.appengine.api.datastore_types import _MAX_STRING_LENGTH
 from google.appengine.ext import ndb
 import httplib2
 from oauth2client.client import AccessTokenRefreshError
@@ -282,22 +283,22 @@ class PollTest(TaskQueueTest):
     self.assert_equals({'http://first': 0, 'http://second': 1},
                        json.loads(resp.urls_to_activity))
 
-  def test_url_over_500_chars(self):
-    """URLs over 500 chars should be truncated and skipped.
+  def test_too_long_urls(self):
+    """URLs longer than the datastore's limit should be truncated and skipped.
 
     https://github.com/snarfed/bridgy/issues/273
     """
     self.activities[0]['object'].update({'tags': [], 'content': 'http://first'})
     self.sources[0].set_activities([self.activities[0]])
 
-    too_long = 'http://' + 'x' * 500
+    too_long = 'http://' + 'x' * _MAX_STRING_LENGTH
     self.expect_requests_head('http://first', redirected_url=too_long)
 
     self.mox.ReplayAll()
     self.post_task()
     resp = self.responses[0].key.get()
     self.assert_equals([], resp.unsent)
-    self.assert_equals([too_long[:496] + '...'], resp.failed)
+    self.assert_equals([too_long[:_MAX_STRING_LENGTH - 4] + '...'], resp.failed)
 
   def test_non_public_posts(self):
     """Only posts with to: @public should be propagated."""
@@ -1337,12 +1338,12 @@ class PropagateTest(TaskQueueTest):
     self.post_task()
     self.assert_response_is('complete', failed=['http://target1/post/url'])
 
-  def test_redirects_to_over_500_chars(self):
-    """If a URL redirects to one over 500 chars, we should skip it.
+  def test_redirect_to_too_long_url(self):
+    """If a URL redirects to one over the URL length limit, we should skip it.
 
     https://github.com/snarfed/bridgy/issues/273
     """
-    too_long = 'http://' + 'x' * 500
+    too_long = 'http://' + 'x' * _MAX_STRING_LENGTH
     self.expect_requests_head('http://target1/post/url', redirected_url=too_long)
     self.mox.ReplayAll()
 

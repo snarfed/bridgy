@@ -279,7 +279,8 @@ class Poll(webapp2.RequestHandler):
           if len(t) <= _MAX_STRING_LENGTH:
             urls_to_activity[t] = i
           else:
-            logging.warning('Giving up on target URL over 500 chars! %s', t)
+            logging.warning('Giving up on target URL over %s chars! %s',
+                            _MAX_STRING_LENGTH, t)
             too_long.add(t[:_MAX_STRING_LENGTH - 4] + '...')
 
       resp = Response(
@@ -446,7 +447,8 @@ class SendWebmentions(webapp2.RequestHandler):
         if len(url) <= _MAX_STRING_LENGTH:
           unsent.add(url)
         else:
-          logging.warning('Giving up on target URL over 500 chars! %s', url)
+          logging.warning('Giving up on target URL over %s chars! %s',
+                          _MAX_STRING_LENGTH, url)
           self.entity.failed.append(orig_url)
     self.entity.unsent = sorted(unsent)
 
