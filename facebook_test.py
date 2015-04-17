@@ -115,6 +115,31 @@ class FacebookPageTest(testutil.ModelsTest):
     self.assertEquals(3, len(obj['replies']['items']))
     self.assertEquals(3, len([t for t in obj['tags'] if t.get('verb') == 'like']))
 
+  def test_get_activities_canonicalizes_ids_with_colons(self):
+    """https://github.com/snarfed/bridgy/issues/305"""
+    # translate post id and comment ids to same ids in new colon-based format
+    post = copy.deepcopy(as_facebook_test.POST)
+    post['id'] = self.post_activity['object']['fb_id'] = \
+        self.post_activity['fb_id'] = '212038:10100176064482163:11'
+
+    reply = self.post_activity['object']['replies']['items'][0]
+    post['comments']['data'][0]['id'] = reply['fb_id'] = \
+        '12345:547822715231468:987_6796480'
+    reply['url'] = 'https://www.facebook.com/12345/posts/547822715231468?comment_id=6796480'
+
+    self.expect_urlopen(
+      'https://graph.facebook.com/v2.2/me/posts?offset=0&access_token=my_token',
+      json.dumps({'data': [post]}))
+    self.expect_urlopen(
+      'https://graph.facebook.com/v2.2/me/photos/uploaded?access_token=my_token',
+      json.dumps({'data': []}))
+    self.expect_urlopen(
+      'https://graph.facebook.com/v2.2/me/events?access_token=my_token',
+      json.dumps({}))
+    self.mox.ReplayAll()
+
+    self.assert_equals([self.post_activity], self.fb.get_activities())
+
   def test_get_activities_ignores_bad_comment_ids(self):
     """https://github.com/snarfed/bridgy/issues/305"""
     bad_post = copy.deepcopy(as_facebook_test.POST)
