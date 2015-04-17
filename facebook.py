@@ -193,6 +193,9 @@ class FacebookPage(models.Source):
     activities += [self.as_source.event_to_activity(e, rsvps=r)
                    for e, r in events_and_rsvps]
 
+    # TODO: remove once we're confident in our id parsing. (i'm going to canary
+    # with just a few users before i do it for everyone.)
+    #
     # discard objects with ids with colons in them. Background:
     # https://github.com/snarfed/bridgy/issues/305
     def remove_bad_ids(objs, label):

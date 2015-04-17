@@ -115,22 +115,19 @@ class FacebookPageTest(testutil.ModelsTest):
     self.assertEquals(3, len(obj['replies']['items']))
     self.assertEquals(3, len([t for t in obj['tags'] if t.get('verb') == 'like']))
 
-  def test_get_activities_ignores_comment_ids_with_colons(self):
-    # Background: https://github.com/snarfed/bridgy/issues/305
-    post_with_bad_comment_and_like = copy.deepcopy(as_facebook_test.POST)
-    comment = copy.deepcopy(as_facebook_test.COMMENTS[0])
-    comment['id'] = '12:34'
-    post_with_bad_comment_and_like['comments']['data'].append(comment)
-    post_with_bad_comment_and_like['likes']['data'].append(
-      {'id': '56:78', 'name': 'Bad'})
-
+  def test_get_activities_ignores_bad_comment_ids(self):
+    """https://github.com/snarfed/bridgy/issues/305"""
     bad_post = copy.deepcopy(as_facebook_test.POST)
-    bad_post['id'] = '90:90'
+    bad_post['id'] = '90^90'
     del bad_post['object_id']
+
+    post_with_bad_comment = copy.deepcopy(as_facebook_test.POST)
+    post_with_bad_comment['comments']['data'].append(
+      {'id': '12^34', 'message': 'bad to the bone'})
 
     self.expect_urlopen(
       'https://graph.facebook.com/v2.2/me/posts?offset=0&access_token=my_token',
-      json.dumps({'data': [bad_post, post_with_bad_comment_and_like]}))
+      json.dumps({'data': [bad_post, post_with_bad_comment]}))
     self.expect_urlopen(
       'https://graph.facebook.com/v2.2/me/photos/uploaded?access_token=my_token',
       json.dumps({'data': []}))
