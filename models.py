@@ -555,11 +555,21 @@ class Webmentions(StringIdModel):
     """
     raise NotImplementedError()
 
-  @ndb.transactional
+  @ndb.transactional(xg=True)
   def get_or_save(self):
     existing = self.key.get()
     if existing:
       return existing
+
+    # TODO(ryan): take this out eventually. (and the xg=Trues!) background:
+    # https://github.com/snarfed/bridgy/issues/305#issuecomment-94004416
+    resp_json = getattr(self, 'response_json', None)
+    if resp_json:
+      fb_id = json.loads(resp_json).get('fb_id')
+      if fb_id:
+        resp = Response.get_by_id('tag:facebook.com,2013:' + fb_id)
+        if resp:
+          return resp
 
     if self.unsent or self.error:
       logging.debug('New webmentions to propagate! %s', self.label())
@@ -605,7 +615,7 @@ class Response(Webmentions):
     type = get_type(obj)
     return type if type in VERB_TYPES else 'comment'
 
-  @ndb.transactional
+  @ndb.transactional(xg=True)
   def get_or_save(self, source):
     resp = super(Response, self).get_or_save()
 

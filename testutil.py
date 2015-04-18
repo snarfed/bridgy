@@ -9,6 +9,7 @@ import logging
 
 import appengine_config
 
+from google.appengine.datastore import datastore_stub_util
 from google.appengine.ext import ndb
 import requests
 
@@ -179,8 +180,10 @@ class HandlerTest(as_testutil.TestCase):
     super(HandlerTest, self).setUp()
     self.handler = util.Handler(self.request, self.response)
     logging.getLogger().removeHandler(appengine_config.ereporter_logging_handler)
+
     # TODO: remove this and don't depend on consistent global queries
-    self.testbed.init_datastore_v3_stub(consistency_policy=None)
+    policy = datastore_stub_util.PseudoRandomHRConsistencyPolicy(probability=1)
+    self.testbed.init_datastore_v3_stub(consistency_policy=policy)
 
     # add FakeSource everywhere necessary
     util.BLACKLIST.add('fa.ke')

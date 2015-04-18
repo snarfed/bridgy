@@ -334,6 +334,22 @@ class PollTest(TaskQueueTest):
     self.assert_responses()
     self.assertEqual('complete', self.responses[0].key.get().status)
 
+  def test_existing_response_with_fb_id(self):
+    """We should de-dupe responses using fb_id as well as id.
+
+    https://github.com/snarfed/bridgy/issues/305#issuecomment-94004416
+    """
+    self.activities[0]['object']['replies']['items'][0]['fb_id'] = '12:34:56_78'
+    fb_id_resp = models.Response(id='tag:facebook.com,2013:12:34:56_78',
+                                 **self.responses[0].to_dict())
+    fb_id_resp.status = 'complete'
+    fb_id_resp.put()
+
+    self.post_task()
+    self.assertIsNone(self.responses[0].key.get())
+    self.assertEqual('complete', fb_id_resp.key.get().status)
+
+
   def test_same_response_for_multiple_activities(self):
     """Should combine the original post URLs from all of them.
     """
