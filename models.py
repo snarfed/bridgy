@@ -565,11 +565,14 @@ class Webmentions(StringIdModel):
     # https://github.com/snarfed/bridgy/issues/305#issuecomment-94004416
     resp_json = getattr(self, 'response_json', None)
     if resp_json:
-      fb_id = json.loads(resp_json).get('fb_id')
+      resp = json.loads(resp_json)
+      fb_id = resp.get('fb_id')
       if fb_id:
-        resp = Response.get_by_id('tag:facebook.com,2013:' + fb_id)
-        if resp:
-          return resp
+        tag_fb_id = 'tag:facebook.com,2013:' + fb_id
+        if tag_fb_id != resp.get('id'):
+          resp = Response.get_by_id(tag_fb_id)
+          if resp:
+            return resp
 
     if self.unsent or self.error:
       logging.debug('New webmentions to propagate! %s', self.label())
