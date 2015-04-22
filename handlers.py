@@ -35,6 +35,12 @@ import original_post_discovery
 import util
 import webapp2
 
+# Import source class files so their metaclasses are initialized.
+import facebook
+import googleplus
+import instagram
+import twitter
+
 TEMPLATE = string.Template("""\
 <!DOCTYPE html>
 <html>
