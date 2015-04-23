@@ -853,19 +853,26 @@ Join us!"""
     for preview in False, True:
       self.assert_success(text, preview=preview, params={'bridgy_omit_link': ''})
 
-  def test_charset_in_meta_tag(self):
+  def test_utf8_meta_tag(self):
+    self._test_charset_in_meta_tag('utf-8')
+
+  def test_iso8859_meta_tag(self):
+    """https://github.com/snarfed/bridgy/issues/385"""
+    self._test_charset_in_meta_tag('iso-8859-1')
+
+  def _test_charset_in_meta_tag(self, charset):
     """Test that we support charset in meta tag as well as HTTP header."""
     text = u'Démo pour les développeur. Je suis navrée de ce problème.'
 
     resp = requests.Response()
-    resp._content = u"""
+    resp._content = (u"""
 <html>
-<head><meta charset="utf-8"></head>
+<head><meta charset="%s"></head>
 <body><article class="h-entry"><p class="e-content">%s</p></article></body>
 <a href="http://localhost/publish/fake"></a>
 </html>
-""" % text
-    resp._text = "shouldn't use this!"
+""" % (charset, text)).encode(charset)
+    resp._text = "shouldn't use this! " + text
     resp.url = 'http://foo.com/bar'
     resp.status_code = 200
     requests.get(resp.url, timeout=appengine_config.HTTP_TIMEOUT,
