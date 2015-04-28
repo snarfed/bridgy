@@ -62,7 +62,7 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
       return self.error('Home page webmentions are not currently supported.')
 
     # create BlogWebmention entity
-    id = '%s %s' % (self.source_url, self.target_url)
+    id = u'%s %s' % (self.source_url, self.target_url)
     self.entity = BlogWebmention.get_or_insert(
       id, source=self.source.key, redirected_target_urls=redirected_target_urls)
     if self.entity.status == 'complete':
@@ -106,8 +106,9 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
     # generate content
     content = props['content'][0]  # find_mention_item() guaranteed this is here
     text = (content.get('html') or content.get('value')).strip()
+    source_url = self.entity.source_url()
     text += ' <br /> <a href="%s">via %s</a>' % (
-      self.entity.source_url(), util.domain_from_link(self.entity.source_url()))
+      source_url, util.domain_from_link(source_url))
 
     # write comment
     try:

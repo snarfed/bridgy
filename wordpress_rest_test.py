@@ -119,6 +119,21 @@ class WordPressTest(testutil.HandlerTest):
                                   'http://who', u'foo Degenève bar')
     self.assertEquals({'id': None}, resp)
 
+  def test_create_comment_with_unicode_chars_in_slug(self):
+    self.expect_urlopen(
+      u'https://public-api.wordpress.com/rest/v1/sites/123/posts/slug:✁?pretty=true',
+      json.dumps({'ID': 456}))
+    self.expect_urlopen(
+      'https://public-api.wordpress.com/rest/v1/sites/123/posts/'
+      '456/replies/new?pretty=true',
+      json.dumps({}),
+      data=urllib.urlencode({'content': '<a href="http://who">who</a>: foo bar'}))
+    self.mox.ReplayAll()
+
+    resp = self.wp.create_comment(u'http://primary/post/✁', u'who',
+                                  'http://who', u'foo bar')
+    self.assertEquals({'id': None}, resp)
+
   def test_create_comment_gives_up_on_invalid_input_error(self):
     # see https://github.com/snarfed/bridgy/issues/161
     self.expect_urlopen(

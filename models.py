@@ -716,7 +716,7 @@ class BlogWebmention(Publish, StringIdModel):
   redirected_target_urls = ndb.StringProperty(repeated=True)
 
   def source_url(self):
-    return self.u_url or self.key.id().split()[0]
+    return self.u_url or self.key.id().split()[0].decode('utf-8')
 
   def target_url(self):
     return self.key.id().split()[1]

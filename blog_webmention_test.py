@@ -1,3 +1,4 @@
+# coding=utf-8
 """Unit tests for blog_webmention.py.
 """
 
@@ -31,9 +32,9 @@ class BlogWebmentionTest(testutil.HandlerTest):
       source = 'http://bar.com/reply'
     if target is None:
       target = 'http://foo.com/post/1'
+    body = (u'source=%s&target=%s' % (source, target)).encode('utf-8')
     return blog_webmention.application.get_response(
-      '/webmention/fake', method='POST',
-      body='source=%s&target=%s' % (source, target))
+      '/webmention/fake', method='POST', body=body)
 
   def assert_error(self, expected_error, status=400, **kwargs):
     resp = self.get_response(**kwargs)
@@ -184,6 +185,28 @@ http://foo.com/post/1
         'http://foo.com/post/1?utm_source=x&utm_medium=y'))
     self.assertEquals(200, resp.status_int, resp.body)
     bw = BlogWebmention.get_by_id('http://bar.com/reply http://foo.com/post/1')
+    self.assertEquals('complete', bw.status)
+
+  def test_unicode_in_target_and_source_urls(self):
+    """Unicode chars in target and source URLs should work."""
+    # note the … and ✁ chars
+    target = u'http://foo.com/2014/11/23/england-german…iendly-wembley'
+    source = u'http://bar.com/✁/1'
+
+    html = u"""\
+<article class="h-entry"><p class="e-content">
+<span class="p-name">my post</span>
+%s
+</p></article>""" % target
+    self.expect_requests_get(source, html)
+
+    comment = u'mentioned this in <a href="%s">my post</a>. <br /> <a href="%s">via bar.com</a>' % (source, source)
+    testutil.FakeSource.create_comment(target, 'foo.com', 'http://foo.com/', comment)
+    self.mox.ReplayAll()
+
+    resp = self.get_response(source=source, target=target)
+    self.assertEquals(200, resp.status_int, resp.body)
+    bw = BlogWebmention.get_by_id(' '.join((source, target)))
     self.assertEquals('complete', bw.status)
 
   def test_target_redirects(self):

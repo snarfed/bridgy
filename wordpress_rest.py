@@ -41,9 +41,9 @@ from google.appengine.ext import ndb
 from google.appengine.ext.webapp import template
 
 
-API_CREATE_COMMENT_URL = 'https://public-api.wordpress.com/rest/v1/sites/%s/posts/%d/replies/new?pretty=true'
-API_POST_SLUG_URL = 'https://public-api.wordpress.com/rest/v1/sites/%s/posts/slug:%s?pretty=true'
-API_SITE_URL = 'https://public-api.wordpress.com/rest/v1/sites/%s?pretty=true'
+API_CREATE_COMMENT_URL = u'https://public-api.wordpress.com/rest/v1/sites/%s/posts/%d/replies/new?pretty=true'
+API_POST_SLUG_URL = u'https://public-api.wordpress.com/rest/v1/sites/%s/posts/slug:%s?pretty=true'
+API_SITE_URL = u'https://public-api.wordpress.com/rest/v1/sites/%s?pretty=true'
 
 
 class WordPress(models.Source):
@@ -134,7 +134,7 @@ class WordPress(models.Source):
       post_id = int(slug)
     except ValueError:
       logging.info('Looking up post id for slug %s', slug)
-      url = API_POST_SLUG_URL % (auth_entity.blog_id, slug.encode('utf-8'))
+      url = API_POST_SLUG_URL % (auth_entity.blog_id, slug)
       post_id = self.urlopen(auth_entity, url).get('ID')
       if not post_id:
         return self.error('Could not find post id')
