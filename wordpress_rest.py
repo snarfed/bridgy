@@ -200,7 +200,9 @@ class AddWordPress(oauth_wordpress.CallbackHandler, util.Handler):
 
       # Check if this is a self-hosted WordPress blog
       site_info = WordPress.get_site_info(self, auth_entity)
-      if site_info.get('jetpack'):
+      if site_info is None:
+        return
+      elif site_info.get('jetpack'):
         logging.info('This is a self-hosted WordPress blog! %s %s',
                      auth_entity.key.id(), auth_entity.blog_id)
         self.response.headers['Content-Type'] = 'text/html'
