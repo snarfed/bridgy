@@ -39,7 +39,7 @@ class PublishTest(testutil.HandlerTest):
       'source_url': 'http://foo.com/bar',
       'target_url': 'http://brid.gy/publish/fake',
       'source_key': self.source.key.urlsafe(),
-      'omit_link': False,
+      'bridgy_omit_link': False,
     }
     self.post_html = '<article class="h-entry"><p class="e-content">%s</p></article>'
     self.backlink = '\n<a href="http://localhost/publish/fake"></a>'
@@ -505,7 +505,11 @@ foo<br /> <blockquote></blockquote>
 </article>"""
     self.expect_requests_get('http://foo.com/bar', self.post_html % 'foo')
     self.mox.ReplayAll()
-    self.assert_success('preview of foo', preview=True)
+
+    resp = self.assert_success('preview of foo', preview=True)
+    self.assertIn(
+      '<input type="hidden" name="state" value="{&quot;bridgy_omit_link&quot;:true,',
+      resp.body.decode('utf-8'))
 
   def test_preview_omit_link_query_param_overrides_mf2(self):
     html = """\
@@ -515,9 +519,13 @@ foo<br /> <blockquote></blockquote>
 </article>"""
     self.expect_requests_get('http://foo.com/bar', html)
     self.mox.ReplayAll()
-    self.assert_success('preview of foo - http://foo.com/bar',
-                        preview=True,
-                        params={'bridgy_omit_link': 'false'})
+
+    resp = self.assert_success('preview of foo - http://foo.com/bar',
+                               preview=True,
+                               params={'bridgy_omit_link': 'false'})
+    self.assertIn(
+      '<input type="hidden" name="state" value="{&quot;bridgy_omit_link&quot;:false,',
+      resp.body.decode('utf-8'))
 
   def test_bridgy_ignore_formatting_query_param(self):
     self.expect_requests_get('http://foo.com/bar', """\
@@ -892,7 +900,6 @@ Join us!"""
     self.source = facebook.FacebookPage(id='789', features=['publish'],
                                         domains=['mr.x'])
     self.source.put()
-    # self.oauth_state['source_key'] = key.urlsafe()
 
     self.expect_requests_get('http://mr.x/like', """
     <article class="h-entry">

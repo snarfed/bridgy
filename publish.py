@@ -296,7 +296,7 @@ class Handler(webmention.WebmentionHandler):
         'source_key': self.source.key.urlsafe(),
         'source_url': self.source_url(),
         'target_url': self.target_url(),
-        'omit_link': omit_link,
+        'bridgy_omit_link': omit_link,
       }
       vars = {'source': self.preprocess_source(self.source),
               'preview': result.content,
@@ -502,8 +502,8 @@ class SendHandler(Handler):
   def target_url(self):
     return self.state['target_url']
 
-  def bridgy_omit_link(self):
-    return self.state['omit_link']
+  def omit_link(self):
+    return self.state['bridgy_omit_link']
 
   def error(self, error, html=None, status=400, data=None, mail=False):
     logging.warning(error, exc_info=True)
