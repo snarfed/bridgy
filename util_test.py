@@ -164,8 +164,9 @@ class UtilTest(testutil.ModelsTest):
       '&oauth_token=fake-token&oauth_token_secret=fake-secret')
 
     self.assert_equals(302, resp.status_code)
-    self.assert_equals('http://withknown.com/bridgy_callback',
-                       resp.headers['location'])
+    self.assert_equals(
+      'http://withknown.com/bridgy_callback?result=success&user=0123456789',
+      resp.headers['location'])
 
     source = FakeSource.get_by_id('0123456789')
     self.assertTrue(source)
@@ -207,8 +208,9 @@ class UtilTest(testutil.ModelsTest):
       '&oauth_token=fake-token&oauth_token_secret=fake-secret')
 
     self.assert_equals(302, resp.status_code)
-    self.assert_equals('http://withknown.com/bridgy_callback',
-                       resp.headers['location'])
+    self.assert_equals(
+      'http://withknown.com/bridgy_callback?result=success&user=0123456789',
+      resp.headers['location'])
 
     source = FakeSource.get_by_id('0123456789')
     self.assertTrue(source)

@@ -352,6 +352,10 @@ class Handler(webapp2.RequestHandler):
                                      features=[feature] if feature else [],
                                      user_url=user_url, **kwargs)
       if callback:
+        callback = util.add_query_params(callback, {
+          'result': 'success',
+          'user': source.key.string_id(),
+        })
         logging.debug(
           'finished adding source, redirect to external callback %s', callback)
         # call super.redirect so the callback url is unmodified

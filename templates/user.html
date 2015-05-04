@@ -2,7 +2,7 @@
 
 {% block title %}{{ source.label|safe }} - Bridgy{% endblock %}
 
-{% block body_class %} user {% endblock %}
+{% block body_class %}user h-card{% endblock %}
 
 {% block content %}
 
@@ -16,7 +16,7 @@
 </script>
 
 <!-- Header: name and picture -->
-<div id="user" class="row big h-card">
+<div id="user" class="row big">
 <a target="_blank" href="{{ source.silo_url }}" title="{{ source.label|safe }}"
    class="u-url">
   <img class="profile u-photo" src="{{ source.picture }}" width="64px" />
@@ -27,11 +27,15 @@
 
 {% if source.status == "disabled" %}
 <!-- TODO: make this work without javascript too -->
+<data class="p-bridgy-account-status" value="disabled">
 <a href="#" onclick="document.forms['listen-{{ source.SHORT_NAME }}-start'].submit();
                      return false;">
   <span class="glyphicon glyphicon-pause"
         title="This account was disconnected on {% firstof source.AS_CLASS.NAME source.key.kind %}'s end. Click to reconnect it!">
 </span></a>
+</data>
+{% else %}
+<data class="p-bridgy-account-status" value="enabled" />
 {% endif %}
 
 {% for w in source.websites %}

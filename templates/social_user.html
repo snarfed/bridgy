@@ -51,6 +51,7 @@ WordPress.com, <a href="/">sign up here!</a>
 <div id="listen-ui" class="{% if source.SHORT_NAME == 'facebook' or source.SHORT_NAME == 'twitter' or source.SHORT_NAME == 'instagram' %}col-sm-6{% endif %} big">
 
 {% if "listen" in source.features and source.status != "disabled" %}
+<data class="p-bridgy-listen-status" value="enabled">
 <form method="post" action="/delete/start">
 <p id="listening-label">Listening for responses.
   <input name="key" type="hidden" value="{{ source.key.urlsafe }}" />
@@ -60,6 +61,7 @@ WordPress.com, <a href="/">sign up here!</a>
     >Disable</button>
 </p>
 </form>
+</data>
 
 <form method="post" action="/poll-now">
 <p>
@@ -72,7 +74,7 @@ WordPress.com, <a href="/">sign up here!</a>
     Polled
     {% spaceless %}
     <a href="/log?start_time={{ source.last_poll_attempt|date:'U' }}&key={{ source.key.urlsafe }}">
-      {{ source.last_poll_attempt|timesince }} ago
+      <time class="dt-bridgy-last-polled" datetime="{{ source.last_poll_attempt|date:'c' }}">{{ source.last_poll_attempt|timesince }}</time> ago
     {% endspaceless %}</a>.
   {% endif %}
 
@@ -84,9 +86,11 @@ WordPress.com, <a href="/">sign up here!</a>
 
 <!-- Listen signup buttons -->
 {% else %}
+<data class="p-bridgy-listen-status" value="disabled">
 Click to enable <a href="/about#listen">listening</a>:
 {% block listen-signup %}
 {% endblock %}
+</data>
 {% endif %}
 
 </div>
@@ -96,6 +100,7 @@ Click to enable <a href="/about#listen">listening</a>:
 <div id="publish-ui" class="col-sm-6">
 
 {% if "publish" in source.features and source.status != "disabled" %}
+<data class="p-bridgy-publish-status" value="enabled">
 <form method="post" action="/delete/start">
 <p id="publishing-label" class="big">
  Ready to publish.
@@ -106,6 +111,7 @@ Click to enable <a href="/about#listen">listening</a>:
      >Disable</button>
 </p>
 </form>
+</data>
 
 <form method="post" name="preview" action="/publish/preview"
       onsubmit="do_preview('{{ source.SHORT_NAME }}'); return false;">
@@ -129,8 +135,10 @@ Click to enable <a href="/about#listen">listening</a>:
 
 <!-- Publish signup buttons -->
 {% else %}
+<data class="p-bridgy-publish-status" value="disabled">
 {% block publish-signup %}
 {% endblock %}
+</data>
 {% endif %}
 
 </div>

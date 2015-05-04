@@ -3,6 +3,7 @@
 
 import app
 import testutil
+import mf2py
 
 
 class AppTest(testutil.ModelsTest):
@@ -47,3 +48,24 @@ class AppTest(testutil.ModelsTest):
 
     resp = app.application.get_response(self.sources[0].bridgy_path())
     self.assertEquals(404, resp.status_int)
+
+  def test_user_page_mf2(self):
+    """parsing the user page with mf2 gives some informative fields
+    about the user and their Bridgy account status.
+    """
+    user_url = self.sources[0].bridgy_path()
+    resp = app.application.get_response(user_url)
+    self.assertEquals(200, resp.status_int)
+    parsed = mf2py.Parser(url=user_url, doc=resp.body).to_dict()
+    hcard = parsed.get('items', [])[0]
+    self.assertEquals(['h-card'], hcard['type'])
+    self.assertEquals(
+      ['fake'], hcard['properties'].get('name'))
+    self.assertEquals(
+      ['http://fa.ke/profile/url'], hcard['properties'].get('url'))
+    self.assertEquals(
+      ['enabled'], hcard['properties'].get('bridgy-account-status'))
+    self.assertEquals(
+      ['enabled'], hcard['properties'].get('bridgy-listen-status'))
+    self.assertEquals(
+      ['disabled'], hcard['properties'].get('bridgy-publish-status'))

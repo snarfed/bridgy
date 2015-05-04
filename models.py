@@ -158,7 +158,7 @@ class Source(StringIdModel):
 
   def bridgy_path(self):
     """Returns the Bridgy page URL path for this source."""
-    return '/%s/%s' % (self.SHORT_NAME,self.key.string_id())
+    return '/%s/%s' % (self.SHORT_NAME, self.key.string_id())
 
   def bridgy_url(self, handler):
     """Returns the Bridgy page URL for this source."""
