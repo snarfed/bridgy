@@ -194,6 +194,7 @@ http://foo.com/post/1
     source = u'http://bar.com/✁/1'
 
     html = u"""\
+<meta charset="utf-8">
 <article class="h-entry"><p class="e-content">
 <span class="p-name">my post</span>
 %s
