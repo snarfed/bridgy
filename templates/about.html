@@ -56,6 +56,8 @@ service.</a>
 <li><a href="#facebook-pages">Does it support Facebook pages?</a></li>
 <li><a href="#security">It looks like anyone can poll or disable my
   account or publish as me. Isn't that a security hole?</a></li>
+<li><a href="#registration-api">Can users sign up for Bridgy
+  without leaving my site or application?</a></li>
 <li><a href="#bug">I found a bug! I have a feature request!</a></li>
 <li><a href="#domain">Brid.gy? Really?</a></li>
 
@@ -246,6 +248,31 @@ disable your account or publish a post. If you <a href="#webmentions">publish vi
 webmention</a>, we require the corresponding Bridgy Publish backlink in your post.
 </p>
 </li>
+
+<li id="registration-api" class="question">Can users sign up for Bridgy
+without leaving my site or application?</li>
+<p>Not exactly, but you can get close. Direct your users to
+POST to a Bridgy registration URL with the parameters:</p>
+<ul>
+<li>"feature" usually equal to "listen" or "publish"</li>
+<li>"callback" a URL pointing back to your site</li>
+</ul>
+<p>They will be ushered through the registration process and sent back to
+your site when it finishes.</p>
+<p>Registration URLs are of the form <code>https://www.brid.gy/SOURCE/start</code>, e.g.</p>
+<pre>
+POST https://www.brid.gy/facebook/start
+feature=listen&amp;callback=http%3A%2F%2Fexample.com%2Fbridgy-callback
+
+POST https://www.brid.gy/twitter/start
+feature=publish&amp;callback=http%3A%2F%2Fexample.com%2Fbridgy-callback
+</pre>
+<p>The callback will be passed back query parameters:</p>
+<ul>
+  <li>"result" equal to "success", "failure", or "declined"</li>
+  <li>"user" (if successful) equal to their Bridgy user page URL</li>
+</ul>
+
 
 <li id="bug" class="question">I found a bug! I have a feature request!</li>
 <li class="answer">
