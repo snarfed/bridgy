@@ -351,6 +351,7 @@ class DeleteStartHandler(util.Handler):
       'operation': 'delete',
       'feature': feature,
       'source': key.urlsafe(),
+      'callback': self.request.get('callback'),
     })
 
     # Google+ and Blogger don't support redirect_url() yet
@@ -373,12 +374,18 @@ class DeleteStartHandler(util.Handler):
 
 class DeleteFinishHandler(util.Handler):
   def get(self):
+    parts = self.decode_state_parameter(util.get_required_param(self, 'state'))
+    callback = isinstance(parts, dict) and parts.get('callback')
+
     if self.request.get('declined'):
-      self.messages.add('If you want to disable, please approve the prompt.')
-      self.redirect('/')
+      if callback:
+        # disable declined means no change took place
+        callback = util.add_query_params(callback, {'result': 'declined'})
+      else:
+        self.messages.add('If you want to disable, please approve the prompt.')
+      self.redirect(str(callback) if callback else '/')
       return
 
-    parts = self.decode_state_parameter(util.get_required_param(self, 'state'))
     if (not isinstance(parts, dict) or 'feature' not in parts
         or 'source' not in parts):
       self.abort(400, 'state query parameter must include "feature" and "source"')
@@ -395,16 +402,26 @@ class DeleteFinishHandler(util.Handler):
         source.features.remove(feature)
         source.put()
       noun = 'webmentions' if feature == 'webmention' else feature + 'ing'
-      self.messages.add('Disabled %s for %s. Sorry to see you go!' %
-                        (noun, source.label()))
+      if callback:
+        callback = util.add_query_params(callback, {
+          'result': 'success',
+          'user': source.bridgy_url(self),
+          'key': source.key.urlsafe(),
+        })
+      else:
+        self.messages.add('Disabled %s for %s. Sorry to see you go!' %
+                          (noun, source.label()))
       # util.email_me(subject='Deleted Bridgy %s user: %s %s' %
       #               (feature, source.label(), source.key.string_id()),
       #               body=source.bridgy_url(self))
     else:
-      self.messages.add('Please log into %s as %s to disable it here.' %
-                        (source.AS_CLASS.NAME, source.name))
+      if callback:
+        callback = util.add_query_params(callback, {'result': 'failure'})
+      else:
+        self.messages.add('Please log into %s as %s to disable it here.' %
+                          (source.AS_CLASS.NAME, source.name))
 
-    self.redirect(source.bridgy_url(self))
+    self.redirect(str(callback) if callback else source.bridgy_url(self))
 
 
 class PollNowHandler(util.Handler):

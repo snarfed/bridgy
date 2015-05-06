@@ -230,7 +230,21 @@ class ModelsTest(HandlerTest):
   def setUp(self):
     super(ModelsTest, self).setUp()
 
-    self.sources = [FakeSource.new(None), FakeSource.new(None)]
+    self.sources = [
+      FakeSource.new(None, auth_entity=FakeAuthEntity(
+        key=ndb.Key('FakeAuthEntity', '01122334455'),
+        user_json=json.dumps({
+          'id': '0123456789',
+          'name': 'Fake User',
+          'url': 'http://fakeuser.com/',
+        }))),
+      FakeSource.new(None, auth_entity=FakeAuthEntity(
+        key=ndb.Key('FakeAuthEntity', '0022446688'),
+        user_json=json.dumps({
+          'id': '0022446688',
+          'name': 'Another Fake',
+          'url': 'http://anotherfake.com/',
+        })))]
     for entity in self.sources:
       entity.features = ['listen']
       entity.put()

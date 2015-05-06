@@ -4,6 +4,19 @@
 import app
 import testutil
 import mf2py
+import urllib
+from activitystreams.oauth_dropins import handlers as oauth_handlers
+from google.appengine.ext import ndb
+
+
+# this class stands in for a oauth_dropins module
+class FakeOAuthHandlerModule:
+
+  class StartHandler(oauth_handlers.StartHandler):
+    def redirect_url(self, state):
+      return 'http://fake/auth/url?' + urllib.urlencode({
+        'redirect_uri': self.to_url(state),
+      })
 
 
 class AppTest(testutil.ModelsTest):
@@ -38,6 +51,47 @@ class AppTest(testutil.ModelsTest):
         resp = app.application.get_response(endpoint, method='POST', body=body)
         self.assertEquals(400, resp.status_int)
 
+  def test_delete_source_callback(self):
+    app.DeleteStartHandler.OAUTH_MODULES['FakeSource'] = FakeOAuthHandlerModule
+
+    auth_entity_key = self.sources[0].auth_entity.urlsafe()
+    key = self.sources[0].key.urlsafe()
+
+    resp = app.application.get_response(
+      '/delete/start', method='POST', body=urllib.urlencode({
+        'feature': 'listen',
+        'key': key,
+        'callback': 'http://withknown.com/bridgy_callback',
+      }))
+
+    encoded_state = urllib.quote_plus(
+      '{"callback":"http://withknown.com/bridgy_callback",'
+      '"feature":"listen","operation":"delete","source":"' + key + '"}')
+
+    # when silo oauth is done, it should send us back to /SOURCE/delete/finish,
+    # which would in turn redirect to the more general /delete/finish.
+    expected_auth_url = 'http://fake/auth/url?' + urllib.urlencode({
+      'redirect_uri': 'http://localhost/fake/delete/finish?state='
+      + encoded_state,
+    })
+
+    self.assertEquals(302, resp.status_int)
+    self.assertEquals(expected_auth_url, resp.headers['Location'])
+
+    # assume that the silo auth finishes and redirects to /delete/finish
+    resp = app.application.get_response(
+      '/delete/finish?'
+      + 'auth_entity=' + auth_entity_key
+      + '&state=' + encoded_state)
+
+    self.assertEquals(302, resp.status_int)
+    self.assertEquals(
+      'http://withknown.com/bridgy_callback?' + urllib.urlencode([
+        ('result', 'success'),
+        ('key', ndb.Key('FakeSource', '0123456789').urlsafe()),
+        ('user', 'http://localhost/fake/0123456789')
+      ]), resp.headers['Location'])
+
   def test_user_page(self):
     resp = app.application.get_response(self.sources[0].bridgy_path())
     self.assertEquals(200, resp.status_int)
@@ -60,7 +114,7 @@ class AppTest(testutil.ModelsTest):
     hcard = parsed.get('items', [])[0]
     self.assertEquals(['h-card'], hcard['type'])
     self.assertEquals(
-      ['fake'], hcard['properties'].get('name'))
+      ['Fake User'], hcard['properties'].get('name'))
     self.assertEquals(
       ['http://fa.ke/profile/url'], hcard['properties'].get('url'))
     self.assertEquals(

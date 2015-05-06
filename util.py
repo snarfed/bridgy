@@ -355,6 +355,7 @@ class Handler(webapp2.RequestHandler):
         callback = util.add_query_params(callback, {
           'result': 'success',
           'user': source.bridgy_url(self),
+          'key': source.key.urlsafe(),
         } if source else {'result': 'failure'})
         logging.debug(
           'finished adding source, redirect to external callback %s', callback)

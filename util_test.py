@@ -6,6 +6,7 @@
 from appengine_config import HTTP_TIMEOUT
 from testutil import FakeAuthEntity, FakeSource
 from webmentiontools import send
+from google.appengine.ext import ndb
 
 import json
 import testutil
@@ -167,6 +168,7 @@ class UtilTest(testutil.ModelsTest):
     self.assert_equals(
       'http://withknown.com/bridgy_callback?' + urllib.urlencode([
         ('result', 'success'),
+        ('key', ndb.Key('FakeSource', '0123456789').urlsafe()),
         ('user', 'http://localhost/fake/0123456789')]),
       resp.headers['location'])
 
@@ -213,6 +215,7 @@ class UtilTest(testutil.ModelsTest):
     self.assert_equals(
       'http://withknown.com/bridgy_callback?' + urllib.urlencode([
         ('result', 'success'),
+        ('key', ndb.Key('FakeSource', '0123456789').urlsafe()),
         ('user', 'http://localhost/fake/0123456789')]),
       resp.headers['location'])
 
