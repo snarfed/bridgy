@@ -383,7 +383,7 @@ class DeleteFinishHandler(util.Handler):
         callback = util.add_query_params(callback, {'result': 'declined'})
       else:
         self.messages.add('If you want to disable, please approve the prompt.')
-      self.redirect(callback or '/')
+      self.redirect(callback.encode('utf-8') if callback else '/')
       return
 
     if (not parts or 'feature' not in parts or 'source' not in parts):
@@ -420,7 +420,8 @@ class DeleteFinishHandler(util.Handler):
         self.messages.add('Please log into %s as %s to disable it here.' %
                           (source.AS_CLASS.NAME, source.name))
 
-    self.redirect(callback or source.bridgy_url(self))
+    self.redirect(callback.encode('utf-8') if callback
+                  else source.bridgy_url(self))
 
 
 class PollNowHandler(util.Handler):

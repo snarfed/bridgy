@@ -157,8 +157,13 @@ class UtilTest(testutil.ModelsTest):
         'callback': 'http://withknown.com/bridgy_callback',
       }))
 
+    expected_auth_url = 'http://fake/auth/url?' + urllib.urlencode({
+      'redirect_uri': 'http://localhost/fakesource/add?state='
+      + encoded_state,
+    })
+
     self.assert_equals(302, resp.status_code)
-    self.assert_equals('http://fake/auth/url', resp.headers['location'])
+    self.assert_equals(expected_auth_url, resp.headers['location'])
 
     resp = application.get_response(
       '/fakesource/add?state=' + encoded_state +
@@ -204,8 +209,13 @@ class UtilTest(testutil.ModelsTest):
         'user_url': 'https://kylewm.com',
       }))
 
+    expected_auth_url = 'http://fake/auth/url?' + urllib.urlencode({
+      'redirect_uri': 'http://localhost/fakesource/add?state='
+      + encoded_state,
+    })
+
     self.assert_equals(302, resp.status_code)
-    self.assert_equals('http://fake/auth/url', resp.headers['location'])
+    self.assert_equals(expected_auth_url, resp.headers['location'])
 
     resp = application.get_response(
       '/fakesource/add?state=' + encoded_state +
@@ -234,7 +244,7 @@ class UtilTest(testutil.ModelsTest):
     """
     encoded_state = urllib.quote_plus(
       '{"callback":"http://withknown.com/bridgy_callback",'
-      '"feature":"listen","operation":"add"}')
+      '"feature":"publish","operation":"add"}')
 
     application = webapp2.WSGIApplication([
       ('/fakesource/start', testutil.FakeStartHandler),
@@ -248,8 +258,14 @@ class UtilTest(testutil.ModelsTest):
         'feature': 'publish',
         'callback': 'http://withknown.com/bridgy_callback',
       }))
+
+    expected_auth_url = 'http://fake/auth/url?' + urllib.urlencode({
+      'redirect_uri': 'http://localhost/fakesource/add?state='
+      + encoded_state,
+    })
+
     self.assert_equals(302, resp.status_code)
-    self.assert_equals('http://fake/auth/url', resp.headers['location'])
+    self.assert_equals(expected_auth_url, resp.headers['location'])
 
     resp = application.get_response(
       '/fakesource/add?state=%s&denied=1' % encoded_state)

@@ -7,16 +7,13 @@ import mf2py
 import urllib
 from activitystreams.oauth_dropins import handlers as oauth_handlers
 from google.appengine.ext import ndb
+from testutil import FakeAuthEntity
+import webapp2
 
 
 # this class stands in for a oauth_dropins module
 class FakeOAuthHandlerModule:
-
-  class StartHandler(oauth_handlers.StartHandler):
-    def redirect_url(self, state):
-      return 'http://fake/auth/url?' + urllib.urlencode({
-        'redirect_uri': self.to_url(state),
-      })
+  StartHandler = testutil.OAuthStartHandler
 
 
 class AppTest(testutil.ModelsTest):
@@ -90,6 +87,41 @@ class AppTest(testutil.ModelsTest):
         ('result', 'success'),
         ('key', ndb.Key('FakeSource', '0123456789').urlsafe()),
         ('user', 'http://localhost/fake/0123456789')
+      ]), resp.headers['Location'])
+
+  def test_delete_source_declined(self):
+    app.DeleteStartHandler.OAUTH_MODULES['FakeSource'] = FakeOAuthHandlerModule
+
+    key = self.sources[0].key.urlsafe()
+    resp = app.application.get_response(
+      '/delete/start', method='POST', body=urllib.urlencode({
+        'feature': 'listen',
+        'key': key,
+        'callback': 'http://withknown.com/bridgy_callback',
+      }))
+
+    encoded_state = urllib.quote_plus(
+      '{"callback":"http://withknown.com/bridgy_callback",'
+      '"feature":"listen","operation":"delete","source":"' + key + '"}')
+
+    # when silo oauth is done, it should send us back to /SOURCE/delete/finish,
+    # which would in turn redirect to the more general /delete/finish.
+    expected_auth_url = 'http://fake/auth/url?' + urllib.urlencode({
+      'redirect_uri': 'http://localhost/fake/delete/finish?state='
+      + encoded_state,
+    })
+
+    self.assertEquals(302, resp.status_int)
+    self.assertEquals(expected_auth_url, resp.headers['Location'])
+
+    # assume that the silo auth finishes
+    resp = app.application.get_response(
+      '/delete/finish?declined=True&state=' + encoded_state)
+
+    self.assertEquals(302, resp.status_int)
+    self.assertEquals(
+      'http://withknown.com/bridgy_callback?' + urllib.urlencode([
+        ('result', 'declined')
       ]), resp.headers['Location'])
 
   def test_user_page(self):

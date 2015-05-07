@@ -6,6 +6,7 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 import datetime
 import json
 import logging
+import urllib
 
 import appengine_config
 
@@ -340,7 +341,9 @@ class OAuthStartHandler(oauth_handlers.StartHandler):
   """
   def redirect_url(self, state=None):
     logging.debug('oauth handler redirect')
-    return 'http://fake/auth/url'
+    return 'http://fake/auth/url?' + urllib.urlencode({
+      'redirect_uri': self.to_url(state),
+    })
 
 
 FakeStartHandler = util.oauth_starter(OAuthStartHandler).to('/fakesource/add')

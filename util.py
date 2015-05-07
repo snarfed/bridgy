@@ -340,7 +340,7 @@ class Handler(webapp2.RequestHandler):
             'user declined adding source, redirect to external callback %s',
             callback)
           # call super.redirect so the callback url is unmodified
-          super(Handler, self).redirect(callback)
+          super(Handler, self).redirect(callback.encode('utf-8'))
         else:
           self.redirect('/')
         return
@@ -360,7 +360,7 @@ class Handler(webapp2.RequestHandler):
         logging.debug(
           'finished adding source, redirect to external callback %s', callback)
         # call super.redirect so the callback url is unmodified
-        super(Handler, self).redirect(callback)
+        super(Handler, self).redirect(callback.encode('utf-8'))
       else:
         self.redirect(source.bridgy_url(self) if source else '/')
       return source
