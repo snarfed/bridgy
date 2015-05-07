@@ -536,7 +536,6 @@ class PollTest(TaskQueueTest):
     self.assertEqual('"new etag"', source.last_activities_etag)
     # reset etag back to None for the next tests
     source._set('etag', None)
-    source.put()
 
   def test_last_activity_id(self):
     """We should store the last activity id seen and then send it as min_id."""

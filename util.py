@@ -340,7 +340,7 @@ class Handler(webapp2.RequestHandler):
             'user declined adding source, redirect to external callback %s',
             callback)
           # call super.redirect so the callback url is unmodified
-          super(Handler, self).redirect(str(callback))
+          super(Handler, self).redirect(callback)
         else:
           self.redirect('/')
         return
@@ -360,7 +360,7 @@ class Handler(webapp2.RequestHandler):
         logging.debug(
           'finished adding source, redirect to external callback %s', callback)
         # call super.redirect so the callback url is unmodified
-        super(Handler, self).redirect(str(callback))
+        super(Handler, self).redirect(callback)
       else:
         self.redirect(source.bridgy_url(self) if source else '/')
       return source
@@ -421,7 +421,11 @@ class Handler(webapp2.RequestHandler):
     Returns: a dict containing operation, feature, and possibly other fields
     """
     logging.debug('decoding state "%s"' % state)
-    return json.loads(state) if state else {}
+    obj = json.loads(state) if state else {}
+    if not isinstance(obj, dict):
+      logging.error('got a non-dict state parameter %s', state)
+      return None
+    return obj
 
   def redirect_home_or_user_page(self, state):
     redirect_to = '/'

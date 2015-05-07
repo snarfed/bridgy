@@ -375,7 +375,7 @@ class DeleteStartHandler(util.Handler):
 class DeleteFinishHandler(util.Handler):
   def get(self):
     parts = self.decode_state_parameter(util.get_required_param(self, 'state'))
-    callback = isinstance(parts, dict) and parts.get('callback')
+    callback = parts and parts.get('callback')
 
     if self.request.get('declined'):
       if callback:
@@ -383,11 +383,10 @@ class DeleteFinishHandler(util.Handler):
         callback = util.add_query_params(callback, {'result': 'declined'})
       else:
         self.messages.add('If you want to disable, please approve the prompt.')
-      self.redirect(str(callback) if callback else '/')
+      self.redirect(callback or '/')
       return
 
-    if (not isinstance(parts, dict) or 'feature' not in parts
-        or 'source' not in parts):
+    if (not parts or 'feature' not in parts or 'source' not in parts):
       self.abort(400, 'state query parameter must include "feature" and "source"')
 
     feature = parts['feature']
@@ -421,7 +420,7 @@ class DeleteFinishHandler(util.Handler):
         self.messages.add('Please log into %s as %s to disable it here.' %
                           (source.AS_CLASS.NAME, source.name))
 
-    self.redirect(str(callback) if callback else source.bridgy_url(self))
+    self.redirect(callback or source.bridgy_url(self))
 
 
 class PollNowHandler(util.Handler):
