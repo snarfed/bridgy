@@ -131,15 +131,6 @@ class FacebookPage(models.Source):
                           if e.get('owner', {}).get('id') == self.key.id()]
 
     except urllib2.HTTPError, e:
-      # XXX TEMPORARY!!! TODO(ryan): remove after closing
-      # https://github.com/snarfed/bridgy/issues/394
-      if str(e.code) == '400':
-        self.as_source.create_notification(
-          self.key.id(),
-          "Brid.gy's access to your account has expired. Click here to renew it now!",
-          'https://www.brid.gy/facebook/start')
-        raise models.DisableSource()
-
       # Facebook API error details:
       # https://developers.facebook.com/docs/graph-api/using-graph-api/#receiving-errorcodes
       # https://developers.facebook.com/docs/reference/api/errors/
