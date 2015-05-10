@@ -119,13 +119,14 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
           'url': 'https://fa.ke/post/url%d' % (idx + 1),
         })
 
-    author_feed = """
+    author_feed = u"""
     <html class="h-feed">
       <div class="h-entry">
         <a class="u-url" href="http://author/post/permalink1"></a>
       </div>
       <div class="h-entry">
-        <a class="u-url" href="http://author/post/permalink2"></a>
+        <!-- note the unicode char in this href -->
+        <a class="u-url" href="http://author/post/perma✁2"></a>
       </div>
       <div class="h-entry">
         <a class="u-url" href="http://author/post/permalink3"></a>
@@ -142,9 +143,9 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     </div>""").InAnyOrder()
 
     # second post is syndicated
-    self.expect_requests_get('http://author/post/permalink2', """
+    self.expect_requests_get(u'http://author/post/perma✁2', u"""
     <div class="h-entry">
-      <a class="u-url" href="http://author/post/permalink2"></a>
+      <a class="u-url" href="http://author/post/perma✁2"></a>
       <a class="u-syndication" href="https://fa.ke/post/url2"></a>
     </div>""").InAnyOrder()
 
@@ -178,13 +179,13 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.assertEquals('http://author/post/permalink1', rs[0].original)
 
     rs = SyndicatedPost.query(
-      SyndicatedPost.original == 'http://author/post/permalink2',
+      SyndicatedPost.original == u'http://author/post/perma✁2',
       ancestor=self.source.key).fetch()
     self.assertEquals('https://fa.ke/post/url2', rs[0].syndication)
     rs = SyndicatedPost.query(
       SyndicatedPost.syndication == 'https://fa.ke/post/url2',
       ancestor=self.source.key).fetch()
-    self.assertEquals('http://author/post/permalink2', rs[0].original)
+    self.assertEquals(u'http://author/post/perma✁2', rs[0].original)
 
     rs = SyndicatedPost.query(
       SyndicatedPost.original == 'http://author/post/permalink3',
@@ -194,7 +195,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     # second lookup should require no additional HTTP requests.
     # the second syndicated post should be linked up to the second permalink.
     original_post_discovery.discover(self.source, self.activities[1])
-    self.assertEquals(['http://author/post/permalink2'],
+    self.assertEquals([u'http://author/post/perma✁2'],
                       self.activities[1]['object']['upstreamDuplicates'])
 
     # third activity lookup.

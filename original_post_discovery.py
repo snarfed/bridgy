@@ -149,7 +149,7 @@ def _posse_post_discovery(source, activity, syndication_url, fetch_hfeed):
 
   logging.debug('posse post discovery found relationship(s) %s -> %s',
                 syndication_url,
-                '; '.join(str(r.original) for r in relationships))
+                '; '.join(unicode(r.original) for r in relationships))
 
   obj = activity.get('object') or activity
   obj.setdefault('upstreamDuplicates', []).extend(
