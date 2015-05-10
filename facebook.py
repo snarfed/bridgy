@@ -103,6 +103,10 @@ class FacebookPage(models.Source):
     try:
       resp = self.as_source.get_activities_response(group_id=SELF, **kwargs)
 
+      # if it's requesting one specific activity, then we're done
+      if 'activity_id' in kwargs:
+        return resp
+
       # also get uploaded photos manually since facebook sometimes collapses
       # multiple photos into albums, and the album post object won't have the
       # post content, comments, etc. from the individual photo posts.
