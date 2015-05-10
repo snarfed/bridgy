@@ -339,6 +339,17 @@ class SourceTest(testutil.HandlerTest):
     self.mox.ReplayAll()
     self.assert_equals(post, source.get_post('123'))
 
+  def test_get_event(self):
+    event = {'verb': 'post', 'object': {
+      'objectType': 'event', 'content': 'asdf'}}
+    source = Source(id='x')
+    source.as_source = self.mox.CreateMock(as_source.Source)
+    self.mox.StubOutWithMock(source.as_source, 'get_event')
+    source.as_source.get_event('123').AndReturn(event)
+
+    self.mox.ReplayAll()
+    self.assert_equals(event, source.get_event('123'))
+
   def test_get_comment(self):
     comment_obj = {'objectType': 'comment', 'content': 'qwert'}
     source = FakeSource.new(None)

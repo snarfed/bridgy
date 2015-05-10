@@ -159,6 +159,12 @@ class FakeSource(FakeBase, Source):
   def get_post(self, id):
     return self.get_activities()[int(id)]
 
+  def set_event(self, evt):
+    self._set('event', evt)
+
+  def get_event(self, evt_id):
+    return self._get('event')
+
   def set_comment(self, val):
     self._set('comment', val)
 

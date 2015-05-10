@@ -235,6 +235,16 @@ class Source(StringIdModel):
     activities = self.get_activities(activity_id=id, user_id=self.key.string_id())
     return activities[0] if activities else None
 
+  def get_event(self, id):
+    """Returns an event post from this source.
+
+    Args:
+      id: string, site-specific event id
+
+    Returns: dict, decoded ActivityStreams activity, or None
+    """
+    return self.as_source.get_event(id)
+
   def get_comment(self, comment_id, activity_id=None, activity_author_id=None):
     """Returns a comment from this source.
 

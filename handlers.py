@@ -66,7 +66,7 @@ class ItemHandler(webapp2.RequestHandler):
   def head(self, *args):
     """Return an empty 200 with no caching directives."""
 
-  def get_item(source, id):
+  def get_item(self, id):
     """Fetches and returns an object from the given source.
 
     To be implemented by subclasses.
@@ -78,6 +78,21 @@ class ItemHandler(webapp2.RequestHandler):
     Returns: ActivityStreams object dict
     """
     raise NotImplementedError()
+
+  def get_post(self, post_id):
+    """Utility method fetches the original post
+    Args:
+      post_id: string, site-specific post id
+
+    Returns: ActivityStreams object dict
+    """
+    try:
+      post = self.source.get_post(post_id)
+      if not post:
+        logging.warning('Source post %s not found', post_id)
+      return post
+    except:
+      logging.warning('Error fetching source post %s', post_id, exc_info=True)
 
   def get(self, type, source_short_name, string_id, *ids):
     source_cls = models.sources.get(source_short_name)
@@ -149,7 +164,7 @@ class ItemHandler(webapp2.RequestHandler):
       self.response.headers['Content-Type'] = 'application/json; charset=utf-8'
       self.response.out.write(json.dumps(mf2_json, indent=2))
 
-  def add_original_post_urls(self, post_id, obj, prop):
+  def add_original_post_urls(self, post, obj, prop):
     """Extracts original post URLs and adds them to an object, in place.
 
     If the post object has upstreamDuplicates, *only* they are considered
@@ -157,20 +172,10 @@ class ItemHandler(webapp2.RequestHandler):
     post's own links and 'article' tags are added with objectType 'mention'.
 
     Args:
-      post_id: string post id
-      obj: ActivityStreams post object
+      post: ActivityStreams post object to get original post URLs from
+      obj: ActivityStreams post object to add original post URLs to
       prop: string property name in obj to add the original post URLs to
     """
-    post = None
-    try:
-      post = self.source.get_post(post_id)
-    except:
-      logging.warning('Error fetching source post %s', post_id, exc_info=True)
-      return
-    if not post:
-      logging.warning('Source post %s not found', post_id)
-      return
-
     original_post_discovery.discover(self.source, post, fetch_hfeed=False)
     tags = [tag for tag in post['object'].get('tags', [])
             if 'url' in tag and tag['objectType'] == 'article']
@@ -234,7 +239,9 @@ class CommentHandler(ItemHandler):
                                   activity_author_id=self.source.key.id())
     if not cmt:
       return None
-    self.add_original_post_urls(post_id, cmt, 'inReplyTo')
+    post = self.get_post(post_id)
+    if post:
+      self.add_original_post_urls(post, cmt, 'inReplyTo')
     return cmt
 
 
@@ -243,7 +250,9 @@ class LikeHandler(ItemHandler):
     like = self.source.get_like(self.source.key.string_id(), post_id, user_id)
     if not like:
       return None
-    self.add_original_post_urls(post_id, like, 'object')
+    post = self.get_post(post_id)
+    if post:
+      self.add_original_post_urls(post, like, 'object')
     return like
 
 
@@ -252,7 +261,9 @@ class RepostHandler(ItemHandler):
     repost = self.source.get_share(self.source.key.string_id(), post_id, share_id)
     if not repost:
       return None
-    self.add_original_post_urls(post_id, repost, 'object')
+    post = self.get_post(post_id)
+    if post:
+      self.add_original_post_urls(post, repost, 'object')
     return repost
 
 
@@ -261,7 +272,11 @@ class RsvpHandler(ItemHandler):
     rsvp = self.source.get_rsvp(self.source.key.string_id(), event_id, user_id)
     if not rsvp:
       return None
-    self.add_original_post_urls(event_id, rsvp, 'inReplyTo')
+    event = self.source.get_event(event_id)
+    if event:
+      self.add_original_post_urls(event, rsvp, 'inReplyTo')
+    else:
+      logging.warning('Could not fetch source event %s', event_id)
     return rsvp
 
 

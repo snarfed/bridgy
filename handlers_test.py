@@ -26,6 +26,16 @@ class HandlersTest(testutil.HandlerTest):
               },
             'upstreamDuplicates': ['http://or.ig/post'],
             }}])
+    self.source.set_event({
+      'object': {
+        'id': 'tag:fa.ke,2013:123',
+        'url': 'http://fa.ke/events/123',
+        'content': 'Come to the next #Bridgy meetup http://other/link',
+        'upstreamDuplicates': ['http://or.ig/event'],
+      },
+      'id': '123',
+      'url': 'http://fa.ke/events/123',
+    })
     self.source.put()
 
   def check_response(self, url_template, expected):
@@ -259,7 +269,7 @@ class HandlersTest(testutil.HandlerTest):
   <a class="u-mention" href="http://other/link"></a>
   </div>
 
-  <a class="u-in-reply-to" href="http://or.ig/post"></a>
+  <a class="u-in-reply-to" href="http://or.ig/event"></a>
   <a class="u-in-reply-to" href="http://example.com/event"></a>
 
 </article>
@@ -301,7 +311,7 @@ class HandlersTest(testutil.HandlerTest):
   <a class="u-mention" href="http://other/link"></a>
   </div>
 
-  <a class="u-in-reply-to" href="http://or.ig/post"></a>
+  <a class="u-in-reply-to" href="http://or.ig/event"></a>
 
 </article>
 """)
