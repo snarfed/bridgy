@@ -79,15 +79,17 @@ class ItemHandler(webapp2.RequestHandler):
     """
     raise NotImplementedError()
 
-  def get_post(self, post_id):
+  def get_post(self, post_id, source_fn=None):
     """Utility method fetches the original post
     Args:
       post_id: string, site-specific post id
+      source_fn: optional reference to a Source method,
+        defaults to Source.get_post.
 
     Returns: ActivityStreams object dict
     """
     try:
-      post = self.source.get_post(post_id)
+      post = (source_fn or self.source.get_post)(post_id)
       if not post:
         logging.warning('Source post %s not found', post_id)
       return post
@@ -96,24 +98,6 @@ class ItemHandler(webapp2.RequestHandler):
       if not interpret_http_exception(e)[0]:
         logging.warning(
           'Error fetching source post %s', post_id, exc_info=True)
-
-  def get_event(self, event_id):
-    """Utility method fetches the original event
-    Args:
-      event_id: string, site-specific event id
-
-    Returns: ActivityStreams object dict
-    """
-    try:
-      event = self.source.get_event(event_id)
-      if not event:
-        logging.warning('Source event %s not found', event_id)
-      return event
-    except Exception, e:
-      # use interpret_http_exception to log HTTP errors
-      if not interpret_http_exception(e)[0]:
-        logging.warning(
-          'Error fetching source event %s', event_id, exc_info=True)
 
   def get(self, type, source_short_name, string_id, *ids):
     source_cls = models.sources.get(source_short_name)
@@ -293,7 +277,7 @@ class RsvpHandler(ItemHandler):
     rsvp = self.source.get_rsvp(self.source.key.string_id(), event_id, user_id)
     if not rsvp:
       return None
-    event = self.get_event(event_id)
+    event = self.get_post(event_id, source_fn=self.source.get_event)
     if event:
       self.add_original_post_urls(event, rsvp, 'inReplyTo')
     return rsvp
