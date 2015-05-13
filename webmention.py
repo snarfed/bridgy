@@ -139,7 +139,9 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
         # https://github.com/snarfed/bridgy/issues/175
         'bX-2i87au' not in error and
         # https://github.com/snarfed/bridgy/issues/177
-        "Invalid argument, 'thread': Unable to find thread" not in error
+        "Invalid argument, 'thread': Unable to find thread" not in error and
+        # expected for partially set up tumblr accounts
+        "we haven't found your Disqus account" not in error
         ):
       self.mail_me(resp)
     self.response.write(resp)
