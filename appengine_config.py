@@ -6,6 +6,7 @@ from activitystreams.appengine_config import *
 DISQUS_ACCESS_TOKEN = read('disqus_access_token')
 DISQUS_API_KEY = read('disqus_api_key')
 DISQUS_API_SECRET = read('disqus_api_secret')
+FACEBOOK_TEST_USER_TOKEN = read('facebook_test_user_access_token')
 SUPERFEEDR_TOKEN = read('superfeedr_token')
 SUPERFEEDR_USERNAME = read('superfeedr_username')
 
