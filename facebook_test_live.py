@@ -5,6 +5,7 @@ https://github.com/snarfed/bridgy/issues/406
 https://developers.facebook.com/docs/apps/test-users
 """
 
+import logging
 import unittest
 import urllib
 import urlparse
@@ -18,20 +19,16 @@ import facebook
 import testutil
 import util
 
+TEST_USER_ID = '100002841140165'
+
 
 class FacebookTestLive(testutil.HandlerTest):
 
   def test_live(self):
-    # self.mox.stubs.UnsetAll()
-
     # sign up (use the form inputs in our actual HTML template)
     with open('templates/facebook_signup.html') as f:
-      doc = BeautifulSoup(f.read())
-      data = {input['name']: input['value'] for input in doc.find_all('input')
-              if input.get('value')}
+      resp = self.submit_form(f.read())
 
-    resp = facebook.application.get_response('/facebook/start', method='POST',
-                                             body=urllib.urlencode(data))
     self.assertEqual(302, resp.status_int)
     to = resp.headers['Location']
     self.assertTrue(to.startswith('https://www.facebook.com/v2.2/dialog/oauth?'), to)
@@ -53,6 +50,22 @@ class FacebookTestLive(testutil.HandlerTest):
       util.add_query_params(redirect, {'code': 'fake_code'}))
     self.assertEqual(200, resp.status_int)
 
+    # submit the "choose user/page" form. the only choice is the test user.
+    self.submit_form(resp.text)
+    source = facebook.FacebookPage.get_by_id(TEST_USER_ID)
+    self.assertEqual('enabled', source.status)
+    self.assertEqual(['listen'], source.features)
+
+  @staticmethod
+  def submit_form(html):
+    """Submits the first form on the page."""
+    form = BeautifulSoup(html).form
+    data = {input['name']: input['value'] for input in form.find_all('input')
+            if input.get('name') and input.get('value')}
+    return facebook.application.get_response(
+      form['action'], method=form['method'].upper(), body=urllib.urlencode(data))
+
 
 if __name__ == '__main__':
+  logging.getLogger().setLevel(logging.DEBUG)
   unittest.main()
