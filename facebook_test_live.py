@@ -20,6 +20,8 @@ import urlparse
 import alltests
 import appengine_config
 
+from google.appengine.api import memcache
+
 from activitystreams.oauth_dropins import facebook as oauth_facebook
 from bs4 import BeautifulSoup
 import facebook
@@ -65,10 +67,14 @@ class FacebookTestLive(testutil.HandlerTest):
     self.assertEqual(['listen'], source.features)
 
     # poll
-    task = self.taskqueue_stub.GetTasks('poll')[0]
-    resp = tasks.application.get_response(
-      task['url'], method='POST', body=urllib.urlencode(testutil.get_task_params(task)))
+    resp = self.run_task(self.taskqueue_stub.GetTasks('poll')[0])
     self.assertEqual(200, resp.status_int)
+
+    # three propagates. don't bother actually sending any wms.
+    memcache.set('W example.zz', {'code': 'BAD_TARGET_URL', 'http_status': 499})
+    for task in self.taskqueue_stub.GetTasks('propagate'):
+      resp = self.run_task(task)
+      self.assertEqual(200, resp.status_int)
 
   @staticmethod
   def submit_form(html):
@@ -78,6 +84,12 @@ class FacebookTestLive(testutil.HandlerTest):
             if input.get('name') and input.get('value')}
     return facebook.application.get_response(
       form['action'], method=form['method'].upper(), body=urllib.urlencode(data))
+
+  @staticmethod
+  def run_task(task):
+    """Runs a task queue task."""
+    return tasks.application.get_response(
+      task['url'], method='POST', body=urllib.urlencode(testutil.get_task_params(task)))
 
 
 if __name__ == '__main__':
