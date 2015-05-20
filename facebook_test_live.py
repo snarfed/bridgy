@@ -1,7 +1,14 @@
 #!/usr/bin/env python
-"""Facebook integration test against the live API, using a test user.
+"""Facebook integration test against the live API, using a canned user.
 
 https://github.com/snarfed/bridgy/issues/406
+
+The canned user is https://www.facebook.com/100009447618341 . He has one post
+with one like and two comments:
+https://www.facebook.com/100009447618341/posts/1407573252900915
+
+I'd ideally like to use a Test User, but their posts can't have comments or
+likes. :(
 https://developers.facebook.com/docs/apps/test-users
 """
 
@@ -16,10 +23,11 @@ import appengine_config
 from activitystreams.oauth_dropins import facebook as oauth_facebook
 from bs4 import BeautifulSoup
 import facebook
+import tasks
 import testutil
 import util
 
-TEST_USER_ID = '100002841140165'
+TEST_USER_ID = '1407574399567467'
 
 
 class FacebookTestLive(testutil.HandlerTest):
@@ -55,6 +63,12 @@ class FacebookTestLive(testutil.HandlerTest):
     source = facebook.FacebookPage.get_by_id(TEST_USER_ID)
     self.assertEqual('enabled', source.status)
     self.assertEqual(['listen'], source.features)
+
+    # poll
+    task = self.taskqueue_stub.GetTasks('poll')[0]
+    resp = tasks.application.get_response(
+      task['url'], method='POST', body=urllib.urlencode(testutil.get_task_params(task)))
+    self.assertEqual(200, resp.status_int)
 
   @staticmethod
   def submit_form(html):
