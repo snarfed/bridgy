@@ -30,8 +30,8 @@ deploys to App Engine:
 ```shell
 ./alltests.py && cd activitystreams && ./alltests.py && \
   cd oauth_dropins && ./alltests.py && cd webutil && ./alltests.py && \
-  cd ../../.. && git push --recurse-submodules=on-demand && \
-  ./facebook_test_live.py && ~/google_appengine/appcfg.py --oauth2 update .
+  ./facebook_test_live.py && cd ../../.. && \
+  git push --recurse-submodules=on-demand && ~/google_appengine/appcfg.py update .
 ```
 
 Most dependencies are clean, but we've made patches to some that we haven't
