@@ -3,8 +3,9 @@
 
 https://github.com/snarfed/bridgy/issues/406
 
-The canned user is https://www.facebook.com/100009447618341 . He has one post
-with one like and two comments:
+The canned user is Snoopy Barrett: https://www.facebook.com/100009447618341 ,
+https://www.brid.gy/facebook/1407574399567467 . He has one post with one like
+and two comments:
 https://www.facebook.com/100009447618341/posts/1407573252900915
 
   Snoopy Barrett:
@@ -20,6 +21,7 @@ https://developers.facebook.com/docs/apps/test-users
 """
 
 import logging
+import sys
 import unittest
 import urllib
 import urlparse
@@ -53,6 +55,7 @@ class FacebookTestLive(testutil.HandlerTest):
     to = resp.headers['Location']
     self.assertTrue(to.startswith('https://www.facebook.com/v2.2/dialog/oauth?'), to)
     redirect = urlparse.parse_qs(urlparse.urlparse(to).query)['redirect_uri'][0]
+    self.dot()
 
     # pretend the user approves the prompt and facebook redirects back to us.
     # mock out the access token request since we use a canned token.
@@ -69,17 +72,20 @@ class FacebookTestLive(testutil.HandlerTest):
     resp = facebook.application.get_response(
       util.add_query_params(redirect, {'code': 'fake_code'}))
     self.assertEqual(200, resp.status_int)
+    self.dot()
 
     # submit the "choose user/page" form. the only choice is the test user.
     self.submit_form(resp.text)
     source = facebook.FacebookPage.get_by_id(TEST_USER_ID)
     self.assertEqual('enabled', source.status)
     self.assertEqual(['listen'], source.features)
+    self.dot()
 
     # poll
     self.stub_requests_head()
     resp = self.run_task(self.taskqueue_stub.GetTasks('poll')[0])
     self.assertEqual(200, resp.status_int)
+    self.dot()
 
     # three propagates, one for the like and one for each comment
     source_urls = []
@@ -102,11 +108,18 @@ class FacebookTestLive(testutil.HandlerTest):
       self.assertEqual(200, resp.status_int)
 
     self.mox.stubs.UnsetAll()
+    self.dot()
 
     # fetch the response handler URLs
     for url in source_urls:
       resp = handlers.application.get_response(url)
       self.assertEqual(200, resp.status_int)
+      self.dot()
+
+  @staticmethod
+  def dot():
+    sys.stdout.write('.')
+    sys.stdout.flush()
 
   @staticmethod
   def submit_form(html):
@@ -125,5 +138,7 @@ class FacebookTestLive(testutil.HandlerTest):
 
 
 if __name__ == '__main__':
-  logging.getLogger().setLevel(logging.DEBUG)
+  if '--debug' in sys.argv:
+    sys.argv.remove('--debug')
+    logging.getLogger().setLevel(logging.DEBUG)
   unittest.main()
