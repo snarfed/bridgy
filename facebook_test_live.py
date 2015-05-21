@@ -7,6 +7,13 @@ The canned user is https://www.facebook.com/100009447618341 . He has one post
 with one like and two comments:
 https://www.facebook.com/100009447618341/posts/1407573252900915
 
+  Snoopy Barrett:
+    just curled up on a blanket, like you do
+    (example.zz abc)
+  Ryan Barrett likes this.
+  Ryan Barrett: really?
+  Snoopy Barrett: yup really
+
 I'd ideally like to use a Test User, but their posts can't have comments or
 likes. :(
 https://developers.facebook.com/docs/apps/test-users
@@ -21,10 +28,13 @@ import alltests
 import appengine_config
 
 from google.appengine.api import memcache
+from bs4 import BeautifulSoup
+import mox
+import requests
 
 from activitystreams.oauth_dropins import facebook as oauth_facebook
-from bs4 import BeautifulSoup
 import facebook
+import handlers
 import tasks
 import testutil
 import util
@@ -67,13 +77,35 @@ class FacebookTestLive(testutil.HandlerTest):
     self.assertEqual(['listen'], source.features)
 
     # poll
+    self.stub_requests_head()
     resp = self.run_task(self.taskqueue_stub.GetTasks('poll')[0])
     self.assertEqual(200, resp.status_int)
 
-    # three propagates. don't bother actually sending any wms.
-    memcache.set('W example.zz', {'code': 'BAD_TARGET_URL', 'http_status': 499})
+    # three propagates, one for the like and one for each comment
+    source_urls = []
+
+    def handle_post_body(params):
+      self.assertEqual('http://example.zz/abc', params['target'])
+      source_urls.append(params['source'])
+      return True
+
+    self.mox.StubOutWithMock(requests, 'post', use_mock_anything=True)
+    self.expect_requests_post(
+      'http://example.zz/wm', timeout=mox.IgnoreArg(), verify=mox.IgnoreArg(),
+      data=mox.Func(handle_post_body)
+      ).MultipleTimes()
+    self.mox.ReplayAll()
+
+    memcache.set('W example.zz', 'http://example.zz/wm')
     for task in self.taskqueue_stub.GetTasks('propagate'):
       resp = self.run_task(task)
+      self.assertEqual(200, resp.status_int)
+
+    self.mox.stubs.UnsetAll()
+
+    # fetch the response handler URLs
+    for url in source_urls:
+      resp = handlers.application.get_response(url)
       self.assertEqual(200, resp.status_int)
 
   @staticmethod

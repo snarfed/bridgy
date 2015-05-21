@@ -195,6 +195,9 @@ class HandlerTest(as_testutil.TestCase):
     # add FakeSource everywhere necessary
     util.BLACKLIST.add('fa.ke')
 
+    self.stub_requests_head()
+
+  def stub_requests_head(self):
     # don't make actual HTTP requests to follow original post url redirects
     def fake_head(url, **kwargs):
       resp = requests.Response()
