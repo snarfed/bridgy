@@ -3,6 +3,7 @@
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
+import app
 import copy
 import datetime
 import json
@@ -266,3 +267,93 @@ class FacebookPageTest(testutil.ModelsTest):
     self.assertEqual(200, resp.status_int)
     for resp in models.Response.query():
       self.assertEqual(['http://my.orig/post'], resp.unsent)
+
+
+class FacebookPagePageTest(testutil.ModelsTest):
+
+  def setUp(self):
+    super(FacebookPagePageTest, self).setUp()
+    for config in (appengine_config, activitystreams.appengine_config,
+                   activitystreams.oauth_dropins.appengine_config):
+      setattr(config, 'FACEBOOK_APP_ID', 'my_app_id')
+      setattr(config, 'FACEBOOK_APP_SECRET', 'my_app_secret')
+
+    self.handler.messages = []
+    self.auth_entity = oauth_facebook.FacebookAuth(
+      id='108663232553079', auth_code='my_code', access_token_str='my_token',
+      user_json=json.dumps({
+        'id': '108663232553079',
+        'about': 'Our vegetarian cooking blog',
+        'category': 'Home\/garden website',
+        'name': 'Hardly Starving',
+        'type': 'page',
+      }))
+
+    self.auth_entity.put()
+    self.fb = FacebookPage.new(self.handler, auth_entity=self.auth_entity,
+                               features=['listen'])
+    self.fb.put()
+
+  def test_disable_page(self):
+    # FacebookAuth.for_page fetches the user URL with the page's access token
+    self.expect_urlopen(
+      oauth_facebook.API_USER_URL + '?access_token=page_token',
+      json.dumps({
+        'id': '108663232553079',
+        'about': 'Our vegetarian cooking blog',
+        'category': 'Home\/garden website',
+        'name': 'Hardly Starving',
+        'type': 'page',
+      }))
+    self.mox.ReplayAll()
+
+    key = self.fb.key.urlsafe()
+    encoded_state = urllib.quote_plus(
+      '{"feature":"listen","operation":"delete","source":"' + key + '"}')
+
+    expected_auth_url = oauth_facebook.GET_AUTH_CODE_URL % {
+      'scope': '',
+      'client_id': appengine_config.FACEBOOK_APP_ID,
+      'redirect_uri': urllib.quote_plus(
+        'http://localhost/facebook/delete/finish?state=' + encoded_state),
+    }
+
+    resp = app.application.get_response(
+      '/delete/start', method='POST', body=urllib.urlencode({
+        'feature': 'listen',
+        'key': key,
+      }))
+
+    self.assertEquals(302, resp.status_int)
+    self.assertEquals(expected_auth_url, resp.headers['Location'])
+
+    # facebook oauth gives us back the user token; we're looking for
+    # the page token
+    user_auth_entity = oauth_facebook.FacebookAuth(
+      id='12802152', auth_code='my_code', access_token_str='my_token',
+      user_json=json.dumps({
+        'id': '12802152',
+        'name': 'Kyle Mahan',
+      }),
+      pages_json=json.dumps([{
+        'id': '108663232553079',
+        'about': 'Our vegetarian cooking blog',
+        'category': 'Home/garden website',
+        'name': 'Hardly Starving',
+        'type': 'page',
+        'access_token': 'page_token',
+      }]))
+    user_auth_entity.put()
+
+    self.assert_equals(['listen'], self.fb.features)
+
+    # when silo oauth is done, it should send us back to /SOURCE/delete/finish,
+    # which would in turn redirect to the more general /delete/finish.
+    resp = app.application.get_response(
+      '/delete/finish?'
+      + 'auth_entity=' + user_auth_entity.key.urlsafe()
+      + '&state=' + encoded_state)
+
+    self.assert_equals(302, resp.status_code)
+    # listen feature has been removed
+    self.assert_equals([], self.fb.features)

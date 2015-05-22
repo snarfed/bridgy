@@ -393,9 +393,11 @@ class DeleteFinishHandler(util.Handler):
     if feature not in (Source.FEATURES):
       self.abort(400, 'cannot delete unknown feature %s' % feature)
 
-    logged_in_as = util.get_required_param(self, 'auth_entity')
+    logged_in_as = ndb.Key(
+      urlsafe=util.get_required_param(self, 'auth_entity')).get()
     source = ndb.Key(urlsafe=parts['source']).get()
-    if logged_in_as == source.auth_entity.urlsafe():
+
+    if logged_in_as and logged_in_as.is_authority_for(source.auth_entity):
       # TODO: remove credentials
       if feature in source.features:
         source.features.remove(feature)
