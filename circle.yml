@@ -1,0 +1,10 @@
+# CircleCI config file. Docs: https://circleci.com/docs/configuration
+
+checkout:
+  post:
+    - git submodule sync
+    - git submodule update --init
+
+test:
+  override:
+    - ./alltests.py
