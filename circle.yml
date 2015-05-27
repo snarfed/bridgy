@@ -7,4 +7,4 @@ checkout:
 
 test:
   override:
-    - python alltests.py
+    - python ./alltests.py
