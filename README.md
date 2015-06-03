@@ -28,10 +28,10 @@ This command runs the tests, pushes any changes in your local repo(s), and
 deploys to App Engine:
 
 ```shell
-./alltests.py && cd activitystreams && ./alltests.py && \
+./alltests.py && ./facebook_test_live.py && cd activitystreams && ./alltests.py && \
   cd oauth_dropins && ./alltests.py && cd webutil && ./alltests.py && \
-  ./facebook_test_live.py && cd ../../.. && \
-  git push --recurse-submodules=on-demand && ~/google_appengine/appcfg.py update .
+  cd ../../.. && git push --recurse-submodules=on-demand && \
+  ~/google_appengine/appcfg.py update .
 ```
 
 Most dependencies are clean, but we've made patches to some that we haven't
