@@ -35,17 +35,11 @@ class WordPressTest(testutil.HandlerTest):
 
   def expect_new_reply(
       self,
-      url='https://public-api.wordpress.com/rest/v1/sites/123/posts/123/replies/new?pretty=true',
-      response={},
+      url='https://public-api.wordpress.com/rest/v1/sites/123/posts/456/replies/new?pretty=true',
       content='<a href="http://who">name</a>: foo bar',
-      status=200,
-      **kwargs):
-    self.expect_urlopen(
-      url,
-      json.dumps(response),
-      data=urllib.urlencode({'content': content}),
-      status=status,
-      **kwargs)
+      response='{}', status=200, **kwargs):
+    self.expect_urlopen(url, response, data=urllib.urlencode({'content': content}),
+                        status=status, **kwargs)
     self.mox.ReplayAll()
 
   def test_new(self):
@@ -121,29 +115,19 @@ class WordPressTest(testutil.HandlerTest):
   def test_create_comment_with_slug_lookup(self):
     self.expect_urlopen(
       'https://public-api.wordpress.com/rest/v1/sites/123/posts/'
-      'slug:the-slug?pretty=true',
+        'slug:the-slug?pretty=true',
       json.dumps({'ID': 456}))
-    self.expect_urlopen(
-      'https://public-api.wordpress.com/rest/v1/sites/123/posts/'
-      '456/replies/new?pretty=true',
-      json.dumps({'ID': 789, 'ok': 'sgtm'}),
-      data=urllib.urlencode({'content': '<a href="http://who">who</a>: foo bar'}))
-    self.mox.ReplayAll()
+    self.expect_new_reply(response=json.dumps({'ID': 789, 'ok': 'sgtm'}))
 
     resp = self.wp.create_comment('http://primary/post/123999/the-slug?asdf',
-                                  'who', 'http://who', 'foo bar')
+                                  'name', 'http://who', 'foo bar')
+    # ID field gets converted to lower case id
     self.assertEquals({'id': 789, 'ok': 'sgtm'}, resp)
 
   def test_create_comment_with_unicode_chars(self):
-    self.expect_urlopen(
-      'https://public-api.wordpress.com/rest/v1/sites/123/posts/'
-      '123/replies/new?pretty=true',
-      json.dumps({}),
-      data=urllib.urlencode({
-          'content': '<a href="http://who">Degenève</a>: foo Degenève bar'}))
-    self.mox.ReplayAll()
+    self.expect_new_reply(content='<a href="http://who">Degenève</a>: foo Degenève bar')
 
-    resp = self.wp.create_comment('http://primary/post/123', u'Degenève',
+    resp = self.wp.create_comment('http://primary/post/456', u'Degenève',
                                   'http://who', u'foo Degenève bar')
     self.assertEquals({'id': None}, resp)
 
@@ -151,50 +135,34 @@ class WordPressTest(testutil.HandlerTest):
     self.expect_urlopen(
       u'https://public-api.wordpress.com/rest/v1/sites/123/posts/slug:✁?pretty=true',
       json.dumps({'ID': 456}))
-    self.expect_urlopen(
-      'https://public-api.wordpress.com/rest/v1/sites/123/posts/'
-      '456/replies/new?pretty=true',
-      json.dumps({}),
-      data=urllib.urlencode({'content': '<a href="http://who">who</a>: foo bar'}))
-    self.mox.ReplayAll()
+    self.expect_new_reply()
 
-    resp = self.wp.create_comment(u'http://primary/post/✁', u'who',
-                                  'http://who', u'foo bar')
+    resp = self.wp.create_comment(u'http://primary/post/✁', 'name',
+                                  'http://who', 'foo bar')
     self.assertEquals({'id': None}, resp)
 
   def test_create_comment_gives_up_on_invalid_input_error(self):
     # see https://github.com/snarfed/bridgy/issues/161
-    self.expect_urlopen(
-      'https://public-api.wordpress.com/rest/v1/sites/123/posts/'
-      '123/replies/new?pretty=true',
-      json.dumps({'error': 'invalid_input'}),
-      status=400,
-      data=urllib.urlencode({'content': '<a href="http://who">name</a>: foo'}))
-    self.mox.ReplayAll()
+    self.expect_new_reply(status=400,
+                          response=json.dumps({'error': 'invalid_input'}))
 
-    resp = self.wp.create_comment('http://primary/post/123', 'name',
-                                  'http://who', 'foo')
+    resp = self.wp.create_comment('http://primary/post/456', 'name',
+                                  'http://who', 'foo bar')
     # shouldn't raise an exception
     self.assertEquals({'error': 'invalid_input'}, resp)
 
   def test_create_comment_gives_up_on_coments_closed(self):
-    response = {'error': 'unauthorized',
-                'message': 'Comments on this post are closed'}
-    self.expect_new_reply(status=403, response=response)
+    resp = {'error': 'unauthorized',
+            'message': 'Comments on this post are closed'}
+    self.expect_new_reply(status=403, response=json.dumps(resp))
 
-    resp = self.wp.create_comment('http://primary/post/123', 'name',
-                                  'http://who', 'foo bar')
     # shouldn't raise an exception
-    self.assertEquals(response, resp)
+    got = self.wp.create_comment('http://primary/post/456', 'name',
+                                 'http://who', 'foo bar')
+    self.assertEquals(resp, got)
 
   def test_create_comment_returns_non_json(self):
-    self.expect_urlopen(
-      'https://public-api.wordpress.com/rest/v1/sites/123/posts/'
-      '123/replies/new?pretty=true',
-      'Forbidden',
-      status=403,
-      data=urllib.urlencode({'content': '<a href="http://who">name</a>: foo'}))
-    self.mox.ReplayAll()
+    self.expect_new_reply(status=403, response='Forbidden')
 
     self.assertRaises(urllib2.HTTPError, self.wp.create_comment,
-                      'http://primary/post/123', 'name', 'http://who', 'foo')
+                      'http://primary/post/456', 'name', 'http://who', 'foo bar')
