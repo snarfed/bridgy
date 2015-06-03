@@ -33,6 +33,21 @@ class WordPressTest(testutil.HandlerTest):
                         url='http://my.wp.com/',
                         domains=['my.wp.com'])
 
+  def expect_new_reply(
+      self,
+      url='https://public-api.wordpress.com/rest/v1/sites/123/posts/123/replies/new?pretty=true',
+      response={},
+      content='<a href="http://who">name</a>: foo bar',
+      status=200,
+      **kwargs):
+    self.expect_urlopen(
+      url,
+      json.dumps(response),
+      data=urllib.urlencode({'content': content}),
+      status=status,
+      **kwargs)
+    self.mox.ReplayAll()
+
   def test_new(self):
     self.expect_urlopen(
       'https://public-api.wordpress.com/rest/v1/sites/123?pretty=true',
@@ -161,6 +176,16 @@ class WordPressTest(testutil.HandlerTest):
                                   'http://who', 'foo')
     # shouldn't raise an exception
     self.assertEquals({'error': 'invalid_input'}, resp)
+
+  def test_create_comment_gives_up_on_coments_closed(self):
+    response = {'error': 'unauthorized',
+                'message': 'Comments on this post are closed'}
+    self.expect_new_reply(status=403, response=response)
+
+    resp = self.wp.create_comment('http://primary/post/123', 'name',
+                                  'http://who', 'foo bar')
+    # shouldn't raise an exception
+    self.assertEquals(response, resp)
 
   def test_create_comment_returns_non_json(self):
     self.expect_urlopen(

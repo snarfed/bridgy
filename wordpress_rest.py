@@ -151,7 +151,8 @@ class WordPress(models.Source):
       code, body = interpret_http_exception(e)
       try:
         parsed = json.loads(body) if body else {}
-        if code == '400' and parsed.get('error') == 'invalid_input':
+        if ((code == '400' and parsed.get('error') == 'invalid_input') or
+            (code == '403' and parsed.get('message') == 'Comments on this post are closed')):
           return parsed  # known error: https://github.com/snarfed/bridgy/issues/161
       except ValueError:
         pass # fall through
