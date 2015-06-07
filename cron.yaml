@@ -1,4 +1,5 @@
 # timezone defaults to UTC
+# docs: https://developers.google.com/appengine/docs/python/config/cron
 
 cron:
 - description: replace missing poll tasks
@@ -23,5 +24,5 @@ cron:
 
 - description: weekly datastore backup, everything
   url: /_ah/datastore_admin/backup.create?filesystem=gs&gs_bucket_name=brid-gy.appspot.com/weekly&queue=datastore-backup&name=full-&kind=BlogPost&kind=BlogWebmention&kind=Blogger&kind=BloggerV2Auth&kind=CredentialsModel&kind=CredentialsModel_Blogger&kind=FacebookAuth&kind=FacebookPage&kind=GooglePlusAuth&kind=GooglePlusPage&kind=Instagram&kind=InstagramAuth&kind=OAuthRequestToken&kind=Publish&kind=PublishedPage&kind=SiteXsrfSecretKey&kind=Tumblr&kind=TumblrAuth&kind=Twitter&kind=TwitterAuth&kind=WordPress&kind=WordPressAuth&kind=Response&kind=SyndicatedPost
-  schedule: every sunday 11:00  # 4am pst
+  schedule: 1st sunday 09:00  # 2am pst
   target: ah-builtin-python-bundle
