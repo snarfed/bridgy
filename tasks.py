@@ -399,7 +399,7 @@ class SendWebmentions(webapp2.RequestHandler):
   # request deadline (10m) plus some padding
   LEASE_LENGTH = datetime.timedelta(minutes=12)
 
-  ERROR_HTTP_RETURN_CODE = 306  # "Unused"
+  ERROR_HTTP_RETURN_CODE = 304  # "Not Modified"
 
   def source_url(self, target_url):
     """Return the source URL to use for a given target URL.
@@ -657,9 +657,11 @@ class PropagateResponse(SendWebmentions):
         try:
           activity = self.activities[urls_to_activity[target_url]]
         except KeyError:
-          logging.error('activities: %s', self.activities)
-          logging.error('urls_to_activity: %s', urls_to_activity)
-          raise
+          logging.warning("""\
+Hit https://github.com/snarfed/bridgy/issues/237 !
+target url %s not in urls_to_activity: %s
+activities: %s""", target_url, urls_to_activity, self.activities)
+          self.abort(self.ERROR_HTTP_RETURN_CODE)
 
     # generate source URL
     id = activity['id']

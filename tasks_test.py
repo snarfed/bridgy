@@ -1444,6 +1444,17 @@ class PropagateTest(TaskQueueTest):
     self.post_task(expected_status=500)
     self.assert_response_is('error', None, sent=['http://target1/post/url'])
 
+  def test_source_url_key_error(self):
+    """We should gracefully retry when we hit the KeyError bug.
+
+    https://github.com/snarfed/bridgy/issues/237
+    """
+    self.responses[0].urls_to_activity = json.dumps({'bad': 9})
+    self.responses[0].put()
+
+    self.mox.ReplayAll()
+    self.post_task(expected_status=PropagateResponse.ERROR_HTTP_RETURN_CODE)
+
   def test_propagate_blogpost(self):
     """Blog post propagate task."""
     source_key = FakeSource.new(None, domains=['fake']).put()
