@@ -11,6 +11,7 @@ import json
 import logging
 import mox
 import StringIO
+import time
 import urllib
 import urllib2
 
@@ -1090,6 +1091,42 @@ class PropagateTest(TaskQueueTest):
     self.responses[0].put()
     self.post_task()
     self.assert_response_is('complete', skipped=['http://target1/post/url'])
+
+  def test_cached_webmention_discovery_shouldnt_refresh_cache(self):
+    """A cached webmention discovery shouldn't be written back to the cache."""
+    # first wm discovers and finds no endpoint, second uses cache, third rediscovers
+    self.expect_webmention(error={'code': 'NO_ENDPOINT'}).AndReturn(False)
+    self.expect_webmention().AndReturn(True)
+    self.mox.ReplayAll()
+
+    # inject a fake time.time into the memcache stub.
+    #
+    # ideally i'd do this:
+    #
+    #   self.testbed.init_memcache_stub(gettime=time_fn)
+    #
+    # but testbed doesn't pass kwargs to the memcache stub ctor like it does for
+    # most other stubs. :( i started to file a patch against the app engine SDK,
+    # but i eventually got impatient and gave up. background:
+    # https://code.google.com/p/googleappengine/
+    # https://code.google.com/p/googleappengine/issues/list?can=1&q=patch&sort=-id
+    now = time.time()
+    self.testbed.get_stub('memcache')._gettime = lambda: now
+
+    self.post_task()
+    self.assert_response_is('complete', skipped=['http://target1/post/url'])
+
+    now += tasks.WEBMENTION_DISCOVERY_CACHE_TIME - 1
+    self.responses[0].status = 'new'
+    self.responses[0].put()
+    self.post_task()
+    self.assert_response_is('complete', skipped=['http://target1/post/url'])
+
+    now += 2
+    self.responses[0].status = 'new'
+    self.responses[0].put()
+    self.post_task()
+    self.assert_response_is('complete', sent=['http://target1/post/url'])
 
   def test_webmention_blacklist(self):
     """Target URLs with domains in the blacklist should be ignored.

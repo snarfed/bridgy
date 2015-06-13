@@ -489,8 +489,9 @@ class SendWebmentions(webapp2.RequestHandler):
         logging.info('Sent! %s', mention.response)
         self.record_source_webmention(mention)
         self.entity.sent.append(target)
-        memcache.set(cache_key, mention.receiver_endpoint,
-                     time=WEBMENTION_DISCOVERY_CACHE_TIME)
+        if not cached:
+          memcache.set(cache_key, mention.receiver_endpoint,
+                       time=WEBMENTION_DISCOVERY_CACHE_TIME)
       else:
         code = error['code']
         status = error.get('http_status', 0)
@@ -498,7 +499,7 @@ class SendWebmentions(webapp2.RequestHandler):
             (code == 'BAD_TARGET_URL' and status == 204)):  # 204 is No Content
           logging.info('Giving up this target. %s', error)
           self.entity.skipped.append(target)
-          if code == 'NO_ENDPOINT':
+          if not cached and code == 'NO_ENDPOINT':
             memcache.set(cache_key, error, time=WEBMENTION_DISCOVERY_CACHE_TIME)
         elif code in ('BAD_TARGET_URL', 'RECEIVER_ERROR') and status / 100 == 4:
           # Give up on 4XX errors; we don't expect later retries to succeed.
