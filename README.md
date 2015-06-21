@@ -14,15 +14,29 @@ License: This project is placed in the public domain.
 
 Development
 ---
-Most dependencies are in git submodules. Be sure to run
-`git submodule update --init --recursive` after you clone the repo.
+Clone this repo, then run these commands in the repo root dir to get set up:
 
-Requires the [App Engine SDK](https://developers.google.com/appengine/downloads)
-and looks for it in the `GAE_SDK_ROOT` environment variable,
-`/usr/local/google_appengine`, or `~/google_appengine`, in that order.
+```
+virtualenv --system-site-packages local
+source local/bin/activate
+pip install -r requirements.txt
+python -m unittest discover
+```
 
-You can run the unit tests with `alltests.py`. If you send a pull request,
-please include (or update) a test for the new functionality if possible!
+The last command runs the unit tests. If you send a pull request, please include
+(or update) a test for the new functionality if possible!
+
+There's a good chance you'll need to make changes to
+[activitystreams-unofficial](https://github.com/snarfed/activitystreams-unofficial)
+or [oauth-dropins](https://github.com/snarfed/oauth-dropins) at the same time as
+bridgy. To do that, clone their repos, then install them in "source" mode with:
+
+```
+pip install -e <path to oauth-dropins repo>
+pip install -e <path to activitystreams-unofficial repo>
+```
+
+Requires the [App Engine SDK](https://developers.google.com/appengine/downloads).
 
 This command runs the tests, pushes any changes in your local repo(s), and
 deploys to App Engine:

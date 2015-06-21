@@ -1,0 +1,3 @@
+activitystreams_unofficial
+html2text
+-e git@github.com:snarfed/webmention-tools.git

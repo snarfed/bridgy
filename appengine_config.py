@@ -1,7 +1,11 @@
 """Bridgy App Engine config.
 """
+# Load packages from virtualenv
+# https://cloud.google.com/appengine/docs/python/tools/libraries27#vendoring
+from google.appengine.ext import vendor
+vendor.add('local')
 
-from activitystreams.appengine_config import *
+from activitystreams_unofficial.appengine_config import *
 
 DISQUS_ACCESS_TOKEN = read('disqus_access_token')
 DISQUS_API_KEY = read('disqus_api_key')
@@ -9,18 +13,6 @@ DISQUS_API_SECRET = read('disqus_api_secret')
 FACEBOOK_TEST_USER_TOKEN = read('facebook_test_user_access_token')
 SUPERFEEDR_TOKEN = read('superfeedr_token')
 SUPERFEEDR_USERNAME = read('superfeedr_username')
-
-# Add library modules directories to sys.path so they can be imported.
-#
-# I used to use symlinks and munge sys.modules, but both of those ended up in
-# duplicate instances of modules, which caused problems. Background in
-# https://github.com/snarfed/bridgy/issues/31
-for path in (
-  'webmention-tools',
-  ):
-  path = os.path.join(os.path.dirname(__file__), path)
-  if path not in sys.path:
-    sys.path.append(path)
 
 # bridgy.util overrides tag_uri() from webutil.tag_uri(). import it here so we
 # know that happens everywhere tag_uri() might be used.
@@ -126,7 +118,7 @@ def webapp_add_wsgi_middleware(app):
   # app = recording.appstats_wsgi_middleware(app)
 
   # uncomment for instance_info concurrent requests recording
-  from activitystreams.oauth_dropins.webutil import instance_info
+  from oauth_dropins.webutil import instance_info
   app = instance_info.concurrent_requests_wsgi_middleware(app)
 
   return app
