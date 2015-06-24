@@ -10,20 +10,19 @@ import urllib
 
 import appengine_config
 
+from activitystreams_unofficial import source as as_source
+from activitystreams_unofficial import testutil as as_testutil
 from google.appengine.datastore import datastore_stub_util
 from google.appengine.ext import ndb
+from models import Response, Source
+from oauth_dropins.models import BaseAuth
+# mirror some methods from webutil.testutil
+from oauth_dropins import handlers as oauth_handlers
+from oauth_dropins.webutil.testutil import get_task_eta
+from oauth_dropins.webutil.testutil import get_task_params
 import requests
 
-from activitystreams import source as as_source
-from models import Response, Source
 import util
-from activitystreams import testutil as as_testutil
-from activitystreams.oauth_dropins.models import BaseAuth
-
-# mirror some methods from webutil.testutil
-from activitystreams.oauth_dropins.webutil.testutil import get_task_eta
-from activitystreams.oauth_dropins.webutil.testutil import get_task_params
-from activitystreams.oauth_dropins import handlers as oauth_handlers
 
 
 class FakeAuthEntity(BaseAuth):

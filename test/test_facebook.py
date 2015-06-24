@@ -13,9 +13,11 @@ import urllib2
 
 import appengine_config
 
-import activitystreams
-from activitystreams import facebook_test as as_facebook_test
-from activitystreams.oauth_dropins import facebook as oauth_facebook
+import activitystreams_unofficial
+from activitystreams_unofficial.test import test_facebook as as_facebook_test
+import oauth_dropins
+from oauth_dropins import facebook as oauth_facebook
+
 from facebook import FacebookPage
 import models
 import tasks
@@ -26,8 +28,8 @@ class FacebookPageTest(testutil.ModelsTest):
 
   def setUp(self):
     super(FacebookPageTest, self).setUp()
-    for config in (appengine_config, activitystreams.appengine_config,
-                   activitystreams.oauth_dropins.appengine_config):
+    for config in (appengine_config, activitystreams_unofficial.appengine_config,
+                   oauth_dropins.appengine_config):
       setattr(config, 'FACEBOOK_APP_ID', 'my_app_id')
       setattr(config, 'FACEBOOK_APP_SECRET', 'my_app_secret')
 
@@ -273,8 +275,8 @@ class FacebookPagePageTest(testutil.ModelsTest):
 
   def setUp(self):
     super(FacebookPagePageTest, self).setUp()
-    for config in (appengine_config, activitystreams.appengine_config,
-                   activitystreams.oauth_dropins.appengine_config):
+    for config in (appengine_config, activitystreams_unofficial.appengine_config,
+                   oauth_dropins.appengine_config):
       setattr(config, 'FACEBOOK_APP_ID', 'my_app_id')
       setattr(config, 'FACEBOOK_APP_SECRET', 'my_app_secret')
 

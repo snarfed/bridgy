@@ -5,22 +5,23 @@
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import json
-import mox
 import urllib
 
-import requests
-from webob import exc
-import webapp2
-
 import appengine_config
-from activitystreams import source as as_source
+
+from activitystreams_unofficial import source as as_source
+from google.appengine.api import mail
+import mox
+import requests
+import webapp2
+from webob import exc
+
 import facebook
 from models import Publish, PublishedPage
 import publish
 import testutil
 import util
 
-from google.appengine.api import mail
 
 class PublishTest(testutil.HandlerTest):
 

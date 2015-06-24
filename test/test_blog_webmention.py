@@ -5,14 +5,16 @@
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import json
-import mox
 import urllib
-from webob import exc
 
 import appengine_config
+
+import mox
+from webob import exc
+
+import blog_webmention
 import models
 from models import BlogWebmention
-import blog_webmention
 import testutil
 
 

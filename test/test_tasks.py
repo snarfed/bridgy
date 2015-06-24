@@ -22,6 +22,7 @@ from google.appengine.ext import ndb
 import httplib2
 from oauth2client.client import AccessTokenRefreshError
 import requests
+from webmentiontools import send
 
 import models
 import tasks
@@ -29,7 +30,6 @@ from tasks import PropagateResponse
 import testutil
 from testutil import FakeSource, FakeAsSource
 import util
-from webmentiontools import send
 
 NOW = datetime.datetime.utcnow()
 tasks.now_fn = lambda: NOW

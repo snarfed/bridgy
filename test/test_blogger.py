@@ -9,12 +9,14 @@ import urllib
 import urlparse
 
 import appengine_config
-from activitystreams.oauth_dropins.blogger_v2 import BloggerV2Auth
-import blogger
-from blogger import Blogger
+
 from gdata.blogger import data
 from gdata.blogger.client import BloggerClient
 from gdata.client import RequestError
+from oauth_dropins.blogger_v2 import BloggerV2Auth
+
+import blogger
+from blogger import Blogger
 import util
 import testutil
 

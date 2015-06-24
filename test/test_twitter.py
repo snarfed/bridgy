@@ -5,13 +5,14 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import copy
 import json
-import testutil
 
 import appengine_config
-from activitystreams import oauth_dropins
-from activitystreams import twitter_test as as_twitter_test
-from activitystreams.oauth_dropins import twitter as oauth_twitter
+from activitystreams_unofficial.test import test_twitter as as_twitter_test
+import oauth_dropins
+from oauth_dropins import twitter as oauth_twitter
+
 import models
+import testutil
 from twitter import Twitter
 
 

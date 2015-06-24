@@ -1,21 +1,20 @@
 # coding=utf-8
-"""Unit tests for util.py.
-"""
-
-
-from appengine_config import HTTP_TIMEOUT
-from testutil import FakeAuthEntity, FakeSource
-from webmentiontools import send
-from google.appengine.ext import ndb
-
+"""Unit tests for util.py."""
 import json
-import testutil
 import urllib
 import urlparse
-import util
-import webapp2
 
-# the invisible character in the middle is an unusual unicode character
+from appengine_config import HTTP_TIMEOUT
+
+from google.appengine.ext import ndb
+import webapp2
+from webmentiontools import send
+
+import testutil
+from testutil import FakeAuthEntity, FakeSource
+import util
+
+# the character in the middle is an unusual unicode character
 UNICODE_STR = u'a ✁ b'
 
 

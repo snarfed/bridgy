@@ -22,9 +22,9 @@ import json
 
 import appengine_config
 
-from activitystreams import instagram as as_instagram
-from activitystreams.oauth_dropins import instagram as oauth_instagram
-from activitystreams.source import SELF
+from activitystreams_unofficial import instagram as as_instagram
+from oauth_dropins import instagram as oauth_instagram
+from activitystreams_unofficial.source import SELF
 import models
 import util
 

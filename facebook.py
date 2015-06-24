@@ -29,9 +29,9 @@ import urlparse
 
 import appengine_config
 
-from activitystreams import facebook as as_facebook
-from activitystreams.oauth_dropins import facebook as oauth_facebook
-from activitystreams.source import SELF
+from activitystreams_unofficial import facebook as as_facebook
+from oauth_dropins import facebook as oauth_facebook
+from activitystreams_unofficial.source import SELF
 import models
 import util
 

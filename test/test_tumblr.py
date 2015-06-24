@@ -5,12 +5,12 @@
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import json
+
 import mox
 from webob import exc
 
 import appengine_config
-
-from activitystreams.oauth_dropins.tumblr import TumblrAuth
+from oauth_dropins.tumblr import TumblrAuth
 import tumblr
 from tumblr import Tumblr
 import testutil

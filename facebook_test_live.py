@@ -26,19 +26,19 @@ import unittest
 import urllib
 import urlparse
 
-import alltests
+import oauth_dropins.test
 import appengine_config
 
-from google.appengine.api import memcache
 from bs4 import BeautifulSoup
+from google.appengine.api import memcache
 import mox
+from oauth_dropins import facebook as oauth_facebook
 import requests
 
-from activitystreams.oauth_dropins import facebook as oauth_facebook
 import facebook
 import handlers
 import tasks
-import testutil
+from test import testutil
 import util
 
 TEST_USER_ID = '1407574399567467'

@@ -30,8 +30,8 @@ import urlparse
 
 import appengine_config
 
-from activitystreams.oauth_dropins import wordpress_rest as oauth_wordpress
-from activitystreams.oauth_dropins.handlers import interpret_http_exception
+from oauth_dropins import wordpress_rest as oauth_wordpress
+from oauth_dropins.handlers import interpret_http_exception
 import models
 import superfeedr
 import util

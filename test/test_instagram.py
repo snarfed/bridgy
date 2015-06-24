@@ -4,10 +4,12 @@
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import json
-import testutil
 
-from activitystreams.oauth_dropins import instagram as oauth_instagram
+
+from oauth_dropins import instagram as oauth_instagram
+
 from instagram import Instagram
+import testutil
 
 
 class InstagramTest(testutil.ModelsTest):

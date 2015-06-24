@@ -1,14 +1,15 @@
 """Unit tests for app.py.
 """
+import urllib
+
+from google.appengine.ext import ndb
+from oauth_dropins import handlers as oauth_handlers
+import mf2py
+import webapp2
 
 import app
 import testutil
-import mf2py
-import urllib
-from activitystreams.oauth_dropins import handlers as oauth_handlers
-from google.appengine.ext import ndb
 from testutil import FakeAuthEntity
-import webapp2
 
 
 # this class stands in for a oauth_dropins module

@@ -9,10 +9,10 @@ import urllib
 import urllib2
 
 import appengine_config
+from oauth_dropins.wordpress_rest import WordPressAuth
 
-from activitystreams.oauth_dropins.wordpress_rest import WordPressAuth
-from wordpress_rest import WordPress, AddWordPress
 import testutil
+from wordpress_rest import WordPress, AddWordPress
 
 
 class WordPressTest(testutil.HandlerTest):

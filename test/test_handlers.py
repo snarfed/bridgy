@@ -2,12 +2,13 @@
 """
 
 import json
+import StringIO
+import urllib2
+
 
 import handlers
 import models
 import testutil
-import urllib2
-import StringIO
 
 
 class HandlersTest(testutil.HandlerTest):

@@ -33,7 +33,7 @@ import requests
 import urlparse
 import util
 
-from activitystreams import source as as_source
+from activitystreams_unofficial import source as as_source
 from google.appengine.api.datastore import MAX_ALLOWABLE_QUERIES
 from bs4 import BeautifulSoup
 from models import SyndicatedPost

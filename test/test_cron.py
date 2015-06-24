@@ -6,11 +6,13 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 import datetime
 import json
 
-from activitystreams import oauth_dropins
-from activitystreams import instagram as as_instagram
-from activitystreams.oauth_dropins import instagram as oauth_instagram
-from activitystreams.oauth_dropins import twitter as oauth_twitter
-from activitystreams.oauth_dropins.webutil.util import Struct
+
+from activitystreams_unofficial import instagram as as_instagram
+import oauth_dropins
+from oauth_dropins import instagram as oauth_instagram
+from oauth_dropins import twitter as oauth_twitter
+from oauth_dropins.webutil.util import Struct
+
 import cron
 import instagram
 from instagram import Instagram

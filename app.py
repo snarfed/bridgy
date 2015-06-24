@@ -12,15 +12,15 @@ import appengine_config
 
 # need to import modules with model class definitions, e.g. facebook, for
 # template rendering.
-from activitystreams import source as as_source
-from activitystreams.oauth_dropins import blogger_v2 as oauth_blogger_v2
-from activitystreams.oauth_dropins import facebook as oauth_facebook
-from activitystreams.oauth_dropins import googleplus as oauth_googleplus
-from activitystreams.oauth_dropins import instagram as oauth_instagram
-from activitystreams.oauth_dropins import tumblr as oauth_tumblr
-from activitystreams.oauth_dropins import twitter as oauth_twitter
-from activitystreams.oauth_dropins import wordpress_rest as oauth_wordpress_rest
-from activitystreams.oauth_dropins.webutil import handlers as webutil_handlers
+from activitystreams_unofficial import source as as_source
+from oauth_dropins import blogger_v2 as oauth_blogger_v2
+from oauth_dropins import facebook as oauth_facebook
+from oauth_dropins import googleplus as oauth_googleplus
+from oauth_dropins import instagram as oauth_instagram
+from oauth_dropins import tumblr as oauth_tumblr
+from oauth_dropins import twitter as oauth_twitter
+from oauth_dropins import wordpress_rest as oauth_wordpress_rest
+from oauth_dropins.webutil import handlers as webutil_handlers
 from blogger import Blogger
 from tumblr import Tumblr
 from wordpress_rest import WordPress

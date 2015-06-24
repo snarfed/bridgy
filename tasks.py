@@ -19,8 +19,8 @@ from webmentiontools import send
 
 import appengine_config
 
-from activitystreams.oauth_dropins import handlers
-from activitystreams.source import Source
+from oauth_dropins import handlers
+from activitystreams_unofficial.source import Source
 # need to import model class definitions since poll creates and saves entities.
 import blogger
 import facebook

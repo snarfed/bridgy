@@ -26,10 +26,10 @@ import string
 
 import appengine_config
 
-from activitystreams import microformats2
-from activitystreams.microformats2 import first_props
-from activitystreams.oauth_dropins.webutil import handlers
-from activitystreams.oauth_dropins.handlers import interpret_http_exception
+from activitystreams_unofficial import microformats2
+from activitystreams_unofficial.microformats2 import first_props
+from oauth_dropins.webutil import handlers
+from oauth_dropins.handlers import interpret_http_exception
 import models
 import original_post_discovery
 import util

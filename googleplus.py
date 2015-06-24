@@ -8,8 +8,8 @@ import json
 
 import appengine_config
 
-from activitystreams import googleplus as as_googleplus
-from activitystreams.oauth_dropins import googleplus as oauth_googleplus
+from activitystreams_unofficial import googleplus as as_googleplus
+from oauth_dropins import googleplus as oauth_googleplus
 import models
 import util
 

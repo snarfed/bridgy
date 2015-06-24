@@ -4,6 +4,7 @@
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import json
+
 import mox
 
 from models import BlogPost

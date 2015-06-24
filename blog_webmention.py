@@ -9,8 +9,9 @@ import urlparse
 
 import appengine_config
 
-from activitystreams import microformats2
-from activitystreams.oauth_dropins import handlers
+from activitystreams_unofficial import microformats2
+from oauth_dropins import handlers
+
 import blogger
 import models
 from models import BlogWebmention

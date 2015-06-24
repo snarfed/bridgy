@@ -13,9 +13,9 @@ import urlparse
 import requests
 import webapp2
 
-from activitystreams.oauth_dropins.webutil.models import StringIdModel
-from activitystreams.oauth_dropins.webutil.util import *
-from activitystreams import source
+from oauth_dropins.webutil.models import StringIdModel
+from oauth_dropins.webutil.util import *
+from activitystreams_unofficial import source
 from appengine_config import HTTP_TIMEOUT, DEBUG
 
 from google.appengine.api import mail
@@ -169,7 +169,7 @@ def follow_redirects(url, cache=True):
 #
 # Needed because I originally generated tag URIs with the current year, which
 # resulted in different URIs for the same objects when the year changed. :/
-from activitystreams.oauth_dropins.webutil import util
+from oauth_dropins.webutil import util
 _orig_tag_uri = tag_uri
 util.tag_uri = lambda domain, name: _orig_tag_uri(domain, name, year=2013)
 

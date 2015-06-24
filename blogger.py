@@ -29,16 +29,16 @@ import urlparse
 
 import appengine_config
 
-from activitystreams.oauth_dropins import blogger_v2 as oauth_blogger
 from gdata.blogger.client import Query
 from gdata.client import RequestError
+from google.appengine.ext import ndb
+from google.appengine.ext.webapp import template
+from oauth_dropins import blogger_v2 as oauth_blogger
+
 import models
 import superfeedr
 import util
 import webapp2
-
-from google.appengine.ext import ndb
-from google.appengine.ext.webapp import template
 
 # Blogger says it's 4096 in an error message. (Couldn't find it in their docs.)
 # We include some padding.

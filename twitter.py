@@ -10,8 +10,8 @@ import webapp2
 
 import appengine_config
 
-from activitystreams import twitter as as_twitter
-from activitystreams.oauth_dropins import twitter as oauth_twitter
+from activitystreams_unofficial import twitter as as_twitter
+from oauth_dropins import twitter as oauth_twitter
 import models
 import util
 

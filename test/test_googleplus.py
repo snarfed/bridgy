@@ -4,10 +4,12 @@
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import json
-import testutil
 
-from activitystreams.oauth_dropins import googleplus as oauth_googleplus
+
+from oauth_dropins import googleplus as oauth_googleplus
+
 from googleplus import GooglePlusPage
+import testutil
 
 
 class GooglePlusTest(testutil.ModelsTest):

@@ -8,7 +8,7 @@ import datetime
 import json
 
 import appengine_config
-from activitystreams.oauth_dropins.webutil import handlers
+from oauth_dropins.webutil import handlers
 from models import BlogPost, Response
 import util
 

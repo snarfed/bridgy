@@ -1,21 +1,22 @@
 # coding=utf-8
 """Unit tests for original_post_discovery.py
 """
-import facebook_test
 import json
 import logging
-import original_post_discovery
-import requests
-import tasks
-import util
-import testutil
+
 
 from google.appengine.ext import ndb
-
-from activitystreams.oauth_dropins import facebook as oauth_facebook
-from models import SyndicatedPost
-from facebook import FacebookPage
+from oauth_dropins import facebook as oauth_facebook
+import requests
 from requests.exceptions import HTTPError
+
+from facebook import FacebookPage
+from models import SyndicatedPost
+import util
+import original_post_discovery
+import tasks
+import test_facebook
+import testutil
 
 
 class OriginalPostDiscoveryTest(testutil.ModelsTest):

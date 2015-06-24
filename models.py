@@ -10,11 +10,12 @@ import re
 import appengine_config
 from appengine_config import HTTP_TIMEOUT
 
-from activitystreams import source as as_source
-from activitystreams.oauth_dropins.webutil.models import StringIdModel
+from activitystreams_unofficial import source as as_source
+from oauth_dropins.webutil.models import StringIdModel
+from webmentiontools import send
+
 import superfeedr
 import util
-from webmentiontools import send
 
 from google.appengine.ext import ndb
 

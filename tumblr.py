@@ -38,7 +38,7 @@ from webob import exc
 import appengine_config
 from appengine_config import HTTP_TIMEOUT
 
-from activitystreams.oauth_dropins import tumblr as oauth_tumblr
+from oauth_dropins import tumblr as oauth_tumblr
 import models
 import superfeedr
 import util

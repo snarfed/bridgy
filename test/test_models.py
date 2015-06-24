@@ -7,21 +7,22 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 import datetime
 import json
 
-import models
-from models import BlogPost, Response, Source, SyndicatedPost
-import facebook
+
+from activitystreams_unofficial import source as as_source
+import mox
+
 import blogger
+import facebook
 import googleplus
 import instagram
-import mox
+import models
+from models import BlogPost, Response, Source, SyndicatedPost
 import superfeedr
 import testutil
 import tumblr
 import twitter
 import wordpress_rest
 from testutil import FakeSource
-
-from activitystreams import source as as_source
 
 
 class ResponseTest(testutil.ModelsTest):

@@ -17,7 +17,7 @@ Development
 Clone this repo, then run these commands in the repo root dir to get set up:
 
 ```
-virtualenv --system-site-packages local
+virtualenv local
 source local/bin/activate
 pip install -r requirements.txt
 python -m unittest discover

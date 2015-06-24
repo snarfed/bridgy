@@ -36,12 +36,12 @@ import urlparse
 import appengine_config
 from appengine_config import HTTP_TIMEOUT
 
-from activitystreams import microformats2
-from activitystreams import source as as_source
-from activitystreams.oauth_dropins import handlers
-from activitystreams.oauth_dropins import facebook as oauth_facebook
-from activitystreams.oauth_dropins import instagram as oauth_instagram
-from activitystreams.oauth_dropins import twitter as oauth_twitter
+from activitystreams_unofficial import microformats2
+from activitystreams_unofficial import source as as_source
+from oauth_dropins import handlers
+from oauth_dropins import facebook as oauth_facebook
+from oauth_dropins import instagram as oauth_instagram
+from oauth_dropins import twitter as oauth_twitter
 from facebook import FacebookPage
 from googleplus import GooglePlusPage
 import html2text
