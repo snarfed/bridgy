@@ -856,7 +856,8 @@ Join us!"""
     """Test that we pass through unicode chars correctly."""
     text = u'Démo pour les développeur. Je suis navrée de ce problème.'
     for i in range(2):
-      self.expect_requests_get('http://foo.com/bar', self.post_html % text)
+      self.expect_requests_get('http://foo.com/bar', self.post_html % text,
+                               content_type='text/html; charset=utf-8')
     self.mox.ReplayAll()
 
     for preview in False, True:

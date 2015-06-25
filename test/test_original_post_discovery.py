@@ -427,10 +427,9 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.assert_syndicated_posts(('http://author1/A', 'https://fa.ke/A'),
                                  ('http://author3/B', 'https://fa.ke/B'))
 
-  def _test_failed_rel_feed_link_fetch(self, raise_exception):
-    """An author page with an invalid rel=feed link. We should recover and
-    use any h-entries on the main url as a fallback.
-    """
+  def test_rel_feed_link_error(self):
+    """Author page has an h-feed link that raises an exception. We should
+    recover and use the main page's h-entries as a fallback."""
     self.expect_requests_get('http://author', """
     <html>
       <head>
@@ -446,28 +445,16 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     </html>""")
 
     # try to do this and fail
-    if raise_exception:
-      self.expect_requests_get('http://author/try_this.html').AndRaise(HTTPError())
-    else:
-      self.expect_requests_get('http://author/try_this.html', status_code=404)
+    self.expect_requests_get('http://author/try_this.html', 'nope',
+                             status_code=404)
 
     # despite the error, should fallback on the main page's h-entries and
     # check the permalink
-    self.expect_requests_get('http://author/recover_and_fetch_this.html')
+    self.expect_requests_get('http://author/recover_and_fetch_this.html', 'ok')
 
     self.mox.ReplayAll()
     logging.debug('Original post discovery %s -> %s', self.source, self.activity)
     original_post_discovery.discover(self.source, self.activity)
-
-  def test_rel_feed_link_not_found(self):
-    """Author page has an h-feed link that is 404 not found. We should
-    recover and use the main page's h-entries as a fallback."""
-    self._test_failed_rel_feed_link_fetch(raise_exception=False)
-
-  def test_rel_feed_link_error(self):
-    """Author page has an h-feed link that raises an exception. We should
-    recover and use the main page's h-entries as a fallback."""
-    self._test_failed_rel_feed_link_fetch(raise_exception=True)
 
   def _test_failed_post_permalink_fetch(self, raise_exception):
     """Make sure something reasonable happens when we're unable to fetch
