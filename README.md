@@ -14,7 +14,12 @@ License: This project is placed in the public domain.
 
 Development
 ---
-Clone this repo, then run these commands in the repo root dir to get set up:
+You'll need the
+[App Engine Python SDK](https://cloud.google.com/appengine/downloads#Google_App_Engine_SDK_for_Python)
+version 1.9.15 or later (for
+[`vendor`](https://cloud.google.com/appengine/docs/python/tools/libraries27#vendoring)
+support). Add it to your `$PYTHONPATH`, e.g.
+`export PYTHONPATH=$PYTHONPATH:/usr/local/google_appengine`, and then run:
 
 ```
 virtualenv local

@@ -4,7 +4,6 @@ gdata>=2.0.18
 google-api-python-client>=1.4.0
 html2text
 mf2py>=0.2.6
-mox
 oauth2client
 requests
 -e git+git@github.com:snarfed/webmention-tools.git#egg=webmentiontools
