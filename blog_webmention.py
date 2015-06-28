@@ -9,7 +9,7 @@ import urlparse
 
 import appengine_config
 
-from activitystreams_unofficial import microformats2
+from granary import microformats2
 from oauth_dropins import handlers
 
 import blogger
@@ -57,7 +57,7 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
     if not self.source:
       return self.error(
         'Could not find %s account for %s. Is it registered with Bridgy?' %
-        (source_cls.AS_CLASS.NAME, domain))
+        (source_cls.GR_CLASS.NAME, domain))
 
     if urlparse.urlparse(self.target_url).path in ('', '/'):
       return self.error('Home page webmentions are not currently supported.')

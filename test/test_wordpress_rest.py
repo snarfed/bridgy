@@ -69,7 +69,7 @@ class WordPressTest(testutil.HandlerTest):
                       w.domain_urls)
     self.assertEquals(['vanity.domain', 'my.wp.com'], w.domains)
 
-  def test_new_site_domain_same_as_blog_url(self):
+  def test_new_site_domain_same_gr_blog_url(self):
     self.expect_urlopen(
       'https://public-api.wordpress.com/rest/v1/sites/123?pretty=true',
       json.dumps({'ID': 123, 'URL': 'http://my.wp.com/'}))

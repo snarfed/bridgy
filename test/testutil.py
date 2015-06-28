@@ -10,8 +10,8 @@ import urllib
 
 import appengine_config
 
-from activitystreams_unofficial import source as as_source
-from activitystreams_unofficial import testutil as as_testutil
+from granary import source as gr_source
+from granary import testutil as gr_testutil
 from google.appengine.datastore import datastore_stub_util
 from google.appengine.ext import ndb
 from models import Response, Source
@@ -66,7 +66,7 @@ class FakeBase(ndb.Model):
     return cls(id=id, **props)
 
 
-class FakeAsSource(FakeBase, as_source.Source):
+class FakeGrSource(FakeBase, gr_source.Source):
   NAME = 'FakeSource'
   DOMAIN = 'fa.ke'
 
@@ -99,18 +99,18 @@ class FakeAsSource(FakeBase, as_source.Source):
     verb = obj.get('verb')
     type = obj.get('objectType')
     if verb == 'like':
-      return as_source.creation_result(
+      return gr_source.creation_result(
         abort=True, error_plain='Cannot publish likes',
         error_html='Cannot publish likes')
     if 'content' not in obj:
-      return as_source.creation_result(
+      return gr_source.creation_result(
         abort=False, error_plain='No content',
         error_html='No content')
 
     if type == 'comment':
       base_url = self.base_object(obj).get('url')
       if not base_url:
-        return as_source.creation_result(
+        return gr_source.creation_result(
           abort=True,
           error_plain='no %s url to reply to' % self.DOMAIN,
           error_html='no %s url to reply to' % self.DOMAIN)
@@ -119,29 +119,29 @@ class FakeAsSource(FakeBase, as_source.Source):
     ret = {'id': 'fake id', 'url': 'http://fake/url', 'content': content}
     if verb == 'rsvp-yes':
       ret['type'] = 'post'
-    return as_source.creation_result(ret)
+    return gr_source.creation_result(ret)
 
   def preview_create(self, obj, include_link=False):
     if obj.get('verb') == 'like':
-      return as_source.creation_result(
+      return gr_source.creation_result(
         abort=True, error_plain='Cannot publish likes',
         error_html='Cannot publish likes')
     content = 'preview of ' + obj['content'] + (' - %s' % obj['url']
                                                 if include_link else '')
-    return as_source.creation_result(description=content)
+    return gr_source.creation_result(description=content)
 
 
 class FakeSource(FakeBase, Source):
-  AS_CLASS = FakeAsSource
+  GR_CLASS = FakeGrSource
   SHORT_NAME = 'fake'
   TYPE_LABELS = {'post': 'FakeSource post label'}
   RATE_LIMITED_POLL = datetime.timedelta(hours=30)
 
-  as_source = FakeAsSource()
+  gr_source = FakeGrSource()
 
   def __init__(self, *args, **kwargs):
     super(FakeSource, self).__init__(*args, **kwargs)
-    ndb.transaction(FakeSource.as_source.put,
+    ndb.transaction(FakeSource.gr_source.put,
                     propagation=ndb.TransactionOptions.INDEPENDENT)
 
   def silo_url(self):
@@ -179,7 +179,7 @@ class FakeSource(FakeBase, Source):
             else super(FakeSource, self).poll_period())
 
 
-class HandlerTest(as_testutil.TestCase):
+class HandlerTest(gr_testutil.TestCase):
   """Base test class.
   """
   def setUp(self):

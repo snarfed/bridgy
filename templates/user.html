@@ -21,8 +21,8 @@
    class="u-url">
   <img class="profile u-photo" src="{{ source.picture }}" width="64px" />
   <img src="/static/{{ source.SHORT_NAME }}_icon.png"
-       {# oddly, source.AS_CLASS doesn't work for Twitter. use kind as fallback. #}
-       alt="{% firstof source.AS_CLASS.NAME source.key.kind %}" />
+       {# oddly, source.GR_CLASS doesn't work for Twitter. use kind as fallback. #}
+       alt="{% firstof source.GR_CLASS.NAME source.key.kind %}" />
   <span class="p-name">{{ source.name|safe }}</span></a>
 
 {% if source.status == "disabled" %}
@@ -31,7 +31,7 @@
 <a href="#" onclick="document.forms['listen-{{ source.SHORT_NAME }}-start'].submit();
                      return false;">
   <span class="glyphicon glyphicon-pause"
-        title="This account was disconnected on {% firstof source.AS_CLASS.NAME source.key.kind %}'s end. Click to reconnect it!">
+        title="This account was disconnected on {% firstof source.GR_CLASS.NAME source.key.kind %}'s end. Click to reconnect it!">
 </span></a>
 </data>
 {% else %}

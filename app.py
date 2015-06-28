@@ -12,7 +12,7 @@ import appengine_config
 
 # need to import modules with model class definitions, e.g. facebook, for
 # template rendering.
-from activitystreams_unofficial import source as as_source
+from granary import source as gr_source
 from oauth_dropins import blogger_v2 as oauth_blogger_v2
 from oauth_dropins import facebook as oauth_facebook
 from oauth_dropins import googleplus as oauth_googleplus
@@ -157,7 +157,7 @@ class UsersHandler(CachedPageHandler):
                for cls in models.sources.values()]
 
     sources = sorted(itertools.chain(*[q.get_result() for q in queries]),
-                     key=lambda s: (s.name.lower(), s.AS_CLASS.NAME))
+                     key=lambda s: (s.name.lower(), s.GR_CLASS.NAME))
     sources = [self.preprocess_source(s) for s in sources
                if s.name.lower() >= start_name.lower() and s.features
                ][:self.PAGE_SIZE]
@@ -229,8 +229,8 @@ class UserHandler(DashboardHandler):
           r.activities_json.append(r.activity_json)
         r.activities = [json.loads(a) for a in r.activities_json]
 
-        if (not as_source.Source.is_public(r.response) or
-            not all(as_source.Source.is_public(a) for a in r.activities)):
+        if (not gr_source.Source.is_public(r.response) or
+            not all(gr_source.Source.is_public(a) for a in r.activities)):
           continue
 
         r.actor = r.response.get('author') or r.response.get('actor', {})
@@ -420,7 +420,7 @@ class DeleteFinishHandler(util.Handler):
         callback = util.add_query_params(callback, {'result': 'failure'})
       else:
         self.messages.add('Please log into %s as %s to disable it here.' %
-                          (source.AS_CLASS.NAME, source.name))
+                          (source.GR_CLASS.NAME, source.name))
 
     self.redirect(callback.encode('utf-8') if callback
                   else source.bridgy_url(self))

@@ -7,7 +7,7 @@ import copy
 import json
 
 import appengine_config
-from activitystreams_unofficial.test import test_twitter as as_twitter_test
+from granary.test import test_twitter as gr_twitter_test
 import oauth_dropins
 from oauth_dropins import twitter as oauth_twitter
 
@@ -36,8 +36,8 @@ class TwitterTest(testutil.ModelsTest):
   def test_new(self):
     tw = Twitter.new(self.handler, auth_entity=self.auth_entity)
     self.assertEqual(self.auth_entity, tw.auth_entity.get())
-    self.assertEqual('my_key', tw.as_source.access_token_key)
-    self.assertEqual('my_secret', tw.as_source.access_token_secret)
+    self.assertEqual('my_key', tw.gr_source.access_token_key)
+    self.assertEqual('my_secret', tw.gr_source.access_token_secret)
     self.assertEqual('snarfed_org', tw.key.string_id())
     self.assertEqual('https://twitter.com/snarfed_org/profile_image?size=original',
                      tw.picture)
@@ -59,11 +59,11 @@ class TwitterTest(testutil.ModelsTest):
   def test_get_activities(self):
     self.expect_urlopen('https://api.twitter.com/1.1/statuses/user_timeline.json?'
                         'include_entities=true&count=0',
-      json.dumps([as_twitter_test.TWEET]))
+      json.dumps([gr_twitter_test.TWEET]))
     self.mox.ReplayAll()
 
     tw = Twitter.new(self.handler, auth_entity=self.auth_entity)
-    self.assert_equals([as_twitter_test.ACTIVITY], tw.get_activities())
+    self.assert_equals([gr_twitter_test.ACTIVITY], tw.get_activities())
 
   def test_get_like(self):
     """get_like() should use the Response stored in the datastore."""
@@ -81,18 +81,18 @@ class TwitterTest(testutil.ModelsTest):
 
   def test_get_like_fallback(self):
     """If there's no Response in the datastore, fall back to get_activities."""
-    tweet = copy.deepcopy(as_twitter_test.TWEET)
+    tweet = copy.deepcopy(gr_twitter_test.TWEET)
     tweet['favorite_count'] = 1
 
     self.expect_urlopen(
       'https://api.twitter.com/1.1/statuses/show.json?id=100&include_entities=true',
       json.dumps(tweet))
     self.expect_urlopen('https://twitter.com/i/activity/favorited_popup?id=100',
-      json.dumps({'htmlUsers': as_twitter_test.FAVORITES_HTML}))
+      json.dumps({'htmlUsers': gr_twitter_test.FAVORITES_HTML}))
 
     self.mox.ReplayAll()
     tw = Twitter.new(self.handler, auth_entity=self.auth_entity)
-    self.assert_equals(as_twitter_test.LIKES_FROM_HTML[0],
+    self.assert_equals(gr_twitter_test.LIKES_FROM_HTML[0],
                        tw.get_like('unused', '100', '353'))
 
   def test_canonicalize_syndication_url(self):

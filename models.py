@@ -10,7 +10,7 @@ import re
 import appengine_config
 from appengine_config import HTTP_TIMEOUT
 
-from activitystreams_unofficial import source as as_source
+from granary import source as gr_source
 from oauth_dropins.webutil.models import StringIdModel
 from webmentiontools import send
 
@@ -34,7 +34,7 @@ def get_type(obj):
     return 'repost'
   elif verb in VERB_TYPES:
     return verb
-  elif verb in as_source.RSVP_TO_EVENT:
+  elif verb in gr_source.RSVP_TO_EVENT:
     return 'rsvp'
   elif type == 'comment':
     return 'comment'
@@ -67,8 +67,8 @@ class Source(StringIdModel):
 
   # short name for this site type. used in URLs, etc.
   SHORT_NAME = None
-  # the corresponding activitystreams-unofficial class
-  AS_CLASS = None
+  # the corresponding granary class
+  GR_CLASS = None
 
   # how often to poll for responses
   FAST_POLL = datetime.timedelta(minutes=10)
@@ -123,7 +123,7 @@ class Source(StringIdModel):
   # limited. it can be used e.g. to modify the poll period.
   rate_limited = False
 
-  # as_source is *not* set to None by default here, since it needs to be unset
+  # gr_source is *not* set to None by default here, since it needs to be unset
   # for __getattr__ to run when it's accessed.
 
   def new(self, **kwargs):
@@ -134,17 +134,17 @@ class Source(StringIdModel):
     raise NotImplementedError()
 
   def __getattr__(self, name):
-    """Lazily load the auth entity and instantiate self.as_source.
+    """Lazily load the auth entity and instantiate self.gr_source.
 
-    Once self.as_source is set, this method will *not* be called; the as_source
+    Once self.gr_source is set, this method will *not* be called; the gr_source
     attribute will be returned normally.
     """
-    if name == 'as_source' and self.auth_entity:
+    if name == 'gr_source' and self.auth_entity:
       token = self.auth_entity.get().access_token()
       if not isinstance(token, tuple):
         token = (token,)
-      self.as_source = self.AS_CLASS(*token)
-      return self.as_source
+      self.gr_source = self.GR_CLASS(*token)
+      return self.gr_source
 
     return getattr(super(Source, self), name)
 
@@ -171,7 +171,7 @@ class Source(StringIdModel):
 
   def label(self):
     """Human-readable label for this site."""
-    return '%s (%s)' % (self.name, self.AS_CLASS.NAME)
+    return '%s (%s)' % (self.name, self.GR_CLASS.NAME)
 
   def poll_period(self):
     """Returns the poll frequency for this source, as a datetime.timedelta.
@@ -217,10 +217,10 @@ class Source(StringIdModel):
   def get_activities_response(self, **kwargs):
     """Returns recent posts and embedded comments for this source.
 
-    Passes through to activitystreams-unofficial by default. May be overridden
+    Passes through to granary by default. May be overridden
     by subclasses.
     """
-    return self.as_source.get_activities_response(group_id=as_source.SELF, **kwargs)
+    return self.gr_source.get_activities_response(group_id=gr_source.SELF, **kwargs)
 
   def get_activities(self, *args, **kwargs):
     return self.get_activities_response(*args, **kwargs)['items']
@@ -244,12 +244,12 @@ class Source(StringIdModel):
 
     Returns: dict, decoded ActivityStreams activity, or None
     """
-    return self.as_source.get_event(id)
+    return self.gr_source.get_event(id)
 
   def get_comment(self, comment_id, activity_id=None, activity_author_id=None):
     """Returns a comment from this source.
 
-    Passes through to activitystreams-unofficial by default. May be overridden
+    Passes through to granary by default. May be overridden
     by subclasses.
 
     Args:
@@ -259,13 +259,13 @@ class Source(StringIdModel):
 
     Returns: dict, decoded ActivityStreams comment object, or None
     """
-    return self.as_source.get_comment(comment_id, activity_id=activity_id,
+    return self.gr_source.get_comment(comment_id, activity_id=activity_id,
                                       activity_author_id=activity_author_id)
 
   def get_like(self, activity_user_id, activity_id, like_user_id):
     """Returns an ActivityStreams 'like' activity object.
 
-    Passes through to activitystreams-unofficial by default. May be overridden
+    Passes through to granary by default. May be overridden
     by subclasses.
 
     Args:
@@ -273,12 +273,12 @@ class Source(StringIdModel):
       activity_id: string activity id
       like_user_id: string id of the user who liked the activity
     """
-    return self.as_source.get_like(activity_user_id, activity_id, like_user_id)
+    return self.gr_source.get_like(activity_user_id, activity_id, like_user_id)
 
   def get_share(self, activity_user_id, activity_id, share_id):
     """Returns an ActivityStreams 'share' activity object.
 
-    Passes through to activitystreams-unofficial by default. May be overridden
+    Passes through to granary by default. May be overridden
     by subclasses.
 
     Args:
@@ -286,12 +286,12 @@ class Source(StringIdModel):
       activity_id: string activity id
       share_id: string id of the share object or the user who shared it
     """
-    return self.as_source.get_share(activity_user_id, activity_id, share_id)
+    return self.gr_source.get_share(activity_user_id, activity_id, share_id)
 
   def get_rsvp(self, activity_user_id, event_id, user_id):
     """Returns an ActivityStreams 'rsvp-*' activity object.
 
-    Passes through to activitystreams-unofficial by default. May be overridden
+    Passes through to granary by default. May be overridden
     by subclasses.
 
     Args:
@@ -299,7 +299,7 @@ class Source(StringIdModel):
       event_id: string event id
       user_id: string id of the user object or the user who RSVPed
     """
-    return self.as_source.get_rsvp(activity_user_id, event_id, user_id)
+    return self.gr_source.get_rsvp(activity_user_id, event_id, user_id)
 
   def create_comment(self, post_url, author_name, author_url, content):
     """Creates a new comment in the source silo.
@@ -361,7 +361,7 @@ class Source(StringIdModel):
         if (feature == 'publish' and
             (not source.domain_urls or not source.domains)):
           handler.messages = {'No valid web sites found in your %s profile. '
-                              'Please update it and try again!' % cls.AS_CLASS.NAME}
+                              'Please update it and try again!' % cls.GR_CLASS.NAME}
           return None
 
     # check if this source already exists
@@ -473,7 +473,7 @@ class Source(StringIdModel):
 
     Returns: ([string url, ...], [string domain, ...])
     """
-    actor = self.as_source.user_to_actor(json.loads(auth_entity.user_json))
+    actor = self.gr_source.user_to_actor(json.loads(auth_entity.user_json))
     logging.debug('Converted to actor: %s', json.dumps(actor, indent=2))
 
     urls = []
@@ -633,7 +633,7 @@ class Response(Webmentions):
   def get_or_save(self, source):
     resp = super(Response, self).get_or_save()
 
-    if source.as_source.activity_changed(json.loads(resp.response_json),
+    if source.gr_source.activity_changed(json.loads(resp.response_json),
                                          json.loads(self.response_json),
                                          log=True):
       logging.info('Response changed! Re-propagating. Original: %s' % resp)

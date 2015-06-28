@@ -7,7 +7,7 @@ import datetime
 import json
 
 
-from activitystreams_unofficial import instagram as as_instagram
+from granary import instagram as gr_instagram
 import oauth_dropins
 from oauth_dropins import instagram as oauth_instagram
 from oauth_dropins import twitter as oauth_twitter

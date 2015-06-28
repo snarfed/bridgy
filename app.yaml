@@ -38,7 +38,7 @@ handlers:
   upload: static/bridgy.js
   expiration: 1h
 
-- url: /activitystreams/oauth_dropins/static
+- url: /oauth_dropins/static
   static_dir: local/lib/python2.7/site-packages/oauth_dropins/static
 
 - url: /fonts
@@ -117,7 +117,7 @@ handlers:
   login: admin
 
 - url: /_info
-  script: activitystreams.oauth_dropins.webutil.instance_info.application
+  script: oauth_dropins.webutil.instance_info.application
   secure: always
 
 - url: /admin/.*

@@ -8,7 +8,7 @@ import json
 
 import appengine_config
 
-from activitystreams_unofficial import googleplus as as_googleplus
+from granary import googleplus as gr_googleplus
 from oauth_dropins import googleplus as oauth_googleplus
 import models
 import util
@@ -23,7 +23,7 @@ class GooglePlusPage(models.Source):
   The key name is the user id.
   """
 
-  AS_CLASS = as_googleplus.GooglePlus
+  GR_CLASS = gr_googleplus.GooglePlus
   SHORT_NAME = 'googleplus'
 
   # We're currently close to the G+ API's daily limit of 10k requests per day.
@@ -70,10 +70,10 @@ class GooglePlusPage(models.Source):
     return self.url
 
   def __getattr__(self, name):
-    """Overridden to pass auth_entity to as_googleplus.GooglePlus's ctor."""
-    if name == 'as_source' and self.auth_entity:
-      self.as_source = as_googleplus.GooglePlus(auth_entity=self.auth_entity.get())
-      return self.as_source
+    """Overridden to pass auth_entity to gr_googleplus.GooglePlus's ctor."""
+    if name == 'gr_source' and self.auth_entity:
+      self.gr_source = gr_googleplus.GooglePlus(auth_entity=self.auth_entity.get())
+      return self.gr_source
 
     return getattr(super(GooglePlusPage, self), name)
 

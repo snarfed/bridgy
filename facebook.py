@@ -29,9 +29,9 @@ import urlparse
 
 import appengine_config
 
-from activitystreams_unofficial import facebook as as_facebook
+from granary import facebook as gr_facebook
 from oauth_dropins import facebook as oauth_facebook
-from activitystreams_unofficial.source import SELF
+from granary.source import SELF
 import models
 import util
 
@@ -57,7 +57,7 @@ class FacebookPage(models.Source):
   The key name is the facebook id.
   """
 
-  AS_CLASS = as_facebook.Facebook
+  GR_CLASS = gr_facebook.Facebook
   SHORT_NAME = 'facebook'
 
   type = ndb.StringProperty(choices=('user', 'page'))
@@ -74,8 +74,8 @@ class FacebookPage(models.Source):
       kwargs: property values
     """
     user = json.loads(auth_entity.user_json)
-    as_source = as_facebook.Facebook(auth_entity.access_token())
-    actor = as_source.user_to_actor(user)
+    gr_source = gr_facebook.Facebook(auth_entity.access_token())
+    actor = gr_source.user_to_actor(user)
     return FacebookPage(id=user['id'], type=user.get('type'),
                         auth_entity=auth_entity.key,
                         name=actor.get('displayName'),
@@ -91,17 +91,17 @@ class FacebookPage(models.Source):
 
   def silo_url(self):
     """Returns the Facebook account URL, e.g. https://facebook.com/foo."""
-    return self.as_source.user_url(self.username or self.key.id())
+    return self.gr_source.user_url(self.username or self.key.id())
 
   def get_data(self, url):
-    """Simple wrapper around as_source.urlopen() that returns 'data' list."""
-    return self.as_source.urlopen(url).get('data', [])
+    """Simple wrapper around gr_source.urlopen() that returns 'data' list."""
+    return self.gr_source.urlopen(url).get('data', [])
 
   def get_activities_response(self, **kwargs):
     # TODO: use batch API to get photos, events, etc in one request
     # https://developers.facebook.com/docs/graph-api/making-multiple-requests
     try:
-      resp = self.as_source.get_activities_response(group_id=SELF, **kwargs)
+      resp = self.gr_source.get_activities_response(group_id=SELF, **kwargs)
 
       # if it's requesting one specific activity, then we're done
       if 'activity_id' in kwargs:
@@ -123,7 +123,7 @@ class FacebookPage(models.Source):
 
       # have to re-fetch the events because the user rsvps response doesn't
       # include the event description, which we need for original post links.
-      events = [self.as_source.urlopen(API_EVENT % r['id'])
+      events = [self.gr_source.urlopen(API_EVENT % r['id'])
                 for r in user_rsvps if r.get('id')]
 
       # also, only process events that the user is the owner of. avoids (but
@@ -152,7 +152,7 @@ class FacebookPage(models.Source):
           raise models.DisableSource()
         elif subcode in (463, 460):  # expired, changed password
           # ask the user to reauthenticate
-          self.as_source.create_notification(
+          self.gr_source.create_notification(
             self.key.id(),
             "Brid.gy's access to your account has expired. Click here to renew it now!",
             'https://www.brid.gy/facebook/start')
@@ -177,12 +177,12 @@ class FacebookPage(models.Source):
         parsed = util.parse_tag_uri(x.get('id', ''))
         if parsed:
           _, orig_id = parsed
-          x['id'] = self.as_source.tag_uri(fb_id)
+          x['id'] = self.gr_source.tag_uri(fb_id)
           x['url'] = x.get('url', '').replace(orig_id, fb_id)
 
     # merge comments and likes from existing photo objects, and add new ones.
     for photo in photos:
-      photo_activity = self.as_source.post_to_activity(photo)
+      photo_activity = self.gr_source.post_to_activity(photo)
       existing = activities_by_fb_id.get(photo.get('id'))
       if existing:
         existing['object'].setdefault('replies', {}).setdefault('items', []).extend(
@@ -194,7 +194,7 @@ class FacebookPage(models.Source):
         activities.append(photo_activity)
 
     # add events
-    activities += [self.as_source.event_to_activity(e, rsvps=r)
+    activities += [self.gr_source.event_to_activity(e, rsvps=r)
                    for e, r in events_and_rsvps]
 
     # TODO: remove once we're confident in our id parsing. (i'm going to canary

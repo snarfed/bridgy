@@ -20,7 +20,7 @@ from webmentiontools import send
 import appengine_config
 
 from oauth_dropins import handlers
-from activitystreams_unofficial.source import Source
+from granary.source import Source
 # need to import model class definitions since poll creates and saves entities.
 import blogger
 import facebook
@@ -254,7 +254,7 @@ class Poll(webapp2.RequestHandler):
       for seen in json.loads(source.seen_responses_cache_json):
         id = seen['id']
         resp = responses.get(id)
-        if resp and not source.as_source.activity_changed(seen, resp, log=True):
+        if resp and not source.gr_source.activity_changed(seen, resp, log=True):
           unchanged_responses.append(seen)
           del responses[id]
 

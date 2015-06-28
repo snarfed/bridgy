@@ -28,7 +28,7 @@ import models
 import tasks
 from tasks import PropagateResponse
 import testutil
-from testutil import FakeSource, FakeAsSource
+from testutil import FakeSource, FakeGrSource
 import util
 
 NOW = datetime.datetime.utcnow()
@@ -60,10 +60,10 @@ class PollTest(TaskQueueTest):
 
   def setUp(self):
     super(PollTest, self).setUp()
-    FakeAsSource.DOMAIN = 'source'
+    FakeGrSource.DOMAIN = 'source'
 
   def tearDown(self):
-    FakeAsSource.DOMAIN = 'fa.ke'
+    FakeGrSource.DOMAIN = 'fa.ke'
     super(PollTest, self).tearDown()
 
   def post_task(self, expected_status=200, source=None, reset=False):
@@ -597,7 +597,7 @@ class PollTest(TaskQueueTest):
     self.post_task()
     self.assert_task_eta(FakeSource.FAST_POLL)
 
-  def test_fast_poll_has_sent_webmention(self):
+  def test_fast_poll_hgr_sent_webmention(self):
     self.sources[0].created = NOW - (FakeSource.FAST_POLL_GRACE_PERIOD +
                                      datetime.timedelta(minutes=1))
     self.sources[0].last_webmention_sent = NOW - datetime.timedelta(days=1)
@@ -610,7 +610,7 @@ class PollTest(TaskQueueTest):
     Source.last_syndication_url to approximately the current time.
     """
     self.sources[0].domain_urls = ['http://author']
-    FakeAsSource.DOMAIN = 'source'
+    FakeGrSource.DOMAIN = 'source'
     self.sources[0].last_syndication_url = None
     self.sources[0].put()
 
@@ -645,7 +645,7 @@ class PollTest(TaskQueueTest):
     """Only 1 hour has passed since we last re-fetched the user's h-feed. Make
     Sure it is not fetched again"""
     self.sources[0].domain_urls = ['http://author']
-    FakeAsSource.DOMAIN = 'source'
+    FakeGrSource.DOMAIN = 'source'
     self.sources[0].last_syndication_url = NOW - datetime.timedelta(minutes=10)
     # too recent to fetch again
     self.sources[0].last_hfeed_fetch = NOW - datetime.timedelta(hours=1)
@@ -684,7 +684,7 @@ class PollTest(TaskQueueTest):
     any new syndication links have been added or updated.
     """
     self.sources[0].domain_urls = ['http://author']
-    FakeAsSource.DOMAIN = 'source'
+    FakeGrSource.DOMAIN = 'source'
     self.sources[0].last_syndication_url = NOW - datetime.timedelta(minutes=10)
     self.sources[0].last_hfeed_fetch = NOW - datetime.timedelta(hours=2,
                                                                 minutes=10)
@@ -743,11 +743,11 @@ class PollTest(TaskQueueTest):
       self.assertEquals(original, syndicated_posts[0].original)
       self.assertEquals(syndication, syndicated_posts[0].syndication)
 
-    class FakeAsSource_Instagram(testutil.FakeAsSource):
+    class FakeGrSource_Instagram(testutil.FakeGrSource):
       DOMAIN = 'instagram'
 
     self.sources[0].domain_urls = ['http://author']
-    self.sources[0].AS_CLASS = FakeAsSource_Instagram
+    self.sources[0].GR_CLASS = FakeGrSource_Instagram
     self.sources[0].last_syndication_url = util.EPOCH
     self.sources[0].last_hfeed_fetch = NOW
 
@@ -757,11 +757,11 @@ class PollTest(TaskQueueTest):
 
     self.sources[0].put()
 
-    class FakeAsSource_Twitter(testutil.FakeAsSource):
+    class FakeGrSource_Twitter(testutil.FakeGrSource):
       DOMAIN = 'twitter'
 
     self.sources[1].domain_urls = ['http://author']
-    self.sources[1].AS_CLASS = FakeAsSource_Twitter
+    self.sources[1].GR_CLASS = FakeGrSource_Twitter
     self.sources[1].last_syndication_url = util.EPOCH
     self.sources[1].last_hfeed_fetch = NOW
     twitter_acts = copy.deepcopy(self.activities)

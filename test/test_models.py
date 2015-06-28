@@ -8,7 +8,7 @@ import datetime
 import json
 
 
-from activitystreams_unofficial import source as as_source
+from granary import source as gr_source
 import mox
 
 import blogger
@@ -344,9 +344,9 @@ class SourceTest(testutil.HandlerTest):
     event = {'verb': 'post', 'object': {
       'objectType': 'event', 'content': 'asdf'}}
     source = Source(id='x')
-    source.as_source = self.mox.CreateMock(as_source.Source)
-    self.mox.StubOutWithMock(source.as_source, 'get_event')
-    source.as_source.get_event('123').AndReturn(event)
+    source.gr_source = self.mox.CreateMock(gr_source.Source)
+    self.mox.StubOutWithMock(source.gr_source, 'get_event')
+    source.gr_source.get_event('123').AndReturn(event)
 
     self.mox.ReplayAll()
     self.assert_equals(event, source.get_event('123'))
@@ -354,8 +354,8 @@ class SourceTest(testutil.HandlerTest):
   def test_get_comment(self):
     comment_obj = {'objectType': 'comment', 'content': 'qwert'}
     source = FakeSource.new(None)
-    source.as_source = self.mox.CreateMock(as_source.Source)
-    source.as_source.get_comment('123', activity_id=None, activity_author_id=None
+    source.gr_source = self.mox.CreateMock(gr_source.Source)
+    source.gr_source.get_comment('123', activity_id=None, activity_author_id=None
                                  ).AndReturn(comment_obj)
 
     self.mox.ReplayAll()

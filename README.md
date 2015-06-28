@@ -32,8 +32,8 @@ The last command runs the unit tests. If you send a pull request, please include
 (or update) a test for the new functionality if possible!
 
 There's a good chance you'll need to make changes to
-[activitystreams-unofficial](https://github.com/snarfed/activitystreams-unofficial)
-or [oauth-dropins](https://github.com/snarfed/oauth-dropins) at the same time as
+[granary](https://github.com/snarfed/granary) or
+[oauth-dropins](https://github.com/snarfed/oauth-dropins) at the same time as
 bridgy. To do that, clone their repos, then install them in "source" mode with:
 
 ```
@@ -41,9 +41,8 @@ pip install -e <path to oauth-dropins>
 ln -s <path to oauth-dropins>/oauth_dropins \
   local/lib/python2.7/site-packages/oauth_dropins
 
-pip install -e <path to activitystreams-unofficial>
-ln -s <path to activitystreams-unofficial>/activitystreams_unofficial \
-  local/lib/python2.7/site-packages/activitystreams_unofficial
+pip install -e <path to granary>
+ln -s <path to granary>/granary local/lib/python2.7/site-packages/granary
 ```
 
 The symlinks are necessary because App Engine's `vendor` module evidently
@@ -56,7 +55,7 @@ deploys to App Engine:
 
 ```shell
 cd ../oauth-dropins && python -m unittest discover && \
-  cd ../activitystreams-unofficial && python -m unittest discover && \
+  cd ../granary && python -m unittest discover && \
   cd ../bridgy && python -m unittest discover && ./facebook_test_live.py && \
   git push && ~/google_appengine/appcfg.py update .
 ```

@@ -29,7 +29,7 @@ class InstagramTest(testutil.ModelsTest):
   def test_new(self):
     inst = Instagram.new(self.handler, auth_entity=self.auth_entity)
     self.assertEqual(self.auth_entity, inst.auth_entity.get())
-    self.assertEqual('my_token', inst.as_source.access_token)
+    self.assertEqual('my_token', inst.gr_source.access_token)
     self.assertEqual('snarfed', inst.key.string_id())
     self.assertEqual('http://pic.ture/url', inst.picture)
     self.assertEqual('http://instagram.com/snarfed', inst.url)

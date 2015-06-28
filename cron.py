@@ -45,7 +45,7 @@ class UpdateTwitterPictures(webapp2.RequestHandler):
   Twitter profile picture URLs, https://twitter.com/USER/profile_image , which
   always redirect to the current image.
 
-  https://github.com/snarfed/activitystreams-unofficial/commit/dfc3d406a20965a5ed14c9705e3d3c2223c8c3ff
+  https://github.com/snarfed/granary/commit/dfc3d406a20965a5ed14c9705e3d3c2223c8c3ff
   http://indiewebcamp.com/Twitter#Profile_Image_URLs
   """
 
@@ -61,11 +61,11 @@ class UpdateTwitterPictures(webapp2.RequestHandler):
     for i in range(0, len(usernames), TWITTER_USERS_PER_LOOKUP):
       url = TWITTER_API_USER_LOOKUP % ','.join(
         usernames[i:i + TWITTER_USERS_PER_LOOKUP])
-      users += auther.as_source.urlopen(url)
+      users += auther.gr_source.urlopen(url)
 
     for user in users:
       source = sources[user['screen_name']]
-      new_actor = auther.as_source.user_to_actor(user)
+      new_actor = auther.gr_source.user_to_actor(user)
       maybe_update_picture(source, new_actor, self)
 
 
@@ -75,7 +75,7 @@ class UpdateInstagramPictures(webapp2.RequestHandler):
   def get(self):
     for source in Instagram.query():
       if source.features and source.status != 'disabled':
-        maybe_update_picture(source, source.as_source.get_actor(), self)
+        maybe_update_picture(source, source.gr_source.get_actor(), self)
 
 
 def maybe_update_picture(source, new_actor, handler):

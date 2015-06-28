@@ -51,7 +51,7 @@ class Blogger(models.Source):
 
   The key name is the blog id.
   """
-  AS_CLASS = collections.namedtuple('FakeAsClass', ('NAME',))(NAME='Blogger')
+  GR_CLASS = collections.namedtuple('FakeGrClass', ('NAME',))(NAME='Blogger')
   SHORT_NAME = 'blogger'
 
   def feed_url(self):

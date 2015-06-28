@@ -22,9 +22,9 @@ import json
 
 import appengine_config
 
-from activitystreams_unofficial import instagram as as_instagram
+from granary import instagram as gr_instagram
 from oauth_dropins import instagram as oauth_instagram
-from activitystreams_unofficial.source import SELF
+from granary.source import SELF
 import models
 import util
 
@@ -37,7 +37,7 @@ class Instagram(models.Source):
   The key name is the username.
   """
 
-  AS_CLASS = as_instagram.Instagram
+  GR_CLASS = gr_instagram.Instagram
   SHORT_NAME = 'instagram'
 
   @staticmethod
@@ -65,7 +65,7 @@ class Instagram(models.Source):
     """Discard min_id because we still want new comments/likes on old photos."""
     if 'min_id' in kwargs:
       del kwargs['min_id']
-    return self.as_source.get_activities_response(*args, group_id=SELF, **kwargs)
+    return self.gr_source.get_activities_response(*args, group_id=SELF, **kwargs)
 
   def canonicalize_syndication_url(self, syndication_url):
     """Instagram-specific standardization of syndicated urls. Canonical form

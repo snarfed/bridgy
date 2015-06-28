@@ -15,7 +15,7 @@ import webapp2
 
 from oauth_dropins.webutil.models import StringIdModel
 from oauth_dropins.webutil.util import *
-from activitystreams_unofficial import source
+from granary import source
 from appengine_config import HTTP_TIMEOUT, DEBUG
 
 from google.appengine.api import mail
@@ -242,7 +242,7 @@ def prune_activity(activity):
   duplicated in both the activity and the object are removed from the object.
 
   Note that this only prunes the to field if it says the activity is public,
-  since activitystreams.Source.is_public() defaults to saying an activity is
+  since granary.Source.is_public() defaults to saying an activity is
   public if the to field is missing. If that ever changes, we'll need to
   start preserving the to field here.
 
@@ -371,7 +371,7 @@ class Handler(webapp2.RequestHandler):
                       (auth_entity.key.urlsafe(), state))
       else:
         self.messages.add('If you want to disable, please approve the %s prompt.' %
-                          source_cls.AS_CLASS.NAME)
+                          source_cls.GR_CLASS.NAME)
         self.redirect_home_or_user_page(state)
 
   def construct_state_param_for_add(self, state=None, **kwargs):

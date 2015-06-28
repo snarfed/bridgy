@@ -10,7 +10,7 @@ import webapp2
 
 import appengine_config
 
-from activitystreams_unofficial import twitter as as_twitter
+from granary import twitter as gr_twitter
 from oauth_dropins import twitter as oauth_twitter
 import models
 import util
@@ -22,7 +22,7 @@ class Twitter(models.Source):
   The key name is the username.
   """
 
-  AS_CLASS = as_twitter.Twitter
+  GR_CLASS = gr_twitter.Twitter
   SHORT_NAME = 'twitter'
   TYPE_LABELS = {'post': 'tweet',
                  'comment': '@-reply',
@@ -46,8 +46,8 @@ class Twitter(models.Source):
       kwargs: property values
     """
     user = json.loads(auth_entity.user_json)
-    as_source = as_twitter.Twitter(*auth_entity.access_token())
-    actor = as_source.user_to_actor(user)
+    gr_source = gr_twitter.Twitter(*auth_entity.access_token())
+    actor = gr_source.user_to_actor(user)
     return Twitter(id=user['screen_name'],
                    auth_entity=auth_entity.key,
                    url=actor.get('url'),
@@ -57,7 +57,7 @@ class Twitter(models.Source):
 
   def silo_url(self):
     """Returns the Twitter account URL, e.g. https://twitter.com/foo."""
-    return self.as_source.user_url(self.key.id())
+    return self.gr_source.user_url(self.key.id())
 
   def get_like(self, activity_user_id, activity_id, like_user_id):
     """Returns an ActivityStreams 'like' activity object for a favorite.
@@ -71,7 +71,7 @@ class Twitter(models.Source):
       activity_id: string activity id
       like_user_id: string id of the user who liked the activity
     """
-    id = self.as_source.tag_uri('%s_favorited_by_%s' % (activity_id, like_user_id))
+    id = self.gr_source.tag_uri('%s_favorited_by_%s' % (activity_id, like_user_id))
     resp = models.Response.get_by_id(id)
     if resp:
       return json.loads(resp.response_json)

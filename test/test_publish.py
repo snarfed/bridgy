@@ -9,7 +9,7 @@ import urllib
 
 import appengine_config
 
-from activitystreams_unofficial import source as as_source
+from granary import source as gr_source
 from google.appengine.api import mail
 import mox
 import requests
@@ -421,7 +421,7 @@ this is my article
     self.assertEquals('post', Publish.query().get().type)
 
   def test_in_reply_to_domain_allows_subdomains(self):
-    """(The code that handles this is in activitystreams.Source.base_object.)"""
+    """(The code that handles this is in granary.Source.base_object.)"""
     subdomains = 'www.', 'mobile.', ''
     for i, subdomain in enumerate(subdomains):
       self.expect_requests_get('http://foo.com/%d' % i,
@@ -454,14 +454,14 @@ this is my article
       mail.send_mail(subject=subject, body=mox.IgnoreArg(),
                      sender=mox.IgnoreArg(), to=mox.IgnoreArg())
 
-    self.mox.StubOutWithMock(self.source.as_source, 'create',
+    self.mox.StubOutWithMock(self.source.gr_source, 'create',
                              use_mock_anything=True)
-    self.source.as_source.create(mox.IgnoreArg(), include_link=True
+    self.source.gr_source.create(mox.IgnoreArg(), include_link=True
                                  ).AndRaise(exc.HTTPPaymentRequired('fooey'))
 
-    self.mox.StubOutWithMock(self.source.as_source, 'preview_create',
+    self.mox.StubOutWithMock(self.source.gr_source, 'preview_create',
                              use_mock_anything=True)
-    self.source.as_source.preview_create(mox.IgnoreArg(), include_link=True
+    self.source.gr_source.preview_create(mox.IgnoreArg(), include_link=True
                                          ).AndRaise(Exception('bar'))
 
     self.mox.ReplayAll()
@@ -472,7 +472,7 @@ this is my article
     html = self.post_html % 'foo'
     self.expect_requests_get('http://foo.com/bar', html)
     # make sure create() isn't called
-    self.mox.StubOutWithMock(self.source.as_source, 'create', use_mock_anything=True)
+    self.mox.StubOutWithMock(self.source.gr_source, 'create', use_mock_anything=True)
     self.mox.ReplayAll()
     self.assert_success('preview of foo', preview=True)
 
@@ -548,7 +548,7 @@ foo<br /> <blockquote>bar</blockquote>
   def test_expand_target_urls_u_syndication(self):
     """Comment on a post with a u-syndication value
     """
-    self.mox.StubOutWithMock(self.source.as_source, 'create',
+    self.mox.StubOutWithMock(self.source.gr_source, 'create',
                              use_mock_anything=True)
 
     self.expect_requests_get('http://foo.com/bar', """
@@ -565,13 +565,13 @@ foo<br /> <blockquote>bar</blockquote>
     </article>
     """)
 
-    self.source.as_source.create({
+    self.source.gr_source.create({
       'inReplyTo': [{'url': 'http://orig.domain/baz'},
                     {'url': 'https://fa.ke/a/b'}],
       'displayName': 'In reply to',
       'url': 'http://foo.com/bar',
       'objectType': 'comment',
-    }, include_link=True).AndReturn(as_source.creation_result({
+    }, include_link=True).AndReturn(gr_source.creation_result({
       'url': 'http://fake/url',
       'id': 'http://fake/url',
       'content': 'This is a reply',
@@ -584,7 +584,7 @@ foo<br /> <blockquote>bar</blockquote>
     """Publishing a like of a post with two rel=syndication values
     """
 
-    self.mox.StubOutWithMock(self.source.as_source, 'create',
+    self.mox.StubOutWithMock(self.source.gr_source, 'create',
                              use_mock_anything=True)
 
     self.expect_requests_get('http://foo.com/bar', """
@@ -602,7 +602,7 @@ foo<br /> <blockquote>bar</blockquote>
     </article>
     """)
 
-    self.source.as_source.create({
+    self.source.gr_source.create({
       'verb': 'like',
       'displayName': 'liked this',
       'url': 'http://foo.com/bar',
@@ -610,7 +610,7 @@ foo<br /> <blockquote>bar</blockquote>
                  {'url': 'https://fa.ke/a/b'},
                  {'url': 'https://flic.kr/c/d'}],
       'objectType': 'activity',
-    }, include_link=True).AndReturn(as_source.creation_result({
+    }, include_link=True).AndReturn(gr_source.creation_result({
       'url': 'http://fake/url',
       'id': 'http://fake/url',
       'content': 'liked this',
@@ -623,7 +623,7 @@ foo<br /> <blockquote>bar</blockquote>
     """Repost a post with a p-syndication h-cite value (syndication
     property is a dict rather than a string)
     """
-    self.mox.StubOutWithMock(self.source.as_source, 'create',
+    self.mox.StubOutWithMock(self.source.gr_source, 'create',
                              use_mock_anything=True)
 
     self.expect_requests_get('http://foo.com/bar', """
@@ -640,14 +640,14 @@ foo<br /> <blockquote>bar</blockquote>
     </article>
     """)
 
-    self.source.as_source.create({
+    self.source.gr_source.create({
       'verb': 'share',
       'displayName': 'reposted this',
       'url': 'http://foo.com/bar',
       'object': [{'url': 'http://orig.domain/baz'},
                  {'url': 'https://fa.ke/a/b'}],
       'objectType': 'activity',
-    }, include_link=True).AndReturn(as_source.creation_result({
+    }, include_link=True).AndReturn(gr_source.creation_result({
       'url': 'http://fake/url',
       'id': 'http://fake/url',
       'content': 'reposted this',
@@ -660,7 +660,7 @@ foo<br /> <blockquote>bar</blockquote>
     """RSVP to an event is a single element inside an h-feed; we should handle
     it just like a normal post permalink page.
     """
-    self.mox.StubOutWithMock(self.source.as_source, 'create',
+    self.mox.StubOutWithMock(self.source.gr_source, 'create',
                              use_mock_anything=True)
 
     self.expect_requests_get('http://foo.com/bar', """
@@ -680,14 +680,14 @@ foo<br /> <blockquote>bar</blockquote>
     </html>
     """)
 
-    self.source.as_source.create({
+    self.source.gr_source.create({
       'url': 'http://foo.com/bar',
       'verb': 'rsvp-yes',
       'displayName': 'yes',
       'object': [{'url': 'http://orig.domain/baz'},
                  {'url': 'https://fa.ke/a/b'}],
       'objectType': 'activity',
-    }, include_link=True).AndReturn(as_source.creation_result({
+    }, include_link=True).AndReturn(gr_source.creation_result({
       'url': 'http://fake/url',
       'id': 'http://fake/url',
       'content': 'RSVPd yes',
@@ -700,7 +700,7 @@ foo<br /> <blockquote>bar</blockquote>
     """Fetching the in-reply-to URL fails, but that shouldn't prevent us
     from publishing the post itself.
     """
-    self.mox.StubOutWithMock(self.source.as_source, 'create',
+    self.mox.StubOutWithMock(self.source.gr_source, 'create',
                              use_mock_anything=True)
 
     self.expect_requests_get('http://foo.com/bar', """
@@ -712,12 +712,12 @@ foo<br /> <blockquote>bar</blockquote>
 
     self.expect_requests_get('http://orig.domain/baz', '', status_code=404)
 
-    self.source.as_source.create({
+    self.source.gr_source.create({
       'inReplyTo': [{'url': 'http://orig.domain/baz'}],
       'displayName': 'In reply to',
       'url': 'http://foo.com/bar',
       'objectType': 'comment',
-    }, include_link=True).AndReturn(as_source.creation_result({
+    }, include_link=True).AndReturn(gr_source.creation_result({
       'url': 'http://fake/url',
       'id': 'http://fake/url',
       'content': 'This is a reply',
@@ -731,7 +731,7 @@ foo<br /> <blockquote>bar</blockquote>
     problems posting the like anyway.
     """
 
-    self.mox.StubOutWithMock(self.source.as_source, 'create',
+    self.mox.StubOutWithMock(self.source.gr_source, 'create',
                              use_mock_anything=True)
 
     self.expect_requests_get('http://foo.com/bar', """
@@ -747,13 +747,13 @@ foo<br /> <blockquote>bar</blockquote>
     </article>
     """)
 
-    self.source.as_source.create({
+    self.source.gr_source.create({
       'verb': 'like',
       'displayName': 'liked this',
       'url': 'http://foo.com/bar',
       'object': [{'url': 'http://orig.domain/baz'}],
       'objectType': 'activity',
-    }, include_link=True).AndReturn(as_source.creation_result({
+    }, include_link=True).AndReturn(gr_source.creation_result({
       'url': 'http://fake/url',
       'id': 'http://fake/url',
       'content': 'liked this',
@@ -765,7 +765,7 @@ foo<br /> <blockquote>bar</blockquote>
   def test_expand_target_urls_blacklisted_target(self):
     """RSVP to a domain in the webmention blacklist should not trigger a fetch.
     """
-    self.mox.StubOutWithMock(self.source.as_source, 'create',
+    self.mox.StubOutWithMock(self.source.gr_source, 'create',
                              use_mock_anything=True)
 
     self.expect_requests_get('http://foo.com/bar', """
@@ -778,14 +778,14 @@ foo<br /> <blockquote>bar</blockquote>
     </article>
     """)
 
-    self.source.as_source.create({
+    self.source.gr_source.create({
       'url': 'http://foo.com/bar',
       'verb': 'rsvp-yes',
       'displayName': 'yes',
       'object': [{'url': 'http://fa.ke/homebrew-website-club'}],
       'objectType': 'activity',
       'content': 'yes',
-    }, include_link=True).AndReturn(as_source.creation_result({
+    }, include_link=True).AndReturn(gr_source.creation_result({
       'url': 'http://fake/url',
       'id': 'http://fake/url',
       'content': 'RSVPd yes',
@@ -797,7 +797,7 @@ foo<br /> <blockquote>bar</blockquote>
   def test_in_reply_to_no_target(self):
     """in-reply-to an original that does not syndicate to the silo should
     fail with a helpful error message. The error message is generated by
-    activitystreams-unofficial.
+    granary.
     """
     self.expect_requests_get('http://foo.com/bar', """
     <article class="h-entry">

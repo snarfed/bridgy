@@ -33,7 +33,7 @@ import requests
 import urlparse
 import util
 
-from activitystreams_unofficial import source as as_source
+from granary import source as gr_source
 from google.appengine.api.datastore import MAX_ALLOWABLE_QUERIES
 from bs4 import BeautifulSoup
 from models import SyndicatedPost
@@ -60,7 +60,7 @@ def discover(source, activity, fetch_hfeed=True):
   Return:
     the activity, updated with original post urls if any are found
   """
-  as_source.Source.original_post_discovery(activity)
+  gr_source.Source.original_post_discovery(activity)
 
   # TODO possible optimization: if we've discovered a backlink to a
   # post on the author's domain (i.e., it included a link or
@@ -455,7 +455,7 @@ def _process_syndication_urls(source, permalink, syndication_urls,
     # lookups by saving results for other sources too (note: query the
     # appropriate source subclass by author.domains, rather than
     # author.domain_urls)
-    if util.domain_from_link(syndication_url) == source.AS_CLASS.DOMAIN:
+    if util.domain_from_link(syndication_url) == source.GR_CLASS.DOMAIN:
       # we may have already seen this relationship, save a DB lookup by
       # finding it in the preexisting list
       relationship = next((sp for sp in preexisting

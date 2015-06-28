@@ -36,8 +36,8 @@ import urlparse
 import appengine_config
 from appengine_config import HTTP_TIMEOUT
 
-from activitystreams_unofficial import microformats2
-from activitystreams_unofficial import source as as_source
+from granary import microformats2
+from granary import source as gr_source
 from oauth_dropins import handlers
 from oauth_dropins import facebook as oauth_facebook
 from oauth_dropins import instagram as oauth_instagram
@@ -61,7 +61,7 @@ SOURCE_NAMES = {
   cls.SHORT_NAME: cls for cls in
   (FacebookPage, Twitter, Instagram, GooglePlusPage)}
 SOURCE_DOMAINS = {
-  cls.AS_CLASS.DOMAIN: cls for cls in
+  cls.GR_CLASS.DOMAIN: cls for cls in
   (FacebookPage, Twitter, Instagram, GooglePlusPage)}
 
 
@@ -119,7 +119,7 @@ class Handler(webmention.WebmentionHandler):
       return self.error('Target must be brid.gy/publish/{facebook,twitter,instagram}')
     elif source_cls == GooglePlusPage:
       return self.error('Sorry, %s is not yet supported.' %
-                        source_cls.AS_CLASS.NAME)
+                        source_cls.GR_CLASS.NAME)
 
     # resolve source URL
     url, domain, ok = util.get_webmention_target(self.source_url())
@@ -127,7 +127,7 @@ class Handler(webmention.WebmentionHandler):
     if domain in SOURCE_DOMAINS:
       return self.error(
         "Looks like that's a %s URL. Try one from your web site instead!" %
-        SOURCE_DOMAINS[domain].AS_CLASS.NAME)
+        SOURCE_DOMAINS[domain].GR_CLASS.NAME)
     elif not ok:
       return self.error('Unsupported source URL %s' % url)
     elif not domain:
@@ -142,7 +142,7 @@ class Handler(webmention.WebmentionHandler):
     sources = source_cls.query().filter(source_cls.domains == domain).fetch(100)
     if not sources:
       return self.error("Could not find <b>%(type)s</b> account for <b>%(domain)s</b>. Check that your %(type)s profile has %(domain)s in its <em>web site</em> or <em>link</em> field, then try signing up again." %
-        {'type': source_cls.AS_CLASS.NAME, 'domain': domain})
+        {'type': source_cls.GR_CLASS.NAME, 'domain': domain})
 
     for source in sources:
       logging.info('Source: %s , features %s, status %s' %
@@ -219,7 +219,7 @@ class Handler(webmention.WebmentionHandler):
       types.discard('h-note')
       if types:
         msg = ("%s doesn't support type(s) %s, or no content was found." %
-               (source_cls.AS_CLASS.NAME, ' + '.join(types)))
+               (source_cls.GR_CLASS.NAME, ' + '.join(types)))
       else:
         msg = 'Could not find content in <a href="http://microformats.org/wiki/h-entry">h-entry</a> or any other element!'
       return self.error(msg, data=data)
@@ -263,7 +263,7 @@ class Handler(webmention.WebmentionHandler):
     if obj_type in ('note', 'article', 'comment'):
       if (not obj.get('content') and not obj.get('summary') and
           not obj.get('displayName')):
-        return as_source.creation_result(
+        return gr_source.creation_result(
           abort=False,
           error_plain='Could not find content in %s' % self.fetched.url,
           error_html='Could not find <a href="http://microformats.org/">content</a> in %s' % self.fetched.url)
@@ -275,19 +275,19 @@ class Handler(webmention.WebmentionHandler):
       omit_link = 'bridgy-omit-link' in props
 
     if not self.authorize():
-      return as_source.creation_result(abort=True)
+      return gr_source.creation_result(abort=True)
 
     # RIP Facebook comments/likes. https://github.com/snarfed/bridgy/issues/350
     if (isinstance(self.source, FacebookPage) and
         (obj_type == 'comment' or obj.get('verb') == 'like')):
-      return as_source.creation_result(
+      return gr_source.creation_result(
         abort=True,
         error_plain='Facebook comments and likes are no longer supported. :(',
         error_html='<a href="https://github.com/snarfed/bridgy/issues/350">'
                    'Facebook comments and likes are no longer supported.</a> :(')
 
     if self.PREVIEW:
-      result = self.source.as_source.preview_create(
+      result = self.source.gr_source.preview_create(
         obj, include_link=not omit_link)
       self.entity.published = result.content or result.description
       if not self.entity.published:
@@ -306,11 +306,11 @@ class Handler(webmention.WebmentionHandler):
               }
       vars.update(state)
       logging.info('Rendering preview with template vars %s', pprint.pformat(vars))
-      return as_source.creation_result(
+      return gr_source.creation_result(
         template.render('templates/preview.html', vars))
 
     else:
-      result = self.source.as_source.create(obj, include_link=not omit_link)
+      result = self.source.gr_source.create(obj, include_link=not omit_link)
       self.entity.published = result.content
       if not result.content:
         return result  # there was an error
@@ -320,7 +320,7 @@ class Handler(webmention.WebmentionHandler):
       self.entity.type_label = self.source.TYPE_LABELS.get(self.entity.type)
       self.response.headers['Content-Type'] = 'application/json'
       logging.info('Returning %s', json.dumps(self.entity.published, indent=2))
-      return as_source.creation_result(
+      return gr_source.creation_result(
         json.dumps(self.entity.published, indent=2))
 
   def preprocess_activity(self, activity, ignore_formatting=False):
@@ -486,7 +486,7 @@ class SendHandler(Handler):
       self.error('If you want to publish, please approve the prompt.')
     elif auth_entity.key != source.auth_entity:
       self.error('Please log into %s as %s to publish that page.' %
-                 (source.AS_CLASS.NAME, source.name))
+                 (source.GR_CLASS.NAME, source.name))
     else:
       result = self._run()
       if result and result.content:

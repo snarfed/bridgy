@@ -166,7 +166,7 @@ class HandlersTest(testutil.HandlerTest):
 """)
 
   def test_like(self):
-    self.source.as_source.set_like({
+    self.source.gr_source.set_like({
         'objectType': 'activity',
         'verb': 'like',
         'id': 'tag:fa.ke,2013:111',
@@ -207,7 +207,7 @@ class HandlersTest(testutil.HandlerTest):
     self.source.domain_urls = ['http://unused']
     self.source.put()
 
-    self.source.as_source.set_share({
+    self.source.gr_source.set_share({
         'objectType': 'activity',
         'verb': 'share',
         'id': 'tag:fa.ke,2013:111',
@@ -243,7 +243,7 @@ class HandlersTest(testutil.HandlerTest):
 """)
 
   def test_rsvp(self):
-    self.source.as_source.set_rsvp({
+    self.source.gr_source.set_rsvp({
         'objectType': 'activity',
         'verb': 'rsvp-no',
         'id': 'tag:fa.ke,2013:111',
@@ -277,7 +277,7 @@ class HandlersTest(testutil.HandlerTest):
 """)
 
   def test_invite(self):
-    self.source.as_source.set_rsvp({
+    self.source.gr_source.set_rsvp({
       'id': 'tag:fa.ke,2013:111',
       'objectType': 'activity',
       'verb': 'invite',
@@ -318,7 +318,7 @@ class HandlersTest(testutil.HandlerTest):
 """)
 
   def test_original_post_urls_follow_redirects(self):
-    self.source.as_source.set_share({
+    self.source.gr_source.set_share({
         'objectType': 'activity',
         'verb': 'share',
         })
@@ -351,7 +351,7 @@ class HandlersTest(testutil.HandlerTest):
         'content': 'asdf http://other/link?utm_source=x&utm_medium=y&a=b qwert',
         'upstreamDuplicates': ['http://or.ig/post?utm_campaign=123'],
         })
-    self.source.as_source.set_share({'objectType': 'activity', 'verb': 'share'})
+    self.source.gr_source.set_share({'objectType': 'activity', 'verb': 'share'})
     self.mox.ReplayAll()
 
     self.check_response('/repost/fake/%s/000/111', """\

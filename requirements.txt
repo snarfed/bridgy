@@ -1,5 +1,5 @@
 oauth-dropins
-activitystreams-unofficial
+granary
 gdata>=2.0.18
 google-api-python-client>=1.4.0
 html2text

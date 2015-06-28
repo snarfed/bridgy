@@ -26,8 +26,8 @@ import string
 
 import appengine_config
 
-from activitystreams_unofficial import microformats2
-from activitystreams_unofficial.microformats2 import first_props
+from granary import microformats2
+from granary.microformats2 import first_props
 from oauth_dropins.webutil import handlers
 from oauth_dropins.handlers import interpret_http_exception
 import models
@@ -127,7 +127,7 @@ class ItemHandler(webapp2.RequestHandler):
       if code:
         self.response.status_int = int(code)
         self.response.headers['Content-Type'] = 'text/plain'
-        self.response.write('%s error:\n%s' % (self.source.AS_CLASS.NAME, body))
+        self.response.write('%s error:\n%s' % (self.source.GR_CLASS.NAME, body))
         return
       else:
         raise
@@ -151,7 +151,7 @@ class ItemHandler(webapp2.RequestHandler):
     if author_uid:
       parsed = util.parse_tag_uri(author_uid)
       if parsed:
-        silo_url = self.source.as_source.user_url(parsed[1])
+        silo_url = self.source.gr_source.user_url(parsed[1])
         urls = author.get('properties', {}).setdefault('url', [])
         if silo_url not in microformats2.get_string_urls(urls):
           urls.append(silo_url)

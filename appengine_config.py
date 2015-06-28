@@ -5,7 +5,7 @@
 from google.appengine.ext import vendor
 vendor.add('local')
 
-from activitystreams_unofficial.appengine_config import *
+from granary.appengine_config import *
 
 DISQUS_ACCESS_TOKEN = read('disqus_access_token')
 DISQUS_API_KEY = read('disqus_api_key')
