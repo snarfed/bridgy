@@ -37,9 +37,17 @@ or [oauth-dropins](https://github.com/snarfed/oauth-dropins) at the same time as
 bridgy. To do that, clone their repos, then install them in "source" mode with:
 
 ```
-pip install -e <path to oauth-dropins repo>
-pip install -e <path to activitystreams-unofficial repo>
+pip install -e <path to oauth-dropins>
+ln -s <path to oauth-dropins>/oauth_dropins \
+  local/lib/python2.7/site-packages/oauth_dropins
+
+pip install -e <path to activitystreams-unofficial>
+ln -s <path to activitystreams-unofficial>/activitystreams_unofficial \
+  local/lib/python2.7/site-packages/activitystreams_unofficial
 ```
+
+The symlinks are necessary because App Engine's `vendor` module evidently
+doesn't follow `.egg-link` files. :/
 
 Requires the [App Engine SDK](https://developers.google.com/appengine/downloads).
 
@@ -47,10 +55,10 @@ This command runs the tests, pushes any changes in your local repo(s), and
 deploys to App Engine:
 
 ```shell
-./alltests.py && ./facebook_test_live.py && cd activitystreams && ./alltests.py && \
-  cd oauth_dropins && ./alltests.py && cd webutil && ./alltests.py && \
-  cd ../../.. && git push --recurse-submodules=on-demand && \
-  ~/google_appengine/appcfg.py update .
+cd ../oauth-dropins && python -m unittest discover && \
+  cd ../activitystreams-unofficial && python -m unittest discover && \
+  cd ../bridgy && python -m unittest discover && ./facebook_test_live.py && \
+  git push && ~/google_appengine/appcfg.py update .
 ```
 
 
