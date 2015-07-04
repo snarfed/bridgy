@@ -141,4 +141,6 @@ if __name__ == '__main__':
   if '--debug' in sys.argv:
     sys.argv.remove('--debug')
     logging.getLogger().setLevel(logging.DEBUG)
+  else:
+    logging.getLogger().setLevel(logging.CRITICAL + 1)
   unittest.main()

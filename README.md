@@ -50,14 +50,14 @@ doesn't follow `.egg-link` files. :/
 
 Requires the [App Engine SDK](https://developers.google.com/appengine/downloads).
 
-This command runs the tests, pushes any changes in your local repo(s), and
+This command runs the tests, pushes any changes in your local repo, and
 deploys to App Engine:
 
 ```shell
-cd ../oauth-dropins && python -m unittest discover && \
-  cd ../granary && python -m unittest discover && \
-  cd ../bridgy && python -m unittest discover && ./facebook_test_live.py && \
-  git push && ~/google_appengine/appcfg.py update .
+cd ../oauth-dropins && source local/bin/activate.csh && python -m unittest discover && \
+  cd ../granary && source local/bin/activate.csh && python -m unittest discover && \
+  cd ../bridgy && source local/bin/activate.csh && python -m unittest discover && \
+  ./facebook_test_live.py && git push && ~/google_appengine/appcfg.py update .
 ```
 
 
