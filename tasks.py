@@ -160,7 +160,7 @@ class Poll(webapp2.RequestHandler):
         etag=source.last_activities_etag, min_id=source.last_activity_id,
         cache=cache)
     except Exception, e:
-      code, body = handlers.interpret_http_exception(e)
+      code, body = util.interpret_http_exception(e)
       if code == '401':
         # TODO: also interpret oauth2client.AccessTokenRefreshError with
         # {'error': 'invalid_grant'} as disabled? it can mean the user revoked

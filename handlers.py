@@ -29,7 +29,6 @@ import appengine_config
 from granary import microformats2
 from granary.microformats2 import first_props
 from oauth_dropins.webutil import handlers
-from oauth_dropins.handlers import interpret_http_exception
 import models
 import original_post_discovery
 import util
@@ -95,7 +94,7 @@ class ItemHandler(webapp2.RequestHandler):
       return post
     except Exception, e:
       # use interpret_http_exception to log HTTP errors
-      if not interpret_http_exception(e)[0]:
+      if not util.interpret_http_exception(e)[0]:
         logging.warning(
           'Error fetching source post %s', post_id, exc_info=True)
 
@@ -123,7 +122,7 @@ class ItemHandler(webapp2.RequestHandler):
       obj = self.get_item(*ids)
     except Exception, e:
       # pass through all API HTTP errors if we can identify them
-      code, body = interpret_http_exception(e)
+      code, body = util.interpret_http_exception(e)
       if code:
         self.response.status_int = int(code)
         self.response.headers['Content-Type'] = 'text/plain'

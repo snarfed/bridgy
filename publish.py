@@ -38,7 +38,6 @@ from appengine_config import HTTP_TIMEOUT
 
 from granary import microformats2
 from granary import source as gr_source
-from oauth_dropins import handlers
 from oauth_dropins import facebook as oauth_facebook
 from oauth_dropins import instagram as oauth_instagram
 from oauth_dropins import twitter as oauth_twitter
@@ -210,7 +209,7 @@ class Handler(webmention.WebmentionHandler):
         types = types.union(item_types)
         queue.extend(item.get('children', []))
       except BaseException, e:
-        code, body = handlers.interpret_http_exception(e)
+        code, body = util.interpret_http_exception(e)
         return self.error('Error: %s %s' % (body or '', e), status=code or 500,
                           mail=True)
 

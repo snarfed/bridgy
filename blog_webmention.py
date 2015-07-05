@@ -10,7 +10,6 @@ import urlparse
 import appengine_config
 
 from granary import microformats2
-from oauth_dropins import handlers
 
 import blogger
 import models
@@ -116,7 +115,7 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
       self.entity.published = self.source.create_comment(
         self.target_url, author_name, author_url, text)
     except Exception, e:
-      code, body = handlers.interpret_http_exception(e)
+      code, body = util.interpret_http_exception(e)
       if code or body:
         return self.error('Error: %s %s; %s' % (code, e, body), status=code, mail=True)
       else:

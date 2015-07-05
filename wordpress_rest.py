@@ -31,7 +31,6 @@ import urlparse
 import appengine_config
 
 from oauth_dropins import wordpress_rest as oauth_wordpress
-from oauth_dropins.handlers import interpret_http_exception
 import models
 import superfeedr
 import util
@@ -148,7 +147,7 @@ class WordPress(models.Source):
     try:
       resp = self.urlopen(auth_entity, url, data=urllib.urlencode(data))
     except urllib2.HTTPError, e:
-      code, body = interpret_http_exception(e)
+      code, body = util.interpret_http_exception(e)
       try:
         parsed = json.loads(body) if body else {}
         if ((code == '400' and parsed.get('error') == 'invalid_input') or
@@ -174,7 +173,7 @@ class WordPress(models.Source):
     try:
       return cls.urlopen(auth_entity, API_SITE_URL % auth_entity.blog_id)
     except urllib2.HTTPError, e:
-      code, body = interpret_http_exception(e)
+      code, body = util.interpret_http_exception(e)
       if (code == '403' and '"API calls to this blog have been disabled."' in body):
         handler.messages.add(
           'You need to <a href="http://jetpack.me/support/json-api/">enable '
