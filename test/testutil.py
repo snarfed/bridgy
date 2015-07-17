@@ -77,7 +77,6 @@ class FakeGrSource(FakeBase, gr_source.Source):
 
   __metaclass__ = FakeGrSourceMeta
 
-
   def user_url(self, id):
     return 'http://fa.ke/' + id
 
