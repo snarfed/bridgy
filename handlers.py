@@ -47,7 +47,22 @@ TEMPLATE = string.Template("""\
 <meta charset="utf-8">
 <title>$title</title>
 <style type="text/css">
-.u-uid { display: none; }
+body {
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+.u-uid {
+  display: none;
+}
+.u-photo {
+  max-width: 50px;
+  -webkit-border-radius: 4px;
+  -moz-border-radius: 4px;
+  border-radius: 4px;
+}
+.e-content {
+  margin-top: 10px;
+  font-size: 1.3em;
+}
 </style>
 </head>
 $body
