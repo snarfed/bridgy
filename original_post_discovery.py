@@ -195,8 +195,8 @@ def _process_author(source, author_url, refetch=False, store_blanks=True):
   author_dom = BeautifulSoup(author_resp.text)
   feeditems = _find_feed_items(author_url, author_dom)
 
-  # look for canonical feed url (if it isn't this one) using
-  # rel='feed', type='text/html'
+  # look for all other feed urls using rel='feed', type='text/html'
+  feed_urls = set()
   for rel_feed_node in (author_dom.find_all('link', rel='feed')
                         + author_dom.find_all('a', rel='feed')):
     feed_url = rel_feed_node.get('href')
@@ -212,12 +212,13 @@ def _process_author(source, author_url, refetch=False, store_blanks=True):
       feed_type_ok = feed_type == 'text/html'
 
     if feed_url == author_url:
-      logging.debug('author url is the feed url, proceeding')
-      break
+      logging.debug('author url is the feed url, ignoring')
     elif not feed_type_ok:
       logging.debug('skipping feed of type %s', feed_type)
-      continue
+    else:
+      feed_urls.add(feed_url)
 
+  for feed_url in feed_urls:
     try:
       logging.debug("fetching author's rel-feed %s", feed_url)
       feed_resp = util.requests_get(feed_url)
@@ -225,7 +226,6 @@ def _process_author(source, author_url, refetch=False, store_blanks=True):
       logging.debug("author's rel-feed fetched successfully %s", feed_url)
       feeditems = _merge_hfeeds(feeditems,
                                 _find_feed_items(feed_url, feed_resp.text))
-      break
     except AssertionError:
       raise  # reraise assertions for unit tests
     except BaseException:

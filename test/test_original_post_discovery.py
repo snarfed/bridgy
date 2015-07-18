@@ -87,7 +87,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     <html class="h-feed">
       <div class="h-entry">
         <a class="u-url" href="http://author/post/permalink"></a>
-        <a class="u-syndication" href="http://fa.ke/post/url">
+        <a class="u-syndication" href="http://fa.ke/post/url"></a>
       </div>
     </html>""")
 
@@ -397,16 +397,16 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.expect_requests_get('http://author1', """
     <html class="h-feed">
       <div class="h-entry">
-        <a class="u-url" href="http://author1/A" />
-        <a class="u-syndication" href="http://fa.ke/A" />
+        <a class="u-url" href="http://author1/A"></a>
+        <a class="u-syndication" href="http://fa.ke/A"></a>
       </div>
     </html>""")
     self.expect_requests_get('http://author2').AndRaise(HTTPError())
     self.expect_requests_get('http://author3', """
     <html class="h-feed">
       <div class="h-entry">
-        <a class="u-url" href="http://author3/B" />
-        <a class="u-syndication" href="http://fa.ke/B" />
+        <a class="u-url" href="http://author3/B"></a>
+        <a class="u-syndication" href="http://fa.ke/B"></a>
       </div>
     </html>""")
     self.mox.ReplayAll()
@@ -579,6 +579,10 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     # keep looking for an html feed
     self.expect_requests_head('http://author/updates.html')
 
+    # look at the rss feed last
+    self.expect_requests_head('http://author/updates.rss',
+                              content_type='application/xml')
+
     # now fetch the html feed
     self.expect_requests_get('http://author/updates.html', """
     <html class="h-feed">
@@ -601,6 +605,64 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     original_post_discovery.discover(self.source, self.activity)
 
   # TODO: activity with existing responses, make sure they're merged right
+
+  def test_multiple_rel_feeds(self):
+    """Make sure that we follow all rel=feed links, e.g. if notes and
+    articles are in separate feeds."""
+
+    self.expect_requests_get('http://author', """
+    <html>
+      <head>
+        <link rel="feed" href="/articles" type="text/html">
+        <link rel="feed" href="/notes" type="text/html">
+      </head>
+    </html>""")
+
+    # fetches all feeds first
+    self.expect_requests_get('http://author/articles', """
+    <html class="h-feed">
+      <article class="h-entry">
+        <a class="u-url" href="/article-permalink"></a>
+      </article>
+    </html>""").InAnyOrder('feed')
+
+    self.expect_requests_get('http://author/notes', """
+    <html class="h-feed">
+      <article class="h-entry">
+        <a class="u-url" href="/note-permalink"></a>
+      </article>
+    </html>""").InAnyOrder('feed')
+
+    # then the permalinks (in any order since they are hashed to
+    # remove duplicates)
+    self.expect_requests_get('http://author/article-permalink', """
+    <html class="h-entry">
+      <a class="u-url" href="/article-permalink"></a>
+      <a class="u-syndication" href="https://fa.ke/article"></a>
+    </html>""").InAnyOrder('permalink')
+
+    self.expect_requests_get('http://author/note-permalink', """
+    <html class="h-entry">
+      <a class="u-url" href="/note-permalink"></a>
+      <a class="u-syndication" href="https://fa.ke/note"></a>
+    </html>""").InAnyOrder('permalink')
+
+    self.mox.ReplayAll()
+    original_post_discovery.discover(self.source, self.activity)
+
+    note_rels = SyndicatedPost.query(
+      SyndicatedPost.original == 'http://author/note-permalink',
+      ancestor=self.source.key).fetch()
+
+    self.assertEqual(1, len(note_rels))
+    self.assertEqual('https://fa.ke/note', note_rels[0].syndication)
+
+    article_rels = SyndicatedPost.query(
+      SyndicatedPost.original == 'http://author/article-permalink',
+      ancestor=self.source.key).fetch()
+
+    self.assertEqual(1, len(article_rels))
+    self.assertEqual('https://fa.ke/article', article_rels[0].syndication)
 
   def test_avoid_author_page_with_bad_content_type(self):
     """Confirm that we check the author page's content type before
@@ -889,10 +951,10 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     <a class="h-entry" href="/permalink"></a>
     </html>"""
     hentry = """<html class="h-entry">
-    <a class="u-url" href="/permalink"/>
-    <a class="u-syndication" href="https://fa.ke/post/url1"/>
-    <a class="u-syndication" href="https://fa.ke/post/url3"/>
-    <a class="u-syndication" href="https://fa.ke/post/url5"/>
+    <a class="u-url" href="/permalink"></a>
+    <a class="u-syndication" href="https://fa.ke/post/url1"></a>
+    <a class="u-syndication" href="https://fa.ke/post/url3"></a>
+    <a class="u-syndication" href="https://fa.ke/post/url5"></a>
     </html>"""
 
     self.expect_requests_get('http://author', hfeed)
@@ -996,8 +1058,8 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.expect_requests_get('http://author', """
     <html class="h-feed">
       <div class="h-entry">
-        <a class="u-url" href="/permalink" />
-        <a class="u-syndication" href="http://fa.ke/changed/url" />
+        <a class="u-url" href="/permalink"></a>
+        <a class="u-syndication" href="http://fa.ke/changed/url"></a>
       </div>
     </html>""")
 
@@ -1016,7 +1078,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.expect_requests_get('http://author', """
     <html class="h-feed">
       <div class="h-entry">
-        <a class="u-url" href="/permalink" />
+        <a class="u-url" href="/permalink"></a>
       </div>
     </html>""")
     self.expect_requests_get('http://author/permalink', """
@@ -1037,7 +1099,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.expect_requests_get('http://author', """
     <html class="h-feed">
       <div class="h-entry">
-        <a class="u-url" href="/permalink" />
+        <a class="u-url" href="/permalink"></a>
       </div>
     </html>""")
     self.expect_requests_get('http://author/permalink', """
@@ -1059,8 +1121,8 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.expect_requests_get('http://author', """
     <html class="h-feed">
       <div class="h-entry">
-        <a class="u-url" href="/permalink" />
-        <a class="u-syndication" href="https://fa.ke/post/url" />
+        <a class="u-url" href="/permalink"></a>
+        <a class="u-syndication" href="https://fa.ke/post/url"></a>
       </div>
     </html>""")
 
