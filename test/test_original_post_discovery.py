@@ -624,14 +624,14 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
       <article class="h-entry">
         <a class="u-url" href="/article-permalink"></a>
       </article>
-    </html>""")
+    </html>""").InAnyOrder('feed')
 
     self.expect_requests_get('http://author/notes', """
     <html class="h-feed">
       <article class="h-entry">
         <a class="u-url" href="/note-permalink"></a>
       </article>
-    </html>""")
+    </html>""").InAnyOrder('feed')
 
     # then the permalinks (in any order since they are hashed to
     # remove duplicates)
@@ -639,13 +639,13 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     <html class="h-entry">
       <a class="u-url" href="/article-permalink"></a>
       <a class="u-syndication" href="https://fa.ke/article"></a>
-    </html>""").InAnyOrder()
+    </html>""").InAnyOrder('permalink')
 
     self.expect_requests_get('http://author/note-permalink', """
     <html class="h-entry">
       <a class="u-url" href="/note-permalink"></a>
       <a class="u-syndication" href="https://fa.ke/note"></a>
-    </html>""").InAnyOrder()
+    </html>""").InAnyOrder('permalink')
 
     self.mox.ReplayAll()
     original_post_discovery.discover(self.source, self.activity)

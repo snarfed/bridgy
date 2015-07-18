@@ -196,7 +196,7 @@ def _process_author(source, author_url, refetch=False, store_blanks=True):
   feeditems = _find_feed_items(author_url, author_dom)
 
   # look for all other feed urls using rel='feed', type='text/html'
-  feed_urls = []
+  feed_urls = set()
   for rel_feed_node in (author_dom.find_all('link', rel='feed')
                         + author_dom.find_all('a', rel='feed')):
     feed_url = rel_feed_node.get('href')
@@ -215,8 +215,8 @@ def _process_author(source, author_url, refetch=False, store_blanks=True):
       logging.debug('author url is the feed url, ignoring')
     elif not feed_type_ok:
       logging.debug('skipping feed of type %s', feed_type)
-    elif feed_url not in feed_urls:
-      feed_urls.append(feed_url)
+    else:
+      feed_urls.add(feed_url)
 
   for feed_url in feed_urls:
     try:
