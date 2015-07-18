@@ -7,3 +7,6 @@ mf2py>=0.2.6
 oauth2client
 requests
 -e git+git@github.com:snarfed/webmention-tools.git#egg=webmentiontools
+pyOpenSSL
+ndg-httpsclient
+pyasn1
