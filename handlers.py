@@ -55,8 +55,6 @@ body {
 }
 .u-photo {
   max-width: 50px;
-  -webkit-border-radius: 4px;
-  -moz-border-radius: 4px;
   border-radius: 4px;
 }
 .e-content {
