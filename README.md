@@ -32,10 +32,11 @@ The last command runs the unit tests. If you send a pull request, please include
 (or update) a test for the new functionality if possible!
 
 There's a good chance you'll need to make changes to
-[granary](https://github.com/snarfed/granary) or
-[oauth-dropins](https://github.com/snarfed/oauth-dropins) at the same time as
-bridgy. To do that, clone their repos elsewhere, then install them in "source"
-mode with:
+[granary](https://github.com/snarfed/granary),
+[oauth-dropins](https://github.com/snarfed/oauth-dropins), or
+[webmention-tools](https://github.com/snarfed/webmention-tools) at the same time
+as bridgy. To do that, clone their repos elsewhere, then install them in
+"source" mode with:
 
 ```
 pip uninstall oauth-dropins
@@ -46,6 +47,10 @@ ln -s <path to oauth-dropins>/oauth_dropins \
 pip uninstall granary
 pip install -e <path to granary>
 ln -s <path to granary>/granary local/lib/python2.7/site-packages/granary
+
+pip uninstall webmention-tools
+# webmention-tools isn't in pypi
+ln -s <path to webmention-tools>/webmentiontools local/lib/python2.7/site-packages/webmentiontools
 ```
 
 The symlinks are necessary because App Engine's `vendor` module evidently
