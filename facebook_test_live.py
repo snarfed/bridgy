@@ -31,7 +31,7 @@ import unittest
 import urllib
 import urlparse
 
-import oauth_dropins.test
+import oauth_dropins.webutil.test
 import appengine_config
 
 from bs4 import BeautifulSoup
