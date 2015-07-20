@@ -4,8 +4,13 @@
 https://github.com/snarfed/bridgy/issues/406
 
 The canned user is Snoopy Barrett: https://www.facebook.com/100009447618341 ,
-https://www.brid.gy/facebook/1407574399567467 . He has one post with one like
-and two comments:
+https://www.brid.gy/facebook/1407574399567467 . To refresh his access token in
+facebook_test_user_access_token, reauth on his bridgy user page and then grab it
+from the datastore:
+
+https://appengine.google.com/datastore/edit?app_id=s~brid-gy&key=aglzfmJyaWQtZ3lyIgsSDEZhY2Vib29rQXV0aCIQMTQwNzU3NDM5OTU2NzQ2Nww
+
+He has one post with one like and two comments:
 https://www.facebook.com/100009447618341/posts/1407573252900915
 
   Snoopy Barrett:
