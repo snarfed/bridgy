@@ -34,13 +34,16 @@ The last command runs the unit tests. If you send a pull request, please include
 There's a good chance you'll need to make changes to
 [granary](https://github.com/snarfed/granary) or
 [oauth-dropins](https://github.com/snarfed/oauth-dropins) at the same time as
-bridgy. To do that, clone their repos, then install them in "source" mode with:
+bridgy. To do that, clone their repos elsewhere, then install them in "source"
+mode with:
 
 ```
+pip uninstall oauth-dropins
 pip install -e <path to oauth-dropins>
 ln -s <path to oauth-dropins>/oauth_dropins \
   local/lib/python2.7/site-packages/oauth_dropins
 
+pip uninstall granary
 pip install -e <path to granary>
 ln -s <path to granary>/granary local/lib/python2.7/site-packages/granary
 ```
