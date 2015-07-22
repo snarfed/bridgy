@@ -9,6 +9,8 @@ queue:
 - name: poll-now
   rate: 1/s
   max_concurrent_requests: 1
+  retry_parameters:
+    task_retry_limit: 1
 
 - name: propagate
   rate: 1/s
