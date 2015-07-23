@@ -25,6 +25,12 @@ support). Add it to your `$PYTHONPATH`, e.g.
 virtualenv local
 source local/bin/activate
 pip install -r requirements.txt
+
+# We install gdata in source mode, and App Engine doesn't follow .egg-link
+# files, so add a symlink to it.
+ln -s ../../../src/gdata/src/gdata local/lib/python2.7/site-packages/gdata
+ln -s ../../../src/gdata/src/atom local/lib/python2.7/site-packages/atom
+
 python -m unittest discover
 ```
 
@@ -46,11 +52,13 @@ ln -s <path to oauth-dropins>/oauth_dropins \
 
 pip uninstall granary
 pip install -e <path to granary>
-ln -s <path to granary>/granary local/lib/python2.7/site-packages/granary
+ln -s <path to granary>/granary \
+  local/lib/python2.7/site-packages/granary
 
 pip uninstall webmention-tools
 # webmention-tools isn't in pypi
-ln -s <path to webmention-tools>/webmentiontools local/lib/python2.7/site-packages/webmentiontools
+ln -s <path to webmention-tools>/webmentiontools \
+  local/lib/python2.7/site-packages/webmentiontools
 ```
 
 The symlinks are necessary because App Engine's `vendor` module evidently

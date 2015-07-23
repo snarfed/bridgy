@@ -1,6 +1,6 @@
 oauth-dropins
 granary
-gdata>=2.0.18
+-e git+git@github.com:snarfed/gdata-python-client-1.git#egg=gdata
 google-api-python-client>=1.4.0
 html2text
 mf2py>=0.2.6
