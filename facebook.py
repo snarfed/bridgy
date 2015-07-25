@@ -48,6 +48,8 @@ API_USER_RSVPS_NOT_REPLIED = 'me/events/not_replied'
 # there's no way to ask for that. :/
 # https://developers.facebook.com/docs/graph-api/using-graph-api/v2.1#fields
 API_EVENT = '%s?fields=comments,description,end_time,id,likes,name,owner,picture,privacy,start_time,timezone,updated_time,venue'
+# WARNING: this edge is deprecated in API v2.4 and will stop working in 2017.
+# https://developers.facebook.com/docs/apps/changelog#v2_4_deprecations
 API_EVENT_RSVPS = '%s/invited'
 
 
