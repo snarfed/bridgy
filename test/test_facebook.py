@@ -193,12 +193,17 @@ class FacebookPageTest(testutil.ModelsTest):
     self.assertRaises(models.DisableSource, self.fb.get_activities)
 
   def test_other_error(self):
+    msg = json.dumps({'error': {'code': 190, 'error_subcode': 789}})
     self.expect_urlopen(
       'https://graph.facebook.com/v2.2/me/posts?offset=0&access_token=my_token',
-      json.dumps({'error': {'code': 190, 'error_subcode': 789}}), status=400)
+      msg, status=400)
     self.mox.ReplayAll()
 
-    self.assertRaises(urllib2.HTTPError, self.fb.get_activities)
+    with self.assertRaises(urllib2.HTTPError) as cm:
+      self.fb.get_activities()
+
+    self.assertEquals(400, cm.exception.code)
+    self.assertEquals(msg, cm.exception.read())
 
   def test_other_error_not_json(self):
     """If an error body isn't JSON, we should raise the original exception."""
@@ -207,7 +212,11 @@ class FacebookPageTest(testutil.ModelsTest):
       'not json', status=400)
     self.mox.ReplayAll()
 
-    self.assertRaises(urllib2.HTTPError, self.fb.get_activities)
+    with self.assertRaises(urllib2.HTTPError) as cm:
+      self.fb.get_activities()
+
+    self.assertEquals(400, cm.exception.code)
+    self.assertEquals('not json', cm.exception.read())
 
   def test_canonicalize_syndication_url(self):
     for expected, input in (

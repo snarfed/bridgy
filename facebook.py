@@ -136,16 +136,17 @@ class FacebookPage(models.Source):
                           for e in events
                           if e.get('owner', {}).get('id') == self.key.id()]
 
-    except urllib2.HTTPError, e:
+    except urllib2.HTTPError as e:
       # Facebook API error details:
       # https://developers.facebook.com/docs/graph-api/using-graph-api/#receiving-errorcodes
       # https://developers.facebook.com/docs/reference/api/errors/
-      exc_type, exc_value, exc_traceback = sys.exc_info()
+      body = e.read()
+      e.fp.seek(0)  # preserve the response body
       try:
-        body = json.loads(e.read())
+        body = json.loads(body)
       except:
         # response isn't JSON. ignore and re-raise the original exception
-        raise exc_type, exc_value, exc_traceback
+        raise e
 
       error = body.get('error', {})
       if error.get('code') in (102, 190):
@@ -161,7 +162,7 @@ class FacebookPage(models.Source):
           raise models.DisableSource()
 
       # other error. re-raise original exception
-      raise exc_type, exc_value, exc_traceback
+      raise e
 
     # add photos. they show up as both a post and a photo, each with a separate
     # id. the post's object_id field points to the photo's id. de-dupe by
