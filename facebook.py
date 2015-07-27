@@ -141,7 +141,7 @@ class FacebookPage(models.Source):
       # https://developers.facebook.com/docs/graph-api/using-graph-api/#receiving-errorcodes
       # https://developers.facebook.com/docs/reference/api/errors/
       body = e.read()
-      e.fp.seek(0)  # preserve the response body
+      e.fp.fp.seek(0)  # preserve the response body
       try:
         body = json.loads(body)
       except:
