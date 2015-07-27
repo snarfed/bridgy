@@ -20,6 +20,7 @@ Example comment ID and links
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
+import cStringIO
 import json
 import logging
 import re
@@ -140,15 +141,18 @@ class FacebookPage(models.Source):
       # Facebook API error details:
       # https://developers.facebook.com/docs/graph-api/using-graph-api/#receiving-errorcodes
       # https://developers.facebook.com/docs/reference/api/errors/
+      exc_type, _, exc_traceback = sys.exc_info()
       body = e.read()
-      e.fp.fp.seek(0)  # preserve the response body
-      try:
-        body = json.loads(body)
-      except:
-        # response isn't JSON. ignore and re-raise the original exception
-        raise e
+      exc_copy = exc_type(e.filename, e.code, e.msg, e.hdrs, cStringIO.StringIO(body))
 
-      error = body.get('error', {})
+      try:
+        body_json = json.loads(body)
+      except:
+        logging.exception('Non-JSON response body: %s', body)
+        # response isn't JSON. ignore and re-raise the original exception
+        raise exc_type, exc_copy, exc_traceback
+
+      error = body_json.get('error', {})
       if error.get('code') in (102, 190):
         subcode = error.get('error_subcode')
         if subcode == 458:  # revoked
@@ -162,7 +166,7 @@ class FacebookPage(models.Source):
           raise models.DisableSource()
 
       # other error. re-raise original exception
-      raise e
+      raise exc_type, exc_copy, exc_traceback
 
     # add photos. they show up as both a post and a photo, each with a separate
     # id. the post's object_id field points to the photo's id. de-dupe by
