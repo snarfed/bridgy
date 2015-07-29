@@ -461,6 +461,7 @@ class PollTest(TaskQueueTest):
           urllib2.HTTPError('url', 400, 'foo', {}, StringIO.StringIO(
             '{"meta":{"error_type":"OAuthAccessTokenException"}}')),
           AccessTokenRefreshError('invalid_grant'),
+          AccessTokenRefreshError('invalid_grant: Token has been revoked.'),
       ):
         self.mox.UnsetStubs()
         self.setUp()

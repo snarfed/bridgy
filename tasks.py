@@ -162,11 +162,6 @@ class Poll(webapp2.RequestHandler):
     except Exception, e:
       code, body = util.interpret_http_exception(e)
       if code == '401':
-        # TODO: also interpret oauth2client.AccessTokenRefreshError with
-        # {'error': 'invalid_grant'} as disabled? it can mean the user revoked
-        # access. it can also mean the token expired, or they deleted their
-        # account, or even other things.
-        # http://code.google.com/p/google-api-python-client/issues/detail?id=187#c1
         msg = 'Unauthorized error: %s' % e
         logging.warning(msg, exc_info=True)
         raise models.DisableSource(msg)
