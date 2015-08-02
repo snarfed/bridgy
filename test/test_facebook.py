@@ -230,6 +230,8 @@ class FacebookPageTest(testutil.ModelsTest):
        'https://facebook.com/permalink.php?story_fbid=314159&id=212038'),
       ('https://www.facebook.com/212038/posts/314159',
        'https://facebook.com/permalink.php?story_fbid=314159&amp;id=212038'),
+      ('https://www.facebook.com/212038/posts/314159',
+       'https://m.facebook.com/story.php?id=212038&story_fbid=314159'),
       # make sure we don't touch user.name when it appears elsewhere in the url
       ('https://www.facebook.com/25624/posts/snarfed.org',
        'http://www.facebook.com/25624/posts/snarfed.org')):

@@ -241,15 +241,10 @@ class FacebookPage(models.Source):
     Return:
       a string, the canonical form of the syndication url
     """
-    parsed = urlparse.urlparse(url)
-
-    if (parsed.path.endswith('/permalink.php') or
-        parsed.path.endswith('/photo.php') or
-        parsed.path.endswith('/photos.php')):
-      params = urlparse.parse_qs(parsed.query)
-      ids = params.get('story_fbid') or params.get('fbid')
-      if ids:
-        url = 'https://www.facebook.com/%s/posts/%s' % (self.key.id(), ids[0])
+    params = urlparse.parse_qs(urlparse.urlparse(url).query)
+    ids = params.get('story_fbid') or params.get('fbid')
+    if ids:
+      url = 'https://www.facebook.com/%s/posts/%s' % (self.key.id(), ids[0])
 
     if self.username:
       url = url.replace('facebook.com/%s/' % self.username,
