@@ -13,8 +13,9 @@ instagram_client_id
 instagram_client_secret
 instagram_client_id_local
 instagram_client_secret_local
-local
-mapreduce
+/l
+/local
+/mapreduce
 private_notes
 superfeedr_token
 superfeedr_username
