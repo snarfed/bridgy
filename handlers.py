@@ -36,6 +36,7 @@ import webapp2
 
 # Import source class files so their metaclasses are initialized.
 import facebook
+import flickr
 import googleplus
 import instagram
 import twitter
