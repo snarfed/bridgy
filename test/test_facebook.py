@@ -14,7 +14,7 @@ import urllib2
 import appengine_config
 
 import granary
-from granary.test import test_facebook as gr_facebook_test
+from granary.test import test_facebook as gr_test_facebook
 import oauth_dropins
 from oauth_dropins import facebook as oauth_facebook
 
@@ -47,7 +47,7 @@ class FacebookPageTest(testutil.ModelsTest):
                                features=['listen'])
     self.fb.put()
 
-    self.post_activity = copy.deepcopy(gr_facebook_test.ACTIVITY)
+    self.post_activity = copy.deepcopy(gr_test_facebook.ACTIVITY)
     fb_id_and_url = {
       'id': 'tag:facebook.com,2013:222', # this is fb_object_id
       'url': 'https://www.facebook.com/212038/posts/222',
@@ -67,44 +67,44 @@ class FacebookPageTest(testutil.ModelsTest):
     self.assertEqual('https://www.facebook.com/snarfed.org', self.fb.silo_url())
 
   def test_get_activities(self):
-    owned_event = copy.deepcopy(gr_facebook_test.EVENT)
+    owned_event = copy.deepcopy(gr_test_facebook.EVENT)
     owned_event['id'] = '888'
     owned_event['owner']['id'] = '212038'
     self.expect_urlopen(
       'https://graph.facebook.com/v2.2/me/posts?offset=0&access_token=my_token',
-      json.dumps({'data': [gr_facebook_test.POST]}))
+      json.dumps({'data': [gr_test_facebook.POST]}))
     self.expect_urlopen(
       'https://graph.facebook.com/v2.2/me/photos/uploaded?access_token=my_token',
-      json.dumps({'data': [gr_facebook_test.POST]}))
+      json.dumps({'data': [gr_test_facebook.POST]}))
     self.expect_urlopen(
       'https://graph.facebook.com/v2.2/me/events?access_token=my_token',
-      json.dumps({'data': [gr_facebook_test.EVENT, owned_event]}))
+      json.dumps({'data': [gr_test_facebook.EVENT, owned_event]}))
     self.expect_urlopen(
       re.compile('^https://graph.facebook.com/v2.2/145304994\?.+'),
-      json.dumps(gr_facebook_test.EVENT))
+      json.dumps(gr_test_facebook.EVENT))
     self.expect_urlopen(
       re.compile('^https://graph.facebook.com/v2.2/888\?.+'),
       json.dumps(owned_event))
     self.expect_urlopen(
       'https://graph.facebook.com/v2.2/888/invited?access_token=my_token',
-      json.dumps({'data': gr_facebook_test.RSVPS}))
+      json.dumps({'data': gr_test_facebook.RSVPS}))
     self.mox.ReplayAll()
 
     event_activity = self.fb.gr_source.event_to_activity(owned_event)
     for k in 'attending', 'notAttending', 'maybeAttending', 'invited':
-      event_activity['object'][k] = gr_facebook_test.EVENT_OBJ_WITH_ATTENDEES[k]
-    self.assert_equals([self.post_activity, gr_facebook_test.ACTIVITY, event_activity],
+      event_activity['object'][k] = gr_test_facebook.EVENT_OBJ_WITH_ATTENDEES[k]
+    self.assert_equals([self.post_activity, gr_test_facebook.ACTIVITY, event_activity],
                        self.fb.get_activities())
 
   def test_get_activities_post_and_photo_duplicates(self):
-    self.assertEqual(gr_facebook_test.POST['object_id'],
-                     gr_facebook_test.PHOTO['id'])
+    self.assertEqual(gr_test_facebook.POST['object_id'],
+                     gr_test_facebook.PHOTO['id'])
     self.expect_urlopen(
       'https://graph.facebook.com/v2.2/me/posts?offset=0&access_token=my_token',
-      json.dumps({'data': [gr_facebook_test.POST]}))
+      json.dumps({'data': [gr_test_facebook.POST]}))
     self.expect_urlopen(
       'https://graph.facebook.com/v2.2/me/photos/uploaded?access_token=my_token',
-      json.dumps({'data': [gr_facebook_test.PHOTO]}))
+      json.dumps({'data': [gr_test_facebook.PHOTO]}))
     self.expect_urlopen(
       'https://graph.facebook.com/v2.2/me/events?access_token=my_token',
       json.dumps({}))
@@ -121,7 +121,7 @@ class FacebookPageTest(testutil.ModelsTest):
   def test_get_activities_canonicalizes_ids_with_colons(self):
     """https://github.com/snarfed/bridgy/issues/305"""
     # translate post id and comment ids to same ids in new colon-based format
-    post = copy.deepcopy(gr_facebook_test.POST)
+    post = copy.deepcopy(gr_test_facebook.POST)
     post['id'] = self.post_activity['object']['fb_id'] = \
         self.post_activity['fb_id'] = '212038:10100176064482163:11'
 
@@ -129,6 +129,7 @@ class FacebookPageTest(testutil.ModelsTest):
     post['comments']['data'][0]['id'] = reply['fb_id'] = \
         '12345:547822715231468:987_6796480'
     reply['url'] = 'https://www.facebook.com/12345/posts/547822715231468?comment_id=6796480'
+    reply['inReplyTo'][0]['url'] = 'https://www.facebook.com/12345/posts/547822715231468'
 
     self.expect_urlopen(
       'https://graph.facebook.com/v2.2/me/posts?offset=0&access_token=my_token',
@@ -145,11 +146,11 @@ class FacebookPageTest(testutil.ModelsTest):
 
   def test_get_activities_ignores_bad_comment_ids(self):
     """https://github.com/snarfed/bridgy/issues/305"""
-    bad_post = copy.deepcopy(gr_facebook_test.POST)
+    bad_post = copy.deepcopy(gr_test_facebook.POST)
     bad_post['id'] = '90^90'
     del bad_post['object_id']
 
-    post_with_bad_comment = copy.deepcopy(gr_facebook_test.POST)
+    post_with_bad_comment = copy.deepcopy(gr_test_facebook.POST)
     post_with_bad_comment['comments']['data'].append(
       {'id': '12^34', 'message': 'bad to the bone'})
 
@@ -247,7 +248,7 @@ class FacebookPageTest(testutil.ModelsTest):
     self.fb.put()
 
     # Facebook API calls
-    post = gr_facebook_test.POST
+    post = gr_test_facebook.POST
     self.expect_urlopen(
       'https://graph.facebook.com/v2.2/me/posts?offset=0&limit=50&access_token=my_token',
       json.dumps({'data': [post]}))
@@ -263,8 +264,8 @@ class FacebookPageTest(testutil.ModelsTest):
       </div>
     </html>""")
 
-    self.assertNotIn('222', gr_facebook_test.POST['id'])
-    self.assertEquals('222', gr_facebook_test.POST['object_id'])
+    self.assertNotIn('222', gr_test_facebook.POST['id'])
+    self.assertEquals('222', gr_test_facebook.POST['object_id'])
     self.expect_requests_get('http://my.orig/post', """
     <html class="h-entry">
       <a class="u-syndication" href="https://www.facebook.com/photo.php?fbid=222&set=a.995695740593.2393090.212038&type=1&theater'"></a>
