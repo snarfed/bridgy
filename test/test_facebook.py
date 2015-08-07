@@ -253,6 +253,7 @@ class FacebookPageTest(testutil.ModelsTest):
       'https://graph.facebook.com/v2.2/me/posts?offset=0&limit=50&access_token=my_token',
       json.dumps({'data': [post]}))
     self.expect_urlopen('https://graph.facebook.com/v2.2/sharedposts?ids=10100176064482163&access_token=my_token', '{}')
+    self.expect_urlopen('https://graph.facebook.com/v2.2/comments?filter=stream&ids=10100176064482163&access_token=my_token', '{}')
     self.expect_urlopen('https://graph.facebook.com/v2.2/me/photos/uploaded?access_token=my_token', '{}')
     self.expect_urlopen('https://graph.facebook.com/v2.2/me/events?access_token=my_token', '{}')
 
