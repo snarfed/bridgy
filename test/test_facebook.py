@@ -71,7 +71,7 @@ class FacebookPageTest(testutil.ModelsTest):
     owned_event['id'] = '888'
     owned_event['owner']['id'] = '212038'
     self.expect_urlopen(
-      'https://graph.facebook.com/v2.2/me/posts?offset=0&access_token=my_token',
+      'https://graph.facebook.com/v2.2/me/feed?offset=0&access_token=my_token',
       json.dumps({'data': [gr_test_facebook.POST]}))
     self.expect_urlopen(
       'https://graph.facebook.com/v2.2/me/photos/uploaded?access_token=my_token',
@@ -100,7 +100,7 @@ class FacebookPageTest(testutil.ModelsTest):
     self.assertEqual(gr_test_facebook.POST['object_id'],
                      gr_test_facebook.PHOTO['id'])
     self.expect_urlopen(
-      'https://graph.facebook.com/v2.2/me/posts?offset=0&access_token=my_token',
+      'https://graph.facebook.com/v2.2/me/feed?offset=0&access_token=my_token',
       json.dumps({'data': [gr_test_facebook.POST]}))
     self.expect_urlopen(
       'https://graph.facebook.com/v2.2/me/photos/uploaded?access_token=my_token',
@@ -132,7 +132,7 @@ class FacebookPageTest(testutil.ModelsTest):
     reply['inReplyTo'][0]['url'] = 'https://www.facebook.com/12345/posts/547822715231468'
 
     self.expect_urlopen(
-      'https://graph.facebook.com/v2.2/me/posts?offset=0&access_token=my_token',
+      'https://graph.facebook.com/v2.2/me/feed?offset=0&access_token=my_token',
       json.dumps({'data': [post]}))
     self.expect_urlopen(
       'https://graph.facebook.com/v2.2/me/photos/uploaded?access_token=my_token',
@@ -155,7 +155,7 @@ class FacebookPageTest(testutil.ModelsTest):
       {'id': '12^34', 'message': 'bad to the bone'})
 
     self.expect_urlopen(
-      'https://graph.facebook.com/v2.2/me/posts?offset=0&access_token=my_token',
+      'https://graph.facebook.com/v2.2/me/feed?offset=0&access_token=my_token',
       json.dumps({'data': [bad_post, post_with_bad_comment]}))
     self.expect_urlopen(
       'https://graph.facebook.com/v2.2/me/photos/uploaded?access_token=my_token',
@@ -171,7 +171,7 @@ class FacebookPageTest(testutil.ModelsTest):
 
   def test_revoked(self):
     self.expect_urlopen(
-      'https://graph.facebook.com/v2.2/me/posts?offset=0&access_token=my_token',
+      'https://graph.facebook.com/v2.2/me/feed?offset=0&access_token=my_token',
       json.dumps({'error': {'code': 190, 'error_subcode': 458}}), status=400)
     self.mox.ReplayAll()
 
@@ -179,7 +179,7 @@ class FacebookPageTest(testutil.ModelsTest):
 
   def test_expired_sends_notification(self):
     self.expect_urlopen(
-      'https://graph.facebook.com/v2.2/me/posts?offset=0&access_token=my_token',
+      'https://graph.facebook.com/v2.2/me/feed?offset=0&access_token=my_token',
       json.dumps({'error': {'code': 190, 'error_subcode': 463}}), status=400)
 
     params = {
@@ -196,7 +196,7 @@ class FacebookPageTest(testutil.ModelsTest):
   def test_other_error(self):
     msg = json.dumps({'error': {'code': 190, 'error_subcode': 789}})
     self.expect_urlopen(
-      'https://graph.facebook.com/v2.2/me/posts?offset=0&access_token=my_token',
+      'https://graph.facebook.com/v2.2/me/feed?offset=0&access_token=my_token',
       msg, status=400)
     self.mox.ReplayAll()
 
@@ -209,7 +209,7 @@ class FacebookPageTest(testutil.ModelsTest):
   def test_other_error_not_json(self):
     """If an error body isn't JSON, we should raise the original exception."""
     self.expect_urlopen(
-      'https://graph.facebook.com/v2.2/me/posts?offset=0&access_token=my_token',
+      'https://graph.facebook.com/v2.2/me/feed?offset=0&access_token=my_token',
       'not json', status=400)
     self.mox.ReplayAll()
 
@@ -250,7 +250,7 @@ class FacebookPageTest(testutil.ModelsTest):
     # Facebook API calls
     post = gr_test_facebook.POST
     self.expect_urlopen(
-      'https://graph.facebook.com/v2.2/me/posts?offset=0&limit=50&access_token=my_token',
+      'https://graph.facebook.com/v2.2/me/feed?offset=0&limit=50&access_token=my_token',
       json.dumps({'data': [post]}))
     self.expect_urlopen('https://graph.facebook.com/v2.2/sharedposts?ids=10100176064482163&access_token=my_token', '{}')
     self.expect_urlopen('https://graph.facebook.com/v2.2/comments?filter=stream&ids=10100176064482163&access_token=my_token', '{}')
