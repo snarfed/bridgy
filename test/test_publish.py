@@ -730,7 +730,6 @@ foo<br /> <blockquote>bar</blockquote>
     """Publishing a like of a post that has no microformats; should have no
     problems posting the like anyway.
     """
-
     self.mox.StubOutWithMock(self.source.gr_source, 'create',
                              use_mock_anything=True)
 
@@ -924,3 +923,20 @@ Join us!"""
                       source='http://mr.x/comment',
                       target='http://brid.gy/publish/facebook',
                       preview=True)
+
+  def test_require_like_of_repost_of(self):
+    """We only trigger on like-of and repost-of, not like or repost."""
+    for prop in 'like', 'repost':
+      url = 'http://foo.com/%s' % prop
+      self.expect_requests_get(url, """
+      <article class="h-entry">
+        <p class="e-content">foo</p>
+        <a class="u-url" href="%s"></a>
+        <a class="u-%s" href="http://a/like"></a>
+      </article>
+      """ % (url, prop))
+
+    self.mox.ReplayAll()
+    for prop in 'like', 'repost':
+      url = 'http://foo.com/%s' % prop
+      self.assert_success('foo - %s' % url, source=url)
