@@ -235,8 +235,7 @@ class Handler(webmention.WebmentionHandler):
       item: mf2 item dict from mf2py
 
     Returns:
-      a CreationResult object, where content is the string HTTP
-      response or None if the source cannot publish this item type.
+      CreationResult
     """
     props = item.get('properties', {})
     ignore_formatting = self.ignore_formatting()
@@ -246,7 +245,9 @@ class Handler(webmention.WebmentionHandler):
     obj = microformats2.json_to_object(item)
     if ignore_formatting:
       prop = microformats2.first_props(props)
-      obj['content'] = prop.get('content', {}).get('value').strip()
+      content = prop.get('content', {}).get('value')
+      if content:
+        obj['content'] = content.strip()
 
     # which original post URL to include? if the source URL redirected, use the
     # (pre-redirect) source URL, since it might be a short URL. otherwise, use

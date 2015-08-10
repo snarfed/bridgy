@@ -296,6 +296,15 @@ class PublishTest(testutil.HandlerTest):
     self.assert_error('or no content was found')
     self.assertEquals('failed', Publish.query().get().status)
 
+  def test_no_content_ignore_formatting(self):
+    self.expect_requests_get('http://foo.com/bar',
+                             '<article class="h-entry h-as-note"></article>')
+    self.mox.ReplayAll()
+
+    self.assert_error('or no content was found',
+                      params={'bridgy_ignore_formatting': ''})
+    self.assertEquals('failed', Publish.query().get().status)
+
   def test_multiple_items_chooses_first_that_works(self):
     html = ('<a class="h-card" href="http://mic.lim.com/">Mic Lim</a>\n' +
             self.post_html % 'foo')
