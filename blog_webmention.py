@@ -116,8 +116,14 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
         self.target_url, author_name, author_url, text)
     except Exception, e:
       code, body = util.interpret_http_exception(e)
-      if code or body:
-        return self.error('Error: %s %s; %s' % (code, e, body), status=code, mail=True)
+      msg = 'Error: %s %s; %s' % (code, e, body)
+      if code == '401':
+        logging.warning('Disabling source!')
+        self.source.status = 'disabled'
+        self.source.put()
+        return self.error(msg, status=code, mail=False)
+      elif code or body:
+        return self.error(msg, status=code, mail=True)
       else:
         raise
 

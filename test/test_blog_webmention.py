@@ -28,6 +28,11 @@ class BlogWebmentionTest(testutil.HandlerTest):
     self.source.put()
 
     self.mox.StubOutWithMock(testutil.FakeSource, 'create_comment')
+    self.mention_html = """\
+<article class="h-entry"><p class="e-content">
+<span class="p-name">my post</span>
+http://foo.com/post/1
+</p></article>"""
 
   def get_response(self, source=None, target=None):
     if source is None:
@@ -42,6 +47,12 @@ class BlogWebmentionTest(testutil.HandlerTest):
     resp = self.get_response(**kwargs)
     self.assertEquals(status, resp.status_int)
     self.assertIn(expected_error, json.loads(resp.body)['error'])
+
+  def expect_mention(self):
+    self.expect_requests_get('http://bar.com/reply', self.mention_html)
+    return testutil.FakeSource.create_comment(
+      'http://foo.com/post/1', 'foo.com', 'http://foo.com/',
+      'mentioned this in <a href="http://bar.com/reply">my post</a>. <br /> <a href="http://bar.com/reply">via bar.com</a>')
 
   def test_success(self):
     html = """
@@ -172,15 +183,7 @@ X http://FoO.cOm/post/1
 
   def test_strip_utm_query_params(self):
     """utm_* query params should be stripped from target URLs."""
-    html = """\
-<article class="h-entry"><p class="e-content">
-<span class="p-name">my post</span>
-http://foo.com/post/1
-</p></article>"""
-    self.expect_requests_get('http://bar.com/reply', html)
-    testutil.FakeSource.create_comment(
-      'http://foo.com/post/1', 'foo.com', 'http://foo.com/',
-      'mentioned this in <a href="http://bar.com/reply">my post</a>. <br /> <a href="http://bar.com/reply">via bar.com</a>')
+    self.expect_mention()
     self.mox.ReplayAll()
 
     resp = self.get_response(target=urllib.quote(
@@ -319,22 +322,26 @@ i hereby mention
     self.assertEquals('complete', bw.status)
 
   def test_create_comment_exception(self):
-    html = """\
-<article class="h-entry"><p class="e-content">
-<span class="p-name">my post</span>
-http://foo.com/post/1
-</p></article>"""
-    self.expect_requests_get('http://bar.com/reply', html)
-    testutil.FakeSource.create_comment(
-      'http://foo.com/post/1', 'foo.com', 'http://foo.com/', mox.IgnoreArg()
-      ).AndRaise(exc.HTTPPaymentRequired())
+    self.expect_mention().AndRaise(exc.HTTPPaymentRequired())
     self.mox.ReplayAll()
 
     resp = self.get_response()
     self.assertEquals(402, resp.status_int, resp.body)
     bw = BlogWebmention.get_by_id('http://bar.com/reply http://foo.com/post/1')
     self.assertEquals('failed', bw.status)
-    self.assertEquals(html, bw.html)
+    self.assertEquals(self.mention_html, bw.html)
+
+  def test_create_comment_401_disables_source(self):
+    self.expect_mention().AndRaise(exc.HTTPUnauthorized('no way'))
+    self.mox.ReplayAll()
+
+    self.assert_error('no way', status=401)
+    source = self.source.key.get()
+    self.assertEquals('disabled', source.status)
+
+    bw = BlogWebmention.get_by_id('http://bar.com/reply http://foo.com/post/1')
+    self.assertEquals('failed', bw.status)
+    self.assertEquals(self.mention_html, bw.html)
 
   def test_sources_global(self):
     self.assertIsNotNone(models.sources['blogger'])
