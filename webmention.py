@@ -134,6 +134,8 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
 
     # don't email about specific known failures
     if (mail and
+        'Deadline exceeded while waiting for HTTP response' not in error and
+        'urlfetch.Fetch() took too long' not in error and
         # https://github.com/snarfed/bridgy/issues/161
         '"error": "invalid_input"' not in error and
         # https://github.com/snarfed/bridgy/issues/175
