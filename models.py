@@ -488,7 +488,8 @@ class Source(StringIdModel):
     domains = [util.domain_from_link(url).lower() for url in urls]
     return urls, domains
 
-  def canonicalize_syndication_url(self, syndication_url, scheme='https'):
+  def canonicalize_syndication_url(self, syndication_url, scheme='https',
+                                   subdomain=''):
     """Perform source-specific transforms to the syndication URL for cases
     where multiple silo URLs can point to the same content.  By
     standardizing on one format, original_post_discovery stands the
@@ -498,11 +499,14 @@ class Source(StringIdModel):
     Args:
       syndication_url: a string, the url of the syndicated content
       scheme: a string, the canonical scheme for this source (https by default)
+      subdomain: a string, the canonical subdomain, e.g. 'www.'
+        (blank by default)
 
     Return:
       a string, the canonical form of the syndication url
     """
-    return re.sub('^https?://(www\.)?', scheme + '://', syndication_url)
+    return re.sub('^https?://(www\.)?', scheme + '://' + subdomain,
+                  syndication_url)
 
   def preprocess_superfeedr_item(self, item):
     """Process a Superfeeder item field before extracting links from it.

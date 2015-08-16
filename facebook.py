@@ -210,8 +210,8 @@ class FacebookPage(models.Source):
                         'facebook.com/%s/' % self.key.id())
 
     # facebook always uses https and www
-    return re.sub('^https?://(www\.)?facebook.com/', 'https://www.facebook.com/',
-                  url)
+    return super(Facebook, self).canonicalize_syndication_url(
+      url, scheme='https', subdomain='www.')
 
   @ndb.transactional
   def on_new_syndicated_post(self, syndpost):
