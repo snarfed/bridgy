@@ -204,31 +204,6 @@ class FacebookPage(models.Source):
     activities += [self.gr_source.event_to_activity(e, rsvps=r)
                    for e, r in events_and_rsvps]
 
-    # TODO: remove once we're confident in our id parsing. (i'm going to canary
-    # with just a few users before i do it for everyone.)
-    #
-    # discard objects with ids with colons in them. Background:
-    # https://github.com/snarfed/bridgy/issues/305
-    def remove_bad_ids(objs, label):
-      ret = []
-      for o in objs:
-        id = util.parse_tag_uri(o.get('id') or o.get('object', {}).get('id') or '')
-        if id and ':' in id[1]:
-          logging.warning('Cowardly ignoring %s with bad id: %s', label,  id[1])
-        else:
-          ret.append(o)
-      return ret
-
-    resp['items'] = remove_bad_ids(activities, 'activity')
-    for activity in resp['items']:
-      obj = activity.get('object', {})
-      obj['tags'] = remove_bad_ids(obj.setdefault('tags', []), 'tag/like')
-      replies = obj.get('replies', {})
-      items = replies.get('items')
-      if items:
-        replies['items'] = remove_bad_ids(items, 'comment')
-        replies['totalItems'] = len(replies['items'])
-
     return util.trim_nulls(resp)
 
   def canonicalize_syndication_url(self, url):
