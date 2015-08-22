@@ -132,23 +132,25 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
       resp['parsed'] = data
     resp = json.dumps(resp, indent=2)
 
-    # don't email about specific known failures
-    if (mail and
-        'Deadline exceeded while waiting for HTTP response' not in error and
-        'urlfetch.Fetch() took too long' not in error and
-        # https://github.com/snarfed/bridgy/issues/161
-        '"error": "invalid_input"' not in error and
-        # https://github.com/snarfed/bridgy/issues/175
-        'bX-2i87au' not in error and
-        # https://github.com/snarfed/bridgy/issues/177
-        "Invalid argument, 'thread': Unable to find thread" not in error and
-        # expected for partially set up tumblr accounts
-        "we haven't found your Disqus account" not in error
-        ):
+    if mail:
       self.mail_me(resp)
     self.response.write(resp)
 
   def mail_me(self, resp):
+    # don't email about specific known failures
+    if ('Deadline exceeded while waiting for HTTP response' in resp or
+        'urlfetch.Fetch() took too long' in resp or
+        # https://github.com/snarfed/bridgy/issues/161
+        '"resp": "invalid_input"' in resp or
+        # https://github.com/snarfed/bridgy/issues/175
+        'bX-2i87au' in resp or
+        # https://github.com/snarfed/bridgy/issues/177
+        "Invalid argument, 'thread': Unable to find thread" in resp or
+        # expected for partially set up tumblr accounts
+        "we haven't found your Disqus account" in resp
+        ):
+      return
+
     subject = '%s %s' % (self.__class__.__name__,
                          '%s %s' % (self.entity.type, self.entity.status)
                          if self.entity else 'failed')
