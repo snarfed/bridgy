@@ -251,6 +251,7 @@ class FacebookPage(models.Source):
       logging.info('Inferring username %s from syndication url %s', author_id, url)
       self.inferred_username = author_id
       self.put()
+      syndpost.syndication = self.canonicalize_syndication_url(syndpost.syndication)
 
 
 class OAuthCallback(oauth_facebook.CallbackHandler, util.Handler):

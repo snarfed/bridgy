@@ -312,9 +312,12 @@ class FacebookPageTest(testutil.ModelsTest):
     self.assertIsNone(fb.key.get().inferred_username)
 
     # should infer username
-    models.SyndicatedPost.insert(self.fb, original='http://fin.al',
-                                 syndication='http://facebook.com/fooey/posts/123')
+    syndpost = models.SyndicatedPost.insert(
+      self.fb, original='http://fin.al',
+      syndication='http://facebook.com/fooey/posts/123')
     self.assertEquals('fooey', fb.key.get().inferred_username)
+    self.assertEquals('https://www.facebook.com/212038/posts/123',
+                      syndpost.syndication)
 
 
 class FacebookPagePageTest(testutil.ModelsTest):

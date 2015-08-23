@@ -748,8 +748,8 @@ class SyndicatedPost(ndb.Model):
 
   See original_post_discovery.
 
-  When a new SyndicatedPost entity is created, its source's
-  on_new_syndicated_post() method is called.
+  When a SyndicatedPost entity is about to be stored, its source's
+  on_new_syndicated_post() method is called (before it's stored).
   """
 
   # Turn off instance and memcache caching. See Response for details.
@@ -830,5 +830,5 @@ class SyndicatedPost(ndb.Model):
     r.put()
     return r
 
-  def _post_put_hook(self, future):
+  def _pre_put_hook(self):
     self.key.parent().get().on_new_syndicated_post(self)
