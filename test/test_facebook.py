@@ -238,6 +238,16 @@ class FacebookPageTest(testutil.ModelsTest):
        'http://www.facebook.com/25624/posts/snarfed.org')):
       self.assertEqual(expected, self.fb.canonicalize_syndication_url(input))
 
+    # username should override inferred username
+    self.fb.inferred_username = 'mr-disguise'
+    url = 'https://www.facebook.com/mr-disguise/posts/314159'
+    self.assertEqual(url, self.fb.canonicalize_syndication_url(url))
+
+    # if no username, fall through
+    self.fb.username = None
+    self.assertEqual('https://www.facebook.com/212038/posts/314159',
+                     self.fb.canonicalize_syndication_url(url))
+
   def test_photo_syndication_url(self):
     """End to end test with syndication URL with FB object id instead of post id.
 
@@ -282,6 +292,29 @@ class FacebookPageTest(testutil.ModelsTest):
     self.assertEqual(200, resp.status_int)
     for resp in models.Response.query():
       self.assertEqual(['http://my.orig/post'], resp.unsent)
+
+  def test_on_new_syndicated_post(self):
+    # username is already set
+    models.SyndicatedPost.insert(self.fb, original='http://or.ig',
+                                 syndication='http://facebook.com/fooey/posts/123')
+    fb = self.fb.key.get()
+    self.assertIsNone(fb.inferred_username)
+
+    # url has user id, not username
+    fb.username = None
+    fb.put()
+    models.SyndicatedPost.insert(self.fb, original='http://an.other',
+                                 syndication='http://facebook.com/987/posts/123')
+    self.assertIsNone(fb.key.get().inferred_username)
+
+    # no syndication url in SyndicatedPost
+    models.SyndicatedPost.insert_original_blank(self.fb, original='http://x')
+    self.assertIsNone(fb.key.get().inferred_username)
+
+    # should infer username
+    models.SyndicatedPost.insert(self.fb, original='http://fin.al',
+                                 syndication='http://facebook.com/fooey/posts/123')
+    self.assertEquals('fooey', fb.key.get().inferred_username)
 
 
 class FacebookPagePageTest(testutil.ModelsTest):
