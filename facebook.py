@@ -66,6 +66,8 @@ class FacebookPage(models.Source):
   type = ndb.StringProperty(choices=('user', 'page'))
   # unique name used in fb URLs, e.g. facebook.com/[username]
   username = ndb.StringProperty()
+  # inferred from syndication URLs if username isn't available
+  inferred_username = ndb.StringProperty()
 
   @staticmethod
   def new(handler, auth_entity=None, **kwargs):
@@ -208,7 +210,7 @@ class FacebookPage(models.Source):
 
   def canonicalize_syndication_url(self, url):
     """Facebook-specific standardization of syndicated urls. Canonical form is
-    https://facebook.com/0123456789
+    https://www.facebook.com/0123456789
 
     Args:
       url: a string, the url of the syndicated content
@@ -221,13 +223,35 @@ class FacebookPage(models.Source):
     if ids:
       url = 'https://www.facebook.com/%s/posts/%s' % (self.key.id(), ids[0])
 
-    if self.username:
-      url = url.replace('facebook.com/%s/' % self.username,
+    username = self.username or self.inferred_username
+    if username:
+      url = url.replace('facebook.com/%s/' % username,
                         'facebook.com/%s/' % self.key.id())
 
     # facebook always uses https and www
     return re.sub('^https?://(www\.)?facebook.com/', 'https://www.facebook.com/',
                   url)
+
+  @ndb.transactional
+  def on_new_syndicated_post(self, syndpost):
+    """If this source has no username, try to infer one from a syndication URL.
+
+    Args:
+      syndpost: SyndicatedPost
+    """
+    url = syndpost.syndication
+    if self.username or not url:
+      return
+
+    # FB usernames only have letters, numbers, and periods:
+    # https://www.facebook.com/help/105399436216001
+    author_id = self.gr_source.base_object({'object': {'url': url}})\
+                              .get('author', {}).get('id')
+    if author_id and not util.is_int(author_id):
+      logging.info('Inferring username %s from syndication url %s', author_id, url)
+      self.inferred_username = author_id
+      self.put()
+      syndpost.syndication = self.canonicalize_syndication_url(syndpost.syndication)
 
 
 class OAuthCallback(oauth_facebook.CallbackHandler, util.Handler):

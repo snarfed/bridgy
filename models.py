@@ -522,6 +522,14 @@ class Source(StringIdModel):
     """
     pass
 
+  def on_new_syndicated_post(self, syndpost):
+    """Called when a new SyndicatedPost is stored for this source.
+
+    Args:
+      syndpost: SyndicatedPost
+    """
+    pass
+
 
 class Webmentions(StringIdModel):
   """A bundle of links to send webmentions for.
@@ -739,6 +747,9 @@ class SyndicatedPost(ndb.Model):
   following rel=syndication links on the author's h-feed.
 
   See original_post_discovery.
+
+  When a SyndicatedPost entity is about to be stored, its source's
+  on_new_syndicated_post() method is called (before it's stored).
   """
 
   # Turn off instance and memcache caching. See Response for details.
@@ -751,7 +762,7 @@ class SyndicatedPost(ndb.Model):
   updated = ndb.DateTimeProperty(auto_now=True)
 
   @classmethod
-  @ndb.transactional
+  @ndb.transactional(xg=True)
   def insert_original_blank(cls, source, original):
     """Insert a new original -> None relationship. Does a check-and-set to
     make sure no previous relationship exists for this original. If
@@ -766,7 +777,7 @@ class SyndicatedPost(ndb.Model):
     cls(parent=source.key, original=original, syndication=None).put()
 
   @classmethod
-  @ndb.transactional
+  @ndb.transactional(xg=True)
   def insert_syndication_blank(cls, source, syndication):
     """Insert a new syndication -> None relationship. Does a check-and-set
     to make sure no previous relationship exists for this
@@ -782,7 +793,7 @@ class SyndicatedPost(ndb.Model):
     cls(parent=source.key, original=None, syndication=syndication).put()
 
   @classmethod
-  @ndb.transactional
+  @ndb.transactional(xg=True)
   def insert(cls, source, syndication, original):
     """Insert a new (non-blank) syndication -> original relationship.
 
@@ -818,3 +829,6 @@ class SyndicatedPost(ndb.Model):
     r = cls(parent=source.key, original=original, syndication=syndication)
     r.put()
     return r
+
+  def _pre_put_hook(self):
+    self.key.parent().get().on_new_syndicated_post(self)
