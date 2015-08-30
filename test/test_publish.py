@@ -60,8 +60,9 @@ class PublishTest(testutil.HandlerTest):
     if interactive:
       class FakeSendHandler(publish.SendHandler):
         def post(fsh_self):
-          fsh_self.finish(self.auth_entity,
-                          self.handler.encode_state_parameter(self.oauth_state))
+          state = (self.handler.encode_state_parameter(self.oauth_state)
+                   if self.oauth_state else None)
+          fsh_self.finish(self.auth_entity, state)
       app = webapp2.WSGIApplication([('.*', FakeSendHandler)])
 
     return app.get_response(
@@ -135,13 +136,25 @@ class PublishTest(testutil.HandlerTest):
 
     self.assertIsNone(Publish.query().get())
 
-  def test_interactive_from_wrong_user_page(self):
+  def test_interactive_oauth_decline(self):
     self.auth_entity = None
     resp = self.get_response(interactive=True)
     self.assertEquals(302, resp.status_int)
     self.assertEquals(
       'http://localhost/fake/foo.com#!'
-        'If you want to publish, please approve the prompt.',
+        'If you want to publish or preview, please approve the prompt.',
+      urllib.unquote_plus(resp.headers['Location']))
+
+    self.assertIsNone(Publish.query().get())
+
+  def test_interactive_no_state(self):
+    """https://github.com/snarfed/bridgy/issues/449"""
+    self.oauth_state = None
+    resp = self.get_response(interactive=True)
+    self.assertEquals(302, resp.status_int)
+    self.assertEquals(
+      'http://localhost/#!'
+        'If you want to publish or preview, please approve the prompt.',
       urllib.unquote_plus(resp.headers['Location']))
 
     self.assertIsNone(Publish.query().get())
