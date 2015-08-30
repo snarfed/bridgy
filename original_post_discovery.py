@@ -410,7 +410,7 @@ def _process_entry(source, permalink, feed_entry, refetch, preexisting,
     if store_blanks and not preexisting:
       # remember that this post doesn't have syndication links for this
       # particular source
-      logging.debug('saving empty relationship so that it %s will not be '
+      logging.debug('saving empty relationship so that %s will not be '
                     'searched again', permalink)
       SyndicatedPost.insert_original_blank(source, permalink)
 

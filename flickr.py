@@ -61,11 +61,16 @@ class Flickr(models.Source):
       *args, group_id=SELF, **kwargs)
 
   def canonicalize_syndication_url(self, url):
+    if not url.endswith('/'):
+      url = url + '/'
     if self.username:
-      url = url.replace('flickr.com/%s/' % self.username,
-                        'flickr.com/%s/' % self.key.id())
-    return super(Flickr, self).canonicalize_syndication_url(
+      url = url.replace('flickr.com/photos/%s/' % self.username,
+                        'flickr.com/photos/%s/' % self.key.id())
+      url = url.replace('flickr.com/people/%s/' % self.username,
+                        'flickr.com/people/%s/' % self.key.id())
+    url = super(Flickr, self).canonicalize_syndication_url(
       url, scheme='https', subdomain='www.')
+    return url
 
 
 class AddFlickr(oauth_flickr.CallbackHandler, util.Handler):
