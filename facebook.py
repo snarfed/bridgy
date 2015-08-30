@@ -210,7 +210,7 @@ class FacebookPage(models.Source):
                         'facebook.com/%s/' % self.key.id())
 
     # facebook always uses https and www
-    return super(Facebook, self).canonicalize_syndication_url(
+    return super(FacebookPage, self).canonicalize_syndication_url(
       url, scheme='https', subdomain='www.')
 
   @ndb.transactional
