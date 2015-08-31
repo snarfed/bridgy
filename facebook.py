@@ -20,7 +20,6 @@ Example comment ID and links
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
-import cStringIO
 import json
 import logging
 import re
@@ -140,35 +139,17 @@ class FacebookPage(models.Source):
                           if e.get('owner', {}).get('id') == self.key.id()]
 
     except urllib2.HTTPError as e:
-      # Facebook API error details:
-      # https://developers.facebook.com/docs/graph-api/using-graph-api/#receiving-errorcodes
-      # https://developers.facebook.com/docs/reference/api/errors/
-      exc_type, _, exc_traceback = sys.exc_info()
-      body = e.read()
-      exc_copy = exc_type(e.filename, e.code, e.msg, e.hdrs, cStringIO.StringIO(body))
-
-      try:
-        body_json = json.loads(body)
-      except:
-        logging.exception('Non-JSON response body: %s', body)
-        # response isn't JSON. ignore and re-raise the original exception
-        raise exc_type, exc_copy, exc_traceback
-
-      error = body_json.get('error', {})
-      if error.get('code') in (102, 190):
-        subcode = error.get('error_subcode')
-        if subcode == 458:  # revoked
-          raise models.DisableSource()
-        elif subcode in (463, 460):  # expired, changed password
-          # ask the user to reauthenticate
-          self.gr_source.create_notification(
-            self.key.id(),
-            "Brid.gy's access to your account has expired. Click here to renew it now!",
-            'https://www.brid.gy/facebook/start')
-          raise models.DisableSource()
-
-      # other error. re-raise original exception
-      raise exc_type, exc_copy, exc_traceback
+      code, body = util.interpret_http_exception(e)
+      if code == '401':
+        # ask the user to reauthenticate. if this API call fails, it will raise
+        # urllib2.HTTPError instead of DisableSource, so that we don't disable
+        # the source without notifying.
+        self.gr_source.create_notification(
+          self.key.id(),
+          "Brid.gy's access to your account has expired. Click here to renew it now!",
+          'https://www.brid.gy/facebook/start')
+        raise models.DisableSource()
+      raise
 
     # add photos. they show up as both a post and a photo, each with a separate
     # id. the post's object_id field points to the photo's id. de-dupe by

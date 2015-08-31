@@ -169,14 +169,6 @@ class FacebookPageTest(testutil.ModelsTest):
     # bad activity at all
     self.assert_equals([self.post_activity], self.fb.get_activities())
 
-  def test_revoked(self):
-    self.expect_urlopen(
-      'https://graph.facebook.com/v2.2/me/feed?offset=0&access_token=my_token',
-      json.dumps({'error': {'code': 190, 'error_subcode': 458}}), status=400)
-    self.mox.ReplayAll()
-
-    self.assertRaises(models.DisableSource, self.fb.get_activities)
-
   def test_expired_sends_notification(self):
     self.expect_urlopen(
       'https://graph.facebook.com/v2.2/me/feed?offset=0&access_token=my_token',
@@ -204,7 +196,7 @@ class FacebookPageTest(testutil.ModelsTest):
       self.fb.get_activities()
 
     self.assertEquals(400, cm.exception.code)
-    self.assertEquals(msg, cm.exception.read())
+    self.assertEquals(msg, cm.exception.body)
 
   def test_other_error_not_json(self):
     """If an error body isn't JSON, we should raise the original exception."""
@@ -217,7 +209,7 @@ class FacebookPageTest(testutil.ModelsTest):
       self.fb.get_activities()
 
     self.assertEquals(400, cm.exception.code)
-    self.assertEquals('not json', cm.exception.read())
+    self.assertEquals('not json', cm.exception.body)
 
   def test_canonicalize_syndication_url(self):
     for expected, input in (
