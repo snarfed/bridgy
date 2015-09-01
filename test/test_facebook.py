@@ -17,7 +17,9 @@ import granary
 from granary.test import test_facebook as gr_test_facebook
 import oauth_dropins
 from oauth_dropins import facebook as oauth_facebook
+import webapp2
 
+import facebook
 from facebook import FacebookPage
 import models
 import tasks
@@ -41,7 +43,8 @@ class FacebookPageTest(testutil.ModelsTest):
                             'username': 'snarfed.org',
                             'bio': 'something about me',
                             'type': 'user',
-                            }))
+                            }),
+      pages_json=json.dumps([]))
     self.auth_entity.put()
     self.fb = FacebookPage.new(self.handler, auth_entity=self.auth_entity,
                                features=['listen'])
@@ -54,6 +57,15 @@ class FacebookPageTest(testutil.ModelsTest):
       }
     self.post_activity.update(fb_id_and_url)
     self.post_activity['object'].update(fb_id_and_url)
+
+    self.page = {
+      'id': '108663232553079',
+      'about': 'Our vegetarian cooking blog',
+      'category': 'Home/garden website',
+      'name': 'Hardly Starving',
+      'type': 'page',
+      'access_token': 'page_token',
+    }
 
   def test_new(self):
     self.assertEqual(self.auth_entity, self.fb.auth_entity.get())
@@ -312,21 +324,12 @@ class FacebookPageTest(testutil.ModelsTest):
                       syndpost.syndication)
 
   def test_disable_page(self):
-    page = {
-      'id': '108663232553079',
-      'about': 'Our vegetarian cooking blog',
-      'category': 'Home/garden website',
-      'name': 'Hardly Starving',
-      'type': 'page',
-      'access_token': 'page_token',
-    }
-
     user_auth_entity = self.auth_entity
-    user_auth_entity.pages_json = json.dumps([page])
+    user_auth_entity.pages_json = json.dumps([self.page])
     user_auth_entity.put()
 
     self.auth_entity = oauth_facebook.FacebookAuth(
-      id=page['id'], user_json=json.dumps(page),
+      id=self.page['id'], user_json=json.dumps(self.page),
       auth_code='my_code', access_token_str='my_token')
     self.auth_entity.put()
     self.fb.auth_entity = self.auth_entity.key
@@ -334,7 +337,7 @@ class FacebookPageTest(testutil.ModelsTest):
 
     # FacebookAuth.for_page fetches the user URL with the page's access token
     self.expect_urlopen(oauth_facebook.API_USER_URL + '?access_token=page_token',
-                        json.dumps(page))
+                        json.dumps(self.page))
     self.mox.ReplayAll()
 
     key = self.fb.key.urlsafe()
@@ -367,3 +370,30 @@ class FacebookPageTest(testutil.ModelsTest):
     self.assert_equals(302, resp.status_code)
     # listen feature has been removed
     self.assert_equals([], self.fb.key.get().features)
+
+  def test_page_chooser(self):
+    self.fb.key.delete()
+    self.auth_entity.pages_json = json.dumps([self.page])
+    self.auth_entity.put()
+
+    handler = facebook.OAuthCallback(
+      webapp2.Request.blank('/facebook/oauth_handler'), self.response)
+    handler.finish(self.auth_entity)
+
+    self.assert_equals(200, self.response.status_code)
+    self.assertIn('<input type="radio" name="id" id="212038"',
+                  self.response.text)
+    self.assertIn('<input type="radio" name="id" id="108663232553079"',
+                  self.response.text)
+    self.assertIsNone(self.fb.key.get())
+
+  def test_skip_page_chooser_if_no_pages(self):
+    self.fb.key.delete()
+
+    handler = facebook.OAuthCallback(
+      webapp2.Request.blank('/facebook/oauth_handler'), self.response)
+    handler.finish(self.auth_entity)
+
+    self.assert_equals(302, self.response.status_code)
+    fb = self.fb.key.get()
+    self.assertEquals(fb.bridgy_url(handler), self.response.headers['Location'])

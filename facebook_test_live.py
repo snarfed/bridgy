@@ -76,11 +76,7 @@ class FacebookTestLive(testutil.HandlerTest):
 
     resp = facebook.application.get_response(
       util.add_query_params(redirect, {'code': 'fake_code'}))
-    self.assertEqual(200, resp.status_int)
-    self.dot()
-
-    # submit the "choose user/page" form. the only choice is the test user.
-    self.submit_form(resp.text)
+    self.assertEqual(302, resp.status_int)
     source = facebook.FacebookPage.get_by_id(TEST_USER_ID)
     self.assertEqual('enabled', source.status)
     self.assertEqual(['listen'], source.features)

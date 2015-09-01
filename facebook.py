@@ -238,7 +238,7 @@ class FacebookPage(models.Source):
 class OAuthCallback(oauth_facebook.CallbackHandler, util.Handler):
   """OAuth callback handler."""
   def finish(self, auth_entity, state=None):
-    if not auth_entity:
+    if not (auth_entity and json.loads(auth_entity.pages_json)):
       self.maybe_add_or_delete_source(FacebookPage, auth_entity, state)
       return
 
