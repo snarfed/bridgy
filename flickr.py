@@ -29,7 +29,7 @@ class Flickr(models.Source):
 
   @staticmethod
   def new(handler, auth_entity=None, **kwargs):
-    """Creates and returns a FlickrPage for the logged in user.
+    """Creates and returns a Flickr for the logged in user.
 
     Args:
       handler: the current RequestHandler
