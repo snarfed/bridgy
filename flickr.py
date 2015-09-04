@@ -1,17 +1,21 @@
-
+"""Flickr source and data model storage class
+"""
 __author__ = ['Kyle Mahan <kyle@kylewm.com>']
 
 
-from google.appengine.ext import ndb
-from granary import flickr as gr_flickr
-from granary.source import SELF
-from oauth_dropins import flickr as oauth_flickr
 import appengine_config
+import datetime
 import json
 import logging
 import models
 import util
 import webapp2
+
+from granary import flickr as gr_flickr
+from granary.source import SELF
+from oauth_dropins import flickr as oauth_flickr
+
+from google.appengine.ext import ndb
 
 
 class Flickr(models.Source):
@@ -19,6 +23,9 @@ class Flickr(models.Source):
 
   The key name is the nsid
   """
+  # Fetching comments and likes is extremely request-intensive, so let's dial
+  # back the frequency for now.
+  FAST_POLL = datetime.timedelta(minutes=60)
 
   GR_CLASS = gr_flickr.Flickr
   SHORT_NAME = 'flickr'
