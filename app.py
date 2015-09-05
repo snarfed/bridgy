@@ -28,8 +28,9 @@ import models
 from models import BlogPost, BlogWebmention, Publish, Response, Source
 import util
 
-import facebook
 import blogger
+import facebook
+import flickr
 import googleplus
 import instagram
 import tumblr
@@ -480,7 +481,7 @@ class WarmupHandler(util.Handler):
 application = webapp2.WSGIApplication(
   [('/?', FrontPageHandler),
    ('/users/?', UsersHandler),
-   ('/(blogger|facebook|fake|googleplus|instagram|tumblr|twitter|wordpress)/(.+)/?',
+   ('/(blogger|facebook|fake|flickr|googleplus|instagram|tumblr|twitter|wordpress)/(.+)/?',
     UserHandler),
    ('/about/?', AboutHandler),
    ('/delete/start', DeleteStartHandler),

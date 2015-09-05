@@ -65,6 +65,10 @@ handlers:
   script: facebook.application
   secure: always
 
+- url: /flickr/(start|add|delete)(/.*)?
+  script: flickr.application
+  secure: always
+
 - url: /googleplus/(start|add|delete|oauth2callback)(/.*)?
   script: googleplus.application
   secure: always

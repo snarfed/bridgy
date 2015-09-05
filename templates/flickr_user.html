@@ -1,0 +1,12 @@
+{% extends "social_user.html" %}
+
+{% block listen-signup %}
+{% include "flickr_signup.html" %}
+{% endblock %}
+
+{% block edit-profile %}
+<a href="https://www.flickr.com/settings/profile#user_url" target="_blank">
+  Edit your Flickr profile</a>,
+enter it in the <em>Website</em> field, then click here:
+{% include "flickr_signup.html" %}
+{% endblock %}
