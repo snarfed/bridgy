@@ -60,7 +60,7 @@ def discover(source, activity, fetch_hfeed=True):
   Return:
     the activity, updated with original post urls if any are found
   """
-  gr_source.Source.original_post_discovery(activity)
+  gr_source.Source.original_post_discovery(activity, domains=source.domains)
 
   # TODO possible optimization: if we've discovered a backlink to a
   # post on the author's domain (i.e., it included a link or

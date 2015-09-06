@@ -25,6 +25,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     super(OriginalPostDiscoveryTest, self).setUp()
     self.source = self.sources[0]
     self.source.domain_urls = ['http://author']
+    self.source.domains = ['author']
 
     self.activity = self.activities[0]
     self.activity['object'].update({
@@ -1247,3 +1248,34 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
 
     self.assertEquals(['http://author/post/permalink'],
                       self.activity['object']['upstreamDuplicates'])
+
+  def test_source_domains(self):
+    """Only links to the user's own domains should end up in upstreamDuplicates.
+    """
+    self.expect_requests_get('http://author', '')
+    self.mox.ReplayAll()
+
+    self.activity['object'].update({
+      'upstreamDuplicates': [],
+      'content': 'x http://author/post y',
+    })
+    original_post_discovery.discover(self.source, self.activity)
+    self.assertEquals(['http://author/post'],
+                      self.activity['object']['upstreamDuplicates'])
+
+    self.activity['object'].update({
+      'upstreamDuplicates': [],
+      'content': 'a http://other/link b',
+    })
+    original_post_discovery.discover(self.source, self.activity)
+    self.assertEquals([], self.activity['object']['upstreamDuplicates'])
+
+    # if we don't know the user's domains, we should allow anything
+    self.source.domain_urls = self.source.domains = []
+    self.source.put()
+
+    self.activity['object']['upstreamDuplicates'] = []
+    original_post_discovery.discover(self.source, self.activity)
+    self.assertEquals(['http://other/link'],
+                      self.activity['object']['upstreamDuplicates'])
+
