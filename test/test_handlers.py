@@ -16,17 +16,17 @@ class HandlersTest(testutil.HandlerTest):
   def setUp(self):
     super(HandlersTest, self).setUp()
     self.source = testutil.FakeSource.new(self.handler)
-    self.source.set_activities(
-      [{'object': {
-            'id': 'tag:fa.ke,2013:000',
-            'url': 'http://fa.ke/000',
-            'content': 'asdf http://other/link qwert',
-            'author': {
-              'id': 'tag:fa.ke,2013:author_id',
-              'image': {'url': 'http://example.com/ryan/image'},
-              },
-            'upstreamDuplicates': ['http://or.ig/post'],
-            }}])
+    self.source.set_activities([{
+      'object': {
+        'id': 'tag:fa.ke,2013:000',
+        'url': 'http://fa.ke/000',
+        'content': 'asdf http://other/link qwert',
+        'author': {
+          'id': 'tag:fa.ke,2013:author_id',
+          'image': {'url': 'http://example.com/ryan/image'},
+        },
+        'upstreamDuplicates': ['http://or.ig/post'],
+      }}])
     self.source.set_event({
       'object': {
         'id': 'tag:fa.ke,2013:123',
@@ -63,6 +63,10 @@ class HandlersTest(testutil.HandlerTest):
   <div class="e-content p-name">
 
   asdf http://other/link qwert
+  <p>
+  <a class="link" href="http://other/link">
+  </a>
+  </p>
   </div>
 
 </article>
@@ -77,7 +81,12 @@ class HandlersTest(testutil.HandlerTest):
         'properties': {
           'uid': ['tag:fa.ke,2013:000'],
           'url': ['http://fa.ke/000', 'http://or.ig/post'],
-          'content': [{ 'html': 'asdf http://other/link qwert',
+          'content': [{ 'html': """\
+asdf http://other/link qwert
+<p>
+<a class="link" href="http://other/link">
+</a>
+</p>""",
                         'value': 'asdf http://other/link qwert',
                         }],
           'author': [{
@@ -402,7 +411,6 @@ class HandlersTest(testutil.HandlerTest):
   <a class="u-in-reply-to" href="https://all"></a>
   <a class="u-in-reply-to" href="http://upstream/only"></a>
   <a class="u-in-reply-to" href="http://upstream"></a>
-  <a class="u-in-reply-to" href="http://all"></a>
   <a class="u-in-reply-to" href="http://all"></a>
   <a class="u-in-reply-to" href="https://reply"></a>
   <a class="u-in-reply-to" href="https://upstream"></a>
