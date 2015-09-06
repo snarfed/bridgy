@@ -320,6 +320,7 @@ class Handler(webmention.WebmentionHandler):
       self.entity.type_label = self.source.TYPE_LABELS.get(self.entity.type)
       self.response.headers['Content-Type'] = 'application/json'
       logging.info('Returning %s', json.dumps(self.entity.published, indent=2))
+      self.response.headers['Location'] = self.entity.published['url']
       return gr_source.creation_result(
         json.dumps(self.entity.published, indent=2))
 
