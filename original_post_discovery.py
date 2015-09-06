@@ -152,8 +152,9 @@ def _posse_post_discovery(source, activity, syndication_url, fetch_hfeed):
                 '; '.join(unicode(r.original) for r in relationships))
 
   obj = activity.get('object') or activity
-  obj.setdefault('upstreamDuplicates', []).extend(
-    r.original for r in relationships if r.original)
+  uds = obj.setdefault('upstreamDuplicates', [])
+  uds.extend(r.original for r in relationships
+             if r.original and r.original not in uds)
 
   return activity
 
