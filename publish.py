@@ -15,7 +15,8 @@ Example request:
 
 Example response:
 
-    HTTP/1.1 200 OK
+    HTTP/1.1 201 Created
+    Location: http://facebook.com/456_789
 
     {
       "url": "http://facebook.com/456_789",
@@ -321,6 +322,7 @@ class Handler(webmention.WebmentionHandler):
       self.response.headers['Content-Type'] = 'application/json'
       logging.info('Returning %s', json.dumps(self.entity.published, indent=2))
       self.response.headers['Location'] = self.entity.published['url']
+      self.response.status = 201
       return gr_source.creation_result(
         json.dumps(self.entity.published, indent=2))
 

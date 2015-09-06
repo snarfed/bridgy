@@ -82,11 +82,14 @@ class PublishTest(testutil.HandlerTest):
                     '%r\n\n=== vs ===\n\n%r' % (expected, resp.body))
     else:
       self.assertIn(expected, json.loads(resp.body)[
-        'content' if status == 200 else 'error'])
+        'content' if status < 300 else 'error'])
     return resp
 
   def assert_success(self, expected, **kwargs):
     return self.assert_response(expected, status=200, **kwargs)
+
+  def assert_created(self, expected, **kwargs):
+    return self.assert_response(expected, status=201, **kwargs)
 
   def assert_error(self, expected, status=400, **kwargs):
     return self.assert_response(expected, status=status, **kwargs)
@@ -94,7 +97,7 @@ class PublishTest(testutil.HandlerTest):
   def test_webmention_success(self):
     self.expect_requests_get('http://foo.com/bar', self.post_html % 'foo')
     self.mox.ReplayAll()
-    resp = self.assert_success('foo - http://foo.com/bar', interactive=False)
+    resp = self.assert_created('foo - http://foo.com/bar', interactive=False)
     self.assertEquals('http://fake/url', resp.headers['Location'])
     self._check_entity()
 
@@ -163,7 +166,7 @@ class PublishTest(testutil.HandlerTest):
   def test_success_domain_translates_to_lowercase(self):
     self.expect_requests_get('http://FoO.cOm/Bar', self.post_html % 'foo')
     self.mox.ReplayAll()
-    self.assert_success('foo - http://FoO.cOm/Bar', source='http://FoO.cOm/Bar')
+    self.assert_created('foo - http://FoO.cOm/Bar', source='http://FoO.cOm/Bar')
 
   def test_success_source_status_error(self):
     """Sources in status 'error' should still be able to publish."""
@@ -172,7 +175,7 @@ class PublishTest(testutil.HandlerTest):
 
     self.expect_requests_get('http://foo.com/bar', self.post_html % 'foo')
     self.mox.ReplayAll()
-    self.assert_success('foo - http://foo.com/bar')
+    self.assert_created('foo - http://foo.com/bar')
 
   def test_already_published(self):
     """We shouldn't allow duplicating an existing, *completed* publish."""
@@ -189,7 +192,7 @@ class PublishTest(testutil.HandlerTest):
     self.mox.ReplayAll()
 
     # first attempt should work
-    self.assert_success('foo - http://foo.com/bar')
+    self.assert_created('foo - http://foo.com/bar')
     self.assertEquals(4, Publish.query().count())
     self.assertEquals(2, Publish.query(Publish.status == 'complete').count())
 
@@ -219,8 +222,8 @@ class PublishTest(testutil.HandlerTest):
 
     self.mox.ReplayAll()
 
-    self.assert_success('')
-    self.assert_success('', target='http://brid.gy/publish/faux')
+    self.assert_created('')
+    self.assert_created('', target='http://brid.gy/publish/faux')
 
   def test_bad_target_url(self):
     self.assert_error('Target must be brid.gy/publish/{facebook,twitter,instagram}',
@@ -236,7 +239,7 @@ class PublishTest(testutil.HandlerTest):
     self.expect_requests_get('http://foo.com', self.post_html % 'foo')
     self.mox.ReplayAll()
     # check that we include the original link, not the resolved one
-    self.assert_success('foo - http://will/redirect', source='http://will/redirect')
+    self.assert_created('foo - http://will/redirect', source='http://will/redirect')
 
   def test_source_url_redirects_with_refresh_header(self):
     self.mox.StubOutWithMock(requests, 'head', use_mock_anything=True)
@@ -247,7 +250,7 @@ class PublishTest(testutil.HandlerTest):
     self.expect_requests_get('http://foo.com', self.post_html % 'foo')
     self.mox.ReplayAll()
     # check that we include the original link, not the resolved one
-    self.assert_success('foo - http://will/redirect', source='http://will/redirect')
+    self.assert_created('foo - http://will/redirect', source='http://will/redirect')
 
   def test_bad_source(self):
     # no source
@@ -279,7 +282,7 @@ class PublishTest(testutil.HandlerTest):
     source_2.put()
     self.expect_requests_get('http://foo.com/bar', self.post_html % 'xyz')
     self.mox.ReplayAll()
-    self.assert_success('xyz - http://foo.com/bar')
+    self.assert_created('xyz - http://foo.com/bar')
     self.assertEquals(source_2.key, Publish.query().get().source)
 
   def test_source_with_multiple_domains(self):
@@ -289,7 +292,7 @@ class PublishTest(testutil.HandlerTest):
     self.source.put()
     self.expect_requests_get('http://foo.com/bar', self.post_html % 'xyz')
     self.mox.ReplayAll()
-    self.assert_success('xyz - http://foo.com/bar')
+    self.assert_created('xyz - http://foo.com/bar')
     self.assertEquals(self.source.key, Publish.query().get().source)
 
   def test_source_missing_mf2(self):
@@ -324,7 +327,7 @@ class PublishTest(testutil.HandlerTest):
             self.post_html % 'foo')
     self.expect_requests_get('http://foo.com/bar', html)
     self.mox.ReplayAll()
-    self.assert_success('foo - http://foo.com/bar')
+    self.assert_created('foo - http://foo.com/bar')
 
   def test_type_not_implemented(self):
     self.expect_requests_get('http://foo.com/bar',
@@ -342,7 +345,7 @@ class PublishTest(testutil.HandlerTest):
     # query params alone shouldn't trigger this
     self.expect_requests_get('http://foo.com/?p=123', self.post_html % 'foo')
     self.mox.ReplayAll()
-    self.assert_success('foo - http://foo.com/?p=123',
+    self.assert_created('foo - http://foo.com/?p=123',
                         source='http://foo.com/?p=123')
 
   def test_source_url_is_silo(self):
@@ -378,7 +381,7 @@ class PublishTest(testutil.HandlerTest):
 this is my article
 </div></div></div>""")
     self.mox.ReplayAll()
-    self.assert_success('this is my article - http://foo.com/bar')
+    self.assert_created('this is my article - http://foo.com/bar')
 
   def test_ignore_hfeed_contents(self):
     """Background in https://github.com/snarfed/bridgy/issues/219"""
@@ -389,7 +392,7 @@ this is my article
 <div class="e-content">my article</div>
 </div>""")
     self.mox.ReplayAll()
-    self.assert_success('my article - http://foo.com/bar')
+    self.assert_created('my article - http://foo.com/bar')
 
   def test_tumblr_markup(self):
     """This is based on Tumblr's default markup, e.g.
@@ -406,7 +409,7 @@ this is my article
 </body>
 """)
     self.mox.ReplayAll()
-    self.assert_success('this is my article - http://foo.com/bar')
+    self.assert_created('this is my article - http://foo.com/bar')
 
   def test_tumblr_markup_with_photo(self):
     """A tumblr post with a picture but no text.
@@ -440,7 +443,7 @@ this is my article
 <a class="u-in-reply-to" href="http://fa.ke/event"></a>
 </p></article>""")
     self.mox.ReplayAll()
-    self.assert_success('')
+    self.assert_created('')
     self.assertEquals('post', Publish.query().get().type)
 
   def test_in_reply_to_domain_allows_subdomains(self):
@@ -455,7 +458,7 @@ this is my article
 
     for i in range(len(subdomains)):
       resp = self.get_response(source='http://foo.com/%d' % i)
-      self.assertEquals(200, resp.status_int, resp.body)
+      self.assertEquals(201, resp.status_int, resp.body)
 
   def test_relative_u_url(self):
     """mf2py expands urls; this just check that we give it the source URL."""
@@ -464,7 +467,7 @@ this is my article
 <p class="e-content">foo</p></article>"""
     self.expect_requests_get('http://foo.com/bar', html)
     self.mox.ReplayAll()
-    self.assert_success('foo - http://foo.com/foo/bar')
+    self.assert_created('foo - http://foo.com/foo/bar')
 
   def test_all_errors_email(self):
     """Should send me email on *any* error from create() or preview_create()."""
@@ -508,7 +511,7 @@ this is my article
   def test_bridgy_omit_link_query_param(self):
     self.expect_requests_get('http://foo.com/bar', self.post_html % 'foo')
     self.mox.ReplayAll()
-    self.assert_success('foo', params={'bridgy_omit_link': 'True'})
+    self.assert_created('foo', params={'bridgy_omit_link': 'True'})
 
   def test_bridgy_omit_link_mf2(self):
     html = """\
@@ -520,7 +523,7 @@ foo<br /> <blockquote></blockquote>
 </article>"""
     self.expect_requests_get('http://foo.com/bar', html)
     self.mox.ReplayAll()
-    self.assert_success('foo')
+    self.assert_created('foo')
 
   def test_preview_omit_link_no_query_param_overrides_mf2(self):
     html = """\
@@ -557,7 +560,7 @@ foo<br /> <blockquote></blockquote>
 foo<br /> <blockquote>bar</blockquote>
 </div></article>""")
     self.mox.ReplayAll()
-    self.assert_success('foo bar', params={'bridgy_ignore_formatting': ''})
+    self.assert_created('foo bar', params={'bridgy_ignore_formatting': ''})
 
   def test_bridgy_ignore_formatting_mf2(self):
     self.expect_requests_get('http://foo.com/bar', """\
@@ -566,7 +569,7 @@ foo<br /> <blockquote>bar</blockquote>
 <a class="u-bridgy-ignore-formatting" href=""></a>
 </div></article>""")
     self.mox.ReplayAll()
-    self.assert_success('foo bar')
+    self.assert_created('foo bar')
 
   def test_expand_target_urls_u_syndication(self):
     """Comment on a post with a u-syndication value
@@ -601,7 +604,7 @@ foo<br /> <blockquote>bar</blockquote>
     }))
 
     self.mox.ReplayAll()
-    self.assert_success('')
+    self.assert_created('')
 
   def test_expand_target_urls_rel_syndication(self):
     """Publishing a like of a post with two rel=syndication values
@@ -640,7 +643,7 @@ foo<br /> <blockquote>bar</blockquote>
     }))
 
     self.mox.ReplayAll()
-    self.assert_success('')
+    self.assert_created('')
 
   def test_expand_target_urls_h_cite(self):
     """Repost a post with a p-syndication h-cite value (syndication
@@ -677,7 +680,7 @@ foo<br /> <blockquote>bar</blockquote>
     }))
 
     self.mox.ReplayAll()
-    self.assert_success('')
+    self.assert_created('')
 
   def test_expand_target_urls_h_event_in_h_feed(self):
     """RSVP to an event is a single element inside an h-feed; we should handle
@@ -717,7 +720,7 @@ foo<br /> <blockquote>bar</blockquote>
     }))
 
     self.mox.ReplayAll()
-    self.assert_success('')
+    self.assert_created('')
 
   def test_expand_target_urls_fetch_failure(self):
     """Fetching the in-reply-to URL fails, but that shouldn't prevent us
@@ -747,7 +750,7 @@ foo<br /> <blockquote>bar</blockquote>
     }))
 
     self.mox.ReplayAll()
-    self.assert_success('')
+    self.assert_created('')
 
   def test_expand_target_urls_no_microformats(self):
     """Publishing a like of a post that has no microformats; should have no
@@ -782,7 +785,7 @@ foo<br /> <blockquote>bar</blockquote>
     }))
 
     self.mox.ReplayAll()
-    self.assert_success('')
+    self.assert_created('')
 
   def test_expand_target_urls_blacklisted_target(self):
     """RSVP to a domain in the webmention blacklist should not trigger a fetch.
@@ -814,7 +817,7 @@ foo<br /> <blockquote>bar</blockquote>
     }))
 
     self.mox.ReplayAll()
-    self.assert_success('')
+    self.assert_created('')
 
   def test_in_reply_to_no_target(self):
     """in-reply-to an original that does not syndicate to the silo should
@@ -871,7 +874,7 @@ Join us!"""
 
     self.assert_success(expected, preview=True)
     expected += ' - http://foo.com/bar'
-    resp = self.assert_success(expected, preview=False)
+    resp = self.assert_created(expected, preview=False)
     self.assertEquals(expected, json.loads(resp.body)['content'])
 
   def test_unicode(self):
@@ -882,8 +885,8 @@ Join us!"""
                                content_type='text/html; charset=utf-8')
     self.mox.ReplayAll()
 
-    for preview in False, True:
-      self.assert_success(text, preview=preview, params={'bridgy_omit_link': ''})
+    self.assert_created(text, preview=False, params={'bridgy_omit_link': ''})
+    self.assert_success(text, preview=True, params={'bridgy_omit_link': ''})
 
   def test_utf8_meta_tag(self):
     self._test_charset_in_meta_tag('utf-8')
@@ -911,7 +914,7 @@ Join us!"""
                  headers=util.USER_AGENT_HEADER).AndReturn(resp)
     self.mox.ReplayAll()
 
-    self.assert_success(text, params={'bridgy_omit_link': ''})
+    self.assert_created(text, params={'bridgy_omit_link': ''})
 
   def test_missing_backlink(self):
     # use super to avoid this class's override that adds backlink
@@ -962,4 +965,4 @@ Join us!"""
     self.mox.ReplayAll()
     for prop in 'like', 'repost':
       url = 'http://foo.com/%s' % prop
-      self.assert_success('foo - %s' % url, source=url)
+      self.assert_created('foo - %s' % url, source=url)
