@@ -94,7 +94,8 @@ class PublishTest(testutil.HandlerTest):
   def test_webmention_success(self):
     self.expect_requests_get('http://foo.com/bar', self.post_html % 'foo')
     self.mox.ReplayAll()
-    self.assert_success('foo - http://foo.com/bar', interactive=False)
+    resp = self.assert_success('foo - http://foo.com/bar', interactive=False)
+    self.assertEquals('http://fake/url', resp.headers['Location'])
     self._check_entity()
 
   def test_interactive_success(self):
