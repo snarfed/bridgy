@@ -747,7 +747,8 @@ short link as the webmention's <code>source</code> parameter.
 responds. A <code>POST</code> to
 <code>http://brid.gy/publish/webmention</code> will return
 <code>200 OK</code> on success with a JSON response containing at least
-a <code>url</code> field that points to the silo object that it operated on. For
+a <code>url</code> field that points to the silo object that it operated on. The
+same URL is included in the <code>Location</code> HTTP header. For
 Twitter favorites and Facebook event RSVPs, this is the tweet, post, or event.
 If a new object was created, e.g. a Facebook post or Twitter tweet, @-reply, or
 retweet, there will also be an <code>id</code> field with the silo id of that
@@ -757,9 +758,13 @@ object.
 </p>
 <pre>POST <span class="keyword">source</span>=<span class="link">https://example.com/posts/123</span>
      &<span class="keyword">target</span>=<a href="https://www.brid.gy/publish/facebook">https://www.brid.gy/publish/facebook</a></pre>
-<p>will receive <code>200 OK</code> with this response:
+<p>will receive this response:
 </p>
-<pre>{
+<pre>HTTP/1.1 200 OK
+Content-Type: application/json
+Location: http://facebook.com/456_789
+
+{
   "<span class='keyword'>url</span>": "<span class='value'>http://facebook.com/456_789</span>",
   "<span class='keyword'>type</span>": "<span class='value'>post</span>",
   "<span class='keyword'>id</span>": "<span class='value'>456_789</span>"
