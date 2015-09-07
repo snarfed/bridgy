@@ -11,7 +11,7 @@ cron:
   schedule: every day 09:00  # 2am pst
 
 - description: ereporter exception report
-  url: /_ereporter?sender=admin@brid-gy.appspotmail.com&to=ryan@brid.gy
+  url: /_ereporter?sender=admin@brid-gy.appspotmail.com
   schedule: every day 00:00  # 5pm pst
 
 # datastore backups. daily backups exclude Response and SyndicatedPost entities.
