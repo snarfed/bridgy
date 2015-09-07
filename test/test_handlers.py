@@ -16,17 +16,17 @@ class HandlersTest(testutil.HandlerTest):
   def setUp(self):
     super(HandlersTest, self).setUp()
     self.source = testutil.FakeSource.new(self.handler)
-    self.source.set_activities(
-      [{'object': {
-            'id': 'tag:fa.ke,2013:000',
-            'url': 'http://fa.ke/000',
-            'content': 'asdf http://other/link qwert',
-            'author': {
-              'id': 'tag:fa.ke,2013:author_id',
-              'image': {'url': 'http://example.com/ryan/image'},
-              },
-            'upstreamDuplicates': ['http://or.ig/post'],
-            }}])
+    self.source.set_activities([{
+      'object': {
+        'id': 'tag:fa.ke,2013:000',
+        'url': 'http://fa.ke/000',
+        'content': 'asdf http://other/link qwert',
+        'author': {
+          'id': 'tag:fa.ke,2013:author_id',
+          'image': {'url': 'http://example.com/ryan/image'},
+        },
+        'upstreamDuplicates': ['http://or.ig/post'],
+      }}])
     self.source.set_event({
       'object': {
         'id': 'tag:fa.ke,2013:123',
@@ -59,9 +59,14 @@ class HandlersTest(testutil.HandlerTest):
   </div>
 
 <a class="u-url" href="http://fa.ke/000"></a>
+<a class="u-url" href="http://or.ig/post"></a>
   <div class="e-content p-name">
 
   asdf http://other/link qwert
+  <p>
+  <a class="link" href="http://other/link">
+  </a>
+  </p>
   </div>
 
 </article>
@@ -75,8 +80,13 @@ class HandlersTest(testutil.HandlerTest):
         'type': ['h-entry'],
         'properties': {
           'uid': ['tag:fa.ke,2013:000'],
-          'url': ['http://fa.ke/000'],
-          'content': [{ 'html': 'asdf http://other/link qwert',
+          'url': ['http://fa.ke/000', 'http://or.ig/post'],
+          'content': [{ 'html': """\
+asdf http://other/link qwert
+<p>
+<a class="link" href="http://other/link">
+</a>
+</p>""",
                         'value': 'asdf http://other/link qwert',
                         }],
           'author': [{
@@ -232,12 +242,12 @@ class HandlersTest(testutil.HandlerTest):
   <div class="p-name">reposts this.</div>
   <div class="e-content">
 
-  <a class="u-mention" href="http://another/mention"></a>
   <a class="u-mention" href="http://other/link"></a>
   </div>
 
   <a class="u-repost u-repost-of" href="http://example.com/original/post"></a>
   <a class="u-repost u-repost-of" href="http://or.ig/post"></a>
+  <a class="u-repost u-repost-of" href="http://another/mention"></a>
 
 </article>
 """)
@@ -265,12 +275,12 @@ class HandlersTest(testutil.HandlerTest):
   </div>
 
   <div class="p-name"><data class="p-rsvp" value="no">is not attending.</data></div>
-  <div class="e-content">
+  <div class="">
 
-  <a class="u-mention" href="http://other/link"></a>
   </div>
 
   <a class="u-in-reply-to" href="http://or.ig/event"></a>
+  <a class="u-in-reply-to" href="http://other/link"></a>
   <a class="u-in-reply-to" href="http://example.com/event"></a>
 
 </article>
@@ -303,16 +313,16 @@ class HandlersTest(testutil.HandlerTest):
   </div>
 
 <div class="p-name"><a class="u-url" href="http://fa.ke/event">invited</a></div>
-  <div class="e-content">
+  <div class="">
   <div class="h-card p-invitee">
     <div class="p-name"><a class="u-url" href="http://fa.ke/guest">Ms. Guest</a></div>
 
   </div>
 
-  <a class="u-mention" href="http://other/link"></a>
   </div>
 
   <a class="u-in-reply-to" href="http://or.ig/event"></a>
+  <a class="u-in-reply-to" href="http://other/link"></a>
 
 </article>
 """)
@@ -394,7 +404,6 @@ class HandlersTest(testutil.HandlerTest):
   <div class="e-content p-name">
 
   <a class="u-mention" href="http://mention/only"></a>
-  <a class="u-mention" href="http://all"></a>
   </div>
 
   <a class="u-in-reply-to" href="https://reply/only"></a>

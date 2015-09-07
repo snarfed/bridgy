@@ -185,9 +185,14 @@ class ItemHandler(webapp2.RequestHandler):
   def add_original_post_urls(self, post, obj, prop):
     """Extracts original post URLs and adds them to an object, in place.
 
-    If the post object has upstreamDuplicates, *only* they are considered
-    original post URLs and added as tags with objectType 'article', and the
-    post's own links and 'article' tags are added with objectType 'mention'.
+    URLs in the upstreamDuplicates field are original post URLs and added as
+    tags with objectType 'article'. The post's own links and 'article' tags are
+    added with objectType 'mention'.
+
+    The implementation of http://indiewebcamp.com/original-post-discovery is
+    mostly in granary.Source.original_post_discovery(), but not entirely. The
+    check for whether the time difference between the posts is <24h is here.
+    Details: https://github.com/snarfed/bridgy/issues/51#issuecomment-136018857
 
     Args:
       post: ActivityStreams post object to get original post URLs from
@@ -195,18 +200,16 @@ class ItemHandler(webapp2.RequestHandler):
       prop: string property name in obj to add the original post URLs to
     """
     original_post_discovery.discover(self.source, post, fetch_hfeed=False)
-    tags = [tag for tag in post['object'].get('tags', [])
-            if 'url' in tag and tag['objectType'] == 'article']
-    upstreams = post['object'].get('upstreamDuplicates', [])
 
     if not isinstance(obj.setdefault(prop, []), list):
       obj[prop] = [obj[prop]]
-    if upstreams:
-      obj[prop] += [{'url': url, 'objectType': 'article'} for url in upstreams]
-      obj.setdefault('tags', []).extend(
-        [{'url': tag.get('url'), 'objectType': 'mention'} for tag in tags])
-    else:
-      obj[prop] += tags
+
+    uds = post['object'].get('upstreamDuplicates', [])
+    obj[prop] += [{'url': url, 'objectType': 'article'} for url in uds]
+    obj.setdefault('tags', []).extend([
+      {'url': tag['url'], 'objectType': 'mention'}
+      for tag in post['object'].get('tags', [])
+      if 'url' in tag and tag['url'] not in uds])
 
     # check for redirects, and if there are any follow them and add final urls
     # in addition to the initial urls.
@@ -247,9 +250,13 @@ class ItemHandler(webapp2.RequestHandler):
 
 class PostHandler(ItemHandler):
   def get_item(self, id):
-    activity = self.source.get_post(id)
-    return activity['object'] if activity else None
-
+    post = self.source.get_post(id)
+    if post:
+      # TODO: expand this to reuse most of add_original_post_urls(), e.g.
+      # following redirects. we can't just call it directly because it
+      # transforms upstreamDuplicates, tags, etc, which we want to keep intact.
+      original_post_discovery.discover(self.source, post, fetch_hfeed=False)
+      return post['object']
 
 class CommentHandler(ItemHandler):
   def get_item(self, post_id, id):
