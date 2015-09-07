@@ -24,6 +24,7 @@ from granary.source import Source
 # need to import model class definitions since poll creates and saves entities.
 import blogger
 import facebook
+import flickr
 import googleplus
 import instagram
 import models

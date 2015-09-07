@@ -20,8 +20,8 @@ class FlickrTest(testutil.ModelsTest):
 
   def setUp(self):
     super(FlickrTest, self).setUp()
-    appengine_config.FLICKR_APP_KEY = 'my_app_key'
-    appengine_config.FLICKR_APP_SECRET = 'my_app_secret'
+    oauth_dropins.appengine_config.FLICKR_APP_KEY = 'my_app_key'
+    oauth_dropins.appengine_config.FLICKR_APP_SECRET = 'my_app_secret'
 
     self.auth_entity = oauth_dropins.flickr.FlickrAuth(
       id='my_string_id',
