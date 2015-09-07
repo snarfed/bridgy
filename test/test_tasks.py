@@ -155,15 +155,20 @@ class PollTest(TaskQueueTest):
   def test_original_post_discovery(self):
     """Target URLs should be extracted from attachments, tags, and text."""
     obj = self.activities[0]['object']
-    obj['tags'] = [{'objectType': 'article', 'url': 'http://tar.get/a'},
-                   {'objectType': 'person', 'url': 'http://pe.rs/on'},
-                   ]
-    obj['attachments'] = [{'objectType': 'article', 'url': 'http://tar.get/b'}]
-    obj['content'] = 'foo http://tar.get/c bar (not.at endd) baz (tar.get d)'
+    obj.update({
+      'upstreamDuplicates': ['http://tar.get/a'],
+      'tags': [
+        {'objectType': 'article', 'url': 'http://tar.get/b'},
+        {'objectType': 'mention', 'url': 'http://tar.get/c'},
+        {'objectType': 'person', 'url': 'http://pe.rs/on'},
+      ],
+      'attachments': [{'objectType': 'article', 'url': 'http://tar.get/d'}],
+      'content': 'foo http://tar.get/e bar (not.at endd) baz (tar.get f)',
+    })
     self.sources[0].set_activities([self.activities[0]])
 
     self.post_task()
-    expected = ['http://tar.get/%s' % i for i in 'a', 'b', 'c', 'd']
+    expected = ['http://tar.get/%s' % i for i in 'a', 'b', 'c', 'd', 'e', 'f']
     self.assert_equals(expected, self.responses[0].key.get().unsent)
 
   def test_original_post_discovery_dedupes(self):

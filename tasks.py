@@ -58,7 +58,7 @@ def get_webmention_targets(source, activity):
 
   for tag in obj.get('tags', []):
     url = tag.get('url')
-    if url and tag.get('objectType') == 'article':
+    if url and tag.get('objectType') in ('article', 'mention'):
       url, domain, send = util.get_webmention_target(url)
       tag['url'] = url
       if send:
