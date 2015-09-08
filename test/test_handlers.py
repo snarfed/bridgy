@@ -15,7 +15,8 @@ class HandlersTest(testutil.HandlerTest):
 
   def setUp(self):
     super(HandlersTest, self).setUp()
-    self.source = testutil.FakeSource.new(self.handler)
+    self.source = testutil.FakeSource.new(
+      self.handler, domains=['or.ig', 'fa.ke'])
     self.source.set_activities([{
       'object': {
         'id': 'tag:fa.ke,2013:000',
@@ -242,11 +243,11 @@ asdf http://other/link qwert
   <div class="p-name">reposts this.</div>
   <div class="e-content">
 
+  <a class="u-mention" href="http://another/mention"></a>
   <a class="u-mention" href="http://other/link"></a>
   </div>
 
   <a class="u-repost u-repost-of" href="http://example.com/original/post"></a>
-  <a class="u-repost u-repost-of" href="http://another/mention"></a>
   <a class="u-repost u-repost-of" href="http://or.ig/post"></a>
 
 </article>
@@ -275,12 +276,12 @@ asdf http://other/link qwert
   </div>
 
   <div class="p-name"><data class="p-rsvp" value="no">is not attending.</data></div>
-  <div class="">
+  <div class="e-content">
 
+  <a class="u-mention" href="http://other/link"></a>
   </div>
 
   <a class="u-in-reply-to" href="http://or.ig/event"></a>
-  <a class="u-in-reply-to" href="http://other/link"></a>
   <a class="u-in-reply-to" href="http://example.com/event"></a>
 
 </article>
@@ -313,16 +314,16 @@ asdf http://other/link qwert
   </div>
 
 <div class="p-name"><a class="u-url" href="http://fa.ke/event">invited</a></div>
-  <div class="">
+  <div class="e-content">
   <div class="h-card p-invitee">
     <div class="p-name"><a class="u-url" href="http://fa.ke/guest">Ms. Guest</a></div>
 
   </div>
 
+  <a class="u-mention" href="http://other/link"></a>
   </div>
 
   <a class="u-in-reply-to" href="http://or.ig/event"></a>
-  <a class="u-in-reply-to" href="http://other/link"></a>
 
 </article>
 """)
