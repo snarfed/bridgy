@@ -246,8 +246,8 @@ asdf http://other/link qwert
   </div>
 
   <a class="u-repost u-repost-of" href="http://example.com/original/post"></a>
-  <a class="u-repost u-repost-of" href="http://or.ig/post"></a>
   <a class="u-repost u-repost-of" href="http://another/mention"></a>
+  <a class="u-repost u-repost-of" href="http://or.ig/post"></a>
 
 </article>
 """)
