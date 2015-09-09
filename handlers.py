@@ -218,12 +218,12 @@ class ItemHandler(webapp2.RequestHandler):
 
       return filter(None, urls)
 
-    originals = list(set(util.clean_webmention_url(u) for u in
+    originals = list(set(util.clean_url(u) for u in
                          (post['object'].get('upstreamDuplicates', []) +
                           existing(original_prop, 'article'))))
 
     if mentions:
-      mentions = list(set(util.clean_webmention_url(u) for u in
+      mentions = list(set(util.clean_url(u) for u in
                           ([t.get('url') for t in post['object'].get('tags', [])] +
                            existing('tags', 'mention') +
                            existing('attachments', 'mention'))))

@@ -82,14 +82,6 @@ class UtilTest(testutil.ModelsTest):
     mention._discoverEndpoint()
     self.assertEquals('http://target/endpoint', mention.receiver_endpoint)
 
-  def test_clean_webmention_url(self):
-    cwt = util.clean_webmention_url
-    for unchanged in 'http://foo', 'http://foo#bar', 'http://foo?x=y&z=w':
-      self.assertEquals(unchanged, cwt(unchanged))
-
-    self.assertEquals('http://foo', cwt('http://foo?utm_source=x&utm_campaign=y'))
-    self.assertEquals('http://foo?a=b&c=d', cwt('http://foo?a=b&utm_source=x&c=d'))
-
   def test_get_webmention_target_blacklisted_urls(self):
     for bad in ('http://facebook.com/x', 'https://www.facebook.com/y',
                 'http://sub.dom.ain.facebook.com/z'):

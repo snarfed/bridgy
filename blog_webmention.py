@@ -38,7 +38,7 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
     # follow target url through any redirects, strip utm_* query params
     resp = util.follow_redirects(self.target_url)
     redirected_target_urls = [r.url for r in resp.history]
-    self.target_url = util.clean_webmention_url(resp.url)
+    self.target_url = util.clean_url(resp.url)
 
     # parse and validate target URL
     domain = util.domain_from_link(self.target_url)

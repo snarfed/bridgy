@@ -153,7 +153,7 @@ def get_webmention_target(url, cache=True):
     domain = domain_from_link(url)
 
   is_html = resolved.headers.get('content-type', '').startswith('text/html')
-  return (clean_webmention_url(url), domain, is_html)
+  return (util.clean_url(url), domain, is_html)
 
 
 def in_webmention_blacklist(domain):
@@ -161,27 +161,6 @@ def in_webmention_blacklist(domain):
   return (domain in BLACKLIST or
           # strip subdomain and check again
           (domain and '.'.join(domain.split('.')[-2:]) in BLACKLIST))
-
-
-def clean_webmention_url(url):
-  """Removes transient query params (e.g. utm_*) from a webmention target URL.
-
-  The utm_* (Urchin Tracking Metrics?) params come from Google Analytics.
-  https://support.google.com/analytics/answer/1033867
-
-  Args:
-    url: string
-
-  Returns: string, the cleaned url
-  """
-  utm_params = set(('utm_campaign', 'utm_content', 'utm_medium', 'utm_source',
-                    'utm_term'))
-  parts = list(urlparse.urlparse(url))
-  query = urllib.unquote_plus(parts[4].encode('utf-8'))
-  params = [(name, value) for name, value in urlparse.parse_qsl(query)
-            if name not in utm_params]
-  parts[4] = urllib.urlencode(params)
-  return urlparse.urlunparse(parts)
 
 
 def prune_activity(activity):
