@@ -417,3 +417,21 @@ asdf http://other/link qwert
 
 </article>
 """)
+
+  def test_tag_without_url(self):
+    self.source.get_activities()[0]['object'] = {
+      'id': 'tag:fa.ke,2013:000',
+      'tags': [{'foo': 'bar'}],
+    }
+    self.mox.ReplayAll()
+
+    self.check_response('/post/fake/%s/000', """\
+<article class="h-entry">
+<span class="u-uid">tag:fa.ke,2013:000</span>
+
+  <div class="">
+
+  </div>
+
+</article>
+""")
