@@ -195,9 +195,8 @@ asdf http://other/link qwert
   </div>
 
   <div class="p-name">likes this.</div>
-  <div class="e-content">
+  <div class="">
 
-  <a class="u-mention" href="http://other/link"></a>
   </div>
 
   <a class="u-like u-like-of" href="http://example.com/original/post"></a>
@@ -241,10 +240,8 @@ asdf http://other/link qwert
   </div>
 
   <div class="p-name">reposts this.</div>
-  <div class="e-content">
+  <div class="">
 
-  <a class="u-mention" href="http://another/mention"></a>
-  <a class="u-mention" href="http://other/link"></a>
   </div>
 
   <a class="u-repost u-repost-of" href="http://example.com/original/post"></a>
@@ -276,9 +273,8 @@ asdf http://other/link qwert
   </div>
 
   <div class="p-name"><data class="p-rsvp" value="no">is not attending.</data></div>
-  <div class="e-content">
+  <div class="">
 
-  <a class="u-mention" href="http://other/link"></a>
   </div>
 
   <a class="u-in-reply-to" href="http://or.ig/event"></a>
@@ -314,13 +310,12 @@ asdf http://other/link qwert
   </div>
 
 <div class="p-name"><a class="u-url" href="http://fa.ke/event">invited</a></div>
-  <div class="e-content">
+  <div class="">
   <div class="h-card p-invitee">
     <div class="p-name"><a class="u-url" href="http://fa.ke/guest">Ms. Guest</a></div>
 
   </div>
 
-  <a class="u-mention" href="http://other/link"></a>
   </div>
 
   <a class="u-in-reply-to" href="http://or.ig/event"></a>
@@ -329,9 +324,9 @@ asdf http://other/link qwert
 """)
 
   def test_original_post_urls_follow_redirects(self):
-    self.source.gr_source.set_share({
-        'objectType': 'activity',
-        'verb': 'share',
+    self.source.set_comment({
+        'content': 'qwert',
+        'inReplyTo': [{'url': 'http://fa.ke/000'}],
         })
 
     self.expect_requests_head('http://or.ig/post',
@@ -340,19 +335,20 @@ asdf http://other/link qwert
                               redirected_url='http://other/link/redirect')
     self.mox.ReplayAll()
 
-    self.check_response('/repost/fake/%s/000/111', """\
-<article class="h-entry h-as-repost">
+    self.check_response('/comment/fake/%s/000/111', """\
+<article class="h-entry">
 <span class="u-uid"></span>
 
-  <div class="p-name">reposts this.</div>
-  <div class="e-content">
+  <div class="e-content p-name">
 
-  <a class="u-mention" href="http://other/link"></a>
+  qwert
   <a class="u-mention" href="http://other/link/redirect"></a>
+  <a class="u-mention" href="http://other/link"></a>
   </div>
 
-  <a class="u-repost u-repost-of" href="http://or.ig/post"></a>
-  <a class="u-repost u-repost-of" href="http://or.ig/post/redirect"></a>
+  <a class="u-in-reply-to" href="http://fa.ke/000"></a>
+  <a class="u-in-reply-to" href="http://or.ig/post"></a>
+  <a class="u-in-reply-to" href="http://or.ig/post/redirect"></a>
 
 </article>
 """)
@@ -362,20 +358,20 @@ asdf http://other/link qwert
         'content': 'asdf http://other/link?utm_source=x&utm_medium=y&a=b qwert',
         'upstreamDuplicates': ['http://or.ig/post?utm_campaign=123'],
         })
-    self.source.gr_source.set_share({'objectType': 'activity', 'verb': 'share'})
+    self.source.set_comment({'content': 'qwert'})
     self.mox.ReplayAll()
 
-    self.check_response('/repost/fake/%s/000/111', """\
-<article class="h-entry h-as-repost">
+    self.check_response('/comment/fake/%s/000/111', """\
+<article class="h-entry">
 <span class="u-uid"></span>
 
-  <div class="p-name">reposts this.</div>
-  <div class="e-content">
+  <div class="e-content p-name">
 
+  qwert
   <a class="u-mention" href="http://other/link?a=b"></a>
   </div>
 
-  <a class="u-repost u-repost-of" href="http://or.ig/post"></a>
+  <a class="u-in-reply-to" href="http://or.ig/post"></a>
 
 </article>
 """)
@@ -404,17 +400,20 @@ asdf http://other/link qwert
 
   <div class="e-content p-name">
 
+  <a class="u-mention" href="http://all"></a>
+  <a class="u-mention" href="http://upstream/only"></a>
+  <a class="u-mention" href="http://upstream"></a>
   <a class="u-mention" href="http://mention/only"></a>
   </div>
 
+  <a class="u-in-reply-to" href="https://reply"></a>
   <a class="u-in-reply-to" href="https://reply/only"></a>
-  <a class="u-in-reply-to" href="http://reply"></a>
   <a class="u-in-reply-to" href="https://all"></a>
+  <a class="u-in-reply-to" href="https://upstream"></a>
+  <a class="u-in-reply-to" href="http://all"></a>
   <a class="u-in-reply-to" href="http://upstream/only"></a>
   <a class="u-in-reply-to" href="http://upstream"></a>
-  <a class="u-in-reply-to" href="http://all"></a>
-  <a class="u-in-reply-to" href="https://reply"></a>
-  <a class="u-in-reply-to" href="https://upstream"></a>
+  <a class="u-in-reply-to" href="http://reply"></a>
 
 </article>
 """)

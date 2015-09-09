@@ -182,12 +182,13 @@ class ItemHandler(webapp2.RequestHandler):
       self.response.headers['Content-Type'] = 'application/json; charset=utf-8'
       self.response.out.write(json.dumps(mf2_json, indent=2))
 
-  def add_original_post_urls(self, post, obj, prop):
-    """Extracts original post URLs and adds them to an object, in place.
+  def update_post_urls(self, post, obj, original_prop, mentions=False):
+    """Updates an object's original post and mention URLs, in place.
 
-    URLs in the upstreamDuplicates field are original post URLs and added as
-    tags with objectType 'article'. The post's own links and 'article' tags are
-    added with objectType 'mention'.
+    Existing URLs in post['object']['upstreamDuplicates'] are included as
+    original posts. Existing URLs in post['object']['tags'] with objectType
+    'mention' are included as mentions. Those and newly discovered
+    originals/mentions are merged into obj's existing properties.
 
     The implementation of http://indiewebcamp.com/original-post-discovery is
     mostly in granary.Source.original_post_discovery(), but not entirely. The
@@ -195,68 +196,89 @@ class ItemHandler(webapp2.RequestHandler):
     Details: https://github.com/snarfed/bridgy/issues/51#issuecomment-136018857
 
     Args:
-      post: ActivityStreams post object to get original post URLs from
-      obj: ActivityStreams post object to add original post URLs to
-      prop: string property name in obj to add the original post URLs to
+      post: ActivityStreams base post object
+      obj: ActivityStreams object to merge URLs into
+      original_prop: string property to store original posts in.
+      mentions: boolean. mentions are always stored as tags with objectType
+        'mention'
     """
     original_post_discovery.discover(self.source, post, fetch_hfeed=False)
 
-    if not isinstance(obj.setdefault(prop, []), list):
-      obj[prop] = [obj[prop]]
+    def existing(prop, object_type):
+      # side effect: remove existing that match
+      urls = obj.pop(prop, [])
+      if not isinstance(urls, list):
+        urls = [urls]
 
-    uds = post['object'].get('upstreamDuplicates', [])
-    obj[prop] += [{'url': url, 'objectType': 'article'} for url in uds]
-    obj.setdefault('tags', []).extend([
-      {'url': tag['url'], 'objectType': 'mention'}
-      for tag in post['object'].get('tags', [])
-      if 'url' in tag and tag['url'] not in uds])
+      if prop != 'upstreamDuplicates':
+        obj[prop] = [u for u in urls
+                     if u.get('objectType', object_type) != object_type]
+        urls = [u.get('url') for u in urls
+                if u.get('objectType', object_type) == object_type]
+
+      return filter(None, urls)
+
+    originals = list(set(util.clean_webmention_url(u) for u in
+                         (post['object'].get('upstreamDuplicates', []) +
+                          existing(original_prop, 'article'))))
+
+    if mentions:
+      mentions = list(set(util.clean_webmention_url(u) for u in
+                          ([t.get('url') for t in post['object'].get('tags', [])] +
+                           existing('tags', 'mention') +
+                           existing('attachments', 'mention'))))
+    else:
+      mentions = []
 
     # check for redirects, and if there are any follow them and add final urls
-    # in addition to the initial urls.
+    # in addition to the initial urls. appends to the lists while iterating over
+    # them so that we keep following redirects until we hit the end.
     seen = set()
-    tags = obj.get('tags', [])
-    for url_list in obj[prop], tags:
-      for url_obj in url_list:
-        url = util.clean_webmention_url(url_obj.get('url', ''))
+    for url_list in originals, mentions:
+      for url in url_list:
         if not url or url in seen:
           continue
         seen.add(url)
-        # when debugging locally, replace my (snarfed.org) URLs with localhost
-        url_obj['url'] = url = util.replace_test_domains_with_localhost(url)
+        url = util.replace_test_domains_with_localhost(url)
         resolved, _, send = util.get_webmention_target(url)
         if send and resolved != url and resolved not in seen:
           seen.add(resolved)
-          url_list.append({'url': resolved, 'objectType': url_obj.get('objectType')})
+          url_list.append(resolved)
 
     # if the http version of a link is in upstreams but the https one is just a
     # mention, or vice versa, promote them both to upstream.
     # https://github.com/snarfed/bridgy/issues/290
-    #
-    # TODO: for links that came from resolving redirects above, this doesn't
-    # also catch the initial pre-redirect link. ah well.
-    prop_schemeful = set(tag['url'] for tag in obj[prop] if tag.get('url'))
-    prop_schemeless = set(util.schemeless(url) for url in prop_schemeful)
-
-    for url_obj in copy.copy(tags):
-      url = url_obj.get('url', '')
+    originals = set(originals)
+    mentions = set(mentions)
+    schemeless_originals = set(util.schemeless(url) for url in originals)
+    for url in copy.copy(mentions):
       schemeless = util.schemeless(url)
-      if schemeless in prop_schemeless and url not in prop_schemeful:
-        obj[prop].append(url_obj)
-        tags.remove(url_obj)
-        prop_schemeful.add(url)
+      if schemeless in schemeless_originals and url not in originals:
+        originals.add(url)
+        mentions.remove(url)
 
-    logging.info('After original post discovery, urls are: %s', seen)
+    logging.info('Original post discovery found original posts %s, mentions %s',
+                 originals, mentions)
+
+    # add back to obj
+    def merge(urls, prop, object_type):
+      obj.setdefault(prop, []).extend(
+        urls if prop == 'upstreamDuplicates'
+        else [{'url': url, 'objectType': object_type} for url in urls])
+
+    if original_prop:
+      merge(originals, original_prop, 'article')
+    if mentions:
+      merge(mentions, 'tags', 'mention')
 
 
 class PostHandler(ItemHandler):
   def get_item(self, id):
     post = self.source.get_post(id)
     if post:
-      # TODO: expand this to reuse most of add_original_post_urls(), e.g.
-      # following redirects. we can't just call it directly because it
-      # transforms upstreamDuplicates, tags, etc, which we want to keep intact.
-      original_post_discovery.discover(self.source, post, fetch_hfeed=False)
+      self.update_post_urls(post, post, 'upstreamDuplicates', mentions=True)
       return post['object']
+
 
 class CommentHandler(ItemHandler):
   def get_item(self, post_id, id):
@@ -266,7 +288,7 @@ class CommentHandler(ItemHandler):
       return None
     post = self.get_post(post_id)
     if post:
-      self.add_original_post_urls(post, cmt, 'inReplyTo')
+      self.update_post_urls(post, cmt, 'inReplyTo', mentions=True)
     return cmt
 
 
@@ -277,7 +299,7 @@ class LikeHandler(ItemHandler):
       return None
     post = self.get_post(post_id)
     if post:
-      self.add_original_post_urls(post, like, 'object')
+      self.update_post_urls(post, like, 'object')
     return like
 
 
@@ -288,7 +310,7 @@ class RepostHandler(ItemHandler):
       return None
     post = self.get_post(post_id)
     if post:
-      self.add_original_post_urls(post, repost, 'object')
+      self.update_post_urls(post, repost, 'object')
     return repost
 
 
@@ -299,7 +321,7 @@ class RsvpHandler(ItemHandler):
       return None
     event = self.get_post(event_id, source_fn=self.source.get_event)
     if event:
-      self.add_original_post_urls(event, rsvp, 'inReplyTo')
+      self.update_post_urls(event, rsvp, 'inReplyTo')
     return rsvp
 
 
