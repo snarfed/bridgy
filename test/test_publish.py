@@ -242,7 +242,6 @@ class PublishTest(testutil.HandlerTest):
     self.assert_created('foo - http://will/redirect', source='http://will/redirect')
 
   def test_source_url_redirects_with_refresh_header(self):
-    self.mox.StubOutWithMock(requests, 'head', use_mock_anything=True)
     self.expect_requests_head('http://will/redirect',
                               response_headers={'refresh': '0; url=http://foo.com'})
     self.expect_requests_head('http://foo.com')

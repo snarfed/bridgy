@@ -5,17 +5,15 @@
 import collections
 import datetime
 import json
-import mimetypes
 import re
 import urllib
 import urlparse
 
-import requests
 import webapp2
 
 from oauth_dropins.webutil.models import StringIdModel
 from oauth_dropins.webutil.util import *
-from granary import source
+from granary import source as gr_source
 from appengine_config import HTTP_TIMEOUT, DEBUG
 
 from google.appengine.api import mail
@@ -28,7 +26,6 @@ LOCALHOST_TEST_DOMAINS = frozenset(('kylewm.com', 'snarfed.org'))
 
 EPOCH = datetime.datetime.utcfromtimestamp(0)
 POLL_TASK_DATETIME_FORMAT = '%Y-%m-%d-%H-%M-%S'
-FAILED_RESOLVE_URL_CACHE_TIME = 60 * 60 * 24  # a day
 
 # rate limiting errors. twitter returns 429, instagram 503, google+ 403.
 # TODO: facebook. it returns 200 and reports the error in the response.
@@ -109,60 +106,12 @@ def requests_get(url, **kwargs):
 
 
 def follow_redirects(url, cache=True):
-  """Fetches a URL with HEAD, repeating if necessary to follow redirects.
+  """Wraps granary.source.follow_redirects and injects our settings.
 
-  Caches resolved URLs in memcache by default. *Does not* raise an exception if
-  any of the HTTP requests fail, just returns the failed response. If you care,
-  be sure to check the returned response's status code!
-
-  Args:
-    url: string
-    cache: whether to read/write memcache
-
-  Returns:
-    the requests.Response for the final request
+  ...specifically memcache and USER_AGENT_HEADER.
   """
-  if cache:
-    cache_key = 'R ' + url
-    resolved = memcache.get(cache_key)
-    if resolved is not None:
-      return resolved
-
-  # can't use urllib2 since it uses GET on redirect requests, even if i specify
-  # HEAD for the initial request.
-  # http://stackoverflow.com/questions/9967632
-  try:
-    # default scheme to http
-    parsed = urlparse.urlparse(url)
-    if not parsed.scheme:
-      url = 'http://' + url
-    resolved = requests.head(url, allow_redirects=True, timeout=HTTP_TIMEOUT,
-                             headers=USER_AGENT_HEADER)
-    resolved.raise_for_status()
-    cache_time = 0  # forever
-  except AssertionError:
-    raise
-  except BaseException, e:
-    logging.warning("Couldn't resolve URL %s : %s", url, e)
-    resolved = requests.Response()
-    resolved.url = url
-    resolved.status_code = 499  # not standard. i made this up.
-    cache_time = FAILED_RESOLVE_URL_CACHE_TIME
-
-  content_type = resolved.headers.get('content-type')
-  if not content_type:
-    type, _ = mimetypes.guess_type(resolved.url)
-    resolved.headers['content-type'] = type or 'text/html'
-
-  refresh = resolved.headers.get('refresh')
-  if refresh:
-    for part in refresh.split(';'):
-      if part.strip().startswith('url='):
-        return follow_redirects(part.strip()[4:])
-
-  if cache:
-    memcache.set(cache_key, resolved, time=cache_time)
-  return resolved
+  return gr_source.follow_redirects(url, cache=memcache if cache else None,
+                                    headers=USER_AGENT_HEADER)
 
 
 # Wrap webutil.util.tag_uri and hard-code the year to 2013.
@@ -252,7 +201,7 @@ def prune_activity(activity):
   Returns: pruned activity dict
   """
   keep = ['id', 'url', 'content']
-  if not source.Source.is_public(activity):
+  if not gr_source.Source.is_public(activity):
     keep += ['to']
   pruned = {f: activity.get(f) for f in keep}
 
