@@ -41,37 +41,6 @@ WEBMENTION_DISCOVERY_CACHE_TIME = 60 * 60 * 24  # a day
 now_fn = datetime.datetime.now
 
 
-def get_webmention_targets(source, activity):
-  """Returns a set of string target URLs to attempt to send webmentions to.
-
-  Side effect: runs the original post discovery algorithm on the activity and
-  adds the resulting URLs to the activity as tags, in place.
-
-  Args:
-   source: models.Source subclass
-   activity: activity dict
-  """
-  original_post_discovery.discover(source, activity)
-
-  obj = activity.get('object') or activity
-  urls = []
-
-  for tag in obj.get('tags', []):
-    url = tag.get('url')
-    if url and tag.get('objectType') in ('article', 'mention'):
-      url, domain, send = util.get_webmention_target(url)
-      tag['url'] = url
-      if send:
-        urls.append(url)
-
-  for url in obj.get('upstreamDuplicates', []):
-    url, domain, send = util.get_webmention_target(url)
-    if send:
-      urls.append(url)
-
-  return util.dedupe_urls(urls)
-
-
 class Poll(webapp2.RequestHandler):
   """Task handler that fetches and processes new responses from a single source.
 
@@ -267,7 +236,8 @@ class Poll(webapp2.RequestHandler):
         # discovered webmention targets inside its object.
         targets = activity.get('targets')
         if targets is None:
-          targets = activity['targets'] = get_webmention_targets(source, activity)
+          targets = original_post_discovery.discover(source, activity)
+          activity['targets'] = targets
           source_updates['last_syndication_url'] = source.last_syndication_url
         logging.info('%s has %d original post URL(s): %s', activity.get('url'),
                      len(targets), ' '.join(targets))
