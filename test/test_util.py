@@ -83,18 +83,22 @@ class UtilTest(testutil.ModelsTest):
     self.assertEquals('http://target/endpoint', mention.receiver_endpoint)
 
   def test_get_webmention_target_blacklisted_urls(self):
-    for bad in ('http://facebook.com/x', 'https://www.facebook.com/y',
-                'http://sub.dom.ain.facebook.com/z'):
-      self.assertFalse(util.get_webmention_target(bad)[2], bad)
-
-    self.assertTrue(util.get_webmention_target('http://good.com/a')[2])
+    for resolve in True, False:
+      self.assertTrue(util.get_webmention_target(
+        'http://good.com/a', resolve=resolve)[2])
+      for bad in ('http://facebook.com/x', 'https://www.facebook.com/y',
+                  'http://sub.dom.ain.facebook.com/z'):
+        self.assertFalse(util.get_webmention_target(bad, resolve=resolve)[2], bad)
 
   def test_get_webmention_cleans_redirected_urls(self):
     self.expect_requests_head('http://foo/bar',
                               redirected_url='http://final?utm_source=x')
     self.mox.ReplayAll()
+
     self.assert_equals(('http://final', 'final', True),
-                       util.get_webmention_target('http://foo/bar'))
+                       util.get_webmention_target('http://foo/bar', resolve=True))
+    self.assert_equals(('http://foo/bar', 'foo', True),
+                       util.get_webmention_target('http://foo/bar', resolve=False))
 
   def test_registration_callback(self):
     """Run through an authorization back and forth and make sure that

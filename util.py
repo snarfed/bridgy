@@ -123,7 +123,7 @@ _orig_tag_uri = tag_uri
 util.tag_uri = lambda domain, name: _orig_tag_uri(domain, name, year=2013)
 
 
-def get_webmention_target(url, cache=True):
+def get_webmention_target(url, resolve=True, cache=True):
   """Resolves a URL and decides whether we should try to send it a webmention.
 
   Note that this ignores failed HTTP requests, ie the boolean in the returned
@@ -131,29 +131,29 @@ def get_webmention_target(url, cache=True):
 
   Args:
     url: string
+    resolve: whether to follow redirects
     cache: whether to use memcache when following redirects
 
   Returns: (string url, string pretty domain, boolean) tuple. The boolean is
     True if we should send a webmention, False otherwise, e.g. if it's a bad
     URL, not text/html, or in the blacklist.
   """
+  url = util.clean_url(url)
   try:
     domain = domain_from_link(url).lower()
   except BaseException:
     logging.warning('Dropping bad URL %s.', url)
-    return (url, None, False)
+    return url, None, False
 
-  if not domain or in_webmention_blacklist(domain):
-    return (url, domain, False)
+  domain_ok = lambda domain: domain and not in_webmention_blacklist(domain)
+
+  if not resolve:
+    return url, domain, domain_ok(domain)
 
   resolved = follow_redirects(url, cache=cache)
-  if resolved.url != url:
-    logging.debug('Resolved %s to %s', url, resolved.url)
-    url = resolved.url
-    domain = domain_from_link(url)
-
+  domain = domain_from_link(resolved.url).lower()
   is_html = resolved.headers.get('content-type', '').startswith('text/html')
-  return (util.clean_url(url), domain, is_html)
+  return util.clean_url(resolved.url), domain, domain_ok(domain) and is_html
 
 
 def in_webmention_blacklist(domain):
