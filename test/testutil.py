@@ -201,23 +201,6 @@ class HandlerTest(gr_testutil.TestCase):
     # add FakeSource everywhere necessary
     util.BLACKLIST.add('fa.ke')
 
-    self.stub_requests_head()
-
-  def stub_requests_head(self):
-    # don't make actual HTTP requests to follow original post url redirects
-    def fake_head(url, **kwargs):
-      resp = requests.Response()
-      resp.url = url
-      if '.' in url or url.startswith('http'):
-        resp.headers['content-type'] = 'text/html; charset=UTF-8'
-        resp.status_code = 200
-      else:
-        resp.status_code = 404
-      return resp
-    self.mox.stubs.Set(requests, 'head', fake_head)
-
-    self._is_head_mocked = False  # expect_requests_head() sets this to True
-
   def expect_requests_get(self, *args, **kwargs):
     kwargs.setdefault('headers', {}).update(util.USER_AGENT_HEADER)
     return super(HandlerTest, self).expect_requests_get(*args, **kwargs)
@@ -227,9 +210,6 @@ class HandlerTest(gr_testutil.TestCase):
     return super(HandlerTest, self).expect_requests_post(*args, **kwargs)
 
   def expect_requests_head(self, *args, **kwargs):
-    if not self._is_head_mocked:
-      self.mox.StubOutWithMock(requests, 'head', use_mock_anything=True)
-      self._is_head_mocked = True
     kwargs.setdefault('headers', {}).update(util.USER_AGENT_HEADER)
     return super(HandlerTest, self).expect_requests_head(*args, **kwargs)
 
