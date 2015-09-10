@@ -123,7 +123,7 @@ _orig_tag_uri = tag_uri
 util.tag_uri = lambda domain, name: _orig_tag_uri(domain, name, year=2013)
 
 
-def get_webmention_target(url, resolve=True, cache=True):
+def get_webmention_target(url, resolve=True):
   """Resolves a URL and decides whether we should try to send it a webmention.
 
   Note that this ignores failed HTTP requests, ie the boolean in the returned
@@ -132,7 +132,6 @@ def get_webmention_target(url, resolve=True, cache=True):
   Args:
     url: string
     resolve: whether to follow redirects
-    cache: whether to use memcache when following redirects
 
   Returns: (string url, string pretty domain, boolean) tuple. The boolean is
     True if we should send a webmention, False otherwise, e.g. if it's a bad
@@ -150,7 +149,7 @@ def get_webmention_target(url, resolve=True, cache=True):
   if not resolve:
     return url, domain, domain_ok(domain)
 
-  resolved = follow_redirects(url, cache=cache)
+  resolved = follow_redirects(url, cache=memcache)
   domain = domain_from_link(resolved.url).lower()
   is_html = resolved.headers.get('content-type', '').startswith('text/html')
   return util.clean_url(resolved.url), domain, domain_ok(domain) and is_html
