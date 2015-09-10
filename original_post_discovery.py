@@ -38,6 +38,8 @@ from google.appengine.api.datastore import MAX_ALLOWABLE_QUERIES
 from bs4 import BeautifulSoup
 from models import SyndicatedPost
 
+from google.appengine.api import memcache
+
 # alias allows unit tests to mock the function
 now_fn = datetime.datetime.now
 
@@ -57,10 +59,23 @@ def discover(source, activity, fetch_hfeed=True):
     activity: activity dict
     fetch_hfeed: boolean
 
-  Return:
-    the activity, updated with original post urls if any are found
+  Returns: ([string original post URLs], [string mention URLs]) tuple
   """
-  gr_source.Source.original_post_discovery(activity, domains=source.domains)
+  originals, mentions = gr_source.Source.original_post_discovery(
+    activity, domains=source.domains, cache=memcache,
+    headers=util.USER_AGENT_HEADER)
+
+  def resolve(urls):
+    resolved = set()
+    for url in urls:
+      url, _, send = util.get_webmention_target(
+        util.replace_test_domains_with_localhost(url))
+      if send:
+        resolved.add(url)
+    return resolved
+
+  originals = resolve(originals)
+  mentions = resolve(mentions)
 
   # TODO possible optimization: if we've discovered a backlink to a
   # post on the author's domain (i.e., it included a link or
@@ -70,21 +85,22 @@ def discover(source, activity, fetch_hfeed=True):
 
   if not source.get_author_urls():
     logging.debug('no author url(s), cannot find h-feed')
-    return activity
+    return originals, mentions
 
-  if not syndication_url:
+  if syndication_url:
+    # use the canonical syndication url on both sides, so that we have
+    # the best chance of finding a match. Some silos allow several
+    # different permalink formats to point to the same place (e.g.,
+    # facebook user id instead of user name)
+    syndication_url = source.canonicalize_syndication_url(
+      util.follow_redirects(syndication_url).url)
+    originals.update(_posse_post_discovery(source, activity, syndication_url,
+                                           fetch_hfeed))
+  else:
     logging.debug('no syndication url, cannot process h-entries %s',
                   syndication_url)
-    return activity
 
-  # use the canonical syndication url on both sides, so that we have
-  # the best chance of finding a match. Some silos allow several
-  # different permalink formats to point to the same place (e.g.,
-  # facebook user id instead of user name)
-  syndication_url = source.canonicalize_syndication_url(
-    util.follow_redirects(syndication_url).url)
-
-  return _posse_post_discovery(source, activity, syndication_url, fetch_hfeed)
+  return originals, mentions
 
 
 def refetch(source):
@@ -119,7 +135,7 @@ def _posse_post_discovery(source, activity, syndication_url, fetch_hfeed):
                  relationship.
 
   Return:
-    the activity, updated with original post urls if any are found
+    sequence of string original post urls, possibly empty
   """
   logging.info('starting posse post discovery with syndicated %s', syndication_url)
   relationships = SyndicatedPost.query(
@@ -129,14 +145,12 @@ def _posse_post_discovery(source, activity, syndication_url, fetch_hfeed):
     # a syndicated post we haven't seen before! fetch the author's URLs to see
     # if we can find it.
     #
-    # Use source.domain_urls for now; it seems more reliable than the
-    # activity.actor.url (which depends on getting the right data back from
-    # various APIs). Consider using the actor's url, with domain_urls as the
+    # TODO: Consider using the actor's url, with get_author_urls() as the
     # fallback in the future to support content from non-Bridgy users.
     results = {}
     for url in source.get_author_urls():
       results.update(_process_author(source, url))
-    relationships = results.get(syndication_url)
+    relationships = results.get(syndication_url, [])
 
   if not relationships:
     # No relationships were found. Remember that we've seen this
@@ -145,18 +159,12 @@ def _posse_post_discovery(source, activity, syndication_url, fetch_hfeed):
                   syndication_url)
     if fetch_hfeed:
       SyndicatedPost.insert_syndication_blank(source, syndication_url)
-    return activity
 
-  logging.debug('posse post discovery found relationship(s) %s -> %s',
-                syndication_url,
-                '; '.join(unicode(r.original) for r in relationships))
-
-  obj = activity.get('object') or activity
-  uds = obj.setdefault('upstreamDuplicates', [])
-  uds.extend(r.original for r in relationships
-             if r.original and r.original not in uds)
-
-  return activity
+  originals = [r.original for r in relationships if r.original]
+  if originals:
+    logging.debug('posse post discovery found relationship(s) %s -> %s',
+                  syndication_url, originals)
+  return originals
 
 
 def _process_author(source, author_url, refetch=False, store_blanks=True):
