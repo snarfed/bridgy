@@ -64,10 +64,7 @@ class HandlersTest(testutil.HandlerTest):
   <div class="e-content p-name">
 
   asdf http://other/link qwert
-  <p>
-  <a class="link" href="http://other/link">
-  </a>
-  </p>
+  <a class="u-mention" href="http://other/link"></a>
   </div>
 
 </article>
@@ -84,10 +81,8 @@ class HandlersTest(testutil.HandlerTest):
           'url': ['http://fa.ke/000', 'http://or.ig/post'],
           'content': [{ 'html': """\
 asdf http://other/link qwert
-<p>
-<a class="link" href="http://other/link">
-</a>
-</p>""",
+<a class="u-mention" href="http://other/link"></a>
+""",
                         'value': 'asdf http://other/link qwert',
                         }],
           'author': [{
@@ -329,10 +324,10 @@ asdf http://other/link qwert
         'inReplyTo': [{'url': 'http://fa.ke/000'}],
         })
 
-    self.expect_requests_head('http://or.ig/post',
-                              redirected_url='http://or.ig/post/redirect')
-    self.expect_requests_head('http://other/link',
-                              redirected_url='http://other/link/redirect')
+    self.expect_requests_head(
+      'http://or.ig/post', redirected_url='http://or.ig/post/redirect').InAnyOrder()
+    self.expect_requests_head(
+      'http://other/link', redirected_url='http://other/link/redirect').InAnyOrder()
     self.mox.ReplayAll()
 
     self.check_response('/comment/fake/%s/000/111', """\
@@ -347,8 +342,8 @@ asdf http://other/link qwert
   </div>
 
   <a class="u-in-reply-to" href="http://fa.ke/000"></a>
-  <a class="u-in-reply-to" href="http://or.ig/post"></a>
   <a class="u-in-reply-to" href="http://or.ig/post/redirect"></a>
+  <a class="u-in-reply-to" href="http://or.ig/post"></a>
 
 </article>
 """)
@@ -400,20 +395,16 @@ asdf http://other/link qwert
 
   <div class="e-content p-name">
 
-  <a class="u-mention" href="http://all"></a>
   <a class="u-mention" href="http://upstream/only"></a>
-  <a class="u-mention" href="http://upstream"></a>
   <a class="u-mention" href="http://mention/only"></a>
+  <a class="u-mention" href="https://reply"></a>
+  <a class="u-mention" href="https://upstream"></a>
+  <a class="u-mention" href="http://all"></a>
   </div>
 
-  <a class="u-in-reply-to" href="https://reply"></a>
   <a class="u-in-reply-to" href="https://reply/only"></a>
-  <a class="u-in-reply-to" href="https://all"></a>
-  <a class="u-in-reply-to" href="https://upstream"></a>
-  <a class="u-in-reply-to" href="http://all"></a>
-  <a class="u-in-reply-to" href="http://upstream/only"></a>
-  <a class="u-in-reply-to" href="http://upstream"></a>
   <a class="u-in-reply-to" href="http://reply"></a>
+  <a class="u-in-reply-to" href="https://all"></a>
 
 </article>
 """)

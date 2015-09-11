@@ -68,6 +68,18 @@ $body
 </html>
 """)
 
+
+def listify(obj, prop):
+  """Converts obj[prop] to a list if it's not already.
+
+  If obj[prop] exists and isn't a list, puts it inside a list.
+  """
+  val = obj.setdefault(prop, [])
+  if not isinstance(val, list):
+    obj[prop] = [val]
+  return obj[prop]
+
+
 class ItemHandler(webapp2.RequestHandler):
   """Fetches a post, repost, like, or comment and serves it as mf2 HTML or JSON.
   """
@@ -182,104 +194,38 @@ class ItemHandler(webapp2.RequestHandler):
       self.response.headers['Content-Type'] = 'application/json; charset=utf-8'
       self.response.out.write(json.dumps(mf2_json, indent=2))
 
-  def update_post_urls(self, post, obj, original_prop, mentions=False):
-    """Updates an object's original post and mention URLs, in place.
+  def merge_urls(self, obj, property, urls, object_type='article'):
+    """Updates an object's ActivityStreams URL objects in place.
 
-    Existing URLs in post['object']['upstreamDuplicates'] are included as
-    original posts. Existing URLs in post['object']['tags'] with objectType
-    'mention' are included as mentions. Those and newly discovered
-    originals/mentions are merged into obj's existing properties.
+    Adds all URLs in urls that don't already exist in obj[property].
 
-    The implementation of http://indiewebcamp.com/original-post-discovery is
-    mostly in granary.Source.original_post_discovery(), but not entirely. The
-    check for whether the time difference between the posts is <24h is here.
-    Details: https://github.com/snarfed/bridgy/issues/51#issuecomment-136018857
+    ActivityStreams schema details:
+    http://activitystrea.ms/specs/json/1.0/#id-comparison
 
     Args:
-      post: ActivityStreams base post object
       obj: ActivityStreams object to merge URLs into
-      original_prop: string property to store original posts in.
-      mentions: boolean. mentions are always stored as tags with objectType
-        'mention'
+      property: string property to merge URLs into
+      urls: sequence of string URLs to add
+      object_type: stored as the objectType alongside each URL
     """
-    original_post_discovery.discover(self.source, post, fetch_hfeed=False)
-
-    def existing(prop, object_type):
-      # side effect: remove existing that match
-      urls = obj.pop(prop, [])
-      if not isinstance(urls, list):
-        urls = [urls]
-
-      if prop != 'upstreamDuplicates':
-        obj[prop] = [u for u in urls
-                     if u.get('objectType', object_type) != object_type]
-        urls = [u.get('url') for u in urls
-                if u.get('objectType', object_type) == object_type]
-
-      return filter(None, urls)
-
-    originals = list(set(
-      util.clean_url(u) for u in
-      (post['object'].get('upstreamDuplicates', []) +
-       existing(original_prop, 'article'))))
-
-    if mentions:
-      mentions = list(set(
-        util.clean_url(u) for u in
-        (filter(None, [t.get('url') for t in post['object'].get('tags', [])]) +
-         existing('tags', 'mention') +
-         existing('attachments', 'mention'))))
-    else:
-      mentions = []
-
-    # check for redirects, and if there are any follow them and add final urls
-    # in addition to the initial urls. appends to the lists while iterating over
-    # them so that we keep following redirects until we hit the end.
-    seen = set()
-    for url_list in originals, mentions:
-      for url in url_list:
-        if not url or url in seen:
-          continue
-        seen.add(url)
-        url = util.replace_test_domains_with_localhost(url)
-        resolved, _, send = util.get_webmention_target(url)
-        if send and resolved != url and resolved not in seen:
-          seen.add(resolved)
-          url_list.append(resolved)
-
-    # if the http version of a link is in upstreams but the https one is just a
-    # mention, or vice versa, promote them both to upstream.
-    # https://github.com/snarfed/bridgy/issues/290
-    originals = set(originals)
-    mentions = set(mentions)
-    schemeless_originals = set(util.schemeless(url) for url in originals)
-    for url in copy.copy(mentions):
-      schemeless = util.schemeless(url)
-      if schemeless in schemeless_originals and url not in originals:
-        originals.add(url)
-        mentions.remove(url)
-
-    logging.info('Original post discovery found original posts %s, mentions %s',
-                 originals, mentions)
-
-    # add back to obj
-    def merge(urls, prop, object_type):
-      obj.setdefault(prop, []).extend(
-        urls if prop == 'upstreamDuplicates'
-        else [{'url': url, 'objectType': object_type} for url in urls])
-
-    if original_prop:
-      merge(originals, original_prop, 'article')
-    if mentions:
-      merge(mentions, 'tags', 'mention')
+    existing = set(filter(None, (u.get('url') for u in listify(obj, property))))
+    obj[property] += [{'url': url, 'objectType': object_type} for url in urls
+                      if url not in existing]
 
 
 class PostHandler(ItemHandler):
   def get_item(self, id):
     post = self.source.get_post(id)
-    if post:
-      self.update_post_urls(post, post, 'upstreamDuplicates', mentions=True)
-      return post['object']
+    if not post:
+      return None
+
+    originals, mentions = original_post_discovery.discover(
+      self.source, post, fetch_hfeed=False)
+    obj = post['object']
+    obj['upstreamDuplicates'] = list(
+      set(listify(obj, 'upstreamDuplicates')) | originals)
+    self.merge_urls(obj, 'tags', mentions, object_type='mention')
+    return obj
 
 
 class CommentHandler(ItemHandler):
@@ -290,7 +236,10 @@ class CommentHandler(ItemHandler):
       return None
     post = self.get_post(post_id)
     if post:
-      self.update_post_urls(post, cmt, 'inReplyTo', mentions=True)
+      originals, mentions = original_post_discovery.discover(
+        self.source, post, fetch_hfeed=False)
+      self.merge_urls(cmt, 'inReplyTo', originals)
+      self.merge_urls(cmt, 'tags', mentions, object_type='mention')
     return cmt
 
 
@@ -301,7 +250,9 @@ class LikeHandler(ItemHandler):
       return None
     post = self.get_post(post_id)
     if post:
-      self.update_post_urls(post, like, 'object')
+      originals, mentions = original_post_discovery.discover(
+        self.source, post, fetch_hfeed=False)
+      self.merge_urls(like, 'object', originals)
     return like
 
 
@@ -312,7 +263,9 @@ class RepostHandler(ItemHandler):
       return None
     post = self.get_post(post_id)
     if post:
-      self.update_post_urls(post, repost, 'object')
+      originals, mentions = original_post_discovery.discover(
+        self.source, post, fetch_hfeed=False)
+      self.merge_urls(repost, 'object', originals)
     return repost
 
 
@@ -323,7 +276,9 @@ class RsvpHandler(ItemHandler):
       return None
     event = self.get_post(event_id, source_fn=self.source.get_event)
     if event:
-      self.update_post_urls(event, rsvp, 'inReplyTo')
+      originals, mentions = original_post_discovery.discover(
+        self.source, event, fetch_hfeed=False)
+      self.merge_urls(rsvp, 'inReplyTo', originals)
     return rsvp
 
 
