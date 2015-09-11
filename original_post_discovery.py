@@ -44,7 +44,7 @@ from google.appengine.api import memcache
 now_fn = datetime.datetime.now
 
 
-def discover(source, activity, fetch_hfeed=True):
+def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True):
   """Augments the standard original_post_discovery algorithm with a
   reverse lookup that supports posts without a backlink or citation.
 
@@ -58,6 +58,8 @@ def discover(source, activity, fetch_hfeed=True):
       last_syndication_url is special-cased in tasks.Poll.)
     activity: activity dict
     fetch_hfeed: boolean
+    include_redirect_sources: boolean, whether to include URLs that redirect as
+      well as their final destination URLs
 
   Returns: ([string original post URLs], [string mention URLs]) tuple
   """
@@ -68,23 +70,25 @@ def discover(source, activity, fetch_hfeed=True):
   def resolve(urls):
     resolved = set()
     for url in urls:
-      url, _, send = util.get_webmention_target(url)
+      final, _, send = util.get_webmention_target(url)
       if send:
-        resolved.add(url)
+        resolved.add(final)
+        if include_redirect_sources:
+          resolved.add(url)
     return resolved
 
   originals = resolve(originals)
   mentions = resolve(mentions)
+
+  if not source.get_author_urls():
+    logging.debug('no author url(s), cannot find h-feed')
+    return originals, mentions
 
   # TODO possible optimization: if we've discovered a backlink to a post on the
   # author's domain (i.e., it included a link or citation), then skip the rest
   # of this.
   obj = activity.get('object') or activity
   syndication_url = obj.get('url')
-
-  if not source.get_author_urls():
-    logging.debug('no author url(s), cannot find h-feed')
-    return originals, mentions
 
   if syndication_url:
     # use the canonical syndication url on both sides, so that we have
@@ -96,8 +100,7 @@ def discover(source, activity, fetch_hfeed=True):
     originals.update(_posse_post_discovery(source, activity, syndication_url,
                                            fetch_hfeed))
   else:
-    logging.debug('no syndication url, cannot process h-entries %s',
-                  syndication_url)
+    logging.debug('no syndication url, cannot process h-entries')
 
   return originals, mentions
 

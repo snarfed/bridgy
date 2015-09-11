@@ -34,9 +34,10 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
       'content': 'content without links',
       })
 
-  def assert_discover(self, expected_originals, expected_mentions=[]):
+  def assert_discover(self, expected_originals, expected_mentions=[],
+                      source=None):
     self.assertEquals((set(expected_originals), set(expected_mentions)),
-                      discover(self.source, self.activity))
+                      discover(source or self.source, self.activity))
 
 
   def assert_syndicated_posts(self, *expected):
@@ -1082,9 +1083,9 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
       user_json=json.dumps(user_obj))
     auth_entity.put()
 
-    source = FacebookPage.new(self.handler, auth_entity=auth_entity,
-                              domain_urls=['http://author'], **source_params)
-    source.put()
+    fb = FacebookPage.new(self.handler, auth_entity=auth_entity,
+                          domain_urls=['http://author'], **source_params)
+    fb.put()
     # facebook activity comes to us with the numeric id
     self.activity['object']['url'] = 'http://facebook.com/212038/posts/314159'
 
@@ -1103,4 +1104,4 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     </html>""")
 
     self.mox.ReplayAll()
-    self.assert_discover(['http://author/post/permalink'])
+    self.assert_discover(['http://author/post/permalink'], source=fb)

@@ -236,7 +236,8 @@ class Poll(webapp2.RequestHandler):
         # discovered webmention targets inside its object.
         targets = activity.get('targets')
         if targets is None:
-          originals, mentions = original_post_discovery.discover(source, activity)
+          originals, mentions = original_post_discovery.discover(
+            source, activity, include_redirect_sources=False)
           targets = activity['targets'] = originals | mentions
           source_updates['last_syndication_url'] = source.last_syndication_url
         logging.info('%s has %d original post URL(s): %s', activity.get('url'),
