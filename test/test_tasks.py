@@ -297,7 +297,7 @@ class PollTest(TaskQueueTest):
     self.activities[0]['object'].update({'tags': [], 'content': 'http://first'})
     self.sources[0].set_activities([self.activities[0]])
 
-    too_long = 'http://' + 'x' * _MAX_STRING_LENGTH
+    too_long = 'http://host/' + 'x' * _MAX_STRING_LENGTH
     self.expect_requests_head('http://first', redirected_url=too_long)
 
     self.mox.ReplayAll()
@@ -1404,7 +1404,7 @@ class PropagateTest(TaskQueueTest):
 
     https://github.com/snarfed/bridgy/issues/273
     """
-    too_long = 'http://' + 'x' * _MAX_STRING_LENGTH
+    too_long = 'http://host/' + 'x' * _MAX_STRING_LENGTH
     self.expect_requests_head('http://target1/post/url', redirected_url=too_long)
     self.mox.ReplayAll()
 
