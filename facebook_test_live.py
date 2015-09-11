@@ -103,7 +103,7 @@ class FacebookTestLive(testutil.HandlerTest):
       ).MultipleTimes()
     self.mox.ReplayAll()
 
-    memcache.set('W example.zz', 'http://example.zz/wm')
+    memcache.set('W http example.zz', 'http://example.zz/wm')
     for task in self.taskqueue_stub.GetTasks('propagate'):
       resp = self.run_task(task)
       self.assertEqual(200, resp.status_int)

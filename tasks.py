@@ -10,6 +10,7 @@ import gc
 import json
 import logging
 import random
+import urlparse
 
 from google.appengine.api import memcache
 from google.appengine.api.datastore_types import _MAX_STRING_LENGTH
@@ -457,11 +458,12 @@ class SendWebmentions(webapp2.RequestHandler):
       # value is a string URL endpoint if discovery succeeded, a
       # WebmentionSend error dict if it failed (semi-)permanently, or None.
       domain = util.domain_from_link(target)
-      cache_key = 'W ' + domain
+      scheme = urlparse.urlparse(target).scheme
+      cache_key = ' '.join(('W', scheme, domain))
       cached = memcache.get(cache_key)
       if cached:
-        logging.info('Using cached webmention endpoint for %s: %s',
-                     domain, cached)
+        logging.info('Using cached webmention endpoint for %s %s: %s',
+                     scheme, domain, cached)
 
       # send! and handle response or error
       error = None
