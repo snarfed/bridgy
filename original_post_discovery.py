@@ -68,8 +68,7 @@ def discover(source, activity, fetch_hfeed=True):
   def resolve(urls):
     resolved = set()
     for url in urls:
-      url, _, send = util.get_webmention_target(
-        util.replace_test_domains_with_localhost(url))
+      url, _, send = util.get_webmention_target(url)
       if send:
         resolved.add(url)
     return resolved
@@ -77,9 +76,9 @@ def discover(source, activity, fetch_hfeed=True):
   originals = resolve(originals)
   mentions = resolve(mentions)
 
-  # TODO possible optimization: if we've discovered a backlink to a
-  # post on the author's domain (i.e., it included a link or
-  # citation), then skip the rest of this.
+  # TODO possible optimization: if we've discovered a backlink to a post on the
+  # author's domain (i.e., it included a link or citation), then skip the rest
+  # of this.
   obj = activity.get('object') or activity
   syndication_url = obj.get('url')
 

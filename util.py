@@ -144,15 +144,14 @@ def get_webmention_target(url, resolve=True):
     logging.warning('Dropping bad URL %s.', url)
     return url, None, False
 
-  domain_ok = lambda domain: domain and not in_webmention_blacklist(domain)
+  send = True
+  if resolve:
+    resolved = follow_redirects(url, cache=memcache)
+    send = resolved.headers.get('content-type', '').startswith('text/html')
+    url, domain, _ = get_webmention_target(resolved.url, resolve=False)
 
-  if not resolve:
-    return url, domain, domain_ok(domain)
-
-  resolved = follow_redirects(url, cache=memcache)
-  domain = domain_from_link(resolved.url).lower()
-  is_html = resolved.headers.get('content-type', '').startswith('text/html')
-  return util.clean_url(resolved.url), domain, domain_ok(domain) and is_html
+  send = send and domain and not in_webmention_blacklist(domain)
+  return replace_test_domains_with_localhost(url), domain, send
 
 
 def in_webmention_blacklist(domain):
