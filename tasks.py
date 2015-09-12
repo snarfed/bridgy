@@ -42,37 +42,6 @@ WEBMENTION_DISCOVERY_CACHE_TIME = 60 * 60 * 24  # a day
 now_fn = datetime.datetime.now
 
 
-def get_webmention_targets(source, activity):
-  """Returns a set of string target URLs to attempt to send webmentions to.
-
-  Side effect: runs the original post discovery algorithm on the activity and
-  adds the resulting URLs to the activity as tags, in place.
-
-  Args:
-   source: models.Source subclass
-   activity: activity dict
-  """
-  original_post_discovery.discover(source, activity)
-
-  obj = activity.get('object') or activity
-  urls = []
-
-  for tag in obj.get('tags', []):
-    url = tag.get('url')
-    if url and tag.get('objectType') in ('article', 'mention'):
-      url, domain, send = util.get_webmention_target(url)
-      tag['url'] = url
-      if send:
-        urls.append(url)
-
-  for url in obj.get('upstreamDuplicates', []):
-    url, domain, send = util.get_webmention_target(url)
-    if send:
-      urls.append(url)
-
-  return util.dedupe_urls(urls)
-
-
 class Poll(webapp2.RequestHandler):
   """Task handler that fetches and processes new responses from a single source.
 
@@ -266,11 +235,19 @@ class Poll(webapp2.RequestHandler):
         # we'll usually have multiple responses for the same activity, and the
         # objects in resp['activities'] are shared, so cache each activity's
         # discovered webmention targets inside its object.
-        targets = activity.get('targets')
-        if targets is None:
-          targets = activity['targets'] = get_webmention_targets(source, activity)
+        if 'originals' not in activity or 'mentions' not in activity:
+          activity['originals'], activity['mentions'] = \
+            original_post_discovery.discover(
+              source, activity, include_redirect_sources=False)
           source_updates['last_syndication_url'] = source.last_syndication_url
-        logging.info('%s has %d original post URL(s): %s', activity.get('url'),
+
+        # send wms to all original posts, but only posts and comments (not
+        # likes, reposts, or rsvps) to mentions. matches logic in handlers.py!
+        targets = set(activity['originals'])
+        if Response.get_type(resp) in ('post', 'comment'):
+          targets |= activity['mentions']
+
+        logging.info('%s has %d webmention target(s): %s', activity.get('url'),
                      len(targets), ' '.join(targets))
         for t in targets:
           if len(t) <= _MAX_STRING_LENGTH:
@@ -438,9 +415,6 @@ class SendWebmentions(webapp2.RequestHandler):
       # or streaming add.
       url, domain, ok = util.get_webmention_target(orig_url)
       if ok:
-        # When debugging locally, redirect our own webmentions to localhost
-        if appengine_config.DEBUG and domain in util.LOCALHOST_TEST_DOMAINS:
-          url = url.replace(domain, 'localhost')
         if len(url) <= _MAX_STRING_LENGTH:
           unsent.add(url)
         else:
