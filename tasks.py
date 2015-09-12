@@ -234,13 +234,19 @@ class Poll(webapp2.RequestHandler):
         # we'll usually have multiple responses for the same activity, and the
         # objects in resp['activities'] are shared, so cache each activity's
         # discovered webmention targets inside its object.
-        targets = activity.get('targets')
-        if targets is None:
-          originals, mentions = original_post_discovery.discover(
-            source, activity, include_redirect_sources=False)
-          targets = activity['targets'] = originals | mentions
+        if 'originals' not in activity or 'mentions' not in activity:
+          activity['originals'], activity['mentions'] = \
+            original_post_discovery.discover(
+              source, activity, include_redirect_sources=False)
           source_updates['last_syndication_url'] = source.last_syndication_url
-        logging.info('%s has %d original post URL(s): %s', activity.get('url'),
+
+        # send wms to all original posts, but only posts and comments (not
+        # likes, reposts, or rsvps) to mentions. matches logic in handlers.py!
+        targets = set(activity['originals'])
+        if Response.get_type(resp) in ('post', 'comment'):
+          targets |= activity['mentions']
+
+        logging.info('%s has %d webmention target(s): %s', activity.get('url'),
                      len(targets), ' '.join(targets))
         for t in targets:
           if len(t) <= _MAX_STRING_LENGTH:

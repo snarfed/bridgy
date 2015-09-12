@@ -410,6 +410,28 @@ class PollTest(TaskQueueTest):
     self.assert_equals('complete', resp.status)
     self.assertIsNone(resp.urls_to_activity)
 
+  def test_mentions_only_go_to_posts_and_comments(self):
+    """Response.urls_to_activity should be left unset.
+    """
+    self.sources[0].domains = ['foo']
+    self.sources[0].put()
+
+    del self.activities[0]['object']['url']  # prevent posse post discovery
+    self.sources[0].set_activities([self.activities[0]])
+
+    self.post_task()
+
+    self.assert_equals('comment', self.responses[0].type)
+    self.responses[0].unsent = ['http://target1/post/url']
+    for resp in self.responses[1:3]:
+      self.assertNotIn(resp.type, ('post', 'comment'))
+      resp.unsent = []
+      resp.status = 'complete'
+
+    self.assert_entities_equal(
+      self.responses[:3], models.Response.query().fetch(),
+      ignore=('created', 'updated', 'activities_json', 'response_json'))
+
   def test_wrong_last_polled(self):
     """If the source doesn't have our last polled value, we should quit.
     """

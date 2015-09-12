@@ -213,6 +213,8 @@ class ItemHandler(webapp2.RequestHandler):
                       if url not in existing]
 
 
+# Note that mention links are included in posts and comments, but not
+# likes, reposts, or rsvps. Matches logic in poll() (step 4) in tasks.py!
 class PostHandler(ItemHandler):
   def get_item(self, id):
     post = self.source.get_post(id)
