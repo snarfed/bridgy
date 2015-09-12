@@ -24,7 +24,7 @@ support). Add it to your `$PYTHONPATH`, e.g.
 ```
 virtualenv local
 source local/bin/activate
-pip install -r requirements.txt
+pip install -r requirements.freeze.txt
 
 # We install gdata in source mode, and App Engine doesn't follow .egg-link
 # files, so add a symlink to it.

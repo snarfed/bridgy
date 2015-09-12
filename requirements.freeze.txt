@@ -1,0 +1,21 @@
+-e git+git@github.com:snarfed/gdata-python-client-1.git@blogger_id_parsing#egg=gdata
+-e git+git@github.com:snarfed/granary.git#egg=granary-master
+-e git+git@github.com:snarfed/oauth-dropins.git#egg=oauth_dropins-master
+-e git+git@github.com:snarfed/webmention-tools.git#egg=webmentiontools
+beautifulsoup4==4.3.2
+google-api-python-client==1.4.1
+html2text==2015.6.21
+httplib2==0.9.1
+mf2py==0.2.6
+oauth2client==1.4.11
+oauthlib==1.0.1
+pyasn1==0.1.7
+pyasn1-modules==0.0.5
+python-tumblpy==1.0.4
+requests==2.1.0
+requests-oauthlib==0.5.0
+rsa==3.1.4
+simplejson==3.7.3
+six==1.9.0
+tweepy==3.3.0
+uritemplate==0.6
