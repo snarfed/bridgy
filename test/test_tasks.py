@@ -410,7 +410,7 @@ class PollTest(TaskQueueTest):
     self.assert_equals('complete', resp.status)
     self.assertIsNone(resp.urls_to_activity)
 
-  def test_mentions_only_go_to_posts_and_comments(self):
+  def test_only_posts_and_comments_go_to_mentions(self):
     """Response.urls_to_activity should be left unset.
     """
     self.sources[0].domains = ['foo']
