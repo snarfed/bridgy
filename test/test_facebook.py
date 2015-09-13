@@ -77,6 +77,7 @@ class FacebookPageTest(testutil.ModelsTest):
     self.assertEqual('snarfed.org', self.fb.username)
     self.assertEqual('user', self.fb.type)
     self.assertEqual('https://www.facebook.com/snarfed.org', self.fb.silo_url())
+    self.assertEqual('tag:facebook.com,2013:212038', self.fb.user_tag_id())
 
   def test_get_activities(self):
     owned_event = copy.deepcopy(gr_test_facebook.EVENT)

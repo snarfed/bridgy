@@ -157,6 +157,10 @@ class Source(StringIdModel):
     """
     return ndb.Key(cls, id).get()
 
+  def user_tag_id(self):
+    """Returns the tag URI for this source, e.g. 'tag:plus.google.com:123456'."""
+    return self.gr_source.tag_uri(self.key.id())
+
   def bridgy_path(self):
     """Returns the Bridgy page URL path for this source."""
     return '/%s/%s' % (self.SHORT_NAME, self.key.string_id())
@@ -170,7 +174,7 @@ class Source(StringIdModel):
     raise NotImplementedError()
 
   def label(self):
-    """Human-readable label for this site."""
+    """Human-readable label for this source."""
     return '%s (%s)' % (self.name, self.GR_CLASS.NAME)
 
   def poll_period(self):

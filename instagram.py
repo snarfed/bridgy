@@ -61,6 +61,11 @@ class Instagram(models.Source):
     """Returns the Instagram account URL, e.g. https://instagram.com/foo."""
     return self.url
 
+  def user_tag_id(self):
+    """Returns the tag URI for this source, e.g. 'tag:instagram.com:123456'."""
+    user = json.loads(self.auth_entity.get().user_json)
+    return self.gr_source.tag_uri(user.get('id') or self.key.id())
+
   def get_activities_response(self, *args, **kwargs):
     """Discard min_id because we still want new comments/likes on old photos."""
     if 'min_id' in kwargs:

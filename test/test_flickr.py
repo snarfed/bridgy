@@ -31,6 +31,15 @@ class FlickrTest(testutil.ModelsTest):
     self.auth_entity.put()
     self.flickr = flickr.Flickr.new(self.handler, self.auth_entity)
 
+  def test_new(self):
+    self.assertEqual(self.auth_entity, self.flickr.auth_entity.get())
+    self.assertEqual('39216764@N00', self.flickr.key.id())
+    self.assertEqual('Kyle Mahan', self.flickr.name)
+    self.assertEqual('kindofblue115', self.flickr.username)
+    self.assertEqual('https://www.flickr.com/people/kindofblue115/',
+                     self.flickr.silo_url())
+    self.assertEqual('tag:flickr.com,2013:kindofblue115', self.flickr.user_tag_id())
+
   def expect_call_api_method(self, method, params, result):
     # FIXME duplicated from granary.test_flickr.FlickrTest, not sure
     # how to share

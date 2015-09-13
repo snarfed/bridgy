@@ -23,6 +23,7 @@ class InstagramTest(testutil.ModelsTest):
                             'full_name': 'Ryan Barrett',
                             'bio': 'something about me',
                             'profile_picture': 'http://pic.ture/url',
+                            'id': 'my_string_id',
                             }))
     self.auth_entity.put()
 
@@ -34,6 +35,7 @@ class InstagramTest(testutil.ModelsTest):
     self.assertEqual('http://pic.ture/url', inst.picture)
     self.assertEqual('http://instagram.com/snarfed', inst.url)
     self.assertEqual('http://instagram.com/snarfed', inst.silo_url())
+    self.assertEqual('tag:instagram.com,2013:my_string_id', inst.user_tag_id())
     self.assertEqual('Ryan Barrett', inst.name)
 
   def test_get_activities_response(self):
