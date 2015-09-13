@@ -65,6 +65,10 @@ class FakeBase(ndb.Model):
       cls.string_id_counter += 1
     return cls(id=id, **props)
 
+  @classmethod
+  def clear(cls):
+    cls.data = {}
+
 
 class FakeGrSourceMeta(FakeBase.__metaclass__,
                        gr_source.Source.__metaclass__):
@@ -157,10 +161,22 @@ class FakeSource(FakeBase, Source):
   def set_activities(self, val):
     self._set('activities', val)
 
+  def set_search_results(self, val):
+    self._set('search_results', val)
+
   def get_activities_response(self, fetch_replies=False, fetch_likes=False,
                               fetch_shares=False, count=None, etag=None,
-                              min_id=None, cache=None):
-    return {'items': self._get('activities'), 'etag': self._get('etag')}
+                              min_id=None, cache=None, search_query=None):
+    activities = self._get('activities')
+    if search_query:
+      activities = self._get('search_results')
+      if activities is None:
+        raise NotImplementedError()
+
+    return {
+      'items': activities,
+      'etag': self._get('etag'),
+    }
 
   def get_post(self, id):
     return self.get_activities()[int(id)]
@@ -193,6 +209,7 @@ class HandlerTest(gr_testutil.TestCase):
     super(HandlerTest, self).setUp()
     self.handler = util.Handler(self.request, self.response)
     logging.getLogger().removeHandler(appengine_config.ereporter_logging_handler)
+    FakeBase.clear()
 
     # TODO: remove this and don't depend on consistent global queries
     policy = datastore_stub_util.PseudoRandomHRConsistencyPolicy(probability=1)

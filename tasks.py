@@ -119,17 +119,33 @@ class Poll(webapp2.RequestHandler):
     source_updates = {}
 
     #
-    # Step 1: fetch activities
+    # Step 1: fetch activities:
+    # * posts by the user
+    # * search all posts for the user's domain to find mention links
     #
     cache = util.CacheDict()
     if source.last_activities_cache_json:
       cache.update(json.loads(source.last_activities_cache_json))
 
+    kwargs = {
+      'fetch_replies': True,
+      'fetch_likes': True,
+      'fetch_shares': True,
+      'count': 50,
+      'etag': source.last_activities_etag,
+      'min_id': source.last_activity_id,
+      'cache': cache,
+    }
+    activities = []
     try:
-      response = source.get_activities_response(
-        fetch_replies=True, fetch_likes=True, fetch_shares=True, count=50,
-        etag=source.last_activities_etag, min_id=source.last_activity_id,
-        cache=cache)
+      response = source.get_activities_response(**kwargs)
+      activities += response.get('items', [])
+      for domain in source.domains:
+        activities += source.get_activities_response(
+          search_query='"%s"' % domain, **kwargs).get('items', [])
+    except NotImplementedError:
+      # this source doesn't support search
+      pass
     except Exception, e:
       code, body = util.interpret_http_exception(e)
       if code == '401':
@@ -143,7 +159,6 @@ class Poll(webapp2.RequestHandler):
       else:
         raise
 
-    activities = response.get('items', [])
     logging.info('Found %d activities', len(activities))
 
     # extract silo activity ids, update last_activity_id
