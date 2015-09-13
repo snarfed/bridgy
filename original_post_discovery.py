@@ -67,6 +67,13 @@ def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True):
     activity, domains=source.domains, cache=memcache,
     headers=util.USER_AGENT_HEADER)
 
+  obj = activity.get('object') or activity
+  author_id = obj.get('author', {}).get('id')
+  if author_id and author_id != source.user_tag_id():
+    # this is someone else's post, so all links must be mentions
+    mentions.update(originals)
+    originals = set()
+
   def resolve(urls):
     resolved = set()
     for url in urls:
@@ -87,7 +94,6 @@ def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True):
   # TODO possible optimization: if we've discovered a backlink to a post on the
   # author's domain (i.e., it included a link or citation), then skip the rest
   # of this.
-  obj = activity.get('object') or activity
   syndication_url = obj.get('url')
 
   if syndication_url:

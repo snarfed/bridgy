@@ -23,7 +23,7 @@ class HandlersTest(testutil.HandlerTest):
         'url': 'http://fa.ke/000',
         'content': 'asdf http://other/link qwert',
         'author': {
-          'id': 'tag:fa.ke,2013:author_id',
+          'id': self.source.user_tag_id(),
           'image': {'url': 'http://example.com/ryan/image'},
         },
         'upstreamDuplicates': ['http://or.ig/post'],
@@ -55,7 +55,7 @@ class HandlersTest(testutil.HandlerTest):
 <span class="u-uid">tag:fa.ke,2013:000</span>
 
   <div class="h-card p-author">
-    <a class="u-url" href="http://fa.ke/author_id"></a>
+    <a class="u-url" href="http://fa.ke/%s"></a>
     <img class="u-photo" src="https://example.com/ryan/image" alt="" />
   </div>
 
@@ -68,7 +68,7 @@ class HandlersTest(testutil.HandlerTest):
   </div>
 
 </article>
-""")
+""" % self.source.key.id())
 
   def test_post_json(self):
     resp = handlers.application.get_response(
@@ -88,8 +88,8 @@ asdf http://other/link qwert
           'author': [{
               'type': ['h-card'],
               'properties': {
-                'uid': ['tag:fa.ke,2013:author_id'],
-                'url': ['http://fa.ke/author_id'],
+                'uid': [self.source.user_tag_id()],
+                'url': ['http://fa.ke/%s' % self.source.key.id()],
                 'photo': ['https://example.com/ryan/image'],
                 },
               }],

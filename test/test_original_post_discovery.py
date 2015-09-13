@@ -631,8 +631,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.assertFalse(SyndicatedPost.query(ancestor=self.source.key).get())
 
   def test_source_domains(self):
-    """Only links to the user's own domains should end up in upstreamDuplicates.
-    """
+    """Only links to the user's own domains should end up in originals."""
     self.expect_requests_get('http://author', '')
     self.mox.ReplayAll()
 
@@ -647,6 +646,23 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.source.put()
 
     self.assert_discover(['https://mention'])
+
+  def test_source_user(self):
+    """Only links from the user's own posts should end up in originals."""
+    self.activity['object']['content'] = 'x http://author/post y'
+    self.expect_requests_get('http://author', '')
+    self.mox.ReplayAll()
+
+    user_id = self.source.user_tag_id()
+    assert user_id
+    self.activity['object']['author'] = {'id': user_id}
+    self.assert_discover(['http://author/post'], [])
+
+    self.activity['object']['author'] = {'id': 'tag:fa.ke,2013:someone_else'}
+    self.assert_discover([], ['http://author/post'])
+
+    del self.activity['object']['author']
+    self.assert_discover(['http://author/post'], [])
 
   def test_refetch_hfeed(self):
     """refetch should grab resources again, even if they were previously
