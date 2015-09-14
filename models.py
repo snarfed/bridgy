@@ -224,7 +224,8 @@ class Source(StringIdModel):
     Passes through to granary by default. May be overridden
     by subclasses.
     """
-    return self.gr_source.get_activities_response(group_id=gr_source.SELF, **kwargs)
+    kwargs.setdefault('group_id', gr_source.SELF)
+    return self.gr_source.get_activities_response(**kwargs)
 
   def get_activities(self, *args, **kwargs):
     return self.get_activities_response(*args, **kwargs)['items']
