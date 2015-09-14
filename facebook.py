@@ -104,8 +104,9 @@ class FacebookPage(models.Source):
   def get_activities_response(self, **kwargs):
     # TODO: use batch API to get photos, events, etc in one request
     # https://developers.facebook.com/docs/graph-api/making-multiple-requests
+    kwargs.setdefault('group_id', SELF)
     try:
-      resp = self.gr_source.get_activities_response(group_id=SELF, **kwargs)
+      resp = self.gr_source.get_activities_response(**kwargs)
 
       # if it's requesting one specific activity, then we're done
       if 'activity_id' in kwargs:

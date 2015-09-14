@@ -68,9 +68,10 @@ class Instagram(models.Source):
 
   def get_activities_response(self, *args, **kwargs):
     """Discard min_id because we still want new comments/likes on old photos."""
+    kwargs.setdefault('group_id', SELF)
     if 'min_id' in kwargs:
       del kwargs['min_id']
-    return self.gr_source.get_activities_response(*args, group_id=SELF, **kwargs)
+    return self.gr_source.get_activities_response(*args, **kwargs)
 
   def canonicalize_syndication_url(self, syndication_url):
     """Instagram-specific standardization of syndicated urls. Canonical form
