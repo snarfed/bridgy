@@ -965,3 +965,9 @@ Join us!"""
     for prop in 'like', 'repost':
       url = 'http://foo.com/%s' % prop
       self.assert_created('foo - %s' % url, source=url)
+
+  def test_unescape(self):
+    self.expect_requests_get('http://foo.com/bar', self.post_html % 'abc &amp; xyz')
+    self.mox.ReplayAll()
+    self.assert_created('abc & xyz - http://foo.com/bar')
+

@@ -350,7 +350,7 @@ class Handler(webmention.WebmentionHandler):
       h.ignore_images = True
       activity['content'] = '\n'.join(
         # strip trailing whitespace that html2text adds to ends of some lines
-        line.rstrip() for line in h.handle(content).splitlines())
+        line.rstrip() for line in h.unescape(h.handle(content)).splitlines())
       logging.info('Rendered content to:\n%s', activity['content'])
 
   def expand_target_urls(self, activity):
