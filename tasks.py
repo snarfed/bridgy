@@ -141,8 +141,9 @@ class Poll(webapp2.RequestHandler):
       response = source.get_activities_response(**kwargs)
       activities += response.get('items', [])
       for domain in source.domains:
-        activities += source.get_activities_response(
-          search_query='"%s"' % domain, **kwargs).get('items', [])
+        if appengine_config.DEBUG or domain in util.LOCALHOST_TEST_DOMAINS:
+          activities += source.get_activities_response(
+            search_query='"%s"' % domain, **kwargs).get('items', [])
     except NotImplementedError:
       # this source doesn't support search
       pass
