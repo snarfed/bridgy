@@ -164,11 +164,13 @@ class FakeSource(FakeBase, Source):
   def set_search_results(self, val):
     self._set('search_results', val)
 
-  def get_activities_response(self, fetch_replies=False, fetch_likes=False,
+  def get_activities_response(self, user_id=None, group_id=None, app_id=None,
+                              fetch_replies=False, fetch_likes=False,
                               fetch_shares=False, count=None, etag=None,
                               min_id=None, cache=None, search_query=None):
     activities = self._get('activities')
     if search_query:
+      assert group_id == gr_source.SEARCH
       activities = self._get('search_results')
       if activities is None:
         raise NotImplementedError()

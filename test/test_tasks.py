@@ -24,6 +24,8 @@ from oauth2client.client import AccessTokenRefreshError
 import requests
 from webmentiontools import send
 
+import appengine_config
+
 import models
 import tasks
 from tasks import PropagateResponse
@@ -61,6 +63,7 @@ class PollTest(TaskQueueTest):
   def setUp(self):
     super(PollTest, self).setUp()
     FakeGrSource.DOMAIN = 'source'
+    appengine_config.DEBUG = True
 
   def tearDown(self):
     FakeGrSource.DOMAIN = 'fa.ke'

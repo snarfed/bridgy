@@ -15,6 +15,7 @@ import urlparse
 from google.appengine.api import memcache
 from google.appengine.api.datastore_types import _MAX_STRING_LENGTH
 from google.appengine.ext import ndb
+from granary import source as gr_source
 import webapp2
 from webmentiontools import send
 
@@ -143,7 +144,8 @@ class Poll(webapp2.RequestHandler):
       for domain in source.domains:
         if appengine_config.DEBUG or domain in util.LOCALHOST_TEST_DOMAINS:
           activities += source.get_activities_response(
-            search_query='"%s"' % domain, **kwargs).get('items', [])
+            search_query='"%s"' % domain, group_id=gr_source.SEARCH, **kwargs
+            ).get('items', [])
     except NotImplementedError:
       # this source doesn't support search
       pass
