@@ -34,6 +34,10 @@ from google.appengine.ext import ereporter
 import logging
 import traceback
 
+# quiet down oauth1 log messages
+logging.getLogger('oauthlib').setLevel(logging.INFO)
+logging.getLogger('requests_oauthlib').setLevel(logging.INFO)
+
 # monkey patch ereporter to combine exceptions from different versions and dates
 ereporter.ExceptionRecord.get_key_name = \
     classmethod(lambda cls, signature, version, date=None: signature)
@@ -93,7 +97,6 @@ class BlacklistingHandler(ereporter.ExceptionRecordingHandler):
 ereporter_logging_handler = BlacklistingHandler()
 import logging
 logging.getLogger().addHandler(ereporter_logging_handler)
-
 
 # temporarily disabled:
 # turn off ndb's in-process cache. i'd love to use it, but the frontends
