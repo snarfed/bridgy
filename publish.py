@@ -37,6 +37,7 @@ import urlparse
 import appengine_config
 from appengine_config import HTTP_TIMEOUT
 
+from bs4 import BeautifulSoup
 from granary import microformats2
 from granary import source as gr_source
 from oauth_dropins import facebook as oauth_facebook
@@ -73,8 +74,11 @@ class Handler(webmention.WebmentionHandler):
 
   Attributes:
     fetched: requests.Response from fetching source_url
+    shortlink: rel-shortlink found in the original post, if any
   """
   PREVIEW = None
+
+  shortlink = None
 
   def authorize(self):
     """Returns True if the current user is authorized for this request.
@@ -179,6 +183,16 @@ class Handler(webmention.WebmentionHandler):
       return
     self.fetched, data = resp
 
+    # find rel-shortlink, if any
+    # http://microformats.org/wiki/rel-shortlink
+    # https://github.com/snarfed/bridgy/issues/173
+    soup = BeautifulSoup(self.fetched.text)
+    shortlinks = (soup.find_all('link', rel='shortlink') +
+                  soup.find_all('a', rel='shortlink') +
+                  soup.find_all('a', class_='shortlink'))
+    if shortlinks:
+      self.shortlink = shortlinks[0]['href']
+
     # loop through each item and its children and try to preview/create it. if
     # it fails, try the next one. break after the first one that works.
     resp = None
@@ -250,10 +264,14 @@ class Handler(webmention.WebmentionHandler):
       if content:
         obj['content'] = content.strip()
 
-    # which original post URL to include? if the source URL redirected, use the
-    # (pre-redirect) source URL, since it might be a short URL. otherwise, use
-    # u-url if it's set. finally, fall back to the actual fetched URL
-    if self.source_url() != self.fetched.url:
+    # which original post URL to include? in order of preference:
+    # 1. rel-shortlink (background: https://github.com/snarfed/bridgy/issues/173)
+    # 2. original user-provided URL if it redirected
+    # 3. u-url if available
+    # 4. actual final fetched URL
+    if self.shortlink:
+      obj['url'] = self.shortlink
+    elif self.source_url() != self.fetched.url:
       obj['url'] = self.source_url()
     elif 'url' not in obj:
       obj['url'] = self.fetched.url

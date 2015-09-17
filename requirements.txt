@@ -2,6 +2,7 @@ oauth-dropins
 granary
 -e git+git@github.com:snarfed/gdata-python-client-1.git@blogger_id_parsing#egg=gdata
 google-api-python-client>=1.4.0
+beautifulsoup4
 html2text
 mf2py>=0.2.6
 oauth2client

@@ -251,6 +251,38 @@ class PublishTest(testutil.HandlerTest):
     # check that we include the original link, not the resolved one
     self.assert_created('foo - http://will/redirect', source='http://will/redirect')
 
+  def test_link_rel_shortlink(self):
+    self._test_shortlink("""\
+<html>
+<head><link rel="shortlink" href="http://sho.rt/link" /></head>
+<body>
+""" + self.post_html % 'foo' + """\
+</body>
+</html>""")
+
+  def test_a_rel_shortlink(self):
+    self._test_shortlink(self.post_html % """\
+foo
+<a rel="shortlink" href="http://sho.rt/link"></a>""")
+
+  def test_a_class_shortlink(self):
+    self._test_shortlink(self.post_html % """\
+foo
+<a class="shortlink" href="http://sho.rt/link"></a>""")
+
+  def _test_shortlink(self, html):
+    self.expect_requests_get('http://foo.com/bar', html)
+    self.mox.ReplayAll()
+    resp = self.assert_created('foo - http://sho.rt/link')
+
+  def test_rel_shortlink_overrides_redirect(self):
+    self.expect_requests_head('http://will/redirect', redirected_url='http://foo.com')
+    self.expect_requests_get('http://foo.com', self.post_html % """\
+foo
+<a class="shortlink" href="http://sho.rt/link"></a>""")
+    self.mox.ReplayAll()
+    self.assert_created('foo - http://sho.rt/link', source='http://will/redirect')
+
   def test_bad_source(self):
     # no source
     self.source.key.delete()
