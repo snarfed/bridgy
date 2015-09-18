@@ -76,6 +76,13 @@ cd ../oauth-dropins && source local/bin/activate.csh && python -m unittest disco
   ./facebook_test_live.py && git push && ~/google_appengine/appcfg.py update .
 ```
 
+[`remote_api_shell`](https://cloud.google.com/appengine/docs/python/tools/remoteapi#using_the_remote_api_shell)
+is a useful interactive Python shell that can interact with the production app's
+datastore, memcache, etc. To use it,
+[create a service account and download its JSON credentials](https://console.developers.google.com/project/brid-gy/apiui/credential),
+put it somewhere safe, and put its path in your `GOOGLE_APPLICATION_CREDENTIALS`
+environment variable.
+
 
 Monitoring
 ---
