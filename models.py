@@ -19,8 +19,8 @@ import util
 
 from google.appengine.ext import ndb
 
-VERB_TYPES = ('comment', 'like', 'repost', 'rsvp')
-TYPES = VERB_TYPES + ('post', 'preview')
+VERB_TYPES = ('post', 'comment', 'like', 'repost', 'rsvp')
+TYPES = VERB_TYPES + ('preview',)
 
 # maps string short name to Source subclass. populated by SourceMeta.
 sources = {}

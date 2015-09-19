@@ -122,7 +122,10 @@ class ResponseTest(testutil.ModelsTest):
         {'objectType': 'activity', 'verb': 'share'}))
     self.assertEqual('rsvp', Response.get_type({'verb': 'rsvp-no'}))
     self.assertEqual('rsvp', Response.get_type({'verb': 'invite'}))
-    self.assertEqual('comment', Response.get_type({'objectType': 'other'}))
+    self.assertEqual('comment', Response.get_type({'objectType': 'comment'}))
+    self.assertEqual('post', Response.get_type({'verb': 'post'}))
+    self.assertEqual('post', Response.get_type({'objectType': 'event'}))
+    self.assertEqual('post', Response.get_type({'objectType': 'image'}))
 
   def test_hooks(self):
     resp = Response(id='x', activity_json='{"foo": "bar"}')
