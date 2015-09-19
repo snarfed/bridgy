@@ -310,7 +310,7 @@ class PollTest(TaskQueueTest):
     self.assert_equals([too_long[:_MAX_STRING_LENGTH - 4] + '...'], resp.failed)
 
   def test_non_public_posts(self):
-    """Only posts with to: @public should be propagated."""
+    """Only posts without to: or with to: @public should be propagated."""
     del self.activities[0]['object']['to']
     self.activities[1]['object']['to'] = [{'objectType':'group', 'alias':'@private'}]
     self.activities[2]['object']['to'] = [{'objectType':'group', 'alias':'@public'}]

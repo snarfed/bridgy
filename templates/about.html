@@ -303,6 +303,7 @@ GitHub</a>. Thank you!
 <li>Facebook event RSVPs. <a href="http://indiewebcamp.com/rsvp">Details.</a></li>
 <li>Google+ comments, +1s, and reshares of your posts.</li>
 <li>Instagram comments and likes on your pictures.</li>
+<li>Flickr comments favorites on your photos.</li>
 </ul>
 </li>
 </p></li>
@@ -494,7 +495,8 @@ webmention manually</a>. Here's how to construct Bridgy's source URLs:
 <p>Details:</p>
 <ul>
 <li><code class='keyword'>SITE</code> is either <code>facebook</code>,
-  <code>googleplus</code>, <code>instagram</code>, or <code>twitter</code>.
+  <code>flickr</code>,<code>googleplus</code>, <code>instagram</code>,
+  or <code>twitter</code>.
 </li>
 <li><code>/post/...</code> URLs aren't currently used by Bridgy itself, but
   they're fun to play with if you want to convert silo posts to
@@ -504,7 +506,7 @@ webmention manually</a>. Here's how to construct Bridgy's source URLs:
   JSON-formatted version.
 </li>
 <li>For Twitter and Instagram, <code class='keyword'>USER_ID</code> is your
-  username, but for Facebook and Google+, it's your numeric user id.
+  username, but for Facebook, Flickr, and Google+, it's your numeric user id.
   <code class='value'>LIKED_BY_USER_ID</code> and
   <code class='value'>RSVP_USER_ID</code> are always numeric. You
   can get numeric user ids from the API consoles
