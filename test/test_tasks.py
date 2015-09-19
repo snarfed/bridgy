@@ -1589,3 +1589,25 @@ class PropagateTest(TaskQueueTest):
     self.post_url = '/_ah/queue/propagate-blogpost'
     super(PropagateTest, self).post_task(params={'key': blogpost.key.urlsafe()})
     self.assert_response_is('complete', response=blogpost)
+
+  def test_post_response(self):
+    """Responses with type 'post' (ie mentions) are their own activity.
+
+    https://github.com/snarfed/bridgy/issues/456
+    """
+    response = models.Response(
+      id='tag:source.com,2013:9',
+      response_json=json.dumps({
+        'id': 'tag:source.com,2013:9',
+        'object': {'content': 'foo http://mention/post bar'},
+      }),
+      type='post',
+      source=self.sources[0].key,
+      unsent=['http://mention/post'],
+    )
+    response.put()
+
+    self.expect_webmention(source_url='http://localhost/post/fake/0123456789/9/9',
+                           target='http://mention/post').AndReturn(True)
+    self.mox.ReplayAll()
+    self.post_task(response=response)
