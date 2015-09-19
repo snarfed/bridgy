@@ -83,15 +83,19 @@ class PollTest(TaskQueueTest):
       params={'source_key': source.key.urlsafe(),
               'last_polled': '1970-01-01-00-00-00'})
 
-  def assert_responses(self):
+  def assert_responses(self, expected=None):
     """Asserts that all of self.responses are saved."""
+    if expected is None:
+      expected = self.responses
+
     # sort fields in json properties since they're compared as strings
     stored = list(models.Response.query())
-    for resp in self.responses + stored:
+    for resp in expected + stored:
       resp.activities_json = [json.dumps(json.loads(a), sort_keys=True)
                               for a in resp.activities_json]
       resp.response_json = json.dumps(json.loads(resp.response_json), sort_keys=True)
-    self.assert_entities_equal(self.responses, stored, ignore=('created', 'updated'))
+
+    self.assert_entities_equal(expected, stored, ignore=('created', 'updated'))
 
   def assert_task_eta(self, countdown):
     """Checks the current poll task's eta. Handles the random range.
@@ -389,13 +393,10 @@ class PollTest(TaskQueueTest):
     resp = models.Response.query().get()
     self.assert_equals(['tag:source.com,2013:%s' % id for id in 'a', 'b', 'c'],
                        [json.loads(a)['id'] for a in resp.activities_json])
-    self.assert_equals(
-      ['http://from/tag', 'http://from/synd/post', 'http://target1/post/url'],
-      resp.unsent)
-    self.assert_equals({'http://from/tag': 1,
-                        'http://from/synd/post': 2,
-                        'http://target1/post/url': 0},
-                       json.loads(resp.urls_to_activity))
+
+    urls = ['http://from/tag', 'http://from/synd/post', 'http://target1/post/url']
+    self.assert_equals(urls, resp.unsent)
+    self.assert_equals(urls, json.loads(resp.urls_to_activity).keys())
 
   def test_multiple_activities_no_target_urls(self):
     """Response.urls_to_activity should be left unset.
@@ -416,29 +417,60 @@ class PollTest(TaskQueueTest):
   def test_search_for_mentions_backfeed_posts_and_comments(self):
     """Search for links to the source's domains in posts, backfeed posts and
     comments to those mention links but not likes, reposts, or rsvps.
-    """
-    self.sources[0].domains = ['foo', 'bar']
-    self.sources[0].put()
 
-    del self.activities[0]['object']['url']  # prevent posse post discovery
-    self.sources[0].set_activities([self.activities[0]])
-    mention = copy.deepcopy(self.activities[0])
-    mention['object']['content'] = ' http://target2/post/url '
-    self.sources[0].set_search_results([mention])
+    https://github.com/snarfed/bridgy/issues/456
+    """
+    source = self.sources[0]
+    source.domains = ['foo', 'bar', 'target1']
+    source.put()
+
+    # return one normal activity and one searched mention
+    activity = self.activities[0]
+    del activity['object']['url']  # prevent posse post discovery
+    source.set_activities([activity])
+
+    mention = {
+      'id': 'tag:source.com,2013:9',
+      'object': {
+        'objectType': 'note',
+        'content': 'foo http://target9/post/url bar',
+        'replies': {'items': [{
+          'objectType': 'comment',
+          'id': 'tag:source.com,2013:9_comment',
+          'content': 'foo bar',
+        }]},
+      },
+    }
+    source.set_search_results([copy.deepcopy(mention)])
+
     self.post_task()
 
-    self.assert_equals('comment', self.responses[0].type)
-    self.responses[0].unsent = ['http://target1/post/url',
-                                'http://target2/post/url']
-    for resp in self.responses[1:3]:
-      self.assertNotIn(resp.type, ('post', 'comment'))
-      resp.unsent = []
-      resp.status = 'complete'
+    # expected responses:
+    # * mention
+    # * mention comment
+    # * comment, like, and reshare from the normal activity
+    pruned_mention = json.dumps({
+      'id': 'tag:source.com,2013:9',
+      'object': {'content': 'foo http://target9/post/url bar'},
+    })
+    expected = [
+      models.Response(
+        id='tag:source.com,2013:9',
+        activities_json=[pruned_mention],
+        response_json=json.dumps(mention),
+        type='post',
+        source=source.key,
+        unsent=['http://target9/post/url'],
+      ), models.Response(
+        id='tag:source.com,2013:9_comment',
+        activities_json=[pruned_mention],
+        response_json=json.dumps(mention['object']['replies']['items'][0]),
+        type='comment',
+        source=source.key,
+        unsent=['http://target9/post/url'],
+      )] + self.responses[:3]  # from the normal activity
 
-    self.assert_entities_equal(
-      self.responses[:3], models.Response.query().fetch(),
-      ignore=('created', 'updated', 'activities_json', 'response_json',
-              'urls_to_activity'))
+    self.assert_responses(expected)
 
   def test_search_raises_not_implemented(self):
     """Some silos don't support search."""

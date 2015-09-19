@@ -5,6 +5,7 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import bz2
 import calendar
+import copy
 import datetime
 import gc
 import json
@@ -137,18 +138,30 @@ class Poll(webapp2.RequestHandler):
       'min_id': source.last_activity_id,
       'cache': cache,
     }
-    activities = []
+    # these map ids to AS objects
+    activities = {}
+    responses = {}
     try:
-      response = source.get_activities_response(**kwargs)
-      activities += response.get('items', [])
-      for domain in source.domains:
-        if appengine_config.DEBUG or domain in util.LOCALHOST_TEST_DOMAINS:
-          activities += source.get_activities_response(
-            search_query='"%s"' % domain, group_id=gr_source.SEARCH, **kwargs
+      # search for mentions
+      try:
+        for domain in source.domains:
+          # we don't backfeed likes or shares of mentions, just replies
+          kwargs['fetch_likes'] = kwargs['fetch_shares'] = False
+          if appengine_config.DEBUG or domain in util.LOCALHOST_TEST_DOMAINS:
+            mentions = source.get_activities_response(
+              search_query='"%s"' % domain, group_id=gr_source.SEARCH, **kwargs
             ).get('items', [])
-    except NotImplementedError:
-      # this source doesn't support search
-      pass
+            mentions = {m['id']: m for m in mentions}
+            activities.update(mentions)
+            responses.update(copy.deepcopy(mentions))
+      except NotImplementedError:
+        # this source doesn't support search
+        pass
+
+      # this user's own activities
+      response = source.get_activities_response(**kwargs)
+      activities.update({a['id']: a for a in response.get('items', [])})
+
     except Exception, e:
       code, body = util.interpret_http_exception(e)
       if code == '401':
@@ -167,21 +180,19 @@ class Poll(webapp2.RequestHandler):
     # extract silo activity ids, update last_activity_id
     silo_activity_ids = set()
     last_activity_id = source.last_activity_id
-    for activity in activities:
-      # extract activity id and maybe replace stored last activity id
-      id = activity.get('id')
-      if id:
-        parsed = util.parse_tag_uri(id)
-        if parsed:
-          id = parsed[1]
-        silo_activity_ids.add(id)
-        try:
-          # try numeric comparison first
-          greater = int(id) > int(last_activity_id)
-        except (TypeError, ValueError):
-          greater = id > last_activity_id
-        if greater:
-          last_activity_id = id
+    for id, activity in activities.items():
+      # maybe replace stored last activity id
+      parsed = util.parse_tag_uri(id)
+      if parsed:
+        id = parsed[1]
+      silo_activity_ids.add(id)
+      try:
+        # try numeric comparison first
+        greater = int(id) > int(last_activity_id)
+      except (TypeError, ValueError):
+        greater = id > last_activity_id
+      if greater:
+        last_activity_id = id
 
     if last_activity_id and last_activity_id != source.last_activity_id:
       source_updates['last_activity_id'] = last_activity_id
@@ -196,8 +207,7 @@ class Poll(webapp2.RequestHandler):
     #
     # Step 2: extract responses, store their activities in response['activities']
     #
-    responses = {}  # key is response id
-    for activity in activities:
+    for id, activity in activities.items():
       if not Source.is_public(activity):
         logging.info('Skipping non-public activity %s', id)
         continue
@@ -227,7 +237,7 @@ class Poll(webapp2.RequestHandler):
           resp = existing
         else:
           responses[id] = resp
-        resp.setdefault('activities', []).append(activity)
+        resp.setdefault('activities', []).append(copy.deepcopy(activity))
 
     #
     # Step 3: filter out responses we've already seen
@@ -246,7 +256,9 @@ class Poll(webapp2.RequestHandler):
     # Step 4: store new responses and enqueue propagate tasks
     #
     for id, resp in responses.items():
-      activities = resp.pop('activities', [])
+      resp_type = Response.get_type(resp)
+      activities = ([copy.deepcopy(resp)] if resp_type == 'post'
+                    else resp.pop('activities', []))
       too_long = set()
       urls_to_activity = {}
       for i, activity in enumerate(activities):
@@ -262,7 +274,7 @@ class Poll(webapp2.RequestHandler):
         # send wms to all original posts, but only posts and comments (not
         # likes, reposts, or rsvps) to mentions. matches logic in handlers.py!
         targets = set(activity['originals'])
-        if Response.get_type(resp) in ('post', 'comment'):
+        if resp_type in ('post', 'comment'):
           targets |= activity['mentions']
 
         logging.info('%s has %d webmention target(s): %s', activity.get('url'),
