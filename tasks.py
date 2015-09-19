@@ -615,7 +615,6 @@ class PropagateResponse(SendWebmentions):
 
   Attributes:
     activities: parsed Response.activities_json list
-    response_obj: parsed response object
 
   Request parameters:
     response_key: string key of Response entity
@@ -627,8 +626,8 @@ class PropagateResponse(SendWebmentions):
       return
 
     self.activities = [json.loads(a) for a in self.entity.activities_json]
-    self.response_obj = json.loads(self.entity.response_json)
-    if (not Source.is_public(self.response_obj) or
+    response_obj = json.loads(self.entity.response_json)
+    if (not Source.is_public(response_obj) or
         not all(Source.is_public(a) for a in self.activities)):
       logging.info('Response or activity is non-public. Dropping.')
       self.complete()
@@ -654,10 +653,8 @@ class PropagateResponse(SendWebmentions):
       response_id = response_id.split('_')[-1]
 
     # determine which activity to use
-    if self.entity.type == 'post':
-      assert not self.activities
-      activity = self.response_obj
-    elif self.entity.urls_to_activity:
+    activity = self.activities[0]
+    if self.entity.urls_to_activity:
       urls_to_activity = json.loads(self.entity.urls_to_activity)
       if urls_to_activity:
         try:
@@ -668,8 +665,6 @@ Hit https://github.com/snarfed/bridgy/issues/237 !
 target url %s not in urls_to_activity: %s
 activities: %s""", target_url, urls_to_activity, self.activities)
           self.abort(self.ERROR_HTTP_RETURN_CODE)
-    else:
-      activity = self.activities[0]
 
     # generate source URL
     id = activity['id']

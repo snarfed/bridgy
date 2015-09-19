@@ -1627,19 +1627,12 @@ class PropagateTest(TaskQueueTest):
 
     https://github.com/snarfed/bridgy/issues/456
     """
-    response = models.Response(
-      id='tag:source.com,2013:9',
-      response_json=json.dumps({
-        'id': 'tag:source.com,2013:9',
-        'object': {'content': 'foo http://mention/post bar'},
-      }),
-      type='post',
-      source=self.sources[0].key,
-      unsent=['http://mention/post'],
-    )
-    response.put()
+    self.responses[0].type = 'post'
+    self.responses[0].response_json = json.dumps(json.loads(
+      self.responses[0].activities_json[0]))
+    self.responses[0].put()
 
-    self.expect_webmention(source_url='http://localhost/post/fake/0123456789/9/9',
-                           target='http://mention/post').AndReturn(True)
+    self.expect_webmention(source_url='http://localhost/post/fake/0123456789/a/1_2_a'
+                          ).AndReturn(True)
     self.mox.ReplayAll()
-    self.post_task(response=response)
+    self.post_task()
