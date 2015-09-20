@@ -71,8 +71,8 @@ def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True):
   author_id = obj.get('author', {}).get('id')
   if author_id and author_id != source.user_tag_id():
     logging.warning(
-      "Demoting original post links because user %s doesn't match author of %s",
-      source.user_tag_id(), activity)
+      "Demoting original post links because user %s doesn't match author %s",
+      source.user_tag_id(), author_id)
     # this is someone else's post, so all links must be mentions
     mentions.update(originals)
     originals = set()
