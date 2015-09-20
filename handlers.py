@@ -128,7 +128,7 @@ class ItemHandler(webapp2.RequestHandler):
     source_cls = models.sources.get(source_short_name)
     if not source_cls:
       self.abort(400, "Source type '%s' not found. Known sources: %s" %
-                 (source_short_name, models.sources))
+                 (source_short_name, filter(None, models.sources.keys())))
 
     self.source = source_cls.get_by_id(string_id)
     if not self.source:
