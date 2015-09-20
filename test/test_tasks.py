@@ -1632,7 +1632,7 @@ class PropagateTest(TaskQueueTest):
       self.responses[0].activities_json[0]))
     self.responses[0].put()
 
-    self.expect_webmention(source_url='http://localhost/post/fake/0123456789/a/1_2_a'
+    self.expect_webmention(source_url='http://localhost/post/fake/0123456789/a'
                           ).AndReturn(True)
     self.mox.ReplayAll()
     self.post_task()

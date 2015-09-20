@@ -679,9 +679,11 @@ activities: %s""", target_url, urls_to_activity, self.activities)
     else:
       host_url = self.request.host_url
 
-    return '%s/%s/%s/%s/%s/%s' % (
-      host_url, self.entity.type, self.entity.source.get().SHORT_NAME,
-      self.entity.source.string_id(), post_id, response_id)
+    path = [host_url, self.entity.type, self.entity.source.get().SHORT_NAME,
+            self.entity.source.string_id(), post_id]
+    if self.entity.type != 'post':
+      path.append(response_id)
+    return '/'.join(path)
 
 
 class PropagateBlogPost(SendWebmentions):
