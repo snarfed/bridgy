@@ -6,6 +6,7 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 import datetime
 import itertools
 import json
+import logging
 import urlparse
 
 import appengine_config
@@ -233,6 +234,10 @@ class UserHandler(DashboardHandler):
         if (not gr_source.Source.is_public(r.response) or
             not all(gr_source.Source.is_public(a) for a in r.activities)):
           continue
+        elif r.type == 'post':
+          if not r.response.get('content'):
+            r.response['content'] = r.response['object'].get('content')
+          r.activities = []
 
         r.actor = r.response.get('author') or r.response.get('actor', {})
         if not r.response.get('content'):
