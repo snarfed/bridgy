@@ -36,7 +36,8 @@ def get_type(obj):
     return verb
   elif verb in gr_source.RSVP_TO_EVENT:
     return 'rsvp'
-  elif type == 'comment':
+  elif (type == 'comment' or obj.get('inReplyTo') or
+        obj.get('context', {}).get('inReplyTo')):
     return 'comment'
   else:
     return 'post'
