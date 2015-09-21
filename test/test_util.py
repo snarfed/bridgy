@@ -100,6 +100,26 @@ class UtilTest(testutil.ModelsTest):
     self.assert_equals(('http://foo/bar', 'foo', True),
                        util.get_webmention_target('http://foo/bar', resolve=False))
 
+  def test_get_webmention_second_redirect_not_text_html(self):
+    self.expect_requests_head('http://orig',
+                              redirected_url=['http://middle', 'https://end'],
+                              content_type='application/pdf')
+    self.mox.ReplayAll()
+    self.assert_equals(('https://end', 'end', False),
+                       util.get_webmention_target('http://orig', resolve=True))
+
+  def test_get_webmention_middle_redirect_blacklisted(self):
+    """We should allow blacklisted domains in the middle of a redirect chain.
+
+    ...e.g. Google's redirector https://www.google.com/url?...
+    """
+    self.expect_requests_head(
+      'http://orig',
+      redirected_url=['https://www.google.com/url?xyz', 'https://end'])
+    self.mox.ReplayAll()
+    self.assert_equals(('https://end', 'end', True),
+                       util.get_webmention_target('http://orig', resolve=True))
+
   def test_registration_callback(self):
     """Run through an authorization back and forth and make sure that
     the external callback makes it all the way through.

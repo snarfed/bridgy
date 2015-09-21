@@ -146,6 +146,7 @@ def get_webmention_target(url, resolve=True):
 
   send = True
   if resolve:
+    # this follows *all* redirects, until the end
     resolved = follow_redirects(url, cache=memcache)
     send = resolved.headers.get('content-type', '').startswith('text/html')
     url, domain, _ = get_webmention_target(resolved.url, resolve=False)
