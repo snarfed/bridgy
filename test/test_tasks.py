@@ -110,6 +110,21 @@ class PollTest(TaskQueueTest):
     self.assertAlmostEqual(datetime.datetime.utcnow() + countdown,
                            testutil.get_task_eta(task), delta=delta)
 
+  def expect_get_activities(self, **kwargs):
+    """Adds and returns an expected get_activities_response() call."""
+    self.mox.StubOutWithMock(FakeSource, 'get_activities_response')
+    params = {
+      'fetch_replies': True,
+      'fetch_likes': True,
+      'fetch_shares': True,
+      'count': mox.IgnoreArg(),
+      'etag': None,
+      'min_id': None,
+      'cache': mox.IgnoreArg(),
+    }
+    params.update(kwargs)
+    return FakeSource.get_activities_response(**params)
+
   def test_poll(self):
     """A normal poll task."""
     self.assertEqual(0, models.Response.query().count())
@@ -138,11 +153,7 @@ class PollTest(TaskQueueTest):
 
   def test_poll_error(self):
     """If anything goes wrong, the source status should be set to 'error'."""
-    self.mox.StubOutWithMock(FakeSource, 'get_activities_response')
-    FakeSource.get_activities_response(
-      count=mox.IgnoreArg(), fetch_replies=True, fetch_likes=True,
-      fetch_shares=True, etag=None, min_id=None, cache=mox.IgnoreArg(),
-      ).AndRaise(Exception('foo'))
+    self.expect_get_activities().AndRaise(Exception('foo'))
     self.mox.ReplayAll()
 
     self.assertRaises(Exception, self.post_task)
@@ -471,6 +482,7 @@ class PollTest(TaskQueueTest):
       )] + self.responses[:3]  # from the normal activity
 
     self.assert_responses(expected)
+    self.assertEquals('"foo" OR "bar" OR "target1"', source.last_search_query)
 
   def test_search_raises_not_implemented(self):
     """Some silos don't support search."""
@@ -515,11 +527,7 @@ class PollTest(TaskQueueTest):
     """If the source raises DisableSource, disable it.
     """
     source = self.sources[0]
-    self.mox.StubOutWithMock(FakeSource, 'get_activities_response')
-    FakeSource.get_activities_response(
-      count=mox.IgnoreArg(), fetch_replies=True, fetch_likes=True,
-      fetch_shares=True, etag=None, min_id=None, cache=mox.IgnoreArg(),
-      ).AndRaise(models.DisableSource)
+    self.expect_get_activities().AndRaise(models.DisableSource)
     self.mox.ReplayAll()
 
     source.status = 'enabled'
@@ -540,12 +548,7 @@ class PollTest(TaskQueueTest):
       ):
         self.mox.UnsetStubs()
         self.setUp()
-
-        self.mox.StubOutWithMock(FakeSource, 'get_activities_response')
-        FakeSource.get_activities_response(
-          count=mox.IgnoreArg(), fetch_replies=True, fetch_likes=True,
-          fetch_shares=True, etag=None, min_id=None, cache=mox.IgnoreArg(),
-          ).AndRaise(err)
+        self.expect_get_activities().AndRaise(err)
         self.mox.ReplayAll()
 
         self.post_task()
@@ -568,11 +571,7 @@ class PollTest(TaskQueueTest):
           urllib2.HTTPError('url', 403, 'msg', {}, None)
       ):
         self.mox.UnsetStubs()
-        self.mox.StubOutWithMock(FakeSource, 'get_activities_response')
-        FakeSource.get_activities_response(
-          count=mox.IgnoreArg(), fetch_replies=True, fetch_likes=True,
-          fetch_shares=True, etag=None, min_id=None, cache=mox.IgnoreArg(),
-          ).AndRaise(err)
+        self.expect_get_activities().AndRaise(err)
         self.mox.ReplayAll()
 
         self.post_task()
@@ -600,12 +599,8 @@ class PollTest(TaskQueueTest):
     source.last_polled = util.EPOCH
     source.put()
 
-    self.mox.StubOutWithMock(FakeSource, 'get_activities_response')
-    FakeSource.get_activities_response(
-      count=mox.IgnoreArg(), fetch_replies=True, fetch_likes=True,
-      fetch_shares=True, etag='"my etag"', min_id='c', cache=mox.IgnoreArg(),
+    self.expect_get_activities(etag='"my etag"', min_id='c'
       ).AndReturn({'items': [], 'etag': '"new etag"'})
-
     self.mox.ReplayAll()
     self.post_task()
 
@@ -624,12 +619,7 @@ class PollTest(TaskQueueTest):
     source.last_polled = util.EPOCH
     source.put()
 
-    self.mox.StubOutWithMock(FakeSource, 'get_activities_response')
-    FakeSource.get_activities_response(
-      count=mox.IgnoreArg(), fetch_replies=True, fetch_likes=True,
-      fetch_shares=True, etag=None, min_id='c', cache=mox.IgnoreArg(),
-      ).AndReturn({'items': []})
-
+    self.expect_get_activities(min_id='c').AndReturn({'items': []})
     self.mox.ReplayAll()
     self.post_task()
 

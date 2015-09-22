@@ -149,6 +149,7 @@ class FakeSource(FakeBase, Source):
   RATE_LIMITED_POLL = datetime.timedelta(hours=30)
 
   gr_source = FakeGrSource()
+  last_search_query = None
 
   def __init__(self, *args, **kwargs):
     super(FakeSource, self).__init__(*args, **kwargs)
@@ -172,6 +173,7 @@ class FakeSource(FakeBase, Source):
     if search_query:
       assert group_id == gr_source.SEARCH
       activities = self._get('search_results')
+      self.last_search_query = search_query
       if activities is None:
         raise NotImplementedError()
 

@@ -131,8 +131,6 @@ class Poll(webapp2.RequestHandler):
 
     kwargs = {
       'fetch_replies': True,
-      'fetch_likes': True,
-      'fetch_shares': True,
       'count': 50,
       'etag': source.last_activities_etag,
       'min_id': source.last_activity_id,
@@ -144,21 +142,30 @@ class Poll(webapp2.RequestHandler):
     try:
       # search for mentions
       try:
-        for domain in source.domains:
-          # we don't backfeed likes or shares of mentions, just replies
-          kwargs['fetch_likes'] = kwargs['fetch_shares'] = False
-          if appengine_config.DEBUG or domain in util.LOCALHOST_TEST_DOMAINS:
-            mentions = source.get_activities_response(
-              search_query='"%s"' % domain, group_id=gr_source.SEARCH, **kwargs
-            ).get('items', [])
-            mentions = {m['id']: m for m in mentions}
-            activities.update(mentions)
-            responses.update(copy.deepcopy(mentions))
+        # we don't backfeed likes or shares of mentions, just replies
+        kwargs['fetch_likes'] = kwargs['fetch_shares'] = False
+        if (source.domains and
+            (appengine_config.DEBUG or
+             set(source.domains).intersection(util.LOCALHOST_TEST_DOMAINS))):
+          # this is a bit of a hack: only twitter and G+ support search right
+          # now, and they both support the OR operator.
+          # TODO: move this into a proper boolean search API in granary
+          #
+          # https://dev.twitter.com/rest/public/search
+          # https://developers.google.com/+/api/latest/activities/search
+          query = ' OR '.join('"%s"' % domain for domain in source.domains)
+          mentions = source.get_activities_response(
+            search_query=query, group_id=gr_source.SEARCH, **kwargs
+          ).get('items', [])
+          mentions = {m['id']: m for m in mentions}
+          activities.update(mentions)
+          responses.update(copy.deepcopy(mentions))
       except NotImplementedError:
         # this source doesn't support search
         pass
 
       # this user's own activities
+      kwargs['fetch_likes'] = kwargs['fetch_shares'] = True
       response = source.get_activities_response(**kwargs)
       activities.update({a['id']: a for a in response.get('items', [])})
 
