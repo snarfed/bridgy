@@ -288,8 +288,9 @@ class Poll(webapp2.RequestHandler):
         if resp_type in ('post', 'comment'):
           targets |= activity['mentions']
 
-        logging.info('%s has %d webmention target(s): %s', activity.get('url'),
-                     len(targets), ' '.join(targets))
+        if targets:
+          logging.info('%s has %d webmention target(s): %s', activity.get('url'),
+                       len(targets), ' '.join(targets))
         for t in targets:
           if len(t) <= _MAX_STRING_LENGTH:
             urls_to_activity[t] = i
