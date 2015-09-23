@@ -193,6 +193,22 @@ def prune_activity(activity):
   return trim_nulls(pruned)
 
 
+def prune_response(response):
+  """Returns a response object dict with a few fields removed.
+
+  Args:
+    response: ActivityStreams response object
+
+  Returns: pruned response object
+  """
+  obj = response.get('object')
+  if obj:
+    response['object'] = prune_response(obj)
+
+  drop = ['activity', 'mentions', 'originals', 'replies', 'tags']
+  return trim_nulls({k: v for k, v in response.items() if k not in drop})
+
+
 def replace_test_domains_with_localhost(url):
   """Replace domains in LOCALHOST_TEST_DOMAINS with localhost for local
   testing when in DEBUG mode.

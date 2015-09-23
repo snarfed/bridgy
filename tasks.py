@@ -5,7 +5,6 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import bz2
 import calendar
-import copy
 import datetime
 import gc
 import json
@@ -144,8 +143,9 @@ class Poll(webapp2.RequestHandler):
       try:
         # we don't backfeed likes or shares of mentions, just replies
         kwargs['fetch_likes'] = kwargs['fetch_shares'] = False
-        if source.domains and appengine_config.DEBUG:
-           # or set(source.domains).intersection(util.LOCALHOST_TEST_DOMAINS))):
+        if (source.domains and
+            (appengine_config.DEBUG or
+             set(source.domains).intersection(util.LOCALHOST_TEST_DOMAINS))):
           # this is a bit of a hack: only twitter and G+ support search right
           # now, and they both support the OR operator.
           # TODO: move this into a proper boolean search API in granary
@@ -213,6 +213,11 @@ class Poll(webapp2.RequestHandler):
     #
     # Step 2: extract responses, store their activities in response['activities']
     #
+    # WARNING: this creates circular references in mentions found by search
+    # queries in step 1, since they are their own activity. We use
+    # prune_activity() and prune_response() in step 4 to remove these before
+    # serializing to JSON.
+    #
     for id, activity in activities.items():
       if not Source.is_public(activity):
         logging.info('Skipping non-public activity %s', id)
@@ -261,10 +266,12 @@ class Poll(webapp2.RequestHandler):
     #
     # Step 4: store new responses and enqueue propagate tasks
     #
+    pruned_responses = []
     for id, resp in responses.items():
       resp_type = Response.get_type(resp)
-      activities = ([resp] if resp_type == 'post'
-                    else resp.pop('activities', []))
+      activities = resp.pop('activities', [])
+      if not activities and resp_type == 'post':
+        activities = [resp]
       too_long = set()
       urls_to_activity = {}
       for i, activity in enumerate(activities):
@@ -293,11 +300,16 @@ class Poll(webapp2.RequestHandler):
                             _MAX_STRING_LENGTH, t)
             too_long.add(t[:_MAX_STRING_LENGTH - 4] + '...')
 
+      # store/update response entity. the prune_*() calls are important to
+      # remove circular references in mention responses, which are their own
+      # activities. details in the step 2 comment above.
+      pruned_response = util.prune_response(resp)
+      pruned_responses.append(pruned_response)
       resp = Response(
         id=id,
         source=source.key,
         activities_json=[json.dumps(util.prune_activity(a)) for a in activities],
-        response_json=json.dumps(resp),
+        response_json=json.dumps(pruned_response),
         type=Response.get_type(resp),
         unsent=list(urls_to_activity.keys()),
         failed=list(too_long))
@@ -306,9 +318,9 @@ class Poll(webapp2.RequestHandler):
       resp.get_or_save(source)
 
     # update cache
-    if responses:
+    if pruned_responses:
       source_updates['seen_responses_cache_json'] = json.dumps(
-        responses.values() + unchanged_responses)
+        pruned_responses + unchanged_responses)
 
     source_updates.update({'last_polled': source.last_poll_attempt,
                            'status': 'enabled'})

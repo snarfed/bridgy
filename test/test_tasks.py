@@ -460,21 +460,28 @@ class PollTest(TaskQueueTest):
     # * mention
     # * mention comment
     # * comment, like, and reshare from the normal activity
-    pruned_mention = json.dumps({
+    pruned_activity = json.dumps({
       'id': 'tag:source.com,2013:9',
       'object': {'content': 'foo http://target9/post/url bar'},
+    })
+    pruned_response = json.dumps({
+      'id': 'tag:source.com,2013:9',
+      'object': {
+        'content': 'foo http://target9/post/url bar',
+        'objectType': 'note',
+      },
     })
     expected = [
       models.Response(
         id='tag:source.com,2013:9',
-        activities_json=[pruned_mention],
-        response_json=json.dumps(mention),
+        activities_json=[pruned_activity],
+        response_json=pruned_response,
         type='post',
         source=source.key,
         unsent=['http://target9/post/url'],
       ), models.Response(
         id='tag:source.com,2013:9_comment',
-        activities_json=[pruned_mention],
+        activities_json=[pruned_activity],
         response_json=json.dumps(mention['object']['replies']['items'][0]),
         type='comment',
         source=source.key,
