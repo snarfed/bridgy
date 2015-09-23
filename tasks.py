@@ -144,9 +144,8 @@ class Poll(webapp2.RequestHandler):
       try:
         # we don't backfeed likes or shares of mentions, just replies
         kwargs['fetch_likes'] = kwargs['fetch_shares'] = False
-        if (source.domains and
-            (appengine_config.DEBUG or
-             set(source.domains).intersection(util.LOCALHOST_TEST_DOMAINS))):
+        if source.domains and appengine_config.DEBUG:
+           # or set(source.domains).intersection(util.LOCALHOST_TEST_DOMAINS))):
           # this is a bit of a hack: only twitter and G+ support search right
           # now, and they both support the OR operator.
           # TODO: move this into a proper boolean search API in granary
@@ -159,7 +158,7 @@ class Poll(webapp2.RequestHandler):
           ).get('items', [])
           mentions = {m['id']: m for m in mentions}
           activities.update(mentions)
-          responses.update(copy.deepcopy(mentions))
+          responses.update(mentions)
       except NotImplementedError:
         # this source doesn't support search
         pass
@@ -244,7 +243,7 @@ class Poll(webapp2.RequestHandler):
           resp = existing
         else:
           responses[id] = resp
-        resp.setdefault('activities', []).append(copy.deepcopy(activity))
+        resp.setdefault('activities', []).append(activity)
 
     #
     # Step 3: filter out responses we've already seen
@@ -264,7 +263,7 @@ class Poll(webapp2.RequestHandler):
     #
     for id, resp in responses.items():
       resp_type = Response.get_type(resp)
-      activities = ([copy.deepcopy(resp)] if resp_type == 'post'
+      activities = ([resp] if resp_type == 'post'
                     else resp.pop('activities', []))
       too_long = set()
       urls_to_activity = {}
