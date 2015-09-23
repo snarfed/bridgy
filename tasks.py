@@ -143,9 +143,7 @@ class Poll(webapp2.RequestHandler):
       try:
         # we don't backfeed likes or shares of mentions, just replies
         kwargs['fetch_likes'] = kwargs['fetch_shares'] = False
-        if (source.domains and
-            (appengine_config.DEBUG or
-             set(source.domains).intersection(util.LOCALHOST_TEST_DOMAINS))):
+        if source.domains:
           # this is a bit of a hack: only twitter and G+ support search right
           # now, and they both support the OR operator.
           # TODO: move this into a proper boolean search API in granary
