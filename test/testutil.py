@@ -3,6 +3,7 @@
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
+import copy
 import datetime
 import json
 import logging
@@ -43,7 +44,7 @@ class FakeBase(ndb.Model):
     FakeBase.data[(self.key.urlsafe(), name)] = val
 
   def _get(self, name):
-    return FakeBase.data.get((self.key.urlsafe(), name))
+    return copy.deepcopy(FakeBase.data.get((self.key.urlsafe(), name)))
 
   @classmethod
   def new(cls, handler, **props):
@@ -88,8 +89,7 @@ class FakeGrSource(FakeBase, gr_source.Source):
     self._set('like', val)
 
   def get_like(self, activity_user_id, activity_id, like_user_id):
-    got = self._get('like')
-    return got
+    return self._get('like')
 
   def set_share(self, val):
     self._set('repost', val)

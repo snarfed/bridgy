@@ -17,7 +17,7 @@ class HandlersTest(testutil.HandlerTest):
     super(HandlersTest, self).setUp()
     self.source = testutil.FakeSource.new(
       self.handler, domains=['or.ig', 'fa.ke'])
-    self.source.set_activities([{
+    self.activities = [{
       'object': {
         'id': 'tag:fa.ke,2013:000',
         'url': 'http://fa.ke/000',
@@ -27,7 +27,8 @@ class HandlersTest(testutil.HandlerTest):
           'image': {'url': 'http://example.com/ryan/image'},
         },
         'upstreamDuplicates': ['http://or.ig/post'],
-      }}])
+      }}]
+    self.source.set_activities(self.activities)
     self.source.set_event({
       'object': {
         'id': 'tag:fa.ke,2013:123',
@@ -117,7 +118,8 @@ asdf http://other/link qwert
       self.assertEqual(404, resp.status_int)
 
   def test_author_uid_not_tag_uri(self):
-    self.source.get_activities()[0]['object']['author']['id'] = 'not a tag uri'
+    self.activities[0]['object']['author']['id'] = 'not a tag uri'
+    self.source.set_activities(self.activities)
     resp = handlers.application.get_response(
       '/post/fake/%s/000?format=json' % self.source.key.string_id())
     self.assertEqual(200, resp.status_int, resp.body)
@@ -201,7 +203,8 @@ asdf http://other/link qwert
 """)
 
   def test_repost_with_syndicated_post_and_mentions(self):
-    self.source.get_activities()[0]['object']['content'] += ' http://another/mention'
+    self.activities[0]['object']['content'] += ' http://another/mention'
+    self.source.set_activities(self.activities)
 
     models.SyndicatedPost(
       parent=self.source.key,
@@ -349,10 +352,11 @@ asdf http://other/link qwert
 """)
 
   def test_strip_utm_query_params(self):
-    self.source.get_activities()[0]['object'].update({
+    self.activities[0]['object'].update({
         'content': 'asdf http://other/link?utm_source=x&utm_medium=y&a=b qwert',
         'upstreamDuplicates': ['http://or.ig/post?utm_campaign=123'],
         })
+    self.source.set_activities(self.activities)
     self.source.set_comment({'content': 'qwert'})
     self.mox.ReplayAll()
 
@@ -372,7 +376,7 @@ asdf http://other/link qwert
 """)
 
   def test_dedupe_http_and_https(self):
-    self.source.get_activities()[0]['object'].update({
+    self.activities[0]['object'].update({
       'content': 'X http://mention/only Y https://reply Z https://upstream '
                  'W http://all',
       'upstreamDuplicates': ['http://upstream/only',
@@ -410,10 +414,11 @@ asdf http://other/link qwert
 """)
 
   def test_tag_without_url(self):
-    self.source.get_activities()[0]['object'] = {
+    self.activities[0]['object'] = {
       'id': 'tag:fa.ke,2013:000',
       'tags': [{'foo': 'bar'}],
     }
+    self.source.set_activities(self.activities)
     self.mox.ReplayAll()
 
     self.check_response('/post/fake/%s/000', """\

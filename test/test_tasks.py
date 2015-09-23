@@ -967,7 +967,6 @@ class PollTest(TaskQueueTest):
     replies.append(self.activities[1]['object']['replies']['items'][0])
 
     self.post_task(reset=True)
-    del replies[0]['activities']
     self.assert_equals(replies, json.loads(source.key.get().seen_responses_cache_json))
     self.responses[3].key.delete()
 
