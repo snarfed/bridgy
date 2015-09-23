@@ -499,6 +499,32 @@ class PollTest(TaskQueueTest):
     self.post_task()
     self.assertEquals(0, models.Response.query().count())
 
+  def test_search_for_mentions_skips_posse_posts(self):
+    """When mention search finds a POSSE post, it shouldn't backfeed it.
+
+    https://github.com/snarfed/bridgy/issues/485
+    """
+    self.sources[0].domains = ['or.ig']
+    self.sources[0].put()
+
+    mention = {
+      'id': 'tag:or.ig,2013:9',
+      'object': {'content': 'foo http://or.ig/post'},
+    }
+    self.sources[0].set_search_results([mention])
+    self.sources[0].set_activities([])
+
+    self.post_task()
+    self.assert_responses([models.Response(
+      id='tag:or.ig,2013:9',
+      activities_json=[json.dumps(mention)],
+      response_json=json.dumps(mention),
+      type='post',
+      source=self.sources[0].key,
+      status='complete',
+    )])
+    self.assertEquals('"or.ig"', self.sources[0].last_search_query)
+
   def test_wrong_last_polled(self):
     """If the source doesn't have our last polled value, we should quit.
     """

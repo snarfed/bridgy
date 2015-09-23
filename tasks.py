@@ -155,7 +155,7 @@ class Poll(webapp2.RequestHandler):
             search_query=query, group_id=gr_source.SEARCH, **kwargs
           ).get('items', [])
           mentions = {m['id']: m for m in mentions}
-          activities.update(mentions)
+          activities.update(mentions)  # so that we handle replies to mentions
           responses.update(mentions)
       except NotImplementedError:
         # this source doesn't support search
@@ -284,7 +284,9 @@ class Poll(webapp2.RequestHandler):
 
         # send wms to all original posts, but only posts and comments (not
         # likes, reposts, or rsvps) to mentions. matches logic in handlers.py!
-        targets = set(activity['originals'])
+        targets = set()
+        if resp_type != 'post':
+          targets |= activity['originals']
         if resp_type in ('post', 'comment'):
           targets |= activity['mentions']
 
