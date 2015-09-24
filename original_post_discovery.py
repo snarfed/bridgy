@@ -65,6 +65,7 @@ def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True):
   """
   originals, mentions = gr_source.Source.original_post_discovery(
     activity, domains=source.domains, cache=memcache,
+    include_redirect_sources=include_redirect_sources,
     headers=util.USER_AGENT_HEADER)
 
   obj = activity.get('object') or activity

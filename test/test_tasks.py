@@ -525,6 +525,32 @@ class PollTest(TaskQueueTest):
     )])
     self.assertEquals('"or.ig"', self.sources[0].last_search_query)
 
+  def test_search_for_mentions_skips_redirected_posse_post(self):
+    """Same as above, with a redirect."""
+    self.sources[0].domains = ['or.ig']
+    self.sources[0].put()
+
+    mention = {
+      'id': 'tag:or.ig,2013:9',
+      'object': {'content': 'foo http://sho.rt/post'},
+    }
+    self.sources[0].set_search_results([mention])
+    self.sources[0].set_activities([])
+
+    self.expect_requests_head('http://sho.rt/post',
+                              redirected_url='http://or.ig/post')
+    self.mox.ReplayAll()
+    self.post_task()
+
+    self.assert_responses([models.Response(
+      id='tag:or.ig,2013:9',
+      activities_json=[json.dumps(mention)],
+      response_json=json.dumps(mention),
+      type='post',
+      source=self.sources[0].key,
+      status='complete',
+    )])
+
   def test_wrong_last_polled(self):
     """If the source doesn't have our last polled value, we should quit.
     """
