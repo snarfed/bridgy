@@ -183,6 +183,12 @@ Click to enable <a href="/about#listen">listening</a>:
       {% endif %}
     </a></li>
     {% endfor %}
+
+    {% if response.original_links %}
+      <li>Original:
+      {{ response.original_links|safeseq|join:', ' }}
+      </li>
+    {% endif %}
     </ul>
 
    </div><div class="col-sm-3">
@@ -212,7 +218,7 @@ Click to enable <a href="/about#listen">listening</a>:
       {{ label|safe }}:
       <ul class="original-post-links">{{ links|safeseq|unordered_list }}</ul>
     {% empty %}
-      No post links found
+      No webmention targets
     {% endfor %}
    </div>
   </li>

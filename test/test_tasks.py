@@ -479,6 +479,7 @@ class PollTest(TaskQueueTest):
         type='post',
         source=source.key,
         unsent=['http://target9/post/url'],
+        original_posts=[],
       ), models.Response(
         id='tag:source.com,2013:9_comment',
         activities_json=[pruned_activity],
@@ -486,6 +487,7 @@ class PollTest(TaskQueueTest):
         type='comment',
         source=source.key,
         unsent=['http://target9/post/url'],
+        original_posts=[],
       )] + self.responses[:3]  # from the normal activity
 
     self.assert_responses(expected)
@@ -522,6 +524,7 @@ class PollTest(TaskQueueTest):
       type='post',
       source=self.sources[0].key,
       status='complete',
+      original_posts=['http://or.ig/post'],
     )])
     self.assertEquals('"or.ig"', self.sources[0].last_search_query)
 
@@ -549,6 +552,7 @@ class PollTest(TaskQueueTest):
       type='post',
       source=self.sources[0].key,
       status='complete',
+      original_posts=['http://or.ig/post'],
     )])
 
   def test_wrong_last_polled(self):

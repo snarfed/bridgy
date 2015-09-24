@@ -306,17 +306,18 @@ class Poll(webapp2.RequestHandler):
       # activities. details in the step 2 comment above.
       pruned_response = util.prune_response(resp)
       pruned_responses.append(pruned_response)
-      resp = Response(
+      resp_entity = Response(
         id=id,
         source=source.key,
         activities_json=[json.dumps(util.prune_activity(a)) for a in activities],
         response_json=json.dumps(pruned_response),
         type=Response.get_type(resp),
         unsent=list(urls_to_activity.keys()),
-        failed=list(too_long))
+        failed=list(too_long),
+        original_posts=resp.get('originals', []))
       if urls_to_activity and len(activities) > 1:
-        resp.urls_to_activity=json.dumps(urls_to_activity)
-      resp.get_or_save(source)
+        resp_entity.urls_to_activity=json.dumps(urls_to_activity)
+      resp_entity.get_or_save(source)
 
     # update cache
     if pruned_responses:

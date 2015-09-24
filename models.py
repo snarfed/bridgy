@@ -631,6 +631,8 @@ class Response(Webmentions):
   # JSON dict mapping original post url to activity index in activities_json.
   # only set when there's more than one activity.
   urls_to_activity = ndb.TextProperty()
+  # Original post links found by original post discovery
+  original_posts = ndb.StringProperty(repeated=True)
 
   # DEPRECATED, DO NOT USE! see https://github.com/snarfed/bridgy/issues/217
   activity_json = ndb.TextProperty()

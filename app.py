@@ -260,6 +260,8 @@ class UserHandler(DashboardHandler):
 
         # generate original post links
         r.links = self.process_webmention_links(r)
+        r.original_links = [util.pretty_link(url, new_tab=True)
+                            for url in r.original_posts]
 
         vars['responses'].append(r)
         if len(vars['responses']) >= 10 or i > 200:
