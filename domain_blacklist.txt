@@ -38,6 +38,7 @@ disqus.com
 dopplr.com
 example.com
 facebook.com
+feedburner.com
 ffffound.com
 findings.com
 flattr.com
@@ -53,10 +54,12 @@ gnolia.com
 godudu.com
 goodreads.com
 google.com
+gu.com
 here.com
 huffduffer.com
 hyves.nl
 identi.ca
+igraal.com
 instagr.am
 instagram.com
 intensedebate.com
@@ -104,6 +107,7 @@ technorati.com
 tent.is
 thesession.org
 tribe.net
+twit.tv
 twitter.com
 typepad.com
 ustream.tv
@@ -121,6 +125,7 @@ yelp.com
 yelp.de
 youtu.be
 youtube.com
+wordpress.org
 
 
 # URL shortener domains. Gratefully stolen from http://longurl.org/services
