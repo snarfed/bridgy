@@ -15,6 +15,16 @@ import util
 from google.appengine.ext import ndb
 import webapp2
 
+# Import source class files so their metaclasses are initialized.
+import blogger
+import facebook
+import flickr
+import googleplus
+import instagram
+import tumblr
+import twitter
+import wordpress_rest
+
 
 class ResponsesHandler(handlers.TemplateHandler):
   NUM_ENTITIES = 30
