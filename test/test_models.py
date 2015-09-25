@@ -252,8 +252,7 @@ class SourceTest(testutil.HandlerTest):
       self.assertEquals([url], source.domain_urls)
       self.assertEquals(['foo.com'], source.domains)
 
-    # multiple good URLs, a bad URL, and a good URL that returns fails a HEAD
-    # request.
+    # multiple good URLs and one that's in the webmention blacklist
     auth_entity = testutil.FakeAuthEntity(id='x', user_json=json.dumps({
           'url': 'http://foo.org',
           'urls': [{'value': u} for u in
@@ -264,6 +263,18 @@ class SourceTest(testutil.HandlerTest):
     self.assertEquals(['http://foo.org', 'http://bar.com', 'http://baz'],
                       source.domain_urls)
     self.assertEquals(['foo.org', 'bar.com', 'baz'], source.domains)
+
+    # a URL that redirects
+    auth_entity = testutil.FakeAuthEntity(
+      id='x', user_json=json.dumps({'url': 'http://orig'}))
+    auth_entity.put()
+
+    self.expect_requests_head('http://orig', redirected_url='http://final')
+    self.mox.ReplayAll()
+
+    source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
+    self.assertEquals(['http://final'], source.domain_urls)
+    self.assertEquals(['final'], source.domains)
 
   def test_create_new_unicode_chars(self):
     """We should handle unusual unicode chars in the source's name ok."""

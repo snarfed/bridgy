@@ -486,8 +486,8 @@ class Source(StringIdModel):
     for url in util.trim_nulls(util.uniquify(
         [user_url] + [actor.get('url')] +
         [u.get('value') for u in actor.get('urls', [])])):
-      domain = util.domain_from_link(url)
-      if domain and not util.in_webmention_blacklist(domain.lower()):
+      url, domain, send = util.get_webmention_target(url)
+      if send and url not in urls:
         urls.append(url)
 
     urls = util.dedupe_urls(urls)
