@@ -59,7 +59,7 @@ service.</a>
 <li><a href="#registration-api">Can users sign up for Bridgy
   without leaving my site or application?</a></li>
 <li><a href="#bug">I found a bug! I have a feature request!</a></li>
-<li><a href="#domain">Brid.gy? Really?</a></li>
+<li><a href="#cute">Brid.gy? Really?</a></li>
 
 <br />
 <p><em>Pulling back responses</em></p>
@@ -70,6 +70,8 @@ service.</a>
   likes or reshares!</a></li>
 <li><a href="#missing">...but it's been a while, and Bridgy
   still hasn't seen it!</a></li>
+<li><a href="#domain">Bridgy can't find my original posts! It just
+  says <em>No webmention targets found</em>.</a></li>
 <li><a href="#link">Do my posts really need to link my web site?</a></li>
 <li><a href="#appspot">What are all these brid-gy.appspot.com links
   in the comments that Bridgy sends to my site?</a></li>
@@ -283,7 +285,7 @@ GitHub</a>. Thank you!
 </p>
 </li>
 
-<li id="domain" class="question">Brid.gy? Really?</li>
+<li id="cute" class="question">Brid.gy? Really?</li>
 <li class="answer">
 <p>Yeah, we know. We're not proud of the cutesy domain name either. Just go with it.
 </p>
@@ -418,6 +420,18 @@ rel="feed"&gt;</code> on the homepage. See the
 <a href="http://indiewebcamp.com/original-post-discovery">original post
 discovery</a> and <a href="http://indiewebcamp.com/posse-post-discovery">posse
 post discovery</a> algorithms for all the gory details.
+</p></li>
+
+<li id="domain" class="question">Bridgy can't find my original posts! It just
+  says <em>No webmention targets found</em>.</li>
+<li class="answer">
+<p>Does your Bridgy user page have a link to your web site? Specifically, the
+exact domain where your original posts are? If not, add that URL to your social
+network profile, then log into Bridgy with that social network again. Bridgy
+needs this to find your original posts <a href="#link">if you don't link to
+them</a>, and it also uses it to
+<a href="https://github.com/snarfed/bridgy/issues/51">distinguish between you
+officially syndicating your posts and other people just mentioning them</a>.
 </p></li>
 
 <li id="appspot" class="question">What are all these brid-gy.appspot.com links
