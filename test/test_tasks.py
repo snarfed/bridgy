@@ -557,6 +557,12 @@ class PollTest(TaskQueueTest):
 
   def test_search_for_mentions_skips_blacklisted_domains(self):
     """https://github.com/snarfed/bridgy/issues/490"""
+    self.sources[0].domains = ['t.co']
+    self.sources[0].put()
+    self.post_task()
+    # if there are *no* good domains, we shouldn't search at all
+    self.assertIsNone(self.sources[0].last_search_query)
+
     self.sources[0].domains = ['good', 't.co']
     self.sources[0].put()
     self.post_task()

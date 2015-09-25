@@ -143,17 +143,17 @@ class Poll(webapp2.RequestHandler):
       try:
         # we don't backfeed likes or shares of mentions, just replies
         kwargs['fetch_likes'] = kwargs['fetch_shares'] = False
-        if source.domains:
-          # this is a bit of a hack: only twitter and G+ support search right
-          # now, and they both support the OR operator.
-          # TODO: move this into a proper boolean search API in granary
-          #
-          # https://dev.twitter.com/rest/public/search
-          # https://developers.google.com/+/api/latest/activities/search
-          query = ' OR '.join('"%s"' % domain for domain in source.domains
-                              if not util.in_webmention_blacklist(domain))
+        # this is a bit of a hack: only twitter and G+ support search right
+        # now, and they both support the OR operator.
+        # TODO: move this into a proper boolean search API in granary
+        #
+        # https://dev.twitter.com/rest/public/search
+        # https://developers.google.com/+/api/latest/activities/search
+        search_query = ' OR '.join('"%s"' % domain for domain in source.domains
+                                   if not util.in_webmention_blacklist(domain))
+        if search_query:
           mentions = source.get_activities_response(
-            search_query=query, group_id=gr_source.SEARCH, **kwargs
+            search_query=search_query, group_id=gr_source.SEARCH, **kwargs
           ).get('items', [])
           mentions = {m['id']: m for m in mentions}
           activities.update(mentions)  # so that we handle replies to mentions

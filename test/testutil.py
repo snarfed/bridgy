@@ -170,7 +170,7 @@ class FakeSource(FakeBase, Source):
                               fetch_shares=False, count=None, etag=None,
                               min_id=None, cache=None, search_query=None):
     activities = self._get('activities')
-    if search_query:
+    if search_query is not None:
       assert group_id == gr_source.SEARCH
       activities = self._get('search_results')
       self.last_search_query = search_query
