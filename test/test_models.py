@@ -176,7 +176,7 @@ class SourceTest(testutil.HandlerTest):
   def test_create_new(self):
     self.assertEqual(0, FakeSource.query().count())
     self._test_create_new(features=['listen'])
-    msg = "Added fake (FakeSource). Refresh to see what we've found!"
+    msg = "Added fake (FakeSource). Refresh in a minute to see what we've found!"
     self.assert_equals({msg}, self.handler.messages)
 
     for queue in 'poll', 'poll-now':

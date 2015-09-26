@@ -386,7 +386,7 @@ class Source(StringIdModel):
     link = ('http://indiewebify.me/send-webmentions/?url=' + author_urls[0]
             if author_urls else 'http://indiewebify.me/#send-webmentions')
     blurb = '%s %s. %s' % (verb, source.label(), {
-      'listen': "Refresh to see what we've found!",
+      'listen': "Refresh in a minute to see what we've found!",
       'publish': 'Try previewing a post from your web site!',
       'webmention': '<a href="%s">Try a webmention!</a>' % link,
       }.get(feature, ''))
