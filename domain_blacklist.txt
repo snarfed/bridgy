@@ -23,6 +23,8 @@ amzn.com
 app.net
 appbrain.com
 audioscrobbler.com
+awriterz.org
+backtype.com
 battlefield.com
 behance.net
 blogger.com
@@ -65,6 +67,7 @@ instagram.com
 intensedebate.com
 ipersonic.de
 jaiku.com
+jamendo.com
 joindiaspora.com
 kmworld.com
 lanyrd.com
@@ -80,6 +83,7 @@ personalinfocloud.com
 photobucket.com
 photoshop.com
 pinboard.in
+plancast.com
 plaxo.com
 plazes.com
 podhost.de
@@ -110,6 +114,7 @@ tribe.net
 twit.tv
 twitter.com
 typepad.com
+userscripts.org
 ustream.tv
 vanderwal.net
 viadeo.com
