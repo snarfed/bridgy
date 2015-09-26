@@ -11,11 +11,10 @@ import urlparse
 
 import appengine_config
 
-# need to import modules with model class definitions, e.g. facebook, for
-# template rendering.
 from granary import source as gr_source
 from oauth_dropins import blogger_v2 as oauth_blogger_v2
 from oauth_dropins import facebook as oauth_facebook
+from oauth_dropins import flickr as oauth_flickr
 from oauth_dropins import googleplus as oauth_googleplus
 from oauth_dropins import instagram as oauth_instagram
 from oauth_dropins import tumblr as oauth_tumblr
@@ -29,6 +28,7 @@ import models
 from models import BlogPost, BlogWebmention, Publish, Response, Source
 import util
 
+# import source model class definitions for template rendering
 import blogger
 import facebook
 import flickr
@@ -344,6 +344,7 @@ class DeleteStartHandler(util.Handler):
   OAUTH_MODULES = {
     'Blogger': oauth_blogger_v2,
     'FacebookPage': oauth_facebook,
+    'Flickr': oauth_flickr,
     'GooglePlusPage': oauth_googleplus,
     'Instagram': oauth_instagram,
     'Tumblr': oauth_tumblr,
