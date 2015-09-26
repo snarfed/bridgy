@@ -772,9 +772,6 @@ class PollTest(TaskQueueTest):
       <a class="u-syndication" href="http://source/post/url"></a>
     </html>""")
 
-    # refetch h-feed now that last_syndication_url should be set
-    self.expect_requests_get('http://author', '')
-
     self.mox.ReplayAll()
     self.post_task()
 

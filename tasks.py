@@ -39,7 +39,7 @@ import wordpress_rest
 
 WEBMENTION_DISCOVERY_CACHE_TIME = 60 * 60 * 24  # a day
 
-# allows injecting timestamps in task_test.py
+# allows injecting timestamps in test_tasks.py
 now_fn = datetime.datetime.now
 
 
@@ -276,9 +276,9 @@ class Poll(webapp2.RequestHandler):
         # discovered webmention targets inside its object.
         if 'originals' not in activity or 'mentions' not in activity:
           activity['originals'], activity['mentions'] = \
-            original_post_discovery.discover(
-              source, activity, include_redirect_sources=False)
-          source_updates['last_syndication_url'] = source.last_syndication_url
+            original_post_discovery.discover(source, activity,
+                                             include_redirect_sources=False,
+                                             source_updates=source_updates)
 
         # send wms to all original posts, but only posts and comments (not
         # likes, reposts, or rsvps) to mentions. matches logic in handlers.py!
@@ -339,7 +339,7 @@ class Poll(webapp2.RequestHandler):
     if (source.last_syndication_url and
         source.last_hfeed_fetch + source.refetch_period()
             <= source.last_poll_attempt):
-      self.refetch_hfeed(source)
+      self.refetch_hfeed(source, source_updates)
       source_updates['last_syndication_url'] = source.last_syndication_url
       source_updates['last_hfeed_fetch'] = source.last_poll_attempt
     else:
@@ -350,7 +350,7 @@ class Poll(webapp2.RequestHandler):
 
     return source_updates
 
-  def refetch_hfeed(self, source):
+  def refetch_hfeed(self, source, source_updates):
     """refetch and reprocess the author's url, looking for
     new or updated syndication urls that we may have missed the first
     time we looked for them.

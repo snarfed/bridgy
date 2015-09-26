@@ -1,6 +1,7 @@
 # coding=utf-8
 """Unit tests for original_post_discovery.py
 """
+import datetime
 import json
 import logging
 
@@ -13,10 +14,14 @@ from requests.exceptions import HTTPError
 from facebook import FacebookPage
 from models import SyndicatedPost
 import util
+import original_post_discovery
 from original_post_discovery import discover, refetch
 import tasks
 import test_facebook
 import testutil
+
+NOW = datetime.datetime.utcnow()
+original_post_discovery.now_fn = lambda: NOW
 
 
 class OriginalPostDiscoveryTest(testutil.ModelsTest):
@@ -35,9 +40,10 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
       })
 
   def assert_discover(self, expected_originals, expected_mentions=[],
-                      source=None):
+                      source=None, source_updates=None):
     self.assertEquals((set(expected_originals), set(expected_mentions)),
-                      discover(source or self.source, self.activity))
+                      discover(source or self.source, self.activity,
+                               source_updates=source_updates))
 
 
   def assert_syndicated_posts(self, *expected):
@@ -65,9 +71,13 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     </div>""")
 
     self.mox.ReplayAll()
-    self.assert_discover(['http://author/post/permalink'])
+    self.assertIsNone(self.source.last_syndication_url)
+    source_updates = {}
+    self.assert_discover(['http://author/post/permalink'],
+                         source_updates=source_updates)
     self.assert_syndicated_posts(('http://author/post/permalink',
                                   'https://fa.ke/post/url'))
+    self.assertEquals(NOW, source_updates['last_syndication_url'])
 
   def test_syndication_url_in_hfeed(self):
     """Like test_single_post, but because the syndication URL is given in
@@ -254,6 +264,21 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
 
     self.mox.ReplayAll()
     discover(self.source, self.activity)
+
+  def test_rel_feed_adds_to_domains(self):
+    """rel=feed discovery should update Source.domains."""
+    self.expect_requests_get('http://author', """
+    <html>
+      <head>
+        <link rel="feed" type="text/html" href="http://other/domain">
+      </head>
+    </html>""")
+    self.expect_requests_get('http://other/domain', 'foo')
+    self.mox.ReplayAll()
+
+    source_updates = {}
+    discover(self.source, self.activity, source_updates=source_updates)
+    self.assertEquals(['author', 'other'], source_updates['domains'])
 
   def test_no_h_entries(self):
     """Make sure nothing bad happens when fetching a feed without h-entries.
