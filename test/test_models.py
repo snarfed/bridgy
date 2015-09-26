@@ -75,14 +75,16 @@ class ResponseTest(testutil.ModelsTest):
     self.assert_propagate_task()
 
     # mark response completed, change content again
-    response.unsent = []
-    response.sent = ['http://sent']
-    response.error = ['http://error']
-    response.failed = ['http://failed']
-    response.skipped = ['http://skipped']
-    response.status = 'complete'
-    response.put()
+    def complete():
+      response.unsent = []
+      response.sent = ['http://sent']
+      response.error = ['http://error']
+      response.failed = ['http://failed']
+      response.skipped = ['http://skipped']
+      response.status = 'complete'
+      response.put()
 
+    complete()
     newer_resp_json = json.loads(response.response_json)
     newer_resp_json['content'] = 'newer content'
     response.response_json = json.dumps(newer_resp_json)
@@ -92,9 +94,18 @@ class ResponseTest(testutil.ModelsTest):
     self.assert_equals([old_resp_json, json.dumps(new_resp_json)],
                        response.old_response_jsons)
     self.assertEqual('new', response.status)
-    self.assertItemsEqual(
-      ['http://sent', 'http://error', 'http://failed', 'http://skipped'],
-      response.unsent)
+    urls = ['http://sent', 'http://error', 'http://failed', 'http://skipped']
+    self.assertItemsEqual(urls, response.unsent)
+    for field in response.sent, response.error, response.failed, response.skipped:
+      self.assertEqual([], field)
+    self.assert_propagate_task()
+
+    # change Response.type
+    complete()
+    response.type = 'rsvp'
+    response = response.get_or_save(self.sources[0])
+    self.assertEqual('new', response.status)
+    self.assertItemsEqual(urls, response.unsent)
     for field in response.sent, response.error, response.failed, response.skipped:
       self.assertEqual([], field)
     self.assert_propagate_task()
