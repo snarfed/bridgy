@@ -130,6 +130,10 @@ class ResponseTest(testutil.ModelsTest):
       'objectType': 'note',
       'context': {'inReplyTo': {'foo': 'bar'}},
     }))
+    self.assertEqual('comment', Response.get_type({
+      'objectType': 'comment',
+      'verb': 'post',
+    }))
 
   def test_hooks(self):
     resp = Response(id='x', activity_json='{"foo": "bar"}')

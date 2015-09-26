@@ -312,7 +312,7 @@ class Poll(webapp2.RequestHandler):
         source=source.key,
         activities_json=[json.dumps(util.prune_activity(a)) for a in activities],
         response_json=json.dumps(pruned_response),
-        type=Response.get_type(resp),
+        type=resp_type,
         unsent=list(urls_to_activity.keys()),
         failed=list(too_long),
         original_posts=resp.get('originals', []))

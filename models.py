@@ -32,13 +32,13 @@ def get_type(obj):
   verb = obj.get('verb')
   if type == 'activity' and verb == 'share':
     return 'repost'
-  elif verb in VERB_TYPES:
-    return verb
   elif verb in gr_source.RSVP_TO_EVENT:
     return 'rsvp'
   elif (type == 'comment' or obj.get('inReplyTo') or
         obj.get('context', {}).get('inReplyTo')):
     return 'comment'
+  elif verb in VERB_TYPES:
+    return verb
   else:
     return 'post'
 

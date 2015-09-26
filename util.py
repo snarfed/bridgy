@@ -163,7 +163,7 @@ def in_webmention_blacklist(domain):
 
 
 def prune_activity(activity):
-  """Returns an activity dict with just id, url, content, to, and object.
+  """Prunes an activity down to just id, url, content, to, and object, in place.
 
   If the object field exists, it's pruned down to the same fields. Any fields
   duplicated in both the activity and the object are removed from the object.
