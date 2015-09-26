@@ -192,7 +192,7 @@ class FacebookPage(models.Source):
 
   def canonicalize_syndication_url(self, url):
     """Facebook-specific standardization of syndicated urls. Canonical form is
-    https://www.facebook.com/0123456789
+    https://www.facebook.com/USERID/posts/POSTID
 
     Args:
       url: a string, the url of the syndicated content
@@ -200,10 +200,16 @@ class FacebookPage(models.Source):
     Return:
       a string, the canonical form of the syndication url
     """
-    params = urlparse.parse_qs(urlparse.urlparse(url).query)
+    def post_url(id):
+      return 'https://www.facebook.com/%s/posts/%s' % (self.key.id(), id)
+
+    parsed = urlparse.urlparse(url)
+    params = urlparse.parse_qs(parsed.query)
     ids = params.get('story_fbid') or params.get('fbid')
     if ids:
-      url = 'https://www.facebook.com/%s/posts/%s' % (self.key.id(), ids[0])
+      url = post_url(ids[0])
+    elif parsed.path.startswith('/notes/'):
+      url = post_url(parsed.path.split('/')[-1])
 
     username = self.username or self.inferred_username
     if username:

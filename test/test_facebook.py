@@ -230,6 +230,9 @@ class FacebookPageTest(testutil.ModelsTest):
        'http://facebook.com/snarfed.org/posts/314159'),
       ('https://www.facebook.com/212038/posts/314159',
        'https://facebook.com/snarfed.org/photos.php?fbid=314159'),
+      # note. https://github.com/snarfed/bridgy/issues/429
+      ('https://www.facebook.com/212038/posts/314159',
+       'https://www.facebook.com/notes/ryan-b/title/314159'),
       ('https://www.facebook.com/212038/posts/10101299919362973',
        'https://www.facebook.com/photo.php?fbid=10101299919362973&set=a.995695740593.2393090.212038&type=1&theater'),
       ('https://www.facebook.com/212038/posts/314159',
