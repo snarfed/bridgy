@@ -239,11 +239,8 @@ class Poll(webapp2.RequestHandler):
 
         existing = responses.get(id)
         if existing:
-          for field in 'url', 'content':
-            old = existing.get(field)
-            new = resp.get(field)
-            if old != new:
-              logging.error('Response %s changed %s! %s => %s', id, field, old, new)
+          if source.gr_source.activity_changed(resp, existing, log=True):
+            logging.warning('Got two different versions of same response! %s', id)
           resp = existing
         else:
           responses[id] = resp
