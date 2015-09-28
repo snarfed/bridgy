@@ -18,6 +18,7 @@ stats.wordpress.com
 
 24sessions.com
 500px.com
+abakus-internet-marketing.de
 about.me
 ador.com
 amazon.com
@@ -37,6 +38,7 @@ bit.ly
 bitbucket.org
 blogger.com
 brightkite.com
+change.org
 claimid.com
 codepen.io
 codeschool.com
@@ -82,6 +84,7 @@ goodreads.com
 google.com
 gu.com
 guardian.co.uk
+gumroad.com
 here.com
 huffduffer.com
 hulu.com
@@ -119,6 +122,7 @@ news.ycombinator.com
 openstreetmap.org
 orkut.com
 pandora.com
+paper.li
 patreon.com
 personalinfocloud.com
 photobucket.com
@@ -142,7 +146,9 @@ rdio.com
 readernaut.com
 readlists.com
 readmill.com
+rebelmouse.com
 reddit.com
+researchgate.net
 scribd.com
 secondlife.com
 seesmic.com
@@ -167,7 +173,10 @@ theonion.com
 thesession.org
 tinyletter.com
 tribe.net
+tweakers.net
 twit.tv
+twitch.com
+twitch.tv
 twitter.com
 twittercounter.com
 typepad.com
