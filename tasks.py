@@ -155,6 +155,12 @@ class Poll(webapp2.RequestHandler):
           mentions = source.get_activities_response(
             search_query=search_query, group_id=gr_source.SEARCH, **kwargs
           ).get('items', [])
+          # strip shares and likes. (some silos get and return them without
+          # explicitly fetching them.)
+          for m in mentions:
+            m['object']['tags'] = [tag for tag in m['object'].get('tags', [])
+                                   if tag.get('verb') not in ('like', 'share')]
+
           mentions = {m['id']: m for m in mentions}
           activities.update(mentions)  # so that we handle replies to mentions
           responses.update(mentions)

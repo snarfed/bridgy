@@ -450,6 +450,17 @@ class PollTest(TaskQueueTest):
           'id': 'tag:source.com,2013:9_comment',
           'content': 'foo bar',
         }]},
+        'tags': [{
+          'id': 'tag:source.com,2013:9_like',
+          'objectType': 'activity',
+          'verb': 'like',
+          'object': {'url': 'http://example.com/abc'},
+        }, {
+          'id': 'tag:source.com,2013:9_reshare',
+          'objectType': 'activity',
+          'verb': 'share',
+          'object': {'url': 'http://example.com/def'},
+        }],
       },
     }
     source.set_search_results([copy.deepcopy(mention)])
