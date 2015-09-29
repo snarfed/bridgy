@@ -43,8 +43,6 @@ with open('domain_blacklist.txt') as f:
   BLACKLIST = {l.strip() for l in f
                if l.strip() and not l.strip().startswith('#')}
 
-Website = collections.namedtuple('Website', ('url', 'domain'))
-
 
 def add_poll_task(source, now=False, **kwargs):
   """Adds a poll task for the given source entity.
@@ -157,6 +155,7 @@ def get_webmention_target(url, resolve=True):
 
 def in_webmention_blacklist(domain):
   """Returns True if the domain or its root domain is in BLACKLIST."""
+  domain = domain.lower()
   return (domain in BLACKLIST or
           # strip subdomain and check again
           (domain and '.'.join(domain.split('.')[-2:]) in BLACKLIST))
@@ -384,8 +383,7 @@ class Handler(webapp2.RequestHandler):
 
     - use id as name if name isn't provided
     - convert image URLs to https if we're serving over SSL
-    - zip domain_urls and domains into website field, list of Website
-      namedtuples with url and domain fields
+    - set 'website_links' attr to list of pretty HTML links to domain_urls
 
     Args:
       source: Source entity
@@ -394,8 +392,7 @@ class Handler(webapp2.RequestHandler):
       source.name = source.key.string_id()
     if source.picture:
       source.picture = util.update_scheme(source.picture, self)
-    source.websites = [Website(url=u, domain=d) for u, d in
-                       zip(source.domain_urls, source.domains)]
+    source.website_links = [util.pretty_link(url) for url in source.domain_urls]
     return source
 
 

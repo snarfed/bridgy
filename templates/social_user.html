@@ -5,7 +5,7 @@
 <!-- Promos to get fully up and running -->
 
 {% if not source.verified and source.status != "disabled" and source.features %}
-{% if not source.domains or not source.domain_urls %}
+{% if not source.domain_urls %}
 <div class="row promo warning">
 <p id="edit-profile">First things first: what's your web site?
 {% block edit-profile %}
