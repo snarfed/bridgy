@@ -432,7 +432,8 @@ class PollTest(TaskQueueTest):
     https://github.com/snarfed/bridgy/issues/456
     """
     source = self.sources[0]
-    source.domains = ['foo', 'bar', 'target1']
+    source.domain_urls = ['http://foo/', 'https://bar/baz?baj']
+    source.domains = ['target1']
     source.put()
 
     # return one normal activity and one searched mention
@@ -502,11 +503,11 @@ class PollTest(TaskQueueTest):
       )] + self.responses[:3]  # from the normal activity
 
     self.assert_responses(expected)
-    self.assertEquals('"foo" OR "bar" OR "target1"', source.last_search_query)
+    self.assertEquals('"foo" OR "bar/baz?baj"', source.last_search_query)
 
   def test_search_raises_not_implemented(self):
     """Some silos don't support search."""
-    self.sources[0].domains = ['foo', 'bar']
+    self.sources[0].domain_urls = ['http://foo', 'http://bar']
     self.sources[0].put()
     self.sources[0].set_activities([])
     self.post_task()
@@ -517,6 +518,7 @@ class PollTest(TaskQueueTest):
 
     https://github.com/snarfed/bridgy/issues/485
     """
+    self.sources[0].domain_urls = ['http://foo.com/bar?biff']
     self.sources[0].domains = ['or.ig']
     self.sources[0].put()
 
@@ -537,10 +539,11 @@ class PollTest(TaskQueueTest):
       status='complete',
       original_posts=['http://or.ig/post'],
     )])
-    self.assertEquals('"or.ig"', self.sources[0].last_search_query)
+    self.assertEquals('"foo.com/bar?biff"', self.sources[0].last_search_query)
 
   def test_search_for_mentions_skips_redirected_posse_post(self):
     """Same as above, with a redirect."""
+    self.sources[0].domain_urls = ['http://foo']
     self.sources[0].domains = ['or.ig']
     self.sources[0].put()
 
@@ -568,13 +571,13 @@ class PollTest(TaskQueueTest):
 
   def test_search_for_mentions_skips_blacklisted_domains(self):
     """https://github.com/snarfed/bridgy/issues/490"""
-    self.sources[0].domains = ['t.co']
+    self.sources[0].domain_urls = ['http://t.co/7k9xNgQCml']
     self.sources[0].put()
     self.post_task()
     # if there are *no* good domains, we shouldn't search at all
     self.assertIsNone(self.sources[0].last_search_query)
 
-    self.sources[0].domains = ['good', 't.co']
+    self.sources[0].domain_urls = ['https://good/', 'http://t.co/7k9xNgQCml']
     self.sources[0].put()
     self.post_task()
     self.assertEquals('"good"', self.sources[0].last_search_query)

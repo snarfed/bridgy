@@ -149,8 +149,10 @@ class Poll(webapp2.RequestHandler):
         #
         # https://dev.twitter.com/rest/public/search
         # https://developers.google.com/+/api/latest/activities/search
-        search_query = ' OR '.join('"%s"' % domain for domain in source.domains
-                                   if not util.in_webmention_blacklist(domain))
+        search_query = ' OR '.join(
+          '"%s"' % util.schemeless(util.fragmentless(url), slashes=False)
+          for url in source.domain_urls
+          if not util.in_webmention_blacklist(util.domain_from_link(url)))
         if search_query:
           mentions = source.get_activities_response(
             search_query=search_query, group_id=gr_source.SEARCH, **kwargs
