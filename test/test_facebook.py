@@ -198,6 +198,18 @@ class FacebookPageTest(testutil.ModelsTest):
 
     self.assertRaises(models.DisableSource, self.fb.get_activities)
 
+  def test_app_not_installed_doesnt_send_notification(self):
+    self.expect_urlopen(
+      'https://graph.facebook.com/v2.2/me/feed?offset=0&access_token=my_token',
+      json.dumps({'error': {
+        'code': 190,
+        'error_subcode': 458,
+        'message': 'Error validating access token: The user has not authorized application 123456.',
+      }}), status=400)
+
+    self.mox.ReplayAll()
+    self.assertRaises(models.DisableSource, self.fb.get_activities)
+
   def test_other_error(self):
     msg = json.dumps({'error': {'code': 190, 'error_subcode': 789}})
     self.expect_urlopen(

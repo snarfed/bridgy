@@ -52,6 +52,9 @@ API_EVENT = '%s?fields=comments,description,end_time,id,likes,name,owner,picture
 # https://developers.facebook.com/docs/apps/changelog#v2_4_deprecations
 API_EVENT_RSVPS = '%s/invited'
 
+# https://developers.facebook.com/docs/graph-api/using-graph-api/#errors
+ERROR_SUBCODE_APP_NOT_INSTALLED = 458
+
 
 class FacebookPage(models.Source):
   """A facebook profile or page.
@@ -141,15 +144,25 @@ class FacebookPage(models.Source):
 
     except urllib2.HTTPError as e:
       code, body = util.interpret_http_exception(e)
+      # use a function to extract error subcode so that we don't clobber the
+      # original exception so we can re-raise it below.
+      def subcode():
+        try:
+          return json.loads(body)['error']['error_subcode']
+        except:
+          return None
+
       if code == '401':
-        # ask the user to reauthenticate. if this API call fails, it will raise
-        # urllib2.HTTPError instead of DisableSource, so that we don't disable
-        # the source without notifying.
-        self.gr_source.create_notification(
-          self.key.id(),
-          "Brid.gy's access to your account has expired. Click here to renew it now!",
-          'https://www.brid.gy/facebook/start')
+        if subcode() != ERROR_SUBCODE_APP_NOT_INSTALLED:
+          # ask the user to reauthenticate. if this API call fails, it will raise
+          # urllib2.HTTPError instead of DisableSource, so that we don't disable
+          # the source without notifying.
+          self.gr_source.create_notification(
+            self.key.id(),
+            "Brid.gy's access to your account has expired. Click here to renew it now!",
+            'https://www.brid.gy/facebook/start')
         raise models.DisableSource()
+
       raise
 
     # add photos. they show up as both a post and a photo, each with a separate
