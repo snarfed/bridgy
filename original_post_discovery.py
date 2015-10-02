@@ -396,6 +396,7 @@ def _process_entry(source, permalink, feed_entry, refetch, preexisting,
 
   # first try with the h-entry from the h-feed. if we find the syndication url
   # we're looking for, we don't have to fetch the permalink
+  permalink, _, type_ok = util.get_webmention_target(permalink)
   usynd = feed_entry.get('properties', {}).get('syndication', [])
   logging.debug('u-syndication links on the h-feed h-entry: %s', usynd)
   results = _process_syndication_urls(source, permalink, set(
@@ -407,7 +408,6 @@ def _process_entry(source, permalink, feed_entry, refetch, preexisting,
     parsed = None
     try:
       logging.debug('fetching post permalink %s', permalink)
-      permalink, _, type_ok = util.get_webmention_target(permalink)
       if type_ok:
         resp = util.requests_get(permalink)
         resp.raise_for_status()

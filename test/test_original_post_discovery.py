@@ -98,6 +98,31 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.assert_syndicated_posts(('http://author/post/permalink',
                                   'https://fa.ke/post/url'))
 
+  def test_syndication_url_in_hfeed_with_redirect(self):
+    """Like test_syndication_url_in_hfeed but u-url redirects to the
+    actual post URL. We should follow the redirect like we do everywhere
+    else.
+    """
+
+    self.expect_requests_head('https://fa.ke/post/url')
+    self.expect_requests_head('http://author')
+    self.expect_requests_get('http://author', """
+    <html class="h-feed">
+      <div class="h-entry">
+        <a class="u-url" href="http://author/post/will-redirect"></a>
+        <a class="u-syndication" href="https://fa.ke/post/url"></a>
+      </div>
+    </html>""")
+
+    self.expect_requests_head(
+      'http://author/post/will-redirect',
+      redirected_url='http://author/post/final')
+
+    self.mox.ReplayAll()
+    self.assert_discover(['http://author/post/final'])
+    self.assert_syndicated_posts(('http://author/post/final',
+                                  'https://fa.ke/post/url'))
+
   def test_additional_requests_do_not_require_rework(self):
     """Test that original post discovery fetches and stores all entries up
     front so that it does not have to reparse the author's h-feed for
