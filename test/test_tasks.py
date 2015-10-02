@@ -67,6 +67,7 @@ class PollTest(TaskQueueTest):
 
   def tearDown(self):
     FakeGrSource.DOMAIN = 'fa.ke'
+    appengine_config.DEBUG = False
     super(PollTest, self).tearDown()
 
   def post_task(self, expected_status=200, source=None, reset=False):
