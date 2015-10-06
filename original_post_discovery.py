@@ -40,6 +40,8 @@ from models import SyndicatedPost
 
 from google.appengine.api import memcache
 
+MAX_AUTHOR_URLS = 5
+
 # alias allows unit tests to mock the function
 now_fn = datetime.datetime.now
 
@@ -136,7 +138,7 @@ def refetch(source, source_updates=None):
   """
   logging.debug('attempting to refetch h-feed for %s', source.label())
   results = {}
-  for url in source.get_author_urls():
+  for url in _get_author_urls(source):
     results.update(_process_author(source, url, refetch=True,
                                    source_updates=source_updates))
   return results
@@ -170,7 +172,7 @@ def _posse_post_discovery(source, activity, syndication_url, fetch_hfeed,
     # TODO: Consider using the actor's url, with get_author_urls() as the
     # fallback in the future to support content from non-Bridgy users.
     results = {}
-    for url in source.get_author_urls():
+    for url in _get_author_urls(source):
       results.update(_process_author(source, url, source_updates=source_updates))
     relationships = results.get(syndication_url, [])
 
@@ -510,3 +512,13 @@ def _process_syndication_urls(source, permalink, syndication_urls,
           source, syndication=syndication_url, original=permalink)
       results.setdefault(syndication_url, []).append(relationship)
   return results
+
+
+def _get_author_urls(source):
+  urls = source.get_author_urls()
+  if len(urls) > MAX_AUTHOR_URLS:
+    logging.warning('user has over %d URLs! only running PPD on %s. skipping %s.',
+                    MAX_AUTHOR_URLS, urls[:MAX_AUTHOR_URLS], urls[MAX_AUTHOR_URLS:])
+    urls = urls[:MAX_AUTHOR_URLS]
+
+  return urls

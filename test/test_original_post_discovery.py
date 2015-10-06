@@ -408,6 +408,15 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.assert_syndicated_posts(('http://author1/A', 'https://fa.ke/A'),
                                  ('http://author3/B', 'https://fa.ke/B'))
 
+  def test_url_limit(self):
+    """We should cap fetches at 5 URLs."""
+    self.source.domain_urls = ['http://a1', 'http://b2', 'https://c3',
+                               'http://d4', 'http://e5', 'https://f6']
+    for url in self.source.domain_urls[:5]:
+      self.expect_requests_get(url, '')
+    self.mox.ReplayAll()
+    self.assert_discover([])
+
   def test_rel_feed_link_error(self):
     """Author page has an h-feed link that raises an exception. We should
     recover and use the main page's h-entries as a fallback."""
