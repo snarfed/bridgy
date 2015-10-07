@@ -271,13 +271,16 @@ class SourceTest(testutil.HandlerTest):
     auth_entity = testutil.FakeAuthEntity(id='x', user_json=json.dumps({
           'url': 'http://foo.org',
           'urls': [{'value': u} for u in
-                   'http://bar.com', 'http://t.co/x', 'http://baz'],
+                   'http://bar.com', 'http://t.co/x', 'http://baz',
+                   # utm_* query params should be stripped
+                   'https://baj/biff?utm_campaign=x&utm_source=y'],
           }))
     auth_entity.put()
     source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
-    self.assertEquals(['http://foo.org', 'http://bar.com', 'http://baz'],
+    self.assertEquals(['http://foo.org', 'http://bar.com', 'http://baz',
+                       'https://baj/biff'],
                       source.domain_urls)
-    self.assertEquals(['foo.org', 'bar.com', 'baz'], source.domains)
+    self.assertEquals(['foo.org', 'bar.com', 'baz', 'baj'], source.domains)
 
     # a URL that redirects
     auth_entity = testutil.FakeAuthEntity(
