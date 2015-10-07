@@ -218,7 +218,7 @@ class Handler(webmention.WebmentionHandler):
                          'like-of', 'in-reply-to'):
           if embedded in item.get('properties', []):
             item_types.add(embedded)
-        logging.error(
+        logging.info(
           'Object type(s) %s not supported; error=%s; trying next.',
           item_types, result.error_plain)
         types = types.union(item_types)
