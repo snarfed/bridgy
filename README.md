@@ -37,6 +37,20 @@ python -m unittest discover
 The last command runs the unit tests. If you send a pull request, please include
 (or update) a test for the new functionality if possible!
 
+If you hit an error during setup, check out the [oauth-dropins Troubleshooting/FAQ section](https://github.com/snarfed/oauth-dropins#troubleshootingfaq). For searchability, here are a handful of error messages that [have solutions there](https://github.com/snarfed/oauth-dropins#troubleshootingfaq):
+
+```
+bash: ./bin/easy_install: ...bad interpreter: No such file or directory
+
+ImportError: cannot import name certs
+
+ImportError: cannot import name tweepy
+
+File ".../site-packages/tweepy/auth.py", line 68, in _get_request_token
+  raise TweepError(e)
+TweepError: must be _socket.socket, not socket
+```
+
 There's a good chance you'll need to make changes to
 [granary](https://github.com/snarfed/granary),
 [oauth-dropins](https://github.com/snarfed/oauth-dropins), or
