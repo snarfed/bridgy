@@ -831,6 +831,40 @@ class PollTest(TaskQueueTest):
     # should not repropagate any responses
     self.assertEquals(0, len(self.taskqueue_stub.GetTasks('propagate')))
 
+  def test_dont_repropagate_posses(self):
+    """If we find a syndication URL for a POSSE post, we shouldn't repropagate it.
+    """
+    self.sources[0].domain_urls = ['http://author']
+    self.sources[0].last_syndication_url = NOW - datetime.timedelta(minutes=10)
+    self.sources[0].set_activities([])
+    self.sources[0].put()
+
+    # the one existing response is a POSSE of that post
+    resp = models.Response(
+      id='tag:or.ig,2013:9',
+      response_json='{}',
+      activities_json=['{"url": "http://source/post/url"}'],
+      source=self.sources[0].key,
+      status='complete',
+      original_posts=['http://author/permalink'],
+    )
+    resp.put()
+    self.responses = [resp]
+
+    self.expect_requests_get('http://author', """
+    <html class="h-feed">
+      <div class="h-entry">
+        <a class="u-url" href="http://author/permalink"></a>
+        <a class="u-syndication" href="http://source/post/url"></a>
+      </div>
+    </html>""")
+    self.mox.ReplayAll()
+    self.post_task()
+
+    # shouldn't repropagate it
+    self.assertEquals(0, len(self.taskqueue_stub.GetTasks('propagate')))
+    self.assertEquals('complete', resp.key.get().status)
+
   def test_do_refetch_hfeed(self):
     """Emulate a situation where we've done posse-post-discovery earlier and
     found no rel=syndication relationships for a particular silo URL. Every

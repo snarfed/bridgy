@@ -396,7 +396,8 @@ class Poll(webapp2.RequestHandler):
         for relationship in relationships.get(activity_url, []):
           # won't re-propagate if the discovered link is already among
           # these well-known upstream duplicates
-          if relationship.original in response.sent:
+          if (relationship.original in response.sent or
+              relationship.original in response.original_posts):
             logging.info(
               '%s found a new rel=syndication link %s -> %s, but the '
               'relationship had already been discovered by another method',
