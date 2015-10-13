@@ -167,7 +167,8 @@ Click to enable <a href="/about#listen">listening</a>:
        title="{{ response.actor.displayName }}">
       <img class="profile" src="{{ response.actor.image.url }}" width="32" /></a>
       <a target="_blank" href="{{ r.url }}">
-        {{ r.content|default:"--"|striptags|truncatewords:6|safe }}</a>
+        {{ r.content|default:"--"|striptags|truncatewords:6|safe }}
+      </a>
     {% endwith %}
 
    </div><div class="col-sm-3">
@@ -176,11 +177,7 @@ Click to enable <a href="/about#listen">listening</a>:
     <li>
     {% if response.type == "comment" %} on {% endif %}
     <a target="_blank" href="{% firstof a.url a.object.url %}">
-      {% if a.content %}
-        {{ a.content|striptags|truncatewords:6|safe }}
-      {% else %}
-        {{ a.object.content|default:"--"|striptags|truncatewords:6|safe }}
-      {% endif %}
+      {{ a.content|default:"--"|striptags|truncatewords:6|safe }}
     </a></li>
     {% endfor %}
 

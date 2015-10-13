@@ -235,11 +235,14 @@ class UserHandler(DashboardHandler):
             not all(gr_source.Source.is_public(a) for a in r.activities)):
           continue
         elif r.type == 'post':
-          if not r.response.get('content'):
-            r.response['content'] = r.response['object'].get('content')
           r.activities = []
 
         r.actor = r.response.get('author') or r.response.get('actor', {})
+
+        for a in r.activities + [r.response]:
+          if not a.get('content'):
+            a['content'] = a.get('object', {}).get('content')
+
         if not r.response.get('content'):
           phrases = {
             'like': 'liked this',
