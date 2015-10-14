@@ -183,6 +183,7 @@ class SourceTest(testutil.HandlerTest):
     self.assertEqual('/_ah/queue/poll', tasks[0]['url'])
     self.assertEqual(source.key.urlsafe(),
                      testutil.get_task_params(tasks[0])['source_key'])
+    self.assertEqual('fake (FakeSource)', source.label())
 
   def test_create_new(self):
     self.assertEqual(0, FakeSource.query().count())

@@ -37,6 +37,7 @@ class InstagramTest(testutil.ModelsTest):
     self.assertEqual('http://instagram.com/snarfed', inst.silo_url())
     self.assertEqual('tag:instagram.com,2013:my_string_id', inst.user_tag_id())
     self.assertEqual('Ryan Barrett', inst.name)
+    self.assertEqual('snarfed (Instagram)', inst.label())
 
   def test_get_activities_response(self):
     """Check that min_id is discarded."""

@@ -176,7 +176,11 @@ class Source(StringIdModel):
 
   def label(self):
     """Human-readable label for this source."""
-    return '%s (%s)' % (self.name, self.GR_CLASS.NAME)
+    return '%s (%s)' % (self.label_name(), self.GR_CLASS.NAME)
+
+  def label_name(self):
+    """Human-readable name or username for this source, whichever is preferred."""
+    return self.name
 
   def poll_period(self):
     """Returns the poll frequency for this source, as a datetime.timedelta.

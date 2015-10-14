@@ -66,6 +66,10 @@ class Instagram(models.Source):
     user = json.loads(self.auth_entity.get().user_json)
     return self.gr_source.tag_uri(user.get('id') or self.key.id())
 
+  def label_name(self):
+    """Returns the username."""
+    return self.key.id()
+
   def get_activities_response(self, *args, **kwargs):
     """Discard min_id because we still want new comments/likes on old photos."""
     kwargs.setdefault('group_id', SELF)

@@ -59,6 +59,10 @@ class Twitter(models.Source):
     """Returns the Twitter account URL, e.g. https://twitter.com/foo."""
     return self.gr_source.user_url(self.key.id())
 
+  def label_name(self):
+    """Returns the username."""
+    return self.key.id()
+
   def get_like(self, activity_user_id, activity_id, like_user_id):
     """Returns an ActivityStreams 'like' activity object for a favorite.
 
