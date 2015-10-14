@@ -1,5 +1,6 @@
 # coding=utf-8
 """Unit tests for util.py."""
+import datetime
 import json
 import urllib
 import urlparse
@@ -16,6 +17,8 @@ import util
 
 # the character in the middle is an unusual unicode character
 UNICODE_STR = u'a ✁ b'
+
+util.now_fn = lambda: datetime.datetime(2000, 1, 1)
 
 
 class UtilTest(testutil.ModelsTest):
@@ -37,15 +40,32 @@ class UtilTest(testutil.ModelsTest):
       self.handler.construct_state_param_for_add(feature='publish'))
     self.assertEquals(['publish'], src.features)
 
-    self.assertEquals(302, self.handler.response.status_int)
-    parsed = urlparse.urlparse(self.handler.response.headers['Location'])
+    self.assertEquals(302, self.response.status_int)
+    parsed = urlparse.urlparse(self.response.headers['Location'])
     self.assertIn(UNICODE_STR, urllib.unquote_plus(parsed.fragment).decode('utf-8'))
+    self.assertEquals(
+      'logins="/fake/%s"; expires=2001-12-31 00:00:00; Path=/' % src.key.id(),
+      self.response.headers['Set-Cookie'])
 
     for feature in None, '':
       src = self.handler.maybe_add_or_delete_source(
         FakeSource, auth_entity,
         self.handler.construct_state_param_for_add(feature))
       self.assertEquals([], src.features)
+
+  def test_add_to_logins_cookie(self):
+    listen = self.handler.construct_state_param_for_add(feature='listen')
+    auth_entity = FakeAuthEntity(id='x', user_json='{}')
+    auth_entity.put()
+
+    self.request.headers['Cookie'] = 'logins=/other/1'
+    src1 = self.handler.maybe_add_or_delete_source(FakeSource, auth_entity, listen)
+    cookie = 'logins="/fake/%s|/other/1"; expires=2001-12-31 00:00:00; Path=/'
+    self.assertEquals(cookie % src1.key.id(), self.response.headers['Set-Cookie'])
+
+    src2 = self.handler.maybe_add_or_delete_source(FakeSource, auth_entity, listen)
+    self.request.headers['Cookie'] = 'logins="/fake/%s|/other/1"' % src2.key.id()
+    self.assertEquals(cookie % src2.key.id(), self.response.headers['Set-Cookie'])
 
   def test_prune_activity(self):
     for orig, expected in (
@@ -165,6 +185,9 @@ class UtilTest(testutil.ModelsTest):
         ('key', ndb.Key('FakeSource', '0123456789').urlsafe()),
         ('user', 'http://localhost/fake/0123456789')]),
       resp.headers['location'])
+    self.assertEquals(
+      'logins="/fake/0123456789"; expires=2001-12-31 00:00:00; Path=/',
+      resp.headers['Set-Cookie'])
 
     source = FakeSource.get_by_id('0123456789')
     self.assertTrue(source)
@@ -217,6 +240,9 @@ class UtilTest(testutil.ModelsTest):
         ('key', ndb.Key('FakeSource', '0123456789').urlsafe()),
         ('user', 'http://localhost/fake/0123456789')]),
       resp.headers['location'])
+    self.assertEquals(
+      'logins="/fake/0123456789"; expires=2001-12-31 00:00:00; Path=/',
+      resp.headers['Set-Cookie'])
 
     source = FakeSource.get_by_id('0123456789')
     self.assertTrue(source)
@@ -255,6 +281,7 @@ class UtilTest(testutil.ModelsTest):
 
     self.assert_equals(302, resp.status_code)
     self.assert_equals(expected_auth_url, resp.headers['location'])
+    self.assertNotIn('Set-Cookie', resp.headers)
 
     resp = application.get_response(
       '/fakesource/add?state=%s&denied=1' % encoded_state)

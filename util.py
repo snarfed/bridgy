@@ -3,6 +3,7 @@
 """
 
 import collections
+import Cookie
 import datetime
 import json
 import re
@@ -33,6 +34,9 @@ POLL_TASK_DATETIME_FORMAT = '%Y-%m-%d-%H-%M-%S'
 HTTP_RATE_LIMIT_CODES = frozenset(('403', '429', '503'))
 
 USER_AGENT_HEADER = {'User-Agent': 'Bridgy (http://brid.gy/about)'}
+
+# alias allows unit tests to mock the function
+now_fn = datetime.datetime.now
 
 # Domains that don't support webmentions. Mainly just the silos.
 # Subdomains are automatically blacklisted too.
@@ -293,6 +297,13 @@ class Handler(webapp2.RequestHandler):
       source = source_cls.create_new(self, auth_entity=auth_entity,
                                      features=[feature] if feature else [],
                                      user_url=user_url, **kwargs)
+
+      if source:
+        # add to login cookie
+        logins = self.get_logins()
+        logins.add(source.bridgy_path())
+        self.set_logins(logins)
+
       if callback:
         callback = util.add_query_params(callback, {
           'result': 'success',
@@ -369,6 +380,36 @@ class Handler(webapp2.RequestHandler):
       return None
     return obj
 
+  def get_logins(self):
+    """Returns the current user page paths from the logins cookie.
+
+    ...e.g. ['/twitter/schnarfed', '/instagram/snarfed', ...]
+    """
+    cookie = self.request.headers.get('Cookie', '')
+    logging.info('Cookie: %s', cookie)
+
+    logins = Cookie.SimpleCookie(cookie).get('logins')
+    if not logins:
+      return set()
+    return set(logins.value.split('|'))
+
+  def set_logins(self, logins):
+    """Sets a logins cookie.
+
+    Args:
+      logins: sequence of user page paths, e.g.
+        ['/twitter/schnarfed', '/instagram/snarfed', ...]
+    """
+    # cookie docs: http://curl.haxx.se/rfc/cookie_spec.html
+    cookie = Cookie.SimpleCookie()
+    cookie['logins'] = '|'.join(sorted(logins))
+    cookie['logins']['path'] = '/'
+    cookie['logins']['expires'] = now_fn() + datetime.timedelta(days=365 * 2)
+
+    header = cookie['logins'].OutputString()
+    logging.info('Set-Cookie: %s', header)
+    self.response.headers['Set-Cookie'] = header
+
   def redirect_home_or_user_page(self, state):
     redirect_to = '/'
     split = state.split('-', 1)
@@ -429,7 +470,7 @@ class CachedPage(StringIdModel):
   def load(cls, path):
     cached = CachedPage.get_by_id(path)
     if cached:
-      if cached.expires and datetime.datetime.now() > cached.expires:
+      if cached.expires and now_fn() > cached.expires:
         logging.info('Deleting expired cached page for %s', path)
         cached.key.delete()
         return None
@@ -443,7 +484,7 @@ class CachedPage(StringIdModel):
     logging.info('Storing new page in cache for %s', path)
     if expires is not None:
       logging.info('  (expires in %s)', expires)
-      expires = datetime.datetime.now() + expires
+      expires = now_fn() + expires
     CachedPage(id=path, html=html, expires=expires).put()
 
   @classmethod
