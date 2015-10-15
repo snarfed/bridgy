@@ -47,6 +47,9 @@ with open('domain_blacklist.txt') as f:
   BLACKLIST = {l.strip() for l in f
                if l.strip() and not l.strip().startswith('#')}
 
+# Unpacked representation of logged in account in the logins cookie.
+Login = collections.namedtuple('Login', ('site', 'name', 'path'))
+
 
 def add_poll_task(source, now=False, **kwargs):
   """Adds a poll task for the given source entity.
@@ -301,7 +304,8 @@ class Handler(webapp2.RequestHandler):
       if source:
         # add to login cookie
         logins = self.get_logins()
-        logins.add(source.bridgy_path())
+        logins.append(Login(path=source.bridgy_path(), site=source.SHORT_NAME,
+                            name=source.label_name()))
         self.set_logins(logins)
 
       if callback:
@@ -381,28 +385,36 @@ class Handler(webapp2.RequestHandler):
     return obj
 
   def get_logins(self):
-    """Returns the current user page paths from the logins cookie.
+    """Extracts the current user page paths from the logins cookie.
 
-    ...e.g. ['/twitter/schnarfed', '/instagram/snarfed', ...]
+    Returns: list of Login objects
     """
     cookie = self.request.headers.get('Cookie', '')
     logging.info('Cookie: %s', cookie)
 
-    logins = Cookie.SimpleCookie(cookie).get('logins')
-    if not logins:
-      return set()
-    return set(logins.value.split('|'))
+    logins_str = Cookie.SimpleCookie(cookie).get('logins')
+    if not logins_str or not logins_str.value:
+      return []
+
+    logins = []
+    for val in set(urllib.unquote_plus(logins_str.value).decode('utf-8').split('|')):
+      path, name = val.split('?')
+      site, _ = path.strip('/').split('/')
+      logins.append(Login(path=path, site=site, name=name))
+
+    return logins
 
   def set_logins(self, logins):
     """Sets a logins cookie.
 
     Args:
-      logins: sequence of user page paths, e.g.
-        ['/twitter/schnarfed', '/instagram/snarfed', ...]
+      logins: sequence of Login objects
     """
     # cookie docs: http://curl.haxx.se/rfc/cookie_spec.html
     cookie = Cookie.SimpleCookie()
-    cookie['logins'] = '|'.join(sorted(logins))
+    cookie['logins'] = '|'.join(sorted(set(
+      '%s?%s' % (login.path, urllib.quote_plus(login.name.encode('utf-8')))
+      for login in logins)))
     cookie['logins']['path'] = '/'
     cookie['logins']['expires'] = now_fn() + datetime.timedelta(days=365 * 2)
 

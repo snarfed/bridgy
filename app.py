@@ -63,15 +63,17 @@ class DashboardHandler(webutil_handlers.TemplateHandler, util.Handler):
     return 'text/html; charset=utf-8'
 
   def template_vars(self):
-    path_parts = [path.strip('/').split('/') for path in self.get_logins()]
-    logged_in_sources = ndb.get_multi(
-      ndb.Key(models.sources[short_name], id) for short_name, id in path_parts)
-
     return {
       'request': self.request,
-      'logged_in_sources': logged_in_sources,
+      'logins': self.get_logins(),
       'DEBUG': appengine_config.DEBUG,
       }
+
+  def headers(self):
+    """Omit Cache-Control header."""
+    headers = super(DashboardHandler, self).headers()
+    headers.pop('Cache-Control', None)
+    return headers
 
 
 class CachedPageHandler(DashboardHandler):

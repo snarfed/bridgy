@@ -36,25 +36,23 @@ _gaq.push(['_trackPageview']);
 <!-- Content starts here -->
 <body class="{% block body_class %}{% endblock %}">
 
-<main class="tp-main lead container">
-
 <div id="messages">
   <p id="message"></p>
 </div>
 
-<div id="logins"><p>
-{% if logged_in_sources %}
-    Welcome back!
-  {% for source in logged_in_sources %}
-  <a href="{{ source.bridgy_path }}" title="{{ source.label|safe }}"
-     class="h-card u-url">
-    <img src="/static/{{ source.SHORT_NAME }}_icon.png" />
-    <span class="p-name">{{ source.label_name|safe }}</span>
+<main class="tp-main lead container">
+
+<div id="logins">
+{% if logins %}
+  {% for login in logins %}
+  <a href="{{ login.path }}" class="h-card u-url">
+    <img src="/static/{{ login.site }}_icon.png" />
+    <span class="p-name">{{ login.name|safe }}</span>
   </a> |
   {% endfor %}
   <a href="/logout">Log out</a>
 {% endif %}
-</p></div>
+</div>
 
 <div id="intro" class="row">
 <div id="logo" class="col-xs-4">

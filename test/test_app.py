@@ -159,7 +159,8 @@ class AppTest(testutil.ModelsTest):
 
   def test_logout(self):
     resp = app.application.get_response('/logout')
-    self.assertEquals('logins=; Path=/', resp.headers['Set-Cookie'])
+    self.assertEquals('logins=; expires=2001-12-31 00:00:00; Path=/',
+                      resp.headers['Set-Cookie'])
     self.assertEquals(302, resp.status_int)
     self.assertEquals('http://localhost/#!Logged%20out.', resp.headers['Location'])
 

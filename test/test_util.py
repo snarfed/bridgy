@@ -44,7 +44,8 @@ class UtilTest(testutil.ModelsTest):
     parsed = urlparse.urlparse(self.response.headers['Location'])
     self.assertIn(UNICODE_STR, urllib.unquote_plus(parsed.fragment).decode('utf-8'))
     self.assertEquals(
-      'logins="/fake/%s"; expires=2001-12-31 00:00:00; Path=/' % src.key.id(),
+      'logins="/fake/%s?%s"; expires=2001-12-31 00:00:00; Path=/' %
+        (src.key.id(), urllib.quote_plus(UNICODE_STR.encode('utf-8'))),
       self.response.headers['Set-Cookie'])
 
     for feature in None, '':
@@ -58,13 +59,14 @@ class UtilTest(testutil.ModelsTest):
     auth_entity = FakeAuthEntity(id='x', user_json='{}')
     auth_entity.put()
 
-    self.request.headers['Cookie'] = 'logins=/other/1'
+    self.request.headers['Cookie'] = 'logins=/other/1?bob'
     src1 = self.handler.maybe_add_or_delete_source(FakeSource, auth_entity, listen)
-    cookie = 'logins="/fake/%s|/other/1"; expires=2001-12-31 00:00:00; Path=/'
+    cookie = 'logins="/fake/%s?fake|/other/1?bob"; expires=2001-12-31 00:00:00; Path=/'
     self.assertEquals(cookie % src1.key.id(), self.response.headers['Set-Cookie'])
 
     src2 = self.handler.maybe_add_or_delete_source(FakeSource, auth_entity, listen)
-    self.request.headers['Cookie'] = 'logins="/fake/%s|/other/1"' % src2.key.id()
+    self.request.headers['Cookie'] = \
+      'logins="/fake/%s?fake|/other/1?bob"' % src2.key.id()
     self.assertEquals(cookie % src2.key.id(), self.response.headers['Set-Cookie'])
 
   def test_prune_activity(self):
@@ -186,7 +188,7 @@ class UtilTest(testutil.ModelsTest):
         ('user', 'http://localhost/fake/0123456789')]),
       resp.headers['location'])
     self.assertEquals(
-      'logins="/fake/0123456789"; expires=2001-12-31 00:00:00; Path=/',
+      'logins="/fake/0123456789?Fake+User"; expires=2001-12-31 00:00:00; Path=/',
       resp.headers['Set-Cookie'])
 
     source = FakeSource.get_by_id('0123456789')
@@ -241,7 +243,7 @@ class UtilTest(testutil.ModelsTest):
         ('user', 'http://localhost/fake/0123456789')]),
       resp.headers['location'])
     self.assertEquals(
-      'logins="/fake/0123456789"; expires=2001-12-31 00:00:00; Path=/',
+      'logins="/fake/0123456789?Fake+User"; expires=2001-12-31 00:00:00; Path=/',
       resp.headers['Set-Cookie'])
 
     source = FakeSource.get_by_id('0123456789')
