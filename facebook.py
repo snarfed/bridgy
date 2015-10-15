@@ -53,7 +53,10 @@ API_EVENT = '%s?fields=comments,description,end_time,id,likes,name,owner,picture
 API_EVENT_RSVPS = '%s/invited'
 
 # https://developers.facebook.com/docs/graph-api/using-graph-api/#errors
-ERROR_SUBCODE_APP_NOT_INSTALLED = 458
+DEAD_TOKEN_ERROR_SUBCODES = frozenset((
+  458,  # "The user has not authorized application 123"
+  460,  # "The session has been invalidated because the user has changed the password"
+))
 
 
 class FacebookPage(models.Source):
@@ -153,7 +156,7 @@ class FacebookPage(models.Source):
           return None
 
       if code == '401':
-        if subcode() != ERROR_SUBCODE_APP_NOT_INSTALLED:
+        if subcode() not in DEAD_TOKEN_ERROR_SUBCODES:
           # ask the user to reauthenticate. if this API call fails, it will raise
           # urllib2.HTTPError instead of DisableSource, so that we don't disable
           # the source without notifying.
