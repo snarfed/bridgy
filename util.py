@@ -390,7 +390,8 @@ class Handler(webapp2.RequestHandler):
     Returns: list of Login objects
     """
     cookie = self.request.headers.get('Cookie', '')
-    logging.info('Cookie: %s', cookie)
+    if cookie:
+      logging.info('Cookie: %s', cookie)
 
     logins_str = Cookie.SimpleCookie(cookie).get('logins')
     if not logins_str or not logins_str.value:
