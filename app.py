@@ -512,7 +512,7 @@ class WarmupHandler(util.Handler):
 application = webapp2.WSGIApplication(
   [('/?', FrontPageHandler),
    ('/users/?', UsersHandler),
-   ('/(blogger|facebook|fake|flickr|googleplus|instagram|tumblr|twitter|wordpress)/(.+)/?',
+   ('/(blogger|facebook|fake|flickr|googleplus|instagram|tumblr|twitter|wordpress)/([^/]+)/?',
     UserHandler),
    ('/about/?', AboutHandler),
    ('/delete/start', DeleteStartHandler),

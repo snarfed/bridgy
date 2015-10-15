@@ -1,5 +1,6 @@
 """Unit tests for app.py.
 """
+import datetime
 import urllib
 
 from google.appengine.ext import ndb
@@ -8,6 +9,7 @@ import mf2py
 import webapp2
 
 import app
+import util
 import testutil
 from testutil import FakeAuthEntity
 
@@ -129,6 +131,10 @@ class AppTest(testutil.ModelsTest):
     resp = app.application.get_response(self.sources[0].bridgy_path())
     self.assertEquals(200, resp.status_int)
 
+  def test_user_page_trailing_slash(self):
+    resp = app.application.get_response(self.sources[0].bridgy_path() + '/')
+    self.assertEquals(200, resp.status_int)
+
   def test_user_page_with_no_features_404s(self):
     self.sources[0].features = []
     self.sources[0].put()
@@ -158,6 +164,7 @@ class AppTest(testutil.ModelsTest):
       ['disabled'], hcard['properties'].get('bridgy-publish-status'))
 
   def test_logout(self):
+    util.now_fn = lambda: datetime.datetime(2000, 1, 1)
     resp = app.application.get_response('/logout')
     self.assertEquals('logins=; expires=2001-12-31 00:00:00; Path=/',
                       resp.headers['Set-Cookie'])
