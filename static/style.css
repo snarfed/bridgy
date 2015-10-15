@@ -1,5 +1,5 @@
-body {
-  margin-top: 3em;
+#intro {
+  margin-top: 2em;
 }
 
 #messages {
@@ -15,6 +15,11 @@ body {
   background-color: gold;
   color: #444;
   padding: .5em;
+}
+
+#logins {
+  margin-top: .3em;
+  text-align: right;
 }
 
 @media (max-width: 600px) {
@@ -283,7 +288,6 @@ iframe#twitter-widget-0 {
   margin-top: 2em;
   margin-bottom: 1em;
   text-align: right;
-  font-size: .8em;
 }
 
 .shadow, .profile, form.signup input, #screenshot {

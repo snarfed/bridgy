@@ -63,21 +63,32 @@ class DashboardHandler(webutil_handlers.TemplateHandler, util.Handler):
     return 'text/html; charset=utf-8'
 
   def template_vars(self):
+    path_parts = [path.strip('/').split('/') for path in self.get_logins()]
+    logged_in_sources = ndb.get_multi(
+      ndb.Key(models.sources[short_name], id) for short_name, id in path_parts)
+
     return {
       'request': self.request,
+      'logged_in_sources': logged_in_sources,
       'DEBUG': appengine_config.DEBUG,
       }
 
 
 class CachedPageHandler(DashboardHandler):
-  """Handle a page that may be cached with CachedPage."""
+  """Handle a page that may be cached with CachedPage.
+
+  Doesn't use the cache when:
+  * running in dev_appserver
+  * there are any query params
+  * there's a logins cookie
+  """
 
   EXPIRES = None  # subclasses can override
 
   @canonicalize_domain
   def get(self, cache=True):
-    # don't cache when running in in dev_appserver or if there are query params
-    if not cache or appengine_config.DEBUG or self.request.params:
+    if (not cache or appengine_config.DEBUG or self.request.params or
+        self.get_logins()):
       return super(DashboardHandler, self).get()
 
     self.response.headers['Content-Type'] = self.content_type()
@@ -117,7 +128,11 @@ class FrontPageHandler(CachedPageHandler):
           KindPropertyNameStat.property_name == property))
                     for kind in ('BlogPost', 'Response'))
       for property in ('sent', 'unsent', 'error', 'failed', 'skipped')}
-    vars = {
+
+    vars = super(FrontPageHandler, self).template_vars()
+
+    # add comma separator between thousands
+    vars.update({k: '{:,}'.format(v) for k, v in {
       'users': num_users,
       'responses': kind_count('Response'),
       'links': sum(link_counts.values()),
@@ -125,10 +140,8 @@ class FrontPageHandler(CachedPageHandler):
       'publishes': kind_count('Publish'),
       'blogposts': kind_count('BlogPost'),
       'webmentions_received': kind_count('BlogWebmention'),
-      }
-
-    # add comma separator between thousands
-    return {k: '{:,}'.format(v) for k, v in vars.items()}
+    }.items()})
+    return vars
 
 
 class UsersHandler(CachedPageHandler):
@@ -195,14 +208,13 @@ class UserHandler(DashboardHandler):
     return {'Access-Control-Allow-Origin': '*'}
 
   def template_vars(self):
-    if not self.source:
-      return {}
-
     vars = super(UserHandler, self).template_vars()
     vars.update({
         'source': self.source,
         'epoch': util.EPOCH,
         })
+    if not self.source:
+      return vars
 
     # Blog webmention promos
     if 'webmention' not in self.source.features:
@@ -335,10 +347,7 @@ class UserHandler(DashboardHandler):
         })
 
 
-class AboutHandler(webutil_handlers.TemplateHandler):
-  def head(self):
-    """Return an empty 200 with no caching directives."""
-
+class AboutHandler(DashboardHandler):
   def template_file(self):
     return 'templates/about.html'
 
@@ -480,6 +489,15 @@ class RedirectToFrontPageHandler(util.Handler):
   head = get
 
 
+class LogoutHandler(util.Handler):
+  @canonicalize_domain
+  def get(self):
+    """Redirect to the front page."""
+    self.set_logins([])
+    self.messages.add('Logged out.')
+    self.redirect('/')
+
+
 class WarmupHandler(util.Handler):
   """Warmup requests. Noop.
 
@@ -500,5 +518,6 @@ application = webapp2.WSGIApplication(
    ('/poll-now', PollNowHandler),
    ('/retry', RetryHandler),
    ('/(listen|publish)/?', RedirectToFrontPageHandler),
+   ('/logout', LogoutHandler),
    ('/_ah/warmup', WarmupHandler),
    ], debug=appengine_config.DEBUG)

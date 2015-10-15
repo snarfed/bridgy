@@ -156,3 +156,10 @@ class AppTest(testutil.ModelsTest):
       ['enabled'], hcard['properties'].get('bridgy-listen-status'))
     self.assertEquals(
       ['disabled'], hcard['properties'].get('bridgy-publish-status'))
+
+  def test_logout(self):
+    resp = app.application.get_response('/logout')
+    self.assertEquals('logins=; Path=/', resp.headers['Set-Cookie'])
+    self.assertEquals(302, resp.status_int)
+    self.assertEquals('http://localhost/#!Logged%20out.', resp.headers['Location'])
+

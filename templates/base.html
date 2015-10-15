@@ -36,26 +36,29 @@ _gaq.push(['_trackPageview']);
 <!-- Content starts here -->
 <body class="{% block body_class %}{% endblock %}">
 
+<main class="tp-main lead container">
+
 <div id="messages">
   <p id="message"></p>
 </div>
 
-<main class="tp-main lead container">
-
-<div class="row">
-<div id="logo" class="col-xs-4">
- <a href="/">
-   <img id="logo-img" class="img-responsive" src="/static/bridgy_logo.jpg" /></a>
-<br />
-
-<ul class="nav nav-pills nav-justified">
-  <li></li>
-  {% for p in pages %}
-    <li {% if p == page %} class="active" {% endif %} >
-      <a href="/{{ p }}">{{ p|capfirst }}</a>
-    </li>
+<div id="logins"><p>
+{% if logged_in_sources %}
+    Welcome back!
+  {% for source in logged_in_sources %}
+  <a href="{{ source.bridgy_path }}" title="{{ source.label|safe }}"
+     class="h-card u-url">
+    <img src="/static/{{ source.SHORT_NAME }}_icon.png" />
+    <span class="p-name">{{ source.label_name|safe }}</span>
+  </a> |
   {% endfor %}
-</ul>
+  <a href="/logout">Log out</a>
+{% endif %}
+</p></div>
+
+<div id="intro" class="row">
+<div id="logo" class="col-xs-4">
+ <a href="/"><img id="logo-img" class="img-responsive" src="/static/bridgy_logo.jpg" /></a>
 </div>
 
 <div id="header" class="col-xs-8">

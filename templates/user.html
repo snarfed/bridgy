@@ -23,7 +23,7 @@
   <img src="/static/{{ source.SHORT_NAME }}_icon.png"
        {# oddly, source.GR_CLASS doesn't work for Twitter. use kind as fallback. #}
        alt="{% firstof source.GR_CLASS.NAME source.key.kind %}" />
-  <span class="p-name">{{ source.name|safe }}</span></a>
+  <span class="p-name">{{ source.label_name|safe }}</span></a>
 
 {% if source.status == "disabled" %}
 <!-- TODO: make this work without javascript too -->
