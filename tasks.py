@@ -159,11 +159,11 @@ class Poll(webapp2.RequestHandler):
           ).get('items', [])
           # strip shares and likes. (some silos get and return them without
           # explicitly fetching them.)
+          def strip_likes_shares(objs):
+            return [o for o in objs if o.get('verb') not in ('like', 'share')]
           for m in mentions:
-            m['object']['tags'] = [tag for tag in m['object'].get('tags', [])
-                                   if tag.get('verb') not in ('like', 'share')]
-
-          mentions = {m['id']: m for m in mentions}
+            m['object']['tags'] = strip_likes_shares(m['object'].get('tags', []))
+          mentions = {m['id']: m for m in strip_likes_shares(mentions)}
           activities.update(mentions)  # so that we handle replies to mentions
           responses.update(mentions)
       except NotImplementedError:

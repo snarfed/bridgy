@@ -442,30 +442,38 @@ class PollTest(TaskQueueTest):
     del activity['object']['url']  # prevent posse post discovery
     source.set_activities([activity])
 
-    mention = {
+    reply = {
+      'objectType': 'comment',
+      'id': 'tag:source.com,2013:9_comment',
+      'content': 'foo bar',
+    }
+    like = {
+      'id': 'tag:source.com,2013:9_like',
+      'objectType': 'activity',
+      'verb': 'like',
+      'object': {'url': 'http://example.com/abc'},
+    }
+    share = {
+      'id': 'tag:source.com,2013:9_reshare',
+      'objectType': 'activity',
+      'verb': 'share',
+      'object': {'url': 'http://example.com/def'},
+    }
+    mentions = [{
+      # good mention
       'id': 'tag:source.com,2013:9',
       'object': {
         'objectType': 'note',
         'content': 'foo http://target9/post/url bar',
-        'replies': {'items': [{
-          'objectType': 'comment',
-          'id': 'tag:source.com,2013:9_comment',
-          'content': 'foo bar',
-        }]},
-        'tags': [{
-          'id': 'tag:source.com,2013:9_like',
-          'objectType': 'activity',
-          'verb': 'like',
-          'object': {'url': 'http://example.com/abc'},
-        }, {
-          'id': 'tag:source.com,2013:9_reshare',
-          'objectType': 'activity',
-          'verb': 'share',
-          'object': {'url': 'http://example.com/def'},
-        }],
+        'replies': {'items': [reply]},
+        'tags': [like, share],
       },
-    }
-    source.set_search_results([copy.deepcopy(mention)])
+    },
+      # these should be filtered out
+      like,
+      share,
+    ]
+    source.set_search_results(copy.deepcopy(mentions))
 
     self.post_task()
 
@@ -496,7 +504,7 @@ class PollTest(TaskQueueTest):
       ), models.Response(
         id='tag:source.com,2013:9_comment',
         activities_json=[pruned_activity],
-        response_json=json.dumps(mention['object']['replies']['items'][0]),
+        response_json=json.dumps(reply),
         type='comment',
         source=source.key,
         unsent=['http://target9/post/url'],
