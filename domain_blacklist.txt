@@ -190,6 +190,7 @@ viddler.com
 vimeo.com
 vodspot.tv
 wikipedia.org
+xda-developers.com
 xfire.com
 xing.com
 yahoo.com
