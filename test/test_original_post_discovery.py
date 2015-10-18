@@ -1139,6 +1139,26 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
                                  ('http://author/only-on-feed', None),
                                  (None, 'https://fa.ke/post/url'))
 
+  def test_store_original_and_canonicalized(self):
+    """If the original and canonicalized URLs are different, store both."""
+    self.mox.StubOutWithMock(testutil.FakeSource, 'canonicalize_syndication_url')
+    testutil.FakeSource.canonicalize_syndication_url('https://fa.ke/post/url'
+      ).MultipleTimes().AndReturn('https://fa.ke/canonicalized/url')
+
+    self.expect_requests_get('http://author', """
+    <html class="h-feed">
+      <div class="h-entry">
+        <a class="u-url" href="http://author/post/permalink"></a>
+        <a class="u-syndication" href="https://fa.ke/post/url"></a>
+      </div>
+    </html>""")
+
+    self.mox.ReplayAll()
+    self.assert_discover(['http://author/post/permalink'])
+    self.assert_syndicated_posts(
+      ('http://author/post/permalink', 'https://fa.ke/post/url'),
+      ('http://author/post/permalink', 'https://fa.ke/canonicalized/url'))
+
   def test_match_facebook_username(self):
     """Facebook URLs use username and user id interchangeably, and one
     does not redirect to the other. Make sure we can still find the
