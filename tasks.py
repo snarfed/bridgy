@@ -39,6 +39,8 @@ import wordpress_rest
 
 WEBMENTION_DISCOVERY_CACHE_TIME = 60 * 60 * 24  # a day
 
+ERROR_HTTP_RETURN_CODE = 304  # "Not Modified"
+
 # allows injecting timestamps in test_tasks.py
 now_fn = datetime.datetime.now
 
@@ -185,6 +187,10 @@ class Poll(webapp2.RequestHandler):
         logging.warning('Rate limited. Marking as error and finishing. %s', e)
         source_updates.update({'status': 'error', 'rate_limited': True})
         return source_updates
+      elif code and int(code) / 100 == 5:
+        logging.error('API call failed. Marking as error and finishing. %s: %s\n%s',
+                      code, body, e)
+        self.abort(ERROR_HTTP_RETURN_CODE)
       else:
         raise
 
@@ -431,8 +437,6 @@ class SendWebmentions(webapp2.RequestHandler):
   # request deadline (10m) plus some padding
   LEASE_LENGTH = datetime.timedelta(minutes=12)
 
-  ERROR_HTTP_RETURN_CODE = 304  # "Not Modified"
-
   def source_url(self, target_url):
     """Return the source URL to use for a given target URL.
 
@@ -613,7 +617,7 @@ class SendWebmentions(webapp2.RequestHandler):
   def fail(self, message, level=logging.WARNING):
     """Fills in an error response status code and message.
     """
-    self.error(self.ERROR_HTTP_RETURN_CODE)
+    self.error(ERROR_HTTP_RETURN_CODE)
     logging.log(level, message)
     self.response.out.write(message)
 
@@ -692,7 +696,7 @@ class PropagateResponse(SendWebmentions):
 Hit https://github.com/snarfed/bridgy/issues/237 !
 target url %s not in urls_to_activity: %s
 activities: %s""", target_url, urls_to_activity, self.activities)
-          self.abort(self.ERROR_HTTP_RETURN_CODE)
+          self.abort(ERROR_HTTP_RETURN_CODE)
 
     # generate source URL
     id = activity['id']
