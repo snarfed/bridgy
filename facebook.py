@@ -35,6 +35,7 @@ from granary.source import SELF
 import models
 import util
 
+from google.appengine.api import memcache
 from google.appengine.ext import ndb
 from google.appengine.ext.webapp import template
 import webapp2
@@ -221,11 +222,26 @@ class FacebookPage(models.Source):
 
     parsed = urlparse.urlparse(url)
     params = urlparse.parse_qs(parsed.query)
+    url_id = self.gr_source.post_id(url)
+
     ids = params.get('story_fbid') or params.get('fbid')
     if ids:
       url = post_url(ids[0])
-    elif parsed.path.startswith('/notes/'):
-      url = post_url(parsed.path.split('/')[-1])
+    elif url_id:
+      if parsed.path.startswith('/notes/'):
+        url = post_url(url_id)
+      else:
+        # fetch this post from facebook (or memcache) to see if we should
+        # canonicalize to the object_id. corresponds to canonicalization for
+        # photo objects in get_activities() above.
+        cache_key = 'FO %s' % url_id
+        object_id = memcache.get(cache_key)
+        if object_id is None:
+          post = self.get_post(url_id)
+          object_id = post.get('object', {}).get('fb_object_id', '') if post else ''
+          memcache.set(cache_key, object_id)
+        if object_id:
+          url = post_url(object_id)
 
     username = self.username or self.inferred_username
     if username:

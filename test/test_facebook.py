@@ -6,6 +6,7 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 import app
 import copy
 import datetime
+import logging
 import json
 import re
 import urllib
@@ -236,17 +237,32 @@ class FacebookPageTest(testutil.ModelsTest):
     self.assertEquals(400, cm.exception.code)
     self.assertEquals('not json', cm.exception.body)
 
+  def expect_canonicalize_syndurl_lookups(self, id, return_id):
+    for id in '212038_' + id, id:
+      self.expect_urlopen(
+        'https://graph.facebook.com/v2.2/%s?access_token=my_token' % id,
+        json.dumps({'id': '0', 'object_id': return_id} if return_id else {}))
+
   def test_canonicalize_syndication_url(self):
+    # should look up each object once, then cache it
+    self.expect_canonicalize_syndurl_lookups('314159', '222')
+    for id in 'snarfed.org', '444':
+      self.expect_canonicalize_syndurl_lookups(id, None)
+    self.mox.ReplayAll()
+
     for expected, input in (
-      ('https://www.facebook.com/212038/posts/314159',
+      ('https://www.facebook.com/212038/posts/222',
+       'http://facebook.com/snarfed.org/posts/314159'),
+      # second time should use memcache instead of fetching object from API
+      ('https://www.facebook.com/212038/posts/222',
        'http://facebook.com/snarfed.org/posts/314159'),
       ('https://www.facebook.com/212038/posts/314159',
        'https://facebook.com/snarfed.org/photos.php?fbid=314159'),
       # note. https://github.com/snarfed/bridgy/issues/429
       ('https://www.facebook.com/212038/posts/314159',
        'https://www.facebook.com/notes/ryan-b/title/314159'),
-      ('https://www.facebook.com/212038/posts/10101299919362973',
-       'https://www.facebook.com/photo.php?fbid=10101299919362973&set=a.995695740593.2393090.212038&type=1&theater'),
+      ('https://www.facebook.com/212038/posts/314159',
+       'https://www.facebook.com/photo.php?fbid=314159&set=a.456.2393090.212038&type=1&theater'),
       ('https://www.facebook.com/212038/posts/314159',
        'https://facebook.com/permalink.php?story_fbid=314159&id=212038'),
       ('https://www.facebook.com/212038/posts/314159',
@@ -255,18 +271,22 @@ class FacebookPageTest(testutil.ModelsTest):
        'https://m.facebook.com/story.php?id=212038&story_fbid=314159'),
       # make sure we don't touch user.name when it appears elsewhere in the url
       ('https://www.facebook.com/25624/posts/snarfed.org',
-       'http://www.facebook.com/25624/posts/snarfed.org')):
+       'http://www.facebook.com/25624/posts/snarfed.org'),
+      ):
+      logging.debug(input)
       self.assertEqual(expected, self.fb.canonicalize_syndication_url(input))
 
     # username should override inferred username
     self.fb.inferred_username = 'mr-disguise'
-    url = 'https://www.facebook.com/mr-disguise/posts/314159'
-    self.assertEqual(url, self.fb.canonicalize_syndication_url(url))
+    self.assertEqual('https://www.facebook.com/mr-disguise/posts/444',
+                     self.fb.canonicalize_syndication_url(
+                       'https://www.facebook.com/mr-disguise/posts/444'))
 
     # if no username, fall through
     self.fb.username = None
-    self.assertEqual('https://www.facebook.com/212038/posts/314159',
-                     self.fb.canonicalize_syndication_url(url))
+    self.assertEqual('https://www.facebook.com/212038/posts/444',
+                     self.fb.canonicalize_syndication_url(
+                       'https://www.facebook.com/mr-disguise/posts/444'))
 
   def test_photo_syndication_url(self):
     """End to end test with syndication URL with FB object id instead of post id.
@@ -297,6 +317,7 @@ class FacebookPageTest(testutil.ModelsTest):
 
     self.assertNotIn('222', gr_test_facebook.POST['id'])
     self.assertEquals('222', gr_test_facebook.POST['object_id'])
+    self.expect_canonicalize_syndurl_lookups('222', '222')
     self.expect_requests_get('http://my.orig/post', """
     <html class="h-entry">
       <a class="u-syndication" href="https://www.facebook.com/photo.php?fbid=222&set=a.995695740593.2393090.212038&type=1&theater'"></a>
@@ -332,6 +353,8 @@ class FacebookPageTest(testutil.ModelsTest):
     self.assertIsNone(fb.key.get().inferred_username)
 
     # should infer username
+    self.expect_canonicalize_syndurl_lookups('123', '123')
+    self.mox.ReplayAll()
     syndpost = models.SyndicatedPost.insert(
       self.fb, original='http://fin.al',
       syndication='http://facebook.com/fooey/posts/123')
