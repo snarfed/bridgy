@@ -1178,9 +1178,8 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
       <a class="u-syndication" href="http://facebook.com/snarfed.org/posts/314159"></a>
     </html>""")
 
-    for id in '212038_314159', '314159':
-      self.expect_urlopen(
-        'https://graph.facebook.com/v2.2/%s?access_token=my_token' % id, '{}')
+    self.expect_urlopen(
+      'https://graph.facebook.com/v2.2/212038_314159?access_token=my_token', '{}')
 
     self.mox.ReplayAll()
     self.assert_discover(['http://author/post/permalink'], source=fb)

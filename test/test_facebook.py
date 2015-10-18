@@ -237,15 +237,14 @@ class FacebookPageTest(testutil.ModelsTest):
     self.assertEquals(400, cm.exception.code)
     self.assertEquals('not json', cm.exception.body)
 
-  def expect_canonicalize_syndurl_lookups(self, id, return_id):
-    for id in '212038_' + id, id:
-      self.expect_urlopen(
-        'https://graph.facebook.com/v2.2/%s?access_token=my_token' % id,
-        json.dumps({'id': '0', 'object_id': return_id} if return_id else {}))
+  def expect_canonicalize_syndurl_lookup(self, id, return_id):
+    self.expect_urlopen(
+      'https://graph.facebook.com/v2.2/212038_%s?access_token=my_token' % id,
+      json.dumps({'id': '0', 'object_id': return_id} if return_id else {}))
 
   def test_canonicalize_syndication_url_basic(self):
     # should look it up once, then cache it
-    self.expect_canonicalize_syndurl_lookups('314159', '222')
+    self.expect_canonicalize_syndurl_lookup('314159', '222')
     self.mox.ReplayAll()
 
     for expected, input in (
@@ -273,7 +272,7 @@ class FacebookPageTest(testutil.ModelsTest):
 
   def test_canonicalize_syndication_url_username(self):
     for id in 'snarfed.org', '444':
-      self.expect_canonicalize_syndurl_lookups(id, None)
+      self.expect_canonicalize_syndurl_lookup(id, None)
     self.mox.ReplayAll()
 
     # we shouldn't touch username when it appears elsewhere in the url
@@ -337,7 +336,7 @@ class FacebookPageTest(testutil.ModelsTest):
 
     self.assertNotIn('222', gr_test_facebook.POST['id'])
     self.assertEquals('222', gr_test_facebook.POST['object_id'])
-    self.expect_canonicalize_syndurl_lookups('222', '222')
+    self.expect_canonicalize_syndurl_lookup('222', '222')
     self.expect_requests_get('http://my.orig/post', """
     <html class="h-entry">
       <a class="u-syndication" href="https://www.facebook.com/photo.php?fbid=222&set=a.995695740593.2393090.212038&type=1&theater'"></a>
@@ -373,7 +372,7 @@ class FacebookPageTest(testutil.ModelsTest):
     self.assertIsNone(fb.key.get().inferred_username)
 
     # should infer username
-    self.expect_canonicalize_syndurl_lookups('123', '123')
+    self.expect_canonicalize_syndurl_lookup('123', '123')
     self.mox.ReplayAll()
     syndpost = models.SyndicatedPost.insert(
       self.fb, original='http://fin.al',

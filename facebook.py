@@ -52,6 +52,7 @@ API_EVENT = '%s?fields=comments,description,end_time,id,likes,name,owner,picture
 # WARNING: this edge is deprecated in API v2.4 and will stop working in 2017.
 # https://developers.facebook.com/docs/apps/changelog#v2_4_deprecations
 API_EVENT_RSVPS = '%s/invited'
+API_POST_OBJECT = '%s_%s'  # USERID_POSTID; used in canonicalize_syndication_url()
 
 # https://developers.facebook.com/docs/graph-api/using-graph-api/#errors
 DEAD_TOKEN_ERROR_SUBCODES = frozenset((
@@ -247,8 +248,8 @@ class FacebookPage(models.Source):
         else:
           object_id = memcache.get(cache_key)
         if object_id is None:
-          post = self.get_post(url_id)
-          object_id = post.get('object', {}).get('fb_object_id', '') if post else ''
+          post = self.gr_source.urlopen(API_POST_OBJECT % (self.key.id(), url_id))
+          object_id = post.get('object_id', '') if post else ''
           memcache.set(cache_key, object_id)
         if object_id:
           url = post_url(object_id)
