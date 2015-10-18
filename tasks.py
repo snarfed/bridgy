@@ -188,7 +188,7 @@ class Poll(webapp2.RequestHandler):
       else:
         raise
 
-    logging.info('Found %d activities', len(activities))
+    logging.info('Found %d activities: %s', len(activities), activities.keys())
 
     # extract silo activity ids, update last_activity_id
     silo_activity_ids = set()

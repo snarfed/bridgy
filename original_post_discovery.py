@@ -390,17 +390,19 @@ def _process_entry(source, permalink, feed_entry, refetch, preexisting,
     # if we're refetching and this one is blank, do not return.
     # if there is a blank entry, it should be the one and only entry,
     # but go ahead and check 'all' of them to be safe.
-    if refetch:
-      logging.debug('previously found relationship(s) for original %s: %s',
-                    permalink, [s.syndication for s in preexisting])
-    else:
+    if not refetch:
       return {}
+    synds = [s.syndication for s in preexisting if s.syndication]
+    if synds:
+      logging.debug('previously found relationship(s) for original %s: %s',
+                    permalink, synds)
 
   # first try with the h-entry from the h-feed. if we find the syndication url
   # we're looking for, we don't have to fetch the permalink
   permalink, _, type_ok = util.get_webmention_target(permalink)
   usynd = feed_entry.get('properties', {}).get('syndication', [])
-  logging.debug('u-syndication links on the h-feed h-entry: %s', usynd)
+  if usynd:
+    logging.debug('u-syndication links on the h-feed h-entry: %s', usynd)
   results = _process_syndication_urls(source, permalink, set(
     url for url in usynd if isinstance(url, basestring)), preexisting)
   success = True
@@ -424,7 +426,8 @@ def _process_entry(source, permalink, feed_entry, refetch, preexisting,
     if parsed:
       syndication_urls = set()
       relsynd = parsed.get('rels').get('syndication', [])
-      logging.debug('rel-syndication links: %s', relsynd)
+      if relsynd:
+        logging.debug('rel-syndication links: %s', relsynd)
       syndication_urls.update(url for url in relsynd
                               if isinstance(url, basestring))
       # there should only be one h-entry on a permalink page, but
@@ -432,7 +435,8 @@ def _process_entry(source, permalink, feed_entry, refetch, preexisting,
       for hentry in (item for item in parsed['items']
                      if 'h-entry' in item['type']):
         usynd = hentry.get('properties', {}).get('syndication', [])
-        logging.debug('u-syndication links: %s', usynd)
+        if usynd:
+          logging.debug('u-syndication links: %s', usynd)
         syndication_urls.update(url for url in usynd
                                 if isinstance(url, basestring))
       results = _process_syndication_urls(
@@ -465,7 +469,8 @@ def _process_entry(source, permalink, feed_entry, refetch, preexisting,
       if syndpost not in preexisting:
         new_results.setdefault(syndurl, []).append(syndpost)
 
-  logging.debug('discovered relationships %s', new_results)
+  if new_results:
+    logging.debug('discovered relationships %s', new_results)
   return new_results
 
 
