@@ -243,11 +243,9 @@ class FacebookPageTest(testutil.ModelsTest):
         'https://graph.facebook.com/v2.2/%s?access_token=my_token' % id,
         json.dumps({'id': '0', 'object_id': return_id} if return_id else {}))
 
-  def test_canonicalize_syndication_url(self):
-    # should look up each object once, then cache it
+  def test_canonicalize_syndication_url_basic(self):
+    # should look it up once, then cache it
     self.expect_canonicalize_syndurl_lookups('314159', '222')
-    for id in 'snarfed.org', '444':
-      self.expect_canonicalize_syndurl_lookups(id, None)
     self.mox.ReplayAll()
 
     for expected, input in (
@@ -269,12 +267,19 @@ class FacebookPageTest(testutil.ModelsTest):
        'https://facebook.com/permalink.php?story_fbid=314159&amp;id=212038'),
       ('https://www.facebook.com/212038/posts/314159',
        'https://m.facebook.com/story.php?id=212038&story_fbid=314159'),
-      # make sure we don't touch user.name when it appears elsewhere in the url
-      ('https://www.facebook.com/25624/posts/snarfed.org',
-       'http://www.facebook.com/25624/posts/snarfed.org'),
       ):
       logging.debug(input)
       self.assertEqual(expected, self.fb.canonicalize_syndication_url(input))
+
+  def test_canonicalize_syndication_url_username(self):
+    for id in 'snarfed.org', '444':
+      self.expect_canonicalize_syndurl_lookups(id, None)
+    self.mox.ReplayAll()
+
+    # we shouldn't touch username when it appears elsewhere in the url
+    self.assertEqual('https://www.facebook.com/25624/posts/snarfed.org',
+                     self.fb.canonicalize_syndication_url(
+                       'http://www.facebook.com/25624/posts/snarfed.org'))
 
     # username should override inferred username
     self.fb.inferred_username = 'mr-disguise'
@@ -287,6 +292,11 @@ class FacebookPageTest(testutil.ModelsTest):
     self.assertEqual('https://www.facebook.com/212038/posts/444',
                      self.fb.canonicalize_syndication_url(
                        'https://www.facebook.com/mr-disguise/posts/444'))
+
+  def test_canonicalize_syndication_url_not_facebook(self):
+    """Shouldn't try to extract id and fetch post for non-facebook.com URLs."""
+    url = 'https://twitter.com/foo/status/123'
+    self.assertEqual(url, self.fb.canonicalize_syndication_url(url))
 
   def test_photo_syndication_url(self):
     """End to end test with syndication URL with FB object id instead of post id.
