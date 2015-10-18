@@ -71,7 +71,7 @@ class Flickr(models.Source):
       del kwargs['min_id']
     return self.gr_source.get_activities_response(*args, **kwargs)
 
-  def canonicalize_syndication_url(self, url):
+  def canonicalize_syndication_url(self, url, **kwargs):
     if not url.endswith('/'):
       url = url + '/'
     if self.username:

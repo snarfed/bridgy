@@ -499,7 +499,7 @@ class Source(StringIdModel):
     return urls, domains
 
   def canonicalize_syndication_url(self, syndication_url, scheme='https',
-                                   subdomain=''):
+                                   subdomain='', **kwargs):
     """Perform source-specific transforms to the syndication URL for cases
     where multiple silo URLs can point to the same content.  By
     standardizing on one format, original_post_discovery stands the
@@ -511,6 +511,7 @@ class Source(StringIdModel):
       scheme: a string, the canonical scheme for this source (https by default)
       subdomain: a string, the canonical subdomain, e.g. 'www.'
         (blank by default)
+      kwargs: may be used by subclasses
 
     Return:
       a string, the canonical form of the syndication url

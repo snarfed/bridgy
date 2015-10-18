@@ -82,7 +82,7 @@ class GooglePlusPage(models.Source):
     return (self.RATE_LIMITED_POLL if self.rate_limited
             else super(GooglePlusPage, self).poll_period())
 
-  def canonicalize_syndication_url(self, url):
+  def canonicalize_syndication_url(self, url, **kwargs):
     """Follow redirects to find and use profile nicknames instead of ids.
 
     ...e.g. +RyanBarrett in https://plus.google.com/+RyanBarrett/posts/JPpA8mApAv2.

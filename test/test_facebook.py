@@ -298,6 +298,16 @@ class FacebookPageTest(testutil.ModelsTest):
     url = 'https://twitter.com/foo/status/123'
     self.assertEqual(url, self.fb.canonicalize_syndication_url(url))
 
+  def test_canonicalize_syndication_url_with_activity(self):
+    """If we pass an activity with fb_object_id, use that, don't fetch from FB."""
+    obj = {'fb_object_id': 456}
+    act = {'object': obj}
+
+    for activity in obj, act:
+      got = self.fb.canonicalize_syndication_url('http://facebook.com/foo/posts/123',
+                                                 activity=activity)
+      self.assertEqual('https://www.facebook.com/212038/posts/456', got)
+
   def test_photo_syndication_url(self):
     """End to end test with syndication URL with FB object id instead of post id.
 

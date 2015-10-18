@@ -77,7 +77,7 @@ class Instagram(models.Source):
       del kwargs['min_id']
     return self.gr_source.get_activities_response(*args, **kwargs)
 
-  def canonicalize_syndication_url(self, syndication_url):
+  def canonicalize_syndication_url(self, syndication_url, **kwargs):
     """Instagram-specific standardization of syndicated urls. Canonical form
     is http://instagram.com
     """

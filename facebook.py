@@ -207,12 +207,15 @@ class FacebookPage(models.Source):
 
     return util.trim_nulls(resp)
 
-  def canonicalize_syndication_url(self, url):
+  def canonicalize_syndication_url(self, url, activity=None, **kwargs):
     """Facebook-specific standardization of syndicated urls. Canonical form is
     https://www.facebook.com/USERID/posts/POSTID
 
     Args:
       url: a string, the url of the syndicated content
+      activity: the activity this URL came from. If it has an fb_object_id,
+        we'll use that instead of fetching the post from Facebook
+      kwargs: unused
 
     Return:
       a string, the canonical form of the syndication url
@@ -238,7 +241,11 @@ class FacebookPage(models.Source):
         # canonicalize to the object_id. corresponds to canonicalization for
         # photo objects in get_activities() above.
         cache_key = 'FO %s' % url_id
-        object_id = memcache.get(cache_key)
+        if activity:
+          object_id = (activity.get('fb_object_id') or
+                       activity.get('object', {}).get('fb_object_id'))
+        else:
+          object_id = memcache.get(cache_key)
         if object_id is None:
           post = self.get_post(url_id)
           object_id = post.get('object', {}).get('fb_object_id', '') if post else ''
