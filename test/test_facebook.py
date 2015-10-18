@@ -237,10 +237,11 @@ class FacebookPageTest(testutil.ModelsTest):
     self.assertEquals(400, cm.exception.code)
     self.assertEquals('not json', cm.exception.body)
 
-  def expect_canonicalize_syndurl_lookup(self, id, return_id):
+  def expect_canonicalize_syndurl_lookup(self, id, return_id, **kwargs):
     self.expect_urlopen(
       'https://graph.facebook.com/v2.2/212038_%s?access_token=my_token' % id,
-      json.dumps({'id': '0', 'object_id': return_id} if return_id else {}))
+      json.dumps({'id': '0', 'object_id': return_id} if return_id else {}),
+      **kwargs)
 
   def test_canonicalize_syndication_url_basic(self):
     # should look it up once, then cache it
@@ -269,6 +270,14 @@ class FacebookPageTest(testutil.ModelsTest):
       ):
       logging.debug(input)
       self.assertEqual(expected, self.fb.canonicalize_syndication_url(input))
+
+  def test_canonicalize_syndication_url_fetch_400s(self):
+    self.expect_canonicalize_syndurl_lookup('123', None, status=400)
+    self.mox.ReplayAll()
+
+    self.assertEqual('https://www.facebook.com/212038/posts/123',
+                     self.fb.canonicalize_syndication_url(
+                       'http://facebook.com/snarfed.org/posts/123'))
 
   def test_canonicalize_syndication_url_username(self):
     for id in 'snarfed.org', '444':

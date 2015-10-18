@@ -248,9 +248,16 @@ class FacebookPage(models.Source):
         else:
           object_id = memcache.get(cache_key)
         if object_id is None:
-          post = self.gr_source.urlopen(API_POST_OBJECT % (self.key.id(), url_id))
-          object_id = post.get('object_id', '') if post else ''
-          memcache.set(cache_key, object_id)
+          try:
+            post = self.gr_source.urlopen(API_POST_OBJECT % (self.key.id(), url_id))
+            object_id = post.get('object_id', '') if post else ''
+            memcache.set(cache_key, object_id)
+          except BaseException, e:
+            code, body = util.interpret_http_exception(e)
+            if code and int(code) / 100 == 4:
+              logging.info('Ignoring %s: %s', code, body)
+            else:
+              raise
         if object_id:
           url = post_url(object_id)
 
