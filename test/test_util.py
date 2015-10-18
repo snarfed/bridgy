@@ -78,6 +78,7 @@ class UtilTest(testutil.ModelsTest):
       ({'object': {'to': [{'objectType': 'group', 'alias': '@private'}]}},) * 2,
       ({'id': 1, 'object': {'id': 1}}, {'id': 1}),
       ({'id': 1, 'object': {'id': 2}},) * 2,
+      ({'fb_id': 1, 'object': {'fb_object_id': 2}},) * 2,
       ):
       self.assert_equals(expected, util.prune_activity(orig))
 

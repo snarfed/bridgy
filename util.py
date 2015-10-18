@@ -184,7 +184,7 @@ def prune_activity(activity):
 
   Returns: pruned activity dict
   """
-  keep = ['id', 'url', 'content']
+  keep = ['id', 'url', 'content', 'fb_id', 'fb_object_id', 'fb_object_type']
   if not gr_source.Source.is_public(activity):
     keep += ['to']
   pruned = {f: activity.get(f) for f in keep}
