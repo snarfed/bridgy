@@ -18,7 +18,7 @@
 <!-- Header: name and picture -->
 <div id="user" class="row big">
 <a target="_blank" href="{{ source.silo_url }}" title="{{ source.label|safe }}"
-   class="u-url">
+   rel="me" class="u-url">
   <img class="profile u-photo" src="{{ source.picture }}" width="64px" />
   <img src="/static/{{ source.SHORT_NAME }}_icon.png"
        {# oddly, source.GR_CLASS doesn't work for Twitter. use kind as fallback. #}

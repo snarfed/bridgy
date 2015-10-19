@@ -446,7 +446,9 @@ class Handler(webapp2.RequestHandler):
       source.name = source.key.string_id()
     if source.picture:
       source.picture = util.update_scheme(source.picture, self)
-    source.website_links = [util.pretty_link(url) for url in source.domain_urls]
+    source.website_links = [
+      util.pretty_link(url, attrs={'rel': 'me', 'class': 'u-url'})
+      for url in source.domain_urls]
     return source
 
 

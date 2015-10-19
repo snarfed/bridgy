@@ -291,7 +291,7 @@ class UserHandler(DashboardHandler):
                                  .fetch(10)
       for p in publishes:
         p.pretty_page = util.pretty_link(
-          p.key.parent().id(), a_class='original-post', new_tab=True)
+          p.key.parent().id(), attrs={'class': 'original-post'}, new_tab=True)
 
       vars['publishes'] = publishes
 
@@ -306,9 +306,9 @@ class UserHandler(DashboardHandler):
           text = b.feed_item.get('title')
         except ValueError:
           text = None
-        b.pretty_url = util.pretty_link(b.key.id(), text=text,
-                                        a_class='original-post', max_length=40,
-                                        new_tab=True)
+        b.pretty_url = util.pretty_link(
+          b.key.id(), text=text, attrs={'class': 'original-post'},
+          max_length=40, new_tab=True)
 
       # Blog webmentions
       webmentions = BlogWebmention.query()\
@@ -316,15 +316,16 @@ class UserHandler(DashboardHandler):
           .order(-BlogWebmention.updated)\
           .fetch(10)
       for w in webmentions:
-        w.pretty_source = util.pretty_link(w.source_url(), a_class='original-post',
-                                           new_tab=True)
+        w.pretty_source = util.pretty_link(
+          w.source_url(), attrs={'class': 'original-post'}, new_tab=True)
         try:
           target_is_source = (urlparse.urlparse(w.target_url()).netloc in
                               self.source.domains)
         except BaseException:
           target_is_source = False
-        w.pretty_target = util.pretty_link(w.target_url(), a_class='original-post',
-                                           new_tab=True, keep_host=target_is_source)
+        w.pretty_target = util.pretty_link(
+          w.target_url(), attrs={'class': 'original-post'}, new_tab=True,
+          keep_host=target_is_source)
 
       vars.update({'blogposts': blogposts, 'webmentions': webmentions})
 
@@ -337,7 +338,7 @@ class UserHandler(DashboardHandler):
       e: BlogWebmention subclass (Response or BlogPost)
     """
     link = lambda url, g: util.pretty_link(
-      url, glyphicon=g, a_class='original-post', new_tab=True)
+      url, glyphicon=g, attrs={'class': 'original-post'}, new_tab=True)
     return util.trim_nulls({
         'Failed': set(link(url, 'exclamation-sign') for url in e.error + e.failed),
         'Sending': set(link(url, 'transfer') for url in e.unsent
