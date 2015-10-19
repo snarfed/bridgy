@@ -77,7 +77,6 @@ class BlacklistingHandler(ereporter.ExceptionRecordingHandler):
     'InternalError: Server is not responding',
     'InternalTransientError',
     'JointException: taskqueue.DatastoreError',
-    "KeyError: u'http://www.nytimes.com/",
     'RequestError: Server responded with: 503',  # gdata.client.RequestError
     'Timeout',
     'TransactionFailedError: The transaction could not be committed.',

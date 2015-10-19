@@ -693,7 +693,7 @@ class PropagateResponse(SendWebmentions):
           activity = self.activities[urls_to_activity[target_url]]
         except KeyError:
           logging.warning("""\
-Hit https://github.com/snarfed/bridgy/issues/237 !
+Hit https://github.com/snarfed/bridgy/issues/237 KeyError!
 target url %s not in urls_to_activity: %s
 activities: %s""", target_url, urls_to_activity, self.activities)
           self.abort(ERROR_HTTP_RETURN_CODE)
