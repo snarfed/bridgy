@@ -32,6 +32,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.source.domain_urls = ['http://author']
     self.source.domains = ['author']
     self.source.put()
+    self.source.updates = {}
 
     self.activity = self.activities[0]
     self.activity['object'].update({
@@ -40,10 +41,9 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
       })
 
   def assert_discover(self, expected_originals, expected_mentions=[],
-                      source=None, source_updates=None):
+                      source=None):
     self.assertEquals((set(expected_originals), set(expected_mentions)),
-                      discover(source or self.source, self.activity,
-                               source_updates=source_updates))
+                      discover(source or self.source, self.activity))
 
 
   def assert_syndicated_posts(self, *expected):
@@ -72,12 +72,10 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
 
     self.mox.ReplayAll()
     self.assertIsNone(self.source.last_syndication_url)
-    source_updates = {}
-    self.assert_discover(['http://author/post/permalink'],
-                         source_updates=source_updates)
+    self.assert_discover(['http://author/post/permalink'])
     self.assert_syndicated_posts(('http://author/post/permalink',
                                   'https://fa.ke/post/url'))
-    self.assertEquals(NOW, source_updates['last_syndication_url'])
+    self.assertEquals(NOW, self.source.updates['last_syndication_url'])
 
   def test_syndication_url_in_hfeed(self):
     """Like test_single_post, but because the syndication URL is given in
@@ -301,9 +299,8 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.expect_requests_get('http://other/domain', 'foo')
     self.mox.ReplayAll()
 
-    source_updates = {}
-    discover(self.source, self.activity, source_updates=source_updates)
-    self.assertEquals(['author', 'other'], source_updates['domains'])
+    discover(self.source, self.activity)
+    self.assertEquals(['author', 'other'], self.source.updates['domains'])
 
   def test_no_h_entries(self):
     """Make sure nothing bad happens when fetching a feed without h-entries.
@@ -1161,6 +1158,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     fb = FacebookPage.new(self.handler, auth_entity=auth_entity,
                           domain_urls=['http://author'], **source_params)
     fb.put()
+    fb.updates = {}
     # facebook activity comes to us with the numeric id
     self.activity['object']['url'] = 'http://facebook.com/212038/posts/314159'
 

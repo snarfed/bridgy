@@ -124,6 +124,10 @@ class Source(StringIdModel):
   # limited. it can be used e.g. to modify the poll period.
   rate_limited = False
 
+  # maps updated property names to values that should be written
+  # transactionally. code that implements this sets it to {} before beginning.
+  updates = None
+
   # gr_source is *not* set to None by default here, since it needs to be unset
   # for __getattr__ to run when it's accessed.
 

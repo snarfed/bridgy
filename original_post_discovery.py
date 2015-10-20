@@ -46,8 +46,7 @@ MAX_AUTHOR_URLS = 5
 now_fn = datetime.datetime.now
 
 
-def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True,
-             source_updates=None):
+def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True):
   """Augments the standard original_post_discovery algorithm with a
   reverse lookup that supports posts without a backlink or citation.
 
@@ -56,18 +55,16 @@ def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True,
   new ones.
 
   Args:
-    source: models.Source subclass. Note that changes to property values will
-      *not* automatically be stored back in the datastore. Use source_updates
-      instead.
+    source: models.Source subclass. Changes to property values (e.g. domains,
+      domain_urls, last_syndication_url) are stored in source.updates; they
+      should be updated transactionally later.
     activity: activity dict
     fetch_hfeed: boolean
     include_redirect_sources: boolean, whether to include URLs that redirect as
       well as their final destination URLs
-    source_updates: optional dict that changed source property values will be
-      stored in so they can be updated transactionally later. Properties that
-      may be set include last_syndication_url, domain_urls, and domains.
 
   Returns: ([string original post URLs], [string mention URLs]) tuple
+
   """
   originals, mentions = gr_source.Source.original_post_discovery(
     activity, domains=source.domains, cache=memcache,
@@ -114,24 +111,21 @@ def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True,
     syndication_url = source.canonicalize_syndication_url(
       util.follow_redirects(syndication_url).url)
     originals.update(_posse_post_discovery(
-      source, activity, syndication_url, fetch_hfeed, source_updates=source_updates))
+      source, activity, syndication_url, fetch_hfeed))
   else:
     logging.debug('no syndication url, cannot process h-entries')
 
   return originals, mentions
 
 
-def refetch(source, source_updates=None):
+def refetch(source):
   """Refetch the author's URLs and look for new or updated syndication
   links that might not have been there the first time we looked.
 
   Args:
-    source: models.Source subclass. Note that changes to property values will
-      *not* automatically be stored back in the datastore. Use source_updates
-      instead.
-    source_updates: optional dict that changed property values will be stored in
-      so they can be updated transactionally later. Properties that may be
-      set include last_syndication_url, domain_urls, and domains.
+    source: models.Source subclass. Changes to property values (e.g. domains,
+      domain_urls, last_syndication_url) are stored in source.updates; they
+      should be updated transactionally later.
 
   Return:
     a dict of syndicated_url to a list of new models.SyndicatedPosts
@@ -139,13 +133,11 @@ def refetch(source, source_updates=None):
   logging.debug('attempting to refetch h-feed for %s', source.label())
   results = {}
   for url in _get_author_urls(source):
-    results.update(_process_author(source, url, refetch=True,
-                                   source_updates=source_updates))
+    results.update(_process_author(source, url, refetch=True))
   return results
 
 
-def _posse_post_discovery(source, activity, syndication_url, fetch_hfeed,
-                          source_updates=None):
+def _posse_post_discovery(source, activity, syndication_url, fetch_hfeed):
   """Performs the actual meat of the posse-post-discover.
 
   Args:
@@ -156,7 +148,6 @@ def _posse_post_discovery(source, activity, syndication_url, fetch_hfeed,
     fetch_hfeed: boolean, whether or not to fetch and parse the
                  author's feed if we don't have a previously stored
                  relationship.
-    source_updates: dict, optional
 
   Return:
     sequence of string original post urls, possibly empty
@@ -173,7 +164,7 @@ def _posse_post_discovery(source, activity, syndication_url, fetch_hfeed,
     # fallback in the future to support content from non-Bridgy users.
     results = {}
     for url in _get_author_urls(source):
-      results.update(_process_author(source, url, source_updates=source_updates))
+      results.update(_process_author(source, url))
     relationships = results.get(syndication_url, [])
 
   if not relationships:
@@ -191,8 +182,7 @@ def _posse_post_discovery(source, activity, syndication_url, fetch_hfeed,
   return originals
 
 
-def _process_author(source, author_url, refetch=False, store_blanks=True,
-                    source_updates=None):
+def _process_author(source, author_url, refetch=False, store_blanks=True):
   """Fetch the author's domain URL, and look for syndicated posts.
 
   Args:
@@ -201,7 +191,6 @@ def _process_author(source, author_url, refetch=False, store_blanks=True,
     refetch: boolean, whether to refetch and process entries we've seen before
     store_blanks: boolean, whether we should store blank SyndicatedPosts when
       we don't find a relationship
-    source_updates: dict, optional
 
   Return:
     a dict of syndicated_url to a list of new models.SyndicatedPost
@@ -263,8 +252,8 @@ def _process_author(source, author_url, refetch=False, store_blanks=True,
                                 _find_feed_items(feed_url, feed_resp.text))
 
       domain = util.domain_from_link(feed_url)
-      if source_updates is not None and domain not in source.domains:
-        domains = source_updates.setdefault('domains', source.domains)
+      if source.updates is not None and domain not in source.domains:
+        domains = source.updates.setdefault('domains', source.domains)
         if domain not in domains:
           logging.info('rel-feed found new domain %s! adding to source', domain)
           domains.append(domain)
@@ -307,15 +296,14 @@ def _process_author(source, author_url, refetch=False, store_blanks=True,
     for key, value in new_results.iteritems():
       results.setdefault(key, []).extend(value)
 
-  if results:
+  if source.updates is not None and results:
     # keep track of the last time we've seen rel=syndication urls for
     # this author. this helps us decide whether to refetch periodically
     # and look for updates.
     # Source will be saved at the end of each round of polling
     now = now_fn()
-    if source_updates is not None:
-      logging.debug('updating source last_syndication_url %s', now)
-      source_updates['last_syndication_url'] = now
+    logging.debug('updating source last_syndication_url %s', now)
+    source.updates['last_syndication_url'] = now
 
   return results
 

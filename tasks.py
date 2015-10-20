@@ -78,20 +78,20 @@ class Poll(webapp2.RequestHandler):
 
     # dict with source property names and values to update
     source.last_poll_attempt = now_fn()
-    source_updates = {'last_poll_attempt': source.last_poll_attempt}
+    source.updates = {'last_poll_attempt': source.last_poll_attempt}
     try:
-      source_updates.update(self.poll(source))
+      self.poll(source)
     except models.DisableSource:
       # the user deauthorized the bridgy app, so disable this source.
       # let the task complete successfully so that it's not retried.
-      source_updates['status'] = 'disabled'
+      source.updates['status'] = 'disabled'
       logging.warning('Disabling source!')
     except:
-      source_updates['status'] = 'error'
+      source.updates['status'] = 'error'
       raise
     finally:
       gc.collect()  # might help avoid hitting the instance memory limit?
-      source = self.update_source(source, source_updates)
+      source = self.update_source(source)
 
     # add new poll task. randomize task ETA to within +/- 20% to try to spread
     # out tasks and prevent thundering herds.
@@ -99,12 +99,9 @@ class Poll(webapp2.RequestHandler):
     util.add_poll_task(source, countdown=task_countdown)
 
   @ndb.transactional
-  def update_source(self, source, updates):
-    """Merges updated fields into the source entity.
-
-    Args:
-      updates: dict mapping source property names to updated values
-    """
+  def update_source(self, source):
+    """Updates property values in source.updates transactionally."""
+    updates = source.updates
     source = source.key.get()
     for name, val in updates.items():
       setattr(source, name, val)
@@ -114,12 +111,11 @@ class Poll(webapp2.RequestHandler):
   def poll(self, source):
     """Actually runs the poll.
 
-    Returns: dict of source property names and values to update (transactionally)
+    Stores property names and values to update in source.updates.
     """
     if source.last_activities_etag or source.last_activity_id:
       logging.debug('Using ETag %s, last activity id %s',
                     source.last_activities_etag, source.last_activity_id)
-    source_updates = {}
 
     #
     # Step 1: fetch activities:
@@ -185,8 +181,8 @@ class Poll(webapp2.RequestHandler):
         raise models.DisableSource(msg)
       elif code in util.HTTP_RATE_LIMIT_CODES:
         logging.warning('Rate limited. Marking as error and finishing. %s', e)
-        source_updates.update({'status': 'error', 'rate_limited': True})
-        return source_updates
+        source.updates.update({'status': 'error', 'rate_limited': True})
+        return
       elif code and int(code) / 100 == 5:
         logging.error('API call failed. Marking as error and finishing. %s: %s\n%s',
                       code, body, e)
@@ -214,13 +210,13 @@ class Poll(webapp2.RequestHandler):
         last_activity_id = id
 
     if last_activity_id and last_activity_id != source.last_activity_id:
-      source_updates['last_activity_id'] = last_activity_id
+      source.updates['last_activity_id'] = last_activity_id
       logging.debug('Storing new last activity id: %s', last_activity_id)
 
     # trim cache to just the returned activity ids, so that it doesn't grow
     # without bound. (WARNING: depends on get_activities_response()'s cache key
     # format, e.g. 'PREFIX ACTIVITY_ID'!
-    source_updates['last_activities_cache_json'] = json.dumps(
+    source.updates['last_activities_cache_json'] = json.dumps(
       {k: v for k, v in cache.items() if k.split()[-1] in silo_activity_ids})
 
     #
@@ -291,8 +287,7 @@ class Poll(webapp2.RequestHandler):
         if 'originals' not in activity or 'mentions' not in activity:
           activity['originals'], activity['mentions'] = \
             original_post_discovery.discover(source, activity,
-                                             include_redirect_sources=False,
-                                             source_updates=source_updates)
+                                             include_redirect_sources=False)
 
         # send wms to all original posts, but only posts and comments (not
         # likes, reposts, or rsvps) to mentions. matches logic in handlers.py!
@@ -333,15 +328,15 @@ class Poll(webapp2.RequestHandler):
 
     # update cache
     if pruned_responses:
-      source_updates['seen_responses_cache_json'] = json.dumps(
+      source.updates['seen_responses_cache_json'] = json.dumps(
         pruned_responses + unchanged_responses)
 
-    source_updates.update({'last_polled': source.last_poll_attempt,
+    source.updates.update({'last_polled': source.last_poll_attempt,
                            'status': 'enabled'})
     etag = response.get('etag')
     if etag and etag != source.last_activities_etag:
       logging.debug('Storing new ETag: %s', etag)
-      source_updates['last_activities_etag'] = etag
+      source.updates['last_activities_etag'] = etag
 
     #
     # Step 5. possibly refetch updated syndication urls
@@ -353,22 +348,17 @@ class Poll(webapp2.RequestHandler):
     if (source.last_syndication_url and
         source.last_hfeed_fetch + source.refetch_period()
             <= source.last_poll_attempt):
-      self.refetch_hfeed(source, source_updates)
-      source_updates['last_syndication_url'] = source.last_syndication_url
-      source_updates['last_hfeed_fetch'] = source.last_poll_attempt
+      self.refetch_hfeed(source)
+      source.updates['last_syndication_url'] = source.last_syndication_url
+      source.updates['last_hfeed_fetch'] = source.last_poll_attempt
     else:
       logging.debug(
           'skipping refetch h-feed. last-syndication-url seen: %s, '
           'last-hfeed-fetch: %s',
           source.last_syndication_url, source.last_hfeed_fetch)
 
-    return source_updates
-
-  def refetch_hfeed(self, source, source_updates):
-    """refetch and reprocess the author's url, looking for
-    new or updated syndication urls that we may have missed the first
-    time we looked for them.
-    """
+  def refetch_hfeed(self, source):
+    """Refetch syndication URLs from the source's web sites."""
     logging.debug('refetching h-feed for source %s', source.label())
     relationships = original_post_discovery.refetch(source)
     if not relationships:
