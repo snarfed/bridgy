@@ -47,9 +47,9 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
 
 
   def assert_syndicated_posts(self, *expected):
-    self.assertItemsEqual(expected,
-                          [(r.original, r.syndication) for r in
-                           SyndicatedPost.query(ancestor=self.source.key)])
+    self.assert_equals(expected,
+                       [(r.original, r.syndication) for r in
+                        SyndicatedPost.query(ancestor=self.source.key)])
 
   def test_single_post(self):
     """Test that original post discovery does the reverse lookup to scan
@@ -1139,6 +1139,26 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
                                  ('http://author/only-on-feed', None),
                                  (None, 'https://fa.ke/post/url'))
 
+  def test_store_original_and_canonicalized(self):
+    """If the original and canonicalized URLs are different, store both."""
+    self.mox.StubOutWithMock(testutil.FakeSource, 'canonicalize_syndication_url')
+    testutil.FakeSource.canonicalize_syndication_url('https://fa.ke/post/url'
+      ).MultipleTimes().AndReturn('https://fa.ke/canonicalized/url')
+
+    self.expect_requests_get('http://author', """
+    <html class="h-feed">
+      <div class="h-entry">
+        <a class="u-url" href="http://author/post/permalink"></a>
+        <a class="u-syndication" href="https://fa.ke/post/url"></a>
+      </div>
+    </html>""")
+
+    self.mox.ReplayAll()
+    self.assert_discover(['http://author/post/permalink'])
+    self.assert_syndicated_posts(
+      ('http://author/post/permalink', 'https://fa.ke/post/url'),
+      ('http://author/post/permalink', 'https://fa.ke/canonicalized/url'))
+
   def test_match_facebook_username(self):
     """Facebook URLs use username and user id interchangeably, and one
     does not redirect to the other. Make sure we can still find the
@@ -1158,9 +1178,9 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
       user_json=json.dumps(user_obj))
     auth_entity.put()
 
-    fb = FacebookPage.new(self.handler, auth_entity=auth_entity,
-                          domain_urls=['http://author'], **source_params)
-    fb.put()
+    self.source = FacebookPage.new(self.handler, auth_entity=auth_entity,
+                                   domain_urls=['http://author'], **source_params)
+    self.source.put()
     # facebook activity comes to us with the numeric id
     self.activity['object']['url'] = 'http://facebook.com/212038/posts/314159'
 
@@ -1168,18 +1188,19 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     <html class="h-feed">
       <div class="h-entry">
         <a class="u-url" href="http://author/post/permalink"></a>
+        <a class="u-syndication"
+           href="http://facebook.com/snarfed.org/posts/314159"></a>
       </div>
     </html>""")
 
-    # user sensibly publishes syndication link using their username
-    self.expect_requests_get('http://author/post/permalink', """
-    <html class="h-entry">
-      <a class="u-url" href="http://author/post/permalink"></a>
-      <a class="u-syndication" href="http://facebook.com/snarfed.org/posts/314159"></a>
-    </html>""")
-
+    # say canonicalize fetches the post from FB and sees a different object_id.
+    # make sure we still store syndication URLs with both ids.
     self.expect_urlopen(
-      'https://graph.facebook.com/v2.2/212038_314159?access_token=my_token', '{}')
+      'https://graph.facebook.com/v2.2/212038_314159?access_token=my_token',
+      json.dumps({'id': '0', 'object_id': '222'}))
 
     self.mox.ReplayAll()
-    self.assert_discover(['http://author/post/permalink'], source=fb)
+    self.assert_discover(['http://author/post/permalink'])
+    self.assert_syndicated_posts(
+      ('http://author/post/permalink', 'https://www.facebook.com/212038/posts/314159'),
+      ('http://author/post/permalink', 'https://www.facebook.com/212038/posts/222'))

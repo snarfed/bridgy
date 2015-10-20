@@ -261,14 +261,18 @@ class FacebookPage(models.Source):
         if object_id:
           url = post_url(object_id)
 
-    username = self.username or self.inferred_username
-    if username:
-      url = url.replace('facebook.com/%s/' % username,
-                        'facebook.com/%s/' % self.key.id())
+    url = self.rewrite_syndication_url_username(url)
 
     # facebook always uses https and www
     return super(FacebookPage, self).canonicalize_syndication_url(
       url, scheme='https', subdomain='www.')
+
+  def rewrite_syndication_url_username(self, url):
+    """Rewrites username or inferred username in a url with user id."""
+    username = self.username or self.inferred_username
+    if username:
+      return url.replace('facebook.com/%s/' % username,
+                         'facebook.com/%s/' % self.key.id())
 
   @ndb.transactional
   def on_new_syndicated_post(self, syndpost):
@@ -289,7 +293,8 @@ class FacebookPage(models.Source):
       logging.info('Inferring username %s from syndication url %s', author_id, url)
       self.inferred_username = author_id
       self.put()
-      syndpost.syndication = self.canonicalize_syndication_url(syndpost.syndication)
+      syndpost.syndication = self.rewrite_syndication_url_username(
+        syndpost.syndication)
 
 
 class OAuthCallback(oauth_facebook.CallbackHandler, util.Handler):

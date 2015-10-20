@@ -491,18 +491,19 @@ def _process_syndication_urls(source, permalink, syndication_urls,
   """
 
   results = {}
+
+  # follow redirects and use source-specific logic to canonicalize URLs, e.g.,
+  # replace facebook usernames with numeric ids.
+  syndication_urls = util.dedupe_urls(set(syndication_urls) | set(
+    source.canonicalize_syndication_url(util.follow_redirects(url).url)
+    for url in syndication_urls))
+
   # save the results (or lack thereof) to the db, and put them in a
-  # map for immediate use
+  # map for immediate use.
   for syndication_url in syndication_urls:
-    # follow redirects to give us the canonical syndication url --
-    # gives the best chance of finding a match.
-    syndication_url = util.follow_redirects(syndication_url).url
-    # source-specific logic to standardize the URL. (e.g., replace facebook
-    # username with numeric id)
-    syndication_url = source.canonicalize_syndication_url(syndication_url)
-    # check that the syndicated url belongs to this source TODO save future
-    # lookups by saving results for other sources too (note: query the
-    # appropriate source subclass by author.domains, rather than
+    # check that the syndicated url belongs to this source.
+    # TODO: save future lookups by saving results for other sources too (note:
+    # query the appropriate source subclass by author.domains, rather than
     # author.domain_urls)
     if util.domain_from_link(syndication_url) == source.GR_CLASS.DOMAIN:
       # we may have already seen this relationship, save a DB lookup by
@@ -516,6 +517,7 @@ def _process_syndication_urls(source, permalink, syndication_urls,
         relationship = SyndicatedPost.insert(
           source, syndication=syndication_url, original=permalink)
       results.setdefault(syndication_url, []).append(relationship)
+
   return results
 
 
