@@ -391,24 +391,27 @@ class FacebookPageTest(testutil.ModelsTest):
                       syndpost.syndication)
 
   def test_pre_put_hook(self):
-    def _test(expected, val):
-      if expected is not None:
-        expected = json.dumps(expected)
-      if val is not None:
-        self.fb.updates = {'resolved_object_ids': val}
-      self.fb.put()
-      self.assertEquals(expected, self.fb.key.get().resolved_object_ids_json)
+    self.expect_canonicalize_syndurl_lookup('1', '2')
+    self.expect_canonicalize_syndurl_lookup('3', '4')
+    self.expect_canonicalize_syndurl_lookup('5', None)
+    self.mox.ReplayAll()
 
-    _test(None, None)
-    _test(None, {})
-    two = {'3': '4', '5': '6'}
-    _test(two, two)
+    self.assertIsNone(self.fb.key.get().resolved_object_ids_json)
+
+    self.fb.resolve_object_id('1')
+    self.fb.resolve_object_id('3')
+    self.fb.put()
+    self.assertEquals(json.dumps({'1': '2', '3': '4'}),
+                      self.fb.key.get().resolved_object_ids_json)
 
     try:
       orig = facebook.MAX_RESOLVED_OBJECT_IDS
       facebook.MAX_RESOLVED_OBJECT_IDS = 2
-      three = {'1': '2', '3': '4', '5': '6'}
-      _test(two, three)  # should keep the highest ids
+      self.fb.resolve_object_id('5')
+      self.fb.put()
+      # should keep the highest ids
+      self.assertEquals(json.dumps({'3': '4', '5': None}),
+                        self.fb.key.get().resolved_object_ids_json)
     finally:
       facebook.MAX_RESOLVED_OBJECT_IDS = orig
 
