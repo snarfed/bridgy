@@ -90,13 +90,16 @@ class Poll(webapp2.RequestHandler):
       source.updates['status'] = 'error'
       raise
     finally:
-      gc.collect()  # might help avoid hitting the instance memory limit?
       source = self.update_source(source)
 
     # add new poll task. randomize task ETA to within +/- 20% to try to spread
     # out tasks and prevent thundering herds.
     task_countdown = source.poll_period().total_seconds() * random.uniform(.8, 1.2)
     util.add_poll_task(source, countdown=task_countdown)
+
+    # feeble attempt to avoid hitting the instance memory limit
+    source = None
+    gc.collect()
 
   @ndb.transactional
   def update_source(self, source):
