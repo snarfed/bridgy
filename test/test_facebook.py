@@ -68,6 +68,16 @@ class FacebookPageTest(testutil.ModelsTest):
       'access_token': 'page_token',
     }
 
+  def expect_api_call(self, path, response, **kwargs):
+    if not isinstance(response, basestring):
+      response = json.dumps(response)
+
+    join_char = '&' if '?' in path else '?'
+    return self.expect_urlopen(
+      'https://graph.facebook.com/v2.2/%s%saccess_token=my_token' %
+        (path, join_char),
+      response, **kwargs)
+
   def test_new(self):
     self.assertEqual(self.auth_entity, self.fb.auth_entity.get())
     self.assertEqual('my_token', self.fb.gr_source.access_token)
@@ -84,24 +94,16 @@ class FacebookPageTest(testutil.ModelsTest):
     owned_event = copy.deepcopy(gr_test_facebook.EVENT)
     owned_event['id'] = '888'
     owned_event['owner']['id'] = '212038'
-    self.expect_urlopen(
-      'https://graph.facebook.com/v2.2/me/feed?offset=0&access_token=my_token',
-      json.dumps({'data': [gr_test_facebook.POST]}))
-    self.expect_urlopen(
-      'https://graph.facebook.com/v2.2/me/photos/uploaded?access_token=my_token',
-      json.dumps({'data': [gr_test_facebook.POST]}))
-    self.expect_urlopen(
-      'https://graph.facebook.com/v2.2/me/events?access_token=my_token',
-      json.dumps({'data': [gr_test_facebook.EVENT, owned_event]}))
+    self.expect_api_call('me/feed?offset=0', {'data': [gr_test_facebook.POST]})
+    self.expect_api_call('me/photos/uploaded', {'data': [gr_test_facebook.POST]})
+    self.expect_api_call('me/events', {'data': [gr_test_facebook.EVENT, owned_event]})
     self.expect_urlopen(
       re.compile('^https://graph.facebook.com/v2.2/145304994\?.+'),
       json.dumps(gr_test_facebook.EVENT))
     self.expect_urlopen(
       re.compile('^https://graph.facebook.com/v2.2/888\?.+'),
       json.dumps(owned_event))
-    self.expect_urlopen(
-      'https://graph.facebook.com/v2.2/888/invited?access_token=my_token',
-      json.dumps({'data': gr_test_facebook.RSVPS}))
+    self.expect_api_call('888/invited', {'data': gr_test_facebook.RSVPS})
     self.mox.ReplayAll()
 
     event_activity = self.fb.gr_source.event_to_activity(owned_event)
@@ -113,15 +115,9 @@ class FacebookPageTest(testutil.ModelsTest):
   def test_get_activities_post_and_photo_duplicates(self):
     self.assertEqual(gr_test_facebook.POST['object_id'],
                      gr_test_facebook.PHOTO['id'])
-    self.expect_urlopen(
-      'https://graph.facebook.com/v2.2/me/feed?offset=0&access_token=my_token',
-      json.dumps({'data': [gr_test_facebook.POST]}))
-    self.expect_urlopen(
-      'https://graph.facebook.com/v2.2/me/photos/uploaded?access_token=my_token',
-      json.dumps({'data': [gr_test_facebook.PHOTO]}))
-    self.expect_urlopen(
-      'https://graph.facebook.com/v2.2/me/events?access_token=my_token',
-      json.dumps({}))
+    self.expect_api_call('me/feed?offset=0', {'data': [gr_test_facebook.POST]})
+    self.expect_api_call('me/photos/uploaded', {'data': [gr_test_facebook.PHOTO]})
+    self.expect_api_call('me/events', {})
     self.mox.ReplayAll()
 
     got = self.fb.get_activities()
@@ -145,15 +141,9 @@ class FacebookPageTest(testutil.ModelsTest):
     reply['url'] = 'https://www.facebook.com/12345/posts/547822715231468?comment_id=6796480'
     reply['inReplyTo'][0]['url'] = 'https://www.facebook.com/12345/posts/547822715231468'
 
-    self.expect_urlopen(
-      'https://graph.facebook.com/v2.2/me/feed?offset=0&access_token=my_token',
-      json.dumps({'data': [post]}))
-    self.expect_urlopen(
-      'https://graph.facebook.com/v2.2/me/photos/uploaded?access_token=my_token',
-      json.dumps({'data': []}))
-    self.expect_urlopen(
-      'https://graph.facebook.com/v2.2/me/events?access_token=my_token',
-      json.dumps({}))
+    self.expect_api_call('me/feed?offset=0', {'data': [post]})
+    self.expect_api_call('me/photos/uploaded', {'data': []})
+    self.expect_api_call('me/events', {})
     self.mox.ReplayAll()
 
     self.assert_equals([self.post_activity], self.fb.get_activities())
@@ -168,15 +158,9 @@ class FacebookPageTest(testutil.ModelsTest):
     post_with_bad_comment['comments']['data'].append(
       {'id': '12^34', 'message': 'bad to the bone'})
 
-    self.expect_urlopen(
-      'https://graph.facebook.com/v2.2/me/feed?offset=0&access_token=my_token',
-      json.dumps({'data': [bad_post, post_with_bad_comment]}))
-    self.expect_urlopen(
-      'https://graph.facebook.com/v2.2/me/photos/uploaded?access_token=my_token',
-      json.dumps({'data': []}))
-    self.expect_urlopen(
-      'https://graph.facebook.com/v2.2/me/events?access_token=my_token',
-      json.dumps({}))
+    self.expect_api_call('me/feed?offset=0', {'data': [bad_post, post_with_bad_comment]})
+    self.expect_api_call('me/photos/uploaded', {'data': []})
+    self.expect_api_call('me/events', {})
     self.mox.ReplayAll()
 
     # should only get the base activity, without the extra comment, and not the
@@ -184,9 +168,9 @@ class FacebookPageTest(testutil.ModelsTest):
     self.assert_equals([self.post_activity], self.fb.get_activities())
 
   def test_expired_sends_notification(self):
-    self.expect_urlopen(
-      'https://graph.facebook.com/v2.2/me/feed?offset=0&access_token=my_token',
-      json.dumps({'error': {'code': 190, 'error_subcode': 463}}), status=400)
+    self.expect_api_call('me/feed?offset=0',
+                         {'error': {'code': 190, 'error_subcode': 463}},
+                         status=400)
 
     params = {
       'template': "Brid.gy's access to your account has expired. Click here to renew it now!",
@@ -200,22 +184,18 @@ class FacebookPageTest(testutil.ModelsTest):
     self.assertRaises(models.DisableSource, self.fb.get_activities)
 
   def test_app_not_installed_doesnt_send_notification(self):
-    self.expect_urlopen(
-      'https://graph.facebook.com/v2.2/me/feed?offset=0&access_token=my_token',
-      json.dumps({'error': {
+    self.expect_api_call('me/feed?offset=0', {'error': {
         'code': 190,
         'error_subcode': 458,
         'message': 'Error validating access token: The user has not authorized application 123456.',
-      }}), status=400)
+      }}, status=400)
 
     self.mox.ReplayAll()
     self.assertRaises(models.DisableSource, self.fb.get_activities)
 
   def test_other_error(self):
     msg = json.dumps({'error': {'code': 190, 'error_subcode': 789}})
-    self.expect_urlopen(
-      'https://graph.facebook.com/v2.2/me/feed?offset=0&access_token=my_token',
-      msg, status=400)
+    self.expect_api_call('me/feed?offset=0', msg, status=400)
     self.mox.ReplayAll()
 
     with self.assertRaises(urllib2.HTTPError) as cm:
@@ -226,9 +206,7 @@ class FacebookPageTest(testutil.ModelsTest):
 
   def test_other_error_not_json(self):
     """If an error body isn't JSON, we should raise the original exception."""
-    self.expect_urlopen(
-      'https://graph.facebook.com/v2.2/me/feed?offset=0&access_token=my_token',
-      'not json', status=400)
+    self.expect_api_call('me/feed?offset=0', 'not json', status=400)
     self.mox.ReplayAll()
 
     with self.assertRaises(urllib2.HTTPError) as cm:
@@ -237,15 +215,9 @@ class FacebookPageTest(testutil.ModelsTest):
     self.assertEquals(400, cm.exception.code)
     self.assertEquals('not json', cm.exception.body)
 
-  def expect_canonicalize_syndurl_lookup(self, id, return_id, **kwargs):
-    self.expect_urlopen(
-      'https://graph.facebook.com/v2.2/212038_%s?access_token=my_token' % id,
-      json.dumps({'id': '0', 'object_id': return_id} if return_id else {}),
-      **kwargs)
-
   def test_canonicalize_syndication_url_basic(self):
     # should look it up once, then cache it
-    self.expect_canonicalize_syndurl_lookup('314159', '222')
+    self.expect_api_call('212038_314159', {'id': '0', 'object_id': '222'})
     self.mox.ReplayAll()
 
     for expected, input in (
@@ -272,7 +244,7 @@ class FacebookPageTest(testutil.ModelsTest):
       self.assertEqual(expected, self.fb.canonicalize_syndication_url(input))
 
   def test_canonicalize_syndication_url_fetch_400s(self):
-    self.expect_canonicalize_syndurl_lookup('123', None, status=400)
+    self.expect_api_call('212038_123', {}, status=400)
     self.mox.ReplayAll()
 
     self.assertEqual('https://www.facebook.com/212038/posts/123',
@@ -280,8 +252,8 @@ class FacebookPageTest(testutil.ModelsTest):
                        'http://facebook.com/snarfed.org/posts/123'))
 
   def test_canonicalize_syndication_url_username(self):
-    for id in 'snarfed.org', '444':
-      self.expect_canonicalize_syndurl_lookup(id, None)
+    for id in '212038_snarfed.org', '212038_444':
+      self.expect_api_call(id, {})
     self.mox.ReplayAll()
 
     # we shouldn't touch username when it appears elsewhere in the url
@@ -327,13 +299,11 @@ class FacebookPageTest(testutil.ModelsTest):
 
     # Facebook API calls
     post = gr_test_facebook.POST
-    self.expect_urlopen(
-      'https://graph.facebook.com/v2.2/me/feed?offset=0&limit=50&access_token=my_token',
-      json.dumps({'data': [post]}))
-    self.expect_urlopen('https://graph.facebook.com/v2.2/sharedposts?ids=10100176064482163&access_token=my_token', '{}')
-    self.expect_urlopen('https://graph.facebook.com/v2.2/comments?filter=stream&ids=10100176064482163&access_token=my_token', '{}')
-    self.expect_urlopen('https://graph.facebook.com/v2.2/me/photos/uploaded?access_token=my_token', '{}')
-    self.expect_urlopen('https://graph.facebook.com/v2.2/me/events?access_token=my_token', '{}')
+    self.expect_api_call('me/feed?offset=0&limit=50', {'data': [post]})
+    self.expect_api_call('sharedposts?ids=10100176064482163', {})
+    self.expect_api_call('comments?filter=stream&ids=10100176064482163', {})
+    self.expect_api_call('me/photos/uploaded', {})
+    self.expect_api_call('me/events', {})
 
     # posse post discovery
     self.expect_requests_get('http://author/url', """
@@ -345,7 +315,7 @@ class FacebookPageTest(testutil.ModelsTest):
 
     self.assertNotIn('222', gr_test_facebook.POST['id'])
     self.assertEquals('222', gr_test_facebook.POST['object_id'])
-    self.expect_canonicalize_syndurl_lookup('222', '222')
+    self.expect_api_call('212038_222', {'id': '0', 'object_id': '222'})
     self.expect_requests_get('http://my.orig/post', """
     <html class="h-entry">
       <a class="u-syndication" href="https://www.facebook.com/photo.php?fbid=222&set=a.995695740593.2393090.212038&type=1&theater'"></a>
@@ -381,7 +351,7 @@ class FacebookPageTest(testutil.ModelsTest):
     self.assertIsNone(fb.key.get().inferred_username)
 
     # should infer username
-    self.expect_canonicalize_syndurl_lookup('123', '123')
+    self.expect_api_call('212038_123', {'id': '0', 'object_id': '123'})
     self.mox.ReplayAll()
     syndpost = models.SyndicatedPost.insert(
       self.fb, original='http://fin.al',
@@ -391,9 +361,9 @@ class FacebookPageTest(testutil.ModelsTest):
                       syndpost.syndication)
 
   def test_pre_put_hook(self):
-    self.expect_canonicalize_syndurl_lookup('1', '2')
-    self.expect_canonicalize_syndurl_lookup('3', '4')
-    self.expect_canonicalize_syndurl_lookup('5', None)
+    self.expect_api_call('212038_1', {'id': '0', 'object_id': '2'})
+    self.expect_api_call('212038_3', {'id': '0', 'object_id': '4'})
+    self.expect_api_call('212038_5', {})
     self.mox.ReplayAll()
 
     self.assertIsNone(self.fb.key.get().resolved_object_ids_json)
