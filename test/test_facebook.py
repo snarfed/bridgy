@@ -390,6 +390,28 @@ class FacebookPageTest(testutil.ModelsTest):
     self.assertEquals('https://www.facebook.com/212038/posts/123',
                       syndpost.syndication)
 
+  def test_pre_put_hook(self):
+    def _test(expected, val):
+      if expected is not None:
+        expected = json.dumps(expected)
+      if val is not None:
+        self.fb.updates = {'resolved_object_ids': val}
+      self.fb.put()
+      self.assertEquals(expected, self.fb.key.get().resolved_object_ids_json)
+
+    _test(None, None)
+    _test(None, {})
+    two = {'3': '4', '5': '6'}
+    _test(two, two)
+
+    try:
+      orig = facebook.MAX_RESOLVED_OBJECT_IDS
+      facebook.MAX_RESOLVED_OBJECT_IDS = 2
+      three = {'1': '2', '3': '4', '5': '6'}
+      _test(two, three)  # should keep the highest ids
+    finally:
+      facebook.MAX_RESOLVED_OBJECT_IDS = orig
+
   def test_disable_page(self):
     user_auth_entity = self.auth_entity
     user_auth_entity.pages_json = json.dumps([self.page])

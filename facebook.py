@@ -20,6 +20,7 @@ Example comment ID and links
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
+import heapq
 import json
 import logging
 import re
@@ -35,7 +36,6 @@ from granary.source import SELF
 import models
 import util
 
-from google.appengine.api import memcache
 from google.appengine.ext import ndb
 from google.appengine.ext.webapp import template
 import webapp2
@@ -60,6 +60,8 @@ DEAD_TOKEN_ERROR_SUBCODES = frozenset((
   460,  # "The session has been invalidated because the user has changed the password"
 ))
 
+MAX_RESOLVED_OBJECT_IDS = 200
+
 
 class FacebookPage(models.Source):
   """A facebook profile or page.
@@ -75,6 +77,9 @@ class FacebookPage(models.Source):
   username = ndb.StringProperty()
   # inferred from syndication URLs if username isn't available
   inferred_username = ndb.StringProperty()
+  # maps string post ids to string facebook object ids or None. background:
+  # https://github.com/snarfed/bridgy/pull/513#issuecomment-149312879
+  resolved_object_ids_json = ndb.TextProperty(compressed=True)
 
   @staticmethod
   def new(handler, auth_entity=None, **kwargs):
@@ -238,26 +243,7 @@ class FacebookPage(models.Source):
       if parsed.path.startswith('/notes/'):
         url = post_url(url_id)
       else:
-        # fetch this post from facebook (or memcache) to see if we should
-        # canonicalize to the object_id. corresponds to canonicalization for
-        # photo objects in get_activities() above.
-        cache_key = 'FO %s' % url_id
-        if activity:
-          object_id = (activity.get('fb_object_id') or
-                       activity.get('object', {}).get('fb_object_id'))
-        else:
-          object_id = memcache.get(cache_key)
-        if object_id is None:
-          try:
-            post = self.gr_source.urlopen(API_POST_OBJECT % (self.key.id(), url_id))
-            object_id = post.get('object_id', '') if post else ''
-            memcache.set(cache_key, object_id)
-          except BaseException, e:
-            code, body = util.interpret_http_exception(e)
-            if code and int(code) / 100 == 4:
-              logging.info('Ignoring %s: %s', code, body)
-            else:
-              raise
+        object_id = self.resolve_object_id(url_id, activity=activity)
         if object_id:
           url = post_url(object_id)
 
@@ -269,6 +255,64 @@ class FacebookPage(models.Source):
     # facebook always uses https and www
     return super(FacebookPage, self).canonicalize_syndication_url(
       url, scheme='https', subdomain='www.')
+
+  def resolve_object_id(self, post_id, activity=None):
+    """Resolve a post id to its Facebook object id, if any.
+
+    Used for photo posts, since Facebook has (at least) two different objects
+    (and ids) for them, one for the post and one for each photo.
+
+    This is the same logic that we do for canonicalizing photo objects in
+    get_activities() above.
+
+    If activity is not provided, looks up the post id in
+    self.resolved_object_ids_json. If it's not there, fetches the post from
+    Facebook.
+
+    Args:
+      post_id: string Facebook post id
+      activity: optional AS activity representation of Facebook post
+
+    Returns: string Facebook object id or None
+    """
+    if activity:
+      return (activity.get('fb_object_id') or
+              activity.get('object', {}).get('fb_object_id'))
+
+    if self.updates is None:
+      self.updates = {}
+
+    resolved = self.updates.setdefault('resolved_object_ids', {})
+    if self.resolved_object_ids_json and not resolved:
+      resolved = self.updates['resolved_object_ids'] = json.loads(
+        self.resolved_object_ids_json)
+
+    if post_id not in resolved:
+      try:
+        post = self.gr_source.urlopen(API_POST_OBJECT % (self.key.id(), post_id))
+        resolved[post_id] = post.get('object_id')
+      except BaseException, e:
+        code, body = util.interpret_http_exception(e)
+        if code and int(code) / 100 == 4:
+          resolved[post_id] = None  # (interpret_http_exception logged it already)
+        else:
+          raise
+
+    return resolved[post_id]
+
+  def _pre_put_hook(self):
+    """Encode updates['resolved_object_ids'] into resolved_object_ids_json.
+
+    ...and cap it at MAX_RESOLVED_OBJECT_IDS.
+    """
+    if self.updates:
+      resolved = self.updates.get('resolved_object_ids')
+      if resolved:
+        keep = heapq.nlargest(
+          MAX_RESOLVED_OBJECT_IDS,
+          (int(id) if util.is_int(id) else id for id in resolved.keys()))
+        self.resolved_object_ids_json = json.dumps(
+          {str(id): resolved[str(id)] for id in keep})
 
   @ndb.transactional
   def on_new_syndicated_post(self, syndpost):
