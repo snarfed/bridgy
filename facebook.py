@@ -298,6 +298,8 @@ class FacebookPage(models.Source):
         else:
           raise
 
+      logging.info('Resolved Facebook post id %s to %s.', post_id, resolved[post_id])
+
     return resolved[post_id]
 
   def _pre_put_hook(self):
@@ -311,6 +313,7 @@ class FacebookPage(models.Source):
         keep = heapq.nlargest(
           MAX_RESOLVED_OBJECT_IDS,
           (int(id) if util.is_int(id) else id for id in resolved.keys()))
+        logging.info('Saving %s resolved Facebook post ids.', len(keep))
         self.resolved_object_ids_json = json.dumps(
           {str(id): resolved[str(id)] for id in keep})
 
