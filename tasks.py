@@ -106,6 +106,7 @@ class Poll(webapp2.RequestHandler):
     """Updates property values in source.updates transactionally."""
     updates = source.updates
     source = source.key.get()
+    source.updates = updates  # because FacebookPage._pre_put_hook uses it
     for name, val in updates.items():
       setattr(source, name, val)
     source.put()
