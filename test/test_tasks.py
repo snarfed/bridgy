@@ -27,13 +27,15 @@ from webmentiontools import send
 import appengine_config
 
 import models
+import original_post_discovery
 import tasks
 from tasks import PropagateResponse
 import testutil
 from testutil import FakeSource, FakeGrSource
 import util
 
-NOW = datetime.datetime.utcnow()
+NOW = testutil.NOW
+original_post_discovery.now_fn = lambda: NOW
 tasks.now_fn = lambda: NOW
 
 LEASE_LENGTH = tasks.SendWebmentions.LEASE_LENGTH
@@ -938,6 +940,8 @@ class PollTest(TaskQueueTest):
     task_keys = [testutil.get_task_params(task)['response_key']
                  for task in tasks]
     self.assertEquals(response_keys, task_keys)
+
+    self.assertEquals(NOW, self.sources[0].key.get().last_syndication_url)
 
   def test_no_duplicate_syndicated_posts(self):
     def assert_syndicated_posts(syndicated_posts, original, syndication):

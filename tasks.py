@@ -353,7 +353,6 @@ class Poll(webapp2.RequestHandler):
         source.last_hfeed_fetch + source.refetch_period()
             <= source.last_poll_attempt):
       self.refetch_hfeed(source)
-      source.updates['last_syndication_url'] = source.last_syndication_url
       source.updates['last_hfeed_fetch'] = source.last_poll_attempt
     else:
       logging.debug(

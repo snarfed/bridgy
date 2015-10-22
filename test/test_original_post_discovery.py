@@ -20,8 +20,7 @@ import tasks
 import test_facebook
 import testutil
 
-NOW = datetime.datetime.utcnow()
-original_post_discovery.now_fn = lambda: NOW
+original_post_discovery.now_fn = lambda: testutil.NOW
 
 
 class OriginalPostDiscoveryTest(testutil.ModelsTest):
@@ -75,7 +74,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.assert_discover(['http://author/post/permalink'])
     self.assert_syndicated_posts(('http://author/post/permalink',
                                   'https://fa.ke/post/url'))
-    self.assertEquals(NOW, self.source.updates['last_syndication_url'])
+    self.assertEquals(testutil.NOW, self.source.updates['last_syndication_url'])
 
   def test_syndication_url_in_hfeed(self):
     """Like test_single_post, but because the syndication URL is given in

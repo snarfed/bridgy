@@ -25,6 +25,8 @@ import requests
 
 import util
 
+NOW = datetime.datetime.utcnow()
+
 
 class FakeAuthEntity(BaseAuth):
   user_json = ndb.TextProperty()
