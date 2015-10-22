@@ -72,6 +72,7 @@ class BlacklistingHandler(ereporter.ExceptionRecordingHandler):
     'HttpError: <HttpError 502 when requesting',
     'HttpError: <HttpError 503 when requesting',
     'HTTPException: Deadline exceeded while waiting for HTTP response from URL:',
+    'HTTPNotFound: ',
     'InstagramClientError: Unable to parse response, not valid JSON:',
     'InternalError: server is not responding',  # usually datastore
     'InternalError: Server is not responding',
