@@ -4,7 +4,7 @@
 https://github.com/snarfed/bridgy/issues/406
 
 The canned user is Snoopy Barrett: https://www.facebook.com/100009447618341 ,
-https://www.brid.gy/facebook/1407574399567467 . To refresh his access token in
+https://brid.gy/facebook/1407574399567467 . To refresh his access token in
 facebook_test_user_access_token, reauth on his bridgy user page and then grab it
 from the datastore:
 

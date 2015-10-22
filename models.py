@@ -216,7 +216,7 @@ class Source(StringIdModel):
   @classmethod
   def bridgy_webmention_endpoint(cls):
     """Returns the Bridgy webmention endpoint for this source type."""
-    return 'https://www.brid.gy/webmention/' + cls.SHORT_NAME
+    return 'https://brid.gy/webmention/' + cls.SHORT_NAME
 
   def get_author_urls(self):
     """Determine the author urls for a particular source.
@@ -454,7 +454,7 @@ class Source(StringIdModel):
 
     author_url = author_urls[0]
     logging.info('Attempting to discover webmention endpoint on %s', author_url)
-    mention = send.WebmentionSend('https://www.brid.gy/', author_url)
+    mention = send.WebmentionSend('https://brid.gy/', author_url)
     mention.requests_kwargs = {'timeout': HTTP_TIMEOUT,
                                'headers': util.USER_AGENT_HEADER}
     try:

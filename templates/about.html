@@ -275,12 +275,12 @@ POST to a Bridgy registration URL with the parameters:</p>
 </ul>
 <p>They will be ushered through the registration process and sent back to
 your site when it finishes.</p>
-<p>Registration URLs are of the form <code>https://www.brid.gy/SOURCE/start</code>, e.g.</p>
+<p>Registration URLs are of the form <code>https://brid.gy/SOURCE/start</code>, e.g.</p>
 <pre>
-POST https://www.brid.gy/facebook/start
+POST https://brid.gy/facebook/start
 feature=listen&amp;callback=http%3A%2F%2Fexample.com%2Fbridgy-callback
 
-POST https://www.brid.gy/twitter/start
+POST https://brid.gy/twitter/start
 feature=publish&amp;callback=http%3A%2F%2Fexample.com%2Fbridgy-callback
 </pre>
 <p>The callback will be passed back query parameters:</p>
@@ -483,7 +483,7 @@ so that recipients can fetch and parse them.
 <li id="ssl" class="question">OK, fine. But why brid-gy.appspot.com instead of
 brid.gy?</li>
 <li class="answer">
-<p>It's an SSL thing. The <a href="https://www.brid.gy">brid.gy</a> domain fully
+<p>It's an SSL thing. The <a href="https://brid.gy">brid.gy</a> domain fully
 supports and uses SSL, but it uses
 <a href="http://en.wikipedia.org/wiki/Server_Name_Indication">SNI</a>, a newer
 SSL feature that some older clients and libraries have trouble with. Modern
@@ -513,19 +513,19 @@ webmention manually</a>. Here's how to construct Bridgy's source URLs:
 
 <p>Examples:</p>
 <ul>
-<li><a href="https://www.brid.gy/post/twitter/schnarfed/476408043819659264">
+<li><a href="https://brid.gy/post/twitter/schnarfed/476408043819659264">
   /post/twitter/schnarfed/476408043819659264
 </a></li>
-<li><a href="https://www.brid.gy/comment/instagram/caseorganic/745317887583248368_5792358/745746409237831003">
+<li><a href="https://brid.gy/comment/instagram/caseorganic/745317887583248368_5792358/745746409237831003">
   /comment/instagram/caseorganic/745317887583248368_5792358/745746409237831003
 </a></li>
-<li><a href="https://www.brid.gy/like/googleplus/103651231634018158746/z12ctz3xpyjlilkc422wif14hsagevxyj04/109885715467340555570">
+<li><a href="https://brid.gy/like/googleplus/103651231634018158746/z12ctz3xpyjlilkc422wif14hsagevxyj04/109885715467340555570">
   /like/googleplus/103651231634018158746/z12ctz3xpyjlilkc422wif14hsagevxyj04/109885715467340555570
 </a></li>
-<li><a href="https://www.brid.gy/repost/twitter/schnarfed/478564735265157120/478788580504899584">
+<li><a href="https://brid.gy/repost/twitter/schnarfed/478564735265157120/478788580504899584">
   /repost/twitter/schnarfed/478564735265157120/478788580504899584
 </a></li>
-<li><a href="https://www.brid.gy/rsvp/facebook/212038/675481332531191/724885424">
+<li><a href="https://brid.gy/rsvp/facebook/212038/675481332531191/724885424">
   /rsvp/facebook/212038/675481332531191/724885424
 </a></li>
 </ul>
@@ -640,16 +640,16 @@ even write a script to
 yourself</a>. It's just a single HTTP request!
 </p>
 <p>Bridgy's webmention endpoint
-is <code>https://www.brid.gy/publish/webmention</code>, and the target URL
+is <code>https://brid.gy/publish/webmention</code>, and the target URL
 should be <code>brid.gy/publish/facebook</code>,
 <code>brid.gy/publish/instagram</code> or
 <code>brid.gy/publish/twitter</code>. Your post HTML must also include that same
 target URL to verify your intent to publish. If your server sends webmentions,
 just include any of these invisible links in your post to publish automatically!
 
-<pre>&lt;a href="<a href='https://www.brid.gy/publish/facebook'>https://www.brid.gy/publish/facebook</a>"&gt;&lt;/a&gt;
-&lt;a href="<a href='https://www.brid.gy/publish/instagram'>https://www.brid.gy/publish/instagram</a>"&gt;&lt;/a&gt;
-&lt;a href="<a href='https://www.brid.gy/publish/twitter'>https://www.brid.gy/publish/twitter</a>"&gt;&lt;/a&gt;
+<pre>&lt;a href="<a href='https://brid.gy/publish/facebook'>https://brid.gy/publish/facebook</a>"&gt;&lt;/a&gt;
+&lt;a href="<a href='https://brid.gy/publish/instagram'>https://brid.gy/publish/instagram</a>"&gt;&lt;/a&gt;
+&lt;a href="<a href='https://brid.gy/publish/twitter'>https://brid.gy/publish/twitter</a>"&gt;&lt;/a&gt;
 </pre>
 </p>
 </li>
@@ -667,7 +667,7 @@ u-in-reply-to</a></code>, as if you were publishing a normal
 <pre>&lt;div class="<span class='keyword'>h-entry</span>"&gt;
   &lt;p class="<span class='keyword'>e-content</span>"&gt;<span class='value'>@schnarfed Highly entertaining. Please subscribe me to your newsletter.</span>&lt;/p&gt;
   &lt;a class="<span class='keyword'>u-in-reply-to</span>" href="<a href='https://twitter.com/schnarfed/status/448205453911015425'>https://twitter.com/schnarfed/status/448205453911015425</a>"&gt;&lt;/a&gt;
-  &lt;a href="<a href='https://www.brid.gy/publish/twitter'>https://www.brid.gy/publish/twitter</a>"&gt;&lt;/a&gt;
+  &lt;a href="<a href='https://brid.gy/publish/twitter'>https://brid.gy/publish/twitter</a>"&gt;&lt;/a&gt;
 &lt;/div&gt;
 </pre>
 
@@ -786,7 +786,7 @@ short link as the webmention's <code>source</code> parameter.
 <li class="answer">
 <p>Bridgy handles webmentions synchronously, so it knows the result when it
 responds. A <code>POST</code> to
-<code>http://brid.gy/publish/webmention</code> will return
+<code>https://brid.gy/publish/webmention</code> will return
 <code>200 OK</code> on success with a JSON response containing at least
 a <code>url</code> field that points to the silo object that it operated on. The
 same URL is included in the <code>Location</code> HTTP header. For
@@ -798,7 +798,7 @@ object.
 <p>For example, this request for an original post:
 </p>
 <pre>POST <span class="keyword">source</span>=<span class="link">https://example.com/posts/123</span>
-     &<span class="keyword">target</span>=<a href="https://www.brid.gy/publish/facebook">https://www.brid.gy/publish/facebook</a></pre>
+     &<span class="keyword">target</span>=<a href="https://brid.gy/publish/facebook">https://brid.gy/publish/facebook</a></pre>
 <p>will receive this response:
 </p>
 <pre>HTTP/1.1 200 OK

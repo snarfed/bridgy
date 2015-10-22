@@ -42,7 +42,8 @@ from google.appengine.ext import ndb
 from google.appengine.ext.ndb.stats import KindStat, KindPropertyNameStat
 import webapp2
 
-canonicalize_domain = webutil_handlers.redirect('brid-gy.appspot.com', 'www.brid.gy')
+canonicalize_domain = webutil_handlers.redirect(
+  ('brid-gy.appspot.com', 'www.brid.gy'), 'brid.gy')
 
 class DashboardHandler(webutil_handlers.TemplateHandler, util.Handler):
   """Base handler for both the front page and user pages."""

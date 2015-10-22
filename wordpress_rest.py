@@ -3,10 +3,10 @@
 To use, go to your WordPress.com blog's admin console, then go to Appearance,
 Widgets, add a Text widget, and put this in its text section:
 
-<a href="https://www.brid.gy/webmention/wordpress" rel="webmention"></a>
+<a href="https://brid.gy/webmention/wordpress" rel="webmention"></a>
 
 (not this, it breaks :/)
-<link rel="webmention" href="https://www.brid.gy/webmention/wordpress">
+<link rel="webmention" href="https://brid.gy/webmention/wordpress">
 
 https://developer.wordpress.com/docs/api/
 create returns id, can lookup by id

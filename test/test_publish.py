@@ -38,7 +38,7 @@ class PublishTest(testutil.HandlerTest):
 
     self.oauth_state = {
       'source_url': 'http://foo.com/bar',
-      'target_url': 'http://brid.gy/publish/fake',
+      'target_url': 'https://brid.gy/publish/fake',
       'source_key': self.source.key.urlsafe(),
       'bridgy_omit_link': False,
     }
@@ -51,7 +51,7 @@ class PublishTest(testutil.HandlerTest):
       params = {}
     params.update({
       'source': source or 'http://foo.com/bar',
-      'target': target or 'http://brid.gy/publish/fake',
+      'target': target or 'https://brid.gy/publish/fake',
       'source_key': self.source.key.urlsafe(),
       })
 
@@ -223,7 +223,7 @@ class PublishTest(testutil.HandlerTest):
     self.mox.ReplayAll()
 
     self.assert_created('')
-    self.assert_created('', target='http://brid.gy/publish/faux')
+    self.assert_created('', target='https://brid.gy/publish/faux')
 
   def test_bad_target_url(self):
     self.assert_error('Target must be brid.gy/publish/{facebook,twitter,instagram}',
@@ -231,7 +231,7 @@ class PublishTest(testutil.HandlerTest):
 
   def test_unsupported_source_class(self):
     self.assert_error('Sorry, Google+ is not yet supported.',
-                      target='http://brid.gy/publish/googleplus')
+                      target='https://brid.gy/publish/googleplus')
 
   def test_source_url_redirects(self):
     self.expect_requests_head('http://will/redirect', redirected_url='http://foo.com')
@@ -973,12 +973,12 @@ Join us!"""
 
     self.assert_error('Facebook comments and likes are no longer supported',
                       source='http://mr.x/like',
-                      target='http://brid.gy/publish/facebook')
+                      target='https://brid.gy/publish/facebook')
     self.assertEquals('failed', Publish.query().get().status)
 
     self.assert_error('Facebook comments and likes are no longer supported',
                       source='http://mr.x/comment',
-                      target='http://brid.gy/publish/facebook',
+                      target='https://brid.gy/publish/facebook',
                       preview=True)
 
   def test_require_like_of_repost_of(self):

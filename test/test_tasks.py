@@ -1634,7 +1634,7 @@ class PropagateTest(TaskQueueTest):
         .AndReturn(True)
 
     self.mox.ReplayAll()
-    self.post_task(base_url='http://www.brid.gy')
+    self.post_task(base_url='https://brid.gy')
 
   def test_translate_http_to_https(self):
     """Tasks on brid-gy.appspot.com should always use https in the source URL.
@@ -1649,7 +1649,7 @@ class PropagateTest(TaskQueueTest):
         .AndReturn(True)
 
     self.mox.ReplayAll()
-    self.post_task(base_url='http://brid-gy.appspot.com')
+    self.post_task(base_url='https://brid-gy.appspot.com')
 
   def test_activity_id_not_tag_uri(self):
     """If the activity id isn't a tag uri, we should just use it verbatim."""
@@ -1666,7 +1666,7 @@ class PropagateTest(TaskQueueTest):
         .AndReturn(True)
 
     self.mox.ReplayAll()
-    self.post_task(base_url='http://www.brid.gy')
+    self.post_task(base_url='https://brid.gy')
 
   def test_response_with_multiple_activities(self):
     """Should use Response.urls_to_activity to generate the source URLs.
@@ -1688,7 +1688,7 @@ class PropagateTest(TaskQueueTest):
         .AndReturn(True)
 
     self.mox.ReplayAll()
-    self.post_task(base_url='http://www.brid.gy')
+    self.post_task(base_url='https://brid.gy')
 
   def test_complete_exception(self):
     """If completing raises an exception, the lease should be released."""
@@ -1735,21 +1735,21 @@ class PropagateTest(TaskQueueTest):
   def test_propagate_blogpost_allows_bridgy_publish_links(self):
     source_key = FakeSource.new(None, domains=['fake']).put()
     blogpost = models.BlogPost(id='x', source=source_key,
-                               unsent=['https://www.brid.gy/publish/facebook'])
+                               unsent=['https://brid.gy/publish/facebook'])
     blogpost.put()
 
-    self.expect_requests_head('https://www.brid.gy/publish/facebook')
+    self.expect_requests_head('https://brid.gy/publish/facebook')
     self.expect_webmention(
       source_url='x',
-      target='https://www.brid.gy/publish/facebook',
-      discovered_endpoint='https://www.brid.gy/publish/webmention',
+      target='https://brid.gy/publish/facebook',
+      discovered_endpoint='https://brid.gy/publish/webmention',
       ).AndReturn(True)
     self.mox.ReplayAll()
 
     self.post_url = '/_ah/queue/propagate-blogpost'
     super(PropagateTest, self).post_task(params={'key': blogpost.key.urlsafe()})
     self.assert_response_is('complete', response=blogpost,
-                            sent=['https://www.brid.gy/publish/facebook'])
+                            sent=['https://brid.gy/publish/facebook'])
 
   def test_propagate_blogpost_follows_redirects_before_checking_self_link(self):
     source_key = FakeSource.new(None, domains=['fake']).put()

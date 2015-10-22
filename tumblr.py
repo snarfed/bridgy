@@ -3,7 +3,7 @@
 To use, go to your Tumblr dashboard, click Customize, Edit HTML, then put this
 in the head section:
 
-<link rel="webmention" href="https://www.brid.gy/webmention/tumblr">
+<link rel="webmention" href="https://brid.gy/webmention/tumblr">
 
 http://disqus.com/api/docs/
 http://disqus.com/api/docs/posts/create/

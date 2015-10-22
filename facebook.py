@@ -170,7 +170,7 @@ class FacebookPage(models.Source):
           self.gr_source.create_notification(
             self.key.id(),
             "Brid.gy's access to your account has expired. Click here to renew it now!",
-            'https://www.brid.gy/facebook/start')
+            'https://brid.gy/facebook/start')
         raise models.DisableSource()
 
       raise

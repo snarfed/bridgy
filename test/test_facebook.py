@@ -174,7 +174,7 @@ class FacebookPageTest(testutil.ModelsTest):
 
     params = {
       'template': "Brid.gy's access to your account has expired. Click here to renew it now!",
-      'href': 'https://www.brid.gy/facebook/start',
+      'href': 'https://brid.gy/facebook/start',
       'access_token': 'my_app_id|my_app_secret',
       }
     self.expect_urlopen('https://graph.facebook.com/v2.2/212038/notifications', '',

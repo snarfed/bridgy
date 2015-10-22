@@ -33,7 +33,7 @@ POLL_TASK_DATETIME_FORMAT = '%Y-%m-%d-%H-%M-%S'
 # https://developers.facebook.com/docs/reference/ads-api/api-rate-limiting/
 HTTP_RATE_LIMIT_CODES = frozenset(('403', '429', '503'))
 
-USER_AGENT_HEADER = {'User-Agent': 'Bridgy (http://brid.gy/about)'}
+USER_AGENT_HEADER = {'User-Agent': 'Bridgy (https://brid.gy/about)'}
 
 # alias allows unit tests to mock the function
 now_fn = datetime.datetime.now
@@ -62,7 +62,7 @@ def add_poll_task(source, now=False, **kwargs):
   here does.
 
   Note the constant. The string 'default' works in dev_appserver, but routes to
-  default.brid-gy.appspot.com in prod instead of www.brid.gy, which breaks SSL
+  default.brid-gy.appspot.com in prod instead of brid.gy, which breaks SSL
   because appspot.com doesn't have a third-level wildcard cert.
   """
   last_polled_str = source.last_polled.strftime(POLL_TASK_DATETIME_FORMAT)

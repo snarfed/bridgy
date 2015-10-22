@@ -93,9 +93,9 @@ class SuperfeedrTest(testutil.HandlerTest):
 
   def test_handle_feed_allows_bridgy_publish_links(self):
     item = {'permalinkUrl': 'A',
-            'content': 'a https://www.brid.gy/publish/facebook b'}
+            'content': 'a https://brid.gy/publish/facebook b'}
     superfeedr.handle_feed(json.dumps({'items': [item]}), self.source)
-    self.assert_equals(['https://www.brid.gy/publish/facebook'],
+    self.assert_equals(['https://brid.gy/publish/facebook'],
                        BlogPost.get_by_id('A').unsent)
 
   def test_preprocess_superfeedr_item(self):

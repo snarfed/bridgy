@@ -2,7 +2,7 @@
 
 Webmention spec: http://webmention.org/
 
-Bridgy request and response details: http://www.brid.gy/about#response
+Bridgy request and response details: https://brid.gy/about#response
 
 Example request:
 

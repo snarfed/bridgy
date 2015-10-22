@@ -1,13 +1,13 @@
-![Bridgy](https://raw.github.com/snarfed/bridgy/master/static/bridgy_logo_thumb.jpg) [Bridgy](http://brid.gy/)
+![Bridgy](https://raw.github.com/snarfed/bridgy/master/static/bridgy_logo_thumb.jpg) [Bridgy](https://brid.gy/)
 ===
 
 Got a web site? Want social network replies and likes on your site? Want to post and tweet from your site? Bridgy is for you.
 
-http://brid.gy/
+https://brid.gy/
 
 Bridgy pulls comments and likes from social networks back to your web site. You
 can also use it to publish your posts to those networks.
-[See the docs](https://www.brid.gy/about) for more details.
+[See the docs](https://brid.gy/about) for more details.
 
 License: This project is placed in the public domain.
 
@@ -138,7 +138,7 @@ gsutil du -hsc gs://brid-gy.appspot.com/\*
 Here are
 [remote_api_shell](https://developers.google.com/appengine/articles/remote_api)
 and shell commands for generating the statistics published at
-[brid.gy/about#stats](http://brid.gy/about#stats):
+[brid.gy/about#stats](https://brid.gy/about#stats):
 
 ```py
 # remote_api_shell
