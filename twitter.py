@@ -5,6 +5,7 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import datetime
 import json
+import os
 
 import webapp2
 
@@ -88,12 +89,17 @@ class AddTwitter(oauth_twitter.CallbackHandler, util.Handler):
   def finish(self, auth_entity, state=None):
     source = self.maybe_add_or_delete_source(Twitter, auth_entity, state)
     feature = self.decode_state_parameter(state).get('feature')
+
     if source is not None and feature == 'listen' and 'publish' in source.features:
       # if we were already signed up for publish, we had a read/write token.
       # when we sign up for listen, we use x_auth_access_type=read to request
       # just read permissions, which *demotes* us to a read only token! ugh.
+      # so, do the whole oauth flow again to get a read/write token.
       source.features.remove('publish')
       source.put()
+      req = webapp2.Request(os.environ, POST={'feature': 'publish'})
+      return util.oauth_starter(oauth_twitter.StartHandler).to(
+        '/twitter/add', access_type='write')(req, self.response).post()
 
 
 class StartHandler(util.Handler):
