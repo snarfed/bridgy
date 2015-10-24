@@ -5,7 +5,6 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import datetime
 import json
-import os
 
 import webapp2
 
@@ -85,7 +84,27 @@ class Twitter(models.Source):
                                            like_user_id)
 
 
-class AddTwitter(oauth_twitter.CallbackHandler, util.Handler):
+class AuthHandler(util.Handler):
+  """Base OAuth handler class."""
+
+  def start_oauth_flow(self, feature):
+    """Redirects to Twitter's OAuth endpoint to start the OAuth flow.
+
+    Args:
+      feature: 'listen' or 'publish'
+    """
+    assert feature in models.Source.FEATURES
+
+    # pass explicit 'write' instead of None for publish so that oauth-dropins
+    # (and tweepy) don't use signin_with_twitter ie /authorize. this works
+    # around a twitter API bug: https://dev.twitter.com/discussions/21281
+    access_type = 'read' if feature == 'listen' else 'write'
+    handler = util.oauth_starter(oauth_twitter.StartHandler, feature=feature).to(
+      '/twitter/add', access_type=access_type)(self.request, self.response)
+    return handler.post()
+
+
+class AddTwitter(oauth_twitter.CallbackHandler, AuthHandler):
   def finish(self, auth_entity, state=None):
     source = self.maybe_add_or_delete_source(Twitter, auth_entity, state)
     feature = self.decode_state_parameter(state).get('feature')
@@ -97,12 +116,10 @@ class AddTwitter(oauth_twitter.CallbackHandler, util.Handler):
       # so, do the whole oauth flow again to get a read/write token.
       source.features.remove('publish')
       source.put()
-      req = webapp2.Request(os.environ, POST={'feature': 'publish'})
-      return util.oauth_starter(oauth_twitter.StartHandler).to(
-        '/twitter/add', access_type='write')(req, self.response).post()
+      return self.start_oauth_flow('publish')
 
 
-class StartHandler(util.Handler):
+class StartHandler(AuthHandler):
   """Custom OAuth start handler so we can use access_type=read for
   state=listen.
 
@@ -111,14 +128,7 @@ class StartHandler(util.Handler):
   https://dev.twitter.com/docs/api/1/post/oauth/request_token
   """
   def post(self):
-    # pass explicit 'write' instead of None for publish so that oauth-dropins
-    # (and tweepy) don't use signin_with_twitter ie /authorize. this works
-    # around a twitter API bug: https://dev.twitter.com/discussions/21281
-    access_type = ('read' if util.get_required_param(self, 'feature') == 'listen'
-                   else 'write')
-    handler = util.oauth_starter(oauth_twitter.StartHandler).to(
-      '/twitter/add', access_type=access_type)(self.request, self.response)
-    return handler.post()
+    return self.start_oauth_flow(util.get_required_param(self, 'feature'))
 
 
 application = webapp2.WSGIApplication([

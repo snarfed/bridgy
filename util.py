@@ -334,14 +334,19 @@ class Handler(webapp2.RequestHandler):
   def construct_state_param_for_add(self, state=None, **kwargs):
     """Construct the state parameter if one isn't explicitly passed in
     """
-    if not state:
-      state = self.encode_state_parameter({
+    state_obj = self.decode_state_parameter(state)
+    if not state_obj:
+      state_obj = {
         'operation': 'add',
-        'feature': kwargs.get('feature') or self.request.get('feature'),
-        'callback': kwargs.get('callback') or self.request.get('callback'),
-        'user_url': kwargs.get('user_url') or self.request.get('user_url'),
-      })
-    return state
+        'feature': self.request.get('feature'),
+        'callback': self.request.get('callback'),
+        'user_url': self.request.get('user_url'),
+      }
+
+    if kwargs:
+      state_obj.update(kwargs)
+
+    return self.encode_state_parameter(state_obj)
 
   def encode_state_parameter(self, obj):
     """The state parameter is passed to various source authorization
@@ -452,17 +457,18 @@ class Handler(webapp2.RequestHandler):
     return source
 
 
-def oauth_starter(oauth_start_handler):
+def oauth_starter(oauth_start_handler, **kwargs):
   """Returns an oauth-dropins start handler that injects the state param.
 
   Args:
     oauth_start_handler: oauth-dropins StartHandler to use,
       e.g. oauth_dropins.twitter.StartHandler.
+    kwargs: passed to construct_state_param_for_add()
   """
   class StartHandler(oauth_start_handler, Handler):
     def redirect_url(self, state=None):
       return super(StartHandler, self).redirect_url(
-        self.construct_state_param_for_add(state))
+        self.construct_state_param_for_add(state, **kwargs))
 
   return StartHandler
 
