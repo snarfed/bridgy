@@ -114,6 +114,7 @@ class AddTwitter(oauth_twitter.CallbackHandler, AuthHandler):
       # when we sign up for listen, we use x_auth_access_type=read to request
       # just read permissions, which *demotes* us to a read only token! ugh.
       # so, do the whole oauth flow again to get a read/write token.
+      logging.info('Restarting OAuth flow to get publish permissions.')
       source.features.remove('publish')
       source.put()
       return self.start_oauth_flow('publish')

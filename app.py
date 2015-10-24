@@ -68,7 +68,9 @@ class DashboardHandler(webutil_handlers.TemplateHandler, util.Handler):
       'request': self.request,
       'logins': self.get_logins(),
       'DEBUG': appengine_config.DEBUG,
-      }
+      'facebook_listen_scopes': facebook.LISTEN_SCOPES,
+      'facebook_publish_scopes': facebook.PUBLISH_SCOPES,
+    }
 
   def headers(self):
     """Omit Cache-Control header."""

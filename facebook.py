@@ -40,6 +40,9 @@ from google.appengine.ext import ndb
 from google.appengine.ext.webapp import template
 import webapp2
 
+LISTEN_SCOPES = 'user_website,user_status,user_posts,user_photos,user_events,read_stream,manage_pages'
+PUBLISH_SCOPES = 'user_website,publish_actions,rsvp_event,user_status,user_photos,user_videos,user_events,user_likes'
+
 API_PHOTOS = 'me/photos/uploaded'
 # returns yes and maybe
 API_USER_RSVPS = 'me/events'
@@ -339,7 +342,52 @@ class FacebookPage(models.Source):
       syndpost.syndication = self.canonicalize_syndication_url(syndpost.syndication)
 
 
-class OAuthCallback(oauth_facebook.CallbackHandler, util.Handler):
+class AuthHandler(util.Handler):
+  """Base OAuth handler class."""
+
+  def finish_oauth_flow(self, auth_entity, state):
+    """Adds or deletes a FacebookPage, or restarts OAuth to get publish permissions.
+
+    Args:
+      auth_entity: FacebookAuth
+      state: encoded state string
+    """
+    if auth_entity is None:
+      auth_entity_key = util.get_required_param(self, 'auth_entity_key')
+      auth_entity = ndb.Key(urlsafe=auth_entity_key).get()
+
+    if state is None:
+      state = self.request.get('state')
+    state_obj = self.decode_state_parameter(state)
+
+    id = state_obj.get('id') or self.request.get('id')
+    if id and id != auth_entity.key.id():
+      auth_entity = auth_entity.for_page(id)
+      auth_entity.put()
+
+    source = self.maybe_add_or_delete_source(FacebookPage, auth_entity, state)
+
+    # If we were already signed up for publish, we had an access token with publish
+    # permissions. If we then go through the listen signup flow, we'll get a token
+    # with just the listen permissions. In that case, do the whole OAuth flow again
+    # to get a token with publish permissions again.
+    feature = state_obj.get('feature')
+    if source is not None and feature == 'listen' and 'publish' in source.features:
+      logging.info('Restarting OAuth flow to get publish permissions.')
+      source.features.remove('publish')
+      source.put()
+      start = util.oauth_starter(oauth_facebook.StartHandler,
+                                 feature='publish', id=id)
+      restart = start.to('/facebook/oauth_handler', scopes=PUBLISH_SCOPES)
+      restart(self.request, self.response).post()
+
+
+class AddFacebookPage(AuthHandler):
+  def post(self, auth_entity=None, state=None):
+        self.finish_oauth_flow(auth_entity, state)
+
+
+class OAuthCallback(oauth_facebook.CallbackHandler, AuthHandler):
   """OAuth callback handler."""
   def finish(self, auth_entity, state=None):
     id = self.decode_state_parameter(state).get('id')
@@ -361,25 +409,7 @@ class OAuthCallback(oauth_facebook.CallbackHandler, util.Handler):
       return
 
     # this user has no FB page(s), or we know the one they want to sign up.
-    AddFacebookPage(self.request, self.response).post(
-      auth_entity=auth_entity, state=state)
-
-
-class AddFacebookPage(util.Handler):
-  def post(self, auth_entity=None, state=None):
-    if auth_entity is None:
-      auth_entity_key = util.get_required_param(self, 'auth_entity_key')
-      auth_entity = ndb.Key(urlsafe=auth_entity_key).get()
-
-    if state is None:
-      state = self.request.get('state')
-
-    id = self.decode_state_parameter(state).get('id') or self.request.get('id')
-    if id and id != auth_entity.key.id():
-      auth_entity = auth_entity.for_page(id)
-      auth_entity.put()
-
-    self.maybe_add_or_delete_source(FacebookPage, auth_entity, state)
+    self.finish_oauth_flow(auth_entity, state)
 
 
 application = webapp2.WSGIApplication([
