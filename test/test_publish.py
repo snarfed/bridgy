@@ -942,15 +942,15 @@ Join us!"""
     resp.url = 'http://foo.com/bar'
     resp.status_code = 200
     requests.get(resp.url, timeout=appengine_config.HTTP_TIMEOUT,
-                 headers=util.USER_AGENT_HEADER).AndReturn(resp)
+                 headers=util.USER_AGENT_HEADER, stream=True).AndReturn(resp)
     self.mox.ReplayAll()
 
     self.assert_created(text, params={'bridgy_omit_link': ''})
 
   def test_missing_backlink(self):
     # use super to avoid this class's override that adds backlink
-    super(PublishTest, self).expect_requests_get('http://foo.com/bar',
-                                                 self.post_html % 'foo')
+    super(PublishTest, self).expect_requests_get(
+      'http://foo.com/bar', self.post_html % 'foo')
     self.mox.ReplayAll()
     self.assert_error("Couldn't find link to http://localhost/publish/fake")
 

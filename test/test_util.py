@@ -156,7 +156,7 @@ class UtilTest(testutil.ModelsTest):
       ('/fakesource/add', testutil.FakeAddHandler),
     ])
 
-    self.expect_requests_get(
+    self.expect_webmention_requests_get(
       u'http://fakeuser.com/',
       response='<html><link rel="webmention" href="/webmention"></html>',
       verify=False)
@@ -210,7 +210,7 @@ class UtilTest(testutil.ModelsTest):
       ('/fakesource/add', testutil.FakeAddHandler),
     ])
 
-    self.expect_requests_get(
+    self.expect_webmention_requests_get(
       'https://kylewm.com',
       response='<html><link rel="webmention" href="/webmention"></html>',
       verify=False)
@@ -291,3 +291,17 @@ class UtilTest(testutil.ModelsTest):
     self.assert_equals(302, resp.status_code)
     self.assert_equals('http://withknown.com/bridgy_callback?result=declined',
                        resp.headers['location'])
+
+  def test_requests_get_too_big(self):
+    self.expect_requests_get(
+      'http://foo/bar', '',
+      response_headers={'Content-Length': util.MAX_HTTP_RESPONSE_SIZE + 1})
+    self.mox.ReplayAll()
+
+    resp = util.requests_get('http://foo/bar')
+    self.assertEquals(util.HTTP_REQUEST_REFUSED_STATUS_CODE, resp.status_code)
+    self.assertLess(len(resp.content), 100, resp.content)
+
+  def test_requests_get_url_blacklist(self):
+    resp = util.requests_get(next(iter(util.URL_BLACKLIST)))
+    self.assertEquals(util.HTTP_REQUEST_REFUSED_STATUS_CODE, resp.status_code)

@@ -186,7 +186,7 @@ class Tumblr(models.Source):
     # get the disqus thread id. details on thread queries:
     # http://stackoverflow.com/questions/4549282/disqus-api-adding-comment
     # https://disqus.com/api/docs/threads/details/
-    resp = self.disqus_call(requests.get, DISQUS_API_THREAD_DETAILS_URL,
+    resp = self.disqus_call(util.requests_get, DISQUS_API_THREAD_DETAILS_URL,
                             {'forum': self.disqus_shortname,
                              # ident:[tumblr_post_id] should work, but doesn't :/
                              'thread': 'link:%s' % post_url,

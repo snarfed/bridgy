@@ -47,6 +47,22 @@ with open('domain_blacklist.txt') as f:
   BLACKLIST = {l.strip() for l in f
                if l.strip() and not l.strip().startswith('#')}
 
+# Individual URLs that we shouldn't fetch. Started because of
+# https://github.com/snarfed/bridgy/issues/525 . Hopefully temporary and can be
+# removed once https://github.com/idno/Known/issues/1088 is fixed!
+URL_BLACKLIST = frozenset((
+  'http://www.evdemon.org/2015/learning-more-about-quill',
+))
+
+# Average HTML page size as of 2015-10-15 is 56K, so this is very generous and
+# conservative.
+# http://www.sitepoint.com/average-page-weight-increases-15-2014/
+# http://httparchive.org/interesting.php#bytesperpage
+MAX_HTTP_RESPONSE_SIZE = 5000000
+
+# Returned as the HTTP status code when we refuse to make or finish a request.
+HTTP_REQUEST_REFUSED_STATUS_CODE = 599
+
 # Unpacked representation of logged in account in the logins cookie.
 Login = collections.namedtuple('Login', ('site', 'name', 'path'))
 
@@ -104,10 +120,32 @@ def email_me(**kwargs):
 
 
 def requests_get(url, **kwargs):
-  """Wraps requests.get and injects our timeout and user agent."""
+  """Wraps requests.get and injects our timeout and user agent.
+
+  If a server tells us a response will be too big (based on Content-Length), we
+  hijack the response and return 599 and an error response body instead. We pass
+  stream=True to requests.get so that it doesn't fetch the response body until
+  we access response.content (or .text).
+
+  http://docs.python-requests.org/en/latest/user/advanced/#body-content-workflow
+  """
+  if url in URL_BLACKLIST:
+    resp = requests.Response()
+    resp.status_code = HTTP_REQUEST_REFUSED_STATUS_CODE
+    resp._text = resp._content = 'Sorry, Bridgy has blacklisted this URL.'
+    return resp
+
   kwargs.setdefault('headers', {}).update(USER_AGENT_HEADER)
   kwargs.setdefault('timeout', HTTP_TIMEOUT)
-  return requests.get(url, **kwargs)
+  resp = requests.get(url, stream=True, **kwargs)
+
+  length = resp.headers.get('Content-Length', 0)
+  if length > MAX_HTTP_RESPONSE_SIZE:
+    resp.status_code = HTTP_REQUEST_REFUSED_STATUS_CODE
+    resp._text = resp._content = ('Content-Length %s is larger than our limit %s.' %
+                                  (length, MAX_HTTP_RESPONSE_SIZE))
+
+  return resp
 
 
 def follow_redirects(url, cache=True):

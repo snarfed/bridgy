@@ -1383,8 +1383,8 @@ class PropagateTest(TaskQueueTest):
     self.responses[0].unsent = ['http://not/html']
     self.responses[0].put()
     self.expect_requests_head('http://not/html', status_code=405)
-    self.expect_requests_get('http://not/html', content_type='image/gif',
-                             timeout=999, verify=False)
+    self.expect_webmention_requests_get(
+      'http://not/html', content_type='image/gif', timeout=999, verify=False)
 
     self.mox.ReplayAll()
     self.post_task()
@@ -1411,7 +1411,7 @@ class PropagateTest(TaskQueueTest):
     self.responses[0].unsent = ['http://html/charset']
     self.responses[0].put()
     self.expect_requests_head('http://html/charset', status_code=405)
-    self.expect_requests_get(
+    self.expect_webmention_requests_get(
       'http://html/charset',
       content_type='text/html; charset=utf-8',
       response_headers={'Link': '<http://my/endpoint>; rel="webmention"'},
@@ -1436,8 +1436,8 @@ class PropagateTest(TaskQueueTest):
     self.responses[0].unsent = ['http://unknown/type']
     self.responses[0].put()
     self.expect_requests_head('http://unknown/type', status_code=405)
-    self.expect_requests_get('http://unknown/type', content_type=None,
-                             timeout=999, verify=False)
+    self.expect_webmention_requests_get('http://unknown/type', content_type=None,
+                                        timeout=999, verify=False)
 
     self.mox.ReplayAll()
     self.post_task()

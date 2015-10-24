@@ -226,6 +226,16 @@ class HandlerTest(gr_testutil.TestCase):
 
   def expect_requests_get(self, *args, **kwargs):
     kwargs.setdefault('headers', {}).update(util.USER_AGENT_HEADER)
+
+    if 'stream' not in kwargs:
+      kwargs['stream'] = True
+    elif kwargs['stream'] == None:
+      del kwargs['stream']
+
+    return super(HandlerTest, self).expect_requests_get(*args, **kwargs)
+
+  def expect_webmention_requests_get(self, *args, **kwargs):
+    kwargs.setdefault('headers', {}).update(util.USER_AGENT_HEADER)
     return super(HandlerTest, self).expect_requests_get(*args, **kwargs)
 
   def expect_requests_post(self, *args, **kwargs):
