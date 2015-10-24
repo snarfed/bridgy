@@ -332,16 +332,13 @@ class Handler(webapp2.RequestHandler):
         self.redirect_home_or_user_page(state)
 
   def construct_state_param_for_add(self, state=None, **kwargs):
-    """Construct the state parameter if one isn't explicitly passed in
+    """Construct the state parameter if one isn't explicitly passed in.
     """
     state_obj = self.decode_state_parameter(state)
     if not state_obj:
-      state_obj = {
-        'operation': 'add',
-        'feature': self.request.get('feature'),
-        'callback': self.request.get('callback'),
-        'user_url': self.request.get('user_url'),
-      }
+      state_obj = {field: self.request.get(field) for field in
+                   ('callback', 'feature', 'id', 'user_url')}
+      state_obj['operation'] = 'add'
 
     if kwargs:
       state_obj.update(kwargs)

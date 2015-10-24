@@ -17,6 +17,7 @@ enter it in the <em>Website</em> field, then click here:
  <input type="image" alt="Sign in with Facebook"
         src="/oauth_dropins/static/facebook.png" />
  <input name="feature" type="hidden" value="publish" />
+ <input name="id" type="hidden" value="{{ source.key.id }}" />
  <!-- https://developers.facebook.com/docs/reference/login/ -->
  <input name="scope" type="hidden"
         value="user_website,publish_actions,rsvp_event,user_status,user_photos,user_videos,user_events,user_likes" />

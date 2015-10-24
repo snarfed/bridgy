@@ -342,33 +342,40 @@ class FacebookPage(models.Source):
 class OAuthCallback(oauth_facebook.CallbackHandler, util.Handler):
   """OAuth callback handler."""
   def finish(self, auth_entity, state=None):
-    if not (auth_entity and json.loads(auth_entity.pages_json)):
-      self.maybe_add_or_delete_source(FacebookPage, auth_entity, state)
+    id = self.decode_state_parameter(state).get('id')
+
+    if auth_entity and json.loads(auth_entity.pages_json) and not id:
+      # this user has FB page(s), and we don't know whether they want to sign
+      # themselves up or one of their pages, so ask them.
+      vars = {
+        'action': '/facebook/add',
+        'state': state,
+        'auth_entity_key': auth_entity.key.urlsafe(),
+        'choices': [json.loads(auth_entity.user_json)] +
+                   json.loads(auth_entity.pages_json),
+        }
+      logging.info('Rendering choose_facebook.html with %s', vars)
+      self.response.headers['Content-Type'] = 'text/html'
+      self.response.out.write(
+        template.render('templates/choose_facebook.html', vars))
       return
 
-    choices = [json.loads(auth_entity.user_json)] + json.loads(auth_entity.pages_json)
-    vars = {
-      'action': '/facebook/add',
-      'state': state,
-      'auth_entity_key': auth_entity.key.urlsafe(),
-      'choices': choices,
-      }
-    logging.info('Rendering choose_facebook.html with %s', vars)
-
-    self.response.headers['Content-Type'] = 'text/html'
-    self.response.out.write(
-      template.render('templates/choose_facebook.html', vars))
+    # this user has no FB page(s), or we know the one they want to sign up.
+    AddFacebookPage(self.request, self.response).post(
+      auth_entity=auth_entity, state=state)
 
 
 class AddFacebookPage(util.Handler):
-  def post(self):
-    state = util.get_required_param(self, 'state')
-    id = util.get_required_param(self, 'id')
+  def post(self, auth_entity=None, state=None):
+    if auth_entity is None:
+      auth_entity_key = util.get_required_param(self, 'auth_entity_key')
+      auth_entity = ndb.Key(urlsafe=auth_entity_key).get()
 
-    auth_entity_key = util.get_required_param(self, 'auth_entity_key')
-    auth_entity = ndb.Key(urlsafe=auth_entity_key).get()
+    if state is None:
+      state = self.request.get('state')
 
-    if id != auth_entity.key.id():
+    id = self.decode_state_parameter(state).get('id') or self.request.get('id')
+    if id and id != auth_entity.key.id():
       auth_entity = auth_entity.for_page(id)
       auth_entity.put()
 
