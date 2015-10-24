@@ -53,12 +53,12 @@ class DashboardHandler(webutil_handlers.TemplateHandler, util.Handler):
     """Return an empty 200 with no caching directives."""
 
   @canonicalize_domain
-  def post(self, *args, **kwargs):
-    """Facebook uses a POST instead of a GET when it renders us in Canvas.
+  def get(self, *args, **kwargs):
+    return super(DashboardHandler, self).get(*args, **kwargs)
 
-    http://stackoverflow.com/a/5353413/186123
-    """
-    return self.get(*args, **kwargs)
+  # Facebook uses a POST instead of a GET when it renders us in Canvas.
+  # http://stackoverflow.com/a/5353413/186123
+  post = get
 
   def content_type(self):
     return 'text/html; charset=utf-8'
