@@ -55,6 +55,7 @@ class BlacklistingHandler(ereporter.ExceptionRecordingHandler):
     'DeadlineExceededError',
     'error: An error occured while connecting to the server:',
     'Error: Logs data is not available.',
+    'HTTPClientError: ',
     'HTTPError: HTTP Error 400: Bad Request',
     'HTTPError: HTTP Error 400: message=Sorry, the Flickr API service is not currently available',
     'HTTPError: HTTP Error 404: Not Found',
