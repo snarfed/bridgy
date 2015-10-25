@@ -14,6 +14,7 @@ from granary import twitter as gr_twitter
 from oauth_dropins import twitter as oauth_twitter
 import models
 import util
+import logging
 
 
 class Twitter(models.Source):
@@ -93,12 +94,13 @@ class AuthHandler(util.Handler):
     Args:
       feature: 'listen' or 'publish'
     """
-    assert feature in models.Source.FEATURES
+    features = feature.split(',') if feature else []
+    assert all(f in models.Source.FEATURES for f in features)
 
     # pass explicit 'write' instead of None for publish so that oauth-dropins
     # (and tweepy) don't use signin_with_twitter ie /authorize. this works
     # around a twitter API bug: https://dev.twitter.com/discussions/21281
-    access_type = 'read' if feature == 'listen' else 'write'
+    access_type = 'write' if 'publish' in features else 'read'
     handler = util.oauth_starter(oauth_twitter.StartHandler, feature=feature).to(
       '/twitter/add', access_type=access_type)(self.request, self.response)
     return handler.post()

@@ -336,7 +336,7 @@ class Handler(webapp2.RequestHandler):
       logging.info('%s.create_new with %s', source_cls.__class__.__name__,
                    (auth_entity.key, state, kwargs))
       source = source_cls.create_new(self, auth_entity=auth_entity,
-                                     features=[feature] if feature else [],
+                                     features=feature.split(',') if feature else [],
                                      user_url=user_url, **kwargs)
 
       if source:

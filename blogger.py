@@ -221,6 +221,8 @@ class SuperfeedrNotifyHandler(superfeedr.NotifyHandler):
 
 
 application = webapp2.WSGIApplication([
+    # Blogger only has one OAuth scope. oauth-dropins fills it in.
+    # https://developers.google.com/blogger/docs/2.0/developers_guide_protocol#OAuth2Authorizing
     ('/blogger/start', util.oauth_starter(oauth_blogger.StartHandler).to(
       '/blogger/oauth2callback')),
     ('/blogger/oauth2callback', oauth_blogger.CallbackHandler.to('/blogger/oauth_handler')),

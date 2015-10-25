@@ -385,6 +385,31 @@ class FacebookPageTest(testutil.ModelsTest):
     finally:
       facebook.MAX_RESOLVED_OBJECT_IDS = orig
 
+  def test_oauth_scopes(self):
+    """Ensure that passing "feature" translates to the appropriate permission
+    scopes when authing when Facebook.
+    """
+    for feature in 'listen', 'publish', 'listen,publish', 'publish,listen':
+      redirect_uri = urllib.quote_plus(
+          'http://localhost/facebook/oauth_handler?state=' + urllib.quote_plus(
+            '{"feature":"' + feature + '","operation":"add"}'))
+
+      expected_auth_url = oauth_facebook.GET_AUTH_CODE_URL % {
+        'scope': ','.join(sorted(set(
+          (facebook.LISTEN_SCOPES if 'listen' in feature else []) +
+          (facebook.PUBLISH_SCOPES if 'publish' in feature else [])))),
+        'client_id': appengine_config.FACEBOOK_APP_ID,
+        'redirect_uri': redirect_uri,
+      }
+
+      resp = facebook.application.get_response(
+        '/facebook/start', method='POST', body=urllib.urlencode({
+          'feature': feature,
+        }))
+
+      self.assertEquals(302, resp.status_code)
+      self.assertEquals(expected_auth_url, resp.headers['Location'])
+
   def test_disable_page(self):
     user_auth_entity = self.auth_entity
     user_auth_entity.pages_json = json.dumps([self.page])

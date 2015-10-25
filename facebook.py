@@ -40,8 +40,15 @@ from google.appengine.ext import ndb
 from google.appengine.ext.webapp import template
 import webapp2
 
-LISTEN_SCOPES = 'user_website,user_status,user_posts,user_photos,user_events,read_stream,manage_pages'
-PUBLISH_SCOPES = 'user_website,publish_actions,rsvp_event,user_status,user_photos,user_videos,user_events,user_likes'
+# https://developers.facebook.com/docs/reference/login/
+LISTEN_SCOPES = [
+  'user_website', 'user_status', 'user_posts', 'user_photos', 'user_events',
+  'read_stream', 'manage_pages',
+]
+PUBLISH_SCOPES = [
+  'user_website', 'publish_actions', 'rsvp_event', 'user_status',
+  'user_photos', 'user_videos', 'user_events', 'user_likes',
+]
 
 API_PHOTOS = 'me/photos/uploaded'
 # returns yes and maybe
@@ -412,10 +419,22 @@ class OAuthCallback(oauth_facebook.CallbackHandler, AuthHandler):
     self.finish_oauth_flow(auth_entity, state)
 
 
+class StartHandler(util.Handler):
+  """Custom handler that sets OAuth scopes based on the requested
+  feature(s)
+  """
+  def post(self):
+    features = self.request.get('feature')
+    features = features.split(',') if features else []
+    starter = util.oauth_starter(oauth_facebook.StartHandler).to(
+      '/facebook/oauth_handler', scopes=sorted(set(
+        (LISTEN_SCOPES if 'listen' in features else []) +
+        (PUBLISH_SCOPES if 'publish' in features else []))))
+    starter(self.request, self.response).post()
+
+
 application = webapp2.WSGIApplication([
-    # OAuth scopes are set in listen.html and publish.html
-    ('/facebook/start', util.oauth_starter(oauth_facebook.StartHandler).to(
-      '/facebook/oauth_handler')),
+    ('/facebook/start', StartHandler),
     ('/facebook/oauth_handler', OAuthCallback),
     ('/facebook/add', AddFacebookPage),
     ('/facebook/delete/finish', oauth_facebook.CallbackHandler.to('/delete/finish')),

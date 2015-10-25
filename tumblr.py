@@ -269,6 +269,8 @@ class SuperfeedrNotifyHandler(superfeedr.NotifyHandler):
 
 
 application = webapp2.WSGIApplication([
+    # Tumblr doesn't seem to use scope
+    # http://www.tumblr.com/docs/en/api/v2#oauth
     ('/tumblr/start', util.oauth_starter(oauth_tumblr.StartHandler).to(
       '/tumblr/choose_blog')),
     ('/tumblr/choose_blog', ChooseBlog),

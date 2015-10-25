@@ -102,9 +102,22 @@ class OAuthCallback(oauth_instagram.CallbackHandler, util.Handler):
     self.maybe_add_or_delete_source(Instagram, auth_entity, state)
 
 
+class StartHandler(util.Handler):
+  """Custom handler that sets OAuth scopes based on the requested
+  feature(s)
+  """
+  def post(self):
+    features = self.request.get('feature')
+    features = features.split(',') if features else []
+    starter = util.oauth_starter(oauth_instagram.StartHandler).to(
+      '/instagram/oauth_callback',
+      # http://instagram.com/developer/authentication/#scope
+      scopes='likes comments' if 'publish' in features else None)
+    starter(self.request, self.response).post()
+
+
 application = webapp2.WSGIApplication([
-    ('/instagram/start', util.oauth_starter(oauth_instagram.StartHandler).to(
-      '/instagram/oauth_callback')),
+    ('/instagram/start', StartHandler),
     ('/instagram/publish/start', oauth_instagram.StartHandler.to(
       '/instagram/oauth_callback')),
     ('/instagram/oauth_callback', OAuthCallback),

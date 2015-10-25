@@ -270,8 +270,9 @@ without leaving my site or application?</li>
 <p>Not exactly, but you can get close. Direct your users to
 POST to a Bridgy registration URL with the parameters:</p>
 <ul>
-<li>"feature" usually equal to "listen" or "publish"</li>
+<li>"feature", a comma-separated list of features, usually "listen", "publish", or "listen,publish"</li>
 <li>"callback" a URL pointing back to your site</li>
+<li> "user_url" (optional), the user's URL. Allows callers to set this value without requiring it to be present in the user's silo profile</li>
 </ul>
 <p>They will be ushered through the registration process and sent back to
 your site when it finishes.</p>

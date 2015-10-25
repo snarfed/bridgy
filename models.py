@@ -364,15 +364,14 @@ class Source(StringIdModel):
     if source is None:
       return None
 
-    feature = source.features[0] if source.features else 'listen'
-
+    new_features = source.features or ['listen']
     if not source.domain_urls:  # defer to the source if it already set this
       auth_entity = kwargs.get('auth_entity')
       if auth_entity and hasattr(auth_entity, 'user_json'):
         source.domain_urls, source.domains = source._urls_and_domains(
           auth_entity, user_url)
         logging.debug('URLs/domains: %s %s', source.domain_urls, source.domains)
-        if (feature == 'publish' and
+        if ('publish' in new_features and
             (not source.domain_urls or not source.domains)):
           handler.messages = {'No valid web sites found in your %s profile. '
                               'Please update it and try again!' % cls.GR_CLASS.NAME}
@@ -397,7 +396,7 @@ class Source(StringIdModel):
       'listen': "Refresh in a minute to see what we've found!",
       'publish': 'Try previewing a post from your web site!',
       'webmention': '<a href="%s">Try a webmention!</a>' % link,
-      }.get(feature, ''))
+      }.get(new_features[0], ''))
     logging.info('%s %s', blurb, source.bridgy_url(handler))
     # uncomment to send email notification for each new user
     # if not existing:

@@ -227,6 +227,8 @@ class SuperfeedrNotifyHandler(superfeedr.NotifyHandler):
 
 
 application = webapp2.WSGIApplication([
+    # wordpress.com doesn't seem to use scope
+    # https://developer.wordpress.com/docs/oauth2/
     ('/wordpress/start', util.oauth_starter(oauth_wordpress.StartHandler).to(
       '/wordpress/add')),
     ('/wordpress/confirm', ConfirmSelfHosted),
