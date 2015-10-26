@@ -295,7 +295,7 @@ class UtilTest(testutil.ModelsTest):
   def test_requests_get_too_big(self):
     self.expect_requests_get(
       'http://foo/bar', '',
-      response_headers={'Content-Length': util.MAX_HTTP_RESPONSE_SIZE + 1})
+      response_headers={'Content-Length': str(util.MAX_HTTP_RESPONSE_SIZE + 1)})
     self.mox.ReplayAll()
 
     resp = util.requests_get('http://foo/bar')
