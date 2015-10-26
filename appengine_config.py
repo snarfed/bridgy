@@ -14,9 +14,13 @@ FACEBOOK_TEST_USER_TOKEN = read('facebook_test_user_access_token')
 SUPERFEEDR_TOKEN = read('superfeedr_token')
 SUPERFEEDR_USERNAME = read('superfeedr_username')
 
-# bridgy.util overrides tag_uri() from webutil.tag_uri(). import it here so we
-# know that happens everywhere tag_uri() might be used.
-import util
+# Wrap webutil.util.tag_uri and hard-code the year to 2013.
+#
+# Needed because I originally generated tag URIs with the current year, which
+# resulted in different URIs for the same objects when the year changed. :/
+from oauth_dropins.webutil import util
+util._orig_tag_uri = util.tag_uri
+util.tag_uri = lambda domain, name: util._orig_tag_uri(domain, name, year=2013)
 
 # Twitter returns HTTP 429 for rate limiting, which webob doesn't know. Tell it.
 import webob

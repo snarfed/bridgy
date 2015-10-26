@@ -12,10 +12,11 @@ import urlparse
 
 import webapp2
 
-from oauth_dropins.webutil.models import StringIdModel
-from oauth_dropins.webutil.util import *
-from granary import source as gr_source
 from appengine_config import HTTP_TIMEOUT, DEBUG
+from granary import source as gr_source
+from oauth_dropins.webutil.models import StringIdModel
+from oauth_dropins.webutil import util
+from oauth_dropins.webutil.util import *
 
 from google.appengine.api import mail
 from google.appengine.api import memcache
@@ -155,15 +156,6 @@ def follow_redirects(url, cache=True):
   """
   return gr_source.follow_redirects(url, cache=memcache if cache else None,
                                     headers=USER_AGENT_HEADER)
-
-
-# Wrap webutil.util.tag_uri and hard-code the year to 2013.
-#
-# Needed because I originally generated tag URIs with the current year, which
-# resulted in different URIs for the same objects when the year changed. :/
-from oauth_dropins.webutil import util
-_orig_tag_uri = tag_uri
-util.tag_uri = lambda domain, name: _orig_tag_uri(domain, name, year=2013)
 
 
 def get_webmention_target(url, resolve=True):
