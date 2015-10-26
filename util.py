@@ -14,6 +14,7 @@ import webapp2
 
 from appengine_config import HTTP_TIMEOUT, DEBUG
 from granary import source as gr_source
+from oauth_dropins.webutil import handlers as webutil_handlers
 from oauth_dropins.webutil.models import StringIdModel
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import *
@@ -66,6 +67,9 @@ HTTP_REQUEST_REFUSED_STATUS_CODE = 599
 
 # Unpacked representation of logged in account in the logins cookie.
 Login = collections.namedtuple('Login', ('site', 'name', 'path'))
+
+canonicalize_domain = webutil_handlers.redirect(
+  ('brid-gy.appspot.com', 'www.brid.gy'), 'brid.gy')
 
 
 def add_poll_task(source, now=False, **kwargs):

@@ -42,17 +42,15 @@ from google.appengine.ext import ndb
 from google.appengine.ext.ndb.stats import KindStat, KindPropertyNameStat
 import webapp2
 
-canonicalize_domain = webutil_handlers.redirect(
-  ('brid-gy.appspot.com', 'www.brid.gy'), 'brid.gy')
 
 class DashboardHandler(webutil_handlers.TemplateHandler, util.Handler):
   """Base handler for both the front page and user pages."""
 
-  @canonicalize_domain
+  @util.canonicalize_domain
   def head(self, *args, **kwargs):
     """Return an empty 200 with no caching directives."""
 
-  @canonicalize_domain
+  @util.canonicalize_domain
   def get(self, *args, **kwargs):
     return super(DashboardHandler, self).get(*args, **kwargs)
 
@@ -88,7 +86,7 @@ class CachedPageHandler(DashboardHandler):
 
   EXPIRES = None  # subclasses can override
 
-  @canonicalize_domain
+  @util.canonicalize_domain
   def get(self, cache=True):
     if (not cache or appengine_config.DEBUG or self.request.params or
         self.get_logins()):
@@ -161,7 +159,7 @@ class UsersHandler(CachedPageHandler):
 
   PAGE_SIZE = 100
 
-  @canonicalize_domain
+  @util.canonicalize_domain
   def get(self):
     # only cache the first page
     return super(UsersHandler, self).get(cache=not self.request.params)
@@ -191,7 +189,7 @@ class UsersHandler(CachedPageHandler):
 class UserHandler(DashboardHandler):
   """Handler for a user page."""
 
-  @canonicalize_domain
+  @util.canonicalize_domain
   def get(self, source_short_name, id):
     self.source = models.sources[source_short_name].lookup(id)
     if self.source and self.source.features:
@@ -499,7 +497,7 @@ class RetryHandler(util.Handler):
 
 
 class RedirectToFrontPageHandler(util.Handler):
-  @canonicalize_domain
+  @util.canonicalize_domain
   def get(self, feature):
     """Redirect to the front page."""
     self.redirect(util.add_query_params('/', self.request.params.items()),
@@ -509,7 +507,7 @@ class RedirectToFrontPageHandler(util.Handler):
 
 
 class LogoutHandler(util.Handler):
-  @canonicalize_domain
+  @util.canonicalize_domain
   def get(self):
     """Redirect to the front page."""
     self.set_logins([])

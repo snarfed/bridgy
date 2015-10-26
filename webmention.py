@@ -27,6 +27,7 @@ class WebmentionGetHandler(util.Handler):
     self.response.headers['Link'] = (
       '<%s/publish/webmention>; rel="webmention"' % self.request.host_url)
 
+  @util.canonicalize_domain
   def get(self, site=None):
     self.head(site)
     self.response.out.write("""\

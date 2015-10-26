@@ -50,6 +50,7 @@ class LogHandler(webapp2.RequestHandler):
   """Searches for and renders the app logs for a single task queue request.
   """
 
+  @util.canonicalize_domain
   def get(self):
     """URL parameters:
       start_time: float, seconds since the epoch
