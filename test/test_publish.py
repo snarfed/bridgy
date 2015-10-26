@@ -506,7 +506,7 @@ this is my article
       self.expect_requests_get('http://foo.com/bar', self.post_html % 'foo')
 
     self.mox.StubOutWithMock(mail, 'send_mail')
-    for subject in ('PublishHandler None failed: None (FakeSource)',
+    for subject in ('WebmentionHandler None failed: None (FakeSource)',
                     'PreviewHandler preview new: None (FakeSource)'):
       mail.send_mail(subject=subject, body=mox.IgnoreArg(),
                      sender=mox.IgnoreArg(), to=mox.IgnoreArg())
@@ -518,7 +518,7 @@ this is my article
 
     self.mox.StubOutWithMock(self.source.gr_source, 'preview_create',
                              use_mock_anything=True)
-    self.source.gr_source.preview_create(mox.IgnoreArg(), include_link=True
+    self.source.gr_source.preview_create(mox.IgnoreArg(), include_link=False
                                          ).AndRaise(Exception('bar'))
 
     self.mox.ReplayAll()
