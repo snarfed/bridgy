@@ -63,7 +63,8 @@ class WebmentionHandler(WebmentionGetHandler):
     try:
       fetched = util.requests_get(url)
       fetched.raise_for_status()
-    except BaseException:
+    except BaseException as e:
+      util.interpret_http_exception(e)  # log exception
       return self.error('Could not fetch source URL %s' % url)
 
     if self.entity:
