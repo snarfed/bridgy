@@ -5,3 +5,4 @@ Disallow: /log
 Disallow: /post
 Disallow: /repost
 Disallow: /rsvp
+Disallow: /*?*

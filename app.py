@@ -238,9 +238,20 @@ class UserHandler(DashboardHandler):
     # Responses
     if 'listen' in self.source.features:
       vars['responses'] = []
-      for i, r in enumerate(Response.query()
-                              .filter(Response.source == self.source.key)\
-                              .order(-Response.updated)):
+      query = Response.query().filter(Response.source == self.source.key)\
+                              .order(-Response.updated)
+
+      before = self.request.get('responses_before')
+      if before:
+        try:
+          before = util.parse_iso8601(before)
+        except:
+          msg = "Couldn't parse %r as ISO8601" % before
+          logging.exception(msg)
+          self.abort(400, msg)
+        query = query.filter(Response.updated < before)
+
+      for i, r in enumerate(query):
         r.response = json.loads(r.response_json)
         if r.activity_json:  # handle old entities
           r.activities_json.append(r.activity_json)
@@ -284,6 +295,10 @@ class UserHandler(DashboardHandler):
         vars['responses'].append(r)
         if len(vars['responses']) >= 10 or i > 200:
           break
+
+      if query.iter().probably_has_next():
+        vars['responses_before_link'] = \
+          '?responses_before=%s#responses' % r.updated.isoformat()
 
     # Publishes
     if 'publish' in self.source.features:
