@@ -84,18 +84,11 @@ This command runs the tests, pushes any changes in your local repo, and
 deploys to App Engine:
 
 ```shell
-test -f disqus_api_key -a -f  disqus_api_secret -a \
-  -f facebook_app_id -a -f facebook_app_secret -a \
-  -f flickr_app_key -a -f flickr_app_secret -a \
-  -f google_client_id -a -f google_client_secret -a \
-  -f instagram_client_id -a -f instagram_client_secret -a \
-  -f tumblr_app_key -a -f tumblr_app_secret -a \
-  -f twitter_app_key -a -f twitter_app_secret -a \
-  -f wordpress.com_client_id -a -f wordpress.com_client_secret && \
-  cd ../oauth-dropins && source local/bin/activate.csh && python -m unittest discover && \
+cd ../oauth-dropins && source local/bin/activate.csh && python -m unittest discover && \
   cd ../granary && source local/bin/activate.csh && python -m unittest discover && \
   cd ../bridgy && source local/bin/activate.csh && python -m unittest discover && \
-  ./facebook_test_live.py && git push && ~/google_appengine/appcfg.py update .
+  ./facebook_test_live.py && git push && md5sum -c keys.md5 && \
+  ~/google_appengine/appcfg.py update .
 ```
 
 [`remote_api_shell`](https://cloud.google.com/appengine/docs/python/tools/remoteapi#using_the_remote_api_shell)
