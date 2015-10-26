@@ -263,6 +263,11 @@ class RepostHandler(ItemHandler):
     repost = self.source.get_share(self.source.key.string_id(), post_id, share_id)
     if not repost:
       return None
+    # webmention receivers don't want to see their own post in their
+    # comments, so remove content before rendering.
+    for key in 'content', 'attachments':
+      if key in repost:
+        del repost[key]
     post = self.get_post(post_id)
     if post:
       originals, mentions = original_post_discovery.discover(
