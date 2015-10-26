@@ -140,7 +140,7 @@ def requests_get(url, **kwargs):
   resp = requests.get(url, stream=True, **kwargs)
 
   length = resp.headers.get('Content-Length', 0)
-  if int(length) > MAX_HTTP_RESPONSE_SIZE:
+  if util.is_int(length) and int(length) > MAX_HTTP_RESPONSE_SIZE:
     resp.status_code = HTTP_REQUEST_REFUSED_STATUS_CODE
     resp._text = resp._content = ('Content-Length %s is larger than our limit %s.' %
                                   (length, MAX_HTTP_RESPONSE_SIZE))

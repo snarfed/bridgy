@@ -300,8 +300,18 @@ class UtilTest(testutil.ModelsTest):
 
     resp = util.requests_get('http://foo/bar')
     self.assertEquals(util.HTTP_REQUEST_REFUSED_STATUS_CODE, resp.status_code)
-    self.assertLess(len(resp.content), 100, resp.content)
+    self.assertIn(' larger than our limit ', resp.content)
+
+  def test_requests_get_content_length_not_int(self):
+    self.expect_requests_get('http://foo/bar', 'xyz',
+                             response_headers={'Content-Length': 'foo'})
+    self.mox.ReplayAll()
+
+    resp = util.requests_get('http://foo/bar')
+    self.assertEquals(200, resp.status_code)
+    self.assertEquals('xyz', resp.content)
 
   def test_requests_get_url_blacklist(self):
     resp = util.requests_get(next(iter(util.URL_BLACKLIST)))
     self.assertEquals(util.HTTP_REQUEST_REFUSED_STATUS_CODE, resp.status_code)
+    self.assertEquals('Sorry, Bridgy has blacklisted this URL.', resp.content)
