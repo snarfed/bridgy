@@ -51,7 +51,7 @@ TEMPLATE = string.Template("""\
 body {
   font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
-.u-uid {
+.p-uid {
   display: none;
 }
 .u-photo {
