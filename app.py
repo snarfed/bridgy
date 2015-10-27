@@ -483,7 +483,9 @@ class RetryHandler(util.Handler):
 
     if entity.status == 'complete':
       entity.status = 'new'
-      entity.put()
+    entity.unsent += entity.sent + entity.skipped
+    entity.sent = entity.skipped = []
+    entity.put()
 
     if entity.key.kind() == 'Response':
       util.add_propagate_task(entity)

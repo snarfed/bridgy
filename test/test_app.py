@@ -35,7 +35,10 @@ class AppTest(testutil.ModelsTest):
   def test_retry_response(self):
     self.assertEqual([], self.taskqueue_stub.GetTasks('propagate'))
 
+    self.responses[0].sent = ['http://sent']
+    self.responses[0].skipped = ['http://skipped']
     self.responses[0].put()
+
     key = self.responses[0].key.urlsafe()
     resp = app.application.get_response(
       '/retry', method='POST', body='key=' + key)
@@ -44,6 +47,12 @@ class AppTest(testutil.ModelsTest):
                       resp.headers['Location'].split('#')[0])
     params = testutil.get_task_params(self.taskqueue_stub.GetTasks('propagate')[0])
     self.assertEqual(key, params['response_key'])
+
+    got = self.responses[0].key.get()
+    self.assertItemsEqual(
+      ['http://sent', 'http://skipped', 'http://target1/post/url'], got.unsent)
+    self.assertEqual([], got.sent)
+    self.assertEqual([], got.skipped)
 
   def test_poll_now_and_retry_response_missing_key(self):
     for endpoint in '/poll-now', '/retry':
