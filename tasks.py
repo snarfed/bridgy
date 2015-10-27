@@ -486,13 +486,10 @@ class SendWebmentions(webapp2.RequestHandler):
       # see if we've cached webmention discovery for this domain. the cache
       # value is a string URL endpoint if discovery succeeded, a
       # WebmentionSend error dict if it failed (semi-)permanently, or None.
-      domain = util.domain_from_link(target)
-      scheme = urlparse.urlparse(target).scheme
-      cache_key = ' '.join(('W', scheme, domain))
+      cache_key = util.webmention_endpoint_cache_key(target)
       cached = memcache.get(cache_key)
       if cached:
-        logging.info('Using cached webmention endpoint for %s %s: %s',
-                     scheme, domain, cached)
+        logging.info('Using cached webmention endpoint %r: %s', cache_key, cached)
 
       # send! and handle response or error
       error = None

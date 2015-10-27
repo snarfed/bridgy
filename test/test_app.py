@@ -3,6 +3,7 @@
 import datetime
 import urllib
 
+from google.appengine.api import memcache
 from google.appengine.ext import ndb
 from oauth_dropins import handlers as oauth_handlers
 import mf2py
@@ -35,9 +36,13 @@ class AppTest(testutil.ModelsTest):
   def test_retry_response(self):
     self.assertEqual([], self.taskqueue_stub.GetTasks('propagate'))
 
+    self.responses[0].status = 'complete'
     self.responses[0].sent = ['http://sent']
-    self.responses[0].skipped = ['http://skipped']
+    self.responses[0].skipped = ['https://skipped']
     self.responses[0].put()
+
+    # cached webmention endpoint
+    memcache.set('W https skipped', 'asdf')
 
     key = self.responses[0].key.urlsafe()
     resp = app.application.get_response(
@@ -48,11 +53,17 @@ class AppTest(testutil.ModelsTest):
     params = testutil.get_task_params(self.taskqueue_stub.GetTasks('propagate')[0])
     self.assertEqual(key, params['response_key'])
 
+    # status and URLs should be refreshed
     got = self.responses[0].key.get()
+    self.assertEqual('new', got.status)
     self.assertItemsEqual(
-      ['http://sent', 'http://skipped', 'http://target1/post/url'], got.unsent)
+      ['http://sent', 'https://skipped', 'http://target1/post/url'], got.unsent)
     self.assertEqual([], got.sent)
     self.assertEqual([], got.skipped)
+
+    # webmention endpoints for URL domains should be refreshed
+    self.assertIsNone(memcache.get('W https skipped'))
+
 
   def test_poll_now_and_retry_response_missing_key(self):
     for endpoint in '/poll-now', '/retry':

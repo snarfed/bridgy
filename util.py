@@ -115,6 +115,16 @@ def add_propagate_blogpost_task(entity, **kwargs):
   logging.info('Added propagate-blogpost task: %s', task.name)
 
 
+def webmention_endpoint_cache_key(url):
+  """Returns memcache key for a cached webmention endpoint for a given URL.
+
+  Example: 'W https snarfed.org'
+  """
+  domain = util.domain_from_link(url)
+  scheme = urlparse.urlparse(url).scheme
+  return ' '.join(('W', scheme, domain))
+
+
 def email_me(**kwargs):
   """Thin wrapper around mail.send_mail() that handles errors."""
   try:

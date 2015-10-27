@@ -38,6 +38,7 @@ import tumblr
 import twitter
 import wordpress_rest
 
+from google.appengine.api import memcache
 from google.appengine.ext import ndb
 from google.appengine.ext.ndb.stats import KindStat, KindPropertyNameStat
 import webapp2
@@ -486,6 +487,10 @@ class RetryHandler(util.Handler):
     entity.unsent += entity.sent + entity.skipped
     entity.sent = entity.skipped = []
     entity.put()
+
+    # clear any cached webmention endpoints
+    memcache.delete_multi(util.webmention_endpoint_cache_key(url) for url in
+                          entity.unsent + entity.error + entity.failed)
 
     if entity.key.kind() == 'Response':
       util.add_propagate_task(entity)
