@@ -192,7 +192,16 @@ class UserHandler(DashboardHandler):
 
   @util.canonicalize_domain
   def get(self, source_short_name, id):
-    self.source = models.sources[source_short_name].lookup(id)
+    cls = models.sources[source_short_name]
+    self.source = cls.lookup(id)
+
+    if not self.source:
+      key = cls.query(ndb.OR(*[ndb.GenericProperty(prop) == id for prop in
+                               'domains', 'inferred_username', 'name', 'username'])
+                      ).get(keys_only=True)
+      if key:
+        return self.redirect(cls(key=key).bridgy_path(), permanent=True)
+
     if self.source and self.source.features:
       self.source.verify()
       self.source = self.preprocess_source(self.source)
