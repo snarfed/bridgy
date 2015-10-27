@@ -104,6 +104,14 @@ class ItemHandler(webapp2.RequestHandler):
     """
     raise NotImplementedError()
 
+  def get_title(self, obj):
+    """Returns the string to be used in the <title> tag.
+
+    Args:
+      obj: ActivityStreams object
+    """
+    return obj.get('title') or obj.get('content') or 'Bridgy Response'
+
   def get_post(self, post_id, source_fn=None):
     """Utility method fetches the original post
     Args:
@@ -188,7 +196,7 @@ class ItemHandler(webapp2.RequestHandler):
       self.response.out.write(TEMPLATE.substitute({
             'url': obj.get('url', ''),
             'body': microformats2.json_to_html(mf2_json),
-            'title': obj.get('title', obj.get('content', 'Bridgy Response')),
+            'title': self.get_title(obj),
             }))
     elif format == 'json':
       self.response.headers['Content-Type'] = 'application/json; charset=utf-8'
@@ -256,6 +264,20 @@ class LikeHandler(ItemHandler):
         self.source, post, fetch_hfeed=False)
       self.merge_urls(like, 'object', originals)
     return like
+
+  def get_title(self, obj):
+    """HOPEFULLY TEMPORARY hack: put liker name in <title>.
+
+    ...as a workaround for https://github.com/snarfed/bridgy/issues/516 .
+    """
+    for o in obj, obj.get('object', {}):
+      for field in 'actor', 'author':
+        actor = o.get(field, {})
+        name = actor.get('displayName') or actor.get('username')
+        if name:
+          return name
+
+    return super(LikeHandler, self).get_title(obj)
 
 
 class RepostHandler(ItemHandler):

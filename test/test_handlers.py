@@ -49,6 +49,7 @@ class HandlersTest(testutil.HandlerTest):
     header_lines = len(handlers.TEMPLATE.template.splitlines()) - 2
     actual = '\n'.join(resp.body.splitlines()[header_lines:-1])
     self.assert_equals(expected, actual)
+    return resp
 
   def test_post_html(self):
     self.check_response('/post/fake/%s/000', """\
@@ -179,15 +180,18 @@ asdf http://other/link qwert
         'verb': 'like',
         'id': 'tag:fa.ke,2013:111',
         'object': {'url': 'http://example.com/original/post'},
-        'author': {'image': {'url': 'http://example.com/ryan/image'}},
-        })
+        'author': {
+          'displayName': 'Alice',
+          'image': {'url': 'http://example.com/ryan/image'},
+        },
+    })
 
-    self.check_response('/like/fake/%s/000/111', """\
+    resp = self.check_response('/like/fake/%s/000/111', """\
 <article class="h-entry h-as-like">
 <span class="p-uid">tag:fa.ke,2013:111</span>
 
   <span class="p-author h-card">
-
+    <span class="p-name">Alice</span>
     <img class="u-photo" src="https://example.com/ryan/image" alt="" />
   </span>
 
@@ -199,6 +203,7 @@ asdf http://other/link qwert
 
 </article>
 """)
+    self.assertIn('<title>Alice</title>', resp.body)
 
   def test_repost_with_syndicated_post_and_mentions(self):
     self.activities[0]['object']['content'] += ' http://another/mention'
