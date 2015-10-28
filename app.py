@@ -26,6 +26,7 @@ from tumblr import Tumblr
 from wordpress_rest import WordPress
 import models
 from models import BlogPost, BlogWebmention, Publish, Response, Source
+import original_post_discovery
 import util
 
 # import source model class definitions for template rendering
@@ -491,15 +492,30 @@ class RetryHandler(util.Handler):
     if not entity:
       self.abort(400, 'key not found')
 
+    # start all target URLs over
     if entity.status == 'complete':
       entity.status = 'new'
-    entity.unsent += entity.sent + entity.skipped
-    entity.sent = entity.skipped = []
+
+    targets = set(entity.unsent + entity.sent + entity.skipped + entity.error +
+                  entity.failed)
+    entity.sent = entity.skipped = entity.error = entity.failed = []
+
+    # run OPD to pick up any new SyndicatedPosts. note that we don't refetch
+    # their h-feed, so if they've added a syndication URL since we last crawled,
+    # retry won't make us pick it up. meh. background in #524.
+    if entity.key.kind() == 'Response':
+      source = entity.source.get()
+      for activity in [json.loads(a) for a in entity.activities_json]:
+        originals, mentions = original_post_discovery.discover(
+          source, activity, fetch_hfeed=False, include_redirect_sources=False)
+        targets |= original_post_discovery.targets_for_response(
+          json.loads(entity.response_json), originals=originals, mentions=mentions)
+
+    entity.unsent = targets
     entity.put()
 
     # clear any cached webmention endpoints
-    memcache.delete_multi(util.webmention_endpoint_cache_key(url) for url in
-                          entity.unsent + entity.error + entity.failed)
+    memcache.delete_multi(util.webmention_endpoint_cache_key(url) for url in targets)
 
     if entity.key.kind() == 'Response':
       util.add_propagate_task(entity)

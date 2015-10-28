@@ -1,6 +1,7 @@
 """Unit tests for app.py.
 """
 import datetime
+import json
 import urllib
 
 from google.appengine.api import memcache
@@ -10,6 +11,7 @@ import mf2py
 import webapp2
 
 import app
+import models
 import util
 import testutil
 from testutil import FakeAuthEntity
@@ -33,37 +35,54 @@ class AppTest(testutil.ModelsTest):
     params = testutil.get_task_params(self.taskqueue_stub.GetTasks('poll-now')[0])
     self.assertEqual(key, params['source_key'])
 
-  def test_retry_response(self):
+  def test_retry(self):
     self.assertEqual([], self.taskqueue_stub.GetTasks('propagate'))
 
-    self.responses[0].status = 'complete'
-    self.responses[0].sent = ['http://sent']
-    self.responses[0].skipped = ['https://skipped']
-    self.responses[0].put()
+    source = self.sources[0]
+    # source.domains = ['orig']
+    source.domain_urls = ['http://orig']
+    source.put()
+
+    resp = self.responses[0]
+    resp.status = 'complete'
+    resp.unsent = ['http://unsent']
+    resp.sent = ['http://sent']
+    resp.error = ['http://error']
+    resp.failed = ['http://failed']
+    resp.skipped = ['https://skipped']
+
+    # SyndicatedPost with new target URLs
+    resp.activities_json = [json.dumps({'url': 'https://silo/1'}),
+                            json.dumps({'url': 'https://silo/2'}),
+                            ]
+    resp.put()
+    models.SyndicatedPost.insert(source, 'https://silo/1', 'https://orig/1')
+    models.SyndicatedPost.insert(source, 'https://silo/2', 'http://orig/2')
 
     # cached webmention endpoint
     memcache.set('W https skipped', 'asdf')
 
-    key = self.responses[0].key.urlsafe()
-    resp = app.application.get_response(
+    key = resp.key.urlsafe()
+    response = app.application.get_response(
       '/retry', method='POST', body='key=' + key)
-    self.assertEquals(302, resp.status_int)
-    self.assertEquals(self.sources[0].bridgy_url(self.handler),
-                      resp.headers['Location'].split('#')[0])
+    self.assertEquals(302, response.status_int)
+    self.assertEquals(source.bridgy_url(self.handler),
+                      response.headers['Location'].split('#')[0])
     params = testutil.get_task_params(self.taskqueue_stub.GetTasks('propagate')[0])
     self.assertEqual(key, params['response_key'])
 
     # status and URLs should be refreshed
-    got = self.responses[0].key.get()
+    got = resp.key.get()
     self.assertEqual('new', got.status)
     self.assertItemsEqual(
-      ['http://sent', 'https://skipped', 'http://target1/post/url'], got.unsent)
-    self.assertEqual([], got.sent)
-    self.assertEqual([], got.skipped)
+      ['http://unsent', 'http://sent', 'https://skipped', 'http://error',
+       'http://failed', 'https://orig/1', 'http://orig/2'],
+      got.unsent)
+    for field in got.sent, got.skipped, got.error, got.failed:
+      self.assertEqual([], field)
 
     # webmention endpoints for URL domains should be refreshed
     self.assertIsNone(memcache.get('W https skipped'))
-
 
   def test_poll_now_and_retry_response_missing_key(self):
     for endpoint in '/poll-now', '/retry':
