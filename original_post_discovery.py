@@ -36,6 +36,7 @@ import util
 from granary import source as gr_source
 from google.appengine.api.datastore import MAX_ALLOWABLE_QUERIES
 from bs4 import BeautifulSoup
+import models
 from models import SyndicatedPost
 
 from google.appengine.api import memcache
@@ -135,6 +136,27 @@ def refetch(source):
   for url in _get_author_urls(source):
     results.update(_process_author(source, url, refetch=True))
   return results
+
+
+def targets_for_response(resp, originals, mentions):
+  """Returns the URLs that we should send webmentions to for a given response.
+
+  ...specifically, all responses except posts get sent to original post URLs,
+  but only posts and comments get sent to mentioned URLs.
+
+  Args:
+    resp: ActivityStreams response object
+    originals, mentions: sequence of string URLs
+
+  Returns: set of string URLs
+  """
+  type = models.Response.get_type(resp)
+  targets = set()
+  if type != 'post':
+    targets |= originals
+  if type in ('post', 'comment'):
+    targets |= mentions
+  return targets
 
 
 def _posse_post_discovery(source, activity, syndication_url, fetch_hfeed):

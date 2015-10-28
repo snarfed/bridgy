@@ -293,14 +293,8 @@ class Poll(webapp2.RequestHandler):
             original_post_discovery.discover(source, activity,
                                              include_redirect_sources=False)
 
-        # send wms to all original posts, but only posts and comments (not
-        # likes, reposts, or rsvps) to mentions. matches logic in handlers.py!
-        targets = set()
-        if resp_type != 'post':
-          targets |= activity['originals']
-        if resp_type in ('post', 'comment'):
-          targets |= activity['mentions']
-
+        targets = original_post_discovery.targets_for_response(
+          resp, originals=activity['originals'], mentions=activity['mentions'])
         if targets:
           logging.info('%s has %d webmention target(s): %s', activity.get('url'),
                        len(targets), ' '.join(targets))
