@@ -391,7 +391,9 @@ class PollTest(TaskQueueTest):
     for a in self.activities:
       a['object']['replies']['items'][0]['id'] = 'tag:source.com,2013:only_reply'
       a['object']['tags'] = []
-      del a['object']['url']  # prevent posse post discovery (except 2, below)
+      # prevent posse post discovery (except 2, below)
+      del a['object']['url']
+      del a['url']
 
     self.activities[1]['object'].update({
         'content': '',
@@ -449,7 +451,9 @@ class PollTest(TaskQueueTest):
 
     # return one normal activity and one searched mention
     activity = self.activities[0]
-    del activity['object']['url']  # prevent posse post discovery
+    # prevent posse post discovery
+    del activity['object']['url']
+    del activity['url']
     source.set_activities([activity])
 
     reply = {
@@ -519,7 +523,15 @@ class PollTest(TaskQueueTest):
         source=source.key,
         unsent=['http://target9/post/url'],
         original_posts=[],
-      )] + self.responses[:3]  # from the normal activity
+      )]
+
+    # responses from the normal activity
+    for resp in self.responses[:3]:
+      resp.activities_json = [json.dumps({
+        'id': 'tag:source.com,2013:a',
+        'object': {'content': 'foo http://target1/post/url bar'},
+      })]
+    expected += self.responses[:3]
 
     self.assert_responses(expected)
     self.assertEquals('"foo" OR "bar/baz?baj"', source.last_search_query)

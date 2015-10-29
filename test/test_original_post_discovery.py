@@ -1180,3 +1180,23 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
 
     self.mox.ReplayAll()
     self.assert_discover(['http://author/post/permalink'], source=fb)
+
+  def test_url_in_activity_not_object(self):
+    """We should use the url field in the activity if object doesn't have it.
+
+    setUp() sets self.activity['object']['url'], so the other tests test that case.
+    """
+    del self.activity['object']['url']
+    self.activity['url'] = 'http://www.fa.ke/post/url'
+
+    self.expect_requests_get('http://author', """
+    <html class="h-feed">
+      <div class="h-entry">
+        <a class="u-url" href="http://author/post/url"></a>
+        <a class="u-syndication" href="http://www.fa.ke/post/url"></a>
+      </div>
+    </html>""")
+
+    self.mox.ReplayAll()
+    self.assert_discover(['http://author/post/url'])
+

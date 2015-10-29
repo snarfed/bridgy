@@ -72,8 +72,8 @@ def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True):
     include_redirect_sources=include_redirect_sources,
     headers=util.USER_AGENT_HEADER)
 
-  obj = activity.get('object') or activity
-  author_id = obj.get('author', {}).get('id')
+  obj = activity.get('object', {})
+  author_id = obj.get('author', {}).get('id') or activity.get('author', {}).get('id')
   if author_id and author_id != source.user_tag_id():
     logging.info(
       "Demoting original post links because user %s doesn't match author %s",
@@ -102,8 +102,7 @@ def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True):
   # TODO possible optimization: if we've discovered a backlink to a post on the
   # author's domain (i.e., it included a link or citation), then skip the rest
   # of this.
-  syndication_url = obj.get('url')
-
+  syndication_url = obj.get('url') or activity.get('url')
   if syndication_url:
     # use the canonical syndication url on both sides, so that we have
     # the best chance of finding a match. Some silos allow several

@@ -39,7 +39,6 @@ class AppTest(testutil.ModelsTest):
     self.assertEqual([], self.taskqueue_stub.GetTasks('propagate'))
 
     source = self.sources[0]
-    # source.domains = ['orig']
     source.domain_urls = ['http://orig']
     source.put()
 
@@ -52,12 +51,15 @@ class AppTest(testutil.ModelsTest):
     resp.skipped = ['https://skipped']
 
     # SyndicatedPost with new target URLs
-    resp.activities_json = [json.dumps({'url': 'https://silo/1'}),
-                            json.dumps({'url': 'https://silo/2'}),
-                            ]
+    resp.activities_json = [
+      json.dumps({'object': {'url': 'https://silo/1'}}),
+      json.dumps({'url': 'https://silo/2', 'object': {'unused': 'ok'}}),
+      json.dumps({'url': 'https://silo/3'}),
+    ]
     resp.put()
     models.SyndicatedPost.insert(source, 'https://silo/1', 'https://orig/1')
     models.SyndicatedPost.insert(source, 'https://silo/2', 'http://orig/2')
+    models.SyndicatedPost.insert(source, 'https://silo/3', 'http://orig/3')
 
     # cached webmention endpoint
     memcache.set('W https skipped', 'asdf')
@@ -76,7 +78,7 @@ class AppTest(testutil.ModelsTest):
     self.assertEqual('new', got.status)
     self.assertItemsEqual(
       ['http://unsent', 'http://sent', 'https://skipped', 'http://error',
-       'http://failed', 'https://orig/1', 'http://orig/2'],
+       'http://failed', 'https://orig/1', 'http://orig/2', 'http://orig/3'],
       got.unsent)
     for field in got.sent, got.skipped, got.error, got.failed:
       self.assertEqual([], field)
