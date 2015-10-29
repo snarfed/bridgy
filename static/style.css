@@ -147,6 +147,8 @@ form input {
     width: 100%;
   }
 
+  .user-items > .row > .col-sm-1,
+  .user-items > .row > .col-sm-2,
   .user-items > .row > .col-sm-3,
   .user-items > .row > .col-sm-4 {
     display: table-cell;
