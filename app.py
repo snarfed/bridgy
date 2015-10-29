@@ -247,20 +247,32 @@ class UserHandler(DashboardHandler):
     # Responses
     if 'listen' in self.source.features:
       vars['responses'] = []
-      query = Response.query().filter(Response.source == self.source.key)\
-                              .order(-Response.updated)
+      query = Response.query().filter(Response.source == self.source.key)
 
-      before = self.request.get('responses_before')
-      if before:
+      # if there's a paging param (responses_before or responses_after), update
+      # query with it
+      def get_paging_param(param):
+        val = self.request.get(param)
         try:
-          before = util.parse_iso8601(before)
+          return util.parse_iso8601(val) if val else None
         except:
-          msg = "Couldn't parse %r as ISO8601" % before
+          msg = "Couldn't parse %s %r as ISO8601" % (param, val)
           logging.exception(msg)
           self.abort(400, msg)
-        query = query.filter(Response.updated < before)
 
-      for i, r in enumerate(query):
+      before = get_paging_param('responses_before')
+      after = get_paging_param('responses_after')
+      if before and after:
+        self.abort(400, "can't handle both responses_before and responses_after")
+      elif after:
+        query = query.filter(Response.updated > after).order(Response.updated)
+      elif before:
+        query = query.filter(Response.updated < before).order(-Response.updated)
+      else:
+        query = query.order(-Response.updated)
+
+      query_iter = query.iter()
+      for i, r in enumerate(query_iter):
         r.response = json.loads(r.response_json)
         if r.activity_json:  # handle old entities
           r.activities_json.append(r.activity_json)
@@ -305,9 +317,26 @@ class UserHandler(DashboardHandler):
         if len(vars['responses']) >= 10 or i > 200:
           break
 
-      if query.iter().probably_has_next():
-        before = r.updated.replace(microsecond=0).isoformat()
-        vars['responses_before_link'] = '?responses_before=%s#responses' % before
+      vars['responses'].sort(key=lambda r: r.updated, reverse=True)
+
+      # calculate new paging param(s)
+      new_after = (
+        before if before else
+        vars['responses'][0].updated if
+          vars['responses'] and query_iter.probably_has_next() and (before or after)
+        else None)
+      if new_after:
+        vars['responses_after_link'] = ('?responses_after=%s#responses' %
+                                         new_after.isoformat())
+
+      new_before = (
+        after if after else
+        vars['responses'][-1].updated if
+          vars['responses'] and query_iter.probably_has_next()
+        else None)
+      if new_before:
+        vars['responses_before_link'] = ('?responses_before=%s#responses' %
+                                         new_before.isoformat())
 
     # Publishes
     if 'publish' in self.source.features:

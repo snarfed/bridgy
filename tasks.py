@@ -371,7 +371,7 @@ class Poll(webapp2.RequestHandler):
     # TODO maybe add a (canonicalized) url field to Response so we can
     # query by it instead of iterating over all of them
     for response in (Response.query(Response.source == source.key)
-                     .order(-Response.created)):
+                     .order(-Response.updated)):
       if response.activity_json:  # handle old entities
         response.activities_json.append(response.activity_json)
         response.activity_json = None

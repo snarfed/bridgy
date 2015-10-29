@@ -222,14 +222,22 @@ Click to enable <a href="/about#listen">listening</a>:
   {% endfor %}
 </ul>
 
-{% if responses_before_link %}
-<div class="row"><div class="col-sm-3 col-sm-offset-9">
-  <a href="{{ responses_before_link }}">Older &rarr;</a>
-</div></div>
-{% endif %}
+<div class="row">
+<div class="col-sm-3">
+  {% if responses_after_link %}
+    <a href="{{ responses_after_link }}">&larr; Newer</a>
+  {% endif %}
+</div>
+
+<div class="col-sm-3 col-sm-offset-6">
+  {% if responses_before_link %}
+    <a href="{{ responses_before_link }}">Older &rarr;</a>
+  {% endif %}
+</div>
+</div>
 
 {% else %}
-<p class="big">No responses yet.</p>
+<p class="big">No responses.</p>
 {% endif %}
 
 {% endif %}
