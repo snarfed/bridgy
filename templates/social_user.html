@@ -157,7 +157,7 @@ Click to enable <a href="/about#listen">listening</a>:
 <div class="row">
 {% if "listen" in source.features %}
 {% if responses %}
-<p id="responses" class="big">Recent responses:</p>
+<p id="responses" class="big">Responses:</p>
 <ul class="user-items">
   {% for response in responses %}
   <li class="row">
@@ -222,6 +222,10 @@ Click to enable <a href="/about#listen">listening</a>:
   {% endfor %}
 </ul>
 
+{% else %}
+<p class="big">No responses.</p>
+{% endif %}
+
 <div class="row">
 <div class="col-sm-3">
   {% if responses_after_link %}
@@ -236,10 +240,6 @@ Click to enable <a href="/about#listen">listening</a>:
 </div>
 </div>
 
-{% else %}
-<p class="big">No responses.</p>
-{% endif %}
-
 {% endif %}
 </div>
 
@@ -248,7 +248,7 @@ Click to enable <a href="/about#listen">listening</a>:
 <div class="row">
 {% if "publish" in source.features %}
 {% if publishes %}
-<p id="publishes" class="big">Recently published:</p>
+<p id="publishes" class="big">Published:</p>
 <ul class="user-items">
   {% for publish in publishes %}
   <li class="row">
