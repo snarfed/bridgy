@@ -5,8 +5,12 @@
 beautifulsoup4==4.3.2
 google-api-python-client==1.4.1
 html2text==2015.6.21
+html5lib==0.9999999
 httplib2==0.9.1
+Jinja2==2.8
+MarkupSafe==0.23
 mf2py==0.2.6
+mf2util==0.2.9
 oauth2client==1.4.11
 oauthlib==1.0.1
 pyasn1==0.1.7
