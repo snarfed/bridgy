@@ -189,18 +189,14 @@ Click to enable <a href="/about#listen">listening</a>:
     </ul>
 
    </div><div class="col-sm-2">
-    {% if response.links %}  {# if no links, then there was no propagate task #}
      <a href="/log?start_time={{ response.updated|date:'U' }}&key={{ response.key.urlsafe }}">
-    {% endif %}
       {{ response.updated|timesince }} ago
       {% if response.status == 'error' %}
        <span title="Error" class="glyphicon glyphicon-exclamation-sign"></span>
       {% else %}{% if response.status == 'processing' %}
        <span title="Processing" class="glyphicon glyphicon-transfer"></span>
       {% endif %}{% endif %}
-    {% if response.links %}
      </a>
-    {% endif %}
 
    </div><div class="col-sm-1">
     <form method="post" action="/retry">
