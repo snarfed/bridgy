@@ -398,6 +398,16 @@ class SourceTest(testutil.HandlerTest):
     self.mox.ReplayAll()
     self.assert_equals(comment_obj, source.get_comment('123'))
 
+  def test_has_bridgy_webmention_endpoint(self):
+    source = FakeSource.new(None)
+    for endpoint, has in ((None, False),
+                          ('http://foo', False ),
+                          ('https://brid.gy/webmention/fake', True),
+                          ('https://www.brid.gy/webmention/fake', True),
+                          ):
+      source.webmention_endpoint = endpoint
+      self.assertEquals(has, source.has_bridgy_webmention_endpoint(), endpoint)
+
 
 class BlogPostTest(testutil.ModelsTest):
 

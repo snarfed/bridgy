@@ -17,7 +17,7 @@
 {% else %}
 
 <div class="row">
-{% if source.webmention_endpoint == source.bridgy_webmention_endpoint %}
+{% if source.has_bridgy_webmention_endpoint %}
 <p class="big">You're all set! Check out your recent
 <a href="#blogposts">blog posts</a> and <a href="#webmentions">webmentions</a>.
   <!-- This currently 500s :/ -->

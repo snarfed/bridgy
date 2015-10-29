@@ -214,9 +214,15 @@ class Source(StringIdModel):
     return self.REFETCH_PERIOD
 
   @classmethod
-  def bridgy_webmention_endpoint(cls):
+  def bridgy_webmention_endpoint(cls, domain='brid.gy'):
     """Returns the Bridgy webmention endpoint for this source type."""
-    return 'https://brid.gy/webmention/' + cls.SHORT_NAME
+    return 'https://%s/webmention/%s' % (domain, cls.SHORT_NAME)
+
+  def has_bridgy_webmention_endpoint(self):
+    """Returns True if this source uses Bridgy's webmention endpoint."""
+    return self.webmention_endpoint in (
+      self.bridgy_webmention_endpoint(),
+      self.bridgy_webmention_endpoint(domain='www.brid.gy'))
 
   def get_author_urls(self):
     """Determine the author urls for a particular source.
@@ -435,9 +441,9 @@ class Source(StringIdModel):
   def verify(self, force=False):
     """Checks that this source is ready to be used.
 
-    For blog and listen sources, this fetches their front page HTML and checks
-    that they're advertising the Bridgy webmention endpoint. For publish
-    sources, this checks that they have a domain.
+    For blog and listen sources, this fetches their front page HTML and
+    discovers their webmention endpoint. For publish sources, this checks that
+    they have a domain.
 
     May be overridden by subclasses, e.g. Tumblr.
 
