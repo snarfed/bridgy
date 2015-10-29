@@ -84,6 +84,14 @@ class AppTest(testutil.ModelsTest):
     # webmention endpoints for URL domains should be refreshed
     self.assertIsNone(memcache.get('W https skipped'))
 
+  def test_retry_redirect_to(self):
+    key = self.responses[0].put()
+    response = app.application.get_response(
+      '/retry', method='POST', body='key=%s&redirect_to=/foo/bar' % key.urlsafe())
+    self.assertEquals(302, response.status_int)
+    self.assertEquals('http://localhost/foo/bar',
+                      response.headers['Location'].split('#')[0])
+
   def test_poll_now_and_retry_response_missing_key(self):
     for endpoint in '/poll-now', '/retry':
       for body in '', 'key=' + self.responses[0].key.urlsafe():  # hasn't been stored

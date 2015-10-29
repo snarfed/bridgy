@@ -525,7 +525,8 @@ class RetryHandler(util.Handler):
       self.abort(400, 'Unexpected key kind %s', entity.key.kind())
 
     self.messages.add('Retrying. Refresh in a minute to see the results!')
-    self.redirect(entity.source.get().bridgy_url(self))
+    self.redirect(self.request.get('redirect_to').encode('utf-8') or
+                  entity.source.get().bridgy_url(self))
 
 
 class RedirectToFrontPageHandler(util.Handler):
