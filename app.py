@@ -306,8 +306,8 @@ class UserHandler(DashboardHandler):
           break
 
       if query.iter().probably_has_next():
-        vars['responses_before_link'] = \
-          '?responses_before=%s#responses' % r.updated.isoformat()
+        before = r.updated.replace(microsecond=0).isoformat()
+        vars['responses_before_link'] = '?responses_before=%s#responses' % before
 
     # Publishes
     if 'publish' in self.source.features:
