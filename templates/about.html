@@ -8,9 +8,9 @@
 
 <li id="what" class="question">What is this?</li>
 <li class="answer">
-<p>Bridgy is a service that pulls comments, likes, and reshares on social
-networks back to your web site. You can also use it to post to social
-networks - or comment, like, reshare, or even RSVP - from your own web site.
+<p>Bridgy pulls comments, likes, and reshares on social networks back to your
+web site. You can also use it to post to social networks - or comment, like,
+reshare, or even RSVP - from your own web site.
 </p>
 
 <p>A picture is worth a thousand words, so here's a screenshot of comments,
@@ -132,19 +132,18 @@ That's ugly.</a></li>
 <li id="how" class="question">How does it work?</li>
 <li class="answer">
 <p>
-When you sign up to pull back responses, Bridgy periodically checks your posts
-for
+Bridgy periodically checks social networks for responses to your posts and
 <a href="http://indiewebcamp.com/original-post-discovery">links to your web
-site</a> and new responses, then sends those responses
+site</a> and sends them back to your site
 as <a href="http://indiewebify.me/#send-webmentions">webmentions</a>. Bridgy
 also translates the responses
 to <a href="http://microformats.org/">microformats</a> so that your web site can
 fetch and parse them.
 </p>
 <p>
-When you ask Bridgy to publish a post from your web site, it fetches the post,
-looks for microformats to determine what it is, then publishes it using the
-social networks' APIs.
+Bridgy can also publish posts, comments, likes, and RSVPs from your web
+site <em>to</em> social networks. When you ask Bridgy to publish a post, it
+analyzes its microformats data and publishes it using the social network APIs.
 </p>
 <p>Bridgy is <a href="https://github.com/snarfed/bridgy">open source</a>. It's
 written in Python and runs on
@@ -165,8 +164,9 @@ Bridgy is small, so thanks to <a href="http://appengine.google.com/">App
 Engine</a>, it doesn't cost much to run. We don't need donations, promise.
 </p>
 <p>If you <em>really</em> want to
-contribute, <a href="https://github.com/snarfed/bridgy">jump into the code</a>
-and send us a pull request, or feel free to donate to the
+contribute, <a href="https://github.com/snarfed/bridgy/issues">file an issue</a>
+or <a href="https://github.com/snarfed/bridgy">send a pull request</a>, or
+feel free to donate to the
 <a href="http://www.aspca.org/">ASPCA</a> or the
 <a href="https://www.eff.org/">EFF</a> in our name.
 </p></li>
@@ -258,36 +258,43 @@ choose that page during signup.</p>
 <li id="security" class="question">It looks like anyone can poll or disable my
 account or publish as me. Isn't that a security hole?</li>
 <li class="answer">
-<p>Yeah, those do seem dangerous. Fortunately, polling is harmless - Bridgy does
-it automatically anyway - and we recheck your account login when you try to
-disable your account or publish a post. If you <a href="#webmentions">publish via
-webmention</a>, we require the corresponding Bridgy Publish backlink in your post.
+<p>Looks can be deceiving. Polling is harmless - Bridgy does it automatically
+anyway - and when you publish a post or try to disable an account, we check that
+you own it first. If you <a href="#webmentions">publish via webmention</a>, we
+<a href="https://brid.gy/about#webmentions">require a Bridgy Publish backlink</a>
+in your post.
 </p>
 </li>
 
 <li id="registration-api" class="question">Can users sign up for Bridgy
 without leaving my site or application?</li>
 <p>Not exactly, but you can get close. Direct your users to
-POST to a Bridgy registration URL with the parameters:</p>
+<code>POST</code> to a Bridgy registration URL of the
+form <code>https://brid.gy/SITE/start</code> (where SITE is
+<code>facebook</code>, <code>twitter</code>, <code>googleplus</code>,
+<code>instagram</code>, or <code>flickr</code>)with the parameters:</p>
 <ul>
-<li>"feature", a comma-separated list of features, usually "listen", "publish", or "listen,publish"</li>
-<li>"callback" a URL pointing back to your site</li>
-<li> "user_url" (optional), the user's URL. Allows callers to set this value without requiring it to be present in the user's silo profile</li>
+<li><code>feature</code>, a comma-separated list of features,
+usually <code>listen</code>, <code>publish</code>,
+or <code>listen,publish</code></li>
+<li><code>callback</code> a URL pointing back to your site</li>
+<li> <code>user_url</code> (optional), the user's URL. Allows callers to set
+this value without requiring it to be present in the user's silo profile</li>
 </ul>
 <p>They will be ushered through the registration process and sent back to
 your site when it finishes.</p>
-<p>Registration URLs are of the form <code>https://brid.gy/SOURCE/start</code>, e.g.</p>
+<p>For example:</p>
 <pre>
-POST https://brid.gy/facebook/start
-feature=listen&amp;callback=http%3A%2F%2Fexample.com%2Fbridgy-callback
+POST <a href="https://brid.gy/facebook/start">https://brid.gy/facebook/start</a>
+<span class="keyword">feature=</span><span class="value">listen</span>&amp;<span class="keyword">callback=</span><span class="value">http%3A%2F%2Fexample.com%2Fbridgy-callback</span>
 
-POST https://brid.gy/twitter/start
-feature=publish&amp;callback=http%3A%2F%2Fexample.com%2Fbridgy-callback
+POST <a href="https://brid.gy/twitter/start">https://brid.gy/twitter/start</a>
+<span class="keyword">feature=</span><span class="value">listen,publish</span>&amp;<span class="keyword">callback=</span><span class="value">http%3A%2F%2Fexample.com%2Fbridgy-callback</span>
 </pre>
 <p>The callback will be passed back query parameters:</p>
 <ul>
-  <li>"result" equal to "success", "failure", or "declined"</li>
-  <li>"user" (if successful) equal to their Bridgy user page URL</li>
+  <li><code>result</code> equal to <code>success</code>, <code>failure</code>, or <code>declined</code></li>
+  <li><code>user</code> (if successful) equal to their Bridgy user page URL</li>
 </ul>
 
 
