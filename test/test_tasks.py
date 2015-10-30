@@ -305,18 +305,18 @@ class PollTest(TaskQueueTest):
     self.activities[1]['object'].update({'content': 'http://redir/1'})
     self.sources[0].set_activities(self.activities[0:2])
 
-    self.expect_requests_head('http://redir/0',
-                              redirected_url='http://first?utm_medium=x')
-    self.expect_requests_head('http://redir/1',
-                              redirected_url='http://second?utm_source=Twitter')
+    self.expect_requests_head(
+      'http://redir/0', redirected_url='http://first?utm_medium=x').InAnyOrder()
+    self.expect_requests_head(
+      'http://redir/1', redirected_url='http://second?utm_source=Twitter').InAnyOrder()
     self.mox.ReplayAll()
     self.post_task()
 
     self.assertEquals(1, models.Response.query().count())
     resp = models.Response.query().get()
     self.assert_equals(['http://first', 'http://second'], resp.unsent)
-    self.assert_equals({'http://first': 0, 'http://second': 1},
-                       json.loads(resp.urls_to_activity))
+    self.assert_equals(['http://first', 'http://second'],
+                       json.loads(resp.urls_to_activity).keys())
 
   def test_too_long_urls(self):
     """URLs longer than the datastore's limit should be truncated and skipped.
@@ -461,6 +461,8 @@ class PollTest(TaskQueueTest):
       'id': 'tag:source.com,2013:9_comment',
       'content': 'foo bar',
     }
+    colliding_reply = copy.copy(self.activities[0]['object']['replies']['items'][0])
+    colliding_reply['objectType'] = 'note'
     like = {
       'id': 'tag:source.com,2013:9_like',
       'objectType': 'activity',
@@ -474,18 +476,21 @@ class PollTest(TaskQueueTest):
       'object': {'url': 'http://example.com/def'},
     }
     mentions = [{
-      # good mention
-      'id': 'tag:source.com,2013:9',
-      'object': {
-        'objectType': 'note',
-        'content': 'foo http://target9/post/url bar',
-        'replies': {'items': [reply]},
-        'tags': [like, share],
-      },
-    },
+       # good mention
+       'id': 'tag:source.com,2013:9',
+       'object': {
+         'objectType': 'note',
+         'content': 'foo http://target9/post/url bar',
+         'replies': {'items': [reply]},
+         'tags': [like, share],
+       },
+     },
       # these should be filtered out
       like,
       share,
+      # this will be returned by the mentions search, and should be overriden by
+      # the reply in self.activities[0]
+      colliding_reply,
     ]
     source.set_search_results(copy.deepcopy(mentions))
 

@@ -164,7 +164,8 @@ class Poll(webapp2.RequestHandler):
           def strip_likes_shares(objs):
             return [o for o in objs if o.get('verb') not in ('like', 'share')]
           for m in mentions:
-            m['object']['tags'] = strip_likes_shares(m['object'].get('tags', []))
+            tags = m.setdefault('object', {}).get('tags', {})
+            m['object']['tags'] = strip_likes_shares(tags)
           mentions = {m['id']: m for m in strip_likes_shares(mentions)}
           activities.update(mentions)  # so that we handle replies to mentions
           responses.update(mentions)
@@ -251,14 +252,20 @@ class Poll(webapp2.RequestHandler):
           logging.error('Skipping response without id: %s', json.dumps(resp, indent=2))
           continue
 
+        resp.setdefault('activities', []).append(activity)
+
+        # when we find two responses with the same id, the earlier one may have
+        # come from a mention, and this one is probably better since it probably
+        # came from the user's activity, so prefer this one. background:
+        # https://github.com/snarfed/bridgy/issues/533
         existing = responses.get(id)
         if existing:
           if source.gr_source.activity_changed(resp, existing, log=True):
-            logging.warning('Got two different versions of same response! %s', id)
-          resp = existing
-        else:
-          responses[id] = resp
-        resp.setdefault('activities', []).append(activity)
+            logging.warning('Got two different versions of same response!\n%s\n%s',
+                            existing, resp)
+          resp['activities'].extend(existing.get('activities', []))
+
+        responses[id] = resp
 
     #
     # Step 3: filter out responses we've already seen
