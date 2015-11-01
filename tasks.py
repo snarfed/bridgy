@@ -189,7 +189,7 @@ class Poll(webapp2.RequestHandler):
         logging.warning('Rate limited. Marking as error and finishing. %s', e)
         source.updates.update({'status': 'error', 'rate_limited': True})
         return
-      elif code and int(code) / 100 == 5:
+      elif (code and int(code) / 100 == 5) or util.is_connection_failure(e):
         logging.error('API call failed. Marking as error and finishing. %s: %s\n%s',
                       code, body, e)
         self.abort(ERROR_HTTP_RETURN_CODE)

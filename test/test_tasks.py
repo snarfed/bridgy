@@ -10,6 +10,7 @@ import datetime
 import json
 import logging
 import mox
+import socket
 import StringIO
 import time
 import urllib
@@ -166,9 +167,18 @@ class PollTest(TaskQueueTest):
     self.assertEqual(0, len(self.taskqueue_stub.GetTasks('poll')))
 
   def test_poll_silo_500(self):
-    """If a silo HTTP request 500s or deadlines, we should retry the task."""
+    """If a silo HTTP request 500s, we should quietly retry the task."""
     self.expect_get_activities().AndRaise(
       urllib2.HTTPError('url', 505, 'msg', {}, None))
+    self.mox.ReplayAll()
+
+    self.post_task(expected_status=tasks.ERROR_HTTP_RETURN_CODE)
+    self.assertEqual('error', self.sources[0].key.get().status)
+
+  def test_poll_silo_deadlines(self):
+    """If a silo HTTP request deadlines, we should quietly retry the task."""
+    self.expect_get_activities().AndRaise(
+      urllib2.URLError(socket.gaierror('deadlined')))
     self.mox.ReplayAll()
 
     self.post_task(expected_status=tasks.ERROR_HTTP_RETURN_CODE)
