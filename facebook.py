@@ -292,6 +292,10 @@ class FacebookPage(models.Source):
     if self.updates is None:
       self.updates = {}
 
+    parsed = gr_facebook.Facebook.parse_id(post_id)
+    if parsed.post:
+      post_id = parsed.post
+
     resolved = self.updates.setdefault('resolved_object_ids', {})
     if self.resolved_object_ids_json and not resolved:
       resolved = self.updates['resolved_object_ids'] = json.loads(

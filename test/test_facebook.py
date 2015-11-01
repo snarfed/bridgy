@@ -217,15 +217,17 @@ class FacebookPageTest(testutil.ModelsTest):
 
   def test_canonicalize_syndication_url_basic(self):
     # should look it up once, then cache it
-    self.expect_api_call('212038_314159', {'id': '0', 'object_id': '222'})
+    self.expect_api_call('212038_222', {'id': '0', 'object_id': '314159'})
     self.mox.ReplayAll()
 
     for expected, input in (
-      ('https://www.facebook.com/212038/posts/222',
-       'http://facebook.com/snarfed.org/posts/314159'),
+      ('https://www.facebook.com/212038/posts/314159',
+       'http://facebook.com/snarfed.org/posts/222'),
       # second time should use memcache instead of fetching object from API
-      ('https://www.facebook.com/212038/posts/222',
-       'http://facebook.com/snarfed.org/posts/314159'),
+      ('https://www.facebook.com/212038/posts/314159',
+       'http://facebook.com/snarfed.org/posts/222'),
+      ('https://www.facebook.com/212038/posts/314159',
+       'http://facebook.com/snarfed.org/posts/222:0'),
       ('https://www.facebook.com/212038/posts/314159',
        'https://facebook.com/snarfed.org/photos.php?fbid=314159'),
       # note. https://github.com/snarfed/bridgy/issues/429
