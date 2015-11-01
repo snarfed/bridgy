@@ -37,7 +37,7 @@ import twitter
 import util
 import wordpress_rest
 
-WEBMENTION_DISCOVERY_CACHE_TIME = 60 * 60 * 24  # a day
+WEBMENTION_DISCOVERY_CACHE_TIME = 60 * 60 * 2  # 2h
 
 ERROR_HTTP_RETURN_CODE = 304  # "Not Modified"
 
