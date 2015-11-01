@@ -16,6 +16,7 @@ import urllib
 import urllib2
 
 import apiclient
+from google.appengine.api import datastore_errors
 from google.appengine.api import memcache
 from google.appengine.api.datastore_types import _MAX_STRING_LENGTH
 from google.appengine.ext import ndb
@@ -27,6 +28,7 @@ from webmentiontools import send
 import appengine_config
 
 import models
+from models import Response, SyndicatedPost
 import original_post_discovery
 import tasks
 from tasks import PropagateResponse
@@ -91,7 +93,7 @@ class PollTest(TaskQueueTest):
       expected = self.responses
 
     # sort fields in json properties since they're compared as strings
-    stored = list(models.Response.query())
+    stored = list(Response.query())
     for resp in expected + stored:
       resp.activities_json = [json.dumps(json.loads(a), sort_keys=True)
                               for a in resp.activities_json]
@@ -129,11 +131,11 @@ class PollTest(TaskQueueTest):
 
   def test_poll(self):
     """A normal poll task."""
-    self.assertEqual(0, models.Response.query().count())
+    self.assertEqual(0, Response.query().count())
     self.assertEqual([], self.taskqueue_stub.GetTasks('poll'))
 
     self.post_task()
-    self.assertEqual(9, models.Response.query().count())
+    self.assertEqual(9, Response.query().count())
     self.assert_responses()
 
     source = self.sources[0].key.get()
@@ -312,8 +314,8 @@ class PollTest(TaskQueueTest):
     self.mox.ReplayAll()
     self.post_task()
 
-    self.assertEquals(1, models.Response.query().count())
-    resp = models.Response.query().get()
+    self.assertEquals(1, Response.query().count())
+    resp = Response.query().get()
     self.assert_equals(['http://first', 'http://second'], resp.unsent)
     self.assert_equals(['http://first', 'http://second'],
                        json.loads(resp.urls_to_activity).keys())
@@ -357,7 +359,7 @@ class PollTest(TaskQueueTest):
     self.sources[0].set_activities(activities)
 
     self.post_task()
-    self.assert_equals([], list(models.Response.query()))
+    self.assert_equals([], list(Response.query()))
 
   def test_existing_responses(self):
     """Poll should be idempotent and not touch existing response entities.
@@ -375,8 +377,8 @@ class PollTest(TaskQueueTest):
     https://github.com/snarfed/bridgy/issues/305#issuecomment-94004416
     """
     self.activities[0]['object']['replies']['items'][0]['fb_id'] = '12:34:56_78'
-    fb_id_resp = models.Response(id='tag:facebook.com,2013:12:34:56_78',
-                                 **self.responses[0].to_dict())
+    fb_id_resp = Response(id='tag:facebook.com,2013:12:34:56_78',
+                          **self.responses[0].to_dict())
     fb_id_resp.status = 'complete'
     fb_id_resp.put()
 
@@ -407,14 +409,14 @@ class PollTest(TaskQueueTest):
     # trigger posse post discovery
     self.sources[0].domain_urls = ['http://author']
     self.sources[0].put()
-    models.SyndicatedPost(parent=self.sources[0].key,
-                          original='http://from/synd/post',
-                          syndication='https://activ/2').put()
+    SyndicatedPost(parent=self.sources[0].key,
+                   original='http://from/synd/post',
+                   syndication='https://activ/2').put()
 
     self.post_task()
     self.assertEquals(1, len(self.taskqueue_stub.GetTasks('propagate')))
-    self.assertEquals(1, models.Response.query().count())
-    resp = models.Response.query().get()
+    self.assertEquals(1, Response.query().count())
+    resp = Response.query().get()
     self.assert_equals(['tag:source.com,2013:%s' % id for id in 'a', 'b', 'c'],
                        [json.loads(a)['id'] for a in resp.activities_json])
 
@@ -433,7 +435,7 @@ class PollTest(TaskQueueTest):
     self.sources[0].set_activities(self.activities)
 
     self.post_task()
-    resp = models.Response.query().get()
+    resp = Response.query().get()
     self.assert_equals([], resp.unsent)
     self.assert_equals('complete', resp.status)
     self.assertIsNone(resp.urls_to_activity)
@@ -512,7 +514,7 @@ class PollTest(TaskQueueTest):
       },
     })
     expected = [
-      models.Response(
+      Response(
         id='tag:source.com,2013:9',
         activities_json=[pruned_activity],
         response_json=pruned_response,
@@ -520,7 +522,7 @@ class PollTest(TaskQueueTest):
         source=source.key,
         unsent=['http://target9/post/url'],
         original_posts=[],
-      ), models.Response(
+      ), Response(
         id='tag:source.com,2013:9_comment',
         activities_json=[pruned_activity],
         response_json=json.dumps(reply),
@@ -547,7 +549,7 @@ class PollTest(TaskQueueTest):
     self.sources[0].put()
     self.sources[0].set_activities([])
     self.post_task()
-    self.assertEquals(0, models.Response.query().count())
+    self.assertEquals(0, Response.query().count())
 
   def test_search_for_mentions_skips_posse_posts(self):
     """When mention search finds a POSSE post, it shouldn't backfeed it.
@@ -566,7 +568,7 @@ class PollTest(TaskQueueTest):
     self.sources[0].set_activities([])
 
     self.post_task()
-    self.assert_responses([models.Response(
+    self.assert_responses([Response(
       id='tag:or.ig,2013:9',
       activities_json=[json.dumps(mention)],
       response_json=json.dumps(mention),
@@ -595,7 +597,7 @@ class PollTest(TaskQueueTest):
     self.mox.ReplayAll()
     self.post_task()
 
-    self.assert_responses([models.Response(
+    self.assert_responses([Response(
       id='tag:or.ig,2013:9',
       activities_json=[json.dumps(mention)],
       response_json=json.dumps(mention),
@@ -624,7 +626,7 @@ class PollTest(TaskQueueTest):
     self.sources[0].last_polled = datetime.datetime.utcfromtimestamp(3)
     self.sources[0].put()
     self.post_task()
-    self.assertEqual([], list(models.Response.query()))
+    self.assertEqual([], list(Response.query()))
 
   def test_no_source(self):
     """If the source doesn't exist, do nothing and let the task die.
@@ -839,11 +841,11 @@ class PollTest(TaskQueueTest):
 
     # pretend we've already done posse-post-discovery for the source
     # and checked this permalink and found no back-links
-    models.SyndicatedPost(parent=self.sources[0].key, original=None,
-                          syndication='https://source/post/url').put()
-    models.SyndicatedPost(parent=self.sources[0].key,
-                          original='http://author/permalink',
-                          syndication=None).put()
+    SyndicatedPost(parent=self.sources[0].key, original=None,
+                   syndication='https://source/post/url').put()
+    SyndicatedPost(parent=self.sources[0].key,
+                   original='http://author/permalink',
+                   syndication=None).put()
 
     # and all the status have already been sent
     for r in self.responses:
@@ -862,8 +864,8 @@ class PollTest(TaskQueueTest):
     self.post_task()
 
     # should still be a blank SyndicatedPost
-    relationships = models.SyndicatedPost.query(
-      models.SyndicatedPost.original == 'http://author/permalink',
+    relationships = SyndicatedPost.query(
+      SyndicatedPost.original == 'http://author/permalink',
       ancestor=self.sources[0].key).fetch()
     self.assertEqual(1, len(relationships))
     self.assertIsNone(relationships[0].syndication)
@@ -880,7 +882,7 @@ class PollTest(TaskQueueTest):
     self.sources[0].put()
 
     # the one existing response is a POSSE of that post
-    resp = models.Response(
+    resp = Response(
       id='tag:or.ig,2013:9',
       response_json='{}',
       activities_json=['{"url": "http://source/post/url"}'],
@@ -911,8 +913,8 @@ class PollTest(TaskQueueTest):
     self.post_task()
 
     # should have a new SyndicatedPost
-    relationships = models.SyndicatedPost.query(
-      models.SyndicatedPost.original == 'http://author/permalink',
+    relationships = SyndicatedPost.query(
+      SyndicatedPost.original == 'http://author/permalink',
       ancestor=self.sources[0].key).fetch()
     self.assertEquals(1, len(relationships))
     self.assertEquals('https://source/post/url', relationships[0].syndication)
@@ -986,26 +988,26 @@ class PollTest(TaskQueueTest):
       self.post_task(source=source)
 
     assert_syndicated_posts(
-      models.SyndicatedPost.query(
-        models.SyndicatedPost.original == 'http://author/permalink',
+      SyndicatedPost.query(
+        SyndicatedPost.original == 'http://author/permalink',
         ancestor=self.sources[0].key).fetch(),
       'http://author/permalink', 'https://instagram/post/url')
 
     assert_syndicated_posts(
-      models.SyndicatedPost.query(
-        models.SyndicatedPost.syndication == 'https://instagram/post/url',
+      SyndicatedPost.query(
+        SyndicatedPost.syndication == 'https://instagram/post/url',
         ancestor=self.sources[0].key).fetch(),
       'http://author/permalink', 'https://instagram/post/url')
 
     assert_syndicated_posts(
-      models.SyndicatedPost.query(
-        models.SyndicatedPost.original == 'http://author/permalink',
+      SyndicatedPost.query(
+        SyndicatedPost.original == 'http://author/permalink',
         ancestor=self.sources[1].key).fetch(),
       'http://author/permalink', None)
 
     assert_syndicated_posts(
-      models.SyndicatedPost.query(
-        models.SyndicatedPost.syndication == 'https://twitter/post/url',
+      SyndicatedPost.query(
+        SyndicatedPost.syndication == 'https://twitter/post/url',
         ancestor=self.sources[1].key).fetch(),
       None, 'https://twitter/post/url')
 
@@ -1050,26 +1052,26 @@ class PollTest(TaskQueueTest):
       self.post_task(source=source)
 
     assert_syndicated_posts(
-      models.SyndicatedPost.query(
-        models.SyndicatedPost.original == 'http://author/permalink',
+      SyndicatedPost.query(
+        SyndicatedPost.original == 'http://author/permalink',
         ancestor=self.sources[0].key).fetch(),
       'http://author/permalink', 'https://instagram/post/url')
 
     assert_syndicated_posts(
-      models.SyndicatedPost.query(
-        models.SyndicatedPost.syndication == 'https://instagram/post/url',
+      SyndicatedPost.query(
+        SyndicatedPost.syndication == 'https://instagram/post/url',
         ancestor=self.sources[0].key).fetch(),
       'http://author/permalink', 'https://instagram/post/url')
 
     assert_syndicated_posts(
-      models.SyndicatedPost.query(
-        models.SyndicatedPost.original == 'http://author/permalink',
+      SyndicatedPost.query(
+        SyndicatedPost.original == 'http://author/permalink',
         ancestor=self.sources[1].key).fetch(),
       'http://author/permalink', 'https://twitter/post/url')
 
     assert_syndicated_posts(
-      models.SyndicatedPost.query(
-        models.SyndicatedPost.syndication == 'https://twitter/post/url',
+      SyndicatedPost.query(
+        SyndicatedPost.syndication == 'https://twitter/post/url',
         ancestor=self.sources[1].key).fetch(),
       'http://author/permalink', 'https://twitter/post/url')
 
@@ -1106,7 +1108,7 @@ class PollTest(TaskQueueTest):
 
     self.post_task(reset=True)
     self.assert_equals([r.key for r in self.responses[:3]],
-                       list(models.Response.query().iter(keys_only=True)))
+                       list(Response.query().iter(keys_only=True)))
     self.assert_equals(tags, json.loads(source.key.get().seen_responses_cache_json))
 
   def _change_response_and_poll(self):
