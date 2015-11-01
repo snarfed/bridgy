@@ -13,6 +13,7 @@ import random
 import urlparse
 
 from google.appengine.api import memcache
+from google.appengine.api import datastore_errors
 from google.appengine.api.datastore_types import _MAX_STRING_LENGTH
 from google.appengine.ext import ndb
 from granary import source as gr_source
@@ -358,7 +359,11 @@ class Poll(webapp2.RequestHandler):
       if relationships:
         logging.info('refetch h-feed found new rel=syndication relationships: %s',
                      relationships)
-        self.repropagate_old_responses(source, relationships)
+        try:
+          self.repropagate_old_responses(source, relationships)
+        except datastore_errors.BadRequestError, e:
+          if 'query has expired' not in e.message:
+            raise
       source.updates['last_hfeed_fetch'] = source.last_poll_attempt
     else:
       logging.info(

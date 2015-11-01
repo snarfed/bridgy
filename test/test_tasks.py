@@ -932,6 +932,20 @@ class PollTest(TaskQueueTest):
 
     self.assertEquals(NOW, self.sources[0].key.get().last_syndication_url)
 
+  def test_refetch_hfeed_repropagate_responses_query_expires(self):
+    """https://github.com/snarfed/bridgy/issues/515"""
+    self._setup_refetch_hfeed()
+    self._expect_fetch_hfeed()
+
+    self.mox.StubOutWithMock(Response, 'query')
+    expired = datastore_errors.BadRequestError(
+      'The requested query has expired. Please restart it with the last cursor to read more results.')
+    Response.query(Response.source == self.sources[0].key).AndRaise(expired)
+    self.mox.ReplayAll()
+
+    # should 200
+    self.post_task()
+
   def test_no_duplicate_syndicated_posts(self):
     def assert_syndicated_posts(syndicated_posts, original, syndication):
       logging.debug('checking syndicated posts [%s -> %s] = %s',
