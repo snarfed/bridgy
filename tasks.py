@@ -353,30 +353,23 @@ class Poll(webapp2.RequestHandler):
     if (source.last_syndication_url and
         source.last_hfeed_fetch + source.refetch_period()
             <= source.last_poll_attempt):
-      self.refetch_hfeed(source)
+      logging.info('refetching h-feed for source %s', source.label())
+      relationships = original_post_discovery.refetch(source)
+      if relationships:
+        logging.info('refetch h-feed found new rel=syndication relationships: %s',
+                     relationships)
+        self.repropagate_old_responses(source, relationships)
       source.updates['last_hfeed_fetch'] = source.last_poll_attempt
     else:
-      logging.debug(
-          'skipping refetch h-feed. last-syndication-url seen: %s, '
-          'last-hfeed-fetch: %s',
+      logging.info(
+          'skipping refetch h-feed. last-syndication-url %s, last-hfeed-fetch %s',
           source.last_syndication_url, source.last_hfeed_fetch)
 
-  def refetch_hfeed(self, source):
-    """Refetch syndication URLs from the source's web sites."""
-    logging.debug('refetching h-feed for source %s', source.label())
-    relationships = original_post_discovery.refetch(source)
-    if not relationships:
-      return
+  def repropagate_old_responses(self, source, relationships):
+    """Find old Responses that match a new SyndicatedPost and repropagate them.
 
-    logging.debug('refetch h-feed found %d new rel=syndication relationships',
-                  len(relationships))
-
-    # grab the Responses and see if any of them have a a syndication
-    # url matching one of the newly discovered relationships. We'll
-    # check each response until we've seen all of them or until
-    # the 60s timer runs out.
-    # TODO maybe add a (canonicalized) url field to Response so we can
-    # query by it instead of iterating over all of them
+    We look through as many responses as we can until the datastore query expires.
+    """
     for response in (Response.query(Response.source == source.key)
                      .order(-Response.updated)):
       if response.activity_json:  # handle old entities

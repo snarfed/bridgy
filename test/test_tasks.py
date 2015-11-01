@@ -797,6 +797,16 @@ class PollTest(TaskQueueTest):
     self.post_task()
     self.assert_task_eta(FakeSource.FAST_POLL)
 
+  def _expect_fetch_hfeed(self):
+    self.expect_requests_get('http://author', """
+    <html class="h-feed">
+      <a class="h-entry" href="/permalink"></a>
+      <div class="h-entry">
+        <a class="u-url" href="http://author/permalink"></a>
+        <a class="u-syndication" href="http://source/post/url"></a>
+      </div>
+    </html>""")
+
   def test_set_last_syndication_url(self):
     """A successful posse-post-discovery round should set
     Source.last_syndication_url to approximately the current time.
@@ -811,17 +821,7 @@ class PollTest(TaskQueueTest):
       r.status = 'complete'
       r.put()
 
-    self.expect_requests_get('http://author', """
-    <html class="h-feed">
-      <a class="h-entry" href="/permalink"></a>
-    </html>""")
-
-    self.expect_requests_get('http://author/permalink', """
-    <html class="h-entry">
-      <a class="u-url" href="http://author/permalink"></a>
-      <a class="u-syndication" href="http://source/post/url"></a>
-    </html>""")
-
+    self._expect_fetch_hfeed()
     self.mox.ReplayAll()
     self.post_task()
 
@@ -830,14 +830,11 @@ class PollTest(TaskQueueTest):
     self.assertIsNotNone(source)
     self.assertIsNotNone(source.last_syndication_url)
 
-  def test_do_not_refetch_hfeed(self):
-    """Only 1 hour has passed since we last re-fetched the user's h-feed. Make
-    Sure it is not fetched again"""
+  def _setup_refetch_hfeed(self):
     self.sources[0].domain_urls = ['http://author']
     FakeGrSource.DOMAIN = 'source'
     self.sources[0].last_syndication_url = NOW - datetime.timedelta(minutes=10)
-    # too recent to fetch again
-    self.sources[0].last_hfeed_fetch = NOW - datetime.timedelta(hours=1)
+    self.sources[0].last_hfeed_fetch = NOW - datetime.timedelta(hours=2, minutes=10)
     self.sources[0].put()
 
     # pretend we've already done posse-post-discovery for the source
@@ -852,6 +849,14 @@ class PollTest(TaskQueueTest):
     for r in self.responses:
       r.status = 'complete'
       r.put()
+
+  def test_do_not_refetch_hfeed(self):
+    """Only 1 hour has passed since we last re-fetched the user's h-feed. Make
+    sure it is not fetched again."""
+    self._setup_refetch_hfeed()
+    # too recent to fetch again
+    self.sources[0].last_hfeed_fetch = NOW - datetime.timedelta(hours=1)
+    self.sources[0].put()
 
     self.mox.ReplayAll()
     self.post_task()
@@ -886,13 +891,7 @@ class PollTest(TaskQueueTest):
     resp.put()
     self.responses = [resp]
 
-    self.expect_requests_get('http://author', """
-    <html class="h-feed">
-      <div class="h-entry">
-        <a class="u-url" href="http://author/permalink"></a>
-        <a class="u-syndication" href="http://source/post/url"></a>
-      </div>
-    </html>""")
+    self._expect_fetch_hfeed()
     self.mox.ReplayAll()
     self.post_task()
 
@@ -906,37 +905,8 @@ class PollTest(TaskQueueTest):
     two hours or so, we should refetch the author's page and check to see if
     any new syndication links have been added or updated.
     """
-    self.sources[0].domain_urls = ['http://author']
-    FakeGrSource.DOMAIN = 'source'
-    self.sources[0].last_syndication_url = NOW - datetime.timedelta(minutes=10)
-    self.sources[0].last_hfeed_fetch = NOW - datetime.timedelta(hours=2,
-                                                                minutes=10)
-    self.sources[0].put()
-
-    # pretend we've already done posse-post-discovery for the source
-    # and checked this permalink and found no back-links
-    models.SyndicatedPost(parent=self.sources[0].key, original=None,
-                          syndication='https://source/post/url').put()
-    models.SyndicatedPost(parent=self.sources[0].key,
-                          original='http://author/permalink',
-                          syndication=None).put()
-
-    # and all the status have already been sent
-    for r in self.responses:
-      r.status = 'complete'
-      r.put()
-
-    self.expect_requests_get('http://author', """
-    <html class="h-feed">
-      <a class="h-entry" href="/permalink"></a>
-    </html>""")
-
-    self.expect_requests_get('http://author/permalink', """
-    <html class="h-entry">
-      <a class="u-url" href="http://author/permalink"></a>
-      <a class="u-syndication" href="http://source/post/url"></a>
-    </html>""")
-
+    self._setup_refetch_hfeed()
+    self._expect_fetch_hfeed()
     self.mox.ReplayAll()
     self.post_task()
 
