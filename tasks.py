@@ -362,9 +362,11 @@ class Poll(webapp2.RequestHandler):
         try:
           self.repropagate_old_responses(source, relationships)
         except datastore_errors.Timeout:
-          pass
+          logging.info('Timeout while repropagating responses.', exc_info=True)
         except datastore_errors.BadRequestError, e:
-          if 'query has expired' not in e.message:
+          if 'query has expired' in e.message:
+            logging.info('Query expired while repropagating responses.', exc_info=True)
+          else:
             raise
       source.updates['last_hfeed_fetch'] = source.last_poll_attempt
     else:
