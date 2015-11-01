@@ -932,15 +932,24 @@ class PollTest(TaskQueueTest):
 
     self.assertEquals(NOW, self.sources[0].key.get().last_syndication_url)
 
-  def test_refetch_hfeed_repropagate_responses_query_expires(self):
+  def test_refetch_hfeed_repropagate_responses_query_expired(self):
     """https://github.com/snarfed/bridgy/issues/515"""
+    self._test_refetch_hfeed_repropagate_responses_exception(
+      datastore_errors.BadRequestError(
+        'The requested query has expired. Please restart it with the last cursor to read more results.'))
+
+  def test_refetch_hfeed_repropagate_responses_timeout(self):
+    """https://github.com/snarfed/bridgy/issues/514"""
+    self._test_refetch_hfeed_repropagate_responses_exception(
+      datastore_errors.Timeout(
+        'The datastore operation timed out, or the data was temporarily unavailable.'))
+
+  def _test_refetch_hfeed_repropagate_responses_exception(self, exception):
     self._setup_refetch_hfeed()
     self._expect_fetch_hfeed()
 
     self.mox.StubOutWithMock(Response, 'query')
-    expired = datastore_errors.BadRequestError(
-      'The requested query has expired. Please restart it with the last cursor to read more results.')
-    Response.query(Response.source == self.sources[0].key).AndRaise(expired)
+    Response.query(Response.source == self.sources[0].key).AndRaise(exception)
     self.mox.ReplayAll()
 
     # should 200

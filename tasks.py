@@ -361,6 +361,8 @@ class Poll(webapp2.RequestHandler):
                      relationships)
         try:
           self.repropagate_old_responses(source, relationships)
+        except datastore_errors.Timeout:
+          pass
         except datastore_errors.BadRequestError, e:
           if 'query has expired' not in e.message:
             raise
