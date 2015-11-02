@@ -1,0 +1,26 @@
+# CircleCI automatically reads this file from our repo and uses it for
+# configuration. Docs: https://circleci.com/docs/configuration
+checkout:
+  post:
+    # use granary and oauth-dropins master at head. (see pip install -e 's below.)
+    - cd /tmp; git clone https://github.com/snarfed/oauth-dropins.git
+    - cd /tmp/oauth-dropins; git submodule sync; git submodule update --init
+    - cd /tmp/oauth-dropins/oauth_dropins/webutil; git checkout master; git pull
+    - cd /tmp; git clone https://github.com/snarfed/granary.git
+
+dependencies:
+  pre:
+    - curl -o $HOME/google_appengine_1.9.28.zip https://storage.googleapis.com/appengine-sdks/featured/google_appengine_1.9.28.zip
+    - unzip -q -d $HOME $HOME/google_appengine_1.9.28.zip
+    - pip install -e /tmp/oauth-dropins/
+    - pip install -e /tmp/granary/
+  post:
+    - ln -s $VIRTUAL_ENV local  # we use app engine's vendor module to point here
+
+machine:
+  environment:
+    PYTHONPATH: $PYTHONPATH:$HOME/google_appengine
+
+test:
+  override:
+    - python -m unittest -v discover
