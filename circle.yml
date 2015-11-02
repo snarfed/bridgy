@@ -23,4 +23,4 @@ machine:
 
 test:
   override:
-    - python -m unittest -v discover
+    - python -m unittest discover -v
