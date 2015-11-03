@@ -190,7 +190,7 @@ def get_webmention_target(url, resolve=True):
   try:
     domain = domain_from_link(url).lower()
   except BaseException:
-    logging.warning('Dropping bad URL %s.', url)
+    logging.info('Dropping bad URL %s.', url)
     return url, None, False
 
   send = True

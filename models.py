@@ -465,14 +465,14 @@ class Source(StringIdModel):
     try:
       mention._discoverEndpoint()
     except BaseException:
-      logging.warning('', exc_info=True)
+      logging.info('Error discovering webmention endpoint', exc_info=True)
       mention.error = {'code': 'EXCEPTION'}
 
     self._fetched_html = getattr(mention, 'html', None)
     error = getattr(mention, 'error', None)
     endpoint = getattr(mention, 'receiver_endpoint', None)
     if error or not endpoint:
-      logging.warning("No webmention endpoint found: %s %r", error, endpoint)
+      logging.info("No webmention endpoint found: %s %r", error, endpoint)
       self.webmention_endpoint = None
     else:
       logging.info("Discovered webmention endpoint %s", endpoint)
