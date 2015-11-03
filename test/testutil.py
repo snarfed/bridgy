@@ -214,7 +214,6 @@ class HandlerTest(gr_testutil.TestCase):
   def setUp(self):
     super(HandlerTest, self).setUp()
     self.handler = util.Handler(self.request, self.response)
-    logging.getLogger().removeHandler(appengine_config.ereporter_logging_handler)
     FakeBase.clear()
 
     # TODO: remove this and don't depend on consistent global queries
