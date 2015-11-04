@@ -47,7 +47,10 @@ class Flickr(models.Source):
       id=person.get('nsid'),
       auth_entity=auth_entity.key,
       name=person.get('realname', {}).get('_content'),
-      username=person.get('username', {}).get('_content'),
+      # path_alias, if it exists, is the actual thing that shows up in the url.
+      # I think this is an artifact of the conversion to Yahoo.
+      username=(person.get('path_alias')
+                or person.get('username', {}).get('_content')),
       picture='https://farm{}.staticflickr.com/{}/buddyicons/{}.jpg' .format(
         person.get('iconfarm'), person.get('iconserver'),
         person.get('nsid')),
