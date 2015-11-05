@@ -62,7 +62,6 @@ API_EVENT = '%s?fields=comments,description,end_time,id,likes,name,owner,picture
 # WARNING: this edge is deprecated in API v2.4 and will stop working in 2017.
 # https://developers.facebook.com/docs/apps/changelog#v2_4_deprecations
 API_EVENT_RSVPS = '%s/invited'
-API_POST_OBJECT = '%s_%s'  # USERID_POSTID; used in canonicalize_syndication_url()
 
 # https://developers.facebook.com/docs/graph-api/using-graph-api/#errors
 DEAD_TOKEN_ERROR_SUBCODES = frozenset((
@@ -253,7 +252,7 @@ class FacebookPage(models.Source):
       if parsed.path.startswith('/notes/'):
         url = post_url(url_id)
       else:
-        object_id = self.resolve_object_id(url_id, activity=activity)
+        object_id = self.cached_resolve_object_id(url_id, activity=activity)
         if object_id:
           url = post_url(object_id)
 
@@ -266,18 +265,11 @@ class FacebookPage(models.Source):
     return super(FacebookPage, self).canonicalize_syndication_url(
       url, scheme='https', subdomain='www.')
 
-  def resolve_object_id(self, post_id, activity=None):
+  def cached_resolve_object_id(self, post_id, activity=None):
     """Resolve a post id to its Facebook object id, if any.
 
-    Used for photo posts, since Facebook has (at least) two different objects
-    (and ids) for them, one for the post and one for each photo.
-
-    This is the same logic that we do for canonicalizing photo objects in
-    get_activities() above.
-
-    If activity is not provided, looks up the post id in
-    self.resolved_object_ids_json. If it's not there, fetches the post from
-    Facebook.
+    Wraps granary.facebook.Facebook.resolve_object_id() and uses
+    FacebookPage.resolved_object_ids_json as a cache.
 
     Args:
       post_id: string Facebook post id
@@ -285,10 +277,6 @@ class FacebookPage(models.Source):
 
     Returns: string Facebook object id or None
     """
-    if activity:
-      return (activity.get('fb_object_id') or
-              activity.get('object', {}).get('fb_object_id'))
-
     if self.updates is None:
       self.updates = {}
 
@@ -302,17 +290,8 @@ class FacebookPage(models.Source):
         self.resolved_object_ids_json)
 
     if post_id not in resolved:
-      try:
-        post = self.gr_source.urlopen(API_POST_OBJECT % (self.key.id(), post_id))
-        resolved[post_id] = post.get('object_id')
-      except BaseException, e:
-        code, body = util.interpret_http_exception(e)
-        if code and int(code) / 100 == 4:
-          resolved[post_id] = None  # (interpret_http_exception logged it already)
-        else:
-          raise
-
-      logging.info('Resolved Facebook post id %s to %s.', post_id, resolved[post_id])
+      resolved[post_id] = self.gr_source.resolve_object_id(
+        self.key.id(), post_id, activity=activity)
 
     return resolved[post_id]
 

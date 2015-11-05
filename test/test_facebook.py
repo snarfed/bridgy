@@ -370,8 +370,8 @@ class FacebookPageTest(testutil.ModelsTest):
 
     self.assertIsNone(self.fb.key.get().resolved_object_ids_json)
 
-    self.fb.resolve_object_id('1')
-    self.fb.resolve_object_id('3')
+    self.fb.canonicalize_syndication_url('http://facebook.com/foo/posts/1')
+    self.fb.canonicalize_syndication_url('http://facebook.com/foo/posts/3')
     self.fb.put()
     self.assertEquals(json.dumps({'1': '2', '3': '4'}),
                       self.fb.key.get().resolved_object_ids_json)
@@ -379,7 +379,7 @@ class FacebookPageTest(testutil.ModelsTest):
     try:
       orig = facebook.MAX_RESOLVED_OBJECT_IDS
       facebook.MAX_RESOLVED_OBJECT_IDS = 2
-      self.fb.resolve_object_id('5')
+      self.fb.canonicalize_syndication_url('http://facebook.com/foo/posts/5')
       self.fb.put()
       # should keep the highest ids
       self.assertEquals(json.dumps({'3': '4', '5': None}),
