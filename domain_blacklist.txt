@@ -40,6 +40,7 @@ blogger.com
 brightkite.com
 change.org
 claimid.com
+cliqset.com
 codepen.io
 codeschool.com
 conferize.com
@@ -60,6 +61,7 @@ edison.com
 elgg.org
 ello.co
 etsy.com
+evernote.com
 example.com
 facebook.com
 fb.com
@@ -74,6 +76,7 @@ friendfeed.com
 friendster.com
 getglue.com
 getsatisfaction.com
+genius.com
 ggpht.com
 github.com
 gitorious.org
@@ -82,10 +85,12 @@ gnolia.com
 godudu.com
 goodreads.com
 google.com
+gowalla.com
 gu.com
 guardian.co.uk
 gumroad.com
 here.com
+hootsuite.com
 huffduffer.com
 hulu.com
 hyves.nl
@@ -101,6 +106,7 @@ jaiku.com
 jamendo.com
 joindiaspora.com
 keybase.io
+khanacademy.org
 klout.com
 kmworld.com
 lanyrd.com
@@ -149,9 +155,11 @@ readmill.com
 rebelmouse.com
 reddit.com
 researchgate.net
+rhapsody.com
 scribd.com
 secondlife.com
 seesmic.com
+shelfari.com
 shutterfly.com
 skitch.com
 slideshare.net
@@ -173,6 +181,7 @@ theonion.com
 thesession.org
 tinyletter.com
 tribe.net
+tripit.com
 tweakers.net
 twit.tv
 twitch.com
