@@ -343,6 +343,16 @@ i hereby mention
     self.assertEquals('failed', bw.status)
     self.assertEquals(self.mention_html, bw.html)
 
+  def test_create_comment_404s(self):
+    self.expect_mention().AndRaise(exc.HTTPNotFound('gone baby gone'))
+    self.mox.ReplayAll()
+
+    self.assert_error('gone baby gone', status=404)
+
+    bw = BlogWebmention.get_by_id('http://bar.com/reply http://foo.com/post/1')
+    self.assertEquals('failed', bw.status)
+    self.assertEquals(self.mention_html, bw.html)
+
   def test_sources_global(self):
     self.assertIsNotNone(models.sources['blogger'])
     self.assertIsNotNone(models.sources['tumblr'])

@@ -122,6 +122,9 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
         self.source.status = 'disabled'
         self.source.put()
         return self.error(msg, status=code, mail=False)
+      elif code == '404':
+        # post is gone
+        return self.error(msg, status=code, mail=False)
       elif code or body:
         return self.error(msg, status=code, mail=True)
       else:
