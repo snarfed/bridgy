@@ -269,7 +269,7 @@ class FacebookPage(models.Source):
     """Resolve a post id to its Facebook object id, if any.
 
     Wraps granary.facebook.Facebook.resolve_object_id() and uses
-    FacebookPage.resolved_object_ids_json as a cache.
+    self.resolved_object_ids_json as a cache.
 
     Args:
       post_id: string Facebook post id

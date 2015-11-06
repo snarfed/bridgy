@@ -14,7 +14,6 @@ import app
 import models
 import util
 import testutil
-from testutil import FakeAuthEntity
 
 
 # this class stands in for a oauth_dropins module
@@ -23,6 +22,10 @@ class FakeOAuthHandlerModule:
 
 
 class AppTest(testutil.ModelsTest):
+
+  def setUp(self):
+    super(AppTest, self).setUp()
+    util.now_fn = lambda: testutil.NOW
 
   def test_poll_now(self):
     self.assertEqual([], self.taskqueue_stub.GetTasks('poll'))
@@ -40,6 +43,8 @@ class AppTest(testutil.ModelsTest):
 
     source = self.sources[0]
     source.domain_urls = ['http://orig']
+    source.last_hfeed_fetch = last_hfeed_fetch = \
+        testutil.NOW - datetime.timedelta(minutes=1)
     source.put()
 
     resp = self.responses[0]
@@ -86,6 +91,9 @@ class AppTest(testutil.ModelsTest):
     # webmention endpoints for URL domains should be refreshed
     self.assertIsNone(memcache.get('W https skipped'))
 
+    # shouldn't have refetched h-feed
+    self.assertEqual(last_hfeed_fetch, source.key.get().last_hfeed_fetch)
+
   def test_retry_redirect_to(self):
     key = self.responses[0].put()
     response = app.application.get_response(
@@ -93,6 +101,25 @@ class AppTest(testutil.ModelsTest):
     self.assertEquals(302, response.status_int)
     self.assertEquals('http://localhost/foo/bar',
                       response.headers['Location'].split('#')[0])
+
+  def test_retry_refetches_hfeed(self):
+    source = self.sources[0]
+    source.domain_urls = ['http://orig']
+    source.last_hfeed_fetch = \
+      testutil.NOW - app.RETRY_REFETCH_HFEED_BUFFER - datetime.timedelta(minutes=1)
+    source.put()
+
+    self.expect_requests_get('http://orig', '<html class="h-feed"></html>')
+    self.mox.ReplayAll()
+
+    resp = self.responses[0]
+    resp.put()
+    response = app.application.get_response('/retry', method='POST',
+                                            body='key=' + resp.key.urlsafe())
+    self.assertEquals(302, response.status_int)
+
+    # should have refetched h-feed
+    self.assertEqual(testutil.NOW, source.key.get().last_hfeed_fetch)
 
   def test_poll_now_and_retry_response_missing_key(self):
     for endpoint in '/poll-now', '/retry':

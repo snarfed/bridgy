@@ -44,6 +44,10 @@ from google.appengine.ext import ndb
 from google.appengine.ext.ndb.stats import KindStat, KindPropertyNameStat
 import webapp2
 
+# The retry button refetches h-feed if it's been more than this long since the
+# last fetch.
+RETRY_REFETCH_HFEED_BUFFER = datetime.timedelta(minutes=2)
+
 
 class DashboardHandler(webutil_handlers.TemplateHandler, util.Handler):
   """Base handler for both the front page and user pages."""
@@ -534,11 +538,21 @@ class RetryHandler(util.Handler):
     # retry won't make us pick it up. meh. background in #524.
     if entity.key.kind() == 'Response':
       source = entity.source.get()
+      fetch_hfeed = (source.last_hfeed_fetch <
+                     util.now_fn() - RETRY_REFETCH_HFEED_BUFFER)
       for activity in [json.loads(a) for a in entity.activities_json]:
         originals, mentions = original_post_discovery.discover(
-          source, activity, fetch_hfeed=False, include_redirect_sources=False)
+          source, activity, fetch_hfeed=fetch_hfeed, include_redirect_sources=False)
         targets |= original_post_discovery.targets_for_response(
           json.loads(entity.response_json), originals=originals, mentions=mentions)
+
+        if fetch_hfeed:
+          fetch_hfeed = False  # only do it for the first activity
+          if not source.updates:
+            source.updates = {}
+          source.updates = {'last_hfeed_fetch': util.now_fn()}
+
+      Source.put_updates(source)
 
     entity.unsent = targets
     entity.put()

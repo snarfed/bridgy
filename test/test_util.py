@@ -18,10 +18,12 @@ import util
 # the character in the middle is an unusual unicode character
 UNICODE_STR = u'a ✁ b'
 
-util.now_fn = lambda: datetime.datetime(2000, 1, 1)
-
 
 class UtilTest(testutil.ModelsTest):
+
+  def setUp(self):
+    super(UtilTest, self).setUp()
+    util.now_fn = lambda: datetime.datetime(2000, 1, 1)
 
   def test_maybe_add_or_delete_source(self):
     # profile url with valid domain is required for publish
