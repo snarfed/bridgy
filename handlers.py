@@ -157,6 +157,9 @@ class ItemHandler(webapp2.RequestHandler):
     except Exception, e:
       # pass through all API HTTP errors if we can identify them
       code, body = util.interpret_http_exception(e)
+      if not code and util.is_connection_failure(e):
+        code = 503
+        body = str(e)
       if code:
         self.response.status_int = int(code)
         self.response.headers['Content-Type'] = 'text/plain'
