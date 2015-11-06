@@ -408,6 +408,20 @@ class SourceTest(testutil.HandlerTest):
       source.webmention_endpoint = endpoint
       self.assertEquals(has, source.has_bridgy_webmention_endpoint(), endpoint)
 
+  def test_put_updates(self):
+    source = FakeSource.new(None)
+    source.put()
+    updates = source.updates = {'status': 'disabled'}
+
+    try:
+      # check that source.updates is preserved through pre-put hook since some
+      # Source subclasses (e.g. FacebookPage) use it.
+      FakeSource._pre_put_hook = lambda fake: self.assertEquals(updates, fake.updates)
+      Source.put_updates(source)
+      self.assertEquals('disabled', source.key.get().status)
+    finally:
+      del FakeSource._pre_put_hook
+
 
 class BlogPostTest(testutil.ModelsTest):
 

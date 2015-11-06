@@ -1173,18 +1173,6 @@ class PollTest(TaskQueueTest):
     source = self.sources[0].key.get()
     self.assert_equals([reply], json.loads(source.seen_responses_cache_json))
 
-  def test_update_source(self):
-    source = self.sources[0]
-    updates = source.updates = {'status': 'disabled'}
-
-    try:
-      # check that source.updates is preserved through pre-put hook since some
-      # Source subclasses (e.g. FacebookPage) use it.
-      FakeSource._pre_put_hook = lambda fake: self.assertEquals(updates, fake.updates)
-      tasks.Poll().update_source(source)
-      self.assertEquals('disabled', source.key.get().status)
-    finally:
-      del FakeSource._pre_put_hook
 
 class PropagateTest(TaskQueueTest):
 

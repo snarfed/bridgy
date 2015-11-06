@@ -91,7 +91,7 @@ class Poll(webapp2.RequestHandler):
       source.updates['status'] = 'error'
       raise
     finally:
-      source = self.update_source(source)
+      source = models.Source.put_updates(source)
 
     # add new poll task. randomize task ETA to within +/- 20% to try to spread
     # out tasks and prevent thundering herds.
@@ -101,17 +101,6 @@ class Poll(webapp2.RequestHandler):
     # feeble attempt to avoid hitting the instance memory limit
     source = None
     gc.collect()
-
-  @ndb.transactional
-  def update_source(self, source):
-    """Updates property values in source.updates transactionally."""
-    updates = source.updates
-    source = source.key.get()
-    source.updates = updates  # because FacebookPage._pre_put_hook uses it
-    for name, val in updates.items():
-      setattr(source, name, val)
-    source.put()
-    return source
 
   def poll(self, source):
     """Actually runs the poll.

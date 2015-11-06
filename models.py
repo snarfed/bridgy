@@ -124,8 +124,8 @@ class Source(StringIdModel):
   # limited. it can be used e.g. to modify the poll period.
   rate_limited = False
 
-  # maps updated property names to values that should be written
-  # transactionally. code that implements this sets it to {} before beginning.
+  # maps updated property names to values that put_updates() writes back to the
+  # datastore transactionally. set this to {} before beginning.
   updates = None
 
   # gr_source is *not* set to None by default here, since it needs to be unset
@@ -185,6 +185,25 @@ class Source(StringIdModel):
   def label_name(self):
     """Human-readable name or username for this source, whichever is preferred."""
     return self.name
+
+  @classmethod
+  @ndb.transactional
+  def put_updates(cls, source):
+    """Writes property values in source.updates to the datastore transactionally.
+
+    Returns: the updated Source
+    """
+    if not source.updates:
+      return source
+
+    updates = source.updates
+    source = source.key.get()
+    source.updates = updates  # because FacebookPage._pre_put_hook uses it
+    for name, val in updates.items():
+      setattr(source, name, val)
+
+    source.put()
+    return source
 
   def poll_period(self):
     """Returns the poll frequency for this source, as a datetime.timedelta.
