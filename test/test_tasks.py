@@ -817,7 +817,7 @@ class PollTest(TaskQueueTest):
 
   def test_set_last_syndication_url(self):
     """A successful posse-post-discovery round should set
-    Source.last_syndication_url to approximately the current time.
+    last_syndication_url and last_hfeed_fetch to approximately the current time.
     """
     self.sources[0].domain_urls = ['http://author']
     FakeGrSource.DOMAIN = 'source'
@@ -835,8 +835,8 @@ class PollTest(TaskQueueTest):
 
     # query source
     source = self.sources[0].key.get()
-    self.assertIsNotNone(source)
-    self.assertIsNotNone(source.last_syndication_url)
+    self.assertEquals(NOW, source.last_syndication_url)
+    self.assertEquals(NOW, source.last_hfeed_fetch)
 
   def _setup_refetch_hfeed(self):
     self.sources[0].domain_urls = ['http://author']

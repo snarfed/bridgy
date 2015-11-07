@@ -545,12 +545,8 @@ class RetryHandler(util.Handler):
           source, activity, fetch_hfeed=fetch_hfeed, include_redirect_sources=False)
         targets |= original_post_discovery.targets_for_response(
           json.loads(entity.response_json), originals=originals, mentions=mentions)
-
         if fetch_hfeed:
           fetch_hfeed = False  # only do it for the first activity
-          if not source.updates:
-            source.updates = {}
-          source.updates = {'last_hfeed_fetch': util.now_fn()}
 
       Source.put_updates(source)
 

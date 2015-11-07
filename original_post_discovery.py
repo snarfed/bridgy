@@ -64,6 +64,9 @@ def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True):
   Returns: ([string original post URLs], [string mention URLs]) tuple
 
   """
+  if not source.updates:
+    source.updates = {}
+
   originals, mentions = gr_source.Source.original_post_discovery(
     activity, domains=source.domains, cache=memcache,
     include_redirect_sources=include_redirect_sources,
@@ -127,10 +130,18 @@ def refetch(source):
   Return:
     a dict of syndicated_url to a list of new models.SyndicatedPosts
   """
+  if not source.updates:
+    source.updates = {}
+
   logging.debug('attempting to refetch h-feed for %s', source.label())
   results = {}
   for url in _get_author_urls(source):
     results.update(_process_author(source, url, refetch=True))
+
+  now = util.now_fn()
+  logging.debug('updating source last_hfeed_fetch %s', now)
+  source.updates['last_hfeed_fetch'] = now
+
   return results
 
 
@@ -184,6 +195,10 @@ def _posse_post_discovery(source, activity, syndication_url, fetch_hfeed):
     for url in _get_author_urls(source):
       results.update(_process_author(source, url))
     relationships = results.get(syndication_url, [])
+
+    now = util.now_fn()
+    logging.debug('updating source last_hfeed_fetch %s', now)
+    source.updates['last_hfeed_fetch'] = util.now_fn()
 
   if not relationships:
     # No relationships were found. Remember that we've seen this

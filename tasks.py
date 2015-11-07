@@ -354,7 +354,6 @@ class Poll(webapp2.RequestHandler):
             logging.info('Query expired while repropagating responses.', exc_info=True)
           else:
             raise
-      source.updates['last_hfeed_fetch'] = source.last_poll_attempt
     else:
       logging.info(
           'skipping refetch h-feed. last-syndication-url %s, last-hfeed-fetch %s',
