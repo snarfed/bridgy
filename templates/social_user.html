@@ -48,12 +48,12 @@ WordPress.com, <a href="/">sign up here!</a>
 <div class="row">
 
 <!-- Listen UI -->
-<div id="listen-ui" class="{% if source.SHORT_NAME == 'facebook' or source.SHORT_NAME == 'twitter' or source.SHORT_NAME == 'instagram' %}col-sm-6{% endif %} big">
+<div id="listen-ui" class="{% if source.SHORT_NAME == 'facebook' or source.SHORT_NAME == 'twitter' or source.SHORT_NAME == 'instagram' %}col-sm-6{% endif %}">
 
 {% if "listen" in source.features and source.status != "disabled" %}
 <data class="p-bridgy-listen-status" value="enabled">
 <form method="post" action="/delete/start">
-<p id="listening-label">Listening for responses.
+<p id="listening-label" class="big">Listening for responses.
   <input name="key" type="hidden" value="{{ source.key.urlsafe }}" />
   <input name="feature" type="hidden" value="listen" />
   <button id="delete-button" type="submit" class="btn btn-default"
@@ -65,6 +65,7 @@ WordPress.com, <a href="/">sign up here!</a>
 
 <form method="post" action="/poll-now">
 <p>
+  <!-- last poll -->
   {% if source.last_poll_attempt == epoch %}
     Not polled yet.
   {% else %}
@@ -72,15 +73,62 @@ WordPress.com, <a href="/">sign up here!</a>
      <span title="Error" class="glyphicon glyphicon-exclamation-sign"></span>
     {% endif %}
     Polled
-    {% spaceless %}
-    <a href="/log?start_time={{ source.last_poll_attempt|date:'U' }}&key={{ source.key.urlsafe }}">
-      <time class="dt-bridgy-last-polled" datetime="{{ source.last_poll_attempt|date:'c' }}">{{ source.last_poll_attempt|timesince }}</time> ago
-    {% endspaceless %}</a>.
+    <a href="/log?start_time={{ source.last_poll_attempt|date:'U' }}&key={{ source.key.urlsafe }}"
+       title="{{ source.last_poll_attempt|date:'r' }}">
+      <time class="dt-bridgy-last-polled"
+            datetime="{{ source.last_poll_attempt|date:'c' }}">
+        {{ source.last_poll_attempt|timesince }}</time> ago</a>.
   {% endif %}
+
+  <!-- next poll -->
+  {% with source.last_poll_attempt|add:source.poll_period as next %}
+  Next poll in
+  <time class="dt-bridgy-next-poll" datetime="{{ next|date:'c' }}"
+        title="{{ next|date:'r' }}">
+    {{ next|timeuntil }}</time>.
+  {% endwith %}
 
   <input name="key" type="hidden" value="{{ source.key.urlsafe }}" />
   <button id="poll-now-button" type="submit" class="btn btn-default">Poll now</button>
 </p>
+
+<p>
+<!-- last_syndication_url -->
+{% if source.last_syndication_url and source.last_syndication_url > epoch %}
+  Last <a href="/about#link">syndication link</a> found
+  <time class="dt-bridgy-last-syndication-link"
+        datetime="{{ source.last_syndication_url|date:'c' }}"
+        title="{{ source.last_syndication_url|date:'r' }}">
+    {{ source.last_syndication_url|timesince }}</time> ago.
+  <br />
+{% endif %}
+
+<!-- last_webmention_sent -->
+{% if source.last_webmention_sent and source.last_webmention_sent > epoch %}
+  Last <a href="/about#accept">webmention</a> sent
+  <time class="dt-bridgy-last-webmention-sent"
+        datetime="{{ source.last_webmention_sent|date:'c' }}"
+        title="{{ source.last_webmention_sent|date:'r' }}">
+    {{ source.last_webmention_sent|timesince }}</time> ago.
+  <br />
+{% endif %}
+
+<!-- last_hfeed_fetch -->
+{% if source.domain_urls %}
+{% with source.domain_urls|length|pluralize as s %}
+{% if source.last_hfeed_fetch == epoch %}
+  Web site{{ s }} not <a href="/about#link">crawled</a> yet.
+{% else %}
+  Web site{{ s }} <a href="/about#link">crawled</a>
+  <time class="dt-bridgy-last-hfeed-fetched"
+        datetime="{{ source.last_hfeed_fetch|date:'c' }}"
+        title="{{ source.last_hfeed_fetch|date:'r' }}">
+    {{ source.last_hfeed_fetch|timesince }}</time> ago.
+{% endif %}
+{% endwith %}
+{% endif %}
+</p>
+
 </form>
 
 
@@ -190,7 +238,8 @@ Click to enable <a href="/about#listen">listening</a>:
 
    </div><div class="col-sm-2">
      <a href="/log?start_time={{ response.updated|date:'U' }}&key={{ response.key.urlsafe }}">
-      {{ response.updated|timesince }} ago
+      <span title="{{ response.updated|date:'r' }}">
+        {{ response.updated|timesince }} ago</span>
       {% if response.status == 'error' %}
        <span title="Error" class="glyphicon glyphicon-exclamation-sign"></span>
       {% else %}{% if response.status == 'processing' %}
@@ -253,7 +302,8 @@ Click to enable <a href="/about#listen">listening</a>:
 
    </div><div class="col-sm-4">
     <a href="/log?start_time={{ publish.updated|date:'U' }}&key={{ publish.key.urlsafe }}">
-      {{ publish.updated|timesince }} ago
+      <span title="{{ publish.updated|date:'r' }}">
+        {{ publish.updated|timesince }} ago</span>
       {% if publish.status == 'failed' %}
        <span title="Error" class="glyphicon glyphicon-exclamation-sign"></span>
       {% else %}{% if publish.status == 'new' %}

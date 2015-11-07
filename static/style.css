@@ -87,11 +87,11 @@ pre .link, code.link {
   text-align: center;
 }
 
-#blogposts, #publishes, #responses, #webmentions, #user {
+#blogposts, #publishes, #webmentions, #user {
   margin-top: 1em;
 }
 
-#top, #listening-label, #publishing-label {
+#top, #listen-ui, #listening-label, #publish-ui, #publishing-label {
   margin-bottom: 1em;
 }
 
