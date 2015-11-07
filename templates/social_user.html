@@ -96,11 +96,12 @@ WordPress.com, <a href="/">sign up here!</a>
 <!-- last_syndication_url -->
 {% if source.last_syndication_url and source.last_syndication_url > epoch %}
   Last <a href="/about#link">syndication link</a> found
+  <a href="/log?start_time={{ source.last_syndication_url|date:'U' }}&key={{ source.key.urlsafe }}"
+       title="{{ source.last_syndication_url|date:'r' }}">
   <time class="dt-bridgy-last-syndication-link"
-        datetime="{{ source.last_syndication_url|date:'c' }}"
-        title="{{ source.last_syndication_url|date:'r' }}">
+        datetime="{{ source.last_syndication_url|date:'c' }}">
     {{ source.last_syndication_url|timesince }}</time> ago.
-  <br />
+  </a><br />
 {% endif %}
 
 <!-- last_webmention_sent -->
@@ -120,10 +121,12 @@ WordPress.com, <a href="/">sign up here!</a>
   Web site{{ s }} not <a href="/about#link">crawled</a> yet.
 {% else %}
   Web site{{ s }} <a href="/about#link">crawled</a>
+  <a href="/log?start_time={{ source.last_hfeed_fetch|date:'U' }}&key={{ source.key.urlsafe }}"
+       title="{{ source.last_hfeed_fetch|date:'r' }}">
   <time class="dt-bridgy-last-hfeed-fetched"
-        datetime="{{ source.last_hfeed_fetch|date:'c' }}"
-        title="{{ source.last_hfeed_fetch|date:'r' }}">
+        datetime="{{ source.last_hfeed_fetch|date:'c' }}">
     {{ source.last_hfeed_fetch|timesince }}</time> ago.
+  </a>
 {% endif %}
 {% endwith %}
 {% endif %}
