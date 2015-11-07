@@ -215,6 +215,7 @@ class HandlerTest(gr_testutil.TestCase):
     super(HandlerTest, self).setUp()
     self.handler = util.Handler(self.request, self.response)
     FakeBase.clear()
+    util.now_fn = lambda: NOW
 
     # TODO: remove this and don't depend on consistent global queries
     policy = datastore_stub_util.PseudoRandomHRConsistencyPolicy(probability=1)

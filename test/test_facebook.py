@@ -296,7 +296,7 @@ class FacebookPageTest(testutil.ModelsTest):
     Background in https://github.com/snarfed/bridgy/issues/189
     """
     self.fb.domain_urls=['http://author/url']
-    self.fb.last_hfeed_fetch = tasks.now_fn()
+    self.fb.last_hfeed_fetch = testutil.NOW
     self.fb.put()
 
     # Facebook API calls

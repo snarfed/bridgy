@@ -20,8 +20,6 @@ import tasks
 import test_facebook
 import testutil
 
-original_post_discovery.now_fn = lambda: testutil.NOW
-
 
 class OriginalPostDiscoveryTest(testutil.ModelsTest):
 

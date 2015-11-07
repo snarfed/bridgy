@@ -42,9 +42,6 @@ WEBMENTION_DISCOVERY_CACHE_TIME = 60 * 60 * 2  # 2h
 
 ERROR_HTTP_RETURN_CODE = 304  # "Not Modified"
 
-# allows injecting timestamps in test_tasks.py
-now_fn = datetime.datetime.now
-
 
 class Poll(webapp2.RequestHandler):
   """Task handler that fetches and processes new responses from a single source.
@@ -78,7 +75,7 @@ class Poll(webapp2.RequestHandler):
                  source.key.urlsafe())
 
     # dict with source property names and values to update
-    source.last_poll_attempt = now_fn()
+    source.last_poll_attempt = util.now_fn()
     source.updates = {'last_poll_attempt': source.last_poll_attempt}
     try:
       self.poll(source)
@@ -551,12 +548,13 @@ class SendWebmentions(webapp2.RequestHandler):
     elif self.entity.status == 'complete':
       # let this task return 200 and finish
       logging.warning('duplicate task already propagated this')
-    elif self.entity.status == 'processing' and now_fn() < self.entity.leased_until:
+    elif (self.entity.status == 'processing' and
+          util.now_fn() < self.entity.leased_until):
       self.fail('duplicate task is currently processing!')
     else:
       assert self.entity.status in ('new', 'processing', 'error')
       self.entity.status = 'processing'
-      self.entity.leased_until = now_fn() + self.LEASE_LENGTH
+      self.entity.leased_until = util.now_fn() + self.LEASE_LENGTH
       self.entity.put()
       return True
 
@@ -611,7 +609,7 @@ class SendWebmentions(webapp2.RequestHandler):
     """
     self.source = self.source.key.get()
     logging.info('Setting last_webmention_sent')
-    self.source.last_webmention_sent = now_fn()
+    self.source.last_webmention_sent = util.now_fn()
 
     if (mention.receiver_endpoint != self.source.webmention_endpoint and
         util.domain_from_link(mention.target_url) in self.source.domains):

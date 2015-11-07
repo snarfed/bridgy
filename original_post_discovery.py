@@ -43,9 +43,6 @@ from google.appengine.api import memcache
 
 MAX_AUTHOR_URLS = 5
 
-# alias allows unit tests to mock the function
-now_fn = datetime.datetime.now
-
 
 def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True):
   """Augments the standard original_post_discovery algorithm with a
@@ -322,7 +319,7 @@ def _process_author(source, author_url, refetch=False, store_blanks=True):
     # this author. this helps us decide whether to refetch periodically
     # and look for updates.
     # Source will be saved at the end of each round of polling
-    now = now_fn()
+    now = util.now_fn()
     logging.debug('updating source last_syndication_url %s', now)
     source.updates['last_syndication_url'] = now
 

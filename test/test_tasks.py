@@ -34,12 +34,8 @@ import original_post_discovery
 import tasks
 from tasks import PropagateResponse
 import testutil
-from testutil import FakeSource, FakeGrSource
+from testutil import FakeSource, FakeGrSource, NOW
 import util
-
-NOW = testutil.NOW
-original_post_discovery.now_fn = lambda: NOW
-tasks.now_fn = lambda: NOW
 
 LEASE_LENGTH = tasks.SendWebmentions.LEASE_LENGTH
 
@@ -1243,13 +1239,15 @@ class PropagateTest(TaskQueueTest):
       self.expect_webmention(source_url=url).AndReturn(True)
     self.mox.ReplayAll()
 
+    now = NOW
+    util.now_fn = lambda: now
+
     for r in self.responses[:3]:
-      global NOW
-      NOW += datetime.timedelta(hours=1)
+      now += datetime.timedelta(hours=1)
       self.post_task(response=r)
-      self.assert_response_is('complete', NOW + LEASE_LENGTH,
+      self.assert_response_is('complete', now + LEASE_LENGTH,
                               sent=['http://target1/post/url'], response=r)
-      self.assert_equals(NOW, self.sources[0].key.get().last_webmention_sent)
+      self.assert_equals(now, self.sources[0].key.get().last_webmention_sent)
       memcache.flush_all()
 
   def test_propagate_from_error(self):
