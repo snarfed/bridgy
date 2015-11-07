@@ -867,11 +867,12 @@ class PollTest(TaskQueueTest):
     sure it is not fetched again."""
     self._setup_refetch_hfeed()
     # too recent to fetch again
-    self.sources[0].last_hfeed_fetch = NOW - datetime.timedelta(hours=1)
+    self.sources[0].last_hfeed_fetch = hour_ago = NOW - datetime.timedelta(hours=1)
     self.sources[0].put()
 
     self.mox.ReplayAll()
     self.post_task()
+    self.assertEquals(hour_ago, self.sources[0].key.get().last_hfeed_fetch)
 
     # should still be a blank SyndicatedPost
     relationships = SyndicatedPost.query(
@@ -940,7 +941,9 @@ class PollTest(TaskQueueTest):
                  for task in tasks]
     self.assertEquals(response_keys, task_keys)
 
-    self.assertEquals(NOW, self.sources[0].key.get().last_syndication_url)
+    source = self.sources[0].key.get()
+    self.assertEquals(NOW, source.last_syndication_url)
+    self.assertEquals(NOW, source.last_hfeed_fetch)
 
   def test_refetch_hfeed_repropagate_responses_query_expired(self):
     """https://github.com/snarfed/bridgy/issues/515"""
@@ -964,6 +967,7 @@ class PollTest(TaskQueueTest):
 
     # should 200
     self.post_task()
+    self.assertEquals(NOW, self.sources[0].key.get().last_hfeed_fetch)
 
   def test_no_duplicate_syndicated_posts(self):
     def assert_syndicated_posts(syndicated_posts, original, syndication):
@@ -1083,6 +1087,7 @@ class PollTest(TaskQueueTest):
     self.mox.ReplayAll()
     for source in self.sources:
       self.post_task(source=source)
+      self.assertEquals(NOW, source.key.get().last_hfeed_fetch)
 
     assert_syndicated_posts(
       SyndicatedPost.query(
