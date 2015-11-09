@@ -74,9 +74,14 @@ class Poll(webapp2.RequestHandler):
                  calendar.timegm(source.last_poll_attempt.utctimetuple()),
                  source.key.urlsafe())
 
-    # dict with source property names and values to update
-    source.last_poll_attempt = util.now_fn()
-    source.updates = {'last_poll_attempt': source.last_poll_attempt}
+    # mark this source as polling
+    source.updates = {
+      'poll_status': 'polling',
+      'last_poll_attempt': util.now_fn(),
+    }
+    source = models.Source.put_updates(source)
+
+    source.updates = {}
     try:
       self.poll(source)
     except models.DisableSource:

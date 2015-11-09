@@ -153,14 +153,23 @@ class PollTest(TaskQueueTest):
     params = testutil.get_task_params(tasks[0])
     self.assert_equals(source.key.urlsafe(), params['source_key'])
 
+  def test_poll_status_polling(self):
+    def check_poll_status(*args, **kwargs):
+      self.assertEqual('polling', self.sources[0].key.get().poll_status)
+
+    self.expect_get_activities().WithSideEffects(check_poll_status) \
+                                .AndReturn({'items': []})
+    self.mox.ReplayAll()
+    self.post_task()
+    self.assertEqual('ok', self.sources[0].key.get().poll_status)
+
   def test_poll_error(self):
     """If anything goes wrong, the source status should be set to 'error'."""
     self.expect_get_activities().AndRaise(Exception('foo'))
     self.mox.ReplayAll()
 
     self.assertRaises(Exception, self.post_task)
-    source = self.sources[0].key.get()
-    self.assertEqual('error', source.poll_status)
+    self.assertEqual('error', self.sources[0].key.get().poll_status)
     self.assertEqual(0, len(self.taskqueue_stub.GetTasks('poll')))
 
   def test_poll_silo_500(self):
@@ -550,7 +559,7 @@ class PollTest(TaskQueueTest):
     expected += self.responses[:3]
 
     self.assert_responses(expected)
-    self.assertEquals('"foo" OR "bar/baz?baj"', source.last_search_query)
+    self.assertEquals('"foo" OR "bar/baz?baj"', FakeSource.last_search_query)
 
   def test_search_raises_not_implemented(self):
     """Some silos don't support search."""
@@ -565,16 +574,17 @@ class PollTest(TaskQueueTest):
 
     https://github.com/snarfed/bridgy/issues/485
     """
-    self.sources[0].domain_urls = ['http://foo.com/bar?biff']
-    self.sources[0].domains = ['or.ig']
-    self.sources[0].put()
+    source = self.sources[0]
+    source.domain_urls = ['http://foo.com/bar?biff']
+    source.domains = ['or.ig']
+    source.put()
 
     mention = {
       'id': 'tag:or.ig,2013:9',
       'object': {'content': 'foo http://or.ig/post'},
     }
-    self.sources[0].set_search_results([mention])
-    self.sources[0].set_activities([])
+    source.set_search_results([mention])
+    source.set_activities([])
 
     self.post_task()
     self.assert_responses([Response(
@@ -582,11 +592,11 @@ class PollTest(TaskQueueTest):
       activities_json=[json.dumps(mention)],
       response_json=json.dumps(mention),
       type='post',
-      source=self.sources[0].key,
+      source=source.key,
       status='complete',
       original_posts=['http://or.ig/post'],
     )])
-    self.assertEquals('"foo.com/bar?biff"', self.sources[0].last_search_query)
+    self.assertEquals('"foo.com/bar?biff"', FakeSource.last_search_query)
 
   def test_search_for_mentions_skips_redirected_posse_post(self):
     """Same as above, with a redirect."""
@@ -618,16 +628,19 @@ class PollTest(TaskQueueTest):
 
   def test_search_for_mentions_skips_blacklisted_domains(self):
     """https://github.com/snarfed/bridgy/issues/490"""
-    self.sources[0].domain_urls = ['http://t.co/7k9xNgQCml']
-    self.sources[0].put()
+    source = self.sources[0]
+    source.domain_urls = ['http://t.co/7k9xNgQCml']
+    source.put()
+
+    FakeSource.last_search_query = None
     self.post_task()
     # if there are *no* good domains, we shouldn't search at all
-    self.assertIsNone(self.sources[0].last_search_query)
+    self.assertIsNone(FakeSource.last_search_query)
 
-    self.sources[0].domain_urls = ['https://good/', 'http://t.co/7k9xNgQCml']
-    self.sources[0].put()
+    source.domain_urls = ['https://good/', 'http://t.co/7k9xNgQCml']
+    source.put()
     self.post_task()
-    self.assertEquals('"good"', self.sources[0].last_search_query)
+    self.assertEquals('"good"', FakeSource.last_search_query)
 
   def test_wrong_last_polled(self):
     """If the source doesn't have our last polled value, we should quit.
@@ -711,8 +724,7 @@ class PollTest(TaskQueueTest):
         self.mox.ReplayAll()
 
         self.post_task()
-        source = self.sources[0].key.get()
-        self.assertEqual('error', source.poll_status)
+        self.assertEqual('error', self.sources[0].key.get().poll_status)
         self.mox.VerifyAll()
 
         # should have inserted a new poll task
@@ -742,8 +754,6 @@ class PollTest(TaskQueueTest):
 
     source = self.sources[0].key.get()
     self.assertEqual('"new etag"', source.last_activities_etag)
-    # reset etag back to None for the next tests
-    source._set('etag', None)
 
   def test_last_activity_id(self):
     """We should store the last activity id seen and then send it as min_id."""
@@ -765,18 +775,19 @@ class PollTest(TaskQueueTest):
     self.activities[2]['id'] = 'c'
     self.sources[0].set_activities(list(reversed(self.activities)))
     self.post_task()
-
-    source = self.sources[0].key.get()
-    self.assertEqual('c', source.last_activity_id)
+    self.assertEqual('c', self.sources[0].key.get().last_activity_id)
 
   def test_cache_trims_to_returned_activity_ids(self):
     """We should trim last_activities_cache_json to just the returned activity ids."""
-    self.sources[0].last_activities_cache_json = json.dumps(
+    source = self.sources[0]
+    source.last_activities_cache_json = json.dumps(
       {1: 2, 'x': 'y', 'prefix x': 1, 'prefix b': 0})
+    source.put()
+
     self.post_task()
 
-    source = self.sources[0].key.get()
-    self.assert_equals({'prefix b': 0}, json.loads(source.last_activities_cache_json))
+    self.assert_equals({'prefix b': 0},
+                       json.loads(source.key.get().last_activities_cache_json))
 
   def test_slow_poll_never_sent_webmention(self):
     self.sources[0].created = NOW - (FakeSource.FAST_POLL_GRACE_PERIOD +
@@ -977,33 +988,42 @@ class PollTest(TaskQueueTest):
 
     class FakeGrSource_Instagram(testutil.FakeGrSource):
       DOMAIN = 'instagram'
+    class FakeSource_Instagram(testutil.FakeSource):
+      GR_CLASS = FakeGrSource_Instagram
 
-    self.sources[0].domain_urls = ['http://author']
-    self.sources[0].GR_CLASS = FakeGrSource_Instagram
-    self.sources[0].last_syndication_url = util.EPOCH
-    self.sources[0].last_hfeed_fetch = NOW
+    self.sources[0] = FakeSource_Instagram.new(
+      None,
+      domain_urls=['http://author'],
+      features=['listen'],
+      last_hfeed_fetch=NOW,
+      last_syndication_url = util.EPOCH)
 
     for act in self.activities:
       act['object']['url'] = 'http://instagram/post/url'
       act['object']['content'] = 'instagram post'
 
+    self.sources[0].set_activities(self.activities)
     self.sources[0].put()
 
     class FakeGrSource_Twitter(testutil.FakeGrSource):
       DOMAIN = 'twitter'
+    class FakeSource_Twitter(testutil.FakeSource):
+      GR_CLASS = FakeGrSource_Twitter
 
-    self.sources[1].domain_urls = ['http://author']
-    self.sources[1].GR_CLASS = FakeGrSource_Twitter
-    self.sources[1].last_syndication_url = util.EPOCH
-    self.sources[1].last_hfeed_fetch = NOW
+    self.sources[1] = FakeSource_Twitter.new(
+      None,
+      domain_urls=['http://author'],
+      features=['listen'],
+      last_hfeed_fetch=NOW,
+      last_syndication_url = util.EPOCH)
+
     twitter_acts = copy.deepcopy(self.activities)
-    self.sources[1].set_activities(twitter_acts)
-
     for act in twitter_acts:
       act['object']['url'] = 'http://twitter/post/url'
       act['object']['content'] = 'twitter post'
       act['object']['replies']['items'][0]['content'] = '@-reply'
 
+    self.sources[1].set_activities(twitter_acts)
     self.sources[1].put()
 
     for _ in range(2):
@@ -1084,6 +1104,7 @@ class PollTest(TaskQueueTest):
 
     self.mox.ReplayAll()
     for source in self.sources:
+      source = source.key.get()
       self.post_task(source=source)
       self.assertEquals(NOW, source.key.get().last_hfeed_fetch)
 

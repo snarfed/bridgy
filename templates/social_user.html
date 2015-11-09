@@ -65,6 +65,11 @@ WordPress.com, <a href="/">sign up here!</a>
 
 <form method="post" action="/poll-now">
 <p>
+{% if source.poll_status == 'polling' %}
+  <span title="Polling now" class="glyphicon glyphicon-transfer"></span>
+  Polling now. Check back in a minute!
+
+{% else %}
   <!-- last poll -->
   {% if source.last_poll_attempt == epoch %}
     Not polled yet.
@@ -90,6 +95,7 @@ WordPress.com, <a href="/">sign up here!</a>
 
   <input name="key" type="hidden" value="{{ source.key.urlsafe }}" />
   <button id="poll-now-button" type="submit" class="btn btn-default">Poll now</button>
+{% endif %}
 </p>
 
 <p>
