@@ -569,12 +569,19 @@ class WebmentionHandler(Handler):
 
   def authorize(self):
     """Check for a backlink to brid.gy/publish/SILO."""
-    expected = '%s/publish/%s' % (self.request.host_url, self.source.SHORT_NAME)
+    bases = set((self.request.host_url,))
+    if util.domain_from_link(self.request.host_url) == 'brid.gy':
+      # also accept www
+      bases.add(self.request.host_url.replace('brid.gy', 'www.brid.gy'))
 
-    if self.entity.html and expected in self.entity.html:
-      return True
+    expected = ['%s/publish/%s' % (base, self.source.SHORT_NAME) for base in bases]
 
-    self.error("Couldn't find link to %s" % expected)
+    if self.entity.html:
+      for url in expected:
+        if url in self.entity.html:
+          return True
+
+    self.error("Couldn't find link to %s" % expected[0])
     return False
 
 
