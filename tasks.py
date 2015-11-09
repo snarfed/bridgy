@@ -353,11 +353,11 @@ class Poll(webapp2.RequestHandler):
                      relationships)
         try:
           self.repropagate_old_responses(source, relationships)
-        except datastore_errors.Timeout:
-          logging.info('Timeout while repropagating responses.', exc_info=True)
-        except datastore_errors.BadRequestError, e:
-          if 'query has expired' in e.message:
-            logging.info('Query expired while repropagating responses.', exc_info=True)
+        except BaseException, e:
+          if (isinstance(e, (datastore_errors.BadRequestError,
+                             datastore_errors.Timeout)) or
+              util.is_connection_failure(e)):
+            logging.info('Timeout while repropagating responses.', exc_info=True)
           else:
             raise
     else:

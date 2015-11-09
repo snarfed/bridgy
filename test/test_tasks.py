@@ -7,6 +7,7 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 import bz2
 import copy
 import datetime
+import httplib
 import json
 import logging
 import mox
@@ -965,6 +966,10 @@ class PollTest(TaskQueueTest):
     self._test_refetch_hfeed_repropagate_responses_exception(
       datastore_errors.Timeout(
         'The datastore operation timed out, or the data was temporarily unavailable.'))
+
+  def test_refetch_hfeed_repropagate_responses_http_exception_deadline(self):
+    self._test_refetch_hfeed_repropagate_responses_exception(
+      httplib.HTTPException('Deadline exceeded foo bar'))
 
   def _test_refetch_hfeed_repropagate_responses_exception(self, exception):
     self._setup_refetch_hfeed()
