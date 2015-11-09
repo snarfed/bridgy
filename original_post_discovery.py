@@ -41,8 +41,6 @@ from models import SyndicatedPost
 
 from google.appengine.api import memcache
 
-MAX_AUTHOR_URLS = 5
-
 
 def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True):
   """Augments the standard original_post_discovery algorithm with a
@@ -541,10 +539,11 @@ def _process_syndication_urls(source, permalink, syndication_urls,
 
 
 def _get_author_urls(source):
+  max = models.MAX_AUTHOR_URLS
   urls = source.get_author_urls()
-  if len(urls) > MAX_AUTHOR_URLS:
+  if len(urls) > max:
     logging.warning('user has over %d URLs! only running PPD on %s. skipping %s.',
-                    MAX_AUTHOR_URLS, urls[:MAX_AUTHOR_URLS], urls[MAX_AUTHOR_URLS:])
-    urls = urls[:MAX_AUTHOR_URLS]
+                    max, urls[:max], urls[max:])
+    urls = urls[:max]
 
   return urls

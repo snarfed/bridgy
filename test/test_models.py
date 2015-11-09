@@ -327,6 +327,20 @@ class SourceTest(testutil.HandlerTest):
     self.assertEquals(['https://foo/'], source.domain_urls)
     self.assertEquals(['foo'], source.domains)
 
+  def test_create_new_too_many_domains(self):
+    urls = ['http://%s' % i for i in range(10)]
+    auth_entity = testutil.FakeAuthEntity(id='x', user_json=json.dumps(
+        {'urls': [{'value': u} for u in urls]}))
+
+    # we should only check the first 5
+    for url in urls[:models.MAX_AUTHOR_URLS]:
+      self.expect_requests_head(url)
+    self.mox.ReplayAll()
+
+    source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
+    self.assertEquals(urls, source.domain_urls)
+    self.assertEquals([str(i) for i in range(10)], source.domains)
+
   def test_verify(self):
     # this requests.get is called by webmention-tools
     self.expect_webmention_requests_get('http://primary/', """

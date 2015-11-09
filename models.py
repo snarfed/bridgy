@@ -22,6 +22,8 @@ from google.appengine.ext import ndb
 VERB_TYPES = ('post', 'comment', 'like', 'repost', 'rsvp')
 TYPES = VERB_TYPES + ('preview',)
 
+MAX_AUTHOR_URLS = 5
+
 # maps string short name to Source subclass. populated by SourceMeta.
 sources = {}
 
@@ -520,11 +522,17 @@ class Source(StringIdModel):
     actor = self.gr_source.user_to_actor(json.loads(auth_entity.user_json))
     logging.debug('Converted to actor: %s', json.dumps(actor, indent=2))
 
-    urls = []
-    for url in util.trim_nulls(util.uniquify(
+    candidates = util.trim_nulls(util.uniquify(
         [user_url] + [actor.get('url')] +
-        [u.get('value') for u in actor.get('urls', [])])):
-      url, domain, send = util.get_webmention_target(url)
+        [u.get('value') for u in actor.get('urls', [])]))
+
+    if len(candidates) > MAX_AUTHOR_URLS:
+      logging.warning('Too many profile links! Only resolving the first %s: %s',
+                      MAX_AUTHOR_URLS, candidates)
+
+    urls = []
+    for i, url in enumerate(candidates):
+      url, domain, send = util.get_webmention_target(url, resolve=i < MAX_AUTHOR_URLS)
       if send and url not in urls:
         urls.append(url)
 
