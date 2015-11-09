@@ -63,7 +63,8 @@ class Source(StringIdModel):
   """
   __metaclass__ = SourceMeta
 
-  STATUSES = ('enabled', 'disabled', 'error')
+  STATUSES = ('enabled', 'disabled', 'error')  # 'error' is deprecated
+  POLL_STATUSES = ('ok', 'error', 'polling')
   FEATURES = ('listen', 'publish', 'webmention')
 
   # short name for this site type. used in URLs, etc.
@@ -88,6 +89,7 @@ class Source(StringIdModel):
   created = ndb.DateTimeProperty(auto_now_add=True, required=True)
   url = ndb.StringProperty()
   status = ndb.StringProperty(choices=STATUSES, default='enabled')
+  poll_status = ndb.StringProperty(choices=POLL_STATUSES, default='ok')
   name = ndb.StringProperty()  # full human-readable name
   picture = ndb.StringProperty()
   domains = ndb.StringProperty(repeated=True)
@@ -201,6 +203,10 @@ class Source(StringIdModel):
     source.updates = updates  # because FacebookPage._pre_put_hook uses it
     for name, val in updates.items():
       setattr(source, name, val)
+
+    if source.status == 'error':  # deprecated
+      logging.warning('Resetting status from error to enabled')
+      source.status = 'enabled'
 
     source.put()
     return source

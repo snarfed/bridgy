@@ -149,8 +149,9 @@ class Handler(webmention.WebmentionHandler):
         {'type': source_cls.GR_CLASS.NAME, 'domain': domain})
 
     for source in sources:
-      logging.info('Source: %s , features %s, status %s' %
-                   (source.bridgy_url(self), source.features, source.status))
+      logging.info('Source: %s , features %s, status %s, poll status %s',
+                   source.bridgy_url(self), source.features, source.status,
+                   source, source.poll_status)
       if source.status != 'disabled' and 'publish' in source.features:
         self.source = source
         break

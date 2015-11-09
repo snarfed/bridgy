@@ -85,7 +85,7 @@ class Poll(webapp2.RequestHandler):
       source.updates['status'] = 'disabled'
       logging.warning('Disabling source!')
     except:
-      source.updates['status'] = 'error'
+      source.updates['poll_status'] = 'error'
       raise
     finally:
       source = models.Source.put_updates(source)
@@ -170,10 +170,11 @@ class Poll(webapp2.RequestHandler):
       if code == '401':
         msg = 'Unauthorized error: %s' % e
         logging.warning(msg, exc_info=True)
+        source.updates['poll_status'] = 'ok'
         raise models.DisableSource(msg)
       elif code in util.HTTP_RATE_LIMIT_CODES:
         logging.warning('Rate limited. Marking as error and finishing. %s', e)
-        source.updates.update({'status': 'error', 'rate_limited': True})
+        source.updates.update({'poll_status': 'error', 'rate_limited': True})
         return
       elif (code and int(code) / 100 == 5) or util.is_connection_failure(e):
         logging.error('API call failed. Marking as error and finishing. %s: %s\n%s',
@@ -324,7 +325,7 @@ class Poll(webapp2.RequestHandler):
         pruned_responses + unchanged_responses)
 
     source.updates.update({'last_polled': source.last_poll_attempt,
-                           'status': 'enabled'})
+                           'poll_status': 'ok'})
     etag = response.get('etag')
     if etag and etag != source.last_activities_etag:
       logging.debug('Storing new ETag: %s', etag)

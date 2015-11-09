@@ -69,4 +69,5 @@ class FlickrTest(testutil.ModelsTest):
 
     with self.assertRaises(models.DisableSource):
       poll_task = tasks.Poll()
+      self.flickr.updates = {}
       poll_task.poll(self.flickr)

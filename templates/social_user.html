@@ -69,7 +69,7 @@ WordPress.com, <a href="/">sign up here!</a>
   {% if source.last_poll_attempt == epoch %}
     Not polled yet.
   {% else %}
-    {% if source.status == "error" %}
+    {% if source.poll_status == "error" %}
      <span title="Error" class="glyphicon glyphicon-exclamation-sign"></span>
     {% endif %}
     Polled

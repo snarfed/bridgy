@@ -28,7 +28,7 @@ class ReplacePollTasks(webapp2.RequestHandler):
   def get(self):
     now = datetime.datetime.now()
     queries = [cls.query(Source.features == 'listen',
-                         Source.status.IN(('enabled', 'error')))
+                         Source.status != 'disabled')
                for cls in models.sources.values()]
     for source in itertools.chain(*queries):
       age = now - source.last_poll_attempt

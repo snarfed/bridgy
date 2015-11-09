@@ -137,6 +137,7 @@ class PollTest(TaskQueueTest):
 
     source = self.sources[0].key.get()
     self.assertEqual(NOW, source.last_polled)
+    self.assertEqual('ok', source.poll_status)
 
     tasks = self.taskqueue_stub.GetTasks('propagate')
     for task in tasks:
@@ -159,7 +160,7 @@ class PollTest(TaskQueueTest):
 
     self.assertRaises(Exception, self.post_task)
     source = self.sources[0].key.get()
-    self.assertEqual('error', source.status)
+    self.assertEqual('error', source.poll_status)
     self.assertEqual(0, len(self.taskqueue_stub.GetTasks('poll')))
 
   def test_poll_silo_500(self):
@@ -169,7 +170,7 @@ class PollTest(TaskQueueTest):
     self.mox.ReplayAll()
 
     self.post_task(expected_status=tasks.ERROR_HTTP_RETURN_CODE)
-    self.assertEqual('error', self.sources[0].key.get().status)
+    self.assertEqual('error', self.sources[0].key.get().poll_status)
 
   def test_poll_silo_deadlines(self):
     """If a silo HTTP request deadlines, we should quietly retry the task."""
@@ -178,16 +179,18 @@ class PollTest(TaskQueueTest):
     self.mox.ReplayAll()
 
     self.post_task(expected_status=tasks.ERROR_HTTP_RETURN_CODE)
-    self.assertEqual('error', self.sources[0].key.get().status)
+    self.assertEqual('error', self.sources[0].key.get().poll_status)
 
   def test_reset_status_to_enabled(self):
-    """After a successful poll, the source status should be set to 'enabled'."""
+    """After a successful poll, status should be set to 'enabled' and 'ok'."""
     self.sources[0].status = 'error'
+    self.sources[0].poll_status = 'error'
     self.sources[0].put()
 
     self.post_task()
     source = self.sources[0].key.get()
     self.assertEqual('enabled', source.status)
+    self.assertEqual('ok', source.poll_status)
 
   def test_original_post_discovery(self):
     """Target URLs should be extracted from attachments, tags, and text."""
@@ -656,6 +659,7 @@ class PollTest(TaskQueueTest):
     self.sources[0].put()
     self.post_task()
     self.assertEqual([], self.taskqueue_stub.GetTasks('poll'))
+    self.assertEqual('enabled', self.sources[0].key.get().status)
 
   def test_disable_source_on_deauthorized(self):
     """If the source raises DisableSource, disable it.
@@ -667,8 +671,7 @@ class PollTest(TaskQueueTest):
     source.status = 'enabled'
     source.put()
     self.post_task()
-    source = source.key.get()
-    self.assertEqual('disabled', source.status)
+    self.assertEqual('disabled', source.key.get().status)
 
   def test_site_specific_disable_sources(self):
     """HTTP 401 and 400 '' for Instagram should disable the source."""
@@ -686,8 +689,7 @@ class PollTest(TaskQueueTest):
         self.mox.ReplayAll()
 
         self.post_task()
-        source = self.sources[0].key.get()
-        self.assertEqual('disabled', source.status)
+        self.assertEqual('disabled', self.sources[0].key.get().status)
 
     finally:
       self.mox.UnsetStubs()
@@ -710,7 +712,7 @@ class PollTest(TaskQueueTest):
 
         self.post_task()
         source = self.sources[0].key.get()
-        self.assertEqual('error', source.status)
+        self.assertEqual('error', source.poll_status)
         self.mox.VerifyAll()
 
         # should have inserted a new poll task
