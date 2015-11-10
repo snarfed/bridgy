@@ -75,7 +75,7 @@ class Source(StringIdModel):
   GR_CLASS = None
 
   # how often to poll for responses
-  FAST_POLL = datetime.timedelta(minutes=10)
+  FAST_POLL = datetime.timedelta(minutes=15)
   # poll sources less often (this much) if they've never sent a webmention
   SLOW_POLL = datetime.timedelta(days=1)
   # how long to wait after signup for a successful webmention before dropping to
