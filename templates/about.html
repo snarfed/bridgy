@@ -795,7 +795,7 @@ short link as the webmention's <code>source</code> parameter.
 <p>Bridgy handles webmentions synchronously, so it knows the result when it
 responds. A <code>POST</code> to
 <code>https://brid.gy/publish/webmention</code> will return
-<code>201 OK</code> on success with a JSON response containing at least
+<code>201 Created</code> on success with a JSON response containing at least
 a <code>url</code> field that points to the silo object that it operated on. The
 same URL is included in the <code>Location</code> HTTP header. For
 Twitter favorites and Facebook event RSVPs, this is the tweet, post, or event.
