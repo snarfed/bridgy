@@ -12,9 +12,9 @@ twitpic.com
 feeds.wordpress.com
 stats.wordpress.com
 
-# her comment spam filter was rejecting all of bridgy's webmentions.
+# her comment spam filter rejects all of bridgy's webmentions.
 # reported: https://twitter.com/schnarfed/status/558739076996554752
-# blog.mahabali.me
+blog.mahabali.me
 
 24sessions.com
 500px.com
