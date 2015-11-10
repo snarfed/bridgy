@@ -60,7 +60,7 @@ URL_BLACKLIST = frozenset((
 # conservative.
 # http://www.sitepoint.com/average-page-weight-increases-15-2014/
 # http://httparchive.org/interesting.php#bytesperpage
-MAX_HTTP_RESPONSE_SIZE = 5000000
+MAX_HTTP_RESPONSE_SIZE = 500000
 
 # Returned as the HTTP status code when we refuse to make or finish a request.
 HTTP_REQUEST_REFUSED_STATUS_CODE = 599
