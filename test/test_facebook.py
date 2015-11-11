@@ -15,6 +15,7 @@ import urllib2
 import appengine_config
 
 import granary
+from granary import facebook as gr_facebook
 from granary.test import test_facebook as gr_test_facebook
 import oauth_dropins
 from oauth_dropins import facebook as oauth_facebook
@@ -51,7 +52,7 @@ class FacebookPageTest(testutil.ModelsTest):
                                features=['listen'])
     self.fb.put()
 
-    self.post_activity = copy.deepcopy(gr_test_facebook.ACTIVITY)
+    self.post_activity = copy.deepcopy(gr_test_facebook.SELF_ACTIVITY)
     fb_id_and_url = {
       'id': 'tag:facebook.com,2013:222', # this is fb_object_id
       'url': 'https://www.facebook.com/212038/posts/222',
@@ -97,12 +98,8 @@ class FacebookPageTest(testutil.ModelsTest):
     self.expect_api_call('me/feed?offset=0', {'data': [gr_test_facebook.POST]})
     self.expect_api_call('me/photos/uploaded', {'data': [gr_test_facebook.POST]})
     self.expect_api_call('me/events', {'data': [gr_test_facebook.EVENT, owned_event]})
-    self.expect_urlopen(
-      re.compile('^https://graph.facebook.com/v2.2/145304994\?.+'),
-      json.dumps(gr_test_facebook.EVENT))
-    self.expect_urlopen(
-      re.compile('^https://graph.facebook.com/v2.2/888\?.+'),
-      json.dumps(owned_event))
+    self.expect_api_call(gr_facebook.API_EVENT % '145304994', gr_test_facebook.EVENT)
+    self.expect_api_call(gr_facebook.API_EVENT % '888', owned_event)
     self.expect_api_call('888/invited', {'data': gr_test_facebook.RSVPS})
     self.mox.ReplayAll()
 
@@ -132,8 +129,7 @@ class FacebookPageTest(testutil.ModelsTest):
     """https://github.com/snarfed/bridgy/issues/305"""
     # translate post id and comment ids to same ids in new colon-based format
     post = copy.deepcopy(gr_test_facebook.POST)
-    post['id'] = self.post_activity['object']['fb_id'] = \
-        self.post_activity['fb_id'] = '212038:10100176064482163:11'
+    post['id'] = '212038:10100176064482163:11'
 
     reply = self.post_activity['object']['replies']['items'][0]
     post['comments']['data'][0]['id'] = reply['fb_id'] = \
@@ -302,10 +298,10 @@ class FacebookPageTest(testutil.ModelsTest):
     # Facebook API calls
     post = gr_test_facebook.POST
     self.expect_api_call('me/feed?offset=0&limit=50', {'data': [post]})
-    self.expect_api_call('sharedposts?ids=10100176064482163', {})
-    self.expect_api_call('comments?filter=stream&ids=10100176064482163', {})
     self.expect_api_call('me/photos/uploaded', {})
     self.expect_api_call('me/events', {})
+    self.expect_api_call('sharedposts?ids=222', {})
+    self.expect_api_call('comments?filter=stream&ids=222', {})
 
     # posse post discovery
     self.expect_requests_get('http://author/url', """

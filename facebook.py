@@ -50,15 +50,6 @@ PUBLISH_SCOPES = [
   'user_photos', 'user_videos', 'user_events', 'user_likes',
 ]
 
-API_PHOTOS = 'me/photos/uploaded'
-# returns yes and maybe
-API_USER_RSVPS = 'me/events'
-API_USER_RSVPS_DECLINED = 'me/events/declined'
-API_USER_RSVPS_NOT_REPLIED = 'me/events/not_replied'
-# Ideally this fields arg would just be [default fields plus comments], but
-# there's no way to ask for that. :/
-# https://developers.facebook.com/docs/graph-api/using-graph-api/v2.1#fields
-API_EVENT = '%s?fields=comments,description,end_time,id,likes,name,owner,picture,privacy,start_time,timezone,updated_time,venue'
 # WARNING: this edge is deprecated in API v2.4 and will stop working in 2017.
 # https://developers.facebook.com/docs/apps/changelog#v2_4_deprecations
 API_EVENT_RSVPS = '%s/invited'
@@ -119,48 +110,13 @@ class FacebookPage(models.Source):
     """Returns the Facebook account URL, e.g. https://facebook.com/foo."""
     return self.gr_source.user_url(self.username or self.key.id())
 
-  def get_data(self, url):
-    """Simple wrapper around gr_source.urlopen() that returns 'data' list."""
-    return self.gr_source.urlopen(url).get('data', [])
-
   def get_activities_response(self, **kwargs):
-    # TODO: use batch API to get photos, events, etc in one request
-    # https://developers.facebook.com/docs/graph-api/making-multiple-requests
     kwargs.setdefault('group_id', SELF)
+    kwargs.setdefault('fetch_events', True)
+    kwargs.setdefault('event_owner_id', self.key.id())
+
     try:
-      resp = self.gr_source.get_activities_response(**kwargs)
-
-      # if it's requesting one specific activity, then we're done
-      if 'activity_id' in kwargs:
-        return resp
-
-      # also get uploaded photos manually since facebook sometimes collapses
-      # multiple photos into albums, and the album post object won't have the
-      # post content, comments, etc. from the individual photo posts.
-      # http://stackoverflow.com/questions/12785120
-      #
-      # TODO: save and use ETag for all of these extra calls
-      photos = self.get_data(API_PHOTOS)
-
-      # also get events and RSVPs
-      # https://developers.facebook.com/docs/graph-api/reference/user/events/
-      # https://developers.facebook.com/docs/graph-api/reference/event#edges
-      # TODO: also fetch and use API_USER_RSVPS_DECLINED
-      user_rsvps = self.get_data(API_USER_RSVPS)
-
-      # have to re-fetch the events because the user rsvps response doesn't
-      # include the event description, which we need for original post links.
-      events = [self.gr_source.urlopen(API_EVENT % r['id'])
-                for r in user_rsvps if r.get('id')]
-
-      # also, only process events that the user is the owner of. avoids (but
-      # doesn't prevent) processing big non-indieweb events with tons of
-      # attendees that put us over app engine's instance memory limit. details:
-      # https://github.com/snarfed/bridgy/issues/77
-      events_and_rsvps = [(e, self.get_data(API_EVENT_RSVPS % e['id']))
-                          for e in events
-                          if e.get('owner', {}).get('id') == self.key.id()]
-
+      return self.gr_source.get_activities_response(**kwargs)
     except urllib2.HTTPError as e:
       code, body = util.interpret_http_exception(e)
       # use a function to extract error subcode so that we don't clobber the
@@ -183,44 +139,6 @@ class FacebookPage(models.Source):
         raise models.DisableSource()
 
       raise
-
-    # add photos. they show up as both a post and a photo, each with a separate
-    # id. the post's object_id field points to the photo's id. de-dupe by
-    # switching the post to use the fb_object_id when it's provided.
-    activities = resp.setdefault('items', [])
-    activities_by_fb_id = {}
-    for activity in activities:
-      obj = activity.get('object', {})
-      fb_id = obj.get('fb_object_id')
-      if not fb_id:
-        continue
-
-      activities_by_fb_id[fb_id] = activity
-      for x in activity, obj:
-        parsed = util.parse_tag_uri(x.get('id', ''))
-        if parsed:
-          _, orig_id = parsed
-          x['id'] = self.gr_source.tag_uri(fb_id)
-          x['url'] = x.get('url', '').replace(orig_id, fb_id)
-
-    # merge comments and likes from existing photo objects, and add new ones.
-    for photo in photos:
-      photo_activity = self.gr_source.post_to_activity(photo)
-      existing = activities_by_fb_id.get(photo.get('id'))
-      if existing:
-        existing['object'].setdefault('replies', {}).setdefault('items', []).extend(
-          photo_activity['object'].get('replies', {}).get('items', []))
-        existing['object'].setdefault('tags', []).extend(
-            [t for t in photo_activity['object'].get('tags', [])
-             if t.get('verb') == 'like'])
-      else:
-        activities.append(photo_activity)
-
-    # add events
-    activities += [self.gr_source.event_to_activity(e, rsvps=r)
-                   for e, r in events_and_rsvps]
-
-    return util.trim_nulls(resp)
 
   def canonicalize_syndication_url(self, url, activity=None, **kwargs):
     """Facebook-specific standardization of syndicated urls. Canonical form is
