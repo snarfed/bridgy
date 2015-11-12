@@ -10,6 +10,7 @@ import appengine_config
 import util
 
 from google.appengine.api import logservice
+from google.appengine.ext import ndb
 import webapp2
 
 
@@ -41,9 +42,16 @@ DATASTORE_KEY_RE = re.compile("'(([A-Za-z0-9-_=]{8})[A-Za-z0-9-_=]{32,})'")
 
 def linkify_datastore_keys(msg):
   """Converts string datastore keys to links to the admin console viewer."""
-  return DATASTORE_KEY_RE.sub(
-    r"'<a title='\1' href='https://appengine.google.com/datastore/edit?app_id=s~brid-gy&key=\1'>\2...</a>'",
-    msg)
+  def linkify_key(match):
+    key = ndb.Key(urlsafe=match.group(1))
+    tokens = [(kind, '%s:%s' % ('id' if isinstance(id, (int, long)) else 'name', id))
+              for kind, id in key.pairs()]
+    key_str = '|'.join('%d/%s|%d/%s' % (len(kind), kind, len(id), id)
+                       for kind, id in tokens)
+    return "'<a title='%s' href='https://console.developers.google.com/datastore/editentity?project=brid-gy&kind=%s&queryType=GQLQuery&queryText&key=0/|%s'>%s...</a>'" % (
+      match.group(1), key.kind(), key_str, match.group(2))
+
+  return DATASTORE_KEY_RE.sub(linkify_key, msg)
 
 
 class LogHandler(webapp2.RequestHandler):
