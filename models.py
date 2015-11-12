@@ -269,19 +269,8 @@ class Source(StringIdModel):
     kwargs.setdefault('group_id', gr_source.SELF)
     return self.gr_source.get_activities_response(**kwargs)
 
-  def get_activities(self, *args, **kwargs):
-    return self.get_activities_response(*args, **kwargs)['items']
-
-  def get_post(self, id):
-    """Returns a post from this source.
-
-    Args:
-      id: string, site-specific post id
-
-    Returns: dict, decoded ActivityStreams activity, or None
-    """
-    activities = self.get_activities(activity_id=id, user_id=self.key.string_id())
-    return activities[0] if activities else None
+  def get_activities(self, **kwargs):
+    return self.get_activities_response(**kwargs)['items']
 
   def get_like(self, activity_user_id, activity_id, like_user_id):
     """Returns an ActivityStreams 'like' activity object.

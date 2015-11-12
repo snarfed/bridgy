@@ -382,15 +382,6 @@ class SourceTest(testutil.HandlerTest):
     source.verify()
     self.assertIsNone(source.webmention_endpoint)
 
-  def test_get_post(self):
-    post = {'verb': 'post', 'object': {'objectType': 'note', 'content': 'asdf'}}
-    source = Source(id='x')
-    self.mox.StubOutWithMock(source, 'get_activities')
-    source.get_activities(activity_id='123', user_id='x').AndReturn([post])
-
-    self.mox.ReplayAll()
-    self.assert_equals(post, source.get_post('123'))
-
   def test_has_bridgy_webmention_endpoint(self):
     source = FakeSource.new(None)
     for endpoint, has in ((None, False),

@@ -112,25 +112,29 @@ class ItemHandler(webapp2.RequestHandler):
     """
     return obj.get('title') or obj.get('content') or 'Bridgy Response'
 
-  def get_post(self, post_id, source_fn=None):
-    """Utility method fetches the original post
+  def get_post(self, id, is_event=False):
+    """Fetch a post.
+
     Args:
-      post_id: string, site-specific post id
-      source_fn: optional reference to a Source method,
-        defaults to Source.get_post.
+      id: string, site-specific post id
+      is_event: bool
 
     Returns: ActivityStreams object dict
     """
     try:
-      post = (source_fn or self.source.get_post)(post_id)
+      if is_event:
+        post = self.source.gr_source.get_event(id)
+      else:
+        posts = self.source.get_activities(
+          activity_id=id, user_id=self.source.key.id())
+        post = posts[0] if posts else None
       if not post:
-        logging.warning('Source post %s not found', post_id)
+        logging.warning('Source post %s not found', id)
       return post
     except Exception, e:
       # use interpret_http_exception to log HTTP errors
       if not util.interpret_http_exception(e)[0]:
-        logging.warning(
-          'Error fetching source post %s', post_id, exc_info=True)
+        logging.warning('Error fetching source post %s', id, exc_info=True)
 
   def get(self, type, source_short_name, string_id, *ids):
     source_cls = models.sources.get(source_short_name)
@@ -228,7 +232,8 @@ class ItemHandler(webapp2.RequestHandler):
 # likes, reposts, or rsvps. Matches logic in poll() (step 4) in tasks.py!
 class PostHandler(ItemHandler):
   def get_item(self, id):
-    post = self.source.get_post(id)
+    posts = self.source.get_activities(activity_id=id, user_id=self.source.key.id())
+    post = posts[0] if posts else None
     if not post:
       return None
 
@@ -308,7 +313,7 @@ class RsvpHandler(ItemHandler):
       self.source.key.string_id(), event_id, user_id)
     if not rsvp:
       return None
-    event = self.get_post(event_id, source_fn=self.source.gr_source.get_event)
+    event = self.get_post(event_id, is_event=True)
     if event:
       originals, mentions = original_post_discovery.discover(
         self.source, event, fetch_hfeed=False)

@@ -180,7 +180,8 @@ class FakeSource(FakeBase, Source):
   def set_search_results(self, val):
     self._set('search_results', val)
 
-  def get_activities_response(self, user_id=None, group_id=None, app_id=None,
+  def get_activities_response(self, user_id=None, group_id=None,
+                              activity_id=None, app_id=None,
                               fetch_replies=False, fetch_likes=False,
                               fetch_shares=False, count=None, etag=None,
                               min_id=None, cache=None, search_query=None):
@@ -196,9 +197,6 @@ class FakeSource(FakeBase, Source):
       'items': activities,
       'etag': self._get('etag'),
     }
-
-  def get_post(self, id):
-    return self.get_activities()[int(id)]
 
   def feed_url(self):
     return 'fake feed url'

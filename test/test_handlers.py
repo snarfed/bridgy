@@ -135,25 +135,28 @@ asdf http://other/link qwert
     self.assertEqual(200, resp.status_int)
 
   def test_pass_through_source_errors(self):
-    self.mox.StubOutWithMock(testutil.FakeSource, 'get_post')
-    testutil.FakeSource.get_post('000').AndRaise(urllib2.HTTPError(
-      'url', 410, 'Gone', {}, StringIO.StringIO('Gone baby gone')))
+    user_id = self.source.key.string_id()
+    err = urllib2.HTTPError('url', 410, 'Gone', {},
+                            StringIO.StringIO('Gone baby gone'))
+    self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities')
+    testutil.FakeSource.get_activities(activity_id='000', user_id=user_id
+                                      ).AndRaise(err)
     self.mox.ReplayAll()
 
-    resp = handlers.application.get_response('/post/fake/%s/000' %
-                                             self.source.key.string_id())
+    resp = handlers.application.get_response('/post/fake/%s/000' % user_id)
     self.assertEqual(410, resp.status_int)
     self.assertEqual('text/plain', resp.headers['Content-Type'])
     self.assertEqual('FakeSource error:\nGone baby gone', resp.body)
 
   def test_connection_failures_503(self):
-    self.mox.StubOutWithMock(testutil.FakeSource, 'get_post')
-    testutil.FakeSource.get_post('000').AndRaise(
-      urlfetch_errors.InternalTransientError('Try again pls'))
+    user_id = self.source.key.string_id()
+    err = urlfetch_errors.InternalTransientError('Try again pls')
+    self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities')
+    testutil.FakeSource.get_activities(activity_id='000', user_id=user_id
+                                      ).AndRaise(err)
     self.mox.ReplayAll()
 
-    resp = handlers.application.get_response('/post/fake/%s/000' %
-                                             self.source.key.string_id())
+    resp = handlers.application.get_response('/post/fake/%s/000' % user_id)
     self.assertEqual(503, resp.status_int)
     self.assertEqual('FakeSource error:\nTry again pls', resp.body)
 
