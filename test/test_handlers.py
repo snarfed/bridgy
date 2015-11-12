@@ -209,9 +209,12 @@ asdf http://other/link qwert
 
   <div class="e-content p-name">
 
-    <a class="u-like u-like-of" href="http://example.com/original/post">likes this.</a>
-    <a class="u-like u-like-of" href="http://or.ig/post"></a>
+    <a href="http://example.com/original/post">likes this.</a>
   </div>
+
+  <a class="u-like u-like-of" href="http://example.com/original/post"></a>
+  <a class="u-like u-like-of" href="http://or.ig/post"></a>
+
 
 </article>
 """)
@@ -254,10 +257,11 @@ asdf http://other/link qwert
 
   <div class="e-content p-name">
 
-    <a class="u-repost u-repost-of" href="http://example.com/original/post">reposts this.</a>
-    <a class="u-repost u-repost-of" href="http://or.ig/post"></a>
+    <a href="http://example.com/original/post">shared this.</a>
   </div>
 
+  <a class="u-repost u-repost-of" href="http://example.com/original/post"></a>
+  <a class="u-repost u-repost-of" href="http://or.ig/post"></a>
 
 
 
