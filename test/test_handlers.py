@@ -30,7 +30,7 @@ class HandlersTest(testutil.HandlerTest):
         'upstreamDuplicates': ['http://or.ig/post'],
       }}]
     self.source.set_activities(self.activities)
-    self.source.set_event({
+    self.source.gr_source.set_event({
       'object': {
         'id': 'tag:fa.ke,2013:123',
         'url': 'http://fa.ke/events/123',
@@ -158,7 +158,7 @@ asdf http://other/link qwert
     self.assertEqual('FakeSource error:\nTry again pls', resp.body)
 
   def test_comment(self):
-    self.source.set_comment({
+    self.source.gr_source.set_comment({
         'id': 'tag:fa.ke,2013:a1-b2.c3',  # test alphanumeric id (like G+)
         'content': 'qwert',
         'inReplyTo': [{'url': 'http://fa.ke/000'}],
@@ -342,7 +342,7 @@ asdf http://other/link qwert
 """)
 
   def test_original_post_urls_follow_redirects(self):
-    self.source.set_comment({
+    self.source.gr_source.set_comment({
         'content': 'qwert',
         'inReplyTo': [{'url': 'http://fa.ke/000'}],
         })
@@ -377,7 +377,7 @@ asdf http://other/link qwert
         'upstreamDuplicates': ['http://or.ig/post?utm_campaign=123'],
         })
     self.source.set_activities(self.activities)
-    self.source.set_comment({'content': 'qwert'})
+    self.source.gr_source.set_comment({'content': 'qwert'})
     self.mox.ReplayAll()
 
     self.check_response('/comment/fake/%s/000/111', """\
@@ -405,7 +405,7 @@ asdf http://other/link qwert
                            ],
       })
 
-    self.source.set_comment({
+    self.source.gr_source.set_comment({
       'inReplyTo': [{'url': 'https://reply/only'},
                     {'url': 'http://reply'},
                     {'url': 'https://all'},

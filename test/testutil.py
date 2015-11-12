@@ -99,6 +99,19 @@ class FakeGrSource(FakeBase, gr_source.Source):
   def get_share(self, activity_user_id, activity_id, repost_user_id):
     return self._get('repost')
 
+  def set_comment(self, val):
+    self._set('comment', val)
+
+  def get_comment(self, comment_id, activity_id=None, activity_author_id=None):
+    comment = self._get('comment')
+    return comment if comment else super(FakeSource, self).get_comment(comment_id)
+
+  def set_event(self, evt):
+    self._set('event', evt)
+
+  def get_event(self, evt_id):
+    return self._get('event')
+
   def set_rsvp(self, val):
     self._set('rsvp', val)
 
@@ -186,19 +199,6 @@ class FakeSource(FakeBase, Source):
 
   def get_post(self, id):
     return self.get_activities()[int(id)]
-
-  def set_event(self, evt):
-    self._set('event', evt)
-
-  def get_event(self, evt_id):
-    return self._get('event')
-
-  def set_comment(self, val):
-    self._set('comment', val)
-
-  def get_comment(self, comment_id, activity_id=None, activity_author_id=None):
-    comment = self._get('comment')
-    return comment if comment else super(FakeSource, self).get_comment(comment_id)
 
   def feed_url(self):
     return 'fake feed url'

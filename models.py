@@ -283,32 +283,6 @@ class Source(StringIdModel):
     activities = self.get_activities(activity_id=id, user_id=self.key.string_id())
     return activities[0] if activities else None
 
-  def get_event(self, id):
-    """Returns an event post from this source.
-
-    Args:
-      id: string, site-specific event id
-
-    Returns: dict, decoded ActivityStreams activity, or None
-    """
-    return self.gr_source.get_event(id)
-
-  def get_comment(self, comment_id, activity_id=None, activity_author_id=None):
-    """Returns a comment from this source.
-
-    Passes through to granary by default. May be overridden
-    by subclasses.
-
-    Args:
-      comment_id: string, site-specific comment id
-      activity_id: string, site-specific activity id
-      activity_author_id: string, site-specific activity author id, optional
-
-    Returns: dict, decoded ActivityStreams comment object, or None
-    """
-    return self.gr_source.get_comment(comment_id, activity_id=activity_id,
-                                      activity_author_id=activity_author_id)
-
   def get_like(self, activity_user_id, activity_id, like_user_id):
     """Returns an ActivityStreams 'like' activity object.
 
@@ -321,32 +295,6 @@ class Source(StringIdModel):
       like_user_id: string id of the user who liked the activity
     """
     return self.gr_source.get_like(activity_user_id, activity_id, like_user_id)
-
-  def get_share(self, activity_user_id, activity_id, share_id):
-    """Returns an ActivityStreams 'share' activity object.
-
-    Passes through to granary by default. May be overridden
-    by subclasses.
-
-    Args:
-      activity_user_id: string id of the user who posted the original activity
-      activity_id: string activity id
-      share_id: string id of the share object or the user who shared it
-    """
-    return self.gr_source.get_share(activity_user_id, activity_id, share_id)
-
-  def get_rsvp(self, activity_user_id, event_id, user_id):
-    """Returns an ActivityStreams 'rsvp-*' activity object.
-
-    Passes through to granary by default. May be overridden
-    by subclasses.
-
-    Args:
-      activity_user_id: string id of the user who posted the original activity
-      event_id: string event id
-      user_id: string id of the user object or the user who RSVPed
-    """
-    return self.gr_source.get_rsvp(activity_user_id, event_id, user_id)
 
   def create_comment(self, post_url, author_name, author_url, content):
     """Creates a new comment in the source silo.

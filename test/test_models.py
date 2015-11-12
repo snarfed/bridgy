@@ -391,27 +391,6 @@ class SourceTest(testutil.HandlerTest):
     self.mox.ReplayAll()
     self.assert_equals(post, source.get_post('123'))
 
-  def test_get_event(self):
-    event = {'verb': 'post', 'object': {
-      'objectType': 'event', 'content': 'asdf'}}
-    source = Source(id='x')
-    source.gr_source = self.mox.CreateMock(gr_source.Source)
-    self.mox.StubOutWithMock(source.gr_source, 'get_event')
-    source.gr_source.get_event('123').AndReturn(event)
-
-    self.mox.ReplayAll()
-    self.assert_equals(event, source.get_event('123'))
-
-  def test_get_comment(self):
-    comment_obj = {'objectType': 'comment', 'content': 'qwert'}
-    source = FakeSource.new(None)
-    source.gr_source = self.mox.CreateMock(gr_source.Source)
-    source.gr_source.get_comment('123', activity_id=None, activity_author_id=None
-                                 ).AndReturn(comment_obj)
-
-    self.mox.ReplayAll()
-    self.assert_equals(comment_obj, source.get_comment('123'))
-
   def test_has_bridgy_webmention_endpoint(self):
     source = FakeSource.new(None)
     for endpoint, has in ((None, False),

@@ -243,8 +243,8 @@ class PostHandler(ItemHandler):
 
 class CommentHandler(ItemHandler):
   def get_item(self, post_id, id):
-    cmt = self.source.get_comment(id, activity_id=post_id,
-                                  activity_author_id=self.source.key.id())
+    cmt = self.source.gr_source.get_comment(
+      id, activity_id=post_id, activity_author_id=self.source.key.id())
     if not cmt:
       return None
     post = self.get_post(post_id)
@@ -285,7 +285,8 @@ class LikeHandler(ItemHandler):
 
 class RepostHandler(ItemHandler):
   def get_item(self, post_id, share_id):
-    repost = self.source.get_share(self.source.key.string_id(), post_id, share_id)
+    repost = self.source.gr_source.get_share(
+      self.source.key.string_id(), post_id, share_id)
     if not repost:
       return None
     # webmention receivers don't want to see their own post in their
@@ -303,10 +304,11 @@ class RepostHandler(ItemHandler):
 
 class RsvpHandler(ItemHandler):
   def get_item(self, event_id, user_id):
-    rsvp = self.source.get_rsvp(self.source.key.string_id(), event_id, user_id)
+    rsvp = self.source.gr_source.get_rsvp(
+      self.source.key.string_id(), event_id, user_id)
     if not rsvp:
       return None
-    event = self.get_post(event_id, source_fn=self.source.get_event)
+    event = self.get_post(event_id, source_fn=self.source.gr_source.get_event)
     if event:
       originals, mentions = original_post_discovery.discover(
         self.source, event, fetch_hfeed=False)
