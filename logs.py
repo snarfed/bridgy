@@ -90,7 +90,7 @@ class LogHandler(webapp2.RequestHandler):
         for a in log.app_logs:
           msg = a.message.decode('utf-8')
           # don't sanitize poll task URLs since they have a key= query param
-          msg = util.linkify(linkify_datastore_keys(cgi.escape(
+          msg = linkify_datastore_keys(util.linkify(cgi.escape(
               msg if msg.startswith('Created by this poll:') else sanitize(msg))))
           self.response.out.write('%s %s %s<br />' %
               (datetime.datetime.utcfromtimestamp(a.time), LEVELS[a.level],
