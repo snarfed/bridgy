@@ -498,6 +498,17 @@ class Source(StringIdModel):
     return re.sub('^https?://(www\.)?', scheme + '://' + subdomain,
                   syndication_url)
 
+  def preprocess_for_publish(self, activity):
+    """Preprocess an activity before trying to publish it.
+
+    The activity is modified in place. Default is noop. Individual sources can
+    override this with source-specific logic.
+
+    Args:
+      activity: ActivityStreams activity dict
+    """
+    pass
+
   def on_new_syndicated_post(self, syndpost):
     """Called when a new SyndicatedPost is stored for this source.
 

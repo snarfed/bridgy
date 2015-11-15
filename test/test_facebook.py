@@ -482,3 +482,35 @@ class FacebookPageTest(testutil.ModelsTest):
     self.assert_equals(302, self.response.status_code)
     fb = self.fb.key.get()
     self.assertEquals(fb.bridgy_url(handler), self.response.headers['Location'])
+
+  def test_preprocess_for_publish(self):
+    FacebookPage(id='555', username='username').put()
+    FacebookPage(id='666', inferred_username='inferred').put()
+    FacebookPage(id='777', domains=['my.domain']).put()
+
+    input_urls = (
+      'https://unknown/',
+      'https://www.facebook.com/444',
+      'https://www.facebook.com/username',
+      'https://www.facebook.com/inferred',
+      'https://www.facebook.com/unknown',
+      'https://my.domain/',
+    )
+    expected_urls = (
+      'https://unknown/',
+      'https://www.facebook.com/444',
+      'https://www.facebook.com/555',
+      'https://www.facebook.com/666',
+      'https://www.facebook.com/unknown',
+      'https://www.facebook.com/777',
+    )
+
+    activity = {
+      'object': {
+        'objectType': 'note',
+        'content': 'a msg',
+        'tags': [{'objectType': 'person', 'url': url} for url in input_urls],
+      },
+    }
+    self.fb.preprocess_for_publish(activity)
+    self.assert_equals(expected_urls, [t['url'] for t in activity['object']['tags']])
