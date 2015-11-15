@@ -98,17 +98,6 @@ class SuperfeedrTest(testutil.HandlerTest):
     self.assert_equals(['https://brid.gy/publish/facebook'],
                        BlogPost.get_by_id('A').unsent)
 
-  def test_preprocess_superfeedr_item(self):
-    self.mox.StubOutWithMock(self.source, 'preprocess_superfeedr_item')
-
-    def add_link(item):
-      item['content'] += '\nhttp://added/by/preprocess'
-    self.source.preprocess_superfeedr_item(self.item).WithSideEffects(add_link)
-
-    self.mox.ReplayAll()
-    superfeedr.handle_feed(self.feed, self.source)
-    self.assertEquals(['http://added/by/preprocess'], BlogPost.query().get().unsent)
-
   def test_notify_handler(self):
     class Handler(superfeedr.NotifyHandler):
       SOURCE_CLS = testutil.FakeSource

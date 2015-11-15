@@ -87,7 +87,6 @@ def handle_feed(feed, source):
       logging.error('Dropping feed item without permalinkUrl or id!')
       continue
 
-    source.preprocess_superfeedr_item(item)
     # extract links from content, discarding self links.
     #
     # i don't use get_webmention_target[s]() here because they follows redirects

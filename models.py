@@ -498,24 +498,6 @@ class Source(StringIdModel):
     return re.sub('^https?://(www\.)?', scheme + '://' + subdomain,
                   syndication_url)
 
-  def preprocess_superfeedr_item(self, item):
-    """Process a Superfeeder item field before extracting links from it.
-
-    The item is modified in place. Default is noop. Indivudal sources can
-    override this with source-specific logic.
-
-    I used to use this to remove WordPress.com category and tag links from
-    content, but I ended up just filtering out all self-links instead. Details
-    in https://github.com/snarfed/bridgy/issues/207.
-
-    TODO: remove this if it ends up unused
-
-    Args:
-      item: dict, a JSON Superfeedr feed item. Details:
-            http://documentation.superfeedr.com/schema.html#json
-    """
-    pass
-
   def on_new_syndicated_post(self, syndpost):
     """Called when a new SyndicatedPost is stored for this source.
 
