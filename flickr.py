@@ -87,6 +87,19 @@ class Flickr(models.Source):
     return url
 
 
+class StartHandler(util.Handler):
+  """Custom handler that sets OAuth scopes based on the requested
+  feature(s)
+  """
+  def post(self):
+    features = self.request.get('feature')
+    features = features.split(',') if features else []
+    starter = util.oauth_starter(oauth_flickr.StartHandler).to(
+      '/flickr/add',
+      scopes='write' if 'publish' in features else 'read')
+    starter(self.request, self.response).post()
+
+
 class AddFlickr(oauth_flickr.CallbackHandler, util.Handler):
   def finish(self, auth_entity, state=None):
     logging.debug('finish with %s, %s', auth_entity, state)
@@ -94,7 +107,10 @@ class AddFlickr(oauth_flickr.CallbackHandler, util.Handler):
 
 
 application = webapp2.WSGIApplication([
-  ('/flickr/start', util.oauth_starter(oauth_flickr.StartHandler).to('/flickr/add')),
+  ('/flickr/start', StartHandler),
   ('/flickr/add', AddFlickr),
-  ('/flickr/delete/finish', oauth_flickr.CallbackHandler.to('/delete/finish')),
+  ('/flickr/delete/finish',
+   oauth_flickr.CallbackHandler.to('/delete/finish')),
+  ('/flickr/publish/start',
+   oauth_flickr.StartHandler.to('/publish/flickr/finish')),
 ], debug=appengine_config.DEBUG)

@@ -38,19 +38,21 @@ import appengine_config
 from appengine_config import HTTP_TIMEOUT
 
 from bs4 import BeautifulSoup
+from facebook import FacebookPage
+from flickr import Flickr
+from googleplus import GooglePlusPage
 from granary import microformats2
 from granary import source as gr_source
+from instagram import Instagram
+from models import Publish, PublishedPage
 from oauth_dropins import facebook as oauth_facebook
+from oauth_dropins import flickr as oauth_flickr
 from oauth_dropins import instagram as oauth_instagram
 from oauth_dropins import twitter as oauth_twitter
-from facebook import FacebookPage
-from googleplus import GooglePlusPage
-import html2text
-from instagram import Instagram
-import models
-from models import Publish, PublishedPage
-import requests
 from twitter import Twitter
+import html2text
+import models
+import requests
 import util
 import webapp2
 import webmention
@@ -58,12 +60,9 @@ import webmention
 from google.appengine.ext import ndb
 from google.appengine.ext.webapp import template
 
-SOURCE_NAMES = {
-  cls.SHORT_NAME: cls for cls in
-  (FacebookPage, Twitter, Instagram, GooglePlusPage)}
-SOURCE_DOMAINS = {
-  cls.GR_CLASS.DOMAIN: cls for cls in
-  (FacebookPage, Twitter, Instagram, GooglePlusPage)}
+SOURCES = (FacebookPage, Flickr, Twitter, Instagram, GooglePlusPage)
+SOURCE_NAMES = {cls.SHORT_NAME: cls for cls in SOURCES}
+SOURCE_DOMAINS = {cls.GR_CLASS.DOMAIN: cls for cls in SOURCES}
 
 
 class Handler(webmention.WebmentionHandler):
@@ -120,7 +119,8 @@ class Handler(webmention.WebmentionHandler):
     source_cls = SOURCE_NAMES.get(path_parts[-1])
     if (domain not in ('brid.gy', 'www.brid.gy', 'localhost:8080') or
         len(path_parts) != 2 or path_parts[0] != '/publish' or not source_cls):
-      return self.error('Target must be brid.gy/publish/{facebook,twitter,instagram}')
+      return self.error(
+        'Target must be brid.gy/publish/{facebook,flickr,twitter,instagram}')
     elif source_cls == GooglePlusPage:
       return self.error('Sorry, %s is not yet supported.' %
                         source_cls.GR_CLASS.NAME)
@@ -540,13 +540,19 @@ class SendHandler(Handler):
       self.mail_me(error)
 
 
-# We want CallbackHandler.get() and SendHandler.finish(), so put CallbackHandler
-# first and override finish.
+# We want CallbackHandler.get() and SendHandler.finish(), so put
+# CallbackHandler first and override finish.
 class FacebookSendHandler(oauth_facebook.CallbackHandler, SendHandler):
   finish = SendHandler.finish
 
+
+class FlickrSendHandler(oauth_flickr.CallbackHandler, SendHandler):
+  finish = SendHandler.finish
+
+
 class TwitterSendHandler(oauth_twitter.CallbackHandler, SendHandler):
   finish = SendHandler.finish
+
 
 # Instagram only allows a single OAuth callback URL, so that's handled in
 # instagram.py and it redirects here for publishes.
@@ -591,6 +597,7 @@ application = webapp2.WSGIApplication([
     ('/publish/webmention', WebmentionHandler),
     ('/publish/(facebook|twitter|instagram)', webmention.WebmentionGetHandler),
     ('/publish/facebook/finish', FacebookSendHandler),
+    ('/publish/flickr/finish', FlickrSendHandler),
     ('/publish/instagram/finish', InstagramSendHandler),
     ('/publish/twitter/finish', TwitterSendHandler),
     ],
