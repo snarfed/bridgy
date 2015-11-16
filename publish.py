@@ -137,10 +137,6 @@ class Handler(webmention.WebmentionHandler):
     elif not domain:
       return self.error('Could not parse source URL %s' % url)
 
-    # When debugging locally, use snarfed.org for localhost webmentions
-    if appengine_config.DEBUG and domain == 'localhost':
-      domain = 'snarfed.org'
-
     # look up source by domain
     domain = domain.lower()
     sources = source_cls.query().filter(source_cls.domains == domain).fetch(100)
