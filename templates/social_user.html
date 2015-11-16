@@ -48,7 +48,7 @@ WordPress.com, <a href="/">sign up here!</a>
 <div class="row">
 
 <!-- Listen UI -->
-<div id="listen-ui" class="{% if source.SHORT_NAME == 'facebook' or source.SHORT_NAME == 'twitter' or source.SHORT_NAME == 'instagram' %}col-sm-6{% endif %}">
+<div id="listen-ui" class="{% if source.SHORT_NAME == 'facebook' or source.SHORT_NAME == 'twitter' or source.SHORT_NAME == 'instagram' or source.SHORT_NAME == 'flickr' %}col-sm-6{% endif %}">
 
 {% if "listen" in source.features and source.status != "disabled" %}
 <data class="p-bridgy-listen-status" value="enabled">

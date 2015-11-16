@@ -228,8 +228,9 @@ class PublishTest(testutil.HandlerTest):
     self.assert_created('', target='https://brid.gy/publish/faux')
 
   def test_bad_target_url(self):
-    self.assert_error('Target must be brid.gy/publish/{facebook,twitter,instagram}',
-                      target='foo')
+    self.assert_error(
+      'Target must be brid.gy/publish/{facebook,flickr,twitter,instagram}',
+      target='foo')
 
   def test_unsupported_source_class(self):
     self.assert_error('Sorry, Google+ is not yet supported.',

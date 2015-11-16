@@ -68,7 +68,7 @@ handlers:
   script: facebook.application
   secure: always
 
-- url: /flickr/(start|add|delete)(/.*)?
+- url: /flickr/(start|add|delete|publish)(/.*)?
   script: flickr.application
   secure: always
 

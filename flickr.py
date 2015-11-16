@@ -87,14 +87,48 @@ class Flickr(models.Source):
     return url
 
 
-class AddFlickr(oauth_flickr.CallbackHandler, util.Handler):
+class AuthHandler(util.Handler):
+  """Base OAuth handler for Flickr.
+  """
+  def start_oauth_flow(self, feature):
+    starter = util.oauth_starter(
+      oauth_flickr.StartHandler, feature=feature
+    ).to(
+      '/flickr/add', scopes='write' if feature == 'publish' else 'read'
+    )
+    return starter(self.request, self.response).post()
+
+
+class StartHandler(AuthHandler):
+  """Custom handler to start Flickr auth process
+  """
+  def post(self):
+    return self.start_oauth_flow(self.request.get('feature'))
+
+
+class AddFlickr(oauth_flickr.CallbackHandler, AuthHandler):
+  """Custom handler to add Flickr source when auth completes. If this
+  account was previously authorized with greater permissions, this will
+  trigger another round of auth with elevated permissions.
+  """
   def finish(self, auth_entity, state=None):
     logging.debug('finish with %s, %s', auth_entity, state)
-    self.maybe_add_or_delete_source(Flickr, auth_entity, state)
+    source = self.maybe_add_or_delete_source(Flickr, auth_entity, state)
+    feature = self.decode_state_parameter(state).get('feature')
+    if source and feature == 'listen' and 'publish' in source.features:
+      # we had signed up previously with publish, so we'll reauth to
+      # avoid losing that permission
+      logging.info('Restarting OAuth flow to get publish permissions.')
+      source.features.remove('publish')
+      source.put()
+      return self.start_oauth_flow('publish')
 
 
 application = webapp2.WSGIApplication([
-  ('/flickr/start', util.oauth_starter(oauth_flickr.StartHandler).to('/flickr/add')),
+  ('/flickr/start', StartHandler),
   ('/flickr/add', AddFlickr),
-  ('/flickr/delete/finish', oauth_flickr.CallbackHandler.to('/delete/finish')),
+  ('/flickr/delete/finish',
+   oauth_flickr.CallbackHandler.to('/delete/finish')),
+  ('/flickr/publish/start',
+   oauth_flickr.StartHandler.to('/publish/flickr/finish')),
 ], debug=appengine_config.DEBUG)
