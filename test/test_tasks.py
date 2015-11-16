@@ -994,6 +994,7 @@ class PollTest(TaskQueueTest):
     class FakeGrSource_Instagram(testutil.FakeGrSource):
       DOMAIN = 'instagram'
     class FakeSource_Instagram(testutil.FakeSource):
+      SHORT_NAME = 'fake_instagram'
       GR_CLASS = FakeGrSource_Instagram
 
     self.sources[0] = FakeSource_Instagram.new(
@@ -1013,6 +1014,7 @@ class PollTest(TaskQueueTest):
     class FakeGrSource_Twitter(testutil.FakeGrSource):
       DOMAIN = 'twitter'
     class FakeSource_Twitter(testutil.FakeSource):
+      SHORT_NAME = 'fake_twitter'
       GR_CLASS = FakeGrSource_Twitter
 
     self.sources[1] = FakeSource_Twitter.new(

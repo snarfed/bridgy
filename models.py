@@ -54,6 +54,7 @@ class SourceMeta(ndb.MetaModel):
   """Source metaclass. Registers all source classes in the sources global."""
   def __new__(meta, name, bases, class_dict):
     cls = ndb.MetaModel.__new__(meta, name, bases, class_dict)
+    assert cls.SHORT_NAME not in sources, cls
     sources[cls.SHORT_NAME] = cls
     return cls
 

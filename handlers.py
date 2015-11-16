@@ -144,7 +144,7 @@ class ItemHandler(webapp2.RequestHandler):
 
     self.source = source_cls.get_by_id(string_id)
     if not self.source:
-      self.abort(400, '%s %s not found' % (source_short_name, string_id))
+      self.abort(400, 'Source %s %s not found' % (source_short_name, string_id))
 
     format = self.request.get('format', 'html')
     if format not in ('html', 'json'):
