@@ -288,7 +288,7 @@ class Handler(webmention.WebmentionHandler):
           error_plain='Could not find content in %s' % self.fetched.url,
           error_html='Could not find <a href="http://microformats.org/">content</a> in %s' % self.fetched.url)
 
-    self.preprocess_activity(obj, ignore_formatting=ignore_formatting)
+    self.preprocess(obj, ignore_formatting=ignore_formatting)
 
     omit_link = self.omit_link()
     if omit_link is None:
@@ -345,7 +345,7 @@ class Handler(webmention.WebmentionHandler):
       return gr_source.creation_result(
         json.dumps(self.entity.published, indent=2))
 
-  def preprocess_activity(self, activity, ignore_formatting=False):
+  def preprocess(self, activity, ignore_formatting=False):
     """Preprocesses an item before trying to publish it.
 
     Specifically:
@@ -354,10 +354,11 @@ class Handler(webmention.WebmentionHandler):
       formatted like in the browser.
 
     Args:
-      activity: an ActivityStreams dict of the activity being published
+      activity: an ActivityStreams activity or object being published
       ignore_formatting: whether to use content text as is, instead of
         converting its HTML to plain text styling (newlines, etc.)
     """
+    self.source.preprocess_for_publish(activity)
     self.expand_target_urls(activity)
 
     content = activity.get('content')

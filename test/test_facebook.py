@@ -483,11 +483,11 @@ class FacebookPageTest(testutil.ModelsTest):
     fb = self.fb.key.get()
     self.assertEquals(fb.bridgy_url(handler), self.response.headers['Location'])
 
-  def test_preprocess_for_publish(self):
+  @staticmethod
+  def prepare_person_tags():
     FacebookPage(id='555', username='username').put()
     FacebookPage(id='666', inferred_username='inferred').put()
     FacebookPage(id='777', domains=['my.domain']).put()
-
     input_urls = (
       'https://unknown/',
       'https://www.facebook.com/444',
@@ -504,7 +504,10 @@ class FacebookPageTest(testutil.ModelsTest):
       'https://www.facebook.com/unknown',
       'https://www.facebook.com/777',
     )
+    return input_urls, expected_urls
 
+  def test_preprocess_for_publish(self):
+    input_urls, expected_urls = self.prepare_person_tags()
     activity = {
       'object': {
         'objectType': 'note',
@@ -512,5 +515,6 @@ class FacebookPageTest(testutil.ModelsTest):
         'tags': [{'objectType': 'person', 'url': url} for url in input_urls],
       },
     }
+
     self.fb.preprocess_for_publish(activity)
     self.assert_equals(expected_urls, [t['url'] for t in activity['object']['tags']])

@@ -498,14 +498,14 @@ class Source(StringIdModel):
     return re.sub('^https?://(www\.)?', scheme + '://' + subdomain,
                   syndication_url)
 
-  def preprocess_for_publish(self, activity):
-    """Preprocess an activity before trying to publish it.
+  def preprocess_for_publish(self, obj):
+    """Preprocess an object before trying to publish it.
 
-    The activity is modified in place. Default is noop. Individual sources can
+    The object is modified in place. Default is noop. Individual sources can
     override this with source-specific logic.
 
     Args:
-      activity: ActivityStreams activity dict
+      obj: ActivityStreams activity or object dict
     """
     pass
 

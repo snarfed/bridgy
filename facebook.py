@@ -228,12 +228,13 @@ class FacebookPage(models.Source):
         self.resolved_object_ids_json = json.dumps(
           {str(id): resolved[str(id)] for id in keep})
 
-  def preprocess_for_publish(self, activity):
+  def preprocess_for_publish(self, obj):
     """Populates person tags with Facebook user ids where possible.
 
     Looks up existing sources by username, inferred username, and domain.
     """
-    for tag in activity.get('object', {}).get('tags', []):
+    obj = obj.get('object', {}) or obj
+    for tag in obj.get('tags', []):
       url = tag.get('url')
       if url and tag.get('objectType') == 'person':
         domain = util.domain_from_link(url)
