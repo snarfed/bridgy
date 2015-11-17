@@ -1006,6 +1006,8 @@ class PollTest(TaskQueueTest):
 
     class FakeGrSource_Instagram(testutil.FakeGrSource):
       DOMAIN = 'instagram'
+      NAME = 'fake_instagram'
+
     class FakeSource_Instagram(testutil.FakeSource):
       SHORT_NAME = 'fake_instagram'
       GR_CLASS = FakeGrSource_Instagram
@@ -1015,7 +1017,7 @@ class PollTest(TaskQueueTest):
       domain_urls=['http://author'],
       features=['listen'],
       last_hfeed_fetch=NOW,
-      last_syndication_url = util.EPOCH)
+      last_syndication_url=util.EPOCH)
 
     for act in self.activities:
       act['object']['url'] = 'http://instagram/post/url'
@@ -1026,6 +1028,8 @@ class PollTest(TaskQueueTest):
 
     class FakeGrSource_Twitter(testutil.FakeGrSource):
       DOMAIN = 'twitter'
+      NAME = 'fake_twitter'
+
     class FakeSource_Twitter(testutil.FakeSource):
       SHORT_NAME = 'fake_twitter'
       GR_CLASS = FakeGrSource_Twitter
@@ -1035,7 +1039,7 @@ class PollTest(TaskQueueTest):
       domain_urls=['http://author'],
       features=['listen'],
       last_hfeed_fetch=NOW,
-      last_syndication_url = util.EPOCH)
+      last_syndication_url=util.EPOCH)
 
     twitter_acts = copy.deepcopy(self.activities)
     for act in twitter_acts:
