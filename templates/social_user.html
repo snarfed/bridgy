@@ -122,6 +122,7 @@ WordPress.com, <a href="/">sign up here!</a>
 
 <!-- last_hfeed_fetch -->
 {% if source.domain_urls %}
+<form method="post" action="/crawl-now">
 {% with source.domain_urls|length|pluralize as s %}
 {% if source.last_hfeed_fetch == epoch %}
   Web site{{ s }} not <a href="/about#link">crawled</a> yet.
@@ -135,6 +136,9 @@ WordPress.com, <a href="/">sign up here!</a>
   </a>
 {% endif %}
 {% endwith %}
+<input name="key" type="hidden" value="{{ source.key.urlsafe }}" />
+<button id="crawl-now-button" type="submit" class="btn btn-default">Crawl now</button>
+</form>
 {% endif %}
 </p>
 
