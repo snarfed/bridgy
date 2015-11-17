@@ -343,9 +343,10 @@ class Poll(webapp2.RequestHandler):
     # original_post_discovery ran, we'll miss them. this cleanup task will
     # periodically check for updated urls. only kicks in if the author has
     # *ever* published a rel=syndication url
-    if (source.last_syndication_url and
-        source.last_hfeed_fetch + source.refetch_period()
-            <= source.last_poll_attempt):
+    if (source.last_hfeed_fetch == models.REFETCH_HFEED_TRIGGER or
+        (source.last_syndication_url and
+         source.last_hfeed_fetch + source.refetch_period()
+           <= source.last_poll_attempt)):
       logging.info('refetching h-feed for source %s', source.label())
       relationships = original_post_discovery.refetch(source)
       if relationships:

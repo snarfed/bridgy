@@ -955,6 +955,19 @@ class PollTest(TaskQueueTest):
     self.assertEquals(NOW, source.last_syndication_url)
     self.assertEquals(NOW, source.last_hfeed_fetch)
 
+  def test_refetch_hfeed_trigger(self):
+    self.sources[0].domain_urls = ['http://author']
+    FakeGrSource.DOMAIN = 'source'
+    self.sources[0].last_syndication_url = None
+    self.sources[0].last_hfeed_fetch = models.REFETCH_HFEED_TRIGGER
+    self.sources[0].put()
+
+    self.sources[0].set_activities([])
+
+    self._expect_fetch_hfeed()
+    self.mox.ReplayAll()
+    self.post_task()
+
   def test_refetch_hfeed_repropagate_responses_query_expired(self):
     """https://github.com/snarfed/bridgy/issues/515"""
     self._test_refetch_hfeed_repropagate_responses_exception(
