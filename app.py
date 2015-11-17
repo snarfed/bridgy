@@ -44,10 +44,6 @@ from google.appengine.ext import ndb
 from google.appengine.ext.ndb.stats import KindStat, KindPropertyNameStat
 import webapp2
 
-# The retry button refetches h-feed if it's been more than this long since the
-# last fetch.
-RETRY_REFETCH_HFEED_BUFFER = datetime.timedelta(minutes=2)
-
 
 class DashboardHandler(webutil_handlers.TemplateHandler, util.Handler):
   """Base handler for both the front page and user pages."""
@@ -509,14 +505,33 @@ class DeleteFinishHandler(util.Handler):
 
 
 class PollNowHandler(util.Handler):
+  source = None
+
   def post(self):
-    source = ndb.Key(urlsafe=util.get_required_param(self, 'key')).get()
-    if not source:
+    self.get_source()
+    util.add_poll_task(self.source, now=True)
+    self.messages.add("Polling now. Refresh in a minute to see what's new!")
+    self.redirect(self.source.bridgy_url(self))
+
+  def get_source(self):
+    if self.source:
+      return self.source
+
+    self.source = ndb.Key(urlsafe=util.get_required_param(self, 'key')).get()
+    if not self.source:
       self.abort(400, 'source not found')
 
-    util.add_poll_task(source, now=True)
-    self.messages.add("Polling now. Refresh in a minute to see what's new!")
-    self.redirect(source.bridgy_url(self))
+
+class CrawlNowHandler(PollNowHandler):
+  def post(self):
+    self.setup_refetch_hfeed()
+    super(CrawlNowHandler, self).post()
+
+  @ndb.transactional
+  def setup_refetch_hfeed(self):
+    self.get_source()
+    self.source.last_hfeed_fetch = models.REFETCH_HFEED_TRIGGER
+    self.source.put()
 
 
 class RetryHandler(util.Handler):
@@ -535,20 +550,14 @@ class RetryHandler(util.Handler):
 
     # run OPD to pick up any new SyndicatedPosts. note that we don't refetch
     # their h-feed, so if they've added a syndication URL since we last crawled,
-    # retry won't make us pick it up. meh. background in #524.
+    # retry won't make us pick it up. background in #524.
     if entity.key.kind() == 'Response':
       source = entity.source.get()
-      fetch_hfeed = (source.last_hfeed_fetch <
-                     util.now_fn() - RETRY_REFETCH_HFEED_BUFFER)
       for activity in [json.loads(a) for a in entity.activities_json]:
         originals, mentions = original_post_discovery.discover(
-          source, activity, fetch_hfeed=fetch_hfeed, include_redirect_sources=False)
+          source, activity, fetch_hfeed=False, include_redirect_sources=False)
         targets |= original_post_discovery.targets_for_response(
           json.loads(entity.response_json), originals=originals, mentions=mentions)
-        if fetch_hfeed:
-          fetch_hfeed = False  # only do it for the first activity
-
-      Source.put_updates(source)
 
     entity.unsent = targets
     entity.put()
@@ -605,6 +614,7 @@ application = webapp2.WSGIApplication(
    ('/delete/start', DeleteStartHandler),
    ('/delete/finish', DeleteFinishHandler),
    ('/poll-now', PollNowHandler),
+   ('/crawl-now', CrawlNowHandler),
    ('/retry', RetryHandler),
    ('/(listen|publish)/?', RedirectToFrontPageHandler),
    ('/logout', LogoutHandler),

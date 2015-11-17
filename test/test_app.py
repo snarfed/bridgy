@@ -102,24 +102,22 @@ class AppTest(testutil.ModelsTest):
     self.assertEquals('http://localhost/foo/bar',
                       response.headers['Location'].split('#')[0])
 
-  def test_retry_refetches_hfeed(self):
+  def test_crawl_now(self):
     source = self.sources[0]
     source.domain_urls = ['http://orig']
-    source.last_hfeed_fetch = \
-      testutil.NOW - app.RETRY_REFETCH_HFEED_BUFFER - datetime.timedelta(minutes=1)
+    source.last_hfeed_fetch = testutil.NOW
     source.put()
 
-    self.expect_requests_get('http://orig', '<html class="h-feed"></html>')
-    self.mox.ReplayAll()
-
-    resp = self.responses[0]
-    resp.put()
-    response = app.application.get_response('/retry', method='POST',
-                                            body='key=' + resp.key.urlsafe())
+    key = source.key.urlsafe()
+    response = app.application.get_response(
+      '/crawl-now', method='POST', body='key=%s' % key)
+    self.assertEquals(source.bridgy_url(self.handler),
+                      response.headers['Location'].split('#')[0])
     self.assertEquals(302, response.status_int)
 
-    # should have refetched h-feed
-    self.assertEqual(testutil.NOW, source.key.get().last_hfeed_fetch)
+    params = testutil.get_task_params(self.taskqueue_stub.GetTasks('poll-now')[0])
+    self.assertEqual(key, params['source_key'])
+    self.assertEqual(models.REFETCH_HFEED_TRIGGER, source.key.get().last_hfeed_fetch)
 
   def test_poll_now_and_retry_response_missing_key(self):
     for endpoint in '/poll-now', '/retry':

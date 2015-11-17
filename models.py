@@ -24,6 +24,8 @@ TYPES = VERB_TYPES + ('preview',)
 
 MAX_AUTHOR_URLS = 5
 
+REFETCH_HFEED_TRIGGER = datetime.datetime.utcfromtimestamp(-1)
+
 # maps string short name to Source subclass. populated by SourceMeta.
 sources = {}
 
