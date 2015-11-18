@@ -228,32 +228,27 @@ class FacebookPage(models.Source):
         self.resolved_object_ids_json = json.dumps(
           {str(id): resolved[str(id)] for id in keep})
 
-  def preprocess_for_publish(self, obj):
-    """Populates person tags with Facebook user ids where possible.
+  def infer_profile_url(self, url):
+    """Find a Facebook profile URL (ideally the one with the user's numeric ID)
 
     Looks up existing sources by username, inferred username, and domain.
+
+    Args:
+      url: string, a person's URL
+
+    Return:
+      a string URL for their Facebook profile (or None)
     """
-    obj = obj.get('object', {}) or obj
-    for tag in obj.get('tags', []):
-      url = tag.get('url')
-      if url and tag.get('objectType') == 'person':
-        domain = util.domain_from_link(url)
-        user = None
-
-        # look up by username
-        if domain == 'facebook.com':
-          username = urlparse.urlparse(url).path.strip('/')
-          if '/' not in username:
-            user = FacebookPage.query(ndb.OR(
-              FacebookPage.username == username,
-              FacebookPage.inferred_username == username)).get()
-
-        # look up by domain
-        elif domain:
-          user = FacebookPage.query(FacebookPage.domains == domain).get()
-
+    domain = util.domain_from_link(url)
+    if domain == self.gr_source.DOMAIN:
+      username = urlparse.urlparse(url).path.strip('/')
+      if '/' not in username:
+        user = FacebookPage.query(ndb.OR(
+          FacebookPage.username == username,
+          FacebookPage.inferred_username == username)).get()
         if user:
-          tag['url'] = self.gr_source.user_url(user.key.id())
+          return self.gr_source.user_url(user.key.id())
+    return super(FacebookPage, self).infer_profile_url(url)
 
   @ndb.transactional
   def on_new_syndicated_post(self, syndpost):

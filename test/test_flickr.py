@@ -71,3 +71,37 @@ class FlickrTest(testutil.ModelsTest):
       poll_task = tasks.Poll()
       self.flickr.updates = {}
       poll_task.poll(self.flickr)
+
+  @staticmethod
+  def prepare_person_tags():
+    flickr.Flickr(id='555', username='username').put()
+    flickr.Flickr(id='666', domains=['my.domain']).put()
+    input_urls = (
+      'https://unknown/',
+      'https://www.flickr.com/photos/444/',
+      'https://flickr.com/people/444/',
+      'https://flickr.com/photos/username/',
+      'https://www.flickr.com/people/username/',
+      'https://my.domain/',
+    )
+    expected_urls = (
+      'https://unknown/',
+      'https://www.flickr.com/photos/444/',
+      'https://flickr.com/people/444/',
+      'https://flickr.com/photos/username/',
+      'https://www.flickr.com/people/username/',
+      'https://www.flickr.com/people/666/',
+    )
+    return input_urls, expected_urls
+
+  def test_preprocess_for_publish(self):
+    input_urls, expected_urls = self.prepare_person_tags()
+    activity = {
+      'object': {
+        'objectType': 'note',
+        'content': 'a msg',
+        'tags': [{'objectType': 'person', 'url': url} for url in input_urls],
+      },
+    }
+    self.flickr.preprocess_for_publish(activity)
+    self.assert_equals(expected_urls, [t['url'] for t in activity['object']['tags']])

@@ -501,16 +501,45 @@ class Source(StringIdModel):
     return re.sub('^https?://(www\.)?', scheme + '://' + subdomain,
                   syndication_url)
 
+  def infer_profile_url(self, url):
+    """Given an arbitrary URL representing a person, try to find their
+    profile URL for *this* service.
+
+    Queries Bridgy's registered accounts for users with a particular
+    domain in their silo profile.
+
+    Args:
+      url: string, a person's URL
+
+    Return:
+      a string URL for their profile on this service (or None)
+    """
+    domain = util.domain_from_link(url)
+    if domain == self.gr_source.DOMAIN:
+      return url
+    user = self.__class__.query(self.__class__.domains == domain).get()
+    if user:
+      return self.gr_source.user_url(user.key.id())
+
   def preprocess_for_publish(self, obj):
     """Preprocess an object before trying to publish it.
 
-    The object is modified in place. Default is noop. Individual sources can
-    override this with source-specific logic.
+    By default this tries to massage person tags so that the tag's
+    "url" points to the person's profile on this service (as opposed
+    to a person's homepage).
+
+    The object is modified in place.
 
     Args:
       obj: ActivityStreams activity or object dict
     """
-    pass
+    obj = obj.get('object', {}) or obj
+    for tag in obj.get('tags', []):
+      if tag.get('objectType') == 'person':
+        urls = [tag.get('url')] + [d.get('value') for d in tag.get('urls', [])]
+        silo_url = next((self.infer_profile_url(u) for u in urls if u), None)
+        if silo_url:
+          tag['url'] = silo_url
 
   def on_new_syndicated_post(self, syndpost):
     """Called when a new SyndicatedPost is stored for this source.
