@@ -165,6 +165,7 @@ class FakeSource(FakeBase, Source):
 
   gr_source = FakeGrSource()
   last_search_query = None
+  username = ndb.StringProperty()
 
   def __init__(self, *args, **kwargs):
     super(FakeSource, self).__init__(*args, **kwargs)

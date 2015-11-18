@@ -7,6 +7,7 @@ import datetime
 import itertools
 import json
 import logging
+import urllib
 import urlparse
 
 import appengine_config
@@ -197,6 +198,7 @@ class UserHandler(DashboardHandler):
     self.source = cls.lookup(id)
 
     if not self.source:
+      id = urllib.unquote(id).decode('utf-8')
       key = cls.query(ndb.OR(*[ndb.GenericProperty(prop) == id for prop in
                                'domains', 'inferred_username', 'name', 'username'])
                       ).get(keys_only=True)

@@ -1,3 +1,4 @@
+# coding=utf-8
 """Unit tests for app.py.
 """
 import datetime
@@ -210,12 +211,13 @@ class AppTest(testutil.ModelsTest):
     self.assertEquals(200, resp.status_int)
 
   def test_user_page_lookup_with_username_etc(self):
-    self.sources[0].name = 'FooBar'
+    self.sources[0].username = 'FooBar'
+    self.sources[0].name = u'Snoøpy Barrett'
     self.sources[0].domains = ['foox.com']
     self.sources[0].put()
 
-    for id in 'FooBar', 'foox.com':
-      resp = app.application.get_response('/fake/%s' % id)
+    for id in 'FooBar', u'Snoøpy Barrett', 'foox.com':
+      resp = app.application.get_response('/fake/%s' % urllib.quote(id.encode('utf-8')))
       self.assertEquals(301, resp.status_int)
       self.assertEquals('http://localhost/fake/%s' % self.sources[0].key.id(),
                         resp.headers['Location'])
