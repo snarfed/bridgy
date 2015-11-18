@@ -537,7 +537,11 @@ class Source(StringIdModel):
     for tag in obj.get('tags', []):
       if tag.get('objectType') == 'person':
         urls = [tag.get('url')] + [d.get('value') for d in tag.get('urls', [])]
-        silo_url = next((self.infer_profile_url(u) for u in urls if u), None)
+        silo_url = None
+        for url in urls:
+          silo_url = url and self.infer_profile_url(url)
+          if silo_url:
+            break
         if silo_url:
           tag['url'] = silo_url
 
