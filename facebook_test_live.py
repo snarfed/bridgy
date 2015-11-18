@@ -82,6 +82,9 @@ class FacebookTestLive(testutil.HandlerTest):
     self.assertEqual(['listen'], source.features)
     self.dot()
 
+    # ignore all domains except example.zz
+    util.in_webmention_blacklist = lambda domain: domain != 'example.zz'
+
     # poll
     self.stub_requests_head()
     resp = self.run_task(self.taskqueue_stub.GetTasks('poll')[0])
