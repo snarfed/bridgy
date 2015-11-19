@@ -24,4 +24,4 @@ machine:
 test:
   override:
     - python -m unittest discover -v
-    - python ./facebook_test_live.py
+    - python ./facebook_test_live.py --debug
