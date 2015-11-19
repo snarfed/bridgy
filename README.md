@@ -44,11 +44,15 @@ bash: ./bin/easy_install: ...bad interpreter: No such file or directory
 
 ImportError: cannot import name certs
 
+ImportError: No module named dev_appserver
+
 ImportError: cannot import name tweepy
 
 File ".../site-packages/tweepy/auth.py", line 68, in _get_request_token
   raise TweepError(e)
 TweepError: must be _socket.socket, not socket
+
+error: option --home not recognized
 ```
 
 There's a good chance you'll need to make changes to
@@ -76,9 +80,7 @@ ln -s <path to webmention-tools>/webmentiontools \
 ```
 
 The symlinks are necessary because App Engine's `vendor` module evidently
-doesn't follow `.egg-link` files. :/
-
-Requires the [App Engine SDK](https://developers.google.com/appengine/downloads).
+doesn't follow `.egg-link` or `.pth` files. :/
 
 This command runs the tests, pushes any changes in your local repo, and
 deploys to App Engine:
@@ -134,38 +136,3 @@ Run this command to see how much space we're currently using:
 ```
 gsutil du -hsc gs://brid-gy.appspot.com/\*
 ```
-
-Here are
-[remote_api_shell](https://developers.google.com/appengine/articles/remote_api)
-and shell commands for generating the statistics published at
-[brid.gy/about#stats](https://brid.gy/about#stats):
-
-```py
-# remote_api_shell
-from models import Response
-cursor = None
-with open('sent_urls', 'w') as sent, open('unsent_urls', 'w') as unsent:
-  while True:
-    results, cursor, _ = Response.query(
-#      projection=[Response.sent,Response.skipped,Response.error,Response.failed]
-      ).fetch_page(100, start_cursor=cursor)
-    if not results:
-      break
-    for r in results:
-      print >> sent, '\n'.join(r.sent)
-      print >> unsent, '\n'.join(r.skipped + r.error + r.failed)
-
-# shell
-sort sent_urls  | uniq > sent_uniq
-cut -f3 -d/ sent_uniq | sed 's/^www\.//' | sort --ignore-case | uniq -i > sent_domains
-wc sent_urls sent_uniq sent_domains
-```
-
-
-Related projects and docs
----
-* http://webmention.io/
-* https://github.com/vrypan/webmention-tools
-* http://indiewebcamp.com/original-post-discovery
-* http://indiewebcamp.com/permashortcitation
-* http://indiewebcamp.com/Twitter#Why_permashortcitation_instead_of_a_link
