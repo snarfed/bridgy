@@ -87,8 +87,7 @@ deploys to App Engine:
 cd ../oauth-dropins && source local/bin/activate.csh && python -m unittest discover && \
   cd ../granary && source local/bin/activate.csh && python -m unittest discover && \
   cd ../bridgy && source local/bin/activate.csh && python -m unittest discover && \
-  ./facebook_test_live.py && git push && md5sum -c keys.md5 && \
-  ~/google_appengine/appcfg.py update .
+  git push && md5sum -c keys.md5 && ~/google_appengine/appcfg.py update .
 ```
 
 [`remote_api_shell`](https://cloud.google.com/appengine/docs/python/tools/remoteapi#using_the_remote_api_shell)
