@@ -121,7 +121,7 @@ class FakeGrSource(FakeBase, gr_source.Source):
   def user_to_actor(self, user):
     return user
 
-  def create(self, obj, include_link=False):
+  def create(self, obj, include_link=False, ignore_formatting=False):
     verb = obj.get('verb')
     type = obj.get('objectType')
     if verb == 'like':
@@ -141,19 +141,25 @@ class FakeGrSource(FakeBase, gr_source.Source):
           error_plain='no %s url to reply to' % self.DOMAIN,
           error_html='no %s url to reply to' % self.DOMAIN)
 
-    content = obj['content'] + (' - %s' % obj['url'] if include_link else '')
+    content = self._content_for_create(obj, ignore_formatting=ignore_formatting)
+    if include_link:
+        content += ' - %s' % obj['url']
     ret = {'id': 'fake id', 'url': 'http://fake/url', 'content': content}
     if verb == 'rsvp-yes':
       ret['type'] = 'post'
     return gr_source.creation_result(ret)
 
-  def preview_create(self, obj, include_link=False):
+  def preview_create(self, obj, include_link=False, ignore_formatting=False):
     if obj.get('verb') == 'like':
       return gr_source.creation_result(
         abort=True, error_plain='Cannot publish likes',
         error_html='Cannot publish likes')
-    content = 'preview of ' + obj['content'] + (' - %s' % obj['url']
-                                                if include_link else '')
+
+    content = self._content_for_create(obj, ignore_formatting=ignore_formatting)
+    if include_link:
+        content += ' - %s' % obj['url']
+
+    content = 'preview of ' + content
     return gr_source.creation_result(description=content)
 
 

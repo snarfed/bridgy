@@ -50,7 +50,6 @@ from oauth_dropins import flickr as oauth_flickr
 from oauth_dropins import instagram as oauth_instagram
 from oauth_dropins import twitter as oauth_twitter
 from twitter import Twitter
-import html2text
 import models
 import requests
 import util
@@ -284,7 +283,7 @@ class Handler(webmention.WebmentionHandler):
           error_plain='Could not find content in %s' % self.fetched.url,
           error_html='Could not find <a href="http://microformats.org/">content</a> in %s' % self.fetched.url)
 
-    self.preprocess(obj, ignore_formatting=ignore_formatting)
+    self.preprocess(obj)
 
     omit_link = self.omit_link()
     if omit_link is None:
@@ -304,7 +303,7 @@ class Handler(webmention.WebmentionHandler):
 
     if self.PREVIEW:
       result = self.source.gr_source.preview_create(
-        obj, include_link=not omit_link)
+        obj, include_link=not omit_link, ignore_formatting=ignore_formatting)
       self.entity.published = result.content or result.description
       if not self.entity.published:
         return result  # there was an error
@@ -326,7 +325,8 @@ class Handler(webmention.WebmentionHandler):
         template.render('templates/preview.html', vars))
 
     else:
-      result = self.source.gr_source.create(obj, include_link=not omit_link)
+      result = self.source.gr_source.create(obj, include_link=not omit_link,
+                                            ignore_formatting=ignore_formatting)
       self.entity.published = result.content
       if not result.content:
         return result  # there was an error
@@ -341,33 +341,17 @@ class Handler(webmention.WebmentionHandler):
       return gr_source.creation_result(
         json.dumps(self.entity.published, indent=2))
 
-  def preprocess(self, activity, ignore_formatting=False):
+  def preprocess(self, activity):
     """Preprocesses an item before trying to publish it.
 
     Specifically:
     * Expands inReplyTo/object URLs with rel=syndication URLs.
-    * Renders the HTML content to text using html2text so that whitespace is
-      formatted like in the browser.
 
     Args:
       activity: an ActivityStreams activity or object being published
-      ignore_formatting: whether to use content text as is, instead of
-        converting its HTML to plain text styling (newlines, etc.)
     """
     self.source.preprocess_for_publish(activity)
     self.expand_target_urls(activity)
-
-    content = activity.get('content')
-    if content and not ignore_formatting:
-      h = html2text.HTML2Text()
-      h.unicode_snob = True
-      h.body_width = 0  # don't wrap lines
-      h.ignore_links = True
-      h.ignore_images = True
-      activity['content'] = '\n'.join(
-        # strip trailing whitespace that html2text adds to ends of some lines
-        line.rstrip() for line in h.unescape(h.handle(content)).splitlines())
-      logging.info('Rendered content to:\n%s', activity['content'])
 
   def expand_target_urls(self, activity):
     """Expand the inReplyTo or object fields of an ActivityStreams object
