@@ -1060,3 +1060,31 @@ my message
                         target='https://brid.gy/publish/facebook')
     self.assert_success('my message', preview=True,
                         target='https://brid.gy/publish/facebook')
+
+  def test_multi_rsvp(self):
+    """Test RSVP that replies to multiple event URLs like
+    http://tantek.com/2015/308/t1/homebrew-website-club-mozsf
+    """
+
+    html = """<div class="h-entry">
+    <data class="p-rsvp" value="yes">RSVP yes</data> to:
+    <a class="u-in-reply-to h-cite" rel="in-reply-to"
+      href="https://kylewm.com/2015/11/sf-homebrew-website-club">
+        https://kylewm.com/2015/11/sf-homebrew-website-club
+    </a>
+    <a class="u-in-reply-to h-cite" rel="in-reply-to"
+      href="https://www.facebook.com/events/1510849812560015/">
+        https://www.facebook.com/events/1510849812560015/
+    </a>
+    <p class="p-name e-content">going to Homebrew Website Club 17:30</p>
+    <input class="u-url" type="url"
+      value="http://tantek.com/2015/308/t1/homebrew-website-club-mozsf" />
+    </div>"""
+
+    self.expect_requests_get('http://foo.com/bar', html)
+    self.expect_requests_get('https://kylewm.com/2015/11/sf-homebrew-website-club', '')
+
+    # make sure create() isn't called
+    self.mox.StubOutWithMock(self.source.gr_source, 'create', use_mock_anything=True)
+    self.mox.ReplayAll()
+    self.assert_success('going to Homebrew', preview=True)

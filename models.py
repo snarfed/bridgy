@@ -533,7 +533,6 @@ class Source(StringIdModel):
     Args:
       obj: ActivityStreams activity or object dict
     """
-    obj = obj.get('object', {}) or obj
     for tag in obj.get('tags', []):
       if tag.get('objectType') == 'person':
         urls = [tag.get('url')] + [d.get('value') for d in tag.get('urls', [])]
@@ -544,6 +543,11 @@ class Source(StringIdModel):
             break
         if silo_url:
           tag['url'] = silo_url
+
+    # recurse on contained object(s)
+    children = obj.get('object', [])
+    for obj in (children if isinstance(children, list) else [children]):
+      self.preprocess_for_publish(obj)
 
   def on_new_syndicated_post(self, syndpost):
     """Called when a new SyndicatedPost is stored for this source.
