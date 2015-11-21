@@ -422,11 +422,11 @@ asdf http://other/link qwert
 
   <div class="e-content p-name">
 
-  <a class="u-mention" href="http://upstream/only"></a>
-  <a class="u-mention" href="http://mention/only"></a>
-  <a class="u-mention" href="https://reply"></a>
   <a class="u-mention" href="https://upstream"></a>
+  <a class="u-mention" href="http://upstream/only"></a>
   <a class="u-mention" href="http://all"></a>
+  <a class="u-mention" href="https://reply"></a>
+  <a class="u-mention" href="http://mention/only"></a>
   </div>
 
   <a class="u-in-reply-to" href="https://reply/only"></a>
