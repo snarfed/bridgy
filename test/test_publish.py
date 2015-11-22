@@ -516,12 +516,14 @@ this is my article
 
     self.mox.StubOutWithMock(self.source.gr_source, 'create',
                              use_mock_anything=True)
-    self.source.gr_source.create(mox.IgnoreArg(), include_link=True
+    self.source.gr_source.create(mox.IgnoreArg(), include_link=True,
+                                 ignore_formatting=False
                                  ).AndRaise(exc.HTTPPaymentRequired('fooey'))
 
     self.mox.StubOutWithMock(self.source.gr_source, 'preview_create',
                              use_mock_anything=True)
-    self.source.gr_source.preview_create(mox.IgnoreArg(), include_link=False
+    self.source.gr_source.preview_create(mox.IgnoreArg(), include_link=False,
+                                         ignore_formatting=False
                                          ).AndRaise(Exception('bar'))
 
     self.mox.ReplayAll()
@@ -631,7 +633,8 @@ foo<br /> <blockquote>bar</blockquote>
       'displayName': 'In reply to',
       'url': 'http://foo.com/bar',
       'objectType': 'comment',
-    }, include_link=True).AndReturn(gr_source.creation_result({
+    }, include_link=True, ignore_formatting=False). \
+    AndReturn(gr_source.creation_result({
       'url': 'http://fake/url',
       'id': 'http://fake/url',
       'content': 'This is a reply',
@@ -670,7 +673,8 @@ foo<br /> <blockquote>bar</blockquote>
                  {'url': 'https://fa.ke/a/b'},
                  {'url': 'https://flic.kr/c/d'}],
       'objectType': 'activity',
-    }, include_link=True).AndReturn(gr_source.creation_result({
+    }, include_link=True, ignore_formatting=False). \
+    AndReturn(gr_source.creation_result({
       'url': 'http://fake/url',
       'id': 'http://fake/url',
       'content': 'liked this',
@@ -707,7 +711,8 @@ foo<br /> <blockquote>bar</blockquote>
       'object': [{'url': 'http://orig.domain/baz'},
                  {'url': 'https://fa.ke/a/b'}],
       'objectType': 'activity',
-    }, include_link=True).AndReturn(gr_source.creation_result({
+    }, include_link=True, ignore_formatting=False). \
+    AndReturn(gr_source.creation_result({
       'url': 'http://fake/url',
       'id': 'http://fake/url',
       'content': 'reposted this',
@@ -747,7 +752,8 @@ foo<br /> <blockquote>bar</blockquote>
       'object': [{'url': 'http://orig.domain/baz'},
                  {'url': 'https://fa.ke/a/b'}],
       'objectType': 'activity',
-    }, include_link=True).AndReturn(gr_source.creation_result({
+    }, include_link=True, ignore_formatting=False). \
+    AndReturn(gr_source.creation_result({
       'url': 'http://fake/url',
       'id': 'http://fake/url',
       'content': 'RSVPd yes',
@@ -777,7 +783,8 @@ foo<br /> <blockquote>bar</blockquote>
       'displayName': 'In reply to',
       'url': 'http://foo.com/bar',
       'objectType': 'comment',
-    }, include_link=True).AndReturn(gr_source.creation_result({
+    }, include_link=True, ignore_formatting=False). \
+    AndReturn(gr_source.creation_result({
       'url': 'http://fake/url',
       'id': 'http://fake/url',
       'content': 'This is a reply',
@@ -812,7 +819,8 @@ foo<br /> <blockquote>bar</blockquote>
       'url': 'http://foo.com/bar',
       'object': [{'url': 'http://orig.domain/baz'}],
       'objectType': 'activity',
-    }, include_link=True).AndReturn(gr_source.creation_result({
+    }, include_link=True, ignore_formatting=False). \
+    AndReturn(gr_source.creation_result({
       'url': 'http://fake/url',
       'id': 'http://fake/url',
       'content': 'liked this',
@@ -843,8 +851,9 @@ foo<br /> <blockquote>bar</blockquote>
       'displayName': 'yes',
       'object': [{'url': 'http://fa.ke/homebrew-website-club'}],
       'objectType': 'activity',
-      'content': 'yes',
-    }, include_link=True).AndReturn(gr_source.creation_result({
+      'content': '\n<span class="p-rsvp" value="yes">yes</span>\n<a class="u-in-reply-to" href="http://fa.ke/homebrew-website-club"></a>\n',
+    }, include_link=True, ignore_formatting=False). \
+    AndReturn(gr_source.creation_result({
       'url': 'http://fake/url',
       'id': 'http://fake/url',
       'content': 'RSVPd yes',
@@ -1024,7 +1033,7 @@ Join us!"""
     obj = {
       'objectType': 'note',
       'url': 'http://foo.com/bar',
-      'content': 'my message',
+      'content': '\nmy message\n',
       'displayName': 'my message\n\nUnknown,444,Username,Inferred,Unknown,My.domain',
       'tags': [{
         'objectType': 'person',
@@ -1049,11 +1058,13 @@ my message
     self.mox.StubOutWithMock(self.source.gr_source, 'create',
                              use_mock_anything=True)
     result = gr_source.creation_result(content={'content': 'my message'})
-    self.source.gr_source.create(obj, include_link=True).AndReturn(result)
+    self.source.gr_source.create(obj, include_link=True,
+                                 ignore_formatting=False).AndReturn(result)
 
     self.mox.StubOutWithMock(self.source.gr_source, 'preview_create',
                              use_mock_anything=True)
-    self.source.gr_source.preview_create(obj, include_link=False).AndReturn(result)
+    self.source.gr_source.preview_create(obj, include_link=False,
+                                         ignore_formatting=False).AndReturn(result)
     self.mox.ReplayAll()
 
     self.assert_created('my message', interactive=False,
