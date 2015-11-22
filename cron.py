@@ -18,7 +18,7 @@ from twitter import Twitter
 import util
 import webapp2
 
-TWITTER_API_USER_LOOKUP = 'https://api.twitter.com/1.1/users/lookup.json?screen_name=%s'
+TWITTER_API_USER_LOOKUP = 'users/lookup.json?screen_name=%s'
 TWITTER_USERS_PER_LOOKUP = 100  # max # of users per API call
 
 

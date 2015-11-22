@@ -8,6 +8,7 @@ import json
 
 
 from granary import instagram as gr_instagram
+from granary import twitter as gr_twitter
 import oauth_dropins
 from oauth_dropins import instagram as oauth_instagram
 from oauth_dropins import twitter as oauth_twitter
@@ -83,10 +84,9 @@ class CronTest(ModelsTest):
                   }]
 
     cron.TWITTER_USERS_PER_LOOKUP = 2
-    self.expect_urlopen(cron.TWITTER_API_USER_LOOKUP % 'a,c',
-                        json.dumps(user_objs))
-    self.expect_urlopen(cron.TWITTER_API_USER_LOOKUP % 'b',
-                        json.dumps(user_objs))
+    lookup_url = gr_twitter.API_BASE + cron.TWITTER_API_USER_LOOKUP
+    self.expect_urlopen(lookup_url % 'a,c', json.dumps(user_objs))
+    self.expect_urlopen(lookup_url % 'b', json.dumps(user_objs))
     self.mox.ReplayAll()
 
     resp = cron.application.get_response('/cron/update_twitter_pictures')
