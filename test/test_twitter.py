@@ -56,24 +56,6 @@ class TwitterTest(testutil.ModelsTest):
     self.assertEqual('https://twitter.com/snarfed_org/profile_image?size=original',
                      Twitter.new(self.handler, auth_entity=self.auth_entity).picture)
 
-  # def test_find_user_mentions(self):
-  #   mention_1 = {
-  #     'objectType': 'person',
-  #     'id': 'tag:twitter.com,2013:snarfed_org',
-  #   }
-  #   mention_2 = copy.copy(mention_1)
-  #   activity = {
-  #     'object': {
-  #       'tags': [
-  #         mention_1,
-  #         {'objectType': 'person', 'id': 'tag:twitter.com,2013:bob_org'},
-  #         mention_2,
-  #       ],
-  #     },
-  #   }
-  #   self.assertEquals([mention_1, mention_2],
-  #                     Twitter.find_user_mentions(activity))
-
   def test_get_like(self):
     """get_like() should use the Response stored in the datastore."""
     like = {
