@@ -32,20 +32,20 @@ class TwitterTest(testutil.ModelsTest):
                             'profile_image_url': 'http://pi.ct/ure',
                             }))
     self.auth_entity.put()
+    self.tw = Twitter.new(self.handler, auth_entity=self.auth_entity)
 
   def test_new(self):
-    tw = Twitter.new(self.handler, auth_entity=self.auth_entity)
-    self.assertEqual(self.auth_entity, tw.auth_entity.get())
-    self.assertEqual('my_key', tw.gr_source.access_token_key)
-    self.assertEqual('my_secret', tw.gr_source.access_token_secret)
-    self.assertEqual('snarfed_org', tw.key.string_id())
+    self.assertEqual(self.auth_entity, self.tw.auth_entity.get())
+    self.assertEqual('my_key', self.tw.gr_source.access_token_key)
+    self.assertEqual('my_secret', self.tw.gr_source.access_token_secret)
+    self.assertEqual('snarfed_org', self.tw.key.string_id())
     self.assertEqual('https://twitter.com/snarfed_org/profile_image?size=original',
-                     tw.picture)
-    self.assertEqual('Ryan Barrett', tw.name)
-    self.assertEqual('https://twitter.com/snarfed_org', tw.url)
-    self.assertEqual('https://twitter.com/snarfed_org', tw.silo_url())
-    self.assertEqual('tag:twitter.com,2013:snarfed_org', tw.user_tag_id())
-    self.assertEqual('snarfed_org (Twitter)', tw.label())
+                     self.tw.picture)
+    self.assertEqual('Ryan Barrett', self.tw.name)
+    self.assertEqual('https://twitter.com/snarfed_org', self.tw.url)
+    self.assertEqual('https://twitter.com/snarfed_org', self.tw.silo_url())
+    self.assertEqual('tag:twitter.com,2013:snarfed_org', self.tw.user_tag_id())
+    self.assertEqual('snarfed_org (Twitter)', self.tw.label())
 
   def test_new_massages_profile_image(self):
     """We should use profile_image_url_https and drop '_normal' if possible."""
@@ -53,19 +53,46 @@ class TwitterTest(testutil.ModelsTest):
     user['profile_image_url_https'] = 'https://foo_normal.xyz'
     self.auth_entity.user_json = json.dumps(user)
 
-    tw = Twitter.new(self.handler, auth_entity=self.auth_entity)
-    # self.assertEqual('https://foo.xyz', tw.picture)
     self.assertEqual('https://twitter.com/snarfed_org/profile_image?size=original',
-                     tw.picture)
+                     Twitter.new(self.handler, auth_entity=self.auth_entity).picture)
 
-  def test_get_activities(self):
+  def test_get_activities_injects_web_site_urls_into_mentions(self):
+    mention_tweet = {
+      'id_str': '2',
+      'entities': {'user_mentions': [
+        {'id_str': '123', 'screen_name': 'snarfed_org'},
+        {'id_str': '456', 'screen_name': 'bob'},
+      ]},
+    }
+    mention_activity = {
+      'id': 'tag:twitter.com,2013:2',
+      'verb': 'post',
+      'object': {
+        'objectType': 'note',
+        'id': 'tag:twitter.com,2013:2',
+        'tags': [{
+          'objectType': 'person',
+          'id': 'tag:twitter.com,2013:snarfed_org',
+          'url': 'https://twitter.com/snarfed_org',
+          # check that we inject their web sites
+        'urls': [{'value': 'http://site1/'}, {'value': 'http://site2/'}],
+        }, {
+          'objectType': 'person',
+          'id': 'tag:twitter.com,2013:bob',
+          'url': 'https://twitter.com/bob',
+        }],
+      },
+    }
+
     self.expect_urlopen('https://api.twitter.com/1.1/statuses/user_timeline.json?'
                         'include_entities=true&count=0&screen_name=',
-      json.dumps([gr_twitter_test.TWEET]))
+      json.dumps([gr_twitter_test.TWEET, mention_tweet]))
     self.mox.ReplayAll()
 
-    tw = Twitter.new(self.handler, auth_entity=self.auth_entity)
-    self.assert_equals([gr_twitter_test.ACTIVITY], tw.get_activities())
+    self.tw.domain_urls = ['http://site1/', 'http://site2/']
+    self.tw.put()
+    self.assert_equals([gr_twitter_test.ACTIVITY, mention_activity],
+                       self.tw.get_activities())
 
   def test_get_like(self):
     """get_like() should use the Response stored in the datastore."""
@@ -77,9 +104,7 @@ class TwitterTest(testutil.ModelsTest):
       }
     models.Response(id='tag:twitter.com,2013:000_favorited_by_222',
                     response_json=json.dumps(like)).put()
-
-    tw = Twitter.new(self.handler, auth_entity=self.auth_entity)
-    self.assert_equals(like, tw.get_like('unused', '000', '222'))
+    self.assert_equals(like, self.tw.get_like('unused', '000', '222'))
 
   def test_get_like_fallback(self):
     """If there's no Response in the datastore, fall back to get_activities."""
@@ -93,16 +118,14 @@ class TwitterTest(testutil.ModelsTest):
       json.dumps({'htmlUsers': gr_twitter_test.FAVORITES_HTML}))
 
     self.mox.ReplayAll()
-    tw = Twitter.new(self.handler, auth_entity=self.auth_entity)
     self.assert_equals(gr_twitter_test.LIKES_FROM_HTML[0],
-                       tw.get_like('unused', '100', '353'))
+                       self.tw.get_like('unused', '100', '353'))
 
   def test_canonicalize_syndication_url(self):
-    tw = Twitter.new(self.handler, auth_entity=self.auth_entity)
     for url in (
         'http://www.twitter.com/username/012345',
         'https://www.twitter.com/username/012345',
         'http://twitter.com/username/012345',
     ):
       self.assertEqual('https://twitter.com/username/012345',
-                       tw.canonicalize_syndication_url(url))
+                       self.tw.canonicalize_syndication_url(url))

@@ -111,12 +111,11 @@ class FacebookPage(models.Source):
     return self.gr_source.user_url(self.username or self.key.id())
 
   def get_activities_response(self, **kwargs):
-    kwargs.setdefault('group_id', SELF)
     kwargs.setdefault('fetch_events', True)
     kwargs.setdefault('event_owner_id', self.key.id())
 
     try:
-      return self.gr_source.get_activities_response(**kwargs)
+      return super(FacebookPage, self).get_activities_response(**kwargs)
     except urllib2.HTTPError as e:
       code, body = util.interpret_http_exception(e)
       # use a function to extract error subcode so that we don't clobber the
