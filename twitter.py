@@ -64,18 +64,6 @@ class Twitter(models.Source):
     """Returns the username."""
     return self.key.id()
 
-  def get_activities_response(self, **kwargs):
-    """Add this user's web site URLs to their @-mention tags."""
-    resp = super(Twitter, self).get_activities_response(**kwargs)
-
-    for activity in resp['items']:
-      for tag in activity.get('object', {}).get('tags', []):
-        parsed = util.parse_tag_uri(tag.get('id', ''))
-        if parsed and parsed[1] == self.key.id():
-          tag.setdefault('urls', []).extend([{'value': u} for u in self.domain_urls])
-
-    return resp
-
   def get_like(self, activity_user_id, activity_id, like_user_id):
     """Returns an ActivityStreams 'like' activity object for a favorite.
 

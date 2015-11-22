@@ -13,6 +13,7 @@ import mox
 
 import blogger
 import facebook
+import flickr
 import googleplus
 import instagram
 import models
@@ -164,6 +165,7 @@ class SourceTest(testutil.HandlerTest):
   def test_sources_global(self):
     self.assertEquals(blogger.Blogger, models.sources['blogger'])
     self.assertEquals(facebook.FacebookPage, models.sources['facebook'])
+    self.assertEquals(flickr.Flickr, models.sources['flickr'])
     self.assertEquals(googleplus.GooglePlusPage, models.sources['googleplus'])
     self.assertEquals(instagram.Instagram, models.sources['instagram'])
     self.assertEquals(tumblr.Tumblr, models.sources['tumblr'])
@@ -194,6 +196,30 @@ class SourceTest(testutil.HandlerTest):
     for queue in 'poll', 'poll-now':
       task_params = testutil.get_task_params(self.taskqueue_stub.GetTasks(queue)[0])
       self.assertEqual('1970-01-01-00-00-00', task_params['last_polled'])
+
+  def test_get_activities_injects_web_site_urls_into_user_mentions(self):
+    source = FakeSource.new(None, domain_urls=['http://site1/', 'http://site2/'])
+    source.put()
+
+    mention = {
+      'object': {
+        'tags': [{
+          'objectType': 'person',
+          'id': 'tag:fa.ke,2013:%s' % source.key.id(),
+          'url': 'https://fa.ke/me',
+        }, {
+          'objectType': 'person',
+          'id': 'tag:fa.ke,2013:bob',
+        }],
+      },
+    }
+    source.gr_source.set_activities([mention])
+
+    # check that we inject their web sites
+    got = super(FakeSource, source).get_activities_response()
+    mention['object']['tags'][0]['urls'] = [
+      {'value': 'http://site1/'}, {'value': 'http://site2/'}]
+    self.assert_equals([mention], got['items'])
 
   def test_create_new_already_exists(self):
     long_ago = datetime.datetime(year=1901, month=2, day=3)

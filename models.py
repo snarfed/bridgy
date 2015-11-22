@@ -266,11 +266,20 @@ class Source(StringIdModel):
   def get_activities_response(self, **kwargs):
     """Returns recent posts and embedded comments for this source.
 
-    Passes through to granary by default. May be overridden
-    by subclasses.
+    Adds this user's web site URLs to their user mention (in tags).
+
+    May be overridden by subclasses.
     """
     kwargs.setdefault('group_id', gr_source.SELF)
-    return self.gr_source.get_activities_response(**kwargs)
+    resp = self.gr_source.get_activities_response(**kwargs)
+
+    user_tag_id = self.user_tag_id()
+    for activity in resp['items']:
+      for tag in activity.get('object', {}).get('tags', []):
+        if tag.get('id') == user_tag_id:
+          tag.setdefault('urls', []).extend([{'value': u} for u in self.domain_urls])
+
+    return resp
 
   def get_activities(self, **kwargs):
     return self.get_activities_response(**kwargs)['items']

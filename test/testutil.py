@@ -87,6 +87,15 @@ class FakeGrSource(FakeBase, gr_source.Source):
   def user_url(self, id):
     return 'http://fa.ke/' + id
 
+  def set_activities(self, val):
+    self._set('activities', val)
+
+  def get_activities(self, **kwargs):
+    return self._get('activities')
+
+  def get_activities_response(self, **kwargs):
+    return {'items': self._get('activities')}
+
   def set_like(self, val):
     self._set('like', val)
 
@@ -190,8 +199,9 @@ class FakeSource(FakeBase, Source):
   def get_activities_response(self, user_id=None, group_id=None,
                               activity_id=None, app_id=None,
                               fetch_replies=False, fetch_likes=False,
-                              fetch_shares=False, count=None, etag=None,
-                              min_id=None, cache=None, search_query=None):
+                              fetch_shares=False, fetch_mentions=False,
+                              count=None, etag=None, min_id=None, cache=None,
+                              search_query=None):
     activities = self._get('activities')
     if search_query is not None:
       assert group_id == gr_source.SEARCH

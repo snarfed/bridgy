@@ -56,43 +56,23 @@ class TwitterTest(testutil.ModelsTest):
     self.assertEqual('https://twitter.com/snarfed_org/profile_image?size=original',
                      Twitter.new(self.handler, auth_entity=self.auth_entity).picture)
 
-  def test_get_activities_injects_web_site_urls_into_mentions(self):
-    mention_tweet = {
-      'id_str': '2',
-      'entities': {'user_mentions': [
-        {'id_str': '123', 'screen_name': 'snarfed_org'},
-        {'id_str': '456', 'screen_name': 'bob'},
-      ]},
-    }
-    mention_activity = {
-      'id': 'tag:twitter.com,2013:2',
-      'verb': 'post',
-      'object': {
-        'objectType': 'note',
-        'id': 'tag:twitter.com,2013:2',
-        'tags': [{
-          'objectType': 'person',
-          'id': 'tag:twitter.com,2013:snarfed_org',
-          'url': 'https://twitter.com/snarfed_org',
-          # check that we inject their web sites
-        'urls': [{'value': 'http://site1/'}, {'value': 'http://site2/'}],
-        }, {
-          'objectType': 'person',
-          'id': 'tag:twitter.com,2013:bob',
-          'url': 'https://twitter.com/bob',
-        }],
-      },
-    }
-
-    self.expect_urlopen('https://api.twitter.com/1.1/statuses/user_timeline.json?'
-                        'include_entities=true&count=0&screen_name=',
-      json.dumps([gr_twitter_test.TWEET, mention_tweet]))
-    self.mox.ReplayAll()
-
-    self.tw.domain_urls = ['http://site1/', 'http://site2/']
-    self.tw.put()
-    self.assert_equals([gr_twitter_test.ACTIVITY, mention_activity],
-                       self.tw.get_activities())
+  # def test_find_user_mentions(self):
+  #   mention_1 = {
+  #     'objectType': 'person',
+  #     'id': 'tag:twitter.com,2013:snarfed_org',
+  #   }
+  #   mention_2 = copy.copy(mention_1)
+  #   activity = {
+  #     'object': {
+  #       'tags': [
+  #         mention_1,
+  #         {'objectType': 'person', 'id': 'tag:twitter.com,2013:bob_org'},
+  #         mention_2,
+  #       ],
+  #     },
+  #   }
+  #   self.assertEquals([mention_1, mention_2],
+  #                     Twitter.find_user_mentions(activity))
 
   def test_get_like(self):
     """get_like() should use the Response stored in the datastore."""
