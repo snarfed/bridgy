@@ -119,6 +119,7 @@ class PollTest(TaskQueueTest):
       'fetch_replies': True,
       'fetch_likes': True,
       'fetch_shares': True,
+      'fetch_mentions': True,
       'count': mox.IgnoreArg(),
       'etag': None,
       'min_id': None,
