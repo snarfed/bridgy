@@ -165,8 +165,8 @@ class Poll(webapp2.RequestHandler):
         # this source doesn't support search
         pass
 
-      # this user's own activities
-      kwargs['fetch_likes'] = kwargs['fetch_shares'] = True
+      # this user's own activities (and user mentions)
+      kwargs['fetch_likes'] = kwargs['fetch_shares'] = kwargs['fetch_mentions'] = True
       response = source.get_activities_response(**kwargs)
       activities.update({a['id']: a for a in response.get('items', [])})
 
@@ -230,8 +230,20 @@ class Poll(webapp2.RequestHandler):
         logging.info('Skipping non-public activity %s', id)
         continue
 
-      # extract replies, likes, reposts, and rsvps
       obj = activity.get('object') or activity
+
+      # handle user mentions
+      user_id = source.user_tag_id()
+      if obj.get('author', {}).get('id') != user_id:
+        for tag in obj.get('tags', []):
+          urls = tag.get('urls')
+          if tag.get('objectType') == 'person' and tag.get('id') == user_id and urls:
+            activity['mentions'] = set(u.get('value') for u in urls)
+            activity['originals'] = set()
+            responses[id] = activity
+            continue
+
+      # extract replies, likes, reposts, and rsvps
       replies = obj.get('replies', {}).get('items', [])
       tags = obj.get('tags', [])
       likes = [t for t in tags if Response.get_type(t) == 'like']

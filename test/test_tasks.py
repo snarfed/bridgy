@@ -643,6 +643,45 @@ class PollTest(TaskQueueTest):
     self.post_task()
     self.assertEquals('"good"', FakeGrSource.last_search_query)
 
+  def test_user_mentions(self):
+    """Search for and backfeed user mentions.
+
+    https://github.com/snarfed/bridgy/issues/523
+    """
+    source = self.sources[0]
+    source.domain_urls = ['http://foo/', 'https://bar']
+    source.put()
+
+    mention = {
+      'id': 'tag:source,2013:9',
+      'object': {
+        'tags': [{
+          'objectType': 'person',
+          'id': 'tag:source,2013:0123456789',
+          'url': 'https://source/0123456789',
+        }, {
+          'objectType': 'person',
+          'id': 'tag:source,2013:other',
+          'url': 'https://source/other',
+        }],
+      },
+    }
+    source.gr_source.set_search_results([mention])
+    source.gr_source.set_activities([])
+    self.post_task()
+
+    # one expected response with two target urls, one for each domain_url
+    pruned = json.dumps({'id': 'tag:source,2013:9'})
+    self.assert_responses([Response(
+      id='tag:source,2013:9',
+      activities_json=[pruned],
+      response_json=pruned,
+      type='post',
+      source=source.key,
+      unsent=['http://foo/', 'https://bar'],
+      original_posts=[],
+    )])
+
   def test_wrong_last_polled(self):
     """If the source doesn't have our last polled value, we should quit.
     """
