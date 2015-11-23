@@ -29,9 +29,10 @@ util.tag_uri = lambda domain, name: util._orig_tag_uri(domain, name, year=2013)
 # turn off ndb's in-process cache. i'd love to use it, but the frontends
 # constantly hit the memory cap and get killed with it on.
 # https://developers.google.com/appengine/docs/python/ndb/cache
-# from google.appengine.ext import ndb
-# ndb.Context.default_cache_policy = ndb.Context._cache_policy = \
-#     lambda ctx, key: False
+#
+# (i used to also set ndb.Context._cache_policy, but that broke. not sure why.)
+from google.appengine.ext import ndb
+ndb.Context.default_cache_policy = lambda ctx, key: False
 
 # I used a namespace for a while when I had both versions deployed, but not any
 # more; I cleared out the old v1 datastore entities.

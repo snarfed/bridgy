@@ -580,7 +580,6 @@ class Webmentions(StringIdModel):
   #
   # If you re-enable caching, MAKE SURE YOU re-enable the global ban on instance
   # caching in appengine_config.py.
-  _use_cache = False
   _use_memcache = False
 
   source = ndb.KeyProperty()
