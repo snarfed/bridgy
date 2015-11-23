@@ -31,7 +31,7 @@ class GooglePlusPage(models.Source):
   # QPS: https://cloud.google.com/console/project/1029605954231
   # Today's quota usage: https://code.google.com/apis/console/b/0/?noredirect#project:1029605954231:quotas
   # Daily total usage: https://code.google.com/apis/console/b/0/?pli=1#project:1029605954231:stats
-  FAST_POLL = datetime.timedelta(minutes=20)
+
   # API quotas are refilled daily. Use 30h to make sure we're over a day even
   # after the randomized task ETA.
   RATE_LIMITED_POLL = datetime.timedelta(hours=30)
