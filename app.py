@@ -57,10 +57,6 @@ class DashboardHandler(webutil_handlers.TemplateHandler, util.Handler):
   def get(self, *args, **kwargs):
     return super(DashboardHandler, self).get(*args, **kwargs)
 
-  # Facebook uses a POST instead of a GET when it renders us in Canvas.
-  # http://stackoverflow.com/a/5353413/186123
-  post = get
-
   def content_type(self):
     return 'text/html; charset=utf-8'
 
@@ -109,6 +105,10 @@ class FrontPageHandler(CachedPageHandler):
   """Handler for the front page."""
 
   EXPIRES = datetime.timedelta(days=1)
+
+  # Facebook uses a POST instead of a GET when it renders us in Canvas.
+  # http://stackoverflow.com/a/5353413/186123
+  post = CachedPageHandler.get
 
   def template_file(self):
     return 'templates/index.html'
