@@ -84,6 +84,8 @@ class FakeGrSource(FakeBase, gr_source.Source):
 
   __metaclass__ = FakeGrSourceMeta
 
+  last_search_query = None
+
   def user_url(self, id):
     return 'http://fa.ke/' + id
 
@@ -93,8 +95,27 @@ class FakeGrSource(FakeBase, gr_source.Source):
   def get_activities(self, **kwargs):
     return self._get('activities')
 
-  def get_activities_response(self, **kwargs):
-    return {'items': self._get('activities')}
+  def get_activities_response(self, user_id=None, group_id=None,
+                              activity_id=None, app_id=None,
+                              fetch_replies=False, fetch_likes=False,
+                              fetch_shares=False, fetch_mentions=False,
+                              count=None, etag=None, min_id=None, cache=None,
+                              search_query=None):
+    activities = self._get('activities')
+    if search_query is not None:
+      assert group_id == gr_source.SEARCH
+      activities = self._get('search_results')
+      FakeGrSource.last_search_query = search_query
+      if activities is None:
+        raise NotImplementedError()
+
+    return {
+      'items': activities,
+      'etag': self._get('etag'),
+    }
+
+  def set_search_results(self, val):
+    self._set('search_results', val)
 
   def set_like(self, val):
     self._set('like', val)
@@ -179,7 +200,6 @@ class FakeSource(FakeBase, Source):
   RATE_LIMITED_POLL = datetime.timedelta(hours=30)
 
   gr_source = FakeGrSource()
-  last_search_query = None
   username = ndb.StringProperty()
 
   def __init__(self, *args, **kwargs):
@@ -189,31 +209,6 @@ class FakeSource(FakeBase, Source):
 
   def silo_url(self):
     return 'http://fa.ke/profile/url'
-
-  def set_activities(self, val):
-    self._set('activities', val)
-
-  def set_search_results(self, val):
-    self._set('search_results', val)
-
-  def get_activities_response(self, user_id=None, group_id=None,
-                              activity_id=None, app_id=None,
-                              fetch_replies=False, fetch_likes=False,
-                              fetch_shares=False, fetch_mentions=False,
-                              count=None, etag=None, min_id=None, cache=None,
-                              search_query=None):
-    activities = self._get('activities')
-    if search_query is not None:
-      assert group_id == gr_source.SEARCH
-      activities = self._get('search_results')
-      FakeSource.last_search_query = search_query
-      if activities is None:
-        raise NotImplementedError()
-
-    return {
-      'items': activities,
-      'etag': self._get('etag'),
-    }
 
   def feed_url(self):
     return 'fake feed url'
@@ -333,7 +328,7 @@ class ModelsTest(HandlerTest):
               }],
         },
       } for id in ('a', 'b', 'c')]
-    self.sources[0].set_activities(self.activities)
+    self.sources[0].gr_source.set_activities(self.activities)
 
     self.responses = []
     created = datetime.datetime.utcnow() - datetime.timedelta(days=10)

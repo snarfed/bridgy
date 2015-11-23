@@ -215,7 +215,7 @@ class PollTest(TaskQueueTest):
       'attachments': [{'objectType': 'article', 'url': 'http://tar.get/d'}],
       'content': 'foo http://tar.get/e bar (not.at endd) baz (tar.get f)',
     })
-    self.sources[0].set_activities([self.activities[0]])
+    self.sources[0].gr_source.set_activities([self.activities[0]])
 
     self.post_task()
     expected = ['http://tar.get/%s' % i for i in 'a', 'b', 'c', 'd', 'e', 'f']
@@ -227,7 +227,7 @@ class PollTest(TaskQueueTest):
     obj['tags'] = [{'objectType': 'article', 'url': 'https://tar.get/a'}]
     obj['attachments'] = [{'objectType': 'article', 'url': 'http://tar.get/a'}]
     obj['content'] = 'foo https://tar.get/a bar (tar.get a)'
-    self.sources[0].set_activities([self.activities[0]])
+    self.sources[0].gr_source.set_activities([self.activities[0]])
 
     self.post_task()
     self.assert_equals(['https://tar.get/a'], self.responses[0].key.get().unsent)
@@ -237,7 +237,7 @@ class PollTest(TaskQueueTest):
     obj = self.activities[0]['object']
     obj['tags'] = []
     obj['content'] = 'http://not/html'
-    self.sources[0].set_activities([self.activities[0]])
+    self.sources[0].gr_source.set_activities([self.activities[0]])
 
     self.expect_requests_head('http://not/html', content_type='application/pdf')
 
@@ -250,7 +250,7 @@ class PollTest(TaskQueueTest):
     obj = self.activities[0]['object']
     obj['tags'] = []
     obj['content'] = 'http://will/redirect'
-    self.sources[0].set_activities([self.activities[0]])
+    self.sources[0].gr_source.set_activities([self.activities[0]])
 
     self.expect_requests_head('http://will/redirect', redirected_url='http://final/url')
 
@@ -263,7 +263,7 @@ class PollTest(TaskQueueTest):
     obj = self.activities[0]['object']
     obj['tags'] = []
     obj['content'] = 'http://fails/resolve'
-    self.sources[0].set_activities([self.activities[0]])
+    self.sources[0].gr_source.set_activities([self.activities[0]])
 
     self.expect_requests_head('http://fails/resolve', status_code=400)
 
@@ -275,7 +275,7 @@ class PollTest(TaskQueueTest):
   def test_non_html_file_extension(self):
     """If our HEAD request fails, we should infer type from file extension."""
     self.activities[0]['object'].update({'tags': [], 'content': 'http://a.zip'})
-    self.sources[0].set_activities([self.activities[0]])
+    self.sources[0].gr_source.set_activities([self.activities[0]])
 
     self.expect_requests_head('http://a.zip', status_code=405,
                               # we should ignore an error response's content type
@@ -294,7 +294,7 @@ class PollTest(TaskQueueTest):
     obj['tags'] = [{'objectType': 'article', 'url': 'http://tar.get/good'}]
     obj['attachments'] = [{'objectType': 'article', 'url': 'http://foo]'}]
     obj['content'] = 'foo http://facebook.com/bad bar baz (t.co bad)'
-    self.sources[0].set_activities([self.activities[0]])
+    self.sources[0].gr_source.set_activities([self.activities[0]])
 
     self.post_task()
     self.assert_equals(['http://tar.get/good'],
@@ -308,7 +308,7 @@ class PollTest(TaskQueueTest):
                 'tags': [{'objectType': 'article',
                           'url': 'http://foo/bar?a=b&utm_medium=x&utm_source=y'}],
                 })
-    self.sources[0].set_activities([self.activities[0]])
+    self.sources[0].gr_source.set_activities([self.activities[0]])
 
     self.post_task()
     self.assert_equals(['http://foo/bar?a=b'],
@@ -324,7 +324,7 @@ class PollTest(TaskQueueTest):
     # https://github.com/snarfed/bridgy/issues/237
     self.activities[0]['object'].update({'content': 'http://redir/0'})
     self.activities[1]['object'].update({'content': 'http://redir/1'})
-    self.sources[0].set_activities(self.activities[0:2])
+    self.sources[0].gr_source.set_activities(self.activities[0:2])
 
     self.expect_requests_head(
       'http://redir/0', redirected_url='http://first?utm_medium=x').InAnyOrder()
@@ -345,7 +345,7 @@ class PollTest(TaskQueueTest):
     https://github.com/snarfed/bridgy/issues/273
     """
     self.activities[0]['object'].update({'tags': [], 'content': 'http://first'})
-    self.sources[0].set_activities([self.activities[0]])
+    self.sources[0].gr_source.set_activities([self.activities[0]])
 
     too_long = 'http://host/' + 'x' * _MAX_STRING_LENGTH
     self.expect_requests_head('http://first', redirected_url=too_long)
@@ -375,7 +375,7 @@ class PollTest(TaskQueueTest):
     activities = self.sources[0].get_activities()
     for a in activities:
       a['object'].update({'replies': {}, 'tags': []})
-    self.sources[0].set_activities(activities)
+    self.sources[0].gr_source.set_activities(activities)
 
     self.post_task()
     self.assert_equals([], list(Response.query()))
@@ -423,7 +423,7 @@ class PollTest(TaskQueueTest):
         'content': '',
         'url': 'https://activ/2'})
 
-    self.sources[0].set_activities(self.activities)
+    self.sources[0].gr_source.set_activities(self.activities)
 
     # trigger posse post discovery
     self.sources[0].domain_urls = ['http://author']
@@ -451,7 +451,7 @@ class PollTest(TaskQueueTest):
       a['object']['tags'] = []
       del a['object']['url']  # prevent posse post discovery
       del a['object']['content']
-    self.sources[0].set_activities(self.activities)
+    self.sources[0].gr_source.set_activities(self.activities)
 
     self.post_task()
     resp = Response.query().get()
@@ -475,7 +475,7 @@ class PollTest(TaskQueueTest):
     # prevent posse post discovery
     del activity['object']['url']
     del activity['url']
-    source.set_activities([activity])
+    source.gr_source.set_activities([activity])
 
     reply = {
       'objectType': 'comment',
@@ -513,7 +513,7 @@ class PollTest(TaskQueueTest):
       # the reply in self.activities[0]
       colliding_reply,
     ]
-    source.set_search_results(copy.deepcopy(mentions))
+    source.gr_source.set_search_results(copy.deepcopy(mentions))
 
     self.post_task()
 
@@ -560,13 +560,13 @@ class PollTest(TaskQueueTest):
     expected += self.responses[:3]
 
     self.assert_responses(expected)
-    self.assertEquals('"foo" OR "bar/baz?baj"', FakeSource.last_search_query)
+    self.assertEquals('"foo" OR "bar/baz?baj"', FakeGrSource.last_search_query)
 
   def test_search_raises_not_implemented(self):
     """Some silos don't support search."""
     self.sources[0].domain_urls = ['http://foo', 'http://bar']
     self.sources[0].put()
-    self.sources[0].set_activities([])
+    self.sources[0].gr_source.set_activities([])
     self.post_task()
     self.assertEquals(0, Response.query().count())
 
@@ -584,8 +584,8 @@ class PollTest(TaskQueueTest):
       'id': 'tag:or.ig,2013:9',
       'object': {'content': 'foo http://or.ig/post'},
     }
-    source.set_search_results([mention])
-    source.set_activities([])
+    source.gr_source.set_search_results([mention])
+    source.gr_source.set_activities([])
 
     self.post_task()
     self.assert_responses([Response(
@@ -597,7 +597,7 @@ class PollTest(TaskQueueTest):
       status='complete',
       original_posts=['http://or.ig/post'],
     )])
-    self.assertEquals('"foo.com/bar?biff"', FakeSource.last_search_query)
+    self.assertEquals('"foo.com/bar?biff"', FakeGrSource.last_search_query)
 
   def test_search_for_mentions_skips_redirected_posse_post(self):
     """Same as above, with a redirect."""
@@ -609,8 +609,8 @@ class PollTest(TaskQueueTest):
       'id': 'tag:or.ig,2013:9',
       'object': {'content': 'foo http://sho.rt/post'},
     }
-    self.sources[0].set_search_results([mention])
-    self.sources[0].set_activities([])
+    self.sources[0].gr_source.set_search_results([mention])
+    self.sources[0].gr_source.set_activities([])
 
     self.expect_requests_head('http://sho.rt/post',
                               redirected_url='http://or.ig/post')
@@ -633,15 +633,15 @@ class PollTest(TaskQueueTest):
     source.domain_urls = ['http://t.co/7k9xNgQCml']
     source.put()
 
-    FakeSource.last_search_query = None
+    FakeGrSource.last_search_query = None
     self.post_task()
     # if there are *no* good domains, we shouldn't search at all
-    self.assertIsNone(FakeSource.last_search_query)
+    self.assertIsNone(FakeGrSource.last_search_query)
 
     source.domain_urls = ['https://good/', 'http://t.co/7k9xNgQCml']
     source.put()
     self.post_task()
-    self.assertEquals('"good"', FakeSource.last_search_query)
+    self.assertEquals('"good"', FakeGrSource.last_search_query)
 
   def test_wrong_last_polled(self):
     """If the source doesn't have our last polled value, we should quit.
@@ -740,7 +740,7 @@ class PollTest(TaskQueueTest):
 
   def test_etag(self):
     """If we see an ETag, we should send it with the next get_activities()."""
-    self.sources[0]._set('etag', '"my etag"')
+    self.sources[0].gr_source._set('etag', '"my etag"')
     self.post_task()
 
     source = self.sources[0].key.get()
@@ -758,7 +758,7 @@ class PollTest(TaskQueueTest):
 
   def test_last_activity_id(self):
     """We should store the last activity id seen and then send it as min_id."""
-    self.sources[0].set_activities(list(reversed(self.activities)))
+    self.sources[0].gr_source.set_activities(list(reversed(self.activities)))
     self.post_task()
 
     source = self.sources[0].key.get()
@@ -774,7 +774,7 @@ class PollTest(TaskQueueTest):
     self.activities[0]['id'] = 'a'
     self.activities[1]['id'] = 'b'
     self.activities[2]['id'] = 'c'
-    self.sources[0].set_activities(list(reversed(self.activities)))
+    self.sources[0].gr_source.set_activities(list(reversed(self.activities)))
     self.post_task()
     self.assertEqual('c', self.sources[0].key.get().last_activity_id)
 
@@ -899,7 +899,7 @@ class PollTest(TaskQueueTest):
     """
     self.sources[0].domain_urls = ['http://author']
     self.sources[0].last_syndication_url = NOW - datetime.timedelta(minutes=10)
-    self.sources[0].set_activities([])
+    self.sources[0].gr_source.set_activities([])
     self.sources[0].put()
 
     # the one existing response is a POSSE of that post
@@ -962,7 +962,7 @@ class PollTest(TaskQueueTest):
     self.sources[0].last_hfeed_fetch = models.REFETCH_HFEED_TRIGGER
     self.sources[0].put()
 
-    self.sources[0].set_activities([])
+    self.sources[0].gr_source.set_activities([])
 
     self._expect_fetch_hfeed()
     self.mox.ReplayAll()
@@ -1023,7 +1023,7 @@ class PollTest(TaskQueueTest):
       act['object']['url'] = 'http://instagram/post/url'
       act['object']['content'] = 'instagram post'
 
-    self.sources[0].set_activities(self.activities)
+    self.sources[0].gr_source.set_activities(self.activities)
     self.sources[0].put()
 
     class FakeGrSource_Twitter(testutil.FakeGrSource):
@@ -1047,7 +1047,7 @@ class PollTest(TaskQueueTest):
       act['object']['content'] = 'twitter post'
       act['object']['replies']['items'][0]['content'] = '@-reply'
 
-    self.sources[1].set_activities(twitter_acts)
+    self.sources[1].gr_source.set_activities(twitter_acts)
     self.sources[1].put()
 
     for _ in range(2):
@@ -1165,7 +1165,7 @@ class PollTest(TaskQueueTest):
     # just one response: self.responses[0]
     tags = activity['object']['tags']
     del activity['object']['tags']
-    source.set_activities([activity])
+    source.gr_source.set_activities([activity])
 
     # first change to response
     self._change_response_and_poll()
