@@ -24,6 +24,7 @@ import webapp2
 import facebook
 from facebook import FacebookPage
 import models
+import publish
 import tasks
 import testutil
 
@@ -518,3 +519,36 @@ class FacebookPageTest(testutil.ModelsTest):
 
     self.fb.preprocess_for_publish(activity)
     self.assert_equals(expected_urls, [t['url'] for t in activity['object']['tags']])
+
+  def test_publish_person_tags(self):
+    self.fb.features = ['publish']
+    self.fb.domains = ['foo.com']
+    self.fb.put()
+
+    input_urls, _ = self.prepare_person_tags()
+    post_html = """
+<article class="h-entry">
+<p class="e-content">
+my message
+</p>
+%s
+<a href="http://localhost/publish/facebook"></a>
+</article>
+""" % ','.join('<a class="h-card u-category" href="%s">%s</a>' %
+               (url, url.strip('/').split('/')[-1].capitalize())
+               for url in input_urls)
+
+    self.expect_requests_get('http://foo.com/bar', post_html)
+    self.expect_api_call(gr_facebook.API_FEED, {'id': '123_456'}, data=urllib.urlencode({
+        'message': 'my message\n\n(Originally published at: http://foo.com/bar)',
+        'tags': '555,666,777,444',
+      }))
+    self.mox.ReplayAll()
+
+    resp = publish.application.get_response(
+      '/publish/webmention', method='POST', body=urllib.urlencode({
+        'source': 'http://foo.com/bar',
+        'target': 'https://brid.gy/publish/facebook',
+        'source_key': self.fb.key.urlsafe(),
+      }))
+    self.assertEquals(201, resp.status_int)

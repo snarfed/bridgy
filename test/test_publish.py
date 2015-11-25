@@ -1015,63 +1015,6 @@ Join us!"""
     self.mox.ReplayAll()
     self.assert_created('abc & xyz - http://foo.com/bar')
 
-  def test_facebook_publish_person_tags(self):
-    self.auth_entity = oauth_facebook.FacebookAuth(
-      id='auth entity', user_json=json.dumps({'id': '1'}), access_token_str='')
-    self.auth_entity.put()
-
-    self.source.key.delete()
-    self.source = facebook.FacebookPage.new(
-      self.handler, auth_entity=self.auth_entity, features=['publish'],
-      domains=['foo.com'])
-    self.source.put()
-
-    self.oauth_state['source_key'] = self.source.key.urlsafe()
-
-    input_urls, expected_urls = test_facebook.FacebookPageTest.prepare_person_tags()
-    names = [url.strip('/').split('/')[-1].capitalize() for url in input_urls]
-    obj = {
-      'objectType': 'note',
-      'url': 'http://foo.com/bar',
-      'content': '\nmy message\n',
-      'displayName': 'my message\n\nUnknown,444,Username,Inferred,Unknown,My.domain',
-      'tags': [{
-        'objectType': 'person',
-        'url': url,
-        'displayName': name,
-      } for url, name in zip(expected_urls, names)],
-    }
-    post_html = """
-<article class="h-entry">
-<p class="e-content">
-my message
-</p>
-%s
-<a href="http://localhost/publish/facebook"></a>
-</article>
-""" % ','.join('<a class="h-card u-category" href="%s">%s</a>' %
-               (url, name) for url, name in zip(input_urls, names))
-
-    for i in range(2):
-      self.expect_requests_get('http://foo.com/bar', post_html)
-
-    self.mox.StubOutWithMock(self.source.gr_source, 'create',
-                             use_mock_anything=True)
-    result = gr_source.creation_result(content={'content': 'my message'})
-    self.source.gr_source.create(obj, include_link=True,
-                                 ignore_formatting=False).AndReturn(result)
-
-    self.mox.StubOutWithMock(self.source.gr_source, 'preview_create',
-                             use_mock_anything=True)
-    self.source.gr_source.preview_create(obj, include_link=False,
-                                         ignore_formatting=False).AndReturn(result)
-    self.mox.ReplayAll()
-
-    self.assert_created('my message', interactive=False,
-                        target='https://brid.gy/publish/facebook')
-    self.assert_success('my message', preview=True,
-                        target='https://brid.gy/publish/facebook')
-
   def test_multi_rsvp(self):
     """Test RSVP that replies to multiple event URLs like
     http://tantek.com/2015/308/t1/homebrew-website-club-mozsf
