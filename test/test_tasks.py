@@ -363,6 +363,12 @@ class PollTest(TaskQueueTest):
     self.activities[1]['object']['to'] = [{'objectType':'group', 'alias':'@private'}]
     self.activities[2]['object']['to'] = [{'objectType':'group', 'alias':'@public'}]
 
+    # Facebook returns 'unknown' for wall posts
+    unknown = copy.deepcopy(self.activities[2])
+    unknown['id'] = unknown['object']['id'] = 'x'
+    unknown['object']['to'] = [{'objectType': 'unknown'}]
+    self.activities.append(unknown)
+
     self.post_task()
     ids = set()
     for task in self.taskqueue_stub.GetTasks('propagate'):
