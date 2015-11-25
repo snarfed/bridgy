@@ -10,6 +10,7 @@ from google.appengine.api import urlfetch_errors
 import handlers
 import models
 import testutil
+from testutil import FakeGrSource
 
 
 class HandlersTest(testutil.HandlerTest):
@@ -18,6 +19,7 @@ class HandlersTest(testutil.HandlerTest):
     super(HandlersTest, self).setUp()
     self.source = testutil.FakeSource.new(
       self.handler, domains=['or.ig', 'fa.ke'])
+    self.source.put()
     self.activities = [{
       'object': {
         'id': 'tag:fa.ke,2013:000',
@@ -29,8 +31,8 @@ class HandlersTest(testutil.HandlerTest):
         },
         'upstreamDuplicates': ['http://or.ig/post'],
       }}]
-    self.source.gr_source.set_activities(self.activities)
-    self.source.gr_source.set_event({
+    FakeGrSource.activities = self.activities
+    FakeGrSource.event = {
       'object': {
         'id': 'tag:fa.ke,2013:123',
         'url': 'http://fa.ke/events/123',
@@ -39,8 +41,7 @@ class HandlersTest(testutil.HandlerTest):
       },
       'id': '123',
       'url': 'http://fa.ke/events/123',
-    })
-    self.source.put()
+    }
 
   def check_response(self, url_template, expected):
     # use an HTTPS request so that URL schemes are converted
@@ -121,7 +122,7 @@ asdf http://other/link qwert
 
   def test_author_uid_not_tag_uri(self):
     self.activities[0]['object']['author']['id'] = 'not a tag uri'
-    self.source.gr_source.set_activities(self.activities)
+    FakeGrSource.activities = self.activities
     resp = handlers.application.get_response(
       '/post/fake/%s/000?format=json' % self.source.key.string_id())
     self.assertEqual(200, resp.status_int, resp.body)
@@ -161,12 +162,12 @@ asdf http://other/link qwert
     self.assertEqual('FakeSource error:\nTry again pls', resp.body)
 
   def test_comment(self):
-    self.source.gr_source.set_comment({
-        'id': 'tag:fa.ke,2013:a1-b2.c3',  # test alphanumeric id (like G+)
-        'content': 'qwert',
-        'inReplyTo': [{'url': 'http://fa.ke/000'}],
-        'author': {'image': {'url': 'http://example.com/ryan/image'}},
-        })
+    FakeGrSource.comment = {
+      'id': 'tag:fa.ke,2013:a1-b2.c3',  # test alphanumeric id (like G+)
+      'content': 'qwert',
+      'inReplyTo': [{'url': 'http://fa.ke/000'}],
+      'author': {'image': {'url': 'http://example.com/ryan/image'}},
+    }
 
     self.check_response('/comment/fake/%s/000/a1-b2.c3', """\
 <article class="h-entry">
@@ -190,16 +191,16 @@ asdf http://other/link qwert
 """)
 
   def test_like(self):
-    self.source.gr_source.set_like({
-        'objectType': 'activity',
-        'verb': 'like',
-        'id': 'tag:fa.ke,2013:111',
-        'object': {'url': 'http://example.com/original/post'},
-        'author': {
-          'displayName': 'Alice',
-          'image': {'url': 'http://example.com/ryan/image'},
-        },
-    })
+    FakeGrSource.like = {
+      'objectType': 'activity',
+      'verb': 'like',
+      'id': 'tag:fa.ke,2013:111',
+      'object': {'url': 'http://example.com/original/post'},
+      'author': {
+        'displayName': 'Alice',
+        'image': {'url': 'http://example.com/ryan/image'},
+      },
+    }
 
     resp = self.check_response('/like/fake/%s/000/111', """\
 <article class="h-entry h-as-like">
@@ -225,7 +226,7 @@ asdf http://other/link qwert
 
   def test_repost_with_syndicated_post_and_mentions(self):
     self.activities[0]['object']['content'] += ' http://another/mention'
-    self.source.gr_source.set_activities(self.activities)
+    FakeGrSource.activities = self.activities
 
     models.SyndicatedPost(
       parent=self.source.key,
@@ -236,17 +237,17 @@ asdf http://other/link qwert
     self.source.domain_urls = ['http://unused']
     self.source.put()
 
-    self.source.gr_source.set_share({
-        'objectType': 'activity',
-        'verb': 'share',
-        'id': 'tag:fa.ke,2013:111',
-        'object': {'url': 'http://example.com/original/post'},
-        'author': {
-          'id': 'tag:fa.ke,2013:reposter_id',
-          'url': 'http://personal.domain/',
-          'image': {'url': 'http://example.com/ryan/image'},
-          },
-        })
+    FakeGrSource.share = {
+      'objectType': 'activity',
+      'verb': 'share',
+      'id': 'tag:fa.ke,2013:111',
+      'object': {'url': 'http://example.com/original/post'},
+      'author': {
+        'id': 'tag:fa.ke,2013:reposter_id',
+        'url': 'http://personal.domain/',
+        'image': {'url': 'http://example.com/ryan/image'},
+      },
+    }
 
     self.check_response('/repost/fake/%s/000/111', """\
 <article class="h-entry h-as-share">
@@ -272,17 +273,17 @@ asdf http://other/link qwert
 """)
 
   def test_rsvp(self):
-    self.source.gr_source.set_rsvp({
-        'objectType': 'activity',
-        'verb': 'rsvp-no',
-        'id': 'tag:fa.ke,2013:111',
-        'object': {'url': 'http://example.com/event'},
-        'author': {
-          'id': 'tag:fa.ke,2013:rsvper_id',
-          'url': 'http://fa.ke/rsvper_id',  # same URL as FakeSource.user_url()
-          'image': {'url': 'http://example.com/ryan/image'},
-          },
-        })
+    FakeGrSource.rsvp = {
+      'objectType': 'activity',
+      'verb': 'rsvp-no',
+      'id': 'tag:fa.ke,2013:111',
+      'object': {'url': 'http://example.com/event'},
+      'author': {
+        'id': 'tag:fa.ke,2013:rsvper_id',
+        'url': 'http://fa.ke/rsvper_id',  # same URL as FakeSource.user_url()
+        'image': {'url': 'http://example.com/ryan/image'},
+      },
+    }
 
     self.check_response('/rsvp/fake/%s/000/111', """\
 <article class="h-entry h-as-rsvp">
@@ -305,7 +306,7 @@ asdf http://other/link qwert
 """)
 
   def test_invite(self):
-    self.source.gr_source.set_rsvp({
+    FakeGrSource.rsvp = {
       'id': 'tag:fa.ke,2013:111',
       'objectType': 'activity',
       'verb': 'invite',
@@ -319,7 +320,7 @@ asdf http://other/link qwert
         'displayName': 'Ms. Guest',
         'url': 'http://fa.ke/guest',
       },
-    })
+    }
 
     self.check_response('/rsvp/fake/%s/000/111', """\
 <article class="h-entry">
@@ -345,10 +346,10 @@ asdf http://other/link qwert
 """)
 
   def test_original_post_urls_follow_redirects(self):
-    self.source.gr_source.set_comment({
-        'content': 'qwert',
-        'inReplyTo': [{'url': 'http://fa.ke/000'}],
-        })
+    FakeGrSource.comment = {
+      'content': 'qwert',
+      'inReplyTo': [{'url': 'http://fa.ke/000'}],
+    }
 
     self.expect_requests_head(
       'http://or.ig/post', redirected_url='http://or.ig/post/redirect').InAnyOrder()
@@ -379,8 +380,8 @@ asdf http://other/link qwert
         'content': 'asdf http://other/link?utm_source=x&utm_medium=y&a=b qwert',
         'upstreamDuplicates': ['http://or.ig/post?utm_campaign=123'],
         })
-    self.source.gr_source.set_activities(self.activities)
-    self.source.gr_source.set_comment({'content': 'qwert'})
+    FakeGrSource.activities = self.activities
+    FakeGrSource.comment = {'content': 'qwert'}
     self.mox.ReplayAll()
 
     self.check_response('/comment/fake/%s/000/111', """\
@@ -408,12 +409,12 @@ asdf http://other/link qwert
                            ],
       })
 
-    self.source.gr_source.set_comment({
+    FakeGrSource.comment = {
       'inReplyTo': [{'url': 'https://reply/only'},
                     {'url': 'http://reply'},
                     {'url': 'https://all'},
                   ],
-    })
+    }
     self.mox.ReplayAll()
 
     self.check_response('/comment/fake/%s/000/111', """\
@@ -441,7 +442,7 @@ asdf http://other/link qwert
       'id': 'tag:fa.ke,2013:000',
       'tags': [{'foo': 'bar'}],
     }
-    self.source.gr_source.set_activities(self.activities)
+    FakeGrSource.activities = self.activities
     self.mox.ReplayAll()
 
     self.check_response('/post/fake/%s/000', """\

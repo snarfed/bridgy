@@ -19,8 +19,7 @@ from models import Response, Source
 from oauth_dropins.models import BaseAuth
 # mirror some methods from webutil.testutil
 from oauth_dropins import handlers as oauth_handlers
-from oauth_dropins.webutil.testutil import get_task_eta
-from oauth_dropins.webutil.testutil import get_task_params
+from oauth_dropins.webutil.testutil import get_task_eta, get_task_params
 import requests
 
 import util
@@ -32,68 +31,42 @@ class FakeAuthEntity(BaseAuth):
   user_json = ndb.TextProperty()
 
 
-class FakeBase(ndb.Model):
-  """Not thread safe.
+class FakeGrSource(gr_source.Source):
+  """Fake granary source class.
+
+  Attributes:
+    activities, like, share, event, rsvp, etag, search_results, last_search_query
   """
-
-  string_id_counter = 1
-  # class attr. maps (string source key, type name) to object or list.
-  # can't use instance attrs because code fetches FakeSource instances from the
-  # datastore.
-  data = {}
-
-  def _set(self, name, val):
-    FakeBase.data[(self.key.urlsafe(), name)] = val
-
-  def _get(self, name):
-    return copy.deepcopy(FakeBase.data.get((self.key.urlsafe(), name)))
-
-  @classmethod
-  def new(cls, handler, **props):
-    id = None
-    if 'url' not in props:
-      props['url'] = 'http://fake/url'
-    auth_entity = props.get('auth_entity')
-    if auth_entity:
-      props['auth_entity'] = auth_entity.key
-      if auth_entity.user_json:
-        user_obj = json.loads(auth_entity.user_json)
-        if 'name' not in props:
-          props['name'] = user_obj.get('name')
-        id = user_obj.get('id')
-    if not props.get('name'):
-      props['name'] = 'fake'
-    if not id:
-      id = str(cls.string_id_counter)
-      cls.string_id_counter += 1
-    return cls(id=id, **props)
-
-  @classmethod
-  def clear(cls):
-    cls.data = {}
-
-
-class FakeGrSourceMeta(FakeBase.__metaclass__,
-                       gr_source.Source.__metaclass__):
-  pass
-
-
-class FakeGrSource(FakeBase, gr_source.Source):
   NAME = 'FakeSource'
   DOMAIN = 'fa.ke'
-
-  __metaclass__ = FakeGrSourceMeta
 
   last_search_query = None
 
   def user_url(self, id):
     return 'http://fa.ke/' + id
 
-  def set_activities(self, val):
-    self._set('activities', val)
+  def user_to_actor(self, user):
+    return user
 
-  def get_activities(self, **kwargs):
-    return self._get('activities')
+  def get_comment(self, *args, **kwargs):
+    return copy.deepcopy(self.comment)
+
+  def get_like(self, *args, **kwargs):
+    return copy.deepcopy(self.like)
+
+  def get_share(self, *args, **kwargs):
+    return copy.deepcopy(self.share)
+
+  def get_event(self, *args, **kwargs):
+    return copy.deepcopy(self.event)
+
+  def get_rsvp(self, *args, **kwargs):
+    return copy.deepcopy(self.rsvp)
+
+  @classmethod
+  def clear(cls):
+    cls.activities = cls.like = cls.share = cls.event = cls.rsvp = cls.etag = \
+      cls.search_results = cls.last_search_query = None
 
   def get_activities_response(self, user_id=None, group_id=None,
                               activity_id=None, app_id=None,
@@ -101,55 +74,18 @@ class FakeGrSource(FakeBase, gr_source.Source):
                               fetch_shares=False, fetch_mentions=False,
                               count=None, etag=None, min_id=None, cache=None,
                               search_query=None):
-    activities = self._get('activities')
+    activities = self.activities
     if search_query is not None:
       assert group_id == gr_source.SEARCH
-      activities = self._get('search_results')
       FakeGrSource.last_search_query = search_query
+      activities = self.search_results
       if activities is None:
         raise NotImplementedError()
 
     return {
-      'items': activities,
-      'etag': self._get('etag'),
+      'items': copy.deepcopy(activities),
+      'etag': getattr(self, 'etag', None),
     }
-
-  def set_search_results(self, val):
-    self._set('search_results', val)
-
-  def set_like(self, val):
-    self._set('like', val)
-
-  def get_like(self, activity_user_id, activity_id, like_user_id):
-    return self._get('like')
-
-  def set_share(self, val):
-    self._set('repost', val)
-
-  def get_share(self, activity_user_id, activity_id, repost_user_id):
-    return self._get('repost')
-
-  def set_comment(self, val):
-    self._set('comment', val)
-
-  def get_comment(self, comment_id, activity_id=None, activity_author_id=None):
-    comment = self._get('comment')
-    return comment if comment else super(FakeSource, self).get_comment(comment_id)
-
-  def set_event(self, evt):
-    self._set('event', evt)
-
-  def get_event(self, evt_id):
-    return self._get('event')
-
-  def set_rsvp(self, val):
-    self._set('rsvp', val)
-
-  def get_rsvp(self, activity_user_id, event_id, rsvp_user_id):
-    return self._get('rsvp')
-
-  def user_to_actor(self, user):
-    return user
 
   def create(self, obj, include_link=False, ignore_formatting=False):
     verb = obj.get('verb')
@@ -193,19 +129,15 @@ class FakeGrSource(FakeBase, gr_source.Source):
     return gr_source.creation_result(description=content)
 
 
-class FakeSource(FakeBase, Source):
+class FakeSource(Source):
   GR_CLASS = FakeGrSource
   SHORT_NAME = 'fake'
   TYPE_LABELS = {'post': 'FakeSource post label'}
   RATE_LIMITED_POLL = datetime.timedelta(hours=30)
 
+  string_id_counter = 1
   gr_source = FakeGrSource()
   username = ndb.StringProperty()
-
-  def __init__(self, *args, **kwargs):
-    super(FakeSource, self).__init__(*args, **kwargs)
-    ndb.transaction(FakeSource.gr_source.put,
-                    propagation=ndb.TransactionOptions.INDEPENDENT)
 
   def silo_url(self):
     return 'http://fa.ke/profile/url'
@@ -217,6 +149,26 @@ class FakeSource(FakeBase, Source):
     return (self.RATE_LIMITED_POLL if self.rate_limited
             else super(FakeSource, self).poll_period())
 
+  @classmethod
+  def new(cls, handler, **props):
+    id = None
+    if 'url' not in props:
+      props['url'] = 'http://fake/url'
+    auth_entity = props.get('auth_entity')
+    if auth_entity:
+      props['auth_entity'] = auth_entity.key
+      if auth_entity.user_json:
+        user_obj = json.loads(auth_entity.user_json)
+        if 'name' not in props:
+          props['name'] = user_obj.get('name')
+        id = user_obj.get('id')
+    if not props.get('name'):
+      props['name'] = 'fake'
+    if not id:
+      id = str(cls.string_id_counter)
+      cls.string_id_counter += 1
+    return cls(id=id, **props)
+
 
 class HandlerTest(gr_testutil.TestCase):
   """Base test class.
@@ -224,7 +176,7 @@ class HandlerTest(gr_testutil.TestCase):
   def setUp(self):
     super(HandlerTest, self).setUp()
     self.handler = util.Handler(self.request, self.response)
-    FakeBase.clear()
+    FakeGrSource.clear()
     util.now_fn = lambda: NOW
 
     # TODO: remove this and don't depend on consistent global queries
@@ -328,7 +280,7 @@ class ModelsTest(HandlerTest):
               }],
         },
       } for id in ('a', 'b', 'c')]
-    self.sources[0].gr_source.set_activities(self.activities)
+    FakeGrSource.activities = self.activities
 
     self.responses = []
     created = datetime.datetime.utcnow() - datetime.timedelta(days=10)

@@ -20,6 +20,7 @@ import models
 from models import BlogPost, Response, Source, SyndicatedPost
 import superfeedr
 import testutil
+from testutil import FakeGrSource
 import tumblr
 import twitter
 import wordpress_rest
@@ -213,7 +214,7 @@ class SourceTest(testutil.HandlerTest):
         }],
       },
     }
-    source.gr_source.set_activities([mention])
+    FakeGrSource.activities = [mention]
 
     # check that we inject their web sites
     got = super(FakeSource, source).get_activities_response()
