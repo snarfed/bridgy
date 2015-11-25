@@ -179,7 +179,10 @@ class HandlerTest(gr_testutil.TestCase):
     FakeGrSource.clear()
     util.now_fn = lambda: NOW
 
-    # TODO: remove this and don't depend on consistent global queries
+    # we use global queries in tests to verify entities in the datastore, so
+    # make the datastore stub always return consistent data. not ideal, since it
+    # doesn't simulate eventual consistency, but oh well.
+    # https://cloud.google.com/appengine/docs/python/tools/localunittesting#Python_Writing_High_Replication_Datastore_tests
     policy = datastore_stub_util.PseudoRandomHRConsistencyPolicy(probability=1)
     self.testbed.init_datastore_v3_stub(consistency_policy=policy)
 

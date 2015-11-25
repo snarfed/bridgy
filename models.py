@@ -68,6 +68,12 @@ class Source(StringIdModel):
   """
   __metaclass__ = SourceMeta
 
+  # Turn off NDB instance and memcache caching.
+  # https://developers.google.com/appengine/docs/python/ndb/cache
+  # https://github.com/snarfed/bridgy/issues/558
+  # https://github.com/snarfed/bridgy/issues/68
+  _use_cache = False
+
   STATUSES = ('enabled', 'disabled', 'error')  # 'error' is deprecated
   POLL_STATUSES = ('ok', 'error', 'polling')
   FEATURES = ('listen', 'publish', 'webmention')
@@ -138,7 +144,8 @@ class Source(StringIdModel):
   # gr_source is *not* set to None by default here, since it needs to be unset
   # for __getattr__ to run when it's accessed.
 
-  def new(self, **kwargs):
+  @classmethod
+  def new(cls, handler, **kwargs):
     """Factory method. Creates and returns a new instance for the current user.
 
     To be implemented by subclasses.
@@ -574,12 +581,8 @@ class Webmentions(StringIdModel):
   """
   STATUSES = ('new', 'processing', 'complete', 'error')
 
-  # Turn off NDB instance and memcache caching. Main reason is to improve memcache
-  # hit rate since app engine only gives me 1MB right now. :/ Background:
-  # https://github.com/snarfed/bridgy/issues/68
-  #
-  # If you re-enable caching, MAKE SURE YOU re-enable the global ban on instance
-  # caching in appengine_config.py.
+  # Turn off instance and memcache caching. See Source for details.
+  _use_cache = False
   _use_memcache = False
 
   source = ndb.KeyProperty()
@@ -740,7 +743,7 @@ class Publish(ndb.Model):
   """
   STATUSES = ('new', 'complete', 'failed')
 
-  # Turn off instance and memcache caching. See Response for details.
+  # Turn off instance and memcache caching. See Source for details.
   _use_cache = False
   _use_memcache = False
 
