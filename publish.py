@@ -91,16 +91,19 @@ class Handler(webmention.WebmentionHandler):
   def target_url(self):
     return util.get_required_param(self, 'target')
 
-  def omit_link(self):
-    return self._bool_or_none('bridgy_omit_link')
+  def omit_link(self, item):
+    return self._bool_or_prop('bridgy_omit_link', item)
 
-  def ignore_formatting(self):
-    return self._bool_or_none('bridgy_ignore_formatting')
+  def ignore_formatting(self, item):
+    return self._bool_or_prop('bridgy_ignore_formatting', item)
 
-  def _bool_or_none(self, param):
-    if param in self.request.params:
-      return self.request.get(param).lower() in ('', 'true')
-    return None
+  def silo_content(self, item):
+    return self._bool_or_prop('bridgy_%s_content' % self.source.SHORT_NAME)
+
+  def _bool_or_prop(self, param, item):
+    val = self.request.get(param, None)
+    return (val.lower() in ('', 'true') if val is not None
+            else param.replace('_', '-') in item.get('properties', {}))
 
   def _run(self):
     """Returns CreationResult on success, None otherwise."""
@@ -248,14 +251,11 @@ class Handler(webmention.WebmentionHandler):
     Returns:
       CreationResult
     """
-    props = item.get('properties', {})
-    ignore_formatting = self.ignore_formatting()
-    if ignore_formatting is None:
-      ignore_formatting = 'bridgy-ignore-formatting' in props
-
     obj = microformats2.json_to_object(item)
+
+    ignore_formatting = self.ignore_formatting(item)
     if ignore_formatting:
-      prop = microformats2.first_props(props)
+      prop = microformats2.first_props(item.get('properties', {}))
       content = prop.get('content', {}).get('value')
       if content:
         obj['content'] = content.strip()
@@ -285,9 +285,7 @@ class Handler(webmention.WebmentionHandler):
 
     self.preprocess(obj)
 
-    omit_link = self.omit_link()
-    if omit_link is None:
-      omit_link = 'bridgy-omit-link' in props
+    omit_link = self.omit_link(item)
 
     if not self.authorize():
       return gr_source.creation_result(abort=True)
@@ -461,7 +459,7 @@ class PreviewHandler(Handler):
 
     return True
 
-  def omit_link(self):
+  def omit_link(self, item):
     # always use query param because there's a checkbox in the UI
     return self.request.get('bridgy_omit_link') in ('', 'true')
 
@@ -509,7 +507,7 @@ class SendHandler(Handler):
   def target_url(self):
     return self.state['target_url']
 
-  def omit_link(self):
+  def omit_link(self, item):
     return self.state['bridgy_omit_link']
 
   def error(self, error, html=None, status=400, data=None, mail=False):
