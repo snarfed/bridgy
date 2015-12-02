@@ -97,7 +97,8 @@ service.</a>
   comments and likes?</li>
 <li><a href="#omit-link">Can I disable the link back to my post?</a></li>
 <li><a href="#ignore-formatting">Can I disable the plain text whitespace and
-formatting?</a></li>
+  formatting?</a></li>
+<li><a href="#silo-content">I want more control over the text that gets posted.</li>
 <li><a href="#short-link">Can I include a short link instead of the full link?</a></li>
 <li><a href="#response">How does Bridgy respond to webmentions?</a></li>
 <li><a href="#error-response">How about error responses?</a></li>
@@ -814,6 +815,30 @@ whitespace when publishing it as plain text. You can disable this by adding the
 query parameter <code>bridgy_ignore_formatting=true</code> to your webmention
 HTTP request, or by adding the <code>u-bridgy-ignore-formatting</code> class to
 a link in your post.
+</li>
+
+<li id="silo-content" class="question">I want more control over the text
+  that gets posted.</li>
+<li class="answer">
+<p>Sure! You can give Bridgy the exact text that you want posted with either
+the <code>bridgy_[SILO]_content=...</code> parameter in your webmention HTTP
+request or the <code>p-bridgy-[SILO]-content</code> class to a link in your
+post. This will override the actual content in the post on your site.
+</p>
+<p>Here's an example that would publish custom text to Facebook and Twitter:
+</p>
+<pre>&lt;div class="<span class='keyword'>h-entry</span>"&gt;
+  &lt;p class="e-content"&gt;This is a going to be a very long blog post. Pull up a chair, it's going to take a while. Ready? Here we go...&lt;/p&gt;
+
+  &lt;div style="display: none"&gt;
+    &lt;p class="<span class='keyword'>p-bridgy-facebook-content</span>"&gt;<span class='value'>You won't believe this one weird old blogging trick!</span>&lt;/p&gt;
+    &lt;a href="<a href='https://brid.gy/publish/facebook'>https://brid.gy/publish/facebook</a>"&gt;&lt;/a&gt;
+
+    &lt;p class="<span class='keyword'>p-bridgy-twitter-content</span>"&gt;<span class='value'>Long form is the new short form.</span>&lt;/p&gt;
+    &lt;a href="<a href='https://brid.gy/publish/twitter'>https://brid.gy/publish/twitter</a>"&gt;&lt;/a&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+</pre>
 </li>
 
 <li id="short-link" class="question">Can I include a short link instead of the full link?</li>
