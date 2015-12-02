@@ -131,8 +131,15 @@ gsutil lifecycle set cloud_storage_lifecycle.json gs://brid-gy.appspot.com
 
 So far, this has kept us within the
 [5GB free quota](https://developers.google.com/appengine/docs/quotas#Default_Gcs_Bucket).
-Run this command to see how much space we're currently using:
+Run this to see how much space we're currently using:
 
 ```
 gsutil du -hsc gs://brid-gy.appspot.com/\*
+```
+
+Run this to download a single complete backup, for e.g. generating usage metrics
+with [`to_tsv.py`](https://github.com/snarfed/bridgy/blob/master/scripts/to_tsv.py):
+
+```
+gsutil cp -r gs://brid-gy.appspot.com/weekly/datastore_backup_full_YYYY_MM_DD_\* .
 ```

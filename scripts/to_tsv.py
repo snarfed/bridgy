@@ -17,6 +17,9 @@ More details:
 https://cloud.google.com/appengine/docs/adminconsole/datastoreadmin#Enable_datastore_admin
 http://leveldb.googlecode.com/svn/trunk/doc/log_format.txt
 http://orcaman.blogspot.com/2014/09/exporting-gae-datastore-data-to-mongodb.html (search for 3.)
+
+To download the files:
+gsutil cp -r gs://brid-gy.appspot.com/weekly/datastore_backup_full_YYYY_MM_DD_\* .
 """
 
 import collections
@@ -24,6 +27,7 @@ import csv
 import datetime
 import glob
 import itertools
+import logging
 import sys
 import urlparse
 
@@ -32,17 +36,14 @@ sys.path.append('/usr/local/google_appengine')
 from google.appengine.api.files import records
 from google.appengine.datastore import entity_pb
 from google.appengine.api import datastore
+from google.appengine.api import datastore_errors
 
-SOURCE_KINDS = ('Blogger', 'FacebookPage', 'GooglePlusPage', 'Instagram',
-                'Tumblr', 'Twitter', 'WordPress')
-KINDS = SOURCE_KINDS# + ('Response', 'BlogPost', 'Publish', 'BlogWebmention')
+SOURCE_KINDS = ('Blogger', 'FacebookPage', 'Flickr', 'GooglePlusPage',
+                'Instagram', 'Tumblr', 'Twitter', 'WordPress')
+KINDS = SOURCE_KINDS + ('Response', 'BlogPost', 'Publish', 'BlogWebmention')
 FEATURES = ('listen', 'publish', 'webmention')
-EXCLUDE_PROPS = ('auth_entity', 'domains', 'domain_urls', 'features',
-                 'feed_item', 'last_activities_cache_json', 'published',
-                 'site_info', 'superfeedr_secret')
-
-# maps string kind to csv.DictWriter
-writers = {}
+INCLUDE_PROPS = {'features', 'sent', 'unsent', 'error', 'failed', 'skipped',
+                 'links', 'domains', 'created', 'updated'}
 
 # maps string kind to list of entities (property dicts)
 all_entities = collections.defaultdict(list)
@@ -51,32 +52,27 @@ all_entities = collections.defaultdict(list)
 #
 # read app engine datastore admin backup files
 #
-# expects that they're named KIND-output-X-attempt-Y
-# assumes only one attempt for all files
-for kind in KINDS:
-  for filename in glob.glob(kind + '-output-*-attempt-*'):
-    print filename
-    # sys.stdout.write('.')
-    # sys.stdout.flush()
+for filename in glob.glob('datastore_backup_*/*/*'):
+  print filename
 
-    with open(filename, 'rb') as raw:
-      reader = records.RecordsReader(raw)
-      for record in reader:
+  with open(filename, 'rb') as raw:
+    reader = records.RecordsReader(raw)
+    for record in reader:
+      try:
         entity_proto = entity_pb.EntityProto(contents=record)
-        props = datastore.Entity.FromPb(entity_proto)
-        all_entities[kind].append(props)
-        props = {k: ' '.join(v.splitlines()).encode('utf-8')
-                 if isinstance(v, basestring) else v
-                 for k, v in props.items() if k not in EXCLUDE_PROPS}
+        entity = datastore.Entity.FromPb(entity_proto)
+      except datastore_errors.Error:
+        logging.error('!!! Skipped an entity !!! %s' % entity.key().to_path(),
+                      exc_info=True)
+        continue
+      kind = entity.kind()
+      if kind not in KINDS:
+        continue
+      props = {k: ' '.join(v.splitlines()).encode('utf-8')
+               if isinstance(v, basestring) else v
+               for k, v in entity.items() if k in INCLUDE_PROPS}
+      all_entities[kind].append(props)
 
-        writer = writers.get(kind)
-        if not writer:
-          writer = writers[kind] = csv.DictWriter(open(kind + '.tsv', 'w'),
-                                                  sorted(props.keys()),
-                                                  dialect='excel-tab',
-                                                  extrasaction='ignore')
-          writer.writeheader()
-        writer.writerow(props)
 
 #
 # generate time series growth data for number of users, wms sent, etc. by day
@@ -121,8 +117,7 @@ with open('growth.tsv', 'w') as file:
     date += datetime.timedelta(days=1)
 
     if date.day == 1:
-      sys.stdout.write('.')
-      sys.stdout.flush()
+      print date
 
   for kind, entities in all_entities.items():
     if entities:
