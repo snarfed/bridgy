@@ -92,18 +92,29 @@ class Handler(webmention.WebmentionHandler):
     return util.get_required_param(self, 'target')
 
   def omit_link(self, item):
-    return self._bool_or_prop('bridgy_omit_link', item)
+    return self._bool_option('bridgy_omit_link', item)
 
   def ignore_formatting(self, item):
-    return self._bool_or_prop('bridgy_ignore_formatting', item)
+    return self._bool_option('bridgy_ignore_formatting', item)
 
-  def silo_content(self, item):
-    return self._bool_or_prop('bridgy_%s_content' % self.source.SHORT_NAME)
-
-  def _bool_or_prop(self, param, item):
+  def _bool_option(self, param, item):
     val = self.request.get(param, None)
     return (val.lower() in ('', 'true') if val is not None
             else param.replace('_', '-') in item.get('properties', {}))
+
+  def maybe_inject_silo_content(self, item):
+    silo_content = None
+    props = item.setdefault('properties', {})
+
+    name = 'bridgy_%s_content' % self.source.SHORT_NAME
+    silo_content = ([{'value':  self.request.get(name).decode('utf-8')}]
+                    if name in self.request.params else
+                    props.get(name.replace('_', '-'), []))
+
+    if silo_content:
+      props['content'] = silo_content
+      props.pop('name', None)
+      props.pop('summary', None)
 
   def _run(self):
     """Returns CreationResult on success, None otherwise."""
@@ -251,12 +262,13 @@ class Handler(webmention.WebmentionHandler):
     Returns:
       CreationResult
     """
+    self.maybe_inject_silo_content(item)
     obj = microformats2.json_to_object(item)
 
     ignore_formatting = self.ignore_formatting(item)
     if ignore_formatting:
       prop = microformats2.first_props(item.get('properties', {}))
-      content = prop.get('content', {}).get('value')
+      content = microformats2.get_text(prop.get('content'))
       if content:
         obj['content'] = content.strip()
 

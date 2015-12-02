@@ -607,6 +607,30 @@ foo<br /> <blockquote>bar</blockquote>
     self.mox.ReplayAll()
     self.assert_created('foo bar')
 
+  def test_bridgy_content_query_param(self):
+    for i in range(2):
+      self.expect_requests_get('http://foo.com/bar', """\
+<article class="h-entry"><div class="e-content">unused</div></article>""")
+    self.mox.ReplayAll()
+
+    params = {'bridgy_fake_content': 'use this'}
+    self.assert_success('use this', preview=True, params=params)
+    self.assert_created('use this', params=params)
+
+  def test_bridgy_content_mf2(self):
+    for i in range(2):
+      self.expect_requests_get('http://foo.com/bar', """\
+<article class="h-entry">
+<div class="e-content">unused</div>
+<div class="p-bridgy-fake-content">use this</div>
+</article>""")
+    self.mox.ReplayAll()
+
+    params = {'bridgy_omit_link': 'false',
+              'bridgy_ignore_formatting': 'true'}
+    self.assert_success('use this - http://foo.com/bar', preview=True, params=params)
+    self.assert_created('use this - http://foo.com/bar', params=params)
+
   def test_expand_target_urls_u_syndication(self):
     """Comment on a post with a u-syndication value
     """
