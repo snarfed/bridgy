@@ -56,6 +56,7 @@ API_EVENT_RSVPS = '%s/invited'
 
 # https://developers.facebook.com/docs/graph-api/using-graph-api/#errors
 DEAD_TOKEN_ERROR_SUBCODES = frozenset((
+  200,  # "Permissions error"
   458,  # "The user has not authorized application 123"
   460,  # "The session has been invalidated because the user has changed the password"
 ))
