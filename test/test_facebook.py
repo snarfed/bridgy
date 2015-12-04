@@ -190,6 +190,17 @@ class FacebookPageTest(testutil.ModelsTest):
     self.mox.ReplayAll()
     self.assertRaises(models.DisableSource, self.fb.get_activities)
 
+  def test_permissions_error_doesnt_send_notification(self):
+    self.expect_api_call('me/feed?offset=0', {'error': {
+      'code': 200,
+      'type': 'FacebookApiException',
+      'message': 'Permissions error',
+      'fbtrace_id': 'ALd\/zyvssBL',
+      }}, status=400)
+
+    self.mox.ReplayAll()
+    self.assertRaises(models.DisableSource, self.fb.get_activities)
+
   def test_other_error(self):
     msg = json.dumps({'error': {'code': 190, 'error_subcode': 789}})
     self.expect_api_call('me/feed?offset=0', msg, status=400)

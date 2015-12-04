@@ -55,8 +55,10 @@ PUBLISH_SCOPES = [
 API_EVENT_RSVPS = '%s/invited'
 
 # https://developers.facebook.com/docs/graph-api/using-graph-api/#errors
-DEAD_TOKEN_ERROR_SUBCODES = frozenset((
+DEAD_TOKEN_ERROR_CODES = frozenset((
   200,  # "Permissions error"
+))
+DEAD_TOKEN_ERROR_SUBCODES = frozenset((
   458,  # "The user has not authorized application 123"
   460,  # "The session has been invalidated because the user has changed the password"
 ))
@@ -119,16 +121,18 @@ class FacebookPage(models.Source):
       return super(FacebookPage, self).get_activities_response(**kwargs)
     except urllib2.HTTPError as e:
       code, body = util.interpret_http_exception(e)
-      # use a function to extract error subcode so that we don't clobber the
-      # original exception so we can re-raise it below.
-      def subcode():
+      # use a function so any new exceptions (JSON decoding, missing keys) don't
+      # clobber the original exception so we can re-raise it below.
+      def dead_token():
         try:
-          return json.loads(body)['error']['error_subcode']
+          err = json.loads(body)['error']
+          return (err['code'] in DEAD_TOKEN_ERROR_CODES or
+                  err['error_subcode'] in DEAD_TOKEN_ERROR_SUBCODES)
         except:
-          return None
+          return False
 
       if code == '401':
-        if subcode() not in DEAD_TOKEN_ERROR_SUBCODES:
+        if not dead_token():
           # ask the user to reauthenticate. if this API call fails, it will raise
           # urllib2.HTTPError instead of DisableSource, so that we don't disable
           # the source without notifying.
