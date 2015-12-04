@@ -103,14 +103,8 @@ class Handler(webmention.WebmentionHandler):
             else param.replace('_', '-') in item.get('properties', {}))
 
   def maybe_inject_silo_content(self, item):
-    silo_content = None
     props = item.setdefault('properties', {})
-
-    name = 'bridgy_%s_content' % self.source.SHORT_NAME
-    silo_content = ([{'value':  self.request.get(name).decode('utf-8')}]
-                    if name in self.request.params else
-                    props.get(name.replace('_', '-'), []))
-
+    silo_content = props.get('bridgy-%s-content' % self.source.SHORT_NAME, [])
     if silo_content:
       props['content'] = silo_content
       props.pop('name', None)
@@ -168,6 +162,10 @@ class Handler(webmention.WebmentionHandler):
       return self.error(
         'Publish is not enabled for your account(s). Please visit %s and sign up!' %
         ' or '.join(s.bridgy_url(self) for s in sources))
+
+    content_param = 'bridgy_%s_content' % self.source.SHORT_NAME
+    if content_param in self.request.params:
+      return self.error('The %s parameter is not supported' % content_param)
 
     # show nice error message if they're trying to publish their home page
     for domain_url in self.source.domain_urls:

@@ -607,15 +607,16 @@ foo<br /> <blockquote>bar</blockquote>
     self.mox.ReplayAll()
     self.assert_created('foo bar')
 
-  def test_bridgy_content_query_param(self):
-    for i in range(2):
-      self.expect_requests_get('http://foo.com/bar', """\
-<article class="h-entry"><div class="e-content">unused</div></article>""")
-    self.mox.ReplayAll()
+  def test_bridgy_content_query_param_unsupported(self):
+    """We originally supported this, then disabled it since it's a security hole.
 
+    https://github.com/snarfed/bridgy/issues/560#issuecomment-161691819
+    """
     params = {'bridgy_fake_content': 'use this'}
-    self.assert_success('use this', preview=True, params=params)
-    self.assert_created('use this', params=params)
+    self.assert_error('bridgy_fake_content parameter is not supported',
+                      params=params)
+    self.assert_error('bridgy_fake_content parameter is not supported',
+                      preview=True, params=params)
 
   def test_bridgy_content_mf2(self):
     for i in range(2):
