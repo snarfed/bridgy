@@ -63,6 +63,11 @@ class Twitter(models.Source):
     """Returns the username."""
     return self.key.id()
 
+  def get_search_urls(self):
+    """Strip scheme (leading 'http://') to play nice with Twitter search."""
+    return [util.schemeless(url, slashes=False)
+            for url in super(Twitter, self).get_search_urls()]
+
   def get_like(self, activity_user_id, activity_id, like_user_id):
     """Returns an ActivityStreams 'like' activity object for a favorite.
 

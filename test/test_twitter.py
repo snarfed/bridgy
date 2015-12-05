@@ -91,3 +91,8 @@ class TwitterTest(testutil.ModelsTest):
     ):
       self.assertEqual('https://twitter.com/username/012345',
                        self.tw.canonicalize_syndication_url(url))
+
+  def test_get_search_urls(self):
+    self.assertEquals([], self.tw.get_search_urls())
+    self.tw.domain_urls = ['http://foo/bar', 'http://baz']
+    self.assertEquals(['foo/bar', 'baz'], self.tw.get_search_urls())

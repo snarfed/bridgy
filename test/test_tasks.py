@@ -567,7 +567,7 @@ class PollTest(TaskQueueTest):
     expected += self.responses[:3]
 
     self.assert_responses(expected)
-    self.assertEquals('"foo" OR "bar/baz?baj"', FakeGrSource.last_search_query)
+    self.assertEquals('"http://foo/" OR "https://bar/baz?baj"', FakeGrSource.last_search_query)
 
   def test_search_raises_not_implemented(self):
     """Some silos don't support search."""
@@ -604,7 +604,7 @@ class PollTest(TaskQueueTest):
       status='complete',
       original_posts=['http://or.ig/post'],
     )])
-    self.assertEquals('"foo.com/bar?biff"', FakeGrSource.last_search_query)
+    self.assertEquals('"http://foo.com/bar?biff"', FakeGrSource.last_search_query)
 
   def test_search_for_mentions_skips_redirected_posse_post(self):
     """Same as above, with a redirect."""
@@ -648,7 +648,7 @@ class PollTest(TaskQueueTest):
     source.domain_urls = ['https://good/', 'http://t.co/7k9xNgQCml']
     source.put()
     self.post_task()
-    self.assertEquals('"good"', FakeGrSource.last_search_query)
+    self.assertEquals('"https://good/"', FakeGrSource.last_search_query)
 
   def test_user_mentions(self):
     """Search for and backfeed user mentions.

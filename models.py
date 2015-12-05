@@ -270,6 +270,14 @@ class Source(StringIdModel):
     """
     return [util.replace_test_domains_with_localhost(u) for u in self.domain_urls]
 
+  def get_search_urls(self):
+    """Returns a sequence of this source's string URLs to search for.
+
+    https://github.com/snarfed/bridgy/issues/456
+    """
+    return [util.fragmentless(url) for url in self.domain_urls
+            if not util.in_webmention_blacklist(util.domain_from_link(url))]
+
   def get_activities_response(self, **kwargs):
     """Returns recent posts and embedded comments for this source.
 
