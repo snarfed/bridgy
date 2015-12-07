@@ -5,6 +5,7 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import bz2
 import calendar
+import copy
 import datetime
 import gc
 import json
@@ -122,50 +123,22 @@ class Poll(webapp2.RequestHandler):
     if source.last_activities_cache_json:
       cache.update(json.loads(source.last_activities_cache_json))
 
-    kwargs = {
-      'fetch_replies': True,
-      'count': 50,
-      'etag': source.last_activities_etag,
-      'min_id': source.last_activity_id,
-      'cache': cache,
-    }
-    # these map ids to AS objects
-    activities = {}
-    responses = {}
     try:
-      # search for mentions
-      try:
-        # we don't backfeed likes or shares of mentions, just replies
-        kwargs['fetch_likes'] = kwargs['fetch_shares'] = False
-        # this is a bit of a hack: only twitter and G+ support search right
-        # now, and they both support the OR operator.
-        # TODO: move this into a proper boolean search API in granary
-        #
-        # https://dev.twitter.com/rest/public/search
-        # https://developers.google.com/+/api/latest/activities/search
-        search_query = ' OR '.join('"%s"' % url for url in source.get_search_urls())
-        if search_query:
-          mentions = source.get_activities_response(
-            search_query=search_query, group_id=gr_source.SEARCH, **kwargs
-          ).get('items', [])
-          # strip shares and likes. (some silos get and return them without
-          # explicitly fetching them.)
-          def strip_likes_shares(objs):
-            return [o for o in objs if o.get('verb') not in ('like', 'share')]
-          for m in mentions:
-            tags = m.setdefault('object', {}).get('tags', {})
-            m['object']['tags'] = strip_likes_shares(tags)
-          mentions = {m['id']: m for m in strip_likes_shares(mentions)}
-          activities.update(mentions)  # so that we handle replies to mentions
-          responses.update(mentions)
-      except NotImplementedError:
-        # this source doesn't support search
-        pass
+      # search for mentions first so that the user's activities and responses
+      # override them if they overlap
+      link_mentions = source.search_for_links()
 
       # this user's own activities (and user mentions)
-      kwargs['fetch_likes'] = kwargs['fetch_shares'] = kwargs['fetch_mentions'] = True
-      response = source.get_activities_response(**kwargs)
-      activities.update({a['id']: a for a in response.get('items', [])})
+      resp = source.get_activities_response(
+        fetch_replies=True, fetch_likes=True, fetch_shares=True,
+        fetch_mentions=True, count=50, etag=source.last_activities_etag,
+        min_id=source.last_activity_id, cache=cache)
+      etag = resp.get('etag')  # used later
+      user_activities = resp.get('items', [])
+
+      # these map ids to AS objects
+      responses = {a['id']: a for a in link_mentions}
+      activities = {a['id']: a for a in link_mentions + user_activities}
 
     except Exception, e:
       code, body = util.interpret_http_exception(e)
@@ -340,7 +313,6 @@ class Poll(webapp2.RequestHandler):
 
     source.updates.update({'last_polled': source.last_poll_attempt,
                            'poll_status': 'ok'})
-    etag = response.get('etag')
     if etag and etag != source.last_activities_etag:
       logging.debug('Storing new ETag: %s', etag)
       source.updates['last_activities_etag'] = etag

@@ -9,6 +9,7 @@ import json
 import appengine_config
 
 from granary import googleplus as gr_googleplus
+from granary import source as gr_source
 from oauth_dropins import googleplus as oauth_googleplus
 import models
 import util
@@ -89,6 +90,21 @@ class GooglePlusPage(models.Source):
     """
     return super(GooglePlusPage, self).canonicalize_syndication_url(
       util.follow_redirects(url).url)
+
+  def search_for_links(self):
+    """Searches for activities with links to any of this source's web sites.
+
+    G+ search supports OR:
+    https://developers.google.com/+/api/latest/activities/search
+
+    Returns: sequence of ActivityStreams activity dicts
+    """
+    query = ' OR '.join(
+      '"%s"' % util.fragmentless(url) for url in self.domain_urls
+      if not util.in_webmention_blacklist(util.domain_from_link(url)))
+    return source.get_activities(
+      search_query=query, group_id=gr_source.SEARCH, etag=self.last_activities_etag,
+      fetch_replies=False, fetch_likes=False, fetch_shares=False)
 
 
 class OAuthCallback(util.Handler):

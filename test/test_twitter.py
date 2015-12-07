@@ -5,8 +5,10 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import copy
 import json
+import urllib
 
 import appengine_config
+from granary import twitter as gr_twitter
 from granary.test import test_twitter as gr_twitter_test
 import oauth_dropins
 from oauth_dropins import twitter as oauth_twitter
@@ -92,7 +94,48 @@ class TwitterTest(testutil.ModelsTest):
       self.assertEqual('https://twitter.com/username/012345',
                        self.tw.canonicalize_syndication_url(url))
 
-  def test_get_search_urls(self):
-    self.assertEquals([], self.tw.get_search_urls())
-    self.tw.domain_urls = ['http://foo/bar', 'http://baz']
-    self.assertEquals(['foo/bar', 'baz'], self.tw.get_search_urls())
+  def test_search_for_links(self):
+    """https://github.com/snarfed/bridgy/issues/565"""
+    self.tw.domain_urls = ['http://foo/', 'http://bar/baz', 'https://t.co/xyz']
+    self.tw.put()
+
+    results = [{
+      'id_str': '0', # no link
+      'text': 'x foo/ y /bar/baz z',
+    }, {
+      'id_str': '1', # no link
+      'text': 'no link here',
+      'entities': {'urls': [{'expanded_url': 'http://bar'},
+                            {'expanded_url': 'https://bar/baz'},
+      ]},
+    }, {
+      'id_str': '2', # no, retweet
+      'text': 'a http://bar/baz ok',
+      'retweeted_status': {
+        'id_str': '456',
+        'text': 'a http://bar/baz ok',
+      },
+    }, {
+      'id_str': '3', # no, link domain is blacklisted
+      'text': 'x https://t.co/xyz/abc z',
+    }, {
+      'id_str': '4', # yes
+      'text': 'x http://bar/baz z',
+    }, {
+      'id_str': '5', # yes
+      'text': 'no link here',
+      'entities': {'urls': [{'expanded_url': 'http://foo/x?y'}]},
+    }, {
+      'id_str': '6', # yes
+      'text': 'a link http://bar/baz here',
+      'entities': {'urls': [{'expanded_url': 'http://foo/'},
+                            {'expanded_url': 'http://other'}]},
+    }]
+    self.expect_urlopen(gr_twitter.API_BASE + gr_twitter.API_SEARCH_URL %
+                        {'q': urllib.quote_plus('"foo" OR "bar/baz"'), 'count': 0},
+                        json.dumps({'statuses': results}))
+
+    self.mox.ReplayAll()
+    self.assert_equals(
+      ['tag:twitter.com,2013:4', 'tag:twitter.com,2013:5', 'tag:twitter.com,2013:6'],
+      [a['id'] for a in self.tw.search_for_links()])

@@ -11,6 +11,7 @@ import webapp2
 import appengine_config
 
 from granary import twitter as gr_twitter
+from granary import source as gr_source
 from oauth_dropins import twitter as oauth_twitter
 import models
 import util
@@ -63,10 +64,43 @@ class Twitter(models.Source):
     """Returns the username."""
     return self.key.id()
 
-  def get_search_urls(self):
-    """Strip scheme (leading 'http://') to play nice with Twitter search."""
-    return [util.schemeless(url, slashes=False)
-            for url in super(Twitter, self).get_search_urls()]
+  def search_for_links(self):
+    """Searches for activities with links to any of this source's web sites.
+
+    Twitter search supports OR:
+    https://dev.twitter.com/rest/public/search
+
+    ...but it only returns complete(ish) results if we strip scheme from URLs,
+    ie search for example.com instead of http://example.com/, and that also
+    returns false positivies, so we check that the returned tweets actually have
+    matching links. https://github.com/snarfed/bridgy/issues/565
+
+    Returns: sequence of ActivityStreams activity dicts
+    """
+    urls = set(util.fragmentless(url) for url in self.domain_urls
+               if not util.in_webmention_blacklist(util.domain_from_link(url)))
+    query = ' OR '.join('"%s"' % util.schemeless(url, slashes=False) for url in urls)
+
+    candidates = self.get_activities(
+      search_query=query, group_id=gr_source.SEARCH, etag=self.last_activities_etag,
+      fetch_replies=False, fetch_likes=False, fetch_shares=False)
+
+    # filter out retweets and search false positives that don't actually link to us
+    results = []
+    for candidate in candidates:
+      if candidate.get('verb') == 'share':
+        continue
+      obj = candidate['object']
+      tags = obj.get('tags', [])
+      atts = obj.get('attachments', [])
+      for url in urls:
+        if (url in obj.get('content', '') or
+            any(t.get('url', '').startswith(url) for t in tags + atts)):
+          id = candidate['id']
+          results.append(candidate)
+          break
+
+    return results
 
   def get_like(self, activity_user_id, activity_id, like_user_id):
     """Returns an ActivityStreams 'like' activity object for a favorite.

@@ -41,6 +41,7 @@ class FakeGrSource(gr_source.Source):
   DOMAIN = 'fa.ke'
 
   last_search_query = None
+  search_results = []
 
   def user_url(self, id):
     return 'http://fa.ke/' + id
@@ -66,7 +67,8 @@ class FakeGrSource(gr_source.Source):
   @classmethod
   def clear(cls):
     cls.activities = cls.like = cls.share = cls.event = cls.rsvp = cls.etag = \
-      cls.search_results = cls.last_search_query = None
+      cls.last_search_query = None
+    cls.search_results = []
 
   def get_activities_response(self, user_id=None, group_id=None,
                               activity_id=None, app_id=None,
@@ -79,8 +81,6 @@ class FakeGrSource(gr_source.Source):
       assert group_id == gr_source.SEARCH
       FakeGrSource.last_search_query = search_query
       activities = self.search_results
-      if activities is None:
-        raise NotImplementedError()
 
     return {
       'items': copy.deepcopy(activities),
@@ -148,6 +148,9 @@ class FakeSource(Source):
   def poll_period(self):
     return (self.RATE_LIMITED_POLL if self.rate_limited
             else super(FakeSource, self).poll_period())
+
+  def search_for_links(self):
+    return copy.deepcopy(FakeGrSource.search_results)
 
   @classmethod
   def new(cls, handler, **props):

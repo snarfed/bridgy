@@ -85,7 +85,7 @@ class PollTest(TaskQueueTest):
       params={'source_key': source.key.urlsafe(),
               'last_polled': '1970-01-01-00-00-00'})
 
-  def assert_responses(self, expected=None):
+  def assert_responses(self, expected=None, ignore=tuple()):
     """Asserts that all of self.responses are saved."""
     if expected is None:
       expected = self.responses
@@ -93,11 +93,14 @@ class PollTest(TaskQueueTest):
     # sort fields in json properties since they're compared as strings
     stored = list(Response.query())
     for resp in expected + stored:
-      resp.activities_json = [json.dumps(json.loads(a), sort_keys=True)
-                              for a in resp.activities_json]
-      resp.response_json = json.dumps(json.loads(resp.response_json), sort_keys=True)
+      if 'activities_json' not in ignore:
+        resp.activities_json = [json.dumps(json.loads(a), sort_keys=True)
+                                for a in resp.activities_json]
+      if 'response_json' not in ignore:
+        resp.response_json = json.dumps(json.loads(resp.response_json), sort_keys=True)
 
-    self.assert_entities_equal(expected, stored, ignore=('created', 'updated'))
+    self.assert_entities_equal(expected, stored,
+                               ignore=('created', 'updated') + ignore)
 
   def assert_task_eta(self, countdown):
     """Checks the current poll task's eta. Handles the random range.
@@ -491,18 +494,6 @@ class PollTest(TaskQueueTest):
     }
     colliding_reply = copy.copy(self.activities[0]['object']['replies']['items'][0])
     colliding_reply['objectType'] = 'note'
-    like = {
-      'id': 'tag:source.com,2013:9_like',
-      'objectType': 'activity',
-      'verb': 'like',
-      'object': {'url': 'http://example.com/abc'},
-    }
-    share = {
-      'id': 'tag:source.com,2013:9_reshare',
-      'objectType': 'activity',
-      'verb': 'share',
-      'object': {'url': 'http://example.com/def'},
-    }
     mentions = [{
        # good mention
        'id': 'tag:source.com,2013:9',
@@ -510,12 +501,8 @@ class PollTest(TaskQueueTest):
          'objectType': 'note',
          'content': 'foo http://target9/post/url bar',
          'replies': {'items': [reply]},
-         'tags': [like, share],
        },
      },
-      # these should be filtered out
-      like,
-      share,
       # this will be returned by the mentions search, and should be overriden by
       # the reply in self.activities[0]
       colliding_reply,
@@ -528,34 +515,15 @@ class PollTest(TaskQueueTest):
     # * mention
     # * mention comment
     # * comment, like, and reshare from the normal activity
-    pruned_activity = json.dumps({
-      'id': 'tag:source.com,2013:9',
-      'object': {'content': 'foo http://target9/post/url bar'},
-    })
-    pruned_response = json.dumps({
-      'id': 'tag:source.com,2013:9',
-      'object': {
-        'content': 'foo http://target9/post/url bar',
-        'objectType': 'note',
-      },
-    })
     expected = [
       Response(
         id='tag:source.com,2013:9',
-        activities_json=[pruned_activity],
-        response_json=pruned_response,
         type='post',
-        source=source.key,
         unsent=['http://target9/post/url'],
-        original_posts=[],
       ), Response(
         id='tag:source.com,2013:9_comment',
-        activities_json=[pruned_activity],
-        response_json=json.dumps(reply),
         type='comment',
-        source=source.key,
         unsent=['http://target9/post/url'],
-        original_posts=[],
       )]
 
     # responses from the normal activity
@@ -566,16 +534,8 @@ class PollTest(TaskQueueTest):
       })]
     expected += self.responses[:3]
 
-    self.assert_responses(expected)
-    self.assertEquals('"http://foo/" OR "https://bar/baz?baj"', FakeGrSource.last_search_query)
-
-  def test_search_raises_not_implemented(self):
-    """Some silos don't support search."""
-    self.sources[0].domain_urls = ['http://foo', 'http://bar']
-    self.sources[0].put()
-    FakeGrSource.activities = []
-    self.post_task()
-    self.assertEquals(0, Response.query().count())
+    self.assert_responses(expected, ignore=('activities_json', 'response_json',
+                                            'source', 'original_posts'))
 
   def test_search_for_mentions_skips_posse_posts(self):
     """When mention search finds a POSSE post, it shouldn't backfeed it.
@@ -604,7 +564,6 @@ class PollTest(TaskQueueTest):
       status='complete',
       original_posts=['http://or.ig/post'],
     )])
-    self.assertEquals('"http://foo.com/bar?biff"', FakeGrSource.last_search_query)
 
   def test_search_for_mentions_skips_redirected_posse_post(self):
     """Same as above, with a redirect."""
@@ -634,22 +593,6 @@ class PollTest(TaskQueueTest):
       original_posts=['http://or.ig/post'],
     )])
 
-  def test_search_for_mentions_skips_blacklisted_domains(self):
-    """https://github.com/snarfed/bridgy/issues/490"""
-    source = self.sources[0]
-    source.domain_urls = ['http://t.co/7k9xNgQCml']
-    source.put()
-
-    FakeGrSource.last_search_query = None
-    self.post_task()
-    # if there are *no* good domains, we shouldn't search at all
-    self.assertIsNone(FakeGrSource.last_search_query)
-
-    source.domain_urls = ['https://good/', 'http://t.co/7k9xNgQCml']
-    source.put()
-    self.post_task()
-    self.assertEquals('"https://good/"', FakeGrSource.last_search_query)
-
   def test_user_mentions(self):
     """Search for and backfeed user mentions.
 
@@ -659,7 +602,7 @@ class PollTest(TaskQueueTest):
     source.domain_urls = ['http://foo/', 'https://bar']
     source.put()
 
-    mention = {
+    FakeGrSource.activities = [{
       'id': 'tag:source,2013:9',
       'object': {
         'tags': [{
@@ -672,9 +615,7 @@ class PollTest(TaskQueueTest):
           'url': 'https://source/other',
         }],
       },
-    }
-    FakeGrSource.search_results = [mention]
-    FakeGrSource.activities = []
+    }]
     self.post_task()
 
     # one expected response with two target urls, one for each domain_url
