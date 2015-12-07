@@ -79,11 +79,13 @@ class Twitter(models.Source):
     """
     urls = set(util.fragmentless(url) for url in self.domain_urls
                if not util.in_webmention_blacklist(util.domain_from_link(url)))
-    query = ' OR '.join('"%s"' % util.schemeless(url, slashes=False) for url in urls)
+    if not urls:
+      return []
 
+    query = ' OR '.join('"%s"' % util.schemeless(url, slashes=False) for url in urls)
     candidates = self.get_activities(
       search_query=query, group_id=gr_source.SEARCH, etag=self.last_activities_etag,
-      fetch_replies=False, fetch_likes=False, fetch_shares=False)
+      fetch_replies=False, fetch_likes=False, fetch_shares=False, count=50)
 
     # filter out retweets and search false positives that don't actually link to us
     results = []

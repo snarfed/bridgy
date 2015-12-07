@@ -102,9 +102,9 @@ class GooglePlusPage(models.Source):
     query = ' OR '.join(
       '"%s"' % util.fragmentless(url) for url in self.domain_urls
       if not util.in_webmention_blacklist(util.domain_from_link(url)))
-    return source.get_activities(
+    return self.get_activities(
       search_query=query, group_id=gr_source.SEARCH, etag=self.last_activities_etag,
-      fetch_replies=False, fetch_likes=False, fetch_shares=False)
+      fetch_replies=False, fetch_likes=False, fetch_shares=False, count=50)
 
 
 class OAuthCallback(util.Handler):

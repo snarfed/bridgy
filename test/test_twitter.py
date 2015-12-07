@@ -132,10 +132,17 @@ class TwitterTest(testutil.ModelsTest):
                             {'expanded_url': 'http://other'}]},
     }]
     self.expect_urlopen(gr_twitter.API_BASE + gr_twitter.API_SEARCH_URL %
-                        {'q': urllib.quote_plus('"foo" OR "bar/baz"'), 'count': 0},
+                        {'q': urllib.quote_plus('"foo" OR "bar/baz"'), 'count': 50},
                         json.dumps({'statuses': results}))
 
     self.mox.ReplayAll()
     self.assert_equals(
       ['tag:twitter.com,2013:4', 'tag:twitter.com,2013:5', 'tag:twitter.com,2013:6'],
       [a['id'] for a in self.tw.search_for_links()])
+
+  def test_search_for_links_no_urls(self):
+    # only a blacklisted domain
+    self.tw.domain_urls = ['https://t.co/xyz']
+    self.tw.put()
+    self.mox.ReplayAll()
+    self.assert_equals([], self.tw.search_for_links())
