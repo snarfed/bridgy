@@ -468,6 +468,29 @@ this is my article
     self.mox.ReplayAll()
     self.assert_error('Could not find content')
 
+  def test_tumblr_special_case_does_not_override_mf1(self):
+    """Tumblr's special case should not add "h-entry" on a class
+    that already has mf1 microformats on it (or it will cause the parser
+    to ignore the mf2 properties).
+    """
+    self.expect_requests_get('http://foo.com/bar', """
+<!DOCTYPE html>
+<html>
+<head></head>
+<body>
+  <div id="content">
+    <div class="post hentry">
+      <div class="entry-content">blah</div>
+      <img class="photo" src="http://baz.org/img.jpg"/>
+      <a rel="bookmark" href="http://foo.com/bar"></a>
+    </div>
+  </div>
+</body>
+</html>
+""")
+    self.mox.ReplayAll()
+    self.assert_created('blah - http://foo.com/bar')
+
   def test_returned_type_overrides(self):
     # FakeSource returns type 'post' when it sees 'rsvp'
     self.expect_requests_get('http://foo.com/bar', """
