@@ -15,7 +15,7 @@ import appengine_config
 from appengine_config import HTTP_TIMEOUT
 
 from bs4 import BeautifulSoup
-from mf2py import parser
+import mf2py
 import requests
 import util
 
@@ -78,25 +78,28 @@ class WebmentionHandler(WebmentionGetHandler):
             else fetched.content)
     doc = BeautifulSoup(text)
 
-    # special case tumblr's markup: div#content > div.post > div.copy
-    # convert to mf2.
-    contents = doc.find_all(id='content')
-    if contents:
-      post = contents[0].find_next(class_='post')
-      if post:
-        post['class'] = 'h-entry'
-        copy = post.find_next(class_='copy')
-        if copy:
-          copy['class'] = 'e-content'
-        photo = post.find_next(class_='photo-wrapper')
-        if photo:
-          img = photo.find_next('img')
-          if img:
-            img['class'] = 'u-photo'
-        doc = unicode(post)
-
     # parse microformats, convert to ActivityStreams
-    data = parser.Parser(doc=doc, url=fetched.url).to_dict()
+    data = mf2py.parse(doc=doc, url=fetched.url)
+
+    # special case tumblr's markup: div#content > div.post > div.copy
+    # convert to mf2 and re-parse
+    if not data.get('items'):
+      contents = doc.find_all(id='content')
+      if contents:
+        post = contents[0].find_next(class_='post')
+        if post:
+          post['class'] = 'h-entry'
+          copy = post.find_next(class_='copy')
+          if copy:
+            copy['class'] = 'e-content'
+          photo = post.find_next(class_='photo-wrapper')
+          if photo:
+            img = photo.find_next('img')
+            if img:
+              img['class'] = 'u-photo'
+          doc = unicode(post)
+          data = mf2py.parse(doc=doc, url=fetched.url)
+
     logging.debug('Parsed microformats2: %s', json.dumps(data, indent=2))
     items = data.get('items', [])
     if not items or not items[0]:
