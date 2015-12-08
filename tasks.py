@@ -117,16 +117,16 @@ class Poll(webapp2.RequestHandler):
     #
     # Step 1: fetch activities:
     # * posts by the user
-    # * search all posts for the user's domain to find mention links
+    # * search all posts for the user's domain URLs to find links
     #
     cache = util.CacheDict()
     if source.last_activities_cache_json:
       cache.update(json.loads(source.last_activities_cache_json))
 
     try:
-      # search for mentions first so that the user's activities and responses
+      # search for links first so that the user's activities and responses
       # override them if they overlap
-      link_mentions = source.search_for_links()
+      links = source.search_for_links()
 
       # this user's own activities (and user mentions)
       resp = source.get_activities_response(
@@ -137,8 +137,8 @@ class Poll(webapp2.RequestHandler):
       user_activities = resp.get('items', [])
 
       # these map ids to AS objects
-      responses = {a['id']: a for a in link_mentions}
-      activities = {a['id']: a for a in link_mentions + user_activities}
+      responses = {a['id']: a for a in links}
+      activities = {a['id']: a for a in links + user_activities}
 
     except Exception, e:
       code, body = util.interpret_http_exception(e)
@@ -190,7 +190,7 @@ class Poll(webapp2.RequestHandler):
     #
     # Step 2: extract responses, store their activities in response['activities']
     #
-    # WARNING: this creates circular references in mentions found by search
+    # WARNING: this creates circular references in link posts found by search
     # queries in step 1, since they are their own activity. We use
     # prune_activity() and prune_response() in step 4 to remove these before
     # serializing to JSON.
@@ -230,9 +230,9 @@ class Poll(webapp2.RequestHandler):
         resp.setdefault('activities', []).append(activity)
 
         # when we find two responses with the same id, the earlier one may have
-        # come from a mention, and this one is probably better since it probably
-        # came from the user's activity, so prefer this one. background:
-        # https://github.com/snarfed/bridgy/issues/533
+        # come from a link post or user mention, and this one is probably better
+        # since it probably came from the user's activity, so prefer this one.
+        # background: https://github.com/snarfed/bridgy/issues/533
         existing = responses.get(id)
         if existing:
           if source.gr_source.activity_changed(resp, existing, log=True):
@@ -289,7 +289,7 @@ class Poll(webapp2.RequestHandler):
             too_long.add(t[:_MAX_STRING_LENGTH - 4] + '...')
 
       # store/update response entity. the prune_*() calls are important to
-      # remove circular references in mention responses, which are their own
+      # remove circular references in link responses, which are their own
       # activities. details in the step 2 comment above.
       pruned_response = util.prune_response(resp)
       pruned_responses.append(pruned_response)

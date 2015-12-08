@@ -469,9 +469,10 @@ class PollTest(TaskQueueTest):
     self.assert_equals('complete', resp.status)
     self.assertIsNone(resp.urls_to_activity)
 
-  def test_search_for_mentions_backfeed_posts_and_comments(self):
-    """Search for links to the source's domains in posts, backfeed posts and
-    comments to those mention links but not likes, reposts, or rsvps.
+  def test_search_for_links_backfeed_posts_and_comments(self):
+    """Search for links to the source's domains in posts.
+
+    Backfeed those posts and their comments, but not likes, reposts, or rsvps.
 
     https://github.com/snarfed/bridgy/issues/456
     """
@@ -480,7 +481,7 @@ class PollTest(TaskQueueTest):
     source.domains = ['target1']
     source.put()
 
-    # return one normal activity and one searched mention
+    # return one normal activity and one searched link
     activity = self.activities[0]
     # prevent posse post discovery
     del activity['object']['url']
@@ -494,8 +495,8 @@ class PollTest(TaskQueueTest):
     }
     colliding_reply = copy.copy(self.activities[0]['object']['replies']['items'][0])
     colliding_reply['objectType'] = 'note'
-    mentions = [{
-       # good mention
+    links = [{
+       # good link
        'id': 'tag:source.com,2013:9',
        'object': {
          'objectType': 'note',
@@ -503,17 +504,17 @@ class PollTest(TaskQueueTest):
          'replies': {'items': [reply]},
        },
      },
-      # this will be returned by the mentions search, and should be overriden by
-      # the reply in self.activities[0]
+      # this will be returned by the link search, and should be overriden by the
+      # reply in self.activities[0]
       colliding_reply,
     ]
-    FakeGrSource.search_results = mentions
+    FakeGrSource.search_results = links
 
     self.post_task()
 
     # expected responses:
-    # * mention
-    # * mention comment
+    # * link
+    # * link comment
     # * comment, like, and reshare from the normal activity
     expected = [
       Response(
@@ -537,7 +538,7 @@ class PollTest(TaskQueueTest):
     self.assert_responses(expected, ignore=('activities_json', 'response_json',
                                             'source', 'original_posts'))
 
-  def test_search_for_mentions_skips_posse_posts(self):
+  def test_search_for_links_skips_posse_posts(self):
     """When mention search finds a POSSE post, it shouldn't backfeed it.
 
     https://github.com/snarfed/bridgy/issues/485
@@ -547,35 +548,35 @@ class PollTest(TaskQueueTest):
     source.domains = ['or.ig']
     source.put()
 
-    mention = {
+    link = {
       'id': 'tag:or.ig,2013:9',
       'object': {'content': 'foo http://or.ig/post'},
     }
-    FakeGrSource.search_results = [mention]
+    FakeGrSource.search_results = [link]
     FakeGrSource.activities = []
 
     self.post_task()
     self.assert_responses([Response(
       id='tag:or.ig,2013:9',
-      activities_json=[json.dumps(mention)],
-      response_json=json.dumps(mention),
+      activities_json=[json.dumps(link)],
+      response_json=json.dumps(link),
       type='post',
       source=source.key,
       status='complete',
       original_posts=['http://or.ig/post'],
     )])
 
-  def test_search_for_mentions_skips_redirected_posse_post(self):
+  def test_search_for_links_skips_redirected_posse_post(self):
     """Same as above, with a redirect."""
     self.sources[0].domain_urls = ['http://foo']
     self.sources[0].domains = ['or.ig']
     self.sources[0].put()
 
-    mention = {
+    link = {
       'id': 'tag:or.ig,2013:9',
       'object': {'content': 'foo http://sho.rt/post'},
     }
-    FakeGrSource.search_results = [mention]
+    FakeGrSource.search_results = [link]
     FakeGrSource.activities = []
 
     self.expect_requests_head('http://sho.rt/post',
@@ -585,8 +586,8 @@ class PollTest(TaskQueueTest):
 
     self.assert_responses([Response(
       id='tag:or.ig,2013:9',
-      activities_json=[json.dumps(mention)],
-      response_json=json.dumps(mention),
+      activities_json=[json.dumps(link)],
+      response_json=json.dumps(link),
       type='post',
       source=self.sources[0].key,
       status='complete',
