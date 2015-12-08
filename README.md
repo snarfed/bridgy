@@ -100,6 +100,80 @@ put it somewhere safe, and put its path in your `GOOGLE_APPLICATION_CREDENTIALS`
 environment variable.
 
 
+Adding a new silo
+---
+So you want to add a new [silo](http://indiewebcamp.com/silo)? Maybe MySpace, or
+Friendster, or even Tinder? Great! Here are the steps to do it. It looks like a
+lot, but it's not that bad, honest.
+
+1. Find the silo's API docs and check that it can do what Bridgy needs. At
+minimum, it should be able to get a user's posts and their comments, likes, and
+reposts, depending on which of those the silo supports. If you want
+[publish](https://www.brid.gy/about#publish) support, it should also be able to
+create posts, comments, likes, reposts, and/or RSVPs.
+1. Fork and clone this repo.
+1. Create an app (aka client) in the silo's developer console, grab your app's id
+(aka key) and secret, put them into new local files in the repo root dir,
+[following this pattern](https://github.com/snarfed/oauth-dropins/blob/master/oauth_dropins/appengine_config.py).
+You'll eventually want to send them to @snarfed and @kylewm too, but no hurry.
+1. Add the silo to [oauth-dropins](https://github.com/snarfed/oauth-dropins) if
+   it's not already there:
+  1. Add a new `.py` file for your silo with an auth model and handler classes.
+    Follow the existing examples.
+  1. Add a [button image](https://github.com/snarfed/oauth-dropins/tree/master/oauth_dropins/static).
+  1. Add it to the
+  [app front page](https://github.com/snarfed/oauth-dropins/blob/master/templates/index.html)
+  and the [README](https://github.com/snarfed/oauth-dropins/blob/master/README.md).
+1. Add the silo to [granary](https://github.com/snarfed/granary):
+  1. Add a new `.py` file for your silo. Follow the existing examples. At
+     minimum, you'll need to implement
+     [`get_activities_response`](https://github.com/snarfed/granary/blob/845afbbd521f7ba43b3339bcc1ce3afddd205047/granary/source.py#L137)
+     and convert your silo's API data to [ActivityStreams](http://activitystrea.ms/).
+  1. Add a new unit test file and write some tests!
+  1. Add it to
+  [`activitystreams.py`](https://github.com/snarfed/granary/blob/master/activitystreams.py)
+  (specifically `Handler.get`),
+  [`app.py`](https://github.com/snarfed/granary/blob/master/app.py),
+  [`app.yaml`](https://github.com/snarfed/granary/blob/master/app.yaml),
+  [`index.html`](https://github.com/snarfed/granary/blob/master/granary/templates/index.html),
+  and the
+  [README](https://github.com/snarfed/granary/blob/master/README.md).
+1. Add the silo to Bridgy:
+  1. Add a new `.py` file for your silo with a model class. Follow the existing
+  examples.
+  1. Add it to
+  [`app.py`](https://github.com/snarfed/granary/blob/master/app.py),
+  [`app.yaml`](https://github.com/snarfed/granary/blob/master/app.yaml), and
+  [`handlers.py`](https://github.com/snarfed/granary/blob/master/handlers.py),
+  (just import the module).
+  1. Add a 24x24 PNG icon to [`static/`](https://github.com/snarfed/granary/tree/master/static).
+  1. Add new `SILO_signup.html` and `SILO_user.html` files in
+  [`templates/`](https://github.com/snarfed/granary/tree/master/templates).
+  and add the silo to
+  [`listen_signup.html`](https://github.com/snarfed/bridgy/blob/master/templates/listen_signup.html).
+  Follow the existing examples.
+  1. Add the silo to
+  [`about.html`](https://github.com/snarfed/granary/blob/master/templates/about.html) and this README.
+  1. If users' profile picture URLs can change, add a cron job that updates them
+  to [`cron.py`](https://github.com/snarfed/granary/blob/master/cron.py) and
+  [`cron.yaml`](https://github.com/snarfed/granary/blob/master/cron.yaml). Also
+  add the model class to the datastore backup job there.
+1. Optionally add publish support:
+  1. Implement
+  [`create`](https://github.com/snarfed/granary/blob/845afbbd521f7ba43b3339bcc1ce3afddd205047/granary/source.py#L223) and
+  [`preview_create`](https://github.com/snarfed/granary/blob/845afbbd521f7ba43b3339bcc1ce3afddd205047/granary/source.py#L247)
+  for the silo in granary.
+  1. Add the silo to
+  [`publish.py`](https://github.com/snarfed/bridgy/blob/publish.py): import its
+  module, add it to `SOURCES`, and update
+  [this error message](https://github.com/snarfed/bridgy/blob/424bbb28c769eea5636534aba5791e868d63b987/publish.py#L130).
+  1. Add a `publish-signup` block to `SILO_user.html` and add the silo
+  [to `social_user.html` here](https://github.com/snarfed/bridgy/blob/424bbb28c769eea5636534aba5791e868d63b987/templates/social_user.html#L51).
+  1. Update `app.yaml`.
+
+Good luck, and happy hacking!
+
+
 Monitoring
 ---
 
