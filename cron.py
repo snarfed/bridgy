@@ -45,7 +45,7 @@ class UpdatePictures(webapp2.RequestHandler):
 
   def get(self):
     for source in self.SOURCE_CLS.query():
-      logging.debug('checking source: %s', source)
+      logging.debug('check for updated profile pictures for: %s', source)
       if source.features and source.status != 'disabled':
         maybe_update_picture(source, source.gr_source.get_actor(), self)
 
