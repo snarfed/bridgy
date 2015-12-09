@@ -15,6 +15,7 @@ import models
 from models import Source
 from instagram import Instagram
 from twitter import Twitter
+from flickr import Flickr
 import util
 import webapp2
 
@@ -68,13 +69,28 @@ class UpdateTwitterPictures(webapp2.RequestHandler):
       maybe_update_picture(source, new_actor, self)
 
 
-class UpdateInstagramPictures(webapp2.RequestHandler):
-  """Finds Instagram sources whose profile pictures have changed and updates them."""
+class UpdatePictures(webapp2.RequestHandler):
+  """Finds sources whose profile pictures have changed and
+  updates them."""
+  SOURCE_CLS = None
 
   def get(self):
-    for source in Instagram.query():
+    for source in self.SOURCE_CLS.query():
+      logging.debug('checking source: %s', source)
       if source.features and source.status != 'disabled':
         maybe_update_picture(source, source.gr_source.get_actor(), self)
+
+
+class UpdateInstagramPictures(UpdatePictures):
+  """Finds Instagram sources whose profile pictures have changed and
+  updates them."""
+  SOURCE_CLS = Instagram
+
+
+class UpdateFlickrPictures(UpdatePictures):
+  """Finds Flickr sources whose profile pictures have changed and
+  updates them."""
+  SOURCE_CLS = Flickr
 
 
 def maybe_update_picture(source, new_actor, handler):
@@ -98,4 +114,5 @@ application = webapp2.WSGIApplication([
     ('/cron/replace_poll_tasks', ReplacePollTasks),
     ('/cron/update_twitter_pictures', UpdateTwitterPictures),
     ('/cron/update_instagram_pictures', UpdateInstagramPictures),
+    ('/cron/update_flickr_pictures', UpdateFlickrPictures),
     ], debug=appengine_config.DEBUG)
