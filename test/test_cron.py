@@ -1,4 +1,4 @@
-"""Unit tests for tasks.py.
+"""Unit tests for cron.py.
 """
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
@@ -6,28 +6,16 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 import datetime
 import json
 
-
-from granary import instagram as gr_instagram
-from granary import twitter as gr_twitter
-import oauth_dropins
 from oauth_dropins import instagram as oauth_instagram
-from oauth_dropins import twitter as oauth_twitter
-from oauth_dropins.webutil.util import Struct
 
 import cron
 import instagram
 from instagram import Instagram
 import testutil
-from testutil import FakeSource, ModelsTest
-from twitter import Twitter
+from testutil import FakeSource, HandlerTest
 
 
-class CronTest(ModelsTest):
-
-  def setUp(self):
-    super(ModelsTest, self).setUp()
-    oauth_dropins.appengine_config.TWITTER_APP_KEY = 'my_app_key'
-    oauth_dropins.appengine_config.TWITTER_APP_SECRET = 'my_app_secret'
+class CronTest(HandlerTest):
 
   def test_replace_poll_tasks(self):
     self.assertEqual([], self.taskqueue_stub.GetTasks('poll'))
@@ -63,41 +51,6 @@ class CronTest(ModelsTest):
     self.assertEqual(1, len(tasks))
     self.assert_equals(sources[4].urlsafe(),
                        testutil.get_task_params(tasks[0])['source_key'])
-
-  def test_update_twitter_pictures(self):
-    sources = []
-    for screen_name in ('a', 'b', 'c'):
-      auth_entity = oauth_twitter.TwitterAuth(
-        id='id', token_key='key', token_secret='secret',
-        user_json=json.dumps({'name': 'Ryan',
-                              'screen_name': screen_name,
-                              'profile_image_url': 'http://pi.ct/ure',
-                              }))
-      auth_entity.put()
-      sources.append(Twitter.new(None, auth_entity=auth_entity).put())
-
-    user_objs = [{'screen_name': sources[0].id(),
-                  'profile_image_url': 'http://pi.ct/ure',
-                  }, {'screen_name': sources[1].id(),
-                      'profile_image_url_https': 'http://new/pic_normal.jpg',
-                      'profile_image_url': 'http://bad/http',
-                  }]
-
-    cron.TWITTER_USERS_PER_LOOKUP = 2
-    lookup_url = gr_twitter.API_BASE + cron.TWITTER_API_USER_LOOKUP
-    self.expect_urlopen(lookup_url % 'a,c', json.dumps(user_objs))
-    self.expect_urlopen(lookup_url % 'b', json.dumps(user_objs))
-    self.mox.ReplayAll()
-
-    resp = cron.application.get_response('/cron/update_twitter_pictures')
-    self.assertEqual(200, resp.status_int)
-
-    # self.assertEquals('http://pi.ct/ure', sources[0].get().picture)
-    # self.assertEquals('http://new/pic.jpg', sources[1].get().picture)
-    self.assertEquals('https://twitter.com/a/profile_image?size=original',
-                      sources[0].get().picture)
-    self.assertEquals('https://twitter.com/b/profile_image?size=original',
-                      sources[1].get().picture)
 
   def test_update_instagram_pictures(self):
     for username in 'a', 'b':
