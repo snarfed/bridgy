@@ -15,13 +15,16 @@ dependencies:
     - pip install -e /tmp/oauth-dropins/
     - pip install -e /tmp/granary/
   post:
+    - pip install coverage
     - ln -s $VIRTUAL_ENV local  # we use app engine's vendor module to point here
 
 machine:
   environment:
     PYTHONPATH: $PYTHONPATH:$HOME/google_appengine
+    COVERAGE_FILE: $CIRCLE_ARTIFACTS/.coverage
 
 test:
   override:
-    - python -m unittest discover -v
+    - python -m coverage run --source=. --omit=admin.py,facebook_test_live.py,local/\*,logs.py,mapreduce/\*,mapreduces.py,scripts/\*,test/\* -m unittest discover -v
+    - python -m coverage html -d $CIRCLE_ARTIFACTS
     - python ./facebook_test_live.py --debug

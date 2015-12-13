@@ -1,3 +1,4 @@
+.coverage
 datastore.dat*
 disqus_access_token
 disqus_api_key
