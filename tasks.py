@@ -208,8 +208,10 @@ class Poll(webapp2.RequestHandler):
         for tag in obj.get('tags', []):
           urls = tag.get('urls')
           if tag.get('objectType') == 'person' and tag.get('id') == user_id and urls:
-            activity['mentions'] = set(u.get('value') for u in urls)
-            activity['originals'] = set()
+            activity['mentions'], activity['originals'] = \
+              original_post_discovery.discover(source, activity,
+                                               include_redirect_sources=False)
+            activity['mentions'].update(u.get('value') for u in urls)
             responses[id] = activity
             continue
 

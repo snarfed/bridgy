@@ -59,7 +59,7 @@ def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True):
     include_redirect_sources: boolean, whether to include URLs that redirect as
       well as their final destination URLs
 
-  Returns: ([string original post URLs], [string mention URLs]) tuple
+  Returns: (set(string original post URLs), set(string mention URLs)) tuple
 
   """
   if not source.updates:

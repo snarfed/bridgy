@@ -608,8 +608,8 @@ class PollTest(TaskQueueTest):
       'object': {
         'tags': [{
           'objectType': 'person',
-          'id': 'tag:source,2013:0123456789',
-          'url': 'https://source/0123456789',
+          'id': 'tag:source,2013:%s' % source.key.id(),
+          'url': 'https://source/%s' % source.key.id(),
         }, {
           'objectType': 'person',
           'id': 'tag:source,2013:other',
@@ -630,6 +630,33 @@ class PollTest(TaskQueueTest):
       unsent=['http://foo/', 'https://bar'],
       original_posts=[],
     )])
+
+  def test_post_has_both_link_and_user_mention(self):
+    """https://github.com/snarfed/bridgy/issues/570"""
+    source = self.sources[0]
+    source.domain_urls = ['http://foo/']
+    source.domains = ['foo']
+    source.put()
+
+    post = {
+      'id': 'tag:source.com,2013:9',
+      'object': {
+        'content': 'http://foo/post @foo',
+        'tags': [{
+          'objectType': 'person',
+          'id': 'tag:source,2013:%s' % source.key.id(),
+        }],
+      },
+    }
+    FakeGrSource.activities = [post]      # for user mention
+    FakeGrSource.search_results = [post]  # for link search
+
+    self.post_task()
+    self.assert_responses([Response(
+      id='tag:source.com,2013:9',
+      type='post',
+      unsent=['http://foo/post', 'http://foo/'],
+    )], ignore=('activities_json', 'response_json', 'source', 'original_posts'))
 
   def test_wrong_last_polled(self):
     """If the source doesn't have our last polled value, we should quit.
