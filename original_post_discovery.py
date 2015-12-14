@@ -110,6 +110,7 @@ def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True):
       util.follow_redirects(syndication_url).url)
     originals.update(_posse_post_discovery(
       source, activity, syndication_url, fetch_hfeed))
+    originals = set(util.dedupe_urls(originals))
   else:
     logging.debug('no syndication url, cannot process h-entries')
 

@@ -226,11 +226,20 @@ class PollTest(TaskQueueTest):
     self.assert_equals(expected, self.responses[0].key.get().unsent)
 
   def test_original_post_discovery_dedupes(self):
-    """Target URLs should be deduped, ignoring scheme (http vs https)."""
-    obj = self.activities[0]['object']
-    obj['tags'] = [{'objectType': 'article', 'url': 'https://tar.get/a'}]
-    obj['attachments'] = [{'objectType': 'article', 'url': 'http://tar.get/a'}]
-    obj['content'] = 'foo https://tar.get/a bar (tar.get a)'
+    """Target URLs should be deduped, ignoring scheme and domain case insensitive."""
+    # trigger posse post discovery
+    self.sources[0].domain_urls = ['http://author']
+    self.sources[0].put()
+
+    SyndicatedPost(parent=self.sources[0].key,
+                   original='http://Tar.Get/a',
+                   syndication='https://source/post/url').put()
+
+    self.activities[0]['object'].update({
+      'tags': [{'objectType': 'article', 'url': 'https://tar.get/a'}],
+      'attachments': [{'objectType': 'article', 'url': 'http://tar.get/a'}],
+      'content': 'foo https://TAR.GET/a bar (tar.get a)',
+    })
     FakeGrSource.activities = [self.activities[0]]
 
     self.post_task()
