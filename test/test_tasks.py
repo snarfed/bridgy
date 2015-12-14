@@ -287,10 +287,10 @@ class PollTest(TaskQueueTest):
 
   def test_non_html_file_extension(self):
     """If our HEAD request fails, we should infer type from file extension."""
-    self.activities[0]['object'].update({'tags': [], 'content': 'http://a.zip'})
+    self.activities[0]['object'].update({'tags': [], 'content': 'http://x/a.zip'})
     FakeGrSource.activities = [self.activities[0]]
 
-    self.expect_requests_head('http://a.zip', status_code=405,
+    self.expect_requests_head('http://x/a.zip', status_code=405,
                               # we should ignore an error response's content type
                               content_type='text/html')
 
@@ -340,16 +340,16 @@ class PollTest(TaskQueueTest):
     FakeGrSource.activities = self.activities[0:2]
 
     self.expect_requests_head(
-      'http://redir/0', redirected_url='http://first?utm_medium=x').InAnyOrder()
+      'http://redir/0', redirected_url='http://first/?utm_medium=x').InAnyOrder()
     self.expect_requests_head(
-      'http://redir/1', redirected_url='http://second?utm_source=Twitter').InAnyOrder()
+      'http://redir/1', redirected_url='http://second/?utm_source=Twitter').InAnyOrder()
     self.mox.ReplayAll()
     self.post_task()
 
     self.assertEquals(1, Response.query().count())
     resp = Response.query().get()
-    self.assert_equals(['http://first', 'http://second'], resp.unsent)
-    self.assert_equals(['http://first', 'http://second'],
+    self.assert_equals(['http://first/', 'http://second/'], resp.unsent)
+    self.assert_equals(['http://first/', 'http://second/'],
                        json.loads(resp.urls_to_activity).keys())
 
   def test_too_long_urls(self):
@@ -357,11 +357,11 @@ class PollTest(TaskQueueTest):
 
     https://github.com/snarfed/bridgy/issues/273
     """
-    self.activities[0]['object'].update({'tags': [], 'content': 'http://first'})
+    self.activities[0]['object'].update({'tags': [], 'content': 'http://foo/bar'})
     FakeGrSource.activities = [self.activities[0]]
 
     too_long = 'http://host/' + 'x' * _MAX_STRING_LENGTH
-    self.expect_requests_head('http://first', redirected_url=too_long)
+    self.expect_requests_head('http://foo/bar', redirected_url=too_long)
 
     self.mox.ReplayAll()
     self.post_task()

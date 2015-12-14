@@ -286,13 +286,13 @@ class SourceTest(testutil.HandlerTest):
 
     # good URLs
     for url in ('http://foo.com/bar', 'https://www.foo.com/bar',
-                'http://FoO.cOm',  # should be normalized to lowercase
+                'http://FoO.cOm/',  # should be normalized to lowercase
                 ):
       auth_entity = testutil.FakeAuthEntity(
         id='x', user_json=json.dumps({'url': url}))
       auth_entity.put()
       source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
-      self.assertEquals([url], source.domain_urls)
+      self.assertEquals([url.lower()], source.domain_urls)
       self.assertEquals(['foo.com'], source.domains)
 
     # multiple good URLs and one that's in the webmention blacklist
@@ -305,7 +305,7 @@ class SourceTest(testutil.HandlerTest):
           }))
     auth_entity.put()
     source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
-    self.assertEquals(['http://foo.org', 'http://bar.com', 'http://baz',
+    self.assertEquals(['http://foo.org/', 'http://bar.com/', 'http://baz/',
                        'https://baj/biff'],
                       source.domain_urls)
     self.assertEquals(['foo.org', 'bar.com', 'baz', 'baj'], source.domains)
@@ -319,7 +319,7 @@ class SourceTest(testutil.HandlerTest):
     self.mox.ReplayAll()
 
     source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
-    self.assertEquals(['http://final'], source.domain_urls)
+    self.assertEquals(['http://final/'], source.domain_urls)
     self.assertEquals(['final'], source.domains)
 
   def test_create_new_unicode_chars(self):
@@ -339,7 +339,7 @@ class SourceTest(testutil.HandlerTest):
 
     self.mox.ReplayAll()
     source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
-    self.assertEquals(['http://bar', 'http://baz'], source.domain_urls)
+    self.assertEquals(['http://bar/', 'http://baz/'], source.domain_urls)
     self.assertEquals(['bar', 'baz'], source.domains)
 
   def test_create_new_dedupes_domains(self):
@@ -355,7 +355,7 @@ class SourceTest(testutil.HandlerTest):
     self.assertEquals(['foo'], source.domains)
 
   def test_create_new_too_many_domains(self):
-    urls = ['http://%s' % i for i in range(10)]
+    urls = ['http://%s/' % i for i in range(10)]
     auth_entity = testutil.FakeAuthEntity(id='x', user_json=json.dumps(
         {'urls': [{'value': u} for u in urls]}))
 

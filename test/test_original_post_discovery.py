@@ -689,16 +689,16 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.mox.ReplayAll()
 
     self.activity['object']['content'] = 'x http://author/post y https://mention z'
-    self.assert_discover(['http://author/post'], ['https://mention'])
+    self.assert_discover(['http://author/post'], ['https://mention/'])
 
     self.activity['object']['content'] = 'a https://mention b'
-    self.assert_discover([], ['https://mention'])
+    self.assert_discover([], ['https://mention/'])
 
     # if we don't know the user's domains, we should allow anything
     self.source.domain_urls = self.source.domains = []
     self.source.put()
 
-    self.assert_discover(['https://mention'])
+    self.assert_discover(['https://mention/'])
 
   def test_source_user(self):
     """Only links from the user's own posts should end up in originals."""

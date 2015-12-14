@@ -499,11 +499,11 @@ class Source(StringIdModel):
     urls = []
     for i, url in enumerate(candidates):
       url, domain, send = util.get_webmention_target(url, resolve=i < MAX_AUTHOR_URLS)
-      if send and url not in urls:
+      if send:
         urls.append(url)
 
-    urls = util.dedupe_urls(urls)
-    domains = [util.domain_from_link(url).lower() for url in urls]
+    urls = util.dedupe_urls(urls)  # normalizes domains to lower case
+    domains = [util.domain_from_link(url) for url in urls]
     return urls, domains
 
   def canonicalize_syndication_url(self, syndication_url, scheme='https',

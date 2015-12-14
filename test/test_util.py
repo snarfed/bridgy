@@ -253,7 +253,7 @@ class UtilTest(testutil.ModelsTest):
     self.assertTrue(source)
     self.assert_equals('Fake User', source.name)
     self.assert_equals(['listen'], source.features)
-    self.assert_equals(['https://kylewm.com', 'http://fakeuser.com/'],
+    self.assert_equals(['https://kylewm.com/', 'http://fakeuser.com/'],
                        source.domain_urls)
     self.assert_equals(['kylewm.com', 'fakeuser.com'], source.domains)
 
