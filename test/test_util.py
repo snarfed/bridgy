@@ -317,3 +317,10 @@ class UtilTest(testutil.ModelsTest):
     resp = util.requests_get(next(iter(util.URL_BLACKLIST)))
     self.assertEquals(util.HTTP_REQUEST_REFUSED_STATUS_CODE, resp.status_code)
     self.assertEquals('Sorry, Bridgy has blacklisted this URL.', resp.content)
+
+  def test_in_webmention_blacklist(self):
+    for bad in 't.co', 'x.t.co', 'x.y.t.co', 'abc.onion':
+      self.assertTrue(util.in_webmention_blacklist(bad), bad)
+
+    for good in 'snarfed.org', 'www.snarfed.org', 't.co.com':
+      self.assertFalse(util.in_webmention_blacklist(good), good)

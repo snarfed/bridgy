@@ -49,6 +49,10 @@ with open('domain_blacklist.txt') as f:
   BLACKLIST = {l.strip() for l in f
                if l.strip() and not l.strip().startswith('#')}
 
+TLD_BLACKLIST = frozenset((
+  'onion',  # we don't support Tor :P
+))
+
 # Individual URLs that we shouldn't fetch. Started because of
 # https://github.com/snarfed/bridgy/issues/525 . Hopefully temporary and can be
 # removed once https://github.com/idno/Known/issues/1088 is fixed!
@@ -207,9 +211,12 @@ def get_webmention_target(url, resolve=True):
 def in_webmention_blacklist(domain):
   """Returns True if the domain or its root domain is in BLACKLIST."""
   domain = domain.lower()
+  parts = domain.split('.')
   return (domain in BLACKLIST or
           # strip subdomain and check again
-          (domain and '.'.join(domain.split('.')[-2:]) in BLACKLIST))
+          (domain and '.'.join(parts[-2:]) in BLACKLIST) or
+          # check TLD
+          parts[-1] in TLD_BLACKLIST)
 
 
 def prune_activity(activity):
