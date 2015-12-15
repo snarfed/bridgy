@@ -240,6 +240,7 @@ def _process_author(source, author_url, refetch=False, store_blanks=True):
     # TODO for error codes that indicate a temporary error, should we make
     # a certain number of retries before giving up forever?
     author_resp.raise_for_status()
+    author_dom = BeautifulSoup(author_resp.text)
   except AssertionError:
     raise  # for unit tests
   except BaseException:
@@ -248,7 +249,6 @@ def _process_author(source, author_url, refetch=False, store_blanks=True):
     logging.warning('Could not fetch author url %s', author_url, exc_info=True)
     return {}
 
-  author_dom = BeautifulSoup(author_resp.text)
   feeditems = _find_feed_items(author_url, author_dom)
 
   # look for all other feed urls using rel='feed', type='text/html'
