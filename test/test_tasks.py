@@ -650,6 +650,10 @@ class PollTest(TaskQueueTest):
     post = {
       'id': 'tag:source.com,2013:9',
       'object': {
+        'author': {
+          'name': 'bar',
+          'id': 'tag:source:2013:bar',  # someone else
+        },
         'content': 'http://foo/post @foo',
         'tags': [{
           'objectType': 'person',
