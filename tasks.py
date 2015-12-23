@@ -213,6 +213,19 @@ class Poll(webapp2.RequestHandler):
                                                include_redirect_sources=False)
             activity['mentions'].update(u.get('value') for u in urls)
             responses[id] = activity
+            break
+
+      # handle quote mentions
+      for att in obj.get('attachments', []):
+        if (att.get('objectType') in ('note', 'article')
+                and att.get('author', {}).get('id') == source.user_tag_id()):
+          if 'originals' not in activity or 'mentions' not in activity:
+            activity['originals'], activity['mentions'] = \
+              original_post_discovery.discover(source, activity,
+                                               include_redirect_sources=False)
+          responses[id] = activity
+          logging.debug('found quote activity: %s', activity)
+          break
 
       # extract replies, likes, reposts, and rsvps
       replies = obj.get('replies', {}).get('items', [])

@@ -25,7 +25,10 @@ from google.appengine.api import taskqueue
 from google.appengine.ext import ndb
 
 # when running in dev_appserver, replace these domains in links with localhost
-LOCALHOST_TEST_DOMAINS = frozenset(('snarfed.org',))
+LOCALHOST_TEST_DOMAINS = frozenset([
+  ('snarfed.org', 'localhost'),
+  ('kylewm.com', 'redwind.dev'),
+])
 
 EPOCH = datetime.datetime.utcfromtimestamp(0)
 POLL_TASK_DATETIME_FORMAT = '%Y-%m-%d-%H-%M-%S'
@@ -276,9 +279,9 @@ def replace_test_domains_with_localhost(url):
   Returns: a string with certain well-known domains replaced by localhost
   """
   if url and DEBUG:
-    for test_domain in LOCALHOST_TEST_DOMAINS:
+    for test_domain, local_domain in LOCALHOST_TEST_DOMAINS:
       url = re.sub('https?://' + test_domain,
-                   'http://localhost', url)
+                   'http://' + local_domain, url)
   return url
 
 

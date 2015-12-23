@@ -80,6 +80,20 @@ def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True):
     mentions.update(originals)
     originals = set()
 
+  # look for original URL of attachments (e.g. quote tweets)
+  for att in obj.get('attachments', []):
+    if (att.get('objectType') in ('note', 'article')
+        and att.get('author', {}).get('id') == source.user_tag_id()):
+      logging.debug('running original post discovery on attachment: %s',
+                    att.get('id'))
+      att_origs, att_mentions = discover(
+        source, att, include_redirect_sources=include_redirect_sources)
+      logging.debug(
+        'original post discovery on attachment found originals=%s, mentions=%s',
+        att_origs, att_mentions)
+      mentions.update(att_origs)
+      mentions.update(att_mentions)
+
   def resolve(urls):
     resolved = set()
     for url in urls:

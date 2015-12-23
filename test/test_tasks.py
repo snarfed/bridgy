@@ -671,6 +671,71 @@ class PollTest(TaskQueueTest):
       unsent=['http://foo/post', 'http://foo/'],
     )], ignore=('activities_json', 'response_json', 'source', 'original_posts'))
 
+  def test_post_attachment(self):
+    """One silo post references another one; second should be propagated
+    as a mention of the first.
+    """
+    source = self.sources[0]
+
+    post = {
+      'id': 'tag:source,2013:1234',
+      'object': {
+        'author': {
+          'id': 'tag:source,2013:someone_else',
+        },
+        'content': 'That was a pretty great post',
+        'attachments': [{
+          'objectType': 'note',
+          'content': 'This note is being referenced or otherwise quoted http://author/permalink',
+          'author': {'id': source.user_tag_id()},
+          'url': 'https://source/post/quoted',
+        }]
+      }
+    }
+
+    FakeGrSource.activities = [post]
+    self.post_task()
+    self.assert_responses([Response(
+      id='tag:source,2013:1234',
+      type='post',
+      unsent=['http://author/permalink'],
+    )], ignore=('activities_json', 'response_json', 'source', 'original_posts'))
+
+  def test_post_attachment_and_user_mention(self):
+    """One silo post references another one and also user mentions the
+    other post's author. We should send webmentions for both references.
+    """
+    source = self.sources[0]
+
+    post = {
+      'id': 'tag:source,2013:1234',
+      'object': {
+        'author': {
+          'id': 'tag:source,2013:someone_else',
+        },
+        'content': 'That was a pretty great post',
+        'attachments': [{
+          'objectType': 'note',
+          'content': 'This note is being referenced or otherwise quoted http://author/permalink',
+          'author': {'id': source.user_tag_id()},
+          'url': 'https://source/post/quoted',
+        }],
+        'tags': [{
+          'objectType': 'person',
+          'id': source.user_tag_id(),
+          'urls': [{'value': 'http://author'}],
+        }],
+      }
+    }
+
+    FakeGrSource.activities = [post]
+    self.post_task()
+    self.assert_responses([Response(
+      id='tag:source,2013:1234',
+      type='post',
+      unsent=['http://author', 'http://author/permalink'],
+    )], ignore=('activities_json', 'response_json', 'source', 'original_posts'))
+
   def test_wrong_last_polled(self):
     """If the source doesn't have our last polled value, we should quit.
     """

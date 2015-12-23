@@ -1,23 +1,14 @@
 # coding=utf-8
 """Unit tests for original_post_discovery.py
 """
-import datetime
 import json
-import logging
 
-
-from google.appengine.ext import ndb
 from oauth_dropins import facebook as oauth_facebook
-import requests
 from requests.exceptions import HTTPError
 
 from facebook import FacebookPage
 from models import SyndicatedPost
-import util
-import original_post_discovery
 from original_post_discovery import discover, refetch
-import tasks
-import test_facebook
 import testutil
 
 
@@ -41,7 +32,6 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
                       source=None):
     self.assertEquals((set(expected_originals), set(expected_mentions)),
                       discover(source or self.source, self.activity))
-
 
   def assert_syndicated_posts(self, *expected):
     self.assertItemsEqual(expected,
@@ -717,6 +707,29 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     del self.activity['object']['author']
     self.assert_discover(['http://author/post'], [])
 
+  def test_attachments(self):
+    """Discovery should search for original URL of attachments when the
+    attachment is by our user.
+    """
+    SyndicatedPost(parent=self.source.key,
+                   original='http://author/permalink',
+                   syndication='https://fa.ke/post/quoted').put()
+
+    self.activity['object']['author'] = {
+      'id': 'tag:fa.ke,2013:someone_else',
+    }
+    self.activity['object']['attachments'] = [{
+      'objectType': 'note',
+      'content': 'This note is being referenced or otherwise quoted',
+      'author': {'id': self.source.user_tag_id()},
+      'url': 'https://fa.ke/post/quoted',
+    }]
+
+    self.expect_requests_get('http://author', '')
+    self.mox.ReplayAll()
+
+    self.assert_discover([], ['http://author/permalink'])
+
   def test_refetch_hfeed(self):
     """refetch should grab resources again, even if they were previously
     marked with a blank SyndicatedPost
@@ -1197,4 +1210,3 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
 
     self.mox.ReplayAll()
     self.assert_discover(['http://author/post/url'])
-
