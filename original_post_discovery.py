@@ -88,7 +88,7 @@ def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True):
                     att.get('id'))
       att_origs, _ = discover(
         source, att, include_redirect_sources=include_redirect_sources)
-      logging.debug('original post discovery originals or attachment, %s',
+      logging.debug('original post discovery found originals for attachment, %s',
                     att_origs)
       mentions.update(att_origs)
 
