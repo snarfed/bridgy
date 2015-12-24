@@ -86,13 +86,11 @@ def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True):
         and att.get('author', {}).get('id') == source.user_tag_id()):
       logging.debug('running original post discovery on attachment: %s',
                     att.get('id'))
-      att_origs, att_mentions = discover(
+      att_origs, _ = discover(
         source, att, include_redirect_sources=include_redirect_sources)
-      logging.debug(
-        'original post discovery on attachment found originals=%s, mentions=%s',
-        att_origs, att_mentions)
+      logging.debug('original post discovery originals or attachment, %s',
+                    att_origs)
       mentions.update(att_origs)
-      mentions.update(att_mentions)
 
   def resolve(urls):
     resolved = set()
