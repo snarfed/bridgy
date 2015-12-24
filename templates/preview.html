@@ -26,7 +26,7 @@ will {{ description|safe }}
 <!-- Equivalent webmention command line -->
 <p>Or <a href="/about#webmentions">send via webmention</a> with this command line:
 <br />
-<pre>curl -d 'source={{ source_url }}&target={{ target_url }}&bridgy_omit_link={{ omit_link }}' \
+<pre>curl -d 'source={{ source_url }}&target={{ target_url }}{% if omit_link %}&bridgy_omit_link=true{% endif %}' \
   {{ webmention_endpoint }}
 </pre>
 </p>
