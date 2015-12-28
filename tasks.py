@@ -183,7 +183,7 @@ class Poll(webapp2.RequestHandler):
 
     # trim cache to just the returned activity ids, so that it doesn't grow
     # without bound. (WARNING: depends on get_activities_response()'s cache key
-    # format, e.g. 'PREFIX ACTIVITY_ID'!
+    # format, e.g. 'PREFIX ACTIVITY_ID'!)
     source.updates['last_activities_cache_json'] = json.dumps(
       {k: v for k, v in cache.items() if k.split()[-1] in silo_activity_ids})
 

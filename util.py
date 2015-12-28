@@ -48,13 +48,12 @@ now_fn = datetime.datetime.now
 #
 # We also check this when a user sign up and we extract the web site links from
 # their profile. We automatically omit links to these domains.
+BLACKLIST = set()
 with open('domain_blacklist.txt') as f:
-  BLACKLIST = {l.strip() for l in f
-               if l.strip() and not l.strip().startswith('#')}
-
-TLD_BLACKLIST = frozenset((
-  'onion',  # we don't support Tor :P
-))
+  for line in f:
+    domain = line.decode('utf-8').strip()
+    if domain and not domain.startswith('#'):
+      BLACKLIST.add(domain)
 
 # Individual URLs that we shouldn't fetch. Started because of
 # https://github.com/snarfed/bridgy/issues/525 . Hopefully temporary and can be
@@ -213,13 +212,7 @@ def get_webmention_target(url, resolve=True):
 
 def in_webmention_blacklist(domain):
   """Returns True if the domain or its root domain is in BLACKLIST."""
-  domain = domain.lower()
-  parts = domain.split('.')
-  return (domain in BLACKLIST or
-          # strip subdomain and check again
-          (domain and '.'.join(parts[-2:]) in BLACKLIST) or
-          # check TLD
-          parts[-1] in TLD_BLACKLIST)
+  return util.domain_or_parent_in(domain.lower(), BLACKLIST)
 
 
 def prune_activity(activity):
