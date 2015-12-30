@@ -69,17 +69,6 @@ $body
 """)
 
 
-def listify(obj, prop):
-  """Converts obj[prop] to a list if it's not already.
-
-  If obj[prop] exists and isn't a list, puts it inside a list.
-  """
-  val = obj.setdefault(prop, [])
-  if not isinstance(val, list):
-    obj[prop] = [val]
-  return obj[prop]
-
-
 class ItemHandler(webapp2.RequestHandler):
   """Fetches a post, repost, like, or comment and serves it as mf2 HTML or JSON.
   """
@@ -223,7 +212,8 @@ class ItemHandler(webapp2.RequestHandler):
       urls: sequence of string URLs to add
       object_type: stored as the objectType alongside each URL
     """
-    existing = set(filter(None, (u.get('url') for u in listify(obj, property))))
+    obj[property] = util.get_list(obj, property)
+    existing = set(filter(None, (u.get('url') for u in obj[property])))
     obj[property] += [{'url': url, 'objectType': object_type} for url in urls
                       if url not in existing]
 
@@ -241,7 +231,7 @@ class PostHandler(ItemHandler):
       self.source, post, fetch_hfeed=False)
     obj = post['object']
     obj['upstreamDuplicates'] = list(
-      set(listify(obj, 'upstreamDuplicates')) | originals)
+      set(util.get_list(obj, 'upstreamDuplicates')) | originals)
     self.merge_urls(obj, 'tags', mentions, object_type='mention')
     return obj
 

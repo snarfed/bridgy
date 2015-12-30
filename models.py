@@ -571,8 +571,7 @@ class Source(StringIdModel):
           tag['url'] = silo_url
 
     # recurse on contained object(s)
-    children = obj.get('object', [])
-    for obj in (children if isinstance(children, list) else [children]):
+    for obj in util.get_list(obj, 'object'):
       self.preprocess_for_publish(obj)
 
   def on_new_syndicated_post(self, syndpost):
