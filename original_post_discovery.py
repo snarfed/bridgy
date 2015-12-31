@@ -29,6 +29,7 @@ import datetime
 import itertools
 import logging
 import mf2py
+import mf2util
 import requests
 import urlparse
 import util
@@ -386,10 +387,10 @@ def _find_feed_items(feed_url, feed_doc):
   Returns:
     a list of dicts, each one representing an mf2 h-* item
   """
-  parsed = mf2py.Parser(url=feed_url, doc=feed_doc).to_dict()
+  parsed = mf2py.parse(url=feed_url, doc=feed_doc)
+
   feeditems = parsed['items']
-  hfeed = next((item for item in feeditems
-                if 'h-feed' in item['type']), None)
+  hfeed = mf2util.find_first_entry(parsed, ('h-feed',))
   if hfeed:
     feeditems = hfeed.get('children', [])
   else:

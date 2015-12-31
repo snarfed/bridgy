@@ -108,6 +108,32 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.assert_syndicated_posts(('http://author/post/final',
                                   'https://fa.ke/post/url'))
 
+  def test_nested_hfeed(self):
+    """Test that we find an h-feed nested inside an h-card like on
+    tantek.com"""
+    self.expect_requests_get('http://author', """
+    <html class="h-card">
+      <span class="p-name">Author</span>
+      <div class="h-feed">
+        <div class="h-entry">
+          <a class="u-url" href="http://author/post/permalink"></a>
+        </div>
+      </div>
+    </html>
+    """)
+
+    self.expect_requests_get('http://author/post/permalink', """
+    <html class="h-entry">
+      <a class="u-url" href="http://author/post/permalink"></a>
+      <a class="u-syndication" href="https://fa.ke/post/url"></a>
+    </html>
+    """)
+
+    self.mox.ReplayAll()
+    self.assert_discover(['http://author/post/permalink'])
+    self.assert_syndicated_posts(('http://author/post/permalink',
+                                  'https://fa.ke/post/url'))
+
   def test_additional_requests_do_not_require_rework(self):
     """Test that original post discovery fetches and stores all entries up
     front so that it does not have to reparse the author's h-feed for
