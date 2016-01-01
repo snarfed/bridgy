@@ -5,6 +5,7 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import datetime
 import json
+import urlparse
 
 import appengine_config
 
@@ -94,6 +95,9 @@ class GooglePlusPage(models.Source):
   def search_for_links(self):
     """Searches for activities with links to any of this source's web sites.
 
+    Only searches for root domain web site URLs! Skips URLs with paths; they
+    tend to generate false positive results in G+'s search. Not sure why yet.
+
     G+ search supports OR:
     https://developers.google.com/+/api/latest/activities/search
 
@@ -101,11 +105,14 @@ class GooglePlusPage(models.Source):
     """
     query = ' OR '.join(
       '"%s"' % util.fragmentless(url) for url in self.domain_urls
-      if not util.in_webmention_blacklist(util.domain_from_link(url)))
-    return self.get_activities(
-      search_query=query, group_id=gr_source.SEARCH, etag=self.last_activities_etag,
-      fetch_replies=False, fetch_likes=False, fetch_shares=False, count=50)
-
+      if not util.in_webmention_blacklist(util.domain_from_link(url))
+      and urlparse.urlparse(url).path in ('', '/'))
+    if query:
+      return self.get_activities(
+        search_query=query, group_id=gr_source.SEARCH, etag=self.last_activities_etag,
+        fetch_replies=False, fetch_likes=False, fetch_shares=False, count=50)
+    else:
+      return []
 
 class OAuthCallback(util.Handler):
   """OAuth callback handler.

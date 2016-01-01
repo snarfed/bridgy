@@ -5,7 +5,10 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import json
 
-
+import appengine_config
+from apiclient import discovery
+from apiclient import http
+from granary.test import test_googleplus as gr_test_googleplus
 from oauth_dropins import googleplus as oauth_googleplus
 
 from googleplus import GooglePlusPage
@@ -19,7 +22,7 @@ class GooglePlusTest(testutil.ModelsTest):
     self.handler.messages = []
     self.auth_entity = oauth_googleplus.GooglePlusAuth(
       id='my_string_id',
-      creds_json=json.dumps({'my': 'creds'}),
+      creds_json=gr_test_googleplus.CREDS_JSON,
       user_json=json.dumps({'id': '987',
                             'displayName': 'Mr. G P',
                             'url': 'http://mr/g/p',
@@ -27,6 +30,9 @@ class GooglePlusTest(testutil.ModelsTest):
                             }))
     self.auth_entity.put()
     self.gp = GooglePlusPage.new(self.handler, auth_entity=self.auth_entity)
+
+  def tearDown(self):
+    oauth_googleplus.json_service = None
 
   def test_new(self):
     self.assertEqual(self.auth_entity, self.gp.auth_entity.get())
@@ -49,3 +55,19 @@ class GooglePlusTest(testutil.ModelsTest):
     self.assertEqual(GooglePlusPage.FAST_POLL, self.gp.poll_period())
     self.gp.rate_limited = True
     self.assertEqual(GooglePlusPage.RATE_LIMITED_POLL, self.gp.poll_period())
+
+  def test_search_for_links(self):
+    # should only search for urls without paths
+    for urls in [], [], ['http://a/b'], ['https://c/d/e', 'https://f.com/g']:
+      self.gp.domain_urls = urls
+      self.assertEqual([], self.gp.search_for_links())
+
+    # TODO: actually check search query. (still haven't figured out how with
+    # RequestMockBuilder etc. :/ see granary/test/test_googleplus.py for more.)
+    self.gp.domain_urls = ['http://a', 'https://b/', 'http://c/d/e']
+    oauth_googleplus.json_service = discovery.build_from_document(
+      gr_test_googleplus.DISCOVERY_DOC, requestBuilder=http.RequestMockBuilder({
+        'plus.activities.search':
+          (None, json.dumps({'items': [gr_test_googleplus.ACTIVITY_GP]})),
+      }))
+    self.assertEqual([gr_test_googleplus.ACTIVITY_AS], self.gp.search_for_links())
