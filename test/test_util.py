@@ -271,8 +271,6 @@ class UtilTest(testutil.ModelsTest):
       ('/fakesource/add', testutil.FakeAddHandler.with_auth(None)),
     ])
 
-    self.mox.ReplayAll()
-
     resp = application.get_response(
       '/fakesource/start', method='POST', body=urllib.urlencode({
         'feature': 'publish',

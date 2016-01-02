@@ -84,6 +84,23 @@ class FacebookPageTest(testutil.ModelsTest):
     self.assertEqual('https://www.facebook.com/snarfed.org', self.fb.silo_url())
     self.assertEqual('tag:facebook.com,2013:212038', self.fb.user_tag_id())
 
+  def test_add_user_declines(self):
+    resp = facebook.application.get_response(
+      '/facebook/oauth_handler?' + urllib.urlencode({
+        'state': '{"feature":"listen","operation":"add"}',
+        'error': 'access_denied',
+        'error_code': '200',
+        'error_reason': 'user_denied',
+        'error_description': 'Permissions error',
+      }))
+
+    self.assert_equals(302, resp.status_code)
+    self.assert_equals(
+      'http://localhost/#!' + urllib.quote(
+        "OK, you're not signed up. Hope you reconsider!"),
+      resp.headers['location'])
+    self.assertNotIn('Set-Cookie', resp.headers)
+
   def test_get_activities(self):
     owned_event = copy.deepcopy(gr_test_facebook.EVENT)
     owned_event['id'] = '888'

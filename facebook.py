@@ -287,15 +287,16 @@ class AuthHandler(util.Handler):
       state: encoded state string
     """
     if auth_entity is None:
-      auth_entity_key = util.get_required_param(self, 'auth_entity_key')
-      auth_entity = ndb.Key(urlsafe=auth_entity_key).get()
+      auth_entity_key = self.request.get('auth_entity_key')
+      if auth_entity_key:
+        auth_entity = ndb.Key(urlsafe=auth_entity_key).get()
 
     if state is None:
       state = self.request.get('state')
-    state_obj = self.decode_state_parameter(state)
+    state_obj = self.decode_state_parameter(state) if state else {}
 
     id = state_obj.get('id') or self.request.get('id')
-    if id and id != auth_entity.key.id():
+    if id and auth_entity and id != auth_entity.key.id():
       auth_entity = auth_entity.for_page(id)
       auth_entity.put()
 
@@ -318,7 +319,7 @@ class AuthHandler(util.Handler):
 
 class AddFacebookPage(AuthHandler):
   def post(self, auth_entity=None, state=None):
-        self.finish_oauth_flow(auth_entity, state)
+    self.finish_oauth_flow(auth_entity, state)
 
 
 class OAuthCallback(oauth_facebook.CallbackHandler, AuthHandler):
