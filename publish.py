@@ -499,7 +499,7 @@ class SendHandler(Handler):
     source = ndb.Key(urlsafe=self.state['source_key']).get()
     if auth_entity is None:
       self.error('If you want to publish or preview, please approve the prompt.')
-    elif auth_entity.key != source.auth_entity:
+    elif not auth_entity.is_authority_for(source.auth_entity):
       self.error('Please log into %s as %s to publish that page.' %
                  (source.GR_CLASS.NAME, source.name))
     else:
