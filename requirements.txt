@@ -4,7 +4,7 @@ granary
 google-api-python-client>=1.4.0
 beautifulsoup4
 mf2py>=1.0.0
-mf2util>=0.2.9
+mf2util>=0.2.11
 oauth2client
 requests==2.1.0
 -e git+git@github.com:snarfed/webmention-tools.git#egg=webmentiontools
