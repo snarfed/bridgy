@@ -63,17 +63,17 @@ as bridgy. To do that, clone their repos elsewhere, then install them in
 "source" mode with:
 
 ```
-pip uninstall oauth-dropins
+pip uninstall -y oauth-dropins
 pip install -e <path to oauth-dropins>
 ln -s <path to oauth-dropins>/oauth_dropins \
   local/lib/python2.7/site-packages/oauth_dropins
 
-pip uninstall granary
+pip uninstall -y granary
 pip install -e <path to granary>
 ln -s <path to granary>/granary \
   local/lib/python2.7/site-packages/granary
 
-pip uninstall webmention-tools
+pip uninstall -y webmentiontools
 # webmention-tools isn't in pypi
 ln -s <path to webmention-tools>/webmentiontools \
   local/lib/python2.7/site-packages/webmentiontools
