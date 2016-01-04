@@ -18,7 +18,8 @@ class HandlersTest(testutil.HandlerTest):
   def setUp(self):
     super(HandlersTest, self).setUp()
     self.source = testutil.FakeSource.new(
-      self.handler, domains=['or.ig', 'fa.ke'])
+      self.handler, domains=['or.ig', 'fa.ke'],
+      domain_urls=['http://or.ig', 'https://fa.ke'])
     self.source.put()
     self.activities = [{
       'object': {
@@ -29,6 +30,12 @@ class HandlersTest(testutil.HandlerTest):
           'id': self.source.user_tag_id(),
           'image': {'url': 'http://example.com/ryan/image'},
         },
+        'tags': [{
+          'id': 'tag:fa.ke,2013:nobody',
+        }, {
+          'id': self.source.user_tag_id(),
+          'objectType': 'person',
+        }],
         'upstreamDuplicates': ['http://or.ig/post'],
       }}]
     FakeGrSource.activities = self.activities
@@ -71,6 +78,12 @@ class HandlersTest(testutil.HandlerTest):
   <a class="u-mention" href="http://other/link"></a>
   </div>
 
+<span class="u-category h-card h-card">
+<a class="u-url" href="http://or.ig">http://or.ig</a>
+<a class="u-url" href="https://fa.ke"></a>
+
+</span>
+
 </article>
 """ % {'key': self.source.key.id()})
 
@@ -79,26 +92,33 @@ class HandlersTest(testutil.HandlerTest):
       '/post/fake/%s/000?format=json' % self.source.key.string_id(), scheme='https')
     self.assertEqual(200, resp.status_int, resp.body)
     self.assert_equals({
-        'type': ['h-entry'],
-        'properties': {
-          'uid': ['tag:fa.ke,2013:000'],
-          'url': ['http://fa.ke/000', 'http://or.ig/post'],
-          'content': [{ 'html': """\
+      'type': ['h-entry'],
+      'properties': {
+        'uid': ['tag:fa.ke,2013:000'],
+        'url': ['http://fa.ke/000', 'http://or.ig/post'],
+        'content': [{ 'html': """\
 asdf http://other/link qwert
 <a class="u-mention" href="http://other/link"></a>
 """,
-                        'value': 'asdf http://other/link qwert',
-                        }],
-          'author': [{
-              'type': ['h-card'],
-              'properties': {
-                'uid': [self.source.user_tag_id()],
-                'url': ['http://fa.ke/%s' % self.source.key.id()],
-                'photo': ['https://example.com/ryan/image'],
-                },
-              }],
+                      'value': 'asdf http://other/link qwert',
+        }],
+        'author': [{
+            'type': ['h-card'],
+            'properties': {
+              'uid': [self.source.user_tag_id()],
+              'url': ['http://fa.ke/%s' % self.source.key.id()],
+              'photo': ['https://example.com/ryan/image'],
+            },
+        }],
+        'category': [{
+          'type': ['h-card'],
+          'properties': {
+            'uid': [self.source.user_tag_id()],
+            'url': ['http://or.ig', 'https://fa.ke'],
           },
-        }, json.loads(resp.body))
+        }],
+      },
+    }, json.loads(resp.body))
 
   def test_bad_source_type(self):
     resp = handlers.application.get_response('/post/not_a_type/%s/000' %
@@ -167,6 +187,7 @@ asdf http://other/link qwert
       'content': 'qwert',
       'inReplyTo': [{'url': 'http://fa.ke/000'}],
       'author': {'image': {'url': 'http://example.com/ryan/image'}},
+      'tags': self.activities[0]['object']['tags'],
     }
 
     self.check_response('/comment/fake/%s/000/a1-b2.c3', """\
@@ -183,6 +204,12 @@ asdf http://other/link qwert
   qwert
   <a class="u-mention" href="http://other/link"></a>
   </div>
+
+<span class="u-category h-card h-card">
+<a class="u-url" href="http://or.ig">http://or.ig</a>
+<a class="u-url" href="https://fa.ke"></a>
+
+</span>
 
 <a class="u-in-reply-to" href="http://fa.ke/000"></a>
 <a class="u-in-reply-to" href="http://or.ig/post"></a>
@@ -232,10 +259,6 @@ asdf http://other/link qwert
       parent=self.source.key,
       original='http://or.ig/post',
       syndication='http://example.com/original/post').put()
-
-    # needed to make original_post_discovery use the SyndicatedPost
-    self.source.domain_urls = ['http://unused']
-    self.source.put()
 
     FakeGrSource.share = {
       'objectType': 'activity',
@@ -355,6 +378,7 @@ asdf http://other/link qwert
       'http://or.ig/post', redirected_url='http://or.ig/post/redirect').InAnyOrder()
     self.expect_requests_head(
       'http://other/link', redirected_url='http://other/link/redirect').InAnyOrder()
+    self.expect_requests_head('http://fa.ke/000')
     self.mox.ReplayAll()
 
     self.check_response('/comment/fake/%s/000/111', """\

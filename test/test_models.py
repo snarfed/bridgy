@@ -222,6 +222,25 @@ class SourceTest(testutil.HandlerTest):
       {'value': 'http://site1/'}, {'value': 'http://site2/'}]
     self.assert_equals([mention], got['items'])
 
+  def test_get_comment_injects_web_site_urls_into_user_mentions(self):
+    source = FakeSource.new(None, domain_urls=['http://site1/', 'http://site2/'])
+    source.put()
+
+    user_id = 'tag:fa.ke,2013:%s' % source.key.id()
+    FakeGrSource.comment = {
+      'id': 'tag:fa.ke,2013:a1-b2.c3',
+      'tags': [
+        {'id': 'tag:fa.ke,2013:nobody'},
+        {'id': user_id},
+      ],
+    }
+
+    # check that we inject their web sites
+    self.assert_equals({
+      'id': 'tag:fa.ke,2013:%s' % source.key.id(),
+      'urls': [{'value': 'http://site1/'}, {'value': 'http://site2/'}],
+    }, super(FakeSource, source).get_comment('x')['tags'][1])
+
   def test_create_new_already_exists(self):
     long_ago = datetime.datetime(year=1901, month=2, day=3)
     props = {

@@ -283,23 +283,35 @@ class Source(StringIdModel):
   def get_activities_response(self, **kwargs):
     """Returns recent posts and embedded comments for this source.
 
-    Adds this user's web site URLs to their user mention (in tags).
-
     May be overridden by subclasses.
     """
     kwargs.setdefault('group_id', gr_source.SELF)
     resp = self.gr_source.get_activities_response(**kwargs)
-
-    user_tag_id = self.user_tag_id()
     for activity in resp['items']:
-      for tag in activity.get('object', {}).get('tags', []):
-        if tag.get('id') == user_tag_id:
-          tag.setdefault('urls', []).extend([{'value': u} for u in self.domain_urls])
-
+      self._inject_user_urls(activity)
     return resp
 
   def get_activities(self, **kwargs):
     return self.get_activities_response(**kwargs)['items']
+
+  def get_comment(self, comment_id, activity_id=None, activity_author_id=None):
+    """Returns a comment from this source.
+
+    Passes through to granary by default. May be overridden
+    by subclasses.
+
+    Args:
+      comment_id: string, site-specific comment id
+      activity_id: string, site-specific activity id
+      activity_author_id: string, site-specific activity author id, optional
+
+    Returns: dict, decoded ActivityStreams comment object, or None
+    """
+    comment = self.gr_source.get_comment(comment_id, activity_id=activity_id,
+                                         activity_author_id=activity_author_id)
+    if comment:
+      self._inject_user_urls(comment)
+    return comment
 
   def get_like(self, activity_user_id, activity_id, like_user_id):
     """Returns an ActivityStreams 'like' activity object.
@@ -313,6 +325,14 @@ class Source(StringIdModel):
       like_user_id: string id of the user who liked the activity
     """
     return self.gr_source.get_like(activity_user_id, activity_id, like_user_id)
+
+  def _inject_user_urls(self, activity):
+    """Adds this user's web site URLs to their user mentions (in tags), in place."""
+    obj = activity.get('object') or activity
+    user_tag_id = self.user_tag_id()
+    for tag in obj.get('tags', []):
+      if tag.get('id') == user_tag_id:
+        tag.setdefault('urls', []).extend([{'value': u} for u in self.domain_urls])
 
   def create_comment(self, post_url, author_name, author_url, content):
     """Creates a new comment in the source silo.

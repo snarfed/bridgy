@@ -238,7 +238,7 @@ class PostHandler(ItemHandler):
 
 class CommentHandler(ItemHandler):
   def get_item(self, post_id, id):
-    cmt = self.source.gr_source.get_comment(
+    cmt = self.source.get_comment(
       id, activity_id=post_id, activity_author_id=self.source.key.id())
     if not cmt:
       return None
