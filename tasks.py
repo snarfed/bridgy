@@ -501,8 +501,9 @@ class SendWebmentions(webapp2.RequestHandler):
                      else {'code': 'EXCEPTION'})
 
       if not cached:
-        memcache.set(cache_key, error if error else mention.receiver_endpoint,
-                     time=WEBMENTION_DISCOVERY_CACHE_TIME)
+        val = (error if error and error['code'] != 'RECEIVER_ERROR'
+               else mention.receiver_endpoint)
+        memcache.set(cache_key, val, time=WEBMENTION_DISCOVERY_CACHE_TIME)
 
       if error is None:
         logging.info('Sent! %s', mention.response)

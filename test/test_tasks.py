@@ -1465,6 +1465,21 @@ class PropagateTest(TaskQueueTest):
     self.post_task()
     self.assert_response_is('complete', skipped=['http://target1/post/url'])
 
+  def test_receiver_error_caches_endpoint(self):
+    """RECEIVER_ERROR (e.g. 4xx, 5xx) should cache the endpoint, not the error."""
+    self.expect_webmention(error={'code': 'RECEIVER_ERROR'}).AndReturn(False)
+    # second webmention should use the cached endpoint
+    self.expect_webmention(input_endpoint='http://webmention/endpoint'
+                           ).AndReturn(True)
+    self.mox.ReplayAll()
+    self.post_task(expected_status=tasks.ERROR_HTTP_RETURN_CODE)
+    self.assert_response_is('error', error=['http://target1/post/url'])
+
+    self.responses[0].status = 'new'
+    self.responses[0].put()
+    self.post_task()
+    self.assert_response_is('complete', sent=['http://target1/post/url'])
+
   def test_cached_webmention_discovery_shouldnt_refresh_cache(self):
     """A cached webmention discovery shouldn't be written back to the cache."""
     # first wm discovers and finds no endpoint, second uses cache, third rediscovers
