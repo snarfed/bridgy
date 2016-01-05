@@ -501,7 +501,7 @@ class SendWebmentions(webapp2.RequestHandler):
                      else {'code': 'EXCEPTION'})
 
       if not cached:
-        val = (error if error and error['code'] != 'RECEIVER_ERROR'
+        val = (error if error and error['code'] in ('NO_ENDPOINT', 'BAD_TARGET_URL')
                else mention.receiver_endpoint)
         memcache.set(cache_key, val, time=WEBMENTION_DISCOVERY_CACHE_TIME)
 
