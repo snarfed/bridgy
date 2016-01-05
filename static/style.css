@@ -267,7 +267,9 @@ button {
 }
 
 #preview-text img {
+  max-height: 200px;
   max-width: 100%;
+  margin-top: 1em;
 }
 
 #source-url {
