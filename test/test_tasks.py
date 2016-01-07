@@ -1722,24 +1722,24 @@ class PropagateTest(TaskQueueTest):
 
   def test_webmention_fail(self):
     """If sending the webmention fails, the lease should be released."""
-    for code, give_up in (('NO_ENDPOINT', True),
-                          ('BAD_TARGET_URL', False),
-                          ('RECEIVER_ERROR', False)):
+    for error, status, bucket in (
+        ({'code': 'NO_ENDPOINT'}, 'complete', 'skipped'),
+        ({'code': 'BAD_TARGET_URL'}, 'error', 'error'),
+        ({'code': 'RECEIVER_ERROR', 'http_status': 400}, 'complete', 'failed'),
+        ({'code': 400, 'http_status': 400}, 'complete', 'failed'),
+        ({'code': 'RECEIVER_ERROR', 'http_status': 500}, 'error', 'error')
+      ):
       self.mox.UnsetStubs()
       self.setUp()
       self.responses[0].status = 'new'
       self.responses[0].put()
-      self.expect_webmention(error={'code': code, 'http_status': 500})\
-          .AndReturn(False)
+      self.expect_webmention(error=error).AndReturn(False)
       self.mox.ReplayAll()
 
-      logging.debug('Testing %s', code)
-      expected_status = 200 if give_up else tasks.ERROR_HTTP_RETURN_CODE
+      logging.debug('Testing %s', error)
+      expected_status = tasks.ERROR_HTTP_RETURN_CODE if bucket == 'error' else 200
       self.post_task(expected_status=expected_status)
-      if give_up:
-        self.assert_response_is('complete', skipped=['http://target1/post/url'])
-      else:
-        self.assert_response_is('error', error=['http://target1/post/url'])
+      self.assert_response_is(status, **{bucket: ['http://target1/post/url']})
       self.mox.VerifyAll()
 
   def test_webmention_fail_and_succeed(self):
