@@ -516,7 +516,7 @@ class SendWebmentions(webapp2.RequestHandler):
             (code == 'BAD_TARGET_URL' and status == 204)):  # 204 is No Content
           logging.info('Giving up this target. %s', error)
           self.entity.skipped.append(target)
-        elif status / 100 == 4:
+        elif status // 100 == 4:
           # Give up on 4XX errors; we don't expect later retries to succeed.
           logging.info('Giving up this target. %s', error)
           self.entity.failed.append(target)
