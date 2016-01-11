@@ -103,16 +103,18 @@ class GooglePlusPage(models.Source):
 
     Returns: sequence of ActivityStreams activity dicts
     """
-    query = ' OR '.join(
-      '"%s"' % util.fragmentless(url) for url in self.domain_urls
-      if not util.in_webmention_blacklist(util.domain_from_link(url))
-      and urlparse.urlparse(url).path in ('', '/'))
-    if query:
+    urls = ['"%s"' % util.fragmentless(url) for url in self.domain_urls
+            if not util.in_webmention_blacklist(util.domain_from_link(url))
+            and urlparse.urlparse(url).path in ('', '/')
+           ][:models.MAX_AUTHOR_URLS]
+
+    if urls:
       return self.get_activities(
-        search_query=query, group_id=gr_source.SEARCH, etag=self.last_activities_etag,
-        fetch_replies=False, fetch_likes=False, fetch_shares=False, count=50)
-    else:
-      return []
+        search_query=' OR '.join(urls), group_id=gr_source.SEARCH,
+        etag=self.last_activities_etag, fetch_replies=False, fetch_likes=False,
+        fetch_shares=False, count=50)
+
+    return []
 
 class OAuthCallback(util.Handler):
   """OAuth callback handler.
