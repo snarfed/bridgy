@@ -238,9 +238,8 @@ asdf http://other/link qwert
     <img class="u-photo" src="https://example.com/ryan/image" alt="" />
   </span>
 
-  <div class="e-content p-name">
+  <div class="">
 
-    <a href="http://example.com/original/post">likes this.</a>
   </div>
 
   <a class="u-like u-like-of" href="http://example.com/original/post"></a>
@@ -265,6 +264,7 @@ asdf http://other/link qwert
       'verb': 'share',
       'id': 'tag:fa.ke,2013:111',
       'object': {'url': 'http://example.com/original/post'},
+      'content': 'message from sharer',
       'author': {
         'id': 'tag:fa.ke,2013:reposter_id',
         'url': 'http://personal.domain/',
@@ -284,7 +284,7 @@ asdf http://other/link qwert
 
   <div class="e-content p-name">
 
-    <a href="http://example.com/original/post">shared this.</a>
+    message from sharer
   </div>
 
   <a class="u-repost u-repost-of" href="http://example.com/original/post"></a>

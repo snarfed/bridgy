@@ -172,7 +172,7 @@ class ItemHandler(webapp2.RequestHandler):
     if url:
       image['url'] = util.update_scheme(url, self)
 
-    mf2_json = microformats2.object_to_json(obj)
+    mf2_json = microformats2.object_to_json(obj, synthesize_content=False)
 
     # try to include the author's silo profile url
     author = first_props(mf2_json.get('properties', {})).get('author', {})
@@ -285,10 +285,9 @@ class RepostHandler(ItemHandler):
     if not repost:
       return None
     # webmention receivers don't want to see their own post in their
-    # comments, so remove content before rendering.
-    for key in 'content', 'attachments':
-      if key in repost:
-        del repost[key]
+    # comments, so remove attachments before rendering.
+    if 'attachments' in repost:
+      del repost['attachments']
     post = self.get_post(post_id)
     if post:
       originals, mentions = original_post_discovery.discover(
