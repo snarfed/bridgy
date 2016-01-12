@@ -205,8 +205,17 @@ class FacebookPageTest(testutil.ModelsTest):
       'code': 200,
       'type': 'FacebookApiException',
       'message': 'Permissions error',
-      'fbtrace_id': 'ALd\/zyvssBL',
       }}, status=400)
+
+    self.mox.ReplayAll()
+    self.assertRaises(models.DisableSource, self.fb.get_activities)
+
+  def test_page_admin_error_doesnt_send_notification(self):
+    self.expect_api_call('me/feed?offset=0', {'error': {
+      'code': 190,
+      'type': 'OAuthException',
+      'message': 'The user must be an administrator of the page in order to impersonate it.'
+    }}, status=400)
 
     self.mox.ReplayAll()
     self.assertRaises(models.DisableSource, self.fb.get_activities)

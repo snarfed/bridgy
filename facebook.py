@@ -62,6 +62,9 @@ DEAD_TOKEN_ERROR_SUBCODES = frozenset((
   458,  # "The user has not authorized application 123"
   460,  # "The session has been invalidated because the user has changed the password"
 ))
+DEAD_TOKEN_ERROR_MESSAGES = frozenset((
+  'The user must be an administrator of the page in order to impersonate it.',
+))
 
 MAX_RESOLVED_OBJECT_IDS = 200
 
@@ -126,9 +129,11 @@ class FacebookPage(models.Source):
       def dead_token():
         try:
           err = json.loads(body)['error']
-          return (err['code'] in DEAD_TOKEN_ERROR_CODES or
-                  err['error_subcode'] in DEAD_TOKEN_ERROR_SUBCODES)
+          return (err.get('code') in DEAD_TOKEN_ERROR_CODES or
+                  err.get('error_subcode') in DEAD_TOKEN_ERROR_SUBCODES or
+                  err.get('message') in DEAD_TOKEN_ERROR_MESSAGES)
         except:
+          logging.exception("Couldn't determine whether token is still valid")
           return False
 
       if code == '401':
