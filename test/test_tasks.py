@@ -949,7 +949,7 @@ class PollTest(TaskQueueTest):
     FakeGrSource.DOMAIN = 'source'
     ten_min = datetime.timedelta(minutes=10)
     self.sources[0].last_syndication_url = NOW - ten_min
-    self.sources[0].last_refetch = NOW - models.Source.REFETCH_PERIOD - ten_min
+    self.sources[0].last_hfeed_refetch = NOW - models.Source.REFETCH_PERIOD - ten_min
     self.sources[0].put()
 
     # pretend we've already done posse-post-discovery for the source
@@ -970,12 +970,12 @@ class PollTest(TaskQueueTest):
     sure it is not fetched again."""
     self._setup_refetch_hfeed()
     # too recent to fetch again
-    self.sources[0].last_refetch = hour_ago = NOW - datetime.timedelta(hours=1)
+    self.sources[0].last_hfeed_refetch = hour_ago = NOW - datetime.timedelta(hours=1)
     self.sources[0].put()
 
     self.mox.ReplayAll()
     self.post_task()
-    self.assertEquals(hour_ago, self.sources[0].key.get().last_refetch)
+    self.assertEquals(hour_ago, self.sources[0].key.get().last_hfeed_refetch)
 
     # should still be a blank SyndicatedPost
     relationships = SyndicatedPost.query(
@@ -1046,13 +1046,13 @@ class PollTest(TaskQueueTest):
 
     source = self.sources[0].key.get()
     self.assertEquals(NOW, source.last_syndication_url)
-    self.assertEquals(NOW, source.last_refetch)
+    self.assertEquals(NOW, source.last_hfeed_refetch)
 
   def test_refetch_hfeed_trigger(self):
     self.sources[0].domain_urls = ['http://author']
     FakeGrSource.DOMAIN = 'source'
     self.sources[0].last_syndication_url = None
-    self.sources[0].last_refetch = models.REFETCH_HFEED_TRIGGER
+    self.sources[0].last_hfeed_refetch = models.REFETCH_HFEED_TRIGGER
     self.sources[0].put()
 
     FakeGrSource.activities = []
@@ -1087,7 +1087,7 @@ class PollTest(TaskQueueTest):
 
     # should 200
     self.post_task()
-    self.assertEquals(NOW, self.sources[0].key.get().last_refetch)
+    self.assertEquals(NOW, self.sources[0].key.get().last_hfeed_refetch)
 
   def test_no_duplicate_syndicated_posts(self):
     def assert_syndicated_posts(syndicated_posts, original, syndication):
@@ -1109,7 +1109,7 @@ class PollTest(TaskQueueTest):
       None,
       domain_urls=['http://author'],
       features=['listen'],
-      last_refetch=NOW,
+      last_hfeed_refetch=NOW,
       last_syndication_url=util.EPOCH)
 
     for act in self.activities:
@@ -1131,7 +1131,7 @@ class PollTest(TaskQueueTest):
       None,
       domain_urls=['http://author'],
       features=['listen'],
-      last_refetch=NOW,
+      last_hfeed_refetch=NOW,
       last_syndication_url=util.EPOCH)
 
     twitter_acts = copy.deepcopy(self.activities)
@@ -1192,7 +1192,7 @@ class PollTest(TaskQueueTest):
     # force refetch h-feed to find the twitter link
     for source in self.sources:
       source.last_polled = util.EPOCH
-      source.last_refetch = NOW - datetime.timedelta(days=1)
+      source.last_hfeed_refetch = NOW - datetime.timedelta(days=1)
       source.put()
 
     # instagram source fetches
@@ -1223,7 +1223,7 @@ class PollTest(TaskQueueTest):
     for source in self.sources:
       source = source.key.get()
       self.post_task(source=source)
-      self.assertEquals(NOW, source.key.get().last_refetch)
+      self.assertEquals(NOW, source.key.get().last_hfeed_refetch)
 
     assert_syndicated_posts(
       SyndicatedPost.query(

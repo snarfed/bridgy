@@ -532,7 +532,7 @@ class CrawlNowHandler(PollNowHandler):
   @ndb.transactional
   def setup_refetch_hfeed(self):
     self.get_source()
-    self.source.last_refetch = models.REFETCH_HFEED_TRIGGER
+    self.source.last_hfeed_refetch = models.REFETCH_HFEED_TRIGGER
     self.source.put()
 
 

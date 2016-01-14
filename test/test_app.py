@@ -44,7 +44,7 @@ class AppTest(testutil.ModelsTest):
 
     source = self.sources[0]
     source.domain_urls = ['http://orig']
-    source.last_refetch = last_refetch = \
+    source.last_hfeed_refetch = last_hfeed_refetch = \
         testutil.NOW - datetime.timedelta(minutes=1)
     source.put()
 
@@ -93,7 +93,7 @@ class AppTest(testutil.ModelsTest):
     self.assertIsNone(memcache.get('W https skipped'))
 
     # shouldn't have refetched h-feed
-    self.assertEqual(last_refetch, source.key.get().last_refetch)
+    self.assertEqual(last_hfeed_refetch, source.key.get().last_hfeed_refetch)
 
   def test_retry_redirect_to(self):
     key = self.responses[0].put()
@@ -106,7 +106,7 @@ class AppTest(testutil.ModelsTest):
   def test_crawl_now(self):
     source = self.sources[0]
     source.domain_urls = ['http://orig']
-    source.last_refetch = testutil.NOW
+    source.last_hfeed_refetch = testutil.NOW
     source.put()
 
     key = source.key.urlsafe()
@@ -118,7 +118,7 @@ class AppTest(testutil.ModelsTest):
 
     params = testutil.get_task_params(self.taskqueue_stub.GetTasks('poll-now')[0])
     self.assertEqual(key, params['source_key'])
-    self.assertEqual(models.REFETCH_HFEED_TRIGGER, source.key.get().last_refetch)
+    self.assertEqual(models.REFETCH_HFEED_TRIGGER, source.key.get().last_hfeed_refetch)
 
   def test_poll_now_and_retry_response_missing_key(self):
     for endpoint in '/poll-now', '/retry':
