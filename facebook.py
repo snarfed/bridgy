@@ -118,6 +118,7 @@ class FacebookPage(models.Source):
 
   def get_activities_response(self, **kwargs):
     kwargs.setdefault('fetch_events', True)
+    kwargs.setdefault('fetch_news', self.type == 'user')
     kwargs.setdefault('event_owner_id', self.key.id())
 
     try:

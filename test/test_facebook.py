@@ -185,6 +185,14 @@ class FacebookPageTest(testutil.ModelsTest):
     # bad activity at all
     self.assert_equals([gr_test_facebook.ACTIVITY], self.fb.get_activities())
 
+  def test_get_activities_page(self):
+    """Shouldn't fetch /me/news.publishes for pages."""
+    self.expect_api_call('me/feed?offset=0', {'data': [gr_test_facebook.POST]})
+    self.expect_api_call('me/photos/uploaded', {})
+    self.expect_api_call('me/events', {})
+    self.mox.ReplayAll()
+    self.assert_equals([gr_test_facebook.ACTIVITY], self.page.get_activities())
+
   def test_expired_sends_notification(self):
     self.expect_api_call('me/feed?offset=0',
                          {'error': {'code': 190, 'error_subcode': 463}},
