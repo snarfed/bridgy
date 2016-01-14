@@ -53,7 +53,7 @@ class FacebookPageTest(testutil.ModelsTest):
                                features=['listen'])
     self.fb.put()
 
-    self.page = {
+    self.page_json = {
       'id': '108663232553079',
       'about': 'Our vegetarian cooking blog',
       'category': 'Home/garden website',
@@ -61,6 +61,14 @@ class FacebookPageTest(testutil.ModelsTest):
       'type': 'page',
       'access_token': 'page_token',
     }
+    self.page_auth_entity = oauth_facebook.FacebookAuth(
+      id=self.page_json['id'], user_json=json.dumps(self.page_json),
+      auth_code='my_code', access_token_str='my_token')
+    self.page_auth_entity.put()
+
+    self.page = FacebookPage.new(self.handler, auth_entity=self.page_auth_entity,
+                                 features=['listen'])
+    self.page.put()
 
   def expect_api_call(self, path, response, **kwargs):
     if not isinstance(response, basestring):
@@ -444,23 +452,15 @@ class FacebookPageTest(testutil.ModelsTest):
       self.assertEquals(expected_auth_url, resp.headers['Location'])
 
   def test_disable_page(self):
-    user_auth_entity = self.auth_entity
-    user_auth_entity.pages_json = json.dumps([self.page])
-    user_auth_entity.put()
-
-    self.auth_entity = oauth_facebook.FacebookAuth(
-      id=self.page['id'], user_json=json.dumps(self.page),
-      auth_code='my_code', access_token_str='my_token')
+    self.auth_entity.pages_json = json.dumps([self.page_json])
     self.auth_entity.put()
-    self.fb.auth_entity = self.auth_entity.key
-    self.fb.put()
 
     # FacebookAuth.for_page fetches the user URL with the page's access token
     self.expect_urlopen(oauth_facebook.API_USER_URL + '?access_token=page_token',
-                        json.dumps(self.page))
+                        json.dumps(self.page_json))
     self.mox.ReplayAll()
 
-    key = self.fb.key.urlsafe()
+    key = self.page.key.urlsafe()
     encoded_state = urllib.quote_plus(
       '{"feature":"listen","operation":"delete","source":"' + key + '"}')
 
@@ -484,16 +484,16 @@ class FacebookPageTest(testutil.ModelsTest):
     # which would in turn redirect to the more general /delete/finish.
     resp = app.application.get_response(
       '/delete/finish?'
-      + 'auth_entity=' + user_auth_entity.key.urlsafe()
+      + 'auth_entity=' + self.auth_entity.key.urlsafe()
       + '&state=' + encoded_state)
 
     self.assert_equals(302, resp.status_code)
     # listen feature has been removed
-    self.assert_equals([], self.fb.key.get().features)
+    self.assert_equals([], self.page.key.get().features)
 
   def test_page_chooser(self):
     self.fb.key.delete()
-    self.auth_entity.pages_json = json.dumps([self.page])
+    self.auth_entity.pages_json = json.dumps([self.page_json])
     self.auth_entity.put()
 
     handler = facebook.OAuthCallback(
