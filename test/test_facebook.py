@@ -105,8 +105,8 @@ class FacebookPageTest(testutil.ModelsTest):
     owned_event = copy.deepcopy(gr_test_facebook.EVENT)
     owned_event['id'] = '888'
     owned_event['owner']['id'] = '212038'
-    self.expect_api_call('me/feed?offset=0', {'data': [
-      gr_test_facebook.POST, gr_test_facebook.PHOTO_POST]})
+    self.expect_api_call('me/feed?offset=0', {'data': [gr_test_facebook.POST]})
+    self.expect_api_call('me/news.publishes', {'data': [gr_test_facebook.PHOTO_POST]})
     self.expect_api_call('me/photos/uploaded', {'data': [gr_test_facebook.PHOTO]})
     self.expect_api_call('me/events', {'data': [gr_test_facebook.EVENT, owned_event]})
     self.expect_api_call(gr_facebook.API_EVENT % '145304994', gr_test_facebook.EVENT)
@@ -123,6 +123,7 @@ class FacebookPageTest(testutil.ModelsTest):
 
   def test_get_activities_post_and_photo_duplicates(self):
     self.expect_api_call('me/feed?offset=0', {'data': [gr_test_facebook.PHOTO_POST]})
+    self.expect_api_call('me/news.publishes', {'data': []})
     self.expect_api_call('me/photos/uploaded', {'data': [gr_test_facebook.PHOTO]})
     self.expect_api_call('me/events', {})
     self.mox.ReplayAll()
@@ -150,7 +151,8 @@ class FacebookPageTest(testutil.ModelsTest):
     reply['inReplyTo'][0]['url'] = 'https://www.facebook.com/12345/posts/547822715231468'
 
     self.expect_api_call('me/feed?offset=0', {'data': [post]})
-    self.expect_api_call('me/photos/uploaded', {'data': []})
+    self.expect_api_call('me/news.publishes', {})
+    self.expect_api_call('me/photos/uploaded', {})
     self.expect_api_call('me/events', {})
     self.mox.ReplayAll()
 
@@ -165,8 +167,9 @@ class FacebookPageTest(testutil.ModelsTest):
     post_with_bad_comment['comments']['data'].append(
       {'id': '12^34', 'message': 'bad to the bone'})
 
-    self.expect_api_call('me/feed?offset=0', {'data': [bad_post, post_with_bad_comment]})
-    self.expect_api_call('me/photos/uploaded', {'data': []})
+    self.expect_api_call('me/feed?offset=0', {'data': [bad_post]})
+    self.expect_api_call('me/news.publishes', {'data': [post_with_bad_comment]})
+    self.expect_api_call('me/photos/uploaded', {})
     self.expect_api_call('me/events', {})
     self.mox.ReplayAll()
 
@@ -329,6 +332,7 @@ class FacebookPageTest(testutil.ModelsTest):
     # Facebook API calls
     self.expect_api_call('me/feed?offset=0&limit=50', {'data': [
       gr_test_facebook.PHOTO_POST]})
+    self.expect_api_call('me/news.publishes', {})
     self.expect_api_call('me/photos/uploaded', {'data': [gr_test_facebook.PHOTO]})
     self.expect_api_call('me/events', {})
     self.expect_api_call('sharedposts?ids=222', {})

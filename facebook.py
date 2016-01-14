@@ -43,7 +43,7 @@ import webapp2
 # https://developers.facebook.com/docs/reference/login/
 LISTEN_SCOPES = [
   'user_website', 'user_status', 'user_posts', 'user_photos', 'user_events',
-  'read_stream', 'manage_pages',
+  'user_actions.news', 'read_stream', 'manage_pages',
 ]
 PUBLISH_SCOPES = [
   'user_website', 'publish_actions', 'rsvp_event', 'user_status',
