@@ -120,19 +120,19 @@ WordPress.com, <a href="/">sign up here!</a>
   <br />
 {% endif %}
 
-<!-- last_hfeed_fetch -->
+<!-- last_hfeed_refetch -->
 {% if source.domain_urls %}
 <form method="post" action="/crawl-now">
 {% with source.domain_urls|length|pluralize as s %}
-{% if source.last_hfeed_fetch == epoch %}
+{% if source.last_hfeed_refetch == epoch %}
   Web site{{ s }} not <a href="/about#link">crawled</a> yet.
 {% else %}
   Web site{{ s }} <a href="/about#link">crawled</a>
-  <a href="/log?start_time={{ source.last_hfeed_fetch|date:'U' }}&key={{ source.key.urlsafe }}"
-       title="{{ source.last_hfeed_fetch|date:'r' }}">
-  <time class="dt-bridgy-last-hfeed-fetched"
-        datetime="{{ source.last_hfeed_fetch|date:'c' }}">
-    {{ source.last_hfeed_fetch|timesince }}</time> ago.
+  <a href="/log?start_time={{ source.last_hfeed_refetch|date:'U' }}&key={{ source.key.urlsafe }}"
+       title="{{ source.last_hfeed_refetch|date:'r' }}">
+  <time class="dt-bridgy-last-refetched"
+        datetime="{{ source.last_hfeed_refetch|date:'c' }}">
+    {{ source.last_hfeed_refetch|timesince }}</time> ago.
   </a>
 {% endif %}
 {% endwith %}

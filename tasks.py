@@ -339,12 +339,21 @@ class Poll(webapp2.RequestHandler):
     # original_post_discovery ran, we'll miss them. this cleanup task will
     # periodically check for updated urls. only kicks in if the author has
     # *ever* published a rel=syndication url
-    if (source.last_hfeed_fetch == models.REFETCH_HFEED_TRIGGER or
+    last_hfeed_refetch = source.last_hfeed_refetch
+    if not last_hfeed_refetch or (last_hfeed_refetch != models.REFETCH_HFEED_TRIGGER and source.last_hfeed_fetch and source.last_hfeed_fetch > last_hfeed_refetch):
+      last_hfeed_refetch = source.last_hfeed_fetch
+
+    if (last_hfeed_refetch == models.REFETCH_HFEED_TRIGGER or
         (source.last_syndication_url and
-         source.last_hfeed_fetch + source.refetch_period()
+         last_hfeed_refetch + source.refetch_period()
            <= source.last_poll_attempt)):
       logging.info('refetching h-feed for source %s', source.label())
       relationships = original_post_discovery.refetch(source)
+
+      now = util.now_fn()
+      logging.debug('updating source last_hfeed_refetch %s', now)
+      source.updates['last_hfeed_refetch'] = now
+
       if relationships:
         logging.info('refetch h-feed found new rel=syndication relationships: %s',
                      relationships)
@@ -359,8 +368,8 @@ class Poll(webapp2.RequestHandler):
             raise
     else:
       logging.info(
-          'skipping refetch h-feed. last-syndication-url %s, last-hfeed-fetch %s',
-          source.last_syndication_url, source.last_hfeed_fetch)
+          'skipping refetch h-feed. last-syndication-url %s, last-refetch %s',
+          source.last_syndication_url, source.last_hfeed_refetch)
 
   def repropagate_old_responses(self, source, relationships):
     """Find old Responses that match a new SyndicatedPost and repropagate them.

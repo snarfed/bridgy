@@ -247,7 +247,7 @@ class SourceTest(testutil.HandlerTest):
       'created': long_ago,
       'last_webmention_sent': long_ago + datetime.timedelta(days=1),
       'last_polled': long_ago + datetime.timedelta(days=2),
-      'last_hfeed_fetch': long_ago + datetime.timedelta(days=3),
+      'last_hfeed_refetch': long_ago + datetime.timedelta(days=3),
       'last_syndication_url': long_ago + datetime.timedelta(days=4),
       'superfeedr_secret': 'asdfqwert',
       }
