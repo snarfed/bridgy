@@ -189,7 +189,7 @@ class Poll(webapp2.RequestHandler):
 
     # Make sure we only fetch the author's h-feed(s) the first time
     # discover is called
-    is_first_discover = util.FirstCheck()
+    is_first_discover = True
 
     #
     # Step 2: extract responses, store their activities in response['activities']
@@ -214,8 +214,9 @@ class Poll(webapp2.RequestHandler):
           if tag.get('objectType') == 'person' and tag.get('id') == user_id and urls:
             activity['originals'], activity['mentions'] = \
               original_post_discovery.discover(
-                source, activity, fetch_hfeed=is_first_discover(),
+                source, activity, fetch_hfeed=is_first_discover,
                 include_redirect_sources=False)
+            is_first_discover = False
             activity['mentions'].update(u.get('value') for u in urls)
             responses[id] = activity
             break
@@ -229,8 +230,9 @@ class Poll(webapp2.RequestHandler):
           if 'originals' not in activity or 'mentions' not in activity:
             activity['originals'], activity['mentions'] = \
               original_post_discovery.discover(
-                source, activity, fetch_hfeed=is_first_discover(),
+                source, activity, fetch_hfeed=is_first_discover,
                 include_redirect_sources=False)
+            is_first_discover = False
           responses[id] = activity
           break
 
@@ -294,8 +296,9 @@ class Poll(webapp2.RequestHandler):
         if 'originals' not in activity or 'mentions' not in activity:
           activity['originals'], activity['mentions'] = \
             original_post_discovery.discover(
-              source, activity, fetch_hfeed=is_first_discover(),
+              source, activity, fetch_hfeed=is_first_discover,
               include_redirect_sources=False)
+          is_first_discover = False
 
         targets = original_post_discovery.targets_for_response(
           resp, originals=activity['originals'], mentions=activity['mentions'])

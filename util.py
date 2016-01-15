@@ -561,16 +561,3 @@ class CachedPage(StringIdModel):
   def invalidate(cls, path):
     logging.info('Deleting cached page for %s', path)
     CachedPage(id=path).key.delete()
-
-
-class FirstCheck:
-  """A callable that returns True the first time it is called, and false
-  every time thereafter.
-  """
-  def __init__(self):
-    self.is_first = True
-
-  def __call__(self):
-    result = self.is_first
-    self.is_first = False
-    return result
