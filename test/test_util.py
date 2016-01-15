@@ -71,6 +71,11 @@ class UtilTest(testutil.ModelsTest):
       'logins="/fake/%s?fake|/other/1?bob"' % src2.key.id()
     self.assertEquals(cookie % src2.key.id(), self.response.headers['Set-Cookie'])
 
+  def test_bad_logins_cookie(self):
+    """https://github.com/snarfed/bridgy/issues/601"""
+    self.request.headers['Cookie'] = 'OAMAuthnCookie_www.arbeitsagentur.de:443=xyz'
+    self.assertEquals([], self.handler.get_logins())
+
   def test_prune_activity(self):
     for orig, expected in (
       ({'id': 1, 'content': 'X', 'foo': 'bar'}, {'id': 1, 'content': 'X'}),

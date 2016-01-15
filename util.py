@@ -442,7 +442,12 @@ class Handler(webapp2.RequestHandler):
     if cookie:
       logging.info('Cookie: %s', cookie)
 
-    logins_str = Cookie.SimpleCookie(cookie).get('logins')
+    try:
+      logins_str = Cookie.SimpleCookie(cookie).get('logins')
+    except Cookie.CookieError, e:
+      logging.warning("Bad cookie: %s", e)
+      return []
+
     if not logins_str or not logins_str.value:
       return []
 
