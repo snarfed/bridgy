@@ -187,6 +187,10 @@ class Poll(webapp2.RequestHandler):
     source.updates['last_activities_cache_json'] = json.dumps(
       {k: v for k, v in cache.items() if k.split()[-1] in silo_activity_ids})
 
+    # Make sure we only fetch the author's h-feed(s) the first time
+    # discover is called
+    is_first_discover = util.FirstCheck()
+
     #
     # Step 2: extract responses, store their activities in response['activities']
     #
@@ -209,8 +213,9 @@ class Poll(webapp2.RequestHandler):
           urls = tag.get('urls')
           if tag.get('objectType') == 'person' and tag.get('id') == user_id and urls:
             activity['originals'], activity['mentions'] = \
-              original_post_discovery.discover(source, activity,
-                                               include_redirect_sources=False)
+              original_post_discovery.discover(
+                source, activity, fetch_hfeed=is_first_discover(),
+                include_redirect_sources=False)
             activity['mentions'].update(u.get('value') for u in urls)
             responses[id] = activity
             break
@@ -223,8 +228,9 @@ class Poll(webapp2.RequestHandler):
           # into the actual attachments
           if 'originals' not in activity or 'mentions' not in activity:
             activity['originals'], activity['mentions'] = \
-              original_post_discovery.discover(source, activity,
-                                               include_redirect_sources=False)
+              original_post_discovery.discover(
+                source, activity, fetch_hfeed=is_first_discover(),
+                include_redirect_sources=False)
           responses[id] = activity
           break
 
@@ -287,8 +293,9 @@ class Poll(webapp2.RequestHandler):
         # discovered webmention targets inside its object.
         if 'originals' not in activity or 'mentions' not in activity:
           activity['originals'], activity['mentions'] = \
-            original_post_discovery.discover(source, activity,
-                                             include_redirect_sources=False)
+            original_post_discovery.discover(
+              source, activity, fetch_hfeed=is_first_discover(),
+              include_redirect_sources=False)
 
         targets = original_post_discovery.targets_for_response(
           resp, originals=activity['originals'], mentions=activity['mentions'])
@@ -339,14 +346,10 @@ class Poll(webapp2.RequestHandler):
     # original_post_discovery ran, we'll miss them. this cleanup task will
     # periodically check for updated urls. only kicks in if the author has
     # *ever* published a rel=syndication url
-    last_hfeed_refetch = source.last_hfeed_refetch
-    if not last_hfeed_refetch or (last_hfeed_refetch != models.REFETCH_HFEED_TRIGGER and source.last_hfeed_fetch and source.last_hfeed_fetch > last_hfeed_refetch):
-      last_hfeed_refetch = source.last_hfeed_fetch
-
-    if (last_hfeed_refetch == models.REFETCH_HFEED_TRIGGER or
+    if (source.last_hfeed_refetch == models.REFETCH_HFEED_TRIGGER or
         (source.last_syndication_url and
-         last_hfeed_refetch + source.refetch_period()
-           <= source.last_poll_attempt)):
+         source.last_hfeed_refetch + source.refetch_period()
+            <= source.last_poll_attempt)):
       logging.info('refetching h-feed for source %s', source.label())
       relationships = original_post_discovery.refetch(source)
 
