@@ -218,7 +218,7 @@ class UtilTest(testutil.ModelsTest):
     ])
 
     self.expect_webmention_requests_get(
-      'https://kylewm.com',
+      'https://kylewm.com/',
       response='<html><link rel="webmention" href="/webmention"></html>',
       verify=False)
 
