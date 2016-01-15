@@ -117,9 +117,6 @@ class Source(StringIdModel):
   # syndication links
   last_hfeed_refetch = ndb.DateTimeProperty(default=util.EPOCH)
 
-  # Deprecated; old name for last_hfeed_refetch
-  last_hfeed_fetch = ndb.DateTimeProperty(default=util.EPOCH)
-
   # the last time we've seen a rel=syndication link for this Source.
   # we won't spend the time to re-fetch and look for updates if there's
   # never been one
@@ -405,7 +402,7 @@ class Source(StringIdModel):
       # merge some fields
       source.features = set(source.features + existing.features)
       source.populate(**existing.to_dict(include=(
-            'created', 'last_hfeed_refetch', 'last_hfeed_fetch', 'last_poll_attempt', 'last_polled',
+            'created', 'last_hfeed_refetch', 'last_poll_attempt', 'last_polled',
             'last_syndication_url', 'last_webmention_sent', 'superfeedr_secret')))
       verb = 'Updated'
     else:

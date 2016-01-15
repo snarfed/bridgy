@@ -12,6 +12,7 @@ import json
 import logging
 import mox
 import socket
+import string
 import StringIO
 import time
 import urllib
@@ -943,6 +944,25 @@ class PollTest(TaskQueueTest):
     # query source
     source = self.sources[0].key.get()
     self.assertEquals(NOW, source.last_syndication_url)
+
+  def test_multiple_activities_fetch_hfeed_once(self):
+    """Make sure that multiple activities only fetch the author's
+    h-feed once
+    """
+    self.sources[0].domain_urls = ['http://author']
+    FakeGrSource.DOMAIN = 'source'
+    self.sources[0].put()
+
+    FakeGrSource.activities = self.activities
+
+    # syndicated urls need to be unique for this to be interesting
+    for letter, activity in zip(string.letters, FakeGrSource.activities):
+      activity['url'] = activity['object']['url'] = 'http://source/post/' + letter
+      activity['object']['content'] = 'foo bar'
+
+    self._expect_fetch_hfeed()
+    self.mox.ReplayAll()
+    self.post_task()
 
   def _setup_refetch_hfeed(self):
     self.sources[0].domain_urls = ['http://author']
