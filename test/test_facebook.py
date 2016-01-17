@@ -45,9 +45,8 @@ class FacebookPageTest(testutil.ModelsTest):
                             'name': 'Ryan Barrett',
                             'username': 'snarfed.org',
                             'bio': 'something about me',
-                            'type': 'user',
                             }),
-      pages_json=json.dumps([]))
+      pages_json=json.dumps([]), type='user')
     self.auth_entity.put()
     self.fb = FacebookPage.new(self.handler, auth_entity=self.auth_entity,
                                features=['listen'])
@@ -58,12 +57,11 @@ class FacebookPageTest(testutil.ModelsTest):
       'about': 'Our vegetarian cooking blog',
       'category': 'Home/garden website',
       'name': 'Hardly Starving',
-      'type': 'page',
       'access_token': 'page_token',
     }
     self.page_auth_entity = oauth_facebook.FacebookAuth(
       id=self.page_json['id'], user_json=json.dumps(self.page_json),
-      auth_code='my_code', access_token_str='my_token')
+      auth_code='my_code', access_token_str='my_token', type='page')
     self.page_auth_entity.put()
 
     self.page = FacebookPage.new(self.handler, auth_entity=self.page_auth_entity,
@@ -88,7 +86,6 @@ class FacebookPageTest(testutil.ModelsTest):
                      self.fb.picture)
     self.assertEqual('Ryan Barrett', self.fb.name)
     self.assertEqual('snarfed.org', self.fb.username)
-    self.assertEqual('user', self.fb.type)
     self.assertEqual('https://www.facebook.com/snarfed.org', self.fb.silo_url())
     self.assertEqual('tag:facebook.com,2013:212038', self.fb.user_tag_id())
 

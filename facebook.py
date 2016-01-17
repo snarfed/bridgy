@@ -78,7 +78,6 @@ class FacebookPage(models.Source):
   GR_CLASS = gr_facebook.Facebook
   SHORT_NAME = 'facebook'
 
-  type = ndb.StringProperty(choices=('user', 'page'))
   # unique name used in fb URLs, e.g. facebook.com/[username]
   username = ndb.StringProperty()
   # inferred from syndication URLs if username isn't available
@@ -99,7 +98,7 @@ class FacebookPage(models.Source):
     user = json.loads(auth_entity.user_json)
     gr_source = gr_facebook.Facebook(auth_entity.access_token())
     actor = gr_source.user_to_actor(user)
-    return FacebookPage(id=user['id'], type=user.get('type'),
+    return FacebookPage(id=user['id'],
                         auth_entity=auth_entity.key,
                         name=actor.get('displayName'),
                         username=actor.get('username'),
@@ -118,7 +117,7 @@ class FacebookPage(models.Source):
 
   def get_activities_response(self, **kwargs):
     kwargs.setdefault('fetch_events', True)
-    kwargs.setdefault('fetch_news', self.type == 'user')
+    kwargs.setdefault('fetch_news', self.auth_entity.get().type == 'user')
     kwargs.setdefault('event_owner_id', self.key.id())
 
     try:
