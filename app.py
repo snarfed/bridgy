@@ -225,7 +225,8 @@ class UserHandler(DashboardHandler):
     vars = super(UserHandler, self).template_vars()
     vars.update({
         'source': self.source,
-        'epoch': util.EPOCH,
+        'EPOCH': util.EPOCH,
+        'REFETCH_HFEED_TRIGGER': models.REFETCH_HFEED_TRIGGER,
         })
     if not self.source:
       return vars

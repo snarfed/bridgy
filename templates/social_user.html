@@ -71,7 +71,7 @@ WordPress.com, <a href="/">sign up here!</a>
 {% else %}
 <form method="post" action="/poll-now">
   <!-- last poll -->
-  {% if source.last_poll_attempt == epoch %}
+  {% if source.last_poll_attempt == EPOCH %}
     Not polled yet.
   {% else %}
     {% if source.poll_status == "error" %}
@@ -101,7 +101,7 @@ WordPress.com, <a href="/">sign up here!</a>
 
 <p>
 <!-- last_syndication_url -->
-{% if source.last_syndication_url and source.last_syndication_url > epoch %}
+{% if source.last_syndication_url and source.last_syndication_url > EPOCH %}
   Last <a href="/about#link">syndication link</a> found
   <a href="/log?start_time={{ source.last_syndication_url|date:'U' }}&key={{ source.key.urlsafe }}"
        title="{{ source.last_syndication_url|date:'r' }}">
@@ -112,7 +112,7 @@ WordPress.com, <a href="/">sign up here!</a>
 {% endif %}
 
 <!-- last_webmention_sent -->
-{% if source.last_webmention_sent and source.last_webmention_sent > epoch %}
+{% if source.last_webmention_sent and source.last_webmention_sent > EPOCH %}
   Last <a href="/about#accept">webmention</a> sent
   <time class="dt-bridgy-last-webmention-sent"
         datetime="{{ source.last_webmention_sent|date:'c' }}"
@@ -125,8 +125,12 @@ WordPress.com, <a href="/">sign up here!</a>
 {% if source.domain_urls %}
 <form method="post" action="/crawl-now">
 {% with source.domain_urls|length|pluralize as s %}
-{% if source.last_hfeed_refetch == epoch %}
+{% if source.last_hfeed_refetch == EPOCH %}
   Web site{{ s }} not <a href="/about#link">crawled</a> yet.
+{% else %}
+{% if source.last_hfeed_refetch == REFETCH_HFEED_TRIGGER %}
+  <span title="Crawling now" class="glyphicon glyphicon-transfer"></span>
+  <a href="/about#link">Crawling</a> now. Check back in a minute!
 {% else %}
   Web site{{ s }} <a href="/about#link">crawled</a>
   <a href="/log?start_time={{ source.last_hfeed_refetch|date:'U' }}&key={{ source.key.urlsafe }}"
@@ -135,6 +139,7 @@ WordPress.com, <a href="/">sign up here!</a>
         datetime="{{ source.last_hfeed_refetch|date:'c' }}">
     {{ source.last_hfeed_refetch|timesince }}</time> ago.
   </a>
+{% endif %}
 {% endif %}
 {% endwith %}
 <input name="key" type="hidden" value="{{ source.key.urlsafe }}" />
