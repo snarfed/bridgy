@@ -77,7 +77,7 @@ class LogHandler(webapp2.RequestHandler):
     key = util.get_required_param(self, 'key')
     if not util.is_base64(key):
       self.abort(400, 'key is not base64: %r' % key)
-    key = urllib.unquote()
+    key = urllib.unquote(key)
 
     # the propagate task logs the poll task's URL, which includes the source
     # entity key as a query param. exclude that with this heuristic.
