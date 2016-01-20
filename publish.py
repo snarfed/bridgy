@@ -133,7 +133,8 @@ class Handler(webmention.WebmentionHandler):
                         source_cls.GR_CLASS.NAME)
 
     # resolve source URL
-    url, domain, ok = util.get_webmention_target(self.source_url())
+    url, domain, ok = util.get_webmention_target(
+      self.source_url(), replace_test_domains=False)
     # show nice error message if they're trying to publish a silo post
     if domain in SOURCE_DOMAINS:
       return self.error(

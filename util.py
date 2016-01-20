@@ -178,7 +178,7 @@ def follow_redirects(url, cache=True):
                                     headers=USER_AGENT_HEADER)
 
 
-def get_webmention_target(url, resolve=True):
+def get_webmention_target(url, resolve=True, replace_test_domains=True):
   """Resolves a URL and decides whether we should try to send it a webmention.
 
   Note that this ignores failed HTTP requests, ie the boolean in the returned
@@ -187,6 +187,7 @@ def get_webmention_target(url, resolve=True):
   Args:
     url: string
     resolve: whether to follow redirects
+    replace_test_domains: whether to replace test user domains with localhost
 
   Returns: (string url, string pretty domain, boolean) tuple. The boolean is
     True if we should send a webmention, False otherwise, e.g. if it's a bad
@@ -204,10 +205,13 @@ def get_webmention_target(url, resolve=True):
     # this follows *all* redirects, until the end
     resolved = follow_redirects(url, cache=memcache)
     send = resolved.headers.get('content-type', '').startswith('text/html')
-    url, domain, _ = get_webmention_target(resolved.url, resolve=False)
+    url, domain, _ = get_webmention_target(
+      resolved.url, resolve=False, replace_test_domains=replace_test_domains)
 
   send = send and domain and not in_webmention_blacklist(domain)
-  return replace_test_domains_with_localhost(url), domain, send
+  if replace_test_domains:
+    url = replace_test_domains_with_localhost(url)
+  return url, domain, send
 
 
 def in_webmention_blacklist(domain):
