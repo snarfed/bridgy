@@ -111,7 +111,7 @@ class PublishTest(testutil.HandlerTest):
     self.assertEquals(302, resp.status_int)
     self.assertEquals(
       'http://localhost/fake/foo.com#!'
-        'Done! <a href="http://fake/url">Click here to view.</a>',
+        'Done! <a href="http://fake/url">Click here to view.</a>\ngranary message',
       urllib.unquote_plus(resp.headers['Location']))
     self._check_entity()
 
@@ -124,9 +124,12 @@ class PublishTest(testutil.HandlerTest):
     self.assertEquals('FakeSource post label', publish.type_label)
     expected_html = (self.post_html % 'foo') + self.backlink
     self.assertEquals(expected_html, publish.html)
-    self.assertEquals({'id': 'fake id', 'url': 'http://fake/url',
-                       'content': 'foo - http://foo.com/bar'},
-                      publish.published)
+    self.assertEquals({
+      'id': 'fake id',
+      'url': 'http://fake/url',
+      'content': 'foo - http://foo.com/bar',
+      'granary_message': 'granary message',
+    }, publish.published)
 
   def test_interactive_from_wrong_user_page(self):
     other_source = testutil.FakeSource.new(None).put()

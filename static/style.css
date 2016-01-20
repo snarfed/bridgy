@@ -266,7 +266,7 @@ button {
   max-width: 98%;
 }
 
-#preview-text img {
+#preview-text img, #preview-text video {
   max-height: 200px;
   max-width: 100%;
   margin-top: 1em;

@@ -110,7 +110,12 @@ class FakeGrSource(gr_source.Source):
     content = self._content_for_create(obj, ignore_formatting=ignore_formatting)
     if include_link:
         content += ' - %s' % obj['url']
-    ret = {'id': 'fake id', 'url': 'http://fake/url', 'content': content}
+    ret = {
+      'id': 'fake id',
+      'url': 'http://fake/url',
+      'content': content,
+      'granary_message': 'granary message',
+    }
     if verb == 'rsvp-yes':
       ret['type'] = 'post'
     return gr_source.creation_result(ret)

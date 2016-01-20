@@ -507,6 +507,9 @@ class SendHandler(Handler):
       if result and result.content:
         self.messages.add('Done! <a href="%s">Click here to view.</a>' %
                           self.entity.published.get('url'))
+        granary_message = self.entity.published.get('granary_message')
+        if granary_message:
+          self.messages.add(granary_message)
       # otherwise error() added an error message
 
     return self.redirect(source.bridgy_url(self))
