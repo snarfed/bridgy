@@ -69,8 +69,15 @@ class LogHandler(webapp2.RequestHandler):
       start_time: float, seconds since the epoch
       key: string that should appear in the first app log
     """
-    start_time = float(util.get_required_param(self, 'start_time'))
-    key = urllib.unquote(util.get_required_param(self, 'key'))
+    start_time = util.get_required_param(self, 'start_time')
+    if not util.is_float(start_time):
+      self.abort(400, "Couldn't convert start_time to float: %r" % start_time)
+    start_time = float(start_time)
+
+    key = util.get_required_param(self, 'key')
+    if not util.is_base64(key):
+      self.abort(400, 'key is not base64: %r' % key)
+    key = urllib.unquote()
 
     # the propagate task logs the poll task's URL, which includes the source
     # entity key as a query param. exclude that with this heuristic.
