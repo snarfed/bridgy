@@ -382,9 +382,10 @@ def _find_feed_items(feed_url, feed_doc):
   parsed = mf2py.parse(url=feed_url, doc=feed_doc)
 
   feeditems = parsed['items']
-  hfeed = mf2util.find_first_entry(parsed, ('h-feed',))
-  if hfeed:
-    feeditems = hfeed.get('children', [])
+  hfeeds = mf2util.find_all_entries(parsed, ('h-feed',))
+  if hfeeds:
+    feeditems = list(itertools.chain.from_iterable(
+      hfeed.get('children', []) for hfeed in hfeeds))
   else:
     logging.debug('No h-feed found, fallback to top-level h-entrys.')
   return feeditems

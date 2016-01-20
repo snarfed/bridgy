@@ -134,6 +134,41 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.assert_syndicated_posts(('http://author/post/permalink',
                                   'https://fa.ke/post/url'))
 
+  def test_multiple_hfeeds(self):
+    """That that we search all the h-feeds on a page if there are more than one.
+    Inspired by https://sixtwothree.org/
+    """
+    for i, activity in enumerate(self.activities):
+      activity['object'].update({
+        'content': 'post content without backlinks',
+        'url': 'https://fa.ke/post/url%d' % (i + 1),
+      })
+
+    # silo domain is fa.ke
+    self.expect_requests_get('http://author', """
+    <html>
+      <div class="h-feed">
+        <div class="h-entry">
+          <a class="u-url" href="http://author/post/permalink1"></a>
+          <a class="u-syndication" href="http://fa.ke/post/url1"></a>
+        </div>
+      </div>
+      <div class="h-feed">
+        <div class="h-entry">
+          <a class="u-url" href="http://author/post/permalink2"></a>
+          <a class="u-syndication" href="http://fa.ke/post/url2"></a>
+        </div>
+      </div>
+    </html>""")
+
+    self.mox.ReplayAll()
+    self.assert_discover(['http://author/post/permalink1'])
+    self.assert_syndicated_posts(
+      ('http://author/post/permalink1', 'https://fa.ke/post/url1'),
+      ('http://author/post/permalink2', 'https://fa.ke/post/url2'),
+    )
+
+
   def test_additional_requests_do_not_require_rework(self):
     """Test that original post discovery fetches and stores all entries up
     front so that it does not have to reparse the author's h-feed for
