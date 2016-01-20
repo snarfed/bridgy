@@ -527,7 +527,9 @@ class PollNowHandler(util.Handler):
 class CrawlNowHandler(PollNowHandler):
   def post(self):
     self.setup_refetch_hfeed()
-    super(CrawlNowHandler, self).post()
+    util.add_poll_task(self.source, now=True)
+    self.messages.add("Crawling now. Refresh in a minute to see what's new!")
+    self.redirect(self.source.bridgy_url(self))
 
   @ndb.transactional
   def setup_refetch_hfeed(self):
