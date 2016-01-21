@@ -504,7 +504,8 @@ class DeleteFinishHandler(util.Handler):
                           (source.GR_CLASS.NAME, source.name))
 
     self.redirect(callback.encode('utf-8') if callback
-                  else source.bridgy_url(self))
+                  else source.bridgy_url(self) if source.features
+                  else '/')
 
 
 class PollNowHandler(util.Handler):
