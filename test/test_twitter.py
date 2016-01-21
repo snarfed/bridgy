@@ -131,7 +131,7 @@ class TwitterTest(testutil.ModelsTest):
       'entities': {'urls': [{'expanded_url': 'http://foo/'},
                             {'expanded_url': 'http://other'}]},
     }]
-    self.expect_urlopen(gr_twitter.API_BASE + gr_twitter.API_SEARCH_URL %
+    self.expect_urlopen(gr_twitter.API_BASE + gr_twitter.API_SEARCH %
                         {'q': urllib.quote_plus('"foo" OR "bar/baz"'), 'count': 50},
                         json.dumps({'statuses': results}))
 
