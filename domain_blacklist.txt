@@ -691,17 +691,14 @@ cdc.gov
 sohu.com
 wikimedia.org
 deviantart.com
-mit.edu
 sakura.ne.jp
 altervista.org
 addtoany.com
 time.com
 google.it
-stanford.edu
 live.com
 alibaba.com
 squidoo.com
-harvard.edu
 gravatar.com
 histats.com
 nasa.gov
@@ -744,7 +741,6 @@ foxnews.com
 discuz.net
 eepurl.com
 businessweek.com
-berkeley.edu
 newsvine.com
 bluehost.com
 geocities.jp
@@ -764,7 +760,6 @@ vkontakte.ru
 oracle.com
 seesaa.net
 examiner.com
-cornell.edu
 hp.com
 nps.gov
 disqus.com
@@ -816,7 +811,6 @@ fda.gov
 redcross.org
 github.com
 cbc.ca
-umich.edu
 jugem.jp
 shinystat.com
 google.com.br
@@ -866,28 +860,21 @@ cdbaby.com
 friendfeed.com
 ehow.com
 patch.com
-upenn.edu
 engadget.com
 diigo.com
 com.com
 slashdot.org
-washington.edu
-columbia.edu
 nhs.uk
 abc.net.au
 elegantthemes.com
-utexas.edu
-yale.edu
 marriott.com
 bigcartel.com
-ucla.edu
 usgs.gov
 jigsy.com
 hexun.com
 hubpages.com
 slate.com
 purevolume.com
-umn.edu
 bloglines.com
 so-net.ne.jp
 wikispaces.com
@@ -904,7 +891,6 @@ hc360.com
 usa.gov
 edublogs.org
 lycos.com
-wisc.edu
 thetimes.co.uk
 state.tx.us
 example.com
@@ -923,7 +909,6 @@ storify.com
 salon.com
 ucoz.com
 gizmodo.com
-psu.edu
 smh.com.au
 reference.com
 sun.com
@@ -951,7 +936,6 @@ deliciousdays.com
 smugmug.com
 wufoo.com
 globo.com
-cmu.edu
 domainmarket.com
 odnoklassniki.ru
 twitpic.com
@@ -959,7 +943,6 @@ ovh.net
 home.pl
 naver.com
 google.ru
-si.edu
 newyorker.com
 blogs.com
 sciencedirect.com
@@ -975,7 +958,6 @@ craigslist.org
 zimbio.com
 chronoengine.com
 cnbc.com
-uiuc.edu
 vistaprint.com
 symantec.com
 prlog.org
@@ -991,18 +973,15 @@ japanpost.jp
 mayoclinic.com
 studiopress.com
 admin.ch
-virginia.edu
 printfriendly.com
 mlb.com
 omniture.com
 simplemachines.org
 dell.com
 accuweather.com
-princeton.edu
 fotki.com
 comcast.net
 chron.com
-nyu.edu
 # wp.com
 merriam-webster.com
 nba.com
@@ -1017,7 +996,6 @@ mapy.cz
 army.mil
 csmonitor.com
 bravesites.com
-tamu.edu
 rediff.com
 toplist.cz
 yellowpages.com
@@ -1037,9 +1015,7 @@ unblog.fr
 fastcompany.com
 # earthlink.net
 vinaora.com
-msu.edu
 aboutads.info
-ucsd.edu
 sogou.com
 seattletimes.com
 # dyndns.org
@@ -1050,16 +1026,13 @@ acquirethisname.com
 shutterfly.com
 walmart.com
 # pen.io
-arizona.edu
 woothemes.com
 scientificamerican.com
 themeforest.net
 spotify.com
 cam.ac.uk
-unc.edu
 arstechnica.com
 hao123.com
-illinois.edu
 bloglovin.com
 nsw.gov.au
 ihg.com
