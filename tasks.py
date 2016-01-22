@@ -570,7 +570,7 @@ class SendWebmentions(webapp2.RequestHandler):
           util.now_fn() < self.entity.leased_until):
       self.fail('duplicate task is currently processing!')
     else:
-      assert self.entity.status in ('new', 'processing', 'error')
+      assert self.entity.status in ('new', 'processing', 'error'), self.entity.status
       self.entity.status = 'processing'
       self.entity.leased_until = util.now_fn() + self.LEASE_LENGTH
       self.entity.put()
@@ -590,10 +590,9 @@ class SendWebmentions(webapp2.RequestHandler):
       logging.warning('another task stole and finished this. did my lease expire?')
       return False
     elif existing.status == 'new':
-      self.fail('went backward from processing to new!',
-                level=logging.ERROR)
+      self.fail('went backward from processing to new!', level=logging.ERROR)
 
-    assert self.entity.status == 'processing'
+    assert self.entity.status == 'processing', self.entity.status
     self.entity.status = 'complete'
     self.entity.put()
     return True
