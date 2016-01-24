@@ -589,7 +589,7 @@ class WebmentionHandler(Handler):
 application = webapp2.WSGIApplication([
     ('/publish/preview', PreviewHandler),
     ('/publish/webmention', WebmentionHandler),
-    ('/publish/(facebook|twitter|instagram)', webmention.WebmentionGetHandler),
+    ('/publish/(facebook|flickr|twitter|instagram)', webmention.WebmentionGetHandler),
     ('/publish/facebook/finish', FacebookSendHandler),
     ('/publish/flickr/finish', FlickrSendHandler),
     ('/publish/instagram/finish', InstagramSendHandler),
