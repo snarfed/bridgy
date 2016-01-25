@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Bridgy: Poll error sources</title>
+<style type="text/css">
+  table { border-spacing: .5em; }
+  th, td { border: none; }
+  li { list-style: none; }
+</style>
+</head>
+
+<h2>Poll error sources</h2>
+<table>
+  <tr>
+    <th>Source</th>
+    <th>Last attempt</th>
+    <th>Last success</th>
+    <th>Last webmention</th>
+  </tr>
+
+  {% for s in sources %}
+  <tr>
+    <td><a target="_blank" href="{{ s.bridgy_path }}">{{ s.label }}</a></td>
+
+    <td><a href="/log?start_time={{ s.last_poll_attempt|date:'U' }}&key={{ s.key.urlsafe }}"
+           title="{{ s.last_poll_attempt|date:'r' }}" target="_blank">
+      <time datetime="{{ s.last_poll_attempt|date:'c' }}">
+        {{ s.last_poll_attempt|timesince }}</time> ago</a></td>
+
+    <td>
+      {% if s.last_polled and s.last_polled > EPOCH %}
+        <a href="/log?start_time={{ s.last_polled|date:'U' }}&key={{ s.key.urlsafe }}"
+           title="{{ s.last_polled|date:'r' }}" target="_blank">
+        <time datetime="{{ s.last_polled|date:'c' }}">
+          {{ s.last_polled|timesince }}</time> ago</a></td>
+      {% else %}
+        never
+      {% endif %}
+    </td>
+
+    <td>
+      {% if s.last_webmention_sent and s.last_webmention_sent > EPOCH %}
+        <time datetime="{{ s.last_webmention_sent|date:'c' }}"
+              title="{{ s.last_webmention_sent|date:'r' }}">
+          {{ s.last_webmention_sent|timesince }} ago</time>
+      {% else %}
+        never
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+</body>
+</html>

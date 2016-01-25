@@ -5,11 +5,12 @@ haven't completed yet.
 """
 
 import datetime
+import itertools
 import json
 
 import appengine_config
 from oauth_dropins.webutil import handlers
-from models import BlogPost, Response
+from models import BlogPost, Response, Source
 import util
 
 from google.appengine.ext import ndb
@@ -27,6 +28,7 @@ import wordpress_rest
 
 
 class ResponsesHandler(handlers.TemplateHandler):
+  """Find the most recently attempted responses and blog posts with error URLs."""
   NUM_ENTITIES = 30
 
   def template_file(self):
@@ -35,7 +37,6 @@ class ResponsesHandler(handlers.TemplateHandler):
   def template_vars(self):
     entities = []
 
-    # Find the most recently attempted responses and blog posts with error URLs
     for cls in BlogPost, Response:
       for e in cls.query().order(-cls.updated):
         if (len(entities) >= self.NUM_ENTITIES or
@@ -58,6 +59,27 @@ class ResponsesHandler(handlers.TemplateHandler):
     return {'responses': entities}
 
 
+class SourcesHandler(handlers.TemplateHandler):
+  """Find sources whose last poll errored out."""
+  NUM_SOURCES = 10
+
+  def template_file(self):
+    return 'templates/admin_sources.html'
+
+  def template_vars(self):
+    CLASSES = (facebook.FacebookPage, flickr.Flickr, twitter.Twitter,
+               instagram.Instagram, googleplus.GooglePlusPage)
+    queries = [cls.query(Source.status == 'enabled',
+                         Source.poll_status == 'error',
+                         Source.features == 'listen',
+                        ).fetch_async(self.NUM_SOURCES)
+               for cls in CLASSES]
+    return {
+      'sources': itertools.chain(*[q.get_result() for q in queries]),
+      'EPOCH': util.EPOCH,
+    }
+
+
 class MarkCompleteHandler(util.Handler):
   def post(self):
     entities = ndb.get_multi(ndb.Key(urlsafe=u)
@@ -70,5 +92,6 @@ class MarkCompleteHandler(util.Handler):
 
 application = webapp2.WSGIApplication([
     ('/admin/responses', ResponsesHandler),
+    ('/admin/sources', SourcesHandler),
     ('/admin/mark_complete', MarkCompleteHandler),
     ], debug=appengine_config.DEBUG)
