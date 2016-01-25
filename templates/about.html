@@ -403,20 +403,18 @@ is <a href="http://help.instagram.com/448523408565555">private</a>, so Bridgy
 handles all Instagram photos and comments. If your Instagram account is private,
 don't sign it up for Bridgy!
 </li>
+<li>Facebook's API isn't great about this either.
+<a href="https://github.com/snarfed/bridgy/issues/611">Sometimes it doesn't give
+us enough information to tell whether a post is public or private.</a> When that
+happens, we have to default to assuming it's not public, which means we
+occasionally miss posts (usually photos) that look public inside Facebook.
+</li>
 <li>Is it on an older post? Bridgy only looks at your 50 most recent posts. It
 doesn't go back arbitrarily far because that doesn't scale. You can get around
 this for an individual response by
 <a href="http://indiewebcamp.com/webmention#How_to_Test_Webmentions">sending a
 webmention manually</a>. <a href="#source-urls">Here's how to
 construct the source URL.</a>
-</li>
-<li>Is it a tweet with more than 25 favorites? Twitter favorites are
-<a href="https://github.com/snarfed/bridgy/issues/73">currently limited to 25
-per tweet</a>. This is an unfortunate result of the fact that
-<a href="https://dev.twitter.com/discussions/661">Twitter's API doesn't expose
-favorites by tweet</a>. Bridgy gets around that by
-<a href="https://github.com/snarfed/bridgy/issues/61">scraping them from the
-tweet's HTML</a>, which works okay, but only for the first 25. Sadface.
 </li>
 <li>Is it a Twitter @-reply? Does it
 <a href="https://support.twitter.com/articles/14023-what-are-replies-and-mentions">@-mention</a>
@@ -431,14 +429,10 @@ doesn't guarantee that it returns all matching tweets for a search. Every now
 and then it may not be able to find one of your replies, which means Bridgy will
 miss it. Sadface.
 </li>
-<li>Is it a Facebook RSVP? If you signed up for Bridgy before RSVP support was
-added, your Facebook account access may not include events and RSVPs. Try
-<a href="/">signing up with Facebook</a> again.
-</li>
 <li>Are you using a <a href="#link">syndication link</a>? If so, Bridgy may have
-fetched your post before you added that link. When that happens, Bridgy waits up
-to two hours before it refetches your post and reloads syndication links, even
-if you manually poll before then. Check back in two hours or so.
+fetched your post before you added the link. When that happens, Bridgy waits up
+to two hours before it refetches your post and reloads syndication links. Try
+clicking the <em>Crawl now</em> button on your user page.
 </li>
 </ul>
 </li>
