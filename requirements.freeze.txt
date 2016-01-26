@@ -9,7 +9,7 @@ html5lib==0.9999999
 httplib2==0.9.1
 Jinja2==2.8
 MarkupSafe==0.23
-mf2py==1.0.0
+mf2py==1.0.2
 mf2util==0.2.11
 oauth2client==1.4.11
 oauthlib==1.0.1
