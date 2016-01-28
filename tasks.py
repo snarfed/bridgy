@@ -592,7 +592,7 @@ class SendWebmentions(webapp2.RequestHandler):
     elif existing.status == 'new':
       self.fail('went backward from processing to new!', level=logging.ERROR)
 
-    assert self.entity.status == 'processing', self.entity.status
+    assert existing.status == 'processing', existing.status
     self.entity.status = 'complete'
     self.entity.put()
     return True
