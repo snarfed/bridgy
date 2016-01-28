@@ -82,15 +82,7 @@ ln -s <path to webmention-tools>/webmentiontools \
 The symlinks are necessary because App Engine's `vendor` module evidently
 doesn't follow `.egg-link` or `.pth` files. :/
 
-This command runs the tests, pushes any changes in your local repo, and
-deploys to App Engine:
-
-```shell
-cd ../oauth-dropins && source local/bin/activate.csh && python -m unittest discover && \
-  cd ../granary && source local/bin/activate.csh && python -m unittest discover && \
-  cd ../bridgy && source local/bin/activate.csh && python -m unittest discover && \
-  git push && md5sum -c keys.md5 && ~/google_appengine/appcfg.py update .
-```
+To deploy to App Engine, run [`scripts/deploy.sh`](https://github.com/snarfed/bridgy/blob/master/scripts/deploy.sh).
 
 [`remote_api_shell`](https://cloud.google.com/appengine/docs/python/tools/remoteapi#using_the_remote_api_shell)
 is a useful interactive Python shell that can interact with the production app's
