@@ -14,10 +14,10 @@ src=`dirname $0`/../..
 cd $src/oauth-dropins && source local/bin/activate
 python -m unittest discover
 
-cd $src/granary && source local/bin/activate
+cd ../granary && source local/bin/activate
 python -m unittest discover
 
-cd $src/bridgy && source local/bin/activate
+cd ../bridgy && source local/bin/activate
 python -m unittest discover
 
 # check silo app keys (aka client ids)
