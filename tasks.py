@@ -588,14 +588,16 @@ class SendWebmentions(webapp2.RequestHandler):
     elif existing.status == 'complete':
       # let this task return 200 and finish
       logging.warning('another task stole and finished this. did my lease expire?')
-      return False
     elif existing.status == 'new':
       self.fail('went backward from processing to new!', level=logging.ERROR)
+    else:
+      assert existing.status == 'processing', existing.status
+      assert self.entity.status == 'processing', self.entity.status
+      self.entity.status = 'complete'
+      self.entity.put()
+      return True
 
-    assert existing.status == 'processing', existing.status
-    self.entity.status = 'complete'
-    self.entity.put()
-    return True
+    return False
 
   @ndb.transactional
   def release(self, new_status):
