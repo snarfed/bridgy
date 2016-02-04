@@ -32,6 +32,7 @@ import logging
 import json
 import mf2py
 import pprint
+import urllib
 import urlparse
 
 import appengine_config
@@ -579,7 +580,7 @@ class WebmentionHandler(Handler):
 
     if self.entity.html:
       for url in expected:
-        if url in self.entity.html:
+        if url in self.entity.html or urllib.quote(url, safe='') in self.entity.html:
           return True
 
     self.error("Couldn't find link to %s" % expected[0])

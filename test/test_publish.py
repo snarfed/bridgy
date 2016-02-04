@@ -494,6 +494,16 @@ this is my article
     self.mox.ReplayAll()
     self.assert_created('blah - http://foo.com/bar')
 
+  def test_tumblr_backlink_in_t_umblr_com_url(self):
+    """Tumblr now rewrites links in t.umblr.com wrapper. Handle that.
+
+    https://github.com/snarfed/bridgy/issues/609"""
+    link = '<a href="http://t.umblr.com/redirect?z=http%3A%2F%2Flocalhost%2Fpublish%2Ffake&amp;t=YmZkMzQyODJmYjQ5ZmEzNDNlMWI5YmZhYmQ2MWI4NDcyNDNlMjNhOCxCOE9JaXhYUQ%3D%3D"></a>'
+    self.expect_requests_get('http://foo.com/bar', self.post_html % 'foo',
+                             backlink=link)
+    self.mox.ReplayAll()
+    self.assert_created('foo - http://foo.com/bar', interactive=False)
+
   def test_returned_type_overrides(self):
     # FakeSource returns type 'post' when it sees 'rsvp'
     self.expect_requests_get('http://foo.com/bar', """
