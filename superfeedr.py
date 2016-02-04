@@ -13,10 +13,10 @@ import logging
 
 import appengine_config
 from appengine_config import HTTP_TIMEOUT
-
-import models
 import requests
 from requests.auth import HTTPBasicAuth
+
+import models
 import util
 import webapp2
 
@@ -96,7 +96,7 @@ def handle_feed(feed, source):
     # TODO: extract_links currently has a bug that makes it drop trailing
     # slashes. ugh. fix that.
     content = item.get('content') or item.get('summary', '')
-    links = [l for l in util.extract_links(content)
+    links = [util.unwrap_t_umblr_com(l) for l in util.extract_links(content)
              if util.domain_from_link(l) not in source.domains]
 
     logging.info('Found links: %s', links)

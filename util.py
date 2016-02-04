@@ -565,3 +565,21 @@ class CachedPage(StringIdModel):
   def invalidate(cls, path):
     logging.info('Deleting cached page for %s', path)
     CachedPage(id=path).key.delete()
+
+
+def unwrap_t_umblr_com(url):
+  """If url is a t.umblr.com short link, extract its destination URL.
+
+  Otherwise, return url unchanged.
+
+  Not in tumblr.py since models imports superfeedr, so it would be a circular
+  import.
+
+  Background: https://github.com/snarfed/bridgy/issues/609
+  """
+  parsed = urlparse.urlparse(url)
+  return (urlparse.parse_qs(parsed.query).get('z', [''])[0]
+          if parsed.netloc == 't.umblr.com'
+          else url)
+
+
