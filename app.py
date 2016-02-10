@@ -341,6 +341,11 @@ class UserHandler(DashboardHandler):
         vars['responses_before_link'] = ('?responses_before=%s#responses' %
                                          new_before.isoformat())
 
+      vars['next_poll'] = min(
+        self.source.last_poll_attempt + self.source.poll_period(),
+        # lower bound is 1 minute from now
+        util.now_fn() + datetime.timedelta(seconds=90))
+
     # Publishes
     if 'publish' in self.source.features:
       publishes = Publish.query().filter(Publish.source == self.source.key)\

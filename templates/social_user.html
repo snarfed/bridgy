@@ -86,12 +86,10 @@ WordPress.com, <a href="/">sign up here!</a>
   {% endif %}
 
   <!-- next poll -->
-  {% with source.last_poll_attempt|add:source.poll_period as next %}
   Next poll in
   <time class="dt-bridgy-next-poll" datetime="{{ next|date:'c' }}"
         title="{{ next|date:'r' }}">
-    {{ next|timeuntil }}</time>.
-  {% endwith %}
+    {{ next_poll|timeuntil }}</time>.
 
   <input name="key" type="hidden" value="{{ source.key.urlsafe }}" />
   <button id="poll-now-button" type="submit" class="btn btn-default">Poll now</button>
