@@ -341,7 +341,7 @@ class UserHandler(DashboardHandler):
         vars['responses_before_link'] = ('?responses_before=%s#responses' %
                                          new_before.isoformat())
 
-      vars['next_poll'] = min(
+      vars['next_poll'] = max(
         self.source.last_poll_attempt + self.source.poll_period(),
         # lower bound is 1 minute from now
         util.now_fn() + datetime.timedelta(seconds=90))
