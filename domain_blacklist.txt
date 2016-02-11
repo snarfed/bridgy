@@ -19,6 +19,11 @@ stats.wordpress.com
 # reported: https://twitter.com/schnarfed/status/558739076996554752
 blog.mahabali.me
 
+# requested by aaronpk since they're in his twitter bio, so otherwise we'd send
+# them homepage webmentions whenever he's @-mentioned on twitter.
+micropub.net
+oauth.net
+
 24sessions.com
 500px.com
 abakus-internet-marketing.de
