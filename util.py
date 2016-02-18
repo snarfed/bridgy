@@ -62,6 +62,15 @@ URL_BLACKLIST = frozenset((
   'http://www.evdemon.org/2015/learning-more-about-quill',
 ))
 
+# Sources that we backfeed private posts/accounts for.
+# https://github.com/snarfed/bridgy/issues/620
+PRIVATE_SOURCE_WHITELIST = frozenset((
+  ndb.Key('FacebookPage', '214611'),
+  ndb.Key('Instagram', 'tantek'),
+  ndb.Key('GooglePlusPage', '109182513536739786206'),
+  ndb.Key('Twitter', 't'),
+))
+
 # Average HTML page size as of 2015-10-15 is 56K, so this is very generous and
 # conservative.
 # http://www.sitepoint.com/average-page-weight-increases-15-2014/

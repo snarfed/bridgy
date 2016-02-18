@@ -270,6 +270,11 @@ class Source(StringIdModel):
     """
     return [util.replace_test_domains_with_localhost(u) for u in self.domain_urls]
 
+  def is_public(self, obj):
+    """Wraps gr_source.Source.is_public and overrides it with the whitelist."""
+    return (True if self.key in util.PRIVATE_SOURCE_WHITELIST
+            else gr_source.Source.is_public(obj))
+
   def search_for_links(self):
     """Searches for activities with links to any of this source's web sites.
 

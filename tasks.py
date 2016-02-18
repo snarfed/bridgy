@@ -200,7 +200,7 @@ class Poll(webapp2.RequestHandler):
     # serializing to JSON.
     #
     for id, activity in activities.items():
-      if not Source.is_public(activity):
+      if not source.is_public(activity):
         logging.info('Skipping non-public activity %s', id)
         continue
 
@@ -655,14 +655,6 @@ class PropagateResponse(SendWebmentions):
     if not self.lease(ndb.Key(urlsafe=self.request.params['response_key'])):
       return
 
-    self.activities = [json.loads(a) for a in self.entity.activities_json]
-    response_obj = json.loads(self.entity.response_json)
-    if (not Source.is_public(response_obj) or
-        not all(Source.is_public(a) for a in self.activities)):
-      logging.info('Response or activity is non-public. Dropping.')
-      self.complete()
-      return
-
     source = self.entity.source.get()
     if not source:
       logging.warning('Source not found! Dropping response.')
@@ -673,6 +665,14 @@ class PropagateResponse(SendWebmentions):
                  self.request.host_url,
                  calendar.timegm(self.entity.created.utctimetuple()) - 61,
                  source.key.urlsafe())
+
+    self.activities = [json.loads(a) for a in self.entity.activities_json]
+    response_obj = json.loads(self.entity.response_json)
+    if (not source.is_public(response_obj) or
+        not all(source.is_public(a) for a in self.activities)):
+      logging.info('Response or activity is non-public. Dropping.')
+      self.complete()
+      return
 
     self.send_webmentions()
 
