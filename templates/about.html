@@ -69,6 +69,7 @@ service.</a>
   account or publish as me. Isn't that a security hole?</a></li>
 <li><a href="#registration-api">Can users sign up for Bridgy
   without leaving my site or application?</a></li>
+<li><a href="#api">Does Bridgy have an API?</a></li>
 <li><a href="#bug">I found a bug! I have a feature request!</a></li>
 <li><a href="#cute">Brid.gy? Really?</a></li>
 
@@ -307,6 +308,71 @@ POST <a href="https://brid.gy/twitter/start">https://brid.gy/twitter/start</a>
   <li><code>user</code> (if successful) equal to their Bridgy user page URL</li>
 </ul>
 
+<li id="api" class="question">Does Bridgy have an API?</li>
+<li class="answer">
+<p>Yes! In the spirit
+of <em><a href="https://aaronparecki.com/2015/04/26/22/html-is-my-api">HTML is
+my API</a></em>, Bridgy's HTML is its API. User pages
+(e.g. <a href="https://brid.gy/twitter/schnarfed">/twitter/schnarfed</a>)
+include standard and custom
+<a href="http://microformats.org/wiki/microformats2">microformats2</a>
+properties that you can use to get information about users and their
+<a href="listen">responses</a>,
+<a href="publish">publishes</a>, and
+<a href="blogs">blog posts</a>.
+</p>
+<p>
+Here are the properties Bridgy uses:
+</p>
+
+<code><ul>
+<li>h-card</li>
+  <ul>
+  <li>p-name</li>
+  <li>u-url</li>
+  <li>u-photo</li>
+  <li>p-bridgy-account-status</li>
+  <li>p-bridgy-listen-status</li>
+  <li>p-bridgy-publish-status</li>
+  <li>dt-bridgy-next-poll</li>
+  <li>dt-bridgy-last-syndication-link</li>
+  <li>dt-bridgy-last-webmention-sent</li>
+  <li>dt-bridgy-last-refetched</li>
+  </ul>
+
+<li>h-bridgy-response h-bridgy-{post,comment,like,repost,rsvp}</li>
+  <ul>
+  <li>u-name</li>
+  <li>dt-updated</li>
+  <li>u-bridgy-syndication-source</li>
+  <li>u-bridgy-original-source</li>
+  <li>u-bridgy-target</li>
+  <li>p-bridgy-status</li>
+  <li>u-bridgy-log</li>
+  </ul>
+
+<li>h-bridgy-publish h-bridgy-{preview,post,photo,comment,like,repost,rsvp}</li>
+  <ul>
+  <li>u-name</li>
+  <li>dt-updated</li>
+  <li>u-url</li>
+  <li>u-syndication</li>
+  <li>p-bridgy-status</li>
+  <li>u-bridgy-log</li>
+  </ul>
+
+<li>h-bridgy-blogpost</li>
+  <ul>
+  <li>u-name</li>
+  <li>dt-updated</li>
+  <li>u-url</li>
+  <li>u-bridgy-target</li>
+  <li>p-bridgy-status</li>
+  <li>u-bridgy-log</li>
+  </ul>
+
+</ul></code>
+</li>
 
 <li id="bug" class="question">I found a bug! I have a feature request!</li>
 <li class="answer">
