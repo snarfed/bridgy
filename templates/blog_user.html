@@ -65,14 +65,17 @@ Click to re-enable:
 <p class="big">Recent blog posts:</p>
 <ul class="user-items">
   {% for blogpost in blogposts %}
-  <li class="row">
+  <li class="row h-bridgy-blogpost">
+   <data class="p-bridgy-status" value="{{ blogpost.status }}" />
    <div class="col-sm-4">
     {{ blogpost.pretty_url|safe }}
 
    </div><div class="col-sm-4">
     <a href="/log?start_time={{ blogpost.updated|date:'U' }}&key={{ blogpost.key.urlsafe }}"
-       title="{{ blogpost.updated|date:'r' }}">
-      {{ blogpost.updated|timesince }} ago
+       class="u-bridgy-log">
+      <time class="dt-updated" datetime="{{ blogpost.updated|date:'c' }}"
+            title="{{ blogpost.updated|date:'r' }}">
+        {{ blogpost.updated|timesince }} ago</time>
       {% if blogpost.status == 'error' %}
        <span title="Error" class="glyphicon glyphicon-exclamation-sign"></span>
       {% else %}{% if blogpost.status == 'processing' %}

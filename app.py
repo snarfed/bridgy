@@ -370,7 +370,7 @@ class UserHandler(DashboardHandler):
         except ValueError:
           text = None
         b.pretty_url = util.pretty_link(
-          b.key.id(), text=text, attrs={'class': 'original-post'},
+          b.key.id(), text=text, attrs={'class': 'original-post u-url u-name'},
           max_length=40, new_tab=True)
 
       # Blog webmentions
