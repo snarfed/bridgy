@@ -353,7 +353,8 @@ class UserHandler(DashboardHandler):
                                  .fetch(10)
       for p in publishes:
         p.pretty_page = util.pretty_link(
-          p.key.parent().id(), attrs={'class': 'original-post'}, new_tab=True)
+          p.key.parent().id(), attrs={'class': 'original-post u-url u-name'},
+          new_tab=True)
 
       vars['publishes'] = publishes
 
@@ -400,7 +401,7 @@ class UserHandler(DashboardHandler):
       e: BlogWebmention subclass (Response or BlogPost)
     """
     link = lambda url, g: util.pretty_link(
-      url, glyphicon=g, attrs={'class': 'original-post'}, new_tab=True)
+      url, glyphicon=g, attrs={'class': 'original-post u-bridgy-target'}, new_tab=True)
     return util.trim_nulls({
         'Failed': set(link(url, 'exclamation-sign') for url in e.error + e.failed),
         'Sending': set(link(url, 'transfer') for url in e.unsent

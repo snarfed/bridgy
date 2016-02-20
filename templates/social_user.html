@@ -78,17 +78,17 @@ WordPress.com, <a href="/">sign up here!</a>
      <span title="Error" class="glyphicon glyphicon-exclamation-sign"></span>
     {% endif %}
     Polled
-    <a href="/log?start_time={{ source.last_poll_attempt|date:'U' }}&key={{ source.key.urlsafe }}"
-       title="{{ source.last_poll_attempt|date:'r' }}">
+    <a href="/log?start_time={{ source.last_poll_attempt|date:'U' }}&key={{ source.key.urlsafe }}">
       <time class="dt-bridgy-last-polled"
-            datetime="{{ source.last_poll_attempt|date:'c' }}">
-        {{ source.last_poll_attempt|timesince }}</time> ago</a>.
+            datetime="{{ source.last_poll_attempt|date:'c' }}"
+            title="{{ source.last_poll_attempt|date:'r' }}">
+        {{ source.last_poll_attempt|timesince }} ago</time></a>.
   {% endif %}
 
   <!-- next poll -->
   Next poll in
-  <time class="dt-bridgy-next-poll" datetime="{{ next|date:'c' }}"
-        title="{{ next|date:'r' }}">
+  <time class="dt-bridgy-next-poll" datetime="{{ next_poll|date:'c' }}"
+        title="{{ next_poll|date:'r' }}">
     {{ next_poll|timeuntil }}</time>.
 
   <input name="key" type="hidden" value="{{ source.key.urlsafe }}" />
@@ -101,11 +101,11 @@ WordPress.com, <a href="/">sign up here!</a>
 <!-- last_syndication_url -->
 {% if source.last_syndication_url and source.last_syndication_url > EPOCH %}
   Last <a href="/about#link">syndication link</a> found
-  <a href="/log?start_time={{ source.last_syndication_url|date:'U' }}&key={{ source.key.urlsafe }}"
-       title="{{ source.last_syndication_url|date:'r' }}">
+  <a href="/log?start_time={{ source.last_syndication_url|date:'U' }}&key={{ source.key.urlsafe }}">
   <time class="dt-bridgy-last-syndication-link"
-        datetime="{{ source.last_syndication_url|date:'c' }}">
-    {{ source.last_syndication_url|timesince }}</time> ago.
+        datetime="{{ source.last_syndication_url|date:'c' }}"
+        title="{{ source.last_syndication_url|date:'r' }}">
+    {{ source.last_syndication_url|timesince }} ago</time>.
   </a><br />
 {% endif %}
 
@@ -115,7 +115,7 @@ WordPress.com, <a href="/">sign up here!</a>
   <time class="dt-bridgy-last-webmention-sent"
         datetime="{{ source.last_webmention_sent|date:'c' }}"
         title="{{ source.last_webmention_sent|date:'r' }}">
-    {{ source.last_webmention_sent|timesince }}</time> ago.
+    {{ source.last_webmention_sent|timesince }} ago</time>.
   <br />
 {% endif %}
 
@@ -131,11 +131,11 @@ WordPress.com, <a href="/">sign up here!</a>
   <a href="/about#link">Crawling</a> now. Check back in a minute!
 {% else %}
   Web site{{ s }} <a href="/about#link">crawled</a>
-  <a href="/log?start_time={{ source.last_hfeed_refetch|date:'U' }}&key={{ source.key.urlsafe }}"
-       title="{{ source.last_hfeed_refetch|date:'r' }}">
+  <a href="/log?start_time={{ source.last_hfeed_refetch|date:'U' }}&key={{ source.key.urlsafe }}">
   <time class="dt-bridgy-last-refetched"
-        datetime="{{ source.last_hfeed_refetch|date:'c' }}">
-    {{ source.last_hfeed_refetch|timesince }}</time> ago.
+        datetime="{{ source.last_hfeed_refetch|date:'c' }}"
+        title="{{ source.last_hfeed_refetch|date:'r' }}">
+    {{ source.last_hfeed_refetch|timesince }} ago</time>.
   </a>
 {% endif %}
 {% endif %}
@@ -223,13 +223,14 @@ Click to enable <a href="/about#listen">listening</a>:
 <p id="responses" class="big">Responses:</p>
 <ul class="user-items">
   {% for response in responses %}
-  <li class="row">
+  <li class="row h-bridgy-response h-bridgy-{{ response.type }}">
+   <data class="p-bridgy-status" value="{{ response.status }}" />
    <div class="col-sm-3">
     {% with response.response as r %}
     <a target="_blank" href="{{ response.actor.url }}"
        title="{{ response.actor.displayName }}">
       <img class="profile" src="{{ response.actor.image.url }}" width="32" /></a>
-      <a target="_blank" href="{{ r.url }}">
+      <a target="_blank" class="u-bridgy-syndication-source u-name" href="{{ r.url }}">
         {{ r.content|default:"--"|striptags|truncatewords:6|safe }}
       </a>
     {% endwith %}
@@ -239,7 +240,8 @@ Click to enable <a href="/about#listen">listening</a>:
     {% for a in response.activities %}
     <li>
     {% if response.type == "comment" %} on {% endif %}
-    <a target="_blank" href="{% firstof a.url a.object.url %}">
+    <a target="_blank" class="u-bridgy-original-source"
+       href="{% firstof a.url a.object.url %}">
       {{ a.content|default:"--"|striptags|truncatewords:6|safe }}
     </a></li>
     {% endfor %}
@@ -252,9 +254,11 @@ Click to enable <a href="/about#listen">listening</a>:
     </ul>
 
    </div><div class="col-sm-2">
-     <a href="/log?start_time={{ response.updated|date:'U' }}&key={{ response.key.urlsafe }}">
-      <span title="{{ response.updated|date:'r' }}">
-        {{ response.updated|timesince }} ago</span>
+     <a href="/log?start_time={{ response.updated|date:'U' }}&key={{ response.key.urlsafe }}"
+        class="u-bridgy-log">
+      <time class="dt-updated" datetime="{{ response.updated|date:'c' }}"
+            title="{{ response.updated|date:'r' }}">
+        {{ response.updated|timesince }} ago</time>
       {% if response.status == 'error' %}
        <span title="Error" class="glyphicon glyphicon-exclamation-sign"></span>
       {% else %}{% if response.status == 'processing' %}
@@ -311,14 +315,17 @@ Click to enable <a href="/about#listen">listening</a>:
 <p id="publishes" class="big">Published:</p>
 <ul class="user-items">
   {% for publish in publishes %}
-  <li class="row">
+  <li class="row h-bridgy-publish h-bridgy-{% firstof publish.type_label publish.type %}">
+   <data class="p-bridgy-status" value="{{ publish.status }}" />
    <div class="col-sm-4">
      {{ publish.pretty_page|safe }}
 
    </div><div class="col-sm-4">
-    <a href="/log?start_time={{ publish.updated|date:'U' }}&key={{ publish.key.urlsafe }}">
-      <span title="{{ publish.updated|date:'r' }}">
-        {{ publish.updated|timesince }} ago</span>
+    <a href="/log?start_time={{ publish.updated|date:'U' }}&key={{ publish.key.urlsafe }}"
+       class="u-bridgy-log">
+      <time class="dt-updated" datetime="{{ publish.updated|date:'c' }}"
+            title="{{ publish.updated|date:'r' }}">
+        {{ publish.updated|timesince }} ago</time>
       {% if publish.status == 'failed' %}
        <span title="Error" class="glyphicon glyphicon-exclamation-sign"></span>
       {% else %}{% if publish.status == 'new' %}
@@ -328,7 +335,7 @@ Click to enable <a href="/about#listen">listening</a>:
 
    </div><div class="col-sm-4">
      {% if publish.published.url %}
-       <a href="{{ publish.published.url }}">
+       <a class="u-syndication" href="{{ publish.published.url }}">
      {% endif %}
      {% firstof publish.type_label publish.type %}
      {% if publish.published.url %}
