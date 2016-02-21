@@ -64,6 +64,19 @@ SOURCES = (FacebookPage, Flickr, Twitter, Instagram, GooglePlusPage)
 SOURCE_NAMES = {cls.SHORT_NAME: cls for cls in SOURCES}
 SOURCE_DOMAINS = {cls.GR_CLASS.DOMAIN: cls for cls in SOURCES}
 
+PUBLISHABLE_TYPES = frozenset((
+  'h-checkin',
+  'h-entry',
+  'h-event',
+  'h-geo',
+  'h-item',
+  'h-listing',
+  'h-product',
+  'h-recipe',
+  'h-resume',
+  'h-review',
+))
+
 
 class Handler(webmention.WebmentionHandler):
   """Base handler for both previews and publishes.
@@ -213,6 +226,8 @@ class Handler(webmention.WebmentionHandler):
       item_types = set(item.get('type'))
       if 'h-feed' in item_types and 'h-entry' not in item_types:
         queue.extend(item.get('children', []))
+        continue
+      elif not item_types & PUBLISHABLE_TYPES:
         continue
 
       try:

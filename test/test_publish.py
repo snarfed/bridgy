@@ -366,6 +366,13 @@ foo
     self.mox.ReplayAll()
     self.assert_created('foo - http://foo.com/bar')
 
+  def test_unpublishable_type(self):
+    html = ('<p class="h-breadcrumb"><span class="e-content">not publishable</span></p>\n' +
+            self.post_html % 'foo')
+    self.expect_requests_get('http://foo.com/bar', html)
+    self.mox.ReplayAll()
+    self.assert_created('foo - http://foo.com/bar')
+
   def test_type_not_implemented(self):
     self.expect_requests_get('http://foo.com/bar',
                              '<article class="h-entry h-as-like"></article>')
