@@ -152,8 +152,9 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
         # https://github.com/snarfed/bridgy/issues/177
         "Invalid argument, 'thread': Unable to find thread" in resp or
         # expected for partially set up tumblr accounts
-        "we haven't found your Disqus account" in resp
-        ):
+        "we haven't found your Disqus account" in resp or
+        # Twitter duplicate publish attempt
+        'Status is a duplicate.' in resp):
       return
 
     subject = '%s %s' % (self.__class__.__name__,
