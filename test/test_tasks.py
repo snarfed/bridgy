@@ -969,7 +969,7 @@ class PollTest(TaskQueueTest):
     FakeGrSource.DOMAIN = 'source'
     ten_min = datetime.timedelta(minutes=10)
     self.sources[0].last_syndication_url = NOW - ten_min
-    self.sources[0].last_hfeed_refetch = NOW - models.Source.REFETCH_PERIOD - ten_min
+    self.sources[0].last_hfeed_refetch = NOW - models.Source.FAST_REFETCH - ten_min
     self.sources[0].put()
 
     # pretend we've already done posse-post-discovery for the source

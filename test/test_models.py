@@ -465,7 +465,14 @@ class SourceTest(testutil.HandlerTest):
     source.last_poll_attempt = testutil.NOW  # too soon
     self.assertFalse(source.should_refetch())
 
-    source.last_hfeed_refetch -= datetime.timedelta(hours=3)
+    hour = datetime.timedelta(hours=1)
+    source.last_hfeed_refetch -= (Source.FAST_REFETCH + hour)
+    self.assertTrue(source.should_refetch())
+
+    source.last_syndication_url -= datetime.timedelta(days=15)  # slow refetch
+    self.assertFalse(source.should_refetch())
+
+    source.last_hfeed_refetch -= (Source.SLOW_REFETCH + hour)
     self.assertTrue(source.should_refetch())
 
 

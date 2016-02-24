@@ -90,8 +90,10 @@ class Source(StringIdModel):
   # how long to wait after signup for a successful webmention before dropping to
   # the lower frequency poll
   FAST_POLL_GRACE_PERIOD = datetime.timedelta(days=7)
-  # refetch author url to look for updated syndication links
-  REFETCH_PERIOD = datetime.timedelta(hours=2)
+  # how often refetch author url to look for updated syndication links
+  FAST_REFETCH = datetime.timedelta(hours=2)
+  # refetch less often (this often) if it's been >2w since the last synd link
+  SLOW_REFETCH = datetime.timedelta(days=1)
 
   # Maps Publish.type (e.g. 'like') to source-specific human readable type label
   # (e.g. 'favorite'). Subclasses should override this.
@@ -244,11 +246,16 @@ class Source(StringIdModel):
 
   def should_refetch(self):
     """Returns True if we should run OPD refetch on this source now."""
+    now = datetime.datetime.now()
     if self.last_hfeed_refetch == REFETCH_HFEED_TRIGGER:
       return True
+    elif not self.last_syndication_url:
+      return False
 
-    return (self.last_syndication_url and
-            self.last_hfeed_refetch + self.REFETCH_PERIOD <= self.last_poll_attempt)
+    period = (self.FAST_REFETCH
+              if self.last_syndication_url > now - datetime.timedelta(days=14)
+              else self.SLOW_REFETCH)
+    return self.last_poll_attempt >= self.last_hfeed_refetch + period
 
   @classmethod
   def bridgy_webmention_endpoint(cls, domain='brid.gy'):
