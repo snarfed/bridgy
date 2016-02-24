@@ -452,6 +452,22 @@ class SourceTest(testutil.HandlerTest):
     finally:
       del FakeSource._pre_put_hook
 
+  def test_should_refetch(self):
+    source = FakeSource.new(None)  # haven't found a synd url yet
+    self.assertFalse(source.should_refetch())
+
+    source.last_hfeed_refetch = models.REFETCH_HFEED_TRIGGER  # override
+    self.assertTrue(source.should_refetch())
+
+    source.last_syndication_url = source.last_hfeed_refetch = testutil.NOW  # too soon
+    self.assertFalse(source.should_refetch())
+
+    source.last_poll_attempt = testutil.NOW  # too soon
+    self.assertFalse(source.should_refetch())
+
+    source.last_hfeed_refetch -= datetime.timedelta(hours=3)
+    self.assertTrue(source.should_refetch())
+
 
 class BlogPostTest(testutil.ModelsTest):
 

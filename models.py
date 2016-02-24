@@ -242,13 +242,13 @@ class Source(StringIdModel):
     else:
       return self.SLOW_POLL
 
-  def refetch_period(self):
-    """Returns the refetch frequency for this source.
+  def should_refetch(self):
+    """Returns True if we should run OPD refetch on this source now."""
+    if self.last_hfeed_refetch == REFETCH_HFEED_TRIGGER:
+      return True
 
-    Note that refetch will only kick in if certain conditions are
-    met.
-    """
-    return self.REFETCH_PERIOD
+    return (self.last_syndication_url and
+            self.last_hfeed_refetch + self.REFETCH_PERIOD <= self.last_poll_attempt)
 
   @classmethod
   def bridgy_webmention_endpoint(cls, domain='brid.gy'):
