@@ -1145,6 +1145,28 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     refetch(self.source)
     self.assert_entities_equal([synd], list(SyndicatedPost.query()))
 
+  def test_refetch_dont_follow_other_silo_syndication(self):
+    """We should only resolve redirects if the initial domain is our silo."""
+    self.unstub_requests_head()
+    self.expect_requests_head('http://author')
+    self.expect_requests_get('http://author', """
+    <html class="h-feed">
+      <div class="h-entry">
+        <a class="u-url" href="/permalink"></a>
+        <a class="u-syndication" href="https://oth.er/post/url"></a>
+      </div>
+    </html>""")
+    self.expect_requests_head('http://author/permalink')
+    self.expect_requests_get('http://author/permalink')
+
+    self.mox.ReplayAll()
+    refetch(self.source)
+
+    synds = list(SyndicatedPost.query())
+    self.assertEquals(1, len(synds))
+    self.assertEquals('http://author/permalink', synds[0].original)
+    self.assertIsNone(synds[0].syndication)
+
   def test_malformed_url_property(self):
     """Non string-like url values (i.e. dicts) used to cause an unhashable
     type exception while processing the h-feed. Make sure that we

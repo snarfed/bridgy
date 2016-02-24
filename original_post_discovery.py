@@ -515,22 +515,31 @@ def _process_syndication_urls(source, permalink, syndication_urls,
 
   Returns: dict mapping string syndication url to list of SyndicatedPost
   """
+  def is_our_silo(url):
+    return util.domain_or_parent_in(util.domain_from_link(syndication_url),
+                                    (source.GR_CLASS.DOMAIN,))
 
   results = {}
   # save the results (or lack thereof) to the db, and put them in a
   # map for immediate use
   for syndication_url in syndication_urls:
+    # short circuit out on other domains, don't even follow redirects
+    # https://github.com/snarfed/bridgy/issues/624
+    if not is_our_silo(syndication_url):
+      continue
+
     # follow redirects to give us the canonical syndication url --
     # gives the best chance of finding a match.
     syndication_url = util.follow_redirects(syndication_url).url
     # source-specific logic to standardize the URL. (e.g., replace facebook
     # username with numeric id)
     syndication_url = source.canonicalize_syndication_url(syndication_url)
-    # check that the syndicated url belongs to this source TODO save future
-    # lookups by saving results for other sources too (note: query the
-    # appropriate source subclass by author.domains, rather than
+    # check that the syndicated url belongs to this source
+    #
+    # TODO: save future lookups by saving results for other sources too (note:
+    # query the appropriate source subclass by author.domains, rather than
     # author.domain_urls)
-    if util.domain_from_link(syndication_url) == source.GR_CLASS.DOMAIN:
+    if is_our_silo(syndication_url):
       # we may have already seen this relationship, save a DB lookup by
       # finding it in the preexisting list
       relationship = next((sp for sp in preexisting
