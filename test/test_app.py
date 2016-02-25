@@ -253,6 +253,14 @@ class AppTest(testutil.ModelsTest):
     self.assertEquals(
       ['disabled'], hcard['properties'].get('bridgy-publish-status'))
 
+  def test_users_page(self):
+    resp = app.application.get_response('/users')
+    for source in self.sources:
+      self.assertIn(
+        '<a href="%s" title="%s"' % (source.bridgy_path(), source.label()),
+        resp.body)
+    self.assertEquals(200, resp.status_int)
+
   def test_logout(self):
     util.now_fn = lambda: datetime.datetime(2000, 1, 1)
     resp = app.application.get_response('/logout')
