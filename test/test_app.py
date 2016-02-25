@@ -28,6 +28,16 @@ class AppTest(testutil.ModelsTest):
     super(AppTest, self).setUp()
     util.now_fn = lambda: testutil.NOW
 
+  def test_front_page(self):
+    self.assertEquals(0, util.CachedPage.query().count())
+
+    resp = app.application.get_response('/')
+    self.assertEquals(200, resp.status_int)
+    self.assertEquals('no-cache', resp.headers['Cache-Control'])
+
+    cached = util.CachedPage.get_by_id('/')
+    self.assert_multiline_equals(resp.body, cached.html)
+
   def test_poll_now(self):
     self.assertEqual([], self.taskqueue_stub.GetTasks('poll'))
 
