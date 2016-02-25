@@ -15,7 +15,7 @@ from granary import source as gr_source
 from granary import testutil as gr_testutil
 from google.appengine.datastore import datastore_stub_util
 from google.appengine.ext import ndb
-from models import Response, Source
+from models import BlogPost, Publish, PublishedPage, Response, Source
 from oauth_dropins.models import BaseAuth
 # mirror some methods from webutil.testutil
 from oauth_dropins import handlers as oauth_handlers
@@ -226,12 +226,15 @@ class ModelsTest(HandlerTest):
   Attributes:
     sources: list of FakeSource
     responses: list of unsaved Response
+    publishes: list of one unsaved Publish
+    blogposts: list of one unsaved BlogPost
     taskqueue_stub: the app engine task queue api proxy stub
   """
 
   def setUp(self):
     super(ModelsTest, self).setUp()
 
+    # sources
     auth_entities = [
       FakeAuthEntity(
         key=ndb.Key('FakeAuthEntity', '01122334455'),
@@ -258,6 +261,7 @@ class ModelsTest(HandlerTest):
       entity.features = ['listen']
       entity.put()
 
+    # activities
     self.activities = [{
       'id': 'tag:source.com,2013:%s' % id,
       'url': 'http://source/post/url',
@@ -293,6 +297,7 @@ class ModelsTest(HandlerTest):
       } for id in ('a', 'b', 'c')]
     FakeGrSource.activities = self.activities
 
+    # responses
     self.responses = []
     created = datetime.datetime.utcnow() - datetime.timedelta(days=10)
 
@@ -341,6 +346,23 @@ class ModelsTest(HandlerTest):
           created=created))
 
       created += datetime.timedelta(hours=1)
+
+    # publishs
+    self.publishes = [Publish(
+      parent=PublishedPage(id='https://post').key,
+      source=self.sources[0].key,
+      status='complete',
+      published={'url': 'http://fa.ke/syndpost'},
+    )]
+
+    # blogposts
+    self.blogposts = [BlogPost(
+      id='https://post',
+      source=self.sources[0].key,
+      status='complete',
+      feed_item={'stuff': 'here'},
+      sent=['http://a/link'],
+    )]
 
 
 class OAuthStartHandler(oauth_handlers.StartHandler):

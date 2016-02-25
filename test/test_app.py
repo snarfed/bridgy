@@ -205,6 +205,7 @@ class AppTest(testutil.ModelsTest):
   def test_user_page(self):
     resp = app.application.get_response(self.sources[0].bridgy_path())
     self.assertEquals(200, resp.status_int)
+    self.assertEquals('no-cache', resp.headers['Cache-Control'])
 
   def test_user_page_trailing_slash(self):
     resp = app.application.get_response(self.sources[0].bridgy_path() + '/')
@@ -232,13 +233,17 @@ class AppTest(testutil.ModelsTest):
     resp = app.application.get_response(self.sources[0].bridgy_path())
     self.assertEquals(404, resp.status_int)
 
-  def test_user_page_mf2(self):
-    """parsing the user page with mf2 gives some informative fields
-    about the user and their Bridgy account status.
-    """
+  def test_social_user_page_mf2(self):
+    """Check the custom mf2 we render on social user pages."""
+    self.sources[0].features = ['listen', 'publish']
+    self.sources[0].put()
+    for entity in self.responses + self.publishes + self.blogposts:
+      entity.put()
+
     user_url = self.sources[0].bridgy_path()
     resp = app.application.get_response(user_url)
     self.assertEquals(200, resp.status_int)
+
     parsed = mf2py.Parser(url=user_url, doc=resp.body).to_dict()
     hcard = parsed.get('items', [])[0]
     self.assertEquals(['h-card'], hcard['type'])
@@ -251,7 +256,25 @@ class AppTest(testutil.ModelsTest):
     self.assertEquals(
       ['enabled'], hcard['properties'].get('bridgy-listen-status'))
     self.assertEquals(
-      ['disabled'], hcard['properties'].get('bridgy-publish-status'))
+      ['enabled'], hcard['properties'].get('bridgy-publish-status'))
+
+    for item, resp in zip(hcard['children'], self.responses):
+      self.assertIn('h-bridgy-response', item['type'])
+      props = item['properties']
+      self.assertEquals([resp.status], props['bridgy-status'])
+      self.assertEquals([json.loads(resp.activities_json[0])['url']],
+                        props['bridgy-original-source'])
+      self.assertEquals(resp.unsent, props['bridgy-target'])
+      self.assertEquals([resp.updated.replace(microsecond=0).isoformat()],
+                        props['updated'])
+
+    publish = hcard['children'][len(self.responses)]
+    self.assertIn('h-bridgy-publish', publish['type'])
+    props = publish['properties']
+    self.assertEquals([self.publishes[0].key.parent().id()], props['url'])
+    self.assertEquals([self.publishes[0].status], props['bridgy-status'])
+    self.assertEquals([self.publishes[0].updated.replace(microsecond=0).isoformat()],
+                      props['updated'])
 
   def test_users_page(self):
     resp = app.application.get_response('/users')
