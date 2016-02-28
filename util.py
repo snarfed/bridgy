@@ -4,9 +4,11 @@
 
 import collections
 import Cookie
+import contextlib
 import datetime
 import json
 import re
+import time
 import urllib
 import urlparse
 
@@ -592,3 +594,14 @@ def unwrap_t_umblr_com(url):
           else url)
 
 
+@contextlib.contextmanager
+def cache_time(label, size=None):
+  """Times a block of code, logs the time, and aggregates it in memcache."""
+  start = int(time.clock() * 1000)
+  yield
+  elapsed = int(time.clock() * 1000) - start
+
+  logging.info('Parse time for %s: %dms', label, elapsed)
+  memcache.incr('timed %s' % label, elapsed, initial_value=0)
+  if size:
+    memcache.incr('timed %s size' % label, size, initial_value=0)
