@@ -28,7 +28,6 @@ lookups in the following primary cases:
 import datetime
 import itertools
 import logging
-import mf2py
 import mf2util
 import requests
 import urlparse
@@ -36,7 +35,6 @@ import util
 
 from granary import source as gr_source
 from google.appengine.api.datastore import MAX_ALLOWABLE_QUERIES
-from bs4 import BeautifulSoup
 import models
 from models import SyndicatedPost
 
@@ -234,7 +232,6 @@ def _process_author(source, author_url, refetch=False, store_blanks=True):
   """
   # for now use whether the url is a valid webmention target
   # as a proxy for whether it's worth searching it.
-  # TODO skip sites we know don't have microformats2 markup
   author_url, _, ok = util.get_webmention_target(author_url)
   if not ok:
     return {}
@@ -245,7 +242,7 @@ def _process_author(source, author_url, refetch=False, store_blanks=True):
     # TODO for error codes that indicate a temporary error, should we make
     # a certain number of retries before giving up forever?
     author_resp.raise_for_status()
-    author_dom = BeautifulSoup(author_resp.text)
+    author_dom = util.beautifulsoup_parse(author_resp.text)
   except AssertionError:
     raise  # for unit tests
   except BaseException:
@@ -379,7 +376,7 @@ def _find_feed_items(feed_url, feed_doc):
   Returns:
     a list of dicts, each one representing an mf2 h-* item
   """
-  parsed = mf2py.parse(url=feed_url, doc=feed_doc)
+  parsed = util.mf2py_parse(feed_doc, feed_url)
 
   feeditems = parsed['items']
   hfeeds = mf2util.find_all_entries(parsed, ('h-feed',))
@@ -445,7 +442,7 @@ def _process_entry(source, permalink, feed_entry, refetch, preexisting,
       if type_ok:
         resp = util.requests_get(permalink)
         resp.raise_for_status()
-        parsed = mf2py.Parser(url=permalink, doc=resp.text).to_dict()
+        parsed = util.mf2py_parse(resp.text, permalink)
     except AssertionError:
       raise  # for unit tests
     except BaseException:

@@ -8,7 +8,6 @@ import urllib
 from google.appengine.api import memcache
 from google.appengine.ext import ndb
 from oauth_dropins import handlers as oauth_handlers
-import mf2py
 import webapp2
 
 import app
@@ -257,7 +256,7 @@ class AppTest(testutil.ModelsTest):
     resp = app.application.get_response(user_url)
     self.assertEquals(200, resp.status_int)
 
-    parsed = mf2py.Parser(url=user_url, doc=resp.body).to_dict()
+    parsed = util.mf2py_parse(resp.body, user_url)
     hcard = parsed.get('items', [])[0]
     self.assertEquals(['h-card'], hcard['type'])
     self.assertEquals(
