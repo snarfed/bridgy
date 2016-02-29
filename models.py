@@ -123,6 +123,9 @@ class Source(StringIdModel):
   # we won't spend the time to re-fetch and look for updates if there's
   # never been one
   last_syndication_url = ndb.DateTimeProperty()
+  # the last time we saw a syndication link in an h-feed, as opposed to just on
+  # permalinks. background: https://github.com/snarfed/bridgy/issues/624
+  last_feed_syndication_url = ndb.DateTimeProperty()
 
   # points to an oauth-dropins auth entity. The model class should be a subclass
   # of oauth_dropins.BaseAuth.

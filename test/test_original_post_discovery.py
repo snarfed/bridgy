@@ -1,6 +1,7 @@
 # coding=utf-8
 """Unit tests for original_post_discovery.py
 """
+import datetime
 import json
 
 from oauth_dropins import facebook as oauth_facebook
@@ -66,8 +67,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
 
   def test_syndication_url_in_hfeed(self):
     """Like test_single_post, but because the syndication URL is given in
-    the h-feed we skip fetching the permalink. New behavior as of
-    2014-11-08
+    the h-feed we skip fetching the permalink.
     """
     # silo domain is fa.ke
     self.expect_requests_get('http://author', """
@@ -82,6 +82,8 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.assert_discover(['http://author/post/permalink'])
     self.assert_syndicated_posts(('http://author/post/permalink',
                                   'https://fa.ke/post/url'))
+
+    self.assertEquals(testutil.NOW, self.source.updates['last_feed_syndication_url'])
 
   def test_syndication_url_in_hfeed_with_redirect(self):
     """Like test_syndication_url_in_hfeed but u-url redirects to the
@@ -1085,6 +1087,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
       ('http://author/permalink', 'https://fa.ke/changed/url'))
     self.assert_equals({'https://fa.ke/changed/url': list(SyndicatedPost.query())},
                        results)
+    self.assertEquals(testutil.NOW, self.source.updates['last_feed_syndication_url'])
 
   def test_refetch_deleted_syndication(self):
     """Deleted syndication links that have disappeared since our last fetch."""
@@ -1144,6 +1147,22 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.mox.ReplayAll()
     refetch(self.source)
     self.assert_entities_equal([synd], list(SyndicatedPost.query()))
+
+  def test_refetch_with_last_feed_syndication_url_skips_permalinks(self):
+    self.source.last_feed_syndication_url = datetime.datetime(1970, 1, 1)
+    self.source.put()
+
+    self.expect_requests_get('http://author', """
+    <html class="h-feed">
+      <div class="h-entry">
+        <a class="u-url" href="/permalink"></a>
+      </div>
+    </html>""")
+    # *don't* expect permalink fetch
+
+    self.mox.ReplayAll()
+    self.assert_equals({}, refetch(self.source))
+    self.assert_syndicated_posts(('http://author/permalink', None))
 
   def test_refetch_dont_follow_other_silo_syndication(self):
     """We should only resolve redirects if the initial domain is our silo."""

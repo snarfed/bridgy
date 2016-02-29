@@ -543,6 +543,7 @@ class CrawlNowHandler(PollNowHandler):
   def setup_refetch_hfeed(self):
     self.get_source()
     self.source.last_hfeed_refetch = models.REFETCH_HFEED_TRIGGER
+    self.source.last_feed_syndication_url = None
     self.source.put()
 
 

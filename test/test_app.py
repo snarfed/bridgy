@@ -116,7 +116,7 @@ class AppTest(testutil.ModelsTest):
   def test_crawl_now(self):
     source = self.sources[0]
     source.domain_urls = ['http://orig']
-    source.last_hfeed_refetch = testutil.NOW
+    source.last_hfeed_refetch = source.last_feed_syndication_url = testutil.NOW
     source.put()
 
     key = source.key.urlsafe()
@@ -128,7 +128,10 @@ class AppTest(testutil.ModelsTest):
 
     params = testutil.get_task_params(self.taskqueue_stub.GetTasks('poll-now')[0])
     self.assertEqual(key, params['source_key'])
-    self.assertEqual(models.REFETCH_HFEED_TRIGGER, source.key.get().last_hfeed_refetch)
+
+    source = source.key.get()
+    self.assertEqual(models.REFETCH_HFEED_TRIGGER, source.last_hfeed_refetch)
+    self.assertIsNone(source.last_feed_syndication_url)
 
   def test_poll_now_and_retry_response_missing_key(self):
     for endpoint in '/poll-now', '/retry':

@@ -433,8 +433,12 @@ def _process_entry(source, permalink, feed_entry, refetch, preexisting,
     url for url in usynd if isinstance(url, basestring)), preexisting)
   success = True
 
-  # fetch the full permalink page, which often has more detailed information
-  if not results:
+  if results:
+    now = util.now_fn()
+    logging.debug('updating source last_feed_syndication_url %s', now)
+    source.updates['last_feed_syndication_url'] = now
+  elif not source.last_feed_syndication_url:
+    # fetch the full permalink page if we think it might have more details
     parsed = None
     try:
       logging.debug('fetching post permalink %s', permalink)
