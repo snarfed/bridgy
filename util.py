@@ -617,8 +617,9 @@ def beautifulsoup_parse(html):
 
   We use App Engine's lxml by declaring it in app.yaml.
   """
-  with cache_time('beautifulsoup', len(html)):
-    return bs4.BeautifulSoup(html)
+  # instrumenting, disabled for now:
+  # with cache_time('beautifulsoup', len(html)):
+  return bs4.BeautifulSoup(html)
 
 
 def mf2py_parse(input, url):
@@ -626,5 +627,6 @@ def mf2py_parse(input, url):
   if isinstance(input, basestring):
     input = beautifulsoup_parse(input)
 
-  with cache_time('mf2py', 1):
-    return mf2py.parse(url=url, doc=input)
+  # instrumenting, disabled for now:
+  # with cache_time('mf2py', 1):
+  return mf2py.parse(url=url, doc=input)
