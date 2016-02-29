@@ -4,16 +4,20 @@
 
 import collections
 import Cookie
+import contextlib
 import datetime
 import json
 import re
+import time
 import urllib
 import urlparse
 
 import webapp2
 
 from appengine_config import HTTP_TIMEOUT, DEBUG
+import bs4
 from granary import source as gr_source
+import mf2py
 from oauth_dropins.webutil import handlers as webutil_handlers
 from oauth_dropins.webutil.models import StringIdModel
 from oauth_dropins.webutil import util
@@ -592,3 +596,35 @@ def unwrap_t_umblr_com(url):
           else url)
 
 
+@contextlib.contextmanager
+def cache_time(label, size=None):
+  """Times a block of code, logs the time, and aggregates it in memcache."""
+  start = int(time.clock() * 1000)
+  yield
+  elapsed = int(time.clock() * 1000) - start
+
+  logging.info('Parse time for %s: %dms', label, elapsed)
+  memcache.incr('timed %s' % label, elapsed, initial_value=0)
+  if size:
+    memcache.incr('timed %s size' % label, size, initial_value=0)
+
+
+def beautifulsoup_parse(html):
+  """Parses an HTML string with BeautifulSoup. Centralizes our parsing config.
+
+  We currently let BeautifulSoup default to lxml, which is the fastest option.
+  http://www.crummy.com/software/BeautifulSoup/bs4/doc/#specifying-the-parser-to-use
+
+  We use App Engine's lxml by declaring it in app.yaml.
+  """
+  with cache_time('beautifulsoup', len(html)):
+    return bs4.BeautifulSoup(html)
+
+
+def mf2py_parse(input, url):
+  """Uses mf2py to parse an input HTML string or BeautifulSoup input."""
+  if isinstance(input, basestring):
+    input = beautifulsoup_parse(input)
+
+  with cache_time('mf2py', 1):
+    return mf2py.parse(url=url, doc=input)

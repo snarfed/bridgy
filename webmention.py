@@ -14,8 +14,6 @@ import pprint
 import appengine_config
 from appengine_config import HTTP_TIMEOUT
 
-from bs4 import BeautifulSoup
-import mf2py
 import requests
 import util
 
@@ -76,10 +74,10 @@ class WebmentionHandler(WebmentionGetHandler):
     # can look for a <meta> tag with a charset and decode.
     text = (fetched.text if 'charset' in fetched.headers.get('content-type', '')
             else fetched.content)
-    doc = BeautifulSoup(text)
+    doc = util.beautifulsoup_parse(text)
 
     # parse microformats, convert to ActivityStreams
-    data = mf2py.parse(doc=doc, url=fetched.url)
+    data = util.mf2py_parse(doc, fetched.url)
 
     # special case tumblr's markup: div#content > div.post > div.copy
     # convert to mf2 and re-parse
@@ -98,7 +96,7 @@ class WebmentionHandler(WebmentionGetHandler):
             if img:
               img['class'] = 'u-photo'
           doc = unicode(post)
-          data = mf2py.parse(doc=doc, url=fetched.url)
+          data = util.mf2py_parse(doc, fetched.url)
 
     logging.debug('Parsed microformats2: %s', json.dumps(data, indent=2))
     items = data.get('items', [])

@@ -30,7 +30,6 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 import collections
 import logging
 import json
-import mf2py
 import pprint
 import urllib
 import urlparse
@@ -38,7 +37,6 @@ import urlparse
 import appengine_config
 from appengine_config import HTTP_TIMEOUT
 
-from bs4 import BeautifulSoup
 from facebook import FacebookPage
 from flickr import Flickr
 from googleplus import GooglePlusPage
@@ -209,7 +207,7 @@ class Handler(webmention.WebmentionHandler):
     # find rel-shortlink, if any
     # http://microformats.org/wiki/rel-shortlink
     # https://github.com/snarfed/bridgy/issues/173
-    soup = BeautifulSoup(self.fetched.text)
+    soup = util.beautifulsoup_parse(self.fetched.text)
     shortlinks = (soup.find_all('link', rel='shortlink') +
                   soup.find_all('a', rel='shortlink') +
                   soup.find_all('a', class_='shortlink'))
@@ -415,7 +413,7 @@ class Handler(webmention.WebmentionHandler):
         try:
           resp = util.requests_get(url)
           resp.raise_for_status()
-          data = mf2py.Parser(url=url, doc=resp.text).to_dict()
+          data = util.mf2py_parse(resp.text, url)
         except AssertionError:
           raise  # for unit tests
         except BaseException:

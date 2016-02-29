@@ -34,7 +34,6 @@ import urlparse
 import oauth_dropins.webutil.test
 import appengine_config
 
-from bs4 import BeautifulSoup
 from google.appengine.api import memcache
 import mox
 from oauth_dropins import facebook as oauth_facebook
@@ -128,7 +127,7 @@ class FacebookTestLive(testutil.HandlerTest):
   @staticmethod
   def submit_form(html):
     """Submits the first form on the page."""
-    form = BeautifulSoup(html).form
+    form = util.beautifulsoup_parse(html).form
     data = {input['name']: input['value'] for input in form.find_all('input')
             if input.get('name') and input.get('value')}
     return facebook.application.get_response(
