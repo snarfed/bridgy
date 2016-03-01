@@ -1739,28 +1739,6 @@ class PropagateTest(TaskQueueTest):
     self.post_task()
     self.assert_response_is('complete', unsent=['http://target1/post/url'], sent=[])
 
-  def test_non_public_activity_response_source_whitelisted(self):
-    """https://github.com/snarfed/bridgy/issues/620"""
-    activity = json.loads(self.responses[0].activities_json[0])
-    activity['to'] = [{'objectType':'group', 'alias':'@private'}]
-    self.responses[0].activities_json = [json.dumps(activity)]
-
-    resp = json.loads(self.responses[0].response_json)
-    resp['to'] = [{'objectType':'group', 'alias':'@private'}]
-    self.responses[0].response_json = json.dumps(resp)
-    self.responses[0].put()
-
-    self.expect_webmention(target='http://target1/post/url').AndReturn(True)
-    self.mox.ReplayAll()
-
-    orig_whitelist = util.PRIVATE_SOURCE_WHITELIST
-    try:
-      util.PRIVATE_SOURCE_WHITELIST = set((self.sources[0].key,))
-      self.post_task()
-      self.assert_response_is('complete', sent=['http://target1/post/url'])
-    finally:
-      util.PRIVATE_SOURCE_WHITELIST = orig_whitelist
-
   def test_webmention_fail(self):
     """If sending the webmention fails, the lease should be released."""
     for error, status, bucket in (
