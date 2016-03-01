@@ -4,6 +4,14 @@
 
 <!-- Promos to get fully up and running -->
 
+{% if source.is_private and "listen" in source.features %}
+<div class="row promo warning">
+<p>Your {{ source.gr_source.NAME }} account is private! Bridgy will only
+  <a href="/about#listen">backfeed</a> mentions and links, not responses to your
+  posts, since they're private.</p>
+</div>
+{% endif %}
+
 {% if not source.verified and source.status != "disabled" and source.features %}
 {% if not source.domain_urls %}
 <div class="row promo warning">

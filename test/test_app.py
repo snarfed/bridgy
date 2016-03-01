@@ -8,12 +8,14 @@ import urllib
 from google.appengine.api import memcache
 from google.appengine.ext import ndb
 from oauth_dropins import handlers as oauth_handlers
+from oauth_dropins.twitter import TwitterAuth
 import webapp2
 
 import app
 import models
 import util
 import testutil
+import twitter
 
 
 # this class stands in for a oauth_dropins module
@@ -287,6 +289,19 @@ class AppTest(testutil.ModelsTest):
     self.assertEquals([self.publishes[0].status], props['bridgy-status'])
     self.assertEquals([self.publishes[0].updated.replace(microsecond=0).isoformat()],
                       props['updated'])
+
+  def test_user_page_private_twitter(self):
+    auth_entity = TwitterAuth(
+      id='foo',
+      user_json=json.dumps({'protected': True}),
+      token_key='', token_secret='',
+    ).put()
+    tw = twitter.Twitter(id='foo', auth_entity=auth_entity, features=['listen'])
+    tw.put()
+
+    resp = app.application.get_response(tw.bridgy_path())
+    self.assertEquals(200, resp.status_int)
+    self.assertIn('Your Twitter account is private!', resp.body)
 
   def test_users_page(self):
     resp = app.application.get_response('/users')
