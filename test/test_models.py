@@ -7,7 +7,7 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 import datetime
 import json
 
-
+from google.appengine.ext.ndb import Key
 from granary import source as gr_source
 import mox
 
@@ -25,6 +25,7 @@ import tumblr
 import twitter
 import wordpress_rest
 from testutil import FakeSource
+import util
 
 
 class ResponseTest(testutil.ModelsTest):
@@ -474,6 +475,22 @@ class SourceTest(testutil.HandlerTest):
 
     source.last_hfeed_refetch -= (Source.SLOW_REFETCH + hour)
     self.assertTrue(source.should_refetch())
+
+  def test_is_public(self):
+    """https://github.com/snarfed/bridgy/issues/620"""
+    tw = twitter.Twitter(id='a')
+    fb = facebook.FacebookPage(id='b')
+    fake = FakeSource(id='c')
+
+    activity = {'to': [{'objectType':'group', 'alias':'@private'}]}
+    self.assertFalse(tw.is_public(activity))
+    self.assertFalse(fb.is_public(activity))
+    self.assertFalse(fake.is_public(activity))
+
+    self.mox.stubs.Set(util, 'PRIVATE_SOURCE_WHITELIST', (tw.key, fb.key, fake.key))
+    self.assertTrue(tw.is_public(activity))  # whitelist only for Twitter/Fake
+    self.assertTrue(fake.is_public(activity))
+    self.assertFalse(fb.is_public(activity))
 
 
 class BlogPostTest(testutil.ModelsTest):

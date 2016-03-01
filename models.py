@@ -282,8 +282,11 @@ class Source(StringIdModel):
 
   def is_public(self, obj):
     """Wraps gr_source.Source.is_public and overrides it with the whitelist."""
-    return (True if self.key in util.PRIVATE_SOURCE_WHITELIST
-            else gr_source.Source.is_public(obj))
+    if (self.key in util.PRIVATE_SOURCE_WHITELIST and
+        self.key.kind() in ('Twitter', 'FakeSource')):
+      return True
+
+    return gr_source.Source.is_public(obj)
 
   def search_for_links(self):
     """Searches for activities with links to any of this source's web sites.
