@@ -612,6 +612,13 @@ class Source(StringIdModel):
     """
     pass
 
+  def is_private(self):
+    """Returns True if this source is private aka protected.
+
+    ...ie their posts are not public.
+    """
+    return False
+
 
 class Webmentions(StringIdModel):
   """A bundle of links to send webmentions for.

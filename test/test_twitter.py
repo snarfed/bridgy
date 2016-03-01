@@ -146,3 +146,10 @@ class TwitterTest(testutil.ModelsTest):
     self.tw.put()
     self.mox.ReplayAll()
     self.assert_equals([], self.tw.search_for_links())
+
+  def test_is_private(self):
+    self.assertFalse(self.tw.is_private())
+
+    self.auth_entity.user_json = json.dumps({'protected': True})
+    self.auth_entity.put()
+    self.assertTrue(self.tw.is_private())

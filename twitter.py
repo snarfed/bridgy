@@ -124,6 +124,15 @@ class Twitter(models.Source):
       return super(Twitter, self).get_like(activity_user_id, activity_id,
                                            like_user_id)
 
+  def is_private(self):
+    """Returns True if this Twitter account is protected.
+
+    https://dev.twitter.com/rest/reference/get/users/show#highlighter_25173
+    https://support.twitter.com/articles/14016
+    https://support.twitter.com/articles/20169886
+    """
+    return json.loads(self.auth_entity.get().user_json).get('protected')
+
 
 class AuthHandler(util.Handler):
   """Base OAuth handler class."""
