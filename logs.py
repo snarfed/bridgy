@@ -36,10 +36,10 @@ def sanitize(msg):
   return SANITIZE_RE.sub(r'\1...', msg)
 
 
-# datastore string keys are url-safe-base64 of, say, at least 40(ish) chars.
+# datastore string keys are url-safe-base64 of, say, at least 32(ish) chars.
 # https://cloud.google.com/appengine/docs/python/ndb/keyclass#Key_urlsafe
 # http://tools.ietf.org/html/rfc3548.html#section-4
-DATASTORE_KEY_RE = re.compile("'(([A-Za-z0-9-_=]{8})[A-Za-z0-9-_=]{32,})'")
+DATASTORE_KEY_RE = re.compile("'(([A-Za-z0-9-_=]{8})[A-Za-z0-9-_=]{24,})'")
 
 def linkify_datastore_keys(msg):
   """Converts string datastore keys to links to the admin console viewer."""
