@@ -1212,7 +1212,7 @@ class PollTest(TaskQueueTest):
     # force refetch h-feed to find the twitter link
     for source in self.sources:
       source.last_polled = util.EPOCH
-      source.last_hfeed_refetch = NOW - datetime.timedelta(days=1)
+      source.last_hfeed_refetch = NOW - models.Source.SLOW_REFETCH
       source.put()
 
     # instagram source fetches
