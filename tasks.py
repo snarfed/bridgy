@@ -585,6 +585,10 @@ class SendWebmentions(webapp2.RequestHandler):
     elif existing.status == 'complete':
       # let this task return 200 and finish
       logging.warning('another task stole and finished this. did my lease expire?')
+    elif self.entity.status == 'complete':
+      # let this task return 200 and finish
+      logging.error('i already completed this task myself somehow?! '
+                    'https://github.com/snarfed/bridgy/issues/610')
     elif existing.status == 'new':
       self.fail('went backward from processing to new!', level=logging.ERROR)
     else:
