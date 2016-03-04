@@ -277,8 +277,6 @@ class UserHandler(DashboardHandler):
       query_iter = query.iter()
       for i, r in enumerate(query_iter):
         r.response = json.loads(r.response_json)
-        if r.activity_json:  # handle old entities
-          r.activities_json.append(r.activity_json)
         r.activities = [json.loads(a) for a in r.activities_json]
 
         if (not gr_source.Source.is_public(r.response) or
