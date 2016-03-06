@@ -336,7 +336,6 @@ def _process_author(source, author_url, refetch=False, store_blanks=True):
     # and look for updates.
     # Source will be saved at the end of each round of polling
     now = util.now_fn()
-    logging.debug('updating source last_syndication_url %s', now)
     source.updates['last_syndication_url'] = now
 
   return results
@@ -432,7 +431,6 @@ def _process_entry(source, permalink, feed_entry, refetch, preexisting,
 
   if results:
     now = util.now_fn()
-    logging.debug('updating source last_feed_syndication_url %s', now)
     source.updates['last_feed_syndication_url'] = now
   elif not source.last_feed_syndication_url:
     # fetch the full permalink page if we think it might have more details

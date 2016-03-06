@@ -179,7 +179,6 @@ class Poll(webapp2.RequestHandler):
 
     if last_activity_id and last_activity_id != source.last_activity_id:
       source.updates['last_activity_id'] = last_activity_id
-      logging.debug('Storing new last activity id: %s', last_activity_id)
 
     # trim cache to just the returned activity ids, so that it doesn't grow
     # without bound. (WARNING: depends on get_activities_response()'s cache key
@@ -339,7 +338,6 @@ class Poll(webapp2.RequestHandler):
     source.updates.update({'last_polled': source.last_poll_attempt,
                            'poll_status': 'ok'})
     if etag and etag != source.last_activities_etag:
-      logging.debug('Storing new ETag: %s', etag)
       source.updates['last_activities_etag'] = etag
 
     #
@@ -354,7 +352,6 @@ class Poll(webapp2.RequestHandler):
       relationships = original_post_discovery.refetch(source)
 
       now = util.now_fn()
-      logging.debug('updating source last_hfeed_refetch %s', now)
       source.updates['last_hfeed_refetch'] = now
 
       if relationships:
@@ -378,6 +375,8 @@ class Poll(webapp2.RequestHandler):
     """Find old Responses that match a new SyndicatedPost and repropagate them.
 
     We look through as many responses as we can until the datastore query expires.
+
+    Args: relationships: refetch result
     """
     for response in (Response.query(Response.source == source.key)
                      .order(-Response.updated)):
