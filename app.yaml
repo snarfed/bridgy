@@ -8,9 +8,9 @@ default_expiration: 90d
 # https://cloud.google.com/appengine/docs/python/modules/#instance_classes
 instance_class: F1  # F1 is the default
 automatic_scaling:
-  min_idle_instances: 0
+  # min_idle_instances: 0
   max_idle_instances: 1
-  max_concurrent_requests: 10
+  max_concurrent_requests: 12
 
 builtins:
 - remote_api: on
