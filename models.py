@@ -215,8 +215,8 @@ class Source(StringIdModel):
     if not source.updates:
       return source
 
-    logging.info('Updating %s %s : %r', self.label(), self.bridgy_url(),
-                 {k: v for k, v in updates.items() if not v.endswith('_json')})
+    logging.info('Updating %s %s : %r', source.label(), source.bridgy_path(),
+                 {k: v for k, v in source.updates.items() if not k.endswith('_json')})
 
     updates = source.updates
     source = source.key.get()
