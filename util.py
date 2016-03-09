@@ -14,7 +14,7 @@ import urlparse
 
 import webapp2
 
-from appengine_config import HTTP_TIMEOUT, DEBUG
+from appengine_config import DEBUG
 import bs4
 from granary import source as gr_source
 import mf2py
@@ -161,7 +161,6 @@ def requests_get(url, **kwargs):
     return resp
 
   kwargs.setdefault('headers', {}).update(USER_AGENT_HEADER)
-  kwargs.setdefault('timeout', HTTP_TIMEOUT)
   resp = util.requests_get(url, stream=True, **kwargs)
 
   length = resp.headers.get('Content-Length', 0)

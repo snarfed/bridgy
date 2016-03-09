@@ -12,7 +12,6 @@ import json
 import pprint
 
 import appengine_config
-from appengine_config import HTTP_TIMEOUT
 
 import requests
 import util

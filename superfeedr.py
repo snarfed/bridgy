@@ -12,7 +12,6 @@ import json
 import logging
 
 import appengine_config
-from appengine_config import HTTP_TIMEOUT
 from requests.auth import HTTPBasicAuth
 
 import models
@@ -53,7 +52,6 @@ def subscribe(source, handler):
     PUSH_API_URL, data=data,
     auth=HTTPBasicAuth(appengine_config.SUPERFEEDR_USERNAME,
                        appengine_config.SUPERFEEDR_TOKEN),
-    timeout=HTTP_TIMEOUT,
     headers=util.USER_AGENT_HEADER)
   resp.raise_for_status()
   handle_feed(resp.text, source)

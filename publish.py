@@ -35,7 +35,6 @@ import urllib
 import urlparse
 
 import appengine_config
-from appengine_config import HTTP_TIMEOUT
 
 from facebook import FacebookPage
 from flickr import Flickr

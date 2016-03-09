@@ -35,7 +35,6 @@ import urlparse
 from webob import exc
 
 import appengine_config
-from appengine_config import HTTP_TIMEOUT
 
 from oauth_dropins import tumblr as oauth_tumblr
 import models
@@ -221,7 +220,7 @@ class Tumblr(models.Source):
         'access_token': appengine_config.DISQUS_ACCESS_TOKEN,
         })
     kwargs.setdefault('headers', {}).update(util.USER_AGENT_HEADER)
-    resp = method(url, timeout=HTTP_TIMEOUT, params=params, **kwargs)
+    resp = method(url, params=params, **kwargs)
     resp.raise_for_status()
     resp = resp.json().get('response', {})
     logging.info('Response: %s', resp)
