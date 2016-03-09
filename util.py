@@ -162,7 +162,7 @@ def requests_get(url, **kwargs):
 
   kwargs.setdefault('headers', {}).update(USER_AGENT_HEADER)
   kwargs.setdefault('timeout', HTTP_TIMEOUT)
-  resp = requests.get(url, stream=True, **kwargs)
+  resp = util.requests_get(url, stream=True, **kwargs)
 
   length = resp.headers.get('Content-Length', 0)
   if util.is_int(length) and int(length) > MAX_HTTP_RESPONSE_SIZE:

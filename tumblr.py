@@ -31,7 +31,6 @@ import collections
 import json
 import logging
 import re
-import requests
 import urlparse
 from webob import exc
 
@@ -195,7 +194,7 @@ class Tumblr(models.Source):
 
     # create the comment
     message = u'<a href="%s">%s</a>: %s' % (author_url, author_name, content)
-    resp = self.disqus_call(requests.post, DISQUS_API_CREATE_POST_URL,
+    resp = self.disqus_call(util.requests_post, DISQUS_API_CREATE_POST_URL,
                             {'thread': thread_id,
                              'message': message.encode('utf-8'),
                              # only allowed when authed as moderator/owner
