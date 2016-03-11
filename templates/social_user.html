@@ -4,12 +4,21 @@
 
 <!-- Promos to get fully up and running -->
 
-{% if source.is_private and "listen" in source.features %}
+{% if "listen" in source.features %}
+{% if source.is_private %}
 <div class="row promo warning">
 <p>Your {{ source.gr_source.NAME }} account is private! Bridgy will only
   <a href="/about#listen">backfeed</a> mentions and links, not responses to your
   posts, since they're private.</p>
 </div>
+{% else %}
+{% if source.recent_private_posts >= RECENT_PRIVATE_POSTS_THRESHOLD %}
+<div class="row promo warning">
+<p>Warning: it looks like most of your recent posts are private! Bridgy
+  only handles <a href="/about#public">fully public posts</a>.</p>
+</div>
+{% endif %}
+{% endif %}
 {% endif %}
 
 {% if not source.verified and source.status != "disabled" and source.features %}

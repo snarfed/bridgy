@@ -302,6 +302,15 @@ class AppTest(testutil.ModelsTest):
     resp = app.application.get_response(tw.bridgy_path())
     self.assertEquals(200, resp.status_int)
     self.assertIn('Your Twitter account is private!', resp.body)
+    self.assertNotIn('most of your recent posts are private', resp.body)
+
+  def test_user_page_recent_private_posts(self):
+    self.sources[0].recent_private_posts = app.RECENT_PRIVATE_POSTS_THRESHOLD
+    self.sources[0].put()
+
+    resp = app.application.get_response(self.sources[0].bridgy_path())
+    self.assertEquals(200, resp.status_int)
+    self.assertIn('most of your recent posts are private', resp.body)
 
   def test_users_page(self):
     resp = app.application.get_response('/users')

@@ -45,6 +45,8 @@ from google.appengine.ext import ndb
 from google.appengine.ext.ndb.stats import KindStat, KindPropertyNameStat
 import webapp2
 
+RECENT_PRIVATE_POSTS_THRESHOLD = 5
+
 
 class DashboardHandler(webutil_handlers.TemplateHandler, util.Handler):
   """Base handler for both the front page and user pages."""
@@ -227,6 +229,7 @@ class UserHandler(DashboardHandler):
         'source': self.source,
         'EPOCH': util.EPOCH,
         'REFETCH_HFEED_TRIGGER': models.REFETCH_HFEED_TRIGGER,
+        'RECENT_PRIVATE_POSTS_THRESHOLD': RECENT_PRIVATE_POSTS_THRESHOLD,
         })
     if not self.source:
       return vars
