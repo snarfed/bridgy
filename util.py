@@ -35,6 +35,7 @@ LOCALHOST_TEST_DOMAINS = frozenset([
 ])
 
 EPOCH = datetime.datetime.utcfromtimestamp(0)
+EPOCH_ISO = EPOCH.isoformat()
 POLL_TASK_DATETIME_FORMAT = '%Y-%m-%d-%H-%M-%S'
 
 # rate limiting errors. twitter returns 429, instagram 503, google+ 403.

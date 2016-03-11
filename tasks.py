@@ -8,6 +8,7 @@ import calendar
 import copy
 import datetime
 import gc
+import itertools
 import json
 import logging
 import random
@@ -158,8 +159,6 @@ class Poll(webapp2.RequestHandler):
       else:
         raise
 
-    logging.info('Found %d activities: %s', len(activities), activities.keys())
-
     # extract silo activity ids, update last_activity_id
     silo_activity_ids = set()
     last_activity_id = source.last_activity_id
@@ -190,6 +189,27 @@ class Poll(webapp2.RequestHandler):
     # discover is called
     is_first_discover = True
 
+    # narrow down to just public activities
+    public = {}
+    private = {}
+    for id, activity in activities.items():
+      (public if Source.is_public(activity) else private)[id] = activity
+    logging.info('Found %d public activities: %s', len(public), public.keys())
+    logging.info('Found %d private activities: %s', len(private), private.keys())
+
+    last_public_post = (source.last_public_post or util.EPOCH).isoformat()
+    public_published = util.trim_nulls([a.get('published') for a in public.values()])
+    if public_published:
+      max_published = max(public_published)
+      if max_published > last_public_post:
+        last_public_post = max_published
+        source.updates['last_public_post'] = \
+          util.as_utc(util.parse_iso8601(max_published))
+
+    source.updates['recent_private_posts'] = \
+      len([a for a in private.values()
+           if a.get('published', util.EPOCH_ISO) > last_public_post])
+
     #
     # Step 2: extract responses, store their activities in response['activities']
     #
@@ -198,11 +218,7 @@ class Poll(webapp2.RequestHandler):
     # prune_activity() and prune_response() in step 4 to remove these before
     # serializing to JSON.
     #
-    for id, activity in activities.items():
-      if not Source.is_public(activity):
-        logging.info('Skipping non-public activity %s', id)
-        continue
-
+    for id, activity in public.items():
       obj = activity.get('object') or activity
 
       # handle user mentions

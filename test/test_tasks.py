@@ -373,11 +373,17 @@ class PollTest(TaskQueueTest):
   def test_non_public_posts(self):
     """Only posts without to: or with to: @public should be propagated."""
     del self.activities[0]['object']['to']
+
     self.activities[1]['object']['to'] = [{'objectType':'group', 'alias':'@private'}]
+    now = testutil.NOW.replace(microsecond=0)
+    self.activities[1]['published'] = now.isoformat()
+
     self.activities[2]['object']['to'] = [{'objectType':'group', 'alias':'@public'}]
+    public_date = now - datetime.timedelta(weeks=1)
+    self.activities[2]['published'] = public_date.isoformat()
 
     # Facebook returns 'unknown' for wall posts
-    unknown = copy.deepcopy(self.activities[2])
+    unknown = copy.deepcopy(self.activities[1])
     unknown['id'] = unknown['object']['id'] = 'x'
     unknown['object']['to'] = [{'objectType': 'unknown'}]
     self.activities.append(unknown)
@@ -388,6 +394,10 @@ class PollTest(TaskQueueTest):
       resp_key = ndb.Key(urlsafe=testutil.get_task_params(task)['response_key'])
       ids.update(json.loads(a)['id'] for a in resp_key.get().activities_json)
     self.assert_equals(ids, set([self.activities[0]['id'], self.activities[2]['id']]))
+
+    source = self.sources[0].key.get()
+    self.assertEquals(public_date, source.last_public_post)
+    self.assertEquals(2, source.recent_private_posts)
 
   def test_no_responses(self):
     """Handle activities without responses ok.

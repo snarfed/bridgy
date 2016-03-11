@@ -111,9 +111,20 @@ class Source(StringIdModel):
   superfeedr_secret = ndb.StringProperty()
   webmention_endpoint = ndb.StringProperty()
 
+  # points to an oauth-dropins auth entity. The model class should be a subclass
+  # of oauth_dropins.BaseAuth.
+  # the token should be generated with the offline_access scope so that it
+  # doesn't expire. details: http://developers.facebook.com/docs/authentication/
+  auth_entity = ndb.KeyProperty()
+
+  #
+  # listen-only properties
+  #
   last_polled = ndb.DateTimeProperty(default=util.EPOCH)
   last_poll_attempt = ndb.DateTimeProperty(default=util.EPOCH)
-  last_webmention_sent = ndb.DateTimeProperty()  # currently only used for listen
+  last_webmention_sent = ndb.DateTimeProperty()
+  last_public_post = ndb.DateTimeProperty()
+  recent_private_posts = ndb.IntegerProperty()
 
   # the last time we re-fetched the author's url looking for updated
   # syndication links
@@ -126,12 +137,6 @@ class Source(StringIdModel):
   # the last time we saw a syndication link in an h-feed, as opposed to just on
   # permalinks. background: https://github.com/snarfed/bridgy/issues/624
   last_feed_syndication_url = ndb.DateTimeProperty()
-
-  # points to an oauth-dropins auth entity. The model class should be a subclass
-  # of oauth_dropins.BaseAuth.
-  # the token should be generated with the offline_access scope so that it
-  # doesn't expire. details: http://developers.facebook.com/docs/authentication/
-  auth_entity = ndb.KeyProperty()
 
   last_activity_id = ndb.StringProperty()
   last_activities_etag = ndb.StringProperty()
