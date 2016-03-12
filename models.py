@@ -99,6 +99,10 @@ class Source(StringIdModel):
   # (e.g. 'favorite'). Subclasses should override this.
   TYPE_LABELS = {}
 
+  # subclasses may override; used in canonicalize_url()
+  CANONICAL_URL_RE = None
+  NON_CANONICAL_URL_RE = None
+
   created = ndb.DateTimeProperty(auto_now_add=True, required=True)
   url = ndb.StringProperty()
   status = ndb.StringProperty(choices=STATUSES, default='enabled')
@@ -544,26 +548,47 @@ class Source(StringIdModel):
     domains = [util.domain_from_link(url) for url in urls]
     return urls, domains
 
-  def canonicalize_syndication_url(self, syndication_url, scheme='https',
-                                   subdomain='', **kwargs):
-    """Perform source-specific transforms to the syndication URL for cases
-    where multiple silo URLs can point to the same content.  By
-    standardizing on one format, original_post_discovery stands the
+  def canonicalize_url(self, url, scheme='https', subdomain='',
+                       follow_redirects=True):
+    """Returns the silo-specific canonical form of a post or object URL.
+
+    Many silos support multiple URL formats for the same post (or object).
+    By standardizing on one format, original_post_discovery stands the
     best chance of finding the relationship between the original and
     its syndicated copies.
 
+    Uses [NON_]CANONICAL_URL_RE to whitelist and blacklist known URL patterns.
+
+    May make HTTP HEAD requests to follow redirects!
+
     Args:
-      syndication_url: a string, the url of the syndicated content
+      url: a string
       scheme: a string, the canonical scheme for this source (https by default)
       subdomain: a string, the canonical subdomain, e.g. 'www.'
         (blank by default)
-      kwargs: may be used by subclasses
 
     Return:
-      a string, the canonical form of the syndication url
+      a string, the canonical form of the url, or None if we know it's not a
+        post/object url
     """
-    return re.sub('^https?://(www\.)?', scheme + '://' + subdomain,
-                  syndication_url)
+    url = re.sub('^https?://(www\.)?', scheme + '://' + subdomain, url)
+
+    if self.CANONICAL_URL_RE and self.CANONICAL_URL_RE.match(url):
+      return url
+    elif self.NON_CANONICAL_URL_RE and self.NON_CANONICAL_URL_RE.match(url):
+      return None
+    elif not util.domain_or_parent_in(util.domain_from_link(url),
+                                      (self.GR_CLASS.DOMAIN,)):
+      return None
+
+    if follow_redirects:
+      redirected = util.follow_redirects(url).url
+      if redirected != url:
+        return self.canonicalize_url(
+          redirected, scheme=scheme, subdomain=subdomain,
+          follow_redirects=False)
+
+    return url
 
   def infer_profile_url(self, url):
     """Given an arbitrary URL representing a person, try to find their

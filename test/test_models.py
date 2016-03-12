@@ -6,7 +6,7 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import datetime
 import json
-
+import re
 
 from granary import source as gr_source
 import mox
@@ -341,7 +341,7 @@ class SourceTest(testutil.HandlerTest):
     FakeSource.string_id_counter -= 1
     auth_entity = testutil.FakeAuthEntity(id='x', user_json=json.dumps(
         {'urls': [{'value': 'http://bar'}, {'value': 'http://baz'}]}))
-    self.expect_webmention_requests_get('http://bar', 'no webmention endpoint',
+    self.expect_webmention_requests_get('http://bar/', 'no webmention endpoint',
                                         verify=False)
 
     self.mox.ReplayAll()
@@ -462,6 +462,28 @@ class SourceTest(testutil.HandlerTest):
 
     source.last_hfeed_refetch -= (Source.SLOW_REFETCH + hour)
     self.assertTrue(source.should_refetch())
+
+  def test_canonicalize_url(self):
+    source = FakeSource()
+    def check(expected, input, **kwargs):
+      self.assertEquals(expected, source.canonicalize_url(input, **kwargs))
+
+    check('https://fa.ke/post', 'http://www.fa.ke/post')
+    check('http://sub.fa.ke/post', 'https://fa.ke/post',
+          scheme='http', subdomain='sub.')
+
+    self.unstub_requests_head()
+    check(None, 'http://x.yz/post')
+
+    self.mox.stubs.Set(FakeSource, 'CANONICAL_URL_RE', re.compile('.*/good$'))
+    check('http//fa.ke/123/good', 'http//fa.ke/123/good')
+
+    self.mox.stubs.Set(FakeSource, 'NON_CANONICAL_URL_RE', re.compile('.*/bad$'))
+    check(None, 'http://fa.ke/456/bad')
+
+    self.expect_requests_head('https://fa.ke/78', redirected_url='https://fa.ke/90')
+    self.mox.ReplayAll()
+    check('https://fa.ke/90', 'http://fa.ke/78')
 
 
 class BlogPostTest(testutil.ModelsTest):
