@@ -12,11 +12,11 @@ import urllib
 import appengine_config
 
 from granary import source as gr_source
-from granary import testutil as gr_testutil
 from google.appengine.datastore import datastore_stub_util
 from google.appengine.ext import ndb
 from models import BlogPost, Publish, PublishedPage, Response, Source
 from oauth_dropins.models import BaseAuth
+from oauth_dropins.webutil import testutil
 # mirror some methods from webutil.testutil
 from oauth_dropins import handlers as oauth_handlers
 from oauth_dropins.webutil.testutil import get_task_eta, get_task_params
@@ -178,7 +178,7 @@ class FakeSource(Source):
     return cls(id=id, **props)
 
 
-class HandlerTest(gr_testutil.TestCase):
+class HandlerTest(testutil.HandlerTest):
   """Base test class.
   """
   def setUp(self):
