@@ -178,8 +178,8 @@ def follow_redirects(url, cache=True):
 
   ...specifically memcache and USER_AGENT_HEADER.
   """
-  return gr_source.follow_redirects(url, cache=memcache if cache else None,
-                                    headers=USER_AGENT_HEADER)
+  return util.follow_redirects(url, cache=memcache if cache else None,
+                               headers=USER_AGENT_HEADER)
 
 
 def get_webmention_target(url, resolve=True, replace_test_domains=True):
