@@ -102,6 +102,8 @@ class Source(StringIdModel):
   # subclasses may override; used in canonicalize_url()
   CANONICAL_URL_RE = None
   NON_CANONICAL_URL_RE = None
+  CANONICAL_URL_SUBDOMAIN = ''  # if set, should end with a .
+  CANONICAL_URL_SCHEME = 'https'
 
   created = ndb.DateTimeProperty(auto_now_add=True, required=True)
   url = ndb.StringProperty()
@@ -548,8 +550,7 @@ class Source(StringIdModel):
     domains = [util.domain_from_link(url) for url in urls]
     return urls, domains
 
-  def canonicalize_url(self, url, scheme='https', subdomain='',
-                       follow_redirects=True, **kwargs):
+  def canonicalize_url(self, url, follow_redirects=True, **kwargs):
     """Returns the silo-specific canonical form of a post or object URL.
 
     Many silos support multiple URL formats for the same post (or object).
@@ -557,7 +558,7 @@ class Source(StringIdModel):
     best chance of finding the relationship between the original and
     its syndicated copies.
 
-    Uses [NON_]CANONICAL_URL_RE and the source domain to whitelist and blacklist
+    Uses [NON_]CANONICAL_URL_* and the source domain to whitelist and blacklist
     known URL patterns.
 
     May make HTTP HEAD requests to follow redirects!
@@ -572,7 +573,12 @@ class Source(StringIdModel):
       a string, the canonical form of the url, or None if we know it's not a
         post/object url
     """
-    url = re.sub('^https?://(www\.)?', scheme + '://' + subdomain, url)
+    if self.CANONICAL_URL_SUBDOMAIN:
+      assert self.CANONICAL_URL_SUBDOMAIN.endswith('.')
+
+    url = re.sub('^https?://(www\.)?',
+                 self.CANONICAL_URL_SCHEME + '://' + self.CANONICAL_URL_SUBDOMAIN,
+                 url)
 
     if self.CANONICAL_URL_RE and self.CANONICAL_URL_RE.match(url):
       return url
@@ -587,9 +593,7 @@ class Source(StringIdModel):
     if follow_redirects:
       redirected = util.follow_redirects(url).url
       if redirected != url:
-        return self.canonicalize_url(
-          redirected, scheme=scheme, subdomain=subdomain,
-          follow_redirects=False)
+        return self.canonicalize_url(redirected, follow_redirects=False)
 
     return url
 

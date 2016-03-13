@@ -470,25 +470,33 @@ class SourceTest(testutil.HandlerTest):
 
     source = MyFakeSource()
 
-    def check(expected, input, **kwargs):
-      self.assertEquals(expected, source.canonicalize_url(input, **kwargs))
+    def check(expected, input):
+      self.assertEquals(expected, source.canonicalize_url(input))
 
     check('https://fa.ke/post', 'http://www.fa.ke/post')
-    check('http://sub.fa.ke/post', 'https://fa.ke/post',
-          scheme='http', subdomain='sub.')
+
+    MyFakeSource.CANONICAL_URL_SCHEME = 'http'
+    check('http://fa.ke/123', 'https://fa.ke/123')
+
+    MyFakeSource.CANONICAL_URL_SUBDOMAIN = 'www'
+    with self.assertRaises(AssertionError):  # missing trailing .
+      source.canonicalize_url('')
+
+    MyFakeSource.CANONICAL_URL_SUBDOMAIN = 'www.'
+    check('http://www.fa.ke/123', 'https://fa.ke/123')
 
     self.unstub_requests_head()
     check(None, 'http://x.yz/post')
 
     MyFakeSource.CANONICAL_URL_RE = re.compile('.*/good$')
-    check('https://fa.ke/123/good', 'http://fa.ke/123/good')
+    check('http://www.fa.ke/123/good', 'http://fa.ke/123/good')
 
     MyFakeSource.NON_CANONICAL_URL_RE = re.compile('.*/bad$')
     check(None, 'http://fa.ke/456/bad')
 
-    self.expect_requests_head('https://fa.ke/78', redirected_url='https://fa.ke/90')
+    self.expect_requests_head('http://www.fa.ke/78', redirected_url='https://fa.ke/90')
     self.mox.ReplayAll()
-    check('https://fa.ke/90', 'http://fa.ke/78')
+    check('http://www.fa.ke/90', 'http://fa.ke/78')
 
 
 class BlogPostTest(testutil.ModelsTest):
