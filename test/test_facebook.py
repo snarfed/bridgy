@@ -258,7 +258,7 @@ class FacebookPageTest(testutil.ModelsTest):
     self.assertEquals(400, cm.exception.code)
     self.assertEquals('not json', cm.exception.body)
 
-  def test_canonicalize_syndication_url_basic(self):
+  def test_canonicalize_url_basic(self):
     # should look it up once, then cache it
     self.expect_api_call('212038_222', {'id': '0', 'object_id': '314159'})
     self.mox.ReplayAll()
@@ -286,50 +286,50 @@ class FacebookPageTest(testutil.ModelsTest):
        'https://m.facebook.com/story.php?id=212038&story_fbid=314159'),
       ):
       logging.debug(input)
-      self.assertEqual(expected, self.fb.canonicalize_syndication_url(input))
+      self.assertEqual(expected, self.fb.canonicalize_url(input))
 
-  def test_canonicalize_syndication_url_fetch_400s(self):
+  def test_canonicalize_url_fetch_400s(self):
     self.expect_api_call('212038_123', {}, status=400)
     self.mox.ReplayAll()
 
     self.assertEqual('https://www.facebook.com/212038/posts/123',
-                     self.fb.canonicalize_syndication_url(
+                     self.fb.canonicalize_url(
                        'http://facebook.com/snarfed.org/posts/123'))
 
-  def test_canonicalize_syndication_url_username(self):
+  def test_canonicalize_url_username(self):
     for id in '212038_snarfed.org', '212038_444':
       self.expect_api_call(id, {})
     self.mox.ReplayAll()
 
     # we shouldn't touch username when it appears elsewhere in the url
     self.assertEqual('https://www.facebook.com/25624/posts/snarfed.org',
-                     self.fb.canonicalize_syndication_url(
+                     self.fb.canonicalize_url(
                        'http://www.facebook.com/25624/posts/snarfed.org'))
 
     # username should override inferred username
     self.fb.inferred_username = 'mr-disguise'
     self.assertEqual('https://www.facebook.com/mr-disguise/posts/444',
-                     self.fb.canonicalize_syndication_url(
+                     self.fb.canonicalize_url(
                        'https://www.facebook.com/mr-disguise/posts/444'))
 
     # if no username, fall through
     self.fb.username = None
     self.assertEqual('https://www.facebook.com/212038/posts/444',
-                     self.fb.canonicalize_syndication_url(
+                     self.fb.canonicalize_url(
                        'https://www.facebook.com/mr-disguise/posts/444'))
 
-  def test_canonicalize_syndication_url_not_facebook(self):
+  def test_canonicalize_url_not_facebook(self):
     """Shouldn't try to extract id and fetch post for non-facebook.com URLs."""
     url = 'https://twitter.com/foo/status/123'
-    self.assertEqual(url, self.fb.canonicalize_syndication_url(url))
+    self.assertEqual(url, self.fb.canonicalize_url(url))
 
-  def test_canonicalize_syndication_url_with_activity(self):
+  def test_canonicalize_url_with_activity(self):
     """If we pass an activity with fb_object_id, use that, don't fetch from FB."""
     obj = {'fb_object_id': 456}
     act = {'object': obj}
 
     for activity in obj, act:
-      got = self.fb.canonicalize_syndication_url('http://facebook.com/foo/posts/123',
+      got = self.fb.canonicalize_url('http://facebook.com/foo/posts/123',
                                                  activity=activity)
       self.assertEqual('https://www.facebook.com/212038/posts/456', got)
 
@@ -414,8 +414,8 @@ class FacebookPageTest(testutil.ModelsTest):
 
     self.assertIsNone(self.fb.key.get().resolved_object_ids_json)
 
-    self.fb.canonicalize_syndication_url('http://facebook.com/foo/posts/1')
-    self.fb.canonicalize_syndication_url('http://facebook.com/foo/posts/3')
+    self.fb.canonicalize_url('http://facebook.com/foo/posts/1')
+    self.fb.canonicalize_url('http://facebook.com/foo/posts/3')
     self.fb.put()
     self.assertEquals(json.dumps({'1': '2', '3': '4'}),
                       self.fb.key.get().resolved_object_ids_json)
@@ -423,7 +423,7 @@ class FacebookPageTest(testutil.ModelsTest):
     try:
       orig = facebook.MAX_RESOLVED_OBJECT_IDS
       facebook.MAX_RESOLVED_OBJECT_IDS = 2
-      self.fb.canonicalize_syndication_url('http://facebook.com/foo/posts/5')
+      self.fb.canonicalize_url('http://facebook.com/foo/posts/5')
       self.fb.put()
       # should keep the highest ids
       self.assertEquals(json.dumps({'3': '4', '5': None}),

@@ -43,13 +43,6 @@ class GooglePlusTest(testutil.ModelsTest):
     self.assertEqual('http://mr/g/p', self.gp.silo_url())
     self.assertEqual('tag:plus.google.com,2013:987', self.gp.user_tag_id())
 
-  def test_canonicalize_syndication_url(self):
-    self.expect_requests_head('http://plus.google.com/first.last/1234',
-                              redirected_url='http://final/url')
-    self.mox.ReplayAll()
-    self.assertEqual('https://final/url',
-      self.gp.canonicalize_syndication_url('http://plus.google.com/first.last/1234'))
-
   def test_poll_period(self):
     self.gp.put()
     self.assertEqual(GooglePlusPage.FAST_POLL, self.gp.poll_period())

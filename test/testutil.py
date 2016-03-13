@@ -7,6 +7,7 @@ import copy
 import datetime
 import json
 import logging
+import re
 import urllib
 
 import appengine_config
@@ -139,6 +140,7 @@ class FakeSource(Source):
   SHORT_NAME = 'fake'
   TYPE_LABELS = {'post': 'FakeSource post label'}
   RATE_LIMITED_POLL = datetime.timedelta(hours=30)
+  CANONICAL_URL_RE = re.compile(r'.*fa\.ke.*')
 
   string_id_counter = 1
   gr_source = FakeGrSource()

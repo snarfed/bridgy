@@ -69,14 +69,14 @@ class AppTest(testutil.ModelsTest):
 
     # SyndicatedPost with new target URLs
     resp.activities_json = [
-      json.dumps({'object': {'url': 'https://silo/1'}}),
-      json.dumps({'url': 'https://silo/2', 'object': {'unused': 'ok'}}),
-      json.dumps({'url': 'https://silo/3'}),
+      json.dumps({'object': {'url': 'https://fa.ke/1'}}),
+      json.dumps({'url': 'https://fa.ke/2', 'object': {'unused': 'ok'}}),
+      json.dumps({'url': 'https://fa.ke/3'}),
     ]
     resp.put()
-    models.SyndicatedPost.insert(source, 'https://silo/1', 'https://orig/1')
-    models.SyndicatedPost.insert(source, 'https://silo/2', 'http://orig/2')
-    models.SyndicatedPost.insert(source, 'https://silo/3', 'http://orig/3')
+    models.SyndicatedPost.insert(source, 'https://fa.ke/1', 'https://orig/1')
+    models.SyndicatedPost.insert(source, 'https://fa.ke/2', 'http://orig/2')
+    models.SyndicatedPost.insert(source, 'https://fa.ke/3', 'http://orig/3')
 
     # cached webmention endpoint
     memcache.set('W https skipped', 'asdf')

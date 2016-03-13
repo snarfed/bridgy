@@ -404,8 +404,10 @@ class Poll(webapp2.RequestHandler):
           logging.warning('activity has no url %s', activity_json)
           continue
 
-        activity_url = source.canonicalize_syndication_url(activity_url,
-                                                           activity=activity)
+        activity_url = source.canonicalize_url(activity_url, activity=activity)
+        if not activity_url:
+          continue
+
         # look for activity url in the newly discovered list of relationships
         for relationship in relationships.get(activity_url, []):
           # won't re-propagate if the discovered link is already among

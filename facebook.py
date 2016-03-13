@@ -149,7 +149,7 @@ class FacebookPage(models.Source):
 
       raise
 
-  def canonicalize_syndication_url(self, url, activity=None, **kwargs):
+  def canonicalize_url(self, url, activity=None, **kwargs):
     """Facebook-specific standardization of syndicated urls. Canonical form is
     https://www.facebook.com/USERID/posts/POSTID
 
@@ -189,7 +189,7 @@ class FacebookPage(models.Source):
                         'facebook.com/%s/' % self.key.id())
 
     # facebook always uses https and www
-    return super(FacebookPage, self).canonicalize_syndication_url(
+    return super(FacebookPage, self).canonicalize_url(
       url, scheme='https', subdomain='www.')
 
   def cached_resolve_object_id(self, post_id, activity=None):
@@ -278,7 +278,7 @@ class FacebookPage(models.Source):
       logging.info('Inferring username %s from syndication url %s', author_id, url)
       self.inferred_username = author_id
       self.put()
-      syndpost.syndication = self.canonicalize_syndication_url(syndpost.syndication)
+      syndpost.syndication = self.canonicalize_url(syndpost.syndication)
 
 
 class AuthHandler(util.Handler):

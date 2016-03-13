@@ -91,8 +91,6 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     actual post URL. We should follow the redirect like we do everywhere
     else.
     """
-
-    self.expect_requests_head('https://fa.ke/post/url')
     self.expect_requests_head('http://author')
     self.expect_requests_get('http://author', """
     <html class="h-feed">
@@ -585,9 +583,6 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     </html>
     """)
 
-    # head request to follow redirects on the post url
-    self.expect_requests_head(self.activity['object']['url'])
-
     # and for the author url
     self.expect_requests_head('http://author')
 
@@ -614,9 +609,6 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
         <link rel="feed" href="/updates.rss">
       </head>
     </html>""")
-
-    # head request to follow redirects on the post url
-    self.expect_requests_head(self.activity['object']['url'])
 
     # and for the author url
     self.expect_requests_head('http://author')
@@ -707,10 +699,8 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     """Confirm that we check the author page's content type before
     fetching and parsing it
     """
-    # head request to follow redirects on the post url
-    self.expect_requests_head(self.activity['object']['url'])
     self.expect_requests_head('http://author', response_headers={
-      'content-type': 'application/xml'
+      'content-type': 'application/xml',
     })
 
     # give up
@@ -721,8 +711,6 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     """Confirm that we don't follow u-url's that lead to anything that
     isn't text/html (e.g., PDF)
     """
-    # head request to follow redirects on the post url
-    self.expect_requests_head(self.activity['object']['url'])
     self.expect_requests_head('http://author')
     self.expect_requests_get('http://author', """
     <html>

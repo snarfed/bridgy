@@ -74,7 +74,7 @@ class Flickr(models.Source):
       del kwargs['min_id']
     return self.gr_source.get_activities_response(*args, **kwargs)
 
-  def canonicalize_syndication_url(self, url, **kwargs):
+  def canonicalize_url(self, url, **kwargs):
     if not url.endswith('/'):
       url = url + '/'
     if self.username:
@@ -82,7 +82,7 @@ class Flickr(models.Source):
                         'flickr.com/photos/%s/' % self.key.id())
       url = url.replace('flickr.com/people/%s/' % self.username,
                         'flickr.com/people/%s/' % self.key.id())
-    url = super(Flickr, self).canonicalize_syndication_url(
+    url = super(Flickr, self).canonicalize_url(
       url, scheme='https', subdomain='www.')
     return url
 

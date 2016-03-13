@@ -464,7 +464,12 @@ class SourceTest(testutil.HandlerTest):
     self.assertTrue(source.should_refetch())
 
   def test_canonicalize_url(self):
-    source = FakeSource()
+    class MyFakeSource(Source):
+      GR_CLASS = testutil.FakeGrSource
+      SHORT_NAME = 'my_fake'
+
+    source = MyFakeSource()
+
     def check(expected, input, **kwargs):
       self.assertEquals(expected, source.canonicalize_url(input, **kwargs))
 
@@ -475,10 +480,10 @@ class SourceTest(testutil.HandlerTest):
     self.unstub_requests_head()
     check(None, 'http://x.yz/post')
 
-    self.mox.stubs.Set(FakeSource, 'CANONICAL_URL_RE', re.compile('.*/good$'))
-    check('http//fa.ke/123/good', 'http//fa.ke/123/good')
+    MyFakeSource.CANONICAL_URL_RE = re.compile('.*/good$')
+    check('https://fa.ke/123/good', 'http://fa.ke/123/good')
 
-    self.mox.stubs.Set(FakeSource, 'NON_CANONICAL_URL_RE', re.compile('.*/bad$'))
+    MyFakeSource.NON_CANONICAL_URL_RE = re.compile('.*/bad$')
     check(None, 'http://fa.ke/456/bad')
 
     self.expect_requests_head('https://fa.ke/78', redirected_url='https://fa.ke/90')

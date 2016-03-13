@@ -85,14 +85,14 @@ class TwitterTest(testutil.ModelsTest):
     self.assert_equals(gr_twitter_test.LIKES_FROM_HTML[0],
                        self.tw.get_like('unused', '100', '353'))
 
-  def test_canonicalize_syndication_url(self):
+  def test_canonicalize_url(self):
     for url in (
         'http://www.twitter.com/username/012345',
         'https://www.twitter.com/username/012345',
         'http://twitter.com/username/012345',
     ):
       self.assertEqual('https://twitter.com/username/012345',
-                       self.tw.canonicalize_syndication_url(url))
+                       self.tw.canonicalize_url(url))
 
   def test_search_for_links(self):
     """https://github.com/snarfed/bridgy/issues/565"""

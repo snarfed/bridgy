@@ -549,7 +549,7 @@ class Source(StringIdModel):
     return urls, domains
 
   def canonicalize_url(self, url, scheme='https', subdomain='',
-                       follow_redirects=True):
+                       follow_redirects=True, **kwargs):
     """Returns the silo-specific canonical form of a post or object URL.
 
     Many silos support multiple URL formats for the same post (or object).
@@ -557,7 +557,8 @@ class Source(StringIdModel):
     best chance of finding the relationship between the original and
     its syndicated copies.
 
-    Uses [NON_]CANONICAL_URL_RE to whitelist and blacklist known URL patterns.
+    Uses [NON_]CANONICAL_URL_RE and the source domain to whitelist and blacklist
+    known URL patterns.
 
     May make HTTP HEAD requests to follow redirects!
 
@@ -579,6 +580,8 @@ class Source(StringIdModel):
       return None
     elif not util.domain_or_parent_in(util.domain_from_link(url),
                                       (self.GR_CLASS.DOMAIN,)):
+      # only support our own silo domain, don't even follow redirects
+      # https://github.com/snarfed/bridgy/issues/624
       return None
 
     if follow_redirects:
