@@ -3,13 +3,14 @@
 """
 import datetime
 import json
+import string
 
 from oauth_dropins import facebook as oauth_facebook
 from requests.exceptions import HTTPError
 
 from facebook import FacebookPage
 from models import SyndicatedPost
-from original_post_discovery import discover, refetch
+from original_post_discovery import discover, refetch, MAX_PERMALINK_FETCHES
 import testutil
 
 
@@ -461,6 +462,21 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
                                'http://d4', 'http://e5', 'https://f6']
     for url in self.source.domain_urls[:5]:
       self.expect_requests_get(url, '')
+    self.mox.ReplayAll()
+    self.assert_discover([])
+
+  def test_permalink_limit(self):
+    letters = string.ascii_letters[:MAX_PERMALINK_FETCHES + 1]
+    self.expect_requests_get('http://author', """
+    <html class="h-feed">""" + '\n'.join("""
+      <div class="h-entry">
+        <a class="u-url" href="http://author/%s"></a>
+      </div>""" % l for l in letters) + """
+    </html>""")
+
+    for l in letters[:-1]:
+      self.expect_requests_get('http://author/%s' % l)
+
     self.mox.ReplayAll()
     self.assert_discover([])
 

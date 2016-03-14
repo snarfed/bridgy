@@ -25,6 +25,7 @@ lookups in the following primary cases:
     *each* post permalink.
 """
 
+import collections
 import datetime
 import itertools
 import logging
@@ -39,6 +40,8 @@ import models
 from models import SyndicatedPost
 
 from google.appengine.api import memcache
+
+MAX_PERMALINK_FETCHES = 10
 
 
 def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True):
@@ -298,16 +301,18 @@ def _process_author(source, author_url, refetch=False, store_blanks=True):
       logging.warning('Could not fetch h-feed url %s.', feed_url,
                       exc_info=True)
 
-  permalink_to_entry = {}
+  permalink_to_entry = collections.OrderedDict()
   for child in feeditems:
     if 'h-entry' in child['type']:
-      # TODO maybe limit to first ~30 entries? (do that here rather than,
-      # below because we want the *first* n entries)
       for permalink in child['properties'].get('url', []):
         if isinstance(permalink, basestring):
           permalink_to_entry[permalink] = child
         else:
           logging.warn('unexpected non-string "url" property: %s', permalink)
+
+    if len(permalink_to_entry) >= MAX_PERMALINK_FETCHES:
+      logging.info('Hit cap of %d permalinks. Stopping.', MAX_PERMALINK_FETCHES)
+      break
 
   # query all preexisting permalinks at once, instead of once per link
   permalinks_list = list(permalink_to_entry.keys())
