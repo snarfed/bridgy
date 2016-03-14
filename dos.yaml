@@ -1,5 +1,12 @@
 blacklist:
 
+# background: https://github.com/snarfed/bridgy/issues/578#issuecomment-196553529
+# https://domainreanimator.com/
+- subnet: 2607:5300:60:6fc6::/48
+  description: Domain Re-Animator Bot. high volume, disobeys robots.txt.
+- subnet: 2607:5300:60:73e5::/48
+  description: Domain Re-Animator Bot. high volume, disobeys robots.txt.
+
 # background: https://twitter.com/jkphl/status/463818470820311041
 # - subnet: 85.114.145.198
 #   description: jkphl server with a rogue cron job
