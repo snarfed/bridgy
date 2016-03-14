@@ -4,8 +4,6 @@
 import datetime
 import json
 import logging
-import pprint
-import re
 
 import appengine_config
 from appengine_config import HTTP_TIMEOUT
@@ -99,11 +97,8 @@ class Source(StringIdModel):
   # (e.g. 'favorite'). Subclasses should override this.
   TYPE_LABELS = {}
 
-  # subclasses may override; used in canonicalize_url()
-  CANONICAL_URL_RE = None
-  NON_CANONICAL_URL_RE = None
-  CANONICAL_URL_SUBDOMAIN = ''  # if set, should end with a .
-  CANONICAL_URL_SCHEME = 'https'
+  # subclasses should override this
+  URL_CANONICALIZER = util.UrlCanonicalizer(headers=util.USER_AGENT_HEADER)
 
   created = ndb.DateTimeProperty(auto_now_add=True, required=True)
   url = ndb.StringProperty()
@@ -550,52 +545,9 @@ class Source(StringIdModel):
     domains = [util.domain_from_link(url) for url in urls]
     return urls, domains
 
-  def canonicalize_url(self, url, follow_redirects=True, **kwargs):
-    """Returns the silo-specific canonical form of a post or object URL.
-
-    Many silos support multiple URL formats for the same post (or object).
-    By standardizing on one format, original_post_discovery stands the
-    best chance of finding the relationship between the original and
-    its syndicated copies.
-
-    Uses [NON_]CANONICAL_URL_* and the source domain to whitelist and blacklist
-    known URL patterns.
-
-    May make HTTP HEAD requests to follow redirects!
-
-    Args:
-      url: a string
-      scheme: a string, the canonical scheme for this source (https by default)
-      subdomain: a string, the canonical subdomain, e.g. 'www.'
-        (blank by default)
-
-    Return:
-      a string, the canonical form of the url, or None if we know it's not a
-        post/object url
-    """
-    if self.CANONICAL_URL_SUBDOMAIN:
-      assert self.CANONICAL_URL_SUBDOMAIN.endswith('.')
-
-    url = re.sub('^https?://(www\.)?',
-                 self.CANONICAL_URL_SCHEME + '://' + self.CANONICAL_URL_SUBDOMAIN,
-                 url)
-
-    if self.CANONICAL_URL_RE and self.CANONICAL_URL_RE.match(url):
-      return url
-    elif self.NON_CANONICAL_URL_RE and self.NON_CANONICAL_URL_RE.match(url):
-      return None
-    elif not util.domain_or_parent_in(util.domain_from_link(url),
-                                      (self.GR_CLASS.DOMAIN,)):
-      # only support our own silo domain, don't even follow redirects
-      # https://github.com/snarfed/bridgy/issues/624
-      return None
-
-    if follow_redirects:
-      redirected = util.follow_redirects(url).url
-      if redirected != url:
-        return self.canonicalize_url(redirected, follow_redirects=False)
-
-    return url
+  def canonicalize_url(self, url, activity=None, **kwargs):
+    """Canonicalizes a post or object URL. Passes through to UrlCanonicalizer."""
+    return self.URL_CANONICALIZER(url, **kwargs) if self.URL_CANONICALIZER else url
 
   def infer_profile_url(self, url):
     """Given an arbitrary URL representing a person, try to find their

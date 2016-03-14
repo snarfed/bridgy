@@ -78,6 +78,14 @@ class FacebookPage(models.Source):
   GR_CLASS = gr_facebook.Facebook
   SHORT_NAME = 'facebook'
 
+  URL_CANONICALIZER = util.UrlCanonicalizer(
+    domain=GR_CLASS.DOMAIN,
+    subdomain='www',
+    query=True,
+    approve=r'https://www\.facebook\.com/[^/?]+/posts/[^/?]+',
+    headers=util.USER_AGENT_HEADER)
+    # no reject regexp; non-private FB post URLs just 404
+
   # unique name used in fb URLs, e.g. facebook.com/[username]
   username = ndb.StringProperty()
   # inferred from syndication URLs if username isn't available
@@ -188,9 +196,7 @@ class FacebookPage(models.Source):
       url = url.replace('facebook.com/%s/' % username,
                         'facebook.com/%s/' % self.key.id())
 
-    # facebook always uses https and www
-    return super(FacebookPage, self).canonicalize_url(
-      url, scheme='https', subdomain='www.')
+    return super(FacebookPage, self).canonicalize_url(url)
 
   def cached_resolve_object_id(self, post_id, activity=None):
     """Resolve a post id to its Facebook object id, if any.

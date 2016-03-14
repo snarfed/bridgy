@@ -121,3 +121,6 @@ class FlickrTest(testutil.ModelsTest):
           'http://flickr.com/photos/mee/123')
     check('https://www.flickr.com/people/39216764@N00/',
           'http://flickr.com/people/mee')
+
+    self.assertIsNone(self.flickr.canonicalize_url(
+      'https://login.yahoo.com/config/login?...'))

@@ -86,13 +86,12 @@ class TwitterTest(testutil.ModelsTest):
                        self.tw.get_like('unused', '100', '353'))
 
   def test_canonicalize_url(self):
-    for url in (
-        'http://www.twitter.com/username/012345',
-        'https://www.twitter.com/username/012345',
-        'http://twitter.com/username/012345',
-    ):
-      self.assertEqual('https://twitter.com/username/012345',
-                       self.tw.canonicalize_url(url))
+    good = 'https://twitter.com/x/status/123'
+    self.assertEqual(good, self.tw.canonicalize_url(good))
+    self.assertEqual(good, self.tw.canonicalize_url(
+      'https://twitter.com/x/statuses/123'))
+    self.assertIsNone(self.tw.canonicalize_url(
+      'https://twitter.com/x?protected_redirect=true'))
 
   def test_search_for_links(self):
     """https://github.com/snarfed/bridgy/issues/565"""

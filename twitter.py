@@ -32,6 +32,12 @@ class Twitter(models.Source):
                  'like': 'favorite',
                  }
 
+  URL_CANONICALIZER = util.UrlCanonicalizer(
+    domain=GR_CLASS.DOMAIN,
+    approve=r'https://twitter\.com/[^/?]+/status/[^/?]+',
+    reject=r'https://twitter\.com/.+\?protected_redirect=true',
+    headers=util.USER_AGENT_HEADER)
+
   # Twitter's rate limiting window is currently 15m. A normal poll with nothing
   # new hits /statuses/user_timeline and /search/tweets once each. Both
   # allow 180 calls per window before they're rate limited.
@@ -132,6 +138,14 @@ class Twitter(models.Source):
     https://support.twitter.com/articles/20169886
     """
     return json.loads(self.auth_entity.get().user_json).get('protected')
+
+  def canonicalize_url(self, url, activity=None, **kwargs):
+    """Normalize /statuses/ to /status/.
+
+    https://github.com/snarfed/bridgy/issues/618
+    """
+    url = url.replace('/statuses/', '/status/')
+    return super(Twitter, self).canonicalize_url(url, **kwargs)
 
 
 class AuthHandler(util.Handler):

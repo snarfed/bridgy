@@ -525,7 +525,7 @@ def _process_syndication_urls(source, permalink, syndication_urls,
   for url in syndication_urls:
     # source-specific logic to standardize the URL. (e.g., replace facebook
     # username with numeric id)
-    url = source.canonicalize_url(url)
+    url = source.canonicalize_url(url, redirects=False)
     if not url:
       continue
 

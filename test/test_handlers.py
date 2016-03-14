@@ -374,6 +374,7 @@ asdf http://other/link qwert
       'inReplyTo': [{'url': 'http://fa.ke/000'}],
     }
 
+    self.expect_requests_head('https://fa.ke/000').InAnyOrder()
     self.expect_requests_head(
       'http://or.ig/post', redirected_url='http://or.ig/post/redirect').InAnyOrder()
     self.expect_requests_head(

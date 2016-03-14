@@ -234,7 +234,7 @@ class PollTest(TaskQueueTest):
 
     SyndicatedPost(parent=self.sources[0].key,
                    original='http://Tar.Get/a',
-                   syndication='https://source/post/url').put()
+                   syndication='https://fa.ke/post/url').put()
 
     self.activities[0]['object'].update({
       'tags': [{'objectType': 'article', 'url': 'https://tar.get/a'}],
@@ -631,11 +631,11 @@ class PollTest(TaskQueueTest):
         'tags': [{
           'objectType': 'person',
           'id': 'tag:source,2013:%s' % source.key.id(),
-          'url': 'https://source/%s' % source.key.id(),
+          'url': 'https://fa.ke/%s' % source.key.id(),
         }, {
           'objectType': 'person',
           'id': 'tag:source,2013:other',
-          'url': 'https://source/other',
+          'url': 'https://fa.ke/other',
         }],
       },
     }]
@@ -701,7 +701,7 @@ class PollTest(TaskQueueTest):
           'objectType': 'note',
           'content': 'This note is being referenced or otherwise quoted http://author/permalink',
           'author': {'id': source.user_tag_id()},
-          'url': 'https://source/post/quoted',
+          'url': 'https://fa.ke/post/quoted',
         }]
       }
     }
@@ -731,7 +731,7 @@ class PollTest(TaskQueueTest):
           'objectType': 'note',
           'content': 'This note is being referenced or otherwise quoted http://author/permalink',
           'author': {'id': source.user_tag_id()},
-          'url': 'https://source/post/quoted',
+          'url': 'https://fa.ke/post/quoted',
         }],
         'tags': [{
           'objectType': 'person',
@@ -931,7 +931,7 @@ class PollTest(TaskQueueTest):
       <a class="h-entry" href="/permalink"></a>
       <div class="h-entry">
         <a class="u-url" href="http://author/permalink"></a>
-        <a class="u-syndication" href="http://source/post/url"></a>
+        <a class="u-syndication" href="http://fa.ke/post/url"></a>
       </div>
     </html>""")
 
@@ -958,18 +958,15 @@ class PollTest(TaskQueueTest):
     self.assertEquals(NOW, source.last_syndication_url)
 
   def test_multiple_activities_fetch_hfeed_once(self):
-    """Make sure that multiple activities only fetch the author's
-    h-feed once
-    """
+    """Make sure that multiple activities only fetch the author's h-feed once."""
     self.sources[0].domain_urls = ['http://author']
-    FakeGrSource.DOMAIN = 'source'
     self.sources[0].put()
 
     FakeGrSource.activities = self.activities
 
     # syndicated urls need to be unique for this to be interesting
     for letter, activity in zip(string.letters, FakeGrSource.activities):
-      activity['url'] = activity['object']['url'] = 'http://source/post/' + letter
+      activity['url'] = activity['object']['url'] = 'http://fa.ke/post/' + letter
       activity['object']['content'] = 'foo bar'
 
     self._expect_fetch_hfeed()
@@ -978,7 +975,6 @@ class PollTest(TaskQueueTest):
 
   def _setup_refetch_hfeed(self):
     self.sources[0].domain_urls = ['http://author']
-    FakeGrSource.DOMAIN = 'source'
     ten_min = datetime.timedelta(minutes=10)
     self.sources[0].last_syndication_url = NOW - ten_min
     self.sources[0].last_hfeed_refetch = NOW - models.Source.FAST_REFETCH - ten_min
@@ -987,7 +983,7 @@ class PollTest(TaskQueueTest):
     # pretend we've already done posse-post-discovery for the source
     # and checked this permalink and found no back-links
     SyndicatedPost(parent=self.sources[0].key, original=None,
-                   syndication='https://source/post/url').put()
+                   syndication='https://fa.ke/post/url').put()
     SyndicatedPost(parent=self.sources[0].key,
                    original='http://author/permalink',
                    syndication=None).put()
@@ -1031,7 +1027,7 @@ class PollTest(TaskQueueTest):
     resp = Response(
       id='tag:or.ig,2013:9',
       response_json='{}',
-      activities_json=['{"url": "http://source/post/url"}'],
+      activities_json=['{"url": "http://fa.ke/post/url"}'],
       source=self.sources[0].key,
       status='complete',
       original_posts=['http://author/permalink'],
@@ -1063,7 +1059,7 @@ class PollTest(TaskQueueTest):
       SyndicatedPost.original == 'http://author/permalink',
       ancestor=self.sources[0].key).fetch()
     self.assertEquals(1, len(relationships))
-    self.assertEquals('https://source/post/url', relationships[0].syndication)
+    self.assertEquals('https://fa.ke/post/url', relationships[0].syndication)
 
     # should repropagate all 9 responses
     tasks = self.taskqueue_stub.GetTasks('propagate')
