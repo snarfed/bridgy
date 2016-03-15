@@ -525,9 +525,9 @@ class SendWebmentions(webapp2.RequestHandler):
                      if 'DNS lookup failed for URL:' in str(e)
                      else {'code': 'EXCEPTION'})
 
-      if not cached:
-        val = (error if error and error['code'] in ('NO_ENDPOINT', 'BAD_TARGET_URL')
-               else mention.receiver_endpoint)
+      error_code = error['code'] if error else None
+      if error_code != 'BAD_TARGET_URL' and not cached:
+        val = error if error_code == 'NO_ENDPOINT' else mention.receiver_endpoint
         memcache.set(cache_key, val, time=WEBMENTION_DISCOVERY_CACHE_TIME)
 
       if error is None:
@@ -535,10 +535,9 @@ class SendWebmentions(webapp2.RequestHandler):
         self.record_source_webmention(mention)
         self.entity.sent.append(target)
       else:
-        code = error['code']
         status = error.get('http_status', 0)
-        if (code == 'NO_ENDPOINT' or
-            (code == 'BAD_TARGET_URL' and status == 204)):  # 204 is No Content
+        if (error_code == 'NO_ENDPOINT' or
+            (error_code == 'BAD_TARGET_URL' and status == 204)):  # No Content
           logging.info('Giving up this target. %s', error)
           self.entity.skipped.append(target)
         elif status // 100 == 4:
