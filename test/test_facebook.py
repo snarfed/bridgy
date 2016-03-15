@@ -321,7 +321,7 @@ class FacebookPageTest(testutil.ModelsTest):
   def test_canonicalize_url_not_facebook(self):
     """Shouldn't try to extract id and fetch post for non-facebook.com URLs."""
     url = 'https://twitter.com/foo/status/123'
-    self.assertEqual(url, self.fb.canonicalize_url(url))
+    self.assertIsNone(self.fb.canonicalize_url(url))
 
   def test_canonicalize_url_with_activity(self):
     """If we pass an activity with fb_object_id, use that, don't fetch from FB."""

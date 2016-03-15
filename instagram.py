@@ -85,11 +85,6 @@ class Instagram(models.Source):
       del kwargs['min_id']
     return self.gr_source.get_activities_response(*args, **kwargs)
 
-  def canonicalize_url(self, url, activity=None, **kwargs):
-    if not url.endswith('/'):
-      url = url + '/'
-    return super(Instagram, self).canonicalize_url(url)
-
 
 class OAuthCallback(oauth_instagram.CallbackHandler, util.Handler):
   """OAuth callback handler.

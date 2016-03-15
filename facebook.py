@@ -171,7 +171,7 @@ class FacebookPage(models.Source):
       a string, the canonical form of the syndication url
     """
     if util.domain_from_link(url) != self.gr_source.DOMAIN:
-      return url
+      return None
 
     def post_url(id):
       return 'https://www.facebook.com/%s/posts/%s' % (self.key.id(), id)
