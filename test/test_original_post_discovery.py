@@ -292,6 +292,22 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.mox.ReplayAll()
     self.assert_discover(['http://author/post/url'])
 
+  def test_ignore_synd_urls_on_other_silos(self):
+    """We should ignore syndication URLs on other (silos') domains."""
+    self.expect_requests_get('http://author', """
+    <html class="h-feed">
+      <div class="h-entry">
+        <a class="u-url" href="http://author/post/url"></a>
+        <a class="u-syndication" href="http://other/silo/url"></a>
+      </div>
+    </html>""")
+    self.expect_requests_get('http://author/post/url')
+
+    self.mox.ReplayAll()
+    self.assert_discover([])
+    self.assert_syndicated_posts(('http://author/post/url', None),
+                                 (None, u'https://fa.ke/post/url'))
+
   def test_rel_feed_link(self):
     """Check that we follow the rel=feed link when looking for the
     author's full feed URL
@@ -1240,6 +1256,22 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     refetch(self.source)
 
     self.assert_syndicated_posts(('http://author/post', None))
+
+  def test_refetch_synd_url_on_other_silo(self):
+    """We should ignore syndication URLs on other (silos') domains."""
+    self.expect_requests_get('http://author', """
+    <html class="h-feed">
+      <div class="h-entry">
+        <a class="u-url" href="http://author/post/url"></a>
+        <a class="u-syndication" href="http://other/silo/url"></a>
+      </div>
+    </html>""")
+    self.expect_requests_get('http://author/post/url')
+
+    self.mox.ReplayAll()
+    refetch(self.source)
+
+    self.assert_syndicated_posts(('http://author/post/url', None))
 
   def test_malformed_url_property(self):
     """Non string-like url values (i.e. dicts) used to cause an unhashable
