@@ -91,7 +91,6 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     actual post URL. We should follow the redirect like we do everywhere
     else.
     """
-
     self.expect_requests_head('https://fa.ke/post/url')
     self.expect_requests_head('http://author')
     self.expect_requests_get('http://author', """
@@ -105,6 +104,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.expect_requests_head(
       'http://author/post/will-redirect',
       redirected_url='http://author/post/final')
+    self.expect_requests_head('https://fa.ke/post/url')
 
     self.mox.ReplayAll()
     self.assert_discover(['http://author/post/final'])
@@ -479,6 +479,26 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
 
     self.mox.ReplayAll()
     self.assert_discover([])
+
+  def test_syndication_url_head_error(self):
+    """We should ignore syndication URLs that 4xx or 5xx."""
+    self.expect_requests_head('https://fa.ke/post/url')
+    self.expect_requests_head('http://author')
+    self.expect_requests_get('http://author', """
+    <html class="h-feed">
+      <div class="h-entry">
+        <a class="u-url" href="http://author/post"></a>
+        <a class="u-syndication" href="https://fa.ke/post/url"></a>
+      </div>
+    </html>""")
+    self.expect_requests_head('http://author/post')
+    self.expect_requests_get('http://author/post')
+    self.expect_requests_head('https://fa.ke/post/url', status_code=404)
+    self.mox.ReplayAll()
+
+    self.assert_discover([])
+    self.assert_syndicated_posts(('http://author/post', None),
+                                 (None, 'https://fa.ke/post/url'))
 
   def test_rel_feed_link_error(self):
     """Author page has an h-feed link that raises an exception. We should
@@ -1201,6 +1221,25 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.assertEquals(1, len(synds))
     self.assertEquals('http://author/permalink', synds[0].original)
     self.assertIsNone(synds[0].syndication)
+
+  def test_refetch_syndication_url_head_error(self):
+    """We should ignore syndication URLs that 4xx or 5xx."""
+    self.expect_requests_head('http://author')
+    self.expect_requests_get('http://author', """
+    <html class="h-feed">
+      <div class="h-entry">
+        <a class="u-url" href="http://author/post"></a>
+        <a class="u-syndication" href="https://fa.ke/post/url"></a>
+      </div>
+    </html>""")
+    self.expect_requests_head('http://author/post')
+    self.expect_requests_get('http://author/post')
+    self.expect_requests_head('https://fa.ke/post/url', status_code=404)
+
+    self.mox.ReplayAll()
+    refetch(self.source)
+
+    self.assert_syndicated_posts(('http://author/post', None))
 
   def test_malformed_url_property(self):
     """Non string-like url values (i.e. dicts) used to cause an unhashable
