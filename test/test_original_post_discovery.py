@@ -854,6 +854,9 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     SyndicatedPost(parent=self.source.key,
                    original='http://author/permalink1',
                    syndication=None).put()
+    SyndicatedPost(parent=self.source.key,
+                   original=None,
+                   syndication='https://fa.ke/post/url1').put()
 
     SyndicatedPost(parent=self.source.key,
                    original='http://author/permalink2',
