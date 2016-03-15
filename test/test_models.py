@@ -6,7 +6,7 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import datetime
 import json
-
+import re
 
 from granary import source as gr_source
 import mox
@@ -341,7 +341,7 @@ class SourceTest(testutil.HandlerTest):
     FakeSource.string_id_counter -= 1
     auth_entity = testutil.FakeAuthEntity(id='x', user_json=json.dumps(
         {'urls': [{'value': 'http://bar'}, {'value': 'http://baz'}]}))
-    self.expect_webmention_requests_get('http://bar', 'no webmention endpoint',
+    self.expect_webmention_requests_get('http://bar/', 'no webmention endpoint',
                                         verify=False)
 
     self.mox.ReplayAll()

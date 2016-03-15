@@ -120,10 +120,10 @@ def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True):
     # the best chance of finding a match. Some silos allow several
     # different permalink formats to point to the same place (e.g.,
     # facebook user id instead of user name)
-    syndication_url = source.canonicalize_syndication_url(
-      util.follow_redirects(syndication_url).url)
-    originals.update(_posse_post_discovery(
-      source, activity, syndication_url, fetch_hfeed))
+    syndication_url = source.canonicalize_url(syndication_url)
+    if syndication_url:
+      originals.update(_posse_post_discovery(
+        source, activity, syndication_url, fetch_hfeed))
     originals = set(util.dedupe_urls(originals))
   else:
     logging.debug('no syndication url, cannot process h-entries')
@@ -340,8 +340,7 @@ def _process_author(source, author_url, refetch=False, store_blanks=True):
     # this author. this helps us decide whether to refetch periodically
     # and look for updates.
     # Source will be saved at the end of each round of polling
-    now = util.now_fn()
-    source.updates['last_syndication_url'] = now
+    source.updates['last_syndication_url'] = util.now_fn()
 
   return results
 
@@ -435,8 +434,7 @@ def _process_entry(source, permalink, feed_entry, refetch, preexisting,
   success = True
 
   if results:
-    now = util.now_fn()
-    source.updates['last_feed_syndication_url'] = now
+    source.updates['last_feed_syndication_url'] = util.now_fn()
   elif not source.last_feed_syndication_url:
     # fetch the full permalink page if we think it might have more details
     parsed = None
@@ -519,42 +517,31 @@ def _process_syndication_urls(source, permalink, syndication_urls,
 
   Returns: dict mapping string syndication url to list of SyndicatedPost
   """
-  def is_our_silo(url):
-    return util.domain_or_parent_in(util.domain_from_link(syndication_url),
-                                    (source.GR_CLASS.DOMAIN,))
-
   results = {}
   # save the results (or lack thereof) to the db, and put them in a
   # map for immediate use
-  for syndication_url in syndication_urls:
-    # short circuit out on other domains, don't even follow redirects
-    # https://github.com/snarfed/bridgy/issues/624
-    if not is_our_silo(syndication_url):
-      continue
-
-    # follow redirects to give us the canonical syndication url --
-    # gives the best chance of finding a match.
-    syndication_url = util.follow_redirects(syndication_url).url
+  for url in syndication_urls:
     # source-specific logic to standardize the URL. (e.g., replace facebook
     # username with numeric id)
-    syndication_url = source.canonicalize_syndication_url(syndication_url)
-    # check that the syndicated url belongs to this source
-    #
+    url = source.canonicalize_url(url)
+    if not url:
+      continue
+
     # TODO: save future lookups by saving results for other sources too (note:
     # query the appropriate source subclass by author.domains, rather than
     # author.domain_urls)
-    if is_our_silo(syndication_url):
-      # we may have already seen this relationship, save a DB lookup by
-      # finding it in the preexisting list
-      relationship = next((sp for sp in preexisting
-                           if sp.syndication == syndication_url
-                           and sp.original == permalink), None)
-      if not relationship:
-        logging.debug('saving discovered relationship %s -> %s',
-                      syndication_url, permalink)
-        relationship = SyndicatedPost.insert(
-          source, syndication=syndication_url, original=permalink)
-      results.setdefault(syndication_url, []).append(relationship)
+    #
+    # we may have already seen this relationship, save a DB lookup by
+    # finding it in the preexisting list
+    relationship = next((sp for sp in preexisting
+                         if sp.syndication == url
+                         and sp.original == permalink), None)
+    if not relationship:
+      logging.debug('saving discovered relationship %s -> %s', url, permalink)
+      relationship = SyndicatedPost.insert(
+        source, syndication=url, original=permalink)
+    results.setdefault(url, []).append(relationship)
+
   return results
 
 

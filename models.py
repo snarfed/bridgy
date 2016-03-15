@@ -4,8 +4,6 @@
 import datetime
 import json
 import logging
-import pprint
-import re
 
 import appengine_config
 from appengine_config import HTTP_TIMEOUT
@@ -98,6 +96,9 @@ class Source(StringIdModel):
   # Maps Publish.type (e.g. 'like') to source-specific human readable type label
   # (e.g. 'favorite'). Subclasses should override this.
   TYPE_LABELS = {}
+
+  # subclasses should override this
+  URL_CANONICALIZER = util.UrlCanonicalizer(headers=util.USER_AGENT_HEADER)
 
   created = ndb.DateTimeProperty(auto_now_add=True, required=True)
   url = ndb.StringProperty()
@@ -544,26 +545,9 @@ class Source(StringIdModel):
     domains = [util.domain_from_link(url) for url in urls]
     return urls, domains
 
-  def canonicalize_syndication_url(self, syndication_url, scheme='https',
-                                   subdomain='', **kwargs):
-    """Perform source-specific transforms to the syndication URL for cases
-    where multiple silo URLs can point to the same content.  By
-    standardizing on one format, original_post_discovery stands the
-    best chance of finding the relationship between the original and
-    its syndicated copies.
-
-    Args:
-      syndication_url: a string, the url of the syndicated content
-      scheme: a string, the canonical scheme for this source (https by default)
-      subdomain: a string, the canonical subdomain, e.g. 'www.'
-        (blank by default)
-      kwargs: may be used by subclasses
-
-    Return:
-      a string, the canonical form of the syndication url
-    """
-    return re.sub('^https?://(www\.)?', scheme + '://' + subdomain,
-                  syndication_url)
+  def canonicalize_url(self, url, activity=None, **kwargs):
+    """Canonicalizes a post or object URL. Passes through to UrlCanonicalizer."""
+    return self.URL_CANONICALIZER(url, **kwargs) if self.URL_CANONICALIZER else url
 
   def infer_profile_url(self, url):
     """Given an arbitrary URL representing a person, try to find their

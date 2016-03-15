@@ -30,6 +30,14 @@ class Flickr(models.Source):
   GR_CLASS = gr_flickr.Flickr
   SHORT_NAME = 'flickr'
 
+  URL_CANONICALIZER = util.UrlCanonicalizer(
+    domain=GR_CLASS.DOMAIN,
+    approve=r'https://www\.flickr\.com/(photos|people)/[^/?]+/([^/?]+/)?',
+    reject=r'https://login\.yahoo\.com/.*',
+    subdomain='www',
+    trailing_slash=True,
+    headers=util.USER_AGENT_HEADER)
+
   # unique name optionally used in URLs instead of nsid (e.g.,
   # flickr.com/photos/username)
   username = ndb.StringProperty()
@@ -74,7 +82,7 @@ class Flickr(models.Source):
       del kwargs['min_id']
     return self.gr_source.get_activities_response(*args, **kwargs)
 
-  def canonicalize_syndication_url(self, url, **kwargs):
+  def canonicalize_url(self, url, activity=None, **kwargs):
     if not url.endswith('/'):
       url = url + '/'
     if self.username:
@@ -82,9 +90,7 @@ class Flickr(models.Source):
                         'flickr.com/photos/%s/' % self.key.id())
       url = url.replace('flickr.com/people/%s/' % self.username,
                         'flickr.com/people/%s/' % self.key.id())
-    url = super(Flickr, self).canonicalize_syndication_url(
-      url, scheme='https', subdomain='www.')
-    return url
+    return super(Flickr, self).canonicalize_url(url, **kwargs)
 
 
 class AuthHandler(util.Handler):

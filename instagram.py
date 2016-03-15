@@ -32,13 +32,21 @@ import webapp2
 
 
 class Instagram(models.Source):
-  """A instagram account.
+  """An Instagram account.
 
   The key name is the username.
   """
 
   GR_CLASS = gr_instagram.Instagram
   SHORT_NAME = 'instagram'
+
+  URL_CANONICALIZER = util.UrlCanonicalizer(
+    domain=GR_CLASS.DOMAIN,
+    subdomain='www',
+    approve=r'https://www.instagram.com/p/[^/?]+/',
+    trailing_slash=True,
+    headers=util.USER_AGENT_HEADER)
+    # no reject regexp; non-private Instagram post URLs just 404
 
   @staticmethod
   def new(handler, auth_entity=None, **kwargs):
@@ -76,13 +84,6 @@ class Instagram(models.Source):
     if 'min_id' in kwargs:
       del kwargs['min_id']
     return self.gr_source.get_activities_response(*args, **kwargs)
-
-  def canonicalize_syndication_url(self, syndication_url, **kwargs):
-    """Instagram-specific standardization of syndicated urls. Canonical form
-    is http://instagram.com
-    """
-    return super(Instagram, self).canonicalize_syndication_url(
-      syndication_url, scheme='http')
 
 
 class OAuthCallback(oauth_instagram.CallbackHandler, util.Handler):

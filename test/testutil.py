@@ -139,6 +139,9 @@ class FakeSource(Source):
   SHORT_NAME = 'fake'
   TYPE_LABELS = {'post': 'FakeSource post label'}
   RATE_LIMITED_POLL = datetime.timedelta(hours=30)
+  URL_CANONICALIZER = util.UrlCanonicalizer(
+    domain=GR_CLASS.DOMAIN,
+    headers=util.USER_AGENT_HEADER)
 
   string_id_counter = 1
   gr_source = FakeGrSource()
@@ -264,18 +267,18 @@ class ModelsTest(HandlerTest):
     # activities
     self.activities = [{
       'id': 'tag:source.com,2013:%s' % id,
-      'url': 'http://source/post/url',
+      'url': 'http://fa.ke/post/url',
       'object': {
         'objectType': 'note',
         'id': 'tag:source.com,2013:%s' % id,
-        'url': 'http://source/post/url',
+        'url': 'http://fa.ke/post/url',
         'content': 'foo http://target1/post/url bar',
         'to': [{'objectType':'group', 'alias':'@public'}],
         'replies': {
           'items': [{
               'objectType': 'comment',
               'id': 'tag:source.com,2013:1_2_%s' % id,
-              'url': 'http://source/comment/url',
+              'url': 'http://fa.ke/comment/url',
               'content': 'foo bar',
               }],
           'totalItems': 1,
@@ -305,7 +308,7 @@ class ModelsTest(HandlerTest):
       obj = activity['object']
       pruned_activity = {
         'id': activity['id'],
-        'url': 'http://source/post/url',
+        'url': 'http://fa.ke/post/url',
         'object': {
           'content': 'foo http://target1/post/url bar',
           }

@@ -106,10 +106,10 @@ class FlickrTest(testutil.ModelsTest):
     self.flickr.preprocess_for_publish(activity)
     self.assert_equals(expected_urls, [t['url'] for t in activity['object']['tags']])
 
-  def test_canonicalize_syndication_url(self):
+  def test_canonicalize_url(self):
     def check(expected, url):
       for input in expected, url:
-        self.assertEquals(expected, self.flickr.canonicalize_syndication_url(input))
+        self.assertEquals(expected, self.flickr.canonicalize_url(input))
 
     check('https://www.flickr.com/photos/xyz/123/',
           'http://flickr.com/photos/xyz/123')
@@ -121,3 +121,6 @@ class FlickrTest(testutil.ModelsTest):
           'http://flickr.com/photos/mee/123')
     check('https://www.flickr.com/people/39216764@N00/',
           'http://flickr.com/people/mee')
+
+    self.assertIsNone(self.flickr.canonicalize_url(
+      'https://login.yahoo.com/config/login?...'))

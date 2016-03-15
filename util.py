@@ -146,7 +146,7 @@ def email_me(**kwargs):
 
 
 def requests_get(url, **kwargs):
-  """Wraps requests.get and injects our timeout and user agent.
+  """Wraps requests.get with extra semantics and our user agent.
 
   If a server tells us a response will be too big (based on Content-Length), we
   hijack the response and return 599 and an error response body instead. We pass

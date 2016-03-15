@@ -28,6 +28,12 @@ class GooglePlusPage(models.Source):
   GR_CLASS = gr_googleplus.GooglePlus
   SHORT_NAME = 'googleplus'
 
+  URL_CANONICALIZER = util.UrlCanonicalizer(
+    domain=GR_CLASS.DOMAIN,
+    approve=r'https://plus\.google\.com/[^/?]+/posts/[^/?]+',
+    headers=util.USER_AGENT_HEADER)
+    # no reject regexp; non-private G+ post URLs just 404
+
   # We're currently close to the G+ API's daily limit of 10k requests per day.
   # So low! :/ Usage history:
   # QPS: https://cloud.google.com/console/project/1029605954231
@@ -83,14 +89,6 @@ class GooglePlusPage(models.Source):
     """Returns the poll frequency for this source."""
     return (self.RATE_LIMITED_POLL if self.rate_limited
             else super(GooglePlusPage, self).poll_period())
-
-  def canonicalize_syndication_url(self, url, **kwargs):
-    """Follow redirects to find and use profile nicknames instead of ids.
-
-    ...e.g. +RyanBarrett in https://plus.google.com/+RyanBarrett/posts/JPpA8mApAv2.
-    """
-    return super(GooglePlusPage, self).canonicalize_syndication_url(
-      util.follow_redirects(url).url)
 
   def search_for_links(self):
     """Searches for activities with links to any of this source's web sites.
