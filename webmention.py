@@ -150,8 +150,9 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
         "Invalid argument, 'thread': Unable to find thread" in resp or
         # expected for partially set up tumblr accounts
         "we haven't found your Disqus account" in resp or
-        # Twitter duplicate publish attempt
-        'Status is a duplicate.' in resp):
+        # Twitter duplicate publish attempts
+        'Status is a duplicate.' in resp or
+        'You have already favorited this status.' in resp):
       return
 
     subject = '%s %s' % (self.__class__.__name__,
