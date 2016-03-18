@@ -472,11 +472,17 @@ is <a href="http://help.instagram.com/448523408565555">private</a>, so Bridgy
 handles all Instagram photos and comments. If your Instagram account is private,
 don't sign it up for Bridgy!
 </li>
-<li>Facebook's API isn't great about this either.
+<li><p>Facebook's API isn't great about this either.
 <a href="https://github.com/snarfed/bridgy/issues/611">Sometimes it doesn't give
 us enough information to tell whether a post is public or private.</a> When that
 happens, we have to default to assuming it's not public, which means we
-occasionally miss posts (usually photos) that look public inside Facebook.
+occasionally miss posts (usually photos) that look public inside Facebook. This
+often happens when Facebook automatically consolidates photos into "X added N
+new photos." posts. (Sometimes the UI isn't clear either! The post, photo, and
+album may show different privacy settings, or none at all.)</p>
+<p>You can avoid this problem by posting photos to albums that are explicitly
+set to public. You can also avoid the auto-consolidated posts by adding photos
+to the Timeline Photos album specifically.</p>
 </li>
 <li>Is it on an older post? Bridgy only looks at your 50 most recent posts. It
 doesn't go back arbitrarily far because that doesn't scale. You can get around
