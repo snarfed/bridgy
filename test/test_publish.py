@@ -344,18 +344,18 @@ foo
 
   def test_no_content(self):
     self.expect_requests_get('http://foo.com/bar',
-                             '<article class="h-entry h-as-note"></article>')
+                             '<article class="h-entry"></article>')
     self.mox.ReplayAll()
 
-    self.assert_error('or no content was found')
+    self.assert_error('Could not find content')
     self.assertEquals('failed', Publish.query().get().status)
 
   def test_no_content_ignore_formatting(self):
     self.expect_requests_get('http://foo.com/bar',
-                             '<article class="h-entry h-as-note"></article>')
+                             '<article class="h-entry"></article>')
     self.mox.ReplayAll()
 
-    self.assert_error('or no content was found',
+    self.assert_error('Could not find content',
                       params={'bridgy_ignore_formatting': ''})
     self.assertEquals('failed', Publish.query().get().status)
 
@@ -374,8 +374,9 @@ foo
     self.assert_created('foo - http://foo.com/bar')
 
   def test_type_not_implemented(self):
-    self.expect_requests_get('http://foo.com/bar',
-                             '<article class="h-entry h-as-like"></article>')
+    self.expect_requests_get('http://foo.com/bar', """
+<article class="h-entry"><a class="u-like-of" href="xyz">W</a></article>""")
+    self.expect_requests_get('http://foo.com/xyz', '')
     self.mox.ReplayAll()
 
     # FakeSource.create() raises NotImplementedError on likes
@@ -514,7 +515,7 @@ this is my article
   def test_returned_type_overrides(self):
     # FakeSource returns type 'post' when it sees 'rsvp'
     self.expect_requests_get('http://foo.com/bar', """
-<article class="h-entry h-as-rsvp">
+<article class="h-entry">
 <p class="e-content">
 <data class="p-rsvp" value="yes"></data>
 <a class="u-in-reply-to" href="http://fa.ke/event"></a>
@@ -904,7 +905,7 @@ foo<br /> <blockquote>bar</blockquote>
                              use_mock_anything=True)
 
     self.expect_requests_get('http://foo.com/bar', """
-    <article class="h-entry h-as-rsvp">
+    <article class="h-entry">
      <div class="e-content">
       <span class="p-rsvp" value="yes">yes</span>
       <a class="u-in-reply-to" href="http://fa.ke/homebrew-website-club"></a>

@@ -78,7 +78,7 @@ class HandlersTest(testutil.HandlerTest):
   <a class="u-mention" href="http://other/link"></a>
   </div>
 
-<span class="u-category h-card h-card">
+<span class="u-category h-card">
 <a class="u-url" href="http://or.ig">http://or.ig</a>
 <a class="u-url" href="https://fa.ke"></a>
 
@@ -205,7 +205,7 @@ asdf http://other/link qwert
   <a class="u-mention" href="http://other/link"></a>
   </div>
 
-<span class="u-category h-card h-card">
+<span class="u-category h-card">
 <a class="u-url" href="http://or.ig">http://or.ig</a>
 <a class="u-url" href="https://fa.ke"></a>
 
@@ -230,7 +230,7 @@ asdf http://other/link qwert
     }
 
     resp = self.check_response('/like/fake/%s/000/111', """\
-<article class="h-entry h-as-like">
+<article class="h-entry">
 <span class="p-uid">tag:fa.ke,2013:111</span>
 
   <span class="p-author h-card">
@@ -273,7 +273,7 @@ asdf http://other/link qwert
     }
 
     self.check_response('/repost/fake/%s/000/111', """\
-<article class="h-entry h-as-share">
+<article class="h-entry">
 <span class="p-uid">tag:fa.ke,2013:111</span>
 
   <span class="p-author h-card">
@@ -309,7 +309,7 @@ asdf http://other/link qwert
     }
 
     self.check_response('/rsvp/fake/%s/000/111', """\
-<article class="h-entry h-as-rsvp">
+<article class="h-entry">
 <span class="p-uid">tag:fa.ke,2013:111</span>
 
   <span class="p-author h-card">
