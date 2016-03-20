@@ -10,7 +10,8 @@ from requests.exceptions import HTTPError
 
 from facebook import FacebookPage
 from models import SyndicatedPost
-from original_post_discovery import discover, refetch, MAX_PERMALINK_FETCHES
+import original_post_discovery
+from original_post_discovery import discover, refetch
 import testutil
 
 
@@ -482,16 +483,32 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.assert_discover([])
 
   def test_permalink_limit(self):
-    letters = string.ascii_letters[:MAX_PERMALINK_FETCHES + 1]
-    self.expect_requests_get('http://author', """
-    <html class="h-feed">""" + '\n'.join("""
-      <div class="h-entry">
-        <a class="u-url" href="http://author/%s"></a>
-      </div>""" % l for l in letters) + """
-    </html>""")
+    self.mox.stubs.Set(original_post_discovery, 'MAX_PERMALINK_FETCHES', 3)
 
-    for l in letters[:-1]:
-      self.expect_requests_get('http://author/%s' % l)
+    self.expect_requests_get('http://author', """
+<html><body>
+<div class="h-feed first">
+  <div class="h-entry"><a class="u-url" href="http://author/a"></a></div>
+  <div class="h-entry"><a class="u-url" href="http://author/b"></a></div>
+  <div class="h-entry">
+    <a class="u-url" href="http://author/c"></a>
+    <time class="dt-published" datetime="2016-01-03T00:00:00-00:00">
+  </div>
+</div>
+<div class="h-feed first">
+  <div class="h-entry"><a class="u-url" href="http://author/d"></a></div>
+  <div class="h-entry">
+    <a class="u-url" href="http://author/e"></a>
+    <time class="dt-published" datetime="2016-01-02T00:00:00-00:00">
+  </div>
+  <div class="h-entry"><a class="u-url" href="http://author/f"></a></div>
+</div>
+</body></html>""")
+
+    # should sort by dt-updated/dt-published, then feed order
+    self.expect_requests_get('http://author/c')
+    self.expect_requests_get('http://author/e')
+    self.expect_requests_get('http://author/a')
 
     self.mox.ReplayAll()
     self.assert_discover([])

@@ -34,6 +34,7 @@ import requests
 import urlparse
 import util
 
+from granary import microformats2
 from granary import source as gr_source
 from google.appengine.api.datastore import MAX_ALLOWABLE_QUERIES
 import models
@@ -300,6 +301,13 @@ def _process_author(source, author_url, refetch=False, store_blanks=True):
     except BaseException:
       logging.warning('Could not fetch h-feed url %s.', feed_url,
                       exc_info=True)
+
+  # sort by dt-updated/dt-published
+  def updated_or_published(item):
+    props = microformats2.first_props(item.get('properties'))
+    return props.get('updated') or props.get('published')
+
+  feeditems.sort(key=updated_or_published, reverse=True)
 
   permalink_to_entry = collections.OrderedDict()
   for child in feeditems:
