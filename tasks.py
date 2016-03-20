@@ -193,7 +193,7 @@ class Poll(webapp2.RequestHandler):
     public = {}
     private = {}
     for id, activity in activities.items():
-      (public if Source.is_public(activity) else private)[id] = activity
+      (public if source.is_activity_public(activity) else private)[id] = activity
     logging.info('Found %d public activities: %s', len(public), public.keys())
     logging.info('Found %d private activities: %s', len(private), private.keys())
 
@@ -336,7 +336,8 @@ class Poll(webapp2.RequestHandler):
       resp_entity = Response(
         id=id,
         source=source.key,
-        activities_json=[json.dumps(util.prune_activity(a)) for a in activities],
+        activities_json=[json.dumps(util.prune_activity(a, source))
+                         for a in activities],
         response_json=json.dumps(pruned_response),
         type=resp_type,
         unsent=list(urls_to_activity.keys()),
@@ -668,14 +669,6 @@ class PropagateResponse(SendWebmentions):
     if not self.lease(ndb.Key(urlsafe=self.request.params['response_key'])):
       return
 
-    self.activities = [json.loads(a) for a in self.entity.activities_json]
-    response_obj = json.loads(self.entity.response_json)
-    if (not Source.is_public(response_obj) or
-        not all(Source.is_public(a) for a in self.activities)):
-      logging.info('Response or activity is non-public. Dropping.')
-      self.complete()
-      return
-
     source = self.entity.source.get()
     if not source:
       logging.warning('Source not found! Dropping response.')
@@ -686,6 +679,14 @@ class PropagateResponse(SendWebmentions):
                  self.request.host_url,
                  calendar.timegm(self.entity.created.utctimetuple()) - 61,
                  source.key.urlsafe())
+
+    self.activities = [json.loads(a) for a in self.entity.activities_json]
+    response_obj = json.loads(self.entity.response_json)
+    if (not source.is_activity_public(response_obj) or
+        not all(source.is_activity_public(a) for a in self.activities)):
+      logging.info('Response or activity is non-public. Dropping.')
+      self.complete()
+      return
 
     self.send_webmentions()
 

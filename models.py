@@ -611,6 +611,13 @@ class Source(StringIdModel):
     """
     return False
 
+  def is_activity_public(self, activity):
+    """Returns True if the given activity is public, False otherwise.
+
+    Just wraps granary's Source.is_public. Subclasses may override.
+    """
+    return gr_source.Source.is_public(activity)
+
 
 class Webmentions(StringIdModel):
   """A bundle of links to send webmentions for.

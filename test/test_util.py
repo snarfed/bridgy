@@ -89,7 +89,7 @@ class UtilTest(testutil.ModelsTest):
       ({'id': 1, 'object': {'id': 2}},) * 2,
       ({'fb_id': 1, 'object': {'fb_object_id': 2}},) * 2,
       ):
-      self.assert_equals(expected, util.prune_activity(orig))
+      self.assert_equals(expected, util.prune_activity(orig, self.sources[0]))
 
   def test_webmention_tools_relative_webmention_endpoint_in_body(self):
     super(testutil.HandlerTest, self).expect_requests_get('http://target/', """

@@ -223,14 +223,14 @@ def in_webmention_blacklist(domain):
   return util.domain_or_parent_in(domain.lower(), BLACKLIST)
 
 
-def prune_activity(activity):
+def prune_activity(activity, source):
   """Prunes an activity down to just id, url, content, to, and object, in place.
 
   If the object field exists, it's pruned down to the same fields. Any fields
   duplicated in both the activity and the object are removed from the object.
 
   Note that this only prunes the to field if it says the activity is public,
-  since granary.Source.is_public() defaults to saying an activity is
+  since granary's Source.is_public() defaults to saying an activity is
   public if the to field is missing. If that ever changes, we'll need to
   start preserving the to field here.
 
@@ -240,13 +240,13 @@ def prune_activity(activity):
   Returns: pruned activity dict
   """
   keep = ['id', 'url', 'content', 'fb_id', 'fb_object_id', 'fb_object_type']
-  if not gr_source.Source.is_public(activity):
+  if not source.is_activity_public(activity):
     keep += ['to']
   pruned = {f: activity.get(f) for f in keep}
 
   obj = activity.get('object')
   if obj:
-    obj = pruned['object'] = prune_activity(obj)
+    obj = pruned['object'] = prune_activity(obj, source)
     for k, v in obj.items():
       if pruned.get(k) == v:
         del obj[k]

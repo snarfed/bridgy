@@ -282,8 +282,8 @@ class UserHandler(DashboardHandler):
         r.response = json.loads(r.response_json)
         r.activities = [json.loads(a) for a in r.activities_json]
 
-        if (not gr_source.Source.is_public(r.response) or
-            not all(gr_source.Source.is_public(a) for a in r.activities)):
+        if (not self.source.is_activity_public(r.response) or
+            not all(self.source.is_activity_public(a) for a in r.activities)):
           continue
         elif r.type == 'post':
           r.activities = []
