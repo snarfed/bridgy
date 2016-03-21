@@ -9,7 +9,6 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import logging
 import json
-import pprint
 
 import appengine_config
 

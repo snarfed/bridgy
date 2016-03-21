@@ -227,7 +227,6 @@ class FacebookPage(models.Source):
 
     resolved = self._load_cache('resolved_object_ids')
     if post_id not in resolved:
-      print post_id, activity
       resolved[post_id] = self.gr_source.resolve_object_id(
         self.key.id(), post_id, activity=activity)
 
