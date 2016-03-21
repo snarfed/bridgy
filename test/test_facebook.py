@@ -647,3 +647,7 @@ my message
         'source_key': self.fb.key.urlsafe(),
       }))
     self.assertEquals(201, resp.status_int)
+
+  def test_is_activity_public(self):
+    """Not a complete test, just checks the case when fb_id isn't set."""
+    self.assertTrue(self.fb.is_activity_public({}))

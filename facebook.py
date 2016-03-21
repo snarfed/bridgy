@@ -227,6 +227,7 @@ class FacebookPage(models.Source):
 
     resolved = self._load_cache('resolved_object_ids')
     if post_id not in resolved:
+      print post_id, activity
       resolved[post_id] = self.gr_source.resolve_object_id(
         self.key.id(), post_id, activity=activity)
 
@@ -239,7 +240,8 @@ class FacebookPage(models.Source):
     """
     obj = activity.get('object', {})
     fb_id = activity.get('fb_id') or obj.get('fb_id')
-    fb_id = self.cached_resolve_object_id(fb_id, activity=activity)
+    if fb_id:
+      fb_id = self.cached_resolve_object_id(fb_id, activity=activity)
 
     post_publics = self._load_cache('post_publics')
     public = gr_source.Source.is_public(activity)
