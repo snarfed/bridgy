@@ -127,6 +127,9 @@ class FacebookPageTest(testutil.ModelsTest):
     self.expect_api_call(gr_facebook.API_EVENT % '145304994', gr_test_facebook.EVENT)
     self.expect_api_call(gr_facebook.API_EVENT % '888', owned_event)
     self.expect_api_call('888/invited', {'data': gr_test_facebook.RSVPS})
+    self.expect_api_call('212038_888', {})
+    self.expect_api_call('212038_10100176064482163', {})
+    self.expect_api_call('212038_222', {})
     self.mox.ReplayAll()
 
     event_activity = self.fb.gr_source.event_to_activity(owned_event)
@@ -141,6 +144,7 @@ class FacebookPageTest(testutil.ModelsTest):
     self.expect_api_call('me/news.publishes', {'data': []})
     self.expect_api_call('me/photos/uploaded', {'data': [gr_test_facebook.PHOTO]})
     self.expect_api_call('me/events', {})
+    self.expect_api_call('212038_222', {})
     self.mox.ReplayAll()
 
     got = self.fb.get_activities()
@@ -169,6 +173,7 @@ class FacebookPageTest(testutil.ModelsTest):
     self.expect_api_call('me/news.publishes', {})
     self.expect_api_call('me/photos/uploaded', {})
     self.expect_api_call('me/events', {})
+    self.expect_api_call('212038_10100176064482163', {})
     self.mox.ReplayAll()
 
     self.assert_equals([activity], self.fb.get_activities())
@@ -186,6 +191,7 @@ class FacebookPageTest(testutil.ModelsTest):
     self.expect_api_call('me/news.publishes', {'data': [post_with_bad_comment]})
     self.expect_api_call('me/photos/uploaded', {})
     self.expect_api_call('me/events', {})
+    self.expect_api_call('212038_10100176064482163', {})
     self.mox.ReplayAll()
 
     # should only get the base activity, without the extra comment, and not the
@@ -197,6 +203,7 @@ class FacebookPageTest(testutil.ModelsTest):
     self.expect_api_call('me/feed?offset=0', {'data': [gr_test_facebook.POST]})
     self.expect_api_call('me/photos/uploaded', {})
     self.expect_api_call('me/events', {})
+    self.expect_api_call('108663232553079_10100176064482163', {})
     self.mox.ReplayAll()
     self.assert_equals([gr_test_facebook.ACTIVITY], self.page.get_activities())
 
