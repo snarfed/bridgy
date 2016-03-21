@@ -14,6 +14,7 @@ import urllib2
 
 import appengine_config
 
+from google.appengine.ext import ndb
 import granary
 from granary import facebook as gr_facebook
 from granary.test import test_facebook as gr_test_facebook
@@ -27,7 +28,7 @@ import models
 import publish
 import tasks
 import testutil
-
+import util
 
 class FacebookPageTest(testutil.ModelsTest):
 
@@ -77,6 +78,15 @@ class FacebookPageTest(testutil.ModelsTest):
       'https://graph.facebook.com/v2.2/%s%saccess_token=my_token' %
         (path, join_char),
       response, **kwargs)
+
+  def poll(self):
+    resp = tasks.application.get_response(
+      '/_ah/queue/poll', method='POST', body=urllib.urlencode({
+          'source_key': self.fb.key.urlsafe(),
+          'last_polled': self.fb.key.get().last_polled.strftime(
+            util.POLL_TASK_DATETIME_FORMAT),
+          }))
+    self.assertEqual(200, resp.status_int)
 
   def test_new(self):
     self.assertEqual(self.auth_entity, self.fb.auth_entity.get())
@@ -368,15 +378,54 @@ class FacebookPageTest(testutil.ModelsTest):
     </html>""")
 
     self.mox.ReplayAll()
+    self.poll()
 
-    resp = tasks.application.get_response(
-      '/_ah/queue/poll', method='POST', body=urllib.urlencode({
-          'source_key': self.fb.key.urlsafe(),
-          'last_polled': '1970-01-01-00-00-00',
-          }))
-    self.assertEqual(200, resp.status_int)
-    for resp in models.Response.query():
+    resps = list(models.Response.query())
+    self.assertEquals(2, len(resps))
+    for resp in resps:
       self.assertEqual(['http://my.orig/post'], resp.unsent)
+
+  def test_privacy_cache(self):
+    """End to end test of the post_privacy_json cache.
+
+    https://github.com/snarfed/bridgy/issues/633#issuecomment-198806909
+    """
+    # first poll. only return post, with privacy and object_id, no responses.
+    photo_post = copy.deepcopy(gr_test_facebook.PHOTO_POST)
+    del photo_post['comments']
+    del photo_post['likes']
+    photo = copy.deepcopy(gr_test_facebook.PHOTO)
+    del photo['comments']
+    del photo['likes']
+
+    self.expect_api_call('me/feed?offset=0&limit=50', {'data': [photo_post]})
+    self.expect_api_call('me/news.publishes', {})
+    self.expect_api_call('me/photos/uploaded', {'data': [photo]})
+    self.expect_api_call('me/events', {})
+    self.expect_api_call('sharedposts?ids=222', {})
+    self.expect_api_call('comments?filter=stream&ids=222', {})
+    self.expect_api_call('212038_222', {'id': '0', 'object_id': '222'})
+
+    # second poll. only return photo. should use post's cached privacy and
+    # object_id mapping.
+    assert 'privacy' not in gr_test_facebook.PHOTO
+    self.expect_api_call('me/feed?offset=0&limit=50', {})
+    self.expect_api_call('me/news.publishes', {})
+    self.expect_api_call('me/photos/uploaded', {'data': [gr_test_facebook.PHOTO]})
+    self.expect_api_call('me/events', {})
+    self.expect_api_call('sharedposts?ids=222', {})
+    self.expect_api_call('comments?filter=stream&ids=222', {})
+
+    self.mox.ReplayAll()
+
+    self.poll()
+    self.assertEquals(0, models.Response.query().count())
+
+    self.poll()
+    self.assert_equals(
+      (ndb.Key('Response', 'tag:facebook.com,2013:222_10559'),
+       ndb.Key('Response', 'tag:facebook.com,2013:222_liked_by_666')),
+      models.Response.query().fetch(keys_only=True))
 
   def test_on_new_syndicated_post(self):
     # username is already set

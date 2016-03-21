@@ -32,7 +32,7 @@ import appengine_config
 
 from granary import facebook as gr_facebook
 from oauth_dropins import facebook as oauth_facebook
-from granary.source import SELF
+from granary import source as gr_source
 import models
 import util
 
@@ -67,6 +67,7 @@ DEAD_TOKEN_ERROR_MESSAGES = frozenset((
 ))
 
 MAX_RESOLVED_OBJECT_IDS = 200
+MAX_POST_PUBLICS = 200
 
 
 class FacebookPage(models.Source):
@@ -86,13 +87,17 @@ class FacebookPage(models.Source):
     headers=util.USER_AGENT_HEADER)
     # no reject regexp; non-private FB post URLs just 404
 
-  # unique name used in fb URLs, e.g. facebook.com/[username]
+  # unique name used in FB URLs, e.g. facebook.com/[username]
   username = ndb.StringProperty()
   # inferred from syndication URLs if username isn't available
   inferred_username = ndb.StringProperty()
-  # maps string post ids to string facebook object ids or None. background:
+  # maps string FB post id to string FB object id or None. background:
   # https://github.com/snarfed/bridgy/pull/513#issuecomment-149312879
   resolved_object_ids_json = ndb.TextProperty(compressed=True)
+  # maps string FB post id to True or False for whether the post is public
+  # or private. only contains posts with *known* privacy. background:
+  # https://github.com/snarfed/bridgy/issues/633#issuecomment-198806909
+  post_publics_json = ndb.TextProperty(compressed=True)
 
   @staticmethod
   def new(handler, auth_entity=None, **kwargs):
@@ -129,7 +134,7 @@ class FacebookPage(models.Source):
     kwargs.setdefault('event_owner_id', self.key.id())
 
     try:
-      return super(FacebookPage, self).get_activities_response(**kwargs)
+      activities = super(FacebookPage, self).get_activities_response(**kwargs)
     except urllib2.HTTPError as e:
       code, body = util.interpret_http_exception(e)
       # use a function so any new exceptions (JSON decoding, missing keys) don't
@@ -156,6 +161,12 @@ class FacebookPage(models.Source):
         raise models.DisableSource()
 
       raise
+
+    # update the post_publics cache
+    for activity in activities['items']:
+      self.is_activity_public(activity)
+
+    return activities
 
   def canonicalize_url(self, url, activity=None, **kwargs):
     """Facebook-specific standardization of syndicated urls. Canonical form is
@@ -210,38 +221,73 @@ class FacebookPage(models.Source):
 
     Returns: string Facebook object id or None
     """
-    if self.updates is None:
-      self.updates = {}
-
     parsed = gr_facebook.Facebook.parse_id(post_id)
     if parsed.post:
       post_id = parsed.post
 
-    resolved = self.updates.setdefault('resolved_object_ids', {})
-    if self.resolved_object_ids_json and not resolved:
-      resolved = self.updates['resolved_object_ids'] = json.loads(
-        self.resolved_object_ids_json)
-
+    resolved = self._load_cache('resolved_object_ids')
     if post_id not in resolved:
       resolved[post_id] = self.gr_source.resolve_object_id(
         self.key.id(), post_id, activity=activity)
 
     return resolved[post_id]
 
-  def _pre_put_hook(self):
-    """Encode updates['resolved_object_ids'] into resolved_object_ids_json.
+  def is_activity_public(self, activity):
+    """Returns True if the given activity is public, False otherwise.
 
-    ...and cap it at MAX_RESOLVED_OBJECT_IDS.
+    Uses the post_publics cache if we can't tell otherwise.
     """
-    if self.updates:
-      resolved = self.updates.get('resolved_object_ids')
-      if resolved:
-        keep = heapq.nlargest(
-          MAX_RESOLVED_OBJECT_IDS,
-          (int(id) if util.is_int(id) else id for id in resolved.keys()))
-        logging.info('Saving %s resolved Facebook post ids.', len(keep))
-        self.resolved_object_ids_json = json.dumps(
-          {str(id): resolved[str(id)] for id in keep})
+    obj = activity.get('object', {})
+    fb_id = activity.get('fb_id') or obj.get('fb_id')
+    fb_id = self.cached_resolve_object_id(fb_id, activity=activity)
+
+    post_publics = self._load_cache('post_publics')
+    public = gr_source.Source.is_public(activity)
+
+    if not fb_id:
+      return public
+    elif public is not None:
+      post_publics[fb_id] = public    # write cache
+      return public
+    else:
+      return post_publics.get(fb_id)  # read cache
+
+  def _load_cache(self, name):
+    """Loads resolved_object_ids_json or post_publics_json into self.updates."""
+    assert name in ('resolved_object_ids', 'post_publics')
+    field = getattr(self, name + '_json')
+
+    if self.updates is None:
+      self.updates = {}
+    loaded = self.updates.setdefault(name, {})
+
+    if not loaded and field:
+      loaded = self.updates[name] = json.loads(field)
+    return loaded
+
+  def _save_cache(self, name):
+    """Writes resolved_object_ids or post_publics from self.updates to _json."""
+    if self.updates is None:
+      return
+
+    assert name in ('resolved_object_ids', 'post_publics')
+    max = globals()['MAX_' + name.upper()]
+    val = self.updates.get(name)
+    if val:
+      keep = heapq.nlargest(max,
+        (int(id) if util.is_int(id) else id for id in val.keys()))
+      setattr(self, name + '_json',
+              json.dumps({str(id): val[str(id)] for id in keep}))
+
+  def _pre_put_hook(self):
+    """Encode the resolved_object_ids and post_publics fields from updates.
+
+    ...and cap them at MAX_RESOLVED_OBJECT_IDS and MAX_POST_PUBLICS. Tries to
+    keep the latest ones by assuming that ids are roughly monotonically
+    increasing.
+    """
+    self._save_cache('resolved_object_ids')
+    self._save_cache('post_publics')
 
   def infer_profile_url(self, url):
     """Find a Facebook profile URL (ideally the one with the user's numeric ID)
