@@ -7,8 +7,8 @@ blacklist:
 - subnet: 2607:5300:60:73e5::/48
   description: Domain Re-Animator Bot. high volume, disobeys robots.txt.
 
-- subnet: 178.62.33.183
-  description: Jay Funabashi crawling all of his responses. (https://brid.gy/facebook/10153584798226153 , http://j4y.co/ )
+# - subnet: 178.62.33.183
+#   description: Jay Funabashi crawling all of his responses. (https://brid.gy/facebook/10153584798226153 , http://j4y.co/ )
 
 # background: https://github.com/snarfed/bridgy/issues/578#issuecomment-196553529
 # doesn't actually matter because handlers respond to HEADs with blind 200s
