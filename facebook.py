@@ -162,7 +162,17 @@ class FacebookPage(models.Source):
 
       raise
 
-    # update the post_publics cache
+    # update the resolved_object_ids and post_publics caches
+    resolved = self._load_cache('resolved_object_ids')
+    for activity in activities['items']:
+      obj = activity.get('object', {})
+      obj_id = obj.get('fb_id') or activity.get('fb_id')
+      ids = obj.get('fb_object_for_ids') or activity.get('fb_object_for_ids')
+      if obj_id and ids:
+        resolved[obj_id] = obj_id
+        for id in ids:
+          resolved[id] = obj_id
+
     for activity in activities['items']:
       self.is_activity_public(activity)
 

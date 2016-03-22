@@ -129,7 +129,6 @@ class FacebookPageTest(testutil.ModelsTest):
     self.expect_api_call('888/invited', {'data': gr_test_facebook.RSVPS})
     self.expect_api_call('212038_888', {})
     self.expect_api_call('212038_10100176064482163', {})
-    self.expect_api_call('212038_222', {})
     self.mox.ReplayAll()
 
     event_activity = self.fb.gr_source.event_to_activity(owned_event)
@@ -144,7 +143,6 @@ class FacebookPageTest(testutil.ModelsTest):
     self.expect_api_call('me/news.publishes', {'data': []})
     self.expect_api_call('me/photos/uploaded', {'data': [gr_test_facebook.PHOTO]})
     self.expect_api_call('me/events', {})
-    self.expect_api_call('212038_222', {})
     self.mox.ReplayAll()
 
     got = self.fb.get_activities()
@@ -206,6 +204,27 @@ class FacebookPageTest(testutil.ModelsTest):
     self.expect_api_call('108663232553079_10100176064482163', {})
     self.mox.ReplayAll()
     self.assert_equals([gr_test_facebook.ACTIVITY], self.page.get_activities())
+
+  def test_get_activities_populates_resolved_ids(self):
+    self.expect_api_call('me/feed?offset=0', {'data': [
+      {'id': '1', 'object_id': '2'},
+      {'id': '3', 'object_id': '4'},
+    ]})
+    self.expect_api_call('me/news.publishes', {})
+    self.expect_api_call('me/photos/uploaded', {'data': [
+      {'id': '2', 'privacy': 'everyone'},
+      {'id': '4', 'privacy': 'everyone'},
+    ]})
+    self.expect_api_call('me/events', {})
+    self.mox.ReplayAll()
+
+    self.fb.get_activities()
+    self.assertEquals('2', self.fb.cached_resolve_object_id('1'))
+    self.assertEquals('4', self.fb.cached_resolve_object_id('3'))
+
+    self.fb.put()
+    self.assert_equals(json.dumps({'1': '2', '3': '4', '2': '2', '4': '4'}),
+                       self.fb.key.get().resolved_object_ids_json)
 
   def test_expired_sends_notification(self):
     self.expect_api_call('me/feed?offset=0',
@@ -378,7 +397,6 @@ class FacebookPageTest(testutil.ModelsTest):
 
     self.assertNotIn('222', gr_test_facebook.PHOTO_POST['id'])
     self.assertEquals('222', gr_test_facebook.PHOTO_POST['object_id'])
-    self.expect_api_call('212038_222', {'id': '0', 'object_id': '222'})
     self.expect_requests_get('http://my.orig/post', """
     <html class="h-entry">
       <a class="u-syndication" href="https://www.facebook.com/photo.php?fbid=222&set=a.995695740593.2393090.212038&type=1&theater'"></a>
@@ -392,8 +410,8 @@ class FacebookPageTest(testutil.ModelsTest):
     for resp in resps:
       self.assertEqual(['http://my.orig/post'], resp.unsent)
 
-  def test_privacy_cache(self):
-    """End to end test of the post_privacy_json cache.
+  def test_post_publics_json(self):
+    """End to end test of the post_publics_json cache.
 
     https://github.com/snarfed/bridgy/issues/633#issuecomment-198806909
     """
@@ -411,7 +429,6 @@ class FacebookPageTest(testutil.ModelsTest):
     self.expect_api_call('me/events', {})
     self.expect_api_call('sharedposts?ids=222', {})
     self.expect_api_call('comments?filter=stream&ids=222', {})
-    self.expect_api_call('212038_222', {'id': '0', 'object_id': '222'})
 
     # second poll. only return photo. should use post's cached privacy and
     # object_id mapping.
