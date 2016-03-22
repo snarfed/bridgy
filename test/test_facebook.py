@@ -128,7 +128,6 @@ class FacebookPageTest(testutil.ModelsTest):
     self.expect_api_call(gr_facebook.API_EVENT % '888', owned_event)
     self.expect_api_call('888/invited', {'data': gr_test_facebook.RSVPS})
     self.expect_api_call('212038_888', {})
-    self.expect_api_call('212038_10100176064482163', {})
     self.mox.ReplayAll()
 
     event_activity = self.fb.gr_source.event_to_activity(owned_event)
@@ -208,12 +207,12 @@ class FacebookPageTest(testutil.ModelsTest):
   def test_get_activities_populates_resolved_ids(self):
     self.expect_api_call('me/feed?offset=0', {'data': [
       {'id': '1', 'object_id': '2'},
-      {'id': '3', 'object_id': '4'},
+      {'id': '000_3', 'object_id': '000_4'},
     ]})
     self.expect_api_call('me/news.publishes', {})
     self.expect_api_call('me/photos/uploaded', {'data': [
       {'id': '2', 'privacy': 'everyone'},
-      {'id': '4', 'privacy': 'everyone'},
+      {'id': '000_4', 'privacy': 'everyone'},
     ]})
     self.expect_api_call('me/events', {})
     self.mox.ReplayAll()

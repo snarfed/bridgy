@@ -163,15 +163,19 @@ class FacebookPage(models.Source):
       raise
 
     # update the resolved_object_ids and post_publics caches
+    def parsed_post_id(id):
+      parsed = gr_facebook.Facebook.parse_id(id)
+      return parsed.post if parsed.post else id
+
     resolved = self._load_cache('resolved_object_ids')
     for activity in activities['items']:
       obj = activity.get('object', {})
-      obj_id = obj.get('fb_id') or activity.get('fb_id')
-      ids = obj.get('fb_object_for_ids') or activity.get('fb_object_for_ids')
+      obj_id = parsed_post_id(obj.get('fb_id'))
+      ids = obj.get('fb_object_for_ids')
       if obj_id and ids:
         resolved[obj_id] = obj_id
         for id in ids:
-          resolved[id] = obj_id
+          resolved[parsed_post_id(id)] = obj_id
 
     for activity in activities['items']:
       self.is_activity_public(activity)
