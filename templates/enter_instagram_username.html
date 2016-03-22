@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Instagram signup - Bridgy{% endblock %}
+
+{% block content %}
+
+<br />
+
+<form method="post" action="/instagram/confirm">
+<p class="row big">
+<label for="username">Enter your Instagram username:</label>
+</p>
+
+<div class="row">
+<input type="text" id="username" name="username" required
+       inputmode="latin-name" minlength="1" maxlength="30"
+       pattern="[a-zA-Z0-9._]+" title="letters, numbers, periods, and underscores"
+       placeholder="e.g. snarfed"
+        />
+  <input type="submit" class="btn btn-default" value="Go" />
+</div>
+</form>
+
+{% endblock %}

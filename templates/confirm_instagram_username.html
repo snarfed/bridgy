@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Confirm Instagram - Bridgy{% endblock %}
+
+{% block content %}
+
+<br />
+<p class="row big">Is this you?</p>
+
+<!-- <div id="user" class="row big"> -->
+<!-- <a target="_blank" href="{{ source.silo_url }}" title="{{ source.label|safe }}" -->
+<!--    rel="me" class="u-url"> -->
+<!--   <img class="profile u-photo" src="{{ source.picture }}" width="64px" /> -->
+<!--   <img src="/static/{{ source.SHORT_NAME }}_icon.png" /> -->
+<!--   <span class="p-name">{{ source.label_name|safe }}</span></a> -->
+<!-- </div> -->
+
+<iframe src="https://www.instagram.com/{{ username }}/"></iframe>
+
+<div class="row">
+<form method="post" action="/instagram/finish">
+  <input type="submit" id="good-button" class="btn btn-default"
+         value="Yes!" />
+</form>
+&nbsp;&nbsp;
+<form method="get" action="/instagram/start">
+  <input type="submit" id="bad-button" class="btn btn-default"
+         value="No." />
+</form>
+</div>
+
+{% endblock %}

@@ -273,7 +273,7 @@ button {
   margin-top: 1em;
 }
 
-#source-url {
+input[type="text"], input[type="url"] {
   padding-left: .3em;
   padding-right: .3em;
   border: 1px solid black;
@@ -345,4 +345,11 @@ iframe#twitter-widget-0 {
 
 .answer li {
   margin-bottom: .5em;
+}
+
+/* confirm_instagram.html */
+iframe {
+  width: 50%;
+  border: 1px solid gray;
+  height: 300px;
 }

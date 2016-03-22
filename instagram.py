@@ -21,14 +21,14 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 import json
 
 import appengine_config
+from oauth_dropins.webutil.handlers import TemplateHandler
+import webapp2
 
 from granary import instagram as gr_instagram
 from oauth_dropins import instagram as oauth_instagram
 from granary.source import SELF
 import models
 import util
-
-import webapp2
 
 
 class Instagram(models.Source):
@@ -86,40 +86,35 @@ class Instagram(models.Source):
     return self.gr_source.get_activities_response(*args, **kwargs)
 
 
-class OAuthCallback(oauth_instagram.CallbackHandler, util.Handler):
-  """OAuth callback handler.
-
-  The add, delete, and interactive publish flows have to share this because
-  Instagram only allows a single callback URL per app. :/
-  """
-
-  def finish(self, auth_entity, state=None):
-    if 'target_url' in self.decode_state_parameter(state):
-      # this is an interactive publish
-      return self.redirect(util.add_query_params(
-        '/publish/instagram/finish',
-        util.trim_nulls({'auth_entity': auth_entity.key.urlsafe(), 'state': state})))
-
-    self.maybe_add_or_delete_source(Instagram, auth_entity, state)
+class StartHandler(TemplateHandler):
+  """Serves the "Enter your username" form page."""
+  def template_file(self):
+    return 'templates/enter_instagram_username.html'
 
 
-class StartHandler(util.Handler):
-  """Custom handler that sets OAuth scopes based on the requested
-  feature(s)
-  """
-  def post(self):
-    features = self.request.get('feature')
-    features = features.split(',') if features else []
-    starter = util.oauth_starter(oauth_instagram.StartHandler).to(
-      '/instagram/oauth_callback',
-      # http://instagram.com/developer/authentication/#scope
-      scopes='likes comments' if 'publish' in features else None)
-    starter(self.request, self.response).post()
+class ConfirmHandler(TemplateHandler):
+  """Serves the "Is this you?" confirmation page."""
+  post = TemplateHandler.get
+
+  def template_file(self):
+    return 'templates/confirm_instagram_username.html'
+
+  def template_vars(self):
+    url = self.gr_source.user_url(util.get_required_param(self, 'username'))
+    html = util.urlopen(url).read()
+    activities, actor = self.gr_source.html_to_activities(html)
+    return {
+      'activities': activities,
+      'actor': actor,
+    }
+
+
+class AddHandler(TemplateHandler):
+  pass
 
 
 application = webapp2.WSGIApplication([
     ('/instagram/start', StartHandler),
-    ('/instagram/publish/start', oauth_instagram.StartHandler.to(
-      '/instagram/oauth_callback')),
-    ('/instagram/oauth_callback', OAuthCallback),
-    ], debug=appengine_config.DEBUG)
+    ('/instagram/confirm', ConfirmHandler),
+    ('/instagram/add', AddHandler),
+], debug=appengine_config.DEBUG)
