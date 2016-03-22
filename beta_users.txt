@@ -1,0 +1,47 @@
+# URL paths of users who opt into testing new "beta" features and changes before
+# we roll them out to everyone.
+
+# Ryan
+/blogger/2746876218882051570
+/blogger/2753999497622528159
+/facebook/1407574399567467
+/facebook/212038
+/flickr/40721178@N00
+/googleplus/103651231634018158746
+/instagram/snarfed
+/tumblr/carbsryanate.tumblr.com
+/tumblr/snarfed.tumblr.com
+/twitter/schnarfed
+/twitter/snarfed_org
+/wordpress/ryandc.wordpress.com
+
+# Kyle
+/blogger/6561492933847572094
+/facebook/12802152
+/flickr/39216764@N00
+/googleplus/117762887708957235787
+/instagram/kylewmahan
+/twitter/kylewmahan
+/wordpress/kylewm.wordpress.com
+
+# Aaron
+/facebook/11500459
+/facebook/688447421193285
+/flickr/10970592@N04
+/instagram/aaronpk
+/instagram/indiewebcat
+/twitter/aaronpk
+/twitter/indiewebcat
+
+# Tantek
+/facebook/214611
+/flickr/39039882@N00
+/googleplus/109182513536739786206
+/instagram/tantek
+/twitter/t
+
+# Kevin
+/blogger/3200930
+/facebook/724885424
+/flickr/35237099379@N01
+/twitter/kevinmarks

@@ -20,11 +20,11 @@ import models
 from models import BlogPost, Response, Source, SyndicatedPost
 import superfeedr
 import testutil
-from testutil import FakeGrSource
+from testutil import FakeGrSource, FakeSource
 import tumblr
 import twitter
+import util
 import wordpress_rest
-from testutil import FakeSource
 
 
 class ResponseTest(testutil.ModelsTest):
@@ -462,6 +462,16 @@ class SourceTest(testutil.HandlerTest):
 
     source.last_hfeed_refetch -= (Source.SLOW_REFETCH + hour)
     self.assertTrue(source.should_refetch())
+
+  def test_is_beta_user(self):
+    source = FakeSource.new(self.handler)
+    self.assertFalse(source.is_beta_user())
+
+    self.mox.stubs.Set(util, 'BETA_USER_PATHS', set())
+    self.assertFalse(source.is_beta_user())
+
+    self.mox.stubs.Set(util, 'BETA_USER_PATHS', set([source.bridgy_path()]))
+    self.assertTrue(source.is_beta_user())
 
 
 class BlogPostTest(testutil.ModelsTest):

@@ -618,6 +618,13 @@ class Source(StringIdModel):
     """
     return gr_source.Source.is_public(activity)
 
+  def is_beta_user(self):
+    """Returns True if this is a "beta" user opted into new features.
+
+    Beta users come from beta_users.txt.
+    """
+    return self.bridgy_path() in util.BETA_USER_PATHS
+
 
 class Webmentions(StringIdModel):
   """A bundle of links to send webmentions for.

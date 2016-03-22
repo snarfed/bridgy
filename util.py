@@ -53,12 +53,8 @@ now_fn = datetime.datetime.now
 #
 # We also check this when a user sign up and we extract the web site links from
 # their profile. We automatically omit links to these domains.
-BLACKLIST = set()
 with open('domain_blacklist.txt') as f:
-  for line in f:
-    domain = line.decode('utf-8').strip()
-    if domain and not domain.startswith('#'):
-      BLACKLIST.add(domain)
+  BLACKLIST = util.load_file_lines(f)
 
 # Individual URLs that we shouldn't fetch. Started because of
 # https://github.com/snarfed/bridgy/issues/525 . Hopefully temporary and can be
@@ -66,6 +62,11 @@ with open('domain_blacklist.txt') as f:
 URL_BLACKLIST = frozenset((
   'http://www.evdemon.org/2015/learning-more-about-quill',
 ))
+
+# URL paths of users who opt into testing new "beta" features and changes
+# before we roll them out to everyone.
+with open('beta_users.txt') as f:
+  BETA_USER_PATHS = util.load_file_lines(f)
 
 # Average HTML page size as of 2015-10-15 is 56K, so this is very generous and
 # conservative.
