@@ -350,7 +350,7 @@ class ModelsTest(HandlerTest):
 
       created += datetime.timedelta(hours=1)
 
-    # publishs
+    # publishes
     self.publishes = [Publish(
       parent=PublishedPage(id='https://post').key,
       source=self.sources[0].key,

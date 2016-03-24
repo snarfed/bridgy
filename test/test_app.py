@@ -287,8 +287,6 @@ class AppTest(testutil.ModelsTest):
     props = publish['properties']
     self.assertEquals([self.publishes[0].key.parent().id()], props['url'])
     self.assertEquals([self.publishes[0].status], props['bridgy-status'])
-    self.assertEquals([self.publishes[0].updated.replace(microsecond=0).isoformat()],
-                      props['updated'])
 
   def test_user_page_private_twitter(self):
     auth_entity = TwitterAuth(
