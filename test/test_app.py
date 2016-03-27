@@ -279,8 +279,6 @@ class AppTest(testutil.ModelsTest):
       self.assertEquals([json.loads(resp.activities_json[0])['url']],
                         props['bridgy-original-source'])
       self.assertEquals(resp.unsent, props['bridgy-target'])
-      self.assertEquals([resp.updated.replace(microsecond=0).isoformat()],
-                        props['updated'])
 
     publish = hcard['children'][len(self.responses)]
     self.assertIn('h-bridgy-publish', publish['type'])
