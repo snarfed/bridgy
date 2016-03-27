@@ -462,7 +462,7 @@ class DeleteStartHandler(util.Handler):
 
 class DeleteFinishHandler(util.Handler):
   def get(self):
-    parts = self.decode_state_parameter(util.get_required_param(self, 'state'))
+    parts = self.decode_state_parameter(self.request.get('state') or '')
     callback = parts and parts.get('callback')
 
     if self.request.get('declined'):
