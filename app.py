@@ -466,12 +466,13 @@ class DeleteFinishHandler(util.Handler):
     callback = parts and parts.get('callback')
 
     if self.request.get('declined'):
+      # disable declined means no change took place
       if callback:
-        # disable declined means no change took place
         callback = util.add_query_params(callback, {'result': 'declined'})
+        self.redirect(callback.encode('utf-8'))
       else:
         self.messages.add('If you want to disable, please approve the prompt.')
-      self.redirect(callback.encode('utf-8') if callback else '/')
+        self.redirect('/')
       return
 
     if (not parts or 'feature' not in parts or 'source' not in parts):
@@ -490,6 +491,15 @@ class DeleteFinishHandler(util.Handler):
       if feature in source.features:
         source.features.remove(feature)
         source.put()
+
+        # remove login cookie
+        logins = self.get_logins()
+        login = util.Login(path=source.bridgy_path(), site=source.SHORT_NAME,
+                           name=source.label_name())
+        if login in logins:
+          logins.remove(login)
+          self.set_logins(logins)
+
       noun = 'webmentions' if feature == 'webmention' else feature + 'ing'
       if callback:
         callback = util.add_query_params(callback, {

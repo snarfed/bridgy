@@ -216,6 +216,23 @@ class AppTest(testutil.ModelsTest):
         ('result', 'declined')
       ]), resp.headers['Location'])
 
+  def test_delete_removes_from_logins_cookie(self):
+    cookie = ('logins="/fake/%s?Fake%%20User|/other/1?bob"; '
+              'expires=2001-12-31 00:00:00; Path=/' % self.sources[0].key.id())
+
+    state = self.handler.construct_state_param_for_add(
+      feature='listen', operation='delete', source=self.sources[0].key.urlsafe())
+    resp = app.application.get_response(
+      '/delete/finish?auth_entity=%s&state=%s' %
+      (self.sources[0].auth_entity.urlsafe(), state),
+      headers={'Cookie': cookie})
+
+    self.assertEquals(302, resp.status_int)
+    location = resp.headers['Location']
+    self.assertTrue(location.startswith('http://localhost/#'), location)
+    new_cookie = resp.headers['Set-Cookie']
+    self.assertTrue(new_cookie.startswith('logins="/other/1?bob"; '), new_cookie)
+
   def test_user_page(self):
     resp = app.application.get_response(self.sources[0].bridgy_path())
     self.assertEquals(200, resp.status_int)
