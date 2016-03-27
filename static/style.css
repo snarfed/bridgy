@@ -5,6 +5,7 @@
 #messages {
   position: fixed;
   width: 100%;
+  font-size: 1.5em;
   top: .2em;
   text-align: center;
   z-index: 999;
