@@ -141,17 +141,22 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
     # don't email about specific known failures
     if ('Deadline exceeded while waiting for HTTP response' in resp or
         'urlfetch.Fetch() took too long' in resp or
+        # WordPress Jetpack bug
         # https://github.com/snarfed/bridgy/issues/161
         '"resp": "invalid_input"' in resp or
+        # Blogger known bug
         # https://github.com/snarfed/bridgy/issues/175
         'bX-2i87au' in resp or
+        # Tumblr: transient Disqus error looking up thread
         # https://github.com/snarfed/bridgy/issues/177
         "Invalid argument, 'thread': Unable to find thread" in resp or
         # expected for partially set up tumblr accounts
         "we haven't found your Disqus account" in resp or
         # Twitter duplicate publish attempts
         'Status is a duplicate.' in resp or
-        'You have already favorited this status.' in resp):
+        'You have already favorited this status.' in resp or
+        # WordPress duplicate comment
+        '"error": "comment_duplicate"' in resp):
       return
 
     subject = '%s %s' % (self.__class__.__name__,
