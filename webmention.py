@@ -156,7 +156,8 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
         'Status is a duplicate.' in resp or
         'You have already favorited this status.' in resp or
         # WordPress duplicate comment
-        '"error": "comment_duplicate"' in resp):
+        # "error": "Error: 409 HTTP Error 409: Conflict; {\n    \"error\": \"comment_duplicate\",\n    \"message\": \"Duplicate comment detected; it looks as though you&#8217;ve already said that!\"\n}\n"
+        'comment_duplicate' in resp):
       return
 
     subject = '%s %s' % (self.__class__.__name__,
