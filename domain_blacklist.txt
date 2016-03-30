@@ -7,6 +7,9 @@
 # https://en.wikipedia.org/wiki/.app_%28gTLD%29
 # https://www.registry.google/
 app
+# Google owns .dev and plans to only use it internally.
+# http://www.theregister.co.uk/2015/03/13/google_developer_gtld_domain_icann/
+dev
 # we don't support Tor. (yet! :P)
 onion
 
