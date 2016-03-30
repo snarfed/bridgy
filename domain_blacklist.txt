@@ -1,7 +1,13 @@
 # Domains that don't support webmentions. Mainly just the silos.
 # Subdomains are automatically blacklisted too.
 
-# TLDs. we don't support Tor. (yet! :P)
+# TLDs
+#
+# Google bought .app on 2015-02-25. No announcement on availability yet.
+# https://en.wikipedia.org/wiki/.app_%28gTLD%29
+# https://www.registry.google/
+app
+# we don't support Tor. (yet! :P)
 onion
 
 # these come from the text of tweets. we also pull the expanded URL
