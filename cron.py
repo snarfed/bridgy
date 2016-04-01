@@ -47,7 +47,7 @@ class UpdatePictures(webapp2.RequestHandler):
     for source in self.SOURCE_CLS.query():
       logging.debug('check for updated profile pictures for: %s', source)
       if source.features and source.status != 'disabled':
-        maybe_update_picture(source, source.gr_source.get_actor(), self)
+        maybe_update_picture(source, source.gr_source.get_actor(source.key.id()), self)
 
 
 class UpdateInstagramPictures(UpdatePictures):

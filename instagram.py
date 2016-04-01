@@ -68,7 +68,7 @@ class Instagram(models.Source):
     username = actor['username']
     if not kwargs.get('features'):
       kwargs['features'] = ['listen']
-    urls = util.dedupe_urls(actor.get('urls', []) + [actor.get('url')])
+    urls = util.dedupe_urls(util.trim_nulls(actor.get('urls', []) + [actor.get('url')]))
     return Instagram(id=username,
                      auth_entity=auth_entity.key,
                      name=actor.get('displayName'),

@@ -3,10 +3,12 @@
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
+import copy
 import datetime
 import json
 
-from oauth_dropins import instagram as oauth_instagram
+from granary.test import test_instagram
+from oauth_dropins import indieauth
 
 import cron
 import instagram
@@ -54,25 +56,23 @@ class CronTest(HandlerTest):
 
   def test_update_instagram_pictures(self):
     for username in 'a', 'b':
-      self.expect_urlopen(
-        'https://api.instagram.com/v1/users/self?access_token=token',
-        json.dumps({'data': {'id': username,
-                             'username': username,
-                             'full_name': 'Ryan Barrett',
-                             'profile_picture': 'http://new/pic',
-                           }}))
+      profile = copy.deepcopy(test_instagram.HTML_PROFILE)
+      profile['entry_data']['ProfilePage'][0]['user'].update({
+        'username': username,
+        'profile_pic_url': 'http://new/pic',
+        })
+      super(HandlerTest, self).expect_requests_get(
+        'https://www.instagram.com/%s/' % username,
+        test_instagram.HTML_HEADER + json.dumps(profile) + test_instagram.HTML_FOOTER,
+        allow_redirects=False)
     self.mox.ReplayAll()
 
     sources = []
+    auth_entity = indieauth.IndieAuth(id='http://foo.com/', user_json='{}')
     for username in 'a', 'b', 'c', 'd':
-      auth_entity = oauth_instagram.InstagramAuth(
-        id=username, auth_code='code', access_token_str='token',
-        user_json=json.dumps({'username': username,
-                              'full_name': 'Ryan Barrett',
-                              'profile_picture': 'http://old/pic',
-                            }))
-      auth_entity.put()
-      source = Instagram.new(None, auth_entity=auth_entity, features=['listen'])
+      source = Instagram.new(
+        None, auth_entity=auth_entity, features=['listen'],
+        actor={'username': username, 'image': {'url': 'http://old/pic'}})
       # test that we skip disabled and deleted sources
       if username == 'c':
         source.status = 'disabled'
