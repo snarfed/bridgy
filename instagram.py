@@ -104,7 +104,7 @@ class StartHandler(TemplateHandler):
     return 'templates/indieauth.html'
 
 
-class AddHandler(indieauth.CallbackHandler, util.Handler):
+class CallbackHandler(indieauth.CallbackHandler, util.Handler):
   def finish(self, auth_entity, state=None):
     if auth_entity:
       user_json = json.loads(auth_entity.user_json)
@@ -120,7 +120,7 @@ class AddHandler(indieauth.CallbackHandler, util.Handler):
         self.messages.add(
           'No Instagram profile found. Please <a href="https://indieauth.com/setup">'
           'add an Instagram rel-me link</a>, then try again.')
-        return self.redirect('/')
+        return self.redirect_home_or_user_page()
 
       # check that instagram profile links to web site
       actor = gr_instagram.Instagram(scrape=True).get_actor(username)
@@ -132,7 +132,7 @@ class AddHandler(indieauth.CallbackHandler, util.Handler):
       if website not in urls:
         self.messages.add("Please add %s to your Instagram profile's website or "
                           'bio field and try again.' % website)
-        return self.redirect('/')
+        return self.redirect_home_or_user_page()
 
     source = self.maybe_add_or_delete_source(Instagram, auth_entity, state,
                                              actor=actor)
@@ -141,5 +141,5 @@ class AddHandler(indieauth.CallbackHandler, util.Handler):
 application = webapp2.WSGIApplication([
     ('/instagram/start', StartHandler),
     ('/instagram/indieauth', indieauth.StartHandler.to('/instagram/callback')),
-    ('/instagram/callback', AddHandler),
+    ('/instagram/callback', CallbackHandler),
 ], debug=appengine_config.DEBUG)

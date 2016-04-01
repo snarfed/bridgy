@@ -73,6 +73,9 @@ WordPress.com, <a href="/">sign up here!</a>
 <p id="listening-label" class="big">Listening for responses.
   <input name="key" type="hidden" value="{{ source.key.urlsafe }}" />
   <input name="feature" type="hidden" value="listen" />
+  {% if source.SHORT_NAME == 'instagram' %}
+    <input name="me" type="hidden" value="{{ source.auth_entity.id }}" />
+  {% endif %}
   <button id="delete-button" type="submit" class="btn btn-default"
     title="Disable sending responses for this account. (Won't delete responses you've already received.)"
     >Disable</button>

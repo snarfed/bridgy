@@ -17,7 +17,7 @@ from oauth_dropins import blogger_v2 as oauth_blogger_v2
 from oauth_dropins import facebook as oauth_facebook
 from oauth_dropins import flickr as oauth_flickr
 from oauth_dropins import googleplus as oauth_googleplus
-from oauth_dropins import instagram as oauth_instagram
+from oauth_dropins import indieauth
 from oauth_dropins import tumblr as oauth_tumblr
 from oauth_dropins import twitter as oauth_twitter
 from oauth_dropins import wordpress_rest as oauth_wordpress_rest
@@ -425,7 +425,7 @@ class DeleteStartHandler(util.Handler):
     'FacebookPage': oauth_facebook,
     'Flickr': oauth_flickr,
     'GooglePlusPage': oauth_googleplus,
-    'Instagram': oauth_instagram,
+    'Instagram': indieauth,
     'Tumblr': oauth_tumblr,
     'Twitter': oauth_twitter,
     'WordPress': oauth_wordpress_rest,
@@ -449,7 +449,7 @@ class DeleteStartHandler(util.Handler):
     if module is oauth_blogger_v2:
       return self.redirect('/blogger/delete/start?state=%s' % state)
 
-    path = ('/instagram/oauth_callback' if module is oauth_instagram
+    path = ('/instagram/callback' if module is indieauth
             else '/wordpress/add' if module is oauth_wordpress_rest
             else '/%s/delete/finish' % key.get().SHORT_NAME)
     kwargs = {}
