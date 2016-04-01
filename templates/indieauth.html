@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Instagram signup - Bridgy{% endblock %}
+
+{% block content %}
+
+<br />
+
+<form method="post" action="/instagram/indieauth">
+<p class="row big">
+<label for="website">
+Make sure your web site <a href="https://indieauth.com/setup">supports IndieAuth</a>,
+then enter it here:</label>
+</p>
+
+<div class="row">
+  <input required type="url" name="me" id="me" placeholder="http://..." />
+  <input type="submit" class="btn btn-default" value="Go" />
+</div>
+</form>
+
+{% endblock %}

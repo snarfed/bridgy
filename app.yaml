@@ -82,7 +82,7 @@ handlers:
   script: googleplus.application
   secure: always
 
-- url: /instagram/(start|confirm|add|delete|publish/.+)(/.*)?
+- url: /instagram/(start|indieauth|callback|add|delete/.+)(/.*)?
   script: instagram.application
   secure: always
 

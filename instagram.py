@@ -19,14 +19,18 @@ Example comment ID and links
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import json
+import logging
+import urlparse
 
 import appengine_config
+from granary import instagram as gr_instagram
+from granary import microformats2
+from granary.source import SELF
+from oauth_dropins import indieauth
+from oauth_dropins import instagram as oauth_instagram
 from oauth_dropins.webutil.handlers import TemplateHandler
 import webapp2
 
-from granary import instagram as gr_instagram
-from oauth_dropins import instagram as oauth_instagram
-from granary.source import SELF
 import models
 import util
 
@@ -49,7 +53,7 @@ class Instagram(models.Source):
     # no reject regexp; non-private Instagram post URLs just 404
 
   @staticmethod
-  def new(handler, auth_entity=None, **kwargs):
+  def new(handler, auth_entity=None, actor=None, **kwargs):
     """Creates and returns a InstagramPage for the logged in user.
 
     Args:
@@ -57,12 +61,21 @@ class Instagram(models.Source):
       auth_entity: oauth_dropins.instagram.InstagramAuth
     """
     user = json.loads(auth_entity.user_json)
-    username = user['username']
+    user['actor'] = actor
+    auth_entity.user_json = json.dumps(user)
+    auth_entity.put()
+
+    username = actor['username']
+    if not kwargs.get('features'):
+      kwargs['features'] = ['listen']
+    urls = util.dedupe_urls(actor.get('urls', []) + [actor.get('url')])
     return Instagram(id=username,
                      auth_entity=auth_entity.key,
-                     name=user['full_name'],
-                     picture=user['profile_picture'],
-                     url='http://instagram.com/' + username,
+                     name=actor.get('displayName'),
+                     picture=actor.get('image', {}).get('url'),
+                     url=gr_instagram.Instagram.user_url(username),
+                     domain_urls=urls,
+                     domains=[util.domain_from_link(url) for url in urls],
                      **kwargs)
 
   def silo_url(self):
@@ -81,40 +94,52 @@ class Instagram(models.Source):
   def get_activities_response(self, *args, **kwargs):
     """Discard min_id because we still want new comments/likes on old photos."""
     kwargs.setdefault('group_id', SELF)
-    if self.is_beta_user():
-      kwargs.setdefault('user_id', self.key.id())
+    kwargs.setdefault('user_id', self.key.id())
     return self.gr_source.get_activities_response(*args, **kwargs)
 
 
 class StartHandler(TemplateHandler):
   """Serves the "Enter your username" form page."""
   def template_file(self):
-    return 'templates/enter_instagram_username.html'
+    return 'templates/indieauth.html'
 
 
-class ConfirmHandler(TemplateHandler):
-  """Serves the "Is this you?" confirmation page."""
-  post = TemplateHandler.get
+class AddHandler(indieauth.CallbackHandler, util.Handler):
+  def finish(self, auth_entity, state=None):
+    if auth_entity:
+      user_json = json.loads(auth_entity.user_json)
 
-  def template_file(self):
-    return 'templates/confirm_instagram_username.html'
+      # find instagram profile URL
+      urls = user_json.get('rel-me', [])
+      logging.info('rel-mes: %s', urls)
+      for url in util.trim_nulls(urls):
+        if util.domain_from_link(url) == gr_instagram.Instagram.DOMAIN:
+          username = urlparse.urlparse(url).path.strip('/')
+          break
+      else:
+        self.messages.add(
+          'No Instagram profile found. Please <a href="https://indieauth.com/setup">'
+          'add an Instagram rel-me link</a>, then try again.')
+        return self.redirect('/')
 
-  def template_vars(self):
-    url = self.gr_source.user_url(util.get_required_param(self, 'username'))
-    html = util.urlopen(url).read()
-    activities, actor = self.gr_source.html_to_activities(html)
-    return {
-      'activities': activities,
-      'actor': actor,
-    }
+      # check that instagram profile links to web site
+      actor = gr_instagram.Instagram(scrape=True).get_actor(username)
 
+      canonicalize = util.UrlCanonicalizer(redirects=False)
+      website = canonicalize(auth_entity.key.id())
+      urls = [canonicalize(u) for u in actor.get('urls', []) + [actor.get('url')]]
+      logging.info('Looking for %s in %s', website, urls)
+      if website not in urls:
+        self.messages.add("Please add %s to your Instagram profile's website or "
+                          'bio field and try again.' % website)
+        return self.redirect('/')
 
-class AddHandler(TemplateHandler):
-  pass
+    source = self.maybe_add_or_delete_source(Instagram, auth_entity, state,
+                                             actor=actor)
 
 
 application = webapp2.WSGIApplication([
     ('/instagram/start', StartHandler),
-    ('/instagram/confirm', ConfirmHandler),
-    ('/instagram/add', AddHandler),
+    ('/instagram/indieauth', indieauth.StartHandler.to('/instagram/callback')),
+    ('/instagram/callback', AddHandler),
 ], debug=appengine_config.DEBUG)
