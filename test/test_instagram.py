@@ -53,33 +53,55 @@ class InstagramTest(testutil.ModelsTest):
 
     self.assertIsNone(self.inst.canonicalize_url('https://www.foo.com/p/abcd/'))
 
-  def test_callback_success(self):
-    self.auth_entity.put()
-    state = json.dumps({'feature': 'listen', 'operation': 'add'})
-    encoded_state = urllib.quote_plus(state)
-
-    TestCase.expect_requests_get(self, 'http://snarfed.org', """
+  def expect_site_fetch(self, body=None):
+    if body is None:
+      body = """
 <html><body>
 <a rel="me" href="https://www.instagram.com/snarfed">me on insta</a>
 </body></html>
-""")
+"""
+    TestCase.expect_requests_get(self, 'http://snarfed.org', body)
+
+  def expect_indieauth_check(self):
     TestCase.expect_requests_post(
       self, indieauth.INDIEAUTH_URL, 'me=http://snarfed.org', data={
         'me': 'http://snarfed.org',
-        'state': state,
+        'state': json.dumps({'feature': 'listen', 'operation': 'add'}),
         'code': 'my_code',
         'client_id': appengine_config.INDIEAUTH_CLIENT_ID,
         'redirect_uri': 'http://localhost/instagram/callback',
       })
 
+  def expect_profile_fetch(self):
     TestCase.expect_requests_get(self, 'https://www.instagram.com/snarfed/',
                                  test_instagram.HTML_PROFILE_COMPLETE,
                                  allow_redirects=False)
+
+  def callback(self):
+    resp = instagram.application.get_response(
+      '/instagram/callback?me=http://snarfed.org&code=my_code&state=%s' %
+      urllib.quote_plus(json.dumps({'feature': 'listen', 'operation': 'add'})))
+    self.assertEquals(302, resp.status_int)
+    return resp
+
+  def test_signup_callback_success(self):
+    self.expect_site_fetch()
+    self.expect_indieauth_check()
+    self.expect_profile_fetch()
+
     # the signup attempt to discover my webmention endpoint
     self.expect_requests_get('https://snarfed.org/', '', stream=None, verify=False)
-    self.mox.ReplayAll()
 
-    resp = instagram.application.get_response(
-      '/instagram/callback?me=http://snarfed.org&code=my_code&state=%s' % encoded_state)
-    self.assertEquals(302, resp.status_int)
+    self.mox.ReplayAll()
+    resp = self.callback()
     self.assertEquals('http://localhost/instagram/snarfed', resp.headers['Location'])
+
+  def test_signup_callback_no_rel_me(self):
+    self.expect_site_fetch('')
+    self.expect_indieauth_check()
+
+    self.mox.ReplayAll()
+    resp = self.callback()
+    location = urllib.unquote_plus(resp.headers['Location'])
+    self.assertTrue(location.startswith(
+      'http://localhost/#!No Instagram profile found.'), location)
