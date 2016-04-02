@@ -25,7 +25,7 @@ import urlparse
 import appengine_config
 from granary import instagram as gr_instagram
 from granary import microformats2
-from granary.source import SELF
+from granary import source as gr_source
 from oauth_dropins import indieauth
 from oauth_dropins import instagram as oauth_instagram
 from oauth_dropins.webutil.handlers import TemplateHandler
@@ -93,7 +93,7 @@ class Instagram(models.Source):
 
   def get_activities_response(self, *args, **kwargs):
     """Discard min_id because we still want new comments/likes on old photos."""
-    kwargs.setdefault('group_id', SELF)
+    kwargs.setdefault('group_id', gr_source.SELF)
     kwargs.setdefault('user_id', self.key.id())
     return self.gr_source.get_activities_response(*args, **kwargs)
 
@@ -120,7 +120,7 @@ class CallbackHandler(indieauth.CallbackHandler, util.Handler):
         self.messages.add(
           'No Instagram profile found. Please <a href="https://indieauth.com/setup">'
           'add an Instagram rel-me link</a>, then try again.')
-        return self.redirect_home_or_user_page()
+        return self.redirect_home_or_user_page(state)
 
       # check that instagram profile links to web site
       actor = gr_instagram.Instagram(scrape=True).get_actor(username)
@@ -132,7 +132,13 @@ class CallbackHandler(indieauth.CallbackHandler, util.Handler):
       if website not in urls:
         self.messages.add("Please add %s to your Instagram profile's website or "
                           'bio field and try again.' % website)
-        return self.redirect_home_or_user_page()
+        return self.redirect_home_or_user_page(state)
+
+      # check that the instagram account is public
+      if not gr_source.Source.is_public(actor):
+        self.messages.add('Your Instagram account is private. '
+                          'Bridgy only supports public accounts.')
+        return self.redirect_home_or_user_page(state)
 
     source = self.maybe_add_or_delete_source(Instagram, auth_entity, state,
                                              actor=actor)
