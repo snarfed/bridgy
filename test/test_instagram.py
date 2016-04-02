@@ -72,10 +72,9 @@ class InstagramTest(testutil.ModelsTest):
         'redirect_uri': 'http://localhost/instagram/callback',
       })
 
-  def expect_profile_fetch(self):
+  def expect_instagram_fetch(self, body=test_instagram.HTML_PROFILE_COMPLETE):
     TestCase.expect_requests_get(self, 'https://www.instagram.com/snarfed/',
-                                 test_instagram.HTML_PROFILE_COMPLETE,
-                                 allow_redirects=False)
+                                 body, allow_redirects=False)
 
   def callback(self):
     resp = instagram.application.get_response(
@@ -84,10 +83,10 @@ class InstagramTest(testutil.ModelsTest):
     self.assertEquals(302, resp.status_int)
     return resp
 
-  def test_signup_callback_success(self):
+  def test_signup_success(self):
     self.expect_site_fetch()
     self.expect_indieauth_check()
-    self.expect_profile_fetch()
+    self.expect_instagram_fetch()
 
     # the signup attempt to discover my webmention endpoint
     self.expect_requests_get('https://snarfed.org/', '', stream=None, verify=False)
@@ -96,7 +95,7 @@ class InstagramTest(testutil.ModelsTest):
     resp = self.callback()
     self.assertEquals('http://localhost/instagram/snarfed', resp.headers['Location'])
 
-  def test_signup_callback_no_rel_me(self):
+  def test_signup_no_rel_me(self):
     self.expect_site_fetch('')
     self.expect_indieauth_check()
 
@@ -105,3 +104,25 @@ class InstagramTest(testutil.ModelsTest):
     location = urllib.unquote_plus(resp.headers['Location'])
     self.assertTrue(location.startswith(
       'http://localhost/#!No Instagram profile found.'), location)
+
+  def test_signup_no_instagram_profile_backlink(self):
+    self.expect_site_fetch()
+    self.expect_indieauth_check()
+    self.expect_instagram_fetch('')
+
+    self.mox.ReplayAll()
+    resp = self.callback()
+    location = urllib.unquote_plus(resp.headers['Location'])
+    self.assertTrue(location.startswith(
+      'http://localhost/#!Please add https://snarfed.org to your Instagram'), location)
+
+  def test_signup_private_account(self):
+    self.expect_site_fetch()
+    self.expect_indieauth_check()
+    self.expect_instagram_fetch(test_instagram.HTML_PROFILE_PRIVATE_COMPLETE)
+
+    self.mox.ReplayAll()
+    resp = self.callback()
+    location = urllib.unquote_plus(resp.headers['Location'])
+    self.assertTrue(location.startswith(
+      'http://localhost/#!Your Instagram account is private.'), location)
