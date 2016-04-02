@@ -92,7 +92,7 @@ class Instagram(models.Source):
     return self.key.id()
 
   def get_activities_response(self, *args, **kwargs):
-    """Discard min_id because we still want new comments/likes on old photos."""
+    """Set user_id because scraping requires it."""
     kwargs.setdefault('group_id', gr_source.SELF)
     kwargs.setdefault('user_id', self.key.id())
     return self.gr_source.get_activities_response(*args, **kwargs)

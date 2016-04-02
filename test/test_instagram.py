@@ -4,11 +4,14 @@
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import json
-
+import urllib
 
 from oauth_dropins import indieauth
+from oauth_dropins.webutil.testutil import TestCase
+from granary.test import test_instagram
 
-from instagram import Instagram
+import appengine_config
+import instagram
 import testutil
 
 
@@ -17,12 +20,15 @@ class InstagramTest(testutil.ModelsTest):
   def setUp(self):
     super(InstagramTest, self).setUp()
     self.handler.messages = []
-    self.auth_entity = indieauth.IndieAuth(id='http://foo.com', user_json='{}')
-    self.inst = Instagram.new(self.handler, auth_entity=self.auth_entity, actor={
-      'username': 'snarfed',
-      'displayName': 'Ryan Barrett',
-      'image': {'url': 'http://pic.ture/url'},
-    })
+    self.auth_entity = indieauth.IndieAuth(id='http://foo.com', user_json=json.dumps({
+      'rel-me': ['http://instagram.com/snarfed'],
+    }))
+    self.inst = instagram.Instagram.new(
+      self.handler, auth_entity=self.auth_entity, actor={
+        'username': 'snarfed',
+        'displayName': 'Ryan Barrett',
+        'image': {'url': 'http://pic.ture/url'},
+      })
 
   def test_new(self):
     self.assertEqual(self.auth_entity, self.inst.auth_entity.get())
@@ -46,3 +52,34 @@ class InstagramTest(testutil.ModelsTest):
                        self.inst.canonicalize_url(url))
 
     self.assertIsNone(self.inst.canonicalize_url('https://www.foo.com/p/abcd/'))
+
+  def test_callback_success(self):
+    self.auth_entity.put()
+    state = json.dumps({'feature': 'listen', 'operation': 'add'})
+    encoded_state = urllib.quote_plus(state)
+
+    TestCase.expect_requests_get(self, 'http://snarfed.org', """
+<html><body>
+<a rel="me" href="https://www.instagram.com/snarfed">me on insta</a>
+</body></html>
+""")
+    TestCase.expect_requests_post(
+      self, indieauth.INDIEAUTH_URL, 'me=http://snarfed.org', data={
+        'me': 'http://snarfed.org',
+        'state': state,
+        'code': 'my_code',
+        'client_id': appengine_config.INDIEAUTH_CLIENT_ID,
+        'redirect_uri': 'http://localhost/instagram/callback',
+      })
+
+    TestCase.expect_requests_get(self, 'https://www.instagram.com/snarfed/',
+                                 test_instagram.HTML_PROFILE_COMPLETE,
+                                 allow_redirects=False)
+    # the signup attempt to discover my webmention endpoint
+    self.expect_requests_get('https://snarfed.org/', '', stream=None, verify=False)
+    self.mox.ReplayAll()
+
+    resp = instagram.application.get_response(
+      '/instagram/callback?me=http://snarfed.org&code=my_code&state=%s' % encoded_state)
+    self.assertEquals(302, resp.status_int)
+    self.assertEquals('http://localhost/instagram/snarfed', resp.headers['Location'])
