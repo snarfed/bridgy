@@ -39,14 +39,6 @@ class InstagramTest(testutil.ModelsTest):
     self.assertEqual('Ryan Barrett', self.inst.name)
     self.assertEqual('snarfed (Instagram)', self.inst.label())
 
-  def test_get_activities_response(self):
-    """Check that min_id is discarded."""
-    self.expect_urlopen(
-      'https://api.instagram.com/v1/users/self/media/recent?access_token=my_token',
-      '{"data":[]}')
-    self.mox.ReplayAll()
-    assert self.inst.get_activities_response(min_id='123')
-
   def test_canonicalize_url(self):
     self.unstub_requests_head()
     for url in (

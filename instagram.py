@@ -81,8 +81,8 @@ class Instagram(models.Source):
   def get_activities_response(self, *args, **kwargs):
     """Discard min_id because we still want new comments/likes on old photos."""
     kwargs.setdefault('group_id', SELF)
-    if 'min_id' in kwargs:
-      del kwargs['min_id']
+    if self.is_beta_user():
+      kwargs.setdefault('user_id', self.key.id())
     return self.gr_source.get_activities_response(*args, **kwargs)
 
 
