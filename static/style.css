@@ -220,6 +220,16 @@ button {
   border-radius: 2px;
 }
 
+button[disabled] {
+  border-color: gray !important;
+  color: gray !important;
+  pointer-events: auto !important;
+}
+
+button[disabled]:hover {
+  background-color: lightgray !important;
+}
+
 #preview-ui > * {
   vertical-align: middle;
 }
