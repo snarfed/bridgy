@@ -420,7 +420,8 @@ class Handler(webapp2.RequestHandler):
     """
     # pass in custom separators to cut down on whitespace, and sort keys for
     # unit test consistency
-    return json.dumps(trim_nulls(obj), separators=(',', ':'), sort_keys=True)
+    return urllib.quote_plus(json.dumps(trim_nulls(obj), separators=(',', ':'),
+                                        sort_keys=True))
 
   def decode_state_parameter(self, state):
     """The state parameter is passed to various source authorization
@@ -436,7 +437,7 @@ class Handler(webapp2.RequestHandler):
     Returns: a dict containing operation, feature, and possibly other fields
     """
     logging.debug('decoding state "%s"' % state)
-    obj = json.loads(state) if state else {}
+    obj = json.loads(urllib.unquote_plus(state)) if state else {}
     if not isinstance(obj, dict):
       logging.error('got a non-dict state parameter %s', state)
       return None

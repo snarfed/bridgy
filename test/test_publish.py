@@ -615,7 +615,7 @@ foo<br /> <blockquote></blockquote>
 
     resp = self.assert_success('preview of foo', preview=True)
     self.assertIn(
-      '<input type="hidden" name="state" value="{&quot;bridgy_omit_link&quot;:true,',
+      '<input type="hidden" name="state" value="%7B%22bridgy_omit_link%22%3Atrue',
       resp.body.decode('utf-8'))
 
   def test_preview_omit_link_query_param_overrides_mf2(self):
@@ -631,7 +631,7 @@ foo<br /> <blockquote></blockquote>
                                preview=True,
                                params={'bridgy_omit_link': 'false'})
     self.assertIn(
-      '<input type="hidden" name="state" value="{&quot;bridgy_omit_link&quot;:false,',
+      '<input type="hidden" name="state" value="%7B%22bridgy_omit_link%22%3Afalse',
       resp.body.decode('utf-8'))
 
   def test_bridgy_ignore_formatting_query_param(self):
