@@ -234,6 +234,13 @@ class UserHandler(DashboardHandler):
     if not self.source:
       return vars
 
+    if isinstance(self.source, instagram.Instagram):
+      auth = self.source.auth_entity
+      vars['indieauth_me'] = (
+        auth.id if isinstance(auth, indieauth.IndieAuth)
+        else self.source.domain_urls[0] if self.source.domain_urls
+        else None)
+
     # Blog webmention promos
     if 'webmention' not in self.source.features:
       if self.source.SHORT_NAME in ('blogger', 'tumblr', 'wordpress'):
