@@ -130,16 +130,16 @@ class Tumblr(models.Source):
   def verify(self):
     """Checks that Disqus is installed as well as the webmention endpoint.
 
-    Stores the result in webmention_endpoint. Expects that Source.verify
-    sets the self._fetched_html attr.
+    Stores the result in webmention_endpoint.
     """
     if self.verified():
       return
 
     super(Tumblr, self).verify(force=True)
 
-    if not self.disqus_shortname and self._fetched_html:
-      self.discover_disqus_shortname(self._fetched_html)
+    html = getattr(self, '_fetched_html', None)  # set by Source.verify()
+    if not self.disqus_shortname and html:
+      self.discover_disqus_shortname(html)
 
   def discover_disqus_shortname(self, html):
     # scrape the disqus shortname out of the page
