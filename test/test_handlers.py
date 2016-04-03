@@ -242,9 +242,8 @@ asdf http://other/link qwert
 
   </div>
 
-  <a class="u-like u-like-of" href="http://example.com/original/post"></a>
-  <a class="u-like u-like-of" href="http://or.ig/post"></a>
-
+  <a class="u-like-of" href="http://example.com/original/post"></a>
+  <a class="u-like-of" href="http://or.ig/post"></a>
 
 </article>
 """)
@@ -287,10 +286,8 @@ asdf http://other/link qwert
     message from sharer
   </div>
 
-  <a class="u-repost u-repost-of" href="http://example.com/original/post"></a>
-  <a class="u-repost u-repost-of" href="http://or.ig/post"></a>
-
-
+  <a class="u-repost-of" href="http://example.com/original/post"></a>
+  <a class="u-repost-of" href="http://or.ig/post"></a>
 
 </article>
 """)
