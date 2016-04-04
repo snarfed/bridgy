@@ -64,6 +64,8 @@ class UpdateFlickrPictures(UpdatePictures):
 
 
 def maybe_update_picture(source, new_actor, handler):
+  if not new_actor:
+    return
   new_pic = new_actor.get('image', {}).get('url')
   if not new_pic or source.picture == new_pic:
     return

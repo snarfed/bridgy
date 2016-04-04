@@ -35,7 +35,6 @@ class CronTest(HandlerTest):
       'https://farm5.staticflickr.com/4068/buddyicons/39216764@N00.jpg',
       self.flickr.picture)
 
-
   def test_replace_poll_tasks(self):
     self.assertEqual([], self.taskqueue_stub.GetTasks('poll'))
     now = datetime.datetime.now()
@@ -104,6 +103,21 @@ class CronTest(HandlerTest):
     self.assertEquals('http://new/pic', sources[1].get().picture)
     self.assertEquals('http://old/pic', sources[2].get().picture)
     self.assertEquals('http://old/pic', sources[3].get().picture)
+
+  def test_update_instagram_picture_profile_404s(self):
+    auth_entity = indieauth.IndieAuth(id='http://foo.com/', user_json='{}')
+    source = Instagram.new(
+        None, auth_entity=auth_entity, features=['listen'],
+        actor={'username': 'x', 'image': {'url': 'http://old/pic'}})
+    source.put()
+
+    super(HandlerTest, self).expect_requests_get(
+      'https://www.instagram.com/x/', status_code=404, allow_redirects=False)
+    self.mox.ReplayAll()
+
+    resp = cron.application.get_response('/cron/update_instagram_pictures')
+    self.assertEqual(200, resp.status_int)
+    self.assertEquals('http://old/pic', source.key.get().picture)
 
   def test_update_flickr_pictures(self):
     self.expect_urlopen(
