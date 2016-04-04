@@ -2,9 +2,11 @@ blacklist:
 
 # background: https://github.com/snarfed/bridgy/issues/578#issuecomment-196553529
 # https://domainreanimator.com/
-- subnet: 2607:5300:60:6fc6::/48
+# Originally blocked /48s, narrowed to /64s due to
+# https://github.com/snarfed/bridgy/issues/642
+- subnet: 2607:5300:60:6fc6::/64
   description: Domain Re-Animator Bot. high volume, disobeys robots.txt.
-- subnet: 2607:5300:60:73e5::/48
+- subnet: 2607:5300:60:73e5::/64
   description: Domain Re-Animator Bot. high volume, disobeys robots.txt.
 
 # - subnet: 178.62.33.183
