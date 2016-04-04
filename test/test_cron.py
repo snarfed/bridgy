@@ -9,6 +9,7 @@ import json
 
 from granary.test import test_flickr
 from granary.test import test_instagram
+import oauth_dropins
 from oauth_dropins import indieauth
 from oauth_dropins import flickr as oauth_flickr
 
@@ -22,6 +23,9 @@ from testutil import FakeSource, HandlerTest
 class CronTest(HandlerTest):
   def setUp(self):
     super(CronTest, self).setUp()
+    oauth_dropins.appengine_config.FLICKR_APP_KEY = 'my_app_key'
+    oauth_dropins.appengine_config.FLICKR_APP_SECRET = 'my_app_secret'
+
     flickr_auth = oauth_flickr.FlickrAuth(
       id='123@N00', user_json=json.dumps(test_flickr.PERSON_INFO),
       token_key='my_key', token_secret='my_secret')
