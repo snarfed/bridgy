@@ -124,6 +124,11 @@ class CallbackHandler(indieauth.CallbackHandler, util.Handler):
 
       # check that instagram profile links to web site
       actor = gr_instagram.Instagram(scrape=True).get_actor(username)
+      if not actor:
+        self.messages.add(
+          "Couldn't find Instagram user '%s'. Please check your site's rel-me "
+          "link and your Instagram account." % username)
+        return self.redirect_home_or_user_page(state)
 
       canonicalize = util.UrlCanonicalizer(redirects=False)
       website = canonicalize(auth_entity.key.id())

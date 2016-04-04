@@ -3,6 +3,7 @@
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
+import copy
 import json
 import urllib
 
@@ -72,9 +73,10 @@ class InstagramTest(testutil.ModelsTest):
         'redirect_uri': 'http://localhost/instagram/callback',
       })
 
-  def expect_instagram_fetch(self, body=test_instagram.HTML_PROFILE_COMPLETE):
+  def expect_instagram_fetch(self, body=test_instagram.HTML_PROFILE_COMPLETE,
+                             **kwargs):
     TestCase.expect_requests_get(self, 'https://www.instagram.com/snarfed/',
-                                 body, allow_redirects=False)
+                                 body, allow_redirects=False, **kwargs)
 
   def callback(self):
     resp = instagram.application.get_response(
@@ -105,10 +107,25 @@ class InstagramTest(testutil.ModelsTest):
     self.assertTrue(location.startswith(
       'http://localhost/#!No Instagram profile found.'), location)
 
+  def test_signup_no_instagram_profile(self):
+    self.expect_site_fetch()
+    self.expect_indieauth_check()
+    self.expect_instagram_fetch('', status_code=404)
+
+    self.mox.ReplayAll()
+    resp = self.callback()
+    location = urllib.unquote_plus(resp.headers['Location'])
+    self.assertTrue(location.startswith(
+      "http://localhost/#!Couldn't find Instagram user 'snarfed'"), location)
+
   def test_signup_no_instagram_profile_backlink(self):
     self.expect_site_fetch()
     self.expect_indieauth_check()
-    self.expect_instagram_fetch('')
+
+    profile = copy.deepcopy(test_instagram.HTML_PROFILE)
+    del profile['entry_data']['ProfilePage'][0]['user']['external_url']
+    self.expect_instagram_fetch(
+      test_instagram.HTML_HEADER + json.dumps(profile) + test_instagram.HTML_FOOTER)
 
     self.mox.ReplayAll()
     resp = self.callback()
@@ -119,6 +136,8 @@ class InstagramTest(testutil.ModelsTest):
   def test_signup_private_account(self):
     self.expect_site_fetch()
     self.expect_indieauth_check()
+
+    profile = copy.deepcopy(test_instagram.HTML_PROFILE)
     self.expect_instagram_fetch(test_instagram.HTML_PROFILE_PRIVATE_COMPLETE)
 
     self.mox.ReplayAll()
