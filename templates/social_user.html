@@ -77,11 +77,11 @@ WordPress.com, <a href="/">sign up here!</a>
     <input name="me" type="hidden" value="{{ indieauth_me }}" />
   {% endif %}
   <button id="delete-button" type="submit" class="btn btn-default"
-    {% if indieauth_me %}
-      title="Disable sending responses for this account. (Won't delete responses you've already received.)"
-    {% else %}
+    {% if source.SHORT_NAME == 'instagram' and not indieauth_me %}
       title="You need to add your web site to your Instagram profile and sign up for Bridgy again before you can disable your account."
       disabled class="disabled"
+    {% else %}
+      title="Disable sending responses for this account. (Won't delete responses you've already received.)"
     {% endif %}
     >Disable</button>
 </p>
