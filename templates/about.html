@@ -114,8 +114,7 @@ service.</a>
 <li><a href="#short-link">Can I include a short link instead of the full link?</a></li>
 <li><a href="#response">How does Bridgy respond to webmentions?</a></li>
 <li><a href="#error-response">How about error responses?</a></li>
-<li><a href="#silos">Why only Facebook and Twitter? Why not Google+ or
-   Instagram?</a></li>
+<li><a href="#silos">Why not Google+ or Instagram?</a></li>
 <li><a href="#401">I'm getting a <em>401: Unauthorized</em> error when I try
    to publish to Twitter.</a></li>
 
@@ -740,14 +739,16 @@ previewing a post to see how it will look!
 <li>Facebook posts and RSVPs, <a href="#facebook-publish">but not comments or
     likes</a>. Posts may include a photo, video, and/or
   <a href="http://indiewebcamp.com/person-tag">people tags</a>.</li>
-<li>Instagram likes, but
-  <a href="http://instagram.com/developer/endpoints/media/#get_media_popular">not
-    photos or videos</a>
-  <a href="http://instagram.com/developer/endpoints/comments/#post_media_comments">or
-  comments</a>.</li>
 <li>Flickr photos, videos, comments, and favorites. Photos may include
   <a href="https://indiewebcamp.com/tags">tags</a> and/or
   <a href="https://indiewebcamp.com/person-tag">people tags</a>.</li>
+<li>Nothing on Instagram, sorry. Likes used to be possible, but not since Instagram
+  <a href="http://developers.instagram.com/post/133424514006/instagram-platform-update">
+    started locking down their API.</a>
+  <a href="http://instagram.com/developer/endpoints/media/#get_media_popular"
+    >Photos, videos,</a>
+  <a href="http://instagram.com/developer/endpoints/comments/#post_media_comments">
+  and comments</a> were never possible.</li>
 <li>Nothing on Google+, sorry.
   <a href="https://developers.google.com/+/api/latest/">Their API is
     read only.</a></li>
@@ -997,15 +998,13 @@ data from your original post, which is often helpful for debugging.
 }</pre>
 </li>
 
-<li id="silos" class="question">Why only Facebook and Twitter? Why not Google+ or
-   Instagram?</li>
+<li id="silos" class="question">Why not Google+ or Instagram?</li>
 <li class="answer">
 <p>Sadly, <a href="https://developers.google.com/+/api/">Google+'s API</a>
 doesn't support posting or commenting, and
-<a href="http://instagram.com/developer/endpoints/comments/#post_media_comments">Instagram's API</a>
-allows liking, but requires
-<a href="https://docs.google.com/spreadsheet/viewform?formkey=dFNydmNsUUlEUGdySWFWbGpQczdmWnc6MQ">manual approval</a>
-for commenting. Shameless plug: check out
+<a href="http://developers.instagram.com/post/133424514006/instagram-platform-update">
+  Instagram's API is locked down to limited manual approval.</a>
+Shameless plug: check out
 <a href="http://ownyourgram.com/">#OwnYourGram</a> for an Instagram alternative!
 </p>
 </li>
