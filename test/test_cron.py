@@ -7,17 +7,30 @@ import copy
 import datetime
 import json
 
+from granary.test import test_flickr
 from granary.test import test_instagram
 from oauth_dropins import indieauth
+from oauth_dropins import flickr as oauth_flickr
 
 import cron
-import instagram
+from flickr import Flickr
 from instagram import Instagram
 import testutil
 from testutil import FakeSource, HandlerTest
 
 
 class CronTest(HandlerTest):
+  def setUp(self):
+    super(CronTest, self).setUp()
+    flickr_auth = oauth_flickr.FlickrAuth(
+      id='123@N00', user_json=json.dumps(test_flickr.PERSON_INFO),
+      token_key='my_key', token_secret='my_secret')
+    flickr_auth.put()
+    self.flickr = Flickr.new(None, auth_entity=flickr_auth, features=['listen'])
+    self.assertEquals(
+      'https://farm5.staticflickr.com/4068/buddyicons/39216764@N00.jpg',
+      self.flickr.picture)
+
 
   def test_replace_poll_tasks(self):
     self.assertEqual([], self.taskqueue_stub.GetTasks('poll'))
@@ -87,3 +100,24 @@ class CronTest(HandlerTest):
     self.assertEquals('http://new/pic', sources[1].get().picture)
     self.assertEquals('http://old/pic', sources[2].get().picture)
     self.assertEquals('http://old/pic', sources[3].get().picture)
+
+  def test_update_flickr_pictures(self):
+    self.expect_urlopen(
+      'https://api.flickr.com/services/rest?'
+        'user_id=39216764%40N00&nojsoncallback=1&'
+        'method=flickr.people.getInfo&format=json',
+      json.dumps({
+        'person': {
+          'id': '123@N00',
+          'nsid': '123@N00',
+          'iconfarm': 9,
+          'iconserver': '9876',
+        }}))
+    self.mox.ReplayAll()
+
+    self.flickr.put()
+    resp = cron.application.get_response('/cron/update_flickr_pictures')
+    self.assertEqual(200, resp.status_int)
+    self.assertEquals(
+      'https://farm9.staticflickr.com/9876/buddyicons/123@N00.jpg',
+      self.flickr.key.get().picture)
