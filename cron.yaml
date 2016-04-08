@@ -14,10 +14,6 @@ cron:
   url: /cron/update_flickr_pictures
   schedule: every day 10:00  # 3am pst
 
-- description: ereporter exception report
-  url: /_ereporter?sender=admin@brid-gy.appspotmail.com&to=ryan@brid.gy,kyle.mahan@gmail.com
-  schedule: every day 00:00  # 5pm pst
-
 # datastore backups. daily backups exclude Response and SyndicatedPost entities.
 # weekly backups include everything.
 # https://developers.google.com/appengine/articles/scheduled_backups#Specifying_Backups_in_a_Cron_File

@@ -125,10 +125,6 @@ handlers:
   login: admin
   secure: always
 
-- url: /_ereporter.*
-  script: google.appengine.ext.ereporter.report_generator.application
-  login: admin
-
 - url: /_info
   script: oauth_dropins.webutil.instance_info.application
   secure: always
