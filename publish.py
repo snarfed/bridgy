@@ -163,14 +163,25 @@ class Handler(webmention.WebmentionHandler):
       return self.error("Could not find <b>%(type)s</b> account for <b>%(domain)s</b>. Check that your %(type)s profile has %(domain)s in its <em>web site</em> or <em>link</em> field, then try signing up again." %
         {'type': source_cls.GR_CLASS.NAME, 'domain': domain})
 
+    publish = False
+    previous_url = ""
     for source in sources:
       logging.info('Source: %s , features %s, status %s, poll status %s',
                    source.bridgy_url(self), source.features, source.status,
                    source.poll_status)
       if source.status != 'disabled' and 'publish' in source.features:
-        self.source = source
-        break
-    else:
+        publish = True
+        # start with the first provided source, then check the rest for
+        # closer matches between the current url and provided domain_urls.
+        if previous_url == "":
+          self.source = source
+
+        for domain_url in source.domain_urls:
+          if (url.startswith(domain_url) and len(domain_url) > len(previous_url)):
+            self.source = source
+            previous_url = domain_url
+
+    if not publish:
       return self.error(
         'Publish is not enabled for your account(s). Please visit %s and sign up!' %
         ' or '.join(s.bridgy_url(self) for s in sources))
