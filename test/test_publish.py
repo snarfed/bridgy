@@ -385,7 +385,7 @@ foo
 
   def test_source_url_is_domain_url(self):
     self.source.put()
-    self.assert_error("Looks like that's your home page.", source='https://foo.com#')
+    self.assert_error("Looks like that's your home page.", source='http://foo.com#')
 
     # query params alone shouldn't trigger this
     self.expect_requests_get('http://foo.com/?p=123', self.post_html % 'foo')
