@@ -634,6 +634,7 @@ class FacebookPageTest(testutil.ModelsTest):
   def test_publish_person_tags(self):
     self.fb.features = ['publish']
     self.fb.domains = ['foo.com']
+    self.fb.domain_urls = ['http://foo.com/']
     self.fb.put()
 
     input_urls, _ = self.prepare_person_tags()
