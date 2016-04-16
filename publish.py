@@ -89,6 +89,8 @@ class Handler(webmention.WebmentionHandler):
 
   shortlink = None
 
+  source = None
+
   def authorize(self):
     """Returns True if the current user is authorized for this request.
 
@@ -163,14 +165,21 @@ class Handler(webmention.WebmentionHandler):
       return self.error("Could not find <b>%(type)s</b> account for <b>%(domain)s</b>. Check that your %(type)s profile has %(domain)s in its <em>web site</em> or <em>link</em> field, then try signing up again." %
         {'type': source_cls.GR_CLASS.NAME, 'domain': domain})
 
+    current_url = ''
     for source in sources:
       logging.info('Source: %s , features %s, status %s, poll status %s',
                    source.bridgy_url(self), source.features, source.status,
                    source.poll_status)
       if source.status != 'disabled' and 'publish' in source.features:
-        self.source = source
-        break
-    else:
+        # use a source that has a domain_url matching the url provided.
+        # look through each source to find the one with the closest match.
+        for domain_url in source.domain_urls:
+          if (url.lower().startswith(domain_url.lower().strip('/')) and
+              len(domain_url) > len(current_url)):
+            self.source = source
+            current_url = domain_url
+
+    if not self.source:
       return self.error(
         'Publish is not enabled for your account(s). Please visit %s and sign up!' %
         ' or '.join(s.bridgy_url(self) for s in sources))
