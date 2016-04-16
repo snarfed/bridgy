@@ -1113,7 +1113,7 @@ Join us!"""
     self.mox.ReplayAll()
     self.assert_success('going to Homebrew', preview=True)
 
-  def test_multiple_users_on_domin(self):
+  def test_multiple_users_on_domain(self):
     source_2 = testutil.FakeSource(
       id='foo.com/b', features=['publish'], domains=['foo.com'],
       domain_urls=['http://foo.com/b'], auth_entity=self.auth_entity.key)
