@@ -1124,5 +1124,17 @@ Join us!"""
     source_3.put()
     self.expect_requests_get('http://foo.com/bar', self.post_html % 'foo')
     self.mox.ReplayAll()
-    resp = self.assert_created('foo - http://foo.com/bar', interactive=False)
+    self.assert_created('foo - http://foo.com/bar', interactive=False)
     self.assertEquals(source_2.key, Publish.query().get().source)
+
+  def test_multiple_users_only_one_registered(self):
+    self.source.key.delete()
+    source_2 = testutil.FakeSource(
+      id='foo.com/b', features=['publish'], domains=['foo.com'],
+      auth_entity=self.auth_entity.key)
+    source_2.put()
+    source_3 = testutil.FakeSource(
+      id='foo.com/c', features=['publish'], domains=['foo.com'],
+      domain_urls=['http://foo.com/c'], auth_entity=self.auth_entity.key)
+    source_3.put()
+    self.assert_error('Publish is not enabled')
