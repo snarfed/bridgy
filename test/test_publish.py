@@ -1125,5 +1125,4 @@ Join us!"""
     self.expect_requests_get('http://foo.com/bar', self.post_html % 'foo')
     self.mox.ReplayAll()
     resp = self.assert_created('foo - http://foo.com/bar', interactive=False)
-    publish = Publish.query().get()
-    self.assertEquals(source_2.key, publish.source)
+    self.assertEquals(source_2.key, Publish.query().get().source)
