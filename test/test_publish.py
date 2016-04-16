@@ -1038,6 +1038,7 @@ Join us!"""
   def test_facebook_comment_and_like_disabled(self):
     self.source = facebook.FacebookPage(id='789', features=['publish'],
                                         domains=['mr.x'])
+    self.source.domain_urls = ['http://mr.x/']
     self.source.put()
 
     self.expect_requests_get('http://mr.x/like', """
@@ -1111,3 +1112,18 @@ Join us!"""
     self.mox.StubOutWithMock(self.source.gr_source, 'create', use_mock_anything=True)
     self.mox.ReplayAll()
     self.assert_success('going to Homebrew', preview=True)
+
+  def test_multiple_users_on_domin(self):
+    source_2 = testutil.FakeSource(
+      id='foo.com/b', features=['publish'], domains=['foo.com'],
+      domain_urls=['http://foo.com/b'], auth_entity=self.auth_entity.key)
+    source_2.put()
+    source_3 = testutil.FakeSource(
+      id='foo.com/c', features=['publish'], domains=['foo.com'],
+      domain_urls=['http://foo.com/c'], auth_entity=self.auth_entity.key)
+    source_3.put()
+    self.expect_requests_get('http://foo.com/bar', self.post_html % 'foo')
+    self.mox.ReplayAll()
+    resp = self.assert_created('foo - http://foo.com/bar', interactive=False)
+    publish = Publish.query().get()
+    self.assertEquals(source_2.key, publish.source)

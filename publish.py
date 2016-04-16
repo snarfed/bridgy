@@ -178,10 +178,6 @@ class Handler(webmention.WebmentionHandler):
               len(domain_url) > len(current_url)):
             self.source = source
             current_url = domain_url
-        # if there are no domain_urls and self.source is not set, allow this
-        # source to be used but keep looking for an actual match.
-        if (not source.domain_urls and not self.source):
-          self.source = source
 
     if not self.source:
       return self.error(
