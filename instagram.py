@@ -27,6 +27,8 @@ from granary import instagram as gr_instagram
 from granary import microformats2
 from granary import source as gr_source
 from oauth_dropins import indieauth
+# InstagramAuth entities are loaded here
+from oauth_dropins import instagram as oauth_instagram
 from oauth_dropins.webutil.handlers import TemplateHandler
 import webapp2
 
