@@ -145,3 +145,21 @@ class InstagramTest(testutil.ModelsTest):
     location = urllib.unquote_plus(resp.headers['Location'])
     self.assertTrue(location.startswith(
       'http://localhost/#!Your Instagram account is private.'), location)
+
+  def test_signup_multiple_profile_urls(self):
+    self.expect_site_fetch()
+    self.expect_indieauth_check()
+
+    profile = copy.deepcopy(test_instagram.HTML_PROFILE)
+    profile['entry_data']['ProfilePage'][0]['user']['biography'] = \
+      'http://a/ https://b'
+    self.expect_instagram_fetch(
+      test_instagram.HTML_HEADER + json.dumps(profile) + test_instagram.HTML_FOOTER)
+
+    # the signup attempt to discover my webmention endpoint
+    self.expect_requests_get('https://snarfed.org', '', stream=None, verify=False)
+
+    self.mox.ReplayAll()
+    resp = self.callback()
+    self.assertEquals('http://localhost/instagram/snarfed', resp.headers['Location'])
+    self.assertEquals(['snarfed.org', 'a', 'b'], self.inst.key.get().domains)

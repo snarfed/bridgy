@@ -8,6 +8,7 @@ import logging
 import appengine_config
 from appengine_config import HTTP_TIMEOUT
 
+from granary import microformats2
 from granary import source as gr_source
 from oauth_dropins.webutil.models import StringIdModel
 from webmentiontools import send
@@ -529,8 +530,7 @@ class Source(StringIdModel):
     logging.debug('Converted to actor: %s', json.dumps(actor, indent=2))
 
     candidates = util.trim_nulls(util.uniquify(
-        [user_url] + [actor.get('url')] +
-        [u.get('value') for u in actor.get('urls', [])]))
+        [user_url] + microformats2.object_urls(actor)))
 
     if len(candidates) > MAX_AUTHOR_URLS:
       logging.warning('Too many profile links! Only resolving the first %s: %s',
@@ -584,9 +584,8 @@ class Source(StringIdModel):
     """
     for tag in obj.get('tags', []):
       if tag.get('objectType') == 'person':
-        urls = [tag.get('url')] + [d.get('value') for d in tag.get('urls', [])]
         silo_url = None
-        for url in urls:
+        for url in microformats2.object_urls(tag):
           silo_url = url and self.infer_profile_url(url)
           if silo_url:
             break

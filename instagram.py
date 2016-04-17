@@ -27,7 +27,6 @@ from granary import instagram as gr_instagram
 from granary import microformats2
 from granary import source as gr_source
 from oauth_dropins import indieauth
-from oauth_dropins import instagram as oauth_instagram
 from oauth_dropins.webutil.handlers import TemplateHandler
 import webapp2
 
@@ -68,7 +67,7 @@ class Instagram(models.Source):
     username = actor['username']
     if not kwargs.get('features'):
       kwargs['features'] = ['listen']
-    urls = util.dedupe_urls(util.trim_nulls(actor.get('urls', []) + [actor.get('url')]))
+    urls = microformats2.object_urls(actor)
     return Instagram(id=username,
                      auth_entity=auth_entity.key,
                      name=actor.get('displayName'),
@@ -132,8 +131,7 @@ class CallbackHandler(indieauth.CallbackHandler, util.Handler):
 
       canonicalize = util.UrlCanonicalizer(redirects=False)
       website = canonicalize(auth_entity.key.id())
-      urls = [canonicalize(u) for u in util.trim_nulls(
-                actor.get('urls', []) + [actor.get('url')])]
+      urls = [canonicalize(u) for u in microformats2.object_urls(actor)]
       logging.info('Looking for %s in %s', website, urls)
       if website not in urls:
         self.messages.add("Please add %s to your Instagram profile's website or "
