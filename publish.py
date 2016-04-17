@@ -181,8 +181,7 @@ class Handler(webmention.WebmentionHandler):
 
     if not self.source:
       return self.error(
-        'Publish is not enabled for your account(s). Please visit %s and sign up!' %
-        ' or '.join(s.bridgy_url(self) for s in sources))
+        'Publish is not enabled for your account. Please visit https://brid.gy and sign up!')
 
     content_param = 'bridgy_%s_content' % self.source.SHORT_NAME
     if content_param in self.request.params:
