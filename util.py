@@ -424,23 +424,21 @@ class Handler(webapp2.RequestHandler):
                                         sort_keys=True))
 
   def decode_state_parameter(self, state):
-    """The state parameter is passed to various source authorization
-    endpoints and returned in a callback. This decodes a
-    JSON-serialized string and returns a dict.
+    """Decodes a state parameter encoded by encode_state_parameter.
 
-    See encode_state_parameter for a list of common state parameter
-    keys.
+    See encode_state_parameter for a list of common state parameter keys.
 
     Args:
       state: a string (JSON-serialized dict)
 
     Returns: a dict containing operation, feature, and possibly other fields
+
     """
     logging.debug('decoding state "%s"' % state)
     obj = json.loads(urllib.unquote_plus(state)) if state else {}
     if not isinstance(obj, dict):
       logging.error('got a non-dict state parameter %s', state)
-      return None
+      return {}
     return obj
 
   def get_logins(self):

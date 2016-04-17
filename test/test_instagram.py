@@ -63,11 +63,11 @@ class InstagramTest(testutil.ModelsTest):
 """
     TestCase.expect_requests_get(self, 'http://snarfed.org', body)
 
-  def expect_indieauth_check(self):
+  def expect_indieauth_check(self, state=''):
     TestCase.expect_requests_post(
       self, indieauth.INDIEAUTH_URL, 'me=http://snarfed.org', data={
         'me': 'http://snarfed.org',
-        'state': json.dumps({'feature': 'listen', 'operation': 'add'}),
+        'state': state,
         'code': 'my_code',
         'client_id': appengine_config.INDIEAUTH_CLIENT_ID,
         'redirect_uri': 'http://localhost/instagram/callback',
@@ -78,10 +78,9 @@ class InstagramTest(testutil.ModelsTest):
     TestCase.expect_requests_get(self, 'https://www.instagram.com/snarfed/',
                                  body, allow_redirects=False, **kwargs)
 
-  def callback(self):
+  def callback(self, state=''):
     resp = instagram.application.get_response(
-      '/instagram/callback?me=http://snarfed.org&code=my_code&state=%s' %
-      urllib.quote_plus(json.dumps({'feature': 'listen', 'operation': 'add'})))
+      '/instagram/callback?me=http://snarfed.org&code=my_code&state=%s' % state)
     self.assertEquals(302, resp.status_int)
     return resp
 
@@ -91,7 +90,7 @@ class InstagramTest(testutil.ModelsTest):
     self.expect_instagram_fetch()
 
     # the signup attempt to discover my webmention endpoint
-    self.expect_requests_get('https://snarfed.org/', '', stream=None, verify=False)
+    self.expect_requests_get('https://snarfed.org', '', stream=None, verify=False)
 
     self.mox.ReplayAll()
     resp = self.callback()
@@ -163,3 +162,16 @@ class InstagramTest(testutil.ModelsTest):
     resp = self.callback()
     self.assertEquals('http://localhost/instagram/snarfed', resp.headers['Location'])
     self.assertEquals(['snarfed.org', 'a', 'b'], self.inst.key.get().domains)
+
+  def test_signup_state_0(self):
+    """https://console.cloud.google.com/errors/5078670695812426116"""
+    self.expect_site_fetch()
+    self.expect_indieauth_check(state='0')
+    self.expect_instagram_fetch()
+
+    # the signup attempt to discover my webmention endpoint
+    self.expect_requests_get('https://snarfed.org', '', stream=None, verify=False)
+
+    self.mox.ReplayAll()
+    resp = self.callback(state='0')
+    self.assertEquals('http://localhost/instagram/snarfed', resp.headers['Location'])
