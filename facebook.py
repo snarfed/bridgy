@@ -21,10 +21,9 @@ Example comment ID and links
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import heapq
+import itertools
 import json
 import logging
-import re
-import sys
 import urllib2
 import urlparse
 
@@ -91,6 +90,9 @@ class FacebookPage(models.Source):
   username = ndb.StringProperty()
   # inferred from syndication URLs if username isn't available
   inferred_username = ndb.StringProperty()
+  # inferred application-specific user IDs (from other applications)
+  inferred_user_ids = ndb.StringProperty(repeated=True)
+
   # maps string FB post id to string FB object id or None. background:
   # https://github.com/snarfed/bridgy/pull/513#issuecomment-149312879
   resolved_object_ids_json = ndb.TextProperty(compressed=True)
@@ -216,9 +218,9 @@ class FacebookPage(models.Source):
         if object_id:
           url = post_url(object_id)
 
-    username = self.username or self.inferred_username
-    if username:
-      url = url.replace('facebook.com/%s/' % username,
+    for alternate_id in util.trim_nulls(itertools.chain(
+       (self.username or self.inferred_username,), self.inferred_user_ids)):
+      url = url.replace('facebook.com/%s/' % alternate_id,
                         'facebook.com/%s/' % self.key.id())
 
     return super(FacebookPage, self).canonicalize_url(url)
@@ -341,11 +343,17 @@ class FacebookPage(models.Source):
     # https://www.facebook.com/help/105399436216001
     author_id = self.gr_source.base_object({'object': {'url': url}})\
                               .get('author', {}).get('id')
-    if author_id and not util.is_int(author_id):
-      logging.info('Inferring username %s from syndication url %s', author_id, url)
-      self.inferred_username = author_id
-      self.put()
-      syndpost.syndication = self.canonicalize_url(syndpost.syndication)
+    if author_id:
+      if not util.is_int(author_id):
+        logging.info('Inferring username %s from syndication url %s', author_id, url)
+        self.inferred_username = author_id
+        self.put()
+        syndpost.syndication = self.canonicalize_url(syndpost.syndication)
+      elif author_id != self.key.id():
+        logging.info('Inferring app-scoped user id %s from syndication url %s', author_id, url)
+        self.inferred_user_ids.append(author_id)
+        self.put()
+        syndpost.syndication = self.canonicalize_url(syndpost.syndication)
 
 
 class AuthHandler(util.Handler):
