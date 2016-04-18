@@ -30,6 +30,7 @@ import tasks
 import testutil
 import util
 
+
 class FacebookPageTest(testutil.ModelsTest):
 
   def setUp(self):
@@ -353,6 +354,15 @@ class FacebookPageTest(testutil.ModelsTest):
                      self.fb.canonicalize_url(
                        'https://www.facebook.com/mr-disguise/posts/444'))
 
+  def test_canonicalize_url_app_scoped_user_id(self):
+    self.expect_api_call('212038_444', {})
+    self.mox.ReplayAll()
+
+    self.fb.inferred_app_scoped_user_ids.append('101008675309')
+    self.assertEqual('https://www.facebook.com/212038/posts/444',
+                     self.fb.canonicalize_url(
+                       'https://www.facebook.com/101008675309/posts/444'))
+
   def test_canonicalize_url_not_facebook(self):
     """Shouldn't try to extract id and fetch post for non-facebook.com URLs."""
     url = 'https://twitter.com/foo/status/123'
@@ -457,11 +467,11 @@ class FacebookPageTest(testutil.ModelsTest):
     fb = self.fb.key.get()
     self.assertIsNone(fb.inferred_username)
 
-    # url has user id, not username
+    # url has original user id, not username
     fb.username = None
     fb.put()
     models.SyndicatedPost.insert(self.fb, original='http://an.other',
-                                 syndication='http://facebook.com/987/posts/123')
+                                 syndication='http://facebook.com/212038/posts/123')
     self.assertIsNone(fb.key.get().inferred_username)
 
     # no syndication url in SyndicatedPost
@@ -469,6 +479,7 @@ class FacebookPageTest(testutil.ModelsTest):
     self.assertIsNone(fb.key.get().inferred_username)
 
     # should infer username
+    self.mox.ResetAll()
     self.expect_api_call('212038_123', {'id': '0', 'object_id': '123'})
     self.mox.ReplayAll()
     syndpost = models.SyndicatedPost.insert(
@@ -476,6 +487,18 @@ class FacebookPageTest(testutil.ModelsTest):
       syndication='http://facebook.com/fooey/posts/123')
     self.assertEquals('fooey', fb.key.get().inferred_username)
     self.assertEquals('https://www.facebook.com/212038/posts/123',
+                      syndpost.syndication)
+
+    # should infer app-scoped user id
+    self.mox.ResetAll()
+    self.expect_api_call('212038_456', {'id': '0', 'object_id': '456'})
+    self.mox.ReplayAll()
+    syndpost = models.SyndicatedPost.insert(
+      self.fb, original='http://aga.in',
+      syndication='https://www.facebook.com/101008675309/posts/456')
+    self.assertEquals(['101008675309'],
+                      fb.key.get().inferred_app_scoped_user_ids)
+    self.assertEquals('https://www.facebook.com/212038/posts/456',
                       syndpost.syndication)
 
   def test_pre_put_hook(self):
