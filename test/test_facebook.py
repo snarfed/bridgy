@@ -358,7 +358,7 @@ class FacebookPageTest(testutil.ModelsTest):
     self.expect_api_call('212038_444', {})
     self.mox.ReplayAll()
 
-    self.fb.inferred_app_scoped_user_ids.append('101008675309')
+    self.fb.inferred_user_ids.append('101008675309')
     self.assertEqual('https://www.facebook.com/212038/posts/444',
                      self.fb.canonicalize_url(
                        'https://www.facebook.com/101008675309/posts/444'))
@@ -497,7 +497,7 @@ class FacebookPageTest(testutil.ModelsTest):
       self.fb, original='http://aga.in',
       syndication='https://www.facebook.com/101008675309/posts/456')
     self.assertEquals(['101008675309'],
-                      fb.key.get().inferred_app_scoped_user_ids)
+                      fb.key.get().inferred_user_ids)
     self.assertEquals('https://www.facebook.com/212038/posts/456',
                       syndpost.syndication)
 

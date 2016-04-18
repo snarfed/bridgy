@@ -21,6 +21,7 @@ Example comment ID and links
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import heapq
+import itertools
 import json
 import logging
 import urllib2
@@ -90,7 +91,7 @@ class FacebookPage(models.Source):
   # inferred from syndication URLs if username isn't available
   inferred_username = ndb.StringProperty()
   # inferred application-specific user IDs (from other applications)
-  inferred_app_scoped_user_ids = ndb.StringProperty(repeated=True)
+  inferred_user_ids = ndb.StringProperty(repeated=True)
 
   # maps string FB post id to string FB object id or None. background:
   # https://github.com/snarfed/bridgy/pull/513#issuecomment-149312879
@@ -217,8 +218,8 @@ class FacebookPage(models.Source):
         if object_id:
           url = post_url(object_id)
 
-    for alternate_id in filter(None, [self.username or self.inferred_username]
-                               + self.inferred_app_scoped_user_ids):
+    for alternate_id in util.trim_nulls(itertools.chain(
+       (self.username or self.inferred_username,), self.inferred_user_ids)):
       url = url.replace('facebook.com/%s/' % alternate_id,
                         'facebook.com/%s/' % self.key.id())
 
@@ -350,7 +351,7 @@ class FacebookPage(models.Source):
         syndpost.syndication = self.canonicalize_url(syndpost.syndication)
       elif author_id != self.key.id():
         logging.info('Inferring app-scoped user id %s from syndication url %s', author_id, url)
-        self.inferred_app_scoped_user_ids.append(author_id)
+        self.inferred_user_ids.append(author_id)
         self.put()
         syndpost.syndication = self.canonicalize_url(syndpost.syndication)
 
