@@ -344,14 +344,14 @@ class FacebookPage(models.Source):
     author_id = self.gr_source.base_object({'object': {'url': url}})\
                               .get('author', {}).get('id')
     if author_id:
-      if not util.is_int(author_id):
+      if author_id != self.inferred_username and not util.is_int(author_id):
         logging.info('Inferring username %s from syndication url %s', author_id, url)
         self.inferred_username = author_id
         self.put()
         syndpost.syndication = self.canonicalize_url(syndpost.syndication)
-      elif author_id != self.key.id():
+      elif author_id != self.key.id() and author_id not in self.inferred_user_ids:
         logging.info('Inferring app-scoped user id %s from syndication url %s', author_id, url)
-        self.inferred_user_ids.append(author_id)
+        self.inferred_user_ids = util.uniquify(self.inferred_user_ids + [author_id])
         self.put()
         syndpost.syndication = self.canonicalize_url(syndpost.syndication)
 

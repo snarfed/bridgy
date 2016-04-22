@@ -460,7 +460,7 @@ class FacebookPageTest(testutil.ModelsTest):
        ndb.Key('Response', 'tag:facebook.com,2013:222_liked_by_666')),
       models.Response.query().fetch(keys_only=True))
 
-  def test_on_new_syndicated_post(self):
+  def test_on_new_syndicated_post_infer_username(self):
     # username is already set
     models.SyndicatedPost.insert(self.fb, original='http://or.ig',
                                  syndication='http://facebook.com/fooey/posts/123')
@@ -489,16 +489,30 @@ class FacebookPageTest(testutil.ModelsTest):
     self.assertEquals('https://www.facebook.com/212038/posts/123',
                       syndpost.syndication)
 
-    # should infer app-scoped user id
-    self.mox.ResetAll()
+  def test_on_new_syndicated_post_infer_user_id(self):
+    self.fb.username = None
+    self.fb.put()
+
     self.expect_api_call('212038_456', {'id': '0', 'object_id': '456'})
     self.mox.ReplayAll()
+
     syndpost = models.SyndicatedPost.insert(
       self.fb, original='http://aga.in',
       syndication='https://www.facebook.com/101008675309/posts/456')
-    self.assertEquals(['101008675309'],
-                      fb.key.get().inferred_user_ids)
+    self.assertEquals(['101008675309'], self.fb.key.get().inferred_user_ids)
     self.assertEquals('https://www.facebook.com/212038/posts/456',
+                      syndpost.syndication)
+
+  def test_on_new_syndicated_post_infer_user_id_dedupes(self):
+    self.fb.username = None
+    self.fb.inferred_user_ids = ['789']
+    self.fb.put()
+
+    syndpost = models.SyndicatedPost.insert(
+      self.fb, original='http://aga.in',
+      syndication='https://www.facebook.com/789/posts/456')
+    self.assertEquals(['789'], self.fb.key.get().inferred_user_ids)
+    self.assertEquals('https://www.facebook.com/789/posts/456',
                       syndpost.syndication)
 
   def test_pre_put_hook(self):
