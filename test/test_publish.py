@@ -96,6 +96,24 @@ class PublishTest(testutil.HandlerTest):
   def assert_error(self, expected, status=400, **kwargs):
     return self.assert_response(expected, status=status, **kwargs)
 
+  def _check_entity(self, content='foo', html_content=None):
+    if html_content is None:
+      html_content = content
+    self.assertTrue(PublishedPage.get_by_id('http://foo.com/bar'))
+    publish = Publish.query().get()
+    self.assertEquals(self.source.key, publish.source)
+    self.assertEquals('complete', publish.status)
+    self.assertEquals('post', publish.type)
+    self.assertEquals('FakeSource post label', publish.type_label)
+    expected_html = (self.post_html % html_content) + self.backlink
+    self.assertEquals(expected_html, publish.html)
+    self.assertEquals({
+      'id': 'fake id',
+      'url': 'http://fake/url',
+      'content': '%s - http://foo.com/bar' % content,
+      'granary_message': 'granary message',
+    }, publish.published)
+
   def test_webmention_success(self):
     self.expect_requests_get('http://foo.com/bar', self.post_html % 'foo')
     self.mox.ReplayAll()
@@ -114,22 +132,6 @@ class PublishTest(testutil.HandlerTest):
         'Done! <a href="http://fake/url">Click here to view.</a>\ngranary message',
       urllib.unquote_plus(resp.headers['Location']))
     self._check_entity()
-
-  def _check_entity(self):
-    self.assertTrue(PublishedPage.get_by_id('http://foo.com/bar'))
-    publish = Publish.query().get()
-    self.assertEquals(self.source.key, publish.source)
-    self.assertEquals('complete', publish.status)
-    self.assertEquals('post', publish.type)
-    self.assertEquals('FakeSource post label', publish.type_label)
-    expected_html = (self.post_html % 'foo') + self.backlink
-    self.assertEquals(expected_html, publish.html)
-    self.assertEquals({
-      'id': 'fake id',
-      'url': 'http://fake/url',
-      'content': 'foo - http://foo.com/bar',
-      'granary_message': 'granary message',
-    }, publish.published)
 
   def test_interactive_from_wrong_user_page(self):
     other_source = testutil.FakeSource.new(None).put()
@@ -1138,3 +1140,16 @@ Join us!"""
       domain_urls=['http://foo.com/c'], auth_entity=self.auth_entity.key)
     source_3.put()
     self.assert_error('Publish is not enabled')
+
+  def test_dont_escape_period_in_content(self):
+    """Odd bug triggered by specific combination of leading <span> and trailing #.
+
+    Root cause was html2text escaping markdown sequences it emits.
+
+    https://github.com/snarfed/bridgy/issues/656
+    """
+    self.expect_requests_get('http://foo.com/bar',
+                             self.post_html % '<span /> 2016. #')
+    self.mox.ReplayAll()
+    self.assert_created('2016. # - http://foo.com/bar', interactive=False)
+    self._check_entity(content='2016. #', html_content='<span /> 2016. #')
