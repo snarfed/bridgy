@@ -57,7 +57,7 @@ class FacebookTestLive(testutil.HandlerTest):
 
     self.assertEqual(302, resp.status_int)
     to = resp.headers['Location']
-    self.assertTrue(to.startswith('https://www.facebook.com/v2.2/dialog/oauth?'), to)
+    self.assertTrue(to.startswith('https://www.facebook.com/v2.6/dialog/oauth?'), to)
     redirect = urlparse.parse_qs(urlparse.urlparse(to).query)['redirect_uri'][0]
     self.dot()
 
@@ -69,7 +69,7 @@ class FacebookTestLive(testutil.HandlerTest):
         'redirect_uri': urllib.quote_plus(redirect),
         'auth_code': 'fake_code',
       },
-      'access_token=%s' % appengine_config.FACEBOOK_TEST_USER_TOKEN,
+      '{"access_token": "%s"}' % appengine_config.FACEBOOK_TEST_USER_TOKEN,
       ).WithSideEffects(lambda *args, **kwargs: self.mox.stubs.UnsetAll())
     self.mox.ReplayAll()
 
