@@ -17,7 +17,9 @@ import appengine_config
 from google.appengine.ext import ndb
 import granary
 from granary import facebook as gr_facebook
-from granary.test import test_facebook as gr_test_facebook
+from granary.test.test_facebook import \
+  ACTIVITY, COMMENT_OBJS, EVENT, EVENT_OBJ_WITH_ATTENDEES, \
+  LIKE_OBJS, PHOTO, PHOTO_ACTIVITY, PHOTO_POST, POST, RSVPS, SHARE_OBJ
 import oauth_dropins
 from oauth_dropins import facebook as oauth_facebook
 import webapp2
@@ -118,30 +120,30 @@ class FacebookPageTest(testutil.ModelsTest):
     self.assertNotIn('Set-Cookie', resp.headers)
 
   def test_get_activities(self):
-    owned_event = copy.deepcopy(gr_test_facebook.EVENT)
+    owned_event = copy.deepcopy(EVENT)
     owned_event['id'] = '888'
     owned_event['owner']['id'] = '212038'
-    self.expect_api_call('me/feed?offset=0', {'data': [gr_test_facebook.POST]})
-    self.expect_api_call('me/news.publishes', {'data': [gr_test_facebook.PHOTO_POST]})
-    self.expect_api_call('me/photos/uploaded', {'data': [gr_test_facebook.PHOTO]})
-    self.expect_api_call('me/events', {'data': [gr_test_facebook.EVENT, owned_event]})
-    self.expect_api_call(gr_facebook.API_EVENT % '145304994', gr_test_facebook.EVENT)
+    self.expect_api_call('me/feed?offset=0', {'data': [POST]})
+    self.expect_api_call('me/news.publishes', {'data': [PHOTO_POST]})
+    self.expect_api_call('me/photos/uploaded', {'data': [PHOTO]})
+    self.expect_api_call('me/events', {'data': [EVENT, owned_event]})
+    self.expect_api_call(gr_facebook.API_EVENT % '145304994', EVENT)
     self.expect_api_call(gr_facebook.API_EVENT % '888', owned_event)
-    self.expect_api_call('888/invited', {'data': gr_test_facebook.RSVPS})
+    self.expect_api_call('888/invited', {'data': RSVPS})
     self.expect_api_call('212038_888', {})
     self.mox.ReplayAll()
 
     event_activity = self.fb.gr_source.event_to_activity(owned_event)
     for k in 'attending', 'notAttending', 'maybeAttending', 'invited':
-      event_activity['object'][k] = gr_test_facebook.EVENT_OBJ_WITH_ATTENDEES[k]
+      event_activity['object'][k] = EVENT_OBJ_WITH_ATTENDEES[k]
     self.assert_equals(
-      [gr_test_facebook.ACTIVITY, gr_test_facebook.PHOTO_ACTIVITY, event_activity],
+      [ACTIVITY, PHOTO_ACTIVITY, event_activity],
       self.fb.get_activities())
 
   def test_get_activities_post_and_photo_duplicates(self):
-    self.expect_api_call('me/feed?offset=0', {'data': [gr_test_facebook.PHOTO_POST]})
+    self.expect_api_call('me/feed?offset=0', {'data': [PHOTO_POST]})
     self.expect_api_call('me/news.publishes', {'data': []})
-    self.expect_api_call('me/photos/uploaded', {'data': [gr_test_facebook.PHOTO]})
+    self.expect_api_call('me/photos/uploaded', {'data': [PHOTO]})
     self.expect_api_call('me/events', {})
     self.mox.ReplayAll()
 
@@ -156,8 +158,8 @@ class FacebookPageTest(testutil.ModelsTest):
   def test_get_activities_canonicalizes_ids_with_colons(self):
     """https://github.com/snarfed/bridgy/issues/305"""
     # translate post id and comment ids to same ids in new colon-based format
-    post = copy.deepcopy(gr_test_facebook.POST)
-    activity = copy.deepcopy(gr_test_facebook.ACTIVITY)
+    post = copy.deepcopy(POST)
+    activity = copy.deepcopy(ACTIVITY)
     post['id'] = activity['fb_id'] = activity['object']['fb_id'] = \
       '212038:10100176064482163:11'
 
@@ -178,10 +180,10 @@ class FacebookPageTest(testutil.ModelsTest):
 
   def test_get_activities_ignores_bad_comment_ids(self):
     """https://github.com/snarfed/bridgy/issues/305"""
-    bad_post = copy.deepcopy(gr_test_facebook.POST)
+    bad_post = copy.deepcopy(POST)
     bad_post['id'] = '90^90'
 
-    post_with_bad_comment = copy.deepcopy(gr_test_facebook.POST)
+    post_with_bad_comment = copy.deepcopy(POST)
     post_with_bad_comment['comments']['data'].append(
       {'id': '12^34', 'message': 'bad to the bone'})
 
@@ -194,16 +196,16 @@ class FacebookPageTest(testutil.ModelsTest):
 
     # should only get the base activity, without the extra comment, and not the
     # bad activity at all
-    self.assert_equals([gr_test_facebook.ACTIVITY], self.fb.get_activities())
+    self.assert_equals([ACTIVITY], self.fb.get_activities())
 
   def test_get_activities_page(self):
     """Shouldn't fetch /me/news.publishes for pages."""
-    self.expect_api_call('me/feed?offset=0', {'data': [gr_test_facebook.POST]})
+    self.expect_api_call('me/feed?offset=0', {'data': [POST]})
     self.expect_api_call('me/photos/uploaded', {})
     self.expect_api_call('me/events', {})
     self.expect_api_call('108663232553079_10100176064482163', {})
     self.mox.ReplayAll()
-    self.assert_equals([gr_test_facebook.ACTIVITY], self.page.get_activities())
+    self.assert_equals([ACTIVITY], self.page.get_activities())
 
   def test_get_activities_populates_resolved_ids(self):
     self.expect_api_call('me/feed?offset=0', {'data': [
@@ -389,9 +391,9 @@ class FacebookPageTest(testutil.ModelsTest):
 
     # Facebook API calls
     self.expect_api_call('me/feed?offset=0&limit=50', {'data': [
-      gr_test_facebook.PHOTO_POST]})
+      PHOTO_POST]})
     self.expect_api_call('me/news.publishes', {})
-    self.expect_api_call('me/photos/uploaded', {'data': [gr_test_facebook.PHOTO]})
+    self.expect_api_call('me/photos/uploaded', {'data': [PHOTO]})
     self.expect_api_call('me/events', {})
     self.expect_api_call('sharedposts?ids=222', {})
     self.expect_api_call('comments?filter=stream&ids=222', {})
@@ -404,8 +406,8 @@ class FacebookPageTest(testutil.ModelsTest):
       </div>
     </html>""")
 
-    self.assertNotIn('222', gr_test_facebook.PHOTO_POST['id'])
-    self.assertEquals('222', gr_test_facebook.PHOTO_POST['object_id'])
+    self.assertNotIn('222', PHOTO_POST['id'])
+    self.assertEquals('222', PHOTO_POST['object_id'])
     self.expect_requests_get('http://my.orig/post', """
     <html class="h-entry">
       <a class="u-syndication" href="https://www.facebook.com/photo.php?fbid=222&set=a.995695740593.2393090.212038&type=1&theater'"></a>
@@ -425,10 +427,10 @@ class FacebookPageTest(testutil.ModelsTest):
     https://github.com/snarfed/bridgy/issues/633#issuecomment-198806909
     """
     # first poll. only return post, with privacy and object_id, no responses.
-    photo_post = copy.deepcopy(gr_test_facebook.PHOTO_POST)
+    photo_post = copy.deepcopy(PHOTO_POST)
     del photo_post['comments']
     del photo_post['likes']
-    photo = copy.deepcopy(gr_test_facebook.PHOTO)
+    photo = copy.deepcopy(PHOTO)
     del photo['comments']
     del photo['likes']
 
@@ -441,10 +443,10 @@ class FacebookPageTest(testutil.ModelsTest):
 
     # second poll. only return photo. should use post's cached privacy and
     # object_id mapping.
-    assert 'privacy' not in gr_test_facebook.PHOTO
+    assert 'privacy' not in PHOTO
     self.expect_api_call('me/feed?offset=0&limit=50', {})
     self.expect_api_call('me/news.publishes', {})
-    self.expect_api_call('me/photos/uploaded', {'data': [gr_test_facebook.PHOTO]})
+    self.expect_api_call('me/photos/uploaded', {'data': [PHOTO]})
     self.expect_api_call('me/events', {})
     self.expect_api_call('sharedposts?ids=222', {})
     self.expect_api_call('comments?filter=stream&ids=222', {})
