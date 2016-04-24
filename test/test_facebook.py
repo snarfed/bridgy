@@ -705,5 +705,13 @@ my message
     self.assertEquals(201, resp.status_int)
 
   def test_is_activity_public(self):
-    """Not a complete test, just checks the case when fb_id isn't set."""
-    self.assertTrue(self.fb.is_activity_public({}))
+    """Incomplete test. Checks replies, likes, reposts, and when fb_id isn't set."""
+    # we shouldn't make any API calls for these
+    for obj in (
+        {},
+        {'to': {}},
+        {'to': [{'alias': '@public'}]},
+        {'to': [{'alias': '@public'}], 'fb_id': '1', 'objectType': 'comment'},
+        {'to': [{'alias': '@public'}], 'fb_id': '2', 'verb': 'like'},
+    ):
+      self.assertTrue(self.fb.is_activity_public(obj))

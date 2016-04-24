@@ -255,7 +255,7 @@ class FacebookPage(models.Source):
     """
     obj = activity.get('object', {})
     fb_id = activity.get('fb_id') or obj.get('fb_id')
-    if fb_id:
+    if fb_id and gr_source.object_type(activity) not in ('comment', 'like', 'share'):
       fb_id = self.cached_resolve_object_id(fb_id, activity=activity)
 
     post_publics = self._load_cache('post_publics')
