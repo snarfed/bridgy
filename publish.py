@@ -104,16 +104,22 @@ class Handler(webmention.WebmentionHandler):
   def target_url(self):
     return util.get_required_param(self, 'target')
 
-  def omit_link(self, item):
-    return self._bool_option('bridgy_omit_link', item)
+  def include_link(self, item):
+    val = self.request.get('bridgy_omit_link', None)
+    if val is None:
+      vals = item.get('properties', {}).get('bridgy-omit-link')
+      val = vals[0] if vals else None
+
+    result = (gr_source.INCLUDE_LINK if val is None or val.lower() == 'false'
+              else gr_source.INCLUDE_IF_TRUNCATED if val.lower() == 'maybe'
+              else gr_source.OMIT_LINK)
+
+    return result
 
   def ignore_formatting(self, item):
-    return self._bool_option('bridgy_ignore_formatting', item)
-
-  def _bool_option(self, param, item):
-    val = self.request.get(param, None)
+    val = self.request.get('bridgy_ignore_formatting', None)
     return (val.lower() in ('', 'true') if val is not None
-            else param.replace('_', '-') in item.get('properties', {}))
+            else 'bridgy-ignore-formatting' in item.get('properties', {}))
 
   def maybe_inject_silo_content(self, item):
     props = item.setdefault('properties', {})
@@ -317,7 +323,7 @@ class Handler(webmention.WebmentionHandler):
 
     self.preprocess(obj)
 
-    omit_link = self.omit_link(item)
+    include_link = self.include_link(item)
 
     if not self.authorize():
       return gr_source.creation_result(abort=True)
@@ -333,7 +339,7 @@ class Handler(webmention.WebmentionHandler):
 
     if self.PREVIEW:
       result = self.source.gr_source.preview_create(
-        obj, include_link=not omit_link, ignore_formatting=ignore_formatting)
+        obj, include_link=include_link, ignore_formatting=ignore_formatting)
       self.entity.published = result.content or result.description
       if not self.entity.published:
         return result  # there was an error
@@ -341,7 +347,7 @@ class Handler(webmention.WebmentionHandler):
         'source_key': self.source.key.urlsafe(),
         'source_url': self.source_url(),
         'target_url': self.target_url(),
-        'bridgy_omit_link': omit_link,
+        'bridgy_omit_link': include_link == gr_source.OMIT_LINK,
       }
       vars = {'source': self.preprocess_source(self.source),
               'preview': result.content,
@@ -355,8 +361,8 @@ class Handler(webmention.WebmentionHandler):
         template.render('templates/preview.html', vars))
 
     else:
-      result = self.source.gr_source.create(obj, include_link=not omit_link,
-                                            ignore_formatting=ignore_formatting)
+      result = self.source.gr_source.create(
+        obj, include_link=include_link, ignore_formatting=ignore_formatting)
       self.entity.published = result.content
       if not result.content:
         return result  # there was an error
@@ -491,9 +497,13 @@ class PreviewHandler(Handler):
 
     return True
 
-  def omit_link(self, item):
+  def include_link(self, item):
     # always use query param because there's a checkbox in the UI
-    return self.request.get('bridgy_omit_link') in ('', 'true')
+    val = self.request.get('bridgy_omit_link', None)
+    result = (gr_source.OMIT_LINK
+              if val is not None and val.lower() in ('', 'true')
+              else gr_source.INCLUDE_LINK)
+    return result
 
   def error(self, error, html=None, status=400, data=None, mail=False):
     logging.warning(error, exc_info=True)
@@ -513,7 +523,6 @@ class SendHandler(Handler):
 
   def finish(self, auth_entity, state=None):
     self.state = self.decode_state_parameter(state)
-
     if not state:
       self.error('If you want to publish or preview, please approve the prompt.')
       return self.redirect('/')
@@ -542,8 +551,9 @@ class SendHandler(Handler):
   def target_url(self):
     return self.state['target_url']
 
-  def omit_link(self, item):
-    return self.state['bridgy_omit_link']
+  def include_link(self, item):
+    return (gr_source.OMIT_LINK if self.state['bridgy_omit_link']
+            else gr_source.INCLUDE_LINK)
 
   def error(self, error, html=None, status=400, data=None, mail=False):
     logging.warning(error, exc_info=True)

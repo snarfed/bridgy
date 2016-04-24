@@ -87,7 +87,8 @@ class FakeGrSource(gr_source.Source):
       'etag': getattr(self, 'etag', None),
     }
 
-  def create(self, obj, include_link=False, ignore_formatting=False):
+  def create(self, obj, include_link=gr_source.OMIT_LINK,
+             ignore_formatting=False):
     verb = obj.get('verb')
     type = obj.get('objectType')
     if verb == 'like':
@@ -108,7 +109,7 @@ class FakeGrSource(gr_source.Source):
           error_html='no %s url to reply to' % self.DOMAIN)
 
     content = self._content_for_create(obj, ignore_formatting=ignore_formatting)
-    if include_link:
+    if include_link == gr_source.INCLUDE_LINK:
         content += ' - %s' % obj['url']
     ret = {
       'id': 'fake id',
@@ -120,14 +121,15 @@ class FakeGrSource(gr_source.Source):
       ret['type'] = 'post'
     return gr_source.creation_result(ret)
 
-  def preview_create(self, obj, include_link=False, ignore_formatting=False):
+  def preview_create(self, obj, include_link=gr_source.OMIT_LINK,
+                     ignore_formatting=False):
     if obj.get('verb') == 'like':
       return gr_source.creation_result(
         abort=True, error_plain='Cannot publish likes',
         error_html='Cannot publish likes')
 
     content = self._content_for_create(obj, ignore_formatting=ignore_formatting)
-    if include_link:
+    if include_link == gr_source.INCLUDE_LINK:
         content += ' - %s' % obj['url']
 
     content = 'preview of ' + content

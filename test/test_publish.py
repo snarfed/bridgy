@@ -562,13 +562,15 @@ this is my article
 
     self.mox.StubOutWithMock(self.source.gr_source, 'create',
                              use_mock_anything=True)
-    self.source.gr_source.create(mox.IgnoreArg(), include_link=True,
+    self.source.gr_source.create(mox.IgnoreArg(),
+                                 include_link=gr_source.INCLUDE_LINK,
                                  ignore_formatting=False
                                  ).AndRaise(exc.HTTPPaymentRequired('fooey'))
 
     self.mox.StubOutWithMock(self.source.gr_source, 'preview_create',
                              use_mock_anything=True)
-    self.source.gr_source.preview_create(mox.IgnoreArg(), include_link=False,
+    self.source.gr_source.preview_create(mox.IgnoreArg(),
+                                         include_link=gr_source.INCLUDE_LINK,
                                          ignore_formatting=False
                                          ).AndRaise(Exception('bar'))
 
@@ -617,7 +619,7 @@ foo<br /> <blockquote></blockquote>
 
     resp = self.assert_success('preview of foo', preview=True)
     self.assertIn(
-      '<input type="hidden" name="state" value="%7B%22bridgy_omit_link%22%3Atrue',
+      '<input type="hidden" name="state" value="%7B%22bridgy_omit_link%22%3Afalse',
       resp.body.decode('utf-8'))
 
   def test_preview_omit_link_query_param_overrides_mf2(self):
@@ -635,6 +637,48 @@ foo<br /> <blockquote></blockquote>
     self.assertIn(
       '<input type="hidden" name="state" value="%7B%22bridgy_omit_link%22%3Afalse',
       resp.body.decode('utf-8'))
+
+  def test_create_bridgy_omit_link_maybe_query_param(self):
+    """Test that ?bridgy_omit_link=maybe query parameter is interpreted
+    properly.
+    """
+    self.expect_requests_get('http://foo.com/bar', self.post_html % 'foo')
+
+    self.mox.StubOutWithMock(
+      self.source.gr_source, 'create', use_mock_anything=True)
+
+    self.source.gr_source.create(
+      mox.IgnoreArg(), include_link=gr_source.INCLUDE_IF_TRUNCATED,
+      ignore_formatting=False
+    ).AndReturn(gr_source.creation_result({
+      'url': 'http://fake/url',
+      'id': 'http://fake/url',
+      'content': 'foo',
+    }))
+
+    self.mox.ReplayAll()
+    self.assert_created('foo', params={'bridgy_omit_link': 'maybe'})
+
+  def test_create_bridgy_omit_link_maybe_mf2(self):
+    """Test that bridgy-omit-link=maybe is parsed properly from mf2
+    """
+    content = '<data class="p-bridgy-omit-link" value="maybe">foo</data>'
+    self.expect_requests_get('http://foo.com/bar', self.post_html % content)
+
+    self.mox.StubOutWithMock(
+      self.source.gr_source, 'create', use_mock_anything=True)
+
+    self.source.gr_source.create(
+      mox.IgnoreArg(), include_link=gr_source.INCLUDE_IF_TRUNCATED,
+      ignore_formatting=False
+    ).AndReturn(gr_source.creation_result({
+      'url': 'http://fake/url',
+      'id': 'http://fake/url',
+      'content': 'foo',
+    }))
+
+    self.mox.ReplayAll()
+    self.assert_created('foo')
 
   def test_bridgy_ignore_formatting_query_param(self):
     self.expect_requests_get('http://foo.com/bar', """\
@@ -704,7 +748,7 @@ foo<br /> <blockquote>bar</blockquote>
       'displayName': 'In reply to',
       'url': 'http://foo.com/bar',
       'objectType': 'comment',
-    }, include_link=True, ignore_formatting=False). \
+    }, include_link=gr_source.INCLUDE_LINK, ignore_formatting=False). \
     AndReturn(gr_source.creation_result({
       'url': 'http://fake/url',
       'id': 'http://fake/url',
@@ -744,7 +788,7 @@ foo<br /> <blockquote>bar</blockquote>
                  {'url': 'https://fa.ke/a/b'},
                  {'url': 'https://flic.kr/c/d'}],
       'objectType': 'activity',
-    }, include_link=True, ignore_formatting=False). \
+    }, include_link=gr_source.INCLUDE_LINK, ignore_formatting=False). \
     AndReturn(gr_source.creation_result({
       'url': 'http://fake/url',
       'id': 'http://fake/url',
@@ -782,7 +826,7 @@ foo<br /> <blockquote>bar</blockquote>
       'object': [{'url': 'http://orig.domain/baz'},
                  {'url': 'https://fa.ke/a/b'}],
       'objectType': 'activity',
-    }, include_link=True, ignore_formatting=False). \
+    }, include_link=gr_source.INCLUDE_LINK, ignore_formatting=False). \
     AndReturn(gr_source.creation_result({
       'url': 'http://fake/url',
       'id': 'http://fake/url',
@@ -823,7 +867,7 @@ foo<br /> <blockquote>bar</blockquote>
       'object': [{'url': 'http://orig.domain/baz'},
                  {'url': 'https://fa.ke/a/b'}],
       'objectType': 'activity',
-    }, include_link=True, ignore_formatting=False). \
+    }, include_link=gr_source.INCLUDE_LINK, ignore_formatting=False). \
     AndReturn(gr_source.creation_result({
       'url': 'http://fake/url',
       'id': 'http://fake/url',
@@ -854,7 +898,7 @@ foo<br /> <blockquote>bar</blockquote>
       'displayName': 'In reply to',
       'url': 'http://foo.com/bar',
       'objectType': 'comment',
-    }, include_link=True, ignore_formatting=False). \
+    }, include_link=gr_source.INCLUDE_LINK, ignore_formatting=False). \
     AndReturn(gr_source.creation_result({
       'url': 'http://fake/url',
       'id': 'http://fake/url',
@@ -890,7 +934,7 @@ foo<br /> <blockquote>bar</blockquote>
       'url': 'http://foo.com/bar',
       'object': [{'url': 'http://orig.domain/baz'}],
       'objectType': 'activity',
-    }, include_link=True, ignore_formatting=False). \
+    }, include_link=gr_source.INCLUDE_LINK, ignore_formatting=False). \
     AndReturn(gr_source.creation_result({
       'url': 'http://fake/url',
       'id': 'http://fake/url',
@@ -923,7 +967,7 @@ foo<br /> <blockquote>bar</blockquote>
       'object': [{'url': 'http://fa.ke/homebrew-website-club'}],
       'objectType': 'activity',
       'content': '       <span class="p-rsvp" value="yes">yes</span>       <a class="u-in-reply-to" href="http://fa.ke/homebrew-website-club"></a>      ',
-    }, include_link=True, ignore_formatting=False). \
+    }, include_link=gr_source.INCLUDE_LINK, ignore_formatting=False). \
     AndReturn(gr_source.creation_result({
       'url': 'http://fake/url',
       'id': 'http://fake/url',
