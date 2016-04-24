@@ -212,9 +212,21 @@ Click to enable <a href="/about#listen">listening</a>:
 
  <nobr>
  &nbsp;
- <input id="include-link-checked" name="bridgy_omit_link" type="checkbox"
-        value="false" checked></input>
- <label id="include-link-label" for="include-link-checked">Include link</label>
+ <div>
+   Include link:
+   <label>
+     <input id="omit-link-false" name="bridgy_omit_link" value="false" type="radio" checked>
+     yes
+   </label>
+   <label>
+     <input id="omit-link-true" name="bridgy_omit_link" value="true" type="radio">
+     no
+   </label>
+   <label>
+     <input id="omit-link-maybe" name="bridgy_omit_link" value="maybe" type="radio">
+     if shortened
+   </label>
+ </div>
  &nbsp;
  <button id="preview-button" type="submit" class="btn btn-default">Preview</button>
  </nobr>

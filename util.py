@@ -31,7 +31,7 @@ from google.appengine.ext import ndb
 # when running in dev_appserver, replace these domains in links with localhost
 LOCALHOST_TEST_DOMAINS = frozenset([
   ('snarfed.org', 'localhost'),
-  ('kylewm.com', 'known.dev'),
+  ('kylewm.com', 'redwind.dev'),
 ])
 
 EPOCH = datetime.datetime.utcfromtimestamp(0)

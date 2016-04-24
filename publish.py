@@ -347,7 +347,7 @@ class Handler(webmention.WebmentionHandler):
         'source_key': self.source.key.urlsafe(),
         'source_url': self.source_url(),
         'target_url': self.target_url(),
-        'bridgy_omit_link': include_link == gr_source.OMIT_LINK,
+        'include_link': include_link,
       }
       vars = {'source': self.preprocess_source(self.source),
               'preview': result.content,
@@ -500,10 +500,9 @@ class PreviewHandler(Handler):
   def include_link(self, item):
     # always use query param because there's a checkbox in the UI
     val = self.request.get('bridgy_omit_link', None)
-    result = (gr_source.OMIT_LINK
-              if val is not None and val.lower() in ('', 'true')
-              else gr_source.INCLUDE_LINK)
-    return result
+    return (gr_source.INCLUDE_LINK if val is None or val.lower() == 'false'
+            else gr_source.INCLUDE_IF_TRUNCATED if val.lower() == 'maybe'
+            else gr_source.OMIT_LINK)
 
   def error(self, error, html=None, status=400, data=None, mail=False):
     logging.warning(error, exc_info=True)
@@ -552,8 +551,7 @@ class SendHandler(Handler):
     return self.state['target_url']
 
   def include_link(self, item):
-    return (gr_source.OMIT_LINK if self.state['bridgy_omit_link']
-            else gr_source.INCLUDE_LINK)
+    return self.state['include_link']
 
   def error(self, error, html=None, status=400, data=None, mail=False):
     logging.warning(error, exc_info=True)

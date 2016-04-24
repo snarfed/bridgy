@@ -42,7 +42,7 @@ class PublishTest(testutil.HandlerTest):
       'source_url': 'http://foo.com/bar',
       'target_url': 'https://brid.gy/publish/fake',
       'source_key': self.source.key.urlsafe(),
-      'bridgy_omit_link': False,
+      'include_link': gr_source.INCLUDE_LINK,
     }
     self.post_html = '<article class="h-entry"><p class="e-content">%s</p></article>'
     self.backlink = '\n<a href="http://localhost/publish/fake"></a>'
@@ -619,7 +619,7 @@ foo<br /> <blockquote></blockquote>
 
     resp = self.assert_success('preview of foo', preview=True)
     self.assertIn(
-      '<input type="hidden" name="state" value="%7B%22bridgy_omit_link%22%3Afalse',
+      '<input type="hidden" name="state" value="%7B%22include_link%22%3A%22include%22',
       resp.body.decode('utf-8'))
 
   def test_preview_omit_link_query_param_overrides_mf2(self):
@@ -635,7 +635,7 @@ foo<br /> <blockquote></blockquote>
                                preview=True,
                                params={'bridgy_omit_link': 'false'})
     self.assertIn(
-      '<input type="hidden" name="state" value="%7B%22bridgy_omit_link%22%3Afalse',
+      '<input type="hidden" name="state" value="%7B%22include_link%22%3A%22include%22',
       resp.body.decode('utf-8'))
 
   def test_create_bridgy_omit_link_maybe_query_param(self):
