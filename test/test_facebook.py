@@ -571,8 +571,7 @@ class FacebookPageTest(testutil.ModelsTest):
     self.auth_entity.pages_json = json.dumps([self.page_json])
     self.auth_entity.put()
 
-    # FacebookAuth.for_page fetches the user URL with the page's access token
-    self.expect_urlopen(oauth_facebook.API_USER_URL + '?access_token=page_token',
+    self.expect_urlopen(oauth_facebook.API_PAGE_URL + '&access_token=page_token',
                         json.dumps(self.page_json))
     self.mox.ReplayAll()
 
