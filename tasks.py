@@ -185,9 +185,9 @@ class Poll(webapp2.RequestHandler):
     source.updates['last_activities_cache_json'] = json.dumps(
       {k: v for k, v in cache.items() if k.split()[-1] in silo_activity_ids})
 
-    # Make sure we only fetch the author's h-feed(s) the first time
-    # discover is called
-    is_first_discover = True
+    # Cache to make sure we only fetch the author's h-feed(s) the
+    # first time we see it
+    fetched = set()
 
     # narrow down to just public activities
     public = {}
@@ -229,9 +229,9 @@ class Poll(webapp2.RequestHandler):
           if tag.get('objectType') == 'person' and tag.get('id') == user_id and urls:
             activity['originals'], activity['mentions'] = \
               original_post_discovery.discover(
-                source, activity, fetch_hfeed=is_first_discover,
-                include_redirect_sources=False)
-            is_first_discover = False
+                source, activity, fetch_hfeed=True,
+                include_redirect_sources=False,
+                already_fetched_hfeeds=fetched)
             activity['mentions'].update(u.get('value') for u in urls)
             responses[id] = activity
             break
@@ -245,9 +245,9 @@ class Poll(webapp2.RequestHandler):
           if 'originals' not in activity or 'mentions' not in activity:
             activity['originals'], activity['mentions'] = \
               original_post_discovery.discover(
-                source, activity, fetch_hfeed=is_first_discover,
-                include_redirect_sources=False)
-            is_first_discover = False
+                source, activity, fetch_hfeed=True,
+                include_redirect_sources=False,
+                already_fetched_hfeeds=fetched)
           responses[id] = activity
           break
 
@@ -311,9 +311,9 @@ class Poll(webapp2.RequestHandler):
         if 'originals' not in activity or 'mentions' not in activity:
           activity['originals'], activity['mentions'] = \
             original_post_discovery.discover(
-              source, activity, fetch_hfeed=is_first_discover,
-              include_redirect_sources=False)
-          is_first_discover = False
+              source, activity, fetch_hfeed=True,
+              include_redirect_sources=False,
+              already_fetched_hfeeds=fetched)
 
         targets = original_post_discovery.targets_for_response(
           resp, originals=activity['originals'], mentions=activity['mentions'])
