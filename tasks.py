@@ -187,7 +187,7 @@ class Poll(webapp2.RequestHandler):
 
     # Cache to make sure we only fetch the author's h-feed(s) the
     # first time we see it
-    fetched = set()
+    fetched_hfeeds = set()
 
     # narrow down to just public activities
     public = {}
@@ -231,7 +231,7 @@ class Poll(webapp2.RequestHandler):
               original_post_discovery.discover(
                 source, activity, fetch_hfeed=True,
                 include_redirect_sources=False,
-                already_fetched_hfeeds=fetched)
+                already_fetched_hfeeds=fetched_hfeeds)
             activity['mentions'].update(u.get('value') for u in urls)
             responses[id] = activity
             break
@@ -247,7 +247,7 @@ class Poll(webapp2.RequestHandler):
               original_post_discovery.discover(
                 source, activity, fetch_hfeed=True,
                 include_redirect_sources=False,
-                already_fetched_hfeeds=fetched)
+                already_fetched_hfeeds=fetched_hfeeds)
           responses[id] = activity
           break
 
@@ -313,7 +313,7 @@ class Poll(webapp2.RequestHandler):
             original_post_discovery.discover(
               source, activity, fetch_hfeed=True,
               include_redirect_sources=False,
-              already_fetched_hfeeds=fetched)
+              already_fetched_hfeeds=fetched_hfeeds)
 
         targets = original_post_discovery.targets_for_response(
           resp, originals=activity['originals'], mentions=activity['mentions'])
