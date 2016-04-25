@@ -12,7 +12,7 @@ src=`dirname $0`/../..
 
 # run unit tests
 cd $src/oauth-dropins && source local/bin/activate
-python -m unittest discover
+python -m unittest discover --pattern="test_*.py"
 
 cd ../granary && source local/bin/activate
 python -m unittest discover

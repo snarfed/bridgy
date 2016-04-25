@@ -958,7 +958,8 @@ class PollTest(TaskQueueTest):
     self.assertEquals(NOW, source.last_syndication_url)
 
   def test_multiple_activities_fetch_hfeed_once(self):
-    """Make sure that multiple activities only fetch the author's h-feed once."""
+    """Make sure that multiple activities only fetch the author's h-feed once.
+    """
     self.sources[0].domain_urls = ['http://author']
     self.sources[0].put()
 
@@ -968,6 +969,32 @@ class PollTest(TaskQueueTest):
     for letter, activity in zip(string.letters, FakeGrSource.activities):
       activity['url'] = activity['object']['url'] = 'http://fa.ke/post/' + letter
       activity['object']['content'] = 'foo bar'
+
+    self._expect_fetch_hfeed()
+    self.mox.ReplayAll()
+    self.post_task()
+
+  def test_syndicated_post_does_not_prevent_fetch_hfeed(self):
+    """The original fix to fetch the source's h-feed only once per task
+    had a bug that prevented us from fetching the h-feed *at all* if
+    there was already a SyndicatedPost for the first activity.
+
+    https://github.com/snarfed/bridgy/issues/597#issuecomment-214079860
+    """
+    self.sources[0].domain_urls = ['http://author']
+    self.sources[0].put()
+
+    FakeGrSource.activities = self.activities
+
+    # syndicated urls need to be unique for this to be interesting
+    for letter, activity in zip(string.letters, FakeGrSource.activities):
+      activity['url'] = activity['object']['url'] = 'http://fa.ke/post/' + letter
+      activity['object']['content'] = 'foo bar'
+
+    # set up a blank, which will short-circuit fetch for the first activity
+    SyndicatedPost.insert_syndication_blank(
+      self.sources[0],
+      self.sources[0].canonicalize_url(self.activities[0].get('url')))
 
     self._expect_fetch_hfeed()
     self.mox.ReplayAll()

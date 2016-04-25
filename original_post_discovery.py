@@ -45,7 +45,8 @@ from google.appengine.api import memcache
 MAX_PERMALINK_FETCHES = 10
 
 
-def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True):
+def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True,
+             already_fetched_hfeeds=None):
   """Augments the standard original_post_discovery algorithm with a
   reverse lookup that supports posts without a backlink or citation.
 
@@ -61,12 +62,17 @@ def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True):
     fetch_hfeed: boolean
     include_redirect_sources: boolean, whether to include URLs that redirect as
       well as their final destination URLs
+    already_fetched_hfeeds: set, URLs that we have already fetched and run
+      posse-post-discovery on, so we can avoid running it multiple times
 
   Returns: (set(string original post URLs), set(string mention URLs)) tuple
 
   """
   if not source.updates:
     source.updates = {}
+
+  if already_fetched_hfeeds is None:
+    already_fetched_hfeeds = set()
 
   originals, mentions = gr_source.Source.original_post_discovery(
     activity, domains=source.domains, cache=memcache,
@@ -124,7 +130,8 @@ def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True):
     syndication_url = source.canonicalize_url(syndication_url)
     if syndication_url:
       originals.update(_posse_post_discovery(
-        source, activity, syndication_url, fetch_hfeed))
+        source, activity, syndication_url, fetch_hfeed,
+        already_fetched_hfeeds))
     originals = set(util.dedupe_urls(originals))
   else:
     logging.debug('no syndication url, cannot process h-entries')
@@ -176,25 +183,31 @@ def targets_for_response(resp, originals, mentions):
   return targets
 
 
-def _posse_post_discovery(source, activity, syndication_url, fetch_hfeed):
+def _posse_post_discovery(source, activity, syndication_url, fetch_hfeed,
+                          already_fetched_hfeeds):
   """Performs the actual meat of the posse-post-discover.
 
   Args:
     source: models.Source subclass
     activity: activity dict
     syndication_url: url of the syndicated copy for which we are
-                     trying to find an original
+      trying to find an original
     fetch_hfeed: boolean, whether or not to fetch and parse the
-                 author's feed if we don't have a previously stored
-                 relationship.
+      author's feed if we don't have a previously stored
+      relationship
+    already_fetched_hfeeds: set, URLs we've already fetched in a
+      previous iteration
 
   Return:
     sequence of string original post urls, possibly empty
   """
-  logging.info('starting posse post discovery with syndicated %s', syndication_url)
+  logging.info('starting posse post discovery with syndicated %s',
+               syndication_url)
+
   relationships = SyndicatedPost.query(
     SyndicatedPost.syndication == syndication_url,
     ancestor=source.key).fetch()
+
   if not relationships and fetch_hfeed:
     # a syndicated post we haven't seen before! fetch the author's URLs to see
     # if we can find it.
@@ -203,7 +216,12 @@ def _posse_post_discovery(source, activity, syndication_url, fetch_hfeed):
     # fallback in the future to support content from non-Bridgy users.
     results = {}
     for url in _get_author_urls(source):
-      results.update(_process_author(source, url))
+      if url not in already_fetched_hfeeds:
+        results.update(_process_author(source, url))
+        already_fetched_hfeeds.add(url)
+      else:
+        logging.debug('skipping %s, already fetched this round', url)
+
     relationships = results.get(syndication_url, [])
 
   if not relationships:
