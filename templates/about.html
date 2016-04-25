@@ -890,11 +890,16 @@ commenting</a>, we'll miss you!</p>
 <li id="omit-link" class="question">Can I disable the link back to my post?</li>
 <li class="answer">
 <p>Sure! By default, Bridgy includes a link back to your post. If you're using
-the form on your user page, you can uncheck the <em>Include link</em> checkbox
+the form on your user page, you can select the <em>Include link: no</em> option
 to disable this. If you're sending a webmention, you can disable it by adding
 the query parameter <code>bridgy_omit_link=true</code> to your webmention HTTP
 request, or by adding the <code>u-bridgy-omit-link</code> class to a link in
-your post.
+your post.</p>
+<p>If you want to include links <em>only</em> on posts that have been automatically ellipsized
+(i.e. to fit on Twitter), you can select the <em>if shortened</em> preview option. This is
+equivalent to sending a webmention with the query parameter <code>bridgy_omit_link=maybe</code>
+or including an element like <code>&lt;data class="p-bridgy-omit-link" value="maybe" /&gt;</code>
+in the post body.</p>
 </li>
 
 <li id="ignore-formatting" class="question">Can I disable the plain text
