@@ -5,6 +5,7 @@ import datetime
 import json
 import string
 
+from granary import facebook as gr_facebook
 from oauth_dropins import facebook as oauth_facebook
 from requests.exceptions import HTTPError
 
@@ -1395,8 +1396,10 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
       <a class="u-syndication" href="http://facebook.com/snarfed.org/posts/314159"></a>
     </html>""")
 
-    self.expect_urlopen(
-      'https://graph.facebook.com/v2.2/212038_314159?access_token=my_token', '{}')
+    self.expect_urlopen(gr_facebook.API_BASE +
+                        gr_facebook.API_OBJECT % ('212038', '314159') +
+                        '&access_token=my_token',
+                        '{}')
 
     self.mox.ReplayAll()
     self.assert_discover(['http://author/post/permalink'], source=fb)
