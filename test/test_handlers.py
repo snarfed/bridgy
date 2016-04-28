@@ -1,3 +1,4 @@
+# coding=utf-8
 """Unit tests for handlers.py.
 """
 
@@ -248,6 +249,40 @@ asdf http://other/link qwert
 </article>
 """)
     self.assertIn('<title>Alice</title>', resp.body)
+
+  def test_reaction(self):
+    FakeGrSource.reaction = {
+      'objectType': 'activity',
+      'verb': 'react',
+      'id': 'tag:fa.ke,2013:000_scissors_by_111',
+      'content': u'✁',
+      'object': {'url': 'http://example.com/original/post'},
+      'author': {
+        'displayName': 'Alice',
+        'image': {'url': 'http://example.com/ryan/image'},
+      },
+    }
+
+    resp = self.check_response('/react/fake/%s/000/111/scissors', """\
+<article class="h-entry">
+<span class="p-uid">tag:fa.ke,2013:000_scissors_by_111</span>
+
+  <span class="p-author h-card">
+    <span class="p-name">Alice</span>
+    <img class="u-photo" src="https://example.com/ryan/image" alt="" />
+  </span>
+
+  <div class="e-content p-name">
+
+  ✁
+  </div>
+
+
+  <a class="u-in-reply-to" href="http://example.com/original/post"></a>
+  <a class="u-in-reply-to" href="http://or.ig/post"></a>
+
+</article>
+""")
 
   def test_repost_with_syndicated_post_and_mentions(self):
     self.activities[0]['object']['content'] += ' http://another/mention'
