@@ -256,8 +256,7 @@ class Poll(webapp2.RequestHandler):
       replies = obj.get('replies', {}).get('items', [])
       tags = obj.get('tags', [])
       likes = [t for t in tags if Response.get_type(t) == 'like']
-      reactions = ([t for t in tags if Response.get_type(t) == 'react']
-                   if source.is_beta_user() else [])
+      reactions = [t for t in tags if Response.get_type(t) == 'react']
       reposts = [t for t in tags if Response.get_type(t) == 'repost']
       rsvps = Source.get_rsvps_from_event(obj)
 
