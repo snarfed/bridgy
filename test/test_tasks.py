@@ -138,7 +138,7 @@ class PollTest(TaskQueueTest):
     self.assertEqual([], self.taskqueue_stub.GetTasks('poll'))
 
     self.post_task()
-    self.assertEqual(9, Response.query().count())
+    self.assertEqual(12, Response.query().count())
     self.assert_responses()
 
     source = self.sources[0].key.get()
@@ -332,7 +332,7 @@ class PollTest(TaskQueueTest):
     """utm_* query params should also be stripped after redirects."""
     for a in self.activities:
       a['object']['tags'][0]['id'] = 'tag:source.com,2013:only_reply'
-      del a['object']['tags'][1], a['object']['replies']
+      del a['object']['tags'][1:], a['object']['replies']
 
     # test with two activities so we can check urls_to_activity.
     # https://github.com/snarfed/bridgy/issues/237
@@ -550,12 +550,12 @@ class PollTest(TaskQueueTest):
       )]
 
     # responses from the normal activity
-    for resp in self.responses[:3]:
+    for resp in self.responses[:4]:
       resp.activities_json = [json.dumps({
         'id': 'tag:source.com,2013:a',
         'object': {'content': 'foo http://target1/post/url bar'},
       })]
-    expected += self.responses[:3]
+    expected += self.responses[:4]
 
     self.assert_responses(expected, ignore=('activities_json', 'response_json',
                                             'source', 'original_posts'))
@@ -1088,9 +1088,9 @@ class PollTest(TaskQueueTest):
     self.assertEquals(1, len(relationships))
     self.assertEquals('https://fa.ke/post/url', relationships[0].syndication)
 
-    # should repropagate all 9 responses
+    # should repropagate all 12 responses
     tasks = self.taskqueue_stub.GetTasks('propagate')
-    self.assertEquals(9, len(tasks))
+    self.assertEquals(12, len(tasks))
 
     # and they should be in reverse creation order
     response_keys = [resp.key.urlsafe() for resp in self.responses]
@@ -1168,7 +1168,7 @@ class PollTest(TaskQueueTest):
 
     self.post_task(reset=True)
     self.assert_equals(replies, json.loads(source.key.get().seen_responses_cache_json))
-    self.responses[3].key.delete()
+    self.responses[4].key.delete()
 
     # new responses that don't include existing response. cache will have
     # existing response.
@@ -1176,7 +1176,7 @@ class PollTest(TaskQueueTest):
     activity['object']['tags'] = tags
 
     self.post_task(reset=True)
-    self.assert_equals([r.key for r in self.responses[:3]],
+    self.assert_equals([r.key for r in self.responses[:4]],
                        list(Response.query().iter(keys_only=True)))
     self.assert_equals(tags, json.loads(source.key.get().seen_responses_cache_json))
 
@@ -1216,7 +1216,7 @@ class PropagateTest(TaskQueueTest):
 
   def setUp(self):
     super(PropagateTest, self).setUp()
-    for r in self.responses[:3]:
+    for r in self.responses[:4]:
       r.put()
     self.mox.StubOutClassWithMocks(send, 'WebmentionSend')
 
@@ -1268,16 +1268,19 @@ class PropagateTest(TaskQueueTest):
     self.assertEqual('new', self.responses[0].status)
 
     id = self.sources[0].key.string_id()
-    for url in ('http://localhost/comment/fake/%s/a/1_2_a' % id,
-                'http://localhost/like/fake/%s/a/alice' % id,
-                'http://localhost/repost/fake/%s/a/bob' % id):
+    for url in (
+        'http://localhost/comment/fake/%s/a/1_2_a' % id,
+        'http://localhost/like/fake/%s/a/alice' % id,
+        'http://localhost/repost/fake/%s/a/bob' % id,
+        'http://localhost/react/fake/%s/a/bob/a_scissors_by_bob' % id,
+    ):
       self.expect_webmention(source_url=url).AndReturn(True)
     self.mox.ReplayAll()
 
     now = NOW
     util.now_fn = lambda: now
 
-    for r in self.responses[:3]:
+    for r in self.responses[:4]:
       now += datetime.timedelta(hours=1)
       self.post_task(response=r)
       self.assert_response_is('complete', now + LEASE_LENGTH,

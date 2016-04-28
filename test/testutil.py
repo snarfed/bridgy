@@ -1,3 +1,4 @@
+# coding=utf-8
 """Unit test utilities.
 """
 
@@ -35,7 +36,8 @@ class FakeGrSource(gr_source.Source):
   """Fake granary source class.
 
   Attributes:
-    activities, like, share, event, rsvp, etag, search_results, last_search_query
+    activities, like, reaction, share, event, rsvp, etag, search_results,
+    last_search_query
   """
   NAME = 'FakeSource'
   DOMAIN = 'fa.ke'
@@ -55,6 +57,9 @@ class FakeGrSource(gr_source.Source):
   def get_like(self, *args, **kwargs):
     return copy.deepcopy(self.like)
 
+  def get_reaction(self, *args, **kwargs):
+    return copy.deepcopy(self.reaction)
+
   def get_share(self, *args, **kwargs):
     return copy.deepcopy(self.share)
 
@@ -66,8 +71,8 @@ class FakeGrSource(gr_source.Source):
 
   @classmethod
   def clear(cls):
-    cls.activities = cls.like = cls.share = cls.event = cls.rsvp = cls.etag = \
-      cls.last_search_query = None
+    cls.activities = cls.like = cls.reaction = cls.share = cls.event = \
+      cls.rsvp = cls.etag = cls.last_search_query = None
     cls.search_results = []
 
   def get_activities_response(self, user_id=None, group_id=None,
@@ -148,6 +153,9 @@ class FakeSource(Source):
   string_id_counter = 1
   gr_source = FakeGrSource()
   username = ndb.StringProperty()
+
+  def is_beta_user(self):
+    return True
 
   def silo_url(self):
     return 'http://fa.ke/profile/url'
@@ -278,28 +286,35 @@ class ModelsTest(HandlerTest):
         'to': [{'objectType':'group', 'alias':'@public'}],
         'replies': {
           'items': [{
-              'objectType': 'comment',
-              'id': 'tag:source.com,2013:1_2_%s' % id,
-              'url': 'http://fa.ke/comment/url',
-              'content': 'foo bar',
-              }],
+            'objectType': 'comment',
+            'id': 'tag:source.com,2013:1_2_%s' % id,
+            'url': 'http://fa.ke/comment/url',
+            'content': 'foo bar',
+          }],
           'totalItems': 1,
-          },
-        'tags': [{
-              'objectType': 'activity',
-              'verb': 'like',
-              'id': 'tag:source.com,2013:%s_liked_by_alice' % id,
-              'object': {'url': 'http://example.com/abc'},
-              'author': {'url': 'http://example.com/alice'},
-              }, {
-              'id': 'tag:source.com,2013:%s_reposted_by_bob' % id,
-              'objectType': 'activity',
-              'verb': 'share',
-              'object': {'url': 'http://example.com/def'},
-              'author': {'url': 'http://example.com/bob'},
-              }],
         },
-      } for id in ('a', 'b', 'c')]
+        'tags': [{
+          'objectType': 'activity',
+          'verb': 'like',
+          'id': 'tag:source.com,2013:%s_liked_by_alice' % id,
+          'object': {'url': 'http://example.com/abc'},
+          'author': {'url': 'http://example.com/alice'},
+        }, {
+          'id': 'tag:source.com,2013:%s_reposted_by_bob' % id,
+          'objectType': 'activity',
+          'verb': 'share',
+          'object': {'url': 'http://example.com/def'},
+          'author': {'url': 'http://example.com/bob'},
+        }, {
+          'id': 'tag:source.com,2013:%s_scissors_by_bob' % id,
+          'objectType': 'activity',
+          'verb': 'react',
+          'content': u'✁',
+          'object': {'url': 'http://example.com/def'},
+          'author': {'url': 'http://example.com/bob'},
+        }],
+      },
+    } for id in ('a', 'b', 'c')]
     FakeGrSource.activities = self.activities
 
     # responses
@@ -346,6 +361,18 @@ class ModelsTest(HandlerTest):
           activities_json=[json.dumps(pruned_activity)],
           response_json=json.dumps(share),
           type='repost',
+          source=self.sources[0].key,
+          unsent=['http://target1/post/url'],
+          created=created))
+
+      created += datetime.timedelta(hours=1)
+
+      reaction = obj['tags'][2]
+      self.responses.append(Response(
+          id=reaction['id'],
+          activities_json=[json.dumps(pruned_activity)],
+          response_json=json.dumps(reaction),
+          type='react',
           source=self.sources[0].key,
           unsent=['http://target1/post/url'],
           created=created))

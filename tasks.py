@@ -1,3 +1,4 @@
+# coding=utf-8
 """Task queue handlers.
 """
 
@@ -251,15 +252,17 @@ class Poll(webapp2.RequestHandler):
           responses[id] = activity
           break
 
-      # extract replies, likes, reposts, and rsvps
+      # extract replies, likes, reactions, reposts, and rsvps
       replies = obj.get('replies', {}).get('items', [])
       tags = obj.get('tags', [])
       likes = [t for t in tags if Response.get_type(t) == 'like']
+      reactions = ([t for t in tags if Response.get_type(t) == 'react']
+                   if source.is_beta_user() else [])
       reposts = [t for t in tags if Response.get_type(t) == 'repost']
       rsvps = Source.get_rsvps_from_event(obj)
 
       # coalesce responses. drop any without ids
-      for resp in replies + likes + reposts + rsvps:
+      for resp in replies + likes + reactions + reposts + rsvps:
         id = resp.get('id')
         if not id:
           logging.error('Skipping response without id: %s', json.dumps(resp, indent=2))
@@ -691,11 +694,6 @@ class PropagateResponse(SendWebmentions):
     self.send_webmentions()
 
   def source_url(self, target_url):
-    # parse the response id. (we know Response key ids are always tag URIs)
-    _, response_id = util.parse_tag_uri(self.entity.key.string_id())
-    if self.entity.type in ('like', 'repost', 'rsvp'):
-      response_id = response_id.split('_')[-1]
-
     # determine which activity to use
     activity = self.activities[0]
     if self.entity.urls_to_activity:
@@ -725,8 +723,17 @@ activities: %s""", target_url, urls_to_activity, self.activities)
 
     path = [host_url, self.entity.type, self.entity.source.get().SHORT_NAME,
             self.entity.source.string_id(), post_id]
+
     if self.entity.type != 'post':
+      # parse and add response id. (we know Response key ids are always tag URIs)
+      _, response_id = util.parse_tag_uri(self.entity.key.string_id())
+      reaction_id = response_id
+      if self.entity.type in ('like', 'react', 'repost', 'rsvp'):
+        response_id = response_id.split('_')[-1]  # extract responder user id
       path.append(response_id)
+      if self.entity.type == 'react':
+        path.append(reaction_id)
+
     return '/'.join(path)
 
 

@@ -464,7 +464,7 @@ class SourceTest(testutil.HandlerTest):
     self.assertTrue(source.should_refetch())
 
   def test_is_beta_user(self):
-    source = FakeSource.new(self.handler)
+    source = Source(id='x')
     self.assertFalse(source.is_beta_user())
 
     self.mox.stubs.Set(util, 'BETA_USER_PATHS', set())

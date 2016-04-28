@@ -4,6 +4,7 @@ Disallow: /comment
 Disallow: /like
 Disallow: /log
 Disallow: /post
+Disallow: /react
 Disallow: /repost
 Disallow: /rsvp
 Disallow: /*?*

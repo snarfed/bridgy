@@ -278,6 +278,20 @@ class LikeHandler(ItemHandler):
     return super(LikeHandler, self).get_title(obj)
 
 
+class ReactionHandler(ItemHandler):
+  def get_item(self, post_id, user_id, reaction_id):
+    reaction = self.source.gr_source.get_reaction(
+      self.source.key.string_id(), post_id, user_id, reaction_id)
+    if not reaction:
+      return None
+    post = self.get_post(post_id)
+    if post:
+      originals, mentions = original_post_discovery.discover(
+        self.source, post, fetch_hfeed=False)
+      self.merge_urls(reaction, 'object', originals)
+    return reaction
+
+
 class RepostHandler(ItemHandler):
   def get_item(self, post_id, share_id):
     repost = self.source.gr_source.get_share(
@@ -314,6 +328,7 @@ application = webapp2.WSGIApplication([
     ('/(post)/(.+)/(.+)/(.+)', PostHandler),
     ('/(comment)/(.+)/(.+)/(.+)/(.+)', CommentHandler),
     ('/(like)/(.+)/(.+)/(.+)/(.+)', LikeHandler),
+    ('/(react)/(.+)/(.+)/(.+)/(.+)/(.+)', ReactionHandler),
     ('/(repost)/(.+)/(.+)/(.+)/(.+)', RepostHandler),
     ('/(rsvp)/(.+)/(.+)/(.+)/(.+)', RsvpHandler),
     ], debug=appengine_config.DEBUG)

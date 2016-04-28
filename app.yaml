@@ -61,7 +61,7 @@ handlers:
   upload: static/robots.txt
 
 # dynamic
-- url: /(post|comment|like|repost|rsvp)/.+
+- url: /(post|comment|like|react|repost|rsvp)/.+
   script: handlers.application
   secure: always
 

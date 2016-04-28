@@ -414,7 +414,7 @@ class FacebookPageTest(testutil.ModelsTest):
     self.poll()
 
     resps = list(models.Response.query())
-    self.assertEquals(2, len(resps))
+    self.assertEquals(3, len(resps))
     for resp in resps:
       self.assertEqual(['http://my.orig/post'], resp.unsent)
 
@@ -425,11 +425,9 @@ class FacebookPageTest(testutil.ModelsTest):
     """
     # first poll. only return post, with privacy and object_id, no responses.
     photo_post = copy.deepcopy(PHOTO_POST)
-    del photo_post['comments']
-    del photo_post['likes']
+    del photo_post['comments'], photo_post['likes'], photo_post['reactions']
     photo = copy.deepcopy(PHOTO)
-    del photo['comments']
-    del photo['likes']
+    del photo['comments'], photo['likes'], photo['reactions']
 
     self.expect_api_call(API_ME_POSTS + '&limit=50', {'data': [photo_post]})
     self.expect_api_call(API_NEWS_PUBLISHES, {})
@@ -454,10 +452,11 @@ class FacebookPageTest(testutil.ModelsTest):
     self.assertEquals(0, models.Response.query().count())
 
     self.poll()
-    self.assert_equals(
-      (ndb.Key('Response', 'tag:facebook.com,2013:222_10559'),
-       ndb.Key('Response', 'tag:facebook.com,2013:222_liked_by_666')),
-      models.Response.query().fetch(keys_only=True))
+    self.assert_equals((
+      ndb.Key('Response', 'tag:facebook.com,2013:222_10559'),
+      ndb.Key('Response', 'tag:facebook.com,2013:222_liked_by_666'),
+      ndb.Key('Response', 'tag:facebook.com,2013:222_wow_by_777'),
+    ), models.Response.query().fetch(keys_only=True))
 
   def test_on_new_syndicated_post_infer_username(self):
     # username is already set
