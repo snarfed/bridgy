@@ -1,3 +1,4 @@
+# coding=utf-8
 """Unit test utilities.
 """
 
@@ -35,7 +36,8 @@ class FakeGrSource(gr_source.Source):
   """Fake granary source class.
 
   Attributes:
-    activities, like, share, event, rsvp, etag, search_results, last_search_query
+    activities, like, reaction, share, event, rsvp, etag, search_results,
+    last_search_query
   """
   NAME = 'FakeSource'
   DOMAIN = 'fa.ke'
@@ -151,6 +153,9 @@ class FakeSource(Source):
   string_id_counter = 1
   gr_source = FakeGrSource()
   username = ndb.StringProperty()
+
+  def is_beta_user(self):
+    return True
 
   def silo_url(self):
     return 'http://fa.ke/profile/url'
@@ -300,6 +305,13 @@ class ModelsTest(HandlerTest):
           'verb': 'share',
           'object': {'url': 'http://example.com/def'},
           'author': {'url': 'http://example.com/bob'},
+        }, {
+          'id': 'tag:source.com,2013:%s_scissors_by_bob' % id,
+          'objectType': 'activity',
+          'verb': 'react',
+          'content': u'✁',
+          'object': {'url': 'http://example.com/def'},
+          'author': {'url': 'http://example.com/bob'},
         }],
       },
     } for id in ('a', 'b', 'c')]
@@ -349,6 +361,18 @@ class ModelsTest(HandlerTest):
           activities_json=[json.dumps(pruned_activity)],
           response_json=json.dumps(share),
           type='repost',
+          source=self.sources[0].key,
+          unsent=['http://target1/post/url'],
+          created=created))
+
+      created += datetime.timedelta(hours=1)
+
+      reaction = obj['tags'][2]
+      self.responses.append(Response(
+          id=reaction['id'],
+          activities_json=[json.dumps(pruned_activity)],
+          response_json=json.dumps(reaction),
+          type='react',
           source=self.sources[0].key,
           unsent=['http://target1/post/url'],
           created=created))

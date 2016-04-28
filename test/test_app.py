@@ -289,7 +289,8 @@ class AppTest(testutil.ModelsTest):
     self.assertEquals(
       ['enabled'], hcard['properties'].get('bridgy-publish-status'))
 
-    for item, resp in zip(hcard['children'], self.responses):
+    expected_resps = self.responses[:10]
+    for item, resp in zip(hcard['children'], expected_resps):
       self.assertIn('h-bridgy-response', item['type'])
       props = item['properties']
       self.assertEquals([resp.status], props['bridgy-status'])
@@ -297,7 +298,7 @@ class AppTest(testutil.ModelsTest):
                         props['bridgy-original-source'])
       self.assertEquals(resp.unsent, props['bridgy-target'])
 
-    publish = hcard['children'][len(self.responses)]
+    publish = hcard['children'][len(expected_resps)]
     self.assertIn('h-bridgy-publish', publish['type'])
     props = publish['properties']
     self.assertEquals([self.publishes[0].key.parent().id()], props['url'])
