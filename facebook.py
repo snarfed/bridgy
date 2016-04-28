@@ -49,10 +49,6 @@ PUBLISH_SCOPES = [
   'user_photos', 'user_videos', 'user_events', 'user_likes',
 ]
 
-# WARNING: this edge is deprecated in API v2.4 and will stop working in 2017.
-# https://developers.facebook.com/docs/apps/changelog#v2_4_deprecations
-API_EVENT_RSVPS = '%s/invited'
-
 # https://developers.facebook.com/docs/graph-api/using-graph-api/#errors
 DEAD_TOKEN_ERROR_CODES = frozenset((
   200,  # "Permissions error"
