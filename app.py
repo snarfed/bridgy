@@ -308,6 +308,7 @@ class UserHandler(DashboardHandler):
             'rsvp-yes': 'is attending',
             'rsvp-no': 'is not attending',
             'rsvp-maybe': 'might attend',
+            'rsvp-interested': 'is interested',
             'invite': 'is invited',
           }
           r.response['content'] = '%s %s.' % (
