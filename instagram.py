@@ -18,6 +18,7 @@ Example comment ID and links
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
+import datetime
 import json
 import logging
 import urlparse
@@ -44,6 +45,7 @@ class Instagram(models.Source):
 
   GR_CLASS = gr_instagram.Instagram
   SHORT_NAME = 'instagram'
+  FAST_POLL = datetime.timedelta(minutes=60)
 
   URL_CANONICALIZER = util.UrlCanonicalizer(
     domain=GR_CLASS.DOMAIN,
