@@ -101,7 +101,7 @@ class ItemHandler(webapp2.RequestHandler):
     """
     return obj.get('title') or obj.get('content') or 'Bridgy Response'
 
-  def get_post(self, id, is_event=False):
+  def get_post(self, id):
     """Fetch a post.
 
     Args:
@@ -111,19 +111,13 @@ class ItemHandler(webapp2.RequestHandler):
     Returns: ActivityStreams object dict
     """
     try:
-      if is_event:
-        post = self.source.gr_source.get_event(id)
-      else:
-        posts = self.source.get_activities(
+      posts = self.source.get_activities(
           activity_id=id, user_id=self.source.key.id())
-        post = posts[0] if posts else None
-      if not post:
-        logging.warning('Source post %s not found', id)
-      return post
-    except Exception, e:
-      # use interpret_http_exception to log HTTP errors
-      if not util.interpret_http_exception(e)[0]:
-        logging.warning('Error fetching source post %s', id, exc_info=True)
+      if posts:
+        return posts[0]
+      logging.warning('Source post %s not found', id)
+    except Exception as e:
+      util.interpret_http_exception(e)
 
   def get(self, type, source_short_name, string_id, *ids):
     source_cls = models.sources.get(source_short_name)
@@ -212,10 +206,11 @@ class ItemHandler(webapp2.RequestHandler):
       urls: sequence of string URLs to add
       object_type: stored as the objectType alongside each URL
     """
-    obj[property] = util.get_list(obj, property)
-    existing = set(filter(None, (u.get('url') for u in obj[property])))
-    obj[property] += [{'url': url, 'objectType': object_type} for url in urls
-                      if url not in existing]
+    if obj:
+      obj[property] = util.get_list(obj, property)
+      existing = set(filter(None, (u.get('url') for u in obj[property])))
+      obj[property] += [{'url': url, 'objectType': object_type} for url in urls
+                        if url not in existing]
 
 
 # Note that mention links are included in posts and comments, but not
@@ -224,9 +219,6 @@ class PostHandler(ItemHandler):
   def get_item(self, id):
     posts = self.source.get_activities(activity_id=id, user_id=self.source.key.id())
     post = posts[0] if posts else None
-    if not post:
-      return None
-
     originals, mentions = original_post_discovery.discover(
       self.source, post, fetch_hfeed=False)
     obj = post['object']
@@ -240,8 +232,6 @@ class CommentHandler(ItemHandler):
   def get_item(self, post_id, id):
     cmt = self.source.get_comment(
       id, activity_id=post_id, activity_author_id=self.source.key.id())
-    if not cmt:
-      return None
     post = self.get_post(post_id)
     if post:
       originals, mentions = original_post_discovery.discover(
@@ -254,8 +244,6 @@ class CommentHandler(ItemHandler):
 class LikeHandler(ItemHandler):
   def get_item(self, post_id, user_id):
     like = self.source.get_like(self.source.key.string_id(), post_id, user_id)
-    if not like:
-      return None
     post = self.get_post(post_id)
     if post:
       originals, mentions = original_post_discovery.discover(
@@ -282,8 +270,6 @@ class ReactionHandler(ItemHandler):
   def get_item(self, post_id, user_id, reaction_id):
     reaction = self.source.gr_source.get_reaction(
       self.source.key.string_id(), post_id, user_id, reaction_id)
-    if not reaction:
-      return None
     post = self.get_post(post_id)
     if post:
       originals, mentions = original_post_discovery.discover(
@@ -296,8 +282,6 @@ class RepostHandler(ItemHandler):
   def get_item(self, post_id, share_id):
     repost = self.source.gr_source.get_share(
       self.source.key.string_id(), post_id, share_id)
-    if not repost:
-      return None
     # webmention receivers don't want to see their own post in their
     # comments, so remove attachments before rendering.
     if 'attachments' in repost:
@@ -312,11 +296,9 @@ class RepostHandler(ItemHandler):
 
 class RsvpHandler(ItemHandler):
   def get_item(self, event_id, user_id):
+    event = self.source.gr_source.get_event(id)
     rsvp = self.source.gr_source.get_rsvp(
       self.source.key.string_id(), event_id, user_id)
-    if not rsvp:
-      return None
-    event = self.get_post(event_id, is_event=True)
     if event:
       originals, mentions = original_post_discovery.discover(
         self.source, event, fetch_hfeed=False)
