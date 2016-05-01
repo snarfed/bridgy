@@ -6,5 +6,7 @@ beautifulsoup4
 mf2py>=1.0.4
 mf2util>=0.2.11
 oauth2client
-requests==2.1.0 # rq.filter: <=2.1.0
+requests>=2.10.0
+requests-toolbelt>=0.6.0
 -e git+git@github.com:snarfed/webmention-tools.git#egg=webmentiontools
+urllib3>=1.14
