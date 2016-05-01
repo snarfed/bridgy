@@ -33,6 +33,11 @@ blog.mahabali.me
 micropub.net
 oauth.net
 
+# these have been down for a while (or always), and their owners are still
+# active on silos.
+kash.space
+
+
 24sessions.com
 500px.com
 abakus-internet-marketing.de
