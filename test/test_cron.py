@@ -7,6 +7,7 @@ import copy
 import datetime
 import json
 
+from granary import instagram as gr_instagram
 from granary.test import test_flickr
 from granary.test import test_instagram
 import oauth_dropins
@@ -78,7 +79,7 @@ class CronTest(HandlerTest):
         'profile_pic_url': 'http://new/pic',
         })
       super(HandlerTest, self).expect_requests_get(
-        'https://www.instagram.com/%s/' % username,
+        gr_instagram.HTML_BASE_URL + '%s/' % username,
         test_instagram.HTML_HEADER + json.dumps(profile) + test_instagram.HTML_FOOTER,
         allow_redirects=False)
     self.mox.ReplayAll()
@@ -112,7 +113,7 @@ class CronTest(HandlerTest):
     source.put()
 
     super(HandlerTest, self).expect_requests_get(
-      'https://www.instagram.com/x/', status_code=404, allow_redirects=False)
+      gr_instagram.HTML_BASE_URL + 'x/', status_code=404, allow_redirects=False)
     self.mox.ReplayAll()
 
     resp = cron.application.get_response('/cron/update_instagram_pictures')

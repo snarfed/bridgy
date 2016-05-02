@@ -14,6 +14,7 @@ instagram_client_id
 instagram_client_secret
 instagram_client_id_local
 instagram_client_secret_local
+instagram_scrape_base
 /l
 /local
 /mapreduce

@@ -9,6 +9,7 @@ import urllib
 
 from oauth_dropins import indieauth
 from oauth_dropins.webutil.testutil import TestCase
+from granary import instagram as gr_instagram
 from granary.test import test_instagram
 
 import appengine_config
@@ -75,7 +76,7 @@ class InstagramTest(testutil.ModelsTest):
 
   def expect_instagram_fetch(self, body=test_instagram.HTML_PROFILE_COMPLETE,
                              **kwargs):
-    TestCase.expect_requests_get(self, 'https://www.instagram.com/snarfed/',
+    TestCase.expect_requests_get(self, gr_instagram.HTML_BASE_URL + 'snarfed/',
                                  body, allow_redirects=False, **kwargs)
 
   def callback(self, state=''):
