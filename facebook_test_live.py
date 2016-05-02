@@ -47,6 +47,10 @@ import util
 
 TEST_USER_ID = '1407574399567467'
 
+# undo requests-toolbelt's app engine monkey patch
+from requests import adapters, sessions
+sessions.HTTPAdapter = adapters.HTTPAdapter
+
 
 class FacebookTestLive(testutil.HandlerTest):
 

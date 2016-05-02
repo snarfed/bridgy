@@ -17,6 +17,12 @@ FACEBOOK_TEST_USER_TOKEN = (os.getenv('FACEBOOK_TEST_USER_TOKEN') or
 SUPERFEEDR_TOKEN = read('superfeedr_token')
 SUPERFEEDR_USERNAME = read('superfeedr_username')
 
+# Make requests and urllib3 play nice with App Engine.
+# https://github.com/snarfed/bridgy/issues/396
+# http://stackoverflow.com/questions/34574740
+from requests_toolbelt.adapters import appengine
+appengine.monkeypatch()
+
 # Wrap webutil.util.tag_uri and hard-code the year to 2013.
 #
 # Needed because I originally generated tag URIs with the current year, which
