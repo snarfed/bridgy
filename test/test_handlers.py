@@ -51,15 +51,17 @@ class HandlersTest(testutil.HandlerTest):
       'url': 'http://fa.ke/events/123',
     }
 
-  def check_response(self, url_template, expected=None):
+  def check_response(self, url_template, expected_body=None, expected_status=200):
     # use an HTTPS request so that URL schemes are converted
     resp = handlers.application.get_response(
       url_template % self.source.key.string_id(), scheme='https')
-    self.assertEqual(200, resp.status_int, resp.body)
-    header_lines = len(handlers.TEMPLATE.template.splitlines()) - 2
-    actual = '\n'.join(resp.body.splitlines()[header_lines:-1])
-    if expected:
-      self.assert_equals(expected, actual)
+    self.assertEqual(expected_status, resp.status_int, resp.body)
+
+    if expected_body:
+      header_lines = len(handlers.TEMPLATE.template.splitlines()) - 2
+      actual = '\n'.join(resp.body.splitlines()[header_lines:-1])
+      self.assert_equals(expected_body, actual)
+
     return resp
 
   def test_post_html(self):
@@ -124,44 +126,32 @@ asdf http://other/link qwert
 
   def test_post_missing(self):
     FakeGrSource.activities = []
-    resp = handlers.application.get_response(
-      '/post/fake/%s/000' % self.source.key.string_id())
-    self.assertEqual(404, resp.status_int, resp.body)
+    self.check_response('/post/fake/%s/000', expected_status=404)
 
   def test_bad_source_type(self):
-    resp = handlers.application.get_response('/post/not_a_type/%s/000' %
-                                             self.source.key.string_id())
-    self.assertEqual(400, resp.status_int)
+    self.check_response('/post/not_a_type/%s/000', expected_status=400)
 
   def test_bad_user(self):
-    resp = handlers.application.get_response('/post/fake/not_a_user/000')
-    self.assertEqual(400, resp.status_int)
+    self.check_response('/post/fake/not_a_user_%s/000', expected_status=400)
 
   def test_bad_format(self):
-    resp = handlers.application.get_response('/post/fake/%s/000?format=asdf' %
-                                             self.source.key.string_id())
-    self.assertEqual(400, resp.status_int)
+    self.check_response('/post/fake/%s/000?format=asdf', expected_status=400)
 
   def test_bad_id(self):
     for url in ('/post/fake/%s/x"1', '/comment/fake/%s/123/y(2',
                 '/like/fake/%s/abc/z$3'):
-      resp = handlers.application.get_response(url % self.source.key.string_id())
-      self.assertEqual(404, resp.status_int)
+      self.check_response(url, expected_status=404)
 
   def test_author_uid_not_tag_uri(self):
     self.activities[0]['object']['author']['id'] = 'not a tag uri'
     FakeGrSource.activities = self.activities
-    resp = handlers.application.get_response(
-      '/post/fake/%s/000?format=json' % self.source.key.string_id())
-    self.assertEqual(200, resp.status_int, resp.body)
+    resp = self.check_response('/post/fake/%s/000?format=json', expected_status=200)
     props = json.loads(resp.body)['properties']['author'][0]['properties']
     self.assert_equals(['not a tag uri'], props['uid'])
     self.assertNotIn('url', props)
 
   def test_ignore_unknown_query_params(self):
-    resp = handlers.application.get_response('/post/fake/%s/000?target=x/y/z' %
-                                             self.source.key.string_id())
-    self.assertEqual(200, resp.status_int)
+    self.check_response('/post/fake/%s/000?target=x/y/z')
 
   def test_pass_through_source_errors(self):
     user_id = self.source.key.string_id()
@@ -172,8 +162,7 @@ asdf http://other/link qwert
                                       ).AndRaise(err)
     self.mox.ReplayAll()
 
-    resp = handlers.application.get_response('/post/fake/%s/000' % user_id)
-    self.assertEqual(410, resp.status_int)
+    resp = self.check_response('/post/fake/%s/000', expected_status=410)
     self.assertEqual('text/plain', resp.headers['Content-Type'])
     self.assertEqual('FakeSource error:\nGone baby gone', resp.body)
 
@@ -184,9 +173,7 @@ asdf http://other/link qwert
     testutil.FakeSource.get_activities(activity_id='000', user_id=user_id
                                       ).AndRaise(err)
     self.mox.ReplayAll()
-
-    resp = handlers.application.get_response('/post/fake/%s/000' % user_id)
-    self.assertEqual(503, resp.status_int)
+    resp = self.check_response('/post/fake/%s/000', expected_status=503)
     self.assertEqual('FakeSource error:\nTry again pls', resp.body)
 
   def test_comment(self):
