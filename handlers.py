@@ -218,7 +218,10 @@ class ItemHandler(webapp2.RequestHandler):
 class PostHandler(ItemHandler):
   def get_item(self, id):
     posts = self.source.get_activities(activity_id=id, user_id=self.source.key.id())
-    post = posts[0] if posts else None
+    if not posts:
+      return None
+
+    post = posts[0]
     originals, mentions = original_post_discovery.discover(
       self.source, post, fetch_hfeed=False)
     obj = post['object']
@@ -226,7 +229,6 @@ class PostHandler(ItemHandler):
       set(util.get_list(obj, 'upstreamDuplicates')) | originals)
     self.merge_urls(obj, 'tags', mentions, object_type='mention')
     return obj
-
 
 class CommentHandler(ItemHandler):
   def get_item(self, post_id, id):

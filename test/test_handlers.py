@@ -51,14 +51,15 @@ class HandlersTest(testutil.HandlerTest):
       'url': 'http://fa.ke/events/123',
     }
 
-  def check_response(self, url_template, expected):
+  def check_response(self, url_template, expected=None):
     # use an HTTPS request so that URL schemes are converted
     resp = handlers.application.get_response(
       url_template % self.source.key.string_id(), scheme='https')
     self.assertEqual(200, resp.status_int, resp.body)
     header_lines = len(handlers.TEMPLATE.template.splitlines()) - 2
     actual = '\n'.join(resp.body.splitlines()[header_lines:-1])
-    self.assert_equals(expected, actual)
+    if expected:
+      self.assert_equals(expected, actual)
     return resp
 
   def test_post_html(self):
@@ -120,6 +121,12 @@ asdf http://other/link qwert
         }],
       },
     }, json.loads(resp.body))
+
+  def test_post_missing(self):
+    FakeGrSource.activities = []
+    resp = handlers.application.get_response(
+      '/post/fake/%s/000' % self.source.key.string_id())
+    self.assertEqual(404, resp.status_int, resp.body)
 
   def test_bad_source_type(self):
     resp = handlers.application.get_response('/post/not_a_type/%s/000' %
