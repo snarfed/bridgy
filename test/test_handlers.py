@@ -321,6 +321,10 @@ asdf http://other/link qwert
 </article>
 """)
 
+  def test_repost_not_found(self):
+    FakeGrSource.share = None
+    self.check_response('/repost/fake/%s/000/111', expected_status=404)
+
   def test_rsvp(self):
     FakeGrSource.rsvp = {
       'objectType': 'activity',

@@ -296,7 +296,7 @@ class RepostHandler(ItemHandler):
       self.source.key.string_id(), post_id, share_id)
     # webmention receivers don't want to see their own post in their
     # comments, so remove attachments before rendering.
-    if 'attachments' in repost:
+    if repost and 'attachments' in repost:
       del repost['attachments']
     post = self.get_post(post_id)
     if post:
