@@ -505,3 +505,13 @@ asdf http://other/link qwert
 
 </article>
 """)
+
+  def test_cache(self):
+    orig = self.check_response('/post/fake/%s/000')
+
+    # should serve the cached response and not refetch
+    self.mox.StubOutWithMock(FakeGrSource, 'get_activities_response')
+    self.mox.ReplayAll()
+
+    cached = self.check_response('/post/fake/%s/000')
+    self.assert_multiline_equals(orig.body, cached.body)

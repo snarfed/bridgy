@@ -24,6 +24,8 @@ import logging
 import re
 import string
 
+from google.appengine.api import memcache
+
 import appengine_config
 
 from granary import microformats2
@@ -40,6 +42,8 @@ import flickr
 import googleplus
 import instagram
 import twitter
+
+CACHE_TIME = 60 * 15  # 15m
 
 TEMPLATE = string.Template("""\
 <!DOCTYPE html>
@@ -138,22 +142,28 @@ class ItemHandler(webapp2.RequestHandler):
         self.abort(404, 'Invalid id %s' % id)
 
     label = '%s:%s %s %s' % (source_short_name, string_id, type, ids)
-    logging.info('Fetching %s', label)
-    try:
-      obj = self.get_item(*ids)
-    except Exception, e:
-      # pass through all API HTTP errors if we can identify them
-      code, body = util.interpret_http_exception(e)
-      if not code and util.is_connection_failure(e):
-        code = 503
-        body = str(e)
-      if code:
-        self.response.status_int = int(code)
-        self.response.headers['Content-Type'] = 'text/plain'
-        self.response.write('%s error:\n%s' % (self.source.GR_CLASS.NAME, body))
-        return
-      else:
-        raise
+    cache_key = 'H ' + label
+    obj = memcache.get(cache_key)
+    if obj:
+      logging.info('Using cached object for %s', label)
+    else:
+      logging.info('Fetching %s', label)
+      try:
+        obj = self.get_item(*ids)
+      except Exception, e:
+        # pass through all API HTTP errors if we can identify them
+        code, body = util.interpret_http_exception(e)
+        if not code and util.is_connection_failure(e):
+          code = 503
+          body = str(e)
+        if code:
+          self.response.status_int = int(code)
+          self.response.headers['Content-Type'] = 'text/plain'
+          self.response.write('%s error:\n%s' % (self.source.GR_CLASS.NAME, body))
+          return
+        else:
+          raise
+      memcache.set(cache_key, obj, time=CACHE_TIME)
 
     if not obj:
       self.abort(404, label)
