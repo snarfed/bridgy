@@ -242,9 +242,10 @@ class PostHandler(ItemHandler):
 
 class CommentHandler(ItemHandler):
   def get_item(self, post_id, id):
-    cmt = self.source.get_comment(
-      id, activity_id=post_id, activity_author_id=self.source.key.id())
     post = self.get_post(post_id)
+    cmt = self.source.get_comment(
+      id, activity_id=post_id, activity_author_id=self.source.key.id(),
+      activity=post)
     if post:
       originals, mentions = original_post_discovery.discover(
         self.source, post, fetch_hfeed=False)
@@ -255,8 +256,9 @@ class CommentHandler(ItemHandler):
 
 class LikeHandler(ItemHandler):
   def get_item(self, post_id, user_id):
-    like = self.source.get_like(self.source.key.string_id(), post_id, user_id)
     post = self.get_post(post_id)
+    like = self.source.get_like(self.source.key.string_id(), post_id, user_id,
+                                activity=post)
     if post:
       originals, mentions = original_post_discovery.discover(
         self.source, post, fetch_hfeed=False)
@@ -280,9 +282,9 @@ class LikeHandler(ItemHandler):
 
 class ReactionHandler(ItemHandler):
   def get_item(self, post_id, user_id, reaction_id):
-    reaction = self.source.gr_source.get_reaction(
-      self.source.key.string_id(), post_id, user_id, reaction_id)
     post = self.get_post(post_id)
+    reaction = self.source.gr_source.get_reaction(
+      self.source.key.string_id(), post_id, user_id, reaction_id, activity=post)
     if post:
       originals, mentions = original_post_discovery.discover(
         self.source, post, fetch_hfeed=False)
@@ -292,13 +294,13 @@ class ReactionHandler(ItemHandler):
 
 class RepostHandler(ItemHandler):
   def get_item(self, post_id, share_id):
+    post = self.get_post(post_id)
     repost = self.source.gr_source.get_share(
-      self.source.key.string_id(), post_id, share_id)
+      self.source.key.string_id(), post_id, share_id, activity=post)
     # webmention receivers don't want to see their own post in their
     # comments, so remove attachments before rendering.
     if repost and 'attachments' in repost:
       del repost['attachments']
-    post = self.get_post(post_id)
     if post:
       originals, mentions = original_post_discovery.discover(
         self.source, post, fetch_hfeed=False)
@@ -310,7 +312,7 @@ class RsvpHandler(ItemHandler):
   def get_item(self, event_id, user_id):
     event = self.source.gr_source.get_event(event_id)
     rsvp = self.source.gr_source.get_rsvp(
-      self.source.key.string_id(), event_id, user_id)
+      self.source.key.string_id(), event_id, user_id, event=event)
     if event:
       originals, mentions = original_post_discovery.discover(
         self.source, event, fetch_hfeed=False)

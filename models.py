@@ -315,26 +315,23 @@ class Source(StringIdModel):
   def get_activities(self, **kwargs):
     return self.get_activities_response(**kwargs)['items']
 
-  def get_comment(self, comment_id, activity_id=None, activity_author_id=None):
+  def get_comment(self, comment_id, **kwargs):
     """Returns a comment from this source.
 
-    Passes through to granary by default. May be overridden
-    by subclasses.
+    Passes through to granary by default. May be overridden by subclasses.
 
     Args:
       comment_id: string, site-specific comment id
-      activity_id: string, site-specific activity id
-      activity_author_id: string, site-specific activity author id, optional
+      kwargs: passed to granary.Source.get_comment
 
     Returns: dict, decoded ActivityStreams comment object, or None
     """
-    comment = self.gr_source.get_comment(comment_id, activity_id=activity_id,
-                                         activity_author_id=activity_author_id)
+    comment = self.gr_source.get_comment(comment_id, **kwargs)
     if comment:
       self._inject_user_urls(comment)
     return comment
 
-  def get_like(self, activity_user_id, activity_id, like_user_id):
+  def get_like(self, activity_user_id, activity_id, like_user_id, **kwargs):
     """Returns an ActivityStreams 'like' activity object.
 
     Passes through to granary by default. May be overridden
@@ -344,8 +341,10 @@ class Source(StringIdModel):
       activity_user_id: string id of the user who posted the original activity
       activity_id: string activity id
       like_user_id: string id of the user who liked the activity
+      kwargs: passed to granary.Source.get_comment
     """
-    return self.gr_source.get_like(activity_user_id, activity_id, like_user_id)
+    return self.gr_source.get_like(activity_user_id, activity_id, like_user_id,
+                                   **kwargs)
 
   def _inject_user_urls(self, activity):
     """Adds this user's web site URLs to their user mentions (in tags), in place."""

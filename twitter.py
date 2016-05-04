@@ -110,7 +110,7 @@ class Twitter(models.Source):
 
     return results
 
-  def get_like(self, activity_user_id, activity_id, like_user_id):
+  def get_like(self, activity_user_id, activity_id, like_user_id, **kwargs):
     """Returns an ActivityStreams 'like' activity object for a favorite.
 
     We get Twitter favorites by scraping HTML, and we only get the first page,
@@ -121,6 +121,7 @@ class Twitter(models.Source):
       activity_user_id: string id of the user who posted the original activity
       activity_id: string activity id
       like_user_id: string id of the user who liked the activity
+      kwargs: passed to granary.Source.get_comment
     """
     id = self.gr_source.tag_uri('%s_favorited_by_%s' % (activity_id, like_user_id))
     resp = models.Response.get_by_id(id)
@@ -128,7 +129,7 @@ class Twitter(models.Source):
       return json.loads(resp.response_json)
     else:
       return super(Twitter, self).get_like(activity_user_id, activity_id,
-                                           like_user_id)
+                                           like_user_id, **kwargs)
 
   def is_private(self):
     """Returns True if this Twitter account is protected.
