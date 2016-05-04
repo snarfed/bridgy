@@ -38,6 +38,33 @@ class ReplacePollTasks(webapp2.RequestHandler):
         util.add_poll_task(source)
 
 
+class UpdateTwitterPictures(webapp2.RequestHandler):
+  """Finds Twitter sources whose profile pictures have changed and updates them.
+
+  https://github.com/snarfed/granary/commit/dfc3d406a20965a5ed14c9705e3d3c2223c8c3ff
+  http://indiewebcamp.com/Twitter#Profile_Image_URLs
+  """
+
+  def get(self):
+    sources = {source.key.id(): source for source in Twitter.query()}
+    if not sources:
+      return
+
+    # just auth as me or the first user. TODO: use app-only auth instead.
+    auther = sources.get('schnarfed') or sources.values()[0]
+    usernames = sources.keys()
+    users = []
+    for i in range(0, len(usernames), TWITTER_USERS_PER_LOOKUP):
+      url = TWITTER_API_USER_LOOKUP % ','.join(
+        usernames[i:i + TWITTER_USERS_PER_LOOKUP])
+      users += auther.gr_source.urlopen(url)
+
+    for user in users:
+      source = sources[user['screen_name']]
+      new_actor = auther.gr_source.user_to_actor(user)
+      maybe_update_picture(source, new_actor, self)
+
+
 class UpdatePictures(webapp2.RequestHandler):
   """Finds sources whose profile pictures have changed and
   updates them."""
@@ -84,6 +111,7 @@ def maybe_update_picture(source, new_actor, handler):
 
 application = webapp2.WSGIApplication([
     ('/cron/replace_poll_tasks', ReplacePollTasks),
+    ('/cron/update_twitter_pictures', UpdateTwitterPictures),
     ('/cron/update_instagram_pictures', UpdateInstagramPictures),
     ('/cron/update_flickr_pictures', UpdateFlickrPictures),
     ], debug=appengine_config.DEBUG)

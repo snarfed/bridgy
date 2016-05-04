@@ -6,6 +6,10 @@ cron:
   url: /cron/replace_poll_tasks
   schedule: every 4 hours
 
+- description: update changed twitter profile pictures
+  url: /cron/update_twitter_pictures
+  schedule: every day 08:00  # 1am pst
+
 - description: update changed instagram profile pictures
   url: /cron/update_instagram_pictures
   schedule: every day 09:00  # 2am pst
