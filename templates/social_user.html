@@ -266,7 +266,9 @@ Click to enable <a href="/about#listen">listening</a>:
     {% with response.response as r %}
     <a target="_blank" href="{{ response.actor.url }}"
        title="{{ response.actor.displayName }}">
-      <img class="profile" src="{{ response.actor.image.url }}" width="32" /></a>
+      {% if response.actor.image.url %}
+        <img class="profile" src="{{ response.actor.image.url }}" width="32" /></a>
+      {% endif %}
       <a target="_blank" class="u-bridgy-syndication-source u-name" href="{{ r.url }}">
         {{ r.content|default:"--"|striptags|truncatewords:6|safe }}
       </a>
