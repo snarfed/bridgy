@@ -41,8 +41,7 @@ class TwitterTest(testutil.ModelsTest):
     self.assertEqual('my_key', self.tw.gr_source.access_token_key)
     self.assertEqual('my_secret', self.tw.gr_source.access_token_secret)
     self.assertEqual('snarfed_org', self.tw.key.string_id())
-    self.assertEqual('https://twitter.com/snarfed_org/profile_image?size=original',
-                     self.tw.picture)
+    self.assertEqual('http://pi.ct/ure', self.tw.picture)
     self.assertEqual('Ryan Barrett', self.tw.name)
     self.assertEqual('https://twitter.com/snarfed_org', self.tw.url)
     self.assertEqual('https://twitter.com/snarfed_org', self.tw.silo_url())
@@ -55,8 +54,7 @@ class TwitterTest(testutil.ModelsTest):
     user['profile_image_url_https'] = 'https://foo_normal.xyz'
     self.auth_entity.user_json = json.dumps(user)
 
-    self.assertEqual('https://twitter.com/snarfed_org/profile_image?size=original',
-                     Twitter.new(self.handler, auth_entity=self.auth_entity).picture)
+    self.assertEqual('https://foo.xyz', Twitter.new(self.handler, auth_entity=self.auth_entity).picture)
 
   def test_get_like(self):
     """get_like() should use the Response stored in the datastore."""
