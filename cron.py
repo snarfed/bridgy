@@ -60,9 +60,10 @@ class UpdateTwitterPictures(webapp2.RequestHandler):
       users += auther.gr_source.urlopen(url)
 
     for user in users:
-      source = sources[user['screen_name']]
-      new_actor = auther.gr_source.user_to_actor(user)
-      maybe_update_picture(source, new_actor, self)
+      source = sources.get(user['screen_name'])
+      if source:
+        new_actor = auther.gr_source.user_to_actor(user)
+        maybe_update_picture(source, new_actor, self)
 
 
 class UpdatePictures(webapp2.RequestHandler):
