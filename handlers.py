@@ -308,7 +308,7 @@ class RepostHandler(ItemHandler):
 
 class RsvpHandler(ItemHandler):
   def get_item(self, event_id, user_id):
-    event = self.source.gr_source.get_event(id)
+    event = self.source.gr_source.get_event(event_id)
     rsvp = self.source.gr_source.get_rsvp(
       self.source.key.string_id(), event_id, user_id)
     if event:
