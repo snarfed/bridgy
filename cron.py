@@ -59,11 +59,15 @@ class UpdateTwitterPictures(webapp2.RequestHandler):
         usernames[i:i + TWITTER_USERS_PER_LOOKUP])
       users += auther.gr_source.urlopen(url)
 
+    updated = False
     for user in users:
       source = sources.get(user['screen_name'])
       if source:
         new_actor = auther.gr_source.user_to_actor(user)
-        maybe_update_picture(source, new_actor, self)
+        updated = maybe_update_picture(source, new_actor, self)
+
+    if updated:
+      util.CachedPage.invalidate('/users')
 
 
 class UpdatePictures(webapp2.RequestHandler):
@@ -72,11 +76,16 @@ class UpdatePictures(webapp2.RequestHandler):
   SOURCE_CLS = None
 
   def get(self):
+    updated = False
     for source in self.SOURCE_CLS.query():
       logging.debug('checking for updated profile pictures for: %s',
                     source.bridgy_url(self))
       if source.features and source.status != 'disabled':
-        maybe_update_picture(source, source.gr_source.get_actor(source.key.id()), self)
+        updated = maybe_update_picture(
+          source, source.gr_source.get_actor(source.key.id()), self)
+
+    if updated:
+      util.CachedPage.invalidate('/users')
 
 
 class UpdateInstagramPictures(UpdatePictures):
@@ -93,10 +102,10 @@ class UpdateFlickrPictures(UpdatePictures):
 
 def maybe_update_picture(source, new_actor, handler):
   if not new_actor:
-    return
+    return False
   new_pic = new_actor.get('image', {}).get('url')
   if not new_pic or source.picture == new_pic:
-    return
+    return False
 
   @ndb.transactional
   def update():
@@ -107,7 +116,7 @@ def maybe_update_picture(source, new_actor, handler):
   logging.info('Updating profile picture for %s from %s to %s',
                source.bridgy_url(handler), source.picture, new_pic)
   update()
-  util.CachedPage.invalidate('/users')
+  return True
 
 
 application = webapp2.WSGIApplication([
