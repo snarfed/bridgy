@@ -105,18 +105,19 @@ class ItemHandler(webapp2.RequestHandler):
     """
     return obj.get('title') or obj.get('content') or 'Bridgy Response'
 
-  def get_post(self, id):
+  def get_post(self, id, **kwargs):
     """Fetch a post.
 
     Args:
       id: string, site-specific post id
       is_event: bool
+      kwargs: passed through to get_activities
 
     Returns: ActivityStreams object dict
     """
     try:
       posts = self.source.get_activities(
-          activity_id=id, user_id=self.source.key.id())
+          activity_id=id, user_id=self.source.key.id(), **kwargs)
       if posts:
         return posts[0]
       logging.warning('Source post %s not found', id)
@@ -242,7 +243,7 @@ class PostHandler(ItemHandler):
 
 class CommentHandler(ItemHandler):
   def get_item(self, post_id, id):
-    post = self.get_post(post_id)
+    post = self.get_post(post_id, fetch_replies=True)
     cmt = self.source.get_comment(
       id, activity_id=post_id, activity_author_id=self.source.key.id(),
       activity=post)
@@ -256,7 +257,7 @@ class CommentHandler(ItemHandler):
 
 class LikeHandler(ItemHandler):
   def get_item(self, post_id, user_id):
-    post = self.get_post(post_id)
+    post = self.get_post(post_id, fetch_likes=True)
     like = self.source.get_like(self.source.key.string_id(), post_id, user_id,
                                 activity=post)
     if post:
@@ -294,7 +295,7 @@ class ReactionHandler(ItemHandler):
 
 class RepostHandler(ItemHandler):
   def get_item(self, post_id, share_id):
-    post = self.get_post(post_id)
+    post = self.get_post(post_id, fetch_shares=True)
     repost = self.source.gr_source.get_share(
       self.source.key.string_id(), post_id, share_id, activity=post)
     # webmention receivers don't want to see their own post in their
