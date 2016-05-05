@@ -144,7 +144,6 @@ asdf http://other/link qwert
 
   def test_author_uid_not_tag_uri(self):
     self.activities[0]['object']['author']['id'] = 'not a tag uri'
-    FakeGrSource.activities = self.activities
     resp = self.check_response('/post/fake/%s/000?format=json', expected_status=200)
     props = json.loads(resp.body)['properties']['author'][0]['properties']
     self.assert_equals(['not a tag uri'], props['uid'])
@@ -280,8 +279,6 @@ asdf http://other/link qwert
 
   def test_repost_with_syndicated_post_and_mentions(self):
     self.activities[0]['object']['content'] += ' http://another/mention'
-    FakeGrSource.activities = self.activities
-
     models.SyndicatedPost(
       parent=self.source.key,
       original='http://or.ig/post',
@@ -434,10 +431,7 @@ asdf http://other/link qwert
         'content': 'asdf http://other/link?utm_source=x&utm_medium=y&a=b qwert',
         'upstreamDuplicates': ['http://or.ig/post?utm_campaign=123'],
         })
-    FakeGrSource.activities = self.activities
     FakeGrSource.comment = {'content': 'qwert'}
-    self.mox.ReplayAll()
-
     self.check_response('/comment/fake/%s/000/111', """\
 <article class="h-entry">
 <span class="p-uid"></span>
@@ -469,8 +463,6 @@ asdf http://other/link qwert
                     {'url': 'https://all'},
                   ],
     }
-    self.mox.ReplayAll()
-
     self.check_response('/comment/fake/%s/000/111', """\
 <article class="h-entry">
 <span class="p-uid"></span>
@@ -496,9 +488,6 @@ asdf http://other/link qwert
       'id': 'tag:fa.ke,2013:000',
       'tags': [{'foo': 'bar'}],
     }
-    FakeGrSource.activities = self.activities
-    self.mox.ReplayAll()
-
     self.check_response('/post/fake/%s/000', """\
 <article class="h-entry">
 <span class="p-uid">tag:fa.ke,2013:000</span>
