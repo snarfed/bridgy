@@ -38,6 +38,13 @@ util.tag_uri = lambda domain, name: util._orig_tag_uri(domain, name, year=2013)
 # def namespace_manager_default_namespace_for_request():
 #   return 'webmention-dev'
 
+# Suppress warnings. These are duplicated in oauth-dropins and bridgy; keep them
+# in sync!
+import warnings
+warnings.filterwarnings('ignore', module='bs4',
+                        message='No parser was explicitly specified')
+warnings.filterwarnings('ignore', message='urllib3 is using URLFetch')
+
 
 def webapp_add_wsgi_middleware(app):
   # # uncomment for app stats
