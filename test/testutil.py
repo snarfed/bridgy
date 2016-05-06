@@ -87,8 +87,21 @@ class FakeGrSource(gr_source.Source):
       FakeGrSource.last_search_query = search_query
       activities = self.search_results
 
+    activities = copy.deepcopy(activities)
+    for activity in activities:
+      obj = activity['object']
+      obj['tags'] = [tag for tag in obj.get('tags', []) if
+                     'verb' not in tag or
+                     (tag['verb'] == 'like' and fetch_likes) or
+                     (tag['verb'] == 'share' and fetch_shares) or
+                     (tag['verb'] == 'mention' and fetch_mentions) or
+                     tag['verb'] == 'react'
+                    ]
+      if 'replies' in obj and not fetch_replies:
+        obj['replies']['items'] = []
+
     return {
-      'items': copy.deepcopy(activities),
+      'items': activities,
       'etag': getattr(self, 'etag', None),
     }
 
