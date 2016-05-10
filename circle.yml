@@ -10,8 +10,8 @@ checkout:
 
 dependencies:
   pre:
-    - curl -o $HOME/google_appengine_1.9.28.zip https://storage.googleapis.com/appengine-sdks/featured/google_appengine_1.9.28.zip
-    - unzip -q -d $HOME $HOME/google_appengine_1.9.28.zip
+    - curl -o $HOME/google_appengine_1.9.37.zip https://storage.googleapis.com/appengine-sdks/featured/google_appengine_1.9.37.zip
+    - unzip -q -d $HOME $HOME/google_appengine_1.9.37.zip
     - pip install -e /tmp/oauth-dropins/
     - pip install -e /tmp/granary/
   post:
