@@ -174,7 +174,13 @@ class Source(StringIdModel):
       token = self.auth_entity.get().access_token()
       if not isinstance(token, tuple):
         token = (token,)
-      kwargs = {'scrape': True} if self.key.kind() == 'Instagram' else {}
+
+      kwargs = {}
+      if self.key.kind() == 'Instagram':
+        kwargs = {'scrape': True}
+      elif self.key.kind() == 'Twitter':
+        kwargs = {'username': self.key.id()}
+
       self.gr_source = self.GR_CLASS(*token, **kwargs)
       return self.gr_source
 

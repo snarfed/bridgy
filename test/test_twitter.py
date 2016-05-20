@@ -150,3 +150,6 @@ class TwitterTest(testutil.ModelsTest):
     self.auth_entity.user_json = json.dumps({'protected': True})
     self.auth_entity.put()
     self.assertTrue(self.tw.is_private())
+
+  def test_gr_source_username(self):
+    self.assertEqual('snarfed_org', self.tw.gr_source.username)
