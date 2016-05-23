@@ -374,7 +374,8 @@ class AuthHandler(util.Handler):
     id = state_obj.get('id') or self.request.get('id')
     if id and auth_entity and id != auth_entity.key.id():
       auth_entity = auth_entity.for_page(id)
-      auth_entity.put()
+      if auth_entity:
+        auth_entity.put()
 
     source = self.maybe_add_or_delete_source(FacebookPage, auth_entity, state)
 
