@@ -29,7 +29,7 @@ import wordpress_rest
 
 class ResponsesHandler(handlers.TemplateHandler):
   """Find the most recently attempted responses and blog posts with error URLs."""
-  NUM_ENTITIES = 30
+  NUM_ENTITIES = 10
 
   def template_file(self):
     return 'templates/admin_responses.html'
@@ -37,7 +37,7 @@ class ResponsesHandler(handlers.TemplateHandler):
   def template_vars(self):
     entities = []
 
-    for cls in BlogPost, Response:
+    for cls in (Response,):  # BlogPost
       for e in cls.query().order(-cls.updated):
         if (len(entities) >= self.NUM_ENTITIES or
             e.updated < datetime.datetime.now() - datetime.timedelta(hours=1)):
