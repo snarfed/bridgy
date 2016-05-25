@@ -125,7 +125,7 @@ service.</a>
   blog?</a></li>
 <li><a href="#incoming">What does it do with incoming webmentions send to my
   blog?</a></li>
-<li><a href="#endpoint">Why do I have to add that line of HTML to
+<li><a href="#endpoint">Why do I have to add a line of HTML to
   my blog?</a></li>
 <li><a href="#disqus">I'm on Tumblr. Why do I have to install Disqus?</a></li>
 <li><a href="#moderation">I received a webmention, but it's not
@@ -1069,13 +1069,22 @@ post. Then, Bridgy reformats the source page and posts it as a comment on your
 post.</p>
 </li>
 
-<li id="endpoint" class="question">Why do I have to add that line of HTML to
+<li id="endpoint" class="question">Why do I have to add a line of HTML to
 my blog?</li>
 <li class="answer">
 <p>When other web servers want to send your blog a webmention, they use that
 HTML line to determine where to send it. This is the
 <a href="https://github.com/converspace/webmention/blob/master/README.md#sender-discovers-receiver-endpoint">webmention
-endpoint discovery</a> process.</p>
+endpoint discovery</a> process. Follow the instructions on your user page to add
+it to your blog.</p>
+<p>If you're already familiar
+  with <a href="http://www.webmention.org/">webmention</a>, Bridgy's
+  endpoints for hosted blogs are:</p>
+<ul>
+<li><code>https://brid.gy/webmention/blogger</code></li>
+<li><code>https://brid.gy/webmention/tumblr</code></li>
+<li><code>https://brid.gy/webmention/wordpress</code></li>
+</ul>
 </li>
 
 <li id="disqus" class="question">I'm on Tumblr. Why do I have to install
