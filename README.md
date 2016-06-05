@@ -183,20 +183,18 @@ that runs
 and stores the results in
 [Cloud Storage](https://developers.google.com/storage/docs/), in the
 [brid-gy.appspot.com bucket](https://console.developers.google.com/project/apps~brid-gy/storage/brid-gy.appspot.com/).
-It backs up all entities weekly, and all entities except `Response` and
-`SyndicatedPost` daily, since they make up 92% of all entities by size and
+It backs up all entities monthly, and all entities except `Response` and
+`SyndicatedPost` weekly, since they make up 92% of all entities by size and
 they aren't as critical to keep.
 
 We use this command to set a
 [Cloud Storage lifecycle policy](https://developers.google.com/storage/docs/lifecycle)
-on that bucket that deletes all files over 30 days old:
+on that bucket that prunes older backups:
 
 ```
 gsutil lifecycle set cloud_storage_lifecycle.json gs://brid-gy.appspot.com
 ```
 
-So far, this has kept us within the
-[5GB free quota](https://developers.google.com/appengine/docs/quotas#Default_Gcs_Bucket).
 Run this to see how much space we're currently using:
 
 ```
