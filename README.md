@@ -205,5 +205,5 @@ Run this to download a single complete backup, for e.g. generating usage metrics
 with [`to_tsv.py`](https://github.com/snarfed/bridgy/blob/master/scripts/to_tsv.py):
 
 ```
-gsutil cp -r gs://brid-gy.appspot.com/weekly/datastore_backup_full_YYYY_MM_DD_\* .
+gsutil -m cp -r gs://brid-gy.appspot.com/weekly/datastore_backup_full_YYYY_MM_DD_\* .
 ```
