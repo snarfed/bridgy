@@ -24,12 +24,15 @@ LEVELS = {
   }
 
 
-SANITIZE_RE = re.compile(
-  r"""((?:access|api|oauth)?[ _]?
-       (?:consumer_key|consumer_secret|nonce|secret|signature|token|verifier)
-       (?:=|:|\ |',\ u?'|%3D)\ *)
-      [^ &=']+""",
-  flags=re.VERBOSE | re.IGNORECASE)
+SANITIZE_RE = re.compile(r"""
+  ((?:access|api|oauth)?[ _]?
+   (?:code|consumer_key|consumer_secret|nonce|secret|signature|token|verifier)
+     (?:u?['"])?
+   (?:=|:|\ |,\ |%3D)\ *
+     (?:u?['"])?
+  )
+  [^ &='"]+
+""", flags=re.VERBOSE | re.IGNORECASE)
 
 def sanitize(msg):
   """Sanitizes access tokens and Authorization headers."""
