@@ -105,6 +105,7 @@ service.</a>
 <li><a href="#reply">How do I reply to a tweet from my web site?</a></li>
 <li><a href="#like">How do I like, retweet, or RSVP from my web site?</a></li>
 <li><a href="#picture">How do I post a picture?</a></li>
+<li><a href="#person-tag">How do I tag someone in a post?</a></li>
 <li><a href="#facebook-publish">What happened to publishing Facebook
   comments and likes?</li>
 <li><a href="#omit-link">Can I disable the link back to my post?</a></li>
@@ -860,6 +861,21 @@ tag. For example:
 &lt;img class="<span class='keyword'>u-photo</span>" src="<span class='value'>/full_glass.jpg</span>" /&gt;
 I love scotch. Scotchy scotchy scotch.
 </pre>
+</p>
+</li>
+
+<li id="person-tag" class="question">How do I tag someone in a post?</li>
+<li class="answer">
+<p>
+Facebook and Flickr support tagging people in posts, photos, and checkins. Just include a <a href="https://indiewebcamp.com/person-tag">person tag link</a> to their silo profile with <code>&lt;a class="u-category h-card"></code>. For example:
+
+<pre>
+&lt;a class="<span class='keyword'>u-category h-card</span>" href="<span class='value'>http://facebook.com/212038</span>"&gt;
+Tag, you're it!
+&lt;a&gt;
+</pre>
+</p>
+<p>If they're signed up for Bridgy, you <em>may</em> also be able to link to their personal web site, e.g. <code>https://snarfed.org</code>, or their Facebook username URL, e.g. <code>http://facebook.com/kyle.mahan</code>, but <a href="https://github.com/snarfed/bridgy/issues/674#issuecomment-228254131">these don't always work.</a> When in doubt, use the Facebook user id URL. You can find the user id in a hidden <code>fb://profile/USERID</code> <a href="https://indiewebcamp.com/person-tag#Bridgy_Publish">link in their profile's HTML</a>.
 </p>
 </li>
 
