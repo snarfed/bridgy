@@ -107,6 +107,25 @@ class CronTest(HandlerTest):
     self.assertEquals('http://pi.ct/ure', sources[0].get().picture)
     self.assertEquals('http://new/pic.jpg', sources[1].get().picture)
 
+  def test_update_twitter_picture_user_lookup_404s(self):
+    auth_entity = oauth_twitter.TwitterAuth(
+      id='id', token_key='key', token_secret='secret',
+      user_json=json.dumps({'name': 'Bad',
+                            'screen_name': 'bad',
+                            'profile_image_url': 'http://pi.ct/ure',
+                           }))
+    auth_entity.put()
+    source = Twitter.new(None, auth_entity=auth_entity).put()
+
+    lookup_url = gr_twitter.API_BASE + cron.TWITTER_API_USER_LOOKUP
+    self.expect_urlopen(lookup_url % 'bad', status=404)
+    self.mox.ReplayAll()
+
+    resp = cron.application.get_response('/cron/update_twitter_pictures')
+    self.assertEqual(200, resp.status_int)
+
+    self.assertEquals('http://pi.ct/ure', source.get().picture)
+
   def test_update_instagram_pictures(self):
     for username in 'a', 'b':
       profile = copy.deepcopy(test_instagram.HTML_PROFILE)

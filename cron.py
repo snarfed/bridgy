@@ -55,9 +55,15 @@ class UpdateTwitterPictures(webapp2.RequestHandler):
     usernames = sources.keys()
     users = []
     for i in range(0, len(usernames), TWITTER_USERS_PER_LOOKUP):
-      url = TWITTER_API_USER_LOOKUP % ','.join(
-        usernames[i:i + TWITTER_USERS_PER_LOOKUP])
-      users += auther.gr_source.urlopen(url)
+      username_batch = usernames[i:i + TWITTER_USERS_PER_LOOKUP]
+      url = TWITTER_API_USER_LOOKUP % ','.join(username_batch)
+      try:
+        users += auther.gr_source.urlopen(url)
+      except Exception, e:
+        code, body = util.interpret_http_exception(e)
+        if not (code == '404' and len(username_batch) == 1):
+          # 404 for a single user means they deleted their account. otherwise...
+          raise
 
     updated = False
     for user in users:
