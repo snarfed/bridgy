@@ -155,6 +155,8 @@ pandora.com
 paper.li
 patreon.com
 personalinfocloud.com
+# links here often tweeted along with '@T COM', which mentions @t
+pet.t-com.ne.jp
 photobucket.com
 photoshop.com
 pinboard.in
