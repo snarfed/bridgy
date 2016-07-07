@@ -45,7 +45,7 @@ LISTEN_SCOPES = [
   'user_actions.news', 'manage_pages',
 ]
 PUBLISH_SCOPES = [
-  'user_website', 'publish_actions', 'rsvp_event', 'user_status',
+  'user_website', 'publish_actions', 'publish_pages', 'rsvp_event', 'user_status',
   'user_photos', 'user_videos', 'user_events', 'user_likes',
 ]
 
