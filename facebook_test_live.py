@@ -8,7 +8,7 @@ https://brid.gy/facebook/1407574399567467 . To refresh his access token in
 facebook_test_user_access_token, reauth on his bridgy user page and then grab it
 from the datastore:
 
-https://console.developers.google.com/datastore/editentity?project=brid-gy&kind=FacebookAuth&queryType=GQLQuery&queryText&key=0/|12/FacebookAuth|21/name:1407574399567467
+https://console.cloud.google.com/datastore/entities/edit?project=brid-gy&kind=FacebookAuth&key=0%2F%7C12%2FFacebookAuth%7C21%2Fname:1407574399567467
 
 He has one post with one like and two comments:
 https://www.facebook.com/100009447618341/posts/1407573252900915
