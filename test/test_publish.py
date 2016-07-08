@@ -692,6 +692,15 @@ foo<br /> <blockquote>bar</blockquote>
     self.mox.ReplayAll()
     self.assert_created('foo bar', params={'bridgy_ignore_formatting': ''})
 
+  def test_bridgy_ignore_formatting_target_query_param(self):
+    self.expect_requests_get('http://foo.com/bar', """\
+<article class="h-entry"><div class="e-content">
+foo<br /> <blockquote>bar</blockquote>
+</div></article>""")
+    self.mox.ReplayAll()
+    target = 'https://brid.gy/publish/fake?bridgy_ignore_formatting=true'
+    self.assert_created('foo bar', target=target)
+
   def test_bridgy_ignore_formatting_mf2(self):
     self.expect_requests_get('http://foo.com/bar', """\
 <article class="h-entry"><div class="e-content">

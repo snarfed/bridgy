@@ -125,8 +125,17 @@ class Handler(webmention.WebmentionHandler):
 
   def ignore_formatting(self, item):
     val = self.request.get('bridgy_ignore_formatting', None)
-    return (val.lower() in ('', 'true') if val is not None
-            else 'bridgy-ignore-formatting' in item.get('properties', {}))
+
+    if val is None:
+      # _run has already parsed and validated the target URL
+      vals = urlparse.parse_qs(urlparse.urlparse(self.target_url()).query)\
+                     .get('bridgy_ignore_formatting')
+      val = vals[0] if vals else None
+
+    if val is not None:
+      return val.lower() in ('', 'true')
+
+    return 'bridgy-ignore-formatting' in item.get('properties', {})
 
   def maybe_inject_silo_content(self, item):
     props = item.setdefault('properties', {})
