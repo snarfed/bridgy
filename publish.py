@@ -106,6 +106,13 @@ class Handler(webmention.WebmentionHandler):
 
   def include_link(self, item):
     val = self.request.get('bridgy_omit_link', None)
+
+    if val is None:
+      # _run has already parsed and validated the target URL
+      vals = urlparse.parse_qs(urlparse.urlparse(self.target_url()).query)\
+                     .get('bridgy_omit_link')
+      val = vals[0] if vals else None
+
     if val is None:
       vals = item.get('properties', {}).get('bridgy-omit-link')
       val = vals[0] if vals else None

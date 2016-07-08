@@ -595,19 +595,23 @@ this is my article
   def test_bridgy_omit_link_query_param(self):
     self.expect_requests_get('http://foo.com/bar', self.post_html % 'foo')
     self.mox.ReplayAll()
-    self.assert_created('foo', params={'bridgy_omit_link': 'True'})
+    resp = self.assert_created('foo', params={'bridgy_omit_link': 'True'})
+    self.assertEquals('foo', json.loads(resp.body)['content'])
+
+  def test_bridgy_omit_link_target_query_param(self):
+    self.expect_requests_get('http://foo.com/bar', self.post_html % 'foo')
+    self.mox.ReplayAll()
+
+    target = 'https://brid.gy/publish/fake?bridgy_omit_link=true'
+    resp = self.assert_created('foo', target=target)
+    self.assertEquals('foo', json.loads(resp.body)['content'])
 
   def test_bridgy_omit_link_mf2(self):
-    html = """\
-<article class="h-entry">
-<div class="e-content">
-foo<br /> <blockquote></blockquote>
-</div>
-<a class="u-bridgy-omit-link" href=""></a>
-</article>"""
+    html = self.post_html % 'foo <a class="u-bridgy-omit-link" href=""></a>'
     self.expect_requests_get('http://foo.com/bar', html)
     self.mox.ReplayAll()
-    self.assert_created('foo')
+    resp = self.assert_created('foo')
+    self.assertEquals('foo', json.loads(resp.body)['content'])
 
   def test_preview_omit_link_no_query_param_overrides_mf2(self):
     html = """\
