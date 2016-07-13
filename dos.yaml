@@ -26,3 +26,6 @@ blacklist:
 # background: https://github.com/snarfed/bridgy/issues/242#issuecomment-50682314
 # - subnet: 162.243.52.117
 #   description: christiaanconover.com retrying a blog webmention
+
+- subnet: 91.200.12.58
+  description: keeps requesting .../xmlrpc.php paths
