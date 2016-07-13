@@ -490,7 +490,7 @@ class Handler(webmention.WebmentionHandler):
         entity.type = 'preview'
       entity.put()
 
-    logging.debug('Publish entity: %s', entity.key.urlsafe())
+    logging.debug("Publish entity: '%s'", entity.key.urlsafe())
     return entity
 
 
