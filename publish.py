@@ -245,7 +245,7 @@ class Handler(webmention.WebmentionHandler):
 
     # loop through each item and its children and try to preview/create it. if
     # it fails, try the next one. break after the first one that works.
-    resp = None
+    result = None
     types = set()
     queue = collections.deque(data.get('items', []))
     while queue:

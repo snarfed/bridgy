@@ -192,16 +192,17 @@ class PublishTest(testutil.HandlerTest):
     Publish(parent=page.key, source=self.source.key, status='new').put()
     Publish(parent=page.key, source=self.source.key, status='failed').put()
     Publish(parent=page.key, source=self.source.key, status='complete',
-            type='preview').put()
+            type='preview', published={'content': 'foo'}).put()
 
-    for i in range(2):
+    for i in range(3):
       self.expect_requests_get('http://foo.com/bar', self.post_html % 'foo')
     self.mox.ReplayAll()
 
     # first attempt should work
+    self.assert_success('preview of foo - http://foo.com/bar', preview=True)
     self.assert_created('foo - http://foo.com/bar')
-    self.assertEquals(4, Publish.query().count())
-    self.assertEquals(2, Publish.query(Publish.status == 'complete').count())
+    self.assertEquals(5, Publish.query().count())
+    self.assertEquals(3, Publish.query(Publish.status == 'complete').count())
 
     # now that there's a complete Publish entity, more attempts should fail
     self.assert_error("Sorry, you've already published that page")
@@ -209,6 +210,15 @@ class PublishTest(testutil.HandlerTest):
     self.assert_error("Sorry, you've already published that page")
     # should still be able to preview though
     self.assert_success('preview of foo', preview=True)
+
+  def test_already_published_then_preview_feed_with_no_items(self):
+    page = PublishedPage(id='http://foo.com/bar')
+    Publish(parent=page.key, source=self.source.key, status='complete',
+            type='post', published={'content': 'foo'}).put()
+
+    self.expect_requests_get('http://foo.com/bar', '<div class="h-feed"></div>')
+    self.mox.ReplayAll()
+    self.assert_success('', preview=True)
 
   def test_more_than_one_silo(self):
     """POSSE to more than one silo should not trip the
@@ -343,6 +353,12 @@ foo
     publish = Publish.query().get()
     self.assertEquals('failed', publish.status)
     self.assertEquals(self.source.key, publish.source)
+
+  def test_h_feed_no_items(self):
+    self.expect_requests_get('http://foo.com/bar', '<div class="h-feed"></div>')
+    self.mox.ReplayAll()
+    self.assert_error('Could not find content')
+    self.assertEquals('failed', Publish.query().get().status)
 
   def test_no_content(self):
     self.expect_requests_get('http://foo.com/bar',
