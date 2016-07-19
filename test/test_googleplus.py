@@ -64,3 +64,10 @@ class GooglePlusTest(testutil.ModelsTest):
           (None, json.dumps({'items': [gr_test_googleplus.ACTIVITY_GP]})),
       }))
     self.assertEqual([gr_test_googleplus.ACTIVITY_AS], self.gp.search_for_links())
+
+  def test_canonicalize_url(self):
+      for input, expected in (
+          ('https://plus.google.com/103651231634018158746/posts/JwiJAfBNs9w/',
+           'https://plus.google.com/103651231634018158746/posts/JwiJAfBNs9w'),
+      ):
+        self.assertEquals(expected, self.gp.canonicalize_url(input))

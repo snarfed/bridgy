@@ -113,6 +113,8 @@ class FlickrTest(testutil.ModelsTest):
 
     check('https://www.flickr.com/photos/xyz/123/',
           'http://flickr.com/photos/xyz/123')
+    check('https://www.flickr.com/photos/xyz/123/',
+          'https://www.flickr.com/photos/xyz/123')
     check('https://www.flickr.com/people/xyz/',
           'http://flickr.com/people/xyz')
 

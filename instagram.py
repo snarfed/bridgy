@@ -50,7 +50,7 @@ class Instagram(models.Source):
   URL_CANONICALIZER = util.UrlCanonicalizer(
     domain=GR_CLASS.DOMAIN,
     subdomain='www',
-    approve=r'https://www.instagram.com/p/[^/?]+/',
+    approve=r'https://www.instagram.com/p/[^/?]+/$',
     trailing_slash=True,
     headers=util.USER_AGENT_HEADER)
     # no reject regexp; non-private Instagram post URLs just 404

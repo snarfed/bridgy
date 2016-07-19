@@ -79,7 +79,7 @@ class FacebookPage(models.Source):
     domain=GR_CLASS.DOMAIN,
     subdomain='www',
     query=True,
-    approve=r'https://www\.facebook\.com/[^/?]+/posts/[^/?]+',
+    approve=r'https://www\.facebook\.com/[^/?]+/posts/[^/?]+$',
     headers=util.USER_AGENT_HEADER)
     # no reject regexp; non-private FB post URLs just 404
 

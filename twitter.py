@@ -34,7 +34,7 @@ class Twitter(models.Source):
 
   URL_CANONICALIZER = util.UrlCanonicalizer(
     domain=GR_CLASS.DOMAIN,
-    approve=r'https://twitter\.com/[^/?]+/status/[^/?]+',
+    approve=r'https://twitter\.com/[^/?]+/status/[^/?]+$',
     reject=r'https://twitter\.com/.+\?protected_redirect=true',
     headers=util.USER_AGENT_HEADER)
 

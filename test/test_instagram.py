@@ -55,6 +55,13 @@ class InstagramTest(testutil.ModelsTest):
 
     self.assertIsNone(self.inst.canonicalize_url('https://www.foo.com/p/abcd/'))
 
+  def test_canonicalize_url_approve_checks_full_url(self):
+    """...specifically, that the regex ends with a $
+    https://github.com/snarfed/bridgy/issues/686
+    """
+    self.assertEqual('https://www.instagram.com/p/abcd/123/',
+                     self.inst.canonicalize_url('https://www.instagram.com/p/abcd/123'))
+
   def expect_site_fetch(self, body=None):
     if body is None:
       body = """

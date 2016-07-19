@@ -301,6 +301,8 @@ class FacebookPageTest(testutil.ModelsTest):
     for expected, input in (
       ('https://www.facebook.com/212038/posts/314159',
        'http://facebook.com/snarfed.org/posts/222'),
+      ('https://www.facebook.com/212038/posts/314159',
+       'http://facebook.com/snarfed.org/posts/222/'),
       # second time should use memcache instead of fetching object from API
       ('https://www.facebook.com/212038/posts/314159',
        'http://facebook.com/snarfed.org/posts/222'),

@@ -30,7 +30,7 @@ class GooglePlusPage(models.Source):
 
   URL_CANONICALIZER = util.UrlCanonicalizer(
     domain=GR_CLASS.DOMAIN,
-    approve=r'https://plus\.google\.com/[^/?]+/posts/[^/?]+',
+    approve=r'https://plus\.google\.com/[^/?]+/posts/[^/?]+$',
     headers=util.USER_AGENT_HEADER)
     # no reject regexp; non-private G+ post URLs just 404
 

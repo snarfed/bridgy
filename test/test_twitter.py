@@ -88,6 +88,8 @@ class TwitterTest(testutil.ModelsTest):
     self.assertEqual(good, self.tw.canonicalize_url(good))
     self.assertEqual(good, self.tw.canonicalize_url(
       'https://twitter.com/x/statuses/123'))
+    self.assertEqual(good, self.tw.canonicalize_url(
+      'https://twitter.com/x/status/123/'))
     self.assertIsNone(self.tw.canonicalize_url(
       'https://twitter.com/x?protected_redirect=true'))
 

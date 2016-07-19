@@ -32,7 +32,7 @@ class Flickr(models.Source):
 
   URL_CANONICALIZER = util.UrlCanonicalizer(
     domain=GR_CLASS.DOMAIN,
-    approve=r'https://www\.flickr\.com/(photos|people)/[^/?]+/([^/?]+/)?',
+    approve=r'https://www\.flickr\.com/(photos|people)/[^/?]+/([^/?]+/)?$',
     reject=r'https://login\.yahoo\.com/.*',
     subdomain='www',
     trailing_slash=True,
