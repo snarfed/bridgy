@@ -128,8 +128,9 @@ class FacebookPage(models.Source):
     return self.gr_source.user_url(self.username or self.key.id())
 
   def get_activities_response(self, **kwargs):
+    type = self.auth_entity.get().type
     kwargs.setdefault('fetch_events', True)
-    kwargs.setdefault('fetch_news', self.auth_entity.get().type == 'user')
+    kwargs.setdefault('fetch_news', type == 'user')
     kwargs.setdefault('event_owner_id', self.key.id())
 
     try:
@@ -149,10 +150,12 @@ class FacebookPage(models.Source):
           return False
 
       if code == '401':
-        if not dead_token():
+        if not dead_token() and type == 'user':
           # ask the user to reauthenticate. if this API call fails, it will raise
           # urllib2.HTTPError instead of DisableSource, so that we don't disable
           # the source without notifying.
+          #
+          # TODO: for pages, fetch the owners/admins and notify them.
           self.gr_source.create_notification(
             self.key.id(),
             "Brid.gy's access to your account has expired. Click here to renew it now!",

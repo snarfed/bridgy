@@ -270,6 +270,11 @@ class FacebookPageTest(testutil.ModelsTest):
     self.mox.ReplayAll()
     self.assertRaises(models.DisableSource, self.fb.get_activities)
 
+  def test_any_disable_error_for_page_doesnt_send_notification(self):
+    self.expect_api_call(API_ME_POSTS, {}, status=401)
+    self.mox.ReplayAll()
+    self.assertRaises(models.DisableSource, self.page.get_activities)
+
   def test_other_error(self):
     msg = json.dumps({'error': {'code': 190, 'error_subcode': 789}})
     self.expect_api_call(API_ME_POSTS, msg, status=400)
