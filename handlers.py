@@ -151,7 +151,9 @@ class ItemHandler(webapp2.RequestHandler):
       logging.info('Fetching %s', label)
       try:
         obj = self.get_item(*ids)
-      except Exception, e:
+      except models.DisableSource as e:
+        self.abort(401, "Bridgy's access to your account has expired. Please visit https://brid.gy/ to refresh it!")
+      except Exception as e:
         # pass through all API HTTP errors if we can identify them
         code, body = util.interpret_http_exception(e)
         if not code and util.is_connection_failure(e):
