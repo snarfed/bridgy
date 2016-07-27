@@ -771,7 +771,7 @@ even write a script to
 <a href="http://indiewebcamp.com/webmention#How_to_Test_Webmentions">send them
 yourself</a>. It's just a single HTTP request!
 </p>
-<p>Bridgy's webmention endpoint
+<p id="publish-backlink">Bridgy's webmention endpoint
 is <code>https://brid.gy/publish/webmention</code>, and the target URL
 should be <code>brid.gy/publish/facebook</code>,
 <code>brid.gy/publish/twitter</code>, or
@@ -907,8 +907,8 @@ commenting</a>, we'll miss you!</p>
 the form on your user page, you can select the <em>Include link: no</em> option
 to disable this. If you're sending a webmention, you can disable it by adding
 the query parameter <code>bridgy_omit_link=true</code> to your webmention HTTP
-request, or by adding the <code>u-bridgy-omit-link</code> class to a link in
-your post.</p>
+request or <a href="#publish-backlink">Bridgy Publish backlink</a>, or by adding
+the <code>u-bridgy-omit-link</code> class to a link in your post.</p>
 <p>If you want to include links <em>only</em> on posts that have been automatically ellipsized
 (i.e. to fit on Twitter), you can select the <em>if shortened</em> preview option. This is
 equivalent to sending a webmention with the query parameter <code>bridgy_omit_link=maybe</code>
@@ -922,8 +922,8 @@ whitespace and formatting?</li>
 <p>Sure! By default, Bridgy tries to preserve your post's HTML formatting and
 whitespace when publishing it as plain text. You can disable this by adding the
 query parameter <code>bridgy_ignore_formatting=true</code> to your webmention
-HTTP request, or by adding the <code>u-bridgy-ignore-formatting</code> class to
-a link in your post.
+HTTP request or <a href="#publish-backlink">Bridgy Publish backlink</a>, or by
+adding the <code>u-bridgy-ignore-formatting</code> class to a link in your post.
 </li>
 
 <li id="silo-content" class="question">I want more control over the text
