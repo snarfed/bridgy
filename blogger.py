@@ -137,7 +137,8 @@ class Blogger(models.Source):
     if not feed.entry:
       return self.error('Could not find Blogger post %s' % post_url)
     elif len(feed.entry) > 1:
-      logging.warning('Found %d Blogger posts for path %s , expected 1', path)
+      logging.warning('Found %d Blogger posts for path %s , expected 1',
+                      len(feed.entry), path)
     post_id = feed.entry[0].get_post_id()
 
     # create the comment
