@@ -23,6 +23,7 @@ from oauth_dropins.webutil import handlers as webutil_handlers
 from oauth_dropins.webutil.models import StringIdModel
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import *
+from webob import exc
 
 from google.appengine.api import mail
 from google.appengine.api import memcache
@@ -436,7 +437,11 @@ class Handler(webapp2.RequestHandler):
 
     """
     logging.debug('decoding state "%s"' % state)
-    obj = json.loads(urllib.unquote_plus(state)) if state else {}
+    try:
+      obj = json.loads(urllib.unquote_plus(state)) if state else {}
+    except ValueError:
+      logging.exception('Invalid value for state parameter: %s' % state)
+      raise exc.HTTPBadRequest('Invalid value for state parameter: %s' % state)
     if not isinstance(obj, dict):
       logging.error('got a non-dict state parameter %s', state)
       return {}

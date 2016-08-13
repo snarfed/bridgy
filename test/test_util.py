@@ -12,6 +12,7 @@ from google.appengine.api import memcache
 from google.appengine.ext import ndb
 import webapp2
 from webmentiontools import send
+from webob import exc
 
 import testutil
 from testutil import FakeAuthEntity, FakeSource
@@ -57,6 +58,12 @@ class UtilTest(testutil.ModelsTest):
         FakeSource, auth_entity,
         self.handler.construct_state_param_for_add(feature))
       self.assertEquals([], src.features)
+
+  def test_maybe_add_or_delete_source_bad_state(self):
+    auth_entity = FakeAuthEntity(id='x', user_json='{}')
+    auth_entity.put()
+    with self.assertRaises(exc.HTTPBadRequest):
+      self.handler.maybe_add_or_delete_source(FakeSource, auth_entity, 'bad')
 
   def test_add_to_logins_cookie(self):
     listen = self.handler.construct_state_param_for_add(feature='listen')
