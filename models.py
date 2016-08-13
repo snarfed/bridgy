@@ -90,7 +90,7 @@ class Source(StringIdModel):
   # the lower frequency poll
   FAST_POLL_GRACE_PERIOD = datetime.timedelta(days=7)
   # how often refetch author url to look for updated syndication links
-  FAST_REFETCH = datetime.timedelta(hours=6)
+  FAST_REFETCH = datetime.timedelta(hours=2)
   # refetch less often (this often) if it's been >2w since the last synd link
   SLOW_REFETCH = datetime.timedelta(days=2)
 
