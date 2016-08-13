@@ -133,8 +133,18 @@ class OAuthCallback(util.Handler):
 
 application = webapp2.WSGIApplication([
     # OAuth scopes based on https://developers.google.com/+/api/oauth#scopes
+    #
+    # Used to use plus.login, but that showed a scary-ish warning on the consent
+    # screen:
+    # "Know the list of people in your circles, your age range, and language...
+    # [in red:] Includes people in circles that are not public on your profile."
+    #
+    # Switched to plus.me (below), which grants less info, but still works fine
+    # for what we need. activities.get and .search don't say they need anything,
+    # and .list says both plus.login and plus.me work (as of 2016-08-13):
+    # https://developers.google.com/+/web/api/rest/latest/activities/list
     ('/googleplus/start', util.oauth_starter(oauth_googleplus.StartHandler).to(
-      '/googleplus/oauth2callback', scopes='https://www.googleapis.com/auth/plus.login')) ,
+      '/googleplus/oauth2callback', scopes='https://www.googleapis.com/auth/plus.me')) ,
     ('/googleplus/oauth2callback', oauth_googleplus.CallbackHandler.to('/googleplus/add')),
     ('/googleplus/add', OAuthCallback),
     ('/googleplus/delete/start', oauth_googleplus.StartHandler.to('/googleplus/oauth2callback')),
