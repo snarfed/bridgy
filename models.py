@@ -379,7 +379,7 @@ class Source(StringIdModel):
     """Returns the RSS or Atom (or similar) feed URL for this source.
 
     Must be implemented by subclasses. Currently only implemented by Blogger,
-    Tumlbr, and WordPress.
+    Medium, Tumlbr, and WordPress.
 
     Returns: string URL
     """

@@ -18,6 +18,7 @@ from oauth_dropins import facebook as oauth_facebook
 from oauth_dropins import flickr as oauth_flickr
 from oauth_dropins import googleplus as oauth_googleplus
 from oauth_dropins import indieauth
+from oauth_dropins import medium as oauth_medium
 from oauth_dropins import tumblr as oauth_tumblr
 from oauth_dropins import twitter as oauth_twitter
 from oauth_dropins import wordpress_rest as oauth_wordpress_rest
@@ -36,6 +37,7 @@ import facebook
 import flickr
 import googleplus
 import instagram
+import medium
 import tumblr
 import twitter
 import wordpress_rest
@@ -243,7 +245,7 @@ class UserHandler(DashboardHandler):
 
     # Blog webmention promos
     if 'webmention' not in self.source.features:
-      if self.source.SHORT_NAME in ('blogger', 'tumblr', 'wordpress'):
+      if self.source.SHORT_NAME in ('blogger', 'medium', 'tumblr', 'wordpress'):
         vars[self.source.SHORT_NAME + '_promo'] = True
       else:
         for domain in self.source.domains:
@@ -434,6 +436,7 @@ class DeleteStartHandler(util.Handler):
     'Flickr': oauth_flickr,
     'GooglePlusPage': oauth_googleplus,
     'Instagram': indieauth,
+    'Medium': oauth_medium,
     'Tumblr': oauth_tumblr,
     'Twitter': oauth_twitter,
     'WordPress': oauth_wordpress_rest,
@@ -640,7 +643,7 @@ class WarmupHandler(util.Handler):
 application = webapp2.WSGIApplication(
   [('/?', FrontPageHandler),
    ('/users/?', UsersHandler),
-   ('/(blogger|facebook|fake|flickr|googleplus|instagram|tumblr|twitter|wordpress)/([^/]+)/?',
+   ('/(blogger|facebook|fake|flickr|googleplus|instagram|medium|tumblr|twitter|wordpress)/([^/]+)/?',
     UserHandler),
    ('/about/?', AboutHandler),
    ('/delete/start', DeleteStartHandler),

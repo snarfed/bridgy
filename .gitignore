@@ -18,6 +18,8 @@ instagram_scrape_base
 /l
 /local
 /mapreduce
+medium_client_id
+medium_client_secret
 private_notes
 superfeedr_token
 superfeedr_username

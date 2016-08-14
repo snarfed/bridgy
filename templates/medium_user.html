@@ -1,0 +1,11 @@
+{% extends "blog_user.html" %}
+
+<p><em>
+Note that Bridgy currently only sends outbound webmentions for Medium.
+Feel free to <a href="https://github.com/Medium/medium-api-docs/issues/71">+1
+this GitHub issue</a> to help us support inbound too!
+</em></p>
+
+{% block blog-signup %}
+{% include "medium_signup.html" %}
+{% endblock %}
