@@ -129,6 +129,8 @@ service.</a>
 <li><a href="#endpoint">Why do I have to add a line of HTML to
   my blog?</a></li>
 <li><a href="#disqus">I'm on Tumblr. Why do I have to install Disqus?</a></li>
+<li><a href="#medium">I'm on Medium. Why doesn't Bridgy give me incoming
+  webmentions?</li>
 <li><a href="#moderation">I received a webmention, but it's not
   showing up on my blog.</a></li>
 <li><a href="#user">All the comments for incoming webmentions come from me.
@@ -421,8 +423,9 @@ GitHub</a>. Thank you!
   webmentions?</li>
 <li class="answer">
 <p>Webmentions are pretty new, but many web servers already support them. If
-you're on Blogger, Tumblr, or WordPress.com, <a href="/">you can sign your blog
-up with Bridgy</a> to accept webmentions. If you're on self-hosted WordPress,
+you're on Blogger, Medium, Tumblr, or WordPress.com, <a href="/">you can sign
+your blog up with Bridgy</a> to accept webmentions. If you're on self-hosted
+WordPress,
 <a href="http://wordpress.org/plugins/indieweb/">install the Indieweb
 plugin</a>. Otherwise,
 <a href="http://indiewebcamp.com/webmention#Publishing_Software">check out the
@@ -1058,11 +1061,14 @@ Shameless plug: check out
 part of both the <a href="http://indiewebcamp.com/">IndieWeb</a> and Bridgy
 itself. The <a href="http://www.webmention.org/">webmention protocol</a> is
 growing fast, but it's still pretty new, so many large hosted blog providers
-don't yet support it. Bridgy lets you add webmention support (incoming and
-outgoing) to three of the largest providers:
+don't yet support it. Bridgy lets you add webmention support to four of the
+largest providers:
 <a href="https://www.blogger.com/">Blogger</a>,
+<a href="https://medium.com/">Medium</a>,
 <a href="http://www.tumblr.com/">Tumblr</a>, and
 <a href="http://wordpress.com/">WordPress.com</a>.
+Medium supports outgoing webmentions only; the other three support outgoing and
+incoming.
 Read on for more details, or
 <a href="/">head to the front page to sign up!</a></p>
 </li>
@@ -1115,6 +1121,22 @@ format. We know Disqus isn't for everyone, though, and we're open to
 alternatives. Feel free
 to <a href="https://github.com/snarfed/bridgy/issues">file suggestions on
 GitHub</a>!</p>
+</li>
+
+<li id="medium" class="question">I'm on Medium. Why doesn't Bridgy give me
+incoming webmentions?</li>
+<li class="answer">
+<p><a href="https://github.com/Medium/medium-api-docs/">Medium's API</a> doesn't
+yet support
+<a href="https://help.medium.com/hc/en-us/articles/214578008-Responses">responding</a>
+or
+<a href="https://help.medium.com/hc/en-us/articles/215252328-Recommends">recommending</a>
+yet, so we can't publish incoming webmentions on your Medium posts. Feel free to
+vote up
+<a href="https://github.com/Medium/medium-api-docs/issues/71">these</a>
+<a href="https://github.com/Medium/medium-api-docs/issues/72">issues</a>
+on GitHub to encourage Medium to add that support!
+</p>
 </li>
 
 <li id="moderation" class="question">I received a webmention, but it's not
