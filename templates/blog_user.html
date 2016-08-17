@@ -13,9 +13,9 @@
   <button type="submit" class="btn btn-default" onclick="document.location.reload()">
     Done!</button>
   </form>
+  <br />
   {% endif %}
 </div>
-<br />
 {% else %}
 
 <div class="row">
@@ -37,7 +37,9 @@ If you want Bridgy to handle your blog's webmentions, change it to
   {{ source.bridgy_webmention_endpoint }}</a></code>.
 </p>
 {% endif %}
+{% endif %}
 
+<div class="row">
 <form method="post" action="/delete/start">
   <input name="key" type="hidden" value="{{ source.key.urlsafe }}" />
   <input name="feature" type="hidden" value="webmention" />
@@ -45,7 +47,6 @@ If you want Bridgy to handle your blog's webmentions, change it to
           title="Disable this account. (Won't delete webmentions you've already sent or received.)">Disable</button>
 </form>
 </div>
-{% endif %}
 
 <!-- Signup button -->
 {% else %}
