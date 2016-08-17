@@ -95,6 +95,17 @@ class SuperfeedrTest(testutil.HandlerTest):
     self.assert_blogposts([BlogPost(id='A', source=self.source.key,
                                     feed_item=item, unsent=['http://wrap/ped'])])
 
+  def test_handle_feed_cleans_links(self):
+    item = {
+      'permalinkUrl': 'A',
+      'id': 'A',
+      'content': 'x <a href="http://abc?source=rss----12b80d28f892---4',
+    }
+    superfeedr.handle_feed(json.dumps({'items': [item]}), self.source)
+    posts = list(BlogPost.query())
+    self.assert_blogposts([BlogPost(id='A', source=self.source.key,
+                                    feed_item=item, unsent=['http://abc'])])
+
   def test_notify_handler(self):
     class Handler(superfeedr.NotifyHandler):
       SOURCE_CLS = testutil.FakeSource
