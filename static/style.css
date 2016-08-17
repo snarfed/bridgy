@@ -139,6 +139,7 @@ form input {
 
 #choose-blog > ul, #choose-facebook > ul  {
   list-style: none;
+  text-align: left;
 }
 
 @media (min-width: 768px) {
