@@ -30,7 +30,7 @@ import urlparse
 import appengine_config
 
 from gdata.blogger.client import Query
-from gdata.client import RequestError
+from gdata.client import Error
 from google.appengine.ext import ndb
 from google.appengine.ext.webapp import template
 from oauth_dropins import blogger_v2 as oauth_blogger
@@ -149,7 +149,7 @@ class Blogger(models.Source):
                  post_id, content.encode('utf-8'))
     try:
       comment = client.add_comment(self.key.id(), post_id, content)
-    except RequestError, e:
+    except Error, e:
       msg = str(e)
       if 'Internal error:' in msg:
         # known errors. e.g. https://github.com/snarfed/bridgy/issues/175
