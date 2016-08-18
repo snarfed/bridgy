@@ -33,6 +33,7 @@ import facebook
 import flickr
 import googleplus
 import instagram
+import medium
 import models
 from models import Response
 import original_post_discovery
