@@ -364,7 +364,8 @@ class UserHandler(DashboardHandler):
                                  .fetch(10)
       for p in publishes:
         p.pretty_page = util.pretty_link(
-          p.key.parent().id(), attrs={'class': 'original-post u-url u-name'},
+          p.key.parent().id().decode('utf-8'),
+          attrs={'class': 'original-post u-url u-name'},
           new_tab=True)
 
       vars['publishes'] = publishes

@@ -13,6 +13,7 @@ import webapp2
 
 import app
 import models
+from models import Publish, PublishedPage
 import util
 import testutil
 import twitter
@@ -325,6 +326,22 @@ class AppTest(testutil.ModelsTest):
     resp = app.application.get_response(self.sources[0].bridgy_path())
     self.assertEquals(200, resp.status_int)
     self.assertIn('most of your recent posts are private', resp.body)
+
+  def test_user_page_publish_url_with_unicode_char(self):
+    """Check the custom mf2 we render on social user pages."""
+    self.sources[0].features = ['publish']
+    self.sources[0].put()
+
+    url = u'https://ptt.com/ransomw…ocks-user-access/'
+    Publish(parent=PublishedPage(id=url.encode('utf-8')).key,
+            source=self.sources[0].key).put()
+
+    user_url = self.sources[0].bridgy_path()
+    resp = app.application.get_response(user_url)
+    self.assertEquals(200, resp.status_int)
+
+    parsed = util.mf2py_parse(resp.body, user_url)
+    publish = parsed['items'][0]['children'][0]
 
   def test_users_page(self):
     resp = app.application.get_response('/users')
