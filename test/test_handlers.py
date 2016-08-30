@@ -19,7 +19,7 @@ class HandlersTest(testutil.HandlerTest):
   def setUp(self):
     super(HandlersTest, self).setUp()
     self.source = testutil.FakeSource.new(
-      self.handler, domains=['or.ig', 'fa.ke'],
+      self.handler, features=['listen'], domains=['or.ig', 'fa.ke'],
       domain_urls=['http://or.ig', 'https://fa.ke'])
     self.source.put()
     self.activities = [{
@@ -133,6 +133,16 @@ asdf http://other/link qwert
 
   def test_bad_user(self):
     self.check_response('/post/fake/not_a_user_%s/000', expected_status=400)
+
+  def test_disabled_user(self):
+    self.source.status = 'disabled'
+    self.source.put()
+    self.check_response('/post/fake/%s/000', expected_status=400)
+
+  def test_user_without_listen_feature(self):
+    self.source.features = []
+    self.source.put()
+    self.check_response('/post/fake/%s/000', expected_status=400)
 
   def test_bad_format(self):
     self.check_response('/post/fake/%s/000?format=asdf', expected_status=400)

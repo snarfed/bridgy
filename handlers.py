@@ -133,6 +133,8 @@ class ItemHandler(webapp2.RequestHandler):
     self.source = source_cls.get_by_id(string_id)
     if not self.source:
       self.abort(400, 'Source %s %s not found' % (source_short_name, string_id))
+    elif self.source.status == 'disabled' or 'listen' not in self.source.features:
+      self.abort(400, 'Source %s is disabled for backfeed' % self.source.bridgy_path())
 
     format = self.request.get('format', 'html')
     if format not in ('html', 'json'):
