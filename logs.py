@@ -62,7 +62,7 @@ def linkify_datastore_keys(msg):
   return DATASTORE_KEY_RE.sub(linkify_key, msg)
 
 
-class LogHandler(webapp2.RequestHandler):
+class LogHandler(util.Handler):
   """Searches for and renders the app logs for a single task queue request.
   """
 

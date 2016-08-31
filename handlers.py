@@ -73,7 +73,7 @@ $body
 """)
 
 
-class ItemHandler(webapp2.RequestHandler):
+class ItemHandler(util.Handler):
   """Fetches a post, repost, like, or comment and serves it as mf2 HTML or JSON.
   """
   handle_exception = handlers.handle_exception

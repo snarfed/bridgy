@@ -292,6 +292,8 @@ def replace_test_domains_with_localhost(url):
 class Handler(webapp2.RequestHandler):
   """Includes misc request handler utilities.
 
+  Also sets the HSTS HTTP response header.
+
   Attributes:
     messages: list of notification messages to be rendered in this page or
       wherever it redirects
@@ -300,6 +302,8 @@ class Handler(webapp2.RequestHandler):
   def __init__(self, *args, **kwargs):
     super(Handler, self).__init__(*args, **kwargs)
     self.messages = set()
+    self.response.headers['Strict-Transport-Security'] = \
+        'max-age=16070400; includeSubDomains; preload'  # 6 months
 
   def redirect(self, uri, **kwargs):
     """Adds self.messages to the fragment, separated by newlines.

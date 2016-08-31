@@ -106,7 +106,7 @@ def handle_feed(feed, source):
                     ).get_or_save()
 
 
-class NotifyHandler(webapp2.RequestHandler):
+class NotifyHandler(util.Handler):
   """Handles a Superfeedr notification.
 
   Abstract; subclasses must set the SOURCE_CLS attr.
