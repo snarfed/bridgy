@@ -64,6 +64,25 @@ function do_preview(site) {
   req.send();
 }
 
+// used in /admin/responses
+function maybeShowInputs(event) {
+  if (String.fromCharCode(event.charCode) == "x") {
+    elems = document.getElementsByTagName("input");
+    for (i = 0; i < elems.length; i++) {
+      elems[i].style.display = "inline";
+    }
+  }
+}
+
+// used in /admin/responses
+function selectAll() {
+  checked = document.getElementById("all").checked;
+  elems = document.getElementsByTagName("input");
+  for (i = 0; i < elems.length; i++) {
+    elems[i].checked = checked;
+  }
+}
+
 // Polyfill String.startsWith() since it's only supported in Firefox right now.
 if (!String.prototype.startsWith) {
   Object.defineProperty(String.prototype, 'startsWith', {

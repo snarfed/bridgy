@@ -8,25 +8,7 @@
   li { list-style: none; }
   input { display: none; }
 </style>
-
-<script type="text/javascript">
-function maybeShowInputs(event) {
-  if (String.fromCharCode(event.charCode) == "x") {
-    elems = document.getElementsByTagName("input");
-    for (i = 0; i < elems.length; i++) {
-      elems[i].style.display = "inline";
-    }
-  }
-}
-
-function selectAll() {
-  checked = document.getElementById("all").checked;
-  elems = document.getElementsByTagName("input");
-  for (i = 0; i < elems.length; i++) {
-    elems[i].checked = checked;
-  }
-}
-</script>
+<script async type="text/javascript" src="/static/bridgy.js"></script>
 </head>
 
 <body onkeypress="maybeShowInputs(event)">
