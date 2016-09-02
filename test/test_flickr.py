@@ -67,10 +67,15 @@ class FlickrTest(testutil.ModelsTest):
     }))
     self.mox.ReplayAll()
 
-    with self.assertRaises(models.DisableSource):
-      poll_task = tasks.Poll()
-      self.flickr.updates = {}
-      poll_task.poll(self.flickr)
+    self.flickr.features = ['listen']
+    self.flickr.put()
+    self.assertEqual('enabled', self.flickr.status)
+    resp = tasks.application.get_response(
+      '/_ah/queue/poll', method='POST', body=urllib.urlencode({
+        'source_key': self.flickr.key.urlsafe(),
+        'last_polled': '1970-01-01-00-00-00',
+      }))
+    self.assertEqual('disabled', self.flickr.key.get().status)
 
   @staticmethod
   def prepare_person_tags():

@@ -88,14 +88,26 @@ class Poll(webapp2.RequestHandler):
     source.updates = {}
     try:
       self.poll(source)
-    except models.DisableSource:
-      # the user deauthorized the bridgy app, so disable this source.
-      # let the task complete successfully so that it's not retried.
-      source.updates['status'] = 'disabled'
-      logging.warning('Disabling source!')
-    except:
+    except Exception, e:
       source.updates['poll_status'] = 'error'
-      raise
+      code, body = util.interpret_http_exception(e)
+      if code == '401' or isinstance(e, models.DisableSource):
+        # the user deauthorized the bridgy app, so disable this source.
+        # let the task complete successfully so that it's not retried.
+        logging.warning('Disabling source due to: %s' % e, exc_info=True)
+        source.updates.update({
+          'status': 'disabled',
+          'poll_status': 'ok',
+        })
+      elif code in util.HTTP_RATE_LIMIT_CODES:
+        logging.warning('Rate limited. Marking as error and finishing. %s', e)
+        source.updates['rate_limited'] = True
+      elif (code and int(code) / 100 == 5) or util.is_connection_failure(e):
+        logging.error('API call failed. Marking as error and finishing. %s: %s\n%s',
+                      code, body, e)
+        self.abort(ERROR_HTTP_RETURN_CODE)
+      else:
+        raise
     finally:
       source = models.Source.put_updates(source)
 
@@ -126,40 +138,21 @@ class Poll(webapp2.RequestHandler):
     if source.last_activities_cache_json:
       cache.update(json.loads(source.last_activities_cache_json))
 
-    try:
-      # search for links first so that the user's activities and responses
-      # override them if they overlap
-      links = source.search_for_links()
+    # search for links first so that the user's activities and responses
+    # override them if they overlap
+    links = source.search_for_links()
 
-      # this user's own activities (and user mentions)
-      resp = source.get_activities_response(
-        fetch_replies=True, fetch_likes=True, fetch_shares=True,
-        fetch_mentions=True, count=50, etag=source.last_activities_etag,
-        min_id=source.last_activity_id, cache=cache)
-      etag = resp.get('etag')  # used later
-      user_activities = resp.get('items', [])
+    # this user's own activities (and user mentions)
+    resp = source.get_activities_response(
+      fetch_replies=True, fetch_likes=True, fetch_shares=True,
+      fetch_mentions=True, count=50, etag=source.last_activities_etag,
+      min_id=source.last_activity_id, cache=cache)
+    etag = resp.get('etag')  # used later
+    user_activities = resp.get('items', [])
 
-      # these map ids to AS objects
-      responses = {a['id']: a for a in links}
-      activities = {a['id']: a for a in links + user_activities}
-
-    except Exception, e:
-      code, body = util.interpret_http_exception(e)
-      if code == '401':
-        msg = 'Unauthorized error: %s' % e
-        logging.warning(msg, exc_info=True)
-        source.updates['poll_status'] = 'ok'
-        raise models.DisableSource(msg)
-      elif code in util.HTTP_RATE_LIMIT_CODES:
-        logging.warning('Rate limited. Marking as error and finishing. %s', e)
-        source.updates.update({'poll_status': 'error', 'rate_limited': True})
-        return
-      elif (code and int(code) / 100 == 5) or util.is_connection_failure(e):
-        logging.error('API call failed. Marking as error and finishing. %s: %s\n%s',
-                      code, body, e)
-        self.abort(ERROR_HTTP_RETURN_CODE)
-      else:
-        raise
+    # these map ids to AS objects
+    responses = {a['id']: a for a in links}
+    activities = {a['id']: a for a in links + user_activities}
 
     # extract silo activity ids, update last_activity_id
     silo_activity_ids = set()
