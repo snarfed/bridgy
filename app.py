@@ -641,6 +641,12 @@ class WarmupHandler(util.Handler):
     pass
 
 
+class CspReportHandler(util.Handler):
+  """Log Content-Security-Policy reports. https://content-security-policy.com/"""
+  def post(self):
+    logging.info(self.request.body)
+
+
 application = webapp2.WSGIApplication(
   [('/?', FrontPageHandler),
    ('/users/?', UsersHandler),
@@ -654,5 +660,6 @@ application = webapp2.WSGIApplication(
    ('/retry', RetryHandler),
    ('/(listen|publish)/?', RedirectToFrontPageHandler),
    ('/logout', LogoutHandler),
+   ('/csp-report', CspReportHandler),
    ('/_ah/warmup', WarmupHandler),
    ], debug=appengine_config.DEBUG)

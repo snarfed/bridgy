@@ -289,10 +289,8 @@ def replace_test_domains_with_localhost(url):
   return url
 
 
-class Handler(webapp2.RequestHandler):
+class Handler(webutil_handlers.ModernHandler):
   """Includes misc request handler utilities.
-
-  Also sets the HSTS HTTP response header.
 
   Attributes:
     messages: list of notification messages to be rendered in this page or
@@ -302,8 +300,10 @@ class Handler(webapp2.RequestHandler):
   def __init__(self, *args, **kwargs):
     super(Handler, self).__init__(*args, **kwargs)
     self.messages = set()
-    self.response.headers['Strict-Transport-Security'] = \
-        'max-age=16070400; includeSubDomains; preload'  # 6 months
+    self.response.headers['Content-Security-Policy'] = \
+      self.response.headers['Content-Security-Policy'].replace(
+        "frame-ancestors 'self';", "frame-ancestors 'self' https://www.facebook.com/;")
+    self.response.headers['X-Frame-Options'] = 'ALLOW-FROM https://www.facebook.com/'
 
   def redirect(self, uri, **kwargs):
     """Adds self.messages to the fragment, separated by newlines.
