@@ -195,8 +195,10 @@ class Handler(webmention.WebmentionHandler):
       if source.status != 'disabled' and 'publish' in source.features:
         # use a source that has a domain_url matching the url provided.
         # look through each source to find the one with the closest match.
+        schemeless_url = util.schemeless(url.lower()).strip('/')
         for domain_url in source.domain_urls:
-          if (url.lower().startswith(domain_url.lower().strip('/')) and
+          schemeless_domain_url = util.schemeless(domain_url.lower()).strip('/')
+          if (schemeless_url.startswith(schemeless_domain_url) and
               len(domain_url) > len(current_url)):
             self.source = source
             current_url = domain_url

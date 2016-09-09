@@ -175,6 +175,11 @@ class PublishTest(testutil.HandlerTest):
     self.mox.ReplayAll()
     self.assert_created('foo - http://FoO.cOm/Bar', source='http://FoO.cOm/Bar')
 
+  def test_success_domain_http_vs_https(self):
+    self.expect_requests_get('https://foo.com/bar', self.post_html % 'foo')
+    self.mox.ReplayAll()
+    self.assert_created('foo - https://foo.com/bar', source='https://foo.com/bar')
+
   def test_success_source_status_error(self):
     """Sources in status 'error' should still be able to publish."""
     self.source.status = 'error'
