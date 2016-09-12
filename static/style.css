@@ -81,7 +81,7 @@ pre .value, code.value {
 }
 
 pre .link, code.link {
-  color: #428BCA;
+  color: #12a;
 }
 
 .row {
@@ -206,14 +206,14 @@ code {
 
 label {
   /* override Bootstrap style */
-  font-weight: 200;
+  font-weight: 400;
 }
 
 button {
   border: 0;
-  background-color: #428BCA;  /* same color as links */
+  background-color: #12A;  /* same color as links */
   color: white;
-  font-weight: 200;
+  font-weight: 400;
   padding-top: .2em;
   padding-bottom: .2em;
   padding-left: .5em;
@@ -236,14 +236,14 @@ button[disabled]:hover {
 }
 
 .btn-default {
-  border-color: #428BCA;
-  color: #428BCA;
+  border-color: #12A;
+  color: #12A;
 }
 
 .btn-default:hover {
   background-color: #BDE;
-  border-color: #428BCA;
-  color: #428BCA;
+  border-color: #12A;
+  color: #12A;
 }
 
 #delete-button, #bad-button {
