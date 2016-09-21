@@ -8,8 +8,8 @@ import json
 import urllib
 
 import appengine_config
-from granary import twitter as gr_twitter
 from granary.test import test_twitter as gr_twitter_test
+from granary.twitter import API_BASE, API_SEARCH, API_STATUS, HTML_FAVORITES
 import oauth_dropins
 from oauth_dropins import twitter as oauth_twitter
 
@@ -73,11 +73,9 @@ class TwitterTest(testutil.ModelsTest):
     tweet = copy.deepcopy(gr_twitter_test.TWEET)
     tweet['favorite_count'] = 1
 
-    self.expect_urlopen(
-      'https://api.twitter.com/1.1/statuses/show.json?id=100&include_entities=true',
-      json.dumps(tweet))
-    self.expect_urlopen('https://twitter.com/i/activity/favorited_popup?id=100',
-      json.dumps({'htmlUsers': gr_twitter_test.FAVORITES_HTML}))
+    self.expect_urlopen(API_BASE + API_STATUS % '100', json.dumps(tweet))
+    self.expect_urlopen(HTML_FAVORITES % '100',
+                        json.dumps({'htmlUsers': gr_twitter_test.FAVORITES_HTML}))
 
     self.mox.ReplayAll()
     self.assert_equals(gr_twitter_test.LIKES_FROM_HTML[0],
@@ -130,7 +128,7 @@ class TwitterTest(testutil.ModelsTest):
       'entities': {'urls': [{'expanded_url': 'http://foo/'},
                             {'expanded_url': 'http://other'}]},
     }]
-    self.expect_urlopen(gr_twitter.API_BASE + gr_twitter.API_SEARCH %
+    self.expect_urlopen(API_BASE + API_SEARCH %
                         {'q': urllib.quote_plus('"foo" OR "bar/baz"'), 'count': 50},
                         json.dumps({'statuses': results}))
 
