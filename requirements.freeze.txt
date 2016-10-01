@@ -3,7 +3,7 @@
 -e git+git@github.com:snarfed/oauth-dropins.git#egg=oauth_dropins-master
 -e git+git@github.com:snarfed/webmention-tools.git#egg=webmentiontools
 beautifulsoup4==4.3.2
-brevity==0.2.10
+brevity==0.2.11
 google-api-python-client==1.4.1
 html2text==2015.6.21
 html5lib==0.9999999
