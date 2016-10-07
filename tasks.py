@@ -688,18 +688,18 @@ class PropagateResponse(SendWebmentions):
 
   def source_url(self, target_url):
     # determine which activity to use
-    activity = self.activities[0]
-    if self.entity.urls_to_activity:
-      urls_to_activity = json.loads(self.entity.urls_to_activity)
-      if urls_to_activity:
-        try:
+    try:
+      activity = self.activities[0]
+      if self.entity.urls_to_activity:
+        urls_to_activity = json.loads(self.entity.urls_to_activity)
+        if urls_to_activity:
           activity = self.activities[urls_to_activity[target_url]]
-        except KeyError:
-          logging.warning("""\
+    except (KeyError, IndexError):
+      logging.warning("""\
 Hit https://github.com/snarfed/bridgy/issues/237 KeyError!
 target url %s not in urls_to_activity: %s
-activities: %s""", target_url, urls_to_activity, self.activities)
-          self.abort(ERROR_HTTP_RETURN_CODE)
+activities: %s""", target_url, self.entity.urls_to_activity, self.activities)
+      self.abort(ERROR_HTTP_RETURN_CODE)
 
     # generate source URL
     id = activity['id']

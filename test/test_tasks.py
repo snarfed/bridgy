@@ -1804,7 +1804,16 @@ class PropagateTest(TaskQueueTest):
     """
     self.responses[0].urls_to_activity = json.dumps({'bad': 9})
     self.responses[0].put()
+    self.mox.ReplayAll()
+    self.post_task(expected_status=tasks.ERROR_HTTP_RETURN_CODE)
 
+  def test_source_url_index_error(self):
+    """We should gracefully retry when we hit the IndexError bug.
+
+    https://github.com/snarfed/bridgy/issues/237
+    """
+    self.responses[0].activities_json = []
+    self.responses[0].put()
     self.mox.ReplayAll()
     self.post_task(expected_status=tasks.ERROR_HTTP_RETURN_CODE)
 
