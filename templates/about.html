@@ -119,6 +119,7 @@ service.</a>
 <li><a href="#401">I'm getting a <em>401: Unauthorized</em> error when I try
    to publish to Twitter.</a></li>
 <li><a href="#extended-tweets">Can I take advantage of Twitter's new extended tweet character counting?</a></li>
+<li><a href="#reply-mention">When I repy to a tweet, do I need to @-mention that tweet's author?</a></li>
 
 <br />
 <p><em>Webmentions for blogs</em></p>
@@ -1038,6 +1039,12 @@ Shameless plug: check out
 <a href="https://blog.twitter.com/express-even-more-in-140-characters">extended tweet character counting</a>?</li>
 <li class="answer">
 <p>Yes! Twitter is now <a href="https://blog.twitter.com/express-even-more-in-140-characters">exempting reply @-mentions, photo and video links, quote tweet links, and more</a> from counting toward the 140 character limit. <a href="https://blog.twitter.com/express-even-more-in-140-characters">More details</a>, <a href="https://dev.twitter.com/overview/api/upcoming-changes-to-tweets">developer docs</a>. Bridgy Publish fully supports these changes. Happy tweeting!
+</p>
+</li>
+
+<li id="reply-mention" class="question">When I repy to a tweet, do I need to @-mention that tweet's author?</li>
+<li class="answer">
+<p>No, Bridgy and Twitter will do that for you. You're welcome to mention them inside your text, but otherwise don't include an @-mention at the beginning, since it will get duplicated. <a href="https://github.com/snarfed/bridgy/issues/703">More background.</a>
 </p>
 </li>
 
