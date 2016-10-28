@@ -5,6 +5,7 @@
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import json
+import socket
 import urllib
 
 import appengine_config
@@ -598,6 +599,17 @@ this is my article
     self.mox.ReplayAll()
     self.assert_error('fooey', status=402)
     self.assertEquals(500, self.get_response(preview=True).status_int)
+
+  def test_connection_error_502s(self):
+    self.expect_requests_get('http://foo.com/bar', self.post_html % 'xyz')
+    self.mox.StubOutWithMock(self.source.gr_source, 'create',
+                             use_mock_anything=True)
+    self.source.gr_source.create(mox.IgnoreArg(),
+                                 include_link=gr_source.INCLUDE_LINK,
+                                 ignore_formatting=False
+                                 ).AndRaise(socket.error('foooey bar'))
+    self.mox.ReplayAll()
+    self.assert_error('foooey bar', status=502)
 
   def test_preview(self):
     html = self.post_html % 'foo'
