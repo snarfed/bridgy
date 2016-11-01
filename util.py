@@ -296,6 +296,7 @@ class Handler(webutil_handlers.ModernHandler):
     messages: list of notification messages to be rendered in this page or
       wherever it redirects
   """
+  USE_APPENGINE_WEBAPP = True
 
   def __init__(self, *args, **kwargs):
     super(Handler, self).__init__(*args, **kwargs)

@@ -52,6 +52,7 @@ RECENT_PRIVATE_POSTS_THRESHOLD = 5
 
 class DashboardHandler(webutil_handlers.TemplateHandler, util.Handler):
   """Base handler for both the front page and user pages."""
+  USE_APPENGINE_WEBAPP = True
 
   @util.canonicalize_domain
   def head(self, *args, **kwargs):
@@ -93,14 +94,14 @@ class CachedPageHandler(DashboardHandler):
   def get(self, cache=True):
     if (not cache or appengine_config.DEBUG or self.request.params or
         self.get_logins()):
-      return super(DashboardHandler, self).get()
+      return super(CachedPageHandler, self).get()
 
     self.response.headers['Content-Type'] = self.content_type()
     cached = util.CachedPage.load(self.request.path)
     if cached:
       self.response.write(cached.html)
     else:
-      super(DashboardHandler, self).get()
+      super(CachedPageHandler, self).get()
       util.CachedPage.store(self.request.path, self.response.body,
                             expires=self.EXPIRES)
 

@@ -29,6 +29,7 @@ import wordpress_rest
 
 class ResponsesHandler(handlers.TemplateHandler):
   """Find the most recently attempted responses and blog posts with error URLs."""
+  USE_APPENGINE_WEBAPP = True
   NUM_ENTITIES = 10
 
   def template_file(self):
@@ -61,6 +62,7 @@ class ResponsesHandler(handlers.TemplateHandler):
 
 class SourcesHandler(handlers.TemplateHandler):
   """Find sources whose last poll errored out."""
+  USE_APPENGINE_WEBAPP = True
   NUM_SOURCES = 10
 
   def template_file(self):
@@ -81,6 +83,8 @@ class SourcesHandler(handlers.TemplateHandler):
 
 
 class MarkCompleteHandler(util.Handler):
+  USE_APPENGINE_WEBAPP = True
+
   def post(self):
     entities = ndb.get_multi(ndb.Key(urlsafe=u)
                              for u in self.request.params.getall('key'))
