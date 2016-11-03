@@ -128,9 +128,9 @@ handlers:
   login: admin
   secure: always
 
-- url: /_info
-  script: oauth_dropins.webutil.instance_info.application
-  secure: always
+# - url: /_info
+#   script: oauth_dropins.webutil.instance_info.application
+#   secure: always
 
 - url: /admin/.*
   script: admin.application
