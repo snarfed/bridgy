@@ -78,10 +78,8 @@ service.</a>
 <li><a href="#which">Which things does it send, specifically?</a></li>
 <li><a href="#accept">How can I get my web site to accept
   webmentions?</a></li>
-<li><a href="#realtime">Bridgy isn't seeing one of my comments or
+<li><a href="#missing">Bridgy isn't seeing one of my comments or
   likes or reshares!</a></li>
-<li><a href="#missing">...but it's been a while, and Bridgy
-  still hasn't seen it!</a></li>
 <li><a href="#domain">Bridgy can't find my original posts! It just
   says <em>No webmention targets found</em>.</a></li>
 <li><a href="#link">Do my posts really need to link my web site?</a></li>
@@ -436,12 +434,15 @@ WordPress,
 plugin</a>. Otherwise,
 <a href="https://indieweb.org/webmention#Publishing_Software">check out the
 Indiewebcamp wiki</a> for a list of options.
-</p></li>
+</p>
 
-<li id="realtime" class="question">Bridgy isn't seeing one of my comments or
+<span id="realtime"></span>
+<li id="missing" class="question">Bridgy isn't seeing one of my comments or
   likes or reshares!</li>
 <li class="answer">
-<p>Bridgy doesn't work immediately. It checks your accounts for new activity
+<p>This can happen for a number of different reasons.</p>
+<ul>
+<li><p>Bridgy doesn't work immediately. It checks your accounts for new activity
 periodically, every 5 to 30 minutes or so depending on the site. This drops down
 to once a day if you've been signed up for over a week and we haven't
 successfully sent you a webmention yet, or the last one we sent was over a month
@@ -453,12 +454,6 @@ exception, since Bridgy used
 API</a> for a while, but
 <a href="https://github.com/snarfed/bridgy/issues/57">not any more</a>.)
 </p></li>
-
-<li id="missing" class="question">...but it's been a while, and Bridgy
-  still hasn't seen it!</li>
-<li class="answer">
-<p>This can happen for a number of different reasons.</p>
-<ul>
 <li>Does the social network post have a link to your web site's post? If not,
 does your web site's post have a
 <a href="#link">rel-syndication link</a> to the social network post?
