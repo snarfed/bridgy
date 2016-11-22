@@ -55,7 +55,8 @@ now_fn = datetime.datetime.now
 #
 # We also check this when a user sign up and we extract the web site links from
 # their profile. We automatically omit links to these domains.
-with open('domain_blacklist.txt') as f:
+_dir = os.path.dirname(__file__)
+with open(os.path.join(_dir, 'domain_blacklist.txt')) as f:
   BLACKLIST = util.load_file_lines(f)
 
 # Individual URLs that we shouldn't fetch. Started because of
@@ -67,7 +68,7 @@ URL_BLACKLIST = frozenset((
 
 # URL paths of users who opt into testing new "beta" features and changes
 # before we roll them out to everyone.
-with open('beta_users.txt') as f:
+with open(os.path.join(_dir, 'beta_users.txt')) as f:
   BETA_USER_PATHS = util.load_file_lines(f)
 
 # Average HTML page size as of 2015-10-15 is 56K, so this is very generous and

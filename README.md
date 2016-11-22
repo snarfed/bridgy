@@ -7,7 +7,8 @@ https://brid.gy/
 
 Bridgy pulls comments and likes from social networks back to your web site. You
 can also use it to publish your posts to those networks.
-[See the docs](https://brid.gy/about) for more details.
+[See the user docs](https://brid.gy/about) for more details, or the
+[developer docs](https://bridgy.readthedocs.io/) if you want to contribute.
 
 License: This project is placed in the public domain.
 
@@ -109,59 +110,59 @@ create posts, comments, likes, reposts, and/or RSVPs.
 [following this pattern](https://github.com/snarfed/oauth-dropins/blob/master/oauth_dropins/appengine_config.py).
 You'll eventually want to send them to @snarfed and @kylewm too, but no hurry.
 1. Add the silo to [oauth-dropins](https://github.com/snarfed/oauth-dropins) if
-   it's not already there:
-  1. Add a new `.py` file for your silo with an auth model and handler classes.
+  it's not already there:
+    1. Add a new `.py` file for your silo with an auth model and handler classes.
     Follow the existing examples.
-  1. Add a [button image](https://github.com/snarfed/oauth-dropins/tree/master/oauth_dropins/static).
-  1. Add it to the
-  [app front page](https://github.com/snarfed/oauth-dropins/blob/master/templates/index.html)
-  and the [README](https://github.com/snarfed/oauth-dropins/blob/master/README.md).
+    1. Add a [button image](https://github.com/snarfed/oauth-dropins/tree/master/oauth_dropins/static).
+    1. Add it to the
+    [app front page](https://github.com/snarfed/oauth-dropins/blob/master/templates/index.html)
+    and the [README](https://github.com/snarfed/oauth-dropins/blob/master/README.md).
 1. Add the silo to [granary](https://github.com/snarfed/granary):
-  1. Add a new `.py` file for your silo. Follow the existing examples. At
-     minimum, you'll need to implement
-     [`get_activities_response`](https://github.com/snarfed/granary/blob/845afbbd521f7ba43b3339bcc1ce3afddd205047/granary/source.py#L137)
-     and convert your silo's API data to [ActivityStreams](http://activitystrea.ms/).
-  1. Add a new unit test file and write some tests!
-  1. Add it to
-  [`activitystreams.py`](https://github.com/snarfed/granary/blob/master/activitystreams.py)
-  (specifically `Handler.get`),
-  [`app.py`](https://github.com/snarfed/granary/blob/master/app.py),
-  [`app.yaml`](https://github.com/snarfed/granary/blob/master/app.yaml),
-  [`index.html`](https://github.com/snarfed/granary/blob/master/granary/templates/index.html),
-  and the
-  [README](https://github.com/snarfed/granary/blob/master/README.md).
+    1. Add a new `.py` file for your silo. Follow the existing examples. At
+    minimum, you'll need to implement
+    [`get_activities_response`](https://github.com/snarfed/granary/blob/845afbbd521f7ba43b3339bcc1ce3afddd205047/granary/source.py#L137)
+    and convert your silo's API data to [ActivityStreams](http://activitystrea.ms/).
+    1. Add a new unit test file and write some tests!
+    1. Add it to
+    [`activitystreams.py`](https://github.com/snarfed/granary/blob/master/activitystreams.py)
+    (specifically `Handler.get`),
+    [`app.py`](https://github.com/snarfed/granary/blob/master/app.py),
+    [`app.yaml`](https://github.com/snarfed/granary/blob/master/app.yaml),
+    [`index.html`](https://github.com/snarfed/granary/blob/master/granary/templates/index.html),
+    and the
+    [README](https://github.com/snarfed/granary/blob/master/README.md).
 1. Add the silo to Bridgy:
-  1. Add a new `.py` file for your silo with a model class. Follow the existing
-  examples.
-  1. Add it to
-  [`app.py`](https://github.com/snarfed/bridgy/blob/master/app.py),
-  [`app.yaml`](https://github.com/snarfed/bridgy/blob/master/app.yaml), and
-  [`handlers.py`](https://github.com/snarfed/bridgy/blob/master/handlers.py),
-  (just import the module).
-  1. Add a 24x24 PNG icon to [`static/`](https://github.com/snarfed/bridgy/tree/master/static).
-  1. Add new `SILO_signup.html` and `SILO_user.html` files in
-  [`templates/`](https://github.com/snarfed/bridgy/tree/master/templates).
-  and add the silo to
-  [`listen_signup.html`](https://github.com/snarfed/bridgy/blob/master/templates/listen_signup.html).
-  Follow the existing examples.
-  1. Add the silo to
-  [`about.html`](https://github.com/snarfed/bridgy/blob/master/templates/about.html) and this README.
-  1. If users' profile picture URLs can change, add a cron job that updates them
-  to [`cron.py`](https://github.com/snarfed/bridgy/blob/master/cron.py) and
-  [`cron.yaml`](https://github.com/snarfed/bridgy/blob/master/cron.yaml). Also
-  add the model class to the datastore backup job there.
+    1. Add a new `.py` file for your silo with a model class. Follow the existing
+    examples.
+    1. Add it to
+    [`app.py`](https://github.com/snarfed/bridgy/blob/master/app.py),
+    [`app.yaml`](https://github.com/snarfed/bridgy/blob/master/app.yaml), and
+    [`handlers.py`](https://github.com/snarfed/bridgy/blob/master/handlers.py),
+    (just import the module).
+    1. Add a 24x24 PNG icon to [`static/`](https://github.com/snarfed/bridgy/tree/master/static).
+    1. Add new `SILO_signup.html` and `SILO_user.html` files in
+    [`templates/`](https://github.com/snarfed/bridgy/tree/master/templates).
+    and add the silo to
+    [`listen_signup.html`](https://github.com/snarfed/bridgy/blob/master/templates/listen_signup.html).
+    Follow the existing examples.
+    1. Add the silo to
+    [`about.html`](https://github.com/snarfed/bridgy/blob/master/templates/about.html) and this README.
+    1. If users' profile picture URLs can change, add a cron job that updates them
+    to [`cron.py`](https://github.com/snarfed/bridgy/blob/master/cron.py) and
+    [`cron.yaml`](https://github.com/snarfed/bridgy/blob/master/cron.yaml). Also
+    add the model class to the datastore backup job there.
 1. Optionally add publish support:
-  1. Implement
-  [`create`](https://github.com/snarfed/granary/blob/845afbbd521f7ba43b3339bcc1ce3afddd205047/granary/source.py#L223) and
-  [`preview_create`](https://github.com/snarfed/granary/blob/845afbbd521f7ba43b3339bcc1ce3afddd205047/granary/source.py#L247)
-  for the silo in granary.
-  1. Add the silo to
-  [`publish.py`](https://github.com/snarfed/bridgy/blob/master/publish.py): import its
-  module, add it to `SOURCES`, and update
-  [this error message](https://github.com/snarfed/bridgy/blob/424bbb28c769eea5636534aba5791e868d63b987/publish.py#L130).
-  1. Add a `publish-signup` block to `SILO_user.html` and add the silo
-  [to `social_user.html` here](https://github.com/snarfed/bridgy/blob/424bbb28c769eea5636534aba5791e868d63b987/templates/social_user.html#L51).
-  1. Update `app.yaml`.
+    1. Implement
+    [`create`](https://github.com/snarfed/granary/blob/845afbbd521f7ba43b3339bcc1ce3afddd205047/granary/source.py#L223) and
+    [`preview_create`](https://github.com/snarfed/granary/blob/845afbbd521f7ba43b3339bcc1ce3afddd205047/granary/source.py#L247)
+    for the silo in granary.
+    1. Add the silo to
+    [`publish.py`](https://github.com/snarfed/bridgy/blob/master/publish.py): import its
+    module, add it to `SOURCES`, and update
+    [this error message](https://github.com/snarfed/bridgy/blob/424bbb28c769eea5636534aba5791e868d63b987/publish.py#L130).
+    1. Add a `publish-signup` block to `SILO_user.html` and add the silo to
+    [`social_user.html`](https://github.com/snarfed/bridgy/blob/424bbb28c769eea5636534aba5791e868d63b987/templates/social_user.html#L51).
+    1. Update `app.yaml`.
 
 Good luck, and happy hacking!
 
@@ -171,7 +172,7 @@ Monitoring
 
 App Engine's [built in dashboard](https://appengine.google.com/dashboard?&app_id=s~brid-gy) and [log browser](https://console.developers.google.com/project/brid-gy/logs) are pretty good for interactive monitoring and debugging.
 
-For alerting, we've set up [Google Cloud Monitoring](https://app.google.stackdriver.com/services/app-engine/brid-gy/) (née [Stackdriver](http://en.wikipedia.org/wiki/Stackdriver)). Background in #377. It [sends alerts](https://app.google.stackdriver.com/policy-advanced) by email and SMS when [HTTP 4xx responses average >.1qps or 5xx >.05qps](https://app.google.stackdriver.com/policy-advanced/650c6f24-17c1-41ac-afda-90a1e56e82c1), [latency averages >15s](https://app.google.stackdriver.com/policy-advanced/2c0006f3-7040-4323-b105-8d24b3266ac6), or [instance count averages >5](https://app.google.stackdriver.com/policy-advanced/5cf96390-dc53-4166-b002-4c3b6934f4c3) over the last 15m window.
+For alerting, we've set up [Google Cloud Monitoring](https://app.google.stackdriver.com/services/app-engine/brid-gy/) (née [Stackdriver](http://en.wikipedia.org/wiki/Stackdriver)). Background in [issue 377](https://github.com/snarfed/bridgy/issues/377). It [sends alerts](https://app.google.stackdriver.com/policy-advanced) by email and SMS when [HTTP 4xx responses average >.1qps or 5xx >.05qps](https://app.google.stackdriver.com/policy-advanced/650c6f24-17c1-41ac-afda-90a1e56e82c1), [latency averages >15s](https://app.google.stackdriver.com/policy-advanced/2c0006f3-7040-4323-b105-8d24b3266ac6), or [instance count averages >5](https://app.google.stackdriver.com/policy-advanced/5cf96390-dc53-4166-b002-4c3b6934f4c3) over the last 15m window.
 
 
 Misc
