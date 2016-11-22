@@ -144,7 +144,8 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
     Args:
       data mf2 data dict
 
-    Returns: mf2 item dict or None
+    Returns:
+      mf2 item dict or None
     """
     # find target URL in source
     for item in data.get('items', []):

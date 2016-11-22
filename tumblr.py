@@ -114,7 +114,8 @@ class Tumblr(models.Source):
       blog_name: which blog. optional. matches the 'name' field for one of the
         blogs in auth_entity.user_json['user']['blogs'].
 
-    Returns: ([string url], [string domain])
+    Returns:
+      ([string url], [string domain])
     """
     for blog in json.loads(auth_entity.user_json).get('user', {}).get('blogs', []):
       if ((blog_name and blog_name == blog.get('name')) or
@@ -162,7 +163,8 @@ class Tumblr(models.Source):
       author_url: string
       content: string
 
-    Returns: JSON response dict with 'id' and other fields
+    Returns:
+      JSON response dict with 'id' and other fields
     """
     if not self.disqus_shortname:
       resp = util.requests_get(post_url)
@@ -211,7 +213,8 @@ class Tumblr(models.Source):
       params: query parameters
       kwargs: passed through to method
 
-    Returns: dict, JSON response
+    Returns:
+      dict, JSON response
     """
     logging.info('Calling Disqus %s with %s', url.split('/')[-2:], params)
     params.update({

@@ -324,6 +324,8 @@ texinfo_documents = [
 intersphinx_mapping = {
   # TODO
   # 'appengine': ('https://cloud.google.com/appengine/docs/python/refdocs', None),
+  'granary': ('https://granary.readthedocs.io/en/latest', None),
+  'oauth_dropins': ('https://oauth-dropins.readthedocs.io/en/latest', None),
   'python': ('https://docs.python.org/', None),
   'requests': ('http://docs.python-requests.org/en/latest', None),
   'urllib3': ('http://urllib3.readthedocs.io/en/latest', None),

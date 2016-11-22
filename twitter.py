@@ -81,7 +81,8 @@ class Twitter(models.Source):
     returns false positivies, so we check that the returned tweets actually have
     matching links. https://github.com/snarfed/bridgy/issues/565
 
-    Returns: sequence of ActivityStreams activity dicts
+    Returns:
+      sequence of ActivityStreams activity dicts
     """
     urls = set(util.fragmentless(url) for url in self.domain_urls
                if not util.in_webmention_blacklist(util.domain_from_link(url)))

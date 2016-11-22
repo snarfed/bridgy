@@ -43,8 +43,11 @@ Developer docs:<br>
 </a>
 
 <style>
-/* Override bad rule in https://media.readthedocs.org/css/badge_only.css that
- * sets all images to width 100% on narrow screens. */
+/* Workaround for https://github.com/snide/sphinx_rtd_theme/issues/144
+ * Override bad rule in https://media.readthedocs.org/css/badge_only.css that
+ * sets all images to width 100% on narrow screens.
+ * TODO: remove when bug is fixed!
+ */
 @media screen and (max-width: 768px) {
   img {
     width: auto;

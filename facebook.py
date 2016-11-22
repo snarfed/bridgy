@@ -3,19 +3,21 @@
 TODO: use third_party_id if we ever need to store an FB user id anywhere else.
 
 Example post ID and links
-  id: 212038_10100823411129293  [USER-ID]_[POST-ID]
-  API URL: https://graph.facebook.com/212038_10100823411094363
-  Permalinks:
-    https://www.facebook.com/10100823411094363
-    https://www.facebook.com/212038/posts/10100823411094363
-    https://www.facebook.com/photo.php?fbid=10100823411094363
-  Local handler path: /post/facebook/212038/10100823411094363
+
+* id: 212038_10100823411129293  [USER-ID]_[POST-ID]
+* API URL: https://graph.facebook.com/212038_10100823411094363
+* Permalinks:
+    * https://www.facebook.com/10100823411094363
+    * https://www.facebook.com/212038/posts/10100823411094363
+    * https://www.facebook.com/photo.php?fbid=10100823411094363
+* Local handler path: /post/facebook/212038/10100823411094363
 
 Example comment ID and links
-  id: 10100823411094363_10069288  [POST-ID]_[COMMENT-ID]
-  API URL: https://graph.facebook.com/10100823411094363_10069288
-  Permalink: https://www.facebook.com/10100823411094363&comment_id=10069288
-  Local handler path: /comment/facebook/212038/10100823411094363_10069288
+
+* id: 10100823411094363_10069288  [POST-ID]_[COMMENT-ID]
+* API URL: https://graph.facebook.com/10100823411094363_10069288
+* Permalink: https://www.facebook.com/10100823411094363&comment_id=10069288
+* Local handler path: /comment/facebook/212038/10100823411094363_10069288
 """
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
@@ -239,7 +241,8 @@ class FacebookPage(models.Source):
       post_id: string Facebook post id
       activity: optional AS activity representation of Facebook post
 
-    Returns: string Facebook object id or None
+    Returns:
+      string Facebook object id or None
     """
     parsed = gr_facebook.Facebook.parse_id(post_id)
     if parsed.post:

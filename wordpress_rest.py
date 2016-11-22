@@ -101,7 +101,8 @@ class WordPress(models.Source):
     Args:
       auth_entity: oauth_dropins.wordpress_rest.WordPressAuth, unused
 
-    Returns: ([string url], [string domain])
+    Returns:
+      ([string url], [string domain])
     """
     return [self.url], [self.key.id()]
 
@@ -119,7 +120,8 @@ class WordPress(models.Source):
       author_url: string
       content: string
 
-    Returns: JSON response dict with 'id' and other fields
+    Returns:
+      JSON response dict with 'id' and other fields
     """
     auth_entity = self.auth_entity.get()
     logging.info('Determining WordPress.com post id for %s', post_url)
@@ -168,7 +170,8 @@ class WordPress(models.Source):
       handler: the current RequestHandler
       auth_entity: oauth_dropins.wordpress.WordPressAuth
 
-    Returns: site info dict, or None if API calls are disabled for this blog
+    Returns:
+      site info dict, or None if API calls are disabled for this blog
     """
     try:
       return cls.urlopen(auth_entity, API_SITE_URL % auth_entity.blog_id)

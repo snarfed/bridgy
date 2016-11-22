@@ -1,19 +1,20 @@
 """Instagram API code and datastore model classes.
 
-Example post ID and links
-  id: 595990791004231349 or 595990791004231349_247678460
-    (suffix is user id)
-  Permalink: http://instagram.com/p/hFYnd7Nha1/
-  API URL: https://api.instagram.com/v1/media/595990791004231349
-  Local handler path: /post/instagram/212038/595990791004231349
+Example post ID and links:
 
-Example comment ID and links
-  id: 595996024371549506
+* id: 595990791004231349 or 595990791004231349_247678460 (suffix is user id)
+* Permalink: http://instagram.com/p/hFYnd7Nha1/
+* API URL: https://api.instagram.com/v1/media/595990791004231349
+* Local handler path: /post/instagram/212038/595990791004231349
+
+Example comment ID and links:
+
+* id: 595996024371549506
   No direct API URL or permalink, as far as I can tell. :/
-  API URL for all comments on that picture:
-    https://api.instagram.com/v1/media/595990791004231349_247678460/comments
-  Local handler path:
-    /comment/instagram/212038/595990791004231349_247678460/595996024371549506
+* API URL for all comments on that picture:
+  https://api.instagram.com/v1/media/595990791004231349_247678460/comments
+* Local handler path:
+  /comment/instagram/212038/595990791004231349_247678460/595996024371549506
 """
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']

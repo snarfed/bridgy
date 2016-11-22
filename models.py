@@ -224,7 +224,8 @@ class Source(StringIdModel):
   def put_updates(cls, source):
     """Writes property values in source.updates to the datastore transactionally.
 
-    Returns: the updated Source
+    Returns:
+      the updated Source
     """
     if not source.updates:
       return source
@@ -303,7 +304,8 @@ class Source(StringIdModel):
     https://github.com/snarfed/bridgy/issues/456
     https://github.com/snarfed/bridgy/issues/565
 
-    Returns: sequence of ActivityStreams activity dicts
+    Returns:
+      sequence of ActivityStreams activity dicts
     """
     return []
 
@@ -330,7 +332,8 @@ class Source(StringIdModel):
       comment_id: string, site-specific comment id
       kwargs: passed to granary.Source.get_comment
 
-    Returns: dict, decoded ActivityStreams comment object, or None
+    Returns:
+      dict, decoded ActivityStreams comment object, or None
     """
     comment = self.gr_source.get_comment(comment_id, **kwargs)
     if comment:
@@ -371,7 +374,8 @@ class Source(StringIdModel):
       author_url: string
       content: string
 
-    Returns: response dict with at least 'id' field
+    Returns:
+      response dict with at least 'id' field
     """
     raise NotImplementedError()
 
@@ -381,7 +385,8 @@ class Source(StringIdModel):
     Must be implemented by subclasses. Currently only implemented by Blogger,
     Medium, Tumlbr, and WordPress.
 
-    Returns: string URL
+    Returns:
+      string URL
     """
     raise NotImplementedError()
 
@@ -391,7 +396,8 @@ class Source(StringIdModel):
     Must be implemented by subclasses. Currently only implemented by Blogger,
     Tumlbr, and WordPress.
 
-    Returns: string URL
+    Returns:
+      string URL
     """
     raise NotImplementedError()
 
@@ -529,7 +535,8 @@ class Source(StringIdModel):
       auth_entity: oauth_dropins.models.BaseAuth
       user_url: string, optional URL passed in when authorizing
 
-    Returns: ([string url, ...], [string domain, ...])
+    Returns:
+      ([string url, ...], [string domain, ...])
     """
     actor = self.gr_source.user_to_actor(json.loads(auth_entity.user_json))
     logging.debug('Converted to actor: %s', json.dumps(actor, indent=2))

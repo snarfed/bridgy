@@ -141,7 +141,7 @@ def webmention_endpoint_cache_key(url):
 
 
 def email_me(**kwargs):
-  """Thin wrapper around mail.send_mail() that handles errors."""
+  """Thin wrapper around :func:`mail.send_mail()` that handles errors."""
   try:
     mail.send_mail(sender='admin@brid-gy.appspotmail.com',
                    to='webmaster@brid.gy', **kwargs)
@@ -150,7 +150,7 @@ def email_me(**kwargs):
 
 
 def requests_get(url, **kwargs):
-  """Wraps requests.get with extra semantics and our user agent.
+  """Wraps :func:`requests.get` with extra semantics and our user agent.
 
   If a server tells us a response will be too big (based on Content-Length), we
   hijack the response and return 599 and an error response body instead. We pass
@@ -178,7 +178,7 @@ def requests_get(url, **kwargs):
 
 
 def follow_redirects(url, cache=True):
-  """Wraps granary.source.follow_redirects and injects our settings.
+  """Wraps :func:`oauth_dropins.webutil.util.follow_redirects` with our settings.
 
   ...specifically memcache and USER_AGENT_HEADER.
   """
@@ -197,7 +197,8 @@ def get_webmention_target(url, resolve=True, replace_test_domains=True):
     resolve: whether to follow redirects
     replace_test_domains: whether to replace test user domains with localhost
 
-  Returns: (string url, string pretty domain, boolean) tuple. The boolean is
+  Returns:
+    (string url, string pretty domain, boolean) tuple. The boolean is
     True if we should send a webmention, False otherwise, e.g. if it's a bad
     URL, not text/html, or in the blacklist.
   """
@@ -234,14 +235,15 @@ def prune_activity(activity, source):
   duplicated in both the activity and the object are removed from the object.
 
   Note that this only prunes the to field if it says the activity is public,
-  since granary's Source.is_public() defaults to saying an activity is
-  public if the to field is missing. If that ever changes, we'll need to
+  since :meth:`granary.source.Source.is_public()` defaults to saying an activity
+  is public if the to field is missing. If that ever changes, we'll need to
   start preserving the to field here.
 
   Args:
     activity: ActivityStreams activity dict
 
-  Returns: pruned activity dict
+  Returns:
+    pruned activity dict
   """
   keep = ['id', 'url', 'content', 'fb_id', 'fb_object_id', 'fb_object_type']
   if not source.is_activity_public(activity):
@@ -264,7 +266,8 @@ def prune_response(response):
   Args:
     response: ActivityStreams response object
 
-  Returns: pruned response object
+  Returns:
+    pruned response object
   """
   obj = response.get('object')
   if obj:
@@ -281,7 +284,8 @@ def replace_test_domains_with_localhost(url):
   Args:
     url: a string
 
-  Returns: a string with certain well-known domains replaced by localhost
+  Returns:
+    a string with certain well-known domains replaced by localhost
   """
   if url and DEBUG:
     for test_domain, local_domain in LOCALHOST_TEST_DOMAINS:
@@ -319,11 +323,11 @@ class Handler(webutil_handlers.ModernHandler):
   def maybe_add_or_delete_source(self, source_cls, auth_entity, state, **kwargs):
     """Adds or deletes a source if auth_entity is not None.
 
-    Used in each source's oauth-dropins CallbackHandler finish() and get()
-    methods, respectively.
+    Used in each source's oauth-dropins :meth:`CallbackHandler.finish()` and
+    :meth:`CallbackHandler.get()` methods, respectively.
 
     Args:
-      source_cls: source class, e.g. Instagram
+      source_cls: source class, e.g. :class:`Instagram`
       auth_entity: ouath-dropins auth entity
       state: string, OAuth callback state parameter. a JSON serialized dict
         with operation, feature, and an optional callback URL. For deletes,
@@ -424,7 +428,8 @@ class Handler(webutil_handlers.ModernHandler):
     Args:
       obj: a JSON-serializable dict
 
-    Returns: a string
+    Returns:
+      a string
     """
     # pass in custom separators to cut down on whitespace, and sort keys for
     # unit test consistency
@@ -439,7 +444,8 @@ class Handler(webutil_handlers.ModernHandler):
     Args:
       state: a string (JSON-serialized dict)
 
-    Returns: a dict containing operation, feature, and possibly other fields
+    Returns:
+      a dict containing operation, feature, and possibly other fields
 
     """
     logging.debug('decoding state "%s"' % state)
@@ -456,7 +462,8 @@ class Handler(webutil_handlers.ModernHandler):
   def get_logins(self):
     """Extracts the current user page paths from the logins cookie.
 
-    Returns: list of Login objects
+    Returns:
+      list of :class:`Login` objects
     """
     cookie = self.request.headers.get('Cookie', '')
     if cookie:
@@ -483,7 +490,7 @@ class Handler(webutil_handlers.ModernHandler):
     """Sets a logins cookie.
 
     Args:
-      logins: sequence of Login objects
+      logins: sequence of :class:`Login` objects
     """
     # cookie docs: http://curl.haxx.se/rfc/cookie_spec.html
     cookie = Cookie.SimpleCookie()
@@ -514,7 +521,7 @@ class Handler(webutil_handlers.ModernHandler):
     - set 'website_links' attr to list of pretty HTML links to domain_urls
 
     Args:
-      source: Source entity
+      source: :class:`Source` entity
     """
     if not source.name:
       source.name = source.key.string_id()
@@ -530,9 +537,9 @@ def oauth_starter(oauth_start_handler, **kwargs):
   """Returns an oauth-dropins start handler that injects the state param.
 
   Args:
-    oauth_start_handler: oauth-dropins StartHandler to use,
-      e.g. oauth_dropins.twitter.StartHandler.
-    kwargs: passed to construct_state_param_for_add()
+    oauth_start_handler: oauth-dropins :class:`StartHandler` to use,
+      e.g. :class:`oauth_dropins.twitter.StartHandler`.
+    kwargs: passed to :func:`construct_state_param_for_add()`
   """
   class StartHandler(oauth_start_handler, Handler):
     def redirect_url(self, state=None):
@@ -546,7 +553,7 @@ class CachedPage(StringIdModel):
   """Cached HTML for pages that changes rarely. Key id is path.
 
   Stored in the datastore since datastore entities in memcache (mostly
-  Responses) are requested way more often, so it would get evicted
+  :class:`Response`s) are requested way more often, so it would get evicted
   out of memcache easily.
 
   Keys, useful for deleting from memcache:

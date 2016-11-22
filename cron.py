@@ -39,7 +39,7 @@ class ReplacePollTasks(webapp2.RequestHandler):
 
 
 class UpdateTwitterPictures(webapp2.RequestHandler):
-  """Finds Twitter sources whose profile pictures have changed and updates them.
+  """Finds :class:`Twitter` sources with new profile pictures and updates them.
 
   https://github.com/snarfed/granary/commit/dfc3d406a20965a5ed14c9705e3d3c2223c8c3ff
   http://indiewebcamp.com/Twitter#Profile_Image_URLs
@@ -77,8 +77,7 @@ class UpdateTwitterPictures(webapp2.RequestHandler):
 
 
 class UpdatePictures(webapp2.RequestHandler):
-  """Finds sources whose profile pictures have changed and
-  updates them."""
+  """Finds sources with new profile pictures and updates them."""
   SOURCE_CLS = None
 
   def get(self):
@@ -95,14 +94,14 @@ class UpdatePictures(webapp2.RequestHandler):
 
 
 class UpdateInstagramPictures(UpdatePictures):
-  """Finds Instagram sources whose profile pictures have changed and
-  updates them."""
+  """Finds :class:`Instagram` sources with new profile pictures and updates them.
+  """
   SOURCE_CLS = Instagram
 
 
 class UpdateFlickrPictures(UpdatePictures):
-  """Finds Flickr sources whose profile pictures have changed and
-  updates them."""
+  """Finds :class:`Flickr` sources with new profile pictures and updates them.
+  """
   SOURCE_CLS = Flickr
 
 

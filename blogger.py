@@ -103,7 +103,8 @@ class Blogger(models.Source):
       auth_entity: oauth_dropins.blogger.BloggerV2Auth
       blog_id: which blog. optional. if not provided, uses the first available.
 
-    Returns: ([string url], [string domain])
+    Returns:
+      ([string url], [string domain])
     """
     for id, host in zip(auth_entity.blog_ids, auth_entity.blog_hostnames):
       if blog_id == id or (not blog_id and host):
@@ -124,7 +125,8 @@ class Blogger(models.Source):
       client: gdata.blogger.client.BloggerClient. If None, one will be created
         from auth_entity. Used for dependency injection in the unit test.
 
-    Returns: JSON response dict with 'id' and other fields
+    Returns:
+      JSON response dict with 'id' and other fields
     """
     if client is None:
       client = self.auth_entity.get().api()

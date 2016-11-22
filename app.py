@@ -80,7 +80,7 @@ class DashboardHandler(webutil_handlers.TemplateHandler, util.Handler):
 
 
 class CachedPageHandler(DashboardHandler):
-  """Handle a page that may be cached with CachedPage.
+  """Handle a page that may be cached with :class:`CachedPage`.
 
   Doesn't use the cache when:
   * running in dev_appserver
@@ -408,10 +408,10 @@ class UserHandler(DashboardHandler):
     return vars
 
   def process_webmention_links(self, e):
-    """Generates pretty HTML for the links in a BlogWebmention entity.
+    """Generates pretty HTML for the links in a :class:`BlogWebmention` entity.
 
     Args:
-      e: BlogWebmention subclass (Response or BlogPost)
+      e: :class:`BlogWebmention` subclass (:class:`Response` or :class:`BlogPost`)
     """
     link = lambda url, g: util.pretty_link(
       url, glyphicon=g, attrs={'class': 'original-post u-bridgy-target'}, new_tab=True)

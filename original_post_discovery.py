@@ -65,7 +65,8 @@ def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True,
     already_fetched_hfeeds: set, URLs that we have already fetched and run
       posse-post-discovery on, so we can avoid running it multiple times
 
-  Returns: (set(string original post URLs), set(string mention URLs)) tuple
+  Returns:
+    (set(string original post URLs), set(string mention URLs)) tuple
 
   """
   if not source.updates:
@@ -172,7 +173,8 @@ def targets_for_response(resp, originals, mentions):
     resp: ActivityStreams response object
     originals, mentions: sequence of string URLs
 
-  Returns: set of string URLs
+  Returns:
+    set of string URLs
   """
   type = models.Response.get_type(resp)
   targets = set()
@@ -541,7 +543,8 @@ def _process_syndication_urls(source, permalink, syndication_urls,
       of syndication urls
     preexisting: a list of previously discovered SyndicatedPosts
 
-  Returns: dict mapping string syndication url to list of SyndicatedPost
+  Returns:
+    dict mapping string syndication url to list of SyndicatedPost
   """
   results = {}
   # save the results (or lack thereof) to the db, and put them in a

@@ -451,7 +451,8 @@ class SendWebmentions(webapp2.RequestHandler):
     Args:
       target_url: string
 
-    Returns: string
+    Returns:
+      string
     """
     raise NotImplementedError()
 

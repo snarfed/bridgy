@@ -99,7 +99,8 @@ class GooglePlusPage(models.Source):
     G+ search supports OR:
     https://developers.google.com/+/api/latest/activities/search
 
-    Returns: sequence of ActivityStreams activity dicts
+    Returns:
+      sequence of ActivityStreams activity dicts
     """
     urls = ['"%s"' % util.fragmentless(url) for url in self.domain_urls
             if not util.in_webmention_blacklist(util.domain_from_link(url))

@@ -93,7 +93,8 @@ class ItemHandler(util.Handler):
       source: bridgy.Source subclass
       id: string
 
-    Returns: ActivityStreams object dict
+    Returns:
+      ActivityStreams object dict
     """
     raise NotImplementedError()
 
@@ -113,7 +114,8 @@ class ItemHandler(util.Handler):
       is_event: bool
       kwargs: passed through to get_activities
 
-    Returns: ActivityStreams object dict
+    Returns:
+      ActivityStreams object dict
     """
     try:
       posts = self.source.get_activities(
