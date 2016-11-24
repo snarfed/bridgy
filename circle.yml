@@ -10,13 +10,19 @@ checkout:
 
 dependencies:
   pre:
-    - curl -o $HOME/google_appengine_1.9.37.zip https://storage.googleapis.com/appengine-sdks/featured/google_appengine_1.9.37.zip
-    - unzip -q -d $HOME $HOME/google_appengine_1.9.37.zip
+    - curl -o $HOME/google_appengine_1.9.40.zip https://storage.googleapis.com/appengine-sdks/featured/google_appengine_1.9.40.zip
+    - unzip -q -d $HOME $HOME/google_appengine_1.9.40.zip
     - pip install -e /tmp/oauth-dropins/
     - pip install -e /tmp/granary/
   post:
     - pip install coverage coveralls  # for https://coveralls.io/
     - ln -s $VIRTUAL_ENV local  # we use app engine's vendor module to point here
+
+    # the gdata packages are inside a src/ subdirectory in the repo dir, which
+    # pip/virtualenv used to handle fine, but inexplicably started failing to
+    # import at 9fd1044 on 11/22/2016. patch it manually. ugh.
+    - ln -sf $VIRTUAL_ENV/src/gdata/src/gdata $VIRTUAL_ENV/src/gdata/
+    - ln -sf $VIRTUAL_ENV/src/gdata/src/atom $VIRTUAL_ENV/src/gdata/
 
 machine:
   environment:
@@ -25,6 +31,7 @@ machine:
 
 test:
   override:
+    # - export PYTHONPATH=$PYTHONPATH:$VIRTUAL_ENV/src/gdata/src
     - python -m coverage run --source=. --omit=admin.py,facebook_test_live.py,local/\*,logs.py,mapreduce/\*,mapreduces.py,scripts/\*,test/\* -m unittest discover -v
     - python -m coverage html -d $CIRCLE_ARTIFACTS
     - python ./facebook_test_live.py --debug
