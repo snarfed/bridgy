@@ -42,10 +42,9 @@ extensions = [
 ]
 
 # autodoc settings
-autoclass_content = 'both'  # both class and __init__ docstrings
+autoclass_content = 'class'
 autodoc_member_order = 'bysource'
-autodoc_default_flags = ['show-inheritance', 'members']
-                         # 'no-private-members', 'no-special-members']
+autodoc_default_flags = ['show-inheritance', 'members', 'special-members']
 
 # Napoleon settings
 # http://www.sphinx-doc.org/en/stable/ext/napoleon.html

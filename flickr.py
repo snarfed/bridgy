@@ -1,4 +1,4 @@
-"""Flickr source and data model storage class
+"""Flickr source and data model storage class.
 """
 __author__ = ['Kyle Mahan <kyle@kylewm.com>']
 
@@ -19,9 +19,9 @@ from google.appengine.ext import ndb
 
 
 class Flickr(models.Source):
-  """A flickr account.
+  """A Flickr account.
 
-  The key name is the nsid
+  The key name is the nsid.
   """
   # Fetching comments and likes is extremely request-intensive, so let's dial
   # back the frequency for now.
@@ -44,11 +44,11 @@ class Flickr(models.Source):
 
   @staticmethod
   def new(handler, auth_entity=None, **kwargs):
-    """Creates and returns a Flickr for the logged in user.
+    """Creates and returns a :class:`Flickr` for the logged in user.
 
     Args:
-      handler: the current RequestHandler
-      auth_entity: oauth_dropins.flickr.FlickrAuth
+      handler: the current :class:`webapp2.RequestHandler`
+      auth_entity: :class:`oauth_dropins.flickr.FlickrAuth`
     """
     person = json.loads(auth_entity.user_json).get('person', {})
     return Flickr(
@@ -66,8 +66,7 @@ class Flickr(models.Source):
       **kwargs)
 
   def silo_url(self):
-    """Returns the Flickr account URL,
-    e.g. https://www.flickr.com/people/foo/."""
+    """Returns the Flickr account URL, e.g. https://www.flickr.com/people/foo/."""
     return self.url
 
   def user_tag_id(self):
@@ -75,8 +74,7 @@ class Flickr(models.Source):
     return self.gr_source.tag_uri(self.username)
 
   def get_activities_response(self, *args, **kwargs):
-    """Discard min_id because we still want new comments/likes on old
-    photos."""
+    """Discard min_id because we still want new comments/likes on old photos."""
     kwargs.setdefault('group_id', SELF)
     if 'min_id' in kwargs:
       del kwargs['min_id']
@@ -94,8 +92,7 @@ class Flickr(models.Source):
 
 
 class AuthHandler(util.Handler):
-  """Base OAuth handler for Flickr.
-  """
+  """Base OAuth handler for Flickr."""
   def start_oauth_flow(self, feature):
     starter = util.oauth_starter(
       oauth_flickr.StartHandler, feature=feature
@@ -106,15 +103,15 @@ class AuthHandler(util.Handler):
 
 
 class StartHandler(AuthHandler):
-  """Custom handler to start Flickr auth process
-  """
+  """Custom handler to start Flickr auth process."""
   def post(self):
     return self.start_oauth_flow(self.request.get('feature'))
 
 
 class AddFlickr(oauth_flickr.CallbackHandler, AuthHandler):
-  """Custom handler to add Flickr source when auth completes. If this
-  account was previously authorized with greater permissions, this will
+  """Custom handler to add Flickr source when auth completes.
+
+  If this account was previously authorized with greater permissions, this will
   trigger another round of auth with elevated permissions.
   """
   def finish(self, auth_entity, state=None):

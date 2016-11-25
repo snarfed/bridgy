@@ -83,11 +83,11 @@ class Tumblr(models.Source):
 
   @staticmethod
   def new(handler, auth_entity=None, blog_name=None, **kwargs):
-    """Creates and returns a Tumblr for the logged in user.
+    """Creates and returns a :class:`Tumblr` for the logged in user.
 
     Args:
-      handler: the current RequestHandler
-      auth_entity: oauth_dropins.tumblr.TumblrAuth
+      handler: the current :class:`webapp2.RequestHandler`
+      auth_entity: :class:`oauth_dropins.tumblr.TumblrAuth`
       blog_name: which blog. optional. passed to _urls_and_domains.
     """
     urls, domains = Tumblr._urls_and_domains(auth_entity, blog_name=blog_name)
@@ -110,7 +110,7 @@ class Tumblr(models.Source):
     """Returns this blog's URL and domain.
 
     Args:
-      auth_entity: oauth_dropins.tumblr.TumblrAuth
+      auth_entity: :class:`oauth_dropins.tumblr.TumblrAuth`
       blog_name: which blog. optional. matches the 'name' field for one of the
         blogs in auth_entity.user_json['user']['blogs'].
 

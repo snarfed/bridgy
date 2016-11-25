@@ -39,8 +39,10 @@ class WebmentionHandler(WebmentionGetHandler):
   """Webmention handler.
 
   Attributes:
-    source: the Source for this webmention
-    entity: the Publish or Webmention entity for this webmention
+
+  * source: the :class:`models.Source` for this webmention
+  * entity: the :class:`models.Publish` or :class:`models.Webmention` entity for
+    this webmention
   """
   source = None
   entity = None
@@ -48,14 +50,14 @@ class WebmentionHandler(WebmentionGetHandler):
   def fetch_mf2(self, url):
     """Fetches a URL and extracts its mf2 data.
 
-    Side effects: sets self.entity.html on success, calls self.error() on
-    errors.
+    Side effects: sets :attr:`entity`\ .html on success, calls :attr:`error()`
+    on errors.
 
     Args:
       url: string
 
     Returns:
-      (requests.Response, mf2 data dict) on success, None on failure
+      (:class:`requests.Response`, mf2 data dict) on success, None on failure
     """
     try:
       fetched = util.requests_get(url)

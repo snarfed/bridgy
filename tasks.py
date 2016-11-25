@@ -51,8 +51,9 @@ class Poll(webapp2.RequestHandler):
   """Task handler that fetches and processes new responses from a single source.
 
   Request parameters:
-    source_key: string key of source entity
-    last_polled: timestamp, YYYY-MM-DD-HH-MM-SS
+
+  * source_key: string key of source entity
+  * last_polled: timestamp, YYYY-MM-DD-HH-MM-SS
 
   Inserts a propagate task for each response that hasn't been seen before.
   """
@@ -389,7 +390,9 @@ class Poll(webapp2.RequestHandler):
 
     We look through as many responses as we can until the datastore query expires.
 
-    Args: relationships: refetch result
+    Args:
+      source: :class:`models.Source`
+      relationships: refetch result
     """
     for response in (Response.query(Response.source == source.key)
                      .order(-Response.updated)):
@@ -436,8 +439,9 @@ class SendWebmentions(webapp2.RequestHandler):
   """Abstract base task handler that can send webmentions.
 
   Attributes:
-    entity: Webmentions subclass instance (set in lease_entity)
-    source: Source entity (set in send_webmentions)
+
+  * entity: :class:`models.Webmentions` subclass instance (set in :meth:`lease_entity`)
+  * source: :class:`models.Source` entity (set in :meth:`send_webmentions`)
   """
 
   # request deadline (10m) plus some padding
@@ -459,9 +463,10 @@ class SendWebmentions(webapp2.RequestHandler):
   def send_webmentions(self):
     """Tries to send each unsent webmention in self.entity.
 
-    Uses source_url() to determine the source parameter for each webmention.
+    Uses :meth:`source_url()` to determine the source parameter for each
+    webmention.
 
-    self.lease() *must* be called before this!
+    :meth:`lease()` *must* be called before this!
     """
     logging.info('Starting %s', self.entity.label())
 
@@ -557,14 +562,14 @@ class SendWebmentions(webapp2.RequestHandler):
 
   @ndb.transactional
   def lease(self, key):
-    """Attempts to acquire and lease the Webmentions entity.
+    """Attempts to acquire and lease the :class:`models.Webmentions` entity.
 
     Returns True on success, False or None otherwise.
 
-    TODO: unify with complete()
+    TODO: unify with :meth:`complete()`
 
     Args:
-      key: ndb.Key
+      key: :class:`ndb.Key`
     """
     self.entity = key.get()
 
@@ -585,7 +590,7 @@ class SendWebmentions(webapp2.RequestHandler):
 
   @ndb.transactional
   def complete(self):
-    """Attempts to mark the Webmentions entity completed.
+    """Attempts to mark the :class:`models.Webmentions` entity completed.
 
     Returns True on success, False otherwise.
     """
@@ -612,7 +617,7 @@ class SendWebmentions(webapp2.RequestHandler):
 
   @ndb.transactional
   def release(self, new_status):
-    """Attempts to unlease the Webmentions entity.
+    """Attempts to unlease the :class:`models.Webmentions` entity.
 
     Args:
       new_status: string
@@ -635,7 +640,7 @@ class SendWebmentions(webapp2.RequestHandler):
     """Sets this source's last_webmention_sent and maybe webmention_endpoint.
 
     Args:
-      mention: webmentiontools.send.WebmentionSend
+      mention: :class:`webmentiontools.send.WebmentionSend`
     """
     self.source = self.source.key.get()
     logging.info('Setting last_webmention_sent')
@@ -652,13 +657,15 @@ class SendWebmentions(webapp2.RequestHandler):
 
 
 class PropagateResponse(SendWebmentions):
-  """Task handler that sends webmentions for a Response.
+  """Task handler that sends webmentions for a :class:`models.Response`.
 
   Attributes:
-    activities: parsed Response.activities_json list
+
+  * activities: parsed :attr:`models.Response.activities_json` list
 
   Request parameters:
-    response_key: string key of Response entity
+
+  * response_key: string key of :class:`models.Response` entity
   """
 
   def post(self):
@@ -732,10 +739,11 @@ activities: %s""", target_url, self.entity.urls_to_activity, self.activities)
 
 
 class PropagateBlogPost(SendWebmentions):
-  """Task handler that sends webmentions for a BlogPost.
+  """Task handler that sends webmentions for a :class:`models.BlogPost`.
 
   Request parameters:
-    key: string key of BlogPost entity
+
+  * key: string key of :class:`models.BlogPost` entity
   """
 
   def post(self):

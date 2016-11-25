@@ -4,7 +4,7 @@ Webmention spec: http://webmention.org/
 
 Bridgy request and response details: https://brid.gy/about#response
 
-Example request:
+Example request::
 
     POST /webmention HTTP/1.1
     Host: brid.gy
@@ -13,7 +13,7 @@ Example request:
     source=http://bob.host/post-by-bob&
     target=http://facebook.com/123
 
-Example response:
+Example response::
 
     HTTP/1.1 201 Created
     Location: http://facebook.com/456_789
@@ -78,11 +78,11 @@ PUBLISHABLE_TYPES = frozenset((
 class Handler(webmention.WebmentionHandler):
   """Base handler for both previews and publishes.
 
-  Subclasses must set the PREVIEW attribute to True or False. They may also
-  override other methods.
+  Subclasses must set the :attr:`PREVIEW` attribute to True or False. They may
+  also override other methods.
 
   Attributes:
-    fetched: requests.Response from fetching source_url
+    fetched: :class:`requests.Response` from fetching source_url
     shortlink: rel-shortlink found in the original post, if any
   """
   PREVIEW = None
@@ -94,7 +94,8 @@ class Handler(webmention.WebmentionHandler):
   def authorize(self):
     """Returns True if the current user is authorized for this request.
 
-    Otherwise, should call self.error() to provide an appropriate error message.
+    Otherwise, should call :meth:`self.error()` to provide an appropriate
+    error message.
     """
     return True
 
@@ -400,8 +401,7 @@ class Handler(webmention.WebmentionHandler):
   def preprocess(self, activity):
     """Preprocesses an item before trying to publish it.
 
-    Specifically:
-    * Expands inReplyTo/object URLs with rel=syndication URLs.
+    Specifically, expands inReplyTo/object URLs with rel=syndication URLs.
 
     Args:
       activity: an ActivityStreams activity or object being published
@@ -477,7 +477,9 @@ class Handler(webmention.WebmentionHandler):
 
   @ndb.transactional
   def get_or_add_publish_entity(self, source_url):
-    """Creates and stores Publish and (if necessary) PublishedPage entities.
+    """Creates and stores :class:`models.Publish` entity.
+
+    ...and if necessary, :class:`models.PublishedPage` entity.
 
     Args:
       source_url: string

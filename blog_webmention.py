@@ -26,8 +26,7 @@ def first_value(props, name):
 
 
 class BlogWebmentionHandler(webmention.WebmentionHandler):
-  """Handler for incoming webmentions against blog providers.
-  """
+  """Handler for incoming webmentions against blog providers."""
 
   def post(self, source_short_name):
     logging.info('Params: %self', self.request.params.items())
@@ -142,7 +141,7 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
     content.value.
 
     Args:
-      data mf2 data dict
+      data: mf2 data dict
 
     Returns:
       mf2 item dict or None

@@ -30,7 +30,7 @@ def subscribe(source, handler):
 
   Args:
     source: Blogger, Tumblr, or WordPress
-    handler: webapp2.RequestHandler
+    handler: :class:`webapp2.RequestHandler`
   """
   if appengine_config.DEBUG:
     logging.info('Running in dev_appserver, not subscribing to Superfeedr')
@@ -60,7 +60,8 @@ def subscribe(source, handler):
 def handle_feed(feed, source):
   """Handles a Superfeedr JSON feed.
 
-  Creates BlogPost entities and adds propagate-blogpost tasks for new items.
+  Creates :class:`models.BlogPost` entities and adds propagate-blogpost tasks
+  for new items.
 
   http://documentation.superfeedr.com/schema.html#json
   http://documentation.superfeedr.com/subscribers.html#pubsubhubbubnotifications

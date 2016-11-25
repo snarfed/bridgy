@@ -154,8 +154,9 @@ def requests_get(url, **kwargs):
 
   If a server tells us a response will be too big (based on Content-Length), we
   hijack the response and return 599 and an error response body instead. We pass
-  stream=True to requests.get so that it doesn't fetch the response body until
-  we access response.content (or .text).
+  stream=True to :func:`requests.get` so that it doesn't fetch the response body
+  until we access :attr:`requests.Response.content` (or
+  :attr:`requests.Response.text`).
 
   http://docs.python-requests.org/en/latest/user/advanced/#body-content-workflow
   """
@@ -312,8 +313,7 @@ class Handler(webutil_handlers.ModernHandler):
     self.response.headers['X-Frame-Options'] = 'ALLOW-FROM https://www.facebook.com/'
 
   def redirect(self, uri, **kwargs):
-    """Adds self.messages to the fragment, separated by newlines.
-    """
+    """Adds self.messages to the fragment, separated by newlines."""
     parts = list(urlparse.urlparse(uri))
     if self.messages and not parts[5]:  # parts[5] is fragment
       parts[5] = '!' + urllib.quote('\n'.join(self.messages).encode('utf-8'))
@@ -327,7 +327,7 @@ class Handler(webutil_handlers.ModernHandler):
     :meth:`CallbackHandler.get()` methods, respectively.
 
     Args:
-      source_cls: source class, e.g. :class:`Instagram`
+      source_cls: source class, e.g. :class:`instagram.Instagram`
       auth_entity: ouath-dropins auth entity
       state: string, OAuth callback state parameter. a JSON serialized dict
         with operation, feature, and an optional callback URL. For deletes,
@@ -400,8 +400,7 @@ class Handler(webutil_handlers.ModernHandler):
         self.redirect_home_or_user_page(state)
 
   def construct_state_param_for_add(self, state=None, **kwargs):
-    """Construct the state parameter if one isn't explicitly passed in.
-    """
+    """Construct the state parameter if one isn't explicitly passed in."""
     state_obj = self.decode_state_parameter(state)
     if not state_obj:
       state_obj = {field: self.request.get(field) for field in
@@ -437,16 +436,15 @@ class Handler(webutil_handlers.ModernHandler):
                                         sort_keys=True))
 
   def decode_state_parameter(self, state):
-    """Decodes a state parameter encoded by encode_state_parameter.
+    """Decodes a state parameter encoded by :meth:`encode_state_parameter`.
 
-    See encode_state_parameter for a list of common state parameter keys.
+    See :meth:`encode_state_parameter` for a list of common state parameter keys.
 
     Args:
       state: a string (JSON-serialized dict)
 
     Returns:
       a dict containing operation, feature, and possibly other fields
-
     """
     logging.debug('decoding state "%s"' % state)
     try:
@@ -521,7 +519,7 @@ class Handler(webutil_handlers.ModernHandler):
     - set 'website_links' attr to list of pretty HTML links to domain_urls
 
     Args:
-      source: :class:`Source` entity
+      source: :class:`models.Source` entity
     """
     if not source.name:
       source.name = source.key.string_id()
@@ -539,7 +537,7 @@ def oauth_starter(oauth_start_handler, **kwargs):
   Args:
     oauth_start_handler: oauth-dropins :class:`StartHandler` to use,
       e.g. :class:`oauth_dropins.twitter.StartHandler`.
-    kwargs: passed to :func:`construct_state_param_for_add()`
+    kwargs: passed to :meth:`construct_state_param_for_add()`
   """
   class StartHandler(oauth_start_handler, Handler):
     def redirect_url(self, state=None):
@@ -553,8 +551,8 @@ class CachedPage(StringIdModel):
   """Cached HTML for pages that changes rarely. Key id is path.
 
   Stored in the datastore since datastore entities in memcache (mostly
-  :class:`Response`s) are requested way more often, so it would get evicted
-  out of memcache easily.
+  :class:`models.Response`) are requested way more often, so it would get
+  evicted out of memcache easily.
 
   Keys, useful for deleting from memcache:
   /: aglzfmJyaWQtZ3lyEQsSCkNhY2hlZFBhZ2UiAS8M
@@ -577,7 +575,13 @@ class CachedPage(StringIdModel):
 
   @classmethod
   def store(cls, path, html, expires=None):
-    """path and html are strings, expires is a datetime.timedelta."""
+    """Stores new page contents.
+
+    Args:
+      path: string
+      html: string
+      expires: :class:`datetime.timedelta`
+    """
     logging.info('Storing new page in cache for %s', path)
     if expires is not None:
       logging.info('  (expires in %s)', expires)

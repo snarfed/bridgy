@@ -69,9 +69,9 @@ MAX_POST_PUBLICS = 200
 
 
 class FacebookPage(models.Source):
-  """A facebook profile or page.
+  """A Facebook profile or page.
 
-  The key name is the facebook id.
+  The key name is the Facebook id.
   """
 
   GR_CLASS = gr_facebook.Facebook
@@ -102,11 +102,11 @@ class FacebookPage(models.Source):
 
   @staticmethod
   def new(handler, auth_entity=None, **kwargs):
-    """Creates and returns a FacebookPage for the logged in user.
+    """Creates and returns a :class:`FacebookPage` for the logged in user.
 
     Args:
-      handler: the current RequestHandler
-      auth_entity: oauth_dropins.facebook.FacebookAuth
+      handler: the current :class:`webapp2.RequestHandler`
+      auth_entity: :class:`oauth_dropins.facebook.FacebookAuth`
       kwargs: property values
     """
     user = json.loads(auth_entity.user_json)
@@ -191,8 +191,9 @@ class FacebookPage(models.Source):
     return activities
 
   def canonicalize_url(self, url, activity=None, **kwargs):
-    """Facebook-specific standardization of syndicated urls. Canonical form is
-    https://www.facebook.com/USERID/posts/POSTID
+    """Facebook-specific standardization of syndicated urls.
+
+    Canonical form is https://www.facebook.com/USERID/posts/POSTID
 
     Args:
       url: a string, the url of the syndicated content
@@ -234,7 +235,7 @@ class FacebookPage(models.Source):
   def cached_resolve_object_id(self, post_id, activity=None):
     """Resolve a post id to its Facebook object id, if any.
 
-    Wraps granary.facebook.Facebook.resolve_object_id() and uses
+    Wraps :meth:`granary.facebook.Facebook.resolve_object_id()` and uses
     self.resolved_object_ids_json as a cache.
 
     Args:
@@ -258,7 +259,7 @@ class FacebookPage(models.Source):
   def is_activity_public(self, activity):
     """Returns True if the given activity is public, False otherwise.
 
-    Uses the post_publics cache if we can't tell otherwise.
+    Uses the :attr:`post_publics_json` cache if we can't tell otherwise.
     """
     obj = activity.get('object', {})
     fb_id = activity.get('fb_id') or obj.get('fb_id')
@@ -340,7 +341,7 @@ class FacebookPage(models.Source):
     """If this source has no username, try to infer one from a syndication URL.
 
     Args:
-      syndpost: SyndicatedPost
+      syndpost: :class:`models.SyndicatedPost`
     """
     url = syndpost.syndication
     if self.username or not url:
@@ -367,10 +368,11 @@ class AuthHandler(util.Handler):
   """Base OAuth handler class."""
 
   def finish_oauth_flow(self, auth_entity, state):
-    """Adds or deletes a FacebookPage, or restarts OAuth to get publish permissions.
+    """Adds or deletes a :class:`FacebookPage`, or restarts OAuth to get publish
+    permissions.
 
     Args:
-      auth_entity: FacebookAuth
+      auth_entity: :class:`oauth_dropins.facebook.FacebookAuth`
       state: encoded state string
     """
     if auth_entity is None:
@@ -436,9 +438,7 @@ class OAuthCallback(oauth_facebook.CallbackHandler, AuthHandler):
 
 
 class StartHandler(util.Handler):
-  """Custom handler that sets OAuth scopes based on the requested
-  feature(s)
-  """
+  """Custom handler that sets OAuth scopes based on the requested feature(s)."""
   def post(self):
     features = self.request.get('feature')
     features = features.split(',') if features else []

@@ -48,11 +48,11 @@ class GooglePlusPage(models.Source):
 
   @staticmethod
   def new(handler, auth_entity=None, **kwargs):
-    """Creates and returns a GooglePlusPage for the logged in user.
+    """Creates and returns a :class:`GooglePlusPage` for the logged in user.
 
     Args:
-      handler: the current RequestHandler
-      auth_entity: oauth_dropins.googleplus.GooglePlusAuth
+      handler: the current :class:`webapp2.RequestHandler`
+      auth_entity: :class:`oauth_dropins.googleplus.GooglePlusAuth`
     """
     # Google+ Person resource
     # https://developers.google.com/+/api/latest/people#resource
@@ -78,7 +78,7 @@ class GooglePlusPage(models.Source):
     return self.url
 
   def __getattr__(self, name):
-    """Overridden to pass auth_entity to gr_googleplus.GooglePlus's ctor."""
+    """Overridden to pass auth_entity to :class:`granary.googleplus.GooglePlus`."""
     if name == 'gr_source' and self.auth_entity:
       self.gr_source = gr_googleplus.GooglePlus(auth_entity=self.auth_entity.get())
       return self.gr_source

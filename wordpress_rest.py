@@ -70,8 +70,8 @@ class WordPress(models.Source):
     """Creates and returns a WordPress for the logged in user.
 
     Args:
-      handler: the current RequestHandler
-      auth_entity: oauth_dropins.wordpress.WordPressAuth
+      handler: the current :class:`webapp2.RequestHandler`
+      auth_entity: :class:`oauth_dropins.wordpress_rest.WordPressAuth`
     """
     auth_domain = auth_entity.key.id()
     site_info = WordPress.get_site_info(handler, auth_entity)
@@ -99,7 +99,7 @@ class WordPress(models.Source):
     """Returns this blog's URL and domain.
 
     Args:
-      auth_entity: oauth_dropins.wordpress_rest.WordPressAuth, unused
+      auth_entity: unused
 
     Returns:
       ([string url], [string domain])
@@ -167,8 +167,8 @@ class WordPress(models.Source):
     """Fetches the site info from the API.
 
     Args:
-      handler: the current RequestHandler
-      auth_entity: oauth_dropins.wordpress.WordPressAuth
+      handler: the current :class:`webapp2.RequestHandler`
+      auth_entity: :class:`oauth_dropins.wordpress_rest.WordPressAuth`
 
     Returns:
       site info dict, or None if API calls are disabled for this blog

@@ -19,10 +19,10 @@ lookups in the following primary cases:
   DB lookup.
 
 - The first time a syndicated post has been seen:
-  - 1 to 2 HTTP requests to get and parse the h-feed plus 1 additional
-    request for *each* post permalink that has not been seen before.
-  - 1 DB query for the initial check plus 1 additional DB query for
-    *each* post permalink.
+    - 1 to 2 HTTP requests to get and parse the h-feed plus 1 additional
+      request for *each* post permalink that has not been seen before.
+    - 1 DB query for the initial check plus 1 additional DB query for
+      *each* post permalink.
 """
 
 import collections
@@ -50,14 +50,14 @@ def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True,
   """Augments the standard original_post_discovery algorithm with a
   reverse lookup that supports posts without a backlink or citation.
 
-  If fetch_hfeed is False, then we will check the db for previously
-  found SyndicatedPosts but will not do posse-post-discovery to find
-  new ones.
+  If fetch_hfeed is False, then we will check the db for previously found
+  :class:`models.SyndicatedPost`\ s but will not do posse-post-discovery to find new
+  ones.
 
   Args:
-    source: models.Source subclass. Changes to property values (e.g. domains,
-      domain_urls, last_syndication_url) are stored in source.updates; they
-      should be updated transactionally later.
+    source: :class:`models.Source` subclass. Changes to property values (e.g.
+      domains, domain_urls, last_syndication_url) are stored in source.updates;
+      they should be updated transactionally later.
     activity: activity dict
     fetch_hfeed: boolean
     include_redirect_sources: boolean, whether to include URLs that redirect as
@@ -67,7 +67,6 @@ def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True,
 
   Returns:
     (set(string original post URLs), set(string mention URLs)) tuple
-
   """
   if not source.updates:
     source.updates = {}
@@ -145,12 +144,12 @@ def refetch(source):
   links that might not have been there the first time we looked.
 
   Args:
-    source: models.Source subclass. Changes to property values (e.g. domains,
-      domain_urls, last_syndication_url) are stored in source.updates; they
-      should be updated transactionally later.
+    source: :class:`models.Source` subclass. Changes to property values (e.g.
+      domains, domain_urls, last_syndication_url) are stored in source.updates;
+      they should be updated transactionally later.
 
-  Return:
-    a dict of syndicated_url to a list of new models.SyndicatedPosts
+  Returns:
+    dict: mapping syndicated_url to a list of new :class:`models.SyndicatedPost`\ s
   """
   if not source.updates:
     source.updates = {}
@@ -190,7 +189,7 @@ def _posse_post_discovery(source, activity, syndication_url, fetch_hfeed,
   """Performs the actual meat of the posse-post-discover.
 
   Args:
-    source: models.Source subclass
+    source: :class:`models.Source` subclass
     activity: activity dict
     syndication_url: url of the syndicated copy for which we are
       trying to find an original
@@ -245,14 +244,14 @@ def _process_author(source, author_url, refetch=False, store_blanks=True):
   """Fetch the author's domain URL, and look for syndicated posts.
 
   Args:
-    source: a subclass of models.Source
+    source: a subclass of :class:`models.Source`
     author_url: the author's homepage URL
     refetch: boolean, whether to refetch and process entries we've seen before
-    store_blanks: boolean, whether we should store blank SyndicatedPosts when
-      we don't find a relationship
+    store_blanks: boolean, whether we should store blank
+      :class:`models.SyndicatedPost`\ s when we don't find a relationship
 
   Return:
-    a dict of syndicated_url to a list of new models.SyndicatedPost
+    a dict of syndicated_url to a list of new :class:`models.SyndicatedPost`\ s
   """
   # for now use whether the url is a valid webmention target
   # as a proxy for whether it's worth searching it.
@@ -421,8 +420,7 @@ def _find_feed_items(feed_url, feed_doc):
 
 def _process_entry(source, permalink, feed_entry, refetch, preexisting,
                    store_blanks=True):
-  """Fetch and process an h-entry, saving a new SyndicatedPost to the
-  DB if successful.
+  """Fetch and process an h-entry and save a new :class:`models.SyndicatedPost`.
 
   Args:
     source:
@@ -430,13 +428,13 @@ def _process_entry(source, permalink, feed_entry, refetch, preexisting,
     feed_entry: the h-feed version of the h-entry dict, often contains
       a partial version of the h-entry at the permalink
     refetch: boolean, whether to refetch and process entries we've seen before
-    preexisting: a list of previously discovered models.SyndicatedPosts
+    preexisting: a list of previously discovered :class:`models.SyndicatedPost`\ s
       for this permalink
-    store_blanks: boolean, whether we should store blank SyndicatedPosts when
-      we don't find a relationship
+    store_blanks: boolean, whether we should store blank
+      :class:`models.SyndicatedPost`\ s when we don't find a relationship
 
   Returns:
-    a dict from syndicated url to a list of new models.SyndicatedPosts
+    a dict from syndicated url to a list of new :class:`models.SyndicatedPost`\ s
   """
   # if the post has already been processed, do not add to the results
   # since this method only returns *newly* discovered relationships.
@@ -533,18 +531,18 @@ def _process_entry(source, permalink, feed_entry, refetch, preexisting,
 def _process_syndication_urls(source, permalink, syndication_urls,
                               preexisting):
   """Process a list of syndication URLs looking for one that matches the
-  current source.  If one is found, stores a new SyndicatedPost in the
-  db.
+  current source. If one is found, stores a new :class:`models.SyndicatedPost`
+  in the db.
 
   Args:
-    source: a models.Source subclass
+    source: a :class:`models.Source` subclass
     permalink: a string. the current h-entry permalink
     syndication_urls: a collection of strings. the unfitered list
       of syndication urls
-    preexisting: a list of previously discovered SyndicatedPosts
+    preexisting: a list of previously discovered :class:`models.SyndicatedPost`\ s
 
   Returns:
-    dict mapping string syndication url to list of SyndicatedPost
+    dict mapping string syndication url to list of :class:`models.SyndicatedPost`\ s
   """
   results = {}
   # save the results (or lack thereof) to the db, and put them in a

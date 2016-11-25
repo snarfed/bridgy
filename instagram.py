@@ -58,11 +58,11 @@ class Instagram(models.Source):
 
   @staticmethod
   def new(handler, auth_entity=None, actor=None, **kwargs):
-    """Creates and returns a InstagramPage for the logged in user.
+    """Creates and returns an :class:`Instagram` for the logged in user.
 
     Args:
-      handler: the current RequestHandler
-      auth_entity: oauth_dropins.instagram.InstagramAuth
+      handler: the current :class:`webapp2.RequestHandler`
+      auth_entity: :class:`oauth_dropins.instagram.InstagramAuth`
     """
     user = json.loads(auth_entity.user_json)
     user['actor'] = actor

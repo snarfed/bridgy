@@ -50,9 +50,9 @@ class Medium(models.Source):
     """Creates and returns a Medium for the logged in user.
 
     Args:
-      handler: the current RequestHandler
-      auth_entity: oauth_dropins.medium.MediumAuth
-      id: string ,either username (starting with @) or publication id
+      handler: the current :class:`webapp2.RequestHandler`
+      auth_entity: :class:`oauth_dropins.medium.MediumAuth`
+      id: string, either username (starting with @) or publication id
     """
     assert id
     medium = Medium(id=id,
@@ -81,23 +81,23 @@ class Medium(models.Source):
 
     https://github.com/Medium/medium-api-docs/#user-content-getting-the-authenticated-users-details
 
-    Example user:
-    {
-      'imageUrl': 'https://cdn-images-1.medium.com/fit/c/200/200/0*4dsrv3pwIJfFraSz.jpeg',
-      'url': 'https://medium.com/@snarfed',
-      'name': 'Ryan Barrett',
-      'username': 'snarfed',
-      'id': '113863a5ca2ab60671e8c9fe089e59c07acbf8137c51523605dc55528516c0d7e'
-    }
+    Example user::
+        {
+          'imageUrl': 'https://cdn-images-1.medium.com/fit/c/200/200/0*4dsrv3pwIJfFraSz.jpeg',
+          'url': 'https://medium.com/@snarfed',
+          'name': 'Ryan Barrett',
+          'username': 'snarfed',
+          'id': '113863a5ca2ab60671e8c9fe089e59c07acbf8137c51523605dc55528516c0d7e'
+        }
 
-    Example publication:
-    {
-      'id': 'b45573563f5a',
-      'name': 'Developers',
-      'description': "Medium's Developer resources",
-      'url': 'https://medium.com/developers',
-      'imageUrl': 'https://cdn-images-1.medium.com/fit/c/200/200/1*ccokMT4VXmDDO1EoQQHkzg@2x.png'
-    }
+    Example publication::
+        {
+          'id': 'b45573563f5a',
+          'name': 'Developers',
+          'description': "Medium's Developer resources",
+          'url': 'https://medium.com/developers',
+          'imageUrl': 'https://cdn-images-1.medium.com/fit/c/200/200/1*ccokMT4VXmDDO1EoQQHkzg@2x.png'
+        }
     """
     id = self.key.id().lstrip('@')
 

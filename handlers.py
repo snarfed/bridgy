@@ -90,7 +90,7 @@ class ItemHandler(util.Handler):
     To be implemented by subclasses.
 
     Args:
-      source: bridgy.Source subclass
+      source: :class:`models.Source` subclass
       id: string
 
     Returns:
@@ -112,7 +112,7 @@ class ItemHandler(util.Handler):
     Args:
       id: string, site-specific post id
       is_event: bool
-      kwargs: passed through to get_activities
+      kwargs: passed through to :meth:`get_activities`
 
     Returns:
       ActivityStreams object dict

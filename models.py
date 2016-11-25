@@ -30,7 +30,7 @@ sources = {}
 
 
 def get_type(obj):
-  """Returns the Response or Publish type for an ActivityStreams object."""
+  """Returns the :class:`Response` or :class:`Publish` type for an AS object."""
   type = obj.get('objectType')
   verb = obj.get('verb')
   if type == 'activity' and verb == 'share':
@@ -47,12 +47,11 @@ def get_type(obj):
 
 
 class DisableSource(Exception):
-  """Raised when a user has deauthorized our app inside a given platform.
-  """
+  """Raised when a user has deauthorized our app inside a given platform."""
 
 
 class SourceMeta(ndb.MetaModel):
-  """Source metaclass. Registers all source classes in the sources global."""
+  """:class:`Source` metaclass. Registers all subclasses in the sources global."""
   def __new__(meta, name, bases, class_dict):
     cls = ndb.MetaModel.__new__(meta, name, bases, class_dict)
     assert cls.SHORT_NAME not in sources, cls
@@ -165,10 +164,10 @@ class Source(StringIdModel):
     raise NotImplementedError()
 
   def __getattr__(self, name):
-    """Lazily load the auth entity and instantiate self.gr_source.
+    """Lazily load the auth entity and instantiate :attr:`self.gr_source`.
 
-    Once self.gr_source is set, this method will *not* be called; the gr_source
-    attribute will be returned normally.
+    Once :attr:`self.gr_source` is set, this method will *not* be called;
+    :attr:`gr_source` will be returned normally.
     """
     if name == 'gr_source' and self.auth_entity:
       token = self.auth_entity.get().access_token()
@@ -208,7 +207,7 @@ class Source(StringIdModel):
     return handler.request.host_url + self.bridgy_path()
 
   def silo_url(self, handler):
-    """Returns the silo account URL.g. https://twitter.com/foo."""
+    """Returns the silo account URL, e.g. https://twitter.com/foo."""
     raise NotImplementedError()
 
   def label(self):
@@ -222,10 +221,13 @@ class Source(StringIdModel):
   @classmethod
   @ndb.transactional
   def put_updates(cls, source):
-    """Writes property values in source.updates to the datastore transactionally.
+    """Writes source.updates to the datastore transactionally.
 
     Returns:
-      the updated Source
+      source: :class:`Source`
+
+    Returns:
+      the updated :class:`Source`
     """
     if not source.updates:
       return source
@@ -247,7 +249,7 @@ class Source(StringIdModel):
     return source
 
   def poll_period(self):
-    """Returns the poll frequency for this source, as a datetime.timedelta.
+    """Returns the poll frequency for this source, as a :class:`datetime.timedelta`.
 
     Defaults to ~15m, depending on silo. If we've never sent a webmention for
     this source, or the last one we sent was over a month ago, we drop them down
@@ -291,6 +293,7 @@ class Source(StringIdModel):
 
   def get_author_urls(self):
     """Determine the author urls for a particular source.
+
     In debug mode, replace test domains with localhost.
 
     Return:
@@ -330,7 +333,7 @@ class Source(StringIdModel):
 
     Args:
       comment_id: string, site-specific comment id
-      kwargs: passed to granary.Source.get_comment
+      kwargs: passed to :meth:`granary.source.Source.get_comment`
 
     Returns:
       dict, decoded ActivityStreams comment object, or None
@@ -382,8 +385,8 @@ class Source(StringIdModel):
   def feed_url(self):
     """Returns the RSS or Atom (or similar) feed URL for this source.
 
-    Must be implemented by subclasses. Currently only implemented by Blogger,
-    Medium, Tumlbr, and WordPress.
+    Must be implemented by subclasses. Currently only implemented by
+    :mod:`blogger`, :mod:`medium`, :mod:`tumblr`, and :mod:`wordpress_rest`.
 
     Returns:
       string URL
@@ -393,8 +396,8 @@ class Source(StringIdModel):
   def edit_template_url(self):
     """Returns the URL for editing this blog's template HTML.
 
-    Must be implemented by subclasses. Currently only implemented by Blogger,
-    Tumlbr, and WordPress.
+    Must be implemented by subclasses. Currently only implemented by
+    :mod:`blogger`, :mod:`medium`, :mod:`tumblr`, and :mod:`wordpress_rest`.
 
     Returns:
       string URL
@@ -403,13 +406,13 @@ class Source(StringIdModel):
 
   @classmethod
   def create_new(cls, handler, user_url=None, **kwargs):
-    """Creates and saves a new Source and adds a poll task for it.
+    """Creates and saves a new :class:`Source` and adds a poll task for it.
 
     Args:
-      handler: the current RequestHandler
+      handler: the current :class:`webapp2.RequestHandler`
       user_url: a string, optional. if provided, supersedes other urls when
         determining the author_url
-      **kwargs: passed to new()
+      **kwargs: passed to :meth:`new()`
     """
     source = cls.new(handler, **kwargs)
     if source is None:
@@ -472,7 +475,8 @@ class Source(StringIdModel):
   def verified(self):
     """Returns True if this source is ready to be used, false otherwise.
 
-    See verify() for details. May be overridden by subclasses, e.g. Tumblr.
+    See :meth:`verify()` for details. May be overridden by subclasses, e.g.
+    :class:`tumblr.Tumblr`.
     """
     if not self.domains or not self.domain_urls:
       return False
@@ -490,7 +494,7 @@ class Source(StringIdModel):
     discovers their webmention endpoint. For publish sources, this checks that
     they have a domain.
 
-    May be overridden by subclasses, e.g. Tumblr.
+    May be overridden by subclasses, e.g. :class:`tumblr.Tumblr`.
 
     Args:
       force: if True, fully verifies (e.g. re-fetches the blog's HTML and
@@ -532,7 +536,7 @@ class Source(StringIdModel):
     its 'urls' and 'url' fields. May be overridden by subclasses.
 
     Args:
-      auth_entity: oauth_dropins.models.BaseAuth
+      auth_entity: :class:`oauth_dropins.models.BaseAuth`
       user_url: string, optional URL passed in when authorizing
 
     Returns:
@@ -559,7 +563,10 @@ class Source(StringIdModel):
     return urls, domains
 
   def canonicalize_url(self, url, activity=None, **kwargs):
-    """Canonicalizes a post or object URL. Passes through to UrlCanonicalizer."""
+    """Canonicalizes a post or object URL.
+
+    Wraps :class:`oauth_dropins.webutil.util.UrlCanonicalizer`.
+    """
     return self.URL_CANONICALIZER(url, **kwargs) if self.URL_CANONICALIZER else url
 
   def infer_profile_url(self, url):
@@ -609,10 +616,10 @@ class Source(StringIdModel):
       self.preprocess_for_publish(obj)
 
   def on_new_syndicated_post(self, syndpost):
-    """Called when a new SyndicatedPost is stored for this source.
+    """Called when a new :class:`SyndicatedPost` is stored for this source.
 
     Args:
-      syndpost: SyndicatedPost
+      syndpost: :class:`SyndicatedPost`
     """
     pass
 
@@ -626,7 +633,7 @@ class Source(StringIdModel):
   def is_activity_public(self, activity):
     """Returns True if the given activity is public, False otherwise.
 
-    Just wraps granary's Source.is_public. Subclasses may override.
+    Just wraps :meth:`granary.source.Source.is_public`. Subclasses may override.
     """
     return gr_source.Source.is_public(activity)
 
@@ -641,7 +648,7 @@ class Source(StringIdModel):
 class Webmentions(StringIdModel):
   """A bundle of links to send webmentions for.
 
-  Use the Response and BlogPost concrete subclasses below.
+  Use the :class:`Response` and :class:`BlogPost` concrete subclasses below.
   """
   STATUSES = ('new', 'processing', 'complete', 'error')
 
@@ -776,7 +783,7 @@ class BlogPost(Webmentions):
 
 
 class PublishedPage(StringIdModel):
-  """Minimal root entity for Publish children entities with the same source URL.
+  """Minimal root entity for :class:`Publish` children with the same source URL.
 
   Key id is the string source URL.
   """
@@ -786,7 +793,7 @@ class PublishedPage(StringIdModel):
 class Publish(ndb.Model):
   """A comment, like, repost, or RSVP published into a silo.
 
-  Child of a PublishedPage entity.
+  Child of a :class:`PublishedPage` entity.
   """
   STATUSES = ('new', 'complete', 'failed')
 
@@ -812,7 +819,7 @@ class BlogWebmention(Publish, StringIdModel):
   request. If the source page has a u-url, that's stored in the u_url property.
   The target URL is always the final URL, after any redirects.
 
-  Reuses Publish's fields, but otherwise unrelated.
+  Reuses :class:`Publish`'s fields, but otherwise unrelated.
   """
   # If the source page has a u-url, it's stored here and overrides the source
   # URL in the key id.
@@ -834,10 +841,10 @@ class SyndicatedPost(ndb.Model):
   if we found no original post).  We discover the relationship by
   following rel=syndication links on the author's h-feed.
 
-  See original_post_discovery.
+  See :mod:`original_post_discovery`.
 
-  When a SyndicatedPost entity is about to be stored, its source's
-  on_new_syndicated_post() method is called (before it's stored).
+  When a :class:`SyndicatedPost` entity is about to be stored,
+  :meth:`source.Source.on_new_syndicated_post()` is called before it's stored.
   """
 
   # Turn off instance and memcache caching. See Response for details.
@@ -857,7 +864,7 @@ class SyndicatedPost(ndb.Model):
     there is, nothing will be added.
 
     Args:
-      source: models.Source subclass
+      source: :class:`Source` subclass
       original: string
     """
     if cls.query(cls.original == original, ancestor=source.key).get():
@@ -872,7 +879,7 @@ class SyndicatedPost(ndb.Model):
     syndication. If there is, nothing will be added.
 
     Args:
-      source: models.Source subclass
+      source: :class:`Source` subclass
       original: string
     """
 
@@ -893,12 +900,12 @@ class SyndicatedPost(ndb.Model):
     removed. If non-blank relationships exist, they will be retained.
 
     Args:
-      source: models.Source subclass
+      source: :class:`Source` subclass
       syndication: string (not None)
       original: string (not None)
 
-    Return:
-      the new SyndicatedPost or a preexisting one if it exists
+    Returns:
+      SyndicatedPost: newly created or preexisting entity
     """
     # check for an exact match
     duplicate = cls.query(cls.syndication == syndication,

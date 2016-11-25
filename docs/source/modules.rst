@@ -81,6 +81,7 @@ twitter
 util
 ----
 .. automodule:: util
+    :exclude-members: __getnewargs__, __getstate__, __new__, __repr__
 
 webmention
 ----------

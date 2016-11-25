@@ -45,11 +45,11 @@ class Twitter(models.Source):
 
   @staticmethod
   def new(handler, auth_entity=None, **kwargs):
-    """Creates and returns a Twitter entity.
+    """Creates and returns a :class:`Twitter` entity.
 
     Args:
-      handler: the current RequestHandler
-      auth_entity: oauth-dropins.twitter.TwitterAuth
+      handler: the current :class:`webapp2.RequestHandler`
+      auth_entity: :class:`oauth_dropins.twitter.TwitterAuth`
       kwargs: property values
     """
     user = json.loads(auth_entity.user_json)
@@ -115,14 +115,14 @@ class Twitter(models.Source):
     """Returns an ActivityStreams 'like' activity object for a favorite.
 
     We get Twitter favorites by scraping HTML, and we only get the first page,
-    which only has 25. So, use a Response in the datastore first, if we have
-    one, and only re-scrape HTML as a fallback.
+    which only has 25. So, use a :class:`models.Response` in the datastore
+    first, if we have one, and only re-scrape HTML as a fallback.
 
     Args:
       activity_user_id: string id of the user who posted the original activity
       activity_id: string activity id
       like_user_id: string id of the user who liked the activity
-      kwargs: passed to granary.Source.get_comment
+      kwargs: passed to :meth:`granary.source.Source.get_comment`
     """
     id = self.gr_source.tag_uri('%s_favorited_by_%s' % (activity_id, like_user_id))
     resp = models.Response.get_by_id(id)
@@ -188,8 +188,7 @@ class AddTwitter(oauth_twitter.CallbackHandler, AuthHandler):
 
 
 class StartHandler(AuthHandler):
-  """Custom OAuth start handler so we can use access_type=read for
-  state=listen.
+  """Custom OAuth start handler so we can use access_type=read for state=listen.
 
   Tweepy converts access_type to x_auth_access_type for Twitter's
   oauth/request_token endpoint. Details:

@@ -69,8 +69,8 @@ class Blogger(models.Source):
     """Creates and returns a Blogger for the logged in user.
 
     Args:
-      handler: the current RequestHandler
-      auth_entity: oauth_dropins.blogger.BloggerV2Auth
+      handler: the current :class:`webapp2.RequestHandler`
+      auth_entity: :class:`oauth_dropins.blogger_v2.BloggerV2Auth`
       blog_id: which blog. optional. if not provided, uses the first available.
     """
     urls, domains = Blogger._urls_and_domains(auth_entity, blog_id=blog_id)
@@ -122,8 +122,9 @@ class Blogger(models.Source):
       author_name: string
       author_url: string
       content: string
-      client: gdata.blogger.client.BloggerClient. If None, one will be created
-        from auth_entity. Used for dependency injection in the unit test.
+      client: :class:`gdata.blogger.client.BloggerClient`. If None, one will be
+        created from auth_entity. Used for dependency injection in the unit
+        test.
 
     Returns:
       JSON response dict with 'id' and other fields
