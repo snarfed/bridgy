@@ -532,7 +532,7 @@ class PreviewHandler(Handler):
     error = html if html else util.linkify(error)
     self.response.write(error)
     if mail:
-      self.mail_me(error)
+      self.mail_me('[Returned HTTP %s to client]\n\n%s' % (status, error))
 
 
 class SendHandler(Handler):
