@@ -86,15 +86,15 @@ Click to re-enable:
       {% endif %}{% endif %}
     </a>
 
-    {% if blogpost.status == 'error' or blogpost.error %}
+   </div><div class="col-sm-1">
     <form method="post" action="/retry">
       <input name="key" type="hidden" value="{{ blogpost.key.urlsafe }}" />
-      <button id="retry-button" type="submit" class="btn btn-default">
-        Retry</button>
+      <input name="redirect_to" type="hidden" value="{{ request.url }}" />
+      <button id="retry-button" type="submit" title="Retry"
+              class="btn btn-default glyphicon glyphicon-refresh"></button>
     </form>
-    {% endif %}
 
-   </div><div class="col-sm-4">
+   </div><div class="col-sm-3">
     {% for label, links in blogpost.links.items %}
       {{ label|safe }}:
       <ul class="original-post-links">{{ links|safeseq|unordered_list }}</ul>
