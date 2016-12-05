@@ -1,6 +1,6 @@
 <a target="_blank" href="{{ source.silo_url }}" title="{{ source.label|safe }}">
   <img class="profile" src="{{ source.picture }}" width="32px" />
-  <img src="/static/{{ source.SHORT_NAME }}_icon.png"
+  <img src="/static/{{ source.SHORT_NAME }}_icon.png" width="24"
        {# oddly, source.GR_CLASS doesn't work for Twitter. use kind as fallback. #}
        alt="{% firstof source.GR_CLASS.NAME source.key.kind %}" />
   {{ source.name|safe }}</a>

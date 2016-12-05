@@ -39,7 +39,7 @@ ga('send', 'pageview');
 {% if logins %}
   {% for login in logins %}
   <a href="{{ login.path }}" class="h-card u-url">
-    <img src="/static/{{ login.site }}_icon.png" />
+    <img src="/static/{{ login.site }}_icon.png" width="24" />
     <span class="p-name">{{ login.name|safe }}</span>
   </a> |
   {% endfor %}
