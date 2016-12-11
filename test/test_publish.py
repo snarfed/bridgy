@@ -571,8 +571,8 @@ this is my article
     self.mox.ReplayAll()
     self.assert_created('foo - http://foo.com/foo/bar')
 
-  def test_all_errors_email(self):
-    """Should send me email on *any* error from create() or preview_create()."""
+  def test_error_email(self):
+    """Should send me email on most errors from create() or preview_create()."""
     for i in range(2):
       self.expect_requests_get('http://foo.com/bar', self.post_html % 'foo')
 
