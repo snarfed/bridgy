@@ -36,7 +36,7 @@ class Flickr(models.Source):
     reject=r'https://login\.yahoo\.com/.*',
     subdomain='www',
     trailing_slash=True,
-    headers=util.USER_AGENT_HEADER)
+    headers=util.REQUEST_HEADERS)
 
   # unique name optionally used in URLs instead of nsid (e.g.,
   # flickr.com/photos/username)

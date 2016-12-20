@@ -45,7 +45,10 @@ POLL_TASK_DATETIME_FORMAT = '%Y-%m-%d-%H-%M-%S'
 # https://developers.facebook.com/docs/reference/ads-api/api-rate-limiting/
 HTTP_RATE_LIMIT_CODES = frozenset(('403', '429', '503'))
 
-USER_AGENT_HEADER = {'User-Agent': 'Bridgy (https://brid.gy/about)'}
+REQUEST_HEADERS = {
+  'Accept': 'text/html, application/json; q=0.9, */*; q=0.8',
+  'User-Agent': 'Bridgy (https://brid.gy/about)',
+}
 
 # alias allows unit tests to mock the function
 now_fn = datetime.datetime.now
@@ -166,7 +169,7 @@ def requests_get(url, **kwargs):
     resp._text = resp._content = 'Sorry, Bridgy has blacklisted this URL.'
     return resp
 
-  kwargs.setdefault('headers', {}).update(USER_AGENT_HEADER)
+  kwargs.setdefault('headers', {}).update(REQUEST_HEADERS)
   resp = util.requests_get(url, stream=True, **kwargs)
 
   length = resp.headers.get('Content-Length', 0)
@@ -181,10 +184,10 @@ def requests_get(url, **kwargs):
 def follow_redirects(url, cache=True):
   """Wraps :func:`oauth_dropins.webutil.util.follow_redirects` with our settings.
 
-  ...specifically memcache and USER_AGENT_HEADER.
+  ...specifically memcache and REQUEST_HEADERS.
   """
   return util.follow_redirects(url, cache=memcache if cache else None,
-                               headers=USER_AGENT_HEADER)
+                               headers=REQUEST_HEADERS)
 
 
 def get_webmention_target(url, resolve=True, replace_test_domains=True):

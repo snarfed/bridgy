@@ -82,7 +82,7 @@ class FacebookPage(models.Source):
     subdomain='www',
     query=True,
     approve=r'https://www\.facebook\.com/[^/?]+/posts/[^/?]+$',
-    headers=util.USER_AGENT_HEADER)
+    headers=util.REQUEST_HEADERS)
     # no reject regexp; non-private FB post URLs just 404
 
   # unique name used in FB URLs, e.g. facebook.com/[username]

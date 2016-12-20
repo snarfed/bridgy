@@ -1261,7 +1261,7 @@ class PropagateTest(TaskQueueTest):
                                    else 'http://webmention/endpoint')
     mock_send.response = 'used in logging'
     mock_send.error = error
-    return mock_send.send(timeout=999, headers=util.USER_AGENT_HEADER)
+    return mock_send.send(timeout=999, headers=util.REQUEST_HEADERS)
 
   def test_propagate(self):
     """Normal propagate tasks."""

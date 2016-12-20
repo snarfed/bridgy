@@ -1115,7 +1115,7 @@ Join us!"""
     resp.url = 'http://foo.com/bar'
     resp.status_code = 200
     requests.get(resp.url, timeout=appengine_config.HTTP_TIMEOUT,
-                 headers=util.USER_AGENT_HEADER, stream=True).AndReturn(resp)
+                 headers=util.REQUEST_HEADERS, stream=True).AndReturn(resp)
     self.mox.ReplayAll()
 
     self.assert_created(text, params={'bridgy_omit_link': ''})

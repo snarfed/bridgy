@@ -52,7 +52,7 @@ def subscribe(source, handler):
     PUSH_API_URL, data=data,
     auth=HTTPBasicAuth(appengine_config.SUPERFEEDR_USERNAME,
                        appengine_config.SUPERFEEDR_TOKEN),
-    headers=util.USER_AGENT_HEADER)
+    headers=util.REQUEST_HEADERS)
   resp.raise_for_status()
   handle_feed(resp.text, source)
 

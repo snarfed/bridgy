@@ -31,7 +31,7 @@ class GooglePlusPage(models.Source):
   URL_CANONICALIZER = util.UrlCanonicalizer(
     domain=GR_CLASS.DOMAIN,
     approve=r'https://plus\.google\.com/[^/?]+/posts/[^/?]+$',
-    headers=util.USER_AGENT_HEADER)
+    headers=util.REQUEST_HEADERS)
     # no reject regexp; non-private G+ post URLs just 404
 
   # We're currently close to the G+ API's daily limit of 10k requests per day.

@@ -98,7 +98,7 @@ class Source(StringIdModel):
   TYPE_LABELS = {}
 
   # subclasses should override this
-  URL_CANONICALIZER = util.UrlCanonicalizer(headers=util.USER_AGENT_HEADER)
+  URL_CANONICALIZER = util.UrlCanonicalizer(headers=util.REQUEST_HEADERS)
 
   created = ndb.DateTimeProperty(auto_now_add=True, required=True)
   url = ndb.StringProperty()
@@ -510,7 +510,7 @@ class Source(StringIdModel):
     logging.info('Attempting to discover webmention endpoint on %s', author_url)
     mention = send.WebmentionSend('https://brid.gy/', author_url)
     mention.requests_kwargs = {'timeout': HTTP_TIMEOUT,
-                               'headers': util.USER_AGENT_HEADER}
+                               'headers': util.REQUEST_HEADERS}
     try:
       mention._discoverEndpoint()
     except BaseException:

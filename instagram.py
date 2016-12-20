@@ -53,7 +53,7 @@ class Instagram(models.Source):
     subdomain='www',
     approve=r'https://www.instagram.com/p/[^/?]+/$',
     trailing_slash=True,
-    headers=util.USER_AGENT_HEADER)
+    headers=util.REQUEST_HEADERS)
     # no reject regexp; non-private Instagram post URLs just 404
 
   @staticmethod

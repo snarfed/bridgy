@@ -77,7 +77,7 @@ def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True,
   originals, mentions = gr_source.Source.original_post_discovery(
     activity, domains=source.domains, cache=memcache,
     include_redirect_sources=include_redirect_sources,
-    headers=util.USER_AGENT_HEADER)
+    headers=util.REQUEST_HEADERS)
 
   obj = activity.get('object', {})
   author_id = obj.get('author', {}).get('id') or activity.get('author', {}).get('id')

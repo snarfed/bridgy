@@ -161,7 +161,7 @@ class FakeSource(Source):
   RATE_LIMITED_POLL = datetime.timedelta(hours=30)
   URL_CANONICALIZER = util.UrlCanonicalizer(
     domain=GR_CLASS.DOMAIN,
-    headers=util.USER_AGENT_HEADER)
+    headers=util.REQUEST_HEADERS)
 
   string_id_counter = 1
   gr_source = FakeGrSource()
@@ -224,7 +224,7 @@ class HandlerTest(testutil.HandlerTest):
     util.BLACKLIST.add('fa.ke')
 
   def expect_requests_get(self, *args, **kwargs):
-    kwargs.setdefault('headers', {}).update(util.USER_AGENT_HEADER)
+    kwargs.setdefault('headers', {}).update(util.REQUEST_HEADERS)
 
     if 'stream' not in kwargs:
       kwargs['stream'] = True
@@ -234,15 +234,15 @@ class HandlerTest(testutil.HandlerTest):
     return super(HandlerTest, self).expect_requests_get(*args, **kwargs)
 
   def expect_webmention_requests_get(self, *args, **kwargs):
-    kwargs.setdefault('headers', {}).update(util.USER_AGENT_HEADER)
+    kwargs.setdefault('headers', {}).update(util.REQUEST_HEADERS)
     return super(HandlerTest, self).expect_requests_get(*args, **kwargs)
 
   def expect_requests_post(self, *args, **kwargs):
-    kwargs.setdefault('headers', {}).update(util.USER_AGENT_HEADER)
+    kwargs.setdefault('headers', {}).update(util.REQUEST_HEADERS)
     return super(HandlerTest, self).expect_requests_post(*args, **kwargs)
 
   def expect_requests_head(self, *args, **kwargs):
-    kwargs.setdefault('headers', {}).update(util.USER_AGENT_HEADER)
+    kwargs.setdefault('headers', {}).update(util.REQUEST_HEADERS)
     return super(HandlerTest, self).expect_requests_head(*args, **kwargs)
 
 
