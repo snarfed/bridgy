@@ -166,6 +166,7 @@ class FakeSource(Source):
   string_id_counter = 1
   gr_source = FakeGrSource()
   username = ndb.StringProperty()
+  is_saved = False
 
   def is_beta_user(self):
     return True
@@ -202,6 +203,10 @@ class FakeSource(Source):
       id = str(cls.string_id_counter)
       cls.string_id_counter += 1
     return cls(id=id, **props)
+
+  def put(self, **kwargs):
+    self.is_saved = True
+    return super(FakeSource, self).put(**kwargs)
 
 
 class HandlerTest(testutil.HandlerTest):

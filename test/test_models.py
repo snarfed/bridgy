@@ -271,7 +271,12 @@ class SourceTest(testutil.HandlerTest):
     self.expect_webmention_requests_get('http://primary/', 'no webmention endpoint',
                                         verify=False)
     self.mox.StubOutWithMock(superfeedr, 'subscribe')
-    superfeedr.subscribe(mox.IsA(FakeSource), self.handler)
+
+    def check_source(source):
+      assert isinstance(source, FakeSource)
+      assert source.is_saved
+      return True
+    superfeedr.subscribe(mox.Func(check_source), self.handler)
 
     self.mox.ReplayAll()
     FakeSource.create_new(self.handler, features=['webmention'],

@@ -460,11 +460,11 @@ class Source(StringIdModel):
     if source.verified():
       handler.messages = {blurb}
 
-    if 'webmention' in source.features:
-      superfeedr.subscribe(source, handler)
-
     # TODO: ugh, *all* of this should be transactional
     source.put()
+
+    if 'webmention' in source.features:
+      superfeedr.subscribe(source, handler)
 
     if 'listen' in source.features:
       util.add_poll_task(source, now=True)
