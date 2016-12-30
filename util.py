@@ -3,6 +3,7 @@
 """
 
 import collections
+import copy
 import Cookie
 import contextlib
 import datetime
@@ -46,9 +47,15 @@ POLL_TASK_DATETIME_FORMAT = '%Y-%m-%d-%H-%M-%S'
 HTTP_RATE_LIMIT_CODES = frozenset(('403', '429', '503'))
 
 REQUEST_HEADERS = {
-  'Accept': 'text/html, application/json; q=0.9, */*; q=0.8',
   'User-Agent': 'Bridgy (https://brid.gy/about)',
 }
+# Only send Accept header to rhiaro.co.uk right now because it needs it, but
+# Known breaks on it.
+# https://github.com/snarfed/bridgy/issues/713
+REQUEST_HEADERS_CONNEG = copy.copy(REQUEST_HEADERS)
+REQUEST_HEADERS_CONNEG['Accept'] = 'text/html, application/json; q=0.9, */*; q=0.8'
+CONNEG_DOMAINS = {'rhiaro.co.uk'}
+CONNEG_PATHS = {'/twitter/rhiaro'}
 
 # alias allows unit tests to mock the function
 now_fn = datetime.datetime.now
@@ -169,7 +176,7 @@ def requests_get(url, **kwargs):
     resp._text = resp._content = 'Sorry, Bridgy has blacklisted this URL.'
     return resp
 
-  kwargs.setdefault('headers', {}).update(REQUEST_HEADERS)
+  kwargs.setdefault('headers', {}).update(request_headers(url=url))
   resp = util.requests_get(url, stream=True, **kwargs)
 
   length = resp.headers.get('Content-Length', 0)
@@ -187,7 +194,15 @@ def follow_redirects(url, cache=True):
   ...specifically memcache and REQUEST_HEADERS.
   """
   return util.follow_redirects(url, cache=memcache if cache else None,
-                               headers=REQUEST_HEADERS)
+                               headers=request_headers(url=url))
+
+
+def request_headers(url=None, source=None):
+  if (url and util.domain_from_link(url) in CONNEG_DOMAINS or
+      source and source.bridgy_path() in CONNEG_PATHS):
+    return REQUEST_HEADERS_CONNEG
+
+  return REQUEST_HEADERS
 
 
 def get_webmention_target(url, resolve=True, replace_test_domains=True):

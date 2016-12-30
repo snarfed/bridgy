@@ -229,7 +229,8 @@ class HandlerTest(testutil.HandlerTest):
     util.BLACKLIST.add('fa.ke')
 
   def expect_requests_get(self, *args, **kwargs):
-    kwargs.setdefault('headers', {}).update(util.REQUEST_HEADERS)
+    if 'headers' not in kwargs:
+      kwargs['headers'] = util.REQUEST_HEADERS
 
     if 'stream' not in kwargs:
       kwargs['stream'] = True

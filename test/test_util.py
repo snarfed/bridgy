@@ -1,5 +1,6 @@
 # coding=utf-8
 """Unit tests for util.py."""
+import copy
 import datetime
 import json
 import time
@@ -16,6 +17,7 @@ from webob import exc
 
 import testutil
 from testutil import FakeAuthEntity, FakeSource
+from twitter import Twitter
 import util
 
 # the character in the middle is an unusual unicode character
@@ -329,6 +331,30 @@ class UtilTest(testutil.ModelsTest):
     resp = util.requests_get(next(iter(util.URL_BLACKLIST)))
     self.assertEquals(util.HTTP_REQUEST_REFUSED_STATUS_CODE, resp.status_code)
     self.assertEquals('Sorry, Bridgy has blacklisted this URL.', resp.content)
+
+  def test_no_accept_header(self):
+    self.assertEquals(util.REQUEST_HEADERS,
+                      util.request_headers(url='http://foo/bar'))
+    self.assertEquals(util.REQUEST_HEADERS,
+                      util.request_headers(source=Twitter(id='not-rhiaro')))
+
+    self.expect_requests_get('http://foo/bar', '', headers=util.REQUEST_HEADERS)
+    self.mox.ReplayAll()
+    util.requests_get('http://foo/bar')
+
+  def test_rhiaro_accept_header(self):
+    """Only send Accept header to rhiaro.co.uk right now.
+    https://github.com/snarfed/bridgy/issues/713
+    """
+    self.assertEquals(util.REQUEST_HEADERS_CONNEG,
+                      util.request_headers(url='http://rhiaro.co.uk/'))
+    self.assertEquals(util.REQUEST_HEADERS_CONNEG,
+                      util.request_headers(source=Twitter(id='rhiaro')))
+
+    self.expect_requests_get('http://rhiaro.co.uk/', '',
+                             headers=util.REQUEST_HEADERS_CONNEG)
+    self.mox.ReplayAll()
+    util.requests_get('http://rhiaro.co.uk/')
 
   def test_in_webmention_blacklist(self):
     for bad in 't.co', 'x.t.co', 'x.y.t.co', 'abc.onion':
