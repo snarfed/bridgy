@@ -462,15 +462,27 @@ class DeleteStartHandler(util.Handler):
     if module is oauth_blogger_v2:
       return self.redirect('/blogger/delete/start?state=%s' % state)
 
+    source = key.get()
     path = ('/instagram/callback' if module is indieauth
             else '/wordpress/add' if module is oauth_wordpress_rest
-            else '/%s/delete/finish' % key.get().SHORT_NAME)
+            else '/%s/delete/finish' % source.SHORT_NAME)
     kwargs = {}
     if module is oauth_twitter:
       kwargs['access_type'] = 'read' if feature == 'listen' else 'write'
 
     handler = module.StartHandler.to(path, **kwargs)(self.request, self.response)
-    self.redirect(handler.redirect_url(state=state))
+    try:
+      self.redirect(handler.redirect_url(state=state))
+    except Exception as e:
+      code, body = util.interpret_http_exception(e)
+      if not code and util.is_connection_failure(e):
+        code = '-'
+        body = unicode(e)
+      if code:
+        self.messages.add('%s API error %s: %s' % (source.GR_CLASS.NAME, code, body))
+        self.redirect(source.bridgy_url(self))
+      else:
+        raise
 
 
 class DeleteFinishHandler(util.Handler):

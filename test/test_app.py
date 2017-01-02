@@ -4,11 +4,14 @@
 import datetime
 import json
 import urllib
+import urlparse
 
 from google.appengine.api import memcache
 from google.appengine.ext import ndb
+import mox
 from oauth_dropins import handlers as oauth_handlers
 from oauth_dropins.twitter import TwitterAuth
+import tweepy
 import webapp2
 
 import app
@@ -216,6 +219,24 @@ class AppTest(testutil.ModelsTest):
       'http://withknown.com/bridgy_callback?' + urllib.urlencode([
         ('result', 'declined')
       ]), resp.headers['Location'])
+
+  def test_delete_start_redirect_url_error(self):
+    app.DeleteStartHandler.OAUTH_MODULES['FakeSource'] = FakeOAuthHandlerModule
+    self.mox.StubOutWithMock(FakeOAuthHandlerModule.StartHandler, 'redirect_url')
+    FakeOAuthHandlerModule.StartHandler.redirect_url(state=mox.IgnoreArg()
+      ).AndRaise(tweepy.TweepError('Connection closed unexpectedly...'))
+    self.mox.ReplayAll()
+
+    resp = app.application.get_response(
+      '/delete/start', method='POST', body=urllib.urlencode({
+        'feature': 'listen',
+        'key': self.sources[0].key.urlsafe(),
+      }))
+    self.assertEquals(302, resp.status_int)
+    location = urlparse.urlparse(resp.headers['Location'])
+    self.assertEquals('/fake/0123456789', location.path)
+    self.assertEquals('!FakeSource API error -: Connection closed unexpectedly...',
+                      urllib.unquote(location.fragment))
 
   def test_delete_removes_from_logins_cookie(self):
     cookie = ('logins="/fake/%s?Fake%%20User|/other/1?bob"; '
