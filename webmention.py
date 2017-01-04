@@ -136,7 +136,7 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
     resp = json.dumps(resp, indent=2)
 
     if mail:
-      self.mail_me(resp)
+      self.mail_me('[Returned HTTP %s to client]\n\n%s' % (status, error))
     self.response.write(resp)
 
   def mail_me(self, resp):
