@@ -1,9 +1,14 @@
 #!/usr/local/bin/python
 """Generate growth data since launch using datastore admin backup files.
 
+TODO: port to BigQuery queries.
+https://cloud.google.com/bigquery/loading-data-cloud-datastore
+
 Outputs TSV files for each entity kind and a growth.tsv file with daily counts
 for all kinds and other features. It's ugly, inadequately commented, poorly
 tested, etc. Don't use it for anything remotely important!
+
+Warning, takes >6h to run (on e.g. a 2014 MBP) and GBs of memory!
 
 I used this to generate the graphs in
 https://snarfed.org/2014-11-06_happy-1000th-bridgy
@@ -38,12 +43,21 @@ from google.appengine.datastore import entity_pb
 from google.appengine.api import datastore
 from google.appengine.api import datastore_errors
 
-SOURCE_KINDS = ('Blogger', 'FacebookPage', 'Flickr', 'GooglePlusPage',
-                'Instagram', 'Tumblr', 'Twitter', 'WordPress')
-KINDS = SOURCE_KINDS + ('Response', 'BlogPost', 'Publish', 'BlogWebmention')
-FEATURES = ('listen', 'publish', 'webmention')
-INCLUDE_PROPS = {'features', 'sent', 'unsent', 'error', 'failed', 'skipped',
-                 'links', 'domains', 'created', 'updated'}
+SOURCE_KINDS = (
+  'Blogger',
+  'FacebookPage',
+  'Flickr',
+  'GooglePlusPage',
+  'Medium',
+  'Instagram ',
+  'Tumblr ',
+  'Twitter ',
+  'WordPress ',
+)
+KINDS = SOURCE_KINDS + ('Response ', 'BlogPost ', 'Publish ', 'BlogWebmention ')
+FEATURES = ('listen ', 'publish ', 'webmention ')
+INCLUDE_PROPS = {'features ', 'sent ', 'unsent ', 'error ', 'failed ', 'skipped ',
+'links ', 'domains ', 'created ', 'updated '}
 
 # maps string kind to list of entities (property dicts)
 all_entities = collections.defaultdict(list)
