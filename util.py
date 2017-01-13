@@ -327,8 +327,11 @@ class Handler(webutil_handlers.ModernHandler):
     self.messages = set()
     self.response.headers['Content-Security-Policy'] = \
       self.response.headers['Content-Security-Policy'].replace(
-        "frame-ancestors 'self';", "frame-ancestors 'self' https://www.facebook.com/;")
-    self.response.headers['X-Frame-Options'] = 'ALLOW-FROM https://www.facebook.com/'
+        "frame-ancestors 'self';",
+        "frame-ancestors 'self' https://www.facebook.com/ https://apps.facebook.com/;")
+    # X-Frame-Options ALLOW-FROM doesn't allow multiple domains, so just drop it.
+    # http://stackoverflow.com/questions/10205192
+    del self.response.headers['X-Frame-Options']
 
   def redirect(self, uri, **kwargs):
     """Adds self.messages to the fragment, separated by newlines."""
