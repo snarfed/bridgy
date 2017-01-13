@@ -230,7 +230,7 @@ class FacebookPageTest(testutil.ModelsTest):
                          status=400)
 
     params = {
-      'template': "Brid.gy's access to your account has expired. Click here to renew it now!",
+      'template': "Bridgy's access to your account has expired. Click here to renew it now!",
       'href': 'https://brid.gy/facebook/start',
       'access_token': 'my_app_id|my_app_secret',
       }

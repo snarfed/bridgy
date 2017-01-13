@@ -164,7 +164,7 @@ class FacebookPage(models.Source):
           # TODO: for pages, fetch the owners/admins and notify them.
           self.gr_source.create_notification(
             self.key.id(),
-            "Brid.gy's access to your account has expired. Click here to renew it now!",
+            "Bridgy's access to your account has expired. Click here to renew it now!",
             'https://brid.gy/facebook/start')
         raise models.DisableSource()
 
