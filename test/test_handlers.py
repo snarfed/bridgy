@@ -195,6 +195,16 @@ asdf http://other/link qwert
     resp = self.check_response('/post/fake/%s/000', expected_status=401)
     self.assertIn("Bridgy's access to your account has expired", resp.body)
 
+  def test_handle_value_error(self):
+    self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities')
+    testutil.FakeSource.get_activities(
+      activity_id='000', user_id=self.source.key.string_id()
+      ).AndRaise(ValueError('foo bar'))
+    self.mox.ReplayAll()
+
+    resp = self.check_response('/post/fake/%s/000', expected_status=400)
+    self.assertIn('FakeSource error: foo bar', resp.body)
+
   def test_comment(self):
     FakeGrSource.comment = {
       'id': 'tag:fa.ke,2013:a1-b2.c3',  # test alphanumeric id (like G+)

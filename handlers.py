@@ -157,6 +157,8 @@ class ItemHandler(util.Handler):
         obj = self.get_item(*ids)
       except models.DisableSource as e:
         self.abort(401, "Bridgy's access to your account has expired. Please visit https://brid.gy/ to refresh it!")
+      except ValueError as e:
+        self.abort(400, '%s error:\n%s' % (self.source.GR_CLASS.NAME, e))
       except Exception as e:
         # pass through all API HTTP errors if we can identify them
         code, body = util.interpret_http_exception(e)
