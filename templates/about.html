@@ -106,6 +106,7 @@ service.</a>
 <li><a href="#video">How do I post a video?</a></li>
 <li><a href="#person-tag">How do I tag someone in a post?</a></li>
 <li><a href="#location">How do I include location in a post?</a></li>
+<li><a href="#quote-tweet">How do I post a quote tweet?</a></li>
 <li><a href="#facebook-publish">What happened to publishing Facebook
   comments and likes?</li>
 <li><a href="#omit-link">Can I disable the link back to my post?</a></li>
@@ -888,7 +889,7 @@ tag. For example:
 
 <pre>
 &lt;video class="<span class='keyword'>u-video</span>" src="<span class='value'>/cat_hunting.mp4</span>"&gt;
-Kitty is on the hunt!
+  Kitty is on the hunt!
 &lt;/video&gt;
 </pre>
 </p>
@@ -901,8 +902,8 @@ Facebook and Flickr support tagging people in posts, photos, and checkins. Just 
 
 <pre>
 &lt;a class="<span class='keyword'>u-category h-card</span>" href="<span class='value'>http://facebook.com/212038</span>"&gt;
-Tag, you're it!
-&lt;a&gt;
+  Tag, you're it!
+&lt;/a&gt;
 </pre>
 </p>
 <p>If they're signed up for Bridgy, you <em>may</em> also be able to link to their personal web site, e.g. <code>https://snarfed.org</code>, or their Facebook username URL, e.g. <code>http://facebook.com/kyle.mahan</code>, but <a href="https://github.com/snarfed/bridgy/issues/674#issuecomment-228254131">these don't always work.</a> When in doubt, use the Facebook user id URL. You can find the user id in a hidden <code>fb://profile/USERID</code> <a href="https://indiewebcamp.com/person-tag#Bridgy_Publish">link in their profile's HTML</a>.
@@ -918,10 +919,28 @@ in an <code>h-geo</code> or <code>p-location h-card</code>. For example:
 <pre>
 I'm
 &lt;p class="<span class='keyword'>p-location h-card</span>"&gt;
-here!
-&lt;span class="<span class='keyword'>p-latitude</span> hidden"&gt;<span class='value'>-27.116667</span>&lt;span&gt;
-&lt;span class="<span class='keyword'>p-longitude</span> hidden"&gt;<span class='value'>-109.366667</span>&lt;span&gt;
-&lt;p&gt;
+  here!
+  &lt;span class="<span class='keyword'>p-latitude</span> hidden"&gt;<span class='value'>-27.116667</span>&lt;/span&gt;
+  &lt;span class="<span class='keyword'>p-longitude</span> hidden"&gt;<span class='value'>-109.366667</span>&lt;/span&gt;
+&lt;/p&gt;
+</pre>
+</p>
+</li>
+
+<li id="quote-tweet" class="question">How do I post a quote tweet?</li>
+<li class="answer">
+<p>Include an <code>h-cite u-quotation-of</code> with a
+<code>u-url</code> that points to a tweet.
+<a href="https://indieweb.org/quotation#How_to_markup">More details.</a>
+For example:
+
+<pre>
+I have something to say about this:
+&lt;cite class="<span class='keyword'>h-cite u-quotation-of</span>"&gt;
+  &lt;a class="<span class='keyword'>u-url</span>" href="<span class='value'><a href='https://twitter.com/schnarfed/status/448205453911015425'>https://twitter.com/schnarfed/status/448205453911015425</a></span>"&gt;
+    A provocative statement.
+  &lt;/a&gt;
+&lt;/cite&gt;
 </pre>
 </p>
 </li>

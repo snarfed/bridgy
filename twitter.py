@@ -32,11 +32,8 @@ class Twitter(models.Source):
                  'like': 'favorite',
                  }
 
-  URL_CANONICALIZER = util.UrlCanonicalizer(
-    domain=GR_CLASS.DOMAIN,
-    approve=r'https://twitter\.com/[^/?]+/status/[^/?]+$',
-    reject=r'https://twitter\.com/.+\?protected_redirect=true',
-    headers=util.REQUEST_HEADERS)
+  URL_CANONICALIZER = gr_twitter.Twitter.URL_CANONICALIZER
+  URL_CANONICALIZER.headers = util.REQUEST_HEADERS
 
   # Twitter's rate limiting window is currently 15m. A normal poll with nothing
   # new hits /statuses/user_timeline and /search/tweets once each. Both
