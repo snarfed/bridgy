@@ -514,6 +514,16 @@ fetched your post before you added the link. When that happens, Bridgy waits up
 to two hours before it refetches your post and reloads syndication links. Try
 clicking the <em>Crawl now</em> button on your user page.
 </li>
+<li>Twitter favorites are sadly best effort only.
+<a href="https://twittercommunity.com/t/list-of-people-who-favorited-a-particular-tweet/11083/8
+">Their
+API still doesn't have a way to get a tweet's favorites</a>, so
+<a href="https://github.com/snarfed/bridgy/issues/61">we have to scrape them
+ from the web</a>, which only shows the latest 25. So
+<a href="https://github.com/snarfed/bridgy/issues/73">if you get more than 25 new favorites</a> between two times that Bridgy polls your Twitter account, we'll miss the rest in that period.
+</li>
+<li>Instagram likes are even worse. They <a href="https://github.com/snarfed/bridgy/issues/722">only show the first 10 individual likes per photo on the web</a>, and a total count after that, so Bridgy can only backfeed the first 10 likes.
+</li>
 </ul>
 </li>
 
