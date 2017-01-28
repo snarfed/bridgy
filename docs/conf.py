@@ -18,12 +18,17 @@ import os
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.abspath('..'))
+sys.path.insert(0, '/opt/homebrew-cask/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/bin')
+sys.path.insert(0, '/opt/homebrew-cask/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/platform/google_appengine/')
 
 # Add App Engine's bundled libraries (django, webob, yaml, etc.) to sys.path.
 import dev_appserver
 dev_appserver.fix_sys_path()
 # sys.path.append(os.path.join(dev_appserver._DIR_PATH, 'lib', 'mox'))
 
+if not os.getenv('VIRTUAL_ENV'):
+    os.environ['VIRTUAL_ENV'] = os.path.abspath(
+        '../../../envs/' + os.getenv('READTHEDOCS_VERSION'))
 
 # -- General configuration ------------------------------------------------
 

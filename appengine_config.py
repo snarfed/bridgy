@@ -1,5 +1,6 @@
 """Bridgy App Engine config.
 """
+import logging
 import os
 
 # Load packages from virtualenv
@@ -7,9 +8,14 @@ import os
 from google.appengine.ext import vendor
 try:
   vendor.add('local')
-except ValueError as e:
-  import logging
-  logging.warning("Couldn't set up App Engine vendor virtualenv! %s", e)
+except Exception as e_local:
+  virtual_env = os.getenv('VIRTUAL_ENV')
+  try:
+    vendor.add(virtual_env)
+  except Exception as e_env:
+    logging.warning("Couldn't set up App Engine vendor for local: %s\n  or %s: %s",
+                    e_local, virtual_env, e_env)
+    raise
 
 from granary.appengine_config import *
 
