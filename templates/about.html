@@ -82,7 +82,7 @@ service.</a>
   likes or reshares!</a></li>
 <li><a href="#domain">Bridgy can't find my original posts! It just
   says <em>No webmention targets found</em>.</a></li>
-<li><a href="#link">Do my posts really need to link my web site?</a></li>
+<li><a href="#link">Do my posts really need to link to my web site?</a></li>
 <li><a href="#domain">Bridgy used to find my syndication links, but
   then it stopped.</a></li>
 <li><a href="#appspot">What are all these brid-gy.appspot.com links
@@ -527,21 +527,39 @@ API still doesn't have a way to get a tweet's favorites</a>, so
 </ul>
 </li>
 
-<li id="link" class="question">Do my posts really need to link my web site?</li>
+<li id="link" class="question">Do my posts really need to link to my web site?</li>
 <li class="answer">
-<p>Nope! You can
-use <a href="https://indieweb.org/rel-syndication">rel-syndication</a> lookup
-instead. It fetches the web site field in your social network profile and
-follows each
-<a href="http://microformats.org/wiki/h-entry">h-entry</a> to its post permalink
-page and look there for rel-syndication or u-syndication links. If you publish
-an unfiltered <a href="http://microformats.org/wiki/h-feed">h-feed</a> somewhere
-other than your homepage, you can point Bridgy to it by including <code>&lt;link
-rel="feed"&gt;</code> on the homepage. See the
-<a href="https://indieweb.org/original-post-discovery">original post
-discovery</a> and <a href="https://indieweb.org/posse-post-discovery">posse
-post discovery</a> algorithms for all the gory details.
-</p></li>
+<p>Nope! If your social network profile has a link to your web site, Bridgy will
+fetch it and run
+<a href="https://indieweb.org/posse-post-discovery#Algorithm">posse-post-discovery</a>
+to find matching posts on your site. You'll need to include
+<a href="https://indieweb.org/rel-syndication#How_to_publish">u-syndication</a>
+links in those posts, and your home page (or wherever the link in your profile
+points) will need either:
+<ul>
+<li>a top-level <a href="http://microformats.org/wiki/h-feed">h-feed</a>
+  with <a href="http://microformats.org/wiki/h-entry">h-entry</a>s
+</li>
+<li>top-level <a href="http://microformats.org/wiki/h-entry">h-entry</a>s
+</li>
+OR
+<li>a <code>&lt;link rel="feed" href="..."&gt;</code> pointing to another page
+  with top-level <a href="http://microformats.org/wiki/h-feed">h-feed</a> or
+  <a href="http://microformats.org/wiki/h-entry">h-entry</a>s
+</li>
+</ul>
+
+If those h-entries don't have u-syndication links, but do have
+<a href="http://microformats.org/wiki/h-entry#Core_Properties">u-url</a>s,
+Bridgy will fetch them and look for u-syndication links there.
+</p>
+
+<p id="parse">You can enter your home page into an online microformats2 parser like
+<a href="http://pin13.net/mf2/">pin13.net</a> or
+<a href="http://mf2.kylewm.com/">mf2.kylewm.com</a> to check that it satisfies
+these requirements.
+</p>
+</li>
 
 <li id="domain" class="question">Bridgy used to find my syndication links, but
   then it stopped.</li>
@@ -570,7 +588,8 @@ can do it on Facebook by separating links with spaces or newlines.) Twitter,
 Instagram, and Flickr only allow one, so Bridgy
 <a href="https://github.com/snarfed/bridgy/issues/483">also looks for links
 in your profile's description field</a>.
-</p></li>
+</p>
+</li>
 
 <li id="appspot" class="question">What are all these brid-gy.appspot.com links
 in the responses that Bridgy sends to my site?</li>
