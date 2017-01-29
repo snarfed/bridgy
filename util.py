@@ -87,6 +87,11 @@ with open(os.path.join(_dir, 'beta_users.txt')) as f:
 # http://httparchive.org/interesting.php#bytesperpage
 MAX_HTTP_RESPONSE_SIZE = 500000
 
+# Returned as the HTTP status code when an upstream API fails. Not 5xx so that
+# it doesn't show up as a server error in graphs or trigger StackDriver's error
+# reporting.
+ERROR_HTTP_RETURN_CODE = 304  # "Not Modified"
+
 # Returned as the HTTP status code when we refuse to make or finish a request.
 HTTP_REQUEST_REFUSED_STATUS_CODE = 599
 

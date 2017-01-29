@@ -44,8 +44,6 @@ import wordpress_rest
 
 WEBMENTION_DISCOVERY_CACHE_TIME = 60 * 60 * 2  # 2h
 
-ERROR_HTTP_RETURN_CODE = 304  # "Not Modified"
-
 
 class Poll(webapp2.RequestHandler):
   """Task handler that fetches and processes new responses from a single source.
@@ -106,7 +104,7 @@ class Poll(webapp2.RequestHandler):
       elif (code and int(code) / 100 == 5) or util.is_connection_failure(e):
         logging.error('API call failed. Marking as error and finishing. %s: %s\n%s',
                       code, body, e)
-        self.abort(ERROR_HTTP_RETURN_CODE)
+        self.abort(util.ERROR_HTTP_RETURN_CODE)
       else:
         raise
     finally:
@@ -632,7 +630,7 @@ class SendWebmentions(webapp2.RequestHandler):
   def fail(self, message, level=logging.WARNING):
     """Fills in an error response status code and message.
     """
-    self.error(ERROR_HTTP_RETURN_CODE)
+    self.error(util.ERROR_HTTP_RETURN_CODE)
     logging.log(level, message)
     self.response.out.write(message)
 
@@ -708,7 +706,7 @@ class PropagateResponse(SendWebmentions):
 Hit https://github.com/snarfed/bridgy/issues/237 KeyError!
 target url %s not in urls_to_activity: %s
 activities: %s""", target_url, self.entity.urls_to_activity, self.activities)
-      self.abort(ERROR_HTTP_RETURN_CODE)
+      self.abort(util.ERROR_HTTP_RETURN_CODE)
 
     # generate source URL
     id = activity['id']

@@ -10,12 +10,14 @@ import urllib
 import appengine_config
 
 import mox
+import requests
 from webob import exc
 
 import blog_webmention
 import models
 from models import BlogWebmention
 import testutil
+import util
 
 
 class BlogWebmentionTest(testutil.HandlerTest):
@@ -352,6 +354,16 @@ i hereby mention
     bw = BlogWebmention.get_by_id('http://bar.com/reply http://foo.com/post/1')
     self.assertEquals('failed', bw.status)
     self.assertEquals(self.mention_html, bw.html)
+
+  def test_create_comment_500s(self):
+    self.expect_mention().AndRaise(exc.HTTPInternalServerError('oops'))
+    self.mox.ReplayAll()
+    self.assert_error('oops', status=util.ERROR_HTTP_RETURN_CODE)
+
+  def test_create_comment_raises_connection_error(self):
+    self.expect_mention().AndRaise(requests.ConnectionError('oops'))
+    self.mox.ReplayAll()
+    self.assert_error('oops', status=util.ERROR_HTTP_RETURN_CODE)
 
   def test_sources_global(self):
     self.assertIsNotNone(models.sources['blogger'])

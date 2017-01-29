@@ -113,7 +113,7 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
     try:
       self.entity.published = self.source.create_comment(
         self.target_url, author_name, author_url, text)
-    except Exception, e:
+    except Exception as e:
       code, body = util.interpret_http_exception(e)
       msg = 'Error: %s %s; %s' % (code, e, body)
       if code == '401':
@@ -124,6 +124,8 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
       elif code == '404':
         # post is gone
         return self.error(msg, status=code, mail=False)
+      elif util.is_connection_failure(e) or (code and int(code) // 100 == 5):
+        return self.error(msg, status=util.ERROR_HTTP_RETURN_CODE, mail=False)
       elif code or body:
         return self.error(msg, status=code, mail=True)
       else:
