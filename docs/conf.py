@@ -42,6 +42,7 @@ extensions = [
 ]
 
 # autodoc settings
+# http://www.sphinx-doc.org/en/stable/ext/autodoc.html
 autoclass_content = 'class'
 autodoc_member_order = 'bysource'
 autodoc_default_flags = ['show-inheritance', 'members', 'special-members']
