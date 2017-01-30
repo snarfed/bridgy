@@ -19,6 +19,7 @@ import testutil
 from testutil import FakeAuthEntity, FakeSource
 from twitter import Twitter
 import util
+from util import Login
 
 # the character in the middle is an unusual unicode character
 UNICODE_STR = u'a ✁ b'
@@ -82,7 +83,29 @@ class UtilTest(testutil.ModelsTest):
       'logins="/fake/%s?fake|/other/1?bob"' % src2.key.id()
     self.assertEquals(cookie % src2.key.id(), self.response.headers['Set-Cookie'])
 
-  def test_bad_logins_cookie(self):
+  def test_get_logins(self):
+    for cookie, expected in (
+        ('', []),
+        ('abc=xyz', []),
+        ('logins=', []),
+        ('logins=|', []),
+        ('logins=/fake/123', [Login('fake', '', '/fake/123')]),
+        ('logins=/fake/123?Name', [Login('fake', 'Name', '/fake/123')]),
+        ('logins=/fake/123?Name|/blogger/456?Nombre',
+         [Login('fake', 'Name', '/fake/123'),
+          Login('blogger', 'Nombre', '/blogger/456'),
+         ]),
+    ):
+      self.request.headers['Cookie'] = cookie
+      self.assertItemsEqual(expected, self.handler.get_logins())
+
+  def test_logins_cookie_url_decode(self):
+    """https://console.cloud.google.com/errors/10588536940780707768?project=brid-gy"""
+    self.request.headers['Cookie'] = 'logins="/fake/123?question%3Fmark"'
+    self.assertEquals([Login(site=u'fake', name=u'question?mark', path=u'/fake/123')],
+                      self.handler.get_logins())
+
+  def test_bad_logins_cookies(self):
     """https://github.com/snarfed/bridgy/issues/601"""
     self.request.headers['Cookie'] = 'OAMAuthnCookie_www.arbeitsagentur.de:443=xyz'
     self.assertEquals([], self.handler.get_logins())

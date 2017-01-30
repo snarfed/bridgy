@@ -504,7 +504,11 @@ class Handler(webutil_handlers.ModernHandler):
 
     logins = []
     for val in set(urllib.unquote_plus(logins_str.value).decode('utf-8').split('|')):
-      path, name = val.split('?')
+      parts = val.split('?', 1)
+      path = parts[0]
+      if not path:
+        continue
+      name = parts[1] if len(parts) > 1 else ''
       site, _ = path.strip('/').split('/')
       logins.append(Login(path=path, site=site, name=name))
 
