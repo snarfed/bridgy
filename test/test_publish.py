@@ -79,12 +79,14 @@ class PublishTest(testutil.HandlerTest):
 
   def assert_response(self, expected, status=None, preview=False, **kwargs):
     resp = self.get_response(preview=preview, **kwargs)
-    self.assertEquals(status, resp.status_int)
+    body = resp.body.decode('utf-8')
+    self.assertEquals(status, resp.status_int,
+                      u'%s != %s: %s' % (status, resp.status_int, body))
     if preview:
-      self.assertIn(expected, resp.body.decode('utf-8'),
-                    '%r\n\n=== vs ===\n\n%r' % (expected, resp.body))
+      self.assertIn(expected, body,
+                    '%r\n\n=== vs ===\n\n%r' % (expected, body))
     else:
-      self.assertIn(expected, json.loads(resp.body)[
+      self.assertIn(expected, json.loads(body)[
         'content' if status < 300 else 'error'])
     return resp
 
@@ -258,19 +260,19 @@ class PublishTest(testutil.HandlerTest):
                       target='https://brid.gy/publish/googleplus')
 
   def test_source_url_redirects(self):
-    self.expect_requests_head('http://will/redirect', redirected_url='http://foo.com')
+    self.expect_requests_head('http://will/redirect', redirected_url='http://foo.com/1')
 
-    self.expect_requests_get('http://foo.com', self.post_html % 'foo')
+    self.expect_requests_get('http://foo.com/1', self.post_html % 'foo')
     self.mox.ReplayAll()
     # check that we include the original link, not the resolved one
     self.assert_created('foo - http://will/redirect', source='http://will/redirect')
 
   def test_source_url_redirects_with_refresh_header(self):
     self.expect_requests_head('http://will/redirect',
-                              response_headers={'refresh': '0; url=http://foo.com'})
-    self.expect_requests_head('http://foo.com')
+                              response_headers={'refresh': '0; url=http://foo.com/1'})
+    self.expect_requests_head('http://foo.com/1')
 
-    self.expect_requests_get('http://foo.com', self.post_html % 'foo')
+    self.expect_requests_get('http://foo.com/1', self.post_html % 'foo')
     self.mox.ReplayAll()
     # check that we include the original link, not the resolved one
     self.assert_created('foo - http://will/redirect', source='http://will/redirect')
@@ -300,8 +302,8 @@ foo
     resp = self.assert_created('foo - http://sho.rt/link')
 
   def test_rel_shortlink_overrides_redirect(self):
-    self.expect_requests_head('http://will/redirect', redirected_url='http://foo.com')
-    self.expect_requests_get('http://foo.com', self.post_html % """\
+    self.expect_requests_head('http://will/redirect', redirected_url='http://foo.com/1')
+    self.expect_requests_get('http://foo.com/1', self.post_html % """\
 foo
 <a class="shortlink" href="http://sho.rt/link"></a>""")
     self.mox.ReplayAll()
@@ -416,6 +418,13 @@ foo
     self.mox.ReplayAll()
     self.assert_created('foo - http://foo.com/?p=123',
                         source='http://foo.com/?p=123')
+
+  def test_source_url_redirects_to_domain_url(self):
+    self.expect_requests_head('http://will/redirect', redirected_url='http://foo.com')
+    self.mox.ReplayAll()
+    self.source.put()
+    self.assert_error("Looks like that's your home page.",
+                      source='http://will/redirect')
 
   def test_source_url_is_silo(self):
     self.source.put()

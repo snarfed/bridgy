@@ -215,12 +215,13 @@ class Handler(webmention.WebmentionHandler):
     # show nice error message if they're trying to publish their home page
     for domain_url in self.source.domain_urls:
       domain_url_parts = urlparse.urlparse(domain_url)
-      source_url_parts = urlparse.urlparse(self.source_url())
-      if (source_url_parts.netloc == domain_url_parts.netloc and
-          source_url_parts.path.strip('/') == domain_url_parts.path.strip('/') and
-          not source_url_parts.query):
-        return self.error(
-          "Looks like that's your home page. Try one of your posts instead!")
+      for source_url in url, self.source_url():
+        parts = urlparse.urlparse(source_url)
+        if (parts.netloc == domain_url_parts.netloc and
+            parts.path.strip('/') == domain_url_parts.path.strip('/') and
+            not parts.query):
+          return self.error(
+            "Looks like that's your home page. Try one of your posts instead!")
 
     # done with the sanity checks, ready to fetch the source url. create the
     # Publish entity so we can store the result.
