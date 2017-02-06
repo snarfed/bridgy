@@ -228,7 +228,7 @@ class Handler(webmention.WebmentionHandler):
     entity = self.get_or_add_publish_entity(url)
     if (entity.status == 'complete' and entity.type != 'preview' and
         not self.PREVIEW and not appengine_config.DEBUG):
-      return self.error("Sorry, you've already published that page, and Bridgy Publish doesn't yet support updating or deleting existing posts. Ping Ryan if you want that feature!")
+      return self.error("Sorry, you've already published that page, and Bridgy Publish doesn't yet support updating or deleting existing posts. Details: https://github.com/snarfed/bridgy/issues/84")
     self.entity = entity
 
     # fetch source page
