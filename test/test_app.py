@@ -235,7 +235,7 @@ class AppTest(testutil.ModelsTest):
     self.assertEquals(302, resp.status_int)
     location = urlparse.urlparse(resp.headers['Location'])
     self.assertEquals('/fake/0123456789', location.path)
-    self.assertEquals('!FakeSource API error -: Connection closed unexpectedly...',
+    self.assertEquals('!FakeSource API error 504: Connection closed unexpectedly...',
                       urllib.unquote(location.fragment))
 
   def test_delete_removes_from_logins_cookie(self):

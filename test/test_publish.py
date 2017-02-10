@@ -609,7 +609,19 @@ this is my article
     self.assert_error('fooey', status=402)
     self.assertEquals(500, self.get_response(preview=True).status_int)
 
-  def test_connection_error_502s(self):
+  def test_silo_500_returns_502(self):
+    self.expect_requests_get('http://foo.com/bar', self.post_html % 'xyz')
+    self.mox.StubOutWithMock(self.source.gr_source, 'create',
+                             use_mock_anything=True)
+    err = requests.HTTPError(response=util.Struct(status_code='500', text='foooey bar'))
+    self.source.gr_source.create(mox.IgnoreArg(),
+                                 include_link=gr_source.INCLUDE_LINK,
+                                 ignore_formatting=False
+                                 ).AndRaise(err)
+    self.mox.ReplayAll()
+    self.assert_error('foooey bar', status=502)
+
+  def test_connection_error_returns_504(self):
     self.expect_requests_get('http://foo.com/bar', self.post_html % 'xyz')
     self.mox.StubOutWithMock(self.source.gr_source, 'create',
                              use_mock_anything=True)
@@ -618,7 +630,7 @@ this is my article
                                  ignore_formatting=False
                                  ).AndRaise(socket.error('foooey bar'))
     self.mox.ReplayAll()
-    self.assert_error('foooey bar', status=502)
+    self.assert_error('foooey bar', status=504)
 
   def test_preview(self):
     html = self.post_html % 'foo'

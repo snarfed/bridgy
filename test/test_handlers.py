@@ -55,7 +55,8 @@ class HandlersTest(testutil.HandlerTest):
     # use an HTTPS request so that URL schemes are converted
     resp = handlers.application.get_response(
       url_template % self.source.key.string_id(), scheme='https')
-    self.assertEqual(expected_status, resp.status_int, resp.body)
+    self.assertEqual(expected_status, resp.status_int,
+                     '%s %s' % (resp.status_int, resp.body))
 
     if expected_body:
       header_lines = len(handlers.TEMPLATE.template.splitlines()) - 2
@@ -182,7 +183,7 @@ asdf http://other/link qwert
     testutil.FakeSource.get_activities(activity_id='000', user_id=user_id
                                       ).AndRaise(err)
     self.mox.ReplayAll()
-    resp = self.check_response('/post/fake/%s/000', expected_status=503)
+    resp = self.check_response('/post/fake/%s/000', expected_status=504)
     self.assertEqual('FakeSource error:\nTry again pls', resp.body)
 
   def test_handle_disable_source(self):

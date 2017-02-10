@@ -281,10 +281,7 @@ class Handler(webmention.WebmentionHandler):
         queue.extend(item.get('children', []))
       except BaseException, e:
         code, body = util.interpret_http_exception(e)
-        mail = True
-        if (not code or code == 500) and util.is_connection_failure(e):
-          code = 502
-          mail=False
+        mail = code not in ('502', '504')
         msg = '%s API error: %s %s' % (self.source.GR_CLASS.NAME, body or '', e)
         return self.error(msg, status=code or 500, mail=mail)
 
