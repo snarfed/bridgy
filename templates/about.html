@@ -1043,7 +1043,14 @@ your post's actual content.
 <li class="answer">
 <p>Sure! Just enter the short link in the URL text box. Or if you're
 <a href="#webmentions">using a webmention</a> instead of the web form, pass the
-short link as the webmention's <code>source</code> parameter.
+short link as the webmention's <code>source</code> parameter.</p>
+<p>Bridgy also obeys and prioritizes
+<a href="http://microformats.org/wiki/rel-shortlink">rel-shortlink</a>.
+If your web page has a <code>link</code> like this:</p>
+<pre>
+&lt;link rel="<span class='keyword'>shortlink</span>" href="<span class='value'>http://my.short/link</span>" /&gt;
+</pre>
+<p>...then Bridgy will include <code>http://my.short/link</code> as your permalink, regardless of the source link you provide.</p>
 </li>
 
 <li id="response" class="question">How does Bridgy respond to webmentions?</li>
