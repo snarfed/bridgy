@@ -135,10 +135,6 @@ class FacebookPage(models.Source):
     kwargs.setdefault('fetch_news', type == 'user')
     kwargs.setdefault('event_owner_id', self.key.id())
 
-    # temporary workaround for http://github.com/snarfed/bridgy/issues/689
-    if self.key.id() == '10207093222641618':
-      kwargs['count'] = 38
-
     try:
       activities = super(FacebookPage, self).get_activities_response(**kwargs)
     except urllib2.HTTPError as e:
