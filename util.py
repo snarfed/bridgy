@@ -115,6 +115,8 @@ def add_poll_task(source, now=False, **kwargs):
   Note the constant. The string 'default' works in dev_appserver, but routes to
   default.brid-gy.appspot.com in prod instead of brid.gy, which breaks SSL
   because appspot.com doesn't have a third-level wildcard cert.
+  ...but they claim that's fixed now:
+    https://issuetracker.google.com/issues/35896683
   """
   last_polled_str = source.last_polled.strftime(POLL_TASK_DATETIME_FORMAT)
   queue = 'poll-now' if now else 'poll'
