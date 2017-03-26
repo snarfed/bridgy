@@ -85,6 +85,7 @@ service.</a>
 <li><a href="#link">Do my posts really need to link to my web site?</a></li>
 <li><a href="#domain">Bridgy used to find my syndication links, but
   then it stopped.</a></li>
+<li><a href="#order">Why are the Bridgy comments on my site out of order?</a></li>
 <li><a href="#appspot">What are all these brid-gy.appspot.com links
   in the comments that Bridgy sends to my site?</a></li>
 <li><a href="#ssl">OK, fine. But why brid-gy.appspot.com instead of
@@ -590,6 +591,24 @@ Instagram, and Flickr only allow one, so Bridgy
 in your profile's description field</a>.
 </p>
 </li>
+
+<li id="order" class="question">Why are the Bridgy comments on my site out of
+ order?</li>
+<li class="answer">
+<p>Bridgy doesn't guarantee that webmentions for comments, likes, etc. will
+always be sent in the same order that they happened inside the silo. If your
+site renders webmentions in the order that it receives them, this may mean that
+some will occasionally appear out of order.
+</p>
+<p>To help prevent this, Bridgy includes the
+<a href="http://microformats.org/wiki/h-entry#Core_Properties">
+ <code>dt-published</code> microformats2 timestamp property</a>
+in responses whenever the silo's API or web site exposes it. Notably, it's
+included in all Facebook and Flickr comments and Twiter @-replies. If those
+appear out of order on your site, file a feature request with your site's CMS or
+webmention plugin to sort by <code>dt-published</code>!
+<a href="https://github.com/idno/Known/issues/1104">Here's an example.</a>
+</p></li>
 
 <li id="appspot" class="question">What are all these brid-gy.appspot.com links
 in the responses that Bridgy sends to my site?</li>
