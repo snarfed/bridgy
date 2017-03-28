@@ -34,6 +34,6 @@ test:
     # - export PYTHONPATH=$PYTHONPATH:$VIRTUAL_ENV/src/gdata/src
     - python -m coverage run --source=. --omit=admin.py,facebook_test_live.py,local/\*,logs.py,mapreduce/\*,mapreduces.py,scripts/\*,test/\* -m unittest discover -v
     - python -m coverage html -d $CIRCLE_ARTIFACTS
-    - python ./facebook_test_live.py --debug
+    - if [ "$FACEBOOK_TEST_USER_TOKEN" != "" ]; then python ./facebook_test_live.py --debug; fi
   post:
     - if [ "$COVERALLS_REPO_TOKEN" != "" ]; then coveralls; fi
