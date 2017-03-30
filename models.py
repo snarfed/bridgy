@@ -169,12 +169,15 @@ class Source(StringIdModel):
     :attr:`gr_source` will be returned normally.
     """
     if name == 'gr_source' and self.auth_entity:
-      token = self.auth_entity.get().access_token()
+      auth_entity = self.auth_entity.get()
+      token = auth_entity.access_token()
       if not isinstance(token, tuple):
         token = (token,)
 
       kwargs = {}
-      if self.key.kind() == 'Instagram':
+      if self.key.kind() == 'FacebookPage' and auth_entity.type == 'user':
+        kwargs = {'user_id': self.key.id()}
+      elif self.key.kind() == 'Instagram':
         kwargs = {'scrape': True}
       elif self.key.kind() == 'Twitter':
         kwargs = {'username': self.key.id()}

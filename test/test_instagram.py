@@ -183,3 +183,6 @@ class InstagramTest(testutil.ModelsTest):
     self.mox.ReplayAll()
     resp = self.callback(state='0')
     self.assertEquals('http://localhost/instagram/snarfed', resp.headers['Location'])
+
+  def test_gr_source_scrape(self):
+    self.assertTrue(self.inst.gr_source.scrape)

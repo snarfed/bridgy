@@ -759,3 +759,7 @@ my message
         {'to': [{'alias': '@public'}], 'fb_id': '2', 'verb': 'like'},
     ):
       self.assertTrue(self.fb.is_activity_public(obj))
+
+  def test_gr_source_user_id(self):
+    self.assertEqual('212038', self.fb.gr_source.user_id)
+    self.assertIsNone(self.page.gr_source.user_id)

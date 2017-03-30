@@ -110,7 +110,7 @@ class FacebookPage(models.Source):
       kwargs: property values
     """
     user = json.loads(auth_entity.user_json)
-    gr_source = gr_facebook.Facebook(auth_entity.access_token())
+    gr_source = gr_facebook.Facebook(access_token=auth_entity.access_token())
     actor = gr_source.user_to_actor(user)
     return FacebookPage(id=user['id'],
                         auth_entity=auth_entity.key,
