@@ -1264,3 +1264,27 @@ Join us!"""
     self.mox.ReplayAll()
     self.assert_created('2016. # - http://foo.com/bar', interactive=False)
     self._check_entity(content='2016. #', html_content='<span /> 2016. #')
+
+  def test_ignore_nested_uphoto(self):
+    """We should only use u-photo directly inside the published item.
+
+    ...not u-photos in children, e.g. h-cards.
+    """
+    for i in range(2):
+      self.expect_requests_get('http://foo.com/bar', """
+<div class="h-entry">
+  <div class="e-content">
+    blah
+    <div class="h-card">
+      <img class="u-photo" src="http://baz.org/img.jpg" />
+    </div>
+  </div>
+</div>
+""")
+    self.mox.ReplayAll()
+
+    resp = self.assert_created('blah - http://foo.com/bar')
+    self.assertNotIn('images', json.loads(resp.body))
+
+    resp = self.assert_success('blah - http://foo.com/bar', preview=True)
+    self.assertNotIn('with images', resp.body)

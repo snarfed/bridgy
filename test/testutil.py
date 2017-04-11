@@ -137,6 +137,11 @@ class FakeGrSource(gr_source.Source):
     }
     if verb == 'rsvp-yes':
       ret['type'] = 'post'
+
+    images = self._images(obj)
+    if images:
+      ret['images'] = images
+
     return gr_source.creation_result(ret)
 
   def preview_create(self, obj, include_link=gr_source.OMIT_LINK,
@@ -151,7 +156,16 @@ class FakeGrSource(gr_source.Source):
         content += ' - %s' % obj['url']
 
     content = 'preview of ' + content
+
+    images = self._images(obj)
+    if images:
+      content += ' with images %s' % ','.join(images)
+
     return gr_source.creation_result(description=content)
+
+  @staticmethod
+  def _images(obj):
+    return [image['url'] for image in util.get_list(obj, 'image')]
 
 
 class FakeSource(Source):
