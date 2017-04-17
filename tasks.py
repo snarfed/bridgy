@@ -54,6 +54,15 @@ class Poll(webapp2.RequestHandler):
   * last_polled: timestamp, YYYY-MM-DD-HH-MM-SS
 
   Inserts a propagate task for each response that hasn't been seen before.
+
+  Steps:
+  1: Fetch activities: posts by the user, links to the user's domain(s).
+  2: Extract responses, store their activities.
+  3: Filter out responses we've already seen, using Responses in the datastore.
+  4: Store new responses and enqueue propagate tasks.
+  5: Possibly refetch updated syndication urls.
+
+  1-4 are in backfeed(); 5 is in poll().
   """
 
   def post(self, *path_args):
@@ -178,6 +187,59 @@ class Poll(webapp2.RequestHandler):
     # format, e.g. 'PREFIX ACTIVITY_ID'!)
     source.updates['last_activities_cache_json'] = json.dumps(
       {k: v for k, v in cache.items() if k.split()[-1] in silo_activity_ids})
+
+    self.backfeed(source, responses, activities=activities)
+
+    source.updates.update({'last_polled': source.last_poll_attempt,
+                           'poll_status': 'ok'})
+    if etag and etag != source.last_activities_etag:
+      source.updates['last_activities_etag'] = etag
+
+    #
+    # Possibly refetch updated syndication urls.
+    #
+    # if the author has added syndication urls since the first time
+    # original_post_discovery ran, we'll miss them. this cleanup task will
+    # periodically check for updated urls. only kicks in if the author has
+    # *ever* published a rel=syndication url
+    if source.should_refetch():
+      logging.info('refetching h-feed for source %s', source.label())
+      relationships = original_post_discovery.refetch(source)
+
+      now = util.now_fn()
+      source.updates['last_hfeed_refetch'] = now
+
+      if relationships:
+        logging.info('refetch h-feed found new rel=syndication relationships: %s',
+                     relationships)
+        try:
+          self.repropagate_old_responses(source, relationships)
+        except BaseException, e:
+          if (isinstance(e, (datastore_errors.BadRequestError,
+                             datastore_errors.Timeout)) or
+              util.is_connection_failure(e)):
+            logging.info('Timeout while repropagating responses.', exc_info=True)
+          else:
+            raise
+    else:
+      logging.info(
+          'skipping refetch h-feed. last-syndication-url %s, last-refetch %s',
+          source.last_syndication_url, source.last_hfeed_refetch)
+
+  def discover(self, source):
+      """Finds and propagates responses to a specific silo post.
+
+      https://github.com/snarfed/bridgy/issues/579
+      """
+      pass
+
+  def backfeed(self, source, responses, activities=None):
+    """Processes responses and activities and generates propagate tasks.
+
+    Stores property names and values to update in source.updates.
+    """
+    if activities is None:
+      activities = {}
 
     # Cache to make sure we only fetch the author's h-feed(s) the
     # first time we see it
@@ -346,42 +408,6 @@ class Poll(webapp2.RequestHandler):
     if pruned_responses:
       source.updates['seen_responses_cache_json'] = json.dumps(
         pruned_responses + unchanged_responses)
-
-    source.updates.update({'last_polled': source.last_poll_attempt,
-                           'poll_status': 'ok'})
-    if etag and etag != source.last_activities_etag:
-      source.updates['last_activities_etag'] = etag
-
-    #
-    # Step 5. possibly refetch updated syndication urls
-    #
-    # if the author has added syndication urls since the first time
-    # original_post_discovery ran, we'll miss them. this cleanup task will
-    # periodically check for updated urls. only kicks in if the author has
-    # *ever* published a rel=syndication url
-    if source.should_refetch():
-      logging.info('refetching h-feed for source %s', source.label())
-      relationships = original_post_discovery.refetch(source)
-
-      now = util.now_fn()
-      source.updates['last_hfeed_refetch'] = now
-
-      if relationships:
-        logging.info('refetch h-feed found new rel=syndication relationships: %s',
-                     relationships)
-        try:
-          self.repropagate_old_responses(source, relationships)
-        except BaseException, e:
-          if (isinstance(e, (datastore_errors.BadRequestError,
-                             datastore_errors.Timeout)) or
-              util.is_connection_failure(e)):
-            logging.info('Timeout while repropagating responses.', exc_info=True)
-          else:
-            raise
-    else:
-      logging.info(
-          'skipping refetch h-feed. last-syndication-url %s, last-refetch %s',
-          source.last_syndication_url, source.last_hfeed_refetch)
 
   def repropagate_old_responses(self, source, relationships):
     """Find old Responses that match a new SyndicatedPost and repropagate them.
