@@ -504,11 +504,13 @@ you? Twitter's API
 tweet's replies</a>, so Bridgy searches for @-mentions of the tweet's author to
 find its replies. That means it can't always find replies that omit the
 @-mention.
-<p>Also, Twitter's search API is sadly
+</li>
+<li>Also, Twitter's search API is
 <a href="https://dev.twitter.com/docs/faq#8650">best effort only</a>, ie it
-doesn't guarantee that it returns all matching tweets for a search. Every now
-and then it may not be able to find one of your replies, which means Bridgy will
-miss it. Sadface.
+doesn't guarantee that it returns all matching tweets for a search. It also
+<a href="https://dev.twitter.com/rest/public/search">only returns results from
+the last 7 days</a>. So, every now and then it may not find a reply, or a tweet
+that links to your site, which means Bridgy will miss it. Sadface.
 </li>
 <li>Are you using a <a href="#link">syndication link</a>? If so, Bridgy may have
 fetched your post before you added the link. When that happens, Bridgy waits up
@@ -1159,6 +1161,8 @@ Shameless plug: check out
 <a href="https://blog.twitter.com/express-even-more-in-140-characters">extended tweet character counting</a>?</li>
 <li class="answer">
 <p>Yes! Twitter is now <a href="https://blog.twitter.com/express-even-more-in-140-characters">exempting reply @-mentions, photo and video links, quote tweet links, and more</a> from counting toward the 140 character limit. <a href="https://blog.twitter.com/express-even-more-in-140-characters">More details</a>, <a href="https://dev.twitter.com/overview/api/upcoming-changes-to-tweets">developer docs</a>. Bridgy Publish fully supports these changes. Happy tweeting!
+</p>
+<p>(Having said all that, the new extended tweets have caused a small change in Bridgy Publish behavior. Before, if you @-mentioned the user you were replying to <em>inside</em> the tweet text, instead of at the beginning, your reply would still show up in the public timeline on your profile and in your followers' feed. Now, it won't. <a href="https://chat.indieweb.org/2017-04-13#t1492116025150000">Ongoing discussion.</a>)
 </p>
 </li>
 
