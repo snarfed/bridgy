@@ -226,18 +226,18 @@ class Poll(webapp2.RequestHandler):
           'skipping refetch h-feed. last-syndication-url %s, last-refetch %s',
           source.last_syndication_url, source.last_hfeed_refetch)
 
-  def discover(self, source):
-      """Finds and propagates responses to a specific silo post.
-
-      https://github.com/snarfed/bridgy/issues/579
-      """
-      pass
-
-  def backfeed(self, source, responses, activities=None):
+  def backfeed(self, source, responses=None, activities=None):
     """Processes responses and activities and generates propagate tasks.
 
     Stores property names and values to update in source.updates.
+
+    Args:
+      source: Source
+      responses: dict mapping AS response id to AS object
+      activities: dict mapping AS activity id to AS object
     """
+    if responses is None:
+      responses = {}
     if activities is None:
       activities = {}
 
@@ -441,14 +441,12 @@ class Poll(webapp2.RequestHandler):
             logging.info(
               '%s found a new rel=syndication link %s -> %s, but the '
               'relationship had already been discovered by another method',
-              response.label(), relationship.original,
-              relationship.syndication)
+              response.label(), relationship.original, relationship.syndication)
           else:
             logging.info(
               '%s found a new rel=syndication link %s -> %s, and '
               'will be repropagated with a new target!',
-              response.label(), relationship.original,
-              relationship.syndication)
+              response.label(), relationship.original, relationship.syndication)
             new_orig_urls.add(relationship.original)
 
       if new_orig_urls:
@@ -457,6 +455,38 @@ class Poll(webapp2.RequestHandler):
         response.unsent.extend(list(new_orig_urls))
         response.put()
         response.add_task()
+
+
+class Discover(Poll):
+  """Task handler that fetches and processes new responses to a single post.
+
+  Request parameters:
+
+  * source_key: string key of source entity
+  * post_id: string, silo post id(s)
+
+  Inserts a propagate task for each response that hasn't been seen before.
+
+  Original feature request: https://github.com/snarfed/bridgy/issues/579
+  """
+
+  def post(self):
+    logging.debug('Params: %s', self.request.params)
+
+    key = util.get_required_param(self, 'source_key')
+    source = ndb.Key(urlsafe=key).get()
+    if not source or source.status == 'disabled' or 'listen' not in source.features:
+      logging.error('Source not found or disabled. Dropping task.')
+      return
+    logging.info('Source: %s %s, %s', source.label(), source.key.string_id(),
+                 source.bridgy_url(self))
+
+    post_id = util.get_required_param(self, 'post_id')
+    activities = source.get_activities(fetch_replies=True, fetch_likes=True,
+                                       fetch_shares=True, activity_id=post_id)
+    assert len(activities) <= 1
+    source.updates = {}
+    self.backfeed(source, activities={a['id']: a for a in activities})
 
 
 class SendWebmentions(webapp2.RequestHandler):
@@ -794,6 +824,7 @@ class PropagateBlogPost(SendWebmentions):
 
 application = webapp2.WSGIApplication([
     ('/_ah/queue/poll(-now)?', Poll),
+    ('/_ah/queue/discover', Discover),
     ('/_ah/queue/propagate', PropagateResponse),
     ('/_ah/queue/propagate-blogpost', PropagateBlogPost),
     ], debug=appengine_config.DEBUG)

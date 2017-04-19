@@ -58,6 +58,23 @@ class TaskQueueTest(testutil.ModelsTest):
                                           **kwargs)
     self.assertEqual(expected_status, resp.status_int)
 
+  def assert_responses(self, expected=None, ignore=tuple()):
+    """Asserts that all of self.responses are saved."""
+    if expected is None:
+      expected = self.responses
+
+    # sort fields in json properties since they're compared as strings
+    stored = list(Response.query())
+    for resp in expected + stored:
+      if 'activities_json' not in ignore:
+        resp.activities_json = [json.dumps(json.loads(a), sort_keys=True)
+                                for a in resp.activities_json]
+      if 'response_json' not in ignore:
+        resp.response_json = json.dumps(json.loads(resp.response_json), sort_keys=True)
+
+    self.assert_entities_equal(expected, stored,
+                               ignore=('created', 'updated') + ignore)
+
 
 class PollTest(TaskQueueTest):
 
@@ -86,23 +103,6 @@ class PollTest(TaskQueueTest):
       expected_status=expected_status,
       params={'source_key': source.key.urlsafe(),
               'last_polled': '1970-01-01-00-00-00'})
-
-  def assert_responses(self, expected=None, ignore=tuple()):
-    """Asserts that all of self.responses are saved."""
-    if expected is None:
-      expected = self.responses
-
-    # sort fields in json properties since they're compared as strings
-    stored = list(Response.query())
-    for resp in expected + stored:
-      if 'activities_json' not in ignore:
-        resp.activities_json = [json.dumps(json.loads(a), sort_keys=True)
-                                for a in resp.activities_json]
-      if 'response_json' not in ignore:
-        resp.response_json = json.dumps(json.loads(resp.response_json), sort_keys=True)
-
-    self.assert_entities_equal(expected, stored,
-                               ignore=('created', 'updated') + ignore)
 
   def assert_task_eta(self, countdown):
     """Checks the current poll task's eta. Handles the random range.
@@ -1209,6 +1209,46 @@ class PollTest(TaskQueueTest):
 
     source = self.sources[0].key.get()
     self.assert_equals([reply], json.loads(source.seen_responses_cache_json))
+
+
+class DiscoverTest(TaskQueueTest):
+
+  post_url = '/_ah/queue/discover'
+
+  def setUp(self):
+    super(DiscoverTest, self).setUp()
+    # FakeGrSource.DOMAIN = 'source'
+    appengine_config.DEBUG = True
+
+  def tearDown(self):
+    # FakeGrSource.DOMAIN = 'fa.ke'
+    appengine_config.DEBUG = False
+    super(DiscoverTest, self).tearDown()
+
+  def test_silo_new(self):
+    """A new silo post we haven't seen before."""
+    self.mox.StubOutWithMock(FakeSource, 'get_activities')
+    FakeSource.get_activities(
+      activity_id='b', fetch_replies=True, fetch_likes=True,fetch_shares=True
+      ).AndReturn([self.activities[1]])
+    self.mox.ReplayAll()
+
+    self.assertEqual(0, Response.query().count())
+    super(DiscoverTest, self).post_task(params={
+      'source_key': self.sources[0].key.urlsafe(),
+      'post_id': 'b',
+    })
+
+    responses = self.responses[4:8]
+    # self.assertEqual(3, Response.query().count())
+    self.assert_responses(expected=responses)
+
+    tasks = self.taskqueue_stub.GetTasks('propagate')
+    for task in tasks:
+      self.assertEqual('/_ah/queue/propagate', task['url'])
+    keys = set(ndb.Key(urlsafe=testutil.get_task_params(t)['response_key'])
+               for t in tasks)
+    self.assert_equals(keys, set(r.key for r in responses))
 
 
 class PropagateTest(TaskQueueTest):

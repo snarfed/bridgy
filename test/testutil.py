@@ -95,8 +95,7 @@ class FakeGrSource(gr_source.Source):
                      (tag['verb'] == 'like' and fetch_likes) or
                      (tag['verb'] == 'share' and fetch_shares) or
                      (tag['verb'] == 'mention' and fetch_mentions) or
-                     tag['verb'] == 'react'
-                    ]
+                     tag['verb'] == 'react']
       if 'replies' in obj and not fetch_replies:
         obj['replies']['items'] = []
 
