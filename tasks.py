@@ -64,6 +64,7 @@ class Poll(webapp2.RequestHandler):
 
   1-4 are in backfeed(); 5 is in poll().
   """
+  RESTART_EXISTING_TASKS = False  # overridden in Discover
 
   def post(self, *path_args):
     logging.debug('Params: %s', self.request.params)
@@ -402,7 +403,7 @@ class Poll(webapp2.RequestHandler):
         original_posts=resp.get('originals', []))
       if urls_to_activity and len(activities) > 1:
         resp_entity.urls_to_activity=json.dumps(urls_to_activity)
-      resp_entity.get_or_save(source)
+      resp_entity.get_or_save(source, restart=self.RESTART_EXISTING_TASKS)
 
     # update cache
     if pruned_responses:
@@ -469,6 +470,7 @@ class Discover(Poll):
 
   Original feature request: https://github.com/snarfed/bridgy/issues/579
   """
+  RESTART_EXISTING_TASKS = True
 
   def post(self):
     logging.debug('Params: %s', self.request.params)
@@ -484,7 +486,11 @@ class Discover(Poll):
     post_id = util.get_required_param(self, 'post_id')
     activities = source.get_activities(fetch_replies=True, fetch_likes=True,
                                        fetch_shares=True, activity_id=post_id)
-    assert len(activities) <= 1
+    if not activities:
+      logging.info('Post %s not found.', post_id)
+      return
+
+    assert len(activities) == 1
     source.updates = {}
     self.backfeed(source, activities={a['id']: a for a in activities})
 

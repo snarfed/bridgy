@@ -1217,15 +1217,28 @@ class DiscoverTest(TaskQueueTest):
 
   def setUp(self):
     super(DiscoverTest, self).setUp()
-    # FakeGrSource.DOMAIN = 'source'
     appengine_config.DEBUG = True
 
   def tearDown(self):
-    # FakeGrSource.DOMAIN = 'fa.ke'
     appengine_config.DEBUG = False
     super(DiscoverTest, self).tearDown()
 
-  def test_silo_new(self):
+  def discover(self):
+    super(DiscoverTest, self).post_task(params={
+      'source_key': self.sources[0].key.urlsafe(),
+      'post_id': 'b',
+    })
+
+  def assert_propagating(self, responses):
+    """Asserts that all of the responses have propagate tasks."""
+    tasks = self.taskqueue_stub.GetTasks('propagate')
+    for task in tasks:
+      self.assertEqual('/_ah/queue/propagate', task['url'])
+    keys = set(ndb.Key(urlsafe=testutil.get_task_params(t)['response_key'])
+               for t in tasks)
+    self.assert_equals(set(r.key for r in responses), keys)
+
+  def test_new(self):
     """A new silo post we haven't seen before."""
     self.mox.StubOutWithMock(FakeSource, 'get_activities')
     FakeSource.get_activities(
@@ -1234,21 +1247,37 @@ class DiscoverTest(TaskQueueTest):
     self.mox.ReplayAll()
 
     self.assertEqual(0, Response.query().count())
-    super(DiscoverTest, self).post_task(params={
-      'source_key': self.sources[0].key.urlsafe(),
-      'post_id': 'b',
-    })
+    self.discover()
+    self.assert_responses(self.responses[4:8])
+    self.assert_propagating(self.responses[4:8])
 
-    responses = self.responses[4:8]
-    # self.assertEqual(3, Response.query().count())
-    self.assert_responses(expected=responses)
+  def test_no_post(self):
+    """Silo post not found."""
+    FakeGrSource.activities = []
+    self.discover()
+    self.assert_responses([])
+    self.assert_propagating([])
 
-    tasks = self.taskqueue_stub.GetTasks('propagate')
-    for task in tasks:
-      self.assertEqual('/_ah/queue/propagate', task['url'])
-    keys = set(ndb.Key(urlsafe=testutil.get_task_params(t)['response_key'])
-               for t in tasks)
-    self.assert_equals(keys, set(r.key for r in responses))
+  def test_restart_existing_tasks(self):
+    FakeGrSource.activities = [self.activities[1]]
+
+    resps = self.responses[4:8]
+    resps[0].status = 'new'
+    resps[1].status = 'processing'
+    resps[2].status = 'complete'
+    resps[3].status = 'error'
+    resps[0].sent = resps[1].error = resps[2].failed = resps[3].skipped = \
+        ['http://target/2']
+    for resp in resps:
+      resp.put()
+
+    self.discover()
+
+    for resp in Response.query():
+      self.assert_equals('new', resp.status)
+      self.assert_equals(['http://target1/post/url', 'http://target/2'],
+                         resp.unsent, resp.key)
+    self.assert_propagating(resps)
 
 
 class PropagateTest(TaskQueueTest):

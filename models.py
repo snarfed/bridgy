@@ -748,7 +748,7 @@ class Response(Webmentions):
     return type if type in VERB_TYPES else 'comment'
 
   @ndb.transactional(xg=True)
-  def get_or_save(self, source):
+  def get_or_save(self, source, restart=False):
     resp = super(Response, self).get_or_save()
 
     if (self.type != resp.type or
@@ -756,15 +756,21 @@ class Response(Webmentions):
                                          json.loads(self.response_json),
                                          log=True)):
       logging.info('Response changed! Re-propagating. Original: %s' % resp)
-      resp.status = 'new'
-      resp.unsent += resp.sent + resp.error + resp.failed + resp.skipped
-      resp.sent = resp.error = resp.failed = resp.skipped = []
       resp.old_response_jsons = resp.old_response_jsons[:10] + [resp.response_json]
       resp.response_json = self.response_json
-      resp.put()
-      self.add_task(transactional=True)
+      resp.restart()
+    elif restart:
+      resp.restart()
 
     return resp
+
+  def restart(self):
+    """Moves a response and its targets to 'new' and adds a propagate task."""
+    self.status = 'new'
+    self.unsent += self.sent + self.error + self.failed + self.skipped
+    self.sent = self.error = self.failed = self.skipped = []
+    self.put()
+    self.add_task(transactional=True)
 
 
 class BlogPost(Webmentions):
