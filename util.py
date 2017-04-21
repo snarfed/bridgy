@@ -106,17 +106,6 @@ def add_poll_task(source, now=False, **kwargs):
   """Adds a poll task for the given source entity.
 
   Pass now=True to insert a poll-now task.
-
-  Tasks inserted from a backend (e.g. twitter_streaming) are sent to that
-  backend by default, which doesn't work in the dev_appserver. Setting the
-  target version to 'default' in queue.yaml doesn't work either, but setting it
-  here does.
-
-  Note the constant. The string 'default' works in dev_appserver, but routes to
-  default.brid-gy.appspot.com in prod instead of brid.gy, which breaks SSL
-  because appspot.com doesn't have a third-level wildcard cert.
-  ...but they claim that's fixed now:
-    https://issuetracker.google.com/issues/35896683
   """
   last_polled_str = source.last_polled.strftime(POLL_TASK_DATETIME_FORMAT)
   queue = 'poll-now' if now else 'poll'
@@ -128,21 +117,17 @@ def add_poll_task(source, now=False, **kwargs):
 
 
 def add_propagate_task(entity, **kwargs):
-  """Adds a propagate task for the given response entity.
-  """
+  """Adds a propagate task for the given response entity."""
   task = taskqueue.add(queue_name='propagate',
                        params={'response_key': entity.key.urlsafe()},
-                       target=taskqueue.DEFAULT_APP_VERSION,
                        **kwargs)
   logging.info('Added propagate task: %s', task.name)
 
 
 def add_propagate_blogpost_task(entity, **kwargs):
-  """Adds a propagate-blogpost task for the given response entity.
-  """
+  """Adds a propagate-blogpost task for the given response entity."""
   task = taskqueue.add(queue_name='propagate-blogpost',
                        params={'key': entity.key.urlsafe()},
-                       target=taskqueue.DEFAULT_APP_VERSION,
                        **kwargs)
   logging.info('Added propagate-blogpost task: %s', task.name)
 
