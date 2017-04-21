@@ -379,3 +379,16 @@ class AppTest(testutil.ModelsTest):
                       resp.headers['Set-Cookie'])
     self.assertEquals(302, resp.status_int)
     self.assertEquals('http://localhost/#!Logged%20out.', resp.headers['Location'])
+
+  def test_discover(self):
+    pass
+
+  def test_discover_param_errors(self):
+    for url in ('/discover',
+                '/discover?key=bad',
+                '/discover?key=%s' % self.sources[0].key,
+                '/discover?url=bad',
+                '/discover?url=http://foo/bar',
+                ):
+      resp = app.application.get_response(url, method='POST')
+      self.assertEquals(400, resp.status_int)

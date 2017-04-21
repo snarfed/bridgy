@@ -12,6 +12,10 @@ import urlparse
 
 import appengine_config
 
+from google.appengine.api import memcache
+from google.appengine.ext import ndb
+from google.appengine.ext.ndb.stats import KindStat, KindPropertyNameStat
+from google.net.proto.ProtocolBuffer import ProtocolBufferDecodeError
 from granary import source as gr_source
 from oauth_dropins import blogger_v2 as oauth_blogger_v2
 from oauth_dropins import facebook as oauth_facebook
@@ -23,6 +27,8 @@ from oauth_dropins import tumblr as oauth_tumblr
 from oauth_dropins import twitter as oauth_twitter
 from oauth_dropins import wordpress_rest as oauth_wordpress_rest
 from oauth_dropins.webutil import handlers as webutil_handlers
+import webapp2
+
 from blogger import Blogger
 from tumblr import Tumblr
 from wordpress_rest import WordPress
@@ -41,11 +47,6 @@ import medium
 import tumblr
 import twitter
 import wordpress_rest
-
-from google.appengine.api import memcache
-from google.appengine.ext import ndb
-from google.appengine.ext.ndb.stats import KindStat, KindPropertyNameStat
-import webapp2
 
 RECENT_PRIVATE_POSTS_THRESHOLD = 5
 
@@ -626,6 +627,17 @@ class RetryHandler(util.Handler):
                   entity.source.get().bridgy_url(self))
 
 
+class DiscoverHandler(util.Handler):
+  def post(self):
+    try:
+      source = ndb.Key(urlsafe=util.get_required_param(self, 'source_key')).get()
+      if not entity:
+        self.abort(400, 'Source key not found')
+    except ProtocolBufferDecodeError:
+      logging.exception('Bad value for source_key')
+      self.abort(400, 'Bad value for source_key')
+
+
 class RedirectToFrontPageHandler(util.Handler):
   @util.canonicalize_domain
   def get(self, feature):
@@ -668,6 +680,7 @@ application = webapp2.WSGIApplication(
    ('/about/?', AboutHandler),
    ('/delete/start', DeleteStartHandler),
    ('/delete/finish', DeleteFinishHandler),
+   ('/discover', DiscoverHandler),
    ('/poll-now', PollNowHandler),
    ('/crawl-now', CrawlNowHandler),
    ('/retry', RetryHandler),

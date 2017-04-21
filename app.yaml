@@ -137,7 +137,7 @@ handlers:
   script: admin.application
   secure: always
 
-- url: /(_ah/warmup|about|crawl-now|csp-report|delete/start|delete/finish|listen|logout|publish|poll-now|retry|users)?/?
+- url: /(_ah/warmup|about|crawl-now|csp-report|delete/start|delete/finish|discover|listen|logout|publish|poll-now|retry|users)?/?
   script: app.application
   secure: always
 
