@@ -380,9 +380,6 @@ class AppTest(testutil.ModelsTest):
     self.assertEquals(302, resp.status_int)
     self.assertEquals('http://localhost/#!Logged%20out.', resp.headers['Location'])
 
-  def test_discover_url_fetch_fails(self):
-    pass
-
   def test_discover_param_errors(self):
     for url in ('/discover',
                 '/discover?key=bad',
@@ -393,12 +390,30 @@ class AppTest(testutil.ModelsTest):
       resp = app.application.get_response(url, method='POST')
       self.assertEquals(400, resp.status_int)
 
-    resp = app.application.get_response(
-      '/discover?source_key=%s&url=http://not/site/or/silo' % self.sources[0].key.urlsafe(),
-      method='POST')
-    self.assertEquals(302, resp.status_int, resp.body)
+  def check_discover(self, url, expected_message):
+      resp = app.application.get_response(
+        '/discover?source_key=%s&url=%s' % (self.sources[0].key.urlsafe(), url),
+        method='POST')
+      detail = ' '.join((url, str(resp.status_int), repr(resp.body)))
+      self.assertEquals(302, resp.status_int, detail)
+      location = urlparse.urlparse(resp.headers['Location'])
+      self.assertEqual('/fake/%s' % self.sources[0].key.id(), location.path, detail)
+      self.assertEqual('!' + expected_message, urllib.unquote(location.fragment),
+                       detail)
 
-    location = urlparse.urlparse(resp.headers['Location'])
-    self.assertEquals(
-      '!Please enter a URL to your web site or a FakeSource FakeSource post label.',
-      urllib.unquote(location.fragment))
+  def test_discover_url_not_site_or_silo_error(self):
+    msg = 'Please enter a URL to your web site or a FakeSource FakeSource post label.'
+    for url in ('http://not/site/or/silo',): # 'http://fa.ke/not/a/post':
+      self.check_discover(url, msg)
+      self.assertEqual([], self.taskqueue_stub.GetTasks('propagate'))
+
+  def test_discover_url_silo_post(self):
+    msg = 'Discovering now. Refresh in a minute to see the results!'
+    self.check_discover('http://fa.ke/123', msg)
+
+    tasks = self.taskqueue_stub.GetTasks('discover')
+    self.assertEqual(1, len(tasks))
+    self.assertEqual({
+      'source_key': self.sources[0].key.urlsafe(),
+      'post_id': '123',
+    }, testutil.get_task_params(tasks[0]))

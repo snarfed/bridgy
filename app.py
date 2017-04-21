@@ -13,6 +13,7 @@ import urlparse
 import appengine_config
 
 from google.appengine.api import memcache
+from google.appengine.api import taskqueue
 from google.appengine.ext import ndb
 from google.appengine.ext.ndb.stats import KindStat, KindPropertyNameStat
 from google.net.proto.ProtocolBuffer import ProtocolBufferDecodeError
@@ -638,14 +639,26 @@ class DiscoverHandler(util.Handler):
       logging.exception('Bad value for source_key')
       self.abort(400, 'Bad value for source_key')
 
-    # validate URL
+    # validate URL, find silo post
     url = util.get_required_param(self, 'url')
     domain = util.domain_from_link(url)
-    if not util.domain_or_parent_in(domain, source.domains + [source.GR_CLASS.DOMAIN]):
-      error_msg = 'Please enter a URL to your web site or a %s %s.' % (
-        source.GR_CLASS.NAME, source.TYPE_LABELS.get('post') or 'post')
-      self.messages.add(error_msg)
-      self.redirect(source.bridgy_url(self))
+
+    if domain == source.GR_CLASS.DOMAIN:
+      post_id = source.GR_CLASS.post_id(url)
+      task = taskqueue.add(queue_name='discover', params={
+        'source_key': source.key.urlsafe(),
+        'post_id': post_id,
+      })
+      logging.info('Added discover task: %s', task.name)
+      self.messages.add('Discovering now. Refresh in a minute to see the results!')
+    elif util.domain_or_parent_in(domain, source.domains):
+      pass
+    else:
+      self.messages.add(
+        'Please enter a URL to your web site or a %s %s.' %
+          (source.GR_CLASS.NAME, source.TYPE_LABELS.get('post') or 'post'))
+
+    self.redirect(source.bridgy_url(self))
 
 
 class RedirectToFrontPageHandler(util.Handler):
