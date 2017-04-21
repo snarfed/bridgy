@@ -629,13 +629,23 @@ class RetryHandler(util.Handler):
 
 class DiscoverHandler(util.Handler):
   def post(self):
+    # load source
     try:
       source = ndb.Key(urlsafe=util.get_required_param(self, 'source_key')).get()
-      if not entity:
+      if not source:
         self.abort(400, 'Source key not found')
     except ProtocolBufferDecodeError:
       logging.exception('Bad value for source_key')
       self.abort(400, 'Bad value for source_key')
+
+    # validate URL
+    url = util.get_required_param(self, 'url')
+    domain = util.domain_from_link(url)
+    if not util.domain_or_parent_in(domain, source.domains + [source.GR_CLASS.DOMAIN]):
+      error_msg = 'Please enter a URL to your web site or a %s %s.' % (
+        source.GR_CLASS.NAME, source.TYPE_LABELS.get('post') or 'post')
+      self.messages.add(error_msg)
+      self.redirect(source.bridgy_url(self))
 
 
 class RedirectToFrontPageHandler(util.Handler):

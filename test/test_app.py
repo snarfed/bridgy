@@ -380,7 +380,7 @@ class AppTest(testutil.ModelsTest):
     self.assertEquals(302, resp.status_int)
     self.assertEquals('http://localhost/#!Logged%20out.', resp.headers['Location'])
 
-  def test_discover(self):
+  def test_discover_url_fetch_fails(self):
     pass
 
   def test_discover_param_errors(self):
@@ -392,3 +392,13 @@ class AppTest(testutil.ModelsTest):
                 ):
       resp = app.application.get_response(url, method='POST')
       self.assertEquals(400, resp.status_int)
+
+    resp = app.application.get_response(
+      '/discover?source_key=%s&url=http://not/site/or/silo' % self.sources[0].key.urlsafe(),
+      method='POST')
+    self.assertEquals(302, resp.status_int, resp.body)
+
+    location = urlparse.urlparse(resp.headers['Location'])
+    self.assertEquals(
+      '!Please enter a URL to your web site or a FakeSource FakeSource post label.',
+      urllib.unquote(location.fragment))
