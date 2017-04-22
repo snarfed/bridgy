@@ -356,7 +356,7 @@ def _process_author(source, author_url, refetch=False, store_blanks=True):
   results = {}
   for permalink, entry in permalink_to_entry.iteritems():
     logging.debug('processing permalink: %s', permalink)
-    new_results = _process_entry(
+    new_results = process_entry(
       source, permalink, entry, refetch, preexisting.get(permalink, []),
       store_blanks=store_blanks)
     for key, value in new_results.iteritems():
@@ -418,8 +418,8 @@ def _find_feed_items(feed_url, feed_doc):
   return feeditems
 
 
-def _process_entry(source, permalink, feed_entry, refetch, preexisting,
-                   store_blanks=True):
+def process_entry(source, permalink, feed_entry, refetch, preexisting,
+                  store_blanks=True):
   """Fetch and process an h-entry and save a new :class:`models.SyndicatedPost`.
 
   Args:
@@ -428,7 +428,7 @@ def _process_entry(source, permalink, feed_entry, refetch, preexisting,
     feed_entry: the h-feed version of the h-entry dict, often contains
       a partial version of the h-entry at the permalink
     refetch: boolean, whether to refetch and process entries we've seen before
-    preexisting: a list of previously discovered :class:`models.SyndicatedPost`\ s
+    preexisting: list of previously discovered :class:`models.SyndicatedPost`\ s
       for this permalink
     store_blanks: boolean, whether we should store blank
       :class:`models.SyndicatedPost`\ s when we don't find a relationship

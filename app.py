@@ -642,22 +642,24 @@ class DiscoverHandler(util.Handler):
     # validate URL, find silo post
     url = util.get_required_param(self, 'url')
     domain = util.domain_from_link(url)
+    msg = 'Discovering now. Refresh in a minute to see the results!'
 
     if domain == source.GR_CLASS.DOMAIN:
       post_id = source.GR_CLASS.post_id(url)
-      task = taskqueue.add(queue_name='discover', params={
-        'source_key': source.key.urlsafe(),
-        'post_id': post_id,
-      })
-      logging.info('Added discover task: %s', task.name)
-      self.messages.add('Discovering now. Refresh in a minute to see the results!')
+      util.add_discover_task(source, post_id)
     elif util.domain_or_parent_in(domain, source.domains):
-      pass
+      synd_links = original_post_discovery.process_entry(source, url, {}, False, [])
+      if synd_links:
+        for link in synd_links:
+          util.add_discover_task(source, source.GR_CLASS.post_id(link))
+      else:
+        msg = 'Failed to fetch <a href="%s">%s</a> or find a %s syndication link.' % (
+          url, url, source.GR_CLASS.NAME)
     else:
-      self.messages.add(
-        'Please enter a URL to your web site or a %s %s.' %
-          (source.GR_CLASS.NAME, source.TYPE_LABELS.get('post') or 'post'))
+      msg = 'Please enter a URL to your web site or a %s %s.' % (
+          source.GR_CLASS.NAME, source.TYPE_LABELS.get('post') or 'post')
 
+    self.messages.add(msg)
     self.redirect(source.bridgy_url(self))
 
 

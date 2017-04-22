@@ -76,7 +76,7 @@ class WebmentionHandler(WebmentionGetHandler):
             else fetched.content)
     doc = util.beautifulsoup_parse(text)
 
-    # parse microformats, convert to ActivityStreams
+    # parse microformats
     data = util.mf2py_parse(doc, fetched.url)
 
     # special case tumblr's markup: div#content > div.post > div.copy

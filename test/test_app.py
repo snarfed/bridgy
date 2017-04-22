@@ -16,7 +16,7 @@ import webapp2
 
 import app
 import models
-from models import Publish, PublishedPage
+from models import Publish, PublishedPage, SyndicatedPost
 import util
 import testutil
 import twitter
@@ -78,9 +78,9 @@ class AppTest(testutil.ModelsTest):
       json.dumps({'url': 'https://fa.ke/3'}),
     ]
     resp.put()
-    models.SyndicatedPost.insert(source, 'https://fa.ke/1', 'https://orig/1')
-    models.SyndicatedPost.insert(source, 'https://fa.ke/2', 'http://orig/2')
-    models.SyndicatedPost.insert(source, 'https://fa.ke/3', 'http://orig/3')
+    SyndicatedPost.insert(source, 'https://fa.ke/1', 'https://orig/1')
+    SyndicatedPost.insert(source, 'https://fa.ke/2', 'http://orig/2')
+    SyndicatedPost.insert(source, 'https://fa.ke/3', 'http://orig/3')
 
     # cached webmention endpoint
     memcache.set('W https skipped', 'asdf')
@@ -380,6 +380,37 @@ class AppTest(testutil.ModelsTest):
     self.assertEquals(302, resp.status_int)
     self.assertEquals('http://localhost/#!Logged%20out.', resp.headers['Location'])
 
+    self.sources[0].domains = ['si.te']
+    self.sources[0].put()
+
+
+class DiscoverTest(testutil.ModelsTest):
+
+  def setUp(self):
+    super(DiscoverTest, self).setUp()
+    self.sources[0].domains = ['si.te']
+    self.sources[0].put()
+
+  def check_discover(self, url, expected_message):
+      resp = app.application.get_response(
+        '/discover?source_key=%s&url=%s' % (self.sources[0].key.urlsafe(), url),
+        method='POST')
+      location = urlparse.urlparse(resp.headers['Location'])
+      detail = ' '.join((url, str(resp.status_int), `location`, `resp.body`))
+      self.assertEquals(302, resp.status_int, detail)
+      self.assertEqual('/fake/%s' % self.sources[0].key.id(), location.path, detail)
+      self.assertEqual('!' + expected_message, urllib.unquote(location.fragment),
+                       detail)
+
+  def check_fail(self, body, **kwargs):
+    self.expect_requests_get('http://si.te/123', body, **kwargs)
+    self.mox.ReplayAll()
+
+    self.check_discover('http://si.te/123',
+        'Failed to fetch <a href="http://si.te/123">http://si.te/123</a> or '
+        'find a FakeSource syndication link.')
+    self.assertEqual([], self.taskqueue_stub.GetTasks('discover'))
+
   def test_discover_param_errors(self):
     for url in ('/discover',
                 '/discover?key=bad',
@@ -389,27 +420,17 @@ class AppTest(testutil.ModelsTest):
                 ):
       resp = app.application.get_response(url, method='POST')
       self.assertEquals(400, resp.status_int)
-
-  def check_discover(self, url, expected_message):
-      resp = app.application.get_response(
-        '/discover?source_key=%s&url=%s' % (self.sources[0].key.urlsafe(), url),
-        method='POST')
-      detail = ' '.join((url, str(resp.status_int), repr(resp.body)))
-      self.assertEquals(302, resp.status_int, detail)
-      location = urlparse.urlparse(resp.headers['Location'])
-      self.assertEqual('/fake/%s' % self.sources[0].key.id(), location.path, detail)
-      self.assertEqual('!' + expected_message, urllib.unquote(location.fragment),
-                       detail)
+      self.assertEqual([], self.taskqueue_stub.GetTasks('discover'))
 
   def test_discover_url_not_site_or_silo_error(self):
     msg = 'Please enter a URL to your web site or a FakeSource FakeSource post label.'
     for url in ('http://not/site/or/silo',): # 'http://fa.ke/not/a/post':
       self.check_discover(url, msg)
-      self.assertEqual([], self.taskqueue_stub.GetTasks('propagate'))
+      self.assertEqual([], self.taskqueue_stub.GetTasks('discover'))
 
   def test_discover_url_silo_post(self):
-    msg = 'Discovering now. Refresh in a minute to see the results!'
-    self.check_discover('http://fa.ke/123', msg)
+    self.check_discover('http://fa.ke/123',
+        'Discovering now. Refresh in a minute to see the results!')
 
     tasks = self.taskqueue_stub.GetTasks('discover')
     self.assertEqual(1, len(tasks))
@@ -417,3 +438,47 @@ class AppTest(testutil.ModelsTest):
       'source_key': self.sources[0].key.urlsafe(),
       'post_id': '123',
     }, testutil.get_task_params(tasks[0]))
+
+  def test_discover_url_site_post_fetch_fails(self):
+    self.check_fail('fooey', status_code=404)
+
+  def test_discover_url_site_post_fetch_no_mf2(self):
+    self.check_fail('<html><body>foo</body></html>')
+
+  def test_discover_url_site_post_fetch_no_hentry(self):
+    self.check_fail('<html><body><div class="h-card">foo</div></body></html>')
+
+  def test_discover_url_site_post_fetch_no_syndication_links(self):
+    self.check_fail('<html><body><div class="h-entry">foo</div></body></html>')
+
+  def test_discover_url_site_post_fetch_syndication_link_to_other_silo(self):
+    self.check_fail("""
+<div class="h-entry">
+  foo <a class="u-syndication" href="http://other/silo"></a>
+</div>""")
+
+  def test_discover_url_site_post_fetch_syndication_link_to_other_silo(self):
+    self.expect_requests_get('http://si.te/123', """
+<div class="h-entry">
+  foo
+  <a class="u-syndication" href="http://fa.ke/222"></a>
+  <a class="u-syndication" href="http://other/silo"></a>
+  <a class="u-syndication" href="http://fa.ke/post/444"></a>
+</div>""")
+    self.mox.ReplayAll()
+
+    self.assertEqual(0, SyndicatedPost.query().count())
+    self.check_discover('http://si.te/123',
+        'Discovering now. Refresh in a minute to see the results!')
+
+    self.assertItemsEqual([
+      {'https://fa.ke/222': 'http://si.te/123'},
+      {'https://fa.ke/post/444': 'http://si.te/123'},
+      ], [{sp.syndication: sp.original} for sp in models.SyndicatedPost.query()])
+
+    tasks = self.taskqueue_stub.GetTasks('discover')
+    key = self.sources[0].key.urlsafe()
+    self.assertEqual([
+      {'source_key': key, 'post_id': '222'},
+      {'source_key': key, 'post_id': '444'},
+    ], [testutil.get_task_params(task) for task in tasks])
