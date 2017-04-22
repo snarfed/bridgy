@@ -407,7 +407,7 @@ class DiscoverTest(testutil.ModelsTest):
     self.mox.ReplayAll()
 
     self.check_discover('http://si.te/123',
-        'Failed to fetch <a href="http://si.te/123">http://si.te/123</a> or '
+        'Failed to fetch <a href="http://si.te/123">si.te/123</a> or '
         'find a FakeSource syndication link.')
     self.assertEqual([], self.taskqueue_stub.GetTasks('discover'))
 
@@ -423,7 +423,7 @@ class DiscoverTest(testutil.ModelsTest):
       self.assertEqual([], self.taskqueue_stub.GetTasks('discover'))
 
   def test_discover_url_not_site_or_silo_error(self):
-    msg = 'Please enter a URL to your web site or a FakeSource FakeSource post label.'
+    msg = 'Please enter a URL on either your web site or FakeSource.'
     for url in ('http://not/site/or/silo',): # 'http://fa.ke/not/a/post':
       self.check_discover(url, msg)
       self.assertEqual([], self.taskqueue_stub.GetTasks('discover'))

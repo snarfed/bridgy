@@ -759,7 +759,7 @@ class Response(Webmentions):
       resp.old_response_jsons = resp.old_response_jsons[:10] + [resp.response_json]
       resp.response_json = self.response_json
       resp.restart()
-    elif restart:
+    elif restart and resp is not self:  # ie it already existed
       resp.restart()
 
     return resp

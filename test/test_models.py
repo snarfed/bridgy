@@ -58,6 +58,17 @@ class ResponseTest(testutil.ModelsTest):
     self.assert_entities_equal(saved, same)
     self.assert_no_propagate_task()
 
+  def test_get_or_save_restart(self):
+    response = self.responses[0]
+
+    # new. should add one propagate task total.
+    saved = response.get_or_save(self.sources[0], restart=True)
+    self.assert_propagate_task()
+
+    # existing. should add one more propagate task.
+    same = saved.get_or_save(self.sources[0], restart=True)
+    self.assert_propagate_task()
+
   def test_get_or_save_activity_changed(self):
     """If the response activity has changed, we should update and resend."""
     # original response

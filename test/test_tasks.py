@@ -149,9 +149,9 @@ class PollTest(TaskQueueTest):
     tasks = self.taskqueue_stub.GetTasks('propagate')
     for task in tasks:
       self.assertEqual('/_ah/queue/propagate', task['url'])
-    keys = set(ndb.Key(urlsafe=testutil.get_task_params(t)['response_key'])
-               for t in tasks)
-    self.assert_equals(keys, set(r.key for r in self.responses))
+    keys = [ndb.Key(urlsafe=testutil.get_task_params(t)['response_key'])
+            for t in tasks]
+    self.assert_equals(keys, [r.key for r in self.responses])
 
     tasks = self.taskqueue_stub.GetTasks('poll')
     self.assertEqual(1, len(tasks))
@@ -1234,15 +1234,15 @@ class DiscoverTest(TaskQueueTest):
     tasks = self.taskqueue_stub.GetTasks('propagate')
     for task in tasks:
       self.assertEqual('/_ah/queue/propagate', task['url'])
-    keys = set(ndb.Key(urlsafe=testutil.get_task_params(t)['response_key'])
-               for t in tasks)
-    self.assert_equals(set(r.key for r in responses), keys)
+    keys = [ndb.Key(urlsafe=testutil.get_task_params(t)['response_key'])
+            for t in tasks]
+    self.assert_equals([r.key for r in responses], keys)
 
   def test_new(self):
     """A new silo post we haven't seen before."""
     self.mox.StubOutWithMock(FakeSource, 'get_activities')
     FakeSource.get_activities(
-      activity_id='b', fetch_replies=True, fetch_likes=True,fetch_shares=True
+      activity_id='b', fetch_replies=True, fetch_likes=True, fetch_shares=True
       ).AndReturn([self.activities[1]])
     self.mox.ReplayAll()
 
