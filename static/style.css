@@ -46,6 +46,10 @@
   font-size: 1.5em;
 }
 
+.small {
+  font-size: .8em;
+}
+
 #header {
   text-align: left;
 }

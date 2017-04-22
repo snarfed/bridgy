@@ -107,11 +107,11 @@ WordPress.com, <a href="/">sign up here!</a>
       <time class="dt-bridgy-last-polled"
             datetime="{{ source.last_poll_attempt|date:'c' }}"
             title="{{ source.last_poll_attempt|date:'r' }}">
-        {{ source.last_poll_attempt|timesince }} ago</time></a>.
+        {{ source.last_poll_attempt|timesince }} ago</time></a>,
   {% endif %}
 
   <!-- next poll -->
-  Next poll in
+  next in
   <time class="dt-bridgy-next-poll" datetime="{{ next_poll|date:'c' }}"
         title="{{ next_poll|date:'r' }}">
     {{ next_poll|timeuntil }}</time>.
@@ -120,9 +120,8 @@ WordPress.com, <a href="/">sign up here!</a>
   <button id="poll-now-button" type="submit" class="btn btn-default">Poll now</button>
 </form>
 {% endif %}
-</p>
-
-<p>
+<br>
+<span class="small">
 <!-- last_syndication_url -->
 {% if source.last_syndication_url and source.last_syndication_url > EPOCH %}
   Last <a href="/about#link">syndication link</a> found
@@ -169,6 +168,7 @@ WordPress.com, <a href="/">sign up here!</a>
 <button id="crawl-now-button" type="submit" class="btn btn-default">Crawl now</button>
 </form>
 {% endif %}
+</span>
 </p>
 
 <!-- Discover button -->
