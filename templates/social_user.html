@@ -171,6 +171,17 @@ WordPress.com, <a href="/">sign up here!</a>
 {% endif %}
 </p>
 
+<!-- Discover button -->
+<form method="post" action="/discover">
+<p>
+ <label id="discover-label" for="discover-url">Enter post URL:</label>
+ <input id="discover-url" name="url" type="url" required alt="URL"></input>
+ <input id="discover-source-key" name="source_key" type="hidden"
+        value="{{ source.key.urlsafe }}" />
+ <button id="discover-button" type="submit" class="btn btn-default">Discover</button>
+</p>
+</form>
+
 
 <!-- Listen signup buttons -->
 {% else %}

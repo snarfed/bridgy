@@ -653,11 +653,10 @@ class DiscoverHandler(util.Handler):
         for link in synd_links:
           util.add_discover_task(source, source.GR_CLASS.post_id(link))
       else:
-        msg = 'Failed to fetch <a href="%s">%s</a> or find a %s syndication link.' % (
-          url, url, source.GR_CLASS.NAME)
+        msg = 'Failed to fetch %s or find a %s syndication link.' % (
+          util.pretty_link(url), source.GR_CLASS.NAME)
     else:
-      msg = 'Please enter a URL to your web site or a %s %s.' % (
-          source.GR_CLASS.NAME, source.TYPE_LABELS.get('post') or 'post')
+      msg = 'Please enter a URL on either your web site or %s.' % source.GR_CLASS.NAME
 
     self.messages.add(msg)
     self.redirect(source.bridgy_url(self))
