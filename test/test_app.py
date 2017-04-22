@@ -442,22 +442,22 @@ class DiscoverTest(testutil.ModelsTest):
   def test_discover_url_site_post_fetch_fails(self):
     self.check_fail('fooey', status_code=404)
 
-  def test_discover_url_site_post_fetch_no_mf2(self):
+  def test_discover_url_site_post_no_mf2(self):
     self.check_fail('<html><body>foo</body></html>')
 
-  def test_discover_url_site_post_fetch_no_hentry(self):
+  def test_discover_url_site_post_no_hentry(self):
     self.check_fail('<html><body><div class="h-card">foo</div></body></html>')
 
-  def test_discover_url_site_post_fetch_no_syndication_links(self):
+  def test_discover_url_site_post_no_syndication_links(self):
     self.check_fail('<html><body><div class="h-entry">foo</div></body></html>')
 
-  def test_discover_url_site_post_fetch_syndication_link_to_other_silo(self):
+  def test_discover_url_site_post_syndication_link_to_other_silo(self):
     self.check_fail("""
 <div class="h-entry">
   foo <a class="u-syndication" href="http://other/silo"></a>
 </div>""")
 
-  def test_discover_url_site_post_fetch_syndication_link_to_other_silo(self):
+  def test_discover_url_site_post_syndication_links(self):
     self.expect_requests_get('http://si.te/123', """
 <div class="h-entry">
   foo
@@ -482,3 +482,21 @@ class DiscoverTest(testutil.ModelsTest):
       {'source_key': key, 'post_id': '222'},
       {'source_key': key, 'post_id': '444'},
     ], [testutil.get_task_params(task) for task in tasks])
+
+  def test_discover_url_site_post_last_feed_syndication_url(self):
+    self.sources[0].last_feed_syndication_url = util.now_fn()
+    self.sources[0].put()
+
+    self.expect_requests_get('http://si.te/123', """
+<div class="h-entry">
+  <a class="u-syndication" href="http://fa.ke/222"></a>
+</div>""")
+    self.mox.ReplayAll()
+
+    self.check_discover('http://si.te/123',
+        'Discovering now. Refresh in a minute to see the results!')
+
+    tasks = self.taskqueue_stub.GetTasks('discover')
+    key = self.sources[0].key.urlsafe()
+    self.assertEqual([{'source_key': key, 'post_id': '222'}],
+                     [testutil.get_task_params(task) for task in tasks])

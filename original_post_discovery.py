@@ -461,7 +461,7 @@ def process_entry(source, permalink, feed_entry, refetch, preexisting,
 
   if results:
     source.updates['last_feed_syndication_url'] = util.now_fn()
-  elif not source.last_feed_syndication_url:
+  elif not source.last_feed_syndication_url or not feed_entry:
     # fetch the full permalink page if we think it might have more details
     parsed = None
     try:
