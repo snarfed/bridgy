@@ -49,15 +49,14 @@ SOURCE_KINDS = (
   'Flickr',
   'GooglePlusPage',
   'Medium',
-  'Instagram ',
-  'Tumblr ',
-  'Twitter ',
-  'WordPress ',
+  'Instagram',
+  'Tumblr',
+  'Twitter',
+  'WordPress',
 )
-KINDS = SOURCE_KINDS + ('Response ', 'BlogPost ', 'Publish ', 'BlogWebmention ')
-FEATURES = ('listen ', 'publish ', 'webmention ')
-INCLUDE_PROPS = {'features ', 'sent ', 'unsent ', 'error ', 'failed ', 'skipped ',
-'links ', 'domains ', 'created ', 'updated '}
+KINDS = SOURCE_KINDS + ('Response', 'BlogPost', 'Publish', 'BlogWebmention')
+FEATURES = ('listen', 'publish', 'webmention')
+INCLUDE_PROPS = {'features', 'sent', 'unsent', 'error', 'failed', 'skipped', 'links', 'domains', 'created', 'updated'}
 
 # maps string kind to list of entities (property dicts)
 all_entities = collections.defaultdict(list)

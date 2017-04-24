@@ -1,13 +1,15 @@
 #!/usr/local/bin/python
-"""Dump the domains of all web site links in user profiles.
+"""Dump all domains in user profiles and that we've sent webmentions to.
 
-...along with the number of different users who have each domain in their profile.
+Profile domains include the number of different users who have each domain in
+their profile.
 
-From https://github.com/snarfed/bridgy/issues/490#issuecomment-143572623
+Started from https://github.com/snarfed/bridgy/issues/490#issuecomment-143572623
 """
 
 import collections
 import models
+from models import Response
 import blogger
 import facebook
 import flickr
@@ -28,3 +30,17 @@ with open('domains.txt', 'w') as f:
   f.write('domain,num_users\n')
   f.write('\n'.join(str(item) for item in reversed(sorted(
     '%s,%s' % (item[1], item[0]) for item in domains.items()))))
+
+with open('domains_sent.txt', 'w') as f:
+  url = ''
+  while True:
+    resp = Response.query(Response.sent > url).get(projection=['sent'])
+    if not resp:
+      break
+    domain = None
+    for sent in resp.sent:
+      parsed = urlparse.urlparse(sent)
+      if sent > url and (domain is None or parsed.netloc < domain):
+        domain = parsed.netloc
+    url = urlparse.urlunparse(parsed[:2] + ('', '', '', '')) + chr(ord('/') + 1)
+    print domain
