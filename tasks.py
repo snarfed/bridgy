@@ -484,15 +484,24 @@ class Discover(Poll):
                  source.bridgy_url(self))
 
     post_id = util.get_required_param(self, 'post_id')
-    activities = source.get_activities(fetch_replies=True, fetch_likes=True,
-                                       fetch_shares=True, activity_id=post_id)
-    if not activities:
-      logging.info('Post %s not found.', post_id)
-      return
-
-    assert len(activities) == 1
     source.updates = {}
-    self.backfeed(source, activities={a['id']: a for a in activities})
+
+    try:
+      activities = source.get_activities(fetch_replies=True, fetch_likes=True,
+                                         fetch_shares=True, activity_id=post_id)
+      if not activities:
+        logging.info('Post %s not found.', post_id)
+        return
+      assert len(activities) == 1
+      self.backfeed(source, activities={activities[0]['id']: activities[0]})
+    except Exception, e:
+      code, body = util.interpret_http_exception(e)
+      if (code and (code in util.HTTP_RATE_LIMIT_CODES or int(code) / 100 == 5)
+            or util.is_connection_failure(e)):
+        logging.error('API call failed; giving up. %s: %s\n%s', code, body, e)
+        self.abort(util.ERROR_HTTP_RETURN_CODE)
+      else:
+        raise
 
 
 class SendWebmentions(webapp2.RequestHandler):

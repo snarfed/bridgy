@@ -75,6 +75,17 @@ class TaskQueueTest(testutil.ModelsTest):
     self.assert_entities_equal(expected, stored,
                                ignore=('created', 'updated') + ignore)
 
+  def expect_get_activities(self, **kwargs):
+    """Adds and returns an expected get_activities_response() call."""
+    self.mox.StubOutWithMock(FakeSource, 'get_activities_response')
+    params = {
+      'fetch_replies': True,
+      'fetch_likes': True,
+      'fetch_shares': True,
+    }
+    params.update(kwargs)
+    return FakeSource.get_activities_response(**params)
+
 
 class PollTest(TaskQueueTest):
 
@@ -119,19 +130,15 @@ class PollTest(TaskQueueTest):
 
   def expect_get_activities(self, **kwargs):
     """Adds and returns an expected get_activities_response() call."""
-    self.mox.StubOutWithMock(FakeSource, 'get_activities_response')
-    params = {
-      'fetch_replies': True,
-      'fetch_likes': True,
-      'fetch_shares': True,
+    full_kwargs = {
       'fetch_mentions': True,
       'count': mox.IgnoreArg(),
       'etag': None,
       'min_id': None,
       'cache': mox.IgnoreArg(),
     }
-    params.update(kwargs)
-    return FakeSource.get_activities_response(**params)
+    full_kwargs.update(kwargs)
+    return super(PollTest, self).expect_get_activities(**full_kwargs)
 
   def test_poll(self):
     """A normal poll task."""
@@ -1223,11 +1230,11 @@ class DiscoverTest(TaskQueueTest):
     appengine_config.DEBUG = False
     super(DiscoverTest, self).tearDown()
 
-  def discover(self):
+  def discover(self, **kwargs):
     super(DiscoverTest, self).post_task(params={
       'source_key': self.sources[0].key.urlsafe(),
       'post_id': 'b',
-    })
+    }, **kwargs)
 
   def assert_propagating(self, responses):
     """Asserts that all of the responses have propagate tasks."""
@@ -1278,6 +1285,15 @@ class DiscoverTest(TaskQueueTest):
       self.assert_equals(['http://target1/post/url', 'http://target/2'],
                          resp.unsent, resp.key)
     self.assert_propagating(resps)
+
+  def test_get_activities_error(self):
+    self.expect_get_activities(activity_id='b').AndRaise(
+      urllib2.HTTPError('url', 429, 'Rate limited', {}, None))
+    self.mox.ReplayAll()
+
+    self.discover(expected_status=ERROR_HTTP_RETURN_CODE)
+    self.assert_responses([])
+    self.assert_propagating([])
 
 
 class PropagateTest(TaskQueueTest):
