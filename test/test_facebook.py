@@ -17,10 +17,11 @@ import appengine_config
 from google.appengine.ext import ndb
 import granary
 from granary import facebook as gr_facebook
-from granary.facebook import API_COMMENTS_ALL, API_EVENT, API_NEWS_PUBLISHES, \
-  API_PHOTOS_UPLOADED, API_OBJECT, API_PUBLISH_POST, API_SHARES, API_USER_EVENTS
-from granary.test.test_facebook import ACTIVITY, API_ME_POSTS, COMMENT_OBJS, EVENT, \
-  EVENT_OBJ, LIKE_OBJS, PHOTO, PHOTO_ACTIVITY, PHOTO_POST, POST, SHARE_OBJ
+from granary.facebook import (API_COMMENTS_ALL, API_EVENT, API_NEWS_PUBLISHES,
+  API_PHOTOS_UPLOADED, API_OBJECT, API_PUBLISH_POST, API_SHARES, API_USER_EVENTS)
+from granary.test.test_facebook import (ACTIVITY, API_ME_POSTS, COMMENT_OBJS, EVENT,
+  EVENT_ACTIVITY, EVENT_OBJ, LIKE_OBJS, PHOTO, PHOTO_ACTIVITY, PHOTO_POST, POST,
+  SHARE_OBJ)
 import oauth_dropins
 from oauth_dropins import facebook as oauth_facebook
 import webapp2
@@ -223,6 +224,12 @@ class FacebookPageTest(testutil.ModelsTest):
     self.fb.put()
     self.assert_equals(json.dumps({'1': '2', '3': '4', '2': '2', '4': '4'}),
                        self.fb.key.get().resolved_object_ids_json)
+
+  def test_get_activities_event_fallback(self):
+    self.expect_api_call(API_EVENT % '321', EVENT)
+    self.expect_api_call(API_OBJECT % ('212038', EVENT['id']), {})
+    self.mox.ReplayAll()
+    self.assert_equals([EVENT_ACTIVITY], self.fb.get_activities(activity_id='321'))
 
   def test_expired_sends_notification(self):
     self.expect_api_call(API_ME_POSTS,

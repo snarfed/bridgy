@@ -131,12 +131,19 @@ class FacebookPage(models.Source):
 
   def get_activities_response(self, **kwargs):
     type = self.auth_entity.get().type
+    activity_id = kwargs.get('activity_id')
+    user_id = kwargs.get('user_id')
     kwargs.setdefault('fetch_events', True)
     kwargs.setdefault('fetch_news', type == 'user')
     kwargs.setdefault('event_owner_id', self.key.id())
 
     try:
-      activities = super(FacebookPage, self).get_activities_response(**kwargs)
+      if activity_id and not user_id and '_' not in activity_id:
+        # this is probably an event id
+        activities = {'items': [self.gr_source.get_event(activity_id)]}
+      else:
+        activities = super(FacebookPage, self).get_activities_response(**kwargs)
+
     except urllib2.HTTPError as e:
       code, body = util.interpret_http_exception(e)
       # use a function so any new exceptions (JSON decoding, missing keys) don't
