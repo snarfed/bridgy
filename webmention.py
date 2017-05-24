@@ -143,9 +143,11 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
     # don't email about specific known failures
     if ('Deadline exceeded while waiting for HTTP response' in resp or
         'urlfetch.Fetch() took too long' in resp or
-        # WordPress Jetpack bug
+        # WordPress Jetpack bugs
         # https://github.com/snarfed/bridgy/issues/161
         '"resp": "invalid_input"' in resp or
+        # https://github.com/snarfed/bridgy/issues/750
+        '"error": "jetpack_verification_failed"' in resp or
         # Blogger known bug
         # https://github.com/snarfed/bridgy/issues/175
         'bX-2i87au' in resp or
