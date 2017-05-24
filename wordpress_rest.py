@@ -138,7 +138,7 @@ class WordPress(models.Source):
       url = API_POST_SLUG_URL % (auth_entity.blog_id, slug)
       post_id = self.urlopen(auth_entity, url).get('ID')
       if not post_id:
-        return self.error('Could not find post id')
+        return self.error('Could not find post id', mail=False)
 
     logging.info('Post id is %d', post_id)
 
