@@ -1249,8 +1249,8 @@ class DiscoverTest(TaskQueueTest):
     """A new silo post we haven't seen before."""
     self.mox.StubOutWithMock(FakeSource, 'get_activities')
     FakeSource.get_activities(
-      activity_id='b', fetch_replies=True, fetch_likes=True, fetch_shares=True
-      ).AndReturn([self.activities[1]])
+      activity_id='b', fetch_replies=True, fetch_likes=True, fetch_shares=True,
+      user_id=self.sources[0].key.id()).AndReturn([self.activities[1]])
     self.mox.ReplayAll()
 
     self.assertEqual(0, Response.query().count())
@@ -1287,8 +1287,14 @@ class DiscoverTest(TaskQueueTest):
     self.assert_propagating(resps)
 
   def test_get_activities_error(self):
-    self.expect_get_activities(activity_id='b').AndRaise(
-      urllib2.HTTPError('url', 429, 'Rate limited', {}, None))
+    self._test_get_activities_error(400)
+
+  def test_get_activities_rate_limited(self):
+    self._test_get_activities_error(429)
+
+  def _test_get_activities_error(self, status):
+    self.expect_get_activities(activity_id='b', user_id=self.sources[0].key.id()
+        ).AndRaise(urllib2.HTTPError('url', status, 'Rate limited', {}, None))
     self.mox.ReplayAll()
 
     self.discover(expected_status=ERROR_HTTP_RETURN_CODE)
