@@ -35,4 +35,4 @@ echo 'Package versions OK.'
 
 # push commits and deploy!
 git push
-appcfg.py update .
+gcloud app deploy --project brid-gy app.yaml

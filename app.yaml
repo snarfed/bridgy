@@ -1,5 +1,7 @@
-application: brid-gy
-version: 7
+# https://cloud.google.com/appengine/docs/standard/python/config/appref
+
+# application: brid-gy
+# version: 7
 runtime: python27
 threadsafe: yes
 api_version: 1
