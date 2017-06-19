@@ -10,8 +10,7 @@ checkout:
 
 dependencies:
   pre:
-    - curl -o $HOME/google_appengine_1.9.40.zip https://storage.googleapis.com/appengine-sdks/featured/google_appengine_1.9.40.zip
-    - unzip -q -d $HOME $HOME/google_appengine_1.9.40.zip
+    - sudo `which gcloud` -q components install app-engine-python app-engine-python-extras
     - pip install -e /tmp/oauth-dropins/
     - pip install -e /tmp/granary/
   post:
@@ -26,7 +25,7 @@ dependencies:
 
 machine:
   environment:
-    PYTHONPATH: $PYTHONPATH:$HOME/google_appengine
+    PYTHONPATH: $PYTHONPATH:/opt/google-cloud-sdk/platform/google_appengine
     COVERAGE_FILE: $CIRCLE_ARTIFACTS/.coverage
 
 test:
