@@ -35,4 +35,7 @@ echo 'Package versions OK.'
 
 # push commits and deploy!
 git push
-gcloud -q app deploy --project brid-gy app.yaml
+# set an explicit version since logs.py's log fetching depends on explicitly
+# enumerating all versions. otherwise gcloud generates a new timestamp-based
+# version by default for every deploy.
+gcloud -q app deploy --project brid-gy --version 7 app.yaml
