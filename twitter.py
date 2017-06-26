@@ -5,8 +5,10 @@ __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
 
 import datetime
 import json
+import logging
 
 import webapp2
+from webob import exc
 
 import appengine_config
 
@@ -15,7 +17,6 @@ from granary import source as gr_source
 from oauth_dropins import twitter as oauth_twitter
 import models
 import util
-import logging
 
 
 class Twitter(models.Source):
@@ -157,7 +158,9 @@ class AuthHandler(util.Handler):
       feature: 'listen' or 'publish'
     """
     features = feature.split(',') if feature else []
-    assert all(f in models.Source.FEATURES for f in features)
+    for feature in features:
+      if feature not in models.Source.FEATURES:
+        raise exc.HTTPBadRequest('Unknown feature: %s' % feature)
 
     # pass explicit 'write' instead of None for publish so that oauth-dropins
     # (and tweepy) don't use signin_with_twitter ie /authorize. this works
