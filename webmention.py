@@ -135,7 +135,7 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
       resp['parsed'] = data
     resp = json.dumps(resp, indent=2)
 
-    if mail:
+    if mail and status != 404:
       self.mail_me('[Returned HTTP %s to client]\n\n%s' % (status, error))
     self.response.write(resp)
 
@@ -156,6 +156,10 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
         "Invalid argument, 'thread': Unable to find thread" in resp or
         # expected for partially set up tumblr accounts
         "we haven't found your Disqus account" in resp or
+        # Twitter 5MB image file size limit
+        '"message":"Image file size must be' in resp or
+        # Facebook image type/size req'ts
+        'Missing or invalid image file' in resp or
         # Twitter duplicate publish attempts
         'Status is a duplicate.' in resp or
         'You have already favorited this status.' in resp or
