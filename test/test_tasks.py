@@ -1589,7 +1589,7 @@ class PropagateTest(TaskQueueTest):
     self.expect_requests_post(
       'http://my/endpoint',
       data={'source': source_url, 'target': 'http://html/charset'},
-      timeout=999, verify=False)
+      timeout=999, verify=False, allow_redirects=False)
 
     self.mox.ReplayAll()
     self.post_task()
@@ -1626,7 +1626,8 @@ class PropagateTest(TaskQueueTest):
                   self.sources[0].key.string_id())
     self.expect_requests_post(
       'http://my/endpoint', timeout=999, verify=False,
-      data={'source': source_url, 'target': 'http://my/post'})
+      data={'source': source_url, 'target': 'http://my/post'},
+      allow_redirects=False)
 
     self.mox.ReplayAll()
     self.post_task()
