@@ -22,6 +22,7 @@ from instagram import Instagram
 import testutil
 from testutil import FakeSource, HandlerTest
 from twitter import Twitter
+import util
 
 
 class CronTest(HandlerTest):
@@ -40,6 +41,25 @@ class CronTest(HandlerTest):
     self.assertEquals(
       'https://farm5.staticflickr.com/4068/buddyicons/39216764@N00.jpg',
       self.flickr.picture)
+
+  def setup_instagram(self, batch_size=None, weekday=0):
+    if batch_size:
+      self.mox.stubs.Set(cron.UpdateInstagramPictures, 'DAYS_IN_WEEK', batch_size)
+
+    self.mox.StubOutWithMock(util, 'now_fn')
+    # 2017-01-02 is a Monday, which datetime.weekday() returns 0 for
+    util.now_fn().AndReturn(datetime.datetime(2017, 1, 2 + weekday))
+
+  def expect_instagram_profile_fetch(self, username):
+    profile = copy.deepcopy(test_instagram.HTML_PROFILE)
+    profile['entry_data']['ProfilePage'][0]['user'].update({
+      'username': username,
+      'profile_pic_url': 'http://new/pic',
+    })
+    super(HandlerTest, self).expect_requests_get(
+      gr_instagram.HTML_BASE_URL + '%s/' % username,
+      test_instagram.HTML_HEADER + json.dumps(profile) + test_instagram.HTML_FOOTER,
+      allow_redirects=False)
 
   def test_replace_poll_tasks(self):
     self.assertEqual([], self.taskqueue_stub.GetTasks('poll'))
@@ -127,16 +147,9 @@ class CronTest(HandlerTest):
     self.assertEquals('http://pi.ct/ure', source.get().picture)
 
   def test_update_instagram_pictures(self):
+    self.setup_instagram(batch_size=1)
     for username in 'a', 'b':
-      profile = copy.deepcopy(test_instagram.HTML_PROFILE)
-      profile['entry_data']['ProfilePage'][0]['user'].update({
-        'username': username,
-        'profile_pic_url': 'http://new/pic',
-        })
-      super(HandlerTest, self).expect_requests_get(
-        gr_instagram.HTML_BASE_URL + '%s/' % username,
-        test_instagram.HTML_HEADER + json.dumps(profile) + test_instagram.HTML_FOOTER,
-        allow_redirects=False)
+      self.expect_instagram_profile_fetch(username)
     self.mox.ReplayAll()
 
     sources = []
@@ -160,7 +173,29 @@ class CronTest(HandlerTest):
     self.assertEquals('http://old/pic', sources[2].get().picture)
     self.assertEquals('http://old/pic', sources[3].get().picture)
 
+  def test_update_instagram_pictures_batch(self):
+    self.setup_instagram(weekday=3)
+    self.expect_instagram_profile_fetch('d')
+    self.mox.ReplayAll()
+
+    sources = []
+    auth_entity = indieauth.IndieAuth(id='http://foo.com/', user_json='{}')
+    for username in 'a', 'b', 'c', 'd', 'e', 'f', 'g':
+      source = Instagram.new(
+        None, auth_entity=auth_entity, features=['listen'],
+        actor={'username': username, 'image': {'url': 'http://old/pic'}})
+      sources.append(source.put())
+
+    resp = cron.application.get_response('/cron/update_instagram_pictures')
+    self.assertEqual(200, resp.status_int)
+
+    for i, source in enumerate(sources):
+      self.assertEqual('http://new/pic' if i == 3 else 'http://old/pic',
+                       source.get().picture)
+
   def test_update_instagram_picture_profile_404s(self):
+    self.setup_instagram(batch_size=1)
+
     auth_entity = indieauth.IndieAuth(id='http://foo.com/', user_json='{}')
     source = Instagram.new(
         None, auth_entity=auth_entity, features=['listen'],

@@ -41,7 +41,9 @@ import util
 class Instagram(models.Source):
   """An Instagram account.
 
-  The key name is the username.
+  The key name is the username. Instagram usernames may have ASCII letters (case
+  insensitive), numbers, periods, and underscores:
+  https://stackoverflow.com/questions/15470180
   """
 
   GR_CLASS = gr_instagram.Instagram

@@ -7,6 +7,8 @@ import datetime
 import itertools
 import json
 import logging
+import math
+import string
 
 from google.appengine.ext import ndb
 import appengine_config
@@ -80,9 +82,12 @@ class UpdatePictures(webapp2.RequestHandler):
   """Finds sources with new profile pictures and updates them."""
   SOURCE_CLS = None
 
+  def source_query(self):
+    return self.SOURCE_CLS.query()
+
   def get(self):
     updated = False
-    for source in self.SOURCE_CLS.query():
+    for source in self.source_query():
       logging.debug('checking for updated profile pictures for: %s',
                     source.bridgy_url(self))
       if source.features and source.status != 'disabled':
@@ -95,8 +100,19 @@ class UpdatePictures(webapp2.RequestHandler):
 
 class UpdateInstagramPictures(UpdatePictures):
   """Finds :class:`Instagram` sources with new profile pictures and updates them.
+
+  Splits the accounts up into seven batches, one per weekday, to avoid hitting
+  Instagram's rate limit. Testing on 2017-07-05 hit the rate limit after ~170
+  profile page requests, with ~270 total Instagram accounts on Bridgy.
   """
   SOURCE_CLS = Instagram
+  DAYS_IN_WEEK = 7
+
+  def source_query(self):
+    batch = float(Instagram.query().count()) / self.DAYS_IN_WEEK
+    day = util.now_fn().weekday()
+    return Instagram.query().fetch(offset=int(math.floor(day * batch)),
+                                   limit=int(math.ceil(batch)))
 
 
 class UpdateFlickrPictures(UpdatePictures):
