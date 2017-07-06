@@ -12,9 +12,9 @@ cron:
 
 # disabled because IG keeps rate limiting it and cutting it off.
 # https://console.cloud.google.com/errors/4741340224519315816
-# - description: update changed instagram profile pictures
-#   url: /cron/update_instagram_pictures
-#   schedule: every day 09:00  # 2am pst
+- description: update changed instagram profile pictures
+  url: /cron/update_instagram_pictures
+  schedule: every day 09:00  # 2am pst
 
 - description: update changed flickr profile pictures
   url: /cron/update_flickr_pictures

@@ -38,4 +38,7 @@ git push
 # set an explicit version since logs.py's log fetching depends on explicitly
 # enumerating all versions. otherwise gcloud generates a new timestamp-based
 # version by default for every deploy.
-gcloud -q app deploy --project brid-gy --version 7 app.yaml
+#
+# https://cloud.google.com/appengine/docs/standard/python/tools/uploadinganapp#deploying_an_app
+# https://cloud.google.com/sdk/gcloud/reference/app/deploy
+gcloud -q app deploy --project brid-gy --version 7 *.yaml

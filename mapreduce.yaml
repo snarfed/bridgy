@@ -1,8 +1,0 @@
-mapreduce:
-- name: Prune Response.activity_json
-  mapper:
-    input_reader: mapreduce.input_readers.DatastoreInputReader
-    handler: mapreduces.prune_activity_json
-    params:
-    - name: entity_kind
-      default: models.Response
