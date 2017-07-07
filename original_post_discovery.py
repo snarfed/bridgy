@@ -331,7 +331,10 @@ def _process_author(source, author_url, refetch=False, store_blanks=True):
   permalink_to_entry = collections.OrderedDict()
   for child in feeditems:
     if 'h-entry' in child['type']:
-      for permalink in child['properties'].get('url', []):
+      permalinks = child['properties'].get('url', [])
+      if not permalinks:
+        logging.debug('ignoring h-entry with no u-url!')
+      for permalink in permalinks:
         if isinstance(permalink, basestring):
           permalink_to_entry[permalink] = child
         else:
