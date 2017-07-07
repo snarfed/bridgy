@@ -158,6 +158,8 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
         "we haven't found your Disqus account" in resp or
         # Twitter 5MB image file size limit
         '"message":"Image file size must be' in resp or
+        # Twitter media file number limits
+        'Tweet with media must have exactly 1 gif or video' in resp or
         # Facebook image type/size req'ts
         'Missing or invalid image file' in resp or
         # Twitter duplicate publish attempts
