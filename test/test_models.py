@@ -74,6 +74,8 @@ class ResponseTest(testutil.ModelsTest):
     synd = source.canonicalize_url(self.activities[0]['url'])
     SyndicatedPost(parent=source.key, original='http://or/ig',
                    syndication=synd).put()
+    SyndicatedPost(parent=source.key, original=None,
+                   syndication=synd).put()  # check that we don't die on blanks
 
     final = response.get_or_save(source, restart=True)
     self.assert_propagate_task()
