@@ -12,7 +12,6 @@ import urlparse
 
 import appengine_config
 
-from google.appengine.api import memcache
 from google.appengine.api import taskqueue
 from google.appengine.ext import ndb
 from google.appengine.ext.ndb.stats import KindStat, KindPropertyNameStat
@@ -34,7 +33,7 @@ from blogger import Blogger
 from tumblr import Tumblr
 from wordpress_rest import WordPress
 import models
-from models import BlogPost, BlogWebmention, Publish, Response, Source
+from models import BlogPost, BlogWebmention, Publish, Response, Source, Webmentions
 import original_post_discovery
 import util
 
@@ -590,39 +589,24 @@ class RetryHandler(util.Handler):
     entity = ndb.Key(urlsafe=util.get_required_param(self, 'key')).get()
     if not entity:
       self.abort(400, 'key not found')
-
-    # start all target URLs over
-    if entity.status == 'complete':
-      entity.status = 'new'
-
-    targets = set(entity.unsent + entity.sent + entity.skipped + entity.error +
-                  entity.failed)
-    entity.sent = entity.skipped = entity.error = entity.failed = []
+    elif not isinstance(entity, Webmentions):
+      self.abort(400, 'Unexpected key kind %s', entity.key.kind())
 
     # run OPD to pick up any new SyndicatedPosts. note that we don't refetch
     # their h-feed, so if they've added a syndication URL since we last crawled,
     # retry won't make us pick it up. background in #524.
     if entity.key.kind() == 'Response':
+      unsent = set(entity.unsent)
       source = entity.source.get()
       for activity in [json.loads(a) for a in entity.activities_json]:
         originals, mentions = original_post_discovery.discover(
           source, activity, fetch_hfeed=False, include_redirect_sources=False)
-        targets |= original_post_discovery.targets_for_response(
+        unsent |= original_post_discovery.targets_for_response(
           json.loads(entity.response_json), originals=originals, mentions=mentions)
 
-    entity.unsent = targets
-    entity.put()
+      entity.unsent = list(unsent)
 
-    # clear any cached webmention endpoints
-    memcache.delete_multi(util.webmention_endpoint_cache_key(url) for url in targets)
-
-    if entity.key.kind() == 'Response':
-      util.add_propagate_task(entity)
-    elif entity.key.kind() == 'BlogPost':
-      util.add_propagate_blogpost_task(entity)
-    else:
-      self.abort(400, 'Unexpected key kind %s', entity.key.kind())
-
+    entity.restart()
     self.messages.add('Retrying. Refresh in a minute to see the results!')
     self.redirect(self.request.get('redirect_to').encode('utf-8') or
                   entity.source.get().bridgy_url(self))

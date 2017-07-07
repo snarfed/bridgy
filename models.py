@@ -8,6 +8,7 @@ import logging
 import appengine_config
 from appengine_config import HTTP_TIMEOUT
 
+from google.appengine.api import memcache
 from granary import microformats2
 from granary import source as gr_source
 from oauth_dropins.webutil.models import StringIdModel
@@ -713,6 +714,20 @@ class Webmentions(StringIdModel):
     self.put()
     return self
 
+  @ndb.transactional
+  def restart(self):
+    """Moves status and targets to 'new' and adds a propagate task."""
+    self.status = 'new'
+    self.unsent += self.sent + self.error + self.failed + self.skipped
+    self.sent = self.error = self.failed = self.skipped = []
+    self.put()
+
+    # clear any cached webmention endpoints
+    memcache.delete_multi(util.webmention_endpoint_cache_key(url)
+                          for url in self.unsent)
+
+    self.add_task(transactional=True)
+
 
 class Response(Webmentions):
   """A comment, like, or repost to be propagated.
@@ -763,14 +778,6 @@ class Response(Webmentions):
       resp.restart()
 
     return resp
-
-  def restart(self):
-    """Moves a response and its targets to 'new' and adds a propagate task."""
-    self.status = 'new'
-    self.unsent += self.sent + self.error + self.failed + self.skipped
-    self.sent = self.error = self.failed = self.skipped = []
-    self.put()
-    self.add_task(transactional=True)
 
 
 class BlogPost(Webmentions):
