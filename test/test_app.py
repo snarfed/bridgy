@@ -290,14 +290,34 @@ class AppTest(testutil.ModelsTest):
     """Check the custom mf2 we render on social user pages."""
     self.sources[0].features = ['listen', 'publish']
     self.sources[0].put()
+
+    # test that invites render the invitee, not the inviter
+    # https://github.com/snarfed/bridgy/issues/754
+    self.responses[9].type = 'rsvp'
+    self.responses[9].response_json = json.dumps({
+      'id': 'tag:fa.ke,2013:111',
+      'objectType': 'activity',
+      'verb': 'invite',
+      'url': 'http://fa.ke/event',
+      'actor': {
+        'displayName': 'Mrs. Host',
+        'url': 'http://fa.ke/host',
+      },
+      'object': {
+        'objectType': 'person',
+        'displayName': 'Ms. Guest',
+        'url': 'http://fa.ke/guest',
+      },
+    })
+
     for entity in self.responses + self.publishes + self.blogposts:
       entity.put()
 
     user_url = self.sources[0].bridgy_path()
-    resp = app.application.get_response(user_url)
-    self.assertEquals(200, resp.status_int)
+    response = app.application.get_response(user_url)
+    self.assertEquals(200, response.status_int)
 
-    parsed = util.mf2py_parse(resp.body, user_url)
+    parsed = util.mf2py_parse(response.body, user_url)
     hcard = parsed.get('items', [])[0]
     self.assertEquals(['h-card'], hcard['type'])
     self.assertEquals(
@@ -319,6 +339,11 @@ class AppTest(testutil.ModelsTest):
       self.assertEquals([json.loads(resp.activities_json[0])['url']],
                         props['bridgy-original-source'])
       self.assertEquals(resp.unsent, props['bridgy-target'])
+
+    # check invite
+    invite = hcard['children'][-1]['properties']
+    self.assertIn('Ms. Guest is invited.', response.body)
+    self.assertNotIn('Mrs. Host is invited.', response.body)
 
     publish = hcard['children'][len(expected_resps)]
     self.assertIn('h-bridgy-publish', publish['type'])

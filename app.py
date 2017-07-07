@@ -299,7 +299,9 @@ class UserHandler(DashboardHandler):
         elif r.type == 'post':
           r.activities = []
 
-        r.actor = r.response.get('author') or r.response.get('actor', {})
+        verb = r.response.get('verb')
+        r.actor = (r.response.get('object') if verb == 'invite'
+                   else r.response.get('author') or r.response.get('actor', {}))
 
         for a in r.activities + [r.response]:
           if not a.get('content'):
@@ -317,7 +319,7 @@ class UserHandler(DashboardHandler):
           }
           r.response['content'] = '%s %s.' % (
             r.actor.get('displayName') or '',
-            phrases.get(r.type) or phrases.get(r.response.get('verb')))
+            phrases.get(r.type) or phrases.get(verb))
 
         # convert image URL to https if we're serving over SSL
         image_url = r.actor.setdefault('image', {}).get('url')
