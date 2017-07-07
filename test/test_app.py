@@ -98,8 +98,8 @@ class AppTest(testutil.ModelsTest):
     got = resp.key.get()
     self.assertEqual('new', got.status)
     self.assertItemsEqual(
-      ['http://unsent', 'http://sent', 'https://skipped', 'http://error',
-       'http://failed', 'https://orig/1', 'http://orig/2', 'http://orig/3'],
+      ['http://unsent/', 'http://sent/', 'https://skipped/', 'http://error/',
+       'http://failed/', 'https://orig/1', 'http://orig/2', 'http://orig/3'],
       got.unsent)
     for field in got.sent, got.skipped, got.error, got.failed:
       self.assertEqual([], field)

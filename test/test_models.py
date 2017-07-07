@@ -59,15 +59,25 @@ class ResponseTest(testutil.ModelsTest):
     self.assert_no_propagate_task()
 
   def test_get_or_save_restart(self):
+    source = self.sources[0]
     response = self.responses[0]
 
     # new. should add one propagate task total.
-    saved = response.get_or_save(self.sources[0], restart=True)
+    saved = response.get_or_save(source, restart=True)
     self.assert_propagate_task()
 
     # existing. should add one more propagate task.
-    same = saved.get_or_save(self.sources[0], restart=True)
+    same = saved.get_or_save(source, restart=True)
     self.assert_propagate_task()
+
+    # new syndication URL. should add two propagate tasks.
+    synd = source.canonicalize_url(self.activities[0]['url'])
+    SyndicatedPost(parent=source.key, original='http://or/ig',
+                   syndication=synd).put()
+
+    final = response.get_or_save(source, restart=True)
+    self.assert_propagate_task()
+    self.assert_equals(['http://or/ig', 'http://target1/post/url'], final.unsent)
 
   def test_get_or_save_activity_changed(self):
     """If the response activity has changed, we should update and resend."""
@@ -107,7 +117,7 @@ class ResponseTest(testutil.ModelsTest):
     self.assert_equals([old_resp_json, json.dumps(new_resp_json)],
                        response.old_response_jsons)
     self.assertEqual('new', response.status)
-    urls = ['http://sent', 'http://error', 'http://failed', 'http://skipped']
+    urls = ['http://sent/', 'http://error/', 'http://failed/', 'http://skipped/']
     self.assertItemsEqual(urls, response.unsent)
     for field in response.sent, response.error, response.failed, response.skipped:
       self.assertEqual([], field)

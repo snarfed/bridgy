@@ -1,6 +1,5 @@
 """Datastore model classes.
 """
-
 import datetime
 import json
 import logging
@@ -714,19 +713,40 @@ class Webmentions(StringIdModel):
     self.put()
     return self
 
-  @ndb.transactional
-  def restart(self):
+  def restart(self, source=None):
     """Moves status and targets to 'new' and adds a propagate task."""
     self.status = 'new'
     self.unsent += self.sent + self.error + self.failed + self.skipped
     self.sent = self.error = self.failed = self.skipped = []
-    self.put()
+
+    # add original posts with syndication URLs
+    # TODO: unify with Poll.repropagate_old_responses()
+    if not source:
+      source = self.source.get()
+
+    synd_urls = set()
+    for activity_json in self.activities_json:
+      activity = json.loads(activity_json)
+      url = activity.get('url') or activity.get('object', {}).get('url')
+      if url:
+        url = source.canonicalize_url(url, activity=activity)
+        if url:
+          synd_urls.add(url)
+
+    self.unsent += [synd.original for synd in
+                    SyndicatedPost.query(SyndicatedPost.syndication.IN(synd_urls))]
+    self.unsent = util.dedupe_urls(self.unsent)
 
     # clear any cached webmention endpoints
     memcache.delete_multi(util.webmention_endpoint_cache_key(url)
                           for url in self.unsent)
 
-    self.add_task(transactional=True)
+    @ndb.transactional
+    def finish():
+      self.put()
+      self.add_task(transactional=True)
+
+    finish()
 
 
 class Response(Webmentions):
@@ -762,7 +782,6 @@ class Response(Webmentions):
     type = get_type(obj)
     return type if type in VERB_TYPES else 'comment'
 
-  @ndb.transactional(xg=True)
   def get_or_save(self, source, restart=False):
     resp = super(Response, self).get_or_save()
 
@@ -773,9 +792,9 @@ class Response(Webmentions):
       logging.info('Response changed! Re-propagating. Original: %s' % resp)
       resp.old_response_jsons = resp.old_response_jsons[:10] + [resp.response_json]
       resp.response_json = self.response_json
-      resp.restart()
+      resp.restart(source)
     elif restart and resp is not self:  # ie it already existed
-      resp.restart()
+      resp.restart(source)
 
     return resp
 

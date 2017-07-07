@@ -596,15 +596,12 @@ class RetryHandler(util.Handler):
     # their h-feed, so if they've added a syndication URL since we last crawled,
     # retry won't make us pick it up. background in #524.
     if entity.key.kind() == 'Response':
-      unsent = set(entity.unsent)
       source = entity.source.get()
       for activity in [json.loads(a) for a in entity.activities_json]:
         originals, mentions = original_post_discovery.discover(
           source, activity, fetch_hfeed=False, include_redirect_sources=False)
-        unsent |= original_post_discovery.targets_for_response(
+        entity.unsent += original_post_discovery.targets_for_response(
           json.loads(entity.response_json), originals=originals, mentions=mentions)
-
-      entity.unsent = list(unsent)
 
     entity.restart()
     self.messages.add('Retrying. Refresh in a minute to see the results!')
