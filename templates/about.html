@@ -544,6 +544,7 @@ API still doesn't have a way to get a tweet's favorites</a>, so
 fetch it and run
 <a href="https://indieweb.org/posse-post-discovery#Algorithm">posse-post-discovery</a>
 to find matching posts on your site. You'll need to include
+<a href="http://microformats.org/wiki/h-entry#Core_Properties">u-url</a> and
 <a href="https://indieweb.org/rel-syndication#How_to_publish">u-syndication</a>
 links in those posts, and your home page (or wherever the link in your profile
 points) will need either:
@@ -560,9 +561,8 @@ OR
 </li>
 </ul>
 
-If those h-entries don't have u-syndication links, but do have
-<a href="http://microformats.org/wiki/h-entry#Core_Properties">u-url</a>s,
-Bridgy will fetch them and look for u-syndication links there.
+If the h-entries in your feed(s) don't have u-syndication links, Bridgy will
+fetch their u-urls and look for u-syndication links there.
 </p>
 
 <p id="parse">You can enter your home page into an online microformats2 parser like
