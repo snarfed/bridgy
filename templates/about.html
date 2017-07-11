@@ -416,7 +416,7 @@ GitHub</a>. Thank you!
 <ul>
 <li>Twitter
   <a href="https://support.twitter.com/articles/14023-what-are-replies-and-mentions">@-replies</a>,
-  retweets, quote tweets, and favorites of your tweets.</li>
+  retweets, quote tweets, and likes of your tweets.</li>
 <li>Tweets from other people that
   <a href="https://support.twitter.com/articles/14023-what-are-replies-and-mentions">@-mention</a>
   you or contain links to your site.</li>
@@ -458,7 +458,7 @@ to once a day if you've been signed up for over a week and we haven't
 successfully sent you a webmention yet, or the last one we sent was over a month
 ago.
 </p>
-<p>(Twitter favorites and retweets used to be an
+<p>(Twitter likes and retweets used to be an
 exception, since Bridgy used
 <a href="https://dev.twitter.com/docs/streaming-apis">Twitter's Streaming
 API</a> for a while, but
@@ -505,35 +505,41 @@ this for an individual response by
 webmention manually</a>. <a href="#source-urls">Here's how to
 construct the source URL.</a>
 </li>
-<li>Is it a Twitter @-reply? Does it
-<a href="https://support.twitter.com/articles/14023-what-are-replies-and-mentions">@-mention</a>
-you? Twitter's API
-<a href="https://dev.twitter.com/discussions/10056">doesn't have a way to get a
-tweet's replies</a>, so Bridgy searches for @-mentions of the tweet's author to
-find its replies. That means it can't always find replies that omit the
-@-mention.
-</li>
-<li>Also, Twitter's search API is
-<a href="https://dev.twitter.com/docs/faq#8650">best effort only</a>, ie it
-doesn't guarantee that it returns all matching tweets for a search. It also
-<a href="https://dev.twitter.com/rest/public/search">only returns results from
-the last 7 days</a>. So, every now and then it may not find a reply, or a tweet
-that links to your site, which means Bridgy will miss it. Sadface.
-</li>
 <li>Are you using a <a href="#link">syndication link</a>? If so, Bridgy may have
 fetched your post before you added the link. When that happens, Bridgy waits up
 to two hours before it refetches your post and reloads syndication links. Try
 clicking the <em>Crawl now</em> button on your user page.
 </li>
-<li>Twitter favorites are sadly best effort only.
-<a href="https://twittercommunity.com/t/list-of-people-who-favorited-a-particular-tweet/11083/8
-">Their
-API still doesn't have a way to get a tweet's favorites</a>, so
-<a href="https://github.com/snarfed/bridgy/issues/61">we have to scrape them
- from the web</a>, which only shows the latest 25. So
-<a href="https://github.com/snarfed/bridgy/issues/73">if you get more than 25 new favorites</a> between two times that Bridgy polls your Twitter account, we'll miss the rest in that period.
-</li>
-<li>Instagram likes are even worse. They <a href="https://github.com/snarfed/bridgy/issues/722">only show the first 10 individual likes per photo on the web</a>, and a total count after that, so Bridgy can only backfeed the first 10 likes.
+<li>Twitter responses can be flaky for a number of reasons:
+  <ul>
+  <li>@-replies are only included if they
+    <a href="https://support.twitter.com/articles/14023-what-are-replies-and-mentions">@-mention</a>
+    you. Twitter's API
+    <a href="https://dev.twitter.com/discussions/10056">doesn't have a way to get a
+    tweet's replies</a>, so Bridgy searches for @-mentions of the tweet's author to
+    find its replies. That means it can't always find replies that omit the
+    @-mention.
+  </li>
+  <li>Also, Twitter's search API is
+    <a href="https://dev.twitter.com/docs/faq#8650">best effort only</a>, ie it
+    doesn't guarantee that it returns all matching tweets for a search. It also
+    <a href="https://dev.twitter.com/rest/public/search">only returns results from
+    the last 7 days</a>. So, every now and then it may not find a reply, or a tweet
+    that links to your site, which means Bridgy will miss it. Sadface.
+  </li>
+  <li>Twitter likes (née favorites) are sadly best effort only.
+    <a href="https://twittercommunity.com/t/list-of-people-who-favorited-a-particular-tweet/11083/8
+    ">Their
+    API still doesn't have a way to get a tweet's likes</a>, so
+    <a href="https://github.com/snarfed/bridgy/issues/61">we have to scrape them
+     from the web</a>, which only shows the latest 25. So
+    <a href="https://github.com/snarfed/bridgy/issues/73">if you get more than 25 new likes</a> between two times that Bridgy polls your Twitter account, we'll miss the rest in that period.
+  </li>
+  <li>Retweets are also flaky occasionally. We've seen the API report
+    <code>retweet_count: 0</code> in tweets that do have retweets.
+  </li>
+  </ul>
+<li>Instagram likes are even worse than Twitter likes. They <a href="https://github.com/snarfed/bridgy/issues/722">only show the first 10 individual likes per photo on the web</a>, and a total count after that, so Bridgy can only backfeed the first 10 likes.
 </li>
 </ul>
 </li>
@@ -802,7 +808,7 @@ previewing a post to see how it will look!
 <li class="answer">
 <p>Bridgy can publish:</p>
 <ul>
-<li>Twitter tweets, @-replies, retweets, and favorites. Tweets and @-replies
+<li>Twitter tweets, @-replies, retweets, and likes. Tweets and @-replies
   may include <a href="#location">location</a> and
   <a href="#picture">up to four photos</a> or
   <a href="#video">one video</a>.</li>
@@ -1096,7 +1102,7 @@ responds. A <code>POST</code> to
 <code>201 Created</code> on success with a JSON response containing at least
 a <code>url</code> field that points to the silo object that it operated on. The
 same URL is included in the <code>Location</code> HTTP header. For
-Twitter favorites and Facebook event RSVPs, this is the tweet, post, or event.
+Twitter likes and Facebook event RSVPs, this is the tweet, post, or event.
 If a new object was created, e.g. a Facebook post or Twitter tweet, @-reply, or
 retweet, there will also be an <code>id</code> field with the silo id of that
 object.
