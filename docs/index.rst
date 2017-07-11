@@ -1,8 +1,7 @@
 Bridgy developer documentation
 ==============================
 
-Got a web site? Want social network replies and likes on your site? Want
-to post and tweet from your site? Bridgy is for you.
+Got a web site? Want replies and likes from social networks? Want to tweet, post, and more? Bridgy is for you.
 
 https://brid.gy/
 

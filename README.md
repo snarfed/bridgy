@@ -1,7 +1,7 @@
 ![Bridgy](https://raw.github.com/snarfed/bridgy/master/static/bridgy_logo_thumb.jpg) [Bridgy](https://brid.gy/) [![Circle CI](https://circleci.com/gh/snarfed/bridgy.svg?style=svg)](https://circleci.com/gh/snarfed/bridgy) [![Coverage Status](https://coveralls.io/repos/github/snarfed/bridgy/badge.svg?branch=master)](https://coveralls.io/github/snarfed/bridgy?branch=master)
 ===
 
-Got a web site? Want social network replies and likes on your site? Want to post and tweet from your site? Bridgy is for you.
+Got a web site? Want replies and likes from social networks? Want to tweet, post, and more? Bridgy is for you.
 
 https://brid.gy/
 
