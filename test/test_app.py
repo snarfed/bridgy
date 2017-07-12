@@ -413,17 +413,18 @@ class DiscoverTest(testutil.ModelsTest):
 
   def setUp(self):
     super(DiscoverTest, self).setUp()
-    self.sources[0].domains = ['si.te']
-    self.sources[0].put()
+    self.source = self.sources[0]
+    self.source.domains = ['si.te']
+    self.source.put()
 
   def check_discover(self, url, expected_message):
       resp = app.application.get_response(
-        '/discover?source_key=%s&url=%s' % (self.sources[0].key.urlsafe(), url),
+        '/discover?source_key=%s&url=%s' % (self.source.key.urlsafe(), url),
         method='POST')
       location = urlparse.urlparse(resp.headers['Location'])
       detail = ' '.join((url, str(resp.status_int), `location`, `resp.body`))
       self.assertEquals(302, resp.status_int, detail)
-      self.assertEqual('/fake/%s' % self.sources[0].key.id(), location.path, detail)
+      self.assertEqual(self.source.bridgy_path(), location.path, detail)
       self.assertEqual('!' + expected_message, urllib.unquote(location.fragment),
                        detail)
 
@@ -439,7 +440,7 @@ class DiscoverTest(testutil.ModelsTest):
   def test_discover_param_errors(self):
     for url in ('/discover',
                 '/discover?key=bad',
-                '/discover?key=%s' % self.sources[0].key,
+                '/discover?key=%s' % self.source.key,
                 '/discover?url=bad',
                 '/discover?url=http://foo/bar',
                 ):
@@ -460,7 +461,7 @@ class DiscoverTest(testutil.ModelsTest):
     tasks = self.taskqueue_stub.GetTasks('discover')
     self.assertEqual(1, len(tasks))
     self.assertEqual({
-      'source_key': self.sources[0].key.urlsafe(),
+      'source_key': self.source.key.urlsafe(),
       'post_id': '123',
     }, testutil.get_task_params(tasks[0]))
 
@@ -468,6 +469,13 @@ class DiscoverTest(testutil.ModelsTest):
     self.check_discover('http://fa.ke/',
         "Sorry, that doesn't look like a FakeSource post URL.")
     self.assertEqual(0, len(self.taskqueue_stub.GetTasks('discover')))
+
+  def test_discover_twitter_profile_url(self):
+    """https://console.cloud.google.com/errors/7553065641439031622"""
+    self.source = twitter.Twitter(id='bltavares', features=['listen'])
+    self.source.put()
+    self.check_discover('https://twitter.com/bltavares',
+        "Sorry, that doesn't look like a Twitter post URL.")
 
   def test_discover_url_site_post_fetch_fails(self):
     self.check_fail('fooey', status_code=404)
@@ -507,15 +515,15 @@ class DiscoverTest(testutil.ModelsTest):
       ], [{sp.syndication: sp.original} for sp in models.SyndicatedPost.query()])
 
     tasks = self.taskqueue_stub.GetTasks('discover')
-    key = self.sources[0].key.urlsafe()
+    key = self.source.key.urlsafe()
     self.assertEqual([
       {'source_key': key, 'post_id': '222'},
       {'source_key': key, 'post_id': '444'},
     ], [testutil.get_task_params(task) for task in tasks])
 
   def test_discover_url_site_post_last_feed_syndication_url(self):
-    self.sources[0].last_feed_syndication_url = util.now_fn()
-    self.sources[0].put()
+    self.source.last_feed_syndication_url = util.now_fn()
+    self.source.put()
 
     self.expect_requests_get('http://si.te/123', """
 <div class="h-entry">
@@ -527,6 +535,6 @@ class DiscoverTest(testutil.ModelsTest):
         'Discovering now. Refresh in a minute to see the results!')
 
     tasks = self.taskqueue_stub.GetTasks('discover')
-    key = self.sources[0].key.urlsafe()
+    key = self.source.key.urlsafe()
     self.assertEqual([{'source_key': key, 'post_id': '222'}],
                      [testutil.get_task_params(task) for task in tasks])

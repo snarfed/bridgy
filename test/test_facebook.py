@@ -339,16 +339,15 @@ class FacebookPageTest(testutil.ModelsTest):
                        'http://facebook.com/snarfed.org/posts/123'))
 
   def test_canonicalize_url_username(self):
-    for id in 'snarfed.org', '444':
-      self.expect_api_call(API_OBJECT % ('212038', id), {})
-    self.mox.ReplayAll()
-
     # we shouldn't touch username when it appears elsewhere in the url
     self.assertEqual('https://www.facebook.com/25624/posts/snarfed.org',
                      self.fb.canonicalize_url(
                        'http://www.facebook.com/25624/posts/snarfed.org'))
 
     # username should override inferred username
+    self.expect_api_call(API_OBJECT % ('212038', '444'), {})
+    self.mox.ReplayAll()
+
     self.fb.inferred_username = 'mr-disguise'
     self.assertEqual('https://www.facebook.com/mr-disguise/posts/444',
                      self.fb.canonicalize_url(
