@@ -629,7 +629,11 @@ class DiscoverHandler(util.Handler):
 
     if domain == source.GR_CLASS.DOMAIN:
       post_id = source.GR_CLASS.post_id(url)
-      util.add_discover_task(source, post_id)
+      if post_id:
+        util.add_discover_task(source, post_id)
+      else:
+        msg = "Sorry, that doesn't look like a %s post URL." % source.GR_CLASS.NAME
+
     elif util.domain_or_parent_in(domain, source.domains):
       synd_links = original_post_discovery.process_entry(source, url, {}, False, [])
       if synd_links:
@@ -638,6 +642,7 @@ class DiscoverHandler(util.Handler):
       else:
         msg = 'Failed to fetch %s or find a %s syndication link.' % (
           util.pretty_link(url), source.GR_CLASS.NAME)
+
     else:
       msg = 'Please enter a URL on either your web site or %s.' % source.GR_CLASS.NAME
 

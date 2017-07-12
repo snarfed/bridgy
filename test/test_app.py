@@ -464,6 +464,11 @@ class DiscoverTest(testutil.ModelsTest):
       'post_id': '123',
     }, testutil.get_task_params(tasks[0]))
 
+  def test_discover_url_silo_not_post_url(self):
+    self.check_discover('http://fa.ke/',
+        "Sorry, that doesn't look like a FakeSource post URL.")
+    self.assertEqual(0, len(self.taskqueue_stub.GetTasks('discover')))
+
   def test_discover_url_site_post_fetch_fails(self):
     self.check_fail('fooey', status_code=404)
 
