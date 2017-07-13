@@ -465,12 +465,24 @@ class DiscoverTest(testutil.ModelsTest):
       'post_id': '123',
     }, testutil.get_task_params(tasks[0]))
 
+  def test_discover_url_silo_event(self):
+    self.check_discover('http://fa.ke/events/123',
+        'Discovering now. Refresh in a minute to see the results!')
+
+    tasks = self.taskqueue_stub.GetTasks('discover')
+    self.assertEqual(1, len(tasks))
+    self.assertEqual({
+      'source_key': self.source.key.urlsafe(),
+      'post_id': '123',
+      'type': 'event',
+    }, testutil.get_task_params(tasks[0]))
+
   def test_discover_url_silo_not_post_url(self):
     self.check_discover('http://fa.ke/',
         "Sorry, that doesn't look like a FakeSource post URL.")
     self.assertEqual(0, len(self.taskqueue_stub.GetTasks('discover')))
 
-  def test_discover_twitter_profile_url(self):
+  def test_discover_twitter_profile_url_error(self):
     """https://console.cloud.google.com/errors/7553065641439031622"""
     self.source = twitter.Twitter(id='bltavares', features=['listen'])
     self.source.put()

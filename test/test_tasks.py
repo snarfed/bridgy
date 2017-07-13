@@ -1301,6 +1301,19 @@ class DiscoverTest(TaskQueueTest):
     self.assert_responses([])
     self.assert_propagating([])
 
+  def test_event_type(self):
+    self.mox.StubOutWithMock(FakeGrSource, 'get_event')
+    FakeGrSource.get_event('321').AndReturn(self.activities[0])
+    self.mox.ReplayAll()
+
+    self.post_task(params={
+      'source_key': self.sources[0].key.urlsafe(),
+      'post_id': '321',
+      'type': 'event',
+    })
+    self.assert_responses(self.responses[:4])
+    self.assert_propagating(self.responses[:4])
+
 
 class PropagateTest(TaskQueueTest):
 

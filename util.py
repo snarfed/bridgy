@@ -131,12 +131,16 @@ def add_propagate_blogpost_task(entity, **kwargs):
                        **kwargs)
   logging.info('Added propagate-blogpost task: %s', task.name)
 
-def add_discover_task(source, post_id, **kwargs):
+def add_discover_task(source, post_id, type=None, **kwargs):
   """Adds a propagate-blogpost task for the given source and silo post id."""
-  task = taskqueue.add(queue_name='discover', params={
+  params = {
     'source_key': source.key.urlsafe(),
     'post_id': post_id,
-  })
+  }
+  if type:
+    params['type'] = type
+
+  task = taskqueue.add(queue_name='discover', params=params)
   logging.info('Added discover task for post %s for %s: %s', post_id,
                source.label(), task.name)
 
