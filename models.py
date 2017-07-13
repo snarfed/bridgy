@@ -733,10 +733,11 @@ class Webmentions(StringIdModel):
         if url:
           synd_urls.add(url)
 
-    self.unsent += [synd.original for synd in
-                    SyndicatedPost.query(SyndicatedPost.syndication.IN(synd_urls))
-                    if synd.original]
-    self.unsent = util.dedupe_urls(self.unsent)
+    if synd_urls:
+      self.unsent += [synd.original for synd in
+                      SyndicatedPost.query(SyndicatedPost.syndication.IN(synd_urls))
+                      if synd.original]
+      self.unsent = util.dedupe_urls(self.unsent)
 
     # clear any cached webmention endpoints
     memcache.delete_multi(util.webmention_endpoint_cache_key(url)

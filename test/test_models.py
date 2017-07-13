@@ -8,6 +8,7 @@ import datetime
 import json
 import re
 
+from google.appengine.ext import ndb
 from granary import source as gr_source
 import mox
 
@@ -32,8 +33,8 @@ class ResponseTest(testutil.ModelsTest):
   def assert_propagate_task(self):
     tasks = self.taskqueue_stub.GetTasks('propagate')
     self.assertEqual(1, len(tasks))
-    self.assertEqual(self.responses[0].key.urlsafe(),
-                     testutil.get_task_params(tasks[0])['response_key'])
+    resp_key = testutil.get_task_params(tasks[0])['response_key']
+    self.assertEqual(self.responses[0].key, ndb.Key(urlsafe=resp_key))
     self.assertEqual('/_ah/queue/propagate', tasks[0]['url'])
     self.taskqueue_stub.FlushQueue('propagate')
 
@@ -80,6 +81,12 @@ class ResponseTest(testutil.ModelsTest):
     final = response.get_or_save(source, restart=True)
     self.assert_propagate_task()
     self.assert_equals(['http://or/ig', 'http://target1/post/url'], final.unsent)
+
+    # no activity URLs. should skip SyndicatedPost query.
+    response.activities_json = []
+    response.put()
+    response.get_or_save(source, restart=True)
+    self.assert_propagate_task()
 
   def test_get_or_save_activity_changed(self):
     """If the response activity has changed, we should update and resend."""
