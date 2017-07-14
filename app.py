@@ -165,7 +165,6 @@ class UsersHandler(CachedPageHandler):
   sort lexicographically before lower case letters. An alternative would be to
   store a lower cased version of the name in another property and query on that.
   """
-
   PAGE_SIZE = 100
 
   @util.canonicalize_domain
@@ -185,6 +184,7 @@ class UsersHandler(CachedPageHandler):
                      key=lambda s: (s.name.lower(), s.GR_CLASS.NAME))
     sources = [self.preprocess_source(s) for s in sources
                if s.name.lower() >= start_name.lower() and s.features
+                  and s.status != 'disabled'
                ][:self.PAGE_SIZE]
 
     vars = super(UsersHandler, self).template_vars()

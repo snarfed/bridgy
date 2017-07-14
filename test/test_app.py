@@ -397,6 +397,18 @@ class AppTest(testutil.ModelsTest):
         resp.body)
     self.assertEquals(200, resp.status_int)
 
+  def test_users_page_hides_deleted_and_disabled(self):
+    deleted = testutil.FakeSource.new(None, features=[])
+    deleted.put()
+    disabled = testutil.FakeSource.new(None, status='disabled', features=['publish'])
+    disabled.put()
+
+    resp = app.application.get_response('/users')
+    for entity in deleted, disabled:
+      self.assertNotIn(
+        '<a href="%s" title="%s"' % (entity.bridgy_path(), entity.label()),
+        resp.body)
+
   def test_logout(self):
     util.now_fn = lambda: datetime.datetime(2000, 1, 1)
     resp = app.application.get_response('/logout')
