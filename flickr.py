@@ -97,6 +97,7 @@ class AuthHandler(util.Handler):
     starter = util.oauth_starter(
       oauth_flickr.StartHandler, feature=feature
     ).to(
+      # TODO: support comma-separated feature list?
       '/flickr/add', scopes='write' if feature == 'publish' else 'read'
     )
     return starter(self.request, self.response).post()
