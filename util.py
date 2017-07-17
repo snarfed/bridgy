@@ -569,9 +569,9 @@ def oauth_starter(oauth_start_handler, **kwargs):
     kwargs: passed to :meth:`construct_state_param_for_add()`
   """
   class StartHandler(oauth_start_handler, Handler):
-    def redirect_url(self, state=None):
+    def redirect_url(self, state=None, **ru_kwargs):
       return super(StartHandler, self).redirect_url(
-        self.construct_state_param_for_add(state, **kwargs))
+        self.construct_state_param_for_add(state, **kwargs), **ru_kwargs)
 
   return StartHandler
 

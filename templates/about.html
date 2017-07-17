@@ -306,9 +306,10 @@ form <code>https://brid.gy/SITE/start</code> (where SITE is
 <li><code>feature</code>, a comma-separated list of features,
 usually <code>listen</code>, <code>publish</code>,
 or <code>listen,publish</code></li>
-<li><code>callback</code> a URL pointing back to your site</li>
-<li> <code>user_url</code> (optional), the user's URL. Allows callers to set
-this value without requiring it to be present in the user's silo profile</li>
+<li><code>callback</code>, a URL pointing back to your site</li>
+<li> <code>user_url</code> (required for Instagram, optional otherwise), the
+user's URL. Allows callers to set this value without requiring it to be present
+in the user's silo profile</li>
 </ul>
 <p>They will be ushered through the registration process and sent back to
 your site when it finishes.</p>

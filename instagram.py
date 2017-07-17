@@ -111,6 +111,15 @@ class StartHandler(TemplateHandler):
   def template_file(self):
     return 'templates/indieauth.html'
 
+  def post(self):
+    features = self.request.get('feature')
+    features = features.split(',') if features else []
+    callback = util.get_required_param(self, 'callback')
+
+    ia_start = util.oauth_starter(indieauth.StartHandler).to('/instagram/callback')(
+      self.request, self.response)
+    self.redirect(ia_start.redirect_url(me=util.get_required_param(self, 'user_url')))
+
 
 class CallbackHandler(indieauth.CallbackHandler, util.Handler):
   def finish(self, auth_entity, state=None):

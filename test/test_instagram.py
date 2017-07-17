@@ -186,3 +186,26 @@ class InstagramTest(testutil.ModelsTest):
 
   def test_gr_source_scrape(self):
     self.assertTrue(self.inst.gr_source.scrape)
+
+  def test_registration_api_start_handler_post(self):
+    state = {
+      'callback': 'http://my.site/callback',
+      'feature': 'listen,publish',
+      'operation': 'add',
+      'user_url': 'http://snarfed.org',
+    }
+    self.expect_site_fetch()
+    self.mox.ReplayAll()
+    resp = instagram.application.get_response(
+      '/instagram/start', method='POST', body=urllib.urlencode(state))
+
+    self.assertEquals(302, resp.status_code)
+
+    state_json = json.dumps(state, separators=(',', ':'), sort_keys=True)
+    expected_auth_url = indieauth.INDIEAUTH_URL + '?' + urllib.urlencode({
+      'me': 'http://snarfed.org',
+      'client_id': appengine_config.INDIEAUTH_CLIENT_ID,
+      'redirect_uri': 'http://localhost/instagram/callback',
+      'state': urllib.quote(state_json, safe=''),
+    })
+    self.assertEquals(expected_auth_url, resp.headers['Location'])
