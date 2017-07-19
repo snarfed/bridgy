@@ -790,8 +790,7 @@ foo<br /> <blockquote>bar</blockquote>
     self.assert_created('use this - http://foo.com/bar', params=params)
 
   def test_expand_target_urls_u_syndication(self):
-    """Comment on a post with a u-syndication value
-    """
+    """Comment on a post with a u-syndication value"""
     self.mox.StubOutWithMock(self.source.gr_source, 'create',
                              use_mock_anything=True)
 
@@ -826,9 +825,7 @@ foo<br /> <blockquote>bar</blockquote>
     self.assert_created('')
 
   def test_expand_target_urls_rel_syndication(self):
-    """Publishing a like of a post with two rel=syndication values
-    """
-
+    """Publishing a like of a post with two rel=syndication values"""
     self.mox.StubOutWithMock(self.source.gr_source, 'create',
                              use_mock_anything=True)
 
@@ -1068,6 +1065,21 @@ foo<br /> <blockquote>bar</blockquote>
     </article>
     """)
 
+    self.mox.ReplayAll()
+
+    self.assert_error('no fa.ke url to reply to')
+
+  def test_dont_expand_home_page_target_url(self):
+    """Replying to a home page shouldn't expand syndication etc. URLs."""
+      # <a class="u-url" href="http://foo.com/bar"></a>
+    self.expect_requests_get('http://foo.com/bar', """
+    <article class="h-entry">
+      <div class="p-name e-content">
+        Reply to a <a class="u-in-reply-to" href="http://ho.me/">home page</a>
+      </div>
+    </article>
+    """)
+    # shouldn't fetch http://ho.me/
     self.mox.ReplayAll()
 
     self.assert_error('no fa.ke url to reply to')
