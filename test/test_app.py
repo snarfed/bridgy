@@ -291,6 +291,13 @@ class AppTest(testutil.ModelsTest):
     self.sources[0].features = ['listen', 'publish']
     self.sources[0].put()
 
+    # test invite with missing object and content
+    resp = json.loads(self.responses[8].response_json)
+    resp['verb'] = 'invite'
+    resp.pop('object', None)
+    resp.pop('content', None)
+    self.responses[8].response_json = json.dumps(resp)
+
     # test that invites render the invitee, not the inviter
     # https://github.com/snarfed/bridgy/issues/754
     self.responses[9].type = 'rsvp'

@@ -301,7 +301,8 @@ class UserHandler(DashboardHandler):
 
         verb = r.response.get('verb')
         r.actor = (r.response.get('object') if verb == 'invite'
-                   else r.response.get('author') or r.response.get('actor', {}))
+                   else r.response.get('author') or r.response.get('actor')
+                  ) or {}
 
         for a in r.activities + [r.response]:
           if not a.get('content'):
