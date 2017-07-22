@@ -61,7 +61,7 @@ class HandlersTest(testutil.HandlerTest):
     if expected_body:
       header_lines = len(handlers.TEMPLATE.template.splitlines()) - 2
       actual = '\n'.join(resp.body.splitlines()[header_lines:-1])
-      self.assert_equals(expected_body, actual)
+      self.assert_multiline_equals(expected_body, actual, ignore_blanks=True)
 
     return resp
 
@@ -69,28 +69,24 @@ class HandlersTest(testutil.HandlerTest):
     self.check_response('/post/fake/%s/000', """\
 <article class="h-entry">
 <span class="p-uid">tag:fa.ke,2013:000</span>
-
   <span class="p-author h-card">
+    <data class="p-uid" value="%(id)s" />
     <a class="u-url" href="http://fa.ke/%(key)s">http://fa.ke/%(key)s</a>
     <img class="u-photo" src="https://example.com/ryan/image" alt="" />
   </span>
-
 <a class="u-url" href="http://fa.ke/000">http://fa.ke/000</a>
 <a class="u-url" href="http://or.ig/post"></a>
   <div class="e-content p-name">
-
   asdf http://other/link qwert
   <a class="u-mention" href="http://other/link"></a>
   </div>
-
 <span class="u-category h-card">
+<data class="p-uid" value="%(id)s" />
 <a class="u-url" href="http://or.ig">http://or.ig</a>
 <a class="u-url" href="https://fa.ke"></a>
-
 </span>
-
 </article>
-""" % {'key': self.source.key.id()})
+""" % {'key': self.source.key.id(), 'id': self.source.user_tag_id()})
 
   def test_post_json(self):
     resp = handlers.application.get_response(
@@ -214,33 +210,27 @@ asdf http://other/link qwert
       'author': {'image': {'url': 'http://example.com/ryan/image'}},
       'tags': self.activities[0]['object']['tags'],
     }
+    comment = models.Response.get_by_id('tag:fa.ke,2013:a1-b2.c3')
 
     self.check_response('/comment/fake/%s/000/a1-b2.c3', """\
 <article class="h-entry">
 <span class="p-uid">tag:fa.ke,2013:a1-b2.c3</span>
-
   <span class="p-author h-card">
-
     <img class="u-photo" src="https://example.com/ryan/image" alt="" />
   </span>
-
   <div class="e-content p-name">
-
   qwert
   <a class="u-mention" href="http://other/link"></a>
   </div>
-
 <span class="u-category h-card">
+<data class="p-uid" value="%s" />
 <a class="u-url" href="http://or.ig">http://or.ig</a>
 <a class="u-url" href="https://fa.ke"></a>
-
 </span>
-
 <a class="u-in-reply-to" href="http://fa.ke/000"></a>
 <a class="u-in-reply-to" href="http://or.ig/post"></a>
-
 </article>
-""")
+""" % self.source.user_tag_id())
 
   def test_like(self):
     FakeGrSource.like = {
@@ -257,19 +247,14 @@ asdf http://other/link qwert
     resp = self.check_response('/like/fake/%s/000/111', """\
 <article class="h-entry">
 <span class="p-uid">tag:fa.ke,2013:111</span>
-
   <span class="p-author h-card">
     <span class="p-name">Alice</span>
     <img class="u-photo" src="https://example.com/ryan/image" alt="" />
   </span>
-
   <div class="">
-
   </div>
-
   <a class="u-like-of" href="http://example.com/original/post"></a>
   <a class="u-like-of" href="http://or.ig/post"></a>
-
 </article>
 """)
     self.assertIn('<title>Alice</title>', resp.body)
@@ -290,21 +275,15 @@ asdf http://other/link qwert
     resp = self.check_response('/react/fake/%s/000/111/scissors', """\
 <article class="h-entry">
 <span class="p-uid">tag:fa.ke,2013:000_scissors_by_111</span>
-
   <span class="p-author h-card">
     <span class="p-name">Alice</span>
     <img class="u-photo" src="https://example.com/ryan/image" alt="" />
   </span>
-
   <div class="e-content p-name">
-
   ✁
   </div>
-
-
   <a class="u-in-reply-to" href="http://example.com/original/post"></a>
   <a class="u-in-reply-to" href="http://or.ig/post"></a>
-
 </article>
 """)
 
@@ -331,21 +310,17 @@ asdf http://other/link qwert
     self.check_response('/repost/fake/%s/000/111', """\
 <article class="h-entry">
 <span class="p-uid">tag:fa.ke,2013:111</span>
-
   <span class="p-author h-card">
+    <data class="p-uid" value="tag:fa.ke,2013:reposter_id" />
     <a class="u-url" href="http://personal.domain/">http://personal.domain/</a>
     <a class="u-url" href="http://fa.ke/reposter_id"></a>
     <img class="u-photo" src="https://example.com/ryan/image" alt="" />
   </span>
-
   <div class="e-content p-name">
-
     message from sharer
   </div>
-
   <a class="u-repost-of" href="http://example.com/original/post"></a>
   <a class="u-repost-of" href="http://or.ig/post"></a>
-
 </article>
 """)
 
@@ -369,20 +344,16 @@ asdf http://other/link qwert
     self.check_response('/rsvp/fake/%s/000/111', """\
 <article class="h-entry">
 <span class="p-uid">tag:fa.ke,2013:111</span>
-
   <span class="p-author h-card">
+    <data class="p-uid" value="tag:fa.ke,2013:rsvper_id" />
     <a class="u-url" href="http://fa.ke/rsvper_id">http://fa.ke/rsvper_id</a>
     <img class="u-photo" src="https://example.com/ryan/image" alt="" />
   </span>
-
   <span class="p-name"><data class="p-rsvp" value="no">is not attending.</data></span>
   <div class="">
-
   </div>
-
   <a class="u-in-reply-to" href="http://or.ig/event"></a>
   <a class="u-in-reply-to" href="http://example.com/event"></a>
-
 </article>
 """)
 
@@ -406,23 +377,16 @@ asdf http://other/link qwert
     self.check_response('/rsvp/fake/%s/000/111', """\
 <article class="h-entry">
 <span class="p-uid">tag:fa.ke,2013:111</span>
-
   <span class="p-author h-card">
     <a class="p-name u-url" href="http://fa.ke/host">Mrs. Host</a>
-
   </span>
-
 <a class="p-name u-url" href="http://fa.ke/event">invited</a>
   <div class="">
   <span class="p-invitee h-card">
     <a class="p-name u-url" href="http://fa.ke/guest">Ms. Guest</a>
-
   </span>
-
   </div>
-
   <a class="u-in-reply-to" href="http://or.ig/event"></a>
-
 </article>
 """)
 
@@ -442,18 +406,14 @@ asdf http://other/link qwert
     self.check_response('/comment/fake/%s/000/111', """\
 <article class="h-entry">
 <span class="p-uid"></span>
-
   <div class="e-content p-name">
-
   qwert
   <a class="u-mention" href="http://other/link/redirect"></a>
   <a class="u-mention" href="http://other/link"></a>
   </div>
-
   <a class="u-in-reply-to" href="http://fa.ke/000"></a>
   <a class="u-in-reply-to" href="http://or.ig/post/redirect"></a>
   <a class="u-in-reply-to" href="http://or.ig/post"></a>
-
 </article>
 """)
 
@@ -466,15 +426,11 @@ asdf http://other/link qwert
     self.check_response('/comment/fake/%s/000/111', """\
 <article class="h-entry">
 <span class="p-uid"></span>
-
   <div class="e-content p-name">
-
   qwert
   <a class="u-mention" href="http://other/link?a=b"></a>
   </div>
-
   <a class="u-in-reply-to" href="http://or.ig/post"></a>
-
 </article>
 """)
 
@@ -497,20 +453,16 @@ asdf http://other/link qwert
     self.check_response('/comment/fake/%s/000/111', """\
 <article class="h-entry">
 <span class="p-uid"></span>
-
   <div class="e-content p-name">
-
   <a class="u-mention" href="http://all/"></a>
   <a class="u-mention" href="https://reply/"></a>
   <a class="u-mention" href="http://upstream/only"></a>
   <a class="u-mention" href="http://mention/only"></a>
   <a class="u-mention" href="https://upstream/"></a>
   </div>
-
   <a class="u-in-reply-to" href="https://reply/only"></a>
   <a class="u-in-reply-to" href="http://reply"></a>
   <a class="u-in-reply-to" href="https://all"></a>
-
 </article>
 """)
 
@@ -522,11 +474,8 @@ asdf http://other/link qwert
     self.check_response('/post/fake/%s/000', """\
 <article class="h-entry">
 <span class="p-uid">tag:fa.ke,2013:000</span>
-
   <div class="">
-
   </div>
-
 </article>
 """)
 
