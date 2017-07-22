@@ -713,31 +713,12 @@ class Webmentions(StringIdModel):
     self.put()
     return self
 
-  def restart(self, source=None):
+  def restart(self):
     """Moves status and targets to 'new' and adds a propagate task."""
     self.status = 'new'
-    self.unsent += self.sent + self.error + self.failed + self.skipped
+    self.unsent = util.dedupe_urls(self.unsent + self.sent + self.error +
+                                   self.failed + self.skipped)
     self.sent = self.error = self.failed = self.skipped = []
-
-    # add original posts with syndication URLs
-    # TODO: unify with Poll.repropagate_old_responses()
-    if not source:
-      source = self.source.get()
-
-    synd_urls = set()
-    for activity_json in self.activities_json:
-      activity = json.loads(activity_json)
-      url = activity.get('url') or activity.get('object', {}).get('url')
-      if url:
-        url = source.canonicalize_url(url, activity=activity)
-        if url:
-          synd_urls.add(url)
-
-    if synd_urls:
-      self.unsent += [synd.original for synd in
-                      SyndicatedPost.query(SyndicatedPost.syndication.IN(synd_urls))
-                      if synd.original]
-      self.unsent = util.dedupe_urls(self.unsent)
 
     # clear any cached webmention endpoints
     memcache.delete_multi(util.webmention_endpoint_cache_key(url)
@@ -799,6 +780,29 @@ class Response(Webmentions):
       resp.restart(source)
 
     return resp
+
+  def restart(self, source=None):
+    """Moves status and targets to 'new' and adds a propagate task."""
+    # add original posts with syndication URLs
+    # TODO: unify with Poll.repropagate_old_responses()
+    if not source:
+      source = self.source.get()
+
+    synd_urls = set()
+    for activity_json in self.activities_json:
+      activity = json.loads(activity_json)
+      url = activity.get('url') or activity.get('object', {}).get('url')
+      if url:
+        url = source.canonicalize_url(url, activity=activity)
+        if url:
+          synd_urls.add(url)
+
+    if synd_urls:
+      self.unsent += [synd.original for synd in
+                      SyndicatedPost.query(SyndicatedPost.syndication.IN(synd_urls))
+                      if synd.original]
+
+    return super(Response, self).restart()
 
 
 class BlogPost(Webmentions):

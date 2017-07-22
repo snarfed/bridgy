@@ -511,6 +511,14 @@ class SourceTest(testutil.HandlerTest):
 
 class BlogPostTest(testutil.ModelsTest):
 
+  def assert_propagate_task(self, queue='propagate'):
+    tasks = self.taskqueue_stub.GetTasks('propagate-blogpost')
+    self.assertEqual(1, len(tasks))
+    key = testutil.get_task_params(tasks[0])['key']
+    self.assertEqual(self.blogposts[0].key, ndb.Key(urlsafe=key))
+    self.assertEqual('/_ah/queue/propagate-blogpost', tasks[0]['url'])
+    self.taskqueue_stub.FlushQueue('propagate-blogpost')
+
   def test_label(self):
     for feed_item in None, {}:
       bp = BlogPost(id='x')
@@ -520,6 +528,15 @@ class BlogPostTest(testutil.ModelsTest):
     bp = BlogPost(id='x', feed_item={'permalinkUrl': 'http://perma/link'})
     bp.put()
     self.assertEquals('BlogPost x http://perma/link', bp.label())
+
+  def test_restart(self):
+    urls = self.blogposts[0].sent
+    self.blogposts[0].restart()
+    self.assert_propagate_task(queue='propagate-blogpost')
+
+    blogpost = self.blogposts[0].key.get()
+    self.assert_equals(urls, blogpost.unsent)
+    self.assert_equals([], blogpost.sent)
 
 
 class SyndicatedPostTest(testutil.ModelsTest):
