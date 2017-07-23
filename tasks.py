@@ -323,6 +323,11 @@ class Poll(webapp2.RequestHandler):
           logging.error('Skipping response without id: %s', json.dumps(resp, indent=2))
           continue
 
+        if source.is_blocked(resp):
+          logging.info('Skipping response by blocked user: %s',
+                       json.dumps(resp.get('author') or resp.get('actor'), indent=2))
+          continue
+
         resp.setdefault('activities', []).append(activity)
 
         # when we find two responses with the same id, the earlier one may have

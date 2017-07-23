@@ -174,6 +174,9 @@ class ItemHandler(util.Handler):
     if not obj:
       self.abort(404, label)
 
+    if self.source.is_blocked(obj):
+      self.abort(410, 'That user is currently blocked')
+
     # use https for profile pictures so we don't cause SSL mixed mode errors
     # when serving over https.
     author = obj.get('author', {})

@@ -1217,6 +1217,24 @@ class PollTest(TaskQueueTest):
     source = self.sources[0].key.get()
     self.assert_equals([reply], json.loads(source.seen_responses_cache_json))
 
+  def test_in_blocklist(self):
+    """Responses from blocked users should be ignored."""
+    self.mox.StubOutWithMock(FakeSource, 'is_blocked')
+    FakeSource.is_blocked(mox.IgnoreArg()).AndReturn(False)
+    FakeSource.is_blocked(mox.IgnoreArg()).AndReturn(True)  # block second response
+    FakeSource.is_blocked(mox.IgnoreArg()).MultipleTimes(10).AndReturn(False)
+    self.mox.ReplayAll()
+
+    self.post_task()
+    self.assertEqual(11, Response.query().count())
+    expected = [self.responses[0]] + self.responses[2:]
+    self.assert_responses(expected)
+
+    tasks = self.taskqueue_stub.GetTasks('propagate')
+    keys = [ndb.Key(urlsafe=testutil.get_task_params(t)['response_key'])
+            for t in tasks]
+    self.assert_equals(keys, [r.key for r in expected])
+
 
 class DiscoverTest(TaskQueueTest):
 

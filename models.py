@@ -646,6 +646,10 @@ class Source(StringIdModel):
     """
     return self.bridgy_path() in util.BETA_USER_PATHS
 
+  def is_blocked(self, actor):
+    """Returns True if an actor is being blocked, ie in this user's block list."""
+    return False
+
 
 class Webmentions(StringIdModel):
   """A bundle of links to send webmentions for.

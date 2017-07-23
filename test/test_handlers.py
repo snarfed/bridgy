@@ -1,17 +1,17 @@
 # coding=utf-8
 """Unit tests for handlers.py.
 """
-
 import json
 import StringIO
 import urllib2
 
 from google.appengine.api import urlfetch_errors
+import mox
 
 import handlers
 import models
 import testutil
-from testutil import FakeGrSource
+from testutil import FakeGrSource, FakeSource
 
 
 class HandlersTest(testutil.HandlerTest):
@@ -488,3 +488,10 @@ asdf http://other/link qwert
 
     cached = self.check_response('/post/fake/%s/000')
     self.assert_multiline_equals(orig.body, cached.body)
+
+  def test_in_blocklist(self):
+    self.mox.StubOutWithMock(FakeSource, 'is_blocked')
+    FakeSource.is_blocked(mox.IgnoreArg()).AndReturn(True)
+    self.mox.ReplayAll()
+
+    orig = self.check_response('/comment/fake/%s/000/111', expected_status=410)
