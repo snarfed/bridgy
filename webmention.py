@@ -162,6 +162,7 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
         'Tweet with media must have exactly 1 gif or video' in resp or
         # Facebook image type/size req'ts
         'Missing or invalid image file' in resp or
+        "Your photos couldn't be uploaded. Photos should be less than 4 MB" in resp or
         # Twitter duplicate publish attempts
         'Status is a duplicate.' in resp or
         'You have already favorited this status.' in resp or
