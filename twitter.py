@@ -11,12 +11,15 @@ import webapp2
 from webob import exc
 
 import appengine_config
+from google.appengine.api import memcache
 
 from granary import twitter as gr_twitter
 from granary import source as gr_source
 from oauth_dropins import twitter as oauth_twitter
 import models
 import util
+
+BLOCKLIST_CACHE_TIME = 60 * 60 * 2  # 1h
 
 
 class Twitter(models.Source):
@@ -151,7 +154,11 @@ class Twitter(models.Source):
     """Returns True if an object's author is being blocked.
 
     ...ie they're in this user's block list."""
-    blocked_ids = self.gr_source.get_blocklist_ids()
+    cache_key = 'B %s' % self.bridgy_path()
+    blocked_ids = memcache.get(cache_key)
+    if blocked_ids is None:
+      blocked_ids = self.gr_source.get_blocklist_ids()
+      memcache.set(cache_key, blocked_ids, time=BLOCKLIST_CACHE_TIME)
 
     for o in obj, obj.get('object', {}):
       for field in 'author', 'actor':

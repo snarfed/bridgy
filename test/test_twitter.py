@@ -8,6 +8,8 @@ import json
 import urllib
 
 import appengine_config
+from google.appengine.api import memcache
+from granary import twitter as gr_twitter
 from granary.test import test_twitter as gr_twitter_test
 from granary.twitter import API_BASE, API_SEARCH, API_STATUS, HTML_FAVORITES
 import oauth_dropins
@@ -155,8 +157,12 @@ class TwitterTest(testutil.ModelsTest):
     self.assertEqual('snarfed_org', self.tw.gr_source.username)
 
   def test_is_blocked(self):
-    self.mox.StubOutWithMock(self.tw.gr_source, 'get_blocklist_ids')
-    self.tw.gr_source.get_blocklist_ids().MultipleTimes().AndReturn(['1', '2'])
+    # check that we only make one API call
+    api_url = gr_twitter.API_BASE + gr_twitter.API_BLOCK_IDS % '-1'
+    self.expect_urlopen(api_url, json.dumps({
+      'ids': ['1', '2'],
+      'next_cursor_str': '0',
+    }))
     self.mox.ReplayAll()
 
     self.assertTrue(self.tw.is_blocked({'author': {'numeric_id': '1'}}))
@@ -164,3 +170,5 @@ class TwitterTest(testutil.ModelsTest):
     self.assertFalse(self.tw.is_blocked({'actor': {'numeric_id': '3'}}))
     self.assertFalse(self.tw.is_blocked({'author': {'id': '0'}}))
     self.assertFalse(self.tw.is_blocked({'actor': {'username': 'foo'}}))
+
+    self.assert_equals(['1', '2'], memcache.get('B /twitter/snarfed_org'))
