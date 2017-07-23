@@ -175,6 +175,7 @@ class TwitterTest(testutil.ModelsTest):
     self.assertFalse(self.tw.is_blocked({'actor': {'numeric_id': '3'}}))
     self.assertFalse(self.tw.is_blocked({'author': {'id': '0'}}))
     self.assertFalse(self.tw.is_blocked({'actor': {'username': 'foo'}}))
+    self.assertFalse(self.tw.is_blocked({'object': []}))
 
     # should have used the blocklist in the instance
     self.assertIsNone(memcache.get('B /twitter/snarfed_org'))

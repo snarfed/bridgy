@@ -164,7 +164,7 @@ class Twitter(models.Source):
         self.blocked_ids = self.gr_source.get_blocklist_ids()
         memcache.set(cache_key, self.blocked_ids, time=BLOCKLIST_CACHE_TIME)
 
-    for o in obj, obj.get('object', {}):
+    for o in [obj] + util.get_list(obj, 'object'):
       for field in 'author', 'actor':
         if o.get(field, {}).get('numeric_id') in self.blocked_ids:
           return True
