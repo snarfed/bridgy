@@ -166,9 +166,15 @@ class TwitterTest(testutil.ModelsTest):
     self.mox.ReplayAll()
 
     self.assertTrue(self.tw.is_blocked({'author': {'numeric_id': '1'}}))
+
+    # check that the result is cached in both memcache and the instance in memory
+    self.assert_equals(['1', '2'], memcache.get('B /twitter/snarfed_org'))
+    memcache.delete('B /twitter/snarfed_org')
+
     self.assertTrue(self.tw.is_blocked({'object': {'actor': {'numeric_id': '2'}}}))
     self.assertFalse(self.tw.is_blocked({'actor': {'numeric_id': '3'}}))
     self.assertFalse(self.tw.is_blocked({'author': {'id': '0'}}))
     self.assertFalse(self.tw.is_blocked({'actor': {'username': 'foo'}}))
 
-    self.assert_equals(['1', '2'], memcache.get('B /twitter/snarfed_org'))
+    # should have used the blocklist in the instance
+    self.assertIsNone(memcache.get('B /twitter/snarfed_org'))

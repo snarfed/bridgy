@@ -1,4 +1,9 @@
 """Twitter source code and datastore model classes.
+
+Twitter's rate limiting window is currently 15m. A normal poll with nothing new
+hits /statuses/user_timeline and /search/tweets once each. Both allow 180 calls
+per window before they're rate limited.
+https://dev.twitter.com/docs/rate-limiting/1.1/limits
 """
 
 __author__ = ['Ryan Barrett <bridgy@ryanb.org>']
@@ -39,10 +44,7 @@ class Twitter(models.Source):
   URL_CANONICALIZER = gr_twitter.Twitter.URL_CANONICALIZER
   URL_CANONICALIZER.headers = util.REQUEST_HEADERS
 
-  # Twitter's rate limiting window is currently 15m. A normal poll with nothing
-  # new hits /statuses/user_timeline and /search/tweets once each. Both
-  # allow 180 calls per window before they're rate limited.
-  # https://dev.twitter.com/docs/rate-limiting/1.1/limits
+  blocked_ids = None
 
   @staticmethod
   def new(handler, auth_entity=None, **kwargs):
@@ -154,15 +156,17 @@ class Twitter(models.Source):
     """Returns True if an object's author is being blocked.
 
     ...ie they're in this user's block list."""
-    cache_key = 'B %s' % self.bridgy_path()
-    blocked_ids = memcache.get(cache_key)
-    if blocked_ids is None:
-      blocked_ids = self.gr_source.get_blocklist_ids()
-      memcache.set(cache_key, blocked_ids, time=BLOCKLIST_CACHE_TIME)
+
+    if self.blocked_ids is None:
+      cache_key = 'B %s' % self.bridgy_path()
+      self.blocked_ids = memcache.get(cache_key)
+      if self.blocked_ids is None:
+        self.blocked_ids = self.gr_source.get_blocklist_ids()
+        memcache.set(cache_key, self.blocked_ids, time=BLOCKLIST_CACHE_TIME)
 
     for o in obj, obj.get('object', {}):
       for field in 'author', 'actor':
-        if o.get(field, {}).get('numeric_id') in blocked_ids:
+        if o.get(field, {}).get('numeric_id') in self.blocked_ids:
           return True
 
 
