@@ -147,6 +147,17 @@ class Twitter(models.Source):
     url = url.replace('/statuses/', '/status/')
     return super(Twitter, self).canonicalize_url(url, **kwargs)
 
+  def is_blocked(self, obj):
+    """Returns True if an object's author is being blocked.
+
+    ...ie they're in this user's block list."""
+    blocked_ids = self.gr_source.get_blocklist_ids()
+
+    for o in obj, obj.get('object', {}):
+      for field in 'author', 'actor':
+        if o.get(field, {}).get('numeric_id') in blocked_ids:
+          return True
+
 
 class AuthHandler(util.Handler):
   """Base OAuth handler class."""

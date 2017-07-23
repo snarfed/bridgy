@@ -153,3 +153,14 @@ class TwitterTest(testutil.ModelsTest):
 
   def test_gr_source_username(self):
     self.assertEqual('snarfed_org', self.tw.gr_source.username)
+
+  def test_is_blocked(self):
+    self.mox.StubOutWithMock(self.tw.gr_source, 'get_blocklist_ids')
+    self.tw.gr_source.get_blocklist_ids().MultipleTimes().AndReturn(['1', '2'])
+    self.mox.ReplayAll()
+
+    self.assertTrue(self.tw.is_blocked({'author': {'numeric_id': '1'}}))
+    self.assertTrue(self.tw.is_blocked({'object': {'actor': {'numeric_id': '2'}}}))
+    self.assertFalse(self.tw.is_blocked({'actor': {'numeric_id': '3'}}))
+    self.assertFalse(self.tw.is_blocked({'author': {'id': '0'}}))
+    self.assertFalse(self.tw.is_blocked({'actor': {'username': 'foo'}}))
