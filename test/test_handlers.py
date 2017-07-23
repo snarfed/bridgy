@@ -70,7 +70,7 @@ class HandlersTest(testutil.HandlerTest):
 <article class="h-entry">
 <span class="p-uid">tag:fa.ke,2013:000</span>
   <span class="p-author h-card">
-    <data class="p-uid" value="%(id)s" />
+    <data class="p-uid" value="%(id)s"></data>
     <a class="u-url" href="http://fa.ke/%(key)s">http://fa.ke/%(key)s</a>
     <img class="u-photo" src="https://example.com/ryan/image" alt="" />
   </span>
@@ -81,7 +81,7 @@ class HandlersTest(testutil.HandlerTest):
   <a class="u-mention" href="http://other/link"></a>
   </div>
 <span class="u-category h-card">
-<data class="p-uid" value="%(id)s" />
+<data class="p-uid" value="%(id)s"></data>
 <a class="u-url" href="http://or.ig">http://or.ig</a>
 <a class="u-url" href="https://fa.ke"></a>
 </span>
@@ -223,7 +223,7 @@ asdf http://other/link qwert
   <a class="u-mention" href="http://other/link"></a>
   </div>
 <span class="u-category h-card">
-<data class="p-uid" value="%s" />
+<data class="p-uid" value="%s"></data>
 <a class="u-url" href="http://or.ig">http://or.ig</a>
 <a class="u-url" href="https://fa.ke"></a>
 </span>
@@ -311,7 +311,7 @@ asdf http://other/link qwert
 <article class="h-entry">
 <span class="p-uid">tag:fa.ke,2013:111</span>
   <span class="p-author h-card">
-    <data class="p-uid" value="tag:fa.ke,2013:reposter_id" />
+    <data class="p-uid" value="tag:fa.ke,2013:reposter_id"></data>
     <a class="u-url" href="http://personal.domain/">http://personal.domain/</a>
     <a class="u-url" href="http://fa.ke/reposter_id"></a>
     <img class="u-photo" src="https://example.com/ryan/image" alt="" />
@@ -345,7 +345,7 @@ asdf http://other/link qwert
 <article class="h-entry">
 <span class="p-uid">tag:fa.ke,2013:111</span>
   <span class="p-author h-card">
-    <data class="p-uid" value="tag:fa.ke,2013:rsvper_id" />
+    <data class="p-uid" value="tag:fa.ke,2013:rsvper_id"></data>
     <a class="u-url" href="http://fa.ke/rsvper_id">http://fa.ke/rsvper_id</a>
     <img class="u-photo" src="https://example.com/ryan/image" alt="" />
   </span>
