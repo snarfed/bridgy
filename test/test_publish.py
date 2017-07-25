@@ -1300,3 +1300,14 @@ Join us!"""
 
     resp = self.assert_success('blah - http://foo.com/bar', preview=True)
     self.assertNotIn('with images', resp.body)
+
+  def test_nested_h_as_entry(self):
+    """https://github.com/snarfed/bridgy/issues/735"""
+    self.expect_requests_get('http://foo.com/bar', """
+<div class="h-as-entry">
+<div class="h-entry">
+<p class="e-content">I'M CONTENT</p>
+</div></div>
+""")
+    self.mox.ReplayAll()
+    self.assert_error("doesn't support type(s) h-as-entry")

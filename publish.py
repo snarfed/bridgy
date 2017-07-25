@@ -259,7 +259,7 @@ class Handler(webmention.WebmentionHandler):
         queue.extend(item.get('children', []))
         continue
       elif not item_types & PUBLISHABLE_TYPES:
-        types.union(item_types)
+        types = types.union(item_types)
         continue
 
       try:
