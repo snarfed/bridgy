@@ -109,7 +109,7 @@ class Poll(webapp2.RequestHandler):
           'poll_status': 'ok',
         })
       elif code in util.HTTP_RATE_LIMIT_CODES:
-        logging.warning('Rate limited. Marking as error and finishing. %s', e)
+        logging.info('Rate limited. Marking as error and finishing. %s', e)
         source.updates['rate_limited'] = True
       elif (code and int(code) / 100 == 5) or util.is_connection_failure(e):
         logging.error('API call failed. Marking as error and finishing. %s: %s\n%s',
@@ -387,8 +387,8 @@ class Poll(webapp2.RequestHandler):
           if len(t) <= _MAX_STRING_LENGTH:
             urls_to_activity[t] = i
           else:
-            logging.warning('Giving up on target URL over %s chars! %s',
-                            _MAX_STRING_LENGTH, t)
+            logging.info('Giving up on target URL over %s chars! %s',
+                         _MAX_STRING_LENGTH, t)
             too_long.add(t[:_MAX_STRING_LENGTH - 4] + '...')
 
       # store/update response entity. the prune_*() calls are important to
@@ -559,7 +559,7 @@ class SendWebmentions(webapp2.RequestHandler):
     try:
       self.do_send_webmentions()
     except:
-      logging.warning('Propagate task failed', exc_info=True)
+      logging.info('Propagate task failed', exc_info=True)
       self.release('error')
       raise
 
@@ -577,8 +577,8 @@ class SendWebmentions(webapp2.RequestHandler):
         if len(url) <= _MAX_STRING_LENGTH:
           unsent.add(url)
         else:
-          logging.warning('Giving up on target URL over %s chars! %s',
-                          _MAX_STRING_LENGTH, url)
+          logging.info('Giving up on target URL over %s chars! %s',
+                       _MAX_STRING_LENGTH, url)
           self.entity.failed.append(orig_url)
     self.entity.unsent = sorted(unsent)
 
@@ -607,7 +607,7 @@ class SendWebmentions(webapp2.RequestHandler):
           if not mention.send(timeout=999, headers=headers):
             error = mention.error
         except BaseException, e:
-          logging.warning('', exc_info=True)
+          logging.info('', exc_info=True)
           error = getattr(mention, 'error')
           if not error:
             error = ({'code': 'BAD_TARGET_URL', 'http_status': 499}
@@ -634,14 +634,14 @@ class SendWebmentions(webapp2.RequestHandler):
           logging.info('Giving up this target. %s', error)
           self.entity.failed.append(target)
         else:
-          self.fail('Error sending to endpoint: %s' % error)
+          self.fail('Error sending to endpoint: %s' % error, level=logging.INFO)
           self.entity.error.append(target)
 
       if target in self.entity.unsent:
         self.entity.unsent.remove(target)
 
     if self.entity.error:
-      logging.warning('Propagate task failed')
+      logging.info('Propagate task failed')
       self.release('error')
     else:
       self.complete()

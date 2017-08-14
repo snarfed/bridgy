@@ -456,8 +456,8 @@ class Handler(webmention.WebmentionHandler):
           raise  # for unit tests
         except BaseException:
           # it's not a big deal if we can't fetch an in-reply-to url
-          logging.warning('expand_target_urls could not fetch field=%s, url=%s',
-                          field, url, exc_info=True)
+          logging.info('expand_target_urls could not fetch field=%s, url=%s',
+                       field, url, exc_info=True)
           continue
 
         synd_urls = data.get('rels', {}).get('syndication', [])
@@ -532,7 +532,7 @@ class PreviewHandler(Handler):
             else gr_source.OMIT_LINK)
 
   def error(self, error, html=None, status=400, data=None, mail=False):
-    logging.warning(error, exc_info=True)
+    logging.info(error, exc_info=True)
     self.response.set_status(status)
     error = html if html else util.linkify(error)
     self.response.write(error)
@@ -581,7 +581,7 @@ class SendHandler(Handler):
     return self.state['include_link']
 
   def error(self, error, html=None, status=400, data=None, mail=False):
-    logging.warning(error, exc_info=True)
+    logging.info(error, exc_info=True)
     error = html if html else util.linkify(error)
     self.messages.add('%s' % error)
     if mail:

@@ -74,10 +74,10 @@ def handle_feed(feed, source):
   logging.info('Raw feed: %s', feed)
 
   if source.status != 'enabled':
-    logging.warning('Dropping because source is %s', source.status)
+    logging.info('Dropping because source is %s', source.status)
     return
   elif 'webmention' not in source.features:
-    logging.warning("Dropping because source doesn't have webmention feature")
+    logging.info("Dropping because source doesn't have webmention feature")
     return
 
   for item in json.loads(feed).get('items', []):

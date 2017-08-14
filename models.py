@@ -551,8 +551,8 @@ class Source(StringIdModel):
         [user_url] + microformats2.object_urls(actor)))
 
     if len(candidates) > MAX_AUTHOR_URLS:
-      logging.warning('Too many profile links! Only resolving the first %s: %s',
-                      MAX_AUTHOR_URLS, candidates)
+      logging.info('Too many profile links! Only resolving the first %s: %s',
+                   MAX_AUTHOR_URLS, candidates)
 
     urls = []
     for i, url in enumerate(candidates):
