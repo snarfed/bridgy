@@ -452,7 +452,7 @@ class DeleteStartHandler(util.Handler):
     key = ndb.Key(urlsafe=util.get_required_param(self, 'key'))
     module = self.OAUTH_MODULES[key.kind()]
     feature = util.get_required_param(self, 'feature')
-    state = self.encode_state_parameter({
+    state = util.encode_oauth_state({
       'operation': 'delete',
       'feature': feature,
       'source': key.urlsafe(),
@@ -491,7 +491,7 @@ class DeleteStartHandler(util.Handler):
 
 class DeleteFinishHandler(util.Handler):
   def get(self):
-    parts = self.decode_state_parameter(self.request.get('state') or '')
+    parts = util.decode_oauth_state(self.request.get('state') or '')
     callback = parts and parts.get('callback')
 
     if self.request.get('declined'):

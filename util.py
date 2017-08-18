@@ -362,7 +362,7 @@ class Handler(webutil_handlers.ModernHandler):
     Returns:
       source entity if it was created or updated, otherwise None
     """
-    state_obj = self.decode_state_parameter(state)
+    state_obj = util.decode_oauth_state(state)
     operation = state_obj.get('operation', 'add')
     feature = state_obj.get('feature')
     callback = state_obj.get('callback')
@@ -425,8 +425,16 @@ class Handler(webutil_handlers.ModernHandler):
         self.redirect_home_or_user_page(state)
 
   def construct_state_param_for_add(self, state=None, **kwargs):
-    """Construct the state parameter if one isn't explicitly passed in."""
-    state_obj = self.decode_state_parameter(state)
+    """Construct the state parameter if one isn't explicitly passed in.
+
+    The following keys are common:
+    - operation: 'add' or 'delete'
+    - feature: 'listen', 'publish', or 'webmention'
+    - callback: an optional external callback, that we will redirect to at
+                the end of the authorization handshake
+    - source: the source key, only applicable to deletes
+    """
+    state_obj = util.decode_oauth_state(state)
     if not state_obj:
       state_obj = {field: self.request.get(field) for field in
                    ('callback', 'feature', 'id', 'user_url')}
@@ -435,52 +443,7 @@ class Handler(webutil_handlers.ModernHandler):
     if kwargs:
       state_obj.update(kwargs)
 
-    return self.encode_state_parameter(state_obj)
-
-  def encode_state_parameter(self, obj):
-    """The state parameter is passed to various source authorization
-    endpoints and returned in a callback. This encodes a JSON object
-    so that it can be safely included as a query string parameter.
-
-    The following keys are common:
-      - operation: 'add' or 'delete'
-      - feature: 'listen', 'publish', or 'webmention'
-      - callback: an optional external callback, that we will redirect to at
-                  the end of the authorization handshake
-      - source: the source key, only applicable to deletes
-
-    Args:
-      obj: a JSON-serializable dict
-
-    Returns:
-      a string
-    """
-    # pass in custom separators to cut down on whitespace, and sort keys for
-    # unit test consistency
-    return urllib.quote_plus(json.dumps(trim_nulls(obj), separators=(',', ':'),
-                                        sort_keys=True))
-
-  def decode_state_parameter(self, state):
-    """Decodes a state parameter encoded by :meth:`encode_state_parameter`.
-
-    See :meth:`encode_state_parameter` for a list of common state parameter keys.
-
-    Args:
-      state: a string (JSON-serialized dict)
-
-    Returns:
-      a dict containing operation, feature, and possibly other fields
-    """
-    logging.debug('decoding state "%s"' % state)
-    try:
-      obj = json.loads(urllib.unquote_plus(state)) if state else {}
-    except ValueError:
-      logging.exception('Invalid value for state parameter: %s' % state)
-      raise exc.HTTPBadRequest('Invalid value for state parameter: %s' % state)
-    if not isinstance(obj, dict):
-      logging.error('got a non-dict state parameter %s', state)
-      return {}
-    return obj
+    return util.encode_oauth_state(state_obj)
 
   def get_logins(self):
     """Extracts the current user page paths from the logins cookie.

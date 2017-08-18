@@ -196,7 +196,7 @@ class AuthHandler(util.Handler):
 class AddTwitter(oauth_twitter.CallbackHandler, AuthHandler):
   def finish(self, auth_entity, state=None):
     source = self.maybe_add_or_delete_source(Twitter, auth_entity, state)
-    feature = self.decode_state_parameter(state).get('feature')
+    feature = util.decode_oauth_state(state).get('feature')
 
     if source is not None and feature == 'listen' and 'publish' in source.features:
       # if we were already signed up for publish, we had a read/write token.

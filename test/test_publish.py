@@ -63,7 +63,7 @@ class PublishTest(testutil.HandlerTest):
     if interactive:
       class FakeSendHandler(publish.SendHandler):
         def post(fsh_self):
-          state = (self.handler.encode_state_parameter(self.oauth_state)
+          state = (util.encode_oauth_state(self.oauth_state)
                    if self.oauth_state else None)
           fsh_self.finish(self.auth_entity, state)
       app = webapp2.WSGIApplication([('.*', FakeSendHandler)])

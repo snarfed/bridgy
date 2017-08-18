@@ -118,7 +118,7 @@ class AddFlickr(oauth_flickr.CallbackHandler, AuthHandler):
   def finish(self, auth_entity, state=None):
     logging.debug('finish with %s, %s', auth_entity, state)
     source = self.maybe_add_or_delete_source(Flickr, auth_entity, state)
-    feature = self.decode_state_parameter(state).get('feature')
+    feature = util.decode_oauth_state(state).get('feature')
     if source and feature == 'listen' and 'publish' in source.features:
       # we had signed up previously with publish, so we'll reauth to
       # avoid losing that permission

@@ -378,7 +378,7 @@ class AuthHandler(util.Handler):
 
     if state is None:
       state = self.request.get('state')
-    state_obj = self.decode_state_parameter(state) if state else {}
+    state_obj = util.decode_oauth_state(state) if state else {}
 
     id = state_obj.get('id') or self.request.get('id')
     if id and auth_entity and id != auth_entity.key.id():
@@ -411,7 +411,7 @@ class AddFacebookPage(AuthHandler):
 class OAuthCallback(oauth_facebook.CallbackHandler, AuthHandler):
   """OAuth callback handler."""
   def finish(self, auth_entity, state=None):
-    id = self.decode_state_parameter(state).get('id')
+    id = util.decode_oauth_state(state).get('id')
 
     if auth_entity and json.loads(auth_entity.pages_json) and not id:
       # this user has FB page(s), and we don't know whether they want to sign

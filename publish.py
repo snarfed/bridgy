@@ -376,7 +376,7 @@ class Handler(webmention.WebmentionHandler):
               'preview': result.content,
               'description': result.description,
               'webmention_endpoint': self.request.host_url + '/publish/webmention',
-              'state': self.encode_state_parameter(state),
+              'state': util.encode_oauth_state(state),
               }
       vars.update(state)
       logging.info('Rendering preview with template vars %s', pprint.pformat(vars))
@@ -548,7 +548,7 @@ class SendHandler(Handler):
   PREVIEW = False
 
   def finish(self, auth_entity, state=None):
-    self.state = self.decode_state_parameter(state)
+    self.state = util.decode_oauth_state(state)
     if not state:
       self.error('If you want to publish or preview, please approve the prompt.')
       return self.redirect('/')
