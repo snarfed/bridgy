@@ -15,6 +15,7 @@ from granary.test import test_instagram
 import appengine_config
 import instagram
 import testutil
+import util
 
 
 class InstagramTest(testutil.ModelsTest):
@@ -88,7 +89,11 @@ class InstagramTest(testutil.ModelsTest):
 
   def callback(self, state=''):
     resp = instagram.application.get_response(
-      '/instagram/callback?me=http://snarfed.org&code=my_code&state=%s' % state)
+      '/instagram/callback?code=my_code&state=%s' % util.encode_oauth_state({
+        'endpoint': indieauth.INDIEAUTH_URL,
+        'me': 'http://snarfed.org',
+        'state': state,
+      }))
     self.assertEquals(302, resp.status_int)
     return resp
 
@@ -201,11 +206,15 @@ class InstagramTest(testutil.ModelsTest):
 
     self.assertEquals(302, resp.status_code)
 
-    state_json = json.dumps(state, separators=(',', ':'), sort_keys=True)
+    state_json = util.encode_oauth_state(state)
     expected_auth_url = indieauth.INDIEAUTH_URL + '?' + urllib.urlencode({
       'me': 'http://snarfed.org',
       'client_id': appengine_config.INDIEAUTH_CLIENT_ID,
       'redirect_uri': 'http://localhost/instagram/callback',
-      'state': urllib.quote(state_json, safe=''),
+      'state': util.encode_oauth_state({
+        'endpoint': indieauth.INDIEAUTH_URL,
+        'me': 'http://snarfed.org',
+        'state': state_json,
+      }),
     })
     self.assertEquals(expected_auth_url, resp.headers['Location'])
