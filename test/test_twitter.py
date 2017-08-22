@@ -17,6 +17,7 @@ from oauth_dropins import twitter as oauth_twitter
 
 import models
 import testutil
+import twitter
 from twitter import Twitter
 
 
@@ -194,3 +195,17 @@ class TwitterTest(testutil.ModelsTest):
     self.assertTrue(self.tw.is_blocked({'author': {'numeric_id': '1'}}))
     self.assertFalse(self.tw.is_blocked({'author': {'numeric_id': '3'}}))
     self.assert_equals(['1', '2'], memcache.get('B /twitter/snarfed_org'))
+
+  def test_is_blocked_size_limit(self):
+    """Test that we cap block list sizes in memcache."""
+    self.mox.stubs.Set(twitter, 'BLOCKLIST_MAX_IDS', 2)
+    api_url = gr_twitter.API_BASE + gr_twitter.API_BLOCK_IDS % '-1'
+    self.expect_urlopen(api_url, json.dumps({
+      'ids': ['1', '2', '3'],
+      'next_cursor_str': '0',
+    }))
+
+    self.mox.ReplayAll()
+    self.assertTrue(self.tw.is_blocked({'author': {'numeric_id': '1'}}))
+    self.assertTrue(self.tw.is_blocked({'author': {'numeric_id': '2'}}))
+    self.assertFalse(self.tw.is_blocked({'author': {'numeric_id': '3'}}))

@@ -24,7 +24,10 @@ from oauth_dropins import twitter as oauth_twitter
 import models
 import util
 
-BLOCKLIST_CACHE_TIME = 60 * 60 * 2  # 1h
+BLOCKLIST_CACHE_TIME = 60 * 60 * 2  # 2h
+# limit size of cached block lists to try to stay under memcache 1MB value limit:
+# https://cloud.google.com/appengine/docs/standard/python/memcache/#limits
+BLOCKLIST_MAX_IDS = 40000
 
 
 class Twitter(models.Source):
@@ -162,9 +165,10 @@ class Twitter(models.Source):
       self.blocked_ids = memcache.get(cache_key)
       if self.blocked_ids is None:
         try:
-          self.blocked_ids = self.gr_source.get_blocklist_ids()
+          ids = self.gr_source.get_blocklist_ids()
         except gr_source.RateLimited as e:
-          self.blocked_ids = e.partial or []
+          ids = e.partial or []
+        self.blocked_ids = ids[:BLOCKLIST_MAX_IDS]
         memcache.set(cache_key, self.blocked_ids, time=BLOCKLIST_CACHE_TIME)
 
     for o in [obj] + util.get_list(obj, 'object'):
