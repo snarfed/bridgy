@@ -161,7 +161,10 @@ class Twitter(models.Source):
       cache_key = 'B %s' % self.bridgy_path()
       self.blocked_ids = memcache.get(cache_key)
       if self.blocked_ids is None:
-        self.blocked_ids = self.gr_source.get_blocklist_ids()
+        try:
+          self.blocked_ids = self.gr_source.get_blocklist_ids()
+        except gr_source.RateLimited as e:
+          self.blocked_ids = e.partial or []
         memcache.set(cache_key, self.blocked_ids, time=BLOCKLIST_CACHE_TIME)
 
     for o in [obj] + util.get_list(obj, 'object'):

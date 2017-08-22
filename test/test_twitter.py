@@ -179,3 +179,18 @@ class TwitterTest(testutil.ModelsTest):
 
     # should have used the blocklist in the instance
     self.assertIsNone(memcache.get('B /twitter/snarfed_org'))
+
+  def test_is_blocked_rate_limited(self):
+    """If we get rate limited, we should use the partial result."""
+    api_url = gr_twitter.API_BASE + gr_twitter.API_BLOCK_IDS % '-1'
+    self.expect_urlopen(api_url, json.dumps({
+      'ids': ['1', '2'],
+      'next_cursor_str': '2',
+    }))
+    api_url = gr_twitter.API_BASE + gr_twitter.API_BLOCK_IDS % '2'
+    self.expect_urlopen(api_url, status=429)
+
+    self.mox.ReplayAll()
+    self.assertTrue(self.tw.is_blocked({'author': {'numeric_id': '1'}}))
+    self.assertFalse(self.tw.is_blocked({'author': {'numeric_id': '3'}}))
+    self.assert_equals(['1', '2'], memcache.get('B /twitter/snarfed_org'))
