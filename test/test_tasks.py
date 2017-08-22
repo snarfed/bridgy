@@ -33,6 +33,7 @@ import appengine_config
 import models
 from models import Response, SyndicatedPost
 import original_post_discovery
+from twitter import Twitter
 import tasks
 from tasks import PropagateResponse
 import testutil
@@ -1372,7 +1373,8 @@ class PropagateTest(TaskQueueTest):
     self.assert_equals(failed, response.failed)
 
   def expect_webmention(self, source_url=None, target='http://target1/post/url',
-                        error=None, input_endpoint=None, discovered_endpoint=None):
+                        error=None, input_endpoint=None, discovered_endpoint=None,
+                        headers=util.REQUEST_HEADERS):
     if source_url is None:
       source_url = 'http://localhost/comment/fake/%s/a/1_2_a' % \
           self.sources[0].key.string_id()
@@ -1384,7 +1386,7 @@ class PropagateTest(TaskQueueTest):
                                    else 'http://webmention/endpoint')
     mock_send.response = 'used in logging'
     mock_send.error = error
-    return mock_send.send(timeout=999, headers=util.REQUEST_HEADERS)
+    return mock_send.send(timeout=999, headers=headers)
 
   def test_propagate(self):
     """Normal propagate tasks."""
@@ -1620,7 +1622,7 @@ class PropagateTest(TaskQueueTest):
     self.expect_requests_post(
       'http://my/endpoint',
       data={'source': source_url, 'target': 'http://html/charset'},
-      timeout=999, verify=False, allow_redirects=False)
+      timeout=999, verify=False, allow_redirects=False, headers={'Accept': '*/*'})
 
     self.mox.ReplayAll()
     self.post_task()
@@ -1658,11 +1660,34 @@ class PropagateTest(TaskQueueTest):
     self.expect_requests_post(
       'http://my/endpoint', timeout=999, verify=False,
       data={'source': source_url, 'target': 'http://my/post'},
-      allow_redirects=False)
+      allow_redirects=False, headers={'Accept': '*/*'})
 
     self.mox.ReplayAll()
     self.post_task()
     self.assert_response_is('complete', sent=['http://my/post'])
+
+  def test_webmention_post_omits_accept_header(self):
+    """The webmention POST request should never send the Accept header."""
+    self.mox.UnsetStubs()  # drop WebmentionSend mock; let it run
+    super(PropagateTest, self).setUp()
+
+    self.responses[0].source = Twitter(id='rhiaro').put()
+    self.responses[0].put()
+    # self.expect_requests_head('http://my/post')
+    self.expect_webmention_requests_get(
+      'http://target1/post/url', timeout=999, verify=False,
+      headers=util.REQUEST_HEADERS_CONNEG,
+      response_headers={'Link': '<http://my/endpoint>; rel=webmention'})
+
+    self.expect_requests_post(
+      'http://my/endpoint', timeout=999, verify=False,
+      data={'source': 'http://localhost/comment/twitter/rhiaro/a/1_2_a',
+            'target': 'http://target1/post/url'},
+      allow_redirects=False, headers={'Accept': '*/*'})
+
+    self.mox.ReplayAll()
+    self.post_task()
+    self.assert_response_is('complete', sent=['http://target1/post/url'])
 
   def test_no_targets(self):
     """No target URLs."""
