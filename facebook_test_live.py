@@ -105,8 +105,8 @@ class FacebookTestLive(testutil.HandlerTest):
     self.mox.StubOutWithMock(requests, 'post', use_mock_anything=True)
     self.expect_requests_post(
       'http://example.zz/wm', timeout=mox.IgnoreArg(), verify=mox.IgnoreArg(),
-      data=mox.Func(handle_post_body), allow_redirects=False
-      ).MultipleTimes()
+      data=mox.Func(handle_post_body), allow_redirects=False,
+      headers={'Accept': '*/*'}).MultipleTimes()
     self.mox.ReplayAll()
 
     memcache.set('W http example.zz', 'http://example.zz/wm')
