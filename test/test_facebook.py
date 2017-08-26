@@ -79,7 +79,7 @@ class FacebookPageTest(testutil.ModelsTest):
 
     join_char = '&' if '?' in path else '?'
     return self.expect_urlopen(
-      'https://graph.facebook.com/v2.6/%s%saccess_token=my_token' %
+      'https://graph.facebook.com/v2.10/%s%saccess_token=my_token' %
         (path, join_char),
       response, **kwargs)
 
@@ -96,7 +96,7 @@ class FacebookPageTest(testutil.ModelsTest):
     self.assertEqual(self.auth_entity, self.fb.auth_entity.get())
     self.assertEqual('my_token', self.fb.gr_source.access_token)
     self.assertEqual('212038', self.fb.key.id())
-    self.assertEqual('https://graph.facebook.com/v2.6/212038/picture?type=large',
+    self.assertEqual('https://graph.facebook.com/v2.10/212038/picture?type=large',
                      self.fb.picture)
     self.assertEqual('Ryan Barrett', self.fb.name)
     self.assertEqual('snarfed.org', self.fb.username)
@@ -234,7 +234,7 @@ class FacebookPageTest(testutil.ModelsTest):
       'href': 'https://brid.gy/facebook/start',
       'access_token': 'my_app_id|my_app_secret',
       }
-    self.expect_urlopen('https://graph.facebook.com/v2.6/212038/notifications', '',
+    self.expect_urlopen('https://graph.facebook.com/v2.10/212038/notifications', '',
                         data=urllib.urlencode(params))
     self.mox.ReplayAll()
 
