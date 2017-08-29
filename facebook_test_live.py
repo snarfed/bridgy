@@ -31,6 +31,9 @@ import unittest
 import urllib
 import urlparse
 
+from requests import adapters, sessions
+orig_HTTPAdapter = adapters.HTTPAdapter
+
 import oauth_dropins.webutil.test
 import appengine_config
 
@@ -48,8 +51,7 @@ import util
 TEST_USER_ID = '1407574399567467'
 
 # undo requests-toolbelt's app engine monkey patch
-from requests import adapters, sessions
-sessions.HTTPAdapter = adapters.HTTPAdapter
+sessions.HTTPAdapter = adapters.HTTPAdapter = orig_HTTPAdapter
 
 
 class FacebookTestLive(testutil.HandlerTest):
