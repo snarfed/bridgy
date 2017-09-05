@@ -101,17 +101,24 @@ class UpdatePictures(webapp2.RequestHandler):
 class UpdateInstagramPictures(UpdatePictures):
   """Finds :class:`Instagram` sources with new profile pictures and updates them.
 
-  Splits the accounts up into seven batches, one per weekday, to avoid hitting
-  Instagram's rate limit. Testing on 2017-07-05 hit the rate limit after ~170
-  profile page requests, with ~270 total Instagram accounts on Bridgy.
+  Splits the accounts up into batches to avoid hitting Instagram's rate limit.
+  Try to hit every account once a week.
+
+  Testing on 2017-07-05 hit the rate limit after ~170 profile page requests,
+  with ~270 total Instagram accounts on Bridgy.
   """
   SOURCE_CLS = Instagram
-  DAYS_IN_WEEK = 7
+  FREQUENCY = datetime.timedelta(hours=1)
+  WEEK = datetime.timedelta(days=7)
+  BATCH = float(WEEK.total_seconds()) / FREQUENCY.total_seconds()
 
   def source_query(self):
-    batch = float(Instagram.query().count()) / self.DAYS_IN_WEEK
-    day = util.now_fn().weekday()
-    return Instagram.query().fetch(offset=int(math.floor(day * batch)),
+    now = util.now_fn()
+    since_sun = (now.weekday() * datetime.timedelta(days=1) +
+                 (now - now.replace(hour=0, minute=0, second=0)))
+    batch = float(Instagram.query().count()) / self.BATCH
+    offset = batch * float(since_sun.total_seconds()) / self.FREQUENCY.total_seconds()
+    return Instagram.query().fetch(offset=int(math.floor(offset)),
                                    limit=int(math.ceil(batch)))
 
 

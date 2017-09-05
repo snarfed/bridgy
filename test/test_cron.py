@@ -44,7 +44,7 @@ class CronTest(HandlerTest):
 
   def setup_instagram(self, batch_size=None, weekday=0):
     if batch_size:
-      self.mox.stubs.Set(cron.UpdateInstagramPictures, 'DAYS_IN_WEEK', batch_size)
+      self.mox.stubs.Set(cron.UpdateInstagramPictures, 'BATCH', batch_size)
 
     self.mox.StubOutWithMock(util, 'now_fn')
     # 2017-01-02 is a Monday, which datetime.weekday() returns 0 for
