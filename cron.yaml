@@ -13,7 +13,7 @@ cron:
 # frequent, updates just a few every time, to throttle and avoid rate limiting
 - description: update changed instagram profile pictures
   url: /cron/update_instagram_pictures
-  schedule: every hour
+  schedule: every 1 hours
 
 - description: update changed flickr profile pictures
   url: /cron/update_flickr_pictures

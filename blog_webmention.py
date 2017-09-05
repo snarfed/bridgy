@@ -117,10 +117,10 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
       code, body = util.interpret_http_exception(e)
       msg = 'Error: %s %s; %s' % (code, e, body)
       if code == '401':
-        logging.warning('Disabling source!')
+        logging.warning('Disabling source due to: %s' % e, exc_info=True)
         self.source.status = 'disabled'
         self.source.put()
-        return self.error(msg, status=code, mail=False)
+        return self.error(msg, status=code, mail=self.source.is_beta_user())
       elif code == '404':
         # post is gone
         return self.error(msg, status=code, mail=False)
