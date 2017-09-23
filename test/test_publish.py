@@ -1311,3 +1311,22 @@ Join us!"""
 """)
     self.mox.ReplayAll()
     self.assert_error("doesn't support type(s) h-as-entry")
+
+  def test_nested_object_without_url(self):
+    """p-repost-of creates an inner object, this one without a u-url.
+
+    From https://dougbeal.com/2017/09/23/instagram-post-by-murbers-%e2%80%a2-sep-23-2017-at-107am-utc/"""
+    self.expect_requests_get('http://foo.com/bar', """
+<div class="h-entry">
+<div class="e-content">
+
+<section class="h-cite p-repost-of">
+<blockquote class="e-summary">
+<a href="https://www.instagram.com/p/BZXVGQIg_u6/">Doug (@murderofcro.ws) is SOOPER excited about #pelikanhubs2017</a>
+</blockquote>
+</section>
+
+</div></div>
+""")
+    self.mox.ReplayAll()
+    self.assert_created('Doug (@murderofcro.ws) is SOOPER excited about #pelikanhubs2017')

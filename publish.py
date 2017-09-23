@@ -432,10 +432,12 @@ class Handler(webmention.WebmentionHandler):
       augmented = list(objs)
       for obj in objs:
         url = obj.get('url')
+        if not url:
+          continue
+
         parsed = urlparse.urlparse(url)
-        if (not url or
-            # ignore home pages. https://github.com/snarfed/bridgy/issues/760
-            parsed.path in ('', '/')):
+        # ignore home pages. https://github.com/snarfed/bridgy/issues/760
+        if parsed.path in ('', '/'):
           continue
 
         # get_webmention_target weeds out silos and non-HTML targets
