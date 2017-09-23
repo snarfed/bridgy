@@ -282,10 +282,11 @@ class Handler(webmention.WebmentionHandler):
         queue.extend(item.get('children', []))
       except BaseException, e:
         code, body = util.interpret_http_exception(e)
-        mail = code not in ('502', '504')
+        if not code:
+          raise
         msg = 'Error from %s API or your site: %s %s' % (
           self.source.GR_CLASS.NAME, body or '', e)
-        return self.error(msg, status=code or 500, mail=mail)
+        return self.error(msg, status=code, mail=code not in ('502', '504'))
 
     if not self.entity.published:  # tried all the items
       types.discard('h-entry')

@@ -86,8 +86,10 @@ class PublishTest(testutil.HandlerTest):
       self.assertIn(expected, body,
                     '%r\n\n=== vs ===\n\n%r' % (expected, body))
     else:
-      self.assertIn(expected, json.loads(body)[
-        'content' if status < 300 else 'error'])
+      if resp.headers['Content-Type'] == 'application/json':
+        body = json.loads(body)['content' if status < 300 else 'error']
+      self.assertIn(expected, body)
+
     return resp
 
   def assert_success(self, expected, **kwargs):
@@ -593,21 +595,22 @@ this is my article
 
     self.mox.StubOutWithMock(self.source.gr_source, 'create',
                              use_mock_anything=True)
+    err = exc.HTTPPaymentRequired('fooey')
     self.source.gr_source.create(mox.IgnoreArg(),
                                  include_link=gr_source.INCLUDE_LINK,
                                  ignore_formatting=False
-                                 ).AndRaise(exc.HTTPPaymentRequired('fooey'))
+                                 ).AndRaise(err)
 
     self.mox.StubOutWithMock(self.source.gr_source, 'preview_create',
                              use_mock_anything=True)
     self.source.gr_source.preview_create(mox.IgnoreArg(),
                                          include_link=gr_source.INCLUDE_LINK,
                                          ignore_formatting=False
-                                         ).AndRaise(Exception('bar'))
+                                         ).AndRaise(err)
 
     self.mox.ReplayAll()
     self.assert_error('fooey', status=402)
-    self.assertEquals(500, self.get_response(preview=True).status_int)
+    self.assertEquals(402, self.get_response(preview=True).status_int)
 
   def test_silo_500_returns_502(self):
     self.expect_requests_get('http://foo.com/bar', self.post_html % 'xyz')
@@ -619,7 +622,7 @@ this is my article
                                  ignore_formatting=False
                                  ).AndRaise(err)
     self.mox.ReplayAll()
-    self.assert_error('foooey bar', status=502)
+    self.assert_error('Error from FakeSource API or your site: foooey bar', status=502)
 
   def test_connection_error_returns_504(self):
     self.expect_requests_get('http://foo.com/bar', self.post_html % 'xyz')
@@ -630,7 +633,19 @@ this is my article
                                  ignore_formatting=False
                                  ).AndRaise(socket.error('foooey bar'))
     self.mox.ReplayAll()
-    self.assert_error('foooey bar', status=504)
+    self.assert_error('Error from FakeSource API or your site: foooey bar', status=504)
+
+  def test_non_http_exception(self):
+    """If we crash, we shouldn't blame the silo or the user's site."""
+    self.expect_requests_get('http://foo.com/bar', self.post_html % 'xyz')
+    self.mox.StubOutWithMock(self.source.gr_source, 'create',
+                             use_mock_anything=True)
+    self.source.gr_source.create(mox.IgnoreArg(),
+                                 include_link=gr_source.INCLUDE_LINK,
+                                 ignore_formatting=False
+                                 ).AndRaise(RuntimeError('baz'))
+    self.mox.ReplayAll()
+    resp = self.assert_error('500', status=500)
 
   def test_preview(self):
     html = self.post_html % 'foo'
