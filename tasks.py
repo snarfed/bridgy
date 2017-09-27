@@ -94,6 +94,7 @@ class Poll(webapp2.RequestHandler):
     source.updates = {
       'poll_status': 'polling',
       'last_poll_attempt': util.now_fn(),
+      'rate_limited': False,
     }
     source = models.Source.put_updates(source)
 

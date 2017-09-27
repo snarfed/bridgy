@@ -105,6 +105,7 @@ class Source(StringIdModel):
   url = ndb.StringProperty()
   status = ndb.StringProperty(choices=STATUSES, default='enabled')
   poll_status = ndb.StringProperty(choices=POLL_STATUSES, default='ok')
+  rate_limited = ndb.BooleanProperty(default=False)
   name = ndb.StringProperty()  # full human-readable name
   picture = ndb.StringProperty()
   domains = ndb.StringProperty(repeated=True)
@@ -144,10 +145,6 @@ class Source(StringIdModel):
   last_activities_etag = ndb.StringProperty()
   last_activities_cache_json = ndb.TextProperty()
   seen_responses_cache_json = ndb.TextProperty(compressed=True)
-
-  # this is set temporarily, in memory only, by the poll task when we get rate
-  # limited. it can be used e.g. to modify the poll period.
-  rate_limited = False
 
   # maps updated property names to values that put_updates() writes back to the
   # datastore transactionally. set this to {} before beginning.

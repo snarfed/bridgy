@@ -207,14 +207,17 @@ class PollTest(TaskQueueTest):
 
   def test_reset_status_to_enabled(self):
     """After a successful poll, status should be set to 'enabled' and 'ok'."""
-    self.sources[0].status = 'error'
-    self.sources[0].poll_status = 'error'
-    self.sources[0].put()
+    source = self.sources[0]
+    source.status = 'error'
+    source.poll_status = 'error'
+    source.rate_limited = True
+    source.put()
 
     self.post_task()
-    source = self.sources[0].key.get()
+    source = source.key.get()
     self.assertEqual('enabled', source.status)
     self.assertEqual('ok', source.poll_status)
+    self.assertFalse(source.rate_limited)
 
   def test_original_post_discovery(self):
     """Target URLs should be extracted from attachments, tags, and text."""
@@ -840,7 +843,9 @@ class PollTest(TaskQueueTest):
         self.mox.ReplayAll()
 
         self.post_task()
-        self.assertEqual('error', self.sources[0].key.get().poll_status)
+        source = self.sources[0].key.get()
+        self.assertEqual('error', source.poll_status)
+        self.assertTrue(source.rate_limited)
         self.mox.VerifyAll()
 
         # should have inserted a new poll task
