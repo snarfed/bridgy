@@ -85,11 +85,6 @@ class GooglePlusPage(models.Source):
 
     return getattr(super(GooglePlusPage, self), name)
 
-  def poll_period(self):
-    """Returns the poll frequency for this source."""
-    return (self.RATE_LIMITED_POLL if self.rate_limited
-            else super(GooglePlusPage, self).poll_period())
-
   def search_for_links(self):
     """Searches for activities with links to any of this source's web sites.
 

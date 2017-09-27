@@ -43,12 +43,6 @@ class GooglePlusTest(testutil.ModelsTest):
     self.assertEqual('http://mr/g/p', self.gp.silo_url())
     self.assertEqual('tag:plus.google.com,2013:987', self.gp.user_tag_id())
 
-  def test_poll_period(self):
-    self.gp.put()
-    self.assertEqual(GooglePlusPage.FAST_POLL, self.gp.poll_period())
-    self.gp.rate_limited = True
-    self.assertEqual(GooglePlusPage.RATE_LIMITED_POLL, self.gp.poll_period())
-
   def test_search_for_links(self):
     # should only search for urls without paths
     for urls in [], [], ['http://a/b'], ['https://c/d/e', 'https://f.com/g']:

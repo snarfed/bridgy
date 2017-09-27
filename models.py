@@ -82,8 +82,10 @@ class Source(StringIdModel):
 
   # how often to poll for responses
   FAST_POLL = datetime.timedelta(minutes=30)
-  # poll sources less often (this much) if they've never sent a webmention
+  # how often to poll sources that have never sent a webmention
   SLOW_POLL = datetime.timedelta(days=1)
+  # how often to poll sources that are currently rate limited by their silo
+  RATE_LIMITED_POLL = SLOW_POLL
   # how long to wait after signup for a successful webmention before dropping to
   # the lower frequency poll
   FAST_POLL_GRACE_PERIOD = datetime.timedelta(days=7)
@@ -258,7 +260,9 @@ class Source(StringIdModel):
     to ~1d after a week long grace period.
     """
     now = datetime.datetime.now()
-    if now < self.created + self.FAST_POLL_GRACE_PERIOD:
+    if self.rate_limited:
+      return self.RATE_LIMITED_POLL
+    elif now < self.created + self.FAST_POLL_GRACE_PERIOD:
       return self.FAST_POLL
     elif not self.last_webmention_sent:
       return self.SLOW_POLL

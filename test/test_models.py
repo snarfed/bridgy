@@ -475,6 +475,25 @@ class SourceTest(testutil.HandlerTest):
     finally:
       del FakeSource._pre_put_hook
 
+  def test_poll_period(self):
+    source = FakeSource.new(None)
+    source.put()
+
+    self.assertEqual(source.FAST_POLL, source.poll_period())
+
+    source.created = datetime.datetime(2000, 1, 1)
+    self.assertEqual(source.SLOW_POLL, source.poll_period())
+
+    now = datetime.datetime.now()
+    source.last_webmention_sent = now - datetime.timedelta(days=8)
+    self.assertEqual(source.FAST_POLL * 10, source.poll_period())
+
+    source.last_webmention_sent = now
+    self.assertEqual(source.FAST_POLL, source.poll_period())
+
+    source.rate_limited = True
+    self.assertEqual(source.RATE_LIMITED_POLL, source.poll_period())
+
   def test_should_refetch(self):
     source = FakeSource.new(None)  # haven't found a synd url yet
     self.assertFalse(source.should_refetch())

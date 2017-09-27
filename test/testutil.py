@@ -190,10 +190,6 @@ class FakeSource(Source):
   def feed_url(self):
     return 'fake feed url'
 
-  def poll_period(self):
-    return (self.RATE_LIMITED_POLL if self.rate_limited
-            else super(FakeSource, self).poll_period())
-
   def search_for_links(self):
     return copy.deepcopy(FakeGrSource.search_results)
 

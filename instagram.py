@@ -49,6 +49,7 @@ class Instagram(models.Source):
   GR_CLASS = gr_instagram.Instagram
   SHORT_NAME = 'instagram'
   FAST_POLL = datetime.timedelta(minutes=60)
+  RATE_LIMITED_POLL = models.Source.SLOW_POLL
 
   URL_CANONICALIZER = util.UrlCanonicalizer(
     domain=GR_CLASS.DOMAIN,
