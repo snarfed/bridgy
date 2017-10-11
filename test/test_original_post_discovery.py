@@ -484,7 +484,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.assert_discover([])
 
   def test_permalink_limit(self):
-    self.mox.stubs.Set(original_post_discovery, 'MAX_PERMALINK_FETCHES', 3)
+    self.mox.stubs.Set(original_post_discovery, 'MAX_PERMALINK_FETCHES_BETA', 3)
 
     self.expect_requests_get('http://author', """
 <html><body>

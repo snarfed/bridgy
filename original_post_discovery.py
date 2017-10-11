@@ -43,6 +43,7 @@ from models import SyndicatedPost
 from google.appengine.api import memcache
 
 MAX_PERMALINK_FETCHES = 10
+MAX_PERMALINK_FETCHES_BETA = 50
 
 
 def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True,
@@ -339,8 +340,10 @@ def _process_author(source, author_url, refetch=False, store_blanks=True):
         else:
           logging.warn('unexpected non-string "url" property: %s', permalink)
 
-    if len(permalink_to_entry) >= MAX_PERMALINK_FETCHES:
-      logging.info('Hit cap of %d permalinks. Stopping.', MAX_PERMALINK_FETCHES)
+    max = (MAX_PERMALINK_FETCHES_BETA if source.is_beta_user()
+           else MAX_PERMALINK_FETCHES)
+    if len(permalink_to_entry) >= max:
+      logging.info('Hit cap of %d permalinks. Stopping.', max)
       break
 
   # query all preexisting permalinks at once, instead of once per link
