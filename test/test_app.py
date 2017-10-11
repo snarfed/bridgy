@@ -552,8 +552,13 @@ class DiscoverTest(testutil.ModelsTest):
       {'source_key': key, 'post_id': '444'},
     ], [testutil.get_task_params(task) for task in tasks])
 
+    now = util.now_fn()
+    source = self.source.key.get()
+    self.assertEqual(now, source.last_syndication_url)
+
   def test_discover_url_site_post_last_feed_syndication_url(self):
-    self.source.last_feed_syndication_url = util.now_fn()
+    now = util.now_fn()
+    self.source.last_feed_syndication_url = now
     self.source.put()
 
     self.expect_requests_get('http://si.te/123', """
@@ -569,3 +574,6 @@ class DiscoverTest(testutil.ModelsTest):
     key = self.source.key.urlsafe()
     self.assertEqual([{'source_key': key, 'post_id': '222'}],
                      [testutil.get_task_params(task) for task in tasks])
+
+    source = self.source.key.get()
+    self.assertEqual(now, source.last_syndication_url)

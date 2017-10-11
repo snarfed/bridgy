@@ -86,6 +86,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.assert_syndicated_posts(('http://author/post/permalink',
                                   'https://fa.ke/post/url'))
 
+    self.assertEquals(testutil.NOW, self.source.updates['last_syndication_url'])
     self.assertEquals(testutil.NOW, self.source.updates['last_feed_syndication_url'])
 
   def test_syndication_url_in_hfeed_with_redirect(self):
@@ -1160,6 +1161,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
       ('http://author/permalink', 'https://fa.ke/changed/url'))
     self.assert_equals({'https://fa.ke/changed/url': list(SyndicatedPost.query())},
                        results)
+    self.assertEquals(testutil.NOW, self.source.updates['last_syndication_url'])
     self.assertEquals(testutil.NOW, self.source.updates['last_feed_syndication_url'])
 
   def test_refetch_deleted_syndication(self):

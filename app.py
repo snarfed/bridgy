@@ -642,6 +642,8 @@ class DiscoverHandler(util.Handler):
       if synd_links:
         for link in synd_links:
           util.add_discover_task(source, source.GR_CLASS.post_id(link))
+        source.updates = {'last_syndication_url': util.now_fn()}
+        models.Source.put_updates(source)
       else:
         msg = 'Failed to fetch %s or find a %s syndication link.' % (
           util.pretty_link(url), source.GR_CLASS.NAME)
