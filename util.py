@@ -236,7 +236,10 @@ def get_webmention_target(url, resolve=True, replace_test_domains=True):
   if resolve:
     # this follows *all* redirects, until the end
     resolved = follow_redirects(url, cache=memcache)
-    send = resolved.headers.get('content-type', '').startswith('text/html')
+    html = resolved.headers.get('content-type', '').startswith('text/html')
+    length = resolved.headers.get('Content-Length', 0)
+    too_big = util.is_int(length) and int(length) > MAX_HTTP_RESPONSE_SIZE
+    send = html and not too_big
     url, domain, _ = get_webmention_target(
       resolved.url, resolve=False, replace_test_domains=replace_test_domains)
 

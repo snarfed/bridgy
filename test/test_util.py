@@ -184,6 +184,14 @@ class UtilTest(testutil.ModelsTest):
     self.assert_equals(('https://end', 'end', True),
                        util.get_webmention_target('http://orig', resolve=True))
 
+  def test_get_webmention_target_too_big(self):
+    self.expect_requests_head('http://orig', response_headers={
+      'Content-Length': str(util.MAX_HTTP_RESPONSE_SIZE + 1),
+    })
+    self.mox.ReplayAll()
+    self.assert_equals(('http://orig', 'orig', False),
+                       util.get_webmention_target('http://orig'))
+
   def test_registration_callback(self):
     """Run through an authorization back and forth and make sure that
     the external callback makes it all the way through.
