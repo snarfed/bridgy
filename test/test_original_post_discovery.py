@@ -515,6 +515,27 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.mox.ReplayAll()
     self.assert_discover([])
 
+  def test_feed_entry_limit(self):
+    self.mox.stubs.Set(original_post_discovery, 'MAX_FEED_ENTRIES', 2)
+
+    self.expect_requests_get('http://author', """
+<html><body>
+<div class="h-feed">
+  <div class="h-entry"><a class="u-url" href="http://author/a"></a>
+    <a class="u-syndication" href="http://fa.ke/post/url"></a></div>
+  <div class="h-entry"><a class="u-url" href="http://author/b"></a>
+    <a class="u-syndication" href="http://fa.ke/post/url"></a></div>
+  <div class="h-entry"><a class="u-url" href="http://author/c"></a>
+    <a class="u-syndication" href="http://fa.ke/post/url"></a></div>
+  <div class="h-entry"><a class="u-url" href="http://author/d"></a>
+    <a class="u-syndication" href="http://fa.ke/post/url"></a></div>
+</body></html>""")
+
+    self.mox.ReplayAll()
+    self.assert_discover(['http://author/a', 'http://author/b'])
+    self.assert_syndicated_posts(('http://author/a', 'https://fa.ke/post/url'),
+                                 ('http://author/b', 'https://fa.ke/post/url'))
+
   def test_syndication_url_head_error(self):
     """We should ignore syndication URLs that 4xx or 5xx."""
     self.expect_requests_head('https://fa.ke/post/url')

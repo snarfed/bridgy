@@ -44,6 +44,7 @@ from google.appengine.api import memcache
 
 MAX_PERMALINK_FETCHES = 10
 MAX_PERMALINK_FETCHES_BETA = 50
+MAX_FEED_ENTRIES = 100
 
 
 def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True,
@@ -420,6 +421,12 @@ def _find_feed_items(feed_url, feed_doc):
       hfeed.get('children', []) for hfeed in hfeeds))
   else:
     logging.debug('No h-feed found, fallback to top-level h-entrys.')
+
+  if len(feeditems) > MAX_FEED_ENTRIES:
+    logging.info('%s has %s entries! only processing the first %s.',
+                 feed_url, len(feeditems), MAX_FEED_ENTRIES)
+    feeditems = feeditems[:MAX_FEED_ENTRIES]
+
   return feeditems
 
 
