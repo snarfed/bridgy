@@ -538,28 +538,24 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
                                  ('http://author/b', 'https://fa.ke/post/url'))
 
   def test_homepage_too_big(self):
-    self.expect_requests_get('http://author', """
-<html><body>
-<div class="h-feed">
-  <div class="h-entry"><a class="u-url" href="http://author/a"></a>
-    <a class="u-syndication" href="http://fa.ke/post/url"></a></div>
-</body></html>""",
+    self.expect_requests_head('https://fa.ke/post/url')
+    self.expect_requests_head('http://author',
       response_headers={'Content-Length': str(util.MAX_HTTP_RESPONSE_SIZE + 1)})
+    # no GET for /author since it's too big
     self.mox.ReplayAll()
     self.assert_discover([])
 
   def test_feed_too_big(self):
+    self.expect_requests_head('https://fa.ke/post/url')
+    self.expect_requests_head('http://author')
     self.expect_requests_get(
       'http://author',
       '<html><head><link rel="feed" type="text/html" href="/feed"></head></html>')
-    self.expect_requests_get(
-      'http://author/feed', """\
-<html><body>
-<div class="h-feed">
-  <div class="h-entry"><a class="u-url" href="http://author/a"></a>
-    <a class="u-syndication" href="http://fa.ke/post/url"></a></div>
-</body></html>""",
-      response_headers={'Content-Length': str(util.MAX_HTTP_RESPONSE_SIZE + 1)})
+    self.expect_requests_head('http://author/feed', response_headers={
+      'Content-Type': 'text/html',
+      'Content-Length': str(util.MAX_HTTP_RESPONSE_SIZE + 1),
+    })
+    # no GET for /author/feed since it's too big
     self.mox.ReplayAll()
     self.assert_discover([])
 

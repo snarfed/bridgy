@@ -288,15 +288,15 @@ def _process_author(source, author_url, refetch=False, store_blanks=True):
 
     feed_url = urlparse.urljoin(author_url, feed_url)
     feed_type = rel_feed_node.get('type')
-    if not feed_type:
-      # type is not specified, use this to confirm that it's text/html
-      feed_url, _, feed_type_ok = util.get_webmention_target(feed_url)
+    if feed_type and feed_type != 'text/html':
+      feed_ok = False
     else:
-      feed_type_ok = feed_type == 'text/html'
+      # double check that it's text/html, not too big, etc
+      feed_url, _, feed_ok = util.get_webmention_target(feed_url)
 
     if feed_url == author_url:
       logging.debug('author url is the feed url, ignoring')
-    elif not feed_type_ok:
+    elif not feed_ok:
       logging.debug('skipping feed of type %s', feed_type)
     else:
       feed_urls.add(feed_url)
