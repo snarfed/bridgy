@@ -14,6 +14,7 @@ from models import SyndicatedPost
 import original_post_discovery
 from original_post_discovery import discover, refetch
 import testutil
+import util
 
 
 class OriginalPostDiscoveryTest(testutil.ModelsTest):
@@ -535,6 +536,32 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.assert_discover(['http://author/a', 'http://author/b'])
     self.assert_syndicated_posts(('http://author/a', 'https://fa.ke/post/url'),
                                  ('http://author/b', 'https://fa.ke/post/url'))
+
+  def test_homepage_too_big(self):
+    self.expect_requests_get('http://author', """
+<html><body>
+<div class="h-feed">
+  <div class="h-entry"><a class="u-url" href="http://author/a"></a>
+    <a class="u-syndication" href="http://fa.ke/post/url"></a></div>
+</body></html>""",
+      response_headers={'Content-Length': str(util.MAX_HTTP_RESPONSE_SIZE + 1)})
+    self.mox.ReplayAll()
+    self.assert_discover([])
+
+  def test_feed_too_big(self):
+    self.expect_requests_get(
+      'http://author',
+      '<html><head><link rel="feed" type="text/html" href="/feed"></head></html>')
+    self.expect_requests_get(
+      'http://author/feed', """\
+<html><body>
+<div class="h-feed">
+  <div class="h-entry"><a class="u-url" href="http://author/a"></a>
+    <a class="u-syndication" href="http://fa.ke/post/url"></a></div>
+</body></html>""",
+      response_headers={'Content-Length': str(util.MAX_HTTP_RESPONSE_SIZE + 1)})
+    self.mox.ReplayAll()
+    self.assert_discover([])
 
   def test_syndication_url_head_error(self):
     """We should ignore syndication URLs that 4xx or 5xx."""
