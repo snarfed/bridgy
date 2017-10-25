@@ -522,7 +522,8 @@ class Discover(Poll):
 
     except Exception, e:
       code, body = util.interpret_http_exception(e)
-      if (code and (code in util.HTTP_RATE_LIMIT_CODES or code == '400' or
+      if (code and (code in util.HTTP_RATE_LIMIT_CODES or
+                    code in ('400', '404') or
                     int(code) / 100 == 5)
             or util.is_connection_failure(e)):
         logging.error('API call failed; giving up. %s: %s\n%s', code, body, e)
