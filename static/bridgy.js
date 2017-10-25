@@ -58,7 +58,7 @@ function do_preview(site) {
 
   preview.innerHTML = '<img src="/static/spinner.gif" width="30" />';
   req.open('post', '/publish/preview?source=' + encodeURIComponent(url) +
-    '&target=http://brid.gy/publish/' + site +
+    '&target=https://brid.gy/publish/' + site +
     '&bridgy_omit_link=' + document.querySelector('input[name="bridgy_omit_link"]:checked').value +
     '&source_key=' + document.getElementById('source_key').value);
   req.send();
