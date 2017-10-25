@@ -37,6 +37,9 @@ oauth.net
 # active on silos.
 kash.space
 
+# serves big pages, e.g. >4MB, and App Engine prod doesn't get Content-Length header
+# http://www.scoop.it/t/e-learning-inclusivo/p/4087456888/2017/10/24/editors-choice-where-is-the-humanity-in-the-computer-science-curriculum
+scoop.it
 
 24sessions.com
 500px.com
