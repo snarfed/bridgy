@@ -121,7 +121,7 @@ class Poll(webapp2.RequestHandler):
         logging.info('Rate limited. Marking as error and finishing. %s', e)
         source.updates['rate_limited'] = True
       elif ((code and int(code) / 100 == 5) or
-            (code == '400' and isinstance(source, Flickr)) or
+            (code == '400' and isinstance(source, flickr.Flickr)) or
             util.is_connection_failure(e)):
         logging.error('API call failed. Marking as error and finishing. %s: %s\n%s',
                       code, body, e)
