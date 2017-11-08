@@ -138,7 +138,7 @@ class CallbackHandler(indieauth.CallbackHandler, util.Handler):
         self.messages.add(
           'No Instagram profile found. Please <a href="https://indieauth.com/setup">'
           'add an Instagram rel-me link</a>, then try again.')
-        return self.redirect_home_or_user_page(state)
+        return self.redirect('/')
 
       # check that instagram profile links to web site
       actor = gr_instagram.Instagram(scrape=True).get_actor(username)
@@ -146,7 +146,7 @@ class CallbackHandler(indieauth.CallbackHandler, util.Handler):
         self.messages.add(
           "Couldn't find Instagram user '%s'. Please check your site's rel-me "
           "link and your Instagram account." % username)
-        return self.redirect_home_or_user_page(state)
+        return self.redirect('/')
 
       canonicalize = util.UrlCanonicalizer(redirects=False)
       website = canonicalize(auth_entity.key.id())
@@ -155,13 +155,13 @@ class CallbackHandler(indieauth.CallbackHandler, util.Handler):
       if website not in urls:
         self.messages.add("Please add %s to your Instagram profile's website or "
                           'bio field and try again.' % website)
-        return self.redirect_home_or_user_page(state)
+        return self.redirect('/')
 
       # check that the instagram account is public
       if not gr_source.Source.is_public(actor):
         self.messages.add('Your Instagram account is private. '
                           'Bridgy only supports public accounts.')
-        return self.redirect_home_or_user_page(state)
+        return self.redirect('/')
 
     source = self.maybe_add_or_delete_source(Instagram, auth_entity, state,
                                              actor=actor)

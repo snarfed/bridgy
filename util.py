@@ -425,7 +425,13 @@ class Handler(webutil_handlers.ModernHandler):
       else:
         self.messages.add('If you want to disable, please approve the %s prompt.' %
                           source_cls.GR_CLASS.NAME)
-        self.redirect_home_or_user_page(state)
+        source_key = state.get('source')
+        if source_key:
+          source = ndb.Key(urlsafe=source_key).get()
+          if source:
+            return self.redirect(source.bridgy_url(self))
+
+        self.redirect('/')
 
   def construct_state_param_for_add(self, state=None, **kwargs):
     """Construct the state parameter if one isn't explicitly passed in.
@@ -496,15 +502,6 @@ class Handler(webutil_handlers.ModernHandler):
     header = cookie['logins'].OutputString()
     logging.info('Set-Cookie: %s', header)
     self.response.headers['Set-Cookie'] = header
-
-  def redirect_home_or_user_page(self, state):
-    redirect_to = '/'
-    split = state.split('-', 1)
-    if len(split) >= 2:
-      source = ndb.Key(urlsafe=split[1]).get()
-      if source:
-        redirect_to = source.bridgy_url(self)
-    self.redirect(redirect_to)
 
   def preprocess_source(self, source):
     """Prepares a source entity for rendering in the source.html template.

@@ -33,6 +33,15 @@ class InstagramTest(testutil.ModelsTest):
         'image': {'url': 'http://pic.ture/url'},
       })
 
+    self.bridgy_api_state = {
+      # dash in this URL is regression test for
+      # https://console.cloud.google.com/errors/8827591112854923168
+      'callback': 'http://my.site/call-back',
+      'feature': 'listen,publish',
+      'operation': 'add',
+      'user_url': 'http://snarfed.org',
+    }
+
   def test_new(self):
     self.assertEqual(self.auth_entity, self.inst.auth_entity.get())
     self.assertEqual('snarfed', self.inst.key.string_id())
@@ -87,6 +96,9 @@ class InstagramTest(testutil.ModelsTest):
     TestCase.expect_requests_get(self, gr_instagram.HTML_BASE_URL + 'snarfed/',
                                  body, allow_redirects=False, **kwargs)
 
+  def expect_webmention_discovery(self):
+    self.expect_requests_get('https://snarfed.org', '', stream=None, verify=False)
+
   def callback(self, state=''):
     resp = instagram.application.get_response(
       '/instagram/callback?code=my_code&state=%s' % util.encode_oauth_state({
@@ -101,9 +113,7 @@ class InstagramTest(testutil.ModelsTest):
     self.expect_site_fetch()
     self.expect_indieauth_check()
     self.expect_instagram_fetch()
-
-    # the signup attempt to discover my webmention endpoint
-    self.expect_requests_get('https://snarfed.org', '', stream=None, verify=False)
+    self.expect_webmention_discovery()
 
     self.mox.ReplayAll()
     resp = self.callback()
@@ -168,8 +178,7 @@ class InstagramTest(testutil.ModelsTest):
     self.expect_instagram_fetch(
       test_instagram.HTML_HEADER + json.dumps(profile) + test_instagram.HTML_FOOTER)
 
-    # the signup attempt to discover my webmention endpoint
-    self.expect_requests_get('https://snarfed.org', '', stream=None, verify=False)
+    self.expect_webmention_discovery()
 
     self.mox.ReplayAll()
     resp = self.callback()
@@ -181,9 +190,7 @@ class InstagramTest(testutil.ModelsTest):
     self.expect_site_fetch()
     self.expect_indieauth_check(state='0')
     self.expect_instagram_fetch()
-
-    # the signup attempt to discover my webmention endpoint
-    self.expect_requests_get('https://snarfed.org', '', stream=None, verify=False)
+    self.expect_webmention_discovery()
 
     self.mox.ReplayAll()
     resp = self.callback(state='0')
@@ -193,20 +200,14 @@ class InstagramTest(testutil.ModelsTest):
     self.assertTrue(self.inst.gr_source.scrape)
 
   def test_registration_api_start_handler_post(self):
-    state = {
-      'callback': 'http://my.site/callback',
-      'feature': 'listen,publish',
-      'operation': 'add',
-      'user_url': 'http://snarfed.org',
-    }
     self.expect_site_fetch()
     self.mox.ReplayAll()
     resp = instagram.application.get_response(
-      '/instagram/start', method='POST', body=urllib.urlencode(state))
+      '/instagram/start', method='POST', body=urllib.urlencode(self.bridgy_api_state))
 
     self.assertEquals(302, resp.status_code)
 
-    state_json = util.encode_oauth_state(state)
+    state_json = util.encode_oauth_state(self.bridgy_api_state)
     expected_auth_url = indieauth.INDIEAUTH_URL + '?' + urllib.urlencode({
       'me': 'http://snarfed.org',
       'client_id': appengine_config.INDIEAUTH_CLIENT_ID,
@@ -218,3 +219,31 @@ class InstagramTest(testutil.ModelsTest):
       }),
     })
     self.assertEquals(expected_auth_url, resp.headers['Location'])
+
+  def test_registration_api_finish_success(self):
+    state = util.encode_oauth_state(self.bridgy_api_state)
+    self.expect_indieauth_check(state=state)
+    self.expect_site_fetch()
+    self.expect_instagram_fetch()
+    self.expect_webmention_discovery()
+
+    self.mox.ReplayAll()
+    resp = self.callback(state=urllib.quote_plus(state))
+    self.assertEquals(302, resp.status_int)
+    self.assertEquals('http://my.site/call-back?' + urllib.urlencode({
+      'result': 'success',
+      'key': self.inst.key.urlsafe(),
+      'user': 'http://localhost/instagram/snarfed',
+    }), resp.headers['Location'])
+
+  def test_registration_api_finish_no_rel_me(self):
+    state = util.encode_oauth_state(self.bridgy_api_state)
+    self.expect_indieauth_check(state=state)
+    self.expect_site_fetch('')
+
+    self.mox.ReplayAll()
+    resp = self.callback(state=urllib.quote_plus(state))
+    self.assertEquals(302, resp.status_int)
+    location = urllib.unquote_plus(resp.headers['Location'])
+    self.assertTrue(location.startswith(
+      'http://localhost/#!No Instagram profile found.'), location)
