@@ -26,7 +26,7 @@ stats.wordpress.com
 
 # her comment spam filter rejects all of bridgy's webmentions.
 # reported: https://twitter.com/schnarfed/status/558739076996554752
-blog.mahabali.me
+# blog.mahabali.me
 
 # requested by aaronpk since they're in his twitter bio, so otherwise we'd send
 # them homepage webmentions whenever he's @-mentioned on twitter.
