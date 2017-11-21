@@ -3,8 +3,8 @@
 -e git+git@github.com:snarfed/oauth-dropins.git#egg=oauth_dropins-master
 -e git+git@github.com:snarfed/webmention-tools.git#egg=webmentiontools
 -e git+git@github.com:snarfed/google-api-python-client#egg=google-api-python-client-master
+-e git+git@github.com:kylewm/brevity#egg=brevity-master
 beautifulsoup4==4.3.2
-brevity==0.2.14
 certifi==2017.7.27.1
 chardet==3.0.4
 html2text==2016.9.19
