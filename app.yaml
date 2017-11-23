@@ -18,6 +18,8 @@ builtins:
 - appstats: on
 
 libraries:
+- name: jinja2
+  version: latest
 - name: lxml
   version: latest
 - name: ssl

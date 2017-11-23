@@ -107,7 +107,6 @@ class Instagram(models.Source):
 
 class StartHandler(TemplateHandler):
   """Serves the "Enter your username" form page."""
-  USE_APPENGINE_WEBAPP = True
 
   def template_file(self):
     return 'templates/indieauth.html'
