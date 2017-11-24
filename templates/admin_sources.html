@@ -20,19 +20,19 @@
 
   {% for s in sources %}
   <tr>
-    <td><a target="_blank" href="{{ s.bridgy_path }}">{{ s.label }}</a></td>
+    <td><a target="_blank" href="{{ s.bridgy_path() }}">{{ s.label() }}</a></td>
 
-    <td><a href="/log?start_time={{ s.last_poll_attempt|date:'U' }}&key={{ s.key.urlsafe }}"
-           title="{{ s.last_poll_attempt|date:'r' }}" target="_blank">
-      <time datetime="{{ s.last_poll_attempt|date:'c' }}">
-        {{ s.last_poll_attempt|timesince }}</time> ago</a></td>
+    <td><a href="/log?start_time={{ timestamp(s.last_poll_attempt) }}&key={{ s.key.urlsafe() }}"
+           title="{{ s.last_poll_attempt.isoformat() }}" target="_blank">
+      <time datetime="{{ s.last_poll_attempt.isoformat() }}">
+        {{ naturaltime(s.last_poll_attempt) }}</time></a></td>
 
     <td>
       {% if s.last_polled and s.last_polled > EPOCH %}
-        <a href="/log?start_time={{ s.last_polled|date:'U' }}&key={{ s.key.urlsafe }}"
-           title="{{ s.last_polled|date:'r' }}" target="_blank">
-        <time datetime="{{ s.last_polled|date:'c' }}">
-          {{ s.last_polled|timesince }}</time> ago</a></td>
+        <a href="/log?start_time={{ timestamp(s.last_polled) }}&key={{ s.key.urlsafe() }}"
+           title="{{ s.last_polled.isoformat() }}" target="_blank">
+        <time datetime="{{ s.last_polled.isoformat() }}">
+          {{ naturaltime(s.last_polled) }}</time></a></td>
       {% else %}
         never
       {% endif %}
@@ -40,9 +40,9 @@
 
     <td>
       {% if s.last_webmention_sent and s.last_webmention_sent > EPOCH %}
-        <time datetime="{{ s.last_webmention_sent|date:'c' }}"
-              title="{{ s.last_webmention_sent|date:'r' }}">
-          {{ s.last_webmention_sent|timesince }} ago</time>
+        <time datetime="{{ s.last_webmention_sent.isoformat() }}"
+              title="{{ s.last_webmention_sent.isoformat() }}">
+          {{ naturaltime(s.last_webmention_sent) }}</time>
       {% else %}
         never
       {% endif %}

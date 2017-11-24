@@ -3,12 +3,13 @@
 Currently just /admin/responses, which shows active responses with tasks that
 haven't completed yet.
 """
-
+import calendar
 import datetime
 import itertools
 import json
 
 import appengine_config
+import humanize
 from oauth_dropins.webutil import handlers
 from models import BlogPost, Response, Source
 import util
@@ -62,7 +63,6 @@ class ResponsesHandler(handlers.TemplateHandler):
 
 class SourcesHandler(handlers.TemplateHandler):
   """Find sources whose last poll errored out."""
-  USE_APPENGINE_WEBAPP = True
   NUM_SOURCES = 10
 
   def template_file(self):
@@ -79,11 +79,12 @@ class SourcesHandler(handlers.TemplateHandler):
     return {
       'sources': itertools.chain(*[q.get_result() for q in queries]),
       'EPOCH': util.EPOCH,
+      'naturaltime': humanize.naturaltime,
+      'timestamp': lambda dt: calendar.timegm(dt.utctimetuple()),
     }
 
 
 class MarkCompleteHandler(util.Handler):
-  USE_APPENGINE_WEBAPP = True
 
   def post(self):
     entities = ndb.get_multi(ndb.Key(urlsafe=u)
