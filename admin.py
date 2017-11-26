@@ -3,13 +3,11 @@
 Currently just /admin/responses, which shows active responses with tasks that
 haven't completed yet.
 """
-import calendar
 import datetime
 import itertools
 import json
 
 import appengine_config
-import humanize
 from oauth_dropins.webutil import handlers
 from models import BlogPost, Response, Source
 import util
@@ -30,7 +28,6 @@ import wordpress_rest
 
 class ResponsesHandler(handlers.TemplateHandler):
   """Find the most recently attempted responses and blog posts with error URLs."""
-  USE_APPENGINE_WEBAPP = True
   NUM_ENTITIES = 10
 
   def template_file(self):
@@ -78,9 +75,6 @@ class SourcesHandler(handlers.TemplateHandler):
                for cls in CLASSES]
     return {
       'sources': itertools.chain(*[q.get_result() for q in queries]),
-      'EPOCH': util.EPOCH,
-      'naturaltime': humanize.naturaltime,
-      'timestamp': lambda dt: calendar.timegm(dt.utctimetuple()),
     }
 
 

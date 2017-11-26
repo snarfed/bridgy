@@ -7,6 +7,7 @@ import copy
 import Cookie
 import contextlib
 import datetime
+import humanize
 import json
 import logging
 import re
@@ -37,8 +38,6 @@ LOCALHOST_TEST_DOMAINS = frozenset([
   ('kylewm.com', 'redwind.dev'),
 ])
 
-EPOCH = datetime.datetime.utcfromtimestamp(0)
-EPOCH_ISO = EPOCH.isoformat()
 POLL_TASK_DATETIME_FORMAT = '%Y-%m-%d-%H-%M-%S'
 
 # rate limiting errors. twitter returns 429, instagram 503, google+ 403.
@@ -100,6 +99,10 @@ Login = collections.namedtuple('Login', ('site', 'name', 'path'))
 
 canonicalize_domain = webutil_handlers.redirect(
   ('brid-gy.appspot.com', 'www.brid.gy'), 'brid.gy')
+
+webutil_handlers.JINJA_ENV.globals.update({
+  'naturaltime': humanize.naturaltime,
+})
 
 
 def add_poll_task(source, now=False, **kwargs):

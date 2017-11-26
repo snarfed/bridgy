@@ -4,6 +4,7 @@ granary>=1.8
 google-api-python-client>=1.6.3
 beautifulsoup4
 humanize
+jinja2>=2.10.0
 mf2py>=1.0.4
 mf2util>=0.5.0
 oauth2client
