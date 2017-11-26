@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{{ source.label|safe }} - Bridgy{% endblock %}
+{% block title %}{{ source.label()|safe }} - Bridgy{% endblock %}
 
 {% block body_class %}user h-card{% endblock %}
 
@@ -8,13 +8,13 @@
 
 <!-- Header: name and picture -->
 <div id="user" class="row big">
-<a target="_blank" href="{{ source.silo_url }}" title="{{ source.label|safe }}"
+<a target="_blank" href="{{ source.silo_url() }}" title="{{ source.label()|safe }}"
    rel="me" class="u-url">
   <img class="profile u-photo" src="{{ source.picture }}" width="64px" />
   <img src="/static/{{ source.SHORT_NAME }}_icon.png" width="24"
        {# oddly, source.GR_CLASS doesn't work for Twitter. use kind as fallback. #}
-       alt="{% firstof source.GR_CLASS.NAME source.key.kind %}" />
-  <span class="p-name">{{ source.label_name|safe }}</span></a>
+       alt="{{ source.GR_CLASS.NAME or source.key.kind }}" />
+  <span class="p-name">{{ source.label_name()|safe }}</span></a>
 
 {% if source.status == "disabled" %}
 <!-- TODO: make this work without javascript too -->
@@ -22,7 +22,7 @@
 <a href="#" onclick="document.forms['listen-{{ source.SHORT_NAME }}-start'].submit();
                      return false;">
   <span class="glyphicon glyphicon-pause"
-        title="This account was disconnected on {% firstof source.GR_CLASS.NAME source.key.kind %}'s end. Click to reconnect it!">
+        title="This account was disconnected on {{ source.GR_CLASS.NAME or source.key.kind }}'s end. Click to reconnect it!">
 </span></a>
 </data>
 {% else %}
@@ -30,7 +30,7 @@
 {% endif %}
 
 {% for link in source.website_links %}
-  {% if forloop.counter0 == 3 %}
+  {% if loop.counter0 == 3 %}
     <span id="more-websites" style="display: none">
   {% endif %}
   &middot;

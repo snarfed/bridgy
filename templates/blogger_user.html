@@ -1,7 +1,7 @@
 {% extends "blog_user.html" %}
 
 {% block undiscovered %}
-<p>Next step: <a target="_blank" href="{{ source.edit_template_url }}">click
+<p>Next step: <a target="_blank" href="{{ source.edit_template_url() }}">click
     here to open your blog's template</a>, click <em>Edit HTML</em>, and add
     this line after <code>&lt;head&gt;</code>:</p>
 <pre>&lt;link rel="webmention" href="https://brid.gy/webmention/blogger" /&gt;</pre>
@@ -10,6 +10,6 @@
 <!--   More details.</a> -->
 {% endblock %}
 
-{% block blog-signup %}
+{% block blog_signup %}
 {% include "blogger_signup.html" %}
 {% endblock %}

@@ -12,7 +12,7 @@
     {% for obj in choices %}
     <li>
       <input type="radio" name="id" id="{{ obj.id }}" value="{{ obj.id }}"
-             {% if forloop.first %} checked {% endif %}>
+             {% if loop.first %} checked {% endif %}>
       <label for="{{ obj.id }}">
         <a target="_blank" href="https://www.facebook.com/{{ obj.id }}">
           <img src="https://graph.facebook.com/v2.6/{{ obj.id }}/picture?width=32"

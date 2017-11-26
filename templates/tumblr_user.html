@@ -11,7 +11,7 @@
   {% endif %}
 
   {% if not source.webmention_endpoint %}
-  <li><a target="_blank" href="{{ source.edit_template_url }}">Click here to
+  <li><a target="_blank" href="{{ source.edit_template_url() }}">Click here to
     customize your blog</a>, click <em>Edit HTML,</em> and add this line
     after <code>&lt;head&gt;</code>:</p>
     <pre>&lt;link rel="webmention" href="https://brid.gy/webmention/tumblr" /&gt;</pre>
@@ -23,6 +23,6 @@
 </ul>
 {% endblock %}
 
-{% block blog-signup %}
+{% block blog_signup %}
 {% include "tumblr_signup.html" %}
 {% endblock %}

@@ -16,14 +16,14 @@ import logging
 
 import appengine_config
 
+from google.appengine.ext import ndb
 from oauth_dropins import medium as oauth_medium
+from oauth_dropins.webutil.handlers import JINJA_ENV
+
 import models
 import superfeedr
 import util
 import webapp2
-
-from google.appengine.ext import ndb
-from google.appengine.ext.webapp import template
 
 
 class Medium(models.Source):
@@ -167,7 +167,7 @@ class ChooseBlog(oauth_medium.CallbackHandler, util.Handler):
     }
     logging.info('Rendering choose_blog.html with %s', vars)
     self.response.headers['Content-Type'] = 'text/html'
-    self.response.out.write(template.render('templates/choose_blog.html', vars))
+    self.response.out.write(JINJA_ENV.get_template('choose_blog.html').render(**vars))
 
 
 class SuperfeedrNotifyHandler(superfeedr.NotifyHandler):

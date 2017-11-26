@@ -109,7 +109,7 @@ class StartHandler(TemplateHandler):
   """Serves the "Enter your username" form page."""
 
   def template_file(self):
-    return 'templates/indieauth.html'
+    return 'indieauth.html'
 
   def post(self):
     features = self.request.get('feature')

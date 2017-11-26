@@ -19,7 +19,7 @@
 {% else %}
 
 <div class="row">
-{% if source.has_bridgy_webmention_endpoint %}
+{% if source.has_bridgy_webmention_endpoint() %}
 <p class="big">You're all set! Check out your recent
 <a href="#blogposts">blog posts</a> and <a href="#webmentions">webmentions</a>.
   <!-- This currently 500s :/ -->
@@ -33,15 +33,15 @@ is
 <code><a href="{{ source.webmention_endpoint }}">
   {{ source.webmention_endpoint }}</a></code>.
 If you want Bridgy to handle your blog's webmentions, change it to
-<code><a href="{{ source.bridgy_webmention_endpoint }}">
-  {{ source.bridgy_webmention_endpoint }}</a></code>.
+<code><a href="{{ source.bridgy_webmention_endpoint() }}">
+  {{ source.bridgy_webmention_endpoint() }}</a></code>.
 </p>
 {% endif %}
 {% endif %}
 
 <div class="row">
 <form method="post" action="/delete/start">
-  <input name="key" type="hidden" value="{{ source.key.urlsafe }}" />
+  <input name="key" type="hidden" value="{{ source.key.urlsafe() }}" />
   <input name="feature" type="hidden" value="webmention" />
   <button id="delete-button" type="submit" class="btn btn-default"
           title="Disable this account. (Won't delete webmentions you've already sent or received.)">Disable</button>
@@ -52,7 +52,7 @@ If you want Bridgy to handle your blog's webmentions, change it to
 {% else %}
 <div class="row big">
 Click to re-enable:
-{% block blog-signup %}
+{% block blog_signup %}
 {% endblock %}
 </div>
 {% endif %}
@@ -74,11 +74,11 @@ Click to re-enable:
     {{ blogpost.pretty_url|safe }}
 
    </div><div class="col-sm-4">
-    <a href="/log?start_time={{ blogpost.updated|date:'U' }}&key={{ blogpost.key.urlsafe }}"
+    <a href="/log?start_time={{ timestamp(blogpost.updated) }}&key={{ blogpost.key.urlsafe() }}"
        class="u-bridgy-log">
-      <time class="dt-updated" datetime="{{ blogpost.updated|date:'c' }}"
-            title="{{ blogpost.updated|date:'r' }}">
-        {{ blogpost.updated|timesince }} ago</time>
+      <time class="dt-updated" datetime="{{ blogpost.updated.isoformat() }}"
+            title="{{ blogpost.updated.ctime() }}">
+        {{ naturaltime(blogpost.updated) }}</time>
       {% if blogpost.status == 'error' %}
        <span title="Error" class="glyphicon glyphicon-exclamation-sign"></span>
       {% else %}{% if blogpost.status == 'processing' %}
@@ -88,17 +88,21 @@ Click to re-enable:
 
    </div><div class="col-sm-1">
     <form method="post" action="/retry">
-      <input name="key" type="hidden" value="{{ blogpost.key.urlsafe }}" />
+      <input name="key" type="hidden" value="{{ blogpost.key.urlsafe() }}" />
       <input name="redirect_to" type="hidden" value="{{ request.url }}" />
       <button id="retry-button" type="submit" title="Retry"
               class="btn btn-default glyphicon glyphicon-refresh"></button>
     </form>
 
    </div><div class="col-sm-3">
-    {% for label, links in blogpost.links.items %}
+    {% for label, links in blogpost.links.items() %}
       {{ label|safe }}:
-      <ul class="original-post-links">{{ links|safeseq|unordered_list }}</ul>
-    {% empty %}
+      <ul class="original-post-links">
+        {% for link in links %}
+          <li>{{ link|safe }}</li>
+        {% endfor %}
+      </ul>
+    {% else %}
       No links found
     {% endfor %}
    </div>
@@ -127,9 +131,9 @@ Click to re-enable:
      {{ wm.pretty_target|safe }}
 
    </div><div class="col-sm-3">
-    <a href="/log?start_time={{ wm.updated|date:'U' }}&key={{ wm.key.urlsafe }}"
-       title="{{ wm.updated|date:'r' }}">
-      {{ wm.updated|timesince }} ago
+    <a href="/log?start_time={{ timestamp(wm.updated) }}&key={{ wm.key.urlsafe() }}"
+       title="{{ wm.updated.ctime() }}">
+      {{ naturaltime(wm.updated) }}
       {% if wm.status == 'failed' %}
        <span title="Error" class="glyphicon glyphicon-exclamation-sign"></span>
       {% else %}{% if wm.status == 'new' %}

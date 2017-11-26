@@ -30,16 +30,16 @@ import urllib2
 import urlparse
 
 import appengine_config
-
+from google.appengine.ext import ndb
 from granary import facebook as gr_facebook
-from oauth_dropins import facebook as oauth_facebook
 from granary import source as gr_source
+from oauth_dropins import facebook as oauth_facebook
+from oauth_dropins.webutil.handlers import JINJA_ENV
+import webapp2
+
 import models
 import util
 
-from google.appengine.ext import ndb
-from google.appengine.ext.webapp import template
-import webapp2
 
 # https://developers.facebook.com/docs/reference/login/
 LISTEN_SCOPES = [
@@ -426,7 +426,7 @@ class OAuthCallback(oauth_facebook.CallbackHandler, AuthHandler):
       logging.info('Rendering choose_facebook.html with %s', vars)
       self.response.headers['Content-Type'] = 'text/html'
       self.response.out.write(
-        template.render('templates/choose_facebook.html', vars))
+        JINJA_ENV.get_template('choose_facebook.html').render(**vars))
       return
 
     # this user has no FB page(s), or we know the one they want to sign up.

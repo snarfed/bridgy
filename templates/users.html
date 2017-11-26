@@ -10,26 +10,23 @@
 
 <ul id="users">
 <li class="row">
-{% with compact as True %}
 {% for source in sources %}
   <div class="source col-xs-6 col-sm-4 col-md-3">
-    <a href="{{ source.bridgy_path }}" title="{{ source.label|safe }}"
+    <a href="{{ source.bridgy_path() }}" title="{{ source.label()|safe }}"
        class="h-card">
       <img class="profile u-photo" width="48px" src="{{ source.picture }}"/>
       <img src="/static/{{ source.SHORT_NAME }}_icon.png" width="24" />
       {{ source.name|safe }}</a>
   </div>
-  {% cycle "" "" "" "</li><li class='row'>" %}
+  {% if loop.index % 4 == 0 and not loop.last %}</li><li class"'row">{% endif %}
 {% endfor %}
-{% endwith %}
 </li>
 </ul>
 
 <p id="users-paging" class="row">
   {% if sources|length >= PAGE_SIZE %}
-    {% with sources|last as last %}
-      <a href="?start_name={{ last.name|capfirst }}">Next »</a>
-    {% endwith %}
+    {% set last = sources[-1] %}
+    <a href="?start_name={{ last.name|capitalize }}">Next »</a>
   {% endif %}
 </p>
 

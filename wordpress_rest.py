@@ -30,14 +30,14 @@ import urlparse
 
 import appengine_config
 
+from google.appengine.ext import ndb
 from oauth_dropins import wordpress_rest as oauth_wordpress
+from oauth_dropins.webutil.handlers import JINJA_ENV
+
 import models
 import superfeedr
 import util
 import webapp2
-
-from google.appengine.ext import ndb
-from google.appengine.ext.webapp import template
 
 
 API_CREATE_COMMENT_URL = u'https://public-api.wordpress.com/rest/v1/sites/%s/posts/%d/replies/new?pretty=true'
@@ -209,9 +209,11 @@ class AddWordPress(oauth_wordpress.CallbackHandler, util.Handler):
         logging.info('This is a self-hosted WordPress blog! %s %s',
                      auth_entity.key.id(), auth_entity.blog_id)
         self.response.headers['Content-Type'] = 'text/html'
-        self.response.out.write(template.render(
-            'templates/confirm_self_hosted_wordpress.html',
-            {'auth_entity_key': auth_entity.key.urlsafe(), 'state': state}))
+        self.response.out.write(
+          JINJA_ENV.get_template('confirm_self_hosted_wordpress.html').render(
+            auth_entity_key=auth_entity.key.urlsafe(),
+            state=state,
+          ))
         return
 
     self.maybe_add_or_delete_source(WordPress, auth_entity, state)

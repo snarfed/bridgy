@@ -12,7 +12,7 @@
     {% for blog in blogs %}
     <li>
       <input type="radio" name="blog" id="{{ blog.id }}" value="{{ blog.id }}"
-             {% if forloop.first %} checked {% endif %}>
+             {% if loop.first %} checked {% endif %}>
       <label for="{{ blog.id }}">
         {% if blog.image %}
           <img class="profile" src="{{ blog.image }}" width="64px" />

@@ -32,8 +32,8 @@ import appengine_config
 from gdata.blogger.client import Query
 from gdata.client import Error
 from google.appengine.ext import ndb
-from google.appengine.ext.webapp import template
 from oauth_dropins import blogger_v2 as oauth_blogger
+from oauth_dropins.webutil.handlers import JINJA_ENV
 
 import models
 import superfeedr
@@ -206,7 +206,7 @@ class OAuthCallback(util.Handler):
     logging.info('Rendering choose_blog.html with %s', vars)
 
     self.response.headers['Content-Type'] = 'text/html'
-    self.response.out.write(template.render('templates/choose_blog.html', vars))
+    self.response.out.write(JINJA_ENV.get_template('choose_blog.html').render(**vars))
 
 
 class AddBlogger(util.Handler):

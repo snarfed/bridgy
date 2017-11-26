@@ -36,14 +36,15 @@ from webob import exc
 
 import appengine_config
 
+from google.appengine.ext import ndb
 from oauth_dropins import tumblr as oauth_tumblr
+from oauth_dropins.webutil.handlers import JINJA_ENV
+import webapp2
+
 import models
 import superfeedr
 import util
 
-from google.appengine.ext import ndb
-from google.appengine.ext.webapp import template
-import webapp2
 
 TUMBLR_AVATAR_URL = 'http://api.tumblr.com/v2/blog/%s/avatar/512'
 DISQUS_API_CREATE_POST_URL = 'https://disqus.com/api/3.0/posts/create.json'
@@ -251,7 +252,7 @@ class ChooseBlog(oauth_tumblr.CallbackHandler, util.Handler):
     logging.info('Rendering choose_blog.html with %s', vars)
 
     self.response.headers['Content-Type'] = 'text/html'
-    self.response.out.write(template.render('templates/choose_blog.html', vars))
+    self.response.out.write(JINJA_ENV.get_template('choose_blog.html').render(**vars))
 
 
 class AddTumblr(util.Handler):

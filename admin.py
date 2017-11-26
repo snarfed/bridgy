@@ -31,7 +31,7 @@ class ResponsesHandler(handlers.TemplateHandler):
   NUM_ENTITIES = 10
 
   def template_file(self):
-    return 'templates/admin_responses.html'
+    return 'admin_responses.html'
 
   def template_vars(self):
     entities = []
@@ -63,7 +63,7 @@ class SourcesHandler(handlers.TemplateHandler):
   NUM_SOURCES = 10
 
   def template_file(self):
-    return 'templates/admin_sources.html'
+    return 'admin_sources.html'
 
   def template_vars(self):
     CLASSES = (facebook.FacebookPage, flickr.Flickr, twitter.Twitter,

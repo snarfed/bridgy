@@ -53,7 +53,6 @@ RECENT_PRIVATE_POSTS_THRESHOLD = 5
 
 class DashboardHandler(webutil_handlers.TemplateHandler, util.Handler):
   """Base handler for both the front page and user pages."""
-  USE_APPENGINE_WEBAPP = True
 
   @util.canonicalize_domain
   def head(self, *args, **kwargs):
@@ -117,7 +116,7 @@ class FrontPageHandler(CachedPageHandler):
   post = CachedPageHandler.get
 
   def template_file(self):
-    return 'templates/index.html'
+    return 'index.html'
 
   def template_vars(self):
     """Use datastore stats to show stats for various things.
@@ -173,7 +172,7 @@ class UsersHandler(CachedPageHandler):
     return super(UsersHandler, self).get(cache=not self.request.params)
 
   def template_file(self):
-    return 'templates/users.html'
+    return 'users.html'
 
   def template_vars(self):
     start_name = self.request.get('start_name')
@@ -219,9 +218,9 @@ class UserHandler(DashboardHandler):
     super(UserHandler, self).get()
 
   def template_file(self):
-    return ('templates/%s_user.html' % self.source.SHORT_NAME
+    return ('%s_user.html' % self.source.SHORT_NAME
             if self.source and self.source.features
-            else 'templates/user_not_found.html')
+            else 'user_not_found.html')
 
   def headers(self):
     """Override the default and omit Cache-Control."""
@@ -432,7 +431,7 @@ class UserHandler(DashboardHandler):
 
 class AboutHandler(DashboardHandler):
   def template_file(self):
-    return 'templates/about.html'
+    return 'about.html'
 
 
 class DeleteStartHandler(util.Handler):

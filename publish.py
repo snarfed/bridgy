@@ -36,17 +36,20 @@ import urlparse
 
 import appengine_config
 
-from facebook import FacebookPage
-from flickr import Flickr
-from googleplus import GooglePlusPage
+from google.appengine.ext import ndb
 from granary import microformats2
 from granary import source as gr_source
-from instagram import Instagram
-from models import Publish, PublishedPage
 from oauth_dropins import facebook as oauth_facebook
 from oauth_dropins import flickr as oauth_flickr
 from oauth_dropins import instagram as oauth_instagram
 from oauth_dropins import twitter as oauth_twitter
+from oauth_dropins.webutil.handlers import JINJA_ENV
+
+from facebook import FacebookPage
+from flickr import Flickr
+from googleplus import GooglePlusPage
+from instagram import Instagram
+from models import Publish, PublishedPage
 from twitter import Twitter
 import models
 import requests
@@ -54,8 +57,6 @@ import util
 import webapp2
 import webmention
 
-from google.appengine.ext import ndb
-from google.appengine.ext.webapp import template
 
 SOURCES = (FacebookPage, Flickr, Twitter, Instagram, GooglePlusPage)
 SOURCE_NAMES = {cls.SHORT_NAME: cls for cls in SOURCES}
@@ -382,7 +383,7 @@ class Handler(webmention.WebmentionHandler):
       vars.update(state)
       logging.info('Rendering preview with template vars %s', pprint.pformat(vars))
       return gr_source.creation_result(
-        template.render('templates/preview.html', vars))
+        JINJA_ENV.get_template('preview.html').render(**vars))
 
     else:
       result = self.source.gr_source.create(
