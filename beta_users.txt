@@ -52,3 +52,7 @@
 /twitter/dissolve333
 /googleplus/113259788317081930920
 /instagram/dissolve333
+
+# Jacky See
+/twitter/jackysee
+/facebook/10155036114442411
