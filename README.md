@@ -212,3 +212,5 @@ with [`to_tsv.py`](https://github.com/snarfed/bridgy/blob/master/scripts/to_tsv.
 ```
 gsutil -m cp -r gs://brid-gy.appspot.com/weekly/datastore_backup_full_YYYY_MM_DD_\* .
 ```
+
+Also see the [BigQuery dataset](https://bigquery.cloud.google.com/dataset/brid-gy:datastore) ([#715](https://github.com/snarfed/bridgy/issues/715)).

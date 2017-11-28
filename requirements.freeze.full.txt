@@ -2,10 +2,8 @@ beautifulsoup4==4.3.2
 -e git+https://github.com/snarfed/brevity.git@d5cdaa4b279d69dec45e2b29c6a0c337979bcc7d#egg=brevity
 certifi==2017.7.27.1
 chardet==3.0.4
-colorama==0.3.9
 coverage==4.0.3
 docopt==0.6.2
-flake8-polyfill==1.0.1
 -e git+git@github.com:snarfed/gdata-python-client-1.git@e1404ec0724a0f603dfc24841eada6d284b60f0e#egg=gdata
 -e git+git@github.com:snarfed/google-api-python-client.git@bdf5ea84a514c95f0d381d1d5bdb0464e246ff75#egg=google_api_python_client
 -e git+git@github.com:snarfed/granary.git@8e43f1244ea8c89100e25f42280cc98f43fcb0d5#egg=granary
@@ -15,7 +13,6 @@ httplib2==0.10.3
 humanize==0.5.1
 idna==2.6
 Jinja2==2.10
-mando==0.6.4
 MarkupSafe==1.0
 mf2py==1.0.4
 mf2util==0.5.0
