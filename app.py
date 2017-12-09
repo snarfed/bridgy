@@ -240,7 +240,7 @@ class UserHandler(DashboardHandler):
     if isinstance(self.source, instagram.Instagram):
       auth = self.source.auth_entity
       vars['indieauth_me'] = (
-        auth.id if isinstance(auth, indieauth.IndieAuth)
+        auth.key.id() if isinstance(auth, indieauth.IndieAuth)
         else self.source.domain_urls[0] if self.source.domain_urls
         else None)
 

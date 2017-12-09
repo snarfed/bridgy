@@ -19,6 +19,6 @@ then click here:
  <input type="image" alt="Sign in with Facebook"
         src="/oauth_dropins/static/facebook.png" />
  <input name="feature" type="hidden" value="publish" />
- <input name="id" type="hidden" value="{{ source.key.id }}" />
+ <input name="id" type="hidden" value="{{ source.key.id() }}" />
 </form>
 {% endblock %}
