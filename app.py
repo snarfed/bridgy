@@ -7,6 +7,7 @@ import datetime
 import itertools
 import json
 import logging
+import string
 import urllib
 import urlparse
 
@@ -189,6 +190,7 @@ class UsersHandler(CachedPageHandler):
     vars = super(UsersHandler, self).template_vars()
     vars.update({
         'sources': sources,
+        'string': string,  # module, used in template
         'PAGE_SIZE': self.PAGE_SIZE,
         })
     return vars

@@ -8,6 +8,12 @@
 
 <p id="users-label" class="row big">Users</p>
 
+<p id="users-index" class="row">
+{% for letter in string.ascii_uppercase %}
+  <a href="?start_name={{ letter }}">{{ letter }}</a>
+{% endfor %}
+</p>
+
 <ul id="users">
 <li class="row">
 {% for source in sources %}
