@@ -553,16 +553,13 @@ class FacebookPageTest(testutil.ModelsTest):
     scopes when authing when Facebook.
     """
     for feature in 'listen', 'publish', 'listen,publish', 'publish,listen':
-      redirect_uri = urllib.quote_plus(
-          'http://localhost/facebook/oauth_handler?state=' + urllib.quote_plus(
-            '{"feature":"' + feature + '","operation":"add"}'))
-
       expected_auth_url = oauth_facebook.GET_AUTH_CODE_URL % {
         'scope': ','.join(sorted(set(
           (facebook.LISTEN_SCOPES if 'listen' in feature else []) +
           (facebook.PUBLISH_SCOPES if 'publish' in feature else [])))),
         'client_id': appengine_config.FACEBOOK_APP_ID,
-        'redirect_uri': redirect_uri,
+        'redirect_uri': urllib.quote_plus('http://localhost/facebook/oauth_handler'),
+        'state': urllib.quote_plus('{"feature":"' + feature + '","operation":"add"}'),
       }
 
       resp = facebook.application.get_response(
@@ -588,8 +585,8 @@ class FacebookPageTest(testutil.ModelsTest):
     expected_auth_url = oauth_facebook.GET_AUTH_CODE_URL % {
       'scope': '',
       'client_id': appengine_config.FACEBOOK_APP_ID,
-      'redirect_uri': urllib.quote_plus(
-        'http://localhost/facebook/delete/finish?state=' + encoded_state),
+      'redirect_uri': urllib.quote_plus('http://localhost/facebook/delete/finish'),
+      'state': encoded_state,
     }
 
     resp = app.application.get_response(
