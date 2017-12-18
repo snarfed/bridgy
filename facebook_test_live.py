@@ -64,7 +64,9 @@ class FacebookTestLive(testutil.HandlerTest):
     self.assertEqual(302, resp.status_int)
     to = resp.headers['Location']
     self.assertTrue(to.startswith('https://www.facebook.com/v2.10/dialog/oauth?'), to)
-    redirect = urlparse.parse_qs(urlparse.urlparse(to).query)['redirect_uri'][0]
+    params = urlparse.parse_qs(urlparse.urlparse(to).query)
+    redirect = params['redirect_uri'][0]
+    state = params['state'][0]
     self.dot()
 
     # pretend the user approves the prompt and facebook redirects back to us.
@@ -76,11 +78,14 @@ class FacebookTestLive(testutil.HandlerTest):
         'auth_code': 'fake_code',
       },
       '{"access_token": "%s"}' % appengine_config.FACEBOOK_TEST_USER_TOKEN,
-      ).WithSideEffects(lambda *args, **kwargs: self.mox.stubs.UnsetAll())
+    ).WithSideEffects(lambda *args, **kwargs: self.mox.stubs.UnsetAll())
     self.mox.ReplayAll()
 
     resp = facebook.application.get_response(
-      util.add_query_params(redirect, {'code': 'fake_code'}))
+      util.add_query_params(redirect, {
+        'code': 'fake_code',
+        'state': urllib.unquote(state),
+      }))
     self.assertEqual(302, resp.status_int)
     source = facebook.FacebookPage.get_by_id(TEST_USER_ID)
     self.assertEqual('enabled', source.status)
