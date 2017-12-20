@@ -1,7 +1,8 @@
 Bridgy developer documentation
 ==============================
 
-Got a web site? Want replies and likes from social networks? Want to tweet, post, and more? Bridgy is for you.
+Got a web site? Want replies and likes from social networks? Want to
+tweet, post, and more? Bridgy is for you.
 
 https://brid.gy/
 
@@ -16,11 +17,15 @@ License: This project is placed in the public domain.
 Development
 -----------
 
-You'll need the `App Engine Python
+You’ll need the `App Engine Python
 SDK <https://cloud.google.com/appengine/downloads#Google_App_Engine_SDK_for_Python>`__
 version 1.9.15 or later (for
 `vendor <https://cloud.google.com/appengine/docs/python/tools/libraries27#vendoring>`__
-support). Add it to your ``$PYTHONPATH``, e.g.
+support) or the `Google Cloud
+SDK <https://cloud.google.com/sdk/gcloud/>`__ (aka ``gcloud``) with the
+``gcloud-appengine-python`` and ``gcloud-appengine-python-extras``
+`components <https://cloud.google.com/sdk/docs/components#additional_components>`__.
+Add it to your ``$PYTHONPATH``, e.g.
 ``export PYTHONPATH=$PYTHONPATH:/usr/local/google_appengine``, and then
 run:
 
@@ -63,12 +68,12 @@ there <https://github.com/snarfed/oauth-dropins#troubleshootingfaq>`__:
 
     error: option --home not recognized
 
-There's a good chance you'll need to make changes to
+There’s a good chance you’ll need to make changes to
 `granary <https://github.com/snarfed/granary>`__,
 `oauth-dropins <https://github.com/snarfed/oauth-dropins>`__, or
 `webmention-tools <https://github.com/snarfed/webmention-tools>`__ at
 the same time as bridgy. To do that, clone their repos elsewhere, then
-install them in "source" mode with:
+install them in “source” mode with:
 
 ::
 
@@ -87,15 +92,15 @@ install them in "source" mode with:
     ln -s <path to webmention-tools>/webmentiontools \
       local/lib/python2.7/site-packages/webmentiontools
 
-The symlinks are necessary because App Engine's ``vendor`` module
-evidently doesn't follow ``.egg-link`` or ``.pth`` files. :/
+The symlinks are necessary because App Engine’s ``vendor`` module
+evidently doesn’t follow ``.egg-link`` or ``.pth`` files. :/
 
 To deploy to App Engine, run
 `scripts/deploy.sh <https://github.com/snarfed/bridgy/blob/master/scripts/deploy.sh>`__.
 
 `remote_api_shell <https://cloud.google.com/appengine/docs/python/tools/remoteapi#using_the_remote_api_shell>`__
 is a useful interactive Python shell that can interact with the
-production app's datastore, memcache, etc. To use it, `create a service
+production app’s datastore, memcache, etc. To use it, `create a service
 account and download its JSON
 credentials <https://console.developers.google.com/project/brid-gy/apiui/credential>`__,
 put it somewhere safe, and put its path in your
@@ -106,23 +111,23 @@ Adding a new silo
 
 So you want to add a new `silo <http://indiewebcamp.com/silo>`__? Maybe
 MySpace, or Friendster, or even Tinder? Great! Here are the steps to do
-it. It looks like a lot, but it's not that bad, honest.
+it. It looks like a lot, but it’s not that bad, honest.
 
-1. Find the silo's API docs and check that it can do what Bridgy needs.
-   At minimum, it should be able to get a user's posts and their
+1. Find the silo’s API docs and check that it can do what Bridgy needs.
+   At minimum, it should be able to get a user’s posts and their
    comments, likes, and reposts, depending on which of those the silo
    supports. If you want `publish <https://www.brid.gy/about#publish>`__
    support, it should also be able to create posts, comments, likes,
    reposts, and/or RSVPs.
 2. Fork and clone this repo.
-3. Create an app (aka client) in the silo's developer console, grab your
-   app's id (aka key) and secret, put them into new local files in the
+3. Create an app (aka client) in the silo’s developer console, grab your
+   app’s id (aka key) and secret, put them into new local files in the
    repo root dir, `following this
    pattern <https://github.com/snarfed/oauth-dropins/blob/master/oauth_dropins/appengine_config.py>`__.
-   You'll eventually want to send them to @snarfed and @kylewm too, but
+   You’ll eventually want to send them to @snarfed and @kylewm too, but
    no hurry.
 4. Add the silo to
-   `oauth-dropins <https://github.com/snarfed/oauth-dropins>`__ if it's
+   `oauth-dropins <https://github.com/snarfed/oauth-dropins>`__ if it’s
    not already there:
 
    1. Add a new ``.py`` file for your silo with an auth model and
@@ -137,9 +142,9 @@ it. It looks like a lot, but it's not that bad, honest.
 5. Add the silo to `granary <https://github.com/snarfed/granary>`__:
 
    1. Add a new ``.py`` file for your silo. Follow the existing
-      examples. At minimum, you'll need to implement
+      examples. At minimum, you’ll need to implement
       `get_activities_response <https://github.com/snarfed/granary/blob/845afbbd521f7ba43b3339bcc1ce3afddd205047/granary/source.py#L137>`__
-      and convert your silo's API data to
+      and convert your silo’s API data to
       `ActivityStreams <http://activitystrea.ms/>`__.
    2. Add a new unit test file and write some tests!
    3. Add it to
@@ -171,7 +176,7 @@ it. It looks like a lot, but it's not that bad, honest.
    5. Add the silo to
       `about.html <https://github.com/snarfed/bridgy/blob/master/templates/about.html>`__
       and this README.
-   6. If users' profile picture URLs can change, add a cron job that
+   6. If users’ profile picture URLs can change, add a cron job that
       updates them to
       `cron.py <https://github.com/snarfed/bridgy/blob/master/cron.py>`__
       and
@@ -199,13 +204,13 @@ Good luck, and happy hacking!
 Monitoring
 ----------
 
-App Engine's `built in
+App Engine’s `built in
 dashboard <https://appengine.google.com/dashboard?&app_id=s~brid-gy>`__
 and `log
 browser <https://console.developers.google.com/project/brid-gy/logs>`__
 are pretty good for interactive monitoring and debugging.
 
-For alerting, we've set up `Google Cloud
+For alerting, we’ve set up `Google Cloud
 Monitoring <https://app.google.stackdriver.com/services/app-engine/brid-gy/>`__
 (née `Stackdriver <http://en.wikipedia.org/wiki/Stackdriver>`__).
 Background in `issue
@@ -232,7 +237,7 @@ Storage <https://developers.google.com/storage/docs/>`__, in the
 bucket <https://console.developers.google.com/project/apps~brid-gy/storage/brid-gy.appspot.com/>`__.
 It backs up all entities monthly, and all entities except ``Response``
 and ``SyndicatedPost`` weekly, since they make up 92% of all entities by
-size and they aren't as critical to keep.
+size and they aren’t as critical to keep.
 
 We use this command to set a `Cloud Storage lifecycle
 policy <https://developers.google.com/storage/docs/lifecycle>`__ on that
@@ -242,16 +247,20 @@ bucket that prunes older backups:
 
     gsutil lifecycle set cloud_storage_lifecycle.json gs://brid-gy.appspot.com
 
-Run this to see how much space we're currently using:
+Run this to see how much space we’re currently using:
 
 ::
 
     gsutil du -hsc gs://brid-gy.appspot.com/\*
 
-Run this to download a single complete backup, for e.g. generating usage
+Run this to download a single complete backup, for e.g. generating usage
 metrics with
 `to_tsv.py <https://github.com/snarfed/bridgy/blob/master/scripts/to_tsv.py>`__:
 
 ::
 
     gsutil -m cp -r gs://brid-gy.appspot.com/weekly/datastore_backup_full_YYYY_MM_DD_\* .
+
+Also see the `BigQuery
+dataset <https://bigquery.cloud.google.com/dataset/brid-gy:datastore>`__
+(`#715 <https://github.com/snarfed/bridgy/issues/715>`__).
