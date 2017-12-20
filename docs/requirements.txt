@@ -1,7 +1,7 @@
 oauth-dropins>=1.8
-granary>=1.8
--e git+https://github.com/snarfed/gdata-python-client-1.git@blogger_id_parsing#egg=gdata
+gdata>=2.0.18
 google-api-python-client>=1.6.3
+granary>=1.8
 beautifulsoup4
 humanize
 jinja2>=2.10.0
