@@ -1,16 +1,20 @@
 """Unit tests for superfeedr.py.
 """
-
-__author__ = ['Ryan Barrett <bridgy@ryanb.org>']
-
 import json
 
+from google.appengine.ext.ndb.key import _MAX_KEYPART_BYTES
 import mox
 
 from models import BlogPost
 import superfeedr
 import testutil
 import webapp2
+
+
+class FakeNotifyHandler(superfeedr.NotifyHandler):
+  SOURCE_CLS = testutil.FakeSource
+
+fake_app = webapp2.WSGIApplication([('/notify/(.+)', FakeNotifyHandler)], debug=True)
 
 
 class SuperfeedrTest(testutil.HandlerTest):
@@ -23,13 +27,14 @@ class SuperfeedrTest(testutil.HandlerTest):
     self.item = {'id': 'A', 'content': 'B'}
     self.feed = json.dumps({'items': [self.item]})
 
-  def assert_blogposts(self, expected):
+  def assert_blogposts(self, expected, tasks=True):
     got = list(BlogPost.query())
     self.assert_entities_equal(expected, got, ignore=('created', 'updated'))
 
-    tasks = self.taskqueue_stub.GetTasks('propagate-blogpost')
-    self.assert_equals([{'key': post.key.urlsafe()} for post in expected],
-                       [testutil.get_task_params(t) for t in tasks])
+    if tasks:
+      tasks = self.taskqueue_stub.GetTasks('propagate-blogpost')
+      self.assert_equals([{'key': post.key.urlsafe()} for post in expected],
+                         [testutil.get_task_params(t) for t in tasks])
 
   def test_subscribe(self):
     expected = {
@@ -107,14 +112,22 @@ class SuperfeedrTest(testutil.HandlerTest):
                                     feed_item=item, unsent=['http://abc'])])
 
   def test_notify_handler(self):
-    class Handler(superfeedr.NotifyHandler):
-      SOURCE_CLS = testutil.FakeSource
-
-    app = webapp2.WSGIApplication([('/notify/(.+)', Handler)], debug=True)
     item = {'id': 'X', 'content': 'a http://x/y z'}
     self.feed = json.dumps({'items': [item]})
-    resp = app.get_response('/notify/foo.com', method='POST', body=self.feed)
+    resp = fake_app.get_response('/notify/foo.com', method='POST', body=self.feed)
 
     self.assertEquals(200, resp.status_int)
     self.assert_blogposts([BlogPost(id='X', source=self.source.key,
                                     feed_item=item, unsent=['http://x/y'])])
+
+  def test_notify_url_too_long(self):
+    item = {'id': 'X' * (_MAX_KEYPART_BYTES + 1), 'content': 'a http://x/y z'}
+    self.feed = json.dumps({'items': [item]})
+    resp = fake_app.get_response('/notify/foo.com', method='POST', body=self.feed)
+
+    self.assertEquals(200, resp.status_int)
+    self.assert_blogposts([BlogPost(id='X' * _MAX_KEYPART_BYTES,
+                                    source=self.source.key, feed_item=item,
+                                    failed=['http://x/y'],
+                                    status='complete')],
+                          tasks=False)
