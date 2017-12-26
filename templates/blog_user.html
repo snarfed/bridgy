@@ -74,17 +74,12 @@ Click to re-enable:
     {{ blogpost.pretty_url|safe }}
 
    </div><div class="col-sm-4">
-    <a href="/log?start_time={{ timestamp(blogpost.updated) }}&key={{ blogpost.key.urlsafe() }}"
-       class="u-bridgy-log">
-      <time class="dt-updated" datetime="{{ blogpost.updated.isoformat() }}"
-            title="{{ blogpost.updated.ctime() }}">
-        {{ naturaltime(blogpost.updated) }}</time>
-      {% if blogpost.status == 'error' %}
-       <span title="Error" class="glyphicon glyphicon-exclamation-sign"></span>
-      {% else %}{% if blogpost.status == 'processing' %}
-       <span title="Processing" class="glyphicon glyphicon-transfer"></span>
-      {% endif %}{% endif %}
-    </a>
+    {{ logs.maybe_link(blogpost.updated, blogpost.key, 'u-bridgy-log')|safe }}
+    {% if blogpost.status == 'error' %}
+     <span title="Error" class="glyphicon glyphicon-exclamation-sign"></span>
+    {% else %}{% if blogpost.status == 'processing' %}
+     <span title="Processing" class="glyphicon glyphicon-transfer"></span>
+    {% endif %}{% endif %}
 
    </div><div class="col-sm-1">
     <form method="post" action="/retry">
@@ -131,15 +126,12 @@ Click to re-enable:
      {{ wm.pretty_target|safe }}
 
    </div><div class="col-sm-3">
-    <a href="/log?start_time={{ timestamp(wm.updated) }}&key={{ wm.key.urlsafe() }}"
-       title="{{ wm.updated.ctime() }}">
-      {{ naturaltime(wm.updated) }}
-      {% if wm.status == 'failed' %}
-       <span title="Error" class="glyphicon glyphicon-exclamation-sign"></span>
-      {% else %}{% if wm.status == 'new' %}
-       <span title="Processing" class="glyphicon glyphicon-transfer"></span>
-      {% endif %}{% endif %}
-    </a>
+    {{ logs.maybe_link(wm.updated, wm.key)|safe }}
+    {% if wm.status == 'failed' %}
+     <span title="Error" class="glyphicon glyphicon-exclamation-sign"></span>
+    {% else %}{% if wm.status == 'new' %}
+     <span title="Processing" class="glyphicon glyphicon-transfer"></span>
+    {% endif %}{% endif %}
 
    </div><div class="col-sm-2">
      {% if wm.published.url %}

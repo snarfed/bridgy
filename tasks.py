@@ -15,18 +15,18 @@ import logging
 import random
 import urlparse
 
+from oauth_dropins.webutil import logs
 from google.appengine.api import memcache
 from google.appengine.api import datastore_errors
 from google.appengine.api.datastore_types import _MAX_STRING_LENGTH
 from google.appengine.ext import ndb
 from granary import source as gr_source
+from granary.source import Source
 import webapp2
 from webmentiontools import send
 
 import appengine_config
 
-from oauth_dropins import handlers
-from granary.source import Source
 # need to import model class definitions since poll creates and saves entities.
 import blogger
 import facebook
@@ -67,10 +67,8 @@ class Poll(webapp2.RequestHandler):
   RESTART_EXISTING_TASKS = False  # overridden in Discover
 
   def _last_poll_url(self, source):
-    return '%s/log?start_time=%s&key=%s' % (
-      self.request.host_url,
-      calendar.timegm(source.last_poll_attempt.utctimetuple()),
-      source.key.urlsafe())
+    return '%s/%s' % (self.request.host_url,
+                      logs.url(source.last_poll_attempt, source.key))
 
   def post(self, *path_args):
     logging.debug('Params: %s', self.request.params)
@@ -777,10 +775,9 @@ class PropagateResponse(SendWebmentions):
       return
     logging.info('Source: %s %s, %s', source.label(), source.key.string_id(),
                  source.bridgy_url(self))
-    logging.info('Created by this poll: %s/log?start_time=%s&key=%s',
-                 self.request.host_url,
-                 calendar.timegm(self.entity.created.utctimetuple()) - 61,
-                 source.key.urlsafe())
+    poll_estimate = self.entity.created - datetime.timedelta(seconds=61)
+    logging.info('Created by this poll: %s/%s', self.request.host_url,
+                 logs.url(poll_estimate, source.key))
 
     self.activities = [json.loads(a) for a in self.entity.activities_json]
     response_obj = json.loads(self.entity.response_json)

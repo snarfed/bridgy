@@ -7,7 +7,6 @@ import copy
 import Cookie
 import contextlib
 import datetime
-import humanize
 import json
 import logging
 import re
@@ -20,6 +19,7 @@ import webapp2
 from appengine_config import DEBUG
 import bs4
 from granary import source as gr_source
+import humanize
 import mf2py
 from oauth_dropins.webutil import handlers as webutil_handlers
 from oauth_dropins.webutil.models import StringIdModel

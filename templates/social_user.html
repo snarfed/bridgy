@@ -97,24 +97,18 @@ WordPress.com, <a href="/">sign up here!</a>
 <form method="post" action="/poll-now">
   <!-- last poll -->
   {% if source.last_poll_attempt == EPOCH %}
-    Not polled yet.
+    Not polled yet,
   {% else %}
     {% if source.poll_status == "error" %}
      <span title="Error" class="glyphicon glyphicon-exclamation-sign"></span>
     {% endif %}
     Polled
-    <a href="/log?start_time={{ timestamp(source.last_poll_attempt) }}&key={{ source.key.urlsafe() }}">
-      <time class="dt-bridgy-last-polled"
-            datetime="{{ source.last_poll_attempt.isoformat() }}"
-            title="{{ source.last_poll_attempt.ctime() }}">
-        {{ naturaltime(source.last_poll_attempt) }}</time></a>,
+    {{ logs.maybe_link(source.last_poll_attempt, source.key, time_class='dt-bridgy-last-polled')|safe }},
   {% endif %}
 
   <!-- next poll -->
   next in
-  <time class="dt-bridgy-next-poll" datetime="{{ next_poll.isoformat() }}"
-        title="{{ next_poll.ctime() }}">
-    {{ naturaltime(next_poll) }}</time>.
+  {{ logs.maybe_link(next_poll, source.key, time_class="dt-bridgy-next-poll")|safe }}.
 
   <input name="key" type="hidden" value="{{ source.key.urlsafe() }}" />
   <button id="poll-now-button" type="submit" class="btn btn-default">Poll now</button>
@@ -125,12 +119,9 @@ WordPress.com, <a href="/">sign up here!</a>
 <!-- last_syndication_url -->
 {% if source.last_syndication_url and source.last_syndication_url > EPOCH %}
   Last <a href="/about#link">syndication link</a> found
-  <a href="/log?start_time={{ timestamp(source.last_syndication_url) }}&key={{ source.key.urlsafe() }}">
-  <time class="dt-bridgy-last-syndication-link"
-        datetime="{{ source.last_syndication_url.isoformat() }}"
-        title="{{ source.last_syndication_url.ctime() }}">
-    {{ naturaltime(source.last_syndication_url) }}</time>.
-  </a><br />
+  {{ logs.maybe_link(source.last_syndication_url, source.key,
+                     time_class='dt-bridgy-last-syndication-link')|safe }}.
+  <br />
 {% endif %}
 
 <!-- last_webmention_sent -->
@@ -156,12 +147,8 @@ WordPress.com, <a href="/">sign up here!</a>
   <a href="/about#link">Crawling</a> now. Check back in a minute!
 {% else %}
   Web site{{ s }} <a href="/about#link">crawled</a>
-  <a href="/log?start_time={{ timestamp(source.last_hfeed_refetch) }}&key={{ source.key.urlsafe() }}">
-  <time class="dt-bridgy-last-refetched"
-        datetime="{{ source.last_hfeed_refetch.isoformat() }}"
-        title="{{ source.last_hfeed_refetch.ctime() }}">
-    {{ naturaltime(source.last_hfeed_refetch) }}</time>.
-  </a>
+  {{ logs.maybe_link(source.last_hfeed_refetch, source.key,
+                     time_class='dt-bridgy-last-refetched')|safe }}.
 {% endif %}
 {% endif %}
 {% endwith %}
@@ -306,17 +293,12 @@ Click to enable <a href="/about#listen">listening</a>:
     </ul>
 
    </div><div class="col-sm-2">
-     <a href="/log?start_time={{ timestamp(response.updated) }}&key={{ response.key.urlsafe() }}"
-        class="u-bridgy-log">
-      <time class="dt-updated" datetime="{{ response.updated.isoformat() }}"
-            title="{{ response.updated.ctime() }}">
-        {{ naturaltime(response.updated) }}</time>
-      {% if response.status == 'error' %}
-       <span title="Error" class="glyphicon glyphicon-exclamation-sign"></span>
-      {% else %}{% if response.status == 'processing' %}
-       <span title="Processing" class="glyphicon glyphicon-transfer"></span>
-      {% endif %}{% endif %}
-     </a>
+     {{ logs.maybe_link(response.updated, response.key, link_class='u-bridgy-log')|safe }}
+     {% if response.status == 'error' %}
+      <span title="Error" class="glyphicon glyphicon-exclamation-sign"></span>
+     {% else %}{% if response.status == 'processing' %}
+      <span title="Processing" class="glyphicon glyphicon-transfer"></span>
+     {% endif %}{% endif %}
 
    </div><div class="col-sm-1">
     <form method="post" action="/retry">
@@ -377,16 +359,12 @@ Click to enable <a href="/about#listen">listening</a>:
      {{ publish.pretty_page|safe }}
 
    </div><div class="col-sm-4">
-    <a href="/log?start_time={{ timestamp(publish.updated) }}&key={{ publish.key.urlsafe() }}"
-       class="u-bridgy-log">
-      <time class="dt-updated" datetime="{{ publish.updated.isoformat() }}"
-            title="{{ publish.updated.ctime() }}">
-        {{ naturaltime(publish.updated) }}</time>
-      {% if publish.status == 'failed' %}
-       <span title="Error" class="glyphicon glyphicon-exclamation-sign"></span>
-      {% else %}{% if publish.status == 'new' %}
-       <span title="Processing" class="glyphicon glyphicon-transfer"></span>
-      {% endif %}{% endif %}
+     {{ logs.maybe_link(publish.updated, publish.key, link_class='u-bridgy-log')|safe }}.
+     {% if publish.status == 'failed' %}
+      <span title="Error" class="glyphicon glyphicon-exclamation-sign"></span>
+     {% else %}{% if publish.status == 'new' %}
+      <span title="Processing" class="glyphicon glyphicon-transfer"></span>
+     {% endif %}{% endif %}
     </a>
 
    </div><div class="col-sm-4">

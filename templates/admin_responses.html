@@ -40,9 +40,7 @@
       </a>
     {% endfor %}</td>
 
-    <td><a target="_blank"
-           href="/log?start_time={{ timestamp(r.updated) }}&key={{ r.key.urlsafe() }}">
-        {{ naturaltime(r.updated) }}</a></td>
+    <td>{{ logs.maybe_link(r.updated, r.key)|safe }}</td>
 
     <td>{{ naturaltime(r.created) }}</td>
 
