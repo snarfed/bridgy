@@ -16,9 +16,6 @@ Example comment ID and links:
 * Local handler path:
   /comment/instagram/212038/595990791004231349_247678460/595996024371549506
 """
-
-__author__ = ['Ryan Barrett <bridgy@ryanb.org>']
-
 import datetime
 import json
 import logging

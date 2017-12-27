@@ -1,8 +1,5 @@
 """Unit tests for flickr.py.
 """
-
-__author__ = ['Kyle Mahan <kyle@kylewm.com>']
-
 import json
 import urllib
 

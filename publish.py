@@ -24,9 +24,6 @@ Example response::
       "id": "456_789"
     }
 """
-
-__author__ = ['Ryan Barrett <bridgy@ryanb.org>']
-
 import collections
 import logging
 import json

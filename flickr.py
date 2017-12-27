@@ -1,7 +1,4 @@
-"""Flickr source and data model storage class.
-"""
-__author__ = ['Kyle Mahan <kyle@kylewm.com>']
-
+"""Flickr source and data model storage class."""
 
 import appengine_config
 import datetime

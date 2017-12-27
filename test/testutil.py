@@ -1,9 +1,6 @@
 # coding=utf-8
 """Unit test utilities.
 """
-
-__author__ = ['Ryan Barrett <bridgy@ryanb.org>']
-
 import copy
 import datetime
 import json

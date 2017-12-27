@@ -20,9 +20,6 @@ test command line:
 curl localhost:8080/webmention/blogger \
   -d 'source=http://localhost/response.html&target=http://freedom-io-2.blogspot.com/2014/04/blog-post.html'
 """
-
-__author__ = ['Ryan Barrett <bridgy@ryanb.org>']
-
 import collections
 import logging
 import urlparse

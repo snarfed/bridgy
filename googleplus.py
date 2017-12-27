@@ -1,8 +1,5 @@
 """Google+ source code and datastore model classes.
 """
-
-__author__ = ['Ryan Barrett <bridgy@ryanb.org>']
-
 import datetime
 import json
 import urlparse

@@ -1,8 +1,5 @@
 """Unit tests for tasks.py.
 """
-
-__author__ = ['Ryan Barrett <bridgy@ryanb.org>']
-
 import copy
 import datetime
 import json

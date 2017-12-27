@@ -4,9 +4,6 @@ Used in publish.py and blog_webmention.py.
 
 Webmention spec: http://webmention.org/
 """
-
-__author__ = ['Ryan Barrett <bridgy@ryanb.org>']
-
 import logging
 import json
 

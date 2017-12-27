@@ -1,9 +1,6 @@
 # coding=utf-8
 """Unit tests for blogger.py.
 """
-
-__author__ = ['Ryan Barrett <bridgy@ryanb.org>']
-
 import mox
 import urllib
 import urlparse

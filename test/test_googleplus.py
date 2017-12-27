@@ -1,8 +1,5 @@
 """Unit tests for googleplus.py.
 """
-
-__author__ = ['Ryan Barrett <bridgy@ryanb.org>']
-
 import json
 
 import appengine_config

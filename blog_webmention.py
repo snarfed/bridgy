@@ -1,8 +1,5 @@
 """Converts webmentions to comments on Blogger, Tumblr, and WP.com.
 """
-
-__author__ = ['Ryan Barrett <bridgy@ryanb.org>']
-
 import logging
 import json
 import urlparse

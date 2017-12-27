@@ -1,9 +1,6 @@
 # coding=utf-8
 """Unit tests for blog_webmention.py.
 """
-
-__author__ = ['Ryan Barrett <bridgy@ryanb.org>']
-
 import json
 import urllib
 

@@ -1,8 +1,5 @@
 """Unit tests for instagram.py.
 """
-
-__author__ = ['Ryan Barrett <bridgy@ryanb.org>']
-
 import copy
 import json
 import urllib

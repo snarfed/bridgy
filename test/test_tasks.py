@@ -1,9 +1,6 @@
 # coding=utf-8
 """Unit tests for tasks.py.
 """
-
-__author__ = ['Ryan Barrett <bridgy@ryanb.org>']
-
 import bz2
 import copy
 import datetime

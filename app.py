@@ -1,8 +1,5 @@
 """Bridgy user-facing handlers: front page, user pages, and delete POSTs.
 """
-
-__author__ = ['Ryan Barrett <bridgy@ryanb.org>']
-
 import datetime
 import itertools
 import json

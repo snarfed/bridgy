@@ -1,9 +1,6 @@
 # coding=utf-8
 """Unit tests for wordpress_rest.py.
 """
-
-__author__ = ['Ryan Barrett <bridgy@ryanb.org>']
-
 import json
 import urllib
 import urllib2

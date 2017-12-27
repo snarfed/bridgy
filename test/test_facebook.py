@@ -1,8 +1,5 @@
 """Unit tests for facebook.py.
 """
-
-__author__ = ['Ryan Barrett <bridgy@ryanb.org>']
-
 import app
 import copy
 import datetime

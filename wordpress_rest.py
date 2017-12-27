@@ -18,9 +18,6 @@ curl localhost:8080/webmention/wordpress \
 making an API call with an access token from the command line:
 curl -H 'Authorization: Bearer [TOKEN]' URL...
 """
-
-__author__ = ['Ryan Barrett <bridgy@ryanb.org>']
-
 import collections
 import json
 import logging

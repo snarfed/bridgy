@@ -1,9 +1,6 @@
 # coding=utf-8
 """Unit tests for publish.py.
 """
-
-__author__ = ['Ryan Barrett <bridgy@ryanb.org>']
-
 import json
 import socket
 import urllib

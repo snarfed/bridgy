@@ -1,8 +1,5 @@
 """Cron jobs. Currently just minor cleanup tasks.
 """
-
-__author__ = ['Ryan Barrett <bridgy@ryanb.org>']
-
 import datetime
 import itertools
 import json

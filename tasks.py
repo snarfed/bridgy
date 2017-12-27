@@ -1,9 +1,6 @@
 # coding=utf-8
 """Task queue handlers.
 """
-
-__author__ = ['Ryan Barrett <bridgy@ryanb.org>']
-
 import bz2
 import calendar
 import copy

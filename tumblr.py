@@ -24,9 +24,6 @@ test command line:
 curl localhost:8080/webmention/tumblr \
   -d 'source=http://localhost/response.html&target=http://snarfed.tumblr.com/post/60428995188/glen-canyon-http-t-co-fzc4ehiydp?foo=bar#baz'
 """
-
-__author__ = ['Ryan Barrett <bridgy@ryanb.org>']
-
 import collections
 import json
 import logging
