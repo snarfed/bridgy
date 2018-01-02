@@ -179,6 +179,31 @@ App Engine's [built in dashboard](https://appengine.google.com/dashboard?&app_id
 For alerting, we've set up [Google Cloud Monitoring](https://app.google.stackdriver.com/services/app-engine/brid-gy/) (née [Stackdriver](http://en.wikipedia.org/wiki/Stackdriver)). Background in [issue 377](https://github.com/snarfed/bridgy/issues/377). It [sends alerts](https://app.google.stackdriver.com/policy-advanced) by email and SMS when [HTTP 4xx responses average >.1qps or 5xx >.05qps](https://app.google.stackdriver.com/policy-advanced/650c6f24-17c1-41ac-afda-90a1e56e82c1), [latency averages >15s](https://app.google.stackdriver.com/policy-advanced/2c0006f3-7040-4323-b105-8d24b3266ac6), or [instance count averages >5](https://app.google.stackdriver.com/policy-advanced/5cf96390-dc53-4166-b002-4c3b6934f4c3) over the last 15m window.
 
 
+Stats
+---
+I occasionally generate [stats and graphs of usage and growth](https://snarfed.org/2018-01-02_bridgy-stats-update) from the [BigQuery dataset](https://bigquery.cloud.google.com/dataset/brid-gy:datastore) ([#715](https://github.com/snarfed/bridgy/issues/715)). Here's how.
+
+1. [Back up the full datastore to Google Cloud Storage.](https://console.cloud.google.com/datastore/settings?project=brid-gy) Include all entities except `*Auth` and other internal details.  
+  TODO: try the [export service](https://cloud.google.com/datastore/docs/export-import-entities)! It worked ok on 2018-01-01 but [BigQuery choked on importing it]() with _query: Entity was of unexpected kind "Response". (error code: invalidQuery)_.
+1. [Import it into BigQuery](https://cloud.google.com/bigquery/docs/loading-data-cloud-datastore#loading_cloud_datastore_backup_data):
+
+    ```
+    gsutil gs://brid-gy.appspot.com/
+    # find the hash in the backup files, replace it in the paths below.
+    
+    for kind in BlogPost BlogWebmention Publish Response SyndicatedPost); do
+      bq load --replace --source_format=DATASTORE_BACKUP datastore.$kind gs://brid-gy.appspot.com/aglzfmJyaWQtZ3lyQQsSHF9BRV9EYXRhc3RvcmVBZG1pbl9PcGVyYXRpb24Y-Z6kCAwLEhZfQUVfQmFja3VwX0luZm9ybWF0aW9uGAEM.$kind.backup_info
+    done
+    
+    for kind in Blogger FacebookPage Flickr GooglePlusPage Instagram Medium Tumblr Twitter WordPress; do
+      bq load --replace --source_format=DATASTORE_BACKUP sources.$kind gs://brid-gy.appspot.com/aglzfmJyaWQtZ3lyQQsSHF9BRV9EYXRhc3RvcmVBZG1pbl9PcGVyYXRpb24Y-Z6kCAwLEhZfQUVfQmFja3VwX0luZm9ybWF0aW9uGAEM.$kind.backup_info
+    done
+    ```
+1. [Run the full stats BigQuery query.](https://bigquery.cloud.google.com/savedquery/586366768654:9d8d4c13e988477bb976a5e29b63da3b) Download the results as CSV.
+1. [Open the stats spreadsheet.](https://docs.google.com/spreadsheets/d/1VhGiZ9Z9PEl7f9ciiVZZgupNcUTsRVltQ8_CqFETpfU/edit) Import the CSV, replacing the _data_ sheet.
+1. Check out the graphs! Save full size images with OS screenshots, thumbnails with the _Save Image_ button. Then post them!
+
+
 Misc
 ---
 The datastore is automatically backed up by a
@@ -206,8 +231,7 @@ Run this to see how much space we're currently using:
 gsutil du -hsc gs://brid-gy.appspot.com/\*
 ```
 
-Run this to download a single complete backup, for e.g. generating usage metrics
-with [`to_tsv.py`](https://github.com/snarfed/bridgy/blob/master/scripts/to_tsv.py):
+Run this to download a single complete backup:
 
 ```
 gsutil -m cp -r gs://brid-gy.appspot.com/weekly/datastore_backup_full_YYYY_MM_DD_\* .
