@@ -41,4 +41,4 @@ git push
 #
 # https://cloud.google.com/appengine/docs/standard/python/tools/uploadinganapp#deploying_an_app
 # https://cloud.google.com/sdk/gcloud/reference/app/deploy
-gcloud -q app deploy --project brid-gy --version 7 *.yaml
+gcloud -q app deploy --account heaven@gmail.com --project brid-gy --version 7 *.yaml

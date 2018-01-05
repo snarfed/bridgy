@@ -102,7 +102,7 @@ class Instagram(models.Source):
     return self.gr_source.get_activities_response(*args, **kwargs)
 
 
-class StartHandler(TemplateHandler):
+class StartHandler(TemplateHandler, util.Handler):
   """Serves the "Enter your username" form page."""
 
   def template_file(self):
@@ -115,7 +115,14 @@ class StartHandler(TemplateHandler):
 
     ia_start = util.oauth_starter(indieauth.StartHandler).to('/instagram/callback')(
       self.request, self.response)
-    self.redirect(ia_start.redirect_url(me=util.get_required_param(self, 'user_url')))
+
+    try:
+      self.redirect(ia_start.redirect_url(me=util.get_required_param(self, 'user_url')))
+    except Exception as e:
+      if util.is_connection_failure(e) or util.interpret_http_exception(e)[0]:
+        self.messages.add("Couldn't fetch your web site: %s" % e)
+        return self.redirect('/')
+      raise
 
 
 class CallbackHandler(indieauth.CallbackHandler, util.Handler):

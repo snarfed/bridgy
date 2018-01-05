@@ -8,6 +8,7 @@ from oauth_dropins import indieauth
 from oauth_dropins.webutil.testutil import TestCase
 from granary import instagram as gr_instagram
 from granary.test import test_instagram
+import requests
 
 import appengine_config
 import instagram
@@ -76,7 +77,7 @@ class InstagramTest(testutil.ModelsTest):
 <a rel="me" href="https://www.instagram.com/snarfed">me on insta</a>
 </body></html>
 """
-    TestCase.expect_requests_get(self, 'http://snarfed.org', body)
+    return TestCase.expect_requests_get(self, 'http://snarfed.org', body)
 
   def expect_indieauth_check(self, state=''):
     TestCase.expect_requests_post(
@@ -216,6 +217,19 @@ class InstagramTest(testutil.ModelsTest):
       }),
     })
     self.assertEquals(expected_auth_url, resp.headers['Location'])
+
+  def test_registration_api_start_handler_site_fetch_fails(self):
+    # Use e.g. https://badssl.com/ for manual testing.
+    self.expect_site_fetch('').AndRaise(
+      requests.exceptions.SSLError('Bad SSL for xyz.com'))
+    self.mox.ReplayAll()
+
+    resp = instagram.application.get_response(
+      '/instagram/start', method='POST', body=urllib.urlencode(self.bridgy_api_state))
+    self.assertEquals(302, resp.status_code)
+    location = urllib.unquote_plus(resp.headers['Location'])
+    self.assertTrue(location.startswith(
+      "http://localhost/#!Couldn't fetch your web site: Bad SSL for xyz.com"), location)
 
   def test_registration_api_finish_success(self):
     state = util.encode_oauth_state(self.bridgy_api_state)
