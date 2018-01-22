@@ -180,31 +180,9 @@ class Handler(webmention.WebmentionHandler):
       return self.error('Could not parse source URL %s' % url)
 
     # look up source by domain
-    domain = domain.lower()
-    sources = source_cls.query().filter(source_cls.domains == domain).fetch(100)
-    if not sources:
-      return self.error("Could not find <b>%(type)s</b> account for <b>%(domain)s</b>. Check that your %(type)s profile has %(domain)s in its <em>web site</em> or <em>link</em> field, then try signing up again." %
-        {'type': source_cls.GR_CLASS.NAME, 'domain': domain})
-
-    current_url = ''
-    for source in sources:
-      logging.info('Source: %s , features %s, status %s, poll status %s',
-                   source.bridgy_url(self), source.features, source.status,
-                   source.poll_status)
-      if source.status != 'disabled' and 'publish' in source.features:
-        # use a source that has a domain_url matching the url provided.
-        # look through each source to find the one with the closest match.
-        schemeless_url = util.schemeless(url.lower()).strip('/')
-        for domain_url in source.domain_urls:
-          schemeless_domain_url = util.schemeless(domain_url.lower()).strip('/')
-          if (schemeless_url.startswith(schemeless_domain_url) and
-              len(domain_url) > len(current_url)):
-            self.source = source
-            current_url = domain_url
-
+    self.source = self._find_source(source_cls, url, domain)
     if not self.source:
-      return self.error(
-        'Publish is not enabled for your account. Please visit https://brid.gy and sign up!')
+      return  # _find_source rendered the error
 
     content_param = 'bridgy_%s_content' % self.source.SHORT_NAME
     if content_param in self.request.params:
@@ -300,6 +278,56 @@ class Handler(webmention.WebmentionHandler):
     self.entity.status = 'complete'
     self.entity.put()
     return result
+
+  def _find_source(self, source_cls, url, domain):
+    """Returns the source that should publish a post URL, or None if not found.
+
+    Args:
+      source_cls: :class:`models.Source` subclass for this silo
+      url: string
+      domain: string, url's domain
+
+    Returns: :class:`models.Source`
+    """
+    domain = domain.lower()
+    sources = source_cls.query().filter(source_cls.domains == domain).fetch(100)
+    if not sources:
+      self.error("Could not find <b>%(type)s</b> account for <b>%(domain)s</b>. Check that your %(type)s profile has %(domain)s in its <em>web site</em> or <em>link</em> field, then try signing up again." %
+        {'type': source_cls.GR_CLASS.NAME, 'domain': domain})
+      return
+
+    current_url = ''
+    sources_ready = []
+    best_match = None
+    for source in sources:
+      logging.info('Source: %s , features %s, status %s, poll status %s',
+                   source.bridgy_url(self), source.features, source.status,
+                   source.poll_status)
+      if source.status != 'disabled' and 'publish' in source.features:
+        # use a source that has a domain_url matching the url provided,
+        # including path. find the source with the closest match.
+        sources_ready.append(source)
+        schemeless_url = util.schemeless(url.lower()).strip('/')
+        for domain_url in source.domain_urls:
+          schemeless_domain_url = util.schemeless(domain_url.lower()).strip('/')
+          if (schemeless_url.startswith(schemeless_domain_url) and
+              len(domain_url) > len(current_url)):
+            current_url = domain_url
+            best_match = source
+
+    if best_match:
+      return best_match
+    elif len(sources_ready) == 1:
+      logging.warning(
+        "Using %s even though %s isn't a path prefix because it's the only source for domain %s",
+        sources_ready[0].label(), schemeless_domain_url, domain)
+      return sources_ready[0]
+    elif len(sources_ready) > 1:
+      self.error(
+        'No account found that matches %s. Check that <a href="/about#profile-link">the web site URL is in your silo profile</a>, then <a href="/">sign up again</a>.' %
+        util.pretty_link(url))
+    else:
+      self.error('Publish is not enabled for your account. <a href="/">Try signing up!</a>')
 
   def attempt_single_item(self, item):
     """Attempts to preview or publish a single mf2 item.

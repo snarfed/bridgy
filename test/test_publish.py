@@ -1042,7 +1042,7 @@ foo<br /> <blockquote>bar</blockquote>
       'displayName': 'yes',
       'object': [{'url': 'http://fa.ke/homebrew-website-club'}],
       'objectType': 'activity',
-      'content': '       <span class="p-rsvp" value="yes">yes</span>       <a class="u-in-reply-to" href="http://fa.ke/homebrew-website-club"></a>      ',
+      'content': '<span class="p-rsvp" value="yes">yes</span>       <a class="u-in-reply-to" href="http://fa.ke/homebrew-website-club"></a>',
     }, include_link=gr_source.INCLUDE_LINK, ignore_formatting=False). \
     AndReturn(gr_source.creation_result({
       'url': 'http://fake/url',
@@ -1259,10 +1259,21 @@ Join us!"""
       id='foo.com/c', features=['publish'], domains=['foo.com'],
       domain_urls=['http://foo.com/c'], auth_entity=self.auth_entity.key)
     source_3.put()
+
     self.expect_requests_get('http://foo.com/bar', self.post_html % 'foo')
     self.mox.ReplayAll()
     self.assert_created('foo - http://foo.com/bar', interactive=False)
     self.assertEquals(source_2.key, Publish.query().get().source)
+
+  def test_multiple_users_on_domain_no_path_matches(self):
+    self.source.domain_urls = ['http://foo.com/a']
+    self.source.put()
+    source_2 = testutil.FakeSource(
+      id='foo.com/c', features=['publish'], domains=['foo.com'],
+      domain_urls=['http://foo.com/c'], auth_entity=self.auth_entity.key)
+    source_2.put()
+
+    self.assert_error('No account found that matches')
 
   def test_multiple_users_only_one_registered(self):
     self.source.key.delete()
@@ -1274,7 +1285,17 @@ Join us!"""
       id='foo.com/c', features=['publish'], domains=['foo.com'],
       domain_urls=['http://foo.com/c'], auth_entity=self.auth_entity.key)
     source_3.put()
-    self.assert_error('Publish is not enabled')
+
+    self.assert_error('No account found that matches')
+
+  def test_single_user_on_domain_with_wrong_path(self):
+    self.source.domain_urls = ['http://foo.com/x']
+    self.source.put()
+
+    self.expect_requests_get('http://foo.com/bar', self.post_html % 'foo')
+    self.mox.ReplayAll()
+    self.assert_created('foo - http://foo.com/bar', interactive=False)
+    self.assertEquals(self.source.key, Publish.query().get().source)
 
   def test_dont_escape_period_in_content(self):
     """Odd bug triggered by specific combination of leading <span> and trailing #.
