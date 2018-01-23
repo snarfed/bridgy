@@ -515,6 +515,12 @@ class Discover(Poll):
       assert len(activities) == 1, activities
       self.backfeed(source, activities={activities[0]['id']: activities[0]})
 
+      in_reply_to = util.get_first(activities[0]['object'], 'inReplyTo')
+      if in_reply_to:
+        parsed = util.parse_tag_uri(in_reply_to.get('id', ''))  # TODO: fall back to url
+        if parsed:
+          util.add_discover_task(source, parsed[1])
+
     except Exception, e:
       code, body = util.interpret_http_exception(e)
       if (code and (code in util.HTTP_RATE_LIMIT_CODES or

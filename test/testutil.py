@@ -353,8 +353,8 @@ class ModelsTest(HandlerTest):
         'url': 'http://fa.ke/post/url',
         'object': {
           'content': 'foo http://target1/post/url bar',
-          }
         }
+      }
 
       comment = obj['replies']['items'][0]
       self.responses.append(Response(

@@ -1307,6 +1307,30 @@ class DiscoverTest(TaskQueueTest):
                          resp.unsent, resp.key)
     self.assert_propagating(resps)
 
+  def test_reply(self):
+    """If the activity is a reply, we should also enqueue the in-reply-to post."""
+    self.mox.StubOutWithMock(FakeSource, 'get_activities')
+    FakeSource.get_activities(
+      activity_id='b', fetch_replies=True, fetch_likes=True, fetch_shares=True,
+      user_id=self.sources[0].key.id()).AndReturn([{
+        'id': 'tag:fake.com:123',
+        'object': {
+          'id': 'tag:fake.com:123',
+          'url': 'https://twitter.com/_/status/123',
+          'inReplyTo': [{'id': 'tag:fake.com:456'}],
+        },
+      }])
+    self.mox.ReplayAll()
+
+    self.discover()
+    tasks = self.taskqueue_stub.GetTasks('discover')
+    self.assertEqual(1, len(tasks))
+    self.assertEqual('/_ah/queue/discover', tasks[0]['url'])
+    self.assertEqual({
+      'source_key': self.sources[0].key.urlsafe(),
+      'post_id': '456',
+    }, testutil.get_task_params(tasks[0]))
+
   def test_get_activities_error(self):
     self._test_get_activities_error(400)
 
