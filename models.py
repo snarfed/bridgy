@@ -559,7 +559,11 @@ class Source(StringIdModel):
     for i, url in enumerate(candidates):
       final, domain, ok = util.get_webmention_target(url, resolve=i < MAX_AUTHOR_URLS)
       if ok:
-        urls.append(url if final.startswith(url) else final)
+        if util.schemeless(final.lower()).startswith(util.schemeless(url.lower())):
+          # redirected to a deeper path. use the original higher level URL. #652
+          urls.append(url)
+        else:
+          urls.append(final)
 
     urls = util.dedupe_urls(urls)  # normalizes domains to lower case
     domains = [util.domain_from_link(url) for url in urls]

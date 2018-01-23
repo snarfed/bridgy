@@ -367,7 +367,7 @@ class SourceTest(testutil.HandlerTest):
       id='x', user_json=json.dumps({'url': 'http://site'}))
     auth_entity.put()
 
-    self.expect_requests_head('http://site', redirected_url='http://site/path')
+    self.expect_requests_head('http://site', redirected_url='https://site/path')
     self.mox.ReplayAll()
 
     source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
