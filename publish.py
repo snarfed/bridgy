@@ -317,12 +317,7 @@ class Handler(webmention.WebmentionHandler):
 
     if best_match:
       return best_match
-    elif len(sources_ready) == 1:
-      logging.warning(
-        "Using %s even though %s isn't a path prefix because it's the only source for domain %s",
-        sources_ready[0].label(), schemeless_domain_url, domain)
-      return sources_ready[0]
-    elif len(sources_ready) > 1:
+    elif sources_ready:
       self.error(
         'No account found that matches %s. Check that <a href="/about#profile-link">the web site URL is in your silo profile</a>, then <a href="/">sign up again</a>.' %
         util.pretty_link(url))

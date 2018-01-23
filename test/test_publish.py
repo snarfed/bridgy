@@ -1291,11 +1291,7 @@ Join us!"""
   def test_single_user_on_domain_with_wrong_path(self):
     self.source.domain_urls = ['http://foo.com/x']
     self.source.put()
-
-    self.expect_requests_get('http://foo.com/bar', self.post_html % 'foo')
-    self.mox.ReplayAll()
-    self.assert_created('foo - http://foo.com/bar', interactive=False)
-    self.assertEquals(self.source.key, Publish.query().get().source)
+    self.assert_error('No account found that matches')
 
   def test_dont_escape_period_in_content(self):
     """Odd bug triggered by specific combination of leading <span> and trailing #.
