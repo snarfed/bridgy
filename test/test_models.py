@@ -361,6 +361,19 @@ class SourceTest(testutil.HandlerTest):
     self.assertEquals(['http://final/'], source.domain_urls)
     self.assertEquals(['final'], source.domains)
 
+  def test_create_new_domain_url_redirects_to_path(self):
+    """If a profile URL is a root that redirects to a path, keep the root."""
+    auth_entity = testutil.FakeAuthEntity(
+      id='x', user_json=json.dumps({'url': 'http://site'}))
+    auth_entity.put()
+
+    self.expect_requests_head('http://site', redirected_url='http://site/path')
+    self.mox.ReplayAll()
+
+    source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
+    self.assertEquals(['http://site/'], source.domain_urls)
+    self.assertEquals(['site'], source.domains)
+
   def test_create_new_unicode_chars(self):
     """We should handle unusual unicode chars in the source's name ok."""
     # the invisible character in the middle is an unusual unicode character

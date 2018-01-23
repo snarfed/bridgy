@@ -557,9 +557,9 @@ class Source(StringIdModel):
 
     urls = []
     for i, url in enumerate(candidates):
-      url, domain, send = util.get_webmention_target(url, resolve=i < MAX_AUTHOR_URLS)
-      if send:
-        urls.append(url)
+      final, domain, ok = util.get_webmention_target(url, resolve=i < MAX_AUTHOR_URLS)
+      if ok:
+        urls.append(url if final.startswith(url) else final)
 
     urls = util.dedupe_urls(urls)  # normalizes domains to lower case
     domains = [util.domain_from_link(url) for url in urls]
