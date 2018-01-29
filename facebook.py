@@ -55,6 +55,7 @@ DEAD_TOKEN_ERROR_CODES = frozenset((
 DEAD_TOKEN_ERROR_SUBCODES = frozenset((
   458,  # "The user has not authorized application 123"
   460,  # "The session has been invalidated because the user has changed the password"
+  467,  # "Error validating access token: This may be because the user logged out or may be due to a system error."
   490,  # "The user is enrolled in a blocking, logged-in checkpoint"
 ))
 DEAD_TOKEN_ERROR_MESSAGES = frozenset((
