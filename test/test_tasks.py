@@ -1,6 +1,8 @@
 # coding=utf-8
 """Unit tests for tasks.py.
 """
+from __future__ import unicode_literals
+
 import bz2
 import copy
 import datetime

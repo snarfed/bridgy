@@ -4,6 +4,8 @@ Used in publish.py and blog_webmention.py.
 
 Webmention spec: http://webmention.org/
 """
+from __future__ import unicode_literals
+
 import logging
 import json
 

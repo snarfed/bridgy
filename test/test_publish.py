@@ -1,6 +1,8 @@
 # coding=utf-8
 """Unit tests for publish.py.
 """
+from __future__ import unicode_literals
+
 import json
 import socket
 import urllib
@@ -78,7 +80,7 @@ class PublishTest(testutil.HandlerTest):
     resp = self.get_response(preview=preview, **kwargs)
     body = resp.body.decode('utf-8')
     self.assertEquals(status, resp.status_int,
-                      u'%s != %s: %s' % (status, resp.status_int, body))
+                      '%s != %s: %s' % (status, resp.status_int, body))
     if preview:
       self.assertIn(expected, body,
                     '%r\n\n=== vs ===\n\n%r' % (expected, body))
@@ -1129,7 +1131,7 @@ Join us!"""
 
   def test_unicode(self):
     """Test that we pass through unicode chars correctly."""
-    text = u'Démo pour les développeur. Je suis navrée de ce problème.'
+    text = 'Démo pour les développeur. Je suis navrée de ce problème.'
     for i in range(2):
       self.expect_requests_get('http://foo.com/bar', self.post_html % text,
                                content_type='text/html; charset=utf-8')
@@ -1147,7 +1149,7 @@ Join us!"""
 
   def _test_charset_in_meta_tag(self, charset):
     """Test that we support charset in meta tag as well as HTTP header."""
-    text = u'Démo pour les développeur. Je suis navrée de ce problème.'
+    text = 'Démo pour les développeur. Je suis navrée de ce problème.'
 
     resp = requests.Response()
     resp._content = (u"""

@@ -1,4 +1,5 @@
 """Handler that exposes app logs to users."""
+from __future__ import unicode_literals
 
 import webapp2
 

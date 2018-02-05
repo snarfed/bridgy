@@ -20,6 +20,8 @@ test command line:
 curl localhost:8080/webmention/blogger \
   -d 'source=http://localhost/response.html&target=http://freedom-io-2.blogspot.com/2014/04/blog-post.html'
 """
+from __future__ import unicode_literals
+
 import collections
 import logging
 import urlparse
@@ -142,7 +144,7 @@ class Blogger(models.Source):
     post_id = feed.entry[0].get_post_id()
 
     # create the comment
-    content = u'<a href="%s">%s</a>: %s' % (author_url, author_name, content)
+    content = '<a href="%s">%s</a>: %s' % (author_url, author_name, content)
     if len(content) > MAX_COMMENT_LENGTH:
       content = content[:MAX_COMMENT_LENGTH - 3] + '...'
     logging.info('Creating comment on blog %s, post %s: %s', self.key.id(),

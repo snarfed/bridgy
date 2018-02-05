@@ -24,6 +24,8 @@ test command line:
 curl localhost:8080/webmention/tumblr \
   -d 'source=http://localhost/response.html&target=http://snarfed.tumblr.com/post/60428995188/glen-canyon-http-t-co-fzc4ehiydp?foo=bar#baz'
 """
+from __future__ import unicode_literals
+
 import collections
 import json
 import logging
@@ -192,7 +194,7 @@ class Tumblr(models.Source):
     thread_id = resp['id']
 
     # create the comment
-    message = u'<a href="%s">%s</a>: %s' % (author_url, author_name, content)
+    message = '<a href="%s">%s</a>: %s' % (author_url, author_name, content)
     resp = self.disqus_call(util.requests_post, DISQUS_API_CREATE_POST_URL,
                             {'thread': thread_id,
                              'message': message.encode('utf-8'),

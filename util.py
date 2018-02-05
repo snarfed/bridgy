@@ -1,6 +1,10 @@
 # coding=utf-8
 """Misc utility constants and classes.
 """
+from __future__ import unicode_literals
+# use python-future's open so that it returns contents as unicode, for interop
+# with webutil.util.load_file_lines().
+from builtins import open
 
 import collections
 import copy

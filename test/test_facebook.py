@@ -1,5 +1,7 @@
 """Unit tests for facebook.py.
 """
+from __future__ import unicode_literals
+
 import app
 import copy
 import datetime

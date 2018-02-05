@@ -1,6 +1,8 @@
 # coding=utf-8
 """Unit test utilities.
 """
+from __future__ import unicode_literals
+
 import copy
 import datetime
 import json
@@ -14,7 +16,7 @@ from google.appengine.datastore import datastore_stub_util
 from google.appengine.ext import ndb
 from models import BlogPost, Publish, PublishedPage, Response, Source
 from oauth_dropins.models import BaseAuth
-from oauth_dropins.webutil import testutil
+from oauth_dropins.webutil import testutil_appengine
 # mirror some methods from webutil.testutil
 from oauth_dropins import handlers as oauth_handlers
 from oauth_dropins.webutil.testutil import get_task_eta, get_task_params
@@ -215,7 +217,7 @@ class FakeSource(Source):
     return super(FakeSource, self).put(**kwargs)
 
 
-class HandlerTest(testutil.HandlerTest):
+class HandlerTest(testutil_appengine.HandlerTest):
   """Base test class.
   """
   def setUp(self):
@@ -334,7 +336,7 @@ class ModelsTest(HandlerTest):
           'id': 'tag:source.com,2013:%s_scissors_by_bob' % id,
           'objectType': 'activity',
           'verb': 'react',
-          'content': u'✁',
+          'content': '✁',
           'object': {'url': 'http://example.com/def'},
           'author': {'url': 'http://example.com/bob'},
         }],

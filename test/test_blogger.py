@@ -1,6 +1,8 @@
 # coding=utf-8
 """Unit tests for blogger.py.
 """
+from __future__ import unicode_literals
+
 import mox
 import urllib
 import urlparse
@@ -99,13 +101,13 @@ class BloggerTest(testutil.HandlerTest):
     # should test that the blogger client itself encodes as UTF-8.
     self.expect_get_posts()
 
-    prefix = u'<a href="http://who">Degenève</a>: '
+    prefix = '<a href="http://who">Degenève</a>: '
     content = prefix + 'x' * (blogger.MAX_COMMENT_LENGTH - len(prefix) - 3) + '...'
     self.client.add_comment('111', '222', content).AndReturn(self.comment)
     self.mox.ReplayAll()
 
     b = Blogger.new(self.handler, auth_entity=self.auth_entity)
-    resp = b.create_comment('http://blawg/path/to/post', u'Degenève', 'http://who',
+    resp = b.create_comment('http://blawg/path/to/post', 'Degenève', 'http://who',
                             'x' * blogger.MAX_COMMENT_LENGTH, client=self.client)
     self.assert_equals({'id': '333', 'response': '<foo></foo>'}, resp)
 
@@ -113,13 +115,13 @@ class BloggerTest(testutil.HandlerTest):
     """Blogger caps HTML comment length at 4096 chars."""
     self.expect_get_posts()
     self.client.add_comment(
-      '111', '222', u'<a href="http://who">Degenève</a>: foo Degenève bar'
+      '111', '222', '<a href="http://who">Degenève</a>: foo Degenève bar'
       ).AndReturn(self.comment)
     self.mox.ReplayAll()
 
     b = Blogger.new(self.handler, auth_entity=self.auth_entity)
-    resp = b.create_comment('http://blawg/path/to/post', u'Degenève', 'http://who',
-                            u'foo Degenève bar', client=self.client)
+    resp = b.create_comment('http://blawg/path/to/post', 'Degenève', 'http://who',
+                            'foo Degenève bar', client=self.client)
     self.assert_equals({'id': '333', 'response': '<foo></foo>'}, resp)
 
   def test_create_comment_gives_up_on_internal_error_bX2i87au(self):

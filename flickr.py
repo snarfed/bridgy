@@ -1,4 +1,5 @@
 """Flickr source and data model storage class."""
+from __future__ import unicode_literals
 
 import appengine_config
 import datetime

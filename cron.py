@@ -1,5 +1,7 @@
 """Cron jobs. Currently just minor cleanup tasks.
 """
+from __future__ import unicode_literals
+
 import datetime
 import itertools
 import json

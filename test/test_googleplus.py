@@ -1,5 +1,7 @@
 """Unit tests for googleplus.py.
 """
+from __future__ import unicode_literals
+
 import json
 
 import appengine_config

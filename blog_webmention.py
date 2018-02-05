@@ -1,5 +1,7 @@
 """Converts webmentions to comments on Blogger, Tumblr, and WP.com.
 """
+from __future__ import unicode_literals
+
 import logging
 import json
 import urlparse
@@ -58,7 +60,7 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
       return self.error('Home page webmentions are not currently supported.')
 
     # create BlogWebmention entity
-    id = u'%s %s' % (self.source_url, self.target_url)
+    id = '%s %s' % (self.source_url, self.target_url)
     self.entity = BlogWebmention.get_or_insert(
       id, source=self.source.key, redirected_target_urls=redirected_target_urls)
     if self.entity.status == 'complete':

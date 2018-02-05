@@ -1,6 +1,8 @@
 # coding=utf-8
 """Task queue handlers.
 """
+from __future__ import unicode_literals
+
 import bz2
 import calendar
 import copy

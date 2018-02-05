@@ -1,6 +1,8 @@
 # coding=utf-8
 """Unit tests for blog_webmention.py.
 """
+from __future__ import unicode_literals
+
 import json
 import urllib
 
@@ -38,7 +40,7 @@ http://foo.com/post/1
       source = 'http://bar.com/reply'
     if target is None:
       target = 'http://foo.com/post/1'
-    body = (u'source=%s&target=%s' % (source, target)).encode('utf-8')
+    body = ('source=%s&target=%s' % (source, target)).encode('utf-8')
     return blog_webmention.application.get_response(
       '/webmention/fake', method='POST', body=body)
 
@@ -194,8 +196,8 @@ X http://FoO.cOm/post/1
   def test_unicode_in_target_and_source_urls(self):
     """Unicode chars in target and source URLs should work."""
     # note the … and ✁ chars
-    target = u'http://foo.com/2014/11/23/england-german…iendly-wembley'
-    source = u'http://bar.com/✁/1'
+    target = 'http://foo.com/2014/11/23/england-german…iendly-wembley'
+    source = 'http://bar.com/✁/1'
 
     html = u"""\
 <meta charset="utf-8">
@@ -205,7 +207,7 @@ X http://FoO.cOm/post/1
 </p></article>""" % target
     self.expect_requests_get(source, html)
 
-    comment = u'mentioned this in <a href="%s">my post</a>. <br /> <a href="%s">via bar.com</a>' % (source, source)
+    comment = 'mentioned this in <a href="%s">my post</a>. <br /> <a href="%s">via bar.com</a>' % (source, source)
     testutil.FakeSource.create_comment(target, 'foo.com', 'http://foo.com/', comment)
     self.mox.ReplayAll()
 

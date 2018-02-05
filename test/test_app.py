@@ -1,6 +1,8 @@
 # coding=utf-8
 """Unit tests for app.py.
 """
+from __future__ import unicode_literals
+
 import datetime
 import json
 import urllib
@@ -266,11 +268,11 @@ class AppTest(testutil.ModelsTest):
 
   def test_user_page_lookup_with_username_etc(self):
     self.sources[0].username = 'FooBar'
-    self.sources[0].name = u'Snoøpy Barrett'
+    self.sources[0].name = 'Snoøpy Barrett'
     self.sources[0].domains = ['foox.com']
     self.sources[0].put()
 
-    for id in 'FooBar', u'Snoøpy Barrett', 'foox.com':
+    for id in 'FooBar', 'Snoøpy Barrett', 'foox.com':
       resp = app.application.get_response('/fake/%s' % urllib.quote(id.encode('utf-8')))
       self.assertEquals(301, resp.status_int)
       self.assertEquals('http://localhost/fake/%s' % self.sources[0].key.id(),
@@ -385,7 +387,7 @@ class AppTest(testutil.ModelsTest):
     self.sources[0].features = ['publish']
     self.sources[0].put()
 
-    url = u'https://ptt.com/ransomw…ocks-user-access/'
+    url = 'https://ptt.com/ransomw…ocks-user-access/'
     Publish(parent=PublishedPage(id=url.encode('utf-8')).key,
             source=self.sources[0].key).put()
 

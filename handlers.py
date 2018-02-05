@@ -17,6 +17,7 @@ URL paths are:
 /rsvp/SITE/USER_ID/EVENT_ID/RSVP_USER_ID
   e.g. /rsvp/facebook/212038/12345/67890
 """
+from __future__ import unicode_literals
 
 import copy
 import json

@@ -19,6 +19,8 @@ Example comment ID and links
 * Permalink: https://www.facebook.com/10100823411094363&comment_id=10069288
 * Local handler path: /comment/facebook/212038/10100823411094363_10069288
 """
+from __future__ import unicode_literals
+
 import heapq
 import itertools
 import json

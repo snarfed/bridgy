@@ -1,5 +1,7 @@
 """Unit tests for flickr.py.
 """
+from __future__ import unicode_literals
+
 import json
 import urllib
 

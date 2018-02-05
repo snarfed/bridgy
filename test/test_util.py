@@ -1,5 +1,7 @@
 # coding=utf-8
 """Unit tests for util.py."""
+from __future__ import unicode_literals
+
 import copy
 import datetime
 import json
@@ -22,7 +24,7 @@ import util
 from util import Login
 
 # the character in the middle is an unusual unicode character
-UNICODE_STR = u'a ✁ b'
+UNICODE_STR = 'a ✁ b'
 
 
 class UtilTest(testutil.ModelsTest):
@@ -102,7 +104,7 @@ class UtilTest(testutil.ModelsTest):
   def test_logins_cookie_url_decode(self):
     """https://console.cloud.google.com/errors/10588536940780707768?project=brid-gy"""
     self.request.headers['Cookie'] = 'logins="/fake/123?question%3Fmark"'
-    self.assertEquals([Login(site=u'fake', name=u'question?mark', path=u'/fake/123')],
+    self.assertEquals([Login(site='fake', name='question?mark', path='/fake/123')],
                       self.handler.get_logins())
 
   def test_bad_logins_cookies(self):
@@ -206,7 +208,7 @@ class UtilTest(testutil.ModelsTest):
     ])
 
     self.expect_webmention_requests_get(
-      u'http://fakeuser.com/',
+      'http://fakeuser.com/',
       response='<html><link rel="webmention" href="/webmention"></html>',
       verify=False)
 

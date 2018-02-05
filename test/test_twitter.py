@@ -1,5 +1,7 @@
 """Unit tests for twitter.py.
 """
+from __future__ import unicode_literals
+
 import copy
 import json
 import urllib

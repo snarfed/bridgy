@@ -7,6 +7,7 @@ http://documentation.superfeedr.com/schema.html
 If/when I add support for arbitrary RSS/Atom feeds, I should use
 http://feediscovery.appspot.com/ for feed discovery based on front page URL.
 """
+from __future__ import unicode_literals
 
 import json
 import logging

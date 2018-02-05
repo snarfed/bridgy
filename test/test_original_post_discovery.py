@@ -1,6 +1,8 @@
 # coding=utf-8
 """Unit tests for original_post_discovery.py
 """
+from __future__ import unicode_literals
+
 import datetime
 import json
 import string
@@ -212,7 +214,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     </div>""").InAnyOrder()
 
     # second post is syndicated
-    self.expect_requests_get(u'http://author/post/perma✁2', u"""
+    self.expect_requests_get('http://author/post/perma✁2', u"""
     <div class="h-entry">
       <a class="u-url" href="http://author/post/perma✁2"></a>
       <a class="u-syndication" href="https://fa.ke/post/url2"></a>
@@ -234,13 +236,13 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     # first activity should trigger all the lookups and storage
     self.assert_discover(['http://author/post/permalink1'])
     syndposts = [('http://author/post/permalink1', 'https://fa.ke/post/url1'),
-                 (u'http://author/post/perma✁2', 'https://fa.ke/post/url2'),
+                 ('http://author/post/perma✁2', 'https://fa.ke/post/url2'),
                  ('http://author/post/permalink3', None)]
     self.assert_syndicated_posts(*syndposts)
 
     # second lookup should require no additional HTTP requests.
     # the second syndicated post should be linked up to the second permalink.
-    self.assertEquals((set([u'http://author/post/perma✁2']), set()),
+    self.assertEquals((set(['http://author/post/perma✁2']), set()),
                       discover(self.source, self.activities[1]))
 
     # third activity lookup. since we didn't find a back-link for the third
@@ -310,7 +312,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.mox.ReplayAll()
     self.assert_discover([])
     self.assert_syndicated_posts(('http://author/post/url', None),
-                                 (None, u'https://fa.ke/post/url'))
+                                 (None, 'https://fa.ke/post/url'))
 
   def test_rel_feed_link(self):
     """Check that we follow the rel=feed link when looking for the
@@ -800,7 +802,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.assert_syndicated_posts(
       ('http://author/note-permalink', 'https://fa.ke/note'),
       ('http://author/article-permalink', 'https://fa.ke/article'),
-      (None, u'https://fa.ke/post/url'))
+      (None, 'https://fa.ke/post/url'))
 
   def test_avoid_author_page_with_bad_content_type(self):
     """Confirm that we check the author page's content type before
@@ -1038,7 +1040,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     discover(self.source, self.activities[0])
     refetch(self.source)
     self.assert_syndicated_posts(('http://author/permalink', None),
-                                 (None, u'https://fa.ke/post/url'))
+                                 (None, 'https://fa.ke/post/url'))
 
     refetch(self.source)
     self.assert_syndicated_posts(('http://author/permalink', 'https://fa.ke/post/url'))

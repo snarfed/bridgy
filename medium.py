@@ -9,6 +9,7 @@ API docs:
 https://github.com/Medium/medium-api-docs#contents
 https://medium.com/developers/welcome-to-the-medium-api-3418f956552
 """
+from __future__ import unicode_literals
 
 import collections
 import json

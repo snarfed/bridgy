@@ -1,6 +1,8 @@
 # coding=utf-8
 """Unit tests for wordpress_rest.py.
 """
+from __future__ import unicode_literals
+
 import json
 import urllib
 import urllib2
@@ -124,17 +126,17 @@ class WordPressTest(testutil.HandlerTest):
   def test_create_comment_with_unicode_chars(self):
     self.expect_new_reply(content='<a href="http://who">Degenève</a>: foo Degenève bar')
 
-    resp = self.wp.create_comment('http://primary/post/456', u'Degenève',
-                                  'http://who', u'foo Degenève bar')
+    resp = self.wp.create_comment('http://primary/post/456', 'Degenève',
+                                  'http://who', 'foo Degenève bar')
     self.assertEquals({'id': None}, resp)
 
   def test_create_comment_with_unicode_chars_in_slug(self):
     self.expect_urlopen(
-      u'https://public-api.wordpress.com/rest/v1/sites/123/posts/slug:✁?pretty=true',
+      'https://public-api.wordpress.com/rest/v1/sites/123/posts/slug:✁?pretty=true',
       json.dumps({'ID': 456}))
     self.expect_new_reply()
 
-    resp = self.wp.create_comment(u'http://primary/post/✁', 'name',
+    resp = self.wp.create_comment('http://primary/post/✁', 'name',
                                   'http://who', 'foo bar')
     self.assertEquals({'id': None}, resp)
 

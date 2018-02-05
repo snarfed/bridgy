@@ -24,6 +24,7 @@ lookups in the following primary cases:
     - 1 DB query for the initial check plus 1 additional DB query for
       *each* post permalink.
 """
+from __future__ import unicode_literals
 
 import collections
 import datetime

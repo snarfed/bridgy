@@ -24,6 +24,7 @@ I'd ideally like to use a Test User, but their posts can't have comments or
 likes. :(
 https://developers.facebook.com/docs/apps/test-users
 """
+from __future__ import unicode_literals
 
 import logging
 import sys

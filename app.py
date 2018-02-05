@@ -1,5 +1,7 @@
 """Bridgy user-facing handlers: front page, user pages, and delete POSTs.
 """
+from __future__ import unicode_literals
+
 import datetime
 import itertools
 import json

@@ -24,6 +24,8 @@ Example response::
       "id": "456_789"
     }
 """
+from __future__ import unicode_literals
+
 import collections
 import logging
 import json

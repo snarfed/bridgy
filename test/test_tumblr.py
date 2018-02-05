@@ -1,6 +1,8 @@
 # coding=utf-8
 """Unit tests for tumblr.py.
 """
+from __future__ import unicode_literals
+
 import json
 
 import mox
@@ -126,7 +128,7 @@ class TumblrTest(testutil.HandlerTest):
     self.mox.ReplayAll()
 
     resp = self.tumblr.create_comment('http://primary/post/123999/xyz_abc',
-                                      u'Degenève', 'http://who', u'foo Degenève bar')
+                                      'Degenève', 'http://who', 'foo Degenève bar')
     self.assertEquals({}, resp)
 
   def test_create_comment_finds_disqus_shortname(self):

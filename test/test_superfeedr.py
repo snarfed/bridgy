@@ -1,5 +1,7 @@
 """Unit tests for superfeedr.py.
 """
+from __future__ import unicode_literals
+
 import json
 
 from google.appengine.ext.ndb.key import _MAX_KEYPART_BYTES

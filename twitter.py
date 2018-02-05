@@ -5,6 +5,8 @@ hits /statuses/user_timeline and /search/tweets once each. Both allow 180 calls
 per window before they're rate limited.
 https://dev.twitter.com/docs/rate-limiting/1.1/limits
 """
+from __future__ import unicode_literals
+
 import datetime
 import json
 import logging

@@ -1,6 +1,8 @@
 # coding=utf-8
 """Unit tests for models.py.
 """
+from __future__ import unicode_literals
+
 import datetime
 import json
 import re
@@ -407,7 +409,7 @@ class SourceTest(testutil.HandlerTest):
   def test_create_new_unicode_chars(self):
     """We should handle unusual unicode chars in the source's name ok."""
     # the invisible character in the middle is an unusual unicode character
-    FakeSource.create_new(self.handler, name=u'a ✁ b')
+    FakeSource.create_new(self.handler, name='a ✁ b')
 
   def test_create_new_rereads_domains(self):
     FakeSource.new(None, features=['listen'],

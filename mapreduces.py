@@ -6,6 +6,7 @@ Best guides I found for writing a datastore mapreduce and tuning it in prod:
 https://code.google.com/p/appengine-mapreduce/wiki/GettingStartedInPython
 http://code.google.com/p/appengine-mapreduce/wiki/InstancesQueuesShardsAndSlices
 """
+from __future__ import unicode_literals
 
 import gc
 import json

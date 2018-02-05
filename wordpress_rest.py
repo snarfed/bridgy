@@ -18,6 +18,8 @@ curl localhost:8080/webmention/wordpress \
 making an API call with an access token from the command line:
 curl -H 'Authorization: Bearer [TOKEN]' URL...
 """
+from __future__ import unicode_literals
+
 import collections
 import json
 import logging
@@ -37,9 +39,9 @@ import util
 import webapp2
 
 
-API_CREATE_COMMENT_URL = u'https://public-api.wordpress.com/rest/v1/sites/%s/posts/%d/replies/new?pretty=true'
-API_POST_SLUG_URL = u'https://public-api.wordpress.com/rest/v1/sites/%s/posts/slug:%s?pretty=true'
-API_SITE_URL = u'https://public-api.wordpress.com/rest/v1/sites/%s?pretty=true'
+API_CREATE_COMMENT_URL = 'https://public-api.wordpress.com/rest/v1/sites/%s/posts/%d/replies/new?pretty=true'
+API_POST_SLUG_URL = 'https://public-api.wordpress.com/rest/v1/sites/%s/posts/slug:%s?pretty=true'
+API_SITE_URL = 'https://public-api.wordpress.com/rest/v1/sites/%s?pretty=true'
 
 
 class WordPress(models.Source):
@@ -141,7 +143,7 @@ class WordPress(models.Source):
 
     # create the comment
     url = API_CREATE_COMMENT_URL % (auth_entity.blog_id, post_id)
-    content = u'<a href="%s">%s</a>: %s' % (author_url, author_name, content)
+    content = '<a href="%s">%s</a>: %s' % (author_url, author_name, content)
     data = {'content': content.encode('utf-8')}
     try:
       resp = self.urlopen(auth_entity, url, data=urllib.urlencode(data))
