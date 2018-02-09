@@ -277,6 +277,10 @@ button[disabled]:hover {
   max-width: 98%;
 }
 
+#preview-text hr {
+  border-color: #cccccc;
+}
+
 #preview-text img, #preview-text video {
   max-height: 200px;
   max-width: 100%;

@@ -173,18 +173,20 @@ WordPress.com, <a href="/">sign up here!</a>
 
 <!-- Listen signup buttons -->
 {% else %}
+{% if source.SHORT_NAME != 'github' %}
 <data class="p-bridgy-listen-status" value="disabled">
 Click to enable <a href="/about#listen">listening</a>:
 {% block listen_signup %}
 {% endblock %}
 </data>
 {% endif %}
+{% endif %}
 
 </div>
 
 
 <!-- Publish UI -->
-<div id="publish-ui" class="col-sm-6">
+<div id="publish-ui" class="{% if source.SHORT_NAME != 'github' %}col-sm-6{% endif %}">
 
 {% if "publish" in source.features and source.status != "disabled" %}
 <data class="p-bridgy-publish-status" value="enabled">
@@ -221,10 +223,12 @@ Click to enable <a href="/about#listen">listening</a>:
      <input id="omit-link-true" name="bridgy_omit_link" value="true" type="radio">
      no
    </label>
+   {% if source.SHORT_NAME != 'github' %}
    <label title="Include a link to the original post only if the text must ellipsized because of character constraints">
      <input id="omit-link-maybe" name="bridgy_omit_link" value="maybe" type="radio">
      if shortened
    </label>
+   {% endif %}
  </div>
  &nbsp;
  <button id="preview-button" type="submit" class="btn btn-default">Preview</button>

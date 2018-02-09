@@ -251,7 +251,7 @@ class PublishTest(testutil.HandlerTest):
 
   def test_bad_target_url(self):
     self.assert_error(
-      'Target must be brid.gy/publish/{facebook,flickr,twitter,instagram}',
+      'Target must be brid.gy/publish/{facebook,flickr,github,instagram,twitter}',
       target='foo')
 
   def test_unsupported_source_class(self):

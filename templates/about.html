@@ -110,6 +110,7 @@ service.</a>
 <li><a href="#person-tag">How do I tag someone in a post?</a></li>
 <li><a href="#location">How do I include location in a post?</a></li>
 <li><a href="#quote-tweet">How do I post a quote tweet?</a></li>
+<li><a href="#github-issue-comment">How do I create a GitHub issue or comment?</a></li>
 <li><a href="#facebook-publish">What happened to publishing Facebook
   comments and likes?</li>
 <li><a href="#omit-link">Can I disable the link back to my post?</a></li>
@@ -842,6 +843,7 @@ previewing a post to see how it will look!
 <li>Nothing on Google+, sorry.
   <a href="https://developers.google.com/+/api/latest/">Their API is
     read only.</a></li>
+<li>GitHub issues, comments on issues, and comments on pull requests.</li>
 </ul>
 </li>
 </p></li>
@@ -1018,6 +1020,22 @@ I have something to say about this:
   &lt;/a&gt;
 &lt;/cite&gt;
 </pre>
+</p>
+</li>
+
+<li id="github-issue-comment" class="question">How do I create a GitHub issue or comment?</li>
+<li class="answer">
+<p>To create an issue, link to the repo with class <code><a href="http://microformats.org/wiki/rel-in-reply-to">u-in-reply-to</a></code>.
+For example:
+
+<pre>&lt;div class="<span class='keyword'>h-entry</span>"&gt;
+  &lt;a class="<span class='keyword'>u-in-reply-to</span>" href="<a href=https://github.com/snarfed/bridgy'>https://github.com/snarfed/bridgy</a>"&gt;Regarding Bridgy:&lt;/a&gt;
+  &lt;h1 class="<span class='keyword'>p-name</span>"&gt;<span class='value'>Please add support for <a href="https://www.justyo.co">Yo</a></span>&lt;/h1&gt;
+  &lt;p class="<span class='keyword'>e-content</span>"&gt;<span class='value'>It's my favorite silo!</span>&lt;/p&gt;
+&lt;/div&gt;
+</pre>
+</p>
+<p>To create a comment, use an <code>u-in-reply-to</code> link to the issue or pull request you want to comment on, instead of to the repo.
 </p>
 </li>
 

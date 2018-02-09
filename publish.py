@@ -38,12 +38,14 @@ from granary import microformats2
 from granary import source as gr_source
 from oauth_dropins import facebook as oauth_facebook
 from oauth_dropins import flickr as oauth_flickr
+from oauth_dropins import github as oauth_github
 from oauth_dropins import instagram as oauth_instagram
 from oauth_dropins import twitter as oauth_twitter
 from oauth_dropins.webutil.handlers import JINJA_ENV
 
 from facebook import FacebookPage
 from flickr import Flickr
+from github import GitHub
 from googleplus import GooglePlusPage
 from instagram import Instagram
 from models import Publish, PublishedPage
@@ -55,7 +57,7 @@ import webapp2
 import webmention
 
 
-SOURCES = (FacebookPage, Flickr, Twitter, Instagram, GooglePlusPage)
+SOURCES = (FacebookPage, Flickr, GitHub, GooglePlusPage, Instagram, Twitter)
 SOURCE_NAMES = {cls.SHORT_NAME: cls for cls in SOURCES}
 SOURCE_DOMAINS = {cls.GR_CLASS.DOMAIN: cls for cls in SOURCES}
 
@@ -161,7 +163,7 @@ class Handler(webmention.WebmentionHandler):
     if (domain not in ('brid.gy', 'www.brid.gy', 'localhost:8080') or
         len(path_parts) != 2 or path_parts[0] != '/publish' or not source_cls):
       return self.error(
-        'Target must be brid.gy/publish/{facebook,flickr,twitter,instagram}')
+        'Target must be brid.gy/publish/{facebook,flickr,github,instagram,twitter}')
     elif source_cls == GooglePlusPage:
       return self.error('Sorry, %s is not yet supported.' %
                         source_cls.GR_CLASS.NAME)
@@ -622,6 +624,10 @@ class FlickrSendHandler(oauth_flickr.CallbackHandler, SendHandler):
   finish = SendHandler.finish
 
 
+class GitHubSendHandler(oauth_github.CallbackHandler, SendHandler):
+  finish = SendHandler.finish
+
+
 class TwitterSendHandler(oauth_twitter.CallbackHandler, SendHandler):
   finish = SendHandler.finish
 
@@ -669,9 +675,10 @@ class WebmentionHandler(Handler):
 application = webapp2.WSGIApplication([
     ('/publish/preview', PreviewHandler),
     ('/publish/webmention', WebmentionHandler),
-    ('/publish/(facebook|flickr|twitter|instagram)', webmention.WebmentionGetHandler),
+    ('/publish/(facebook|flickr|github|instagram|twitter)', webmention.WebmentionGetHandler),
     ('/publish/facebook/finish', FacebookSendHandler),
     ('/publish/flickr/finish', FlickrSendHandler),
+    ('/publish/github/finish', GitHubSendHandler),
     ('/publish/instagram/finish', InstagramSendHandler),
     ('/publish/twitter/finish', TwitterSendHandler),
     ],

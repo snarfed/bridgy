@@ -81,6 +81,10 @@ handlers:
   script: flickr.application
   secure: always
 
+- url: /github/(start|add|delete|publish)(/.*)?
+  script: github.application
+  secure: always
+
 - url: /googleplus/(start|add|delete|oauth2callback)(/.*)?
   script: googleplus.application
   secure: always
@@ -144,7 +148,7 @@ handlers:
   script: app.application
   secure: always
 
-- url: /(blogger|facebook|fake|flickr|googleplus|instagram|medium|tumblr|twitter|wordpress)/.+
+- url: /(blogger|facebook|fake|flickr|github|googleplus|instagram|medium|tumblr|twitter|wordpress)/.+
   script: app.application
   secure: always
 

@@ -128,7 +128,7 @@ You'll eventually want to send them to @snarfed and @kylewm too, but no hurry.
     and convert your silo's API data to [ActivityStreams](http://activitystrea.ms/).
     1. Add a new unit test file and write some tests!
     1. Add it to
-    [`activitystreams.py`](https://github.com/snarfed/granary/blob/master/activitystreams.py)
+    [`api.py`](https://github.com/snarfed/granary/blob/master/api.py)
     (specifically `Handler.get`),
     [`app.py`](https://github.com/snarfed/granary/blob/master/app.py),
     [`app.yaml`](https://github.com/snarfed/granary/blob/master/app.yaml),
@@ -141,11 +141,11 @@ You'll eventually want to send them to @snarfed and @kylewm too, but no hurry.
     1. Add it to
     [`app.py`](https://github.com/snarfed/bridgy/blob/master/app.py),
     [`app.yaml`](https://github.com/snarfed/bridgy/blob/master/app.yaml), and
-    [`handlers.py`](https://github.com/snarfed/bridgy/blob/master/handlers.py),
+    [`handlers.py`](https://github.com/snarfed/bridgy/blob/master/handlers.py)
     (just import the module).
-    1. Add a 24x24 PNG icon to [`static/`](https://github.com/snarfed/bridgy/tree/master/static).
+    1. Add a 48x48 PNG icon to [`static/`](https://github.com/snarfed/bridgy/tree/master/static).
     1. Add new `SILO_signup.html` and `SILO_user.html` files in
-    [`templates/`](https://github.com/snarfed/bridgy/tree/master/templates).
+    [`templates/`](https://github.com/snarfed/bridgy/tree/master/templates)
     and add the silo to
     [`listen_signup.html`](https://github.com/snarfed/bridgy/blob/master/templates/listen_signup.html).
     Follow the existing examples.

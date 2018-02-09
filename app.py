@@ -18,6 +18,7 @@ from granary import source as gr_source
 from oauth_dropins import blogger_v2 as oauth_blogger_v2
 from oauth_dropins import facebook as oauth_facebook
 from oauth_dropins import flickr as oauth_flickr
+from oauth_dropins import github as oauth_github
 from oauth_dropins import googleplus as oauth_googleplus
 from oauth_dropins import indieauth
 from oauth_dropins import medium as oauth_medium
@@ -39,6 +40,7 @@ import util
 import blogger
 import facebook
 import flickr
+import github
 import googleplus
 import instagram
 import medium
@@ -438,6 +440,7 @@ class DeleteStartHandler(util.Handler):
     'Blogger': oauth_blogger_v2,
     'FacebookPage': oauth_facebook,
     'Flickr': oauth_flickr,
+    'GitHub': oauth_github,
     'GooglePlusPage': oauth_googleplus,
     'Instagram': indieauth,
     'Medium': oauth_medium,
@@ -690,7 +693,7 @@ class CspReportHandler(util.Handler):
 application = webapp2.WSGIApplication(
   [('/?', FrontPageHandler),
    ('/users/?', UsersHandler),
-   ('/(blogger|facebook|fake|flickr|googleplus|instagram|medium|tumblr|twitter|wordpress)/([^/]+)/?',
+   ('/(blogger|facebook|fake|flickr|github|googleplus|instagram|medium|tumblr|twitter|wordpress)/([^/]+)/?',
     UserHandler),
    ('/about/?', AboutHandler),
    ('/delete/start', DeleteStartHandler),
