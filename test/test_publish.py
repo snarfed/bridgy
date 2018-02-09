@@ -250,13 +250,14 @@ class PublishTest(testutil.HandlerTest):
     self.assert_created('', target='https://brid.gy/publish/faux')
 
   def test_bad_target_url(self):
-    self.assert_error(
-      'Target must be brid.gy/publish/{facebook,flickr,github,instagram,twitter}',
-      target='foo')
-
-  def test_unsupported_source_class(self):
-    self.assert_error('Sorry, Google+ is not yet supported.',
-                      target='https://brid.gy/publish/googleplus')
+    for target in (
+        'foo',
+        'https://brid.gy/publish/googleplus',
+        'https://brid.gy/publish/instagram',
+    ):
+      self.assert_error(
+        'Target must be brid.gy/publish/{facebook,flickr,github,twitter}',
+        target=target)
 
   def test_source_url_redirects(self):
     self.expect_requests_head('http://will/redirect', redirected_url='http://foo.com/1')

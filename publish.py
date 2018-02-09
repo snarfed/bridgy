@@ -39,7 +39,6 @@ from granary import source as gr_source
 from oauth_dropins import facebook as oauth_facebook
 from oauth_dropins import flickr as oauth_flickr
 from oauth_dropins import github as oauth_github
-from oauth_dropins import instagram as oauth_instagram
 from oauth_dropins import twitter as oauth_twitter
 from oauth_dropins.webutil.handlers import JINJA_ENV
 
@@ -57,7 +56,7 @@ import webapp2
 import webmention
 
 
-SOURCES = (FacebookPage, Flickr, GitHub, GooglePlusPage, Instagram, Twitter)
+SOURCES = (FacebookPage, Flickr, GitHub, Twitter)
 SOURCE_NAMES = {cls.SHORT_NAME: cls for cls in SOURCES}
 SOURCE_DOMAINS = {cls.GR_CLASS.DOMAIN: cls for cls in SOURCES}
 
@@ -163,8 +162,8 @@ class Handler(webmention.WebmentionHandler):
     if (domain not in ('brid.gy', 'www.brid.gy', 'localhost:8080') or
         len(path_parts) != 2 or path_parts[0] != '/publish' or not source_cls):
       return self.error(
-        'Target must be brid.gy/publish/{facebook,flickr,github,instagram,twitter}')
-    elif source_cls == GooglePlusPage:
+        'Target must be brid.gy/publish/{facebook,flickr,github,twitter}')
+    elif source_cls in (GooglePlusPage, Instagram):
       return self.error('Sorry, %s is not yet supported.' %
                         source_cls.GR_CLASS.NAME)
 
@@ -632,16 +631,6 @@ class TwitterSendHandler(oauth_twitter.CallbackHandler, SendHandler):
   finish = SendHandler.finish
 
 
-# Instagram only allows a single OAuth callback URL, so that's handled in
-# instagram.py and it redirects here for publishes.
-class InstagramSendHandler(SendHandler):
-  def get(self):
-    auth_entity = self.request.get('auth_entity') or None
-    if auth_entity:
-      auth_entity = ndb.Key(urlsafe=auth_entity).get()
-    return self.finish(auth_entity, self.request.get('state'))
-
-
 class WebmentionHandler(Handler):
   """Accepts webmentions and translates them to publish requests.
   """
@@ -675,11 +664,10 @@ class WebmentionHandler(Handler):
 application = webapp2.WSGIApplication([
     ('/publish/preview', PreviewHandler),
     ('/publish/webmention', WebmentionHandler),
-    ('/publish/(facebook|flickr|github|instagram|twitter)', webmention.WebmentionGetHandler),
+    ('/publish/(facebook|flickr|github|twitter)', webmention.WebmentionGetHandler),
     ('/publish/facebook/finish', FacebookSendHandler),
     ('/publish/flickr/finish', FlickrSendHandler),
     ('/publish/github/finish', GitHubSendHandler),
-    ('/publish/instagram/finish', InstagramSendHandler),
     ('/publish/twitter/finish', TwitterSendHandler),
     ],
   debug=appengine_config.DEBUG)
