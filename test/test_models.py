@@ -325,6 +325,7 @@ class SourceTest(testutil.HandlerTest):
 
     self.expect_requests_get('http://foo.com')
     self.expect_requests_get('https://www.foo.com')
+    self.expect_requests_get('https://baj')
     self.mox.ReplayAll()
     # good URLs
     for url in ('http://foo.com/bar', 'https://www.foo.com/bar',

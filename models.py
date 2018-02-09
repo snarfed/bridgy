@@ -560,26 +560,21 @@ class Source(StringIdModel):
     for i, url in enumerate(candidates):
       final, domain, ok = util.get_webmention_target(url, resolve=i < MAX_AUTHOR_URLS)
       if ok:
-        current_url = ''
         final = final.lower()
-        # Ignore redirects when fetching the root url, they are dealt with next.
-        if util.schemeless(final) == util.schemeless(url.lower()):
-          # If final has a path segment check if root has a matching rel=me.
-          match = re.match(r'^(https?://[^/]+)/.+', final)
-          if match:
-            root = match.group(1)
-            resp = util.requests_get(root)
-            resp.raise_for_status()
-            data = util.mf2py_parse(resp.text, root)
-            me_urls = data.get('rels', {}).get('me', [])
-            if final in me_urls:
-              current_url = root
-        elif util.schemeless(final).startswith(util.schemeless(url.lower())):
+        if util.schemeless(final).startswith(util.schemeless(url.lower())):
           # redirected to a deeper path. use the original higher level URL. #652
-          current_url = url
-        if current_url == '':
-          current_url = final
-        urls.append(current_url)
+          final = url
+        # If final has a path segment check if root has a matching rel=me.
+        match = re.match(r'^(https?://[^/]+)/.+', final)
+        if match and i < MAX_AUTHOR_URLS:
+          root = match.group(1)
+          resp = util.requests_get(root)
+          resp.raise_for_status()
+          data = util.mf2py_parse(resp.text, root)
+          me_urls = data.get('rels', {}).get('me', [])
+          if final in me_urls:
+            final = root
+        urls.append(final)
 
     urls = util.dedupe_urls(urls)  # normalizes domains to lower case
     domains = [util.domain_from_link(url) for url in urls]

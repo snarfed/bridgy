@@ -244,6 +244,12 @@ to connect your web site to your social network account. Second, if you want to
 get responses without linking your posts to your web site, Bridgy uses this link
 to <a href="#link">fetch syndication URLs</a> from your site so it can map back
 from your posts.</p>
+<p>Note that if the web site URL used in your social network profile contains
+a path, Bridgy will look for a rel="me" link from the root of your domain, to
+that path. If the link is found, Bridgy will publish posts from any path on
+your domain to your social network profiles. If the link isn't found, Bridgy
+will only publish posts from your domain that contain the original path. This is
+to support sites that allow multiple users per domain.</p>
 </li>
 
 <li id="add-remove-url" class="question">How do I add or remove a web site URL from
