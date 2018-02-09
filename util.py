@@ -195,6 +195,12 @@ def requests_get(url, **kwargs):
   return resp
 
 
+def requests_post(url, **kwargs):
+  """Wraps :func:`requests.get` with our user agent."""
+  kwargs.setdefault('headers', {}).update(request_headers(url=url))
+  return util.requests_post(url, **kwargs)
+
+
 def follow_redirects(url, cache=True):
   """Wraps :func:`oauth_dropins.webutil.util.follow_redirects` with our settings.
 
