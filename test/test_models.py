@@ -323,6 +323,10 @@ class SourceTest(testutil.HandlerTest):
       self.assertEqual([], source.domains)
       self.assertEqual([], source.domain_urls)
 
+    self.expect_requests_get('http://foo.com')
+    self.expect_requests_get('https://www.foo.com')
+    self.expect_requests_get('https://baj')
+    self.mox.ReplayAll()
     # good URLs
     for url in ('http://foo.com/bar', 'https://www.foo.com/bar',
                 'http://FoO.cOm/',  # should be normalized to lowercase
@@ -372,6 +376,32 @@ class SourceTest(testutil.HandlerTest):
 
     source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
     self.assertEquals(['http://site/'], source.domain_urls)
+    self.assertEquals(['site'], source.domains)
+
+  def test_create_new_domain_url_matches_root_relme(self):
+    """If a profile URL contains a path, check the root for a rel=me to the path."""
+    auth_entity = testutil.FakeAuthEntity(
+      id='x', user_json=json.dumps({'url': 'http://site/path'}))
+    auth_entity.put()
+
+    self.expect_requests_get('http://site', '<html><a href="http://site/path" rel="me">http://site/path</a></html>')
+    self.mox.ReplayAll()
+
+    source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
+    self.assertEquals(['http://site/'], source.domain_urls)
+    self.assertEquals(['site'], source.domains)
+
+  def test_create_new_domain_url_no_root_relme(self):
+    """If a profile URL contains a path, check the root for a rel=me to the path."""
+    auth_entity = testutil.FakeAuthEntity(
+      id='x', user_json=json.dumps({'url': 'http://site/path'}))
+    auth_entity.put()
+
+    self.expect_requests_get('http://site')
+    self.mox.ReplayAll()
+
+    source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
+    self.assertEquals(['http://site/path'], source.domain_urls)
     self.assertEquals(['site'], source.domains)
 
   def test_create_new_unicode_chars(self):
