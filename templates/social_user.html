@@ -357,7 +357,7 @@ Click to enable <a href="/about#listen">listening</a>:
 <p id="publishes" class="big">Published:</p>
 <ul class="user-items">
   {% for publish in publishes %}
-  <li class="row h-bridgy-publish h-bridgy-{{ publish.type_label or publish.type }}">
+  <li class="row h-bridgy-publish h-bridgy-{{ publish.type_label() }}">
    <data class="p-bridgy-status" value="{{ publish.status }}" />
    <div class="col-sm-4">
      {{ publish.pretty_page|safe }}
@@ -375,7 +375,7 @@ Click to enable <a href="/about#listen">listening</a>:
      {% if publish.published.url %}
        <a class="u-syndication" href="{{ publish.published.url }}">
      {% endif %}
-     {{ publish.type_label or publish.type }}
+     {{ publish.type_label() }}
      {% if publish.published.url %}
        </a>
      {% endif %}

@@ -415,7 +415,6 @@ class Handler(webmention.WebmentionHandler):
       if 'url' not in self.entity.published:
         self.entity.published['url'] = obj.get('url')
       self.entity.type = self.entity.published.get('type') or models.get_type(obj)
-      self.entity.type_label = self.source.TYPE_LABELS.get(self.entity.type)
       self.response.headers['Content-Type'] = 'application/json'
       logging.info('Returning %s', json.dumps(self.entity.published, indent=2))
       self.response.headers['Location'] = self.entity.published['url'].encode('utf-8')

@@ -35,11 +35,12 @@ class Twitter(models.Source):
 
   GR_CLASS = gr_twitter.Twitter
   SHORT_NAME = 'twitter'
-  TYPE_LABELS = {'post': 'tweet',
-                 'comment': '@-reply',
-                 'repost': 'retweet',
-                 'like': 'favorite',
-                 }
+  TYPE_LABELS = {
+    'post': 'tweet',
+    'comment': '@-reply',
+    'repost': 'retweet',
+    'like': 'favorite',
+  }
 
   URL_CANONICALIZER = gr_twitter.Twitter.URL_CANONICALIZER
   URL_CANONICALIZER.headers = util.REQUEST_HEADERS

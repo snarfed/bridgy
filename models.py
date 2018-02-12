@@ -865,13 +865,20 @@ class Publish(ndb.Model):
   _use_memcache = False
 
   type = ndb.StringProperty(choices=TYPES)
-  type_label = ndb.StringProperty()  # source-specific type, e.g. 'favorite'
   status = ndb.StringProperty(choices=STATUSES, default='new')
   source = ndb.KeyProperty()
   html = ndb.TextProperty()  # raw HTML fetched from source
   published = ndb.JsonProperty(compressed=True)
   created = ndb.DateTimeProperty(auto_now_add=True)
   updated = ndb.DateTimeProperty(auto_now=True)
+
+  def type_label(self):
+    """Returns silo-specific string type, e.g. 'favorite' instead of 'like'."""
+    for cls in sources.values():  # global
+      if cls.__name__ == self.source.kind():
+        return cls.TYPE_LABELS.get(self.type, self.type)
+
+    return self.type
 
 
 class BlogWebmention(Publish, StringIdModel):

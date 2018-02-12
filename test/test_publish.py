@@ -106,7 +106,7 @@ class PublishTest(testutil.HandlerTest):
     self.assertEquals(self.source.key, publish.source)
     self.assertEquals('complete', publish.status)
     self.assertEquals('post', publish.type)
-    self.assertEquals('FakeSource post label', publish.type_label)
+    self.assertEquals('FakeSource post label', publish.type_label())
     expected_html = (self.post_html % html_content) + self.backlink
     self.assertEquals(expected_html, publish.html)
     self.assertEquals({

@@ -30,6 +30,10 @@ class GitHub(models.Source):
   """
   GR_CLASS = gr_github.GitHub
   SHORT_NAME = 'github'
+  TYPE_LABELS = {
+    'post': 'issue',
+    'like': 'star',
+  }
 
   URL_CANONICALIZER = util.UrlCanonicalizer(
     domain=GR_CLASS.DOMAIN,
