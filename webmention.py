@@ -9,6 +9,7 @@ import json
 
 import appengine_config
 
+from github import GitHub
 import requests
 import util
 
@@ -132,7 +133,7 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
       resp['parsed'] = data
     resp = json.dumps(resp, indent=2)
 
-    if mail and status != 404:
+    if (mail and status != 404) or isinstance(self.source, GitHub):  # temporary!
       self.mail_me('[Returned HTTP %s to client]\n\n%s' % (status, error))
     self.response.write(resp)
 
