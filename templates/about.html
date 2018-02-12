@@ -111,6 +111,7 @@ service.</a>
 <li><a href="#location">How do I include location in a post?</a></li>
 <li><a href="#quote-tweet">How do I post a quote tweet?</a></li>
 <li><a href="#github-issue-comment">How do I create a GitHub issue or comment?</a></li>
+<li><a href="#github-star">How do I star a GitHub repo?</a></li>
 <li><a href="#facebook-publish">What happened to publishing Facebook
   comments and likes?</li>
 <li><a href="#omit-link">Can I disable the link back to my post?</a></li>
@@ -833,6 +834,7 @@ previewing a post to see how it will look!
   <a href="#location">location</a>,
   <a href="https://indieweb.org/tags">tags</a>, and/or
   <a href="#person-tag">people tags</a>.</li>
+<li>GitHub issues, comments on issues, comments on pull requests, and stars.</li>
 <li>Nothing on Instagram, sorry. Likes used to be possible, but not since Instagram
   <a href="http://developers.instagram.com/post/133424514006/instagram-platform-update">
     started locking down their API.</a>
@@ -843,7 +845,6 @@ previewing a post to see how it will look!
 <li>Nothing on Google+, sorry.
   <a href="https://developers.google.com/+/api/latest/">Their API is
     read only.</a></li>
-<li>GitHub issues, comments on issues, and comments on pull requests.</li>
 </ul>
 </li>
 </p></li>
@@ -864,9 +865,14 @@ yourself</a>. It's just a single HTTP request!
 </p>
 <p id="publish-backlink">Bridgy's webmention endpoint
 is <code>https://brid.gy/publish/webmention</code>, and the target URL
-should be <code>brid.gy/publish/facebook</code>,
-<code>brid.gy/publish/twitter</code>, or
-<code>brid.gy/publish/flickr</code>. Your post HTML must also include that same
+should be one of:
+<ul>
+<li><code>https://brid.gy/publish/facebook</code></li>
+<li><code>https://brid.gy/publish/flickr</code></li>
+<li><code>https://brid.gy/publish/github</code></li>
+<li><code>https://brid.gy/publish/twitter</code></li>
+</ul>
+Your post HTML must also include that same
 target URL to verify your intent to publish. It doesn't have to be in your
 <code>e-content</code> or <code>h-entry</code>; it can appear anywhere on the
 page.
@@ -874,8 +880,9 @@ page.
 <p>If your server sends webmentions, just include any of these invisible links
 in your post to publish automatically!
 <pre>&lt;a href="<a href='https://brid.gy/publish/facebook'>https://brid.gy/publish/facebook</a>"&gt;&lt;/a&gt;
-&lt;a href="<a href='https://brid.gy/publish/twitter'>https://brid.gy/publish/twitter</a>"&gt;&lt;/a&gt;
 &lt;a href="<a href='https://brid.gy/publish/flickr'>https://brid.gy/publish/flickr</a>"&gt;&lt;/a&gt;
+&lt;a href="<a href='https://brid.gy/publish/flickr'>https://brid.gy/publish/github</a>"&gt;&lt;/a&gt;
+&lt;a href="<a href='https://brid.gy/publish/twitter'>https://brid.gy/publish/twitter</a>"&gt;&lt;/a&gt;
 </pre>
 </p>
 </li>
@@ -1025,8 +1032,7 @@ I have something to say about this:
 
 <li id="github-issue-comment" class="question">How do I create a GitHub issue or comment?</li>
 <li class="answer">
-<p>To create an issue, link to the repo with class <code><a href="http://microformats.org/wiki/rel-in-reply-to">u-in-reply-to</a></code>.
-For example:
+<p>To create an issue, link to the repo with class <code><a href="http://microformats.org/wiki/rel-in-reply-to">u-in-reply-to</a></code>. For example:
 
 <pre>&lt;div class="<span class='keyword'>h-entry</span>"&gt;
   &lt;a class="<span class='keyword'>u-in-reply-to</span>" href="<a href=https://github.com/snarfed/bridgy'>https://github.com/snarfed/bridgy</a>"&gt;Regarding Bridgy:&lt;/a&gt;
@@ -1037,6 +1043,14 @@ For example:
 </p>
 <p>To create a comment, use an <code>u-in-reply-to</code> link to the issue or pull request you want to comment on, instead of to the repo.
 </p>
+</li>
+
+<li id="github-star" class="question">How do I star a GitHub repo?</li>
+<li class="answer">
+<p>Just post a <a href="like">like</a> of the repo URL! For example:</p>
+<pre>
+&lt;a class="<span class='keyword'>u-like-of</span>" href="<a href='https://github.com/snarfed/bridgy'>https://github.com/snarfed/bridgy</a>"&gt;&lt;/a&gt;
+</pre>
 </li>
 
 <li id="facebook-publish" class="question">What happened to publishing Facebook
