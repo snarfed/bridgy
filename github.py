@@ -16,7 +16,10 @@ import util
 
 
 # https://developer.github.com/apps/building-oauth-apps/scopes-for-oauth-apps/
+# https://github.com/dear-github/dear-github/issues/113#issuecomment-365121631
 LISTEN_SCOPES = [
+  'notifications',
+  'public_repo',
 ]
 PUBLISH_SCOPES = [
   'public_repo',
@@ -80,7 +83,7 @@ class AddGitHub(oauth_github.CallbackHandler, util.Handler):
 
 application = webapp2.WSGIApplication([
     ('/github/start', util.oauth_starter(oauth_github.StartHandler).to(
-      '/github/add', scopes=PUBLISH_SCOPES)),
+      '/github/add', scopes=LISTEN_SCOPES)),
     ('/github/add', AddGitHub),
     ('/github/delete/finish', oauth_github.CallbackHandler.to('/delete/finish')),
     ('/github/publish/start', oauth_github.StartHandler.to(
