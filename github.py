@@ -74,6 +74,15 @@ class GitHub(models.Source):
     """Returns the username."""
     return self.key.id()
 
+  def get_activities_response(self, *args, **kwargs):
+    """Drop kwargs that granary doesn't currently support for github."""
+    kwargs.update({
+      'fetch_likes': None,
+      'fetch_shares': None,
+      'fetch_mentions': None,
+    })
+    return self.gr_source.get_activities_response(*args, **kwargs)
+
 
 class AddGitHub(oauth_github.CallbackHandler, util.Handler):
   def finish(self, auth_entity, state=None):
