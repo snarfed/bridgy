@@ -20,7 +20,7 @@ import util
 from google.appengine.ext import ndb
 
 VERB_TYPES = ('post', 'comment', 'like', 'react', 'repost', 'rsvp')
-TYPES = VERB_TYPES + ('preview',)
+PUBLISH_TYPES = VERB_TYPES + ('preview',)
 
 MAX_AUTHOR_URLS = 5
 
@@ -864,7 +864,7 @@ class Publish(ndb.Model):
   _use_cache = False
   _use_memcache = False
 
-  type = ndb.StringProperty(choices=TYPES)
+  type = ndb.StringProperty(choices=PUBLISH_TYPES)
   status = ndb.StringProperty(choices=STATUSES, default='new')
   source = ndb.KeyProperty()
   html = ndb.TextProperty()  # raw HTML fetched from source

@@ -361,7 +361,7 @@ Click to enable <a href="/about#listen">listening</a>:
      {{ publish.pretty_page|safe }}
 
    </div><div class="col-sm-4">
-     {{ logs.maybe_link(publish.updated, publish.key, link_class='u-bridgy-log')|safe }}.
+     {{ logs.maybe_link(publish.updated, publish.key, link_class='u-bridgy-log')|safe }}
      {% if publish.status == 'failed' %}
       <span title="Error" class="glyphicon glyphicon-exclamation-sign"></span>
      {% else %}{% if publish.status == 'new' %}

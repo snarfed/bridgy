@@ -111,6 +111,7 @@ service.</a>
 <li><a href="#location">How do I include location in a post?</a></li>
 <li><a href="#quote-tweet">How do I post a quote tweet?</a></li>
 <li><a href="#github-issue-comment">How do I create a GitHub issue or comment?</a></li>
+<li><a href="#github-reaction">How do I post an emoji reaction on a GitHub issue or PR?</a></li>
 <li><a href="#github-star">How do I star a GitHub repo?</a></li>
 <li><a href="#facebook-publish">What happened to publishing Facebook
   comments and likes?</li>
@@ -438,6 +439,7 @@ GitHub</a>. Thank you!
 <li>Google+ posts from other people that contain links to your site.</li>
 <li>Instagram comments and likes on your pictures.</li>
 <li>Flickr comments and favorites on your photos.</li>
+<li>GitHub comments on your issues and pull requests.</li>
 </ul>
 </li>
 </p></li>
@@ -551,6 +553,8 @@ clicking the <em>Crawl now</em> button on your user page.
 <li>Instagram likes are even worse than Twitter likes. They <a href="https://github.com/snarfed/bridgy/issues/722">only show the first 10 individual likes per photo on the web</a>, and a total count after that, so Bridgy can only backfeed the first 10 likes.
 </li>
 <li>Have you blocked the author inside the silo? If so, Bridgy won't send you any of their responses. (This is <a href="https://github.com/snarfed/bridgy/issues/764">best effort only for Twitter</a>, due to <a href="https://dev.twitter.com/rest/reference/get/blocks/ids#resource-information">their API's rate limits</a>. In practice, Bridgy will only filter out responses from the first 40,000 users on your Twitter block list.)
+</li>
+<li>GitHub responses are currently best effort only. [Their API](https://developer.github.com/v3/reactions/) is almost entirely broken down by user and repository, so there's no good way to ask for all recent responses to your posts. We get close by using their [Notifications API](https://developer.github.com/v3/activity/notifications/), which is good, but not always comprehensive. Apologies!
 </li>
 </ul>
 </li>
@@ -834,7 +838,7 @@ previewing a post to see how it will look!
   <a href="#location">location</a>,
   <a href="https://indieweb.org/tags">tags</a>, and/or
   <a href="#person-tag">people tags</a>.</li>
-<li>GitHub issues, comments on issues, comments on pull requests, and stars.</li>
+<li>GitHub issues, <a href="https://help.github.com/articles/about-stars">stars</a>, comments on issues and PRs, and <a href="https://help.github.com/articles/about-conversations-on-github/#reacting-to-ideas-in-comments">reactions</a> to issues and PRs.</li>
 <li>Nothing on Instagram, sorry. Likes used to be possible, but not since Instagram
   <a href="http://developers.instagram.com/post/133424514006/instagram-platform-update">
     started locking down their API.</a>
@@ -1043,6 +1047,17 @@ I have something to say about this:
 </p>
 <p>To create a comment, use an <code>u-in-reply-to</code> link to the issue or pull request you want to comment on, instead of to the repo.
 </p>
+</li>
+
+<li id="github-reaction" class="question">How do I post an emoji reaction on a GitHub issue or PR?</li>
+<li class="answer">
+<p><a href="#github-issue-comment">Post a comment</a> where the content is 👍, 👎, 😆, 😕, ❤️, or 🎉. For example:</p>
+<pre>&lt;div class="<span class='keyword'>h-entry</span>"&gt;
+  &lt;a class="<span class='keyword'>u-in-reply-to</span>" href="<a href=https://github.com/snarfed/bridgy'>https://github.com/snarfed/bridgy/issues/333</a>"&gt;Regarding bridgy#333:&lt;/a&gt;
+  &lt;p class="<span class='keyword'>e-content</span>"&gt;<span class='value'>😆</span>&lt;/p&gt;
+&lt;/div&gt;
+</pre>
+<p><a href="https://help.github.com/articles/about-conversations-on-github/#reacting-to-ideas-in-comments">More details.</a> The indieweb community also calls these <a href="https://indieweb.org/reacji">reacji</a>.
 </li>
 
 <li id="github-star" class="question">How do I star a GitHub repo?</li>
