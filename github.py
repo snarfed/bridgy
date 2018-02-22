@@ -77,7 +77,6 @@ class GitHub(models.Source):
   def get_activities_response(self, *args, **kwargs):
     """Drop kwargs that granary doesn't currently support for github."""
     kwargs.update({
-      'fetch_likes': None,
       'fetch_shares': None,
       'fetch_mentions': None,
     })
