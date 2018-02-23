@@ -251,6 +251,7 @@ asdf http://other/link qwert
     <span class="p-name">Alice</span>
     <img class="u-photo" src="https://example.com/ryan/image" alt="" />
   </span>
+  <span class="p-name"></span>
   <div class="">
   </div>
   <a class="u-like-of" href="http://example.com/original/post"></a>
@@ -474,6 +475,7 @@ asdf http://other/link qwert
     self.check_response('/post/fake/%s/000', """\
 <article class="h-entry">
 <span class="p-uid">tag:fa.ke,2013:000</span>
+  <span class="p-name"></span>
   <div class="">
   </div>
 </article>
