@@ -37,6 +37,7 @@ class GitHub(models.Source):
     'post': 'issue',
     'like': 'star',
   }
+  BACKFEED_REQUIRES_SYNDICATION_LINK = True
 
   URL_CANONICALIZER = util.UrlCanonicalizer(
     domain=GR_CLASS.DOMAIN,

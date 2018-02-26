@@ -255,6 +255,32 @@ class PollTest(TaskQueueTest):
     self.post_task()
     self.assert_equals(['https://tar.get/a'], self.responses[0].key.get().unsent)
 
+  def test_backfeed_requires_syndication_link(self):
+    # trigger posse post discovery
+    self.sources[0].domain_urls = ['http://author']
+    self.sources[0].put()
+
+    obj = self.activities[0]['object']
+    obj.update({
+      'upstreamDuplicates': ['http://tar.get/a'],
+      'tags': [
+        {'objectType': 'article', 'url': 'http://tar.get/b'},
+        {'objectType': 'mention', 'url': 'http://tar.get/c'},
+        {'objectType': 'person', 'url': 'http://pe.rs/on'},
+      ],
+      'attachments': [{'objectType': 'article', 'url': 'http://tar.get/d'}],
+      'content': 'foo http://tar.get/e bar (not.at endd) baz (tar.get f)',
+    })
+    FakeGrSource.activities = [self.activities[0]]
+
+    SyndicatedPost(parent=self.sources[0].key,
+                   original='http://tar.get/z',
+                   syndication='https://fa.ke/post/url').put()
+
+    self.mox.stubs.Set(FakeSource, 'BACKFEED_REQUIRES_SYNDICATION_LINK', True)
+    self.post_task()
+    self.assert_equals(['http://tar.get/z'], self.responses[0].key.get().unsent)
+
   def test_non_html_url(self):
     """Target URLs that aren't HTML should be ignored."""
     obj = self.activities[0]['object']

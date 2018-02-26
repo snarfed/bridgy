@@ -118,7 +118,8 @@ def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True,
 
   if not source.get_author_urls():
     logging.debug('no author url(s), cannot find h-feed')
-    return originals, mentions
+    return ((originals, mentions) if not source.BACKFEED_REQUIRES_SYNDICATION_LINK
+            else (set(), set()))
 
   # TODO possible optimization: if we've discovered a backlink to a post on the
   # author's domain (i.e., it included a link or citation), then skip the rest
@@ -131,14 +132,15 @@ def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True,
     # facebook user id instead of user name)
     syndication_url = source.canonicalize_url(syndication_url)
     if syndication_url:
-      originals.update(_posse_post_discovery(
-        source, activity, syndication_url, fetch_hfeed,
-        already_fetched_hfeeds))
+      syndicated = _posse_post_discovery(source, activity, syndication_url,
+                                         fetch_hfeed, already_fetched_hfeeds)
+      originals.update(syndicated)
     originals = set(util.dedupe_urls(originals))
   else:
     logging.debug('no syndication url, cannot process h-entries')
 
-  return originals, mentions
+  return ((originals, mentions) if not source.BACKFEED_REQUIRES_SYNDICATION_LINK
+          else (set(syndicated), set()))
 
 
 def refetch(source):

@@ -94,6 +94,8 @@ class Source(StringIdModel):
   FAST_REFETCH = datetime.timedelta(hours=6)
   # refetch less often (this often) if it's been >2w since the last synd link
   SLOW_REFETCH = datetime.timedelta(days=2)
+  # whether to require a u-syndication link for backfeed
+  BACKFEED_REQUIRES_SYNDICATION_LINK = False
 
   # Maps Publish.type (e.g. 'like') to source-specific human readable type label
   # (e.g. 'favorite'). Subclasses should override this.
