@@ -1043,7 +1043,7 @@ foo<br /> <blockquote>bar</blockquote>
       'displayName': 'yes',
       'object': [{'url': 'http://fa.ke/homebrew-website-club'}],
       'objectType': 'activity',
-      'content': '<span class="p-rsvp" value="yes">yes</span>       <a class="u-in-reply-to" href="http://fa.ke/homebrew-website-club"></a>',
+      'content': '<span class="p-rsvp" value="yes">yes</span>\n      <a class="u-in-reply-to" href="http://fa.ke/homebrew-website-club"></a>',
     }, include_link=gr_source.INCLUDE_LINK, ignore_formatting=False). \
     AndReturn(gr_source.creation_result({
       'url': 'http://fake/url',
