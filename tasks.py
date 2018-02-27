@@ -28,6 +28,7 @@ import appengine_config
 import blogger
 import facebook
 import flickr
+import github
 import googleplus
 import instagram
 import medium
