@@ -608,7 +608,7 @@ class SendHandler(Handler):
     logging.info(error, exc_info=True)
     error = html if html else util.linkify(error)
     self.messages.add('%s' % error)
-    if mail or isinstance(self.source, GitHub):  # temporary!
+    if mail:
       self.mail_me(error)
 
 
