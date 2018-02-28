@@ -516,7 +516,8 @@ class Discover(Poll):
       assert len(activities) == 1, activities
       self.backfeed(source, activities={activities[0]['id']: activities[0]})
 
-      in_reply_to = util.get_first(activities[0]['object'], 'inReplyTo')
+      obj = activities[0].get('object') or activities[0]
+      in_reply_to = util.get_first(obj, 'inReplyTo')
       if in_reply_to:
         parsed = util.parse_tag_uri(in_reply_to.get('id', ''))  # TODO: fall back to url
         if parsed:
