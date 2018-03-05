@@ -626,14 +626,23 @@ def cache_time(label, size=None):
 def beautifulsoup_parse(html):
   """Parses an HTML string with BeautifulSoup. Centralizes our parsing config.
 
-  We currently let BeautifulSoup default to lxml, which is the fastest option.
+  We currently use lxml, which BeautifulSoup claims is the fastest and best:
   http://www.crummy.com/software/BeautifulSoup/bs4/doc/#specifying-the-parser-to-use
 
-  We use App Engine's lxml by declaring it in app.yaml.
+  lxml is a native module, so we don't bundle and deploy it to App Engine.
+  Instead, we use App Engine's version by declaring it in app.yaml.
+  https://cloud.google.com/appengine/docs/standard/python/tools/built-in-libraries-27
+
+  We pin App Engine's version, 3.7.3, in requirements.freeze.txt, and tell
+  BeautifulSoup to use lxml explicitly, to ensure we use the same parser and
+  version in prod and locally, since we've been bit by at least one meaningful
+  difference between lxml and e.g. html5lib: lxml includes the contents of
+  <noscript> tags, html5lib omits them. :(
+  https://github.com/snarfed/bridgy/issues/798#issuecomment-370508015
   """
   # instrumenting, disabled for now:
   # with cache_time('beautifulsoup', len(html)):
-  return bs4.BeautifulSoup(html)
+  return bs4.BeautifulSoup(html, 'lxml')
 
 
 def mf2py_parse(input, url):

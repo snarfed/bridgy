@@ -1043,7 +1043,7 @@ foo<br /> <blockquote>bar</blockquote>
       'displayName': 'yes',
       'object': [{'url': 'http://fa.ke/homebrew-website-club'}],
       'objectType': 'activity',
-      'content': '<span class="p-rsvp" value="yes">yes</span>\n      <a class="u-in-reply-to" href="http://fa.ke/homebrew-website-club"></a>',
+      'content': '<span class="p-rsvp" value="yes">yes</span>\n<a class="u-in-reply-to" href="http://fa.ke/homebrew-website-club"></a>',
     }, include_link=gr_source.INCLUDE_LINK, ignore_formatting=False). \
     AndReturn(gr_source.creation_result({
       'url': 'http://fake/url',
@@ -1330,6 +1330,27 @@ Join us!"""
 
     resp = self.assert_success('blah - http://foo.com/bar', preview=True)
     self.assertNotIn('with images', resp.body)
+
+  def test_ignore_jetpack_lazy_loaded_imgs(self):
+    """https://github.com/snarfed/bridgy/issues/798"""
+    for i in range(2):
+      self.expect_requests_get('http://foo.com/bar', """
+<div class="h-entry">
+<img src="http://example.com/wp-content/plugins/jetpack/modules/lazy-images/images/1x1.trans.gif"
+  class="photo u-photo" data-lazy-src="http://example.com/real">
+<noscript>
+  <img src='http://example.com/real' class='photo u-photo' />
+</noscript>
+<div class="e-content">blah</div>
+</div>
+""")
+    self.mox.ReplayAll()
+
+    resp = self.assert_created("blah - http://foo.com/bar")
+    self.assertEquals(['http://example.com/real'], json.loads(resp.body)['images'])
+
+    resp = self.assert_success('blah - http://foo.com/bar', preview=True)
+    self.assertIn('with images http://example.com/real', resp.body)
 
   def test_nested_h_as_entry(self):
     """https://github.com/snarfed/bridgy/issues/735"""

@@ -28,6 +28,7 @@ import collections
 import logging
 import json
 import pprint
+import re
 import urllib
 import urlparse
 
@@ -59,6 +60,10 @@ import webmention
 SOURCES = (FacebookPage, Flickr, GitHub, Twitter)
 SOURCE_NAMES = {cls.SHORT_NAME: cls for cls in SOURCES}
 SOURCE_DOMAINS = {cls.GR_CLASS.DOMAIN: cls for cls in SOURCES}
+# image URLs matching this regexp should be ignored.
+# (This matches Wordpress Jetpack lazy loaded image placeholders.)
+# https://github.com/snarfed/bridgy/issues/798
+IGNORE_IMAGE_RE = re.compile(r'.*/lazy-images/images/1x1\.trans\.gif$')
 
 PUBLISHABLE_TYPES = frozenset((
   'h-checkin',
@@ -432,6 +437,11 @@ class Handler(webmention.WebmentionHandler):
     """
     self.source.preprocess_for_publish(activity)
     self.expand_target_urls(activity)
+
+    activity['image'] = [{'url': url} for url in util.get_urls(activity, 'image')
+                         if not IGNORE_IMAGE_RE.match(url)]
+    if not activity['image']:
+      del activity['image']
 
   def expand_target_urls(self, activity):
     """Expand the inReplyTo or object fields of an ActivityStreams object
