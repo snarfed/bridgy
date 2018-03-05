@@ -29,6 +29,20 @@ PUBLISH_SCOPES = [
 class GitHub(models.Source):
   """A GitHub user.
 
+  WARNING: technically we should override URL_CANONICALIZER here and pass it
+  fragment=True, since comment permalinks have meaningful fragments, eg
+  #issuecomment=123. Right now, when we see a comment syndication URL, we strip
+  its fragment and store just the issue URL as the synd URL, which is obviously
+  wrong.
+
+  ...HOWEVER, that has the nice side effect of enabling backfeed to comments as
+  well as issues, since we think comment OPs are the issue itself.
+
+  This is obviously not ideal. The fix is to extend
+  original_post_discovery.discover() to allow silo-specific synd URL
+  comparisons, so that a comment on an issue can match along with the issue
+  itself. I'm lazy, though, so I'm leaving this as is for now.
+
   The key name is the GitHub username.
   """
   GR_CLASS = gr_github.GitHub
@@ -39,6 +53,7 @@ class GitHub(models.Source):
   }
   BACKFEED_REQUIRES_SYNDICATION_LINK = True
 
+  # WARNING: see docstring
   URL_CANONICALIZER = util.UrlCanonicalizer(
     domain=GR_CLASS.DOMAIN,
     headers=util.REQUEST_HEADERS)
