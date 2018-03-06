@@ -76,11 +76,11 @@ body.about #more-link {
   display: none;
 }
 
-pre .keyword, code.keyword {
+pre .keyword, code .keyword, code.keyword {
   color: green;
 }
 
-pre .value, code.value {
+pre .value, code .value, code.value {
   color: chocolate;
 }
 
