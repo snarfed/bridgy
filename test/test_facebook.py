@@ -122,8 +122,8 @@ class FacebookPageTest(testutil.ModelsTest):
     owned_event['id'] = '888'
     owned_event['owner']['id'] = '212038'
     self.expect_api_call(API_ME_POSTS, {'data': [POST]})
-    self.expect_api_call(API_NEWS_PUBLISHES, {'data': [PHOTO_POST]})
-    self.expect_api_call(API_PHOTOS_UPLOADED, {'data': [PHOTO]})
+    self.expect_api_call(API_NEWS_PUBLISHES % 'me', {'data': [PHOTO_POST]})
+    self.expect_api_call(API_PHOTOS_UPLOADED % 'me', {'data': [PHOTO]})
     self.expect_api_call(API_USER_EVENTS, {'data': [EVENT, owned_event]})
     self.expect_api_call(API_OBJECT % ('212038', '888'), {})
     self.mox.ReplayAll()
@@ -135,8 +135,8 @@ class FacebookPageTest(testutil.ModelsTest):
 
   def test_get_activities_post_and_photo_duplicates(self):
     self.expect_api_call(API_ME_POSTS, {'data': [PHOTO_POST]})
-    self.expect_api_call(API_NEWS_PUBLISHES, {'data': []})
-    self.expect_api_call(API_PHOTOS_UPLOADED, {'data': [PHOTO]})
+    self.expect_api_call(API_NEWS_PUBLISHES % 'me', {'data': []})
+    self.expect_api_call(API_PHOTOS_UPLOADED % 'me', {'data': [PHOTO]})
     self.expect_api_call(API_USER_EVENTS, {})
     self.mox.ReplayAll()
 
@@ -163,8 +163,8 @@ class FacebookPageTest(testutil.ModelsTest):
     reply['inReplyTo'][0]['url'] = 'https://www.facebook.com/12345/posts/547822715231468'
 
     self.expect_api_call(API_ME_POSTS, {'data': [post]})
-    self.expect_api_call(API_NEWS_PUBLISHES, {})
-    self.expect_api_call(API_PHOTOS_UPLOADED, {})
+    self.expect_api_call(API_NEWS_PUBLISHES % 'me', {})
+    self.expect_api_call(API_PHOTOS_UPLOADED % 'me', {})
     self.expect_api_call(API_USER_EVENTS, {})
     self.expect_api_call(API_OBJECT % ('212038', '10100176064482163'), {})
     self.mox.ReplayAll()
@@ -181,8 +181,8 @@ class FacebookPageTest(testutil.ModelsTest):
       {'id': '12^34', 'message': 'bad to the bone'})
 
     self.expect_api_call(API_ME_POSTS, {'data': [bad_post]})
-    self.expect_api_call(API_NEWS_PUBLISHES, {'data': [post_with_bad_comment]})
-    self.expect_api_call(API_PHOTOS_UPLOADED, {})
+    self.expect_api_call(API_NEWS_PUBLISHES % 'me', {'data': [post_with_bad_comment]})
+    self.expect_api_call(API_PHOTOS_UPLOADED % 'me', {})
     self.expect_api_call(API_USER_EVENTS, {})
     self.expect_api_call(API_OBJECT % ('212038', '10100176064482163'), {})
     self.mox.ReplayAll()
@@ -194,7 +194,7 @@ class FacebookPageTest(testutil.ModelsTest):
   def test_get_activities_page(self):
     """Shouldn't fetch /me/news.publishes for pages."""
     self.expect_api_call(API_ME_POSTS, {'data': [POST]})
-    self.expect_api_call(API_PHOTOS_UPLOADED, {})
+    self.expect_api_call(API_PHOTOS_UPLOADED % 'me', {})
     self.expect_api_call(API_USER_EVENTS, {})
     self.expect_api_call(API_OBJECT % ('108663232553079', '10100176064482163'), {})
     self.mox.ReplayAll()
@@ -205,8 +205,8 @@ class FacebookPageTest(testutil.ModelsTest):
       {'id': '1', 'object_id': '2'},
       {'id': '000_3', 'object_id': '000_4'},
     ]})
-    self.expect_api_call(API_NEWS_PUBLISHES, {})
-    self.expect_api_call(API_PHOTOS_UPLOADED, {'data': [
+    self.expect_api_call(API_NEWS_PUBLISHES % 'me', {})
+    self.expect_api_call(API_PHOTOS_UPLOADED % 'me', {'data': [
       {'id': '2', 'privacy': 'everyone'},
       {'id': '000_4', 'privacy': 'everyone'},
     ]})
@@ -392,8 +392,8 @@ class FacebookPageTest(testutil.ModelsTest):
     # Facebook API calls
     self.expect_api_call(API_ME_POSTS + '&limit=50', {'data': [
       PHOTO_POST]})
-    self.expect_api_call(API_NEWS_PUBLISHES, {})
-    self.expect_api_call(API_PHOTOS_UPLOADED, {'data': [PHOTO]})
+    self.expect_api_call(API_NEWS_PUBLISHES % 'me', {})
+    self.expect_api_call(API_PHOTOS_UPLOADED % 'me', {'data': [PHOTO]})
     self.expect_api_call(API_USER_EVENTS, {})
     self.expect_api_call(API_SHARES % '222', {})
     self.expect_api_call(API_COMMENTS_ALL % '222', {})
@@ -433,8 +433,8 @@ class FacebookPageTest(testutil.ModelsTest):
     del photo['comments'], photo['likes'], photo['reactions']
 
     self.expect_api_call(API_ME_POSTS + '&limit=50', {'data': [photo_post]})
-    self.expect_api_call(API_NEWS_PUBLISHES, {})
-    self.expect_api_call(API_PHOTOS_UPLOADED, {'data': [photo]})
+    self.expect_api_call(API_NEWS_PUBLISHES % 'me', {})
+    self.expect_api_call(API_PHOTOS_UPLOADED % 'me', {'data': [photo]})
     self.expect_api_call(API_USER_EVENTS, {})
     self.expect_api_call(API_SHARES % '222', {})
     self.expect_api_call(API_COMMENTS_ALL % '222', {})
@@ -443,8 +443,8 @@ class FacebookPageTest(testutil.ModelsTest):
     # object_id mapping.
     assert 'privacy' not in PHOTO
     self.expect_api_call(API_ME_POSTS + '&limit=50', {})
-    self.expect_api_call(API_NEWS_PUBLISHES, {})
-    self.expect_api_call(API_PHOTOS_UPLOADED, {'data': [PHOTO]})
+    self.expect_api_call(API_NEWS_PUBLISHES % 'me', {})
+    self.expect_api_call(API_PHOTOS_UPLOADED % 'me', {'data': [PHOTO]})
     self.expect_api_call(API_USER_EVENTS, {})
     self.expect_api_call(API_SHARES % '222', {})
     self.expect_api_call(API_COMMENTS_ALL % '222', {})
