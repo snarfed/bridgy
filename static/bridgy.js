@@ -12,7 +12,7 @@ function toggle(id) {
 window.onload = function () {
   if (window.location.hash.substr(0, 2) == '#!') {
     var p = document.getElementById('message');
-    p.style.display = 'inline';
+    p.style.display = 'block';
     p.innerHTML = decodeURIComponent(
       window.location.hash.substr(2))  // strip leading #!
         .replace('\n', '<br />');
@@ -22,6 +22,8 @@ window.onload = function () {
 
 // AJAX publish previews on user pages.
 function do_preview(site) {
+  document.getElementById('messages').style.display = 'none';
+
   var url = document.getElementById('source-url').value.trim();
   if (url.length == 0) {
     window.alert('Please enter a URL.');
