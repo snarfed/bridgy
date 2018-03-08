@@ -266,8 +266,7 @@ class Handler(webmention.WebmentionHandler):
         code, body = util.interpret_http_exception(e)
         if not code:
           raise
-        msg = 'Error from %s API or your site: %s %s' % (
-          self.source.GR_CLASS.NAME, body or '', e)
+        msg = 'Error: %s %s' % (body or '', e)
         return self.error(msg, status=code, mail=code not in ('502', '503', '504'))
 
     if not self.entity.published:  # tried all the items

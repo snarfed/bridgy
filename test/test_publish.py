@@ -620,7 +620,7 @@ this is my article
                                  ignore_formatting=False
                                  ).AndRaise(err)
     self.mox.ReplayAll()
-    self.assert_error('Error from FakeSource API or your site: foooey bar', status=502)
+    self.assert_error('Error: foooey bar', status=502)
 
   def test_connection_error_returns_504(self):
     self.expect_requests_get('http://foo.com/bar', self.post_html % 'xyz')
@@ -631,7 +631,7 @@ this is my article
                                  ignore_formatting=False
                                  ).AndRaise(socket.error('foooey bar'))
     self.mox.ReplayAll()
-    self.assert_error('Error from FakeSource API or your site: foooey bar', status=504)
+    self.assert_error('Error: foooey bar', status=504)
 
   def test_non_http_exception(self):
     """If we crash, we shouldn't blame the silo or the user's site."""
