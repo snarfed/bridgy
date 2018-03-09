@@ -71,6 +71,7 @@ service.</a>
   account or publish as me. Isn't that a security hole?</a></li>
 <li><a href="#registration-api">Can users sign up for Bridgy
   without leaving my site or application?</a></li>
+<li><a href="#permissions">Why does Bridgy ask for all these permissions?</a></li>
 <li><a href="#api">Does Bridgy have an API?</a></li>
 <li><a href="#bug">I found a bug! I have a feature request!</a></li>
 <li><a href="#cute">Brid.gy? Really?</a></li>
@@ -335,6 +336,24 @@ POST <a href="https://brid.gy/twitter/start">https://brid.gy/twitter/start</a>
   <li><code>result</code> equal to <code>success</code>, <code>failure</code>, or <code>declined</code></li>
   <li><code>user</code> (if successful) equal to their Bridgy user page URL</li>
 </ul>
+
+<li id="permissions" class="question">Why does Bridgy ask for all these permissions?</li>
+<li class="answer">
+<p>Bridgy needs various permissions to access each social network accounts you connect. It prompts you when you first connect an acount, and also when you enable <a href="#listen">listening</a> or <a href="#publish">publishing</a> afterward. It <a href="https://en.wikipedia.org/wiki/Principle_of_least_privilege">asks for as little access as possible</a>, to only public data, but still often has to ask for more access than it needs, since many social networks have overly coarse permissions. Details:
+</p>
+<ul>
+  <li><b>Blogger</b> doesn't have permissions at all, <a href="https://developers.google.com/blogger/docs/2.0/developers_guide_protocol#OAuth2Authorizing">just full access or none.</a> <a href="/static/permissions_screenshots/blogger.png">Screenshot.</a></li>
+  <li><b>Facebook</b> has <a href="https://developers.facebook.com/docs/facebook-login/permissions">very fine grained permissions</a>. For listen, we ask for read access to your public profile info, posts, events, photos, pages, etc. For publish, we ask for permission to post as you and/or your pages, and let you choose who those posts will be visible to. Screenshots: <a href="/static/permissions_screenshots/facebook_read.png">listen</a> (<a href="/static/permissions_screenshots/facebook_read_pages.png">pages</a>), <a href="/static/permissions_screenshots/facebook_write.png">publish</a> (<a href="/static/permissions_screenshots/facebook_write_pages.png">pages</a>).</li>
+  <li><b>Flickr</b> has <a href="https://www.flickr.com/services/api/auth.oauth.html#authorization">read, write, and delete permissions</a>. We ask for read for listen, write for publish. Screenshots: <a href="/static/permissions_screenshots/flickr_read.png">listen</a>, <a href="/static/permissions_screenshots/flickr_write.png">publish</a>.</li>
+  <li><b>GitHub</b> has a few different permission models. We use an <a href="https://developer.github.com/apps/building-oauth-apps/scopes-for-oauth-apps/">OAuth app</a> to request read/write permission to public repository data, and notifications to see new comments and reactions. The alternative would have been a <a href="https://developer.github.com/apps/building-github-apps/">GitHub app,</a> which lets you grant read vs write permission to individual repos, but includes private repos, and doesn't include notifications. <a href="https://developer.github.com/apps/differences-between-apps/">More on the tradeoff here.</a> <a href="/static/permissions_screenshots/github.png">Screenshot.</a></li>
+  <li><b>Google+</b> has <a href="https://developers.google.com/+/web/api/rest/oauth#scopes">semi-fine grained permissions</a>, and only read access. We ask for access to your profile info, circles, and public posts. <a href="/static/permissions_screenshots/googleplus.png">Screenshot.</a></li>
+  <li><b>Instagram</b> turned off their API for individual usage, so we just ask for your web site, via <a href="https://indieauth.com/">IndieAuth</a>, and your Instagram username. <a href="/static/permissions_screenshots/instagram_indieauth.png">Screenshot.</a></li>
+  <li><b>Medium</b> has <a href="https://github.com/Medium/medium-api-docs/#user-content-21-browser-based-authentication">a few different permissions</a>. We ask for read acces to your profile, public posts, and publications. <a href="/static/permissions_screenshots/medium.png">Screenshot.</a></li>
+  <li><b>Tumblr</b> doesn't have permissions at all, <a href="https://www.tumblr.com/docs/en/api/v2#oauth">just full access or nothing.</a> <a href="/static/permissions_screenshots/tumblr.png">Screenshot.</a></li>
+  <li><b>Twitter</b> <a href="https://developer.twitter.com/en/docs/basics/authentication/overview/application-permission-model">distinguishes between read and write access,</a> but not between different types of data. We ask for read access to your tweets and profile for listen, write access for publish. We don't ask for access to your direct messages. Screenshots: <a href="/static/permissions_screenshots/twitter_read.png">listen</a>, <a href="/static/permissions_screenshots/twitter_write.png">publish</a>.</li>
+  <li><b>WordPress.com</b>: doesn't have permissions at all, <a href="https://developer.wordpress.com/docs/oauth2/">just full access or nothing.</a> We ask for read and write access to a single blog that you specify, so we can see and handle new blog posts and to create comments. <a href="/static/permissions_screenshots/wordpress.com.png">Screenshot.</a></li>
+</ul>
+</li>
 
 <li id="api" class="question">Does Bridgy have an API?</li>
 <li class="answer">

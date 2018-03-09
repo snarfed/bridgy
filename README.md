@@ -195,7 +195,7 @@ I occasionally generate [stats and graphs of usage and growth](https://snarfed.o
       bq load --replace --source_format=DATASTORE_BACKUP datastore.$kind gs://brid-gy.appspot.com/aglzfmJyaWQtZ3lyQQsSHF9BRV9EYXRhc3RvcmVBZG1pbl9PcGVyYXRpb24Y-Z6kCAwLEhZfQUVfQmFja3VwX0luZm9ybWF0aW9uGAEM.$kind.backup_info
     done
     
-    for kind in Blogger FacebookPage Flickr GooglePlusPage Instagram Medium Tumblr Twitter WordPress; do
+    for kind in Blogger FacebookPage Flickr GitHub GooglePlusPage Instagram Medium Tumblr Twitter WordPress; do
       bq load --replace --source_format=DATASTORE_BACKUP sources.$kind gs://brid-gy.appspot.com/aglzfmJyaWQtZ3lyQQsSHF9BRV9EYXRhc3RvcmVBZG1pbl9PcGVyYXRpb24Y-Z6kCAwLEhZfQUVfQmFja3VwX0luZm9ybWF0aW9uGAEM.$kind.backup_info
     done
     ```
