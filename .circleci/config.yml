@@ -1,0 +1,67 @@
+# CircleCI automatically reads this file from our repo and uses it for
+# configuration. Docs:
+# https://circleci.com/docs/2.0/configuration-reference/
+# https://circleci.com/docs/2.0/sample-config/
+version: 2
+
+jobs:
+  build:
+    docker:
+      # https://circleci.com/docs/2.0/google-container-engine/#selecting-a-base-image
+      - image: google/cloud-sdk
+      - image: circleci/python:2.7
+
+    environment:
+      - PYTHONPATH: /usr/lib/google-cloud-sdk/platform/google_appengine
+
+    steps:
+      - checkout
+
+      - restore_cache:
+          key: venv-{{ .Branch }}-{{ checksum "requirements.freeze.txt" }}
+
+      - run:
+          name: Install oauth-dropins and granary
+          command: |
+            # use granary and oauth-dropins master at head. (see pip install -e 's below.)
+            cd /tmp; git clone https://github.com/snarfed/oauth-dropins.git
+            cd /tmp/oauth-dropins; git submodule sync; git submodule update --init
+            cd /tmp/oauth-dropins/oauth_dropins/webutil; git checkout master; git pull
+            cd /tmp; git clone https://github.com/snarfed/granary.git
+
+      - run:
+          name: Install dependencies
+          command: |
+            apt-get install google-cloud-sdk-app-engine-python-extras
+
+            pip install virtualenv
+            virtualenv local
+            . local/bin/activate
+
+            pip install -r requirements.freeze.txt
+            pip install -e /tmp/oauth-dropins/
+            pip install -e /tmp/granary/
+            pip install coverage coveralls  # for https://coveralls.io/
+
+            # the gdata packages are inside a src/ subdirectory in the repo dir,
+            # which pip/virtualenv used to handle fine, but inexplicably started
+            # failing to import at 9fd1044 on 11/22/2016. patch it manually. ugh.
+            ln -sf $VIRTUAL_ENV/src/gdata/src/gdata $VIRTUAL_ENV/src/gdata/
+            ln -sf $VIRTUAL_ENV/src/gdata/src/atom $VIRTUAL_ENV/src/gdata/
+
+      - run:
+          name: Test
+          command: |
+            . local/bin/activate
+            python -m coverage run --source=. --omit=admin.py,facebook_test_live.py,local/\*,logs.py,mapreduce/\*,mapreduces.py,scripts/\*,test/\* -m unittest discover -v
+            if [ "$FACEBOOK_TEST_USER_TOKEN" != "" ]; then python ./facebook_test_live.py --debug; fi
+            python -m coverage html -d /tmp/coverage_html
+            if [ "$COVERALLS_REPO_TOKEN" != "" ]; then coveralls; fi
+
+      - save_cache:
+          key: venv-{{ .Branch }}-{{ checksum "requirements.freeze.txt" }}
+          paths:
+            - "local"
+
+      - store_artifacts:
+          path: /tmp/coverage_html
