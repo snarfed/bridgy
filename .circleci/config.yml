@@ -21,21 +21,22 @@ jobs:
           key: venv-{{ .Branch }}-{{ checksum "requirements.freeze.txt" }}
 
       - run:
-          name: Install oauth-dropins and granary
-          command: |
-            # use granary and oauth-dropins master at head. (see pip install -e 's below.)
-            cd /tmp; git clone https://github.com/snarfed/oauth-dropins.git
-            cd /tmp/oauth-dropins; git submodule sync; git submodule update --init
-            cd /tmp/oauth-dropins/oauth_dropins/webutil; git checkout master; git pull
-            cd /tmp; git clone https://github.com/snarfed/granary.git
-
-      - run:
-          name: Install dependencies
+          name: Base dependencies
           command: |
             apt-get install google-cloud-sdk-app-engine-python-extras
+            # use granary and oauth-dropins master at head. (see pip install -e 's below.)
+            cd /tmp; git clone https://github.com/snarfed/oauth-dropins.git
+            cd /tmp/oauth-dropins; git checkout python3; git submodule sync; git submodule update --init
+            # cd /tmp/oauth-dropins/oauth_dropins/webutil; git checkout master; git pull
 
-            pip install virtualenv
-            virtualenv local
+            cd /tmp; git clone https://github.com/snarfed/granary.git
+            cd /tmp/granary; git checkout python3
+
+      - run:
+          name: Python 2 dependencies
+          command: |
+            apt-get install -y python-virtualenv
+            virtualenv --python=python2 local
             . local/bin/activate
 
             pip install -r requirements.freeze.txt
@@ -50,12 +51,12 @@ jobs:
             ln -sf $VIRTUAL_ENV/src/gdata/src/atom $VIRTUAL_ENV/src/gdata/
 
       - run:
-          name: Test
+          name: Test Python 2
           command: |
             . local/bin/activate
-            python -m coverage run --source=. --omit=admin.py,facebook_test_live.py,local/\*,logs.py,mapreduce/\*,mapreduces.py,scripts/\*,test/\* -m unittest discover -v
+            python2 -m coverage run --source=. --omit=admin.py,facebook_test_live.py,local/\*,logs.py,mapreduce/\*,mapreduces.py,scripts/\*,test/\* -m unittest discover -v
             if [ "$FACEBOOK_TEST_USER_TOKEN" != "" ]; then python ./facebook_test_live.py --debug; fi
-            python -m coverage html -d /tmp/coverage_html
+            python2 -m coverage html -d /tmp/coverage_html
             if [ "$COVERALLS_REPO_TOKEN" != "" ]; then coveralls; fi
 
       - save_cache:
