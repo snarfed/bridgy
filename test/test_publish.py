@@ -631,7 +631,7 @@ this is my article
     self.source.gr_source.create(mox.IgnoreArg(),
                                  include_link=gr_source.INCLUDE_LINK,
                                  ignore_formatting=False
-                                 ).AndRaise(socket.error('foooey bar'))
+                                 ).AndRaise(socket.timeout('foooey bar'))
     self.mox.ReplayAll()
     self.assert_error('Error: foooey bar', status=504)
 

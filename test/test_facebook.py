@@ -731,7 +731,7 @@ my message
     self.expect_requests_get('http://foo.com/bar', post_html)
     self.expect_api_call(API_PUBLISH_POST, {'id': '123_456'}, data=urllib.urlencode({
         'message': 'my message\n\n(Originally published at: http://foo.com/bar)',
-        'tags': '555,666,777,444',
+        'tags': '444,555,666,777',
       }))
     self.mox.ReplayAll()
 

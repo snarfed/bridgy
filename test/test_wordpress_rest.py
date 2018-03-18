@@ -2,6 +2,9 @@
 """Unit tests for wordpress_rest.py.
 """
 from __future__ import unicode_literals
+from future import standard_library
+standard_library.install_aliases()
+import urllib.parse
 
 import json
 import urllib
@@ -37,8 +40,9 @@ class WordPressTest(testutil.HandlerTest):
       url='https://public-api.wordpress.com/rest/v1/sites/123/posts/456/replies/new?pretty=true',
       content='<a href="http://who">name</a>: foo bar',
       response='{}', status=200, **kwargs):
-    self.expect_urlopen(url, response, data=urllib.urlencode({'content': content}),
-                        status=status, **kwargs)
+    self.expect_urlopen(
+      url, response, data=urllib.parse.urlencode({'content': content}),
+      status=status, **kwargs)
     self.mox.ReplayAll()
 
   def test_new(self):

@@ -2,6 +2,7 @@
 """Unit tests for app.py.
 """
 from __future__ import unicode_literals
+from future.utils import native_str
 
 import datetime
 import json
@@ -49,7 +50,8 @@ class AppTest(testutil.ModelsTest):
     self.assertEqual([], self.taskqueue_stub.GetTasks('poll'))
 
     key = self.sources[0].key.urlsafe()
-    resp = app.application.get_response('/poll-now', method='POST', body='key=' + key)
+    resp = app.application.get_response('/poll-now', method='POST',
+                                        body=urllib.urlencode({'key': key}))
     self.assertEquals(302, resp.status_int)
     self.assertEquals(self.sources[0].bridgy_url(self.handler),
                       resp.headers['Location'].split('#')[0])
@@ -89,7 +91,7 @@ class AppTest(testutil.ModelsTest):
 
     key = resp.key.urlsafe()
     response = app.application.get_response(
-      '/retry', method='POST', body='key=' + key)
+      '/retry', method='POST', body=urllib.urlencode({'key': key}))
     self.assertEquals(302, response.status_int)
     self.assertEquals(source.bridgy_url(self.handler),
                       response.headers['Location'].split('#')[0])
@@ -115,7 +117,10 @@ class AppTest(testutil.ModelsTest):
   def test_retry_redirect_to(self):
     key = self.responses[0].put()
     response = app.application.get_response(
-      '/retry', method='POST', body='key=%s&redirect_to=/foo/bar' % key.urlsafe())
+      '/retry', method='POST', body=urllib.urlencode({
+        'key': key.urlsafe(),
+        'redirect_to': '/foo/bar',
+      }))
     self.assertEquals(302, response.status_int)
     self.assertEquals('http://localhost/foo/bar',
                       response.headers['Location'].split('#')[0])
@@ -128,7 +133,7 @@ class AppTest(testutil.ModelsTest):
 
     key = source.key.urlsafe()
     response = app.application.get_response(
-      '/crawl-now', method='POST', body='key=%s' % key)
+      '/crawl-now', method='POST', body=urllib.urlencode({'key': key}))
     self.assertEquals(source.bridgy_url(self.handler),
                       response.headers['Location'].split('#')[0])
     self.assertEquals(302, response.status_int)
@@ -142,8 +147,9 @@ class AppTest(testutil.ModelsTest):
 
   def test_poll_now_and_retry_response_missing_key(self):
     for endpoint in '/poll-now', '/retry':
-      for body in '', 'key=' + self.responses[0].key.urlsafe():  # hasn't been stored
-        resp = app.application.get_response(endpoint, method='POST', body=body)
+      for body in {}, {'key': self.responses[0].key.urlsafe()}:  # hasn't been stored
+        resp = app.application.get_response(endpoint, method='POST',
+                                            body=urllib.urlencode(body))
         self.assertEquals(400, resp.status_int)
 
   def test_delete_source_callback(self):
@@ -273,7 +279,8 @@ class AppTest(testutil.ModelsTest):
     self.sources[0].put()
 
     for id in 'FooBar', 'Snoøpy Barrett', 'foox.com':
-      resp = app.application.get_response('/fake/%s' % urllib.quote(id.encode('utf-8')))
+      resp = app.application.get_response(
+        native_str('/fake/%s' % urllib.quote(id.encode('utf-8'))))
       self.assertEquals(301, resp.status_int)
       self.assertEquals('http://localhost/fake/%s' % self.sources[0].key.id(),
                         resp.headers['Location'])
@@ -350,9 +357,9 @@ class AppTest(testutil.ModelsTest):
       self.assertEquals(resp.unsent, props['bridgy-target'])
 
     # check invite
-    invite = hcard['children'][-1]['properties']
-    self.assertIn('Ms. Guest is invited.', response.body)
-    self.assertNotIn('Mrs. Host is invited.', response.body)
+    html = response.body.decode('utf-8')
+    self.assertIn('Ms. Guest is invited.', html)
+    self.assertNotIn('Mrs. Host is invited.', html)
 
     publish = hcard['children'][len(expected_resps)]
     self.assertIn('h-bridgy-publish', publish['type'])

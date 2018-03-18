@@ -860,7 +860,7 @@ class PollTest(TaskQueueTest):
       for err in (
           urllib2.HTTPError('url', 429, 'Rate limited', {},
                             StringIO.StringIO(error_body)),
-          apiclient.errors.HttpError(httplib2.Response({'status': 429}), ''),
+          apiclient.errors.HttpError(httplib2.Response({'status': 429}), b''),
           urllib2.HTTPError('url', 403, 'msg', {}, None)
       ):
         self.mox.UnsetStubs()
@@ -1756,7 +1756,7 @@ class PropagateTest(TaskQueueTest):
     """Target URLs with escaped unicode chars should work ok.
     Background: https://github.com/snarfed/bridgy/issues/248
     """
-    url = 'https://maps/?q=' + urllib.quote_plus('3 Cours de la République')
+    url = 'https://maps/?q=' + urllib.quote_plus('3 Cours de la République'.encode('utf-8'))
     self.responses[0].unsent = [url]
     self.responses[0].put()
 

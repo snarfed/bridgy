@@ -52,7 +52,8 @@ class UtilTest(testutil.ModelsTest):
 
     self.assertEquals(302, self.response.status_int)
     parsed = urlparse.urlparse(self.response.headers['Location'])
-    self.assertIn(UNICODE_STR, urllib.unquote_plus(parsed.fragment).decode('utf-8'))
+    self.assertIn(UNICODE_STR,
+                  urllib.unquote_plus(str(parsed.fragment)).decode('utf-8'))
     self.assertEquals(
       'logins="/fake/%s?%s"; expires=2001-12-31 00:00:00; Path=/' %
         (src.key.id(), urllib.quote_plus(UNICODE_STR.encode('utf-8'))),

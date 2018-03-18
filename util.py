@@ -1,14 +1,19 @@
 # coding=utf-8
 """Misc utility constants and classes.
 """
-from __future__ import unicode_literals
+# Don't use `from __future__ import unicode_literals` because Python 2's Cookie
+# module doesn't support unicode strings well.
+#
 # use python-future's open so that it returns contents as unicode, for interop
 # with webutil.util.load_file_lines().
 from builtins import open
+from future import standard_library
+standard_library.install_aliases()
+from future.utils import native_str
 
 import collections
 import copy
-import Cookie
+from http.cookies import CookieError, SimpleCookie
 import contextlib
 import datetime
 import json
@@ -477,8 +482,8 @@ class Handler(webutil_handlers.ModernHandler):
       logging.info('Cookie: %s', cookie)
 
     try:
-      logins_str = Cookie.SimpleCookie(cookie).get('logins')
-    except Cookie.CookieError, e:
+      logins_str = SimpleCookie(native_str(cookie)).get('logins')
+    except CookieError, e:
       logging.warning("Bad cookie: %s", e)
       return []
 
@@ -504,7 +509,7 @@ class Handler(webutil_handlers.ModernHandler):
       logins: sequence of :class:`Login` objects
     """
     # cookie docs: http://curl.haxx.se/rfc/cookie_spec.html
-    cookie = Cookie.SimpleCookie()
+    cookie = SimpleCookie()
     cookie['logins'] = '|'.join(sorted(set(
       '%s?%s' % (login.path, urllib.quote_plus(login.name.encode('utf-8')))
       for login in logins)))

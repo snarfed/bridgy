@@ -1205,8 +1205,9 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     results = refetch(self.source)
     self.assert_syndicated_posts(
       ('http://author/permalink', 'https://fa.ke/changed/url'))
-    self.assert_equals({'https://fa.ke/changed/url': list(SyndicatedPost.query())},
-                       results)
+    self.assert_equals(['https://fa.ke/changed/url'], results.keys())
+    self.assert_entities_equal(
+      list(SyndicatedPost.query()), results['https://fa.ke/changed/url'])
     self.assertEquals(testutil.NOW, self.source.updates['last_syndication_url'])
     self.assertEquals(testutil.NOW, self.source.updates['last_feed_syndication_url'])
 

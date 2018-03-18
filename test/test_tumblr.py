@@ -123,8 +123,9 @@ class TumblrTest(testutil.HandlerTest):
       tumblr.DISQUS_API_CREATE_POST_URL,
       json.dumps({}),
       params=self.disqus_params({
-            'thread': '87654',
-            'message': '<a href="http://who">Degenève</a>: foo Degenève bar'}))
+        'thread': '87654',
+        'message': '<a href="http://who">Degenève</a>: foo Degenève bar'.encode('utf-8'),
+      }))
     self.mox.ReplayAll()
 
     resp = self.tumblr.create_comment('http://primary/post/123999/xyz_abc',

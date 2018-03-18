@@ -25,6 +25,7 @@ Example response::
     }
 """
 from __future__ import unicode_literals
+from future.utils import native_str
 
 import collections
 import logging
@@ -524,7 +525,7 @@ class Handler(webmention.WebmentionHandler):
     Args:
       source_url: string
     """
-    page = PublishedPage.get_or_insert(source_url)
+    page = PublishedPage.get_or_insert(native_str(source_url))
     entity = Publish.query(
       Publish.status == 'complete', Publish.type != 'preview',
       Publish.source == self.source.key,

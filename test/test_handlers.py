@@ -57,12 +57,13 @@ class HandlersTest(testutil.HandlerTest):
     # use an HTTPS request so that URL schemes are converted
     resp = handlers.application.get_response(
       url_template % self.source.key.string_id(), scheme='https')
+    html = resp.body.decode('utf-8')
     self.assertEqual(expected_status, resp.status_int,
-                     '%s %s' % (resp.status_int, resp.body))
+                     '%s %s' % (resp.status_int, html))
 
     if expected_body:
       header_lines = len(handlers.TEMPLATE.template.splitlines()) - 2
-      actual = '\n'.join(resp.body.splitlines()[header_lines:-1])
+      actual = '\n'.join(html.splitlines()[header_lines:-1])
       self.assert_multiline_equals(expected_body, actual, ignore_blanks=True)
 
     return resp
@@ -171,7 +172,7 @@ asdf http://other/link qwert
     self.mox.ReplayAll()
 
     resp = self.check_response('/post/fake/%s/000', expected_status=410)
-    self.assertEqual('text/plain', resp.headers['Content-Type'])
+    self.assertEqual('text/plain; charset=utf-8', resp.headers['Content-Type'])
     self.assertEqual('FakeSource error:\nGone baby gone', resp.body)
 
   def test_connection_failures_503(self):
@@ -411,8 +412,8 @@ asdf http://other/link qwert
 <span class="p-uid"></span>
   <div class="e-content p-name">
   qwert
-  <a class="u-mention" href="http://other/link/redirect"></a>
   <a class="u-mention" href="http://other/link"></a>
+  <a class="u-mention" href="http://other/link/redirect"></a>
   </div>
   <a class="u-in-reply-to" href="http://fa.ke/000"></a>
   <a class="u-in-reply-to" href="http://or.ig/post/redirect"></a>
@@ -458,9 +459,9 @@ asdf http://other/link qwert
 <span class="p-uid"></span>
   <div class="e-content p-name">
   <a class="u-mention" href="http://all/"></a>
-  <a class="u-mention" href="https://reply/"></a>
-  <a class="u-mention" href="http://upstream/only"></a>
   <a class="u-mention" href="http://mention/only"></a>
+  <a class="u-mention" href="http://upstream/only"></a>
+  <a class="u-mention" href="https://reply/"></a>
   <a class="u-mention" href="https://upstream/"></a>
   </div>
   <a class="u-in-reply-to" href="https://reply/only"></a>
