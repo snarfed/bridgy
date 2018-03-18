@@ -49,7 +49,7 @@ class CronTest(HandlerTest):
 
   def expect_instagram_profile_fetch(self, username):
     profile = copy.deepcopy(test_instagram.HTML_PROFILE)
-    profile['entry_data']['ProfilePage'][0]['user'].update({
+    profile['entry_data']['ProfilePage'][0]['graphql']['user'].update({
       'username': username,
       'profile_pic_url': 'http://new/pic',
     })

@@ -143,7 +143,7 @@ class InstagramTest(testutil.ModelsTest):
     self.expect_indieauth_check()
 
     profile = copy.deepcopy(test_instagram.HTML_PROFILE)
-    del profile['entry_data']['ProfilePage'][0]['user']['external_url']
+    del profile['entry_data']['ProfilePage'][0]['graphql']['user']['external_url']
     self.expect_instagram_fetch(
       test_instagram.HTML_HEADER + json.dumps(profile) + test_instagram.HTML_FOOTER)
 
@@ -171,7 +171,7 @@ class InstagramTest(testutil.ModelsTest):
     self.expect_indieauth_check()
 
     profile = copy.deepcopy(test_instagram.HTML_PROFILE)
-    profile['entry_data']['ProfilePage'][0]['user']['biography'] = \
+    profile['entry_data']['ProfilePage'][0]['graphql']['user']['biography'] = \
       'http://a/ https://b'
     self.expect_instagram_fetch(
       test_instagram.HTML_HEADER + json.dumps(profile) + test_instagram.HTML_FOOTER)
