@@ -69,3 +69,13 @@ def webapp_add_wsgi_middleware(app):
   # app = instance_info.concurrent_requests_wsgi_middleware(app)
 
   return app
+
+# monkey-patch WsgiRequest to allow unicode header values.
+from google.appengine.runtime.wsgi import WsgiRequest
+orig_response = WsgiRequest._StartResponse
+
+def unicode_start_response(self, status, response_headers, exc_info=None):
+  # {str(name): value.encode('utf-8')
+  return orig_response(self, status, util.encode(response_headers), exc_info)
+
+WsgiRequest._StartResponse = unicode_start_response

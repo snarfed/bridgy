@@ -550,8 +550,8 @@ def oauth_starter(oauth_start_handler, **kwargs):
   """
   class StartHandler(oauth_start_handler, Handler):
     def redirect_url(self, state=None, **ru_kwargs):
-      return super(StartHandler, self).redirect_url(
-        self.construct_state_param_for_add(state, **kwargs), **ru_kwargs)
+      return native_str(super(StartHandler, self).redirect_url(
+        self.construct_state_param_for_add(state, **kwargs), **ru_kwargs))
 
   return StartHandler
 
