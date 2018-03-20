@@ -91,7 +91,8 @@ class Instagram(models.Source):
   def user_tag_id(self):
     """Returns the tag URI for this source, e.g. 'tag:instagram.com:123456'."""
     user = json.loads(self.auth_entity.get().user_json)
-    return self.gr_source.tag_uri(user.get('id') or self.key.id())
+    return (user.get('actor', {}).get('id') or
+            self.gr_source.tag_uri(user.get('id') or self.key.id()))
 
   def label_name(self):
     """Returns the username."""

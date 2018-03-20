@@ -7,6 +7,7 @@ import json
 import urllib
 
 from oauth_dropins import indieauth
+from oauth_dropins.instagram import InstagramAuth
 from oauth_dropins.webutil.testutil import TestCase
 from granary import instagram as gr_instagram
 from granary.test import test_instagram
@@ -24,13 +25,21 @@ class InstagramTest(testutil.ModelsTest):
     super(InstagramTest, self).setUp()
     self.handler.messages = []
     self.auth_entity = indieauth.IndieAuth(id='http://foo.com', user_json=json.dumps({
+      'me': 'https://snarfed.org/',
       'rel-me': ['http://instagram.com/snarfed'],
+      'h-card': {
+        # ...
+      },
     }))
     self.inst = instagram.Instagram.new(
       self.handler, auth_entity=self.auth_entity, actor={
+        'objectType': 'person',
+        'id': 'tag:instagram.com,2013:420973239',
         'username': 'snarfed',
         'displayName': 'Ryan Barrett',
+        'url': 'https://snarfed.org/',
         'image': {'url': 'http://pic.ture/url'},
+        # ...
       })
 
     self.bridgy_api_state = {
@@ -48,9 +57,19 @@ class InstagramTest(testutil.ModelsTest):
     self.assertEqual('http://pic.ture/url', self.inst.picture)
     self.assertEqual('https://www.instagram.com/snarfed/', self.inst.url)
     self.assertEqual('https://www.instagram.com/snarfed/', self.inst.silo_url())
-    self.assertEqual('tag:instagram.com,2013:snarfed', self.inst.user_tag_id())
+    self.assertEqual('tag:instagram.com,2013:420973239', self.inst.user_tag_id())
     self.assertEqual('Ryan Barrett', self.inst.name)
     self.assertEqual('snarfed (Instagram)', self.inst.label())
+
+  def test_user_tag_id_old_instagram_auth_entity(self):
+    self.inst.auth_entity = InstagramAuth(
+      id='snarfed', access_token_str='', auth_code='', user_json=json.dumps({
+        'id': '420973239',
+        'username': 'snarfed',
+        'full_name': 'Ryan B',
+        'website': 'https://snarfed.org/'
+      })).put()
+    self.assertEqual('tag:instagram.com,2013:420973239', self.inst.user_tag_id())
 
   def test_canonicalize_url(self):
     self.unstub_requests_head()
