@@ -8,7 +8,7 @@ from oauth_dropins.webutil import logs
 
 
 class LogHandler(logs.LogHandler):
-  VERSION_IDS = ['2', '3', '4', '5', '6', '7']
+  VERSION_IDS = ['2', '3', '4', '5', '6', '7', '8']
 
 
 application = webapp2.WSGIApplication([
