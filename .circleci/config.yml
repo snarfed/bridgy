@@ -26,16 +26,16 @@ jobs:
             apt-get install google-cloud-sdk-app-engine-python-extras
             # use granary and oauth-dropins master at head. (see pip install -e 's below.)
             cd /tmp; git clone https://github.com/snarfed/oauth-dropins.git
-            cd /tmp/oauth-dropins; git checkout python3; git submodule sync; git submodule update --init
-            # cd /tmp/oauth-dropins/oauth_dropins/webutil; git checkout master; git pull
+            cd /tmp/oauth-dropins; git submodule sync; git submodule update --init
+            cd /tmp/oauth-dropins/oauth_dropins/webutil; git checkout master; git pull
 
             cd /tmp; git clone https://github.com/snarfed/granary.git
-            cd /tmp/granary; git checkout python3
 
       - run:
           name: Python 2 dependencies
           command: |
             apt-get install -y python-virtualenv
+            apt-get install -y libxml2-dev libxslt-dev zlib1g-dev  # for pip install lxml
             virtualenv --python=python2 local
             . local/bin/activate
 
