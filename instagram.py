@@ -33,11 +33,11 @@ from oauth_dropins import instagram as oauth_instagram
 from oauth_dropins.webutil.handlers import TemplateHandler
 import webapp2
 
-import models
+from models import Source
 import util
 
 
-class Instagram(models.Source):
+class Instagram(Source):
   """An Instagram account.
 
   The key name is the username. Instagram usernames may have ASCII letters (case
@@ -48,7 +48,8 @@ class Instagram(models.Source):
   GR_CLASS = gr_instagram.Instagram
   SHORT_NAME = 'instagram'
   FAST_POLL = datetime.timedelta(minutes=60)
-  RATE_LIMITED_POLL = models.Source.SLOW_POLL
+  RATE_LIMITED_POLL = Source.SLOW_POLL
+  HTTP_RATE_LIMIT_CODES = Source.RATE_LIMIT_HTTP_CODES + ('503',)
 
   URL_CANONICALIZER = util.UrlCanonicalizer(
     domain=GR_CLASS.DOMAIN,

@@ -49,11 +49,6 @@ LOCALHOST_TEST_DOMAINS = frozenset([
 
 POLL_TASK_DATETIME_FORMAT = '%Y-%m-%d-%H-%M-%S'
 
-# rate limiting errors. twitter returns 429, instagram 503, google+ 403.
-# TODO: facebook. it returns 200 and reports the error in the response.
-# https://developers.facebook.com/docs/reference/ads-api/api-rate-limiting/
-HTTP_RATE_LIMIT_CODES = frozenset(('403', '429', '503'))
-
 REQUEST_HEADERS = {
   'User-Agent': 'Bridgy (https://brid.gy/about)',
 }

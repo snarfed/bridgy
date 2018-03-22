@@ -96,6 +96,13 @@ class Source(StringIdModel):
   FAST_REFETCH = datetime.timedelta(hours=6)
   # refetch less often (this often) if it's been >2w since the last synd link
   SLOW_REFETCH = datetime.timedelta(days=2)
+  # rate limiting HTTP status codes returned by this silo. e.g. twitter returns
+  # 429, instagram 503, google+ 403.
+  # TODO: facebook. it returns 200 and reports the error in the response.
+  # https://developers.facebook.com/docs/reference/ads-api/api-rate-limiting/
+  RATE_LIMIT_HTTP_CODES = ('429',)
+  DISABLE_HTTP_CODES = ('401',)
+
   # whether to require a u-syndication link for backfeed
   BACKFEED_REQUIRES_SYNDICATION_LINK = False
 

@@ -11,7 +11,7 @@ from granary import source as gr_source
 from oauth_dropins import github as oauth_github
 import webapp2
 
-import models
+from models import Source
 import util
 
 
@@ -26,7 +26,7 @@ PUBLISH_SCOPES = [
 ]
 
 
-class GitHub(models.Source):
+class GitHub(Source):
   """A GitHub user.
 
   WARNING: technically we should override URL_CANONICALIZER here and pass it
@@ -52,6 +52,7 @@ class GitHub(models.Source):
     'like': 'star',
   }
   BACKFEED_REQUIRES_SYNDICATION_LINK = True
+  DISABLE_HTTP_CODES = Source.DISABLE_HTTP_CODES + ('403',)
 
   # WARNING: see docstring
   URL_CANONICALIZER = util.UrlCanonicalizer(

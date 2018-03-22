@@ -11,14 +11,14 @@ import appengine_config
 from granary import googleplus as gr_googleplus
 from granary import source as gr_source
 from oauth_dropins import googleplus as oauth_googleplus
-import models
+from models import MAX_AUTHOR_URLS, Source
 import util
 
 from google.appengine.ext import ndb
 import webapp2
 
 
-class GooglePlusPage(models.Source):
+class GooglePlusPage(Source):
   """A Google+ profile or page.
 
   The key name is the user id.
@@ -26,6 +26,7 @@ class GooglePlusPage(models.Source):
 
   GR_CLASS = gr_googleplus.GooglePlus
   SHORT_NAME = 'googleplus'
+  RATE_LIMIT_HTTP_CODES = Source.RATE_LIMIT_HTTP_CODES + ('403',)
 
   URL_CANONICALIZER = util.UrlCanonicalizer(
     domain=GR_CLASS.DOMAIN,
@@ -99,7 +100,7 @@ class GooglePlusPage(models.Source):
     urls = ['"%s"' % util.fragmentless(url) for url in self.domain_urls
             if not util.in_webmention_blacklist(util.domain_from_link(url))
             and urlparse.urlparse(url).path in ('', '/')
-           ][:models.MAX_AUTHOR_URLS]
+           ][:MAX_AUTHOR_URLS]
 
     if urls:
       return self.get_activities(

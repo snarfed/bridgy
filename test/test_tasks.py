@@ -853,6 +853,8 @@ class PollTest(TaskQueueTest):
 
   def test_rate_limiting_errors(self):
     """Finish the task on rate limiting errors."""
+    self.mox.stubs.Set(FakeSource, 'RATE_LIMIT_HTTP_CODES', ('429', '456'))
+    self.mox.stubs.Set(self.sources[0], 'RATE_LIMIT_HTTP_CODES', ('429', '456'))
     try:
       error_body = json.dumps({"meta": {
         "code": 429, "error_message": "The maximum number of requests...",
@@ -861,7 +863,6 @@ class PollTest(TaskQueueTest):
           urllib2.HTTPError('url', 429, 'Rate limited', {},
                             StringIO.StringIO(error_body)),
           apiclient.errors.HttpError(httplib2.Response({'status': 429}), b''),
-          urllib2.HTTPError('url', 403, 'msg', {}, None)
       ):
         self.mox.UnsetStubs()
         self.expect_get_activities().AndRaise(err)

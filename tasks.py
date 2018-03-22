@@ -102,7 +102,7 @@ class Poll(webapp2.RequestHandler):
     except Exception, e:
       source.updates['poll_status'] = 'error'
       code, body = util.interpret_http_exception(e)
-      if code == '401' or isinstance(e, models.DisableSource):
+      if code in source.DISABLE_HTTP_CODES or isinstance(e, models.DisableSource):
         # the user deauthorized the bridgy app, so disable this source.
         # let the task complete successfully so that it's not retried.
         logging.warning('Disabling source due to: %s' % e, exc_info=True)
@@ -115,7 +115,7 @@ class Poll(webapp2.RequestHandler):
         if source.is_beta_user():
           util.email_me(subject='Bridgy: disabled %s' % source.label(), body=body)
 
-      elif code in util.HTTP_RATE_LIMIT_CODES:
+      elif code in source.RATE_LIMIT_HTTP_CODES:
         logging.info('Rate limited. Marking as error and finishing. %s', e)
         source.updates['rate_limited'] = True
       elif ((code and int(code) / 100 == 5) or
@@ -527,7 +527,7 @@ class Discover(Poll):
 
     except Exception, e:
       code, body = util.interpret_http_exception(e)
-      if (code and (code in util.HTTP_RATE_LIMIT_CODES or
+      if (code and (code in source.RATE_LIMIT_HTTP_CODES or
                     code in ('400', '404') or
                     int(code) / 100 == 5)
             or util.is_connection_failure(e)):
