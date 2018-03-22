@@ -176,6 +176,10 @@ class ResponseTest(testutil.ModelsTest):
       'objectType': 'comment',
       'verb': 'post',
     }))
+    self.assertEqual('post', Response.get_type({
+      'objectType': 'issue',
+      'context': {'inReplyTo': {'foo': 'bar'}},
+    }))
 
 
 class SourceTest(testutil.HandlerTest):
