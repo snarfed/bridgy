@@ -36,7 +36,7 @@ jobs:
           command: |
             apt-get install -y python-virtualenv
             apt-get install -y libxml2-dev libxslt-dev zlib1g-dev  # for pip install lxml
-            virtualenv --python=python2 local
+            if [ ! -d local ]; then virtualenv --python=python2 local; fi
             . local/bin/activate
 
             pip install -r requirements.freeze.txt
