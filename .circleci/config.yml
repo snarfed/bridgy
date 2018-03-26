@@ -54,7 +54,7 @@ jobs:
           name: Test Python 2
           command: |
             . local/bin/activate
-            python2 -m coverage run --source=. --omit=admin.py,facebook_test_live.py,local/\*,logs.py,mapreduce/\*,mapreduces.py,scripts/\*,test/\* -m unittest discover -v
+            python2 -m coverage run --source=. --omit=admin.py,appengine_config.py,facebook_test_live.py,local/\*,logs.py,mapreduce/\*,mapreduces.py,scripts/\*,test/\* -m unittest discover -v
             if [ "$FACEBOOK_TEST_USER_TOKEN" != "" ]; then python ./facebook_test_live.py --debug; fi
             python2 -m coverage html -d /tmp/coverage_html
             if [ "$COVERALLS_REPO_TOKEN" != "" ]; then coveralls; fi
