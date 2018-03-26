@@ -1,3 +1,4 @@
+# coding=utf-8
 """Unit tests for superfeedr.py.
 """
 from __future__ import unicode_literals
@@ -131,5 +132,16 @@ class SuperfeedrTest(testutil.HandlerTest):
     self.assert_blogposts([BlogPost(id='X' * _MAX_KEYPART_BYTES,
                                     source=self.source.key, feed_item=item,
                                     failed=['http://x/y'],
+                                    status='complete')],
+                          tasks=False)
+
+  def test_notify_utf8(self):
+    """Check that we handle unicode chars in content ok, including logging."""
+    self.feed = '{"items": [{"id": "X", "content": "a ☕ z"}]}'.encode('utf-8')
+    resp = fake_app.get_response('/notify/foo.com', method='POST', body=self.feed)
+
+    self.assertEquals(200, resp.status_int)
+    self.assert_blogposts([BlogPost(id='X', source=self.source.key,
+                                    feed_item={'id': 'X', 'content': 'a ☕ z'},
                                     status='complete')],
                           tasks=False)

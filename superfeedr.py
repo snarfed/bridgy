@@ -69,7 +69,7 @@ def handle_feed(feed, source):
   http://documentation.superfeedr.com/subscribers.html#pubsubhubbubnotifications
 
   Args:
-    feed: string, Superfeedr JSON feed
+    feed: unicode string, Superfeedr JSON feed
     source: Blogger, Tumblr, or WordPress
   """
   logging.info('Source: %s %s', source.label(), source.key.string_id())
@@ -124,4 +124,4 @@ class NotifyHandler(util.Handler):
   def post(self, id):
     source = self.SOURCE_CLS.get_by_id(id)
     if source:
-      handle_feed(self.request.body, source)
+      handle_feed(self.request.body.decode('utf-8'), source)
