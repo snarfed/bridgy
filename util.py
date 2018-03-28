@@ -115,7 +115,6 @@ def add_poll_task(source, now=False, **kwargs):
                        params={'source_key': source.key.urlsafe(),
                                'last_polled': last_polled_str},
                        target='background',
-                       headers={'X-AppEngine-FailFast': 'true'},
                        **kwargs)
   logging.info('Added %s task %s with args %s', queue, task.name, kwargs)
 
@@ -125,7 +124,6 @@ def add_propagate_task(entity, **kwargs):
   task = taskqueue.add(queue_name='propagate',
                        params={'response_key': entity.key.urlsafe()},
                        target='background',
-                       headers={'X-AppEngine-FailFast': 'true'},
                        **kwargs)
   logging.info('Added propagate task: %s', task.name)
 
@@ -135,7 +133,6 @@ def add_propagate_blogpost_task(entity, **kwargs):
   task = taskqueue.add(queue_name='propagate-blogpost',
                        params={'key': entity.key.urlsafe()},
                        target='background',
-                       headers={'X-AppEngine-FailFast': 'true'},
                        **kwargs)
   logging.info('Added propagate-blogpost task: %s', task.name)
 
@@ -149,7 +146,6 @@ def add_discover_task(source, post_id, type=None, **kwargs):
     params['type'] = type
 
   task = taskqueue.add(queue_name='discover', params=params,
-                       headers={'X-AppEngine-FailFast': 'true'},
                        target='background')
   logging.info('Added discover task for post %s for %s: %s', post_id,
                source.label(), task.name)
