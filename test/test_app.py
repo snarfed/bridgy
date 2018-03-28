@@ -12,10 +12,8 @@ import urlparse
 from google.appengine.api import memcache
 from google.appengine.ext import ndb
 import mox
-from oauth_dropins import handlers as oauth_handlers
 from oauth_dropins.twitter import TwitterAuth
 import tweepy
-import webapp2
 
 import app
 import models

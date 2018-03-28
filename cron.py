@@ -4,10 +4,8 @@ from __future__ import unicode_literals
 
 import datetime
 import itertools
-import json
 import logging
 import math
-import string
 
 from google.appengine.ext import ndb
 import appengine_config

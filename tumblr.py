@@ -177,9 +177,7 @@ class Tumblr(models.Source):
     # strip slug, query and fragment from post url
     parsed = urlparse.urlparse(post_url)
     path = parsed.path.split('/')
-    try:
-      tumblr_post_id = int(path[-1])
-    except ValueError:
+    if not util.is_int(path[-1]):
       path.pop(-1)
     post_url = urlparse.urlunparse(parsed[:2] + ('/'.join(path), '', '', ''))
 

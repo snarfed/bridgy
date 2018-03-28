@@ -5,10 +5,8 @@ from __future__ import unicode_literals
 
 import datetime
 import json
-import re
 
 from google.appengine.ext import ndb
-from granary import source as gr_source
 import mox
 
 import blogger
@@ -67,7 +65,7 @@ class ResponseTest(testutil.ModelsTest):
     self.assert_propagate_task()
 
     # existing. should add one more propagate task.
-    same = saved.get_or_save(source, restart=True)
+    saved.get_or_save(source, restart=True)
     self.assert_propagate_task()
 
     # new syndication URL. should add two propagate tasks.

@@ -49,7 +49,7 @@ class Instagram(Source):
   SHORT_NAME = 'instagram'
   FAST_POLL = datetime.timedelta(minutes=60)
   RATE_LIMITED_POLL = Source.SLOW_POLL
-  HTTP_RATE_LIMIT_CODES = Source.RATE_LIMIT_HTTP_CODES + ('503',)
+  RATE_HTTP_LIMIT_CODES = Source.RATE_LIMIT_HTTP_CODES + ('503',)
 
   URL_CANONICALIZER = util.UrlCanonicalizer(
     domain=GR_CLASS.DOMAIN,
@@ -115,7 +115,7 @@ class StartHandler(TemplateHandler, util.Handler):
   def post(self):
     features = self.request.get('feature')
     features = features.split(',') if features else []
-    callback = util.get_required_param(self, 'callback')
+    util.get_required_param(self, 'callback')
 
     ia_start = util.oauth_starter(indieauth.StartHandler).to('/instagram/callback')(
       self.request, self.response)
@@ -170,8 +170,7 @@ class CallbackHandler(indieauth.CallbackHandler, util.Handler):
                           'Bridgy only supports public accounts.')
         return self.redirect('/')
 
-    source = self.maybe_add_or_delete_source(Instagram, auth_entity, state,
-                                             actor=actor)
+    self.maybe_add_or_delete_source(Instagram, auth_entity, state, actor=actor)
 
 
 application = webapp2.WSGIApplication([

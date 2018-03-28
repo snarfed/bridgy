@@ -12,7 +12,6 @@ import appengine_config
 from granary import source as gr_source
 from google.appengine.api import mail
 import mox
-from oauth_dropins import facebook as oauth_facebook
 import requests
 import webapp2
 from webob import exc
@@ -20,7 +19,6 @@ from webob import exc
 import facebook
 from models import Publish, PublishedPage
 import publish
-from test import test_facebook
 import testutil
 import util
 
@@ -301,7 +299,7 @@ foo
   def _test_shortlink(self, html):
     self.expect_requests_get('http://foo.com/bar', html)
     self.mox.ReplayAll()
-    resp = self.assert_created('foo - http://sho.rt/link')
+    self.assert_created('foo - http://sho.rt/link')
 
   def test_rel_shortlink_overrides_redirect(self):
     self.expect_requests_head('http://will/redirect', redirected_url='http://foo.com/1')
@@ -645,7 +643,7 @@ this is my article
                                  ignore_formatting=False
                                  ).AndRaise(RuntimeError('baz'))
     self.mox.ReplayAll()
-    resp = self.assert_error('500', status=500)
+    self.assert_error('500', status=500)
 
   def test_preview(self):
     html = self.post_html % 'foo'
@@ -683,10 +681,6 @@ this is my article
     self.assertEquals('foo', json.loads(resp.body)['content'])
 
   def test_preview_omit_link_no_query_param_overrides_mf2(self):
-    html = """\
-<article class="h-entry">
-<div class="e-content">foo</div>
-</article>"""
     self.expect_requests_get('http://foo.com/bar', self.post_html % 'foo')
     self.mox.ReplayAll()
 

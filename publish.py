@@ -54,7 +54,6 @@ from instagram import Instagram
 from models import Publish, PublishedPage
 from twitter import Twitter
 import models
-import requests
 import util
 import webapp2
 import webmention

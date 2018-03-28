@@ -1,14 +1,11 @@
 """Unit tests for github.py."""
 import json
-import urllib
 
 import appengine_config
 import github
 import granary
 import granary.test.test_github
-import models
 import oauth_dropins
-import tasks
 import testutil
 
 

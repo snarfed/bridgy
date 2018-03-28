@@ -18,7 +18,6 @@ from requests.auth import HTTPBasicAuth
 
 import models
 import util
-import webapp2
 
 PUSH_API_URL = 'https://push.superfeedr.com'
 

@@ -72,7 +72,6 @@ class WordPress(models.Source):
       handler: the current :class:`webapp2.RequestHandler`
       auth_entity: :class:`oauth_dropins.wordpress_rest.WordPressAuth`
     """
-    auth_domain = auth_entity.key.id()
     site_info = WordPress.get_site_info(handler, auth_entity)
     if site_info is None:
       return

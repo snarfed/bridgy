@@ -99,7 +99,6 @@ class SuperfeedrTest(testutil.HandlerTest):
       'content': 'x <a href="http://t.umblr.com/redirect?z=http%3A%2F%2Fwrap%2Fped&amp;t=YmZkMzQy..."></a> y',
     }
     superfeedr.handle_feed(json.dumps({'items': [item]}), self.source)
-    posts = list(BlogPost.query())
     self.assert_blogposts([BlogPost(id='A', source=self.source.key,
                                     feed_item=item, unsent=['http://wrap/ped'])])
 
@@ -110,7 +109,6 @@ class SuperfeedrTest(testutil.HandlerTest):
       'content': 'x <a href="http://abc?source=rss----12b80d28f892---4',
     }
     superfeedr.handle_feed(json.dumps({'items': [item]}), self.source)
-    posts = list(BlogPost.query())
     self.assert_blogposts([BlogPost(id='A', source=self.source.key,
                                     feed_item=item, unsent=['http://abc'])])
 

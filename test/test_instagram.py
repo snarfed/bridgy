@@ -177,8 +177,6 @@ class InstagramTest(testutil.ModelsTest):
   def test_signup_private_account(self):
     self.expect_site_fetch()
     self.expect_indieauth_check()
-
-    profile = copy.deepcopy(test_instagram.HTML_PROFILE)
     self.expect_instagram_fetch(test_instagram.HTML_PROFILE_PRIVATE_COMPLETE)
 
     self.mox.ReplayAll()

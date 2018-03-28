@@ -42,6 +42,12 @@ python -m unittest discover
 The last command runs the unit tests. If you send a pull request, please include
 (or update) a test for the new functionality if possible!
 
+To run the entire app locally, run this in the repo root directory:
+
+```
+dev_appserver.py --log_level debug app.yaml background.yaml
+```
+
 If you hit an error during setup, check out the [oauth-dropins Troubleshooting/FAQ section](https://github.com/snarfed/oauth-dropins#troubleshootingfaq). For searchability, here are a handful of error messages that [have solutions there](https://github.com/snarfed/oauth-dropins#troubleshootingfaq):
 
 ```

@@ -9,7 +9,6 @@ import appengine_config
 import flickr
 import granary
 import granary.test.test_flickr
-import models
 import oauth_dropins
 import tasks
 import testutil
@@ -69,7 +68,7 @@ class FlickrTest(testutil.ModelsTest):
     self.flickr.features = ['listen']
     self.flickr.put()
     self.assertEqual('enabled', self.flickr.status)
-    resp = tasks.application.get_response(
+    tasks.application.get_response(
       '/_ah/queue/poll', method='POST', body=urllib.urlencode({
         'source_key': self.flickr.key.urlsafe(),
         'last_polled': '1970-01-01-00-00-00',

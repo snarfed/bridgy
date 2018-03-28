@@ -5,7 +5,6 @@ from __future__ import unicode_literals
 
 import datetime
 import json
-import string
 
 from granary import facebook as gr_facebook
 from oauth_dropins import facebook as oauth_facebook

@@ -9,8 +9,7 @@ import urllib
 import appengine_config
 from oauth_dropins import medium as oauth_medium
 
-from medium import AddMedium, ChooseBlog, Medium, application
-import util
+from medium import ChooseBlog, Medium, application
 import testutil
 
 

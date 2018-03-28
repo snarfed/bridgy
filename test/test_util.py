@@ -2,7 +2,6 @@
 """Unit tests for util.py."""
 from __future__ import unicode_literals
 
-import copy
 import datetime
 import json
 import time

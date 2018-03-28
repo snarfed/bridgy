@@ -27,11 +27,9 @@ lookups in the following primary cases:
 from __future__ import unicode_literals
 
 import collections
-import datetime
 import itertools
 import logging
 import mf2util
-import requests
 import urlparse
 import util
 

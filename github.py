@@ -2,12 +2,9 @@
 """
 import json
 import logging
-import urlparse
 
 import appengine_config
-from google.appengine.ext import ndb
 from granary import github as gr_github
-from granary import source as gr_source
 from oauth_dropins import github as oauth_github
 import webapp2
 
@@ -98,7 +95,7 @@ class GitHub(Source):
 class AddGitHub(oauth_github.CallbackHandler, util.Handler):
   def finish(self, auth_entity, state=None):
     logging.debug('finish with %s, %s', auth_entity, state)
-    source = self.maybe_add_or_delete_source(GitHub, auth_entity, state)
+    self.maybe_add_or_delete_source(GitHub, auth_entity, state)
 
 
 application = webapp2.WSGIApplication([

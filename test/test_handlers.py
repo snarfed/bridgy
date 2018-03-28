@@ -213,7 +213,6 @@ asdf http://other/link qwert
       'author': {'image': {'url': 'http://example.com/ryan/image'}},
       'tags': self.activities[0]['object']['tags'],
     }
-    comment = models.Response.get_by_id('tag:fa.ke,2013:a1-b2.c3')
 
     self.check_response('/comment/fake/%s/000/a1-b2.c3', """\
 <article class="h-entry">
@@ -276,7 +275,7 @@ asdf http://other/link qwert
       },
     }
 
-    resp = self.check_response('/react/fake/%s/000/111/scissors', """\
+    self.check_response('/react/fake/%s/000/111/scissors', """\
 <article class="h-entry">
 <span class="p-uid">tag:fa.ke,2013:000_scissors_by_111</span>
   <span class="p-author h-card">
@@ -499,4 +498,4 @@ asdf http://other/link qwert
     FakeSource.is_blocked(mox.IgnoreArg()).AndReturn(True)
     self.mox.ReplayAll()
 
-    orig = self.check_response('/comment/fake/%s/000/111', expected_status=410)
+    self.check_response('/comment/fake/%s/000/111', expected_status=410)

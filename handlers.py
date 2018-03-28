@@ -19,7 +19,6 @@ URL paths are:
 """
 from __future__ import unicode_literals
 
-import copy
 import json
 import logging
 import re

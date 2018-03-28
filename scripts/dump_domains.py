@@ -6,8 +6,9 @@ their profile.
 
 Started from https://github.com/snarfed/bridgy/issues/490#issuecomment-143572623
 """
-
 import collections
+import urlparse
+
 import models
 from models import Response
 import blogger

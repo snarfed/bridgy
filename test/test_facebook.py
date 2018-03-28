@@ -4,10 +4,8 @@ from __future__ import unicode_literals
 
 import app
 import copy
-import datetime
 import logging
 import json
-import re
 import urllib
 import urllib2
 
@@ -15,11 +13,10 @@ import appengine_config
 
 from google.appengine.ext import ndb
 import granary
-from granary import facebook as gr_facebook
-from granary.facebook import API_COMMENTS_ALL, API_EVENT, API_NEWS_PUBLISHES, \
+from granary.facebook import API_COMMENTS_ALL, API_NEWS_PUBLISHES, \
   API_PHOTOS_UPLOADED, API_OBJECT, API_PUBLISH_POST, API_SHARES, API_USER_EVENTS
-from granary.test.test_facebook import ACTIVITY, API_ME_POSTS, COMMENT_OBJS, EVENT, \
-  EVENT_OBJ, LIKE_OBJS, PHOTO, PHOTO_ACTIVITY, PHOTO_POST, POST, SHARE_OBJ
+from granary.test.test_facebook import ACTIVITY, API_ME_POSTS, EVENT, \
+  PHOTO, PHOTO_ACTIVITY, PHOTO_POST, POST
 import oauth_dropins
 from oauth_dropins import facebook as oauth_facebook
 import webapp2

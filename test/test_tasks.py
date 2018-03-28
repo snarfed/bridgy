@@ -3,7 +3,6 @@
 """
 from __future__ import unicode_literals
 
-import bz2
 import copy
 import datetime
 import httplib
@@ -31,7 +30,6 @@ import appengine_config
 
 import models
 from models import Response, SyndicatedPost
-import original_post_discovery
 from twitter import Twitter
 import tasks
 from tasks import PropagateResponse

@@ -3,23 +3,17 @@
 """
 from __future__ import unicode_literals
 
-import bz2
-import calendar
-import copy
 import datetime
 import gc
-import itertools
 import json
 import logging
 import random
-import urlparse
 
 from oauth_dropins.webutil import logs
 from google.appengine.api import memcache
 from google.appengine.api import datastore_errors
 from google.appengine.api.datastore_types import _MAX_STRING_LENGTH
 from google.appengine.ext import ndb
-from granary import source as gr_source
 from granary.source import Source
 import webapp2
 from webmentiontools import send

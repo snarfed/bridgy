@@ -12,11 +12,9 @@ import urlparse
 
 import appengine_config
 
-from google.appengine.api import taskqueue
 from google.appengine.ext import ndb
 from google.appengine.ext.ndb.stats import KindStat, KindPropertyNameStat
 from google.net.proto.ProtocolBuffer import ProtocolBufferDecodeError
-from granary import source as gr_source
 from oauth_dropins import blogger_v2 as oauth_blogger_v2
 from oauth_dropins import facebook as oauth_facebook
 from oauth_dropins import flickr as oauth_flickr

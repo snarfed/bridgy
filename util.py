@@ -16,25 +16,20 @@ import copy
 from http.cookies import CookieError, SimpleCookie
 import contextlib
 import datetime
-import json
 import logging
 import re
 import time
 import urllib
 import urlparse
 
-import webapp2
-
 from appengine_config import DEBUG
 import bs4
-from granary import source as gr_source
 import humanize
 import mf2py
 from oauth_dropins.webutil import handlers as webutil_handlers
 from oauth_dropins.webutil.models import StringIdModel
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import *
-from webob import exc
 
 from google.appengine.api import mail
 from google.appengine.api import memcache

@@ -7,7 +7,6 @@ https://dev.twitter.com/docs/rate-limiting/1.1/limits
 """
 from __future__ import unicode_literals
 
-import datetime
 import json
 import logging
 
@@ -111,7 +110,6 @@ class Twitter(models.Source):
       for url in urls:
         if (url in obj.get('content', '') or
             any(t.get('url', '').startswith(url) for t in tags + atts)):
-          id = candidate['id']
           results.append(candidate)
           break
 

@@ -11,7 +11,6 @@ import json
 
 import appengine_config
 
-import requests
 import util
 
 
