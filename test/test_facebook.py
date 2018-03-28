@@ -1,8 +1,8 @@
 """Unit tests for facebook.py.
 """
 from __future__ import unicode_literals
+from future.types.newstr import newstr
 
-import app
 import copy
 import logging
 import json
@@ -21,6 +21,7 @@ import oauth_dropins
 from oauth_dropins import facebook as oauth_facebook
 import webapp2
 
+import app
 import facebook
 from facebook import FacebookPage
 import models
@@ -459,6 +460,17 @@ class FacebookPageTest(testutil.ModelsTest):
       ndb.Key('Response', 'tag:facebook.com,2013:222_liked_by_666'),
       ndb.Key('Response', 'tag:facebook.com,2013:222_wow_by_777'),
     ), models.Response.query().fetch(keys_only=True))
+
+  def test_save_cache(self):
+    self.fb.updates = {
+      'post_publics': {
+        '3': None,
+        newstr('4'): None,
+        'True': None,
+        newstr('False'): None,
+      },
+    }
+    self.fb.put()
 
   def test_on_new_syndicated_post_infer_username(self):
     # username is already set

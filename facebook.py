@@ -296,7 +296,7 @@ class FacebookPage(models.Source):
     val = self.updates.get(name)
     if val:
       keep = heapq.nlargest(max,
-        (int(id) if util.is_int(id) else id for id in val.keys()))
+        (int(id) if util.is_int(id) else str(id) for id in val.keys()))
       setattr(self, name + '_json',
               json.dumps({str(id): val[str(id)] for id in keep}))
 
