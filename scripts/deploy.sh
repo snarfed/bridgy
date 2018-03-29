@@ -34,7 +34,7 @@ fi
 echo 'Package versions OK.'
 
 # push commits and deploy!
-git push
+# git push
 # set an explicit version since logs.py's log fetching depends on explicitly
 # enumerating all versions. otherwise gcloud generates a new timestamp-based
 # version by default for every deploy.
