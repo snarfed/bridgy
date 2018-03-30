@@ -47,7 +47,7 @@ class Instagram(Source):
 
   GR_CLASS = gr_instagram.Instagram
   SHORT_NAME = 'instagram'
-  FAST_POLL = datetime.timedelta(minutes=60)
+  FAST_POLL = datetime.timedelta(minutes=120)
   RATE_LIMITED_POLL = Source.SLOW_POLL
   RATE_HTTP_LIMIT_CODES = Source.RATE_LIMIT_HTTP_CODES + ('503',)
 
