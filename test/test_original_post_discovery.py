@@ -10,6 +10,7 @@ from granary import facebook as gr_facebook
 from oauth_dropins import facebook as oauth_facebook
 from requests.exceptions import HTTPError
 
+import appengine_config
 from facebook import FacebookPage
 from models import SyndicatedPost
 import original_post_discovery

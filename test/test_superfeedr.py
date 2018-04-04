@@ -8,6 +8,7 @@ import json
 from google.appengine.ext.ndb.key import _MAX_KEYPART_BYTES
 import mox
 
+import appengine_config
 from models import BlogPost
 import superfeedr
 import testutil

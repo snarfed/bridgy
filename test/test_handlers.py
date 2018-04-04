@@ -7,6 +7,7 @@ import json
 import StringIO
 import urllib2
 
+import appengine_config
 from google.appengine.api import urlfetch_errors
 import mox
 

@@ -15,6 +15,7 @@ from oauth_dropins import indieauth
 from oauth_dropins import flickr as oauth_flickr
 from oauth_dropins import twitter as oauth_twitter
 
+import appengine_config
 import cron
 from flickr import Flickr
 from instagram import Instagram

@@ -7,8 +7,8 @@ import itertools
 import logging
 import math
 
-from google.appengine.ext import ndb
 import appengine_config
+from google.appengine.ext import ndb
 
 import models
 from models import Source

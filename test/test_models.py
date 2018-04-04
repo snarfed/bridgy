@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 import datetime
 import json
 
+import appengine_config
 from google.appengine.ext import ndb
 import mox
 
