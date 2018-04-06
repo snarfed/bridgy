@@ -45,7 +45,7 @@ class WebmentionHandler(WebmentionGetHandler):
   source = None
   entity = None
 
-  def fetch_mf2(self, url):
+  def fetch_mf2(self, url, require_mf2=True):
     """Fetches a URL and extracts its mf2 data.
 
     Side effects: sets :attr:`entity`\ .html on success, calls :attr:`error()`
@@ -53,6 +53,7 @@ class WebmentionHandler(WebmentionGetHandler):
 
     Args:
       url: string
+      require_mf2: boolean, whether to return error if no mf2 are found
 
     Returns:
       (:class:`requests.Response`, mf2 data dict) on success, None on failure
@@ -98,7 +99,7 @@ class WebmentionHandler(WebmentionGetHandler):
 
     logging.debug('Parsed microformats2: %s', json.dumps(data, indent=2))
     items = data.get('items', [])
-    if not items or not items[0]:
+    if require_mf2 and (not items or not items[0]):
       return self.error('No microformats2 data found in ' + fetched.url,
                         data=data, html="""
 No <a href="http://microformats.org/get-started">microformats</a> or

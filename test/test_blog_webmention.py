@@ -108,9 +108,18 @@ i hereby reply
     self.assertEquals(html, bw.html)
 
   def test_domain_not_found(self):
+    self.expect_requests_get('http://foo.com/post/1', status_code=404)
+    for i in range(4):
+      self.expect_requests_get('http://foo.com/post/1', '')
+    self.mox.ReplayAll()
+
+    # couldn't fetch source URL
+    self.source.key.delete()
+    self.assert_error('Could not fetch source URL http://foo.com/post/1')
+    self.assertEquals(0, BlogWebmention.query().count())
+
     # no source
     msg = 'Could not find FakeSource account for foo.com.'
-    self.source.key.delete()
     self.assert_error(msg)
     self.assertEquals(0, BlogWebmention.query().count())
 
@@ -133,6 +142,31 @@ i hereby reply
     self.source.put()
     self.assert_error(msg)
     self.assertEquals(0, BlogWebmention.query().count())
+
+  def test_rel_canonical_different_domain(self):
+    self.expect_requests_get('http://foo.zz/post/1', """
+<head>
+<link href='http://foo.com/post/1' rel='canonical'/>
+</head>
+foo bar""")
+
+    html = """
+<article class="h-entry"><p class="e-content">
+i hereby <a href="http://foo.zz/post/1">mention</a>
+</p></article>"""
+    self.expect_requests_get('http://bar.com/mention', html)
+
+    testutil.FakeSource.create_comment(
+      'http://foo.zz/post/1', 'foo.zz', 'http://foo.zz/',
+      'mentioned this in <a href="http://bar.com/mention">i hereby mention</a>. <br /> <a href="http://bar.com/mention">via bar.com</a>')
+    self.mox.ReplayAll()
+
+    resp = self.get_response('http://bar.com/mention', 'http://foo.zz/post/1')
+    self.assertEquals(200, resp.status_int, resp.body)
+
+    bw = BlogWebmention.get_by_id('http://bar.com/mention http://foo.zz/post/1')
+    self.assertEquals('complete', bw.status)
+    self.assertEquals(html, bw.html)
 
   def test_target_is_home_page(self):
     self.assert_error('Home page webmentions are not currently supported.',

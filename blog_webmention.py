@@ -52,6 +52,25 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
                    .filter(source_cls.status == 'enabled')
                    .get())
     if not self.source:
+      # check for a rel-canonical link. Blogger uses these when it serves a post
+      # from multiple domains, e.g country TLDs like epeus.blogspot.co.uk vs
+      # epeus.blogspot.com.
+      # https://github.com/snarfed/bridgy/issues/805
+      mf2 = self.fetch_mf2(self.target_url, require_mf2=False)
+      if not mf2:
+        # fetch_mf2() already wrote the error response
+        return
+      domains = util.dedupe_urls(
+        util.domain_from_link(url)
+        for url in mf2[1].get('rels', {}).get('canonical', []))
+      if domains:
+        self.source = (source_cls.query()
+                       .filter(source_cls.domains.IN(domains))
+                       .filter(source_cls.features == 'webmention')
+                       .filter(source_cls.status == 'enabled')
+                       .get())
+
+    if not self.source:
       return self.error(
         'Could not find %s account for %s. Is it registered with Bridgy?' %
         (source_cls.GR_CLASS.NAME, domain))
