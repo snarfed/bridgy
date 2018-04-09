@@ -186,7 +186,7 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
         url = first_value(props, 'url') or self.source_url
         name = first_value(props, 'name') or first_value(props, 'summary')
         text = content['html'] = ('mentioned this in %s.' %
-                                  util.pretty_link(url, text=name))
+                                  util.pretty_link(url, text=name, max_length=280))
 
       if type:
         # found the target!
