@@ -105,7 +105,9 @@ WordPress.com, <a href="/">sign up here!</a>
      <span title="Error" class="glyphicon glyphicon-exclamation-sign"></span>
     {% endif %}
     Polled
-    {{ logs.maybe_link(source.last_poll_attempt, source.key, time_class='dt-bridgy-last-polled')|safe }},
+    {{ logs.maybe_link(
+         source.last_polled if source.rate_limited else source.last_poll_attempt,
+         source.key, time_class='dt-bridgy-last-polled')|safe }},
   {% endif %}
 
   <!-- next poll -->
