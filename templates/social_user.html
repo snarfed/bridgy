@@ -99,7 +99,9 @@ WordPress.com, <a href="/">sign up here!</a>
   {% if source.last_poll_attempt == EPOCH %}
     Not polled yet,
   {% else %}
-    {% if source.poll_status == "error" %}
+    {% if source.rate_limited %}
+     <span title="Polling delayed because {{ source.gr_source.NAME }} is throttling Bridgy.">🐢</span>
+    {% elif source.poll_status == "error" %}
      <span title="Error" class="glyphicon glyphicon-exclamation-sign"></span>
     {% endif %}
     Polled
