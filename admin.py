@@ -72,6 +72,7 @@ class SourcesHandler(handlers.TemplateHandler):
                instagram.Instagram, googleplus.GooglePlusPage)
     queries = [cls.query(Source.status == 'enabled',
                          Source.poll_status == 'error',
+                         Source.rate_limited == False,
                          Source.features == 'listen',
                         ).fetch_async(self.NUM_SOURCES)
                for cls in CLASSES]
