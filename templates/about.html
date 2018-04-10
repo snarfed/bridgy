@@ -27,15 +27,6 @@ likes, etc. that Bridgy sent to a
 </a></p>
 <br />
 
-<p>Here's a screencast of Bridgy sending an Instagram comment and like to my web
-site:</p>
-
-<p style="text-align: center">
-<iframe src="//www.youtube.com/embed/eGMNItivBdY"
-  width="420" height="315" class="shadow" frameborder="0" allowfullscreen>
-</iframe>
-</p>
-
 <p>Bridgy is part of the
 <a href="https://indieweb.org/">IndieWeb</a> ecosystem. In IndieWeb lingo,
 Bridgy offers
@@ -312,7 +303,8 @@ without leaving my site or application?</li>
 <code>POST</code> to a Bridgy registration URL of the
 form <code>https://brid.gy/SITE/start</code> (where SITE is
 <code>facebook</code>, <code>twitter</code>, <code>googleplus</code>,
-<code>instagram</code>, or <code>flickr</code>) with the parameters:</p>
+<code>instagram</code>, <code>flickr</code>, or <code>github</code>) with the
+parameters:</p>
 <ul>
 <li><code>feature</code>, a comma-separated list of features,
 usually <code>listen</code>, <code>publish</code>,
@@ -520,16 +512,10 @@ to <em>your</em> posts.
 </li>
 <li id="public">Is the post fully public? And the response too? Bridgy only
 shows and sends webmentions for fully public posts and responses. If your
-default Facebook audience is "friends" or "friends of friends," or your Twitter
-account
-is <a href="https://dev.twitter.com/docs/platform-objects/users#protected">protected</a>,
-or your Google+ post wasn't sent to "public," Bridgy won't see it.
-<p>Instagram is the one exception. The Instagram API
-<a href="https://groups.google.com/forum/m/#!topic/instagram-api-developers/DAO7OriVFsw">doesn't
-expose</a> whether an account
-is <a href="http://help.instagram.com/448523408565555">private</a>, so Bridgy
-handles all Instagram photos and comments. If your Instagram account is private,
-don't sign it up for Bridgy!
+default Facebook audience is <em>friends</em> or <em>friends of friends,</em> or
+your Twitter account is
+<a href="https://dev.twitter.com/docs/platform-objects/users#protected">protected</a>,
+or your Google+ post wasn't sent to <em>public,</em> Bridgy won't see it.
 </li>
 <li><p>Facebook's API isn't great about this either.
 <a href="https://github.com/snarfed/bridgy/issues/611">Sometimes it doesn't give
@@ -651,7 +637,7 @@ officially syndicating your posts and other people just mentioning them</a>.
 <p>
 Google+ and Facebook let you add multiple web site links to your profile. (You
 can do it on Facebook by separating links with spaces or newlines.) Twitter,
-Instagram, and Flickr only allow one, so Bridgy
+Instagram, Flickr, and GitHub only allow one, so Bridgy
 <a href="https://github.com/snarfed/bridgy/issues/483">also looks for links
 in your profile's description field</a>.
 </p>
@@ -669,7 +655,7 @@ some will occasionally appear out of order.
 <a href="http://microformats.org/wiki/h-entry#Core_Properties">
  <code>dt-published</code> microformats2 timestamp property</a>
 in responses whenever the silo's API or web site exposes it. Notably, it's
-included in all Facebook and Flickr comments and Twiter @-replies. If those
+included in all comments/replies. If those
 appear out of order on your site, file a feature request with your site's CMS or
 webmention plugin to sort by <code>dt-published</code>!
 <a href="https://github.com/idno/Known/issues/1104">Here's an example.</a>
@@ -752,8 +738,8 @@ webmention manually</a>. Here's how to construct Bridgy's source URLs:
 <p>Details:</p>
 <ul>
 <li><code class='keyword'>SITE</code> is either <code>facebook</code>,
-  <code>flickr</code>,<code>googleplus</code>, <code>instagram</code>,
-  or <code>twitter</code>.
+  <code>flickr</code>, <code>github</code>, <code>googleplus</code>,
+  <code>instagram</code>, or <code>twitter</code>.
 </li>
 <li><code>/post/...</code> URLs aren't currently used by Bridgy itself, but
   they're fun to play with if you want to convert silo posts to
@@ -762,7 +748,7 @@ webmention manually</a>. Here's how to construct Bridgy's source URLs:
 <li>You can add <code>?format=json</code> to the end of any URL to get the
   JSON-formatted version.
 </li>
-<li>For Twitter and Instagram, <code class='keyword'>USER_ID</code> is your
+<li>For Twitter, Instagram, and GitHub, <code class='keyword'>USER_ID</code> is your
   username, but for Facebook, Flickr, and Google+, it's your numeric user id.
   <code class='value'>LIKED_BY_USER_ID</code> and
   <code class='value'>RSVP_USER_ID</code> are always numeric. You
@@ -919,7 +905,7 @@ page.
 in your post to publish automatically!
 <pre>&lt;a href="<a href='https://brid.gy/publish/facebook'>https://brid.gy/publish/facebook</a>"&gt;&lt;/a&gt;
 &lt;a href="<a href='https://brid.gy/publish/flickr'>https://brid.gy/publish/flickr</a>"&gt;&lt;/a&gt;
-&lt;a href="<a href='https://brid.gy/publish/flickr'>https://brid.gy/publish/github</a>"&gt;&lt;/a&gt;
+&lt;a href="<a href='https://brid.gy/publish/github'>https://brid.gy/publish/github</a>"&gt;&lt;/a&gt;
 &lt;a href="<a href='https://brid.gy/publish/twitter'>https://brid.gy/publish/twitter</a>"&gt;&lt;/a&gt;
 </pre>
 </p>
