@@ -42,11 +42,10 @@ import util
 
 # https://developers.facebook.com/docs/reference/login/
 LISTEN_SCOPES = [
-  'user_website', 'user_status', 'user_posts', 'user_photos', 'user_events',
-  'user_actions.news', 'manage_pages',
+  'user_status', 'user_posts', 'user_photos', 'user_events', 'manage_pages',
 ]
 PUBLISH_SCOPES = [
-  'user_website', 'publish_actions', 'publish_pages', 'rsvp_event', 'user_status',
+  'publish_actions', 'publish_pages', 'rsvp_event', 'user_status',
   'user_photos', 'user_videos', 'user_events', 'user_likes',
 ]
 
