@@ -219,7 +219,7 @@ class Source(StringIdModel):
 
   def bridgy_url(self, handler):
     """Returns the Bridgy page URL for this source."""
-    return handler.request.host_url + self.bridgy_path()
+    return util.host_url(handler) + self.bridgy_path()
 
   def silo_url(self, handler):
     """Returns the silo account URL, e.g. https://twitter.com/foo."""

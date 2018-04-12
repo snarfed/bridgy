@@ -61,7 +61,7 @@ class Poll(webapp2.RequestHandler):
   RESTART_EXISTING_TASKS = False  # overridden in Discover
 
   def _last_poll_url(self, source):
-    return '%s/%s' % (self.request.host_url,
+    return '%s/%s' % (util.host_url(self),
                       logs.url(source.last_poll_attempt, source.key))
 
   def post(self, *path_args):
@@ -777,7 +777,7 @@ class PropagateResponse(SendWebmentions):
     logging.info('Source: %s %s, %s', source.label(), source.key.string_id(),
                  source.bridgy_url(self))
     poll_estimate = self.entity.created - datetime.timedelta(seconds=61)
-    logging.info('Created by this poll: %s/%s', self.request.host_url,
+    logging.info('Created by this poll: %s/%s', util.host_url(self),
                  logs.url(poll_estimate, source.key))
 
     self.activities = [json.loads(a) for a in self.entity.activities_json]
@@ -812,11 +812,10 @@ activities: %s""", target_url, self.entity.urls_to_activity, self.activities)
     # prefer brid-gy.appspot.com to brid.gy because non-browsers (ie OpenSSL)
     # currently have problems with brid.gy's SSL cert. details:
     # https://github.com/snarfed/bridgy/issues/20
-    if (self.request.host_url.endswith('brid.gy') or
-        self.request.host_url.endswith('brid-gy.appspot.com')):
+    host_url = self.request.host_url
+    domain = util.domain_from_link(host_url)
+    if domain == util.PROD_DOMAIN or domain in util.PROD_INTERNAL_DOMAINS:
       host_url = 'https://brid-gy.appspot.com'
-    else:
-      host_url = self.request.host_url
 
     path = [host_url, self.entity.type, self.entity.source.get().SHORT_NAME,
             self.entity.source.string_id(), post_id]

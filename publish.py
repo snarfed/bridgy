@@ -401,12 +401,13 @@ class Handler(webmention.WebmentionHandler):
         'target_url': self.target_url(),
         'include_link': include_link,
       }
-      vars = {'source': self.preprocess_source(self.source),
-              'preview': result.content,
-              'description': result.description,
-              'webmention_endpoint': self.request.host_url + '/publish/webmention',
-              'state': util.encode_oauth_state(state),
-              }
+      vars = {
+        'source': self.preprocess_source(self.source),
+        'preview': result.content,
+        'description': result.description,
+        'webmention_endpoint': util.host_url(self) + '/publish/webmention',
+        'state': util.encode_oauth_state(state),
+      }
       vars.update(state)
       logging.info('Rendering preview with template vars %s', pprint.pformat(vars))
       return gr_source.creation_result(

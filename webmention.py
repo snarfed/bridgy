@@ -19,7 +19,7 @@ class WebmentionGetHandler(util.Handler):
   """
   def head(self, site=None):
     self.response.headers['Link'] = (
-      '<%s/publish/webmention>; rel="webmention"' % self.request.host_url)
+      '<%s/publish/webmention>; rel="webmention"' % util.host_url(self))
 
   @util.canonicalize_domain
   def get(self, site=None):
@@ -30,7 +30,7 @@ class WebmentionGetHandler(util.Handler):
 <link rel="webmention" href="%s/publish/webmention">
 </head>
 <body>Nothing here! <a href="/about">Try the docs instead.</a></body>
-</html>""" % self.request.host_url)
+</html>""" % util.host_url(self))
 
 
 class WebmentionHandler(WebmentionGetHandler):
