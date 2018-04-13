@@ -148,7 +148,8 @@ class CallbackHandler(indieauth.CallbackHandler, util.Handler):
         return self.redirect('/')
 
       # check that instagram profile links to web site
-      actor = gr_instagram.Instagram(scrape=True).get_actor(username)
+      actor = gr_instagram.Instagram(scrape=True).get_actor(
+        username, ignore_rate_limit=True)
       if not actor:
         self.messages.add(
           "Couldn't find Instagram user '%s'. Please check your site's rel-me "
