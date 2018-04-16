@@ -9,6 +9,7 @@ import json
 import appengine_config
 from google.appengine.ext import ndb
 import mox
+import requests
 
 import blogger
 import facebook
@@ -454,6 +455,27 @@ class SourceTest(testutil.HandlerTest):
     source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
     self.assertEquals(urls, source.domain_urls)
     self.assertEquals([str(i) for i in range(10)], source.domains)
+
+  def test_create_new_domain_url_path_fails(self):
+    auth_entity = testutil.FakeAuthEntity(id='x', user_json=json.dumps(
+        {'urls': [{'value': 'http://flaky/foo'}]}))
+    self.expect_requests_get('http://flaky', status_code=500)
+    self.mox.ReplayAll()
+
+    source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
+    self.assertEquals(['http://flaky/foo'], source.domain_urls)
+    self.assertEquals(['flaky'], source.domains)
+
+  def test_create_new_domain_url_path_connection_fails(self):
+    auth_entity = testutil.FakeAuthEntity(id='x', user_json=json.dumps(
+        {'urls': [{'value': 'http://flaky/foo'}]}))
+    self.expect_requests_get('http://flaky').AndRaise(
+      requests.ConnectionError('DNS lookup failed for URL: http://bad/'))
+    self.mox.ReplayAll()
+
+    source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
+    self.assertEquals(['http://flaky/foo'], source.domain_urls)
+    self.assertEquals(['flaky'], source.domains)
 
   def test_verify(self):
     # this requests.get is called by webmention-tools

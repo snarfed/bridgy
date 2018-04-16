@@ -14,6 +14,7 @@ from google.appengine.api import memcache
 from granary import microformats2
 from granary import source as gr_source
 from oauth_dropins.webutil.models import StringIdModel
+import requests
 from webmentiontools import send
 
 import superfeedr
@@ -581,12 +582,16 @@ class Source(StringIdModel):
         match = re.match(r'^(https?://[^/]+)/.+', final)
         if match and i < MAX_AUTHOR_URLS:
           root = match.group(1)
-          resp = util.requests_get(root)
-          resp.raise_for_status()
-          data = util.mf2py_parse(resp.text, root)
-          me_urls = data.get('rels', {}).get('me', [])
-          if final in me_urls:
-            final = root
+          try:
+            resp = util.requests_get(root)
+            resp.raise_for_status()
+            data = util.mf2py_parse(resp.text, root)
+            me_urls = data.get('rels', {}).get('me', [])
+            if final in me_urls:
+              final = root
+          except requests.RequestException:
+            logging.warning("Couldn't fetch %s, preserving path in %s",
+                            root, final, exc_info=True)
         urls.append(final)
 
     urls = util.dedupe_urls(urls)  # normalizes domains to lower case
