@@ -11,6 +11,7 @@ default_expiration: 1h
 automatic_scaling:
   # min_idle_instances: 0
   # max_idle_instances: 1
+  max_pending_latency: 100ms  # default is 30
   max_concurrent_requests: 12
 
 builtins:
