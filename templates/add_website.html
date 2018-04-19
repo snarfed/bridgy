@@ -6,33 +6,35 @@
 
 <br />
 
-<p class="row big">
+
 {% if source.website_links %}
-  Your web sites:
-  <ul>
+  <p class="row big">Your web sites:</p>
+  <p class="row big">
     {% for link in source.website_links %}
       {{ link|safe }}
+      {% if not loop.last %}&middot;{% endif %}
     {% endfor %}
-    <li>
-  </ul>
+  </p>
 {% else %}
-  What's your web site?
+  <p class="row big">What's your web site?</p>
 {% endif %}
-</p>
 
 
 <div class="row">
-<form method="post" action="add_web_site">
+<form method="post" action="add-website">
   <input required type="url" name="url" id="url" placeholder="http://..." />
   <input type="submit" class="btn btn-default" value="Add" />
   <input type="hidden" name="source_key" value="{{ source.key.urlsafe() }}" />
 </form>
+
+{% if source.website_links %}
 <form method="get" action="{{ source.bridgy_path() }}">
-  <input type="submit" class="btn btn-default"
-         value="{{ 'Continue' if source.website_links else 'Skip' }}" />
+  <input type="submit" class="btn btn-default" value="Continue" />
 </form>
+{% endif %}
 </div>
 
+<br>
 <p class="row">Bridgy uses your web site(s) for <a href="https://brid.gy/about#link">post discovery</a> and, if you choose, <a href="https://brid.gy/about#publish">publishing</a>.</p>
 
 {% endblock %}

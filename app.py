@@ -651,13 +651,16 @@ class DiscoverHandler(util.Handler):
 class AddWebsite(webutil_handlers.TemplateHandler, util.Handler):
   source = None
 
+  def template_file(self):
+    return 'add_website.html'
+
   def content_type(self):
     return 'text/html; charset=utf-8'
 
   def post(self):
-    self.source = self.load_source()
+    source = self.load_source()
     redirect_url = '%s?%s' % (self.request.path, urllib.urlencode({
-      'source_key': self.source.key.urlsafe(),
+      'source_key': source.key.urlsafe(),
     }))
 
     url = util.get_required_param(self, 'url')
@@ -665,13 +668,13 @@ class AddWebsite(webutil_handlers.TemplateHandler, util.Handler):
 
     resolved = Source.resolve_profile_url(url)
     if resolved:
-      if resolved in self.source.domain_urls:
+      if resolved in source.domain_urls:
         self.messages.add('%s already exists.' % link)
       else:
-        self.source.domain_urls.append(resolved)
+        source.domain_urls.append(resolved)
         domain = util.domain_from_link(resolved)
-        self.source.domains.append(domain)
-        self.source.put()
+        source.domains.append(domain)
+        source.put()
         self.messages.add('Added %s.' % link)
     else:
       self.messages.add("%s doesn't look like your web site. Try again?" % link)
@@ -679,11 +682,8 @@ class AddWebsite(webutil_handlers.TemplateHandler, util.Handler):
     self.redirect(redirect_url)
 
   def template_vars(self):
-    if not self.source:
-      self.source = self.load_source()
-
     return {
-      'source': self.source,
+      'source': self.preprocess_source(self.load_source()),
     }
 
 
@@ -734,7 +734,7 @@ application = webapp2.WSGIApplication(
    ('/crawl-now', CrawlNowHandler),
    ('/retry', RetryHandler),
    ('/(listen|publish)/?', RedirectToFrontPageHandler),
-   ('/add_web_site', AddWebsite),
+   ('/add-website', AddWebsite),
    ('/logout', LogoutHandler),
    ('/csp-report', CspReportHandler),
    ('/_ah/warmup', WarmupHandler),
