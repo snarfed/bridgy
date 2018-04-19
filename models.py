@@ -572,31 +572,49 @@ class Source(StringIdModel):
 
     urls = []
     for i, url in enumerate(candidates):
-      final, domain, ok = util.get_webmention_target(url, resolve=i < MAX_AUTHOR_URLS)
-      if ok:
-        final = final.lower()
-        if util.schemeless(final).startswith(util.schemeless(url.lower())):
-          # redirected to a deeper path. use the original higher level URL. #652
-          final = url
-        # If final has a path segment check if root has a matching rel=me.
-        match = re.match(r'^(https?://[^/]+)/.+', final)
-        if match and i < MAX_AUTHOR_URLS:
-          root = match.group(1)
-          try:
-            resp = util.requests_get(root)
-            resp.raise_for_status()
-            data = util.mf2py_parse(resp.text, root)
-            me_urls = data.get('rels', {}).get('me', [])
-            if final in me_urls:
-              final = root
-          except requests.RequestException:
-            logging.warning("Couldn't fetch %s, preserving path in %s",
-                            root, final, exc_info=True)
-        urls.append(final)
+      resolved = self.resolve_profile_url(url, resolve=i < MAX_AUTHOR_URLS)
+      if resolved:
+        urls.append(resolved)
 
     urls = util.dedupe_urls(urls)  # normalizes domains to lower case
     domains = [util.domain_from_link(url) for url in urls]
     return urls, domains
+
+  @staticmethod
+  def resolve_profile_url(url, resolve=True):
+    """Resolves a profile URL to be added to a source.
+
+    Args:
+      url: string
+      resolve: boolean, whether to make HTTP requests to follow redirects, etc.
+
+    Returns: string, resolved URL, or None
+    """
+    final, _, ok = util.get_webmention_target(url, resolve=resolve)
+    if not ok:
+      return None
+
+    final = final.lower()
+    if util.schemeless(final).startswith(util.schemeless(url.lower())):
+      # redirected to a deeper path. use the original higher level URL. #652
+      final = url
+
+    # If final has a path segment check if root has a matching rel=me.
+    match = re.match(r'^(https?://[^/]+)/.+', final)
+    if match and resolve:
+      root = match.group(1)
+      try:
+        resp = util.requests_get(root)
+        resp.raise_for_status()
+        data = util.mf2py_parse(resp.text, root)
+        me_urls = data.get('rels', {}).get('me', [])
+        if final in me_urls:
+          final = root
+      except requests.RequestException:
+        logging.warning("Couldn't fetch %s, preserving path in %s",
+                        root, final, exc_info=True)
+
+    return final
 
   def canonicalize_url(self, url, activity=None, **kwargs):
     """Canonicalizes a post or object URL.

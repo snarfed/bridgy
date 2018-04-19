@@ -14,7 +14,6 @@ import appengine_config
 
 from google.appengine.ext import ndb
 from google.appengine.ext.ndb.stats import KindStat, KindPropertyNameStat
-from google.net.proto.ProtocolBuffer import ProtocolBufferDecodeError
 from oauth_dropins import blogger_v2 as oauth_blogger_v2
 from oauth_dropins import facebook as oauth_facebook
 from oauth_dropins import flickr as oauth_flickr
@@ -615,14 +614,7 @@ class RetryHandler(util.Handler):
 
 class DiscoverHandler(util.Handler):
   def post(self):
-    # load source
-    try:
-      source = ndb.Key(urlsafe=util.get_required_param(self, 'source_key')).get()
-      if not source:
-        self.abort(400, 'Source key not found')
-    except ProtocolBufferDecodeError:
-      logging.exception('Bad value for source_key')
-      self.abort(400, 'Bad value for source_key')
+    source = self.load_source()
 
     # validate URL, find silo post
     url = util.get_required_param(self, 'url')
@@ -654,6 +646,45 @@ class DiscoverHandler(util.Handler):
 
     self.messages.add(msg)
     self.redirect(source.bridgy_url(self))
+
+
+class AddWebsite(webutil_handlers.TemplateHandler, util.Handler):
+  source = None
+
+  def content_type(self):
+    return 'text/html; charset=utf-8'
+
+  def post(self):
+    self.source = self.load_source()
+    redirect_url = '%s?%s' % (self.request.path, urllib.urlencode({
+      'source_key': self.source.key.urlsafe(),
+    }))
+
+    url = util.get_required_param(self, 'url')
+    link = util.linkify(url, pretty=True)
+
+    resolved = Source.resolve_profile_url(url)
+    if resolved:
+      if resolved in self.source.domain_urls:
+        self.messages.add('%s already exists.' % link)
+      else:
+        self.source.domain_urls.append(resolved)
+        domain = util.domain_from_link(resolved)
+        self.source.domains.append(domain)
+        self.source.put()
+        self.messages.add('Added %s.' % link)
+    else:
+      self.messages.add("%s doesn't look like your web site. Try again?" % link)
+
+    self.redirect(redirect_url)
+
+  def template_vars(self):
+    if not self.source:
+      self.source = self.load_source()
+
+    return {
+      'source': self.source,
+    }
 
 
 class RedirectToFrontPageHandler(util.Handler):
@@ -703,6 +734,7 @@ application = webapp2.WSGIApplication(
    ('/crawl-now', CrawlNowHandler),
    ('/retry', RetryHandler),
    ('/(listen|publish)/?', RedirectToFrontPageHandler),
+   ('/add_web_site', AddWebsite),
    ('/logout', LogoutHandler),
    ('/csp-report', CspReportHandler),
    ('/_ah/warmup', WarmupHandler),

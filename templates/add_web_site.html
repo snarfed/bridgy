@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Add web site - Bridgy{% endblock %}
+
+{% block content %}
+
+<br />
+
+<p class="row big">
+{% if source.website_links %}
+  Your web sites:
+  <ul>
+    {% for link in source.website_links %}
+      {{ link|safe }}
+    {% endfor %}
+    <li>
+  </ul>
+{% else %}
+  What's your web site?
+{% endif %}
+</p>
+
+
+<div class="row">
+<form method="post" action="add_web_site">
+  <input required type="url" name="url" id="url" placeholder="http://..." />
+  <input type="submit" class="btn btn-default" value="Add" />
+  <input type="hidden" name="source_key" value="{{ source.key.urlsafe() }}" />
+</form>
+<form method="get" action="{{ source.bridgy_path() }}">
+  <input type="submit" class="btn btn-default"
+         value="{{ 'Continue' if source.website_links else 'Skip' }}" />
+</form>
+</div>
+
+<p class="row">Bridgy uses your web site(s) for <a href="https://brid.gy/about#link">post discovery</a> and, if you choose, <a href="https://brid.gy/about#publish">publishing</a>.</p>
+
+{% endblock %}

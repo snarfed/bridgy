@@ -35,6 +35,7 @@ from google.appengine.api import mail
 from google.appengine.api import memcache
 from google.appengine.api import taskqueue
 from google.appengine.ext import ndb
+from google.net.proto.ProtocolBuffer import ProtocolBufferDecodeError
 
 # when running in dev_appserver, replace these domains in links with localhost
 LOCALHOST_TEST_DOMAINS = frozenset([
@@ -544,6 +545,26 @@ class Handler(webutil_handlers.ModernHandler):
     source.website_links = [
       util.pretty_link(url, attrs={'rel': 'me', 'class': 'u-url'})
       for url in source.domain_urls]
+    return source
+
+  def load_source(self, param='source_key'):
+    """Extracts a URL-safe key from a query parameter and loads a source object.
+
+    Returns HTTP 400 if the parameter is not provided or the source doesn't exist.
+
+    Args:
+      param: string
+
+    Returns: Source object
+    """
+    try:
+      source = ndb.Key(urlsafe=util.get_required_param(self, param)).get()
+      if not source:
+        self.abort(400, 'Source key not found')
+    except ProtocolBufferDecodeError:
+      logging.exception('Bad value for source_key')
+      self.abort(400, 'Bad value for source_key')
+
     return source
 
 
