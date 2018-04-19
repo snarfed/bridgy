@@ -449,7 +449,7 @@ class Handler(webutil_handlers.ModernHandler):
       else:
         self.messages.add('If you want to disable, please approve the %s prompt.' %
                           source_cls.GR_CLASS.NAME)
-        source_key = state.get('source')
+        source_key = state_obj.get('source')
         if source_key:
           source = ndb.Key(urlsafe=source_key).get()
           if source:

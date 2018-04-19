@@ -70,6 +70,28 @@ class UtilTest(testutil.ModelsTest):
     with self.assertRaises(exc.HTTPBadRequest):
       self.handler.maybe_add_or_delete_source(FakeSource, auth_entity, 'bad')
 
+  def test_maybe_add_or_delete_source_delete_declined(self):
+    state = {
+      'feature': 'webmention',
+      'operation': 'delete',
+    }
+    msg = '#!If%20you%20want%20to%20disable%2C%20please%20approve%20the%20FakeSource%20prompt.'
+
+    # no source
+    self.assertIsNone(self.handler.maybe_add_or_delete_source(
+      FakeSource, None, util.encode_oauth_state(state)))
+    self.assert_equals(302, self.handler.response.status_code)
+    self.assert_equals('http://localhost/' + msg,
+                       self.handler.response.headers['location'])
+
+    # source
+    state['source'] = self.sources[0].key.urlsafe()
+    self.assertIsNone(self.handler.maybe_add_or_delete_source(
+      FakeSource, None, util.encode_oauth_state(state)))
+    self.assert_equals(302, self.handler.response.status_code)
+    self.assert_equals(self.sources[0].bridgy_url(self.handler) + msg,
+                       self.handler.response.headers['location'])
+
   def test_add_to_logins_cookie(self):
     listen = self.handler.construct_state_param_for_add(feature='listen')
     auth_entity = FakeAuthEntity(id='x', user_json='{}')
