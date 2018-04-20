@@ -18,11 +18,9 @@
 <li class="row">
 {% for source in sources %}
   <div class="source col-xs-6 col-sm-4 col-md-3">
-    <a href="{{ source.bridgy_path() }}" title="{{ source.label()|safe }}"
-       class="h-card">
-      <img class="profile u-photo" width="48px" src="{{ source.picture }}"/>
-      <img src="/static/{{ source.SHORT_NAME }}_icon.png" width="24" />
-      {{ source.name|safe }}</a>
+    {% with link = source.bridgy_path(), picture_width = 48 %}
+      {% include "profile_link.html" %}
+    {% endwith %}
   </div>
   {% if loop.index % 4 == 0 and not loop.last %}</li><li class"'row">{% endif %}
 {% endfor %}
