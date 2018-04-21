@@ -25,6 +25,7 @@ import heapq
 import itertools
 import json
 import logging
+import urllib
 import urllib2
 import urlparse
 
@@ -400,6 +401,12 @@ class AuthHandler(util.Handler):
                                  feature='publish', id=id)
       restart = start.to('/facebook/oauth_handler', scopes=PUBLISH_SCOPES)
       restart(self.request, self.response).post()
+
+    # ask the user for their web site if we don't already have one.
+    if source and not source.domains:
+      self.redirect('/edit-websites?' + urllib.urlencode({
+        'source_key': source.key.urlsafe(),
+      }))
 
 
 class AddFacebookPage(AuthHandler):

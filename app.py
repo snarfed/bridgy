@@ -652,7 +652,7 @@ class AddWebsite(webutil_handlers.TemplateHandler, util.Handler):
   source = None
 
   def template_file(self):
-    return 'add_website.html'
+    return 'edit_websites.html'
 
   def content_type(self):
     return 'text/html; charset=utf-8'
@@ -734,7 +734,7 @@ application = webapp2.WSGIApplication(
    ('/crawl-now', CrawlNowHandler),
    ('/retry', RetryHandler),
    ('/(listen|publish)/?', RedirectToFrontPageHandler),
-   ('/add-website', AddWebsite),
+   ('/edit-websites', AddWebsite),
    ('/logout', LogoutHandler),
    ('/csp-report', CspReportHandler),
    ('/_ah/warmup', WarmupHandler),

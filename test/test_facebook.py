@@ -43,11 +43,12 @@ class FacebookPageTest(testutil.ModelsTest):
     self.handler.messages = []
     self.auth_entity = oauth_facebook.FacebookAuth(
       id='my_string_id', auth_code='my_code', access_token_str='my_token',
-      user_json=json.dumps({'id': '212038',
-                            'name': 'Ryan Barrett',
-                            'username': 'snarfed.org',
-                            'bio': 'something about me',
-                            }),
+      user_json=json.dumps({
+        'id': '212038',
+        'name': 'Ryan Barrett',
+        'username': 'snarfed.org',
+        'bio': 'something about me',
+      }),
       pages_json=json.dumps([]), type='user')
     self.auth_entity.put()
     self.fb = FacebookPage.new(self.handler, auth_entity=self.auth_entity,
@@ -116,6 +117,30 @@ class FacebookPageTest(testutil.ModelsTest):
         "OK, you're not signed up. Hope you reconsider!"),
       resp.headers['location'])
     self.assertNotIn('Set-Cookie', resp.headers)
+
+  def test_add_user_no_domains_redirects_to_edit_websites(self):
+    handler = facebook.OAuthCallback(
+      webapp2.Request.blank('/facebook/oauth_handler'), self.response)
+    handler.finish(self.auth_entity)
+
+    self.assert_equals(302, handler.response.status_code)
+    self.assert_equals(
+      'http://localhost/edit-websites?source_key=%s' % self.fb.key.urlsafe(),
+      handler.response.headers['location'])
+
+  def test_add_user_with_domains_redirects_to_user_page(self):
+    self.fb.domains = ['foo.com']
+    self.fb.domain_urls = ['http://foo.com/']
+    self.fb.webmention_endpoint = 'http://foo.com/wm'
+    self.fb.put()
+
+    handler = facebook.OAuthCallback(
+      webapp2.Request.blank('/facebook/oauth_handler'), self.response)
+    handler.finish(self.auth_entity)
+
+    self.assert_equals(302, handler.response.status_code)
+    loc = handler.response.headers['Location']
+    self.assertTrue(loc.startswith('http://localhost/facebook/212038#'), loc)
 
   def test_get_activities(self):
     owned_event = copy.deepcopy(EVENT)
@@ -648,11 +673,14 @@ class FacebookPageTest(testutil.ModelsTest):
         self.auth_entity.key.urlsafe(),
       method='POST')
 
-    self.assertEquals(302, resp.status_code)
-    self.assertEquals('http://localhost/facebook/108663232553079',
-                      resp.headers['Location'])
     self.assertIsNone(self.fb.key.get())
-    self.assertIsNotNone(FacebookPage.get_by_id('108663232553079'))
+    page = FacebookPage.get_by_id('108663232553079')
+    self.assertIsNotNone(page)
+
+    self.assertEquals(302, resp.status_code)
+    self.assert_equals(
+      'http://localhost/edit-websites?source_key=%s' % page.key.urlsafe(),
+      resp.headers['Location'])
 
   def test_add_page_id_not_found(self):
     self.fb.key.delete()
@@ -679,8 +707,9 @@ class FacebookPageTest(testutil.ModelsTest):
     handler.finish(self.auth_entity)
 
     self.assert_equals(302, self.response.status_code)
-    fb = self.fb.key.get()
-    self.assertEquals(fb.bridgy_url(handler), self.response.headers['Location'])
+    self.assertEquals(
+      'http://localhost/edit-websites?source_key=%s' % self.fb.key.urlsafe(),
+      self.response.headers['Location'])
 
   @staticmethod
   def prepare_person_tags():

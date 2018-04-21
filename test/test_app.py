@@ -431,16 +431,16 @@ class AppTest(testutil.ModelsTest):
     self.assertEquals(302, resp.status_int)
     self.assertEquals('http://localhost/#!Logged%20out.', resp.headers['Location'])
 
-  def test_add_web_site(self):
+  def test_edit_web_sites(self):
     source = self.sources[0]
     self.assertNotIn('foo.com', source.domains)
-    resp = app.application.get_response('/add-website', method='POST',
+    resp = app.application.get_response('/edit-websites', method='POST',
                                         body=urllib.urlencode({
       'source_key': source.key.urlsafe(),
       'url': 'http://foo.com/',
     }))
     self.assertEquals(302, resp.status_int)
-    self.assertEquals('http://localhost/add-website?source_key=%s#!%s' % (
+    self.assertEquals('http://localhost/edit-websites?source_key=%s#!%s' % (
       (source.key.urlsafe(),
        urllib.quote('Added <a href="http://foo.com/">foo.com</a>.'))),
       resp.headers['Location'])
@@ -449,19 +449,19 @@ class AppTest(testutil.ModelsTest):
     self.assertIn('foo.com', source.domains)
     self.assertIn('http://foo.com/', source.domain_urls)
 
-  def test_add_web_site_existing(self):
+  def test_edit_web_sites_existing(self):
     source = self.sources[0]
     source.domain_urls = ['http://foo.com/']
     source.domains = ['foo.com']
     source.put()
 
-    resp = app.application.get_response('/add-website', method='POST',
+    resp = app.application.get_response('/edit-websites', method='POST',
                                         body=urllib.urlencode({
       'source_key': source.key.urlsafe(),
       'url': 'http://foo.com/',
     }))
     self.assertEquals(302, resp.status_int)
-    self.assertEquals('http://localhost/add-website?source_key=%s#!%s' % (
+    self.assertEquals('http://localhost/edit-websites?source_key=%s#!%s' % (
       (source.key.urlsafe(),
        urllib.quote('<a href="http://foo.com/">foo.com</a> already exists.'))),
       resp.headers['Location'])
@@ -470,15 +470,15 @@ class AppTest(testutil.ModelsTest):
     self.assertEquals(['foo.com'], source.domains)
     self.assertEquals(['http://foo.com/'], source.domain_urls)
 
-  def test_add_web_site_bad(self):
+  def test_edit_web_sites_bad(self):
     source = self.sources[0]
-    resp = app.application.get_response('/add-website', method='POST',
+    resp = app.application.get_response('/edit-websites', method='POST',
                                         body=urllib.urlencode({
       'source_key': source.key.urlsafe(),
       'url': 'http://facebook.com/',
     }))
     self.assertEquals(302, resp.status_int)
-    self.assertEquals('http://localhost/add-website?source_key=%s#!%s' % (
+    self.assertEquals('http://localhost/edit-websites?source_key=%s#!%s' % (
       (source.key.urlsafe(),
        urllib.quote('<a href="http://facebook.com/">facebook.com</a> doesn\'t look like your web site. Try again?'))),
       resp.headers['Location'])
@@ -487,8 +487,7 @@ class AppTest(testutil.ModelsTest):
     self.assertEquals([], source.domains)
     self.assertEquals([], source.domain_urls)
 
-
-  def test_add_web_site_errors(self):
+  def test_edit_web_sites_errors(self):
     source_key = self.sources[0].key.urlsafe()
     for data in (
         {},
@@ -496,7 +495,7 @@ class AppTest(testutil.ModelsTest):
         {'url': 'http://foo'},
         {'source_key': 'asdf', 'url': 'http://foo'},
     ):
-      resp = app.application.get_response('/add-website', method='POST',
+      resp = app.application.get_response('/edit-websites', method='POST',
                                           body=urllib.urlencode(data))
       self.assertEquals(400, resp.status_int)
 
