@@ -415,7 +415,7 @@ class SourceTest(testutil.HandlerTest):
     # the invisible character in the middle is an unusual unicode character
     FakeSource.create_new(self.handler, name='a ✁ b')
 
-  def test_create_new_rereads_domains(self):
+  def test_create_new_merges_domains(self):
     FakeSource.new(None, features=['listen'],
                    domain_urls=['http://foo'], domains=['foo']).put()
 
@@ -427,8 +427,8 @@ class SourceTest(testutil.HandlerTest):
 
     self.mox.ReplayAll()
     source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
-    self.assertEquals(['http://bar/', 'http://baz/'], source.domain_urls)
-    self.assertEquals(['bar', 'baz'], source.domains)
+    self.assertEquals(['http://bar/', 'http://baz/', 'http://foo/'], source.domain_urls)
+    self.assertEquals(['baz', 'foo', 'bar'], source.domains)
 
   def test_create_new_dedupes_domains(self):
     auth_entity = testutil.FakeAuthEntity(id='x', user_json=json.dumps(

@@ -439,8 +439,15 @@ class Handler(webutil_handlers.ModernHandler):
           'finished adding source, redirect to external callback %s', callback)
         # call super.redirect so the callback url is unmodified
         super(Handler, self).redirect(callback.encode('utf-8'))
+
+      elif source and not source.domains:
+        self.redirect('/edit-websites?' + urllib.urlencode({
+          'source_key': source.key.urlsafe(),
+        }))
+
       else:
         self.redirect(source.bridgy_url(self) if source else '/')
+
       return source
 
     else:  # this is a delete

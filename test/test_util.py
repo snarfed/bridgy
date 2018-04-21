@@ -33,14 +33,6 @@ class UtilTest(testutil.ModelsTest):
     util.now_fn = lambda: datetime.datetime(2000, 1, 1)
 
   def test_maybe_add_or_delete_source(self):
-    # profile url with valid domain is required for publish
-    for bad_url in None, 'not>a<url', 'http://fa.ke/xyz':
-      auth_entity = FakeAuthEntity(id='x', user_json=json.dumps({'url': bad_url}))
-      auth_entity.put()
-      self.assertIsNone(self.handler.maybe_add_or_delete_source(
-        FakeSource, auth_entity,
-        self.handler.construct_state_param_for_add(feature='publish')))
-
     auth_entity = FakeAuthEntity(id='x', user_json=json.dumps(
         {'url': 'http://foo.com/', 'name': UNICODE_STR}))
     auth_entity.put()
@@ -91,6 +83,17 @@ class UtilTest(testutil.ModelsTest):
     self.assert_equals(302, self.handler.response.status_code)
     self.assert_equals(self.sources[0].bridgy_url(self.handler) + msg,
                        self.handler.response.headers['location'])
+
+  def test_maybe_add_or_delete_without_web_site_redirects_to_edit_websites(self):
+    for bad_url in None, 'not>a<url', 'http://fa.ke/xyz':
+      auth_entity = FakeAuthEntity(id='x', user_json=json.dumps({'url': bad_url}))
+      auth_entity.put()
+      source = self.handler.maybe_add_or_delete_source(FakeSource, auth_entity, '{}')
+
+      self.assertEquals(302, self.handler.response.status_code)
+      self.assert_equals(
+        'http://localhost/edit-websites?source_key=%s' % source.key.urlsafe(),
+        self.handler.response.headers['Location'])
 
   def test_add_to_logins_cookie(self):
     listen = self.handler.construct_state_param_for_add(feature='listen')
