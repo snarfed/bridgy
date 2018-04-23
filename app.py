@@ -648,8 +648,7 @@ class DiscoverHandler(util.Handler):
     self.redirect(source.bridgy_url(self))
 
 
-class AddWebsite(webutil_handlers.TemplateHandler, util.Handler):
-  source = None
+class EditWebsites(webutil_handlers.TemplateHandler, util.Handler):
 
   def template_file(self):
     return 'edit_websites.html'
@@ -663,27 +662,46 @@ class AddWebsite(webutil_handlers.TemplateHandler, util.Handler):
       'source_key': source.key.urlsafe(),
     }))
 
-    url = util.get_required_param(self, 'url')
-    link = util.linkify(url, pretty=True)
+    add = self.request.get('add')
+    delete = self.request.get('delete')
+    if (add and delete) or (not add and not delete):
+      self.abort(400, 'Either add or delete param (but not both) required')
 
-    resolved = Source.resolve_profile_url(url)
-    if resolved:
-      if resolved in source.domain_urls:
-        self.messages.add('%s already exists.' % link)
+    link = util.pretty_link(add or delete)
+
+    if add:
+      resolved = Source.resolve_profile_url(add)
+      if resolved:
+        if resolved in source.domain_urls:
+          self.messages.add('%s already exists.' % link)
+        else:
+          source.domain_urls.append(resolved)
+          domain = util.domain_from_link(resolved)
+          source.domains.append(domain)
+          source.put()
+          self.messages.add('Added %s.' % link)
       else:
-        source.domain_urls.append(resolved)
-        domain = util.domain_from_link(resolved)
-        source.domains.append(domain)
-        source.put()
-        self.messages.add('Added %s.' % link)
+        self.messages.add("%s doesn't look like your web site. Try again?" % link)
+
     else:
-      self.messages.add("%s doesn't look like your web site. Try again?" % link)
+      assert delete
+      try:
+        source.domain_urls.remove(delete)
+      except ValueError:
+        self.abort(400, "%s not found in %s's current web sites" % (
+                          delete, source.label()))
+      domain = util.domain_from_link(delete)
+      if domain not in set(util.domain_from_link(url) for url in source.domain_urls):
+        source.domains.remove(domain)
+      source.put()
+      self.messages.add('Removed %s.' % link)
 
     self.redirect(redirect_url)
 
   def template_vars(self):
     return {
       'source': self.preprocess_source(self.load_source()),
+      'util': util,
     }
 
 
@@ -734,7 +752,7 @@ application = webapp2.WSGIApplication(
    ('/crawl-now', CrawlNowHandler),
    ('/retry', RetryHandler),
    ('/(listen|publish)/?', RedirectToFrontPageHandler),
-   ('/edit-websites', AddWebsite),
+   ('/edit-websites', EditWebsites),
    ('/logout', LogoutHandler),
    ('/csp-report', CspReportHandler),
    ('/_ah/warmup', WarmupHandler),

@@ -12,20 +12,23 @@
 
 {% if source.website_links %}
   <p class="row big">Your web sites:</p>
-  <p class="row big">
-    {% for link in source.website_links %}
-      {{ link|safe }}
-      {% if not loop.last %}&middot;{% endif %}
-    {% endfor %}
-  </p>
+  {% for url in source.domain_urls %}
+    <form method="post" action="">
+      <p class="row big">
+        {{ util.pretty_link(url)|safe }}
+        <input type="hidden" name="delete" value="{{ url }}" />
+        <input type="submit" title="Remove" value="✖" class="btn delete-website" />
+      </p>
+    </form>
+  {% endfor %}
 {% else %}
   <p class="row big">What's your web site?</p>
 {% endif %}
 
 
 <div class="row">
-<form method="post" action="edit-websites">
-  <input required type="url" name="url" id="url" placeholder="http://..." />
+<form method="post" action="">
+  <input required type="url" name="add" id="add" placeholder="http://..." />
   <input type="submit" class="btn btn-default" value="Add" />
   <input type="hidden" name="source_key" value="{{ source.key.urlsafe() }}" />
 </form>

@@ -431,13 +431,13 @@ class AppTest(testutil.ModelsTest):
     self.assertEquals(302, resp.status_int)
     self.assertEquals('http://localhost/#!Logged%20out.', resp.headers['Location'])
 
-  def test_edit_web_sites(self):
+  def test_edit_web_sites_add(self):
     source = self.sources[0]
     self.assertNotIn('foo.com', source.domains)
     resp = app.application.get_response('/edit-websites', method='POST',
                                         body=urllib.urlencode({
       'source_key': source.key.urlsafe(),
-      'url': 'http://foo.com/',
+      'add': 'http://foo.com/',
     }))
     self.assertEquals(302, resp.status_int)
     self.assertEquals('http://localhost/edit-websites?source_key=%s#!%s' % (
@@ -449,7 +449,7 @@ class AppTest(testutil.ModelsTest):
     self.assertIn('foo.com', source.domains)
     self.assertIn('http://foo.com/', source.domain_urls)
 
-  def test_edit_web_sites_existing(self):
+  def test_edit_web_sites_add_existing(self):
     source = self.sources[0]
     source.domain_urls = ['http://foo.com/']
     source.domains = ['foo.com']
@@ -458,7 +458,7 @@ class AppTest(testutil.ModelsTest):
     resp = app.application.get_response('/edit-websites', method='POST',
                                         body=urllib.urlencode({
       'source_key': source.key.urlsafe(),
-      'url': 'http://foo.com/',
+      'add': 'http://foo.com/',
     }))
     self.assertEquals(302, resp.status_int)
     self.assertEquals('http://localhost/edit-websites?source_key=%s#!%s' % (
@@ -470,12 +470,12 @@ class AppTest(testutil.ModelsTest):
     self.assertEquals(['foo.com'], source.domains)
     self.assertEquals(['http://foo.com/'], source.domain_urls)
 
-  def test_edit_web_sites_bad(self):
+  def test_edit_web_sites_add_bad(self):
     source = self.sources[0]
     resp = app.application.get_response('/edit-websites', method='POST',
                                         body=urllib.urlencode({
       'source_key': source.key.urlsafe(),
-      'url': 'http://facebook.com/',
+      'add': 'http://facebook.com/',
     }))
     self.assertEquals(302, resp.status_int)
     self.assertEquals('http://localhost/edit-websites?source_key=%s#!%s' % (
@@ -487,18 +487,62 @@ class AppTest(testutil.ModelsTest):
     self.assertEquals([], source.domains)
     self.assertEquals([], source.domain_urls)
 
+  def test_edit_web_sites_delete(self):
+    source = self.sources[0]
+    source.domain_urls = ['http://foo/', 'https://bar']
+    source.domains = ['foo', 'bar']
+    source.put()
+
+    resp = app.application.get_response('/edit-websites', method='POST',
+                                        body=urllib.urlencode({
+      'source_key': source.key.urlsafe(),
+      'delete': 'https://bar',
+    }))
+    self.assertEquals(302, resp.status_int)
+    self.assertEquals('http://localhost/edit-websites?source_key=%s#!%s' % (
+      (source.key.urlsafe(),
+       urllib.quote('Removed <a href="https://bar">bar</a>.'))),
+      resp.headers['Location'])
+
+    source = source.key.get()
+    self.assertEquals(['foo'], source.domains)
+    self.assertEquals(['http://foo/'], source.domain_urls)
+
+  def test_edit_web_sites_delete_multiple_urls_same_domain(self):
+    source = self.sources[0]
+    source.domain_urls = ['http://foo.com/bar', 'https://foo.com/baz']
+    source.domains = ['foo.com']
+    source.put()
+
+    resp = app.application.get_response('/edit-websites', method='POST',
+                                        body=urllib.urlencode({
+      'source_key': source.key.urlsafe(),
+      'delete': 'https://foo.com/baz',
+    }))
+    self.assertEquals(302, resp.status_int)
+    self.assertEquals('http://localhost/edit-websites?source_key=%s#!%s' % (
+      (source.key.urlsafe(),
+       urllib.quote('Removed <a href="https://foo.com/baz">foo.com/baz</a>.'))),
+      resp.headers['Location'])
+
+    source = source.key.get()
+    self.assertEquals(['foo.com'], source.domains)
+    self.assertEquals(['http://foo.com/bar'], source.domain_urls)
+
   def test_edit_web_sites_errors(self):
     source_key = self.sources[0].key.urlsafe()
     for data in (
         {},
         {'source_key': source_key},
-        {'url': 'http://foo'},
-        {'source_key': 'asdf', 'url': 'http://foo'},
+        {'add': 'http://foo'},
+        {'delete': 'http://foo'},
+        {'source_key': 'asdf', 'add': 'http://foo'},
+        {'source_key': 'asdf', 'delete': 'http://foo', 'add': 'http://bar'},
+        {'source_key': source_key, 'delete': 'http://missing'},
     ):
       resp = app.application.get_response('/edit-websites', method='POST',
                                           body=urllib.urlencode(data))
       self.assertEquals(400, resp.status_int)
-
 
 
 class DiscoverTest(testutil.ModelsTest):

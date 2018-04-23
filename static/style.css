@@ -126,6 +126,18 @@ form input {
   vertical-align: middle;
 }
 
+.delete-website {
+  padding: 0;
+  font-size: .7em;
+  border: none;
+  background-color: transparent;
+}
+
+.delete-website:hover {
+  color: red;
+  background-color: transparent;
+}
+
 #users-label {
   margin-top: 1em;
 }
