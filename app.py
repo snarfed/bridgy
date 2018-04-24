@@ -307,7 +307,9 @@ class UserHandler(DashboardHandler):
           if not a.get('content'):
             a['content'] = a.get('object', {}).get('content')
 
-        if not r.response.get('content'):
+        content = r.response.get('content')
+        if (not content or
+            (r.activities and r.activities[0]['content'].startswith(content))):
           phrases = {
             'like': 'liked this',
             'repost': 'reposted this',
