@@ -814,7 +814,7 @@ activities: %s""", target_url, self.entity.urls_to_activity, self.activities)
     # https://github.com/snarfed/bridgy/issues/20
     host_url = self.request.host_url
     domain = util.domain_from_link(host_url)
-    if domain == util.PROD_DOMAIN or domain in util.PROD_INTERNAL_DOMAINS:
+    if domain == util.PRIMARY_DOMAIN or domain in util.OTHER_DOMAINS:
       host_url = 'https://brid-gy.appspot.com'
 
     path = [host_url, self.entity.type, self.entity.source.get().SHORT_NAME,

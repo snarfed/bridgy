@@ -97,15 +97,17 @@ HTTP_REQUEST_REFUSED_STATUS_CODE = 599
 # Unpacked representation of logged in account in the logins cookie.
 Login = collections.namedtuple('Login', ('site', 'name', 'path'))
 
-PROD_HOST_URL = 'https://brid.gy'
-PROD_DOMAIN = 'brid.gy'
-PROD_INTERNAL_DOMAINS = (
+HOST_URL = 'https://brid.gy'
+PRIMARY_DOMAIN = 'brid.gy'
+OTHER_DOMAINS = (
   'background.brid-gy.appspot.com',
   'default.brid-gy.appspot.com',
   'brid-gy.appspot.com',
   'www.brid.gy',
+  'bridgy.org',
+  'www.bridgy.org',
 )
-canonicalize_domain = webutil_handlers.redirect(PROD_INTERNAL_DOMAINS, PROD_DOMAIN)
+canonicalize_domain = webutil_handlers.redirect(OTHER_DOMAINS, PRIMARY_DOMAIN)
 
 webutil_handlers.JINJA_ENV.globals.update({
   'naturaltime': humanize.naturaltime,
@@ -342,8 +344,7 @@ def replace_test_domains_with_localhost(url):
 
 def host_url(handler):
   domain = util.domain_from_link(handler.request.host_url)
-  return (PROD_HOST_URL if domain in PROD_INTERNAL_DOMAINS
-          else handler.request.host_url)
+  return HOST_URL if domain in OTHER_DOMAINS else handler.request.host_url
 
 
 class Handler(webutil_handlers.ModernHandler):
