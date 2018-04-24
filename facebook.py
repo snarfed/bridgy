@@ -67,6 +67,11 @@ DEAD_TOKEN_ERROR_MESSAGES = frozenset((
 MAX_RESOLVED_OBJECT_IDS = 200
 MAX_POST_PUBLICS = 200
 
+# empirically we've seen global user ids as high as 407874323168, and app scoped
+# ids as low as 527127880724, so there's probably not a single cutoff like this.
+# but it's ok as an approximation.
+MIN_APP_SCOPED_ID = 500000000000
+
 
 class FacebookPage(models.Source):
   """A Facebook profile or page.
@@ -126,8 +131,18 @@ class FacebookPage(models.Source):
     return ndb.Key(cls, id).get() or cls.query(cls.username == id).get()
 
   def silo_url(self):
-    """Returns the Facebook account URL, e.g. https://facebook.com/foo."""
-    return self.gr_source.user_url(self.username or self.key.id())
+    """Returns the Facebook account URL, e.g. https://facebook.com/foo.
+
+    Facebook profile URLS with app-scoped user ids (eg www.facebook.com/ID) no
+    longer work as of April 2018, so if that's all we have, return None instead.
+    https://developers.facebook.com/blog/post/2018/04/19/facebook-login-changes-address-abuse/
+    """
+    if self.username or self.inferred_username:
+      return self.gr_source.user_url(self.username or self.inferred_username)
+
+    for id in [self.key.id()] + self.inferred_user_ids:
+      if util.is_int(id) and int(id) < MIN_APP_SCOPED_ID:
+        return self.gr_source.user_url(id)
 
   def get_activities_response(self, **kwargs):
     type = self.auth_entity.get().type
