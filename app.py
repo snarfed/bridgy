@@ -303,13 +303,14 @@ class UserHandler(DashboardHandler):
                    else r.response.get('author') or r.response.get('actor')
                   ) or {}
 
+        activity_content = ''
         for a in r.activities + [r.response]:
           if not a.get('content'):
-            a['content'] = a.get('object', {}).get('content')
+            a['content'] = activity_content = a.get('object', {}).get('content') or ''
 
-        content = r.response.get('content')
-        if (not content or
-            (r.activities and r.activities[0]['content'].startswith(content))):
+        response_content = r.response.get('content')
+        if (not response_content or
+            (r.type == 'repost' and activity_content.startswith(response_content))):
           phrases = {
             'like': 'liked this',
             'repost': 'reposted this',
