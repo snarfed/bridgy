@@ -41,7 +41,7 @@ def get_type(obj):
     return 'repost'
   elif type == 'issue':
     return 'post'
-  elif verb in gr_source.RSVP_TO_EVENT:
+  elif verb in gr_source.RSVP_VERB_TO_COLLECTION:
     return 'rsvp'
   elif (type == 'comment' or obj.get('inReplyTo') or
         obj.get('context', {}).get('inReplyTo')):

@@ -1169,12 +1169,18 @@ Join us!"""
     self.mox.ReplayAll()
     self.assert_error("Couldn't find link to http://localhost/publish/fake")
 
-  def test_facebook_comment_and_like_disabled(self):
+  def test_facebook_comment_like_rsvp_disabled(self):
     self.source = facebook.FacebookPage(id='789', features=['publish'],
                                         domains=['mr.x'])
     self.source.domain_urls = ['http://mr.x/']
     self.source.put()
 
+    self.expect_requests_get('http://mr.x/rsvp', """
+    <article class="h-entry">
+      <a class="u-in-reply-to" href="http://fa.ke/event"></a>
+      <data class="p-rsvp" value="yes"></data>
+      <a href="http://localhost/publish/facebook"></a>
+    </article>""")
     self.expect_requests_get('http://mr.x/like', """
     <article class="h-entry">
       <a class="u-like-of" href="http://facebook.com/789/posts/456">liked this</a>
@@ -1187,12 +1193,15 @@ Join us!"""
     </article>""")
     self.mox.ReplayAll()
 
-    self.assert_error('Facebook comments and likes are no longer supported',
+    self.assert_error('Facebook RSVPs, comments, and likes are not supported',
+                      source='http://mr.x/rsvp',
+                      target='https://brid.gy/publish/facebook')
+    self.assert_error('Facebook RSVPs, comments, and likes are not supported',
                       source='http://mr.x/like',
                       target='https://brid.gy/publish/facebook')
     self.assertEquals('failed', Publish.query().get().status)
 
-    self.assert_error('Facebook comments and likes are no longer supported',
+    self.assert_error('Facebook RSVPs, comments, and likes are not supported',
                       source='http://mr.x/comment',
                       target='https://brid.gy/publish/facebook',
                       preview=True)

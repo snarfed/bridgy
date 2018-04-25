@@ -40,6 +40,7 @@ import appengine_config
 from google.appengine.ext import ndb
 from granary import microformats2
 from granary import source as gr_source
+from granary.source import RSVP_VERB_TO_COLLECTION
 from oauth_dropins import facebook as oauth_facebook
 from oauth_dropins import flickr as oauth_flickr
 from oauth_dropins import github as oauth_github
@@ -380,14 +381,17 @@ class Handler(webmention.WebmentionHandler):
     if not self.authorize():
       return gr_source.creation_result(abort=True)
 
-    # RIP Facebook comments/likes. https://github.com/snarfed/bridgy/issues/350
+    # RIP Facebook.
+    # https://github.com/snarfed/bridgy/issues/817
+    # https://github.com/snarfed/bridgy/issues/350
+    verb = obj.get('verb')
     if (isinstance(self.source, FacebookPage) and
-        (obj_type == 'comment' or obj.get('verb') == 'like')):
+        (obj_type == 'comment' or verb == 'like' or verb in RSVP_VERB_TO_COLLECTION)):
       return gr_source.creation_result(
         abort=True,
-        error_plain='Facebook comments and likes are no longer supported. :(',
-        error_html='<a href="https://github.com/snarfed/bridgy/issues/350">'
-                   'Facebook comments and likes are no longer supported.</a> :(')
+        error_plain='Facebook RSVPs, comments, and likes are not supported. :(',
+        error_html='<a href="https://brid.gy/about#facebook-publish">'
+                   'Facebook RSVPs, comments, and likes are not supported.</a> :(')
 
     if self.PREVIEW:
       result = self.source.gr_source.preview_create(

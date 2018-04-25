@@ -10,7 +10,7 @@
 <li class="answer">
 <p>Bridgy pulls comments, likes, and reshares on social networks back to your
 web site. You can also use it to post to social networks - or comment, like,
-reshare, or even RSVP - from your own web site.
+or reshare - from your own web site.
 </p>
 
 <p>A picture is worth a thousand words, so here's a screenshot of comments,
@@ -97,7 +97,7 @@ service.</a>
 <li><a href="#webmentions">Can I do this automatically, whenever
   I post something new on my web site?</a></li>
 <li><a href="#reply">How do I reply to a tweet from my web site?</a></li>
-<li><a href="#like">How do I like, retweet, or RSVP from my web site?</a></li>
+<li><a href="#like">How do I like or retweet from my web site?</a></li>
 <li><a href="#picture">How do I post a picture?</a></li>
 <li><a href="#video">How do I post a video?</a></li>
 <li><a href="#person-tag">How do I tag someone in a post?</a></li>
@@ -106,8 +106,7 @@ service.</a>
 <li><a href="#github-issue-comment">How do I create a GitHub issue or comment?</a></li>
 <li><a href="#github-reaction">How do I post an emoji reaction on a GitHub issue or PR?</a></li>
 <li><a href="#github-star">How do I star a GitHub repo?</a></li>
-<li><a href="#facebook-publish">What happened to publishing Facebook
-  comments and likes?</li>
+<li><a href="#facebook-publish">What happened to Facebook?</li>
 <li><a href="#omit-link">Can I disable the link back to my post?</a></li>
 <li><a href="#ignore-formatting">Can I disable the plain text whitespace and
   formatting?</a></li>
@@ -160,7 +159,7 @@ to <a href="http://microformats.org/">microformats</a> so that your web site can
 fetch and parse them.
 </p>
 <p>
-Bridgy can also publish posts, comments, likes, and RSVPs from your web
+Bridgy can also publish posts, comments, likes, and retweets from your web
 site <em>to</em> social networks. When you ask Bridgy to publish a post, it
 analyzes its microformats data and publishes it using the social network APIs.
 </p>
@@ -790,8 +789,7 @@ and Bridgy will post it for you.</p>
 <p>It's not just for posts or tweets, either! You can use Bridgy to publish
 <a href="#reply">replies</a>,
 <a href="#repost">retweets</a>,
-<a href="#like">likes</a>,
-<a href="#like">RSVPs</a>, and even
+<a href="#like">likes</a>, and even
 <a href="#person-tag">tag people</a> in photos!
 <a href="#publish-types">Here's the full list.</a>
 </li>
@@ -810,7 +808,6 @@ class. It also understands more advanced microformats2 classes like
 <a href="http://microformats.org/wiki/rel-in-reply-to"><code>in-reply-to</code></a>,
 <a href="https://indieweb.org/like"><code>u-like-of</code></a>,
 <a href="https://indieweb.org/like"><code>u-repost-of</code></a>,
-<a href="https://indieweb.org/rsvp"><code>p-rsvp</code></a>,
 <a href="https://indieweb.org/photo"><code>u-photo</code></a>,
 <a href="https://indieweb.org/tag"><code>u-category</code></a> (for
 <a href="https://indieweb.org/person-tag">tagging</a>), and
@@ -847,12 +844,7 @@ previewing a post to see how it will look!
   may include <a href="#location">location</a> and
   <a href="#picture">up to four photos</a> or
   <a href="#video">one video</a>.</li>
-<li>Facebook posts and RSVPs, <a href="#facebook-publish">but not comments or
-  likes</a>. Posts support both users and pages, and may include a
-  <a href="#picture">photo</a>, <a href="#video">video</a>, and/or
-  <a href="#person-tag">people tags</a>. RSVPs support
-  <em>yes, no,</em> and <em>maybe</em>,
-  <a href="https://github.com/snarfed/bridgy/issues/717#issuecomment-272750964">but not <em>interested</em></a>.
+<li>Facebook posts, <a href="#facebook-publish">until August 2018</a>. Posts support both users and pages, and may include a <a href="#picture">photo</a>, <a href="#video">video</a>, and/or <a href="#person-tag">people tags</a>. <a href="#facebook-publish">Not comments, likes, or RSVPs.</a>
 </li>
 <li>Flickr photos, videos, comments, and favorites. Photos may include
   <a href="#location">location</a>,
@@ -939,18 +931,14 @@ links in the other post to find the appropriate silo copy to reply to.
 </p>
 </li>
 
-<li id="like" class="question">How do I like, retweet, or RSVP from my web
-site?</li>
+<li id="like" class="question">How do I like or retweet from my web site?</li>
 <li class="answer">
-<p>
-Liking, retweeting, and RSVPing are almost exactly the
+<p>Liking and retweeting are almost exactly the
 <a href="#reply">same as replying</a>. The only difference is that you use
 <code><a href="https://indieweb.org/like">u-like-of</a></code>
-for a like (or favorite),
+for a like (or favorite) or
 <code><a href="https://indieweb.org/repost">u-repost-of</a></code> for a
-retweet,
-or <code><a href="https://indieweb.org/rsvp">p-rsvp</a></code> for an
-RSVP.
+retweet.
 
 <pre>
 &lt;a class="<span class='keyword'>u-like-of</span>" href="<a href='https://www.flickr.com/photos/40721178@N00/24476817906/'>https://www.flickr.com/photos/40721178@N00/24476817906/</a>"&gt;&lt;/a&gt;
@@ -959,21 +947,7 @@ RSVP.
 <pre>
 &lt;a class="<span class='keyword'>u-repost-of</span>" href="<a href='https://twitter.com/schnarfed/status/448205453911015425'>https://twitter.com/schnarfed/status/448205453911015425</a>"&gt;&lt;/a&gt;
 </pre>
-
-<pre>
-&lt;data class="<span class='keyword'>p-rsvp</span>" value="<span class='keyword'>yes</span>"&gt;<span class='value'>I'm in!</span>&lt;/data&gt;
-&lt;a class="<span class='keyword'>u-in-reply-to</span>" href="<a href='https://www.facebook.com/events/1409507205977978/'>https://www.facebook.com/events/1409507205977978/</a>"&gt;&lt;/a&gt;
-</pre>
 </p>
-
-<p>Here's an example screencast of RSVPing to a Facebook event:</p>
-
-<p style="text-align: center">
-<iframe src="//www.youtube.com/embed/otq0rcidmyI"
-  width="420" height="315" class="shadow" frameborder="0" allowfullscreen>
-</iframe>
-</p>
-
 </li>
 
 <li id="picture" class="question">How do I post a picture?</li>
@@ -1089,27 +1063,27 @@ I have something to say about this:
 </pre>
 </li>
 
-<li id="facebook-publish" class="question">What happened to publishing Facebook
-  comments and likes?</li>
+<li id="facebook-publish" class="question">What happened to Facebook?</li>
 <li class="answer">
-<p>
-Bridgy Publish supported Facebook likes and comments for almost a
-year, <a href="https://snarfed.org/2014-03-25_bridgy-publish">from its
-launch</a> on March 24
-2014 <a href="https://github.com/snarfed/bridgy/commit/0e44fe28c1df5026b2b237d2c094a0a0ed9c8c00">until
-February 14 2015</a>.
+<p>Bridgy Publish supported Facebook posts and RSVPs for over four years, <a href="https://snarfed.org/2014-03-25_bridgy-publish">starting with its launch</a> on March 24, 2014.
+</p>
+
+<p>After the <a href="https://www.theverge.com/2018/4/10/17165130/facebook-cambridge-analytica-scandal">Cambridge Analytica scandal</a> broke, Facebook started limiting its API in a number of ways. Notably, <a href="https://developers.facebook.com/blog/post/2018/04/24/new-facebook-platform-product-changes-policy-updates/">it disabled RSVPing on April 24, 2018, and will disable posting on August 1, 2018,</a> which will effectively kill Bridgy Publish for Facebook. RIP, we'll miss you!
+</p>
+
+<p>Bridgy Publish also supported Facebook likes and comments for
+almost a year, <a href="https://github.com/snarfed/bridgy/commit/0e44fe28c1df5026b2b237d2c094a0a0ed9c8c00">up to February 14, 2015</a>.
 <a href="https://developers.facebook.com/docs/apps/changelog#v2_0_graph_api">Facebook's
 v2.x API</a>
-<a href="https://developers.facebook.com/docs/apps/upgrading#upgrading_v2_0_graph_api">makes
+<a href="https://developers.facebook.com/docs/apps/upgrading#upgrading_v2_0_graph_api">made
 it much harder</a> to map backward from a Facebook post's URL to its API object
 id, and even when you can, the API usually won't let you read the post or like
 or comment on it. You need
 the <a href="https://developers.facebook.com/docs/facebook-login/permissions/#reference-read_stream"><code>read_stream</code>
-permission</a>, which Facebook only gives out in very rare circumstances.</p>
-
-<p><a href="https://github.com/snarfed/bridgy/issues/350">Lots more gory details
-here.</a> <a href="https://snarfed.org/2015-02-14_13259">RIP Facebook liking and
-commenting</a>, we'll miss you!</p>
+permission</a>, which Facebook only gave out in very rare circumstances.
+<a href="https://github.com/snarfed/bridgy/issues/350">Lots more gory details here.</a>
+</p>
+</li>
 
 <li id="omit-link" class="question">Can I disable the link back to my post?</li>
 <li class="answer">
@@ -1124,7 +1098,7 @@ the <code>u-bridgy-omit-link</code> class to a link in your post.</p>
 equivalent to sending a webmention with the query parameter <code>bridgy_omit_link=maybe</code>
 or including an element like <code>&lt;data class="p-bridgy-omit-link" value="maybe" /&gt;</code>
 in the post body.</p>
-<p>Please note that if you omit the link and want Bridgy to report back responses to your posts, 
+<p>Please note that if you omit the link and want Bridgy to report back responses to your posts,
 it needs <a href="#link">additional markup</a> to find the corresponding post on your website.</p>
 </li>
 
@@ -1173,16 +1147,15 @@ If your web page has a <code>link</code> like this:</p>
 
 <li id="response" class="question">How does Bridgy respond to webmentions?</li>
 <li class="answer">
+
 <p>Bridgy handles webmentions synchronously, so it knows the result when it
-responds. A <code>POST</code> to
-<code>https://brid.gy/publish/webmention</code> will return
-<code>201 Created</code> on success with a JSON response containing at least
-a <code>url</code> field that points to the silo object that it operated on. The
-same URL is included in the <code>Location</code> HTTP header. For
-Twitter likes and Facebook event RSVPs, this is the tweet, post, or event.
-If a new object was created, e.g. a Facebook post or Twitter tweet, @-reply, or
-retweet, there will also be an <code>id</code> field with the silo id of that
-object.
+responds. A <code>POST</code> to <code>https://brid.gy/publish/webmention</code>
+will return <code>201 Created</code> on success with a JSON response containing
+at least a <code>url</code> field that points to the silo object that it
+operated on. The same URL is included in the <code>Location</code> HTTP header.
+For Twitter likes, this is the tweet. If a new object was created, e.g. a
+Facebook post or Twitter tweet, @-reply, or retweet, there will also be
+an <code>id</code> field with the silo id of that object.
 </p>
 <p>For example, this request for an original post:
 </p>
