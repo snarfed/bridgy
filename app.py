@@ -436,6 +436,9 @@ class AboutHandler(DashboardHandler):
   def template_file(self):
     return 'about.html'
 
+  # when you click on a facebook notification, it POSTs, so accept POSTs too.
+  post = DashboardHandler.get
+
 
 class DeleteStartHandler(util.Handler):
   OAUTH_MODULES = {
