@@ -21,6 +21,7 @@ Example comment ID and links
 """
 from __future__ import unicode_literals
 
+import datetime
 import heapq
 import itertools
 import json
@@ -40,6 +41,9 @@ import webapp2
 import models
 import util
 
+# don't let people turn on publish if they signed up after this date.
+# https://github.com/snarfed/bridgy/issues/817
+PUBLISH_SIGNUP_CUTOFF = datetime.datetime(2018, 4, 27)
 
 # https://developers.facebook.com/docs/reference/login/
 LISTEN_SCOPES = [

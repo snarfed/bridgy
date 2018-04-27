@@ -14,6 +14,7 @@ then click here:
 {% endblock %}
 
 {% block publish_signup %}
+{% if publish_signup_ok %}
 <span class="big">Click to enable <a href="/about#publish">publishing</a>:</span>
 <form method="post" name="publish-facebook-start" action="/facebook/start" class="signup">
  <input type="image" alt="Sign in with Facebook"
@@ -21,4 +22,5 @@ then click here:
  <input name="feature" type="hidden" value="publish" />
  <input name="id" type="hidden" value="{{ source.key.id() }}" />
 </form>
+{% endif %}
 {% endblock %}

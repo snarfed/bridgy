@@ -244,6 +244,11 @@ class UserHandler(DashboardHandler):
         else self.source.domain_urls[0] if self.source.domain_urls
         else None)
 
+    kind = self.source.key.kind()
+    vars['publish_signup_ok'] = (self.source.created < facebook.PUBLISH_SIGNUP_CUTOFF
+                                   if kind == 'FacebookPage'
+                                 else kind not in ('Instagram', 'GooglePlus'))
+
     # Blog webmention promos
     if 'webmention' not in self.source.features:
       if self.source.SHORT_NAME in ('blogger', 'medium', 'tumblr', 'wordpress'):
