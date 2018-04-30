@@ -32,11 +32,11 @@
     </a></td>
 
     <td><a target="_blank" href="{{ r.response.url }}">
-      {{ r.response.content|default('--')|striptags|truncate(40)|safe }}</a></td>
+      {{ (r.response or {}).content|default('--')|striptags|truncate(40)|safe }}</a></td>
 
     <td>{% for a in r.activities %}
       on <a target="_blank" href="{{ a.url or a.object.url }}">
-        {{ a.object.content|default(a.url)|striptags|truncate(40)|safe }}
+        {{ (a.object or {}).content|default(a.url)|striptags|truncate(40)|safe }}
       </a>
     {% endfor %}</td>
 
