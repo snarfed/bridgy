@@ -654,33 +654,48 @@ class PollTest(TaskQueueTest):
   def test_user_mentions(self):
     """Search for and backfeed user mentions.
 
+    A mention post itself should be backfed:
     https://github.com/snarfed/bridgy/issues/523
+
+    ...but not a share (repost) of a mention:
+    https://github.com/snarfed/bridgy/issues/819
     """
     source = self.sources[0]
     source.domain_urls = ['http://foo/', 'https://bar']
     source.put()
 
+    obj = {
+      'id': 'tag:source,2013:9',
+      'tags': [{
+        'objectType': 'person',
+        'id': 'tag:source,2013:%s' % source.key.id(),
+        'url': 'https://fa.ke/%s' % source.key.id(),
+      }, {
+        'objectType': 'person',
+        'id': 'tag:source,2013:other',
+        'url': 'https://fa.ke/other',
+      }],
+    }
     FakeGrSource.activities = [{
       'id': 'tag:source,2013:9',
-      'object': {
-        'tags': [{
-          'objectType': 'person',
-          'id': 'tag:source,2013:%s' % source.key.id(),
-          'url': 'https://fa.ke/%s' % source.key.id(),
-        }, {
-          'objectType': 'person',
-          'id': 'tag:source,2013:other',
-          'url': 'https://fa.ke/other',
-        }],
-      },
+      'verb': 'post',
+      'object': obj,
+    }, {
+      'id': 'tag:source,2013:5',
+      'verb': 'share',
+      'object': obj,
     }]
     self.post_task()
 
     # one expected response with two target urls, one for each domain_url
-    pruned = json.dumps({'id': 'tag:source,2013:9'})
+    pruned = json.dumps({
+      'id': 'tag:source,2013:9',
+      'verb': 'post',
+      'object': {'id': 'tag:source,2013:9'},
+    })
     self.assert_responses([Response(
       id='tag:source,2013:9',
-      activities_json=[pruned],
+      activities_json=[json.dumps({'id': 'tag:source,2013:9'})],
       response_json=pruned,
       type='post',
       source=source.key,

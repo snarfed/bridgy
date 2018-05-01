@@ -283,7 +283,7 @@ class Poll(webapp2.RequestHandler):
 
       # handle user mentions
       user_id = source.user_tag_id()
-      if obj.get('author', {}).get('id') != user_id:
+      if obj.get('author', {}).get('id') != user_id and activity.get('verb') != 'share':
         for tag in obj.get('tags', []):
           urls = tag.get('urls')
           if tag.get('objectType') == 'person' and tag.get('id') == user_id and urls:
