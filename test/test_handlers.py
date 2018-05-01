@@ -177,6 +177,8 @@ asdf http://other/link qwert
     self.assertEqual('FakeSource error:\nGone baby gone', resp.body)
 
   def test_connection_failures_503(self):
+    print('%r %r' % (urlfetch_errors, handlers.util.urlfetch_errors))
+
     user_id = self.source.key.string_id()
     err = urlfetch_errors.InternalTransientError('Try again pls')
     self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities')
