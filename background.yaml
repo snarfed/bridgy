@@ -3,13 +3,13 @@ service: background
 runtime: python27
 threadsafe: yes
 api_version: 1
+
+includes:
+  - local/lib/python2.7/site-packages/oauth_dropins/webutil/app.common.yaml
+
 instance_class: B1
 basic_scaling:
   max_instances: 1
-
-builtins:
-- remote_api: on
-- appstats: on
 
 libraries:
 - name: lxml
@@ -35,12 +35,3 @@ handlers:
   script: mapreduce.main.APP
   login: admin
   secure: always
-
-skip_files:
-- ^(.*/)?.*\.(c|cc|cpp|h|o|py[co]|so)$
-- ^(.*/)?.*/RCS/.*
-- ^(.*/)?\.git.*
-- ^(.*/)?.*\.bak$
-- ^(.*/)?(\.?coverage|debian|docs?|examples?|l|pydocs?|python3|ref|samples?|TAGS|tests?)/.*
-- ^local/lib/python2.7/site-packages/setuptools/script\ \(dev\)\.tmpl$
-- ^local/lib/python2.7/site-packages/lxml$
