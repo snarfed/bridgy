@@ -12,6 +12,7 @@ import appengine_config
 from granary import source as gr_source
 from google.appengine.api import mail
 import mox
+from oauth_dropins.webutil.testutil import requests_response
 import requests
 import webapp2
 from webob import exc
@@ -632,6 +633,20 @@ this is my article
                                  ).AndRaise(socket.timeout('foooey bar'))
     self.mox.ReplayAll()
     self.assert_error('Error: foooey bar', status=504)
+
+  def test_auth_error_disables_source(self):
+    self.expect_requests_get('http://foo.com/bar', self.post_html % 'xyz')
+    self.mox.StubOutWithMock(self.source.gr_source, 'create',
+                             use_mock_anything=True)
+    err = requests.HTTPError(response=requests_response('orig', status=401))
+    self.source.gr_source.create(mox.IgnoreArg(),
+                                 include_link=gr_source.INCLUDE_LINK,
+                                 ignore_formatting=False
+                                 ).AndRaise(err)
+    self.mox.ReplayAll()
+
+    self.assert_error('orig', status=401)
+    self.assertEquals('disabled', self.source.key.get().status)
 
   def test_non_http_exception(self):
     """If we crash, we shouldn't blame the silo or the user's site."""

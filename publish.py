@@ -267,6 +267,16 @@ class Handler(webmention.WebmentionHandler):
         queue.extend(item.get('children', []))
       except BaseException, e:
         code, body = util.interpret_http_exception(e)
+        if code in self.source.DISABLE_HTTP_CODES or isinstance(e, models.DisableSource):
+          # the user deauthorized the bridgy app, or the token expired, so
+          # disable this source.
+          logging.warning('Disabling source due to: %s' % e, exc_info=True)
+          self.source.status = 'disabled'
+          self.source.put()
+          # TODO: eventually drop this to just if source.is_beta_user(). leaving
+          # for everyone right now for initial monitoring.
+          util.email_me(subject='Bridgy Publish: disabled %s' % self.source.label(),
+                        body=body)
         if not code:
           raise
         msg = 'Error: %s %s' % (body or '', e)
