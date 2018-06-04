@@ -42,7 +42,7 @@ class AppTest(testutil.ModelsTest):
     self.assertEquals('no-cache', resp.headers['Cache-Control'])
 
     cached = util.CachedPage.get_by_id('/')
-    self.assert_multiline_equals(resp.body, cached.html)
+    self.assert_multiline_equals(resp.body.decode('utf-8'), cached.html)
 
   def test_poll_now(self):
     self.assertEqual([], self.taskqueue_stub.GetTasks('poll'))

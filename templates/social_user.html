@@ -4,6 +4,13 @@
 
 <!-- Promos to get fully up and running -->
 
+{% if source.SHORT_NAME == 'facebook' %}
+<div class="row promo error">
+<p><b><a href="/about#rip-facebook">Facebook is no longer supported.</a>
+So long, and thanks for all the fish!</b></p>
+</div>
+{% endif %}
+
 {% if "listen" in source.features %}
 {% if source.is_private() %}
 <div class="row promo warning">
@@ -64,6 +71,7 @@ WordPress.com, <a href="/">sign up here!</a>
 
 <div class="row">
 
+{% if source.SHORT_NAME != 'facebook' %}
 <!-- Listen UI -->
 <div id="listen-ui" class="{% if publish_signup_ok %}col-sm-6{% endif %}">
 
@@ -249,6 +257,7 @@ Click to enable <a href="/about#listen">listening</a>:
 </div>
 
 </div>
+{% endif %}
 
 
 <!-- Publish preview UI -->

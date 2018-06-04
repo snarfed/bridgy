@@ -245,9 +245,7 @@ class UserHandler(DashboardHandler):
         else None)
 
     kind = self.source.key.kind()
-    vars['publish_signup_ok'] = (self.source.created < facebook.PUBLISH_SIGNUP_CUTOFF
-                                   if kind == 'FacebookPage'
-                                 else kind not in ('Instagram', 'GooglePlus'))
+    vars['publish_signup_ok'] = kind not in ('Instagram', 'GooglePlus')
 
     # Blog webmention promos
     if 'webmention' not in self.source.features:

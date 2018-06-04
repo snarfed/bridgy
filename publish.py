@@ -400,7 +400,7 @@ class Handler(webmention.WebmentionHandler):
       return gr_source.creation_result(
         abort=True,
         error_plain='Facebook RSVPs, comments, and likes are not supported. :(',
-        error_html='<a href="https://brid.gy/about#facebook-publish">'
+        error_html='<a href="https://brid.gy/about#rip-facebook">'
                    'Facebook RSVPs, comments, and likes are not supported.</a> :(')
 
     if self.PREVIEW:

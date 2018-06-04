@@ -223,6 +223,13 @@ label {
   font-weight: 300;
 }
 
+/* Seems like this shouldn't be necessary, but cursor was ending up as auto on the
+ * a > img for the disabled Facebook signup button for some reason, not sure why.
+ */
+a > img {
+  cursor: pointer;
+}
+
 button {
   border: 0;
   background-color: #337AB7;  /* same color as links */
@@ -345,15 +352,22 @@ iframe#twitter-widget-0 {
   filter: progid:DXImageTransform.Microsoft.Shadow(Strength=2,Direction=135,Color='#222222');
 }
 
-.error {
-  background-color: tomato !important;
+.error, .warning {
+  margin: 10px;
+  padding: .2em;
   font-style: italic;
 }
 
+.error {
+  background-color: lightcoral !important;
+}
+
 .warning {
-  padding: .2em;
   background-color: gold !important;
-  font-style: italic;
+}
+
+.error p, .warning p {
+  margin: 10px;
 }
 
 .error code, .warning code {

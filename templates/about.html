@@ -106,7 +106,7 @@ service.</a>
 <li><a href="#github-issue-comment">How do I create a GitHub issue or comment?</a></li>
 <li><a href="#github-reaction">How do I post an emoji reaction on a GitHub issue or PR?</a></li>
 <li><a href="#github-star">How do I star a GitHub repo?</a></li>
-<li><a href="#facebook-publish">What happened to Facebook?</li>
+<li><a href="#rip-facebook">What happened to Facebook?</li>
 <li><a href="#omit-link">Can I disable the link back to my post?</a></li>
 <li><a href="#ignore-formatting">Can I disable the plain text whitespace and
   formatting?</a></li>
@@ -845,7 +845,7 @@ previewing a post to see how it will look!
   may include <a href="#location">location</a> and
   <a href="#picture">up to four photos</a> or
   <a href="#video">one video</a>.</li>
-<li>Facebook posts, <a href="#facebook-publish">until August 2018</a>. Posts support both users and pages, and may include a <a href="#picture">photo</a>, <a href="#video">video</a>, and/or <a href="#person-tag">people tags</a>. <a href="#facebook-publish">Not comments, likes, or RSVPs.</a>
+<li>Facebook posts, <a href="#rip-facebook">until August 2018</a>. Posts support both users and pages, and may include a <a href="#picture">photo</a>, <a href="#video">video</a>, and/or <a href="#person-tag">people tags</a>. <a href="#rip-facebook">Not comments, likes, or RSVPs.</a>
 </li>
 <li>Flickr photos, videos, comments, and favorites. Photos may include
   <a href="#location">location</a>,
@@ -1064,15 +1064,15 @@ I have something to say about this:
 </pre>
 </li>
 
-<li id="facebook-publish" class="question">What happened to Facebook?</li>
+<a id="facebook-publish"></a>
+<li id="rip-facebook" class="question">What happened to Facebook?</li>
 <li class="answer">
-<p>Bridgy Publish supported Facebook posts and RSVPs for over four years, <a href="https://snarfed.org/2014-03-25_bridgy-publish">starting with its launch</a> on March 24, 2014.
+<p>Facebook is no longer supported. So long, and thanks for all the fish!</p>
+
+<p>Bridgy included support Facebook from the very beginning, <a href="https://snarfed.org/2012-01-08_bridgy_launched">when it launched in January 2012</a>. After the <a href="https://www.theverge.com/2018/4/10/17165130/facebook-cambridge-analytica-scandal">Cambridge Analytica scandal</a> broke, Facebook started limiting its API in a number of ways. Notably, <a href="https://developers.facebook.com/blog/post/2018/04/24/new-facebook-platform-product-changes-policy-updates/">it disabled RSVPing on April 24, 2018, posting on August 1, 2018,</a> and <a href="https://developers.facebook.com/blog/post/2018/05/01/facebook-login-updates-further-protect-privacy/">reading other people's comments and likes on May 24, 2018</a>, which killed Bridgy for Facebook entirely. Gory details in <a href="https://github.com/snarfed/bridgy/issues/826">these</a> <a href="https://github.com/snarfed/bridgy/issues/817">issues</a>. RIP, we'll miss you!
 </p>
 
-<p>After the <a href="https://www.theverge.com/2018/4/10/17165130/facebook-cambridge-analytica-scandal">Cambridge Analytica scandal</a> broke, Facebook started limiting its API in a number of ways. Notably, <a href="https://developers.facebook.com/blog/post/2018/04/24/new-facebook-platform-product-changes-policy-updates/">it disabled RSVPing on April 24, 2018, and will disable posting on August 1, 2018,</a> which will effectively kill Bridgy Publish for Facebook. RIP, we'll miss you!
-</p>
-
-<p>Bridgy Publish also supported Facebook likes and comments for
+<p>(Bridgy Publish also supported Facebook likes and comments for
 almost a year, <a href="https://github.com/snarfed/bridgy/commit/0e44fe28c1df5026b2b237d2c094a0a0ed9c8c00">up to February 14, 2015</a>.
 <a href="https://developers.facebook.com/docs/apps/changelog#v2_0_graph_api">Facebook's
 v2.x API</a>
@@ -1082,7 +1082,7 @@ id, and even when you can, the API usually won't let you read the post or like
 or comment on it. You need
 the <a href="https://developers.facebook.com/docs/facebook-login/permissions/#reference-read_stream"><code>read_stream</code>
 permission</a>, which Facebook only gave out in very rare circumstances.
-<a href="https://github.com/snarfed/bridgy/issues/350">Lots more gory details here.</a>
+<a href="https://github.com/snarfed/bridgy/issues/350">Lots more gory details here.</a>)
 </p>
 </li>
 
