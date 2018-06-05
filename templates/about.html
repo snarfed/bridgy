@@ -50,14 +50,12 @@ service.</a>
 <li><a href="#who">Who are you? Why did you make this?</a></li>
 <li><a href="#history">How long has this been around?</a></li>
 <li><a href="#stats">How big is this?</a></li>
+<li><a href="#rip-facebook">What happened to Facebook?</li>
 <li><a href="#profile-link">Why does my web site URL need to be in my social
   network profile?</a></li>
 <li><a href="#add-remove-url">How do I add or remove a web site URL from
   my Bridgy profile?</a></li>
 <li><a href="#disconnected">Bridgy stopped working for me!</a></li>
-<li><a href="#facebook-expired">Bridgy used to work with my Facebook account,
-  but now it doesn't!</a></li>
-<li><a href="#facebook-pages">Does it support Facebook pages?</a></li>
 <li><a href="#security">It looks like anyone can poll or disable my
   account or publish as me. Isn't that a security hole?</a></li>
 <li><a href="#registration-api">Can users sign up for Bridgy
@@ -106,7 +104,6 @@ service.</a>
 <li><a href="#github-issue-comment">How do I create a GitHub issue or comment?</a></li>
 <li><a href="#github-reaction">How do I post an emoji reaction on a GitHub issue or PR?</a></li>
 <li><a href="#github-star">How do I star a GitHub repo?</a></li>
-<li><a href="#rip-facebook">What happened to Facebook?</li>
 <li><a href="#omit-link">Can I disable the link back to my post?</a></li>
 <li><a href="#ignore-formatting">Can I disable the plain text whitespace and
   formatting?</a></li>
@@ -231,6 +228,28 @@ inspiration of the
 <p>Check out the <a href="/#stats">stats on the front page</a>!</p>
 </li>
 
+<a id="facebook-publish"></a>
+<li id="rip-facebook" class="question">What happened to Facebook?</li>
+<li class="answer">
+<p>Facebook is no longer supported. So long, and thanks for all the fish!</p>
+
+<p>Bridgy included support Facebook from the very beginning, <a href="https://snarfed.org/2012-01-08_bridgy_launched">when it launched in January 2012</a>. After the <a href="https://www.theverge.com/2018/4/10/17165130/facebook-cambridge-analytica-scandal">Cambridge Analytica scandal</a> broke, Facebook started limiting its API in a number of ways. Notably, <a href="https://developers.facebook.com/blog/post/2018/04/24/new-facebook-platform-product-changes-policy-updates/">it disabled RSVPing on April 24, 2018, posting on August 1, 2018,</a> and <a href="https://developers.facebook.com/blog/post/2018/05/01/facebook-login-updates-further-protect-privacy/">reading other people's comments and likes on May 24, 2018</a>, which killed Bridgy for Facebook entirely. Gory details in <a href="https://github.com/snarfed/bridgy/issues/826">these</a> <a href="https://github.com/snarfed/bridgy/issues/817">issues</a>. RIP, we'll miss you!
+</p>
+
+<p>(Bridgy Publish also supported Facebook likes and comments for
+almost a year, <a href="https://github.com/snarfed/bridgy/commit/0e44fe28c1df5026b2b237d2c094a0a0ed9c8c00">up to February 14, 2015</a>.
+<a href="https://developers.facebook.com/docs/apps/changelog#v2_0_graph_api">Facebook's
+v2.x API</a>
+<a href="https://developers.facebook.com/docs/apps/upgrading#upgrading_v2_0_graph_api">made
+it much harder</a> to map backward from a Facebook post's URL to its API object
+id, and even when you can, the API usually won't let you read the post or like
+or comment on it. You need
+the <a href="https://developers.facebook.com/docs/facebook-login/permissions/#reference-read_stream"><code>read_stream</code>
+permission</a>, which Facebook only gave out in very rare circumstances.
+<a href="https://github.com/snarfed/bridgy/issues/350">Lots more gory details here.</a>)
+</p>
+</li>
+
 <li id="profile-link" class="question">Why does my web site URL need to be in my
   social network profile?</li>
 <li class="answer">
@@ -265,26 +284,6 @@ Bridgy's access expires or is revoked, or for other reasons.</p>
 <span class="glyphicon glyphicon-pause"></span> icon on your user page.
 </p></li>
 
-<li id="facebook-expired" class="question">Bridgy used to work with my Facebook
-  account, but now it doesn't!</li>
-<li class="answer">
-<p>Facebook <a href="https://developers.facebook.com/docs/roadmap/completed-changes/offline-access-removal/">only
-lets apps access your account for two months at a time</a>. That time period
-automatically extends when you interact with an app yourself, but Bridgy works
-in the background, without user interaction. So, you'll need to come back every
-two months and log into Facebook again to renew its access to your account.</p>
-
-<p>Don't worry! You don't need to remember to do this yourself. Bridgy will send
-you a notification on Facebook when you need to renew. Just click on the
-notification, and you'll be set for another two months.
-</p></li>
-
-<li id="facebook-pages" class="question">Does it support Facebook pages?</li>
-<li class="answer">
-<p>Yes! If you log in as a Facebook user who's an admin of a page, you can
-choose that page during signup.</p>
-</li>
-
 <li id="security" class="question">It looks like anyone can poll or disable my
 account or publish as me. Isn't that a security hole?</li>
 <li class="answer">
@@ -301,7 +300,7 @@ without leaving my site or application?</li>
 <p>Not exactly, but you can get close. Direct your users to
 <code>POST</code> to a Bridgy registration URL of the
 form <code>https://brid.gy/SITE/start</code> (where SITE is
-<code>facebook</code>, <code>twitter</code>, <code>googleplus</code>,
+<code>twitter</code>, <code>googleplus</code>,
 <code>instagram</code>, <code>flickr</code>, or <code>github</code>) with the
 parameters:</p>
 <ul>
@@ -317,9 +316,6 @@ in the user's silo profile</li>
 your site when it finishes.</p>
 <p>For example:</p>
 <pre>
-POST <a href="https://brid.gy/facebook/start">https://brid.gy/facebook/start</a>
-<span class="keyword">feature=</span><span class="value">listen</span>&amp;<span class="keyword">callback=</span><span class="value">http%3A%2F%2Fexample.com%2Fbridgy-callback</span>
-
 POST <a href="https://brid.gy/twitter/start">https://brid.gy/twitter/start</a>
 <span class="keyword">feature=</span><span class="value">listen,publish</span>&amp;<span class="keyword">callback=</span><span class="value">http%3A%2F%2Fexample.com%2Fbridgy-callback</span>
 </pre>
@@ -335,7 +331,6 @@ POST <a href="https://brid.gy/twitter/start">https://brid.gy/twitter/start</a>
 </p>
 <ul>
   <li><b>Blogger</b> doesn't have permissions at all, <a href="https://developers.google.com/blogger/docs/2.0/developers_guide_protocol#OAuth2Authorizing">just full access or none.</a> <a href="/static/permissions_screenshots/blogger.png">Screenshot.</a></li>
-  <li><b>Facebook</b> has <a href="https://developers.facebook.com/docs/facebook-login/permissions">very fine grained permissions</a>. For listen, we ask for read access to your public profile info, posts, events, photos, pages, etc. For publish, we ask for permission to post as you and/or your pages, and let you choose who those posts will be visible to. Screenshots: <a href="/static/permissions_screenshots/facebook_read.png">listen</a> (<a href="/static/permissions_screenshots/facebook_read_pages.png">pages</a>), <a href="/static/permissions_screenshots/facebook_write.png">publish</a> (<a href="/static/permissions_screenshots/facebook_write_pages.png">pages</a>).</li>
   <li><b>Flickr</b> has <a href="https://www.flickr.com/services/api/auth.oauth.html#authorization">read, write, and delete permissions</a>. We ask for read for listen, write for publish. Screenshots: <a href="/static/permissions_screenshots/flickr_read.png">listen</a>, <a href="/static/permissions_screenshots/flickr_write.png">publish</a>.</li>
   <li><b>GitHub</b> has a few different permission models. We use an <a href="https://developer.github.com/apps/building-oauth-apps/scopes-for-oauth-apps/">OAuth app</a> to request read/write permission to public repository data, and notifications to see new comments and reactions. The alternative would have been a <a href="https://developer.github.com/apps/building-github-apps/">GitHub app,</a> which lets you grant read vs write permission to individual repos, but includes private repos, and doesn't include notifications. <a href="https://developer.github.com/apps/differences-between-apps/">More on the tradeoff here.</a> <a href="/static/permissions_screenshots/github.png">Screenshot.</a></li>
   <li><b>Google+</b> has <a href="https://developers.google.com/+/web/api/rest/oauth#scopes">semi-fine grained permissions</a>, and only read access. We ask for access to your profile info, circles, and public posts. <a href="/static/permissions_screenshots/googleplus.png">Screenshot.</a></li>
@@ -456,11 +451,6 @@ GitHub</a>. Thank you!
 <li>Tweets from other people that
   <a href="https://support.twitter.com/articles/14023-what-are-replies-and-mentions">@-mention</a>
   you or contain links to your site.</li>
-<li>Facebook comments, likes, and reactions to your posts.</li>
-<li>Facebook shares of your posts
-  <a href="https://github.com/snarfed/bridgy/issues/510">from other Bridgy
-    users</a>.</li>
-<li>Facebook event RSVPs. <a href="https://indieweb.org/rsvp">Details.</a></li>
 <li>Google+ comments, +1s, and reshares of your posts.</li>
 <li>Google+ posts from other people that contain links to your site.</li>
 <li>Instagram comments and likes on your pictures.</li>
@@ -511,23 +501,10 @@ posts, even if they have links to your web site. It only sends back responses
 to <em>your</em> posts.
 </li>
 <li id="public">Is the post fully public? And the response too? Bridgy only
-shows and sends webmentions for fully public posts and responses. If your
-default Facebook audience is <em>friends</em> or <em>friends of friends,</em> or
+shows and sends webmentions for fully public posts and responses. If
 your Twitter account is
 <a href="https://dev.twitter.com/docs/platform-objects/users#protected">protected</a>,
 or your Google+ post wasn't sent to <em>public,</em> Bridgy won't see it.
-</li>
-<li><p>Facebook's API isn't great about this either.
-<a href="https://github.com/snarfed/bridgy/issues/611">Sometimes it doesn't give
-us enough information to tell whether a post is public or private.</a> When that
-happens, we have to default to assuming it's not public, which means we
-occasionally miss posts (usually photos) that look public inside Facebook. This
-often happens when Facebook automatically consolidates photos into "X added N
-new photos." posts. (Sometimes the UI isn't clear either! The post, photo, and
-album may show different privacy settings, or none at all.)</p>
-<p>You can avoid this problem by posting photos to albums that are explicitly
-set to public. You can also avoid the auto-consolidated posts by adding photos
-to the Timeline Photos album specifically.</p>
 </li>
 <li>Is it on an older post? Bridgy only looks at your 50 most recent posts. It
 doesn't go back arbitrarily far because that doesn't scale. You can get around
@@ -635,8 +612,7 @@ officially syndicating your posts and other people just mentioning them</a>.
 </p>
 
 <p>
-Google+ and Facebook let you add multiple web site links to your profile. (You
-can do it on Facebook by separating links with spaces or newlines.) Twitter,
+Google+ lets you add multiple web site links to your profile. Twitter,
 Instagram, Flickr, and GitHub only allow one, so Bridgy
 <a href="https://github.com/snarfed/bridgy/issues/483">also looks for links
 in your profile's description field</a>.
@@ -712,7 +688,6 @@ webmention manually</a>. Here's how to construct Bridgy's source URLs:
 /comment/<span class='keyword'>SITE</span>/<span class='keyword'>USER_ID</span>/<span class='value'>POST_ID</span>/<span class='value'>COMMENT_ID</span>
 /like/<span class='keyword'>SITE</span>/<span class='keyword'>USER_ID</span>/<span class='value'>POST_ID</span>/<span class='value'>LIKED_BY_USER_ID</span>
 /repost/<span class='keyword'>SITE</span>/<span class='keyword'>USER_ID</span>/<span class='value'>POST_ID</span>/<span class='value'>SHARE_POST_ID</span>
-/rsvp/facebook/<span class='keyword'>USER_ID</span>/<span class='value'>EVENT_ID</span>/<span class='value'>RSVP_USER_ID</span>
 </pre>
 
 <p>Examples:</p>
@@ -729,15 +704,12 @@ webmention manually</a>. Here's how to construct Bridgy's source URLs:
 <li><a href="/repost/twitter/schnarfed/478564735265157120/478788580504899584">
   /repost/twitter/schnarfed/478564735265157120/478788580504899584
 </a></li>
-<li><a href="/rsvp/facebook/212038/675481332531191/724885424">
-  /rsvp/facebook/212038/675481332531191/724885424
-</a></li>
 </ul>
 <br />
 
 <p>Details:</p>
 <ul>
-<li><code class='keyword'>SITE</code> is either <code>facebook</code>,
+<li><code class='keyword'>SITE</code> is either
   <code>flickr</code>, <code>github</code>, <code>googleplus</code>,
   <code>instagram</code>, or <code>twitter</code>.
 </li>
@@ -749,12 +721,11 @@ webmention manually</a>. Here's how to construct Bridgy's source URLs:
   JSON-formatted version.
 </li>
 <li>For Twitter, Instagram, and GitHub, <code class='keyword'>USER_ID</code> is your
-  username, but for Facebook, Flickr, and Google+, it's your numeric user id.
+  username, but for Flickr and Google+, it's your numeric user id.
   <code class='value'>LIKED_BY_USER_ID</code> and
   <code class='value'>RSVP_USER_ID</code> are always numeric. You
   can get numeric user ids from the API consoles
-  (<a href="https://developers.facebook.com/tools/explorer">Facebook</a>,
-   <a href="https://developers.google.com/+/api/latest/people/get#try-it">Google+</a>,
+  (<a href="https://developers.google.com/+/api/latest/people/get#try-it">Google+</a>,
    <a href="https://apigee.com/embed/console/twitter">Twitter</a>) or
   from <a href="https://granary.io/">granary</a>.
 </li>
@@ -776,7 +747,7 @@ webmention manually</a>. Here's how to construct Bridgy's source URLs:
 <li id="publishing" class="question">What do you mean, <em>publishing</em>?</li>
 <li class="answer">
 <p>People often post something on their web site, then post a link to it on
-Facebook or Twitter so that other people will see it. The
+Twitter or elsewhere so that other people will see it. The
 <a href="https://indieweb.org/">IndieWeb</a> community calls this
 <a href="https://indieweb.org/POSSE">POSSE</a>. There are
 <a href="https://indieweb.org/why">lots of different reasons</a> to do this,
@@ -785,7 +756,7 @@ faster, more effectively, and even automatically!</p>
 <p>You can try it right now. Once you're signed up to publish, plug the URL for
 one of your posts into the text box on your Bridgy user page, then hit
 the <em>Preview</em> button. You'll see a preview of what your post would look
-like as a Facebook post or Twitter tweet. If you like it, click <em>Send</em>
+like as a tweet. If you like it, click <em>Send</em>
 and Bridgy will post it for you.</p>
 <p>It's not just for posts or tweets, either! You can use Bridgy to publish
 <a href="#reply">replies</a>,
@@ -884,7 +855,6 @@ yourself</a>. It's just a single HTTP request!
 is <code>https://brid.gy/publish/webmention</code>, and the target URL
 should be one of:
 <ul>
-<li><code>https://brid.gy/publish/facebook</code></li>
 <li><code>https://brid.gy/publish/flickr</code></li>
 <li><code>https://brid.gy/publish/github</code></li>
 <li><code>https://brid.gy/publish/twitter</code></li>
@@ -896,8 +866,7 @@ page.
 </p>
 <p>If your server sends webmentions, just include any of these invisible links
 in your post to publish automatically!
-<pre>&lt;a href="<a href='https://brid.gy/publish/facebook'>https://brid.gy/publish/facebook</a>"&gt;&lt;/a&gt;
-&lt;a href="<a href='https://brid.gy/publish/flickr'>https://brid.gy/publish/flickr</a>"&gt;&lt;/a&gt;
+<pre>&lt;a href="<a href='https://brid.gy/publish/flickr'>https://brid.gy/publish/flickr</a>"&gt;&lt;/a&gt;
 &lt;a href="<a href='https://brid.gy/publish/github'>https://brid.gy/publish/github</a>"&gt;&lt;/a&gt;
 &lt;a href="<a href='https://brid.gy/publish/twitter'>https://brid.gy/publish/twitter</a>"&gt;&lt;/a&gt;
 </pre>
@@ -982,15 +951,13 @@ tag. For example:
 <li id="person-tag" class="question">How do I tag someone in a post?</li>
 <li class="answer">
 <p>
-Facebook and Flickr support tagging people in posts, photos, and checkins. Just include a <a href="https://indieweb.org/person-tag">person tag link</a> to their silo profile with <code>&lt;a class="u-category h-card"></code>. For example:
+Flickr supports tagging people in posts, photos, and checkins. Just include a <a href="https://indieweb.org/person-tag">person tag link</a> to their silo profile with <code>&lt;a class="u-category h-card"></code>. For example:
 
 <pre>
-&lt;a class="<span class='keyword'>u-category h-card</span>" href="<span class='value'>http://facebook.com/212038</span>"&gt;
+&lt;a class="<span class='keyword'>u-category h-card</span>" href="<span class='value'>https://www.flickr.com/people/40721178@N00/</span>"&gt;
   Tag, you're it!
 &lt;/a&gt;
 </pre>
-</p>
-<p>If they're signed up for Bridgy, you <em>may</em> also be able to link to their personal web site, e.g. <code>https://snarfed.org</code>, or their Facebook username URL, e.g. <code>http://facebook.com/kyle.mahan</code>, but <a href="https://github.com/snarfed/bridgy/issues/674#issuecomment-228254131">these don't always work.</a> When in doubt, use the Facebook user id URL. You can find the user id in a hidden <code>fb://profile/USERID</code> <a href="https://indiewebcamp.com/person-tag#Bridgy_Publish">link in their profile's HTML</a>.
 </p>
 </li>
 
@@ -1064,28 +1031,6 @@ I have something to say about this:
 </pre>
 </li>
 
-<a id="facebook-publish"></a>
-<li id="rip-facebook" class="question">What happened to Facebook?</li>
-<li class="answer">
-<p>Facebook is no longer supported. So long, and thanks for all the fish!</p>
-
-<p>Bridgy included support Facebook from the very beginning, <a href="https://snarfed.org/2012-01-08_bridgy_launched">when it launched in January 2012</a>. After the <a href="https://www.theverge.com/2018/4/10/17165130/facebook-cambridge-analytica-scandal">Cambridge Analytica scandal</a> broke, Facebook started limiting its API in a number of ways. Notably, <a href="https://developers.facebook.com/blog/post/2018/04/24/new-facebook-platform-product-changes-policy-updates/">it disabled RSVPing on April 24, 2018, posting on August 1, 2018,</a> and <a href="https://developers.facebook.com/blog/post/2018/05/01/facebook-login-updates-further-protect-privacy/">reading other people's comments and likes on May 24, 2018</a>, which killed Bridgy for Facebook entirely. Gory details in <a href="https://github.com/snarfed/bridgy/issues/826">these</a> <a href="https://github.com/snarfed/bridgy/issues/817">issues</a>. RIP, we'll miss you!
-</p>
-
-<p>(Bridgy Publish also supported Facebook likes and comments for
-almost a year, <a href="https://github.com/snarfed/bridgy/commit/0e44fe28c1df5026b2b237d2c094a0a0ed9c8c00">up to February 14, 2015</a>.
-<a href="https://developers.facebook.com/docs/apps/changelog#v2_0_graph_api">Facebook's
-v2.x API</a>
-<a href="https://developers.facebook.com/docs/apps/upgrading#upgrading_v2_0_graph_api">made
-it much harder</a> to map backward from a Facebook post's URL to its API object
-id, and even when you can, the API usually won't let you read the post or like
-or comment on it. You need
-the <a href="https://developers.facebook.com/docs/facebook-login/permissions/#reference-read_stream"><code>read_stream</code>
-permission</a>, which Facebook only gave out in very rare circumstances.
-<a href="https://github.com/snarfed/bridgy/issues/350">Lots more gory details here.</a>)
-</p>
-</li>
-
 <li id="omit-link" class="question">Can I disable the link back to my post?</li>
 <li class="answer">
 <p>Sure! By default, Bridgy includes a link back to your post. If you're using
@@ -1120,11 +1065,10 @@ adding the <code>u-bridgy-ignore-formatting</code> class to a link in your post.
 the <code>p-bridgy-[SILO]-content</code> class in your post. This will override
 your post's actual content.
 </p>
-<p>Here's an example of publishing custom text for both Facebook and Twitter:
+<p>Here's an example of publishing custom text for Twitter:
 </p>
 <pre>&lt;div class="<span class='keyword'>h-entry</span>"&gt;
   &lt;p class="e-content"&gt;This is a going to be a very long blog post. Pull up a chair, it's going to take a while. Ready? Here we go...&lt;/p&gt;
-  &lt;p class="<span class='keyword'>p-bridgy-facebook-content</span>"&gt;<span class='value'>You won't believe this one weird old blogging trick!</span>&lt;/p&gt;
   &lt;p class="<span class='keyword'>p-bridgy-twitter-content</span>"&gt;<span class='value'>Long form is the new short form.</span>&lt;/p&gt;
 &lt;/div&gt;
 </pre>
@@ -1155,23 +1099,23 @@ will return <code>201 Created</code> on success with a JSON response containing
 at least a <code>url</code> field that points to the silo object that it
 operated on. The same URL is included in the <code>Location</code> HTTP header.
 For Twitter likes, this is the tweet. If a new object was created, e.g. a
-Facebook post or Twitter tweet, @-reply, or retweet, there will also be
+Twitter tweet, @-reply, or retweet, there will also be
 an <code>id</code> field with the silo id of that object.
 </p>
 <p>For example, this request for an original post:
 </p>
 <pre>POST <span class="keyword">source</span>=<a>https://example.com/posts/123</a>
-     &<span class="keyword">target</span>=<a href="https://brid.gy/publish/facebook">https://brid.gy/publish/facebook</a></pre>
+     &<span class="keyword">target</span>=<a href="https://brid.gy/publish/twitter">https://brid.gy/publish/twitter</a></pre>
 <p>will receive this response:
 </p>
 <pre>HTTP/1.1 201 Created
 Content-Type: application/json
-Location: http://facebook.com/456_789
+Location: https://twitter.com/me/status/456789
 
 {
-  "<span class='keyword'>url</span>": "<span class='value'>http://facebook.com/456_789</span>",
+  "<span class='keyword'>url</span>": "<span class='value'>https://twitter.com/me/status/456789</span>",
   "<span class='keyword'>type</span>": "<span class='value'>post</span>",
-  "<span class='keyword'>id</span>": "<span class='value'>456_789</span>"
+  "<span class='keyword'>id</span>": "<span class='value'>456789</span>"
 }</pre>
 <p>Pro tip: Twitter responses that create new tweets actually return the entire
 newly
@@ -1183,8 +1127,9 @@ object</a>. The more you know!
 <li id="error-response" class="question">How about error responses?</li>
 <li class="answer">
 <p><code>400 Bad Request</code> is the most common error response. Other status
-codes may be returned when a Facebook or Twitter API call error is propagated
-back to you. For example, Facebook often <code>500</code>s API requests.
+codes may be returned when an API call error is propagated back to you. For
+example, GitHub sometimes <code>403</code>s API requests due to access
+restrictions.
 </p>
 <p>
 Like successful responses, error response bodies are JSON. All error responses
