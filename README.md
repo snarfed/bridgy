@@ -189,25 +189,28 @@ Stats
 ---
 I occasionally generate [stats and graphs of usage and growth](https://snarfed.org/2018-01-02_bridgy-stats-update) from the [BigQuery dataset](https://bigquery.cloud.google.com/dataset/brid-gy:datastore) ([#715](https://github.com/snarfed/bridgy/issues/715)). Here's how.
 
-1. [Back up the full datastore to Google Cloud Storage.](https://console.cloud.google.com/datastore/settings?project=brid-gy) Include all entities except `*Auth` and other internal details.  
-  TODO: try the [export service](https://cloud.google.com/datastore/docs/export-import-entities)! It worked ok on 2018-01-01 but [BigQuery choked on importing it]() with _query: Entity was of unexpected kind "Response". (error code: invalidQuery)_.
-1. [Import it into BigQuery](https://cloud.google.com/bigquery/docs/loading-data-cloud-datastore#loading_cloud_datastore_backup_data):
+1. [Back up the full datastore to Google Cloud Storage.](https://console.cloud.google.com/datastore/settings?project=brid-gy) Include all entities except `*Auth` and other internal details. Check to see if any new kinds have been added since the last time this command was run.
+    
+    ```
+    gcloud datastore export --async gs://brid-gy.appspot.com/stats/ --kinds Blogger,BlogPost,BlogWebmention,FacebookPage,Flickr,GitHub,GooglePlusPage,Instagram,Medium,Publish,PublishedPage,Response,SyndicatedPost,Tumblr,Twitter,WordPress
+    ```
+    
+    Note that `--kinds` is required. [From the export docs](https://cloud.google.com/datastore/docs/export-import-entities#limitations), _Data exported without specifying an entity filter cannot be loaded into BigQuery._
+
+1. [Import it into BigQuery](https://cloud.google.com/bigquery/docs/loading-data-cloud-datastore#loading_cloud_datastore_export_service_data):
 
     ```
-    gsutil gs://brid-gy.appspot.com/
-    # find the hash in the backup files, replace it in the paths below.
-    
-    for kind in BlogPost BlogWebmention Publish Response SyndicatedPost); do
-      bq load --replace --source_format=DATASTORE_BACKUP datastore.$kind gs://brid-gy.appspot.com/aglzfmJyaWQtZ3lyQQsSHF9BRV9EYXRhc3RvcmVBZG1pbl9PcGVyYXRpb24Y-Z6kCAwLEhZfQUVfQmFja3VwX0luZm9ybWF0aW9uGAEM.$kind.backup_info
+    for kind in BlogPost BlogWebmention Publish Response SyndicatedPost; do
+      bq load --replace --nosync --source_format=DATASTORE_BACKUP datastore.$kind gs://brid-gy.appspot.com/stats/all_namespaces/kind_$kind/all_namespaces_kind_$kind.export_metadata
     done
     
     for kind in Blogger FacebookPage Flickr GitHub GooglePlusPage Instagram Medium Tumblr Twitter WordPress; do
-      bq load --replace --source_format=DATASTORE_BACKUP sources.$kind gs://brid-gy.appspot.com/aglzfmJyaWQtZ3lyQQsSHF9BRV9EYXRhc3RvcmVBZG1pbl9PcGVyYXRpb24Y-Z6kCAwLEhZfQUVfQmFja3VwX0luZm9ybWF0aW9uGAEM.$kind.backup_info
+      bq load --replace --nosync --source_format=DATASTORE_BACKUP sources.$kind gs://brid-gy.appspot.com/stats/all_namespaces/kind_$kind/all_namespaces_kind_$kind.export_metadata
     done
     ```
 1. [Run the full stats BigQuery query.](https://bigquery.cloud.google.com/savedquery/586366768654:9d8d4c13e988477bb976a5e29b63da3b) Download the results as CSV.
 1. [Open the stats spreadsheet.](https://docs.google.com/spreadsheets/d/1VhGiZ9Z9PEl7f9ciiVZZgupNcUTsRVltQ8_CqFETpfU/edit) Import the CSV, replacing the _data_ sheet.
-1. Check out the graphs! Save full size images with OS screenshots, thumbnails with the _Save Image_ button. Then post them!
+1. Check out the graphs! Save full size images with OS or browser screenshots, thumbnails with the _Save Image_ button. Then post them!
 
 
 Misc
