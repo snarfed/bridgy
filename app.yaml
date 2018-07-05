@@ -73,7 +73,7 @@ handlers:
   script: blogger.application
   secure: always
 
-- url: /facebook/(start|oauth_handler|add|delete|publish/.+)(/.*)?
+- url: /facebook/(start|oauth_handler|delete|publish/.+)(/.*)?
   script: facebook.application
   secure: always
 

@@ -658,47 +658,6 @@ class FacebookPageTest(testutil.ModelsTest):
                   self.response.text)
     self.assertIsNone(self.fb.key.get())
 
-  def test_add_page(self):
-    self.fb.key.delete()
-    self.page.key.delete()
-    self.auth_entity.pages_json = json.dumps([self.page_json])
-    self.auth_entity.put()
-
-    self.expect_urlopen(oauth_facebook.API_PAGE_URL + '&access_token=page_token',
-                        json.dumps(self.page_json))
-    self.mox.ReplayAll()
-
-    resp = facebook.application.get_response(
-      '/facebook/add?id=108663232553079&auth_entity_key=%s' %
-        self.auth_entity.key.urlsafe(),
-      method='POST')
-
-    self.assertIsNone(self.fb.key.get())
-    page = FacebookPage.get_by_id('108663232553079')
-    self.assertIsNotNone(page)
-
-    self.assertEquals(302, resp.status_code)
-    self.assert_equals(
-      'http://localhost/edit-websites?source_key=%s' % page.key.urlsafe(),
-      resp.headers['Location'])
-
-  def test_add_page_id_not_found(self):
-    self.fb.key.delete()
-    self.page.key.delete()
-    self.auth_entity.pages_json = json.dumps([self.page_json])
-    self.auth_entity.put()
-
-    resp = facebook.application.get_response(
-      '/facebook/add?id=999&auth_entity_key=%s' % self.auth_entity.key.urlsafe(),
-      method='POST')
-
-    self.assertEquals(302, resp.status_code)
-    self.assert_equals('http://localhost/#!' + urllib.quote(
-        "OK, you're not signed up. Hope you reconsider!"),
-      resp.headers['location'])
-    self.assertIsNone(self.fb.key.get())
-    self.assertIsNone(FacebookPage.get_by_id('108663232553079'))
-
   def test_skip_page_chooser_if_no_pages(self):
     self.fb.key.delete()
 

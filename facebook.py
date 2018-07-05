@@ -428,11 +428,6 @@ class AuthHandler(util.Handler):
       }))
 
 
-class AddFacebookPage(AuthHandler):
-  def post(self, auth_entity=None, state=None):
-    self.finish_oauth_flow(auth_entity, state)
-
-
 class OAuthCallback(oauth_facebook.CallbackHandler, AuthHandler):
   """OAuth callback handler."""
   def finish(self, auth_entity, state=None):
@@ -473,7 +468,6 @@ class StartHandler(util.Handler):
 application = webapp2.WSGIApplication([
     ('/facebook/start', StartHandler),
     ('/facebook/oauth_handler', OAuthCallback),
-    ('/facebook/add', AddFacebookPage),
     ('/facebook/delete/finish', oauth_facebook.CallbackHandler.to('/delete/finish')),
     ('/facebook/publish/start', oauth_facebook.StartHandler.to(
       '/publish/facebook/finish')),
