@@ -80,7 +80,7 @@ class ItemHandler(util.Handler):
   handle_exception = handlers.handle_exception
   source = None
 
-  VALID_ID = re.compile(r'^[\w.+:@-]+$')
+  VALID_ID = re.compile(r'^[\w.+:@=-]+$')
 
   def head(self, *args):
     """Return an empty 200 with no caching directives."""
@@ -150,7 +150,7 @@ class ItemHandler(util.Handler):
     label = '%s:%s %s %s' % (source_short_name, string_id, type, ids)
     cache_key = 'H ' + label
     obj = memcache.get(cache_key)
-    if obj:
+    if obj and not appengine_config.DEBUG:
       logging.info('Using cached object for %s', label)
     else:
       logging.info('Fetching %s', label)
