@@ -103,6 +103,7 @@ service.</a>
 <li><a href="#quote-tweet">How do I post a quote tweet?</a></li>
 <li><a href="#github-issue-comment">How do I create a GitHub issue or comment?</a></li>
 <li><a href="#github-reaction">How do I post an emoji reaction on a GitHub issue or PR?</a></li>
+<li><a href="#add-label">How do I add a label to a GitHub issue?</a></li>
 <li><a href="#github-star">How do I star a GitHub repo?</a></li>
 <li><a href="#omit-link">Can I disable the link back to my post?</a></li>
 <li><a href="#ignore-formatting">Can I disable the plain text whitespace and
@@ -823,6 +824,7 @@ previewing a post to see how it will look!
   <a href="https://indieweb.org/tags">tags</a>, and/or
   <a href="#person-tag">people tags</a>.</li>
 <li>GitHub issues, <a href="https://help.github.com/articles/about-stars">stars</a>, comments on issues and PRs, and <a href="https://help.github.com/articles/about-conversations-on-github/#reacting-to-ideas-in-comments">emoji reactions</a> to issues, PRs, and comments.</li>
+<li><a href="#add-label">Adding new labels to GitHub issues.</a></li>
 <li>Nothing on Instagram, sorry. Likes used to be possible, but not since Instagram
   <a href="http://developers.instagram.com/post/133424514006/instagram-platform-update">
     started locking down their API.</a>
@@ -1021,6 +1023,21 @@ I have something to say about this:
 &lt;/div&gt;
 </pre>
 <p><a href="https://help.github.com/articles/about-conversations-on-github/#reacting-to-ideas-in-comments">More details.</a> The indieweb community also calls these <a href="https://indieweb.org/reacji">reacji</a>.
+</li>
+
+<li id="add-label" class="question">How do I add a label to a GitHub issue?</li>
+<li class="answer">
+<p>Post a <a href="https://indieweb.org/tag-reply#How_to_simple_tag-reply">tag-reply</a> to the issue with the new label(s). For example:</p>
+<pre>
+Adding labels
+&lt;a class="<span class='keyword'>p-category</span>"&gt;good&lt;/span&gt;
+and
+&lt;a class="<span class='keyword'>p-category</span>"&gt;better&lt;/span&gt;
+to
+&lt;a class="<span class='keyword'>u-tag-of</span>" href="<a href='https://github.com/snarfed/bridgy/issues/333'>https://github.com/snarfed/bridgy/issues/333</a>"&gt;bridgy#333&lt;/a&gt;.
+</pre>
+
+<p>Bridgy will ignore tags that don't match existing labels in the repo.</p>
 </li>
 
 <li id="github-star" class="question">How do I star a GitHub repo?</li>
