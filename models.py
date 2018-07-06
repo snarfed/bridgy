@@ -22,7 +22,7 @@ import util
 
 from google.appengine.ext import ndb
 
-VERB_TYPES = ('post', 'comment', 'like', 'react', 'repost', 'rsvp')
+VERB_TYPES = ('post', 'comment', 'like', 'react', 'repost', 'rsvp', 'tag')
 PUBLISH_TYPES = VERB_TYPES + ('preview',)
 
 MAX_AUTHOR_URLS = 5
