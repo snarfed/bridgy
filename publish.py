@@ -277,10 +277,12 @@ class Handler(webmention.WebmentionHandler):
           # for everyone right now for initial monitoring.
           util.email_me(subject='Bridgy Publish: disabled %s' % self.source.label(),
                         body=body)
-        if not code:
+        if isinstance(e, NotImplementedError):
+          code = '400'
+        elif not code:
           raise
         msg = 'Error: %s %s' % (body or '', e)
-        return self.error(msg, status=code, mail=code not in ('502', '503', '504'))
+        return self.error(msg, status=code, mail=code not in ('400', '502', '503', '504'))
 
     if not self.entity.published:  # tried all the items
       types.discard('h-entry')
