@@ -951,7 +951,6 @@ foo<br /> <blockquote>bar</blockquote>
     self.source.gr_source.create({
       'url': 'http://foo.com/bar',
       'verb': 'rsvp-yes',
-      'displayName': 'yes',
       'object': [{'url': 'http://orig.domain/baz'},
                  {'url': 'https://fa.ke/a/b'}],
       'objectType': 'activity',
@@ -1051,7 +1050,6 @@ foo<br /> <blockquote>bar</blockquote>
     self.source.gr_source.create({
       'url': 'http://foo.com/bar',
       'verb': 'rsvp-yes',
-      'displayName': 'yes',
       'object': [{'url': 'http://fa.ke/homebrew-website-club'}],
       'objectType': 'activity',
       'content': '<span class="p-rsvp" value="yes">yes</span>\n<a class="u-in-reply-to" href="http://fa.ke/homebrew-website-club"></a>',

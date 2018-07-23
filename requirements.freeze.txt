@@ -4,19 +4,19 @@
 -e git+git@github.com:snarfed/python-future.git@all#egg=future
 -e git+git@github.com:snarfed/oauth-dropins.git#egg=oauth_dropins-master
 -e git+git@github.com:snarfed/webmention-tools.git#egg=webmentiontools
-beautifulsoup4==4.3.2
-certifi==2018.1.18
+beautifulsoup4==4.6.0
+certifi==2018.4.16
 chardet==3.0.4
 google-api-python-client==1.6.5
 html2text==2018.1.9
-html5lib==0.9999999
+html5lib==1.0.1
 httplib2==0.10.3
 humanize==0.5.1
-idna==2.6
+idna==2.7
 Jinja2==2.10
 lxml==3.7.3
 MarkupSafe==1.0
-mf2py==1.0.4
+-e git+https://github.com/snarfed/mf2py.git@all#egg=mf2py
 mf2util==0.5.0
 mox3==0.24.0
 oauth2client==4.1.2
@@ -24,7 +24,7 @@ oauthlib==2.0.7
 pyasn1==0.3.3
 pyasn1-modules==0.1.1
 python-tumblpy==1.0.4
-requests==2.18.4
+requests==2.19.1
 requests-oauthlib==0.8.0
 requests-toolbelt==0.8.0
 rsa==3.4.2
@@ -32,5 +32,5 @@ simplejson==3.7.3
 six==1.11.0
 tweepy==3.6.0
 uritemplate==3.0.0
-urllib3==1.22
+urllib3==1.23
 webapp2==3.0.0b1

@@ -152,13 +152,14 @@ foo bar""")
 
     html = """
 <article class="h-entry"><p class="e-content">
+<a href="http://bar.com/mention">this post</a>
 i hereby <a href="http://foo.zz/post/1">mention</a>
 </p></article>"""
     self.expect_requests_get('http://bar.com/mention', html)
 
     testutil.FakeSource.create_comment(
       'http://foo.zz/post/1', 'foo.zz', 'http://foo.zz/',
-      'mentioned this in <a href="http://bar.com/mention">i hereby mention</a>. <br /> <a href="http://bar.com/mention">via bar.com</a>')
+      'mentioned this in <a href="http://bar.com/mention">bar.com/mention</a>. <br /> <a href="http://bar.com/mention">via bar.com</a>')
     self.mox.ReplayAll()
 
     resp = self.get_response('http://bar.com/mention', 'http://foo.zz/post/1')
@@ -177,16 +178,16 @@ i hereby <a href="http://foo.zz/post/1">mention</a>
     html = """\
 <article class="h-entry"><p class="e-content">
 <span class="p-name">my post</span>
-foo
-<a href="http://foo.com/post/1">this post</a>
+<a href="http://bar.com/mention">this post</a>
+<a href="http://foo.com/post/1">another post</a>
 </p></article>"""
-    self.expect_requests_get('http://bar.com/reply', html)
+    self.expect_requests_get('http://bar.com/mention', html)
     testutil.FakeSource.create_comment(
       'http://foo.com/post/1', 'foo.com', 'http://foo.com/',
-      'mentioned this in <a href="http://bar.com/reply">my post</a>. <br /> <a href="http://bar.com/reply">via bar.com</a>')
+      'mentioned this in <a href="http://bar.com/mention">my post</a>. <br /> <a href="http://bar.com/mention">via bar.com</a>')
     self.mox.ReplayAll()
 
-    resp = self.get_response()
+    resp = self.get_response('http://bar.com/mention')
     self.assertEquals(200, resp.status_int, resp.body)
 
   def test_domain_translates_to_lowercase(self):
@@ -271,6 +272,7 @@ http://second/
   def test_source_link_check_ignores_fragment(self):
     html = """\
 <article class="h-entry"><p class="e-content">
+<a href="http://bar.com/reply">(permalink)</a>
 <span class="p-name">my post</span>
 <a href="http://foo.com/post/1"></a>
 </p></article>"""
