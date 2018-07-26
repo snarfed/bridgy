@@ -85,7 +85,7 @@ class ItemHandler(util.Handler):
   def head(self, *args):
     """Return an empty 200 with no caching directives."""
 
-  def get_item(self, id):
+  def get_item(self, id, **kwargs):
     """Fetches and returns an object from the given source.
 
     To be implemented by subclasses.
