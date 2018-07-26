@@ -690,4 +690,4 @@ def mf2py_parse(input, url):
 
   # instrumenting, disabled for now:
   # with cache_time('mf2py', 1):
-  return mf2py.parse(url=url, doc=input)
+  return mf2py.parse(url=url, doc=input, img_with_alt=True)

@@ -456,8 +456,8 @@ class Handler(webmention.WebmentionHandler):
     self.source.preprocess_for_publish(activity)
     self.expand_target_urls(activity)
 
-    activity['image'] = [{'url': url} for url in util.get_urls(activity, 'image')
-                         if not IGNORE_IMAGE_RE.match(url)]
+    activity['image'] = [img for img in util.get_list(activity, 'image')
+                         if not IGNORE_IMAGE_RE.match(img.get('url', ''))]
     if not activity['image']:
       del activity['image']
 
