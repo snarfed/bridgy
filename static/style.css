@@ -203,11 +203,6 @@ form input {
 .glyphicon-remove { color: red !important; }
 .glyphicon-transfer { color: blue; }
 
-#edit-websites {
-  font-size: .7em;
-  margin-left: .4em;
-}
-
 .user-items {
   font-size: .8em;
   list-style: none;
