@@ -35,6 +35,10 @@
      id="show-more-websites" href="#" />...</a>
 {% endif %}
 
+<a id="edit-websites" href="/edit-websites?source_key={{ source.key.urlsafe() }}">
+  <span class="glyphicon glyphicon-pencil" title="Edit web sites"></span>
+</a>
+
 </div>
 
 {% block ui %}
