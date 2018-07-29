@@ -448,8 +448,6 @@ class Source(StringIdModel):
     if existing:
       # merge some fields
       source.features = set(source.features + existing.features)
-      source.domains = set(source.domains + existing.domains)
-      source.domain_urls = util.dedupe_urls(source.domain_urls + existing.domain_urls)
       source.populate(**existing.to_dict(include=(
             'created', 'last_hfeed_refetch', 'last_poll_attempt', 'last_polled',
             'last_syndication_url', 'last_webmention_sent', 'superfeedr_secret',

@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 
 import datetime
 import json
+from unittest import skip
 
 import appengine_config
 from google.appengine.ext import ndb
@@ -415,6 +416,22 @@ class SourceTest(testutil.HandlerTest):
     # the invisible character in the middle is an unusual unicode character
     FakeSource.create_new(self.handler, name='a ✁ b')
 
+  def test_create_new_rereads_domains(self):
+    FakeSource.new(None, features=['listen'],
+                   domain_urls=['http://foo'], domains=['foo']).put()
+
+    FakeSource.string_id_counter -= 1
+    auth_entity = testutil.FakeAuthEntity(id='x', user_json=json.dumps(
+        {'urls': [{'value': 'http://bar'}, {'value': 'http://baz'}]}))
+    self.expect_webmention_requests_get('http://bar/', 'no webmention endpoint',
+                                        verify=False)
+
+    self.mox.ReplayAll()
+    source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
+    self.assertEquals(['http://bar/', 'http://baz/'], source.domain_urls)
+    self.assertEquals(['bar', 'baz'], source.domains)
+
+  @skip("can't keep old domains on signup until edit websites works. #623")
   def test_create_new_merges_domains(self):
     FakeSource.new(None, features=['listen'],
                    domain_urls=['http://foo'], domains=['foo']).put()
