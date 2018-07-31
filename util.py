@@ -671,16 +671,15 @@ def beautifulsoup_parse(html):
   Instead, we use App Engine's version by declaring it in app.yaml.
   https://cloud.google.com/appengine/docs/standard/python/tools/built-in-libraries-27
 
-  We pin App Engine's version, 3.7.3, in requirements.freeze.txt, and tell
-  BeautifulSoup to use lxml explicitly, to ensure we use the same parser and
-  version in prod and locally, since we've been bit by at least one meaningful
-  difference between lxml and e.g. html5lib: lxml includes the contents of
-  <noscript> tags, html5lib omits them. :(
+  We pin App Engine's version in requirements.freeze.txt and tell BeautifulSoup
+  to use lxml explicitly to ensure we use the same parser and version in prod
+  and locally, since we've been bit by at least one meaningful difference
+  between lxml and e.g. html5lib: lxml includes the contents of <noscript> tags,
+  html5lib omits them. :(
   https://github.com/snarfed/bridgy/issues/798#issuecomment-370508015
   """
-  # instrumenting, disabled for now:
-  # with cache_time('beautifulsoup', len(html)):
-  return bs4.BeautifulSoup(html, 'lxml')
+  with cache_time('beautifulsoup', len(html)):
+    return bs4.BeautifulSoup(html, 'lxml')
 
 
 def mf2py_parse(input, url):
@@ -688,6 +687,5 @@ def mf2py_parse(input, url):
   if isinstance(input, basestring):
     input = beautifulsoup_parse(input)
 
-  # instrumenting, disabled for now:
-  # with cache_time('mf2py', 1):
-  return mf2py.parse(url=url, doc=input, img_with_alt=True)
+  with cache_time('mf2py', 1):
+    return mf2py.parse(url=url, doc=input, img_with_alt=True)
