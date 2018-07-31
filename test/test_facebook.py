@@ -708,6 +708,7 @@ class FacebookPageTest(testutil.ModelsTest):
     self.fb.preprocess_for_publish(activity)
     self.assert_equals(expected_urls, [t['url'] for t in activity['object']['tags']])
 
+  @skip("FB is dead!")
   def test_publish_person_tags(self):
     self.fb.features = ['publish']
     self.fb.domains = ['foo.com']

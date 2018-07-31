@@ -1206,15 +1206,15 @@ Join us!"""
     </article>""")
     self.mox.ReplayAll()
 
-    self.assert_error('Facebook RSVPs, comments, and likes are not supported',
+    self.assert_error('Facebook is no longer supported',
                       source='http://mr.x/rsvp',
                       target='https://brid.gy/publish/facebook')
-    self.assert_error('Facebook RSVPs, comments, and likes are not supported',
+    self.assert_error('Facebook is no longer supported',
                       source='http://mr.x/like',
                       target='https://brid.gy/publish/facebook')
     self.assertEquals('failed', Publish.query().get().status)
 
-    self.assert_error('Facebook RSVPs, comments, and likes are not supported',
+    self.assert_error('Facebook is no longer supported',
                       source='http://mr.x/comment',
                       target='https://brid.gy/publish/facebook',
                       preview=True)

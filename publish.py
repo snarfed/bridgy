@@ -397,13 +397,11 @@ class Handler(webmention.WebmentionHandler):
     # https://github.com/snarfed/bridgy/issues/817
     # https://github.com/snarfed/bridgy/issues/350
     verb = obj.get('verb')
-    if (isinstance(self.source, FacebookPage) and
-        (obj_type == 'comment' or verb == 'like' or verb in RSVP_VERB_TO_COLLECTION)):
+    if isinstance(self.source, FacebookPage):
       return gr_source.creation_result(
         abort=True,
-        error_plain='Facebook RSVPs, comments, and likes are not supported. :(',
-        error_html='<a href="https://brid.gy/about#rip-facebook">'
-                   'Facebook RSVPs, comments, and likes are not supported.</a> :(')
+        error_plain='Facebook is no longer supported. So long, and thanks for all the fish!',
+        error_html='<a href="https://brid.gy/about#rip-facebook">Facebook is no longer supported. So long, and thanks for all the fish!</a>')
 
     if self.PREVIEW:
       result = self.source.gr_source.preview_create(
