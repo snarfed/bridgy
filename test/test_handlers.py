@@ -177,7 +177,6 @@ asdf http://other/link qwert
     self.assertEqual('FakeSource error:\nGone baby gone', resp.body)
 
   def test_connection_failures_504(self):
-    print('%r %r' % (urlfetch_errors, handlers.util.urlfetch_errors))
     assert urlfetch_errors is not None
     # no idea why, but every now and then this module doesn't get imported
     # ok on circle, which makes this test flaky and fail. this workaround
@@ -186,7 +185,6 @@ asdf http://other/link qwert
     # https://circleci.com/gh/snarfed/bridgy/800
     if handlers.util.urlfetch_errors is None:
       handlers.util.urlfetch_errors = urlfetch
-    print('%r %r' % (urlfetch_errors, handlers.util.urlfetch_errors))
 
     user_id = self.source.key.string_id()
     err = urlfetch_errors.InternalTransientError('Try again pls')

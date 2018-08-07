@@ -162,11 +162,9 @@ class ItemHandler(util.Handler):
         self.abort(400, '%s error:\n%s' % (self.source.GR_CLASS.NAME, e))
       except Exception as e:
         # pass through all API HTTP errors if we can identify them
-        print('%r' % util.urlfetch_errors)
         code, body = util.interpret_http_exception(e)
         # temporary, trying to debug a flaky test failure
         # eg https://circleci.com/gh/snarfed/bridgy/769
-        import traceback; traceback.print_exc()
         if code:
           self.response.status_int = int(code)
           self.response.headers['Content-Type'] = 'text/plain'
