@@ -16,7 +16,7 @@ idna==2.7
 Jinja2==2.10
 lxml==3.7.3
 MarkupSafe==1.0
--e git+https://github.com/snarfed/mf2py.git@all#egg=mf2py
+mf2py==1.1.2
 mf2util==0.5.0
 mox3==0.24.0
 oauth2client==4.1.2
