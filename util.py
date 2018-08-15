@@ -678,8 +678,9 @@ def beautifulsoup_parse(html):
   html5lib omits them. :(
   https://github.com/snarfed/bridgy/issues/798#issuecomment-370508015
   """
-  with cache_time('beautifulsoup', len(html)):
-    return bs4.BeautifulSoup(html, 'lxml')
+  # instrumenting, disabled for now:
+  # with cache_time('beautifulsoup', len(html)):
+  return bs4.BeautifulSoup(html, 'lxml')
 
 
 def mf2py_parse(input, url):
@@ -687,5 +688,6 @@ def mf2py_parse(input, url):
   if isinstance(input, basestring):
     input = beautifulsoup_parse(input)
 
-  with cache_time('mf2py', 1):
-    return mf2py.parse(url=url, doc=input, img_with_alt=True)
+  # instrumenting, disabled for now:
+  # with cache_time('mf2py', 1):
+  return mf2py.parse(url=url, doc=input, img_with_alt=True)
