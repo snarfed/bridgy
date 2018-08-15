@@ -486,11 +486,7 @@ to once a day if you've been signed up for over a week and we haven't
 successfully sent you a webmention yet, or the last one we sent was over a month
 ago.
 </p>
-<p>(Twitter likes and retweets used to be an
-exception, since Bridgy used
-<a href="https://dev.twitter.com/docs/streaming-apis">Twitter's Streaming
-API</a> for a while, but
-<a href="https://github.com/snarfed/bridgy/issues/57">not any more</a>.)
+<p>(Twitter likes and retweets used to be an exception, since Bridgy used <a href="https://developer.twitter.com/en/docs/tweets/filter-realtime/overview">Twitter's (old) Streaming API</a> for a while, but <a href="https://github.com/snarfed/bridgy/issues/57">not any more</a>.)
 </p></li>
 <li>Does the social network post have a link to your web site's post? If not,
 does your web site's post have a
@@ -501,11 +497,7 @@ Bridgy needs at least one or the other so it can connect the two posts.
 posts, even if they have links to your web site. It only sends back responses
 to <em>your</em> posts.
 </li>
-<li id="public">Is the post fully public? And the response too? Bridgy only
-shows and sends webmentions for fully public posts and responses. If
-your Twitter account is
-<a href="https://dev.twitter.com/docs/platform-objects/users#protected">protected</a>,
-or your Google+ post wasn't sent to <em>public,</em> Bridgy won't see it.
+<li id="public">Is the post fully public? And the response too? Bridgy only shows and sends webmentions for fully public posts and responses. If your Twitter account is <a href="https://help.twitter.com/en/safety-and-security/public-and-protected-tweets">protected</a>, or your Google+ post wasn't sent to <em>public,</em> Bridgy won't see it.
 </li>
 <li>Is it on an older post? Bridgy only looks at your 50 most recent posts. It
 doesn't go back arbitrarily far because that doesn't scale. You can get around
@@ -521,36 +513,20 @@ clicking the <em>Crawl now</em> button on your user page.
 </li>
 <li>Twitter responses can be flaky for a number of reasons:
   <ul>
-  <li>@-replies are only included if they
-    <a href="https://support.twitter.com/articles/14023-what-are-replies-and-mentions">@-mention</a>
-    you. Twitter's API
-    <a href="https://dev.twitter.com/discussions/10056">doesn't have a way to get a
-    tweet's replies</a>, so Bridgy searches for @-mentions of the tweet's author to
-    find its replies. That means it can't always find replies that omit the
-    @-mention.
+  <li>@-replies are only included if they <a href="https://support.twitter.com/articles/14023-what-are-replies-and-mentions">@-mention</a> you. Twitter's API <a href="https://twittercommunity.com/t/replying-fetching-for-tweet/31307/1">doesn't have a way to get a tweet's replies</a>, so Bridgy searches for @-mentions of the tweet's author to find its replies. That means it can't always find replies that omit the @-mention. (This requirement has become complicated and unclear now that Twitter hides/omits @-mentions in replies, but they're kind of still there under the covers, somewhat, sometimes.)
   </li>
-  <li>Also, Twitter's search API is
-    <a href="https://dev.twitter.com/docs/faq#8650">best effort only</a>, ie it
-    doesn't guarantee that it returns all matching tweets for a search. It also
-    <a href="https://dev.twitter.com/rest/public/search">only returns results from
-    the last 7 days</a>. So, every now and then it may not find a reply, or a tweet
-    that links to your site, which means Bridgy will miss it. Sadface.
+
+  <li>Also, Bridgy uses Twitter's <a href="<a href="https://developer.twitter.com/en/docs/tweets/search/overview/standard">"Standard Search API</a>, which only includes the last 7 days, and is best effort only, ie doesn't guarantee that it returns all matching tweets for a search. So, every now and then it may not find a reply, or a tweet that links to your site, which means Bridgy will miss it. Sadface.
   </li>
-  <li>Twitter likes (née favorites) are sadly best effort only.
-    <a href="https://twittercommunity.com/t/list-of-people-who-favorited-a-particular-tweet/11083/8
-    ">Their
-    API still doesn't have a way to get a tweet's likes</a>, so
-    <a href="https://github.com/snarfed/bridgy/issues/61">we have to scrape them
-     from the web</a>, which only shows the latest 25. So
-    <a href="https://github.com/snarfed/bridgy/issues/73">if you get more than 25 new likes</a> between two times that Bridgy polls your Twitter account, we'll miss the rest in that period.
+
+  <li>Twitter likes (née favorites) are sadly best effort only. <a href="https://twittercommunity.com/t/list-of-people-who-favorited-a-particular-tweet/11083/8">Their API still doesn't have a way to get a tweet's likes</a>, so <a href="https://github.com/snarfed/bridgy/issues/61">we have to scrape them from the web</a>, which only shows the latest 25. So <a href="https://github.com/snarfed/bridgy/issues/73">if you get more than 25 new likes</a> between two times that Bridgy polls your Twitter account, we'll miss the rest in that period.
   </li>
-  <li>Retweets are also flaky occasionally. We've seen the API report
-    <code>retweet_count: 0</code> in tweets that do have retweets.
+  <li>Retweets are also flaky occasionally. We've seen the API report <code>retweet_count: 0</code> in tweets that do have retweets.
   </li>
   </ul>
 <li>Instagram likes are even worse than Twitter likes. They <a href="https://github.com/snarfed/bridgy/issues/722">only show the first 10 individual likes per photo on the web</a>, and a total count after that, so Bridgy can only backfeed the first 10 likes.
 </li>
-<li>Have you blocked the author inside the silo? If so, Bridgy won't send you any of their responses. (This is <a href="https://github.com/snarfed/bridgy/issues/764">best effort only for Twitter</a>, due to <a href="https://dev.twitter.com/rest/reference/get/blocks/ids#resource-information">their API's rate limits</a>. In practice, Bridgy will only filter out responses from the first 40,000 users on your Twitter block list.)
+<li>Have you blocked the author inside the silo? If so, Bridgy won't send you any of their responses. (This is <a href="https://github.com/snarfed/bridgy/issues/764">best effort only for Twitter</a>, due to <a href="https://developer.twitter.com/en/docs/accounts-and-users/mute-block-report-users/api-reference/get-blocks-ids#resource-information">their API's rate limits</a>. In practice, Bridgy will only filter out responses from the first 40,000 users on your Twitter block list.)
 </li>
 <li>Currently, GitHub responses require a <a href="#link">syndication link on the original post on your web site</a> (<a href="https://chat.indieweb.org/dev/2018-02-26#t1519610412751400">background</a>). They're also currently best effort only. <a href="https://developer.github.com/v3/">Their API</a> is almost entirely broken down by user and repository, so there's no good way to ask for all recent responses to your posts. We get close by using their <a href="https://developer.github.com/v3/activity/notifications/">Notifications API</a>, which is good, but not always comprehensive. Apologies!
 </li>
@@ -1090,7 +1066,7 @@ your post's actual content.
 &lt;/div&gt;
 </pre>
 <p>You can hide these extra elements with <code>display: none</code>, or add the classes to existing elements like your title or summary, or anything else you like.</p>
-<p>If you use this, Bridgy will still include a link to your post. <a href="#omit-link">You can change that with <code>omit-link</code>.</a> It will also still truncate your text if it's <a href="https://dev.twitter.com/overview/api/counting-characters">over 280 characters</a>. You can always <a href="#try+it">preview your post first</a> to see how Bridgy will handle it!</p>
+<p>If you use this, Bridgy will still include a link to your post. <a href="#omit-link">You can change that with <code>omit-link</code>.</a> It will also still truncate your text if it's <a href="https://developer.twitter.com/en/docs/basics/counting-characters">over 280 characters</a>. You can always <a href="#try+it">preview your post first</a> to see how Bridgy will handle it!</p>
 </li>
 
 <li id="short-link" class="question">Can I include a short link instead of the full link?</li>
@@ -1134,10 +1110,7 @@ Location: https://twitter.com/me/status/456789
   "<span class='keyword'>type</span>": "<span class='value'>post</span>",
   "<span class='keyword'>id</span>": "<span class='value'>456789</span>"
 }</pre>
-<p>Pro tip: Twitter responses that create new tweets actually return the entire
-newly
-created <a href="https://dev.twitter.com/docs/platform-objects/tweets">tweet
-object</a>. The more you know!
+<p>Pro tip: Twitter responses that create new tweets actually return the entire newly created <a href="https://developer.twitter.com/en/docs/tweets/data-dictionary/overview/tweet-object">tweet object</a>. The more you know!
 </p>
 </li>
 
@@ -1187,7 +1160,7 @@ Shameless plug: check out
 <li id="extended-tweets" class="question">Can I take advantage of Twitter's new
 <a href="https://blog.twitter.com/express-even-more-in-140-characters">extended tweet character counting</a>?</li>
 <li class="answer">
-<p>Yes! Twitter is now <a href="https://blog.twitter.com/express-even-more-in-140-characters">exempting reply @-mentions, photo and video links, quote tweet links, and more</a> from counting toward the total character limit. <a href="https://blog.twitter.com/express-even-more-in-140-characters">More details</a>, <a href="https://dev.twitter.com/overview/api/upcoming-changes-to-tweets">developer docs</a>. Bridgy Publish fully supports these changes. Happy tweeting!
+<p>Yes! Twitter is now <a href="https://blog.twitter.com/express-even-more-in-140-characters">exempting reply @-mentions, photo and video links, quote tweet links, and more</a> from counting toward the total character limit. <a href="https://blog.twitter.com/express-even-more-in-140-characters">More details</a>, <a href="https://developer.twitter.com/en/docs/tweets/tweet-updates">developer docs</a>. Bridgy Publish fully supports these changes. Happy tweeting!
 </p>
 <p>(Having said all that, the new extended tweets have caused a small change in Bridgy Publish behavior. Before, if you @-mentioned the user you were replying to <em>inside</em> the tweet text, instead of at the beginning, your reply would still show up in the public timeline on your profile and in your followers' feed. Now, it won't. <a href="https://chat.indieweb.org/2017-04-13#t1492116025150000">Ongoing discussion.</a>)
 </p>
