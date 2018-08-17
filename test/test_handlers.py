@@ -184,6 +184,7 @@ asdf http://other/link qwert
     # https://circleci.com/gh/snarfed/bridgy/769
     # https://circleci.com/gh/snarfed/bridgy/800
     if handlers.util.urlfetch_errors is None:
+      import urlfetch
       handlers.util.urlfetch_errors = urlfetch
 
     user_id = self.source.key.string_id()
