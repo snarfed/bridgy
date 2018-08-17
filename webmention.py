@@ -165,6 +165,7 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
         # Twitter duplicate publish attempts
         'Status is a duplicate.' in resp or
         'You have already favorited this status.' in resp or
+        'You have already retweeted this' in resp or
         # Facebook duplicate publish attempts
         'This status update is identical to the last one you posted.' in resp or
         # WordPress duplicate comment
