@@ -85,7 +85,7 @@ class AppTest(testutil.ModelsTest):
     SyndicatedPost.insert(source, 'https://fa.ke/3', 'http://orig/3')
 
     # cached webmention endpoint
-    memcache.set('W https skipped', 'asdf')
+    memcache.set('W https skipped /', 'asdf')
 
     key = resp.key.urlsafe()
     response = app.application.get_response(
@@ -107,7 +107,7 @@ class AppTest(testutil.ModelsTest):
       self.assertEqual([], field)
 
     # webmention endpoints for URL domains should be refreshed
-    self.assertIsNone(memcache.get('W https skipped'))
+    self.assertIsNone(memcache.get('W https skipped /'))
 
     # shouldn't have refetched h-feed
     self.assertEqual(last_hfeed_refetch, source.key.get().last_hfeed_refetch)

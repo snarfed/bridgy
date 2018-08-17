@@ -163,11 +163,20 @@ def add_discover_task(source, post_id, type=None, **kwargs):
 def webmention_endpoint_cache_key(url):
   """Returns memcache key for a cached webmention endpoint for a given URL.
 
-  Example: 'W https snarfed.org'
+  Example: 'W https snarfed.org /'
+
+  If the URL is the home page, ie path is / , the key includes a / at the end,
+  so that we cache webmention endpoints for home pages separate from other pages.
+  https://github.com/snarfed/bridgy/issues/701
   """
   domain = util.domain_from_link(url)
   scheme = urlparse.urlparse(url).scheme
-  return ' '.join(('W', scheme, domain))
+
+  parts = ['W', scheme, domain]
+  if urlparse.urlparse(url).path in ('', '/'):
+    parts.append('/')
+
+  return ' '.join(parts)
 
 
 def email_me(**kwargs):

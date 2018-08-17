@@ -443,3 +443,13 @@ class UtilTest(testutil.ModelsTest):
 
     self.assertEquals(102, memcache.get('timed foo'))
     self.assertEquals(3, memcache.get('timed foo size'))
+
+  def test_webmention_endpoint_cache_key(self):
+    for expected, url in (
+        ('W http foo.com', 'http://foo.com/x'),
+        ('W https foo.com', 'https://foo.com/x/y'),
+        ('W http foo.com /', 'http://foo.com'),
+        ('W http foo.com /', 'http://foo.com/'),
+    ):
+      got = util.webmention_endpoint_cache_key(url)
+      self.assertEquals(expected, got, (url, got))
