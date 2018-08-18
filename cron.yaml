@@ -5,23 +5,23 @@ cron:
 - description: replace missing poll tasks
   url: /cron/replace_poll_tasks
   schedule: every 4 hours
-  target: default
+  target: background
 
 - description: update changed twitter profile pictures
   url: /cron/update_twitter_pictures
   schedule: every day 08:00  # 1am pst
-  target: default
+  target: background
 
 # frequent, updates just a few every time, to throttle and avoid rate limiting
 - description: update changed instagram profile pictures
   url: /cron/update_instagram_pictures
   schedule: every 1 hours
-  target: default
+  target: background
 
 - description: update changed flickr profile pictures
   url: /cron/update_flickr_pictures
   schedule: every day 10:00  # 3am pst
-  target: default
+  target: background
 
 # weekly datastore backup. excludes Response and SyndicatedPost entities.
 # https://developers.google.com/appengine/articles/scheduled_backups#Specifying_Backups_in_a_Cron_File
