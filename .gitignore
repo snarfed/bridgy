@@ -16,6 +16,7 @@ github_client_*
 google_client_*
 instagram_client_*
 instagram_scrape_base
+instagram_sessionid_cookie
 medium_client_*
 private_notes
 superfeedr_token

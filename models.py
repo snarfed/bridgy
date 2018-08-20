@@ -192,7 +192,7 @@ class Source(StringIdModel):
       if self.key.kind() == 'FacebookPage' and auth_entity.type == 'user':
         kwargs = {'user_id': self.key.id()}
       elif self.key.kind() == 'Instagram':
-        kwargs = {'scrape': True}
+        kwargs = {'scrape': True, 'cookie': appengine_config.INSTAGRAM_SESSIONID_COOKIE}
       elif self.key.kind() == 'Twitter':
         kwargs = {'username': self.key.id()}
 
