@@ -436,6 +436,11 @@ foo
       "Looks like that's a Facebook URL. Try one from your web site instead!",
       source='http://facebook.com/post/123')
 
+  def test_source_url_error_preview_html_escapes(self):
+    """Bad source URLs should be HTML-escape in preview error messages."""
+    self.assert_error('Unsupported source URL &lt;script x=&quot;y&quot;&gt;',
+                      source='<script x="y">', preview=True)
+
   def test_embedded_type_not_implemented(self):
     self.expect_requests_get('http://foo.com/bar', """
 <article class="h-entry">

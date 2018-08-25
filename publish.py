@@ -29,6 +29,7 @@ from future.utils import native_str
 
 import collections
 import logging
+import html
 import json
 import pprint
 import re
@@ -253,7 +254,7 @@ class Handler(webmention.WebmentionHandler):
           break
         if result.abort:
           if result.error_plain:
-            self.error(result.error_plain, html=result.error_html, data=item)
+            self.error(result.error_plain, error_html=result.error_html, data=item)
           return
         # try the next item
         for embedded in ('rsvp', 'invitee', 'repost', 'repost-of', 'like',
@@ -581,11 +582,11 @@ class PreviewHandler(Handler):
             else gr_source.INCLUDE_IF_TRUNCATED if val.lower() == 'maybe'
             else gr_source.OMIT_LINK)
 
-  def error(self, error, html=None, status=400, data=None, mail=False):
-    logging.info(error, exc_info=True)
+  def error(self, error_text, error_html=None, status=400, data=None, mail=False):
+    logging.info(error_text, exc_info=True)
     self.response.set_status(status)
-    error = html if html else util.linkify(error)
-    self.response.write(error)
+    error = error_html or util.linkify(error_text)
+    self.response.write(html.escape(error))
     if mail:
       self.mail_me('[Returned HTTP %s to client]\n\n%s' % (status, error))
 
@@ -630,9 +631,9 @@ class SendHandler(Handler):
   def include_link(self, item):
     return self.state['include_link']
 
-  def error(self, error, html=None, status=400, data=None, mail=False):
-    logging.info(error, exc_info=True)
-    error = html if html else util.linkify(error)
+  def error(self, error_text, error_html=None, status=400, data=None, mail=False):
+    logging.info(error_text, exc_info=True)
+    error = error_html or util.linkify(error_text)
     self.messages.add('%s' % error)
     if mail:
       self.mail_me(error)
