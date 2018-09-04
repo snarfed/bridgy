@@ -167,7 +167,7 @@ class FacebookPage(models.Source):
                   err.get('error_subcode') in DEAD_TOKEN_ERROR_SUBCODES or
                   err.get('message') in DEAD_TOKEN_ERROR_MESSAGES)
         except:
-          logging.exception("Couldn't determine whether token is still valid")
+          logging.warning("Couldn't determine whether token is still valid", exc_info=True)
           return False
 
       if code == '401':

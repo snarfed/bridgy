@@ -371,7 +371,7 @@ def load_source(handler, param='source_key'):
     source = ndb.Key(urlsafe=util.get_required_param(handler, param)).get()
   except (TypeError, ProtocolBufferDecodeError):
     msg = 'Bad value for %s' % param
-    logging.exception(msg)
+    logging.warning(msg, exc_info=True)
     handler.abort(400, msg)
 
   if not source:

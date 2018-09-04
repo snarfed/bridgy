@@ -276,7 +276,7 @@ class UserHandler(DashboardHandler):
           return util.parse_iso8601(val) if val else None
         except:
           msg = "Couldn't parse %s %r as ISO8601" % (param, val)
-          logging.exception(msg)
+          logging.warning(msg, exc_info=True)
           self.abort(400, msg)
 
       before = get_paging_param('responses_before')
