@@ -184,8 +184,7 @@ asdf http://other/link qwert
     # https://circleci.com/gh/snarfed/bridgy/769
     # https://circleci.com/gh/snarfed/bridgy/800
     if handlers.util.urlfetch_errors is None:
-      import urlfetch
-      handlers.util.urlfetch_errors = urlfetch
+      handlers.util.urlfetch_errors = urlfetch_errors
 
     user_id = self.source.key.string_id()
     err = urlfetch_errors.InternalTransientError('Try again pls')
