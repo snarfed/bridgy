@@ -458,13 +458,13 @@ class DeleteStartHandler(util.Handler):
     }
 
   def post(self):
-    key = ndb.Key(urlsafe=util.get_required_param(self, 'key'))
-    module = self.OAUTH_MODULES[key.kind()]
+    source = self.load_source(param='key')
+    module = self.OAUTH_MODULES[source.key.kind()]
     feature = util.get_required_param(self, 'feature')
     state = util.encode_oauth_state({
       'operation': 'delete',
       'feature': feature,
-      'source': key.urlsafe(),
+      'source': source.key.urlsafe(),
       'callback': self.request.get('callback'),
     })
 
@@ -475,7 +475,6 @@ class DeleteStartHandler(util.Handler):
     if module is oauth_blogger_v2:
       return self.redirect('/blogger/delete/start?state=%s' % state)
 
-    source = key.get()
     path = ('/instagram/callback' if module is indieauth
             else '/wordpress/add' if module is oauth_wordpress_rest
             else '/%s/delete/finish' % source.SHORT_NAME)
@@ -573,12 +572,9 @@ class PollNowHandler(util.Handler):
     self.redirect(self.source.bridgy_url(self))
 
   def get_source(self):
-    if self.source:
-      return self.source
-
-    self.source = ndb.Key(urlsafe=util.get_required_param(self, 'key')).get()
     if not self.source:
-      self.abort(400, 'source not found')
+      self.source = self.load_source(param='key')
+    return self.source
 
 
 class CrawlNowHandler(PollNowHandler):
@@ -598,10 +594,8 @@ class CrawlNowHandler(PollNowHandler):
 
 class RetryHandler(util.Handler):
   def post(self):
-    entity = ndb.Key(urlsafe=util.get_required_param(self, 'key')).get()
-    if not entity:
-      self.abort(400, 'key not found')
-    elif not isinstance(entity, Webmentions):
+    entity = self.load_source(param='key')
+    if not isinstance(entity, Webmentions):
       self.abort(400, 'Unexpected key kind %s', entity.key.kind())
 
     # run OPD to pick up any new SyndicatedPosts. note that we don't refetch

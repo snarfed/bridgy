@@ -487,8 +487,7 @@ class Discover(Poll):
     if type:
       assert type in ('event',)
 
-    key = util.get_required_param(self, 'source_key')
-    source = ndb.Key(urlsafe=key).get()
+    source = util.load_source(self)
     if not source or source.status == 'disabled' or 'listen' not in source.features:
       logging.error('Source not found or disabled. Dropping task.')
       return

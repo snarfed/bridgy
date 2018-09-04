@@ -356,6 +356,30 @@ def host_url(handler):
   return HOST_URL if domain in OTHER_DOMAINS else handler.request.host_url
 
 
+def load_source(handler, param='source_key'):
+  """Extracts a URL-safe key from a query parameter and loads a source object.
+
+  Returns HTTP 400 if the parameter is not provided or the source doesn't exist.
+
+  Args:
+    handler: RequestHandler
+    param: string
+
+  Returns: Source object
+  """
+  try:
+    source = ndb.Key(urlsafe=util.get_required_param(handler, param)).get()
+  except (TypeError, ProtocolBufferDecodeError):
+    msg = 'Bad value for %s' % param
+    logging.exception(msg)
+    handler.abort(400, msg)
+
+  if not source:
+    handler.abort(400, 'Source key not found')
+
+  return source
+
+
 class Handler(webutil_handlers.ModernHandler):
   """Includes misc request handler utilities.
 
@@ -557,25 +581,8 @@ class Handler(webutil_handlers.ModernHandler):
       for url in source.domain_urls]
     return source
 
-  def load_source(self, param='source_key'):
-    """Extracts a URL-safe key from a query parameter and loads a source object.
-
-    Returns HTTP 400 if the parameter is not provided or the source doesn't exist.
-
-    Args:
-      param: string
-
-    Returns: Source object
-    """
-    try:
-      source = ndb.Key(urlsafe=util.get_required_param(self, param)).get()
-      if not source:
-        self.abort(400, 'Source key not found')
-    except ProtocolBufferDecodeError:
-      logging.exception('Bad value for source_key')
-      self.abort(400, 'Bad value for source_key')
-
-    return source
+  def load_source(self, **kwargs):
+    return load_source(self, **kwargs)
 
 
 def oauth_starter(oauth_start_handler, **kwargs):

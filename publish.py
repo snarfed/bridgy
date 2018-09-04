@@ -567,8 +567,8 @@ class PreviewHandler(Handler):
       self.response.write(result.content)
 
   def authorize(self):
-    from_source = ndb.Key(urlsafe=util.get_required_param(self, 'source_key'))
-    if from_source != self.source.key:
+    from_source = self.load_source()
+    if from_source.key != self.source.key:
       self.error('Try publishing that page from <a href="%s">%s</a> instead.' %
                  (self.source.bridgy_path(), self.source.label()))
       return False
