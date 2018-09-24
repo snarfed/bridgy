@@ -46,6 +46,8 @@ class Twitter(models.Source):
   URL_CANONICALIZER = gr_twitter.Twitter.URL_CANONICALIZER
   URL_CANONICALIZER.headers = util.REQUEST_HEADERS
 
+  DISABLE_HTTP_CODES = models.Source.DISABLE_HTTP_CODES + ('403',)
+
   blocked_ids = None
 
   @staticmethod
