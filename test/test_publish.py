@@ -665,6 +665,21 @@ this is my article
     self.mox.ReplayAll()
     self.assert_error('500', status=500)
 
+  def test_value_error(self):
+    """For example, Twitter raises ValueError on invalid in-reply-to URL....
+
+    ...eg https:/twitter.com/, which matches domain but isn't a tweet.
+    """
+    self.expect_requests_get('http://foo.com/bar', self.post_html % 'xyz')
+    self.mox.StubOutWithMock(self.source.gr_source, 'create',
+                             use_mock_anything=True)
+    self.source.gr_source.create(mox.IgnoreArg(),
+                                 include_link=gr_source.INCLUDE_LINK,
+                                 ignore_formatting=False
+                                 ).AndRaise(ValueError('baz'))
+    self.mox.ReplayAll()
+    self.assert_error('baz', status=400)
+
   def test_preview(self):
     html = self.post_html % 'foo'
     self.expect_requests_get('http://foo.com/bar', html)

@@ -278,7 +278,7 @@ class Handler(webmention.WebmentionHandler):
           # for everyone right now for initial monitoring.
           util.email_me(subject='Bridgy Publish: disabled %s' % self.source.label(),
                         body=body)
-        if isinstance(e, NotImplementedError):
+        if isinstance(e, (NotImplementedError, ValueError)):
           code = '400'
         elif not code:
           raise
