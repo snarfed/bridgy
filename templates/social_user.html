@@ -28,7 +28,7 @@ So long, and thanks for all the fish!</b></p>
 {% endif %}
 {% endif %}
 
-{% if not source.verified and source.status != "disabled" and source.features %}
+{% if not source.verified() and source.status != "disabled" and source.features %}
 {% if not source.domain_urls %}
 <div class="row promo warning">
 <p id="edit-profile">First things first: what's your web site?

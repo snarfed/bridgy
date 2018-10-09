@@ -4,7 +4,7 @@
 
 {% if "webmention" in source.features and source.status != "disabled" %}
 <!-- Banner for blogs that aren't yet advertising the webmention endpoint -->
-{% if not source.verified %}
+{% if not source.verified() %}
 <div id="undiscovered" class="row big promo">
   {% block undiscovered %}
   {% endblock %}
