@@ -10,7 +10,7 @@ from oauth_dropins import indieauth
 from oauth_dropins.instagram import InstagramAuth
 from oauth_dropins.webutil.testutil import TestCase
 from granary import instagram as gr_instagram
-from granary.test import test_instagram
+from granary.tests import test_instagram as gr_test_instagram
 import requests
 
 import appengine_config
@@ -110,7 +110,7 @@ class InstagramTest(testutil.ModelsTest):
         'redirect_uri': 'http://localhost/instagram/callback',
       })
 
-  def expect_instagram_fetch(self, body=test_instagram.HTML_PROFILE_COMPLETE,
+  def expect_instagram_fetch(self, body=gr_test_instagram.HTML_PROFILE_COMPLETE,
                              **kwargs):
     TestCase.expect_requests_get(self, gr_instagram.HTML_BASE_URL + 'snarfed/',
                                  body, allow_redirects=False, **kwargs)
@@ -163,10 +163,10 @@ class InstagramTest(testutil.ModelsTest):
     self.expect_site_fetch()
     self.expect_indieauth_check()
 
-    profile = copy.deepcopy(test_instagram.HTML_PROFILE)
+    profile = copy.deepcopy(gr_test_instagram.HTML_PROFILE)
     del profile['entry_data']['ProfilePage'][0]['graphql']['user']['external_url']
     self.expect_instagram_fetch(
-      test_instagram.HTML_HEADER + json.dumps(profile) + test_instagram.HTML_FOOTER)
+      gr_test_instagram.HTML_HEADER + json.dumps(profile) + gr_test_instagram.HTML_FOOTER)
 
     self.mox.ReplayAll()
     resp = self.callback()
@@ -177,7 +177,7 @@ class InstagramTest(testutil.ModelsTest):
   def test_signup_private_account(self):
     self.expect_site_fetch()
     self.expect_indieauth_check()
-    self.expect_instagram_fetch(test_instagram.HTML_PROFILE_PRIVATE_COMPLETE)
+    self.expect_instagram_fetch(gr_test_instagram.HTML_PROFILE_PRIVATE_COMPLETE)
 
     self.mox.ReplayAll()
     resp = self.callback()
@@ -189,11 +189,11 @@ class InstagramTest(testutil.ModelsTest):
     self.expect_site_fetch()
     self.expect_indieauth_check()
 
-    profile = copy.deepcopy(test_instagram.HTML_PROFILE)
+    profile = copy.deepcopy(gr_test_instagram.HTML_PROFILE)
     profile['entry_data']['ProfilePage'][0]['graphql']['user']['biography'] = \
       'http://a/ https://b'
     self.expect_instagram_fetch(
-      test_instagram.HTML_HEADER + json.dumps(profile) + test_instagram.HTML_FOOTER)
+      gr_test_instagram.HTML_HEADER + json.dumps(profile) + gr_test_instagram.HTML_FOOTER)
 
     self.expect_webmention_discovery()
 

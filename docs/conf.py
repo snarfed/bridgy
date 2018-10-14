@@ -108,7 +108,7 @@ language = None
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = ['_build', '**/appengine_config.py', '**/test', '**/test_*.py',
+exclude_patterns = ['_build', '**/appengine_config.py', '**/tests', '**/test_*.py',
                     '**/mapreduce']
 
 # The reST default role (used for this markup: `text`) to use for all

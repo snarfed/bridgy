@@ -8,7 +8,7 @@ import urllib
 import appengine_config
 import flickr
 import granary
-import granary.test.test_flickr
+import granary.tests.test_flickr as gr_test_flickr
 import oauth_dropins
 import tasks
 import testutil
@@ -24,7 +24,7 @@ class FlickrTest(testutil.ModelsTest):
     self.auth_entity = oauth_dropins.flickr.FlickrAuth(
       id='my_string_id',
       token_key='my_key', token_secret='my_secret',
-      user_json=json.dumps(granary.test.test_flickr.PERSON_INFO))
+      user_json=json.dumps(gr_test_flickr.PERSON_INFO))
 
     self.auth_entity.put()
     self.flickr = flickr.Flickr.new(self.handler, self.auth_entity)

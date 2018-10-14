@@ -9,7 +9,7 @@ import urllib
 import appengine_config
 from google.appengine.api import memcache
 from granary import twitter as gr_twitter
-from granary.test import test_twitter as gr_twitter_test
+from granary.tests import test_twitter as gr_twitter_test
 from granary.twitter import API_BASE, API_SEARCH, API_STATUS, HTML_FAVORITES
 import oauth_dropins
 from oauth_dropins import twitter as oauth_twitter

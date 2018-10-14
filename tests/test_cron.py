@@ -8,8 +8,8 @@ import json
 
 from granary import instagram as gr_instagram
 from granary import twitter as gr_twitter
-from granary.test import test_flickr
-from granary.test import test_instagram
+from granary.tests import test_flickr
+from granary.tests import test_instagram
 import oauth_dropins
 from oauth_dropins import indieauth
 from oauth_dropins import flickr as oauth_flickr

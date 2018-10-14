@@ -7,7 +7,7 @@ import json
 import appengine_config
 from apiclient import discovery
 from apiclient import http
-from granary.test import test_googleplus as gr_test_googleplus
+from granary.tests import test_googleplus as gr_test_googleplus
 from oauth_dropins import googleplus as oauth_googleplus
 
 from googleplus import GooglePlusPage
@@ -49,7 +49,7 @@ class GooglePlusTest(testutil.ModelsTest):
       self.assertEqual([], self.gp.search_for_links())
 
     # TODO: actually check search query. (still haven't figured out how with
-    # RequestMockBuilder etc. :/ see granary/test/test_googleplus.py for more.)
+    # RequestMockBuilder etc. :/ see granary/tests/test_googleplus.py for more.)
     self.gp.domain_urls = ['http://a', 'https://b/', 'http://c/d/e']
     oauth_googleplus.json_service = discovery.build_from_document(
       gr_test_googleplus.DISCOVERY_DOC, requestBuilder=http.RequestMockBuilder({

@@ -35,7 +35,7 @@ import urlparse
 from requests import adapters, sessions
 orig_HTTPAdapter = adapters.HTTPAdapter
 
-import oauth_dropins.webutil.test
+import oauth_dropins.webutil.tests
 import appengine_config
 
 from google.appengine.api import memcache
@@ -46,7 +46,7 @@ import requests
 import facebook
 import handlers
 import tasks
-from test import testutil
+from tests import testutil
 import util
 
 TEST_USER_ID = '1407574399567467'

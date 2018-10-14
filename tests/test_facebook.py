@@ -16,7 +16,7 @@ from google.appengine.ext import ndb
 import granary
 from granary.facebook import API_COMMENTS_ALL, API_NEWS_PUBLISHES, \
   API_PHOTOS_UPLOADED, API_OBJECT, API_PUBLISH_POST, API_SHARES, API_USER_EVENTS
-from granary.test.test_facebook import ACTIVITY, API_ME_POSTS, EVENT, \
+from granary.tests.test_facebook import ACTIVITY, API_ME_POSTS, EVENT, \
   PHOTO, PHOTO_ACTIVITY, PHOTO_POST, POST
 import oauth_dropins
 from oauth_dropins import facebook as oauth_facebook
