@@ -339,10 +339,10 @@ class Handler(webmention.WebmentionHandler):
       return best_match
     elif sources_ready:
       self.error(
-        'No account found that matches %s. Check that <a href="/about#profile-link">the web site URL is in your silo profile</a>, then <a href="/">sign up again</a>.' %
-        util.pretty_link(url))
+        'No account found that matches %s. Check that <a href="%s/about#profile-link">the web site URL is in your silo profile</a>, then <a href="%s/">sign up again</a>.' %
+        (self.request.host_url, util.pretty_link(url), self.request.host_url))
     else:
-      self.error('Publish is not enabled for your account. <a href="/">Try signing up!</a>')
+      self.error('Publish is not enabled for your account. <a href="%s/">Try signing up!</a>' % self.request.host_url)
 
   def attempt_single_item(self, item):
     """Attempts to preview or publish a single mf2 item.
