@@ -7,13 +7,6 @@ function toggle(id) {
   elem.style.display = (elem.style.display == 'none') ? 'block' : 'none';
 }
 
-// From https://stackoverflow.com/a/48054293/186123
-function escapeHTML(unsafeText) {
-    var div = document.createElement('div');
-    div.innerText = unsafeText;
-    return div.innerHTML;
-}
-
 // Extract toast style messages from URL fragments and render them at the top of
 // the page.
 window.onload = function () {
@@ -21,8 +14,8 @@ window.onload = function () {
     var p = document.getElementById('message');
     p.style.display = 'block';
 
-    p.innerHTML = escapeHTML(decodeURIComponent(
-      window.location.hash.substr(2)))  // strip leading #!
+    p.innerHTML = decodeURIComponent(
+      window.location.hash.substr(2))  // strip leading #!
         .replace('\n', '<br />');
 
     window.setTimeout(function() {
