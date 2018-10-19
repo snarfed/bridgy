@@ -101,7 +101,7 @@ class WebmentionHandler(WebmentionGetHandler):
     items = data.get('items', [])
     if require_mf2 and (not items or not items[0]):
       return self.error('No microformats2 data found in ' + fetched.url,
-                        data=data, error_html="""
+                        data=data, html="""
 No <a href="http://microformats.org/get-started">microformats</a> or
 <a href="http://microformats.org/wiki/microformats2">microformats2</a> found in
 <a href="%s">%s</a>! See <a href="http://indiewebify.me/">indiewebify.me</a>
@@ -110,32 +110,32 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
 
     return fetched, data
 
-  def error(self, error_text, error_html=None, status=400, data=None,
-            log_exception=True, mail=False):
+  def error(self, error, html=None, status=400, data=None, log_exception=True,
+            mail=False):
     """Handle an error. May be overridden by subclasses.
 
     Args:
-      error_text: string human-readable error message
-      error_html: string HTML human-readable error message
+      error: string human-readable error message
+      html: string HTML human-readable error message
       status: int HTTP response status code
       data: mf2 data dict parsed from source page
       log_exception: boolean, whether to include a stack trace in the log msg
       mail: boolean, whether to email me
     """
-    logging.info(error_text, exc_info=log_exception)
+    logging.info(error, exc_info=log_exception)
 
     if self.entity:
       self.entity.status = 'failed'
       self.entity.put()
 
     self.response.set_status(status)
-    resp = {'error': error_text}
+    resp = {'error': error}
     if data:
       resp['parsed'] = data
     resp = json.dumps(resp, indent=2)
 
     if mail and status != 404:
-      self.mail_me('[Returned HTTP %s to client]\n\n%s' % (status, error_text))
+      self.mail_me('[Returned HTTP %s to client]\n\n%s' % (status, error))
     self.response.write(resp)
 
   def mail_me(self, resp):
