@@ -137,6 +137,7 @@ def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True,
     originals = set(util.dedupe_urls(originals))
   else:
     logging.debug('no syndication url, cannot process h-entries')
+    syndicated = []
 
   return ((originals, mentions) if not source.BACKFEED_REQUIRES_SYNDICATION_LINK
           else (set(syndicated), set()))
