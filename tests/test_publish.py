@@ -202,7 +202,7 @@ class PublishTest(testutil.HandlerTest):
     Publish(parent=page.key, source=self.source.key, status='complete',
             type='preview', published={'content': 'foo'}).put()
 
-    for i in range(3):
+    for i in range(5):
       self.expect_requests_get('http://foo.com/bar', self.post_html % 'foo')
     self.mox.ReplayAll()
 
@@ -1425,3 +1425,12 @@ Join us!"""
 """)
     self.mox.ReplayAll()
     self.assert_error('Combined in-reply-to and tag-of is not yet supported.')
+
+  def test_delete_not_published_error(self):
+    self.expect_requests_get('http://foo.com/bar', status_code=410)
+    self.mox.ReplayAll()
+    self.assert_error("Can't delete this post from FakeSource because Bridgy Publish didn't originally POSSE it there")
+
+  def test_delete(self):
+    page = PublishedPage(id='http://foo.com/bar')
+    Publish(parent=page.key, source=self.source.key, status='complete').put()

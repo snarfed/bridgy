@@ -46,6 +46,7 @@ from oauth_dropins import flickr as oauth_flickr
 from oauth_dropins import github as oauth_github
 from oauth_dropins import twitter as oauth_twitter
 from oauth_dropins.webutil.handlers import JINJA_ENV
+import requests
 
 from facebook import FacebookPage
 from flickr import Flickr
@@ -210,17 +211,23 @@ class Handler(webmention.WebmentionHandler):
 
     # done with the sanity checks, ready to fetch the source url. create the
     # Publish entity so we can store the result.
-    entity = self.get_or_add_publish_entity(url)
-    if (entity.status == 'complete' and entity.type != 'preview' and
-        not self.PREVIEW and not appengine_config.DEBUG):
-      return self.error("Sorry, you've already published that page, and Bridgy Publish doesn't yet support updating or deleting existing posts. Details: https://github.com/snarfed/bridgy/issues/84")
-    self.entity = entity
+    self.entity = self.get_or_add_publish_entity(url)
+    try:
+      resp = self.fetch_mf2(url, raise_errors=True)
+    except BaseException as e:
+      status, body = util.interpret_http_exception(e)
+      if status == '410':
+        return self.delete(url)
+      return self.error('Could not fetch source URL %s' % url)
 
-    # fetch source page
-    resp = self.fetch_mf2(url)
     if not resp:
       return
     self.fetched, data = resp
+
+    # create the Publish entity so we can store the result.
+    if (self.entity.status == 'complete' and self.entity.type != 'preview' and
+        not self.PREVIEW and not appengine_config.DEBUG):
+      return self.error("Sorry, you've already published that page, and Bridgy Publish doesn't yet support updating or deleting existing posts. Details: https://github.com/snarfed/bridgy/issues/84")
 
     # find rel-shortlink, if any
     # http://microformats.org/wiki/rel-shortlink
@@ -442,6 +449,12 @@ class Handler(webmention.WebmentionHandler):
       self.response.status = 201
       return gr_source.creation_result(
         json.dumps(self.entity.published, indent=2))
+
+  def delete(self, source_url):
+    self.entity = self.get_or_add_publish_entity(source_url)
+    if ((self.entity.status != 'complete' or self.entity.type == 'preview') and
+        not self.PREVIEW and not appengine_config.DEBUG):
+      return self.error("Can't delete this post from %s because Bridgy Publish didn't originally POSSE it there" % self.source.gr_source.NAME)
 
   def preprocess(self, activity):
     """Preprocesses an item before trying to publish it.

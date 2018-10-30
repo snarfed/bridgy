@@ -45,7 +45,7 @@ class WebmentionHandler(WebmentionGetHandler):
   source = None
   entity = None
 
-  def fetch_mf2(self, url, require_mf2=True):
+  def fetch_mf2(self, url, require_mf2=True, raise_errors=False):
     """Fetches a URL and extracts its mf2 data.
 
     Side effects: sets :attr:`entity`\ .html on success, calls :attr:`error()`
@@ -54,6 +54,8 @@ class WebmentionHandler(WebmentionGetHandler):
     Args:
       url: string
       require_mf2: boolean, whether to return error if no mf2 are found
+      raise_errors: boolean, whether to let error exceptions propagate up or
+        handle them
 
     Returns:
       (:class:`requests.Response`, mf2 data dict) on success, None on failure
@@ -62,6 +64,8 @@ class WebmentionHandler(WebmentionGetHandler):
       fetched = util.requests_get(url)
       fetched.raise_for_status()
     except BaseException as e:
+      if raise_errors:
+        raise
       util.interpret_http_exception(e)  # log exception
       return self.error('Could not fetch source URL %s' % url)
 
@@ -124,7 +128,7 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
     """
     logging.info(error, exc_info=log_exception)
 
-    if self.entity:
+    if self.entity and self.entity.status == 'new':
       self.entity.status = 'failed'
       self.entity.put()
 
