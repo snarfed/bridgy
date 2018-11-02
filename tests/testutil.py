@@ -162,7 +162,7 @@ class FakeGrSource(gr_source.Source):
     return gr_source.creation_result(description=content)
 
   def delete(self, id):
-    return gr_source.creation_result('delete %s' % id)
+    return gr_source.creation_result({'msg': 'delete %s' % id})
 
   def preview_delete(self, id):
     return gr_source.creation_result(description='delete %s' % id)

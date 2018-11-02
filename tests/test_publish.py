@@ -1445,3 +1445,8 @@ Join us!"""
     delete = list(Publish.query())[-1]
     self.assertEquals(delete.key.parent(), page.key)
     self.assertEquals('deleted', delete.status)
+    self.assertEquals({
+      'id': 'the_id',
+      'url': None,
+      'msg': 'delete the_id',
+    }, delete.published)

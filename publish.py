@@ -435,17 +435,23 @@ class Handler(webmention.WebmentionHandler):
         json.dumps(self.entity.published, indent=2))
 
   def delete(self, source_url):
+    """Attempts to delete or preview delete a published post.
+
+    Args:
+      source_url: string, original post URL
+
+    Returns:
+      dict response data with at least id and url
+    """
     self.entity = self.get_or_add_publish_entity(source_url)
     if ((self.entity.status != 'complete' or self.entity.type == 'preview') and
         not appengine_config.DEBUG):
       return self.error("Can't delete this post from %s because Bridgy Publish didn't originally POSSE it there" % self.source.gr_source.NAME)
 
     id = self.entity.published.get('id')
-    if not id:
-      url = self.entity.published.get('url')
-      if url:
-        id = self.source.gr_source.post_id(url)
-
+    url = self.entity.published.get('url')
+    if not id and url:
+      id = self.source.gr_source.post_id(url)
     if not id:
       return self.error(
         "Bridgy Publish can't find the id of the %s post that it originally published for %s" %
@@ -458,7 +464,11 @@ class Handler(webmention.WebmentionHandler):
     self.entity = models.Publish(parent=self.entity.key.parent(), source=self.source.key)
     self.entity.put()
     logging.debug("Publish entity for delete: '%s'", self.entity.key.urlsafe())
+
     resp = self.source.gr_source.delete(id)
+    resp.content.setdefault('id', id)
+    resp.content.setdefault('url', url)
+    self.entity.published = resp.content
     self.entity.status = 'deleted'
     self.entity.put()
     return resp
