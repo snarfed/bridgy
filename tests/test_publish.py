@@ -1440,7 +1440,11 @@ Join us!"""
     self.mox.ReplayAll()
 
     resp = self.assert_success('delete the_id', preview=True)
-    resp = self.assert_response('delete the_id', status=200)
+    resp = self.assert_response('', status=302, interactive=True)
+    self.assertEquals(
+      'http://localhost/fake/foo.com#!'
+        'Done! <a href="http://fake/url">Click here to view.</a>',
+      urllib.unquote_plus(resp.headers['Location']))
 
     delete = list(Publish.query())[-1]
     self.assertEquals(delete.key.parent(), page.key)
@@ -1448,6 +1452,6 @@ Join us!"""
     self.assertEquals('delete', delete.type)
     self.assertEquals({
       'id': 'the_id',
-      'url': None,
+      'url': 'http://fake/url',
       'msg': 'delete the_id',
     }, delete.published)

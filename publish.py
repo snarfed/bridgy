@@ -452,6 +452,7 @@ class Handler(webmention.WebmentionHandler):
     url = self.entity.published.get('url')
     if not id and url:
       id = self.source.gr_source.post_id(url)
+
     if not id:
       return self.error(
         "Bridgy Publish can't find the id of the %s post that it originally published for %s" %
@@ -469,6 +470,7 @@ class Handler(webmention.WebmentionHandler):
     resp = self.source.gr_source.delete(id)
     resp.content.setdefault('id', id)
     resp.content.setdefault('url', url)
+    logging.info(resp.content)
     self.entity.published = resp.content
     self.entity.status = 'deleted'
     self.entity.put()
