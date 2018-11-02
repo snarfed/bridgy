@@ -1260,7 +1260,6 @@ Join us!"""
     """Test RSVP that replies to multiple event URLs like
     http://tantek.com/2015/308/t1/homebrew-website-club-mozsf
     """
-
     html = """<div class="h-entry">
     <data class="p-rsvp" value="yes">RSVP yes</data> to:
     <a class="u-in-reply-to h-cite" rel="in-reply-to"
@@ -1433,4 +1432,16 @@ Join us!"""
 
   def test_delete(self):
     page = PublishedPage(id='http://foo.com/bar')
-    Publish(parent=page.key, source=self.source.key, status='complete').put()
+    Publish(parent=page.key, source=self.source.key, status='complete',
+            published={'id': 'the_id'}).put()
+
+    for i in range(2):
+      self.expect_requests_get('http://foo.com/bar', status_code=410)
+    self.mox.ReplayAll()
+
+    resp = self.assert_success('delete the_id', preview=True)
+    resp = self.assert_response('delete the_id', status=200)
+
+    delete = list(Publish.query())[-1]
+    self.assertEquals(delete.key.parent(), page.key)
+    self.assertEquals('deleted', delete.status)

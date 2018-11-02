@@ -416,23 +416,7 @@ class Handler(webmention.WebmentionHandler):
       self.entity.published = result.content or result.description
       if not self.entity.published:
         return result  # there was an error
-      state = {
-        'source_key': self.source.key.urlsafe(),
-        'source_url': self.source_url(),
-        'target_url': self.target_url(),
-        'include_link': include_link,
-      }
-      vars = {
-        'source': self.preprocess_source(self.source),
-        'preview': result.content,
-        'description': result.description,
-        'webmention_endpoint': util.host_url(self) + '/publish/webmention',
-        'state': util.encode_oauth_state(state),
-      }
-      vars.update(state)
-      logging.info('Rendering preview with template vars %s', pprint.pformat(vars))
-      return gr_source.creation_result(
-        JINJA_ENV.get_template('preview.html').render(**vars))
+      return self._render_preview(result, include_link=include_link)
 
     else:
       result = self.source.gr_source.create(
@@ -453,8 +437,31 @@ class Handler(webmention.WebmentionHandler):
   def delete(self, source_url):
     self.entity = self.get_or_add_publish_entity(source_url)
     if ((self.entity.status != 'complete' or self.entity.type == 'preview') and
-        not self.PREVIEW and not appengine_config.DEBUG):
+        not appengine_config.DEBUG):
       return self.error("Can't delete this post from %s because Bridgy Publish didn't originally POSSE it there" % self.source.gr_source.NAME)
+
+    id = self.entity.published.get('id')
+    if not id:
+      url = self.entity.published.get('url')
+      if url:
+        id = self.source.gr_source.post_id(url)
+
+    if not id:
+      return self.error(
+        "Bridgy Publish can't find the id of the %s post that it originally published for %s" %
+        self.source.gr_source.NAME, source_url)
+
+    if self.PREVIEW:
+      return self._render_preview(self.source.gr_source.preview_delete(id))
+
+    logging.info('Deleting silo post id %s', id)
+    self.entity = models.Publish(parent=self.entity.key.parent(), source=self.source.key)
+    self.entity.put()
+    logging.debug("Publish entity for delete: '%s'", self.entity.key.urlsafe())
+    resp = self.source.gr_source.delete(id)
+    self.entity.status = 'deleted'
+    self.entity.put()
+    return resp
 
   def preprocess(self, activity):
     """Preprocesses an item before trying to publish it.
@@ -566,6 +573,33 @@ class Handler(webmention.WebmentionHandler):
 
     logging.debug("Publish entity: '%s'", entity.key.urlsafe())
     return entity
+
+  def _render_preview(self, result, include_link=False):
+    """Renders a preview CreationResult as HTML.
+
+    Args:
+      result: CreationResult
+      include_link: boolean
+
+    Returns: CreationResult with the rendered HTML in content
+    """
+    state = {
+      'source_key': self.source.key.urlsafe(),
+      'source_url': self.source_url(),
+      'target_url': self.target_url(),
+      'include_link': include_link,
+    }
+    vars = {
+      'source': self.preprocess_source(self.source),
+      'preview': result.content,
+      'description': result.description,
+      'webmention_endpoint': util.host_url(self) + '/publish/webmention',
+      'state': util.encode_oauth_state(state),
+    }
+    vars.update(state)
+    logging.info('Rendering preview with template vars %s', pprint.pformat(vars))
+    return gr_source.creation_result(
+      JINJA_ENV.get_template('preview.html').render(**vars))
 
 
 class PreviewHandler(Handler):

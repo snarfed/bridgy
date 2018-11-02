@@ -161,6 +161,12 @@ class FakeGrSource(gr_source.Source):
 
     return gr_source.creation_result(description=content)
 
+  def delete(self, id):
+    return gr_source.creation_result('delete %s' % id)
+
+  def preview_delete(self, id):
+    return gr_source.creation_result(description='delete %s' % id)
+
   @staticmethod
   def _images(obj):
     return [image['url'] for image in util.get_list(obj, 'image')]

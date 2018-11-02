@@ -890,7 +890,7 @@ class Publish(ndb.Model):
 
   Child of a :class:`PublishedPage` entity.
   """
-  STATUSES = ('new', 'complete', 'failed')
+  STATUSES = ('new', 'complete', 'failed', 'deleted')
 
   # Turn off instance and memcache caching. See Source for details.
   _use_cache = False
