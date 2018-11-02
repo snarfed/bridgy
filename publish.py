@@ -461,7 +461,8 @@ class Handler(webmention.WebmentionHandler):
       return self._render_preview(self.source.gr_source.preview_delete(id))
 
     logging.info('Deleting silo post id %s', id)
-    self.entity = models.Publish(parent=self.entity.key.parent(), source=self.source.key)
+    self.entity = models.Publish(parent=self.entity.key.parent(),
+                                 source=self.source.key, type='delete')
     self.entity.put()
     logging.debug("Publish entity for delete: '%s'", self.entity.key.urlsafe())
 
