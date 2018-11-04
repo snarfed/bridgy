@@ -95,7 +95,12 @@ class AuthHandler(util.Handler):
     starter = util.oauth_starter(
       oauth_flickr.StartHandler, feature=feature
     ).to(
-      # TODO: support comma-separated feature list?
+      # TODO: delete instead of write. if we do that below, it works, and we get
+      # granted delete permissions. however, if we then attempt to actually
+      # delete something, it fails with code 99 "Insufficient permissions.
+      # Method requires delete privileges; write granted." and
+      # https://www.flickr.com/services/auth/list.gne shows that my user's
+      # permissions for the Bridgy app are back to write, not delete. wtf?!
       '/flickr/add', scopes='write' if feature == 'publish' else 'read'
     )
     return starter(self.request, self.response).post()
