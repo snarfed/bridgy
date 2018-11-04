@@ -101,6 +101,7 @@ service.</a>
 <li><a href="#person-tag">How do I tag someone in a post?</a></li>
 <li><a href="#location">How do I include location in a post?</a></li>
 <li><a href="#quote-tweet">How do I post a quote tweet?</a></li>
+<li><a href="#delete">How do I delete a tweet?</a></li>
 <li><a href="#github-issue-comment">How do I create a GitHub issue or comment?</a></li>
 <li><a href="#github-reaction">How do I post an emoji reaction on a GitHub issue or PR?</a></li>
 <li><a href="#add-label">How do I add a label to a GitHub issue?</a></li>
@@ -789,26 +790,12 @@ previewing a post to see how it will look!
 <li class="answer">
 <p>Bridgy can publish:</p>
 <ul>
-<li>Twitter tweets, @-replies, retweets, and likes. Tweets and @-replies
-  may include <a href="#location">location</a> and
-  <a href="#picture">up to four photos</a> or
-  <a href="#video">one video</a>.</li>
-<li>Flickr photos, videos, comments, and favorites. Photos may include
-  <a href="#location">location</a>,
-  <a href="https://indieweb.org/tags">tags</a>, and/or
-  <a href="#person-tag">people tags</a>.</li>
+<li>Twitter tweets, @-replies, retweets, and likes. Tweets and @-replies may include <a href="#location">location</a> and <a href="#picture">up to four photos</a> or <a href="#video">one video</a>. Tweets may also be <a href="#delete">deleted</a>.</li>
+<li>Flickr photos, videos, comments, and favorites. Photos may include <a href="#location">location</a>, <a href="https://indieweb.org/tags">tags</a>, and/or <a href="#person-tag">people tags</a>.</li>
 <li>GitHub issues, <a href="https://help.github.com/articles/about-stars">stars</a>, comments on issues and PRs, and <a href="https://help.github.com/articles/about-conversations-on-github/#reacting-to-ideas-in-comments">emoji reactions</a> to issues, PRs, and comments.</li>
 <li><a href="#add-label">Adding new labels to GitHub issues.</a></li>
-<li>Nothing on Instagram, sorry. Likes used to be possible, but not since Instagram
-  <a href="http://developers.instagram.com/post/133424514006/instagram-platform-update">
-    started locking down their API.</a>
-  <a href="http://instagram.com/developer/endpoints/media/#get_media_popular"
-    >Photos, videos,</a>
-  <a href="http://instagram.com/developer/endpoints/comments/#post_media_comments">
-  and comments</a> were never possible.</li>
-<li>Nothing on Google+, sorry.
-  <a href="https://developers.google.com/+/api/latest/">Their API is
-    read only.</a></li>
+<li>Nothing on Instagram, sorry. Likes used to be possible, but not since Instagram <a href="http://developers.instagram.com/post/133424514006/instagram-platform-update"> started locking down their API.</a> <a href="http://instagram.com/developer/endpoints/media/#get_media_popular">Photos, videos,</a> <a href="http://instagram.com/developer/endpoints/comments/#post_media_comments">and comments</a> were never possible.</li>
+<li>Nothing on Google+, sorry. <a href="https://developers.google.com/+/api/latest/">Their API is read only.</a></li>
 </ul>
 </li>
 </p></li>
@@ -970,6 +957,12 @@ I have something to say about this:
 &lt;/cite&gt;
 </pre>
 </p>
+</li>
+
+<li id="delete" class="question">How do I delete a tweet?</li>
+<li class="answer">
+<p><a href="https://indieweb.org/delete">Delete its original post by returning HTTP 410 Gone.</a> (The response body can be anything.)</p>
+<p>Bridgy Publish can only delete tweets that it created originally. Also, once it publishes and then deletes a tweet, it can't re-publish the same post as another tweet. If you want to edit a tweet, delete it, change its permalink on your site, and then republish it using that new URL.</p>
 </li>
 
 <li id="github-issue-comment" class="question">How do I create a GitHub issue or comment?</li>
