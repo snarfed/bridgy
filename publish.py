@@ -289,7 +289,7 @@ class Handler(webmention.WebmentionHandler):
         elif not code:
           raise
         msg = 'Error: %s %s' % (body or '', e)
-        return self.error(msg, status=code, mail=code not in ('400', '502', '503', '504'))
+        return self.error(msg, status=code, mail=code not in ('400', '404', '502', '503', '504'))
 
     if not self.entity.published:  # tried all the items
       types.discard('h-entry')
