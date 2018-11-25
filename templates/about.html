@@ -1063,7 +1063,7 @@ your post's actual content.
 <li id="multiple-types" class="question">What if my original post does more than one thing?
 </li>
 <li class="answer">
-<p>Bridgy Publish always interprets an original post on your web site as a single thing. It would be <a href="https://github.com/snarfed/bridgy/issues/832">difficult</a>, at best, to translate a single publish request to multiple actions in a silo consistently and safely, so we don't currently try.</p>
+<p>Bridgy Publish always interprets an original post on your web site as a single thing. <a href="https://github.com/snarfed/bridgy/issues/832#issuecomment-441453850">It would be difficult, at best,</a> to translate a single publish request to multiple actions in a silo consistently and safely, so we don't currently try. (What should we do if one part succeeds but one part fails? What if you retry? Etc.)</p>
 <p>Bridgy Publish largely follows the <a href="https://ptd.spec.indieweb.org/#algorithm">Post Type Discovery</a> standard to map a microformats2 post on your web site to a single thing. There's one exception: PTD doesn't currently handle <a href="https://indieweb.org/tag-reply">tag replies</a>, but we do, so if your post has <code>u-tag-of</code>, it's interpreted as a tag reply. So, the <a href="https://ptd.spec.indieweb.org/#algorithm">Post Type Algorithm</a> results in this overall order of precedence:</p>
 <ol>
 <li><a href="https://indieweb.org/tag-reply">tag reply</a></li>
