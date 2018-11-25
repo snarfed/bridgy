@@ -385,7 +385,7 @@ iframe#twitter-widget-0 {
   font-weight: bold;
 }
 
-.answer li {
+.answer ul li, .answer ol {
   margin-bottom: .5em;
 }
 

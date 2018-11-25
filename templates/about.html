@@ -89,8 +89,7 @@ service.</a>
 <br />
 <p><em>Publishing</em></p>
 <li><a href="#publishing">What do you mean, <em>publishing</em>?</a></li>
-<li><a href="#microformats">How does it decide which parts of my web
-  page to include?</a></li>
+<li><a href="#microformats">How does it decide which parts of my web page to include?</a></li>
 <li><a href="#publish-types">What can I publish, exactly?</a></li>
 <li><a href="#webmentions">Can I do this automatically, whenever
   I post something new on my web site?</a></li>
@@ -110,6 +109,7 @@ service.</a>
 <li><a href="#ignore-formatting">Can I disable the plain text whitespace and
   formatting?</a></li>
 <li><a href="#silo-content">I want more control over the text that gets posted.</li>
+<li><a href="#multiple-types">What if my original post does more than one thing?</li>
 <li><a href="#short-link">Can I include a short link instead of the full link?</a></li>
 <li><a href="#response">How does Bridgy respond to webmentions?</a></li>
 <li><a href="#error-response">How about error responses?</a></li>
@@ -1058,6 +1058,23 @@ your post's actual content.
 </pre>
 <p>You can hide these extra elements with <code>display: none</code>, or add the classes to existing elements like your title or summary, or anything else you like.</p>
 <p>If you use this, Bridgy will still include a link to your post. <a href="#omit-link">You can change that with <code>omit-link</code>.</a> It will also still truncate your text if it's <a href="https://developer.twitter.com/en/docs/basics/counting-characters">over 280 characters</a>. You can always <a href="#try+it">preview your post first</a> to see how Bridgy will handle it!</p>
+</li>
+
+<li id="multiple-types" class="question">What if my original post does more than one thing?
+</li>
+<li class="answer">
+<p>Bridgy Publish always interprets an original post on your web site as a single thing. It would be <a href="https://github.com/snarfed/bridgy/issues/832">difficult</a>, at best, to translate a single publish request to multiple actions in a silo consistently and safely, so we don't currently try.</p>
+<p>Bridgy Publish largely follows the <a href="https://ptd.spec.indieweb.org/#algorithm">Post Type Discovery</a> standard to map a microformats2 post on your web site to a single thing. There's one exception: PTD doesn't currently handle <a href="https://indieweb.org/tag-reply">tag replies</a>, but we do, so if your post has <code>u-tag-of</code>, it's interpreted as a tag reply. So, the <a href="https://ptd.spec.indieweb.org/#algorithm">Post Type Algorithm</a> results in this overall order of precedence:</p>
+<ol>
+<li><a href="https://indieweb.org/tag-reply">tag reply</a></li>
+<li><a href="https://indieweb.org/rsvp">RSVP</a></li>
+<li><a href="https://indieweb.org/repost">repost</a></li>
+<li><a href="https://indieweb.org/like">like</a></li>
+<li><a href="https://indieweb.org/reply">reply</a></li>
+<li><a href="https://indieweb.org/post">post</a></li>
+</ol>
+<p>So, for example, if you try publish a post that's both a like and a repost, Bridgy translates it to a repost.</p>
+<p> Replies with tag replies (ie <code>u-tag-of</code>) are an exception. <a href="https://github.com/snarfed/bridgy/issues/832">They currently return an error.</a></p>
 </li>
 
 <li id="short-link" class="question">Can I include a short link instead of the full link?</li>
