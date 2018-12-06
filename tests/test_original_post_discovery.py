@@ -463,6 +463,12 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     </html>""")
     self.mox.ReplayAll()
 
+  def test_canonicalize_drops_non_silo_activity_url(self):
+    """For https://console.cloud.google.com/errors/CNnLpJml7O3cvAE ."""
+    self.source.BACKFEED_REQUIRES_SYNDICATION_LINK = True
+    self.activity['object']['url'] = 'http://not/silo'
+    self.assert_discover([])
+
   def test_discover_multiple_domain_urls(self):
     """We should fetch and process all of a source's URLs."""
     self._expect_multiple_domain_url_fetches()

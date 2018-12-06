@@ -123,6 +123,7 @@ def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True,
   # TODO possible optimization: if we've discovered a backlink to a post on the
   # author's domain (i.e., it included a link or citation), then skip the rest
   # of this.
+  syndicated = []
   syndication_url = obj.get('url') or activity.get('url')
   if syndication_url:
     # use the canonical syndication url on both sides, so that we have
@@ -135,9 +136,9 @@ def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True,
                                          fetch_hfeed, already_fetched_hfeeds)
       originals.update(syndicated)
     originals = set(util.dedupe_urls(originals))
-  else:
-    logging.debug('no syndication url, cannot process h-entries')
-    syndicated = []
+
+  if not syndication_url:
+    logging.debug('no %s syndication url, cannot process h-entries', source.SHORT_NAME)
 
   return ((originals, mentions) if not source.BACKFEED_REQUIRES_SYNDICATION_LINK
           else (set(syndicated), set()))
