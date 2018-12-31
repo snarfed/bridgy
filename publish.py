@@ -573,7 +573,7 @@ class Handler(webmention.WebmentionHandler):
     Args:
       source_url: string
     """
-    page = PublishedPage.get_or_insert(native_str(source_url))
+    page = PublishedPage.get_or_insert(native_str(source_url.encode('utf-8')))
     entity = Publish.query(
       Publish.status == 'complete', Publish.type != 'preview',
       Publish.source == self.source.key,

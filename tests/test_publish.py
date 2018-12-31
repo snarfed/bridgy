@@ -1155,12 +1155,13 @@ Join us!"""
     """Test that we pass through unicode chars correctly."""
     text = 'Démo pour les développeur. Je suis navrée de ce problème.'
     for i in range(2):
-      self.expect_requests_get('http://foo.com/bar', self.post_html % text,
+      self.expect_requests_get('http://foo.com/bår', self.post_html % text,
                                content_type='text/html; charset=utf-8')
     self.mox.ReplayAll()
 
-    self.assert_created(text, preview=False, params={'bridgy_omit_link': ''})
-    self.assert_success(text, preview=True, params={'bridgy_omit_link': ''})
+    url = 'http://foo.com/bår'.encode('utf-8')
+    self.assert_created(text, preview=False, source=url, params={'bridgy_omit_link': ''})
+    self.assert_success(text, preview=True, source=url, params={'bridgy_omit_link': ''})
 
   def test_utf8_meta_tag(self):
     self._test_charset_in_meta_tag('utf-8')
