@@ -187,7 +187,7 @@ For alerting, we've set up [Google Cloud Monitoring](https://app.google.stackdri
 
 Stats
 ---
-I occasionally generate [stats and graphs of usage and growth](https://snarfed.org/2018-01-02_bridgy-stats-update) from the [BigQuery dataset](https://bigquery.cloud.google.com/dataset/brid-gy:datastore) ([#715](https://github.com/snarfed/bridgy/issues/715)). Here's how.
+I occasionally generate [stats and graphs of usage and growth](https://snarfed.org/2018-01-02_bridgy-stats-update) from the [BigQuery dataset](https://console.cloud.google.com/bigquery?p=brid-gy&d=datastore&page=dataset) ([#715](https://github.com/snarfed/bridgy/issues/715)). Here's how.
 
 1. [Back up the full datastore to Google Cloud Storage.](https://console.cloud.google.com/datastore/settings?project=brid-gy) Include all entities except `*Auth` and other internal details. Check to see if any new kinds have been added since the last time this command was run.
     
@@ -208,7 +208,7 @@ I occasionally generate [stats and graphs of usage and growth](https://snarfed.o
       bq load --replace --nosync --source_format=DATASTORE_BACKUP sources.$kind gs://brid-gy.appspot.com/stats/all_namespaces/kind_$kind/all_namespaces_kind_$kind.export_metadata
     done
     ```
-1. [Run the full stats BigQuery query.](https://bigquery.cloud.google.com/savedquery/586366768654:9d8d4c13e988477bb976a5e29b63da3b) Download the results as CSV.
+1. [Run the full stats BigQuery query.](https://console.cloud.google.com/bigquery?sq=586366768654:9d8d4c13e988477bb976a5e29b63da3b) Download the results as CSV.
 1. [Open the stats spreadsheet.](https://docs.google.com/spreadsheets/d/1VhGiZ9Z9PEl7f9ciiVZZgupNcUTsRVltQ8_CqFETpfU/edit) Import the CSV, replacing the _data_ sheet.
 1. Check out the graphs! Save full size images with OS or browser screenshots, thumbnails with the _Save Image_ button. Then post them!
 
@@ -246,4 +246,4 @@ Run this to download a single complete backup:
 gsutil -m cp -r gs://brid-gy.appspot.com/weekly/datastore_backup_full_YYYY_MM_DD_\* .
 ```
 
-Also see the [BigQuery dataset](https://bigquery.cloud.google.com/dataset/brid-gy:datastore) ([#715](https://github.com/snarfed/bridgy/issues/715)).
+Also see the [BigQuery dataset](https://console.cloud.google.com/bigquery?p=brid-gy&d=datastore&page=dataset) ([#715](https://github.com/snarfed/bridgy/issues/715)).
