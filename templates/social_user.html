@@ -11,6 +11,14 @@ So long, and thanks for all the fish!</b></p>
 </div>
 {% endif %}
 
+{% if source.SHORT_NAME == 'googleplus' %}
+<div class="row promo error">
+<p><b><a href="/about#rip-google+">Google+ won't exist for much longer.</a>
+So long, and thanks for all the fish!</b></p>
+</div>
+{% endif %}
+
+
 {% if "listen" in source.features %}
 {% if source.is_private() %}
 <div class="row promo warning">
@@ -71,7 +79,7 @@ WordPress.com, <a href="/">sign up here!</a>
 
 <div class="row">
 
-{% if source.SHORT_NAME != 'facebook' %}
+{% if source.SHORT_NAME not in ('facebook', 'googleplus') %}
 <!-- Listen UI -->
 <div id="listen-ui" class="{% if publish_signup_ok %}col-sm-6{% endif %}">
 
@@ -257,7 +265,7 @@ Click to enable <a href="/about#listen">listening</a>:
 </div>
 
 </div>
-{% endif %}
+{% endif %} {# end Facebook/Google+ hiding UI blocks #}
 
 
 <!-- Publish preview UI -->
