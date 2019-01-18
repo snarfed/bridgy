@@ -1477,3 +1477,43 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
 
     self.mox.ReplayAll()
     self.assert_discover(['http://author/post/url'])
+
+  def test_skip_non_string_u_urls(self):
+    """Make sure that we do not abort due to u-urls that contain objects
+    """
+    self.expect_requests_get('http://author', """
+    <link rel="feed" href="/feed">
+    <html class="h-feed">
+      <div class="h-entry">
+        <a class="u-url" href="http://author/post-with-mistake"></a>
+        <a class="u-url h-card" href="http://author/dummy-url">someone made a mistake</a>
+      </div>
+    </html>""")
+
+    self.expect_requests_get('http://author/feed', """
+    <html class="h-feed">
+      <div class="h-entry">
+        <a class="u-url h-card" href="http://author/dummy-url">someone made a mistake</a>
+        <a class="u-url" href="http://author/post-with-mistake"></a>
+      </div>
+      </div>
+      <div class="h-entry">
+        <a class="u-url" href="http://author/only-on-feed"></a>
+      </div>
+      <div class="h-entry">
+        <a class="u-url h-card" href="http://author/dummy-url">someone made a mistake, and no correct link</a>
+      </div>
+    </html>""")
+
+    for orig in ('/post-with-mistake', '/only-on-feed'):
+      self.expect_requests_get('http://author%s' % orig,
+                               """<div class="h-entry">
+                                 <a class="u-url" href="%s"></a>
+                               </div>""" % orig).InAnyOrder()
+
+    self.mox.ReplayAll()
+    discover(self.source, self.activity)
+    # should have found both posts successfully
+    self.assert_syndicated_posts(('http://author/post-with-mistake', None),
+                                 ('http://author/only-on-feed', None),
+                                 (None, 'https://fa.ke/post/url'))
