@@ -399,7 +399,7 @@ def _merge_hfeeds(feed1, feed2):
         seen.add(url)
 
   return feed1 + [item for item in feed2 if all(
-    url not in seen for url in item.get('properties', {}).get('url', []))]
+    (url not in seen) for url in item.get('properties', {}).get('url', []) if isinstance(url, basestring))]
 
 
 def _find_feed_items(feed_url, feed_doc):
