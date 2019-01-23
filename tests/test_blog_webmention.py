@@ -56,13 +56,28 @@ http://foo.com/post/1
       'mentioned this in <a href="http://bar.com/reply">my post</a>. <br /> <a href="http://bar.com/reply">via bar.com</a>')
 
   def test_success(self):
-    html = """
+    self._test_success("""
 <article class="h-entry">
 <p class="p-author">my name</p>
 <p class="e-content">
 i hereby reply
 <a class="u-in-reply-to" href="http://foo.com/post/1"></a>
-</p></article>"""
+</p></article>""")
+
+  def test_nested_item_in_hfeed(self):
+    """https://chat.indieweb.org/dev/2019-01-23#t1548242942538900"""
+    self._test_success("""
+<div class="h-feed">
+<article class="h-entry">
+<p class="p-author">my name</p>
+<p class="e-content">
+i hereby reply
+<a class="u-in-reply-to" href="http://foo.com/post/1"></a>
+</p>
+</article>
+</div>""")
+
+  def _test_success(self, html):
     self.expect_requests_get('http://bar.com/reply', html)
 
     testutil.FakeSource.create_comment(

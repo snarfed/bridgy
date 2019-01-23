@@ -94,7 +94,7 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
       return
     self.fetched, data = resp
 
-    item = self.find_mention_item(data)
+    item = self.find_mention_item(data.get('items', []))
     if not item:
       return self.error('Could not find target URL %s in source page %s' %
                         (self.target_url, self.fetched.url),
@@ -154,20 +154,20 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
     self.entity.put()
     self.response.write(json.dumps(self.entity.published))
 
-  def find_mention_item(self, data):
+  def find_mention_item(self, items):
     """Returns the mf2 item that mentions (or replies to, likes, etc) the target.
 
-    May modify the data arg, e.g. may set or replace content.html or
+    May modify the items arg, e.g. may set or replace content.html or
     content.value.
 
     Args:
-      data: mf2 data dict
+      items: sequence of mf2 item dicts
 
     Returns:
       mf2 item dict or None
     """
     # find target URL in source
-    for item in data.get('items', []):
+    for item in items:
       props = item.setdefault('properties', {})
 
       # find first non-empty content element
@@ -180,13 +180,14 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
         if self.any_target_in(urls):
           break
       else:
-        if not text or not self.any_target_in(text):
-          continue
-        type = 'post'
-        url = first_value(props, 'url') or self.source_url
-        name = first_value(props, 'name') or first_value(props, 'summary')
-        text = content['html'] = ('mentioned this in %s.' %
-                                  util.pretty_link(url, text=name, max_length=280))
+        if text and self.any_target_in(text):
+          type = 'post'
+          url = first_value(props, 'url') or self.source_url
+          name = first_value(props, 'name') or first_value(props, 'summary')
+          text = content['html'] = ('mentioned this in %s.' %
+                                    util.pretty_link(url, text=name, max_length=280))
+        else:
+          type = None
 
       if type:
         # found the target!
@@ -206,6 +207,11 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
                                 'repost': 'reposted this.',
                                 }[self.entity.type]
         return item
+
+      # check children in case this is eg an h-feed
+      found = self.find_mention_item(item.get('children', []))
+      if found:
+        return found
 
     return None
 
