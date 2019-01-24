@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 
 import json
 
+from google.appengine.api.datastore_types import _MAX_STRING_LENGTH
 from google.appengine.ext.ndb.key import _MAX_KEYPART_BYTES
 import mox
 
@@ -58,9 +59,9 @@ class SuperfeedrTest(testutil.HandlerTest):
     superfeedr.subscribe(self.source, self.handler)
     self.assert_blogposts(
       [BlogPost(id='A', source=self.source.key, feed_item=item_a,
-                unsent=['http://a.com']),
+                unsent=['http://a.com/']),
        BlogPost(id='B', source=self.source.key, feed_item=item_b,
-                unsent=['http://b.com']),
+                unsent=['http://b.com/']),
        ])
 
   def test_handle_feed(self):
@@ -69,7 +70,7 @@ class SuperfeedrTest(testutil.HandlerTest):
     superfeedr.handle_feed(json.dumps({'items': [item_a]}), self.source)
     self.assert_blogposts(
       [BlogPost(id='A', source=self.source.key, feed_item=item_a,
-                unsent=['http://a.com'])])  # self link should be discarded
+                unsent=['http://a.com/'])])  # self link should be discarded
 
   def test_handle_feed_no_items(self):
     superfeedr.handle_feed('{}', self.source)
@@ -111,7 +112,7 @@ class SuperfeedrTest(testutil.HandlerTest):
     }
     superfeedr.handle_feed(json.dumps({'items': [item]}), self.source)
     self.assert_blogposts([BlogPost(id='A', source=self.source.key,
-                                    feed_item=item, unsent=['http://abc'])])
+                                    feed_item=item, unsent=['http://abc/'])])
 
   def test_notify_handler(self):
     item = {'id': 'X', 'content': 'a http://x/y z'}
@@ -132,6 +133,19 @@ class SuperfeedrTest(testutil.HandlerTest):
                                     source=self.source.key, feed_item=item,
                                     failed=['http://x/y'],
                                     status='complete')],
+                          tasks=False)
+
+  def test_notify_link_too_long(self):
+    too_long = 'http://a/' + 'b' * _MAX_STRING_LENGTH
+    item = {'id': 'X', 'content': 'a http://x/y %s z' % too_long}
+    self.feed = json.dumps({'items': [item]})
+    resp = fake_app.get_response('/notify/foo.com', method='POST', body=self.feed)
+
+    self.assertEquals(200, resp.status_int)
+    self.assert_blogposts([BlogPost(id='X',
+                                    source=self.source.key, feed_item=item,
+                                    unsent=['http://x/y'],
+                                    status='new')],
                           tasks=False)
 
   def test_notify_utf8(self):

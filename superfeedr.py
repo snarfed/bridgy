@@ -13,6 +13,7 @@ import json
 import logging
 
 import appengine_config
+from google.appengine.api.datastore_types import _MAX_STRING_LENGTH
 from google.appengine.ext.ndb.key import _MAX_KEYPART_BYTES
 from requests.auth import HTTPBasicAuth
 
@@ -100,13 +101,20 @@ def handle_feed(feed, source):
              for l in util.extract_links(content)
              if util.domain_from_link(l) not in source.domains]
 
-    logging.info('Found links: %s', links)
+    unique = []
+    for link in util.dedupe_urls(links):
+      if len(link) <= _MAX_STRING_LENGTH:
+        unique.append(link)
+      else:
+        logging.info('Giving up on link over %s chars! %s', _MAX_STRING_LENGTH, link)
+
+    logging.info('Found links: %s', unique)
     if len(url) > _MAX_KEYPART_BYTES:
       logging.warning('Blog post URL is too long (over 500 chars)! Giving up.')
       bp = models.BlogPost(id=url[:_MAX_KEYPART_BYTES], source=source.key,
-                           feed_item=item, failed=links)
+                           feed_item=item, failed=unique)
     else:
-      bp = models.BlogPost(id=url, source=source.key, feed_item=item, unsent=links)
+      bp = models.BlogPost(id=url, source=source.key, feed_item=item, unsent=unique)
 
     bp.get_or_save()
 
