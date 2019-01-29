@@ -1,13 +1,10 @@
 {% extends "blog_user.html" %}
 
 {% block undiscovered %}
-<p>First Step: Copy the line below:</p>
+<p>You're almost done! Next, copy this line:</p>
 <pre>&lt;a rel="webmention" href="https://brid.gy/webmention/wordpress"&gt;-&lt;/a&gt;</pre>
 <!-- <a href="http://en.support.wordpress.com/widgets/text-widget/">More details.</a> -->
-<p>Second step: <a target="_blank" href="{{ source.edit_template_url() }}">click
-    here to edit your blog's widgets</a>, add a Custom HTML Widget, and put paste the
-   link you copied:</p>
-<p>Optional: You may want to add a title to your plugin. You may also want to replace the -- as the name of your webmention link</p>
+<p>...then <a target="_blank" href="{{ source.edit_template_url() }}">click here to edit your blog's widgets</a>, add a <em>Custom HTML</em> widget, leave the title blank, and paste the line above into its content.</p>
 {% endblock %}
 
 {% block blog_signup %}
