@@ -215,20 +215,11 @@ I occasionally generate [stats and graphs of usage and growth](https://snarfed.o
 
 Misc
 ---
-The datastore is automatically backed up by a
-[cron job](https://developers.google.com/appengine/articles/scheduled_backups)
-that runs
-[Datastore Admin backup](https://developers.google.com/appengine/docs/adminconsole/datastoreadmin#backup_and_restore)
-and stores the results in
-[Cloud Storage](https://developers.google.com/storage/docs/), in the
-[brid-gy.appspot.com bucket](https://console.developers.google.com/project/apps~brid-gy/storage/brid-gy.appspot.com/).
-It backs up all entities monthly, and all entities except `Response` and
-`SyndicatedPost` weekly, since they make up 92% of all entities by size and
-they aren't as critical to keep.
+The datastore is automatically backed up by an App Engine cron job that runs [Datastore managed export](https://cloud.google.com/datastore/docs/schedule-export) ([details](https://cloud.google.com/datastore/docs/export-import-entities)) and stores the results in [Cloud Storage](https://developers.google.com/storage/docs/), in the [brid-gy.appspot.com bucket](https://console.developers.google.com/project/apps~brid-gy/storage/brid-gy.appspot.com/). It backs up weekly and includes all entities except `Response` and `SyndicatedPost`, since they make up 92% of all entities by size and they aren't as critical to keep.
 
-We use this command to set a
-[Cloud Storage lifecycle policy](https://developers.google.com/storage/docs/lifecycle)
-on that bucket that prunes older backups:
+(We used to use [Datastore Admin Backup](https://cloud.google.com/appengine/docs/standard/python/console/datastore-backing-up-restoring), but [it shut down in Feb 2019](https://cloud.google.com/appengine/docs/deprecations/datastore-admin-backups.)
+
+We use this command to set a [Cloud Storage lifecycle policy](https://developers.google.com/storage/docs/lifecycle) on that bucket that prunes older backups:
 
 ```
 gsutil lifecycle set cloud_storage_lifecycle.json gs://brid-gy.appspot.com
