@@ -1,5 +1,5 @@
 oauth-dropins>=1.13
-granary>=1.13
+granary>=1.13,<2.0
 -e git+git@github.com:snarfed/python-future.git@all#egg=future
 -e git+https://github.com/snarfed/gdata-python-client-1.git@blogger_id_parsing#egg=gdata
 google-api-python-client>=1.6.5
