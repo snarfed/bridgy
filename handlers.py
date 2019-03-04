@@ -40,7 +40,6 @@ import webapp2
 import facebook
 import flickr
 import github
-import googleplus
 import instagram
 import twitter
 

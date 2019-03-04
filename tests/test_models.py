@@ -15,7 +15,6 @@ import requests
 import blogger
 import facebook
 import flickr
-import googleplus
 import instagram
 import models
 from models import BlogPost, Response, Source, SyndicatedPost
@@ -189,7 +188,6 @@ class SourceTest(testutil.HandlerTest):
     self.assertEquals(blogger.Blogger, models.sources['blogger'])
     self.assertEquals(facebook.FacebookPage, models.sources['facebook'])
     self.assertEquals(flickr.Flickr, models.sources['flickr'])
-    self.assertEquals(googleplus.GooglePlusPage, models.sources['googleplus'])
     self.assertEquals(instagram.Instagram, models.sources['instagram'])
     self.assertEquals(tumblr.Tumblr, models.sources['tumblr'])
     self.assertEquals(twitter.Twitter, models.sources['twitter'])

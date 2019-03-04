@@ -14,7 +14,6 @@ from models import Response
 import blogger
 import facebook
 import flickr
-import googleplus
 import instagram
 import tumblr
 import twitter

@@ -85,10 +85,6 @@ handlers:
   script: github.application
   secure: always
 
-- url: /googleplus/(start|add|delete|oauth2callback)(/.*)?
-  script: googleplus.application
-  secure: always
-
 - url: /instagram/(start|indieauth|callback|add|delete/.+)(/.*)?
   script: instagram.application
   secure: always

@@ -18,7 +18,6 @@ from oauth_dropins import blogger_v2 as oauth_blogger_v2
 from oauth_dropins import facebook as oauth_facebook
 from oauth_dropins import flickr as oauth_flickr
 from oauth_dropins import github as oauth_github
-from oauth_dropins import googleplus as oauth_googleplus
 from oauth_dropins import indieauth
 from oauth_dropins import medium as oauth_medium
 from oauth_dropins import tumblr as oauth_tumblr
@@ -40,7 +39,6 @@ import blogger
 import facebook
 import flickr
 import github
-import googleplus
 import instagram
 import medium
 import tumblr
@@ -199,6 +197,12 @@ class UserHandler(DashboardHandler):
 
   @util.canonicalize_domain
   def get(self, source_short_name, id):
+    if source_short_name == 'googleplus':
+      # turned off in march 2019: https://github.com/snarfed/bridgy/issues/846
+      self.source = None
+      self.response.status_int = 404
+      return super(UserHandler, self).get()
+
     cls = models.sources[source_short_name]
     self.source = cls.lookup(id)
 
@@ -449,7 +453,6 @@ class DeleteStartHandler(util.Handler):
     'FacebookPage': oauth_facebook,
     'Flickr': oauth_flickr,
     'GitHub': oauth_github,
-    'GooglePlusPage': oauth_googleplus,
     'Instagram': indieauth,
     'Medium': oauth_medium,
     'Tumblr': oauth_tumblr,
@@ -468,10 +471,7 @@ class DeleteStartHandler(util.Handler):
       'callback': self.request.get('callback'),
     })
 
-    # Google+ and Blogger don't support redirect_url() yet
-    if module is oauth_googleplus:
-      return self.redirect('/googleplus/delete/start?state=%s' % state)
-
+    # Blogger don't support redirect_url() yet
     if module is oauth_blogger_v2:
       return self.redirect('/blogger/delete/start?state=%s' % state)
 

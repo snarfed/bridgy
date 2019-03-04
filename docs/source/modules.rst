@@ -30,10 +30,6 @@ flickr
 ------
 .. automodule:: flickr
 
-googleplus
-----------
-.. automodule:: googleplus
-
 handlers
 --------
 .. automodule:: handlers

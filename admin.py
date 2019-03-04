@@ -22,7 +22,6 @@ import blogger
 import facebook
 import flickr
 import github
-import googleplus
 import instagram
 import tumblr
 import twitter
@@ -70,7 +69,7 @@ class SourcesHandler(handlers.TemplateHandler):
 
   def template_vars(self):
     CLASSES = (facebook.FacebookPage, flickr.Flickr, github.GitHub,
-               twitter.Twitter, instagram.Instagram, googleplus.GooglePlusPage)
+               twitter.Twitter, instagram.Instagram)
     queries = [cls.query(Source.status == 'enabled',
                          Source.poll_status == 'error',
                          Source.rate_limited.IN((False, None)),

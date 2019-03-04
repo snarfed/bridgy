@@ -52,7 +52,6 @@ import requests
 from facebook import FacebookPage
 from flickr import Flickr
 from github import GitHub
-from googleplus import GooglePlusPage
 from instagram import Instagram
 from models import Publish, PublishedPage
 from twitter import Twitter
@@ -173,8 +172,8 @@ class Handler(webmention.WebmentionHandler):
         len(path_parts) != 2 or path_parts[0] != '/publish' or not source_cls):
       return self.error(
         'Target must be brid.gy/publish/{facebook,flickr,github,twitter}')
-    elif source_cls in (GooglePlusPage, Instagram):
-      return self.error('Sorry, %s is not yet supported.' %
+    elif source_cls == Instagram:
+      return self.error('Sorry, %s is not supported.' %
                         source_cls.GR_CLASS.NAME)
 
     # resolve source URL
