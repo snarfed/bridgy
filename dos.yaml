@@ -29,3 +29,6 @@ blacklist:
 
 - subnet: 91.200.12.58
   description: keeps requesting .../xmlrpc.php paths
+
+- subnet: 2601:98a:4400:2b0:ad09:85f6:3978:bd9
+  description: arush's personal computer. temporary. https://chat.indieweb.org/dev/2019-03-19#t1553019423996900
