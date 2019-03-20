@@ -19,3 +19,6 @@ Disallow: /tumblr
 Disallow: /twitter
 Disallow: /wordpress
 Disallow: /*?*
+
+User-agent: FemtosearchBot
+Disallow: *
