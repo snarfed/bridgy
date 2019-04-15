@@ -459,7 +459,11 @@ class Handler(webmention.WebmentionHandler):
         self.source.gr_source.NAME, source_url)
 
     if self.PREVIEW:
-      return self._render_preview(self.source.gr_source.preview_delete(id))
+      try:
+        return self._render_preview(self.source.gr_source.preview_delete(id))
+      except NotImplementedError:
+        return self.error("Sorry, deleting isn't supported for %s yet" %
+                          self.source.gr_source.NAME)
 
     logging.info('Deleting silo post id %s', id)
     self.entity = models.Publish(parent=self.entity.key.parent(),

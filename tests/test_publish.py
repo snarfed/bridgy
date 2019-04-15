@@ -229,9 +229,7 @@ class PublishTest(testutil.HandlerTest):
     self.assert_success('', preview=True)
 
   def test_more_than_one_silo(self):
-    """POSSE to more than one silo should not trip the
-    'already published' check"""
-
+    """POSSE to more than one silo should not trip the already published check"""
     class FauxSource(testutil.FakeSource):
       SHORT_NAME = 'faux'
 
@@ -1456,3 +1454,17 @@ Join us!"""
       'url': 'http://fake/url',
       'msg': 'delete the_id',
     }, delete.published)
+
+  def test_preview_delete_unsupported_silo(self):
+    page = PublishedPage(id='http://foo.com/bar')
+    Publish(parent=page.key, source=self.source.key, status='complete',
+            published={'id': 'the_id'}).put()
+
+    self.expect_requests_get('http://foo.com/bar', status_code=410)
+    self.mox.StubOutWithMock(self.source.gr_source, 'preview_delete',
+                             use_mock_anything=True)
+    self.source.gr_source.preview_delete(
+      mox.IgnoreArg()).AndRaise(NotImplementedError())
+    self.mox.ReplayAll()
+
+    self.assert_error("Sorry, deleting isn't supported for FakeSource yet", preview=True)
