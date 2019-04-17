@@ -50,6 +50,7 @@ TEMPLATE = string.Template("""\
 <html>
 <head>
 <meta charset="utf-8">
+<meta http-equiv="refresh" content="0;url=$url">
 <title>$title</title>
 <style type="text/css">
 body {
