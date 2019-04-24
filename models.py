@@ -116,6 +116,10 @@ class Source(StringIdModel):
   # subclasses should override this
   URL_CANONICALIZER = util.UrlCanonicalizer(headers=util.REQUEST_HEADERS)
 
+  # Regexps for URL paths that don't accept incoming webmentions. Currently used
+  # by Blogger.
+  PATH_BLACKLIST = ()
+
   created = ndb.DateTimeProperty(auto_now_add=True, required=True)
   url = ndb.StringProperty()
   status = ndb.StringProperty(choices=STATUSES, default='enabled')

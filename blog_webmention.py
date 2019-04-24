@@ -75,8 +75,15 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
         'Could not find %s account for %s. Is it registered with Bridgy?' %
         (source_cls.GR_CLASS.NAME, domain))
 
-    if urlparse.urlparse(self.target_url).path in ('', '/'):
-      return self.error('Home page webmentions are not currently supported.')
+    # check that the target URL path is supported
+    target_path = urlparse.urlparse(self.target_url).path
+    if target_path in ('', '/'):
+      return self.error('Home page webmentions are not currently supported.',
+                        status=202)
+    for pattern in self.source.PATH_BLACKLIST:
+      if pattern.match(target_path):
+        return self.error('%s webmentions are not supported for URL path: %s' %
+                          (self.source.GR_CLASS.NAME, target_path), status=202)
 
     # create BlogWebmention entity
     id = '%s %s' % (self.source_url, self.target_url)

@@ -7,6 +7,7 @@ import copy
 import datetime
 import json
 import logging
+import re
 import urllib
 
 import appengine_config
@@ -183,6 +184,7 @@ class FakeSource(Source):
   URL_CANONICALIZER = util.UrlCanonicalizer(
     domain=GR_CLASS.DOMAIN,
     headers=util.REQUEST_HEADERS)
+  PATH_BLACKLIST = (re.compile('^/blacklisted/.*'),)
 
   string_id_counter = 1
   gr_source = FakeGrSource()

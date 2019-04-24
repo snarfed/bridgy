@@ -24,6 +24,7 @@ from __future__ import unicode_literals
 
 import collections
 import logging
+import re
 import urlparse
 
 import appengine_config
@@ -52,6 +53,7 @@ class Blogger(models.Source):
   """
   GR_CLASS = collections.namedtuple('FakeGrClass', ('NAME',))(NAME='Blogger')
   SHORT_NAME = 'blogger'
+  PATH_BLACKLIST = (re.compile('^/search/.*'),)
 
   def feed_url(self):
     # https://support.google.com/blogger/answer/97933?hl=en
@@ -153,7 +155,7 @@ class Blogger(models.Source):
       comment = client.add_comment(self.key.id(), post_id, content)
     except Error, e:
       msg = str(e)
-      if 'Internal error:' in msg:
+      if ('Internal error:' in msg):
         # known errors. e.g. https://github.com/snarfed/bridgy/issues/175
         # https://groups.google.com/d/topic/bloggerdev/szGkT5xA9CE/discussion
         return {'error': msg}

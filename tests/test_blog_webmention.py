@@ -186,7 +186,7 @@ i hereby <a href="http://foo.zz/post/1">mention</a>
 
   def test_target_is_home_page(self):
     self.assert_error('Home page webmentions are not currently supported.',
-                      target='http://foo.com/')
+                      target='http://foo.com/', status=202)
     self.assertEquals(0, BlogWebmention.query().count())
 
   def test_mention(self):
@@ -231,6 +231,13 @@ X http://FoO.cOm/post/1
     bw = BlogWebmention.get_by_id('http://bar.com/reply http://foo.com/post/1')
     self.assertEquals('failed', bw.status)
     self.assertEquals(html, bw.html)
+
+  def test_target_path_blacklisted(self):
+    bad = 'http://foo.com/blacklisted/1'
+    self.assert_error(
+      'FakeSource webmentions are not supported for URL path: /blacklisted/1',
+      target=bad, status=202)
+    self.assertEquals(0, BlogWebmention.query().count())
 
   def test_strip_utm_query_params(self):
     """utm_* query params should be stripped from target URLs."""
