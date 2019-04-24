@@ -31,19 +31,25 @@ run:
 
 ::
 
-    virtualenv local
-    source local/bin/activate
-    pip install -r requirements.freeze.txt
+   virtualenv local
+   source local/bin/activate
+   pip install -r requirements.freeze.txt
 
-    # We install gdata in source mode, and App Engine doesn't follow .egg-link
-    # files, so add a symlink to it.
-    ln -s ../../../src/gdata/src/gdata local/lib/python2.7/site-packages/gdata
-    ln -s ../../../src/gdata/src/atom local/lib/python2.7/site-packages/atom
+   # We install gdata in source mode, and App Engine doesn't follow .egg-link
+   # files, so add a symlink to it.
+   ln -s ../../../src/gdata/src/gdata local/lib/python2.7/site-packages/gdata
+   ln -s ../../../src/gdata/src/atom local/lib/python2.7/site-packages/atom
 
-    python -m unittest discover
+   python -m unittest discover
 
 The last command runs the unit tests. If you send a pull request, please
 include (or update) a test for the new functionality if possible!
+
+To run the entire app locally, run this in the repo root directory:
+
+::
+
+   dev_appserver.py --log_level debug app.yaml background.yaml
 
 If you hit an error during setup, check out the `oauth-dropins
 Troubleshooting/FAQ
@@ -54,19 +60,19 @@ there <https://github.com/snarfed/oauth-dropins#troubleshootingfaq>`__:
 
 ::
 
-    bash: ./bin/easy_install: ...bad interpreter: No such file or directory
+   bash: ./bin/easy_install: ...bad interpreter: No such file or directory
 
-    ImportError: cannot import name certs
+   ImportError: cannot import name certs
 
-    ImportError: No module named dev_appserver
+   ImportError: No module named dev_appserver
 
-    ImportError: cannot import name tweepy
+   ImportError: cannot import name tweepy
 
-    File ".../site-packages/tweepy/auth.py", line 68, in _get_request_token
-      raise TweepError(e)
-    TweepError: must be _socket.socket, not socket
+   File ".../site-packages/tweepy/auth.py", line 68, in _get_request_token
+     raise TweepError(e)
+   TweepError: must be _socket.socket, not socket
 
-    error: option --home not recognized
+   error: option --home not recognized
 
 There’s a good chance you’ll need to make changes to
 `granary <https://github.com/snarfed/granary>`__,
@@ -77,20 +83,20 @@ install them in “source” mode with:
 
 ::
 
-    pip uninstall -y oauth-dropins
-    pip install -e <path to oauth-dropins>
-    ln -s <path to oauth-dropins>/oauth_dropins \
-      local/lib/python2.7/site-packages/oauth_dropins
+   pip uninstall -y oauth-dropins
+   pip install -e <path to oauth-dropins>
+   ln -s <path to oauth-dropins>/oauth_dropins \
+     local/lib/python2.7/site-packages/oauth_dropins
 
-    pip uninstall -y granary
-    pip install -e <path to granary>
-    ln -s <path to granary>/granary \
-      local/lib/python2.7/site-packages/granary
+   pip uninstall -y granary
+   pip install -e <path to granary>
+   ln -s <path to granary>/granary \
+     local/lib/python2.7/site-packages/granary
 
-    pip uninstall -y webmentiontools
-    # webmention-tools isn't in pypi
-    ln -s <path to webmention-tools>/webmentiontools \
-      local/lib/python2.7/site-packages/webmentiontools
+   pip uninstall -y webmentiontools
+   # webmention-tools isn't in pypi
+   ln -s <path to webmention-tools>/webmentiontools \
+     local/lib/python2.7/site-packages/webmentiontools
 
 The symlinks are necessary because App Engine’s ``vendor`` module
 evidently doesn’t follow ``.egg-link`` or ``.pth`` files. :/
@@ -148,7 +154,7 @@ it. It looks like a lot, but it’s not that bad, honest.
       `ActivityStreams <http://activitystrea.ms/>`__.
    2. Add a new unit test file and write some tests!
    3. Add it to
-      `activitystreams.py <https://github.com/snarfed/granary/blob/master/activitystreams.py>`__
+      `api.py <https://github.com/snarfed/granary/blob/master/api.py>`__
       (specifically ``Handler.get``),
       `app.py <https://github.com/snarfed/granary/blob/master/app.py>`__,
       `app.yaml <https://github.com/snarfed/granary/blob/master/app.yaml>`__,
@@ -164,12 +170,12 @@ it. It looks like a lot, but it’s not that bad, honest.
       `app.py <https://github.com/snarfed/bridgy/blob/master/app.py>`__,
       `app.yaml <https://github.com/snarfed/bridgy/blob/master/app.yaml>`__,
       and
-      `handlers.py <https://github.com/snarfed/bridgy/blob/master/handlers.py>`__,
+      `handlers.py <https://github.com/snarfed/bridgy/blob/master/handlers.py>`__
       (just import the module).
-   3. Add a 24x24 PNG icon to
+   3. Add a 48x48 PNG icon to
       `static/ <https://github.com/snarfed/bridgy/tree/master/static>`__.
    4. Add new ``SILO_signup.html`` and ``SILO_user.html`` files in
-      `templates/ <https://github.com/snarfed/bridgy/tree/master/templates>`__.
+      `templates/ <https://github.com/snarfed/bridgy/tree/master/templates>`__
       and add the silo to
       `listen_signup.html <https://github.com/snarfed/bridgy/blob/master/templates/listen_signup.html>`__.
       Follow the existing examples.
@@ -224,20 +230,71 @@ or `instance count averages
 >5 <https://app.google.stackdriver.com/policy-advanced/5cf96390-dc53-4166-b002-4c3b6934f4c3>`__
 over the last 15m window.
 
+Stats
+-----
+
+I occasionally generate `stats and graphs of usage and
+growth <https://snarfed.org/2018-01-02_bridgy-stats-update>`__ from the
+`BigQuery
+dataset <https://console.cloud.google.com/bigquery?p=brid-gy&d=datastore&page=dataset>`__
+(`#715 <https://github.com/snarfed/bridgy/issues/715>`__). Here’s how.
+
+1. `Back up the full datastore to Google Cloud
+   Storage. <https://console.cloud.google.com/datastore/settings?project=brid-gy>`__
+   Include all entities except ``*Auth`` and other internal details.
+   Check to see if any new kinds have been added since the last time
+   this command was run.
+
+   ::
+
+      gcloud datastore export --async gs://brid-gy.appspot.com/stats/ --kinds Blogger,BlogPost,BlogWebmention,FacebookPage,Flickr,GitHub,GooglePlusPage,Instagram,Medium,Publish,PublishedPage,Response,SyndicatedPost,Tumblr,Twitter,WordPress
+
+   Note that ``--kinds`` is required. `From the export
+   docs <https://cloud.google.com/datastore/docs/export-import-entities#limitations>`__,
+   *Data exported without specifying an entity filter cannot be loaded
+   into BigQuery.*
+
+2. `Import it into
+   BigQuery <https://cloud.google.com/bigquery/docs/loading-data-cloud-datastore#loading_cloud_datastore_export_service_data>`__:
+
+   ::
+
+      for kind in BlogPost BlogWebmention Publish Response SyndicatedPost; do
+        bq load --replace --nosync --source_format=DATASTORE_BACKUP datastore.$kind gs://brid-gy.appspot.com/stats/all_namespaces/kind_$kind/all_namespaces_kind_$kind.export_metadata
+      done
+
+      for kind in Blogger FacebookPage Flickr GitHub GooglePlusPage Instagram Medium Tumblr Twitter WordPress; do
+        bq load --replace --nosync --source_format=DATASTORE_BACKUP sources.$kind gs://brid-gy.appspot.com/stats/all_namespaces/kind_$kind/all_namespaces_kind_$kind.export_metadata
+      done
+
+3. `Run the full stats BigQuery
+   query. <https://console.cloud.google.com/bigquery?sq=586366768654:9d8d4c13e988477bb976a5e29b63da3b>`__
+   Download the results as CSV.
+4. `Open the stats
+   spreadsheet. <https://docs.google.com/spreadsheets/d/1VhGiZ9Z9PEl7f9ciiVZZgupNcUTsRVltQ8_CqFETpfU/edit>`__
+   Import the CSV, replacing the *data* sheet.
+5. Check out the graphs! Save full size images with OS or browser
+   screenshots, thumbnails with the *Save Image* button. Then post them!
+
 Misc
 ----
 
-The datastore is automatically backed up by a `cron
-job <https://developers.google.com/appengine/articles/scheduled_backups>`__
-that runs `Datastore Admin
-backup <https://developers.google.com/appengine/docs/adminconsole/datastoreadmin#backup_and_restore>`__
+The datastore is automatically backed up by an App Engine cron job that
+runs `Datastore managed
+export <https://cloud.google.com/datastore/docs/schedule-export>`__
+(`details <https://cloud.google.com/datastore/docs/export-import-entities>`__)
 and stores the results in `Cloud
 Storage <https://developers.google.com/storage/docs/>`__, in the
 `brid-gy.appspot.com
 bucket <https://console.developers.google.com/project/apps~brid-gy/storage/brid-gy.appspot.com/>`__.
-It backs up all entities monthly, and all entities except ``Response``
-and ``SyndicatedPost`` weekly, since they make up 92% of all entities by
-size and they aren’t as critical to keep.
+It backs up weekly and includes all entities except ``Response`` and
+``SyndicatedPost``, since they make up 92% of all entities by size and
+they aren’t as critical to keep.
+
+(We used to use `Datastore Admin
+Backup <https://cloud.google.com/appengine/docs/standard/python/console/datastore-backing-up-restoring>`__,
+but `it shut down in Feb
+2019 <https://cloud.google.com/appengine/docs/deprecations/datastore-admin-backups.>`__
 
 We use this command to set a `Cloud Storage lifecycle
 policy <https://developers.google.com/storage/docs/lifecycle>`__ on that
@@ -245,22 +302,20 @@ bucket that prunes older backups:
 
 ::
 
-    gsutil lifecycle set cloud_storage_lifecycle.json gs://brid-gy.appspot.com
+   gsutil lifecycle set cloud_storage_lifecycle.json gs://brid-gy.appspot.com
 
 Run this to see how much space we’re currently using:
 
 ::
 
-    gsutil du -hsc gs://brid-gy.appspot.com/\*
+   gsutil du -hsc gs://brid-gy.appspot.com/\*
 
-Run this to download a single complete backup, for e.g. generating usage
-metrics with
-`to_tsv.py <https://github.com/snarfed/bridgy/blob/master/scripts/to_tsv.py>`__:
+Run this to download a single complete backup:
 
 ::
 
-    gsutil -m cp -r gs://brid-gy.appspot.com/weekly/datastore_backup_full_YYYY_MM_DD_\* .
+   gsutil -m cp -r gs://brid-gy.appspot.com/weekly/datastore_backup_full_YYYY_MM_DD_\* .
 
 Also see the `BigQuery
-dataset <https://bigquery.cloud.google.com/dataset/brid-gy:datastore>`__
+dataset <https://console.cloud.google.com/bigquery?p=brid-gy&d=datastore&page=dataset>`__
 (`#715 <https://github.com/snarfed/bridgy/issues/715>`__).
