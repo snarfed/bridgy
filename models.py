@@ -519,7 +519,8 @@ class Source(StringIdModel):
         performs webmention discovery) even we already think this source is
         verified.
     """
-    author_urls = self.get_author_urls()
+    author_urls = [u for u, d in zip(self.get_author_urls(), self.domains)
+                   if not util.in_webmention_blacklist(d)]
     if ((self.verified() and not force) or self.status == 'disabled' or
         not self.features or not author_urls):
       return

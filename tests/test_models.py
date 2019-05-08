@@ -533,6 +533,19 @@ class SourceTest(testutil.HandlerTest):
     source.verify()
     self.assertIsNone(source.webmention_endpoint)
 
+  def test_verify_checks_blacklist(self):
+    self.expect_webmention_requests_get('http://good/', """
+<html><meta>
+<link rel="webmention" href="http://web.ment/ion">
+</meta></html>""", verify=False)
+    self.mox.ReplayAll()
+
+    source = FakeSource.new(self.handler, features=['webmention'],
+                            domain_urls=['http://bad.app/', 'http://good/'],
+                            domains=['bad.app', 'good'])
+    source.verify()
+    self.assertEquals('http://web.ment/ion', source.webmention_endpoint)
+
   def test_has_bridgy_webmention_endpoint(self):
     source = FakeSource.new(None)
     for endpoint, has in ((None, False),
