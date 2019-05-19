@@ -237,7 +237,7 @@ class Handler(webmention.WebmentionHandler):
                   soup.find_all('a', rel='shortlink') +
                   soup.find_all('a', class_='shortlink'))
     if shortlinks:
-      self.shortlink = shortlinks[0]['href']
+      self.shortlink = urllib.parse.urljoin(url, shortlinks[0]['href'])
 
     # loop through each item and its children and try to preview/create it. if
     # it fails, try the next one. break after the first one that works.
