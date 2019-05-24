@@ -144,6 +144,6 @@ handlers:
   script: app.application
   secure: always
 
-- url: /(blogger|facebook|fake|flickr|github|googleplus|instagram|medium|tumblr|twitter|wordpress)/.+
+- url: /(blogger|facebook(-email)?|fake|flickr|github|googleplus|instagram|medium|tumblr|twitter|wordpress)/.+
   script: app.application
   secure: always

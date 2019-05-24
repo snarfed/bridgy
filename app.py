@@ -37,6 +37,7 @@ import util
 # import source model class definitions for template rendering
 import blogger
 import facebook
+import facebook_email
 import flickr
 import github
 import instagram
@@ -745,7 +746,7 @@ class CspReportHandler(util.Handler):
 application = webapp2.WSGIApplication(
   [('/?', FrontPageHandler),
    ('/users/?', UsersHandler),
-   ('/(blogger|facebook|fake|flickr|github|googleplus|instagram|medium|tumblr|twitter|wordpress)/([^/]+)/?',
+   ('/(blogger|facebook(?:-email)?|fake|flickr|github|googleplus|instagram|medium|tumblr|twitter|wordpress)/([^/]+)/?',
     UserHandler),
    ('/about/?', AboutHandler),
    ('/delete/start', DeleteStartHandler),

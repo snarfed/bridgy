@@ -79,7 +79,7 @@ class Source(StringIdModel):
 
   STATUSES = ('enabled', 'disabled', 'error')  # 'error' is deprecated
   POLL_STATUSES = ('ok', 'error', 'polling')
-  FEATURES = ('listen', 'publish', 'webmention')
+  FEATURES = ('listen', 'publish', 'webmention', 'email')
 
   # short name for this site type. used in URLs, etc.
   SHORT_NAME = None
@@ -201,6 +201,11 @@ class Source(StringIdModel):
         kwargs = {'username': self.key.id()}
 
       self.gr_source = self.GR_CLASS(*token, **kwargs)
+      return self.gr_source
+
+    if name == 'gr_source' and self.key.kind() == 'FacebookEmailAccount':
+      from granary import facebook as gr_facebook
+      self.gr_source = gr_facebook.Facebook(user_id=self.key.id())
       return self.gr_source
 
     return getattr(super(Source, self), name)

@@ -194,7 +194,9 @@ WordPress.com, <a href="/">sign up here!</a>
 <!-- Listen signup buttons -->
 {% else %}
 <data class="p-bridgy-listen-status" value="disabled">
-Click to enable <a href="/about#listen">listening</a>:
+{% if source.SHORT_NAME != 'facebook-email' %}
+  Click to enable <a href="/about#listen">listening</a>:
+{% endif %}
 {% block listen_signup %}
 {% endblock %}
 </data>
