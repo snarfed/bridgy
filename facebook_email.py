@@ -17,6 +17,7 @@ to create:
 """
 from __future__ import unicode_literals
 
+import json
 import logging
 
 import appengine_config
@@ -27,13 +28,13 @@ from granary import source as gr_source
 import webapp2
 
 import models
-import util
+from models import Response
 
 
 class FacebookEmail(ndb.Model):
   """Stores a Facebook notification email."""
   source = ndb.KeyProperty()
-  html = ndb.TextProperty()
+  html = ndb.TextProperty(repeated=True)
   # as1 = ndb.TextProperty()  # JSON
 
 
@@ -57,17 +58,12 @@ class FacebookEmailAccount(models.Source):
   def silo_url(self):
     return self.gr_source.user_url(self.key.id())
 
-
-# XXX TODO: just implement get_comment() and get_like() and use handlers.py instead?
-class RenderHandler(util.Handler):
-  """Renders a stored FacebookEmail as HTML with microformats2."""
-
-  def get(self, id):
+  def get_comment(self, id, **kwargs):
     email = FacebookEmail.get_by_id(id)
-    if not email:
-      self.abort(404, 'No FacebookEmail found with id %s', id)
+    if email:
+      return gr_facebook.Facebook.email_to_object(email.html[0])
 
-    # TODO: render
+  get_like = get_comment
 
 
 class EmailHandler(InboundMailHandler):
@@ -89,19 +85,33 @@ class EmailHandler(InboundMailHandler):
     source = FacebookEmailAccount.query(FacebookEmailAccount.email_user == user).get()
     logging.info('Source for %s is %s', user, source)
 
+    htmls = list(body.decode() for _, body in email.bodies('text/html'))
+    fbe = FacebookEmail(source=source.key if source else None, html=htmls).put()
+    logging.info('Stored FacebookEmail %s', fbe)
+
     if not source:
       self.response.status_code = 404
       self.response.write('No Facebook email user found with address %s' % addr)
       return
 
-    for content_type, body in email.bodies('text/html'):
-      html = body.decode()
-      fbe = FacebookEmail(source=source.key, html=html).put()
-      logging.info('Stored FacebookEmail %s', fbe)
-      break
+    for html in htmls:
+      obj = gr_facebook.Facebook.email_to_object(html)
+      if obj:
+        break
+    else:
+      self.response.status_code = 400
+      self.response.write('No HTML body could be parsed')
+      return
+
+    logging.info('Converted to AS1: %s', json.dumps(obj, indent=2))
+    resp = Response(
+      id=obj['id'],
+      type=Response.get_type(obj),
+      response_json=json.dumps(obj),
+      unsent=[source.gr_source.base_object(obj)['url']])
+    resp.get_or_save(source, restart=True)
 
 
 application = webapp2.WSGIApplication([
-  ('/facebook-email/render/(.+)', RenderHandler),
   EmailHandler.mapping(),
 ], debug=appengine_config.DEBUG)

@@ -3,6 +3,7 @@
 from __future__ import unicode_literals
 
 import copy
+from datetime import datetime
 import logging
 import json
 import urllib
@@ -11,13 +12,19 @@ import urllib2
 import appengine_config
 
 from google.appengine.api import mail
-from granary.tests.test_facebook import COMMENT_EMAIL, LIKE_EMAIL
+from granary import facebook as gr_facebook
+from granary.tests.test_facebook import (
+  COMMENT_EMAIL,
+  LIKE_EMAIL,
+  EMAIL_COMMENT_OBJ,
+  EMAIL_LIKE_OBJ,
+)
 import webapp2
 
 import facebook_email
 from facebook_email import EmailHandler, FacebookEmail, FacebookEmailAccount
+from models import Response
 import testutil
-import util
 
 
 class FacebookEmailTest(testutil.ModelsTest):
@@ -39,13 +46,28 @@ class FacebookEmailTest(testutil.ModelsTest):
       html=COMMENT_EMAIL,
     )
 
+    gr_facebook.now_fn = lambda: datetime(1999, 1, 1)
+
   def test_success(self):
     self.handler.receive(self.mail)
     self.assert_equals(200, self.response.status_code)
 
     self.assert_entities_equal(
-      [FacebookEmail(source=self.fea.key, html=COMMENT_EMAIL)],
+      [FacebookEmail(source=self.fea.key, html=[COMMENT_EMAIL])],
       list(FacebookEmail.query()))
+
+    resps = list(Response.query())
+    expected = Response(
+      id=EMAIL_COMMENT_OBJ['id'],
+      type='comment',
+      response_json=json.dumps(EMAIL_COMMENT_OBJ),
+      unsent=[EMAIL_COMMENT_OBJ['inReplyTo'][0]['url']])
+    self.assert_entities_equal([expected], resps, ignore=('created', 'updated'))
+
+    tasks = self.taskqueue_stub.GetTasks('propagate')
+    self.assertEquals(1, len(tasks))
+    self.assert_equals(resps[0].key.urlsafe(),
+                       testutil.get_task_params(tasks[0])['response_key'])
 
   def test_user_not_found(self):
     self.handler.request = webapp2.Request.blank('/_ah/mail/nope@xyz')
@@ -53,3 +75,25 @@ class FacebookEmailTest(testutil.ModelsTest):
     self.assert_equals(404, self.response.status_code)
     self.assert_equals('No Facebook email user found with address nope@xyz',
                        self.response.body)
+
+  def test_no_html_body(self):
+    del self.mail.html
+    self.handler.receive(self.mail)
+    self.assert_equals(400, self.response.status_code)
+    self.assert_equals('No HTML body could be parsed', self.response.body)
+
+  def test_html_parse_failed(self):
+    self.mail.html = """\
+<!DOCTYPE html>
+<html><body>foo</body></html>"""
+    self.handler.receive(self.mail)
+    self.assert_equals(400, self.response.status_code)
+    self.assert_equals('No HTML body could be parsed', self.response.body)
+
+  def test_get_comment(self):
+    key = FacebookEmail(html=[COMMENT_EMAIL]).put()
+    self.assert_equals(EMAIL_COMMENT_OBJ, self.fea.get_comment(key.id()))
+
+  def test_get_like(self):
+    key = FacebookEmail(html=[LIKE_EMAIL]).put()
+    self.assert_equals(EMAIL_LIKE_OBJ, self.fea.get_like(key.id()))
