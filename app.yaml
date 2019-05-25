@@ -27,6 +27,7 @@ libraries:
   version: latest
 
 inbound_services:
+- mail
 - warmup
 
 handlers:
@@ -119,6 +120,11 @@ handlers:
 
 - url: /_ah/queue/.+
   script: tasks.application
+  login: admin
+  secure: always
+
+- url: /_ah/mail/.+
+  script: facebook_email.application
   login: admin
   secure: always
 
