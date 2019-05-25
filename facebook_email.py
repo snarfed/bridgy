@@ -34,7 +34,7 @@ class FacebookEmail(ndb.Model):
   """Stores a Facebook notification email."""
   source = ndb.KeyProperty()
   html = ndb.TextProperty()
-  as1 = ndb.TextProperty()  # JSON
+  # as1 = ndb.TextProperty()  # JSON
 
 
 class FacebookEmailAccount(models.Source):
@@ -81,7 +81,7 @@ class EmailHandler(InboundMailHandler):
     to = getattr(email, 'to', None)
     cc = getattr(email, 'cc', None)
     subject = getattr(email, 'subject', None)
-    logging.info('Received email at %s from %s (%s) to %s cc %s: %s',
+    logging.info('Received email from %s (%s) to %s cc %s: %s',
                  addr, sender, to, cc, subject)
 
     addr = self.request.path.split('/')[-1]
@@ -89,15 +89,15 @@ class EmailHandler(InboundMailHandler):
     source = FacebookEmailAccount.query(FacebookEmailAccount.email_user == user).get()
     logging.info('Source for %s is %s', user, source)
 
+    if not source:
+      self.response.status_code = 404
+      self.response.write('No Facebook email user found with address %s' % addr)
+      return
+
     for content_type, body in email.bodies('text/html'):
       html = body.decode()
-      fbe = FacebookEmail(source=source, html=html).put()
+      fbe = FacebookEmail(source=source.key, html=html).put()
       logging.info('Stored FacebookEmail %s', fbe)
-      break
-
-    for content_type, body in email.bodies('text/plain'):
-      text = body.decode()
-      logging.info('Got text %s', text)
       break
 
 

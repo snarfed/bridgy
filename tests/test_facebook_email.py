@@ -28,7 +28,7 @@ class FacebookEmailTest(testutil.ModelsTest):
     self.fea.put()
 
     self.handler = EmailHandler()
-    self.handler.request = webapp2.Request.blank('/_ah/mail/from@foo.com')
+    self.handler.request = webapp2.Request.blank('/_ah/mail/abc123@foo.com')
     self.handler.response = self.response
 
     self.mail = mail.InboundEmailMessage(
@@ -43,8 +43,13 @@ class FacebookEmailTest(testutil.ModelsTest):
     self.handler.receive(self.mail)
     self.assert_equals(200, self.response.status_code)
 
+    self.assert_entities_equal(
+      [FacebookEmail(source=self.fea.key, html=COMMENT_EMAIL)],
+      list(FacebookEmail.query()))
+
   def test_user_not_found(self):
     self.handler.request = webapp2.Request.blank('/_ah/mail/nope@xyz')
     self.handler.receive(self.mail)
     self.assert_equals(404, self.response.status_code)
-    self.assert_equals('No Facebook email user found with address nope@xyz')
+    self.assert_equals('No Facebook email user found with address nope@xyz',
+                       self.response.body)
