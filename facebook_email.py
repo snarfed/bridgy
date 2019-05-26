@@ -12,7 +12,13 @@ key = facebook_email.FacebookEmailAccount(
 ).put()
 
 to create:
-* create w/user id, domain_urls, domains, features=['email']
+pwgen --no-capitalize --ambiguous 16 1
+# copy password
+remote_api_shell.py brid-gy
+from facebook_email import FacebookEmailAccount
+f = FacebookEmailAccount(id=ID, features=['email'], domain_urls=[...], domains=[...],
+                         email_user=EMAIL)
+f.put()
 * copy other fields from existing fb source
 """
 from __future__ import unicode_literals
@@ -25,23 +31,28 @@ from google.appengine.ext import ndb
 from google.appengine.ext.webapp.mail_handlers import InboundMailHandler
 from granary import facebook as gr_facebook
 from granary import source as gr_source
+from oauth_dropins.webutil.models import StringIdModel
 import webapp2
 
 import models
 from models import Response
 
 
-class FacebookEmail(ndb.Model):
-  """Stores a Facebook notification email."""
+class FacebookEmail(StringIdModel):
+  """Stores a Facebook notification email.
+
+  The key id is the Message-ID header.
+  """
   source = ndb.KeyProperty()
   html = ndb.TextProperty(repeated=True)
+  created = ndb.DateTimeProperty(auto_now_add=True, required=True)
   # as1 = ndb.TextProperty()  # JSON
 
 
 class FacebookEmailAccount(models.Source):
   """A Facebook profile or page.
 
-  The key name is the Facebook id.
+  The key name is the Facebook user id.
   """
 
   GR_CLASS = gr_facebook.Facebook
@@ -73,12 +84,13 @@ class EmailHandler(InboundMailHandler):
   """
   def receive(self, email):
     addr = self.request.path.split('/')[-1]
+    message_id = email.original.get('message-id')
     sender = getattr(email, 'sender', None)
     to = getattr(email, 'to', None)
     cc = getattr(email, 'cc', None)
     subject = getattr(email, 'subject', None)
-    logging.info('Received email from %s (%s) to %s cc %s: %s',
-                 addr, sender, to, cc, subject)
+    logging.info('Received %s from %s (%s) to %s cc %s: %s',
+                 message_id, addr, sender, to, cc, subject)
 
     addr = self.request.path.split('/')[-1]
     user = addr.split('@')[0]
@@ -86,7 +98,8 @@ class EmailHandler(InboundMailHandler):
     logging.info('Source for %s is %s', user, source)
 
     htmls = list(body.decode() for _, body in email.bodies('text/html'))
-    fbe = FacebookEmail(source=source.key if source else None, html=htmls).put()
+    fbe = FacebookEmail(id=message_id, source=source.key if source else None,
+                        html=htmls).put()
     logging.info('Stored FacebookEmail %s', fbe)
 
     if not source:

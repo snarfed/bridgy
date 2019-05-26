@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 
 import copy
 from datetime import datetime
+from email.message import Message
 import logging
 import json
 import urllib
@@ -38,12 +39,15 @@ class FacebookEmailTest(testutil.ModelsTest):
     self.handler.request = webapp2.Request.blank('/_ah/mail/abc123@foo.com')
     self.handler.response = self.response
 
+    headers = Message()
+    headers['Message-ID'] = 'SMTP-123-xyz'
     self.mail = mail.InboundEmailMessage(
       sender='other@foo.com',
       to='abc123@localhost',
       subject='Ryan Barrett commented on your post.',
       body='plain text is useless',
       html=COMMENT_EMAIL,
+      mime_message=headers,
     )
 
     gr_facebook.now_fn = lambda: datetime(1999, 1, 1)
@@ -53,8 +57,9 @@ class FacebookEmailTest(testutil.ModelsTest):
     self.assert_equals(200, self.response.status_code)
 
     self.assert_entities_equal(
-      [FacebookEmail(source=self.fea.key, html=[COMMENT_EMAIL])],
-      list(FacebookEmail.query()))
+      [FacebookEmail(id='SMTP-123-xyz', source=self.fea.key, html=[COMMENT_EMAIL])],
+      list(FacebookEmail.query()),
+      ignore=('created',))
 
     resps = list(Response.query())
     expected = Response(
@@ -91,9 +96,9 @@ class FacebookEmailTest(testutil.ModelsTest):
     self.assert_equals('No HTML body could be parsed', self.response.body)
 
   def test_get_comment(self):
-    key = FacebookEmail(html=[COMMENT_EMAIL]).put()
-    self.assert_equals(EMAIL_COMMENT_OBJ, self.fea.get_comment(key.id()))
+    key = FacebookEmail(id='xyz', html=[COMMENT_EMAIL]).put()
+    self.assert_equals(EMAIL_COMMENT_OBJ, self.fea.get_comment('xyz'))
 
   def test_get_like(self):
-    key = FacebookEmail(html=[LIKE_EMAIL]).put()
-    self.assert_equals(EMAIL_LIKE_OBJ, self.fea.get_like(key.id()))
+    key = FacebookEmail(id='xyz', html=[LIKE_EMAIL]).put()
+    self.assert_equals(EMAIL_LIKE_OBJ, self.fea.get_like('xyz'))
