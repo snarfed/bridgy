@@ -43,7 +43,7 @@ class FacebookEmailTest(testutil.ModelsTest):
     headers['Message-ID'] = 'SMTP-123-xyz'
     self.mail = mail.InboundEmailMessage(
       sender='other@foo.com',
-      to='abc123@localhost',
+      to='abc123@foo.com',
       subject='Ryan Barrett commented on your post.',
       body='plain text is useless',
       html=COMMENT_EMAIL,
@@ -64,6 +64,7 @@ class FacebookEmailTest(testutil.ModelsTest):
     resps = list(Response.query())
     expected = Response(
       id=EMAIL_COMMENT_OBJ['id'],
+      source=self.fea.key,
       type='comment',
       response_json=json.dumps(EMAIL_COMMENT_OBJ),
       unsent=[EMAIL_COMMENT_OBJ['inReplyTo'][0]['url']])

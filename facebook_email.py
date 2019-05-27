@@ -84,13 +84,13 @@ class EmailHandler(InboundMailHandler):
   """
   def receive(self, email):
     addr = self.request.path.split('/')[-1]
-    message_id = email.original.get('message-id')
+    message_id = email.original.get('message-id').strip('<>')
     sender = getattr(email, 'sender', None)
     to = getattr(email, 'to', None)
     cc = getattr(email, 'cc', None)
     subject = getattr(email, 'subject', None)
-    logging.info('Received %s from %s (%s) to %s cc %s: %s',
-                 message_id, addr, sender, to, cc, subject)
+    logging.info('Received %s from %s to %s (%s) cc %s: %s',
+                 message_id, sender, to, addr, cc, subject)
 
     addr = self.request.path.split('/')[-1]
     user = addr.split('@')[0]
@@ -98,9 +98,9 @@ class EmailHandler(InboundMailHandler):
     logging.info('Source for %s is %s', user, source)
 
     htmls = list(body.decode() for _, body in email.bodies('text/html'))
-    fbe = FacebookEmail(id=message_id, source=source.key if source else None,
-                        html=htmls).put()
-    logging.info('Stored FacebookEmail %s', fbe)
+    fbe = FacebookEmail.get_or_insert(
+      message_id, source=source.key if source else None, html=htmls)
+    logging.info('FacebookEmail created %s', fbe.created)
 
     if not source:
       self.response.status_code = 404
@@ -119,6 +119,7 @@ class EmailHandler(InboundMailHandler):
     logging.info('Converted to AS1: %s', json.dumps(obj, indent=2))
     resp = Response(
       id=obj['id'],
+      source=source.key,
       type=Response.get_type(obj),
       response_json=json.dumps(obj),
       unsent=[source.gr_source.base_object(obj)['url']])
