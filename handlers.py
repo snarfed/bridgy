@@ -50,7 +50,7 @@ TEMPLATE = string.Template("""\
 <html>
 <head>
 <meta charset="utf-8">
-<meta http-equiv="refresh" content="0;url=$url">
+$refresh
 <title>$title</title>
 <style type="text/css">
 body {
@@ -80,7 +80,7 @@ class ItemHandler(util.Handler):
   handle_exception = handlers.handle_exception
   source = None
 
-  VALID_ID = re.compile(r'^[\w.+:@=-]+$')
+  VALID_ID = re.compile(r'^[\w.+:@=+<>-]+$')
 
   def head(self, *args):
     """Return an empty 200 with no caching directives."""
@@ -136,7 +136,9 @@ class ItemHandler(util.Handler):
     self.source = source_cls.get_by_id(string_id)
     if not self.source:
       self.abort(400, 'Source %s %s not found' % (source_short_name, string_id))
-    elif self.source.status == 'disabled' or 'listen' not in self.source.features:
+    elif (self.source.status == 'disabled' or
+          ('listen' not in self.source.features and
+           'email' not in self.source.features)):
       self.abort(400, 'Source %s is disabled for backfeed' % self.source.bridgy_path())
 
     format = self.request.get('format', 'html')
@@ -205,11 +207,14 @@ class ItemHandler(util.Handler):
     self.response.headers['Access-Control-Allow-Origin'] = '*'
     if format == 'html':
       self.response.headers['Content-Type'] = 'text/html; charset=utf-8'
+      url = obj.get('url', '')
       self.response.out.write(TEMPLATE.substitute({
-            'url': obj.get('url', ''),
-            'body': microformats2.json_to_html(mf2_json),
-            'title': self.get_title(obj),
-            }))
+        'refresh': (('<meta http-equiv="refresh" content="0;url=%s">' % url)
+                    if url else ''),
+        'url': url,
+        'body': microformats2.json_to_html(mf2_json),
+        'title': self.get_title(obj),
+      }))
     elif format == 'json':
       self.response.headers['Content-Type'] = 'application/json; charset=utf-8'
       self.response.out.write(json.dumps(mf2_json, indent=2))
