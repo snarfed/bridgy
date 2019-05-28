@@ -36,6 +36,8 @@ import webapp2
 
 import models
 from models import Response
+import original_post_discovery
+from facebook import FacebookPage
 
 
 class FacebookEmail(StringIdModel):
@@ -46,10 +48,9 @@ class FacebookEmail(StringIdModel):
   source = ndb.KeyProperty()
   html = ndb.TextProperty(repeated=True)
   created = ndb.DateTimeProperty(auto_now_add=True, required=True)
-  # as1 = ndb.TextProperty()  # JSON
 
 
-class FacebookEmailAccount(models.Source):
+class FacebookEmailAccount(FacebookPage):
   """A Facebook profile or page.
 
   The key name is the Facebook user id.
@@ -75,6 +76,9 @@ class FacebookEmailAccount(models.Source):
       return gr_facebook.Facebook.email_to_object(email.html[0])
 
   get_like = get_comment
+
+  def cached_resolve_object_id(self, post_id, activity=None):
+    return None
 
 
 class EmailHandler(InboundMailHandler):
@@ -115,14 +119,19 @@ class EmailHandler(InboundMailHandler):
       self.response.status_code = 400
       self.response.write('No HTML body could be parsed')
       return
-
     logging.info('Converted to AS1: %s', json.dumps(obj, indent=2))
+
+    base_obj = source.gr_source.base_object(obj)
+    # note that this ignores the id query param (the post's user id) and uses
+    # the source object's user id instead.
+    base_obj['url'] = source.canonicalize_url(base_obj['url'])
+    targets, _ = original_post_discovery.discover(source, base_obj)
     resp = Response(
       id=obj['id'],
       source=source.key,
       type=Response.get_type(obj),
       response_json=json.dumps(obj),
-      unsent=[source.gr_source.base_object(obj)['url']])
+      unsent=targets)
     resp.get_or_save(source, restart=True)
 
 

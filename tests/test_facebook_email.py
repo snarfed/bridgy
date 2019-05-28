@@ -32,7 +32,12 @@ class FacebookEmailTest(testutil.ModelsTest):
 
   def setUp(self):
     super(FacebookEmailTest, self).setUp()
-    self.fea = FacebookEmailAccount(id='212038', email_user='abc123')
+    self.fea = FacebookEmailAccount(
+      id='212038',
+      email_user='abc123',
+      domain_urls=['http://foo.com/'],
+      domains=['foo.com'],
+    )
     self.fea.put()
 
     self.handler = EmailHandler()
@@ -53,6 +58,15 @@ class FacebookEmailTest(testutil.ModelsTest):
     gr_facebook.now_fn = lambda: datetime(1999, 1, 1)
 
   def test_success(self):
+    self.expect_requests_get('http://foo.com/', """
+    <html class="h-feed">
+      <div class="h-entry">
+        <a class="u-url" href="http://foo.com/post"></a>
+        <a class="u-syndication" href="https://www.facebook.com/212038/posts/123"></a>
+      </div>
+    </html>""")
+    self.mox.ReplayAll()
+
     self.handler.receive(self.mail)
     self.assert_equals(200, self.response.status_code)
 
@@ -67,7 +81,7 @@ class FacebookEmailTest(testutil.ModelsTest):
       source=self.fea.key,
       type='comment',
       response_json=json.dumps(EMAIL_COMMENT_OBJ),
-      unsent=[EMAIL_COMMENT_OBJ['inReplyTo'][0]['url']])
+      unsent=['http://foo.com/post'])
     self.assert_entities_equal([expected], resps, ignore=('created', 'updated'))
 
     tasks = self.taskqueue_stub.GetTasks('propagate')
