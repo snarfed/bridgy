@@ -343,6 +343,8 @@ class FacebookPageTest(testutil.ModelsTest):
       ('https://www.facebook.com/212038/posts/314159',
        'https://www.facebook.com/notes/ryan-b/title/314159'),
       ('https://www.facebook.com/212038/posts/314159',
+       'https://www.facebook.com/212038/posts/222?comment_id=456'),
+      ('https://www.facebook.com/212038/posts/314159',
        'https://www.facebook.com/photo.php?fbid=314159&set=a.456.2393090.212038&type=1&theater'),
       ('https://www.facebook.com/212038/posts/314159',
        'https://facebook.com/permalink.php?story_fbid=314159&id=212038'),
@@ -352,7 +354,7 @@ class FacebookPageTest(testutil.ModelsTest):
        'https://m.facebook.com/story.php?id=212038&story_fbid=314159'),
       ):
       logging.debug(input)
-      self.assertEqual(expected, self.fb.canonicalize_url(input))
+      self.assertEqual(expected, self.fb.canonicalize_url(input), input)
 
   def test_canonicalize_url_fetch_400s(self):
     self.expect_api_call(API_OBJECT % ('212038', '123'), {}, status=400)
@@ -373,7 +375,7 @@ class FacebookPageTest(testutil.ModelsTest):
     self.mox.ReplayAll()
 
     self.fb.inferred_username = 'mr-disguise'
-    self.assertEqual('https://www.facebook.com/mr-disguise/posts/444',
+    self.assertEqual('https://www.facebook.com/212038/posts/444',
                      self.fb.canonicalize_url(
                        'https://www.facebook.com/mr-disguise/posts/444'))
 

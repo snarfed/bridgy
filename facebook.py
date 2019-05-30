@@ -227,18 +227,21 @@ class FacebookPage(models.Source):
 
     parsed = urlparse.urlparse(url)
     params = urlparse.parse_qs(parsed.query)
+    path = parsed.path.strip('/').split('/')
     url_id = self.gr_source.post_id(url)
 
     ids = params.get('story_fbid') or params.get('fbid')
     if ids:
       url = post_url(ids[0])
     elif url_id:
-      if parsed.path.startswith('/notes/'):
+      if path and path[0] == 'notes':
         url = post_url(url_id)
       else:
         object_id = self.cached_resolve_object_id(url_id, activity=activity)
         if object_id:
           url = post_url(object_id)
+        elif path and path[1] == 'posts':
+          url = post_url(url_id)
 
     for alternate_id in util.trim_nulls(itertools.chain(
        (self.username or self.inferred_username,), self.inferred_user_ids)):

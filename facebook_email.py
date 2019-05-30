@@ -17,12 +17,13 @@ pwgen --no-capitalize --ambiguous 16 1
 remote_api_shell.py brid-gy
 from facebook_email import FacebookEmailAccount
 f = FacebookEmailAccount(id=ID, features=['email'], domain_urls=[...], domains=[...],
-                         email_user=EMAIL)
+                         email_user='EMAIL_USER')
 f.put()
 * copy other fields from existing fb source
 """
 from __future__ import unicode_literals
 
+import copy
 import json
 import logging
 
@@ -126,11 +127,15 @@ class EmailHandler(InboundMailHandler):
     # the source object's user id instead.
     base_obj['url'] = source.canonicalize_url(base_obj['url'])
     targets, _ = original_post_discovery.discover(source, base_obj)
+
+    activity = copy.deepcopy(base_obj)
+    activity.setdefault('id', source.gr_source.base_id(base_obj['url']))
     resp = Response(
       id=obj['id'],
       source=source.key,
       type=Response.get_type(obj),
       response_json=json.dumps(obj),
+      activities_json=[json.dumps(activity)],
       unsent=targets)
     resp.get_or_save(source, restart=True)
 
