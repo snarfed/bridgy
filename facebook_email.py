@@ -49,6 +49,7 @@ class FacebookEmail(StringIdModel):
   source = ndb.KeyProperty()
   html = ndb.TextProperty(repeated=True)
   created = ndb.DateTimeProperty(auto_now_add=True, required=True)
+  response = ndb.KeyProperty()
 
 
 class FacebookEmailAccount(FacebookPage):
@@ -66,13 +67,22 @@ class FacebookEmailAccount(FacebookPage):
   email_user = ndb.StringProperty()
 
   def get_activities_response(self, **kwargs):
-    return gr_source.Source.make_activities_base_response([])
+    activities = []
+
+    activity_id = kwargs.get('activity_id')
+    if activity_id:
+      resp = Response.get_by_id(self.gr_source.tag_uri(activity_id))
+      if resp:
+        activities = [json.loads(resp.activities_json[0])]
+
+    return gr_source.Source.make_activities_base_response(activities)
 
   def silo_url(self):
     return self.gr_source.user_url(self.key.id())
 
   def get_comment(self, id, **kwargs):
-    email = FacebookEmail.get_by_id(id)
+    resp = ndb.Key('Response', self.gr_source.tag_uri(id))
+    email = FacebookEmail.query(FacebookEmail.response == resp).get()
     if email:
       return gr_facebook.Facebook.email_to_object(email.html[0])
 
@@ -80,6 +90,10 @@ class FacebookEmailAccount(FacebookPage):
 
   def cached_resolve_object_id(self, post_id, activity=None):
     return None
+
+  # XXX TODO
+  def is_activity_public(self, activity):
+    return True
 
 
 class EmailHandler(InboundMailHandler):
@@ -126,7 +140,9 @@ class EmailHandler(InboundMailHandler):
     # note that this ignores the id query param (the post's user id) and uses
     # the source object's user id instead.
     base_obj['url'] = source.canonicalize_url(base_obj['url'])
-    targets, _ = original_post_discovery.discover(source, base_obj)
+    logging.info('Starting OPD for: %s', json.dumps(base_obj, indent=2))
+    targets, mentions = original_post_discovery.discover(source, base_obj)
+    logging.info('Got targets %s mentions %s', targets, mentions)
 
     activity = copy.deepcopy(base_obj)
     activity.setdefault('id', source.gr_source.base_id(base_obj['url']))
@@ -138,6 +154,9 @@ class EmailHandler(InboundMailHandler):
       activities_json=[json.dumps(activity)],
       unsent=targets)
     resp.get_or_save(source, restart=True)
+
+    fbe.response = resp.key
+    fbe.put()
 
 
 application = webapp2.WSGIApplication([
