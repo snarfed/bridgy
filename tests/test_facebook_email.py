@@ -57,7 +57,7 @@ class FacebookEmailTest(testutil.ModelsTest):
 
     gr_facebook.now_fn = lambda: datetime(1999, 1, 1)
 
-  def test_success(self):
+  def test_good(self):
     self.expect_requests_get('http://foo.com/', """
     <html class="h-feed">
       <div class="h-entry">
