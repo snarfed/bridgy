@@ -279,7 +279,7 @@ WordPress.com, <a href="/">sign up here!</a>
 {% block recent %}
 <!-- Responses -->
 <div class="row">
-{% if "listen" in source.features %}
+{% if "listen" in source.features or "email" in source.features %}
 {% if responses %}
 <p id="responses" class="big">Responses:</p>
 <ul class="user-items">

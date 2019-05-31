@@ -269,7 +269,7 @@ class UserHandler(DashboardHandler):
             vars['wordpress_promo'] = True
 
     # Responses
-    if 'listen' in self.source.features:
+    if 'listen' in self.source.features or 'email' in self.source.features:
       vars['responses'] = []
       query = Response.query().filter(Response.source == self.source.key)
 
