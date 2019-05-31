@@ -2,7 +2,6 @@
 """
 from __future__ import unicode_literals
 
-import copy
 from datetime import datetime
 from email.message import Message
 import logging
@@ -75,7 +74,7 @@ class FacebookEmailTest(testutil.ModelsTest):
     self.assertEquals(1, len(emails))
     self.assert_equals('SMTP-123-xyz', emails[0].key.id())
     self.assert_equals(self.fea.key, emails[0].source)
-    self.assert_equals([COMMENT_EMAIL_USERNAME], emails[0].html)
+    self.assert_equals([COMMENT_EMAIL_USERNAME], emails[0].htmls)
     resp_id = EMAIL_COMMENT_OBJ_USERNAME['id']
     self.assert_equals(ndb.Key('Response', resp_id), emails[0].response)
 
@@ -85,12 +84,14 @@ class FacebookEmailTest(testutil.ModelsTest):
       type='comment',
       response_json=json.dumps(EMAIL_COMMENT_OBJ_USERNAME),
       activities_json=[json.dumps({
-        'id': self.fea.gr_source.tag_uri('123'),
+        'id': '123',
+        'numeric_id': '123',
         'url': 'https://www.facebook.com/212038/posts/123',
+        'author': {'id': 'snarfed.org'},
       })],
       unsent=['http://foo.com/post'])
-    # self.assert_entities_equal([expected], list(Response.query()),
-    #                            ignore=('created', 'updated'))
+    self.assert_entities_equal([expected], list(Response.query()),
+                               ignore=('created', 'updated'))
 
     tasks = self.taskqueue_stub.GetTasks('propagate')
     self.assertEquals(1, len(tasks))
@@ -122,12 +123,12 @@ class FacebookEmailTest(testutil.ModelsTest):
 
   def test_get_comment(self):
     resp_key = ndb.Key('Response', 'tag:facebook.com,2013:xyz')
-    FacebookEmail(id='_', html=[COMMENT_EMAIL_USERNAME], response=resp_key).put()
+    FacebookEmail(id='_', htmls=[COMMENT_EMAIL_USERNAME], response=resp_key).put()
     self.assert_equals(EMAIL_COMMENT_OBJ_USERNAME, self.fea.get_comment('xyz'))
 
   def test_get_like(self):
     resp_key = ndb.Key('Response', 'tag:facebook.com,2013:xyz')
-    FacebookEmail(id='_', html=[LIKE_EMAIL], response=resp_key).put()
+    FacebookEmail(id='_', htmls=[LIKE_EMAIL], response=resp_key).put()
     self.assert_equals(EMAIL_LIKE_OBJ, self.fea.get_like('xyz'))
 
   def test_get_activity_id(self):
@@ -138,4 +139,3 @@ class FacebookEmailTest(testutil.ModelsTest):
       activities_json=[json.dumps(activity)],
     ).put()
     self.assert_equals([activity], self.fea.get_activities(activity_id='xyz'))
-

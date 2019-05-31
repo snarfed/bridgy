@@ -23,7 +23,6 @@ f.put()
 """
 from __future__ import unicode_literals
 
-import copy
 import json
 import logging
 
@@ -47,7 +46,7 @@ class FacebookEmail(StringIdModel):
   The key id is the Message-ID header.
   """
   source = ndb.KeyProperty()
-  html = ndb.TextProperty(repeated=True)
+  htmls = ndb.TextProperty(repeated=True)
   created = ndb.DateTimeProperty(auto_now_add=True, required=True)
   response = ndb.KeyProperty()
 
@@ -84,7 +83,7 @@ class FacebookEmailAccount(FacebookPage):
     resp = ndb.Key('Response', self.gr_source.tag_uri(id))
     email = FacebookEmail.query(FacebookEmail.response == resp).get()
     if email:
-      return gr_facebook.Facebook.email_to_object(email.html[0])
+      return gr_facebook.Facebook.email_to_object(email.htmls[0])
 
   get_like = get_comment
 
@@ -118,7 +117,7 @@ class EmailHandler(InboundMailHandler):
 
     htmls = list(body.decode() for _, body in email.bodies('text/html'))
     fbe = FacebookEmail.get_or_insert(
-      message_id, source=source.key if source else None, html=htmls)
+      message_id, source=source.key if source else None, htmls=htmls)
     logging.info('FacebookEmail created %s', fbe.created)
 
     if not source:
@@ -140,18 +139,20 @@ class EmailHandler(InboundMailHandler):
     # note that this ignores the id query param (the post's user id) and uses
     # the source object's user id instead.
     base_obj['url'] = source.canonicalize_url(base_obj['url'])
+    # also note that base_obj['id'] is not a tag URI, it's the raw Facebook post
+    # id, eg '104790764108207'. we don't use it from activities_json much,
+    # though, just in PropagateResponse.source_url(), which handles this fine.
+
     logging.info('Starting OPD for: %s', json.dumps(base_obj, indent=2))
     targets, mentions = original_post_discovery.discover(source, base_obj)
     logging.info('Got targets %s mentions %s', targets, mentions)
 
-    activity = copy.deepcopy(base_obj)
-    activity.setdefault('id', source.gr_source.base_id(base_obj['url']))
     resp = Response(
       id=obj['id'],
       source=source.key,
       type=Response.get_type(obj),
       response_json=json.dumps(obj),
-      activities_json=[json.dumps(activity)],
+      activities_json=[json.dumps(base_obj)],
       unsent=targets)
     resp.get_or_save(source, restart=True)
 
