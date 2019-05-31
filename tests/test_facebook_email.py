@@ -132,10 +132,7 @@ class FacebookEmailTest(testutil.ModelsTest):
     self.assert_equals(EMAIL_LIKE_OBJ, self.fea.get_like('xyz'))
 
   def test_get_activity_id(self):
-    activity = {'foo': 'bar'}
-    Response(
-      id='tag:facebook.com,2013:xyz',
-      source=self.fea.key,
-      activities_json=[json.dumps(activity)],
-    ).put()
-    self.assert_equals([activity], self.fea.get_activities(activity_id='xyz'))
+    self.assert_equals([{
+      'id': 'xyz',
+      'url': 'https://www.facebook.com/212038/posts/xyz',
+    }], self.fea.get_activities(activity_id='xyz'))

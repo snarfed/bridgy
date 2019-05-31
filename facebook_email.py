@@ -5,19 +5,13 @@ I already regret implementing this!
 https://github.com/snarfed/bridgy/issues/854
 https://cloud.google.com/appengine/docs/standard/python/mail/receiving-mail-with-mail-api
 
-To create one:
-key = facebook_email.FacebookEmailAccount(
-  id='212038',
-  features=['listen'],
-).put()
-
 to create:
 pwgen --no-capitalize --ambiguous 16 1
 # copy password
 remote_api_shell.py brid-gy
 from facebook_email import FacebookEmailAccount
 f = FacebookEmailAccount(id=ID, features=['email'], domain_urls=[...], domains=[...],
-                         email_user='EMAIL_USER')
+                         email_user='EMAIL_USER', picture='URL')
 f.put()
 * copy other fields from existing fb source
 """
@@ -70,9 +64,10 @@ class FacebookEmailAccount(FacebookPage):
 
     activity_id = kwargs.get('activity_id')
     if activity_id:
-      resp = Response.get_by_id(self.gr_source.tag_uri(activity_id))
-      if resp:
-        activities = [json.loads(resp.activities_json[0])]
+      activities = [{
+        'id': activity_id,
+        'url': 'https://www.facebook.com/%s/posts/%s' % (self.key.id(), activity_id),
+      }]
 
     return gr_source.Source.make_activities_base_response(activities)
 
