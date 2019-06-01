@@ -28,10 +28,10 @@ from granary import source as gr_source
 from oauth_dropins.webutil.models import StringIdModel
 import webapp2
 
-import models
+from facebook import FacebookPage
 from models import Response
 import original_post_discovery
-from facebook import FacebookPage
+import util
 
 
 class FacebookEmail(StringIdModel):
@@ -109,6 +109,9 @@ class EmailHandler(InboundMailHandler):
     user = addr.split('@')[0]
     source = FacebookEmailAccount.query(FacebookEmailAccount.email_user == user).get()
     logging.info('Source for %s is %s', user, source)
+
+    util.email_me(subject='New email from %s: %s' % (sender, subject),
+                  body='Source: %s' % (source.bridgy_url(self) if source else None))
 
     htmls = list(body.decode() for _, body in email.bodies('text/html'))
     fbe = FacebookEmail.get_or_insert(
