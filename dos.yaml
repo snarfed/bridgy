@@ -9,6 +9,9 @@ blacklist:
 - subnet: 2607:5300:60:73e5::/64
   description: Domain Re-Animator Bot. high volume, disobeys robots.txt.
 
+- subnet: 173.230.155.197
+  description: Aperture, fetching /twitter/schussman. (also catches a trickle of random requests from user-agents Ruby and Unknown. not sure what they are; don't seem to be aaron's site, XRay, or Pin13.)
+
 # - subnet: 178.62.33.183
 # - subnet: 82.30.9.142
   # description: Jay Funabashi crawling all of his responses. (https://brid.gy/facebook/10153584798226153 , http://j4y.co/ )
