@@ -189,14 +189,14 @@ Stats
 ---
 I occasionally generate [stats and graphs of usage and growth](https://snarfed.org/2018-01-02_bridgy-stats-update) from the [BigQuery dataset](https://console.cloud.google.com/bigquery?p=brid-gy&d=datastore&page=dataset) ([#715](https://github.com/snarfed/bridgy/issues/715)). Here's how.
 
-1. [Back up the full datastore to Google Cloud Storage.](https://console.cloud.google.com/datastore/settings?project=brid-gy) Include all entities except `*Auth` and other internal details. Check to see if any new kinds have been added since the last time this command was run.
+1. [Export the full datastore to Google Cloud Storage.](https://cloud.google.com/datastore/docs/export-import-entities) Include all entities except `*Auth` and other internal details. Check to see if any new kinds have been added since the last time this command was run.
     
     ```
     gcloud datastore export --async gs://brid-gy.appspot.com/stats/ --kinds Blogger,BlogPost,BlogWebmention,FacebookPage,Flickr,GitHub,GooglePlusPage,Instagram,Medium,Publish,PublishedPage,Response,SyndicatedPost,Tumblr,Twitter,WordPress
     ```
     
     Note that `--kinds` is required. [From the export docs](https://cloud.google.com/datastore/docs/export-import-entities#limitations), _Data exported without specifying an entity filter cannot be loaded into BigQuery._
-
+1. Wait for it to be done with `gcloud datastore operations list | grep done`.
 1. [Import it into BigQuery](https://cloud.google.com/bigquery/docs/loading-data-cloud-datastore#loading_cloud_datastore_export_service_data):
 
     ```
@@ -208,6 +208,7 @@ I occasionally generate [stats and graphs of usage and growth](https://snarfed.o
       bq load --replace --nosync --source_format=DATASTORE_BACKUP sources.$kind gs://brid-gy.appspot.com/stats/all_namespaces/kind_$kind/all_namespaces_kind_$kind.export_metadata
     done
     ```
+1. Check the jobs with `bq ls -j`, then wait for them with `bq wait`.
 1. [Run the full stats BigQuery query.](https://console.cloud.google.com/bigquery?sq=586366768654:9d8d4c13e988477bb976a5e29b63da3b) Download the results as CSV.
 1. [Open the stats spreadsheet.](https://docs.google.com/spreadsheets/d/1VhGiZ9Z9PEl7f9ciiVZZgupNcUTsRVltQ8_CqFETpfU/edit) Import the CSV, replacing the _data_ sheet.
 1. Check out the graphs! Save full size images with OS or browser screenshots, thumbnails with the _Save Image_ button. Then post them!
