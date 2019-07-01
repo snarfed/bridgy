@@ -114,7 +114,7 @@ service.</a>
 <li><a href="#short-link">Can I include a short link instead of the full link?</a></li>
 <li><a href="#response">How does Bridgy respond to webmentions?</a></li>
 <li><a href="#error-response">How about error responses?</a></li>
-<li><a href="#silos">Why not Google+ or Instagram?</a></li>
+<li><a href="#silos">Why not Instagram?</a></li>
 <li><a href="#401">I'm getting a <em>401: Unauthorized</em> error when I try
    to publish to Twitter.</a></li>
 <li><a href="#extended-tweets">Can I take advantage of Twitter's new extended tweet character counting?</a></li>
@@ -323,7 +323,6 @@ POST <a href="https://brid.gy/twitter/start">https://brid.gy/twitter/start</a>
   <li><b>Blogger</b> doesn't have permissions at all, <a href="https://developers.google.com/blogger/docs/2.0/developers_guide_protocol#OAuth2Authorizing">just full access or none.</a> <a href="/static/permissions_screenshots/blogger.png">Screenshot.</a></li>
   <li><b>Flickr</b> has <a href="https://www.flickr.com/services/api/auth.oauth.html#authorization">read, write, and delete permissions</a>. We ask for read for listen, write for publish. Screenshots: <a href="/static/permissions_screenshots/flickr_read.png">listen</a>, <a href="/static/permissions_screenshots/flickr_write.png">publish</a>.</li>
   <li><b>GitHub</b> has a few different permission models. We use an <a href="https://developer.github.com/apps/building-oauth-apps/scopes-for-oauth-apps/">OAuth app</a> to request read/write permission to public repository data, and notifications to see new comments and reactions. The alternative would have been a <a href="https://developer.github.com/apps/building-github-apps/">GitHub app,</a> which lets you grant read vs write permission to individual repos, but includes private repos, and doesn't include notifications. <a href="https://developer.github.com/apps/differences-between-apps/">More on the tradeoff here.</a> <a href="/static/permissions_screenshots/github.png">Screenshot.</a></li>
-  <li><b>Google+</b> has <a href="https://developers.google.com/+/web/api/rest/oauth#scopes">semi-fine grained permissions</a>, and only read access. We ask for access to your profile info, circles, and public posts. <a href="/static/permissions_screenshots/googleplus.png">Screenshot.</a></li>
   <li><b>Instagram</b> turned off their API for individual usage, so we just ask for your web site, via <a href="https://indieauth.com/">IndieAuth</a>, and your Instagram username. <a href="/static/permissions_screenshots/instagram_indieauth.png">Screenshot.</a></li>
   <li><b>Medium</b> has <a href="https://github.com/Medium/medium-api-docs/#user-content-21-browser-based-authentication">a few different permissions</a>. We ask for read acces to your profile, public posts, and publications. <a href="/static/permissions_screenshots/medium.png">Screenshot.</a></li>
   <li><b>Tumblr</b> doesn't have permissions at all, <a href="https://www.tumblr.com/docs/en/api/v2#oauth">just full access or nothing.</a> <a href="/static/permissions_screenshots/tumblr.png">Screenshot.</a></li>
@@ -441,8 +440,6 @@ GitHub</a>. Thank you!
 <li>Tweets from other people that
   <a href="https://support.twitter.com/articles/14023-what-are-replies-and-mentions">@-mention</a>
   you or contain links to your site.</li>
-<li>Google+ comments, +1s, and reshares of your posts.</li>
-<li>Google+ posts from other people that contain links to your site.</li>
 <li>Instagram comments and likes on your pictures.</li>
 <li>Flickr comments and favorites on your photos.</li>
 <li>GitHub comments and emoji reactions on your issues and pull requests.</li>
@@ -486,7 +483,7 @@ Bridgy needs at least one or the other so it can connect the two posts.
 posts, even if they have links to your web site. It only sends back responses
 to <em>your</em> posts.
 </li>
-<li id="public">Is the post fully public? And the response too? Bridgy only shows and sends webmentions for fully public posts and responses. If your Twitter account is <a href="https://help.twitter.com/en/safety-and-security/public-and-protected-tweets">protected</a>, or your Google+ post wasn't sent to <em>public,</em> Bridgy won't see it.
+<li id="public">Is the post fully public? And the response too? Bridgy only shows and sends webmentions for fully public posts and responses. If your Twitter account is <a href="https://help.twitter.com/en/safety-and-security/public-and-protected-tweets">protected</a>, Bridgy won't see it.
 </li>
 <li>Is it on an older post? Bridgy only looks at your 50 most recent posts. It
 doesn't go back arbitrarily far because that doesn't scale. You can get around
@@ -577,12 +574,7 @@ them</a>, and it also uses it to
 officially syndicating your posts and other people just mentioning them</a>.
 </p>
 
-<p>
-Google+ lets you add multiple web site links to your profile. Twitter,
-Instagram, Flickr, and GitHub only allow one, so Bridgy
-<a href="https://github.com/snarfed/bridgy/issues/483">also looks for links
-in your profile's description field</a>.
-</p>
+<p>Twitter, Instagram, Flickr, and GitHub only allow one web site link in your profile, so Bridgy <a href="https://github.com/snarfed/bridgy/issues/483">also looks for links in your profile's description field</a>.</p>
 
 <p>Also, if your web server has <a href="https://brotli.org/">Brotli compression</a> enabled, Bridgy won't work with it due to <a href="https://issuetracker.google.com/issues/112277350">this long-standing App Engine bug</a>. <a href="https://github.com/snarfed/bridgy/issues/878">More background.</a> Until this bug is fixed, we recommend disabling Brotli on your web server as a workaround.</p>
 </li>
@@ -689,12 +681,11 @@ webmention manually</a>. Here's how to construct Bridgy's source URLs:
   JSON-formatted version.
 </li>
 <li>For Twitter, Instagram, and GitHub, <code class='keyword'>USER_ID</code> is your
-  username, but for Flickr and Google+, it's your numeric user id.
+  username, but for Flickr, it's your numeric user id.
   <code class='value'>LIKED_BY_USER_ID</code> and
   <code class='value'>RSVP_USER_ID</code> are always numeric. You
   can get numeric user ids from the API consoles
-  (<a href="https://developers.google.com/+/api/latest/people/get#try-it">Google+</a>,
-   <a href="https://apigee.com/embed/console/twitter">Twitter</a>) or
+  (<a href="https://apigee.com/embed/console/twitter">Twitter's</a>) or
   from <a href="https://granary.io/">granary</a>.
 </li>
 <li>For Instagram, <code class='value'>POST_ID</code> is a numeric id,
@@ -785,7 +776,6 @@ previewing a post to see how it will look!
 <li>GitHub issues, <a href="https://help.github.com/articles/about-stars">stars</a>, comments on issues and PRs, and <a href="https://help.github.com/articles/about-conversations-on-github/#reacting-to-ideas-in-comments">emoji reactions</a> to issues, PRs, and comments.</li>
 <li><a href="#add-label">Adding new labels to GitHub issues.</a></li>
 <li>Nothing on Instagram, sorry. Likes used to be possible, but not since Instagram <a href="http://developers.instagram.com/post/133424514006/instagram-platform-update"> started locking down their API.</a> <a href="http://instagram.com/developer/endpoints/media/#get_media_popular">Photos, videos,</a> <a href="http://instagram.com/developer/endpoints/comments/#post_media_comments">and comments</a> were never possible.</li>
-<li>Nothing on Google+, sorry. <a href="https://developers.google.com/+/api/latest/">Their API is read only.</a></li>
 </ul>
 </li>
 </p></li>
@@ -1147,15 +1137,9 @@ data from your original post, which is often helpful for debugging.
 }</pre>
 </li>
 
-<li id="silos" class="question">Why not Google+ or Instagram?</li>
+<li id="silos" class="question">Why not Instagram?</li>
 <li class="answer">
-<p>Sadly, <a href="https://developers.google.com/+/api/">Google+'s API</a>
-doesn't support posting or commenting, and
-<a href="http://developers.instagram.com/post/133424514006/instagram-platform-update">
-  Instagram's API is locked down to limited manual approval.</a>
-Shameless plug: check out
-<a href="http://ownyourgram.com/">#OwnYourGram</a> for an Instagram alternative!
-</p>
+<p>Sadly, <a href="http://developers.instagram.com/post/133424514006/instagram-platform-update">Instagram's API is locked down to limited manual approval.</a> Shameless plug: check out <a href="http://ownyourgram.com/">#OwnYourGram</a> for an Instagram alternative!</p>
 </li>
 
 <li id="extended-tweets" class="question">Can I take advantage of Twitter's new
