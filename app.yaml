@@ -150,12 +150,6 @@ handlers:
   script: app.application
   secure: always
 
-# Block Aperture from fetching /twitter/schussman
-- url: /twitter/schussman
-  script: app.application
-  login: required
-  auth_fail_action: unauthorized
-
 - url: /(blogger|facebook(-email)?|fake|flickr|github|googleplus|instagram|medium|tumblr|twitter|wordpress)/.+
   script: app.application
   secure: always
