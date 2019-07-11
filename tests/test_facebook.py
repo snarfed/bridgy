@@ -360,9 +360,12 @@ class FacebookPageTest(testutil.ModelsTest):
     self.expect_api_call(API_OBJECT % ('212038', '123'), {}, status=400)
     self.mox.ReplayAll()
 
-    self.assertEqual('https://www.facebook.com/212038/posts/123',
-                     self.fb.canonicalize_url(
-                       'http://facebook.com/snarfed.org/posts/123'))
+    self.assertEqual(
+      'https://www.facebook.com/212038/posts/123',
+      self.fb.canonicalize_url('http://facebook.com/snarfed.org/posts/123'))
+    self.assertEqual(
+      'https://www.facebook.com/123',
+      self.fb.canonicalize_url('http://facebook.com/123'))
 
   def test_canonicalize_url_username(self):
     # we shouldn't touch username when it appears elsewhere in the url

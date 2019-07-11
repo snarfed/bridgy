@@ -240,7 +240,7 @@ class FacebookPage(models.Source):
         object_id = self.cached_resolve_object_id(url_id, activity=activity)
         if object_id:
           url = post_url(object_id)
-        elif path and path[1] == 'posts':
+        elif path and len(path) > 1 and path[1] == 'posts':
           url = post_url(url_id)
 
     for alternate_id in util.trim_nulls(itertools.chain(
