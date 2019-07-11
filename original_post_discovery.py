@@ -28,6 +28,7 @@ from __future__ import unicode_literals
 
 import collections
 import itertools
+import json
 import logging
 import mf2util
 import urlparse
@@ -69,6 +70,9 @@ def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True,
   Returns:
     (set(string original post URLs), set(string mention URLs)) tuple
   """
+  logging.debug('discovering original posts for: %s',
+                activity.get('url') or activity.get('id'))
+
   if not source.updates:
     source.updates = {}
 
@@ -156,10 +160,11 @@ def refetch(source):
   Returns:
     dict: mapping syndicated_url to a list of new :class:`models.SyndicatedPost`\ s
   """
+  logging.debug('attempting to refetch h-feed for %s', source.label())
+
   if not source.updates:
     source.updates = {}
 
-  logging.debug('attempting to refetch h-feed for %s', source.label())
   results = {}
   for url in _get_author_urls(source):
     results.update(_process_author(source, url, refetch=True))

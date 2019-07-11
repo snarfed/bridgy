@@ -116,7 +116,7 @@ class EmailHandler(InboundMailHandler):
     htmls = list(body.decode() for _, body in email.bodies('text/html'))
     fbe = FacebookEmail.get_or_insert(
       message_id, source=source.key if source else None, htmls=htmls)
-    logging.info('FacebookEmail created %s', fbe.created)
+    logging.info('FacebookEmail created %s: %s', fbe.created, fbe.key.urlsafe())
 
     if not source:
       self.response.status_code = 404
@@ -141,8 +141,9 @@ class EmailHandler(InboundMailHandler):
     # id, eg '104790764108207'. we don't use it from activities_json much,
     # though, just in PropagateResponse.source_url(), which handles this fine.
 
-    logging.info('Starting OPD for: %s', json.dumps(base_obj, indent=2))
-    targets, mentions = original_post_discovery.discover(source, base_obj)
+    original_post_discovery.refetch(source)
+    targets, mentions = original_post_discovery.discover(source, base_obj,
+                                                         fetch_hfeed=False)
     logging.info('Got targets %s mentions %s', targets, mentions)
 
     resp = Response(
