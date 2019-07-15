@@ -295,7 +295,7 @@ WordPress.com, <a href="/">sign up here!</a>
         <img class="profile" src="{{ response.actor.image.url }}" width="32" /></a>
       {% endif %}
       <a target="_blank" class="u-bridgy-syndication-source u-name" href="{{ r.url }}">
-        {{ r.content|default('--')|striptags|truncate(40)|safe }}
+        {{ r.content|default('--')|striptags|truncate(40) }}
       </a>
     {% endwith %}
 
@@ -306,7 +306,7 @@ WordPress.com, <a href="/">sign up here!</a>
     {% if response.type == "comment" %} on {% endif %}
     <a target="_blank" class="u-bridgy-original-source"
        href="{{ a.url or a.object.url }}">
-      {{ a.content|default('--')|striptags|truncate(40)|safe }}
+      {{ a.content|default('--')|striptags|truncate(40) }}
     </a></li>
     {% endfor %}
 
@@ -336,6 +336,7 @@ WordPress.com, <a href="/">sign up here!</a>
    </div><div class="col-sm-3">
     {% for label, links in response.links.items() %}
       {{ label|safe }}:
+        {# label is hard-coded by us, in UserHandler.process_webmention_links #}
       <ul class="original-post-links">
         {% for link in links %}
           <li>{{ link|safe }}</li>

@@ -1,7 +1,7 @@
 {% set link=link|default(source.silo_url()) %}
 
 {% if link %}
-  <a href="{{ link }}" title="{{ source.label()|safe }}" rel="me" class="u-url"
+  <a href="{{ link }}" title="{{ source.label() }}" rel="me" class="u-url"
      {% if not link.startswith('/') %} target="_blank" {% endif %}>
 {% endif %}
   <img class="profile u-photo" src="{{ source.picture }}"
@@ -9,7 +9,7 @@
   <img src="/static/{{ source.SHORT_NAME }}_icon.png" width="24"
        {# oddly, source.GR_CLASS doesn't work for Twitter. use kind as fallback. #}
        alt="{{ source.GR_CLASS.NAME or source.key.kind }}" />
-  <span class="p-name">{{ source.label_name()|safe }}</span>
+  <span class="p-name">{{ source.label_name() }}</span>
 {% if link %}
   </a>
 {% endif %}

@@ -403,6 +403,24 @@ class AppTest(testutil.ModelsTest):
     parsed = util.mf2py_parse(resp.body, user_url)
     publish = parsed['items'][0]['children'][0]
 
+  def test_user_page_escapes_html_chars(self):
+    html = '<xyz> a&b'
+    escaped = '&lt;xyz&gt; a&amp;b'
+
+    activity = json.loads(self.responses[0].activities_json[0])
+    activity['object']['content'] = escaped
+    self.responses[0].activities_json = [json.dumps(activity)]
+
+    resp = json.loads(self.responses[0].response_json)
+    resp['content'] = escaped
+    self.responses[0].response_json = json.dumps(resp)
+    self.responses[0].put()
+
+    resp = app.application.get_response(self.sources[0].bridgy_path())
+    self.assertEquals(200, resp.status_int)
+    self.assertNotIn(html, resp.body)
+    self.assertIn(escaped, resp.body)
+
   def test_users_page(self):
     resp = app.application.get_response('/users')
     for source in self.sources:
