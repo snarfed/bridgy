@@ -336,7 +336,7 @@ WordPress.com, <a href="/">sign up here!</a>
    </div><div class="col-sm-3">
     {% for label, links in response.links.items() %}
       {{ label|safe }}:
-        {# label is hard-coded by us, in UserHandler.process_webmention_links #}
+        {# label and links are sanitized in UserHandler.process_webmention_links #}
       <ul class="original-post-links">
         {% for link in links %}
           <li>{{ link|safe }}</li>

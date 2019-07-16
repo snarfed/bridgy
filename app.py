@@ -746,7 +746,7 @@ class CspReportHandler(util.Handler):
 application = webapp2.WSGIApplication(
   [('/?', FrontPageHandler),
    ('/users/?', UsersHandler),
-   ('/(blogger|facebook(?:-email)?|fake|flickr|github|googleplus|instagram|medium|tumblr|twitter|wordpress)/([^/]+)/?',
+   ('/(blogger|facebook(?:-email)?|fake|fake_blog|flickr|github|googleplus|instagram|medium|tumblr|twitter|wordpress)/([^/]+)/?',
     UserHandler),
    ('/about/?', AboutHandler),
    ('/delete/start', DeleteStartHandler),

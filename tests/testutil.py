@@ -228,6 +228,10 @@ class FakeSource(Source):
     return super(FakeSource, self).put(**kwargs)
 
 
+class FakeBlogSource(FakeSource):
+  SHORT_NAME = 'fake_blog'
+
+
 class HandlerTest(testutil_appengine.HandlerTest):
   """Base test class.
   """
@@ -430,7 +434,7 @@ class ModelsTest(HandlerTest):
       id='https://post',
       source=self.sources[0].key,
       status='complete',
-      feed_item={'stuff': 'here'},
+      feed_item={'title': 'a post'},
       sent=['http://a/link'],
     )]
 

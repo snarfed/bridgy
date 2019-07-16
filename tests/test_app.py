@@ -20,6 +20,7 @@ import models
 from models import Publish, PublishedPage, SyndicatedPost
 import util
 import testutil
+from testutil import FakeBlogSource
 import twitter
 
 
@@ -417,6 +418,27 @@ class AppTest(testutil.ModelsTest):
     self.responses[0].put()
 
     resp = app.application.get_response(self.sources[0].bridgy_path())
+    self.assertEquals(200, resp.status_int)
+    self.assertNotIn(html, resp.body)
+    self.assertIn(escaped, resp.body)
+
+  def test_blog_user_page_escapes_html_chars(self):
+    html = '<xyz> a&b'
+    escaped = '&lt;xyz&gt; a&amp;b'
+
+    # self.mox.StubOutWithMock(FakeSource, 'template_file')
+    # FakeSource.template_file(mox.IgnoreArg()).AndReturn('blog_user.html')
+    # self.mox.ReplayAll()
+
+    source = FakeBlogSource.new(None)#, auth_entity=self.auth_entities[0])
+    source.features = ['webmention']
+    source.put()
+
+    self.blogposts[0].source = source.key
+    self.blogposts[0].feed_item['title'] = html
+    self.blogposts[0].put()
+
+    resp = app.application.get_response(source.bridgy_path())
     self.assertEquals(200, resp.status_int)
     self.assertNotIn(html, resp.body)
     self.assertIn(escaped, resp.body)
