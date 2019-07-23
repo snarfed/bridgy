@@ -422,10 +422,10 @@ class UserHandler(DashboardHandler):
     return vars
 
   def process_webmention_links(self, e):
-    """Generates pretty HTML for the links in a :class:`BlogWebmention` entity.
+    """Generates pretty HTML for the links in a :class:`Webmentions` entity.
 
     Args:
-      e: :class:`BlogWebmention` subclass (:class:`Response` or :class:`BlogPost`)
+      e: :class:`Webmentions` subclass (:class:`Response` or :class:`BlogPost`)
     """
     link = lambda url, g: util.pretty_link(
       url, glyphicon=g, attrs={'class': 'original-post u-bridgy-target'}, new_tab=True)

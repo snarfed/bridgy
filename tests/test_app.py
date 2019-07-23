@@ -415,12 +415,16 @@ class AppTest(testutil.ModelsTest):
     resp = json.loads(self.responses[0].response_json)
     resp['content'] = escaped
     self.responses[0].response_json = json.dumps(resp)
+    self.responses[0].status = 'processing'
     self.responses[0].put()
 
     resp = app.application.get_response(self.sources[0].bridgy_path())
     self.assertEquals(200, resp.status_int)
     self.assertNotIn(html, resp.body)
     self.assertIn(escaped, resp.body)
+
+    self.assertNotIn('&lt;span class="glyphicon glyphicon-transfer"&gt;', resp.body)
+    self.assertIn('<span class="glyphicon glyphicon-transfer">', resp.body)
 
   def test_blog_user_page_escapes_html_chars(self):
     html = '<xyz> a&b'
