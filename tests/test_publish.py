@@ -208,12 +208,14 @@ class PublishTest(testutil.HandlerTest):
 
     # first attempt should work
     self.assert_success('preview of foo - http://foo.com/bar', preview=True)
-    self.assert_created('foo - http://foo.com/bar')
+    created = self.assert_created('foo - http://foo.com/bar')
     self.assertEquals(5, Publish.query().count())
     self.assertEquals(3, Publish.query(Publish.status == 'complete').count())
 
     # now that there's a complete Publish entity, more attempts should fail
-    self.assert_error("Sorry, you've already published that page")
+    resp = self.assert_error("Sorry, you've already published that page")
+    self.assertEquals(json.loads(created.body), json.loads(resp.body)['original'])
+
     # try again to test for a bug we had where a second try would succeed
     self.assert_error("Sorry, you've already published that page")
     # should still be able to preview though

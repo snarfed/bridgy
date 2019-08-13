@@ -115,7 +115,7 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
     return fetched, data
 
   def error(self, error, html=None, status=400, data=None, log_exception=True,
-            mail=False):
+            mail=False, extra_json=None):
     """Handle an error. May be overridden by subclasses.
 
     Args:
@@ -125,6 +125,7 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
       data: mf2 data dict parsed from source page
       log_exception: boolean, whether to include a stack trace in the log msg
       mail: boolean, whether to email me
+      extra_json: dict to be merged into the JSON response body
     """
     logging.info(error, exc_info=log_exception)
 
@@ -136,6 +137,11 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
     resp = {'error': error}
     if data:
       resp['parsed'] = data
+    if extra_json:
+      assert 'error' not in extra_json
+      assert 'parsed' not in extra_json
+      resp.update(extra_json)
+
     resp = json.dumps(resp, indent=2)
 
     if mail and status != 404:

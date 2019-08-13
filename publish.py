@@ -227,7 +227,8 @@ class Handler(webmention.WebmentionHandler):
     # create the Publish entity so we can store the result.
     if (self.entity.status == 'complete' and self.entity.type != 'preview' and
         not self.PREVIEW and not appengine_config.DEBUG):
-      return self.error("Sorry, you've already published that page, and Bridgy Publish doesn't yet support updating or deleting existing posts. Details: https://github.com/snarfed/bridgy/issues/84")
+      return self.error("Sorry, you've already published that page, and Bridgy Publish doesn't support updating existing posts. Details: https://github.com/snarfed/bridgy/issues/84",
+                        extra_json={'original': self.entity.published})
 
     # find rel-shortlink, if any
     # http://microformats.org/wiki/rel-shortlink
