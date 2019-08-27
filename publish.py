@@ -646,7 +646,7 @@ class PreviewHandler(Handler):
             else gr_source.INCLUDE_IF_TRUNCATED if val.lower() == 'maybe'
             else gr_source.OMIT_LINK)
 
-  def error(self, error, html=None, status=400, data=None, mail=False):
+  def error(self, error, html=None, status=400, data=None, mail=False, **kwargs):
     logging.info(error, exc_info=True)
     self.response.set_status(status)
     error = html if html else util.linkify(error)
@@ -695,7 +695,7 @@ class SendHandler(Handler):
   def include_link(self, item):
     return self.state['include_link']
 
-  def error(self, error, html=None, status=400, data=None, mail=False):
+  def error(self, error, html=None, status=400, data=None, mail=False, **kwargs):
     logging.info(error, exc_info=True)
     error = html if html else util.linkify(error)
     self.messages.add('%s' % error)

@@ -221,6 +221,18 @@ class PublishTest(testutil.HandlerTest):
     # should still be able to preview though
     self.assert_success('preview of foo', preview=True)
 
+  def test_already_published_interactive(self):
+    self.expect_requests_get('http://foo.com/bar', self.post_html % 'foo')
+    self.mox.ReplayAll()
+
+    page = PublishedPage(id='http://foo.com/bar')
+    Publish(parent=page.key, source=self.source.key, status='complete',
+            type='post', published={'content': 'foo'}).put()
+
+    resp = self.assert_response('', status=302, interactive=True)
+    self.assertIn("Sorry, you've already published that page",
+                  urllib.unquote_plus(resp.headers['Location']))
+
   def test_already_published_then_preview_feed_with_no_items(self):
     page = PublishedPage(id='http://foo.com/bar')
     Publish(parent=page.key, source=self.source.key, status='complete',
