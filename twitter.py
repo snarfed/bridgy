@@ -42,6 +42,7 @@ class Twitter(models.Source):
     'repost': 'retweet',
     'like': 'favorite',
   }
+  TRANSIENT_ERROR_HTTP_CODES = ('404',)
 
   URL_CANONICALIZER = gr_twitter.Twitter.URL_CANONICALIZER
   URL_CANONICALIZER.headers = util.REQUEST_HEADERS

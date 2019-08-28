@@ -105,6 +105,7 @@ class Source(StringIdModel):
   # https://developers.facebook.com/docs/reference/ads-api/api-rate-limiting/
   RATE_LIMIT_HTTP_CODES = ('429',)
   DISABLE_HTTP_CODES = ('401',)
+  TRANSIENT_ERROR_HTTP_CODES = ()
 
   # whether to require a u-syndication link for backfeed
   BACKFEED_REQUIRES_SYNDICATION_LINK = False

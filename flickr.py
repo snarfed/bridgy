@@ -27,6 +27,7 @@ class Flickr(models.Source):
 
   GR_CLASS = gr_flickr.Flickr
   SHORT_NAME = 'flickr'
+  TRANSIENT_ERROR_HTTP_CODES = ('400',)
 
   URL_CANONICALIZER = util.UrlCanonicalizer(
     domain=GR_CLASS.DOMAIN,
