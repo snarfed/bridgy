@@ -7,11 +7,12 @@ https://cloud.google.com/appengine/docs/standard/python/mail/receiving-mail-with
 
 to create:
 pwgen --no-capitalize --ambiguous 16 1
-# copy password
+# copy result, it goes into EMAIL_USER below
+# find facebook profile, put username into ID, profile pic URL into URL
 remote_api_shell.py brid-gy
 from facebook_email import FacebookEmailAccount
 f = FacebookEmailAccount(id=ID, features=['email'], domain_urls=[...], domains=[...],
-                         email_user='EMAIL_USER', picture='URL')
+                         email_user=EMAIL_USER, picture=URL)
 f.put()
 * copy other fields from existing fb source
 """
