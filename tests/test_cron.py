@@ -43,6 +43,7 @@ class CronTest(HandlerTest):
       self.flickr.picture)
 
   def setup_instagram(self, batch_size=None, weekday=0):
+    self.mox.stubs.Set(appengine_config, 'INSTAGRAM_SESSIONID_COOKIE', None)
     if batch_size:
       self.mox.stubs.Set(cron.UpdateInstagramPictures, 'BATCH', batch_size)
 
