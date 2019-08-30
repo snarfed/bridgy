@@ -426,6 +426,15 @@ class AppTest(testutil.ModelsTest):
     self.assertNotIn('&lt;span class="glyphicon glyphicon-transfer"&gt;', resp.body)
     self.assertIn('<span class="glyphicon glyphicon-transfer">', resp.body)
 
+  def test_user_page_rate_limited_never_successfully_polled(self):
+    self.sources[0].rate_limited = True
+    self.sources[0].last_poll_attempt = datetime.datetime(2019, 1, 1)
+    self.sources[0].put()
+
+    resp = app.application.get_response(self.sources[0].bridgy_path())
+    self.assertEquals(200, resp.status_int)
+    self.assertIn('Not polled yet,', resp.body.decode('utf-8'))
+
   def test_blog_user_page_escapes_html_chars(self):
     html = '<xyz> a&b'
     escaped = '&lt;xyz&gt; a&amp;b'

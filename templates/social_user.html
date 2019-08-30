@@ -112,7 +112,7 @@ WordPress.com, <a href="/">sign up here!</a>
 {% else %}
 <form method="post" action="/poll-now">
   <!-- last poll -->
-  {% if source.last_poll_attempt == EPOCH %}
+  {% if source.last_poll_attempt == EPOCH or (source.rate_limited and source.last_polled == EPOCH) %}
     Not polled yet,
   {% else %}
     {% if source.rate_limited %}
