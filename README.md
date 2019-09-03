@@ -1,14 +1,11 @@
 ![Bridgy](https://raw.github.com/snarfed/bridgy/master/static/bridgy_logo_thumb.jpg) [Bridgy](https://brid.gy/) [![Circle CI](https://circleci.com/gh/snarfed/bridgy.svg?style=svg)](https://circleci.com/gh/snarfed/bridgy) [![Coverage Status](https://coveralls.io/repos/github/snarfed/bridgy/badge.svg?branch=master)](https://coveralls.io/github/snarfed/bridgy?branch=master)
 ===
 
-Got a web site? Want replies and likes from social networks? Want to tweet, post, and more? Bridgy is for you.
+Bridgy connects your web site to social media. Likes, retweets, mentions, cross-posting, and more. [See the user docs](https://brid.gy/about) for more details, or the [developer docs](https://bridgy.readthedocs.io/) if you want to contribute.
 
 https://brid.gy/
 
-Bridgy pulls comments and likes from social networks back to your web site. You
-can also use it to publish your posts to those networks.
-[See the user docs](https://brid.gy/about) for more details, or the
-[developer docs](https://bridgy.readthedocs.io/) if you want to contribute.
+Bridgy is part of the [IndieWeb](https://indieweb.org/) ecosystem. In IndieWeb terminology, Bridgy offers [backfeed](https://indieweb.org/backfeed), [POSSE](https://indieweb.org/POSSE), and [webmention](http://indiewebify.me/#send-webmentions) support as a service.
 
 License: This project is placed in the public domain.
 
