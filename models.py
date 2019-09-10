@@ -194,14 +194,18 @@ class Source(StringIdModel):
         token = (token,)
 
       kwargs = {}
-      if self.key.kind() == 'FacebookPage' and auth_entity.type == 'user':
-        kwargs = {'user_id': self.key.id()}
-      elif self.key.kind() == 'Instagram':
+      if self.key.kind() == 'Instagram':
         kwargs = {'scrape': True, 'cookie': appengine_config.INSTAGRAM_SESSIONID_COOKIE}
       elif self.key.kind() == 'Twitter':
         kwargs = {'username': self.key.id()}
 
       self.gr_source = self.GR_CLASS(*token, **kwargs)
+      return self.gr_source
+
+    if name == 'gr_source' and self.key.kind() == 'FacebookPage':
+      self.gr_source = self.GR_CLASS(
+        user_id=self.key.id(), scrape=True, cookie_c_user='100009447618341',
+        cookie_xs='...')
       return self.gr_source
 
     if name == 'gr_source' and self.key.kind() == 'FacebookEmailAccount':

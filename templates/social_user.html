@@ -4,13 +4,6 @@
 
 <!-- Promos to get fully up and running -->
 
-{% if source.SHORT_NAME == 'facebook' %}
-<div class="row promo error">
-<p><b><a href="/about#rip-facebook">Facebook is no longer supported.</a>
-So long, and thanks for all the fish!</b></p>
-</div>
-{% endif %}
-
 {% if source.SHORT_NAME == 'googleplus' %}
 <div class="row promo error">
 <p><b><a href="/about#rip-google+">Google+ won't exist for much longer.</a>
@@ -79,7 +72,7 @@ WordPress.com, <a href="/">sign up here!</a>
 
 <div class="row">
 
-{% if source.SHORT_NAME not in ('facebook', 'googleplus') %}
+{% if source.SHORT_NAME not in ('googleplus') %}
 <!-- Listen UI -->
 <div id="listen-ui" class="{% if publish_signup_ok %}col-sm-6{% endif %}">
 
@@ -267,7 +260,7 @@ WordPress.com, <a href="/">sign up here!</a>
 </div>
 
 </div>
-{% endif %} {# end Facebook/Google+ hiding UI blocks #}
+{% endif %} {# end Google+ hiding UI blocks #}
 
 
 <!-- Publish preview UI -->

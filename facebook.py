@@ -119,7 +119,12 @@ class FacebookPage(models.Source):
       kwargs: property values
     """
     user = json.loads(auth_entity.user_json)
-    gr_source = gr_facebook.Facebook(access_token=auth_entity.access_token())
+
+    # Snoopy's
+    gr_source = gr_facebook.Facebook(
+      scrape=True, cookie_c_user='100009447618341',
+      cookie_xs='...')
+
     actor = gr_source.user_to_actor(user)
     return FacebookPage(id=user['id'],
                         auth_entity=auth_entity.key,
@@ -148,62 +153,62 @@ class FacebookPage(models.Source):
       if util.is_int(id) and int(id) < MIN_APP_SCOPED_ID:
         return self.gr_source.user_url(id)
 
-  def get_activities_response(self, **kwargs):
-    type = self.auth_entity.get().type
-    kwargs.setdefault('fetch_events', True)
-    kwargs.setdefault('fetch_news', type == 'user')
-    kwargs.setdefault('event_owner_id', self.key.id())
+  # def get_activities_response(self, **kwargs):
+  #   type = self.auth_entity.get().type
+  #   kwargs.setdefault('fetch_events', True)
+  #   kwargs.setdefault('fetch_news', type == 'user')
+  #   kwargs.setdefault('event_owner_id', self.key.id())
 
-    try:
-      activities = super(FacebookPage, self).get_activities_response(**kwargs)
-    except urllib2.HTTPError as e:
-      code, body = util.interpret_http_exception(e)
-      # use a function so any new exceptions (JSON decoding, missing keys) don't
-      # clobber the original exception so we can re-raise it below.
-      def dead_token():
-        try:
-          err = json.loads(body)['error']
-          return (err.get('code') in DEAD_TOKEN_ERROR_CODES or
-                  err.get('error_subcode') in DEAD_TOKEN_ERROR_SUBCODES or
-                  err.get('message') in DEAD_TOKEN_ERROR_MESSAGES)
-        except:
-          logging.warning("Couldn't determine whether token is still valid", exc_info=True)
-          return False
+  #   try:
+  #     activities = super(FacebookPage, self).get_activities_response(**kwargs)
+  #   except urllib2.HTTPError as e:
+  #     code, body = util.interpret_http_exception(e)
+  #     # use a function so any new exceptions (JSON decoding, missing keys) don't
+  #     # clobber the original exception so we can re-raise it below.
+  #     def dead_token():
+  #       try:
+  #         err = json.loads(body)['error']
+  #         return (err.get('code') in DEAD_TOKEN_ERROR_CODES or
+  #                 err.get('error_subcode') in DEAD_TOKEN_ERROR_SUBCODES or
+  #                 err.get('message') in DEAD_TOKEN_ERROR_MESSAGES)
+  #       except:
+  #         logging.warning("Couldn't determine whether token is still valid", exc_info=True)
+  #         return False
 
-      if code == '401':
-        if not dead_token() and type == 'user':
-          # ask the user to reauthenticate. if this API call fails, it will raise
-          # urllib2.HTTPError instead of DisableSource, so that we don't disable
-          # the source without notifying.
-          #
-          # TODO: for pages, fetch the owners/admins and notify them.
-          self.gr_source.create_notification(
-            self.key.id(),
-            "Bridgy's access to your account has expired. Click here to renew it now!",
-            'https://brid.gy/facebook/start')
-        raise models.DisableSource()
+  #     if code == '401':
+  #       if not dead_token() and type == 'user':
+  #         # ask the user to reauthenticate. if this API call fails, it will raise
+  #         # urllib2.HTTPError instead of DisableSource, so that we don't disable
+  #         # the source without notifying.
+  #         #
+  #         # TODO: for pages, fetch the owners/admins and notify them.
+  #         self.gr_source.create_notification(
+  #           self.key.id(),
+  #           "Bridgy's access to your account has expired. Click here to renew it now!",
+  #           'https://brid.gy/facebook/start')
+  #       raise models.DisableSource()
 
-      raise
+  #     raise
 
-    # update the resolved_object_ids and post_publics caches
-    def parsed_post_id(id):
-      parsed = gr_facebook.Facebook.parse_id(id)
-      return parsed.post if parsed.post else id
+  #   # update the resolved_object_ids and post_publics caches
+  #   def parsed_post_id(id):
+  #     parsed = gr_facebook.Facebook.parse_id(id)
+  #     return parsed.post if parsed.post else id
 
-    resolved = self._load_cache('resolved_object_ids')
-    for activity in activities['items']:
-      obj = activity.get('object', {})
-      obj_id = parsed_post_id(obj.get('fb_id'))
-      ids = obj.get('fb_object_for_ids')
-      if obj_id and ids:
-        resolved[obj_id] = obj_id
-        for id in ids:
-          resolved[parsed_post_id(id)] = obj_id
+  #   resolved = self._load_cache('resolved_object_ids')
+  #   for activity in activities['items']:
+  #     obj = activity.get('object', {})
+  #     obj_id = parsed_post_id(obj.get('fb_id'))
+  #     ids = obj.get('fb_object_for_ids')
+  #     if obj_id and ids:
+  #       resolved[obj_id] = obj_id
+  #       for id in ids:
+  #         resolved[parsed_post_id(id)] = obj_id
 
-    for activity in activities['items']:
-      self.is_activity_public(activity)
+  #   for activity in activities['items']:
+  #     self.is_activity_public(activity)
 
-    return activities
+  #   return activities
 
   def canonicalize_url(self, url, activity=None, **kwargs):
     """Facebook-specific standardization of syndicated urls.
