@@ -101,7 +101,7 @@ class InstagramTest(testutil.ModelsTest):
     return TestCase.expect_requests_get(self, 'http://snarfed.org', body)
 
   def expect_indieauth_check(self, state=''):
-    TestCase.expect_requests_post(
+    return TestCase.expect_requests_post(
       self, indieauth.INDIEAUTH_URL, 'me=http://snarfed.org', data={
         'me': 'http://snarfed.org',
         'state': state,
@@ -112,11 +112,13 @@ class InstagramTest(testutil.ModelsTest):
 
   def expect_instagram_fetch(self, body=gr_test_instagram.HTML_PROFILE_COMPLETE,
                              **kwargs):
-    TestCase.expect_requests_get(self, gr_instagram.HTML_BASE_URL + 'snarfed/',
-                                 body, allow_redirects=False, **kwargs)
+    return TestCase.expect_requests_get(
+      self, gr_instagram.HTML_BASE_URL + 'snarfed/', body,
+      allow_redirects=False, **kwargs)
 
   def expect_webmention_discovery(self):
-    self.expect_requests_get('https://snarfed.org', '', stream=None, verify=False)
+    return self.expect_requests_get('https://snarfed.org', '', stream=None,
+                                    verify=False)
 
   def callback(self, state=''):
     resp = instagram.application.get_response(
@@ -213,6 +215,17 @@ class InstagramTest(testutil.ModelsTest):
     self.mox.ReplayAll()
     resp = self.callback(state='0')
     self.assertEquals('http://localhost/instagram/snarfed', resp.headers['Location'])
+
+  def test_signup_instagram_blocks_fetch(self):
+    self.expect_site_fetch()
+    self.expect_indieauth_check()
+    self.expect_instagram_fetch('', status_code=401)
+
+    self.mox.ReplayAll()
+    resp = self.callback()
+    location = urllib.unquote_plus(resp.headers['Location'])
+    self.assertTrue(location.startswith('http://localhost/#'))
+    self.assertIn('Apologies, Instagram is temporarily blocking us.', location)
 
   def test_gr_source_scrape(self):
     self.assertTrue(self.inst.gr_source.scrape)

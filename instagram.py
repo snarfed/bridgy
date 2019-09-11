@@ -140,17 +140,24 @@ class CallbackHandler(indieauth.CallbackHandler, util.Handler):
           break
       else:
         self.messages.add(
-          'No Instagram profile found. Please <a href="https://indieauth.com/setup">'
-          'add an Instagram rel-me link</a>, then try again.')
+          'No Instagram profile found. Please <a href="https://indieauth.com/setup">add an Instagram rel-me link</a>, then try again.')
         return self.redirect('/')
 
       # check that instagram profile links to web site
-      actor = gr_instagram.Instagram(scrape=True).get_actor(
-        username, ignore_rate_limit=True)
+      try:
+        actor = gr_instagram.Instagram(scrape=True).get_actor(
+          username, ignore_rate_limit=True)
+      except Exception as e:
+        code, _ = util.interpret_http_exception(e)
+        if code in Instagram.RATE_LIMIT_HTTP_CODES:
+          self.messages.add(
+            '<a href="https://github.com/snarfed/bridgy/issues/665#issuecomment-524977427">Apologies, Instagram is temporarily blocking us.</a> Please try again later!')
+          return self.redirect('/')
+        else:
+          raise
+
       if not actor:
-        self.messages.add(
-          "Couldn't find Instagram user '%s'. Please check your site's rel-me "
-          "link and your Instagram account." % username)
+        self.messages.add("Couldn't find Instagram user '%s'. Please check your site's rel-me link and your Instagram account." % username)
         return self.redirect('/')
 
       canonicalize = util.UrlCanonicalizer(redirects=False)
@@ -158,14 +165,12 @@ class CallbackHandler(indieauth.CallbackHandler, util.Handler):
       urls = [canonicalize(u) for u in microformats2.object_urls(actor)]
       logging.info('Looking for %s in %s', website, urls)
       if website not in urls:
-        self.messages.add("Please add %s to your Instagram profile's website or "
-                          'bio field and try again.' % website)
+        self.messages.add("Please add %s to your Instagram profile's website or bio field and try again." % website)
         return self.redirect('/')
 
       # check that the instagram account is public
       if not gr_source.Source.is_public(actor):
-        self.messages.add('Your Instagram account is private. '
-                          'Bridgy only supports public accounts.')
+        self.messages.add('Your Instagram account is private. Bridgy only supports public accounts.')
         return self.redirect('/')
 
     self.maybe_add_or_delete_source(Instagram, auth_entity, state, actor=actor)
