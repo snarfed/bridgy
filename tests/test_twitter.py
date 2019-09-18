@@ -102,7 +102,7 @@ class TwitterTest(testutil.ModelsTest):
       'id_str': '0', # no link
       'text': 'x foo/ y /bar/baz z',
     }, {
-      'id_str': '1', # no link
+      'id_str': '1', # yes, ignore http vs https for bar/baz
       'text': 'no link here',
       'entities': {'urls': [{'expanded_url': 'http://bar'},
                             {'expanded_url': 'https://bar/baz'},
@@ -118,7 +118,7 @@ class TwitterTest(testutil.ModelsTest):
       'id_str': '3', # no, link domain is blacklisted
       'text': 'x https://t.co/xyz/abc z',
     }, {
-      'id_str': '4', # yes
+      'id_str': '4', # no link
       'text': 'x http://bar/baz z',
     }, {
       'id_str': '5', # yes
@@ -131,12 +131,12 @@ class TwitterTest(testutil.ModelsTest):
                             {'expanded_url': 'http://other'}]},
     }]
     self.expect_urlopen(API_BASE + API_SEARCH %
-                        {'q': urllib.quote_plus('"foo" OR "bar/baz"'), 'count': 50},
+                        {'q': urllib.quote_plus('bar/baz OR foo'), 'count': 50},
                         json.dumps({'statuses': results}))
 
     self.mox.ReplayAll()
     self.assert_equals(
-      ['tag:twitter.com,2013:4', 'tag:twitter.com,2013:5', 'tag:twitter.com,2013:6'],
+      ['tag:twitter.com,2013:1', 'tag:twitter.com,2013:5', 'tag:twitter.com,2013:6'],
       [a['id'] for a in self.tw.search_for_links()])
 
   def test_search_for_links_no_urls(self):

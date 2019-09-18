@@ -90,12 +90,13 @@ class Twitter(models.Source):
     Returns:
       sequence of ActivityStreams activity dicts
     """
-    urls = set(util.fragmentless(url) for url in self.domain_urls
+    urls = set(util.schemeless(util.fragmentless(url), slashes=False)
+               for url in self.domain_urls
                if not util.in_webmention_blacklist(util.domain_from_link(url)))
     if not urls:
       return []
 
-    query = ' OR '.join('"%s"' % util.schemeless(url, slashes=False) for url in urls)
+    query = ' OR '.join(urls)
     candidates = self.get_activities(
       search_query=query, group_id=gr_source.SEARCH, etag=self.last_activities_etag,
       fetch_replies=False, fetch_likes=False, fetch_shares=False, count=50)
@@ -109,8 +110,8 @@ class Twitter(models.Source):
       tags = obj.get('tags', [])
       atts = obj.get('attachments', [])
       for url in urls:
-        if (url in obj.get('content', '') or
-            any(t.get('url', '').startswith(url) for t in tags + atts)):
+        if (any(util.schemeless(t.get('url', ''), slashes=False).startswith(url)
+                for t in tags + atts)):
           results.append(candidate)
           break
 
