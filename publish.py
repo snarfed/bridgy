@@ -41,13 +41,11 @@ import appengine_config
 from google.appengine.ext import ndb
 from granary import microformats2
 from granary import source as gr_source
-from granary.source import RSVP_VERB_TO_COLLECTION
 from oauth_dropins import facebook as oauth_facebook
 from oauth_dropins import flickr as oauth_flickr
 from oauth_dropins import github as oauth_github
 from oauth_dropins import twitter as oauth_twitter
 from oauth_dropins.webutil.handlers import JINJA_ENV
-import requests
 
 from facebook import FacebookPage
 from flickr import Flickr
@@ -404,7 +402,6 @@ class Handler(webmention.WebmentionHandler):
     # RIP Facebook.
     # https://github.com/snarfed/bridgy/issues/817
     # https://github.com/snarfed/bridgy/issues/350
-    verb = obj.get('verb')
     if isinstance(self.source, FacebookPage):
       return gr_source.creation_result(
         abort=True,

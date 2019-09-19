@@ -80,7 +80,7 @@ class ItemHandler(util.Handler):
   handle_exception = handlers.handle_exception
   source = None
 
-  VALID_ID = re.compile(r'^[\w.+:@=+<>-]+$')
+  VALID_ID = re.compile(r'^[\w.+:@=<>-]+$')
 
   def head(self, *args):
     """Return an empty 200 with no caching directives."""

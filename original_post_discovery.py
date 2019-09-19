@@ -28,7 +28,6 @@ from __future__ import unicode_literals
 
 import collections
 import itertools
-import json
 import logging
 import mf2util
 import urlparse
