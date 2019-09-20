@@ -54,11 +54,11 @@ DISQUS_API_THREAD_DETAILS_URL = 'http://disqus.com/api/3.0/threads/details.json'
 # Details in https://github.com/snarfed/bridgy/issues/278
 DISQUS_SHORTNAME_RES = (
   re.compile("""
-    (?:http://disqus.com/forums|disqus[ -_]?(?:user|short)?name)
+    (?:https?://disqus\.com/forums|disqus[ -_]?(?:user|short)?name)
     \ *[=:/]\ *['"]?
     ([^/"\' ]+)     # the actual shortname
     """, re.IGNORECASE | re.VERBOSE),
-  re.compile('http://([^./"\' ]+).disqus.com/embed.js'),
+  re.compile('https?://([^./"\' ]+)\.disqus\.com/embed\.js'),
   )
 
 class Tumblr(models.Source):
