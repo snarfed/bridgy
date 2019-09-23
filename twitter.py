@@ -24,8 +24,9 @@ import util
 
 BLOCKLIST_CACHE_TIME = 60 * 60 * 2  # 2h
 # limit size of cached block lists to try to stay under memcache 1MB value limit:
+# https://github.com/snarfed/bridgy/issues/764
 # https://cloud.google.com/appengine/docs/standard/python/memcache/#limits
-BLOCKLIST_MAX_IDS = 40000
+BLOCKLIST_MAX_IDS = 35000
 
 
 class Twitter(models.Source):
