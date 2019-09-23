@@ -6,6 +6,7 @@
 #
 # use python-future's open so that it returns contents as unicode, for interop
 # with webutil.util.load_file_lines().
+from past.builtins import basestring
 from builtins import open
 from future import standard_library
 standard_library.install_aliases()
@@ -19,8 +20,7 @@ import datetime
 import logging
 import re
 import time
-import urllib
-import urlparse
+import urllib.request, urllib.parse, urllib.error
 
 from appengine_config import DEBUG
 import bs4
@@ -170,10 +170,10 @@ def webmention_endpoint_cache_key(url):
   https://github.com/snarfed/bridgy/issues/701
   """
   domain = util.domain_from_link(url)
-  scheme = urlparse.urlparse(url).scheme
+  scheme = urllib.parse.urlparse(url).scheme
 
   parts = ['W', scheme, domain]
-  if urlparse.urlparse(url).path in ('', '/'):
+  if urllib.parse.urlparse(url).path in ('', '/'):
     parts.append('/')
 
   return ' '.join(parts)
@@ -394,10 +394,10 @@ class Handler(webutil_handlers.ModernHandler):
 
   def redirect(self, uri, **kwargs):
     """Adds self.messages to the fragment, separated by newlines."""
-    parts = list(urlparse.urlparse(uri))
+    parts = list(urllib.parse.urlparse(uri))
     if self.messages and not parts[5]:  # parts[5] is fragment
-      parts[5] = '!' + urllib.quote('\n'.join(self.messages).encode('utf-8'))
-    uri = urlparse.urlunparse(parts)
+      parts[5] = '!' + urllib.parse.quote('\n'.join(self.messages).encode('utf-8'))
+    uri = urllib.parse.urlunparse(parts)
     super(Handler, self).redirect(uri, **kwargs)
 
   def maybe_add_or_delete_source(self, source_cls, auth_entity, state, **kwargs):
@@ -468,7 +468,7 @@ class Handler(webutil_handlers.ModernHandler):
         super(Handler, self).redirect(callback.encode('utf-8'))
 
       elif source and not source.domains:
-        self.redirect('/edit-websites?' + urllib.urlencode({
+        self.redirect('/edit-websites?' + urllib.parse.urlencode({
           'source_key': source.key.urlsafe(),
         }))
 
@@ -525,7 +525,7 @@ class Handler(webutil_handlers.ModernHandler):
 
     try:
       logins_str = SimpleCookie(native_str(cookie)).get('logins')
-    except CookieError, e:
+    except CookieError as e:
       logging.warning("Bad cookie: %s", e)
       return []
 
@@ -533,7 +533,7 @@ class Handler(webutil_handlers.ModernHandler):
       return []
 
     logins = []
-    for val in set(urllib.unquote_plus(logins_str.value).decode('utf-8').split('|')):
+    for val in set(urllib.parse.unquote_plus(logins_str.value).decode('utf-8').split('|')):
       parts = val.split('?', 1)
       path = parts[0]
       if not path:
@@ -553,7 +553,7 @@ class Handler(webutil_handlers.ModernHandler):
     # cookie docs: http://curl.haxx.se/rfc/cookie_spec.html
     cookie = SimpleCookie()
     cookie['logins'] = '|'.join(sorted(set(
-      '%s?%s' % (login.path, urllib.quote_plus(login.name.encode('utf-8')))
+      '%s?%s' % (login.path, urllib.parse.quote_plus(login.name.encode('utf-8')))
       for login in logins)))
     cookie['logins']['path'] = '/'
     cookie['logins']['expires'] = now_fn() + datetime.timedelta(days=365 * 2)
@@ -658,8 +658,8 @@ def unwrap_t_umblr_com(url):
 
   Background: https://github.com/snarfed/bridgy/issues/609
   """
-  parsed = urlparse.urlparse(url)
-  return (urlparse.parse_qs(parsed.query).get('z', [''])[0]
+  parsed = urllib.parse.urlparse(url)
+  return (urllib.parse.parse_qs(parsed.query).get('z', [''])[0]
           if parsed.netloc == 't.umblr.com'
           else url)
 

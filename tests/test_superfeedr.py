@@ -2,6 +2,7 @@
 """Unit tests for superfeedr.py.
 """
 from __future__ import unicode_literals
+from __future__ import absolute_import
 
 import json
 
@@ -12,7 +13,7 @@ import mox
 import appengine_config
 from models import BlogPost
 import superfeedr
-import testutil
+from . import testutil
 import webapp2
 
 

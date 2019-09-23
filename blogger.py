@@ -22,10 +22,14 @@ curl localhost:8080/webmention/blogger \
 """
 from __future__ import unicode_literals
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import zip
 import collections
 import logging
 import re
-import urlparse
+import urllib.parse
 
 import appengine_config
 
@@ -57,7 +61,7 @@ class Blogger(models.Source):
 
   def feed_url(self):
     # https://support.google.com/blogger/answer/97933?hl=en
-    return urlparse.urljoin(self.url, '/feeds/posts/default')  # Atom
+    return urllib.parse.urljoin(self.url, '/feeds/posts/default')  # Atom
 
   def silo_url(self):
     return self.url
@@ -134,7 +138,7 @@ class Blogger(models.Source):
       client = self.auth_entity.get().api()
 
     # extract the post's path and look up its post id
-    path = urlparse.urlparse(post_url).path
+    path = urllib.parse.urlparse(post_url).path
     logging.info('Looking up post id for %s', path)
     feed = client.get_posts(self.key.id(), query=Query(path=path))
 
@@ -153,7 +157,7 @@ class Blogger(models.Source):
                  post_id, content.encode('utf-8'))
     try:
       comment = client.add_comment(self.key.id(), post_id, content)
-    except Error, e:
+    except Error as e:
       msg = str(e)
       if ('Internal error:' in msg):
         # known errors. e.g. https://github.com/snarfed/bridgy/issues/175

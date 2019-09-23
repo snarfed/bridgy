@@ -2,15 +2,18 @@
 """Unit tests for medium.py.
 """
 from __future__ import unicode_literals
+from __future__ import absolute_import
 
+from future import standard_library
+standard_library.install_aliases()
 import json
-import urllib
+import urllib.request, urllib.parse, urllib.error
 
 import appengine_config
 from oauth_dropins import medium as oauth_medium
 
 from medium import ChooseBlog, Medium, application
-import testutil
+from . import testutil
 
 
 USER = {
@@ -113,13 +116,13 @@ class MediumTest(testutil.HandlerTest):
     self.assertEquals(302, self.response.status_int)
     self.assertEquals(
       "http://localhost/#!OK, you're not signed up. Hope you reconsider!",
-      urllib.unquote_plus(self.response.headers['Location']))
+      urllib.parse.unquote_plus(self.response.headers['Location']))
 
   def test_choose_blog_no_publications(self):
     self.expect_get_publications({})
     ChooseBlog(self.request, self.response).finish(self.auth_entity)
     self.assertEquals(302, self.response.status_int)
-    loc = urllib.unquote_plus(self.response.headers['Location'])
+    loc = urllib.parse.unquote_plus(self.response.headers['Location'])
     self.assertTrue(loc.startswith('http://localhost/'), loc)
     self.assert_created_profile()
 
@@ -143,7 +146,7 @@ class MediumTest(testutil.HandlerTest):
       method='POST')
 
     self.assertEquals(302, resp.status_int)
-    loc = urllib.unquote_plus(resp.headers['Location'])
+    loc = urllib.parse.unquote_plus(resp.headers['Location'])
     self.assertTrue(loc.startswith('http://localhost/'), loc)
     self.assert_created_profile()
 
@@ -154,6 +157,6 @@ class MediumTest(testutil.HandlerTest):
       method='POST')
 
     self.assertEquals(302, resp.status_int)
-    loc = urllib.unquote_plus(resp.headers['Location'])
+    loc = urllib.parse.unquote_plus(resp.headers['Location'])
     self.assertTrue(loc.startswith('http://localhost/'), loc)
     self.assert_created_publication()

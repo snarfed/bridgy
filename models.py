@@ -2,6 +2,7 @@
 """
 from __future__ import unicode_literals
 
+from builtins import zip
 import datetime
 import json
 import logging
@@ -21,6 +22,7 @@ import superfeedr
 import util
 
 from google.appengine.ext import ndb
+from future.utils import with_metaclass
 
 VERB_TYPES = ('post', 'comment', 'like', 'react', 'repost', 'rsvp', 'tag')
 PUBLISH_TYPES = VERB_TYPES + ('preview', 'delete')
@@ -64,12 +66,11 @@ class SourceMeta(ndb.MetaModel):
     return cls
 
 
-class Source(StringIdModel):
+class Source(with_metaclass(SourceMeta, StringIdModel)):
   """A silo account, e.g. a Facebook or Google+ account.
 
   Each concrete silo class should subclass this class.
   """
-  __metaclass__ = SourceMeta
 
   # Turn off NDB instance and memcache caching.
   # https://developers.google.com/appengine/docs/python/ndb/cache

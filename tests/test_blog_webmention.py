@@ -2,9 +2,13 @@
 """Unit tests for blog_webmention.py.
 """
 from __future__ import unicode_literals
+from __future__ import absolute_import
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import range
 import json
-import urllib
+import urllib.request, urllib.parse, urllib.error
 
 import appengine_config
 
@@ -15,7 +19,7 @@ from webob import exc
 import blog_webmention
 import models
 from models import BlogWebmention
-import testutil
+from . import testutil
 import util
 
 
@@ -244,7 +248,7 @@ X http://FoO.cOm/post/1
     self.expect_mention()
     self.mox.ReplayAll()
 
-    resp = self.get_response(target=urllib.quote(
+    resp = self.get_response(target=urllib.parse.quote(
         'http://foo.com/post/1?utm_source=x&utm_medium=y'))
     self.assertEquals(200, resp.status_int, resp.body)
     bw = BlogWebmention.get_by_id('http://bar.com/reply http://foo.com/post/1')

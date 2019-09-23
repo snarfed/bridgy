@@ -2,12 +2,18 @@
 """Unit tests for app.py.
 """
 from __future__ import unicode_literals
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import zip
+from builtins import str
+from builtins import object
 from future.utils import native_str
 
 import datetime
 import json
-import urllib
-import urlparse
+import urllib.request, urllib.parse, urllib.error
+import urllib.parse
 
 from google.appengine.api import memcache
 from google.appengine.ext import ndb
@@ -19,13 +25,13 @@ import app
 import models
 from models import Publish, PublishedPage, SyndicatedPost
 import util
-import testutil
-from testutil import FakeBlogSource
+from . import testutil
+from .testutil import FakeBlogSource
 import twitter
 
 
 # this class stands in for a oauth_dropins module
-class FakeOAuthHandlerModule:
+class FakeOAuthHandlerModule(object):
   StartHandler = testutil.OAuthStartHandler
 
 
@@ -50,7 +56,7 @@ class AppTest(testutil.ModelsTest):
 
     key = self.sources[0].key.urlsafe()
     resp = app.application.get_response('/poll-now', method='POST',
-                                        body=urllib.urlencode({'key': key}))
+                                        body=urllib.parse.urlencode({'key': key}))
     self.assertEquals(302, resp.status_int)
     self.assertEquals(self.sources[0].bridgy_url(self.handler),
                       resp.headers['Location'].split('#')[0])
@@ -90,7 +96,7 @@ class AppTest(testutil.ModelsTest):
 
     key = resp.key.urlsafe()
     response = app.application.get_response(
-      '/retry', method='POST', body=urllib.urlencode({'key': key}))
+      '/retry', method='POST', body=urllib.parse.urlencode({'key': key}))
     self.assertEquals(302, response.status_int)
     self.assertEquals(source.bridgy_url(self.handler),
                       response.headers['Location'].split('#')[0])
@@ -116,7 +122,7 @@ class AppTest(testutil.ModelsTest):
   def test_retry_redirect_to(self):
     key = self.responses[0].put()
     response = app.application.get_response(
-      '/retry', method='POST', body=urllib.urlencode({
+      '/retry', method='POST', body=urllib.parse.urlencode({
         'key': key.urlsafe(),
         'redirect_to': '/foo/bar',
       }))
@@ -132,7 +138,7 @@ class AppTest(testutil.ModelsTest):
 
     key = source.key.urlsafe()
     response = app.application.get_response(
-      '/crawl-now', method='POST', body=urllib.urlencode({'key': key}))
+      '/crawl-now', method='POST', body=urllib.parse.urlencode({'key': key}))
     self.assertEquals(source.bridgy_url(self.handler),
                       response.headers['Location'].split('#')[0])
     self.assertEquals(302, response.status_int)
@@ -148,7 +154,7 @@ class AppTest(testutil.ModelsTest):
     for endpoint in '/poll-now', '/retry':
       for body in {}, {'key': self.responses[0].key.urlsafe()}:  # hasn't been stored
         resp = app.application.get_response(endpoint, method='POST',
-                                            body=urllib.urlencode(body))
+                                            body=urllib.parse.urlencode(body))
         self.assertEquals(400, resp.status_int)
 
   def test_delete_source_callback(self):
@@ -158,19 +164,19 @@ class AppTest(testutil.ModelsTest):
     key = self.sources[0].key.urlsafe()
 
     resp = app.application.get_response(
-      '/delete/start', method='POST', body=urllib.urlencode({
+      '/delete/start', method='POST', body=urllib.parse.urlencode({
         'feature': 'listen',
         'key': key,
         'callback': 'http://withknown.com/bridgy_callback',
       }))
 
-    encoded_state = urllib.quote_plus(
+    encoded_state = urllib.parse.quote_plus(
       '{"callback":"http://withknown.com/bridgy_callback",'
       '"feature":"listen","operation":"delete","source":"' + key + '"}')
 
     # when silo oauth is done, it should send us back to /SOURCE/delete/finish,
     # which would in turn redirect to the more general /delete/finish.
-    expected_auth_url = 'http://fake/auth/url?' + urllib.urlencode({
+    expected_auth_url = 'http://fake/auth/url?' + urllib.parse.urlencode({
       'redirect_uri': 'http://localhost/fake/delete/finish?state='
       + encoded_state,
     })
@@ -186,7 +192,7 @@ class AppTest(testutil.ModelsTest):
 
     self.assertEquals(302, resp.status_int)
     self.assertEquals(
-      'http://withknown.com/bridgy_callback?' + urllib.urlencode([
+      'http://withknown.com/bridgy_callback?' + urllib.parse.urlencode([
         ('result', 'success'),
         ('key', ndb.Key('FakeSource', '0123456789').urlsafe()),
         ('user', 'http://localhost/fake/0123456789')
@@ -197,19 +203,19 @@ class AppTest(testutil.ModelsTest):
 
     key = self.sources[0].key.urlsafe()
     resp = app.application.get_response(
-      '/delete/start', method='POST', body=urllib.urlencode({
+      '/delete/start', method='POST', body=urllib.parse.urlencode({
         'feature': 'listen',
         'key': key,
         'callback': 'http://withknown.com/bridgy_callback',
       }))
 
-    encoded_state = urllib.quote_plus(
+    encoded_state = urllib.parse.quote_plus(
       '{"callback":"http://withknown.com/bridgy_callback",'
       '"feature":"listen","operation":"delete","source":"' + key + '"}')
 
     # when silo oauth is done, it should send us back to /SOURCE/delete/finish,
     # which would in turn redirect to the more general /delete/finish.
-    expected_auth_url = 'http://fake/auth/url?' + urllib.urlencode({
+    expected_auth_url = 'http://fake/auth/url?' + urllib.parse.urlencode({
       'redirect_uri': 'http://localhost/fake/delete/finish?state='
       + encoded_state,
     })
@@ -223,7 +229,7 @@ class AppTest(testutil.ModelsTest):
 
     self.assertEquals(302, resp.status_int)
     self.assertEquals(
-      'http://withknown.com/bridgy_callback?' + urllib.urlencode([
+      'http://withknown.com/bridgy_callback?' + urllib.parse.urlencode([
         ('result', 'declined')
       ]), resp.headers['Location'])
 
@@ -235,15 +241,15 @@ class AppTest(testutil.ModelsTest):
     self.mox.ReplayAll()
 
     resp = app.application.get_response(
-      '/delete/start', method='POST', body=urllib.urlencode({
+      '/delete/start', method='POST', body=urllib.parse.urlencode({
         'feature': 'listen',
         'key': self.sources[0].key.urlsafe(),
       }))
     self.assertEquals(302, resp.status_int)
-    location = urlparse.urlparse(resp.headers['Location'])
+    location = urllib.parse.urlparse(resp.headers['Location'])
     self.assertEquals('/fake/0123456789', location.path)
     self.assertEquals('!FakeSource API error 504: Connection closed unexpectedly...',
-                      urllib.unquote(location.fragment))
+                      urllib.parse.unquote(location.fragment))
 
   def test_delete_removes_from_logins_cookie(self):
     cookie = ('logins="/fake/%s?Fake%%20User|/other/1?bob"; '
@@ -279,7 +285,7 @@ class AppTest(testutil.ModelsTest):
 
     for id in 'FooBar', 'Snoøpy Barrett', 'foox.com':
       resp = app.application.get_response(
-        native_str('/fake/%s' % urllib.quote(id.encode('utf-8'))))
+        native_str('/fake/%s' % urllib.parse.quote(id.encode('utf-8'))))
       self.assertEquals(301, resp.status_int)
       self.assertEquals('http://localhost/fake/%s' % self.sources[0].key.id(),
                         resp.headers['Location'])
@@ -488,14 +494,14 @@ class AppTest(testutil.ModelsTest):
     source = self.sources[0]
     self.assertNotIn('foo.com', source.domains)
     resp = app.application.get_response('/edit-websites', method='POST',
-                                        body=urllib.urlencode({
+                                        body=urllib.parse.urlencode({
       'source_key': source.key.urlsafe(),
       'add': 'http://foo.com/',
     }))
     self.assertEquals(302, resp.status_int)
     self.assertEquals('http://localhost/edit-websites?source_key=%s#!%s' % (
       (source.key.urlsafe(),
-       urllib.quote('Added <a href="http://foo.com/">foo.com</a>.'))),
+       urllib.parse.quote('Added <a href="http://foo.com/">foo.com</a>.'))),
       resp.headers['Location'])
 
     source = source.key.get()
@@ -509,14 +515,14 @@ class AppTest(testutil.ModelsTest):
     source.put()
 
     resp = app.application.get_response('/edit-websites', method='POST',
-                                        body=urllib.urlencode({
+                                        body=urllib.parse.urlencode({
       'source_key': source.key.urlsafe(),
       'add': 'http://foo.com/',
     }))
     self.assertEquals(302, resp.status_int)
     self.assertEquals('http://localhost/edit-websites?source_key=%s#!%s' % (
       (source.key.urlsafe(),
-       urllib.quote('<a href="http://foo.com/">foo.com</a> already exists.'))),
+       urllib.parse.quote('<a href="http://foo.com/">foo.com</a> already exists.'))),
       resp.headers['Location'])
 
     source = source.key.get()
@@ -526,14 +532,14 @@ class AppTest(testutil.ModelsTest):
   def test_edit_web_sites_add_bad(self):
     source = self.sources[0]
     resp = app.application.get_response('/edit-websites', method='POST',
-                                        body=urllib.urlencode({
+                                        body=urllib.parse.urlencode({
       'source_key': source.key.urlsafe(),
       'add': 'http://facebook.com/',
     }))
     self.assertEquals(302, resp.status_int)
     self.assertEquals('http://localhost/edit-websites?source_key=%s#!%s' % (
       (source.key.urlsafe(),
-       urllib.quote('<a href="http://facebook.com/">facebook.com</a> doesn\'t look like your web site. Try again?'))),
+       urllib.parse.quote('<a href="http://facebook.com/">facebook.com</a> doesn\'t look like your web site. Try again?'))),
       resp.headers['Location'])
 
     source = source.key.get()
@@ -547,14 +553,14 @@ class AppTest(testutil.ModelsTest):
     source.put()
 
     resp = app.application.get_response('/edit-websites', method='POST',
-                                        body=urllib.urlencode({
+                                        body=urllib.parse.urlencode({
       'source_key': source.key.urlsafe(),
       'delete': 'https://bar',
     }))
     self.assertEquals(302, resp.status_int)
     self.assertEquals('http://localhost/edit-websites?source_key=%s#!%s' % (
       (source.key.urlsafe(),
-       urllib.quote('Removed <a href="https://bar">bar</a>.'))),
+       urllib.parse.quote('Removed <a href="https://bar">bar</a>.'))),
       resp.headers['Location'])
 
     source = source.key.get()
@@ -568,14 +574,14 @@ class AppTest(testutil.ModelsTest):
     source.put()
 
     resp = app.application.get_response('/edit-websites', method='POST',
-                                        body=urllib.urlencode({
+                                        body=urllib.parse.urlencode({
       'source_key': source.key.urlsafe(),
       'delete': 'https://foo.com/baz',
     }))
     self.assertEquals(302, resp.status_int)
     self.assertEquals('http://localhost/edit-websites?source_key=%s#!%s' % (
       (source.key.urlsafe(),
-       urllib.quote('Removed <a href="https://foo.com/baz">foo.com/baz</a>.'))),
+       urllib.parse.quote('Removed <a href="https://foo.com/baz">foo.com/baz</a>.'))),
       resp.headers['Location'])
 
     source = source.key.get()
@@ -594,7 +600,7 @@ class AppTest(testutil.ModelsTest):
         {'source_key': source_key, 'delete': 'http://missing'},
     ):
       resp = app.application.get_response('/edit-websites', method='POST',
-                                          body=urllib.urlencode(data))
+                                          body=urllib.parse.urlencode(data))
       self.assertEquals(400, resp.status_int)
 
 
@@ -610,11 +616,11 @@ class DiscoverTest(testutil.ModelsTest):
       resp = app.application.get_response(
         '/discover?source_key=%s&url=%s' % (self.source.key.urlsafe(), url),
         method='POST')
-      location = urlparse.urlparse(resp.headers['Location'])
-      detail = ' '.join((url, str(resp.status_int), `location`, `resp.body`))
+      location = urllib.parse.urlparse(resp.headers['Location'])
+      detail = ' '.join((url, str(resp.status_int), repr(location), repr(resp.body)))
       self.assertEquals(302, resp.status_int, detail)
       self.assertEqual(self.source.bridgy_path(), location.path, detail)
-      self.assertEqual('!' + expected_message, urllib.unquote(location.fragment),
+      self.assertEqual('!' + expected_message, urllib.parse.unquote(location.fragment),
                        detail)
 
   def check_fail(self, body, **kwargs):

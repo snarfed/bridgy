@@ -18,10 +18,12 @@ Example comment ID and links:
 """
 from __future__ import unicode_literals
 
+from future import standard_library
+standard_library.install_aliases()
 import datetime
 import json
 import logging
-import urlparse
+import urllib.parse
 
 import appengine_config
 from granary import instagram as gr_instagram
@@ -136,7 +138,7 @@ class CallbackHandler(indieauth.CallbackHandler, util.Handler):
       logging.info('rel-mes: %s', urls)
       for url in util.trim_nulls(urls):
         if util.domain_from_link(url) == gr_instagram.Instagram.DOMAIN:
-          username = urlparse.urlparse(url).path.strip('/')
+          username = urllib.parse.urlparse(url).path.strip('/')
           break
       else:
         self.messages.add(

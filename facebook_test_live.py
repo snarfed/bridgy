@@ -26,11 +26,13 @@ https://developers.facebook.com/docs/apps/test-users
 """
 from __future__ import unicode_literals
 
+from future import standard_library
+standard_library.install_aliases()
 import logging
 import sys
 import unittest
-import urllib
-import urlparse
+import urllib.request, urllib.parse, urllib.error
+import urllib.parse
 
 from requests import adapters, sessions
 orig_HTTPAdapter = adapters.HTTPAdapter
@@ -65,7 +67,7 @@ class FacebookTestLive(testutil.HandlerTest):
     self.assertEqual(302, resp.status_int)
     to = resp.headers['Location']
     self.assertTrue(to.startswith('https://www.facebook.com/v2.10/dialog/oauth?'), to)
-    params = urlparse.parse_qs(urlparse.urlparse(to).query)
+    params = urllib.parse.parse_qs(urllib.parse.urlparse(to).query)
     redirect = params['redirect_uri'][0]
     state = params['state'][0]
     self.dot()
@@ -75,7 +77,7 @@ class FacebookTestLive(testutil.HandlerTest):
     self.expect_urlopen(oauth_facebook.GET_ACCESS_TOKEN_URL % {
         'client_id': appengine_config.FACEBOOK_APP_ID,
         'client_secret': appengine_config.FACEBOOK_APP_SECRET,
-        'redirect_uri': urllib.quote_plus(redirect),
+        'redirect_uri': urllib.parse.quote_plus(redirect),
         'auth_code': 'fake_code',
       },
       '{"access_token": "%s"}' % appengine_config.FACEBOOK_TEST_USER_TOKEN,
@@ -85,7 +87,7 @@ class FacebookTestLive(testutil.HandlerTest):
     resp = facebook.application.get_response(
       util.add_query_params(redirect, {
         'code': 'fake_code',
-        'state': urllib.unquote(state),
+        'state': urllib.parse.unquote(state),
       }))
     self.assertEqual(302, resp.status_int)
     source = facebook.FacebookPage.get_by_id(TEST_USER_ID)
@@ -143,13 +145,13 @@ class FacebookTestLive(testutil.HandlerTest):
     data = {input['name']: input['value'] for input in form.find_all('input')
             if input.get('name') and input.get('value')}
     return facebook.application.get_response(
-      form['action'], method=form['method'].upper(), body=urllib.urlencode(data))
+      form['action'], method=form['method'].upper(), body=urllib.parse.urlencode(data))
 
   @staticmethod
   def run_task(task):
     """Runs a task queue task."""
     return tasks.application.get_response(
-      task['url'], method='POST', body=urllib.urlencode(testutil.get_task_params(task)))
+      task['url'], method='POST', body=urllib.parse.urlencode(testutil.get_task_params(task)))
 
 
 if __name__ == '__main__':

@@ -1,12 +1,15 @@
 # coding=utf-8
 """Unit tests for util.py."""
 from __future__ import unicode_literals
+from __future__ import absolute_import
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import next, str
 import datetime
 import json
 import time
-import urllib
-import urlparse
+import urllib.request, urllib.parse, urllib.error
 
 from appengine_config import HTTP_TIMEOUT
 
@@ -16,8 +19,8 @@ import webapp2
 from webmentiontools import send
 from webob import exc
 
-import testutil
-from testutil import FakeAuthEntity, FakeSource
+from . import testutil
+from .testutil import FakeAuthEntity, FakeSource
 from twitter import Twitter
 import util
 from util import Login
@@ -42,12 +45,12 @@ class UtilTest(testutil.ModelsTest):
     self.assertEquals(['publish'], src.features)
 
     self.assertEquals(302, self.response.status_int)
-    parsed = urlparse.urlparse(self.response.headers['Location'])
+    parsed = urllib.parse.urlparse(self.response.headers['Location'])
     self.assertIn(UNICODE_STR,
-                  urllib.unquote_plus(str(parsed.fragment)).decode('utf-8'))
+                  urllib.parse.unquote_plus(str(parsed.fragment)).decode('utf-8'))
     self.assertEquals(
       'logins="/fake/%s?%s"; expires=2001-12-31 00:00:00; Path=/' %
-        (src.key.id(), urllib.quote_plus(UNICODE_STR.encode('utf-8'))),
+        (src.key.id(), urllib.parse.quote_plus(UNICODE_STR.encode('utf-8'))),
       self.response.headers['Set-Cookie'])
 
     for feature in None, '':
@@ -223,7 +226,7 @@ class UtilTest(testutil.ModelsTest):
     """Run through an authorization back and forth and make sure that
     the external callback makes it all the way through.
     """
-    encoded_state = urllib.quote_plus(
+    encoded_state = urllib.parse.quote_plus(
       '{"callback":"http://withknown.com/bridgy_callback",'
       '"feature":"listen","operation":"add"}')
 
@@ -240,12 +243,12 @@ class UtilTest(testutil.ModelsTest):
     self.mox.ReplayAll()
 
     resp = application.get_response(
-      '/fakesource/start', method='POST', body=urllib.urlencode({
+      '/fakesource/start', method='POST', body=urllib.parse.urlencode({
         'feature': 'listen',
         'callback': 'http://withknown.com/bridgy_callback',
       }))
 
-    expected_auth_url = 'http://fake/auth/url?' + urllib.urlencode({
+    expected_auth_url = 'http://fake/auth/url?' + urllib.parse.urlencode({
       'redirect_uri': 'http://localhost/fakesource/add?state='
       + encoded_state,
     })
@@ -259,7 +262,7 @@ class UtilTest(testutil.ModelsTest):
 
     self.assert_equals(302, resp.status_code)
     self.assert_equals(
-      'http://withknown.com/bridgy_callback?' + urllib.urlencode([
+      'http://withknown.com/bridgy_callback?' + urllib.parse.urlencode([
         ('result', 'success'),
         ('key', ndb.Key('FakeSource', '0123456789').urlsafe()),
         ('user', 'http://localhost/fake/0123456789')]),
@@ -277,7 +280,7 @@ class UtilTest(testutil.ModelsTest):
     """Run through an authorization back and forth with a custom user url
     provided to the auth mechanism
     """
-    encoded_state = urllib.quote_plus(
+    encoded_state = urllib.parse.quote_plus(
       '{"callback":"http://withknown.com/bridgy_callback","feature":"listen",'
       '"operation":"add","user_url":"https://kylewm.com"}')
 
@@ -294,13 +297,13 @@ class UtilTest(testutil.ModelsTest):
     self.mox.ReplayAll()
 
     resp = application.get_response(
-      '/fakesource/start', method='POST', body=urllib.urlencode({
+      '/fakesource/start', method='POST', body=native_str(urllib.parse.urlencode({
         'feature': 'listen',
         'callback': 'http://withknown.com/bridgy_callback',
         'user_url': 'https://kylewm.com',
-      }))
+      })))#.encode('utf-8'))
 
-    expected_auth_url = 'http://fake/auth/url?' + urllib.urlencode({
+    expected_auth_url = 'http://fake/auth/url?' + urllib.parse.urlencode({
       'redirect_uri': 'http://localhost/fakesource/add?state='
       + encoded_state,
     })
@@ -314,7 +317,7 @@ class UtilTest(testutil.ModelsTest):
 
     self.assert_equals(302, resp.status_code)
     self.assert_equals(
-      'http://withknown.com/bridgy_callback?' + urllib.urlencode([
+      'http://withknown.com/bridgy_callback?' + urllib.parse.urlencode([
         ('result', 'success'),
         ('key', ndb.Key('FakeSource', '0123456789').urlsafe()),
         ('user', 'http://localhost/fake/0123456789')]),
@@ -336,7 +339,7 @@ class UtilTest(testutil.ModelsTest):
     decline and make sure that the callback makes it all the way
     through.
     """
-    encoded_state = urllib.quote_plus(
+    encoded_state = urllib.parse.quote_plus(
       '{"callback":"http://withknown.com/bridgy_callback",'
       '"feature":"publish","operation":"add"}')
 
@@ -346,12 +349,12 @@ class UtilTest(testutil.ModelsTest):
     ])
 
     resp = application.get_response(
-      '/fakesource/start', method='POST', body=urllib.urlencode({
+      '/fakesource/start', method='POST', body=urllib.parse.urlencode({
         'feature': 'publish',
         'callback': 'http://withknown.com/bridgy_callback',
       }))
 
-    expected_auth_url = 'http://fake/auth/url?' + urllib.urlencode({
+    expected_auth_url = 'http://fake/auth/url?' + urllib.parse.urlencode({
       'redirect_uri': 'http://localhost/fakesource/add?state='
       + encoded_state,
     })

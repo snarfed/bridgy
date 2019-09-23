@@ -2,18 +2,19 @@
 """Unit tests for wordpress_rest.py.
 """
 from __future__ import unicode_literals
+from __future__ import absolute_import
+from builtins import next
 from future import standard_library
 standard_library.install_aliases()
 import urllib.parse
 
 import json
-import urllib
-import urllib2
+import urllib.request, urllib.parse, urllib.error
 
 import appengine_config
 from oauth_dropins.wordpress_rest import WordPressAuth
 
-import testutil
+from . import testutil
 from wordpress_rest import WordPress, AddWordPress
 
 
@@ -87,7 +88,7 @@ class WordPressTest(testutil.HandlerTest):
       'https://public-api.wordpress.com/rest/v1/sites/123?pretty=true',
       'my resp body', status=402)
     self.mox.ReplayAll()
-    self.assertRaises(urllib2.HTTPError, WordPress.new, self.handler,
+    self.assertRaises(urllib.error.HTTPError, WordPress.new, self.handler,
                       auth_entity=self.auth_entity)
 
   def test_site_lookup_api_disabled_error_start(self):
@@ -167,5 +168,5 @@ class WordPressTest(testutil.HandlerTest):
   def test_create_comment_returns_non_json(self):
     self.expect_new_reply(status=403, response='Forbidden')
 
-    self.assertRaises(urllib2.HTTPError, self.wp.create_comment,
+    self.assertRaises(urllib.error.HTTPError, self.wp.create_comment,
                       'http://primary/post/456', 'name', 'http://who', 'foo bar')

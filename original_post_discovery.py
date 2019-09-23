@@ -26,11 +26,16 @@ lookups in the following primary cases:
 """
 from __future__ import unicode_literals
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import next
+from builtins import range
+from past.builtins import basestring
 import collections
 import itertools
 import logging
 import mf2util
-import urlparse
+import urllib.parse
 import util
 
 from granary import microformats2
@@ -293,7 +298,7 @@ def _process_author(source, author_url, refetch=False, store_blanks=True):
     if not feed_url:
       continue
 
-    feed_url = urlparse.urljoin(author_url, feed_url)
+    feed_url = urllib.parse.urljoin(author_url, feed_url)
     feed_type = rel_feed_node.get('type')
     if feed_type and feed_type != 'text/html':
       feed_ok = False
@@ -361,18 +366,18 @@ def _process_author(source, author_url, refetch=False, store_blanks=True):
     SyndicatedPost.query(
       SyndicatedPost.original.IN(permalinks_list[i:i + MAX_ALLOWABLE_QUERIES]),
       ancestor=source.key)
-    for i in xrange(0, len(permalinks_list), MAX_ALLOWABLE_QUERIES))
+    for i in range(0, len(permalinks_list), MAX_ALLOWABLE_QUERIES))
   preexisting = {}
   for r in preexisting_list:
     preexisting.setdefault(r.original, []).append(r)
 
   results = {}
-  for permalink, entry in permalink_to_entry.iteritems():
+  for permalink, entry in permalink_to_entry.items():
     logging.debug('processing permalink: %s', permalink)
     new_results = process_entry(
       source, permalink, entry, refetch, preexisting.get(permalink, []),
       store_blanks=store_blanks)
-    for key, value in new_results.iteritems():
+    for key, value in new_results.items():
       results.setdefault(key, []).extend(value)
 
   if source.updates is not None and results:
@@ -537,7 +542,7 @@ def process_entry(source, permalink, feed_entry, refetch, preexisting,
 
   # only return results that are not in the preexisting list
   new_results = {}
-  for syndurl, syndposts_for_url in results.iteritems():
+  for syndurl, syndposts_for_url in results.items():
     for syndpost in syndposts_for_url:
       if syndpost not in preexisting:
         new_results.setdefault(syndurl, []).append(syndpost)

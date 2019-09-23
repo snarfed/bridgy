@@ -1,7 +1,11 @@
 """Cron jobs. Currently just minor cleanup tasks.
 """
 from __future__ import unicode_literals
+from __future__ import division
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import range
 import datetime
 import itertools
 import json
@@ -13,7 +17,7 @@ from google.appengine.api import app_identity
 from google.appengine.api import urlfetch
 from google.appengine.ext import ndb
 from google.appengine.ext.ndb import metadata
-import httplib
+import http.client
 
 import models
 from models import Source
@@ -55,15 +59,15 @@ class UpdateTwitterPictures(webapp2.RequestHandler):
       return
 
     # just auth as me or the first user. TODO: use app-only auth instead.
-    auther = sources.get('schnarfed') or sources.values()[0]
-    usernames = sources.keys()
+    auther = sources.get('schnarfed') or list(sources.values())[0]
+    usernames = list(sources.keys())
     users = []
     for i in range(0, len(usernames), TWITTER_USERS_PER_LOOKUP):
       username_batch = usernames[i:i + TWITTER_USERS_PER_LOOKUP]
       url = TWITTER_API_USER_LOOKUP % ','.join(username_batch)
       try:
         users += auther.gr_source.urlopen(url)
-      except Exception, e:
+      except Exception as e:
         code, body = util.interpret_http_exception(e)
         if not (code == '404' and len(username_batch) == 1):
           # 404 for a single user means they deleted their account. otherwise...
@@ -112,13 +116,13 @@ class UpdateInstagramPictures(UpdatePictures):
   SOURCE_CLS = Instagram
   FREQUENCY = datetime.timedelta(hours=1)
   WEEK = datetime.timedelta(days=7)
-  BATCH = float(WEEK.total_seconds()) / FREQUENCY.total_seconds()
+  BATCH = float(WEEK.total_seconds()), FREQUENCY.total_seconds()
 
   def source_query(self):
     now = util.now_fn()
     since_sun = (now.weekday() * datetime.timedelta(days=1) +
                  (now - now.replace(hour=0, minute=0, second=0)))
-    batch = float(Instagram.query().count()) / self.BATCH
+    batch = float(Instagram.query().count()), self.BATCH
     offset = batch * float(since_sun.total_seconds()) / self.FREQUENCY.total_seconds()
     return Instagram.query().fetch(offset=int(math.floor(offset)),
                                    limit=int(math.ceil(batch)))
@@ -188,7 +192,7 @@ class DatastoreBackup(webapp2.RequestHandler):
           payload=json.dumps(request),
           method=urlfetch.POST,
           headers=headers)
-      if result.status_code == httplib.OK:
+      if result.status_code == http.client.OK:
         logging.info(result.content)
       else:
         logging.error(result.content)

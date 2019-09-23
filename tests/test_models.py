@@ -2,7 +2,9 @@
 """Unit tests for models.py.
 """
 from __future__ import unicode_literals
+from __future__ import absolute_import
 
+from builtins import range, str
 import datetime
 import json
 from unittest import skip
@@ -19,8 +21,8 @@ import instagram
 import models
 from models import BlogPost, Response, Source, SyndicatedPost
 import superfeedr
-import testutil
-from testutil import FakeGrSource, FakeSource
+from . import testutil
+from .testutil import FakeGrSource, FakeSource
 import tumblr
 import twitter
 import util
@@ -347,9 +349,9 @@ class SourceTest(testutil.HandlerTest):
     auth_entity = testutil.FakeAuthEntity(id='x', user_json=json.dumps({
           'url': 'http://foo.org',
           'urls': [{'value': u} for u in
-                   'http://bar.com', 'http://t.co/x', 'http://baz',
+                   ('http://bar.com', 'http://t.co/x', 'http://baz',
                    # utm_* query params should be stripped
-                   'https://baj/biff?utm_campaign=x&utm_source=y'],
+                   'https://baj/biff?utm_campaign=x&utm_source=y')],
           }))
     auth_entity.put()
     source = FakeSource.create_new(self.handler, auth_entity=auth_entity)

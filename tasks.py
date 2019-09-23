@@ -2,7 +2,10 @@
 """Task queue handlers.
 """
 from __future__ import unicode_literals
+from __future__ import division
 
+from builtins import str
+from past.utils import old_div
 import datetime
 import gc
 import json
@@ -93,7 +96,7 @@ class Poll(webapp2.RequestHandler):
     source.updates = {}
     try:
       self.poll(source)
-    except Exception, e:
+    except Exception as e:
       source.updates['poll_status'] = 'error'
       code, body = util.interpret_http_exception(e)
       if code in source.DISABLE_HTTP_CODES or isinstance(e, models.DisableSource):
@@ -112,7 +115,7 @@ class Poll(webapp2.RequestHandler):
       elif code in source.RATE_LIMIT_HTTP_CODES:
         logging.info('Rate limited. Marking as error and finishing. %s', e)
         source.updates['rate_limited'] = True
-      elif ((code and int(code) / 100 == 5) or
+      elif ((code and int(code) // 100 == 5) or
             code in source.TRANSIENT_ERROR_HTTP_CODES or
             util.is_connection_failure(e)):
         logging.error('API call failed. Marking as error and finishing. %s: %s\n%s',
@@ -218,7 +221,7 @@ class Poll(webapp2.RequestHandler):
                      relationships)
         try:
           self.repropagate_old_responses(source, relationships)
-        except BaseException, e:
+        except BaseException as e:
           if (isinstance(e, (datastore_errors.BadRequestError,
                              datastore_errors.Timeout)) or
               util.is_connection_failure(e)):
@@ -518,11 +521,11 @@ class Discover(Poll):
         if parsed:
           util.add_discover_task(source, parsed[1])
 
-    except Exception, e:
+    except Exception as e:
       code, body = util.interpret_http_exception(e)
       if (code and (code in source.RATE_LIMIT_HTTP_CODES or
                     code in ('400', '404') or
-                    int(code) / 100 == 5)
+                    int(code) // 100 == 5)
             or util.is_connection_failure(e)):
         logging.error('API call failed; giving up. %s: %s\n%s', code, body, e)
         self.abort(util.ERROR_HTTP_RETURN_CODE)
@@ -616,7 +619,7 @@ class SendWebmentions(webapp2.RequestHandler):
         try:
           if not mention.send(timeout=999, headers=headers):
             error = mention.error
-        except BaseException, e:
+        except BaseException as e:
           logging.info('', exc_info=True)
           error = getattr(mention, 'error')
           if not error:

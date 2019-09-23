@@ -2,10 +2,14 @@
 """Unit tests for blogger.py.
 """
 from __future__ import unicode_literals
+from __future__ import absolute_import
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import next
 import mox
-import urllib
-import urlparse
+import urllib.request, urllib.parse, urllib.error
+import urllib.parse
 
 import appengine_config
 
@@ -17,7 +21,7 @@ from oauth_dropins.blogger_v2 import BloggerV2Auth
 import blogger
 from blogger import Blogger
 import util
-import testutil
+from . import testutil
 
 
 class BloggerTest(testutil.HandlerTest):
@@ -62,9 +66,9 @@ class BloggerTest(testutil.HandlerTest):
     """
     resp = blogger.application.get_response('/blogger/oauth_handler')
     self.assertEquals(302, resp.status_int)
-    location = urlparse.urlparse(resp.headers['Location'])
+    location = urllib.parse.urlparse(resp.headers['Location'])
     self.assertEquals('/', location.path)
-    self.assertIn("Couldn't fetch your blogs", urllib.unquote(location.fragment))
+    self.assertIn("Couldn't fetch your blogs", urllib.parse.unquote(location.fragment))
     self.assertEquals(0, BloggerV2Auth.query().count())
     self.assertEquals(0, Blogger.query().count())
 
@@ -76,9 +80,9 @@ class BloggerTest(testutil.HandlerTest):
     resp = blogger.application.get_response(
       '/blogger/oauth_handler?auth_entity=%s' % self.auth_entity.key.urlsafe())
     self.assertEquals(302, resp.status_int)
-    location = urlparse.urlparse(resp.headers['Location'])
+    location = urllib.parse.urlparse(resp.headers['Location'])
     self.assertEquals('/', location.path)
-    self.assertIn("Couldn't fetch your blogs", urllib.unquote(location.fragment))
+    self.assertIn("Couldn't fetch your blogs", urllib.parse.unquote(location.fragment))
 
   def test_new_no_blogs(self):
     self.auth_entity.blog_hostnames = []

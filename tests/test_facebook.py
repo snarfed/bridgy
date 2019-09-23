@@ -1,14 +1,17 @@
 """Unit tests for facebook.py.
 """
 from __future__ import unicode_literals
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from past.builtins import basestring
 from future.types.newstr import newstr
 
 import copy
 import logging
 import json
 from unittest import skip
-import urllib
-import urllib2
+import urllib.error, urllib.parse, urllib.request
 
 import appengine_config
 
@@ -28,7 +31,7 @@ from facebook import FacebookPage
 import models
 import publish
 import tasks
-import testutil
+from . import testutil
 import util
 
 
@@ -84,7 +87,7 @@ class FacebookPageTest(testutil.ModelsTest):
 
   def poll(self):
     resp = tasks.application.get_response(
-      '/_ah/queue/poll', method='POST', body=urllib.urlencode({
+      '/_ah/queue/poll', method='POST', body=urllib.parse.urlencode({
           'source_key': self.fb.key.urlsafe(),
           'last_polled': self.fb.key.get().last_polled.strftime(
             util.POLL_TASK_DATETIME_FORMAT),
@@ -104,7 +107,7 @@ class FacebookPageTest(testutil.ModelsTest):
 
   def test_add_user_declines(self):
     resp = facebook.application.get_response(
-      '/facebook/oauth_handler?' + urllib.urlencode({
+      '/facebook/oauth_handler?' + urllib.parse.urlencode({
         'state': '{"feature":"listen","operation":"add"}',
         'error': 'access_denied',
         'error_code': '200',
@@ -114,7 +117,7 @@ class FacebookPageTest(testutil.ModelsTest):
 
     self.assert_equals(302, resp.status_code)
     self.assert_equals(
-      'http://localhost/#!' + urllib.quote(
+      'http://localhost/#!' + urllib.parse.quote(
         "OK, you're not signed up. Hope you reconsider!"),
       resp.headers['location'])
     self.assertNotIn('Set-Cookie', resp.headers)
@@ -259,7 +262,7 @@ class FacebookPageTest(testutil.ModelsTest):
       'access_token': 'my_app_id|my_app_secret',
       }
     self.expect_urlopen('https://graph.facebook.com/v2.10/212038/notifications', '',
-                        data=urllib.urlencode(params))
+                        data=urllib.parse.urlencode(params))
     self.mox.ReplayAll()
 
     self.assertRaises(models.DisableSource, self.fb.get_activities)
@@ -304,7 +307,7 @@ class FacebookPageTest(testutil.ModelsTest):
     self.expect_api_call(API_ME_POSTS, msg, status=400)
     self.mox.ReplayAll()
 
-    with self.assertRaises(urllib2.HTTPError) as cm:
+    with self.assertRaises(urllib.error.HTTPError) as cm:
       self.fb.get_activities()
 
     self.assertEquals(400, cm.exception.code)
@@ -315,7 +318,7 @@ class FacebookPageTest(testutil.ModelsTest):
     self.expect_api_call(API_ME_POSTS, 'not json', status=400)
     self.mox.ReplayAll()
 
-    with self.assertRaises(urllib2.HTTPError) as cm:
+    with self.assertRaises(urllib.error.HTTPError) as cm:
       self.fb.get_activities()
 
     self.assertEquals(400, cm.exception.code)
@@ -598,12 +601,12 @@ class FacebookPageTest(testutil.ModelsTest):
           (facebook.LISTEN_SCOPES if 'listen' in feature else []) +
           (facebook.PUBLISH_SCOPES if 'publish' in feature else [])))),
         'client_id': appengine_config.FACEBOOK_APP_ID,
-        'redirect_uri': urllib.quote_plus('http://localhost/facebook/oauth_handler'),
-        'state': urllib.quote_plus('{"feature":"' + feature + '","operation":"add"}'),
+        'redirect_uri': urllib.parse.quote_plus('http://localhost/facebook/oauth_handler'),
+        'state': urllib.parse.quote_plus('{"feature":"' + feature + '","operation":"add"}'),
       }
 
       resp = facebook.application.get_response(
-        '/facebook/start', method='POST', body=urllib.urlencode({
+        '/facebook/start', method='POST', body=urllib.parse.urlencode({
           'feature': feature,
         }))
 
@@ -619,18 +622,18 @@ class FacebookPageTest(testutil.ModelsTest):
     self.mox.ReplayAll()
 
     key = self.page.key.urlsafe()
-    encoded_state = urllib.quote_plus(
+    encoded_state = urllib.parse.quote_plus(
       '{"feature":"listen","operation":"delete","source":"' + key + '"}')
 
     expected_auth_url = oauth_facebook.GET_AUTH_CODE_URL % {
       'scope': '',
       'client_id': appengine_config.FACEBOOK_APP_ID,
-      'redirect_uri': urllib.quote_plus('http://localhost/facebook/delete/finish'),
+      'redirect_uri': urllib.parse.quote_plus('http://localhost/facebook/delete/finish'),
       'state': encoded_state,
     }
 
     resp = app.application.get_response(
-      '/delete/start', method='POST', body=urllib.urlencode({
+      '/delete/start', method='POST', body=urllib.parse.urlencode({
         'feature': 'listen',
         'key': key,
       }))
@@ -734,14 +737,14 @@ my message
                for url in input_urls)
 
     self.expect_requests_get('http://foo.com/bar', post_html)
-    self.expect_api_call(API_PUBLISH_POST, {'id': '123_456'}, data=urllib.urlencode({
+    self.expect_api_call(API_PUBLISH_POST, {'id': '123_456'}, data=urllib.parse.urlencode({
         'message': 'my message\n\n(Originally published at: http://foo.com/bar)',
         'tags': '444,555,666,777',
       }))
     self.mox.ReplayAll()
 
     resp = publish.application.get_response(
-      '/publish/webmention', method='POST', body=urllib.urlencode({
+      '/publish/webmention', method='POST', body=urllib.parse.urlencode({
         'source': 'http://foo.com/bar',
         'target': 'https://brid.gy/publish/facebook',
         'source_key': self.fb.key.urlsafe(),

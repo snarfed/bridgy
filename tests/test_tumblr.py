@@ -2,7 +2,9 @@
 """Unit tests for tumblr.py.
 """
 from __future__ import unicode_literals
+from __future__ import absolute_import
 
+from builtins import next
 import json
 
 import mox
@@ -12,7 +14,7 @@ import appengine_config
 from oauth_dropins.tumblr import TumblrAuth
 import tumblr
 from tumblr import Tumblr
-import testutil
+from . import testutil
 
 
 class TumblrTest(testutil.HandlerTest):

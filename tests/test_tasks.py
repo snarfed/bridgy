@@ -2,19 +2,22 @@
 """Unit tests for tasks.py.
 """
 from __future__ import unicode_literals
+from __future__ import absolute_import
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import zip
 import copy
 import datetime
-import httplib
+import http.client
 import json
 import logging
 import mox
 import socket
 import string
-import StringIO
+import io
 import time
-import urllib
-import urllib2
+import urllib.request, urllib.parse, urllib.error
 
 import apiclient
 from google.appengine.api import datastore_errors
@@ -33,8 +36,8 @@ from models import Response, SyndicatedPost
 from twitter import Twitter
 import tasks
 from tasks import PropagateResponse
-import testutil
-from testutil import FakeSource, FakeGrSource, NOW
+from . import testutil
+from .testutil import FakeSource, FakeGrSource, NOW
 import util
 from util import ERROR_HTTP_RETURN_CODE
 
@@ -52,7 +55,7 @@ class TaskQueueTest(testutil.ModelsTest):
       expected_status: integer, the expected HTTP return code
     """
     resp = tasks.application.get_response(self.post_url, method='POST',
-                                          body=urllib.urlencode(params),
+                                          body=urllib.parse.urlencode(params),
                                           **kwargs)
     self.assertEqual(expected_status, resp.status_int)
 
@@ -187,7 +190,7 @@ class PollTest(TaskQueueTest):
   def test_poll_silo_500(self):
     """If a silo HTTP request 500s, we should quietly retry the task."""
     self.expect_get_activities().AndRaise(
-      urllib2.HTTPError('url', 505, 'msg', {}, None))
+      urllib.error.HTTPError('url', 505, 'msg', {}, None))
     self.mox.ReplayAll()
 
     self.post_task(expected_status=ERROR_HTTP_RETURN_CODE)
@@ -196,7 +199,7 @@ class PollTest(TaskQueueTest):
   def test_poll_silo_deadlines(self):
     """If a silo HTTP request deadlines, we should quietly retry the task."""
     self.expect_get_activities().AndRaise(
-      urllib2.URLError(socket.gaierror('deadlined')))
+      urllib.error.URLError(socket.gaierror('deadlined')))
     self.mox.ReplayAll()
 
     self.post_task(expected_status=ERROR_HTTP_RETURN_CODE)
@@ -232,7 +235,7 @@ class PollTest(TaskQueueTest):
     FakeGrSource.activities = [self.activities[0]]
 
     self.post_task()
-    expected = ['http://tar.get/%s' % i for i in 'a', 'b', 'c', 'd', 'e', 'f']
+    expected = ['http://tar.get/%s' % i for i in ('a', 'b', 'c', 'd', 'e', 'f')]
     self.assert_equals(expected, self.responses[0].key.get().unsent)
 
   def test_original_post_discovery_dedupes(self):
@@ -386,7 +389,7 @@ class PollTest(TaskQueueTest):
     resp = Response.query().get()
     self.assert_equals(['http://first/', 'http://second/'], resp.unsent)
     self.assert_equals(['http://first/', 'http://second/'],
-                       json.loads(resp.urls_to_activity).keys())
+                       list(json.loads(resp.urls_to_activity).keys()))
 
   def test_too_long_urls(self):
     """URLs longer than the datastore's limit should be truncated and skipped.
@@ -503,12 +506,12 @@ class PollTest(TaskQueueTest):
     self.assertEquals(1, len(self.taskqueue_stub.GetTasks('propagate')))
     self.assertEquals(1, Response.query().count())
     resp = Response.query().get()
-    self.assert_equals(['tag:source.com,2013:%s' % id for id in 'a', 'b', 'c'],
+    self.assert_equals(['tag:source.com,2013:%s' % id for id in ('a', 'b', 'c')],
                        [json.loads(a)['id'] for a in resp.activities_json])
 
     urls = ['http://from/tag', 'http://from/synd/post', 'http://target1/post/url']
     self.assert_equals(urls, resp.unsent)
-    self.assert_equals(urls, json.loads(resp.urls_to_activity).keys())
+    self.assert_equals(urls, list(json.loads(resp.urls_to_activity).keys()))
 
   def test_multiple_activities_no_target_urls(self):
     """Response.urls_to_activity should be left unset.
@@ -847,8 +850,8 @@ class PollTest(TaskQueueTest):
     """HTTP 401 and 400 '' for Instagram should disable the source."""
     try:
       for err in (
-          urllib2.HTTPError('url', 401, 'msg', {}, StringIO.StringIO('body')),
-          urllib2.HTTPError('url', 400, 'foo', {}, StringIO.StringIO(
+          urllib.error.HTTPError('url', 401, 'msg', {}, io.StringIO('body')),
+          urllib.error.HTTPError('url', 400, 'foo', {}, io.StringIO(
             '{"meta":{"error_type":"OAuthAccessTokenException"}}')),
           AccessTokenRefreshError('invalid_grant'),
           AccessTokenRefreshError('invalid_grant: Token has been revoked.'),
@@ -873,8 +876,8 @@ class PollTest(TaskQueueTest):
         "code": 429, "error_message": "The maximum number of requests...",
         "error_type": "OAuthRateLimitException"}})
       for err in (
-          urllib2.HTTPError('url', 429, 'Rate limited', {},
-                            StringIO.StringIO(error_body)),
+          urllib.error.HTTPError('url', 429, 'Rate limited', {},
+                            io.StringIO(error_body)),
           apiclient.errors.HttpError(httplib2.Response({'status': 429}), b''),
       ):
         self.mox.UnsetStubs()
@@ -1183,7 +1186,7 @@ class PollTest(TaskQueueTest):
 
   def test_refetch_hfeed_repropagate_responses_http_exception_deadline(self):
     self._test_refetch_hfeed_repropagate_responses_exception(
-      httplib.HTTPException('Deadline exceeded foo bar'))
+      http.client.HTTPException('Deadline exceeded foo bar'))
 
   def _test_refetch_hfeed_repropagate_responses_exception(self, exception):
     self._setup_refetch_hfeed()
@@ -1381,7 +1384,7 @@ class DiscoverTest(TaskQueueTest):
 
   def _test_get_activities_error(self, status):
     self.expect_get_activities(activity_id='b', user_id=self.sources[0].key.id()
-        ).AndRaise(urllib2.HTTPError('url', status, 'Rate limited', {}, None))
+        ).AndRaise(urllib.error.HTTPError('url', status, 'Rate limited', {}, None))
     self.mox.ReplayAll()
 
     self.discover(expected_status=ERROR_HTTP_RETURN_CODE)
@@ -1770,7 +1773,7 @@ class PropagateTest(TaskQueueTest):
     """Target URLs with escaped unicode chars should work ok.
     Background: https://github.com/snarfed/bridgy/issues/248
     """
-    url = 'https://maps/?q=' + urllib.quote_plus('3 Cours de la République'.encode('utf-8'))
+    url = 'https://maps/?q=' + urllib.parse.quote_plus('3 Cours de la République'.encode('utf-8'))
     self.responses[0].unsent = [url]
     self.responses[0].put()
 

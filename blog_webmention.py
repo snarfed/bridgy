@@ -2,9 +2,13 @@
 """
 from __future__ import unicode_literals
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import next
+from past.builtins import basestring
 import logging
 import json
-import urlparse
+import urllib.parse
 
 import appengine_config
 
@@ -30,8 +34,8 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
   def post(self, source_short_name):
     logging.info('Params: %self', self.request.params.items())
     # strip fragments from source and target url
-    self.source_url = urlparse.urldefrag(util.get_required_param(self, 'source'))[0]
-    self.target_url = urlparse.urldefrag(util.get_required_param(self, 'target'))[0]
+    self.source_url = urllib.parse.urldefrag(util.get_required_param(self, 'source'))[0]
+    self.target_url = urllib.parse.urldefrag(util.get_required_param(self, 'target'))[0]
 
     # follow target url through any redirects, strip utm_* query params
     resp = util.follow_redirects(self.target_url)
@@ -76,7 +80,7 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
         (source_cls.GR_CLASS.NAME, domain))
 
     # check that the target URL path is supported
-    target_path = urlparse.urlparse(self.target_url).path
+    target_path = urllib.parse.urlparse(self.target_url).path
     if target_path in ('', '/'):
       return self.error('Home page webmentions are not currently supported.',
                         status=202)
@@ -182,7 +186,7 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
       text = content.get('html') or content.get('value')
 
       for type in 'in-reply-to', 'like', 'like-of', 'repost', 'repost-of':
-        urls = [urlparse.urldefrag(u)[0] for u in
+        urls = [urllib.parse.urldefrag(u)[0] for u in
                 microformats2.get_string_urls(props.get(type, []))]
         if self.any_target_in(urls):
           break

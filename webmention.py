@@ -6,6 +6,7 @@ Webmention spec: http://webmention.org/
 """
 from __future__ import unicode_literals
 
+from builtins import str
 import logging
 import json
 
@@ -98,7 +99,7 @@ class WebmentionHandler(WebmentionGetHandler):
             img = photo.find_next('img')
             if img:
               img['class'] = 'u-photo'
-          doc = unicode(post)
+          doc = str(post)
           data = util.mf2py_parse(doc, fetched.url)
 
     logging.debug('Parsed microformats2: %s', json.dumps(data, indent=2))

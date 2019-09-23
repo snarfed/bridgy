@@ -1,4 +1,5 @@
 """Unit tests for github.py."""
+from __future__ import absolute_import
 import json
 
 import appengine_config
@@ -6,7 +7,7 @@ import github
 import granary
 import granary.tests.test_github as gr_test_github
 import oauth_dropins
-import testutil
+from . import testutil
 
 
 class GitHubTest(testutil.ModelsTest):

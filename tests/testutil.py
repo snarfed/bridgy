@@ -3,12 +3,15 @@
 """
 from __future__ import unicode_literals
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
 import copy
 import datetime
 import json
 import logging
 import re
-import urllib
+import urllib.request, urllib.parse, urllib.error
 
 import appengine_config
 
@@ -445,7 +448,7 @@ class OAuthStartHandler(oauth_handlers.StartHandler):
   """
   def redirect_url(self, state=None):
     logging.debug('oauth handler redirect')
-    return 'http://fake/auth/url?' + urllib.urlencode({
+    return 'http://fake/auth/url?' + urllib.parse.urlencode({
       'redirect_uri': self.to_url(state),
     })
 

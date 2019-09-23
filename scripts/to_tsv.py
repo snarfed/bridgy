@@ -26,7 +26,11 @@ http://orcaman.blogspot.com/2014/09/exporting-gae-datastore-data-to-mongodb.html
 To download the files:
 gsutil cp -r gs://brid-gy.appspot.com/weekly/datastore_backup_full_YYYY_MM_DD_\* .
 """
+from __future__ import print_function
 
+from future import standard_library
+standard_library.install_aliases()
+from past.builtins import basestring
 import collections
 import csv
 import datetime
@@ -34,7 +38,7 @@ import glob
 import itertools
 import logging
 import sys
-import urlparse
+import urllib.parse
 
 sys.path.append('/usr/local/google_appengine')
 
@@ -66,7 +70,7 @@ all_entities = collections.defaultdict(list)
 # read app engine datastore admin backup files
 #
 for filename in glob.glob('datastore_backup_*/*/*'):
-  print filename
+  print(filename)
 
   with open(filename, 'rb') as raw:
     reader = records.RecordsReader(raw)
@@ -121,17 +125,17 @@ with open('growth.tsv', 'w') as file:
           sent = e.get('sent', [])
           counts['webmentions'] += len(sent)
           links = list(itertools.chain(*[e.get(field, []) for field in
-                       'sent', 'unsent', 'error', 'failed', 'skipped']))
+                       ('sent', 'unsent', 'error', 'failed', 'skipped')]))
           counts['links'] += len(links)
-          domains.update(urlparse.urlparse(l).netloc for l in sent)
+          domains.update(urllib.parse.urlparse(l).netloc for l in sent)
           counts['domains'] = len(domains)
 
     writer.writerow([date] + [counts[c] for c in columns])
     date += datetime.timedelta(days=1)
 
     if date.day == 1:
-      print date
+      print(date)
 
-  for kind, entities in all_entities.items():
+  for kind, entities in list(all_entities.items()):
     if entities:
-      print '%d %s entities left over! e.g. %s' % (len(entities), kind, entities[0])
+      print('%d %s entities left over! e.g. %s' % (len(entities), kind, entities[0]))

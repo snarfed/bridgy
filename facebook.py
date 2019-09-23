@@ -21,14 +21,17 @@ Example comment ID and links
 """
 from __future__ import unicode_literals
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
 import datetime
 import heapq
 import itertools
 import json
 import logging
-import urllib
-import urllib2
-import urlparse
+import urllib.request, urllib.parse, urllib.error
+import urllib.request, urllib.error, urllib.parse
+import urllib.parse
 
 import appengine_config
 from google.appengine.ext import ndb
@@ -156,7 +159,7 @@ class FacebookPage(models.Source):
 
     try:
       activities = super(FacebookPage, self).get_activities_response(**kwargs)
-    except urllib2.HTTPError as e:
+    except urllib.error.HTTPError as e:
       code, body = util.interpret_http_exception(e)
       # use a function so any new exceptions (JSON decoding, missing keys) don't
       # clobber the original exception so we can re-raise it below.
@@ -225,8 +228,8 @@ class FacebookPage(models.Source):
     def post_url(id):
       return 'https://www.facebook.com/%s/posts/%s' % (self.key.id(), id)
 
-    parsed = urlparse.urlparse(url)
-    params = urlparse.parse_qs(parsed.query)
+    parsed = urllib.parse.urlparse(url)
+    params = urllib.parse.parse_qs(parsed.query)
     path = parsed.path.strip('/').split('/')
     url_id = self.gr_source.post_id(url)
 
@@ -345,7 +348,7 @@ class FacebookPage(models.Source):
     """
     domain = util.domain_from_link(url)
     if domain == self.gr_source.DOMAIN:
-      username = urlparse.urlparse(url).path.strip('/')
+      username = urllib.parse.urlparse(url).path.strip('/')
       if '/' not in username:
         user = FacebookPage.query(ndb.OR(
           FacebookPage.username == username,
@@ -426,7 +429,7 @@ class AuthHandler(util.Handler):
 
     # ask the user for their web site if we don't already have one.
     if source and not source.domains:
-      self.redirect('/edit-websites?' + urllib.urlencode({
+      self.redirect('/edit-websites?' + urllib.parse.urlencode({
         'source_key': source.key.urlsafe(),
       }))
 

@@ -26,11 +26,13 @@ curl localhost:8080/webmention/tumblr \
 """
 from __future__ import unicode_literals
 
+from future import standard_library
+standard_library.install_aliases()
 import collections
 import json
 import logging
 import re
-import urlparse
+import urllib.parse
 from webob import exc
 
 import appengine_config
@@ -73,7 +75,7 @@ class Tumblr(models.Source):
 
   def feed_url(self):
     # http://www.tumblr.com/help  (search for feed)
-    return urlparse.urljoin(self.silo_url(), '/rss')
+    return urllib.parse.urljoin(self.silo_url(), '/rss')
 
   def silo_url(self):
     return self.domain_urls[0]
@@ -175,11 +177,11 @@ class Tumblr(models.Source):
                                  "we haven't found your Disqus account.")
 
     # strip slug, query and fragment from post url
-    parsed = urlparse.urlparse(post_url)
+    parsed = urllib.parse.urlparse(post_url)
     path = parsed.path.split('/')
     if not util.is_int(path[-1]):
       path.pop(-1)
-    post_url = urlparse.urlunparse(parsed[:2] + ('/'.join(path), '', '', ''))
+    post_url = urllib.parse.urlunparse(parsed[:2] + ('/'.join(path), '', '', ''))
 
     # get the disqus thread id. details on thread queries:
     # http://stackoverflow.com/questions/4549282/disqus-api-adding-comment

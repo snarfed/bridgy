@@ -6,8 +6,13 @@ their profile.
 
 Started from https://github.com/snarfed/bridgy/issues/490#issuecomment-143572623
 """
+from __future__ import print_function
+from future import standard_library
+standard_library.install_aliases()
+from builtins import chr
+from builtins import str
 import collections
-import urlparse
+import urllib.parse
 
 import models
 from models import Response
@@ -23,7 +28,7 @@ domains = collections.defaultdict(int)  # maps domain to # of users
 for cls in models.sources.values():
   for src in cls.query(cls.domains > ''):
     for domain in src.domains:
-      print domain
+      print(domain)
       domains[domain] += 1
 
 with open('domains.txt', 'w') as f:
@@ -39,8 +44,8 @@ with open('domains_sent.txt', 'w') as f:
       break
     domain = None
     for sent in resp.sent:
-      parsed = urlparse.urlparse(sent)
+      parsed = urllib.parse.urlparse(sent)
       if sent > url and (domain is None or parsed.netloc < domain):
         domain = parsed.netloc
-    url = urlparse.urlunparse(parsed[:2] + ('', '', '', '')) + chr(ord('/') + 1)
-    print domain
+    url = urllib.parse.urlunparse(parsed[:2] + ('', '', '', '')) + chr(ord('/') + 1)
+    print(domain)

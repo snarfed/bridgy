@@ -2,7 +2,9 @@
 """Unit tests for original_post_discovery.py
 """
 from __future__ import unicode_literals
+from __future__ import absolute_import
 
+from builtins import range, str
 import datetime
 import json
 
@@ -15,7 +17,7 @@ from facebook import FacebookPage
 from models import SyndicatedPost
 import original_post_discovery
 from original_post_discovery import discover, refetch
-import testutil
+from . import testutil
 import util
 
 
@@ -480,7 +482,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     """We should refetch all of a source's URLs."""
     self._expect_multiple_domain_url_fetches()
     result = refetch(self.source)
-    self.assert_equals(['https://fa.ke/A' ,'https://fa.ke/B'], result.keys())
+    self.assert_equals(['https://fa.ke/A' ,'https://fa.ke/B'], list(result.keys()))
     self.assert_syndicated_posts(('http://author1/A', 'https://fa.ke/A'),
                                  ('http://author3/B', 'https://fa.ke/B'))
 
@@ -1211,7 +1213,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     results = refetch(self.source)
     self.assert_syndicated_posts(
       ('http://author/permalink', 'https://fa.ke/changed/url'))
-    self.assert_equals(['https://fa.ke/changed/url'], results.keys())
+    self.assert_equals(['https://fa.ke/changed/url'], list(results.keys()))
     self.assert_entities_equal(
       list(SyndicatedPost.query()), results['https://fa.ke/changed/url'])
     self.assertEquals(testutil.NOW, self.source.updates['last_syndication_url'])

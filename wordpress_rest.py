@@ -20,12 +20,12 @@ curl -H 'Authorization: Bearer [TOKEN]' URL...
 """
 from __future__ import unicode_literals
 
+from future import standard_library
+standard_library.install_aliases()
 import collections
 import json
 import logging
-import urllib
-import urllib2
-import urlparse
+import urllib.request, urllib.parse, urllib.error
 
 import appengine_config
 
@@ -56,13 +56,13 @@ class WordPress(models.Source):
 
   def feed_url(self):
     # http://en.support.wordpress.com/feeds/
-    return urlparse.urljoin(self.silo_url(), 'feed/')
+    return urllib.parse.urljoin(self.silo_url(), 'feed/')
 
   def silo_url(self):
     return self.domain_urls[0]
 
   def edit_template_url(self):
-    return urlparse.urljoin(self.silo_url(), 'wp-admin/widgets.php')
+    return urllib.parse.urljoin(self.silo_url(), 'wp-admin/widgets.php')
 
   @staticmethod
   def new(handler, auth_entity=None, **kwargs):
@@ -125,7 +125,7 @@ class WordPress(models.Source):
     logging.info('Determining WordPress.com post id for %s', post_url)
 
     # extract the post's slug and look up its post id
-    path = urlparse.urlparse(post_url).path
+    path = urllib.parse.urlparse(post_url).path
     if path.endswith('/'):
       path = path[:-1]
     slug = path.split('/')[-1]
@@ -145,8 +145,8 @@ class WordPress(models.Source):
     content = '<a href="%s">%s</a>: %s' % (author_url, author_name, content)
     data = {'content': content.encode('utf-8')}
     try:
-      resp = self.urlopen(auth_entity, url, data=urllib.urlencode(data))
-    except urllib2.HTTPError, e:
+      resp = self.urlopen(auth_entity, url, data=urllib.parse.urlencode(data))
+    except urllib.error.HTTPError as e:
       code, body = util.interpret_http_exception(e)
       try:
         parsed = json.loads(body) if body else {}
@@ -173,7 +173,7 @@ class WordPress(models.Source):
     """
     try:
       return cls.urlopen(auth_entity, API_SITE_URL % auth_entity.blog_id)
-    except urllib2.HTTPError, e:
+    except urllib.error.HTTPError as e:
       code, body = util.interpret_http_exception(e)
       if (code == '403' and '"API calls to this blog have been disabled."' in body):
         handler.messages.add(

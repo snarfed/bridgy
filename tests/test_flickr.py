@@ -1,9 +1,12 @@
 """Unit tests for flickr.py.
 """
 from __future__ import unicode_literals
+from __future__ import absolute_import
 
+from future import standard_library
+standard_library.install_aliases()
 import json
-import urllib
+import urllib.request, urllib.parse, urllib.error
 
 import appengine_config
 import flickr
@@ -11,7 +14,7 @@ import granary
 import granary.tests.test_flickr as gr_test_flickr
 import oauth_dropins
 import tasks
-import testutil
+from . import testutil
 
 
 class FlickrTest(testutil.ModelsTest):
@@ -48,7 +51,7 @@ class FlickrTest(testutil.ModelsTest):
     }
     full_params.update(params)
     self.expect_urlopen('https://api.flickr.com/services/rest?'
-                        + urllib.urlencode(full_params), result)
+                        + urllib.parse.urlencode(full_params), result)
 
   def test_revoked_disables_source(self):
     """ Make sure polling Flickr with a revoked token will
@@ -69,7 +72,7 @@ class FlickrTest(testutil.ModelsTest):
     self.flickr.put()
     self.assertEqual('enabled', self.flickr.status)
     tasks.application.get_response(
-      '/_ah/queue/poll', method='POST', body=urllib.urlencode({
+      '/_ah/queue/poll', method='POST', body=urllib.parse.urlencode({
         'source_key': self.flickr.key.urlsafe(),
         'last_polled': '1970-01-01-00-00-00',
       }))

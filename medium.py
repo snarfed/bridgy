@@ -11,6 +11,7 @@ https://medium.com/developers/welcome-to-the-medium-api-3418f956552
 """
 from __future__ import unicode_literals
 
+from builtins import str
 import collections
 import json
 import logging

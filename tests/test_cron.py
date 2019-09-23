@@ -1,6 +1,7 @@
 """Unit tests for tasks.py.
 """
 from __future__ import unicode_literals
+from __future__ import absolute_import
 
 import copy
 import datetime
@@ -19,8 +20,8 @@ import appengine_config
 import cron
 from flickr import Flickr
 from instagram import Instagram
-import testutil
-from testutil import FakeSource, HandlerTest
+from . import testutil
+from .testutil import FakeSource, HandlerTest
 from twitter import Twitter
 import util
 

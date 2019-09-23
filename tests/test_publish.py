@@ -2,10 +2,14 @@
 """Unit tests for publish.py.
 """
 from __future__ import unicode_literals
+from __future__ import absolute_import
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import range
 import json
 import socket
-import urllib
+import urllib.request, urllib.parse, urllib.error
 
 import appengine_config
 
@@ -20,7 +24,7 @@ from webob import exc
 import facebook
 from models import Publish, PublishedPage
 import publish
-import testutil
+from . import testutil
 import util
 
 
@@ -68,7 +72,7 @@ class PublishTest(testutil.HandlerTest):
 
     return app.get_response(
       '/publish/preview' if preview else '/publish/webmention',
-      method='POST', body=urllib.urlencode(params))
+      method='POST', body=urllib.parse.urlencode(params))
 
   def expect_requests_get(self, url, body='', backlink=None, **kwargs):
     body += backlink or self.backlink
@@ -133,7 +137,7 @@ class PublishTest(testutil.HandlerTest):
     self.assertEquals(
       'http://localhost/fake/foo.com#!'
         'Done! <a href="http://fake/url">Click here to view.</a>\ngranary message',
-      urllib.unquote_plus(resp.headers['Location']))
+      urllib.parse.unquote_plus(resp.headers['Location']))
     self._check_entity()
 
   def test_interactive_from_wrong_user_page(self):
@@ -146,7 +150,7 @@ class PublishTest(testutil.HandlerTest):
       'http://localhost/fake/%s#!'
         'Please log into FakeSource as fake to publish that page.' %
         other_source.id(),
-      urllib.unquote_plus(resp.headers['Location']))
+      urllib.parse.unquote_plus(resp.headers['Location']))
 
     self.assertIsNone(Publish.query().get())
 
@@ -157,7 +161,7 @@ class PublishTest(testutil.HandlerTest):
     self.assertEquals(
       'http://localhost/fake/foo.com#!'
         'If you want to publish or preview, please approve the prompt.',
-      urllib.unquote_plus(resp.headers['Location']))
+      urllib.parse.unquote_plus(resp.headers['Location']))
 
     self.assertIsNone(Publish.query().get())
 
@@ -169,7 +173,7 @@ class PublishTest(testutil.HandlerTest):
     self.assertEquals(
       'http://localhost/#!'
         'If you want to publish or preview, please approve the prompt.',
-      urllib.unquote_plus(resp.headers['Location']))
+      urllib.parse.unquote_plus(resp.headers['Location']))
 
     self.assertIsNone(Publish.query().get())
 
@@ -231,7 +235,7 @@ class PublishTest(testutil.HandlerTest):
 
     resp = self.assert_response('', status=302, interactive=True)
     self.assertIn("Sorry, you've already published that page",
-                  urllib.unquote_plus(resp.headers['Location']))
+                  urllib.parse.unquote_plus(resp.headers['Location']))
 
   def test_already_published_then_preview_feed_with_no_items(self):
     page = PublishedPage(id='http://foo.com/bar')
@@ -1466,7 +1470,7 @@ Join us!"""
     self.assertEquals(
       'http://localhost/fake/foo.com#!'
         'Done! <a href="http://fake/url">Click here to view.</a>',
-      urllib.unquote_plus(resp.headers['Location']))
+      urllib.parse.unquote_plus(resp.headers['Location']))
 
     delete = list(Publish.query())[-1]
     self.assertEquals(delete.key.parent(), page.key)

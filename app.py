@@ -2,13 +2,16 @@
 """
 from __future__ import unicode_literals
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
 import datetime
 import itertools
 import json
 import logging
 import string
-import urllib
-import urlparse
+import urllib.request, urllib.parse, urllib.error
+import urllib.parse
 
 import appengine_config
 
@@ -208,9 +211,9 @@ class UserHandler(DashboardHandler):
     self.source = cls.lookup(id)
 
     if not self.source:
-      id = urllib.unquote(id).decode('utf-8')
+      id = urllib.parse.unquote(id).decode('utf-8')
       key = cls.query(ndb.OR(*[ndb.GenericProperty(prop) == id for prop in
-                               'domains', 'inferred_username', 'name', 'username'])
+                               ('domains', 'inferred_username', 'name', 'username')])
                       ).get(keys_only=True)
       if key:
         return self.redirect(cls(key=key).bridgy_path(), permanent=True)
@@ -409,7 +412,7 @@ class UserHandler(DashboardHandler):
         w.pretty_source = util.pretty_link(
           w.source_url(), attrs={'class': 'original-post'}, new_tab=True)
         try:
-          target_is_source = (urlparse.urlparse(w.target_url()).netloc in
+          target_is_source = (urllib.parse.urlparse(w.target_url()).netloc in
                               self.source.domains)
         except BaseException:
           target_is_source = False
@@ -490,7 +493,7 @@ class DeleteStartHandler(util.Handler):
       code, body = util.interpret_http_exception(e)
       if not code and util.is_connection_failure(e):
         code = '-'
-        body = unicode(e)
+        body = str(e)
       if code:
         self.messages.add('%s API error %s: %s' % (source.GR_CLASS.NAME, code, body))
         self.redirect(source.bridgy_url(self))
@@ -623,7 +626,7 @@ class DiscoverHandler(util.Handler):
     # validate URL, find silo post
     url = util.get_required_param(self, 'url')
     domain = util.domain_from_link(url)
-    path = urlparse.urlparse(url).path
+    path = urllib.parse.urlparse(url).path
     msg = 'Discovering now. Refresh in a minute to see the results!'
 
     if domain == source.GR_CLASS.DOMAIN:
@@ -662,7 +665,7 @@ class EditWebsites(webutil_handlers.TemplateHandler, util.Handler):
 
   def post(self):
     source = self.load_source()
-    redirect_url = '%s?%s' % (self.request.path, urllib.urlencode({
+    redirect_url = '%s?%s' % (self.request.path, urllib.parse.urlencode({
       'source_key': source.key.urlsafe(),
     }))
 

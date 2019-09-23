@@ -1,10 +1,13 @@
 """Unit tests for twitter.py.
 """
 from __future__ import unicode_literals
+from __future__ import absolute_import
 
+from future import standard_library
+standard_library.install_aliases()
 import copy
 import json
-import urllib
+import urllib.request, urllib.parse, urllib.error
 
 import appengine_config
 from google.appengine.api import memcache
@@ -15,7 +18,7 @@ import oauth_dropins
 from oauth_dropins import twitter as oauth_twitter
 
 import models
-import testutil
+from . import testutil
 import twitter
 from twitter import Twitter
 
@@ -131,7 +134,7 @@ class TwitterTest(testutil.ModelsTest):
                             {'expanded_url': 'http://other'}]},
     }]
     self.expect_urlopen(API_BASE + API_SEARCH %
-                        {'q': urllib.quote_plus('bar/baz OR foo'), 'count': 50},
+                        {'q': urllib.parse.quote_plus('bar/baz OR foo'), 'count': 50},
                         json.dumps({'statuses': results}))
 
     self.mox.ReplayAll()

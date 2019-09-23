@@ -2,10 +2,13 @@
 """Unit tests for handlers.py.
 """
 from __future__ import unicode_literals
+from __future__ import absolute_import
 
+from future import standard_library
+standard_library.install_aliases()
 import json
-import StringIO
-import urllib2
+import io
+import urllib.request, urllib.error, urllib.parse
 
 import appengine_config
 from google.appengine.api import urlfetch_errors
@@ -13,8 +16,8 @@ import mox
 
 import handlers
 import models
-import testutil
-from testutil import FakeGrSource, FakeSource
+from . import testutil
+from .testutil import FakeGrSource, FakeSource
 
 
 class HandlersTest(testutil.HandlerTest):
@@ -165,8 +168,8 @@ asdf http://other/link qwert
 
   def test_pass_through_source_errors(self):
     user_id = self.source.key.string_id()
-    err = urllib2.HTTPError('url', 410, 'Gone', {},
-                            StringIO.StringIO('Gone baby gone'))
+    err = urllib.error.HTTPError('url', 410, 'Gone', {},
+                            io.StringIO('Gone baby gone'))
     self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities')
     testutil.FakeSource.get_activities(activity_id='000', user_id=user_id
                                       ).AndRaise(err)

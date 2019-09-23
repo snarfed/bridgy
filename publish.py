@@ -25,6 +25,8 @@ Example response::
     }
 """
 from __future__ import unicode_literals
+from future import standard_library
+standard_library.install_aliases()
 from future.utils import native_str
 
 import collections
@@ -32,9 +34,9 @@ import logging
 import json
 import pprint
 import re
-import urllib
-import urllib2
-import urlparse
+import urllib.request, urllib.parse, urllib.error
+import urllib.request, urllib.error, urllib.parse
+import urllib.parse
 
 import appengine_config
 
@@ -116,7 +118,7 @@ class Handler(webmention.WebmentionHandler):
 
     if val is None:
       # _run has already parsed and validated the target URL
-      vals = urlparse.parse_qs(urlparse.urlparse(self.target_url()).query)\
+      vals = urllib.parse.parse_qs(urllib.parse.urlparse(self.target_url()).query)\
                      .get('bridgy_omit_link')
       val = vals[0] if vals else None
 
@@ -135,7 +137,7 @@ class Handler(webmention.WebmentionHandler):
 
     if val is None:
       # _run has already parsed and validated the target URL
-      vals = urlparse.parse_qs(urlparse.urlparse(self.target_url()).query)\
+      vals = urllib.parse.parse_qs(urllib.parse.urlparse(self.target_url()).query)\
                      .get('bridgy_ignore_formatting')
       val = vals[0] if vals else None
 
@@ -198,9 +200,9 @@ class Handler(webmention.WebmentionHandler):
 
     # show nice error message if they're trying to publish their home page
     for domain_url in self.source.domain_urls:
-      domain_url_parts = urlparse.urlparse(domain_url)
+      domain_url_parts = urllib.parse.urlparse(domain_url)
       for source_url in url, self.source_url():
-        parts = urlparse.urlparse(source_url)
+        parts = urllib.parse.urlparse(source_url)
         if (parts.netloc == domain_url_parts.netloc and
             parts.path.strip('/') == domain_url_parts.path.strip('/') and
             not parts.query):
@@ -271,7 +273,7 @@ class Handler(webmention.WebmentionHandler):
           item_types, result.error_plain)
         types = types.union(item_types)
         queue.extend(item.get('children', []))
-      except BaseException, e:
+      except BaseException as e:
         code, body = util.interpret_http_exception(e)
         if code in self.source.DISABLE_HTTP_CODES or isinstance(e, models.DisableSource):
           # the user deauthorized the bridgy app, or the token expired, so
@@ -283,7 +285,7 @@ class Handler(webmention.WebmentionHandler):
           # for everyone right now for initial monitoring.
           util.email_me(subject='Bridgy Publish: disabled %s' % self.source.label(),
                         body=body)
-        if isinstance(e, (NotImplementedError, ValueError, urllib2.URLError)):
+        if isinstance(e, (NotImplementedError, ValueError, urllib.error.URLError)):
           code = '400'
         elif not code:
           raise
@@ -518,7 +520,7 @@ class Handler(webmention.WebmentionHandler):
         if not url:
           continue
 
-        parsed = urlparse.urlparse(url)
+        parsed = urllib.parse.urlparse(url)
         # ignore home pages. https://github.com/snarfed/bridgy/issues/760
         if parsed.path in ('', '/'):
           continue
@@ -741,7 +743,7 @@ class WebmentionHandler(Handler):
 
     if self.entity.html:
       for url in expected:
-        if url in self.entity.html or urllib.quote(url, safe='') in self.entity.html:
+        if url in self.entity.html or urllib.parse.quote(url, safe='') in self.entity.html:
           return True
 
     self.error("Couldn't find link to %s" % expected[0])

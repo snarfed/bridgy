@@ -1,10 +1,13 @@
 """Unit tests for instagram.py.
 """
 from __future__ import unicode_literals
+from __future__ import absolute_import
 
+from future import standard_library
+standard_library.install_aliases()
 import copy
 import json
-import urllib
+import urllib.request, urllib.parse, urllib.error
 
 from oauth_dropins import indieauth
 from oauth_dropins.instagram import InstagramAuth
@@ -15,7 +18,7 @@ import requests
 
 import appengine_config
 import instagram
-import testutil
+from . import testutil
 import util
 
 
@@ -146,7 +149,7 @@ class InstagramTest(testutil.ModelsTest):
 
     self.mox.ReplayAll()
     resp = self.callback()
-    location = urllib.unquote_plus(resp.headers['Location'])
+    location = urllib.parse.unquote_plus(resp.headers['Location'])
     self.assertTrue(location.startswith(
       'http://localhost/#!No Instagram profile found.'), location)
 
@@ -157,7 +160,7 @@ class InstagramTest(testutil.ModelsTest):
 
     self.mox.ReplayAll()
     resp = self.callback()
-    location = urllib.unquote_plus(resp.headers['Location'])
+    location = urllib.parse.unquote_plus(resp.headers['Location'])
     self.assertTrue(location.startswith(
       "http://localhost/#!Couldn't find Instagram user 'snarfed'"), location)
 
@@ -172,7 +175,7 @@ class InstagramTest(testutil.ModelsTest):
 
     self.mox.ReplayAll()
     resp = self.callback()
-    location = urllib.unquote_plus(resp.headers['Location'])
+    location = urllib.parse.unquote_plus(resp.headers['Location'])
     self.assertTrue(location.startswith(
       'http://localhost/#!Please add https://snarfed.org to your Instagram'), location)
 
@@ -183,7 +186,7 @@ class InstagramTest(testutil.ModelsTest):
 
     self.mox.ReplayAll()
     resp = self.callback()
-    location = urllib.unquote_plus(resp.headers['Location'])
+    location = urllib.parse.unquote_plus(resp.headers['Location'])
     self.assertTrue(location.startswith(
       'http://localhost/#!Your Instagram account is private.'), location)
 
@@ -223,7 +226,7 @@ class InstagramTest(testutil.ModelsTest):
 
     self.mox.ReplayAll()
     resp = self.callback()
-    location = urllib.unquote_plus(resp.headers['Location'])
+    location = urllib.parse.unquote_plus(resp.headers['Location'])
     self.assertTrue(location.startswith('http://localhost/#'))
     self.assertIn('Apologies, Instagram is temporarily blocking us.', location)
 
@@ -234,12 +237,12 @@ class InstagramTest(testutil.ModelsTest):
     self.expect_site_fetch()
     self.mox.ReplayAll()
     resp = instagram.application.get_response(
-      '/instagram/start', method='POST', body=urllib.urlencode(self.bridgy_api_state))
+      '/instagram/start', method='POST', body=urllib.parse.urlencode(self.bridgy_api_state))
 
     self.assertEquals(302, resp.status_code)
 
     state_json = util.encode_oauth_state(self.bridgy_api_state)
-    expected_auth_url = indieauth.INDIEAUTH_URL + '?' + urllib.urlencode({
+    expected_auth_url = indieauth.INDIEAUTH_URL + '?' + urllib.parse.urlencode({
       'me': 'http://snarfed.org',
       'client_id': appengine_config.INDIEAUTH_CLIENT_ID,
       'redirect_uri': 'http://localhost/instagram/callback',
@@ -258,9 +261,9 @@ class InstagramTest(testutil.ModelsTest):
     self.mox.ReplayAll()
 
     resp = instagram.application.get_response(
-      '/instagram/start', method='POST', body=urllib.urlencode(self.bridgy_api_state))
+      '/instagram/start', method='POST', body=urllib.parse.urlencode(self.bridgy_api_state))
     self.assertEquals(302, resp.status_code)
-    location = urllib.unquote_plus(resp.headers['Location'])
+    location = urllib.parse.unquote_plus(resp.headers['Location'])
     self.assertTrue(location.startswith(
       "http://localhost/#!Couldn't fetch your web site: Bad SSL for xyz.com"), location)
 
@@ -272,9 +275,9 @@ class InstagramTest(testutil.ModelsTest):
     self.expect_webmention_discovery()
 
     self.mox.ReplayAll()
-    resp = self.callback(state=urllib.quote_plus(state))
+    resp = self.callback(state=urllib.parse.quote_plus(state))
     self.assertEquals(302, resp.status_int)
-    self.assertEquals('http://my.site/call-back?' + urllib.urlencode({
+    self.assertEquals('http://my.site/call-back?' + urllib.parse.urlencode({
       'result': 'success',
       'key': self.inst.key.urlsafe(),
       'user': 'http://localhost/instagram/snarfed',
@@ -286,8 +289,8 @@ class InstagramTest(testutil.ModelsTest):
     self.expect_site_fetch('')
 
     self.mox.ReplayAll()
-    resp = self.callback(state=urllib.quote_plus(state))
+    resp = self.callback(state=urllib.parse.quote_plus(state))
     self.assertEquals(302, resp.status_int)
-    location = urllib.unquote_plus(resp.headers['Location'])
+    location = urllib.parse.unquote_plus(resp.headers['Location'])
     self.assertTrue(location.startswith(
       'http://localhost/#!No Instagram profile found.'), location)

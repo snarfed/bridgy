@@ -1,13 +1,15 @@
 """Unit tests for facebook_email.py.
 """
 from __future__ import unicode_literals
+from __future__ import absolute_import
 
+from future import standard_library
+standard_library.install_aliases()
 from datetime import datetime
 from email.message import Message
 import logging
 import json
-import urllib
-import urllib2
+import urllib.error, urllib.parse, urllib.request
 
 import appengine_config
 
@@ -25,7 +27,7 @@ import webapp2
 import facebook_email
 from facebook_email import EmailHandler, FacebookEmail, FacebookEmailAccount
 from models import Response
-import testutil
+from . import testutil
 
 
 class FacebookEmailTest(testutil.ModelsTest):
