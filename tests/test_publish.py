@@ -4,6 +4,7 @@
 from __future__ import unicode_literals
 from __future__ import absolute_import
 
+from future.utils import native_str
 from future import standard_library
 standard_library.install_aliases()
 from builtins import range
@@ -72,7 +73,7 @@ class PublishTest(testutil.HandlerTest):
 
     return app.get_response(
       '/publish/preview' if preview else '/publish/webmention',
-      method='POST', body=urllib.parse.urlencode(params))
+      method='POST', body=native_str(urllib.parse.urlencode(params)))
 
   def expect_requests_get(self, url, body='', backlink=None, **kwargs):
     body += backlink or self.backlink

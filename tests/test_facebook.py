@@ -2,6 +2,8 @@
 """
 from __future__ import unicode_literals
 from __future__ import absolute_import
+from future.moves.urllib import error as urllib_error_py2
+from future.utils import native_str
 from future import standard_library
 standard_library.install_aliases()
 from past.builtins import basestring
@@ -87,11 +89,11 @@ class FacebookPageTest(testutil.ModelsTest):
 
   def poll(self):
     resp = tasks.application.get_response(
-      '/_ah/queue/poll', method='POST', body=urllib.parse.urlencode({
+      '/_ah/queue/poll', method='POST', body=native_str(urllib.parse.urlencode({
           'source_key': self.fb.key.urlsafe(),
           'last_polled': self.fb.key.get().last_polled.strftime(
             util.POLL_TASK_DATETIME_FORMAT),
-          }))
+          })))
     self.assertEqual(200, resp.status_int)
 
   def test_new(self):
@@ -106,14 +108,14 @@ class FacebookPageTest(testutil.ModelsTest):
     self.assertEqual('tag:facebook.com,2013:212038', self.fb.user_tag_id())
 
   def test_add_user_declines(self):
-    resp = facebook.application.get_response(
+    resp = facebook.application.get_response(native_str(
       '/facebook/oauth_handler?' + urllib.parse.urlencode({
         'state': '{"feature":"listen","operation":"add"}',
         'error': 'access_denied',
         'error_code': '200',
         'error_reason': 'user_denied',
         'error_description': 'Permissions error',
-      }))
+      })))
 
     self.assert_equals(302, resp.status_code)
     self.assert_equals(
@@ -307,7 +309,7 @@ class FacebookPageTest(testutil.ModelsTest):
     self.expect_api_call(API_ME_POSTS, msg, status=400)
     self.mox.ReplayAll()
 
-    with self.assertRaises(urllib.error.HTTPError) as cm:
+    with self.assertRaises(urllib_error_py2.HTTPError) as cm:
       self.fb.get_activities()
 
     self.assertEquals(400, cm.exception.code)
@@ -318,7 +320,7 @@ class FacebookPageTest(testutil.ModelsTest):
     self.expect_api_call(API_ME_POSTS, 'not json', status=400)
     self.mox.ReplayAll()
 
-    with self.assertRaises(urllib.error.HTTPError) as cm:
+    with self.assertRaises(urllib_error_py2.HTTPError) as cm:
       self.fb.get_activities()
 
     self.assertEquals(400, cm.exception.code)
@@ -606,9 +608,9 @@ class FacebookPageTest(testutil.ModelsTest):
       }
 
       resp = facebook.application.get_response(
-        '/facebook/start', method='POST', body=urllib.parse.urlencode({
+        '/facebook/start', method='POST', body=native_str(urllib.parse.urlencode({
           'feature': feature,
-        }))
+        })))
 
       self.assertEquals(302, resp.status_code)
       self.assertEquals(expected_auth_url, resp.headers['Location'])
@@ -633,20 +635,20 @@ class FacebookPageTest(testutil.ModelsTest):
     }
 
     resp = app.application.get_response(
-      '/delete/start', method='POST', body=urllib.parse.urlencode({
+      '/delete/start', method='POST', body=native_str(urllib.parse.urlencode({
         'feature': 'listen',
         'key': key,
-      }))
+      })))
 
     self.assertEquals(302, resp.status_int)
     self.assertEquals(expected_auth_url, resp.headers['Location'])
 
     # when silo oauth is done, it should send us back to /SOURCE/delete/finish,
     # which would in turn redirect to the more general /delete/finish.
-    resp = app.application.get_response(
+    resp = app.application.get_response(native_str(
       '/delete/finish?'
       + 'auth_entity=' + self.auth_entity.key.urlsafe()
-      + '&state=' + encoded_state)
+      + '&state=' + encoded_state))
 
     self.assert_equals(302, resp.status_code)
     # listen feature has been removed
@@ -744,11 +746,11 @@ my message
     self.mox.ReplayAll()
 
     resp = publish.application.get_response(
-      '/publish/webmention', method='POST', body=urllib.parse.urlencode({
+      '/publish/webmention', method='POST', body=native_str(urllib.parse.urlencode({
         'source': 'http://foo.com/bar',
         'target': 'https://brid.gy/publish/facebook',
         'source_key': self.fb.key.urlsafe(),
-      }))
+      })))
     self.assertEquals(201, resp.status_int)
 
   def test_is_activity_public(self):

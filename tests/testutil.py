@@ -3,6 +3,7 @@
 """
 from __future__ import unicode_literals
 
+from future.utils import native_str
 from future import standard_library
 standard_library.install_aliases()
 from builtins import str
@@ -224,7 +225,7 @@ class FakeSource(Source):
     if not id:
       id = str(cls.string_id_counter)
       cls.string_id_counter += 1
-    return cls(id=id, **props)
+    return cls(id=native_str(id), **props)
 
   def put(self, **kwargs):
     self.is_saved = True

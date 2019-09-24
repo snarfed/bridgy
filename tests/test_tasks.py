@@ -4,6 +4,7 @@
 from __future__ import unicode_literals
 from __future__ import absolute_import
 
+from future.utils import native_str
 from future import standard_library
 standard_library.install_aliases()
 from builtins import zip
@@ -54,9 +55,9 @@ class TaskQueueTest(testutil.ModelsTest):
     """Args:
       expected_status: integer, the expected HTTP return code
     """
-    resp = tasks.application.get_response(self.post_url, method='POST',
-                                          body=urllib.parse.urlencode(params),
-                                          **kwargs)
+    resp = tasks.application.get_response(
+      self.post_url, method='POST',
+      body=native_str(urllib.parse.urlencode(params)), **kwargs)
     self.assertEqual(expected_status, resp.status_int)
 
   def assert_responses(self, expected=None, ignore=tuple()):
@@ -877,7 +878,7 @@ class PollTest(TaskQueueTest):
         "error_type": "OAuthRateLimitException"}})
       for err in (
           urllib.error.HTTPError('url', 429, 'Rate limited', {},
-                            io.StringIO(error_body)),
+                                 io.StringIO(error_body.decode('utf-8'))),
           apiclient.errors.HttpError(httplib2.Response({'status': 429}), b''),
       ):
         self.mox.UnsetStubs()

@@ -3,6 +3,7 @@
 from __future__ import unicode_literals
 from __future__ import absolute_import
 
+from future.utils import native_str
 from future import standard_library
 standard_library.install_aliases()
 from builtins import next, str
@@ -46,8 +47,7 @@ class UtilTest(testutil.ModelsTest):
 
     self.assertEquals(302, self.response.status_int)
     parsed = urllib.parse.urlparse(self.response.headers['Location'])
-    self.assertIn(UNICODE_STR,
-                  urllib.parse.unquote_plus(str(parsed.fragment)).decode('utf-8'))
+    self.assertIn(UNICODE_STR, urllib.parse.unquote_plus(parsed.fragment))
     self.assertEquals(
       'logins="/fake/%s?%s"; expires=2001-12-31 00:00:00; Path=/' %
         (src.key.id(), urllib.parse.quote_plus(UNICODE_STR.encode('utf-8'))),
@@ -243,10 +243,10 @@ class UtilTest(testutil.ModelsTest):
     self.mox.ReplayAll()
 
     resp = application.get_response(
-      '/fakesource/start', method='POST', body=urllib.parse.urlencode({
+      '/fakesource/start', method='POST', body=native_str(urllib.parse.urlencode({
         'feature': 'listen',
         'callback': 'http://withknown.com/bridgy_callback',
-      }))
+      })))
 
     expected_auth_url = 'http://fake/auth/url?' + urllib.parse.urlencode({
       'redirect_uri': 'http://localhost/fakesource/add?state='
@@ -256,9 +256,9 @@ class UtilTest(testutil.ModelsTest):
     self.assert_equals(302, resp.status_code)
     self.assert_equals(expected_auth_url, resp.headers['location'])
 
-    resp = application.get_response(
+    resp = application.get_response(native_str(
       '/fakesource/add?state=' + encoded_state +
-      '&oauth_token=fake-token&oauth_token_secret=fake-secret')
+      '&oauth_token=fake-token&oauth_token_secret=fake-secret'))
 
     self.assert_equals(302, resp.status_code)
     self.assert_equals(
@@ -301,7 +301,7 @@ class UtilTest(testutil.ModelsTest):
         'feature': 'listen',
         'callback': 'http://withknown.com/bridgy_callback',
         'user_url': 'https://kylewm.com',
-      })))#.encode('utf-8'))
+      })))
 
     expected_auth_url = 'http://fake/auth/url?' + urllib.parse.urlencode({
       'redirect_uri': 'http://localhost/fakesource/add?state='
@@ -311,9 +311,9 @@ class UtilTest(testutil.ModelsTest):
     self.assert_equals(302, resp.status_code)
     self.assert_equals(expected_auth_url, resp.headers['location'])
 
-    resp = application.get_response(
+    resp = application.get_response(native_str(
       '/fakesource/add?state=' + encoded_state +
-      '&oauth_token=fake-token&oauth_token_secret=fake-secret')
+      '&oauth_token=fake-token&oauth_token_secret=fake-secret'))
 
     self.assert_equals(302, resp.status_code)
     self.assert_equals(
@@ -349,10 +349,10 @@ class UtilTest(testutil.ModelsTest):
     ])
 
     resp = application.get_response(
-      '/fakesource/start', method='POST', body=urllib.parse.urlencode({
+      '/fakesource/start', method='POST', body=native_str(urllib.parse.urlencode({
         'feature': 'publish',
         'callback': 'http://withknown.com/bridgy_callback',
-      }))
+      })))
 
     expected_auth_url = 'http://fake/auth/url?' + urllib.parse.urlencode({
       'redirect_uri': 'http://localhost/fakesource/add?state='

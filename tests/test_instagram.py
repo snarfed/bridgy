@@ -3,6 +3,7 @@
 from __future__ import unicode_literals
 from __future__ import absolute_import
 
+from future.utils import native_str
 from future import standard_library
 standard_library.install_aliases()
 import copy
@@ -237,7 +238,7 @@ class InstagramTest(testutil.ModelsTest):
     self.expect_site_fetch()
     self.mox.ReplayAll()
     resp = instagram.application.get_response(
-      '/instagram/start', method='POST', body=urllib.parse.urlencode(self.bridgy_api_state))
+      '/instagram/start', method='POST', body=native_str(urllib.parse.urlencode(self.bridgy_api_state)))
 
     self.assertEquals(302, resp.status_code)
 
@@ -261,7 +262,7 @@ class InstagramTest(testutil.ModelsTest):
     self.mox.ReplayAll()
 
     resp = instagram.application.get_response(
-      '/instagram/start', method='POST', body=urllib.parse.urlencode(self.bridgy_api_state))
+      '/instagram/start', method='POST', body=native_str(urllib.parse.urlencode(self.bridgy_api_state)))
     self.assertEquals(302, resp.status_code)
     location = urllib.parse.unquote_plus(resp.headers['Location'])
     self.assertTrue(location.startswith(

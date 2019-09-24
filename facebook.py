@@ -20,7 +20,9 @@ Example comment ID and links
 * Local handler path: /comment/facebook/212038/10100823411094363_10069288
 """
 from __future__ import unicode_literals
+from future.moves.urllib import error as urllib_error_py2
 
+from future.utils import native_str
 from future import standard_library
 standard_library.install_aliases()
 from builtins import str
@@ -30,8 +32,6 @@ import itertools
 import json
 import logging
 import urllib.request, urllib.parse, urllib.error
-import urllib.request, urllib.error, urllib.parse
-import urllib.parse
 
 import appengine_config
 from google.appengine.ext import ndb
@@ -159,7 +159,7 @@ class FacebookPage(models.Source):
 
     try:
       activities = super(FacebookPage, self).get_activities_response(**kwargs)
-    except urllib.error.HTTPError as e:
+    except (urllib.error.HTTPError, urllib_error_py2.HTTPError) as e:
       code, body = util.interpret_http_exception(e)
       # use a function so any new exceptions (JSON decoding, missing keys) don't
       # clobber the original exception so we can re-raise it below.
@@ -321,7 +321,7 @@ class FacebookPage(models.Source):
     val = self.updates.get(name)
     if val:
       keep = heapq.nlargest(max,
-        (int(id) if util.is_int(id) else str(id) for id in val.keys()))
+        (int(id) if util.is_int(id) else native_str(id) for id in val.keys()))
       setattr(self, name + '_json',
               json.dumps({str(id): val[str(id)] for id in keep}))
 

@@ -35,8 +35,6 @@ import json
 import pprint
 import re
 import urllib.request, urllib.parse, urllib.error
-import urllib.request, urllib.error, urllib.parse
-import urllib.parse
 
 import appengine_config
 
@@ -161,7 +159,7 @@ class Handler(webmention.WebmentionHandler):
 
     # parse and validate target URL
     try:
-      parsed = urlparse.urlparse(self.target_url())
+      parsed = urllib.parse.urlparse(self.target_url())
     except BaseException:
       return self.error('Could not parse target URL %s' % self.target_url())
 

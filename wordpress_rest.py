@@ -19,6 +19,7 @@ making an API call with an access token from the command line:
 curl -H 'Authorization: Bearer [TOKEN]' URL...
 """
 from __future__ import unicode_literals
+from future.moves.urllib import error as urllib_error_py2
 
 from future import standard_library
 standard_library.install_aliases()
@@ -146,7 +147,7 @@ class WordPress(models.Source):
     data = {'content': content.encode('utf-8')}
     try:
       resp = self.urlopen(auth_entity, url, data=urllib.parse.urlencode(data))
-    except urllib.error.HTTPError as e:
+    except (urllib.error.HTTPError, urllib_error_py2.HTTPError) as e:
       code, body = util.interpret_http_exception(e)
       try:
         parsed = json.loads(body) if body else {}
@@ -173,7 +174,7 @@ class WordPress(models.Source):
     """
     try:
       return cls.urlopen(auth_entity, API_SITE_URL % auth_entity.blog_id)
-    except urllib.error.HTTPError as e:
+    except (urllib.error.HTTPError, urllib_error_py2.HTTPError) as e:
       code, body = util.interpret_http_exception(e)
       if (code == '403' and '"API calls to this blog have been disabled."' in body):
         handler.messages.add(

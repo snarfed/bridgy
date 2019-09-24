@@ -116,13 +116,13 @@ class UpdateInstagramPictures(UpdatePictures):
   SOURCE_CLS = Instagram
   FREQUENCY = datetime.timedelta(hours=1)
   WEEK = datetime.timedelta(days=7)
-  BATCH = float(WEEK.total_seconds()), FREQUENCY.total_seconds()
+  BATCH = float(WEEK.total_seconds()) / FREQUENCY.total_seconds()
 
   def source_query(self):
     now = util.now_fn()
     since_sun = (now.weekday() * datetime.timedelta(days=1) +
                  (now - now.replace(hour=0, minute=0, second=0)))
-    batch = float(Instagram.query().count()), self.BATCH
+    batch = float(Instagram.query().count()) / self.BATCH
     offset = batch * float(since_sun.total_seconds()) / self.FREQUENCY.total_seconds()
     return Instagram.query().fetch(offset=int(math.floor(offset)),
                                    limit=int(math.ceil(batch)))

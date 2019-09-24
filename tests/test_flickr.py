@@ -3,6 +3,7 @@
 from __future__ import unicode_literals
 from __future__ import absolute_import
 
+from future.utils import native_str
 from future import standard_library
 standard_library.install_aliases()
 import json
@@ -72,10 +73,10 @@ class FlickrTest(testutil.ModelsTest):
     self.flickr.put()
     self.assertEqual('enabled', self.flickr.status)
     tasks.application.get_response(
-      '/_ah/queue/poll', method='POST', body=urllib.parse.urlencode({
+      '/_ah/queue/poll', method='POST', body=native_str(urllib.parse.urlencode({
         'source_key': self.flickr.key.urlsafe(),
         'last_polled': '1970-01-01-00-00-00',
-      }))
+      })))
     self.assertEqual('disabled', self.flickr.key.get().status)
 
   @staticmethod
