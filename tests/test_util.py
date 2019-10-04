@@ -16,6 +16,8 @@ from appengine_config import HTTP_TIMEOUT
 
 from google.appengine.api import memcache
 from google.appengine.ext import ndb
+from oauth_dropins.webutil.testutil import requests_response
+import requests
 import webapp2
 from webmentiontools import send
 from webob import exc
@@ -154,25 +156,24 @@ class UtilTest(testutil.ModelsTest):
       self.assert_equals(expected, util.prune_activity(orig, self.sources[0]))
 
   def test_webmention_tools_relative_webmention_endpoint_in_body(self):
-    super(testutil.HandlerTest, self).expect_requests_get('http://target/', """
+    requests.get('http://target/', verify=False).AndReturn(requests_response("""
 <html><meta>
 <link rel="webmention" href="/endpoint">
-</meta></html>""", verify=False)
+</meta></html>"""))
     self.mox.ReplayAll()
 
     mention = send.WebmentionSend('http://source/', 'http://target/')
-    mention.requests_kwargs = {'timeout': HTTP_TIMEOUT}
+    mention.requests_kwargs = {}
     mention._discoverEndpoint()
     self.assertEquals('http://target/endpoint', mention.receiver_endpoint)
 
   def test_webmention_tools_relative_webmention_endpoint_in_header(self):
-    super(testutil.HandlerTest, self).expect_requests_get(
-      'http://target/', '', verify=False,
-      response_headers={'Link': '</endpoint>; rel="webmention"'})
+    requests.get('http://target/', verify=False).AndReturn(requests_response(
+      '', headers={'Link': '</endpoint>; rel="webmention"'}))
     self.mox.ReplayAll()
 
     mention = send.WebmentionSend('http://source/', 'http://target/')
-    mention.requests_kwargs = {'timeout': HTTP_TIMEOUT}
+    mention.requests_kwargs = {}
     mention._discoverEndpoint()
     self.assertEquals('http://target/endpoint', mention.receiver_endpoint)
 
@@ -237,8 +238,7 @@ class UtilTest(testutil.ModelsTest):
 
     self.expect_webmention_requests_get(
       'http://fakeuser.com/',
-      response='<html><link rel="webmention" href="/webmention"></html>',
-      verify=False)
+      response='<html><link rel="webmention" href="/webmention"></html>')
 
     self.mox.ReplayAll()
 
@@ -291,8 +291,7 @@ class UtilTest(testutil.ModelsTest):
 
     self.expect_webmention_requests_get(
       'https://kylewm.com/',
-      response='<html><link rel="webmention" href="/webmention"></html>',
-      verify=False)
+      response='<html><link rel="webmention" href="/webmention"></html>')
 
     self.mox.ReplayAll()
 
@@ -376,7 +375,7 @@ class UtilTest(testutil.ModelsTest):
     self.mox.ReplayAll()
 
     resp = util.requests_get('http://foo/bar')
-    self.assertEquals(util.HTTP_REQUEST_REFUSED_STATUS_CODE, resp.status_code)
+    self.assertEquals(util.HTTP_RESPONSE_TOO_BIG_STATUS_CODE, resp.status_code)
     self.assertIn(' larger than our limit ', resp.content)
 
   def test_requests_get_content_length_not_int(self):

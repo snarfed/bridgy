@@ -1656,7 +1656,7 @@ class PropagateTest(TaskQueueTest):
     self.responses[0].put()
     self.expect_requests_head('http://not/html', status_code=405)
     self.expect_webmention_requests_get(
-      'http://not/html', content_type='image/gif', timeout=999, verify=False)
+      'http://not/html', content_type='image/gif', timeout=999)
 
     self.mox.ReplayAll()
     self.post_task()
@@ -1687,14 +1687,14 @@ class PropagateTest(TaskQueueTest):
       'http://html/charset',
       content_type='text/html; charset=utf-8',
       response_headers={'Link': '<http://my/endpoint>; rel="webmention"'},
-      timeout=999, verify=False)
+      timeout=999)
 
     source_url = ('http://localhost/comment/fake/%s/a/1_2_a' %
                   self.sources[0].key.string_id())
     self.expect_requests_post(
       'http://my/endpoint',
       data={'source': source_url, 'target': 'http://html/charset'},
-      timeout=999, verify=False, allow_redirects=False, headers={'Accept': '*/*'})
+      stream=None, timeout=999, verify=False, allow_redirects=False, headers={'Accept': '*/*'})
 
     self.mox.ReplayAll()
     self.post_task()
@@ -1709,7 +1709,7 @@ class PropagateTest(TaskQueueTest):
     self.responses[0].put()
     self.expect_requests_head('http://unknown/type', status_code=405)
     self.expect_webmention_requests_get('http://unknown/type', content_type=None,
-                                        timeout=999, verify=False)
+                                        timeout=999)
 
     self.mox.ReplayAll()
     self.post_task()
@@ -1724,7 +1724,7 @@ class PropagateTest(TaskQueueTest):
     self.responses[0].put()
     self.expect_requests_head('http://my/post')
     self.expect_webmention_requests_get(
-      'http://my/post', timeout=999, verify=False,
+      'http://my/post', timeout=999,
       response_headers={'Link': '<http://my/endpoint>; rel=webmention'})
 
     source_url = ('http://localhost/comment/fake/%s/a/1_2_a' %
@@ -1732,7 +1732,7 @@ class PropagateTest(TaskQueueTest):
     self.expect_requests_post(
       'http://my/endpoint', timeout=999, verify=False,
       data={'source': source_url, 'target': 'http://my/post'},
-      allow_redirects=False, headers={'Accept': '*/*'})
+      stream=None, allow_redirects=False, headers={'Accept': '*/*'})
 
     self.mox.ReplayAll()
     self.post_task()
@@ -1747,7 +1747,7 @@ class PropagateTest(TaskQueueTest):
     self.responses[0].put()
     # self.expect_requests_head('http://my/post')
     self.expect_webmention_requests_get(
-      'http://target1/post/url', timeout=999, verify=False,
+      'http://target1/post/url', timeout=999,
       headers=util.REQUEST_HEADERS_CONNEG,
       response_headers={'Link': '<http://my/endpoint>; rel=webmention'})
 
@@ -1755,7 +1755,7 @@ class PropagateTest(TaskQueueTest):
       'http://my/endpoint', timeout=999, verify=False,
       data={'source': 'http://localhost/comment/twitter/rhiaro/a/1_2_a',
             'target': 'http://target1/post/url'},
-      allow_redirects=False, headers={'Accept': '*/*'})
+      stream=None, allow_redirects=False, headers={'Accept': '*/*'})
 
     self.mox.ReplayAll()
     self.post_task()

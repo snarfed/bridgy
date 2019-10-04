@@ -259,16 +259,12 @@ class HandlerTest(testutil_appengine.HandlerTest):
     if 'headers' not in kwargs:
       kwargs['headers'] = util.REQUEST_HEADERS
 
-    if 'stream' not in kwargs:
-      kwargs['stream'] = True
-    elif kwargs['stream'] == None:
-      del kwargs['stream']
-
     return super(HandlerTest, self).expect_requests_get(*args, **kwargs)
 
   def expect_webmention_requests_get(self, *args, **kwargs):
     kwargs.setdefault('headers', {}).update(util.REQUEST_HEADERS)
-    return super(HandlerTest, self).expect_requests_get(*args, **kwargs)
+    return super(HandlerTest, self).expect_requests_get(
+      *args, stream=None, verify=False, **kwargs)
 
   def expect_requests_post(self, *args, **kwargs):
     kwargs.setdefault('headers', {}).update(util.REQUEST_HEADERS)

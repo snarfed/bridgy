@@ -62,8 +62,8 @@ class WebmentionHandler(WebmentionGetHandler):
       (:class:`requests.Response`, mf2 data dict) on success, None on failure
     """
     try:
-      fetched = util.requests_get(url)
-      fetched.raise_for_status()
+      resp = util.requests_get(url)
+      resp.raise_for_status()
     except BaseException as e:
       if raise_errors:
         raise
@@ -71,22 +71,16 @@ class WebmentionHandler(WebmentionGetHandler):
       return self.error('Could not fetch source URL %s' % url)
 
     if self.entity:
-      self.entity.html = fetched.text
-
-    # .text is decoded unicode string, .content is raw bytes. if the HTTP
-    # headers didn't specify a charset, pass raw bytes to BeautifulSoup so it
-    # can look for a <meta> tag with a charset and decode.
-    text = (fetched.text if 'charset' in fetched.headers.get('content-type', '')
-            else fetched.content)
-    doc = util.beautifulsoup_parse(text)
+      self.entity.html = resp.text
 
     # parse microformats
-    data = util.mf2py_parse(doc, fetched.url)
+    soup = util.parse_html(resp)
+    mf2 = util.parse_mf2(soup, resp.url)
 
     # special case tumblr's markup: div#content > div.post > div.copy
     # convert to mf2 and re-parse
-    if not data.get('items'):
-      contents = doc.find_all(id='content')
+    if not mf2.get('items'):
+      contents = soup.find_all(id='content')
       if contents:
         post = contents[0].find_next(class_='post')
         if post:
@@ -99,21 +93,23 @@ class WebmentionHandler(WebmentionGetHandler):
             img = photo.find_next('img')
             if img:
               img['class'] = 'u-photo'
+          # TODO: i should be able to pass post or contents[0] to mf2py instead
+          # here, but it returns no items. mf2py bug?
           doc = str(post)
-          data = util.mf2py_parse(doc, fetched.url)
+          mf2 = util.parse_mf2(doc, resp.url)
 
-    logging.debug('Parsed microformats2: %s', json.dumps(data, indent=2))
-    items = data.get('items', [])
+    logging.debug('Parsed microformats2: %s', json.dumps(mf2, indent=2))
+    items = mf2.get('items', [])
     if require_mf2 and (not items or not items[0]):
-      return self.error('No microformats2 data found in ' + fetched.url,
-                        data=data, html="""
+      return self.error('No microformats2 data found in ' + resp.url,
+                        data=mf2, html="""
 No <a href="http://microformats.org/get-started">microformats</a> or
 <a href="http://microformats.org/wiki/microformats2">microformats2</a> found in
 <a href="%s">%s</a>! See <a href="http://indiewebify.me/">indiewebify.me</a>
 for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
-""" % (fetched.url, util.pretty_link(fetched.url)))
+""" % (resp.url, util.pretty_link(resp.url)))
 
-    return fetched, data
+    return resp, mf2
 
   def error(self, error, html=None, status=400, data=None, log_exception=True,
             mail=False, extra_json=None):

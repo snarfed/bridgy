@@ -612,10 +612,8 @@ class Source(with_metaclass(SourceMeta, StringIdModel)):
     if match and resolve:
       root = match.group(1)
       try:
-        resp = util.requests_get(root)
-        resp.raise_for_status()
-        data = util.mf2py_parse(resp.text, root)
-        me_urls = data.get('rels', {}).get('me', [])
+        mf2 = util.fetch_mf2(root)
+        me_urls = mf2['rels'].get('me', [])
         if final in me_urls:
           final = root
       except requests.RequestException:

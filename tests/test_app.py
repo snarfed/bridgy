@@ -335,7 +335,7 @@ class AppTest(testutil.ModelsTest):
     response = app.application.get_response(user_url)
     self.assertEquals(200, response.status_int)
 
-    parsed = util.mf2py_parse(response.body, user_url)
+    parsed = util.parse_mf2(response.body, user_url)
     hcard = parsed.get('items', [])[0]
     self.assertEquals(['h-card'], hcard['type'])
     self.assertEquals(
@@ -404,7 +404,7 @@ class AppTest(testutil.ModelsTest):
     resp = app.application.get_response(user_url)
     self.assertEquals(200, resp.status_int)
 
-    parsed = util.mf2py_parse(resp.body, user_url)
+    parsed = util.parse_mf2(resp.body, user_url)
     publish = parsed['items'][0]['children'][0]
 
   def test_user_page_escapes_html_chars(self):

@@ -91,15 +91,14 @@ class TumblrTest(testutil.HandlerTest):
   def _test_verify_finds_disqus(self, snippet):
     # this requests.get is called by webmention-tools
     self.expect_webmention_requests_get(
-      'http://primary/', '<html>\nstuff\n%s\n</html>' % snippet, verify=False)
+      'http://primary/', '<html>\nstuff\n%s\n</html>' % snippet)
     self.mox.ReplayAll()
     t = Tumblr.new(self.handler, auth_entity=self.auth_entity, features=['webmention'])
     t.verify()
     self.assertEquals('my-disqus-name', t.disqus_shortname)
 
   def test_verify_without_disqus(self):
-    self.expect_webmention_requests_get('http://primary/', 'no disqus here!',
-                                        verify=False)
+    self.expect_webmention_requests_get('http://primary/', 'no disqus here!')
     self.mox.ReplayAll()
     t = Tumblr.new(self.handler, auth_entity=self.auth_entity, features=['webmention'])
     t.verify()

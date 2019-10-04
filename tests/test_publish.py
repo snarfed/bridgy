@@ -318,11 +318,6 @@ class PublishTest(testutil.HandlerTest):
 foo
 <a rel="shortlink" href="http://foo.com/short"></a>""")
 
-  def test_a_class_shortlink(self):
-    self._test_shortlink(self.post_html % """\
-foo
-<a class="shortlink" href="http://foo.com/short"></a>""")
-
   def _test_shortlink(self, html):
     self.expect_requests_get('http://foo.com/bar', html)
     self.mox.ReplayAll()
@@ -332,7 +327,7 @@ foo
     self.expect_requests_head('http://will/redirect', redirected_url='http://foo.com/1')
     self.expect_requests_get('http://foo.com/1', self.post_html % """\
 foo
-<a class="shortlink" href="http://foo.com/short"></a>""")
+<a rel="shortlink" href="http://foo.com/short"></a>""")
     self.mox.ReplayAll()
     self.assert_created('foo - http://foo.com/short', source='http://will/redirect')
 

@@ -141,7 +141,7 @@ class FacebookTestLive(testutil.HandlerTest):
   @staticmethod
   def submit_form(html):
     """Submits the first form on the page."""
-    form = util.beautifulsoup_parse(html).form
+    form = util.parse_html(html).form
     data = {input['name']: input['value'] for input in form.find_all('input')
             if input.get('name') and input.get('value')}
     return facebook.application.get_response(

@@ -273,13 +273,9 @@ def _process_author(source, author_url, refetch=False, store_blanks=True):
   if not ok:
     return {}
 
+  logging.debug('fetching author url %s', author_url)
   try:
-    logging.debug('fetching author url %s', author_url)
-    author_resp = util.requests_get(author_url)
-    # TODO for error codes that indicate a temporary error, should we make
-    # a certain number of retries before giving up forever?
-    author_resp.raise_for_status()
-    author_dom = util.beautifulsoup_parse(author_resp.text)
+    author_mf2 = util.fetch_mf2(author_url)
   except AssertionError:
     raise  # for unit tests
   except BaseException:
@@ -288,40 +284,25 @@ def _process_author(source, author_url, refetch=False, store_blanks=True):
     logging.info('Could not fetch author url %s', author_url, exc_info=True)
     return {}
 
-  feeditems = _find_feed_items(author_url, author_dom)
+  feeditems = _find_feed_items(author_mf2)
 
-  # look for all other feed urls using rel='feed', type='text/html'
+  # try rel=feeds
   feed_urls = set()
-  for rel_feed_node in (author_dom.find_all('link', rel='feed')
-                        + author_dom.find_all('a', rel='feed')):
-    feed_url = rel_feed_node.get('href')
-    if not feed_url:
-      continue
-
-    feed_url = urllib.parse.urljoin(author_url, feed_url)
-    feed_type = rel_feed_node.get('type')
-    if feed_type and feed_type != 'text/html':
-      feed_ok = False
-    else:
-      # double check that it's text/html, not too big, etc
-      feed_url, _, feed_ok = util.get_webmention_target(feed_url)
-
+  for feed_url in author_mf2['rels'].get('feed', []):
+    # check that it's html, not too big, etc
+    feed_url, _, feed_ok = util.get_webmention_target(feed_url)
     if feed_url == author_url:
       logging.debug('author url is the feed url, ignoring')
     elif not feed_ok:
-      logging.debug('skipping feed of type %s', feed_type)
+      logging.debug("skipping feed since it's not HTML or otherwise bad")
     else:
       feed_urls.add(feed_url)
 
   for feed_url in feed_urls:
     try:
       logging.debug("fetching author's rel-feed %s", feed_url)
-      feed_resp = util.requests_get(feed_url)
-      feed_resp.raise_for_status()
-      logging.debug("author's rel-feed fetched successfully %s", feed_url)
-      feeditems = _merge_hfeeds(feeditems,
-                                _find_feed_items(feed_url, feed_resp.text))
-
+      feed_mf2 = util.fetch_mf2(feed_url)
+      feeditems = _merge_hfeeds(feeditems, _find_feed_items(feed_mf2))
       domain = util.domain_from_link(feed_url)
       if source.updates is not None and domain not in source.domains:
         domains = source.updates.setdefault('domains', source.domains)
@@ -411,23 +392,19 @@ def _merge_hfeeds(feed1, feed2):
     (url not in seen) for url in item.get('properties', {}).get('url', []) if isinstance(url, basestring))]
 
 
-def _find_feed_items(feed_url, feed_doc):
-  """Extract feed items from a given URL and document. If the top-level
-  h-* item is an h-feed, return its children. Otherwise, returns the
-  top-level items.
+def _find_feed_items(mf2):
+  """Extract feed items from given microformats2 data.
+
+  If the top-level h-* item is an h-feed, return its children. Otherwise,
+  returns the top-level items.
 
   Args:
-    feed_url: a string. the URL passed to mf2py parser
-    feed_doc: a string or BeautifulSoup object. document is passed to
-      mf2py parser
+    mf2: dict, parsed mf2 data
 
-  Returns:
-    a list of dicts, each one representing an mf2 h-* item
+  Returns: list of dicts, each one representing an mf2 h-* item
   """
-  parsed = util.mf2py_parse(feed_doc, feed_url)
-
-  feeditems = parsed['items']
-  hfeeds = mf2util.find_all_entries(parsed, ('h-feed',))
+  feeditems = mf2['items']
+  hfeeds = mf2util.find_all_entries(mf2, ('h-feed',))
   if hfeeds:
     feeditems = list(itertools.chain.from_iterable(
       hfeed.get('children', []) for hfeed in hfeeds))
@@ -435,8 +412,8 @@ def _find_feed_items(feed_url, feed_doc):
     logging.debug('No h-feed found, fallback to top-level h-entrys.')
 
   if len(feeditems) > MAX_FEED_ENTRIES:
-    logging.info('%s has %s entries! only processing the first %s.',
-                 feed_url, len(feeditems), MAX_FEED_ENTRIES)
+    logging.info('Feed has %s entries! only processing the first %s.',
+                 len(feeditems), MAX_FEED_ENTRIES)
     feeditems = feeditems[:MAX_FEED_ENTRIES]
 
   return feeditems
@@ -487,13 +464,11 @@ def process_entry(source, permalink, feed_entry, refetch, preexisting,
     source.updates['last_feed_syndication_url'] = util.now_fn()
   elif not source.last_feed_syndication_url or not feed_entry:
     # fetch the full permalink page if we think it might have more details
-    parsed = None
+    mf2 = None
     try:
-      logging.debug('fetching post permalink %s', permalink)
       if type_ok:
-        resp = util.requests_get(permalink)
-        resp.raise_for_status()
-        parsed = util.mf2py_parse(resp.text, permalink)
+        logging.debug('fetching post permalink %s', permalink)
+        mf2 = util.fetch_mf2(permalink)
     except AssertionError:
       raise  # for unit tests
     except BaseException:
@@ -501,16 +476,16 @@ def process_entry(source, permalink, feed_entry, refetch, preexisting,
       logging.info('Could not fetch permalink %s', permalink, exc_info=True)
       success = False
 
-    if parsed:
+    if mf2:
       syndication_urls = set()
-      relsynd = parsed.get('rels').get('syndication', [])
+      relsynd = mf2['rels'].get('syndication', [])
       if relsynd:
         logging.debug('rel-syndication links: %s', relsynd)
       syndication_urls.update(url for url in relsynd
                               if isinstance(url, basestring))
       # there should only be one h-entry on a permalink page, but
       # we'll check all of them just in case.
-      for hentry in (item for item in parsed['items']
+      for hentry in (item for item in mf2['items']
                      if 'h-entry' in item['type']):
         usynd = hentry.get('properties', {}).get('syndication', [])
         if usynd:

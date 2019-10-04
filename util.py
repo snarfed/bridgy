@@ -23,9 +23,7 @@ import time
 import urllib.request, urllib.parse, urllib.error
 
 from appengine_config import DEBUG
-import bs4
 import humanize
-import mf2py
 from oauth_dropins.webutil import handlers as webutil_handlers
 from oauth_dropins.webutil.models import StringIdModel
 from oauth_dropins.webutil import util
@@ -79,12 +77,6 @@ URL_BLACKLIST = frozenset((
 # before we roll them out to everyone.
 with open(os.path.join(_dir, 'beta_users.txt'), 'rt', encoding='utf-8') as f:
   BETA_USER_PATHS = util.load_file_lines(f)
-
-# Average HTML page size as of 2015-10-15 is 56K, so this is very generous and
-# conservative.
-# http://www.sitepoint.com/average-page-weight-increases-15-2014/
-# http://httparchive.org/interesting.php#bytesperpage
-MAX_HTTP_RESPONSE_SIZE = 500000
 
 # Returned as the HTTP status code when an upstream API fails. Not 5xx so that
 # it doesn't show up as a server error in graphs or trigger StackDriver's error
@@ -206,15 +198,12 @@ def requests_get(url, **kwargs):
     return resp
 
   kwargs.setdefault('headers', {}).update(request_headers(url=url))
-  resp = util.requests_get(url, stream=True, **kwargs)
+  return util.requests_get(url, **kwargs)
 
-  length = resp.headers.get('Content-Length', 0)
-  if util.is_int(length) and int(length) > MAX_HTTP_RESPONSE_SIZE:
-    resp.status_code = HTTP_REQUEST_REFUSED_STATUS_CODE
-    resp._text = resp._content = ('Content-Length %s is larger than our limit %s.' %
-                                  (length, MAX_HTTP_RESPONSE_SIZE))
 
-  return resp
+def fetch_mf2(url, **kwargs):
+  """Injects :func:`requests_get` into :func:`oauth_dropins.webutil.util.fetch_mf2`."""
+  return util.fetch_mf2(url, get_fn=requests_get, **kwargs)
 
 
 def requests_post(url, **kwargs):
@@ -268,9 +257,7 @@ def get_webmention_target(url, resolve=True, replace_test_domains=True):
     # this follows *all* redirects, until the end
     resolved = follow_redirects(url, cache=memcache)
     html = resolved.headers.get('content-type', '').startswith('text/html')
-    length = resolved.headers.get('Content-Length', 0)
-    too_big = util.is_int(length) and int(length) > MAX_HTTP_RESPONSE_SIZE
-    send = html and not too_big
+    send = html and resolved.status_code != util.HTTP_RESPONSE_TOO_BIG_STATUS_CODE
     url, domain, _ = get_webmention_target(
       resolved.url, resolve=False, replace_test_domains=replace_test_domains)
 
@@ -675,35 +662,3 @@ def cache_time(label, size=None):
   memcache.incr('timed %s' % label, elapsed, initial_value=0)
   if size:
     memcache.incr('timed %s size' % label, size, initial_value=0)
-
-
-def beautifulsoup_parse(html):
-  """Parses an HTML string with BeautifulSoup. Centralizes our parsing config.
-
-  We currently use lxml, which BeautifulSoup claims is the fastest and best:
-  http://www.crummy.com/software/BeautifulSoup/bs4/doc/#specifying-the-parser-to-use
-
-  lxml is a native module, so we don't bundle and deploy it to App Engine.
-  Instead, we use App Engine's version by declaring it in app.yaml.
-  https://cloud.google.com/appengine/docs/standard/python/tools/built-in-libraries-27
-
-  We pin App Engine's version in requirements.freeze.txt and tell BeautifulSoup
-  to use lxml explicitly to ensure we use the same parser and version in prod
-  and locally, since we've been bit by at least one meaningful difference
-  between lxml and e.g. html5lib: lxml includes the contents of <noscript> tags,
-  html5lib omits them. :(
-  https://github.com/snarfed/bridgy/issues/798#issuecomment-370508015
-  """
-  # instrumenting, disabled for now:
-  # with cache_time('beautifulsoup', len(html)):
-  return bs4.BeautifulSoup(html, 'lxml')
-
-
-def mf2py_parse(input, url):
-  """Uses mf2py to parse an input HTML string or BeautifulSoup input."""
-  if isinstance(input, basestring):
-    input = beautifulsoup_parse(input)
-
-  # instrumenting, disabled for now:
-  # with cache_time('mf2py', 1):
-  return mf2py.parse(url=url, doc=input, img_with_alt=True)

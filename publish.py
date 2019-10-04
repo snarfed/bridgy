@@ -94,7 +94,6 @@ class Handler(webmention.WebmentionHandler):
   PREVIEW = None
 
   shortlink = None
-
   source = None
 
   def authorize(self):
@@ -220,7 +219,7 @@ class Handler(webmention.WebmentionHandler):
 
     if not resp:
       return
-    self.fetched, data = resp
+    self.fetched, mf2 = resp
 
     # create the Publish entity so we can store the result.
     if (self.entity.status == 'complete' and self.entity.type != 'preview' and
@@ -231,18 +230,15 @@ class Handler(webmention.WebmentionHandler):
     # find rel-shortlink, if any
     # http://microformats.org/wiki/rel-shortlink
     # https://github.com/snarfed/bridgy/issues/173
-    soup = util.beautifulsoup_parse(self.fetched.text)
-    shortlinks = (soup.find_all('link', rel='shortlink') +
-                  soup.find_all('a', rel='shortlink') +
-                  soup.find_all('a', class_='shortlink'))
+    shortlinks = mf2['rels'].get('shortlink')
     if shortlinks:
-      self.shortlink = urllib.parse.urljoin(url, shortlinks[0]['href'])
+      self.shortlink = urllib.parse.urljoin(url, shortlinks[0])
 
     # loop through each item and its children and try to preview/create it. if
     # it fails, try the next one. break after the first one that works.
     result = None
     types = set()
-    queue = collections.deque(data.get('items', []))
+    queue = collections.deque(mf2.get('items', []))
     while queue:
       item = queue.popleft()
       item_types = set(item.get('type'))
@@ -298,7 +294,7 @@ class Handler(webmention.WebmentionHandler):
                (source_cls.GR_CLASS.NAME, ' + '.join(types)))
       else:
         msg = 'Could not find content in <a href="http://microformats.org/wiki/h-entry">h-entry</a> or any other element!'
-      return self.error(msg, data=data)
+      return self.error(msg, data=mf2)
 
     # write results to datastore
     self.entity.status = 'complete'
@@ -529,14 +525,9 @@ class Handler(webmention.WebmentionHandler):
         if not ok:
           continue
 
-        # fetch_mf2 raises a fuss if it can't fetch a mf2 document;
-        # easier to just grab this ourselves than add a bunch of
-        # special-cases to that method
         logging.debug('expand_target_urls fetching field=%s, url=%s', field, url)
         try:
-          resp = util.requests_get(url)
-          resp.raise_for_status()
-          data = util.mf2py_parse(resp.text, url)
+          mf2 = util.fetch_mf2(url)
         except AssertionError:
           raise  # for unit tests
         except BaseException:
@@ -545,10 +536,10 @@ class Handler(webmention.WebmentionHandler):
                        field, url, exc_info=True)
           continue
 
-        synd_urls = data.get('rels', {}).get('syndication', [])
+        synd_urls = mf2['rels'].get('syndication', [])
 
         # look for syndication urls in the first h-entry
-        queue = collections.deque(data.get('items', []))
+        queue = collections.deque(mf2.get('items', []))
         while queue:
           item = queue.popleft()
           item_types = set(item.get('type', []))

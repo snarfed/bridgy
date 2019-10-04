@@ -66,7 +66,7 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
         return
       domains = util.dedupe_urls(
         util.domain_from_link(url)
-        for url in mf2[1].get('rels', {}).get('canonical', []))
+        for url in mf2[1]['rels'].get('canonical', []))
       if domains:
         self.source = (source_cls.query()
                        .filter(source_cls.domains.IN(domains))
@@ -100,16 +100,15 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
     logging.debug("BlogWebmention entity: '%s'", self.entity.key.urlsafe())
 
     # fetch source page
-    resp = self.fetch_mf2(self.source_url)
-    if not resp:
+    fetched = self.fetch_mf2(self.source_url)
+    if not fetched:
       return
-    self.fetched, data = resp
+    resp, mf2 = fetched
 
-    item = self.find_mention_item(data.get('items', []))
+    item = self.find_mention_item(mf2.get('items', []))
     if not item:
       return self.error('Could not find target URL %s in source page %s' %
-                        (self.target_url, self.fetched.url),
-                        data=data, log_exception=False)
+                        (self.target_url, resp.url), data=mf2, log_exception=False)
 
     # default author to target domain
     author_name = domain

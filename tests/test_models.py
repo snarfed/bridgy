@@ -302,8 +302,7 @@ class SourceTest(testutil.HandlerTest):
 
   def test_create_new_webmention(self):
     """We should subscribe to webmention sources in Superfeedr."""
-    self.expect_webmention_requests_get('http://primary/', 'no webmention endpoint',
-                                        verify=False)
+    self.expect_webmention_requests_get('http://primary/', 'no webmention endpoint')
     self.mox.StubOutWithMock(superfeedr, 'subscribe')
 
     def check_source(source):
@@ -423,8 +422,7 @@ class SourceTest(testutil.HandlerTest):
     FakeSource.string_id_counter -= 1
     auth_entity = testutil.FakeAuthEntity(id='x', user_json=json.dumps(
         {'urls': [{'value': 'http://bar'}, {'value': 'http://baz'}]}))
-    self.expect_webmention_requests_get('http://bar/', 'no webmention endpoint',
-                                        verify=False)
+    self.expect_webmention_requests_get('http://bar/', 'no webmention endpoint')
 
     self.mox.ReplayAll()
     source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
@@ -439,8 +437,7 @@ class SourceTest(testutil.HandlerTest):
     FakeSource.string_id_counter -= 1
     auth_entity = testutil.FakeAuthEntity(id='x', user_json=json.dumps(
         {'urls': [{'value': 'http://bar'}, {'value': 'http://baz'}]}))
-    self.expect_webmention_requests_get('http://bar/', 'no webmention endpoint',
-                                        verify=False)
+    self.expect_webmention_requests_get('http://bar/', 'no webmention endpoint')
 
     self.mox.ReplayAll()
     source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
@@ -499,7 +496,7 @@ class SourceTest(testutil.HandlerTest):
     self.expect_webmention_requests_get('http://primary/', """
 <html><meta>
 <link rel="webmention" href="http://web.ment/ion">
-</meta></html>""", verify=False)
+</meta></html>""")
     self.mox.ReplayAll()
 
     source = FakeSource.new(self.handler, features=['webmention'],
@@ -516,7 +513,7 @@ class SourceTest(testutil.HandlerTest):
     self.expect_webmention_requests_get(
       'http://primary/', """\xef\xbb\xbf<html><head>
 <link rel="webmention" href="http://web.ment/ion"></head>
-</html>""", verify=False)
+</html>""")
     self.mox.ReplayAll()
 
     source = FakeSource.new(self.handler, features=['webmention'],
@@ -527,7 +524,7 @@ class SourceTest(testutil.HandlerTest):
 
   def test_verify_without_webmention_endpoint(self):
     self.expect_webmention_requests_get(
-      'http://primary/', 'no webmention endpoint here!', verify=False)
+      'http://primary/', 'no webmention endpoint here!')
     self.mox.ReplayAll()
 
     source = FakeSource.new(self.handler, features=['webmention'],
@@ -539,7 +536,7 @@ class SourceTest(testutil.HandlerTest):
     self.expect_webmention_requests_get('http://good/', """
 <html><meta>
 <link rel="webmention" href="http://web.ment/ion">
-</meta></html>""", verify=False)
+</meta></html>""")
     self.mox.ReplayAll()
 
     source = FakeSource.new(self.handler, features=['webmention'],

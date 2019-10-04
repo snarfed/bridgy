@@ -4,7 +4,7 @@
 -e git+git@github.com:PythonCharmers/python-future.git@e12549c42ed3a38ece45b9d88c75f5f3ee4d658d#egg=future
 -e git+git@github.com:snarfed/oauth-dropins.git#egg=oauth_dropins-master
 -e git+git@github.com:snarfed/webmention-tools.git#egg=webmentiontools
-beautifulsoup4==4.6.0
+beautifulsoup4==4.8.0
 certifi==2019.3.9
 chardet==3.0.4
 google-api-python-client==1.7.4
@@ -14,6 +14,8 @@ httplib2==0.10.3
 humanize==0.5.1
 idna==2.8
 Jinja2==2.10.1
+# Same version as on App Engine Standard Python 2:
+# https://cloud.google.com/appengine/docs/standard/python/tools/built-in-libraries-27
 lxml==3.7.3
 MarkupSafe==1.1.1
 mf2py==1.1.2

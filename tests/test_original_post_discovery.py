@@ -194,6 +194,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
 
     author_feed = u"""
     <html class="h-feed">
+      <head><meta charset="utf-8"></head>
       <div class="h-entry">
         <a class="u-url" href="http://author/post/permalink1"></a>
       </div>
@@ -663,23 +664,25 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.assertFalse(SyndicatedPost.query(ancestor=self.source.key).get())
 
   def test_feed_type_application_xml(self):
-    """Confirm that we don't follow rel=feeds explicitly marked as
-    application/xml.
+    """Confirm that we don't fetch non-HTML rel=feeds.
     """
+    self.expect_requests_head(self.activity['object']['url'])
+    self.expect_requests_head('http://author')
     self.expect_requests_get('http://author', """
     <html>
       <head>
-        <link rel="feed" type="application/xml" href="/updates.atom">
+        <link rel="feed" href="/updates.atom">
       </head>
     </html>
     """)
-
+    self.expect_requests_head('http://author/updates.atom',
+                              response_headers={'Content-Type': 'application/xml'})
+    # check that we don't GET http://author/updates.atom
     self.mox.ReplayAll()
     discover(self.source, self.activity)
 
   def test_feed_head_request_failed(self):
-    """Confirm that we don't follow rel=feeds explicitly marked as
-    application/xml.
+    """Confirm that we fetch permalinks even if HEAD fails.
     """
     self.expect_requests_get('http://author', """
     <html>
