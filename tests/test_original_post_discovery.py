@@ -221,7 +221,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     <div class="h-entry">
       <a class="u-url" href="http://author/post/perma✁2"></a>
       <a class="u-syndication" href="https://fa.ke/post/url2"></a>
-    </div>""").InAnyOrder()
+    </div>""", content_type='text/html; charset=utf-8').InAnyOrder()
 
     # third post is not syndicated
     self.expect_requests_get('http://author/post/permalink3', """
