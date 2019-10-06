@@ -1,16 +1,19 @@
 Bridgy developer documentation
 ==============================
 
-Got a web site? Want replies and likes from social networks? Want to
-tweet, post, and more? Bridgy is for you.
+Bridgy connects your web site to social media. Likes, retweets,
+mentions, cross-posting, and more. `See the user
+docs <https://brid.gy/about>`__ for more details, or the `developer
+docs <https://bridgy.readthedocs.io/>`__ if you want to contribute.
 
 https://brid.gy/
 
-Bridgy pulls comments and likes from social networks back to your web
-site. You can also use it to publish your posts to those networks. `See
-the user docs <https://brid.gy/about>`__ for more details, or the
-`developer docs <https://bridgy.readthedocs.io/>`__ if you want to
-contribute.
+Bridgy is part of the `IndieWeb <https://indieweb.org/>`__ ecosystem. In
+IndieWeb terminology, Bridgy offers
+`backfeed <https://indieweb.org/backfeed>`__,
+`POSSE <https://indieweb.org/POSSE>`__, and
+`webmention <http://indiewebify.me/#send-webmentions>`__ support as a
+service.
 
 License: This project is placed in the public domain.
 
@@ -239,8 +242,8 @@ growth <https://snarfed.org/2018-01-02_bridgy-stats-update>`__ from the
 dataset <https://console.cloud.google.com/bigquery?p=brid-gy&d=datastore&page=dataset>`__
 (`#715 <https://github.com/snarfed/bridgy/issues/715>`__). Here’s how.
 
-1. `Back up the full datastore to Google Cloud
-   Storage. <https://console.cloud.google.com/datastore/settings?project=brid-gy>`__
+1. `Export the full datastore to Google Cloud
+   Storage. <https://cloud.google.com/datastore/docs/export-import-entities>`__
    Include all entities except ``*Auth`` and other internal details.
    Check to see if any new kinds have been added since the last time
    this command was run.
@@ -253,8 +256,9 @@ dataset <https://console.cloud.google.com/bigquery?p=brid-gy&d=datastore&page=da
    docs <https://cloud.google.com/datastore/docs/export-import-entities#limitations>`__,
    *Data exported without specifying an entity filter cannot be loaded
    into BigQuery.*
-
-2. `Import it into
+2. Wait for it to be done with
+   ``gcloud datastore operations list | grep done``.
+3. `Import it into
    BigQuery <https://cloud.google.com/bigquery/docs/loading-data-cloud-datastore#loading_cloud_datastore_export_service_data>`__:
 
    ::
@@ -267,13 +271,15 @@ dataset <https://console.cloud.google.com/bigquery?p=brid-gy&d=datastore&page=da
         bq load --replace --nosync --source_format=DATASTORE_BACKUP sources.$kind gs://brid-gy.appspot.com/stats/all_namespaces/kind_$kind/all_namespaces_kind_$kind.export_metadata
       done
 
-3. `Run the full stats BigQuery
+4. Check the jobs with ``bq ls -j``, then wait for them with
+   ``bq wait``.
+5. `Run the full stats BigQuery
    query. <https://console.cloud.google.com/bigquery?sq=586366768654:9d8d4c13e988477bb976a5e29b63da3b>`__
    Download the results as CSV.
-4. `Open the stats
+6. `Open the stats
    spreadsheet. <https://docs.google.com/spreadsheets/d/1VhGiZ9Z9PEl7f9ciiVZZgupNcUTsRVltQ8_CqFETpfU/edit>`__
    Import the CSV, replacing the *data* sheet.
-5. Check out the graphs! Save full size images with OS or browser
+7. Check out the graphs! Save full size images with OS or browser
    screenshots, thumbnails with the *Save Image* button. Then post them!
 
 Misc
