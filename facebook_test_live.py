@@ -66,7 +66,7 @@ class FacebookTestLive(testutil.HandlerTest):
 
     self.assertEqual(302, resp.status_int)
     to = resp.headers['Location']
-    self.assertTrue(to.startswith('https://www.facebook.com/v2.10/dialog/oauth?'), to)
+    self.assertTrue(to.startswith('https://www.facebook.com/v4.0/dialog/oauth?'), to)
     params = urllib.parse.parse_qs(urllib.parse.urlparse(to).query)
     redirect = params['redirect_uri'][0]
     state = params['state'][0]
