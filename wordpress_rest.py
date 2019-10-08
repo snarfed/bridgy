@@ -24,7 +24,6 @@ from future.moves.urllib import error as urllib_error_py2
 from future import standard_library
 standard_library.install_aliases()
 import collections
-import json
 import logging
 import urllib.request, urllib.parse, urllib.error
 
@@ -33,11 +32,12 @@ import appengine_config
 from google.appengine.ext import ndb
 from oauth_dropins import wordpress_rest as oauth_wordpress
 from oauth_dropins.webutil.handlers import JINJA_ENV
+import ujson as json
+import webapp2
 
 import models
 import superfeedr
 import util
-import webapp2
 
 
 API_CREATE_COMMENT_URL = 'https://public-api.wordpress.com/rest/v1/sites/%s/posts/%d/replies/new?pretty=true'

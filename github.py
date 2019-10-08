@@ -1,11 +1,11 @@
 """GitHub API code and datastore model classes.
 """
-import json
 import logging
 
 import appengine_config
 from granary import github as gr_github
 from oauth_dropins import github as oauth_github
+import ujson as json
 import webapp2
 
 from models import Source

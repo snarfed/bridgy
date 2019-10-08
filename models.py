@@ -4,7 +4,6 @@ from __future__ import unicode_literals
 
 from builtins import zip
 import datetime
-import json
 import logging
 import re
 
@@ -16,6 +15,7 @@ from granary import microformats2
 from granary import source as gr_source
 from oauth_dropins.webutil.models import StringIdModel
 import requests
+import ujson as json
 from webmentiontools import send
 
 import superfeedr

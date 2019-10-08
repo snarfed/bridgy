@@ -8,7 +8,6 @@ from future import standard_library
 standard_library.install_aliases()
 from builtins import next, str
 import datetime
-import json
 import time
 import urllib.request, urllib.parse, urllib.error
 
@@ -19,6 +18,7 @@ from google.appengine.ext import ndb
 from oauth_dropins.webutil.testutil import requests_response
 import requests
 import webapp2
+import ujson as json
 from webmentiontools import send
 from webob import exc
 
@@ -227,9 +227,11 @@ class UtilTest(testutil.ModelsTest):
     """Run through an authorization back and forth and make sure that
     the external callback makes it all the way through.
     """
-    encoded_state = urllib.parse.quote_plus(
-      '{"callback":"http://withknown.com/bridgy_callback",'
-      '"feature":"listen","operation":"add"}')
+    encoded_state = urllib.parse.quote_plus(json.dumps({
+      'callback': 'http://withknown.com/bridgy_callback',
+      'feature': 'listen',
+      'operation': 'add',
+    }, sort_keys=True))
 
     application = webapp2.WSGIApplication([
       ('/fakesource/start', testutil.FakeStartHandler),
@@ -280,9 +282,12 @@ class UtilTest(testutil.ModelsTest):
     """Run through an authorization back and forth with a custom user url
     provided to the auth mechanism
     """
-    encoded_state = urllib.parse.quote_plus(
-      '{"callback":"http://withknown.com/bridgy_callback","feature":"listen",'
-      '"operation":"add","user_url":"https://kylewm.com"}')
+    encoded_state = urllib.parse.quote_plus(json.dumps({
+      'callback': 'http://withknown.com/bridgy_callback',
+      'feature': 'listen',
+      'operation': 'add',
+      'user_url': 'https://kylewm.com',
+    }, sort_keys=True))
 
     application = webapp2.WSGIApplication([
       ('/fakesource/start', testutil.FakeStartHandler),
@@ -338,9 +343,11 @@ class UtilTest(testutil.ModelsTest):
     decline and make sure that the callback makes it all the way
     through.
     """
-    encoded_state = urllib.parse.quote_plus(
-      '{"callback":"http://withknown.com/bridgy_callback",'
-      '"feature":"publish","operation":"add"}')
+    encoded_state = urllib.parse.quote_plus(json.dumps({
+      'callback': 'http://withknown.com/bridgy_callback',
+      'feature': 'publish',
+      'operation': 'add',
+    }, sort_keys=True))
 
     application = webapp2.WSGIApplication([
       ('/fakesource/start', testutil.FakeStartHandler),

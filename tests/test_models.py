@@ -6,13 +6,13 @@ from __future__ import absolute_import
 
 from builtins import range, str
 import datetime
-import json
 from unittest import skip
 
 import appengine_config
 from google.appengine.ext import ndb
 import mox
 import requests
+import ujson as json
 
 import blogger
 import facebook

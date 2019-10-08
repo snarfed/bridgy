@@ -11,4 +11,5 @@ oauth2client
 requests>=2.10.0
 requests-toolbelt>=0.6.2
 -e git+https://github.com/snarfed/webmention-tools.git#egg=webmentiontools
+ujson>=1.35
 urllib3>=1.14

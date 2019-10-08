@@ -7,7 +7,6 @@ from future.utils import native_str
 from future import standard_library
 standard_library.install_aliases()
 import copy
-import json
 import urllib.request, urllib.parse, urllib.error
 
 from oauth_dropins import indieauth
@@ -16,6 +15,7 @@ from oauth_dropins.webutil.testutil import TestCase
 from granary import instagram as gr_instagram
 from granary.tests import test_instagram as gr_test_instagram
 import requests
+import ujson as json
 
 import appengine_config
 import instagram

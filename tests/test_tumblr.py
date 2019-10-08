@@ -5,9 +5,9 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 
 from builtins import next
-import json
 
 import mox
+import ujson as json
 from webob import exc
 
 import appengine_config

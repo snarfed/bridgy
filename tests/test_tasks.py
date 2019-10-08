@@ -11,7 +11,6 @@ from builtins import zip
 import copy
 import datetime
 import http.client
-import json
 import logging
 import mox
 import socket
@@ -28,6 +27,7 @@ from google.appengine.ext import ndb
 import httplib2
 from oauth2client.client import AccessTokenRefreshError
 import requests
+import ujson as json
 from webmentiontools import send
 
 import appengine_config

@@ -7,13 +7,12 @@ from future.moves.urllib import error as urllib_error_py2
 from builtins import next
 from future import standard_library
 standard_library.install_aliases()
-import urllib.parse
 
-import json
 import urllib.request, urllib.parse, urllib.error
 
 import appengine_config
 from oauth_dropins.wordpress_rest import WordPressAuth
+import ujson as json
 
 from . import testutil
 from wordpress_rest import WordPress, AddWordPress

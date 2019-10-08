@@ -19,22 +19,22 @@ URL paths are:
 """
 from __future__ import unicode_literals
 
-import json
 import logging
 import re
 import string
 
 from google.appengine.api import memcache
-
-import appengine_config
-
 from granary import microformats2
 from granary.microformats2 import first_props
 from oauth_dropins.webutil import handlers
+import ujson as json
+import webapp2
+
+import appengine_config
+
 import models
 import original_post_discovery
 import util
-import webapp2
 
 # Import source class files so their metaclasses are initialized.
 import facebook

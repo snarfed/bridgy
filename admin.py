@@ -7,7 +7,6 @@ from __future__ import unicode_literals
 
 import datetime
 import itertools
-import json
 
 import appengine_config
 from oauth_dropins.webutil import handlers
@@ -15,6 +14,7 @@ from models import BlogPost, Response, Source
 import util
 
 from google.appengine.ext import ndb
+import ujson as json
 import webapp2
 
 # Import source class files so their metaclasses are initialized.

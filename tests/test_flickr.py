@@ -6,7 +6,6 @@ from __future__ import absolute_import
 from future.utils import native_str
 from future import standard_library
 standard_library.install_aliases()
-import json
 import urllib.request, urllib.parse, urllib.error
 
 import appengine_config
@@ -15,6 +14,8 @@ import granary
 import granary.tests.test_flickr as gr_test_flickr
 import oauth_dropins
 import tasks
+import ujson as json
+
 from . import testutil
 
 

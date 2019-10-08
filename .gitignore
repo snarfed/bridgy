@@ -15,7 +15,7 @@ github_app_client_*
 github_client_*
 google_client_*
 instagram_client_*
-instagram_scrape_base
+instagram_scrape_*
 instagram_sessionid_cookie
 linkedin_client_*
 medium_client_*

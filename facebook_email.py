@@ -18,7 +18,6 @@ f.put()
 """
 from __future__ import unicode_literals
 
-import json
 import logging
 
 import appengine_config
@@ -27,6 +26,7 @@ from google.appengine.ext.webapp.mail_handlers import InboundMailHandler
 from granary import facebook as gr_facebook
 from granary import source as gr_source
 from oauth_dropins.webutil.models import StringIdModel
+import ujson as json
 import webapp2
 
 from facebook import FacebookPage

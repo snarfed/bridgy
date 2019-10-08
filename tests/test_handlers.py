@@ -6,13 +6,13 @@ from __future__ import absolute_import
 
 from future import standard_library
 standard_library.install_aliases()
-import json
 import io
 import urllib.request, urllib.error, urllib.parse
 
 import appengine_config
 from google.appengine.api import urlfetch_errors
 import mox
+import ujson as json
 
 import handlers
 import models

@@ -29,7 +29,6 @@ from __future__ import unicode_literals
 from future import standard_library
 standard_library.install_aliases()
 import collections
-import json
 import logging
 import re
 import urllib.parse
@@ -40,6 +39,7 @@ import appengine_config
 from google.appengine.ext import ndb
 from oauth_dropins import tumblr as oauth_tumblr
 from oauth_dropins.webutil.handlers import JINJA_ENV
+import ujson as json
 import webapp2
 
 import models

@@ -8,7 +8,6 @@ from builtins import str
 from past.utils import old_div
 import datetime
 import gc
-import json
 import logging
 import random
 
@@ -18,6 +17,7 @@ from google.appengine.api import datastore_errors
 from google.appengine.api.datastore_types import _MAX_STRING_LENGTH
 from google.appengine.ext import ndb
 from granary.source import Source
+import ujson as json
 import webapp2
 from webmentiontools import send
 

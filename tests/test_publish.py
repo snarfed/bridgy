@@ -8,7 +8,6 @@ from future.utils import native_str
 from future import standard_library
 standard_library.install_aliases()
 from builtins import range
-import json
 import socket
 import urllib.request, urllib.parse, urllib.error
 
@@ -19,6 +18,7 @@ from google.appengine.api import mail
 import mox
 from oauth_dropins.webutil.testutil import requests_response
 import requests
+import ujson as json
 import webapp2
 from webob import exc
 

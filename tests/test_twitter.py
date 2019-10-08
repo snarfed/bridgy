@@ -6,7 +6,6 @@ from __future__ import absolute_import
 from future import standard_library
 standard_library.install_aliases()
 import copy
-import json
 import urllib.request, urllib.parse, urllib.error
 
 import appengine_config
@@ -16,6 +15,7 @@ from granary.tests import test_twitter as gr_twitter_test
 from granary.twitter import API_BASE, API_SEARCH, API_STATUS, HTML_FAVORITES
 import oauth_dropins
 from oauth_dropins import twitter as oauth_twitter
+import ujson as json
 
 import models
 from . import testutil

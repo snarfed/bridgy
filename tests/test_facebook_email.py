@@ -8,7 +8,6 @@ standard_library.install_aliases()
 from datetime import datetime
 from email.message import Message
 import logging
-import json
 import urllib.error, urllib.parse, urllib.request
 
 import appengine_config
@@ -22,6 +21,7 @@ from granary.tests.test_facebook import (
   EMAIL_COMMENT_OBJ_USERNAME,
   EMAIL_LIKE_OBJ,
 )
+import ujson as json
 import webapp2
 
 import facebook_email

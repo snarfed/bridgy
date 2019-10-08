@@ -5,7 +5,6 @@ from __future__ import absolute_import
 
 import copy
 import datetime
-import json
 
 from granary import instagram as gr_instagram
 from granary import twitter as gr_twitter
@@ -15,6 +14,7 @@ import oauth_dropins
 from oauth_dropins import indieauth
 from oauth_dropins import flickr as oauth_flickr
 from oauth_dropins import twitter as oauth_twitter
+import ujson as json
 
 import appengine_config
 import cron

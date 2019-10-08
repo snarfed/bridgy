@@ -13,7 +13,6 @@ from __future__ import unicode_literals
 
 from builtins import str
 import collections
-import json
 import logging
 
 import appengine_config
@@ -21,11 +20,12 @@ import appengine_config
 from google.appengine.ext import ndb
 from oauth_dropins import medium as oauth_medium
 from oauth_dropins.webutil.handlers import JINJA_ENV
+import ujson as json
+import webapp2
 
 import models
 import superfeedr
 import util
-import webapp2
 
 
 class Medium(models.Source):

@@ -16,6 +16,7 @@ import appengine_config
 from google.appengine.api.datastore_types import _MAX_STRING_LENGTH
 from google.appengine.ext.ndb.key import _MAX_KEYPART_BYTES
 from requests.auth import HTTPBasicAuth
+import ujson as json
 
 import models
 import util

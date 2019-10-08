@@ -6,11 +6,11 @@ from __future__ import absolute_import
 
 from future import standard_library
 standard_library.install_aliases()
-import json
 import urllib.request, urllib.parse, urllib.error
 
 import appengine_config
 from oauth_dropins import medium as oauth_medium
+import ujson as json
 
 from medium import ChooseBlog, Medium, application
 from . import testutil

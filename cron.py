@@ -8,7 +8,6 @@ standard_library.install_aliases()
 from builtins import range
 import datetime
 import itertools
-import json
 import logging
 import math
 
@@ -18,6 +17,7 @@ from google.appengine.api import urlfetch
 from google.appengine.ext import ndb
 from google.appengine.ext.ndb import metadata
 import http.client
+import ujson as json
 
 import models
 from models import Source

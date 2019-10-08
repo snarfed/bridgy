@@ -7,13 +7,13 @@ from __future__ import absolute_import
 from future import standard_library
 standard_library.install_aliases()
 from builtins import range
-import json
 import urllib.request, urllib.parse, urllib.error
 
 import appengine_config
 
 import mox
 import requests
+import ujson as json
 from webob import exc
 
 import blog_webmention

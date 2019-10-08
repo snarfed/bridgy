@@ -9,9 +9,10 @@ http://code.google.com/p/appengine-mapreduce/wiki/InstancesQueuesShardsAndSlices
 from __future__ import unicode_literals
 
 import gc
-import json
 
 from mapreduce import operation as op
+import ujson as json
+
 import util
 
 

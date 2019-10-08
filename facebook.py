@@ -29,7 +29,6 @@ from builtins import str
 import datetime
 import heapq
 import itertools
-import json
 import logging
 import urllib.request, urllib.parse, urllib.error
 
@@ -39,6 +38,7 @@ from granary import facebook as gr_facebook
 from granary import source as gr_source
 from oauth_dropins import facebook as oauth_facebook
 from oauth_dropins.webutil.handlers import JINJA_ENV
+import ujson as json
 import webapp2
 
 import models

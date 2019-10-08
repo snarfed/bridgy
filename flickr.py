@@ -3,17 +3,16 @@ from __future__ import unicode_literals
 
 import appengine_config
 import datetime
-import json
 import logging
 import models
 import util
 import webapp2
 
+from google.appengine.ext import ndb
 from granary import flickr as gr_flickr
 from granary.source import SELF
 from oauth_dropins import flickr as oauth_flickr
-
-from google.appengine.ext import ndb
+import ujson as json
 
 
 class Flickr(models.Source):

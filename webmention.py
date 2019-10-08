@@ -8,10 +8,10 @@ from __future__ import unicode_literals
 
 from builtins import str
 import logging
-import json
+
+import ujson as json
 
 import appengine_config
-
 import util
 
 
@@ -143,6 +143,8 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
 
     if mail and status != 404:
       self.mail_me('[Returned HTTP %s to client]\n\n%s' % (status, error))
+
+    self.response.headers['Content-Type'] = 'application/json'
     self.response.write(resp)
 
   def mail_me(self, resp):

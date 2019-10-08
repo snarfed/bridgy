@@ -31,7 +31,6 @@ from future.utils import native_str
 
 import collections
 import logging
-import json
 import pprint
 import re
 import urllib.request, urllib.parse, urllib.error
@@ -46,6 +45,8 @@ from oauth_dropins import flickr as oauth_flickr
 from oauth_dropins import github as oauth_github
 from oauth_dropins import twitter as oauth_twitter
 from oauth_dropins.webutil.handlers import JINJA_ENV
+import ujson as json
+import webapp2
 
 from facebook import FacebookPage
 from flickr import Flickr
@@ -55,7 +56,6 @@ from models import Publish, PublishedPage
 from twitter import Twitter
 import models
 import util
-import webapp2
 import webmention
 
 

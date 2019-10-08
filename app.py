@@ -7,7 +7,6 @@ standard_library.install_aliases()
 from builtins import str
 import datetime
 import itertools
-import json
 import logging
 import string
 import urllib.request, urllib.parse, urllib.error
@@ -26,6 +25,7 @@ from oauth_dropins import tumblr as oauth_tumblr
 from oauth_dropins import twitter as oauth_twitter
 from oauth_dropins import wordpress_rest as oauth_wordpress_rest
 from oauth_dropins.webutil import handlers as webutil_handlers
+import ujson as json
 import webapp2
 
 from blogger import Blogger

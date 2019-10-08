@@ -21,7 +21,6 @@ from __future__ import unicode_literals
 from future import standard_library
 standard_library.install_aliases()
 import datetime
-import json
 import logging
 import urllib.parse
 
@@ -33,6 +32,7 @@ from oauth_dropins import indieauth
 # InstagramAuth entities are loaded here
 from oauth_dropins import instagram as oauth_instagram
 from oauth_dropins.webutil.handlers import TemplateHandler
+import ujson as json
 import webapp2
 
 from models import Source

@@ -11,7 +11,6 @@ from future.types.newstr import newstr
 
 import copy
 import logging
-import json
 from unittest import skip
 import urllib.error, urllib.parse, urllib.request
 
@@ -25,6 +24,7 @@ from granary.tests.test_facebook import ACTIVITY, API_ME_POSTS, EVENT, \
   PHOTO, PHOTO_ACTIVITY, PHOTO_POST, POST
 import oauth_dropins
 from oauth_dropins import facebook as oauth_facebook
+import ujson as json
 import webapp2
 
 import app

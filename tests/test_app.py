@@ -9,7 +9,6 @@ from builtins import object, str, zip
 from future.utils import native_str
 
 import datetime
-import json
 import urllib.request, urllib.parse, urllib.error
 
 from google.appengine.api import memcache
@@ -17,6 +16,7 @@ from google.appengine.ext import ndb
 import mox
 from oauth_dropins.twitter import TwitterAuth
 import tweepy
+import ujson as json
 
 import app
 import models
@@ -167,9 +167,12 @@ class AppTest(testutil.ModelsTest):
         'callback': 'http://withknown.com/bridgy_callback',
       })))
 
-    encoded_state = urllib.parse.quote_plus(
-      '{"callback":"http://withknown.com/bridgy_callback",'
-      '"feature":"listen","operation":"delete","source":"' + key + '"}')
+    encoded_state = urllib.parse.quote_plus(json.dumps({
+      'callback': 'http://withknown.com/bridgy_callback',
+      'feature': 'listen',
+      'operation': 'delete',
+      'source': key,
+    }, sort_keys=True))
 
     # when silo oauth is done, it should send us back to /SOURCE/delete/finish,
     # which would in turn redirect to the more general /delete/finish.
@@ -206,9 +209,12 @@ class AppTest(testutil.ModelsTest):
         'callback': 'http://withknown.com/bridgy_callback',
       })))
 
-    encoded_state = urllib.parse.quote_plus(
-      '{"callback":"http://withknown.com/bridgy_callback",'
-      '"feature":"listen","operation":"delete","source":"' + key + '"}')
+    encoded_state = urllib.parse.quote_plus(json.dumps({
+      'callback': 'http://withknown.com/bridgy_callback',
+      'feature': 'listen',
+      'operation': 'delete',
+      'source': key,
+    }, sort_keys=True))
 
     # when silo oauth is done, it should send us back to /SOURCE/delete/finish,
     # which would in turn redirect to the more general /delete/finish.

@@ -6,11 +6,11 @@ from __future__ import absolute_import
 
 from builtins import range, str
 import datetime
-import json
 
 from granary import facebook as gr_facebook
 from oauth_dropins import facebook as oauth_facebook
 from requests.exceptions import HTTPError
+import ujson as json
 
 import appengine_config
 from facebook import FacebookPage

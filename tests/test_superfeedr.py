@@ -4,17 +4,16 @@
 from __future__ import unicode_literals
 from __future__ import absolute_import
 
-import json
-
 from google.appengine.api.datastore_types import _MAX_STRING_LENGTH
 from google.appengine.ext.ndb.key import _MAX_KEYPART_BYTES
 import mox
+import ujson as json
+import webapp2
 
 import appengine_config
 from models import BlogPost
 import superfeedr
 from . import testutil
-import webapp2
 
 
 class FakeNotifyHandler(superfeedr.NotifyHandler):

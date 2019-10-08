@@ -9,7 +9,6 @@ standard_library.install_aliases()
 from builtins import str
 import copy
 import datetime
-import json
 import logging
 import re
 import urllib.request, urllib.parse, urllib.error
@@ -26,6 +25,7 @@ from oauth_dropins.webutil import testutil_appengine
 from oauth_dropins import handlers as oauth_handlers
 from oauth_dropins.webutil.testutil import get_task_eta, get_task_params
 import requests
+import ujson as json
 
 import util
 

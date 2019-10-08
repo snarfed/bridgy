@@ -7,12 +7,12 @@ standard_library.install_aliases()
 from builtins import next
 from past.builtins import basestring
 import logging
-import json
 import urllib.parse
 
 import appengine_config
 
 from granary import microformats2
+import ujson as json
 
 import blogger
 import models
