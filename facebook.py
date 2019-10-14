@@ -38,7 +38,7 @@ from granary import facebook as gr_facebook
 from granary import source as gr_source
 from oauth_dropins import facebook as oauth_facebook
 from oauth_dropins.webutil.handlers import JINJA_ENV
-import ujson as json
+from oauth_dropins.webutil.util import json_dumps, json_loads
 import webapp2
 
 import models
@@ -121,7 +121,7 @@ class FacebookPage(models.Source):
       auth_entity: :class:`oauth_dropins.facebook.FacebookAuth`
       kwargs: property values
     """
-    user = json.loads(auth_entity.user_json)
+    user = json_loads(auth_entity.user_json)
     gr_source = gr_facebook.Facebook(access_token=auth_entity.access_token())
     actor = gr_source.user_to_actor(user)
     return FacebookPage(id=user['id'],
@@ -165,7 +165,7 @@ class FacebookPage(models.Source):
       # clobber the original exception so we can re-raise it below.
       def dead_token():
         try:
-          err = json.loads(body)['error']
+          err = json_loads(body)['error']
           return (err.get('code') in DEAD_TOKEN_ERROR_CODES or
                   err.get('error_subcode') in DEAD_TOKEN_ERROR_SUBCODES or
                   err.get('message') in DEAD_TOKEN_ERROR_MESSAGES)
@@ -308,7 +308,7 @@ class FacebookPage(models.Source):
     loaded = self.updates.setdefault(name, {})
 
     if not loaded and field:
-      loaded = self.updates[name] = json.loads(field)
+      loaded = self.updates[name] = json_loads(field)
     return loaded
 
   def _save_cache(self, name):
@@ -323,7 +323,7 @@ class FacebookPage(models.Source):
       keep = heapq.nlargest(max,
         (int(id) if util.is_int(id) else native_str(id) for id in val.keys()))
       setattr(self, name + '_json',
-              json.dumps({str(id): val[str(id)] for id in keep}))
+              json_dumps({str(id): val[str(id)] for id in keep}))
 
   def _pre_put_hook(self):
     """Encode the resolved_object_ids and post_publics fields from updates.
@@ -439,15 +439,15 @@ class OAuthCallback(oauth_facebook.CallbackHandler, AuthHandler):
   def finish(self, auth_entity, state=None):
     id = util.decode_oauth_state(state).get('id')
 
-    if auth_entity and json.loads(auth_entity.pages_json) and not id:
+    if auth_entity and json_loads(auth_entity.pages_json) and not id:
       # this user has FB page(s), and we don't know whether they want to sign
       # themselves up or one of their pages, so ask them.
       vars = {
         'action': '/facebook/add',
         'state': state,
         'auth_entity_key': auth_entity.key.urlsafe(),
-        'choices': [json.loads(auth_entity.user_json)] +
-                   json.loads(auth_entity.pages_json),
+        'choices': [json_loads(auth_entity.user_json)] +
+                   json_loads(auth_entity.pages_json),
         }
       logging.info('Rendering choose_facebook.html with %s', vars)
       self.response.headers['Content-Type'] = 'text/html'

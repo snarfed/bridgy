@@ -14,7 +14,7 @@ from models import BlogPost, Response, Source
 import util
 
 from google.appengine.ext import ndb
-import ujson as json
+from oauth_dropins.webutil.util import json_dumps, json_loads
 import webapp2
 
 # Import source class files so their metaclasses are initialized.
@@ -49,8 +49,8 @@ class ResponsesHandler(handlers.TemplateHandler):
 
         e.links = [util.pretty_link(u, new_tab=True) for u in e.error + e.failed]
         if e.key.kind() == 'Response':
-          e.response = json.loads(e.response_json)
-          e.activities = [json.loads(a) for a in e.activities_json]
+          e.response = json_loads(e.response_json)
+          e.activities = [json_loads(a) for a in e.activities_json]
         else:
           e.response = {'content': '[BlogPost]'}
           e.activities = [{'url': e.key.id()}]

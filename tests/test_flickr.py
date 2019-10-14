@@ -13,8 +13,8 @@ import flickr
 import granary
 import granary.tests.test_flickr as gr_test_flickr
 import oauth_dropins
+from oauth_dropins.webutil.util import json_dumps, json_loads
 import tasks
-import ujson as json
 
 from . import testutil
 
@@ -29,7 +29,7 @@ class FlickrTest(testutil.ModelsTest):
     self.auth_entity = oauth_dropins.flickr.FlickrAuth(
       id='my_string_id',
       token_key='my_key', token_secret='my_secret',
-      user_json=json.dumps(gr_test_flickr.PERSON_INFO))
+      user_json=json_dumps(gr_test_flickr.PERSON_INFO))
 
     self.auth_entity.put()
     self.flickr = flickr.Flickr.new(self.handler, self.auth_entity)
@@ -63,7 +63,7 @@ class FlickrTest(testutil.ModelsTest):
       'extras': granary.flickr.Flickr.API_EXTRAS,
       'per_page': 50,
       'user_id': 'me',
-    }, json.dumps({
+    }, json_dumps({
       'stat': 'fail',
       'code': 98,
       'message': 'Invalid auth token',

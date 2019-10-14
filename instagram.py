@@ -32,7 +32,7 @@ from oauth_dropins import indieauth
 # InstagramAuth entities are loaded here
 from oauth_dropins import instagram as oauth_instagram
 from oauth_dropins.webutil.handlers import TemplateHandler
-import ujson as json
+from oauth_dropins.webutil.util import json_dumps, json_loads
 import webapp2
 
 from models import Source
@@ -70,9 +70,9 @@ class Instagram(Source):
       handler: the current :class:`webapp2.RequestHandler`
       auth_entity: :class:`oauth_dropins.instagram.InstagramAuth`
     """
-    user = json.loads(auth_entity.user_json)
+    user = json_loads(auth_entity.user_json)
     user['actor'] = actor
-    auth_entity.user_json = json.dumps(user)
+    auth_entity.user_json = json_dumps(user)
     auth_entity.put()
 
     username = actor['username']
@@ -94,7 +94,7 @@ class Instagram(Source):
 
   def user_tag_id(self):
     """Returns the tag URI for this source, e.g. 'tag:instagram.com:123456'."""
-    user = json.loads(self.auth_entity.get().user_json)
+    user = json_loads(self.auth_entity.get().user_json)
     return (user.get('actor', {}).get('id') or
             self.gr_source.tag_uri(user.get('id') or self.key.id()))
 
@@ -131,7 +131,7 @@ class StartHandler(TemplateHandler, util.Handler):
 class CallbackHandler(indieauth.CallbackHandler, util.Handler):
   def finish(self, auth_entity, state=None):
     if auth_entity:
-      user_json = json.loads(auth_entity.user_json)
+      user_json = json_loads(auth_entity.user_json)
 
       # find instagram profile URL
       urls = user_json.get('rel-me', [])

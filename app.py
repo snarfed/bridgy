@@ -25,7 +25,7 @@ from oauth_dropins import tumblr as oauth_tumblr
 from oauth_dropins import twitter as oauth_twitter
 from oauth_dropins import wordpress_rest as oauth_wordpress_rest
 from oauth_dropins.webutil import handlers as webutil_handlers
-import ujson as json
+from oauth_dropins.webutil.util import json_dumps, json_loads
 import webapp2
 
 from blogger import Blogger
@@ -299,8 +299,8 @@ class UserHandler(DashboardHandler):
 
       query_iter = query.iter()
       for i, r in enumerate(query_iter):
-        r.response = json.loads(r.response_json)
-        r.activities = [json.loads(a) for a in r.activities_json]
+        r.response = json_loads(r.response_json)
+        r.activities = [json_loads(a) for a in r.activities_json]
 
         if (not self.source.is_activity_public(r.response) or
             not all(self.source.is_activity_public(a) for a in r.activities)):
@@ -606,11 +606,11 @@ class RetryHandler(util.Handler):
     # retry won't make us pick it up. background in #524.
     if entity.key.kind() == 'Response':
       source = entity.source.get()
-      for activity in [json.loads(a) for a in entity.activities_json]:
+      for activity in [json_loads(a) for a in entity.activities_json]:
         originals, mentions = original_post_discovery.discover(
           source, activity, fetch_hfeed=False, include_redirect_sources=False)
         entity.unsent += original_post_discovery.targets_for_response(
-          json.loads(entity.response_json), originals=originals, mentions=mentions)
+          json_loads(entity.response_json), originals=originals, mentions=mentions)
 
     entity.restart()
     self.messages.add('Retrying. Refresh in a minute to see the results!')

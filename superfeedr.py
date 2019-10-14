@@ -15,8 +15,8 @@ import logging
 import appengine_config
 from google.appengine.api.datastore_types import _MAX_STRING_LENGTH
 from google.appengine.ext.ndb.key import _MAX_KEYPART_BYTES
+from oauth_dropins.webutil.util import json_dumps, json_loads
 from requests.auth import HTTPBasicAuth
-import ujson as json
 
 import models
 import util
@@ -83,7 +83,7 @@ def handle_feed(feed, source):
     logging.info("Dropping because source doesn't have webmention feature")
     return
 
-  for item in json.loads(feed).get('items', []):
+  for item in json_loads(feed).get('items', []):
     url = item.get('permalinkUrl') or item.get('id')
     if not url:
       logging.error('Dropping feed item without permalinkUrl or id!')

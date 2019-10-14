@@ -26,7 +26,7 @@ from google.appengine.ext.webapp.mail_handlers import InboundMailHandler
 from granary import facebook as gr_facebook
 from granary import source as gr_source
 from oauth_dropins.webutil.models import StringIdModel
-import ujson as json
+from oauth_dropins.webutil.util import json_dumps, json_loads
 import webapp2
 
 from facebook import FacebookPage
@@ -132,7 +132,7 @@ class EmailHandler(InboundMailHandler):
       self.response.status_code = 400
       self.response.write('No HTML body could be parsed')
       return
-    logging.info('Converted to AS1: %s', json.dumps(obj, indent=2))
+    logging.info('Converted to AS1: %s', json_dumps(obj, indent=2))
 
     base_obj = source.gr_source.base_object(obj)
     # note that this ignores the id query param (the post's user id) and uses
@@ -151,8 +151,8 @@ class EmailHandler(InboundMailHandler):
       id=obj['id'],
       source=source.key,
       type=Response.get_type(obj),
-      response_json=json.dumps(obj),
-      activities_json=[json.dumps(base_obj)],
+      response_json=json_dumps(obj),
+      activities_json=[json_dumps(base_obj)],
       unsent=targets)
     resp.get_or_save(source, restart=True)
 

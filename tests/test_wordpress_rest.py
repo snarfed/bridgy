@@ -11,8 +11,8 @@ standard_library.install_aliases()
 import urllib.request, urllib.parse, urllib.error
 
 import appengine_config
+from oauth_dropins.webutil.util import json_dumps, json_loads
 from oauth_dropins.wordpress_rest import WordPressAuth
-import ujson as json
 
 from . import testutil
 from wordpress_rest import WordPress, AddWordPress
@@ -23,7 +23,7 @@ class WordPressTest(testutil.HandlerTest):
   def setUp(self):
     super(WordPressTest, self).setUp()
     self.auth_entity = WordPressAuth(id='my.wp.com',
-                                     user_json=json.dumps({
+                                     user_json=json_dumps({
                                        'display_name': 'Ryan',
                                        'username': 'ry',
                                        'avatar_URL': 'http://ava/tar'}),
@@ -49,7 +49,7 @@ class WordPressTest(testutil.HandlerTest):
   def test_new(self):
     self.expect_urlopen(
       'https://public-api.wordpress.com/rest/v1/sites/123?pretty=true',
-      json.dumps({}))
+      json_dumps({}))
     self.mox.ReplayAll()
 
     w = WordPress.new(self.handler, auth_entity=self.auth_entity)
@@ -63,7 +63,7 @@ class WordPressTest(testutil.HandlerTest):
   def test_new_with_site_domain(self):
     self.expect_urlopen(
       'https://public-api.wordpress.com/rest/v1/sites/123?pretty=true',
-      json.dumps({'ID': 123, 'URL': 'https://vanity.domain/'}))
+      json_dumps({'ID': 123, 'URL': 'https://vanity.domain/'}))
     self.mox.ReplayAll()
 
     w = WordPress.new(self.handler, auth_entity=self.auth_entity)
@@ -76,7 +76,7 @@ class WordPressTest(testutil.HandlerTest):
   def test_new_site_domain_same_gr_blog_url(self):
     self.expect_urlopen(
       'https://public-api.wordpress.com/rest/v1/sites/123?pretty=true',
-      json.dumps({'ID': 123, 'URL': 'http://my.wp.com/'}))
+      json_dumps({'ID': 123, 'URL': 'http://my.wp.com/'}))
     self.mox.ReplayAll()
 
     w = WordPress.new(self.handler, auth_entity=self.auth_entity)
@@ -120,8 +120,8 @@ class WordPressTest(testutil.HandlerTest):
     self.expect_urlopen(
       'https://public-api.wordpress.com/rest/v1/sites/123/posts/'
         'slug:the-slug?pretty=true',
-      json.dumps({'ID': 456}))
-    self.expect_new_reply(response=json.dumps({'ID': 789, 'ok': 'sgtm'}))
+      json_dumps({'ID': 456}))
+    self.expect_new_reply(response=json_dumps({'ID': 789, 'ok': 'sgtm'}))
 
     resp = self.wp.create_comment('http://primary/post/123999/the-slug?asdf',
                                   'name', 'http://who', 'foo bar')
@@ -138,7 +138,7 @@ class WordPressTest(testutil.HandlerTest):
   def test_create_comment_with_unicode_chars_in_slug(self):
     self.expect_urlopen(
       'https://public-api.wordpress.com/rest/v1/sites/123/posts/slug:✁?pretty=true',
-      json.dumps({'ID': 456}))
+      json_dumps({'ID': 456}))
     self.expect_new_reply()
 
     resp = self.wp.create_comment('http://primary/post/✁', 'name',
@@ -148,7 +148,7 @@ class WordPressTest(testutil.HandlerTest):
   def test_create_comment_gives_up_on_invalid_input_error(self):
     # see https://github.com/snarfed/bridgy/issues/161
     self.expect_new_reply(status=400,
-                          response=json.dumps({'error': 'invalid_input'}))
+                          response=json_dumps({'error': 'invalid_input'}))
 
     resp = self.wp.create_comment('http://primary/post/456', 'name',
                                   'http://who', 'foo bar')
@@ -158,7 +158,7 @@ class WordPressTest(testutil.HandlerTest):
   def test_create_comment_gives_up_on_coments_closed(self):
     resp = {'error': 'unauthorized',
             'message': 'Comments on this post are closed'}
-    self.expect_new_reply(status=403, response=json.dumps(resp))
+    self.expect_new_reply(status=403, response=json_dumps(resp))
 
     # shouldn't raise an exception
     got = self.wp.create_comment('http://primary/post/456', 'name',

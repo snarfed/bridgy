@@ -11,8 +11,8 @@ from unittest import skip
 import appengine_config
 from google.appengine.ext import ndb
 import mox
+from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
-import ujson as json
 
 import blogger
 import facebook
@@ -98,12 +98,12 @@ class ResponseTest(testutil.ModelsTest):
 
     # change response content
     old_resp_json = response.response_json
-    new_resp_json = json.loads(old_resp_json)
+    new_resp_json = json_loads(old_resp_json)
     new_resp_json['content'] = 'new content'
-    response.response_json = json.dumps(new_resp_json)
+    response.response_json = json_dumps(new_resp_json)
 
     response = response.get_or_save(self.sources[0])
-    self.assert_equals(json.dumps(new_resp_json), response.response_json)
+    self.assert_equals(json_dumps(new_resp_json), response.response_json)
     self.assert_equals([old_resp_json], response.old_response_jsons)
     self.assert_propagate_task()
 
@@ -118,13 +118,13 @@ class ResponseTest(testutil.ModelsTest):
       response.put()
 
     complete()
-    newer_resp_json = json.loads(response.response_json)
+    newer_resp_json = json_loads(response.response_json)
     newer_resp_json['content'] = 'newer content'
-    response.response_json = json.dumps(newer_resp_json)
+    response.response_json = json_dumps(newer_resp_json)
 
     response = response.get_or_save(self.sources[0])
-    self.assert_equals(json.dumps(newer_resp_json), response.response_json)
-    self.assert_equals([old_resp_json, json.dumps(new_resp_json)],
+    self.assert_equals(json_dumps(newer_resp_json), response.response_json)
+    self.assert_equals([old_resp_json, json_dumps(new_resp_json)],
                        response.old_response_jsons)
     self.assertEqual('new', response.status)
     urls = ['http://sent/', 'http://error/', 'http://failed/', 'http://skipped/']
@@ -144,7 +144,7 @@ class ResponseTest(testutil.ModelsTest):
     self.assert_propagate_task()
 
   def test_get_or_save_objectType_note(self):
-    self.responses[0].response_json = json.dumps({
+    self.responses[0].response_json = json_dumps({
       'objectType': 'note',
       'id': 'tag:source.com,2013:1_2_%s' % id,
       })
@@ -278,7 +278,7 @@ class SourceTest(testutil.HandlerTest):
 
     FakeSource.string_id_counter -= 1
     auth_entity = testutil.FakeAuthEntity(
-      id='x', user_json=json.dumps({'url': 'http://foo.com/'}))
+      id='x', user_json=json_dumps({'url': 'http://foo.com/'}))
     auth_entity.put()
     self._test_create_new(auth_entity=auth_entity, features=['publish'])
 
@@ -323,7 +323,7 @@ class SourceTest(testutil.HandlerTest):
                       {'url': 'http://t.co/foo'}):
       auth_entity = None
       if user_json is not None:
-        auth_entity = testutil.FakeAuthEntity(id='x', user_json=json.dumps(user_json))
+        auth_entity = testutil.FakeAuthEntity(id='x', user_json=json_dumps(user_json))
         auth_entity.put()
       source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
       self.assertEqual([], source.domains)
@@ -338,14 +338,14 @@ class SourceTest(testutil.HandlerTest):
                 'http://FoO.cOm/',  # should be normalized to lowercase
                 ):
       auth_entity = testutil.FakeAuthEntity(
-        id='x', user_json=json.dumps({'url': url}))
+        id='x', user_json=json_dumps({'url': url}))
       auth_entity.put()
       source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
       self.assertEquals([url.lower()], source.domain_urls)
       self.assertEquals(['foo.com'], source.domains)
 
     # multiple good URLs and one that's in the webmention blacklist
-    auth_entity = testutil.FakeAuthEntity(id='x', user_json=json.dumps({
+    auth_entity = testutil.FakeAuthEntity(id='x', user_json=json_dumps({
           'url': 'http://foo.org',
           'urls': [{'value': u} for u in
                    ('http://bar.com', 'http://t.co/x', 'http://baz',
@@ -361,7 +361,7 @@ class SourceTest(testutil.HandlerTest):
 
     # a URL that redirects
     auth_entity = testutil.FakeAuthEntity(
-      id='x', user_json=json.dumps({'url': 'http://orig'}))
+      id='x', user_json=json_dumps({'url': 'http://orig'}))
     auth_entity.put()
 
     self.expect_requests_head('http://orig', redirected_url='http://final')
@@ -374,7 +374,7 @@ class SourceTest(testutil.HandlerTest):
   def test_create_new_domain_url_redirects_to_path(self):
     """If a profile URL is a root that redirects to a path, keep the root."""
     auth_entity = testutil.FakeAuthEntity(
-      id='x', user_json=json.dumps({'url': 'http://site'}))
+      id='x', user_json=json_dumps({'url': 'http://site'}))
     auth_entity.put()
 
     self.expect_requests_head('http://site', redirected_url='https://site/path')
@@ -387,7 +387,7 @@ class SourceTest(testutil.HandlerTest):
   def test_create_new_domain_url_matches_root_relme(self):
     """If a profile URL contains a path, check the root for a rel=me to the path."""
     auth_entity = testutil.FakeAuthEntity(
-      id='x', user_json=json.dumps({'url': 'http://site/path'}))
+      id='x', user_json=json_dumps({'url': 'http://site/path'}))
     auth_entity.put()
 
     self.expect_requests_get('http://site', '<html><a href="http://site/path" rel="me">http://site/path</a></html>')
@@ -400,7 +400,7 @@ class SourceTest(testutil.HandlerTest):
   def test_create_new_domain_url_no_root_relme(self):
     """If a profile URL contains a path, check the root for a rel=me to the path."""
     auth_entity = testutil.FakeAuthEntity(
-      id='x', user_json=json.dumps({'url': 'http://site/path'}))
+      id='x', user_json=json_dumps({'url': 'http://site/path'}))
     auth_entity.put()
 
     self.expect_requests_get('http://site')
@@ -420,7 +420,7 @@ class SourceTest(testutil.HandlerTest):
                    domain_urls=['http://foo'], domains=['foo']).put()
 
     FakeSource.string_id_counter -= 1
-    auth_entity = testutil.FakeAuthEntity(id='x', user_json=json.dumps(
+    auth_entity = testutil.FakeAuthEntity(id='x', user_json=json_dumps(
         {'urls': [{'value': 'http://bar'}, {'value': 'http://baz'}]}))
     self.expect_webmention_requests_get('http://bar/', 'no webmention endpoint')
 
@@ -435,7 +435,7 @@ class SourceTest(testutil.HandlerTest):
                    domain_urls=['http://foo'], domains=['foo']).put()
 
     FakeSource.string_id_counter -= 1
-    auth_entity = testutil.FakeAuthEntity(id='x', user_json=json.dumps(
+    auth_entity = testutil.FakeAuthEntity(id='x', user_json=json_dumps(
         {'urls': [{'value': 'http://bar'}, {'value': 'http://baz'}]}))
     self.expect_webmention_requests_get('http://bar/', 'no webmention endpoint')
 
@@ -445,7 +445,7 @@ class SourceTest(testutil.HandlerTest):
     self.assertEquals(['baz', 'foo', 'bar'], source.domains)
 
   def test_create_new_dedupes_domains(self):
-    auth_entity = testutil.FakeAuthEntity(id='x', user_json=json.dumps(
+    auth_entity = testutil.FakeAuthEntity(id='x', user_json=json_dumps(
         {'urls': [{'value': 'http://foo'},
                   {'value': 'https://foo/'},
                   {'value': 'http://foo/'},
@@ -458,7 +458,7 @@ class SourceTest(testutil.HandlerTest):
 
   def test_create_new_too_many_domains(self):
     urls = ['http://%s/' % i for i in range(10)]
-    auth_entity = testutil.FakeAuthEntity(id='x', user_json=json.dumps(
+    auth_entity = testutil.FakeAuthEntity(id='x', user_json=json_dumps(
         {'urls': [{'value': u} for u in urls]}))
 
     # we should only check the first 5
@@ -471,7 +471,7 @@ class SourceTest(testutil.HandlerTest):
     self.assertEquals([str(i) for i in range(10)], source.domains)
 
   def test_create_new_domain_url_path_fails(self):
-    auth_entity = testutil.FakeAuthEntity(id='x', user_json=json.dumps(
+    auth_entity = testutil.FakeAuthEntity(id='x', user_json=json_dumps(
         {'urls': [{'value': 'http://flaky/foo'}]}))
     self.expect_requests_get('http://flaky', status_code=500)
     self.mox.ReplayAll()
@@ -481,7 +481,7 @@ class SourceTest(testutil.HandlerTest):
     self.assertEquals(['flaky'], source.domains)
 
   def test_create_new_domain_url_path_connection_fails(self):
-    auth_entity = testutil.FakeAuthEntity(id='x', user_json=json.dumps(
+    auth_entity = testutil.FakeAuthEntity(id='x', user_json=json_dumps(
         {'urls': [{'value': 'http://flaky/foo'}]}))
     self.expect_requests_get('http://flaky').AndRaise(
       requests.ConnectionError('DNS lookup failed for URL: http://bad/'))

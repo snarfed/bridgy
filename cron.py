@@ -17,7 +17,7 @@ from google.appengine.api import urlfetch
 from google.appengine.ext import ndb
 from google.appengine.ext.ndb import metadata
 import http.client
-import ujson as json
+from oauth_dropins.webutil.util import json_dumps, json_loads
 
 import models
 from models import Source
@@ -189,7 +189,7 @@ class DatastoreBackup(webapp2.RequestHandler):
     try:
       result = urlfetch.fetch(
           url='https://datastore.googleapis.com/v1/projects/%s:export' % app_id,
-          payload=json.dumps(request),
+          payload=json_dumps(request),
           method=urlfetch.POST,
           headers=headers)
       if result.status_code == http.client.OK:

@@ -15,8 +15,8 @@ from google.appengine.api import memcache
 from google.appengine.ext import ndb
 import mox
 from oauth_dropins.twitter import TwitterAuth
+from oauth_dropins.webutil.util import json_dumps, json_loads
 import tweepy
-import ujson as json
 
 import app
 import models
@@ -79,9 +79,9 @@ class AppTest(testutil.ModelsTest):
 
     # SyndicatedPost with new target URLs
     resp.activities_json = [
-      json.dumps({'object': {'url': 'https://fa.ke/1'}}),
-      json.dumps({'url': 'https://fa.ke/2', 'object': {'unused': 'ok'}}),
-      json.dumps({'url': 'https://fa.ke/3'}),
+      json_dumps({'object': {'url': 'https://fa.ke/1'}}),
+      json_dumps({'url': 'https://fa.ke/2', 'object': {'unused': 'ok'}}),
+      json_dumps({'url': 'https://fa.ke/3'}),
     ]
     resp.put()
     SyndicatedPost.insert(source, 'https://fa.ke/1', 'https://orig/1')
@@ -167,7 +167,7 @@ class AppTest(testutil.ModelsTest):
         'callback': 'http://withknown.com/bridgy_callback',
       })))
 
-    encoded_state = urllib.parse.quote_plus(json.dumps({
+    encoded_state = urllib.parse.quote_plus(json_dumps({
       'callback': 'http://withknown.com/bridgy_callback',
       'feature': 'listen',
       'operation': 'delete',
@@ -209,7 +209,7 @@ class AppTest(testutil.ModelsTest):
         'callback': 'http://withknown.com/bridgy_callback',
       })))
 
-    encoded_state = urllib.parse.quote_plus(json.dumps({
+    encoded_state = urllib.parse.quote_plus(json_dumps({
       'callback': 'http://withknown.com/bridgy_callback',
       'feature': 'listen',
       'operation': 'delete',
@@ -309,16 +309,16 @@ class AppTest(testutil.ModelsTest):
     self.sources[0].put()
 
     # test invite with missing object and content
-    resp = json.loads(self.responses[8].response_json)
+    resp = json_loads(self.responses[8].response_json)
     resp['verb'] = 'invite'
     resp.pop('object', None)
     resp.pop('content', None)
-    self.responses[8].response_json = json.dumps(resp)
+    self.responses[8].response_json = json_dumps(resp)
 
     # test that invites render the invitee, not the inviter
     # https://github.com/snarfed/bridgy/issues/754
     self.responses[9].type = 'rsvp'
-    self.responses[9].response_json = json.dumps({
+    self.responses[9].response_json = json_dumps({
       'id': 'tag:fa.ke,2013:111',
       'objectType': 'activity',
       'verb': 'invite',
@@ -360,7 +360,7 @@ class AppTest(testutil.ModelsTest):
       self.assertIn('h-bridgy-response', item['type'])
       props = item['properties']
       self.assertEquals([resp.status], props['bridgy-status'])
-      self.assertEquals([json.loads(resp.activities_json[0])['url']],
+      self.assertEquals([json_loads(resp.activities_json[0])['url']],
                         props['bridgy-original-source'])
       self.assertEquals(resp.unsent, props['bridgy-target'])
 
@@ -378,7 +378,7 @@ class AppTest(testutil.ModelsTest):
   def test_user_page_private_twitter(self):
     auth_entity = TwitterAuth(
       id='foo',
-      user_json=json.dumps({'protected': True}),
+      user_json=json_dumps({'protected': True}),
       token_key='', token_secret='',
     ).put()
     tw = twitter.Twitter(id='foo', auth_entity=auth_entity, features=['listen'])
@@ -417,13 +417,13 @@ class AppTest(testutil.ModelsTest):
     html = '<xyz> a&b'
     escaped = '&lt;xyz&gt; a&amp;b'
 
-    activity = json.loads(self.responses[0].activities_json[0])
+    activity = json_loads(self.responses[0].activities_json[0])
     activity['object']['content'] = escaped
-    self.responses[0].activities_json = [json.dumps(activity)]
+    self.responses[0].activities_json = [json_dumps(activity)]
 
-    resp = json.loads(self.responses[0].response_json)
+    resp = json_loads(self.responses[0].response_json)
     resp['content'] = escaped
-    self.responses[0].response_json = json.dumps(resp)
+    self.responses[0].response_json = json_dumps(resp)
     self.responses[0].status = 'processing'
     self.responses[0].put()
 

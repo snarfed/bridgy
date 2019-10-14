@@ -12,8 +12,8 @@ import urllib.request, urllib.parse, urllib.error
 import appengine_config
 
 import mox
+from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
-import ujson as json
 from webob import exc
 
 import blog_webmention
@@ -51,7 +51,7 @@ http://foo.com/post/1
   def assert_error(self, expected_error, status=400, **kwargs):
     resp = self.get_response(**kwargs)
     self.assertEquals(status, resp.status_int)
-    self.assertIn(expected_error, json.loads(resp.body)['error'])
+    self.assertIn(expected_error, json_loads(resp.body)['error'])
 
   def expect_mention(self):
     self.expect_requests_get('http://bar.com/reply', self.mention_html)
@@ -93,7 +93,7 @@ i hereby reply
 
     resp = self.get_response()
     self.assertEquals(200, resp.status_int, resp.body)
-    self.assertEquals({'id': 'fake id'}, json.loads(resp.body))
+    self.assertEquals({'id': 'fake id'}, json_loads(resp.body))
 
     bw = BlogWebmention.get_by_id('http://bar.com/reply http://foo.com/post/1')
     self.assertEquals(self.source.key, bw.source)

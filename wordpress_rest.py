@@ -32,7 +32,7 @@ import appengine_config
 from google.appengine.ext import ndb
 from oauth_dropins import wordpress_rest as oauth_wordpress
 from oauth_dropins.webutil.handlers import JINJA_ENV
-import ujson as json
+from oauth_dropins.webutil.util import json_dumps, json_loads
 import webapp2
 
 import models
@@ -81,7 +81,7 @@ class WordPress(models.Source):
       [site_info.get('URL'), auth_entity.blog_url]))
     domains = [util.domain_from_link(u) for u in urls]
 
-    avatar = (json.loads(auth_entity.user_json).get('avatar_URL')
+    avatar = (json_loads(auth_entity.user_json).get('avatar_URL')
               if auth_entity.user_json else None)
     return WordPress(id=domains[0],
                      auth_entity=auth_entity.key,
@@ -150,7 +150,7 @@ class WordPress(models.Source):
     except (urllib.error.HTTPError, urllib_error_py2.HTTPError) as e:
       code, body = util.interpret_http_exception(e)
       try:
-        parsed = json.loads(body) if body else {}
+        parsed = json_loads(body) if body else {}
         if ((code == '400' and parsed.get('error') == 'invalid_input') or
             (code == '403' and parsed.get('message') == 'Comments on this post are closed')):
           return parsed  # known error: https://github.com/snarfed/bridgy/issues/161
@@ -189,7 +189,7 @@ class WordPress(models.Source):
   def urlopen(auth_entity, url, **kwargs):
     resp = auth_entity.urlopen(url, **kwargs).read()
     logging.debug(resp)
-    return json.loads(resp)
+    return json_loads(resp)
 
 
 class AddWordPress(oauth_wordpress.CallbackHandler, util.Handler):

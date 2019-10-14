@@ -27,7 +27,7 @@ from google.appengine.api import memcache
 from granary import microformats2
 from granary.microformats2 import first_props
 from oauth_dropins.webutil import handlers
-import ujson as json
+from oauth_dropins.webutil.util import json_dumps, json_loads
 import webapp2
 
 import appengine_config
@@ -217,7 +217,7 @@ class ItemHandler(util.Handler):
       }))
     elif format == 'json':
       self.response.headers['Content-Type'] = 'application/json; charset=utf-8'
-      self.response.out.write(json.dumps(mf2_json, indent=2))
+      self.response.out.write(json_dumps(mf2_json, indent=2))
 
   def merge_urls(self, obj, property, urls, object_type='article'):
     """Updates an object's ActivityStreams URL objects in place.

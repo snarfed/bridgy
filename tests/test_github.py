@@ -6,7 +6,7 @@ import appengine_config
 import granary
 import granary.tests.test_github as gr_test_github
 import oauth_dropins
-import ujson as json
+from oauth_dropins.webutil.util import json_dumps, json_loads
 
 import github
 from . import testutil
@@ -18,7 +18,7 @@ class GitHubTest(testutil.ModelsTest):
     super(GitHubTest, self).setUp()
     self.auth_entity = oauth_dropins.github.GitHubAuth(
       id='snarfed', access_token_str='towkin',
-      user_json=json.dumps(gr_test_github.USER_GRAPHQL))
+      user_json=json_dumps(gr_test_github.USER_GRAPHQL))
 
     self.auth_entity.put()
     self.gh = github.GitHub.new(self.handler, self.auth_entity)

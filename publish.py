@@ -45,7 +45,7 @@ from oauth_dropins import flickr as oauth_flickr
 from oauth_dropins import github as oauth_github
 from oauth_dropins import twitter as oauth_twitter
 from oauth_dropins.webutil.handlers import JINJA_ENV
-import ujson as json
+from oauth_dropins.webutil.util import json_dumps, json_loads
 import webapp2
 
 from facebook import FacebookPage
@@ -376,7 +376,7 @@ class Handler(webmention.WebmentionHandler):
       obj['url'] = self.source_url()
     elif 'url' not in obj:
       obj['url'] = self.fetched.url
-    logging.debug('Converted to ActivityStreams object: %s', json.dumps(obj, indent=2))
+    logging.debug('Converted to ActivityStreams object: %s', json_dumps(obj, indent=2))
 
     # posts and comments need content
     obj_type = obj.get('objectType')
@@ -422,11 +422,11 @@ class Handler(webmention.WebmentionHandler):
         self.entity.published['url'] = obj.get('url')
       self.entity.type = self.entity.published.get('type') or models.get_type(obj)
       self.response.headers['Content-Type'] = 'application/json'
-      logging.info('Returning %s', json.dumps(self.entity.published, indent=2))
+      logging.info('Returning %s', json_dumps(self.entity.published, indent=2))
       self.response.headers['Location'] = self.entity.published['url'].encode('utf-8')
       self.response.status = 201
       return gr_source.creation_result(
-        json.dumps(self.entity.published, indent=2))
+        json_dumps(self.entity.published, indent=2))
 
   def delete(self, source_url):
     """Attempts to delete or preview delete a published post.

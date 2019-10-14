@@ -17,7 +17,7 @@ from google.appengine.api import memcache
 from granary import twitter as gr_twitter
 from granary import source as gr_source
 from oauth_dropins import twitter as oauth_twitter
-import ujson as json
+from oauth_dropins.webutil.util import json_dumps, json_loads
 
 import models
 import util
@@ -59,7 +59,7 @@ class Twitter(models.Source):
       auth_entity: :class:`oauth_dropins.twitter.TwitterAuth`
       kwargs: property values
     """
-    user = json.loads(auth_entity.user_json)
+    user = json_loads(auth_entity.user_json)
     gr_source = gr_twitter.Twitter(*auth_entity.access_token())
     actor = gr_source.user_to_actor(user)
     return Twitter(id=user['screen_name'],
@@ -134,7 +134,7 @@ class Twitter(models.Source):
     id = self.gr_source.tag_uri('%s_favorited_by_%s' % (activity_id, like_user_id))
     resp = models.Response.get_by_id(id)
     if resp:
-      return json.loads(resp.response_json)
+      return json_loads(resp.response_json)
     else:
       return super(Twitter, self).get_like(activity_user_id, activity_id,
                                            like_user_id, **kwargs)
@@ -146,7 +146,7 @@ class Twitter(models.Source):
     https://support.twitter.com/articles/14016
     https://support.twitter.com/articles/20169886
     """
-    return json.loads(self.auth_entity.get().user_json).get('protected')
+    return json_loads(self.auth_entity.get().user_json).get('protected')
 
   def canonicalize_url(self, url, activity=None, **kwargs):
     """Normalize /statuses/ to /status/.

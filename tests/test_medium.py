@@ -10,7 +10,7 @@ import urllib.request, urllib.parse, urllib.error
 
 import appengine_config
 from oauth_dropins import medium as oauth_medium
-import ujson as json
+from oauth_dropins.webutil.util import json_dumps, json_loads
 
 from medium import ChooseBlog, Medium, application
 from . import testutil
@@ -46,8 +46,8 @@ class MediumTest(testutil.HandlerTest):
   def setUp(self):
     super(MediumTest, self).setUp()
     self.auth_entity = oauth_medium.MediumAuth(
-      id='abcdef01234', access_token_str='my token', user_json=json.dumps(USER),
-      publications_json=json.dumps(PUBLICATIONS))
+      id='abcdef01234', access_token_str='my token', user_json=json_dumps(USER),
+      publications_json=json_dumps(PUBLICATIONS))
     self.auth_entity.put()
 
     # prevent subscribing to superfeedr
@@ -69,7 +69,7 @@ class MediumTest(testutil.HandlerTest):
 
   def expect_get_publications(self, pubs):
     # https://github.com/Medium/medium-api-docs/#user-content-listing-the-users-publications
-    self.expect_requests_get('users/abcdef01234/publications', json.dumps(pubs))
+    self.expect_requests_get('users/abcdef01234/publications', json_dumps(pubs))
     self.mox.ReplayAll()
 
   def assert_created_profile(self, medium=None):

@@ -21,7 +21,7 @@ from granary.tests.test_facebook import (
   EMAIL_COMMENT_OBJ_USERNAME,
   EMAIL_LIKE_OBJ,
 )
-import ujson as json
+from oauth_dropins.webutil.util import json_dumps, json_loads
 import webapp2
 
 import facebook_email
@@ -84,8 +84,8 @@ class FacebookEmailTest(testutil.ModelsTest):
       id=resp_id,
       source=self.fea.key,
       type='comment',
-      response_json=json.dumps(EMAIL_COMMENT_OBJ_USERNAME),
-      activities_json=[json.dumps({
+      response_json=json_dumps(EMAIL_COMMENT_OBJ_USERNAME),
+      activities_json=[json_dumps({
         'id': '123',
         'numeric_id': '123',
         'url': 'https://www.facebook.com/212038/posts/123',

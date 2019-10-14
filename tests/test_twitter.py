@@ -15,7 +15,7 @@ from granary.tests import test_twitter as gr_twitter_test
 from granary.twitter import API_BASE, API_SEARCH, API_STATUS, HTML_FAVORITES
 import oauth_dropins
 from oauth_dropins import twitter as oauth_twitter
-import ujson as json
+from oauth_dropins.webutil.util import json_dumps, json_loads
 
 import models
 from . import testutil
@@ -33,7 +33,7 @@ class TwitterTest(testutil.ModelsTest):
     self.auth_entity = oauth_twitter.TwitterAuth(
       id='my_string_id',
       token_key='my_key', token_secret='my_secret',
-      user_json=json.dumps({'name': 'Ryan Barrett',
+      user_json=json_dumps({'name': 'Ryan Barrett',
                             'screen_name': 'snarfed_org',
                             'description': 'something about me',
                             'profile_image_url': 'http://pi.ct/ure',
@@ -55,9 +55,9 @@ class TwitterTest(testutil.ModelsTest):
 
   def test_new_massages_profile_image(self):
     """We should use profile_image_url_https and drop '_normal' if possible."""
-    user = json.loads(self.auth_entity.user_json)
+    user = json_loads(self.auth_entity.user_json)
     user['profile_image_url_https'] = 'https://foo_normal.xyz'
-    self.auth_entity.user_json = json.dumps(user)
+    self.auth_entity.user_json = json_dumps(user)
 
     self.assertEqual('https://foo.xyz', Twitter.new(self.handler, auth_entity=self.auth_entity).picture)
 
@@ -70,7 +70,7 @@ class TwitterTest(testutil.ModelsTest):
       'object': {'url': 'http://my/favorite'},
       }
     models.Response(id='tag:twitter.com,2013:000_favorited_by_222',
-                    response_json=json.dumps(like)).put()
+                    response_json=json_dumps(like)).put()
     self.assert_equals(like, self.tw.get_like('unused', '000', '222'))
 
   def test_get_like_fallback(self):
@@ -78,9 +78,9 @@ class TwitterTest(testutil.ModelsTest):
     tweet = copy.deepcopy(gr_twitter_test.TWEET)
     tweet['favorite_count'] = 1
 
-    self.expect_urlopen(API_BASE + API_STATUS % '100', json.dumps(tweet))
+    self.expect_urlopen(API_BASE + API_STATUS % '100', json_dumps(tweet))
     self.expect_urlopen(HTML_FAVORITES % '100',
-                        json.dumps({'htmlUsers': gr_twitter_test.FAVORITES_HTML}))
+                        json_dumps({'htmlUsers': gr_twitter_test.FAVORITES_HTML}))
 
     self.mox.ReplayAll()
     self.assert_equals(gr_twitter_test.LIKES_FROM_HTML[0],
@@ -135,7 +135,7 @@ class TwitterTest(testutil.ModelsTest):
     }]
     self.expect_urlopen(API_BASE + API_SEARCH %
                         {'q': urllib.parse.quote_plus('bar/baz OR foo'), 'count': 50},
-                        json.dumps({'statuses': results}))
+                        json_dumps({'statuses': results}))
 
     self.mox.ReplayAll()
     self.assert_equals(
@@ -152,7 +152,7 @@ class TwitterTest(testutil.ModelsTest):
   def test_is_private(self):
     self.assertFalse(self.tw.is_private())
 
-    self.auth_entity.user_json = json.dumps({'protected': True})
+    self.auth_entity.user_json = json_dumps({'protected': True})
     self.auth_entity.put()
     self.assertTrue(self.tw.is_private())
 
@@ -162,7 +162,7 @@ class TwitterTest(testutil.ModelsTest):
   def test_is_blocked(self):
     # check that we only make one API call
     api_url = gr_twitter.API_BASE + gr_twitter.API_BLOCK_IDS % '-1'
-    self.expect_urlopen(api_url, json.dumps({
+    self.expect_urlopen(api_url, json_dumps({
       'ids': ['1', '2'],
       'next_cursor_str': '0',
     }))
@@ -186,7 +186,7 @@ class TwitterTest(testutil.ModelsTest):
   def test_is_blocked_rate_limited(self):
     """If we get rate limited, we should use the partial result."""
     api_url = gr_twitter.API_BASE + gr_twitter.API_BLOCK_IDS % '-1'
-    self.expect_urlopen(api_url, json.dumps({
+    self.expect_urlopen(api_url, json_dumps({
       'ids': ['1', '2'],
       'next_cursor_str': '2',
     }))
@@ -202,7 +202,7 @@ class TwitterTest(testutil.ModelsTest):
     """Test that we cap block list sizes in memcache."""
     self.mox.stubs.Set(twitter, 'BLOCKLIST_MAX_IDS', 2)
     api_url = gr_twitter.API_BASE + gr_twitter.API_BLOCK_IDS % '-1'
-    self.expect_urlopen(api_url, json.dumps({
+    self.expect_urlopen(api_url, json_dumps({
       'ids': ['1', '2', '3'],
       'next_cursor_str': '0',
     }))

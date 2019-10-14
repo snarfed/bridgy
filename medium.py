@@ -20,7 +20,7 @@ import appengine_config
 from google.appengine.ext import ndb
 from oauth_dropins import medium as oauth_medium
 from oauth_dropins.webutil.handlers import JINJA_ENV
-import ujson as json
+from oauth_dropins.webutil.util import json_dumps, json_loads
 import webapp2
 
 import models
@@ -103,11 +103,11 @@ class Medium(models.Source):
     """
     id = self.key.id().lstrip('@')
 
-    user = json.loads(auth_entity.user_json).get('data')
+    user = json_loads(auth_entity.user_json).get('data')
     if user.get('username').lstrip('@') == id:
       return user
 
-    for pub in json.loads(auth_entity.publications_json).get('data', []):
+    for pub in json_loads(auth_entity.publications_json).get('data', []):
       if pub.get('id') == id:
         return pub
 
@@ -133,7 +133,7 @@ class ChooseBlog(oauth_medium.CallbackHandler, util.Handler):
       self.maybe_add_or_delete_source(Medium, auth_entity, state)
       return
 
-    user = json.loads(auth_entity.user_json)['data']
+    user = json_loads(auth_entity.user_json)['data']
     username = user['username']
     if not username.startswith('@'):
       username = '@' + username
@@ -145,7 +145,7 @@ class ChooseBlog(oauth_medium.CallbackHandler, util.Handler):
     auth_entity.publications_json = auth_entity.get(
       oauth_medium.API_BASE + 'users/%s/publications' % user['id']).text
     auth_entity.put()
-    pubs = json.loads(auth_entity.publications_json).get('data')
+    pubs = json_loads(auth_entity.publications_json).get('data')
     if not pubs:
       self.maybe_add_or_delete_source(Medium, auth_entity, state,
                                       id=username)

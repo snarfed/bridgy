@@ -39,7 +39,7 @@ import appengine_config
 from google.appengine.ext import ndb
 from oauth_dropins import tumblr as oauth_tumblr
 from oauth_dropins.webutil.handlers import JINJA_ENV
-import ujson as json
+from oauth_dropins.webutil.util import json_dumps, json_loads
 import webapp2
 
 import models
@@ -119,7 +119,7 @@ class Tumblr(models.Source):
     Returns:
       ([string url], [string domain])
     """
-    for blog in json.loads(auth_entity.user_json).get('user', {}).get('blogs', []):
+    for blog in json_loads(auth_entity.user_json).get('user', {}).get('blogs', []):
       if ((blog_name and blog_name == blog.get('name')) or
           (not blog_name and blog.get('primary'))):
         return [blog['url']], [util.domain_from_link(blog['url']).lower()]
@@ -245,7 +245,7 @@ class ChooseBlog(oauth_tumblr.CallbackHandler, util.Handler):
                  'domain': util.domain_from_link(b['url'])}
                 # user_json is the user/info response:
                 # http://www.tumblr.com/docs/en/api/v2#user-methods
-                for b in json.loads(auth_entity.user_json)['user']['blogs']
+                for b in json_loads(auth_entity.user_json)['user']['blogs']
                 if b.get('name') and b.get('url')],
       }
     logging.info('Rendering choose_blog.html with %s', vars)

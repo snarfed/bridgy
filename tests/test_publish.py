@@ -17,8 +17,8 @@ from granary import source as gr_source
 from google.appengine.api import mail
 import mox
 from oauth_dropins.webutil.testutil import requests_response
+from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
-import ujson as json
 import webapp2
 from webob import exc
 
@@ -90,7 +90,7 @@ class PublishTest(testutil.HandlerTest):
                     '%r\n\n=== vs ===\n\n%r' % (expected, body))
     else:
       if resp.headers['Content-Type'] == 'application/json':
-        body = json.loads(body)['content' if status < 300 else 'error']
+        body = json_loads(body)['content' if status < 300 else 'error']
       self.assertIn(expected, body)
 
     return resp
@@ -219,7 +219,7 @@ class PublishTest(testutil.HandlerTest):
 
     # now that there's a complete Publish entity, more attempts should fail
     resp = self.assert_error("Sorry, you've already published that page")
-    self.assertEquals(json.loads(created.body), json.loads(resp.body)['original'])
+    self.assertEquals(json_loads(created.body), json_loads(resp.body)['original'])
 
     # try again to test for a bug we had where a second try would succeed
     self.assert_error("Sorry, you've already published that page")
@@ -714,7 +714,7 @@ this is my article
     self.expect_requests_get('http://foo.com/bar', self.post_html % 'foo')
     self.mox.ReplayAll()
     resp = self.assert_created('foo', params={'bridgy_omit_link': 'True'})
-    self.assertEquals('foo', json.loads(resp.body)['content'])
+    self.assertEquals('foo', json_loads(resp.body)['content'])
 
   def test_bridgy_omit_link_target_query_param(self):
     self.expect_requests_get('http://foo.com/bar', self.post_html % 'foo')
@@ -722,14 +722,14 @@ this is my article
 
     target = 'https://brid.gy/publish/fake?bridgy_omit_link=true'
     resp = self.assert_created('foo', target=target)
-    self.assertEquals('foo', json.loads(resp.body)['content'])
+    self.assertEquals('foo', json_loads(resp.body)['content'])
 
   def test_bridgy_omit_link_mf2(self):
     html = self.post_html % 'foo <a class="u-bridgy-omit-link" href=""></a>'
     self.expect_requests_get('http://foo.com/bar', html)
     self.mox.ReplayAll()
     resp = self.assert_created('foo')
-    self.assertEquals('foo', json.loads(resp.body)['content'])
+    self.assertEquals('foo', json_loads(resp.body)['content'])
 
   def test_preview_omit_link_no_query_param_overrides_mf2(self):
     self.expect_requests_get('http://foo.com/bar', self.post_html % 'foo')
@@ -1170,7 +1170,7 @@ Join us!"""
     self.assert_success(expected, preview=True)
     expected += ' - http://foo.com/bar'
     resp = self.assert_created(expected, preview=False)
-    self.assertEquals(expected, json.loads(resp.body)['content'])
+    self.assertEquals(expected, json_loads(resp.body)['content'])
 
   def test_unicode(self):
     """Test that we pass through unicode chars correctly."""
@@ -1380,7 +1380,7 @@ Join us!"""
     self.mox.ReplayAll()
 
     resp = self.assert_created('blah - http://foo.com/bar')
-    self.assertNotIn('images', json.loads(resp.body))
+    self.assertNotIn('images', json_loads(resp.body))
 
     resp = self.assert_success('blah - http://foo.com/bar', preview=True)
     self.assertNotIn('with images', resp.body)
@@ -1401,7 +1401,7 @@ Join us!"""
     self.mox.ReplayAll()
 
     resp = self.assert_created("blah - http://foo.com/bar")
-    self.assertEquals(['http://example.com/real'], json.loads(resp.body)['images'])
+    self.assertEquals(['http://example.com/real'], json_loads(resp.body)['images'])
 
     resp = self.assert_success('blah - http://foo.com/bar', preview=True)
     self.assertIn('with images http://example.com/real', resp.body)

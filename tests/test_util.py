@@ -16,9 +16,9 @@ from appengine_config import HTTP_TIMEOUT
 from google.appengine.api import memcache
 from google.appengine.ext import ndb
 from oauth_dropins.webutil.testutil import requests_response
+from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
 import webapp2
-import ujson as json
 from webmentiontools import send
 from webob import exc
 
@@ -39,7 +39,7 @@ class UtilTest(testutil.ModelsTest):
     util.now_fn = lambda: datetime.datetime(2000, 1, 1)
 
   def test_maybe_add_or_delete_source(self):
-    auth_entity = FakeAuthEntity(id='x', user_json=json.dumps(
+    auth_entity = FakeAuthEntity(id='x', user_json=json_dumps(
         {'url': 'http://foo.com/', 'name': UNICODE_STR}))
     auth_entity.put()
     src = self.handler.maybe_add_or_delete_source(
@@ -91,7 +91,7 @@ class UtilTest(testutil.ModelsTest):
 
   def test_maybe_add_or_delete_without_web_site_redirects_to_edit_websites(self):
     for bad_url in None, 'not>a<url', 'http://fa.ke/xyz':
-      auth_entity = FakeAuthEntity(id='x', user_json=json.dumps({'url': bad_url}))
+      auth_entity = FakeAuthEntity(id='x', user_json=json_dumps({'url': bad_url}))
       auth_entity.put()
       source = self.handler.maybe_add_or_delete_source(FakeSource, auth_entity, '{}')
 
@@ -227,7 +227,7 @@ class UtilTest(testutil.ModelsTest):
     """Run through an authorization back and forth and make sure that
     the external callback makes it all the way through.
     """
-    encoded_state = urllib.parse.quote_plus(json.dumps({
+    encoded_state = urllib.parse.quote_plus(json_dumps({
       'callback': 'http://withknown.com/bridgy_callback',
       'feature': 'listen',
       'operation': 'add',
@@ -282,7 +282,7 @@ class UtilTest(testutil.ModelsTest):
     """Run through an authorization back and forth with a custom user url
     provided to the auth mechanism
     """
-    encoded_state = urllib.parse.quote_plus(json.dumps({
+    encoded_state = urllib.parse.quote_plus(json_dumps({
       'callback': 'http://withknown.com/bridgy_callback',
       'feature': 'listen',
       'operation': 'add',
@@ -343,7 +343,7 @@ class UtilTest(testutil.ModelsTest):
     decline and make sure that the callback makes it all the way
     through.
     """
-    encoded_state = urllib.parse.quote_plus(json.dumps({
+    encoded_state = urllib.parse.quote_plus(json_dumps({
       'callback': 'http://withknown.com/bridgy_callback',
       'feature': 'publish',
       'operation': 'add',

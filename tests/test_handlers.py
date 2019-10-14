@@ -12,7 +12,7 @@ import urllib.request, urllib.error, urllib.parse
 import appengine_config
 from google.appengine.api import urlfetch_errors
 import mox
-import ujson as json
+from oauth_dropins.webutil.util import json_dumps, json_loads
 
 import handlers
 import models
@@ -126,7 +126,7 @@ asdf http://other/link qwert
           },
         }],
       },
-    }, json.loads(resp.body))
+    }, json_loads(resp.body))
 
   def test_post_missing(self):
     FakeGrSource.activities = []
@@ -159,7 +159,7 @@ asdf http://other/link qwert
   def test_author_uid_not_tag_uri(self):
     self.activities[0]['object']['author']['id'] = 'not a tag uri'
     resp = self.check_response('/post/fake/%s/000?format=json', expected_status=200)
-    props = json.loads(resp.body)['properties']['author'][0]['properties']
+    props = json_loads(resp.body)['properties']['author'][0]['properties']
     self.assert_equals(['not a tag uri'], props['uid'])
     self.assertNotIn('url', props)
 

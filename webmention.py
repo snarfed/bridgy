@@ -9,7 +9,7 @@ from __future__ import unicode_literals
 from builtins import str
 import logging
 
-import ujson as json
+from oauth_dropins.webutil.util import json_dumps, json_loads
 
 import appengine_config
 import util
@@ -98,7 +98,7 @@ class WebmentionHandler(WebmentionGetHandler):
           doc = str(post)
           mf2 = util.parse_mf2(doc, resp.url)
 
-    logging.debug('Parsed microformats2: %s', json.dumps(mf2, indent=2))
+    logging.debug('Parsed microformats2: %s', json_dumps(mf2, indent=2))
     items = mf2.get('items', [])
     if require_mf2 and (not items or not items[0]):
       return self.error('No microformats2 data found in ' + resp.url,
@@ -139,7 +139,7 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
       assert 'parsed' not in extra_json
       resp.update(extra_json)
 
-    resp = json.dumps(resp, indent=2)
+    resp = json_dumps(resp, indent=2)
 
     if mail and status != 404:
       self.mail_me('[Returned HTTP %s to client]\n\n%s' % (status, error))

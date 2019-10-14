@@ -9,8 +9,8 @@ import datetime
 
 from granary import facebook as gr_facebook
 from oauth_dropins import facebook as oauth_facebook
+from oauth_dropins.webutil.util import json_dumps, json_loads
 from requests.exceptions import HTTPError
-import ujson as json
 
 import appengine_config
 from facebook import FacebookPage
@@ -1432,7 +1432,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
   def _test_match_facebook_username(self, user_obj, **source_params):
     auth_entity = oauth_facebook.FacebookAuth(
       id='my_string_id', auth_code='my_code', access_token_str='my_token',
-      user_json=json.dumps(user_obj))
+      user_json=json_dumps(user_obj))
     auth_entity.put()
 
     fb = FacebookPage.new(self.handler, auth_entity=auth_entity,

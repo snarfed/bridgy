@@ -12,7 +12,7 @@ from google.appengine.ext import ndb
 from granary import flickr as gr_flickr
 from granary.source import SELF
 from oauth_dropins import flickr as oauth_flickr
-import ujson as json
+from oauth_dropins.webutil.util import json_dumps, json_loads
 
 
 class Flickr(models.Source):
@@ -48,7 +48,7 @@ class Flickr(models.Source):
       handler: the current :class:`webapp2.RequestHandler`
       auth_entity: :class:`oauth_dropins.flickr.FlickrAuth`
     """
-    person = json.loads(auth_entity.user_json).get('person', {})
+    person = json_loads(auth_entity.user_json).get('person', {})
     return Flickr(
       id=person.get('nsid'),
       auth_entity=auth_entity.key,

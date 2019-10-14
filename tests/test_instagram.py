@@ -14,8 +14,8 @@ from oauth_dropins.instagram import InstagramAuth
 from oauth_dropins.webutil.testutil import TestCase
 from granary import instagram as gr_instagram
 from granary.tests import test_instagram as gr_test_instagram
+from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
-import ujson as json
 
 import appengine_config
 import instagram
@@ -28,7 +28,7 @@ class InstagramTest(testutil.ModelsTest):
   def setUp(self):
     super(InstagramTest, self).setUp()
     self.handler.messages = []
-    self.auth_entity = indieauth.IndieAuth(id='http://foo.com', user_json=json.dumps({
+    self.auth_entity = indieauth.IndieAuth(id='http://foo.com', user_json=json_dumps({
       'me': 'https://snarfed.org/',
       'rel-me': ['http://instagram.com/snarfed'],
       'h-card': {
@@ -67,7 +67,7 @@ class InstagramTest(testutil.ModelsTest):
 
   def test_user_tag_id_old_instagram_auth_entity(self):
     self.inst.auth_entity = InstagramAuth(
-      id='snarfed', access_token_str='', auth_code='', user_json=json.dumps({
+      id='snarfed', access_token_str='', auth_code='', user_json=json_dumps({
         'id': '420973239',
         'username': 'snarfed',
         'full_name': 'Ryan B',
@@ -172,7 +172,7 @@ class InstagramTest(testutil.ModelsTest):
     profile = copy.deepcopy(gr_test_instagram.HTML_PROFILE)
     del profile['entry_data']['ProfilePage'][0]['graphql']['user']['external_url']
     self.expect_instagram_fetch(
-      gr_test_instagram.HTML_HEADER + json.dumps(profile) + gr_test_instagram.HTML_FOOTER)
+      gr_test_instagram.HTML_HEADER + json_dumps(profile) + gr_test_instagram.HTML_FOOTER)
 
     self.mox.ReplayAll()
     resp = self.callback()
@@ -199,7 +199,7 @@ class InstagramTest(testutil.ModelsTest):
     profile['entry_data']['ProfilePage'][0]['graphql']['user']['biography'] = \
       'http://a/ https://b'
     self.expect_instagram_fetch(
-      gr_test_instagram.HTML_HEADER + json.dumps(profile) + gr_test_instagram.HTML_FOOTER)
+      gr_test_instagram.HTML_HEADER + json_dumps(profile) + gr_test_instagram.HTML_FOOTER)
 
     self.expect_webmention_discovery()
 

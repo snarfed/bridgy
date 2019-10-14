@@ -25,9 +25,9 @@ from google.appengine.api import memcache
 from google.appengine.api.datastore_types import _MAX_STRING_LENGTH
 from google.appengine.ext import ndb
 import httplib2
+from oauth_dropins.webutil.util import json_dumps, json_loads
 from oauth2client.client import AccessTokenRefreshError
 import requests
-import ujson as json
 from webmentiontools import send
 
 import appengine_config
@@ -69,10 +69,10 @@ class TaskQueueTest(testutil.ModelsTest):
     stored = list(Response.query())
     for resp in expected + stored:
       if 'activities_json' not in ignore:
-        resp.activities_json = [json.dumps(json.loads(a), sort_keys=True)
+        resp.activities_json = [json_dumps(json_loads(a), sort_keys=True)
                                 for a in resp.activities_json]
       if 'response_json' not in ignore:
-        resp.response_json = json.dumps(json.loads(resp.response_json), sort_keys=True)
+        resp.response_json = json_dumps(json_loads(resp.response_json), sort_keys=True)
 
     self.assert_entities_equal(expected, stored,
                                ignore=('created', 'updated') + ignore)
@@ -390,7 +390,7 @@ class PollTest(TaskQueueTest):
     resp = Response.query().get()
     self.assert_equals(['http://first/', 'http://second/'], resp.unsent)
     self.assert_equals(['http://first/', 'http://second/'],
-                       list(json.loads(resp.urls_to_activity).keys()))
+                       list(json_loads(resp.urls_to_activity).keys()))
 
   def test_too_long_urls(self):
     """URLs longer than the datastore's limit should be truncated and skipped.
@@ -431,7 +431,7 @@ class PollTest(TaskQueueTest):
     ids = set()
     for task in self.taskqueue_stub.GetTasks('propagate'):
       resp_key = ndb.Key(urlsafe=testutil.get_task_params(task)['response_key'])
-      ids.update(json.loads(a)['id'] for a in resp_key.get().activities_json)
+      ids.update(json_loads(a)['id'] for a in resp_key.get().activities_json)
     self.assert_equals(ids, set([self.activities[0]['id'], self.activities[2]['id']]))
 
     source = self.sources[0].key.get()
@@ -508,11 +508,11 @@ class PollTest(TaskQueueTest):
     self.assertEquals(1, Response.query().count())
     resp = Response.query().get()
     self.assert_equals(['tag:source.com,2013:%s' % id for id in ('a', 'b', 'c')],
-                       [json.loads(a)['id'] for a in resp.activities_json])
+                       [json_loads(a)['id'] for a in resp.activities_json])
 
     urls = ['http://from/tag', 'http://from/synd/post', 'http://target1/post/url']
     self.assert_equals(urls, resp.unsent)
-    self.assert_equals(urls, list(json.loads(resp.urls_to_activity).keys()))
+    self.assert_equals(urls, list(json_loads(resp.urls_to_activity).keys()))
 
   def test_multiple_activities_no_target_urls(self):
     """Response.urls_to_activity should be left unset.
@@ -590,7 +590,7 @@ class PollTest(TaskQueueTest):
 
     # responses from the normal activity
     for resp in self.responses[:4]:
-      resp.activities_json = [json.dumps({
+      resp.activities_json = [json_dumps({
         'id': 'tag:source.com,2013:a',
         'object': {'content': 'foo http://target1/post/url bar'},
       })]
@@ -619,8 +619,8 @@ class PollTest(TaskQueueTest):
     self.post_task()
     self.assert_responses([Response(
       id='tag:or.ig,2013:9',
-      activities_json=[json.dumps(link)],
-      response_json=json.dumps(link),
+      activities_json=[json_dumps(link)],
+      response_json=json_dumps(link),
       type='post',
       source=source.key,
       status='complete',
@@ -647,8 +647,8 @@ class PollTest(TaskQueueTest):
 
     self.assert_responses([Response(
       id='tag:or.ig,2013:9',
-      activities_json=[json.dumps(link)],
-      response_json=json.dumps(link),
+      activities_json=[json_dumps(link)],
+      response_json=json_dumps(link),
       type='post',
       source=self.sources[0].key,
       status='complete',
@@ -692,14 +692,14 @@ class PollTest(TaskQueueTest):
     self.post_task()
 
     # one expected response with two target urls, one for each domain_url
-    pruned = json.dumps({
+    pruned = json_dumps({
       'id': 'tag:source,2013:9',
       'verb': 'post',
       'object': {'id': 'tag:source,2013:9'},
     })
     self.assert_responses([Response(
       id='tag:source,2013:9',
-      activities_json=[json.dumps({'id': 'tag:source,2013:9'})],
+      activities_json=[json_dumps({'id': 'tag:source,2013:9'})],
       response_json=pruned,
       type='post',
       source=source.key,
@@ -873,7 +873,7 @@ class PollTest(TaskQueueTest):
     self.mox.stubs.Set(FakeSource, 'RATE_LIMIT_HTTP_CODES', ('429', '456'))
     self.mox.stubs.Set(self.sources[0], 'RATE_LIMIT_HTTP_CODES', ('429', '456'))
     try:
-      error_body = json.dumps({"meta": {
+      error_body = json_dumps({"meta": {
         "code": 429, "error_message": "The maximum number of requests...",
         "error_type": "OAuthRateLimitException"}})
       for err in (
@@ -944,14 +944,14 @@ class PollTest(TaskQueueTest):
   def test_cache_trims_to_returned_activity_ids(self):
     """We should trim last_activities_cache_json to just the returned activity ids."""
     source = self.sources[0]
-    source.last_activities_cache_json = json.dumps(
+    source.last_activities_cache_json = json_dumps(
       {1: 2, 'x': 'y', 'prefix x': 1, 'prefix b': 0})
     source.put()
 
     self.post_task()
 
     self.assert_equals({'prefix b': 0},
-                       json.loads(source.key.get().last_activities_cache_json))
+                       json_loads(source.key.get().last_activities_cache_json))
 
   def test_slow_poll_never_sent_webmention(self):
     self.sources[0].created = NOW - (FakeSource.FAST_POLL_GRACE_PERIOD +
@@ -1224,7 +1224,7 @@ class PollTest(TaskQueueTest):
     replies.append(self.activities[1]['object']['replies']['items'][0])
 
     self.post_task(reset=True)
-    self.assert_equals(replies, json.loads(source.key.get().seen_responses_cache_json))
+    self.assert_equals(replies, json_loads(source.key.get().seen_responses_cache_json))
     self.responses[4].key.delete()
 
     # new responses that don't include existing response. cache will have
@@ -1235,7 +1235,7 @@ class PollTest(TaskQueueTest):
     self.post_task(reset=True)
     self.assert_equals([r.key for r in self.responses[:4]],
                        list(Response.query().iter(keys_only=True)))
-    self.assert_equals(tags, json.loads(source.key.get().seen_responses_cache_json))
+    self.assert_equals(tags, json_loads(source.key.get().seen_responses_cache_json))
 
   def _change_response_and_poll(self):
     resp = self.responses[0].key.get() or self.responses[0]
@@ -1247,7 +1247,7 @@ class PollTest(TaskQueueTest):
 
     reply = self.activities[0]['object']['replies']['items'][0]
     reply['content'] += ' xyz'
-    new_resp_json = json.dumps(reply)
+    new_resp_json = json_dumps(reply)
     self.post_task(reset=True)
 
     resp = resp.key.get()
@@ -1264,7 +1264,7 @@ class PollTest(TaskQueueTest):
     self.taskqueue_stub.FlushQueue('propagate')
 
     source = self.sources[0].key.get()
-    self.assert_equals([reply], json.loads(source.seen_responses_cache_json))
+    self.assert_equals([reply], json_loads(source.seen_responses_cache_json))
 
   def test_in_blocklist(self):
     """Responses from blocked users should be ignored."""
@@ -1851,9 +1851,9 @@ class PropagateTest(TaskQueueTest):
 
   def test_non_public_activity(self):
     """If the activity is non-public, we should give up."""
-    activity = json.loads(self.responses[0].activities_json[0])
+    activity = json_loads(self.responses[0].activities_json[0])
     activity['to'] = [{'objectType':'group', 'alias':'@private'}]
-    self.responses[0].activities_json = [json.dumps(activity)]
+    self.responses[0].activities_json = [json_dumps(activity)]
     self.responses[0].put()
 
     self.post_task()
@@ -1861,9 +1861,9 @@ class PropagateTest(TaskQueueTest):
 
   def test_non_public_response(self):
     """If the response is non-public, we should give up."""
-    resp = json.loads(self.responses[0].response_json)
+    resp = json_loads(self.responses[0].response_json)
     resp['to'] = [{'objectType':'group', 'alias':'@private'}]
-    self.responses[0].response_json = json.dumps(resp)
+    self.responses[0].response_json = json_dumps(resp)
     self.responses[0].put()
 
     self.post_task()
@@ -1971,9 +1971,9 @@ class PropagateTest(TaskQueueTest):
 
   def test_activity_id_not_tag_uri(self):
     """If the activity id isn't a tag uri, we should just use it verbatim."""
-    activity = json.loads(self.responses[0].activities_json[0])
+    activity = json_loads(self.responses[0].activities_json[0])
     activity['id'] = 'AAA'
-    self.responses[0].activities_json = [json.dumps(activity)]
+    self.responses[0].activities_json = [json_dumps(activity)]
 
     self.responses[0].unsent = ['http://good']
     self.responses[0].put()
@@ -1992,7 +1992,7 @@ class PropagateTest(TaskQueueTest):
     self.responses[0].activities_json = [
       '{"id": "000"}', '{"id": "111"}', '{"id": "222"}']
     self.responses[0].unsent = ['http://AAA', 'http://BBB', 'http://CCC']
-    self.responses[0].urls_to_activity = json.dumps(
+    self.responses[0].urls_to_activity = json_dumps(
       {'http://AAA': 0, 'http://BBB': 1, 'http://CCC': 2})
     self.responses[0].put()
 
@@ -2023,7 +2023,7 @@ class PropagateTest(TaskQueueTest):
 
     https://github.com/snarfed/bridgy/issues/237
     """
-    self.responses[0].urls_to_activity = json.dumps({'bad': 9})
+    self.responses[0].urls_to_activity = json_dumps({'bad': 9})
     self.responses[0].put()
     self.mox.ReplayAll()
     self.post_task(expected_status=ERROR_HTTP_RETURN_CODE)
@@ -2098,7 +2098,7 @@ class PropagateTest(TaskQueueTest):
     https://github.com/snarfed/bridgy/issues/456
     """
     self.responses[0].type = 'post'
-    self.responses[0].response_json = json.dumps(json.loads(
+    self.responses[0].response_json = json_dumps(json_loads(
       self.responses[0].activities_json[0]))
     self.responses[0].put()
 

@@ -14,8 +14,8 @@ from google.appengine.api import memcache
 from granary import microformats2
 from granary import source as gr_source
 from oauth_dropins.webutil.models import StringIdModel
+from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
-import ujson as json
 from webmentiontools import send
 
 import superfeedr
@@ -568,8 +568,8 @@ class Source(with_metaclass(SourceMeta, StringIdModel)):
     Returns:
       ([string url, ...], [string domain, ...])
     """
-    actor = self.gr_source.user_to_actor(json.loads(auth_entity.user_json))
-    logging.debug('Converted to actor: %s', json.dumps(actor, indent=2))
+    actor = self.gr_source.user_to_actor(json_loads(auth_entity.user_json))
+    logging.debug('Converted to actor: %s', json_dumps(actor, indent=2))
 
     candidates = util.trim_nulls(util.uniquify(
         [user_url] + microformats2.object_urls(actor)))
@@ -760,7 +760,7 @@ class Webmentions(StringIdModel):
     # https://github.com/snarfed/bridgy/issues/305#issuecomment-94004416
     resp_json = getattr(self, 'response_json', None)
     if resp_json:
-      resp = json.loads(resp_json)
+      resp = json_loads(resp_json)
       fb_id = resp.get('fb_id')
       if fb_id:
         tag_fb_id = 'tag:facebook.com,2013:' + fb_id
@@ -820,7 +820,7 @@ class Response(Webmentions):
 
   def label(self):
     return ' '.join((self.key.kind(), self.type, self.key.id(),
-                     json.loads(self.response_json).get('url', '[no url]')))
+                     json_loads(self.response_json).get('url', '[no url]')))
 
   def add_task(self, **kwargs):
     util.add_propagate_task(self, **kwargs)
@@ -834,8 +834,8 @@ class Response(Webmentions):
     resp = super(Response, self).get_or_save()
 
     if (self.type != resp.type or
-        source.gr_source.activity_changed(json.loads(resp.response_json),
-                                         json.loads(self.response_json),
+        source.gr_source.activity_changed(json_loads(resp.response_json),
+                                         json_loads(self.response_json),
                                          log=True)):
       logging.info('Response changed! Re-propagating. Original: %s' % resp)
       resp.old_response_jsons = resp.old_response_jsons[:10] + [resp.response_json]
@@ -855,7 +855,7 @@ class Response(Webmentions):
 
     synd_urls = set()
     for activity_json in self.activities_json:
-      activity = json.loads(activity_json)
+      activity = json_loads(activity_json)
       url = activity.get('url') or activity.get('object', {}).get('url')
       if url:
         url = source.canonicalize_url(url, activity=activity)

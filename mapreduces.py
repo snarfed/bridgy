@@ -11,7 +11,7 @@ from __future__ import unicode_literals
 import gc
 
 from mapreduce import operation as op
-import ujson as json
+from oauth_dropins.webutil.util import json_dumps, json_loads
 
 import util
 
@@ -21,8 +21,8 @@ def prune_activity_json(response):
 
   Background: https://github.com/snarfed/bridgy/issues/68
   """
-  response.activity_json = json.dumps(util.prune_activity(
-      json.loads(response.activity_json)))
+  response.activity_json = json_dumps(util.prune_activity(
+      json_loads(response.activity_json)))
   # helps avoid hitting the instance memory limit
   gc.collect()
   yield op.db.Put(response)

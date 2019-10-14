@@ -24,8 +24,8 @@ from oauth_dropins.webutil import testutil_appengine
 # mirror some methods from webutil.testutil
 from oauth_dropins import handlers as oauth_handlers
 from oauth_dropins.webutil.testutil import get_task_eta, get_task_params
+from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
-import ujson as json
 
 import util
 
@@ -216,7 +216,7 @@ class FakeSource(Source):
     if auth_entity:
       props['auth_entity'] = auth_entity.key
       if auth_entity.user_json:
-        user_obj = json.loads(auth_entity.user_json)
+        user_obj = json_loads(auth_entity.user_json)
         if 'name' not in props:
           props['name'] = user_obj.get('name')
         id = user_obj.get('id')
@@ -293,14 +293,14 @@ class ModelsTest(HandlerTest):
     auth_entities = [
       FakeAuthEntity(
         key=ndb.Key('FakeAuthEntity', '01122334455'),
-        user_json=json.dumps({
+        user_json=json_dumps({
           'id': '0123456789',
           'name': 'Fake User',
           'url': 'http://fakeuser.com/',
         })),
       FakeAuthEntity(
         key=ndb.Key('FakeAuthEntity', '0022446688'),
-        user_json=json.dumps({
+        user_json=json_dumps({
           'id': '0022446688',
           'name': 'Another Fake',
           'url': 'http://anotherfake.com/',
@@ -376,8 +376,8 @@ class ModelsTest(HandlerTest):
       comment = obj['replies']['items'][0]
       self.responses.append(Response(
           id=comment['id'],
-          activities_json=[json.dumps(pruned_activity)],
-          response_json=json.dumps(comment),
+          activities_json=[json_dumps(pruned_activity)],
+          response_json=json_dumps(comment),
           type='comment',
           source=self.sources[0].key,
           unsent=['http://target1/post/url'],
@@ -388,8 +388,8 @@ class ModelsTest(HandlerTest):
       like = obj['tags'][0]
       self.responses.append(Response(
           id=like['id'],
-          activities_json=[json.dumps(pruned_activity)],
-          response_json=json.dumps(like),
+          activities_json=[json_dumps(pruned_activity)],
+          response_json=json_dumps(like),
           type='like',
           source=self.sources[0].key,
           unsent=['http://target1/post/url'],
@@ -400,8 +400,8 @@ class ModelsTest(HandlerTest):
       share = obj['tags'][1]
       self.responses.append(Response(
           id=share['id'],
-          activities_json=[json.dumps(pruned_activity)],
-          response_json=json.dumps(share),
+          activities_json=[json_dumps(pruned_activity)],
+          response_json=json_dumps(share),
           type='repost',
           source=self.sources[0].key,
           unsent=['http://target1/post/url'],
@@ -412,8 +412,8 @@ class ModelsTest(HandlerTest):
       reaction = obj['tags'][2]
       self.responses.append(Response(
           id=reaction['id'],
-          activities_json=[json.dumps(pruned_activity)],
-          response_json=json.dumps(reaction),
+          activities_json=[json_dumps(pruned_activity)],
+          response_json=json_dumps(reaction),
           type='react',
           source=self.sources[0].key,
           unsent=['http://target1/post/url'],
@@ -456,7 +456,7 @@ FakeStartHandler = util.oauth_starter(OAuthStartHandler).to('/fakesource/add')
 class FakeAddHandler(util.Handler):
   """Handles the authorization callback when handling a fake source
   """
-  auth_entity = FakeAuthEntity(user_json=json.dumps({
+  auth_entity = FakeAuthEntity(user_json=json_dumps({
     'id': '0123456789',
     'name': 'Fake User',
     'url': 'http://fakeuser.com/',

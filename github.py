@@ -5,7 +5,7 @@ import logging
 import appengine_config
 from granary import github as gr_github
 from oauth_dropins import github as oauth_github
-import ujson as json
+from oauth_dropins.webutil.util import json_dumps, json_loads
 import webapp2
 
 from models import Source
@@ -65,7 +65,7 @@ class GitHub(Source):
       auth_entity: :class:`oauth_dropins.github.GitHubAuth`
       kwargs: property values
     """
-    user = json.loads(auth_entity.user_json)
+    user = json_loads(auth_entity.user_json)
     gr_source = gr_github.GitHub(access_token=auth_entity.access_token())
     actor = gr_source.user_to_actor(user)
     return GitHub(id=auth_entity.key.id(),

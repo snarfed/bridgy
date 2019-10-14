@@ -24,7 +24,7 @@ from granary.tests.test_facebook import ACTIVITY, API_ME_POSTS, EVENT, \
   PHOTO, PHOTO_ACTIVITY, PHOTO_POST, POST
 import oauth_dropins
 from oauth_dropins import facebook as oauth_facebook
-import ujson as json
+from oauth_dropins.webutil.util import json_dumps, json_loads
 import webapp2
 
 import app
@@ -49,13 +49,13 @@ class FacebookPageTest(testutil.ModelsTest):
     self.handler.messages = []
     self.auth_entity = oauth_facebook.FacebookAuth(
       id='my_string_id', auth_code='my_code', access_token_str='my_token',
-      user_json=json.dumps({
+      user_json=json_dumps({
         'id': '212038',
         'name': 'Ryan Barrett',
         'username': 'snarfed.org',
         'bio': 'something about me',
       }),
-      pages_json=json.dumps([]), type='user')
+      pages_json=json_dumps([]), type='user')
     self.auth_entity.put()
     self.fb = FacebookPage.new(self.handler, auth_entity=self.auth_entity,
                                features=['listen'])
@@ -69,7 +69,7 @@ class FacebookPageTest(testutil.ModelsTest):
       'access_token': 'page_token',
     }
     self.page_auth_entity = oauth_facebook.FacebookAuth(
-      id=self.page_json['id'], user_json=json.dumps(self.page_json),
+      id=self.page_json['id'], user_json=json_dumps(self.page_json),
       auth_code='my_code', access_token_str='my_token', type='page')
     self.page_auth_entity.put()
 
@@ -79,7 +79,7 @@ class FacebookPageTest(testutil.ModelsTest):
 
   def expect_api_call(self, path, response, **kwargs):
     if not isinstance(response, basestring):
-      response = json.dumps(response)
+      response = json_dumps(response)
 
     join_char = '&' if '?' in path else '?'
     return self.expect_urlopen(
@@ -250,7 +250,7 @@ class FacebookPageTest(testutil.ModelsTest):
     self.assertEquals('4', self.fb.cached_resolve_object_id('3'))
 
     self.fb.put()
-    self.assert_equals(json.dumps({'1': '2', '3': '4', '2': '2', '4': '4'}),
+    self.assert_equals(json_dumps({'1': '2', '3': '4', '2': '2', '4': '4'}),
                        self.fb.key.get().resolved_object_ids_json)
 
   def test_expired_sends_notification(self):
@@ -305,7 +305,7 @@ class FacebookPageTest(testutil.ModelsTest):
     self.assertRaises(models.DisableSource, self.page.get_activities)
 
   def test_other_error(self):
-    msg = json.dumps({'error': {'code': 190, 'error_subcode': 789}})
+    msg = json_dumps({'error': {'code': 190, 'error_subcode': 789}})
     self.expect_api_call(API_ME_POSTS, msg, status=400)
     self.mox.ReplayAll()
 
@@ -579,7 +579,7 @@ class FacebookPageTest(testutil.ModelsTest):
     self.fb.canonicalize_url('http://facebook.com/foo/posts/1')
     self.fb.canonicalize_url('http://facebook.com/foo/posts/3')
     self.fb.put()
-    self.assertEquals(json.dumps({'1': '2', '3': '4'}),
+    self.assertEquals(json_dumps({'1': '2', '3': '4'}),
                       self.fb.key.get().resolved_object_ids_json)
 
     try:
@@ -588,7 +588,7 @@ class FacebookPageTest(testutil.ModelsTest):
       self.fb.canonicalize_url('http://facebook.com/foo/posts/5')
       self.fb.put()
       # should keep the highest ids
-      self.assertEquals(json.dumps({'3': '4', '5': None}),
+      self.assertEquals(json_dumps({'3': '4', '5': None}),
                         self.fb.key.get().resolved_object_ids_json)
     finally:
       facebook.MAX_RESOLVED_OBJECT_IDS = orig
@@ -616,11 +616,11 @@ class FacebookPageTest(testutil.ModelsTest):
       self.assertEquals(expected_auth_url, resp.headers['Location'])
 
   def test_disable_page(self):
-    self.auth_entity.pages_json = json.dumps([self.page_json])
+    self.auth_entity.pages_json = json_dumps([self.page_json])
     self.auth_entity.put()
 
     self.expect_urlopen(oauth_facebook.API_PAGE_URL + '&access_token=page_token',
-                        json.dumps(self.page_json))
+                        json_dumps(self.page_json))
     self.mox.ReplayAll()
 
     key = self.page.key.urlsafe()
@@ -656,7 +656,7 @@ class FacebookPageTest(testutil.ModelsTest):
 
   def test_page_chooser(self):
     self.fb.key.delete()
-    self.auth_entity.pages_json = json.dumps([self.page_json])
+    self.auth_entity.pages_json = json_dumps([self.page_json])
     self.auth_entity.put()
 
     handler = facebook.OAuthCallback(

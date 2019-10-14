@@ -14,7 +14,7 @@ import oauth_dropins
 from oauth_dropins import indieauth
 from oauth_dropins import flickr as oauth_flickr
 from oauth_dropins import twitter as oauth_twitter
-import ujson as json
+from oauth_dropins.webutil.util import json_dumps, json_loads
 
 import appengine_config
 import cron
@@ -35,7 +35,7 @@ class CronTest(HandlerTest):
     oauth_dropins.appengine_config.TWITTER_APP_SECRET = 'my_app_secret'
 
     flickr_auth = oauth_flickr.FlickrAuth(
-      id='123@N00', user_json=json.dumps(test_flickr.PERSON_INFO),
+      id='123@N00', user_json=json_dumps(test_flickr.PERSON_INFO),
       token_key='my_key', token_secret='my_secret')
     flickr_auth.put()
     self.flickr = Flickr.new(None, auth_entity=flickr_auth, features=['listen'])
@@ -60,7 +60,7 @@ class CronTest(HandlerTest):
     })
     super(HandlerTest, self).expect_requests_get(
       gr_instagram.HTML_BASE_URL + '%s/' % username,
-      test_instagram.HTML_HEADER + json.dumps(profile) + test_instagram.HTML_FOOTER,
+      test_instagram.HTML_HEADER + json_dumps(profile) + test_instagram.HTML_FOOTER,
       allow_redirects=False)
 
   def test_replace_poll_tasks(self):
@@ -103,7 +103,7 @@ class CronTest(HandlerTest):
     for screen_name in ('a', 'b', 'c'):
       auth_entity = oauth_twitter.TwitterAuth(
         id='id', token_key='key', token_secret='secret',
-        user_json=json.dumps({'name': 'Ryan',
+        user_json=json_dumps({'name': 'Ryan',
                               'screen_name': screen_name,
                               'profile_image_url': 'http://pi.ct/ure',
                               }))
@@ -119,8 +119,8 @@ class CronTest(HandlerTest):
 
     cron.TWITTER_USERS_PER_LOOKUP = 2
     lookup_url = gr_twitter.API_BASE + cron.TWITTER_API_USER_LOOKUP
-    self.expect_urlopen(lookup_url % 'a,c', json.dumps(user_objs))
-    self.expect_urlopen(lookup_url % 'b', json.dumps(user_objs))
+    self.expect_urlopen(lookup_url % 'a,c', json_dumps(user_objs))
+    self.expect_urlopen(lookup_url % 'b', json_dumps(user_objs))
     self.mox.ReplayAll()
 
     resp = cron.application.get_response('/cron/update_twitter_pictures')
@@ -132,7 +132,7 @@ class CronTest(HandlerTest):
   def test_update_twitter_picture_user_lookup_404s(self):
     auth_entity = oauth_twitter.TwitterAuth(
       id='id', token_key='key', token_secret='secret',
-      user_json=json.dumps({'name': 'Bad',
+      user_json=json_dumps({'name': 'Bad',
                             'screen_name': 'bad',
                             'profile_image_url': 'http://pi.ct/ure',
                            }))
@@ -217,7 +217,7 @@ class CronTest(HandlerTest):
       'https://api.flickr.com/services/rest?'
         'user_id=39216764%40N00&nojsoncallback=1&'
         'method=flickr.people.getInfo&format=json',
-      json.dumps({
+      json_dumps({
         'person': {
           'id': '123@N00',
           'nsid': '123@N00',

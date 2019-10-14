@@ -7,11 +7,11 @@ from __future__ import absolute_import
 from builtins import next
 
 import mox
-import ujson as json
+from oauth_dropins.tumblr import TumblrAuth
+from oauth_dropins.webutil.util import json_dumps, json_loads
 from webob import exc
 
 import appengine_config
-from oauth_dropins.tumblr import TumblrAuth
 import tumblr
 from tumblr import Tumblr
 from . import testutil
@@ -21,7 +21,7 @@ class TumblrTest(testutil.HandlerTest):
 
   def setUp(self):
     super(TumblrTest, self).setUp()
-    self.auth_entity = TumblrAuth(id='name', user_json=json.dumps({
+    self.auth_entity = TumblrAuth(id='name', user_json=json_dumps({
           'user': {'blogs': [{'url': 'other'},
                              {'url': 'http://primary/', 'primary': True}]}}))
     self.tumblr = Tumblr(id='my id', disqus_shortname='my-disqus-name')
@@ -43,7 +43,7 @@ class TumblrTest(testutil.HandlerTest):
       resp = {'response': {'id': '87654'}}
     self.expect_requests_get(
       tumblr.DISQUS_API_THREAD_DETAILS_URL,
-      json.dumps(resp),
+      json_dumps(resp),
       params=self.disqus_params({'forum': 'my-disqus-name',
                                  'thread':'link:http://primary/post/123999'}),
       **kwargs)
@@ -57,12 +57,12 @@ class TumblrTest(testutil.HandlerTest):
     self.assertEquals('http://api.tumblr.com/v2/blog/primary/avatar/512', t.picture)
 
   def test_new_no_primary_blog(self):
-    self.auth_entity.user_json = json.dumps({'user': {'blogs': [{'url': 'foo'}]}})
+    self.auth_entity.user_json = json_dumps({'user': {'blogs': [{'url': 'foo'}]}})
     self.assertIsNone(Tumblr.new(self.handler, auth_entity=self.auth_entity))
     self.assertIn('Tumblr blog not found', next(iter(self.handler.messages)))
 
   def test_new_with_blog_name(self):
-    self.auth_entity.user_json = json.dumps({
+    self.auth_entity.user_json = json_dumps({
         'user': {'blogs': [{'url': 'foo'},
                            {'name': 'bar', 'url': 'baz'},
                            {'name': 'biff', 'url': 'http://boff/'},
@@ -108,7 +108,7 @@ class TumblrTest(testutil.HandlerTest):
     self.expect_thread_details()
     self.expect_requests_post(
       tumblr.DISQUS_API_CREATE_POST_URL,
-      json.dumps({'response': {'ok': 'sgtm'}}),
+      json_dumps({'response': {'ok': 'sgtm'}}),
       params=self.disqus_params({
             'thread': '87654',
             'message': '<a href="http://who">who</a>: foo bar'}))
@@ -122,7 +122,7 @@ class TumblrTest(testutil.HandlerTest):
     self.expect_thread_details()
     self.expect_requests_post(
       tumblr.DISQUS_API_CREATE_POST_URL,
-      json.dumps({}),
+      json_dumps({}),
       params=self.disqus_params({
         'thread': '87654',
         'message': '<a href="http://who">Degenève</a>: foo Degenève bar'.encode('utf-8'),
@@ -140,7 +140,7 @@ class TumblrTest(testutil.HandlerTest):
                              "fooo var disqus_shortname = 'my-disqus-name';")
     self.expect_thread_details()
     self.expect_requests_post(tumblr.DISQUS_API_CREATE_POST_URL,
-                              json.dumps({}), params=mox.IgnoreArg())
+                              json_dumps({}), params=mox.IgnoreArg())
     self.mox.ReplayAll()
 
     self.tumblr.create_comment('http://primary/post/123999', '', '', '')

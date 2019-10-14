@@ -11,13 +11,13 @@ import gc
 import logging
 import random
 
-from oauth_dropins.webutil import logs
 from google.appengine.api import memcache
 from google.appengine.api import datastore_errors
 from google.appengine.api.datastore_types import _MAX_STRING_LENGTH
 from google.appengine.ext import ndb
 from granary.source import Source
-import ujson as json
+from oauth_dropins.webutil import logs
+from oauth_dropins.webutil.util import json_dumps, json_loads
 import webapp2
 from webmentiontools import send
 
@@ -151,7 +151,7 @@ class Poll(webapp2.RequestHandler):
     #
     cache = util.CacheDict()
     if source.last_activities_cache_json:
-      cache.update(json.loads(source.last_activities_cache_json))
+      cache.update(json_loads(source.last_activities_cache_json))
 
     # search for links first so that the user's activities and responses
     # override them if they overlap
@@ -192,7 +192,7 @@ class Poll(webapp2.RequestHandler):
     # trim cache to just the returned activity ids, so that it doesn't grow
     # without bound. (WARNING: depends on get_activities_response()'s cache key
     # format, e.g. 'PREFIX ACTIVITY_ID'!)
-    source.updates['last_activities_cache_json'] = json.dumps(
+    source.updates['last_activities_cache_json'] = json_dumps(
       {k: v for k, v in cache.items() if k.split()[-1] in silo_activity_ids})
 
     self.backfeed(source, responses, activities=activities)
@@ -326,12 +326,12 @@ class Poll(webapp2.RequestHandler):
       for resp in replies + likes + reactions + reposts + rsvps:
         id = resp.get('id')
         if not id:
-          logging.error('Skipping response without id: %s', json.dumps(resp, indent=2))
+          logging.error('Skipping response without id: %s', json_dumps(resp, indent=2))
           continue
 
         if source.is_blocked(resp):
           logging.info('Skipping response by blocked user: %s',
-                       json.dumps(resp.get('author') or resp.get('actor'), indent=2))
+                       json_dumps(resp.get('author') or resp.get('actor'), indent=2))
           continue
 
         resp.setdefault('activities', []).append(activity)
@@ -355,7 +355,7 @@ class Poll(webapp2.RequestHandler):
     # seen responses (JSON objects) for each source are stored in its entity.
     unchanged_responses = []
     if source.seen_responses_cache_json:
-      for seen in json.loads(source.seen_responses_cache_json):
+      for seen in json_loads(source.seen_responses_cache_json):
         id = seen['id']
         resp = responses.get(id)
         if resp and not source.gr_source.activity_changed(seen, resp, log=True):
@@ -405,20 +405,20 @@ class Poll(webapp2.RequestHandler):
       resp_entity = Response(
         id=id,
         source=source.key,
-        activities_json=[json.dumps(util.prune_activity(a, source))
+        activities_json=[json_dumps(util.prune_activity(a, source))
                          for a in activities],
-        response_json=json.dumps(pruned_response),
+        response_json=json_dumps(pruned_response),
         type=resp_type,
         unsent=list(urls_to_activity.keys()),
         failed=list(too_long),
         original_posts=resp.get('originals', []))
       if urls_to_activity and len(activities) > 1:
-        resp_entity.urls_to_activity=json.dumps(urls_to_activity)
+        resp_entity.urls_to_activity=json_dumps(urls_to_activity)
       resp_entity.get_or_save(source, restart=self.RESTART_EXISTING_TASKS)
 
     # update cache
     if pruned_responses:
-      source.updates['seen_responses_cache_json'] = json.dumps(
+      source.updates['seen_responses_cache_json'] = json_dumps(
         pruned_responses + unchanged_responses)
 
   def repropagate_old_responses(self, source, relationships):
@@ -434,7 +434,7 @@ class Poll(webapp2.RequestHandler):
                      .order(-Response.updated)):
       new_orig_urls = set()
       for activity_json in response.activities_json:
-        activity = json.loads(activity_json)
+        activity = json_loads(activity_json)
         activity_url = activity.get('url') or activity.get('object', {}).get('url')
         if not activity_url:
           logging.warning('activity has no url %s', activity_json)
@@ -782,8 +782,8 @@ class PropagateResponse(SendWebmentions):
     logging.info('Created by this poll: %s/%s', util.host_url(self),
                  logs.url(poll_estimate, source.key))
 
-    self.activities = [json.loads(a) for a in self.entity.activities_json]
-    response_obj = json.loads(self.entity.response_json)
+    self.activities = [json_loads(a) for a in self.entity.activities_json]
+    response_obj = json_loads(self.entity.response_json)
     if (not source.is_activity_public(response_obj) or
         not all(source.is_activity_public(a) for a in self.activities)):
       logging.info('Response or activity is non-public. Dropping.')
@@ -797,7 +797,7 @@ class PropagateResponse(SendWebmentions):
     try:
       activity = self.activities[0]
       if self.entity.urls_to_activity:
-        urls_to_activity = json.loads(self.entity.urls_to_activity)
+        urls_to_activity = json_loads(self.entity.urls_to_activity)
         if urls_to_activity:
           activity = self.activities[urls_to_activity[target_url]]
     except (KeyError, IndexError):

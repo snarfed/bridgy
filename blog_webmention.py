@@ -12,7 +12,7 @@ import urllib.parse
 import appengine_config
 
 from granary import microformats2
-import ujson as json
+from oauth_dropins.webutil.util import json_dumps, json_loads
 
 import blogger
 import models
@@ -162,7 +162,7 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
     # write results to datastore
     self.entity.status = 'complete'
     self.entity.put()
-    self.response.write(json.dumps(self.entity.published))
+    self.response.write(json_dumps(self.entity.published))
 
   def find_mention_item(self, items):
     """Returns the mf2 item that mentions (or replies to, likes, etc) the target.
