@@ -33,10 +33,10 @@ class Mastodon(models.Source):
   }
 
   @property
-  def URL_CANONICALIZER():
+  def URL_CANONICALIZER(self):
     """Generate URL_CANONICALIZER dynamically to use the instance's domain."""
     return util.UrlCanonicalizer(
-      domain=GR_CLASS.DOMAIN,
+      domain=self.gr_source.DOMAIN,
       headers=util.REQUEST_HEADERS)
 
   @staticmethod

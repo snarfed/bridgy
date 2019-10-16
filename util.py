@@ -99,6 +99,11 @@ OTHER_DOMAINS = (
   'bridgy.org',
   'www.bridgy.org',
 )
+LOCAL_HOSTS = (
+  'localhost:8080',
+  'my.dev.com:8080',
+)
+DOMAINS = (PRIMARY_DOMAIN,) + OTHER_DOMAINS + LOCAL_HOSTS
 canonicalize_domain = webutil_handlers.redirect(OTHER_DOMAINS, PRIMARY_DOMAIN)
 
 webutil_handlers.JINJA_ENV.globals.update({

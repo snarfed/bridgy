@@ -23,6 +23,7 @@ import appengine_config
 
 import models
 from models import Response
+import original_post_discovery
 import util
 # need to import model class definitions since poll creates and saves entities.
 import blogger, facebook, facebook_email, flickr, github, instagram, mastodon, medium, tumblr, twitter, wordpress_rest

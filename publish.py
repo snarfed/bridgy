@@ -63,7 +63,7 @@ import util
 import webmention
 
 
-SOURCES = (FacebookPage, Flickr, GitHub, Twitter)
+SOURCES = (Flickr, GitHub, Mastodon, Twitter)
 SOURCE_NAMES = {cls.SHORT_NAME: cls for cls in SOURCES}
 SOURCE_DOMAINS = {cls.GR_CLASS.DOMAIN: cls for cls in SOURCES}
 # image URLs matching this regexp should be ignored.
@@ -109,10 +109,10 @@ class Handler(webmention.WebmentionHandler):
     return True
 
   def source_url(self):
-    return util.get_required_param(self, 'source')
+    return util.get_required_param(self, 'source').strip()
 
   def target_url(self):
-    return util.get_required_param(self, 'target')
+    return util.get_required_param(self, 'target').strip()
 
   def include_link(self, item):
     val = self.request.get('bridgy_omit_link', None)
@@ -169,7 +169,9 @@ class Handler(webmention.WebmentionHandler):
     domain = parsed.netloc
     path_parts = parsed.path.rsplit('/', 1)
     source_cls = SOURCE_NAMES.get(path_parts[-1])
-    if (domain not in ('brid.gy', 'www.brid.gy', 'localhost:8080') or
+    logging.info('@ %r', (domain not in util.DOMAINS,
+        len(path_parts) != 2, path_parts[0] != '/publish', source_cls, path_parts[-1]))
+    if (domain not in util.DOMAINS or
         len(path_parts) != 2 or path_parts[0] != '/publish' or not source_cls):
       return self.error(
         'Target must be brid.gy/publish/{flickr,github,mastodon,twitter}')

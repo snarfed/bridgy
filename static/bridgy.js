@@ -34,14 +34,6 @@ window.onload = function () {
 function do_preview(site) {
   document.getElementById('messages').style.display = 'none';
 
-  var url = document.getElementById('source-url').value.trim();
-  if (url.length == 0) {
-    window.alert('Please enter a URL.');
-    return;
-  } else if (!url.startsWith('http')) {
-    url = 'http://' + url;
-  }
-
   var preview = document.getElementById('preview');
   var req = new XMLHttpRequest();
   req.onload = function() {
@@ -69,10 +61,8 @@ function do_preview(site) {
   }
 
   preview.innerHTML = '<img src="/static/spinner.gif" width="30" />';
-  req.open('post', '/publish/preview?source=' + encodeURIComponent(url) +
-    '&target=https://brid.gy/publish/' + site +
-    '&bridgy_omit_link=' + document.querySelector('input[name="bridgy_omit_link"]:checked').value +
-    '&source_key=' + document.getElementById('source_key').value);
+  params = new URLSearchParams(new FormData(document.getElementsByName('preview')[0]));
+  req.open('post', '/publish/preview?' + params.toString());
   req.send();
 }
 
