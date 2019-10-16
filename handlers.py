@@ -17,7 +17,7 @@ URL paths are:
 /rsvp/SITE/USER_ID/EVENT_ID/RSVP_USER_ID
   e.g. /rsvp/facebook/212038/12345/67890
 """
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
 import logging
 import re
@@ -37,11 +37,7 @@ import original_post_discovery
 import util
 
 # Import source class files so their metaclasses are initialized.
-import facebook
-import flickr
-import github
-import instagram
-import twitter
+import blogger, facebook, facebook_email, flickr, github, instagram, mastodon, medium, tumblr, twitter, wordpress_rest
 
 CACHE_TIME = 60 * 15  # 15m
 

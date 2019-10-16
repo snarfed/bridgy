@@ -1,9 +1,7 @@
 # coding=utf-8
 """Task queue handlers.
 """
-from __future__ import unicode_literals
-from __future__ import division
-
+from __future__ import absolute_import, division, unicode_literals
 from builtins import str
 from past.utils import old_div
 import datetime
@@ -23,21 +21,12 @@ from webmentiontools import send
 
 import appengine_config
 
-# need to import model class definitions since poll creates and saves entities.
-import blogger
-import facebook
-import facebook_email
-import flickr
-import github
-import instagram
-import medium
 import models
 from models import Response
-import original_post_discovery
-import tumblr
-import twitter
 import util
-import wordpress_rest
+# need to import model class definitions since poll creates and saves entities.
+import blogger, facebook, facebook_email, flickr, github, instagram, mastodon, medium, tumblr, twitter, wordpress_rest
+
 
 WEBMENTION_DISCOVERY_CACHE_TIME = 60 * 60 * 2  # 2h
 

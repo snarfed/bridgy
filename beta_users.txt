@@ -9,6 +9,7 @@
 /flickr/40721178@N00
 /googleplus/103651231634018158746
 /instagram/snarfed
+/mastodon/@snarfed@mastodon.technology
 /tumblr/carbsryanate.tumblr.com
 /tumblr/snarfed.tumblr.com
 /twitter/schnarfed

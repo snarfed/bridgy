@@ -11,7 +11,6 @@ import webapp2
 from models import Source
 import util
 
-
 # https://developer.github.com/apps/building-oauth-apps/scopes-for-oauth-apps/
 # https://github.com/dear-github/dear-github/issues/113#issuecomment-365121631
 LISTEN_SCOPES = [

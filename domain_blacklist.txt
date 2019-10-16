@@ -103,6 +103,7 @@ flipboard.com
 foursquare.com
 friendfeed.com
 friendster.com
+gab.com
 getglue.com
 getsatisfaction.com
 genius.com
@@ -145,11 +146,16 @@ linkd.in
 linkedin.com
 live.com
 livestream.com
+mastodon.cloud
+mastodon.social
+mastodon.technology
 medium.com
 meetin.gs
 meetup.com
 mixcloud.com
 mixx.com
+mstdn.io
+mstdn.jp
 myopenid.com
 myspace.com
 myvideo.de
@@ -159,6 +165,7 @@ orkut.com
 pandora.com
 paper.li
 patreon.com
+pawoo.net
 personalinfocloud.com
 # links here often tweeted along with '@T COM', which mentions @t
 pet.t-com.ne.jp
@@ -173,6 +180,7 @@ plinky.com
 plurk.com
 podhost.de
 podspot.de
+pontapreta.net
 pownce.com
 prezi.com
 qik.com
@@ -206,6 +214,7 @@ steamcommunity.com
 striking.ly
 strikingly.com
 stumbleupon.com
+switter.at
 technorati.com
 tent.is
 theonion.com

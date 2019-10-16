@@ -298,6 +298,12 @@ button[disabled]:hover {
   max-width: 98%;
 }
 
+.mastodon-button {
+  height: 50px;
+  padding: 6px;
+  background-color: #323946;
+}
+
 #preview-text hr {
   border-color: #cccccc;
 }

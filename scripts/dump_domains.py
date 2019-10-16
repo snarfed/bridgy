@@ -6,7 +6,7 @@ their profile.
 
 Started from https://github.com/snarfed/bridgy/issues/490#issuecomment-143572623
 """
-from __future__ import print_function
+from __future__ import absolute_import, print_function, unicode_literals
 from future import standard_library
 standard_library.install_aliases()
 from builtins import chr
@@ -16,13 +16,8 @@ import urllib.parse
 
 import models
 from models import Response
-import blogger
-import facebook
-import flickr
-import instagram
-import tumblr
-import twitter
-import wordpress_rest
+import blogger, facebook, facebook_email, flickr, github, instagram, mastodon, medium, tumblr, twitter, wordpress_rest
+
 
 domains = collections.defaultdict(int)  # maps domain to # of users
 for cls in models.sources.values():

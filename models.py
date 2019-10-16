@@ -190,19 +190,22 @@ class Source(with_metaclass(SourceMeta, StringIdModel)):
     """
     if name == 'gr_source' and self.auth_entity:
       auth_entity = self.auth_entity.get()
-      token = auth_entity.access_token()
-      if not isinstance(token, tuple):
-        token = (token,)
+      args = auth_entity.access_token()
+      if not isinstance(args, tuple):
+        args = (args,)
 
       kwargs = {}
       if self.key.kind() == 'FacebookPage' and auth_entity.type == 'user':
         kwargs = {'user_id': self.key.id()}
       elif self.key.kind() == 'Instagram':
         kwargs = {'scrape': True, 'cookie': appengine_config.INSTAGRAM_SESSIONID_COOKIE}
+      elif self.key.kind() == 'Mastodon':
+        args = (auth_entity.instance(),) + args
+        kwargs = {'user_id': json_loads(auth_entity.user_json).get('id')}
       elif self.key.kind() == 'Twitter':
         kwargs = {'username': self.key.id()}
 
-      self.gr_source = self.GR_CLASS(*token, **kwargs)
+      self.gr_source = self.GR_CLASS(*args, **kwargs)
       return self.gr_source
 
     if name == 'gr_source' and self.key.kind() == 'FacebookEmailAccount':

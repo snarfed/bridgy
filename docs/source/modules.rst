@@ -42,6 +42,10 @@ logs
 ----
 .. automodule:: logs
 
+mastodon
+--------
+.. automodule:: mastodon
+
 medium
 ------
 .. automodule:: medium

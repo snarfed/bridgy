@@ -92,6 +92,10 @@ handlers:
   script: instagram.application
   secure: always
 
+- url: /mastodon/(start|callback|delete|publish/.+)(/.*)?
+  script: mastodon.application
+  secure: always
+
 - url: /medium/(start|add|delete|notify|choose_blog)(/.*)?
   script: medium.application
   secure: always
@@ -152,6 +156,6 @@ handlers:
   script: app.application
   secure: always
 
-- url: /(blogger|facebook(-email)?|fake|flickr|github|googleplus|instagram|medium|tumblr|twitter|wordpress)/.+
+- url: /(blogger|facebook(-email)?|fake|flickr|github|googleplus|instagram|mastodon|medium|tumblr|twitter|wordpress)/.+
   script: app.application
   secure: always

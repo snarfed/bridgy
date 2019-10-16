@@ -1,6 +1,6 @@
 """Bridgy user-facing handlers: front page, user pages, and delete POSTs.
 """
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
 from future import standard_library
 standard_library.install_aliases()
@@ -15,15 +15,18 @@ import appengine_config
 
 from google.appengine.ext import ndb
 from google.appengine.ext.ndb.stats import KindStat, KindPropertyNameStat
-from oauth_dropins import blogger_v2 as oauth_blogger_v2
-from oauth_dropins import facebook as oauth_facebook
-from oauth_dropins import flickr as oauth_flickr
-from oauth_dropins import github as oauth_github
-from oauth_dropins import indieauth
-from oauth_dropins import medium as oauth_medium
-from oauth_dropins import tumblr as oauth_tumblr
-from oauth_dropins import twitter as oauth_twitter
-from oauth_dropins import wordpress_rest as oauth_wordpress_rest
+from oauth_dropins import (
+  blogger_v2 as oauth_blogger_v2,
+  facebook as oauth_facebook,
+  flickr as oauth_flickr,
+  github as oauth_github,
+  indieauth,
+  medium as oauth_medium,
+  mastodon as oauth_mastodon,
+  tumblr as oauth_tumblr,
+  twitter as oauth_twitter,
+  wordpress_rest as oauth_wordpress_rest,
+)
 from oauth_dropins.webutil import handlers as webutil_handlers
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import webapp2
@@ -37,16 +40,7 @@ import original_post_discovery
 import util
 
 # import source model class definitions for template rendering
-import blogger
-import facebook
-import facebook_email
-import flickr
-import github
-import instagram
-import medium
-import tumblr
-import twitter
-import wordpress_rest
+import blogger, facebook, facebook_email, flickr, github, instagram, mastodon, medium, tumblr, twitter, wordpress_rest
 
 RECENT_PRIVATE_POSTS_THRESHOLD = 5
 
@@ -200,12 +194,6 @@ class UserHandler(DashboardHandler):
 
   @util.canonicalize_domain
   def get(self, source_short_name, id):
-    if source_short_name == 'googleplus':
-      # turned off in march 2019: https://github.com/snarfed/bridgy/issues/846
-      self.source = None
-      self.response.status_int = 404
-      return super(UserHandler, self).get()
-
     cls = models.sources[source_short_name]
     self.source = cls.lookup(id)
 
@@ -457,6 +445,7 @@ class DeleteStartHandler(util.Handler):
     'Flickr': oauth_flickr,
     'GitHub': oauth_github,
     'Instagram': indieauth,
+    'Mastodon': oauth_mastodon,
     'Medium': oauth_medium,
     'Tumblr': oauth_tumblr,
     'Twitter': oauth_twitter,
@@ -748,7 +737,7 @@ class CspReportHandler(util.Handler):
 application = webapp2.WSGIApplication(
   [('/?', FrontPageHandler),
    ('/users/?', UsersHandler),
-   ('/(blogger|facebook(?:-email)?|fake|fake_blog|flickr|github|googleplus|instagram|medium|tumblr|twitter|wordpress)/([^/]+)/?',
+   ('/(blogger|facebook(?:-email)?|fake|fake_blog|flickr|github|googleplus|instagram|mastodon|medium|tumblr|twitter|wordpress)/([^/]+)/?',
     UserHandler),
    ('/about/?', AboutHandler),
    ('/delete/start', DeleteStartHandler),

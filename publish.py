@@ -24,7 +24,7 @@ Example response::
       "id": "456_789"
     }
 """
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 from future import standard_library
 standard_library.install_aliases()
 from future.utils import native_str
@@ -40,10 +40,13 @@ import appengine_config
 from google.appengine.ext import ndb
 from granary import microformats2
 from granary import source as gr_source
-from oauth_dropins import facebook as oauth_facebook
-from oauth_dropins import flickr as oauth_flickr
-from oauth_dropins import github as oauth_github
-from oauth_dropins import twitter as oauth_twitter
+from oauth_dropins import (
+  facebook as oauth_facebook,
+  flickr as oauth_flickr,
+  github as oauth_github,
+  mastodon as oauth_mastodon,
+  twitter as oauth_twitter,
+)
 from oauth_dropins.webutil.handlers import JINJA_ENV
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import webapp2
@@ -52,6 +55,7 @@ from facebook import FacebookPage
 from flickr import Flickr
 from github import GitHub
 from instagram import Instagram
+from mastodon import Mastodon
 from models import Publish, PublishedPage
 from twitter import Twitter
 import models
@@ -168,7 +172,7 @@ class Handler(webmention.WebmentionHandler):
     if (domain not in ('brid.gy', 'www.brid.gy', 'localhost:8080') or
         len(path_parts) != 2 or path_parts[0] != '/publish' or not source_cls):
       return self.error(
-        'Target must be brid.gy/publish/{facebook,flickr,github,twitter}')
+        'Target must be brid.gy/publish/{flickr,github,mastodon,twitter}')
     elif source_cls == Instagram:
       return self.error('Sorry, %s is not supported.' %
                         source_cls.GR_CLASS.NAME)
@@ -705,6 +709,10 @@ class GitHubSendHandler(oauth_github.CallbackHandler, SendHandler):
   finish = SendHandler.finish
 
 
+class MastodonSendHandler(oauth_mastodon.CallbackHandler, SendHandler):
+  finish = SendHandler.finish
+
+
 class TwitterSendHandler(oauth_twitter.CallbackHandler, SendHandler):
   finish = SendHandler.finish
 
@@ -743,9 +751,9 @@ application = webapp2.WSGIApplication([
     ('/publish/preview', PreviewHandler),
     ('/publish/webmention', WebmentionHandler),
     ('/publish/(facebook|flickr|github|twitter)', webmention.WebmentionGetHandler),
-    ('/publish/facebook/finish', FacebookSendHandler),
     ('/publish/flickr/finish', FlickrSendHandler),
     ('/publish/github/finish', GitHubSendHandler),
+    ('/publish/mastodon/finish', MastodonSendHandler),
     ('/publish/twitter/finish', TwitterSendHandler),
     ],
   debug=appengine_config.DEBUG)

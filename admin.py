@@ -24,6 +24,7 @@ import facebook_email
 import flickr
 import github
 import instagram
+import mastodon
 import tumblr
 import twitter
 import wordpress_rest
@@ -70,7 +71,7 @@ class SourcesHandler(handlers.TemplateHandler):
 
   def template_vars(self):
     CLASSES = (facebook.FacebookPage, flickr.Flickr, github.GitHub,
-               twitter.Twitter, instagram.Instagram)
+               twitter.Twitter, instagram.Instagram, mastodon.Mastodon)
     queries = [cls.query(Source.status == 'enabled',
                          Source.poll_status == 'error',
                          Source.rate_limited.IN((False, None)),

@@ -10,6 +10,7 @@ Disallow: /googleplus
 Disallow: /instagram
 Disallow: /like
 Disallow: /log
+Disallow: /mastodon
 Disallow: /medium
 Disallow: /post
 Disallow: /react
