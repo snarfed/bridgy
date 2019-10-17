@@ -169,8 +169,6 @@ class Handler(webmention.WebmentionHandler):
     domain = parsed.netloc
     path_parts = parsed.path.rsplit('/', 1)
     source_cls = SOURCE_NAMES.get(path_parts[-1])
-    logging.info('@ %r', (domain not in util.DOMAINS,
-        len(path_parts) != 2, path_parts[0] != '/publish', source_cls, path_parts[-1]))
     if (domain not in util.DOMAINS or
         len(path_parts) != 2 or path_parts[0] != '/publish' or not source_cls):
       return self.error(
