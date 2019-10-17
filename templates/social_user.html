@@ -100,6 +100,9 @@ WordPress.com, <a href="/">sign up here!</a>
       title="Disable sending responses for this account. (Won't delete responses you've already received.)"
     {% endif %}
     >Disable</button>
+  {% if source.SHORT_NAME == 'mastodon' %}
+    <input name="instance" type="hidden" value="{{ source.instance() }}" />
+  {% endif %}
 </p>
 </form>
 </data>
@@ -213,11 +216,14 @@ WordPress.com, <a href="/">sign up here!</a>
 <form method="post" action="/delete/start">
 <p id="publishing-label" class="big">
  Ready to publish.
-   <input name="key" type="hidden" value="{{ source.key.urlsafe() }}" />
-   <input name="feature" type="hidden" value="publish" />
-   <button id="delete-button" type="submit" class="btn btn-default"
-     title="Disable publishing for this account. (Won't delete posts you've already published.)"
-     >Disable</button>
+ <input name="key" type="hidden" value="{{ source.key.urlsafe() }}" />
+ <input name="feature" type="hidden" value="publish" />
+ <button id="delete-button" type="submit" class="btn btn-default"
+   title="Disable publishing for this account. (Won't delete posts you've already published.)"
+   >Disable</button>
+ {% if source.SHORT_NAME == 'mastodon' %}
+   <input name="instance" type="hidden" value="{{ source.instance() }}" />
+ {% endif %}
 </p>
 </form>
 </data>

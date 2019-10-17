@@ -18,10 +18,6 @@ import util
 LISTEN_SCOPES = ('read')
 PUBLISH_SCOPES = ('read', 'write')
 
-APP_URL = appengine_config.HOST_URL
-if appengine_config.HOST in util.OTHER_DOMAINS:
-  APP_URL = util.HOST_URL
-
 
 class Mastodon(models.Source):
   """A Mastodon account.
@@ -106,22 +102,28 @@ class Mastodon(models.Source):
       fetch_likes=False, fetch_shares=False)
 
 
-class StartHandler(TemplateHandler, util.Handler):
+class StartHandler(oauth_mastodon.StartHandler):
+  """Abstract base OAuth starter class with our redirect URLs."""
+  APP_NAME = 'Bridgy'
+  APP_URL = (util.HOST_URL if appengine_config.HOST in util.OTHER_DOMAINS
+             else appengine_config.HOST_URL)
+  REDIRECT_PATHS = (
+    '/mastodon/callback',
+    '/publish/mastodon/finish',
+    '/delete/finish',
+  )
+
+
+class InstanceHandler(TemplateHandler, util.Handler):
   """Serves the "Enter your instance" form page."""
   def template_file(self):
     return 'mastodon_instance.html'
 
   def post(self):
     feature = self.request.get('feature')
-    start = util.oauth_starter(oauth_mastodon.StartHandler).to(
-      '/mastodon/callback', app_name='Bridgy', app_url=APP_URL,
-      scopes=PUBLISH_SCOPES if feature == 'publish' else LISTEN_SCOPES)(
-      self.request, self.response)
-    start.REDIRECT_PATHS = (
-      '/mastodon/callback',
-      '/publish/mastodon/finish',
-      '/delete/finish',
-    )
+    start_cls = util.oauth_starter(StartHandler).to('/mastodon/callback',
+      scopes=PUBLISH_SCOPES if feature == 'publish' else LISTEN_SCOPES)
+    start = start_cls(self.request, self.response)
 
     instance = util.get_required_param(self, 'instance')
     self.redirect(start.redirect_url(instance=instance))
@@ -133,11 +135,9 @@ class CallbackHandler(oauth_mastodon.CallbackHandler, util.Handler):
 
 
 application = webapp2.WSGIApplication([
-  ('/mastodon/start', StartHandler),
+  ('/mastodon/start', InstanceHandler),
   ('/mastodon/callback', CallbackHandler),
-  # TODO
-  # ('/mastodon/delete/finish', oauth_mastodon.CallbackHandler.to('/delete/finish')),
-  ('/mastodon/publish/start', oauth_mastodon.StartHandler.to(
-    '/publish/mastodon/finish', app_name='Bridgy', app_url=APP_URL,
-    scopes=PUBLISH_SCOPES)),
+  ('/mastodon/delete/finish', oauth_mastodon.CallbackHandler.to('/delete/finish')),
+  ('/mastodon/publish/start', StartHandler.to('/publish/mastodon/finish',
+                                              scopes=PUBLISH_SCOPES)),
 ], debug=appengine_config.DEBUG)

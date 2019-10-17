@@ -445,7 +445,8 @@ class DeleteStartHandler(util.Handler):
     'Flickr': oauth_flickr,
     'GitHub': oauth_github,
     'Instagram': indieauth,
-    'Mastodon': oauth_mastodon,
+    # use our StartHandler subclass since it has config constants
+    'Mastodon': mastodon,
     'Medium': oauth_medium,
     'Tumblr': oauth_tumblr,
     'Twitter': oauth_twitter,
