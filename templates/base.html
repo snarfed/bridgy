@@ -39,10 +39,10 @@ ga('send', 'pageview');
 <div id="logins">
 {% if logins %}
   {% for login in logins %}
-  <a href="{{ login.path }}" class="h-card u-url">
+  <nobr><a href="{{ login.path }}" class="h-card u-url">
     <img src="/static/{{ login.site }}_icon.png" width="24" />
     <span class="p-name">{{ login.name }}</span>
-  </a> |
+  </a></nobr> |
   {% endfor %}
   <a href="/logout">Log out</a>
 {% endif %}
