@@ -284,12 +284,10 @@ in your post.
 
 <li id="registration-api" class="question">Can users sign up for Bridgy
 without leaving my site or application?</li>
-<p>Not exactly, but you can get close. Direct your users to
-<code>POST</code> to a Bridgy registration URL of the
-form <code>https://brid.gy/SITE/start</code> (where SITE is
-<code>twitter</code>, <code>googleplus</code>,
-<code>instagram</code>, <code>flickr</code>, or <code>github</code>) with the
-parameters:</p>
+
+<p>Not exactly, but you can get close. Direct your users to <code>POST</code> to a Bridgy registration URL of the form <code>https://brid.gy/SITE/start</code> (where SITE is
+<code>twitter</code>, <code>instagram</code>, <code>flickr</code>, <code>github</code>, or <code>mastodon</code>) with the parameters:</p>
+
 <ul>
 <li><code>feature</code>, a comma-separated list of features,
 usually <code>listen</code>, <code>publish</code>,
@@ -321,6 +319,7 @@ POST <a href="https://brid.gy/twitter/start">https://brid.gy/twitter/start</a>
   <li><b>Flickr</b> has <a href="https://www.flickr.com/services/api/auth.oauth.html#authorization">read, write, and delete permissions</a>. We ask for read for listen, write for publish. Screenshots: <a href="/static/permissions_screenshots/flickr_read.png">listen</a>, <a href="/static/permissions_screenshots/flickr_write.png">publish</a>.</li>
   <li><b>GitHub</b> has a few different permission models. We use an <a href="https://developer.github.com/apps/building-oauth-apps/scopes-for-oauth-apps/">OAuth app</a> to request read/write permission to public repository data, and notifications to see new comments and reactions. The alternative would have been a <a href="https://developer.github.com/apps/building-github-apps/">GitHub app,</a> which lets you grant read vs write permission to individual repos, but includes private repos, and doesn't include notifications. <a href="https://developer.github.com/apps/differences-between-apps/">More on the tradeoff here.</a> <a href="/static/permissions_screenshots/github.png">Screenshot.</a></li>
   <li><b>Instagram</b> turned off their API for individual usage, so we just ask for your web site, via <a href="https://indieauth.com/">IndieAuth</a>, and your Instagram username. <a href="/static/permissions_screenshots/instagram_indieauth.png">Screenshot.</a></li>
+  <li><b>Mastodon</b> has <a href="https://docs.joinmastodon.org/api/permissions/">a number of fine grained permissions</a>, but listen needs most of the read categories, and publish needs most of the write ones, so Bridgy just asks for blanket read and write permission for each.</li>
   <li><b>Medium</b> has <a href="https://github.com/Medium/medium-api-docs/#user-content-21-browser-based-authentication">a few different permissions</a>. We ask for read acces to your profile, public posts, and publications. <a href="/static/permissions_screenshots/medium.png">Screenshot.</a></li>
   <li><b>Tumblr</b> doesn't have permissions at all, <a href="https://www.tumblr.com/docs/en/api/v2#oauth">just full access or nothing.</a> <a href="/static/permissions_screenshots/tumblr.png">Screenshot.</a></li>
   <li><b>Twitter</b> <a href="https://developer.twitter.com/en/docs/basics/authentication/overview/application-permission-model">distinguishes between read and write access,</a> but not between different types of data. We ask for read access to your tweets and profile for listen, write access for publish. We don't ask for access to your direct messages. Screenshots: <a href="/static/permissions_screenshots/twitter_read.png">listen</a>, <a href="/static/permissions_screenshots/twitter_write.png">publish</a>.</li>
@@ -440,6 +439,7 @@ GitHub</a>. Thank you!
 <li>Instagram comments and likes on your pictures.</li>
 <li>Flickr comments and favorites on your photos.</li>
 <li>GitHub comments and emoji reactions on your issues and pull requests.</li>
+<li>Mastodon replies, favorites, boosts, mentions, and links to your site.</li>
 </ul>
 </li>
 </p></li>
@@ -678,7 +678,7 @@ webmention manually</a>. Here's how to construct Bridgy's source URLs:
   JSON-formatted version.
 </li>
 <li>For Twitter, Instagram, and GitHub, <code class='keyword'>USER_ID</code> is your
-  username, but for Flickr, it's your numeric user id.
+  username, but for Flickr and Mastodon, it's your numeric user id.
   <code class='value'>LIKED_BY_USER_ID</code> and
   <code class='value'>RSVP_USER_ID</code> are always numeric. You
   can get numeric user ids from the API consoles
@@ -753,7 +753,7 @@ class. It also understands more advanced microformats2 classes like
 <p>In general, Bridgy prefers to use <code>p-summary</code> if available, then
 the full <code>e-content</code>, and finally <code>p-name</code>, in that order.
 The one exception is original tweets (not <a href="#reply">@-replies</a>) on
-Twitter: for those, it prefers <code>p-name</code> before <code>e-content</code>.
+Twitter and Mastodon: for those, it prefers <code>p-name</code> before <code>e-content</code>.
 <a href="https://github.com/snarfed/bridgy/issues/228">Background</a>
 <a href="https://github.com/snarfed/bridgy/issues/219">discussion</a>.
 </p>
@@ -772,6 +772,7 @@ previewing a post to see how it will look!
 <li>Flickr photos, videos, comments, and favorites. Photos may include <a href="#location">location</a>, <a href="https://indieweb.org/tags">tags</a>, and/or <a href="#person-tag">people tags</a>.</li>
 <li>GitHub issues, <a href="https://help.github.com/articles/about-stars">stars</a>, comments on issues and PRs, and <a href="https://help.github.com/articles/about-conversations-on-github/#reacting-to-ideas-in-comments">emoji reactions</a> to issues, PRs, and comments.</li>
 <li><a href="#add-label">Adding new labels to GitHub issues.</a></li>
+<li>Mastodon toots, replies, favorites, and boosts. Toots and replies may include <a href="#picture">pictures</a> and <a href="#video">videos</a>.</li>
 <li>Nothing on Instagram, sorry. Likes used to be possible, but not since Instagram <a href="http://developers.instagram.com/post/133424514006/instagram-platform-update"> started locking down their API.</a> <a href="http://instagram.com/developer/endpoints/media/#get_media_popular">Photos, videos,</a> <a href="http://instagram.com/developer/endpoints/comments/#post_media_comments">and comments</a> were never possible.</li>
 </ul>
 </li>
@@ -809,6 +810,7 @@ page.
 in your post to publish automatically!
 <pre>&lt;a href="<a href='https://brid.gy/publish/flickr'>https://brid.gy/publish/flickr</a>"&gt;&lt;/a&gt;
 &lt;a href="<a href='https://brid.gy/publish/github'>https://brid.gy/publish/github</a>"&gt;&lt;/a&gt;
+&lt;a href="<a href='https://brid.gy/publish/mastodon'>https://brid.gy/publish/mastodon</a>"&gt;&lt;/a&gt;
 &lt;a href="<a href='https://brid.gy/publish/twitter'>https://brid.gy/publish/twitter</a>"&gt;&lt;/a&gt;
 </pre>
 </p>
@@ -872,7 +874,7 @@ tag. For example:
 I love scotch. Scotchy scotchy scotch.
 </pre>
 </p>
-<p>If you're posting to Twitter, and your <code>&lt;img&gt;</code> tag includes <code>alt="..."</code>, Bridgy will pass on that alt text and <a href="https://blog.twitter.com/developer/en_us/a/2016/alt-text-support-for-twitter-cards-and-the-rest-api.html">it will be included with the picture in your tweet</a>.</p>
+<p>If you're posting to Mastodon or Twitter, and your <code>&lt;img&gt;</code> tag includes <code>alt="..."</code>, Bridgy will pass on that alt text and it will be included with the picture <a href="https://blog.twitter.com/developer/en_us/a/2016/alt-text-support-for-twitter-cards-and-the-rest-api.html">in your tweet</a> or toot.</p>
 </li>
 
 <li id="video" class="question">How do I post a video?</li>
@@ -1005,7 +1007,7 @@ the query parameter <code>bridgy_omit_link=true</code> to your webmention HTTP
 request or <a href="#publish-backlink">Bridgy Publish backlink</a>, or by adding
 the <code>u-bridgy-omit-link</code> class to a link in your post.</p>
 <p>If you want to include links <em>only</em> on posts that have been automatically ellipsized
-(i.e. to fit on Twitter), you can select the <em>if shortened</em> preview option. This is
+(i.e. to fit on Twitter or Mastodon), you can select the <em>if shortened</em> preview option. This is
 equivalent to sending a webmention with the query parameter <code>bridgy_omit_link=maybe</code>
 or including an element like <code>&lt;data class="p-bridgy-omit-link" value="maybe" /&gt;</code>
 in the post body.</p>
@@ -1155,8 +1157,7 @@ data from your original post, which is often helpful for debugging.
 </p>
 </li>
 
-<li id="401" class="question">I'm getting a <em>401: Unauthorized</em> error
-   when I try to publish to Twitter.</li>
+<li id="401" class="question">I'm getting a <em>401: Unauthorized</em> error when I try to publish to Twitter.</li>
 <li class="answer">
 <p>Sorry for the trouble! Here are steps to fix this:
 </p>
