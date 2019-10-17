@@ -79,7 +79,7 @@ class FacebookEmailAccount(FacebookPage):
     resp = ndb.Key('Response', self.gr_source.tag_uri(id))
     email = FacebookEmail.query(FacebookEmail.response == resp).get()
     if email:
-      return gr_facebook.Facebook.email_to_object(email.htmls[0])
+      return gr_facebook.Facebook().email_to_object(email.htmls[0])
 
   get_like = get_comment
 
@@ -125,7 +125,7 @@ class EmailHandler(InboundMailHandler):
       return
 
     for html in htmls:
-      obj = gr_facebook.Facebook.email_to_object(html)
+      obj = gr_facebook.Facebook().email_to_object(html)
       if obj:
         break
     else:
