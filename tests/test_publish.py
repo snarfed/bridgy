@@ -454,8 +454,8 @@ foo
       "Looks like that's a FakeSource URL. Try one from your web site instead!",
       source='http://fa.ke/post/123')
     self.assert_error(
-      "Looks like that's a Facebook URL. Try one from your web site instead!",
-      source='http://facebook.com/post/123')
+      "Looks like that's a Twitter URL. Try one from your web site instead!",
+      source='http://twitter.com/post/123')
 
   def test_embedded_type_not_implemented(self):
     self.expect_requests_get('http://foo.com/bar', """
@@ -1219,42 +1219,10 @@ Join us!"""
     self.mox.ReplayAll()
     self.assert_error("Couldn't find link to http://localhost/publish/fake")
 
-  def test_facebook_comment_like_rsvp_disabled(self):
-    self.source = facebook.FacebookPage(id='789', features=['publish'],
-                                        domains=['mr.x'])
-    self.source.domain_urls = ['http://mr.x/']
-    self.source.put()
-
-    self.expect_requests_get('http://mr.x/rsvp', """
-    <article class="h-entry">
-      <a class="u-in-reply-to" href="http://fa.ke/event"></a>
-      <data class="p-rsvp" value="yes"></data>
-      <a href="http://localhost/publish/facebook"></a>
-    </article>""")
-    self.expect_requests_get('http://mr.x/like', """
-    <article class="h-entry">
-      <a class="u-like-of" href="http://facebook.com/789/posts/456">liked this</a>
-      <a href="http://localhost/publish/facebook"></a>
-    </article>""")
-    self.expect_requests_get('http://mr.x/comment', """
-    <article class="h-entry">
-      <a class="u-in-reply-to" href="http://facebook.com/789/posts/456">reply</a>
-      <a href="http://localhost/publish/facebook"></a>
-    </article>""")
-    self.mox.ReplayAll()
-
-    self.assert_error('Facebook is no longer supported',
-                      source='http://mr.x/rsvp',
-                      target='https://brid.gy/publish/facebook')
-    self.assert_error('Facebook is no longer supported',
-                      source='http://mr.x/like',
-                      target='https://brid.gy/publish/facebook')
-    self.assertEquals('failed', Publish.query().get().status)
-
-    self.assert_error('Facebook is no longer supported',
+  def test_facebook_disabled(self):
+    self.assert_error('Target must be brid.gy/publish/{',
                       source='http://mr.x/comment',
-                      target='https://brid.gy/publish/facebook',
-                      preview=True)
+                      target='https://brid.gy/publish/facebook')
 
   def test_require_like_of_repost_of(self):
     """We only trigger on like-of and repost-of, not like or repost."""
