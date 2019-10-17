@@ -15,6 +15,9 @@ app
 # we don't support Tor. (yet! :P)
 onion
 
+# This does its own thing :P
+fed.brid.gy
+
 # these come from the text of tweets. we also pull the expanded URL
 # from the tweet entities, so ignore these instead of resolving them.
 t.co
