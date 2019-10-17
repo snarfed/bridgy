@@ -5,6 +5,7 @@ import logging
 
 import appengine_config
 from granary import mastodon as gr_mastodon
+from granary import source as gr_source
 from oauth_dropins import mastodon as oauth_mastodon
 from oauth_dropins.webutil.handlers import TemplateHandler
 from oauth_dropins.webutil.util import json_dumps, json_loads
@@ -56,9 +57,22 @@ class Mastodon(models.Source):
                     picture=user.get('avatar'),
                     **kwargs)
 
+  def username(self):
+    """Returns the Mastodon username, e.g. alice."""
+    return self._split_address()[0]
+
   def instance(self):
     """Returns the Mastodon instance URL, e.g. https://foo.com/."""
-    return self.auth_entity.get().instance()
+    return self._split_address()[1]
+
+  def _split_address(self):
+    split = self.key.id().split('@')
+    assert len(split) == 3 and split[0] == '', self.key.id()
+    return split[1], split[2]
+
+  def user_tag_id(self):
+    """Returns the tag URI for this source, e.g. 'tag:foo.com:alice'."""
+    return self.gr_source.tag_uri(self.username())
 
   def silo_url(self):
     """Returns the Mastodon profile URL, e.g. https://foo.com/@bar."""
@@ -75,6 +89,17 @@ class Mastodon(models.Source):
     https://docs.joinmastodon.org/api/entities/#account
     """
     return json_loads(self.auth_entity.get().user_json).get('locked')
+
+  def search_for_links(self):
+    """Searches for activities with links to any of this source's web sites.
+
+    Returns:
+      sequence of ActivityStreams activity dicts
+    """
+    query = ' OR '.join(self.domains)
+    return self.get_activities(
+      search_query=query, group_id=gr_source.SEARCH, fetch_replies=False,
+      fetch_likes=False, fetch_shares=False)
 
 
 class StartHandler(TemplateHandler, util.Handler):
