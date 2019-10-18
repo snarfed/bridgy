@@ -96,6 +96,9 @@ class Mastodon(models.Source):
     Returns:
       sequence of ActivityStreams activity dicts
     """
+    if not self.domains:
+      return []
+
     query = ' OR '.join(self.domains)
     return self.get_activities(
       search_query=query, group_id=gr_source.SEARCH, fetch_replies=False,

@@ -65,3 +65,7 @@ class MastodonTest(testutil.ModelsTest):
     self.mox.ReplayAll()
 
     self.assert_equals([ACTIVITY], self.m.search_for_links())
+
+  def test_search_links_no_domains(self):
+    self.m.domains = []
+    self.assert_equals([], self.m.search_for_links())
