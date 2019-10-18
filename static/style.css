@@ -314,6 +314,10 @@ button[disabled]:hover {
   margin-top: 1em;
 }
 
+.mastodon-embed {
+  margin: 1em;
+}
+
 input[type="text"], input[type="url"] {
   padding-left: .3em;
   padding-right: .3em;
