@@ -194,10 +194,13 @@ class ItemHandler(util.Handler):
     if author_uid:
       parsed = util.parse_tag_uri(author_uid)
       if parsed:
-        silo_url = self.source.gr_source.user_url(parsed[1])
         urls = author.get('properties', {}).setdefault('url', [])
-        if silo_url not in microformats2.get_string_urls(urls):
-          urls.append(silo_url)
+        try:
+          silo_url = self.source.gr_source.user_url(parsed[1])
+          if silo_url not in microformats2.get_string_urls(urls):
+            urls.append(silo_url)
+        except NotImplementedError:  # from gr_source.user_url()
+          pass
 
     # write the response!
     self.response.headers['Access-Control-Allow-Origin'] = '*'

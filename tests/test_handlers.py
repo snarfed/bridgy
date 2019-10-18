@@ -406,6 +406,21 @@ asdf http://other/link qwert
 </article>
 """)
 
+  def test_granary_source_user_url_not_implemented(self):
+    self.mox.StubOutWithMock(FakeGrSource, 'user_url')
+    FakeGrSource.user_url('reposter_id').AndRaise(NotImplementedError())
+    self.mox.ReplayAll()
+
+    FakeGrSource.share = {
+      'objectType': 'activity',
+      'verb': 'share',
+      'object': {'url': 'http://example.com/original/post'},
+      'author': {'id': 'tag:fa.ke,2013:reposter_id'},
+    }
+    resp = self.check_response('/repost/fake/%s/000/111')
+    self.assertIn('<data class="p-uid" value="tag:fa.ke,2013:reposter_id">', resp.text)
+    self.assertNotIn('u-url', resp.text)
+
   def test_original_post_urls_follow_redirects(self):
     FakeGrSource.comment = {
       'content': 'qwert',
