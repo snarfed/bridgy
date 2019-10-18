@@ -110,6 +110,7 @@ class StartHandler(oauth_mastodon.StartHandler):
   REDIRECT_PATHS = (
     '/mastodon/callback',
     '/publish/mastodon/finish',
+    '/mastodon/delete/finish',
     '/delete/finish',
   )
 
