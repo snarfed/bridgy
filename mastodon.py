@@ -130,7 +130,13 @@ class InstanceHandler(TemplateHandler, util.Handler):
     start = start_cls(self.request, self.response)
 
     instance = util.get_required_param(self, 'instance')
-    self.redirect(start.redirect_url(instance=instance))
+    try:
+      self.redirect(start.redirect_url(instance=instance))
+    except ValueError as e:
+      logging.warning('Bad Mastodon instance', exc_info=True)
+      self.messages.add(unicode(e))
+      return self.redirect(self.request.path)
+
 
 
 class CallbackHandler(oauth_mastodon.CallbackHandler, util.Handler):
