@@ -735,11 +735,24 @@ class CspReportHandler(util.Handler):
     logging.info(self.request.body)
 
 
+class FacebookIsDeadHandler(util.Handler):
+  def get(self):
+    self.redirect('/about#rip-facebook')
+
+
+class GooglePlusIsDeadHandler(util.Handler):
+  def get(self):
+    self.redirect('/about#rip-google+')
+
+
+
 application = webapp2.WSGIApplication(
   [('/?', FrontPageHandler),
    ('/users/?', UsersHandler),
-   ('/(blogger|facebook(?:-email)?|fake|fake_blog|flickr|github|googleplus|instagram|mastodon|medium|tumblr|twitter|wordpress)/([^/]+)/?',
+   ('/(blogger|facebook-email|fake|fake_blog|flickr|instagram|mastodon|medium|tumblr|twitter|wordpress)/([^/]+)/?',
     UserHandler),
+   ('/facebook/.*', FacebookIsDeadHandler),
+   ('/googleplus/.*', GooglePlusIsDeadHandler),
    ('/about/?', AboutHandler),
    ('/delete/start', DeleteStartHandler),
    ('/delete/finish', DeleteFinishHandler),
