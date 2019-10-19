@@ -749,7 +749,7 @@ class GooglePlusIsDeadHandler(util.Handler):
 application = webapp2.WSGIApplication(
   [('/?', FrontPageHandler),
    ('/users/?', UsersHandler),
-   ('/(blogger|facebook-email|fake|fake_blog|flickr|instagram|mastodon|medium|tumblr|twitter|wordpress)/([^/]+)/?',
+   ('/(blogger|facebook-email|fake|fake_blog|flickr|github|instagram|mastodon|medium|tumblr|twitter|wordpress)/([^/]+)/?',
     UserHandler),
    ('/facebook/.*', FacebookIsDeadHandler),
    ('/googleplus/.*', GooglePlusIsDeadHandler),
