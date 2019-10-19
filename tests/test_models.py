@@ -317,10 +317,21 @@ class SourceTest(testutil.HandlerTest):
 
   def test_create_new_domain(self):
     """If the source has a URL set, extract its domain."""
+    util.BLACKLIST.remove('fa.ke')
+
+    self.expect_requests_get('http://fa.ke')
+    self.expect_requests_get('http://foo.com')
+    self.expect_requests_get('https://www.foo.com')
+    self.expect_requests_get('https://baj')
+    self.mox.ReplayAll()
+
     # bad URLs
     for user_json in (None, {}, {'url': 'not<a>url'},
                       # t.co is in the webmention blacklist
-                      {'url': 'http://t.co/foo'}):
+                      {'url': 'http://t.co/foo'},
+                      # fa.ke is the source's domain
+                      {'url': 'http://fa.ke/bar'},
+                     ):
       auth_entity = None
       if user_json is not None:
         auth_entity = testutil.FakeAuthEntity(id='x', user_json=json_dumps(user_json))
@@ -329,10 +340,6 @@ class SourceTest(testutil.HandlerTest):
       self.assertEqual([], source.domains)
       self.assertEqual([], source.domain_urls)
 
-    self.expect_requests_get('http://foo.com')
-    self.expect_requests_get('https://www.foo.com')
-    self.expect_requests_get('https://baj')
-    self.mox.ReplayAll()
     # good URLs
     for url in ('http://foo.com/bar', 'https://www.foo.com/bar',
                 'http://FoO.cOm/',  # should be normalized to lowercase

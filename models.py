@@ -587,9 +587,17 @@ class Source(with_metaclass(SourceMeta, StringIdModel)):
       if resolved:
         urls.append(resolved)
 
-    urls = util.dedupe_urls(urls)  # normalizes domains to lower case
-    domains = [util.domain_from_link(url) for url in urls]
-    return urls, domains
+    final_urls = []
+    domains = []
+    for url in util.dedupe_urls(urls):  # normalizes domains to lower case
+      # skip links on this source's domain itself. only currently needed for
+      # Mastodon; the other silo domains are in the webmention blacklist.
+      domain = util.domain_from_link(url)
+      if domain != self.GR_CLASS.DOMAIN:
+        final_urls.append(url)
+        domains.append(domain)
+
+    return final_urls, domains
 
   @staticmethod
   def resolve_profile_url(url, resolve=True):
