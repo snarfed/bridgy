@@ -593,7 +593,7 @@ class Source(with_metaclass(SourceMeta, StringIdModel)):
       # skip links on this source's domain itself. only currently needed for
       # Mastodon; the other silo domains are in the webmention blacklist.
       domain = util.domain_from_link(url)
-      if domain != self.GR_CLASS.DOMAIN:
+      if domain != self.gr_source.DOMAIN:
         final_urls.append(url)
         domains.append(domain)
 
