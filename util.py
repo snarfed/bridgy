@@ -525,7 +525,7 @@ class Handler(webutil_handlers.ModernHandler):
       return []
 
     logins = []
-    for val in set(urllib.parse.unquote_plus(logins_str.value).decode('utf-8').split('|')):
+    for val in set(urllib.parse.unquote_plus(logins_str.value).split('|')):
       parts = val.split('?', 1)
       path = parts[0]
       if not path:

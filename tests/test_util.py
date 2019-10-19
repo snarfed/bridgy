@@ -123,6 +123,7 @@ class UtilTest(testutil.ModelsTest):
         ('logins=|', []),
         ('logins=/fake/123', [Login('fake', '', '/fake/123')]),
         ('logins=/fake/123?Name', [Login('fake', 'Name', '/fake/123')]),
+        ('logins=/fake/123?a%E2%98%95b', [Login('fake', 'a☕b', '/fake/123')]),
         ('logins=/fake/123?Name|/blogger/456?Nombre',
          [Login('fake', 'Name', '/fake/123'),
           Login('blogger', 'Nombre', '/blogger/456'),
