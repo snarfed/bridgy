@@ -60,8 +60,13 @@ class MastodonTest(testutil.ModelsTest):
     self.m.domains = ['foo.com', 'bar']
 
     self.expect_requests_get(
-      'https://foo.com' + API_SEARCH, params={'q': 'foo.com OR bar'},
-      response={'statuses': [STATUS]}, headers={'Authorization': 'Bearer towkin'})
+      'https://foo.com' + API_SEARCH, params={
+        'q': 'foo.com OR bar',
+        'resolve': True,
+        'limit': '',
+        'offset': 0},
+      response={'statuses': [STATUS]},
+      headers={'Authorization': 'Bearer towkin'})
     self.mox.ReplayAll()
 
     self.assert_equals([ACTIVITY], self.m.search_for_links())
