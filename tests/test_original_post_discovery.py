@@ -881,6 +881,12 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
 
     self.assert_discover(['https://mention/'])
 
+  def test_not_source_DOMAIN(self):
+    """Links to the source silo's domain should be ignored."""
+    self.source.domain_urls = self.source.domains = []
+    self.activity['object']['content'] = 'x http://fa.ke/post'
+    self.assert_discover([], [])
+
   def test_source_user(self):
     """Only links from the user's own posts should end up in originals."""
     self.activity['object']['content'] = 'x http://author/post y'

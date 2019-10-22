@@ -113,8 +113,8 @@ def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True,
   def resolve(urls):
     resolved = set()
     for url in urls:
-      final, _, send = util.get_webmention_target(url)
-      if send:
+      final, domain, send = util.get_webmention_target(url)
+      if send and domain != source.gr_source.DOMAIN:
         resolved.add(final)
         if include_redirect_sources:
           resolved.add(url)
