@@ -38,7 +38,9 @@ function do_preview(site) {
   var req = new XMLHttpRequest();
   req.onload = function() {
     if (this.status == 200) {
-      document.getElementById('preview').innerHTML = this.responseText;
+      preview = document.getElementById('preview');
+      preview.innerHTML = this.responseText;
+      preview.scrollIntoView({behavior: 'smooth', block: 'nearest'});
       // trigger re-renders of twitter and facebook embeds
       if (typeof(twttr) != 'undefined') {
         twttr.widgets.load();
