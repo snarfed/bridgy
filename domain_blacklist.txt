@@ -14,6 +14,9 @@ app
 # dev
 # we don't support Tor. (yet! :P)
 onion
+# doesn't exist, but we get lots of false positives from Mastodon's link formatting:
+# https://mastodon.social/@janboddez/103011103151906324
+www
 
 # This does its own thing :P
 fed.brid.gy
