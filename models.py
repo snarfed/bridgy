@@ -481,8 +481,8 @@ class Source(with_metaclass(SourceMeta, StringIdModel)):
       else "Refresh in a minute to see what we've found!")
     logging.info('%s %s', blurb, source.bridgy_url(handler))
     # uncomment to send email notification for each new user
-    # if not existing:
-    #   util.email_me(subject=blurb, body=source.bridgy_url(handler))
+    if not existing and cls.SHORT_NAME == 'mastodon':
+      util.email_me(subject=blurb, body=source.bridgy_url(handler))
 
     source.verify()
     if source.verified():
