@@ -90,31 +90,6 @@ class Mastodon(models.Source):
     """
     return json_loads(self.auth_entity.get().user_json).get('locked')
 
-  def get_activities_response(self, **kwargs):
-    """Strip mentions of other Mastodon users since they won't accept webmentions.
-
-    We don't need this for other silos because their domains are all blacklisted.
-    """
-    resp = super(Mastodon, self).get_activities_response(**kwargs)
-
-    instance = self.instance()
-    user_id = self.auth_entity.get().user_id()
-    username = self.username()
-
-    for activity in resp['items']:
-      obj = activity.get('object', {})
-      tags = obj.get('tags', [])
-      obj['tags'] = []
-      for tag in tags:
-        if tag.get('objectType') == 'mention':
-          parsed = util.parse_tag_uri(tag.get('id'))
-          if (not parsed or parsed[0] != instance or
-              parsed[1] not in (user_id, username)):
-            continue  # mention of another user
-        obj['tags'].append(tag)
-
-    return resp
-
   def search_for_links(self):
     """Searches for activities with links to any of this source's web sites.
 

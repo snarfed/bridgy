@@ -5,17 +5,13 @@ from future import standard_library
 standard_library.install_aliases()
 
 import appengine_config
-import copy
-from granary.mastodon import API_ACCOUNT_STATUSES, API_SEARCH
+from granary.mastodon import API_SEARCH
 from granary.tests.test_mastodon import ACTIVITY, STATUS
 from oauth_dropins import mastodon as oauth_mastodon
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
 from . import testutil
 from mastodon import Mastodon
-
-ACTIVITY_NO_MENTIONS = copy.deepcopy(ACTIVITY)
-ACTIVITY_NO_MENTIONS['object']['tags'] = ACTIVITY['object']['tags'][1:]
 
 
 class MastodonTest(testutil.ModelsTest):
@@ -73,32 +69,8 @@ class MastodonTest(testutil.ModelsTest):
       headers={'Authorization': 'Bearer towkin'})
     self.mox.ReplayAll()
 
-    self.assert_equals([ACTIVITY_NO_MENTIONS], self.m.search_for_links())
+    self.assert_equals([ACTIVITY], self.m.search_for_links())
 
   def test_search_links_no_domains(self):
     self.m.domains = []
     self.assert_equals([], self.m.search_for_links())
-
-  def test_get_activities_strips_mentions_except_user(self):
-    status = copy.deepcopy(STATUS)
-
-    # one mention of another user
-    self.assertEqual(1, len(status['mentions']))
-    self.assertNotEqual('123', status['mentions'][0]['id'])
-
-    # add a mention of this user
-    status['mentions'].append({'id': '123'})
-
-    self.expect_requests_get(
-      'https://foo.com' + API_ACCOUNT_STATUSES % '123', params={},
-      response=[status],
-      headers={'Authorization': 'Bearer towkin'})
-    self.mox.ReplayAll()
-
-    # we should only get the mention of this user
-    got = self.m.get_activities()
-    self.assertEqual(1, len(got))
-    mentions = [t for t in got[0]['object']['tags'] if t['objectType'] == 'mention']
-    self.assertEqual(1, len(mentions))
-    self.assertEqual('mention', mentions[0]['objectType'])
-    self.assertEqual('tag:foo.com,2013:123', mentions[0]['id'])
