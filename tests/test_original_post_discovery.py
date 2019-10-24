@@ -26,7 +26,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
   def setUp(self):
     super(OriginalPostDiscoveryTest, self).setUp()
     self.source = self.sources[0]
-    self.source.domain_urls = ['http://author']
+    self.source.domain_urls = ['http://author/']
     self.source.domains = ['author']
     self.source.put()
     self.source.updates = {}
@@ -38,9 +38,9 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
       })
 
   def assert_discover(self, expected_originals, expected_mentions=[],
-                      source=None):
+                      source=None, **kwargs):
     self.assertEquals((set(expected_originals), set(expected_mentions)),
-                      discover(source or self.source, self.activity))
+                      discover(source or self.source, self.activity, **kwargs))
 
   def assert_syndicated_posts(self, *expected):
     self.assertItemsEqual(expected,
@@ -51,7 +51,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     """Test that original post discovery does the reverse lookup to scan
     author's h-feed for rel=syndication links
     """
-    self.expect_requests_get('http://author', """
+    self.expect_requests_get('http://author/', """
     <html class="h-feed">
       <div class="h-entry">
         <a class="u-url" href="http://author/post/permalink"></a>
@@ -78,7 +78,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     the h-feed we skip fetching the permalink.
     """
     # silo domain is fa.ke
-    self.expect_requests_get('http://author', """
+    self.expect_requests_get('http://author/', """
     <html class="h-feed">
       <div class="h-entry">
         <a class="u-url" href="http://author/post/permalink"></a>
@@ -100,8 +100,8 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     else.
     """
     self.expect_requests_head('https://fa.ke/post/url')
-    self.expect_requests_head('http://author')
-    self.expect_requests_get('http://author', """
+    self.expect_requests_head('http://author/')
+    self.expect_requests_get('http://author/', """
     <html class="h-feed">
       <div class="h-entry">
         <a class="u-url" href="http://author/post/will-redirect"></a>
@@ -122,7 +122,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
   def test_nested_hfeed(self):
     """Test that we find an h-feed nested inside an h-card like on
     tantek.com"""
-    self.expect_requests_get('http://author', """
+    self.expect_requests_get('http://author/', """
     <html class="h-card">
       <span class="p-name">Author</span>
       <div class="h-feed">
@@ -156,7 +156,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
       })
 
     # silo domain is fa.ke
-    self.expect_requests_get('http://author', """
+    self.expect_requests_get('http://author/', """
     <html>
       <div class="h-feed">
         <div class="h-entry">
@@ -207,7 +207,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
       </div>
     </html>"""
 
-    self.expect_requests_get('http://author', author_feed)
+    self.expect_requests_get('http://author/', author_feed)
 
     # first post is syndicated
     self.expect_requests_get('http://author/post/permalink1', """
@@ -232,7 +232,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     # the second activity lookup should not make any HTTP requests
 
     # the third activity lookup will fetch the author's h-feed one more time
-    self.expect_requests_get('http://author', author_feed).InAnyOrder()
+    self.expect_requests_get('http://author/', author_feed).InAnyOrder()
 
     self.mox.ReplayAll()
 
@@ -268,7 +268,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.activity['object']['content'] = 'with a link http://author/post/url'
     original = 'http://author/post/url'
 
-    self.expect_requests_get('http://author', """
+    self.expect_requests_get('http://author/', """
     <html class="h-feed">
       <div class="h-entry">
         <a class="u-url" href="%s"></a>
@@ -283,11 +283,25 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.mox.ReplayAll()
     self.assert_discover([original])
 
+  def test_exclude_mentions_except_user(self):
+    """Ignore mentions *except* to the user themselves."""
+    self.activity['object'].update({
+      'content': 'foo http://author/ bar http://other/',
+      'tags': [{
+        'objectType': 'person',
+        'url': 'http://author/',
+      }, {
+        'objectType': 'person',
+        'url': 'http://other/',
+      }],
+    })
+    self.assert_discover(['http://author/'], fetch_hfeed=False)
+
   def test_strip_www_when_comparing_domains(self):
     """We should ignore leading www when comparing syndicated URL domains."""
     self.activity['object']['url'] = 'http://www.fa.ke/post/url'
 
-    self.expect_requests_get('http://author', """
+    self.expect_requests_get('http://author/', """
     <html class="h-feed">
       <div class="h-entry">
         <a class="u-url" href="http://author/post/url"></a>
@@ -303,7 +317,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
 
   def test_ignore_synd_urls_on_other_silos(self):
     """We should ignore syndication URLs on other (silos') domains."""
-    self.expect_requests_get('http://author', """
+    self.expect_requests_get('http://author/', """
     <html class="h-feed">
       <div class="h-entry">
         <a class="u-url" href="http://author/post/url"></a>
@@ -321,7 +335,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     """Check that we follow the rel=feed link when looking for the
     author's full feed URL
     """
-    self.expect_requests_get('http://author', """
+    self.expect_requests_get('http://author/', """
     <html>
       <head>
         <link rel="feed" type="text/html" href="try_this.html">
@@ -343,7 +357,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
   def test_rel_feed_anchor(self):
     """Check that we follow the rel=feed when it's in an <a> tag instead of <link>
     """
-    self.expect_requests_get('http://author', """
+    self.expect_requests_get('http://author/', """
     <html>
       <head>
         <link rel="alternate" type="application/xml" href="not_this.html">
@@ -366,7 +380,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
 
   def test_rel_feed_adds_to_domains(self):
     """rel=feed discovery should update Source.domains."""
-    self.expect_requests_get('http://author', """
+    self.expect_requests_get('http://author/', """
     <html>
       <head>
         <link rel="feed" type="text/html" href="http://other/domain">
@@ -381,7 +395,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
   def test_no_h_entries(self):
     """Make sure nothing bad happens when fetching a feed without h-entries.
     """
-    self.expect_requests_get('http://author', """
+    self.expect_requests_get('http://author/', """
     <html class="h-feed">
     <p>under construction</p>
     </html>""")
@@ -423,9 +437,9 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     gives an unexpected response
     """
     if raise_exception:
-      self.expect_requests_get('http://author').AndRaise(HTTPError())
+      self.expect_requests_get('http://author/').AndRaise(HTTPError())
     else:
-      self.expect_requests_get('http://author', status_code=404)
+      self.expect_requests_get('http://author/', status_code=404)
 
     self.mox.ReplayAll()
     discover(self.source, self.activity)
@@ -499,7 +513,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
   def test_permalink_limit(self):
     self.mox.stubs.Set(original_post_discovery, 'MAX_PERMALINK_FETCHES_BETA', 3)
 
-    self.expect_requests_get('http://author', """
+    self.expect_requests_get('http://author/', """
 <html><body>
 <div class="h-feed first">
   <div class="h-entry"><a class="u-url" href="http://author/a"></a></div>
@@ -530,7 +544,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
   def test_feed_entry_limit(self):
     self.mox.stubs.Set(original_post_discovery, 'MAX_FEED_ENTRIES', 2)
 
-    self.expect_requests_get('http://author', """
+    self.expect_requests_get('http://author/', """
 <html><body>
 <div class="h-feed">
   <div class="h-entry"><a class="u-url" href="http://author/a"></a>
@@ -550,7 +564,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
 
   def test_homepage_too_big(self):
     self.expect_requests_head('https://fa.ke/post/url')
-    self.expect_requests_head('http://author',
+    self.expect_requests_head('http://author/',
       response_headers={'Content-Length': str(util.MAX_HTTP_RESPONSE_SIZE + 1)})
     # no GET for /author since it's too big
     self.mox.ReplayAll()
@@ -558,9 +572,9 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
 
   def test_feed_too_big(self):
     self.expect_requests_head('https://fa.ke/post/url')
-    self.expect_requests_head('http://author')
+    self.expect_requests_head('http://author/')
     self.expect_requests_get(
-      'http://author',
+      'http://author/',
       '<html><head><link rel="feed" type="text/html" href="/feed"></head></html>')
     self.expect_requests_head('http://author/feed', response_headers={
       'Content-Type': 'text/html',
@@ -573,8 +587,8 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
   def test_syndication_url_head_error(self):
     """We should ignore syndication URLs that 4xx or 5xx."""
     self.expect_requests_head('https://fa.ke/post/url')
-    self.expect_requests_head('http://author')
-    self.expect_requests_get('http://author', """
+    self.expect_requests_head('http://author/')
+    self.expect_requests_get('http://author/', """
     <html class="h-feed">
       <div class="h-entry">
         <a class="u-url" href="http://author/post"></a>
@@ -593,7 +607,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
   def test_rel_feed_link_error(self):
     """Author page has an h-feed link that raises an exception. We should
     recover and use the main page's h-entries as a fallback."""
-    self.expect_requests_get('http://author', """
+    self.expect_requests_get('http://author/', """
     <html>
       <head>
         <link rel="feed" type="text/html" href="try_this.html">
@@ -622,7 +636,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     """Make sure something reasonable happens when we're unable to fetch
     the permalink of an entry linked in the h-feed
     """
-    self.expect_requests_get('http://author', """
+    self.expect_requests_get('http://author/', """
     <html class="h-feed">
       <article class="h-entry">
         <a class="u-url" href="nonexistent.html"></a>
@@ -667,8 +681,8 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     """Confirm that we don't fetch non-HTML rel=feeds.
     """
     self.expect_requests_head(self.activity['object']['url'])
-    self.expect_requests_head('http://author')
-    self.expect_requests_get('http://author', """
+    self.expect_requests_head('http://author/')
+    self.expect_requests_get('http://author/', """
     <html>
       <head>
         <link rel="feed" href="/updates.atom">
@@ -684,7 +698,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
   def test_feed_head_request_failed(self):
     """Confirm that we fetch permalinks even if HEAD fails.
     """
-    self.expect_requests_get('http://author', """
+    self.expect_requests_get('http://author/', """
     <html>
       <head>
         <link rel="feed" href="/updates">
@@ -701,7 +715,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.expect_requests_head(self.activity['object']['url'])
 
     # and for the author url
-    self.expect_requests_head('http://author')
+    self.expect_requests_head('http://author/')
 
     # try and fail to get the feed
     self.expect_requests_head('http://author/updates', status_code=400)
@@ -718,7 +732,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     """Confirm that we look for an h-feed with type=text/html even when
     the type is not given in <link>, and keep looking until we find one.
     """
-    self.expect_requests_get('http://author', """
+    self.expect_requests_get('http://author/', """
     <html>
       <head>
         <link rel="feed" href="/updates.atom">
@@ -731,7 +745,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.expect_requests_head(self.activity['object']['url'])
 
     # and for the author url
-    self.expect_requests_head('http://author')
+    self.expect_requests_head('http://author/')
 
     # try to get the atom feed first
     self.expect_requests_head('http://author/updates.atom',
@@ -771,7 +785,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     """Make sure that we follow all rel=feed links, e.g. if notes and
     articles are in separate feeds."""
 
-    self.expect_requests_get('http://author', """
+    self.expect_requests_get('http://author/', """
     <html>
       <head>
         <link rel="feed" href="/articles" type="text/html">
@@ -821,7 +835,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     """
     # head request to follow redirects on the post url
     self.expect_requests_head(self.activity['object']['url'])
-    self.expect_requests_head('http://author', response_headers={
+    self.expect_requests_head('http://author/', response_headers={
       'content-type': 'application/xml',
     })
 
@@ -835,8 +849,8 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     """
     # head request to follow redirects on the post url
     self.expect_requests_head(self.activity['object']['url'])
-    self.expect_requests_head('http://author')
-    self.expect_requests_get('http://author', """
+    self.expect_requests_head('http://author/')
+    self.expect_requests_get('http://author/', """
     <html>
       <body>
         <div class="h-entry">
@@ -866,7 +880,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
 
   def test_source_domains(self):
     """Only links to the user's own domains should end up in originals."""
-    self.expect_requests_get('http://author', '')
+    self.expect_requests_get('http://author/', '')
     self.mox.ReplayAll()
 
     self.activity['object']['content'] = 'x http://author/post y https://mention z'
@@ -890,7 +904,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
   def test_source_user(self):
     """Only links from the user's own posts should end up in originals."""
     self.activity['object']['content'] = 'x http://author/post y'
-    self.expect_requests_get('http://author', '')
+    self.expect_requests_get('http://author/', '')
     self.mox.ReplayAll()
 
     user_id = self.source.user_tag_id()
@@ -922,7 +936,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
       'url': 'https://fa.ke/post/quoted',
     }]
 
-    self.expect_requests_get('http://author', '')
+    self.expect_requests_get('http://author/', '')
     self.mox.ReplayAll()
 
     self.assert_discover([], ['http://author/permalink'])
@@ -948,7 +962,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
                    original='http://author/permalink3',
                    syndication=None).put()
 
-    self.expect_requests_get('http://author', """
+    self.expect_requests_get('http://author/', """
       <html class="h-feed">
         <a class="h-entry" href="/permalink1"></a>
         <a class="h-entry" href="/permalink2"></a>
@@ -1005,10 +1019,10 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     </html>"""
 
     # original
-    self.expect_requests_get('http://author', author_feed)
+    self.expect_requests_get('http://author/', author_feed)
     self.expect_requests_get('http://author/post/permalink', author_entry)
     # refetch
-    self.expect_requests_get('http://author', author_feed)
+    self.expect_requests_get('http://author/', author_feed)
     self.expect_requests_get('http://author/post/permalink', author_entry)
     self.mox.ReplayAll()
 
@@ -1042,15 +1056,15 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     </html>"""
 
     # first attempt, no syndication url yet
-    self.expect_requests_get('http://author', hfeed)
+    self.expect_requests_get('http://author/', hfeed)
     self.expect_requests_get('http://author/permalink', unsyndicated)
 
     # refetch, still no syndication url
-    self.expect_requests_get('http://author', hfeed)
+    self.expect_requests_get('http://author/', hfeed)
     self.expect_requests_get('http://author/permalink', unsyndicated)
 
     # second refetch, has a syndication url this time
-    self.expect_requests_get('http://author', hfeed)
+    self.expect_requests_get('http://author/', hfeed)
     self.expect_requests_get('http://author/permalink', syndicated)
 
     self.mox.ReplayAll()
@@ -1085,12 +1099,12 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
        </html>""" % (i + 1)) for i in range(2)
     ]
 
-    self.expect_requests_get('http://author', hfeed)
+    self.expect_requests_get('http://author/', hfeed)
     for permalink, content in hentries:
       self.expect_requests_get(permalink, content)
 
     # refetch
-    self.expect_requests_get('http://author', hfeed)
+    self.expect_requests_get('http://author/', hfeed)
     for permalink, content in hentries:
       self.expect_requests_get(permalink, content)
 
@@ -1124,11 +1138,11 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     <a class="u-syndication" href="https://fa.ke/post/url5"></a>
     </html>"""
 
-    self.expect_requests_get('http://author', hfeed)
+    self.expect_requests_get('http://author/', hfeed)
     self.expect_requests_get('http://author/permalink', hentry)
 
     # refetch
-    self.expect_requests_get('http://author', hfeed)
+    self.expect_requests_get('http://author/', hfeed)
     # refetch grabs posts that it's seen before in case there have been updates
     self.expect_requests_get('http://author/permalink', hentry)
 
@@ -1152,7 +1166,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     })
 
     # first attempt, no stub yet
-    self.expect_requests_get('http://author', """
+    self.expect_requests_get('http://author/', """
     <html class="h-feed">
     <a class="h-entry" href="/2014/08/09"></a>
     </html>""")
@@ -1163,7 +1177,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     </html>""")
 
     # refetch, permalink has a stub now
-    self.expect_requests_get('http://author', """
+    self.expect_requests_get('http://author/', """
     <html class="h-feed">
     <a class="h-entry" href="/2014/08/09/this-is-a-stub"></a>
     </html>""")
@@ -1175,7 +1189,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     </html>""")
 
     # refetch again
-    self.expect_requests_get('http://author', """
+    self.expect_requests_get('http://author/', """
     <html class="h-feed">
     <a class="h-entry" href="/2014/08/09/this-is-a-stub"></a>
     </html>""")
@@ -1210,7 +1224,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     SyndicatedPost(parent=self.source.key,
                    original='http://author/permalink',
                    syndication='https://fa.ke/post/url').put()
-    self.expect_requests_get('http://author', """
+    self.expect_requests_get('http://author/', """
     <html class="h-feed">
       <div class="h-entry">
         <a class="u-url" href="/permalink"></a>
@@ -1233,7 +1247,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     SyndicatedPost(parent=self.source.key,
                    original='http://author/permalink',
                    syndication='https://fa.ke/post/url').put()
-    self.expect_requests_get('http://author', """
+    self.expect_requests_get('http://author/', """
     <html class="h-feed">
       <div class="h-entry">
         <a class="u-url" href="/permalink"></a>
@@ -1254,7 +1268,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
                            original='http://author/permalink',
                            syndication=None)
     blank.put()
-    self.expect_requests_get('http://author', """
+    self.expect_requests_get('http://author/', """
     <html class="h-feed">
       <div class="h-entry">
         <a class="u-url" href="/permalink"></a>
@@ -1275,7 +1289,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
                           original='http://author/permalink',
                           syndication='https://fa.ke/post/url')
     synd.put()
-    self.expect_requests_get('http://author', """
+    self.expect_requests_get('http://author/', """
     <html class="h-feed">
       <div class="h-entry">
         <a class="u-url" href="/permalink"></a>
@@ -1291,7 +1305,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.source.last_feed_syndication_url = datetime.datetime(1970, 1, 1)
     self.source.put()
 
-    self.expect_requests_get('http://author', """
+    self.expect_requests_get('http://author/', """
     <html class="h-feed">
       <div class="h-entry">
         <a class="u-url" href="/permalink"></a>
@@ -1306,8 +1320,8 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
   def test_refetch_dont_follow_other_silo_syndication(self):
     """We should only resolve redirects if the initial domain is our silo."""
     self.unstub_requests_head()
-    self.expect_requests_head('http://author')
-    self.expect_requests_get('http://author', """
+    self.expect_requests_head('http://author/')
+    self.expect_requests_get('http://author/', """
     <html class="h-feed">
       <div class="h-entry">
         <a class="u-url" href="/permalink"></a>
@@ -1327,8 +1341,8 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
 
   def test_refetch_syndication_url_head_error(self):
     """We should ignore syndication URLs that 4xx or 5xx."""
-    self.expect_requests_head('http://author')
-    self.expect_requests_get('http://author', """
+    self.expect_requests_head('http://author/')
+    self.expect_requests_get('http://author/', """
     <html class="h-feed">
       <div class="h-entry">
         <a class="u-url" href="http://author/post"></a>
@@ -1346,7 +1360,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
 
   def test_refetch_synd_url_on_other_silo(self):
     """We should ignore syndication URLs on other (silos') domains."""
-    self.expect_requests_get('http://author', """
+    self.expect_requests_get('http://author/', """
     <html class="h-feed">
       <div class="h-entry">
         <a class="u-url" href="http://author/post/url"></a>
@@ -1371,7 +1385,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     })
 
     # malformed u-url, should skip it without an unhashable dict error
-    self.expect_requests_get('http://author', """
+    self.expect_requests_get('http://author/', """
 <html class="h-feed">
   <div class="h-entry">
     <a class="u-url h-cite" href="/permalink">this is a strange permalink</a>
@@ -1386,7 +1400,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     checking that we visit h-entries that are only the front page or
     only the rel-feed page.
     """
-    self.expect_requests_get('http://author', """
+    self.expect_requests_get('http://author/', """
     <link rel="feed" href="/feed">
     <html class="h-feed">
       <div class="h-entry">
@@ -1442,13 +1456,13 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     auth_entity.put()
 
     fb = FacebookPage.new(self.handler, auth_entity=auth_entity,
-                          domain_urls=['http://author'], **source_params)
+                          domain_urls=['http://author/'], **source_params)
     fb.put()
     fb.updates = {}
     # facebook activity comes to us with the numeric id
     self.activity['object']['url'] = 'http://facebook.com/212038/posts/314159'
 
-    self.expect_requests_get('http://author', """
+    self.expect_requests_get('http://author/', """
     <html class="h-feed">
       <div class="h-entry">
         <a class="u-url" href="http://author/post/permalink"></a>
@@ -1478,7 +1492,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     del self.activity['object']['url']
     self.activity['url'] = 'http://www.fa.ke/post/url'
 
-    self.expect_requests_get('http://author', """
+    self.expect_requests_get('http://author/', """
     <html class="h-feed">
       <div class="h-entry">
         <a class="u-url" href="http://author/post/url"></a>
@@ -1492,7 +1506,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
   def test_skip_non_string_u_urls(self):
     """Make sure that we do not abort due to u-urls that contain objects
     """
-    self.expect_requests_get('http://author', """
+    self.expect_requests_get('http://author/', """
     <link rel="feed" href="/feed">
     <html class="h-feed">
       <div class="h-entry">

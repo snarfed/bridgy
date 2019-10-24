@@ -88,7 +88,18 @@ def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True,
     include_redirect_sources=include_redirect_sources,
     headers=util.request_headers(source=source))
 
+  # only include mentions of the author themselves.
+  # (mostly just for Mastodon; other silos' domains are all in the blacklist, so
+  # their mention URLs get dropped later anyway.)
+  # (these are originally added in Source._inject_user_urls() and in poll step 2.)
   obj = activity.get('object', {})
+  other_user_mentions = set(
+    t.get('url') for t in obj.get('tags', [])
+    if t.get('objectType') == 'person' and t.get('url') not in source.domain_urls)
+  originals -= other_user_mentions
+  mentions -= other_user_mentions
+
+  # original posts are only from the author themselves
   author_id = obj.get('author', {}).get('id') or activity.get('author', {}).get('id')
   if author_id and author_id != source.user_tag_id():
     logging.info(
