@@ -98,8 +98,7 @@ class MastodonTest(testutil.ModelsTest):
     # we should only get the mention of this user
     got = self.m.get_activities()
     self.assertEqual(1, len(got))
-    tags = got[0]['object']['tags']
-    self.assertEqual(2, len(tags))
-    self.assertEqual('mention', tags[0]['objectType'])
-    self.assertEqual('tag:foo.com,2013:123', tags[0]['id'])
-    self.assertNotEqual('mention', tags[1]['objectType'])
+    mentions = [t for t in got[0]['object']['tags'] if t['objectType'] == 'mention']
+    self.assertEqual(1, len(mentions))
+    self.assertEqual('mention', mentions[0]['objectType'])
+    self.assertEqual('tag:foo.com,2013:123', mentions[0]['id'])
