@@ -21,6 +21,7 @@ from oauth_dropins import (
   flickr as oauth_flickr,
   github as oauth_github,
   indieauth,
+  instagram as oauth_instagram,
   medium as oauth_medium,
   mastodon as oauth_mastodon,
   tumblr as oauth_tumblr,
@@ -133,8 +134,9 @@ class FrontPageHandler(CachedPageHandler):
       for property in ('sent', 'unsent', 'error', 'failed', 'skipped')}
 
     vars = super(FrontPageHandler, self).template_vars()
+    vars['sources'] = models.sources
 
-    # add comma separator between thousands
+    # stats; add comma separator between thousands
     vars.update({k: '{:,}'.format(v) for k, v in {
       'users': num_users,
       'responses': kind_count('Response'),
@@ -224,11 +226,12 @@ class UserHandler(DashboardHandler):
   def template_vars(self):
     vars = super(UserHandler, self).template_vars()
     vars.update({
-        'source': self.source,
-        'EPOCH': util.EPOCH,
-        'REFETCH_HFEED_TRIGGER': models.REFETCH_HFEED_TRIGGER,
-        'RECENT_PRIVATE_POSTS_THRESHOLD': RECENT_PRIVATE_POSTS_THRESHOLD,
-        })
+      'source': self.source,
+      'sources': models.sources,
+      'EPOCH': util.EPOCH,
+      'REFETCH_HFEED_TRIGGER': models.REFETCH_HFEED_TRIGGER,
+      'RECENT_PRIVATE_POSTS_THRESHOLD': RECENT_PRIVATE_POSTS_THRESHOLD,
+    })
     if not self.source:
       return vars
 
@@ -238,9 +241,6 @@ class UserHandler(DashboardHandler):
         auth.key.id() if isinstance(auth, indieauth.IndieAuth)
         else self.source.domain_urls[0] if self.source.domain_urls
         else None)
-
-    kind = self.source.key.kind()
-    vars['publish_signup_ok'] = kind not in ('Instagram', 'GooglePlus')
 
     # Blog webmention promos
     if 'webmention' not in self.source.features:
@@ -439,23 +439,9 @@ class AboutHandler(DashboardHandler):
 
 
 class DeleteStartHandler(util.Handler):
-  OAUTH_MODULES = {
-    'Blogger': oauth_blogger_v2,
-    'FacebookPage': oauth_facebook,
-    'Flickr': oauth_flickr,
-    'GitHub': oauth_github,
-    'Instagram': indieauth,
-    # use our StartHandler subclass since it has config constants
-    'Mastodon': mastodon,
-    'Medium': oauth_medium,
-    'Tumblr': oauth_tumblr,
-    'Twitter': oauth_twitter,
-    'WordPress': oauth_wordpress_rest,
-    }
-
   def post(self):
     source = self.load_source(param='key')
-    module = self.OAUTH_MODULES[source.key.kind()]
+    kind = source.key.kind()
     feature = util.get_required_param(self, 'feature')
     state = util.encode_oauth_state({
       'operation': 'delete',
@@ -465,17 +451,19 @@ class DeleteStartHandler(util.Handler):
     })
 
     # Blogger don't support redirect_url() yet
-    if module is oauth_blogger_v2:
+    if kind == 'Blogger':
       return self.redirect('/blogger/delete/start?state=%s' % state)
 
-    path = ('/instagram/callback' if module is indieauth
-            else '/wordpress/add' if module is oauth_wordpress_rest
+    path = ('/instagram/callback' if kind == 'Instagram'
+            else '/wordpress/add' if kind == 'WordPress'
             else '/%s/delete/finish' % source.SHORT_NAME)
     kwargs = {}
-    if module is oauth_twitter:
+    if kind == 'Twitter':
       kwargs['access_type'] = 'read' if feature == 'listen' else 'write'
 
-    handler = module.StartHandler.to(path, **kwargs)(self.request, self.response)
+    start_handler = (indieauth.StartHandler if kind == 'Instagram'
+                     else source.OAUTH_START_HANDLER)
+    handler = start_handler.to(path, **kwargs)(self.request, self.response)
     try:
       self.redirect(handler.redirect_url(state=state))
     except Exception as e:

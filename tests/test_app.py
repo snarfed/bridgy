@@ -27,11 +27,6 @@ from .testutil import FakeBlogSource
 import twitter
 
 
-# this class stands in for a oauth_dropins module
-class FakeOAuthHandlerModule(object):
-  StartHandler = testutil.OAuthStartHandler
-
-
 class AppTest(testutil.ModelsTest):
 
   def setUp(self):
@@ -155,8 +150,6 @@ class AppTest(testutil.ModelsTest):
         self.assertEquals(400, resp.status_int)
 
   def test_delete_source_callback(self):
-    app.DeleteStartHandler.OAUTH_MODULES['FakeSource'] = FakeOAuthHandlerModule
-
     auth_entity_key = self.sources[0].auth_entity.urlsafe()
     key = self.sources[0].key.urlsafe()
 
@@ -199,8 +192,6 @@ class AppTest(testutil.ModelsTest):
       ]), resp.headers['Location'])
 
   def test_delete_source_declined(self):
-    app.DeleteStartHandler.OAUTH_MODULES['FakeSource'] = FakeOAuthHandlerModule
-
     key = self.sources[0].key.urlsafe()
     resp = app.application.get_response(
       '/delete/start', method='POST', body=native_str(urllib.parse.urlencode({
@@ -237,9 +228,8 @@ class AppTest(testutil.ModelsTest):
       ]), resp.headers['Location'])
 
   def test_delete_start_redirect_url_error(self):
-    app.DeleteStartHandler.OAUTH_MODULES['FakeSource'] = FakeOAuthHandlerModule
-    self.mox.StubOutWithMock(FakeOAuthHandlerModule.StartHandler, 'redirect_url')
-    FakeOAuthHandlerModule.StartHandler.redirect_url(state=mox.IgnoreArg()
+    self.mox.StubOutWithMock(testutil.OAuthStartHandler, 'redirect_url')
+    testutil.OAuthStartHandler.redirect_url(state=mox.IgnoreArg()
       ).AndRaise(tweepy.TweepError('Connection closed unexpectedly...'))
     self.mox.ReplayAll()
 

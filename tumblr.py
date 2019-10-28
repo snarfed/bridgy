@@ -69,6 +69,7 @@ class Tumblr(models.Source):
   The key name is the blog domain.
   """
   GR_CLASS = collections.namedtuple('FakeGrClass', ('NAME',))(NAME='Tumblr')
+  OAUTH_START_HANDLER = oauth_tumblr.StartHandler
   SHORT_NAME = 'tumblr'
 
   disqus_shortname = ndb.StringProperty()

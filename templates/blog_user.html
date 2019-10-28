@@ -22,9 +22,8 @@
 {% if source.has_bridgy_webmention_endpoint() %}
 <p class="big">You're all set! Check out your recent
 <a href="#blogposts">blog posts</a> and <a href="#webmentions">webmentions</a>.
-  <!-- This currently 500s :/ -->
-  <!-- <a href="http://indiewebify.me/send-webmentions/?url={{ source.domain_url }}"> -->
-  <!--   Try a webmention!</a> -->
+<a href="http://indiewebify.me/send-webmentions/?url={{ source.domain_urls[0] }}">
+ Try a webmention!</a>
 </p>
 {% else %}
 <p class="warning">Warning: your blog's current
@@ -52,8 +51,7 @@ If you want Bridgy to handle your blog's webmentions, change it to
 {% else %}
 <div class="row big">
 Click to re-enable:
-{% block blog_signup %}
-{% endblock %}
+{{ source.button_html('webmention')|safe }}
 </div>
 {% endif %}
 

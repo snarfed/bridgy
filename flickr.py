@@ -23,11 +23,11 @@ class Flickr(models.Source):
   # Fetching comments and likes is extremely request-intensive, so let's dial
   # back the frequency for now.
   FAST_POLL = datetime.timedelta(minutes=60)
-
   GR_CLASS = gr_flickr.Flickr
+  OAUTH_START_HANDLER = oauth_flickr.StartHandler
   SHORT_NAME = 'flickr'
   TRANSIENT_ERROR_HTTP_CODES = ('400',)
-
+  CAN_PUBLISH = True
   URL_CANONICALIZER = util.UrlCanonicalizer(
     domain=GR_CLASS.DOMAIN,
     approve=r'https://www\.flickr\.com/(photos|people)/[^/?]+/([^/?]+/)?$',

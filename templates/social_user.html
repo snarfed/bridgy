@@ -3,22 +3,6 @@
 {% block ui %}
 
 <!-- Promos to get fully up and running -->
-
-{% if source.SHORT_NAME == 'facebook' %}
-<div class="row promo error">
-<p><b><a href="/about#rip-facebook">Facebook is no longer supported.</a>
-So long, and thanks for all the fish!</b></p>
-</div>
-{% endif %}
-
-{% if source.SHORT_NAME == 'googleplus' %}
-<div class="row promo error">
-<p><b><a href="/about#rip-google+">Google+ won't exist for much longer.</a>
-So long, and thanks for all the fish!</b></p>
-</div>
-{% endif %}
-
-
 {% if "listen" in source.features %}
 {% if source.is_private() %}
 <div class="row promo warning">
@@ -42,6 +26,7 @@ So long, and thanks for all the fish!</b></p>
 <p id="edit-profile">First things first: what's your web site?
 {% block edit_profile %}
 {% endblock %}
+{{ source.button_html('listen', source=source)|safe }}
 </p>
 </div>
 
@@ -54,23 +39,15 @@ You
 
 {% if blogger_promo or tumblr_promo or wordpress_promo %}
 Click here to add it:
-{% if blogger_promo %}
-{% include "blogger_signup.html" %}
-{% endif %}
-{% if tumblr_promo %}
-{% include "tumblr_signup.html" %}
-{% endif %}
-{% if wordpress_promo %}
-{% include "wordpress_signup.html" %}
-{% endif %}
-
+{% if blogger_promo %}{{ sources['blogger'].button_html('webmention')|safe }}{% endif %}
+{% if tumblr_promo %}{{ sources['tumblr'].button_html('webmention')|safe }}{% endif %}
+{% if wordpress_promo %}{{ sources['wordpress'].button_html('webmention')|safe }}{% endif %}
 {% else %}
 <a href="http://indiewebcamp.com/webmention#Publishing_Software">Here are some
 resources.</a> If you're on
 WordPress, <a href="http://wordpress.org/plugins/indieweb/">try the IndieWeb
 bundle plugin</a>. If you're on Blogger, Tumblr, or
 WordPress.com, <a href="/">sign up here!</a>
-
 {% endif %}
 {% endif %}
 </div>
@@ -79,9 +56,8 @@ WordPress.com, <a href="/">sign up here!</a>
 
 <div class="row">
 
-{% if source.SHORT_NAME not in ('facebook', 'googleplus') %}
 <!-- Listen UI -->
-<div id="listen-ui" class="{% if publish_signup_ok %}col-sm-6{% endif %}">
+<div id="listen-ui" class="{% if source.CAN_PUBLISH %}col-sm-6{% endif %}">
 
 {% if "listen" in source.features and source.status != "disabled" %}
 <data class="p-bridgy-listen-status" value="enabled">
@@ -200,8 +176,7 @@ WordPress.com, <a href="/">sign up here!</a>
 {% if source.SHORT_NAME != 'facebook-email' %}
   Click to enable <a href="/about#listen">listening</a>:
 {% endif %}
-{% block listen_signup %}
-{% endblock %}
+{{ source.button_html('listen', source=source)|safe }}
 </data>
 {% endif %}
 
@@ -264,23 +239,23 @@ WordPress.com, <a href="/">sign up here!</a>
 
 <!-- Publish signup buttons -->
 {% else %}
+{% if source.CAN_PUBLISH %}
 <data class="p-bridgy-publish-status" value="disabled">
-{% block publish_signup %}
-{% endblock %}
+<span class="big">Click to enable <a href="/about#publish">publishing</a>:</span>
+{{ source.button_html('publish', source=source)|safe }}
 </data>
+{% endif %}
 {% endif %}
 
 </div>
 
 </div>
-{% endif %} {# end Facebook/Google+ hiding UI blocks #}
 
 
 <!-- Publish preview UI -->
 <br />
 <div id="preview" class="row"></div>
 {% endblock %}
-
 
 {% block recent %}
 <!-- Responses -->

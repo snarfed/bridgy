@@ -206,8 +206,7 @@ class InstagramTest(testutil.ModelsTest):
     self.mox.ReplayAll()
     resp = self.callback()
     self.assertEquals('http://localhost/instagram/snarfed', resp.headers['Location'])
-    self.assertEquals(['instagram.com', 'snarfed.org', 'a', 'b'],
-                      self.inst.key.get().domains)
+    self.assertEquals(['snarfed.org', 'a', 'b'], self.inst.key.get().domains)
 
   def test_signup_state_0(self):
     """https://console.cloud.google.com/errors/5078670695812426116"""

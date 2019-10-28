@@ -147,10 +147,10 @@ You'll eventually want to send them to @snarfed and @kylewm too, but no hurry.
     [`handlers.py`](https://github.com/snarfed/bridgy/blob/master/handlers.py)
     (just import the module).
     1. Add a 48x48 PNG icon to [`static/`](https://github.com/snarfed/bridgy/tree/master/static).
-    1. Add new `SILO_signup.html` and `SILO_user.html` files in
+    1. Add a new `SILO_user.html` file in
     [`templates/`](https://github.com/snarfed/bridgy/tree/master/templates)
     and add the silo to
-    [`listen_signup.html`](https://github.com/snarfed/bridgy/blob/master/templates/listen_signup.html).
+    [`index.html`](https://github.com/snarfed/bridgy/blob/master/templates/index.html).
     Follow the existing examples.
     1. Add the silo to
     [`about.html`](https://github.com/snarfed/bridgy/blob/master/templates/about.html) and this README.

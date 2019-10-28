@@ -8,9 +8,25 @@
 
 <!-- Signup buttons -->
 <div id="signups">
-{% include "listen_signup.html" %}
+<div id="listen-signups" class="row">
+<p class="big">Connect your accounts:</p>
+{{ sources['twitter'].button_html('listen')|safe }}
+{{ sources['instagram'].button_html('listen')|safe }}
+{{ sources['flickr'].button_html('listen')|safe }}
+{{ sources['github'].button_html('listen')|safe }}
+{{ sources['mastodon'].button_html('listen')|safe }}
+</div>
+
 <hr />
-{% include "webmention_signup.html" %}
+
+<div id="webmention-signups" class="row">
+<p class="big">Using one of these? Click to <a href="/about#blogs">add webmentions</a>:</p>
+{{ sources['tumblr'].button_html('webmention')|safe }}
+{{ sources['wordpress'].button_html('webmention')|safe }}
+{{ sources['blogger'].button_html('webmention')|safe }}
+{{ sources['medium'].button_html('webmention')|safe }}
+</div>
+
 <hr />
 </div>
 

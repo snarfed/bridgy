@@ -42,6 +42,7 @@ class GitHub(Source):
   The key name is the GitHub username.
   """
   GR_CLASS = gr_github.GitHub
+  OAUTH_START_HANDLER = oauth_github.StartHandler
   SHORT_NAME = 'github'
   TYPE_LABELS = {
     'post': 'issue',
@@ -49,7 +50,7 @@ class GitHub(Source):
   }
   BACKFEED_REQUIRES_SYNDICATION_LINK = True
   DISABLE_HTTP_CODES = Source.DISABLE_HTTP_CODES + ('403',)
-
+  CAN_PUBLISH = True
   # WARNING: see docstring
   URL_CANONICALIZER = util.UrlCanonicalizer(
     domain=GR_CLASS.DOMAIN,

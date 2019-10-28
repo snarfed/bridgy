@@ -46,14 +46,14 @@ class Instagram(Source):
   insensitive), numbers, periods, and underscores:
   https://stackoverflow.com/questions/15470180
   """
-
   GR_CLASS = gr_instagram.Instagram
+  OAUTH_START_HANDLER = oauth_instagram.StartHandler
   SHORT_NAME = 'instagram'
   FAST_POLL = datetime.timedelta(minutes=120)
   RATE_LIMITED_POLL = Source.SLOW_POLL
   RATE_LIMIT_HTTP_CODES = ('401', '429', '503')
   DISABLE_HTTP_CODES = ()
-
+  CAN_PUBLISH = False
   URL_CANONICALIZER = util.UrlCanonicalizer(
     domain=GR_CLASS.DOMAIN,
     subdomain='www',
@@ -78,14 +78,11 @@ class Instagram(Source):
     username = actor['username']
     if not kwargs.get('features'):
       kwargs['features'] = ['listen']
-    urls = microformats2.object_urls(actor)
     return Instagram(id=username,
                      auth_entity=auth_entity.key,
                      name=actor.get('displayName'),
                      picture=actor.get('image', {}).get('url'),
                      url=gr_instagram.Instagram.user_url(username),
-                     domain_urls=urls,
-                     domains=[util.domain_from_link(url) for url in urls],
                      **kwargs)
 
   def silo_url(self):
@@ -101,6 +98,10 @@ class Instagram(Source):
   def label_name(self):
     """Returns the username."""
     return self.key.id()
+
+  @classmethod
+  def button_html(cls, feature, **kwargs):
+    return super(cls, cls).button_html(feature, form_method='get', **kwargs)
 
   def get_activities_response(self, *args, **kwargs):
     """Set user_id because scraping requires it."""

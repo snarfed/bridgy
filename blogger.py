@@ -56,6 +56,7 @@ class Blogger(models.Source):
   The key name is the blog id.
   """
   GR_CLASS = collections.namedtuple('FakeGrClass', ('NAME',))(NAME='Blogger')
+  OAUTH_START_HANDLER = oauth_blogger.StartHandler
   SHORT_NAME = 'blogger'
   PATH_BLACKLIST = (re.compile('^/search/.*'),)
 

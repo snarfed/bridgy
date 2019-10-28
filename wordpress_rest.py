@@ -51,6 +51,7 @@ class WordPress(models.Source):
   The key name is the blog hostname.
   """
   GR_CLASS = collections.namedtuple('FakeGrClass', ('NAME',))(NAME='WordPress.com')
+  OAUTH_START_HANDLER = oauth_wordpress.StartHandler
   SHORT_NAME = 'wordpress'
 
   site_info = ndb.JsonProperty(compressed=True)  # from /sites/$site API call

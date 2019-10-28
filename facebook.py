@@ -85,8 +85,8 @@ class FacebookPage(models.Source):
 
   The key name is the Facebook id.
   """
-
   GR_CLASS = gr_facebook.Facebook
+  OAUTH_START_HANDLER = oauth_facebook.StartHandler
   SHORT_NAME = 'facebook'
 
   URL_CANONICALIZER = util.UrlCanonicalizer(

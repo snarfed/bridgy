@@ -34,6 +34,7 @@ class Medium(models.Source):
   The key name is the username (with @ prefix) or publication name.
   """
   GR_CLASS = collections.namedtuple('FakeGrClass', ('NAME',))(NAME='Medium')
+  OAUTH_START_HANDLER = oauth_medium.StartHandler
   SHORT_NAME = 'medium'
 
 

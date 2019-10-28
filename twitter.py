@@ -34,8 +34,8 @@ class Twitter(models.Source):
 
   The key name is the username.
   """
-
   GR_CLASS = gr_twitter.Twitter
+  OAUTH_START_HANDLER = oauth_twitter.StartHandler
   SHORT_NAME = 'twitter'
   TYPE_LABELS = {
     'post': 'tweet',
@@ -44,7 +44,7 @@ class Twitter(models.Source):
     'like': 'favorite',
   }
   TRANSIENT_ERROR_HTTP_CODES = ('404',)
-
+  CAN_PUBLISH = True
   URL_CANONICALIZER = gr_twitter.Twitter.URL_CANONICALIZER
   URL_CANONICALIZER.headers = util.REQUEST_HEADERS
 

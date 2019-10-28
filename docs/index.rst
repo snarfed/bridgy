@@ -177,10 +177,10 @@ it. It looks like a lot, but it’s not that bad, honest.
       (just import the module).
    3. Add a 48x48 PNG icon to
       `static/ <https://github.com/snarfed/bridgy/tree/master/static>`__.
-   4. Add new ``SILO_signup.html`` and ``SILO_user.html`` files in
+   4. Add a new ``SILO_user.html`` file in
       `templates/ <https://github.com/snarfed/bridgy/tree/master/templates>`__
       and add the silo to
-      `listen_signup.html <https://github.com/snarfed/bridgy/blob/master/templates/listen_signup.html>`__.
+      `index.html <https://github.com/snarfed/bridgy/blob/master/templates/index.html>`__.
       Follow the existing examples.
    5. Add the silo to
       `about.html <https://github.com/snarfed/bridgy/blob/master/templates/about.html>`__

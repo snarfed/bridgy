@@ -86,7 +86,10 @@ class Source(with_metaclass(SourceMeta, StringIdModel)):
   SHORT_NAME = None
   # the corresponding granary class
   GR_CLASS = None
-
+  # oauth-dropins StartHandler class
+  OAUTH_START_HANDLER = None
+  # whether Bridgy supports publish for this silo
+  CAN_PUBLISH = None
   # how often to poll for responses
   FAST_POLL = datetime.timedelta(minutes=30)
   # how often to poll sources that have never sent a webmention
@@ -437,6 +440,30 @@ class Source(with_metaclass(SourceMeta, StringIdModel)):
     raise NotImplementedError()
 
   @classmethod
+  def button_html(cls, feature, **kwargs):
+    """Returns an HTML string with a login form and button for this site.
+
+    Mostly just passes through to
+    :meth:`oauth_dropins.handlers.StartHandler.button_html`.
+
+    Returns: string, HTML
+    """
+    assert feature in cls.FEATURES
+    form_extra = (kwargs.pop('form_extra', '') +
+                  '<input name="feature" type="hidden" value="%s" />' % feature)
+
+    source = kwargs.pop('source', None)
+    if source:
+      form_extra += ('\n<input name="id" type="hidden" value="%s" />' %
+                     source.key.id())
+
+    return cls.OAUTH_START_HANDLER.button_html(
+      '/%s/start' % cls.SHORT_NAME,
+      form_extra=form_extra,
+      image_prefix='/oauth_dropins/static/',
+      **kwargs)
+
+  @classmethod
   def create_new(cls, handler, user_url=None, **kwargs):
     """Creates and saves a new :class:`Source` and adds a poll task for it.
 
@@ -571,8 +598,11 @@ class Source(with_metaclass(SourceMeta, StringIdModel)):
     Returns:
       ([string url, ...], [string domain, ...])
     """
-    actor = self.gr_source.user_to_actor(json_loads(auth_entity.user_json))
-    logging.debug('Converted to actor: %s', json_dumps(actor, indent=2))
+    user = json_loads(auth_entity.user_json)
+    actor = (user.get('actor')  # for Instagram; its user_json is IndieAuth
+             or self.gr_source.user_to_actor(user))
+    logging.debug('Extracting URLs and domains from actor: %s',
+                  json_dumps(actor, indent=2))
 
     candidates = util.trim_nulls(util.uniquify(
         [user_url] + microformats2.object_urls(actor)))

@@ -1,12 +1,7 @@
 {% extends "social_user.html" %}
 
-{% block listen_signup %}
-{% include "instagram_signup.html" %}
-{% endblock %}
-
 {% block edit_profile %}
 <a href="https://instagram.com/accounts/edit/#external_url" target="_blank">
   Edit your Instagram profile</a>,
 enter it in the <em>Website</em> field, then click here:
-{% include "instagram_signup.html" %}
 {% endblock %}

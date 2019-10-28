@@ -180,8 +180,20 @@ class FakeGrSource(gr_source.Source):
     return [image['url'] for image in util.get_list(obj, 'image')]
 
 
+class OAuthStartHandler(oauth_handlers.StartHandler):
+  """Stand-in for the oauth-dropins StartHandler, redirects to
+  a made-up silo url.
+  """
+  def redirect_url(self, state=None):
+    logging.debug('oauth handler redirect')
+    return 'http://fake/auth/url?' + urllib.parse.urlencode({
+      'redirect_uri': self.to_url(state),
+    })
+
+
 class FakeSource(Source):
   GR_CLASS = FakeGrSource
+  OAUTH_START_HANDLER = OAuthStartHandler
   SHORT_NAME = 'fake'
   TYPE_LABELS = {'post': 'FakeSource post label'}
   RATE_LIMITED_POLL = datetime.timedelta(hours=30)
@@ -437,17 +449,6 @@ class ModelsTest(HandlerTest):
       feed_item={'title': 'a post'},
       sent=['http://a/link'],
     )]
-
-
-class OAuthStartHandler(oauth_handlers.StartHandler):
-  """Stand-in for the oauth-dropins StartHandler, redirects to
-  a made-up silo url
-  """
-  def redirect_url(self, state=None):
-    logging.debug('oauth handler redirect')
-    return 'http://fake/auth/url?' + urllib.parse.urlencode({
-      'redirect_uri': self.to_url(state),
-    })
 
 
 FakeStartHandler = util.oauth_starter(OAuthStartHandler).to('/fakesource/add')

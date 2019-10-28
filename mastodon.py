@@ -19,13 +19,28 @@ LISTEN_SCOPES = ('read')
 PUBLISH_SCOPES = ('read', 'write')
 
 
+class StartHandler(oauth_mastodon.StartHandler):
+  """Abstract base OAuth starter class with our redirect URLs."""
+  APP_NAME = 'Bridgy'
+  APP_URL = (util.HOST_URL if appengine_config.HOST in util.OTHER_DOMAINS
+             else appengine_config.HOST_URL)
+  REDIRECT_PATHS = (
+    '/mastodon/callback',
+    '/publish/mastodon/finish',
+    '/mastodon/delete/finish',
+    '/delete/finish',
+  )
+
+
 class Mastodon(models.Source):
   """A Mastodon account.
 
   The key name is the fully qualified address, eg 'snarfed@mastodon.technology'.
   """
   GR_CLASS = gr_mastodon.Mastodon
+  OAUTH_START_HANDLER = StartHandler
   SHORT_NAME = 'mastodon'
+  CAN_PUBLISH = True
   TYPE_LABELS = {
     'post': 'toot',
     'comment': 'reply',
@@ -82,6 +97,20 @@ class Mastodon(models.Source):
     """Returns the username."""
     return self.key.id()
 
+  @classmethod
+  def button_html(cls, feature, **kwargs):
+    """Override oauth-dropins's button_html() to not show the instance text box."""
+    source = kwargs.get('source')
+    instance = source.instance() if source else ''
+    return """\
+<form method="%s" action="/mastodon/start">
+  <input type="image" class="mastodon-button shadow" alt="Sign in with Mastodon"
+         src="/oauth_dropins/static/mastodon_large.png" />
+  <input name="feature" type="hidden" value="%s" />
+  <input name="instance" type="hidden" value="%s" />
+</form>
+""" % ('post' if instance else 'get', feature, instance)
+
   def is_private(self):
     """Returns True if this Mastodon account is protected.
 
@@ -103,19 +132,6 @@ class Mastodon(models.Source):
     return self.get_activities(
       search_query=query, group_id=gr_source.SEARCH, fetch_replies=False,
       fetch_likes=False, fetch_shares=False)
-
-
-class StartHandler(oauth_mastodon.StartHandler):
-  """Abstract base OAuth starter class with our redirect URLs."""
-  APP_NAME = 'Bridgy'
-  APP_URL = (util.HOST_URL if appengine_config.HOST in util.OTHER_DOMAINS
-             else appengine_config.HOST_URL)
-  REDIRECT_PATHS = (
-    '/mastodon/callback',
-    '/publish/mastodon/finish',
-    '/mastodon/delete/finish',
-    '/delete/finish',
-  )
 
 
 class InstanceHandler(TemplateHandler, util.Handler):
