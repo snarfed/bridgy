@@ -33,6 +33,16 @@ SUPERFEEDR_USERNAME = read('superfeedr_username')
 from requests_toolbelt.adapters import appengine
 appengine.monkeypatch()
 
+# Stub out the multiprocessing module. it's not supported on App Engine
+# Standard, but humanfriendly uses it for some terminal animation thing that we
+# don't need.
+import sys
+from types import ModuleType
+
+class DummyProcessing(ModuleType):
+  pass
+sys.modules['multiprocessing'] = DummyProcessing
+
 # Wrap webutil.util.tag_uri and hard-code the year to 2013.
 #
 # Needed because I originally generated tag URIs with the current year, which
