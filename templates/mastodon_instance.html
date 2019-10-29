@@ -10,8 +10,10 @@
 <p class="row big">
 <label for="website">
 Enter your
-<a href="https://joinmastodon.org/#getting-started">Mastodon server</a>
-(aka instance) here:
+<a href="https://joinmastodon.org/#getting-started" target="_blank">Mastodon
+<img src="/oauth_dropins/static/mastodon_logo_large.png"
+     style="height: 1em; margin-top: -.1em"/>
+server</a> (aka instance) here:
 <!-- , e.g. -->
 <!-- <a href="https://mastodon.social/"><code>mastodon.social</code></a>:</label> -->
 </p>
@@ -19,7 +21,6 @@ Enter your
 <div class="row">
   <input required type="url" name="instance" id="instance" scheme="https"
          placeholder="e.g. mastodon.social" />
-  <a href="https://joinmastodon.org/" target="_blank" id="mastodon-logo"><img src="/oauth_dropins/static/mastodon_logo_large.png" style="height: 2em" /></a>
   <input type="submit" class="btn btn-default" value="Go" />
   <input name="feature" type="hidden" value="listen" />
 </div>
