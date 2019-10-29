@@ -12,8 +12,7 @@
 {% if source.status == "disabled" %}
 <!-- TODO: make this work without javascript too -->
 <data class="p-bridgy-account-status" value="disabled">
-<a href="#" onclick="document.forms['listen-{{ source.SHORT_NAME }}-start'].submit();
-                     return false;">
+<a href="#" onclick="document.forms[0].submit(); return false;">
   <span class="glyphicon glyphicon-pause"
         title="This account was disconnected on {{ source.GR_CLASS.NAME or source.key.kind }}'s end. Click to reconnect it!">
 </span></a>
