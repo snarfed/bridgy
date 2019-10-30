@@ -22,12 +22,6 @@ from oauth_dropins.webutil.util import json_dumps, json_loads
 import models
 import util
 
-BLOCKLIST_CACHE_TIME = 60 * 60 * 2  # 2h
-# limit size of cached block lists to try to stay under memcache 1MB value limit:
-# https://github.com/snarfed/bridgy/issues/764
-# https://cloud.google.com/appengine/docs/standard/python/memcache/#limits
-BLOCKLIST_MAX_IDS = 35000
-
 
 class Twitter(models.Source):
   """A Twitter account.
@@ -45,10 +39,9 @@ class Twitter(models.Source):
   }
   TRANSIENT_ERROR_HTTP_CODES = ('404',)
   CAN_PUBLISH = True
+  HAS_BLOCKS = True
   URL_CANONICALIZER = gr_twitter.Twitter.URL_CANONICALIZER
   URL_CANONICALIZER.headers = util.REQUEST_HEADERS
-
-  blocked_ids = None
 
   @staticmethod
   def new(handler, auth_entity=None, **kwargs):
@@ -155,27 +148,6 @@ class Twitter(models.Source):
     """
     url = url.replace('/statuses/', '/status/')
     return super(Twitter, self).canonicalize_url(url, **kwargs)
-
-  def is_blocked(self, obj):
-    """Returns True if an object's author is being blocked.
-
-    ...ie they're in this user's block list."""
-
-    if self.blocked_ids is None:
-      cache_key = 'B %s' % self.bridgy_path()
-      self.blocked_ids = memcache.get(cache_key)
-      if self.blocked_ids is None:
-        try:
-          ids = self.gr_source.get_blocklist_ids()
-        except gr_source.RateLimited as e:
-          ids = e.partial or []
-        self.blocked_ids = ids[:BLOCKLIST_MAX_IDS]
-        memcache.set(cache_key, self.blocked_ids, time=BLOCKLIST_CACHE_TIME)
-
-    for o in [obj] + util.get_list(obj, 'object'):
-      for field in 'author', 'actor':
-        if o.get(field, {}).get('numeric_id') in self.blocked_ids:
-          return True
 
 
 class AuthHandler(util.Handler):

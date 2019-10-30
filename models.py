@@ -31,6 +31,12 @@ MAX_AUTHOR_URLS = 5
 
 REFETCH_HFEED_TRIGGER = datetime.datetime.utcfromtimestamp(-1)
 
+BLOCKLIST_CACHE_TIME = 60 * 60 * 2  # 2h
+# limit size of cached block lists to try to stay under memcache 1MB value limit:
+# https://github.com/snarfed/bridgy/issues/764
+# https://cloud.google.com/appengine/docs/standard/python/memcache/#limits
+BLOCKLIST_MAX_IDS = 35000
+
 # maps string short name to Source subclass. populated by SourceMeta.
 sources = {}
 
@@ -110,7 +116,8 @@ class Source(with_metaclass(SourceMeta, StringIdModel)):
   RATE_LIMIT_HTTP_CODES = ('429',)
   DISABLE_HTTP_CODES = ('401',)
   TRANSIENT_ERROR_HTTP_CODES = ()
-
+  # whether granary supports fetching block lists
+  HAS_BLOCKS = False
   # whether to require a u-syndication link for backfeed
   BACKFEED_REQUIRES_SYNDICATION_LINK = False
 
@@ -173,6 +180,10 @@ class Source(with_metaclass(SourceMeta, StringIdModel)):
   # maps updated property names to values that put_updates() writes back to the
   # datastore transactionally. set this to {} before beginning.
   updates = None
+
+  # manually cache id blocklist (returned by granary's get_blocklist_ids()) in
+  # this attribute, per instance. set and used by is_blocked().
+  blocked_ids = None
 
   # gr_source is *not* set to None by default here, since it needs to be unset
   # for __getattr__ to run when it's accessed.
@@ -749,8 +760,28 @@ class Source(with_metaclass(SourceMeta, StringIdModel)):
     """Returns True if an object's author is being blocked.
 
     ...ie they're in this user's block list.
+
+    Note that this method is tested in test_twitter.py, not test_models.py, for
+    historical reasons.
     """
-    return False
+    if not self.HAS_BLOCKS:
+      return False
+
+    if self.blocked_ids is None:
+      cache_key = 'B %s' % self.bridgy_path()
+      self.blocked_ids = memcache.get(cache_key)
+      if self.blocked_ids is None:
+        try:
+          ids = self.gr_source.get_blocklist_ids()
+        except gr_source.RateLimited as e:
+          ids = e.partial or []
+        self.blocked_ids = ids[:BLOCKLIST_MAX_IDS]
+        memcache.set(cache_key, self.blocked_ids, time=BLOCKLIST_CACHE_TIME)
+
+    for o in [obj] + util.get_list(obj, 'object'):
+      for field in 'author', 'actor':
+        if o.get(field, {}).get('numeric_id') in self.blocked_ids:
+          return True
 
 
 class Webmentions(StringIdModel):

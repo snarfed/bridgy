@@ -41,6 +41,7 @@ class Mastodon(models.Source):
   OAUTH_START_HANDLER = StartHandler
   SHORT_NAME = 'mastodon'
   CAN_PUBLISH = True
+  HAS_BLOCKS = True
   TYPE_LABELS = {
     'post': 'toot',
     'comment': 'reply',

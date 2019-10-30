@@ -200,7 +200,7 @@ class TwitterTest(testutil.ModelsTest):
 
   def test_is_blocked_size_limit(self):
     """Test that we cap block list sizes in memcache."""
-    self.mox.stubs.Set(twitter, 'BLOCKLIST_MAX_IDS', 2)
+    self.mox.stubs.Set(models, 'BLOCKLIST_MAX_IDS', 2)
     api_url = gr_twitter.API_BASE + gr_twitter.API_BLOCK_IDS % '-1'
     self.expect_urlopen(api_url, json_dumps({
       'ids': ['1', '2', '3'],
