@@ -224,6 +224,10 @@ class UtilTest(testutil.ModelsTest):
     self.assert_equals(('http://orig', 'orig', False),
                        util.get_webmention_target('http://orig'))
 
+  def test_get_webmention_target_not_http_https(self):
+    self.assert_equals(('chrome://flags', 'flags', False),
+                       util.get_webmention_target('chrome://flags'))
+
   def test_registration_callback(self):
     """Run through an authorization back and forth and make sure that
     the external callback makes it all the way through.

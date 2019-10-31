@@ -297,6 +297,11 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     })
     self.assert_discover(['http://author/'], fetch_hfeed=False)
 
+  def test_require_http_or_https(self):
+    """Ignore non-http URLs."""
+    self.activity['object']['content'] = 'ftp://a/b chrome://flags dat://c/d'
+    self.assert_discover([], fetch_hfeed=False)
+
   def test_strip_www_when_comparing_domains(self):
     """We should ignore leading www when comparing syndicated URL domains."""
     self.activity['object']['url'] = 'http://www.fa.ke/post/url'

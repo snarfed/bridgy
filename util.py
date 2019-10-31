@@ -238,7 +238,7 @@ def get_webmention_target(url, resolve=True, replace_test_domains=True):
   """Resolves a URL and decides whether we should try to send it a webmention.
 
   Note that this ignores failed HTTP requests, ie the boolean in the returned
-  tuple will be true! TODO: check callers and reconsider this.
+  tuple will be True! TODO: check callers and reconsider this.
 
   Args:
     url: string
@@ -266,9 +266,13 @@ def get_webmention_target(url, resolve=True, replace_test_domains=True):
     url, domain, _ = get_webmention_target(
       resolved.url, resolve=False, replace_test_domains=replace_test_domains)
 
-  send = send and domain and not in_webmention_blacklist(domain)
+  scheme = urllib.parse.urlparse(url).scheme  # require http or https
+  send = (send and domain and scheme in ('http', 'https') and
+          not in_webmention_blacklist(domain))
+
   if replace_test_domains:
     url = replace_test_domains_with_localhost(url)
+
   return url, domain, send
 
 
