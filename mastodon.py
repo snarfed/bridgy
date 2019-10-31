@@ -144,6 +144,7 @@ class Mastodon(models.Source):
         # scope, which the block list API endpoint requires. just skip them.
         # https://console.cloud.google.com/errors/CMfA_KfIld6Q2AE
         logging.info("Couldn't fetch block list due to missing OAuth scope")
+        self.blocked_ids = []
         return False
       raise
 
