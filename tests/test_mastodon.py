@@ -5,7 +5,7 @@ from future import standard_library
 standard_library.install_aliases()
 
 import appengine_config
-from granary.mastodon import API_SEARCH
+from granary.mastodon import API_BLOCKS, API_SEARCH
 from granary.tests.test_mastodon import ACTIVITY, STATUS
 from oauth_dropins import mastodon as oauth_mastodon
 from oauth_dropins.webutil.util import json_dumps, json_loads
@@ -74,3 +74,10 @@ class MastodonTest(testutil.ModelsTest):
   def test_search_links_no_domains(self):
     self.m.domains = []
     self.assert_equals([], self.m.search_for_links())
+
+  def test_is_blocked_missing_scope(self):
+    self.expect_requests_get('https://foo.com' + API_BLOCKS,
+                             headers={'Authorization': 'Bearer towkin'},
+                             status_code=403)
+    self.mox.ReplayAll()
+    self.assertFalse(self.m.is_blocked({'numeric_id': 123}))

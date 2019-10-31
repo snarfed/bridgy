@@ -9,14 +9,15 @@ from granary import source as gr_source
 from oauth_dropins import mastodon as oauth_mastodon
 from oauth_dropins.webutil.handlers import TemplateHandler
 from oauth_dropins.webutil.util import json_dumps, json_loads
+import requests
 import webapp2
 
 import models
 import util
 
 # https://docs.joinmastodon.org/api/permissions/
-LISTEN_SCOPES = ('read')
-PUBLISH_SCOPES = ('read', 'write')
+LISTEN_SCOPES = ('read', 'follow')
+PUBLISH_SCOPES = LISTEN_SCOPES + ('write',)
 
 
 class StartHandler(oauth_mastodon.StartHandler):
@@ -133,6 +134,18 @@ class Mastodon(models.Source):
     return self.get_activities(
       search_query=query, group_id=gr_source.SEARCH, fetch_replies=False,
       fetch_likes=False, fetch_shares=False)
+
+  def is_blocked(self, obj):
+    try:
+      return super(Mastodon, self).is_blocked(obj)
+    except requests.HTTPError as e:
+      if e.response.status_code == 403:
+        # this user signed up before we started asking for the 'follow' OAuth
+        # scope, which the block list API endpoint requires. just skip them.
+        # https://console.cloud.google.com/errors/CMfA_KfIld6Q2AE
+        logging.info("Couldn't fetch block list due to missing OAuth scope")
+        return False
+      raise
 
 
 class InstanceHandler(TemplateHandler, util.Handler):
