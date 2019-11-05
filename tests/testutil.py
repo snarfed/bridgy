@@ -41,7 +41,7 @@ class FakeGrSource(gr_source.Source):
 
   Attributes:
     activities, like, reaction, share, event, rsvp, etag, search_results,
-    last_search_query
+    last_search_query, blocked_ids
   """
   NAME = 'FakeSource'
   DOMAIN = 'fa.ke'
@@ -73,11 +73,14 @@ class FakeGrSource(gr_source.Source):
   def get_rsvp(self, *args, **kwargs):
     return copy.deepcopy(self.rsvp)
 
+  def get_blocklist_ids(self, *args, **kwargs):
+    return copy.deepcopy(self.blocklist_ids)
+
   @classmethod
   def clear(cls):
     cls.activities = cls.like = cls.reaction = cls.share = cls.event = \
       cls.rsvp = cls.etag = cls.last_search_query = None
-    cls.search_results = []
+    cls.search_results = cls.blocklist_ids = []
 
   def get_activities_response(self, user_id=None, group_id=None,
                               activity_id=None, app_id=None,
@@ -201,6 +204,7 @@ class FakeSource(Source):
     domain=GR_CLASS.DOMAIN,
     headers=util.REQUEST_HEADERS)
   PATH_BLACKLIST = (re.compile('^/blacklisted/.*'),)
+  HAS_BLOCKS = True
 
   string_id_counter = 1
   gr_source = FakeGrSource()

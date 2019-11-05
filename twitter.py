@@ -13,7 +13,6 @@ import webapp2
 from webob import exc
 
 import appengine_config
-from google.appengine.api import memcache
 from granary import twitter as gr_twitter
 from granary import source as gr_source
 from oauth_dropins import twitter as oauth_twitter

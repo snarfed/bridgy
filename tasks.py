@@ -356,6 +356,8 @@ class Poll(webapp2.RequestHandler):
     # Step 4: store new responses and enqueue propagate tasks
     #
     pruned_responses = []
+    source.blocked_ids = None
+
     for id, resp in responses.items():
       resp_type = Response.get_type(resp)
       activities = resp.pop('activities', [])
@@ -379,6 +381,10 @@ class Poll(webapp2.RequestHandler):
         if targets:
           logging.info('%s has %d webmention target(s): %s', activity.get('url'),
                        len(targets), ' '.join(targets))
+          # new response to propagate! load block list if we haven't already
+          if source.blocked_ids is None:
+            source.load_blocklist()
+
         for t in targets:
           if len(t) <= _MAX_STRING_LENGTH:
             urls_to_activity[t] = i

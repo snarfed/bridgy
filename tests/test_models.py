@@ -10,6 +10,7 @@ from unittest import skip
 
 import appengine_config
 from google.appengine.ext import ndb
+from granary import source as gr_source
 import mox
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
@@ -627,6 +628,32 @@ class SourceTest(testutil.HandlerTest):
 
     self.mox.stubs.Set(util, 'BETA_USER_PATHS', set([source.bridgy_path()]))
     self.assertTrue(source.is_beta_user())
+
+  def test_load_blocklist(self):
+    self.mox.stubs.Set(models, 'BLOCKLIST_MAX_IDS', 2)
+    FakeGrSource.blocklist_ids = [1, 2, 3]
+
+    source = FakeSource(id='x')
+    source.load_blocklist()
+    self.assertEqual([1, 2], source.blocked_ids)
+
+  def test_load_blocklist_rate_limited(self):
+    source = FakeSource(id='x')
+    self.mox.StubOutWithMock(source.gr_source, 'get_blocklist_ids')
+    source.gr_source.get_blocklist_ids().AndRaise(
+      gr_source.RateLimited(partial=[4, 5]))
+    self.mox.ReplayAll()
+
+    source.load_blocklist()
+    self.assertEqual([4, 5], source.blocked_ids)
+
+  def test_is_blocked(self):
+    source = Source(id='x')
+    self.assertFalse(source.is_blocked({'author': {'numeric_id': '1'}}))
+
+    source = Source(id='x', blocked_ids = ['1', '2'])
+    self.assertTrue(source.is_blocked({'author': {'numeric_id': '1'}}))
+    self.assertFalse(source.is_blocked({'object': {'actor': {'numeric_id': '3'}}}))
 
 
 class BlogPostTest(testutil.ModelsTest):

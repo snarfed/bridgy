@@ -31,11 +31,10 @@ MAX_AUTHOR_URLS = 5
 
 REFETCH_HFEED_TRIGGER = datetime.datetime.utcfromtimestamp(-1)
 
-BLOCKLIST_CACHE_TIME = 60 * 60 * 2  # 2h
-# limit size of cached block lists to try to stay under memcache 1MB value limit:
-# https://github.com/snarfed/bridgy/issues/764
-# https://cloud.google.com/appengine/docs/standard/python/memcache/#limits
-BLOCKLIST_MAX_IDS = 35000
+# limit size of block lists stored in source entities to try to keep whole
+# entiry under 1MB datastore limit:
+# https://cloud.google.com/datastore/docs/concepts/limits
+BLOCKLIST_MAX_IDS = 20000
 
 # maps string short name to Source subclass. populated by SourceMeta.
 sources = {}
@@ -177,13 +176,12 @@ class Source(with_metaclass(SourceMeta, StringIdModel)):
   last_activities_cache_json = ndb.TextProperty()
   seen_responses_cache_json = ndb.TextProperty(compressed=True)
 
+  # populated in Poll.poll(), used by handlers
+  blocked_ids = ndb.JsonProperty(compressed=True)
+
   # maps updated property names to values that put_updates() writes back to the
   # datastore transactionally. set this to {} before beginning.
   updates = None
-
-  # manually cache id blocklist (returned by granary's get_blocklist_ids()) in
-  # this attribute, per instance. set and used by is_blocked().
-  blocked_ids = None
 
   # gr_source is *not* set to None by default here, since it needs to be unset
   # for __getattr__ to run when it's accessed.
@@ -756,6 +754,19 @@ class Source(with_metaclass(SourceMeta, StringIdModel)):
     """
     return self.bridgy_path() in util.BETA_USER_PATHS
 
+  def load_blocklist(self):
+    """Fetches this user's blocklist, if supported, and stores it in the entity."""
+    if not self.HAS_BLOCKS:
+      return
+
+    try:
+      ids = self.gr_source.get_blocklist_ids()
+    except gr_source.RateLimited as e:
+      ids = e.partial or []
+
+    self.blocked_ids = ids[:BLOCKLIST_MAX_IDS]
+    self.put()
+
   def is_blocked(self, obj):
     """Returns True if an object's author is being blocked.
 
@@ -764,19 +775,8 @@ class Source(with_metaclass(SourceMeta, StringIdModel)):
     Note that this method is tested in test_twitter.py, not test_models.py, for
     historical reasons.
     """
-    if not self.HAS_BLOCKS:
+    if not self.blocked_ids:
       return False
-
-    if self.blocked_ids is None:
-      cache_key = 'B %s' % self.bridgy_path()
-      self.blocked_ids = memcache.get(cache_key)
-      if self.blocked_ids is None:
-        try:
-          ids = self.gr_source.get_blocklist_ids()
-        except gr_source.RateLimited as e:
-          ids = e.partial or []
-        self.blocked_ids = ids[:BLOCKLIST_MAX_IDS]
-        memcache.set(cache_key, self.blocked_ids, time=BLOCKLIST_CACHE_TIME)
 
     for o in [obj] + util.get_list(obj, 'object'):
       for field in 'author', 'actor':

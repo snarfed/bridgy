@@ -135,9 +135,9 @@ class Mastodon(models.Source):
       search_query=query, group_id=gr_source.SEARCH, fetch_replies=False,
       fetch_likes=False, fetch_shares=False)
 
-  def is_blocked(self, obj):
+  def load_blocklist(self):
     try:
-      return super(Mastodon, self).is_blocked(obj)
+      return super(Mastodon, self).load_blocklist()
     except requests.HTTPError as e:
       if e.response.status_code == 403:
         # this user signed up before we started asking for the 'follow' OAuth
@@ -145,8 +145,9 @@ class Mastodon(models.Source):
         # https://console.cloud.google.com/errors/CMfA_KfIld6Q2AE
         logging.info("Couldn't fetch block list due to missing OAuth scope")
         self.blocked_ids = []
-        return False
-      raise
+        self.put()
+      else:
+        raise
 
 
 class InstanceHandler(TemplateHandler, util.Handler):

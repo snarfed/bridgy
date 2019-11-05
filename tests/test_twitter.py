@@ -9,7 +9,6 @@ import copy
 import urllib.request, urllib.parse, urllib.error
 
 import appengine_config
-from google.appengine.api import memcache
 from granary import twitter as gr_twitter
 from granary.tests import test_twitter as gr_twitter_test
 from granary.twitter import API_BASE, API_SEARCH, API_STATUS, HTML_FAVORITES
@@ -159,31 +158,7 @@ class TwitterTest(testutil.ModelsTest):
   def test_gr_source_username(self):
     self.assertEqual('snarfed_org', self.tw.gr_source.username)
 
-  def test_is_blocked(self):
-    # check that we only make one API call
-    api_url = gr_twitter.API_BASE + gr_twitter.API_BLOCK_IDS % '-1'
-    self.expect_urlopen(api_url, json_dumps({
-      'ids': ['1', '2'],
-      'next_cursor_str': '0',
-    }))
-    self.mox.ReplayAll()
-
-    self.assertTrue(self.tw.is_blocked({'author': {'numeric_id': '1'}}))
-
-    # check that the result is cached in both memcache and the instance in memory
-    self.assert_equals(['1', '2'], memcache.get('B /twitter/snarfed_org'))
-    memcache.delete('B /twitter/snarfed_org')
-
-    self.assertTrue(self.tw.is_blocked({'object': {'actor': {'numeric_id': '2'}}}))
-    self.assertFalse(self.tw.is_blocked({'actor': {'numeric_id': '3'}}))
-    self.assertFalse(self.tw.is_blocked({'author': {'id': '0'}}))
-    self.assertFalse(self.tw.is_blocked({'actor': {'username': 'foo'}}))
-    self.assertFalse(self.tw.is_blocked({'object': []}))
-
-    # should have used the blocklist in the instance
-    self.assertIsNone(memcache.get('B /twitter/snarfed_org'))
-
-  def test_is_blocked_rate_limited(self):
+  def test_load_blocklist_rate_limited(self):
     """If we get rate limited, we should use the partial result."""
     api_url = gr_twitter.API_BASE + gr_twitter.API_BLOCK_IDS % '-1'
     self.expect_urlopen(api_url, json_dumps({
@@ -194,20 +169,6 @@ class TwitterTest(testutil.ModelsTest):
     self.expect_urlopen(api_url, status=429)
 
     self.mox.ReplayAll()
-    self.assertTrue(self.tw.is_blocked({'author': {'numeric_id': '1'}}))
-    self.assertFalse(self.tw.is_blocked({'author': {'numeric_id': '3'}}))
-    self.assert_equals(['1', '2'], memcache.get('B /twitter/snarfed_org'))
+    self.tw.load_blocklist()
+    self.assert_equals(['1', '2'], self.tw.blocked_ids)
 
-  def test_is_blocked_size_limit(self):
-    """Test that we cap block list sizes in memcache."""
-    self.mox.stubs.Set(models, 'BLOCKLIST_MAX_IDS', 2)
-    api_url = gr_twitter.API_BASE + gr_twitter.API_BLOCK_IDS % '-1'
-    self.expect_urlopen(api_url, json_dumps({
-      'ids': ['1', '2', '3'],
-      'next_cursor_str': '0',
-    }))
-
-    self.mox.ReplayAll()
-    self.assertTrue(self.tw.is_blocked({'author': {'numeric_id': '1'}}))
-    self.assertTrue(self.tw.is_blocked({'author': {'numeric_id': '2'}}))
-    self.assertFalse(self.tw.is_blocked({'author': {'numeric_id': '3'}}))

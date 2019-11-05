@@ -75,9 +75,11 @@ class MastodonTest(testutil.ModelsTest):
     self.m.domains = []
     self.assert_equals([], self.m.search_for_links())
 
-  def test_is_blocked_missing_scope(self):
+  def test_load_blocklist_missing_scope(self):
     self.expect_requests_get('https://foo.com' + API_BLOCKS,
                              headers={'Authorization': 'Bearer towkin'},
                              status_code=403)
     self.mox.ReplayAll()
+    self.m.load_blocklist()
+    self.assertEqual([], self.m.blocked_ids)
     self.assertFalse(self.m.is_blocked({'numeric_id': 123}))
