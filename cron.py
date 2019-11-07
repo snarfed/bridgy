@@ -12,7 +12,6 @@ import logging
 import math
 
 import appengine_config
-from google.appengine.api import app_identity
 from google.appengine.api import urlfetch
 from google.appengine.ext import ndb
 from google.appengine.ext.ndb import metadata
@@ -153,59 +152,9 @@ def maybe_update_picture(source, new_actor, handler):
   return True
 
 
-class DatastoreBackup(webapp2.RequestHandler):
-  """Backs up all datastore entities except Response and SyndicatedPost.
-
-  Based on:
-  * https://cloud.google.com/datastore/docs/schedule-export
-  * https://cloud.google.com/datastore/docs/export-import-entities
-  """
-
-  def get(self):
-    # https://cloud.google.com/appengine/docs/standard/python/ndb/admin#Metadata_queries
-    kinds = [k for k in metadata.get_kinds() if not k.startswith('_')]
-    kinds.remove('Response')
-    kinds.remove('SyndicatedPost')
-    logging.info('Backing up %s', kinds)
-
-    access_token, _ = app_identity.get_access_token(
-      'https://www.googleapis.com/auth/datastore')
-    app_id = app_identity.get_application_id()
-
-    request = {
-        'project_id': app_id,
-        'output_url_prefix': ('gs://brid-gy.appspot.com/weekly/' +
-                              datetime.datetime.now().strftime('%Y%m%d')),
-        'entity_filter': {
-          'kinds': kinds,
-          # 'namespace_ids': self.request.get_all('namespace_id'),
-        },
-    }
-    headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + access_token,
-    }
-
-    try:
-      result = urlfetch.fetch(
-          url='https://datastore.googleapis.com/v1/projects/%s:export' % app_id,
-          payload=json_dumps(request),
-          method=urlfetch.POST,
-          headers=headers)
-      if result.status_code == http.client.OK:
-        logging.info(result.content)
-      else:
-        logging.error(result.content)
-        self.abort(result.status_code)
-    except urlfetch.Error as e:
-      util.interpret_http_exception(e)
-      raise
-
-
 application = webapp2.WSGIApplication([
     ('/cron/replace_poll_tasks', ReplacePollTasks),
     ('/cron/update_twitter_pictures', UpdateTwitterPictures),
     ('/cron/update_instagram_pictures', UpdateInstagramPictures),
     ('/cron/update_flickr_pictures', UpdateFlickrPictures),
-    ('/cron/datastore_backup', DatastoreBackup),
 ], debug=appengine_config.DEBUG)

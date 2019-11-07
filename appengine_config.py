@@ -51,13 +51,6 @@ from oauth_dropins.webutil import util
 util._orig_tag_uri = util.tag_uri
 util.tag_uri = lambda domain, name: util._orig_tag_uri(domain, name, year=2013)
 
-# I used a namespace for a while when I had both versions deployed, but not any
-# more; I cleared out the old v1 datastore entities.
-# Called only if the current namespace is not set.
-# from google.appengine.api import namespace_manager
-# def namespace_manager_default_namespace_for_request():
-#   return 'webmention-dev'
-
 # Suppress warnings. These are duplicated in oauth-dropins and bridgy; keep them
 # in sync!
 import warnings

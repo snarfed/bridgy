@@ -22,10 +22,3 @@ cron:
   url: /cron/update_flickr_pictures
   schedule: every day 09:00  # 2am pst
   target: background
-
-# weekly datastore backup. excludes Response and SyndicatedPost entities.
-# https://cloud.google.com/datastore/docs/schedule-export
-- description: weekly datastore backup, just user account data
-  url: /cron/datastore_backup
-  schedule: every sunday 10:00  # 3am pst
-  target: background
