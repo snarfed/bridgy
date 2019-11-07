@@ -13,6 +13,8 @@ jobs:
 
     environment:
       - PYTHONPATH: /usr/lib/google-cloud-sdk/platform/google_appengine
+      # https://github.com/GoogleCloudPlatform/google-cloud-datastore/issues/168#issuecomment-294418422
+      - APPLICATION_ID: dev~brid-gy
 
     steps:
       - checkout
