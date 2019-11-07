@@ -10,7 +10,6 @@ import io
 import urllib.request, urllib.error, urllib.parse
 
 import appengine_config
-from google.appengine.api import urlfetch_errors
 import mox
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
@@ -180,23 +179,13 @@ asdf http://other/link qwert
     self.assertEqual('FakeSource error:\nGone baby gone', resp.body)
 
   def test_connection_failures_504(self):
-    assert urlfetch_errors is not None
-    # no idea why, but every now and then this module doesn't get imported
-    # ok on circle, which makes this test flaky and fail. this workaround
-    # doesn't fix the root cause, but meh. examples:
-    # https://circleci.com/gh/snarfed/bridgy/769
-    # https://circleci.com/gh/snarfed/bridgy/800
-    if handlers.util.urlfetch_errors is None:
-      handlers.util.urlfetch_errors = urlfetch_errors
-
     user_id = self.source.key.string_id()
-    err = urlfetch_errors.InternalTransientError('Try again pls')
     self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities')
     testutil.FakeSource.get_activities(activity_id='000', user_id=user_id
-                                      ).AndRaise(err)
+        ).AndRaise(Exception('Connection closed unexpectedly'))
     self.mox.ReplayAll()
     resp = self.check_response('/post/fake/%s/000', expected_status=504)
-    self.assertEqual('FakeSource error:\nTry again pls', resp.body)
+    self.assertEqual('FakeSource error:\nConnection closed unexpectedly', resp.body)
 
   def test_handle_disable_source(self):
     self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities')

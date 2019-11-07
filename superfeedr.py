@@ -13,8 +13,8 @@ import json
 import logging
 
 import appengine_config
-from google.appengine.api.datastore_types import _MAX_STRING_LENGTH
 from google.appengine.ext.ndb.key import _MAX_KEYPART_BYTES
+from google.appengine.ext.ndb.model import _MAX_STRING_LENGTH
 from oauth_dropins.webutil.util import json_dumps, json_loads
 from requests.auth import HTTPBasicAuth
 

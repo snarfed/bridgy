@@ -10,9 +10,8 @@ import logging
 import random
 
 from google.appengine.api import memcache
-from google.appengine.api import datastore_errors
-from google.appengine.api.datastore_types import _MAX_STRING_LENGTH
 from google.appengine.ext import ndb
+from google.appengine.ext.ndb.model import _MAX_STRING_LENGTH
 from granary.source import Source
 from oauth_dropins.webutil import logs
 from oauth_dropins.webutil.util import json_dumps, json_loads
@@ -209,8 +208,8 @@ class Poll(webapp2.RequestHandler):
         try:
           self.repropagate_old_responses(source, relationships)
         except BaseException as e:
-          if (isinstance(e, (datastore_errors.BadRequestError,
-                             datastore_errors.Timeout)) or
+          if ('BadRequestError' in str(e.__class__) or
+              'Timeout' in str(e.__class__) or
               util.is_connection_failure(e)):
             logging.info('Timeout while repropagating responses.', exc_info=True)
           else:

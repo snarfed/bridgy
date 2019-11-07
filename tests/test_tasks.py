@@ -20,10 +20,9 @@ import time
 import urllib.request, urllib.parse, urllib.error
 
 import apiclient
-from google.appengine.api import datastore_errors
 from google.appengine.api import memcache
-from google.appengine.api.datastore_types import _MAX_STRING_LENGTH
 from google.appengine.ext import ndb
+from google.appengine.ext.ndb.model import _MAX_STRING_LENGTH
 import httplib2
 from oauth_dropins.webutil.util import json_dumps, json_loads
 from oauth2client.client import AccessTokenRefreshError
@@ -1175,15 +1174,19 @@ class PollTest(TaskQueueTest):
 
   def test_refetch_hfeed_repropagate_responses_query_expired(self):
     """https://github.com/snarfed/bridgy/issues/515"""
+    class BadRequestError(BaseException):
+      pass
+
     self._test_refetch_hfeed_repropagate_responses_exception(
-      datastore_errors.BadRequestError(
-        'The requested query has expired. Please restart it with the last cursor to read more results.'))
+      BadRequestError('The requested query has expired. Please restart it with the last cursor to read more results.'))
 
   def test_refetch_hfeed_repropagate_responses_timeout(self):
     """https://github.com/snarfed/bridgy/issues/514"""
+    class Timeout(BaseException):
+      pass
+
     self._test_refetch_hfeed_repropagate_responses_exception(
-      datastore_errors.Timeout(
-        'The datastore operation timed out, or the data was temporarily unavailable.'))
+      Timeout('The datastore operation timed out, or the data was temporarily unavailable.'))
 
   def test_refetch_hfeed_repropagate_responses_http_exception_deadline(self):
     self._test_refetch_hfeed_repropagate_responses_exception(

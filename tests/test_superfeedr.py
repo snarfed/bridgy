@@ -4,8 +4,8 @@
 from __future__ import unicode_literals
 from __future__ import absolute_import
 
-from google.appengine.api.datastore_types import _MAX_STRING_LENGTH
 from google.appengine.ext.ndb.key import _MAX_KEYPART_BYTES
+from google.appengine.ext.ndb.model import _MAX_STRING_LENGTH
 import mox
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import webapp2
