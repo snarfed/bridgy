@@ -17,6 +17,7 @@ fixtures==3.0.0
 google-api-python-client==1.7.11
 google-auth-httplib2==0.0.3
 google-auth==1.6.3
+google-cloud-error-reporting==0.33.0
 html2text==2019.8.11
 html5lib==1.0.1
 httplib2==0.14.0

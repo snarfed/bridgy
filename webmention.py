@@ -9,6 +9,7 @@ from __future__ import unicode_literals
 from builtins import str
 import logging
 
+from google.cloud import error_reporting
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
 import appengine_config
@@ -112,7 +113,7 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
     return resp, mf2
 
   def error(self, error, html=None, status=400, data=None, log_exception=True,
-            mail=False, extra_json=None):
+            report=False, extra_json=None):
     """Handle an error. May be overridden by subclasses.
 
     Args:
@@ -121,7 +122,7 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
       status: int HTTP response status code
       data: mf2 data dict parsed from source page
       log_exception: boolean, whether to include a stack trace in the log msg
-      mail: boolean, whether to email me
+      report: boolean, whether to report to StackDriver Error Reporting
       extra_json: dict to be merged into the JSON response body
     """
     logging.info(error, exc_info=log_exception)
@@ -141,13 +142,14 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
 
     resp = json_dumps(resp, indent=2)
 
-    if mail and status != 404:
-      self.mail_me('[Returned HTTP %s to client]\n\n%s' % (status, error))
+    if report and status != 404:
+      self.report_error(error)
 
     self.response.headers['Content-Type'] = 'application/json'
     self.response.write(resp)
 
-  def mail_me(self, resp):
+  def report_error(self, resp):
+    """Report an error to StackDriver Error reporting."""
     # don't email about specific known failures
     if ('Deadline exceeded while waiting for HTTP response' in resp or
         'urlfetch.Fetch() took too long' in resp or
@@ -185,10 +187,11 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
     subject = '%s %s' % (self.__class__.__name__,
                          '%s %s' % (self.entity.type, self.entity.status)
                          if self.entity else 'failed')
-    body = 'Request:\n%s\n\nResponse:\n%s' % (self.request.params.items(), resp)
-
-    if self.source:
-      body = 'Source: %s\n\n%s' % (self.source.bridgy_url(self), body)
-      subject += ': %s' % self.source.label()
-
-    util.email_me(subject=subject, body=body)
+    user = self.source.bridgy_url(self) if self.source else None
+    http_context = None
+    util.report_error(subject, user=user,
+                      http_context=error_reporting.HTTPContext(
+                        method=self.request.method,
+                        url=self.request.url,
+                        response_status_code=self.response.status,
+                        remote_ip=self.request.client_addr))

@@ -111,9 +111,6 @@ class EmailHandler(InboundMailHandler):
     source = FacebookEmailAccount.query(FacebookEmailAccount.email_user == user).get()
     logging.info('Source for %s is %s', user, source)
 
-    util.email_me(subject='New email from %s: %s' % (sender, subject),
-                  body='Source: %s' % (source.bridgy_url(self) if source else None))
-
     htmls = list(body.decode() for _, body in email.bodies('text/html'))
     fbe = FacebookEmail.get_or_insert(
       message_id, source=source.key if source else None, htmls=htmls)

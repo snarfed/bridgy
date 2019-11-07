@@ -99,9 +99,6 @@ class Poll(webapp2.RequestHandler):
         })
         body = '%s\nLast poll: %s' % (source.bridgy_url(self),
                                       self._last_poll_url(source))
-        if source.is_beta_user():
-          util.email_me(subject='Bridgy: disabled %s' % source.label(), body=body)
-
       elif code in source.RATE_LIMIT_HTTP_CODES:
         logging.info('Rate limited. Marking as error and finishing. %s', e)
         source.updates['rate_limited'] = True

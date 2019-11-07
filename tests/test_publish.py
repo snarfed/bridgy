@@ -14,7 +14,6 @@ import urllib.request, urllib.parse, urllib.error
 import appengine_config
 
 from granary import source as gr_source
-from google.appengine.api import mail
 import mox
 from oauth_dropins.webutil.testutil import requests_response
 from oauth_dropins.webutil.util import json_dumps, json_loads
@@ -602,16 +601,17 @@ this is my article
     self.mox.ReplayAll()
     self.assert_created('foo - http://foo.com/foo/bar')
 
-  def test_error_email(self):
-    """Should send me email on most errors from create() or preview_create()."""
+  def test_report_error(self):
+    """Should report most errors from create() or preview_create()."""
     for i in range(2):
       self.expect_requests_get('http://foo.com/bar', self.post_html % 'foo')
 
-    self.mox.StubOutWithMock(mail, 'send_mail')
-    for subject in ('WebmentionHandler None failed: None (FakeSource)',
-                    'PreviewHandler preview new: None (FakeSource)'):
-      mail.send_mail(subject=subject, body=mox.IgnoreArg(),
-                     sender=mox.IgnoreArg(), to=mox.IgnoreArg())
+    self.mox.StubOutWithMock(util.error_reporting_client, 'report',
+                             use_mock_anything=True)
+    for subject in ('WebmentionHandler None failed',
+                    'PreviewHandler preview new'):
+      util.error_reporting_client.report(subject, http_context=mox.IgnoreArg(),
+                                         user=u'http://localhost/fake/foo.com')
 
     self.mox.StubOutWithMock(self.source.gr_source, 'create',
                              use_mock_anything=True)

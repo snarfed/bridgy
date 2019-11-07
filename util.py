@@ -23,13 +23,13 @@ import time
 import urllib.request, urllib.parse, urllib.error
 
 from appengine_config import DEBUG
+from google.cloud import error_reporting
 import humanize
 from oauth_dropins.webutil import handlers as webutil_handlers
 from oauth_dropins.webutil.models import StringIdModel
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import *
 
-from google.appengine.api import mail
 from google.appengine.api import memcache
 from google.appengine.api import taskqueue
 from google.appengine.ext import ndb
@@ -110,6 +110,8 @@ webutil_handlers.JINJA_ENV.globals.update({
   'naturaltime': humanize.naturaltime,
 })
 
+error_reporting_client = error_reporting.Client()
+
 
 def add_poll_task(source, now=False, **kwargs):
   """Adds a poll task for the given source entity.
@@ -176,13 +178,19 @@ def webmention_endpoint_cache_key(url):
   return ' '.join(parts)
 
 
-def email_me(**kwargs):
-  """Thin wrapper around :func:`mail.send_mail()` that handles errors."""
+def report_error(msg, **kwargs):
+  """Reports an error to StackDriver Error Reporting.
+
+  https://cloud.google.com/error-reporting/docs/reference/libraries#client-libraries-install-python
+
+  Args:
+    msg: string
+  """
   try:
-    mail.send_mail(sender='admin@brid-gy.appspotmail.com',
-                   to='webmaster@brid.gy', **kwargs)
+    error_reporting_client.report(msg, **kwargs)
   except BaseException:
-    logging.warning('Error sending notification email', exc_info=True)
+    logging.warning('Failed to report error to StackDriver! %s %s', msg, kwargs,
+                    exc_info=True)
 
 
 def requests_get(url, **kwargs):

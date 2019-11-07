@@ -148,14 +148,14 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
         logging.warning('Disabling source due to: %s' % e, exc_info=True)
         self.source.status = 'disabled'
         self.source.put()
-        return self.error(msg, status=code, mail=self.source.is_beta_user())
+        return self.error(msg, status=code, report=self.source.is_beta_user())
       elif code == '404':
         # post is gone
-        return self.error(msg, status=code, mail=False)
+        return self.error(msg, status=code, report=False)
       elif util.is_connection_failure(e) or (code and int(code) // 100 == 5):
-        return self.error(msg, status=util.ERROR_HTTP_RETURN_CODE, mail=False)
+        return self.error(msg, status=util.ERROR_HTTP_RETURN_CODE, report=False)
       elif code or body:
-        return self.error(msg, status=code, mail=True)
+        return self.error(msg, status=code, report=True)
       else:
         raise
 

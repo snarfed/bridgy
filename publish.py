@@ -279,16 +279,14 @@ class Handler(webmention.WebmentionHandler):
           logging.warning('Disabling source due to: %s' % e, exc_info=True)
           self.source.status = 'disabled'
           self.source.put()
-          # TODO: eventually drop this to just if source.is_beta_user(). leaving
-          # for everyone right now for initial monitoring.
-          util.email_me(subject='Bridgy Publish: disabled %s' % self.source.label(),
-                        body=body)
+          # util.email_me(subject='Bridgy Publish: disabled %s' % self.source.label(),
+          #               body=body)
         if isinstance(e, (NotImplementedError, ValueError, urllib.error.URLError)):
           code = '400'
         elif not code:
           raise
         msg = 'Error: %s %s' % (body or '', e)
-        return self.error(msg, status=code, mail=code not in ('400', '404', '502', '503', '504'))
+        return self.error(msg, status=code, report=code not in ('400', '404', '502', '503', '504'))
 
     if not self.entity.published:  # tried all the items
       types.discard('h-entry')
@@ -638,13 +636,13 @@ class PreviewHandler(Handler):
             else gr_source.INCLUDE_IF_TRUNCATED if val.lower() == 'maybe'
             else gr_source.OMIT_LINK)
 
-  def error(self, error, html=None, status=400, data=None, mail=False, **kwargs):
+  def error(self, error, html=None, status=400, data=None, report=False, **kwargs):
     logging.info(error, exc_info=True)
     self.response.set_status(status)
     error = html if html else util.linkify(error)
     self.response.write(error)
-    if mail:
-      self.mail_me('[Returned HTTP %s to client]\n\n%s' % (status, error))
+    if report:
+      self.report_error(error)
 
 
 class SendHandler(Handler):
@@ -687,12 +685,12 @@ class SendHandler(Handler):
   def include_link(self, item):
     return self.state['include_link']
 
-  def error(self, error, html=None, status=400, data=None, mail=False, **kwargs):
+  def error(self, error, html=None, status=400, data=None, report=False, **kwargs):
     logging.info(error, exc_info=True)
     error = html if html else util.linkify(error)
     self.messages.add('%s' % error)
-    if mail:
-      self.mail_me(error)
+    if report:
+      self.report_error(error)
 
 
 # We want CallbackHandler.get() and SendHandler.finish(), so put
