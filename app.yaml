@@ -21,6 +21,8 @@ libraries:
 # *not* jinja2 because app engine's built in is 2.6, so we bundle our own 2.10
 - name: lxml
   version: latest
+- name: protobuf
+  version: latest
 - name: ssl
   version: latest
 - name: ujson
