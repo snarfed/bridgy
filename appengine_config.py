@@ -60,19 +60,6 @@ warnings.filterwarnings('ignore', message='urllib3 is using URLFetch')
 warnings.filterwarnings('ignore',
                         message='URLFetch does not support granular timeout')
 
-
-def webapp_add_wsgi_middleware(app):
-  # # uncomment for app stats
-  # appstats_CALC_RPC_COSTS = True
-  # from google.appengine.ext.appstats import recording
-  # app = recording.appstats_wsgi_middleware(app)
-
-  # # uncomment for instance_info concurrent requests recording
-  # from oauth_dropins.webutil import instance_info
-  # app = instance_info.concurrent_requests_wsgi_middleware(app)
-
-  return app
-
 # monkey-patch WsgiRequest to allow unicode header values.
 from google.appengine.runtime.wsgi import WsgiRequest
 orig_response = WsgiRequest._StartResponse
