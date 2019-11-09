@@ -1,5 +1,7 @@
 """Common handlers, e.g. post and comment permalinks.
 
+Docs: https://brid.gy/about#source-urls
+
 URL paths are:
 
 /post/SITE/USER_ID/POST_ID
@@ -23,7 +25,7 @@ import logging
 import re
 import string
 
-from google.appengine.api import memcache
+from cachetools import cachedmethod, TTLCache
 from granary import microformats2
 from granary.microformats2 import first_props
 from oauth_dropins.webutil import handlers
@@ -145,35 +147,26 @@ class ItemHandler(util.Handler):
       if not self.VALID_ID.match(id):
         self.abort(404, 'Invalid id %s' % id)
 
-    label = '%s:%s %s %s' % (source_short_name, string_id, type, ids)
-    cache_key = 'H ' + label
-    obj = memcache.get(cache_key)
-    if obj and not appengine_config.DEBUG:
-      logging.info('Using cached object for %s', label)
-    else:
-      logging.info('Fetching %s', label)
-      try:
-        obj = self.get_item(*ids)
-      except models.DisableSource as e:
-        self.abort(401, "Bridgy's access to your account has expired. Please visit https://brid.gy/ to refresh it!")
-      except ValueError as e:
-        self.abort(400, '%s error:\n%s' % (self.source.GR_CLASS.NAME, e))
-      except Exception as e:
-        # pass through all API HTTP errors if we can identify them
-        code, body = util.interpret_http_exception(e)
-        # temporary, trying to debug a flaky test failure
-        # eg https://circleci.com/gh/snarfed/bridgy/769
-        if code:
-          self.response.status_int = int(code)
-          self.response.headers['Content-Type'] = 'text/plain'
-          self.response.write('%s error:\n%s' % (self.source.GR_CLASS.NAME, body))
-          return
-        else:
-          raise
-      memcache.set(cache_key, obj, time=CACHE_TIME)
+    try:
+      obj = self.get_item(*ids)
+    except models.DisableSource as e:
+      self.abort(401, "Bridgy's access to your account has expired. Please visit https://brid.gy/ to refresh it!")
+    except ValueError as e:
+      self.abort(400, '%s error:\n%s' % (self.source.GR_CLASS.NAME, e))
+    except Exception as e:
+      # pass through all API HTTP errors if we can identify them
+      code, body = util.interpret_http_exception(e)
+      if code:
+        self.response.status_int = int(code)
+        self.response.headers['Content-Type'] = 'text/plain'
+        self.response.write('%s error:\n%s' % (self.source.GR_CLASS.NAME, body))
+        return
+      else:
+        raise
 
     if not obj:
-      self.abort(404, label)
+      self.abort(404, 'Not found: %s:%s %s %s' %
+                      (source_short_name, string_id, type, ids))
 
     if self.source.is_blocked(obj):
       self.abort(410, 'That user is currently blocked')
@@ -242,6 +235,8 @@ class ItemHandler(util.Handler):
 # Note that mention links are included in posts and comments, but not
 # likes, reposts, or rsvps. Matches logic in poll() (step 4) in tasks.py!
 class PostHandler(ItemHandler):
+  cache = TTLCache(100, CACHE_TIME)
+  @cachedmethod(lambda self: self.cache)
   def get_item(self, id):
     posts = self.source.get_activities(activity_id=id, user_id=self.source.key.id())
     if not posts:
@@ -257,6 +252,8 @@ class PostHandler(ItemHandler):
     return obj
 
 class CommentHandler(ItemHandler):
+  cache = TTLCache(100, CACHE_TIME)
+  @cachedmethod(lambda self: self.cache)
   def get_item(self, post_id, id):
     post = self.get_post(post_id, fetch_replies=True)
     cmt = self.source.get_comment(
@@ -271,6 +268,8 @@ class CommentHandler(ItemHandler):
 
 
 class LikeHandler(ItemHandler):
+  cache = TTLCache(200, CACHE_TIME)
+  @cachedmethod(lambda self: self.cache)
   def get_item(self, post_id, user_id):
     post = self.get_post(post_id, fetch_likes=True)
     like = self.source.get_like(self.source.key.string_id(), post_id, user_id,
@@ -297,6 +296,8 @@ class LikeHandler(ItemHandler):
 
 
 class ReactionHandler(ItemHandler):
+  cache = TTLCache(100, CACHE_TIME)
+  @cachedmethod(lambda self: self.cache)
   def get_item(self, post_id, user_id, reaction_id):
     post = self.get_post(post_id)
     reaction = self.source.gr_source.get_reaction(
@@ -309,6 +310,8 @@ class ReactionHandler(ItemHandler):
 
 
 class RepostHandler(ItemHandler):
+  cache = TTLCache(100, CACHE_TIME)
+  @cachedmethod(lambda self: self.cache)
   def get_item(self, post_id, share_id):
     post = self.get_post(post_id, fetch_shares=True)
     repost = self.source.gr_source.get_share(
@@ -325,6 +328,8 @@ class RepostHandler(ItemHandler):
 
 
 class RsvpHandler(ItemHandler):
+  cache = TTLCache(100, CACHE_TIME)
+  @cachedmethod(lambda self: self.cache)
   def get_item(self, event_id, user_id):
     event = self.source.gr_source.get_event(event_id)
     rsvp = self.source.gr_source.get_rsvp(

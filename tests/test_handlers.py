@@ -56,6 +56,11 @@ class HandlersTest(testutil.HandlerTest):
       'url': 'http://fa.ke/events/123',
     }
 
+    for handler in (handlers.PostHandler, handlers.CommentHandler,
+                    handlers.ReactionHandler, handlers.LikeHandler,
+                    handlers.RepostHandler, handlers.RsvpHandler):
+      handler.cache.clear()
+
   def check_response(self, url_template, expected_body=None, expected_status=200):
     # use an HTTPS request so that URL schemes are converted
     resp = handlers.application.get_response(
