@@ -19,10 +19,12 @@ import contextlib
 import datetime
 import logging
 import re
+import threading
 import time
 import urllib.request, urllib.parse, urllib.error
 
 from appengine_config import DEBUG
+from cachetools import TTLCache
 from google.cloud import error_reporting
 import humanize
 from oauth_dropins.webutil import handlers as webutil_handlers
@@ -110,6 +112,9 @@ webutil_handlers.JINJA_ENV.globals.update({
   'naturaltime': humanize.naturaltime,
 })
 
+webmention_endpoint_cache_lock = threading.RLock()
+webmention_endpoint_cache = TTLCache(500, 60 * 60 * 2)  # 2h expiration
+
 error_reporting_client = error_reporting.Client()
 
 
@@ -160,7 +165,7 @@ def add_discover_task(source, post_id, type=None, **kwargs):
                source.label(), task.name)
 
 def webmention_endpoint_cache_key(url):
-  """Returns memcache key for a cached webmention endpoint for a given URL.
+  """Returns cache key for a cached webmention endpoint for a given URL.
 
   Example: 'W https snarfed.org /'
 
@@ -666,16 +671,3 @@ def unwrap_t_umblr_com(url):
   return (urllib.parse.parse_qs(parsed.query).get('z', [''])[0]
           if parsed.netloc == 't.umblr.com'
           else url)
-
-
-@contextlib.contextmanager
-def cache_time(label, size=None):
-  """Times a block of code, logs the time, and aggregates it in memcache."""
-  start = int(time.clock() * 1000)
-  yield
-  elapsed = int(time.clock() * 1000) - start
-
-  logging.info('Parse time for %s: %dms', label, elapsed)
-  memcache.incr('timed %s' % label, elapsed, initial_value=0)
-  if size:
-    memcache.incr('timed %s size' % label, size, initial_value=0)

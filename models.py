@@ -10,7 +10,6 @@ import re
 import appengine_config
 from appengine_config import HTTP_TIMEOUT
 
-from google.appengine.api import memcache
 from granary import microformats2
 from granary import source as gr_source
 from oauth_dropins.webutil.models import StringIdModel
@@ -858,8 +857,9 @@ class Webmentions(StringIdModel):
     self.sent = self.error = self.failed = self.skipped = []
 
     # clear any cached webmention endpoints
-    memcache.delete_multi(util.webmention_endpoint_cache_key(url)
-                          for url in self.unsent)
+    with util.webmention_endpoint_cache_lock:
+      for url in self.unsent:
+        util.webmention_endpoint_cache.pop(util.webmention_endpoint_cache_key(url), None)
 
     @ndb.transactional
     def finish():

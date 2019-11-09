@@ -13,7 +13,6 @@ import urllib.request, urllib.parse, urllib.error
 
 from appengine_config import HTTP_TIMEOUT
 
-from google.appengine.api import memcache
 from google.appengine.ext import ndb
 from oauth_dropins.webutil.testutil import requests_response
 from oauth_dropins.webutil.util import json_dumps, json_loads
@@ -434,29 +433,6 @@ class UtilTest(testutil.ModelsTest):
 
     for good in 'snarfed.org', 'www.snarfed.org', 't.co.com':
       self.assertFalse(util.in_webmention_blacklist(good), good)
-
-  def test_cache_time(self):
-    self.mox.StubOutWithMock(time, 'clock')
-    time.clock().AndReturn(0.1)
-    time.clock().AndReturn(0.2)
-    time.clock().AndReturn(1.501)
-    time.clock().AndReturn(1.503)
-    self.mox.ReplayAll()
-
-    self.assertIsNone(memcache.get('timed foo'))
-    self.assertIsNone(memcache.get('timed foo size'))
-
-    with util.cache_time('foo'):
-      pass
-
-    self.assertEquals(100, memcache.get('timed foo'))
-    self.assertIsNone(memcache.get('timed foo size'))
-
-    with util.cache_time('foo', 3):
-      pass
-
-    self.assertEquals(102, memcache.get('timed foo'))
-    self.assertEquals(3, memcache.get('timed foo size'))
 
   def test_webmention_endpoint_cache_key(self):
     for expected, url in (

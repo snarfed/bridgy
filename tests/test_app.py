@@ -11,7 +11,6 @@ from future.utils import native_str
 import datetime
 import urllib.request, urllib.parse, urllib.error
 
-from google.appengine.api import memcache
 from google.appengine.ext import ndb
 import mox
 from oauth_dropins.twitter import TwitterAuth
@@ -84,7 +83,7 @@ class AppTest(testutil.ModelsTest):
     SyndicatedPost.insert(source, 'https://fa.ke/3', 'http://orig/3')
 
     # cached webmention endpoint
-    memcache.set('W https skipped /', 'asdf')
+    util.webmention_endpoint_cache['W https skipped /'] = 'asdf'
 
     key = resp.key.urlsafe()
     response = app.application.get_response(
@@ -106,7 +105,7 @@ class AppTest(testutil.ModelsTest):
       self.assertEqual([], field)
 
     # webmention endpoints for URL domains should be refreshed
-    self.assertIsNone(memcache.get('W https skipped /'))
+    self.assertNotIn('W https skipped /', util.webmention_endpoint_cache)
 
     # shouldn't have refetched h-feed
     self.assertEqual(last_hfeed_refetch, source.key.get().last_hfeed_refetch)

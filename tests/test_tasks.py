@@ -20,7 +20,7 @@ import time
 import urllib.request, urllib.parse, urllib.error
 
 import apiclient
-from google.appengine.api import memcache
+from cachetools import TTLCache
 from google.appengine.ext import ndb
 from google.appengine.ext.ndb.model import _MAX_STRING_LENGTH
 import httplib2
@@ -1486,7 +1486,7 @@ class PropagateTest(TaskQueueTest):
       self.assert_response_is('complete', now + LEASE_LENGTH,
                               sent=['http://target1/post/url'], response=r)
       self.assert_equals(now, self.sources[0].key.get().last_webmention_sent)
-      memcache.flush_all()
+      util.webmention_endpoint_cache.clear()
 
   def test_propagate_from_error(self):
     """A normal propagate task, with a response starting as 'error'."""
@@ -1593,24 +1593,14 @@ class PropagateTest(TaskQueueTest):
     self.expect_webmention().AndReturn(True)
     self.mox.ReplayAll()
 
-    # inject a fake time.time into the memcache stub.
-    #
-    # ideally i'd do this:
-    #
-    #   self.testbed.init_memcache_stub(gettime=time_fn)
-    #
-    # but testbed doesn't pass kwargs to the memcache stub ctor like it does for
-    # most other stubs. :( i started to file a patch against the app engine SDK,
-    # but i eventually got impatient and gave up. background:
-    # https://code.google.com/p/googleappengine/
-    # https://code.google.com/p/googleappengine/issues/list?can=1&q=patch&sort=-id
+    # inject a fake time.time into the cache
     now = time.time()
-    self.testbed.get_stub('memcache')._gettime = lambda: now
+    util.webmention_endpoint_cache = TTLCache(500, 2, timer=lambda: now)
 
     self.post_task()
     self.assert_response_is('complete', skipped=['http://target1/post/url'])
 
-    now += tasks.WEBMENTION_DISCOVERY_CACHE_TIME - 1
+    now += 1
     self.responses[0].status = 'new'
     self.responses[0].put()
     self.post_task()

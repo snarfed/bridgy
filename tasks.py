@@ -9,7 +9,6 @@ import gc
 import logging
 import random
 
-from google.appengine.api import memcache
 from google.appengine.ext import ndb
 from google.appengine.ext.ndb.model import _MAX_STRING_LENGTH
 from granary.source import Source
@@ -26,9 +25,6 @@ import original_post_discovery
 import util
 # need to import model class definitions since poll creates and saves entities.
 import blogger, facebook, facebook_email, flickr, github, instagram, mastodon, medium, tumblr, twitter, wordpress_rest
-
-
-WEBMENTION_DISCOVERY_CACHE_TIME = 60 * 60 * 2  # 2h
 
 
 class Poll(webapp2.RequestHandler):
@@ -596,7 +592,7 @@ class SendWebmentions(webapp2.RequestHandler):
       # value is a string URL endpoint if discovery succeeded, a
       # WebmentionSend error dict if it failed (semi-)permanently, or None.
       cache_key = util.webmention_endpoint_cache_key(target)
-      cached = memcache.get(cache_key)
+      cached = util.webmention_endpoint_cache.get(cache_key)
       if cached:
         logging.info('Using cached webmention endpoint %r: %s', cache_key, cached)
 
@@ -622,7 +618,8 @@ class SendWebmentions(webapp2.RequestHandler):
       error_code = error['code'] if error else None
       if error_code != 'BAD_TARGET_URL' and not cached:
         val = error if error_code == 'NO_ENDPOINT' else mention.receiver_endpoint
-        memcache.set(cache_key, val, time=WEBMENTION_DISCOVERY_CACHE_TIME)
+        with util.webmention_endpoint_cache_lock:
+          util.webmention_endpoint_cache[cache_key] = val
 
       if error is None:
         logging.info('Sent! %s', mention.response)

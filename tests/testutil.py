@@ -271,6 +271,8 @@ class HandlerTest(testutil_appengine.HandlerTest):
     # add FakeSource everywhere necessary
     util.BLACKLIST.add('fa.ke')
 
+    util.webmention_endpoint_cache.clear()
+
   def expect_requests_get(self, *args, **kwargs):
     if 'headers' not in kwargs:
       kwargs['headers'] = util.REQUEST_HEADERS
