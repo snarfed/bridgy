@@ -11,7 +11,7 @@ import urllib.request, urllib.error, urllib.parse
 
 import appengine_config
 import mox
-from oauth_dropins.webutil.util import json_dumps, json_loads
+from util import json_dumps, json_loads
 
 import handlers
 import models

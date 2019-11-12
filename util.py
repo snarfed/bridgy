@@ -230,13 +230,9 @@ def requests_post(url, **kwargs):
   return util.requests_post(url, **kwargs)
 
 
-def follow_redirects(url, cache=True):
-  """Wraps :func:`oauth_dropins.webutil.util.follow_redirects` with our settings.
-
-  ...specifically memcache and REQUEST_HEADERS.
-  """
-  return util.follow_redirects(url, cache=memcache if cache else None,
-                               headers=request_headers(url=url))
+def follow_redirects(url):
+  """Wraps :func:`oauth_dropins.webutil.util.follow_redirects` with our headers."""
+  return util.follow_redirects(url, headers=request_headers(url=url))
 
 
 def request_headers(url=None, source=None):
@@ -273,7 +269,7 @@ def get_webmention_target(url, resolve=True, replace_test_domains=True):
   send = True
   if resolve:
     # this follows *all* redirects, until the end
-    resolved = follow_redirects(url, cache=memcache)
+    resolved = follow_redirects(url)
     html = resolved.headers.get('content-type', '').startswith('text/html')
     send = html and resolved.status_code != util.HTTP_RESPONSE_TOO_BIG_STATUS_CODE
     url, domain, _ = get_webmention_target(

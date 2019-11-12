@@ -112,7 +112,6 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.expect_requests_head(
       'http://author/post/will-redirect',
       redirected_url='http://author/post/final')
-    self.expect_requests_head('https://fa.ke/post/url')
 
     self.mox.ReplayAll()
     self.assert_discover(['http://author/post/final'])
@@ -597,12 +596,12 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     <html class="h-feed">
       <div class="h-entry">
         <a class="u-url" href="http://author/post"></a>
-        <a class="u-syndication" href="https://fa.ke/post/url"></a>
+        <a class="u-syndication" href="https://fa.ke/other"></a>
       </div>
     </html>""")
     self.expect_requests_head('http://author/post')
     self.expect_requests_get('http://author/post')
-    self.expect_requests_head('https://fa.ke/post/url', status_code=404)
+    self.expect_requests_head('https://fa.ke/other', status_code=404)
     self.mox.ReplayAll()
 
     self.assert_discover([])
