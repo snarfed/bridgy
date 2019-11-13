@@ -39,7 +39,7 @@ import original_post_discovery
 import util
 
 # Import source class files so their metaclasses are initialized.
-import blogger, facebook, facebook_email, flickr, github, instagram, mastodon, medium, tumblr, twitter, wordpress_rest
+import blogger, facebook, flickr, github, instagram, mastodon, medium, tumblr, twitter, wordpress_rest
 
 CACHE_TIME = 60 * 15  # 15m
 
@@ -135,8 +135,7 @@ class ItemHandler(util.Handler):
     if not self.source:
       self.abort(400, 'Source %s %s not found' % (source_short_name, string_id))
     elif (self.source.status == 'disabled' or
-          ('listen' not in self.source.features and
-           'email' not in self.source.features)):
+          'listen' not in self.source.features):
       self.abort(400, 'Source %s is disabled for backfeed' % self.source.bridgy_path())
 
     format = self.request.get('format', 'html')

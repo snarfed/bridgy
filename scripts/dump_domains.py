@@ -16,7 +16,7 @@ import urllib.parse
 
 import models
 from models import Response
-import blogger, facebook, facebook_email, flickr, github, instagram, mastodon, medium, tumblr, twitter, wordpress_rest
+import blogger, facebook, flickr, github, instagram, mastodon, medium, tumblr, twitter, wordpress_rest
 
 
 domains = collections.defaultdict(int)  # maps domain to # of users

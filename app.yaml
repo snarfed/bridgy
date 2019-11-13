@@ -131,11 +131,6 @@ handlers:
   login: admin
   secure: always
 
-- url: /_ah/mail/.+
-  script: facebook_email.application
-  login: admin
-  secure: always
-
 - url: /cron/.+
   script: cron.application
   login: admin
@@ -158,6 +153,6 @@ handlers:
   script: app.application
   secure: always
 
-- url: /(blogger|facebook(-email)?|fake|flickr|github|googleplus|instagram|mastodon|medium|tumblr|twitter|wordpress)/.+
+- url: /(blogger|facebook|fake|flickr|github|googleplus|instagram|mastodon|medium|tumblr|twitter|wordpress)/.+
   script: app.application
   secure: always

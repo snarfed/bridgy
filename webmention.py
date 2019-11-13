@@ -150,7 +150,7 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
 
   def report_error(self, resp):
     """Report an error to StackDriver Error reporting."""
-    # don't email about specific known failures
+    # don't report specific known failures
     if ('Deadline exceeded while waiting for HTTP response' in resp or
         'urlfetch.Fetch() took too long' in resp or
         # WordPress Jetpack bugs

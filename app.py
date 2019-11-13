@@ -41,7 +41,7 @@ import original_post_discovery
 import util
 
 # import source model class definitions for template rendering
-import blogger, facebook, facebook_email, flickr, github, instagram, mastodon, medium, tumblr, twitter, wordpress_rest
+import blogger, facebook, flickr, github, instagram, mastodon, medium, tumblr, twitter, wordpress_rest
 
 RECENT_PRIVATE_POSTS_THRESHOLD = 5
 
@@ -737,7 +737,7 @@ class GooglePlusIsDeadHandler(util.Handler):
 application = webapp2.WSGIApplication(
   [('/?', FrontPageHandler),
    ('/users/?', UsersHandler),
-   ('/(blogger|facebook-email|fake|fake_blog|flickr|github|instagram|mastodon|medium|tumblr|twitter|wordpress)/([^/]+)/?',
+   ('/(blogger|fake|fake_blog|flickr|github|instagram|mastodon|medium|tumblr|twitter|wordpress)/([^/]+)/?',
     UserHandler),
    ('/facebook/.*', FacebookIsDeadHandler),
    ('/googleplus/.*', GooglePlusIsDeadHandler),

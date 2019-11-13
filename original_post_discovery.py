@@ -44,8 +44,6 @@ from google.appengine.api.datastore import MAX_ALLOWABLE_QUERIES
 import models
 from models import SyndicatedPost
 
-from google.appengine.api import memcache
-
 MAX_PERMALINK_FETCHES = 10
 MAX_PERMALINK_FETCHES_BETA = 50
 MAX_FEED_ENTRIES = 100
@@ -84,7 +82,7 @@ def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True,
     already_fetched_hfeeds = set()
 
   originals, mentions = gr_source.Source.original_post_discovery(
-    activity, domains=source.domains, cache=memcache,
+    activity, domains=source.domains,
     include_redirect_sources=include_redirect_sources,
     headers=util.request_headers(source=source))
 
