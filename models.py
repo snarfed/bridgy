@@ -480,6 +480,8 @@ class Source(with_metaclass(SourceMeta, StringIdModel)):
       user_url: a string, optional. if provided, supersedes other urls when
         determining the author_url
       **kwargs: passed to :meth:`new()`
+
+    Returns: newly created :class:`Source`
     """
     source = cls.new(handler, **kwargs)
     if source is None:
@@ -531,7 +533,7 @@ class Source(with_metaclass(SourceMeta, StringIdModel)):
 
     if 'listen' in source.features:
       util.add_poll_task(source, now=True)
-      util.add_poll_task(source, countdown=source.poll_period().total_seconds())
+      util.add_poll_task(source)
 
     return source
 
@@ -814,7 +816,7 @@ class Webmentions(StringIdModel):
     """
     raise NotImplementedError()
 
-  def add_task(self, **kwargs):
+  def add_task(self):
     """Adds a propagate task for this entity.
 
     To be implemented by subclasses.
@@ -827,22 +829,9 @@ class Webmentions(StringIdModel):
     if existing:
       return existing
 
-    # TODO(ryan): take this out eventually. (and the xg=Trues!) background:
-    # https://github.com/snarfed/bridgy/issues/305#issuecomment-94004416
-    resp_json = getattr(self, 'response_json', None)
-    if resp_json:
-      resp = json_loads(resp_json)
-      fb_id = resp.get('fb_id')
-      if fb_id:
-        tag_fb_id = 'tag:facebook.com,2013:' + fb_id
-        if tag_fb_id != resp.get('id'):
-          resp = Response.get_by_id(tag_fb_id)
-          if resp:
-            return resp
-
     if self.unsent or self.error:
       logging.debug('New webmentions to propagate! %s', self.label())
-      self.add_task(transactional=True)
+      self.add_task()
     else:
       self.status = 'complete'
 
@@ -861,12 +850,11 @@ class Webmentions(StringIdModel):
       for url in self.unsent:
         util.webmention_endpoint_cache.pop(util.webmention_endpoint_cache_key(url), None)
 
-    @ndb.transactional
-    def finish():
-      self.put()
-      self.add_task(transactional=True)
-
-    finish()
+    # this datastore put and task add should be transactional, but Cloud Tasks
+    # doesn't support that :(
+    # https://cloud.google.com/appengine/docs/standard/python/taskqueue/push/migrating-push-queues#features-not-available
+    self.put()
+    self.add_task()
 
 
 class Response(Webmentions):
@@ -894,8 +882,8 @@ class Response(Webmentions):
     return ' '.join((self.key.kind(), self.type, self.key.id(),
                      json_loads(self.response_json).get('url', '[no url]')))
 
-  def add_task(self, **kwargs):
-    util.add_propagate_task(self, **kwargs)
+  def add_task(self):
+    util.add_propagate_task(self)
 
   @staticmethod
   def get_type(obj):
@@ -955,8 +943,8 @@ class BlogPost(Webmentions):
       url = self.feed_item.get('permalinkUrl')
     return ' '.join((self.key.kind(), self.key.id(), url or '[no url]'))
 
-  def add_task(self, **kwargs):
-    util.add_propagate_blogpost_task(self, **kwargs)
+  def add_task(self):
+    util.add_propagate_blogpost_task(self)
 
 
 class PublishedPage(StringIdModel):
