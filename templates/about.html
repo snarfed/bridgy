@@ -507,7 +507,7 @@ clicking the <em>Crawl now</em> button on your user page.
   <li>Retweets are also flaky occasionally. We've seen the API report <code>retweet_count: 0</code> in tweets that do have retweets.
   </li>
   </ul>
-<li>Instagram likes are even worse than Twitter likes. They <a href="https://github.com/snarfed/bridgy/issues/722">only show the first 10 individual likes per photo on the web</a>, and a total count after that, so Bridgy can only backfeed the first 10 likes.
+<li>Instagram likes are even worse than Twitter likes. We have to scrape, which <a href="https://github.com/snarfed/bridgy/issues/898">currently limits us to the first 50 likes per photo</a>. Any likes beyond that won't be backfed.
 </li>
 <li>Have you blocked the author inside the silo? If so, Bridgy won't send you any of their responses. (This is <a href="https://github.com/snarfed/bridgy/issues/764">best effort only for Twitter</a>, due to <a href="https://developer.twitter.com/en/docs/accounts-and-users/mute-block-report-users/api-reference/get-blocks-ids#resource-information">their API's rate limits</a>. In practice, Bridgy will only filter out responses from the first 35,000 users on your Twitter block list.)
 </li>
