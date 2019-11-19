@@ -41,4 +41,4 @@ echo 'Package versions OK.'
 #
 # https://cloud.google.com/appengine/docs/standard/python/tools/uploadinganapp#deploying_an_app
 # https://cloud.google.com/sdk/gcloud/reference/app/deploy
-gcloud -q app deploy --account heaven@gmail.com --project brid-gy --version 8 *.yaml
+gcloud -q app deploy --account heaven@gmail.com --project brid-gy --version 8 app.yaml
