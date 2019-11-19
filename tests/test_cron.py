@@ -64,6 +64,7 @@ class CronTest(HandlerTest):
       allow_redirects=False)
 
   def test_replace_poll_tasks(self):
+    self.assertEqual([], self.taskqueue_stub.GetTasks('poll'))
     now = datetime.datetime.now()
 
     # a bunch of sources, one needs a new poll task
@@ -89,12 +90,13 @@ class CronTest(HandlerTest):
       FakeSource.new(None, features=['listen'], created=month_ago,
                      last_poll_attempt=day_and_half_ago).put(),
       ]
-
-    self.expect_task('poll', source_key=sources[4])
-    self.mox.ReplayAll()
-
     resp = cron.application.get_response('/cron/replace_poll_tasks')
     self.assertEqual(200, resp.status_int)
+
+    tasks = self.taskqueue_stub.GetTasks('poll')
+    self.assertEqual(1, len(tasks))
+    self.assert_equals(sources[4].urlsafe(),
+                       testutil.get_task_params(tasks[0])['source_key'])
 
   def test_update_twitter_pictures(self):
     sources = []

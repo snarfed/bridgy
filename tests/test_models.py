@@ -32,84 +32,70 @@ import wordpress_rest
 
 class ResponseTest(testutil.ModelsTest):
 
-  def test_get_or_save_new(self):
-    """new. should add a propagate task."""
+  def assert_propagate_task(self):
+    tasks = self.taskqueue_stub.GetTasks('propagate')
+    self.assertEqual(1, len(tasks))
+    resp_key = testutil.get_task_params(tasks[0])['response_key']
+    self.assertEqual(self.responses[0].key, ndb.Key(urlsafe=resp_key))
+    self.assertEqual('/_ah/queue/propagate', tasks[0]['url'])
+    self.taskqueue_stub.FlushQueue('propagate')
+
+  def assert_no_propagate_task(self):
+    self.assertEqual(0, len(self.taskqueue_stub.GetTasks('propagate')))
+
+  def test_get_or_save(self):
     response = self.responses[0]
     self.assertEqual(0, Response.query().count())
+    self.assert_no_propagate_task()
 
-    self.expect_task('propagate', response_key=self.responses[0])
-    self.mox.ReplayAll()
-
+    # new. should add a propagate task.
     saved = response.get_or_save(self.sources[0])
     self.assertEqual(response.key, saved.key)
     self.assertEqual(response.source, saved.source)
     self.assertEqual('comment', saved.type)
     self.assertEqual([], saved.old_response_jsons)
+    self.assert_propagate_task()
 
-  def test_get_or_save_existing(self):
-    """existing. shouldn't add a new propagate task."""
-    self.responses[0].put()
-    got = self.responses[0].get_or_save(self.sources[0])
-    self.assert_entities_equal(self.responses[0], got)
+    # existing. no new task.
+    same = saved.get_or_save(self.sources[0])
+    self.assert_entities_equal(saved, same)
+    self.assert_no_propagate_task()
 
-  def test_get_or_save_restart_new(self):
-    response = self.responses[0]
-
-    # should add one propagate task total
-    self.expect_task('propagate', response_key=response)
-    self.mox.ReplayAll()
-
-    response.get_or_save(self.sources[0], restart=True)
-
-  def test_get_or_save_restart_existing(self):
-    response = self.responses[0]
-    response.put()
-
-    # should add a propagate task
-    self.expect_task('propagate', response_key=response)
-    self.mox.ReplayAll()
-
-    response.get_or_save(self.sources[0], restart=True)
-
-  def test_get_or_save_restart_existing_new_synd_url(self):
+  def test_get_or_save_restart(self):
     source = self.sources[0]
     response = self.responses[0]
-    response.put()
 
-    # new syndication URL. should add two unsent URLs.
+    # new. should add one propagate task total.
+    saved = response.get_or_save(source, restart=True)
+    self.assert_propagate_task()
+
+    # existing. should add one more propagate task.
+    saved.get_or_save(source, restart=True)
+    self.assert_propagate_task()
+
+    # new syndication URL. should add two propagate tasks.
     synd = source.canonicalize_url(self.activities[0]['url'])
     SyndicatedPost(parent=source.key, original='http://or/ig',
                    syndication=synd).put()
     SyndicatedPost(parent=source.key, original=None,
                    syndication=synd).put()  # check that we don't die on blanks
 
-    self.expect_task('propagate', response_key=response)
-    self.mox.ReplayAll()
-
     final = response.get_or_save(source, restart=True)
+    self.assert_propagate_task()
     self.assert_equals(['http://or/ig', 'http://target1/post/url'], final.unsent)
 
-  def test_get_or_save_restart_no_activity_urls(self):
     # no activity URLs. should skip SyndicatedPost query.
-    response = self.responses[0]
     response.activities_json = []
     response.put()
-
-    self.expect_task('propagate', response_key=response)
-    self.mox.ReplayAll()
-
-    response.get_or_save(self.sources[0], restart=True)
+    response.get_or_save(source, restart=True)
+    self.assert_propagate_task()
 
   def test_get_or_save_activity_changed(self):
     """If the response activity has changed, we should update and resend."""
     # original response
     response = self.responses[0]
     response.put()
-
-    # should enqueue three propagate tasks total
-    for i in range(3):
-      self.expect_task('propagate', response_key=response)
-    self.mox.ReplayAll()
+    self.assert_no_propagate_task()
 
     # change response content
     old_resp_json = response.response_json
@@ -120,6 +106,7 @@ class ResponseTest(testutil.ModelsTest):
     response = response.get_or_save(self.sources[0])
     self.assert_equals(json_dumps(new_resp_json), response.response_json)
     self.assert_equals([old_resp_json], response.old_response_jsons)
+    self.assert_propagate_task()
 
     # mark response completed, change content again
     def complete():
@@ -145,6 +132,7 @@ class ResponseTest(testutil.ModelsTest):
     self.assertItemsEqual(urls, response.unsent)
     for field in response.sent, response.error, response.failed, response.skipped:
       self.assertEqual([], field)
+    self.assert_propagate_task()
 
     # change Response.type
     complete()
@@ -154,17 +142,14 @@ class ResponseTest(testutil.ModelsTest):
     self.assertItemsEqual(urls, response.unsent)
     for field in response.sent, response.error, response.failed, response.skipped:
       self.assertEqual([], field)
+    self.assert_propagate_task()
 
   def test_get_or_save_objectType_note(self):
-    response = self.responses[0]
-    self.expect_task('propagate', response_key=response)
-    self.mox.ReplayAll()
-
-    response.response_json = json_dumps({
+    self.responses[0].response_json = json_dumps({
       'objectType': 'note',
       'id': 'tag:source.com,2013:1_2_%s' % id,
       })
-    saved = response.get_or_save(self.sources[0])
+    saved = self.responses[0].get_or_save(self.sources[0])
     self.assertEqual('comment', saved.type)
 
   def test_url(self):
@@ -175,6 +160,7 @@ class ResponseTest(testutil.ModelsTest):
     self.responses[0].unsent = []
     saved = self.responses[0].get_or_save(self.sources[0])
     self.assertEqual('complete', saved.status)
+    self.assert_no_propagate_task()
 
   def test_get_type(self):
     self.assertEqual('repost', Response.get_type(
@@ -216,20 +202,24 @@ class SourceTest(testutil.HandlerTest):
                           webmention_endpoint='http://x/y',
                           **kwargs)
     self.assertEqual(1, FakeSource.query().count())
+
+    tasks = self.taskqueue_stub.GetTasks('poll')
+    self.assertEqual(1, len(tasks))
     source = FakeSource.query().get()
+    self.assertEqual('/_ah/queue/poll', tasks[0]['url'])
+    self.assertEqual(source.key.urlsafe(),
+                     testutil.get_task_params(tasks[0])['source_key'])
     self.assertEqual('fake (FakeSource)', source.label())
 
   def test_create_new(self):
     self.assertEqual(0, FakeSource.query().count())
-
-    key = FakeSource.next_key()
-    for queue in 'poll', 'poll-now':
-      self.expect_task(queue, source_key=key, last_polled='1970-01-01-00-00-00')
-    self.mox.ReplayAll()
-
     self._test_create_new(features=['listen'])
     msg = "Added fake (FakeSource). Refresh in a minute to see what we've found!"
     self.assert_equals({msg}, self.handler.messages)
+
+    for queue in 'poll', 'poll-now':
+      task_params = testutil.get_task_params(self.taskqueue_stub.GetTasks(queue)[0])
+      self.assertEqual('1970-01-01-00-00-00', task_params['last_polled'])
 
   def test_get_activities_injects_web_site_urls_into_user_mentions(self):
     source = FakeSource.new(None, domain_urls=['http://site1/', 'http://site2/'])
@@ -284,12 +274,8 @@ class SourceTest(testutil.HandlerTest):
       'last_syndication_url': long_ago + datetime.timedelta(days=4),
       'superfeedr_secret': 'asdfqwert',
       }
-    key = FakeSource.new(None, features=['listen'], **props).put()
+    FakeSource.new(None, features=['listen'], **props).put()
     self.assert_equals(['listen'], FakeSource.query().get().features)
-
-    for queue in 'poll', 'poll-now':
-      self.expect_task(queue, source_key=key, last_polled='1901-02-05-00-00-00')
-    self.mox.ReplayAll()
 
     FakeSource.string_id_counter -= 1
     auth_entity = testutil.FakeAuthEntity(
@@ -306,10 +292,14 @@ class SourceTest(testutil.HandlerTest):
       {"Updated fake (FakeSource). Try previewing a post from your web site!"},
       self.handler.messages)
 
+    task_params = testutil.get_task_params(self.taskqueue_stub.GetTasks('poll')[0])
+    self.assertEqual('1901-02-05-00-00-00', task_params['last_polled'])
+
   def test_create_new_publish(self):
     """If a source is publish only, we shouldn't insert a poll task."""
     FakeSource.create_new(self.handler, features=['publish'])
-    # util.tasks_client is stubbed out, it will complain if it gets called
+    self.assertEqual(0, len(self.taskqueue_stub.GetTasks('poll')))
+    self.assertEqual(0, len(self.taskqueue_stub.GetTasks('poll-now')))
 
   def test_create_new_webmention(self):
     """We should subscribe to webmention sources in Superfeedr."""
@@ -434,16 +424,13 @@ class SourceTest(testutil.HandlerTest):
     FakeSource.create_new(self.handler, name='a ✁ b')
 
   def test_create_new_rereads_domains(self):
-    key = FakeSource.new(None, features=['listen'],
-                         domain_urls=['http://foo'], domains=['foo']).put()
+    FakeSource.new(None, features=['listen'],
+                   domain_urls=['http://foo'], domains=['foo']).put()
 
     FakeSource.string_id_counter -= 1
     auth_entity = testutil.FakeAuthEntity(id='x', user_json=json_dumps(
         {'urls': [{'value': 'http://bar'}, {'value': 'http://baz'}]}))
     self.expect_webmention_requests_get('http://bar/', 'no webmention endpoint')
-
-    for queue in 'poll-now', 'poll':
-      self.expect_task(queue, source_key=key, last_polled='1970-01-01-00-00-00')
 
     self.mox.ReplayAll()
     source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
@@ -671,6 +658,14 @@ class SourceTest(testutil.HandlerTest):
 
 class BlogPostTest(testutil.ModelsTest):
 
+  def assert_propagate_task(self, queue='propagate'):
+    tasks = self.taskqueue_stub.GetTasks('propagate-blogpost')
+    self.assertEqual(1, len(tasks))
+    key = testutil.get_task_params(tasks[0])['key']
+    self.assertEqual(self.blogposts[0].key, ndb.Key(urlsafe=key))
+    self.assertEqual('/_ah/queue/propagate-blogpost', tasks[0]['url'])
+    self.taskqueue_stub.FlushQueue('propagate-blogpost')
+
   def test_label(self):
     for feed_item in None, {}:
       bp = BlogPost(id='x')
@@ -682,11 +677,9 @@ class BlogPostTest(testutil.ModelsTest):
     self.assertEquals('BlogPost x http://perma/link', bp.label())
 
   def test_restart(self):
-    self.expect_task('propagate-blogpost', key=self.blogposts[0])
-    self.mox.ReplayAll()
-
     urls = self.blogposts[0].sent
     self.blogposts[0].restart()
+    self.assert_propagate_task(queue='propagate-blogpost')
 
     blogpost = self.blogposts[0].key.get()
     self.assert_equals(urls, blogpost.unsent)

@@ -18,23 +18,21 @@ from http.cookies import CookieError, SimpleCookie
 import contextlib
 import datetime
 import logging
-import random
 import re
 import threading
 import time
 import urllib.request, urllib.parse, urllib.error
 
-from appengine_config import APP_ID, DEBUG
+from appengine_config import DEBUG
 from cachetools import TTLCache
 from google.cloud import error_reporting
-from google.cloud import tasks_v2
-from google.cloud.tasks_v2.types import Timestamp
 import humanize
 from oauth_dropins.webutil import handlers as webutil_handlers
 from oauth_dropins.webutil.models import StringIdModel
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import *
 
+from google.appengine.api import taskqueue
 from google.appengine.ext import ndb
 from google.net.proto.ProtocolBuffer import ProtocolBufferDecodeError
 
@@ -113,73 +111,57 @@ webutil_handlers.JINJA_ENV.globals.update({
   'naturaltime': humanize.naturaltime,
 })
 
-# https://cloud.google.com/appengine/docs/locations
-TASKS_LOCATION = 'us-central1'
-
 webmention_endpoint_cache_lock = threading.RLock()
 webmention_endpoint_cache = TTLCache(500, 60 * 60 * 2)  # 2h expiration
 
 error_reporting_client = error_reporting.Client()
-tasks_client = tasks_v2.CloudTasksClient()
 
 
-def add_poll_task(source, now=False):
+def add_poll_task(source, now=False, **kwargs):
   """Adds a poll task for the given source entity.
 
   Pass now=True to insert a poll-now task.
   """
-  if now:
-    queue = 'poll-now'
-    eta_seconds = None
-  else:
-    queue = 'poll'
-    # randomize task ETA to within +/- 20% to try to spread out tasks and
-    # prevent thundering herds.
-    eta_seconds = int(source.poll_period().total_seconds() * random.uniform(.8, 1.2))
-
-  add_task(queue, eta_seconds=eta_seconds, source_key=source.key.urlsafe(),
-           last_polled=source.last_polled.strftime(POLL_TASK_DATETIME_FORMAT))
+  last_polled_str = source.last_polled.strftime(POLL_TASK_DATETIME_FORMAT)
+  queue = 'poll-now' if now else 'poll'
+  task = taskqueue.add(queue_name=queue,
+                       params={'source_key': source.key.urlsafe(),
+                               'last_polled': last_polled_str},
+                       target='background',
+                       **kwargs)
+  logging.info('Added %s task %s with args %s', queue, task.name, kwargs)
 
 
-def add_propagate_task(entity):
+def add_propagate_task(entity, **kwargs):
   """Adds a propagate task for the given response entity."""
-  add_task('propagate', response_key=entity.key.urlsafe())
+  task = taskqueue.add(queue_name='propagate',
+                       params={'response_key': entity.key.urlsafe()},
+                       target='background',
+                       **kwargs)
+  logging.info('Added propagate task: %s', task.name)
 
 
-def add_propagate_blogpost_task(entity):
+def add_propagate_blogpost_task(entity, **kwargs):
   """Adds a propagate-blogpost task for the given response entity."""
-  add_task('propagate-blogpost', key=entity.key.urlsafe())
+  task = taskqueue.add(queue_name='propagate-blogpost',
+                       params={'key': entity.key.urlsafe()},
+                       target='background',
+                       **kwargs)
+  logging.info('Added propagate-blogpost task: %s', task.name)
 
-
-def add_discover_task(source, post_id, type=None):
-  """Adds a discover task for the given source and silo post id."""
-  add_task('discover', source_key=source.key.urlsafe(), post_id=post_id, type=type)
-
-
-def add_task(queue, eta_seconds=None, **kwargs):
-  """Adds a Cloud Tasks task for the given entity.
-
-  Args:
-    queue: string, queue name
-    entity: Source or Webmentions instance
-    eta_seconds: integer, optional
-    kwargs: added to task's POST body (form-encoded)
-  """
+def add_discover_task(source, post_id, type=None, **kwargs):
+  """Adds a propagate-blogpost task for the given source and silo post id."""
   params = {
-    'app_engine_http_request': {
-      'http_method': 'POST',
-      'relative_uri': '/_ah/queue/%s' % queue,
-      'app_engine_routing': {'service': 'background'},
-      'body': urllib.urlencode(kwargs),
-    }
+    'source_key': source.key.urlsafe(),
+    'post_id': post_id,
   }
-  if eta_seconds:
-    params['schedule_time'] = Timestamp(seconds=eta_seconds)
+  if type:
+    params['type'] = type
 
-  queue_path = tasks_client.queue_path(APP_ID, TASKS_LOCATION, queue)
-  task = tasks_client.create_task(queue_path, params)
-  logging.info('Added %s task %s with ETA %s', queue, task.name, eta_seconds)
-
+  task = taskqueue.add(queue_name='discover', params=params,
+                       target='background')
+  logging.info('Added discover task for post %s for %s: %s', post_id,
+               source.label(), task.name)
 
 def webmention_endpoint_cache_key(url):
   """Returns cache key for a cached webmention endpoint for a given URL.

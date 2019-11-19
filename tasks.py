@@ -7,6 +7,7 @@ from past.utils import old_div
 import datetime
 import gc
 import logging
+import random
 
 from google.appengine.ext import ndb
 from google.appengine.ext.ndb.model import _MAX_STRING_LENGTH
@@ -107,7 +108,10 @@ class Poll(webapp2.RequestHandler):
     finally:
       source = models.Source.put_updates(source)
 
-    util.add_poll_task(source)
+    # add new poll task. randomize task ETA to within +/- 20% to try to spread
+    # out tasks and prevent thundering herds.
+    task_countdown = source.poll_period().total_seconds() * random.uniform(.8, 1.2)
+    util.add_poll_task(source, countdown=task_countdown)
 
     # feeble attempt to avoid hitting the instance memory limit
     source = None

@@ -5,7 +5,6 @@ granary>=1.13,<2.0
 cachetools
 google-api-python-client>=1.6.5
 google-cloud-error-reporting
-google-cloud-tasks
 humanize
 jinja2>=2.10.0
 lxml==3.7.3

@@ -32,9 +32,14 @@ class SuperfeedrTest(testutil.HandlerTest):
     self.item = {'id': 'A', 'content': 'B'}
     self.feed = json_dumps({'items': [self.item]})
 
-  def assert_blogposts(self, expected):
+  def assert_blogposts(self, expected, tasks=True):
     got = list(BlogPost.query())
     self.assert_entities_equal(expected, got, ignore=('created', 'updated'))
+
+    if tasks:
+      tasks = self.taskqueue_stub.GetTasks('propagate-blogpost')
+      self.assert_equals([{'key': post.key.urlsafe()} for post in expected],
+                         [testutil.get_task_params(t) for t in tasks])
 
   def test_subscribe(self):
     expected = {
@@ -49,29 +54,23 @@ class SuperfeedrTest(testutil.HandlerTest):
     feed = json_dumps({'items': [item_a, {}, item_b]})
     self.expect_requests_post(superfeedr.PUSH_API_URL, feed,
                               data=expected, auth=mox.IgnoreArg())
-
-    post_a = BlogPost(id='A', source=self.source.key, feed_item=item_a,
-                      unsent=['http://a.com/'])
-    post_b = BlogPost(id='B', source=self.source.key, feed_item=item_b,
-                      unsent=['http://b.com/'])
-    self.expect_task('propagate-blogpost', key=post_a)
-    self.expect_task('propagate-blogpost', key=post_b)
     self.mox.ReplayAll()
 
     superfeedr.subscribe(self.source, self.handler)
-    self.assert_blogposts([post_a, post_b])
+    self.assert_blogposts(
+      [BlogPost(id='A', source=self.source.key, feed_item=item_a,
+                unsent=['http://a.com/']),
+       BlogPost(id='B', source=self.source.key, feed_item=item_b,
+                unsent=['http://b.com/']),
+       ])
 
   def test_handle_feed(self):
     item_a = {'permalinkUrl': 'A',
               'content': 'a http://a.com http://foo.com/self/link b'}
-    post_a = BlogPost(id='A', source=self.source.key, feed_item=item_a,
-                      # self link should be discarded
-                      unsent=['http://a.com/'])
-    self.expect_task('propagate-blogpost', key=post_a)
-    self.mox.ReplayAll()
-
     superfeedr.handle_feed(json_dumps({'items': [item_a]}), self.source)
-    self.assert_blogposts([post_a])
+    self.assert_blogposts(
+      [BlogPost(id='A', source=self.source.key, feed_item=item_a,
+                unsent=['http://a.com/'])])  # self link should be discarded
 
   def test_handle_feed_no_items(self):
     superfeedr.handle_feed('{}', self.source)
@@ -91,9 +90,6 @@ class SuperfeedrTest(testutil.HandlerTest):
 
   def test_handle_feed_allows_bridgy_publish_links(self):
     item = {'permalinkUrl': 'A', 'content': 'a https://brid.gy/publish/facebook b'}
-    self.expect_task('propagate-blogpost', key=BlogPost(id='A'))
-    self.mox.ReplayAll()
-
     superfeedr.handle_feed(json_dumps({'items': [item]}), self.source)
     self.assert_equals(['https://brid.gy/publish/facebook'],
                        BlogPost.get_by_id('A').unsent)
@@ -104,13 +100,9 @@ class SuperfeedrTest(testutil.HandlerTest):
       'id': 'A',
       'content': 'x <a href="http://t.umblr.com/redirect?z=http%3A%2F%2Fwrap%2Fped&amp;t=YmZkMzQy..."></a> y',
     }
-    post = BlogPost(id='A', source=self.source.key, feed_item=item,
-                    unsent=['http://wrap/ped'])
-    self.expect_task('propagate-blogpost', key=post)
-    self.mox.ReplayAll()
-
     superfeedr.handle_feed(json_dumps({'items': [item]}), self.source)
-    self.assert_blogposts([post])
+    self.assert_blogposts([BlogPost(id='A', source=self.source.key,
+                                    feed_item=item, unsent=['http://wrap/ped'])])
 
   def test_handle_feed_cleans_links(self):
     item = {
@@ -118,26 +110,18 @@ class SuperfeedrTest(testutil.HandlerTest):
       'id': 'A',
       'content': 'x <a href="http://abc?source=rss----12b80d28f892---4',
     }
-    post = BlogPost(id='A', source=self.source.key, feed_item=item,
-                    unsent=['http://abc/'])
-    self.expect_task('propagate-blogpost', key=post)
-    self.mox.ReplayAll()
-
     superfeedr.handle_feed(json_dumps({'items': [item]}), self.source)
-    self.assert_blogposts([post])
+    self.assert_blogposts([BlogPost(id='A', source=self.source.key,
+                                    feed_item=item, unsent=['http://abc/'])])
 
   def test_notify_handler(self):
     item = {'id': 'X', 'content': 'a http://x/y z'}
-    post = BlogPost(id='X', source=self.source.key, feed_item=item,
-                    unsent=['http://x/y'])
-    self.expect_task('propagate-blogpost', key=post)
-    self.mox.ReplayAll()
-
     self.feed = json_dumps({'items': [item]})
     resp = fake_app.get_response('/notify/foo.com', method='POST', body=self.feed)
 
     self.assertEquals(200, resp.status_int)
-    self.assert_blogposts([post])
+    self.assert_blogposts([BlogPost(id='X', source=self.source.key,
+                                    feed_item=item, unsent=['http://x/y'])])
 
   def test_notify_url_too_long(self):
     item = {'id': 'X' * (_MAX_KEYPART_BYTES + 1), 'content': 'a http://x/y z'}
@@ -147,21 +131,22 @@ class SuperfeedrTest(testutil.HandlerTest):
     self.assertEquals(200, resp.status_int)
     self.assert_blogposts([BlogPost(id='X' * _MAX_KEYPART_BYTES,
                                     source=self.source.key, feed_item=item,
-                                    failed=['http://x/y'], status='complete')])
+                                    failed=['http://x/y'],
+                                    status='complete')],
+                          tasks=False)
 
   def test_notify_link_too_long(self):
     too_long = 'http://a/' + 'b' * _MAX_STRING_LENGTH
     item = {'id': 'X', 'content': 'a http://x/y %s z' % too_long}
-    post = BlogPost(id='X', source=self.source.key, feed_item=item,
-                    unsent=['http://x/y'], status='new')
-    self.expect_task('propagate-blogpost', key=post)
-    self.mox.ReplayAll()
-
     self.feed = json_dumps({'items': [item]})
     resp = fake_app.get_response('/notify/foo.com', method='POST', body=self.feed)
 
     self.assertEquals(200, resp.status_int)
-    self.assert_blogposts([post])
+    self.assert_blogposts([BlogPost(id='X',
+                                    source=self.source.key, feed_item=item,
+                                    unsent=['http://x/y'],
+                                    status='new')],
+                          tasks=False)
 
   def test_notify_utf8(self):
     """Check that we handle unicode chars in content ok, including logging."""
@@ -171,4 +156,5 @@ class SuperfeedrTest(testutil.HandlerTest):
     self.assertEquals(200, resp.status_int)
     self.assert_blogposts([BlogPost(id='X', source=self.source.key,
                                     feed_item={'id': 'X', 'content': 'a ☕ z'},
-                                    status='complete')])
+                                    status='complete')],
+                          tasks=False)
