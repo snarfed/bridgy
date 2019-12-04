@@ -1,17 +1,11 @@
-oauth-dropins>=1.13
-granary>=1.13,<2.0
--e git+git@github.com:PythonCharmers/python-future.git@master#egg=future
--e git+https://github.com/snarfed/gdata-python-client-1.git@blogger_id_parsing#egg=gdata
-cachetools
-google-api-python-client>=1.6.5
-google-cloud-error-reporting
-humanize
-jinja2>=2.10.0
-lxml==3.7.3
-mf2util>=0.5.0
-oauth2client
-requests>=2.10.0
-requests-toolbelt>=0.6.2
--e git+https://github.com/snarfed/webmention-tools.git#egg=webmentiontools
-ujson>=1.35
-urllib3>=1.14
+-e git+git@github.com:snarfed/granary.git#egg=granary-master
+-e git+git@github.com:snarfed/oauth-dropins.git#egg=oauth_dropins-master
+-e git+git@github.com/snarfed/webmention-tools.git#egg=webmentiontools
+cachetools~=3.1
+gdata-python3~=3.0
+google-cloud-error-reporting~=0.33
+granary~=3.0
+humanize~=0.5
+mf2util~=0.5
+oauth-dropins~=3.0
+requests~=2.22

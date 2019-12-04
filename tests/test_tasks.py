@@ -25,7 +25,6 @@ from google.appengine.ext import ndb
 from google.appengine.ext.ndb.model import _MAX_STRING_LENGTH
 import httplib2
 from oauth_dropins.webutil.util import json_dumps, json_loads
-from oauth2client.client import AccessTokenRefreshError
 import requests
 from webmentiontools import send
 
@@ -853,8 +852,6 @@ class PollTest(TaskQueueTest):
           urllib.error.HTTPError('url', 401, 'msg', {}, io.StringIO('body')),
           urllib.error.HTTPError('url', 400, 'foo', {}, io.StringIO(
             '{"meta":{"error_type":"OAuthAccessTokenException"}}')),
-          AccessTokenRefreshError('invalid_grant'),
-          AccessTokenRefreshError('invalid_grant: Token has been revoked.'),
       ):
         self.mox.UnsetStubs()
         self.setUp()

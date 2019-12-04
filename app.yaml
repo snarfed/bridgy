@@ -2,13 +2,8 @@
 
 # application: brid-gy
 # version: 8
-runtime: python27
-threadsafe: yes
-api_version: 1
+runtime: python37
 default_expiration: 1h
-
-includes:
-  - local/lib/python2.7/site-packages/oauth_dropins/webutil/app.common.yaml
 
 # background: https://github.com/snarfed/bridgy/issues/578
 automatic_scaling:
@@ -16,23 +11,6 @@ automatic_scaling:
   # max_idle_instances: 1
   max_pending_latency: 100ms  # default is 30
   max_concurrent_requests: 12
-
-libraries:
-# *not* jinja2 because app engine's built in is 2.6, so we bundle our own 2.10
-- name: lxml
-  version: latest
-- name: protobuf
-  version: latest
-- name: ssl
-  version: latest
-- name: ujson
-  version: latest
-- name: webob
-  version: latest
-
-inbound_services:
-- mail
-- warmup
 
 handlers:
 

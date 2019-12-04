@@ -27,12 +27,6 @@ FACEBOOK_TEST_USER_TOKEN = (os.getenv('FACEBOOK_TEST_USER_TOKEN') or
 SUPERFEEDR_TOKEN = read('superfeedr_token')
 SUPERFEEDR_USERNAME = read('superfeedr_username')
 
-# Make requests and urllib3 play nice with App Engine.
-# https://github.com/snarfed/bridgy/issues/396
-# http://stackoverflow.com/questions/34574740
-from requests_toolbelt.adapters import appengine
-appengine.monkeypatch()
-
 # Stub out the multiprocessing module. it's not supported on App Engine
 # Standard, but humanfriendly uses it for some terminal animation thing that we
 # don't need.

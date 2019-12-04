@@ -1,15 +1,1 @@
-oauth-dropins>=2.0
-granary>=2.1
--e git+git@github.com:snarfed/python-future.git@all#egg=future
--e git+https://github.com/snarfed/gdata-python-client-1.git@blogger_id_parsing#egg=gdata
-google-api-python-client>=1.6.5
-humanize
-jinja2>=2.10.0
-lxml==3.7.3
-mf2util>=0.5.0
-oauth2client
-requests>=2.10.0
-requests-toolbelt>=0.6.2
--e git+https://github.com/snarfed/webmention-tools.git#egg=webmentiontools
-urllib3>=1.14
-appengine-sdk>=1.9.40.post0
+../requirements.txt
