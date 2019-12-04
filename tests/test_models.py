@@ -9,9 +9,9 @@ import datetime
 from unittest import skip
 
 import appengine_config
-from google.appengine.ext import ndb
+from google.cloud import ndb
 from granary import source as gr_source
-import mox
+from mox3 import mox
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
 

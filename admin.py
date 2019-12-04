@@ -13,7 +13,7 @@ from oauth_dropins.webutil import handlers
 from models import BlogPost, Response, Source
 import util
 
-from google.appengine.ext import ndb
+from google.cloud import ndb
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import webapp2
 

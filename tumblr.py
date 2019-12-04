@@ -36,7 +36,7 @@ from webob import exc
 
 import appengine_config
 
-from google.appengine.ext import ndb
+from google.cloud import ndb
 from oauth_dropins import tumblr as oauth_tumblr
 from oauth_dropins.webutil.handlers import JINJA_ENV
 from oauth_dropins.webutil.util import json_dumps, json_loads

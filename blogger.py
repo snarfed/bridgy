@@ -35,8 +35,8 @@ import appengine_config
 
 from gdata.blogger.client import Query
 from gdata.client import Error
-from google.appengine.ext import ndb
-from oauth_dropins import blogger_v2 as oauth_blogger
+from google.cloud import ndb
+from oauth_dropins import blogger as oauth_blogger
 from oauth_dropins.webutil.handlers import JINJA_ENV
 
 import models
@@ -76,7 +76,7 @@ class Blogger(models.Source):
 
     Args:
       handler: the current :class:`webapp2.RequestHandler`
-      auth_entity: :class:`oauth_dropins.blogger_v2.BloggerV2Auth`
+      auth_entity: :class:`oauth_dropins.blogger.BloggerUser`
       blog_id: which blog. optional. if not provided, uses the first available.
     """
     urls, domains = Blogger._urls_and_domains(auth_entity, blog_id=blog_id)

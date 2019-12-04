@@ -8,7 +8,7 @@ import models
 import util
 import webapp2
 
-from google.appengine.ext import ndb
+from google.cloud import ndb
 from granary import flickr as gr_flickr
 from granary.source import SELF
 from oauth_dropins import flickr as oauth_flickr

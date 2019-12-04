@@ -17,7 +17,7 @@ import logging
 
 import appengine_config
 
-from google.appengine.ext import ndb
+from google.cloud import ndb
 from oauth_dropins import medium as oauth_medium
 from oauth_dropins.webutil.handlers import JINJA_ENV
 from oauth_dropins.webutil.util import json_dumps, json_loads

@@ -14,7 +14,7 @@ import urllib.request, urllib.parse, urllib.error
 import appengine_config
 
 from granary import source as gr_source
-import mox
+from mox3 import mox
 from oauth_dropins.webutil.testutil import requests_response
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests

@@ -29,7 +29,7 @@ import urllib.request, urllib.parse, urllib.error
 
 import appengine_config
 
-from google.appengine.ext import ndb
+from google.cloud import ndb
 from oauth_dropins import wordpress_rest as oauth_wordpress
 from oauth_dropins.webutil.handlers import JINJA_ENV
 from oauth_dropins.webutil.util import json_dumps, json_loads

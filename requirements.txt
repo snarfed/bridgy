@@ -1,6 +1,6 @@
 -e git+git@github.com:snarfed/granary.git#egg=granary-master
 -e git+git@github.com:snarfed/oauth-dropins.git#egg=oauth_dropins-master
--e git+git@github.com/snarfed/webmention-tools.git#egg=webmentiontools
+-e git+git@github.com/snarfed/webmention-tools.git#webmentiontools-python3
 cachetools~=3.1
 gdata-python3~=3.0
 google-cloud-error-reporting~=0.33

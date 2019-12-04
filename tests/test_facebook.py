@@ -16,7 +16,7 @@ import urllib.error, urllib.parse, urllib.request
 
 import appengine_config
 
-from google.appengine.ext import ndb
+from google.cloud import ndb
 import granary
 from granary.facebook import API_COMMENTS_ALL, API_NEWS_PUBLISHES, \
   API_PHOTOS_UPLOADED, API_OBJECT, API_PUBLISH_POST, API_SHARES, API_USER_EVENTS

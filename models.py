@@ -20,7 +20,7 @@ from webmentiontools import send
 import superfeedr
 import util
 
-from google.appengine.ext import ndb
+from google.cloud import ndb
 from future.utils import with_metaclass
 
 VERB_TYPES = ('post', 'comment', 'like', 'react', 'repost', 'rsvp', 'tag')

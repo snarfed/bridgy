@@ -13,7 +13,7 @@ import urllib.request, urllib.parse, urllib.error
 
 from appengine_config import HTTP_TIMEOUT
 
-from google.appengine.ext import ndb
+from google.cloud import ndb
 from oauth_dropins.webutil.testutil import requests_response
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests

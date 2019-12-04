@@ -11,8 +11,8 @@ from future.utils import native_str
 import datetime
 import urllib.request, urllib.parse, urllib.error
 
-from google.appengine.ext import ndb
-import mox
+from google.cloud import ndb
+from mox3 import mox
 from oauth_dropins.twitter import TwitterAuth
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import tweepy

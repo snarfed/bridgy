@@ -13,10 +13,10 @@ import urllib.request, urllib.parse, urllib.error
 
 import appengine_config
 
-from google.appengine.ext import ndb
-from google.appengine.ext.ndb.stats import KindStat, KindPropertyNameStat
+from google.cloud import ndb
+from google.cloud.ndb.stats import KindStat, KindPropertyNameStat
 from oauth_dropins import (
-  blogger_v2 as oauth_blogger_v2,
+  blogger as oauth_blogger,
   facebook as oauth_facebook,
   flickr as oauth_flickr,
   github as oauth_github,

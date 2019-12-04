@@ -33,7 +33,7 @@ import logging
 import urllib.request, urllib.parse, urllib.error
 
 import appengine_config
-from google.appengine.ext import ndb
+from google.cloud import ndb
 from granary import facebook as gr_facebook
 from granary import source as gr_source
 from oauth_dropins import facebook as oauth_facebook

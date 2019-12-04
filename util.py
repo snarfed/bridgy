@@ -33,7 +33,7 @@ from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import *
 
 from google.appengine.api import taskqueue
-from google.appengine.ext import ndb
+from google.cloud import ndb
 from google.net.proto.ProtocolBuffer import ProtocolBufferDecodeError
 
 # when running in dev_appserver, replace these domains in links with localhost

@@ -16,8 +16,7 @@ import urllib.request, urllib.parse, urllib.error
 import appengine_config
 
 from granary import source as gr_source
-from google.appengine.datastore import datastore_stub_util
-from google.appengine.ext import ndb
+from google.cloud import ndb
 from models import BlogPost, Publish, PublishedPage, Response, Source
 from oauth_dropins import handlers as oauth_handlers
 from oauth_dropins.models import BaseAuth
@@ -259,13 +258,6 @@ class HandlerTest(testutil.HandlerTest):
     FakeGrSource.clear()
     util.now_fn = lambda: NOW
 
-    # we use global queries in tests to verify entities in the datastore, so
-    # make the datastore stub always return consistent data. not ideal, since it
-    # doesn't simulate eventual consistency, but oh well.
-    # https://cloud.google.com/appengine/docs/python/tools/localunittesting#Python_Writing_High_Replication_Datastore_tests
-    policy = datastore_stub_util.PseudoRandomHRConsistencyPolicy(probability=1)
-    self.testbed.init_datastore_v3_stub(consistency_policy=policy)
-
     # add FakeSource everywhere necessary
     util.BLACKLIST.add('fa.ke')
 
@@ -299,7 +291,6 @@ class ModelsTest(HandlerTest):
     responses: list of unsaved Response
     publishes: list of one unsaved Publish
     blogposts: list of one unsaved BlogPost
-    taskqueue_stub: the app engine task queue api proxy stub
   """
 
   def setUp(self):

@@ -6,7 +6,7 @@ from __future__ import absolute_import
 
 from builtins import next
 
-import mox
+from mox3 import mox
 from oauth_dropins.tumblr import TumblrAuth
 from oauth_dropins.webutil.util import json_dumps, json_loads
 from webob import exc

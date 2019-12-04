@@ -37,7 +37,7 @@ import urllib.request, urllib.parse, urllib.error
 
 import appengine_config
 
-from google.appengine.ext import ndb
+from google.cloud import ndb
 from granary import microformats2
 from granary import source as gr_source
 from oauth_dropins import (

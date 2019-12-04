@@ -12,7 +12,7 @@ import logging
 import math
 
 import appengine_config
-from google.appengine.ext import ndb
+from google.cloud import ndb
 import http.client
 from oauth_dropins.webutil.util import json_dumps, json_loads
 

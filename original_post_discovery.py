@@ -40,13 +40,16 @@ import util
 
 from granary import microformats2
 from granary import source as gr_source
-from google.appengine.api.datastore import MAX_ALLOWABLE_QUERIES
 import models
 from models import SyndicatedPost
 
 MAX_PERMALINK_FETCHES = 10
 MAX_PERMALINK_FETCHES_BETA = 50
 MAX_FEED_ENTRIES = 100
+# this was 30 in google.appengine.ext.ndb. haven't found it in google.cloud.ndb
+# yet, or whether it's even there at all, but we only rarely hit it anyway, so
+# let's just keep it as is for now.
+MAX_ALLOWABLE_QUERIES = 30
 
 
 def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True,

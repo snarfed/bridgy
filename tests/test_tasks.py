@@ -12,7 +12,7 @@ import copy
 import datetime
 import http.client
 import logging
-import mox
+from mox3 import mox
 import socket
 import string
 import io
@@ -21,8 +21,8 @@ import urllib.request, urllib.parse, urllib.error
 
 import apiclient
 from cachetools import TTLCache
-from google.appengine.ext import ndb
-from google.appengine.ext.ndb.model import _MAX_STRING_LENGTH
+from google.cloud import ndb
+from google.cloud.ndb._datastore_types import _MAX_STRING_LENGTH
 import httplib2
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
