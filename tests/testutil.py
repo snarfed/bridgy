@@ -15,15 +15,16 @@ import urllib.request, urllib.parse, urllib.error
 
 import appengine_config
 
-from granary import source as gr_source
 from google.cloud import ndb
-from models import BlogPost, Publish, PublishedPage, Response, Source
+from google.cloud.tasks_v2.types import Task
+from granary import source as gr_source
 from oauth_dropins import handlers as oauth_handlers
 from oauth_dropins.models import BaseAuth
-from oauth_dropins.webutil.testutil import HandlerTest, get_task_eta, get_task_params
+from oauth_dropins.webutil.testutil import HandlerTest
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
 
+from models import BlogPost, Publish, PublishedPage, Response, Source
 import util
 
 NOW = datetime.datetime.utcnow()
@@ -244,6 +245,10 @@ class FakeSource(Source):
     self.is_saved = True
     return super(FakeSource, self).put(**kwargs)
 
+  @classmethod
+  def next_key(cls):
+    return ndb.Key(cls, native_str(cls.string_id_counter))
+
 
 class FakeBlogSource(FakeSource):
   SHORT_NAME = 'fake_blog'
@@ -262,6 +267,51 @@ class HandlerTest(testutil.HandlerTest):
     util.BLACKLIST.add('fa.ke')
 
     util.webmention_endpoint_cache.clear()
+    self.stubbed_create_task = False
+    util.tasks_client.create_task = lambda *args, **kwargs: Task(name='foo')
+
+  def expect_task(self, queue, eta_seconds=None, **kwargs):
+    if not self.stubbed_create_task:
+      self.mox.StubOutWithMock(util.tasks_client, 'create_task')
+      self.stubbed_create_task = True
+
+    def check_queue(path):
+      if not path.endswith('/' + queue):
+        # print("expect_task: %s doesn't end with /%s!" % (path, queue))
+        return False
+      return True
+
+    def check_params(params):
+      req = params['app_engine_http_request']
+      if not check_queue(req['relative_uri']):
+        return False
+
+      # convert model objects and keys to url-safe key strings for comparison
+      for name, val in kwargs.items():
+        if isinstance(val, ndb.Model):
+          kwargs[name] = val.key.urlsafe()
+        elif isinstance(val, ndb.Key):
+          kwargs[name] = val.urlsafe()
+
+      body = set(urllib.parse.parse_qsl(req['body']))
+      diff = set(kwargs.items()) - body
+      if diff:
+        # print('expect_task: %s not found in %s' % (diff, body))
+        return False
+
+      if eta_seconds is not None:
+        got =  params['schedule_time'].seconds
+        delta = eta_seconds * .2 + 10
+        if not (got + delta >= eta_seconds >= got - delta):
+          # print('expect_task: expected schedule_time %s, got %s' %
+          #       (eta_seconds, params['schedule_time'].seconds))
+          return False
+
+      return True
+
+    return util.tasks_client.create_task(
+      mox.Func(check_queue), mox.Func(check_params)
+    ).InAnyOrder().AndReturn(Task(name='my task'))
 
   def expect_requests_get(self, *args, **kwargs):
     if 'headers' not in kwargs:

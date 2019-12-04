@@ -7,7 +7,6 @@ from past.utils import old_div
 import datetime
 import gc
 import logging
-import random
 
 from google.cloud import ndb
 from google.cloud.ndb._datastore_types import _MAX_STRING_LENGTH
@@ -108,10 +107,7 @@ class Poll(webapp2.RequestHandler):
     finally:
       source = models.Source.put_updates(source)
 
-    # add new poll task. randomize task ETA to within +/- 20% to try to spread
-    # out tasks and prevent thundering herds.
-    task_countdown = source.poll_period().total_seconds() * random.uniform(.8, 1.2)
-    util.add_poll_task(source, countdown=task_countdown)
+    util.add_poll_task(source)
 
     # feeble attempt to avoid hitting the instance memory limit
     source = None
