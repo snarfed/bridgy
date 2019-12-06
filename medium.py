@@ -178,11 +178,11 @@ class SuperfeedrNotifyHandler(superfeedr.NotifyHandler):
 
 
 application = webapp2.WSGIApplication([
-    # https://github.com/Medium/medium-api-docs#user-content-21-browser-based-authentication
-    ('/medium/start', util.oauth_starter(oauth_medium.StartHandler).to(
-      '/medium/choose_blog', scopes=('basicProfile', 'listPublications'))),
-    ('/medium/add', AddMedium),
-    ('/medium/choose_blog', ChooseBlog),
-    ('/medium/delete/finish', oauth_medium.CallbackHandler.to('/delete/finish')),
-    ('/medium/notify/(.+)', SuperfeedrNotifyHandler),
-    ], debug=appengine_config.DEBUG)
+  # https://github.com/Medium/medium-api-docs#user-content-21-browser-based-authentication
+  ('/medium/start', util.oauth_starter(oauth_medium.StartHandler).to(
+    '/medium/choose_blog', scopes=('basicProfile', 'listPublications'))),
+  ('/medium/add', AddMedium),
+  ('/medium/choose_blog', ChooseBlog),
+  ('/medium/delete/finish', oauth_medium.CallbackHandler.to('/delete/finish')),
+  ('/medium/notify/(.+)', SuperfeedrNotifyHandler),
+], debug=appengine_config.DEBUG)

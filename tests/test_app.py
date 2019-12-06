@@ -95,7 +95,7 @@ class AppTest(testutil.ModelsTest):
     # status and URLs should be refreshed
     got = resp.key.get()
     self.assertEqual('new', got.status)
-    self.assertItemsEqual(
+    self.assertCountEqual(
       ['http://unsent/', 'http://sent/', 'https://skipped/', 'http://error/',
        'http://failed/', 'https://orig/1', 'http://orig/2', 'http://orig/3'],
       got.unsent)
@@ -703,7 +703,7 @@ class DiscoverTest(testutil.ModelsTest):
     self.check_discover('http://si.te/123',
         'Discovering now. Refresh in a minute to see the results!')
 
-    self.assertItemsEqual([
+    self.assertCountEqual([
       {'https://fa.ke/222': 'http://si.te/123'},
       {'https://fa.ke/post/444': 'http://si.te/123'},
       ], [{sp.syndication: sp.original} for sp in models.SyndicatedPost.query()])

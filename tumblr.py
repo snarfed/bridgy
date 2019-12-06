@@ -270,13 +270,13 @@ class SuperfeedrNotifyHandler(superfeedr.NotifyHandler):
   SOURCE_CLS = Tumblr
 
 
-application = webapp2.WSGIApplication([
-    # Tumblr doesn't seem to use scope
-    # http://www.tumblr.com/docs/en/api/v2#oauth
-    ('/tumblr/start', util.oauth_starter(oauth_tumblr.StartHandler).to(
-      '/tumblr/choose_blog')),
-    ('/tumblr/choose_blog', ChooseBlog),
-    ('/tumblr/add', AddTumblr),
-    ('/tumblr/delete/finish', oauth_tumblr.CallbackHandler.to('/delete/finish')),
-    ('/tumblr/notify/(.+)', SuperfeedrNotifyHandler),
-    ], debug=appengine_config.DEBUG)
+ROUTES = [
+  # Tumblr doesn't seem to use scope
+  # http://www.tumblr.com/docs/en/api/v2#oauth
+  ('/tumblr/start', util.oauth_starter(oauth_tumblr.StartHandler).to(
+    '/tumblr/choose_blog')),
+  ('/tumblr/choose_blog', ChooseBlog),
+  ('/tumblr/add', AddTumblr),
+  ('/tumblr/delete/finish', oauth_tumblr.CallbackHandler.to('/delete/finish')),
+  ('/tumblr/notify/(.+)', SuperfeedrNotifyHandler),
+]

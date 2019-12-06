@@ -15,19 +15,7 @@ import appengine_config
 
 from google.cloud import ndb
 from google.cloud.ndb.stats import KindStat, KindPropertyNameStat
-from oauth_dropins import (
-  blogger as oauth_blogger,
-  facebook as oauth_facebook,
-  flickr as oauth_flickr,
-  github as oauth_github,
-  indieauth,
-  instagram as oauth_instagram,
-  medium as oauth_medium,
-  mastodon as oauth_mastodon,
-  tumblr as oauth_tumblr,
-  twitter as oauth_twitter,
-  wordpress_rest as oauth_wordpress_rest,
-)
+from oauth_dropins import indieauth
 from oauth_dropins.webutil import handlers as webutil_handlers
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import webapp2
@@ -40,8 +28,27 @@ from models import BlogPost, BlogWebmention, Publish, Response, Source, Webmenti
 import original_post_discovery
 import util
 
-# import source model class definitions for template rendering
-import blogger, facebook, flickr, github, instagram, mastodon, medium, tumblr, twitter, wordpress_rest
+# import handler classes for URL routes, and for source model class definitions
+# for template rendering.
+MODULES = [importlib.import_module(name) for name in (
+  'admin',
+  'blog_webmention',
+  'blogger',
+  'cron',
+  'facebook',
+  'flickr',
+  'github',
+  'handlers',
+  'instagram',
+  'logs',
+  'mastodon',
+  'medium',
+  'publish',
+  'tasks',
+  'tumblr',
+  'twitter',
+  'wordpress_rest',
+)]
 
 RECENT_PRIVATE_POSTS_THRESHOLD = 5
 
@@ -734,7 +741,7 @@ class GooglePlusIsDeadHandler(util.Handler):
 
 
 
-application = webapp2.WSGIApplication(
+application = webutil_handlers.ndb_context_middleware(webapp2.WSGIApplication(
   [('/?', FrontPageHandler),
    ('/users/?', UsersHandler),
    ('/(blogger|fake|fake_blog|flickr|github|instagram|mastodon|medium|tumblr|twitter|wordpress)/([^/]+)/?',
@@ -753,4 +760,5 @@ application = webapp2.WSGIApplication(
    ('/logout', LogoutHandler),
    ('/csp-report', CspReportHandler),
    ('/_ah/warmup', WarmupHandler),
-   ], debug=appengine_config.DEBUG)
+   ] + [module.ROUTES for module in MODULES],
+  debug=appengine_config.DEBUG, client=appengine_config.ndb_client)

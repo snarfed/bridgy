@@ -43,7 +43,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
                       discover(source or self.source, self.activity, **kwargs))
 
   def assert_syndicated_posts(self, *expected):
-    self.assertItemsEqual(expected,
+    self.assertCountEqual(expected,
                           [(r.original, r.syndication) for r in
                            SyndicatedPost.query(ancestor=self.source.key)])
 

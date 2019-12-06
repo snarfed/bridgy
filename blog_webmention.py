@@ -234,7 +234,6 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
 
 
 
-application = webapp2.WSGIApplication([
-    ('/webmention/(blogger|fake|tumblr|wordpress)', BlogWebmentionHandler),
-    ],
-  debug=appengine_config.DEBUG)
+ROUTES = [
+  ('/webmention/(blogger|fake|tumblr|wordpress)', BlogWebmentionHandler),
+]

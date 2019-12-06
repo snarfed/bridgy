@@ -849,9 +849,9 @@ class PropagateBlogPost(SendWebmentions):
     return self.entity.key.id()
 
 
-application = webapp2.WSGIApplication([
-    ('/_ah/queue/poll(-now)?', Poll),
-    ('/_ah/queue/discover', Discover),
-    ('/_ah/queue/propagate', PropagateResponse),
-    ('/_ah/queue/propagate-blogpost', PropagateBlogPost),
-    ], debug=appengine_config.DEBUG)
+ROUTES = [
+  ('/_ah/queue/poll(-now)?', Poll),
+  ('/_ah/queue/discover', Discover),
+  ('/_ah/queue/propagate', PropagateResponse),
+  ('/_ah/queue/propagate-blogpost', PropagateBlogPost),
+]

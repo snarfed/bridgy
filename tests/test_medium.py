@@ -56,6 +56,7 @@ class MediumTest(testutil.HandlerTest):
 
   def tearDown(self):
     appengine_config.DEBUG = self.orig_debug
+    super(MediumTest, self).tearDown()
 
   def expect_requests_get(self, path, *args, **kwargs):
     return super(testutil.HandlerTest, self).expect_requests_get(

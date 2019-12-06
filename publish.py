@@ -745,14 +745,13 @@ class WebmentionHandler(Handler):
     return False
 
 
-application = webapp2.WSGIApplication([
-    ('/publish/preview', PreviewHandler),
-    ('/publish/webmention', WebmentionHandler),
-    ('/publish/(facebook|flickr|github|mastodon|twitter)',
-     webmention.WebmentionGetHandler),
-    ('/publish/flickr/finish', FlickrSendHandler),
-    ('/publish/github/finish', GitHubSendHandler),
-    ('/publish/mastodon/finish', MastodonSendHandler),
-    ('/publish/twitter/finish', TwitterSendHandler),
-    ],
-  debug=appengine_config.DEBUG)
+ROUTES = [
+  ('/publish/preview', PreviewHandler),
+  ('/publish/webmention', WebmentionHandler),
+  ('/publish/(facebook|flickr|github|mastodon|twitter)',
+   webmention.WebmentionGetHandler),
+  ('/publish/flickr/finish', FlickrSendHandler),
+  ('/publish/github/finish', GitHubSendHandler),
+  ('/publish/mastodon/finish', MastodonSendHandler),
+  ('/publish/twitter/finish', TwitterSendHandler),
+]

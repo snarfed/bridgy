@@ -150,9 +150,9 @@ def maybe_update_picture(source, new_actor, handler):
   return True
 
 
-application = webapp2.WSGIApplication([
-    ('/cron/replace_poll_tasks', ReplacePollTasks),
-    ('/cron/update_twitter_pictures', UpdateTwitterPictures),
-    ('/cron/update_instagram_pictures', UpdateInstagramPictures),
-    ('/cron/update_flickr_pictures', UpdateFlickrPictures),
-], debug=appengine_config.DEBUG)
+ROUTES = [
+  ('/cron/replace_poll_tasks', ReplacePollTasks),
+  ('/cron/update_twitter_pictures', UpdateTwitterPictures),
+  ('/cron/update_instagram_pictures', UpdateInstagramPictures),
+  ('/cron/update_flickr_pictures', UpdateFlickrPictures),
+]

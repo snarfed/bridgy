@@ -173,7 +173,7 @@ class Source(with_metaclass(SourceMeta, StringIdModel)):
   last_activity_id = ndb.StringProperty()
   last_activities_etag = ndb.StringProperty()
   last_activities_cache_json = ndb.TextProperty()
-  seen_responses_cache_json = ndb.TextProperty(compressed=True)
+  seen_responses_cache_json = ndb.TextProperty()
 
   # populated in Poll.poll(), used by handlers
   blocked_ids = ndb.JsonProperty(compressed=True)

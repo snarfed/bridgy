@@ -106,11 +106,11 @@ class FacebookPage(models.Source):
 
   # maps string FB post id to string FB object id or None. background:
   # https://github.com/snarfed/bridgy/pull/513#issuecomment-149312879
-  resolved_object_ids_json = ndb.TextProperty(compressed=True)
+  resolved_object_ids_json = ndb.TextProperty()
   # maps string FB post id to True or False for whether the post is public
   # or private. only contains posts with *known* privacy. background:
   # https://github.com/snarfed/bridgy/issues/633#issuecomment-198806909
-  post_publics_json = ndb.TextProperty(compressed=True)
+  post_publics_json = ndb.TextProperty()
 
   @staticmethod
   def new(handler, auth_entity=None, **kwargs):
@@ -471,10 +471,10 @@ class StartHandler(util.Handler):
     starter(self.request, self.response).post()
 
 
-application = webapp2.WSGIApplication([
-    ('/facebook/start', StartHandler),
-    ('/facebook/oauth_handler', OAuthCallback),
-    ('/facebook/delete/finish', oauth_facebook.CallbackHandler.to('/delete/finish')),
-    ('/facebook/publish/start', oauth_facebook.StartHandler.to(
-      '/publish/facebook/finish')),
-    ], debug=appengine_config.DEBUG)
+ROUTES = [
+  ('/facebook/start', StartHandler),
+  ('/facebook/oauth_handler', OAuthCallback),
+  ('/facebook/delete/finish', oauth_facebook.CallbackHandler.to('/delete/finish')),
+  ('/facebook/publish/start', oauth_facebook.StartHandler.to(
+    '/publish/facebook/finish')),
+]

@@ -176,10 +176,10 @@ class CallbackHandler(oauth_mastodon.CallbackHandler, util.Handler):
     source = self.maybe_add_or_delete_source(Mastodon, auth_entity, state)
 
 
-application = webapp2.WSGIApplication([
+ROUTES = [
   ('/mastodon/start', InstanceHandler),
   ('/mastodon/callback', CallbackHandler),
   ('/mastodon/delete/finish', oauth_mastodon.CallbackHandler.to('/delete/finish')),
   ('/mastodon/publish/start', StartHandler.to('/publish/mastodon/finish',
                                               scopes=PUBLISH_SCOPES)),
-], debug=appengine_config.DEBUG)
+]

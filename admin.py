@@ -93,8 +93,8 @@ class MarkCompleteHandler(util.Handler):
     self.redirect('/admin/responses')
 
 
-application = webapp2.WSGIApplication([
-    ('/admin/responses', ResponsesHandler),
-    ('/admin/sources', SourcesHandler),
-    ('/admin/mark_complete', MarkCompleteHandler),
-    ], debug=appengine_config.DEBUG)
+ROUTES =[
+  ('/admin/responses', ResponsesHandler),
+  ('/admin/sources', SourcesHandler),
+  ('/admin/mark_complete', MarkCompleteHandler),
+]

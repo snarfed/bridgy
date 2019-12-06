@@ -199,10 +199,10 @@ class StartHandler(AuthHandler):
     return self.start_oauth_flow(util.get_required_param(self, 'feature'))
 
 
-application = webapp2.WSGIApplication([
-    ('/twitter/start', StartHandler),
-    ('/twitter/add', AddTwitter),
-    ('/twitter/delete/finish', oauth_twitter.CallbackHandler.to('/delete/finish')),
-    ('/twitter/publish/start', oauth_twitter.StartHandler.to(
-      '/publish/twitter/finish')),
-    ], debug=appengine_config.DEBUG)
+ROUTES = [
+  ('/twitter/start', StartHandler),
+  ('/twitter/add', AddTwitter),
+  ('/twitter/delete/finish', oauth_twitter.CallbackHandler.to('/delete/finish')),
+  ('/twitter/publish/start', oauth_twitter.StartHandler.to(
+    '/publish/twitter/finish')),
+]

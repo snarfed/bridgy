@@ -230,14 +230,14 @@ class SuperfeedrNotifyHandler(superfeedr.NotifyHandler):
   SOURCE_CLS = Blogger
 
 
-application = webapp2.WSGIApplication([
-    # Blogger only has one OAuth scope. oauth-dropins fills it in.
-    # https://developers.google.com/blogger/docs/2.0/developers_guide_protocol#OAuth2Authorizing
-    ('/blogger/start', util.oauth_starter(oauth_blogger.StartHandler).to(
-      '/blogger/oauth2callback')),
-    ('/blogger/oauth2callback', oauth_blogger.CallbackHandler.to('/blogger/oauth_handler')),
-    ('/blogger/oauth_handler', OAuthCallback),
-    ('/blogger/add', AddBlogger),
-    ('/blogger/delete/start', oauth_blogger.StartHandler.to('/blogger/oauth2callback')),
-    ('/blogger/notify/(.+)', SuperfeedrNotifyHandler),
-    ], debug=appengine_config.DEBUG)
+ROUTES = [
+  # Blogger only has one OAuth scope. oauth-dropins fills it in.
+  # https://developers.google.com/blogger/docs/2.0/developers_guide_protocol#OAuth2Authorizing
+  ('/blogger/start', util.oauth_starter(oauth_blogger.StartHandler).to(
+    '/blogger/oauth2callback')),
+  ('/blogger/oauth2callback', oauth_blogger.CallbackHandler.to('/blogger/oauth_handler')),
+  ('/blogger/oauth_handler', OAuthCallback),
+  ('/blogger/add', AddBlogger),
+  ('/blogger/delete/start', oauth_blogger.StartHandler.to('/blogger/oauth2callback')),
+  ('/blogger/notify/(.+)', SuperfeedrNotifyHandler),
+]

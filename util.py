@@ -12,6 +12,7 @@ from future import standard_library
 standard_library.install_aliases()
 from future.utils import native_str
 
+import binascii
 import collections
 import copy
 from http.cookies import CookieError, SimpleCookie
@@ -30,13 +31,12 @@ from google.cloud import error_reporting
 from google.cloud import ndb
 from google.cloud import tasks_v2
 from google.cloud.tasks_v2.types import Timestamp
+import google.protobuf.message
 import humanize
 from oauth_dropins.webutil import handlers as webutil_handlers
 from oauth_dropins.webutil.models import StringIdModel
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import *
-
-from google.net.proto.ProtocolBuffer import ProtocolBufferDecodeError
 
 # when running in dev_appserver, replace these domains in links with localhost
 LOCALHOST_TEST_DOMAINS = frozenset([
@@ -170,7 +170,7 @@ def add_task(queue, eta_seconds=None, **kwargs):
       'http_method': 'POST',
       'relative_uri': '/_ah/queue/%s' % queue,
       'app_engine_routing': {'service': 'background'},
-      'body': urllib.urlencode(kwargs),
+      'body': urllib.parse.urlencode(kwargs),
     }
   }
   if eta_seconds:
@@ -229,7 +229,8 @@ def requests_get(url, **kwargs):
   if url in URL_BLACKLIST:
     resp = requests.Response()
     resp.status_code = HTTP_REQUEST_REFUSED_STATUS_CODE
-    resp._text = resp._content = 'Sorry, Bridgy has blacklisted this URL.'
+    resp._text = 'Sorry, Bridgy has blacklisted this URL.'
+    resp._content = resp._text.encode()
     return resp
 
   kwargs.setdefault('headers', {}).update(request_headers(url=url))
@@ -391,7 +392,7 @@ def load_source(handler, param='source_key'):
   """
   try:
     source = ndb.Key(urlsafe=util.get_required_param(handler, param)).get()
-  except (TypeError, ProtocolBufferDecodeError):
+  except (binascii.Error, google.protobuf.message.DecodeError):
     msg = 'Bad value for %s' % param
     logging.warning(msg, exc_info=True)
     handler.abort(400, msg)

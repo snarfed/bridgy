@@ -3,7 +3,6 @@
 from __future__ import unicode_literals
 from __future__ import absolute_import
 
-from future.utils import native_str
 from future import standard_library
 standard_library.install_aliases()
 from builtins import next, str
@@ -129,7 +128,7 @@ class UtilTest(testutil.ModelsTest):
          ]),
     ):
       self.request.headers['Cookie'] = cookie
-      self.assertItemsEqual(expected, self.handler.get_logins())
+      self.assertCountEqual(expected, self.handler.get_logins())
 
   def test_logins_cookie_url_decode(self):
     """https://console.cloud.google.com/errors/10588536940780707768?project=brid-gy"""
@@ -249,10 +248,10 @@ class UtilTest(testutil.ModelsTest):
     self.mox.ReplayAll()
 
     resp = application.get_response(
-      '/fakesource/start', method='POST', body=native_str(urllib.parse.urlencode({
+      '/fakesource/start', method='POST', body=urllib.parse.urlencode({
         'feature': 'listen',
         'callback': 'http://withknown.com/bridgy_callback',
-      })))
+      }).encode())
 
     expected_auth_url = 'http://fake/auth/url?' + urllib.parse.urlencode({
       'redirect_uri': 'http://localhost/fakesource/add?state='
@@ -262,9 +261,9 @@ class UtilTest(testutil.ModelsTest):
     self.assert_equals(302, resp.status_code)
     self.assert_equals(expected_auth_url, resp.headers['location'])
 
-    resp = application.get_response(native_str(
+    resp = application.get_response(
       '/fakesource/add?state=' + encoded_state +
-      '&oauth_token=fake-token&oauth_token_secret=fake-secret'))
+      '&oauth_token=fake-token&oauth_token_secret=fake-secret')
 
     self.assert_equals(302, resp.status_code)
     self.assert_equals(
@@ -305,11 +304,11 @@ class UtilTest(testutil.ModelsTest):
     self.mox.ReplayAll()
 
     resp = application.get_response(
-      '/fakesource/start', method='POST', body=native_str(urllib.parse.urlencode({
+      '/fakesource/start', method='POST', body=urllib.parse.urlencode({
         'feature': 'listen',
         'callback': 'http://withknown.com/bridgy_callback',
         'user_url': 'https://kylewm.com',
-      })))
+      }).encode())
 
     expected_auth_url = 'http://fake/auth/url?' + urllib.parse.urlencode({
       'redirect_uri': 'http://localhost/fakesource/add?state='
@@ -319,9 +318,9 @@ class UtilTest(testutil.ModelsTest):
     self.assert_equals(302, resp.status_code)
     self.assert_equals(expected_auth_url, resp.headers['location'])
 
-    resp = application.get_response(native_str(
+    resp = application.get_response(
       '/fakesource/add?state=' + encoded_state +
-      '&oauth_token=fake-token&oauth_token_secret=fake-secret'))
+      '&oauth_token=fake-token&oauth_token_secret=fake-secret')
 
     self.assert_equals(302, resp.status_code)
     self.assert_equals(
@@ -359,10 +358,10 @@ class UtilTest(testutil.ModelsTest):
     ])
 
     resp = application.get_response(
-      '/fakesource/start', method='POST', body=native_str(urllib.parse.urlencode({
+      '/fakesource/start', method='POST', body=urllib.parse.urlencode({
         'feature': 'publish',
         'callback': 'http://withknown.com/bridgy_callback',
-      })))
+      }).encode())
 
     expected_auth_url = 'http://fake/auth/url?' + urllib.parse.urlencode({
       'redirect_uri': 'http://localhost/fakesource/add?state='
@@ -387,7 +386,7 @@ class UtilTest(testutil.ModelsTest):
 
     resp = util.requests_get('http://foo/bar')
     self.assertEquals(util.HTTP_RESPONSE_TOO_BIG_STATUS_CODE, resp.status_code)
-    self.assertIn(' larger than our limit ', resp.content)
+    self.assertIn(' larger than our limit ', resp.text)
 
   def test_requests_get_content_length_not_int(self):
     self.expect_requests_get('http://foo/bar', 'xyz',
@@ -396,12 +395,12 @@ class UtilTest(testutil.ModelsTest):
 
     resp = util.requests_get('http://foo/bar')
     self.assertEquals(200, resp.status_code)
-    self.assertEquals('xyz', resp.content)
+    self.assertEquals('xyz', resp.text)
 
   def test_requests_get_url_blacklist(self):
     resp = util.requests_get(next(iter(util.URL_BLACKLIST)))
     self.assertEquals(util.HTTP_REQUEST_REFUSED_STATUS_CODE, resp.status_code)
-    self.assertEquals('Sorry, Bridgy has blacklisted this URL.', resp.content)
+    self.assertEquals('Sorry, Bridgy has blacklisted this URL.', resp.text)
 
   def test_no_accept_header(self):
     self.assertEquals(util.REQUEST_HEADERS,

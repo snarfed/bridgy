@@ -131,11 +131,11 @@ class AddFlickr(oauth_flickr.CallbackHandler, AuthHandler):
       return self.start_oauth_flow('publish')
 
 
-application = webapp2.WSGIApplication([
+ROUTES = [
   ('/flickr/start', StartHandler),
   ('/flickr/add', AddFlickr),
   ('/flickr/delete/finish',
    oauth_flickr.CallbackHandler.to('/delete/finish')),
   ('/flickr/publish/start',
    oauth_flickr.StartHandler.to('/publish/flickr/finish')),
-], debug=appengine_config.DEBUG)
+]

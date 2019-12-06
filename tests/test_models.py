@@ -142,7 +142,7 @@ class ResponseTest(testutil.ModelsTest):
                        response.old_response_jsons)
     self.assertEqual('new', response.status)
     urls = ['http://sent/', 'http://error/', 'http://failed/', 'http://skipped/']
-    self.assertItemsEqual(urls, response.unsent)
+    self.assertCountEqual(urls, response.unsent)
     for field in response.sent, response.error, response.failed, response.skipped:
       self.assertEqual([], field)
 
@@ -151,7 +151,7 @@ class ResponseTest(testutil.ModelsTest):
     response.type = 'rsvp'
     response = response.get_or_save(self.sources[0])
     self.assertEqual('new', response.status)
-    self.assertItemsEqual(urls, response.unsent)
+    self.assertCountEqual(urls, response.unsent)
     for field in response.sent, response.error, response.failed, response.skipped:
       self.assertEqual([], field)
 
@@ -788,7 +788,7 @@ class SyndicatedPostTest(testutil.ModelsTest):
         ancestor=self.source.key
     ).fetch()
 
-    self.assertItemsEqual(['http://original/post/url',
+    self.assertCountEqual(['http://original/post/url',
                            'http://original/another/post',
                            'http://original/different/url'],
                           [rel.original for rel in rs])
@@ -805,7 +805,7 @@ class SyndicatedPostTest(testutil.ModelsTest):
         ancestor=self.source.key
     ).fetch()
 
-    self.assertItemsEqual([None], [rel.original for rel in rs])
+    self.assertCountEqual([None], [rel.original for rel in rs])
 
   def test_insert_no_duplicates(self):
     """Make sure we don't insert duplicate entries"""

@@ -20,7 +20,7 @@ from google.cloud.tasks_v2.types import Task
 from granary import source as gr_source
 from oauth_dropins import handlers as oauth_handlers
 from oauth_dropins.models import BaseAuth
-from oauth_dropins.webutil.testutil import HandlerTest
+from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
 
@@ -269,6 +269,13 @@ class HandlerTest(testutil.HandlerTest):
     util.webmention_endpoint_cache.clear()
     self.stubbed_create_task = False
     util.tasks_client.create_task = lambda *args, **kwargs: Task(name='foo')
+
+    self.ndb_context = appengine_config.ndb_client.context()
+    self.ndb_context.__enter__()
+
+  def tearDown(self):
+    self.ndb_context.__exit__(None, None, None)
+    super(HandlerTest, self).tearDown()
 
   def expect_task(self, queue, eta_seconds=None, **kwargs):
     if not self.stubbed_create_task:

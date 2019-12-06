@@ -340,11 +340,11 @@ class RsvpHandler(ItemHandler):
     return rsvp
 
 
-application = webapp2.WSGIApplication([
-    ('/(post)/(.+)/(.+)/(.+)', PostHandler),
-    ('/(comment)/(.+)/(.+)/(.+)/(.+)', CommentHandler),
-    ('/(like)/(.+)/(.+)/(.+)/(.+)', LikeHandler),
-    ('/(react)/(.+)/(.+)/(.+)/(.+)/(.+)', ReactionHandler),
-    ('/(repost)/(.+)/(.+)/(.+)/(.+)', RepostHandler),
-    ('/(rsvp)/(.+)/(.+)/(.+)/(.+)', RsvpHandler),
-    ], debug=appengine_config.DEBUG)
+ROUTES = [
+  ('/(post)/(.+)/(.+)/(.+)', PostHandler),
+  ('/(comment)/(.+)/(.+)/(.+)/(.+)', CommentHandler),
+  ('/(like)/(.+)/(.+)/(.+)/(.+)', LikeHandler),
+  ('/(react)/(.+)/(.+)/(.+)/(.+)/(.+)', ReactionHandler),
+  ('/(repost)/(.+)/(.+)/(.+)/(.+)', RepostHandler),
+  ('/(rsvp)/(.+)/(.+)/(.+)/(.+)', RsvpHandler),
+]

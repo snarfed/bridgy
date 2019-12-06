@@ -13,6 +13,6 @@ class LogHandler(logs.LogHandler):
     [('background', ver) for ver in ('7', '8')]
 
 
-application = webapp2.WSGIApplication([
-    ('/log', LogHandler),
-], debug=appengine_config.DEBUG)
+ROUTES =[
+  ('/log', LogHandler),
+]

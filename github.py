@@ -98,11 +98,11 @@ class AddGitHub(oauth_github.CallbackHandler, util.Handler):
     self.maybe_add_or_delete_source(GitHub, auth_entity, state)
 
 
-application = webapp2.WSGIApplication([
-    ('/github/start', util.oauth_starter(oauth_github.StartHandler).to(
-      '/github/add', scopes=LISTEN_SCOPES)),
-    ('/github/add', AddGitHub),
-    ('/github/delete/finish', oauth_github.CallbackHandler.to('/delete/finish')),
-    ('/github/publish/start', oauth_github.StartHandler.to(
-      '/publish/github/finish', scopes=PUBLISH_SCOPES)),
-], debug=appengine_config.DEBUG)
+ROUTES = [
+  ('/github/start', util.oauth_starter(oauth_github.StartHandler).to(
+    '/github/add', scopes=LISTEN_SCOPES)),
+  ('/github/add', AddGitHub),
+  ('/github/delete/finish', oauth_github.CallbackHandler.to('/delete/finish')),
+  ('/github/publish/start', oauth_github.StartHandler.to(
+    '/publish/github/finish', scopes=PUBLISH_SCOPES)),
+]

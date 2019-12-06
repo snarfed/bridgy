@@ -231,14 +231,14 @@ class SuperfeedrNotifyHandler(superfeedr.NotifyHandler):
   SOURCE_CLS = WordPress
 
 
-application = webapp2.WSGIApplication([
-    # wordpress.com doesn't seem to use scope
-    # https://developer.wordpress.com/docs/oauth2/
-    ('/wordpress/start', util.oauth_starter(oauth_wordpress.StartHandler).to(
-      '/wordpress/add')),
-    ('/wordpress/confirm', ConfirmSelfHosted),
-    # This handles both add and delete. (WordPress.com only allows a single
-    # OAuth redirect URL.)
-    ('/wordpress/add', AddWordPress),
-    ('/wordpress/notify/(.+)', SuperfeedrNotifyHandler),
-    ], debug=appengine_config.DEBUG)
+ROUTES = [
+  # wordpress.com doesn't seem to use scope
+  # https://developer.wordpress.com/docs/oauth2/
+  ('/wordpress/start', util.oauth_starter(oauth_wordpress.StartHandler).to(
+    '/wordpress/add')),
+  ('/wordpress/confirm', ConfirmSelfHosted),
+  # This handles both add and delete. (WordPress.com only allows a single
+  # OAuth redirect URL.)
+  ('/wordpress/add', AddWordPress),
+  ('/wordpress/notify/(.+)', SuperfeedrNotifyHandler),
+]

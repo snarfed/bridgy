@@ -179,8 +179,8 @@ class CallbackHandler(indieauth.CallbackHandler, util.Handler):
     self.maybe_add_or_delete_source(Instagram, auth_entity, state, actor=actor)
 
 
-application = webapp2.WSGIApplication([
-    ('/instagram/start', StartHandler),
-    ('/instagram/indieauth', indieauth.StartHandler.to('/instagram/callback')),
-    ('/instagram/callback', CallbackHandler),
-], debug=appengine_config.DEBUG)
+ROUTES = [
+  ('/instagram/start', StartHandler),
+  ('/instagram/indieauth', indieauth.StartHandler.to('/instagram/callback')),
+  ('/instagram/callback', CallbackHandler),
+]
