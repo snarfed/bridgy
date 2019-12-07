@@ -21,7 +21,6 @@ import webapp2
 from webob import exc
 
 import app
-import facebook
 from models import Publish, PublishedPage
 import publish
 from . import testutil
@@ -1218,11 +1217,6 @@ Join us!"""
       'http://foo.com/bar', self.post_html % 'foo')
     self.mox.ReplayAll()
     self.assert_error("Couldn't find link to http://localhost/publish/fake")
-
-  def test_facebook_disabled(self):
-    self.assert_error('Target must be brid.gy/publish/{',
-                      source='http://mr.x/comment',
-                      target='https://brid.gy/publish/facebook')
 
   def test_require_like_of_repost_of(self):
     """We only trigger on like-of and repost-of, not like or repost."""

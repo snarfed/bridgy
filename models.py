@@ -109,8 +109,6 @@ class Source(with_metaclass(SourceMeta, StringIdModel)):
   SLOW_REFETCH = datetime.timedelta(days=2)
   # rate limiting HTTP status codes returned by this silo. e.g. twitter returns
   # 429, instagram 503, google+ 403.
-  # TODO: facebook. it returns 200 and reports the error in the response.
-  # https://developers.facebook.com/docs/reference/ads-api/api-rate-limiting/
   RATE_LIMIT_HTTP_CODES = ('429',)
   DISABLE_HTTP_CODES = ('401',)
   TRANSIENT_ERROR_HTTP_CODES = ()
@@ -144,9 +142,8 @@ class Source(with_metaclass(SourceMeta, StringIdModel)):
   webmention_endpoint = ndb.StringProperty()
 
   # points to an oauth-dropins auth entity. The model class should be a subclass
-  # of oauth_dropins.BaseAuth.
-  # the token should be generated with the offline_access scope so that it
-  # doesn't expire. details: http://developers.facebook.com/docs/authentication/
+  # of oauth_dropins.BaseAuth. the token should be generated with the
+  # offline_access scope so that it doesn't expire.
   auth_entity = ndb.KeyProperty()
 
   #
@@ -217,11 +214,6 @@ class Source(with_metaclass(SourceMeta, StringIdModel)):
         kwargs = {'username': self.key.id()}
 
       self.gr_source = self.GR_CLASS(*args, **kwargs)
-      return self.gr_source
-
-    if name == 'gr_source' and self.key.kind() == 'FacebookEmailAccount':
-      from granary import facebook as gr_facebook
-      self.gr_source = gr_facebook.Facebook(user_id=self.key.id())
       return self.gr_source
 
     return getattr(super(Source, self), name)

@@ -1982,13 +1982,13 @@ class PropagateTest(TaskTest):
   def test_propagate_blogpost_allows_bridgy_publish_links(self):
     source_key = FakeSource.new(None, domains=['fake']).put()
     blogpost = models.BlogPost(id='x', source=source_key,
-                               unsent=['https://brid.gy/publish/facebook'])
+                               unsent=['https://brid.gy/publish/twitter'])
     blogpost.put()
 
-    self.expect_requests_head('https://brid.gy/publish/facebook')
+    self.expect_requests_head('https://brid.gy/publish/twitter')
     self.expect_webmention(
       source_url='x',
-      target='https://brid.gy/publish/facebook',
+      target='https://brid.gy/publish/twitter',
       discovered_endpoint='https://brid.gy/publish/webmention',
       ).AndReturn(True)
     self.mox.ReplayAll()
@@ -1997,7 +1997,7 @@ class PropagateTest(TaskTest):
     super(PropagateTest, self).post_task(
       params={'key': blogpost.key.urlsafe().decode()})
     self.assert_response_is('complete', response=blogpost,
-                            sent=['https://brid.gy/publish/facebook'])
+                            sent=['https://brid.gy/publish/twitter'])
 
   def test_propagate_blogpost_follows_redirects_before_checking_self_link(self):
     source_key = FakeSource.new(None, domains=['fake']).put()

@@ -16,7 +16,6 @@ from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
 
 import blogger
-import facebook
 import flickr
 import instagram
 import models
@@ -203,7 +202,6 @@ class SourceTest(testutil.HandlerTest):
 
   def test_sources_global(self):
     self.assertEqual(blogger.Blogger, models.sources['blogger'])
-    self.assertEqual(facebook.FacebookPage, models.sources['facebook'])
     self.assertEqual(flickr.Flickr, models.sources['flickr'])
     self.assertEqual(instagram.Instagram, models.sources['instagram'])
     self.assertEqual(tumblr.Tumblr, models.sources['tumblr'])

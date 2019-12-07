@@ -36,7 +36,6 @@ MODULES = [importlib.import_module(name) for name in (
   'blog_webmention',
   'blogger',
   'cron',
-  'facebook',
   'flickr',
   'github',
   'handlers',

@@ -22,10 +22,6 @@ cron
 ----
 .. automodule:: cron
 
-facebook
---------
-.. automodule:: facebook
-
 flickr
 ------
 .. automodule:: flickr

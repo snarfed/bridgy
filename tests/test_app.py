@@ -489,7 +489,7 @@ class AppTest(testutil.ModelsTest):
     resp = app.application.get_response(
       '/edit-websites', method='POST',
       text=urlencode({'source_key': source.key.urlsafe().decode(),
-                                   'add': 'http://foo.com/'}))
+                      'add': 'http://foo.com/'}))
     self.assertEqual(302, resp.status_int)
     self.assertEqual('http://localhost/edit-websites?source_key=%s#!%s' % (
       (source.key.urlsafe().decode(),
@@ -509,7 +509,7 @@ class AppTest(testutil.ModelsTest):
     resp = app.application.get_response(
       '/edit-websites', method='POST',
       text=urlencode({'source_key': source.key.urlsafe().decode(),
-                                   'add': 'http://foo.com/'}))
+                      'add': 'http://foo.com/'}))
     self.assertEqual(302, resp.status_int)
     self.assertEqual('http://localhost/edit-websites?source_key=%s#!%s' % (
       (source.key.urlsafe().decode(),
@@ -525,7 +525,7 @@ class AppTest(testutil.ModelsTest):
     resp = app.application.get_response(
       '/edit-websites', method='POST',
       text=urlencode({'source_key': source.key.urlsafe().decode(),
-                                   'add': 'http://facebook.com/'}))
+                      'add': 'http://facebook.com/'}))
     self.assertEqual(302, resp.status_int)
     self.assertEqual('http://localhost/edit-websites?source_key=%s#!%s' % (
       (source.key.urlsafe().decode(),
@@ -545,7 +545,7 @@ class AppTest(testutil.ModelsTest):
     resp = app.application.get_response(
       '/edit-websites', method='POST',
       text=urlencode({'source_key': source.key.urlsafe().decode(),
-                                   'delete': 'https://bar'}))
+                      'delete': 'https://bar'}))
     self.assertEqual(302, resp.status_int)
     self.assertEqual('http://localhost/edit-websites?source_key=%s#!%s' % (
       (source.key.urlsafe().decode(),
@@ -565,7 +565,7 @@ class AppTest(testutil.ModelsTest):
     resp = app.application.get_response(
       '/edit-websites', method='POST',
       text=urlencode({'source_key': source.key.urlsafe().decode(),
-                                   'delete': 'https://foo.com/baz'}))
+                      'delete': 'https://foo.com/baz'}))
     self.assertEqual(302, resp.status_int)
     self.assertEqual('http://localhost/edit-websites?source_key=%s#!%s' % (
       (source.key.urlsafe().decode(),

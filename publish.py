@@ -3,26 +3,6 @@
 Webmention spec: http://webmention.org/
 
 Bridgy request and response details: https://brid.gy/about#response
-
-Example request::
-
-    POST /webmention HTTP/1.1
-    Host: brid.gy
-    Content-Type: application/x-www-url-form-encoded
-
-    source=http://bob.host/post-by-bob&
-    target=http://facebook.com/123
-
-Example response::
-
-    HTTP/1.1 201 Created
-    Location: http://facebook.com/456_789
-
-    {
-      "url": "http://facebook.com/456_789",
-      "type": "post",
-      "id": "456_789"
-    }
 """
 from __future__ import absolute_import, unicode_literals
 from future import standard_library
@@ -40,7 +20,6 @@ from google.cloud import ndb
 from granary import microformats2
 from granary import source as gr_source
 from oauth_dropins import (
-  facebook as oauth_facebook,
   flickr as oauth_flickr,
   github as oauth_github,
   mastodon as oauth_mastodon,
@@ -50,7 +29,6 @@ from oauth_dropins.webutil.handlers import JINJA_ENV
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import webapp2
 
-from facebook import FacebookPage
 from flickr import Flickr
 from github import GitHub
 from instagram import Instagram
@@ -396,15 +374,6 @@ class Handler(webmention.WebmentionHandler):
     if not self.authorize():
       return gr_source.creation_result(abort=True)
 
-    # RIP Facebook.
-    # https://github.com/snarfed/bridgy/issues/817
-    # https://github.com/snarfed/bridgy/issues/350
-    if isinstance(self.source, FacebookPage):
-      return gr_source.creation_result(
-        abort=True,
-        error_plain='Facebook is no longer supported. So long, and thanks for all the fish!',
-        error_html='<a href="https://brid.gy/about#rip-facebook">Facebook is no longer supported. So long, and thanks for all the fish!</a>')
-
     if self.PREVIEW:
       result = self.source.gr_source.preview_create(
         obj, include_link=include_link, ignore_formatting=ignore_formatting)
@@ -695,10 +664,6 @@ class SendHandler(Handler):
 
 # We want CallbackHandler.get() and SendHandler.finish(), so put
 # CallbackHandler first and override finish.
-class FacebookSendHandler(oauth_facebook.CallbackHandler, SendHandler):
-  finish = SendHandler.finish
-
-
 class FlickrSendHandler(oauth_flickr.CallbackHandler, SendHandler):
   finish = SendHandler.finish
 
@@ -748,7 +713,7 @@ class WebmentionHandler(Handler):
 ROUTES = [
   ('/publish/preview', PreviewHandler),
   ('/publish/webmention', WebmentionHandler),
-  ('/publish/(facebook|flickr|github|mastodon|twitter)',
+  ('/publish/(flickr|github|mastodon|twitter)',
    webmention.WebmentionGetHandler),
   ('/publish/flickr/finish', FlickrSendHandler),
   ('/publish/github/finish', GitHubSendHandler),

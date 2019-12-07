@@ -90,12 +90,12 @@ class SuperfeedrTest(testutil.HandlerTest):
     self.assert_blogposts([])
 
   def test_handle_feed_allows_bridgy_publish_links(self):
-    item = {'permalinkUrl': 'A', 'content': 'a https://brid.gy/publish/facebook b'}
+    item = {'permalinkUrl': 'A', 'content': 'a https://brid.gy/publish/twitter b'}
     self.expect_task('propagate-blogpost', key=BlogPost(id='A'))
     self.mox.ReplayAll()
 
     superfeedr.handle_feed(json_dumps({'items': [item]}), self.source)
-    self.assert_equals(['https://brid.gy/publish/facebook'],
+    self.assert_equals(['https://brid.gy/publish/twitter'],
                        BlogPost.get_by_id('A').unsent)
 
   def test_handle_feed_unwraps_t_umblr_com_links(self):

@@ -41,15 +41,9 @@ function do_preview(site) {
       preview = document.getElementById('preview');
       preview.innerHTML = this.responseText;
       preview.scrollIntoView({behavior: 'smooth', block: 'nearest'});
-      // trigger re-renders of twitter and facebook embeds
+      // trigger re-render of twitter embed
       if (typeof(twttr) != 'undefined') {
         twttr.widgets.load();
-      }
-      if (typeof(FB) != 'undefined') {
-        FB.XFBML.parse();
-      }
-      if (typeof(instgrm) != 'undefined') {
-        instgrm.Embeds.process()
       }
     } else {
       this.onerror();

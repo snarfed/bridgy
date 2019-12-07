@@ -5,7 +5,7 @@ Docs: https://brid.gy/about#source-urls
 URL paths are:
 
 /post/SITE/USER_ID/POST_ID
-  e.g. /post/facebook/212038/10100823411094363
+  e.g. /post/fflickr/212038/10100823411094363
 
 /comment/SITE/USER_ID/POST_ID/COMMENT_ID
   e.g. /comment/twitter/snarfed_org/10100823411094363/999999
@@ -39,7 +39,7 @@ import original_post_discovery
 import util
 
 # Import source class files so their metaclasses are initialized.
-import blogger, facebook, flickr, github, instagram, mastodon, medium, tumblr, twitter, wordpress_rest
+import blogger, flickr, github, instagram, mastodon, medium, tumblr, twitter, wordpress_rest
 
 CACHE_TIME = 60 * 15  # 15m
 

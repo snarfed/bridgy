@@ -151,7 +151,7 @@ form input {
   margin-top: .5em;
 }
 
-#choose-blog > ul, #choose-facebook > ul  {
+#choose-blog > ul {
   list-style: none;
   text-align: left;
 }

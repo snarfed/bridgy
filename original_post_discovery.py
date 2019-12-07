@@ -148,8 +148,7 @@ def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True,
   if syndication_url:
     # use the canonical syndication url on both sides, so that we have
     # the best chance of finding a match. Some silos allow several
-    # different permalink formats to point to the same place (e.g.,
-    # facebook user id instead of user name)
+    # different permalink formats to point to the same place.
     syndication_url = source.canonicalize_url(syndication_url)
     if syndication_url:
       syndicated = _posse_post_discovery(source, activity, syndication_url,
@@ -559,8 +558,7 @@ def _process_syndication_urls(source, permalink, syndication_urls,
   # save the results (or lack thereof) to the db, and put them in a
   # map for immediate use
   for url in syndication_urls:
-    # source-specific logic to standardize the URL. (e.g., replace facebook
-    # username with numeric id)
+    # source-specific logic to standardize the URL
     url = source.canonicalize_url(url)
     if not url:
       continue

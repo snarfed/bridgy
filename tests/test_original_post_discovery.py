@@ -7,13 +7,10 @@ from __future__ import absolute_import
 from builtins import range, str
 import datetime
 
-from granary import facebook as gr_facebook
-from oauth_dropins import facebook as oauth_facebook
 from oauth_dropins.webutil.util import json_dumps, json_loads
 from requests.exceptions import HTTPError
 
 import appengine_config
-from facebook import FacebookPage
 from models import SyndicatedPost
 import original_post_discovery
 from original_post_discovery import discover, refetch
@@ -1439,54 +1436,6 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
                                  ('http://author/on-both', None),
                                  ('http://author/only-on-feed', None),
                                  (None, 'https://fa.ke/post/url'))
-
-  def test_match_facebook_username(self):
-    """Facebook URLs use username and user id interchangeably, and one
-    does not redirect to the other. Make sure we can still find the
-    relationship if author's publish syndication links using their
-    username.
-    """
-    self._test_match_facebook_username({'id': '212038', 'username': 'snarfed.org'})
-
-  def test_match_facebook_inferred_username(self):
-    """Same test as above, but with inferred username."""
-    self._test_match_facebook_username({'id': '212038'},
-                                       inferred_username='snarfed.org')
-
-  def _test_match_facebook_username(self, user_obj, **source_params):
-    auth_entity = oauth_facebook.FacebookAuth(
-      id='my_string_id', auth_code='my_code', access_token_str='my_token',
-      user_json=json_dumps(user_obj))
-    auth_entity.put()
-
-    fb = FacebookPage.new(self.handler, auth_entity=auth_entity,
-                          domain_urls=['http://author/'], **source_params)
-    fb.put()
-    fb.updates = {}
-    # facebook activity comes to us with the numeric id
-    self.activity['object']['url'] = 'http://facebook.com/212038/posts/314159'
-
-    self.expect_requests_get('http://author/', """
-    <html class="h-feed">
-      <div class="h-entry">
-        <a class="u-url" href="http://author/post/permalink"></a>
-      </div>
-    </html>""")
-
-    # user sensibly publishes syndication link using their username
-    self.expect_requests_get('http://author/post/permalink', """
-    <html class="h-entry">
-      <a class="u-url" href="http://author/post/permalink"></a>
-      <a class="u-syndication" href="http://facebook.com/snarfed.org/posts/314159"></a>
-    </html>""")
-
-    self.expect_urlopen(gr_facebook.API_BASE +
-                        gr_facebook.API_OBJECT % ('212038', '314159') +
-                        '&access_token=my_token',
-                        '{}')
-
-    self.mox.ReplayAll()
-    self.assert_discover(['http://author/post/permalink'], source=fb)
 
   def test_url_in_activity_not_object(self):
     """We should use the url field in the activity if object doesn't have it.
