@@ -134,17 +134,17 @@ class SuperfeedrTest(testutil.HandlerTest):
     self.mox.ReplayAll()
 
     self.feed = json_dumps({'items': [item]})
-    resp = fake_app.get_response('/notify/foo.com', method='POST', body=self.feed)
+    resp = fake_app.get_response('/notify/foo.com', method='POST', text=self.feed)
 
-    self.assertEquals(200, resp.status_int)
+    self.assertEqual(200, resp.status_int)
     self.assert_blogposts([post])
 
   def test_notify_url_too_long(self):
     item = {'id': 'X' * (_MAX_KEYPART_BYTES + 1), 'content': 'a http://x/y z'}
     self.feed = json_dumps({'items': [item]})
-    resp = fake_app.get_response('/notify/foo.com', method='POST', body=self.feed)
+    resp = fake_app.get_response('/notify/foo.com', method='POST', text=self.feed)
 
-    self.assertEquals(200, resp.status_int)
+    self.assertEqual(200, resp.status_int)
     self.assert_blogposts([BlogPost(id='X' * _MAX_KEYPART_BYTES,
                                     source=self.source.key, feed_item=item,
                                     failed=['http://x/y'], status='complete')])
@@ -158,17 +158,17 @@ class SuperfeedrTest(testutil.HandlerTest):
     self.mox.ReplayAll()
 
     self.feed = json_dumps({'items': [item]})
-    resp = fake_app.get_response('/notify/foo.com', method='POST', body=self.feed)
+    resp = fake_app.get_response('/notify/foo.com', method='POST', text=self.feed)
 
-    self.assertEquals(200, resp.status_int)
+    self.assertEqual(200, resp.status_int)
     self.assert_blogposts([post])
 
   def test_notify_utf8(self):
     """Check that we handle unicode chars in content ok, including logging."""
     self.feed = '{"items": [{"id": "X", "content": "a ☕ z"}]}'.encode('utf-8')
-    resp = fake_app.get_response('/notify/foo.com', method='POST', body=self.feed)
+    resp = fake_app.get_response('/notify/foo.com', method='POST', text=self.feed)
 
-    self.assertEquals(200, resp.status_int)
+    self.assertEqual(200, resp.status_int)
     self.assert_blogposts([BlogPost(id='X', source=self.source.key,
                                     feed_item={'id': 'X', 'content': 'a ☕ z'},
                                     status='complete')])

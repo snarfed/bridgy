@@ -50,11 +50,11 @@ class TumblrTest(testutil.HandlerTest):
 
   def test_new(self):
     t = Tumblr.new(self.handler, auth_entity=self.auth_entity)
-    self.assertEquals(self.auth_entity.key, t.auth_entity)
-    self.assertEquals('name', t.name)
-    self.assertEquals(['http://primary/'], t.domain_urls)
-    self.assertEquals(['primary'], t.domains)
-    self.assertEquals('http://api.tumblr.com/v2/blog/primary/avatar/512', t.picture)
+    self.assertEqual(self.auth_entity.key, t.auth_entity)
+    self.assertEqual('name', t.name)
+    self.assertEqual(['http://primary/'], t.domain_urls)
+    self.assertEqual(['primary'], t.domains)
+    self.assertEqual('http://api.tumblr.com/v2/blog/primary/avatar/512', t.picture)
 
   def test_new_no_primary_blog(self):
     self.auth_entity.user_json = json_dumps({'user': {'blogs': [{'url': 'foo'}]}})
@@ -68,8 +68,8 @@ class TumblrTest(testutil.HandlerTest):
                            {'name': 'biff', 'url': 'http://boff/'},
                            ]}})
     got = Tumblr.new(self.handler, auth_entity=self.auth_entity, blog_name='biff')
-    self.assertEquals(['http://boff/'], got.domain_urls)
-    self.assertEquals(['boff'], got.domains)
+    self.assertEqual(['http://boff/'], got.domain_urls)
+    self.assertEqual(['boff'], got.domains)
 
   def test_verify_default(self):
     # based on http://snarfed.tumblr.com/
@@ -95,7 +95,7 @@ class TumblrTest(testutil.HandlerTest):
     self.mox.ReplayAll()
     t = Tumblr.new(self.handler, auth_entity=self.auth_entity, features=['webmention'])
     t.verify()
-    self.assertEquals('my-disqus-name', t.disqus_shortname)
+    self.assertEqual('my-disqus-name', t.disqus_shortname)
 
   def test_verify_without_disqus(self):
     self.expect_webmention_requests_get('http://primary/', 'no disqus here!')
@@ -116,7 +116,7 @@ class TumblrTest(testutil.HandlerTest):
 
     resp = self.tumblr.create_comment('http://primary/post/123999/xyz_abc?asdf',
                                       'who', 'http://who', 'foo bar')
-    self.assertEquals({'ok': 'sgtm'}, resp)
+    self.assertEqual({'ok': 'sgtm'}, resp)
 
   def test_create_comment_with_unicode_chars(self):
     self.expect_thread_details()
@@ -131,7 +131,7 @@ class TumblrTest(testutil.HandlerTest):
 
     resp = self.tumblr.create_comment('http://primary/post/123999/xyz_abc',
                                       'Degenève', 'http://who', 'foo Degenève bar')
-    self.assertEquals({}, resp)
+    self.assertEqual({}, resp)
 
   def test_create_comment_finds_disqus_shortname(self):
     self.tumblr.disqus_shortname = None
@@ -144,7 +144,7 @@ class TumblrTest(testutil.HandlerTest):
     self.mox.ReplayAll()
 
     self.tumblr.create_comment('http://primary/post/123999', '', '', '')
-    self.assertEquals('my-disqus-name', self.tumblr.key.get().disqus_shortname)
+    self.assertEqual('my-disqus-name', self.tumblr.key.get().disqus_shortname)
 
   def test_create_comment_doesnt_find_disqus_shortname(self):
     self.tumblr.disqus_shortname = None

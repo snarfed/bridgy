@@ -39,7 +39,7 @@ class CronTest(HandlerTest):
       token_key='my_key', token_secret='my_secret')
     flickr_auth.put()
     self.flickr = Flickr.new(None, auth_entity=flickr_auth, features=['listen'])
-    self.assertEquals(
+    self.assertEqual(
       'https://farm5.staticflickr.com/4068/buddyicons/39216764@N00.jpg',
       self.flickr.picture)
 
@@ -93,7 +93,7 @@ class CronTest(HandlerTest):
     self.expect_task('poll', source_key=sources[4])
     self.mox.ReplayAll()
 
-    resp = cron.application.get_response('/cron/replace_poll_tasks')
+    resp = app.application.get_response('/cron/replace_poll_tasks')
     self.assertEqual(200, resp.status_int)
 
   def test_update_twitter_pictures(self):
@@ -121,11 +121,11 @@ class CronTest(HandlerTest):
     self.expect_urlopen(lookup_url % 'b', json_dumps(user_objs))
     self.mox.ReplayAll()
 
-    resp = cron.application.get_response('/cron/update_twitter_pictures')
+    resp = app.application.get_response('/cron/update_twitter_pictures')
     self.assertEqual(200, resp.status_int)
 
-    self.assertEquals('http://pi.ct/ure', sources[0].get().picture)
-    self.assertEquals('http://new/pic.jpg', sources[1].get().picture)
+    self.assertEqual('http://pi.ct/ure', sources[0].get().picture)
+    self.assertEqual('http://new/pic.jpg', sources[1].get().picture)
 
   def test_update_twitter_picture_user_lookup_404s(self):
     auth_entity = oauth_twitter.TwitterAuth(
@@ -141,10 +141,10 @@ class CronTest(HandlerTest):
     self.expect_urlopen(lookup_url % 'bad', status=404)
     self.mox.ReplayAll()
 
-    resp = cron.application.get_response('/cron/update_twitter_pictures')
+    resp = app.application.get_response('/cron/update_twitter_pictures')
     self.assertEqual(200, resp.status_int)
 
-    self.assertEquals('http://pi.ct/ure', source.get().picture)
+    self.assertEqual('http://pi.ct/ure', source.get().picture)
 
   def test_update_instagram_pictures(self):
     self.setup_instagram(batch_size=1)
@@ -165,13 +165,13 @@ class CronTest(HandlerTest):
         source.features = []
       sources.append(source.put())
 
-    resp = cron.application.get_response('/cron/update_instagram_pictures')
+    resp = app.application.get_response('/cron/update_instagram_pictures')
     self.assertEqual(200, resp.status_int)
 
-    self.assertEquals('http://new/pic', sources[0].get().picture)
-    self.assertEquals('http://new/pic', sources[1].get().picture)
-    self.assertEquals('http://old/pic', sources[2].get().picture)
-    self.assertEquals('http://old/pic', sources[3].get().picture)
+    self.assertEqual('http://new/pic', sources[0].get().picture)
+    self.assertEqual('http://new/pic', sources[1].get().picture)
+    self.assertEqual('http://old/pic', sources[2].get().picture)
+    self.assertEqual('http://old/pic', sources[3].get().picture)
 
   def test_update_instagram_pictures_batch(self):
     self.setup_instagram(weekday=3)
@@ -186,7 +186,7 @@ class CronTest(HandlerTest):
         actor={'username': username, 'image': {'url': 'http://old/pic'}})
       sources.append(source.put())
 
-    resp = cron.application.get_response('/cron/update_instagram_pictures')
+    resp = app.application.get_response('/cron/update_instagram_pictures')
     self.assertEqual(200, resp.status_int)
 
     for i, source in enumerate(sources):
@@ -206,9 +206,9 @@ class CronTest(HandlerTest):
       gr_instagram.HTML_BASE_URL + 'x/', status_code=404, allow_redirects=False)
     self.mox.ReplayAll()
 
-    resp = cron.application.get_response('/cron/update_instagram_pictures')
+    resp = app.application.get_response('/cron/update_instagram_pictures')
     self.assertEqual(200, resp.status_int)
-    self.assertEquals('http://old/pic', source.key.get().picture)
+    self.assertEqual('http://old/pic', source.key.get().picture)
 
   def test_update_flickr_pictures(self):
     self.expect_urlopen(
@@ -225,8 +225,8 @@ class CronTest(HandlerTest):
     self.mox.ReplayAll()
 
     self.flickr.put()
-    resp = cron.application.get_response('/cron/update_flickr_pictures')
+    resp = app.application.get_response('/cron/update_flickr_pictures')
     self.assertEqual(200, resp.status_int)
-    self.assertEquals(
+    self.assertEqual(
       'https://farm9.staticflickr.com/9876/buddyicons/123@N00.jpg',
       self.flickr.key.get().picture)

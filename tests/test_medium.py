@@ -76,32 +76,32 @@ class MediumTest(testutil.HandlerTest):
   def assert_created_profile(self, medium=None):
     if not medium:
       mediums = list(Medium.query())
-      self.assertEquals(1, len(mediums))
+      self.assertEqual(1, len(mediums))
       medium = mediums[0]
 
-    self.assertEquals('@ry', medium.key.id())
-    self.assertEquals(self.auth_entity.key, medium.auth_entity)
-    self.assertEquals('Ryan', medium.name)
-    self.assertEquals('http://medium.com/@ry', medium.url)
-    self.assertEquals('http://ava/tar', medium.picture)
+    self.assertEqual('@ry', medium.key.id())
+    self.assertEqual(self.auth_entity.key, medium.auth_entity)
+    self.assertEqual('Ryan', medium.name)
+    self.assertEqual('http://medium.com/@ry', medium.url)
+    self.assertEqual('http://ava/tar', medium.picture)
     self.assertFalse(medium.is_publication())
-    self.assertEquals('http://medium.com/feed/@ry', medium.feed_url())
-    self.assertEquals('http://medium.com/@ry', medium.silo_url())
+    self.assertEqual('http://medium.com/feed/@ry', medium.feed_url())
+    self.assertEqual('http://medium.com/@ry', medium.silo_url())
 
   def assert_created_publication(self, medium=None):
     if not medium:
       mediums = list(Medium.query())
-      self.assertEquals(1, len(mediums))
+      self.assertEqual(1, len(mediums))
       medium = mediums[0]
 
-    self.assertEquals('b45573563f5a', medium.key.id())
-    self.assertEquals(self.auth_entity.key, medium.auth_entity)
-    self.assertEquals('Developers', medium.name)
-    self.assertEquals('https://medium.com/developers', medium.url)
-    self.assertEquals('https://developers/image.png', medium.picture)
+    self.assertEqual('b45573563f5a', medium.key.id())
+    self.assertEqual(self.auth_entity.key, medium.auth_entity)
+    self.assertEqual('Developers', medium.name)
+    self.assertEqual('https://medium.com/developers', medium.url)
+    self.assertEqual('https://developers/image.png', medium.picture)
     self.assertTrue(medium.is_publication())
-    self.assertEquals('https://medium.com/feed/developers', medium.feed_url())
-    self.assertEquals('https://medium.com/developers', medium.silo_url())
+    self.assertEqual('https://medium.com/feed/developers', medium.feed_url())
+    self.assertEqual('https://medium.com/developers', medium.silo_url())
 
   def test_new_profile(self):
     self.assert_created_profile(
@@ -113,16 +113,16 @@ class MediumTest(testutil.HandlerTest):
 
   def test_choose_blog_decline(self):
     ChooseBlog(self.request, self.response).finish(None)
-    self.assertEquals(0, Medium.query().count())
-    self.assertEquals(302, self.response.status_int)
-    self.assertEquals(
+    self.assertEqual(0, Medium.query().count())
+    self.assertEqual(302, self.response.status_int)
+    self.assertEqual(
       "http://localhost/#!OK, you're not signed up. Hope you reconsider!",
       urllib.parse.unquote_plus(self.response.headers['Location']))
 
   def test_choose_blog_no_publications(self):
     self.expect_get_publications({})
     ChooseBlog(self.request, self.response).finish(self.auth_entity)
-    self.assertEquals(302, self.response.status_int)
+    self.assertEqual(302, self.response.status_int)
     loc = urllib.parse.unquote_plus(self.response.headers['Location'])
     self.assertTrue(loc.startswith('http://localhost/'), loc)
     self.assert_created_profile()
@@ -138,15 +138,15 @@ class MediumTest(testutil.HandlerTest):
                      ):
       self.assertIn(expected, self.response.text)
 
-    self.assertEquals(0, Medium.query().count())
+    self.assertEqual(0, Medium.query().count())
 
   def test_add_profile(self):
     resp = application.get_response(
       '/medium/add?auth_entity_key=%s&state={"feature":"webmention"}&blog=@ry' %
-      self.auth_entity.key.urlsafe(),
+      self.auth_entity.key.urlsafe().decode(),
       method='POST')
 
-    self.assertEquals(302, resp.status_int)
+    self.assertEqual(302, resp.status_int)
     loc = urllib.parse.unquote_plus(resp.headers['Location'])
     self.assertTrue(loc.startswith('http://localhost/'), loc)
     self.assert_created_profile()
@@ -154,10 +154,10 @@ class MediumTest(testutil.HandlerTest):
   def test_add_publication(self):
     resp = application.get_response(
       '/medium/add?auth_entity_key=%s&state={"feature":"webmention"}&blog=b45573563f5a' %
-      self.auth_entity.key.urlsafe(),
+      self.auth_entity.key.urlsafe().decode(),
       method='POST')
 
-    self.assertEquals(302, resp.status_int)
+    self.assertEqual(302, resp.status_int)
     loc = urllib.parse.unquote_plus(resp.headers['Location'])
     self.assertTrue(loc.startswith('http://localhost/'), loc)
     self.assert_created_publication()

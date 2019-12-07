@@ -27,7 +27,6 @@ Example response::
 from __future__ import absolute_import, unicode_literals
 from future import standard_library
 standard_library.install_aliases()
-from future.utils import native_str
 
 import collections
 import logging
@@ -465,7 +464,8 @@ class Handler(webmention.WebmentionHandler):
     self.entity = models.Publish(parent=self.entity.key.parent(),
                                  source=self.source.key, type='delete')
     self.entity.put()
-    logging.debug("Publish entity for delete: '%s'", self.entity.key.urlsafe())
+    logging.debug("Publish entity for delete: '%s'",
+                  self.entity.key.urlsafe().decode())
 
     resp = self.source.gr_source.delete(id)
     resp.content.setdefault('id', id)
@@ -567,7 +567,7 @@ class Handler(webmention.WebmentionHandler):
     Args:
       source_url: string
     """
-    page = PublishedPage.get_or_insert(native_str(source_url.encode('utf-8')))
+    page = PublishedPage.get_or_insert(source_url)
     entity = Publish.query(
       Publish.status == 'complete', Publish.type != 'preview',
       Publish.source == self.source.key,
@@ -579,7 +579,7 @@ class Handler(webmention.WebmentionHandler):
         entity.type = 'preview'
       entity.put()
 
-    logging.debug("Publish entity: '%s'", entity.key.urlsafe())
+    logging.debug("Publish entity: '%s'", entity.key.urlsafe().decode())
     return entity
 
   def _render_preview(self, result, include_link=False):
@@ -592,7 +592,7 @@ class Handler(webmention.WebmentionHandler):
     Returns: CreationResult with the rendered HTML in content
     """
     state = {
-      'source_key': self.source.key.urlsafe(),
+      'source_key': self.source.key.urlsafe().decode(),
       'source_url': self.source_url(),
       'target_url': self.target_url(),
       'include_link': include_link,

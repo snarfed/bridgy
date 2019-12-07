@@ -159,7 +159,7 @@ class ChooseBlog(oauth_medium.CallbackHandler, util.Handler):
     vars = {
       'action': '/medium/add',
       'state': state,
-      'auth_entity_key': auth_entity.key.urlsafe(),
+      'auth_entity_key': auth_entity.key.urlsafe().decode(),
       'blogs': [{
         'id': p['id'],
         'title': p.get('name', ''),
@@ -177,7 +177,7 @@ class SuperfeedrNotifyHandler(superfeedr.NotifyHandler):
   SOURCE_CLS = Medium
 
 
-application = webapp2.WSGIApplication([
+ROUTES = [
   # https://github.com/Medium/medium-api-docs#user-content-21-browser-based-authentication
   ('/medium/start', util.oauth_starter(oauth_medium.StartHandler).to(
     '/medium/choose_blog', scopes=('basicProfile', 'listPublications'))),
@@ -185,4 +185,4 @@ application = webapp2.WSGIApplication([
   ('/medium/choose_blog', ChooseBlog),
   ('/medium/delete/finish', oauth_medium.CallbackHandler.to('/delete/finish')),
   ('/medium/notify/(.+)', SuperfeedrNotifyHandler),
-], debug=appengine_config.DEBUG)
+]

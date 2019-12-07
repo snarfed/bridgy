@@ -3,7 +3,6 @@
 """
 from __future__ import unicode_literals
 
-from future.utils import native_str
 from future import standard_library
 standard_library.install_aliases()
 from builtins import str
@@ -18,6 +17,7 @@ import appengine_config
 from google.cloud import ndb
 from google.cloud.tasks_v2.types import Task
 from granary import source as gr_source
+from mox3 import mox
 from oauth_dropins import handlers as oauth_handlers
 from oauth_dropins.models import BaseAuth
 from oauth_dropins.webutil import testutil
@@ -237,9 +237,9 @@ class FakeSource(Source):
     if not props.get('name'):
       props['name'] = 'fake'
     if not id:
-      id = str(cls.string_id_counter)
+      id = cls.string_id_counter
       cls.string_id_counter += 1
-    return cls(id=native_str(id), **props)
+    return cls(id=str(id), **props)
 
   def put(self, **kwargs):
     self.is_saved = True
@@ -247,7 +247,7 @@ class FakeSource(Source):
 
   @classmethod
   def next_key(cls):
-    return ndb.Key(cls, native_str(cls.string_id_counter))
+    return ndb.Key(cls, str(cls.string_id_counter))
 
 
 class FakeBlogSource(FakeSource):
@@ -296,9 +296,9 @@ class HandlerTest(testutil.HandlerTest):
       # convert model objects and keys to url-safe key strings for comparison
       for name, val in kwargs.items():
         if isinstance(val, ndb.Model):
-          kwargs[name] = val.key.urlsafe()
+          kwargs[name] = val.key.urlsafe().decode()
         elif isinstance(val, ndb.Key):
-          kwargs[name] = val.urlsafe()
+          kwargs[name] = val.urlsafe().decode()
 
       body = set(urllib.parse.parse_qsl(req['body']))
       diff = set(kwargs.items()) - body

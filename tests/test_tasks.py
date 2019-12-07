@@ -4,7 +4,6 @@
 from __future__ import unicode_literals
 from __future__ import absolute_import
 
-from future.utils import native_str
 from future import standard_library
 standard_library.install_aliases()
 
@@ -53,9 +52,9 @@ class TaskTest(testutil.ModelsTest):
     """Args:
       expected_status: integer, the expected HTTP return code
     """
-    resp = tasks.application.get_response(
+    resp = app.application.get_response(
       self.post_url, method='POST',
-      body=native_str(urllib.parse.urlencode(params)), **kwargs)
+      text=urllib.parse.urlencode(params), **kwargs)
     self.assertEqual(expected_status, resp.status_int)
 
   def assert_responses(self, expected=None, ignore=tuple()):
@@ -119,7 +118,7 @@ class PollTest(TaskTest):
 
     super(PollTest, self).post_task(
       expected_status=expected_status,
-      params={'source_key': source.key.urlsafe(),
+      params={'source_key': source.key.urlsafe().decode(),
               'last_polled': '1970-01-01-00-00-00'})
 
   def expect_get_activities(self, **kwargs):
@@ -365,7 +364,7 @@ class PollTest(TaskTest):
     self.mox.ReplayAll()
     self.post_task()
 
-    self.assertEquals(1, Response.query().count())
+    self.assertEqual(1, Response.query().count())
     resp = Response.query().get()
     self.assert_equals(['http://first/', 'http://second/'], resp.unsent)
     self.assert_equals(['http://first/', 'http://second/'],
@@ -412,8 +411,8 @@ class PollTest(TaskTest):
     self.post_task(expect_poll=FakeSource.FAST_POLL)
 
     source = self.sources[0].key.get()
-    self.assertEquals(public_date, source.last_public_post)
-    self.assertEquals(2, source.recent_private_posts)
+    self.assertEqual(public_date, source.last_public_post)
+    self.assertEqual(2, source.recent_private_posts)
 
   def test_no_responses(self):
     """Handle activities without responses ok.
@@ -468,7 +467,7 @@ class PollTest(TaskTest):
     self.expect_task('propagate', response_key=resp_key)
 
     self.post_task(expect_poll=FakeSource.FAST_POLL)
-    self.assertEquals(1, Response.query().count())
+    self.assertEqual(1, Response.query().count())
     resp = Response.query().get()
     self.assert_equals(['tag:source.com,2013:%s' % id for id in ('a', 'b', 'c')],
                        [json_loads(a)['id'] for a in resp.activities_json])
@@ -956,7 +955,7 @@ class PollTest(TaskTest):
 
     # query source
     source = self.sources[0].key.get()
-    self.assertEquals(NOW, source.last_syndication_url)
+    self.assertEqual(NOW, source.last_syndication_url)
 
   def test_multiple_activities_fetch_hfeed_once(self):
     """Make sure that multiple activities only fetch the author's h-feed once.
@@ -1030,7 +1029,7 @@ class PollTest(TaskTest):
     self.sources[0].put()
 
     self.post_task(expect_poll=FakeSource.FAST_POLL)
-    self.assertEquals(hour_ago, self.sources[0].key.get().last_hfeed_refetch)
+    self.assertEqual(hour_ago, self.sources[0].key.get().last_hfeed_refetch)
 
     # should still be a blank SyndicatedPost
     relationships = SyndicatedPost.query(
@@ -1066,7 +1065,7 @@ class PollTest(TaskTest):
     self.post_task(expect_poll=FakeSource.FAST_POLL)
 
     # shouldn't repropagate it
-    self.assertEquals('complete', resp.key.get().status)
+    self.assertEqual('complete', resp.key.get().status)
 
   def test_do_refetch_hfeed(self):
     """Emulate a situation where we've done posse-post-discovery earlier and
@@ -1086,12 +1085,12 @@ class PollTest(TaskTest):
     relationships = SyndicatedPost.query(
       SyndicatedPost.original == 'http://author/permalink',
       ancestor=self.sources[0].key).fetch()
-    self.assertEquals(1, len(relationships))
-    self.assertEquals('https://fa.ke/post/url', relationships[0].syndication)
+    self.assertEqual(1, len(relationships))
+    self.assertEqual('https://fa.ke/post/url', relationships[0].syndication)
 
     source = self.sources[0].key.get()
-    self.assertEquals(NOW, source.last_syndication_url)
-    self.assertEquals(NOW, source.last_hfeed_refetch)
+    self.assertEqual(NOW, source.last_syndication_url)
+    self.assertEqual(NOW, source.last_hfeed_refetch)
 
   def test_refetch_hfeed_trigger(self):
     self.sources[0].domain_urls = ['http://author']
@@ -1136,7 +1135,7 @@ class PollTest(TaskTest):
 
     # should 200
     self.post_task()
-    self.assertEquals(NOW, self.sources[0].key.get().last_hfeed_refetch)
+    self.assertEqual(NOW, self.sources[0].key.get().last_hfeed_refetch)
 
   def test_response_changed(self):
     """If a response changes, we should repropagate it from scratch.
@@ -1241,7 +1240,7 @@ class DiscoverTest(TaskTest):
 
   def discover(self, **kwargs):
     super(DiscoverTest, self).post_task(params={
-      'source_key': self.sources[0].key.urlsafe(),
+      'source_key': self.sources[0].key.urlsafe().decode(),
       'post_id': 'b',
     }, **kwargs)
 
@@ -1329,7 +1328,7 @@ class DiscoverTest(TaskTest):
     self.mox.ReplayAll()
 
     self.post_task(params={
-      'source_key': self.sources[0].key.urlsafe(),
+      'source_key': self.sources[0].key.urlsafe().decode(),
       'post_id': '321',
       'type': 'event',
     })
@@ -1355,7 +1354,7 @@ class PropagateTest(TaskTest):
       response = self.responses[0]
     super(PropagateTest, self).post_task(
       expected_status=expected_status,
-      params={'response_key': response.key.urlsafe()},
+      params={'response_key': response.key.urlsafe().decode()},
       **kwargs)
 
   def assert_response_is(self, status, leased_until=False, sent=[], error=[],
@@ -1459,7 +1458,7 @@ class PropagateTest(TaskTest):
                             error=['http://3', 'http://6'],
                             failed=['http://4', 'http://5'],
                             skipped=['http://2', 'http://8'])
-    self.assertEquals(NOW, self.sources[0].key.get().last_webmention_sent)
+    self.assertEqual(NOW, self.sources[0].key.get().last_webmention_sent)
 
   def test_cached_webmention_discovery(self):
     """Webmention endpoints should be cached."""
@@ -1974,7 +1973,8 @@ class PropagateTest(TaskTest):
     self.mox.ReplayAll()
 
     self.post_url = '/_ah/queue/propagate-blogpost'
-    super(PropagateTest, self).post_task(params={'key': blogpost.key.urlsafe()})
+    super(PropagateTest, self).post_task(
+      params={'key': blogpost.key.urlsafe().decode()})
     self.assert_response_is('complete', NOW + LEASE_LENGTH,
                             sent=['http://ok/two'], response=blogpost)
     self.assert_equals(NOW, source_key.get().last_webmention_sent)
@@ -1994,7 +1994,8 @@ class PropagateTest(TaskTest):
     self.mox.ReplayAll()
 
     self.post_url = '/_ah/queue/propagate-blogpost'
-    super(PropagateTest, self).post_task(params={'key': blogpost.key.urlsafe()})
+    super(PropagateTest, self).post_task(
+      params={'key': blogpost.key.urlsafe().decode()})
     self.assert_response_is('complete', response=blogpost,
                             sent=['https://brid.gy/publish/facebook'])
 
@@ -2009,7 +2010,8 @@ class PropagateTest(TaskTest):
     self.mox.ReplayAll()
 
     self.post_url = '/_ah/queue/propagate-blogpost'
-    super(PropagateTest, self).post_task(params={'key': blogpost.key.urlsafe()})
+    super(PropagateTest, self).post_task(
+      params={'key': blogpost.key.urlsafe().decode()})
     self.assert_response_is('complete', response=blogpost)
 
   def test_post_response(self):

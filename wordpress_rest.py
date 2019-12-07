@@ -211,7 +211,7 @@ class AddWordPress(oauth_wordpress.CallbackHandler, util.Handler):
         self.response.headers['Content-Type'] = 'text/html'
         self.response.out.write(
           JINJA_ENV.get_template('confirm_self_hosted_wordpress.html').render(
-            auth_entity_key=auth_entity.key.urlsafe(),
+            auth_entity_key=auth_entity.key.urlsafe().decode(),
             state=state,
           ))
         return

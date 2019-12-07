@@ -43,12 +43,12 @@ class UtilTest(testutil.ModelsTest):
     src = self.handler.maybe_add_or_delete_source(
       FakeSource, auth_entity,
       self.handler.construct_state_param_for_add(feature='publish'))
-    self.assertEquals(['publish'], src.features)
+    self.assertEqual(['publish'], src.features)
 
-    self.assertEquals(302, self.response.status_int)
+    self.assertEqual(302, self.response.status_int)
     parsed = urllib.parse.urlparse(self.response.headers['Location'])
     self.assertIn(UNICODE_STR, urllib.parse.unquote_plus(parsed.fragment))
-    self.assertEquals(
+    self.assertEqual(
       'logins="/fake/%s?%s"; expires=2001-12-31 00:00:00; Path=/' %
         (src.key.id(), urllib.parse.quote_plus(UNICODE_STR.encode('utf-8'))),
       self.response.headers['Set-Cookie'])
@@ -57,7 +57,7 @@ class UtilTest(testutil.ModelsTest):
       src = self.handler.maybe_add_or_delete_source(
         FakeSource, auth_entity,
         self.handler.construct_state_param_for_add(feature))
-      self.assertEquals([], src.features)
+      self.assertEqual([], src.features)
 
   def test_maybe_add_or_delete_source_bad_state(self):
     auth_entity = FakeAuthEntity(id='x', user_json='{}')
@@ -80,7 +80,7 @@ class UtilTest(testutil.ModelsTest):
                        self.handler.response.headers['location'])
 
     # source
-    state['source'] = self.sources[0].key.urlsafe()
+    state['source'] = self.sources[0].key.urlsafe().decode()
     self.assertIsNone(self.handler.maybe_add_or_delete_source(
       FakeSource, None, util.encode_oauth_state(state)))
     self.assert_equals(302, self.handler.response.status_code)
@@ -93,9 +93,9 @@ class UtilTest(testutil.ModelsTest):
       auth_entity.put()
       source = self.handler.maybe_add_or_delete_source(FakeSource, auth_entity, '{}')
 
-      self.assertEquals(302, self.handler.response.status_code)
+      self.assertEqual(302, self.handler.response.status_code)
       self.assert_equals(
-        'http://localhost/edit-websites?source_key=%s' % source.key.urlsafe(),
+        'http://localhost/edit-websites?source_key=%s' % source.key.urlsafe().decode(),
         self.handler.response.headers['Location'])
 
   def test_add_to_logins_cookie(self):
@@ -106,12 +106,12 @@ class UtilTest(testutil.ModelsTest):
     self.request.headers['Cookie'] = 'logins=/other/1?bob'
     src1 = self.handler.maybe_add_or_delete_source(FakeSource, auth_entity, listen)
     cookie = 'logins="/fake/%s?fake|/other/1?bob"; expires=2001-12-31 00:00:00; Path=/'
-    self.assertEquals(cookie % src1.key.id(), self.response.headers['Set-Cookie'])
+    self.assertEqual(cookie % src1.key.id(), self.response.headers['Set-Cookie'])
 
     src2 = self.handler.maybe_add_or_delete_source(FakeSource, auth_entity, listen)
     self.request.headers['Cookie'] = \
       'logins="/fake/%s?fake|/other/1?bob"' % src2.key.id()
-    self.assertEquals(cookie % src2.key.id(), self.response.headers['Set-Cookie'])
+    self.assertEqual(cookie % src2.key.id(), self.response.headers['Set-Cookie'])
 
   def test_get_logins(self):
     for cookie, expected in (
@@ -133,13 +133,13 @@ class UtilTest(testutil.ModelsTest):
   def test_logins_cookie_url_decode(self):
     """https://console.cloud.google.com/errors/10588536940780707768?project=brid-gy"""
     self.request.headers['Cookie'] = 'logins="/fake/123?question%3Fmark"'
-    self.assertEquals([Login(site='fake', name='question?mark', path='/fake/123')],
+    self.assertEqual([Login(site='fake', name='question?mark', path='/fake/123')],
                       self.handler.get_logins())
 
   def test_bad_logins_cookies(self):
     """https://github.com/snarfed/bridgy/issues/601"""
     self.request.headers['Cookie'] = 'OAMAuthnCookie_www.arbeitsagentur.de:443=xyz'
-    self.assertEquals([], self.handler.get_logins())
+    self.assertEqual([], self.handler.get_logins())
 
   def test_prune_activity(self):
     for orig, expected in (
@@ -164,7 +164,7 @@ class UtilTest(testutil.ModelsTest):
     mention = send.WebmentionSend('http://source/', 'http://target/')
     mention.requests_kwargs = {}
     mention._discoverEndpoint()
-    self.assertEquals('http://target/endpoint', mention.receiver_endpoint)
+    self.assertEqual('http://target/endpoint', mention.receiver_endpoint)
 
   def test_webmention_tools_relative_webmention_endpoint_in_header(self):
     requests.get('http://target/', verify=False).AndReturn(requests_response(
@@ -174,7 +174,7 @@ class UtilTest(testutil.ModelsTest):
     mention = send.WebmentionSend('http://source/', 'http://target/')
     mention.requests_kwargs = {}
     mention._discoverEndpoint()
-    self.assertEquals('http://target/endpoint', mention.receiver_endpoint)
+    self.assertEqual('http://target/endpoint', mention.receiver_endpoint)
 
   def test_get_webmention_target_blacklisted_urls(self):
     for resolve in True, False:
@@ -248,10 +248,10 @@ class UtilTest(testutil.ModelsTest):
     self.mox.ReplayAll()
 
     resp = application.get_response(
-      '/fakesource/start', method='POST', body=urllib.parse.urlencode({
+      '/fakesource/start', method='POST', text=urllib.parse.urlencode({
         'feature': 'listen',
         'callback': 'http://withknown.com/bridgy_callback',
-      }).encode())
+      }))
 
     expected_auth_url = 'http://fake/auth/url?' + urllib.parse.urlencode({
       'redirect_uri': 'http://localhost/fakesource/add?state='
@@ -269,10 +269,11 @@ class UtilTest(testutil.ModelsTest):
     self.assert_equals(
       'http://withknown.com/bridgy_callback?' + urllib.parse.urlencode([
         ('result', 'success'),
-        ('key', ndb.Key('FakeSource', '0123456789').urlsafe()),
-        ('user', 'http://localhost/fake/0123456789')]),
+        ('user', 'http://localhost/fake/0123456789'),
+        ('key', ndb.Key('FakeSource', '0123456789').urlsafe().decode()),
+      ]),
       resp.headers['location'])
-    self.assertEquals(
+    self.assertEqual(
       'logins="/fake/0123456789?Fake+User"; expires=2001-12-31 00:00:00; Path=/',
       resp.headers['Set-Cookie'])
 
@@ -304,11 +305,11 @@ class UtilTest(testutil.ModelsTest):
     self.mox.ReplayAll()
 
     resp = application.get_response(
-      '/fakesource/start', method='POST', body=urllib.parse.urlencode({
+      '/fakesource/start', method='POST', text=urllib.parse.urlencode({
         'feature': 'listen',
         'callback': 'http://withknown.com/bridgy_callback',
         'user_url': 'https://kylewm.com',
-      }).encode())
+      }))
 
     expected_auth_url = 'http://fake/auth/url?' + urllib.parse.urlencode({
       'redirect_uri': 'http://localhost/fakesource/add?state='
@@ -326,10 +327,11 @@ class UtilTest(testutil.ModelsTest):
     self.assert_equals(
       'http://withknown.com/bridgy_callback?' + urllib.parse.urlencode([
         ('result', 'success'),
-        ('key', ndb.Key('FakeSource', '0123456789').urlsafe()),
-        ('user', 'http://localhost/fake/0123456789')]),
+        ('user', 'http://localhost/fake/0123456789'),
+        ('key', ndb.Key('FakeSource', '0123456789').urlsafe().decode()),
+      ]),
       resp.headers['location'])
-    self.assertEquals(
+    self.assertEqual(
       'logins="/fake/0123456789?Fake+User"; expires=2001-12-31 00:00:00; Path=/',
       resp.headers['Set-Cookie'])
 
@@ -358,10 +360,10 @@ class UtilTest(testutil.ModelsTest):
     ])
 
     resp = application.get_response(
-      '/fakesource/start', method='POST', body=urllib.parse.urlencode({
+      '/fakesource/start', method='POST', text=urllib.parse.urlencode({
         'feature': 'publish',
         'callback': 'http://withknown.com/bridgy_callback',
-      }).encode())
+      }))
 
     expected_auth_url = 'http://fake/auth/url?' + urllib.parse.urlencode({
       'redirect_uri': 'http://localhost/fakesource/add?state='
@@ -385,7 +387,7 @@ class UtilTest(testutil.ModelsTest):
     self.mox.ReplayAll()
 
     resp = util.requests_get('http://foo/bar')
-    self.assertEquals(util.HTTP_RESPONSE_TOO_BIG_STATUS_CODE, resp.status_code)
+    self.assertEqual(util.HTTP_RESPONSE_TOO_BIG_STATUS_CODE, resp.status_code)
     self.assertIn(' larger than our limit ', resp.text)
 
   def test_requests_get_content_length_not_int(self):
@@ -394,18 +396,18 @@ class UtilTest(testutil.ModelsTest):
     self.mox.ReplayAll()
 
     resp = util.requests_get('http://foo/bar')
-    self.assertEquals(200, resp.status_code)
-    self.assertEquals('xyz', resp.text)
+    self.assertEqual(200, resp.status_code)
+    self.assertEqual('xyz', resp.text)
 
   def test_requests_get_url_blacklist(self):
     resp = util.requests_get(next(iter(util.URL_BLACKLIST)))
-    self.assertEquals(util.HTTP_REQUEST_REFUSED_STATUS_CODE, resp.status_code)
-    self.assertEquals('Sorry, Bridgy has blacklisted this URL.', resp.text)
+    self.assertEqual(util.HTTP_REQUEST_REFUSED_STATUS_CODE, resp.status_code)
+    self.assertEqual('Sorry, Bridgy has blacklisted this URL.', resp.text)
 
   def test_no_accept_header(self):
-    self.assertEquals(util.REQUEST_HEADERS,
+    self.assertEqual(util.REQUEST_HEADERS,
                       util.request_headers(url='http://foo/bar'))
-    self.assertEquals(util.REQUEST_HEADERS,
+    self.assertEqual(util.REQUEST_HEADERS,
                       util.request_headers(source=Twitter(id='not-rhiaro')))
 
     self.expect_requests_get('http://foo/bar', '', headers=util.REQUEST_HEADERS)
@@ -416,9 +418,9 @@ class UtilTest(testutil.ModelsTest):
     """Only send Accept header to rhiaro.co.uk right now.
     https://github.com/snarfed/bridgy/issues/713
     """
-    self.assertEquals(util.REQUEST_HEADERS_CONNEG,
+    self.assertEqual(util.REQUEST_HEADERS_CONNEG,
                       util.request_headers(url='http://rhiaro.co.uk/'))
-    self.assertEquals(util.REQUEST_HEADERS_CONNEG,
+    self.assertEqual(util.REQUEST_HEADERS_CONNEG,
                       util.request_headers(source=Twitter(id='rhiaro')))
 
     self.expect_requests_get('http://rhiaro.co.uk/', '',
@@ -441,4 +443,4 @@ class UtilTest(testutil.ModelsTest):
         ('W http foo.com /', 'http://foo.com/'),
     ):
       got = util.webmention_endpoint_cache_key(url)
-      self.assertEquals(expected, got, (url, got))
+      self.assertEqual(expected, got, (url, got))

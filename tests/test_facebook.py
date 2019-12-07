@@ -3,7 +3,6 @@
 from __future__ import unicode_literals
 from __future__ import absolute_import
 from future.moves.urllib import error as urllib_error_py2
-from future.utils import native_str
 from future import standard_library
 standard_library.install_aliases()
 from past.builtins import basestring
@@ -88,12 +87,12 @@ class FacebookPageTest(testutil.ModelsTest):
       response, **kwargs)
 
   def poll(self):
-    resp = tasks.application.get_response(
-      '/_ah/queue/poll', method='POST', body=native_str(urllib.parse.urlencode({
-          'source_key': self.fb.key.urlsafe(),
-          'last_polled': self.fb.key.get().last_polled.strftime(
-            util.POLL_TASK_DATETIME_FORMAT),
-          })))
+    resp = app.application.get_response(
+      '/_ah/queue/poll', method='POST', text=urllib.parse.urlencode({
+        'source_key': self.fb.key.urlsafe().decode(),
+        'last_polled': self.fb.key.get().last_polled.strftime(
+          util.POLL_TASK_DATETIME_FORMAT),
+      }))
     self.assertEqual(200, resp.status_int)
 
   def test_new(self):
@@ -108,14 +107,14 @@ class FacebookPageTest(testutil.ModelsTest):
     self.assertEqual('tag:facebook.com,2013:212038', self.fb.user_tag_id())
 
   def test_add_user_declines(self):
-    resp = facebook.application.get_response(native_str(
+    resp = app.application.get_response(
       '/facebook/oauth_handler?' + urllib.parse.urlencode({
         'state': '{"feature":"listen","operation":"add"}',
         'error': 'access_denied',
         'error_code': '200',
         'error_reason': 'user_denied',
         'error_description': 'Permissions error',
-      })))
+      }))
 
     self.assert_equals(302, resp.status_code)
     self.assert_equals(
@@ -131,7 +130,7 @@ class FacebookPageTest(testutil.ModelsTest):
 
     self.assert_equals(302, handler.response.status_code)
     self.assert_equals(
-      'http://localhost/edit-websites?source_key=%s' % self.fb.key.urlsafe(),
+      'http://localhost/edit-websites?source_key=%s' % self.fb.key.urlsafe().decode(),
       handler.response.headers['location'])
 
   @skip("don't understand why this fails now, but don't care, since FB is dead")
@@ -173,12 +172,12 @@ class FacebookPageTest(testutil.ModelsTest):
     self.mox.ReplayAll()
 
     got = self.fb.get_activities()
-    self.assertEquals(1, len(got))
+    self.assertEqual(1, len(got))
     obj = got[0]['object']
-    self.assertEquals('tag:facebook.com,2013:222', obj['id'])
-    self.assertEquals('https://www.facebook.com/212038/posts/222', obj['url'])
-    self.assertEquals(1, len(obj['replies']['items']))
-    self.assertEquals(1, len([t for t in obj['tags'] if t.get('verb') == 'like']))
+    self.assertEqual('tag:facebook.com,2013:222', obj['id'])
+    self.assertEqual('https://www.facebook.com/212038/posts/222', obj['url'])
+    self.assertEqual(1, len(obj['replies']['items']))
+    self.assertEqual(1, len([t for t in obj['tags'] if t.get('verb') == 'like']))
 
   def test_get_activities_canonicalizes_ids_with_colons(self):
     """https://github.com/snarfed/bridgy/issues/305"""
@@ -246,12 +245,12 @@ class FacebookPageTest(testutil.ModelsTest):
     self.mox.ReplayAll()
 
     self.fb.get_activities()
-    self.assertEquals('2', self.fb.cached_resolve_object_id('1'))
-    self.assertEquals('4', self.fb.cached_resolve_object_id('3'))
+    self.assertEqual('2', self.fb.cached_resolve_object_id('1'))
+    self.assertEqual('4', self.fb.cached_resolve_object_id('3'))
 
     self.fb.put()
-    self.assert_equals(json_dumps({'1': '2', '3': '4', '2': '2', '4': '4'}),
-                       self.fb.key.get().resolved_object_ids_json)
+    self.assert_equals({'1': '2', '3': '4', '2': '2', '4': '4'},
+                       json_loads(self.fb.key.get().resolved_object_ids_json))
 
   def test_expired_sends_notification(self):
     self.expect_api_call(API_ME_POSTS,
@@ -312,8 +311,8 @@ class FacebookPageTest(testutil.ModelsTest):
     with self.assertRaises(urllib_error_py2.HTTPError) as cm:
       self.fb.get_activities()
 
-    self.assertEquals(400, cm.exception.code)
-    self.assertEquals(msg, cm.exception.body)
+    self.assertEqual(400, cm.exception.code)
+    self.assertEqual(msg, cm.exception.body)
 
   def test_other_error_not_json(self):
     """If an error body isn't JSON, we should raise the original exception."""
@@ -323,8 +322,8 @@ class FacebookPageTest(testutil.ModelsTest):
     with self.assertRaises(urllib_error_py2.HTTPError) as cm:
       self.fb.get_activities()
 
-    self.assertEquals(400, cm.exception.code)
-    self.assertEquals('not json', cm.exception.body)
+    self.assertEqual(400, cm.exception.code)
+    self.assertEqual('not json', cm.exception.body)
 
   def test_canonicalize_url_basic(self):
     # should look it up once, then cache it
@@ -444,7 +443,7 @@ class FacebookPageTest(testutil.ModelsTest):
     </html>""")
 
     self.assertNotIn('222', PHOTO_POST['id'])
-    self.assertEquals('222', PHOTO_POST['object_id'])
+    self.assertEqual('222', PHOTO_POST['object_id'])
     self.expect_requests_get('http://my.orig/post', """
     <html class="h-entry">
       <a class="u-syndication" href="https://www.facebook.com/photo.php?fbid=222&set=a.995695740593.2393090.212038&type=1&theater'"></a>
@@ -454,7 +453,7 @@ class FacebookPageTest(testutil.ModelsTest):
     self.poll()
 
     resps = list(models.Response.query())
-    self.assertEquals(3, len(resps))
+    self.assertEqual(3, len(resps))
     for resp in resps:
       self.assertEqual(['http://my.orig/post'], resp.unsent)
 
@@ -489,7 +488,7 @@ class FacebookPageTest(testutil.ModelsTest):
     self.mox.ReplayAll()
 
     self.poll()
-    self.assertEquals(0, models.Response.query().count())
+    self.assertEqual(0, models.Response.query().count())
 
     self.poll()
     self.assert_equals((
@@ -535,8 +534,8 @@ class FacebookPageTest(testutil.ModelsTest):
     syndpost = models.SyndicatedPost.insert(
       self.fb, original='http://fin.al',
       syndication='http://facebook.com/fooey/posts/123')
-    self.assertEquals('fooey', fb.key.get().inferred_username)
-    self.assertEquals('https://www.facebook.com/212038/posts/123',
+    self.assertEqual('fooey', fb.key.get().inferred_username)
+    self.assertEqual('https://www.facebook.com/212038/posts/123',
                       syndpost.syndication)
 
   def test_on_new_syndicated_post_infer_user_id(self):
@@ -550,8 +549,8 @@ class FacebookPageTest(testutil.ModelsTest):
     syndpost = models.SyndicatedPost.insert(
       self.fb, original='http://aga.in',
       syndication='https://www.facebook.com/101008675309/posts/456')
-    self.assertEquals(['101008675309'], self.fb.key.get().inferred_user_ids)
-    self.assertEquals('https://www.facebook.com/212038/posts/456',
+    self.assertEqual(['101008675309'], self.fb.key.get().inferred_user_ids)
+    self.assertEqual('https://www.facebook.com/212038/posts/456',
                       syndpost.syndication)
 
   def test_on_new_syndicated_post_infer_user_id_dedupes(self):
@@ -562,8 +561,8 @@ class FacebookPageTest(testutil.ModelsTest):
     syndpost = models.SyndicatedPost.insert(
       self.fb, original='http://aga.in',
       syndication='https://www.facebook.com/789/posts/456')
-    self.assertEquals(['789'], self.fb.key.get().inferred_user_ids)
-    self.assertEquals('https://www.facebook.com/789/posts/456',
+    self.assertEqual(['789'], self.fb.key.get().inferred_user_ids)
+    self.assertEqual('https://www.facebook.com/789/posts/456',
                       syndpost.syndication)
 
   def test_pre_put_hook(self):
@@ -579,8 +578,8 @@ class FacebookPageTest(testutil.ModelsTest):
     self.fb.canonicalize_url('http://facebook.com/foo/posts/1')
     self.fb.canonicalize_url('http://facebook.com/foo/posts/3')
     self.fb.put()
-    self.assertEquals(json_dumps({'1': '2', '3': '4'}),
-                      self.fb.key.get().resolved_object_ids_json)
+    self.assertEqual({'1': '2', '3': '4'},
+                     json_loads(self.fb.key.get().resolved_object_ids_json))
 
     try:
       orig = facebook.MAX_RESOLVED_OBJECT_IDS
@@ -588,8 +587,8 @@ class FacebookPageTest(testutil.ModelsTest):
       self.fb.canonicalize_url('http://facebook.com/foo/posts/5')
       self.fb.put()
       # should keep the highest ids
-      self.assertEquals(json_dumps({'3': '4', '5': None}),
-                        self.fb.key.get().resolved_object_ids_json)
+      self.assertEqual({'3': '4', '5': None},
+                        json_loads(self.fb.key.get().resolved_object_ids_json))
     finally:
       facebook.MAX_RESOLVED_OBJECT_IDS = orig
 
@@ -607,13 +606,13 @@ class FacebookPageTest(testutil.ModelsTest):
         'state': urllib.parse.quote_plus('{"feature":"' + feature + '","operation":"add"}'),
       }
 
-      resp = facebook.application.get_response(
-        '/facebook/start', method='POST', body=native_str(urllib.parse.urlencode({
+      resp = app.application.get_response(
+        '/facebook/start', method='POST', text=urllib.parse.urlencode({
           'feature': feature,
-        })))
+        }))
 
-      self.assertEquals(302, resp.status_code)
-      self.assertEquals(expected_auth_url, resp.headers['Location'])
+      self.assertEqual(302, resp.status_code)
+      self.assertEqual(expected_auth_url, resp.headers['Location'])
 
   def test_disable_page(self):
     self.auth_entity.pages_json = json_dumps([self.page_json])
@@ -623,7 +622,7 @@ class FacebookPageTest(testutil.ModelsTest):
                         json_dumps(self.page_json))
     self.mox.ReplayAll()
 
-    key = self.page.key.urlsafe()
+    key = self.page.key.urlsafe().decode()
     encoded_state = urllib.parse.quote_plus(
       '{"feature":"listen","operation":"delete","source":"' + key + '"}')
 
@@ -635,20 +634,20 @@ class FacebookPageTest(testutil.ModelsTest):
     }
 
     resp = app.application.get_response(
-      '/delete/start', method='POST', body=native_str(urllib.parse.urlencode({
+      '/delete/start', method='POST', text=urllib.parse.urlencode({
         'feature': 'listen',
         'key': key,
-      })))
+      }))
 
-    self.assertEquals(302, resp.status_int)
-    self.assertEquals(expected_auth_url, resp.headers['Location'])
+    self.assertEqual(302, resp.status_int)
+    self.assertEqual(expected_auth_url, resp.headers['Location'])
 
     # when silo oauth is done, it should send us back to /SOURCE/delete/finish,
     # which would in turn redirect to the more general /delete/finish.
-    resp = app.application.get_response(native_str(
-      '/delete/finish?'
-      + 'auth_entity=' + self.auth_entity.key.urlsafe()
-      + '&state=' + encoded_state))
+    resp = app.application.get_response('/delete/finish?' + urllib.parse.urlencode({
+      'auth_entity': self.auth_entity.key.urlsafe().decode(),
+      'state': encoded_state,
+    }))
 
     self.assert_equals(302, resp.status_code)
     # listen feature has been removed
@@ -678,8 +677,8 @@ class FacebookPageTest(testutil.ModelsTest):
     handler.finish(self.auth_entity)
 
     self.assert_equals(302, self.response.status_code)
-    self.assertEquals(
-      'http://localhost/edit-websites?source_key=%s' % self.fb.key.urlsafe(),
+    self.assertEqual(
+      'http://localhost/edit-websites?source_key=%s' % self.fb.key.urlsafe().decode(),
       self.response.headers['Location'])
 
   @staticmethod
@@ -745,13 +744,13 @@ my message
       }))
     self.mox.ReplayAll()
 
-    resp = publish.application.get_response(
-      '/publish/webmention', method='POST', body=native_str(urllib.parse.urlencode({
+    resp = app.application.get_response(
+      '/publish/webmention', method='POST', text=urllib.parse.urlencode({
         'source': 'http://foo.com/bar',
         'target': 'https://brid.gy/publish/facebook',
-        'source_key': self.fb.key.urlsafe(),
-      })))
-    self.assertEquals(201, resp.status_int)
+        'source_key': self.fb.key.urlsafe().decode(),
+      }))
+    self.assertEqual(201, resp.status_int)
 
   def test_is_activity_public(self):
     """Incomplete test. Checks replies, likes, reposts, and when fb_id isn't set."""

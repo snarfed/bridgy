@@ -22,7 +22,6 @@ Example comment ID and links
 from __future__ import unicode_literals
 from future.moves.urllib import error as urllib_error_py2
 
-from future.utils import native_str
 from future import standard_library
 standard_library.install_aliases()
 from builtins import str
@@ -321,7 +320,7 @@ class FacebookPage(models.Source):
     val = self.updates.get(name)
     if val:
       keep = heapq.nlargest(max,
-        (int(id) if util.is_int(id) else native_str(id) for id in val.keys()))
+        (int(id) if util.is_int(id) else str(id) for id in val.keys()))
       setattr(self, name + '_json',
               json_dumps({str(id): val[str(id)] for id in keep}))
 
@@ -430,7 +429,7 @@ class AuthHandler(util.Handler):
     # ask the user for their web site if we don't already have one.
     if source and not source.domains:
       self.redirect('/edit-websites?' + urllib.parse.urlencode({
-        'source_key': source.key.urlsafe(),
+        'source_key': source.key.urlsafe().decode(),
       }))
 
 
@@ -445,7 +444,7 @@ class OAuthCallback(oauth_facebook.CallbackHandler, AuthHandler):
       vars = {
         'action': '/facebook/add',
         'state': state,
-        'auth_entity_key': auth_entity.key.urlsafe(),
+        'auth_entity_key': auth_entity.key.urlsafe().decode(),
         'choices': [json_loads(auth_entity.user_json)] +
                    json_loads(auth_entity.pages_json),
         }

@@ -52,11 +52,11 @@ class BloggerTest(testutil.HandlerTest):
 
   def test_new(self):
     b = Blogger.new(self.handler, auth_entity=self.auth_entity)
-    self.assertEquals(self.auth_entity.key, b.auth_entity)
-    self.assertEquals('name', b.name)
-    self.assertEquals(['http://my.blawg/'], b.domain_urls)
-    self.assertEquals(['my.blawg'], b.domains)
-    self.assertEquals('http://pic', b.picture)
+    self.assertEqual(self.auth_entity.key, b.auth_entity)
+    self.assertEqual('name', b.name)
+    self.assertEqual(['http://my.blawg/'], b.domain_urls)
+    self.assertEqual(['my.blawg'], b.domains)
+    self.assertEqual('http://pic', b.picture)
 
   def test_new_oauth_dropins_error(self):
     """Blogger is special cased in oauth-dropins: when login succeeds but then
@@ -64,24 +64,24 @@ class BloggerTest(testutil.HandlerTest):
     we can differentiate from a user decline because oauth-dropins can't
     currently intercept Blogger declines.
     """
-    resp = blogger.application.get_response('/blogger/oauth_handler')
-    self.assertEquals(302, resp.status_int)
+    resp = app.application.get_response('/blogger/oauth_handler')
+    self.assertEqual(302, resp.status_int)
     location = urllib.parse.urlparse(resp.headers['Location'])
-    self.assertEquals('/', location.path)
+    self.assertEqual('/', location.path)
     self.assertIn("Couldn't fetch your blogs", urllib.parse.unquote(location.fragment))
-    self.assertEquals(0, BloggerUser.query().count())
-    self.assertEquals(0, Blogger.query().count())
+    self.assertEqual(0, BloggerUser.query().count())
+    self.assertEqual(0, Blogger.query().count())
 
   def test_oauth_handler_no_blogs(self):
     self.auth_entity = BloggerUser(id='123', name='name', picture_url='pic',
                                      blogs_atom='x', user_atom='y', creds_json='z')
     self.auth_entity.put()
 
-    resp = blogger.application.get_response(
-      '/blogger/oauth_handler?auth_entity=%s' % self.auth_entity.key.urlsafe())
-    self.assertEquals(302, resp.status_int)
+    resp = app.application.get_response('/blogger/oauth_handler?auth_entity=%s' %
+                                        self.auth_entity.key.urlsafe().decode())
+    self.assertEqual(302, resp.status_int)
     location = urllib.parse.urlparse(resp.headers['Location'])
-    self.assertEquals('/', location.path)
+    self.assertEqual('/', location.path)
     self.assertIn("Couldn't fetch your blogs", urllib.parse.unquote(location.fragment))
 
   def test_new_no_blogs(self):
@@ -142,6 +142,6 @@ class BloggerTest(testutil.HandlerTest):
     self.assert_equals({'error': '500, Internal error: bX-2i87au'}, resp)
 
   def test_feed_url(self):
-    self.assertEquals(
+    self.assertEqual(
       'http://my.blawg/feeds/posts/default',
       Blogger.new(self.handler, auth_entity=self.auth_entity).feed_url())

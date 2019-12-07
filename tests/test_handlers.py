@@ -13,6 +13,7 @@ import appengine_config
 from mox3 import mox
 from util import json_dumps, json_loads
 
+import app
 import handlers
 import models
 from . import testutil
@@ -63,15 +64,14 @@ class HandlersTest(testutil.HandlerTest):
 
   def check_response(self, url_template, expected_body=None, expected_status=200):
     # use an HTTPS request so that URL schemes are converted
-    resp = handlers.application.get_response(
+    resp = app.application.get_response(
       url_template % self.source.key.string_id(), scheme='https')
-    html = resp.body.decode('utf-8')
     self.assertEqual(expected_status, resp.status_int,
-                     '%s %s' % (resp.status_int, html))
+                     '%s %s' % (resp.status_int, resp.text))
 
     if expected_body:
       header_lines = len(handlers.TEMPLATE.template.splitlines()) - 2
-      actual = '\n'.join(html.splitlines()[header_lines:-1])
+      actual = '\n'.join(resp.text.splitlines()[header_lines:-1])
       self.assert_multiline_equals(expected_body, actual, ignore_blanks=True)
 
     return resp
@@ -100,9 +100,9 @@ class HandlersTest(testutil.HandlerTest):
 """ % {'key': self.source.key.id(), 'id': self.source.user_tag_id()})
 
   def test_post_json(self):
-    resp = handlers.application.get_response(
+    resp = app.application.get_response(
       '/post/fake/%s/000?format=json' % self.source.key.string_id(), scheme='https')
-    self.assertEqual(200, resp.status_int, resp.body)
+    self.assertEqual(200, resp.status_int, resp.text)
     self.assert_equals({
       'type': ['h-entry'],
       'properties': {
@@ -130,7 +130,7 @@ asdf http://other/link qwert
           },
         }],
       },
-    }, json_loads(resp.body))
+    }, json_loads(resp.text))
 
   def test_post_missing(self):
     FakeGrSource.activities = []
@@ -163,7 +163,7 @@ asdf http://other/link qwert
   def test_author_uid_not_tag_uri(self):
     self.activities[0]['object']['author']['id'] = 'not a tag uri'
     resp = self.check_response('/post/fake/%s/000?format=json', expected_status=200)
-    props = json_loads(resp.body)['properties']['author'][0]['properties']
+    props = json_loads(resp.text)['properties']['author'][0]['properties']
     self.assert_equals(['not a tag uri'], props['uid'])
     self.assertNotIn('url', props)
 
@@ -181,7 +181,7 @@ asdf http://other/link qwert
 
     resp = self.check_response('/post/fake/%s/000', expected_status=410)
     self.assertEqual('text/plain; charset=utf-8', resp.headers['Content-Type'])
-    self.assertEqual('FakeSource error:\nGone baby gone', resp.body)
+    self.assertEqual('FakeSource error:\nGone baby gone', resp.text)
 
   def test_connection_failures_504(self):
     user_id = self.source.key.string_id()
@@ -190,7 +190,7 @@ asdf http://other/link qwert
         ).AndRaise(Exception('Connection closed unexpectedly'))
     self.mox.ReplayAll()
     resp = self.check_response('/post/fake/%s/000', expected_status=504)
-    self.assertEqual('FakeSource error:\nConnection closed unexpectedly', resp.body)
+    self.assertEqual('FakeSource error:\nConnection closed unexpectedly', resp.text)
 
   def test_handle_disable_source(self):
     self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities')
@@ -200,7 +200,7 @@ asdf http://other/link qwert
     self.mox.ReplayAll()
 
     resp = self.check_response('/post/fake/%s/000', expected_status=401)
-    self.assertIn("Bridgy's access to your account has expired", resp.body)
+    self.assertIn("Bridgy's access to your account has expired", resp.text)
 
   def test_handle_value_error(self):
     self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities')
@@ -210,7 +210,7 @@ asdf http://other/link qwert
     self.mox.ReplayAll()
 
     resp = self.check_response('/post/fake/%s/000', expected_status=400)
-    self.assertIn('FakeSource error: foo bar', resp.body)
+    self.assertIn('FakeSource error: foo bar', resp.text)
 
   def test_comment(self):
     FakeGrSource.comment = {
@@ -267,7 +267,7 @@ asdf http://other/link qwert
   <a class="u-like-of" href="http://or.ig/post"></a>
 </article>
 """)
-    self.assertIn('<title>Alice</title>', resp.body)
+    self.assertIn('<title>Alice</title>', resp.text)
 
   def test_reaction(self):
     FakeGrSource.reaction = {
@@ -437,8 +437,8 @@ asdf http://other/link qwert
   <a class="u-mention" href="http://other/link/redirect"></a>
   </div>
   <a class="u-in-reply-to" href="http://fa.ke/000"></a>
-  <a class="u-in-reply-to" href="http://or.ig/post/redirect"></a>
   <a class="u-in-reply-to" href="http://or.ig/post"></a>
+  <a class="u-in-reply-to" href="http://or.ig/post/redirect"></a>
 </article>
 """)
 
@@ -513,7 +513,7 @@ asdf http://other/link qwert
     self.mox.ReplayAll()
 
     cached = self.check_response('/post/fake/%s/000')
-    self.assert_multiline_equals(orig.body, cached.body)
+    self.assert_multiline_equals(orig.text, cached.text)
 
   def test_in_blocklist(self):
     self.mox.StubOutWithMock(FakeSource, 'is_blocked')

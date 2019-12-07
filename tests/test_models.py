@@ -202,13 +202,13 @@ class ResponseTest(testutil.ModelsTest):
 class SourceTest(testutil.HandlerTest):
 
   def test_sources_global(self):
-    self.assertEquals(blogger.Blogger, models.sources['blogger'])
-    self.assertEquals(facebook.FacebookPage, models.sources['facebook'])
-    self.assertEquals(flickr.Flickr, models.sources['flickr'])
-    self.assertEquals(instagram.Instagram, models.sources['instagram'])
-    self.assertEquals(tumblr.Tumblr, models.sources['tumblr'])
-    self.assertEquals(twitter.Twitter, models.sources['twitter'])
-    self.assertEquals(wordpress_rest.WordPress, models.sources['wordpress'])
+    self.assertEqual(blogger.Blogger, models.sources['blogger'])
+    self.assertEqual(facebook.FacebookPage, models.sources['facebook'])
+    self.assertEqual(flickr.Flickr, models.sources['flickr'])
+    self.assertEqual(instagram.Instagram, models.sources['instagram'])
+    self.assertEqual(tumblr.Tumblr, models.sources['tumblr'])
+    self.assertEqual(twitter.Twitter, models.sources['twitter'])
+    self.assertEqual(wordpress_rest.WordPress, models.sources['wordpress'])
 
   def _test_create_new(self, **kwargs):
     FakeSource.create_new(self.handler, domains=['foo'],
@@ -359,8 +359,8 @@ class SourceTest(testutil.HandlerTest):
         id='x', user_json=json_dumps({'url': url}))
       auth_entity.put()
       source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
-      self.assertEquals([url.lower()], source.domain_urls)
-      self.assertEquals(['foo.com'], source.domains)
+      self.assertEqual([url.lower()], source.domain_urls)
+      self.assertEqual(['foo.com'], source.domains)
 
     # multiple good URLs and one that's in the webmention blacklist
     auth_entity = testutil.FakeAuthEntity(id='x', user_json=json_dumps({
@@ -372,10 +372,10 @@ class SourceTest(testutil.HandlerTest):
           }))
     auth_entity.put()
     source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
-    self.assertEquals(['http://foo.org/', 'http://bar.com/', 'http://baz/',
+    self.assertEqual(['http://foo.org/', 'http://bar.com/', 'http://baz/',
                        'https://baj/biff'],
                       source.domain_urls)
-    self.assertEquals(['foo.org', 'bar.com', 'baz', 'baj'], source.domains)
+    self.assertEqual(['foo.org', 'bar.com', 'baz', 'baj'], source.domains)
 
     # a URL that redirects
     auth_entity = testutil.FakeAuthEntity(
@@ -386,8 +386,8 @@ class SourceTest(testutil.HandlerTest):
     self.mox.ReplayAll()
 
     source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
-    self.assertEquals(['http://final/'], source.domain_urls)
-    self.assertEquals(['final'], source.domains)
+    self.assertEqual(['http://final/'], source.domain_urls)
+    self.assertEqual(['final'], source.domains)
 
   def test_create_new_domain_url_redirects_to_path(self):
     """If a profile URL is a root that redirects to a path, keep the root."""
@@ -399,8 +399,8 @@ class SourceTest(testutil.HandlerTest):
     self.mox.ReplayAll()
 
     source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
-    self.assertEquals(['http://site/'], source.domain_urls)
-    self.assertEquals(['site'], source.domains)
+    self.assertEqual(['http://site/'], source.domain_urls)
+    self.assertEqual(['site'], source.domains)
 
   def test_create_new_domain_url_matches_root_relme(self):
     """If a profile URL contains a path, check the root for a rel=me to the path."""
@@ -412,8 +412,8 @@ class SourceTest(testutil.HandlerTest):
     self.mox.ReplayAll()
 
     source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
-    self.assertEquals(['http://site/'], source.domain_urls)
-    self.assertEquals(['site'], source.domains)
+    self.assertEqual(['http://site/'], source.domain_urls)
+    self.assertEqual(['site'], source.domains)
 
   def test_create_new_domain_url_no_root_relme(self):
     """If a profile URL contains a path, check the root for a rel=me to the path."""
@@ -425,8 +425,8 @@ class SourceTest(testutil.HandlerTest):
     self.mox.ReplayAll()
 
     source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
-    self.assertEquals(['http://site/path'], source.domain_urls)
-    self.assertEquals(['site'], source.domains)
+    self.assertEqual(['http://site/path'], source.domain_urls)
+    self.assertEqual(['site'], source.domains)
 
   def test_create_new_unicode_chars(self):
     """We should handle unusual unicode chars in the source's name ok."""
@@ -447,8 +447,8 @@ class SourceTest(testutil.HandlerTest):
 
     self.mox.ReplayAll()
     source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
-    self.assertEquals(['http://bar/', 'http://baz/'], source.domain_urls)
-    self.assertEquals(['bar', 'baz'], source.domains)
+    self.assertEqual(['http://bar/', 'http://baz/'], source.domain_urls)
+    self.assertEqual(['bar', 'baz'], source.domains)
 
   @skip("can't keep old domains on signup until edit websites works. #623")
   def test_create_new_merges_domains(self):
@@ -462,8 +462,8 @@ class SourceTest(testutil.HandlerTest):
 
     self.mox.ReplayAll()
     source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
-    self.assertEquals(['http://bar/', 'http://baz/', 'http://foo/'], source.domain_urls)
-    self.assertEquals(['baz', 'foo', 'bar'], source.domains)
+    self.assertEqual(['http://bar/', 'http://baz/', 'http://foo/'], source.domain_urls)
+    self.assertEqual(['baz', 'foo', 'bar'], source.domains)
 
   def test_create_new_dedupes_domains(self):
     auth_entity = testutil.FakeAuthEntity(id='x', user_json=json_dumps(
@@ -474,8 +474,8 @@ class SourceTest(testutil.HandlerTest):
                 ]}))
     self.mox.ReplayAll()
     source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
-    self.assertEquals(['https://foo/'], source.domain_urls)
-    self.assertEquals(['foo'], source.domains)
+    self.assertEqual(['https://foo/'], source.domain_urls)
+    self.assertEqual(['foo'], source.domains)
 
   def test_create_new_too_many_domains(self):
     urls = ['http://%s/' % i for i in range(10)]
@@ -488,8 +488,8 @@ class SourceTest(testutil.HandlerTest):
     self.mox.ReplayAll()
 
     source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
-    self.assertEquals(urls, source.domain_urls)
-    self.assertEquals([str(i) for i in range(10)], source.domains)
+    self.assertEqual(urls, source.domain_urls)
+    self.assertEqual([str(i) for i in range(10)], source.domains)
 
   def test_create_new_domain_url_path_fails(self):
     auth_entity = testutil.FakeAuthEntity(id='x', user_json=json_dumps(
@@ -498,8 +498,8 @@ class SourceTest(testutil.HandlerTest):
     self.mox.ReplayAll()
 
     source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
-    self.assertEquals(['http://flaky/foo'], source.domain_urls)
-    self.assertEquals(['flaky'], source.domains)
+    self.assertEqual(['http://flaky/foo'], source.domain_urls)
+    self.assertEqual(['flaky'], source.domains)
 
   def test_create_new_domain_url_path_connection_fails(self):
     auth_entity = testutil.FakeAuthEntity(id='x', user_json=json_dumps(
@@ -509,8 +509,8 @@ class SourceTest(testutil.HandlerTest):
     self.mox.ReplayAll()
 
     source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
-    self.assertEquals(['http://flaky/foo'], source.domain_urls)
-    self.assertEquals(['flaky'], source.domains)
+    self.assertEqual(['http://flaky/foo'], source.domain_urls)
+    self.assertEqual(['flaky'], source.domains)
 
   def test_verify(self):
     # this requests.get is called by webmention-tools
@@ -523,7 +523,7 @@ class SourceTest(testutil.HandlerTest):
     source = FakeSource.new(self.handler, features=['webmention'],
                             domain_urls=['http://primary/'], domains=['primary'])
     source.verify()
-    self.assertEquals('http://web.ment/ion', source.webmention_endpoint)
+    self.assertEqual('http://web.ment/ion', source.webmention_endpoint)
 
   def test_verify_unicode_characters(self):
     """Older versions of BS4 had an issue where it would check short HTML
@@ -541,7 +541,7 @@ class SourceTest(testutil.HandlerTest):
                             domain_urls=['http://primary/'],
                             domains=['primary'])
     source.verify()
-    self.assertEquals('http://web.ment/ion', source.webmention_endpoint)
+    self.assertEqual('http://web.ment/ion', source.webmention_endpoint)
 
   def test_verify_without_webmention_endpoint(self):
     self.expect_webmention_requests_get(
@@ -564,7 +564,7 @@ class SourceTest(testutil.HandlerTest):
                             domain_urls=['http://bad.app/', 'http://good/'],
                             domains=['bad.app', 'good'])
     source.verify()
-    self.assertEquals('http://web.ment/ion', source.webmention_endpoint)
+    self.assertEqual('http://web.ment/ion', source.webmention_endpoint)
 
   def test_has_bridgy_webmention_endpoint(self):
     source = FakeSource.new(None)
@@ -574,7 +574,7 @@ class SourceTest(testutil.HandlerTest):
                           ('https://www.brid.gy/webmention/fake', True),
                           ):
       source.webmention_endpoint = endpoint
-      self.assertEquals(has, source.has_bridgy_webmention_endpoint(), endpoint)
+      self.assertEqual(has, source.has_bridgy_webmention_endpoint(), endpoint)
 
   def test_put_updates(self):
     source = FakeSource.new(None)
@@ -584,9 +584,9 @@ class SourceTest(testutil.HandlerTest):
     try:
       # check that source.updates is preserved through pre-put hook since some
       # Source subclasses (e.g. FacebookPage) use it.
-      FakeSource._pre_put_hook = lambda fake: self.assertEquals(updates, fake.updates)
+      FakeSource._pre_put_hook = lambda fake: self.assertEqual(updates, fake.updates)
       Source.put_updates(source)
-      self.assertEquals('disabled', source.key.get().status)
+      self.assertEqual('disabled', source.key.get().status)
     finally:
       del FakeSource._pre_put_hook
 
@@ -675,11 +675,11 @@ class BlogPostTest(testutil.ModelsTest):
     for feed_item in None, {}:
       bp = BlogPost(id='x')
       bp.put()
-      self.assertEquals('BlogPost x [no url]', bp.label())
+      self.assertEqual('BlogPost x [no url]', bp.label())
 
     bp = BlogPost(id='x', feed_item={'permalinkUrl': 'http://perma/link'})
     bp.put()
-    self.assertEquals('BlogPost x http://perma/link', bp.label())
+    self.assertEqual('BlogPost x http://perma/link', bp.label())
 
   def test_restart(self):
     self.expect_task('propagate-blogpost', key=self.blogposts[0])
@@ -750,16 +750,16 @@ class SyndicatedPostTest(testutil.ModelsTest):
         self.source, 'http://silo/no-original',
         'http://original/newly-discovered')
     self.assertIsNotNone(r)
-    self.assertEquals('http://original/newly-discovered', r.original)
+    self.assertEqual('http://original/newly-discovered', r.original)
 
     # make sure it's in NDB
     rs = SyndicatedPost.query(
         SyndicatedPost.syndication == 'http://silo/no-original',
         ancestor=self.source.key
     ).fetch()
-    self.assertEquals(1, len(rs))
-    self.assertEquals('http://original/newly-discovered', rs[0].original)
-    self.assertEquals('http://silo/no-original', rs[0].syndication)
+    self.assertEqual(1, len(rs))
+    self.assertEqual('http://original/newly-discovered', rs[0].original)
+    self.assertEqual('http://silo/no-original', rs[0].syndication)
 
     # and the blanks have been removed
     self.assertFalse(
@@ -780,7 +780,7 @@ class SyndicatedPostTest(testutil.ModelsTest):
         self.source, 'http://silo/post/url',
         'http://original/different/url')
     self.assertIsNotNone(r)
-    self.assertEquals('http://original/different/url', r.original)
+    self.assertEqual('http://original/different/url', r.original)
 
     # make sure they're both in the DB
     rs = SyndicatedPost.query(

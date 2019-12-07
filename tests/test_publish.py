@@ -4,7 +4,6 @@
 from __future__ import unicode_literals
 from __future__ import absolute_import
 
-from future.utils import native_str
 from future import standard_library
 standard_library.install_aliases()
 from builtins import range
@@ -21,6 +20,7 @@ import requests
 import webapp2
 from webob import exc
 
+import app
 import facebook
 from models import Publish, PublishedPage
 import publish
@@ -44,7 +44,7 @@ class PublishTest(testutil.HandlerTest):
     self.oauth_state = {
       'source_url': 'http://foo.com/bar',
       'target_url': 'https://brid.gy/publish/fake',
-      'source_key': self.source.key.urlsafe(),
+      'source_key': self.source.key.urlsafe().decode(),
       'include_link': gr_source.INCLUDE_LINK,
     }
     self.post_html = '<article class="h-entry"><p class="e-content">%s</p></article>'
@@ -57,10 +57,10 @@ class PublishTest(testutil.HandlerTest):
     params.update({
       'source': source or 'http://foo.com/bar',
       'target': target or 'https://brid.gy/publish/fake',
-      'source_key': self.source.key.urlsafe(),
+      'source_key': self.source.key.urlsafe().decode(),
       })
 
-    app = publish.application
+    appl = app.application
     assert not (preview and interactive)
     if interactive:
       class FakeSendHandler(publish.SendHandler):
@@ -68,11 +68,11 @@ class PublishTest(testutil.HandlerTest):
           state = (util.encode_oauth_state(self.oauth_state)
                    if self.oauth_state else None)
           fsh_self.finish(self.auth_entity, state)
-      app = webapp2.WSGIApplication([('.*', FakeSendHandler)])
+      appl = webapp2.WSGIApplication([('.*', FakeSendHandler)])
 
-    return app.get_response(
+    return appl.get_response(
       '/publish/preview' if preview else '/publish/webmention',
-      method='POST', body=native_str(urllib.parse.urlencode(params)))
+      method='POST', text=urllib.parse.urlencode(params))
 
   def expect_requests_get(self, url, body='', backlink=None, **kwargs):
     body += backlink or self.backlink
@@ -82,7 +82,7 @@ class PublishTest(testutil.HandlerTest):
   def assert_response(self, expected, status=None, preview=False, **kwargs):
     resp = self.get_response(preview=preview, **kwargs)
     body = resp.body.decode('utf-8')
-    self.assertEquals(status, resp.status_int,
+    self.assertEqual(status, resp.status_int,
                       '%s != %s: %s' % (status, resp.status_int, body))
     if preview:
       self.assertIn(expected, body,
@@ -108,13 +108,13 @@ class PublishTest(testutil.HandlerTest):
       html_content = content
     self.assertTrue(PublishedPage.get_by_id('http://foo.com/bar'))
     publish = Publish.query().get()
-    self.assertEquals(self.source.key, publish.source)
-    self.assertEquals('complete', publish.status)
-    self.assertEquals('post', publish.type)
-    self.assertEquals('FakeSource post label', publish.type_label())
+    self.assertEqual(self.source.key, publish.source)
+    self.assertEqual('complete', publish.status)
+    self.assertEqual('post', publish.type)
+    self.assertEqual('FakeSource post label', publish.type_label())
     expected_html = (self.post_html % html_content) + self.backlink
-    self.assertEquals(expected_html, publish.html)
-    self.assertEquals({
+    self.assertEqual(expected_html, publish.html)
+    self.assertEqual({
       'id': 'fake id',
       'url': 'http://fake/url',
       'content': '%s - http://foo.com/bar' % content,
@@ -125,7 +125,7 @@ class PublishTest(testutil.HandlerTest):
     self.expect_requests_get('http://foo.com/bar', self.post_html % 'foo')
     self.mox.ReplayAll()
     resp = self.assert_created('foo - http://foo.com/bar', interactive=False)
-    self.assertEquals('http://fake/url', resp.headers['Location'])
+    self.assertEqual('http://fake/url', resp.headers['Location'])
     self._check_entity()
 
   def test_interactive_success(self):
@@ -133,8 +133,8 @@ class PublishTest(testutil.HandlerTest):
     self.mox.ReplayAll()
 
     resp = self.get_response(interactive=True)
-    self.assertEquals(302, resp.status_int)
-    self.assertEquals(
+    self.assertEqual(302, resp.status_int)
+    self.assertEqual(
       'http://localhost/fake/foo.com#!'
         'Done! <a href="http://fake/url">Click here to view.</a>\ngranary message',
       urllib.parse.unquote_plus(resp.headers['Location']))
@@ -142,11 +142,11 @@ class PublishTest(testutil.HandlerTest):
 
   def test_interactive_from_wrong_user_page(self):
     other_source = testutil.FakeSource.new(None).put()
-    self.oauth_state['source_key'] = other_source.urlsafe()
+    self.oauth_state['source_key'] = other_source.urlsafe().decode()
 
     resp = self.get_response(interactive=True)
-    self.assertEquals(302, resp.status_int)
-    self.assertEquals(
+    self.assertEqual(302, resp.status_int)
+    self.assertEqual(
       'http://localhost/fake/%s#!'
         'Please log into FakeSource as fake to publish that page.' %
         other_source.id(),
@@ -157,8 +157,8 @@ class PublishTest(testutil.HandlerTest):
   def test_interactive_oauth_decline(self):
     self.auth_entity = None
     resp = self.get_response(interactive=True)
-    self.assertEquals(302, resp.status_int)
-    self.assertEquals(
+    self.assertEqual(302, resp.status_int)
+    self.assertEqual(
       'http://localhost/fake/foo.com#!'
         'If you want to publish or preview, please approve the prompt.',
       urllib.parse.unquote_plus(resp.headers['Location']))
@@ -169,8 +169,8 @@ class PublishTest(testutil.HandlerTest):
     """https://github.com/snarfed/bridgy/issues/449"""
     self.oauth_state = None
     resp = self.get_response(interactive=True)
-    self.assertEquals(302, resp.status_int)
-    self.assertEquals(
+    self.assertEqual(302, resp.status_int)
+    self.assertEqual(
       'http://localhost/#!'
         'If you want to publish or preview, please approve the prompt.',
       urllib.parse.unquote_plus(resp.headers['Location']))
@@ -213,12 +213,12 @@ class PublishTest(testutil.HandlerTest):
     # first attempt should work
     self.assert_success('preview of foo - http://foo.com/bar', preview=True)
     created = self.assert_created('foo - http://foo.com/bar')
-    self.assertEquals(5, Publish.query().count())
-    self.assertEquals(3, Publish.query(Publish.status == 'complete').count())
+    self.assertEqual(5, Publish.query().count())
+    self.assertEqual(3, Publish.query(Publish.status == 'complete').count())
 
     # now that there's a complete Publish entity, more attempts should fail
     resp = self.assert_error("Sorry, you've already published that page")
-    self.assertEquals(json_loads(created.body), json_loads(resp.body)['original'])
+    self.assertEqual(json_loads(created.body), json_loads(resp.body)['original'])
 
     # try again to test for a bug we had where a second try would succeed
     self.assert_error("Sorry, you've already published that page")
@@ -361,7 +361,7 @@ foo
     self.expect_requests_get('http://foo.com/bar', self.post_html % 'xyz')
     self.mox.ReplayAll()
     self.assert_created('xyz - http://foo.com/bar')
-    self.assertEquals(source_2.key, Publish.query().get().source)
+    self.assertEqual(source_2.key, Publish.query().get().source)
 
   def test_source_with_multiple_domains(self):
     """Publish domain is second in source's domains list."""
@@ -371,7 +371,7 @@ foo
     self.expect_requests_get('http://foo.com/bar', self.post_html % 'xyz')
     self.mox.ReplayAll()
     self.assert_created('xyz - http://foo.com/bar')
-    self.assertEquals(self.source.key, Publish.query().get().source)
+    self.assertEqual(self.source.key, Publish.query().get().source)
 
   def test_source_missing_mf2(self):
     self.expect_requests_get('http://foo.com/bar', '')
@@ -380,14 +380,14 @@ foo
 
     self.assertTrue(PublishedPage.get_by_id('http://foo.com/bar'))
     publish = Publish.query().get()
-    self.assertEquals('failed', publish.status)
-    self.assertEquals(self.source.key, publish.source)
+    self.assertEqual('failed', publish.status)
+    self.assertEqual(self.source.key, publish.source)
 
   def test_h_feed_no_items(self):
     self.expect_requests_get('http://foo.com/bar', '<div class="h-feed"></div>')
     self.mox.ReplayAll()
     self.assert_error('Could not find content')
-    self.assertEquals('failed', Publish.query().get().status)
+    self.assertEqual('failed', Publish.query().get().status)
 
   def test_no_content(self):
     self.expect_requests_get('http://foo.com/bar',
@@ -395,7 +395,7 @@ foo
     self.mox.ReplayAll()
 
     self.assert_error('Could not find content')
-    self.assertEquals('failed', Publish.query().get().status)
+    self.assertEqual('failed', Publish.query().get().status)
 
   def test_no_content_ignore_formatting(self):
     self.expect_requests_get('http://foo.com/bar',
@@ -404,7 +404,7 @@ foo
 
     self.assert_error('Could not find content',
                       params={'bridgy_ignore_formatting': ''})
-    self.assertEquals('failed', Publish.query().get().status)
+    self.assertEqual('failed', Publish.query().get().status)
 
   def test_multiple_items_chooses_first_that_works(self):
     html = ('<a class="h-card" href="http://mic.lim.com/">Mic Lim</a>\n' +
@@ -428,7 +428,7 @@ foo
 
     # FakeSource.create() raises NotImplementedError on likes
     self.assert_error('Cannot publish likes')
-    self.assertEquals('failed', Publish.query().get().status)
+    self.assertEqual('failed', Publish.query().get().status)
 
   def test_source_url_is_domain_url(self):
     self.source.put()
@@ -467,7 +467,7 @@ foo
 
     # FakeSource.create() returns an error message for verb='like'
     self.assert_error("Cannot publish likes")
-    self.assertEquals('failed', Publish.query().get().status)
+    self.assertEqual('failed', Publish.query().get().status)
 
   def test_mf1_backward_compatibility_inside_hfeed(self):
     """This is based on Blogger's default markup, e.g.
@@ -576,7 +576,7 @@ this is my article
 </p></article>""")
     self.mox.ReplayAll()
     self.assert_created('')
-    self.assertEquals('post', Publish.query().get().type)
+    self.assertEqual('post', Publish.query().get().type)
 
   def test_in_reply_to_domain_allows_subdomains(self):
     """(The code that handles this is in granary.Source.base_object.)"""
@@ -590,7 +590,7 @@ this is my article
 
     for i in range(len(subdomains)):
       resp = self.get_response(source='http://foo.com/%d' % i)
-      self.assertEquals(201, resp.status_int, resp.body)
+      self.assertEqual(201, resp.status_int, resp.body)
 
   def test_relative_u_url(self):
     """mf2py expands urls; this just check that we give it the source URL."""
@@ -630,7 +630,7 @@ this is my article
 
     self.mox.ReplayAll()
     self.assert_error('fooey', status=402)
-    self.assertEquals(402, self.get_response(preview=True).status_int)
+    self.assertEqual(402, self.get_response(preview=True).status_int)
 
   def test_silo_500_returns_502(self):
     self.expect_requests_get('http://foo.com/bar', self.post_html % 'xyz')
@@ -667,7 +667,7 @@ this is my article
     self.mox.ReplayAll()
 
     self.assert_error('orig', status=401)
-    self.assertEquals('disabled', self.source.key.get().status)
+    self.assertEqual('disabled', self.source.key.get().status)
 
   def test_non_http_exception(self):
     """If we crash, we shouldn't blame the silo or the user's site."""
@@ -705,16 +705,16 @@ this is my article
     self.assert_success('preview of foo', preview=True)
 
     publish = Publish.query().get()
-    self.assertEquals(self.source.key, publish.source)
-    self.assertEquals('complete', publish.status)
-    self.assertEquals('preview', publish.type)
-    self.assertEquals(html + self.backlink, publish.html)
+    self.assertEqual(self.source.key, publish.source)
+    self.assertEqual('complete', publish.status)
+    self.assertEqual('preview', publish.type)
+    self.assertEqual(html + self.backlink, publish.html)
 
   def test_bridgy_omit_link_query_param(self):
     self.expect_requests_get('http://foo.com/bar', self.post_html % 'foo')
     self.mox.ReplayAll()
     resp = self.assert_created('foo', params={'bridgy_omit_link': 'True'})
-    self.assertEquals('foo', json_loads(resp.body)['content'])
+    self.assertEqual('foo', json_loads(resp.body)['content'])
 
   def test_bridgy_omit_link_target_query_param(self):
     self.expect_requests_get('http://foo.com/bar', self.post_html % 'foo')
@@ -722,14 +722,14 @@ this is my article
 
     target = 'https://brid.gy/publish/fake?bridgy_omit_link=true'
     resp = self.assert_created('foo', target=target)
-    self.assertEquals('foo', json_loads(resp.body)['content'])
+    self.assertEqual('foo', json_loads(resp.body)['content'])
 
   def test_bridgy_omit_link_mf2(self):
     html = self.post_html % 'foo <a class="u-bridgy-omit-link" href=""></a>'
     self.expect_requests_get('http://foo.com/bar', html)
     self.mox.ReplayAll()
     resp = self.assert_created('foo')
-    self.assertEquals('foo', json_loads(resp.body)['content'])
+    self.assertEqual('foo', json_loads(resp.body)['content'])
 
   def test_preview_omit_link_no_query_param_overrides_mf2(self):
     self.expect_requests_get('http://foo.com/bar', self.post_html % 'foo')
@@ -1170,7 +1170,7 @@ Join us!"""
     self.assert_success(expected, preview=True)
     expected += ' - http://foo.com/bar'
     resp = self.assert_created(expected, preview=False)
-    self.assertEquals(expected, json_loads(resp.body)['content'])
+    self.assertEqual(expected, json_loads(resp.body)['content'])
 
   def test_unicode(self):
     """Test that we pass through unicode chars correctly."""
@@ -1286,7 +1286,7 @@ Join us!"""
     self.expect_requests_get('http://foo.com/bar', self.post_html % 'foo')
     self.mox.ReplayAll()
     self.assert_created('foo - http://foo.com/bar', interactive=False)
-    self.assertEquals(source_2.key, Publish.query().get().source)
+    self.assertEqual(source_2.key, Publish.query().get().source)
 
   def test_multiple_users_on_domain_no_path_matches(self):
     self.source.domain_urls = ['http://foo.com/a']
@@ -1369,7 +1369,7 @@ Join us!"""
     self.mox.ReplayAll()
 
     resp = self.assert_created("blah - http://foo.com/bar")
-    self.assertEquals(['http://example.com/real'], json_loads(resp.body)['images'])
+    self.assertEqual(['http://example.com/real'], json_loads(resp.body)['images'])
 
     resp = self.assert_success('blah - http://foo.com/bar', preview=True)
     self.assertIn('with images http://example.com/real', resp.body)
@@ -1431,16 +1431,16 @@ Join us!"""
 
     resp = self.assert_success('delete the_id', preview=True)
     resp = self.assert_response('', status=302, interactive=True)
-    self.assertEquals(
+    self.assertEqual(
       'http://localhost/fake/foo.com#!'
         'Done! <a href="http://fake/url">Click here to view.</a>',
       urllib.parse.unquote_plus(resp.headers['Location']))
 
     delete = list(Publish.query())[-1]
-    self.assertEquals(delete.key.parent(), page.key)
-    self.assertEquals('deleted', delete.status)
-    self.assertEquals('delete', delete.type)
-    self.assertEquals({
+    self.assertEqual(delete.key.parent(), page.key)
+    self.assertEqual('deleted', delete.status)
+    self.assertEqual('delete', delete.type)
+    self.assertEqual({
       'id': 'the_id',
       'url': 'http://fake/url',
       'msg': 'delete the_id',

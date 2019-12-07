@@ -203,7 +203,7 @@ class OAuthCallback(util.Handler):
     vars = {
       'action': '/blogger/add',
       'state': state,
-      'auth_entity_key': auth_entity.key.urlsafe(),
+      'auth_entity_key': auth_entity.key.urlsafe().decode(),
       'blogs': [{'id': id, 'title': title, 'domain': host}
                 for id, title, host in zip(auth_entity.blog_ids,
                                            auth_entity.blog_titles,
@@ -223,7 +223,7 @@ class AddBlogger(util.Handler):
       ndb.Key(urlsafe=auth_entity_key).get(),
       util.get_required_param(self, 'state'),
       blog_id=util.get_required_param(self, 'blog'),
-      )
+    )
 
 
 class SuperfeedrNotifyHandler(superfeedr.NotifyHandler):

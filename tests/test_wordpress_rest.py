@@ -53,12 +53,12 @@ class WordPressTest(testutil.HandlerTest):
     self.mox.ReplayAll()
 
     w = WordPress.new(self.handler, auth_entity=self.auth_entity)
-    self.assertEquals(self.auth_entity.key, w.auth_entity)
-    self.assertEquals('my.wp.com', w.key.id())
-    self.assertEquals('Ryan', w.name)
-    self.assertEquals(['http://my.wp.com/'], w.domain_urls)
-    self.assertEquals(['my.wp.com'], w.domains)
-    self.assertEquals('http://ava/tar', w.picture)
+    self.assertEqual(self.auth_entity.key, w.auth_entity)
+    self.assertEqual('my.wp.com', w.key.id())
+    self.assertEqual('Ryan', w.name)
+    self.assertEqual(['http://my.wp.com/'], w.domain_urls)
+    self.assertEqual(['my.wp.com'], w.domains)
+    self.assertEqual('http://ava/tar', w.picture)
 
   def test_new_with_site_domain(self):
     self.expect_urlopen(
@@ -67,11 +67,11 @@ class WordPressTest(testutil.HandlerTest):
     self.mox.ReplayAll()
 
     w = WordPress.new(self.handler, auth_entity=self.auth_entity)
-    self.assertEquals('vanity.domain', w.key.id())
-    self.assertEquals('https://vanity.domain/', w.url)
-    self.assertEquals(['https://vanity.domain/', 'http://my.wp.com/'],
+    self.assertEqual('vanity.domain', w.key.id())
+    self.assertEqual('https://vanity.domain/', w.url)
+    self.assertEqual(['https://vanity.domain/', 'http://my.wp.com/'],
                       w.domain_urls)
-    self.assertEquals(['vanity.domain', 'my.wp.com'], w.domains)
+    self.assertEqual(['vanity.domain', 'my.wp.com'], w.domains)
 
   def test_new_site_domain_same_gr_blog_url(self):
     self.expect_urlopen(
@@ -80,8 +80,8 @@ class WordPressTest(testutil.HandlerTest):
     self.mox.ReplayAll()
 
     w = WordPress.new(self.handler, auth_entity=self.auth_entity)
-    self.assertEquals(['http://my.wp.com/'], w.domain_urls)
-    self.assertEquals(['my.wp.com'], w.domains)
+    self.assertEqual(['http://my.wp.com/'], w.domain_urls)
+    self.assertEqual(['my.wp.com'], w.domains)
 
   def test_site_lookup_fails(self):
     self.expect_urlopen(
@@ -126,14 +126,14 @@ class WordPressTest(testutil.HandlerTest):
     resp = self.wp.create_comment('http://primary/post/123999/the-slug?asdf',
                                   'name', 'http://who', 'foo bar')
     # ID field gets converted to lower case id
-    self.assertEquals({'id': 789, 'ok': 'sgtm'}, resp)
+    self.assertEqual({'id': 789, 'ok': 'sgtm'}, resp)
 
   def test_create_comment_with_unicode_chars(self):
     self.expect_new_reply(content='<a href="http://who">Degenève</a>: foo Degenève bar')
 
     resp = self.wp.create_comment('http://primary/post/456', 'Degenève',
                                   'http://who', 'foo Degenève bar')
-    self.assertEquals({'id': None}, resp)
+    self.assertEqual({'id': None}, resp)
 
   def test_create_comment_with_unicode_chars_in_slug(self):
     self.expect_urlopen(
@@ -143,7 +143,7 @@ class WordPressTest(testutil.HandlerTest):
 
     resp = self.wp.create_comment('http://primary/post/✁', 'name',
                                   'http://who', 'foo bar')
-    self.assertEquals({'id': None}, resp)
+    self.assertEqual({'id': None}, resp)
 
   def test_create_comment_gives_up_on_invalid_input_error(self):
     # see https://github.com/snarfed/bridgy/issues/161
@@ -153,7 +153,7 @@ class WordPressTest(testutil.HandlerTest):
     resp = self.wp.create_comment('http://primary/post/456', 'name',
                                   'http://who', 'foo bar')
     # shouldn't raise an exception
-    self.assertEquals({'error': 'invalid_input'}, resp)
+    self.assertEqual({'error': 'invalid_input'}, resp)
 
   def test_create_comment_gives_up_on_coments_closed(self):
     resp = {'error': 'unauthorized',
@@ -163,7 +163,7 @@ class WordPressTest(testutil.HandlerTest):
     # shouldn't raise an exception
     got = self.wp.create_comment('http://primary/post/456', 'name',
                                  'http://who', 'foo bar')
-    self.assertEquals(resp, got)
+    self.assertEqual(resp, got)
 
   def test_create_comment_returns_non_json(self):
     self.expect_new_reply(status=403, response='Forbidden')

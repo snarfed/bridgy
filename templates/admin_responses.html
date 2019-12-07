@@ -47,7 +47,7 @@
     <td>{{ r.links|join('<br>')|safe }}</td>
 
     <td class="hidden">
-      <input name="key" value="{{ r.key.urlsafe() }}" type="checkbox" />
+      <input name="key" value="{{ r.key.urlsafe().decode() }}" type="checkbox" />
     </td>
   </tr>
   {% endfor %}

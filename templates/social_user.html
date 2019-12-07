@@ -63,7 +63,7 @@ WordPress.com, <a href="/">sign up here!</a>
 <data class="p-bridgy-listen-status" value="enabled">
 <form method="post" action="/delete/start">
 <p id="listening-label" class="big">Listening for responses.
-  <input name="key" type="hidden" value="{{ source.key.urlsafe() }}" />
+  <input name="key" type="hidden" value="{{ source.key.urlsafe().decode() }}" />
   <input name="feature" type="hidden" value="listen" />
   {% if indieauth_me %}
     <input name="me" type="hidden" value="{{ indieauth_me }}" />
@@ -109,7 +109,7 @@ WordPress.com, <a href="/">sign up here!</a>
   next in
   {{ logs.maybe_link(next_poll, source.key, time_class="dt-bridgy-next-poll")|safe }}.
 
-  <input name="key" type="hidden" value="{{ source.key.urlsafe() }}" />
+  <input name="key" type="hidden" value="{{ source.key.urlsafe().decode() }}" />
   <button id="poll-now-button" type="submit" class="btn btn-default">Poll now</button>
 </form>
 {% endif %}
@@ -151,7 +151,7 @@ WordPress.com, <a href="/">sign up here!</a>
 {% endif %}
 {% endif %}
 {% endwith %}
-<input name="key" type="hidden" value="{{ source.key.urlsafe() }}" />
+<input name="key" type="hidden" value="{{ source.key.urlsafe().decode() }}" />
 <button id="crawl-now-button" type="submit" class="btn btn-default">Crawl now</button>
 </form>
 {% endif %}
@@ -164,7 +164,7 @@ WordPress.com, <a href="/">sign up here!</a>
  <label id="discover-label" for="discover-url">Resend for post:</label>
  <input id="discover-url" name="url" type="url" required alt="URL"></input>
  <input id="discover-source-key" name="source_key" type="hidden"
-        value="{{ source.key.urlsafe() }}" />
+        value="{{ source.key.urlsafe().decode() }}" />
  <button id="discover-button" type="submit" class="btn btn-default">Discover</button>
 </p>
 </form>
@@ -189,7 +189,7 @@ Click to enable <a href="/about#listen">listening</a>:
 <form method="post" action="/delete/start">
 <p id="publishing-label" class="big">
  Ready to publish.
- <input name="key" type="hidden" value="{{ source.key.urlsafe() }}" />
+ <input name="key" type="hidden" value="{{ source.key.urlsafe().decode() }}" />
  <input name="feature" type="hidden" value="publish" />
  <button id="delete-button" type="submit" class="btn btn-default"
    title="Disable publishing for this account. (Won't delete posts you've already published.)"
@@ -206,7 +206,7 @@ Click to enable <a href="/about#listen">listening</a>:
 <p id="preview-ui">
  <label id="source-label" for="source-url">Enter post URL:</label>
  <input id="source-url" name="source" type="url" required alt="Source URL"></input>
- <input id="source_key" name="source_key" type="hidden" value="{{ source.key.urlsafe() }}" />
+ <input id="source_key" name="source_key" type="hidden" value="{{ source.key.urlsafe().decode() }}" />
  <input name="target" type="hidden"
         value="https://brid.gy/publish/{{ source.SHORT_NAME }}"></input>
 
@@ -306,7 +306,7 @@ Click to enable <a href="/about#listen">listening</a>:
 
    </div><div class="col-sm-1">
     <form method="post" action="/retry">
-      <input name="key" type="hidden" value="{{ response.key.urlsafe() }}" />
+      <input name="key" type="hidden" value="{{ response.key.urlsafe().decode() }}" />
       <input name="redirect_to" type="hidden" value="{{ request.url }}" />
       <button id="retry-button" type="submit" title="Retry"
               class="btn btn-default glyphicon glyphicon-refresh"></button>

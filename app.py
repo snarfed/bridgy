@@ -6,6 +6,7 @@ from future import standard_library
 standard_library.install_aliases()
 from builtins import str
 import datetime
+import importlib
 import itertools
 import logging
 import string
@@ -207,7 +208,6 @@ class UserHandler(DashboardHandler):
     self.source = cls.lookup(id)
 
     if not self.source:
-      id = id.decode('utf-8')
       key = cls.query(ndb.OR(*[ndb.GenericProperty(prop) == id for prop in
                                ('domains', 'inferred_username', 'name', 'username')])
                       ).get(keys_only=True)
@@ -242,10 +242,10 @@ class UserHandler(DashboardHandler):
     if not self.source:
       return vars
 
-    if isinstance(self.source, instagram.Instagram):
+    if self.source.key.kind() == 'Instagram':
       auth = self.source.auth_entity
       vars['indieauth_me'] = (
-        auth.key.id() if isinstance(auth, indieauth.IndieAuth)
+        auth.key.id() if auth.key.kind() == 'IndieAuth'
         else self.source.domain_urls[0] if self.source.domain_urls
         else None)
 
@@ -376,7 +376,7 @@ class UserHandler(DashboardHandler):
                                  .fetch(10)
       for p in publishes:
         p.pretty_page = util.pretty_link(
-          p.key.parent().id().decode('utf-8'),
+          p.key.parent().id(),
           attrs={'class': 'original-post u-url u-name'},
           new_tab=True)
 
@@ -453,7 +453,7 @@ class DeleteStartHandler(util.Handler):
     state = util.encode_oauth_state({
       'operation': 'delete',
       'feature': feature,
-      'source': source.key.urlsafe(),
+      'source': source.key.urlsafe().decode(),
       'callback': self.request.get('callback'),
     })
 
@@ -494,7 +494,7 @@ class DeleteFinishHandler(util.Handler):
       # disable declined means no change took place
       if callback:
         callback = util.add_query_params(callback, {'result': 'declined'})
-        self.redirect(callback.encode('utf-8'))
+        self.redirect(callback)
       else:
         self.messages.add('If you want to disable, please approve the prompt.')
         self.redirect('/')
@@ -530,7 +530,7 @@ class DeleteFinishHandler(util.Handler):
         callback = util.add_query_params(callback, {
           'result': 'success',
           'user': source.bridgy_url(self),
-          'key': source.key.urlsafe(),
+          'key': source.key.urlsafe().decode(),
         })
       else:
         self.messages.add('Disabled %s for %s. Sorry to see you go!' %
@@ -545,7 +545,7 @@ class DeleteFinishHandler(util.Handler):
         self.messages.add('Please log into %s as %s to disable it here.' %
                           (source.GR_CLASS.NAME, source.name))
 
-    self.redirect(callback.encode('utf-8') if callback
+    self.redirect(callback if callback
                   else source.bridgy_url(self) if source.features
                   else '/')
 
@@ -599,7 +599,7 @@ class RetryHandler(util.Handler):
 
     entity.restart()
     self.messages.add('Retrying. Refresh in a minute to see the results!')
-    self.redirect(self.request.get('redirect_to').encode('utf-8') or
+    self.redirect(self.request.get('redirect_to') or
                   entity.source.get().bridgy_url(self))
 
 
@@ -650,7 +650,7 @@ class EditWebsites(webutil_handlers.TemplateHandler, util.Handler):
   def post(self):
     source = self.load_source()
     redirect_url = '%s?%s' % (self.request.path, urllib.parse.urlencode({
-      'source_key': source.key.urlsafe(),
+      'source_key': source.key.urlsafe().decode(),
     }))
 
     add = self.request.get('add')
@@ -741,24 +741,29 @@ class GooglePlusIsDeadHandler(util.Handler):
 
 
 
-application = webutil_handlers.ndb_context_middleware(webapp2.WSGIApplication(
-  [('/?', FrontPageHandler),
-   ('/users/?', UsersHandler),
-   ('/(blogger|fake|fake_blog|flickr|github|instagram|mastodon|medium|tumblr|twitter|wordpress)/([^/]+)/?',
-    UserHandler),
-   ('/facebook/.*', FacebookIsDeadHandler),
-   ('/googleplus/.*', GooglePlusIsDeadHandler),
-   ('/about/?', AboutHandler),
-   ('/delete/start', DeleteStartHandler),
-   ('/delete/finish', DeleteFinishHandler),
-   ('/discover', DiscoverHandler),
-   ('/poll-now', PollNowHandler),
-   ('/crawl-now', CrawlNowHandler),
-   ('/retry', RetryHandler),
-   ('/(listen|publish)/?', RedirectToFrontPageHandler),
-   ('/edit-websites', EditWebsites),
-   ('/logout', LogoutHandler),
-   ('/csp-report', CspReportHandler),
-   ('/_ah/warmup', WarmupHandler),
-   ] + [module.ROUTES for module in MODULES],
-  debug=appengine_config.DEBUG, client=appengine_config.ndb_client)
+routes = [
+  ('/?', FrontPageHandler),
+  ('/users/?', UsersHandler),
+  ('/(blogger|fake|fake_blog|flickr|github|instagram|mastodon|medium|tumblr|twitter|wordpress)/([^/]+)/?',
+   UserHandler),
+  ('/facebook/.*', FacebookIsDeadHandler),
+  ('/googleplus/.*', GooglePlusIsDeadHandler),
+  ('/about/?', AboutHandler),
+  ('/delete/start', DeleteStartHandler),
+  ('/delete/finish', DeleteFinishHandler),
+  ('/discover', DiscoverHandler),
+  ('/poll-now', PollNowHandler),
+  ('/crawl-now', CrawlNowHandler),
+  ('/retry', RetryHandler),
+  ('/(listen|publish)/?', RedirectToFrontPageHandler),
+  ('/edit-websites', EditWebsites),
+  ('/logout', LogoutHandler),
+  ('/csp-report', CspReportHandler),
+  ('/_ah/warmup', WarmupHandler),
+]
+for module in MODULES:
+  routes += module.ROUTES
+
+application = webutil_handlers.ndb_context_middleware(
+  webapp2.WSGIApplication(routes, debug=appengine_config.DEBUG),
+  client=appengine_config.ndb_client)

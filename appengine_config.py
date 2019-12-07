@@ -1,6 +1,5 @@
 """Bridgy App Engine config.
 """
-import logging
 import os
 
 from granary.appengine_config import *

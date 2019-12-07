@@ -10,7 +10,6 @@ from past.builtins import basestring
 from builtins import open
 from future import standard_library
 standard_library.install_aliases()
-from future.utils import native_str
 
 import binascii
 import collections
@@ -25,7 +24,7 @@ import threading
 import time
 import urllib.request, urllib.parse, urllib.error
 
-from appengine_config import APP_ID, DEBUG
+from appengine_config import APP_ID, DEBUG, LOCAL
 from cachetools import TTLCache
 from google.cloud import error_reporting
 from google.cloud import ndb
@@ -137,23 +136,24 @@ def add_poll_task(source, now=False):
     # prevent thundering herds.
     eta_seconds = int(source.poll_period().total_seconds() * random.uniform(.8, 1.2))
 
-  add_task(queue, eta_seconds=eta_seconds, source_key=source.key.urlsafe(),
+  add_task(queue, eta_seconds=eta_seconds, source_key=source.key.urlsafe().decode(),
            last_polled=source.last_polled.strftime(POLL_TASK_DATETIME_FORMAT))
 
 
 def add_propagate_task(entity):
   """Adds a propagate task for the given response entity."""
-  add_task('propagate', response_key=entity.key.urlsafe())
+  add_task('propagate', response_key=entity.key.urlsafe().decode())
 
 
 def add_propagate_blogpost_task(entity):
   """Adds a propagate-blogpost task for the given response entity."""
-  add_task('propagate-blogpost', key=entity.key.urlsafe())
+  add_task('propagate-blogpost', key=entity.key.urlsafe().decode())
 
 
 def add_discover_task(source, post_id, type=None):
   """Adds a discover task for the given source and silo post id."""
-  add_task('discover', source_key=source.key.urlsafe(), post_id=post_id, type=type)
+  add_task('discover', source_key=source.key.urlsafe().decode(),
+           post_id=post_id, type=type)
 
 
 def add_task(queue, eta_seconds=None, **kwargs):
@@ -333,7 +333,7 @@ def prune_activity(activity, source):
   obj = activity.get('object')
   if obj:
     obj = pruned['object'] = prune_activity(obj, source)
-    for k, v in obj.items():
+    for k, v in list(obj.items()):
       if pruned.get(k) == v:
         del obj[k]
 
@@ -367,7 +367,7 @@ def replace_test_domains_with_localhost(url):
   Returns:
     a string with certain well-known domains replaced by localhost
   """
-  if url and DEBUG:
+  if url and LOCAL:
     for test_domain, local_domain in LOCALHOST_TEST_DOMAINS:
       url = re.sub('https?://' + test_domain,
                    'http://' + local_domain, url)
@@ -460,7 +460,7 @@ class Handler(webutil_handlers.ModernHandler):
             'user declined adding source, redirect to external callback %s',
             callback)
           # call super.redirect so the callback url is unmodified
-          super(Handler, self).redirect(callback.encode('utf-8'))
+          super(Handler, self).redirect(callback)
         else:
           self.redirect('/')
         return
@@ -483,16 +483,16 @@ class Handler(webutil_handlers.ModernHandler):
         callback = util.add_query_params(callback, {
           'result': 'success',
           'user': source.bridgy_url(self),
-          'key': source.key.urlsafe(),
+          'key': source.key.urlsafe().decode(),
         } if source else {'result': 'failure'})
         logging.debug(
           'finished adding source, redirect to external callback %s', callback)
         # call super.redirect so the callback url is unmodified
-        super(Handler, self).redirect(callback.encode('utf-8'))
+        super(Handler, self).redirect(callback)
 
       elif source and not source.domains:
         self.redirect('/edit-websites?' + urllib.parse.urlencode({
-          'source_key': source.key.urlsafe(),
+          'source_key': source.key.urlsafe().decode(),
         }))
 
       else:
@@ -503,7 +503,7 @@ class Handler(webutil_handlers.ModernHandler):
     else:  # this is a delete
       if auth_entity:
         self.redirect('/delete/finish?auth_entity=%s&state=%s' %
-                      (auth_entity.key.urlsafe(), state))
+                      (auth_entity.key.urlsafe().decode(), state))
       else:
         self.messages.add('If you want to disable, please approve the %s prompt.' %
                           source_cls.GR_CLASS.NAME)
@@ -547,7 +547,7 @@ class Handler(webutil_handlers.ModernHandler):
       logging.info('Cookie: %s', cookie)
 
     try:
-      logins_str = SimpleCookie(native_str(cookie)).get('logins')
+      logins_str = SimpleCookie(cookie).get('logins')
     except CookieError as e:
       logging.warning("Bad cookie: %s", e)
       return []
@@ -618,8 +618,8 @@ def oauth_starter(oauth_start_handler, **kwargs):
   """
   class StartHandler(oauth_start_handler, Handler):
     def redirect_url(self, state=None, **ru_kwargs):
-      return native_str(super(StartHandler, self).redirect_url(
-        self.construct_state_param_for_add(state, **kwargs), **ru_kwargs))
+      return super(StartHandler, self).redirect_url(
+        self.construct_state_param_for_add(state, **kwargs), **ru_kwargs)
 
   return StartHandler
 

@@ -30,7 +30,7 @@
 <form method="post" action="">
   <input required type="url" name="add" id="add" placeholder="http://..." />
   <input type="submit" class="btn btn-default" value="Add" />
-  <input type="hidden" name="source_key" value="{{ source.key.urlsafe() }}" />
+  <input type="hidden" name="source_key" value="{{ source.key.urlsafe().decode() }}" />
 </form>
 
 {% if source.website_links %}

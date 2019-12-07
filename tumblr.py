@@ -240,7 +240,7 @@ class ChooseBlog(oauth_tumblr.CallbackHandler, util.Handler):
     vars = {
       'action': '/tumblr/add',
       'state': state,
-      'auth_entity_key': auth_entity.key.urlsafe(),
+      'auth_entity_key': auth_entity.key.urlsafe().decode(),
       'blogs': [{'id': b['name'],
                  'title': b.get('title', ''),
                  'domain': util.domain_from_link(b['url'])}

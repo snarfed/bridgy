@@ -97,7 +97,7 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
       # TODO: response message saying update isn't supported
       self.response.write(self.entity.published)
       return
-    logging.debug("BlogWebmention entity: '%s'", self.entity.key.urlsafe())
+    logging.debug("BlogWebmention entity: '%s'", self.entity.key.urlsafe().decode())
 
     # fetch source page
     fetched = self.fetch_mf2(self.source_url)

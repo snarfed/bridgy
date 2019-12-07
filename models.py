@@ -156,7 +156,7 @@ class Source(with_metaclass(SourceMeta, StringIdModel)):
   last_poll_attempt = ndb.DateTimeProperty(default=util.EPOCH)
   last_webmention_sent = ndb.DateTimeProperty()
   last_public_post = ndb.DateTimeProperty()
-  recent_private_posts = ndb.IntegerProperty()
+  recent_private_posts = ndb.IntegerProperty(default=0)
 
   # the last time we re-fetched the author's url looking for updated
   # syndication links
@@ -1002,7 +1002,7 @@ class BlogWebmention(Publish, StringIdModel):
   redirected_target_urls = ndb.StringProperty(repeated=True)
 
   def source_url(self):
-    return self.u_url or self.key.id().split()[0].decode('utf-8')
+    return self.u_url or self.key.id().split()[0]
 
   def target_url(self):
     return self.key.id().split()[1]

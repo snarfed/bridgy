@@ -39,7 +39,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
 
   def assert_discover(self, expected_originals, expected_mentions=[],
                       source=None, **kwargs):
-    self.assertEquals((set(expected_originals), set(expected_mentions)),
+    self.assertEqual((set(expected_originals), set(expected_mentions)),
                       discover(source or self.source, self.activity, **kwargs))
 
   def assert_syndicated_posts(self, *expected):
@@ -71,7 +71,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.assert_discover(['http://author/post/permalink'])
     self.assert_syndicated_posts(('http://author/post/permalink',
                                   'https://fa.ke/post/url'))
-    self.assertEquals(testutil.NOW, self.source.updates['last_syndication_url'])
+    self.assertEqual(testutil.NOW, self.source.updates['last_syndication_url'])
 
   def test_syndication_url_in_hfeed(self):
     """Like test_single_post, but because the syndication URL is given in
@@ -91,8 +91,8 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.assert_syndicated_posts(('http://author/post/permalink',
                                   'https://fa.ke/post/url'))
 
-    self.assertEquals(testutil.NOW, self.source.updates['last_syndication_url'])
-    self.assertEquals(testutil.NOW, self.source.updates['last_feed_syndication_url'])
+    self.assertEqual(testutil.NOW, self.source.updates['last_syndication_url'])
+    self.assertEqual(testutil.NOW, self.source.updates['last_feed_syndication_url'])
 
   def test_syndication_url_in_hfeed_with_redirect(self):
     """Like test_syndication_url_in_hfeed but u-url redirects to the
@@ -244,13 +244,13 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
 
     # second lookup should require no additional HTTP requests.
     # the second syndicated post should be linked up to the second permalink.
-    self.assertEquals((set(['http://author/post/perma✁2']), set()),
+    self.assertEqual((set(['http://author/post/perma✁2']), set()),
                       discover(self.source, self.activities[1]))
 
     # third activity lookup. since we didn't find a back-link for the third
     # syndicated post, it should fetch the author's feed again, but seeing no
     # new posts, it should not follow any of the permalinks.
-    self.assertEquals((set(), set()), discover(self.source, self.activities[2]))
+    self.assertEqual((set(), set()), discover(self.source, self.activities[2]))
 
     # should have saved a blank to prevent subsequent checks of this syndicated
     # post from fetching the h-feed again
@@ -258,7 +258,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.assert_syndicated_posts(*syndposts)
 
     # confirm that we do not fetch the h-feed again for the same syndicated post
-    self.assertEquals((set(), set()), discover(self.source, self.activities[2]))
+    self.assertEqual((set(), set()), discover(self.source, self.activities[2]))
 
   def test_no_duplicate_links(self):
     """Make sure that a link found by both original-post-discovery and
@@ -394,7 +394,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.mox.ReplayAll()
 
     discover(self.source, self.activity)
-    self.assertEquals(['author', 'other'], self.source.updates['domains'])
+    self.assertEqual(['author', 'other'], self.source.updates['domains'])
 
   def test_no_h_entries(self):
     """Make sure nothing bad happens when fetching a feed without h-entries.
@@ -1212,11 +1212,11 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     # refetch should find the updated original url -> syndication url.
     # it should *not* find the previously discovered relationship.
     first_results = refetch(self.source)
-    self.assertEquals(1, len(first_results))
+    self.assertEqual(1, len(first_results))
     new_relations = first_results.get('https://fa.ke/post/url')
-    self.assertEquals(1, len(new_relations))
-    self.assertEquals('https://fa.ke/post/url', new_relations[0].syndication)
-    self.assertEquals('http://author/2014/08/09/this-is-a-stub',
+    self.assertEqual(1, len(new_relations))
+    self.assertEqual('https://fa.ke/post/url', new_relations[0].syndication)
+    self.assertEqual('http://author/2014/08/09/this-is-a-stub',
                       new_relations[0].original)
 
     # second refetch should find nothing because nothing has changed
@@ -1243,8 +1243,8 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.assert_equals(['https://fa.ke/changed/url'], list(results.keys()))
     self.assert_entities_equal(
       list(SyndicatedPost.query()), results['https://fa.ke/changed/url'])
-    self.assertEquals(testutil.NOW, self.source.updates['last_syndication_url'])
-    self.assertEquals(testutil.NOW, self.source.updates['last_feed_syndication_url'])
+    self.assertEqual(testutil.NOW, self.source.updates['last_syndication_url'])
+    self.assertEqual(testutil.NOW, self.source.updates['last_feed_syndication_url'])
 
   def test_refetch_deleted_syndication(self):
     """Deleted syndication links that have disappeared since our last fetch."""
@@ -1339,8 +1339,8 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     refetch(self.source)
 
     synds = list(SyndicatedPost.query())
-    self.assertEquals(1, len(synds))
-    self.assertEquals('http://author/permalink', synds[0].original)
+    self.assertEqual(1, len(synds))
+    self.assertEqual('http://author/permalink', synds[0].original)
     self.assertIsNone(synds[0].syndication)
 
   def test_refetch_syndication_url_head_error(self):
