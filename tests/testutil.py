@@ -23,6 +23,7 @@ from oauth_dropins.models import BaseAuth
 from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
+from requests import post as orig_requests_post
 
 from models import BlogPost, Publish, PublishedPage, Response, Source
 import util
@@ -270,6 +271,8 @@ class HandlerTest(testutil.HandlerTest):
     self.stubbed_create_task = False
     util.tasks_client.create_task = lambda *args, **kwargs: Task(name='foo')
 
+    # clear datastore
+    orig_requests_post('http://%s/reset' % appengine_config.ndb_client.host)
     self.ndb_context = appengine_config.ndb_client.context()
     self.ndb_context.__enter__()
 

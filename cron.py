@@ -138,7 +138,7 @@ def maybe_update_picture(source, new_actor, handler):
   if not new_pic or source.picture == new_pic:
     return False
 
-  @ndb.transactional
+  @ndb.transactional()
   def update():
     src = source.key.get()
     src.picture = new_pic

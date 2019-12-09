@@ -644,7 +644,7 @@ class SendWebmentions(webapp2.RequestHandler):
     else:
       self.complete()
 
-  @ndb.transactional
+  @ndb.transactional()
   def lease(self, key):
     """Attempts to acquire and lease the :class:`models.Webmentions` entity.
 
@@ -672,7 +672,7 @@ class SendWebmentions(webapp2.RequestHandler):
       self.entity.put()
       return True
 
-  @ndb.transactional
+  @ndb.transactional()
   def complete(self):
     """Attempts to mark the :class:`models.Webmentions` entity completed.
 
@@ -699,7 +699,7 @@ class SendWebmentions(webapp2.RequestHandler):
 
     return False
 
-  @ndb.transactional
+  @ndb.transactional()
   def release(self, new_status):
     """Attempts to unlease the :class:`models.Webmentions` entity.
 
@@ -719,7 +719,7 @@ class SendWebmentions(webapp2.RequestHandler):
     logging.log(level, message)
     self.response.out.write(message)
 
-  @ndb.transactional
+  @ndb.transactional()
   def record_source_webmention(self, mention):
     """Sets this source's last_webmention_sent and maybe webmention_endpoint.
 

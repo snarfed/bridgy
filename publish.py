@@ -527,7 +527,7 @@ class Handler(webmention.WebmentionHandler):
 
       activity[field] = augmented
 
-  @ndb.transactional
+  @ndb.transactional()
   def get_or_add_publish_entity(self, source_url):
     """Creates and stores :class:`models.Publish` entity.
 

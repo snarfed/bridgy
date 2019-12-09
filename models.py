@@ -252,7 +252,7 @@ class Source(with_metaclass(SourceMeta, StringIdModel)):
     return self.name
 
   @classmethod
-  @ndb.transactional
+  @ndb.transactional()
   def put_updates(cls, source):
     """Writes source.updates to the datastore transactionally.
 
@@ -270,7 +270,7 @@ class Source(with_metaclass(SourceMeta, StringIdModel)):
 
     updates = source.updates
     source = source.key.get()
-    source.updates = updates  # because FacebookPage._pre_put_hook uses it
+    source.updates = updates
     for name, val in updates.items():
       setattr(source, name, val)
 
@@ -815,7 +815,7 @@ class Webmentions(StringIdModel):
     """
     raise NotImplementedError()
 
-  @ndb.transactional(xg=True)
+  @ndb.transactional()
   def get_or_save(self):
     existing = self.key.get()
     if existing:
@@ -1021,7 +1021,7 @@ class SyndicatedPost(ndb.Model):
   updated = ndb.DateTimeProperty(auto_now=True)
 
   @classmethod
-  @ndb.transactional(xg=True)
+  @ndb.transactional()
   def insert_original_blank(cls, source, original):
     """Insert a new original -> None relationship. Does a check-and-set to
     make sure no previous relationship exists for this original. If
@@ -1036,7 +1036,7 @@ class SyndicatedPost(ndb.Model):
     cls(parent=source.key, original=original, syndication=None).put()
 
   @classmethod
-  @ndb.transactional(xg=True)
+  @ndb.transactional()
   def insert_syndication_blank(cls, source, syndication):
     """Insert a new syndication -> None relationship. Does a check-and-set
     to make sure no previous relationship exists for this
@@ -1052,7 +1052,7 @@ class SyndicatedPost(ndb.Model):
     cls(parent=source.key, original=None, syndication=syndication).put()
 
   @classmethod
-  @ndb.transactional(xg=True)
+  @ndb.transactional()
   def insert(cls, source, syndication, original):
     """Insert a new (non-blank) syndication -> original relationship.
 
@@ -1088,6 +1088,3 @@ class SyndicatedPost(ndb.Model):
     r = cls(parent=source.key, original=original, syndication=syndication)
     r.put()
     return r
-
-  def _pre_put_hook(self):
-    self.key.parent().get().on_new_syndicated_post(self)

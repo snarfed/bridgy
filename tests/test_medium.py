@@ -12,7 +12,8 @@ import appengine_config
 from oauth_dropins import medium as oauth_medium
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
-from medium import ChooseBlog, Medium, application
+import app
+from medium import ChooseBlog, Medium
 from . import testutil
 
 
@@ -141,7 +142,7 @@ class MediumTest(testutil.HandlerTest):
     self.assertEqual(0, Medium.query().count())
 
   def test_add_profile(self):
-    resp = application.get_response(
+    resp = app.application.get_response(
       '/medium/add?auth_entity_key=%s&state={"feature":"webmention"}&blog=@ry' %
       self.auth_entity.key.urlsafe().decode(),
       method='POST')
@@ -152,7 +153,7 @@ class MediumTest(testutil.HandlerTest):
     self.assert_created_profile()
 
   def test_add_publication(self):
-    resp = application.get_response(
+    resp = app.application.get_response(
       '/medium/add?auth_entity_key=%s&state={"feature":"webmention"}&blog=b45573563f5a' %
       self.auth_entity.key.urlsafe().decode(),
       method='POST')

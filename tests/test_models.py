@@ -300,9 +300,8 @@ class SourceTest(testutil.HandlerTest):
     for prop, value in props.items():
       self.assert_equals(value, getattr(source, prop), prop)
 
-    self.assert_equals(
-      {"Updated fake (FakeSource). Try previewing a post from your web site!"},
-      self.handler.messages)
+    msg = next(iter(self.handler.messages))
+    self.assertIn('Updated fake (FakeSource)', msg)
 
   def test_create_new_publish(self):
     """If a source is publish only, we shouldn't insert a poll task."""
@@ -579,14 +578,8 @@ class SourceTest(testutil.HandlerTest):
     source.put()
     updates = source.updates = {'status': 'disabled'}
 
-    try:
-      # check that source.updates is preserved through pre-put hook since some
-      # Source subclasses (e.g. FacebookPage) use it.
-      FakeSource._pre_put_hook = lambda fake: self.assertEqual(updates, fake.updates)
-      Source.put_updates(source)
-      self.assertEqual('disabled', source.key.get().status)
-    finally:
-      del FakeSource._pre_put_hook
+    Source.put_updates(source)
+    self.assertEqual('disabled', source.key.get().status)
 
   def test_poll_period(self):
     source = FakeSource.new(None)

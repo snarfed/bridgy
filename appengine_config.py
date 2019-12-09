@@ -1,6 +1,8 @@
 """Bridgy App Engine config.
 """
 import os
+os.environ.setdefault('GOOGLE_CLOUD_PROJECT', 'brid-gy')
+os.environ.setdefault('DATASTORE_DATASET', 'brid-gy')
 
 from granary.appengine_config import *
 

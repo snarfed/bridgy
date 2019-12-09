@@ -571,7 +571,7 @@ class CrawlNowHandler(PollNowHandler):
     self.messages.add("Crawling now. Refresh in a minute to see what's new!")
     self.redirect(self.source.bridgy_url(self))
 
-  @ndb.transactional
+  @ndb.transactional()
   def setup_refetch_hfeed(self):
     self.get_source()
     self.source.last_hfeed_refetch = models.REFETCH_HFEED_TRIGGER
@@ -740,7 +740,10 @@ class GooglePlusIsDeadHandler(util.Handler):
 
 
 
-routes = [
+routes = []
+for module in MODULES:
+  routes += module.ROUTES
+routes += [
   ('/?', FrontPageHandler),
   ('/users/?', UsersHandler),
   ('/(blogger|fake|fake_blog|flickr|github|instagram|mastodon|medium|tumblr|twitter|wordpress)/([^/]+)/?',
@@ -760,8 +763,6 @@ routes = [
   ('/csp-report', CspReportHandler),
   ('/_ah/warmup', WarmupHandler),
 ]
-for module in MODULES:
-  routes += module.ROUTES
 
 application = webutil_handlers.ndb_context_middleware(
   webapp2.WSGIApplication(routes, debug=appengine_config.DEBUG),
