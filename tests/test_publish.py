@@ -1175,7 +1175,7 @@ Join us!"""
                                content_type='text/html; charset=utf-8')
     self.mox.ReplayAll()
 
-    url = 'http://foo.com/bår'.encode('utf-8')
+    url = 'http://foo.com/bår'.encode()
     self.assert_created(text, preview=False, source=url, params={'bridgy_omit_link': ''})
     self.assert_success(text, preview=True, source=url, params={'bridgy_omit_link': ''})
 

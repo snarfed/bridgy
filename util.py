@@ -160,7 +160,7 @@ def add_task(queue, eta_seconds=None, **kwargs):
       'http_method': 'POST',
       'relative_uri': '/_ah/queue/%s' % queue,
       'app_engine_routing': {'service': 'background'},
-      'body': urllib.parse.urlencode(kwargs),
+      'body': urllib.parse.urlencode(kwargs).encode(),
     }
   }
   if eta_seconds:
@@ -408,7 +408,7 @@ class Handler(webutil_handlers.ModernHandler):
     """Adds self.messages to the fragment, separated by newlines."""
     parts = list(urllib.parse.urlparse(uri))
     if self.messages and not parts[5]:  # parts[5] is fragment
-      parts[5] = '!' + urllib.parse.quote('\n'.join(self.messages).encode('utf-8'))
+      parts[5] = '!' + urllib.parse.quote('\n'.join(self.messages).encode())
     uri = urllib.parse.urlunparse(parts)
     super(Handler, self).redirect(uri, **kwargs)
 

@@ -44,7 +44,7 @@ class UtilTest(testutil.ModelsTest):
     self.assertIn(UNICODE_STR, urllib.parse.unquote_plus(parsed.fragment))
     self.assertEqual(
       'logins="/fake/%s?%s"; expires="2001-12-31 00:00:00"; Path=/' %
-        (src.key.id(), urllib.parse.quote_plus(UNICODE_STR.encode('utf-8'))),
+        (src.key.id(), urllib.parse.quote_plus(UNICODE_STR.encode())),
       self.response.headers['Set-Cookie'])
 
     for feature in None, '':

@@ -130,4 +130,4 @@ class NotifyHandler(util.Handler):
   def post(self, id):
     source = self.SOURCE_CLS.get_by_id(id)
     if source:
-      handle_feed(self.request.body.decode('utf-8'), source)
+      handle_feed(self.request.text, source)

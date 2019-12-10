@@ -140,7 +140,7 @@ class WordPress(models.Source):
     # create the comment
     url = API_CREATE_COMMENT_URL % (auth_entity.blog_id, post_id)
     content = '<a href="%s">%s</a>: %s' % (author_url, author_name, content)
-    data = {'content': content.encode('utf-8')}
+    data = {'content': content.encode()}
     try:
       resp = self.urlopen(auth_entity, url, data=urllib.parse.urlencode(data))
     except urllib.error.HTTPError as e:

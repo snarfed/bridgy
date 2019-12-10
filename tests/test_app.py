@@ -272,7 +272,7 @@ class AppTest(testutil.ModelsTest):
 
     for id in 'FooBar', 'Snoøpy Barrett', 'foox.com':
       resp = app.application.get_response(
-        '/fake/%s' % urllib.parse.quote(id.encode('utf-8')))
+        '/fake/%s' % urllib.parse.quote(id.encode()))
       self.assertEqual(301, resp.status_int)
       self.assertEqual('http://localhost/fake/%s' % self.sources[0].key.id(),
                         resp.headers['Location'])

@@ -1687,7 +1687,7 @@ class PropagateTest(TaskTest):
     """Target URLs with escaped unicode chars should work ok.
     Background: https://github.com/snarfed/bridgy/issues/248
     """
-    url = 'https://maps/?q=' + urllib.parse.quote_plus('3 Cours de la République'.encode('utf-8'))
+    url = 'https://maps/?q=' + urllib.parse.quote_plus('3 Cours de la République'.encode())
     self.responses[0].unsent = [url]
     self.responses[0].put()
 
