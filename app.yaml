@@ -4,6 +4,7 @@
 # version: 8
 runtime: python37
 default_expiration: 1h
+entrypoint: gunicorn -b :$PORT app:application
 
 # background: https://github.com/snarfed/bridgy/issues/578
 automatic_scaling:
