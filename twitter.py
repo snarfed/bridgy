@@ -89,7 +89,7 @@ class Twitter(models.Source):
     if not urls:
       return []
 
-    query = ' OR '.join(urls)
+    query = ' OR '.join(sorted(urls))
     candidates = self.get_activities(
       search_query=query, group_id=gr_source.SEARCH, etag=self.last_activities_etag,
       fetch_replies=False, fetch_likes=False, fetch_shares=False, count=50)

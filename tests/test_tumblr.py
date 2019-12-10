@@ -125,7 +125,7 @@ class TumblrTest(testutil.HandlerTest):
       json_dumps({}),
       params=self.disqus_params({
         'thread': '87654',
-        'message': '<a href="http://who">Degenève</a>: foo Degenève bar'.encode('utf-8'),
+        'message': '<a href="http://who">Degenève</a>: foo Degenève bar',
       }))
     self.mox.ReplayAll()
 

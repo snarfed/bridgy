@@ -1079,11 +1079,10 @@ class SyndicatedPost(ndb.Model):
       return duplicate
 
     # delete blanks (expect at most 1 of each)
-    ndb.delete_multi(
-      cls.query(ndb.OR(
-        ndb.AND(cls.syndication == syndication, cls.original == None),
-        ndb.AND(cls.original == original, cls.syndication == None)),
-                ancestor=source.key).fetch(keys_only=True))
+    for filter in (ndb.AND(cls.syndication == syndication, cls.original == None),
+                   ndb.AND(cls.original == original, cls.syndication == None)):
+      for synd in cls.query(filter, ancestor=source.key).fetch(keys_only=True):
+        synd.delete()
 
     r = cls(parent=source.key, original=original, syndication=syndication)
     r.put()

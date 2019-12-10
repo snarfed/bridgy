@@ -44,7 +44,7 @@ http://foo.com/post/1
       source = 'http://bar.com/reply'
     if target is None:
       target = 'http://foo.com/post/1'
-    body = ('source=%s&target=%s' % (source, target)).encode('utf-8')
+    body = ('source=%s&target=%s' % (source, target))
     return app.application.get_response(
       '/webmention/fake', method='POST', text=body)
 

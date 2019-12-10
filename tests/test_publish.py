@@ -80,14 +80,14 @@ class PublishTest(testutil.HandlerTest):
 
   def assert_response(self, expected, status=None, preview=False, **kwargs):
     resp = self.get_response(preview=preview, **kwargs)
-    body = resp.body.decode('utf-8')
+    body = resp.text
     self.assertEqual(status, resp.status_int,
                       '%s != %s: %s' % (status, resp.status_int, body))
     if preview:
       self.assertIn(expected, body,
                     '%r\n\n=== vs ===\n\n%r' % (expected, body))
     else:
-      if resp.headers['Content-Type'] == 'application/json':
+      if resp.headers['Content-Type'].startswith('application/json'):
         body = json_loads(body)['content' if status < 300 else 'error']
       self.assertIn(expected, body)
 
@@ -133,10 +133,12 @@ class PublishTest(testutil.HandlerTest):
 
     resp = self.get_response(interactive=True)
     self.assertEqual(302, resp.status_int)
-    self.assertEqual(
-      'http://localhost/fake/foo.com#!'
-        'Done! <a href="http://fake/url">Click here to view.</a>\ngranary message',
-      urllib.parse.unquote_plus(resp.headers['Location']))
+
+    loc = urllib.parse.unquote_plus(resp.headers['Location'])
+    self.assertTrue(loc.startswith('http://localhost/fake/foo.com#!'), loc)
+    self.assertIn('Done! <a href="http://fake/url">Click here to view.</a>', loc)
+    self.assertIn('granary message', loc)
+
     self._check_entity()
 
   def test_interactive_from_wrong_user_page(self):
@@ -217,7 +219,7 @@ class PublishTest(testutil.HandlerTest):
 
     # now that there's a complete Publish entity, more attempts should fail
     resp = self.assert_error("Sorry, you've already published that page")
-    self.assertEqual(json_loads(created.body), json_loads(resp.body)['original'])
+    self.assertEqual(json_loads(created.text), json_loads(resp.text)['original'])
 
     # try again to test for a bug we had where a second try would succeed
     self.assert_error("Sorry, you've already published that page")
@@ -589,7 +591,7 @@ this is my article
 
     for i in range(len(subdomains)):
       resp = self.get_response(source='http://foo.com/%d' % i)
-      self.assertEqual(201, resp.status_int, resp.body)
+      self.assertEqual(201, resp.status_int, resp.text)
 
   def test_relative_u_url(self):
     """mf2py expands urls; this just check that we give it the source URL."""
@@ -678,7 +680,7 @@ this is my article
                                  ignore_formatting=False
                                  ).AndRaise(RuntimeError('baz'))
     self.mox.ReplayAll()
-    self.assert_error('500', status=500)
+    self.assert_error('Internal Server Error', status=500)
 
   def test_value_error(self):
     """For example, Twitter raises ValueError on invalid in-reply-to URL....
@@ -713,7 +715,7 @@ this is my article
     self.expect_requests_get('http://foo.com/bar', self.post_html % 'foo')
     self.mox.ReplayAll()
     resp = self.assert_created('foo', params={'bridgy_omit_link': 'True'})
-    self.assertEqual('foo', json_loads(resp.body)['content'])
+    self.assertEqual('foo', json_loads(resp.text)['content'])
 
   def test_bridgy_omit_link_target_query_param(self):
     self.expect_requests_get('http://foo.com/bar', self.post_html % 'foo')
@@ -721,14 +723,14 @@ this is my article
 
     target = 'https://brid.gy/publish/fake?bridgy_omit_link=true'
     resp = self.assert_created('foo', target=target)
-    self.assertEqual('foo', json_loads(resp.body)['content'])
+    self.assertEqual('foo', json_loads(resp.text)['content'])
 
   def test_bridgy_omit_link_mf2(self):
     html = self.post_html % 'foo <a class="u-bridgy-omit-link" href=""></a>'
     self.expect_requests_get('http://foo.com/bar', html)
     self.mox.ReplayAll()
     resp = self.assert_created('foo')
-    self.assertEqual('foo', json_loads(resp.body)['content'])
+    self.assertEqual('foo', json_loads(resp.text)['content'])
 
   def test_preview_omit_link_no_query_param_overrides_mf2(self):
     self.expect_requests_get('http://foo.com/bar', self.post_html % 'foo')
@@ -737,7 +739,7 @@ this is my article
     resp = self.assert_success('preview of foo', preview=True)
     self.assertIn(
       '<input type="hidden" name="state" value="%7B%22include_link%22%3A%22include%22',
-      resp.body.decode('utf-8'))
+      resp.text)
 
   def test_preview_omit_link_query_param_overrides_mf2(self):
     html = """\
@@ -753,7 +755,7 @@ this is my article
                                params={'bridgy_omit_link': 'false'})
     self.assertIn(
       '<input type="hidden" name="state" value="%7B%22include_link%22%3A%22include%22',
-      resp.body.decode('utf-8'))
+      resp.text)
 
   def test_create_bridgy_omit_link_maybe_query_param(self):
     """Test that ?bridgy_omit_link=maybe query parameter is interpreted
@@ -1169,7 +1171,7 @@ Join us!"""
     self.assert_success(expected, preview=True)
     expected += ' - http://foo.com/bar'
     resp = self.assert_created(expected, preview=False)
-    self.assertEqual(expected, json_loads(resp.body)['content'])
+    self.assertEqual(expected, json_loads(resp.text)['content'])
 
   def test_unicode(self):
     """Test that we pass through unicode chars correctly."""
@@ -1342,10 +1344,10 @@ Join us!"""
     self.mox.ReplayAll()
 
     resp = self.assert_created('blah - http://foo.com/bar')
-    self.assertNotIn('images', json_loads(resp.body))
+    self.assertNotIn('images', json_loads(resp.text))
 
     resp = self.assert_success('blah - http://foo.com/bar', preview=True)
-    self.assertNotIn('with images', resp.body)
+    self.assertNotIn('with images', resp.text)
 
   def test_ignore_jetpack_lazy_loaded_imgs(self):
     """https://github.com/snarfed/bridgy/issues/798"""
@@ -1363,10 +1365,10 @@ Join us!"""
     self.mox.ReplayAll()
 
     resp = self.assert_created("blah - http://foo.com/bar")
-    self.assertEqual(['http://example.com/real'], json_loads(resp.body)['images'])
+    self.assertEqual(['http://example.com/real'], json_loads(resp.text)['images'])
 
     resp = self.assert_success('blah - http://foo.com/bar', preview=True)
-    self.assertIn('with images http://example.com/real', resp.body)
+    self.assertIn('with images http://example.com/real', resp.text)
 
   def test_nested_h_as_entry(self):
     """https://github.com/snarfed/bridgy/issues/735"""

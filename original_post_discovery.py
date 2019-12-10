@@ -329,7 +329,7 @@ def _process_author(source, author_url, refetch=False, store_blanks=True):
   # sort by dt-updated/dt-published
   def updated_or_published(item):
     props = microformats2.first_props(item.get('properties'))
-    return props.get('updated') or props.get('published')
+    return props.get('updated') or props.get('published') or ''
 
   feeditems.sort(key=updated_or_published, reverse=True)
 
@@ -508,8 +508,8 @@ def process_entry(source, permalink, feed_entry, refetch, preexisting,
 
   # detect and delete SyndicatedPosts that were removed from the site
   if success:
-    result_syndposts = itertools.chain(*results.values())
-    for syndpost in list(preexisting):
+    result_syndposts = list(itertools.chain(*results.values()))
+    for syndpost in preexisting:
       if syndpost.syndication and syndpost not in result_syndposts:
         logging.info('deleting relationship that disappeared: %s', syndpost)
         syndpost.key.delete()

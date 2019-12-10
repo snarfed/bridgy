@@ -17,6 +17,7 @@ from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
 
 import appengine_config
+import app
 import instagram
 from . import testutil
 import util
@@ -278,11 +279,11 @@ class InstagramTest(testutil.ModelsTest):
     self.mox.ReplayAll()
     resp = self.callback(state=urllib.parse.quote_plus(state))
     self.assertEqual(302, resp.status_int)
-    self.assertEqual('http://my.site/call-back?' + urllib.parse.urlencode({
-      'result': 'success',
-      'key': self.inst.key.urlsafe().decode(),
-      'user': 'http://localhost/instagram/snarfed',
-    }), resp.headers['Location'])
+    self.assertEqual('http://my.site/call-back?' + urllib.parse.urlencode([
+      ('result', 'success'),
+      ('user', 'http://localhost/instagram/snarfed'),
+      ('key', self.inst.key.urlsafe().decode()),
+    ]), resp.headers['Location'])
 
   def test_registration_api_finish_no_rel_me(self):
     state = util.encode_oauth_state(self.bridgy_api_state)

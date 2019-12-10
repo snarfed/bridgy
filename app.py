@@ -94,7 +94,7 @@ class CachedPageHandler(DashboardHandler):
 
   @util.canonicalize_domain
   def get(self, cache=True):
-    if (not cache or appengine_config.DEBUG or self.request.params or
+    if (not cache or appengine_config.LOCAL or self.request.params or
         self.get_logins()):
       return super(CachedPageHandler, self).get()
 

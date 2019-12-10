@@ -133,7 +133,7 @@ class TwitterTest(testutil.ModelsTest):
                             {'expanded_url': 'http://other'}]},
     }]
     self.expect_urlopen(API_BASE + API_SEARCH %
-                        {'q': urllib.parse.quote_plus('foo OR bar/baz'), 'count': 50},
+                        {'q': urllib.parse.quote_plus('bar/baz OR foo'), 'count': 50},
                         json_dumps({'statuses': results}))
 
     self.mox.ReplayAll()

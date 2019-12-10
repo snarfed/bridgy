@@ -18,6 +18,7 @@ from gdata.blogger.client import BloggerClient
 from gdata.client import RequestError
 from oauth_dropins.blogger import BloggerUser
 
+import app
 import blogger
 from blogger import Blogger
 import util

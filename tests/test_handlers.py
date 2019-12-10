@@ -362,8 +362,8 @@ asdf http://other/link qwert
   <span class="p-name"><data class="p-rsvp" value="no">is not attending.</data></span>
   <div class="">
   </div>
-  <a class="u-in-reply-to" href="http://or.ig/event"></a>
   <a class="u-in-reply-to" href="http://example.com/event"></a>
+  <a class="u-in-reply-to" href="http://or.ig/event"></a>
 </article>
 """)
 
@@ -485,9 +485,9 @@ asdf http://other/link qwert
   <a class="u-mention" href="https://reply/"></a>
   <a class="u-mention" href="https://upstream/"></a>
   </div>
-  <a class="u-in-reply-to" href="https://reply/only"></a>
   <a class="u-in-reply-to" href="http://reply"></a>
   <a class="u-in-reply-to" href="https://all"></a>
+  <a class="u-in-reply-to" href="https://reply/only"></a>
 </article>
 """)
 

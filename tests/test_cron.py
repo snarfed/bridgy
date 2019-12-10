@@ -17,6 +17,7 @@ from oauth_dropins import twitter as oauth_twitter
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
 import appengine_config
+import app
 import cron
 from flickr import Flickr
 from instagram import Instagram
@@ -117,8 +118,8 @@ class CronTest(HandlerTest):
 
     cron.TWITTER_USERS_PER_LOOKUP = 2
     lookup_url = gr_twitter.API_BASE + cron.TWITTER_API_USER_LOOKUP
-    self.expect_urlopen(lookup_url % 'a,c', json_dumps(user_objs))
-    self.expect_urlopen(lookup_url % 'b', json_dumps(user_objs))
+    self.expect_urlopen(lookup_url % 'a,b', json_dumps(user_objs))
+    self.expect_urlopen(lookup_url % 'c', json_dumps(user_objs))
     self.mox.ReplayAll()
 
     resp = app.application.get_response('/cron/update_twitter_pictures')
@@ -213,8 +214,8 @@ class CronTest(HandlerTest):
   def test_update_flickr_pictures(self):
     self.expect_urlopen(
       'https://api.flickr.com/services/rest?'
-        'user_id=39216764%40N00&nojsoncallback=1&'
-        'method=flickr.people.getInfo&format=json',
+        'nojsoncallback=1&format=json&'
+        'method=flickr.people.getInfo&user_id=39216764%40N00',
       json_dumps({
         'person': {
           'id': '123@N00',

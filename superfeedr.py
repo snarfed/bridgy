@@ -35,7 +35,7 @@ def subscribe(source, handler):
     source: Blogger, Tumblr, or WordPress
     handler: :class:`webapp2.RequestHandler`
   """
-  if appengine_config.DEBUG:
+  if appengine_config.LOCAL:
     logging.info('Running in dev_appserver, not subscribing to Superfeedr')
     return
 

@@ -160,7 +160,7 @@ class Poll(webapp2.RequestHandler):
         # try numeric comparison first
         greater = int(id) > int(last_activity_id)
       except (TypeError, ValueError):
-        greater = id > last_activity_id
+        greater = str(id) > str(last_activity_id)
       if greater:
         last_activity_id = id
 

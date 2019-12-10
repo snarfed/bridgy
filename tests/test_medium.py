@@ -52,11 +52,11 @@ class MediumTest(testutil.HandlerTest):
     self.auth_entity.put()
 
     # prevent subscribing to superfeedr
-    self.orig_debug = appengine_config.DEBUG
-    appengine_config.DEBUG = True
+    self.orig_local = appengine_config.LOCAL
+    appengine_config.LOCAL = True
 
   def tearDown(self):
-    appengine_config.DEBUG = self.orig_debug
+    appengine_config.LOCAL = self.orig_local
     super(MediumTest, self).tearDown()
 
   def expect_requests_get(self, path, *args, **kwargs):

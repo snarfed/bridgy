@@ -165,7 +165,7 @@ class SuperfeedrTest(testutil.HandlerTest):
 
   def test_notify_utf8(self):
     """Check that we handle unicode chars in content ok, including logging."""
-    self.feed = '{"items": [{"id": "X", "content": "a ☕ z"}]}'.encode('utf-8')
+    self.feed = '{"items": [{"id": "X", "content": "a ☕ z"}]}'
     resp = fake_app.get_response('/notify/foo.com', method='POST', text=self.feed)
 
     self.assertEqual(200, resp.status_int)

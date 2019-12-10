@@ -29,6 +29,7 @@ from webmentiontools import send
 
 import appengine_config
 
+import app
 import models
 from models import Response, SyndicatedPost
 from twitter import Twitter
@@ -93,11 +94,11 @@ class PollTest(TaskTest):
   def setUp(self):
     super(PollTest, self).setUp()
     FakeGrSource.DOMAIN = 'source'
-    appengine_config.DEBUG = True
+    appengine_config.LOCAL = True
 
   def tearDown(self):
     FakeGrSource.DOMAIN = 'fa.ke'
-    appengine_config.DEBUG = False
+    appengine_config.LOCAL = False
     super(PollTest, self).tearDown()
 
   def post_task(self, expected_status=200, source=None, reset=False,
@@ -834,7 +835,7 @@ class PollTest(TaskTest):
       "error_type": "OAuthRateLimitException"}})
     self.expect_get_activities().AndRaise(
       urllib.error.HTTPError('url', 429, 'Rate limited', {},
-                             io.StringIO(error_body.decode('utf-8'))))
+                             io.StringIO(error_body)))
 
     self.post_task(expect_poll=FakeSource.RATE_LIMITED_POLL)
     source = self.sources[0].key.get()
@@ -966,7 +967,7 @@ class PollTest(TaskTest):
     FakeGrSource.activities = self.activities
 
     # syndicated urls need to be unique for this to be interesting
-    for letter, activity in zip(string.letters, FakeGrSource.activities):
+    for letter, activity in zip(string.ascii_letters, FakeGrSource.activities):
       activity['url'] = activity['object']['url'] = 'http://fa.ke/post/' + letter
       activity['object']['content'] = 'foo bar'
 
@@ -987,7 +988,7 @@ class PollTest(TaskTest):
     FakeGrSource.activities = self.activities
 
     # syndicated urls need to be unique for this to be interesting
-    for letter, activity in zip(string.letters, FakeGrSource.activities):
+    for letter, activity in zip(string.ascii_letters, FakeGrSource.activities):
       activity['url'] = activity['object']['url'] = 'http://fa.ke/post/' + letter
       activity['object']['content'] = 'foo bar'
 
@@ -1232,10 +1233,10 @@ class DiscoverTest(TaskTest):
 
   def setUp(self):
     super(DiscoverTest, self).setUp()
-    appengine_config.DEBUG = True
+    appengine_config.LOCAL = True
 
   def tearDown(self):
-    appengine_config.DEBUG = False
+    appengine_config.LOCAL = False
     super(DiscoverTest, self).tearDown()
 
   def discover(self, **kwargs):

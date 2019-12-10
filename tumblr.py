@@ -198,7 +198,7 @@ class Tumblr(models.Source):
     message = '<a href="%s">%s</a>: %s' % (author_url, author_name, content)
     resp = self.disqus_call(util.requests_post, DISQUS_API_CREATE_POST_URL,
                             {'thread': thread_id,
-                             'message': message.encode('utf-8'),
+                             'message': message,
                              # only allowed when authed as moderator/owner
                              # 'state': 'approved',
                              })

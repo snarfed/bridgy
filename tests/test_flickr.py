@@ -8,6 +8,7 @@ standard_library.install_aliases()
 import urllib.request, urllib.parse, urllib.error
 
 import appengine_config
+import app
 import flickr
 import granary
 import granary.tests.test_flickr as gr_test_flickr

@@ -24,7 +24,7 @@ import threading
 import time
 import urllib.request, urllib.parse, urllib.error
 
-from appengine_config import APP_ID, DEBUG, LOCAL
+from appengine_config import APP_ID, LOCAL
 from cachetools import TTLCache
 from google.cloud import error_reporting
 from google.cloud import ndb
@@ -358,8 +358,7 @@ def prune_response(response):
 
 
 def replace_test_domains_with_localhost(url):
-  """Replace domains in LOCALHOST_TEST_DOMAINS with localhost for local
-  testing when in DEBUG mode.
+  """Replace domains in LOCALHOST_TEST_DOMAINS with localhost for local testing.
 
   Args:
     url: a string
@@ -576,10 +575,13 @@ class Handler(webutil_handlers.ModernHandler):
     # cookie docs: http://curl.haxx.se/rfc/cookie_spec.html
     cookie = SimpleCookie()
     cookie['logins'] = '|'.join(sorted(set(
-      '%s?%s' % (login.path, urllib.parse.quote_plus(login.name.encode('utf-8')))
+      '%s?%s' % (login.path, urllib.parse.quote_plus(login.name))
       for login in logins)))
     cookie['logins']['path'] = '/'
-    cookie['logins']['expires'] = now_fn() + datetime.timedelta(days=365 * 2)
+
+    expires = (now_fn() + datetime.timedelta(days=365 * 2)).replace(microsecond=0)
+    # this will have a space in it, eg '2021-12-08 15:48:34', so quote it
+    cookie['logins']['expires'] = '"%s"' % expires
 
     header = cookie['logins'].OutputString()
     logging.info('Set-Cookie: %s', header)

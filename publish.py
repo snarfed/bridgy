@@ -204,7 +204,7 @@ class Handler(webmention.WebmentionHandler):
 
     # create the Publish entity so we can store the result.
     if (self.entity.status == 'complete' and self.entity.type != 'preview' and
-        not self.PREVIEW and not appengine_config.DEBUG):
+        not self.PREVIEW and not appengine_config.LOCAL):
       return self.error("Sorry, you've already published that page, and Bridgy Publish doesn't support updating existing posts. Details: https://github.com/snarfed/bridgy/issues/84",
                         extra_json={'original': self.entity.published})
 
@@ -393,7 +393,7 @@ class Handler(webmention.WebmentionHandler):
       self.entity.type = self.entity.published.get('type') or models.get_type(obj)
       self.response.headers['Content-Type'] = 'application/json'
       logging.info('Returning %s', json_dumps(self.entity.published, indent=2))
-      self.response.headers['Location'] = self.entity.published['url'].encode('utf-8')
+      self.response.headers['Location'] = self.entity.published['url']
       self.response.status = 201
       return gr_source.creation_result(
         json_dumps(self.entity.published, indent=2))
@@ -409,7 +409,7 @@ class Handler(webmention.WebmentionHandler):
     """
     self.entity = self.get_or_add_publish_entity(source_url)
     if ((self.entity.status != 'complete' or self.entity.type == 'preview') and
-        not appengine_config.DEBUG):
+        not appengine_config.LOCAL):
       return self.error("Can't delete this post from %s because Bridgy Publish didn't originally POSSE it there" % self.source.gr_source.NAME)
 
     id = self.entity.published.get('id')
