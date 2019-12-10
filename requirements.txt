@@ -1,13 +1,11 @@
-#-e git+git@github.com:snarfed/granary.git#egg=granary-master
-#-e git+git@github.com:snarfed/oauth-dropins.git#egg=oauth_dropins-master
-#-e git+git@github.com:snarfed/webmention-tools.git#egg=webmentiontools-python3
+git+https://github.com/snarfed/webmention-tools.git@python3#egg=webmentiontools
+git+https://github.com/snarfed/oauth-dropins.git@python3-ndb#egg=oauth_dropins
+git+https://github.com/snarfed/granary.git@python3-ndb#egg=granary
 cachetools~=3.1
 gdata-python3~=3.0
 google-cloud-error-reporting~=0.33
 google-cloud-tasks~=1.3
-#granary~=3.0
 humanize~=0.5
 lxml~=4.4.2
 mf2util~=0.5
-#oauth-dropins~=3.0
 requests~=2.22
