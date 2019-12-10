@@ -8,6 +8,7 @@ import re
 import urllib.request, urllib.parse, urllib.error
 
 import appengine_config
+from appengine_config import tasks_client
 
 from google.cloud import ndb
 from google.cloud.tasks_v2.types import Task
@@ -264,7 +265,7 @@ class HandlerTest(testutil.HandlerTest):
 
     util.webmention_endpoint_cache.clear()
     self.stubbed_create_task = False
-    util.tasks_client.create_task = lambda *args, **kwargs: Task(name='foo')
+    tasks_client.create_task = lambda *args, **kwargs: Task(name='foo')
 
     # clear datastore
     orig_requests_post('http://%s/reset' % appengine_config.ndb_client.host)
@@ -277,7 +278,7 @@ class HandlerTest(testutil.HandlerTest):
 
   def expect_task(self, queue, eta_seconds=None, **kwargs):
     if not self.stubbed_create_task:
-      self.mox.StubOutWithMock(util.tasks_client, 'create_task')
+      self.mox.StubOutWithMock(tasks_client, 'create_task')
       self.stubbed_create_task = True
 
     def check_queue(path):
@@ -298,7 +299,7 @@ class HandlerTest(testutil.HandlerTest):
         elif isinstance(val, ndb.Key):
           kwargs[name] = val.urlsafe().decode()
 
-      body = set(urllib.parse.parse_qsl(req['body']))
+      body = set(urllib.parse.parse_qsl(req['body'].decode()))
       diff = set(kwargs.items()) - body
       if diff:
         # print('expect_task: %s not found in %s' % (diff, body))
@@ -314,7 +315,7 @@ class HandlerTest(testutil.HandlerTest):
 
       return True
 
-    return util.tasks_client.create_task(
+    return tasks_client.create_task(
       mox.Func(check_queue), mox.Func(check_params)
     ).InAnyOrder().AndReturn(Task(name='my task'))
 

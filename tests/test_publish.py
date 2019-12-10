@@ -5,6 +5,7 @@ import socket
 import urllib.request, urllib.parse, urllib.error
 
 import appengine_config
+from appengine_config import error_reporting_client
 
 from granary import source as gr_source
 from mox3 import mox
@@ -601,12 +602,12 @@ this is my article
     for i in range(2):
       self.expect_requests_get('http://foo.com/bar', self.post_html % 'foo')
 
-    self.mox.StubOutWithMock(util.error_reporting_client, 'report',
+    self.mox.StubOutWithMock(error_reporting_client, 'report',
                              use_mock_anything=True)
     for subject in ('WebmentionHandler None failed',
                     'PreviewHandler preview new'):
-      util.error_reporting_client.report(subject, http_context=mox.IgnoreArg(),
-                                         user=u'http://localhost/fake/foo.com')
+      error_reporting_client.report(subject, http_context=mox.IgnoreArg(),
+                                    user=u'http://localhost/fake/foo.com')
 
     self.mox.StubOutWithMock(self.source.gr_source, 'create',
                              use_mock_anything=True)

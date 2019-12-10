@@ -21,6 +21,7 @@ import requests
 from webmentiontools import send
 
 import appengine_config
+from appengine_config import tasks_client
 
 import app
 import models
@@ -1032,7 +1033,7 @@ class PollTest(TaskTest):
     self.assertEqual(1, len(relationships))
     self.assertIsNone(relationships[0].syndication)
 
-    # should not have repropagated any responses. util.tasks_client is stubbed
+    # should not have repropagated any responses. tasks_client is stubbed
     # out in tests, mox will complain if it gets called.
 
   def test_dont_repropagate_posses(self):
@@ -1166,7 +1167,7 @@ class PollTest(TaskTest):
 
     self.mox.VerifyAll()
     self.mox.UnsetStubs()
-    self.mox.StubOutWithMock(util.tasks_client, 'create_task')
+    self.mox.StubOutWithMock(tasks_client, 'create_task')
     for resp in self.responses[1:4]:
       self.expect_task('propagate', response_key=resp)
 
@@ -1202,7 +1203,7 @@ class PollTest(TaskTest):
 
     self.mox.VerifyAll()
     self.mox.UnsetStubs()
-    self.mox.StubOutWithMock(util.tasks_client, 'create_task')
+    self.mox.StubOutWithMock(tasks_client, 'create_task')
 
   def test_in_blocklist(self):
     """Responses from blocked users should be ignored."""
@@ -1254,7 +1255,7 @@ class DiscoverTest(TaskTest):
 
   def test_no_post(self):
     """Silo post not found."""
-    self.mox.StubOutWithMock(util.tasks_client, 'create_task')
+    self.mox.StubOutWithMock(tasks_client, 'create_task')
     FakeGrSource.activities = []
     self.discover()
     self.assert_responses([])
@@ -1308,7 +1309,7 @@ class DiscoverTest(TaskTest):
   def _test_get_activities_error(self, status):
     self.expect_get_activities(activity_id='b', user_id=self.sources[0].key.id()
         ).AndRaise(urllib.error.HTTPError('url', status, 'Rate limited', {}, None))
-    self.mox.StubOutWithMock(util.tasks_client, 'create_task')
+    self.mox.StubOutWithMock(tasks_client, 'create_task')
     self.mox.ReplayAll()
 
     self.discover(expected_status=ERROR_HTTP_RETURN_CODE)

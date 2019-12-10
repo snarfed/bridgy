@@ -302,7 +302,7 @@ class SourceTest(testutil.HandlerTest):
   def test_create_new_publish(self):
     """If a source is publish only, we shouldn't insert a poll task."""
     FakeSource.create_new(self.handler, features=['publish'])
-    # util.tasks_client is stubbed out, it will complain if it gets called
+    # tasks_client is stubbed out, it will complain if it gets called
 
   def test_create_new_webmention(self):
     """We should subscribe to webmention sources in Superfeedr."""

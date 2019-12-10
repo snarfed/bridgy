@@ -5,6 +5,8 @@ import datetime
 import urllib.request, urllib.parse, urllib.error
 from urllib.parse import urlencode
 
+import appengine_config
+
 from google.cloud import ndb
 from mox3 import mox
 from oauth_dropins.twitter import TwitterAuth
@@ -609,7 +611,7 @@ class DiscoverTest(testutil.ModelsTest):
         'Failed to fetch <a href="http://si.te/123">si.te/123</a> or '
         'find a FakeSource syndication link.')
 
-    # util.tasks_client.create_task() is stubbed out, so if any calls to it were
+    # tasks_client.create_task() is stubbed out, so if any calls to it were
     # made, mox would notice that and fail.
 
   def test_discover_param_errors(self):

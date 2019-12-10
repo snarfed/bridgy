@@ -14,11 +14,9 @@ import threading
 import time
 import urllib.request, urllib.parse, urllib.error
 
-from appengine_config import APP_ID, LOCAL
+from appengine_config import APP_ID, error_reporting_client, LOCAL, tasks_client
 from cachetools import TTLCache
-from google.cloud import error_reporting
 from google.cloud import ndb
-from google.cloud import tasks_v2
 from google.cloud.tasks_v2.types import Timestamp
 import google.protobuf.message
 import humanize
@@ -108,9 +106,6 @@ TASKS_LOCATION = 'us-central1'
 webmention_endpoint_cache_lock = threading.RLock()
 webmention_endpoint_cache = TTLCache(500, 60 * 60 * 2)  # 2h expiration
 
-error_reporting_client = error_reporting.Client()
-tasks_client = tasks_v2.CloudTasksClient()
-
 
 def add_poll_task(source, now=False):
   """Adds a poll task for the given source entity.
@@ -167,8 +162,11 @@ def add_task(queue, eta_seconds=None, **kwargs):
     params['schedule_time'] = Timestamp(seconds=eta_seconds)
 
   queue_path = tasks_client.queue_path(APP_ID, TASKS_LOCATION, queue)
-  task = tasks_client.create_task(queue_path, params)
-  logging.info('Added %s task %s with ETA %s', queue, task.name, eta_seconds)
+  if LOCAL:
+    logging.info('Would add task: %s %s', queue_path, params)
+  else:
+    task = tasks_client.create_task(queue_path, params)
+    logging.info('Added %s task %s with ETA %s', queue, task.name, eta_seconds)
 
 
 def webmention_endpoint_cache_key(url):

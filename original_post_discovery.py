@@ -336,7 +336,7 @@ def _process_author(source, author_url, refetch=False, store_blanks=True):
         if isinstance(permalink, str):
           permalink_to_entry[permalink] = child
         else:
-          logging.warn('unexpected non-string "url" property: %s', permalink)
+          logging.warning('unexpected non-string "url" property: %s', permalink)
 
     max = (MAX_PERMALINK_FETCHES_BETA if source.is_beta_user()
            else MAX_PERMALINK_FETCHES)
