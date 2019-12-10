@@ -1,6 +1,4 @@
 """Unit tests for github.py."""
-from __future__ import absolute_import
-
 import appengine_config
 
 import granary

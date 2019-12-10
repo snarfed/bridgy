@@ -24,24 +24,17 @@ lookups in the following primary cases:
     - 1 DB query for the initial check plus 1 additional DB query for
       *each* post permalink.
 """
-from __future__ import unicode_literals
-
-from future import standard_library
-standard_library.install_aliases()
-from builtins import next
-from builtins import range
-from past.builtins import basestring
 import collections
 import itertools
 import logging
 import mf2util
 import urllib.parse
-import util
 
 from granary import microformats2
 from granary import source as gr_source
 import models
 from models import SyndicatedPost
+import util
 
 MAX_PERMALINK_FETCHES = 10
 MAX_PERMALINK_FETCHES_BETA = 50
@@ -340,7 +333,7 @@ def _process_author(source, author_url, refetch=False, store_blanks=True):
       if not permalinks:
         logging.debug('ignoring h-entry with no u-url!')
       for permalink in permalinks:
-        if isinstance(permalink, basestring):
+        if isinstance(permalink, str):
           permalink_to_entry[permalink] = child
         else:
           logging.warn('unexpected non-string "url" property: %s', permalink)
@@ -396,11 +389,11 @@ def _merge_hfeeds(feed1, feed2):
   seen = set()
   for item in feed1:
     for url in item.get('properties', {}).get('url', []):
-      if isinstance(url, basestring):
+      if isinstance(url, str):
         seen.add(url)
 
   return feed1 + [item for item in feed2 if all(
-    (url not in seen) for url in item.get('properties', {}).get('url', []) if isinstance(url, basestring))]
+    (url not in seen) for url in item.get('properties', {}).get('url', []) if isinstance(url, str))]
 
 
 def _find_feed_items(mf2):
@@ -468,7 +461,7 @@ def process_entry(source, permalink, feed_entry, refetch, preexisting,
   if usynd:
     logging.debug('u-syndication links on the h-feed h-entry: %s', usynd)
   results = _process_syndication_urls(source, permalink, set(
-    url for url in usynd if isinstance(url, basestring)), preexisting)
+    url for url in usynd if isinstance(url, str)), preexisting)
   success = True
 
   if results:
@@ -493,7 +486,7 @@ def process_entry(source, permalink, feed_entry, refetch, preexisting,
       if relsynd:
         logging.debug('rel-syndication links: %s', relsynd)
       syndication_urls.update(url for url in relsynd
-                              if isinstance(url, basestring))
+                              if isinstance(url, str))
       # there should only be one h-entry on a permalink page, but
       # we'll check all of them just in case.
       for hentry in (item for item in mf2['items']
@@ -502,7 +495,7 @@ def process_entry(source, permalink, feed_entry, refetch, preexisting,
         if usynd:
           logging.debug('u-syndication links: %s', usynd)
         syndication_urls.update(url for url in usynd
-                                if isinstance(url, basestring))
+                                if isinstance(url, str))
       results = _process_syndication_urls(
         source, permalink, syndication_urls, preexisting)
 

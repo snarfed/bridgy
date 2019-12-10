@@ -1,9 +1,6 @@
 # coding=utf-8
 """Unit tests for superfeedr.py.
 """
-from __future__ import unicode_literals
-from __future__ import absolute_import
-
 from google.cloud.ndb.key import _MAX_KEYPART_BYTES
 from google.cloud.ndb._datastore_types import _MAX_STRING_LENGTH
 from mox3 import mox

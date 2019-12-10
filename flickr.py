@@ -1,12 +1,11 @@
 """Flickr source and data model storage class."""
-from __future__ import unicode_literals
-
-import appengine_config
 import datetime
 import logging
 import models
 import util
 import webapp2
+
+import appengine_config
 
 from google.cloud import ndb
 from granary import flickr as gr_flickr

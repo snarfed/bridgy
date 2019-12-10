@@ -5,18 +5,15 @@ hits /statuses/user_timeline and /search/tweets once each. Both allow 180 calls
 per window before they're rate limited.
 https://dev.twitter.com/docs/rate-limiting/1.1/limits
 """
-from __future__ import unicode_literals
-
 import logging
-
-import webapp2
-from webob import exc
 
 import appengine_config
 from granary import twitter as gr_twitter
 from granary import source as gr_source
 from oauth_dropins import twitter as oauth_twitter
 from oauth_dropins.webutil.util import json_dumps, json_loads
+import webapp2
+from webob import exc
 
 import models
 import util

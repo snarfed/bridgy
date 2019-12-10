@@ -1,9 +1,6 @@
 # coding=utf-8
 """Task queue handlers.
 """
-from __future__ import absolute_import, division, unicode_literals
-from builtins import str
-from past.utils import old_div
 import datetime
 import gc
 import logging

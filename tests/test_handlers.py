@@ -1,11 +1,6 @@
 # coding=utf-8
 """Unit tests for handlers.py.
 """
-from __future__ import unicode_literals
-from __future__ import absolute_import
-
-from future import standard_library
-standard_library.install_aliases()
 import io
 import urllib.request, urllib.error, urllib.parse
 

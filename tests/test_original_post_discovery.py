@@ -1,10 +1,6 @@
 # coding=utf-8
 """Unit tests for original_post_discovery.py
 """
-from __future__ import unicode_literals
-from __future__ import absolute_import
-
-from builtins import range, str
 import datetime
 
 from oauth_dropins.webutil.util import json_dumps, json_loads

@@ -1,11 +1,5 @@
 """Converts webmentions to comments on Blogger, Tumblr, and WP.com.
 """
-from __future__ import unicode_literals
-
-from future import standard_library
-standard_library.install_aliases()
-from builtins import next
-from past.builtins import basestring
 import logging
 import urllib.parse
 
@@ -118,7 +112,7 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
     props = item['properties']
     author = first_value(props, 'author')
     if author:
-      if isinstance(author, basestring):
+      if isinstance(author, str):
         author_name = author
       else:
         author_props = author.get('properties', {})

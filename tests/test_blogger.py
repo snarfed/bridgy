@@ -1,15 +1,7 @@
 # coding=utf-8
 """Unit tests for blogger.py.
 """
-from __future__ import unicode_literals
-from __future__ import absolute_import
-
-from future import standard_library
-standard_library.install_aliases()
-from builtins import next
-from mox3 import mox
 import urllib.request, urllib.parse, urllib.error
-import urllib.parse
 
 import appengine_config
 
@@ -17,6 +9,7 @@ from gdata.blogger import data
 from gdata.blogger.client import BloggerClient
 from gdata.client import RequestError
 from oauth_dropins.blogger import BloggerUser
+from mox3 import mox
 
 import app
 import blogger

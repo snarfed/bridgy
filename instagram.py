@@ -16,10 +16,6 @@ Example comment ID and links:
 * Local handler path:
   /comment/instagram/212038/595990791004231349_247678460/595996024371549506
 """
-from __future__ import unicode_literals
-
-from future import standard_library
-standard_library.install_aliases()
 import datetime
 import logging
 import urllib.parse

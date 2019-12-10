@@ -20,12 +20,6 @@ test command line:
 curl localhost:8080/webmention/blogger \
   -d 'source=http://localhost/response.html&target=http://freedom-io-2.blogspot.com/2014/04/blog-post.html'
 """
-from __future__ import unicode_literals
-
-from future import standard_library
-standard_library.install_aliases()
-from builtins import str
-from builtins import zip
 import collections
 import logging
 import re

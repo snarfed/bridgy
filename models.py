@@ -1,8 +1,5 @@
 """Datastore model classes.
 """
-from __future__ import unicode_literals
-
-from builtins import zip
 import datetime
 import logging
 import re

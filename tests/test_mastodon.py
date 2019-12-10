@@ -1,9 +1,5 @@
 """Unit tests for mastodon.py.
 """
-from __future__ import absolute_import, unicode_literals
-from future import standard_library
-standard_library.install_aliases()
-
 import appengine_config
 from granary.mastodon import API_BLOCKS, API_SEARCH
 from granary.tests.test_mastodon import ACTIVITY, STATUS

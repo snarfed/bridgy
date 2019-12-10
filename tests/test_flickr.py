@@ -1,21 +1,16 @@
 """Unit tests for flickr.py.
 """
-from __future__ import unicode_literals
-from __future__ import absolute_import
-
-from future import standard_library
-standard_library.install_aliases()
 import urllib.request, urllib.parse, urllib.error
 
 import appengine_config
-import app
-import flickr
 import granary
 import granary.tests.test_flickr as gr_test_flickr
 import oauth_dropins
 from oauth_dropins.webutil.util import json_dumps, json_loads
-import tasks
 
+import app
+import flickr
+import tasks
 from . import testutil
 
 

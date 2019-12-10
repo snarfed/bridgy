@@ -1,18 +1,10 @@
 # coding=utf-8
 """Unit tests for tasks.py.
 """
-from __future__ import unicode_literals
-from __future__ import absolute_import
-
-from future import standard_library
-standard_library.install_aliases()
-
-from builtins import zip
 import copy
 import datetime
 import http.client
 import logging
-from mox3 import mox
 import socket
 import string
 import io
@@ -23,6 +15,7 @@ from cachetools import TTLCache
 from google.cloud import ndb
 from google.cloud.ndb._datastore_types import _MAX_STRING_LENGTH
 from google.cloud.tasks_v2.types import Task
+from mox3 import mox
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
 from webmentiontools import send

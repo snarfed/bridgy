@@ -1,6 +1,4 @@
 """Mastodon source and datastore model classes."""
-from __future__ import unicode_literals
-
 import logging
 
 import appengine_config

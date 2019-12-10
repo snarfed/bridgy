@@ -24,15 +24,10 @@ test command line:
 curl localhost:8080/webmention/tumblr \
   -d 'source=http://localhost/response.html&target=http://snarfed.tumblr.com/post/60428995188/glen-canyon-http-t-co-fzc4ehiydp?foo=bar#baz'
 """
-from __future__ import unicode_literals
-
-from future import standard_library
-standard_library.install_aliases()
 import collections
 import logging
 import re
 import urllib.parse
-from webob import exc
 
 import appengine_config
 
@@ -41,6 +36,7 @@ from oauth_dropins import tumblr as oauth_tumblr
 from oauth_dropins.webutil.handlers import JINJA_ENV
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import webapp2
+from webob import exc
 
 import models
 import superfeedr

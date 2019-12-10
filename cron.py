@@ -1,10 +1,5 @@
 """Cron jobs. Currently just minor cleanup tasks.
 """
-from __future__ import unicode_literals
-from __future__ import division
-
-from future import standard_library
-standard_library.install_aliases()
 from builtins import range
 import datetime
 import itertools

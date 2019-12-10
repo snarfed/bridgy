@@ -1,16 +1,6 @@
 # coding=utf-8
 """Misc utility constants and classes.
 """
-# Don't use `from __future__ import unicode_literals` because Python 2's Cookie
-# module doesn't support unicode strings well.
-#
-# use python-future's open so that it returns contents as unicode, for interop
-# with webutil.util.load_file_lines().
-from past.builtins import basestring
-from builtins import open
-from future import standard_library
-standard_library.install_aliases()
-
 import binascii
 import collections
 import copy

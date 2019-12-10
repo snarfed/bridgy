@@ -1,10 +1,6 @@
 # coding=utf-8
 """Unit tests for models.py.
 """
-from __future__ import unicode_literals
-from __future__ import absolute_import
-
-from builtins import range, str
 import datetime
 from unittest import skip
 

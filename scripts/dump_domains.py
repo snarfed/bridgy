@@ -6,11 +6,6 @@ their profile.
 
 Started from https://github.com/snarfed/bridgy/issues/490#issuecomment-143572623
 """
-from __future__ import absolute_import, print_function, unicode_literals
-from future import standard_library
-standard_library.install_aliases()
-from builtins import chr
-from builtins import str
 import collections
 import urllib.parse
 
