@@ -13,6 +13,13 @@ DISQUS_API_SECRET = read('disqus_api_secret')
 SUPERFEEDR_TOKEN = read('superfeedr_token')
 SUPERFEEDR_USERNAME = read('superfeedr_username')
 
+# App level logs. Everything from Bridgy itself, less from some libraries that
+# are chatty on DEBUG.
+# https://cloud.google.com/appengine/docs/standard/python3/writing-application-logs
+import logging
+logging.getLogger().setLevel(logging.DEBUG)
+logging.getLogger('google.cloud').setLevel(logging.INFO)
+
 # Wrap webutil.util.tag_uri and hard-code the year to 2013.
 #
 # Needed because I originally generated tag URIs with the current year, which
