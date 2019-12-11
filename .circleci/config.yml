@@ -32,8 +32,8 @@ jobs:
             python3 -m venv local3
             . local3/bin/activate
             pip install -U -r requirements.txt
-            pip install mox3  # for tests
-            pip install coverage coveralls  # for https://coveralls.io/
+            pip install mox3
+            pip install coverage coveralls
 
       - run:
           name: Test Python 3

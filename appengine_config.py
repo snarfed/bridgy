@@ -1,11 +1,12 @@
 """Bridgy App Engine config.
 """
-import os
-os.environ.setdefault('CLOUDSDK_CORE_PROJECT', 'brid-gy')
-os.environ.setdefault('DATASTORE_DATASET', 'brid-gy')
-os.environ.setdefault('GOOGLE_CLOUD_PROJECT', 'brid-gy')
-
 from granary.appengine_config import *
+
+import os
+if DEBUG:
+  os.environ.setdefault('CLOUDSDK_CORE_PROJECT', 'brid-gy')
+  os.environ.setdefault('DATASTORE_DATASET', 'brid-gy')
+  os.environ.setdefault('GOOGLE_CLOUD_PROJECT', 'brid-gy')
 
 DISQUS_ACCESS_TOKEN = read('disqus_access_token')
 DISQUS_API_KEY = read('disqus_api_key')
