@@ -38,6 +38,3 @@ TAGS
 TAGS/
 test/
 tests/
-
-# drop if this doesn't break gcloud app deploy?
-# script (dev).tmpl

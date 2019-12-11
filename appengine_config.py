@@ -34,28 +34,23 @@ if DEBUG:
     message='Your application has authenticated using end user credentials')
 
 # Google API clients
-creds = None
 if DEBUG:
-  from google.auth.credentials import AnonymousCredentials
-  creds = AnonymousCredentials()
+  os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'fake_user_account.json'
 
 # https://googleapis.dev/python/python-ndb/latest/
 # TODO: make thread local?
 # https://googleapis.dev/python/python-ndb/latest/migrating.html#setting-up-a-connection
 from google.cloud import ndb
-ndb_client = ndb.Client(credentials=creds)
+ndb_client = ndb.Client()
 
 from google.cloud import error_reporting
-error_reporting_client = error_reporting.Client(credentials=creds)
+error_reporting_client = error_reporting.Client()
 
 from google.cloud import tasks_v2
-tasks_client = tasks_v2.CloudTasksClient(credentials=creds)
+tasks_client = tasks_v2.CloudTasksClient()
 
 if DEBUG:
-  from google.auth.credentials import AnonymousCredentials
-  creds = AnonymousCredentials()
-
-  # HACK! work around that the python 3 ndb lib doesn't support dev_appserver.py
+  # HACK! work around that these don't natively support dev_appserver.py.
   # https://github.com/googleapis/python-ndb/issues/238
   ndb_client.host = 'localhost:8089'
   ndb_client.secure = False

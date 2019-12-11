@@ -24,16 +24,6 @@ jobs:
           name: Base dependencies
           command: |
             apt-get install -y python3
-            # use granary and oauth-dropins master at head. (see pip install -e 's below.)
-            cd /tmp; git clone https://github.com/snarfed/oauth-dropins.git
-            # TODO: switch back to master
-            cd /tmp/oauth-dropins; git checkout python3-ndb; git submodule sync; git submodule update --init
-            cd /tmp/oauth-dropins/oauth_dropins/webutil; git checkout python3-ndb; git pull
-
-            cd /tmp; git clone https://github.com/snarfed/granary.git
-            cd /tmp/granary; git checkout python3-ndb
-            cd /tmp; git clone https://github.com/snarfed/webmention-tools.git
-            cd /tmp/webmention-tools; git checkout python3
 
       - run:
           name: Python 3 dependencies
@@ -41,9 +31,6 @@ jobs:
             apt-get install -y python3-venv python3-dev
             python3 -m venv local3
             . local3/bin/activate
-            pip install -e /tmp/oauth-dropins/
-            pip install -e /tmp/granary/
-            pip install -e /tmp/webmention-tools/
             pip install -U -r requirements.txt
             pip install mox3  # for tests
             pip install coverage coveralls  # for https://coveralls.io/
@@ -52,7 +39,7 @@ jobs:
           name: Test Python 3
           command: |
             . local3/bin/activate
-            CLOUDSDK_CORE_PROJECT=brid-gy gcloud beta emulators datastore start --no-store-on-disk --consistency=1.0 < /dev/null >& /dev/null &
+            CLOUDSDK_CORE_PROJECT=brid-gy gcloud beta emulators datastore start --no-store-on-disk --consistency=1.0 --host-port=localhost:8089 < /dev/null >& /dev/null &
             sleep 5s
             python -m coverage run --source=. --omit=admin.py,appengine_config.py,local3/\*,logs.py,scripts/\*,tests/\* -m unittest discover -v
             python -m coverage html -d /tmp/coverage_html
