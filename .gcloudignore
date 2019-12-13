@@ -15,6 +15,7 @@
 *.so
 .git*
 
+__pycache__/
 .coverage/
 .git*/
 coverage/

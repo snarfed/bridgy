@@ -7,6 +7,7 @@ import re
 import appengine_config
 from appengine_config import HTTP_TIMEOUT
 
+from google.cloud import ndb
 from granary import microformats2
 from granary import source as gr_source
 from oauth_dropins.webutil.models import StringIdModel
@@ -16,9 +17,6 @@ from webmentiontools import send
 
 import superfeedr
 import util
-
-from google.cloud import ndb
-from future.utils import with_metaclass
 
 VERB_TYPES = ('post', 'comment', 'like', 'react', 'repost', 'rsvp', 'tag')
 PUBLISH_TYPES = VERB_TYPES + ('preview', 'delete')
@@ -67,7 +65,7 @@ class SourceMeta(ndb.MetaModel):
     return cls
 
 
-class Source(with_metaclass(SourceMeta, StringIdModel)):
+class Source(StringIdModel, metaclass=SourceMeta):
   """A silo account, e.g. a Facebook or Google+ account.
 
   Each concrete silo class should subclass this class.

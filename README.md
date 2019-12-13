@@ -12,37 +12,28 @@ License: This project is placed in the public domain.
 
 Development
 ---
-You'll need the
-[App Engine Python SDK](https://cloud.google.com/appengine/downloads#Google_App_Engine_SDK_for_Python)
-version 1.9.15 or later (for
-[`vendor`](https://cloud.google.com/appengine/docs/python/tools/libraries27#vendoring)
-support) or the
-[Google Cloud SDK](https://cloud.google.com/sdk/gcloud/) (aka `gcloud`)
-with the `gcloud-appengine-python` and `gcloud-appengine-python-extras`
-[components](https://cloud.google.com/sdk/docs/components#additional_components).
-Add it to your `$PYTHONPATH`, e.g.
-`export PYTHONPATH=$PYTHONPATH:/usr/local/google_appengine`, and then run:
+You'll need the [Google Cloud SDK](https://cloud.google.com/sdk/gcloud/) (aka `gcloud`) with the `gcloud-appengine-python` and `gcloud-appengine-python-extras` [components](https://cloud.google.com/sdk/docs/components#additional_components). Then, create a Python 3 virtualenv and install the dependencies with:
 
+```sh
+python3 -m venv local3
+source local3/bin/activate
+pip install -r requirements.txt
 ```
-virtualenv local
-source local/bin/activate
-pip install -r requirements.freeze.txt
 
-# We install gdata in source mode, and App Engine doesn't follow .egg-link
-# files, so add a symlink to it.
-ln -s ../../../src/gdata/src/gdata local/lib/python2.7/site-packages/gdata
-ln -s ../../../src/gdata/src/atom local/lib/python2.7/site-packages/atom
+Now, run the unit tests:
 
+```sh
+gcloud beta emulators datastore start --no-store-on-disk --consistency=1.0 --host-port=localhost:8089 < /dev/null >& /dev/null
 python -m unittest discover
+kill %1
 ```
 
-The last command runs the unit tests. If you send a pull request, please include
-(or update) a test for the new functionality if possible!
+If you send a pull request, please include or update a test for your new code!
 
 To run the entire app locally, run this in the repo root directory:
 
 ```
-dev_appserver.py --log_level debug app.yaml background.yaml
+dev_appserver.py --log_level debug --enable_host_checking false --support_datastore_emulator --datastore_emulator_port=8089 --application=brid-gy ~/src/bridgy/app.yaml ~/src/bridgy/background.yaml
 ```
 
 If you hit an error during setup, check out the [oauth-dropins Troubleshooting/FAQ section](https://github.com/snarfed/oauth-dropins#troubleshootingfaq). For searchability, here are a handful of error messages that [have solutions there](https://github.com/snarfed/oauth-dropins#troubleshootingfaq):
@@ -63,41 +54,22 @@ TweepError: must be _socket.socket, not socket
 error: option --home not recognized
 ```
 
-There's a good chance you'll need to make changes to
-[granary](https://github.com/snarfed/granary),
-[oauth-dropins](https://github.com/snarfed/oauth-dropins), or
-[webmention-tools](https://github.com/snarfed/webmention-tools) at the same time
-as bridgy. To do that, clone their repos elsewhere, then install them in
-"source" mode with:
+There's a good chance you'll need to make changes to [granary](https://github.com/snarfed/granary), [oauth-dropins](https://github.com/snarfed/oauth-dropins), or [webmention-tools](https://github.com/snarfed/webmention-tools) at the same time as bridgy. To do that, clone their repos elsewhere, then install them in "source" mode with:
 
 ```
 pip uninstall -y oauth-dropins
 pip install -e <path to oauth-dropins>
-ln -s <path to oauth-dropins>/oauth_dropins \
-  local/lib/python2.7/site-packages/oauth_dropins
 
 pip uninstall -y granary
 pip install -e <path to granary>
-ln -s <path to granary>/granary \
-  local/lib/python2.7/site-packages/granary
 
 pip uninstall -y webmentiontools
-# webmention-tools isn't in pypi
-ln -s <path to webmention-tools>/webmentiontools \
-  local/lib/python2.7/site-packages/webmentiontools
+pip install <path to webmention-tools>
 ```
-
-The symlinks are necessary because App Engine's `vendor` module evidently
-doesn't follow `.egg-link` or `.pth` files. :/
 
 To deploy to App Engine, run [`scripts/deploy.sh`](https://github.com/snarfed/bridgy/blob/master/scripts/deploy.sh).
 
-[`remote_api_shell`](https://cloud.google.com/appengine/docs/python/tools/remoteapi#using_the_remote_api_shell)
-is a useful interactive Python shell that can interact with the production app's
-datastore, memcache, etc. To use it,
-[create a service account and download its JSON credentials](https://console.developers.google.com/project/brid-gy/apiui/credential),
-put it somewhere safe, and put its path in your `GOOGLE_APPLICATION_CREDENTIALS`
-environment variable.
+[`remote_api_shell`](https://cloud.google.com/appengine/docs/python/tools/remoteapi#using_the_remote_api_shell) is a useful interactive Python shell that can interact with the production app's datastore, memcache, etc. To use it, [create a service account and download its JSON credentials](https://console.developers.google.com/project/brid-gy/apiui/credential), put it somewhere safe, and put its path in your `GOOGLE_APPLICATION_CREDENTIALS` environment variable.
 
 
 Adding a new silo
