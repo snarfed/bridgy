@@ -8,6 +8,7 @@ import logging
 from google.cloud import ndb
 from google.cloud.ndb._datastore_types import _MAX_STRING_LENGTH
 from granary.source import Source
+from oauth_dropins.webutil import handlers as webutil_handlers
 from oauth_dropins.webutil import logs
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import webapp2
@@ -15,6 +16,7 @@ from webmentiontools import send
 
 import appengine_config
 
+import cron
 import models
 from models import Response
 import original_post_discovery
@@ -846,9 +848,12 @@ class PropagateBlogPost(SendWebmentions):
     return self.entity.key.id()
 
 
-ROUTES = [
-  ('/_ah/queue/poll(-now)?', Poll),
-  ('/_ah/queue/discover', Discover),
-  ('/_ah/queue/propagate', PropagateResponse),
-  ('/_ah/queue/propagate-blogpost', PropagateBlogPost),
-]
+application = webutil_handlers.ndb_context_middleware(
+  webapp2.WSGIApplication([
+    ('/_ah/queue/poll(-now)?', Poll),
+    ('/_ah/queue/discover', Discover),
+    ('/_ah/queue/propagate', PropagateResponse),
+    ('/_ah/queue/propagate-blogpost', PropagateBlogPost),
+  ] + cron.ROUTES, debug=appengine_config.DEBUG),
+  client=appengine_config.ndb_client)
+

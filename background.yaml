@@ -1,6 +1,7 @@
 service: background
 # version: 1
 runtime: python37
+entrypoint: gunicorn -b :$PORT tasks:application
 
 instance_class: B1
 basic_scaling:
@@ -8,17 +9,6 @@ basic_scaling:
 
 handlers:
 
-- url: /_ah/queue/.+
-  script: tasks.application
-  login: admin
-  secure: always
-
-- url: /cron/.+
-  script: cron.application
-  login: admin
-  secure: always
-
-- url: /mapreduce(/.*)?
-  script: mapreduce.main.APP
-  login: admin
+- url: .*
+  script: auto
   secure: always

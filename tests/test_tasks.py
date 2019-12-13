@@ -23,12 +23,10 @@ from webmentiontools import send
 import appengine_config
 from appengine_config import tasks_client
 
-import app
 import models
 from models import Response, SyndicatedPost
 from twitter import Twitter
 import tasks
-from tasks import PropagateResponse
 from . import testutil
 from .testutil import FakeSource, FakeGrSource, NOW
 import util
@@ -47,7 +45,7 @@ class TaskTest(testutil.ModelsTest):
     """Args:
       expected_status: integer, the expected HTTP return code
     """
-    resp = app.application.get_response(
+    resp = tasks.application.get_response(
       self.post_url, method='POST',
       text=urllib.parse.urlencode(params), **kwargs)
     self.assertEqual(expected_status, resp.status_int)
@@ -1925,8 +1923,8 @@ class PropagateTest(TaskTest):
   def test_complete_exception(self):
     """If completing raises an exception, the lease should be released."""
     self.expect_webmention().AndReturn(True)
-    self.mox.StubOutWithMock(PropagateResponse, 'complete')
-    PropagateResponse.complete().AndRaise(Exception('foo'))
+    self.mox.StubOutWithMock(tasks.PropagateResponse, 'complete')
+    tasks.PropagateResponse.complete().AndRaise(Exception('foo'))
     self.mox.ReplayAll()
 
     self.post_task(expected_status=500)

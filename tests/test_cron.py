@@ -14,13 +14,13 @@ from oauth_dropins import twitter as oauth_twitter
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
 import appengine_config
-import app
 import cron
 from flickr import Flickr
 from instagram import Instagram
 from . import testutil
 from .testutil import FakeSource, HandlerTest
 from twitter import Twitter
+import tasks
 import util
 
 
@@ -91,7 +91,7 @@ class CronTest(HandlerTest):
     self.expect_task('poll', source_key=sources[4])
     self.mox.ReplayAll()
 
-    resp = app.application.get_response('/cron/replace_poll_tasks')
+    resp = tasks.application.get_response('/cron/replace_poll_tasks')
     self.assertEqual(200, resp.status_int)
 
   def test_update_twitter_pictures(self):
@@ -119,7 +119,7 @@ class CronTest(HandlerTest):
     self.expect_urlopen(lookup_url % 'c', json_dumps(user_objs))
     self.mox.ReplayAll()
 
-    resp = app.application.get_response('/cron/update_twitter_pictures')
+    resp = tasks.application.get_response('/cron/update_twitter_pictures')
     self.assertEqual(200, resp.status_int)
 
     self.assertEqual('http://pi.ct/ure', sources[0].get().picture)
@@ -139,7 +139,7 @@ class CronTest(HandlerTest):
     self.expect_urlopen(lookup_url % 'bad', status=404)
     self.mox.ReplayAll()
 
-    resp = app.application.get_response('/cron/update_twitter_pictures')
+    resp = tasks.application.get_response('/cron/update_twitter_pictures')
     self.assertEqual(200, resp.status_int)
 
     self.assertEqual('http://pi.ct/ure', source.get().picture)
@@ -163,7 +163,7 @@ class CronTest(HandlerTest):
         source.features = []
       sources.append(source.put())
 
-    resp = app.application.get_response('/cron/update_instagram_pictures')
+    resp = tasks.application.get_response('/cron/update_instagram_pictures')
     self.assertEqual(200, resp.status_int)
 
     self.assertEqual('http://new/pic', sources[0].get().picture)
@@ -184,7 +184,7 @@ class CronTest(HandlerTest):
         actor={'username': username, 'image': {'url': 'http://old/pic'}})
       sources.append(source.put())
 
-    resp = app.application.get_response('/cron/update_instagram_pictures')
+    resp = tasks.application.get_response('/cron/update_instagram_pictures')
     self.assertEqual(200, resp.status_int)
 
     for i, source in enumerate(sources):
@@ -204,7 +204,7 @@ class CronTest(HandlerTest):
       gr_instagram.HTML_BASE_URL + 'x/', status_code=404, allow_redirects=False)
     self.mox.ReplayAll()
 
-    resp = app.application.get_response('/cron/update_instagram_pictures')
+    resp = tasks.application.get_response('/cron/update_instagram_pictures')
     self.assertEqual(200, resp.status_int)
     self.assertEqual('http://old/pic', source.key.get().picture)
 
@@ -223,7 +223,7 @@ class CronTest(HandlerTest):
     self.mox.ReplayAll()
 
     self.flickr.put()
-    resp = app.application.get_response('/cron/update_flickr_pictures')
+    resp = tasks.application.get_response('/cron/update_flickr_pictures')
     self.assertEqual(200, resp.status_int)
     self.assertEqual(
       'https://farm9.staticflickr.com/9876/buddyicons/123@N00.jpg',
