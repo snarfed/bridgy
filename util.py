@@ -13,6 +13,7 @@ import re
 import threading
 import time
 import urllib.request, urllib.parse, urllib.error
+import zlib
 
 from appengine_config import APP_ID, error_reporting_client, LOCAL, tasks_client
 from cachetools import TTLCache
@@ -105,6 +106,21 @@ TASKS_LOCATION = 'us-central1'
 
 webmention_endpoint_cache_lock = threading.RLock()
 webmention_endpoint_cache = TTLCache(500, 60 * 60 * 2)  # 2h expiration
+
+
+class CompressedTextProperty(ndb.GenericProperty):
+  """Custom ndb property to read compressed TextProperty()s written by Python 2."""
+  def __init__(self, *args, **kwargs):
+    assert not kwargs.setdefault('indexed', False)
+    super(CompressedTextProperty, self).__init__(*args, **kwargs)
+
+  def _to_base_type(self, value):
+    if isinstance(value, str):
+      return zlib.compress(value.encode())
+
+  def _from_base_type(self, value):
+    if isinstance(value, bytes):
+      return zlib.decompress(value).decode()
 
 
 def add_poll_task(source, now=False):
