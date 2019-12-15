@@ -51,6 +51,7 @@ class Poll(webapp2.RequestHandler):
                       logs.url(source.last_poll_attempt, source.key))
 
   def post(self, *path_args):
+    self.request.headers['Content-Type'] = 'application/x-www-form-urlencoded'
     logging.debug('Params: %s', self.request.params)
 
     key = self.request.params['source_key']
@@ -752,6 +753,7 @@ class PropagateResponse(SendWebmentions):
   """
 
   def post(self):
+    self.request.headers['Content-Type'] = 'application/x-www-form-urlencoded'
     logging.debug('Params: %s', self.request.params)
     if not self.lease(ndb.Key(urlsafe=self.request.params['response_key'])):
       return
@@ -856,4 +858,3 @@ application = webutil_handlers.ndb_context_middleware(
     ('/_ah/queue/propagate-blogpost', PropagateBlogPost),
   ] + cron.ROUTES, debug=appengine_config.DEBUG),
   client=appengine_config.ndb_client)
-

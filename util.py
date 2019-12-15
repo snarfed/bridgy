@@ -135,7 +135,8 @@ def add_poll_task(source, now=False):
     queue = 'poll'
     # randomize task ETA to within +/- 20% to try to spread out tasks and
     # prevent thundering herds.
-    eta_seconds = int(source.poll_period().total_seconds() * random.uniform(.8, 1.2))
+    eta_seconds = int(util.to_utc_timestamp(now_fn()) +
+                      source.poll_period().total_seconds() * random.uniform(.8, 1.2))
 
   add_task(queue, eta_seconds=eta_seconds, source_key=source.key.urlsafe().decode(),
            last_polled=source.last_polled.strftime(POLL_TASK_DATETIME_FORMAT))
@@ -172,6 +173,8 @@ def add_task(queue, eta_seconds=None, **kwargs):
       'relative_uri': '/_ah/queue/%s' % queue,
       'app_engine_routing': {'service': 'background'},
       'body': urllib.parse.urlencode(kwargs).encode(),
+      # https://googleapis.dev/python/cloudtasks/latest/gapic/v2/types.html#google.cloud.tasks_v2.types.AppEngineHttpRequest.headers
+      'headers': {'Content-Type': 'application/x-www-form-urlencoded'},
     }
   }
   if eta_seconds:
