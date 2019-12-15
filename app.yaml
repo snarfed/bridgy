@@ -1,10 +1,11 @@
-# https://cloud.google.com/appengine/docs/standard/python/config/appref
+# https://cloud.google.com/appengine/docs/standard/python3/config/appref
 
 # application: brid-gy
-# version: 8
 runtime: python37
-default_expiration: 1h
-entrypoint: gunicorn -b :$PORT app:application
+# default_expiration: 1h
+
+# https://docs.gunicorn.org/en/latest/settings.html#timeout
+entrypoint: gunicorn --workers 4 --timeout 60 -b :$PORT app:application
 
 # background: https://github.com/snarfed/bridgy/issues/578
 automatic_scaling:
@@ -17,7 +18,7 @@ handlers:
 
 # static
 - url: /(static/bootstrap.*\.css)
-  static_files: oauth_dropins/static/\1
+  static_files: oauth_dropins/\1
   upload: oauth_dropins/static/bootstrap.*\.css
 
 - url: /static

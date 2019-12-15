@@ -707,15 +707,6 @@ class LogoutHandler(util.Handler):
     self.redirect('/')
 
 
-class WarmupHandler(util.Handler):
-  """Warmup requests. Noop.
-
-  https://developers.google.com/appengine/docs/python/config/appconfig#Python_app_yaml_Warmup_requests
-  """
-  def get(self):
-    pass
-
-
 class CspReportHandler(util.Handler):
   """Log Content-Security-Policy reports. https://content-security-policy.com/"""
   def post(self):
@@ -754,7 +745,7 @@ routes += [
   ('/edit-websites', EditWebsites),
   ('/logout', LogoutHandler),
   ('/csp-report', CspReportHandler),
-  ('/_ah/warmup', WarmupHandler),
+  ('/_ah/(start|stop|warmup)', util.NoopHandler),
 ]
 
 application = webutil_handlers.ndb_context_middleware(

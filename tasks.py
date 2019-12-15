@@ -856,5 +856,6 @@ application = webutil_handlers.ndb_context_middleware(
     ('/_ah/queue/discover', Discover),
     ('/_ah/queue/propagate', PropagateResponse),
     ('/_ah/queue/propagate-blogpost', PropagateBlogPost),
+    ('/_ah/(start|stop|warmup)', util.NoopHandler),
   ] + cron.ROUTES, debug=appengine_config.DEBUG),
   client=appengine_config.ndb_client)

@@ -694,3 +694,16 @@ def unwrap_t_umblr_com(url):
   return (urllib.parse.parse_qs(parsed.query).get('z', [''])[0]
           if parsed.netloc == 't.umblr.com'
           else url)
+
+
+class NoopHandler(Handler):
+  """Returns 200 and does nothing. Useful for /_ah/start, /_ah/stop, etc.
+
+  https://cloud.google.com/appengine/docs/standard/python3/how-instances-are-managed#startup
+  """
+
+  def get(self, *args):
+    pass
+
+  def post(self, *args):
+    pass
