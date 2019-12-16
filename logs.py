@@ -12,5 +12,5 @@ class LogHandler(logs.LogHandler):
 
 
 ROUTES =[
-  ('/log', LogHandler),
+  # ('/log', LogHandler),
 ]

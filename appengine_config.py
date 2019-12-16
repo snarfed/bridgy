@@ -50,6 +50,9 @@ error_reporting_client = error_reporting.Client()
 from google.cloud import tasks_v2
 tasks_client = tasks_v2.CloudTasksClient()
 
+import google.cloud.logging
+logging_client = google.cloud.logging.Client()
+
 if DEBUG:
   # HACK! work around that these don't natively support dev_appserver.py.
   # https://github.com/googleapis/python-ndb/issues/238
@@ -61,3 +64,9 @@ if DEBUG:
 
   tasks_client.host = 'localhost:9999'
   tasks_client.secure = False
+
+else:
+  # https://stackoverflow.com/a/58296028/186123
+  # https://googleapis.dev/python/logging/latest/usage.html#cloud-logging-handler
+  from google.cloud.logging.handlers import AppEngineHandler, setup_logging
+  setup_logging(AppEngineHandler(logging_client, name='stdout'))

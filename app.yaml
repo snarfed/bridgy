@@ -5,7 +5,7 @@ runtime: python37
 # default_expiration: 1h
 
 # https://docs.gunicorn.org/en/latest/settings.html#timeout
-entrypoint: gunicorn --workers 4 --timeout 60 -b :$PORT app:application
+entrypoint: gunicorn --workers 1 --timeout 60 -b :$PORT app:application
 
 # background: https://github.com/snarfed/bridgy/issues/578
 automatic_scaling:
