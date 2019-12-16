@@ -306,7 +306,7 @@ class HandlerTest(testutil.HandlerTest):
         return False
 
       if eta_seconds is not None:
-        got =  params['schedule_time'].seconds
+        got = params['schedule_time'].seconds - util.to_utc_timestamp(NOW)
         delta = eta_seconds * .2 + 10
         if not (got + delta >= eta_seconds >= got - delta):
           # print('expect_task: expected schedule_time %s, got %s' %
