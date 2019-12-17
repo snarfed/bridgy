@@ -130,7 +130,7 @@ class Handler(webmention.WebmentionHandler):
 
   def _run(self):
     """Returns CreationResult on success, None otherwise."""
-    logging.info('Params: %s', self.request.params.items())
+    logging.info('Params: %s', list(self.request.params.items()))
     assert self.PREVIEW in (True, False)
 
     # parse and validate target URL

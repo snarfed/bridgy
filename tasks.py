@@ -52,7 +52,7 @@ class Poll(webapp2.RequestHandler):
 
   def post(self, *path_args):
     self.request.headers['Content-Type'] = 'application/x-www-form-urlencoded'
-    logging.debug('Params: %s', self.request.params)
+    logging.debug('Params: %s', list(self.request.params.items()))
 
     key = self.request.params['source_key']
     source = ndb.Key(urlsafe=key).get()
@@ -468,7 +468,7 @@ class Discover(Poll):
   RESTART_EXISTING_TASKS = True
 
   def post(self):
-    logging.debug('Params: %s', self.request.params)
+    logging.debug('Params: %s', list(self.request.params.items()))
 
     type = self.request.get('type')
     if type:
@@ -754,7 +754,7 @@ class PropagateResponse(SendWebmentions):
 
   def post(self):
     self.request.headers['Content-Type'] = 'application/x-www-form-urlencoded'
-    logging.debug('Params: %s', self.request.params)
+    logging.debug('Params: %s', list(self.request.params.items()))
     if not self.lease(ndb.Key(urlsafe=self.request.params['response_key'])):
       return
 
@@ -830,7 +830,7 @@ class PropagateBlogPost(SendWebmentions):
   """
 
   def post(self):
-    logging.debug('Params: %s', self.request.params)
+    logging.debug('Params: %s', list(self.request.params.items()))
 
     if not self.lease(ndb.Key(urlsafe=self.request.params['key'])):
       return

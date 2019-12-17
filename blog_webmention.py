@@ -26,7 +26,7 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
   """Handler for incoming webmentions against blog providers."""
 
   def post(self, source_short_name):
-    logging.info('Params: %self', self.request.params.items())
+    logging.info('Params: %s', list(self.request.params.items()))
     # strip fragments from source and target url
     self.source_url = urllib.parse.urldefrag(util.get_required_param(self, 'source'))[0]
     self.target_url = urllib.parse.urldefrag(util.get_required_param(self, 'target'))[0]
