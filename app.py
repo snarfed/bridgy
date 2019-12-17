@@ -237,7 +237,7 @@ class UserHandler(DashboardHandler):
     if self.source.key.kind() == 'Instagram':
       auth = self.source.auth_entity
       vars['indieauth_me'] = (
-        auth.key.id() if auth.key.kind() == 'IndieAuth'
+        auth.id() if auth.kind() == 'IndieAuth'
         else self.source.domain_urls[0] if self.source.domain_urls
         else None)
 
