@@ -25,6 +25,23 @@ import util
 import blogger, flickr, github, instagram, mastodon, medium, tumblr, twitter, wordpress_rest
 
 
+def handle_exception(handler, e, debug):
+  """Common exception handler for background tasks."""
+  transients = ()
+  source = getattr(handler, 'source', None)
+  if source:
+    transients = (source.RATE_LIMIT_HTTP_CODES + source.TRANSIENT_ERROR_HTTP_CODES +
+                  handler.TRANSIENT_ERROR_HTTP_CODES)
+
+  code, body = util.interpret_http_exception(e)
+  if ((code and int(code) // 100 == 5) or code in transients or
+      util.is_connection_failure(e)):
+    logging.error('Marking as error and finishing. %s: %s\n%s', code, body, e)
+    handler.abort(util.ERROR_HTTP_RETURN_CODE)
+  else:
+    raise
+
+
 class Poll(webapp2.RequestHandler):
   """Task handler that fetches and processes new responses from a single source.
 
@@ -45,6 +62,9 @@ class Poll(webapp2.RequestHandler):
   1-4 are in backfeed(); 5 is in poll().
   """
   RESTART_EXISTING_TASKS = False  # overridden in Discover
+  TRANSIENT_ERROR_HTTP_CODES = ()
+
+  handle_exception = handle_exception
 
   def _last_poll_url(self, source):
     return '%s/%s' % (util.host_url(self),
@@ -55,7 +75,7 @@ class Poll(webapp2.RequestHandler):
     logging.debug('Params: %s', list(self.request.params.items()))
 
     key = self.request.params['source_key']
-    source = ndb.Key(urlsafe=key).get()
+    source = self.source = ndb.Key(urlsafe=key).get()
     if not source or source.status == 'disabled' or 'listen' not in source.features:
       logging.error('Source not found or disabled. Dropping task.')
       return
@@ -96,12 +116,6 @@ class Poll(webapp2.RequestHandler):
       elif code in source.RATE_LIMIT_HTTP_CODES:
         logging.info('Rate limited. Marking as error and finishing. %s', e)
         source.updates['rate_limited'] = True
-      elif ((code and int(code) // 100 == 5) or
-            code in source.TRANSIENT_ERROR_HTTP_CODES or
-            util.is_connection_failure(e)):
-        logging.error('API call failed. Marking as error and finishing. %s: %s\n%s',
-                      code, body, e)
-        self.abort(util.ERROR_HTTP_RETURN_CODE)
       else:
         raise
     finally:
@@ -466,6 +480,9 @@ class Discover(Poll):
   Original feature request: https://github.com/snarfed/bridgy/issues/579
   """
   RESTART_EXISTING_TASKS = True
+  TRANSIENT_ERROR_HTTP_CODES = ('400', '404')
+
+  handle_exception = handle_exception
 
   def post(self):
     logging.debug('Params: %s', list(self.request.params.items()))
@@ -474,7 +491,7 @@ class Discover(Poll):
     if type:
       assert type in ('event',)
 
-    source = util.load_source(self)
+    source = self.source = util.load_source(self)
     if not source or source.status == 'disabled' or 'listen' not in source.features:
       logging.error('Source not found or disabled. Dropping task.')
       return
@@ -484,37 +501,25 @@ class Discover(Poll):
     post_id = util.get_required_param(self, 'post_id')
     source.updates = {}
 
-    try:
-      if type == 'event':
-        activities = [source.gr_source.get_event(post_id)]
-      else:
-        activities = source.get_activities(
-          fetch_replies=True, fetch_likes=True, fetch_shares=True,
-          activity_id=post_id, user_id=source.key.id())
+    if type == 'event':
+      activities = [source.gr_source.get_event(post_id)]
+    else:
+      activities = source.get_activities(
+        fetch_replies=True, fetch_likes=True, fetch_shares=True,
+        activity_id=post_id, user_id=source.key.id())
 
-      if not activities or not activities[0]:
-        logging.info('Post %s not found.', post_id)
-        return
-      assert len(activities) == 1, activities
-      self.backfeed(source, activities={activities[0]['id']: activities[0]})
+    if not activities or not activities[0]:
+      logging.info('Post %s not found.', post_id)
+      return
+    assert len(activities) == 1, activities
+    self.backfeed(source, activities={activities[0]['id']: activities[0]})
 
-      obj = activities[0].get('object') or activities[0]
-      in_reply_to = util.get_first(obj, 'inReplyTo')
-      if in_reply_to:
-        parsed = util.parse_tag_uri(in_reply_to.get('id', ''))  # TODO: fall back to url
-        if parsed:
-          util.add_discover_task(source, parsed[1])
-
-    except Exception as e:
-      code, body = util.interpret_http_exception(e)
-      if (code and (code in source.RATE_LIMIT_HTTP_CODES or
-                    code in ('400', '404') or
-                    int(code) // 100 == 5)
-            or util.is_connection_failure(e)):
-        logging.error('API call failed; giving up. %s: %s\n%s', code, body, e)
-        self.abort(util.ERROR_HTTP_RETURN_CODE)
-      else:
-        raise
+    obj = activities[0].get('object') or activities[0]
+    in_reply_to = util.get_first(obj, 'inReplyTo')
+    if in_reply_to:
+      parsed = util.parse_tag_uri(in_reply_to.get('id', ''))  # TODO: fall back to url
+      if parsed:
+        util.add_discover_task(source, parsed[1])
 
 
 class SendWebmentions(webapp2.RequestHandler):
@@ -525,9 +530,11 @@ class SendWebmentions(webapp2.RequestHandler):
   * entity: :class:`models.Webmentions` subclass instance (set in :meth:`lease_entity`)
   * source: :class:`models.Source` entity (set in :meth:`send_webmentions`)
   """
-
   # request deadline (10m) plus some padding
   LEASE_LENGTH = datetime.timedelta(minutes=12)
+  TRANSIENT_ERROR_HTTP_CODES = ()
+
+  handle_exception = handle_exception
 
   def source_url(self, target_url):
     """Return the source URL to use for a given target URL.
@@ -758,7 +765,7 @@ class PropagateResponse(SendWebmentions):
     if not self.lease(ndb.Key(urlsafe=self.request.params['response_key'])):
       return
 
-    source = self.entity.source.get()
+    source = self.source = self.entity.source.get()
     if not source:
       logging.warning('Source not found! Dropping response.')
       return
