@@ -86,7 +86,7 @@ class Poll(webapp2.RequestHandler):
       if code in source.DISABLE_HTTP_CODES or isinstance(e, models.DisableSource):
         # the user deauthorized the bridgy app, so disable this source.
         # let the task complete successfully so that it's not retried.
-        logging.warning('Disabling source due to: %s' % e, exc_info=True)
+        logging.warning('Disabling source due to: %s' % e, stack_info=True)
         source.updates.update({
           'status': 'disabled',
           'poll_status': 'ok',
@@ -203,7 +203,7 @@ class Poll(webapp2.RequestHandler):
           if ('BadRequestError' in str(e.__class__) or
               'Timeout' in str(e.__class__) or
               util.is_connection_failure(e)):
-            logging.info('Timeout while repropagating responses.', exc_info=True)
+            logging.info('Timeout while repropagating responses.', stack_info=True)
           else:
             raise
     else:
@@ -556,7 +556,7 @@ class SendWebmentions(webapp2.RequestHandler):
     try:
       self.do_send_webmentions()
     except:
-      logging.info('Propagate task failed', exc_info=True)
+      logging.info('Propagate task failed', stack_info=True)
       self.release('error')
       raise
 
@@ -604,7 +604,7 @@ class SendWebmentions(webapp2.RequestHandler):
           if not mention.send(timeout=999, headers=headers):
             error = mention.error
         except BaseException as e:
-          logging.info('', exc_info=True)
+          logging.info('', stack_info=True)
           error = getattr(mention, 'error')
           if not error:
             error = ({'code': 'BAD_TARGET_URL', 'http_status': 499}

@@ -567,7 +567,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
     try:
       mention._discoverEndpoint()
     except BaseException:
-      logging.info('Error discovering webmention endpoint', exc_info=True)
+      logging.info('Error discovering webmention endpoint', stack_info=True)
       mention.error = {'code': 'EXCEPTION'}
 
     self._fetched_html = getattr(mention, 'html', None)
@@ -656,7 +656,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
           final = root
       except requests.RequestException:
         logging.warning("Couldn't fetch %s, preserving path in %s",
-                        root, final, exc_info=True)
+                        root, final, stack_info=True)
 
     return final
 

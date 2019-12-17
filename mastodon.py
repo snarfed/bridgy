@@ -163,8 +163,8 @@ class InstanceHandler(TemplateHandler, util.Handler):
     try:
       self.redirect(start.redirect_url(instance=instance))
     except ValueError as e:
-      logging.warning('Bad Mastodon instance', exc_info=True)
-      self.messages.add(util.linkify(unicode(e), pretty=True))
+      logging.warning('Bad Mastodon instance', stack_info=True)
+      self.messages.add(util.linkify(str(e), pretty=True))
       return self.redirect(self.request.path)
 
 

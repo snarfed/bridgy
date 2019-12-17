@@ -249,7 +249,7 @@ class Handler(webmention.WebmentionHandler):
         if code in self.source.DISABLE_HTTP_CODES or isinstance(e, models.DisableSource):
           # the user deauthorized the bridgy app, or the token expired, so
           # disable this source.
-          logging.warning('Disabling source due to: %s' % e, exc_info=True)
+          logging.warning('Disabling source due to: %s' % e, stack_info=True)
           self.source.status = 'disabled'
           self.source.put()
           # util.email_me(subject='Bridgy Publish: disabled %s' % self.source.label(),
@@ -500,7 +500,7 @@ class Handler(webmention.WebmentionHandler):
         except BaseException:
           # it's not a big deal if we can't fetch an in-reply-to url
           logging.info('expand_target_urls could not fetch field=%s, url=%s',
-                       field, url, exc_info=True)
+                       field, url, stack_info=True)
           continue
 
         synd_urls = mf2['rels'].get('syndication', [])
@@ -602,7 +602,7 @@ class PreviewHandler(Handler):
             else gr_source.OMIT_LINK)
 
   def error(self, error, html=None, status=400, data=None, report=False, **kwargs):
-    logging.info(error, exc_info=True)
+    logging.info(error, stack_info=True)
     self.response.set_status(status)
     error = html if html else util.linkify(error)
     self.response.write(error)
@@ -651,7 +651,7 @@ class SendHandler(Handler):
     return self.state['include_link']
 
   def error(self, error, html=None, status=400, data=None, report=False, **kwargs):
-    logging.info(error, exc_info=True)
+    logging.info(error, stack_info=True)
     error = html if html else util.linkify(error)
     self.messages.add('%s' % error)
     if report:

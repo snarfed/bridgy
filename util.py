@@ -219,7 +219,7 @@ def report_error(msg, **kwargs):
     error_reporting_client.report(msg, **kwargs)
   except BaseException:
     logging.warning('Failed to report error to StackDriver! %s %s', msg, kwargs,
-                    exc_info=True)
+                    stack_info=True)
 
 
 def requests_get(url, **kwargs):
@@ -400,7 +400,7 @@ def load_source(handler, param='source_key'):
     source = ndb.Key(urlsafe=util.get_required_param(handler, param)).get()
   except (binascii.Error, google.protobuf.message.DecodeError):
     msg = 'Bad value for %s' % param
-    logging.warning(msg, exc_info=True)
+    logging.warning(msg, stack_info=True)
     handler.abort(400, msg)
 
   if not source:
