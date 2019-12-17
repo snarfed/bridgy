@@ -438,3 +438,10 @@ class UtilTest(testutil.ModelsTest):
     ):
       got = util.webmention_endpoint_cache_key(url)
       self.assertEqual(expected, got, (url, got))
+
+  def test_add_task(self):
+    self.expect_task('foo', eta_seconds=123, x='y')
+    self.mox.ReplayAll()
+
+    eta = int(util.to_utc_timestamp(util.now_fn())) + 123
+    util.add_task('foo', eta_seconds=eta, x='y', z=None)

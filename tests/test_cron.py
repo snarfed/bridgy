@@ -88,7 +88,7 @@ class CronTest(HandlerTest):
                      last_poll_attempt=day_and_half_ago).put(),
       ]
 
-    self.expect_task('poll', source_key=sources[4])
+    self.expect_task('poll', source_key=sources[4], last_polled='1970-01-01-00-00-00')
     self.mox.ReplayAll()
 
     resp = tasks.application.get_response('/cron/replace_poll_tasks')

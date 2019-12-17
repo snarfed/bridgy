@@ -299,18 +299,17 @@ class HandlerTest(testutil.HandlerTest):
         elif isinstance(val, ndb.Key):
           kwargs[name] = val.urlsafe().decode()
 
-      body = set(urllib.parse.parse_qsl(req['body'].decode()))
-      diff = set(kwargs.items()) - body
-      if diff:
-        # print('expect_task: %s not found in %s' % (diff, body))
+      got = set(urllib.parse.parse_qsl(req['body'].decode()))
+      expected = set(kwargs.items())
+      if got != expected:
+        # print('expect_task: expected %s, got %s' % (expected, got))
         return False
 
       if eta_seconds is not None:
-        got = params['schedule_time'].seconds - util.to_utc_timestamp(NOW)
+        got = params['schedule_time'].seconds - util.to_utc_timestamp(util.now_fn())
         delta = eta_seconds * .2 + 10
         if not (got + delta >= eta_seconds >= got - delta):
-          # print('expect_task: expected schedule_time %s, got %s' %
-          #       (eta_seconds, params['schedule_time'].seconds))
+          # print('expect_task: expected schedule_time %r, got %r' % (eta_seconds, got))
           return False
 
       return True

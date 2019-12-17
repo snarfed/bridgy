@@ -30,7 +30,7 @@ import tasks
 from . import testutil
 from .testutil import FakeSource, FakeGrSource, NOW
 import util
-from util import ERROR_HTTP_RETURN_CODE
+from util import ERROR_HTTP_RETURN_CODE, POLL_TASK_DATETIME_FORMAT
 
 LEASE_LENGTH = tasks.SendWebmentions.LEASE_LENGTH
 
@@ -94,12 +94,13 @@ class PollTest(TaskTest):
     super(PollTest, self).tearDown()
 
   def post_task(self, expected_status=200, source=None, reset=False,
-                expect_poll=None):
-    if expect_poll is not None:
-      if expect_poll:
-        self.expect_task('poll', eta_seconds=expect_poll.total_seconds(),
-                         source_key=self.sources[0])
-        self.mox.ReplayAll()
+                expect_poll=None, expect_last_polled=None):
+    if expect_poll:
+      last_polled = (expect_last_polled or util.now_fn()).strftime(
+        POLL_TASK_DATETIME_FORMAT)
+      self.expect_task('poll', eta_seconds=expect_poll.total_seconds(),
+                       source_key=self.sources[0], last_polled=last_polled)
+      self.mox.ReplayAll()
 
     if source is None:
       source = self.sources[0]
@@ -109,10 +110,10 @@ class PollTest(TaskTest):
       source.last_polled = util.EPOCH
       source.put()
 
-    super(PollTest, self).post_task(
-      expected_status=expected_status,
-      params={'source_key': source.key.urlsafe().decode(),
-              'last_polled': '1970-01-01-00-00-00'})
+    super(PollTest, self).post_task(expected_status=expected_status, params={
+        'source_key': source.key.urlsafe().decode(),
+        'last_polled': '1970-01-01-00-00-00',
+      })
 
   def expect_get_activities(self, **kwargs):
     """Adds and returns an expected get_activities_response() call."""
@@ -829,7 +830,8 @@ class PollTest(TaskTest):
       urllib.error.HTTPError('url', 429, 'Rate limited', {},
                              io.StringIO(error_body)))
 
-    self.post_task(expect_poll=FakeSource.RATE_LIMITED_POLL)
+    self.post_task(expect_poll=FakeSource.RATE_LIMITED_POLL,
+                   expect_last_polled=util.EPOCH)
     source = self.sources[0].key.get()
     self.assertEqual('error', source.poll_status)
     self.assertTrue(source.rate_limited)

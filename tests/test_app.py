@@ -40,7 +40,7 @@ class AppTest(testutil.ModelsTest):
 
   def test_poll_now(self):
     key = self.sources[0].key.urlsafe().decode()
-    self.expect_task('poll-now', source_key=key)
+    self.expect_task('poll-now', source_key=key, last_polled='1970-01-01-00-00-00')
     self.mox.ReplayAll()
 
     resp = app.application.get_response('/poll-now', method='POST',
@@ -125,14 +125,14 @@ class AppTest(testutil.ModelsTest):
     source.put()
 
     key = source.key.urlsafe().decode()
-    self.expect_task('poll-now', source_key=key)
+    self.expect_task('poll-now', source_key=key, last_polled='1970-01-01-00-00-00')
     self.mox.ReplayAll()
 
     response = app.application.get_response(
       '/crawl-now', method='POST', text=urlencode({'key': key}))
+    self.assertEqual(302, response.status_int)
     self.assertEqual(source.bridgy_url(self.handler),
                       response.headers['Location'].split('#')[0])
-    self.assertEqual(302, response.status_int)
 
     source = source.key.get()
     self.assertEqual(models.REFETCH_HFEED_TRIGGER, source.last_hfeed_refetch)
