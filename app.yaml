@@ -4,8 +4,9 @@
 runtime: python37
 # default_expiration: 1h
 
+# https://cloud.google.com/appengine/docs/standard/python3/runtime#entrypoint_best_practices
 # https://docs.gunicorn.org/en/latest/settings.html#timeout
-entrypoint: gunicorn --workers 1 --timeout 60 -b :$PORT app:application
+entrypoint: gunicorn --workers 1 --threads 10 --timeout 60 -b :$PORT app:application
 
 # background: https://github.com/snarfed/bridgy/issues/578
 automatic_scaling:

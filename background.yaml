@@ -3,6 +3,7 @@
 service: background
 runtime: python37
 
+# https://cloud.google.com/appengine/docs/standard/python3/runtime#entrypoint_best_practices
 # https://docs.gunicorn.org/en/latest/settings.html#timeout
 entrypoint: gunicorn --workers 1 --timeout 600 -b :$PORT tasks:application
 
