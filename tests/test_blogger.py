@@ -8,7 +8,7 @@ import appengine_config
 from gdata.blogger import data
 from gdata.blogger.client import BloggerClient
 from gdata.client import RequestError
-from oauth_dropins.blogger import BloggerUser
+from oauth_dropins.blogger import BloggerV2Auth
 from mox3 import mox
 
 import app
@@ -22,7 +22,7 @@ class BloggerTest(testutil.HandlerTest):
 
   def setUp(self):
     super(BloggerTest, self).setUp()
-    self.auth_entity = BloggerUser(name='name',
+    self.auth_entity = BloggerV2Auth(name='name',
                                      blog_ids=['111'],
                                      blog_hostnames=['my.blawg'],
                                      picture_url='http://pic')
@@ -63,11 +63,11 @@ class BloggerTest(testutil.HandlerTest):
     location = urllib.parse.urlparse(resp.headers['Location'])
     self.assertEqual('/', location.path)
     self.assertIn("Couldn't fetch your blogs", urllib.parse.unquote(location.fragment))
-    self.assertEqual(0, BloggerUser.query().count())
+    self.assertEqual(0, BloggerV2Auth.query().count())
     self.assertEqual(0, Blogger.query().count())
 
   def test_oauth_handler_no_blogs(self):
-    self.auth_entity = BloggerUser(id='123', name='name', picture_url='pic',
+    self.auth_entity = BloggerV2Auth(id='123', name='name', picture_url='pic',
                                      blogs_atom='x', user_atom='y', creds_json='z')
     self.auth_entity.put()
 

@@ -70,7 +70,7 @@ class Blogger(models.Source):
 
     Args:
       handler: the current :class:`webapp2.RequestHandler`
-      auth_entity: :class:`oauth_dropins.blogger.BloggerUser`
+      auth_entity: :class:`oauth_dropins.blogger.BloggerV2Auth`
       blog_id: which blog. optional. if not provided, uses the first available.
     """
     urls, domains = Blogger._urls_and_domains(auth_entity, blog_id=blog_id)
