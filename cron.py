@@ -25,6 +25,7 @@ TWITTER_USERS_PER_LOOKUP = 100  # max # of users per API call
 
 class ReplacePollTasks(webapp2.RequestHandler):
   """Finds sources missing their poll tasks and adds new ones."""
+  handle_exception = util.background_handle_exception
 
   def get(self):
     now = datetime.datetime.now()
@@ -44,6 +45,7 @@ class UpdateTwitterPictures(webapp2.RequestHandler):
   https://github.com/snarfed/granary/commit/dfc3d406a20965a5ed14c9705e3d3c2223c8c3ff
   http://indiewebcamp.com/Twitter#Profile_Image_URLs
   """
+  handle_exception = util.background_handle_exception
 
   def get(self):
     sources = {source.key.id(): source for source in Twitter.query()}
@@ -79,6 +81,8 @@ class UpdateTwitterPictures(webapp2.RequestHandler):
 class UpdatePictures(webapp2.RequestHandler):
   """Finds sources with new profile pictures and updates them."""
   SOURCE_CLS = None
+
+  handle_exception = util.background_handle_exception
 
   def source_query(self):
     return self.SOURCE_CLS.query()

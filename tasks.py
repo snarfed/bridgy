@@ -25,23 +25,6 @@ import util
 import blogger, flickr, github, instagram, mastodon, medium, tumblr, twitter, wordpress_rest
 
 
-def handle_exception(handler, e, debug):
-  """Common exception handler for background tasks."""
-  transients = ()
-  source = getattr(handler, 'source', None)
-  if source:
-    transients = (source.RATE_LIMIT_HTTP_CODES + source.TRANSIENT_ERROR_HTTP_CODES +
-                  handler.TRANSIENT_ERROR_HTTP_CODES)
-
-  code, body = util.interpret_http_exception(e)
-  if ((code and int(code) // 100 == 5) or code in transients or
-      util.is_connection_failure(e)):
-    logging.error('Marking as error and finishing. %s: %s\n%s', code, body, e)
-    handler.abort(util.ERROR_HTTP_RETURN_CODE)
-  else:
-    raise
-
-
 class Poll(webapp2.RequestHandler):
   """Task handler that fetches and processes new responses from a single source.
 
@@ -64,7 +47,7 @@ class Poll(webapp2.RequestHandler):
   RESTART_EXISTING_TASKS = False  # overridden in Discover
   TRANSIENT_ERROR_HTTP_CODES = ()
 
-  handle_exception = handle_exception
+  handle_exception = util.background_handle_exception
 
   def _last_poll_url(self, source):
     return '%s/%s' % (util.host_url(self),
@@ -482,7 +465,7 @@ class Discover(Poll):
   RESTART_EXISTING_TASKS = True
   TRANSIENT_ERROR_HTTP_CODES = ('400', '404')
 
-  handle_exception = handle_exception
+  handle_exception = util.background_handle_exception
 
   def post(self):
     logging.debug('Params: %s', list(self.request.params.items()))
@@ -534,7 +517,7 @@ class SendWebmentions(webapp2.RequestHandler):
   LEASE_LENGTH = datetime.timedelta(minutes=12)
   TRANSIENT_ERROR_HTTP_CODES = ()
 
-  handle_exception = handle_exception
+  handle_exception = util.background_handle_exception
 
   def source_url(self, target_url):
     """Return the source URL to use for a given target URL.
