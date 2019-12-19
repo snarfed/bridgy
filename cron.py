@@ -45,6 +45,8 @@ class UpdateTwitterPictures(webapp2.RequestHandler):
   https://github.com/snarfed/granary/commit/dfc3d406a20965a5ed14c9705e3d3c2223c8c3ff
   http://indiewebcamp.com/Twitter#Profile_Image_URLs
   """
+  TRANSIENT_ERROR_HTTP_CODES = (Twitter.TRANSIENT_ERROR_HTTP_CODES +
+                                Twitter.RATE_LIMIT_HTTP_CODES)
   handle_exception = util.background_handle_exception
 
   def get(self):
@@ -113,6 +115,8 @@ class UpdateInstagramPictures(UpdatePictures):
   FREQUENCY = datetime.timedelta(hours=1)
   WEEK = datetime.timedelta(days=7)
   BATCH = float(WEEK.total_seconds()) / FREQUENCY.total_seconds()
+  TRANSIENT_ERROR_HTTP_CODES = (Instagram.TRANSIENT_ERROR_HTTP_CODES +
+                                Instagram.RATE_LIMIT_HTTP_CODES)
 
   def source_query(self):
     now = util.now_fn()
@@ -128,6 +132,8 @@ class UpdateFlickrPictures(UpdatePictures):
   """Finds :class:`Flickr` sources with new profile pictures and updates them.
   """
   SOURCE_CLS = Flickr
+  TRANSIENT_ERROR_HTTP_CODES = (Flickr.TRANSIENT_ERROR_HTTP_CODES +
+                                Flickr.RATE_LIMIT_HTTP_CODES)
 
 
 def maybe_update_picture(source, new_actor, handler):
