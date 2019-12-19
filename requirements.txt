@@ -2,8 +2,8 @@
 # -without -e, Cloud Build was using old cached versions, even when the github
 # -repo had new commits with more recent timestamps.
 -e git+https://github.com/snarfed/webmention-tools.git@python3#egg=webmentiontools
--e git+https://github.com/snarfed/oauth-dropins.git@python3-ndb#egg=oauth_dropins
--e git+https://github.com/snarfed/granary.git@python3-ndb#egg=granary
+-e git+https://github.com/snarfed/oauth-dropins.git@master#egg=oauth_dropins
+-e git+https://github.com/snarfed/granary.git@master#egg=granary
 cachetools~=3.1
 gdata-python3~=3.0
 google-cloud-error-reporting~=0.33
