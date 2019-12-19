@@ -13,6 +13,7 @@ from google.cloud import ndb
 from google.cloud.ndb.stats import KindStat, KindPropertyNameStat
 from oauth_dropins import indieauth
 from oauth_dropins.webutil import handlers as webutil_handlers
+from oauth_dropins.webutil.logs import LogHandler
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import webapp2
 
@@ -34,7 +35,6 @@ MODULES = [importlib.import_module(name) for name in (
   'github',
   'handlers',
   'instagram',
-  'logs',
   'mastodon',
   'medium',
   'publish',
@@ -745,6 +745,7 @@ routes += [
   ('/edit-websites', EditWebsites),
   ('/logout', LogoutHandler),
   ('/csp-report', CspReportHandler),
+  ('/log', LogHandler),
   ('/_ah/(start|stop|warmup)', util.NoopHandler),
 ]
 
