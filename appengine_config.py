@@ -69,7 +69,9 @@ else:
   # https://stackoverflow.com/a/58296028/186123
   # https://googleapis.dev/python/logging/latest/usage.html#cloud-logging-handler
   from google.cloud.logging.handlers import AppEngineHandler, setup_logging
-  setup_logging(AppEngineHandler(logging_client, name='stdout'))
+  import logging
+  setup_logging(AppEngineHandler(logging_client, name='stdout'),
+                log_level=logging.DEBUG)
 
   # this currently occasionally hits the 256KB stackdriver logging limit and
   # crashes in the background service. i've tried batch_size=1 and
