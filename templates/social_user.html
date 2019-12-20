@@ -11,7 +11,7 @@
   posts, since they're private.</p>
 </div>
 {% else %}
-{% if source.recent_private_posts >= RECENT_PRIVATE_POSTS_THRESHOLD %}
+{% if source.recent_private_posts and source.recent_private_posts>= RECENT_PRIVATE_POSTS_THRESHOLD %}
 <div class="row promo warning">
 <p>Warning: it looks like most of your recent posts are private! Bridgy
   only handles <a href="/about#public">fully public posts</a>.</p>

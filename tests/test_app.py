@@ -382,6 +382,14 @@ class AppTest(testutil.ModelsTest):
     self.assertEqual(200, resp.status_int)
     self.assertIn('most of your recent posts are private', resp.text)
 
+  def test_user_page_recent_private_posts_none(self):
+    self.sources[0].recent_private_posts = None
+    self.sources[0].put()
+
+    resp = app.application.get_response(self.sources[0].bridgy_path())
+    self.assertEqual(200, resp.status_int)
+    self.assertNotIn('most of your recent posts are private', resp.text)
+
   def test_user_page_publish_url_with_unicode_char(self):
     """Check the custom mf2 we render on social user pages."""
     self.sources[0].features = ['publish']
