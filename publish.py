@@ -270,9 +270,12 @@ class Handler(webmention.WebmentionHandler):
         msg = 'Could not find content in <a href="http://microformats.org/wiki/h-entry">h-entry</a> or any other element!'
       return self.error(msg, data=mf2)
 
-    # write results to datastore
-    self.entity.status = 'complete'
-    self.entity.put()
+    # write results to datastore, but don't overwrite a previous publish with a
+    # preview.
+    if not (self.PREVIEW and self.entity.type != 'preview'):
+      self.entity.status = 'complete'
+      self.entity.put()
+
     return result
 
   def _find_source(self, source_cls, url, domain):
@@ -372,8 +375,10 @@ class Handler(webmention.WebmentionHandler):
     if self.PREVIEW:
       result = self.source.gr_source.preview_create(
         obj, include_link=include_link, ignore_formatting=ignore_formatting)
-      self.entity.published = result.content or result.description
-      if not self.entity.published:
+      previewed = result.content or result.description
+      if self.entity.type == 'preview':
+        self.entity.published = previewed
+      if not previewed:
         return result  # there was an error
       return self._render_preview(result, include_link=include_link)
 

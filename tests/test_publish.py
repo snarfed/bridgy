@@ -211,14 +211,24 @@ class PublishTest(testutil.HandlerTest):
     self.assertEqual(5, Publish.query().count())
     self.assertEqual(3, Publish.query(Publish.status == 'complete').count())
 
+    completed = list(Publish.query(Publish.status == 'complete',
+                                   Publish.type == 'post'))
+    self.assertEqual(1, len(completed))
+    completed = completed[0]
+    orig_published = completed.published
+
     # now that there's a complete Publish entity, more attempts should fail
     resp = self.assert_error("Sorry, you've already published that page")
     self.assertEqual(json_loads(created.text), json_loads(resp.text)['original'])
+    self.assertEqual('complete', completed.key.get().status)
 
     # try again to test for a bug we had where a second try would succeed
     self.assert_error("Sorry, you've already published that page")
-    # should still be able to preview though
+
+    # should still be able to preview, but the preview shouldn't modify the
+    # Publish entity.
     self.assert_success('preview of foo', preview=True)
+    self.assertEqual(orig_published, completed.key.get().published)
 
   def test_already_published_interactive(self):
     self.expect_requests_get('http://foo.com/bar', self.post_html % 'foo')
