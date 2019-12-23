@@ -10,15 +10,17 @@ http://feediscovery.appspot.com/ for feed discovery based on front page URL.
 import json
 import logging
 
-import appengine_config
 from google.cloud.ndb.key import _MAX_KEYPART_BYTES
 from google.cloud.ndb._datastore_types import _MAX_STRING_LENGTH
+from oauth_dropins.webutil import appengine_info
 from oauth_dropins.webutil.util import json_dumps, json_loads
 from requests.auth import HTTPBasicAuth
 
 import models
 import util
 
+SUPERFEEDR_TOKEN = util.read('superfeedr_token')
+SUPERFEEDR_USERNAME = util.read('superfeedr_username')
 PUSH_API_URL = 'https://push.superfeedr.com'
 
 
@@ -33,7 +35,7 @@ def subscribe(source, handler):
     source: Blogger, Tumblr, or WordPress
     handler: :class:`webapp2.RequestHandler`
   """
-  if appengine_config.LOCAL:
+  if appengine_info.LOCAL:
     logging.info('Running in dev_appserver, not subscribing to Superfeedr')
     return
 
@@ -51,8 +53,7 @@ def subscribe(source, handler):
   logging.info('Adding Superfeedr subscription: %s', data)
   resp = util.requests_post(
     PUSH_API_URL, data=data,
-    auth=HTTPBasicAuth(appengine_config.SUPERFEEDR_USERNAME,
-                       appengine_config.SUPERFEEDR_TOKEN),
+    auth=HTTPBasicAuth(SUPERFEEDR_USERNAME, SUPERFEEDR_TOKEN),
     headers=util.REQUEST_HEADERS)
   resp.raise_for_status()
   handle_feed(resp.text, source)

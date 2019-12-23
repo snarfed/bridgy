@@ -2,10 +2,9 @@
 """
 import urllib.request, urllib.parse, urllib.error
 
-import appengine_config
 import granary
 import granary.tests.test_flickr as gr_test_flickr
-import oauth_dropins
+import oauth_dropins.flickr_auth
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
 import flickr
@@ -17,8 +16,8 @@ class FlickrTest(testutil.ModelsTest):
 
   def setUp(self):
     super(FlickrTest, self).setUp()
-    oauth_dropins.appengine_config.FLICKR_APP_KEY = 'my_app_key'
-    oauth_dropins.appengine_config.FLICKR_APP_SECRET = 'my_app_secret'
+    oauth_dropins.flickr_auth.FLICKR_APP_KEY = 'my_app_key'
+    oauth_dropins.flickr_auth.FLICKR_APP_SECRET = 'my_app_secret'
 
     self.auth_entity = oauth_dropins.flickr.FlickrAuth(
       id='my_string_id',

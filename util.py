@@ -15,12 +15,13 @@ import time
 import urllib.request, urllib.parse, urllib.error
 import zlib
 
-from appengine_config import APP_ID, error_reporting_client, LOCAL, tasks_client
 from cachetools import TTLCache
 from google.cloud import ndb
 from google.cloud.tasks_v2.types import Timestamp
 import google.protobuf.message
 import humanize
+from oauth_dropins.webutil.appengine_config import error_reporting_client, tasks_client
+from oauth_dropins.webutil.appengine_info import APP_ID, LOCAL
 from oauth_dropins.webutil import handlers as webutil_handlers
 from oauth_dropins.webutil.models import StringIdModel
 from oauth_dropins.webutil import util

@@ -7,8 +7,7 @@ import logging
 import re
 import urllib.request, urllib.parse, urllib.error
 
-import appengine_config
-from appengine_config import tasks_client
+from oauth_dropins.webutil.appengine_config import ndb_client, tasks_client
 
 from google.cloud import ndb
 from google.cloud.tasks_v2.types import Task
@@ -21,6 +20,7 @@ from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
 from requests import post as orig_requests_post
 
+import appengine_config
 from models import BlogPost, Publish, PublishedPage, Response, Source
 import util
 
@@ -268,8 +268,8 @@ class HandlerTest(testutil.HandlerTest):
     tasks_client.create_task = lambda *args, **kwargs: Task(name='foo')
 
     # clear datastore
-    orig_requests_post('http://%s/reset' % appengine_config.ndb_client.host)
-    self.ndb_context = appengine_config.ndb_client.context()
+    orig_requests_post('http://%s/reset' % ndb_client.host)
+    self.ndb_context = ndb_client.context()
     self.ndb_context.__enter__()
 
   def tearDown(self):

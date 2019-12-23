@@ -9,7 +9,6 @@ import logging
 from google.cloud import error_reporting
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
-import appengine_config
 import util
 
 

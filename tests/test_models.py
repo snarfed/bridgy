@@ -4,7 +4,6 @@
 import datetime
 from unittest import skip
 
-import appengine_config
 from google.cloud import ndb
 from granary import source as gr_source
 from mox3 import mox

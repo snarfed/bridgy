@@ -4,12 +4,10 @@ import datetime
 import logging
 import re
 
-import appengine_config
-from appengine_config import HTTP_TIMEOUT
-
 from google.cloud import ndb
 from granary import microformats2
 from granary import source as gr_source
+from oauth_dropins.instagram import INSTAGRAM_SESSIONID_COOKIE
 from oauth_dropins.webutil.models import StringIdModel
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
@@ -201,7 +199,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
       if self.key.kind() == 'FacebookPage' and auth_entity.type == 'user':
         kwargs = {'user_id': self.key.id()}
       elif self.key.kind() == 'Instagram':
-        kwargs = {'scrape': True, 'cookie': appengine_config.INSTAGRAM_SESSIONID_COOKIE}
+        kwargs = {'scrape': True, 'cookie': INSTAGRAM_SESSIONID_COOKIE}
       elif self.key.kind() == 'Mastodon':
         args = (auth_entity.instance(),) + args
         kwargs = {'user_id': json_loads(auth_entity.user_json).get('id')}
@@ -562,7 +560,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
     author_url = author_urls[0]
     logging.info('Attempting to discover webmention endpoint on %s', author_url)
     mention = send.WebmentionSend('https://brid.gy/', author_url)
-    mention.requests_kwargs = {'timeout': HTTP_TIMEOUT,
+    mention.requests_kwargs = {'timeout': util.HTTP_TIMEOUT,
                                'headers': util.REQUEST_HEADERS}
     try:
       mention._discoverEndpoint()

@@ -16,12 +16,11 @@ from google.cloud import ndb
 from google.cloud.ndb._datastore_types import _MAX_STRING_LENGTH
 from google.cloud.tasks_v2.types import Task
 from mox3 import mox
+from oauth_dropins.webutil.appengine_config import tasks_client
+from oauth_dropins.webutil import appengine_info
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
 from webmentiontools import send
-
-import appengine_config
-from appengine_config import tasks_client
 
 import models
 from models import Response, SyndicatedPost
@@ -86,11 +85,11 @@ class PollTest(TaskTest):
   def setUp(self):
     super(PollTest, self).setUp()
     FakeGrSource.DOMAIN = 'source'
-    appengine_config.LOCAL = True
+    appengine_info.LOCAL = True
 
   def tearDown(self):
     FakeGrSource.DOMAIN = 'fa.ke'
-    appengine_config.LOCAL = False
+    appengine_info.LOCAL = False
     super(PollTest, self).tearDown()
 
   def post_task(self, expected_status=200, source=None, reset=False,
@@ -1227,10 +1226,10 @@ class DiscoverTest(TaskTest):
 
   def setUp(self):
     super(DiscoverTest, self).setUp()
-    appengine_config.LOCAL = True
+    appengine_info.LOCAL = True
 
   def tearDown(self):
-    appengine_config.LOCAL = False
+    appengine_info.LOCAL = False
     super(DiscoverTest, self).tearDown()
 
   def discover(self, **kwargs):

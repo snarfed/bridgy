@@ -20,7 +20,6 @@ import datetime
 import logging
 import urllib.parse
 
-import appengine_config
 from granary import instagram as gr_instagram
 from granary import microformats2
 from granary import source as gr_source

@@ -3,9 +3,9 @@
 """
 import urllib.request, urllib.parse, urllib.error
 
-import appengine_config
 from oauth_dropins import medium as oauth_medium
 from oauth_dropins.webutil.util import json_dumps, json_loads
+from oauth_dropins.webutil import appengine_info
 
 import app
 from medium import ChooseBlog, Medium
@@ -47,11 +47,11 @@ class MediumTest(testutil.HandlerTest):
     self.auth_entity.put()
 
     # prevent subscribing to superfeedr
-    self.orig_local = appengine_config.LOCAL
-    appengine_config.LOCAL = True
+    self.orig_local = appengine_info.LOCAL
+    appengine_info.LOCAL = True
 
   def tearDown(self):
-    appengine_config.LOCAL = self.orig_local
+    appengine_info.LOCAL = self.orig_local
     super(MediumTest, self).tearDown()
 
   def expect_requests_get(self, path, *args, **kwargs):

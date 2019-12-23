@@ -5,8 +5,6 @@ import models
 import util
 import webapp2
 
-import appengine_config
-
 from google.cloud import ndb
 from granary import flickr as gr_flickr
 from granary.source import SELF

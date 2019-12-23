@@ -3,12 +3,11 @@
 import copy
 import urllib.request, urllib.parse, urllib.error
 
-import appengine_config
 from granary import twitter as gr_twitter
 from granary.tests import test_twitter as gr_twitter_test
 from granary.twitter import API_BASE, API_SEARCH, API_STATUS, HTML_FAVORITES
-import oauth_dropins
-from oauth_dropins import twitter as oauth_twitter
+import oauth_dropins.twitter
+import oauth_dropins.twitter_auth
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
 import models
@@ -21,10 +20,10 @@ class TwitterTest(testutil.ModelsTest):
 
   def setUp(self):
     super(TwitterTest, self).setUp()
-    oauth_dropins.appengine_config.TWITTER_APP_KEY = 'my_app_key'
-    oauth_dropins.appengine_config.TWITTER_APP_SECRET = 'my_app_secret'
+    oauth_dropins.twitter.TWITTER_APP_KEY = 'my_app_key'
+    oauth_dropins.twitter.TWITTER_APP_SECRET = 'my_app_secret'
     self.handler.messages = []
-    self.auth_entity = oauth_twitter.TwitterAuth(
+    self.auth_entity = oauth_dropins.twitter.TwitterAuth(
       id='my_string_id',
       token_key='my_key', token_secret='my_secret',
       user_json=json_dumps({'name': 'Ryan Barrett',

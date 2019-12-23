@@ -6,7 +6,6 @@ haven't completed yet.
 import datetime
 import itertools
 
-import appengine_config
 from oauth_dropins.webutil import handlers
 from models import BlogPost, Response, Source
 import util

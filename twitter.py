@@ -7,7 +7,6 @@ https://dev.twitter.com/docs/rate-limiting/1.1/limits
 """
 import logging
 
-import appengine_config
 from granary import twitter as gr_twitter
 from granary import source as gr_source
 from oauth_dropins import twitter as oauth_twitter

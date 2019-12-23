@@ -9,8 +9,7 @@ cd `dirname $absfile`
 cp -f ../requirements.txt ./requirements.txt
 echo 'appengine-sdk>=1.9.40.post0' >> ./requirements.txt
 
-# sphinx-apidoc -f -o source ../ \
-#   ../{appengine_config.py,mapreduce,tests}
+# sphinx-apidoc -f -o source ../ ../tests
 
 rm -f index.rst
 cat > index.rst <<EOF

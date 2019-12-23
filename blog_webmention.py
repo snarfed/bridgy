@@ -3,7 +3,6 @@
 import logging
 import urllib.parse
 
-import appengine_config
 
 from granary import microformats2
 from oauth_dropins.webutil.util import json_dumps, json_loads

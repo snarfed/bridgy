@@ -1,6 +1,5 @@
 """Unit tests for mastodon.py.
 """
-import appengine_config
 from granary.mastodon import API_BLOCKS, API_SEARCH
 from granary.tests.test_mastodon import ACTIVITY, STATUS
 from oauth_dropins import mastodon as oauth_mastodon

@@ -29,8 +29,6 @@ import logging
 import re
 import urllib.parse
 
-import appengine_config
-
 from google.cloud import ndb
 from oauth_dropins import tumblr as oauth_tumblr
 from oauth_dropins.webutil.handlers import JINJA_ENV
@@ -46,6 +44,9 @@ import util
 TUMBLR_AVATAR_URL = 'http://api.tumblr.com/v2/blog/%s/avatar/512'
 DISQUS_API_CREATE_POST_URL = 'https://disqus.com/api/3.0/posts/create.json'
 DISQUS_API_THREAD_DETAILS_URL = 'http://disqus.com/api/3.0/threads/details.json'
+DISQUS_ACCESS_TOKEN = util.read('disqus_access_token')
+DISQUS_API_KEY = util.read('disqus_api_key')
+DISQUS_API_SECRET = util.read('disqus_api_secret')
 
 # Tumblr has no single standard markup or JS for integrating Disqus. It does
 # have a default way, but themes often do it themselves, differently. Sigh.
@@ -58,6 +59,7 @@ DISQUS_SHORTNAME_RES = (
     """, re.IGNORECASE | re.VERBOSE),
   re.compile('https?://([^./"\' ]+)\.disqus\.com/embed\.js'),
   )
+
 
 class Tumblr(models.Source):
   """A Tumblr blog.
@@ -215,9 +217,9 @@ class Tumblr(models.Source):
     """
     logging.info('Calling Disqus %s with %s', url.split('/')[-2:], params)
     params.update({
-        'api_key': appengine_config.DISQUS_API_KEY,
-        'api_secret': appengine_config.DISQUS_API_SECRET,
-        'access_token': appengine_config.DISQUS_ACCESS_TOKEN,
+        'api_key': DISQUS_API_KEY,
+        'api_secret': DISQUS_API_SECRET,
+        'access_token': DISQUS_ACCESS_TOKEN,
         })
     kwargs.setdefault('headers', {}).update(util.REQUEST_HEADERS)
     resp = method(url, params=params, **kwargs)

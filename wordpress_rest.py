@@ -22,8 +22,6 @@ import collections
 import logging
 import urllib.request, urllib.parse, urllib.error
 
-import appengine_config
-
 from google.cloud import ndb
 from oauth_dropins import wordpress_rest as oauth_wordpress
 from oauth_dropins.webutil.handlers import JINJA_ENV

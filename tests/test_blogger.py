@@ -3,8 +3,6 @@
 """
 import urllib.request, urllib.parse, urllib.error
 
-import appengine_config
-
 from gdata.blogger import data
 from gdata.blogger.client import BloggerClient
 from gdata.client import RequestError

@@ -6,7 +6,6 @@ from oauth_dropins.tumblr import TumblrAuth
 from oauth_dropins.webutil.util import json_dumps, json_loads
 from webob import exc
 
-import appengine_config
 import tumblr
 from tumblr import Tumblr
 from . import testutil
@@ -21,9 +20,9 @@ class TumblrTest(testutil.HandlerTest):
                              {'url': 'http://primary/', 'primary': True}]}}))
     self.tumblr = Tumblr(id='my id', disqus_shortname='my-disqus-name')
 
-    appengine_config.DISQUS_API_KEY = 'my key'
-    appengine_config.DISQUS_API_SECRET = 'my secret'
-    appengine_config.DISQUS_ACCESS_TOKEN = 'my token'
+    tumblr.DISQUS_API_KEY = 'my key'
+    tumblr.DISQUS_API_SECRET = 'my secret'
+    tumblr.DISQUS_ACCESS_TOKEN = 'my token'
 
   def disqus_params(self, params):
     params.update({

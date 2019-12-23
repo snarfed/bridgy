@@ -7,7 +7,6 @@ from mox3 import mox
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import webapp2
 
-import appengine_config
 from models import BlogPost
 import superfeedr
 from . import testutil

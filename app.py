@@ -7,16 +7,17 @@ import logging
 import string
 import urllib.request, urllib.parse, urllib.error
 
-import appengine_config
-
 from google.cloud import ndb
 from google.cloud.ndb.stats import KindStat, KindPropertyNameStat
 from oauth_dropins import indieauth
+from oauth_dropins.webutil import appengine_info
 from oauth_dropins.webutil import handlers as webutil_handlers
+from oauth_dropins.webutil.appengine_config import ndb_client
 from oauth_dropins.webutil.logs import LogHandler
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import webapp2
 
+import appengine_config
 from blogger import Blogger
 from tumblr import Tumblr
 from wordpress_rest import WordPress
@@ -64,7 +65,7 @@ class DashboardHandler(webutil_handlers.TemplateHandler, util.Handler):
     return {
       'request': self.request,
       'logins': self.get_logins(),
-      'DEBUG': appengine_config.DEBUG,
+      'DEBUG': appengine_info.DEBUG,
     }
 
   def headers(self):
@@ -87,7 +88,7 @@ class CachedPageHandler(DashboardHandler):
 
   @util.canonicalize_domain
   def get(self, cache=True):
-    if (not cache or appengine_config.LOCAL or self.request.params or
+    if (not cache or appengine_info.LOCAL or self.request.params or
         self.get_logins()):
       return super(CachedPageHandler, self).get()
 
@@ -750,5 +751,4 @@ routes += [
 ]
 
 application = webutil_handlers.ndb_context_middleware(
-  webapp2.WSGIApplication(routes, debug=appengine_config.DEBUG),
-  client=appengine_config.ndb_client)
+  webapp2.WSGIApplication(routes, debug=appengine_info.DEBUG), client=ndb_client)

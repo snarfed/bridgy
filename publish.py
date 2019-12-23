@@ -10,8 +10,6 @@ import pprint
 import re
 import urllib.request, urllib.parse, urllib.error
 
-import appengine_config
-
 from google.cloud import ndb
 from granary import microformats2
 from granary import source as gr_source
@@ -21,6 +19,7 @@ from oauth_dropins import (
   mastodon as oauth_mastodon,
   twitter as oauth_twitter,
 )
+from oauth_dropins.webutil import appengine_info
 from oauth_dropins.webutil.handlers import JINJA_ENV
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import webapp2
@@ -200,7 +199,7 @@ class Handler(webmention.WebmentionHandler):
 
     # create the Publish entity so we can store the result.
     if (self.entity.status == 'complete' and self.entity.type != 'preview' and
-        not self.PREVIEW and not appengine_config.LOCAL):
+        not self.PREVIEW and not appengine_info.LOCAL):
       return self.error("Sorry, you've already published that page, and Bridgy Publish doesn't support updating existing posts. Details: https://github.com/snarfed/bridgy/issues/84",
                         extra_json={'original': self.entity.published})
 
@@ -405,7 +404,7 @@ class Handler(webmention.WebmentionHandler):
     """
     self.entity = self.get_or_add_publish_entity(source_url)
     if ((self.entity.status != 'complete' or self.entity.type == 'preview') and
-        not appengine_config.LOCAL):
+        not appengine_info.LOCAL):
       return self.error("Can't delete this post from %s because Bridgy Publish didn't originally POSSE it there" % self.source.gr_source.NAME)
 
     id = self.entity.published.get('id')

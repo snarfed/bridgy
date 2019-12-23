@@ -1,6 +1,4 @@
 """Unit tests for github.py."""
-import appengine_config
-
 import granary
 import granary.tests.test_github as gr_test_github
 import oauth_dropins

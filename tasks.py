@@ -8,14 +8,15 @@ import logging
 from google.cloud import ndb
 from google.cloud.ndb._datastore_types import _MAX_STRING_LENGTH
 from granary.source import Source
+from oauth_dropins.webutil import appengine_info
 from oauth_dropins.webutil import handlers as webutil_handlers
 from oauth_dropins.webutil import logs
+from oauth_dropins.webutil.appengine_config import ndb_client
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import webapp2
 from webmentiontools import send
 
 import appengine_config
-
 import cron
 import models
 from models import Response
@@ -847,5 +848,4 @@ application = webutil_handlers.ndb_context_middleware(
     ('/_ah/queue/propagate', PropagateResponse),
     ('/_ah/queue/propagate-blogpost', PropagateBlogPost),
     ('/_ah/(start|stop|warmup)', util.NoopHandler),
-  ] + cron.ROUTES, debug=appengine_config.DEBUG),
-  client=appengine_config.ndb_client)
+  ] + cron.ROUTES, debug=appengine_info.DEBUG), client=ndb_client)

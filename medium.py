@@ -12,8 +12,6 @@ https://medium.com/developers/welcome-to-the-medium-api-3418f956552
 import collections
 import logging
 
-import appengine_config
-
 from google.cloud import ndb
 from oauth_dropins import medium as oauth_medium
 from oauth_dropins.webutil.handlers import JINJA_ENV

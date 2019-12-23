@@ -3,7 +3,6 @@
 """
 import urllib.request, urllib.parse, urllib.error
 
-import appengine_config
 from oauth_dropins.webutil.util import json_dumps, json_loads
 from oauth_dropins.wordpress_rest import WordPressAuth
 

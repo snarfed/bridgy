@@ -6,7 +6,6 @@ import datetime
 from oauth_dropins.webutil.util import json_dumps, json_loads
 from requests.exceptions import HTTPError
 
-import appengine_config
 from models import SyndicatedPost
 import original_post_discovery
 from original_post_discovery import discover, refetch

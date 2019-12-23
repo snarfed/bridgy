@@ -4,7 +4,6 @@
 import io
 import urllib.request, urllib.error, urllib.parse
 
-import appengine_config
 from mox3 import mox
 from util import json_dumps, json_loads
 

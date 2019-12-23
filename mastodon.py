@@ -1,10 +1,10 @@
 """Mastodon source and datastore model classes."""
 import logging
 
-import appengine_config
 from granary import mastodon as gr_mastodon
 from granary import source as gr_source
-from oauth_dropins import mastodon as oauth_mastodon
+import oauth_dropins.mastodon
+from oauth_dropins.webutil import appengine_info
 from oauth_dropins.webutil.handlers import TemplateHandler
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
@@ -18,11 +18,11 @@ LISTEN_SCOPES = ('read', 'follow')
 PUBLISH_SCOPES = LISTEN_SCOPES + ('write',)
 
 
-class StartHandler(oauth_mastodon.StartHandler):
+class StartHandler(oauth_dropins.mastodon.StartHandler):
   """Abstract base OAuth starter class with our redirect URLs."""
   APP_NAME = 'Bridgy'
-  APP_URL = (util.HOST_URL if appengine_config.HOST in util.OTHER_DOMAINS
-             else appengine_config.HOST_URL)
+  APP_URL = (util.HOST_URL if appengine_info.HOST in util.OTHER_DOMAINS
+             else appengine_info.HOST_URL)
   REDIRECT_PATHS = (
     '/mastodon/callback',
     '/publish/mastodon/finish',
@@ -169,7 +169,7 @@ class InstanceHandler(TemplateHandler, util.Handler):
 
 
 
-class CallbackHandler(oauth_mastodon.CallbackHandler, util.Handler):
+class CallbackHandler(oauth_dropins.mastodon.CallbackHandler, util.Handler):
   def finish(self, auth_entity, state=None):
     source = self.maybe_add_or_delete_source(Mastodon, auth_entity, state)
 
@@ -177,7 +177,7 @@ class CallbackHandler(oauth_mastodon.CallbackHandler, util.Handler):
 ROUTES = [
   ('/mastodon/start', InstanceHandler),
   ('/mastodon/callback', CallbackHandler),
-  ('/mastodon/delete/finish', oauth_mastodon.CallbackHandler.to('/delete/finish')),
+  ('/mastodon/delete/finish', oauth_dropins.mastodon.CallbackHandler.to('/delete/finish')),
   ('/mastodon/publish/start', StartHandler.to('/publish/mastodon/finish',
                                               scopes=PUBLISH_SCOPES)),
 ]

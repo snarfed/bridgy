@@ -25,8 +25,6 @@ import logging
 import re
 import urllib.parse
 
-import appengine_config
-
 from gdata.blogger.client import Query
 from gdata.client import Error
 from google.cloud import ndb

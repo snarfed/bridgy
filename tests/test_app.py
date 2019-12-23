@@ -5,8 +5,6 @@ import datetime
 import urllib.request, urllib.parse, urllib.error
 from urllib.parse import urlencode
 
-import appengine_config
-
 from google.cloud import ndb
 from mox3 import mox
 from oauth_dropins.twitter import TwitterAuth

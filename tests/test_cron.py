@@ -7,16 +7,17 @@ from granary import instagram as gr_instagram
 from granary import twitter as gr_twitter
 from granary.tests import test_flickr
 from granary.tests import test_instagram
-import oauth_dropins
+import oauth_dropins.flickr
+import oauth_dropins.flickr_auth
 from oauth_dropins import indieauth
-from oauth_dropins import flickr as oauth_flickr
-from oauth_dropins import twitter as oauth_twitter
+import oauth_dropins.twitter
+import oauth_dropins.twitter_auth
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
-import appengine_config
 import cron
 from flickr import Flickr
 from instagram import Instagram
+import models
 from . import testutil
 from .testutil import FakeSource, HandlerTest
 from twitter import Twitter
@@ -27,12 +28,12 @@ import util
 class CronTest(HandlerTest):
   def setUp(self):
     super(CronTest, self).setUp()
-    oauth_dropins.appengine_config.FLICKR_APP_KEY = 'my_app_key'
-    oauth_dropins.appengine_config.FLICKR_APP_SECRET = 'my_app_secret'
-    oauth_dropins.appengine_config.TWITTER_APP_KEY = 'my_app_key'
-    oauth_dropins.appengine_config.TWITTER_APP_SECRET = 'my_app_secret'
+    oauth_dropins.flickr_auth.FLICKR_APP_KEY = 'my_app_key'
+    oauth_dropins.flickr_auth.FLICKR_APP_SECRET = 'my_app_secret'
+    oauth_dropins.twitter_auth.TWITTER_APP_KEY = 'my_app_key'
+    oauth_dropins.twitter_auth.TWITTER_APP_SECRET = 'my_app_secret'
 
-    flickr_auth = oauth_flickr.FlickrAuth(
+    flickr_auth = oauth_dropins.flickr.FlickrAuth(
       id='123@N00', user_json=json_dumps(test_flickr.PERSON_INFO),
       token_key='my_key', token_secret='my_secret')
     flickr_auth.put()
@@ -42,7 +43,7 @@ class CronTest(HandlerTest):
       self.flickr.picture)
 
   def setup_instagram(self, batch_size=None, weekday=0):
-    self.mox.stubs.Set(appengine_config, 'INSTAGRAM_SESSIONID_COOKIE', None)
+    self.mox.stubs.Set(models, 'INSTAGRAM_SESSIONID_COOKIE', None)
     if batch_size:
       self.mox.stubs.Set(cron.UpdateInstagramPictures, 'BATCH', batch_size)
 
@@ -97,7 +98,7 @@ class CronTest(HandlerTest):
   def test_update_twitter_pictures(self):
     sources = []
     for screen_name in ('a', 'b', 'c'):
-      auth_entity = oauth_twitter.TwitterAuth(
+      auth_entity = oauth_dropins.twitter.TwitterAuth(
         id='id', token_key='key', token_secret='secret',
         user_json=json_dumps({'name': 'Ryan',
                               'screen_name': screen_name,
@@ -126,7 +127,7 @@ class CronTest(HandlerTest):
     self.assertEqual('http://new/pic.jpg', sources[1].get().picture)
 
   def test_update_twitter_picture_user_lookup_404s(self):
-    auth_entity = oauth_twitter.TwitterAuth(
+    auth_entity = oauth_dropins.twitter.TwitterAuth(
       id='id', token_key='key', token_secret='secret',
       user_json=json_dumps({'name': 'Bad',
                             'screen_name': 'bad',

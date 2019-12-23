@@ -4,11 +4,10 @@
 import socket
 import urllib.request, urllib.parse, urllib.error
 
-import appengine_config
-from appengine_config import error_reporting_client
 
 from granary import source as gr_source
 from mox3 import mox
+from oauth_dropins.webutil.appengine_config import error_reporting_client
 from oauth_dropins.webutil.testutil import requests_response
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
@@ -1202,7 +1201,7 @@ Join us!"""
     resp._text = "shouldn't use this! " + text
     resp.url = 'http://foo.com/bar'
     resp.status_code = 200
-    requests.get(resp.url, timeout=appengine_config.HTTP_TIMEOUT,
+    requests.get(resp.url, timeout=util.HTTP_TIMEOUT,
                  headers=util.REQUEST_HEADERS, stream=True).AndReturn(resp)
     self.mox.ReplayAll()
 

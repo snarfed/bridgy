@@ -11,7 +11,6 @@ from granary.tests import test_instagram as gr_test_instagram
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
 
-import appengine_config
 import app
 import instagram
 from . import testutil
@@ -105,7 +104,7 @@ class InstagramTest(testutil.ModelsTest):
         'me': 'http://snarfed.org',
         'state': state,
         'code': 'my_code',
-        'client_id': appengine_config.INDIEAUTH_CLIENT_ID,
+        'client_id': indieauth.INDIEAUTH_CLIENT_ID,
         'redirect_uri': 'http://localhost/instagram/callback',
       })
 
@@ -240,7 +239,7 @@ class InstagramTest(testutil.ModelsTest):
     state_json = util.encode_oauth_state(self.bridgy_api_state)
     expected_auth_url = indieauth.INDIEAUTH_URL + '?' + urllib.parse.urlencode({
       'me': 'http://snarfed.org',
-      'client_id': appengine_config.INDIEAUTH_CLIENT_ID,
+      'client_id': indieauth.INDIEAUTH_CLIENT_ID,
       'redirect_uri': 'http://localhost/instagram/callback',
       'state': util.encode_oauth_state({
         'endpoint': indieauth.INDIEAUTH_URL,
