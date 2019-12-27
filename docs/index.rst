@@ -20,39 +20,39 @@ License: This project is placed in the public domain.
 Development
 -----------
 
-You’ll need the `App Engine Python
-SDK <https://cloud.google.com/appengine/downloads#Google_App_Engine_SDK_for_Python>`__
-version 1.9.15 or later (for
-`vendor <https://cloud.google.com/appengine/docs/python/tools/libraries27#vendoring>`__
-support) or the `Google Cloud
+You’ll need the `Google Cloud
 SDK <https://cloud.google.com/sdk/gcloud/>`__ (aka ``gcloud``) with the
 ``gcloud-appengine-python`` and ``gcloud-appengine-python-extras``
 `components <https://cloud.google.com/sdk/docs/components#additional_components>`__.
-Add it to your ``$PYTHONPATH``, e.g.
-``export PYTHONPATH=$PYTHONPATH:/usr/local/google_appengine``, and then
-run:
+Then, create a Python 3 virtualenv and install the dependencies with:
 
-::
+.. code:: sh
 
-   virtualenv local
-   source local/bin/activate
-   pip install -r requirements.freeze.txt
+   python3 -m venv local3
+   source local3/bin/activate
+   pip install -r requirements.txt
 
-   # We install gdata in source mode, and App Engine doesn't follow .egg-link
-   # files, so add a symlink to it.
-   ln -s ../../../src/gdata/src/gdata local/lib/python2.7/site-packages/gdata
-   ln -s ../../../src/gdata/src/atom local/lib/python2.7/site-packages/atom
+Now, run the unit tests:
 
-   python -m unittest discover
+.. code:: sh
 
-The last command runs the unit tests. If you send a pull request, please
-include (or update) a test for the new functionality if possible!
+   gcloud beta emulators datastore start --no-store-on-disk --consistency=1.0 --host-port=localhost:8089 < /dev/null >& /dev/null
+   python3 -m unittest discover
+   kill %1
+
+If you send a pull request, please include or update a test for your new
+code!
 
 To run the entire app locally, run this in the repo root directory:
 
 ::
 
-   dev_appserver.py --log_level debug app.yaml background.yaml
+   dev_appserver.py --log_level debug --enable_host_checking false \
+     --support_datastore_emulator --datastore_emulator_port=8089 \
+     --application=brid-gy ~/src/bridgy/app.yaml ~/src/bridgy/background.yaml
+
+Open `localhost:8080 <http://localhost:8080/>`__ and you should see the
+Bridgy home page!
 
 If you hit an error during setup, check out the `oauth-dropins
 Troubleshooting/FAQ
@@ -88,21 +88,12 @@ install them in “source” mode with:
 
    pip uninstall -y oauth-dropins
    pip install -e <path to oauth-dropins>
-   ln -s <path to oauth-dropins>/oauth_dropins \
-     local/lib/python2.7/site-packages/oauth_dropins
 
    pip uninstall -y granary
    pip install -e <path to granary>
-   ln -s <path to granary>/granary \
-     local/lib/python2.7/site-packages/granary
 
    pip uninstall -y webmentiontools
-   # webmention-tools isn't in pypi
-   ln -s <path to webmention-tools>/webmentiontools \
-     local/lib/python2.7/site-packages/webmentiontools
-
-The symlinks are necessary because App Engine’s ``vendor`` module
-evidently doesn’t follow ``.egg-link`` or ``.pth`` files. :/
+   pip install <path to webmention-tools>
 
 To deploy to App Engine, run
 `scripts/deploy.sh <https://github.com/snarfed/bridgy/blob/master/scripts/deploy.sh>`__.
@@ -132,17 +123,18 @@ it. It looks like a lot, but it’s not that bad, honest.
 3. Create an app (aka client) in the silo’s developer console, grab your
    app’s id (aka key) and secret, put them into new local files in the
    repo root dir, `following this
-   pattern <https://github.com/snarfed/oauth-dropins/blob/master/oauth_dropins/appengine_config.py>`__.
-   You’ll eventually want to send them to @snarfed and @kylewm too, but
-   no hurry.
+   pattern <https://github.com/snarfed/oauth-dropins/blob/6c3628b76aa198d1f9ea1ce0d49322c74b94eabc/oauth_dropins/twitter_auth.py#L16-L17>`__.
+   You’ll eventually want to send them to @snarfed too, but no hurry.
 4. Add the silo to
    `oauth-dropins <https://github.com/snarfed/oauth-dropins>`__ if it’s
    not already there:
 
    1. Add a new ``.py`` file for your silo with an auth model and
       handler classes. Follow the existing examples.
-   2. Add a `button
-      image <https://github.com/snarfed/oauth-dropins/tree/master/oauth_dropins/static>`__.
+   2. Add a 100 pixel tall `button
+      image <https://github.com/snarfed/oauth-dropins/tree/master/oauth_dropins/static>`__
+      named ``[NAME]_2x.png``, where ``[NAME]`` is your start handler
+      class’s ``NAME`` constant, eg ``'twitter'``.
    3. Add it to the `app front
       page <https://github.com/snarfed/oauth-dropins/blob/master/templates/index.html>`__
       and the
@@ -160,7 +152,6 @@ it. It looks like a lot, but it’s not that bad, honest.
       `api.py <https://github.com/snarfed/granary/blob/master/api.py>`__
       (specifically ``Handler.get``),
       `app.py <https://github.com/snarfed/granary/blob/master/app.py>`__,
-      `app.yaml <https://github.com/snarfed/granary/blob/master/app.yaml>`__,
       `index.html <https://github.com/snarfed/granary/blob/master/granary/templates/index.html>`__,
       and the
       `README <https://github.com/snarfed/granary/blob/master/README.md>`__.
@@ -170,14 +161,13 @@ it. It looks like a lot, but it’s not that bad, honest.
    1. Add a new ``.py`` file for your silo with a model class. Follow
       the existing examples.
    2. Add it to
-      `app.py <https://github.com/snarfed/bridgy/blob/master/app.py>`__,
-      `app.yaml <https://github.com/snarfed/bridgy/blob/master/app.yaml>`__,
+      `app.py <https://github.com/snarfed/bridgy/blob/master/app.py>`__
       and
       `handlers.py <https://github.com/snarfed/bridgy/blob/master/handlers.py>`__
       (just import the module).
    3. Add a 48x48 PNG icon to
       `static/ <https://github.com/snarfed/bridgy/tree/master/static>`__.
-   4. Add a new ``SILO_user.html`` file in
+   4. Add a new ``[SILO]_user.html`` file in
       `templates/ <https://github.com/snarfed/bridgy/tree/master/templates>`__
       and add the silo to
       `index.html <https://github.com/snarfed/bridgy/blob/master/templates/index.html>`__.
@@ -187,10 +177,7 @@ it. It looks like a lot, but it’s not that bad, honest.
       and this README.
    6. If users’ profile picture URLs can change, add a cron job that
       updates them to
-      `cron.py <https://github.com/snarfed/bridgy/blob/master/cron.py>`__
-      and
-      `cron.yaml <https://github.com/snarfed/bridgy/blob/master/cron.yaml>`__.
-      Also add the model class to the datastore backup job there.
+      `cron.py <https://github.com/snarfed/bridgy/blob/master/cron.py>`__.
 
 7. Optionally add publish support:
 
@@ -203,10 +190,6 @@ it. It looks like a lot, but it’s not that bad, honest.
       `publish.py <https://github.com/snarfed/bridgy/blob/master/publish.py>`__:
       import its module, add it to ``SOURCES``, and update `this error
       message <https://github.com/snarfed/bridgy/blob/424bbb28c769eea5636534aba5791e868d63b987/publish.py#L130>`__.
-   3. Add a ``publish-signup`` block to ``SILO_user.html`` and add the
-      silo to
-      `social_user.html <https://github.com/snarfed/bridgy/blob/424bbb28c769eea5636534aba5791e868d63b987/templates/social_user.html#L51>`__.
-   4. Update ``app.yaml``.
 
 Good luck, and happy hacking!
 
@@ -300,7 +283,7 @@ they aren’t as critical to keep.
 (We used to use `Datastore Admin
 Backup <https://cloud.google.com/appengine/docs/standard/python/console/datastore-backing-up-restoring>`__,
 but `it shut down in Feb
-2019 <https://cloud.google.com/appengine/docs/deprecations/datastore-admin-backups.>`__
+2019 <https://cloud.google.com/appengine/docs/deprecations/datastore-admin-backups.>`__.)
 
 We use this command to set a `Cloud Storage lifecycle
 policy <https://developers.google.com/storage/docs/lifecycle>`__ on that

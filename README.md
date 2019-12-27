@@ -33,7 +33,9 @@ If you send a pull request, please include or update a test for your new code!
 To run the entire app locally, run this in the repo root directory:
 
 ```
-dev_appserver.py --log_level debug --enable_host_checking false --support_datastore_emulator --datastore_emulator_port=8089 --application=brid-gy ~/src/bridgy/app.yaml ~/src/bridgy/background.yaml
+dev_appserver.py --log_level debug --enable_host_checking false \
+  --support_datastore_emulator --datastore_emulator_port=8089 \
+  --application=brid-gy ~/src/bridgy/app.yaml ~/src/bridgy/background.yaml
 ```
 
 Open [localhost:8080](http://localhost:8080/) and you should see the Bridgy home page!
@@ -144,7 +146,7 @@ Misc
 ---
 The datastore is automatically backed up by an App Engine cron job that runs [Datastore managed export](https://cloud.google.com/datastore/docs/schedule-export) ([details](https://cloud.google.com/datastore/docs/export-import-entities)) and stores the results in [Cloud Storage](https://developers.google.com/storage/docs/), in the [brid-gy.appspot.com bucket](https://console.developers.google.com/project/apps~brid-gy/storage/brid-gy.appspot.com/). It backs up weekly and includes all entities except `Response` and `SyndicatedPost`, since they make up 92% of all entities by size and they aren't as critical to keep.
 
-(We used to use [Datastore Admin Backup](https://cloud.google.com/appengine/docs/standard/python/console/datastore-backing-up-restoring), but [it shut down in Feb 2019](https://cloud.google.com/appengine/docs/deprecations/datastore-admin-backups.)
+(We used to use [Datastore Admin Backup](https://cloud.google.com/appengine/docs/standard/python/console/datastore-backing-up-restoring), but [it shut down in Feb 2019](https://cloud.google.com/appengine/docs/deprecations/datastore-admin-backups.).)
 
 We use this command to set a [Cloud Storage lifecycle policy](https://developers.google.com/storage/docs/lifecycle) on that bucket that prunes older backups:
 

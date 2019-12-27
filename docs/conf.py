@@ -18,17 +18,6 @@ import os
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.abspath('..'))
-sys.path.insert(0, '/opt/homebrew-cask/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/bin')
-sys.path.insert(0, '/opt/homebrew-cask/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/platform/google_appengine/')
-
-# Add App Engine's bundled libraries (django, webob, yaml, etc.) to sys.path.
-import dev_appserver
-dev_appserver.fix_sys_path()
-# sys.path.append(os.path.join(dev_appserver._DIR_PATH, 'lib', 'mox'))
-
-if not os.getenv('VIRTUAL_ENV'):
-    os.environ['VIRTUAL_ENV'] = os.path.abspath(
-        '../../../envs/' + os.getenv('READTHEDOCS_VERSION'))
 
 # -- General configuration ------------------------------------------------
 
@@ -50,7 +39,7 @@ extensions = [
 # http://www.sphinx-doc.org/en/stable/ext/autodoc.html
 autoclass_content = 'class'
 autodoc_member_order = 'bysource'
-autodoc_default_flags = ['show-inheritance', 'members', 'special-members']
+autodoc_default_options = ['show-inheritance', 'members', 'special-members']
 
 # Napoleon settings
 # http://www.sphinx-doc.org/en/stable/ext/napoleon.html
@@ -80,9 +69,9 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'Bridgy'
-copyright = u'2016, Ryan Barrett'
-author = u'Ryan Barrett'
+project = 'Bridgy'
+copyright = '2011-2020, Ryan Barrett'
+author = 'Ryan Barrett'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -263,8 +252,8 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  (master_doc, 'bridgy.tex', u'Bridgy Documentation',
-   u'Ryan Barrett', 'manual'),
+  (master_doc, 'bridgy.tex', 'Bridgy Documentation',
+   'Ryan Barrett', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -293,7 +282,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'Bridgy', u'Bridgy Documentation',
+    (master_doc, 'Bridgy', 'Bridgy Documentation',
      [author], 1)
 ]
 
@@ -307,7 +296,7 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  (master_doc, 'Bridgy', u'Bridgy Documentation',
+  (master_doc, 'Bridgy', 'Bridgy Documentation',
    author, 'Bridgy', 'One line description of project.',
    'Miscellaneous'),
 ]
@@ -327,8 +316,6 @@ texinfo_documents = [
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
-  # TODO
-  # 'appengine': ('https://cloud.google.com/appengine/docs/python/refdocs', None),
   'granary': ('https://granary.readthedocs.io/en/latest', None),
   'oauth_dropins': ('https://oauth-dropins.readthedocs.io/en/latest', None),
   'python': ('https://docs.python.org/', None),

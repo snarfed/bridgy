@@ -6,9 +6,6 @@ set -e
 absfile=`readlink -f $0`
 cd `dirname $absfile`
 
-cp -f ../requirements.txt ./requirements.txt
-echo 'appengine-sdk>=1.9.40.post0' >> ./requirements.txt
-
 # sphinx-apidoc -f -o source ../ ../tests
 
 rm -f index.rst
@@ -23,8 +20,8 @@ tail -n +4 ../README.md \
   | sed -E 's/```/`/; s/`` </ </' \
   >> index.rst
 
-source ../local/bin/activate
+source ../local3/bin/activate
 
 # Run sphinx in the virtualenv's python interpreter so it can import packages
 # installed in the virtualenv.
-python `which sphinx-build` -b html . _build/html
+python3 `which sphinx-build` -b html . _build/html
