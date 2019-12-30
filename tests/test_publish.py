@@ -296,7 +296,7 @@ class PublishTest(testutil.HandlerTest):
         'https://brid.gy/publish/instagram',
     ):
       self.assert_error(
-        'Target must be brid.gy/publish/{flickr,github,mastodon,twitter}',
+        'Target must be brid.gy/publish/{flickr,github,mastodon,meetup,twitter}',
         target=target)
 
   def test_source_url_redirects(self):
