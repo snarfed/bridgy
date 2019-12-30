@@ -132,7 +132,7 @@ I occasionally generate [stats and graphs of usage and growth](https://snarfed.o
       bq load --replace --nosync --source_format=DATASTORE_BACKUP datastore.$kind gs://brid-gy.appspot.com/stats/all_namespaces/kind_$kind/all_namespaces_kind_$kind.export_metadata
     done
     
-    for kind in Blogger FacebookPage Flickr GitHub GooglePlusPage Instagram Medium Tumblr Twitter WordPress; do
+    for kind in Blogger FacebookPage Flickr GitHub GooglePlusPage Instagram Medium Meetup Tumblr Twitter WordPress; do
       bq load --replace --nosync --source_format=DATASTORE_BACKUP sources.$kind gs://brid-gy.appspot.com/stats/all_namespaces/kind_$kind/all_namespaces_kind_$kind.export_metadata
     done
     ```

@@ -18,6 +18,7 @@ from oauth_dropins import (
   flickr as oauth_flickr,
   github as oauth_github,
   mastodon as oauth_mastodon,
+  meetup as oauth_meetup,
   twitter as oauth_twitter,
 )
 from oauth_dropins.webutil import appengine_info
@@ -29,6 +30,7 @@ from flickr import Flickr
 from github import GitHub
 from instagram import Instagram
 from mastodon import Mastodon
+from meetup import Meetup
 from models import Publish, PublishedPage
 from twitter import Twitter
 import models
@@ -36,7 +38,7 @@ import util
 import webmention
 
 
-SOURCES = (Flickr, GitHub, Mastodon, Twitter)
+SOURCES = (Flickr, GitHub, Mastodon, Meetup, Twitter)
 SOURCE_NAMES = {cls.SHORT_NAME: cls for cls in SOURCES}
 SOURCE_DOMAINS = {cls.GR_CLASS.DOMAIN: cls for cls in SOURCES}
 # image URLs matching this regexp should be ignored.
@@ -145,7 +147,7 @@ class Handler(webmention.WebmentionHandler):
     if (domain not in util.DOMAINS or
         len(path_parts) != 2 or path_parts[0] != '/publish' or not source_cls):
       return self.error(
-        'Target must be brid.gy/publish/{flickr,github,mastodon,twitter}')
+        'Target must be brid.gy/publish/{flickr,github,mastodon,meetup,twitter}')
     elif source_cls == Instagram:
       return self.error('Sorry, %s is not supported.' %
                         source_cls.GR_CLASS.NAME)
@@ -696,6 +698,10 @@ class MastodonSendHandler(oauth_mastodon.CallbackHandler, SendHandler):
   finish = SendHandler.finish
 
 
+class MeetupSendHandler(oauth_meetup.CallbackHandler, SendHandler):
+  finish = SendHandler.finish
+
+
 class TwitterSendHandler(oauth_twitter.CallbackHandler, SendHandler):
   finish = SendHandler.finish
 
@@ -733,10 +739,11 @@ class WebmentionHandler(Handler):
 ROUTES = [
   ('/publish/preview', PreviewHandler),
   ('/publish/webmention', WebmentionHandler),
-  ('/publish/(flickr|github|mastodon|twitter)',
+  ('/publish/(flickr|github|mastodon|meetup|twitter)',
    webmention.WebmentionGetHandler),
   ('/publish/flickr/finish', FlickrSendHandler),
   ('/publish/github/finish', GitHubSendHandler),
   ('/publish/mastodon/finish', MastodonSendHandler),
+  ('/meetup/publish/finish', MeetupSendHandler), # because Meetup's `redirect_uri` handling is a little more restrictive
   ('/publish/twitter/finish', TwitterSendHandler),
 ]

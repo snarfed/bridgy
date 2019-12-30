@@ -105,6 +105,7 @@ service.</a>
 <li><a href="#github-respond-to-comment">How do I respond to a GitHub comment in particular?</a></li>
 <li><a href="#add-label">How do I add a label to a GitHub issue?</a></li>
 <li><a href="#github-star">How do I star a GitHub repo?</a></li>
+<li><a href="#meetup-rsvp">How do I RSVP to an event on Meetup?</a></li>
 <li><a href="#omit-link">Can I disable the link back to my post?</a></li>
 <li><a href="#ignore-formatting">Can I disable the plain text whitespace and
   formatting?</a></li>
@@ -811,6 +812,7 @@ should be one of:
 <li><code>https://brid.gy/publish/flickr</code></li>
 <li><code>https://brid.gy/publish/github</code></li>
 <li><code>https://brid.gy/publish/mastodon</code></li>
+<li><code>https://brid.gy/publish/meetup</code></li>
 <li><code>https://brid.gy/publish/twitter</code></li>
 </ul>
 Your post HTML must also include that same
@@ -823,6 +825,7 @@ in your post to publish automatically!
 <pre>&lt;a href="<a href='https://brid.gy/publish/flickr'>https://brid.gy/publish/flickr</a>"&gt;&lt;/a&gt;
 &lt;a href="<a href='https://brid.gy/publish/github'>https://brid.gy/publish/github</a>"&gt;&lt;/a&gt;
 &lt;a href="<a href='https://brid.gy/publish/mastodon'>https://brid.gy/publish/mastodon</a>"&gt;&lt;/a&gt;
+&lt;a href="<a href='https://brid.gy/publish/meetup'>https://brid.gy/publish/meetup</a>"&gt;&lt;/a&gt;
 &lt;a href="<a href='https://brid.gy/publish/twitter'>https://brid.gy/publish/twitter</a>"&gt;&lt;/a&gt;
 </pre>
 </p>
@@ -1020,6 +1023,19 @@ to
 <p>Just post a <a href="#like">like</a> of the repo URL! For example:</p>
 <pre>
 &lt;a class="<span class='keyword'>u-like-of</span>" href="<a href='https://github.com/snarfed/bridgy'>https://github.com/snarfed/bridgy</a>"&gt;&lt;/a&gt;
+</pre>
+</li>
+
+<li id="meetup-rsvp" class="question">How do I RSVP to an event on Meetup?</li>
+<li class="answer">
+<p>Just post an RSVP to the event's URL! For example:</p>
+<pre>
+&lt;div class="<span class='keyword'>h-entry</span>"&gt;
+  &lt;p&gt;
+    &lt;data class="<span class='keyword'>p-rsvp</span>" value="no"&gt;I will not be attending&lt;/data&gt;
+    &lt;a class="<span class="keyword">u-in-reply-to</span>" href="<a href="https://www.meetup.com/PHPMiNDS-in-Nottingham/events/264008439/">https://www.meetup.com/PHPMiNDS-in-Nottingham/events/264008439/</a>"&gt;https://www.meetup.com/PHPMiNDS-in-Nottingham/events/264008439/&lt;/a&gt;
+  &lt;/p&gt;
+&lt;/div&gt;
 </pre>
 </li>
 
