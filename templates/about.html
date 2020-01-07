@@ -61,6 +61,7 @@ service.</a>
 <li><a href="#permissions">Why does Bridgy ask for all these permissions?</a></li>
 <li><a href="#api">Does Bridgy have an API?</a></li>
 <li><a href="#gdpr">Does Bridgy comply with the GDPR?</a></li>
+<li><a href="#ccpa">Does Bridgy comply with the CCPA?</a></li>
 <li><a href="#bug">I found a bug! I have a feature request!</a></li>
 <li><a href="#cute">Brid.gy? Really?</a></li>
 
@@ -396,7 +397,7 @@ Here are the properties Bridgy uses:
 <li id="gdpr" class="question">Does Bridgy comply with the GDPR?</li>
 <li class="answer">
 <p>Um...maybe?</p>
-<p>The <a href="https://www.eugdpr.org/">EU General Data Protection Regulation</a> aka GDPR (<a href="https://indieweb.org/GDPR">more details</a>) is a sweeping new set of data privacy laws that take effect May 2018.</p>
+<p>The <a href="https://www.eugdpr.org/">EU General Data Protection Regulation</a> aka GDPR (<a href="https://indieweb.org/GDPR">more details</a>) is a sweeping new set of data privacy laws that took effect May 2018.</p>
 <p>A few of us (including a GDPR lawyer) took a look at Bridgy, and we think it <em>may</em> be exempt from much of the GDPR:</p>
 <ul>
 <li>It only handles fully public data. <a href="https://gdpr-info.eu/art-9-gdpr/">Article 9.2.e</a> exempts processing that <em>relates to personal data which are manifestly made public by the data subject.</em></li>
@@ -406,6 +407,16 @@ Here are the properties Bridgy uses:
 <p>The GDPR does require us to provide a full export of a user's data (<a href="https://gdpr-info.eu/art-15-gdpr/">15.1, 15.3</a>, <a href="https://gdpr-info.eu/art-20-gdpr/">20</a>), delete that data (<a href="https://gdpr-info.eu/art-17-gdpr/">17</a>), or terminate their account (<a href="https://gdpr-info.eu/art-17-gdpr/">17</a>) upon request. Bridgy currently lets you terminate (disable) your account, but I don't plan to build automated export or delete. I will happily do it <a href="https://indieweb.org/manual_until_it_hurts">manually until it hurts</a>, though!</p>
 <p>Bridgy is a small free service with a small user base. Even if it doesn't comply, I don't expect anyone to care much. I don't plan to spend much more time or effort researching until someone convinces me I need to. (Sorry!)</p>
 <p>Also, this analysis only applies to Bridgy itself. For web sites that receive and display webmentions from Bridgy, see <a href="https://sebastiangreger.net/2018/05/indieweb-privacy-challenge-webmentions-backfeeds-gdpr/"><em>The Indieweb privacy challenge (Webmentions, silo backfeeds, and the GDPR)</em></a>, <a href="https://ascraeus.org/micro/1525556293/">Daniel Goldsmith's response</a>, and other similar articles for deeper takes on both the legalities and the ethics.</p>
+</li>
+
+<li id="ccpa" class="question">Does Bridgy comply with the CCPA?</li>
+<li class="answer">
+<p>The <a href="https://oag.ca.gov/privacy/ccpa">California Consumer Privacy Act (CCPA)</a> is a sweeping new set of data privacy laws that apply to businesses serving California consumers. It took effect January 1, 2020. None of the <a href="https://oag.ca.gov/system/files/attachments/press_releases/CCPA%20Fact%20Sheet%20%2800000002%29.pdf">CCPA's eligibility criteria</a> apply to Bridgy, so it's currently exempt:</p>
+<ul>
+<li><em>Has gross annual revenues in excess of $25 million;</em><br>(Bridgy has no revenue.)</li>
+<li><em>Buys, receives, or sells the personal information of 50,000 or more consumers, households, or devices;</em><br>(Bridgy doesn't buy, sell, or monetize personal information. It does <em>receive</em> personal information, but not yet over 50k users' worth. Maybe someday!)</li>
+<li><em>Derives 50 percent or more of annual revenues from selling consumers’ personal information.</em><br>(Again, Bridgy doesn't sell or monetize personal information.)</li>
+</ul>
 </li>
 
 <li id="bug" class="question">I found a bug! I have a feature request!</li>
