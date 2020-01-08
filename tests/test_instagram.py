@@ -13,11 +13,16 @@ import requests
 
 import app
 import instagram
-from . import testutil
+from .testutil import ModelsTest, instagram_profile_user
 import util
 
 
-class InstagramTest(testutil.ModelsTest):
+PROFILE_USER = copy.deepcopy(
+  gr_test_instagram.HTML_PROFILE['entry_data']['ProfilePage'][0]['graphql']['user'])
+PROFILE_USER['id'] = '987'
+
+
+class InstagramTest(ModelsTest):
 
   def setUp(self):
     super(InstagramTest, self).setUp()
@@ -108,10 +113,17 @@ class InstagramTest(testutil.ModelsTest):
         'redirect_uri': 'http://localhost/instagram/callback',
       })
 
-  def expect_instagram_fetch(self, body=gr_test_instagram.HTML_PROFILE_COMPLETE,
-                             **kwargs):
+  def expect_instagram_fetch(self, user=PROFILE_USER, **kwargs):
+    html = ''
+    if user:
+      profile = copy.deepcopy(gr_test_instagram.HTML_PROFILE)
+      instagram_profile_user(profile).clear()
+      instagram_profile_user(profile).update(user)
+      html = (gr_test_instagram.HTML_HEADER + json_dumps(profile) +
+              gr_test_instagram.HTML_FOOTER)
+
     return TestCase.expect_requests_get(
-      self, gr_instagram.HTML_BASE_URL + 'snarfed/', body,
+      self, gr_instagram.HTML_BASE_URL + 'snarfed/', html,
       allow_redirects=False, **kwargs)
 
   def expect_webmention_discovery(self):
@@ -151,7 +163,7 @@ class InstagramTest(testutil.ModelsTest):
   def test_signup_no_instagram_profile(self):
     self.expect_site_fetch()
     self.expect_indieauth_check()
-    self.expect_instagram_fetch('', status_code=404)
+    self.expect_instagram_fetch(None, status_code=404)
 
     self.mox.ReplayAll()
     resp = self.callback()
@@ -163,10 +175,9 @@ class InstagramTest(testutil.ModelsTest):
     self.expect_site_fetch()
     self.expect_indieauth_check()
 
-    profile = copy.deepcopy(gr_test_instagram.HTML_PROFILE)
-    del profile['entry_data']['ProfilePage'][0]['graphql']['user']['external_url']
-    self.expect_instagram_fetch(
-      gr_test_instagram.HTML_HEADER + json_dumps(profile) + gr_test_instagram.HTML_FOOTER)
+    user = copy.deepcopy(PROFILE_USER)
+    del user['external_url']
+    self.expect_instagram_fetch(user)
 
     self.mox.ReplayAll()
     resp = self.callback()
@@ -177,7 +188,10 @@ class InstagramTest(testutil.ModelsTest):
   def test_signup_private_account(self):
     self.expect_site_fetch()
     self.expect_indieauth_check()
-    self.expect_instagram_fetch(gr_test_instagram.HTML_PROFILE_PRIVATE_COMPLETE)
+
+    user = copy.deepcopy(PROFILE_USER)
+    user['is_private'] = True
+    self.expect_instagram_fetch(user)
 
     self.mox.ReplayAll()
     resp = self.callback()
@@ -189,11 +203,9 @@ class InstagramTest(testutil.ModelsTest):
     self.expect_site_fetch()
     self.expect_indieauth_check()
 
-    profile = copy.deepcopy(gr_test_instagram.HTML_PROFILE)
-    profile['entry_data']['ProfilePage'][0]['graphql']['user']['biography'] = \
-      'http://a/ https://b'
-    self.expect_instagram_fetch(
-      gr_test_instagram.HTML_HEADER + json_dumps(profile) + gr_test_instagram.HTML_FOOTER)
+    user = copy.deepcopy(PROFILE_USER)
+    user['biography'] = 'http://a/ https://b'
+    self.expect_instagram_fetch(user)
 
     self.expect_webmention_discovery()
 
@@ -216,7 +228,7 @@ class InstagramTest(testutil.ModelsTest):
   def test_signup_instagram_blocks_fetch(self):
     self.expect_site_fetch()
     self.expect_indieauth_check()
-    self.expect_instagram_fetch('', status_code=401)
+    self.expect_instagram_fetch(None, status_code=401)
 
     self.mox.ReplayAll()
     resp = self.callback()

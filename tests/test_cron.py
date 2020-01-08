@@ -19,7 +19,7 @@ from flickr import Flickr
 from instagram import Instagram
 import models
 from . import testutil
-from .testutil import FakeSource, HandlerTest
+from .testutil import FakeSource, HandlerTest, instagram_profile_user
 from twitter import Twitter
 import tasks
 import util
@@ -53,7 +53,7 @@ class CronTest(HandlerTest):
 
   def expect_instagram_profile_fetch(self, username):
     profile = copy.deepcopy(test_instagram.HTML_PROFILE)
-    profile['entry_data']['ProfilePage'][0]['graphql']['user'].update({
+    instagram_profile_user(profile).update({
       'username': username,
       'profile_pic_url': 'http://new/pic',
     })
