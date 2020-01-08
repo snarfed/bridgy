@@ -1,5 +1,5 @@
 # Domains that don't support webmentions. Mainly just the silos.
-# Subdomains are automatically blacklisted too.
+# Subdomains are automatically blocklisted too.
 
 # TLDs
 #

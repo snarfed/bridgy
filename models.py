@@ -552,7 +552,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
         verified.
     """
     author_urls = [u for u, d in zip(self.get_author_urls(), self.domains)
-                   if not util.in_webmention_blacklist(d)]
+                   if not util.in_webmention_blocklist(d)]
     if ((self.verified() and not force) or self.status == 'disabled' or
         not self.features or not author_urls):
       return
@@ -581,7 +581,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
     self.put()
 
   def _urls_and_domains(self, auth_entity, user_url):
-    """Returns this user's valid (not webmention-blacklisted) URLs and domains.
+    """Returns this user's valid (not webmention-blocklisted) URLs and domains.
 
     Converts the auth entity's user_json to an ActivityStreams actor and uses
     its 'urls' and 'url' fields. May be overridden by subclasses.
@@ -616,7 +616,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
     domains = []
     for url in util.dedupe_urls(urls):  # normalizes domains to lower case
       # skip links on this source's domain itself. only currently needed for
-      # Mastodon; the other silo domains are in the webmention blacklist.
+      # Mastodon; the other silo domains are in the webmention blocklist.
       domain = util.domain_from_link(url)
       if domain != self.gr_source.DOMAIN:
         final_urls.append(url)

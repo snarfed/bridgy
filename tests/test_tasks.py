@@ -309,8 +309,8 @@ class PollTest(TaskTest):
     self.post_task()
     self.assert_equals([], self.responses[0].key.get().unsent)
 
-  def test_invalid_and_blacklisted_urls(self):
-    """Target URLs with domains in the blacklist should be ignored.
+  def test_invalid_and_blocklisted_urls(self):
+    """Target URLs with domains in the blocklist should be ignored.
 
     Same with invalid URLs that can't be parsed by urlparse.
     """
@@ -1532,8 +1532,8 @@ class PropagateTest(TaskTest):
     self.post_task()
     self.assert_response_is('complete', sent=['http://target1/post/url'])
 
-  def test_webmention_blacklist(self):
-    """Target URLs with domains in the blacklist should be ignored.
+  def test_webmention_blocklist(self):
+    """Target URLs with domains in the blocklist should be ignored.
 
     TODO: also invalid URLs that can't be parsed by urlparse?
     """

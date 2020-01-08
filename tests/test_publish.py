@@ -1072,8 +1072,8 @@ foo<br /> <blockquote>bar</blockquote>
     self.mox.ReplayAll()
     self.assert_created('')
 
-  def test_expand_target_urls_blacklisted_target(self):
-    """RSVP to a domain in the webmention blacklist should not trigger a fetch.
+  def test_expand_target_urls_blocklisted_target(self):
+    """RSVP to a domain in the webmention blocklist should not trigger a fetch.
     """
     self.mox.StubOutWithMock(self.source.gr_source, 'create',
                              use_mock_anything=True)

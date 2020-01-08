@@ -168,7 +168,7 @@ class UtilTest(testutil.ModelsTest):
     mention._discoverEndpoint()
     self.assertEqual('http://target/endpoint', mention.receiver_endpoint)
 
-  def test_get_webmention_target_blacklisted_urls(self):
+  def test_get_webmention_target_blocklisted_urls(self):
     for resolve in True, False:
       self.assertTrue(util.get_webmention_target(
         'http://good.com/a', resolve=resolve)[2])
@@ -194,8 +194,8 @@ class UtilTest(testutil.ModelsTest):
     self.assert_equals(('https://end', 'end', False),
                        util.get_webmention_target('http://orig', resolve=True))
 
-  def test_get_webmention_middle_redirect_blacklisted(self):
-    """We should allow blacklisted domains in the middle of a redirect chain.
+  def test_get_webmention_middle_redirect_blocklisted(self):
+    """We should allow blocklisted domains in the middle of a redirect chain.
 
     ...e.g. Google's redirector https://www.google.com/url?...
     """
@@ -391,10 +391,10 @@ class UtilTest(testutil.ModelsTest):
     self.assertEqual(200, resp.status_code)
     self.assertEqual('xyz', resp.text)
 
-  def test_requests_get_url_blacklist(self):
+  def test_requests_get_url_blocklist(self):
     resp = util.requests_get(next(iter(util.URL_BLACKLIST)))
     self.assertEqual(util.HTTP_REQUEST_REFUSED_STATUS_CODE, resp.status_code)
-    self.assertEqual('Sorry, Bridgy has blacklisted this URL.', resp.text)
+    self.assertEqual('Sorry, Bridgy has blocklisted this URL.', resp.text)
 
   def test_no_accept_header(self):
     self.assertEqual(util.REQUEST_HEADERS,
@@ -420,12 +420,12 @@ class UtilTest(testutil.ModelsTest):
     self.mox.ReplayAll()
     util.requests_get('http://rhiaro.co.uk/')
 
-  def test_in_webmention_blacklist(self):
+  def test_in_webmention_blocklist(self):
     for bad in 't.co', 'x.t.co', 'x.y.t.co', 'abc.onion':
-      self.assertTrue(util.in_webmention_blacklist(bad), bad)
+      self.assertTrue(util.in_webmention_blocklist(bad), bad)
 
     for good in 'snarfed.org', 'www.snarfed.org', 't.co.com':
-      self.assertFalse(util.in_webmention_blacklist(good), good)
+      self.assertFalse(util.in_webmention_blocklist(good), good)
 
   def test_webmention_endpoint_cache_key(self):
     for expected, url in (

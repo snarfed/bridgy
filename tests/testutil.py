@@ -210,7 +210,7 @@ class FakeSource(Source):
   URL_CANONICALIZER = util.UrlCanonicalizer(
     domain=GR_CLASS.DOMAIN,
     headers=util.REQUEST_HEADERS)
-  PATH_BLACKLIST = (re.compile('^/blacklisted/.*'),)
+  PATH_BLACKLIST = (re.compile('^/blocklisted/.*'),)
   HAS_BLOCKS = True
 
   string_id_counter = 1

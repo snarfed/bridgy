@@ -50,12 +50,12 @@ CONNEG_PATHS = {'/twitter/rhiaro'}
 now_fn = datetime.datetime.now
 
 # Domains that don't support webmentions. Mainly just the silos.
-# Subdomains are automatically blacklisted too.
+# Subdomains are automatically blocklisted too.
 #
 # We also check this when a user sign up and we extract the web site links from
 # their profile. We automatically omit links to these domains.
 _dir = os.path.dirname(__file__)
-with open(os.path.join(_dir, 'domain_blacklist.txt'), 'rt', encoding='utf-8') as f:
+with open(os.path.join(_dir, 'domain_blocklist.txt'), 'rt', encoding='utf-8') as f:
   BLACKLIST = util.load_file_lines(f)
 
 # Individual URLs that we shouldn't fetch. Started because of
@@ -237,7 +237,7 @@ def requests_get(url, **kwargs):
   if url in URL_BLACKLIST:
     resp = requests.Response()
     resp.status_code = HTTP_REQUEST_REFUSED_STATUS_CODE
-    resp._text = 'Sorry, Bridgy has blacklisted this URL.'
+    resp._text = 'Sorry, Bridgy has blocklisted this URL.'
     resp._content = resp._text.encode()
     return resp
 
@@ -283,7 +283,7 @@ def get_webmention_target(url, resolve=True, replace_test_domains=True):
   Returns:
     (string url, string pretty domain, boolean) tuple. The boolean is
     True if we should send a webmention, False otherwise, e.g. if it's a bad
-    URL, not text/html, or in the blacklist.
+    URL, not text/html, or in the blocklist.
   """
   url = util.clean_url(url)
   try:
@@ -303,7 +303,7 @@ def get_webmention_target(url, resolve=True, replace_test_domains=True):
 
   scheme = urllib.parse.urlparse(url).scheme  # require http or https
   send = (send and domain and scheme in ('http', 'https') and
-          not in_webmention_blacklist(domain))
+          not in_webmention_blocklist(domain))
 
   if replace_test_domains:
     url = replace_test_domains_with_localhost(url)
@@ -311,7 +311,7 @@ def get_webmention_target(url, resolve=True, replace_test_domains=True):
   return url, domain, send
 
 
-def in_webmention_blacklist(domain):
+def in_webmention_blocklist(domain):
   """Returns True if the domain or its root domain is in BLACKLIST."""
   return util.domain_or_parent_in(domain.lower(), BLACKLIST)
 

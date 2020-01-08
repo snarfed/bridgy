@@ -228,10 +228,10 @@ X http://FoO.cOm/post/1
     self.assertEqual('failed', bw.status)
     self.assertEqual(html, bw.html)
 
-  def test_target_path_blacklisted(self):
-    bad = 'http://foo.com/blacklisted/1'
+  def test_target_path_blocklisted(self):
+    bad = 'http://foo.com/blocklisted/1'
     self.assert_error(
-      'FakeSource webmentions are not supported for URL path: /blacklisted/1',
+      'FakeSource webmentions are not supported for URL path: /blocklisted/1',
       target=bad, status=202)
     self.assertEqual(0, BlogWebmention.query().count())
 

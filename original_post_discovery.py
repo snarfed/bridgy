@@ -11,7 +11,7 @@ See http://indiewebcamp.com/posse-post-discovery for more detail.
 This feature adds costs in terms of HTTP requests and database
 lookups in the following primary cases:
 
-- Author's domain is known to be invalid or blacklisted, there will
+- Author's domain is known to be invalid or blocklisted, there will
   be 0 requests and 0 DB lookups.
 
 - For a syndicated post has been seen previously (regardless of
@@ -83,7 +83,7 @@ def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True,
     headers=util.request_headers(source=source))
 
   # only include mentions of the author themselves.
-  # (mostly just for Mastodon; other silos' domains are all in the blacklist, so
+  # (mostly just for Mastodon; other silos' domains are all in the blocklist, so
   # their mention URLs get dropped later anyway.)
   # (these are originally added in Source._inject_user_urls() and in poll step 2.)
   obj = activity.get('object', {})

@@ -418,7 +418,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
   def test_invalid_webmention_target(self):
     """Confirm that no additional requests are made if the author url is
     an invalid webmention target. Right now this pretty much just
-    means they're on the blacklist. Eventually we want to filter out
+    means they're on the blocklist. Eventually we want to filter out
     targets that don't have certain features, like a webmention
     endpoint or microformats.
     """

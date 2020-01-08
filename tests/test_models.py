@@ -330,7 +330,7 @@ class SourceTest(testutil.HandlerTest):
 
     # bad URLs
     for user_json in (None, {}, {'url': 'not<a>url'},
-                      # t.co is in the webmention blacklist
+                      # t.co is in the webmention blocklist
                       {'url': 'http://t.co/foo'},
                       # fa.ke is the source's domain
                       {'url': 'http://fa.ke/bar'},
@@ -354,7 +354,7 @@ class SourceTest(testutil.HandlerTest):
       self.assertEqual([url.lower()], source.domain_urls)
       self.assertEqual(['foo.com'], source.domains)
 
-    # multiple good URLs and one that's in the webmention blacklist
+    # multiple good URLs and one that's in the webmention blocklist
     auth_entity = testutil.FakeAuthEntity(id='x', user_json=json_dumps({
           'url': 'http://foo.org',
           'urls': [{'value': u} for u in
@@ -545,7 +545,7 @@ class SourceTest(testutil.HandlerTest):
     source.verify()
     self.assertIsNone(source.webmention_endpoint)
 
-  def test_verify_checks_blacklist(self):
+  def test_verify_checks_blocklist(self):
     self.expect_webmention_requests_get('http://good/', """
 <html><meta>
 <link rel="webmention" href="http://web.ment/ion">

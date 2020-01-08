@@ -81,7 +81,7 @@ class Twitter(models.Source):
     """
     urls = set(util.schemeless(util.fragmentless(url), slashes=False)
                for url in self.domain_urls
-               if not util.in_webmention_blacklist(util.domain_from_link(url)))
+               if not util.in_webmention_blocklist(util.domain_from_link(url)))
     if not urls:
       return []
 

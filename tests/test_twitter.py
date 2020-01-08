@@ -111,7 +111,7 @@ class TwitterTest(testutil.ModelsTest):
         'text': 'a http://bar/baz ok',
       },
     }, {
-      'id_str': '3', # no, link domain is blacklisted
+      'id_str': '3', # no, link domain is blocklisted
       'text': 'x https://t.co/xyz/abc z',
     }, {
       'id_str': '4', # no link
@@ -136,7 +136,7 @@ class TwitterTest(testutil.ModelsTest):
       [a['id'] for a in self.tw.search_for_links()])
 
   def test_search_for_links_no_urls(self):
-    # only a blacklisted domain
+    # only a blocklisted domain
     self.tw.domain_urls = ['https://t.co/xyz']
     self.tw.put()
     self.mox.ReplayAll()
