@@ -68,6 +68,10 @@ class Flickr(models.Source):
     """Returns the tag URI for this source, e.g. 'tag:instagram.com:123456'."""
     return self.gr_source.tag_uri(self.username)
 
+  def label_name(self):
+    """Human-readable name, username, or id for this source."""
+    return self.name or self.username or self.key.string_id()
+
   def get_activities_response(self, *args, **kwargs):
     """Discard min_id because we still want new comments/likes on old photos."""
     kwargs.setdefault('group_id', SELF)

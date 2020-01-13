@@ -127,3 +127,13 @@ class FlickrTest(testutil.ModelsTest):
 
     self.assertIsNone(self.flickr.canonicalize_url(
       'https://login.yahoo.com/config/login?...'))
+
+  def test_label_name(self):
+    # default to name
+    self.assertEqual('Kyle Mahan', self.flickr.label_name())
+    # fall back to username
+    self.flickr.name = None
+    self.assertEqual('kindofblue115', self.flickr.label_name())
+    # final fallback to key id
+    self.flickr.username = None
+    self.assertEqual('39216764@N00', self.flickr.label_name())

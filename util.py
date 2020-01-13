@@ -598,15 +598,12 @@ class Handler(webutil_handlers.ModernHandler):
   def preprocess_source(self, source):
     """Prepares a source entity for rendering in the source.html template.
 
-    - use id as name if name isn't provided
     - convert image URLs to https if we're serving over SSL
     - set 'website_links' attr to list of pretty HTML links to domain_urls
 
     Args:
       source: :class:`models.Source` entity
     """
-    if not source.name:
-      source.name = source.key.string_id()
     if source.picture:
       source.picture = util.update_scheme(source.picture, self)
     source.website_links = [

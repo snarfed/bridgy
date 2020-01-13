@@ -242,7 +242,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
 
   def label_name(self):
     """Human-readable name or username for this source, whichever is preferred."""
-    return self.name
+    return self.name or self.key.string_id()
 
   @classmethod
   @ndb.transactional()
