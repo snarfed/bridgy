@@ -4,7 +4,6 @@ import logging
 from granary import mastodon as gr_mastodon
 from granary import source as gr_source
 import oauth_dropins.mastodon
-from oauth_dropins.webutil import appengine_info
 from oauth_dropins.webutil.handlers import TemplateHandler
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
@@ -13,16 +12,13 @@ import webapp2
 import models
 import util
 
-# https://docs.joinmastodon.org/api/permissions/
+# https://docs.joinmastodon.org/api/oauth-scopes/
 LISTEN_SCOPES = ('read', 'follow')
 PUBLISH_SCOPES = LISTEN_SCOPES + ('write',)
 
 
 class StartHandler(oauth_dropins.mastodon.StartHandler):
   """Abstract base OAuth starter class with our redirect URLs."""
-  APP_NAME = 'Bridgy'
-  APP_URL = (util.HOST_URL if appengine_info.HOST in util.OTHER_DOMAINS
-             else appengine_info.HOST_URL)
   REDIRECT_PATHS = (
     '/mastodon/callback',
     '/publish/mastodon/finish',
@@ -30,11 +26,20 @@ class StartHandler(oauth_dropins.mastodon.StartHandler):
     '/delete/finish',
   )
 
+  def app_name(self):
+    return 'Bridgy'
+
+  def app_url(self):
+    if self.request.host in util.OTHER_DOMAINS:
+      return util.HOST_URL
+
+    return super().app_url()
+
 
 class Mastodon(models.Source):
   """A Mastodon account.
 
-  The key name is the fully qualified address, eg 'snarfed@mastodon.technology'.
+  The key name is the fully qualified address, eg '@snarfed@mastodon.technology'.
   """
   GR_CLASS = gr_mastodon.Mastodon
   OAUTH_START_HANDLER = StartHandler
