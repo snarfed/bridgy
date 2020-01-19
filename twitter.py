@@ -59,11 +59,11 @@ class Twitter(models.Source):
 
   def silo_url(self):
     """Returns the Twitter account URL, e.g. https://twitter.com/foo."""
-    return self.gr_source.user_url(self.key.id())
+    return self.gr_source.user_url(self.key_id())
 
   def label_name(self):
     """Returns the username."""
-    return self.key.id()
+    return self.key_id()
 
   def search_for_links(self):
     """Searches for activities with links to any of this source's web sites.

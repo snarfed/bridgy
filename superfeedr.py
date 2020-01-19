@@ -43,7 +43,7 @@ def subscribe(source, handler):
     'hub.mode': 'subscribe',
     'hub.topic': source.feed_url(),
     'hub.callback': '%s/%s/notify/%s' % (
-      util.host_url(handler), source.SHORT_NAME, source.key.id()),
+      util.host_url(handler), source.SHORT_NAME, source.key_id()),
     # TODO
     # 'hub.secret': 'xxx',
     'format': 'json',
@@ -72,7 +72,7 @@ def handle_feed(feed, source):
     feed: unicode string, Superfeedr JSON feed
     source: Blogger, Tumblr, or WordPress
   """
-  logging.info('Source: %s %s', source.label(), source.key.string_id())
+  logging.info('Source: %s %s', source.label(), source.key_id())
   logging.info('Raw feed: %s', feed)
 
   if source.status != 'enabled':

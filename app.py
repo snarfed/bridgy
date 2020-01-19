@@ -529,7 +529,7 @@ class DeleteFinishHandler(util.Handler):
         self.messages.add('Disabled %s for %s. Sorry to see you go!' %
                           (noun, source.label()))
       # util.email_me(subject='Deleted Bridgy %s user: %s %s' %
-      #               (feature, source.label(), source.key.string_id()),
+      #               (feature, source.label(), source.key_id()),
       #               body=source.bridgy_url(self))
     else:
       if callback:

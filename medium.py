@@ -34,7 +34,7 @@ class Medium(models.Source):
 
 
   def is_publication(self):
-    return not self.key.id().startswith('@')
+    return not self.key_id().startswith('@')
 
   def feed_url(self):
     # https://help.medium.com/hc/en-us/articles/214874118-RSS-Feeds-of-publications-and-profiles
@@ -97,7 +97,7 @@ class Medium(models.Source):
           'imageUrl': 'https://cdn-images-1.medium.com/fit/c/200/200/1*ccokMT4VXmDDO1EoQQHkzg@2x.png'
         }
     """
-    id = self.key.id().lstrip('@')
+    id = self.key_id().lstrip('@')
 
     user = json_loads(auth_entity.user_json).get('data')
     if user.get('username').lstrip('@') == id:

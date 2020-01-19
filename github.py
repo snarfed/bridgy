@@ -67,7 +67,7 @@ class GitHub(Source):
     user = json_loads(auth_entity.user_json)
     gr_source = gr_github.GitHub(access_token=auth_entity.access_token())
     actor = gr_source.user_to_actor(user)
-    return GitHub(id=auth_entity.key.id(),
+    return GitHub(id=auth_entity.key_id(),
                   auth_entity=auth_entity.key,
                   name=actor.get('displayName'),
                   picture=actor.get('image', {}).get('url'),
@@ -76,11 +76,11 @@ class GitHub(Source):
 
   def silo_url(self):
     """Returns the GitHub account URL, e.g. https://github.com/foo."""
-    return self.gr_source.user_url(self.key.id())
+    return self.gr_source.user_url(self.key_id())
 
   def label_name(self):
     """Returns the username."""
-    return self.key.id()
+    return self.key_id()
 
   def get_activities_response(self, *args, **kwargs):
     """Drop kwargs that granary doesn't currently support for github."""

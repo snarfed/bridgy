@@ -224,6 +224,11 @@ class SourceTest(testutil.HandlerTest):
     msg = "Added fake (FakeSource). Refresh in a minute to see what we've found!"
     self.assert_equals({msg}, self.handler.messages)
 
+  def test_escape_key_id(self):
+    s = Source(id='__foo__')
+    self.assert_equals(r'\__foo__', s.key.string_id())
+    self.assert_equals('__foo__', s.key_id())
+
   def test_get_activities_injects_web_site_urls_into_user_mentions(self):
     source = FakeSource.new(None, domain_urls=['http://site1/', 'http://site2/'])
     source.put()

@@ -97,7 +97,7 @@ class WordPress(models.Source):
     Returns:
       ([string url], [string domain])
     """
-    return [self.url], [self.key.id()]
+    return [self.url], [self.key_id()]
 
   def create_comment(self, post_url, author_name, author_url, content):
     """Creates a new comment in the source silo.
@@ -200,7 +200,7 @@ class AddWordPress(oauth_wordpress.CallbackHandler, util.Handler):
         return
       elif site_info.get('jetpack'):
         logging.info('This is a self-hosted WordPress blog! %s %s',
-                     auth_entity.key.id(), auth_entity.blog_id)
+                     auth_entity.key_id(), auth_entity.blog_id)
         self.response.headers['Content-Type'] = 'text/html'
         self.response.out.write(
           JINJA_ENV.get_template('confirm_self_hosted_wordpress.html').render(

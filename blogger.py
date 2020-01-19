@@ -60,7 +60,7 @@ class Blogger(models.Source):
     return self.url
 
   def edit_template_url(self):
-    return 'https://www.blogger.com/blogger.g?blogID=%s#template' % self.key.id()
+    return 'https://www.blogger.com/blogger.g?blogID=%s#template' % self.key_id()
 
   @staticmethod
   def new(handler, auth_entity=None, blog_id=None, **kwargs):
@@ -133,7 +133,7 @@ class Blogger(models.Source):
     # extract the post's path and look up its post id
     path = urllib.parse.urlparse(post_url).path
     logging.info('Looking up post id for %s', path)
-    feed = client.get_posts(self.key.id(), query=Query(path=path))
+    feed = client.get_posts(self.key_id(), query=Query(path=path))
 
     if not feed.entry:
       return self.error('Could not find Blogger post %s' % post_url)

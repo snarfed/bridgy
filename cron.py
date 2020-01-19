@@ -49,7 +49,7 @@ class UpdateTwitterPictures(webapp2.RequestHandler):
   handle_exception = util.background_handle_exception
 
   def get(self):
-    sources = {source.key.id(): source for source in Twitter.query()}
+    sources = {source.key_id(): source for source in Twitter.query()}
     if not sources:
       return
 
@@ -95,7 +95,7 @@ class UpdatePictures(webapp2.RequestHandler):
                     source.bridgy_url(self))
       if source.features and source.status != 'disabled':
         updated = maybe_update_picture(
-          source, source.gr_source.get_actor(source.key.id()), self)
+          source, source.gr_source.get_actor(source.key_id()), self)
 
     if updated:
       util.CachedPage.invalidate('/users')

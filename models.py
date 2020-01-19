@@ -175,6 +175,17 @@ class Source(StringIdModel, metaclass=SourceMeta):
   # gr_source is *not* set to None by default here, since it needs to be unset
   # for __getattr__ to run when it's accessed.
 
+  def __init__(self, *args, id=None, **kwargs):
+    """Constructor. Escapes the key string id if it starts with `__`."""
+    if id and id.startswith('__'):
+      id = '\\' + id
+    super().__init__(*args, id=id, **kwargs)
+
+  def key_id(self):
+    """Returns the key's unescaped string id."""
+    id = self.key.id()
+    return id[1:] if id[0] == '\\' else id
+
   @classmethod
   def new(cls, handler, **kwargs):
     """Factory method. Creates and returns a new instance for the current user.
@@ -197,14 +208,14 @@ class Source(StringIdModel, metaclass=SourceMeta):
 
       kwargs = {}
       if self.key.kind() == 'FacebookPage' and auth_entity.type == 'user':
-        kwargs = {'user_id': self.key.id()}
+        kwargs = {'user_id': self.key_id()}
       elif self.key.kind() == 'Instagram':
         kwargs = {'scrape': True, 'cookie': INSTAGRAM_SESSIONID_COOKIE}
       elif self.key.kind() == 'Mastodon':
         args = (auth_entity.instance(),) + args
         kwargs = {'user_id': json_loads(auth_entity.user_json).get('id')}
       elif self.key.kind() == 'Twitter':
-        kwargs = {'username': self.key.id()}
+        kwargs = {'username': self.key_id()}
 
       self.gr_source = self.GR_CLASS(*args, **kwargs)
       return self.gr_source
@@ -218,15 +229,17 @@ class Source(StringIdModel, metaclass=SourceMeta):
     By default, interprets id as just the key id. Subclasses may extend this to
     support usernames, etc.
     """
+    if id and id.startswith('__'):
+      id = '\\' + id
     return ndb.Key(cls, id).get()
 
   def user_tag_id(self):
     """Returns the tag URI for this source, e.g. 'tag:plus.google.com:123456'."""
-    return self.gr_source.tag_uri(self.key.id())
+    return self.gr_source.tag_uri(self.key_id())
 
   def bridgy_path(self):
     """Returns the Bridgy page URL path for this source."""
-    return '/%s/%s' % (self.SHORT_NAME, self.key.string_id())
+    return '/%s/%s' % (self.SHORT_NAME, self.key_id())
 
   def bridgy_url(self, handler):
     """Returns the Bridgy page URL for this source."""
@@ -242,7 +255,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
 
   def label_name(self):
     """Human-readable name or username for this source, whichever is preferred."""
-    return self.name or self.key.string_id()
+    return self.name or self.key_id()
 
   @classmethod
   @ndb.transactional()
@@ -448,7 +461,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
     source = kwargs.pop('source', None)
     if source:
       form_extra += ('\n<input name="id" type="hidden" value="%s" />' %
-                     source.key.id())
+                     source.key_id())
 
     return cls.OAUTH_START_HANDLER.button_html(
       '/%s/start' % cls.SHORT_NAME,
@@ -683,7 +696,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
       return url
     user = self.__class__.query(self.__class__.domains == domain).get()
     if user:
-      return self.gr_source.user_url(user.key.id())
+      return self.gr_source.user_url(user.key_id())
 
   def preprocess_for_publish(self, obj):
     """Preprocess an object before trying to publish it.

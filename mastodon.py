@@ -71,7 +71,7 @@ class Mastodon(models.Source):
       kwargs: property values
     """
     user = json_loads(auth_entity.user_json)
-    return Mastodon(id=auth_entity.key.id(),
+    return Mastodon(id=auth_entity.key_id(),
                     auth_entity=auth_entity.key,
                     url=user.get('url'),
                     name=user.get('display_name') or user.get('username'),
@@ -87,8 +87,8 @@ class Mastodon(models.Source):
     return self._split_address()[1]
 
   def _split_address(self):
-    split = self.key.id().split('@')
-    assert len(split) == 3 and split[0] == '', self.key.id()
+    split = self.key_id().split('@')
+    assert len(split) == 3 and split[0] == '', self.key_id()
     return split[1], split[2]
 
   def user_tag_id(self):
@@ -101,7 +101,7 @@ class Mastodon(models.Source):
 
   def label_name(self):
     """Returns the username."""
-    return self.key.id()
+    return self.key_id()
 
   @classmethod
   def button_html(cls, feature, **kwargs):

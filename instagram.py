@@ -88,11 +88,11 @@ class Instagram(Source):
     """Returns the tag URI for this source, e.g. 'tag:instagram.com:123456'."""
     user = json_loads(self.auth_entity.get().user_json)
     return (user.get('actor', {}).get('id') or
-            self.gr_source.tag_uri(user.get('id') or self.key.id()))
+            self.gr_source.tag_uri(user.get('id') or self.key_id()))
 
   def label_name(self):
     """Returns the username."""
-    return self.key.id()
+    return self.key_id()
 
   @classmethod
   def button_html(cls, feature, **kwargs):
@@ -101,7 +101,7 @@ class Instagram(Source):
   def get_activities_response(self, *args, **kwargs):
     """Set user_id because scraping requires it."""
     kwargs.setdefault('group_id', gr_source.SELF)
-    kwargs.setdefault('user_id', self.key.id())
+    kwargs.setdefault('user_id', self.key_id())
     return self.gr_source.get_activities_response(*args, **kwargs)
 
 

@@ -63,7 +63,7 @@ class Poll(webapp2.RequestHandler):
     if not source or source.status == 'disabled' or 'listen' not in source.features:
       logging.error('Source not found or disabled. Dropping task.')
       return
-    logging.info('Source: %s %s, %s', source.label(), source.key.string_id(),
+    logging.info('Source: %s %s, %s', source.label(), source.key_id(),
                  source.bridgy_url(self))
 
     last_polled = self.request.params['last_polled']
@@ -479,7 +479,7 @@ class Discover(Poll):
     if not source or source.status == 'disabled' or 'listen' not in source.features:
       logging.error('Source not found or disabled. Dropping task.')
       return
-    logging.info('Source: %s %s, %s', source.label(), source.key.string_id(),
+    logging.info('Source: %s %s, %s', source.label(), source.key_id(),
                  source.bridgy_url(self))
 
     post_id = util.get_required_param(self, 'post_id')
@@ -490,7 +490,7 @@ class Discover(Poll):
     else:
       activities = source.get_activities(
         fetch_replies=True, fetch_likes=True, fetch_shares=True,
-        activity_id=post_id, user_id=source.key.id())
+        activity_id=post_id, user_id=source.key_id())
 
     if not activities or not activities[0]:
       logging.info('Post %s not found.', post_id)
@@ -753,7 +753,7 @@ class PropagateResponse(SendWebmentions):
     if not source:
       logging.warning('Source not found! Dropping response.')
       return
-    logging.info('Source: %s %s, %s', source.label(), source.key.string_id(),
+    logging.info('Source: %s %s, %s', source.label(), source.key_id(),
                  source.bridgy_url(self))
     poll_estimate = self.entity.created - datetime.timedelta(seconds=61)
     logging.info('Created by this poll: %s/%s', util.host_url(self),

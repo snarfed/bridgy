@@ -70,7 +70,7 @@ class Flickr(models.Source):
 
   def label_name(self):
     """Human-readable name, username, or id for this source."""
-    return self.name or self.username or self.key.string_id()
+    return self.name or self.username or self.key_id()
 
   def get_activities_response(self, *args, **kwargs):
     """Discard min_id because we still want new comments/likes on old photos."""
@@ -84,9 +84,9 @@ class Flickr(models.Source):
       url = url + '/'
     if self.username:
       url = url.replace('flickr.com/photos/%s/' % self.username,
-                        'flickr.com/photos/%s/' % self.key.id())
+                        'flickr.com/photos/%s/' % self.key_id())
       url = url.replace('flickr.com/people/%s/' % self.username,
-                        'flickr.com/people/%s/' % self.key.id())
+                        'flickr.com/people/%s/' % self.key_id())
     return super(Flickr, self).canonicalize_url(url, **kwargs)
 
 

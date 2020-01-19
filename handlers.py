@@ -114,7 +114,7 @@ class ItemHandler(util.Handler):
     """
     try:
       posts = self.source.get_activities(
-          activity_id=id, user_id=self.source.key.id(), **kwargs)
+          activity_id=id, user_id=self.source.key_id(), **kwargs)
       if posts:
         return posts[0]
       logging.warning('Source post %s not found', id)
@@ -233,7 +233,7 @@ class PostHandler(ItemHandler):
   cache = TTLCache(100, CACHE_TIME)
   @cachedmethod(lambda self: self.cache)
   def get_item(self, id):
-    posts = self.source.get_activities(activity_id=id, user_id=self.source.key.id())
+    posts = self.source.get_activities(activity_id=id, user_id=self.source.key_id())
     if not posts:
       return None
 
@@ -252,7 +252,7 @@ class CommentHandler(ItemHandler):
   def get_item(self, post_id, id):
     post = self.get_post(post_id, fetch_replies=True)
     cmt = self.source.get_comment(
-      id, activity_id=post_id, activity_author_id=self.source.key.id(),
+      id, activity_id=post_id, activity_author_id=self.source.key_id(),
       activity=post)
     if post:
       originals, mentions = original_post_discovery.discover(
@@ -267,7 +267,7 @@ class LikeHandler(ItemHandler):
   @cachedmethod(lambda self: self.cache)
   def get_item(self, post_id, user_id):
     post = self.get_post(post_id, fetch_likes=True)
-    like = self.source.get_like(self.source.key.string_id(), post_id, user_id,
+    like = self.source.get_like(self.source.key_id(), post_id, user_id,
                                 activity=post)
     if post:
       originals, mentions = original_post_discovery.discover(
@@ -296,7 +296,7 @@ class ReactionHandler(ItemHandler):
   def get_item(self, post_id, user_id, reaction_id):
     post = self.get_post(post_id)
     reaction = self.source.gr_source.get_reaction(
-      self.source.key.string_id(), post_id, user_id, reaction_id, activity=post)
+      self.source.key_id(), post_id, user_id, reaction_id, activity=post)
     if post:
       originals, mentions = original_post_discovery.discover(
         self.source, post, fetch_hfeed=False)
@@ -310,7 +310,7 @@ class RepostHandler(ItemHandler):
   def get_item(self, post_id, share_id):
     post = self.get_post(post_id, fetch_shares=True)
     repost = self.source.gr_source.get_share(
-      self.source.key.string_id(), post_id, share_id, activity=post)
+      self.source.key_id(), post_id, share_id, activity=post)
     # webmention receivers don't want to see their own post in their
     # comments, so remove attachments before rendering.
     if repost and 'attachments' in repost:
@@ -328,7 +328,7 @@ class RsvpHandler(ItemHandler):
   def get_item(self, event_id, user_id):
     event = self.source.gr_source.get_event(event_id)
     rsvp = self.source.gr_source.get_rsvp(
-      self.source.key.string_id(), event_id, user_id, event=event)
+      self.source.key_id(), event_id, user_id, event=event)
     if event:
       originals, mentions = original_post_discovery.discover(
         self.source, event, fetch_hfeed=False)
