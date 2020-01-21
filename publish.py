@@ -266,9 +266,10 @@ class Handler(webmention.WebmentionHandler):
       if types:
         msg = ("%s doesn't support type(s) %s, or no content was found." %
                (source_cls.GR_CLASS.NAME, ' + '.join(types)))
+        return self.error(msg, data=mf2)
       else:
         msg = 'Could not find content in <a href="http://microformats.org/wiki/h-entry">h-entry</a> or any other element!'
-      return self.error(msg, data=mf2)
+        return self.error(msg, html=msg, data=mf2)
 
     # write results to datastore, but don't overwrite a previous publish with a
     # preview.
@@ -291,9 +292,8 @@ class Handler(webmention.WebmentionHandler):
     domain = domain.lower()
     sources = source_cls.query().filter(source_cls.domains == domain).fetch(100)
     if not sources:
-      self.error("Could not find <b>%(type)s</b> account for <b>%(domain)s</b>. Check that your %(type)s profile has %(domain)s in its <em>web site</em> or <em>link</em> field, then try signing up again." %
-        {'type': source_cls.GR_CLASS.NAME, 'domain': domain})
-      return
+      msg = "Could not find <b>%(type)s</b> account for <b>%(domain)s</b>. Check that your %(type)s profile has %(domain)s in its <em>web site</em> or <em>link</em> field, then try signing up again." % {'type': source_cls.GR_CLASS.NAME, 'domain': domain}
+      return self.error(msg, html=msg)
 
     current_url = ''
     sources_ready = []
@@ -316,12 +316,12 @@ class Handler(webmention.WebmentionHandler):
 
     if best_match:
       return best_match
-    elif sources_ready:
-      self.error(
-        'No account found that matches %s. Check that <a href="%s/about#profile-link">the web site URL is in your silo profile</a>, then <a href="%s/">sign up again</a>.' %
-        (self.request.host_url, util.pretty_link(url), self.request.host_url))
+
+    if sources_ready:
+      msg = 'No account found that matches %s. Check that <a href="%s/about#profile-link">the web site URL is in your silo profile</a>, then <a href="%s/">sign up again</a>.' % (self.request.host_url, util.pretty_link(url), self.request.host_url)
     else:
-      self.error('Publish is not enabled for your account. <a href="%s/">Try signing up!</a>' % self.request.host_url)
+      msg = 'Publish is not enabled for your account. <a href="%s/">Try signing up!</a>' % self.request.host_url
+    return self.error(msg, html=msg)
 
   def attempt_single_item(self, item):
     """Attempts to preview or publish a single mf2 item.
@@ -592,8 +592,8 @@ class PreviewHandler(Handler):
   def authorize(self):
     from_source = self.load_source()
     if from_source.key != self.source.key:
-      self.error('Try publishing that page from <a href="%s">%s</a> instead.' %
-                 (self.source.bridgy_path(), self.source.label()))
+      msg = 'Try publishing that page from <a href="%s">%s</a> instead.' % (self.source.bridgy_path(), self.source.label())
+      self.error(msg, html=msg)
       return False
 
     return True
