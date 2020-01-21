@@ -12,6 +12,17 @@ indexes:
   - name: "source"
   - name: "updated"
     direction: desc
+- kind: "Publish"
+  properties:
+  - name: "source"
+  - name: "updated"
+    direction: desc
+- kind: "Publish"
+  ancestor: yes
+  properties:
+  - name: "source"
+  - name: "status"
+  - name: "type"
 - kind: "BlogPost"
   properties:
   - name: "source"
@@ -44,17 +55,6 @@ indexes:
   properties:
   - name: "status"
   - name: "features"
-- kind: "Publish"
-  properties:
-  - name: "source"
-  - name: "updated"
-    direction: desc
-- kind: "Publish"
-  ancestor: yes
-  properties:
-  - name: "source"
-  - name: "status"
-  - name: "type"
 - kind: "Publish"
   ancestor: yes
   properties:

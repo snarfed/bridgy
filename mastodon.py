@@ -13,8 +13,17 @@ import models
 import util
 
 # https://docs.joinmastodon.org/api/oauth-scopes/
-LISTEN_SCOPES = ('read', 'follow')
-PUBLISH_SCOPES = LISTEN_SCOPES + ('write',)
+LISTEN_SCOPES = (
+  'read:accounts',
+  'read:blocks',
+  'read:search',
+  #  read:statuses is only needed for private statuses, not public
+)
+PUBLISH_SCOPES = LISTEN_SCOPES + (
+  'write:statuses',
+  'write:favourites',
+  'write:media',
+)
 
 
 class StartHandler(oauth_dropins.mastodon.StartHandler):
