@@ -13,7 +13,7 @@ from oauth_dropins import indieauth
 from oauth_dropins.webutil import appengine_info
 from oauth_dropins.webutil import handlers as webutil_handlers
 from oauth_dropins.webutil.appengine_config import ndb_client
-from oauth_dropins.webutil.logs import LogHandler
+from oauth_dropins.webutil import logs
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import webapp2
 
@@ -228,6 +228,7 @@ class UserHandler(DashboardHandler):
     vars.update({
       'source': self.source,
       'sources': models.sources,
+      'logs': logs,
       'EPOCH': util.EPOCH,
       'REFETCH_HFEED_TRIGGER': models.REFETCH_HFEED_TRIGGER,
       'RECENT_PRIVATE_POSTS_THRESHOLD': RECENT_PRIVATE_POSTS_THRESHOLD,
@@ -746,7 +747,7 @@ routes += [
   ('/edit-websites', EditWebsites),
   ('/logout', LogoutHandler),
   ('/csp-report', CspReportHandler),
-  ('/log', LogHandler),
+  ('/log', logs.LogHandler),
   ('/_ah/(start|stop|warmup)', util.NoopHandler),
 ]
 

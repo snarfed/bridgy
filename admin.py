@@ -11,6 +11,7 @@ from models import BlogPost, Response, Source
 import util
 
 from google.cloud import ndb
+from oauth_dropins.webutil import logs
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import webapp2
 
@@ -47,7 +48,7 @@ class ResponsesHandler(handlers.TemplateHandler):
         entities.append(e)
 
     entities.sort(key=lambda e: (e.source, e.activities, e.response))
-    return {'responses': entities}
+    return {'responses': entities, 'logs': logs}
 
 
 class SourcesHandler(handlers.TemplateHandler):
