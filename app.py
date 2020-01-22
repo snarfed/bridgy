@@ -161,7 +161,7 @@ class UsersHandler(CachedPageHandler):
   sort lexicographically before lower case letters. An alternative would be to
   store a lower cased version of the name in another property and query on that.
   """
-  PAGE_SIZE = 100
+  PAGE_SIZE = 50
 
   @util.canonicalize_domain
   def get(self):
