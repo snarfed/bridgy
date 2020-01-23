@@ -8,8 +8,8 @@ runtime: python37
 entrypoint: gunicorn --workers 1 --timeout 600 -b :$PORT tasks:application
 
 instance_class: B1
-basic_scaling:
-  max_instances: 1
+manual_scaling:
+  instances: 1
 
 handlers:
 

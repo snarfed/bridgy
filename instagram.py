@@ -137,6 +137,11 @@ class CallbackHandler(indieauth.CallbackHandler, util.Handler):
           username = urllib.parse.urlparse(url).path.strip('/')
           break
       else:
+        # TODO: detect when the actual error is that we couldn't fetch their
+        # home page. when that happens, IndieAuth currently logs a warning and
+        # stores user_json with just 'me', which we can't really distinguish
+        # from a successful fetch with no rel links or representative h-card.
+        # https://indiewebcamp.slack.com/archives/C1PA11USK/p1579284622006700
         self.messages.add(
           'No Instagram profile found. Please <a href="https://indieauth.com/setup">add an Instagram rel-me link</a>, then try again.')
         return self.redirect('/')
