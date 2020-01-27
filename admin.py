@@ -47,7 +47,6 @@ class ResponsesHandler(handlers.TemplateHandler):
 
         entities.append(e)
 
-    entities.sort(key=lambda e: (e.source, e.activities, e.response))
     return {'responses': entities, 'logs': logs}
 
 
