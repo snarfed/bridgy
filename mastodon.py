@@ -16,8 +16,9 @@ import util
 LISTEN_SCOPES = (
   'read:accounts',
   'read:blocks',
+  'read:notifications',
   'read:search',
-  #  read:statuses is only needed for private statuses, not public
+  'read:statuses',
 )
 PUBLISH_SCOPES = LISTEN_SCOPES + (
   'write:statuses',
