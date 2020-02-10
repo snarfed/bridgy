@@ -13,6 +13,7 @@ import urllib.request, urllib.parse, urllib.error
 from google.cloud import ndb
 from granary import microformats2
 from granary import source as gr_source
+import grpc
 from oauth_dropins import (
   flickr as oauth_flickr,
   github as oauth_github,
@@ -185,6 +186,9 @@ class Handler(webmention.WebmentionHandler):
     # done with the sanity checks, ready to fetch the source url. create the
     # Publish entity so we can store the result.
     self.entity = self.get_or_add_publish_entity(url)
+    if not self.entity:
+      return None
+
     try:
       resp = self.fetch_mf2(url, raise_errors=True)
     except BaseException as e:
@@ -408,6 +412,9 @@ class Handler(webmention.WebmentionHandler):
       dict response data with at least id and url
     """
     self.entity = self.get_or_add_publish_entity(source_url)
+    if not self.entity:
+      return None
+
     if ((self.entity.status != 'complete' or self.entity.type == 'preview') and
         not appengine_info.LOCAL):
       return self.error("Can't delete this post from %s because Bridgy Publish didn't originally POSSE it there" % self.source.gr_source.NAME)
@@ -527,7 +534,6 @@ class Handler(webmention.WebmentionHandler):
 
       activity[field] = augmented
 
-  @ndb.transactional()
   def get_or_add_publish_entity(self, source_url):
     """Creates and stores :class:`models.Publish` entity.
 
@@ -536,6 +542,20 @@ class Handler(webmention.WebmentionHandler):
     Args:
       source_url: string
     """
+    try:
+      return self._get_or_add_publish_entity(source_url)
+    except Exception as e:
+      code = getattr(e, 'code', None)
+      details = getattr(e, 'details', None)
+      logging.info((code(), details()))
+      if (code and code() == grpc.StatusCode.ABORTED and
+          details and 'too much contention' in details()):
+        return self.error("You're already publishing that post in another request.",
+                          status=429)
+      raise
+
+  @ndb.transactional()
+  def _get_or_add_publish_entity(self, source_url):
     page = PublishedPage.get_or_insert(source_url)
     entity = Publish.query(
       Publish.status == 'complete', Publish.type != 'preview',

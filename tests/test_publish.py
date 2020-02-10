@@ -6,6 +6,7 @@ import urllib.request, urllib.parse, urllib.error
 
 
 from granary import source as gr_source
+import grpc
 from mox3 import mox
 from oauth_dropins.webutil.appengine_config import error_reporting_client
 from oauth_dropins.webutil.testutil import requests_response
@@ -241,6 +242,23 @@ class PublishTest(testutil.HandlerTest):
     resp = self.assert_response('', status=302, interactive=True)
     self.assertIn("Sorry, you've already published that page",
                   urllib.parse.unquote_plus(resp.headers['Location']))
+
+  def test_publish_entity_too_much_contention(self):
+    self.mox.StubOutWithMock(publish.Handler, '_get_or_add_publish_entity',
+                             use_mock_anything=True)
+
+    class GrpcError(Exception):
+      def code(self):
+        return grpc.StatusCode.ABORTED
+      def details(self):
+        return 'too much contention on these datastore entities...'
+
+    publish.Handler._get_or_add_publish_entity('http://foo.com/bar'
+        ).AndRaise(GrpcError())
+
+    self.mox.ReplayAll()
+    self.assert_error("You're already publishing that post in another request.",
+                      status=429)
 
   def test_already_published_then_preview_feed_with_no_items(self):
     page = PublishedPage(id='http://foo.com/bar')
