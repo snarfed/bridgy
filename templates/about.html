@@ -977,7 +977,7 @@ I have something to say about this:
 
 <li id="github-reaction" class="question">How do I post an emoji reaction on a GitHub issue, PR, or comment?</li>
 <li class="answer">
-<p><a href="#github-issue-comment">Post a comment</a> where the content is 👍, 👎, 😆, 😕, ❤️, or 🎉. For example:</p>
+<p><a href="#github-issue-comment">Post a comment</a> where the content is 👍, 👎, 😆, 😕, ❤️, 🎉, 🚀, or 👀. For example:</p>
 <pre>&lt;div class="<span class='keyword'>h-entry</span>"&gt;
   &lt;a class="<span class='keyword'>u-in-reply-to</span>" href="<a href='https://github.com/snarfed/bridgy/issues/333'>https://github.com/snarfed/bridgy/issues/333</a>"&gt;Regarding bridgy#333:&lt;/a&gt;
   &lt;p class="<span class='keyword'>e-content</span>"&gt;<span class='value'>😆</span>&lt;/p&gt;
@@ -985,6 +985,19 @@ I have something to say about this:
 </pre>
 <p><a href="https://help.github.com/articles/about-conversations-on-github/#reacting-to-ideas-in-comments">More details.</a> The indieweb community also calls these <a href="https://indieweb.org/reacji">reacji</a>.
 </li>
+
+<li id="github-respond-to-comment" class="question">How do I respond to a GitHub comment in particular?</li>
+<li class="answer">
+<p>You may respond with a comment or reacji to a comment on a GitHub issue (but not to a comment on a pull request) 
+   by using an <code>u-in-reply-to</code> link to the specific comment permalink including its fragment. For example:</p>
+<pre>&lt;div class="<span class='keyword'>h-entry</span>"&gt;
+  &lt;a class="<span class='keyword'>u-in-reply-to</span>" href="<a href='https://github.com/snarfed/bridgy/issues/803#issuecomment-404736702'>https://github.com/snarfed/bridgy/issues/803#issuecomment-404736702</a>"&gt;Regarding comment on #803:&lt;/a&gt;
+  &lt;p class="<span class='keyword'>e-content</span>"&gt;<span class='value'>👀</span>&lt;/p&gt;
+&lt;/div&gt;
+</pre>
+</li>
+
+
 
 <li id="add-label" class="question">How do I add a label to a GitHub issue?</li>
 <li class="answer">
