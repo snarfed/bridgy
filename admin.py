@@ -68,6 +68,7 @@ class SourcesHandler(handlers.TemplateHandler):
                for cls in CLASSES]
     return {
       'sources': itertools.chain(*[q.get_result() for q in queries]),
+      'logs': logs,
     }
 
 
