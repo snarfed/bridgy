@@ -85,6 +85,8 @@ class Source(StringIdModel, metaclass=SourceMeta):
   GR_CLASS = None
   # oauth-dropins StartHandler class
   OAUTH_START_HANDLER = None
+  # whether Bridgy supports listen for this silo - this is unlikely, so we default to True
+  CAN_LISTEN = True
   # whether Bridgy supports publish for this silo
   CAN_PUBLISH = None
   # how often to poll for responses

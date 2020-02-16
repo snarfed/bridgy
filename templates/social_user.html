@@ -56,6 +56,7 @@ WordPress.com, <a href="/">sign up here!</a>
 
 <div class="row">
 
+{% if source.CAN_LISTEN %}
 <!-- Listen UI -->
 <div id="listen-ui" class="{% if source.CAN_PUBLISH %}col-sm-6{% endif %}">
 
@@ -179,10 +180,11 @@ Click to enable <a href="/about#listen">listening</a>:
 {% endif %}
 
 </div>
+{% endif %}
 
 
 <!-- Publish UI -->
-<div id="publish-ui" class="col-sm-6">
+<div id="publish-ui" class="{% if source.CAN_LISTEN %}col-sm-6{% endif %}">
 
 {% if "publish" in source.features and source.status != "disabled" %}
 <data class="p-bridgy-publish-status" value="enabled">
@@ -329,7 +331,7 @@ Click to enable <a href="/about#listen">listening</a>:
   {% endfor %}
 </ul>
 
-{% else %}
+{% elif source.CAN_LISTEN %}
 <p class="big">No responses.</p>
 {% endif %}
 
