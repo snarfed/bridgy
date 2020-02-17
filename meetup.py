@@ -63,7 +63,7 @@ class AddMeetup(oauth_meetup.CallbackHandler, util.Handler):
 
 ROUTES = [
   ('/meetup/start', util.oauth_starter(oauth_meetup.StartHandler).to(
-    '/meetup/add', scopes=LISTEN_SCOPES)),
+    '/meetup/add', scopes=PUBLISH_SCOPES)), # we don't support listen
   ('/meetup/add', AddMeetup),
   ('/meetup/delete/finish', oauth_meetup.CallbackHandler.to('/delete/finish')),
   ('/meetup/publish/start', oauth_meetup.StartHandler.to(
