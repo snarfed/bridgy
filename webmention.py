@@ -43,7 +43,7 @@ class WebmentionHandler(WebmentionGetHandler):
   source = None
   entity = None
 
-  def fetch_mf2(self, url, require_mf2=True, raise_errors=False):
+  def fetch_mf2(self, url, id=None, require_mf2=True, raise_errors=False):
     """Fetches a URL and extracts its mf2 data.
 
     Side effects: sets :attr:`entity`\ .html on success, calls :attr:`error()`
@@ -51,6 +51,8 @@ class WebmentionHandler(WebmentionGetHandler):
 
     Args:
       url: string
+      id: string, optional id of specific element to extract and parse. defaults
+        to the whole page.
       require_mf2: boolean, whether to return error if no mf2 are found
       raise_errors: boolean, whether to let error exceptions propagate up or
         handle them
@@ -72,6 +74,12 @@ class WebmentionHandler(WebmentionGetHandler):
 
     # parse microformats
     soup = util.parse_html(resp)
+    if id:
+      logging.info('Extracting and parsing just DOM element %s', id)
+      soup = soup.find(id=id)
+      if not soup:
+        return self.error('Got fragment %s but no element found with that id.' % id)
+
     mf2 = util.parse_mf2(soup, resp.url)
 
     # special case tumblr's markup: div#content > div.post > div.copy
@@ -108,7 +116,7 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
 
     return resp, mf2
 
-  def error(self, error, html=None, status=400, data=None, log_exception=True,
+  def error(self, error, html=None, status=400, data=None, log_exception=False,
             report=False, extra_json=None):
     """Handle an error. May be overridden by subclasses.
 

@@ -107,8 +107,8 @@ service.</a>
 <li><a href="#github-star">How do I star a GitHub repo?</a></li>
 <li><a href="#meetup-rsvp">How do I RSVP to an event on Meetup?</a></li>
 <li><a href="#omit-link">Can I disable the link back to my post?</a></li>
-<li><a href="#ignore-formatting">Can I disable the plain text whitespace and
-  formatting?</a></li>
+<li><a href="#ignore-formatting">Can I disable the plain text whitespace and formatting?</a></li>
+<li><a href="#fragment">Can I publish just one part of a page?</a></li>
 <li><a href="#silo-content">I want more control over the text that gets posted.</li>
 <li><a href="#multiple-types">What if my original post does more than one thing?</li>
 <li><a href="#short-link">Can I include a short link instead of the full link?</a></li>
@@ -910,7 +910,7 @@ tag. For example:
 <li id="person-tag" class="question">How do I tag someone in a post?</li>
 <li class="answer">
 <p>
-Flickr supports tagging people in posts, photos, and checkins. Just include a <a href="https://indieweb.org/person-tag">person tag link</a> to their silo profile with <code>&lt;a class="u-category h-card"></code>. For example:
+Flickr supports tagging people in posts, photos, and checkins. Just include a <a href="https://indieweb.org/person-tag">person tag link</a> to their silo profile with <code>&lt;a class="u-category h-card"&gt;</code>. For example:
 
 <pre>
 &lt;a class="<span class='keyword'>u-category h-card</span>" href="<span class='value'>https://www.flickr.com/people/40721178@N00/</span>"&gt;
@@ -1063,6 +1063,16 @@ whitespace when publishing it as plain text. You can disable this by adding the
 query parameter <code>bridgy_ignore_formatting=true</code> to your webmention
 HTTP request or <a href="#publish-backlink">Bridgy Publish backlink</a>, or by
 adding the <code>u-bridgy-ignore-formatting</code> class to a link in your post.
+</li>
+
+<li id="fragment" class="question">Can I publish just one part of a page?</li>
+<li class="answer">
+<p>If that HTML element has its own id, then sure! Just put the id in the fragment of the URL that you publish. For example, to publish the <code>bar</code> post here:</p>
+<pre>&lt;div id="<span class='value'>a</span>" class="<span class='keyword'>h-entry</span>"&gt;<span class='value'>foo</span>&lt;/div&gt;
+&lt;div id="<span class='value'>b</span>" class="<span class='keyword'>h-entry</span>"&gt;<span class='value'>bar</span>&lt;/div&gt;
+&lt;div id="<span class='value'>c</span>" class="<span class='keyword'>h-entry</span>"&gt;<span class='value'>baz</span>&lt;/div&gt;
+</pre>
+<p>...just add the id to your page's URL in a fragment, e.g. <code>http://site/post#b</code> here.</p>
 </li>
 
 <li id="silo-content" class="question">I want more control over the text

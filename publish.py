@@ -153,20 +153,21 @@ class Handler(webmention.WebmentionHandler):
                         source_cls.GR_CLASS.NAME)
 
     # resolve source URL
-    url, domain, ok = util.get_webmention_target(
-      self.source_url(), replace_test_domains=False)
+    source_url = self.source_url()
+    resolved_url, domain, ok = util.get_webmention_target(
+      source_url, replace_test_domains=False)
     # show nice error message if they're trying to publish a silo post
     if domain in SOURCE_DOMAINS:
       return self.error(
         "Looks like that's a %s URL. Try one from your web site instead!" %
         SOURCE_DOMAINS[domain].GR_CLASS.NAME)
     elif not ok:
-      return self.error('Unsupported source URL %s' % url)
+      return self.error('Unsupported source URL %s' % resolved_url)
     elif not domain:
-      return self.error('Could not parse source URL %s' % url)
+      return self.error('Could not parse source URL %s' % resolved_url)
 
     # look up source by domain
-    self.source = self._find_source(source_cls, url, domain)
+    self.source = self._find_source(source_cls, resolved_url, domain)
     if not self.source:
       return  # _find_source rendered the error
 
@@ -177,8 +178,8 @@ class Handler(webmention.WebmentionHandler):
     # show nice error message if they're trying to publish their home page
     for domain_url in self.source.domain_urls:
       domain_url_parts = urllib.parse.urlparse(domain_url)
-      for source_url in url, self.source_url():
-        parts = urllib.parse.urlparse(source_url)
+      for check_url in resolved_url, source_url:
+        parts = urllib.parse.urlparse(check_url)
         if (parts.netloc == domain_url_parts.netloc and
             parts.path.strip('/') == domain_url_parts.path.strip('/') and
             not parts.query):
@@ -187,17 +188,18 @@ class Handler(webmention.WebmentionHandler):
 
     # done with the sanity checks, ready to fetch the source url. create the
     # Publish entity so we can store the result.
-    self.entity = self.get_or_add_publish_entity(url)
+    self.entity = self.get_or_add_publish_entity(resolved_url)
     if not self.entity:
       return None
 
+    fragment = urllib.parse.urlparse(source_url).fragment
     try:
-      resp = self.fetch_mf2(url, raise_errors=True)
+      resp = self.fetch_mf2(resolved_url, id=fragment, raise_errors=True)
     except BaseException as e:
       status, body = util.interpret_http_exception(e)
       if status == '410':
-        return self.delete(url)
-      return self.error('Could not fetch source URL %s' % url)
+        return self.delete(resolved_url)
+      return self.error('Could not fetch source URL %s' % resolved_url)
 
     if not resp:
       return
@@ -214,7 +216,7 @@ class Handler(webmention.WebmentionHandler):
     # https://github.com/snarfed/bridgy/issues/173
     shortlinks = mf2['rels'].get('shortlink')
     if shortlinks:
-      self.shortlink = urllib.parse.urljoin(url, shortlinks[0])
+      self.shortlink = urllib.parse.urljoin(resolved_url, shortlinks[0])
 
     # loop through each item and its children and try to preview/create it. if
     # it fails, try the next one. break after the first one that works.
@@ -628,7 +630,7 @@ class PreviewHandler(Handler):
             else gr_source.OMIT_LINK)
 
   def error(self, error, html=None, status=400, data=None, report=False, **kwargs):
-    logging.info(error, stack_info=True)
+    logging.info(error)
     self.response.set_status(status)
     error = html if html else util.linkify(error)
     self.response.write(error)
@@ -677,7 +679,7 @@ class SendHandler(Handler):
     return self.state['include_link']
 
   def error(self, error, html=None, status=400, data=None, report=False, **kwargs):
-    logging.info(error, stack_info=True)
+    logging.info(error)
     error = html if html else util.linkify(error)
     self.messages.add('%s' % error)
     if report:

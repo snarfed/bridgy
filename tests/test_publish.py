@@ -97,21 +97,23 @@ class PublishTest(testutil.HandlerTest):
   def assert_error(self, expected, status=400, **kwargs):
     return self.assert_response(expected, status=status, **kwargs)
 
-  def _check_entity(self, content='foo', html_content=None):
+  def _check_entity(self, url='http://foo.com/bar', content='foo',
+                    html_content=None, expected_html=None):
     if html_content is None:
       html_content = content
-    self.assertTrue(PublishedPage.get_by_id('http://foo.com/bar'))
+    self.assertTrue(PublishedPage.get_by_id(url))
     publish = Publish.query().get()
     self.assertEqual(self.source.key, publish.source)
     self.assertEqual('complete', publish.status)
     self.assertEqual('post', publish.type)
     self.assertEqual('FakeSource post label', publish.type_label())
-    expected_html = (self.post_html % html_content) + self.backlink
-    self.assertEqual(expected_html, publish.html)
+    if expected_html is None:
+      expected_html = (self.post_html % html_content)
+    self.assertEqual(expected_html + self.backlink, publish.html)
     self.assertEqual({
       'id': 'fake id',
       'url': 'http://fake/url',
-      'content': '%s - http://foo.com/bar' % content,
+      'content': '%s - %s' % (content, url),
       'granary_message': 'granary message',
     }, publish.published)
 
@@ -1421,6 +1423,30 @@ Join us!"""
 """)
     self.mox.ReplayAll()
     self.assert_created('Doug (@murderofcro.ws) is SOOPER excited about #pelikanhubs2017')
+
+  def test_fragment(self):
+    """If we get a fragment, just publish the element with that id."""
+    html = """
+<div id="xyz" class="h-entry"></div>
+<div id="baz" class="h-entry"><div class="e-content">foo</div></div>
+<div id="abc" class="h-entry"></div>
+"""
+    self.expect_requests_get('http://foo.com/bar#baz', html)
+    self.mox.ReplayAll()
+    resp = self.assert_created('foo - http://foo.com/bar#baz',
+                               source='http://foo.com/bar#baz')
+    self._check_entity(url='http://foo.com/bar#baz', expected_html=html)
+
+  def test_fragment_not_found(self):
+    """If we get a fragment but there's no element with that id, return error."""
+    self.expect_requests_get('http://foo.com/bar#baz', """
+<div class="h-entry" id="123">
+<div class="e-content" id="abc">
+</div></div>
+""")
+    self.mox.ReplayAll()
+    self.assert_error('Got fragment baz but no element found with that id.',
+                      source='http://foo.com/bar#baz')
 
   def test_not_implemented_error(self):
     """https://github.com/snarfed/bridgy/issues/832"""
