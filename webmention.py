@@ -74,13 +74,9 @@ class WebmentionHandler(WebmentionGetHandler):
 
     # parse microformats
     soup = util.parse_html(resp)
-    if id:
-      logging.info('Extracting and parsing just DOM element %s', id)
-      soup = soup.find(id=id)
-      if not soup:
-        return self.error('Got fragment %s but no element found with that id.' % id)
-
-    mf2 = util.parse_mf2(soup, resp.url)
+    mf2 = util.parse_mf2(soup, url=resp.url, id=id)
+    if id and not mf2:
+      return self.error('Got fragment %s but no element found with that id.' % id)
 
     # special case tumblr's markup: div#content > div.post > div.copy
     # convert to mf2 and re-parse
