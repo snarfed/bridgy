@@ -21,6 +21,9 @@ sys.path.insert(0, os.path.abspath('..'))
 
 # -- General configuration ------------------------------------------------
 
+# [We specify Sphinx version with the docs extra in requirements.txt, and tell
+# RTD to use it in .readthedocs.yaml. We *don't* use this, which doesn't
+# actually tell RTD to use this version, it just fails if it doesn't match.]
 # If your documentation needs a minimal Sphinx version, state it here.
 #needs_sphinx = '1.0'
 

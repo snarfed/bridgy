@@ -1,0 +1,8 @@
+# Config file for Sphinx build on ReadTheDocs:
+# https://docs.readthedocs.io/en/stable/config-file/
+# https://docs.readthedocs.io/en/stable/config-file/v2.html
+version: 2
+python:
+   install:
+      - requirements: requirements.txt
+      - requirements: docs/requirements.txt
