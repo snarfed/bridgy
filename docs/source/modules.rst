@@ -34,10 +34,6 @@ instagram
 ---------
 .. automodule:: instagram
 
-logs
-----
-.. automodule:: logs
-
 mastodon
 --------
 .. automodule:: mastodon
@@ -45,6 +41,10 @@ mastodon
 medium
 ------
 .. automodule:: medium
+
+meetup
+------
+.. automodule:: meetup
 
 models
 ------

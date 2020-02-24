@@ -39,7 +39,11 @@ extensions = [
 # http://www.sphinx-doc.org/en/stable/ext/autodoc.html
 autoclass_content = 'class'
 autodoc_member_order = 'bysource'
-autodoc_default_options = ['show-inheritance', 'members', 'special-members']
+autodoc_default_options = {
+    'show-inheritance': True,
+    'members': True,
+    'special-members': True,
+}
 
 # Napoleon settings
 # http://www.sphinx-doc.org/en/stable/ext/napoleon.html
@@ -165,7 +169,7 @@ html_favicon = '../static/favicon.png'
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+html_static_path = []
 
 # Add any extra paths that contain custom files (such as robots.txt or
 # .htaccess) here, relative to this directory. These files are copied
@@ -318,8 +322,9 @@ texinfo_documents = [
 intersphinx_mapping = {
   'granary': ('https://granary.readthedocs.io/en/latest', None),
   'oauth_dropins': ('https://oauth-dropins.readthedocs.io/en/latest', None),
-  'python': ('https://docs.python.org/', None),
-  'requests': ('http://docs.python-requests.org/en/latest', None),
-  'urllib3': ('http://urllib3.readthedocs.io/en/latest', None),
+  'python': ('https://docs.python.org/3/', None),
+  'requests': ('https://requests.readthedocs.io/en/stable/', None),
+  'urllib3': ('https://urllib3.readthedocs.io/en/latest', None),
   'webapp2': ('https://webapp2.readthedocs.io/en/latest', None),
+  'webob': ('https://webob.readthedocs.io/en/latest', None),
 }

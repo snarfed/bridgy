@@ -233,7 +233,7 @@ dataset <https://console.cloud.google.com/bigquery?p=brid-gy&d=datastore&page=da
 
    ::
 
-      gcloud datastore export --async gs://brid-gy.appspot.com/stats/ --kinds Blogger,BlogPost,BlogWebmention,FacebookPage,Flickr,GitHub,GooglePlusPage,Instagram,Medium,Meetup,Publish,PublishedPage,Response,SyndicatedPost,Tumblr,Twitter,WordPress
+      gcloud datastore export --async gs://brid-gy.appspot.com/stats/ --kinds Blogger,BlogPost,BlogWebmention,FacebookPage,Flickr,GitHub,GooglePlusPage,Instagram,Medium,Publish,PublishedPage,Response,SyndicatedPost,Tumblr,Twitter,WordPress
 
    Note that ``--kinds`` is required. `From the export
    docs <https://cloud.google.com/datastore/docs/export-import-entities#limitations>`__,
