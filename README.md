@@ -20,7 +20,13 @@ source local3/bin/activate
 pip install -r requirements.txt
 ```
 
-Now, run the unit tests:
+Now, run the unit tests.  First, you'll need to set the gcloud project name:
+
+```sh
+gcloud config set project brid-gy
+```
+
+Then you can fire up the gcloud emulator and run the tests:
 
 ```sh
 gcloud beta emulators datastore start --no-store-on-disk --consistency=1.0 --host-port=localhost:8089 < /dev/null >& /dev/null

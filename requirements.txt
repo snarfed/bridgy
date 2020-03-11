@@ -19,3 +19,4 @@ lxml~=4.4.2
 mf2util~=0.5
 requests~=2.22
 webapp2>=3.0.0b1
+mox3~=0.28
