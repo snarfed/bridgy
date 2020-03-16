@@ -1,6 +1,10 @@
 #!/bin/bash
 #
 # Preprocesses docs and runs Sphinx (apidoc and build) to build the HTML docs.
+#
+# Requires:
+#  brew install pandoc
+#  pip install sphinx  (in virtualenv)
 set -e
 
 absfile=`readlink -f $0`

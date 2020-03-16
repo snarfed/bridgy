@@ -2,7 +2,7 @@
 /.well-known/acme-challenge/
 /docs/_build/
 /l
-/local
+/local*/
 /mapreduce
 datastore.dat*
 disqus_access_token

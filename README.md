@@ -18,6 +18,7 @@ You'll need the [Google Cloud SDK](https://cloud.google.com/sdk/gcloud/) (aka `g
 python3 -m venv local3
 source local3/bin/activate
 pip install -r requirements.txt
+ln -s local3/lib/python3*/site-packages/oauth_dropins  # needed to serve static file assets in dev_appserver
 ```
 
 Now, run the unit tests.  First, you'll need to set the gcloud project name:
@@ -68,7 +69,8 @@ There's a good chance you'll need to make changes to [granary](https://github.co
 
 ```
 pip uninstall -y oauth-dropins
-pip install -e <path to oauth-dropins>
+pip install -e <path-to-oauth-dropins-repo>
+ln -sf <path-to-oauth-dropins-repo>/oauth_dropins  # needed to serve static file assets in dev_appserver
 
 pip uninstall -y granary
 pip install -e <path to granary>
