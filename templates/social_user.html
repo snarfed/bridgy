@@ -203,6 +203,13 @@ Click to enable <a href="/about#listen">listening</a>:
 </form>
 </data>
 
+
+{% if source.SHORT_NAME == 'mastodon' %}
+<div class="promo warning">
+<p>Interactive publishing is temporarily disabled <a href="https://github.com/tootsuite/mastodon/issues/12915">due to this Mastodon bug</a>. Try <a href="https://brid.gy/about#webmentions">publishing via webmention instead</a>!
+</div>
+
+{% else %}
 <form method="post" name="preview" action="/publish/preview"
       onsubmit="do_preview('{{ source.SHORT_NAME }}'); return false;">
 <p id="preview-ui">
@@ -236,6 +243,7 @@ Click to enable <a href="/about#listen">listening</a>:
  </nobr>
 </p>
 </form>
+{% endif %} {# not mastodon #}
 
 <!-- Publish signup buttons -->
 {% else %}
