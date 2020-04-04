@@ -2022,3 +2022,30 @@ class PropagateTest(TaskTest):
                           ).AndReturn(True)
     self.mox.ReplayAll()
     self.post_task()
+
+
+class PropagateBlogPostTest(TaskTest):
+
+  post_url = '/_ah/queue/propagate-blogpost'
+
+  def setUp(self):
+    super(PropagateBlogPostTest, self).setUp()
+    self.blogposts[0].unsent = ['http://foo', 'http://bar']
+    self.blogposts[0].status = 'new'
+    self.blogposts[0].put()
+
+  def post_task(self, **kwargs):
+    super(PropagateBlogPostTest, self).post_task(
+      params={'key': self.blogposts[0].key.urlsafe().decode()},
+      **kwargs)
+
+  def test_no_source(self):
+    """If the source doesn't exist, do nothing and let the task die."""
+    self.sources[0].key.delete()
+    self.post_task()
+
+  def test_disabled_source(self):
+    """If the source is disabled, do nothing and let the task die."""
+    self.sources[0].status = 'disabled'
+    self.sources[0].put()
+    self.post_task()

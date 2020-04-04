@@ -543,7 +543,6 @@ class SendWebmentions(webapp2.RequestHandler):
     """
     logging.info('Starting %s', self.entity.label())
 
-    self.source = self.entity.source.get()
     try:
       self.do_send_webmentions()
     except:
@@ -639,29 +638,40 @@ class SendWebmentions(webapp2.RequestHandler):
   def lease(self, key):
     """Attempts to acquire and lease the :class:`models.Webmentions` entity.
 
-    Returns True on success, False or None otherwise.
+    Also loads and sets `self.source`, and returns False if the source doesn't
+    exist or is disabled.
 
     TODO: unify with :meth:`complete()`
 
     Args:
       key: :class:`ndb.Key`
+
+    Returns: True on success, False or None otherwise
     """
     self.entity = key.get()
 
     if self.entity is None:
-      self.fail('no entity!')
+      return self.fail('no entity!')
     elif self.entity.status == 'complete':
       # let this task return 200 and finish
       logging.warning('duplicate task already propagated this')
+      return
     elif (self.entity.status == 'processing' and
           util.now_fn() < self.entity.leased_until):
-      self.fail('duplicate task is currently processing!')
-    else:
-      assert self.entity.status in ('new', 'processing', 'error'), self.entity.status
-      self.entity.status = 'processing'
-      self.entity.leased_until = util.now_fn() + self.LEASE_LENGTH
-      self.entity.put()
-      return True
+      return self.fail('duplicate task is currently processing!')
+
+    self.source = self.entity.source.get()
+    if not self.source or self.source.status == 'disabled':
+      logging.error('Source not found or disabled. Dropping task.')
+      return False
+    logging.info('Source: %s %s, %s', self.source.label(), self.source.key_id(),
+                 self.source.bridgy_url(self))
+
+    assert self.entity.status in ('new', 'processing', 'error'), self.entity.status
+    self.entity.status = 'processing'
+    self.entity.leased_until = util.now_fn() + self.LEASE_LENGTH
+    self.entity.put()
+    return True
 
   @ndb.transactional()
   def complete(self):
@@ -749,12 +759,7 @@ class PropagateResponse(SendWebmentions):
     if not self.lease(ndb.Key(urlsafe=self.request.params['response_key'])):
       return
 
-    source = self.source = self.entity.source.get()
-    if not source:
-      logging.warning('Source not found! Dropping response.')
-      return
-    logging.info('Source: %s %s, %s', source.label(), source.key_id(),
-                 source.bridgy_url(self))
+    source = self.source
     poll_estimate = self.entity.created - datetime.timedelta(seconds=61)
     logging.info('Created by this poll: %s/%s', util.host_url(self),
                  logs.url(poll_estimate, source.key))
@@ -796,8 +801,8 @@ activities: %s""", target_url, self.entity.urls_to_activity, self.activities)
     if domain == util.PRIMARY_DOMAIN or domain in util.OTHER_DOMAINS:
       host_url = 'https://brid-gy.appspot.com'
 
-    path = [host_url, self.entity.type, self.entity.source.get().SHORT_NAME,
-            self.entity.source.string_id(), post_id]
+    path = [host_url, self.entity.type, self.source.SHORT_NAME,
+            self.source.key.string_id(), post_id]
 
     if self.entity.type != 'post':
       # parse and add response id. (we know Response key ids are always tag URIs)
@@ -826,12 +831,11 @@ class PropagateBlogPost(SendWebmentions):
     if not self.lease(ndb.Key(urlsafe=self.request.params['key'])):
       return
 
-    source_domains = self.entity.source.get().domains
     to_send = set()
     for url in self.entity.unsent:
       url, domain, ok = util.get_webmention_target(url)
       # skip "self" links to this blog's domain
-      if ok and domain not in source_domains:
+      if ok and domain not in self.source.domains:
         to_send.add(url)
 
     self.entity.unsent = list(to_send)
