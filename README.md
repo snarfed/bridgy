@@ -123,7 +123,7 @@ For alerting, we've set up [Google Cloud Monitoring](https://app.google.stackdri
 
 Stats
 ---
-I occasionally generate [stats and graphs of usage and growth](https://snarfed.org/2018-01-02_bridgy-stats-update) from the [BigQuery dataset](https://console.cloud.google.com/bigquery?p=brid-gy&d=datastore&page=dataset) ([#715](https://github.com/snarfed/bridgy/issues/715)). Here's how.
+I occasionally generate [stats and graphs of usage and growth](https://snarfed.org/2019-01-02_bridgy-stats-update-4) from the [BigQuery dataset](https://console.cloud.google.com/bigquery?p=brid-gy&d=datastore&page=dataset) ([#715](https://github.com/snarfed/bridgy/issues/715)). Here's how.
 
 1. [Export the full datastore to Google Cloud Storage.](https://cloud.google.com/datastore/docs/export-import-entities) Include all entities except `*Auth` and other internal details. Check to see if any new kinds have been added since the last time this command was run.
     
