@@ -168,3 +168,16 @@ class SuperfeedrTest(testutil.HandlerTest):
     self.assert_blogposts([BlogPost(id='X', source=self.source.key,
                                     feed_item={'id': 'X', 'content': 'a ☕ z'},
                                     status='complete')])
+
+  def test_handle_feed_truncates_links(self):
+    self.mox.stubs.Set(superfeedr, 'MAX_BLOGPOST_LINKS', 2)
+
+    item_a = {'permalinkUrl': 'A',
+              'content': 'a http://a http://b http://c z'}
+    post_a = BlogPost(id='A', source=self.source.key, feed_item=item_a,
+                      unsent=['http://a/', 'http://b/'])
+    self.expect_task('propagate-blogpost', key=post_a)
+    self.mox.ReplayAll()
+
+    superfeedr.handle_feed(json_dumps({'items': [item_a]}), self.source)
+    self.assert_blogposts([post_a])

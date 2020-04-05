@@ -22,6 +22,7 @@ import util
 SUPERFEEDR_TOKEN = util.read('superfeedr_token')
 SUPERFEEDR_USERNAME = util.read('superfeedr_username')
 PUSH_API_URL = 'https://push.superfeedr.com'
+MAX_BLOGPOST_LINKS = 10
 
 
 def subscribe(source, handler):
@@ -107,6 +108,9 @@ def handle_feed(feed, source):
         unique.append(link)
       else:
         logging.info('Giving up on link over %s chars! %s', _MAX_STRING_LENGTH, link)
+      if len(unique) >= MAX_BLOGPOST_LINKS:
+        logging.info('Stopping at 10 links! Skipping the rest.')
+        break
 
     logging.info('Found links: %s', unique)
     if len(url) > _MAX_KEYPART_BYTES:
