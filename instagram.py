@@ -148,8 +148,9 @@ class CallbackHandler(indieauth.CallbackHandler, util.Handler):
 
       # check that instagram profile links to web site
       try:
-        actor = gr_instagram.Instagram(scrape=True).get_actor(
-          username, ignore_rate_limit=True)
+        actor = gr_instagram.Instagram(
+          scrape=True, cookie=oauth_instagram.INSTAGRAM_SESSIONID_COOKIE
+          ).get_actor(username, ignore_rate_limit=True)
       except Exception as e:
         code, _ = util.interpret_http_exception(e)
         if code in Instagram.RATE_LIMIT_HTTP_CODES:

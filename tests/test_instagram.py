@@ -8,6 +8,7 @@ from oauth_dropins.instagram import InstagramAuth
 from oauth_dropins.webutil.testutil import TestCase
 from granary import instagram as gr_instagram
 from granary.tests import test_instagram as gr_test_instagram
+from oauth_dropins import instagram as oauth_instagram
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
 
@@ -44,6 +45,7 @@ class InstagramTest(ModelsTest):
         'image': {'url': 'http://pic.ture/url'},
         # ...
       })
+    self.mox.stubs.Set(oauth_instagram, 'INSTAGRAM_SESSIONID_COOKIE', 'kooky')
 
     self.bridgy_api_state = {
       # dash in this URL is regression test for
@@ -124,7 +126,8 @@ class InstagramTest(ModelsTest):
 
     return TestCase.expect_requests_get(
       self, gr_instagram.HTML_BASE_URL + 'snarfed/', html,
-      allow_redirects=False, **kwargs)
+      allow_redirects=False, headers={'Cookie': 'sessionid=kooky'}, **kwargs)
+
 
   def expect_webmention_discovery(self):
     return self.expect_requests_get('https://snarfed.org', '', stream=None,
