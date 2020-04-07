@@ -51,6 +51,12 @@ kash.space
 # http://www.scoop.it/t/e-learning-inclusivo/p/4087456888/2017/10/24/editors-choice-where-is-the-humanity-in-the-computer-science-curriculum
 scoop.it
 
+# misbehaving, somewhat spammy, degenerate, too many links per post. started
+# 4/1. all related.
+analogindex.tumblr.com
+complexdoc.blogspot.com
+newsexchanger.wordpress.com
+
 24sessions.com
 500px.com
 abakus-internet-marketing.de
