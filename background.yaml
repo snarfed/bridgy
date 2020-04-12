@@ -7,10 +7,13 @@ runtime: python37
 # https://docs.gunicorn.org/en/latest/settings.html#timeout
 entrypoint: gunicorn --workers 1 --timeout 600 -b :$PORT tasks:application
 
-automatic_scaling:
-  max_pending_latency: 15s
-  max_concurrent_requests: 6
-  max_instances: 2
+instance_class: B1
+manual_scaling:
+  instances: 1
+# automatic_scaling:
+#   max_pending_latency: 15s
+#   max_concurrent_requests: 6
+#   max_instances: 2
 
 handlers:
 
