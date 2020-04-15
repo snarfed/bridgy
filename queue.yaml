@@ -2,7 +2,7 @@
 queue:
 - name: poll
   rate: 1/s
-  max_concurrent_requests: 2
+  max_concurrent_requests: 1
   retry_parameters:
     min_backoff_seconds: 120
 
