@@ -289,7 +289,7 @@ in your post.
 without leaving my site or application?</li>
 
 <p>Not exactly, but you can get close. Direct your users to <code>POST</code> to a Bridgy registration URL of the form <code>https://brid.gy/SITE/start</code> (where SITE is
-<code>twitter</code>, <code>instagram</code>, <code>flickr</code>, <code>github</code>, or <code>mastodon</code>) with the parameters:</p>
+<code>twitter</code>, <code>instagram</code>, <code>flickr</code>, <code>github</code>, <code>mastodon</code>, or <code>reddit</code>) with the parameters:</p>
 
 <ul>
 <li><code>feature</code>, a comma-separated list of features,
@@ -327,6 +327,7 @@ POST <a href="https://brid.gy/twitter/start">https://brid.gy/twitter/start</a>
   <li><b>Tumblr</b> doesn't have permissions at all, <a href="https://www.tumblr.com/docs/en/api/v2#oauth">just full access or nothing.</a> <a href="/static/permissions_screenshots/tumblr.png">Screenshot.</a></li>
   <li><b>Twitter</b> <a href="https://developer.twitter.com/en/docs/basics/authentication/faq">distinguishes between read and write access,</a> but not between different types of data. We ask for read access to your tweets and profile for listen, write access for publish. We don't ask for access to your direct messages. Screenshots: <a href="/static/permissions_screenshots/twitter_read.png">listen</a>, <a href="/static/permissions_screenshots/twitter_write.png">publish</a>.</li>
   <li><b>WordPress.com</b>: doesn't have permissions at all, <a href="https://developer.wordpress.com/docs/oauth2/">just full access or nothing.</a> We ask for read and write access to a single blog that you specify, so we can see and handle new blog posts and to create comments. <a href="/static/permissions_screenshots/wordpress.com.png">Screenshot.</a></li>
+  <li><b>Reddit</b> allows you to permit access to different <a href="https://www.reddit.com/api/v1/scopes.json">scopes</a>, We're asking for permission to confirm your identity and read posts that you can read.</li>
 </ul>
 </li>
 
@@ -453,6 +454,7 @@ GitHub</a>. Thank you!
 <li>Flickr comments and favorites on your photos.</li>
 <li>GitHub comments and emoji reactions on your issues and pull requests.</li>
 <li>Mastodon replies, favorites, boosts, mentions, and links to your site.</li>
+<li>Reddit posts that link to your site and the top-level comments on those posts.</li>
 </ul>
 </li>
 </p></li>
@@ -584,7 +586,7 @@ them</a>, and it also uses it to
 officially syndicating your posts and other people just mentioning them</a>.
 </p>
 
-<p>Twitter, Instagram, Flickr, and GitHub only allow one web site link in your profile, so Bridgy <a href="https://github.com/snarfed/bridgy/issues/483">also looks for links in your profile's description field</a>.</p>
+<p>Twitter, Instagram, Flickr, and GitHub only allow one web site link in your profile, so Bridgy <a href="https://github.com/snarfed/bridgy/issues/483">also looks for links in your profile's description field</a>. Reddit doesn't have a spot for any website links so Bridgy just searches your profile description.</p>
 
 <p>Also, if your web server has <a href="https://brotli.org/">Brotli compression</a> enabled, Bridgy won't work with it due to <a href="https://issuetracker.google.com/issues/112277350">this long-standing App Engine bug</a>. <a href="https://github.com/snarfed/bridgy/issues/878">More background.</a> Until this bug is fixed, we recommend disabling Brotli on your web server as a workaround.</p>
 </li>
@@ -690,7 +692,7 @@ webmention manually</a>. Here's how to construct Bridgy's source URLs:
 <li>You can add <code>?format=json</code> to the end of any URL to get the
   JSON-formatted version.
 </li>
-<li>For Twitter, Instagram, and GitHub, <code class='keyword'>USER_ID</code> is your
+<li>For Twitter, Instagram, Reddit, and GitHub, <code class='keyword'>USER_ID</code> is your
   username, but for Flickr and Mastodon, it's your numeric user id.
   <code class='value'>LIKED_BY_USER_ID</code> and
   <code class='value'>RSVP_USER_ID</code> are always numeric. You

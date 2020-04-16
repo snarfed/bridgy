@@ -12,7 +12,7 @@ License: This project is placed in the public domain.
 
 Development
 ---
-You'll need the [Google Cloud SDK](https://cloud.google.com/sdk/gcloud/) (aka `gcloud`) with the `gcloud-appengine-python` and `gcloud-appengine-python-extras` [components](https://cloud.google.com/sdk/docs/components#additional_components). Then, create a Python 3 virtualenv and install the dependencies with:
+You'll need the [Google Cloud SDK](https://cloud.google.com/sdk/gcloud/) (aka `gcloud`) with the `gcloud-appengine-python`, `gcloud-appengine-python-extras` and `google-cloud-sdk-datastore-emulator` [components](https://cloud.google.com/sdk/docs/components#additional_components). Then, create a Python 3 virtualenv and install the dependencies with:
 
 ```sh
 python3 -m venv local3
@@ -39,6 +39,8 @@ dev_appserver.py --log_level debug --enable_host_checking false \
   --support_datastore_emulator --datastore_emulator_port=8089 \
   --application=brid-gy ~/src/bridgy/app.yaml ~/src/bridgy/background.yaml
 ```
+
+(Note: dev_appserver.py is incompatible with python3. if python3 is your default python, you can run `python2 /location/of/dev_appserver.py ...` instead.)
 
 Open [localhost:8080](http://localhost:8080/) and you should see the Bridgy home page!
 
