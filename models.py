@@ -204,6 +204,12 @@ class Source(StringIdModel, metaclass=SourceMeta):
     """
     if name == 'gr_source' and self.auth_entity:
       auth_entity = self.auth_entity.get()
+      try:
+        refresh_token = auth_entity.refresh_token
+        self.gr_source = self.GR_CLASS(refresh_token)
+        return self.gr_source
+      except AttributeError:
+        logging.info('no refresh_token')
       args = auth_entity.access_token()
       if not isinstance(args, tuple):
         args = (args,)
