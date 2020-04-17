@@ -19,19 +19,14 @@ python3 -m venv local3
 source local3/bin/activate
 pip install -r requirements.txt
 ln -s local3/lib/python3*/site-packages/oauth_dropins  # needed to serve static file assets in dev_appserver
-```
-
-Now, run the unit tests.  First, you'll need to set the gcloud project name:
-
-```sh
 gcloud config set project brid-gy
 ```
 
-Then you can fire up the gcloud emulator and run the tests:
+Now, you can fire up the gcloud emulator and run the tests:
 
 ```sh
 gcloud beta emulators datastore start --no-store-on-disk --consistency=1.0 --host-port=localhost:8089 < /dev/null >& /dev/null
-python3 -m unittest discover
+python3 -m unittest discover -s tests -t .
 kill %1
 ```
 
