@@ -26,15 +26,14 @@ class Reddit(models.Source):
     'post': 'submission',
     'comment': 'comment',
   }
-  TRANSIENT_ERROR_HTTP_CODES = ('404',)
 
   @staticmethod
   def new(handler, auth_entity=None, **kwargs):
-    """Creates and returns a :class:`Twitter` entity.
+    """Creates and returns a :class:`Reddit` entity.
 
     Args:
       handler: the current :class:`webapp2.RequestHandler`
-      auth_entity: :class:`oauth_dropins.twitter.TwitterAuth`
+      auth_entity: :class:`oauth_dropins.reddit.RedditAuth`
       kwargs: property values
     """
     user = json_loads(auth_entity.user_json)
@@ -47,7 +46,7 @@ class Reddit(models.Source):
                   **kwargs)
 
   def silo_url(self):
-    """Returns the Twitter account URL, e.g. https://twitter.com/foo."""
+    """Returns the Reddit account URL, e.g. https://reddit.com/user/foo."""
     return self.gr_source.user_url(self.key_id())
 
   def label_name(self):
@@ -56,14 +55,6 @@ class Reddit(models.Source):
 
   def search_for_links(self):
     """Searches for activities with links to any of this source's web sites.
-
-    Twitter search supports OR:
-    https://dev.twitter.com/rest/public/search
-
-    ...but it only returns complete(ish) results if we strip scheme from URLs,
-    ie search for example.com instead of http://example.com/, and that also
-    returns false positivies, so we check that the returned tweets actually have
-    matching links. https://github.com/snarfed/bridgy/issues/565
 
     Returns:
       sequence of ActivityStreams activity dicts
@@ -80,21 +71,7 @@ class Reddit(models.Source):
         search_query=query, group_id=gr_source.SEARCH, etag=self.last_activities_etag,
         fetch_replies=False, fetch_likes=False, fetch_shares=False, count=50))
 
-    # filter out retweets and search false positives that don't actually link to us
-    results = []
-    for candidate in candidates:
-      if candidate.get('verb') == 'share':
-        continue
-      obj = candidate['object']
-      tags = obj.get('tags', [])
-      atts = obj.get('attachments', [])
-      for url in urls:
-        if (any(util.schemeless(t.get('url', ''), slashes=False).startswith(url)
-                for t in tags + atts)):
-          results.append(candidate)
-          break
-
-    return results
+    return candidates
 
 
 class AuthHandler(util.Handler):
@@ -121,12 +98,9 @@ class AddReddit(oauth_reddit.CallbackHandler, util.Handler):
     logging.debug('finish with %s, %s', auth_entity, state)
     self.maybe_add_or_delete_source(Reddit, auth_entity, util.encode_oauth_state(state))
 
+
 class StartHandler(AuthHandler):
   """Custom OAuth start handler so we can use access_type=read for state=listen.
-
-  Tweepy converts access_type to x_auth_access_type for Twitter's
-  oauth/request_token endpoint. Details:
-  https://dev.twitter.com/docs/api/1/post/oauth/request_token
   """
   def post(self):
     return self.start_oauth_flow(util.get_required_param(self, 'feature'))
