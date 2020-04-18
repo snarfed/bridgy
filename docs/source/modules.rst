@@ -54,6 +54,10 @@ original_post_discovery
 -----------------------
 .. automodule:: original_post_discovery
 
+pixelfed
+--------
+.. automodule:: pixelfed
+
 publish
 -------
 .. automodule:: publish

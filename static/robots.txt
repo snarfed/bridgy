@@ -12,6 +12,7 @@ Disallow: /like
 Disallow: /log
 Disallow: /mastodon
 Disallow: /medium
+Disallow: /pixelfed
 Disallow: /post
 Disallow: /react
 Disallow: /repost

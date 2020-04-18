@@ -288,8 +288,7 @@ in your post.
 <li id="registration-api" class="question">Can users sign up for Bridgy
 without leaving my site or application?</li>
 
-<p>Not exactly, but you can get close. Direct your users to <code>POST</code> to a Bridgy registration URL of the form <code>https://brid.gy/SITE/start</code> (where SITE is
-<code>twitter</code>, <code>instagram</code>, <code>flickr</code>, <code>github</code>, or <code>mastodon</code>) with the parameters:</p>
+<p>Not exactly, but you can get close. Direct your users to <code>POST</code> to a Bridgy registration URL of the form <code>https://brid.gy/SITE/start</code> (where SITE is <code>twitter</code>, <code>instagram</code>, <code>flickr</code>, <code>github</code>, <code>mastodon</code>, <code>meetup</code>, or <code>pixelfed</code>) with the parameters:</p>
 
 <ul>
 <li><code>feature</code>, a comma-separated list of features,
@@ -452,7 +451,8 @@ GitHub</a>. Thank you!
 <li>Instagram comments and likes on your pictures.</li>
 <li>Flickr comments and favorites on your photos.</li>
 <li>GitHub comments and emoji reactions on your issues and pull requests.</li>
-<li>Mastodon replies, favorites, boosts, mentions, and links to your site.</li>
+<li>Mastodon replies, favorites, boosts, mentions, and links on your toots.</li>
+<li>Pixelfed comments, likes, shares, and emoji reactions on your posts.</li>
 </ul>
 </li>
 </p></li>
@@ -786,6 +786,7 @@ previewing a post to see how it will look!
 <li>GitHub issues, <a href="https://help.github.com/articles/about-stars">stars</a>, comments on issues and PRs, and <a href="https://help.github.com/articles/about-conversations-on-github/#reacting-to-ideas-in-comments">emoji reactions</a> to issues, PRs, and comments.</li>
 <li><a href="#add-label">Adding new labels to GitHub issues.</a></li>
 <li>Mastodon toots, replies, favorites, and boosts. Toots and replies may include <a href="#picture">pictures</a> and <a href="#video">videos</a>. Toots may also be <a href="#delete">deleted</a>.</li>
+<li>Pixelfed posts, comments, likes, shares, and reactions. Posts may also be <a href="#delete">deleted</a>.</li>
 <li>Nothing on Instagram, sorry. Likes used to be possible, but not since Instagram <a href="http://developers.instagram.com/post/133424514006/instagram-platform-update"> started locking down their API.</a> <a href="http://instagram.com/developer/endpoints/media/#get_media_popular">Photos, videos,</a> <a href="http://instagram.com/developer/endpoints/comments/#post_media_comments">and comments</a> were never possible.</li>
 </ul>
 </li>
@@ -813,6 +814,7 @@ should be one of:
 <li><code>https://brid.gy/publish/github</code></li>
 <li><code>https://brid.gy/publish/mastodon</code></li>
 <li><code>https://brid.gy/publish/meetup</code></li>
+<li><code>https://brid.gy/publish/pixelfed</code></li>
 <li><code>https://brid.gy/publish/twitter</code></li>
 </ul>
 Your post HTML must also include that same
@@ -826,6 +828,7 @@ in your post to publish automatically!
 &lt;a href="<a href='https://brid.gy/publish/github'>https://brid.gy/publish/github</a>"&gt;&lt;/a&gt;
 &lt;a href="<a href='https://brid.gy/publish/mastodon'>https://brid.gy/publish/mastodon</a>"&gt;&lt;/a&gt;
 &lt;a href="<a href='https://brid.gy/publish/meetup'>https://brid.gy/publish/meetup</a>"&gt;&lt;/a&gt;
+&lt;a href="<a href='https://brid.gy/publish/pixelfed'>https://brid.gy/publish/pixelfed</a>"&gt;&lt;/a&gt;
 &lt;a href="<a href='https://brid.gy/publish/twitter'>https://brid.gy/publish/twitter</a>"&gt;&lt;/a&gt;
 </pre>
 </p>

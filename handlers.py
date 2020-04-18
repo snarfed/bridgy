@@ -35,7 +35,7 @@ import original_post_discovery
 import util
 
 # Import source class files so their metaclasses are initialized.
-import blogger, flickr, github, instagram, mastodon, medium, tumblr, twitter, wordpress_rest
+import blogger, flickr, github, instagram, mastodon, medium, pixelfed, tumblr, twitter, wordpress_rest
 
 CACHE_TIME = 60 * 15  # 15m
 

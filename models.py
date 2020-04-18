@@ -213,7 +213,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
         kwargs = {'user_id': self.key_id()}
       elif self.key.kind() == 'Instagram':
         kwargs = {'scrape': True, 'cookie': INSTAGRAM_SESSIONID_COOKIE}
-      elif self.key.kind() == 'Mastodon':
+      elif self.key.kind() in ('Mastodon', 'Pixelfed'):
         args = (auth_entity.instance(),) + args
         kwargs = {'user_id': json_loads(auth_entity.user_json).get('id')}
       elif self.key.kind() == 'Twitter':
@@ -499,10 +499,12 @@ class Source(StringIdModel, metaclass=SourceMeta):
     if existing:
       # merge some fields
       source.features = set(source.features + existing.features)
-      source.populate(**existing.to_dict(include=(
-            'created', 'last_hfeed_refetch', 'last_poll_attempt', 'last_polled',
-            'last_syndication_url', 'last_webmention_sent', 'superfeedr_secret',
-            'webmention_endpoint')))
+      props = ('created', 'last_hfeed_refetch', 'last_poll_attempt',
+               'last_polled', 'last_syndication_url', 'last_webmention_sent',
+               'superfeedr_secret', 'webmention_endpoint')
+      if existing.domain_urls and not source.domain_urls:
+        props += ('domains', 'domain_urls')
+      source.populate(**existing.to_dict(include=props))
       verb = 'Updated'
     else:
       verb = 'Added'

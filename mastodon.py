@@ -12,20 +12,6 @@ import webapp2
 import models
 import util
 
-# https://docs.joinmastodon.org/api/oauth-scopes/
-LISTEN_SCOPES = (
-  'read:accounts',
-  'read:blocks',
-  'read:notifications',
-  'read:search',
-  'read:statuses',
-)
-PUBLISH_SCOPES = LISTEN_SCOPES + (
-  'write:statuses',
-  'write:favourites',
-  'write:media',
-)
-
 
 class StartHandler(oauth_dropins.mastodon.StartHandler):
   """Abstract base OAuth starter class with our redirect URLs."""
@@ -56,12 +42,7 @@ class Mastodon(models.Source):
   SHORT_NAME = 'mastodon'
   CAN_PUBLISH = True
   HAS_BLOCKS = True
-  TYPE_LABELS = {
-    'post': 'toot',
-    'comment': 'reply',
-    'repost': 'boost',
-    'like': 'favorite',
-  }
+  TYPE_LABELS = GR_CLASS.TYPE_LABELS
   DISABLE_HTTP_CODES = ('401', '403')
 
   @property
@@ -71,8 +52,8 @@ class Mastodon(models.Source):
       domain=self.gr_source.DOMAIN,
       headers=util.REQUEST_HEADERS)
 
-  @staticmethod
-  def new(handler, auth_entity=None, **kwargs):
+  @classmethod
+  def new(cls, handler, auth_entity=None, **kwargs):
     """Creates and returns a :class:`Mastodon` entity.
 
     Args:
@@ -81,12 +62,12 @@ class Mastodon(models.Source):
       kwargs: property values
     """
     user = json_loads(auth_entity.user_json)
-    return Mastodon(id=auth_entity.key_id(),
-                    auth_entity=auth_entity.key,
-                    url=user.get('url'),
-                    name=user.get('display_name') or user.get('username'),
-                    picture=user.get('avatar'),
-                    **kwargs)
+    return cls(id=auth_entity.key_id(),
+               auth_entity=auth_entity.key,
+               url=user.get('url'),
+               name=user.get('display_name') or user.get('username'),
+               picture=user.get('avatar'),
+              **kwargs)
 
   def username(self):
     """Returns the Mastodon username, e.g. alice."""
@@ -119,13 +100,18 @@ class Mastodon(models.Source):
     source = kwargs.get('source')
     instance = source.instance() if source else ''
     return """\
-<form method="%s" action="/mastodon/start">
-  <input type="image" class="mastodon-button shadow" alt="Sign in with Mastodon"
-         src="/oauth_dropins/static/mastodon_large.png" />
-  <input name="feature" type="hidden" value="%s" />
-  <input name="instance" type="hidden" value="%s" />
+<form method="{method}" action="/{short_name}/start">
+  <input type="image" class="{short_name}-button shadow" alt="Sign in with {name}"
+         src="/oauth_dropins/static/{short_name}_large.png" />
+  <input name="feature" type="hidden" value="{feature}" />
+  <input name="instance" type="hidden" value="{instance}" />
 </form>
-""" % ('post' if instance else 'get', feature, instance)
+""".format(instance=instance,
+           method='post' if instance else 'get',
+           feature=feature,
+           name=cls.GR_CLASS.NAME,
+           short_name=cls.SHORT_NAME,
+           **kwargs)
 
   def is_private(self):
     """Returns True if this Mastodon account is protected.
@@ -166,20 +152,44 @@ class Mastodon(models.Source):
 
 class InstanceHandler(TemplateHandler, util.Handler):
   """Serves the "Enter your instance" form page."""
+  SITE = 'mastodon'
+  START_HANDLER = StartHandler
+
+  # https://docs.joinmastodon.org/api/oauth-scopes/
+  LISTEN_SCOPES = (
+    'read:accounts',
+    'read:blocks',
+    'read:notifications',
+    'read:search',
+    'read:statuses',
+  )
+  PUBLISH_SCOPES = LISTEN_SCOPES + (
+    'write:statuses',
+    'write:favourites',
+    'write:media',
+  )
+
   def template_file(self):
-    return 'mastodon_instance.html'
+    return 'choose_instance.html'
+
+  def template_vars(self):
+    return {
+      'site': self.SITE,
+      'logo_file': 'mastodon_logo_large.png',
+      'join_url': 'https://joinmastodon.org/#getting-started',
+    }
 
   def post(self):
     feature = self.request.get('feature')
-    start_cls = util.oauth_starter(StartHandler).to('/mastodon/callback',
-      scopes=PUBLISH_SCOPES if feature == 'publish' else LISTEN_SCOPES)
+    start_cls = util.oauth_starter(self.START_HANDLER).to('/%s/callback' % self.SITE,
+      scopes=self.PUBLISH_SCOPES if feature == 'publish' else self.LISTEN_SCOPES)
     start = start_cls(self.request, self.response)
 
     instance = util.get_required_param(self, 'instance')
     try:
       self.redirect(start.redirect_url(instance=instance))
     except ValueError as e:
-      logging.warning('Bad Mastodon instance', stack_info=True)
+      logging.warning('Bad %s instance' % self.SITE.capitalize(), stack_info=True)
       self.messages.add(util.linkify(str(e), pretty=True))
       return self.redirect(self.request.path)
 
@@ -194,6 +204,6 @@ ROUTES = [
   ('/mastodon/start', InstanceHandler),
   ('/mastodon/callback', CallbackHandler),
   ('/mastodon/delete/finish', oauth_dropins.mastodon.CallbackHandler.to('/delete/finish')),
-  ('/mastodon/publish/start', StartHandler.to('/publish/mastodon/finish',
-                                              scopes=PUBLISH_SCOPES)),
+  ('/mastodon/publish/start', StartHandler.to(
+    '/publish/mastodon/finish', scopes=InstanceHandler.PUBLISH_SCOPES)),
 ]

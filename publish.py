@@ -19,6 +19,7 @@ from oauth_dropins import (
   github as oauth_github,
   mastodon as oauth_mastodon,
   meetup as oauth_meetup,
+  pixelfed as oauth_pixelfed,
   twitter as oauth_twitter,
 )
 from oauth_dropins.webutil import appengine_info
@@ -32,13 +33,14 @@ from instagram import Instagram
 from mastodon import Mastodon
 from meetup import Meetup
 from models import Publish, PublishedPage
+from pixelfed import Pixelfed
 from twitter import Twitter
 import models
 import util
 import webmention
 
 
-SOURCES = (Flickr, GitHub, Mastodon, Meetup, Twitter)
+SOURCES = (Flickr, GitHub, Mastodon, Meetup, Pixelfed, Twitter)
 SOURCE_NAMES = {cls.SHORT_NAME: cls for cls in SOURCES}
 SOURCE_DOMAINS = {cls.GR_CLASS.DOMAIN: cls for cls in SOURCES}
 # image URLs matching this regexp should be ignored.
@@ -147,7 +149,7 @@ class Handler(webmention.WebmentionHandler):
     if (domain not in util.DOMAINS or
         len(path_parts) != 2 or path_parts[0] != '/publish' or not source_cls):
       return self.error(
-        'Target must be brid.gy/publish/{flickr,github,mastodon,meetup,twitter}')
+        'Target must be brid.gy/publish/{flickr,github,mastodon,meetup,pixelfed,twitter}')
     elif source_cls == Instagram:
       return self.error('Sorry, %s is not supported.' %
                         source_cls.GR_CLASS.NAME)
@@ -691,18 +693,17 @@ class SendHandler(Handler):
 class FlickrSendHandler(oauth_flickr.CallbackHandler, SendHandler):
   finish = SendHandler.finish
 
-
 class GitHubSendHandler(oauth_github.CallbackHandler, SendHandler):
   finish = SendHandler.finish
-
 
 class MastodonSendHandler(oauth_mastodon.CallbackHandler, SendHandler):
   finish = SendHandler.finish
 
-
 class MeetupSendHandler(oauth_meetup.CallbackHandler, SendHandler):
   finish = SendHandler.finish
 
+class PixelfedSendHandler(oauth_pixelfed.CallbackHandler, SendHandler):
+  finish = SendHandler.finish
 
 class TwitterSendHandler(oauth_twitter.CallbackHandler, SendHandler):
   finish = SendHandler.finish
@@ -741,11 +742,12 @@ class WebmentionHandler(Handler):
 ROUTES = [
   ('/publish/preview', PreviewHandler),
   ('/publish/webmention', WebmentionHandler),
-  ('/publish/(flickr|github|mastodon|meetup|twitter)',
+  ('/publish/(flickr|github|mastodon|meetup|pixelfed|twitter)',
    webmention.WebmentionGetHandler),
   ('/publish/flickr/finish', FlickrSendHandler),
   ('/publish/github/finish', GitHubSendHandler),
   ('/publish/mastodon/finish', MastodonSendHandler),
   ('/meetup/publish/finish', MeetupSendHandler), # because Meetup's `redirect_uri` handling is a little more restrictive
+  ('/publish/pixelfed/finish', PixelfedSendHandler),
   ('/publish/twitter/finish', TwitterSendHandler),
 ]

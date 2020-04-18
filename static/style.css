@@ -305,6 +305,12 @@ button[disabled]:hover {
   background-color: #323946;
 }
 
+.pixelfed-button {
+  height: 50px;
+  padding: 3px;
+  background-color: #EEEEEE;
+}
+
 #preview-text hr {
   border-color: #cccccc;
 }
@@ -315,7 +321,7 @@ button[disabled]:hover {
   margin-top: 1em;
 }
 
-.mastodon-embed {
+.mastodon-embed, .pixelfed-embed {
   margin: 1em;
 }
 

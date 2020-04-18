@@ -42,6 +42,20 @@ dev_appserver.py --log_level debug --enable_host_checking false \
 
 Open [localhost:8080](http://localhost:8080/) and you should see the Bridgy home page!
 
+To test polling interactively, temporarily comment out the `manual_scaling` section in [background.yaml](https://github.com/snarfed/bridgy/blob/master/background.yaml), uncomment the `automatic_scaling` section, and use `curl` to run the task handler directly:
+
+```sh
+curl -d 'source_key=[KEY]&last_polled=1970-01-01-00-00-00' http://localhost:8081/_ah/queue/poll
+```
+
+...where `[KEY]` is the url-safe ndb key for the source entity you want to poll, e.g. `ndb.Key('Twitter', 'schnarfed').urlsafe()`.
+
+Similarly, to run a webmention (aka propagate) task, look in `dev_appserver`'s logs for lines beginning with _Would add task: ..._, grab the request body there, and plug it into a similar `curl` command, eg:
+
+```sh
+curl -d 'response_key=...' localhost:8081/_ah/queue/propagate
+```
+
 If you hit an error during setup, check out the [oauth-dropins Troubleshooting/FAQ section](https://github.com/snarfed/oauth-dropins#troubleshootingfaq). For searchability, here are a handful of error messages that [have solutions there](https://github.com/snarfed/oauth-dropins#troubleshootingfaq):
 
 ```

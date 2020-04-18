@@ -303,6 +303,19 @@ class SourceTest(testutil.HandlerTest):
     msg = next(iter(self.handler.messages))
     self.assertIn('Updated fake (FakeSource)', msg)
 
+  def test_create_new_already_exists_preserve_domains(self):
+    key = FakeSource.new(
+      None, features=['listen'], domains=['x'], domain_urls=['http://x'],
+      webmention_endpoint='http://x/y').put()
+
+    FakeSource.string_id_counter -= 1
+    FakeSource.create_new(self.handler)
+    self.assertEqual(1, FakeSource.query().count())
+
+    source = FakeSource.query().get()
+    self.assert_equals(['x'], source.domains)
+    self.assert_equals(['http://x'], source.domain_urls)
+
   def test_create_new_publish(self):
     """If a source is publish only, we shouldn't insert a poll task."""
     FakeSource.create_new(self.handler, features=['publish'])

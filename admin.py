@@ -16,7 +16,7 @@ from oauth_dropins.webutil.util import json_dumps, json_loads
 import webapp2
 
 # Import source class files so their metaclasses are initialized.
-import blogger, flickr, github, instagram, mastodon, medium, tumblr, twitter, wordpress_rest
+import blogger, flickr, github, instagram, mastodon, medium, pixelfed, tumblr, twitter, wordpress_rest
 
 
 class ResponsesHandler(handlers.TemplateHandler):
@@ -59,7 +59,7 @@ class SourcesHandler(handlers.TemplateHandler):
 
   def template_vars(self):
     CLASSES = (flickr.Flickr, github.GitHub, twitter.Twitter,
-               instagram.Instagram, mastodon.Mastodon)
+               instagram.Instagram, mastodon.Mastodon, pixelfed.Pixelfed)
     queries = [cls.query(Source.status == 'enabled',
                          Source.poll_status == 'error',
                          Source.rate_limited.IN((False, None)),

@@ -23,7 +23,7 @@ from models import Response
 import original_post_discovery
 import util
 # need to import model class definitions since poll creates and saves entities.
-import blogger, flickr, github, instagram, mastodon, medium, tumblr, twitter, wordpress_rest
+import blogger, flickr, github, instagram, mastodon, medium, pixelfed, tumblr, twitter, wordpress_rest
 
 
 class Poll(webapp2.RequestHandler):
@@ -56,7 +56,7 @@ class Poll(webapp2.RequestHandler):
 
   def post(self, *path_args):
     self.request.headers['Content-Type'] = 'application/x-www-form-urlencoded'
-    logging.debug('Params: %s', list(self.request.params.items()))
+    logging.info('Params: %s', list(self.request.params.items()))
 
     key = self.request.params['source_key']
     source = self.source = ndb.Key(urlsafe=key).get()

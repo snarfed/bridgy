@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}{{ site.capitalize() }} signup - Bridgy{% endblock %}
+
+{% block content %}
+
+<br />
+
+<form method="post" action="/{{ site }}/start">
+<p class="row big">
+<label for="website">
+Enter your
+<a href="{{ join_url }}" target="_blank">
+<img src="/oauth_dropins/static/{{ logo_file }}"
+     style="height: 1em; margin-top: -.1em"/> {{ site.capitalize() }} server</a>
+(aka instance) here:
+</p>
+
+<div class="row">
+  <input required type="url" name="instance" id="instance" scheme="https"
+         placeholder="e.g. {{ site }}.social" />
+  <input type="submit" class="btn btn-default" value="Go" />
+  <input name="feature" type="hidden" value="listen" />
+</div>
+</form>
+
+<br>
+<p class="row">
+...or if you're technical, <a href="https://fed.brid.gy/">try Bridgy Fed instead!</a> No {{ site.capitalize() }} account needed.
+</p>
+
+{% endblock %}
