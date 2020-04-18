@@ -96,7 +96,7 @@ class AuthHandler(util.Handler):
 class AddReddit(oauth_reddit.CallbackHandler, util.Handler):
   def finish(self, auth_entity, state=None):
     logging.debug('finish with %s, %s', auth_entity, state)
-    self.maybe_add_or_delete_source(Reddit, auth_entity, util.encode_oauth_state(state))
+    self.maybe_add_or_delete_source(Reddit, auth_entity, state)
 
 
 class StartHandler(AuthHandler):
