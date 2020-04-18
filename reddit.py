@@ -68,8 +68,8 @@ class Reddit(models.Source):
     candidates = []
     for u in urls:
       candidates.extend(self.get_activities(
-        search_query=query, group_id=gr_source.SEARCH, etag=self.last_activities_etag,
-        fetch_replies=False, fetch_likes=False, fetch_shares=False, count=50))
+        search_query=u, group_id=gr_source.SEARCH, etag=self.last_activities_etag,
+        fetch_replies=True, fetch_likes=False, fetch_shares=False, count=50))
 
     return candidates
 
