@@ -1,16 +1,11 @@
-"""Unit tests for twitter.py.
+"""Unit tests for reddit.py.
 """
-import copy
-import urllib.request, urllib.parse, urllib.error
-
-from granary import reddit as gr_reddit
 from granary.tests import test_reddit as gr_reddit_test
 import oauth_dropins.reddit
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
 import models
 from . import testutil
-import reddit
 from reddit import Reddit
 
 
