@@ -496,9 +496,11 @@ class Discover(Poll):
       logging.info('Post %s not found.', post_id)
       return
     assert len(activities) == 1, activities
-    self.backfeed(source, activities={activities[0]['id']: activities[0]})
+    activity = activities[0]
+    activities = {activity['id']: activity}
+    self.backfeed(source, responses=activities, activities=activities)
 
-    obj = activities[0].get('object') or activities[0]
+    obj = activity.get('object') or activity
     in_reply_to = util.get_first(obj, 'inReplyTo')
     if in_reply_to:
       parsed = util.parse_tag_uri(in_reply_to.get('id', ''))  # TODO: fall back to url
