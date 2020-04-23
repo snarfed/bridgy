@@ -348,7 +348,7 @@ class Handler(webmention.WebmentionHandler):
       prop = microformats2.first_props(item.get('properties', {}))
       content = microformats2.get_text(prop.get('content'))
       if content:
-        obj['content'] = content.strip()
+        obj['content'] = content.strip().replace('<', '&lt;').replace('>', '&gt;')
 
     # which original post URL to include? in order of preference:
     # 1. rel-shortlink (background: https://github.com/snarfed/bridgy/issues/173)
