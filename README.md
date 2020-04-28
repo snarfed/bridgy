@@ -80,6 +80,7 @@ To deploy to App Engine, run [`scripts/deploy.sh`](https://github.com/snarfed/br
 
 [`remote_api_shell`](https://cloud.google.com/appengine/docs/python/tools/remoteapi#using_the_remote_api_shell) is a useful interactive Python shell that can interact with the production app's datastore, memcache, etc. To use it, [create a service account and download its JSON credentials](https://console.developers.google.com/project/brid-gy/apiui/credential), put it somewhere safe, and put its path in your `GOOGLE_APPLICATION_CREDENTIALS` environment variable.
 
+To deploy to your own app-engine project, create a project on [gcloud console](https://console.cloud.google.com/) and activate the [Tasks API](https://console.cloud.google.com/apis/api/cloudtasks.googleapis.com).  Initialize the project on the command line using `gcloud config set project <project-name>` followed by `gcloud app create`.  You will need to update  `TASKS_LOCATION` in util.py to match your project's location.  Finally, you will need to add your "background" domain (eg `background.YOUR-APP-NAME.appspot.com`) to OTHER_DOMAINS in util.py and set `host_url` in `tasks.py` to your base app url (eg `app-dot-YOUR-APP-NAME.wn.r.appspot.com`).  Finally, deploy (after testing) with `gcloud -q beta app deploy --no-cache --project YOUR-APP-NAME *.yaml`
 
 Adding a new silo
 ---
@@ -123,11 +124,11 @@ Stats
 I occasionally generate [stats and graphs of usage and growth](https://snarfed.org/2019-01-02_bridgy-stats-update-4) from the [BigQuery dataset](https://console.cloud.google.com/bigquery?p=brid-gy&d=datastore&page=dataset) ([#715](https://github.com/snarfed/bridgy/issues/715)). Here's how.
 
 1. [Export the full datastore to Google Cloud Storage.](https://cloud.google.com/datastore/docs/export-import-entities) Include all entities except `*Auth` and other internal details. Check to see if any new kinds have been added since the last time this command was run.
-    
+
     ```
     gcloud datastore export --async gs://brid-gy.appspot.com/stats/ --kinds Blogger,BlogPost,BlogWebmention,FacebookPage,Flickr,GitHub,GooglePlusPage,Instagram,Medium,Publish,PublishedPage,Response,SyndicatedPost,Tumblr,Twitter,WordPress
     ```
-    
+
     Note that `--kinds` is required. [From the export docs](https://cloud.google.com/datastore/docs/export-import-entities#limitations), _Data exported without specifying an entity filter cannot be loaded into BigQuery._
 1. Wait for it to be done with `gcloud datastore operations list | grep done`.
 1. [Import it into BigQuery](https://cloud.google.com/bigquery/docs/loading-data-cloud-datastore#loading_cloud_datastore_export_service_data):
@@ -136,7 +137,7 @@ I occasionally generate [stats and graphs of usage and growth](https://snarfed.o
     for kind in BlogPost BlogWebmention Publish Response SyndicatedPost; do
       bq load --replace --nosync --source_format=DATASTORE_BACKUP datastore.$kind gs://brid-gy.appspot.com/stats/all_namespaces/kind_$kind/all_namespaces_kind_$kind.export_metadata
     done
-    
+
     for kind in Blogger FacebookPage Flickr GitHub GooglePlusPage Instagram Medium Meetup Tumblr Twitter WordPress; do
       bq load --replace --nosync --source_format=DATASTORE_BACKUP sources.$kind gs://brid-gy.appspot.com/stats/all_namespaces/kind_$kind/all_namespaces_kind_$kind.export_metadata
     done
