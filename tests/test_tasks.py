@@ -1250,7 +1250,12 @@ class DiscoverTest(TaskTest):
 
     self.assertEqual(0, Response.query().count())
     self.discover()
-    self.assert_responses(self.responses[4:8])
+    self.assert_responses(self.responses[4:8] + [Response(
+      id=self.activities[1]['id'],
+      type='post',
+      source=self.sources[0].key,
+      status='complete',
+    )], ignore=('activities_json', 'response_json', 'original_posts'))
 
   def test_no_post(self):
     """Silo post not found."""
@@ -1278,6 +1283,8 @@ class DiscoverTest(TaskTest):
     self.discover()
 
     for resp in Response.query():
+      if resp.key.id() == self.activities[1]['id']:
+        continue
       self.assert_equals('new', resp.status)
       self.assert_equals(['http://target1/post/url', 'http://target/2'],
                          resp.unsent, resp.key)
@@ -1298,6 +1305,34 @@ class DiscoverTest(TaskTest):
     self.expect_task('discover', source_key=self.sources[0], post_id='456')
     self.mox.ReplayAll()
     self.discover()
+
+  def test_link_to_post(self):
+    """If the activity links to a post, we should enqueue it itself."""
+    source = self.sources[0]
+    source.domain_urls = ['http://foo/']
+    source.domains = ['foo']
+    source.put()
+
+    self.mox.StubOutWithMock(FakeSource, 'get_activities')
+    FakeSource.get_activities(
+      activity_id='b', fetch_replies=True, fetch_likes=True, fetch_shares=True,
+      user_id=self.sources[0].key.id()).AndReturn([{
+        'id': 'tag:fake.com:123',
+        'object': {
+          'author': {'id': 'tag:not-source'},
+          'id': 'tag:fake.com:123',
+          'url': 'https://fake.com/_/status/123',
+          'content': 'i like https://foo/post a lot',
+        },
+      }])
+    resp_key = ndb.Key('Response', 'tag:fake.com:123')
+    self.expect_task('propagate', response_key=resp_key)
+    self.mox.ReplayAll()
+
+    self.discover()
+    resp = resp_key.get()
+    self.assert_equals('new', resp.status)
+    self.assert_equals(['https://foo/post'], resp.unsent)
 
   def test_get_activities_error(self):
     self._test_get_activities_error(400)
@@ -1326,8 +1361,12 @@ class DiscoverTest(TaskTest):
       'post_id': '321',
       'type': 'event',
     })
-    self.assert_responses(self.responses[:4])
-
+    self.assert_responses(self.responses[:4] + [Response(
+      id=self.activities[0]['id'],
+      type='post',
+      source=self.sources[0].key,
+      status='complete',
+    )], ignore=('activities_json', 'response_json', 'original_posts'))
 
 class PropagateTest(TaskTest):
 
