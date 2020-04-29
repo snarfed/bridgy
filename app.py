@@ -458,6 +458,7 @@ class DeleteStartHandler(util.Handler):
       return self.redirect('/blogger/delete/start?state=%s' % state)
 
     path = ('/instagram/callback' if kind == 'Instagram'
+            else '/reddit/callback' if kind == 'Reddit'
             else '/wordpress/add' if kind == 'WordPress'
             else '/%s/delete/finish' % source.SHORT_NAME)
     kwargs = {}

@@ -77,23 +77,23 @@ class Reddit(models.Source):
 class AuthHandler(util.Handler):
   """Base OAuth handler class."""
 
-  def start_oauth_flow(self, feature):
-    """Redirects to Twitter's OAuth endpoint to start the OAuth flow.
+  def start_oauth_flow(self, feature, operation):
+    """Redirects to Reddit's OAuth endpoint to start the OAuth flow.
 
     Args:
-      feature: 'listen' or 'publish'
+      feature: 'listen' or 'publish', only 'listen' supported
     """
     features = feature.split(',') if feature else []
     for feature in features:
       if feature not in models.Source.FEATURES:
         raise exc.HTTPBadRequest('Unknown feature: %s' % feature)
 
-    handler = util.oauth_starter(oauth_reddit.StartHandler, feature=feature).to(
-      '/reddit/add')(self.request, self.response)
+    handler = util.oauth_starter(oauth_reddit.StartHandler, feature=feature, operation=operation).to(
+      '/reddit/callback')(self.request, self.response)
     return handler.post()
 
 
-class AddReddit(oauth_reddit.CallbackHandler, util.Handler):
+class CallbackHandler(oauth_reddit.CallbackHandler, util.Handler):
   def finish(self, auth_entity, state=None):
     logging.debug('finish with %s, %s', auth_entity, state)
     self.maybe_add_or_delete_source(Reddit, auth_entity, state)
@@ -103,13 +103,10 @@ class StartHandler(AuthHandler):
   """Custom OAuth start handler so we can use access_type=read for state=listen.
   """
   def post(self):
-    return self.start_oauth_flow(util.get_required_param(self, 'feature'))
+    return self.start_oauth_flow(util.get_required_param(self, 'feature'), self.request.get('operation'))
 
 
 ROUTES = [
   ('/reddit/start', StartHandler),
-  ('/reddit/add', AddReddit),
-  ('/reddit/delete/finish', oauth_reddit.CallbackHandler.to('/delete/finish')),
-  ('/reddit/publish/start', oauth_reddit.StartHandler.to(
-    '/publish/reddit/finish')),
+  ('/reddit/callback', CallbackHandler),
 ]
