@@ -26,6 +26,7 @@ class Reddit(models.Source):
     'post': 'submission',
     'comment': 'comment',
   }
+  CAN_PUBLISH = False
 
   @staticmethod
   def new(handler, auth_entity=None, **kwargs):
