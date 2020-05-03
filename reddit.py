@@ -66,14 +66,10 @@ class Reddit(models.Source):
     if not urls:
       return []
 
-    candidates = []
-    for u in urls:
-      candidates.extend(self.get_activities(
-        search_query=u, group_id=gr_source.SEARCH, etag=self.last_activities_etag,
-        fetch_replies=True, fetch_likes=False, fetch_shares=False, count=50))
-
-    return candidates
-
+    url_query = ' OR '.join([f'"{u}"' for u in urls])
+    return self.get_activities(
+      search_query=url_query, group_id=gr_source.SEARCH, etag=self.last_activities_etag,
+      fetch_replies=True, fetch_likes=False, fetch_shares=False, count=50)
 
 class AuthHandler(util.Handler):
   """Base OAuth handler class."""
