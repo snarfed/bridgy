@@ -3,6 +3,7 @@
 """
 import datetime
 from unittest import skip
+import copy
 
 from google.cloud import ndb
 from granary import source as gr_source
@@ -101,7 +102,7 @@ class ResponseTest(testutil.ModelsTest):
     response.put()
 
     # should enqueue three propagate tasks total
-    for i in range(3):
+    for i in range(4):
       self.expect_task('propagate', response_key=response)
     self.mox.ReplayAll()
 
@@ -109,6 +110,7 @@ class ResponseTest(testutil.ModelsTest):
     old_resp_json = response.response_json
     new_resp_json = json_loads(old_resp_json)
     new_resp_json['content'] = 'new content'
+    new_resp_json['inReplyTo'] = ['somebody1']
     response.response_json = json_dumps(new_resp_json)
 
     response = response.get_or_save(self.sources[0])
@@ -139,6 +141,18 @@ class ResponseTest(testutil.ModelsTest):
     self.assertCountEqual(urls, response.unsent)
     for field in response.sent, response.error, response.failed, response.skipped:
       self.assertEqual([], field)
+
+    # change inReplyTo
+    newest_resp_json = json_loads(response.response_json)
+    newest_resp_json['inReplyTo'] = 'somebody2'
+    expected_resp_json = copy.deepcopy(newest_resp_json)
+    expected_resp_json['inReplyTo'] = ['somebody2', 'somebody1']
+    response.response_json = json_dumps(newest_resp_json)
+
+    response = response.get_or_save(self.sources[0])
+    self.assert_equals(json_dumps(expected_resp_json), response.response_json)
+    self.assert_equals([old_resp_json, json_dumps(new_resp_json), json_dumps(newer_resp_json)],
+                       response.old_response_jsons)
 
     # change Response.type
     complete()

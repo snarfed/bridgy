@@ -906,7 +906,10 @@ class Response(Webmentions):
       logging.info('Response changed! Re-propagating. Original: %s' % resp)
 
       resp.old_response_jsons = resp.old_response_jsons[:10] + [resp.response_json]
-      source.gr_source.append_in_reply_to(resp.response_json, self.response_json)
+
+      response_json_to_append = json_loads(self.response_json)
+      source.gr_source.append_in_reply_to(json_loads(resp.response_json), response_json_to_append)
+      self.response_json = json_dumps(response_json_to_append)
       resp.response_json = self.response_json
       resp.restart(source)
     elif restart and resp is not self:  # ie it already existed
