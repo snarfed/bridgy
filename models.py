@@ -909,7 +909,7 @@ class Response(Webmentions):
 
       response_json_to_append = json_loads(self.response_json)
       source.gr_source.append_in_reply_to(json_loads(resp.response_json), response_json_to_append)
-      self.response_json = json_dumps(response_json_to_append)
+      self.response_json = json_dumps(util.trim_nulls(response_json_to_append))
       resp.response_json = self.response_json
       resp.restart(source)
     elif restart and resp is not self:  # ie it already existed
