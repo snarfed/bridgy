@@ -7,16 +7,16 @@ import logging
 import math
 
 from google.cloud import ndb
-import http.client
 from oauth_dropins.webutil.util import json_dumps, json_loads
+import webapp2
 
 import models
 from models import Source
-from instagram import Instagram
-from twitter import Twitter
 from flickr import Flickr
+from instagram import Instagram
+from mastodon import Mastodon
+from twitter import Twitter
 import util
-import webapp2
 
 TWITTER_API_USER_LOOKUP = 'users/lookup.json?screen_name=%s'
 TWITTER_USERS_PER_LOOKUP = 100  # max # of users per API call
@@ -91,9 +91,9 @@ class UpdatePictures(webapp2.RequestHandler):
   def get(self):
     updated = False
     for source in self.source_query():
-      logging.debug('checking for updated profile pictures for: %s',
-                    source.bridgy_url(self))
       if source.features and source.status != 'disabled':
+        logging.debug('checking for updated profile pictures for: %s',
+                      source.bridgy_url(self))
         updated = maybe_update_picture(
           source, source.gr_source.get_actor(source.key_id()), self)
 
@@ -135,6 +135,14 @@ class UpdateFlickrPictures(UpdatePictures):
                                 Flickr.RATE_LIMIT_HTTP_CODES)
 
 
+class UpdateMastodonPictures(UpdatePictures):
+  """Finds :class:`Mastodon` sources with new profile pictures and updates them.
+  """
+  SOURCE_CLS = Mastodon
+  TRANSIENT_ERROR_HTTP_CODES = (Mastodon.TRANSIENT_ERROR_HTTP_CODES +
+                                Mastodon.RATE_LIMIT_HTTP_CODES)
+
+
 def maybe_update_picture(source, new_actor, handler):
   if not new_actor:
     return False
@@ -156,7 +164,8 @@ def maybe_update_picture(source, new_actor, handler):
 
 ROUTES = [
   ('/cron/replace_poll_tasks', ReplacePollTasks),
-  ('/cron/update_twitter_pictures', UpdateTwitterPictures),
-  ('/cron/update_instagram_pictures', UpdateInstagramPictures),
   ('/cron/update_flickr_pictures', UpdateFlickrPictures),
+  ('/cron/update_instagram_pictures', UpdateInstagramPictures),
+  ('/cron/update_mastodon_pictures', UpdateMastodonPictures),
+  ('/cron/update_twitter_pictures', UpdateTwitterPictures),
 ]

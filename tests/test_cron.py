@@ -4,12 +4,15 @@ import copy
 import datetime
 
 from granary import instagram as gr_instagram
+from granary import mastodon as gr_mastodon
 from granary import twitter as gr_twitter
 from granary.tests import test_flickr
 from granary.tests import test_instagram
+from granary.tests import test_mastodon
 import oauth_dropins.flickr
 import oauth_dropins.flickr_auth
 from oauth_dropins import indieauth
+import oauth_dropins.mastodon
 import oauth_dropins.twitter
 import oauth_dropins.twitter_auth
 from oauth_dropins.webutil.util import json_dumps, json_loads
@@ -17,6 +20,7 @@ from oauth_dropins.webutil.util import json_dumps, json_loads
 import cron
 from flickr import Flickr
 from instagram import Instagram
+from mastodon import Mastodon
 import models
 from . import testutil
 from .testutil import FakeSource, HandlerTest, instagram_profile_user
@@ -229,3 +233,27 @@ class CronTest(HandlerTest):
     self.assertEqual(
       'https://farm9.staticflickr.com/9876/buddyicons/123@N00.jpg',
       self.flickr.key.get().picture)
+
+  def test_update_mastodon_pictures(self):
+    app = oauth_dropins.mastodon.MastodonApp(instance='https://foo.com', data='')
+    app.put()
+    auth = oauth_dropins.mastodon.MastodonAuth(
+      id='@me@foo.com', access_token_str='towkin', app=app.key,
+      user_json=json_dumps({
+        'id': 123,
+        'username': 'me',
+        'acct': 'me',
+        'avatar': 'http://before',
+      }))
+    auth.put()
+    mastodon = Mastodon.new(self.handler, auth_entity=auth, features=['listen'])
+    mastodon.put()
+
+    self.expect_requests_get(
+      'https://foo.com' + test_mastodon.API_ACCOUNT % '@me@foo.com',
+      test_mastodon.ACCOUNT, headers={'Authorization': 'Bearer towkin'})
+    self.mox.ReplayAll()
+
+    resp = tasks.application.get_response('/cron/update_mastodon_pictures')
+    self.assertEqual(200, resp.status_int)
+    self.assertEqual(test_mastodon.ACCOUNT['avatar'], mastodon.key.get().picture)

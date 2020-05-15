@@ -22,3 +22,8 @@ cron:
   url: /cron/update_flickr_pictures
   schedule: every day 09:00  # 2am pst
   target: background
+
+- description: update changed mastodon profile pictures
+  url: /cron/update_mastodon_pictures
+  schedule: every day 10:00  # 3am pst
+  target: background
