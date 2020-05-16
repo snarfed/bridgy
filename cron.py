@@ -8,6 +8,7 @@ import math
 
 from google.cloud import ndb
 from oauth_dropins.webutil.util import json_dumps, json_loads
+import requests
 import webapp2
 
 import models
@@ -94,8 +95,13 @@ class UpdatePictures(webapp2.RequestHandler):
       if source.features and source.status != 'disabled':
         logging.debug('checking for updated profile pictures for: %s',
                       source.bridgy_url(self))
-        updated = maybe_update_picture(
-          source, source.gr_source.get_actor(source.key_id()), self)
+        try:
+          actor = source.gr_source.get_actor(source.key_id())
+        except requests.HTTPError as e:
+          # Mastodon API returns HTTP 404 for deleted (etc) users
+          util.interpret_http_exception(e)
+          continue
+        updated = maybe_update_picture(source, actor, self)
 
     if updated:
       util.CachedPage.invalidate('/users')

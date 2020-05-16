@@ -16,6 +16,7 @@ import oauth_dropins.mastodon
 import oauth_dropins.twitter
 import oauth_dropins.twitter_auth
 from oauth_dropins.webutil.util import json_dumps, json_loads
+import requests
 
 import cron
 from flickr import Flickr
@@ -235,6 +236,32 @@ class CronTest(HandlerTest):
       self.flickr.key.get().picture)
 
   def test_update_mastodon_pictures(self):
+    self.expect_requests_get(
+      'https://foo.com' + test_mastodon.API_ACCOUNT % '@me@foo.com',
+      test_mastodon.ACCOUNT, headers={'Authorization': 'Bearer towkin'})
+    self.mox.ReplayAll()
+
+    mastodon = self._setup_mastodon()
+    resp = tasks.application.get_response('/cron/update_mastodon_pictures')
+    self.assertEqual(200, resp.status_int)
+    self.assertEqual(test_mastodon.ACCOUNT['avatar'], mastodon.key.get().picture)
+
+  def test_update_mastodon_pictures_get_actor_404(self):
+    self.expect_requests_get(
+      'https://foo.com' + test_mastodon.API_ACCOUNT % '@me@foo.com',
+      headers={'Authorization': 'Bearer towkin'},
+    ).AndRaise(
+      requests.exceptions.HTTPError(
+        response=util.Struct(status_code='404', text='foo')))
+    self.mox.ReplayAll()
+
+    mastodon = self._setup_mastodon()
+    resp = tasks.application.get_response('/cron/update_mastodon_pictures')
+    self.assertEqual(200, resp.status_int)
+    self.assertEqual('http://before', mastodon.key.get().picture)
+
+  def _setup_mastodon(self):
+    """Creates and returns a test :class:`Mastodon`."""
     app = oauth_dropins.mastodon.MastodonApp(instance='https://foo.com', data='')
     app.put()
     auth = oauth_dropins.mastodon.MastodonAuth(
@@ -248,12 +275,4 @@ class CronTest(HandlerTest):
     auth.put()
     mastodon = Mastodon.new(self.handler, auth_entity=auth, features=['listen'])
     mastodon.put()
-
-    self.expect_requests_get(
-      'https://foo.com' + test_mastodon.API_ACCOUNT % '@me@foo.com',
-      test_mastodon.ACCOUNT, headers={'Authorization': 'Bearer towkin'})
-    self.mox.ReplayAll()
-
-    resp = tasks.application.get_response('/cron/update_mastodon_pictures')
-    self.assertEqual(200, resp.status_int)
-    self.assertEqual(test_mastodon.ACCOUNT['avatar'], mastodon.key.get().picture)
+    return mastodon
