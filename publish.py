@@ -551,7 +551,7 @@ class Handler(webmention.WebmentionHandler):
     except Exception as e:
       code = getattr(e, 'code', None)
       details = getattr(e, 'details', None)
-      logging.info((code(), details()))
+      logging.info((code and code(), details and details()))
       if (code and code() == grpc.StatusCode.ABORTED and
           details and 'too much contention' in details()):
         return self.error("You're already publishing that post in another request.",
