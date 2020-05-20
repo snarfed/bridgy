@@ -89,6 +89,10 @@ class UpdatePictures(webapp2.RequestHandler):
   def source_query(self):
     return self.SOURCE_CLS.query()
 
+  @classmethod
+  def user_id(cls, source):
+    return source.key_id()
+
   def get(self):
     updated = False
     for source in self.source_query():
@@ -96,7 +100,7 @@ class UpdatePictures(webapp2.RequestHandler):
         logging.debug('checking for updated profile pictures for: %s',
                       source.bridgy_url(self))
         try:
-          actor = source.gr_source.get_actor(source.key_id())
+          actor = source.gr_source.get_actor(self.user_id(source))
         except requests.HTTPError as e:
           # Mastodon API returns HTTP 404 for deleted (etc) users
           util.interpret_http_exception(e)
@@ -147,6 +151,10 @@ class UpdateMastodonPictures(UpdatePictures):
   SOURCE_CLS = Mastodon
   TRANSIENT_ERROR_HTTP_CODES = (Mastodon.TRANSIENT_ERROR_HTTP_CODES +
                                 Mastodon.RATE_LIMIT_HTTP_CODES)
+
+  @classmethod
+  def user_id(cls, source):
+    return source.auth_entity.get().user_id()
 
 
 def maybe_update_picture(source, new_actor, handler):

@@ -237,7 +237,7 @@ class CronTest(HandlerTest):
 
   def test_update_mastodon_pictures(self):
     self.expect_requests_get(
-      'https://foo.com' + test_mastodon.API_ACCOUNT % '@me@foo.com',
+      'https://foo.com' + test_mastodon.API_ACCOUNT % 123,
       test_mastodon.ACCOUNT, headers={'Authorization': 'Bearer towkin'})
     self.mox.ReplayAll()
 
@@ -248,7 +248,7 @@ class CronTest(HandlerTest):
 
   def test_update_mastodon_pictures_get_actor_404(self):
     self.expect_requests_get(
-      'https://foo.com' + test_mastodon.API_ACCOUNT % '@me@foo.com',
+      'https://foo.com' + test_mastodon.API_ACCOUNT % 123,
       headers={'Authorization': 'Bearer towkin'},
     ).AndRaise(
       requests.exceptions.HTTPError(
