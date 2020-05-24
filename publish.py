@@ -558,7 +558,9 @@ class Handler(webmention.WebmentionHandler):
                           status=429)
       raise
 
-  @ndb.transactional()
+  # TODO: uncomment as soon as https://github.com/snarfed/bridgy/issues/945
+  # is fixed!
+  # @ndb.transactional()
   def _get_or_add_publish_entity(self, source_url):
     page = PublishedPage.get_or_insert(source_url)
     entity = Publish.query(
