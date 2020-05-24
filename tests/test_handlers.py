@@ -83,7 +83,7 @@ class HandlersTest(testutil.HandlerTest):
 <a class="u-url" href="http://or.ig/post"></a>
   <div class="e-content p-name">
   asdf http://other/link qwert
-  <a class="u-mention" href="http://other/link"></a>
+  <a class="u-mention" aria-hidden="true" href="http://other/link"></a>
   </div>
 <span class="u-category h-card">
 <data class="p-uid" value="%(id)s"></data>
@@ -104,7 +104,7 @@ class HandlersTest(testutil.HandlerTest):
         'url': ['http://fa.ke/000', 'http://or.ig/post'],
         'content': [{ 'html': """\
 asdf http://other/link qwert
-<a class="u-mention" href="http://other/link"></a>
+<a class="u-mention" aria-hidden="true" href="http://other/link"></a>
 """,
                       'value': 'asdf http://other/link qwert',
         }],
@@ -223,7 +223,7 @@ asdf http://other/link qwert
   </span>
   <div class="e-content p-name">
   qwert
-  <a class="u-mention" href="http://other/link"></a>
+  <a class="u-mention" aria-hidden="true" href="http://other/link"></a>
   </div>
 <span class="u-category h-card">
 <data class="p-uid" value="%s"></data>
@@ -427,8 +427,8 @@ asdf http://other/link qwert
 <span class="p-uid"></span>
   <div class="e-content p-name">
   qwert
-  <a class="u-mention" href="http://other/link"></a>
-  <a class="u-mention" href="http://other/link/redirect"></a>
+  <a class="u-mention" aria-hidden="true" href="http://other/link"></a>
+  <a class="u-mention" aria-hidden="true" href="http://other/link/redirect"></a>
   </div>
   <a class="u-in-reply-to" href="http://fa.ke/000"></a>
   <a class="u-in-reply-to" href="http://or.ig/post"></a>
@@ -447,7 +447,7 @@ asdf http://other/link qwert
 <span class="p-uid"></span>
   <div class="e-content p-name">
   qwert
-  <a class="u-mention" href="http://other/link?a=b"></a>
+  <a class="u-mention" aria-hidden="true" href="http://other/link?a=b"></a>
   </div>
   <a class="u-in-reply-to" href="http://or.ig/post"></a>
 </article>
@@ -473,11 +473,11 @@ asdf http://other/link qwert
 <article class="h-entry">
 <span class="p-uid"></span>
   <div class="e-content p-name">
-  <a class="u-mention" href="http://all/"></a>
-  <a class="u-mention" href="http://mention/only"></a>
-  <a class="u-mention" href="http://upstream/only"></a>
-  <a class="u-mention" href="https://reply/"></a>
-  <a class="u-mention" href="https://upstream/"></a>
+  <a class="u-mention" aria-hidden="true" href="http://all/"></a>
+  <a class="u-mention" aria-hidden="true" href="http://mention/only"></a>
+  <a class="u-mention" aria-hidden="true" href="http://upstream/only"></a>
+  <a class="u-mention" aria-hidden="true" href="https://reply/"></a>
+  <a class="u-mention" aria-hidden="true" href="https://upstream/"></a>
   </div>
   <a class="u-in-reply-to" href="http://reply"></a>
   <a class="u-in-reply-to" href="https://all"></a>
