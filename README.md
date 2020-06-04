@@ -32,6 +32,19 @@ kill %1
 
 If you send a pull request, please include or update a test for your new code!
 
+To test a poll or propagate task, find the relevant _Would add task_ line in the logs, eg:
+
+```
+INFO:root:Would add task: projects//locations/us-central1/queues/poll {'app_engine_http_request': {'http_method': 'POST', 'relative_uri': '/_ah/queue/poll', 'app_engine_routing': {'service': 'background'}, 'body': b'source_key=agNhcHByFgsSB1R3aXR0ZXIiCXNjaG5hcmZlZAw&last_polled=1970-01-01-00-00-00', 'headers': {'Content-Type': 'application/x-www-form-urlencoded'}}, 'schedule_time': seconds: 1591176072
+```
+
+...pull out the `relative_uri` and `body`, and then put them together in a `curl` command against the `background` service, which usually runs on http://localhost:8081/, eg:
+
+```
+curl -d 'source_key=agNhcHByFgsSB1R3aXR0ZXIiCXNjaG5hcmZlZAw&last_polled=1970-01-01-00-00-00' \
+  http://localhost:8081/_ah/queue/poll
+```
+
 To run the entire app locally, run this in the repo root directory:
 
 ```
@@ -81,6 +94,7 @@ To deploy to App Engine, run [`scripts/deploy.sh`](https://github.com/snarfed/br
 [`remote_api_shell`](https://cloud.google.com/appengine/docs/python/tools/remoteapi#using_the_remote_api_shell) is a useful interactive Python shell that can interact with the production app's datastore, memcache, etc. To use it, [create a service account and download its JSON credentials](https://console.developers.google.com/project/brid-gy/apiui/credential), put it somewhere safe, and put its path in your `GOOGLE_APPLICATION_CREDENTIALS` environment variable.
 
 Deploying to your own app-engine project can be useful for testing, but is not recommended for production.  To deploy to your own app-engine project, create a project on [gcloud console](https://console.cloud.google.com/) and activate the [Tasks API](https://console.cloud.google.com/apis/api/cloudtasks.googleapis.com).  Initialize the project on the command line using `gcloud config set project <project-name>` followed by `gcloud app create`.  You will need to update  `TASKS_LOCATION` in util.py to match your project's location.  Finally, you will need to add your "background" domain (eg `background.YOUR-APP-NAME.appspot.com`) to OTHER_DOMAINS in util.py and set `host_url` in `tasks.py` to your base app url (eg `app-dot-YOUR-APP-NAME.wn.r.appspot.com`).  Finally, deploy (after testing) with `gcloud -q beta app deploy --no-cache --project YOUR-APP-NAME *.yaml`
+
 
 Adding a new silo
 ---
