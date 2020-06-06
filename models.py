@@ -28,6 +28,8 @@ REFETCH_HFEED_TRIGGER = datetime.datetime.utcfromtimestamp(-1)
 # https://cloud.google.com/datastore/docs/concepts/limits
 BLOCKLIST_MAX_IDS = 20000
 
+TWITTER_SCRAPE_HEADERS = json_loads(util.read('twitter_scrape_headers.json'))
+
 # maps string short name to Source subclass. populated by SourceMeta.
 sources = {}
 
@@ -223,7 +225,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
         args = (auth_entity.instance(),) + args
         kwargs = {'user_id': json_loads(auth_entity.user_json).get('id')}
       elif self.key.kind() == 'Twitter':
-        kwargs = {'username': self.key_id()}
+        kwargs = {'username': self.key_id(), 'scrape_headers': TWITTER_SCRAPE_HEADERS}
 
       self.gr_source = self.GR_CLASS(*args, **kwargs)
       return self.gr_source

@@ -5,7 +5,7 @@ import urllib.request, urllib.parse, urllib.error
 
 from granary import twitter as gr_twitter
 from granary.tests import test_twitter as gr_twitter_test
-from granary.twitter import API_BASE, API_SEARCH, API_STATUS, HTML_FAVORITES
+from granary.twitter import API_BASE, API_SEARCH, API_STATUS, SCRAPE_LIKES_URL
 import oauth_dropins.twitter
 import oauth_dropins.twitter_auth
 from oauth_dropins.webutil.util import json_dumps, json_loads
@@ -68,16 +68,20 @@ class TwitterTest(testutil.ModelsTest):
 
   def test_get_like_fallback(self):
     """If there's no Response in the datastore, fall back to get_activities."""
+    models.TWITTER_SCRAPE_HEADERS = {'x': 'y'}
+
     tweet = copy.deepcopy(gr_twitter_test.TWEET)
     tweet['favorite_count'] = 1
 
     self.expect_urlopen(API_BASE + API_STATUS % '100', json_dumps(tweet))
-    self.expect_urlopen(HTML_FAVORITES % '100',
-                        json_dumps({'htmlUsers': gr_twitter_test.FAVORITES_HTML}))
+    self.expect_requests_get(SCRAPE_LIKES_URL % '100', gr_twitter_test.LIKES_SCRAPED,
+                             headers={'x': 'y'})
 
     self.mox.ReplayAll()
-    self.assert_equals(gr_twitter_test.LIKES_FROM_HTML[0],
-                       self.tw.get_like('unused', '100', '353'))
+    like = copy.deepcopy(gr_twitter_test.LIKE_OBJECTS[0])
+    like['id'] = 'tag:twitter.com,2013:100_favorited_by_353'
+    like['author']['id'] = 'tag:twitter.com,2013:ge'
+    self.assert_equals(like, self.tw.get_like('unused', '100', '353'))
 
   def test_canonicalize_url(self):
     good = 'https://twitter.com/x/status/123'
