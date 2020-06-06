@@ -28,7 +28,7 @@ REFETCH_HFEED_TRIGGER = datetime.datetime.utcfromtimestamp(-1)
 # https://cloud.google.com/datastore/docs/concepts/limits
 BLOCKLIST_MAX_IDS = 20000
 
-TWITTER_SCRAPE_HEADERS = json_loads(util.read('twitter_scrape_headers.json'))
+TWITTER_SCRAPE_HEADERS = json_loads(util.read('twitter_scrape_headers.json') or '{}')
 
 # maps string short name to Source subclass. populated by SourceMeta.
 sources = {}
