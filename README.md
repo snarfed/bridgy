@@ -140,7 +140,7 @@ I occasionally generate [stats and graphs of usage and growth](https://snarfed.o
 1. [Export the full datastore to Google Cloud Storage.](https://cloud.google.com/datastore/docs/export-import-entities) Include all entities except `*Auth` and other internal details. Check to see if any new kinds have been added since the last time this command was run.
 
     ```
-    gcloud datastore export --async gs://brid-gy.appspot.com/stats/ --kinds Blogger,BlogPost,BlogWebmention,FacebookPage,Flickr,GitHub,GooglePlusPage,Instagram,Medium,Publish,PublishedPage,Response,SyndicatedPost,Tumblr,Twitter,WordPress
+    gcloud datastore export --async gs://brid-gy.appspot.com/stats/ --kinds Blogger,BlogPost,BlogWebmention,FacebookPage,Flickr,GitHub,GooglePlusPage,Instagram,Mastodon,Medium,Meetup,Publish,PublishedPage,Reddit,Response,SyndicatedPost,Tumblr,Twitter,WordPress
     ```
 
     Note that `--kinds` is required. [From the export docs](https://cloud.google.com/datastore/docs/export-import-entities#limitations), _Data exported without specifying an entity filter cannot be loaded into BigQuery._
@@ -152,7 +152,7 @@ I occasionally generate [stats and graphs of usage and growth](https://snarfed.o
       bq load --replace --nosync --source_format=DATASTORE_BACKUP datastore.$kind gs://brid-gy.appspot.com/stats/all_namespaces/kind_$kind/all_namespaces_kind_$kind.export_metadata
     done
 
-    for kind in Blogger FacebookPage Flickr GitHub GooglePlusPage Instagram Medium Meetup Tumblr Twitter WordPress; do
+    for kind in Blogger FacebookPage Flickr GitHub GooglePlusPage Instagram Mastodon Medium Meetup Reddit Tumblr Twitter WordPress; do
       bq load --replace --nosync --source_format=DATASTORE_BACKUP sources.$kind gs://brid-gy.appspot.com/stats/all_namespaces/kind_$kind/all_namespaces_kind_$kind.export_metadata
     done
     ```
