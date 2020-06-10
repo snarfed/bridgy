@@ -23,6 +23,7 @@ medium_client_*
 meetup_client_*
 private_notes
 reddit_app_*
+service_account_creds.json
 superfeedr_token
 superfeedr_username
 TAGS

@@ -36,6 +36,7 @@ RCS/
 ref/
 sample/
 samples/
+service_account_creds.json
 TAGS
 TAGS/
 test/
