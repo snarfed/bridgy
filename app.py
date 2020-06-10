@@ -610,27 +610,28 @@ class DiscoverHandler(util.Handler):
     path = urllib.parse.urlparse(url).path
     msg = 'Discovering now. Refresh in a minute to see the results!'
 
-    if domain == source.GR_CLASS.DOMAIN:
-      post_id = source.GR_CLASS.post_id(url)
+    gr_source = source.gr_source
+    if domain == gr_source.DOMAIN:
+      post_id = gr_source.post_id(url)
       if post_id:
         type = 'event' if path.startswith('/events/') else None
         util.add_discover_task(source, post_id, type=type)
       else:
-        msg = "Sorry, that doesn't look like a %s post URL." % source.GR_CLASS.NAME
+        msg = "Sorry, that doesn't look like a %s post URL." % gr_source.NAME
 
     elif util.domain_or_parent_in(domain, source.domains):
       synd_links = original_post_discovery.process_entry(source, url, {}, False, [])
       if synd_links:
         for link in synd_links:
-          util.add_discover_task(source, source.GR_CLASS.post_id(link))
+          util.add_discover_task(source, gr_source.post_id(link))
         source.updates = {'last_syndication_url': util.now_fn()}
         models.Source.put_updates(source)
       else:
         msg = 'Failed to fetch %s or find a %s syndication link.' % (
-          util.pretty_link(url), source.GR_CLASS.NAME)
+          util.pretty_link(url), gr_source.NAME)
 
     else:
-      msg = 'Please enter a URL on either your web site or %s.' % source.GR_CLASS.NAME
+      msg = 'Please enter a URL on either your web site or %s.' % gr_source.NAME
 
     self.messages.add(msg)
     self.redirect(source.bridgy_url(self))

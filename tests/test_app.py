@@ -656,7 +656,10 @@ class DiscoverTest(testutil.ModelsTest):
 
   def test_discover_twitter_profile_url_error(self):
     """https://console.cloud.google.com/errors/7553065641439031622"""
-    self.source = twitter.Twitter(id='bltavares', features=['listen'])
+    auth_entity = TwitterAuth(id='foo', user_json='',
+                              token_key='', token_secret='').put()
+    self.source = twitter.Twitter(id='foo', features=['listen'],
+                                  auth_entity=auth_entity)
     self.source.put()
     self.check_discover('https://twitter.com/bltavares',
         "Sorry, that doesn't look like a Twitter post URL.")
