@@ -8,7 +8,7 @@ import string
 import urllib.request, urllib.parse, urllib.error
 
 from google.cloud import ndb
-from google.cloud.ndb.stats import KindStat, KindPropertyNameStat
+from google.cloud.ndb.stats import KindStat, KindPropertyNamePropertyTypeStat
 from oauth_dropins import indieauth
 from oauth_dropins.webutil import appengine_info
 from oauth_dropins.webutil import handlers as webutil_handlers
@@ -130,9 +130,13 @@ class FrontPageHandler(CachedPageHandler):
 
     num_users = sum(kind_count(cls.__name__) for cls in models.sources.values())
     link_counts = {
-      property: sum(count(KindPropertyNameStat.query(
-          KindPropertyNameStat.kind_name == kind,
-          KindPropertyNameStat.property_name == property))
+      property: sum(count(KindPropertyNamePropertyTypeStat.query(
+        KindPropertyNamePropertyTypeStat.kind_name == kind,
+        KindPropertyNamePropertyTypeStat.property_name == property,
+        # specify string because there are also ~2M Response entities with null
+        # values for some of these properties, as opposed to missing altogether,
+        # which we don't want to include.
+        KindPropertyNamePropertyTypeStat.property_type == 'String'))
                     for kind in ('BlogPost', 'Response'))
       for property in ('sent', 'unsent', 'error', 'failed', 'skipped')}
 
