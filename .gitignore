@@ -4,6 +4,7 @@
 /l
 /local*/
 /mapreduce
+circleci_token
 datastore.dat*
 disqus_access_token
 disqus_api_*

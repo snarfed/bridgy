@@ -19,6 +19,7 @@ from mastodon import Mastodon
 from twitter import Twitter
 import util
 
+CIRCLECI_TOKEN = util.read('circleci_token')
 TWITTER_API_USER_LOOKUP = 'users/lookup.json?screen_name=%s'
 TWITTER_USERS_PER_LOOKUP = 100  # max # of users per API call
 
@@ -176,7 +177,18 @@ def maybe_update_picture(source, new_actor, handler):
   return True
 
 
+class BuildCircle(webapp2.RequestHandler):
+  """Trigger CircleCI to build and test the master branch.
+
+  ...to run twitter_live_test.py, to check that scraping likes is still working.
+  """
+  def get(self):
+    resp = requests.post('https://circleci.com/api/v1.1/project/github/snarfed/bridgy/tree/master?circle-token=%s' % CIRCLECI_TOKEN)
+    resp.raise_for_status()
+
+
 ROUTES = [
+  ('/cron/build_circle', BuildCircle),
   ('/cron/replace_poll_tasks', ReplacePollTasks),
   ('/cron/update_flickr_pictures', UpdateFlickrPictures),
   ('/cron/update_instagram_pictures', UpdateInstagramPictures),
