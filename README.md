@@ -159,7 +159,7 @@ I occasionally generate [stats and graphs of usage and growth](https://snarfed.o
 1. Check the jobs with `bq ls -j`, then wait for them with `bq wait`.
 1. [Run the full stats BigQuery query.](https://console.cloud.google.com/bigquery?sq=586366768654:9d8d4c13e988477bb976a5e29b63da3b) Download the results as CSV.
 1. [Open the stats spreadsheet.](https://docs.google.com/spreadsheets/d/1VhGiZ9Z9PEl7f9ciiVZZgupNcUTsRVltQ8_CqFETpfU/edit) Import the CSV, replacing the _data_ sheet.
-1. Check out the graphs! Save full size images with OS or browser screenshots, thumbnails with the _Save Image_ button. Then post them!
+1. Check out the graphs! Save full size images with OS or browser screenshots, thumbnails with the _Download Chart_ button. Then post them!
 
 
 Misc
