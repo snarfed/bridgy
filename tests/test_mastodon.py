@@ -78,3 +78,9 @@ class MastodonTest(testutil.ModelsTest):
     self.m.load_blocklist()
     self.assertEqual([], self.m.blocked_ids)
     self.assertFalse(self.m.is_blocked({'numeric_id': 123}))
+
+  def test_gr_class_with_max_toot_chars(self):
+    app = self.auth_entity.app.get()
+    app.instance_info = '{"max_toot_chars": 999}'
+    app.put()
+    self.assert_equals(999, self.m.gr_source.TRUNCATE_TEXT_LENGTH)

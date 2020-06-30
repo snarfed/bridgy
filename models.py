@@ -233,7 +233,13 @@ class Source(StringIdModel, metaclass=SourceMeta):
         kwargs = {'scrape': True, 'cookie': INSTAGRAM_SESSIONID_COOKIE}
       elif self.key.kind() == 'Mastodon':
         args = (auth_entity.instance(),) + args
-        kwargs = {'user_id': json_loads(auth_entity.user_json).get('id')}
+        inst = auth_entity.app.get().instance_info
+        kwargs = {
+          'user_id': json_loads(auth_entity.user_json).get('id'),
+          # https://docs-develop.pleroma.social/backend/API/differences_in_mastoapi_responses/#instance
+          'truncate_text_length':
+            json_loads(inst).get('max_toot_chars') if inst else None,
+        }
       elif self.key.kind() == 'Twitter':
         kwargs = {'username': self.key_id(), 'scrape_headers': TWITTER_SCRAPE_HEADERS}
 
