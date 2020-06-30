@@ -673,6 +673,11 @@ class SourceTest(testutil.HandlerTest):
     self.assertTrue(source.is_blocked({'author': {'numeric_id': '1'}}))
     self.assertFalse(source.is_blocked({'object': {'actor': {'numeric_id': '3'}}}))
 
+  def test_getattr_doesnt_exist(self):
+    source = FakeSource(id='x')
+    with self.assertRaises(AttributeError):
+      source.bad
+
 
 class BlogPostTest(testutil.ModelsTest):
 

@@ -207,9 +207,8 @@ class Source(StringIdModel, metaclass=SourceMeta):
     Once :attr:`self.gr_source` is set, this method will *not* be called;
     :attr:`gr_source` will be returned normally.
     """
-    super_attr = getattr(super(Source, self), name, None)
-
     if name =='gr_source':
+      super_attr = getattr(super(Source, self), name, None)
       if super_attr:
         return super_attr
       elif not self.auth_entity:
@@ -246,7 +245,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
       self.gr_source = self.GR_CLASS(*args, **kwargs)
       return self.gr_source
 
-    return super_attr
+    return getattr(super(Source, self), name)
 
   @classmethod
   def lookup(cls, id):
