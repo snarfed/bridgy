@@ -334,7 +334,9 @@ Click to enable <a href="/about#listen">listening</a>:
         {% endfor %}
       </ul>
       {% else %}
-      <a href="/about#profile-links">No webmention targets</a>
+        {% if not response.original_links %}
+          <a href="/about#profile-links">No webmention targets</a>
+        {% endif %}
     {% endfor %}
    </div>
   </li>
