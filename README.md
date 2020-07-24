@@ -15,10 +15,10 @@ Development
 You'll need the [Google Cloud SDK](https://cloud.google.com/sdk/gcloud/) (aka `gcloud`) with the `gcloud-appengine-python`, `gcloud-appengine-python-extras` and `google-cloud-sdk-datastore-emulator` [components](https://cloud.google.com/sdk/docs/components#additional_components). Then, create a Python 3 virtualenv and install the dependencies with:
 
 ```sh
-python3 -m venv local3
-source local3/bin/activate
+python3 -m venv local
+source local/bin/activate
 pip install -r requirements.txt
-ln -s local3/lib/python3*/site-packages/oauth_dropins  # needed to serve static file assets in dev_appserver
+ln -s local/lib/python3*/site-packages/oauth_dropins  # needed to serve static file assets in dev_appserver
 gcloud config set project brid-gy
 ```
 

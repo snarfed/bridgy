@@ -13,13 +13,13 @@ pkill datastore || true
 gcloud beta emulators datastore start --no-store-on-disk --consistency=1.0 --host-port=localhost:8089 < /dev/null >& /dev/null &
 sleep 2s
 
-cd $src/oauth-dropins && source local3/bin/activate
+cd $src/oauth-dropins && source local/bin/activate
 python -m unittest discover --pattern="test_*.py"
 
-cd ../granary && source local3/bin/activate
+cd ../granary && source local/bin/activate
 python -m unittest discover
 
-cd ../bridgy && source local3/bin/activate
+cd ../bridgy && source local/bin/activate
 python -m unittest discover -s tests -t .
 
 kill %1  # datastore emulator
