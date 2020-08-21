@@ -33,6 +33,8 @@ LOCALHOST_TEST_DOMAINS = frozenset([
   ('kylewm.com', 'redwind.dev'),
 ])
 
+LOCAL_HOSTS = {'localhost', '127.0.0.1'}
+
 POLL_TASK_DATETIME_FORMAT = '%Y-%m-%d-%H-%M-%S'
 
 REQUEST_HEADERS = {
@@ -56,12 +58,12 @@ now_fn = datetime.datetime.now
 # their profile. We automatically omit links to these domains.
 _dir = os.path.dirname(__file__)
 with open(os.path.join(_dir, 'domain_blocklist.txt'), 'rt', encoding='utf-8') as f:
-  BLACKLIST = util.load_file_lines(f)
+  BLOCKLIST = util.load_file_lines(f)
 
 # Individual URLs that we shouldn't fetch. Started because of
 # https://github.com/snarfed/bridgy/issues/525 . Hopefully temporary and can be
 # removed once https://github.com/idno/Known/issues/1088 is fixed!
-URL_BLACKLIST = frozenset((
+URL_BLOCKLIST = frozenset((
   'http://www.evdemon.org/2015/learning-more-about-quill',
 ))
 
@@ -91,11 +93,11 @@ OTHER_DOMAINS = (
   'bridgy.org',
   'www.bridgy.org',
 )
-LOCAL_HOSTS = (
+LOCAL_DOMAINS = (
   'localhost:8080',
   'my.dev.com:8080',
 )
-DOMAINS = (PRIMARY_DOMAIN,) + OTHER_DOMAINS + LOCAL_HOSTS
+DOMAINS = (PRIMARY_DOMAIN,) + OTHER_DOMAINS + LOCAL_DOMAINS
 canonicalize_domain = webutil_handlers.redirect(OTHER_DOMAINS, PRIMARY_DOMAIN)
 
 webutil_handlers.JINJA_ENV.globals.update({
@@ -219,7 +221,8 @@ def requests_get(url, **kwargs):
 
   http://docs.python-requests.org/en/latest/user/advanced/#body-content-workflow
   """
-  if url in URL_BLACKLIST:
+  host = urllib.parse.urlparse(url).netloc.split(':')[0]
+  if url in URL_BLOCKLIST or (not LOCAL and host in LOCAL_HOSTS):
     resp = requests.Response()
     resp.status_code = HTTP_REQUEST_REFUSED_STATUS_CODE
     resp._text = 'Sorry, Bridgy has blocklisted this URL.'
@@ -297,8 +300,10 @@ def get_webmention_target(url, resolve=True, replace_test_domains=True):
 
 
 def in_webmention_blocklist(domain):
-  """Returns True if the domain or its root domain is in BLACKLIST."""
-  return util.domain_or_parent_in(domain.lower(), BLACKLIST)
+  """Returns True if the domain or its root domain is in BLOCKLIST."""
+  domain = domain.lower()
+  return (util.domain_or_parent_in(domain, BLOCKLIST) or
+          (not LOCAL and domain in LOCAL_HOSTS))
 
 
 def prune_activity(activity, source):
