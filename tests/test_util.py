@@ -392,13 +392,13 @@ class UtilTest(testutil.ModelsTest):
     self.assertEqual('xyz', resp.text)
 
   def test_requests_get_url_blocklist(self):
-    resp = util.requests_get(next(iter(util.URL_BLACKLIST)))
+    resp = util.requests_get(next(iter(util.URL_BLOCKLIST)))
     self.assertEqual(util.HTTP_REQUEST_REFUSED_STATUS_CODE, resp.status_code)
     self.assertEqual('Sorry, Bridgy has blocklisted this URL.', resp.text)
 
   def test_blocklist_localhost_when_deployed(self):
     self.mox.StubOutWithMock(util, 'LOCAL')
-    util.LOCAL = True
+    util.LOCAL = False
     for bad in 'http://localhost:8080/', 'http://127.0.0.1/':
       resp = util.requests_get(bad)
       self.assertEqual(util.HTTP_REQUEST_REFUSED_STATUS_CODE, resp.status_code)

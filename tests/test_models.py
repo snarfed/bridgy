@@ -339,7 +339,7 @@ class SourceTest(testutil.HandlerTest):
 
   def test_create_new_domain(self):
     """If the source has a URL set, extract its domain."""
-    util.BLACKLIST.remove('fa.ke')
+    util.BLOCKLIST.remove('fa.ke')
 
     self.expect_requests_get('http://fa.ke')
     self.expect_requests_get('http://foo.com')

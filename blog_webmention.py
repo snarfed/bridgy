@@ -77,7 +77,7 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
     if target_path in ('', '/'):
       return self.error('Home page webmentions are not currently supported.',
                         status=202)
-    for pattern in self.source.PATH_BLACKLIST:
+    for pattern in self.source.PATH_BLOCKLIST:
       if pattern.match(target_path):
         return self.error('%s webmentions are not supported for URL path: %s' %
                           (self.source.GR_CLASS.NAME, target_path), status=202)

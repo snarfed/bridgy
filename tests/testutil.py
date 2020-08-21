@@ -210,7 +210,7 @@ class FakeSource(Source):
   URL_CANONICALIZER = util.UrlCanonicalizer(
     domain=GR_CLASS.DOMAIN,
     headers=util.REQUEST_HEADERS)
-  PATH_BLACKLIST = (re.compile('^/blocklisted/.*'),)
+  PATH_BLOCKLIST = (re.compile('^/blocklisted/.*'),)
   HAS_BLOCKS = True
 
   string_id_counter = 1
@@ -273,7 +273,7 @@ class HandlerTest(testutil.HandlerTest):
     util.now_fn = lambda: NOW
 
     # add FakeSource everywhere necessary
-    util.BLACKLIST.add('fa.ke')
+    util.BLOCKLIST.add('fa.ke')
 
     util.webmention_endpoint_cache.clear()
     self.stubbed_create_task = False

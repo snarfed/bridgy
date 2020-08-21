@@ -126,7 +126,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
 
   # Regexps for URL paths that don't accept incoming webmentions. Currently used
   # by Blogger.
-  PATH_BLACKLIST = ()
+  PATH_BLOCKLIST = ()
 
   created = ndb.DateTimeProperty(auto_now_add=True, required=True)
   url = ndb.StringProperty()

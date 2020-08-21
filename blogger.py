@@ -50,7 +50,7 @@ class Blogger(models.Source):
   GR_CLASS = collections.namedtuple('FakeGrClass', ('NAME',))(NAME='Blogger')
   OAUTH_START_HANDLER = oauth_blogger.StartHandler
   SHORT_NAME = 'blogger'
-  PATH_BLACKLIST = (re.compile('^/search/.*'),)
+  PATH_BLOCKLIST = (re.compile('^/search/.*'),)
 
   def feed_url(self):
     # https://support.google.com/blogger/answer/97933?hl=en
