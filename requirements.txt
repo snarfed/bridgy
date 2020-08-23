@@ -18,6 +18,6 @@ gunicorn~=20.0
 humanize~=2.6
 lxml~=4.4.2
 mox3~=1.1
-requests~=2.22
+requests~=2.24
 webapp2>=3.0.0b1
 mox3~=1.1
