@@ -10,7 +10,7 @@ git+https://github.com/snarfed/granary.git@master#egg=granary
 git+https://github.com/kylewm/mf2util.git@master#egg=mf2util
 cachetools~=4.1
 gdata-python3~=3.0
-google-cloud-error-reporting~=0.34
+google-cloud-error-reporting~=1.0
 google-cloud-logging~=1.15
 google-cloud-ndb==1.5.0
 google-cloud-tasks~=1.5
