@@ -293,15 +293,15 @@ class HandlerTest(testutil.HandlerTest):
       self.mox.StubOutWithMock(tasks_client, 'create_task')
       self.stubbed_create_task = True
 
-    def check_queue(path):
-      if not path.endswith('/' + queue):
-        # print("expect_task: %s doesn't end with /%s!" % (path, queue))
+    def check_task(task):
+      if not task.parent.endswith('/' + queue):
+        print("expect_task: %s doesn't end with /%s!" % (task.parent, queue))
         return False
-      return True
 
-    def check_params(params):
-      req = params['app_engine_http_request']
-      if not check_queue(req['relative_uri']):
+      req = task.task.app_engine_http_request
+      if not req.relative_uri.endswith('/' + queue):
+        print("expect_task: relative_uri %s doesn't end with /%s!" % (
+          req.relative_uri, queue))
         return False
 
       # convert model objects and keys to url-safe key strings for comparison
@@ -311,24 +311,24 @@ class HandlerTest(testutil.HandlerTest):
         elif isinstance(val, ndb.Key):
           kwargs[name] = val.urlsafe().decode()
 
-      got = set(urllib.parse.parse_qsl(req['body'].decode()))
+      got = set(urllib.parse.parse_qsl(req.body.decode()))
       expected = set(kwargs.items())
       if got != expected:
-        # print('expect_task: expected %s, got %s' % (expected, got))
+        print('expect_task: expected %s, got %s' % (expected, got))
         return False
 
       if eta_seconds is not None:
-        got = params['schedule_time'].seconds - util.to_utc_timestamp(util.now_fn())
+        got = (util.to_utc_timestamp(task.task.schedule_time) -
+               util.to_utc_timestamp(util.now_fn()))
         delta = eta_seconds * .2 + 10
         if not (got + delta >= eta_seconds >= got - delta):
-          # print('expect_task: expected schedule_time %r, got %r' % (eta_seconds, got))
+          print('expect_task: expected schedule_time %r, got %r' % (eta_seconds, got))
           return False
 
       return True
 
     return tasks_client.create_task(
-      mox.Func(check_queue), mox.Func(check_params)
-    ).InAnyOrder().AndReturn(Task(name='my task'))
+      mox.Func(check_task)).InAnyOrder().AndReturn(Task(name='my task'))
 
   def expect_requests_get(self, *args, **kwargs):
     if 'headers' not in kwargs:

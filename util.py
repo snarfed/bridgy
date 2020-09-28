@@ -17,7 +17,8 @@ import zlib
 
 from cachetools import TTLCache
 from google.cloud import ndb
-from google.cloud.tasks_v2.types import Timestamp
+from google.cloud.tasks_v2 import CreateTaskRequest
+from google.protobuf.timestamp_pb2 import Timestamp
 import google.protobuf.message
 import humanize
 from oauth_dropins.webutil.appengine_config import error_reporting_client, tasks_client
@@ -172,7 +173,7 @@ def add_task(queue, eta_seconds=None, **kwargs):
   if LOCAL:
     logging.info('Would add task: %s %s', queue_path, params)
   else:
-    task = tasks_client.create_task(queue_path, params)
+    task = tasks_client.create_task(CreateTaskRequest(parent=queue_path, task=params))
     logging.info('Added %s task %s with ETA %s', queue, task.name, eta_seconds)
 
 
