@@ -58,7 +58,6 @@ class MastodonTest(testutil.ModelsTest):
       'https://foo.com' + API_SEARCH, params={
         'q': 'foo.com OR bar',
         'resolve': True,
-        'limit': '',
         'offset': 0},
       response={'statuses': [STATUS]},
       headers={'Authorization': 'Bearer towkin'})
