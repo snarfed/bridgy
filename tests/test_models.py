@@ -572,8 +572,8 @@ class SourceTest(testutil.HandlerTest):
     self.mox.ReplayAll()
 
     source = FakeSource.new(self.handler, features=['webmention'],
-                            domain_urls=['http://bad.app/', 'http://good/'],
-                            domains=['bad.app', 'good'])
+                            domain_urls=['http://bad.www/', 'http://good/'],
+                            domains=['bad.www', 'good'])
     source.verify()
     self.assertEqual('http://web.ment/ion', source.webmention_endpoint)
 

@@ -3,10 +3,10 @@
 
 # TLDs
 #
-# Google bought .app on 2015-02-25. No announcement on availability yet.
+# Google bought .app on 2015-02-25. It's now usable.
 # https://en.wikipedia.org/wiki/.app_%28gTLD%29
 # https://www.registry.google/
-app
+# app
 # Google owns .dev, and originally planned to only use it internally...
 # http://www.theregister.co.uk/2015/03/13/google_developer_gtld_domain_icann/
 # ...but later changed their mind and opened it to registrations.
