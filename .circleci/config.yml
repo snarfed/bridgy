@@ -32,6 +32,7 @@ jobs:
             apt-get install -y python3-venv python3-dev
             python3 -m venv local3
             . local3/bin/activate
+            pip install cython  # avoids grpcio install bug (search _needs_stub)
             pip install -U -r requirements.txt
             pip install mox3
             pip install coverage coveralls
