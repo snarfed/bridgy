@@ -1,1 +1,1 @@
-sphinx~=3.2
+sphinx~=3.3
