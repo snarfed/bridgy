@@ -20,4 +20,3 @@ lxml~=4.6.1
 mox3~=1.1
 requests~=2.25
 webapp2>=3.0.0b1
-mox3~=1.1

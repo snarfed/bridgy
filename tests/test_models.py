@@ -230,7 +230,7 @@ class SourceTest(testutil.HandlerTest):
     self.assertEqual(0, FakeSource.query().count())
 
     key = FakeSource.next_key()
-    for queue in 'poll', 'poll-now':
+    for queue in 'poll-now', 'poll':
       self.expect_task(queue, source_key=key, last_polled='1970-01-01-00-00-00')
     self.mox.ReplayAll()
 
@@ -299,7 +299,7 @@ class SourceTest(testutil.HandlerTest):
     key = FakeSource.new(None, features=['listen'], **props).put()
     self.assert_equals(['listen'], FakeSource.query().get().features)
 
-    for queue in 'poll', 'poll-now':
+    for queue in 'poll-now', 'poll':
       self.expect_task(queue, source_key=key, last_polled='1901-02-05-00-00-00')
     self.mox.ReplayAll()
 

@@ -295,13 +295,16 @@ class HandlerTest(testutil.HandlerTest):
 
     def check_task(task):
       if not task.parent.endswith('/' + queue):
-        print("expect_task: %s doesn't end with /%s!" % (task.parent, queue))
+        # These can help for debugging, but can also be misleading, since many
+        # tests insert multiple tasks, so check_task() runs on all of them (due
+        # to InAnyOrder() below) until it finds one that matches.
+        # print("expect_task: %s doesn't end with /%s!" % (task.parent, queue))
         return False
 
       req = task.task.app_engine_http_request
       if not req.relative_uri.endswith('/' + queue):
-        print("expect_task: relative_uri %s doesn't end with /%s!" % (
-          req.relative_uri, queue))
+        # print("expect_task: relative_uri %s doesn't end with /%s!" % (
+        #   req.relative_uri, queue))
         return False
 
       # convert model objects and keys to url-safe key strings for comparison
@@ -314,7 +317,7 @@ class HandlerTest(testutil.HandlerTest):
       got = set(urllib.parse.parse_qsl(req.body.decode()))
       expected = set(kwargs.items())
       if got != expected:
-        print('expect_task: expected %s, got %s' % (expected, got))
+        # print('expect_task: expected %s, got %s' % (expected, got))
         return False
 
       if eta_seconds is not None:
@@ -322,7 +325,7 @@ class HandlerTest(testutil.HandlerTest):
                util.to_utc_timestamp(util.now_fn()))
         delta = eta_seconds * .2 + 10
         if not (got + delta >= eta_seconds >= got - delta):
-          print('expect_task: expected schedule_time %r, got %r' % (eta_seconds, got))
+          # print('expect_task: expected schedule_time %r, got %r' % (eta_seconds, got))
           return False
 
       return True
