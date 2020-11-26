@@ -116,6 +116,8 @@ class Source(StringIdModel, metaclass=SourceMeta):
   HAS_BLOCKS = False
   # whether to require a u-syndication link for backfeed
   BACKFEED_REQUIRES_SYNDICATION_LINK = False
+  # ignore fragments when comparing syndication links in OPD
+  IGNORE_SYNDICATION_LINK_FRAGMENTS = False
 
   # Maps Publish.type (e.g. 'like') to source-specific human readable type label
   # (e.g. 'favorite'). Subclasses should override this.

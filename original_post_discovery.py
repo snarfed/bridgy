@@ -227,6 +227,13 @@ def _posse_post_discovery(source, activity, syndication_url, fetch_hfeed,
     SyndicatedPost.syndication == syndication_url,
     ancestor=source.key).fetch()
 
+  if source.IGNORE_SYNDICATION_LINK_FRAGMENTS:
+    relationships += SyndicatedPost.query(
+      # prefix search to find any instances of this synd link with a fragment
+      SyndicatedPost.syndication > f'{syndication_url}#',
+      SyndicatedPost.syndication < f'{syndication_url}#\ufffd',
+      ancestor=source.key).fetch()
+
   if not relationships and fetch_hfeed:
     # a syndicated post we haven't seen before! fetch the author's URLs to see
     # if we can find it.

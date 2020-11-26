@@ -6,6 +6,7 @@ import datetime
 from oauth_dropins.webutil.util import json_dumps, json_loads
 from requests.exceptions import HTTPError
 
+from github import GitHub
 from models import SyndicatedPost
 import original_post_discovery
 from original_post_discovery import discover, refetch
@@ -29,15 +30,14 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
       'content': 'content without links',
       })
 
-  def assert_discover(self, expected_originals, expected_mentions=[],
-                      source=None, **kwargs):
-    self.assertEqual((set(expected_originals), set(expected_mentions)),
-                      discover(source or self.source, self.activity, **kwargs))
+  def assert_discover(self, expected_originals, expected_mentions=[], **kwargs):
+    got = discover(self.source, self.activity, **kwargs)
+    self.assertEqual((set(expected_originals), set(expected_mentions)), got, got)
 
   def assert_syndicated_posts(self, *expected):
-    self.assertCountEqual(expected,
-                          [(r.original, r.syndication) for r in
-                           SyndicatedPost.query(ancestor=self.source.key)])
+    got = [(r.original, r.syndication) for r in
+           SyndicatedPost.query(ancestor=self.source.key)]
+    self.assertCountEqual(expected, got, got)
 
   def test_single_post(self):
     """Test that original post discovery does the reverse lookup to scan
@@ -1490,3 +1490,49 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     self.assert_syndicated_posts(('http://author/post-with-mistake', None),
                                  ('http://author/only-on-feed', None),
                                  (None, 'https://fa.ke/post/url'))
+
+  def test_default_strip_fragments(self):
+    """We should strip fragments in syndication URLs by default.
+
+    ...even across resolving redirects.
+    https://github.com/snarfed/bridgy/issues/984
+    """
+    self.expect_requests_get('http://author/', """
+    <html class="h-feed">
+      <div class="h-entry">
+        <a class="u-url" href="http://author/post"></a>
+        <a class="u-syndication" href="http://fa.ke/post#frag"></a>
+      </div>
+    </html>""")
+
+    self.mox.ReplayAll()
+    result = refetch(self.source)
+    self.assertCountEqual(['https://fa.ke/post'], result.keys(), result.keys())
+    self.assert_syndicated_posts(('http://author/post', 'https://fa.ke/post'))
+
+  def test_github_preserve_fragments(self):
+    """GitHub sources should preserve fragments in syndication URLs.
+
+    ...even across resolving redirects.
+    https://github.com/snarfed/bridgy/issues/984
+    """
+    self.expect_requests_get('http://author/', """
+    <html class="h-feed">
+      <div class="h-entry">
+        <a class="u-url" href="http://author/post"></a>
+        <a class="u-syndication" href="https://github.com/post#frag"></a>
+      </div>
+    </html>""")
+
+    self.mox.ReplayAll()
+    self.source = GitHub(id='snarfed', domain_urls=['http://author/'],
+                         domains=['author'])
+    self.source.put()
+
+    result = refetch(self.source)
+    self.assertCountEqual(['https://github.com/post#frag'], result.keys(),
+                          result.keys())
+
+    self.activity['object']['url'] = 'https://github.com/post'
+    self.assert_discover(['http://author/post'])
+    self.assert_syndicated_posts(('http://author/post', 'https://github.com/post#frag'))
