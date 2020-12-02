@@ -44,8 +44,8 @@ class Instagram(Source):
   GR_CLASS = gr_instagram.Instagram
   OAUTH_START_HANDLER = oauth_instagram.StartHandler
   SHORT_NAME = 'instagram'
-  FAST_POLL = datetime.timedelta(minutes=120)
-  RATE_LIMITED_POLL = Source.SLOW_POLL
+  FAST_POLL = datetime.timedelta(days=7)
+  RATE_LIMITED_POLL = FAST_POLL
   RATE_LIMIT_HTTP_CODES = ('401', '429', '503')
   DISABLE_HTTP_CODES = ()
   CAN_PUBLISH = False
