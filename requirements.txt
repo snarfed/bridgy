@@ -8,6 +8,7 @@ git+https://github.com/snarfed/webmention-tools.git@python3#egg=webmentiontools
 git+https://github.com/snarfed/oauth-dropins.git@master#egg=oauth_dropins
 git+https://github.com/snarfed/granary.git@master#egg=granary
 git+https://github.com/kylewm/mf2util.git@master#egg=mf2util
+git+https://github.com/snarfed/html2text.git@all#egg=granary
 cachetools~=4.1
 gdata-python3~=3.0
 google-cloud-error-reporting~=1.1.0
