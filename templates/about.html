@@ -104,6 +104,7 @@ service.</a>
 <li><a href="#github-reaction">How do I post an emoji reaction on a GitHub issue or PR?</a></li>
 <li><a href="#github-respond-to-comment">How do I respond to a GitHub comment in particular?</a></li>
 <li><a href="#add-label">How do I add a label to a GitHub issue?</a></li>
+<li><a href="#add-tag">How do I add a tag to a Flickr photo?</a></li>
 <li><a href="#github-star">How do I star a GitHub repo?</a></li>
 <li><a href="#meetup-rsvp">How do I RSVP to an event on Meetup?</a></li>
 <li><a href="#omit-link">Can I disable the link back to my post?</a></li>
@@ -772,9 +773,8 @@ previewing a post to see how it will look!
 <p>Bridgy can publish:</p>
 <ul>
 <li>Twitter tweets, @-replies, retweets, and likes. Tweets and @-replies may include <a href="#location">location</a> and <a href="#picture">up to four photos</a> or <a href="#video">one video</a>. Tweets may also be <a href="#delete">deleted</a>.</li>
-<li>Flickr photos, videos, comments, and favorites. Photos may include <a href="#location">location</a>, <a href="https://indieweb.org/tags">tags</a>, and/or <a href="#person-tag">people tags</a>.</li>
-<li>GitHub issues, <a href="https://help.github.com/articles/about-stars">stars</a>, comments on issues and PRs, and <a href="https://help.github.com/articles/about-conversations-on-github/#reacting-to-ideas-in-comments">emoji reactions</a> to issues, PRs, and comments.</li>
-<li><a href="#add-label">New labels on GitHub issues.</a></li>
+<li>Flickr photos, videos, comments, favorites, and <a href="#add-tag">tags onto existing photos</a>. Photos may include <a href="#location">location</a>, <a href="https://indieweb.org/tags">tags</a>, and/or <a href="#person-tag">people tags</a>.</li>
+<li>GitHub issues, <a href="https://help.github.com/articles/about-stars">stars</a>, comments on issues and PRs, <a href="#add-label">labels onto existing issues</a>, and <a href="https://help.github.com/articles/about-conversations-on-github/#reacting-to-ideas-in-comments">emoji reactions</a> to issues, PRs, and comments.</li>
 <li>Mastodon toots, replies, favorites, and boosts. Toots and replies may include <a href="#picture">pictures</a> and <a href="#video">videos</a>. Toots may also be <a href="#delete">deleted</a>.</li>
 <li><a href="#meetup-rsvp">Meetup RSVPs.</a></li>
 <li>Nothing on Instagram, sorry. Likes used to be possible, but not since Instagram <a href="http://developers.instagram.com/post/133424514006/instagram-platform-update"> started locking down their API.</a> <a href="http://instagram.com/developer/endpoints/media/#get_media_popular">Photos, videos,</a> <a href="http://instagram.com/developer/endpoints/comments/#post_media_comments">and comments</a> were never possible.</li>
@@ -991,8 +991,6 @@ I have something to say about this:
 </pre>
 </li>
 
-
-
 <li id="add-label" class="question">How do I add a label to a GitHub issue?</li>
 <li class="answer">
 <p>Post a <a href="https://indieweb.org/tag-reply#How_to_simple_tag-reply">tag-reply</a> to the issue with the new label(s). For example:</p>
@@ -1006,6 +1004,11 @@ to
 </pre>
 
 <p>Bridgy will ignore tags that don't match existing labels in the repo.</p>
+</li>
+
+<li id="add-tag" class="question">How do I add a tag to a Flickr photo?</li>
+<li class="answer">
+<p>The same way you'd <a href="add-label">add a label to a GitHub issue, above.</a> Just put the tag in a <code>p-category</code> and point the <code>u-tag-of</code> link to the Flickr photo URL.</p>
 </li>
 
 <li id="github-star" class="question">How do I star a GitHub repo?</li>
