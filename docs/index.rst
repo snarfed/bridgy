@@ -22,26 +22,45 @@ Development
 
 You’ll need the `Google Cloud
 SDK <https://cloud.google.com/sdk/gcloud/>`__ (aka ``gcloud``) with the
-``gcloud-appengine-python`` and ``gcloud-appengine-python-extras``
+``gcloud-appengine-python``, ``gcloud-appengine-python-extras`` and
+``google-cloud-sdk-datastore-emulator``
 `components <https://cloud.google.com/sdk/docs/components#additional_components>`__.
 Then, create a Python 3 virtualenv and install the dependencies with:
 
 .. code:: sh
 
-   python3 -m venv local3
-   source local3/bin/activate
+   python3 -m venv local
+   source local/bin/activate
    pip install -r requirements.txt
+   ln -s local/lib/python3*/site-packages/oauth_dropins  # needed to serve static file assets in dev_appserver
+   gcloud config set project brid-gy
 
-Now, run the unit tests:
+Now, you can fire up the gcloud emulator and run the tests:
 
 .. code:: sh
 
    gcloud beta emulators datastore start --no-store-on-disk --consistency=1.0 --host-port=localhost:8089 < /dev/null >& /dev/null
-   python3 -m unittest discover
+   python3 -m unittest discover -s tests -t .
    kill %1
 
 If you send a pull request, please include or update a test for your new
 code!
+
+To test a poll or propagate task, find the relevant *Would add task*
+line in the logs, eg:
+
+::
+
+   INFO:root:Would add task: projects//locations/us-central1/queues/poll {'app_engine_http_request': {'http_method': 'POST', 'relative_uri': '/_ah/queue/poll', 'app_engine_routing': {'service': 'background'}, 'body': b'source_key=agNhcHByFgsSB1R3aXR0ZXIiCXNjaG5hcmZlZAw&last_polled=1970-01-01-00-00-00', 'headers': {'Content-Type': 'application/x-www-form-urlencoded'}}, 'schedule_time': seconds: 1591176072
+
+…pull out the ``relative_uri`` and ``body``, and then put them together
+in a ``curl`` command against the ``background`` service, which usually
+runs on http://localhost:8081/, eg:
+
+::
+
+   curl -d 'source_key=agNhcHByFgsSB1R3aXR0ZXIiCXNjaG5hcmZlZAw&last_polled=1970-01-01-00-00-00' \
+     http://localhost:8081/_ah/queue/poll
 
 To run the entire app locally, run this in the repo root directory:
 
@@ -50,6 +69,10 @@ To run the entire app locally, run this in the repo root directory:
    dev_appserver.py --log_level debug --enable_host_checking false \
      --support_datastore_emulator --datastore_emulator_port=8089 \
      --application=brid-gy ~/src/bridgy/app.yaml ~/src/bridgy/background.yaml
+
+(Note: dev_appserver.py is incompatible with python3. if python3 is your
+default python, you can run
+``python2 /location/of/dev_appserver.py ...`` instead.)
 
 Open `localhost:8080 <http://localhost:8080/>`__ and you should see the
 Bridgy home page!
@@ -87,7 +110,8 @@ install them in “source” mode with:
 ::
 
    pip uninstall -y oauth-dropins
-   pip install -e <path to oauth-dropins>
+   pip install -e <path-to-oauth-dropins-repo>
+   ln -sf <path-to-oauth-dropins-repo>/oauth_dropins  # needed to serve static file assets in dev_appserver
 
    pip uninstall -y granary
    pip install -e <path to granary>
@@ -105,6 +129,21 @@ account and download its JSON
 credentials <https://console.developers.google.com/project/brid-gy/apiui/credential>`__,
 put it somewhere safe, and put its path in your
 ``GOOGLE_APPLICATION_CREDENTIALS`` environment variable.
+
+Deploying to your own app-engine project can be useful for testing, but
+is not recommended for production. To deploy to your own app-engine
+project, create a project on `gcloud
+console <https://console.cloud.google.com/>`__ and activate the `Tasks
+API <https://console.cloud.google.com/apis/api/cloudtasks.googleapis.com>`__.
+Initialize the project on the command line using
+``gcloud config set project <project-name>`` followed by
+``gcloud app create``. You will need to update ``TASKS_LOCATION`` in
+util.py to match your project’s location. Finally, you will need to add
+your “background” domain (eg ``background.YOUR-APP-NAME.appspot.com``)
+to OTHER_DOMAINS in util.py and set ``host_url`` in ``tasks.py`` to your
+base app url (eg ``app-dot-YOUR-APP-NAME.wn.r.appspot.com``). Finally,
+deploy (after testing) with
+``gcloud -q beta app deploy --no-cache --project YOUR-APP-NAME *.yaml``
 
 Adding a new silo
 -----------------
@@ -220,8 +259,8 @@ Stats
 -----
 
 I occasionally generate `stats and graphs of usage and
-growth <https://snarfed.org/2018-01-02_bridgy-stats-update>`__ from the
-`BigQuery
+growth <https://snarfed.org/2019-01-02_bridgy-stats-update-4>`__ from
+the `BigQuery
 dataset <https://console.cloud.google.com/bigquery?p=brid-gy&d=datastore&page=dataset>`__
 (`#715 <https://github.com/snarfed/bridgy/issues/715>`__). Here’s how.
 
@@ -233,14 +272,16 @@ dataset <https://console.cloud.google.com/bigquery?p=brid-gy&d=datastore&page=da
 
    ::
 
-      gcloud datastore export --async gs://brid-gy.appspot.com/stats/ --kinds Blogger,BlogPost,BlogWebmention,FacebookPage,Flickr,GitHub,GooglePlusPage,Instagram,Medium,Publish,PublishedPage,Response,SyndicatedPost,Tumblr,Twitter,WordPress
+      gcloud datastore export --async gs://brid-gy.appspot.com/stats/ --kinds Blogger,BlogPost,BlogWebmention,FacebookPage,Flickr,GitHub,GooglePlusPage,Instagram,Mastodon,Medium,Meetup,Publish,PublishedPage,Reddit,Response,SyndicatedPost,Tumblr,Twitter,WordPress
 
    Note that ``--kinds`` is required. `From the export
    docs <https://cloud.google.com/datastore/docs/export-import-entities#limitations>`__,
    *Data exported without specifying an entity filter cannot be loaded
    into BigQuery.*
+
 2. Wait for it to be done with
    ``gcloud datastore operations list | grep done``.
+
 3. `Import it into
    BigQuery <https://cloud.google.com/bigquery/docs/loading-data-cloud-datastore#loading_cloud_datastore_export_service_data>`__:
 
@@ -250,20 +291,24 @@ dataset <https://console.cloud.google.com/bigquery?p=brid-gy&d=datastore&page=da
         bq load --replace --nosync --source_format=DATASTORE_BACKUP datastore.$kind gs://brid-gy.appspot.com/stats/all_namespaces/kind_$kind/all_namespaces_kind_$kind.export_metadata
       done
 
-      for kind in Blogger FacebookPage Flickr GitHub GooglePlusPage Instagram Medium Meetup Tumblr Twitter WordPress; do
+      for kind in Blogger FacebookPage Flickr GitHub GooglePlusPage Instagram Mastodon Medium Meetup Reddit Tumblr Twitter WordPress; do
         bq load --replace --nosync --source_format=DATASTORE_BACKUP sources.$kind gs://brid-gy.appspot.com/stats/all_namespaces/kind_$kind/all_namespaces_kind_$kind.export_metadata
       done
 
 4. Check the jobs with ``bq ls -j``, then wait for them with
    ``bq wait``.
+
 5. `Run the full stats BigQuery
    query. <https://console.cloud.google.com/bigquery?sq=586366768654:9d8d4c13e988477bb976a5e29b63da3b>`__
    Download the results as CSV.
+
 6. `Open the stats
    spreadsheet. <https://docs.google.com/spreadsheets/d/1VhGiZ9Z9PEl7f9ciiVZZgupNcUTsRVltQ8_CqFETpfU/edit>`__
    Import the CSV, replacing the *data* sheet.
+
 7. Check out the graphs! Save full size images with OS or browser
-   screenshots, thumbnails with the *Save Image* button. Then post them!
+   screenshots, thumbnails with the *Download Chart* button. Then post
+   them!
 
 Misc
 ----
