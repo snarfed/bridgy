@@ -1,0 +1,19 @@
+{
+	"private": true,
+	"scripts": {
+		"lint": "run-p lint:*",
+		"lint-fix": "run-p 'lint:* -- --fix'",
+		"release:chrome": "webstore upload --auto-publish",
+		"release:firefox": "web-ext-submit",
+		"test": "run-s lint:* build"
+	},
+	"dependencies": {
+		"webextension-polyfill": "^0.4.0"
+	},
+	"devDependencies": {
+		"chrome-webstore-upload-cli": "^1.2.0",
+		"eslint": "^6.1.0",
+		"web-ext": "^4.1.0",
+		"web-ext-submit": "^4.1.0"
+	}
+}

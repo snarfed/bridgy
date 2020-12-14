@@ -22,6 +22,8 @@ instagram_sessionid_cookie
 linkedin_client_*
 medium_client_*
 meetup_client_*
+node_modules
+package-lock.json
 private_notes
 reddit_app_*
 service_account_creds.json
@@ -33,3 +35,4 @@ twitter_access_token_*
 twitter_app_*
 twitter_scrape_headers*
 wordpress.com_client_*
+yarn.lock
