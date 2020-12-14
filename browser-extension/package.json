@@ -1,11 +1,8 @@
 {
 	"private": true,
 	"scripts": {
-		"lint": "run-p lint:*",
-		"lint-fix": "run-p 'lint:* -- --fix'",
 		"release:chrome": "webstore upload --auto-publish",
 		"release:firefox": "web-ext-submit",
-		"test": "run-s lint:* build"
 	},
 	"dependencies": {
 		"webextension-polyfill": "^0.4.0"

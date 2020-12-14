@@ -1,28 +1,35 @@
+// https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json
 {
 	"name": "Bridgy",
 	"version": "0.1.0",
 	"description": "Bridgy connects your web site to social media. This extension adds Instagram support.",
 	"homepage_url": "https://brid.gy/",
-	"manifest_version": 2,
-	"minimum_chrome_version": "74",
-	"applications": {
-		"gecko": {
-			"id": "browser-backfeed@snarfed.org",
-			"strict_min_version": "67.0"
-		}
-	},
+    "manifest_version": 2,
+    "minimum_chrome_version": "74",
+    "applications": {
+        "gecko": {
+            "id": "browser-backfeed@snarfed.org",
+            "strict_min_version": "67.0"
+        }
+    },
     // TODO
-	// "icons": {
-	// 	"400": "icon.png"
-	// },
-	"permissions": [
-		"storage"
-	],
-	"background": {
-		"persistent": false,
-		"scripts": [
-			// "browser-polyfill.min.js",
-			"background.js"
-		]
-	}
+    // "icons": {
+    //     "400": "icon.png"
+    // },
+    "permissions": [
+       // https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/webrequest
+       "*://*.brid.gy/*",
+       "*://*.granary.io/*",
+       "*://*.instagram.com/*",
+       "cookies",
+       "storage",
+       "webRequest"
+    ],
+    "background": {
+        "persistent": true,
+        "scripts": [
+            // "browser-polyfill.min.js",
+            "background.js"
+        ]
+    }
 }
