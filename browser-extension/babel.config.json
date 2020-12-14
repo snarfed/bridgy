@@ -1,0 +1,5 @@
+// Needed for Jest to support async/await
+// https://jestjs.io/docs/en/tutorial-async#asyncawait
+{
+  presets: [["@babel/preset-env", {targets: {node: "current"}}]]
+}

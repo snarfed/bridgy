@@ -14,8 +14,10 @@ async function fetchJson() {
   return await res.json()
 }
 
-console.log('Starting')
-fetchJson().then((res) => {
-  console.log(`Got ${res.items.length} items`)
-  console.log(`${res.items[0].properties.content[0]}`)
-})
+// console.log('Starting')
+// fetchJson().then((res) => {
+//   console.log(`Got ${res.items.length} items`)
+//   console.log(`${res.items[0].properties.content[0]}`)
+// })
+
+export { fetchJson }

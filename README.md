@@ -95,6 +95,14 @@ To deploy to App Engine, run [`scripts/deploy.sh`](https://github.com/snarfed/br
 
 Deploying to your own app-engine project can be useful for testing, but is not recommended for production.  To deploy to your own app-engine project, create a project on [gcloud console](https://console.cloud.google.com/) and activate the [Tasks API](https://console.cloud.google.com/apis/api/cloudtasks.googleapis.com).  Initialize the project on the command line using `gcloud config set project <project-name>` followed by `gcloud app create`.  You will need to update  `TASKS_LOCATION` in util.py to match your project's location.  Finally, you will need to add your "background" domain (eg `background.YOUR-APP-NAME.appspot.com`) to OTHER_DOMAINS in util.py and set `host_url` in `tasks.py` to your base app url (eg `app-dot-YOUR-APP-NAME.wn.r.appspot.com`).  Finally, deploy (after testing) with `gcloud -q beta app deploy --no-cache --project YOUR-APP-NAME *.yaml`
 
+To work on the browser extension:
+
+```sh
+cd browser-extension
+npm install
+npm run test
+```
+
 
 Adding a new silo
 ---
