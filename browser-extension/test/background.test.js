@@ -2,7 +2,7 @@
 
 import fetchMock from 'jest-fetch-mock'
 
-import {fetchIG, injectBrowser} from '../background.js'
+import {forward, injectBrowser} from '../background.js'
 
 
 fetchMock.enableMocks()
@@ -28,7 +28,7 @@ afterEach(() => {
 })
 
 
-test('fetchIG', async () => {
+test('forward', async () => {
   browser.cookies.getAll.mockResolvedValue([
     {name: 'foo', value: 'bar'},
     {name: 'baz', value: 'biff'},
@@ -37,14 +37,24 @@ test('fetchIG', async () => {
   const body = 'some data'
   fetch.mockResponseOnce(body)
 
-  expect(await fetchIG('/the-path')).toBe(body)
-  expect(fetch.mock.calls[0][0]).toBe('https://www.instagram.com/the-path');
-  expect(fetch.mock.calls[0][1]).toStrictEqual({
-    method: 'GET',
-    credentials: 'same-origin',
-    headers: {
-      'Cookie': 'foo=bar; baz=biff',
-      'User-Agent': navigator.userAgent,
+  await forward('/ig-path', '/br-path')
+  expect(fetch.mock.calls.length).toBe(2)
+  expect(fetch.mock.calls[0]).toEqual([
+    'https://www.instagram.com/ig-path',
+    {
+      method: 'GET',
+      credentials: 'same-origin',
+      headers: {
+        'Cookie': 'foo=bar; baz=biff',
+        'User-Agent': navigator.userAgent,
+      },
     },
-  })
+  ])
+  expect(fetch.mock.calls[1]).toEqual([
+    'https://brid.gy/br-path',
+    {
+      method: 'POST',
+      body: body,
+    },
+  ])
 })
