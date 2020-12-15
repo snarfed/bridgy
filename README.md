@@ -103,6 +103,8 @@ npm install
 npm run test
 ```
 
+Note that it doesn't yet work with [Firefox's Facebook Container](https://github.com/mozilla/contain-facebook) add-on. If you have that enabled, you'll need to disable it to use Bridgy's browser extension. TODO: fix this. Easy fix.
+
 
 Adding a new silo
 ---
