@@ -7,6 +7,25 @@ function injectBrowser(browser) {
   global.browser = browser
 }
 
+
+/**
+ * Polls the user's IG photos, forwards new comments and likes to Bridgy.
+ */
+async function poll() {
+  const data = await browser.storage.sync.get()
+  if (!data.instagram || !data.instagram.username) {
+    let username = await forward('/', '/username')
+    await browser.storage.sync.set({instagram: {username: username}})
+  }
+
+  // await forward(`/${username}/`, '/instagram/browser/account')
+  // profile
+  // permalinks
+  // likes
+  // trigger
+}
+
+
 /**
  * Fetches a page from Instagram, then sends it to Bridgy.
  *
@@ -42,13 +61,17 @@ async function forward(instagramPath, bridgyPath) {
   const body = await res.text()
 
   // Send to Bridgy
-  url = 'https://brid.gy' + bridgyPath
+  url = 'https://brid.gy/instagram/browser' + bridgyPath
   // console.log(`Sending to ${url}`)
-  await fetch(url, {
+  res = await fetch(url, {
     method: 'POST',
     body: body,
   })
+
   // console.log(`Got ${res.status} ${res.statusText}`)
+  if (res.ok) {
+    return await res.text()
+  }
 }
 
 // console.log('Starting')
@@ -57,4 +80,4 @@ async function forward(instagramPath, bridgyPath) {
 //   console.log(`${res.items[0].properties.content[0]}`)
 // })
 
-export { forward, injectBrowser }
+export {forward, injectBrowser, poll}

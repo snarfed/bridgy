@@ -2,7 +2,7 @@
 
 import fetchMock from 'jest-fetch-mock'
 
-import {forward, injectBrowser} from '../background.js'
+import {forward, injectBrowser, poll} from '../background.js'
 
 
 fetchMock.enableMocks()
@@ -12,6 +12,13 @@ fetchMock.enableMocks()
 let browser = {
   cookies: {
     getAll: jest.fn(),
+  },
+  storage: {
+    sync: {
+      get: async () => browser.storage.sync.data,
+      set: async values => Object.assign(browser.storage.sync.data, values),
+      data: {},
+    },
   },
 }
 
@@ -34,10 +41,11 @@ test('forward', async () => {
     {name: 'baz', value: 'biff'},
   ])
 
-  const body = 'some data'
-  fetch.mockResponseOnce(body)
+  fetch.mockResponseOnce('ig resp')
+  fetch.mockResponseOnce('bridgy resp')
 
-  await forward('/ig-path', '/br-path')
+  expect(await forward('/ig-path', '/br-path')).toBe('bridgy resp')
+
   expect(fetch.mock.calls.length).toBe(2)
   expect(fetch.mock.calls[0]).toEqual([
     'https://www.instagram.com/ig-path',
@@ -51,10 +59,27 @@ test('forward', async () => {
     },
   ])
   expect(fetch.mock.calls[1]).toEqual([
-    'https://brid.gy/br-path',
+    'https://brid.gy/instagram/browser/br-path',
     {
       method: 'POST',
-      body: body,
+      body: 'ig resp',
     },
   ])
+})
+
+test('poll-no-username', async () => {
+  // no username stored
+  expect(await browser.storage.sync.get()).toEqual({})
+
+  fetch.mockResponseOnce('ig resp')
+  fetch.mockResponseOnce('snarfed')
+
+  await poll()
+  expect(await browser.storage.sync.get()).toEqual({instagram: {username: 'snarfed'}})
+})
+
+test('poll-existing-username', async () => {
+  await browser.storage.sync.set({instagram: {username: 'snarfed'}})
+  await poll()
+  expect(fetch.mock.calls.length).toBe(0)
 })
