@@ -18,13 +18,18 @@ jobs:
       - checkout
 
       - restore_cache:
-          key: venv-{{ .Branch }}-{{ checksum "requirements.txt" }}
+          keys:
+            - venv-npm-{{ .Branch }}-{{ checksum "requirements.txt" }}-{{ checksum "browser-extension/package.json" }}
+            - venv-npm-{{ .Branch }}-{{ checksum "requirements.txt" }}
+            - venv-npm-{{ .Branch }}
+            - venv-npm
+            - venv
 
       - run:
           name: Base dependencies
           command: |
             apt-get update
-            apt-get install -y python3
+            apt-get install -y python3 npm nodejs
 
       - run:
           name: Python 3 dependencies
@@ -38,6 +43,12 @@ jobs:
             pip install coverage coveralls
 
       - run:
+          name: JavaScript dependencies
+          command: |
+            cd browser-extension
+            npm install
+
+      - run:
           name: Test Python 3
           command: |
             . local3/bin/activate
@@ -48,10 +59,17 @@ jobs:
             python -m coverage html -d /tmp/coverage_html
             if [ "$COVERALLS_REPO_TOKEN" != "" ]; then coveralls || true; fi
 
+      - run:
+          name: Test JavaScript
+          command: |
+            cd browser-extension
+            npm run test
+
       - save_cache:
-          key: venv-{{ .Branch }}-{{ checksum "requirements.txt" }}
+          key: venv-npm-{{ .Branch }}-{{ checksum "requirements.txt" }}-{{ checksum "browser-extension/package.json" }}
           paths:
             - "local"
+            - "browser-extension/node_modules"
 
       - store_artifacts:
           path: /tmp/coverage_html
