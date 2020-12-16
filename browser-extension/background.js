@@ -25,8 +25,9 @@ async function poll() {
 
   for (const shortcode of JSON.parse(shortcodes)) {
     await forward(`/p/${shortcode}/`, '/post')
+    await forward(`/graphql/query/?query_hash=d5d763b1e2acf209d62d22d184488e57&variables={"shortcode":"${shortcode}","include_reel":false,"first":100}`, '/likes')
   }
-  // likes
+
   // trigger
 }
 

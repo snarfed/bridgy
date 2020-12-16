@@ -77,11 +77,16 @@ test('poll, no stored username', async () => {
   fetch.mockResponseOnce(JSON.stringify(['abc', 'xyz']))
   fetch.mockResponseOnce('post abc')
   fetch.mockResponseOnce('')
+  fetch.mockResponseOnce('likes abc')
+  fetch.mockResponseOnce('')
   fetch.mockResponseOnce('post xyz')
+  fetch.mockResponseOnce('')
+  fetch.mockResponseOnce('likes xyz')
   fetch.mockResponseOnce('')
 
   await poll()
-  expect(fetch.mock.calls.length).toBe(8)
+  expect(fetch.mock.calls.length).toBe(12)
+
   expect(fetch.mock.calls[0][0]).toBe('https://www.instagram.com/')
   expect(fetch.mock.calls[1][0]).toBe('https://brid.gy/instagram/browser/homepage')
   expect(await browser.storage.sync.get()).toEqual({instagram: {username: 'snarfed'}})
@@ -90,13 +95,15 @@ test('poll, no stored username', async () => {
   expect(fetch.mock.calls[3][0]).toBe('https://brid.gy/instagram/browser/profile')
   expect(fetch.mock.calls[3][1].body).toBe('ig profile')
 
-  expect(fetch.mock.calls[4][0]).toBe('https://www.instagram.com/p/abc/')
-  expect(fetch.mock.calls[5][0]).toBe('https://brid.gy/instagram/browser/post')
-  expect(fetch.mock.calls[5][1].body).toBe('post abc')
-
-  expect(fetch.mock.calls[6][0]).toBe('https://www.instagram.com/p/xyz/')
-  expect(fetch.mock.calls[7][0]).toBe('https://brid.gy/instagram/browser/post')
-  expect(fetch.mock.calls[7][1].body).toBe('post xyz')
+  for (const [i, shortcode] of [[4, 'abc'], [8, 'xyz']]) {
+    expect(fetch.mock.calls[i][0]).toBe(`https://www.instagram.com/p/${shortcode}/`)
+    expect(fetch.mock.calls[i + 1][0]).toBe('https://brid.gy/instagram/browser/post')
+    expect(fetch.mock.calls[i + 1][1].body).toBe(`post ${shortcode}`)
+    expect(fetch.mock.calls[i + 2][0]).toContain('https://www.instagram.com/graphql/')
+    expect(fetch.mock.calls[i + 2][0]).toContain(shortcode)
+    expect(fetch.mock.calls[i + 3][0]).toBe('https://brid.gy/instagram/browser/likes')
+    expect(fetch.mock.calls[i + 3][1].body).toBe(`likes ${shortcode}`)
+  }
 })
 
 test('poll, existing username stored', async () => {
