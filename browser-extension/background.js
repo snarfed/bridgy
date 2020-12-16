@@ -1,10 +1,10 @@
 'use strict'
 
 /**
- * Injects a mock browser namespace for tests.
+ * Injects mock globals for tests.
  */
-function injectBrowser(browser) {
-  global.browser = browser
+function injectGlobals(newGlobals) {
+  Object.assign(global, newGlobals)
 }
 
 
@@ -47,7 +47,7 @@ async function forward(instagramPath, bridgyPath) {
   // https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/cookies/getAll
   const cookies = await browser.cookies.getAll({domain: 'instagram.com'})
   let url = 'https://www.instagram.com' + instagramPath
-  // console.log(`Fetching ${url}`)
+  console.debug(`Fetching ${url}`)
 
   let res = await fetch(url, {
     method: 'GET',
@@ -60,7 +60,7 @@ async function forward(instagramPath, bridgyPath) {
     credentials: 'same-origin',
   })
 
-  // console.log(`Got ${res.status} ${res.statusText}`)
+  console.debug(`Got ${res.status} ${res.statusText}`)
   if (!res.ok) {
     return null
   }
@@ -68,13 +68,13 @@ async function forward(instagramPath, bridgyPath) {
 
   // Send to Bridgy
   url = 'https://brid.gy/instagram/browser' + bridgyPath
-  // console.log(`Sending to ${url}`)
+  console.debug(`Sending to ${url}`)
   res = await fetch(url, {
     method: 'POST',
     body: body,
   })
 
-  // console.log(`Got ${res.status} ${res.statusText}`)
+  console.debug(`Got ${res.status} ${res.statusText}`)
   if (res.ok) {
     return await res.text()
   }
@@ -86,4 +86,4 @@ async function forward(instagramPath, bridgyPath) {
 //   console.log(`${res.items[0].properties.content[0]}`)
 // })
 
-export {forward, injectBrowser, poll}
+export {forward, poll, injectGlobals}

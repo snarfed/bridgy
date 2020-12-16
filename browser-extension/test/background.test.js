@@ -2,28 +2,31 @@
 
 import fetchMock from 'jest-fetch-mock'
 
-import {forward, injectBrowser, poll} from '../background.js'
+import {forward, poll, injectGlobals} from '../background.js'
 
 
 fetchMock.enableMocks()
 
-// browser is a namespace, so we can't use jest.mock(), have to mock and inject
-// it manually like this.
-let browser = {
-  cookies: {
-    getAll: jest.fn(),
-  },
-  storage: {
-    sync: {
-      get: async () => browser.storage.sync.data,
-      set: async values => Object.assign(browser.storage.sync.data, values),
-      data: {},
-    },
-  },
-}
-
 beforeAll(() => {
-  injectBrowser(browser)
+  injectGlobals({
+    // browser is a namespace, so we can't use jest.mock(), have to mock and inject
+    // it manually like this.
+    browser: {
+      cookies: {
+        getAll: jest.fn(),
+      },
+      storage: {
+        sync: {
+          get: async () => browser.storage.sync.data,
+          set: async values => Object.assign(browser.storage.sync.data, values),
+          data: {},
+        },
+      },
+    },
+    console: {
+      debug: () => null
+    }
+  })
 })
 
 beforeEach(() => {
