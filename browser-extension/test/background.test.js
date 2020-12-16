@@ -74,20 +74,33 @@ test('poll, no stored username', async () => {
   fetch.mockResponseOnce('ig home page')
   fetch.mockResponseOnce('snarfed')
   fetch.mockResponseOnce('ig profile')
+  fetch.mockResponseOnce(JSON.stringify(['abc', 'xyz']))
+  fetch.mockResponseOnce('post abc')
+  fetch.mockResponseOnce('')
+  fetch.mockResponseOnce('post xyz')
   fetch.mockResponseOnce('')
 
   await poll()
-  expect(fetch.mock.calls.length).toBe(4)
+  expect(fetch.mock.calls.length).toBe(8)
   expect(fetch.mock.calls[0][0]).toBe('https://www.instagram.com/')
-  expect(fetch.mock.calls[1][0]).toBe('https://brid.gy/instagram/browser/username')
+  expect(fetch.mock.calls[1][0]).toBe('https://brid.gy/instagram/browser/homepage')
+  expect(await browser.storage.sync.get()).toEqual({instagram: {username: 'snarfed'}})
+
   expect(fetch.mock.calls[2][0]).toBe('https://www.instagram.com/snarfed/')
   expect(fetch.mock.calls[3][0]).toBe('https://brid.gy/instagram/browser/profile')
   expect(fetch.mock.calls[3][1].body).toBe('ig profile')
-  expect(await browser.storage.sync.get()).toEqual({instagram: {username: 'snarfed'}})
+
+  expect(fetch.mock.calls[4][0]).toBe('https://www.instagram.com/p/abc/')
+  expect(fetch.mock.calls[5][0]).toBe('https://brid.gy/instagram/browser/post')
+  expect(fetch.mock.calls[5][1].body).toBe('post abc')
+
+  expect(fetch.mock.calls[6][0]).toBe('https://www.instagram.com/p/xyz/')
+  expect(fetch.mock.calls[7][0]).toBe('https://brid.gy/instagram/browser/post')
+  expect(fetch.mock.calls[7][1].body).toBe('post xyz')
 })
 
 test('poll, existing username stored', async () => {
   await browser.storage.sync.set({instagram: {username: 'snarfed'}})
   await poll()
-  expect(fetch.mock.calls.length).toBe(0)
+  expect(fetch.mock.calls[0][0]).toBe('https://www.instagram.com/snarfed/')
 })

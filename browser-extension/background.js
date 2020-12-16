@@ -14,13 +14,18 @@ function injectBrowser(browser) {
 async function poll() {
   const data = await browser.storage.sync.get()
   if (!data.instagram || !data.instagram.username) {
-    let username = await forward('/', '/username')
-    await forward(`/${username}/`, '/profile')
+    const username = await forward('/', '/homepage')
     await browser.storage.sync.set({instagram: {username: username}})
   }
 
-  // profile
-  // permalinks
+  const shortcodes = await forward(`/${data.instagram.username}/`, '/profile')
+  if (!shortcodes) {
+    return
+  }
+
+  for (const shortcode of JSON.parse(shortcodes)) {
+    await forward(`/p/${shortcode}/`, '/post')
+  }
   // likes
   // trigger
 }
