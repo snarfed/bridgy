@@ -12,12 +12,6 @@ cron:
   schedule: every day 08:00  # 1am pst
   target: background
 
-# frequent, updates just a few every time, to throttle and avoid rate limiting
-- description: update changed instagram profile pictures
-  url: /cron/update_instagram_pictures
-  schedule: every 1 hours
-  target: background
-
 - description: update changed flickr profile pictures
   url: /cron/update_flickr_pictures
   schedule: every day 09:00  # 2am pst

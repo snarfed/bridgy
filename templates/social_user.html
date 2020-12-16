@@ -26,7 +26,7 @@
 <p id="edit-profile">First things first: what's your web site?
 {% block edit_profile %}
 {% endblock %}
-{{ source.button_html('listen' if source.CAN_LISTEN else 'publish', source=source)|safe }}
+{{ source.button_html('listen' if source.CAN_LISTEN else 'publish' if source.CAN_PUBLISH else '', source=source)|safe }}
 </p>
 </div>
 
@@ -66,16 +66,8 @@ WordPress.com, <a href="/">sign up here!</a>
 <p id="listening-label" class="big">Listening for responses.
   <input name="key" type="hidden" value="{{ source.key.urlsafe().decode() }}" />
   <input name="feature" type="hidden" value="listen" />
-  {% if indieauth_me %}
-    <input name="me" type="hidden" value="{{ indieauth_me }}" />
-  {% endif %}
   <button id="delete-button" type="submit" class="btn btn-default"
-    {% if source.SHORT_NAME == 'instagram' and not indieauth_me %}
-      title="You need to add your web site to your Instagram profile and sign up for Bridgy again before you can disable your account."
-      disabled class="disabled"
-    {% else %}
-      title="Disable sending responses for this account. (Won't delete responses you've already received.)"
-    {% endif %}
+          title="Disable sending responses for this account. (Won't delete responses you've already received.)"
     >Disable</button>
   {% if source.SHORT_NAME == 'mastodon' %}
     <input name="instance" type="hidden" value="{{ source.instance() }}" />

@@ -242,13 +242,6 @@ class UserHandler(DashboardHandler):
     if not self.source:
       return vars
 
-    if self.source.key.kind() == 'Instagram':
-      auth = self.source.auth_entity
-      vars['indieauth_me'] = (
-        auth.id() if auth.kind() == 'IndieAuth'
-        else self.source.domain_urls[0] if self.source.domain_urls
-        else None)
-
     # Blog webmention promos
     if 'webmention' not in self.source.features:
       if self.source.SHORT_NAME in ('blogger', 'medium', 'tumblr', 'wordpress'):
@@ -461,17 +454,14 @@ class DeleteStartHandler(util.Handler):
     if kind == 'Blogger':
       return self.redirect('/blogger/delete/start?state=%s' % state)
 
-    path = ('/instagram/callback' if kind == 'Instagram'
-            else '/reddit/callback' if kind == 'Reddit'
+    path = ('/reddit/callback' if kind == 'Reddit'
             else '/wordpress/add' if kind == 'WordPress'
             else '/%s/delete/finish' % source.SHORT_NAME)
     kwargs = {}
     if kind == 'Twitter':
       kwargs['access_type'] = 'read' if feature == 'listen' else 'write'
 
-    start_handler = (indieauth.StartHandler if kind == 'Instagram'
-                     else source.OAUTH_START_HANDLER)
-    handler = start_handler.to(path, **kwargs)(self.request, self.response)
+    handler = source.OAUTH_START_HANDLER.to(path, **kwargs)(self.request, self.response)
     try:
       self.redirect(handler.redirect_url(state=state))
     except Exception as e:

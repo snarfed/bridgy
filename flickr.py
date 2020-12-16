@@ -65,7 +65,7 @@ class Flickr(models.Source):
     return self.url
 
   def user_tag_id(self):
-    """Returns the tag URI for this source, e.g. 'tag:instagram.com:123456'."""
+    """Returns the tag URI for this source, e.g. 'tag:flickr.com:123456'."""
     return self.gr_source.tag_uri(self.username)
 
   def label_name(self):

@@ -3,11 +3,9 @@
 import copy
 import datetime
 
-from granary import instagram as gr_instagram
 from granary import mastodon as gr_mastodon
 from granary import twitter as gr_twitter
 from granary.tests import test_flickr
-from granary.tests import test_instagram
 from granary.tests import test_mastodon
 import oauth_dropins.flickr
 import oauth_dropins.flickr_auth
@@ -20,11 +18,10 @@ import requests
 
 import cron
 from flickr import Flickr
-from instagram import Instagram
 from mastodon import Mastodon
 import models
 from . import testutil
-from .testutil import FakeSource, HandlerTest, instagram_profile_user
+from .testutil import FakeSource, HandlerTest
 from twitter import Twitter
 import tasks
 import util
@@ -46,26 +43,6 @@ class CronTest(HandlerTest):
     self.assertEqual(
       'https://farm5.staticflickr.com/4068/buddyicons/39216764@N00.jpg',
       self.flickr.picture)
-
-  def setup_instagram(self, batch_size=None, weekday=0):
-    self.mox.stubs.Set(models, 'INSTAGRAM_SESSIONID_COOKIE', None)
-    if batch_size:
-      self.mox.stubs.Set(cron.UpdateInstagramPictures, 'BATCH', batch_size)
-
-    self.mox.StubOutWithMock(util, 'now_fn')
-    # 2017-01-02 is a Monday, which datetime.weekday() returns 0 for
-    util.now_fn().AndReturn(datetime.datetime(2017, 1, 2 + weekday))
-
-  def expect_instagram_profile_fetch(self, username):
-    profile = copy.deepcopy(test_instagram.HTML_PROFILE)
-    instagram_profile_user(profile).update({
-      'username': username,
-      'profile_pic_url': 'http://new/pic',
-    })
-    super(HandlerTest, self).expect_requests_get(
-      gr_instagram.HTML_BASE_URL + '%s/' % username,
-      test_instagram.HTML_HEADER + json_dumps(profile) + test_instagram.HTML_FOOTER,
-      allow_redirects=False)
 
   def test_replace_poll_tasks(self):
     now = datetime.datetime.now()
@@ -149,70 +126,6 @@ class CronTest(HandlerTest):
     self.assertEqual(200, resp.status_int)
 
     self.assertEqual('http://pi.ct/ure', source.get().picture)
-
-  def test_update_instagram_pictures(self):
-    self.setup_instagram(batch_size=1)
-    for username in 'a', 'b':
-      self.expect_instagram_profile_fetch(username)
-    self.mox.ReplayAll()
-
-    sources = []
-    auth_entity = indieauth.IndieAuth(id='http://foo.com/', user_json='{}')
-    for username in 'a', 'b', 'c', 'd':
-      source = Instagram.new(
-        None, auth_entity=auth_entity, features=['listen'],
-        actor={'username': username, 'image': {'url': 'http://old/pic'}})
-      # test that we skip disabled and deleted sources
-      if username == 'c':
-        source.status = 'disabled'
-      elif username == 'd':
-        source.features = []
-      sources.append(source.put())
-
-    resp = tasks.application.get_response('/cron/update_instagram_pictures')
-    self.assertEqual(200, resp.status_int)
-
-    self.assertEqual('http://new/pic', sources[0].get().picture)
-    self.assertEqual('http://new/pic', sources[1].get().picture)
-    self.assertEqual('http://old/pic', sources[2].get().picture)
-    self.assertEqual('http://old/pic', sources[3].get().picture)
-
-  def test_update_instagram_pictures_batch(self):
-    self.setup_instagram(weekday=3)
-    self.expect_instagram_profile_fetch('d')
-    self.mox.ReplayAll()
-
-    sources = []
-    auth_entity = indieauth.IndieAuth(id='http://foo.com/', user_json='{}')
-    for username in 'a', 'b', 'c', 'd', 'e', 'f', 'g':
-      source = Instagram.new(
-        None, auth_entity=auth_entity, features=['listen'],
-        actor={'username': username, 'image': {'url': 'http://old/pic'}})
-      sources.append(source.put())
-
-    resp = tasks.application.get_response('/cron/update_instagram_pictures')
-    self.assertEqual(200, resp.status_int)
-
-    for i, source in enumerate(sources):
-      self.assertEqual('http://new/pic' if i == 3 else 'http://old/pic',
-                       source.get().picture)
-
-  def test_update_instagram_picture_profile_404s(self):
-    self.setup_instagram(batch_size=1)
-
-    auth_entity = indieauth.IndieAuth(id='http://foo.com/', user_json='{}')
-    source = Instagram.new(
-        None, auth_entity=auth_entity, features=['listen'],
-        actor={'username': 'x', 'image': {'url': 'http://old/pic'}})
-    source.put()
-
-    super(HandlerTest, self).expect_requests_get(
-      gr_instagram.HTML_BASE_URL + 'x/', status_code=404, allow_redirects=False)
-    self.mox.ReplayAll()
-
-    resp = tasks.application.get_response('/cron/update_instagram_pictures')
-    self.assertEqual(200, resp.status_int)
-    self.assertEqual('http://old/pic', source.key.get().picture)
 
   def test_update_flickr_pictures(self):
     self.expect_urlopen(

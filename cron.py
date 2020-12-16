@@ -14,7 +14,6 @@ import webapp2
 import models
 from models import Source
 from flickr import Flickr
-from instagram import Instagram
 from mastodon import Mastodon
 from twitter import Twitter
 import util
@@ -112,32 +111,6 @@ class UpdatePictures(webapp2.RequestHandler):
       util.CachedPage.invalidate('/users')
 
 
-class UpdateInstagramPictures(UpdatePictures):
-  """Finds :class:`Instagram` sources with new profile pictures and updates them.
-
-  Splits the accounts up into batches to avoid hitting Instagram's rate limit.
-  Try to hit every account once a week.
-
-  Testing on 2017-07-05 hit the rate limit after ~170 profile page requests,
-  with ~270 total Instagram accounts on Bridgy.
-  """
-  SOURCE_CLS = Instagram
-  FREQUENCY = datetime.timedelta(hours=1)
-  WEEK = datetime.timedelta(days=7)
-  BATCH = float(WEEK.total_seconds()) / FREQUENCY.total_seconds()
-  TRANSIENT_ERROR_HTTP_CODES = (Instagram.TRANSIENT_ERROR_HTTP_CODES +
-                                Instagram.RATE_LIMIT_HTTP_CODES)
-
-  def source_query(self):
-    now = util.now_fn()
-    since_sun = (now.weekday() * datetime.timedelta(days=1) +
-                 (now - now.replace(hour=0, minute=0, second=0)))
-    batch = float(Instagram.query().count()) / self.BATCH
-    offset = batch * float(since_sun.total_seconds()) / self.FREQUENCY.total_seconds()
-    return Instagram.query().fetch(offset=int(math.floor(offset)),
-                                   limit=int(math.ceil(batch)))
-
-
 class UpdateFlickrPictures(UpdatePictures):
   """Finds :class:`Flickr` sources with new profile pictures and updates them.
   """
@@ -191,7 +164,6 @@ ROUTES = [
   ('/cron/build_circle', BuildCircle),
   ('/cron/replace_poll_tasks', ReplacePollTasks),
   ('/cron/update_flickr_pictures', UpdateFlickrPictures),
-  ('/cron/update_instagram_pictures', UpdateInstagramPictures),
   ('/cron/update_mastodon_pictures', UpdateMastodonPictures),
   ('/cron/update_twitter_pictures', UpdateTwitterPictures),
 ]

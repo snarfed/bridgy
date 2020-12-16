@@ -29,6 +29,8 @@ l3/
 local/
 local3/
 local3.7/
+node_modules
+package-lock.json
 pydoc/
 pydocs/
 python3/
@@ -41,3 +43,4 @@ TAGS
 TAGS/
 test/
 tests/
+yarn.lock

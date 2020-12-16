@@ -47,6 +47,7 @@ service.</a>
 <li><a href="#who">Who are you? Why did you make this?</a></li>
 <li><a href="#history">How long has this been around?</a></li>
 <li><a href="#stats">How big is this?</a></li>
+<li><a href="#instagram-paused">What happened to Instagram?</li>
 <li><a href="#rip-facebook">What happened to Facebook?</li>
 <li><a href="#rip-google+">What happened to Google+?</li>
 <li><a href="#profile-link">Why does my web site URL need to be in my social
@@ -225,6 +226,11 @@ web</a> and like <a href="https://indieweb.org/why">owning our data</a>.
 <p>Check out the <a href="/#stats">stats on the front page</a>!</p>
 </li>
 
+<li id="instagram-paused" class="question">What happened to Instagram?</li>
+<li class="answer">
+<p>Instagram ramped up their scraping countermeasures around November 2020. We tried various approaches, but we were unable to find a reliable way around them. We're currently working on a browser extension to keep Instagram backfeed working. Stay tuned!</p>
+</li>
+
 <a id="facebook-publish"></a>
 <li id="rip-facebook" class="question">What happened to Facebook?</li>
 <li class="answer">
@@ -290,16 +296,12 @@ in your post.
 without leaving my site or application?</li>
 
 <p>Not exactly, but you can get close. Direct your users to <code>POST</code> to a Bridgy registration URL of the form <code>https://brid.gy/SITE/start</code> (where SITE is
-<code>twitter</code>, <code>instagram</code>, <code>flickr</code>, <code>github</code>, <code>mastodon</code>, or <code>reddit</code>) with the parameters:</p>
+<code>twitter</code>, <code>flickr</code>, <code>github</code>, <code>mastodon</code>, or <code>reddit</code>) with the parameters:</p>
 
 <ul>
-<li><code>feature</code>, a comma-separated list of features,
-usually <code>listen</code>, <code>publish</code>,
-or <code>listen,publish</code></li>
+<li><code>feature</code>, a comma-separated list of features, usually <code>listen</code>, <code>publish</code>, or <code>listen,publish</code></li>
 <li><code>callback</code>, a URL pointing back to your site</li>
-<li> <code>user_url</code> (required for Instagram, optional otherwise), the
-user's URL. Allows callers to set this value without requiring it to be present
-in the user's silo profile</li>
+<li> <code>user_url</code> (optional), the user's URL. Allows callers to set this value without requiring it to be present in the user's silo profile</li>
 </ul>
 <p>They will be ushered through the registration process and sent back to
 your site when it finishes.</p>
@@ -322,7 +324,6 @@ POST <a href="https://brid.gy/twitter/start">https://brid.gy/twitter/start</a>
   <li><b>Blogger</b> doesn't have permissions at all, <a href="https://developers.google.com/blogger/docs/2.0/developers_guide_protocol#OAuth2Authorizing">just full access or none.</a> <a href="/static/permissions_screenshots/blogger.png">Screenshot.</a></li>
   <li><b>Flickr</b> has <a href="https://www.flickr.com/services/api/auth.oauth.html#authorization">read, write, and delete permissions</a>. We ask for read for listen, write for publish. Screenshots: <a href="/static/permissions_screenshots/flickr_read.png">listen</a>, <a href="/static/permissions_screenshots/flickr_write.png">publish</a>.</li>
   <li><b>GitHub</b> has a few different permission models. We use an <a href="https://developer.github.com/apps/building-oauth-apps/scopes-for-oauth-apps/">OAuth app</a> to request read/write permission to public repository data, and notifications to see new comments and reactions. The alternative would have been a <a href="https://developer.github.com/apps/building-github-apps/">GitHub app,</a> which lets you grant read vs write permission to individual repos, but includes private repos, and doesn't include notifications. <a href="https://developer.github.com/apps/differences-between-apps/">More on the tradeoff here.</a> <a href="/static/permissions_screenshots/github.png">Screenshot.</a></li>
-  <li><b>Instagram</b> turned off their API for individual usage, so we just ask for your web site, via <a href="https://indieauth.com/">IndieAuth</a>, and your Instagram username. <a href="/static/permissions_screenshots/instagram_indieauth.png">Screenshot.</a></li>
   <li><b>Mastodon</b> has <a href="https://docs.joinmastodon.org/api/permissions/">a number of fine grained permissions</a>, but listen needs most of the read categories, and publish needs most of the write ones, so Bridgy just asks for blanket read and write permission for each. Listen also uses your block list to suppress responses from accounts you've blocked, which <a href="https://docs.joinmastodon.org/api/rest/blocks/#get-api-v1-blocks">Mastodon unfortunately bundles with write access</a> and reports as <em>modify account relationships</em>. We don't actually modify any account relationships, promise!</li>
   <li><b>Medium</b> has <a href="https://github.com/Medium/medium-api-docs/#user-content-21-browser-based-authentication">a few different permissions</a>. We ask for read acces to your profile, public posts, and publications. <a href="/static/permissions_screenshots/medium.png">Screenshot.</a></li>
   <li><b>Tumblr</b> doesn't have permissions at all, <a href="https://www.tumblr.com/docs/en/api/v2#oauth">just full access or nothing.</a> <a href="/static/permissions_screenshots/tumblr.png">Screenshot.</a></li>
@@ -451,7 +452,7 @@ GitHub</a>. Thank you!
 <li>Tweets from other people that
   <a href="https://support.twitter.com/articles/14023-what-are-replies-and-mentions">@-mention</a>
   you or contain links to your site.</li>
-<li>Instagram comments and likes on your pictures.</li>
+<!-- TODO (browser extension) <li>Instagram comments and likes on your pictures.</li> -->
 <li>Flickr comments and favorites on your photos.</li>
 <li>GitHub comments and emoji reactions on your issues and pull requests.</li>
 <li>Mastodon replies, favorites, boosts, mentions, and links to your site.</li>
