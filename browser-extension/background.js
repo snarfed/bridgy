@@ -28,7 +28,7 @@ async function poll() {
     await forward(`/graphql/query/?query_hash=d5d763b1e2acf209d62d22d184488e57&variables={"shortcode":"${shortcode}","include_reel":false,"first":100}`, '/likes')
   }
 
-  // trigger
+  await postBridgy('/poll', data.instagram.username)
 }
 
 
@@ -37,8 +37,20 @@ async function poll() {
  *
  * @param {String} instagramPath
  * @param {String} bridgyPath
+ * @returns {String} Response body from Bridgy
  */
 async function forward(instagramPath, bridgyPath) {
+  const data = await getInstagram(instagramPath)
+  return await postBridgy(bridgyPath, data)
+}
+
+/**
+ * Makes an HTTP GET request to Instagram.
+ *
+ * @param {String} path
+ * @returns {String} Response body from Instagram
+ */
+async function getInstagram(path) {
   // Fetch from Instagram
   // TODO: fetch cookies from all stores, not just the default one, in order to
   // support containers.
@@ -46,10 +58,10 @@ async function forward(instagramPath, bridgyPath) {
   // https://hacks.mozilla.org/2017/10/containers-for-add-on-developers/
   // https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/cookies/getAll
   const cookies = await browser.cookies.getAll({domain: 'instagram.com'})
-  let url = 'https://www.instagram.com' + instagramPath
+  const url = `https://www.instagram.com${path}`
   console.debug(`Fetching ${url}`)
 
-  let res = await fetch(url, {
+  const res = await fetch(url, {
     method: 'GET',
     headers: {
       'Cookie': cookies.map(c => `${c.name}=${c.value}`).join('; '),
@@ -64,12 +76,20 @@ async function forward(instagramPath, bridgyPath) {
   if (!res.ok) {
     return null
   }
-  const body = await res.text()
+  return await res.text()
+}
 
-  // Send to Bridgy
-  url = 'https://brid.gy/instagram/browser' + bridgyPath
+/**
+ * Makes an HTTP POST request to Bridgy.
+ *
+ * @param {String} path
+ * @param {String} body
+ * @returns {String} Response body from Bridgy
+ */
+async function postBridgy(path, body) {
+  const url = `https://brid.gy/instagram/browser${path}`
   console.debug(`Sending to ${url}`)
-  res = await fetch(url, {
+  const res = await fetch(url, {
     method: 'POST',
     body: body,
   })

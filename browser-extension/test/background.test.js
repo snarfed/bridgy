@@ -88,7 +88,7 @@ test('poll, no stored username', async () => {
   fetch.mockResponseOnce('')
 
   await poll()
-  expect(fetch.mock.calls.length).toBe(12)
+  expect(fetch.mock.calls.length).toBe(13)
 
   expect(fetch.mock.calls[0][0]).toBe('https://www.instagram.com/')
   expect(fetch.mock.calls[1][0]).toBe('https://brid.gy/instagram/browser/homepage')
@@ -107,6 +107,9 @@ test('poll, no stored username', async () => {
     expect(fetch.mock.calls[i + 3][0]).toBe('https://brid.gy/instagram/browser/likes')
     expect(fetch.mock.calls[i + 3][1].body).toBe(`likes ${shortcode}`)
   }
+
+  expect(fetch.mock.calls[12][0]).toBe('https://brid.gy/instagram/browser/poll')
+  expect(fetch.mock.calls[12][1].body).toBe('snarfed')
 })
 
 test('poll, existing username stored', async () => {
