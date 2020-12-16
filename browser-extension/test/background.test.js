@@ -67,18 +67,26 @@ test('forward', async () => {
   ])
 })
 
-test('poll-no-username', async () => {
+test('poll, no stored username', async () => {
   // no username stored
   expect(await browser.storage.sync.get()).toEqual({})
 
-  fetch.mockResponseOnce('ig resp')
+  fetch.mockResponseOnce('ig home page')
   fetch.mockResponseOnce('snarfed')
+  fetch.mockResponseOnce('ig profile')
+  fetch.mockResponseOnce('')
 
   await poll()
+  expect(fetch.mock.calls.length).toBe(4)
+  expect(fetch.mock.calls[0][0]).toBe('https://www.instagram.com/')
+  expect(fetch.mock.calls[1][0]).toBe('https://brid.gy/instagram/browser/username')
+  expect(fetch.mock.calls[2][0]).toBe('https://www.instagram.com/snarfed/')
+  expect(fetch.mock.calls[3][0]).toBe('https://brid.gy/instagram/browser/profile')
+  expect(fetch.mock.calls[3][1].body).toBe('ig profile')
   expect(await browser.storage.sync.get()).toEqual({instagram: {username: 'snarfed'}})
 })
 
-test('poll-existing-username', async () => {
+test('poll, existing username stored', async () => {
   await browser.storage.sync.set({instagram: {username: 'snarfed'}})
   await poll()
   expect(fetch.mock.calls.length).toBe(0)

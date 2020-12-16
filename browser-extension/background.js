@@ -15,10 +15,10 @@ async function poll() {
   const data = await browser.storage.sync.get()
   if (!data.instagram || !data.instagram.username) {
     let username = await forward('/', '/username')
+    await forward(`/${username}/`, '/profile')
     await browser.storage.sync.set({instagram: {username: username}})
   }
 
-  // await forward(`/${username}/`, '/instagram/browser/account')
   // profile
   // permalinks
   // likes
