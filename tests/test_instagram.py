@@ -4,6 +4,8 @@ import copy
 from unittest import skip
 import urllib.request, urllib.parse, urllib.error
 
+import appengine_config  # injects 2013 into tag URIs in test_instagram objects
+
 from granary import instagram as gr_instagram
 from granary.tests import test_instagram as gr_test_instagram
 from oauth_dropins.webutil.testutil import TestCase
@@ -12,6 +14,7 @@ import requests
 
 import app
 from instagram import Instagram
+from models import Activity
 from .testutil import ModelsTest, instagram_profile_user
 import util
 
@@ -83,6 +86,7 @@ class InstagramTest(ModelsTest):
       '/instagram/browser/homepage', method='POST',
       text='not a logged in IG feed')
     self.assertEqual(400, resp.status_int)
+    self.assertIn("Couldn't determine logged in Instagram user", resp.text)
 
   def test_profile_new_user(self):
     self.assertIsNone(Instagram.get_by_id('snarfed'))
@@ -112,16 +116,38 @@ class InstagramTest(ModelsTest):
       '/instagram/browser/profile', method='POST',
       text=gr_test_instagram.HTML_PROFILE_PRIVATE_COMPLETE)
     self.assertEqual(400, resp.status_int)
+    self.assertIn('Your Instagram account is private.', resp.text)
 
-  # def test_signup_multiple_profile_urls(self):
-  #   self.expect_site_fetch()
+  def test_post(self):
+    source = Instagram.create_new(self.handler, actor={'username': 'jc'})
 
-  #   user = copy.deepcopy(PROFILE_USER)
-  #   user['biography'] = 'http://a/ https://b'
+    resp = app.application.get_response(
+      '/instagram/browser/post', method='POST',
+      text=gr_test_instagram.HTML_VIDEO_COMPLETE)
+    self.assertEqual(200, resp.status_int, resp.text)
+    self.assertEqual(gr_test_instagram.HTML_VIDEO_ACTIVITY_FULL, resp.json)
 
-  #   self.expect_webmention_discovery()
+    activities = Activity.query().fetch()
+    self.assertEqual(1, len(activities))
+    self.assertEqual(source.key, activities[0].source)
+    self.assertEqual(gr_test_instagram.HTML_VIDEO_ACTIVITY_FULL,
+                     json_loads(activities[0].activity_json))
 
-  #   self.mox.ReplayAll()
-  #   resp = self.callback()
-  #   self.assertEqual('http://localhost/instagram/snarfed', resp.headers['Location'])
-  #   self.assertEqual(['snarfed.org', 'a', 'b'], self.inst.key.get().domains)
+  def test_post_no_source(self):
+    resp = app.application.get_response(
+      '/instagram/browser/post', method='POST',
+      text=gr_test_instagram.HTML_VIDEO_COMPLETE)
+    self.assertEqual(400, resp.status_int)
+    self.assertIn('No account found for Instagram user jc', resp.text)
+
+  def test_post_empty(self):
+    resp = app.application.get_response(
+      '/instagram/browser/post', method='POST', text='')
+    self.assertEqual(400, resp.status_int)
+    self.assertIn('Expected 1 Instagram post', resp.text)
+
+  def test_likes(self):
+    pass
+
+  def test_poll(self):
+    pass

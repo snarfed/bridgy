@@ -11,7 +11,7 @@ import webapp2
 from oauth_dropins import indieauth
 # from oauth_dropins import instagram as oauth_instagram
 
-from models import Source
+from models import Activity, Source
 import util
 
 
@@ -63,12 +63,6 @@ class Instagram(Source):
     """Returns the Instagram account URL, e.g. https://instagram.com/foo."""
     return self.url
 
-  # def user_tag_id(self):
-  #   """Returns the tag URI for this source, e.g. 'tag:instagram.com:123456'."""
-  #   user = json_loads(self.auth_entity.get().user_json)
-  #   return (user.get('actor', {}).get('id') or
-  #           self.gr_source.tag_uri(user.get('id') or self.key_id()))
-
   def label_name(self):
     """Returns the username."""
     return self.key_id()
@@ -85,7 +79,10 @@ class Instagram(Source):
 
 
 class HomepageHandler(util.Handler):
-  """Parses an Instagram home page and returns the logged in user's username."""
+  """Parses an Instagram home page and returns the logged in user's username.
+
+  Request body is https://www.instagram.com/ HTML for a logged in user.
+  """
   def post(self):
     ig = gr_instagram.Instagram()
     _, actor = ig.html_to_activities(self.request.text)
@@ -96,7 +93,11 @@ class HomepageHandler(util.Handler):
 
 
 class ProfileHandler(util.Handler):
-  """Parses an Instagram profile page and returns the posts' URLs."""
+  """Parses an Instagram profile page and returns the posts' URLs.
+
+  Request body is HTML from an IG profile, eg https://www.instagram.com/name/ ,
+  for a logged in user.
+  """
   def post(self):
     # parse the Instagram profile HTML
     ig = gr_instagram.Instagram()
@@ -113,7 +114,38 @@ class ProfileHandler(util.Handler):
     self.response.write(json_dumps([a['object']['url'] for a in activities]))
 
 
+class PostHandler(util.Handler):
+  """Parses an Instagram post and creates new Responses as needed.
+
+  Request body is HTML from an IG photo/video permalink, eg
+  https://www.instagram.com/p/ABC123/ , for a logged in user.
+
+  Response body is the translated ActivityStreams activity JSON.
+  """
+  def post(self):
+    ig = gr_instagram.Instagram()
+    activities, _ = ig.html_to_activities(self.request.text)
+
+    if len(activities) != 1:
+      self.abort(400, f'Expected 1 Instagram post, got {len(activities)}')
+    activity = activities[0]
+    if not activity['id']:
+      self.abort(400, 'Instagram post missing id')
+
+    obj = activity['object']
+    username = obj['author']['username']
+    source = Instagram.get_by_id(username)
+    if not source:
+      self.abort(400, f'No account found for Instagram user {username}')
+
+    activity_json = json_dumps(activity, indent=2)
+    Activity.get_or_insert(activity['id'], source=source.key,
+                           activity_json=activity_json)
+    self.response.write(activity_json)
+
+
 ROUTES = [
   ('/instagram/browser/homepage', HomepageHandler),
   ('/instagram/browser/profile', ProfileHandler),
+  ('/instagram/browser/post', PostHandler),
 ]

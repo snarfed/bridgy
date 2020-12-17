@@ -961,6 +961,19 @@ class Response(Webmentions):
     return super(Response, self).restart()
 
 
+class Activity(StringIdModel):
+  """An activity with responses to be propagated.
+
+  The key name is the activity id as a tag URI.
+
+  Currently only used for posts sent to us by the browser extension.
+  """
+  source = ndb.KeyProperty()
+  created = ndb.DateTimeProperty(auto_now_add=True)
+  updated = ndb.DateTimeProperty(auto_now=True)
+  activity_json = ndb.TextProperty()
+
+
 class BlogPost(Webmentions):
   """A blog post to be processed for links to send webmentions to.
 
