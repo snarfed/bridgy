@@ -21,7 +21,6 @@ PROFILE_USER = copy.deepcopy(
 PROFILE_USER['id'] = '987'
 
 
-@skip('in progress disabling Instagram temporarily')
 class InstagramTest(ModelsTest):
 
   def setUp(self):
@@ -44,7 +43,7 @@ class InstagramTest(ModelsTest):
     self.assertEqual('http://pic.ture/url', self.inst.picture)
     self.assertEqual('https://www.instagram.com/snarfed/', self.inst.url)
     self.assertEqual('https://www.instagram.com/snarfed/', self.inst.silo_url())
-    self.assertEqual('tag:instagram.com,2013:420973239', self.inst.user_tag_id())
+    # self.assertEqual('tag:instagram.com,2013:420973239', self.inst.user_tag_id())
     self.assertEqual('Ryan Barrett', self.inst.name)
     self.assertEqual('snarfed (Instagram)', self.inst.label())
 
@@ -68,96 +67,96 @@ class InstagramTest(ModelsTest):
     self.assertEqual('https://www.instagram.com/p/abcd/123/',
                      self.inst.canonicalize_url('https://www.instagram.com/p/abcd/123'))
 
-  def expect_site_fetch(self, body=None):
-    if body is None:
-      body = """
-<html><body>
-<a rel="me" href="https://www.instagram.com/snarfed">me on insta</a>
-</body></html>
-"""
-    return TestCase.expect_requests_get(self, 'http://snarfed.org', body)
+  def test_homepage(self):
+    resp = app.application.get_response(
+      '/instagram/browser/homepage', method='POST',
+      text=gr_test_instagram.HTML_FEED_COMPLETE)
+    self.assertEqual(200, resp.status_int)
+    self.assertEqual('snarfed', resp.text)
 
-  def expect_webmention_discovery(self):
-    return self.expect_requests_get('https://snarfed.org', '', stream=None,
-                                    verify=False)
+  def test_homepage_bad_Html(self):
+    resp = app.application.get_response(
+      '/instagram/browser/homepage', method='POST',
+      text='not a logged in IG feed')
+    self.assertEqual(400, resp.status_int)
 
-  def test_signup_success(self):
-    self.expect_site_fetch()
-    self.expect_webmention_discovery()
+  # def test_signup_success(self):
+  #   self.expect_site_fetch()
+  #   self.expect_webmention_discovery()
 
-    self.mox.ReplayAll()
-    resp = self.callback()
-    self.assertEqual('http://localhost/instagram/snarfed', resp.headers['Location'])
+  #   self.mox.ReplayAll()
+  #   resp = self.callback()
+  #   self.assertEqual('http://localhost/instagram/snarfed', resp.headers['Location'])
 
-  def test_signup_no_rel_me(self):
-    self.expect_site_fetch('')
+  # def test_signup_no_rel_me(self):
+  #   self.expect_site_fetch('')
 
-    self.mox.ReplayAll()
-    resp = self.callback()
-    location = urllib.parse.unquote_plus(resp.headers['Location'])
-    self.assertTrue(location.startswith(
-      'http://localhost/#!No Instagram profile found.'), location)
+  #   self.mox.ReplayAll()
+  #   resp = self.callback()
+  #   location = urllib.parse.unquote_plus(resp.headers['Location'])
+  #   self.assertTrue(location.startswith(
+  #     'http://localhost/#!No Instagram profile found.'), location)
 
-  def test_signup_no_instagram_profile(self):
-    self.expect_site_fetch()
+  # def test_signup_no_instagram_profile(self):
+  #   self.expect_site_fetch()
 
-    self.mox.ReplayAll()
-    resp = self.callback()
-    location = urllib.parse.unquote_plus(resp.headers['Location'])
-    self.assertTrue(location.startswith(
-      "http://localhost/#!Couldn't find Instagram user 'snarfed'"), location)
+  #   self.mox.ReplayAll()
+  #   resp = self.callback()
+  #   location = urllib.parse.unquote_plus(resp.headers['Location'])
+  #   self.assertTrue(location.startswith(
+  #     "http://localhost/#!Couldn't find Instagram user 'snarfed'"), location)
 
-  def test_signup_no_instagram_profile_backlink(self):
-    self.expect_site_fetch()
+  # def test_signup_no_instagram_profile_backlink(self):
+  #   self.expect_site_fetch()
 
-    user = copy.deepcopy(PROFILE_USER)
-    del user['external_url']
+  #   user = copy.deepcopy(PROFILE_USER)
+  #   del user['external_url']
 
-    self.mox.ReplayAll()
-    resp = self.callback()
-    location = urllib.parse.unquote_plus(resp.headers['Location'])
-    self.assertTrue(location.startswith(
-      'http://localhost/#!Please add https://snarfed.org to your Instagram'), location)
+  #   self.mox.ReplayAll()
+  #   resp = self.callback()
+  #   location = urllib.parse.unquote_plus(resp.headers['Location'])
+  #   self.assertTrue(location.startswith(
+  #     'http://localhost/#!Please add https://snarfed.org to your Instagram'), location)
 
-  def test_signup_private_account(self):
-    self.expect_site_fetch()
+  # def test_signup_private_account(self):
+  #   self.expect_site_fetch()
 
-    user = copy.deepcopy(PROFILE_USER)
-    user['is_private'] = True
+  #   user = copy.deepcopy(PROFILE_USER)
+  #   user['is_private'] = True
 
-    self.mox.ReplayAll()
-    resp = self.callback()
-    location = urllib.parse.unquote_plus(resp.headers['Location'])
-    self.assertTrue(location.startswith(
-      'http://localhost/#!Your Instagram account is private.'), location)
+  #   self.mox.ReplayAll()
+  #   resp = self.callback()
+  #   location = urllib.parse.unquote_plus(resp.headers['Location'])
+  #   self.assertTrue(location.startswith(
+  #     'http://localhost/#!Your Instagram account is private.'), location)
 
-  def test_signup_multiple_profile_urls(self):
-    self.expect_site_fetch()
+  # def test_signup_multiple_profile_urls(self):
+  #   self.expect_site_fetch()
 
-    user = copy.deepcopy(PROFILE_USER)
-    user['biography'] = 'http://a/ https://b'
+  #   user = copy.deepcopy(PROFILE_USER)
+  #   user['biography'] = 'http://a/ https://b'
 
-    self.expect_webmention_discovery()
+  #   self.expect_webmention_discovery()
 
-    self.mox.ReplayAll()
-    resp = self.callback()
-    self.assertEqual('http://localhost/instagram/snarfed', resp.headers['Location'])
-    self.assertEqual(['snarfed.org', 'a', 'b'], self.inst.key.get().domains)
+  #   self.mox.ReplayAll()
+  #   resp = self.callback()
+  #   self.assertEqual('http://localhost/instagram/snarfed', resp.headers['Location'])
+  #   self.assertEqual(['snarfed.org', 'a', 'b'], self.inst.key.get().domains)
 
-  def test_signup_state_0(self):
-    """https://console.cloud.google.com/errors/5078670695812426116"""
-    self.expect_site_fetch()
-    self.expect_webmention_discovery()
+  # def test_signup_state_0(self):
+  #   """https://console.cloud.google.com/errors/5078670695812426116"""
+  #   self.expect_site_fetch()
+  #   self.expect_webmention_discovery()
 
-    self.mox.ReplayAll()
-    resp = self.callback(state='0')
-    self.assertEqual('http://localhost/instagram/snarfed', resp.headers['Location'])
+  #   self.mox.ReplayAll()
+  #   resp = self.callback(state='0')
+  #   self.assertEqual('http://localhost/instagram/snarfed', resp.headers['Location'])
 
-  def test_signup_instagram_blocks_fetch(self):
-    self.expect_site_fetch()
+  # def test_signup_instagram_blocks_fetch(self):
+  #   self.expect_site_fetch()
 
-    self.mox.ReplayAll()
-    resp = self.callback()
-    location = urllib.parse.unquote_plus(resp.headers['Location'])
-    self.assertTrue(location.startswith('http://localhost/#'))
-    self.assertIn('Apologies, Instagram is temporarily blocking us.', location)
+  #   self.mox.ReplayAll()
+  #   resp = self.callback()
+  #   location = urllib.parse.unquote_plus(resp.headers['Location'])
+  #   self.assertTrue(location.startswith('http://localhost/#'))
+  #   self.assertIn('Apologies, Instagram is temporarily blocking us.', location)

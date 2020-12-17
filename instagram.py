@@ -8,6 +8,9 @@ from granary import source as gr_source
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import webapp2
 
+from oauth_dropins import indieauth
+# from oauth_dropins import instagram as oauth_instagram
+
 from models import Source
 import util
 
@@ -53,11 +56,11 @@ class Instagram(Source):
     """Returns the Instagram account URL, e.g. https://instagram.com/foo."""
     return self.url
 
-  def user_tag_id(self):
-    """Returns the tag URI for this source, e.g. 'tag:instagram.com:123456'."""
-    user = json_loads(self.auth_entity.get().user_json)
-    return (user.get('actor', {}).get('id') or
-            self.gr_source.tag_uri(user.get('id') or self.key_id()))
+  # def user_tag_id(self):
+  #   """Returns the tag URI for this source, e.g. 'tag:instagram.com:123456'."""
+  #   user = json_loads(self.auth_entity.get().user_json)
+  #   return (user.get('actor', {}).get('id') or
+  #           self.gr_source.tag_uri(user.get('id') or self.key_id()))
 
   def label_name(self):
     """Returns the username."""
@@ -72,6 +75,18 @@ class Instagram(Source):
     kwargs.setdefault('group_id', gr_source.SELF)
     kwargs.setdefault('user_id', self.key_id())
     return self.gr_source.get_activities_response(*args, **kwargs)
+
+
+class HomepageHandler(util.Handler):
+  """Parses an Instagram home page and returns the logged in user's username."""
+  def post(self):
+    ig = gr_instagram.Instagram()
+    _, actor = ig.html_to_activities(self.request.text)
+    if not actor or not actor.get('username'):
+      self.abort(400, "Couldn't determine logged in Instagram user")
+
+    self.response.write(actor['username'])
+
 
     #   # check that instagram profile links to web site
     #   actor = gr_instagram.Instagram(
@@ -94,4 +109,6 @@ class Instagram(Source):
     # self.maybe_add_or_delete_source(Instagram, auth_entity, state, actor=actor)
 
 
-ROUTES = []
+ROUTES = [
+  ('/instagram/browser/homepage', HomepageHandler),
+]
