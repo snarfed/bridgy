@@ -34,6 +34,9 @@ class Instagram(Source):
     headers=util.REQUEST_HEADERS)
     # no reject regexp; non-private Instagram post URLs just 404
 
+  # blank granary Instagram object, shared across all instances
+  gr_source = gr_instagram.Instagram()
+
   @staticmethod
   def new(handler, auth_entity=None, actor=None, **kwargs):
     """Creates and returns an :class:`Instagram` for the logged in user.
@@ -41,16 +44,20 @@ class Instagram(Source):
     Args:
       handler: the current :class:`webapp2.RequestHandler`
     """
-    assert auth_entity is None
+    assert not auth_entity
+    assert actor
 
     username = actor['username']
     if not kwargs.get('features'):
       kwargs['features'] = ['listen']
-    return Instagram(id=username,
-                     name=actor.get('displayName'),
-                     picture=actor.get('image', {}).get('url'),
-                     url=gr_instagram.Instagram.user_url(username),
-                     **kwargs)
+
+    ig = Instagram(id=username,
+                   name=actor.get('displayName'),
+                   picture=actor.get('image', {}).get('url'),
+                   url=gr_instagram.Instagram.user_url(username),
+                   **kwargs)
+    ig.domain_urls, ig.domains = ig._urls_and_domains(None, None, actor=actor)
+    return ig
 
   def silo_url(self):
     """Returns the Instagram account URL, e.g. https://instagram.com/foo."""
@@ -88,27 +95,25 @@ class HomepageHandler(util.Handler):
     self.response.write(actor['username'])
 
 
-    #   # check that instagram profile links to web site
-    #   actor = gr_instagram.Instagram(
-    #     scrape=True, cookie=oauth_instagram.INSTAGRAM_SESSIONID_COOKIE
-    #   ).get_actor(username, ignore_rate_limit=True)
+class ProfileHandler(util.Handler):
+  """Parses an Instagram profile page and returns the posts' URLs."""
+  def post(self):
+    # parse the Instagram profile HTML
+    ig = gr_instagram.Instagram()
+    activities, actor = ig.html_to_activities(self.request.text)
+    if not actor or not actor.get('username'):
+      self.abort(400, "Couldn't determine logged in Instagram user")
 
-    #   canonicalize = util.UrlCanonicalizer(redirects=False)
-    #   website = canonicalize(auth_entity.key.id())
-    #   urls = [canonicalize(u) for u in microformats2.object_urls(actor)]
-    #   logging.info('Looking for %s in %s', website, urls)
-    #   if website not in urls:
-    #     self.messages.add("Please add %s to your Instagram profile's website or bio field and try again." % website)
-    #     return self.redirect('/')
+    # check that the instagram account is public
+    if not gr_source.Source.is_public(actor):
+      self.abort(400, 'Your Instagram account is private. Bridgy only supports public accounts.')
 
-    #   # check that the instagram account is public
-    #   if not gr_source.Source.is_public(actor):
-    #     self.messages.add('Your Instagram account is private. Bridgy only supports public accounts.')
-    #     return self.redirect('/')
-
-    # self.maybe_add_or_delete_source(Instagram, auth_entity, state, actor=actor)
+    # create/update the Bridgy account
+    Instagram.create_new(self, actor=actor)
+    self.response.write(json_dumps([a['object']['url'] for a in activities]))
 
 
 ROUTES = [
   ('/instagram/browser/homepage', HomepageHandler),
+  ('/instagram/browser/profile', ProfileHandler),
 ]

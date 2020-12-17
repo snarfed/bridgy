@@ -604,8 +604,8 @@ class Source(StringIdModel, metaclass=SourceMeta):
                                'headers': util.REQUEST_HEADERS}
     try:
       mention._discoverEndpoint()
-    except BaseException:
-      logging.info('Error discovering webmention endpoint', stack_info=True)
+    except BaseException as e:
+      logging.info('Error discovering webmention endpoint', exc_info=e)
       mention.error = {'code': 'EXCEPTION'}
 
     self._fetched_html = getattr(mention, 'html', None)
@@ -620,7 +620,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
 
     self.put()
 
-  def _urls_and_domains(self, auth_entity, user_url):
+  def _urls_and_domains(self, auth_entity, user_url, actor=None):
     """Returns this user's valid (not webmention-blocklisted) URLs and domains.
 
     Converts the auth entity's user_json to an ActivityStreams actor and uses
@@ -629,13 +629,14 @@ class Source(StringIdModel, metaclass=SourceMeta):
     Args:
       auth_entity: :class:`oauth_dropins.models.BaseAuth`
       user_url: string, optional URL passed in when authorizing
+      actor: dict, optional AS actor for the user. If provided, overrides
+        auth_entity
 
     Returns:
       ([string url, ...], [string domain, ...])
     """
-    user = json_loads(auth_entity.user_json)
-    actor = (user.get('actor')  # for Instagram; its user_json is IndieAuth
-             or self.gr_source.user_to_actor(user))
+    if not actor:
+      actor = self.gr_source.user_to_actor(json_loads(auth_entity.user_json))
     logging.debug('Extracting URLs and domains from actor: %s',
                   json_dumps(actor, indent=2))
 
