@@ -100,8 +100,8 @@ class InstagramTest(ModelsTest):
 
     self.assertEqual(200, resp.status_int)
     self.assertEqual([
-      'https://www.instagram.com/p/ABC123/',
-      'https://www.instagram.com/p/XYZ789/',
+      gr_test_instagram.HTML_PHOTO_ACTIVITY,
+      gr_test_instagram.HTML_VIDEO_ACTIVITY,
     ], resp.json)
 
     ig = Instagram.get_by_id('snarfed')
@@ -146,8 +146,42 @@ class InstagramTest(ModelsTest):
     self.assertEqual(400, resp.status_int)
     self.assertIn('Expected 1 Instagram post', resp.text)
 
-  def test_likes(self):
+  def test_post_merge_comments(self):
+    # TODO
     pass
+
+  def test_likes(self):
+    activity_json = json_dumps(gr_test_instagram.HTML_PHOTO_ACTIVITY)
+    a = Activity(id='tag:instagram.com,2013:123_456', activity_json=activity_json).put()
+
+    resp = app.application.get_response(
+      '/instagram/browser/likes?id=tag:instagram.com,2013:123_456', method='POST',
+      text=json_dumps(gr_test_instagram.LIKES))
+    self.assertEqual(200, resp.status_int, resp.text)
+
+    expected_likes = copy.deepcopy(gr_test_instagram.LIKE_OBJS)
+    for like in expected_likes:
+      del like['object']
+      del like['url']
+    self.assertEqual(expected_likes, resp.json)
+
+    activity = json_loads(a.get().activity_json)
+    self.assertEqual(expected_likes, activity['object']['tags'])
+
+  def test_likes_bad_id(self):
+    resp = app.application.get_response(
+      '/instagram/browser/likes?id=789', method='POST',
+      text=json_dumps(gr_test_instagram.LIKES))
+    self.assertEqual(400, resp.status_int)
+    self.assertIn('Expected id to be tag URI', resp.text)
+
+  def test_likes_no_activity(self):
+    resp = app.application.get_response(
+      '/instagram/browser/likes?id=tag:instagram.com,2013:789', method='POST',
+      text=json_dumps(gr_test_instagram.LIKES))
+    self.assertEqual(400, resp.status_int)
+    self.assertIn('No Instagram post found for id tag:instagram.com,2013:789',
+                  resp.text)
 
   def test_poll(self):
     pass

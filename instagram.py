@@ -1,6 +1,7 @@
 """Instagram code and datastore model classes.
 """
 import logging
+from operator import itemgetter
 
 from granary import instagram as gr_instagram
 from granary import microformats2
@@ -9,10 +10,11 @@ from oauth_dropins.webutil.util import json_dumps, json_loads
 import webapp2
 
 from oauth_dropins import indieauth
-# from oauth_dropins import instagram as oauth_instagram
 
 from models import Activity, Source
 import util
+
+AS1_JSON_CONTENT_TYPE = 'application/stream+json'
 
 
 class Instagram(Source):
@@ -89,6 +91,7 @@ class HomepageHandler(util.Handler):
     if not actor or not actor.get('username'):
       self.abort(400, "Couldn't determine logged in Instagram user")
 
+    self.response.headers['Content-Type'] = 'text/plain'
     self.response.write(actor['username'])
 
 
@@ -97,6 +100,8 @@ class ProfileHandler(util.Handler):
 
   Request body is HTML from an IG profile, eg https://www.instagram.com/name/ ,
   for a logged in user.
+
+  Response body is the JSON list of translated ActivityStreams activities.
   """
   def post(self):
     # parse the Instagram profile HTML
@@ -111,7 +116,9 @@ class ProfileHandler(util.Handler):
 
     # create/update the Bridgy account
     Instagram.create_new(self, actor=actor)
-    self.response.write(json_dumps([a['object']['url'] for a in activities]))
+
+    self.response.headers['Content-Type'] = AS1_JSON_CONTENT_TYPE
+    self.response.write(json_dumps(activities, indent=2))
 
 
 class PostHandler(util.Handler):
@@ -121,6 +128,8 @@ class PostHandler(util.Handler):
   https://www.instagram.com/p/ABC123/ , for a logged in user.
 
   Response body is the translated ActivityStreams activity JSON.
+
+  TODO: merge new comments into existing activities
   """
   def post(self):
     ig = gr_instagram.Instagram()
@@ -141,11 +150,64 @@ class PostHandler(util.Handler):
     activity_json = json_dumps(activity, indent=2)
     Activity.get_or_insert(activity['id'], source=source.key,
                            activity_json=activity_json)
+
+    self.response.headers['Content-Type'] = AS1_JSON_CONTENT_TYPE
     self.response.write(activity_json)
+
+
+class LikesHandler(util.Handler):
+  """Parses a list of Instagram likes and adds them to an existing Activity.
+
+  Requires the request parameter `shortcode` with the IG post's shortcode.
+
+  Request body is a JSON list of IG likes for a post that's already been created
+  via the /instagram/browser/post endpoint.
+
+  Response body is the translated ActivityStreams JSON for the likes.
+  """
+  def post(self):
+    id = util.get_required_param(self, 'id')
+    parsed = util.parse_tag_uri(id)
+    if not parsed:
+      self.abort(400, f'Expected id to be tag URI; got {id}')
+
+    activity = Activity.get_by_id(id)
+    if not activity:
+      self.abort(400, f'No Instagram post found for id {id}')
+
+    _, id = parsed
+
+    if not self.request.json:
+      self.response.headers['Content-Type'] = AS1_JSON_CONTENT_TYPE
+      self.response.write(json_dumps([]))
+      return
+
+    # convert new likes to AS
+    container = {
+      'id': id,
+      'edge_media_preview_like': {
+        'edges': [{'node': like} for like in self.request.json],
+      },
+    }
+    ig = gr_instagram.Instagram()
+    new_likes = ig._json_media_node_to_activity(container)['object']['tags']
+
+    # merge them into existing activity
+    activity_data = json_loads(activity.activity_json)
+    existing = {id: tag for tag in activity_data['object'].get('tags', [])}
+    existing.update({like['id']: like for like in new_likes})
+
+    activity_data['object']['tags'] = list(existing.values())
+    activity.activity_json = json_dumps(activity_data)
+    activity.put()
+
+    self.response.headers['Content-Type'] = AS1_JSON_CONTENT_TYPE
+    self.response.write(json_dumps(new_likes, indent=2))
 
 
 ROUTES = [
   ('/instagram/browser/homepage', HomepageHandler),
   ('/instagram/browser/profile', ProfileHandler),
   ('/instagram/browser/post', PostHandler),
+  ('/instagram/browser/likes', LikesHandler),
 ]

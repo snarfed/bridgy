@@ -18,14 +18,14 @@ async function poll() {
     await browser.storage.sync.set({instagram: {username: username}})
   }
 
-  const shortcodes = await forward(`/${data.instagram.username}/`, '/profile')
-  if (!shortcodes) {
+  const activities = await forward(`/${data.instagram.username}/`, '/profile')
+  if (!activities) {
     return
   }
 
-  for (const shortcode of JSON.parse(shortcodes)) {
-    await forward(`/p/${shortcode}/`, '/post')
-    await forward(`/graphql/query/?query_hash=d5d763b1e2acf209d62d22d184488e57&variables={"shortcode":"${shortcode}","include_reel":false,"first":100}`, '/likes')
+  for (const activity of JSON.parse(activities)) {
+    await forward(`/p/${activity.object.ig_shortcode}/`, '/post')
+    await forward(`/graphql/query/?query_hash=d5d763b1e2acf209d62d22d184488e57&variables={"shortcode":"${activity.object.ig_shortcode}","include_reel":false,"first":100}`, `/likes?id=${activity.id}`)
   }
 
   await postBridgy('/poll', data.instagram.username)

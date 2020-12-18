@@ -77,7 +77,14 @@ test('poll, no stored username', async () => {
   fetch.mockResponseOnce('ig home page')
   fetch.mockResponseOnce('snarfed')
   fetch.mockResponseOnce('ig profile')
-  fetch.mockResponseOnce(JSON.stringify(['abc', 'xyz']))
+  fetch.mockResponseOnce(JSON.stringify([
+    {
+      id: '246',
+      object: {ig_shortcode: 'abc'},
+    }, {
+      id: '357',
+      object: {ig_shortcode: 'xyz'},
+    }]))
   fetch.mockResponseOnce('post abc')
   fetch.mockResponseOnce('')
   fetch.mockResponseOnce('likes abc')
@@ -98,13 +105,13 @@ test('poll, no stored username', async () => {
   expect(fetch.mock.calls[3][0]).toBe('https://brid.gy/instagram/browser/profile')
   expect(fetch.mock.calls[3][1].body).toBe('ig profile')
 
-  for (const [i, shortcode] of [[4, 'abc'], [8, 'xyz']]) {
+  for (const [i, shortcode, id] of [[4, 'abc', '246'], [8, 'xyz', '357']]) {
     expect(fetch.mock.calls[i][0]).toBe(`https://www.instagram.com/p/${shortcode}/`)
     expect(fetch.mock.calls[i + 1][0]).toBe('https://brid.gy/instagram/browser/post')
     expect(fetch.mock.calls[i + 1][1].body).toBe(`post ${shortcode}`)
     expect(fetch.mock.calls[i + 2][0]).toContain('https://www.instagram.com/graphql/')
     expect(fetch.mock.calls[i + 2][0]).toContain(shortcode)
-    expect(fetch.mock.calls[i + 3][0]).toBe('https://brid.gy/instagram/browser/likes')
+    expect(fetch.mock.calls[i + 3][0]).toBe(`https://brid.gy/instagram/browser/likes?id=${id}`)
     expect(fetch.mock.calls[i + 3][1].body).toBe(`likes ${shortcode}`)
   }
 
