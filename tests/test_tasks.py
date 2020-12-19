@@ -141,6 +141,13 @@ class PollTest(TaskTest):
     self.assertEqual(NOW, source.last_polled)
     self.assertEqual('ok', source.poll_status)
 
+  def test_poll_no_auto_poll(self):
+    FakeGrSource.clear()
+    self.stub_create_task()
+    self.mox.stubs.Set(FakeSource, 'AUTO_POLL', False)
+    self.mox.ReplayAll()
+    self.post_task()
+
   def test_poll_status_polling(self):
     def check_poll_status(*args, **kwargs):
       self.assertEqual('polling', self.sources[0].key.get().poll_status)

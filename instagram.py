@@ -1,5 +1,6 @@
 """Instagram code and datastore model classes.
 """
+from datetime import timedelta
 import logging
 from operator import itemgetter
 
@@ -26,8 +27,10 @@ class Instagram(Source):
   """
   GR_CLASS = gr_instagram.Instagram
   SHORT_NAME = 'instagram'
-  CAN_LISTEN = False
+  CAN_LISTEN = True
   CAN_PUBLISH = False
+  AUTO_POLL = False
+  SLOW_POLL = FAST_POLL = timedelta(0)
   URL_CANONICALIZER = util.UrlCanonicalizer(
     domain=GR_CLASS.DOMAIN,
     subdomain='www',
@@ -145,7 +148,7 @@ class PostHandler(util.Handler):
     username = obj['author']['username']
     source = Instagram.get_by_id(username)
     if not source:
-      self.abort(400, f'No account found for Instagram user {username}')
+      self.abort(404, f'No account found for Instagram user {username}')
 
     activity_json = json_dumps(activity, indent=2)
     Activity.get_or_insert(activity['id'], source=source.key,
@@ -173,7 +176,7 @@ class LikesHandler(util.Handler):
 
     activity = Activity.get_by_id(id)
     if not activity:
-      self.abort(400, f'No Instagram post found for id {id}')
+      self.abort(404, f'No Instagram post found for id {id}')
 
     _, id = parsed
 
@@ -205,9 +208,23 @@ class LikesHandler(util.Handler):
     self.response.write(json_dumps(new_likes, indent=2))
 
 
+class PollHandler(util.Handler):
+  """Triggers a poll for an Instagram account.
+
+  Requires the `username` parameter.
+  """
+  def post(self):
+    username = util.get_required_param(self, 'username')
+    source = Instagram.get_by_id(username)
+    if not source:
+      self.abort(404, f'No account found for Instagram user {username}')
+
+    util.add_poll_task(source)
+
 ROUTES = [
   ('/instagram/browser/homepage', HomepageHandler),
   ('/instagram/browser/profile', ProfileHandler),
   ('/instagram/browser/post', PostHandler),
   ('/instagram/browser/likes', LikesHandler),
+  ('/instagram/browser/poll', PollHandler),
 ]

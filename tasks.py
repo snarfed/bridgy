@@ -66,10 +66,11 @@ class Poll(webapp2.RequestHandler):
     logging.info('Source: %s %s, %s', source.label(), source.key_id(),
                  source.bridgy_url(self))
 
-    last_polled = self.request.params['last_polled']
-    if last_polled != source.last_polled.strftime(util.POLL_TASK_DATETIME_FORMAT):
-      logging.warning('duplicate poll task! deferring to the other task.')
-      return
+    if source.AUTO_POLL:
+      last_polled = self.request.params['last_polled']
+      if last_polled != source.last_polled.strftime(util.POLL_TASK_DATETIME_FORMAT):
+        logging.warning('duplicate poll task! deferring to the other task.')
+        return
 
     logging.info('Last poll: %s', self._last_poll_url(source))
 
@@ -105,7 +106,8 @@ class Poll(webapp2.RequestHandler):
     finally:
       source = models.Source.put_updates(source)
 
-    util.add_poll_task(source)
+    if source.AUTO_POLL:
+      util.add_poll_task(source)
 
     # feeble attempt to avoid hitting the instance memory limit
     source = None

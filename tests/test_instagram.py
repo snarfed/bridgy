@@ -137,7 +137,7 @@ class InstagramTest(ModelsTest):
     resp = app.application.get_response(
       '/instagram/browser/post', method='POST',
       text=gr_test_instagram.HTML_VIDEO_COMPLETE)
-    self.assertEqual(400, resp.status_int)
+    self.assertEqual(404, resp.status_int)
     self.assertIn('No account found for Instagram user jc', resp.text)
 
   def test_post_empty(self):
@@ -179,9 +179,21 @@ class InstagramTest(ModelsTest):
     resp = app.application.get_response(
       '/instagram/browser/likes?id=tag:instagram.com,2013:789', method='POST',
       text=json_dumps(gr_test_instagram.LIKES))
-    self.assertEqual(400, resp.status_int)
+    self.assertEqual(404, resp.status_int)
     self.assertIn('No Instagram post found for id tag:instagram.com,2013:789',
                   resp.text)
 
   def test_poll(self):
-    pass
+    source = Instagram.create_new(self.handler, actor={'username': 'snarfed'})
+    self.expect_task('poll', eta_seconds=0, source_key=source.key,
+                     last_polled='1970-01-01-00-00-00')
+    self.mox.ReplayAll()
+    resp = app.application.get_response(
+      '/instagram/browser/poll?username=snarfed', method='POST')
+
+  def test_poll_no_source(self):
+    self.stub_create_task()
+    resp = app.application.get_response(
+      '/instagram/browser/poll?username=snarfed', method='POST')
+    self.assertEqual(404, resp.status_int)
+    self.assertIn('No account found for Instagram user snarfed', resp.text)

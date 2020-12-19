@@ -94,6 +94,9 @@ class Source(StringIdModel, metaclass=SourceMeta):
   CAN_LISTEN = True
   # whether Bridgy supports publish for this silo
   CAN_PUBLISH = None
+  # whether this source should poll automatically, or only when triggered
+  # (eg Instagram)
+  AUTO_POLL = True
   # how often to poll for responses
   FAST_POLL = datetime.timedelta(minutes=30)
   # how often to poll sources that have never sent a webmention

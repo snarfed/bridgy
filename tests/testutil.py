@@ -85,9 +85,9 @@ class FakeGrSource(gr_source.Source):
 
   @classmethod
   def clear(cls):
-    cls.activities = cls.like = cls.reaction = cls.share = cls.event = \
+    cls.like = cls.reaction = cls.share = cls.event = \
       cls.rsvp = cls.etag = cls.last_search_query = None
-    cls.search_results = cls.blocklist_ids = []
+    cls.activities = cls.search_results = cls.blocklist_ids = []
 
   def get_activities_response(self, user_id=None, group_id=None,
                               activity_id=None, app_id=None,
@@ -288,10 +288,13 @@ class HandlerTest(testutil.HandlerTest):
     self.ndb_context.__exit__(None, None, None)
     super(HandlerTest, self).tearDown()
 
-  def expect_task(self, queue, eta_seconds=None, **kwargs):
+  def stub_create_task(self):
     if not self.stubbed_create_task:
       self.mox.StubOutWithMock(tasks_client, 'create_task')
       self.stubbed_create_task = True
+
+  def expect_task(self, queue, eta_seconds=None, **kwargs):
+    self.stub_create_task()
 
     def check_task(task):
       if not task.parent.endswith('/' + queue):
