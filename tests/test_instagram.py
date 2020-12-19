@@ -91,6 +91,24 @@ class InstagramTest(ModelsTest):
     self.assertEqual('https://www.instagram.com/p/abcd/123/',
                      self.inst.canonicalize_url('https://www.instagram.com/p/abcd/123'))
 
+  def test_get_activities_response_activity_id(self):
+    id = 'tag:instagram.com,2013:123_456'
+    Activity(id=id, activity_json=json_dumps({'foo': 'bar'})).put()
+
+    resp = self.inst.get_activities_response(activity_id=id)
+    self.assertEqual([{'foo': 'bar'}], resp['items'])
+
+  def test_get_activities_response_no_activity_id(self):
+    id = 'tag:instagram.com,2013:123_456'
+    Activity(id=id, activity_json=json_dumps({'foo': 'bar'})).put()
+
+    resp = self.inst.get_activities_response()
+    self.assertEqual([], resp['items'])
+
+  def test_get_activities_response_no_stored_activity(self):
+    resp = self.inst.get_activities_response(activity_id='tag:instagram.com,2013:123')
+    self.assertEqual([], resp['items'])
+
   def test_homepage(self):
     resp = app.application.get_response(
       '/instagram/browser/homepage', method='POST', text=HTML_FEED_COMPLETE)

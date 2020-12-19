@@ -96,10 +96,19 @@ class Instagram(Source):
     return super(cls, cls).button_html(feature, form_method='get', **kwargs)
 
   def get_activities_response(self, *args, **kwargs):
-    """Set user_id because scraping requires it."""
-    kwargs.setdefault('group_id', gr_source.SELF)
-    kwargs.setdefault('user_id', self.key_id())
-    return self.gr_source.get_activities_response(*args, **kwargs)
+    """Use Activity entities stored in the datastore."""
+    activities = []
+
+    activity_id = kwargs.get('activity_id')
+    if activity_id:
+      activity = Activity.get_by_id(activity_id)
+      if activity:
+        activities = [activity]
+    else:
+      logging.debug(f'Ignoring Instagram get_activities() without activity_id: {args} {kwargs}')
+
+    return self.gr_source.make_activities_base_response(
+      [json_loads(a.activity_json) for a in activities])
 
 
 class HomepageHandler(util.Handler):
