@@ -4,6 +4,7 @@ from datetime import timedelta
 import logging
 from operator import itemgetter
 
+from google.cloud import ndb
 from granary import instagram as gr_instagram
 from granary import microformats2
 from granary import source as gr_source
@@ -18,7 +19,25 @@ import util
 AS1_JSON_CONTENT_TYPE = 'application/stream+json'
 
 
+def merge_by_id(existing, updates):
+  """Merges two lists of AS1 objects by id.
+
+  Overwrites the objects in the existing list with objects in the updates list
+  with the same id. Requires all objects to have ids.
+
+  Args:
+    existing: sequence of AS1 dicts
+    updates: sequence of AS1 dicts
+
+  Returns: merged list of AS1 dicts
+  """
+  objs = {o['id']: o for o in existing}
+  objs.update({o['id']: o for o in updates})
+  return sorted(objs.values(), key=itemgetter('id'))
+
+
 class Instagram(Source):
+
   """An Instagram account.
 
   The key name is the username. Instagram usernames may have ASCII letters (case
@@ -131,29 +150,39 @@ class PostHandler(util.Handler):
   https://www.instagram.com/p/ABC123/ , for a logged in user.
 
   Response body is the translated ActivityStreams activity JSON.
-
-  TODO: merge new comments into existing activities
   """
+  @ndb.transactional()
   def post(self):
     ig = gr_instagram.Instagram()
     activities, _ = ig.html_to_activities(self.request.text)
 
     if len(activities) != 1:
       self.abort(400, f'Expected 1 Instagram post, got {len(activities)}')
-    activity = activities[0]
-    if not activity['id']:
+    activity_data = activities[0]
+    id = activity_data.get('id')
+    if not id:
       self.abort(400, 'Instagram post missing id')
 
-    obj = activity['object']
-    username = obj['author']['username']
+    username = activity_data['object']['author']['username']
     source = Instagram.get_by_id(username)
     if not source:
       self.abort(404, f'No account found for Instagram user {username}')
 
-    activity_json = json_dumps(activity, indent=2)
-    Activity.get_or_insert(activity['id'], source=source.key,
-                           activity_json=activity_json)
+    activity = Activity.get_by_id(id)
+    if activity:
+      # we already have this activity! merge in any new comments.
+      existing = json_loads(activity.activity_json)
+      comments = merge_by_id(
+        existing['object'].get('replies', {}).get('items', []),
+        activity_data['object'].get('replies', {}).get('items', []))
+      activity_data['object']['replies'] = {
+        'items': comments,
+        'totalItems': len(comments),
+      }
 
+    # store the new activity
+    activity_json = json_dumps(activity_data, indent=2)
+    Activity(id=id, source=source.key, activity_json=activity_json).put()
     self.response.headers['Content-Type'] = AS1_JSON_CONTENT_TYPE
     self.response.write(activity_json)
 
@@ -197,10 +226,8 @@ class LikesHandler(util.Handler):
 
     # merge them into existing activity
     activity_data = json_loads(activity.activity_json)
-    existing = {id: tag for tag in activity_data['object'].get('tags', [])}
-    existing.update({like['id']: like for like in new_likes})
-
-    activity_data['object']['tags'] = list(existing.values())
+    obj = activity_data['object']
+    obj['tags'] = merge_by_id(obj.get('tags', []), new_likes)
     activity.activity_json = json_dumps(activity_data)
     activity.put()
 

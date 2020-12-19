@@ -7,7 +7,24 @@ import urllib.request, urllib.parse, urllib.error
 import appengine_config  # injects 2013 into tag URIs in test_instagram objects
 
 from granary import instagram as gr_instagram
-from granary.tests import test_instagram as gr_test_instagram
+from granary.tests.test_instagram import (
+  COMMENT_OBJS,
+  HTML_FEED_COMPLETE,
+  HTML_FOOTER,
+  HTML_HEADER,
+  HTML_PHOTO,
+  HTML_PHOTO_ACTIVITY,
+  HTML_PROFILE,
+  HTML_PROFILE_COMPLETE,
+  HTML_PROFILE_PRIVATE_COMPLETE,
+  HTML_VIDEO_ACTIVITY,
+  HTML_VIDEO_ACTIVITY_FULL,
+  HTML_VIDEO_COMPLETE,
+  HTML_VIDEO_FULL,
+  HTML_VIDEO_EXTRA_COMMENT_OBJ,
+  LIKES,
+  LIKE_OBJS,
+)
 from oauth_dropins.webutil.testutil import TestCase
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
@@ -20,7 +37,7 @@ import util
 
 
 PROFILE_USER = copy.deepcopy(
-  gr_test_instagram.HTML_PROFILE['entry_data']['ProfilePage'][0]['graphql']['user'])
+  HTML_PROFILE['entry_data']['ProfilePage'][0]['graphql']['user'])
 PROFILE_USER['id'] = '987'
 
 
@@ -76,8 +93,7 @@ class InstagramTest(ModelsTest):
 
   def test_homepage(self):
     resp = app.application.get_response(
-      '/instagram/browser/homepage', method='POST',
-      text=gr_test_instagram.HTML_FEED_COMPLETE)
+      '/instagram/browser/homepage', method='POST', text=HTML_FEED_COMPLETE)
     self.assertEqual(200, resp.status_int)
     self.assertEqual('snarfed', resp.text)
 
@@ -95,14 +111,10 @@ class InstagramTest(ModelsTest):
     self.mox.ReplayAll()
 
     resp = app.application.get_response(
-      '/instagram/browser/profile', method='POST',
-      text=gr_test_instagram.HTML_PROFILE_COMPLETE)
+      '/instagram/browser/profile', method='POST', text=HTML_PROFILE_COMPLETE)
 
     self.assertEqual(200, resp.status_int)
-    self.assertEqual([
-      gr_test_instagram.HTML_PHOTO_ACTIVITY,
-      gr_test_instagram.HTML_VIDEO_ACTIVITY,
-    ], resp.json)
+    self.assertEqual([HTML_PHOTO_ACTIVITY, HTML_VIDEO_ACTIVITY], resp.json)
 
     ig = Instagram.get_by_id('snarfed')
     self.assertEqual('Ryan B', ig.name)
@@ -114,7 +126,7 @@ class InstagramTest(ModelsTest):
   def test_profile_private_account(self):
     resp = app.application.get_response(
       '/instagram/browser/profile', method='POST',
-      text=gr_test_instagram.HTML_PROFILE_PRIVATE_COMPLETE)
+      text=HTML_PROFILE_PRIVATE_COMPLETE)
     self.assertEqual(400, resp.status_int)
     self.assertIn('Your Instagram account is private.', resp.text)
 
@@ -122,21 +134,18 @@ class InstagramTest(ModelsTest):
     source = Instagram.create_new(self.handler, actor={'username': 'jc'})
 
     resp = app.application.get_response(
-      '/instagram/browser/post', method='POST',
-      text=gr_test_instagram.HTML_VIDEO_COMPLETE)
+      '/instagram/browser/post', method='POST', text=HTML_VIDEO_COMPLETE)
     self.assertEqual(200, resp.status_int, resp.text)
-    self.assertEqual(gr_test_instagram.HTML_VIDEO_ACTIVITY_FULL, resp.json)
+    self.assertEqual(HTML_VIDEO_ACTIVITY_FULL, resp.json)
 
     activities = Activity.query().fetch()
     self.assertEqual(1, len(activities))
     self.assertEqual(source.key, activities[0].source)
-    self.assertEqual(gr_test_instagram.HTML_VIDEO_ACTIVITY_FULL,
-                     json_loads(activities[0].activity_json))
+    self.assertEqual(HTML_VIDEO_ACTIVITY_FULL, json_loads(activities[0].activity_json))
 
   def test_post_no_source(self):
     resp = app.application.get_response(
-      '/instagram/browser/post', method='POST',
-      text=gr_test_instagram.HTML_VIDEO_COMPLETE)
+      '/instagram/browser/post', method='POST', text=HTML_VIDEO_COMPLETE)
     self.assertEqual(404, resp.status_int)
     self.assertIn('No account found for Instagram user jc', resp.text)
 
@@ -147,19 +156,38 @@ class InstagramTest(ModelsTest):
     self.assertIn('Expected 1 Instagram post', resp.text)
 
   def test_post_merge_comments(self):
-    # TODO
-    pass
+    source = Instagram.create_new(self.handler, actor={'username': 'jc'})
+
+    # existing activity with one of the two comments in HTML_VIDEO_COMPLETE
+    existing_activity = copy.deepcopy(HTML_VIDEO_ACTIVITY)
+    existing_activity['object']['replies'] = {
+      'totalItems': 1,
+      'items': [COMMENT_OBJS[0]],
+    }
+    activity_key = Activity(id='tag:instagram.com,2013:789_456',
+                            activity_json=json_dumps(existing_activity)).put()
+
+    # send HTML_VIDEO_COMPLETE to /post, check that the response and stored
+    # activity have both of its comments
+    resp = app.application.get_response(
+      '/instagram/browser/post', method='POST', text=HTML_VIDEO_COMPLETE)
+
+    self.assertEqual(200, resp.status_int, resp.text)
+    self.assert_equals(HTML_VIDEO_ACTIVITY_FULL, resp.json)
+
+    activity = activity_key.get()
+    self.assert_equals(HTML_VIDEO_ACTIVITY_FULL, json_loads(activity.activity_json))
 
   def test_likes(self):
-    activity_json = json_dumps(gr_test_instagram.HTML_PHOTO_ACTIVITY)
+    activity_json = json_dumps(HTML_PHOTO_ACTIVITY)
     a = Activity(id='tag:instagram.com,2013:123_456', activity_json=activity_json).put()
 
     resp = app.application.get_response(
       '/instagram/browser/likes?id=tag:instagram.com,2013:123_456', method='POST',
-      text=json_dumps(gr_test_instagram.LIKES))
+      text=json_dumps(LIKES))
     self.assertEqual(200, resp.status_int, resp.text)
 
-    expected_likes = copy.deepcopy(gr_test_instagram.LIKE_OBJS)
+    expected_likes = copy.deepcopy(LIKE_OBJS)
     for like in expected_likes:
       del like['object']
       del like['url']
@@ -170,15 +198,14 @@ class InstagramTest(ModelsTest):
 
   def test_likes_bad_id(self):
     resp = app.application.get_response(
-      '/instagram/browser/likes?id=789', method='POST',
-      text=json_dumps(gr_test_instagram.LIKES))
+      '/instagram/browser/likes?id=789', method='POST', text=json_dumps(LIKES))
     self.assertEqual(400, resp.status_int)
     self.assertIn('Expected id to be tag URI', resp.text)
 
   def test_likes_no_activity(self):
     resp = app.application.get_response(
       '/instagram/browser/likes?id=tag:instagram.com,2013:789', method='POST',
-      text=json_dumps(gr_test_instagram.LIKES))
+      text=json_dumps(LIKES))
     self.assertEqual(404, resp.status_int)
     self.assertIn('No Instagram post found for id tag:instagram.com,2013:789',
                   resp.text)
