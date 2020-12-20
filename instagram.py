@@ -117,6 +117,10 @@ class HomepageHandler(util.Handler):
 
   Request body is https://www.instagram.com/ HTML for a logged in user.
   """
+  def options(self):
+    self.response.headers['Access-Control-Allow-Origin'] = '*'
+    self.response.headers['Access-Control-Allow-Methods'] = '*'
+
   def post(self):
     ig = gr_instagram.Instagram()
     _, actor = ig.html_to_activities(self.request.text)
@@ -135,6 +139,10 @@ class ProfileHandler(util.Handler):
 
   Response body is the JSON list of translated ActivityStreams activities.
   """
+  def options(self):
+    self.response.headers['Access-Control-Allow-Origin'] = '*'
+    self.response.headers['Access-Control-Allow-Methods'] = '*'
+
   def post(self):
     # parse the Instagram profile HTML
     ig = gr_instagram.Instagram()
@@ -161,6 +169,10 @@ class PostHandler(util.Handler):
 
   Response body is the translated ActivityStreams activity JSON.
   """
+  def options(self):
+    self.response.headers['Access-Control-Allow-Origin'] = '*'
+    self.response.headers['Access-Control-Allow-Methods'] = '*'
+
   @ndb.transactional()
   def post(self):
     ig = gr_instagram.Instagram()
@@ -207,6 +219,10 @@ class LikesHandler(util.Handler):
 
   Response body is the translated ActivityStreams JSON for the likes.
   """
+  def options(self):
+    self.response.headers['Access-Control-Allow-Origin'] = '*'
+    self.response.headers['Access-Control-Allow-Methods'] = '*'
+
   def post(self):
     id = util.get_required_param(self, 'id')
     parsed = util.parse_tag_uri(id)
@@ -247,6 +263,10 @@ class PollHandler(util.Handler):
 
   Requires the `username` parameter.
   """
+  def options(self):
+    self.response.headers['Access-Control-Allow-Origin'] = '*'
+    self.response.headers['Access-Control-Allow-Methods'] = '*'
+
   def post(self):
     username = util.get_required_param(self, 'username')
     source = Instagram.get_by_id(username)
