@@ -12,6 +12,15 @@ indexes:
   - name: "source"
   - name: "updated"
     direction: desc
+- kind: "Activity"
+  properties:
+  - name: "source"
+  - name: "updated"
+    direction: desc
+- kind: "Response"
+  properties:
+  - name: "source"
+  - name: "updated"
 - kind: "Publish"
   properties:
   - name: "source"
@@ -64,10 +73,6 @@ indexes:
   properties:
   - name: "status"
   - name: "type"
-- kind: "Response"
-  properties:
-  - name: "source"
-  - name: "updated"
 - kind: "Tumblr"
   properties:
   - name: "status"
@@ -80,8 +85,3 @@ indexes:
   properties:
   - name: "status"
   - name: "features"
-- kind: "Activity"
-  properties:
-  - name: "source"
-  - name: "updated"
-    direction: desc
