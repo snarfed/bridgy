@@ -1,7 +1,8 @@
 'use strict'
 
 const INSTAGRAM_BASE_URL = 'https://www.instagram.com'
-const BRIDGY_BASE_URL = 'https://brid.gy/instagram/browser'
+// const BRIDGY_BASE_URL = 'https://brid.gy/instagram/browser'
+const BRIDGY_BASE_URL = 'http://localhost:8080/instagram/browser'
 
 
 /**
@@ -17,22 +18,28 @@ function injectGlobals(newGlobals) {
  */
 async function poll() {
   const data = await browser.storage.sync.get()
-  if (!data.instagram || !data.instagram.username) {
-    const username = await forward('/', '/homepage')
+  let username = null
+  if (data.instagram && data.instagram.username) {
+    username = data.instagram.username
+  } else {
+    username = await forward('/', '/homepage')
+    if (!username)
+      return
     await browser.storage.sync.set({instagram: {username: username}})
   }
 
-  const activities = await forward(`/${data.instagram.username}/`, '/profile')
-  if (!activities) {
+  const activities = await forward(`/${username}/`, '/profile')
+  if (!activities)
     return
+
+  for (const activity of activities) {
+    if (!await forward(`/p/${activity.object.ig_shortcode}/`, '/post'))
+      return
+    if (!await forward(`/graphql/query/?query_hash=d5d763b1e2acf209d62d22d184488e57&variables={"shortcode":"${activity.object.ig_shortcode}","include_reel":false,"first":100}`, `/likes?id=${activity.id}`))
+      return
   }
 
-  for (const activity of JSON.parse(activities)) {
-    await forward(`/p/${activity.object.ig_shortcode}/`, '/post')
-    await forward(`/graphql/query/?query_hash=d5d763b1e2acf209d62d22d184488e57&variables={"shortcode":"${activity.object.ig_shortcode}","include_reel":false,"first":100}`, `/likes?id=${activity.id}`)
-  }
-
-  await postBridgy('/poll', data.instagram.username)
+  await postBridgy(`/poll?username=${data.instagram.username}`)
 }
 
 
@@ -45,7 +52,8 @@ async function poll() {
  */
 async function forward(instagramPath, bridgyPath) {
   const data = await getInstagram(instagramPath)
-  return await postBridgy(bridgyPath, data)
+  if (data)
+    return await postBridgy(bridgyPath, data)
 }
 
 /**
@@ -76,11 +84,12 @@ async function getInstagram(path) {
     credentials: 'same-origin',
   })
 
-  console.debug(`Got ${res.status} ${res.statusText}`)
-  if (!res.ok) {
-    return null
+  console.debug(`Got ${res.status}`)
+  const text = await res.text()
+  console.debug(text)
+  if (res.ok) {
+    return text
   }
-  return await res.text()
 }
 
 /**
@@ -88,7 +97,7 @@ async function getInstagram(path) {
  *
  * @param {String} path
  * @param {String} body
- * @returns {String} Response body from Bridgy
+ * @returns {Object} JSON parsed response from Bridgy
  */
 async function postBridgy(path, body) {
   const url = `${BRIDGY_BASE_URL}${path}`
@@ -98,16 +107,17 @@ async function postBridgy(path, body) {
     body: body,
   })
 
-  console.debug(`Got ${res.status} ${res.statusText}`)
+  console.debug(`Got ${res.status}`)
   if (res.ok) {
-    return await res.text()
+    const json = await res.json()
+    console.debug(json)
+    return json
+  } else {
+    console.debug(await res.text())
   }
 }
 
 // console.log('Starting')
-// fetchJson().then((res) => {
-//   console.log(`Got ${res.items.length} items`)
-//   console.log(`${res.items[0].properties.content[0]}`)
-// })
+// poll()
 
-export {forward, poll, injectGlobals}
+export {forward, poll, injectGlobals, INSTAGRAM_BASE_URL, BRIDGY_BASE_URL}
