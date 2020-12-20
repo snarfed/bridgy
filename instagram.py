@@ -105,7 +105,8 @@ class Instagram(Source):
       if activity:
         activities = [activity]
     else:
-      logging.debug(f'Ignoring Instagram get_activities() without activity_id: {args} {kwargs}')
+      activities = Activity.query(Activity.source == self.key)\
+                           .order(-Activity.updated).fetch(50)
 
     return self.gr_source.make_activities_base_response(
       [json_loads(a.activity_json) for a in activities])
@@ -122,8 +123,8 @@ class HomepageHandler(util.Handler):
     if not actor or not actor.get('username'):
       self.abort(400, "Couldn't determine logged in Instagram user")
 
-    self.response.headers['Content-Type'] = 'text/plain'
-    self.response.write(actor['username'])
+    self.response.headers['Content-Type'] = AS1_JSON_CONTENT_TYPE
+    self.response.write(json_dumps(actor['username']))
 
 
 class ProfileHandler(util.Handler):
@@ -199,7 +200,7 @@ class PostHandler(util.Handler):
 class LikesHandler(util.Handler):
   """Parses a list of Instagram likes and adds them to an existing Activity.
 
-  Requires the request parameter `shortcode` with the IG post's shortcode.
+  Requires the request parameter `id` with the IG post's id (not shortcode!).
 
   Request body is a JSON list of IG likes for a post that's already been created
   via the /instagram/browser/post endpoint.
@@ -218,16 +219,13 @@ class LikesHandler(util.Handler):
 
     _, id = parsed
 
-    if not self.request.json:
-      self.response.headers['Content-Type'] = AS1_JSON_CONTENT_TYPE
-      self.response.write(json_dumps([]))
-      return
-
     # convert new likes to AS
     container = {
       'id': id,
       'edge_media_preview_like': {
-        'edges': [{'node': like} for like in self.request.json],
+        # corresponds to same code in gr_instagram.Instagram.html_to_activities()
+        'edges': self.request.json.get('data', {}).get('shortcode_media', {})\
+                                  .get('edge_liked_by', {}).get('edges', [])
       },
     }
     ig = gr_instagram.Instagram()
@@ -256,6 +254,10 @@ class PollHandler(util.Handler):
       self.abort(404, f'No account found for Instagram user {username}')
 
     util.add_poll_task(source)
+
+    self.response.headers['Content-Type'] = AS1_JSON_CONTENT_TYPE
+    self.response.write(json_dumps('OK'))
+
 
 ROUTES = [
   ('/instagram/browser/homepage', HomepageHandler),

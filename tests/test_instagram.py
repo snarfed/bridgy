@@ -14,6 +14,7 @@ from granary.tests.test_instagram import (
   HTML_HEADER,
   HTML_PHOTO,
   HTML_PHOTO_ACTIVITY,
+  HTML_PHOTO_LIKES_RESPONSE,
   HTML_PROFILE,
   HTML_PROFILE_COMPLETE,
   HTML_PROFILE_PRIVATE_COMPLETE,
@@ -22,7 +23,6 @@ from granary.tests.test_instagram import (
   HTML_VIDEO_COMPLETE,
   HTML_VIDEO_FULL,
   HTML_VIDEO_EXTRA_COMMENT_OBJ,
-  LIKES,
   LIKE_OBJS,
 )
 from oauth_dropins.webutil.testutil import TestCase
@@ -92,28 +92,34 @@ class InstagramTest(ModelsTest):
                      self.inst.canonicalize_url('https://www.instagram.com/p/abcd/123'))
 
   def test_get_activities_response_activity_id(self):
-    id = 'tag:instagram.com,2013:123_456'
-    Activity(id=id, activity_json=json_dumps({'foo': 'bar'})).put()
+    Activity(id='123', activity_json=json_dumps({'foo': 'bar'})).put()
 
-    resp = self.inst.get_activities_response(activity_id=id)
+    resp = self.inst.get_activities_response(activity_id='123')
     self.assertEqual([{'foo': 'bar'}], resp['items'])
 
   def test_get_activities_response_no_activity_id(self):
-    id = 'tag:instagram.com,2013:123_456'
-    Activity(id=id, activity_json=json_dumps({'foo': 'bar'})).put()
+    Activity(id='123', source=self.inst.key,
+             activity_json=json_dumps({'foo': 'bar'})).put()
+    Activity(id='456', source=self.inst.key,
+             activity_json=json_dumps({'baz': 'biff'})).put()
+
+    other = Instagram.new(self.handler, actor={'username': 'other'}).put()
+    Activity(id='789', source=other,
+             activity_json=json_dumps({'boo': 'bah'})).put()
+
 
     resp = self.inst.get_activities_response()
-    self.assertEqual([], resp['items'])
+    self.assert_equals([{'foo': 'bar'}, {'baz': 'biff'}], resp['items'])
 
   def test_get_activities_response_no_stored_activity(self):
-    resp = self.inst.get_activities_response(activity_id='tag:instagram.com,2013:123')
+    resp = self.inst.get_activities_response(activity_id='123')
     self.assertEqual([], resp['items'])
 
   def test_homepage(self):
     resp = app.application.get_response(
       '/instagram/browser/homepage', method='POST', text=HTML_FEED_COMPLETE)
     self.assertEqual(200, resp.status_int)
-    self.assertEqual('snarfed', resp.text)
+    self.assertEqual('snarfed', resp.json)
 
   def test_homepage_bad_html(self):
     resp = app.application.get_response(
@@ -202,7 +208,7 @@ class InstagramTest(ModelsTest):
 
     resp = app.application.get_response(
       '/instagram/browser/likes?id=tag:instagram.com,2013:123_456', method='POST',
-      text=json_dumps(LIKES))
+      text=json_dumps(HTML_PHOTO_LIKES_RESPONSE))
     self.assertEqual(200, resp.status_int, resp.text)
 
     expected_likes = copy.deepcopy(LIKE_OBJS)
@@ -216,14 +222,15 @@ class InstagramTest(ModelsTest):
 
   def test_likes_bad_id(self):
     resp = app.application.get_response(
-      '/instagram/browser/likes?id=789', method='POST', text=json_dumps(LIKES))
+      '/instagram/browser/likes?id=789', method='POST',
+      text=json_dumps(HTML_PHOTO_LIKES_RESPONSE))
     self.assertEqual(400, resp.status_int)
     self.assertIn('Expected id to be tag URI', resp.text)
 
   def test_likes_no_activity(self):
     resp = app.application.get_response(
       '/instagram/browser/likes?id=tag:instagram.com,2013:789', method='POST',
-      text=json_dumps(LIKES))
+      text=json_dumps(HTML_PHOTO_LIKES_RESPONSE))
     self.assertEqual(404, resp.status_int)
     self.assertIn('No Instagram post found for id tag:instagram.com,2013:789',
                   resp.text)
@@ -235,6 +242,9 @@ class InstagramTest(ModelsTest):
     self.mox.ReplayAll()
     resp = app.application.get_response(
       '/instagram/browser/poll?username=snarfed', method='POST')
+    self.assertEqual(200, resp.status_int, resp.text)
+    self.assertEqual('OK', resp.json)
+
 
   def test_poll_no_source(self):
     self.stub_create_task()

@@ -80,3 +80,8 @@ indexes:
   properties:
   - name: "status"
   - name: "features"
+- kind: "Activity"
+  properties:
+  - name: "source"
+  - name: "updated"
+    direction: desc
