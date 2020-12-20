@@ -10,6 +10,7 @@
 <div id="user" class="row big">
 {% include "profile_link.html" %}
 {% if source.status == "disabled" %}
+{% if source.CAN_LISTEN or source.CAN_PUBLISH %}
 <!-- TODO: make this work without javascript too -->
 <data class="p-bridgy-account-status" value="disabled">
 <a href="#" onclick="document.forms[0].submit(); return false;">
@@ -17,6 +18,7 @@
         title="This account was disconnected on {{ source.GR_CLASS.NAME or source.key.kind }}'s end. Click to reconnect it!">
 </span></a>
 </data>
+{% endif %}
 {% else %}
 <data class="p-bridgy-account-status" value="enabled" />
 {% endif %}
