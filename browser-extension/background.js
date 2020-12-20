@@ -1,5 +1,9 @@
 'use strict'
 
+const INSTAGRAM_BASE_URL = 'https://www.instagram.com'
+const BRIDGY_BASE_URL = 'https://brid.gy/instagram/browser'
+
+
 /**
  * Injects mock globals for tests.
  */
@@ -58,7 +62,7 @@ async function getInstagram(path) {
   // https://hacks.mozilla.org/2017/10/containers-for-add-on-developers/
   // https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/cookies/getAll
   const cookies = await browser.cookies.getAll({domain: 'instagram.com'})
-  const url = `https://www.instagram.com${path}`
+  const url = `${INSTAGRAM_BASE_URL}${path}`
   console.debug(`Fetching ${url}`)
 
   const res = await fetch(url, {
@@ -87,7 +91,7 @@ async function getInstagram(path) {
  * @returns {String} Response body from Bridgy
  */
 async function postBridgy(path, body) {
-  const url = `https://brid.gy/instagram/browser${path}`
+  const url = `${BRIDGY_BASE_URL}${path}`
   console.debug(`Sending to ${url}`)
   const res = await fetch(url, {
     method: 'POST',
