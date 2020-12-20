@@ -33,10 +33,15 @@ async function poll() {
     return
 
   for (const activity of activities) {
-    if (!await forward(`/p/${activity.object.ig_shortcode}/`, '/post'))
-      return
-    if (!await forward(`/graphql/query/?query_hash=d5d763b1e2acf209d62d22d184488e57&variables={"shortcode":"${activity.object.ig_shortcode}","include_reel":false,"first":100}`, `/likes?id=${activity.id}`))
-      return
+    const shortcode = activity.object.ig_shortcode
+    if (!await forward(`/p/${shortcode}/`, '/post')) {
+      logging.warning(`Bridgy couldn't translate post HTML for ${shortcode}`)
+      continue
+    }
+    if (!await forward(`/graphql/query/?query_hash=d5d763b1e2acf209d62d22d184488e57&variables={"shortcode":"${shortcode}","include_reel":false,"first":100}`, `/likes?id=${activity.id}`)) {
+      logging.warning(`Bridgy couldn't translate likes for ${shortcode}`)
+      continue
+    }
   }
 
   await postBridgy(`/poll?username=${data.instagram.username}`)
