@@ -278,7 +278,7 @@ Click to enable <a href="/about#listen">listening</a>:
         <img class="profile" src="{{ response.actor.image.url }}" width="32" /></a>
       {% endif %}
       <a target="_blank" class="u-bridgy-syndication-source u-name" href="{{ r.url }}">
-        {{ r.content|default('--')|striptags|truncate(40) }}
+        {{ r.content|default('--', true)|striptags|truncate(40) }}
       </a>
     {% endwith %}
 
@@ -289,7 +289,7 @@ Click to enable <a href="/about#listen">listening</a>:
     {% if response.type == "comment" %} on {% endif %}
     <a target="_blank" class="u-bridgy-original-source"
        href="{{ a.url or a.object.url }}">
-      {{ a.content|default('--')|striptags|truncate(40) }}
+      {{ a.content|default('--', true)|striptags|truncate(40) }}
     </a></li>
     {% endfor %}
 
