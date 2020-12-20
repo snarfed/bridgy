@@ -8,7 +8,7 @@ import {
   injectGlobals,
   INSTAGRAM_BASE_URL,
   BRIDGY_BASE_URL,
-} from '../background.js'
+} from '../instagram.js'
 
 
 fetchMock.enableMocks()

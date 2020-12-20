@@ -26,9 +26,6 @@
     ],
     "background": {
         "persistent": true,
-        "scripts": [
-            // "browser-polyfill.min.js",
-            "background.js"
-        ]
+        "page": "background.html"
     }
 }
