@@ -559,7 +559,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
     if 'webmention' in source.features:
       superfeedr.subscribe(source, handler)
 
-    if 'listen' in source.features:
+    if 'listen' in source.features and source.AUTO_POLL:
       util.add_poll_task(source, now=True)
       util.add_poll_task(source)
 

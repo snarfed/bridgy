@@ -30,7 +30,7 @@ class ReplacePollTasks(webapp2.RequestHandler):
   def get(self):
     now = datetime.datetime.now()
     queries = [cls.query(Source.features == 'listen', Source.status == 'enabled')
-               for cls in models.sources.values()]
+               for cls in models.sources.values() if cls.AUTO_POLL]
     for source in itertools.chain(*queries):
       age = now - source.last_poll_attempt
       if age > max(source.poll_period() * 2, datetime.timedelta(hours=2)):
