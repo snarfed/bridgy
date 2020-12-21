@@ -18,8 +18,12 @@ beforeAll(() => {
     // browser is a namespace, so we can't use jest.mock(), have to mock and inject
     // it manually like this.
     browser: {
+      contextualIdentities: {
+        query: async (q) => []
+      },
       cookies: {
         getAll: jest.fn(),
+        getAllCookieStores: async () => [{id: 1}]
       },
       storage: {
         sync: {
@@ -46,8 +50,8 @@ afterEach(() => {
 
 test('forward', async () => {
   browser.cookies.getAll.mockResolvedValue([
-    {name: 'foo', value: 'bar'},
-    {name: 'baz', value: 'biff'},
+    {name: 'sessionid', value: 'foo'},
+    {name: 'bar', value: 'baz'},
   ])
 
   fetch.mockResponseOnce('ig resp')
@@ -62,7 +66,7 @@ test('forward', async () => {
       method: 'GET',
       credentials: 'same-origin',
       headers: {
-        'Cookie': 'foo=bar; baz=biff',
+        'Cookie': 'sessionid=foo; bar=baz',
         'User-Agent': navigator.userAgent,
       },
     },

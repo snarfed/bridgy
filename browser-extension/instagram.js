@@ -1,8 +1,8 @@
 'use strict'
 
 const INSTAGRAM_BASE_URL = 'https://www.instagram.com'
-// const BRIDGY_BASE_URL = 'https://brid.gy/instagram/browser'
-const BRIDGY_BASE_URL = 'http://localhost:8080/instagram/browser'
+const BRIDGY_BASE_URL = 'https://brid.gy/instagram/browser'
+// const BRIDGY_BASE_URL = 'http://localhost:8080/instagram/browser'
 
 
 /**
@@ -35,16 +35,16 @@ async function poll() {
   for (const activity of activities) {
     const shortcode = activity.object.ig_shortcode
     if (!await forward(`/p/${shortcode}/`, '/post')) {
-      logging.warning(`Bridgy couldn't translate post HTML for ${shortcode}`)
+      console.warn(`Bridgy couldn't translate post HTML for ${shortcode}`)
       continue
     }
     if (!await forward(`/graphql/query/?query_hash=d5d763b1e2acf209d62d22d184488e57&variables={"shortcode":"${shortcode}","include_reel":false,"first":100}`, `/likes?id=${activity.id}`)) {
-      logging.warning(`Bridgy couldn't translate likes for ${shortcode}`)
+      console.warn(`Bridgy couldn't translate likes for ${shortcode}`)
       continue
     }
   }
 
-  await postBridgy(`/poll?username=${data.instagram.username}`)
+  await postBridgy(`/poll?username=${username}`)
 }
 
 
@@ -57,9 +57,48 @@ async function poll() {
  */
 async function forward(instagramPath, bridgyPath) {
   const data = await getInstagram(instagramPath)
-  if (data)
+  if (data) {
     return await postBridgy(bridgyPath, data)
+  }
 }
+
+
+/**
+ * Finds and returns Instagram cookies that include sessionid.
+ *
+ * Looks through all cookie stores and contextual identities (ie containers).
+ *
+ * TODO: debug why this still doesn't actually work with eg the Firefox
+ * Container Tabs extension. The HTTP requests complain that the sessionid
+ * cookie is expired, even if it works in the container tab.
+ *
+ * @returns {String} Cookie header for instagram.com, ready to be sent, or null
+ */
+async function findCookies(path) {
+  // getAllCookieStores() only returns containers with open tabs, so we have to
+  // use the contextualIdentities API to get any others.
+  // https://bugzilla.mozilla.org/show_bug.cgi?id=1486274
+  const storeIds =
+    (await browser.cookies.getAllCookieStores()).map(s => s.id).concat(
+      (await browser.contextualIdentities.query({})).map(s => s.cookieStoreId))
+
+  for (const storeId of storeIds) {
+    const cookies = await browser.cookies.getAll({
+      storeId: storeId,
+      domain: 'instagram.com',
+    })
+    if (cookies) {
+      const header = cookies.map(c => `${c.name}=${c.value}`).join('; ')
+      // console.debug(header)
+      if (header.includes('sessionid=')) {
+        return header
+      }
+    }
+  }
+
+  console.log('No Instagram sessionid cookie found!')
+}
+
 
 /**
  * Makes an HTTP GET request to Instagram.
@@ -68,20 +107,14 @@ async function forward(instagramPath, bridgyPath) {
  * @returns {String} Response body from Instagram
  */
 async function getInstagram(path) {
-  // Fetch from Instagram
-  // TODO: fetch cookies from all stores, not just the default one, in order to
-  // support containers.
-  // https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Work_with_the_Cookies_API#Cookie_stores
-  // https://hacks.mozilla.org/2017/10/containers-for-add-on-developers/
-  // https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/cookies/getAll
-  const cookies = await browser.cookies.getAll({domain: 'instagram.com'})
+  // Make HTTP request
   const url = `${INSTAGRAM_BASE_URL}${path}`
   console.debug(`Fetching ${url}`)
 
   const res = await fetch(url, {
     method: 'GET',
     headers: {
-      'Cookie': cookies.map(c => `${c.name}=${c.value}`).join('; '),
+      'Cookie': await findCookies(),
       'User-Agent': navigator.userAgent,
     },
     // required for sending cookies in older browsers?
