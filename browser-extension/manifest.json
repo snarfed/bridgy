@@ -8,7 +8,7 @@
     "minimum_chrome_version": "74",
     "applications": {
         "gecko": {
-            "id": "browser-backfeed@snarfed.org",
+            "id": "bridgy@snarfed.org",
             "strict_min_version": "67.0"
         }
     },
@@ -20,6 +20,7 @@
        // https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/webrequest
        "*://*.brid.gy/*",
        "*://*.instagram.com/*",
+       "contextualIdentities",
        "cookies",
        "storage",
        "webRequest"

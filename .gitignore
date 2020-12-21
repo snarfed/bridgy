@@ -34,5 +34,6 @@ tumblr_app_*
 twitter_access_token_*
 twitter_app_*
 twitter_scrape_headers*
+web-ext-artifacts
 wordpress.com_client_*
 yarn.lock
