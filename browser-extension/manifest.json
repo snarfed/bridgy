@@ -1,4 +1,3 @@
-// https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json
 {
 	"name": "Bridgy",
 	"version": "0.1.0",
@@ -12,12 +11,7 @@
             "strict_min_version": "67.0"
         }
     },
-    // TODO
-    // "icons": {
-    //     "400": "icon.png"
-    // },
     "permissions": [
-       // https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/webrequest
        "*://*.brid.gy/*",
        "*://*.instagram.com/*",
        "contextualIdentities",
@@ -28,5 +22,9 @@
     "background": {
         "persistent": true,
         "page": "background.html"
+    },
+    "icons": {
+        "128": "bridgy_logo_128.jpg",
+        "1024": "bridgy_logo_square_1024.jpg"
     }
 }

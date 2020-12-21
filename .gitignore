@@ -36,4 +36,6 @@ twitter_app_*
 twitter_scrape_headers*
 web-ext-artifacts
 wordpress.com_client_*
+*.crx
+*.xpi
 yarn.lock
