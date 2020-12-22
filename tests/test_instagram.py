@@ -117,6 +117,17 @@ class InstagramTest(ModelsTest):
     resp = self.inst.get_activities_response(activity_id='123')
     self.assertEqual([], resp['items'])
 
+  def test_get_comment(self):
+    self.assert_equals(
+      HTML_VIDEO_EXTRA_COMMENT_OBJ,
+      self.inst.get_comment('020', activity=HTML_VIDEO_ACTIVITY_FULL))
+
+  def test_get_comment_no_matching_id(self):
+    self.assertIsNone(self.inst.get_comment('333', activity=HTML_VIDEO_ACTIVITY_FULL))
+
+  def test_get_comment_no_activity_kwarg(self):
+    self.assertIsNone(self.inst.get_comment('020'))
+
   def test_get_like(self):
     self.assert_equals(LIKE_OBJS[1], self.inst.get_like(
       'unused', '123', '9', activity=HTML_PHOTO_ACTIVITY_LIKES))
