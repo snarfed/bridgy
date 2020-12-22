@@ -4,6 +4,16 @@ const INSTAGRAM_BASE_URL = 'https://www.instagram.com'
 const BRIDGY_BASE_URL = 'https://brid.gy/instagram/browser'
 // const BRIDGY_BASE_URL = 'http://localhost:8080/instagram/browser'
 
+/* Local storage schema for this extension:
+ *
+ * instagramUsername: [string],
+ * 'instagramPost-[shortcode]': {
+ *   c: [integer],  // number of commenst
+ *   l: [integer],  // number of likes
+ * },
+ * ...
+ */
+
 
 /**
  * Injects mock globals for tests.
@@ -17,15 +27,15 @@ function injectGlobals(newGlobals) {
  * Polls the user's IG photos, forwards new comments and likes to Bridgy.
  */
 async function poll() {
-  const data = await browser.storage.sync.get()
+  const data = await browser.storage.sync.get(['instagramUsername'])
   let username = null
-  if (data.instagram && data.instagram.username) {
-    username = data.instagram.username
+  if (data.instagramUsername) {
+    username = data.instagramUsername
   } else {
     username = await forward('/', '/homepage')
     if (!username)
       return
-    await browser.storage.sync.set({instagram: {username: username}})
+    await browser.storage.sync.set({instagramUsername: username})
   }
 
   const activities = await forward(`/${username}/`, '/profile')
@@ -33,11 +43,29 @@ async function poll() {
     return
 
   for (const activity of activities) {
+    // check cached comment and like counts for this post, skip if they're unchanged
     const shortcode = activity.object.ig_shortcode
-    if (!await forward(`/p/${shortcode}/`, '/post')) {
+    const comments = activity.object.replies ? activity.object.replies.totalItems : null
+    const likes = activity.object.ig_like_count
+
+    const cacheKey = `instagramPost-${shortcode}`
+    let cache = await browser.storage.sync.get([cacheKey])
+    if (cache[cacheKey] && comments != null && likes != null &&
+        cache[cacheKey].c == comments && cache[cacheKey].l == likes) {
+      console.debug(`No new comments or likes for ${shortcode}, skipping fetches`)
+      continue
+    }
+    cache[cacheKey] = {c: comments, l: likes}
+    await browser.storage.sync.set(cache)
+
+    // fetch post permalink for comments
+    const resolved = await forward(`/p/${shortcode}/`, '/post')
+    if (!resolved) {
       console.warn(`Bridgy couldn't translate post HTML for ${shortcode}`)
       continue
     }
+
+    // fetch likes
     if (!await forward(`/graphql/query/?query_hash=d5d763b1e2acf209d62d22d184488e57&variables={"shortcode":"${shortcode}","include_reel":false,"first":100}`, `/likes?id=${activity.id}`)) {
       console.warn(`Bridgy couldn't translate likes for ${shortcode}`)
       continue

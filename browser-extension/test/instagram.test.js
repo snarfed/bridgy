@@ -34,7 +34,8 @@ beforeAll(() => {
       },
     },
     console: {
-      debug: () => null
+      debug: () => null,
+      log: () => null,
     }
   })
 })
@@ -91,9 +92,13 @@ test('poll, no stored username', async () => {
     {
       id: '246',
       object: {ig_shortcode: 'abc'},
+      'replies': {'totalItems': 3},
+      'ig_like_count': 5,
     }, {
       id: '357',
       object: {ig_shortcode: 'xyz'},
+      'replies': {'totalItems': 0},
+      'ig_like_count': 0,
     }]))
   fetch.mockResponseOnce('post abc')
   fetch.mockResponseOnce('{}')
@@ -110,7 +115,12 @@ test('poll, no stored username', async () => {
 
   expect(fetch.mock.calls[0][0]).toBe(`${INSTAGRAM_BASE_URL}/`)
   expect(fetch.mock.calls[1][0]).toBe(`${BRIDGY_BASE_URL}/homepage`)
-  expect(await browser.storage.sync.get()).toEqual({instagram: {username: 'snarfed'}})
+
+  expect(await browser.storage.sync.get()).toEqual({
+    instagramUsername: 'snarfed',
+    'instagramPost-abc': {c: 3, l: 5},
+    'instagramPost-xyz': {c: 0, l: 0},
+  })
 
   expect(fetch.mock.calls[2][0]).toBe(`${INSTAGRAM_BASE_URL}/snarfed/`)
   expect(fetch.mock.calls[3][0]).toBe(`${BRIDGY_BASE_URL}/profile`)
@@ -129,8 +139,45 @@ test('poll, no stored username', async () => {
   expect(fetch.mock.calls[12][0]).toBe(`${BRIDGY_BASE_URL}/poll?username=snarfed`)
 })
 
+test('poll, skip comments and likes', async () => {
+  fetch.mockResponseOnce('{}')
+  fetch.mockResponseOnce(JSON.stringify([
+    {
+      id: '246',
+      object: {ig_shortcode: 'abc'},
+      'replies': {'totalItems': 3},
+      'ig_like_count': 5,
+    }, {
+      id: '357',
+      object: {ig_shortcode: 'xyz'},
+      'replies': {'totalItems': 0},
+      'ig_like_count': 1,
+    }]))
+  fetch.mockResponseOnce('post xyz')
+  fetch.mockResponseOnce('{}')
+  fetch.mockResponseOnce('likes xyz')
+  fetch.mockResponseOnce('{}')
+  fetch.mockResponseOnce('{}')
+
+  await browser.storage.sync.set({
+    instagramUsername: 'snarfed',
+    'instagramPost-abc': {c: 3, l: 5},
+  })
+
+  await poll()
+  expect(fetch.mock.calls.length).toBe(7)
+  expect(fetch.mock.calls[0][0]).toBe(`${INSTAGRAM_BASE_URL}/snarfed/`)
+  expect(fetch.mock.calls[2][0]).toBe(`${INSTAGRAM_BASE_URL}/p/xyz/`)
+
+  expect(await browser.storage.sync.get()).toEqual({
+    instagramUsername: 'snarfed',
+    'instagramPost-abc': {c: 3, l: 5},
+    'instagramPost-xyz': {c: 0, l: 1},
+  })
+})
+
 test('poll, existing username stored', async () => {
-  await browser.storage.sync.set({instagram: {username: 'snarfed'}})
+  await browser.storage.sync.set({instagramUsername: 'snarfed'})
   await poll()
   expect(fetch.mock.calls[0][0]).toBe(`${INSTAGRAM_BASE_URL}/snarfed/`)
 })
