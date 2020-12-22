@@ -96,12 +96,12 @@ class Instagram(Source):
     return super(cls, cls).button_html(feature, form_method='get', **kwargs)
 
   def get_activities_response(self, *args, **kwargs):
-    """Use Activity entities stored in the datastore."""
+    """Uses Activity entities stored in the datastore."""
     activities = []
 
     activity_id = kwargs.get('activity_id')
     if activity_id:
-      activity = Activity.get_by_id(activity_id)
+      activity = Activity.get_by_id(self.gr_source.tag_uri(activity_id))
       if activity:
         activities = [activity]
     else:
@@ -110,6 +110,20 @@ class Instagram(Source):
 
     return self.gr_source.make_activities_base_response(
       [json_loads(a.activity_json) for a in activities])
+
+  def get_comment(self, comment_id, **kwargs):
+    """Uses the Activity entity stored in the datastore."""
+    TODO
+
+  def get_like(self, activity_user_id, activity_id, like_user_id, **kwargs):
+    """Uses the activity passed in the activity kwarg."""
+    obj = kwargs.get('activity', {}).get('object')
+    if obj:
+      for tag in obj.get('tags', []):
+        if tag.get('verb') == 'like':
+          parsed = util.parse_tag_uri(tag.get('author', {}).get('id', ''))
+          if parsed and parsed[1] == like_user_id:
+            return tag
 
 
 class HomepageHandler(util.Handler):

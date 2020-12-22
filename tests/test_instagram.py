@@ -14,6 +14,7 @@ from granary.tests.test_instagram import (
   HTML_HEADER,
   HTML_PHOTO,
   HTML_PHOTO_ACTIVITY,
+  HTML_PHOTO_ACTIVITY_LIKES,
   HTML_PHOTO_LIKES_RESPONSE,
   HTML_PROFILE,
   HTML_PROFILE_COMPLETE,
@@ -92,19 +93,20 @@ class InstagramTest(ModelsTest):
                      self.inst.canonicalize_url('https://www.instagram.com/p/abcd/123'))
 
   def test_get_activities_response_activity_id(self):
-    Activity(id='123', activity_json=json_dumps({'foo': 'bar'})).put()
+    Activity(id='tag:instagram.com,2013:123',
+             activity_json=json_dumps({'foo': 'bar'})).put()
 
     resp = self.inst.get_activities_response(activity_id='123')
     self.assertEqual([{'foo': 'bar'}], resp['items'])
 
   def test_get_activities_response_no_activity_id(self):
-    Activity(id='123', source=self.inst.key,
+    Activity(id='tag:instagram.com,2013:123', source=self.inst.key,
              activity_json=json_dumps({'foo': 'bar'})).put()
-    Activity(id='456', source=self.inst.key,
+    Activity(id='tag:instagram.com,2013:456', source=self.inst.key,
              activity_json=json_dumps({'baz': 'biff'})).put()
 
     other = Instagram.new(self.handler, actor={'username': 'other'}).put()
-    Activity(id='789', source=other,
+    Activity(id='tag:instagram.com,2013:789', source=other,
              activity_json=json_dumps({'boo': 'bah'})).put()
 
 
@@ -114,6 +116,17 @@ class InstagramTest(ModelsTest):
   def test_get_activities_response_no_stored_activity(self):
     resp = self.inst.get_activities_response(activity_id='123')
     self.assertEqual([], resp['items'])
+
+  def test_get_like(self):
+    self.assert_equals(LIKE_OBJS[1], self.inst.get_like(
+      'unused', '123', '9', activity=HTML_PHOTO_ACTIVITY_LIKES))
+
+  def test_get_like_no_matching_user(self):
+    self.assertIsNone(self.inst.get_like(
+      'unused', '123', '222', activity=HTML_PHOTO_ACTIVITY_LIKES))
+
+  def test_get_like_no_activity_kwarg(self):
+    self.assertIsNone(self.inst.get_like('unused', '123', '9'))
 
   def test_homepage(self):
     resp = app.application.get_response(
