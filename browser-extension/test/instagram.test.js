@@ -10,6 +10,21 @@ import {
   BRIDGY_BASE_URL,
 } from '../instagram.js'
 
+const postActivities = [{
+  id: '246',
+  object: {
+    ig_shortcode: 'abc',
+    replies: {totalItems: 3},
+    ig_like_count: 5,
+  },
+}, {
+  id: '357',
+  object: {
+    ig_shortcode: 'xyz',
+    replies: {totalItems: 0},
+    ig_like_count: 0,
+  },
+}]
 
 fetchMock.enableMocks()
 
@@ -36,12 +51,18 @@ beforeAll(() => {
     console: {
       debug: () => null,
       log: () => null,
-    }
+    },
+    _console: console,
   })
 })
 
 beforeEach(() => {
   fetch.resetMocks()
+  browser.cookies.getAll.mockResolvedValue([
+    {name: 'sessionid', value: 'foo'},
+    {name: 'bar', value: 'baz'},
+  ])
+  browser.storage.sync.data = {}
 })
 
 afterEach(() => {
@@ -50,11 +71,6 @@ afterEach(() => {
 
 
 test('forward', async () => {
-  browser.cookies.getAll.mockResolvedValue([
-    {name: 'sessionid', value: 'foo'},
-    {name: 'bar', value: 'baz'},
-  ])
-
   fetch.mockResponseOnce('ig resp')
   fetch.mockResponseOnce('"bridgy resp"')
 
@@ -88,18 +104,7 @@ test('poll, no stored username', async () => {
   fetch.mockResponseOnce('ig home page')
   fetch.mockResponseOnce('"snarfed"')
   fetch.mockResponseOnce('ig profile')
-  fetch.mockResponseOnce(JSON.stringify([
-    {
-      id: '246',
-      object: {ig_shortcode: 'abc'},
-      'replies': {'totalItems': 3},
-      'ig_like_count': 5,
-    }, {
-      id: '357',
-      object: {ig_shortcode: 'xyz'},
-      'replies': {'totalItems': 0},
-      'ig_like_count': 0,
-    }]))
+  fetch.mockResponseOnce(JSON.stringify(postActivities))
   fetch.mockResponseOnce('post abc')
   fetch.mockResponseOnce('{}')
   fetch.mockResponseOnce('likes abc')
@@ -141,18 +146,7 @@ test('poll, no stored username', async () => {
 
 test('poll, skip comments and likes', async () => {
   fetch.mockResponseOnce('{}')
-  fetch.mockResponseOnce(JSON.stringify([
-    {
-      id: '246',
-      object: {ig_shortcode: 'abc'},
-      'replies': {'totalItems': 3},
-      'ig_like_count': 5,
-    }, {
-      id: '357',
-      object: {ig_shortcode: 'xyz'},
-      'replies': {'totalItems': 0},
-      'ig_like_count': 1,
-    }]))
+  fetch.mockResponseOnce(JSON.stringify(postActivities))
   fetch.mockResponseOnce('post xyz')
   fetch.mockResponseOnce('{}')
   fetch.mockResponseOnce('likes xyz')
@@ -172,7 +166,7 @@ test('poll, skip comments and likes', async () => {
   expect(await browser.storage.sync.get()).toEqual({
     instagramUsername: 'snarfed',
     'instagramPost-abc': {c: 3, l: 5},
-    'instagramPost-xyz': {c: 0, l: 1},
+    'instagramPost-xyz': {c: 0, l: 0},
   })
 })
 

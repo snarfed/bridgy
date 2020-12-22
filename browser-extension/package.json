@@ -2,7 +2,6 @@
     "private": true,
     "scripts": {
         "build:firefox": "web-ext build",
-        "build:chrome": "webstore",
         "release:chrome": "webstore upload --auto-publish",
         "release:firefox": "web-ext-submit",
         "test": "jest"

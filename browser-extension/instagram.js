@@ -48,15 +48,17 @@ async function poll() {
     const comments = activity.object.replies ? activity.object.replies.totalItems : null
     const likes = activity.object.ig_like_count
 
-    const cacheKey = `instagramPost-${shortcode}`
-    let cache = await browser.storage.sync.get([cacheKey])
-    if (cache[cacheKey] && comments != null && likes != null &&
-        cache[cacheKey].c == comments && cache[cacheKey].l == likes) {
-      console.debug(`No new comments or likes for ${shortcode}, skipping fetches`)
-      continue
+    if (comments != null && likes != null) {
+      const cacheKey = `instagramPost-${shortcode}`
+      let cache = await browser.storage.sync.get([cacheKey])
+      if (cache[cacheKey] &&
+          cache[cacheKey].c == comments && cache[cacheKey].l == likes) {
+        console.debug(`No new comments or likes for ${shortcode}, skipping fetches`)
+        continue
+      }
+      cache[cacheKey] = {c: comments, l: likes}
+      await browser.storage.sync.set(cache)
     }
-    cache[cacheKey] = {c: comments, l: likes}
-    await browser.storage.sync.set(cache)
 
     // fetch post permalink for comments
     const resolved = await forward(`/p/${shortcode}/`, '/post')
@@ -135,6 +137,11 @@ async function findCookies(path) {
  * @returns {String} Response body from Instagram
  */
 async function getInstagram(path) {
+  const cookies = await findCookies()
+  if (!cookies) {
+    return
+  }
+
   // Make HTTP request
   const url = `${INSTAGRAM_BASE_URL}${path}`
   console.debug(`Fetching ${url}`)
@@ -142,7 +149,7 @@ async function getInstagram(path) {
   const res = await fetch(url, {
     method: 'GET',
     headers: {
-      'Cookie': await findCookies(),
+      'Cookie': cookies,
       'User-Agent': navigator.userAgent,
     },
     // required for sending cookies in older browsers?
