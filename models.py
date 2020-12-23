@@ -493,11 +493,14 @@ class Source(StringIdModel, metaclass=SourceMeta):
       form_extra += ('\n<input name="id" type="hidden" value="%s" />' %
                      source.key_id())
 
-    return cls.OAUTH_START_HANDLER.button_html(
-      '/%s/start' % cls.SHORT_NAME,
-      form_extra=form_extra,
-      image_prefix='/oauth_dropins/static/',
-      **kwargs)
+    if cls.OAUTH_START_HANDLER:
+      return cls.OAUTH_START_HANDLER.button_html(
+        '/%s/start' % cls.SHORT_NAME,
+        form_extra=form_extra,
+        image_prefix='/oauth_dropins/static/',
+        **kwargs)
+
+    return ''
 
   @classmethod
   def create_new(cls, handler, user_url=None, **kwargs):

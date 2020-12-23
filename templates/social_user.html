@@ -165,10 +165,12 @@ WordPress.com, <a href="/">sign up here!</a>
 
 <!-- Listen signup buttons -->
 {% else %}
+{% if source.AUTO_POLL %}
 <data class="p-bridgy-listen-status" value="disabled">
 Click to enable <a href="/about#listen">listening</a>:
 {{ source.button_html('listen', source=source)|safe }}
 </data>
+{% endif %}
 {% endif %}
 
 </div>
