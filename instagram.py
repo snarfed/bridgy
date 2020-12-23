@@ -143,8 +143,9 @@ class HomepageHandler(util.Handler):
     ig = gr_instagram.Instagram()
     _, actor = ig.html_to_activities(self.request.text)
     if not actor or not actor.get('username'):
-      self.abort(400, "Couldn't determine logged in Instagram user")
+      self.abort(400, "Extension: Couldn't determine logged in Instagram user")
 
+    logging.info(f"Extension: returning {actor['username']}")
     self.response.headers['Content-Type'] = AS1_JSON_CONTENT_TYPE
     self.response.write(json_dumps(actor['username']))
 
@@ -166,15 +167,17 @@ class ProfileHandler(util.Handler):
     ig = gr_instagram.Instagram()
     activities, actor = ig.html_to_activities(self.request.text)
     if not actor or not actor.get('username'):
-      self.abort(400, "Couldn't determine logged in Instagram user")
+      self.abort(400, "Extension: Couldn't determine logged in Instagram user")
 
     # check that the instagram account is public
     if not gr_source.Source.is_public(actor):
-      self.abort(400, 'Your Instagram account is private. Bridgy only supports public accounts.')
+      self.abort(400, 'Extension: Your Instagram account is private. Bridgy only supports public accounts.')
 
     # create/update the Bridgy account
     Instagram.create_new(self, actor=actor)
 
+    ids = ' '.join(a['id'] for a in activities)
+    logging.info(f"Extension: returning activities for {actor['username']}: {ids}")
     self.response.headers['Content-Type'] = AS1_JSON_CONTENT_TYPE
     self.response.write(json_dumps(activities, indent=2))
 
@@ -197,16 +200,16 @@ class PostHandler(util.Handler):
     activities, _ = ig.html_to_activities(self.request.text)
 
     if len(activities) != 1:
-      self.abort(400, f'Expected 1 Instagram post, got {len(activities)}')
+      self.abort(400, f'Extension: Expected 1 Instagram post, got {len(activities)}')
     activity_data = activities[0]
     id = activity_data.get('id')
     if not id:
-      self.abort(400, 'Instagram post missing id')
+      self.abort(400, 'Extension: Instagram post missing id')
 
     username = activity_data['object']['author']['username']
     source = Instagram.get_by_id(username)
     if not source:
-      self.abort(404, f'No account found for Instagram user {username}')
+      self.abort(404, f'Extension: No account found for Instagram user {username}')
 
     activity = Activity.get_by_id(id)
     if activity:
@@ -225,6 +228,8 @@ class PostHandler(util.Handler):
     Activity(id=id, source=source.key, activity_json=activity_json).put()
     self.response.headers['Content-Type'] = AS1_JSON_CONTENT_TYPE
     self.response.write(activity_json)
+
+    logging.info(f"Extension: stored activity {id}")
 
 
 class LikesHandler(util.Handler):
@@ -245,11 +250,11 @@ class LikesHandler(util.Handler):
     id = util.get_required_param(self, 'id')
     parsed = util.parse_tag_uri(id)
     if not parsed:
-      self.abort(400, f'Expected id to be tag URI; got {id}')
+      self.abort(400, f'Extension: Expected id to be tag URI; got {id}')
 
     activity = Activity.get_by_id(id)
     if not activity:
-      self.abort(404, f'No Instagram post found for id {id}')
+      self.abort(404, f'Extension: No Instagram post found for id {id}')
 
     _, id = parsed
 
@@ -272,6 +277,9 @@ class LikesHandler(util.Handler):
     activity.activity_json = json_dumps(activity_data)
     activity.put()
 
+    like_ids = ' '.join(l['id'] for l in new_likes)
+    logging.info(f"Extension: stored likes for activity {id}: {like_ids}")
+
     self.response.headers['Content-Type'] = AS1_JSON_CONTENT_TYPE
     self.response.write(json_dumps(new_likes, indent=2))
 
@@ -289,7 +297,7 @@ class PollHandler(util.Handler):
     username = util.get_required_param(self, 'username')
     source = Instagram.get_by_id(username)
     if not source:
-      self.abort(404, f'No account found for Instagram user {username}')
+      self.abort(404, f'Extension: No account found for Instagram user {username}')
 
     util.add_poll_task(source)
 
