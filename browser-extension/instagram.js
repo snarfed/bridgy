@@ -106,11 +106,16 @@ async function forward(instagramPath, bridgyPath) {
  */
 async function findCookies(path) {
   // getAllCookieStores() only returns containers with open tabs, so we have to
-  // use the contextualIdentities API to get any others.
+  // use the contextualIdentities API to get any others, eg Firefox container tabs.
   // https://bugzilla.mozilla.org/show_bug.cgi?id=1486274
-  const storeIds =
-    (await browser.cookies.getAllCookieStores()).map(s => s.id).concat(
-      (await browser.contextualIdentities.query({})).map(s => s.cookieStoreId))
+  let storeIds = (await browser.cookies.getAllCookieStores()).map(s => s.id)
+
+  // this needs the contextualIdentities permission, which we don't currently
+  // include in manifest.json since it's not supported in Chrome.
+  if (browser.contextualIdentities) {
+      storeIds = storeIds.concat(
+        (await browser.contextualIdentities.query({})).map(s => s.cookieStoreId))
+  }
 
   for (const storeId of storeIds) {
     const cookies = await browser.cookies.getAll({

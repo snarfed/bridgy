@@ -1,6 +1,6 @@
 {
 	"name": "Bridgy",
-	"version": "0.1.2",
+	"version": "0.1.4",
 	"description": "Bridgy connects your web site to social media. This extension adds Instagram support.",
 	"homepage_url": "https://brid.gy/",
     "manifest_version": 2,
@@ -15,7 +15,6 @@
        "*://*.brid.gy/*",
        "*://*.instagram.com/*",
        "alarms",
-       "contextualIdentities",
        "cookies",
        "storage",
        "webRequest"

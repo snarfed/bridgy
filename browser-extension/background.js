@@ -1,3 +1,4 @@
+import './browser-polyfill.js'
 import {poll} from './instagram.js'
 
 const FREQUENCY_MIN = 30
