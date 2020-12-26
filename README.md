@@ -103,7 +103,7 @@ npm install
 npm run test
 ```
 
-Note that it doesn't yet work with [Firefox's Facebook Container](https://github.com/mozilla/contain-facebook) add-on. If you have that enabled, you'll need to disable it to use Bridgy's browser extension. TODO: fix this. Easy fix.
+You need to be logged into Instagram in your browser. The extension doesn't have a UI, but you can see what it's doing on your Bridgy user page, eg <code>brid.gy/instagram/[username]</code>.  Note that it doesn't work with [Firefox's Facebook Container tabs](https://github.com/mozilla/contain-facebook) add-on. If you have that enabled, you'll need to disable it to use Bridgy's browser extension.
 
 
 Adding a new silo

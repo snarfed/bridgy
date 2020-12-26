@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}IndieAuth - Bridgy{% endblock %}
+
+{% block content %}
+
+<br />
+
+<form method="post" action="/indieauth/start">
+<p class="row big">
+<label for="website">
+Make sure your web site
+  <a href="https://indieauth.com/setup" target="_blank">supports IndieAuth
+  <img src="/oauth_dropins/static/indieauth_logo.png"
+       style="height: 1em; margin-top: -.2em" /></a>,
+  then enter it here:</label>
+</p>
+
+<div class="row">
+  <input required type="url" name="me" id="me" placeholder="http://..." />
+  <input type="hidden" name="token" value="{{ token }}" />
+  <input type="submit" class="btn btn-default" value="Go" />
+</div>
+</form>
+
+{% endblock %}

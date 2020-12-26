@@ -8,6 +8,7 @@ import re
 from google.cloud import ndb
 from granary import microformats2
 from granary import source as gr_source
+from oauth_dropins.indieauth import IndieAuth
 from oauth_dropins.instagram import INSTAGRAM_SESSIONID_COOKIE
 from oauth_dropins.webutil.models import StringIdModel
 from oauth_dropins.webutil.util import json_dumps, json_loads
@@ -1145,3 +1146,16 @@ class SyndicatedPost(ndb.Model):
     r = cls(parent=source.key, original=original, syndication=syndication)
     r.put()
     return r
+
+
+class Domain(StringIdModel):
+  """A domain owned by a user.
+
+  Ownership is proven via IndieAuth. Supports secret tokens associated with each
+  domain. Clients can include a token with requests that operate on a given
+  domain, eg sending posts and responses from the browser extension.
+
+  Key id is the string domain, eg 'example.com'.
+  """
+  tokens = ndb.StringProperty(repeated=True)
+  auth = ndb.KeyProperty(IndieAuth)

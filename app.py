@@ -35,6 +35,7 @@ MODULES = [importlib.import_module(name) for name in (
   'flickr',
   'github',
   'handlers',
+  'indieauth',
   'instagram',
   'mastodon',
   'medium',
