@@ -1,7 +1,5 @@
 """IndieAuth handlers for authenticating and proving ownership of a domain.
 """
-import uuid
-
 from google.cloud import ndb
 from oauth_dropins import indieauth
 from oauth_dropins.webutil.handlers import TemplateHandler
@@ -39,7 +37,7 @@ class CallbackHandler(indieauth.CallbackHandler, util.Handler):
       return
 
     assert state
-    domain = Domain.get_or_insert(auth_entity.key.id())
+    domain = Domain.get_or_insert(util.domain_from_link(auth_entity.key.id()))
     domain.auth = auth_entity.key
     if state not in domain.tokens:
       domain.tokens.append(state)
