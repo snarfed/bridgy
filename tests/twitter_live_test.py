@@ -17,13 +17,18 @@ from granary import twitter
 
 from models import TWITTER_SCRAPE_HEADERS
 
-twitter_auth.TWITTER_APP_KEY = os.getenv('TWITTER_LIVE_TEST_APP_KEY')
-twitter_auth.TWITTER_APP_SECRET = os.getenv('TWITTER_LIVE_TEST_APP_SECRET')
-
+twitter_auth.TWITTER_APP_KEY = (os.getenv('TWITTER_LIVE_TEST_APP_KEY') or
+                                util.read('twitter_live_test_app_key'))
+assert twitter_auth.TWITTER_APP_KEY
+twitter_auth.TWITTER_APP_SECRET = (os.getenv('TWITTER_LIVE_TEST_APP_SECRET') or
+                                   util.read('twitter_live_test_app_secret'))
+assert twitter_auth.TWITTER_APP_SECRET
 TOKEN_KEY = (os.getenv('TWITTER_ACCESS_TOKEN_KEY') or
              util.read('twitter_access_token_key'))
+assert TOKEN_KEY
 TOKEN_SECRET = (os.getenv('TWITTER_ACCESS_TOKEN_SECRET') or
                 util.read('twitter_access_token_secret'))
+assert TOKEN_SECRET
 TWEET_ID = '1270018109630369797'
 
 
