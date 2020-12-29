@@ -21,9 +21,9 @@ from granary.tests.test_instagram import (
   HTML_PROFILE_PRIVATE_COMPLETE,
   HTML_VIDEO_ACTIVITY,
   HTML_VIDEO_ACTIVITY_FULL,
-  HTML_VIDEO_COMPLETE,
-  HTML_VIDEO_FULL,
   HTML_VIDEO_EXTRA_COMMENT_OBJ,
+  HTML_VIDEO_PAGE,
+  HTML_VIEWER_CONFIG,
   LIKE_OBJS,
 )
 from oauth_dropins.webutil.testutil import TestCase
@@ -36,10 +36,13 @@ from models import Activity
 from .testutil import ModelsTest, instagram_profile_user
 import util
 
-
 PROFILE_USER = copy.deepcopy(
   HTML_PROFILE['entry_data']['ProfilePage'][0]['graphql']['user'])
 PROFILE_USER['id'] = '987'
+
+HTML_VIDEO_WITH_VIEWER = copy.deepcopy(HTML_VIDEO_PAGE)
+HTML_VIDEO_WITH_VIEWER['config'] = HTML_VIEWER_CONFIG
+HTML_VIDEO_COMPLETE = HTML_HEADER + json_dumps(HTML_VIDEO_WITH_VIEWER) + HTML_FOOTER
 
 
 class InstagramTest(ModelsTest):
@@ -68,7 +71,6 @@ class InstagramTest(ModelsTest):
     self.assertEqual('http://pic.ture/url', self.inst.picture)
     self.assertEqual('https://www.instagram.com/snarfed/', self.inst.url)
     self.assertEqual('https://www.instagram.com/snarfed/', self.inst.silo_url())
-    # self.assertEqual('tag:instagram.com,2013:420973239', self.inst.user_tag_id())
     self.assertEqual('Ryan Barrett', self.inst.name)
     self.assertEqual('snarfed (Instagram)', self.inst.label())
 
@@ -198,8 +200,9 @@ class InstagramTest(ModelsTest):
     self.assertIn('No account found for Instagram user jc', resp.text)
 
   def test_post_empty(self):
-    resp = app.application.get_response(
-      '/instagram/browser/post', method='POST', text='')
+    empty = HTML_HEADER + json_dumps({'config': HTML_VIEWER_CONFIG}) + HTML_FOOTER
+    resp = app.application.get_response('/instagram/browser/post',
+                                        method='POST', text=empty)
     self.assertEqual(400, resp.status_int)
     self.assertIn('Expected 1 Instagram post', resp.text)
 

@@ -16,7 +16,7 @@ from oauth_dropins import indieauth
 from models import Activity, Source
 import util
 
-AS1_JSON_CONTENT_TYPE = 'application/stream+json'
+JSON_CONTENT_TYPE = 'application/json'
 
 
 def merge_by_id(existing, updates):
@@ -130,42 +130,26 @@ class Instagram(Source):
             return tag
 
 
-class HomepageHandler(util.Handler):
-  """Parses an Instagram home page and returns the logged in user's username.
+class BrowserHandler(util.Handler):
+  """Base class for requests from the browser extension."""
+  ig = gr_instagram.Instagram()
 
-  Request body is https://www.instagram.com/ HTML for a logged in user.
-  """
   def options(self):
     self.response.headers['Access-Control-Allow-Origin'] = '*'
     self.response.headers['Access-Control-Allow-Methods'] = '*'
 
-  def post(self):
-    ig = gr_instagram.Instagram()
-    _, actor = ig.html_to_activities(self.request.text)
-    if not actor or not actor.get('username'):
-      self.abort(400, "Extension: Couldn't determine logged in Instagram user")
+  def output(self, text):
+    self.response.headers['Content-Type'] = JSON_CONTENT_TYPE
+    self.response.write(json_dumps(text, indent=2))
 
-    logging.info(f"Extension: returning {actor['username']}")
-    self.response.headers['Content-Type'] = AS1_JSON_CONTENT_TYPE
-    self.response.write(json_dumps(actor['username']))
+  def parse_activities(self):
+    """Parses Instagram HTML (in the POST body) into logged in user and posts.
 
-
-class ProfileHandler(util.Handler):
-  """Parses an Instagram profile page and returns the posts' URLs.
-
-  Request body is HTML from an IG profile, eg https://www.instagram.com/name/ ,
-  for a logged in user.
-
-  Response body is the JSON list of translated ActivityStreams activities.
-  """
-  def options(self):
-    self.response.headers['Access-Control-Allow-Origin'] = '*'
-    self.response.headers['Access-Control-Allow-Methods'] = '*'
-
-  def post(self):
+    Returns:
+      (list of dicts, dict): AS1 activities and logged in actor
+    """
     # parse the Instagram profile HTML
-    ig = gr_instagram.Instagram()
-    activities, actor = ig.html_to_activities(self.request.text)
+    activities, actor = self.ig.html_to_activities(self.request.text)
     if not actor or not actor.get('username'):
       self.abort(400, "Extension: Couldn't determine logged in Instagram user")
 
@@ -173,16 +157,39 @@ class ProfileHandler(util.Handler):
     if not gr_source.Source.is_public(actor):
       self.abort(400, 'Extension: Your Instagram account is private. Bridgy only supports public accounts.')
 
+    return activities, actor
+
+
+class HomepageHandler(BrowserHandler):
+  """Parses an Instagram home page and returns the logged in user's username.
+
+  Request body is https://www.instagram.com/ HTML for a logged in user.
+  """
+  def post(self):
+    _, actor = self.parse_activities()
+    logging.info(f"Extension: returning {actor['username']}")
+    self.output(actor['username'])
+
+
+class ProfileHandler(BrowserHandler):
+  """Parses an Instagram profile page and returns the posts' URLs.
+
+  Request body is HTML from an IG profile, eg https://www.instagram.com/name/ ,
+  for a logged in user.
+
+  Response body is the JSON list of translated ActivityStreams activities.
+  """
+  def post(self):
+    activities, actor = self.parse_activities()
     # create/update the Bridgy account
     Instagram.create_new(self, actor=actor)
 
     ids = ' '.join(a['id'] for a in activities)
     logging.info(f"Extension: returning activities for {actor['username']}: {ids}")
-    self.response.headers['Content-Type'] = AS1_JSON_CONTENT_TYPE
-    self.response.write(json_dumps(activities, indent=2))
+    self.output(activities)
 
 
-class PostHandler(util.Handler):
+class PostHandler(BrowserHandler):
   """Parses an Instagram post and creates new Responses as needed.
 
   Request body is HTML from an IG photo/video permalink, eg
@@ -190,14 +197,9 @@ class PostHandler(util.Handler):
 
   Response body is the translated ActivityStreams activity JSON.
   """
-  def options(self):
-    self.response.headers['Access-Control-Allow-Origin'] = '*'
-    self.response.headers['Access-Control-Allow-Methods'] = '*'
-
   @ndb.transactional()
   def post(self):
-    ig = gr_instagram.Instagram()
-    activities, _ = ig.html_to_activities(self.request.text)
+    activities, _ = self.parse_activities()
 
     if len(activities) != 1:
       self.abort(400, f'Extension: Expected 1 Instagram post, got {len(activities)}')
@@ -224,15 +226,12 @@ class PostHandler(util.Handler):
       }
 
     # store the new activity
-    activity_json = json_dumps(activity_data, indent=2)
-    Activity(id=id, source=source.key, activity_json=activity_json).put()
-    self.response.headers['Content-Type'] = AS1_JSON_CONTENT_TYPE
-    self.response.write(activity_json)
-
+    Activity(id=id, source=source.key, activity_json=json_dumps(activity_data)).put()
     logging.info(f"Extension: stored activity {id}")
+    self.output(activity_data)
 
 
-class LikesHandler(util.Handler):
+class LikesHandler(BrowserHandler):
   """Parses a list of Instagram likes and adds them to an existing Activity.
 
   Requires the request parameter `id` with the IG post's id (not shortcode!).
@@ -242,10 +241,6 @@ class LikesHandler(util.Handler):
 
   Response body is the translated ActivityStreams JSON for the likes.
   """
-  def options(self):
-    self.response.headers['Access-Control-Allow-Origin'] = '*'
-    self.response.headers['Access-Control-Allow-Methods'] = '*'
-
   def post(self):
     id = util.get_required_param(self, 'id')
     parsed = util.parse_tag_uri(id)
@@ -267,8 +262,7 @@ class LikesHandler(util.Handler):
                                   .get('edge_liked_by', {}).get('edges', [])
       },
     }
-    ig = gr_instagram.Instagram()
-    new_likes = ig._json_media_node_to_activity(container)['object']['tags']
+    new_likes = self.ig._json_media_node_to_activity(container)['object']['tags']
 
     # merge them into existing activity
     activity_data = json_loads(activity.activity_json)
@@ -279,20 +273,14 @@ class LikesHandler(util.Handler):
 
     like_ids = ' '.join(l['id'] for l in new_likes)
     logging.info(f"Extension: stored likes for activity {id}: {like_ids}")
-
-    self.response.headers['Content-Type'] = AS1_JSON_CONTENT_TYPE
-    self.response.write(json_dumps(new_likes, indent=2))
+    self.output(new_likes)
 
 
-class PollHandler(util.Handler):
+class PollHandler(BrowserHandler):
   """Triggers a poll for an Instagram account.
 
   Requires the `username` parameter.
   """
-  def options(self):
-    self.response.headers['Access-Control-Allow-Origin'] = '*'
-    self.response.headers['Access-Control-Allow-Methods'] = '*'
-
   def post(self):
     username = util.get_required_param(self, 'username')
     source = Instagram.get_by_id(username)
@@ -301,8 +289,7 @@ class PollHandler(util.Handler):
 
     util.add_poll_task(source)
 
-    self.response.headers['Content-Type'] = AS1_JSON_CONTENT_TYPE
-    self.response.write(json_dumps('OK'))
+    self.output('OK')
 
 
 ROUTES = [
