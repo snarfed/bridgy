@@ -32,7 +32,7 @@ import requests
 
 import app
 from instagram import Instagram
-from models import Activity
+from models import Activity, Domain
 from .testutil import ModelsTest, instagram_profile_user
 import util
 
@@ -61,9 +61,17 @@ class InstagramTest(ModelsTest):
         # ...
       })
 
+    self.domain = Domain(id='snarfed.org', tokens=['towkin']).put()
+
   def expect_webmention_discovery(self):
     return self.expect_requests_get('https://snarfed.org/', '', stream=None,
                                     verify=False)
+
+  def store_activity(self):
+    activity = copy.deepcopy(HTML_PHOTO_ACTIVITY)
+    activity['actor']['url'] = 'http://snarfed.org/'
+    activity_json = json_dumps(activity)
+    return Activity(id='tag:instagram.com,2013:123_456', activity_json=activity_json).put()
 
   def test_new(self):
     self.assertIsNone(self.inst.auth_entity)
@@ -161,7 +169,8 @@ class InstagramTest(ModelsTest):
     self.mox.ReplayAll()
 
     resp = app.application.get_response(
-      '/instagram/browser/profile', method='POST', text=HTML_PROFILE_COMPLETE)
+      '/instagram/browser/profile?token=towkin', method='POST',
+      text=HTML_PROFILE_COMPLETE)
 
     self.assertEqual(200, resp.status_int)
     self.assertEqual([HTML_PHOTO_ACTIVITY, HTML_VIDEO_ACTIVITY], resp.json)
@@ -175,16 +184,39 @@ class InstagramTest(ModelsTest):
 
   def test_profile_private_account(self):
     resp = app.application.get_response(
-      '/instagram/browser/profile', method='POST',
+      '/instagram/browser/profile?token=towkin', method='POST',
       text=HTML_PROFILE_PRIVATE_COMPLETE)
     self.assertEqual(400, resp.status_int)
     self.assertIn('Your Instagram account is private.', resp.text)
+
+  def test_profile_missing_token(self):
+    resp = app.application.get_response(
+      '/instagram/browser/profile', method='POST',
+      text=HTML_PROFILE_COMPLETE)
+    self.assertEqual(400, resp.status_int)
+    self.assertIn('Missing required parameter: token', resp.text)
+
+  def test_profile_no_stored_token(self):
+    self.domain.delete()
+    resp = app.application.get_response(
+      '/instagram/browser/profile?token=towkin', method='POST',
+      text=HTML_PROFILE_COMPLETE)
+    self.assertEqual(400, resp.status_int)
+    self.assertIn("towkin is not authorized for any of: {'snarfed.org'}", resp.text)
+
+  def test_profile_bad_token(self):
+    resp = app.application.get_response(
+      '/instagram/browser/profile?token=nope', method='POST',
+      text=HTML_PROFILE_COMPLETE)
+    self.assertEqual(400, resp.status_int)
+    self.assertIn('', resp.text)
 
   def test_post(self):
     source = Instagram.create_new(self.handler, actor={'username': 'jc'})
 
     resp = app.application.get_response(
-      '/instagram/browser/post', method='POST', text=HTML_VIDEO_COMPLETE)
+      '/instagram/browser/post?token=towkin', method='POST',
+      text=HTML_VIDEO_COMPLETE)
     self.assertEqual(200, resp.status_int, resp.text)
     self.assertEqual(HTML_VIDEO_ACTIVITY_FULL, resp.json)
 
@@ -195,16 +227,24 @@ class InstagramTest(ModelsTest):
 
   def test_post_no_source(self):
     resp = app.application.get_response(
-      '/instagram/browser/post', method='POST', text=HTML_VIDEO_COMPLETE)
+      '/instagram/browser/post?token=towkin', method='POST',
+      text=HTML_VIDEO_COMPLETE)
     self.assertEqual(404, resp.status_int)
     self.assertIn('No account found for Instagram user jc', resp.text)
 
   def test_post_empty(self):
     empty = HTML_HEADER + json_dumps({'config': HTML_VIEWER_CONFIG}) + HTML_FOOTER
-    resp = app.application.get_response('/instagram/browser/post',
-                                        method='POST', text=empty)
+    resp = app.application.get_response(
+      '/instagram/browser/post?token=towkin', method='POST', text=empty)
     self.assertEqual(400, resp.status_int)
     self.assertIn('Expected 1 Instagram post', resp.text)
+
+  def test_post_missing_token(self):
+    empty = HTML_HEADER + json_dumps({'config': HTML_VIEWER_CONFIG}) + HTML_FOOTER
+    resp = app.application.get_response(
+      '/instagram/browser/post', method='POST', text=empty)
+    self.assertEqual(400, resp.status_int)
+    self.assertIn('Missing required parameter: token', resp.text)
 
   def test_post_merge_comments(self):
     source = Instagram.create_new(self.handler, actor={'username': 'jc'})
@@ -221,7 +261,8 @@ class InstagramTest(ModelsTest):
     # send HTML_VIDEO_COMPLETE to /post, check that the response and stored
     # activity have both of its comments
     resp = app.application.get_response(
-      '/instagram/browser/post', method='POST', text=HTML_VIDEO_COMPLETE)
+      '/instagram/browser/post?token=towkin', method='POST',
+      text=HTML_VIDEO_COMPLETE)
 
     self.assertEqual(200, resp.status_int, resp.text)
     self.assert_equals(HTML_VIDEO_ACTIVITY_FULL, resp.json)
@@ -230,12 +271,11 @@ class InstagramTest(ModelsTest):
     self.assert_equals(HTML_VIDEO_ACTIVITY_FULL, json_loads(activity.activity_json))
 
   def test_likes(self):
-    activity_json = json_dumps(HTML_PHOTO_ACTIVITY)
-    a = Activity(id='tag:instagram.com,2013:123_456', activity_json=activity_json).put()
+    key = self.store_activity()
 
     resp = app.application.get_response(
-      '/instagram/browser/likes?id=tag:instagram.com,2013:123_456', method='POST',
-      text=json_dumps(HTML_PHOTO_LIKES_RESPONSE))
+      '/instagram/browser/likes?id=tag:instagram.com,2013:123_456&token=towkin',
+      method='POST', text=json_dumps(HTML_PHOTO_LIKES_RESPONSE))
     self.assertEqual(200, resp.status_int, resp.text)
 
     expected_likes = copy.deepcopy(LIKE_OBJS)
@@ -244,23 +284,31 @@ class InstagramTest(ModelsTest):
       del like['url']
     self.assertEqual(expected_likes, resp.json)
 
-    activity = json_loads(a.get().activity_json)
+    activity = json_loads(key.get().activity_json)
     self.assertEqual(expected_likes, activity['object']['tags'])
 
   def test_likes_bad_id(self):
     resp = app.application.get_response(
-      '/instagram/browser/likes?id=789', method='POST',
+      '/instagram/browser/likes?id=789&token=towkin', method='POST',
       text=json_dumps(HTML_PHOTO_LIKES_RESPONSE))
     self.assertEqual(400, resp.status_int)
     self.assertIn('Expected id to be tag URI', resp.text)
 
   def test_likes_no_activity(self):
     resp = app.application.get_response(
-      '/instagram/browser/likes?id=tag:instagram.com,2013:789', method='POST',
-      text=json_dumps(HTML_PHOTO_LIKES_RESPONSE))
+      '/instagram/browser/likes?id=tag:instagram.com,2013:789&token=towkin',
+      method='POST', text=json_dumps(HTML_PHOTO_LIKES_RESPONSE))
     self.assertEqual(404, resp.status_int)
     self.assertIn('No Instagram post found for id tag:instagram.com,2013:789',
                   resp.text)
+
+  def test_likes_bad_token(self):
+    self.store_activity()
+    resp = app.application.get_response(
+      '/instagram/browser/likes?id=tag:instagram.com,2013:123_456&token=nope',
+      method='POST', text=json_dumps(HTML_PHOTO_LIKES_RESPONSE))
+    self.assertEqual(400, resp.status_int)
+    self.assertIn("nope is not authorized for any of: {'snarfed.org'}", resp.text)
 
   def test_poll(self):
     source = Instagram.create_new(self.handler, actor={'username': 'snarfed'})

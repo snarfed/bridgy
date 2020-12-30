@@ -13,7 +13,7 @@ import webapp2
 
 from oauth_dropins import indieauth
 
-from models import Activity, Source
+from models import Activity, Domain, Source, MAX_AUTHOR_URLS
 import util
 
 JSON_CONTENT_TYPE = 'application/json'
@@ -159,6 +159,22 @@ class BrowserHandler(util.Handler):
 
     return activities, actor
 
+  def check_token(self, actor):
+    """If the request's token is not stored for the actor's domain, returns 400.
+
+    Args:
+      actor: dict, AS1 actor for logged in Instagram user
+    """
+    token = util.get_required_param(self, 'token')
+
+    domains = set(util.domain_from_link(u) for u in microformats2.object_urls(actor))
+    domains.discard(gr_instagram.Instagram.DOMAIN)
+    for domain in ndb.get_multi(ndb.Key(Domain, d) for d in domains):
+      if domain and token in domain.tokens:
+        return
+
+    self.abort(400, f'Extension: token {token} is not authorized for any of: {domains}')
+
 
 class HomepageHandler(BrowserHandler):
   """Parses an Instagram home page and returns the logged in user's username.
@@ -181,6 +197,8 @@ class ProfileHandler(BrowserHandler):
   """
   def post(self):
     activities, actor = self.parse_activities()
+    self.check_token(actor)
+
     # create/update the Bridgy account
     Instagram.create_new(self, actor=actor)
 
@@ -199,7 +217,8 @@ class PostHandler(BrowserHandler):
   """
   @ndb.transactional()
   def post(self):
-    activities, _ = self.parse_activities()
+    activities, actor = self.parse_activities()
+    self.check_token(actor)
 
     if len(activities) != 1:
       self.abort(400, f'Extension: Expected 1 Instagram post, got {len(activities)}')
@@ -243,19 +262,24 @@ class LikesHandler(BrowserHandler):
   """
   def post(self):
     id = util.get_required_param(self, 'id')
-    parsed = util.parse_tag_uri(id)
-    if not parsed:
+
+    # validate request
+    parsed_id = util.parse_tag_uri(id)
+    if not parsed_id:
       self.abort(400, f'Extension: Expected id to be tag URI; got {id}')
 
     activity = Activity.get_by_id(id)
     if not activity:
       self.abort(404, f'Extension: No Instagram post found for id {id}')
 
-    _, id = parsed
+    activity_data = json_loads(activity.activity_json)
+    obj = activity_data['object']
+    actor = obj.get('author') or activity.get('actor')
+    self.check_token(actor=actor)
 
     # convert new likes to AS
     container = {
-      'id': id,
+      'id': parsed_id[1],
       'edge_media_preview_like': {
         # corresponds to same code in gr_instagram.Instagram.html_to_activities()
         'edges': self.request.json.get('data', {}).get('shortcode_media', {})\
@@ -265,8 +289,6 @@ class LikesHandler(BrowserHandler):
     new_likes = self.ig._json_media_node_to_activity(container)['object']['tags']
 
     # merge them into existing activity
-    activity_data = json_loads(activity.activity_json)
-    obj = activity_data['object']
     obj['tags'] = merge_by_id(obj.get('tags', []), new_likes)
     activity.activity_json = json_dumps(activity_data)
     activity.put()
