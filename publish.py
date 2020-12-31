@@ -59,6 +59,10 @@ PUBLISHABLE_TYPES = frozenset((
   'h-review',
 ))
 
+class CollisionError(RuntimeError):
+  """Multiple publish requests for the same page at the same time."""
+  pass
+
 
 class Handler(webmention.WebmentionHandler):
   """Base handler for both previews and publishes.
@@ -415,10 +419,7 @@ class Handler(webmention.WebmentionHandler):
     Returns:
       dict response data with at least id and url
     """
-    self.entity = self.get_or_add_publish_entity(source_url)
-    if not self.entity:
-      return None
-
+    assert self.entity
     if ((self.entity.status != 'complete' or self.entity.type == 'preview') and
         not appengine_info.LOCAL):
       return self.error("Can't delete this post from %s because Bridgy Publish didn't originally POSSE it there" % self.source.gr_source.NAME)
@@ -548,6 +549,9 @@ class Handler(webmention.WebmentionHandler):
     """
     try:
       return self._get_or_add_publish_entity(source_url)
+    except CollisionError:
+      return self.error("You're already publishing that post in another request.",
+                        status=429)
     except Exception as e:
       code = getattr(e, 'code', None)
       details = getattr(e, 'details', None)
@@ -561,11 +565,19 @@ class Handler(webmention.WebmentionHandler):
   @ndb.transactional()
   def _get_or_add_publish_entity(self, source_url):
     page = PublishedPage.get_or_insert(source_url)
+
+    # Detect concurrent publish request for the same page
+    # https://github.com/snarfed/bridgy/issues/996
+    pending = Publish.query(
+        Publish.status == 'new', Publish.type != 'preview',
+        Publish.source == self.source.key, ancestor=page.key).get()
+    if pending:
+      logging.warning(f'Collided with publish: {pending.key.urlsafe().decode()}')
+      raise CollisionError()
+
     entity = Publish.query(
       Publish.status == 'complete', Publish.type != 'preview',
-      Publish.source == self.source.key,
-      ancestor=page.key).get()
-
+      Publish.source == self.source.key, ancestor=page.key).get()
     if entity is None:
       entity = Publish(parent=page.key, source=self.source.key)
       if self.PREVIEW:

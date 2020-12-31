@@ -199,7 +199,6 @@ class PublishTest(testutil.HandlerTest):
     page = PublishedPage(id='http://foo.com/bar')
 
     # these are all fine
-    Publish(parent=page.key, source=self.source.key, status='new').put()
     Publish(parent=page.key, source=self.source.key, status='failed').put()
     Publish(parent=page.key, source=self.source.key, status='complete',
             type='preview', published={'content': 'foo'}).put()
@@ -211,7 +210,7 @@ class PublishTest(testutil.HandlerTest):
     # first attempt should work
     self.assert_success('preview of foo - http://foo.com/bar', preview=True)
     created = self.assert_created('foo - http://foo.com/bar')
-    self.assertEqual(5, Publish.query().count())
+    self.assertEqual(4, Publish.query().count())
     self.assertEqual(3, Publish.query(Publish.status == 'complete').count())
 
     completed = list(Publish.query(Publish.status == 'complete',
@@ -244,6 +243,12 @@ class PublishTest(testutil.HandlerTest):
     resp = self.assert_response('', status=302, interactive=True)
     self.assertIn("Sorry, you've already published that page",
                   urllib.parse.unquote_plus(resp.headers['Location']))
+
+  def test_publish_entity_collision(self):
+    page = PublishedPage(id='http://foo.com/bar')
+    Publish(parent=page.key, source=self.source.key, status='new').put()
+    self.assert_error("You're already publishing that post in another request.",
+                      status=429)
 
   def test_publish_entity_too_much_contention(self):
     self.mox.StubOutWithMock(publish.Handler, '_get_or_add_publish_entity',
