@@ -4,16 +4,6 @@ const INSTAGRAM_BASE_URL = 'https://www.instagram.com'
 const BRIDGY_BASE_URL = 'https://brid.gy/instagram/browser'
 // const BRIDGY_BASE_URL = 'http://localhost:8080/instagram/browser'
 
-/* Local storage schema for this extension:
- *
- * instagramUsername: [string],
- * 'instagramPost-[shortcode]': {
- *   c: [integer],  // number of commenst
- *   l: [integer],  // number of likes
- * },
- * ...
- */
-
 
 /**
  * Injects mock globals for tests.

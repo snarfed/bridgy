@@ -1,5 +1,17 @@
 import './browser-polyfill.js'
+import {login} from '../common.js'
 import {poll} from './instagram.js'
+
+/* Local storage schema for this extension:
+ *
+ * token: [string],
+ * instagramUsername: [string],
+ * 'instagramPost-[shortcode]': {
+ *   c: [integer],  // number of commenst
+ *   l: [integer],  // number of likes
+ * },
+ *
+ */
 
 const FREQUENCY_MIN = 30
 
@@ -8,15 +20,20 @@ function doPoll(alarm) {
   poll().then(() => console.log('Done!'))
 }
 
-console.log(`Scheduling poll every ${FREQUENCY_MIN}m`)
-browser.alarms.onAlarm.addListener((alarm) => {
-  if (alarm.name == 'bridgy-instagram-poll') {
-    doPoll()
-  }
-})
-browser.alarms.create('bridgy-instagram-poll', {
-  delayInMinutes: 0,
-  periodInMinutes: FREQUENCY_MIN,
-})
+function schedulePoll() {
+  console.log(`Scheduling poll every ${FREQUENCY_MIN}m`)
+  browser.alarms.onAlarm.addListener((alarm) => {
+    if (alarm.name == 'bridgy-instagram-poll') {
+      doPoll()
+    }
+  })
+  browser.alarms.create('bridgy-instagram-poll', {
+    delayInMinutes: 0,
+    periodInMinutes: FREQUENCY_MIN,
+  })
+}
 
-doPoll()
+login().then(() => {
+  schedulePoll()
+  doPoll()
+})
