@@ -62,7 +62,7 @@ class Mastodon(models.Source):
     'repost': 'boost',
     'like': 'favorite',
   }
-  DISABLE_HTTP_CODES = ('401', '403')
+  DISABLE_HTTP_CODES = ('401', '403', '404')
 
   @property
   def URL_CANONICALIZER(self):
