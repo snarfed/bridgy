@@ -51,6 +51,7 @@ beforeAll(() => {
     console: {
       debug: () => null,
       log: () => null,
+      error: () => null,
     },
     _console: console,
   })
@@ -62,7 +63,9 @@ beforeEach(() => {
     {name: 'sessionid', value: 'foo'},
     {name: 'bar', value: 'baz'},
   ])
-  browser.storage.sync.data = {}
+  browser.storage.sync.data = {
+    token: 'towkin',
+  }
 })
 
 afterEach(() => {
@@ -97,9 +100,16 @@ test('forward', async () => {
   ])
 })
 
+test('poll, no stored token', async () => {
+  // no token stored
+  browser.storage.sync.data = {}
+  await poll()
+  expect(fetch.mock.calls.length).toBe(0)
+})
+
 test('poll, no stored username', async () => {
   // no username stored
-  expect(await browser.storage.sync.get()).toEqual({})
+  expect(browser.storage.sync.data.instagramUsername).toBeUndefined()
 
   fetch.mockResponseOnce('ig home page')
   fetch.mockResponseOnce('"snarfed"')
@@ -125,19 +135,20 @@ test('poll, no stored username', async () => {
     instagramUsername: 'snarfed',
     'instagramPost-abc': {c: 3, l: 5},
     'instagramPost-xyz': {c: 0, l: 0},
+    token: 'towkin',
   })
 
   expect(fetch.mock.calls[2][0]).toBe(`${INSTAGRAM_BASE_URL}/snarfed/`)
-  expect(fetch.mock.calls[3][0]).toBe(`${BRIDGY_BASE_URL}/profile`)
+  expect(fetch.mock.calls[3][0]).toBe(`${BRIDGY_BASE_URL}/profile?token=towkin`)
   expect(fetch.mock.calls[3][1].body).toBe('ig profile')
 
   for (const [i, shortcode, id] of [[4, 'abc', '246'], [8, 'xyz', '357']]) {
     expect(fetch.mock.calls[i][0]).toBe(`${INSTAGRAM_BASE_URL}/p/${shortcode}/`)
-    expect(fetch.mock.calls[i + 1][0]).toBe(`${BRIDGY_BASE_URL}/post`)
+    expect(fetch.mock.calls[i + 1][0]).toBe(`${BRIDGY_BASE_URL}/post?token=towkin`)
     expect(fetch.mock.calls[i + 1][1].body).toBe(`post ${shortcode}`)
     expect(fetch.mock.calls[i + 2][0]).toContain(`${INSTAGRAM_BASE_URL}/graphql/`)
     expect(fetch.mock.calls[i + 2][0]).toContain(shortcode)
-    expect(fetch.mock.calls[i + 3][0]).toBe(`${BRIDGY_BASE_URL}/likes?id=${id}`)
+    expect(fetch.mock.calls[i + 3][0]).toBe(`${BRIDGY_BASE_URL}/likes?id=${id}&token=towkin`)
     expect(fetch.mock.calls[i + 3][1].body).toBe(`likes ${shortcode}`)
   }
 
@@ -167,6 +178,7 @@ test('poll, skip comments and likes', async () => {
     instagramUsername: 'snarfed',
     'instagramPost-abc': {c: 3, l: 5},
     'instagramPost-xyz': {c: 0, l: 0},
+    token: 'towkin',
   })
 })
 

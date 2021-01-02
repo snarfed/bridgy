@@ -28,12 +28,11 @@ function schedulePoll() {
     }
   })
   browser.alarms.create('bridgy-instagram-poll', {
-    delayInMinutes: 0,
+    delayInMinutes: 5,
     periodInMinutes: FREQUENCY_MIN,
   })
 }
 
 login().then(() => {
   schedulePoll()
-  doPoll()
 })

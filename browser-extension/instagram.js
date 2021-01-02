@@ -17,18 +17,25 @@ function injectGlobals(newGlobals) {
  * Polls the user's IG photos, forwards new comments and likes to Bridgy.
  */
 async function poll() {
-  const data = await browser.storage.sync.get(['instagramUsername'])
-  let username = null
-  if (data.instagramUsername) {
-    username = data.instagramUsername
-  } else {
+  const data = await browser.storage.sync.get(['instagramUsername', 'token'])
+
+  const token = data.token
+  if (!token) {
+    console.error('No stored token!')
+    return
+  }
+
+  // extract Instagram username from a logged in home page fetch
+  let username = data.instagramUsername
+  if (!username) {
     username = await forward('/', '/homepage')
     if (!username)
       return
     await browser.storage.sync.set({instagramUsername: username})
   }
 
-  const activities = await forward(`/${username}/`, '/profile')
+  // extract posts (activities) from profile fetch
+  const activities = await forward(`/${username}/`, `/profile?token=${token}`)
   if (!activities)
     return
 
@@ -51,14 +58,15 @@ async function poll() {
     }
 
     // fetch post permalink for comments
-    const resolved = await forward(`/p/${shortcode}/`, '/post')
+    const resolved = await forward(`/p/${shortcode}/`, `/post?token=${token}`)
     if (!resolved) {
       console.warn(`Bridgy couldn't translate post HTML for ${shortcode}`)
       continue
     }
 
     // fetch likes
-    if (!await forward(`/graphql/query/?query_hash=d5d763b1e2acf209d62d22d184488e57&variables={"shortcode":"${shortcode}","include_reel":false,"first":100}`, `/likes?id=${activity.id}`)) {
+    if (!await forward(`/graphql/query/?query_hash=d5d763b1e2acf209d62d22d184488e57&variables={"shortcode":"${shortcode}","include_reel":false,"first":100}`,
+                       `/likes?id=${activity.id}&token=${token}`)) {
       console.warn(`Bridgy couldn't translate likes for ${shortcode}`)
       continue
     }
