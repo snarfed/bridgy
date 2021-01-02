@@ -27,6 +27,7 @@
         "1024": "bridgy_logo_square_1024.jpg"
     },
     "options_ui": {
-        "page": "options.html"
+        "page": "options.html",
+        "browser_style": true
     }
 }

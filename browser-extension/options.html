@@ -4,9 +4,23 @@
 <head>
   <meta charset="utf-8"/>
   <script type="module" src="./options.js"></script>
+  <style type="text/css">
+    a, button, span { font-weight: bold; }
+    li { list-style: none; }
+  </style>
 </head>
 
 <body>
-  <button id="reconnect">Reconnect to Bridgy</button>
+  <ul>
+    <li>Instagram username: <a id="username"></a></li>
+    <li>Last success: <span id="last-success"></span></li>
+    <li>Last attempt: <span id="last-attempt"></span></li>
+    <li>Posts seen: <span id="posts"></span></li>
+    <li>Comments seen: <span id="comments"></span></li>
+    <li>Likes seen: <span id="likes"></span></li>
+    <br>
+    <li>Bridgy token: <span id="token"></span></li>
+    <li><button id="reconnect">Reconnect to Bridgy</button></li>
+  </ul>
 </body>
 </html>
