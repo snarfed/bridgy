@@ -17,16 +17,11 @@ import {poll} from './instagram.js'
 
 const FREQUENCY_MIN = 30
 
-function doPoll(alarm) {
-  console.log('Starting poll...')
-  poll().then(() => console.log('Done!'))
-}
-
 function schedulePoll() {
   console.log(`Scheduling poll every ${FREQUENCY_MIN}m`)
   browser.alarms.onAlarm.addListener((alarm) => {
     if (alarm.name == 'bridgy-instagram-poll') {
-      doPoll()
+      poll()
     }
   })
   browser.alarms.create('bridgy-instagram-poll', {

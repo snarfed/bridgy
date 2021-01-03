@@ -17,8 +17,9 @@ function injectGlobals(newGlobals) {
  * Polls the user's IG photos, forwards new comments and likes to Bridgy.
  */
 async function poll() {
-  const data = await browser.storage.sync.get(['instagramUsername', 'token'])
+  console.log('Starting poll...')
 
+  const data = await browser.storage.sync.get(['instagramUsername', 'token'])
   const token = data.token
   if (!token) {
     console.error('No stored token!')
@@ -77,6 +78,7 @@ async function poll() {
   await postBridgy(`/poll?username=${username}`)
 
   await browser.storage.sync.set({instagramLastSuccess: Date.now()})
+  console.log('Done!')
 }
 
 
