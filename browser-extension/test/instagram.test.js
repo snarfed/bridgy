@@ -100,11 +100,20 @@ test('forward', async () => {
   ])
 })
 
+test('forward, non-JSON response from Bridgy', async () => {
+  fetch.mockResponseOnce('ig resp')
+  fetch.mockResponseOnce('')  // not valid JSON
+  expect(await forward('/ig-path', '/br-path')).toBeNull()
+})
+
 test('poll, no stored token', async () => {
   // no token stored
   browser.storage.sync.data = {}
   await poll()
+
   expect(fetch.mock.calls.length).toBe(0)
+  expect(browser.storage.sync.data.instagramLastStart).toBeUndefined()
+  expect(browser.storage.sync.data.instagramLastSuccess).toBeUndefined()
 })
 
 test('poll, no stored username', async () => {
@@ -131,11 +140,10 @@ test('poll, no stored username', async () => {
   expect(fetch.mock.calls[0][0]).toBe(`${INSTAGRAM_BASE_URL}/`)
   expect(fetch.mock.calls[1][0]).toBe(`${BRIDGY_BASE_URL}/homepage`)
 
-  expect(await browser.storage.sync.get()).toEqual({
+  expect(await browser.storage.sync.get()).toMatchObject({
     instagramUsername: 'snarfed',
     'instagramPost-abc': {c: 3, l: 5},
     'instagramPost-xyz': {c: 0, l: 0},
-    token: 'towkin',
   })
 
   expect(fetch.mock.calls[2][0]).toBe(`${INSTAGRAM_BASE_URL}/snarfed/`)
@@ -153,6 +161,10 @@ test('poll, no stored username', async () => {
   }
 
   expect(fetch.mock.calls[12][0]).toBe(`${BRIDGY_BASE_URL}/poll?username=snarfed`)
+
+  // this will be NaN if either value is undefined
+  expect(browser.storage.sync.data.instagramLastSuccess -
+         browser.storage.sync.data.instagramLastStart).toBeLessThan(2000) // ms
 })
 
 test('poll, skip comments and likes', async () => {
@@ -174,16 +186,43 @@ test('poll, skip comments and likes', async () => {
   expect(fetch.mock.calls[0][0]).toBe(`${INSTAGRAM_BASE_URL}/snarfed/`)
   expect(fetch.mock.calls[2][0]).toBe(`${INSTAGRAM_BASE_URL}/p/xyz/`)
 
-  expect(await browser.storage.sync.get()).toEqual({
+  expect(await browser.storage.sync.get()).toMatchObject({
     instagramUsername: 'snarfed',
     'instagramPost-abc': {c: 3, l: 5},
     'instagramPost-xyz': {c: 0, l: 0},
-    token: 'towkin',
   })
+
+  // this will be NaN if either value is undefined
+  expect(browser.storage.sync.data.instagramLastSuccess -
+         browser.storage.sync.data.instagramLastStart).toBeLessThan(2000) // ms
 })
 
 test('poll, existing username stored', async () => {
   await browser.storage.sync.set({instagramUsername: 'snarfed'})
   await poll()
   expect(fetch.mock.calls[0][0]).toBe(`${INSTAGRAM_BASE_URL}/snarfed/`)
+})
+
+test('poll, profile error', async () => {
+  fetch.mockResponseOnce('ig profile')
+  fetch.mockResponseOnce('{}', {status: 400})  // Bridgy returns an HTTP error
+
+  await browser.storage.sync.set({instagramUsername: 'snarfed'})
+  await poll()
+
+  expect(fetch.mock.calls.length).toBe(2)
+  expect(browser.storage.sync.data.instagramLastStart).toBeDefined()
+  expect(browser.storage.sync.data.instagramLastSuccess).toBeUndefined()
+})
+
+test('poll, Bridgy non-JSON response', async () => {
+  fetch.mockResponseOnce('ig profile')
+  fetch.mockResponseOnce('xyz')  // Bridgy returns invalid JSON
+
+  await browser.storage.sync.set({instagramUsername: 'snarfed'})
+  await poll()
+
+  expect(fetch.mock.calls.length).toBe(2)
+  expect(browser.storage.sync.data.instagramLastStart).toBeDefined()
+  expect(browser.storage.sync.data.instagramLastSuccess).toBeUndefined()
 })

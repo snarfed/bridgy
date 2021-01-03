@@ -8,6 +8,8 @@ document.addEventListener('DOMContentLoaded', function () {
     document.querySelector('#username').innerText = data.instagramUsername
     document.querySelector('#username').href = `https://www.instagram.com/${data.instagramUsername}/`
     document.querySelector('#token').innerText = data.token
+    document.querySelector('#last-start').innerText = new Date(data.instagramLastStart).toLocaleString()
+    document.querySelector('#last-success').innerText = new Date(data.instagramLastSuccess).toLocaleString()
 
     const posts = Object.entries(data).filter(x => x[0].startsWith('instagramPost-'))
     const comments = posts.reduce((sum, cur) => sum + cur[1].c, 0)

@@ -25,6 +25,8 @@ async function poll() {
     return
   }
 
+  await browser.storage.sync.set({instagramLastStart: Date.now()})
+
   // extract Instagram username from a logged in home page fetch
   let username = data.instagramUsername
   if (!username) {
@@ -73,6 +75,8 @@ async function poll() {
   }
 
   await postBridgy(`/poll?username=${username}`)
+
+  await browser.storage.sync.set({instagramLastSuccess: Date.now()})
 }
 
 
@@ -185,7 +189,13 @@ async function postBridgy(path, body) {
 
   console.debug(`Got ${res.status}`)
   if (res.ok) {
-    const json = await res.json()
+    var json
+    try {
+      json = await res.json()
+    } catch (err) {
+      console.error(err)
+      return null
+    }
     console.debug(json)
     return json
   } else {

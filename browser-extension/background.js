@@ -6,6 +6,8 @@ import {poll} from './instagram.js'
  *
  * token: [string],
  * instagramUsername: [string],
+ * instagramLastStart: [Date],
+ * instagramLastSuccess: [Date],
  * 'instagramPost-[shortcode]': {
  *   c: [integer],  // number of commenst
  *   l: [integer],  // number of likes
