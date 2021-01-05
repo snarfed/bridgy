@@ -12,6 +12,7 @@ from oauth_dropins.webutil.util import json_dumps, json_loads
 import webapp2
 
 from oauth_dropins import indieauth
+from oauth_dropins import instagram as od_instagram
 
 from models import Activity, Domain, Source, MAX_AUTHOR_URLS
 import util
@@ -50,6 +51,7 @@ class Instagram(Source):
   CAN_PUBLISH = False
   AUTO_POLL = False
   SLOW_POLL = FAST_POLL = timedelta(0)
+  OAUTH_START_HANDLER = None
   URL_CANONICALIZER = util.UrlCanonicalizer(
     domain=GR_CLASS.DOMAIN,
     subdomain='www',
@@ -93,7 +95,10 @@ class Instagram(Source):
 
   @classmethod
   def button_html(cls, feature, **kwargs):
-    return super(cls, cls).button_html(feature, form_method='get', **kwargs)
+    return od_instagram.StartHandler.button_html(
+      '/about#browser-extension',
+      form_method='get',
+      image_prefix='/oauth_dropins/static/')
 
   def get_activities_response(self, *args, **kwargs):
     """Uses Activity entities stored in the datastore."""
