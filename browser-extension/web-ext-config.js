@@ -6,6 +6,7 @@ module.exports = {
   ignoreFiles: [
     'babel.config.json',
     'package-lock.json',
+    'screenshot*',
     'test',
     'web-ext-artifacts',
     'yarn.lock',
