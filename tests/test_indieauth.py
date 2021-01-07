@@ -61,4 +61,4 @@ class IndieAuthTest(ModelsTest):
 
     self.assert_entities_equal([
       Domain(id='snarfed.org', tokens=['towkin'], auth=self.auth_entity.key),
-    ], Domain.query().fetch())
+    ], Domain.query().fetch(), ignore=('created', 'updated'))

@@ -1159,3 +1159,5 @@ class Domain(StringIdModel):
   """
   tokens = ndb.StringProperty(repeated=True)
   auth = ndb.KeyProperty(IndieAuth)
+  created = ndb.DateTimeProperty(auto_now_add=True)
+  updated = ndb.DateTimeProperty(auto_now=True)
