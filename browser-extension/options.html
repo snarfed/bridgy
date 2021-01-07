@@ -7,12 +7,18 @@
   <style type="text/css">
     a, button, span { font-weight: bold; }
     li { list-style: none; }
+    .ok { color: green; }
+    .pending { color: gold; }
+    .error { color: red; }
   </style>
 </head>
 
 <body>
   <ul>
-    <li>Instagram username: <a id="username" target="_blank"></a></li>
+    <li><b>Status</b>: <span id="status"></span></li>
+    <br>
+    <li>Bridgy user page: <a id="user-page" target="_blank"></a></li>
+    <li>Instagram account: <a id="username" target="_blank"></a></li>
     <li>Last success: <span id="last-success"></span></li>
     <li>Last attempt: <span id="last-start"></span></li>
     <br>

@@ -3,7 +3,7 @@
 import './browser-polyfill.js'
 
 import {login} from '../common.js'
-import {poll} from './instagram.js'
+import {findCookies, poll} from './instagram.js'
 
 function update() {
   browser.storage.sync.get().then(data => {
@@ -12,6 +12,8 @@ function update() {
     if (data.instagramUsername) {
       document.querySelector('#username').innerText = data.instagramUsername
       document.querySelector('#username').href = `https://www.instagram.com/${data.instagramUsername}/`
+      document.querySelector('#user-page').innerText = `brid.gy/instagram/${data.instagramUsername}`
+      document.querySelector('#user-page').href = `https://brid.gy/instagram/${data.instagramUsername}`
     }
 
     if (data.instagramLastStart) {
@@ -27,7 +29,31 @@ function update() {
     document.querySelector('#posts').innerText = posts.length
     document.querySelector('#comments').innerText = comments
     document.querySelector('#likes').innerText = likes
+
+    findCookies().then((cookies) => updateStatus(data, cookies))
   })
+}
+
+function updateStatus(data, cookies) {
+    // Link to console logs for reporting bugs:
+    // about:devtools-toolbox?type=extension&id=bridgy2%40snarfed.org
+    let status = document.querySelector('#status')
+    if (!cookies) {
+      status.innerHTML = 'No Instagram cookie found. <a href="https://www.instagram.com/accounts/login/">Try logging in!</a>'
+      status.className = 'error'
+    } else if (!data.instagramLastStart) {
+      status.innerText = 'Not started yet'
+      status.className = 'pending'
+    } else if (!data.instagramLastSuccess) {
+      status.innerText = 'Poll is failing'
+      status.className = 'error'
+    } else if (data.instagramLastStart > data.instagramLastSuccess) {
+      status.innerText = 'Poll was working but is now failing'
+      status.className = 'error'
+    } else if (data.instagramLastSuccess > data.instagramLastStart) {
+      status.innerText = 'OK!'
+      status.className = 'ok'
+    }
 }
 
 document.addEventListener('DOMContentLoaded', function () {

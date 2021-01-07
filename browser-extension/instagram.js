@@ -205,4 +205,4 @@ async function postBridgy(path, body) {
   }
 }
 
-export {forward, poll, injectGlobals, INSTAGRAM_BASE_URL, BRIDGY_BASE_URL}
+export {findCookies, forward, poll, injectGlobals, INSTAGRAM_BASE_URL, BRIDGY_BASE_URL}
