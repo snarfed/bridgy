@@ -3,7 +3,7 @@
 import './browser-polyfill.js'
 
 import {login} from '../common.js'
-import {findCookies, poll} from './instagram.js'
+import {findCookies, poll, LOGIN_URL} from './instagram.js'
 
 function update() {
   browser.storage.sync.get().then(data => {
@@ -39,7 +39,7 @@ function updateStatus(data, cookies) {
     // about:devtools-toolbox?type=extension&id=bridgy2%40snarfed.org
     let status = document.querySelector('#status')
     if (!cookies) {
-      status.innerHTML = 'No Instagram cookie found. <a href="https://www.instagram.com/accounts/login/">Try logging in!</a>'
+      status.innerHTML = `No Instagram cookie found. <a href="${LOGIN_URL}">Try logging in!</a>`
       status.className = 'error'
     } else if (!data.instagramLastStart) {
       status.innerText = 'Not started yet'

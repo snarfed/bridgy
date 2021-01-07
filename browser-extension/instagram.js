@@ -3,7 +3,7 @@
 const INSTAGRAM_BASE_URL = 'https://www.instagram.com'
 const BRIDGY_BASE_URL = 'https://brid.gy/instagram/browser'
 // const BRIDGY_BASE_URL = 'http://localhost:8080/instagram/browser'
-
+const LOGIN_URL = 'https://www.instagram.com/accounts/login/'
 
 /**
  * Injects mock globals for tests.
@@ -205,4 +205,12 @@ async function postBridgy(path, body) {
   }
 }
 
-export {findCookies, forward, poll, injectGlobals, INSTAGRAM_BASE_URL, BRIDGY_BASE_URL}
+export {
+  findCookies,
+  forward,
+  injectGlobals,
+  poll,
+  BRIDGY_BASE_URL,
+  INSTAGRAM_BASE_URL,
+  LOGIN_URL,
+}

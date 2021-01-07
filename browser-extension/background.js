@@ -1,6 +1,6 @@
 import './browser-polyfill.js'
 import {login} from '../common.js'
-import {poll} from './instagram.js'
+import {findCookies, poll, LOGIN_URL} from './instagram.js'
 
 /* Local storage schema for this extension:
  *
@@ -29,6 +29,12 @@ function schedulePoll() {
     periodInMinutes: FREQUENCY_MIN,
   })
 }
+
+findCookies().then((cookies) => {
+  if (!cookies) {
+    browser.tabs.create({url: LOGIN_URL})
+  }
+})
 
 login().then(() => {
   schedulePoll()
