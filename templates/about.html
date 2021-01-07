@@ -447,7 +447,7 @@ GitHub</a>. Thank you!
 <li>Tweets from other people that
   <a href="https://support.twitter.com/articles/14023-what-are-replies-and-mentions">@-mention</a>
   you or contain links to your site.</li>
-<!-- TODO (browser extension) <li>Instagram comments and likes on your pictures.</li> -->
+<li>Instagram comments and likes on your pictures.</li>
 <li>Flickr comments and favorites on your photos.</li>
 <li>GitHub comments and emoji reactions on your issues and pull requests.</li>
 <li>Mastodon replies, favorites, boosts, mentions, and links to your site.</li>
@@ -700,6 +700,8 @@ it for webmention sources in order to be as compatible as possible.
 <p>Bridgy now uses a browser extension to pull back Instagram responses (ie <a href="https://indieweb.org/backfeed">backfeed</a>)!
 </p>
 <p>When you first install it, it opens a Bridgy tab for you to <a href="https://indieauth.net/">IndieAuth</a> into your web site. (Your site needs to support IndieAuth, like before.) After that, it runs in the background, forwarding responses to Bridgy to send back to your site like normal. You can see status info and poke it on the extension's settings page. Grab it <a href="https://chrome.google.com/webstore/detail/bridgy/lcpeamdhminbbjdfjbpmhgjgliaknflj">for Chrome</a> <a href="https://addons.mozilla.org/en-US/firefox/addon/bridgy/">or Firefox</a> and <a href="https://indieweb.org/discuss">let us know what you think</a>!
+</p>
+<p>(Caveat: the Bridgy browser extension is not currently compatible with the Firefox [Facebook Container](https://github.com/mozilla/contain-facebook) extension. If you use that, you'll need to disable it. Sorry for the inconvenience!)
 </p>
 <p>Instagram and Facebook have been thorns in Bridgy's side for many years now, as they both gradually locked down parts of their APIs that Bridgy needed. Facebook also had strong anti-scraping countermeasures, so we were <a href="#rip-facebook">forced to shut it down entirely</a>, but we <a href="https://github.com/snarfed/bridgy/issues/603">managed to scrape Instagram</a> enough to keep it limping along. <a href="https://github.com/snarfed/bridgy/issues/665">They recently stepped up their countermeasures too</a>, though, and we couldn't keep up.
 </p>
