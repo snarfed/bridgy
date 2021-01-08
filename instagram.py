@@ -143,9 +143,9 @@ class BrowserHandler(util.Handler):
     self.response.headers['Access-Control-Allow-Origin'] = '*'
     self.response.headers['Access-Control-Allow-Methods'] = '*'
 
-  def output(self, text):
+  def output(self, obj):
     self.response.headers['Content-Type'] = JSON_CONTENT_TYPE
-    self.response.write(json_dumps(text, indent=2))
+    self.response.write(json_dumps(obj, indent=2))
 
   def parse_activities(self):
     """Parses Instagram HTML (in the POST body) into logged in user and posts.
@@ -156,11 +156,11 @@ class BrowserHandler(util.Handler):
     # parse the Instagram profile HTML
     activities, actor = self.ig.html_to_activities(self.request.text)
     if not actor or not actor.get('username'):
-      self.abort(400, "Extension: Couldn't determine logged in Instagram user")
+      self.abort(400, "Couldn't determine logged in Instagram user")
 
     # check that the instagram account is public
     if not gr_source.Source.is_public(actor):
-      self.abort(400, 'Extension: Your Instagram account is private. Bridgy only supports public accounts.')
+      self.abort(400, 'Your Instagram account is private. Bridgy only supports public accounts.')
 
     return activities, actor
 
@@ -178,7 +178,7 @@ class BrowserHandler(util.Handler):
       if domain and token in domain.tokens:
         return
 
-    self.abort(400, f'Extension: token {token} is not authorized for any of: {domains}')
+    self.abort(400, f'Token {token} is not authorized for any of: {domains}')
 
 
 class HomepageHandler(BrowserHandler):
@@ -188,7 +188,7 @@ class HomepageHandler(BrowserHandler):
   """
   def post(self):
     _, actor = self.parse_activities()
-    logging.info(f"Extension: returning {actor['username']}")
+    logging.info(f"Returning {actor['username']}")
     self.output(actor['username'])
 
 
@@ -208,7 +208,7 @@ class ProfileHandler(BrowserHandler):
     Instagram.create_new(self, actor=actor)
 
     ids = ' '.join(a['id'] for a in activities)
-    logging.info(f"Extension: returning activities for {actor['username']}: {ids}")
+    logging.info(f"Returning activities for {actor['username']}: {ids}")
     self.output(activities)
 
 
@@ -226,16 +226,16 @@ class PostHandler(BrowserHandler):
     self.check_token(actor)
 
     if len(activities) != 1:
-      self.abort(400, f'Extension: Expected 1 Instagram post, got {len(activities)}')
+      self.abort(400, f'Expected 1 Instagram post, got {len(activities)}')
     activity_data = activities[0]
     id = activity_data.get('id')
     if not id:
-      self.abort(400, 'Extension: Instagram post missing id')
+      self.abort(400, 'Instagram post missing id')
 
     username = activity_data['object']['author']['username']
     source = Instagram.get_by_id(username)
     if not source:
-      self.abort(404, f'Extension: No account found for Instagram user {username}')
+      self.abort(404, f'No account found for Instagram user {username}')
 
     activity = Activity.get_by_id(id)
     if activity:
@@ -251,7 +251,7 @@ class PostHandler(BrowserHandler):
 
     # store the new activity
     Activity(id=id, source=source.key, activity_json=json_dumps(activity_data)).put()
-    logging.info(f"Extension: stored activity {id}")
+    logging.info(f"Stored activity {id}")
     self.output(activity_data)
 
 
@@ -271,11 +271,11 @@ class LikesHandler(BrowserHandler):
     # validate request
     parsed_id = util.parse_tag_uri(id)
     if not parsed_id:
-      self.abort(400, f'Extension: Expected id to be tag URI; got {id}')
+      self.abort(400, f'Expected id to be tag URI; got {id}')
 
     activity = Activity.get_by_id(id)
     if not activity:
-      self.abort(404, f'Extension: No Instagram post found for id {id}')
+      self.abort(404, f'No Instagram post found for id {id}')
 
     activity_data = json_loads(activity.activity_json)
     obj = activity_data['object']
@@ -299,7 +299,7 @@ class LikesHandler(BrowserHandler):
     activity.put()
 
     like_ids = ' '.join(l['id'] for l in new_likes)
-    logging.info(f"Extension: stored likes for activity {id}: {like_ids}")
+    logging.info(f"Stored likes for activity {id}: {like_ids}")
     self.output(new_likes)
 
 
@@ -312,11 +312,23 @@ class PollHandler(BrowserHandler):
     username = util.get_required_param(self, 'username')
     source = Instagram.get_by_id(username)
     if not source:
-      self.abort(404, f'Extension: No account found for Instagram user {username}')
+      self.abort(404, f'No account found for Instagram user {username}')
 
     util.add_poll_task(source)
 
     self.output('OK')
+
+
+class TokenDomainsHandler(BrowserHandler):
+  """Returns the domains that a token is registered for."""
+  def post(self):
+    token = util.get_required_param(self, 'token')
+
+    domains = [d.key.id() for d in Domain.query(Domain.tokens == token)]
+    if not domains:
+      self.abort(404, f'No registered domains for token {token}')
+
+    self.output(domains)
 
 
 ROUTES = [
@@ -325,4 +337,5 @@ ROUTES = [
   ('/instagram/browser/post', PostHandler),
   ('/instagram/browser/likes', LikesHandler),
   ('/instagram/browser/poll', PollHandler),
+  ('/instagram/browser/token-domains', TokenDomainsHandler),
 ]

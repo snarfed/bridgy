@@ -320,10 +320,20 @@ class InstagramTest(ModelsTest):
     self.assertEqual(200, resp.status_int, resp.text)
     self.assertEqual('OK', resp.json)
 
-
   def test_poll_no_source(self):
     self.stub_create_task()
     resp = app.application.get_response(
       '/instagram/browser/poll?username=snarfed', method='POST')
     self.assertEqual(404, resp.status_int)
     self.assertIn('No account found for Instagram user snarfed', resp.text)
+
+  def test_token_domains(self):
+    resp = app.application.get_response(
+      '/instagram/browser/token-domains?token=towkin', method='POST')
+    self.assertEqual(200, resp.status_int)
+    self.assertEqual(['snarfed.org'], resp.json)
+
+  def test_token_domains_missing(self):
+    resp = app.application.get_response(
+      '/instagram/browser/token-domains?token=unknown', method='POST')
+    self.assertEqual(404, resp.status_int)

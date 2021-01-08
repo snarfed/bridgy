@@ -1,9 +1,9 @@
 'use strict'
 
 const INSTAGRAM_BASE_URL = 'https://www.instagram.com'
+const INSTAGRAM_LOGIN_URL = `${INSTAGRAM_BASE_URL}/accounts/login/`
 const BRIDGY_BASE_URL = 'https://brid.gy/instagram/browser'
 // const BRIDGY_BASE_URL = 'http://localhost:8080/instagram/browser'
-const LOGIN_URL = 'https://www.instagram.com/accounts/login/'
 
 /**
  * Injects mock globals for tests.
@@ -210,7 +210,8 @@ export {
   forward,
   injectGlobals,
   poll,
+  postBridgy,
   BRIDGY_BASE_URL,
   INSTAGRAM_BASE_URL,
-  LOGIN_URL,
+  INSTAGRAM_LOGIN_URL,
 }
