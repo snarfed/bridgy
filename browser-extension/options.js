@@ -6,6 +6,7 @@ import {login} from '../common.js'
 import {findCookies, poll, LOGIN_URL} from './instagram.js'
 
 function update() {
+  console.debug('Updating options page fields')
   browser.storage.sync.get().then(data => {
     document.querySelector('#token').innerText = data.token
 
@@ -59,5 +60,24 @@ function updateStatus(data, cookies) {
 document.addEventListener('DOMContentLoaded', function () {
   document.querySelector('#poll').addEventListener('click', () => poll().then(update))
   document.querySelector('#reconnect').addEventListener('click', () => login(true))
+
+  console.debug('Scheduling options page refresh every minute')
+  browser.alarms.onAlarm.addListener((alarm) => {
+    if (alarm.name == 'bridgy-options-page-refresh') {
+      update()
+    }
+  })
+  browser.alarms.create('bridgy-options-page-refresh', {
+    periodInMinutes: 1,
+  })
   update()
+
+  // oddly, this doesn't work. the options page's visibilityState is always
+  // 'visible' when it exists. hrm.
+  // document.addEventListener('visibilitychange', function() {
+  //   if (document.visibilityState === 'visible') {
+  //     update()
+  //   }
+  // })
 })
+
