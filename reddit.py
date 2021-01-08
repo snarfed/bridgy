@@ -66,7 +66,8 @@ class Reddit(models.Source):
     if not urls:
       return []
 
-    url_query = ' OR '.join([f'"{u}"' for u in urls])
+    # Search syntax: https://www.reddit.com/wiki/search
+    url_query = ' OR '.join([f'site:"{u}" OR selftext:"{u}"' for u in urls])
     return self.get_activities(
       search_query=url_query, group_id=gr_source.SEARCH, etag=self.last_activities_etag,
       fetch_replies=True, fetch_likes=False, fetch_shares=False, count=50)
