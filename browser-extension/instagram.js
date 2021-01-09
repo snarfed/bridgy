@@ -191,6 +191,8 @@ async function postBridgy(path, body) {
   console.debug(`Sending to ${url}`)
 
   try {
+    // TODO: support optional timeout via signal and AbortHandler
+    // https://dmitripavlutin.com/timeout-fetch-request/
     const res = await fetch(url, {
       method: 'POST',
       body: body,

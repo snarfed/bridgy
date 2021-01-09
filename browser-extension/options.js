@@ -44,10 +44,10 @@ async function update() {
   const cookies = await findCookies()
   let status = document.querySelector('#status')
   if (!cookies) {
-    status.innerHTML = `No Instagram cookie found. <a href="${INSTAGRAM_LOGIN_URL}">Try logging in!</a>`
+    status.innerHTML = `No Instagram cookie found. <a href="${INSTAGRAM_LOGIN_URL}" target="_blank">Try logging in!</a>`
     status.className = 'error'
   } else if (!domains) {
-    status.innerHTML = `Not connected to Bridgy. <a href="${INDIEAUTH_START}?token=${token}">Connect now!</a>`
+    status.innerHTML = `Not connected to Bridgy. <a href="${INDIEAUTH_START}?token=${token} target="_blank"">Connect now!</a>`
     status.className = 'error'
   } else if (!data.instagramLastStart) {
     status.innerHTML = 'Not started yet'
