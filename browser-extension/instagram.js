@@ -121,6 +121,10 @@ async function findCookies(path) {
         (await browser.contextualIdentities.query({})).map(s => s.cookieStoreId))
   }
 
+  if (storeIds.find(id => id.startsWith('firefox-container-'))) {
+    console.debug('Detected active Firefox Container add-on!')
+  }
+
   for (const storeId of storeIds) {
     const cookies = await browser.cookies.getAll({
       storeId: storeId,
@@ -130,6 +134,7 @@ async function findCookies(path) {
       const header = cookies.map(c => `${c.name}=${c.value}`).join('; ')
       // console.debug(header)
       if (header.includes('sessionid=')) {
+        console.debug(`Using Instagram cookie ${header}`)
         return header
       }
     }
@@ -184,24 +189,24 @@ async function getInstagram(path) {
 async function postBridgy(path, body) {
   const url = `${BRIDGY_BASE_URL}${path}`
   console.debug(`Sending to ${url}`)
-  const res = await fetch(url, {
-    method: 'POST',
-    body: body,
-  })
 
-  console.debug(`Got ${res.status}`)
-  if (res.ok) {
-    var json
-    try {
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      body: body,
+    })
+    console.debug(`Got ${res.status}`)
+    if (res.ok) {
+      var json
       json = await res.json()
-    } catch (err) {
-      console.error(err)
-      return null
+      console.debug(json)
+      return json
+    } else {
+      console.debug(await res.text())
     }
-    console.debug(json)
-    return json
-  } else {
-    console.debug(await res.text())
+  } catch (err) {
+    console.error(err)
+    return null
   }
 }
 

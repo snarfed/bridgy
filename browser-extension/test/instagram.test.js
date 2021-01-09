@@ -38,7 +38,7 @@ beforeAll(() => {
       },
       cookies: {
         getAll: jest.fn(),
-        getAllCookieStores: async () => [{id: 1}]
+        getAllCookieStores: async () => [{id: '1'}]
       },
       storage: {
         sync: {

@@ -12,11 +12,12 @@
         }
     },
     "permissions": [
-       "*://*.brid.gy/*",
-       "*://*.instagram.com/*",
-       "alarms",
-       "cookies",
-       "storage"
+        "*://*.brid.gy/*",
+        "*://*.instagram.com/*",
+        "alarms",
+        "contextualIdentities",
+        "cookies",
+        "storage"
     ],
     "background": {
         "persistent": true,

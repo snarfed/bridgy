@@ -2,12 +2,12 @@
 
 import './browser-polyfill.js'
 
-import {update} from './options.js'
+import {pollNow, update} from './options.js'
 import {poll} from './instagram.js'
 import {login} from './common.js'
 
 document.addEventListener('DOMContentLoaded', function () {
-  document.querySelector('#poll').addEventListener('click', () => poll().then(update))
+  document.querySelector('#poll').addEventListener('click', () => pollNow())
   document.querySelector('#reconnect').addEventListener('click', () => login(true))
 
   console.debug('Scheduling options page refresh every minute')
