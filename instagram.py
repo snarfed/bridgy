@@ -2,7 +2,6 @@
 """
 from datetime import timedelta
 import logging
-from operator import itemgetter
 
 from google.cloud import ndb
 from granary import instagram as gr_instagram
@@ -18,23 +17,6 @@ from models import Activity, Domain, Source, MAX_AUTHOR_URLS
 import util
 
 JSON_CONTENT_TYPE = 'application/json'
-
-
-def merge_by_id(existing, updates):
-  """Merges two lists of AS1 objects by id.
-
-  Overwrites the objects in the existing list with objects in the updates list
-  with the same id. Requires all objects to have ids.
-
-  Args:
-    existing: sequence of AS1 dicts
-    updates: sequence of AS1 dicts
-
-  Returns: merged list of AS1 dicts
-  """
-  objs = {o['id']: o for o in existing}
-  objs.update({o['id']: o for o in updates})
-  return sorted(objs.values(), key=itemgetter('id'))
 
 
 class Instagram(Source):
@@ -213,7 +195,7 @@ class ProfileHandler(BrowserHandler):
 
 
 class PostHandler(BrowserHandler):
-  """Parses an Instagram post and creates new Responses as needed.
+  """Parses an Instagram post and creates or updates a stored Activity.
 
   Request body is HTML from an IG photo/video permalink, eg
   https://www.instagram.com/p/ABC123/ , for a logged in user.
@@ -227,32 +209,32 @@ class PostHandler(BrowserHandler):
 
     if len(activities) != 1:
       self.abort(400, f'Expected 1 Instagram post, got {len(activities)}')
-    activity_data = activities[0]
-    id = activity_data.get('id')
+    new_activity = activities[0]
+    id = new_activity.get('id')
     if not id:
       self.abort(400, 'Instagram post missing id')
 
-    username = activity_data['object']['author']['username']
+    username = new_activity['object']['author']['username']
     source = Instagram.get_by_id(username)
     if not source:
       self.abort(404, f'No account found for Instagram user {username}')
 
     activity = Activity.get_by_id(id)
     if activity:
-      # we already have this activity! merge in any new comments.
+      # we already have this activity! merge in the existing comments.
       existing = json_loads(activity.activity_json)
-      comments = merge_by_id(
-        existing['object'].get('replies', {}).get('items', []),
-        activity_data['object'].get('replies', {}).get('items', []))
-      activity_data['object']['replies'] = {
-        'items': comments,
-        'totalItems': len(comments),
-      }
+      replies = existing['object'].setdefault('replies', {})
+      new_replies = new_activity['object'].get('replies', {}).get('items', [])
+      gr_source.merge_by_id(replies, 'items', new_replies)
+      replies['totalItems'] = len(existing_replies['items'])
+      activity.activity_json = json_dumps(existing)
+      activity.put()
+    else:
+      # store the new activity
+      Activity(id=id, source=source.key, activity_json=json_dumps(new_activity)).put()
 
-    # store the new activity
-    Activity(id=id, source=source.key, activity_json=json_dumps(activity_data)).put()
     logging.info(f"Stored activity {id}")
-    self.output(activity_data)
+    self.output(new_activity)
 
 
 class LikesHandler(BrowserHandler):
@@ -294,7 +276,7 @@ class LikesHandler(BrowserHandler):
     new_likes = self.ig._json_media_node_to_activity(container)['object']['tags']
 
     # merge them into existing activity
-    obj['tags'] = merge_by_id(obj.get('tags', []), new_likes)
+    obj['tags'] = gr_source.merge_by_id(obj.get('tags', []), new_likes)
     activity.activity_json = json_dumps(activity_data)
     activity.put()
 
