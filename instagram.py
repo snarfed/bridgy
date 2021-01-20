@@ -226,7 +226,7 @@ class PostHandler(BrowserHandler):
       replies = existing['object'].setdefault('replies', {})
       new_replies = new_activity['object'].get('replies', {}).get('items', [])
       gr_source.merge_by_id(replies, 'items', new_replies)
-      replies['totalItems'] = len(existing_replies['items'])
+      replies['totalItems'] = len(replies['items'])
       activity.activity_json = json_dumps(existing)
       activity.put()
     else:
@@ -276,7 +276,7 @@ class LikesHandler(BrowserHandler):
     new_likes = self.ig._json_media_node_to_activity(container)['object']['tags']
 
     # merge them into existing activity
-    obj['tags'] = gr_source.merge_by_id(obj.get('tags', []), new_likes)
+    gr_source.merge_by_id(obj, 'tags', new_likes)
     activity.activity_json = json_dumps(activity_data)
     activity.put()
 
