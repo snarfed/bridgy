@@ -701,11 +701,9 @@ it for webmention sources in order to be as compatible as possible.
 </p>
 <p>When you first install it, it opens a Bridgy tab for you to <a href="https://indieauth.net/">IndieAuth</a> into your web site. (Your site needs to support IndieAuth, like before.) After that, it runs in the background, forwarding responses to Bridgy to send back to your site like normal. You can see status info and poke it on the extension's settings page. Grab it <a href="https://chrome.google.com/webstore/detail/bridgy/lcpeamdhminbbjdfjbpmhgjgliaknflj">for Chrome</a> <a href="https://addons.mozilla.org/en-US/firefox/addon/bridgy/">or Firefox</a> and <a href="https://indieweb.org/discuss">let us know what you think</a>!
 </p>
-<p>(Caveat: the Bridgy browser extension is not currently compatible with the Firefox [Facebook Container](https://github.com/mozilla/contain-facebook) extension. If you use that, you'll need to disable it. Sorry for the inconvenience!)
-</p>
 <p>Instagram and Facebook have been thorns in Bridgy's side for many years now, as they both gradually locked down parts of their APIs that Bridgy needed. Facebook also had strong anti-scraping countermeasures, so we were <a href="#rip-facebook">forced to shut it down entirely</a>, but we <a href="https://github.com/snarfed/bridgy/issues/603">managed to scrape Instagram</a> enough to keep it limping along. <a href="https://github.com/snarfed/bridgy/issues/665">They recently stepped up their countermeasures too</a>, though, and we couldn't keep up.
 </p>
-<p>Fortunately, Bridgy users can log into Instagram legitimately, in their own browsers, so a browser extension lets us piggyback on that legit usage and scrape out the data they want us to have. Shh, don't tell, it's our little (open source) secret.
+<p>Fortunately, Bridgy users can log into Instagram legitimately, in their own browsers, so a browser extension lets them send Bridgy their own Instagram data. Shh, don't tell, it's our little (open source) secret.
 </p>
 </li>
 
