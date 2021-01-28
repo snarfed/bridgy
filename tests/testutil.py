@@ -47,7 +47,7 @@ class FakeGrSource(gr_source.Source):
   """Fake granary source class.
 
   Attributes:
-    activities, like, reaction, share, event, rsvp, etag, search_results,
+    activities, actor, like, reaction, share, event, rsvp, etag, search_results,
     last_search_query, blocked_ids
   """
   NAME = 'FakeSource'
@@ -106,17 +106,30 @@ class FakeGrSource(gr_source.Source):
       obj = activity['object']
       obj['tags'] = [tag for tag in obj.get('tags', []) if
                      'verb' not in tag or
-                     (tag['verb'] == 'like' and fetch_likes) or
+                     (tag['verb'] in ('like', 'react') and fetch_likes) or
                      (tag['verb'] == 'share' and fetch_shares) or
-                     (tag['verb'] == 'mention' and fetch_mentions) or
-                     tag['verb'] == 'react']
-      if 'replies' in obj and not fetch_replies:
-        obj['replies']['items'] = []
+                     (tag['verb'] == 'mention' and fetch_mentions)]
+      if not fetch_replies:
+        obj.pop('replies', None)
 
     return {
       'items': activities,
       'etag': getattr(self, 'etag', None),
     }
+
+  def scraped_to_activities(self, scraped, count=None, fetch_extras=False):
+    activities = self.get_activities(
+      count=count, fetch_replies=fetch_extras, fetch_likes=fetch_extras,
+      fetch_shares=fetch_extras, fetch_mentions=fetch_extras)
+    return activities, self.actor
+
+  def scraped_to_activity(self, scraped):
+    activities = self.get_activities(count=1, fetch_replies=True)
+    return activities[0] if activities else None, self.actor
+
+  def merge_scraped_reactions(self, scraped, activity):
+    gr_source.merge_by_id(activity['object'], 'tags', [self.like])
+    return [self.like]
 
   def create(self, obj, include_link=gr_source.OMIT_LINK,
              ignore_formatting=False):
@@ -396,8 +409,16 @@ class ModelsTest(HandlerTest):
       entity.features = ['listen']
       entity.put()
 
+    self.actor = FakeGrSource.actor = {
+      'objectType': 'person',
+      'id': 'tag:fa.ke,2013:654321',
+      'username': 'snarfed',
+      'displayName': 'Ryan B',
+      'url': 'https://snarfed.org/',
+    }
+
     # activities
-    self.activities = [{
+    self.activities = FakeGrSource.activities = [{
       'id': 'tag:source.com,2013:%s' % id,
       'url': 'http://fa.ke/post/url',
       'object': {
@@ -420,7 +441,10 @@ class ModelsTest(HandlerTest):
           'verb': 'like',
           'id': 'tag:source.com,2013:%s_liked_by_alice' % id,
           'object': {'url': 'http://example.com/abc'},
-          'author': {'url': 'http://example.com/alice'},
+          'author': {
+            'id': 'tag:source.com,2013:alice',
+            'url': 'http://example.com/alice',
+          },
         }, {
           'id': 'tag:source.com,2013:%s_reposted_by_bob' % id,
           'objectType': 'activity',
@@ -437,7 +461,6 @@ class ModelsTest(HandlerTest):
         }],
       },
     } for id in ('a', 'b', 'c')]
-    FakeGrSource.activities = self.activities
 
     # responses
     self.responses = []
