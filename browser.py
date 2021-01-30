@@ -214,8 +214,12 @@ class ProfileHandler(BrowserHandler):
   Response body is the JSON list of translated ActivityStreams activities.
   """
   def post(self):
-    activities, actor = self.gr_source().scraped_to_activities(
-      self.request.text)
+    gr_src = self.gr_source()
+
+    activities, actor = gr_src.scraped_to_activities(self.request.text)
+    if not actor:
+      actor = gr_src.scraped_to_actor(self.request.text)
+
     self.check_silo_user(actor)
     self.check_token(actor)
 

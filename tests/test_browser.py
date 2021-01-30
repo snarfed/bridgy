@@ -137,6 +137,26 @@ class BrowserHandlerTest(ModelsTest):
     self.assertEqual(['https://snarfed.org/'], src.domain_urls)
     self.assertEqual(['snarfed.org'], src.domains)
 
+  def test_profile_fall_back_to_scraped_to_actor(self):
+    self.source.delete()
+
+    self.mox.StubOutWithMock(FakeGrSource, 'scraped_to_activities')
+    FakeGrSource.scraped_to_activities('').AndReturn(([], None))
+
+    # webmention endpoint discovery
+    self.expect_requests_get('https://snarfed.org/', '', stream=None, verify=False)
+    self.mox.ReplayAll()
+
+    resp = self.app.get_response('/fbs/browser/profile?token=towkin', method='POST')
+    self.assertEqual(200, resp.status_int)
+    self.assert_equals([], resp.json)
+
+    src = FakeBrowserSource.get_by_id('snarfed')
+    self.assertEqual('Ryan B', src.name)
+    self.assertEqual('http://fa.ke/snarfed', src.url)
+    self.assertEqual(['https://snarfed.org/'], src.domain_urls)
+    self.assertEqual(['snarfed.org'], src.domains)
+
   def test_profile_private_account(self):
     FakeBrowserSource.gr_source.actor['to'] = \
       [{'objectType':'group', 'alias':'@private'}]
