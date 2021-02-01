@@ -62,6 +62,7 @@ WordPress.com, <a href="/">sign up here!</a>
 
 {% if "listen" in source.features and source.status != "disabled" %}
 <data class="p-bridgy-listen-status" value="enabled">
+{% if source.AUTO_POLL %}
 <form method="post" action="/delete/start">
 <p id="listening-label" class="big">Listening for responses.
   <input name="key" type="hidden" value="{{ source.key.urlsafe().decode() }}" />
@@ -74,6 +75,7 @@ WordPress.com, <a href="/">sign up here!</a>
   {% endif %}
 </p>
 </form>
+{% endif %}
 </data>
 
 <p>
