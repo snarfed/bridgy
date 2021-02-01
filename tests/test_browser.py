@@ -17,19 +17,22 @@ class FakeBrowserSource(browser.BrowserSource):
   SHORT_NAME = 'fbs'
   gr_source = FakeGrSource()
 
+  @classmethod
+  def key_id_from_actor(cls, actor):
+    return actor['fbs_id']
+
 
 class BrowserSourceTest(ModelsTest):
 
   def setUp(self):
     super(BrowserSourceTest, self).setUp()
-    self.handler.messages = []
+    self.actor['fbs_id'] = '222yyy'
     self.inst = FakeBrowserSource.new(self.handler, actor=self.actor)
     FakeBrowserSource.gr_source.actor = {}
 
   def test_new(self):
     self.assertIsNone(self.inst.auth_entity)
-    self.assertEqual('snarfed', self.inst.key.string_id())
-    self.assertEqual('http://fa.ke/snarfed', self.inst.url)
+    self.assertEqual('222yyy', self.inst.key.id())
     self.assertEqual('Ryan B', self.inst.name)
     self.assertEqual('Ryan B (FakeSource)', self.inst.label())
 
@@ -46,7 +49,7 @@ class BrowserSourceTest(ModelsTest):
     Activity(id='tag:fa.ke,2013:456', source=self.inst.key,
              activity_json=json_dumps({'baz': 'biff'})).put()
 
-    other = FakeBrowserSource.new(self.handler, actor={'username': 'other'}).put()
+    other = FakeBrowserSource.new(self.handler, actor={'fbs_id': 'other'}).put()
     Activity(id='tag:fa.ke,2013:789', source=other,
              activity_json=json_dumps({'boo': 'bah'})).put()
 
@@ -89,6 +92,7 @@ class BrowserHandlerTest(ModelsTest):
     super().setUp()
     self.domain = Domain(id='snarfed.org', tokens=['towkin']).put()
     FakeBrowserSource.gr_source = FakeGrSource()
+    self.actor['fbs_id'] = '222yyy'
     self.source = FakeBrowserSource.new(self.handler, actor=self.actor).put()
 
     for a in self.activities:
@@ -122,8 +126,7 @@ class BrowserHandlerTest(ModelsTest):
   def test_profile_new_user(self):
     self.source.delete()
 
-    # webmention endpoint discovery
-    self.expect_requests_get('https://snarfed.org/', '', stream=None, verify=False)
+    self.expect_webmention_requests_get('https://snarfed.org/', '')
     self.mox.ReplayAll()
 
     resp = self.app.get_response('/fbs/browser/profile?token=towkin', method='POST')
@@ -131,9 +134,8 @@ class BrowserHandlerTest(ModelsTest):
     self.assertEqual(200, resp.status_int)
     self.assert_equals(self.activities_no_replies, util.trim_nulls(resp.json))
 
-    src = FakeBrowserSource.get_by_id('snarfed')
+    src = self.source.get()
     self.assertEqual('Ryan B', src.name)
-    self.assertEqual('http://fa.ke/snarfed', src.url)
     self.assertEqual(['https://snarfed.org/'], src.domain_urls)
     self.assertEqual(['snarfed.org'], src.domains)
 
@@ -143,17 +145,15 @@ class BrowserHandlerTest(ModelsTest):
     self.mox.StubOutWithMock(FakeGrSource, 'scraped_to_activities')
     FakeGrSource.scraped_to_activities('').AndReturn(([], None))
 
-    # webmention endpoint discovery
-    self.expect_requests_get('https://snarfed.org/', '', stream=None, verify=False)
+    self.expect_webmention_requests_get('https://snarfed.org/', '')
     self.mox.ReplayAll()
 
     resp = self.app.get_response('/fbs/browser/profile?token=towkin', method='POST')
     self.assertEqual(200, resp.status_int)
     self.assert_equals([], resp.json)
 
-    src = FakeBrowserSource.get_by_id('snarfed')
+    src = self.source.get()
     self.assertEqual('Ryan B', src.name)
-    self.assertEqual('http://fa.ke/snarfed', src.url)
     self.assertEqual(['https://snarfed.org/'], src.domain_urls)
     self.assertEqual(['snarfed.org'], src.domains)
 
@@ -181,7 +181,7 @@ class BrowserHandlerTest(ModelsTest):
     self.assertIn("nope is not authorized for any of: {'snarfed.org'}", resp.text)
 
   def test_post(self):
-    source = FakeBrowserSource.create_new(self.handler, actor={'username': 'snarfed'})
+    source = FakeBrowserSource.create_new(self.handler, actor={'fbs_id': 'snarfed'})
 
     resp = self.app.get_response('/fbs/browser/post?token=towkin', method='POST')
     self.assertEqual(200, resp.status_int, resp.text)
@@ -211,8 +211,6 @@ class BrowserHandlerTest(ModelsTest):
     self.assertIn('Missing required parameter: token', resp.text)
 
   def test_post_merge_comments(self):
-    source = FakeBrowserSource.create_new(self.handler, actor={'username': 'snarfed'})
-
     # existing activity with two comments
     activity = copy.deepcopy(self.activities_no_extras[0])
     reply = self.activities[0]['object']['replies']['items'][0]
@@ -274,21 +272,31 @@ class BrowserHandlerTest(ModelsTest):
     self.assertEqual(400, resp.status_int)
     self.assertIn("nope is not authorized for any of: {'snarfed.org'}", resp.text)
 
-  def test_poll(self):
-    source = FakeBrowserSource.create_new(self.handler, actor={'username': 'snarfed'})
-    self.expect_task('poll', eta_seconds=0, source_key=source.key,
+  def test_poll_key(self):
+    self.expect_task('poll', eta_seconds=0, source_key=self.source,
                      last_polled='1970-01-01-00-00-00')
     self.mox.ReplayAll()
     resp = self.app.get_response(
-      '/fbs/browser/poll?username=snarfed', method='POST')
+      f'/fbs/browser/poll?key={self.source.urlsafe().decode()}', method='POST')
+    self.assertEqual(200, resp.status_int, resp.text)
+    self.assertEqual('OK', resp.json)
+
+  def test_poll_username(self):
+    self.expect_task('poll', eta_seconds=0, source_key=self.source,
+                     last_polled='1970-01-01-00-00-00')
+    self.mox.ReplayAll()
+    resp = self.app.get_response('/fbs/browser/poll?username=222yyy', method='POST')
     self.assertEqual(200, resp.status_int, resp.text)
     self.assertEqual('OK', resp.json)
 
   def test_poll_no_source(self):
-    self.source.delete()
-    resp = self.app.get_response('/fbs/browser/poll?username=snarfed', method='POST')
+    resp = self.app.get_response('/fbs/browser/poll?username=nope', method='POST')
     self.assertEqual(404, resp.status_int)
-    self.assertIn('No account found for FakeSource user snarfed', resp.text)
+    self.assertIn('No account found for FakeSource user nope', resp.text)
+
+  def test_poll_no_key_or_username(self):
+    resp = self.app.get_response('/fbs/browser/poll', method='POST')
+    self.assertEqual(400, resp.status_int, resp.text)
 
   def test_token_domains(self):
     resp = self.app.get_response(

@@ -55,27 +55,39 @@ class BrowserSource(Source):
   domain_tokens = ndb.StringProperty(repeated=True)
 
   @classmethod
+  def key_id_from_actor(cls, actor):
+    """Returns the key id for this entity from a given AS1 actor.
+
+    To be implemented by subclasses.
+
+    Args:
+      actor: dict AS1 actor
+
+    Returns: str, key id to use for the corresponding datastore entity
+    """
+    raise NotImplementedError()
+
+  @classmethod
   def new(cls, handler, auth_entity=None, actor=None, **kwargs):
-    """Creates and returns an entity for the logged in user.
+    """Creates and returns an entity based on an AS1 actor.
 
     Args:
       handler: the current :class:`webapp2.RequestHandler`
+      auth_entity: unused
+      actor: dict AS1 actor
     """
     assert not auth_entity
     assert actor
 
-    username = actor['username']
     if not kwargs.get('features'):
       kwargs['features'] = ['listen']
 
-    src = cls(id=username,
+    src = cls(id=cls.key_id_from_actor(actor),
               name=actor.get('displayName'),
               picture=actor.get('image', {}).get('url'),
-              url=cls.GR_CLASS().user_url(username),
               **kwargs)
     src.domain_urls, src.domains = src._urls_and_domains(None, None, actor=actor)
     return src
-
 
   @classmethod
   def button_html(cls, feature, **kwargs):
@@ -321,13 +333,20 @@ class PollHandler(BrowserHandler):
   Requires the `username` parameter.
   """
   def post(self):
-    username = util.get_required_param(self, 'username')
-    source = self.source_class().get_by_id(username)
+    key = self.request.get('key')
+    username = self.request.get('username')
+
+    if key:
+      source = ndb.Key(urlsafe=key).get()
+    elif username:
+      source = self.source_class().get_by_id(username)
+    else:
+      self.abort(400, 'Expected key or username query param')
+
     if not source:
       self.abort(404, f'No account found for {self.gr_source().NAME} user {username}')
 
     util.add_poll_task(source)
-
     self.output('OK')
 
 

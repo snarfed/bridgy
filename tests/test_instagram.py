@@ -1,7 +1,6 @@
 """Unit tests for instagram.py.
 """
 import copy
-from unittest import skip
 import urllib.request, urllib.parse, urllib.error
 
 import appengine_config  # injects 2013 into tag URIs in test_instagram objects
@@ -23,8 +22,7 @@ from granary.tests.test_instagram import (
   HTML_VIEWER_CONFIG,
   LIKE_OBJS,
 )
-from oauth_dropins.webutil.util import json_dumps, json_loads
-import requests
+from oauth_dropins.webutil.util import HTTP_TIMEOUT, json_dumps, json_loads
 
 import app
 from instagram import Instagram
@@ -40,23 +38,8 @@ class InstagramTest(ModelsTest):
 
   def setUp(self):
     super(InstagramTest, self).setUp()
-    self.handler.messages = []
-    self.ig = Instagram.new(
-      self.handler, actor={
-        'objectType': 'person',
-        'id': 'tag:instagram.com,2013:420973239',
-        'username': 'snarfed',
-        'displayName': 'Ryan Barrett',
-        'url': 'https://snarfed.org/',
-        'image': {'url': 'http://pic.ture/url'},
-        # ...
-      })
-
+    self.ig = Instagram.new(self.handler, actor=self.actor)
     self.domain = Domain(id='snarfed.org', tokens=['towkin']).put()
-
-  def expect_webmention_discovery(self):
-    return self.expect_requests_get('https://snarfed.org/', '', stream=None,
-                                    verify=False)
 
   def store_activity(self):
     activity = copy.deepcopy(HTML_PHOTO_ACTIVITY)
@@ -68,9 +51,8 @@ class InstagramTest(ModelsTest):
     self.assertIsNone(self.ig.auth_entity)
     self.assertEqual('snarfed', self.ig.key.string_id())
     self.assertEqual('http://pic.ture/url', self.ig.picture)
-    self.assertEqual('https://www.instagram.com/snarfed/', self.ig.url)
     self.assertEqual('https://www.instagram.com/snarfed/', self.ig.silo_url())
-    self.assertEqual('Ryan Barrett', self.ig.name)
+    self.assertEqual('Ryan B', self.ig.name)
     self.assertEqual('snarfed (Instagram)', self.ig.label())
 
   def test_canonicalize_url(self):
@@ -156,7 +138,7 @@ class InstagramTest(ModelsTest):
   def test_profile_new_user(self):
     self.assertIsNone(Instagram.get_by_id('snarfed'))
 
-    self.expect_webmention_discovery()
+    self.expect_webmention_requests_get('https://snarfed.org/', '')
     self.mox.ReplayAll()
 
     resp = app.application.get_response(
@@ -169,7 +151,7 @@ class InstagramTest(ModelsTest):
     ig = Instagram.get_by_id('snarfed')
     self.assertEqual('Ryan B', ig.name)
     self.assertEqual('https://scontent-sjc2-1.cdninstagram.com/hphotos-xfa1/t51.2885-19/11373714_959073410822287_2004790583_a.jpg', ig.picture)
-    self.assertEqual('https://www.instagram.com/snarfed/', ig.url)
+    self.assertEqual('https://www.instagram.com/snarfed/', ig.silo_url())
     self.assertEqual(['https://snarfed.org/'], ig.domain_urls)
     self.assertEqual(['snarfed.org'], ig.domains)
 

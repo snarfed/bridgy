@@ -28,9 +28,14 @@ class Instagram(browser.BrowserSource):
   # blank granary Instagram object, shared across all instances
   gr_source = gr_instagram.Instagram()
 
+  @classmethod
+  def key_id_from_actor(cls, actor):
+    """Returns the actor's username field to be used as this entity's key id."""
+    return actor['username']
+
   def silo_url(self):
     """Returns the Instagram account URL, e.g. https://instagram.com/foo."""
-    return self.url
+    return self.gr_source.user_url(self.key.id())
 
   def label_name(self):
     """Returns the username."""

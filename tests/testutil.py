@@ -27,18 +27,6 @@ import util
 NOW = datetime.datetime.utcnow()
 
 
-def instagram_profile_user(graphql):
-  """Extracts and returns the user from an Instagram GraphQL profile.
-
-  Args:
-    graphql: dict, JSON object scraped from an Instagram HTML profile page
-
-  Returns: dict, user object
-  """
-  return graphql['entry_data']['ProfilePage'][0]['graphql']['user']\
-      ['edge_owner_to_timeline_media']['edges'][0]['node']['owner']
-
-
 class FakeAuthEntity(BaseAuth):
   user_json = ndb.TextProperty()
 
@@ -126,6 +114,9 @@ class FakeGrSource(gr_source.Source):
   def scraped_to_activity(self, scraped):
     activities = self.get_activities(count=1, fetch_replies=True)
     return activities[0] if activities else None, self.actor
+
+  def scraped_to_actor(self, scraped):
+    return self.actor
 
   def merge_scraped_reactions(self, scraped, activity):
     gr_source.merge_by_id(activity['object'], 'tags', [self.like])
@@ -411,10 +402,11 @@ class ModelsTest(HandlerTest):
 
     self.actor = FakeGrSource.actor = {
       'objectType': 'person',
-      'id': 'tag:fa.ke,2013:654321',
+      'id': 'tag:fa.ke,2013:212038',
       'username': 'snarfed',
       'displayName': 'Ryan B',
       'url': 'https://snarfed.org/',
+      'image': {'url': 'http://pic.ture/url'},
     }
 
     # activities
