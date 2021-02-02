@@ -797,13 +797,10 @@ activities: %s""", target_url, self.entity.urls_to_activity, self.activities)
     id = activity['id']
     parsed = util.parse_tag_uri(id)
     post_id = parsed[1] if parsed else id
-    # prefer brid-gy.appspot.com to brid.gy because non-browsers (ie OpenSSL)
-    # currently have problems with brid.gy's SSL cert. details:
-    # https://github.com/snarfed/bridgy/issues/20
     host_url = self.request.host_url
     domain = util.domain_from_link(host_url)
-    if domain == util.PRIMARY_DOMAIN or domain in util.OTHER_DOMAINS:
-      host_url = 'https://brid-gy.appspot.com'
+    if domain in util.OTHER_DOMAINS:
+      host_url = util.HOST_URL  # brid.gy
 
     path = [host_url, self.entity.type, self.source.SHORT_NAME,
             self.source.key.string_id(), post_id]

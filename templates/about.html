@@ -78,10 +78,7 @@ service.</a>
 <li><a href="#domain">Bridgy used to find my syndication links, but
   then it stopped.</a></li>
 <li><a href="#order">Why are the Bridgy comments on my site out of order?</a></li>
-<li><a href="#appspot">What are all these brid-gy.appspot.com links
-  in the comments that Bridgy sends to my site?</a></li>
-<li><a href="#ssl">OK, fine. But why brid-gy.appspot.com instead of
-  brid.gy?</a></li>
+<li><a href="#appspot">What are all these brid.gy links in the comments that Bridgy sends to my site?</a></li>
 <li><a href="#source-urls">What's the format for Bridgy's webmention
   source URLs?</a></li>
 <li><a href="#browser-extension">Wait, Instagram needs a browser extension now?</a></li>
@@ -598,8 +595,7 @@ webmention plugin to sort by <code>dt-published</code>!
 <a href="https://github.com/idno/Known/issues/1104">Here's an example.</a>
 </p></li>
 
-<li id="appspot" class="question">What are all these brid-gy.appspot.com links
-in the responses that Bridgy sends to my site?</li>
+<li id="appspot" class="question">What are all these brid.gy links in the responses that Bridgy sends to my site?</li>
 <li class="answer">
 <p>Short answer: your
 server's <a href="http://www.webmention.org/">webmention</a> code is probably
@@ -619,21 +615,6 @@ social networks don't (yet) support microformats2, so Bridgy translates their
 data to microformats2 HTML and serves those translations as webmention targets
 so that recipients can fetch and parse them.
 <p>
-</p></li>
-
-<li id="ssl" class="question">OK, fine. But why brid-gy.appspot.com instead of
-brid.gy?</li>
-<li class="answer">
-<p>It's an SSL thing. The <a href="https://brid.gy">brid.gy</a> domain fully
-supports and uses SSL, but it uses
-<a href="http://en.wikipedia.org/wiki/Server_Name_Indication">SNI</a>, a newer
-SSL feature that some older clients and libraries have trouble with. Modern
-browsers are generally fine, but when Bridgy sends a webmention, the
-server that receives it also needs to understand SNI,
-<a href="https://github.com/snarfed/bridgy/issues/20">and some</a>
-<a href="https://github.com/aaronpk/webmention.io/issues/14">still don't</a>.
-<a href="https://appspot.com/">appspot.com</a>'s SSL doesn't use SNI, so we use
-it for webmention sources in order to be as compatible as possible.
 </p></li>
 
 <li id="source-urls" class="question">What's the format for Bridgy's webmention source URLs?</li>
@@ -690,7 +671,7 @@ it for webmention sources in order to be as compatible as possible.
   id from <a href="https://granary.io/">granary</a>.
 </li>
 <li>If your webmention target complains about <code>brid.gy</code>'s SSL, try
-<code>brid-gy.appspot.com</code> instead. <a href="#ssl">More details.</a>
+<code>brid-gy.appspot.com</code> instead.
 </li>
 </ul>
 </li>

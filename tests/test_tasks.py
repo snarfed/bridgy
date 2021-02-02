@@ -1901,32 +1901,17 @@ class PropagateTest(TaskTest):
     self.post_task()
     self.assert_response_is('complete', failed=['http://target1/post/url'])
 
-  def test_translate_appspot_to_bridgy(self):
-    """Tasks on brid.gy should use brid-gy.appspot.com as the source URL."""
+  def test_translate_appspot_to_brid_gy(self):
+    """Tasks on brid-gy.appspot.com should translate source URLs to brid.gy."""
     self.responses[0].unsent = ['http://good']
     self.responses[0].put()
-    source_url = 'https://brid-gy.appspot.com/comment/fake/%s/a/1_2_a' % \
+    source_url = 'https://brid.gy/comment/fake/%s/a/1_2_a' % \
         self.sources[0].key.string_id()
     self.expect_webmention(source_url=source_url, target='http://good')\
         .AndReturn(True)
 
     self.mox.ReplayAll()
-    self.post_task(base_url='https://brid.gy')
-
-  def test_translate_http_to_https(self):
-    """Tasks on brid-gy.appspot.com should always use https in the source URL.
-
-    TODO: unify with test_translate_appspot_to_bridgy()
-    """
-    self.responses[0].unsent = ['http://good']
-    self.responses[0].put()
-    source_url = 'https://brid-gy.appspot.com/comment/fake/%s/a/1_2_a' % \
-        self.sources[0].key.string_id()
-    self.expect_webmention(source_url=source_url, target='http://good')\
-        .AndReturn(True)
-
-    self.mox.ReplayAll()
-    self.post_task(base_url='https://brid-gy.appspot.com')
+    self.post_task(base_url='http://brid-gy.appspot.com')
 
   def test_activity_id_not_tag_uri(self):
     """If the activity id isn't a tag uri, we should just use it verbatim."""
@@ -1937,7 +1922,7 @@ class PropagateTest(TaskTest):
     self.responses[0].unsent = ['http://good']
     self.responses[0].put()
 
-    source_url = 'https://brid-gy.appspot.com/comment/fake/%s/AAA/1_2_a' % \
+    source_url = 'https://brid.gy/comment/fake/%s/AAA/1_2_a' % \
         self.sources[0].key.string_id()
     self.expect_webmention(source_url=source_url, target='http://good')\
         .AndReturn(True)
@@ -1955,7 +1940,7 @@ class PropagateTest(TaskTest):
       {'http://AAA': 0, 'http://BBB': 1, 'http://CCC': 2})
     self.responses[0].put()
 
-    source_url = 'https://brid-gy.appspot.com/comment/fake/%s/%%s/1_2_a' % \
+    source_url = 'https://brid.gy/comment/fake/%s/%%s/1_2_a' % \
         self.sources[0].key.string_id()
     self.expect_webmention(source_url=source_url % '000', target='http://AAA')\
         .AndReturn(True)
