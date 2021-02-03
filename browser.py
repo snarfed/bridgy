@@ -133,10 +133,6 @@ class BrowserSource(Source):
 
 class BrowserHandler(util.Handler):
   """Base class for requests from the browser extension."""
-  def options(self):
-    self.response.headers['Access-Control-Allow-Origin'] = '*'
-    self.response.headers['Access-Control-Allow-Methods'] = '*'
-
   def output(self, obj):
     self.response.headers['Content-Type'] = JSON_CONTENT_TYPE
     self.response.write(json_dumps(obj, indent=2))
@@ -147,20 +143,14 @@ class BrowserHandler(util.Handler):
   def gr_source(self):
     return self.source_class().gr_source
 
-  def check_silo_user(self, actor):
-    """Returns an HTTP 400 if the given actor is not populated or public."""
-    if not actor or not actor.get('username'):
-      self.abort(400, f"Couldn't determine logged in {self.gr_source().NAME} user")
+  def check_token_for_actor(self, actor):
+    """Checks that the given actor is public and matches the request's token.
 
+    Raises: :class:`HTTPException` with HTTP 400
+    """
     if not gr_source.Source.is_public(actor):
       self.abort(400, f'Your {self.gr_source().NAME} account is private. Bridgy only supports public accounts.')
 
-  def check_token(self, actor):
-    """If the request's token is not stored for the actor's domain, returns 400.
-
-    Args:
-      actor: dict, AS1 actor for logged in user
-    """
     token = util.get_required_param(self, 'token')
     src_cls = self.source_class()
 
@@ -182,7 +172,51 @@ class BrowserHandler(util.Handler):
       if domain and token in domain.tokens:
         return
 
-    self.abort(400, f'Token {token} is not authorized for any of: {domains}')
+    self.abort(403, f'Token {token} is not authorized for any of: {domains}')
+
+  def auth(self, actor=None, check_token=True):
+    """Loads the source and (optionally) token and checks that they're valid.
+
+    Expects token in the `token` query param, source in `key` or `username` with
+    fallback to `actor` for older browser extension versions that didn't send
+    them.
+
+    Args:
+      actor: dict, optional, AS1 actor
+      check_token: boolean, optional, whether to load and check the token too
+
+    Raises: :class:`HTTPException` with HTTP 400 if the token or source are
+      missing or invalid
+
+    Returns: BrowserSource or None
+    """
+    # Load source
+    key = self.request.get('key')
+    username = self.request.get('username')
+    if not username and actor:
+      username = actor.get('username')
+
+    source = None
+    if key:
+      source = util.load_source(self, param='key')
+    elif username:
+      source = self.source_class().get_by_id(username)
+    else:
+      self.abort(400, 'No key or username query param and no scraped actor found')
+
+    if not source:
+      self.abort(404, f'No account found for {self.gr_source().NAME} user {key or username}')
+
+    # Load and check token
+    if not check_token:
+      return source
+
+    token = util.get_required_param(self, 'token')
+    for domain in Domain.query(Domain.tokens == token):
+      if domain.key.id() in source.domains:
+        return source
+
+    self.abort(403, f'Token {token} is not authorized for any of: {source.domains}')
 
 
 class HomepageHandler(BrowserHandler):
@@ -191,31 +225,18 @@ class HomepageHandler(BrowserHandler):
   Request body is https://www.instagram.com/ HTML for a logged in user.
   """
   def post(self):
-    _, actor = self.gr_source().scraped_to_activities(self.request.text)
-    self.check_silo_user(actor)
-    logging.info(f"Returning {actor['username']}")
-    self.output(actor['username'])
+    gr_src = self.gr_source()
+    _, actor = gr_src.scraped_to_activities(self.request.text)
+    logging.info(f'Got actor: {actor}')
 
+    if actor:
+      # TODO?
+      username = actor.get('username')
+      if username:
+        logging.info(f"Returning {username}")
+        return self.output(username)
 
-class RegisterTokenHandler(BrowserHandler):
-  """Registers a token with a source.
-
-  Request body is silo HTML from a user profile page that includes their
-  username (or id) and web site(s).
-  """
-  def post(self):
-    pass
-
-
-class RegisterTokenHandler(BrowserHandler):
-  """Registers a token with a source.
-
-  Request body is silo HTML from a user profile page that includes their
-  username (or id) and web site(s).
-  """
-  def post(self):
-    pass
-
+    self.abort(400, f"Couldn't determine logged in {gr_src.NAME} user or username")
 
 class ProfileHandler(BrowserHandler):
   """Parses a silo profile page and returns the posts' URLs.
@@ -232,14 +253,13 @@ class ProfileHandler(BrowserHandler):
     if not actor:
       actor = gr_src.scraped_to_actor(self.request.text)
 
-    self.check_silo_user(actor)
-    self.check_token(actor)
+    self.check_token_for_actor(actor)
 
     # create/update the Bridgy account
-    self.source_class().create_new(self, actor=actor)
+    source = self.source_class().create_new(self, actor=actor)
 
     ids = ' '.join(a['id'] for a in activities)
-    logging.info(f"Returning activities for {actor['username']}: {ids}")
+    logging.info(f"Returning activities for {source}: {ids}")
     self.output(activities)
 
 
@@ -250,46 +270,42 @@ class PostHandler(BrowserHandler):
 
   Response body is the translated ActivityStreams activity JSON.
   """
-  @ndb.transactional()
   def post(self):
     gr_src = self.gr_source()
     new_activity, actor = gr_src.scraped_to_activity(self.request.text)
     if not new_activity:
       self.abort(400, f'No {gr_src.NAME} post found in HTML')
 
-    id = new_activity.get('id')
-    if not id:
-      self.abort(400, 'Scraped post missing id')
+    source = self.auth(actor=actor)
 
-    self.check_silo_user(actor)
-    self.check_token(actor)
+    @ndb.transactional()
+    def update_activity():
+      id = new_activity.get('id')
+      if not id:
+        self.abort(400, 'Scraped post missing id')
+      activity = Activity.get_by_id(id)
 
-    # TODO
-    username = actor['username']
-    source = self.source_class().get_by_id(username)
-    if not source:
-      self.abort(404, f'No account found for {gr_src.NAME} user {username}')
+      if activity:
+        # we already have this activity! merge in any new comments.
+        merged_activity = copy.deepcopy(new_activity)
+        existing_activity = json_loads(activity.activity_json)
+        # TODO: extract out merging replies
+        replies = merged_activity.setdefault('object', {}).setdefault('replies', {})
+        gr_source.merge_by_id(replies, 'items',
+          existing_activity.get('object', {}).get('replies', {}).get('items', []))
+        replies['totalItems'] = len(replies.get('items', []))
+        # TODO: merge tags too
+        activity.activity_json = json_dumps(merged_activity)
+      else:
+        activity = Activity(id=id, source=source.key,
+                            activity_json=json_dumps(new_activity))
 
-    activity = Activity.get_by_id(id)
-    if activity:
-      # we already have this activity! merge in any new comments.
-      merged_activity = copy.deepcopy(new_activity)
-      existing_activity = json_loads(activity.activity_json)
-      # TODO: extract out merging replies
-      replies = merged_activity.setdefault('object', {}).setdefault('replies', {})
-      gr_source.merge_by_id(replies, 'items',
-        existing_activity.get('object', {}).get('replies', {}).get('items', []))
-      replies['totalItems'] = len(replies.get('items', []))
-      # TODO: merge tags too
-      activity.activity_json = json_dumps(merged_activity)
-    else:
-      activity = Activity(id=id, source=source.key,
-                          activity_json=json_dumps(new_activity))
+      # store and return the activity
+      activity.put()
+      logging.info(f"Stored activity {id}")
+      self.output(new_activity)
 
-    # store and return the activity
-    activity.put()
-    logging.info(f"Stored activity {id}")
-    self.output(new_activity)
+    update_activity()
 
 
 class LikesHandler(BrowserHandler):
@@ -315,7 +331,7 @@ class LikesHandler(BrowserHandler):
     activity_data = json_loads(activity.activity_json)
     obj = activity_data['object']
     actor = obj.get('author') or activity_data.get('actor')
-    self.check_token(actor=actor)
+    self.check_token_for_actor(actor)
 
     # convert new likes to AS, merge into existing activity
     new_likes = gr_src.merge_scraped_reactions(self.request.text, activity_data)
@@ -328,24 +344,9 @@ class LikesHandler(BrowserHandler):
 
 
 class PollHandler(BrowserHandler):
-  """Triggers a poll for a browser-based account.
-
-  Requires the `username` parameter.
-  """
+  """Triggers a poll for a browser-based account."""
   def post(self):
-    key = self.request.get('key')
-    username = self.request.get('username')
-
-    if key:
-      source = ndb.Key(urlsafe=key).get()
-    elif username:
-      source = self.source_class().get_by_id(username)
-    else:
-      self.abort(400, 'Expected key or username query param')
-
-    if not source:
-      self.abort(404, f'No account found for {self.gr_source().NAME} user {username}')
-
+    source = self.auth(check_token=False)
     util.add_poll_task(source)
     self.output('OK')
 

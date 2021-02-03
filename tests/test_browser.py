@@ -172,16 +172,19 @@ class BrowserHandlerTest(ModelsTest):
   def test_profile_no_stored_token(self):
     self.domain.delete()
     resp = self.app.get_response('/fbs/browser/profile?token=towkin', method='POST')
-    self.assertEqual(400, resp.status_int)
+    self.assertEqual(403, resp.status_int)
     self.assertIn("towkin is not authorized for any of: {'snarfed.org'}", resp.text)
 
   def test_profile_bad_token(self):
     resp = self.app.get_response('/fbs/browser/profile?token=nope', method='POST')
-    self.assertEqual(400, resp.status_int)
+    self.assertEqual(403, resp.status_int)
     self.assertIn("nope is not authorized for any of: {'snarfed.org'}", resp.text)
 
   def test_post(self):
-    source = FakeBrowserSource.create_new(self.handler, actor={'fbs_id': 'snarfed'})
+    source = FakeBrowserSource.new(self.handler, actor={
+      'fbs_id': 'snarfed',
+      'url': 'https://snarfed.org/',
+    }).put()
 
     resp = self.app.get_response('/fbs/browser/post?token=towkin', method='POST')
     self.assertEqual(200, resp.status_int, resp.text)
@@ -189,26 +192,41 @@ class BrowserHandlerTest(ModelsTest):
 
     activities = Activity.query().fetch()
     self.assertEqual(1, len(activities))
-    self.assertEqual(source.key, activities[0].source)
+    self.assertEqual(source, activities[0].source)
     self.assert_equals(self.activities_no_extras[0],
                      util.trim_nulls(json_loads(activities[0].activity_json)))
 
-  def test_post_no_source(self):
+  def test_post_key_no_stored_source(self):
+    resp = self.app.get_response(
+      '/fbs/browser/post?token=towkin&key=foo', method='POST')
+    self.assertEqual(400, resp.status_int)
+    # this comes from util.load_source() since the urlsafe key is malformed
+    self.assertIn('Bad value for key', resp.text)
+
+  def test_post_username_no_stored_source(self):
     FakeGrSource.activities[0]['object']['author']['username'] = 'unknown'
-    resp = self.app.get_response('/fbs/browser/post?token=towkin', method='POST')
+    resp = self.app.get_response(
+      '/fbs/browser/post?token=towkin', method='POST')
     self.assertEqual(404, resp.status_int)
     self.assertIn('No account found for FakeSource user unknown', resp.text)
 
   def test_post_empty(self):
     FakeGrSource.activities = []
-    resp = self.app.get_response('/fbs/browser/post?token=towkin', method='POST')
+    resp = self.app.get_response(
+      f'/fbs/browser/post?token=towkin&key={self.source.urlsafe().decode()}', method='POST')
     self.assertEqual(400, resp.status_int)
     self.assertIn('No FakeSource post found in HTML', resp.text)
 
   def test_post_missing_token(self):
-    resp = self.app.get_response('/fbs/browser/post', method='POST')
+    resp = self.app.get_response(
+      f'/fbs/browser/post?key={self.source.urlsafe().decode()}', method='POST')
     self.assertEqual(400, resp.status_int)
     self.assertIn('Missing required parameter: token', resp.text)
+
+  def test_post_missing_key(self):
+    resp = self.app.get_response('/fbs/browser/profile?token=nope', method='POST')
+    self.assertEqual(403, resp.status_int)
+    self.assertIn("nope is not authorized for any of: {'snarfed.org'}", resp.text)
 
   def test_post_merge_comments(self):
     # existing activity with two comments
@@ -225,7 +243,9 @@ class BrowserHandlerTest(ModelsTest):
     activity['object']['replies']['items'][1]['id'] = 'xyz'
     FakeGrSource.activities = [activity]
 
-    resp = self.app.get_response('/fbs/browser/post?token=towkin', method='POST')
+    resp = self.app.get_response(
+      f'/fbs/browser/post?token=towkin&key={self.source.urlsafe().decode()}',
+      method='POST')
     self.assertEqual(200, resp.status_int, resp.text)
     self.assert_equals(activity, util.trim_nulls(resp.json))
 
@@ -269,7 +289,7 @@ class BrowserHandlerTest(ModelsTest):
     self.store_activity()
     resp = self.app.get_response(
       '/fbs/browser/likes?id=tag:fa.ke,2013:123_456&token=nope', method='POST')
-    self.assertEqual(400, resp.status_int)
+    self.assertEqual(403, resp.status_int)
     self.assertIn("nope is not authorized for any of: {'snarfed.org'}", resp.text)
 
   def test_poll_key(self):

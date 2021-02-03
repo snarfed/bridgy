@@ -392,7 +392,7 @@ def load_source(handler, param='source_key'):
     source = ndb.Key(urlsafe=util.get_required_param(handler, param)).get()
   except (binascii.Error, google.protobuf.message.DecodeError):
     msg = 'Bad value for %s' % param
-    logging.warning(msg, stack_info=True)
+    logging.warning(msg, exc_info=True)
     handler.abort(400, msg)
 
   if not source:
