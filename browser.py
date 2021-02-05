@@ -150,9 +150,22 @@ class BrowserHandler(util.Handler):
       actor: dict, AS1 actor for logged in user
     """
     token = util.get_required_param(self, 'token')
+    src_cls = self.source_class()
 
     domains = set(util.domain_from_link(u) for u in microformats2.object_urls(actor))
-    domains.discard(self.source_class().GR_CLASS.DOMAIN)
+
+    # TEMPORARY since we've lost the profile's domains in Activity contents for
+    # Instagram for some reason. :/
+    url = actor.get('url')
+    if url:
+      logging.info(f'Looking up source by URL {url}')
+      source = src_cls.query(src_cls.url == url).get()
+      if source:
+        domains.update(source.domains)
+
+    domains.discard(src_cls.GR_CLASS.DOMAIN)
+
+    logging.info(f'Checking token against domains {domains}')
     for domain in ndb.get_multi(ndb.Key(Domain, d) for d in domains):
       if domain and token in domain.tokens:
         return
