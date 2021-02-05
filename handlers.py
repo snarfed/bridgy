@@ -76,6 +76,7 @@ class ItemHandler(util.Handler):
 
   VALID_ID = re.compile(r'^[\w.+:@=<>-]+$')
 
+  @util.canonicalize_domain
   def head(self, *args):
     """Return an empty 200 with no caching directives."""
 
@@ -121,6 +122,7 @@ class ItemHandler(util.Handler):
     except Exception as e:
       util.interpret_http_exception(e)
 
+  @util.canonicalize_domain
   def get(self, type, source_short_name, string_id, *ids):
     source_cls = models.sources.get(source_short_name)
     if not source_cls:
