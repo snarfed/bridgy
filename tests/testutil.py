@@ -123,7 +123,7 @@ class FakeGrSource(gr_source.Source):
       fetch_shares=fetch_extras, fetch_mentions=fetch_extras)
     return activities, self.actor
 
-  def scraped_to_activity(self, scraped, url):
+  def scraped_to_activity(self, scraped):
     activities = self.get_activities(count=1, fetch_replies=True)
     return activities[0] if activities else None, self.actor
 

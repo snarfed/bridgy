@@ -224,7 +224,7 @@ class PostHandler(BrowserHandler):
   @ndb.transactional()
   def post(self):
     gr_src = self.gr_source()
-    new_activity, actor = gr_src.scraped_to_activity(self.request.text, 'TODO')
+    new_activity, actor = gr_src.scraped_to_activity(self.request.text)
     if not new_activity:
       self.abort(400, f'No {gr_src.NAME} post found in HTML')
 
