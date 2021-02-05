@@ -92,7 +92,6 @@ class InstagramTest(ModelsTest):
     Activity(id='tag:instagram.com,2013:789', source=other,
              activity_json=json_dumps({'boo': 'bah'})).put()
 
-
     resp = self.ig.get_activities_response()
     self.assert_equals([{'foo': 'bar'}, {'baz': 'biff'}], resp['items'])
 
@@ -174,15 +173,15 @@ class InstagramTest(ModelsTest):
     resp = app.application.get_response(
       '/instagram/browser/profile?token=towkin', method='POST',
       text=HTML_PROFILE_COMPLETE)
-    self.assertEqual(400, resp.status_int)
+    self.assertEqual(403, resp.status_int)
     self.assertIn("towkin is not authorized for any of: {'snarfed.org'}", resp.text)
 
   def test_profile_bad_token(self):
     resp = app.application.get_response(
       '/instagram/browser/profile?token=nope', method='POST',
       text=HTML_PROFILE_COMPLETE)
-    self.assertEqual(400, resp.status_int)
-    self.assertIn('', resp.text)
+    self.assertEqual(403, resp.status_int)
+    self.assertIn("nope is not authorized for any of: {'snarfed.org'}", resp.text)
 
   def test_post(self):
     self.ig.put()
@@ -213,9 +212,11 @@ class InstagramTest(ModelsTest):
     self.assertIn('No Instagram post found in HTML', resp.text)
 
   def test_post_missing_token(self):
+    key = self.ig.put()
     empty = HTML_HEADER + json_dumps({'config': HTML_VIEWER_CONFIG}) + HTML_FOOTER
     resp = app.application.get_response(
-      '/instagram/browser/post', method='POST', text=HTML_VIDEO_COMPLETE)
+      f'/instagram/browser/post?key={key.urlsafe().decode()}',
+      method='POST', text=HTML_VIDEO_COMPLETE)
     self.assertEqual(400, resp.status_int)
     self.assertIn('Missing required parameter: token', resp.text)
 
@@ -276,7 +277,7 @@ class InstagramTest(ModelsTest):
     resp = app.application.get_response(
       '/instagram/browser/likes?id=tag:instagram.com,2013:123_456&token=nope',
       method='POST', text=json_dumps(HTML_PHOTO_LIKES_RESPONSE))
-    self.assertEqual(400, resp.status_int)
+    self.assertEqual(403, resp.status_int)
     self.assertIn("nope is not authorized for any of: {'snarfed.org'}", resp.text)
 
   def test_poll(self):
