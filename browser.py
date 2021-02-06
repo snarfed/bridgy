@@ -329,8 +329,7 @@ class LikesHandler(BrowserHandler):
       self.abort(404, f'No {gr_src.NAME} post found for id {id}')
 
     activity_data = json_loads(activity.activity_json)
-    obj = activity_data['object']
-    actor = obj.get('author') or activity_data.get('actor')
+    actor = activity_data['object'].get('author') or activity_data.get('actor')
     self.check_token_for_actor(actor)
 
     # convert new likes to AS, merge into existing activity

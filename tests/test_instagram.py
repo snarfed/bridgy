@@ -44,8 +44,8 @@ class InstagramTest(ModelsTest):
   def store_activity(self):
     activity = copy.deepcopy(HTML_PHOTO_ACTIVITY)
     activity['actor']['url'] = 'http://snarfed.org/'
-    activity_json = json_dumps(activity)
-    return Activity(id='tag:instagram.com,2013:123_456', activity_json=activity_json).put()
+    return Activity(id='tag:instagram.com,2013:123_456',
+                    activity_json=json_dumps(activity)).put()
 
   def test_new(self):
     self.assertIsNone(self.ig.auth_entity)
@@ -213,7 +213,6 @@ class InstagramTest(ModelsTest):
 
   def test_post_missing_token(self):
     key = self.ig.put()
-    empty = HTML_HEADER + json_dumps({'config': HTML_VIEWER_CONFIG}) + HTML_FOOTER
     resp = app.application.get_response(
       f'/instagram/browser/post?key={key.urlsafe().decode()}',
       method='POST', text=HTML_VIDEO_COMPLETE)
@@ -297,14 +296,3 @@ class InstagramTest(ModelsTest):
       '/instagram/browser/poll?username=snarfed', method='POST')
     self.assertEqual(404, resp.status_int)
     self.assertIn('No account found for Instagram user snarfed', resp.text)
-
-  def test_token_domains(self):
-    resp = app.application.get_response(
-      '/instagram/browser/token-domains?token=towkin', method='POST')
-    self.assertEqual(200, resp.status_int)
-    self.assertEqual(['snarfed.org'], resp.json)
-
-  def test_token_domains_missing(self):
-    resp = app.application.get_response(
-      '/instagram/browser/token-domains?token=unknown', method='POST')
-    self.assertEqual(404, resp.status_int)

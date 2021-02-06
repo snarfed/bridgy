@@ -32,6 +32,7 @@ MODULES = [importlib.import_module(name) for name in (
   'admin',
   'blog_webmention',
   'blogger',
+  'facebook',
   'flickr',
   'github',
   'handlers',
@@ -731,9 +732,8 @@ for module in MODULES:
 routes += [
   ('/?', FrontPageHandler),
   ('/users/?', UsersHandler),
-  ('/(blogger|fake|fake_blog|flickr|github|instagram|mastodon|medium|meetup|reddit|tumblr|twitter|wordpress)/([^/]+)/?',
+  ('/(blogger|facebook|fake|fake_blog|flickr|github|instagram|mastodon|medium|meetup|reddit|tumblr|twitter|wordpress)/([^/]+)/?',
    UserHandler),
-  ('/facebook/.*', FacebookIsDeadHandler),
   ('/googleplus/.*', GooglePlusIsDeadHandler),
   ('/about/?', AboutHandler),
   ('/delete/start', DeleteStartHandler),
