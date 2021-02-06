@@ -106,10 +106,6 @@ class BrowserHandlerTest(ModelsTest):
     for a in self.activities_no_replies:
       del a['object']['replies']
 
-  def store_activity(self):
-    return Activity(id='tag:fa.ke,2013:123_456',
-                    activity_json=json_dumps(self.activities[0])).put()
-
   def test_homepage(self):
     resp = self.app.get_response(
       '/fbs/browser/homepage', method='POST', text='homepage html')
@@ -157,6 +153,13 @@ class BrowserHandlerTest(ModelsTest):
     self.assertEqual(['https://snarfed.org/'], src.domain_urls)
     self.assertEqual(['snarfed.org'], src.domains)
 
+  def test_profile_fall_back_no_scraped_actor(self):
+    self.source.delete()
+    FakeGrSource.actor = None
+    resp = self.app.get_response('/fbs/browser/profile?token=towkin', method='POST')
+    self.assertEqual(400, resp.status_int, resp.text)
+    self.assertIn('Missing actor', resp.text)
+
   def test_profile_private_account(self):
     FakeBrowserSource.gr_source.actor['to'] = \
       [{'objectType':'group', 'alias':'@private'}]
@@ -196,6 +199,13 @@ class BrowserHandlerTest(ModelsTest):
     self.assert_equals(self.activities_no_extras[0],
                      util.trim_nulls(json_loads(activities[0].activity_json)))
 
+  def test_post_key(self):
+    resp = self.app.get_response(
+      f'/fbs/browser/post?token=towkin&key={self.source.urlsafe().decode()}',
+      method='POST')
+    self.assertEqual(200, resp.status_int, resp.text)
+    self.assert_equals(self.activities_no_extras[0], util.trim_nulls(resp.json))
+
   def test_post_key_no_stored_source(self):
     resp = self.app.get_response(
       '/fbs/browser/post?token=towkin&key=foo', method='POST')
@@ -213,7 +223,8 @@ class BrowserHandlerTest(ModelsTest):
   def test_post_empty(self):
     FakeGrSource.activities = []
     resp = self.app.get_response(
-      f'/fbs/browser/post?token=towkin&key={self.source.urlsafe().decode()}', method='POST')
+      f'/fbs/browser/post?token=towkin&key={self.source.urlsafe().decode()}',
+      method='POST')
     self.assertEqual(400, resp.status_int)
     self.assertIn('No FakeSource post found in HTML', resp.text)
 
@@ -223,14 +234,9 @@ class BrowserHandlerTest(ModelsTest):
     self.assertEqual(400, resp.status_int)
     self.assertIn('Missing required parameter: token', resp.text)
 
-  def test_post_missing_key(self):
-    resp = self.app.get_response('/fbs/browser/profile?token=nope', method='POST')
-    self.assertEqual(403, resp.status_int)
-    self.assertIn("nope is not authorized for any of: {'snarfed.org'}", resp.text)
-
   def test_post_merge_comments(self):
     # existing activity with two comments
-    activity = copy.deepcopy(self.activities_no_extras[0])
+    activity = self.activities_no_extras[0]
     reply = self.activities[0]['object']['replies']['items'][0]
     activity['object']['replies'] = {
       'items': [reply, copy.deepcopy(reply)],
@@ -256,7 +262,8 @@ class BrowserHandlerTest(ModelsTest):
                        [r['id'] for r in replies['items']])
 
   def test_likes(self):
-    key = self.store_activity()
+    key = Activity(id='tag:fa.ke,2013:123_456',
+                   activity_json=json_dumps(self.activities[0])).put()
     like = FakeBrowserSource.gr_source.like = {
       'objectType': 'activity',
       'verb': 'like',
@@ -285,8 +292,20 @@ class BrowserHandlerTest(ModelsTest):
     self.assertEqual(404, resp.status_int)
     self.assertIn('No FakeSource post found for id tag:fa.ke,2013:789', resp.text)
 
+  def test_likes_activity_missing_actor(self):
+    del self.activities[0]['object']['author']
+    Activity(id='tag:fa.ke,2013:123',
+             activity_json=json_dumps(self.activities[0])).put()
+
+    resp = self.app.get_response(
+      '/fbs/browser/likes?id=tag:fa.ke,2013:123&token=towkin', method='POST')
+    self.assertEqual(400, resp.status_int)
+    self.assertIn('Missing actor', resp.text)
+
   def test_likes_bad_token(self):
-    self.store_activity()
+    key = Activity(id='tag:fa.ke,2013:123_456',
+                   activity_json=json_dumps(self.activities[0])).put()
+
     resp = self.app.get_response(
       '/fbs/browser/likes?id=tag:fa.ke,2013:123_456&token=nope', method='POST')
     self.assertEqual(403, resp.status_int)

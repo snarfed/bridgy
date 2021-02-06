@@ -148,6 +148,9 @@ class BrowserHandler(util.Handler):
 
     Raises: :class:`HTTPException` with HTTP 400
     """
+    if not actor:
+      self.abort(400, f'Missing actor!')
+
     if not gr_source.Source.is_public(actor):
       self.abort(400, f'Your {self.gr_source().NAME} account is private. Bridgy only supports public accounts.')
 
@@ -252,7 +255,6 @@ class ProfileHandler(BrowserHandler):
     activities, actor = gr_src.scraped_to_activities(self.request.text)
     if not actor:
       actor = gr_src.scraped_to_actor(self.request.text)
-
     self.check_token_for_actor(actor)
 
     # create/update the Bridgy account
