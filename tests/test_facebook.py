@@ -118,6 +118,18 @@ class FacebookTest(ModelsTest):
     self.assertEqual(403, resp.status_int)
     self.assertIn("nope is not authorized for any of: {'snarfed.org'}", resp.text)
 
+    self.assertIsNone(Facebook.get_by_id('212038'))
+
+  def test_feed(self):
+    gr_facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
+    self.mox.ReplayAll()
+
+    resp = app.application.get_response(
+      '/facebook/browser/feed?token=towkin&key={key.urlsafe().decode()}',
+      method='POST', text=MBASIC_HTML_TIMELINE)
+    self.assertEqual(200, resp.status_int)
+    self.assertEqual(MBASIC_ACTIVITIES, resp.json)
+
   def test_post(self):
     key = self.fb.put()
     gr_facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))

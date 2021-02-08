@@ -241,8 +241,28 @@ class HomepageHandler(BrowserHandler):
 
     self.abort(400, f"Couldn't determine logged in {gr_src.NAME} user or username")
 
-class ProfileHandler(BrowserHandler):
-  """Parses a silo profile page and returns the posts' URLs.
+
+class FeedHandler(BrowserHandler):
+  """Parses a silo feed page and returns the posts.
+
+  Request body is HTML from a silo profile with posts, eg
+  https://www.instagram.com/name/ , for a logged in user.
+
+  Response body is the JSON list of translated ActivityStreams activities.
+  """
+  def post(self):
+    self.scrape()
+
+  def scrape(self):
+    activities, actor = self.gr_source().scraped_to_activities(self.request.text)
+    ids = ' '.join(a['id'] for a in activities)
+    logging.info(f"Returning activities: {ids}")
+    self.output(activities)
+    return activities, actor
+
+
+class ProfileHandler(FeedHandler):
+  """Parses a silo profile page and creates or updates its Bridgy user.
 
   Request body is HTML from an IG profile, eg https://www.instagram.com/name/ ,
   for a logged in user.
@@ -250,19 +270,13 @@ class ProfileHandler(BrowserHandler):
   Response body is the JSON list of translated ActivityStreams activities.
   """
   def post(self):
-    gr_src = self.gr_source()
-
-    activities, actor = gr_src.scraped_to_activities(self.request.text)
+    _, actor = self.scrape()
     if not actor:
-      actor = gr_src.scraped_to_actor(self.request.text)
+      actor = self.gr_source().scraped_to_actor(self.request.text)
     self.check_token_for_actor(actor)
 
     # create/update the Bridgy account
-    source = self.source_class().create_new(self, actor=actor)
-
-    ids = ' '.join(a['id'] for a in activities)
-    logging.info(f"Returning activities for {source}: {ids}")
-    self.output(activities)
+    self.source_class().create_new(self, actor=actor)
 
 
 class PostHandler(BrowserHandler):
@@ -372,6 +386,7 @@ def routes(source_cls):
   return [
     (f'/{source_cls.SHORT_NAME}/browser/homepage', HomepageHandler),
     (f'/{source_cls.SHORT_NAME}/browser/profile', ProfileHandler),
+    (f'/{source_cls.SHORT_NAME}/browser/feed', FeedHandler),
     (f'/{source_cls.SHORT_NAME}/browser/post', PostHandler),
     (f'/{source_cls.SHORT_NAME}/browser/likes', LikesHandler),
     (f'/{source_cls.SHORT_NAME}/browser/poll', PollHandler),

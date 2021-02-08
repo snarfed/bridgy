@@ -183,6 +183,11 @@ class BrowserHandlerTest(ModelsTest):
     self.assertEqual(403, resp.status_int)
     self.assertIn("nope is not authorized for any of: {'snarfed.org'}", resp.text)
 
+  def test_feed(self):
+    resp = self.app.get_response('/fbs/browser/feed', method='POST')
+    self.assertEqual(200, resp.status_int)
+    self.assertEqual(self.activities_no_replies, util.trim_nulls(resp.json))
+
   def test_post(self):
     source = FakeBrowserSource.new(self.handler, actor={
       'fbs_id': 'snarfed',
