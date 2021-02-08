@@ -56,6 +56,10 @@ indexes:
   - name: "major_version"
   - name: "minor_version"
     direction: desc
+- kind: "Facebook"
+  properties:
+  - name: "status"
+  - name: "features"
 - kind: "FacebookPage"
   properties:
   - name: "status"
