@@ -2,12 +2,14 @@
 
 import './browser-polyfill.js'
 
-import {INDIEAUTH_START} from './common.js'
+import {
+  BRIDGY_BASE_URL,
+  INDIEAUTH_START,
+} from './common.js'
 import {
   findCookies,
   poll,
   postBridgy,
-  BRIDGY_BASE_URL,
   INSTAGRAM_LOGIN_URL,
 } from './instagram.js'
 
