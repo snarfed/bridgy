@@ -17,6 +17,7 @@ from granary.tests.test_facebook import (
   MBASIC_ACTIVITIES,
   MBASIC_ACTIVITIES_REPLIES,
   MBASIC_ACTIVITIES_REPLIES_REACTIONS,
+  MBASIC_ACTIVITY,
   MBASIC_REACTION_TAGS,
 )
 from oauth_dropins.webutil.util import json_dumps, json_loads
@@ -139,13 +140,12 @@ class FacebookTest(ModelsTest):
       f'/facebook/browser/post?token=towkin&key={key.urlsafe().decode()}',
       method='POST', text=MBASIC_HTML_POST)
     self.assertEqual(200, resp.status_int, resp.text)
-    self.assertEqual(MBASIC_ACTIVITIES_REPLIES[1], resp.json)
+    self.assertEqual(MBASIC_ACTIVITY, resp.json)
 
     activities = Activity.query().fetch()
     self.assertEqual(1, len(activities))
     self.assertEqual(self.fb.key, activities[0].source)
-    self.assertEqual(MBASIC_ACTIVITIES_REPLIES[1],
-                     json_loads(activities[0].activity_json))
+    self.assertEqual(MBASIC_ACTIVITY, json_loads(activities[0].activity_json))
 
   def test_post_no_source(self):
     key = self.fb.put()
@@ -202,11 +202,10 @@ class FacebookTest(ModelsTest):
       method='POST', text=MBASIC_HTML_POST)
 
     self.assertEqual(200, resp.status_int, resp.text)
-    self.assert_equals(MBASIC_ACTIVITIES_REPLIES[1], resp.json)
+    self.assert_equals(MBASIC_ACTIVITY, resp.json)
 
     activity = activity_key.get()
-    self.assert_equals(MBASIC_ACTIVITIES_REPLIES[1],
-                       json_loads(activity.activity_json))
+    self.assert_equals(MBASIC_ACTIVITY, json_loads(activity.activity_json))
 
   def test_likes(self):
     key = self.store_activity()
