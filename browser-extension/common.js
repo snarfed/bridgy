@@ -1,7 +1,7 @@
 'use strict'
 
-const BRIDGY_BASE_URL = 'https://brid.gy/instagram/browser'
-// const BRIDGY_BASE_URL = 'http://localhost:8080/instagram/browser'
+const BRIDGY_BASE_URL = 'https://brid.gy'
+// const BRIDGY_BASE_URL = 'http://localhost:8080'
 const INDIEAUTH_START = 'https://brid.gy/indieauth/start'
 // const INDIEAUTH_START = 'http://localhost:8080/indieauth/start'
 
@@ -22,9 +22,8 @@ function injectGlobals(newGlobals) {
  *   already exists.
  */
 async function login(force) {
-  const data = await browser.storage.sync.get(['token'])
+  let token = (await browser.storage.sync.get(['token'])).token
   let generated = false
-  let token = data.token
   if (!token) {
     token = Math.random().toString(36).substring(2, 15)
     await browser.storage.sync.set({token: token})
@@ -40,47 +39,120 @@ async function login(force) {
 
 
 /**
- * Makes an HTTP POST request to Bridgy.
- *
- * @param {String} path
- * @param {String} body
- * @returns {Object} JSON parsed response from Bridgy
- */
-async function postBridgy(path, body) {
-  const url = `${BRIDGY_BASE_URL}${path}`
-  console.debug(`Sending to ${url}`)
-
-  try {
-    // TODO: support optional timeout via signal and AbortHandler
-    // https://dmitripavlutin.com/timeout-fetch-request/
-    const res = await fetch(url, {
-      method: 'POST',
-      body: body,
-    })
-    console.debug(`Got ${res.status}`)
-    if (res.ok) {
-      var json
-      json = await res.json()
-      console.debug(json)
-      return json
-    } else {
-      console.debug(await res.text())
-    }
-  } catch (err) {
-    console.error(err)
-    return null
-  }
-}
-
-
-/**
  * Abstract base class for a silo, eg Facebook or Instagram.
  */
 class Silo {
   DOMAIN     // eg 'silo.com'
+  NAME       // eg 'instagram'
   BASE_URL   // eg 'https://silo.com'
   LOGIN_URL  // eg 'https://silo.com/login'
   COOKIE     // eg 'sessionid'
+
+  /**
+   * Returns the URL path to the user's profile, eg '/snarfed'.
+   *
+   * To be implemented by subclasses.
+   *
+   * @returns {String} URL path to the user's silo profile
+   */
+  async profilePath() {
+    throw new Error('Not implemented')
+  }
+
+  /**
+   * Returns the URL path to the user's feed of posts.
+   *
+   * To be implemented by subclasses.
+   *
+   * @returns {String} URL path
+   */
+  async feedPath() {
+    throw new Error('Not implemented')
+  }
+
+  /**
+   * Returns an AS1 activity's reaction count, if available.
+   *
+   * To be implemented by subclasses.
+   *
+   * @param {Object} AS1 activity
+   * @returns {integer} number of reactions for this activity
+   */
+  reactionsCount(activity) {
+    throw new Error('Not implemented')
+  }
+
+  /**
+   * Returns the URL path for a given AS1 activity's reactions.
+   *
+   * To be implemented by subclasses.
+   *
+   * @param {Object} AS1 activity
+   * @returns {String} silo URL path
+   */
+  reactionsPath(activity) {
+    throw new Error('Not implemented')
+  }
+
+  /**
+   * Polls the user's posts, forwards new comments and likes to Bridgy.
+   */
+  async poll() {
+    const token = (await browser.storage.sync.get(['token'])).token
+    if (!token) {
+      return
+    }
+
+    console.log('Starting poll...')
+    await this.storageSet('lastStart', Date.now())
+
+    // register with Bridgy (ie create source for this silo account) if necessary
+    let key = await this.storageGet('bridgySourceKey')
+    if (!key) {
+      key = await this.forward(await this.profilePath(), '/profile')
+      await this.storageSet('bridgySourceKey', key)
+    }
+
+    // extract posts (activities) from profile timeline
+    const activities = await this.forward(await this.feedPath(), `/feed`)
+    if (!activities) {
+      return
+    }
+
+    for (const activity of activities) {
+      // check cached comment and like counts for this post, skip if they're unchanged
+      const commentCount = activity.object.replies ? activity.object.replies.totalItems : null
+      const reactionCount = this.reactionsCount(activity)
+
+      if (commentCount != null && reactionCount != null) {
+        const cacheKey = `post-${activity.id}`
+        let cache = await this.storageGet(cacheKey)
+        if (cache && cache.c == commentCount && cache.r == reactionCount) {
+          console.debug(`No new comments or reactions for ${activity.id}, skipping`)
+          continue
+        }
+        await this.storageSet(cacheKey, {c: commentCount, r: reactionCount})
+      }
+
+      // fetch post permalink for comments
+      const resolved = await this.forward(activity.url, `/post`)
+      if (!resolved) {
+        console.warn(`Bridgy couldn't translate post HTML`)
+        continue
+      }
+
+      // fetch reactions
+      if (!await this.forward(this.reactionsPath(activity),
+                              `/reactions?id=${activity.id}`)) {
+        console.warn(`Bridgy couldn't translate reactions`)
+        continue
+      }
+    }
+
+    await this.postBridgy(`/poll`)
+    await this.storageSet('lastSuccess', Date.now())
+    console.log('Done!')
+  }
 
   /**
    * Finds and returns session cookies for this silo.
@@ -119,13 +191,13 @@ class Silo {
         const header = cookies.map(c => `${c.name}=${c.value}`).join('; ')
         // console.debug(header)
         if (header.includes(`${this.COOKIE}=`)) {
-          console.debug(`Using ${this.DOMAIN} cookie ${header}`)
+          console.debug(`Using ${this.NAME} cookie ${header}`)
           return header
         }
       }
     }
 
-    console.log(`No ${this.DOMAIN} ${this.COOKIE} cookie found!`)
+    console.log(`No ${this.NAME} ${this.COOKIE} cookie found!`)
   }
 
   /**
@@ -136,28 +208,41 @@ class Silo {
    * @returns {String} Response body from Bridgy
    */
   async forward(siloPath, bridgyPath) {
-    const data = await this.get(siloPath)
+    if (!siloPath || !bridgyPath) {
+      return
+    }
+    const data = await this.siloGet(siloPath)
     if (data) {
-      return await postBridgy(bridgyPath, data)
+      return await this.postBridgy(bridgyPath, data)
     }
   }
 
   /**
    * Makes an HTTP GET request to the silo.
    *
-   * @param {String} path
+   * @param {String} url
    * @returns {String} Response body from the silo
    */
-  async get(path) {
+  async siloGet(url) {
     const cookies = await this.findCookies()
     if (!cookies) {
       return
     }
 
-    // Make HTTP request
-    const url = `${this.BASE_URL}${path}`
-    console.debug(`Fetching ${url}`)
+    // check if url is a full URL or a path
+    try {
+      const parsed = new URL(url)
+      if (parsed.hostname != this.DOMAIN &&
+          !parsed.hostname.startsWith(`.${this.DOMAIN}`)) {
+        console.error(`Got non-${this.NAME} URL: ${url}`)
+        return
+      }
+    } catch (err) {
+      url = `${this.BASE_URL}${url}`
+    }
 
+    // Make HTTP request
+    console.debug(`Fetching ${url}`)
     const res = await fetch(url, {
       method: 'GET',
       headers: {
@@ -167,6 +252,7 @@ class Silo {
       // required for sending cookies in older browsers?
       // https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API#Differences_from_jQuery
       credentials: 'same-origin',
+      redirect: 'follow',
     })
 
     console.debug(`Got ${res.status}`)
@@ -175,6 +261,85 @@ class Silo {
     if (res.ok) {
       return text
     }
+  }
+
+  /**
+   * Makes an HTTP POST request to Bridgy.
+   *
+   * @param {String} path_query
+   * @param {String} body
+   * @returns {Object} JSON parsed response from Bridgy
+   */
+  async postBridgy(path_query, body) {
+    const token = (await browser.storage.sync.get(['token'])).token
+    if (!token) {
+      console.error('No stored token!')
+      return
+    }
+
+    let url = new URL(`${BRIDGY_BASE_URL}/${this.NAME}/browser${path_query}`)
+    url.searchParams.set('token', token)
+
+    const key = await this.storageGet('bridgySourceKey')
+    if (key) {
+      url.searchParams.set('key', key)
+    }
+
+    console.debug(`Sending to ${url}`)
+    try {
+      // TODO: support optional timeout via signal and AbortHandler
+      // https://dmitripavlutin.com/timeout-fetch-request/
+      const res = await fetch(url.toString(), {
+        method: 'POST',
+        body: body,
+      })
+      console.debug(`Got ${res.status}`)
+      if (res.ok) {
+        let json = await res.json()
+        console.debug(json)
+        return json
+      } else {
+        console.debug(await res.text())
+      }
+    } catch (err) {
+      console.error(err)
+      return null
+    }
+  }
+
+  /**
+   * Fetches a value from local storage for a key prefixed with this silo's name.
+   *
+   * For example, storageGet('foo') would return the value for key 'NAME-foo'.
+   *
+   * @param {String} key
+   * @returns {Object} stored value, or none
+   */
+  async storageGet(key) {
+    key = this.siloKey(key)
+    return (await browser.storage.local.get([key]))[key]
+  }
+
+  /**
+   * Stores a value from local storage for a key prefixed with this silo's name.
+   *
+   * For example, storageSet('foo') would store the value for key 'NAME-foo'.
+   *
+   * @param {String} key
+   * @param {Object} value
+   */
+  async storageSet(key, value) {
+    return await browser.storage.local.set({[this.siloKey(key)]: value})
+  }
+
+  /**
+   * Prefixes a local storage key with the silo's name.
+   *
+   * @param {String} key
+   * @returns {String} prefixed key
+   */
+  siloKey(key) {
+    return `${this.NAME}-${key}`
   }
 }
 

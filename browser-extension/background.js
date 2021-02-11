@@ -4,15 +4,17 @@ import {findCookies, poll, INSTAGRAM_LOGIN_URL} from './instagram.js'
 
 /* Local storage schema for this extension:
  *
- * token: [string],
- * instagramUsername: [string],
- * instagramLastStart: [Date],
- * instagramLastSuccess: [Date],
- * 'instagramPost-[shortcode]': {
- *   c: [integer],  // number of commenst
- *   l: [integer],  // number of likes
- * },
+ * browser.storage.sync:
+ *   token: [string]
  *
+ * browser.storage.local:
+ *   [silo]-bridgySourceKey: [string],
+ *   [silo]-lastStart: [Date],
+ *   [silo]-lastSuccess: [Date],
+ *   [silo]-post-[id]: {
+ *     c: [integer],  // number of commenst
+ *     r: [integer],  // number of reactions
+ *   },
  */
 
 const FREQUENCY_MIN = 30
