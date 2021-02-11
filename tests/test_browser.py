@@ -128,7 +128,7 @@ class BrowserHandlerTest(ModelsTest):
     resp = self.app.get_response('/fbs/browser/profile?token=towkin', method='POST')
 
     self.assertEqual(200, resp.status_int)
-    self.assert_equals(self.activities_no_replies, util.trim_nulls(resp.json))
+    self.assert_equals(self.source.urlsafe().decode(), resp.json)
 
     src = self.source.get()
     self.assertEqual('Ryan B', src.name)
@@ -146,7 +146,7 @@ class BrowserHandlerTest(ModelsTest):
 
     resp = self.app.get_response('/fbs/browser/profile?token=towkin', method='POST')
     self.assertEqual(200, resp.status_int)
-    self.assert_equals([], resp.json)
+    self.assert_equals(self.source.urlsafe().decode(), resp.json)
 
     src = self.source.get()
     self.assertEqual('Ryan B', src.name)
@@ -187,6 +187,12 @@ class BrowserHandlerTest(ModelsTest):
     resp = self.app.get_response('/fbs/browser/feed', method='POST')
     self.assertEqual(200, resp.status_int)
     self.assertEqual(self.activities_no_replies, util.trim_nulls(resp.json))
+
+  def test_feed_empty(self):
+    FakeGrSource.activities = []
+    resp = self.app.get_response('/fbs/browser/feed', method='POST')
+    self.assertEqual(200, resp.status_int)
+    self.assertEqual([], resp.json)
 
   def test_post(self):
     source = FakeBrowserSource.new(self.handler, actor={
@@ -266,7 +272,7 @@ class BrowserHandlerTest(ModelsTest):
     self.assert_equals([reply['id'], 'abc', 'xyz'],
                        [r['id'] for r in replies['items']])
 
-  def test_likes(self):
+  def test_reactions(self):
     key = Activity(id='tag:fa.ke,2013:123_456',
                    activity_json=json_dumps(self.activities[0])).put()
     like = FakeBrowserSource.gr_source.like = {
@@ -276,7 +282,7 @@ class BrowserHandlerTest(ModelsTest):
     }
 
     resp = self.app.get_response(
-      '/fbs/browser/likes?id=tag:fa.ke,2013:123_456&token=towkin',
+      '/fbs/browser/reactions?id=tag:fa.ke,2013:123_456&token=towkin',
       method='POST')
     self.assertEqual(200, resp.status_int, resp.text)
     self.assert_equals([like], resp.json)
@@ -285,34 +291,34 @@ class BrowserHandlerTest(ModelsTest):
     self.assert_equals(self.activities[0]['object']['tags'] + [like],
                        stored['object']['tags'])
 
-  def test_likes_bad_id(self):
+  def test_reactions_bad_id(self):
     resp = self.app.get_response(
-      '/fbs/browser/likes?id=789&token=towkin', method='POST')
+      '/fbs/browser/reactions?id=789&token=towkin', method='POST')
     self.assertEqual(400, resp.status_int)
     self.assertIn('Expected id to be tag URI', resp.text)
 
-  def test_likes_no_activity(self):
+  def test_reactions_no_activity(self):
     resp = self.app.get_response(
-      '/fbs/browser/likes?id=tag:fa.ke,2013:789&token=towkin', method='POST')
+      '/fbs/browser/reactions?id=tag:fa.ke,2013:789&token=towkin', method='POST')
     self.assertEqual(404, resp.status_int)
     self.assertIn('No FakeSource post found for id tag:fa.ke,2013:789', resp.text)
 
-  def test_likes_activity_missing_actor(self):
+  def test_reactions_activity_missing_actor(self):
     del self.activities[0]['object']['author']
     Activity(id='tag:fa.ke,2013:123',
              activity_json=json_dumps(self.activities[0])).put()
 
     resp = self.app.get_response(
-      '/fbs/browser/likes?id=tag:fa.ke,2013:123&token=towkin', method='POST')
+      '/fbs/browser/reactions?id=tag:fa.ke,2013:123&token=towkin', method='POST')
     self.assertEqual(400, resp.status_int)
     self.assertIn('Missing actor', resp.text)
 
-  def test_likes_bad_token(self):
+  def test_reactions_bad_token(self):
     key = Activity(id='tag:fa.ke,2013:123_456',
                    activity_json=json_dumps(self.activities[0])).put()
 
     resp = self.app.get_response(
-      '/fbs/browser/likes?id=tag:fa.ke,2013:123_456&token=nope', method='POST')
+      '/fbs/browser/reactions?id=tag:fa.ke,2013:123_456&token=nope', method='POST')
     self.assertEqual(403, resp.status_int)
     self.assertIn("nope is not authorized for any of: {'snarfed.org'}", resp.text)
 

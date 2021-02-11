@@ -251,13 +251,13 @@ class FeedHandler(BrowserHandler):
   Response body is the JSON list of translated ActivityStreams activities.
   """
   def post(self):
-    self.scrape()
+    activities, _ = self.scrape()
+    self.output(activities)
 
   def scrape(self):
     activities, actor = self.gr_source().scraped_to_activities(self.request.text)
     ids = ' '.join(a['id'] for a in activities)
     logging.info(f"Returning activities: {ids}")
-    self.output(activities)
     return activities, actor
 
 
@@ -267,7 +267,7 @@ class ProfileHandler(FeedHandler):
   Request body is HTML from an IG profile, eg https://www.instagram.com/name/ ,
   for a logged in user.
 
-  Response body is the JSON list of translated ActivityStreams activities.
+  Response body is the JSON string URL-safe key of the Bridgy source entity.
   """
   def post(self):
     _, actor = self.scrape()
@@ -276,7 +276,8 @@ class ProfileHandler(FeedHandler):
     self.check_token_for_actor(actor)
 
     # create/update the Bridgy account
-    self.source_class().create_new(self, actor=actor)
+    source = self.source_class().create_new(self, actor=actor)
+    self.output(source.key.urlsafe().decode())
 
 
 class PostHandler(BrowserHandler):
@@ -324,14 +325,14 @@ class PostHandler(BrowserHandler):
     update_activity()
 
 
-class LikesHandler(BrowserHandler):
-  """Parses likes from silo HTML or JSON and adds them to an existing Activity.
+class ReactionsHandler(BrowserHandler):
+  """Parses reactions/likes from silo HTML and adds them to an existing Activity.
 
   Requires the request parameter `id` with the silo post's id (not shortcode!).
 
-  Response body is the translated ActivityStreams JSON for the likes.
+  Response body is the translated ActivityStreams JSON for the reactions.
   """
-  def post(self):
+  def post(self, *args):
     gr_src = self.gr_source()
     id = util.get_required_param(self, 'id')
 
@@ -348,14 +349,14 @@ class LikesHandler(BrowserHandler):
     actor = activity_data['object'].get('author') or activity_data.get('actor')
     self.check_token_for_actor(actor)
 
-    # convert new likes to AS, merge into existing activity
-    new_likes = gr_src.merge_scraped_reactions(self.request.text, activity_data)
+    # convert new reactions to AS, merge into existing activity
+    new_reactions = gr_src.merge_scraped_reactions(self.request.text, activity_data)
     activity.activity_json = json_dumps(activity_data)
     activity.put()
 
-    like_ids = ' '.join(l['id'] for l in new_likes)
-    logging.info(f"Stored likes for activity {id}: {like_ids}")
-    self.output(new_likes)
+    reaction_ids = ' '.join(r['id'] for r in new_reactions)
+    logging.info(f"Stored reactions for activity {id}: {reaction_ids}")
+    self.output(new_reactions)
 
 
 class PollHandler(BrowserHandler):
@@ -388,7 +389,7 @@ def routes(source_cls):
     (f'/{source_cls.SHORT_NAME}/browser/profile', ProfileHandler),
     (f'/{source_cls.SHORT_NAME}/browser/feed', FeedHandler),
     (f'/{source_cls.SHORT_NAME}/browser/post', PostHandler),
-    (f'/{source_cls.SHORT_NAME}/browser/likes', LikesHandler),
+    (f'/{source_cls.SHORT_NAME}/browser/(likes|reactions)', ReactionsHandler),
     (f'/{source_cls.SHORT_NAME}/browser/poll', PollHandler),
     (f'/{source_cls.SHORT_NAME}/browser/token-domains', TokenDomainsHandler),
   ]
