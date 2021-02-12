@@ -1,27 +1,23 @@
 'use strict'
 
-import fetchMock from 'jest-fetch-mock'
-
 import {
   BRIDGY_BASE_URL,
   INDIEAUTH_START,
-  injectGlobals,
   login,
   Silo,
 } from '../common.js'
 
+import './testutil.js'
 
-const postActivities = [{
-  id: '246',
-  url: 'http://fa.ke/246',
-  reactions_count: 5,
-  object: {replies: {totalItems: 3}},
-}, {
-  id: '357',
-  url: 'http://fa.ke/357',
-  reactions_count: 0,
-  object: {replies: {totalItems: 0}},
-}]
+
+beforeEach(() => {
+  browser.storage.local.data = {'fake-bridgySourceKey': 'KEE'}
+  browser.cookies.getAll.mockResolvedValue([
+    {name: 'seshun', value: 'foo'},
+    {name: 'bar', value: 'baz'},
+  ])
+})
+
 
 class FakeSilo extends Silo {
   DOMAIN = 'fa.ke'
@@ -48,57 +44,17 @@ class FakeSilo extends Silo {
 }
 
 
-fetchMock.enableMocks()
-
-beforeAll(() => {
-  injectGlobals({
-    // browser is a namespace, so we can't use jest.mock(), have to mock and inject
-    // it manually like this.
-    browser: {
-      cookies: {
-        getAll: jest.fn(),
-        getAllCookieStores: async () => [{id: '1'}],
-      },
-      storage: {
-        sync: {
-          get: async function () { return this.data },
-          set: async function (values) { Object.assign(this.data, values) },
-          data: {},
-        },
-        local: {
-          get: async function () { return this.data },
-          set: async function (values) { Object.assign(this.data, values) },
-          data: {},
-        },
-      },
-      tabs: {
-        create: jest.fn(),
-      },
-    },
-    console: {
-      debug: () => null,
-      log: () => null,
-      error: () => null,
-    },
-    _console: console,
-  })
-})
-
-beforeEach(() => {
-  jest.resetAllMocks()
-  fetch.resetMocks()
-
-  browser.storage.sync.data = {'token': 'towkin'}
-  browser.storage.local.data = {'fake-bridgySourceKey': 'KEE'}
-  browser.cookies.getAll.mockResolvedValue([
-    {name: 'seshun', value: 'foo'},
-    {name: 'bar', value: 'baz'},
-  ])
-})
-
-afterEach(() => {
-  jest.restoreAllMocks()
-})
+const activities = [{
+  id: '246',
+  url: 'http://fa.ke/246',
+  reactions_count: 5,
+  object: {replies: {totalItems: 3}},
+}, {
+  id: '357',
+  url: 'http://fa.ke/357',
+  reactions_count: 0,
+  object: {replies: {totalItems: 0}},
+}]
 
 
 test('login, no existing token', async () => {
@@ -183,7 +139,7 @@ test('poll, no stored token', async () => {
 
 test('poll', async () => {
   fetch.mockResponseOnce('fake feed')
-  fetch.mockResponseOnce(JSON.stringify(postActivities))
+  fetch.mockResponseOnce(JSON.stringify(activities))
   fetch.mockResponseOnce('post 246')
   fetch.mockResponseOnce('{}')
   fetch.mockResponseOnce('reactions 246')
@@ -227,7 +183,7 @@ test('poll', async () => {
 
 test('poll, skip comments and likes', async () => {
   fetch.mockResponseOnce('{}')
-  fetch.mockResponseOnce(JSON.stringify(postActivities))
+  fetch.mockResponseOnce(JSON.stringify(activities))
   fetch.mockResponseOnce('post 357')
   fetch.mockResponseOnce('{}')
   fetch.mockResponseOnce('likes 357')

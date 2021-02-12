@@ -6,14 +6,6 @@ const INDIEAUTH_START = 'https://brid.gy/indieauth/start'
 // const INDIEAUTH_START = 'http://localhost:8080/indieauth/start'
 
 
-/**
- * Injects mock globals for tests.
- */
-function injectGlobals(newGlobals) {
-  Object.assign(global, newGlobals)
-}
-
-
 /*
  * Initial setup: generate a token, then start IndieAuth flow on Bridgy to log
  * into their web site and connect that token.
@@ -347,7 +339,6 @@ class Silo {
 export {
   BRIDGY_BASE_URL,
   INDIEAUTH_START,
-  injectGlobals,
   login,
   Silo,
 }
