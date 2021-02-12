@@ -1,5 +1,13 @@
-// Needed for Jest to support async/await
-// https://jestjs.io/docs/en/tutorial-async#asyncawait
+// Babel config
+// https://babeljs.io/docs/en/configuration#babelconfigjson
+// https://babeljs.io/docs/en/options
 {
-  presets: [["@babel/preset-env", {targets: {node: "current"}}]]
+  // Needed for Jest to support async/await
+  // https://jestjs.io/docs/en/tutorial-async#asyncawait
+  presets: [["@babel/preset-env", {targets: {node: "current"}}]],
+
+  // Needed for experimental class property syntax
+  // http://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/Public_class_fields
+  // https://github.com/babel/babel/tree/master/packages/babel-plugin-proposal-class-propertise
+  "plugins": ["@babel/plugin-proposal-class-properties"]
 }
