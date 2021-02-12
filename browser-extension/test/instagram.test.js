@@ -8,8 +8,7 @@ import {
   Instagram,
 } from '../instagram.js'
 
-import {
-} from './testutil.js'
+import './testutil.js'
 
 beforeEach(() => {
   browser.storage.local.data = {'instagram-bridgySourceKey': 'KEE'}
