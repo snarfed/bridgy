@@ -145,7 +145,7 @@ class InstagramTest(ModelsTest):
       text=HTML_PROFILE_COMPLETE)
 
     self.assertEqual(200, resp.status_int)
-    self.assertEqual([HTML_PHOTO_ACTIVITY, HTML_VIDEO_ACTIVITY], resp.json)
+    self.assertEqual(self.ig.key.urlsafe().decode(), resp.json)
 
     ig = Instagram.get_by_id('snarfed')
     self.assertEqual('Ryan B', ig.name)

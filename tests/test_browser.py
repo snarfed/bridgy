@@ -135,6 +135,24 @@ class BrowserHandlerTest(ModelsTest):
     self.assertEqual(['https://snarfed.org/'], src.domain_urls)
     self.assertEqual(['snarfed.org'], src.domains)
 
+  def test_profile_existing_user_update(self):
+    self.assertIsNotNone(self.source.get())
+    FakeBrowserSource.gr_source.actor.update({
+      'displayName': 'Mrs. Foo',
+      'image': {'url': 'http://foo/img'},
+    })
+
+    # for webmention discovery
+    self.mox.ReplayAll()
+
+    resp = self.app.get_response('/fbs/browser/profile?token=towkin', method='POST')
+    self.assertEqual(200, resp.status_int)
+    self.assert_equals(self.source.urlsafe().decode(), resp.json)
+
+    src = self.source.get()
+    self.assertEqual('Mrs. Foo', src.name)
+    self.assertEqual('http://foo/img', src.picture)
+
   def test_profile_fall_back_to_scraped_to_actor(self):
     self.source.delete()
 

@@ -90,7 +90,7 @@ class FacebookTest(ModelsTest):
       '/facebook/browser/profile?token=towkin', method='POST', text=MBASIC_HTML_ABOUT)
 
     self.assertEqual(200, resp.status_int)
-    self.assertEqual([], resp.json)
+    self.assertEqual(self.fb.key.urlsafe().decode(), resp.json)
 
     fb = Facebook.get_by_id('212038')
     self.assertEqual('Ryan Barrett', fb.name)
