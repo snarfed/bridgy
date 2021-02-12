@@ -181,6 +181,29 @@ test('poll', async () => {
     `${BRIDGY_BASE_URL}/fake/browser/poll?token=towkin&key=KEE`)
 })
 
+test('poll, no stored token', async () => {
+  // no token stored
+  browser.storage.sync.data = {}
+  await new FakeSilo().poll()
+
+  expect(fetch.mock.calls.length).toBe(0)
+  expect(browser.storage.local.data['fake-lastStart']).toBeUndefined()
+  expect(browser.storage.local.data['fake-lastSuccess']).toBeUndefined()
+})
+
+test('poll, no stored bridgy source key', async () => {
+  delete browser.storage.local.data['fake-bridgySourceKey']
+
+  fetch.mockResponseOnce('fake profile')
+  fetch.mockResponseOnce('"abc123"')
+
+  await new FakeSilo().poll()
+  expect(fetch.mock.calls[0][0]).toBe('http://fa.ke/profile')
+  expect(fetch.mock.calls[1][0]).toBe(
+    `${BRIDGY_BASE_URL}/fake/browser/profile?token=towkin`)
+  expect(browser.storage.local.data['fake-bridgySourceKey']).toBe('abc123')
+})
+
 test('poll, skip comments and likes', async () => {
   fetch.mockResponseOnce('{}')
   fetch.mockResponseOnce(JSON.stringify(activities))
