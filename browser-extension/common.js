@@ -225,7 +225,7 @@ class Silo {
     try {
       const parsed = new URL(url)
       if (parsed.hostname != this.DOMAIN &&
-          !parsed.hostname.startsWith(`.${this.DOMAIN}`)) {
+          !parsed.hostname.endsWith(`.${this.DOMAIN}`)) {
         console.error(`Got non-${this.NAME} URL: ${url}`)
         return
       }
