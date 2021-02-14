@@ -155,20 +155,8 @@ class BrowserHandler(util.Handler):
       self.abort(400, f'Your {self.gr_source().NAME} account is private. Bridgy only supports public accounts.')
 
     token = util.get_required_param(self, 'token')
-    src_cls = self.source_class()
-
     domains = set(util.domain_from_link(u) for u in microformats2.object_urls(actor))
-
-    # TEMPORARY since we've lost the profile's domains in Activity contents for
-    # Instagram for some reason. :/
-    url = actor.get('url')
-    if url:
-      logging.info(f'Looking up source by URL {url}')
-      source = src_cls.query(src_cls.url == url).get()
-      if source:
-        domains.update(source.domains)
-
-    domains.discard(src_cls.GR_CLASS.DOMAIN)
+    domains.discard(self.source_class().GR_CLASS.DOMAIN)
 
     logging.info(f'Checking token against domains {domains}')
     for domain in ndb.get_multi(ndb.Key(Domain, d) for d in domains):
@@ -177,16 +165,10 @@ class BrowserHandler(util.Handler):
 
     self.abort(403, f'Token {token} is not authorized for any of: {domains}')
 
-  def auth(self, actor=None, check_token=True):
-    """Loads the source and (optionally) token and checks that they're valid.
+  def auth(self):
+    """Loads the source and token and checks that they're valid.
 
-    Expects token in the `token` query param, source in `key` or `username` with
-    fallback to `actor` for older browser extension versions that didn't send
-    them.
-
-    Args:
-      actor: dict, optional, AS1 actor
-      check_token: boolean, optional, whether to load and check the token too
+    Expects token in the `token` query param, source in `key` or `username`.
 
     Raises: :class:`HTTPException` with HTTP 400 if the token or source are
       missing or invalid
@@ -194,26 +176,11 @@ class BrowserHandler(util.Handler):
     Returns: BrowserSource or None
     """
     # Load source
-    key = self.request.get('key')
-    username = self.request.get('username')
-    if not username and actor:
-      username = actor.get('username')
-
-    source = None
-    if key:
-      source = util.load_source(self, param='key')
-    elif username:
-      source = self.source_class().get_by_id(username)
-    else:
-      self.abort(400, 'No key or username query param and no scraped actor found')
-
+    source = util.load_source(self, param='key')
     if not source:
       self.abort(404, f'No account found for {self.gr_source().NAME} user {key or username}')
 
     # Load and check token
-    if not check_token:
-      return source
-
     token = util.get_required_param(self, 'token')
     for domain in Domain.query(Domain.tokens == token):
       if domain.key.id() in source.domains:
@@ -233,7 +200,6 @@ class HomepageHandler(BrowserHandler):
     logging.info(f'Got actor: {actor}')
 
     if actor:
-      # TODO?
       username = actor.get('username')
       if username:
         logging.info(f"Returning {username}")
@@ -251,6 +217,8 @@ class FeedHandler(BrowserHandler):
   Response body is the JSON list of translated ActivityStreams activities.
   """
   def post(self):
+    self.auth()
+
     activities, _ = self.scrape()
     self.output(activities)
 
@@ -288,12 +256,12 @@ class PostHandler(BrowserHandler):
   Response body is the translated ActivityStreams activity JSON.
   """
   def post(self):
+    source = self.auth()
+
     gr_src = self.gr_source()
     new_activity, actor = gr_src.scraped_to_activity(self.request.text)
     if not new_activity:
       self.abort(400, f'No {gr_src.NAME} post found in HTML')
-
-    source = self.auth(actor=actor)
 
     @ndb.transactional()
     def update_activity():
@@ -333,6 +301,8 @@ class ReactionsHandler(BrowserHandler):
   Response body is the translated ActivityStreams JSON for the reactions.
   """
   def post(self, *args):
+    source = self.auth()
+
     gr_src = self.gr_source()
     id = util.get_required_param(self, 'id')
 
@@ -344,10 +314,10 @@ class ReactionsHandler(BrowserHandler):
     activity = Activity.get_by_id(id)
     if not activity:
       self.abort(404, f'No {gr_src.NAME} post found for id {id}')
+    elif activity.source != source.key:
+      self.abort(403, f'Activity {id} is owned by {activity.source}, not {source.key}')
 
     activity_data = json_loads(activity.activity_json)
-    actor = activity_data['object'].get('author') or activity_data.get('actor')
-    self.check_token_for_actor(actor)
 
     # convert new reactions to AS, merge into existing activity
     new_reactions = gr_src.merge_scraped_reactions(self.request.text, activity_data)
@@ -362,7 +332,7 @@ class ReactionsHandler(BrowserHandler):
 class PollHandler(BrowserHandler):
   """Triggers a poll for a browser-based account."""
   def post(self):
-    source = self.auth(check_token=False)
+    source = self.auth()
     util.add_poll_task(source)
     self.output('OK')
 
