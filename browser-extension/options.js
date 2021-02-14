@@ -36,11 +36,16 @@ async function update() {
       document.querySelector(`#${silo.NAME}-userPage`).href = `https://brid.gy/${silo.NAME}/${domains[0]}`
     }
 
-    for (var field of ['lastStart', 'lastSuccess']) {
-      field = `${silo.NAME}-${field}`
-      if (data[field]) {
-        document.getElementById(field).innerText = new Date(data[field]).toLocaleString()
-      }
+    const lastStart = data[`${silo.NAME}-lastStart`]
+    if (lastStart) {
+      const date = new Date(lastStart).toLocaleString()
+      document.getElementById(`${silo.NAME}-lastStart`).innerText = date
+    }
+
+    const lastSuccess = data[`${silo.NAME}-lastSuccess`]
+    if (lastSuccess) {
+      const date = new Date(lastSuccess).toLocaleString()
+      document.getElementById(`${silo.NAME}-lastSuccess`).innerText = date
     }
 
     const cookies = await silo.findCookies()
@@ -51,19 +56,19 @@ async function update() {
     } else if (!domains) {
       status.innerHTML = `Not connected to Bridgy. <a href="${INDIEAUTH_START}?token=${token} target="_blank"">Connect now!</a>`
       status.className = 'error'
-    } else if (!data.instagramLastStart) {
+    } else if (!lastStart) {
       status.innerHTML = 'Not started yet'
       status.className = 'pending'
-    } else if (!data.instagramLastSuccess) {
+    } else if (!lastSuccess) {
       status.innerHTML = 'Initial poll did not succeed'
       status.className = 'error'
-    } else if (data.instagramLastSuccess >= data.instagramLastStart) {
+    } else if (lastSuccess >= lastStart) {
       status.innerHTML = 'OK'
       status.className = 'ok'
-    } else if (data.instagramLastStart > Date.now() - 30 * 1000) {
+    } else if (lastStart > Date.now() - 30 * 1000) {
       status.innerHTML = 'Polling now...'
       status.className = 'pending'
-    } else if (data.instagramLastStart > data.instagramLastSuccess) {
+    } else if (lastStart > lastSuccess) {
       status.innerHTML = 'Last poll did not succeed'
       // want to include this but can't get it to work. Firefox says
       // "Uncaught SyntaxError: private fields are not currently supported"
@@ -79,11 +84,14 @@ async function update() {
   }
 }
 
-function pollNow() {
-  let status = document.querySelector('#status')
+function pollNow(silo) {
+  let status = document.querySelector(`#${silo.NAME}-status`)
   status.innerHTML = 'Polling now...'
   status.className = 'pending'
-  poll().then(update)
+  silo.poll().then(update)
 }
 
-export {update}
+export {
+  pollNow,
+  update,
+}

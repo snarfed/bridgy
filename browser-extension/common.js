@@ -1,9 +1,8 @@
 'use strict'
 
-const BRIDGY_BASE_URL = 'https://brid.gy'
-// const BRIDGY_BASE_URL = 'http://localhost:8080'
-const INDIEAUTH_START = 'https://brid.gy/indieauth/start'
-// const INDIEAUTH_START = 'http://localhost:8080/indieauth/start'
+// const BRIDGY_BASE_URL = 'https://brid.gy'
+const BRIDGY_BASE_URL = 'http://localhost:8080'
+const INDIEAUTH_START = `${BRIDGY_BASE_URL}/indieauth/start`
 
 
 /*
@@ -115,15 +114,13 @@ class Silo {
       // check cached comment and like counts for this post, skip if they're unchanged
       const commentCount = activity.object.replies ? activity.object.replies.totalItems : null
       const reactionCount = this.reactionsCount(activity)
-
+      const cacheKey = `post-${activity.id}`
       if (commentCount != null && reactionCount != null) {
-        const cacheKey = `post-${activity.id}`
         let cache = await this.storageGet(cacheKey)
         if (cache && cache.c == commentCount && cache.r == reactionCount) {
           console.debug(`No new comments or reactions for ${activity.id}, skipping`)
           continue
         }
-        await this.storageSet(cacheKey, {c: commentCount, r: reactionCount})
       }
 
       // fetch post permalink for comments
@@ -139,6 +136,8 @@ class Silo {
         console.warn(`Bridgy couldn't translate reactions`)
         continue
       }
+
+      await this.storageSet(cacheKey, {c: commentCount, r: reactionCount})
     }
 
     await this.postBridgy(`/poll`)

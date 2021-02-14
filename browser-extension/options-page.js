@@ -2,12 +2,21 @@
 
 import './browser-polyfill.js'
 
-import {update} from './options.js'
 import {login} from './common.js'
+import {Facebook} from './facebook.js'
+import {Instagram} from './instagram.js'
+import {
+  pollNow,
+  update,
+} from './options.js'
 
 document.addEventListener('DOMContentLoaded', function () {
-  // document.querySelector('#poll').addEventListener('click', () => pollNow())
   document.querySelector('#reconnect').addEventListener('click', () => login(true))
+
+  for (const silo of [new Instagram(), new Facebook()]) {
+    document.querySelector(`#${silo.NAME}-poll`).addEventListener(
+      'click', () => pollNow(silo))
+  }
 
   console.debug('Scheduling options page refresh every minute')
   browser.alarms.onAlarm.addListener((alarm) => {
