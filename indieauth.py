@@ -37,7 +37,8 @@ class CallbackHandler(indieauth.CallbackHandler, util.Handler):
       return
 
     assert state
-    domain = Domain.get_or_insert(util.domain_from_link(auth_entity.key.id()))
+    domain = Domain.get_or_insert(util.domain_from_link(
+      util.replace_test_domains_with_localhost(auth_entity.key.id())))
     domain.auth = auth_entity.key
     if state not in domain.tokens:
       domain.tokens.append(state)
