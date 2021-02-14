@@ -7,30 +7,43 @@
     a, button, span { font-weight: bold; }
     li { list-style: none; }
     .ok { color: green; }
-    .pending { color: gold; }
+    .pending { color: goldenrod; }
     .error { color: red; }
   </style>
 </head>
 
 <body>
   <ul>
-    <li><b>Status</b>: <span id="status" class="pending">Checking with Bridgy...</span></li>
-    <br>
-    <li>Bridgy user page: <a id="user-page" target="_blank"></a></li>
-    <li>Instagram account: <a id="username" target="_blank"></a></li>
-    <li>Last success: <span id="last-success"></span></li>
-    <li>Last attempt: <span id="last-start"></span></li>
-    <br>
-    <li><button id="poll">Poll Instagram now</button></li>
-    <br>
-    <li>Posts seen: <span id="posts"></span></li>
-    <li>Comments seen: <span id="comments"></span></li>
-    <li>Likes seen: <span id="likes"></span></li>
-    <br>
-    <li>Bridgy token: <span id="token"></span></li>
+    <h2>Bridgy</h2>
+    <li>Token: <span id="token"></span></li>
     <li>Registered domains: <span id="domains"></span></li>
     <br>
     <li><button id="reconnect">Reconnect to Bridgy</button></li>
+    <br>
+    <h2>Instagram</h2>
+    <li><b>Status</b>: <span id="instagram-status" class="pending">Checking with Bridgy...</span></li>
+    <br>
+    <li>Bridgy user page: <a id="instagram-userPage" target="_blank"></a></li>
+    <li>Instagram account: <a id="instagram-username" target="_blank"></a></li>
+    <li>Last success: <span id="instagram-lastSuccess"></span></li>
+    <li>Last attempt: <span id="instagram-lastStart"></span></li>
+    <li>Posts seen: <span id="instagram-posts"></span></li>
+    <li>Comments seen: <span id="instagram-comments"></span></li>
+    <li>Likes seen: <span id="instagram-reactions"></span></li>
+    <br>
+    <li><button id="instagram-poll">Poll Instagram now</button></li>
+    <br>
+    <h2>Facebook</h2>
+    <li><b>Status</b>: <span id="facebook-status" class="pending">Checking with Bridgy...</span></li>
+    <br>
+    <li>Bridgy user page: <a id="facebook-userPage" target="_blank"></a></li>
+    <li>Last success: <span id="facebook-lastSuccess"></span></li>
+    <li>Last attempt: <span id="facebook-lastStart"></span></li>
+    <li>Posts seen: <span id="facebook-posts"></span></li>
+    <li>Comments seen: <span id="facebook-comments"></span></li>
+    <li>Reactions seen: <span id="facebook-reactions"></span></li>
+    <br>
+    <li><button id="facebook-poll">Poll Facebook now</button></li>
   </ul>
 </body>
 </html>
