@@ -52,8 +52,6 @@ class BrowserSource(Source):
   OAUTH_START_HANDLER = None
   gr_source = None
 
-  domain_tokens = ndb.StringProperty(repeated=True)
-
   @classmethod
   def key_id_from_actor(cls, actor):
     """Returns the key id for this entity from a given AS1 actor.
@@ -155,7 +153,8 @@ class BrowserHandler(util.Handler):
       self.abort(400, f'Your {self.gr_source().NAME} account is private. Bridgy only supports public accounts.')
 
     token = util.get_required_param(self, 'token')
-    domains = set(util.domain_from_link(u) for u in microformats2.object_urls(actor))
+    domains = set(util.domain_from_link(util.replace_test_domains_with_localhost(u))
+                  for u in microformats2.object_urls(actor))
     domains.discard(self.source_class().GR_CLASS.DOMAIN)
 
     logging.info(f'Checking token against domains {domains}')
