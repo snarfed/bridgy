@@ -100,8 +100,8 @@ class FacebookTest(ModelsTest):
     fb = Facebook.get_by_id('212038')
     self.assertEqual('Ryan Barrett', fb.name)
     self.assertEqual('https://scontent-sjc3-1.xx.fbcdn.net/v/t1.0-1/cp0/e15/q65/p74x74/39610935_10104076860151373_4179282966062563328_o.jpg?...', fb.picture)
-    self.assertEqual(['https://snarfed.org/'], fb.domain_urls)
-    self.assertEqual(['snarfed.org'], fb.domains)
+    self.assertEqual(['https://snarfed.org/', 'https://foo.bar/'], fb.domain_urls)
+    self.assertEqual(['snarfed.org', 'foo.bar'], fb.domains)
 
   def test_feed(self):
     self.source.put()
