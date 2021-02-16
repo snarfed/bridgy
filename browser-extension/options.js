@@ -25,15 +25,16 @@ async function update() {
   const data = await browser.storage.local.get()
   for (const silo of [new Instagram(), new Facebook()]) {
     const posts = Object.entries(data).filter(x => x[0].startsWith(`${silo.NAME}-post-`))
-    const comments = posts.reduce((sum, cur) => sum + cur[1].c, 0)
-    const likes = posts.reduce((sum, cur) => sum + cur[1].r, 0)
+    const comments = posts.reduce((sum, cur) => sum + (cur[1].c || 0), 0)
+    const reactions = posts.reduce((sum, cur) => sum + (cur[1].r || 0), 0)
     document.querySelector(`#${silo.NAME}-posts`).innerText = posts.length
     document.querySelector(`#${silo.NAME}-comments`).innerText = comments
-    document.querySelector(`#${silo.NAME}-reactions`).innerText = likes
+    document.querySelector(`#${silo.NAME}-reactions`).innerText = reactions
 
     if (domains) {
-      document.querySelector(`#${silo.NAME}-userPage`).innerText = `brid.gy/${silo.NAME}/${domains[0]}`
-      document.querySelector(`#${silo.NAME}-userPage`).href = `https://brid.gy/${silo.NAME}/${domains[0]}`
+      const userUrl = `${BRIDGY_BASE_URL}/${silo.NAME}/${domains[0]}`
+      document.querySelector(`#${silo.NAME}-userPage`).innerText = userUrl.split('//')[1]
+      document.querySelector(`#${silo.NAME}-userPage`).href = userUrl
     }
 
     const lastStart = data[`${silo.NAME}-lastStart`]
