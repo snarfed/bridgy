@@ -23,7 +23,7 @@ from models import Response
 import original_post_discovery
 import util
 # need to import model class definitions since poll creates and saves entities.
-import blogger, flickr, github, instagram, mastodon, medium, reddit, tumblr, twitter, wordpress_rest
+import blogger, facebook, flickr, github, instagram, mastodon, medium, reddit, tumblr, twitter, wordpress_rest
 
 
 class Poll(webapp2.RequestHandler):
