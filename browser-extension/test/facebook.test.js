@@ -38,20 +38,20 @@ test('poll', async () => {
   fetch.mockResponseOnce('fb feed')
   fetch.mockResponseOnce(JSON.stringify(activities))
   fetch.mockResponseOnce('post 246')
-  fetch.mockResponseOnce('{}')
-  fetch.mockResponseOnce('likes 246')
-  fetch.mockResponseOnce('{}')
+  fetch.mockResponseOnce('{"object": {"replies": {"items": [1,2]}}}')
+  fetch.mockResponseOnce('reactions 246')
+  fetch.mockResponseOnce('[1,2,3]')
   fetch.mockResponseOnce('post 357')
   fetch.mockResponseOnce('{}')
-  fetch.mockResponseOnce('likes 357')
-  fetch.mockResponseOnce('{}')
+  fetch.mockResponseOnce('reactions 357')
+  fetch.mockResponseOnce('[]')
   fetch.mockResponseOnce('"OK"')
 
   await new Facebook().poll()
   expect(fetch.mock.calls.length).toBe(11)
 
   expect(await browser.storage.local.get()).toMatchObject({
-    'facebook-post-246': {c: 3, r: 5},
+    'facebook-post-246': {c: 2, r: 3},
     'facebook-post-357': {c: 0, r: 0},
   })
 
@@ -69,7 +69,7 @@ test('poll', async () => {
     expect(fetch.mock.calls[i + 2][0]).toContain(fb_id)
     expect(fetch.mock.calls[i + 3][0]).toBe(
       `${BRIDGY_BASE_URL}/facebook/browser/reactions?id=${id}&token=towkin&key=KEE`)
-    expect(fetch.mock.calls[i + 3][1].body).toBe(`likes ${id}`)
+    expect(fetch.mock.calls[i + 3][1].body).toBe(`reactions ${id}`)
   }
 
   expect(fetch.mock.calls[10][0]).toBe(

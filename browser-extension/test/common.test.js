@@ -141,20 +141,20 @@ test('poll', async () => {
   fetch.mockResponseOnce('fake feed')
   fetch.mockResponseOnce(JSON.stringify(activities))
   fetch.mockResponseOnce('post 246')
-  fetch.mockResponseOnce('{}')
+  fetch.mockResponseOnce('{"object": {"replies": {"items": [1,2]}}}')
   fetch.mockResponseOnce('reactions 246')
-  fetch.mockResponseOnce('{}')
+  fetch.mockResponseOnce('[1, 2, 3, 4]')
   fetch.mockResponseOnce('post 357')
-  fetch.mockResponseOnce('{}')
+  fetch.mockResponseOnce('{"object": {}}')
   fetch.mockResponseOnce('reactions 357')
-  fetch.mockResponseOnce('{}')
+  fetch.mockResponseOnce('[]')
   fetch.mockResponseOnce('"OK"')
 
   await new FakeSilo().poll()
   expect(fetch.mock.calls.length).toBe(11)
 
   expect(browser.storage.local.data).toMatchObject({
-    'fake-post-246': {c: 3, r: 5},
+    'fake-post-246': {c: 2, r: 4},
     'fake-post-357': {c: 0, r: 0},
   })
   // this will be NaN if either value is undefined
@@ -204,14 +204,14 @@ test('poll, no stored bridgy source key', async () => {
   expect(browser.storage.local.data['fake-bridgySourceKey']).toBe('abc123')
 })
 
-test('poll, skip comments and likes', async () => {
+test('poll, skip comments and reactions', async () => {
   fetch.mockResponseOnce('{}')
   fetch.mockResponseOnce(JSON.stringify(activities))
   fetch.mockResponseOnce('post 357')
   fetch.mockResponseOnce('{}')
-  fetch.mockResponseOnce('likes 357')
-  fetch.mockResponseOnce('{}')
-  fetch.mockResponseOnce('{}')
+  fetch.mockResponseOnce('reactions 357')
+  fetch.mockResponseOnce('[]')
+  fetch.mockResponseOnce('"OK"')
 
   await browser.storage.local.set({
     'fake-post-246': {c: 3, r: 5},

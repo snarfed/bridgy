@@ -131,13 +131,18 @@ class Silo {
       }
 
       // fetch reactions
-      if (!await this.forward(this.reactionsPath(activity),
-                              `/reactions?id=${activity.id}`)) {
+      const reactions = await this.forward(this.reactionsPath(activity),
+                                           `/reactions?id=${activity.id}`)
+      if (!reactions) {
         console.warn(`Bridgy couldn't translate reactions`)
         continue
       }
 
-      await this.storageSet(cacheKey, {c: commentCount, r: reactionCount})
+      await this.storageSet(cacheKey, {
+        c: (resolved.object && resolved.object.replies && resolved.object.replies.items)
+          ? resolved.object.replies.items.length : 0,
+        r: reactions.length,
+      })
     }
 
     await this.postBridgy(`/poll`)

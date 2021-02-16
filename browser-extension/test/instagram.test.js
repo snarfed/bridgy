@@ -60,13 +60,13 @@ test('poll, no stored username', async () => {
   fetch.mockResponseOnce('ig profile')
   fetch.mockResponseOnce(JSON.stringify(activities))
   fetch.mockResponseOnce('post 246')
-  fetch.mockResponseOnce('{}')
-  fetch.mockResponseOnce('likes 246')
-  fetch.mockResponseOnce('{}')
+  fetch.mockResponseOnce('{"object": {"replies": {"items": [1,2]}}}')
+  fetch.mockResponseOnce('reactions 246')
+  fetch.mockResponseOnce('[1,2,3]')
   fetch.mockResponseOnce('post 357')
   fetch.mockResponseOnce('{}')
-  fetch.mockResponseOnce('likes 357')
-  fetch.mockResponseOnce('{}')
+  fetch.mockResponseOnce('reactions 357')
+  fetch.mockResponseOnce('[]')
   fetch.mockResponseOnce('"OK"')
 
   await new Instagram().poll()
@@ -78,7 +78,7 @@ test('poll, no stored username', async () => {
 
   expect(await browser.storage.local.get()).toMatchObject({
     'instagram-username': 'snarfed',
-    'instagram-post-246': {c: 3, r: 5},
+    'instagram-post-246': {c: 2, r: 3},
     'instagram-post-357': {c: 0, r: 0},
   })
 
@@ -96,7 +96,7 @@ test('poll, no stored username', async () => {
     expect(fetch.mock.calls[i + 2][0]).toContain(shortcode)
     expect(fetch.mock.calls[i + 3][0]).toBe(
       `${BRIDGY_BASE_URL}/instagram/browser/reactions?id=${id}&token=towkin&key=KEE`)
-    expect(fetch.mock.calls[i + 3][1].body).toBe(`likes ${id}`)
+    expect(fetch.mock.calls[i + 3][1].body).toBe(`reactions ${id}`)
   }
 
   expect(fetch.mock.calls[12][0]).toBe(
