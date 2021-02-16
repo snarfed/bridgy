@@ -9,6 +9,7 @@ class Facebook extends Silo {
   DOMAIN = 'facebook.com'
   NAME = 'facebook'
   BASE_URL = 'https://mbasic.facebook.com'
+  NON_SCRAPED_BASE_URL = 'https://www.facebook.com'
   LOGIN_URL = `${this.BASE_URL}/login`
   COOKIE = 'xs'
 
@@ -16,7 +17,7 @@ class Facebook extends Silo {
    * Returns the URL path to the user's profile.
    */
   async profilePath() {
-    return '/me/about'
+    return '/profile.php?v=info'
   }
 
   /**
@@ -38,6 +39,13 @@ class Facebook extends Silo {
    */
   reactionsPath(activity) {
       return `/ufi/reaction/profile/browser/?ft_ent_identifier=${activity.fb_id}`
+  }
+
+  /**
+   * Wrap and substitute mbasic for www.
+   */
+  async siloGet(url) {
+    return await super.siloGet(url.replace(this.NON_SCRAPED_BASE_URL, this.BASE_URL))
   }
 }
 
