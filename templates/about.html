@@ -226,13 +226,13 @@ web</a> and like <a href="https://indieweb.org/why">owning our data</a>.
 <a id="facebook-publish"></a>
 <li id="rip-facebook" class="question">What happened to Facebook?</li>
 <li class="answer">
-<p>Facebook is no longer supported. So long, and thanks for all the fish!</p>
+<p><a href="#browser-extension">Facebook is now supported again via the browser extension!</a></p>
 
-<p>Bridgy included support Facebook from the very beginning, <a href="https://snarfed.org/2012-01-08_bridgy_launched">when it launched in January 2012</a>. After the <a href="https://www.theverge.com/2018/4/10/17165130/facebook-cambridge-analytica-scandal">Cambridge Analytica scandal</a> broke, Facebook started limiting its API in a number of ways. Notably, <a href="https://developers.facebook.com/blog/post/2018/04/24/new-facebook-platform-product-changes-policy-updates/">it disabled RSVPing on April 24, 2018, posting on August 1, 2018,</a> and <a href="https://developers.facebook.com/blog/post/2018/05/01/facebook-login-updates-further-protect-privacy/">reading other people's comments and likes on May 24, 2018</a>, which killed Bridgy for Facebook entirely. Gory details in <a href="https://github.com/snarfed/bridgy/issues/826">these</a> <a href="https://github.com/snarfed/bridgy/issues/817">issues</a>. RIP, we'll miss you!</p>
+<p>Bridgy included support Facebook from the very beginning, <a href="https://snarfed.org/2012-01-08_bridgy_launched">when it launched in January 2012</a>. After the <a href="https://www.theverge.com/2018/4/10/17165130/facebook-cambridge-analytica-scandal">Cambridge Analytica scandal</a> broke, Facebook started limiting its API in a number of ways. Notably, <a href="https://developers.facebook.com/blog/post/2018/04/24/new-facebook-platform-product-changes-policy-updates/">it disabled RSVPing on April 24, 2018, posting on August 1, 2018,</a> and <a href="https://developers.facebook.com/blog/post/2018/05/01/facebook-login-updates-further-protect-privacy/">reading other people's comments and likes on May 24, 2018</a>, which killed Bridgy for Facebook entirely (see <a href="https://github.com/snarfed/bridgy/issues/826">these</a> <a href="https://github.com/snarfed/bridgy/issues/817">issues</a>) <a href="#browser-extension">until we developed the browser extension</a>.</p>
 
 <p>We tried hard to keep Facebook support alive even without the API. <a href="https://github.com/snarfed/bridgy/issues/854">We first tried using email notifications</a> for backfeed. Users forwarded emails from Facebook to Bridgy, which extracted comment text, likes, and shares, and sent webmentions as normal. This was surprisingly difficult to set up, though: many users struggled to get Facebook to actually send notification emails, even after they were turned on in settings.</p>
 
-<p>After that, <a href="https://github.com/snarfed/granary/search?q=m.facebook.com&type=Commits">we tried scraping m.facebook.com</a>, like <a href="https://facebook-atom.appspot.com/">facebook-atom</a> does. The scraping itself worked fine, but we never managed to consistently evade Facebook's bot detection. They always ended up rate limiting or blocking us, even after we started rotating IP addresses, spoofing User Agent headers, and even running some JavaScript for browser fingerprinting. They have way more resources for that arms race than we do, so we gave up.</p>
+<p>After that, <a href="https://github.com/snarfed/granary/search?q=m.facebook.com&type=Commits">we tried scraping m.facebook.com</a>, like <a href="https://facebook-atom.appspot.com/">facebook-atom</a> does. The scraping itself worked fine, but we never managed to consistently evade Facebook's bot detection. They always ended up rate limiting or blocking us, even after we started rotating IP addresses, spoofing User Agent headers, and even running some JavaScript for browser fingerprinting. They have way more resources for that arms race than we do, so we gave up on server side fetching altogether.</p>
 </li>
 
 <li id="rip-google+" class="question">What happened to Google+?</li>
@@ -676,15 +676,15 @@ so that recipients can fetch and parse them.
 </ul>
 </li>
 
-<li id="browser-extension" class="question">Wait, Instagram needs a browser extension now?</li>
+<li id="browser-extension" class="question">Wait, Instagram and Facebook need a browser extension now?</li>
 <li class="answer">
-<p>Bridgy now uses a browser extension to pull back Instagram responses (ie <a href="https://indieweb.org/backfeed">backfeed</a>)!
+<p>Bridgy now uses a browser extension to pull back Instagram and Facebook responses (ie <a href="https://indieweb.org/backfeed">backfeed</a>). Grab it for <a href="https://chrome.google.com/webstore/detail/bridgy/lcpeamdhminbbjdfjbpmhgjgliaknflj" style="white-space: nowrap"><img src="/static/chrome_logo.png" style="height: 1em; margin-top: -.2em; white-space: nowrap" /> Chrome</a> or <a href="https://addons.mozilla.org/en-US/firefox/addon/bridgy/" style="white-space: nowrap"><img src="/static/firefox_logo.png" style="height: 1em; margin-top: -.2em" /> Firefox</a>, try it out, and <a href="https://indieweb.org/discuss">let us know what you think</a>!
 </p>
-<p>When you first install it, it opens a Bridgy tab for you to <a href="https://indieauth.net/">IndieAuth</a> into your web site. (Your site needs to support IndieAuth, like before.) After that, it runs in the background, forwarding responses to Bridgy to send back to your site like normal. You can see status info and poke it on the extension's settings page. Grab it <a href="https://chrome.google.com/webstore/detail/bridgy/lcpeamdhminbbjdfjbpmhgjgliaknflj">for Chrome</a> <a href="https://addons.mozilla.org/en-US/firefox/addon/bridgy/">or Firefox</a> and <a href="https://indieweb.org/discuss">let us know what you think</a>!
+<p>When you first install the extension, it opens a Bridgy tab for you to <a href="https://indieauth.net/">IndieAuth</a> into your web site. (Your site needs to support IndieAuth, like before.) After that, it runs in the background, forwarding responses to Bridgy to send back to your site like normal. You can see status info and poke it on the extension's settings page.
 </p>
 <p>Instagram and Facebook have been thorns in Bridgy's side for many years now, as they both gradually locked down parts of their APIs that Bridgy needed. Facebook also had strong anti-scraping countermeasures, so we were <a href="#rip-facebook">forced to shut it down entirely</a>, but we <a href="https://github.com/snarfed/bridgy/issues/603">managed to scrape Instagram</a> enough to keep it limping along. <a href="https://github.com/snarfed/bridgy/issues/665">They recently stepped up their countermeasures too</a>, though, and we couldn't keep up.
 </p>
-<p>Fortunately, Bridgy users can log into Instagram legitimately, in their own browsers, so a browser extension lets them send Bridgy their own Instagram data. Shh, don't tell, it's our little (open source) secret.
+<p>Fortunately, you can log into Instagram and Facebook legitimately, in your own browser, so the browser extension lets you send your own data from those silos to Bridgy.
 </p>
 </li>
 

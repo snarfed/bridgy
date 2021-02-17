@@ -68,6 +68,14 @@ class Facebook(browser.BrowserSource):
     if util.is_int(id) and int(id) < MIN_APP_SCOPED_ID:
       return self.gr_source.user_url(user_id)
 
+  @classmethod
+  def button_html(cls, feature, **kwargs):
+    return super(cls, cls).button_html(feature, form_method='get', **kwargs)
+    return oauth_instagram.StartHandler.button_html(
+      '/about#browser-extension',
+      form_method='get',
+      image_prefix='/oauth_dropins/static/')
+
   def canonicalize_url(self, url, **kwargs):
     """Facebook-specific standardization of syndicated urls.
 
