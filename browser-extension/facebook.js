@@ -6,47 +6,49 @@ import {Silo} from './common.js'
 
 
 class Facebook extends Silo {
-  DOMAIN = 'facebook.com'
-  NAME = 'facebook'
-  BASE_URL = 'https://mbasic.facebook.com'
-  NON_SCRAPED_BASE_URL = 'https://www.facebook.com'
-  LOGIN_URL = `${this.BASE_URL}/login`
-  COOKIE = 'xs'
+  /** See below class declaration for class static properties. */
 
   /**
    * Returns the URL path to the user's profile.
    */
-  async profilePath() {
+  static async profilePath() {
     return '/profile.php?v=info'
   }
 
   /**
    * Returns the URL path to the user's feed of posts.
    */
-  async feedPath() {
+  static async feedPath() {
     return '/me'
   }
 
   /**
    * Returns an AS activity's reaction count, if available.
    */
-  reactionsCount(activity) {
+  static reactionsCount(activity) {
     return activity.object.fb_reaction_count
   }
 
   /**
    * Returns the URL path for a given activity's reactions.
    */
-  reactionsPath(activity) {
+  static reactionsPath(activity) {
       return `/ufi/reaction/profile/browser/?ft_ent_identifier=${activity.fb_id}`
   }
 
   /**
    * Wrap and substitute mbasic for www.
    */
-  async siloGet(url) {
+  static async siloGet(url) {
     return await super.siloGet(url.replace(this.NON_SCRAPED_BASE_URL, this.BASE_URL))
   }
 }
+
+Facebook.DOMAIN = 'facebook.com'
+Facebook.NAME = 'facebook'
+Facebook.BASE_URL = 'https://mbasic.facebook.com'
+Facebook.NON_SCRAPED_BASE_URL = 'https://www.facebook.com'
+Facebook.LOGIN_URL = `${Facebook.BASE_URL}/login`
+Facebook.COOKIE = 'xs'
 
 export {Facebook}

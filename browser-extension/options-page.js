@@ -13,7 +13,7 @@ import {
 document.addEventListener('DOMContentLoaded', function () {
   document.querySelector('#reconnect').addEventListener('click', () => login(true))
 
-  for (const silo of [new Instagram(), new Facebook()]) {
+  for (const silo of [Instagram, Facebook]) {
     document.querySelector(`#${silo.NAME}-poll`).addEventListener(
       'click', () => pollNow(silo))
   }

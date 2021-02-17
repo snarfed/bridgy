@@ -47,7 +47,7 @@ test('poll', async () => {
   fetch.mockResponseOnce('[]')
   fetch.mockResponseOnce('"OK"')
 
-  await new Facebook().poll()
+  await Facebook.poll()
   expect(fetch.mock.calls.length).toBe(11)
 
   expect(await browser.storage.local.get()).toMatchObject({

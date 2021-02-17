@@ -20,29 +20,28 @@ beforeEach(() => {
 
 
 class FakeSilo extends Silo {
-  DOMAIN = 'fa.ke'
-  NAME = 'fake'
-  BASE_URL = 'http://fa.ke'
-  LOGIN_URL = 'http://fa.ke/login'
-  COOKIE = 'seshun'
-
-  async profilePath() {
+  static async profilePath() {
     return '/profile'
   }
 
-  async feedPath() {
+  static async feedPath() {
     return '/feed'
   }
 
-  reactionsCount(activity) {
+  static reactionsCount(activity) {
     return activity.reactions_count
   }
 
-  reactionsPath(activity) {
+  static reactionsPath(activity) {
     return `/reactions/${activity.id}`
   }
 }
 
+Silo.DOMAIN = 'fa.ke'
+Silo.NAME = 'fake'
+Silo.BASE_URL = 'http://fa.ke'
+Silo.LOGIN_URL = 'http://fa.ke/login'
+Silo.COOKIE = 'seshun'
 
 const activities = [{
   id: '246',
@@ -78,8 +77,7 @@ test('forward', async () => {
   fetch.mockResponseOnce('silo resp')
   fetch.mockResponseOnce('"bridgy resp"')
 
-  let fake = new FakeSilo()
-  expect(await fake.forward('/silo-path', '/bridgy-path')).toBe('bridgy resp')
+  expect(await FakeSilo.forward('/silo-path', '/bridgy-path')).toBe('bridgy resp')
 
   expect(fetch.mock.calls.length).toBe(2)
   expect(fetch.mock.calls[0]).toEqual([
@@ -109,8 +107,7 @@ test('forward, no stored key', async () => {
   fetch.mockResponseOnce('silo resp')
   fetch.mockResponseOnce('"bridgy resp"')
 
-  let fake = new FakeSilo()
-  await fake.forward('/silo-path', '/bridgy-path')
+  await FakeSilo.forward('/silo-path', '/bridgy-path')
 
   expect(fetch.mock.calls[1]).toEqual([
     `${BRIDGY_BASE_URL}/fake/browser/bridgy-path?token=towkin`,
@@ -124,13 +121,13 @@ test('forward, no stored key', async () => {
 test('forward, non-JSON response from Bridgy', async () => {
   fetch.mockResponseOnce('resp')
   fetch.mockResponseOnce('')  // not valid JSON
-  expect(await new FakeSilo().forward('/silo-path', '/bridgy-path')).toBeNull()
+  expect(await FakeSilo.forward('/silo-path', '/bridgy-path')).toBeNull()
 })
 
 test('poll, no stored token', async () => {
   // no token stored
   browser.storage.sync.data = {}
-  await new FakeSilo().poll()
+  await FakeSilo.poll()
 
   expect(fetch.mock.calls.length).toBe(0)
   expect(browser.storage.local.data['fake-lastStart']).toBeUndefined()
@@ -150,7 +147,7 @@ test('poll', async () => {
   fetch.mockResponseOnce('[]')
   fetch.mockResponseOnce('"OK"')
 
-  await new FakeSilo().poll()
+  await FakeSilo.poll()
   expect(fetch.mock.calls.length).toBe(11)
 
   expect(browser.storage.local.data).toMatchObject({
@@ -184,7 +181,7 @@ test('poll', async () => {
 test('poll, no stored token', async () => {
   // no token stored
   browser.storage.sync.data = {}
-  await new FakeSilo().poll()
+  await FakeSilo.poll()
 
   expect(fetch.mock.calls.length).toBe(0)
   expect(browser.storage.local.data['fake-lastStart']).toBeUndefined()
@@ -197,7 +194,7 @@ test('poll, no stored bridgy source key', async () => {
   fetch.mockResponseOnce('fake profile')
   fetch.mockResponseOnce('"abc123"')
 
-  await new FakeSilo().poll()
+  await FakeSilo.poll()
   expect(fetch.mock.calls[0][0]).toBe('http://fa.ke/profile')
   expect(fetch.mock.calls[1][0]).toBe(
     `${BRIDGY_BASE_URL}/fake/browser/profile?token=towkin`)
@@ -217,7 +214,7 @@ test('poll, skip comments and reactions', async () => {
     'fake-post-246': {c: 3, r: 5},
   })
 
-  await new FakeSilo().poll()
+  await FakeSilo.poll()
   expect(fetch.mock.calls.length).toBe(7)
   expect(fetch.mock.calls[0][0]).toBe('http://fa.ke/feed')
   expect(fetch.mock.calls[2][0]).toBe('http://fa.ke/357')
@@ -235,7 +232,7 @@ test('poll, skip comments and reactions', async () => {
 test('poll, feed error', async () => {
   fetch.mockResponseOnce('fake feed')
   fetch.mockResponseOnce('{}', {status: 400})  // Bridgy returns an HTTP error
-  await new FakeSilo().poll()
+  await FakeSilo.poll()
 
   expect(fetch.mock.calls.length).toBe(2)
   expect(browser.storage.local.data['fake-lastStart']).toBeDefined()
@@ -245,7 +242,7 @@ test('poll, feed error', async () => {
 test('poll, Bridgy non-JSON response', async () => {
   fetch.mockResponseOnce('fake feed')
   fetch.mockResponseOnce('<html>xyz</html>')  // Bridgy returns invalid JSON
-  await new FakeSilo().poll()
+  await FakeSilo.poll()
 
   expect(fetch.mock.calls.length).toBe(2)
   expect(browser.storage.local.data['fake-lastStart']).toBeDefined()

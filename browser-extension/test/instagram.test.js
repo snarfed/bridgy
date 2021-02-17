@@ -40,7 +40,7 @@ test('profilePath, homepage fetch for username', async () => {
   fetch.mockResponseOnce('ig home page')
   fetch.mockResponseOnce('"snarfed"')
 
-  expect(await new Instagram().profilePath()).toBe('/snarfed/')
+  expect(await Instagram.profilePath()).toBe('/snarfed/')
   expect(await browser.storage.local.get()).toMatchObject({
     'instagram-username': 'snarfed',
   })
@@ -48,7 +48,7 @@ test('profilePath, homepage fetch for username', async () => {
 
 test('profilePath, stored username', async () => {
   browser.storage.local.data = {'instagram-username': 'snarfed'}
-  expect(await new Instagram().profilePath()).toBe('/snarfed/')
+  expect(await Instagram.profilePath()).toBe('/snarfed/')
 })
 
 test('poll, no stored username', async () => {
@@ -69,7 +69,7 @@ test('poll, no stored username', async () => {
   fetch.mockResponseOnce('[]')
   fetch.mockResponseOnce('"OK"')
 
-  await new Instagram().poll()
+  await Instagram.poll()
   expect(fetch.mock.calls.length).toBe(13)
 
   expect(fetch.mock.calls[0][0]).toBe('https://www.instagram.com/')
@@ -109,7 +109,7 @@ test('poll, bridgy homepage error', async () => {
 
   fetch.mockResponseOnce('ig home page')
   fetch.mockResponseOnce('{}', {status: 400})  // Bridgy returns an HTTP error
-  await new Instagram().poll()
+  await Instagram.poll()
 
   expect(fetch.mock.calls.length).toBe(2)
   expect(browser.storage.local.data['instagram-username']).toBeUndefined()
@@ -119,7 +119,7 @@ test('poll, bridgy homepage error', async () => {
 
 test('poll, existing username stored', async () => {
   await browser.storage.local.set({'instagram-username': 'snarfed'})
-  await new Instagram().poll()
+  await Instagram.poll()
   expect(fetch.mock.calls[0][0]).toBe('https://www.instagram.com/snarfed/')
 })
 
@@ -128,7 +128,7 @@ test('poll, feed error', async () => {
   fetch.mockResponseOnce('{}', {status: 400})  // Bridgy returns an HTTP error
 
   await browser.storage.local.set({'instagram-username': 'snarfed'})
-  await new Instagram().poll()
+  await Instagram.poll()
 
   expect(fetch.mock.calls.length).toBe(2)
   expect(browser.storage.local.data['instagram-lastStart']).toBeDefined()
@@ -140,7 +140,7 @@ test('poll, Bridgy non-JSON response', async () => {
   fetch.mockResponseOnce('xyz')  // Bridgy returns invalid JSON
 
   await browser.storage.local.set({'instagram-username': 'snarfed'})
-  await new Instagram().poll()
+  await Instagram.poll()
 
   expect(fetch.mock.calls.length).toBe(2)
   expect(browser.storage.local.data['instagram-lastStart']).toBeDefined()

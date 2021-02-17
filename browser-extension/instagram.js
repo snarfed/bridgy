@@ -4,16 +4,12 @@ import {Silo} from './common.js'
 
 
 class Instagram extends Silo {
-  DOMAIN = 'instagram.com'
-  NAME = 'instagram'
-  BASE_URL = 'https://www.instagram.com'
-  LOGIN_URL = `${this.BASE_URL}/accounts/login/`
-  COOKIE = 'sessionid'
+  /** See below class declaration for class static properties. */
 
   /**
    * Returns the URL path to the user's profile, eg '/snarfed/'.
    */
-  async profilePath() {
+  static async profilePath() {
     let username = await this.storageGet('username')
 
     if (!username) {
@@ -31,22 +27,30 @@ class Instagram extends Silo {
   /**
    * Returns the URL path to the user's feed of posts.
    */
-  feedPath = this.profilePath
+  static async feedPath() {
+    return await this.profilePath()
+  }
 
   /**
    * Returns an AS activity's like count, if available.
    */
-  reactionsCount(activity) {
+  static reactionsCount(activity) {
     return activity.object.ig_like_count
   }
 
   /**
    * Returns the URL path for a given activity's likes.
    */
-  reactionsPath(activity) {
+  static reactionsPath(activity) {
     return `/graphql/query/?query_hash=d5d763b1e2acf209d62d22d184488e57&variables={"shortcode":"${activity.object.ig_shortcode}","include_reel":false,"first":100}`
   }
 }
+
+Instagram.DOMAIN = 'instagram.com'
+Instagram.NAME = 'instagram'
+Instagram.BASE_URL = 'https://www.instagram.com'
+Instagram.LOGIN_URL = `${Instagram.BASE_URL}/accounts/login/`
+Instagram.COOKIE = 'sessionid'
 
 export {
   Instagram,

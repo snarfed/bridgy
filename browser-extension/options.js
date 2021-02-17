@@ -18,12 +18,12 @@ async function update() {
   var domains
   if (token) {
     document.querySelector('#token').innerText = token
-    domains = await new Instagram().postBridgy(`/token-domains?token=${token}`)
+    domains = await Instagram.postBridgy(`/token-domains?token=${token}`)
     document.querySelector('#domains').innerText = (domains ? domains.join(', ') : 'none')
   }
 
   const data = await browser.storage.local.get()
-  for (const silo of [new Instagram(), new Facebook()]) {
+  for (const silo of [Instagram, Facebook]) {
     const posts = Object.entries(data).filter(x => x[0].startsWith(`${silo.NAME}-post-`))
     const comments = posts.reduce((sum, cur) => sum + (cur[1].c || 0), 0)
     const reactions = posts.reduce((sum, cur) => sum + (cur[1].r || 0), 0)

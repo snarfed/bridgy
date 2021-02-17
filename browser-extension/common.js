@@ -31,14 +31,10 @@ async function login(force) {
 
 /**
  * Abstract base class for a silo, eg Facebook or Instagram.
+ *
+ * See below class declaration for class static properties.
  */
 class Silo {
-  DOMAIN     // eg 'silo.com'
-  NAME       // eg 'instagram'
-  BASE_URL   // eg 'https://silo.com'
-  LOGIN_URL  // eg 'https://silo.com/login'
-  COOKIE     // eg 'sessionid'
-
   /**
    * Returns the URL path to the user's profile, eg '/snarfed'.
    *
@@ -46,7 +42,7 @@ class Silo {
    *
    * @returns {String} URL path to the user's silo profile
    */
-  async profilePath() {
+  static async profilePath() {
     throw new Error('Not implemented')
   }
 
@@ -57,7 +53,7 @@ class Silo {
    *
    * @returns {String} URL path
    */
-  async feedPath() {
+  static async feedPath() {
     throw new Error('Not implemented')
   }
 
@@ -69,7 +65,7 @@ class Silo {
    * @param {Object} AS1 activity
    * @returns {integer} number of reactions for this activity
    */
-  reactionsCount(activity) {
+  static reactionsCount(activity) {
     throw new Error('Not implemented')
   }
 
@@ -81,14 +77,14 @@ class Silo {
    * @param {Object} AS1 activity
    * @returns {String} silo URL path
    */
-  reactionsPath(activity) {
+  static reactionsPath(activity) {
     throw new Error('Not implemented')
   }
 
   /**
    * Polls the user's posts, forwards new comments and likes to Bridgy.
    */
-  async poll() {
+  static async poll() {
     const token = (await browser.storage.sync.get(['token'])).token
     if (!token) {
       return
@@ -161,7 +157,7 @@ class Silo {
    *
    * @returns {String} Cookie header for the silo, ready to be sent, or null
    */
-  async findCookies(path) {
+  static async findCookies(path) {
     // getAllCookieStores() only returns containers with open tabs, so we have to
     // use the contextualIdentities API to get any others, eg Firefox container tabs.
     // https://bugzilla.mozilla.org/show_bug.cgi?id=1486274
@@ -203,7 +199,7 @@ class Silo {
    * @param {String} bridgyPath
    * @returns {String} Response body from Bridgy
    */
-  async forward(siloPath, bridgyPath) {
+  static async forward(siloPath, bridgyPath) {
     if (!siloPath || !bridgyPath) {
       return
     }
@@ -219,7 +215,7 @@ class Silo {
    * @param {String} url
    * @returns {String} Response body from the silo
    */
-  async siloGet(url) {
+  static async siloGet(url) {
     const cookies = await this.findCookies()
     if (!cookies) {
       return
@@ -266,7 +262,7 @@ class Silo {
    * @param {String} body
    * @returns {Object} JSON parsed response from Bridgy
    */
-  async postBridgy(path_query, body) {
+  static async postBridgy(path_query, body) {
     const token = (await browser.storage.sync.get(['token'])).token
     if (!token) {
       console.error('No stored token!')
@@ -311,7 +307,7 @@ class Silo {
    * @param {String} key
    * @returns {Object} stored value, or none
    */
-  async storageGet(key) {
+  static async storageGet(key) {
     key = this.siloKey(key)
     return (await browser.storage.local.get([key]))[key]
   }
@@ -324,7 +320,7 @@ class Silo {
    * @param {String} key
    * @param {Object} value
    */
-  async storageSet(key, value) {
+  static async storageSet(key, value) {
     return await browser.storage.local.set({[this.siloKey(key)]: value})
   }
 
@@ -334,10 +330,16 @@ class Silo {
    * @param {String} key
    * @returns {String} prefixed key
    */
-  siloKey(key) {
+  static siloKey(key) {
     return `${this.NAME}-${key}`
   }
 }
+
+Silo.DOMAIN = null     // eg 'silo.com'
+Silo.NAME = null       // eg 'instagram'
+Silo.BASE_URL = null   // eg 'https://silo.com'
+Silo.LOGIN_URL = null  // eg 'https://silo.com/login'
+Silo.COOKIE = null     // eg 'sessionid'
 
 
 export {
