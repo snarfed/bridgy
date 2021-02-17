@@ -1,7 +1,7 @@
 'use strict'
 
-// const BRIDGY_BASE_URL = 'https://brid.gy'
-const BRIDGY_BASE_URL = 'http://localhost:8080'
+const BRIDGY_BASE_URL = 'https://brid.gy'
+// const BRIDGY_BASE_URL = 'http://localhost:8080'
 const INDIEAUTH_START = `${BRIDGY_BASE_URL}/indieauth/start`
 
 
