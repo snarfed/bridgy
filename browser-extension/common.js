@@ -210,15 +210,49 @@ class Silo {
   }
 
   /**
+   * WebRequest onBeforeSendHeaders listener that injects cookies.
+   *
+   * Needed to support Firefox container tabs.
+   *
+   * https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/webRequest/onBeforeSendHeaders
+   */
+  static injectCookies(cookies) {
+    return function (details) {
+      details.requestHeaders = details.requestHeaders.concat(
+        [{name: 'Cookie', value: cookies}])
+      return details
+    }
+  }
+
+  /**
    * Makes an HTTP GET request to the silo.
    *
    * @param {String} url
    * @returns {String} Response body from the silo
    */
   static async siloGet(url) {
+    // Set up cookies. Can't pass them to fetch directly because it blocks the
+    // Cookie header. :( Instead, we use webRequest, which lets us.
+    // https://developer.mozilla.org/en-US/docs/Glossary/Forbidden_header_name
+    // https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/webRequest/onBeforeSendHeaders
+    //
+    // (If only the fetch API let us specify a cookie store, we could skip all
+    // this and just let it automatically send the appropriate cookies from that
+    // store. We already have the contextualIdentities permission, so we already
+    // have access to those cookies. Maybe because contextualIdentities isn't a
+    // cross-browser standard yet? Argh!)
     const cookies = await this.findCookies()
     if (!cookies) {
       return
+    }
+
+    const inject = this.injectCookies(cookies)
+    if (!browser.webRequest.onBeforeSendHeaders.hasListener(inject)) {
+      browser.webRequest.onBeforeSendHeaders.addListener(
+        inject,
+        {urls: [`https://*.${this.DOMAIN}/*`]},
+        ['blocking', 'requestHeaders']
+      );
     }
 
     // check if url is a full URL or a path
@@ -237,13 +271,6 @@ class Silo {
     console.debug(`Fetching ${url}`)
     const res = await fetch(url, {
       method: 'GET',
-      headers: {
-        'Cookie': cookies,
-        'User-Agent': navigator.userAgent,
-      },
-      // required for sending cookies in older browsers?
-      // https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API#Differences_from_jQuery
-      credentials: 'same-origin',
       redirect: 'follow',
     })
 

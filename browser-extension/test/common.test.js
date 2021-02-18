@@ -84,12 +84,7 @@ test('forward', async () => {
     'http://fa.ke/silo-path',
     {
       method: 'GET',
-      credentials: 'same-origin',
       redirect: 'follow',
-      headers: {
-        'Cookie': 'seshun=foo; bar=baz',
-        'User-Agent': navigator.userAgent,
-      },
     },
   ])
   expect(fetch.mock.calls[1]).toEqual([

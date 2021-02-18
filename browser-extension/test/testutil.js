@@ -26,6 +26,12 @@ beforeAll(() => {
       tabs: {
         create: jest.fn(),
       },
+      webRequest: {
+        onBeforeSendHeaders: {
+          hasListener: (fn) => false,
+          addListener: (fn, filter, extra) => null,
+        },
+      },
     },
     console: {
       debug: () => null,
