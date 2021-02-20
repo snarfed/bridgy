@@ -281,7 +281,7 @@ class PostHandler(BrowserHandler):
         # TODO: merge tags too
         activity.activity_json = json_dumps(merged_activity)
       else:
-        activity = Activity(id=id, source=source.key,
+        activity = Activity(id=id, source=source.key, html=self.request.text,
                             activity_json=json_dumps(new_activity))
 
       # store and return the activity

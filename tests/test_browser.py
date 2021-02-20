@@ -243,7 +243,7 @@ class BrowserHandlerTest(ModelsTest):
     self.assertEqual(403, resp.status_int, resp.text)
 
   def test_post(self):
-    resp = self.get_response('post')
+    resp = self.get_response('post', text='silowe html')
     self.assertEqual(200, resp.status_int, resp.text)
     self.assert_equals(self.activities_no_extras[0], util.trim_nulls(resp.json))
 
@@ -252,6 +252,7 @@ class BrowserHandlerTest(ModelsTest):
     self.assertEqual(self.source, activities[0].source)
     self.assert_equals(self.activities_no_extras[0],
                        util.trim_nulls(json_loads(activities[0].activity_json)))
+    self.assertEqual('silowe html', activities[0].html)
 
   def test_post_empty(self):
     FakeGrSource.activities = []

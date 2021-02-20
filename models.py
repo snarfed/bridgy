@@ -979,6 +979,7 @@ class Activity(StringIdModel):
   created = ndb.DateTimeProperty(auto_now_add=True)
   updated = ndb.DateTimeProperty(auto_now=True)
   activity_json = ndb.TextProperty()
+  html = ndb.TextProperty()
 
 
 class BlogPost(Webmentions):
