@@ -218,9 +218,13 @@ class Silo {
    */
   static injectCookies(cookies) {
     return function (details) {
-      details.requestHeaders = details.requestHeaders.concat(
-        [{name: 'Cookie', value: cookies}])
-      return details
+      for (let header of details.requestHeaders) {
+        if (header.name == 'X-Bridgy') {
+          header.name = 'Cookie'
+          header.value = cookies
+          return details
+        }
+      }
     }
   }
 
@@ -250,7 +254,7 @@ class Silo {
     if (!browser.webRequest.onBeforeSendHeaders.hasListener(inject)) {
       browser.webRequest.onBeforeSendHeaders.addListener(
         inject,
-        {urls: [`https://*.${this.DOMAIN}/*`]},
+        {urls: [`${this.BASE_URL}/*`]},
         ['blocking', 'requestHeaders']
       );
     }
@@ -272,6 +276,8 @@ class Silo {
     const res = await fetch(url, {
       method: 'GET',
       redirect: 'follow',
+      // replaced in injectCookies()
+      headers: {'X-Bridgy': '1'},
     })
 
     console.debug(`Got ${res.status}`)

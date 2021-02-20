@@ -85,6 +85,7 @@ test('forward', async () => {
     {
       method: 'GET',
       redirect: 'follow',
+      headers: {'X-Bridgy': '1'},
     },
   ])
   expect(fetch.mock.calls[1]).toEqual([
