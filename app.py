@@ -253,10 +253,10 @@ class UserHandler(DashboardHandler):
           if ('.blogspot.' in domain and  # Blogger uses country TLDs
               not Blogger.query(Blogger.domains == domain).get()):
             vars['blogger_promo'] = True
-          elif (domain.endswith('tumblr.com') and
+          elif (util.domain_or_parent_in(domain, ['tumblr.com']) and
                 not Tumblr.query(Tumblr.domains == domain).get()):
             vars['tumblr_promo'] = True
-          elif (domain.endswith('wordpress.com') and
+          elif (util.domain_or_parent_in(domain, 'wordpress.com') and
                 not WordPress.query(WordPress.domains == domain).get()):
             vars['wordpress_promo'] = True
 
