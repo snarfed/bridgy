@@ -9,18 +9,28 @@
     .ok { color: green; }
     .pending { color: goldenrod; }
     .error { color: red; }
+    .disabled { color: gray }
+    input[type="checkbox"] {
+      width: 1.5em;
+      height: 1.5em;
+    }
   </style>
 </head>
 
 <body>
-  <ul>
+  <ul id="bridgy">
     <h2>Bridgy</h2>
     <li>Token: <span id="token"></span></li>
     <li>Registered domains: <span id="domains"></span></li>
     <br>
     <li><button id="reconnect">Reconnect to Bridgy</button></li>
-    <br>
-    <h2>Instagram</h2>
+  </ul>
+  <br>
+  <ul id="instagram">
+    <h2>
+      <input type="checkbox" id="instagram-enabled">
+      <label for="instagram-enabled">Instagram</label>
+    </h2>
     <li><b>Status</b>: <span id="instagram-status" class="pending">Checking with Bridgy...</span></li>
     <br>
     <li>Bridgy user page: <a id="instagram-userPage" target="_blank"></a></li>
@@ -32,8 +42,13 @@
     <li>Likes seen: <span id="instagram-reactions"></span></li>
     <br>
     <li><button id="instagram-poll">Poll Instagram now</button></li>
-    <br>
-    <h2>Facebook</h2>
+  </ul>
+  <br>
+  <ul id="facebook">
+    <h2>
+      <input type="checkbox" id="facebook-enabled">
+      <label for="facebook-enabled">Facebook</label>
+    </h2>
     <li><b>Status</b>: <span id="facebook-status" class="pending">Checking with Bridgy...</span></li>
     <br>
     <li>Bridgy user page: <a id="facebook-userPage" target="_blank"></a></li>

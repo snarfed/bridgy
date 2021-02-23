@@ -244,3 +244,15 @@ test('poll, Bridgy non-JSON response', async () => {
   expect(browser.storage.local.data['fake-lastStart']).toBeDefined()
   expect(browser.storage.local.data['fake-lastSuccess']).toBeUndefined()
 })
+
+
+test('poll, not enabled', async () => {
+  await browser.storage.local.set({
+    'fake-enabled': false,
+  })
+  await FakeSilo.poll()
+
+  expect(fetch.mock.calls.length).toBe(0)
+  expect(browser.storage.local.data['fake-lastStart']).toBeUndefined()
+  expect(browser.storage.local.data['fake-lastSuccess']).toBeUndefined()
+})

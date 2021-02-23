@@ -7,6 +7,7 @@ import {Facebook} from './facebook.js'
 import {Instagram} from './instagram.js'
 import {
   pollNow,
+  toggle,
   update,
 } from './options.js'
 
@@ -14,7 +15,9 @@ document.addEventListener('DOMContentLoaded', function () {
   document.querySelector('#reconnect').addEventListener('click', () => login(true))
 
   for (const silo of [Instagram, Facebook]) {
-    document.querySelector(`#${silo.NAME}-poll`).addEventListener(
+    document.getElementById(`${silo.NAME}-enabled`).addEventListener(
+      'click', () => toggle(silo))
+    document.getElementById(`${silo.NAME}-poll`).addEventListener(
       'click', () => pollNow(silo))
   }
 

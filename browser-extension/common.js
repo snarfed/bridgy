@@ -85,6 +85,10 @@ class Silo {
    * Polls the user's posts, forwards new comments and likes to Bridgy.
    */
   static async poll() {
+    if (await this.storageGet('enabled') == false) {
+      return
+    }
+
     const token = (await browser.storage.sync.get(['token'])).token
     if (!token) {
       return

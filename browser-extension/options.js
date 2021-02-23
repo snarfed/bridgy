@@ -24,6 +24,10 @@ async function update() {
 
   const data = await browser.storage.local.get()
   for (const silo of [Instagram, Facebook]) {
+    const enabled = (data[`${silo.NAME}-enabled`] != false)
+    document.getElementById(`${silo.NAME}-enabled`).checked = enabled
+    document.getElementById(silo.NAME).className = (enabled) ? '' : 'disabled'
+
     const posts = Object.entries(data).filter(x => x[0].startsWith(`${silo.NAME}-post-`))
     const comments = posts.reduce((sum, cur) => sum + (cur[1].c || 0), 0)
     const reactions = posts.reduce((sum, cur) => sum + (cur[1].r || 0), 0)
@@ -51,7 +55,10 @@ async function update() {
 
     const cookies = await silo.findCookies()
     let status = document.querySelector(`#${silo.NAME}-status`)
-    if (!cookies) {
+    if (!enabled) {
+      status.innerHTML = `Disabled`
+      status.className = 'disabled'
+    } else if (!cookies) {
       status.innerHTML = `No ${silo.DOMAIN} cookie found. <a href="${silo.LOGIN_URL}" target="_blank">Try logging in!</a>`
       status.className = 'error'
     } else if (!domains) {
@@ -85,6 +92,13 @@ async function update() {
   }
 }
 
+function toggle(silo) {
+  var data = {}
+  var field = `${silo.NAME}-enabled`
+  data[field] = document.getElementById(field).checked
+  browser.storage.local.set(data).then(update())
+}
+
 function pollNow(silo) {
   let status = document.querySelector(`#${silo.NAME}-status`)
   status.innerHTML = 'Polling now...'
@@ -94,5 +108,6 @@ function pollNow(silo) {
 
 export {
   pollNow,
+  toggle,
   update,
 }
