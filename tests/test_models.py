@@ -45,7 +45,7 @@ class ResponseTest(testutil.ModelsTest):
     """existing. shouldn't add a new propagate task."""
     self.responses[0].put()
     got = self.responses[0].get_or_save(self.sources[0])
-    self.assert_entities_equal(self.responses[0], got)
+    self.assert_entities_equal(self.responses[0], got, ignore=['updated'])
 
   def test_get_or_save_restart_new(self):
     response = self.responses[0]
@@ -162,6 +162,18 @@ class ResponseTest(testutil.ModelsTest):
     self.assertCountEqual(urls, response.unsent)
     for field in response.sent, response.error, response.failed, response.skipped:
       self.assertEqual([], field)
+
+  def test_get_or_save_merge_urls(self):
+    self.responses[0].failed = ['http://failed/1']
+    self.responses[0].put()
+
+    got = Response(id=self.responses[0].key.id(),
+                   unsent=['http://new'],
+                   failed = ['http://failed/1', 'http://failed/2'],
+                   response_json=self.responses[0].response_json,
+                   ).get_or_save(self.sources[0])
+    self.assertEqual(['http://target1/post/url', 'http://new'], got.unsent)
+    self.assertEqual(['http://failed/1', 'http://failed/2'], got.failed)
 
   def test_get_or_save_objectType_note(self):
     response = self.responses[0]

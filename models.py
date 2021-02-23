@@ -858,18 +858,31 @@ class Webmentions(StringIdModel):
 
   @ndb.transactional()
   def get_or_save(self):
-    existing = self.key.get()
-    if existing:
-      return existing
+    entity = existing = self.key.get()
 
-    if self.unsent or self.error:
-      logging.debug('New webmentions to propagate! %s', self.label())
-      self.add_task()
+    propagate = False
+    if entity:
+      # merge targets
+      urls = set(entity.sent + entity.unsent + entity.error +
+                 entity.failed + entity.skipped)
+      for field in ('sent', 'unsent', 'error', 'failed', 'skipped'):
+        entity_urls = getattr(entity, field)
+        new_urls = set(getattr(self, field)) - urls
+        entity_urls += new_urls
+        if new_urls and field in ('unsent', 'error'):
+          propagate = True
     else:
-      self.status = 'complete'
+      entity = self
+      propagate = self.unsent or self.error
 
-    self.put()
-    return self
+    if propagate:
+      logging.debug('New webmentions to propagate! %s', entity.label())
+      entity.add_task()
+    elif not existing:
+      entity.status = 'complete'
+
+    entity.put()
+    return entity
 
   def restart(self):
     """Moves status and targets to 'new' and adds a propagate task."""
@@ -928,8 +941,8 @@ class Response(Webmentions):
 
     if (self.type != resp.type or
         source.gr_source.activity_changed(json_loads(resp.response_json),
-                                         json_loads(self.response_json),
-                                         log=True)):
+                                          json_loads(self.response_json),
+                                          log=True)):
       logging.info('Response changed! Re-propagating. Original: %s' % resp)
 
       resp.old_response_jsons = resp.old_response_jsons[:10] + [resp.response_json]
