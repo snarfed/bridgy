@@ -67,15 +67,15 @@ async function update() {
     } else if (!lastStart) {
       status.innerHTML = 'Not started yet'
       status.className = 'pending'
-    } else if (!lastSuccess) {
-      status.innerHTML = 'Initial poll did not succeed'
-      status.className = 'error'
     } else if (lastSuccess >= lastStart) {
       status.innerHTML = 'OK'
       status.className = 'ok'
-    } else if (lastStart > Date.now() - 30 * 1000) {
+    } else if (lastStart > Date.now() - 2 * 60 * 1000) {
       status.innerHTML = 'Polling now...'
       status.className = 'pending'
+    } else if (!lastSuccess) {
+      status.innerHTML = 'Initial poll did not succeed'
+      status.className = 'error'
     } else if (lastStart > lastSuccess) {
       status.innerHTML = 'Last poll did not succeed'
       // want to include this but can't get it to work. Firefox says
