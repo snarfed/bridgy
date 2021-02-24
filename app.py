@@ -306,23 +306,27 @@ class UserHandler(DashboardHandler):
         activity_content = ''
         for a in r.activities + [r.response]:
           if not a.get('content'):
-            a['content'] = activity_content = a.get('object', {}).get('content') or ''
+            obj = a.get('object', {})
+            a['content'] = activity_content = (
+              obj.get('content') or obj.get('displayName') or
+              # historical, from a Reddit bug fixed in granary@4f9df7c
+              obj.get('name') or '')
 
         response_content = r.response.get('content')
-        if (not response_content or
-            (r.type == 'repost' and activity_content.startswith(response_content))):
-          phrases = {
-            'like': 'liked this',
-            'repost': 'reposted this',
-            'rsvp-yes': 'is attending',
-            'rsvp-no': 'is not attending',
-            'rsvp-maybe': 'might attend',
-            'rsvp-interested': 'is interested',
-            'invite': 'is invited',
-          }
+        phrases = {
+          'like': 'liked this',
+          'repost': 'reposted this',
+          'rsvp-yes': 'is attending',
+          'rsvp-no': 'is not attending',
+          'rsvp-maybe': 'might attend',
+          'rsvp-interested': 'is interested',
+          'invite': 'is invited',
+        }
+        phrase = phrases.get(r.type) or phrases.get(verb)
+        if phrase and (r.type != 'repost' or
+                       activity_content.startswith(response_content)):
           r.response['content'] = '%s %s.' % (
-            r.actor.get('displayName') or '',
-            phrases.get(r.type) or phrases.get(verb))
+            r.actor.get('displayName') or '', phrase)
 
         # convert image URL to https if we're serving over SSL
         image_url = r.actor.setdefault('image', {}).get('url')
