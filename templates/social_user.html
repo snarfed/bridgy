@@ -97,12 +97,13 @@ WordPress.com, <a href="/">sign up here!</a>
     Polled
     {{ logs.maybe_link(
          source.last_polled if source.rate_limited else source.last_poll_attempt,
-         source.key, time_class='dt-bridgy-last-polled')|safe }},
-  {% endif %}
+         source.key, time_class='dt-bridgy-last-polled')|safe
 
+  }}{% endif %}{% if source.AUTO_POLL %},
   <!-- next poll -->
   next in
-  {{ logs.maybe_link(next_poll, source.key, time_class="dt-bridgy-next-poll")|safe }}.
+  {{ logs.maybe_link(next_poll, source.key, time_class="dt-bridgy-next-poll")|safe }}
+  {% endif %}.
 
   <input name="key" type="hidden" value="{{ source.key.urlsafe().decode() }}" />
   <button id="poll-now-button" type="submit" class="btn btn-default">Poll now</button>
