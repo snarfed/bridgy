@@ -2,6 +2,7 @@
 """
 import copy
 
+from mox3 import mox
 from oauth_dropins.webutil.testutil import TestCase
 from oauth_dropins.webutil.util import json_dumps, json_loads
 from oauth_dropins.webutil import util
@@ -331,6 +332,21 @@ class BrowserHandlerTest(ModelsTest):
     resp = self.get_response(f'reactions?id=789&{self.auth}')
     self.assertEqual(400, resp.status_int)
     self.assertIn('Expected id to be tag URI', resp.text)
+
+  def test_reactions_bad_scraped_data(self):
+    Activity(id='tag:fa.ke,2013:123_456', source=self.source,
+             activity_json=json_dumps(self.activities[0])).put()
+
+    bad_json = '<html><not><json>'
+    self.mox.StubOutWithMock(FakeGrSource, 'merge_scraped_reactions')
+    FakeGrSource.merge_scraped_reactions(bad_json, mox.IgnoreArg()
+                                         ).AndRaise((ValueError('fooey')))
+    self.mox.ReplayAll()
+
+    resp = self.get_response(f'reactions?id=tag:fa.ke,2013:123_456&{self.auth}',
+                             text=bad_json)
+    self.assertEqual(400, resp.status_int)
+    self.assertIn("Couldn't parse scraped reactions: fooey", resp.text)
 
   def test_reactions_no_activity(self):
     resp = self.get_response(f'reactions?id=tag:fa.ke,2013:789&{self.auth}')

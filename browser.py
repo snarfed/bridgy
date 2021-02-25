@@ -319,7 +319,13 @@ class ReactionsHandler(BrowserHandler):
     activity_data = json_loads(activity.activity_json)
 
     # convert new reactions to AS, merge into existing activity
-    new_reactions = gr_src.merge_scraped_reactions(self.request.text, activity_data)
+    try:
+      new_reactions = gr_src.merge_scraped_reactions(self.request.text, activity_data)
+    except ValueError as e:
+      msg = "Couldn't parse scraped reactions: %s" % e
+      logging.error(msg, stack_info=True)
+      self.abort(400, msg)
+
     activity.activity_json = json_dumps(activity_data)
     activity.put()
 
