@@ -26,7 +26,7 @@
 <p id="edit-profile">First things first: what's your web site?
 {% block edit_profile %}
 {% endblock %}
-{{ source.button_html('listen' if source.CAN_LISTEN else 'publish' if source.CAN_PUBLISH else '', source=source)|safe }}
+{{ source.button_html(','.join(source.features), source=source)|safe }}
 </p>
 </div>
 
@@ -87,8 +87,7 @@ WordPress.com, <a href="/">sign up here!</a>
 <form method="post" action="/poll-now">
   <!-- last poll -->
   {% if source.last_poll_attempt == EPOCH or (source.rate_limited and source.last_polled == EPOCH) %}
-    Not polled yet,
-  {% else %}
+    Not polled yet{% else %}
     {% if source.rate_limited %}
      <span title="Polling delayed because {{ source.gr_source.NAME }} is throttling Bridgy.">🐢</span>
     {% elif source.poll_status == "error" %}
@@ -102,8 +101,7 @@ WordPress.com, <a href="/">sign up here!</a>
   }}{% endif %}{% if source.AUTO_POLL %},
   <!-- next poll -->
   next in
-  {{ logs.maybe_link(next_poll, source.key, time_class="dt-bridgy-next-poll")|safe }}
-  {% endif %}.
+  {{ logs.maybe_link(next_poll, source.key, time_class="dt-bridgy-next-poll")|safe }}{% endif %}.
 
   <input name="key" type="hidden" value="{{ source.key.urlsafe().decode() }}" />
   <button id="poll-now-button" type="submit" class="btn btn-default">Poll now</button>
@@ -249,7 +247,7 @@ Click to enable <a href="/about#listen">listening</a>:
 {% if source.CAN_PUBLISH %}
 <data class="p-bridgy-publish-status" value="disabled">
 <span class="big">Click to enable <a href="/about#publish">publishing</a>:</span>
-{{ source.button_html('publish', source=source)|safe }}
+{{ source.button_html('listen,publish' if 'listen' in source.features else 'publish', source=source)|safe }}
 </data>
 {% endif %}
 {% endif %}

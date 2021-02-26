@@ -485,7 +485,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
 
     Returns: string, HTML
     """
-    assert feature in cls.FEATURES
+    assert set(feature.split(',')) <= set(cls.FEATURES)
     form_extra = (kwargs.pop('form_extra', '') +
                   '<input name="feature" type="hidden" value="%s" />' % feature)
 

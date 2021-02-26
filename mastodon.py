@@ -170,9 +170,9 @@ class InstanceHandler(TemplateHandler, util.Handler):
     return 'mastodon_instance.html'
 
   def post(self):
-    feature = self.request.get('feature')
+    features = (self.request.get('feature') or '').split(',')
     start_cls = util.oauth_starter(StartHandler).to('/mastodon/callback',
-      scopes=PUBLISH_SCOPES if feature == 'publish' else LISTEN_SCOPES)
+      scopes=PUBLISH_SCOPES if 'publish' in features else LISTEN_SCOPES)
     start = start_cls(self.request, self.response)
 
     instance = util.get_required_param(self, 'instance')
@@ -188,6 +188,14 @@ class InstanceHandler(TemplateHandler, util.Handler):
 class CallbackHandler(oauth_dropins.mastodon.CallbackHandler, util.Handler):
   def finish(self, auth_entity, state=None):
     source = self.maybe_add_or_delete_source(Mastodon, auth_entity, state)
+
+    features = util.decode_oauth_state(state).get('feature', '').split(',')
+    if set(features) != set(source.features):
+      # override features with whatever we requested scopes for just now, since
+      # scopes are per access token. background:
+      # https://github.com/snarfed/bridgy/issues/1015
+      source.features = features
+      source.put()
 
 
 ROUTES = [
