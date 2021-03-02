@@ -79,6 +79,15 @@ class GitHub(Source):
     return self.gr_source.get_activities_response(*args, **kwargs)
 
 
+class StartHandler(util.Handler):
+  def post(self):
+    features = util.get_required_param(self, 'feature')
+    scopes = PUBLISH_SCOPES if 'publish' in features else LISTEN_SCOPES
+    starter = util.oauth_starter(oauth_github.StartHandler, feature=features
+                                 ).to('/github/add', scopes=scopes)
+    return starter(self.request, self.response).post()
+
+
 class AddGitHub(oauth_github.CallbackHandler, util.Handler):
   def finish(self, auth_entity, state=None):
     logging.debug('finish with %s, %s', auth_entity, state)
@@ -86,8 +95,7 @@ class AddGitHub(oauth_github.CallbackHandler, util.Handler):
 
 
 ROUTES = [
-  ('/github/start', util.oauth_starter(oauth_github.StartHandler).to(
-    '/github/add', scopes=LISTEN_SCOPES)),
+  ('/github/start', StartHandler),
   ('/github/add', AddGitHub),
   ('/github/delete/finish', oauth_github.CallbackHandler.to('/delete/finish')),
   ('/github/publish/start', oauth_github.StartHandler.to(
