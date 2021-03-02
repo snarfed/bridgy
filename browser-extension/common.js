@@ -138,11 +138,13 @@ class Silo {
         continue
       }
 
-      await this.storageSet(cacheKey, {
-        c: (resolved.object && resolved.object.replies && resolved.object.replies.items)
-          ? resolved.object.replies.items.length : 0,
-        r: reactions.length,
-      })
+      const numComments = (resolved.object && resolved.object.replies &&
+                           resolved.object.replies.items)
+          ? resolved.object.replies.items.length : 0
+      await this.storageSet(cacheKey, {c: numComments, r: reactions.length})
+      if (numComments > 0) {
+        await this.storageSet('lastResponse', Date.now())
+      }
     }
 
     await this.postBridgy(`/poll`)
@@ -381,6 +383,7 @@ Silo.COOKIE = null     // eg 'sessionid'
 
 export {
   BRIDGY_BASE_URL,
+  FAST_POLL_MIN,
   INDIEAUTH_START,
   login,
   Silo,

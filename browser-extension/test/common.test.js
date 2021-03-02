@@ -128,6 +128,7 @@ test('poll, no stored token', async () => {
   expect(fetch.mock.calls.length).toBe(0)
   expect(browser.storage.local.data['fake-lastStart']).toBeUndefined()
   expect(browser.storage.local.data['fake-lastSuccess']).toBeUndefined()
+  expect(browser.storage.local.data['fake-lastResponse']).toBeUndefined()
 })
 
 test('poll', async () => {
@@ -143,16 +144,23 @@ test('poll', async () => {
   fetch.mockResponseOnce('[]')
   fetch.mockResponseOnce('"OK"')
 
+  const start = Date.now()
   await FakeSilo.poll()
+  const end = Date.now()
   expect(fetch.mock.calls.length).toBe(11)
 
   expect(browser.storage.local.data).toMatchObject({
     'fake-post-246': {c: 2, r: 4},
     'fake-post-357': {c: 0, r: 0},
   })
-  // this will be NaN if either value is undefined
-  expect(browser.storage.local.data['fake-lastSuccess'] -
-         browser.storage.local.data['fake-lastStart']).toBeLessThan(2000) // ms
+
+  for (const field of ['lastStart', 'lastSuccess', 'lastResponse']) {
+    const timestamp = await FakeSilo.storageGet(field)
+    expect(timestamp).toBeGreaterThanOrEqual(start)
+    expect(timestamp).toBeLessThanOrEqual(end)
+  }
+  expect(await FakeSilo.storageGet('lastSuccess')).toBeGreaterThanOrEqual(
+    await FakeSilo.storageGet('lastStart'))
 
   expect(fetch.mock.calls[0][0]).toBe('http://fa.ke/feed')
   expect(fetch.mock.calls[1][0]).toBe(
@@ -182,6 +190,7 @@ test('poll, no stored token', async () => {
   expect(fetch.mock.calls.length).toBe(0)
   expect(browser.storage.local.data['fake-lastStart']).toBeUndefined()
   expect(browser.storage.local.data['fake-lastSuccess']).toBeUndefined()
+  expect(browser.storage.local.data['fake-lastResponse']).toBeUndefined()
 })
 
 test('poll, no stored bridgy source key', async () => {
@@ -223,6 +232,7 @@ test('poll, skip comments and reactions', async () => {
   // this will be NaN if either value is undefined
   expect(browser.storage.local.data['fake-lastSuccess'] -
          browser.storage.local.data['fake-lastStart']).toBeLessThan(2000) // ms
+  expect(browser.storage.local.data['fake-lastResponse']).toBeUndefined()
 })
 
 test('poll, feed error', async () => {
@@ -233,6 +243,7 @@ test('poll, feed error', async () => {
   expect(fetch.mock.calls.length).toBe(2)
   expect(browser.storage.local.data['fake-lastStart']).toBeDefined()
   expect(browser.storage.local.data['fake-lastSuccess']).toBeUndefined()
+  expect(browser.storage.local.data['fake-lastResponse']).toBeUndefined()
 })
 
 test('poll, Bridgy non-JSON response', async () => {
@@ -255,4 +266,5 @@ test('poll, not enabled', async () => {
   expect(fetch.mock.calls.length).toBe(0)
   expect(browser.storage.local.data['fake-lastStart']).toBeUndefined()
   expect(browser.storage.local.data['fake-lastSuccess']).toBeUndefined()
+  expect(browser.storage.local.data['fake-lastResponse']).toBeUndefined()
 })
