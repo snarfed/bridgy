@@ -142,13 +142,17 @@ class Silo {
                            resolved.object.replies.items)
           ? resolved.object.replies.items.length : 0
       await this.storageSet(cacheKey, {c: numComments, r: reactions.length})
-      if (numComments > 0) {
+
+      if (numComments > 0 || reactions.length > 0) {
         await this.storageSet('lastResponse', Date.now())
       }
     }
 
     await this.postBridgy(`/poll`)
     await this.storageSet('lastSuccess', Date.now())
+    if (!(await this.storageGet('lastResponse'))) {
+      await this.storageSet('lastResponse', Date.now())
+    }
     console.log('Done!')
   }
 

@@ -131,7 +131,7 @@ test('poll, no stored token', async () => {
   expect(browser.storage.local.data['fake-lastResponse']).toBeUndefined()
 })
 
-test('poll', async () => {
+async function pollWithResponses() {
   fetch.mockResponseOnce('fake feed')
   fetch.mockResponseOnce(JSON.stringify(activities))
   fetch.mockResponseOnce('post 246')
@@ -144,10 +144,14 @@ test('poll', async () => {
   fetch.mockResponseOnce('[]')
   fetch.mockResponseOnce('"OK"')
 
-  const start = Date.now()
   await FakeSilo.poll()
-  const end = Date.now()
   expect(fetch.mock.calls.length).toBe(11)
+}
+
+test('poll', async () => {
+  const start = Date.now()
+  await pollWithResponses()
+  const end = Date.now()
 
   expect(browser.storage.local.data).toMatchObject({
     'fake-post-246': {c: 2, r: 4},
@@ -232,7 +236,7 @@ test('poll, skip comments and reactions', async () => {
   // this will be NaN if either value is undefined
   expect(browser.storage.local.data['fake-lastSuccess'] -
          browser.storage.local.data['fake-lastStart']).toBeLessThan(2000) // ms
-  expect(browser.storage.local.data['fake-lastResponse']).toBeUndefined()
+  expect(browser.storage.local.data['fake-lastResponse']).toBeDefined()
 })
 
 test('poll, feed error', async () => {
@@ -256,7 +260,6 @@ test('poll, Bridgy non-JSON response', async () => {
   expect(browser.storage.local.data['fake-lastSuccess']).toBeUndefined()
 })
 
-
 test('poll, not enabled', async () => {
   await browser.storage.local.set({
     'fake-enabled': false,
@@ -268,3 +271,61 @@ test('poll, not enabled', async () => {
   expect(browser.storage.local.data['fake-lastSuccess']).toBeUndefined()
   expect(browser.storage.local.data['fake-lastResponse']).toBeUndefined()
 })
+
+
+async function pollNoActivities() {
+  fetch.mockResponseOnce('fake feed')
+  fetch.mockResponseOnce('[]')
+
+  await FakeSilo.poll()
+  expect(fetch.mock.calls.length).toBe(3)
+}
+
+async function pollNoResponses() {
+  fetch.mockResponseOnce('fake feed')
+  fetch.mockResponseOnce(JSON.stringify([activities[1]]))
+  fetch.mockResponseOnce('post 357')
+  fetch.mockResponseOnce('{}')
+  fetch.mockResponseOnce('reactions 357')
+  fetch.mockResponseOnce('[]')
+  fetch.mockResponseOnce('"OK"')
+
+  await FakeSilo.poll()
+  expect(fetch.mock.calls.length).toBe(7)
+}
+
+test('poll, initial, no activities', async () => {
+  await pollNoActivities()
+  expect(browser.storage.local.data['fake-lastResponse']).toBeDefined()
+})
+
+test('poll, existing lastResponse, no activities', async () => {
+  browser.storage.local.data['fake-lastResponse'] = 123
+  await pollNoActivities()
+  expect(browser.storage.local.data['fake-lastResponse']).toBe(123)
+})
+
+test('poll, initial, no comments or reactions', async () => {
+  await pollNoResponses()
+  expect(browser.storage.local.data['fake-lastResponse']).toBeDefined()
+})
+
+test('poll, existing lastResponse, no comments or reactions', async () => {
+  browser.storage.local.data['fake-lastResponse'] = 123
+  await pollNoResponses()
+  expect(browser.storage.local.data['fake-lastResponse']).toBe(123)
+})
+
+
+test('poll, initial, with comments/reactions', async () => {
+  await pollWithResponses()
+  expect(browser.storage.local.data['fake-lastResponse']).toBeDefined()
+})
+
+test('poll, existing lastResponse, with comments/reactions', async () => {
+  browser.storage.local.data['fake-lastResponse'] = 123
+  const start = Date.now()
+  await pollWithResponses()
+  expect(browser.storage.local.data['fake-lastResponse']).toBeGreaterThanOrEqual(start)
+})
+
