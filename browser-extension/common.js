@@ -387,7 +387,6 @@ Silo.COOKIE = null     // eg 'sessionid'
 
 export {
   BRIDGY_BASE_URL,
-  FAST_POLL_MIN,
   INDIEAUTH_START,
   login,
   Silo,
