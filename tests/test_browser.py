@@ -123,7 +123,7 @@ class BrowserHandlerTest(ModelsTest):
 
     self.assertEqual({
       'status': 'enabled',
-      'poll-seconds': FakeBrowserSource.SLOW_POLL.total_seconds(),
+      'poll-seconds': FakeBrowserSource.FAST_POLL.total_seconds(),
     }, resp.json)
 
   def test_homepage(self):

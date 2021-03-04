@@ -45,7 +45,6 @@ class BrowserSource(Source):
   CAN_LISTEN = True
   CAN_PUBLISH = False
   AUTO_POLL = False
-  SLOW_POLL = FAST_POLL = timedelta(0)
 
   # set by subclasses
   GR_CLASS = None

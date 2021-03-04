@@ -122,10 +122,11 @@ def add_poll_task(source, now=False):
     eta_seconds = None
   else:
     queue = 'poll'
-    # randomize task ETA to within +/- 20% to try to spread out tasks and
-    # prevent thundering herds.
-    eta_seconds = int(util.to_utc_timestamp(now_fn()) +
-                      source.poll_period().total_seconds() * random.uniform(.8, 1.2))
+    eta_seconds = int(util.to_utc_timestamp(now_fn()))
+    if source.AUTO_POLL:
+      # add poll period. randomize task ETA to within +/- 20% to try to spread
+      # out tasks and prevent thundering herds.
+      eta_seconds += int(source.poll_period().total_seconds() * random.uniform(.8, 1.2))
 
   add_task(queue, eta_seconds=eta_seconds, source_key=source.key.urlsafe().decode(),
            last_polled=source.last_polled.strftime(POLL_TASK_DATETIME_FORMAT))
