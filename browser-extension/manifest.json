@@ -1,6 +1,6 @@
 {
 	"name": "Bridgy",
-	"version": "0.3.4",
+	"version": "0.3.5",
 	"description": "Bridgy connects your web site to social media. This extension adds Facebook and Instagram support.",
 	"homepage_url": "https://brid.gy/",
     "manifest_version": 2,

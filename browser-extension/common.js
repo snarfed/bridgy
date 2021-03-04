@@ -99,6 +99,7 @@ class Silo {
       const mins = status['poll-seconds'] / 60
       // this overwrites the existing alarm.
       // https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/alarms/create
+      console.log(`Scheduling ${this.NAME} poll every ${mins}m`)
       browser.alarms.create(this.alarmName(), {
         delayInMinutes: mins,
         periodInMinutes: mins,

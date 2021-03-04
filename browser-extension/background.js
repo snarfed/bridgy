@@ -22,7 +22,6 @@ import {Facebook} from './facebook.js'
 const FREQUENCY_MIN = 30
 
 function schedulePoll() {
-  console.log(`Scheduling poll every ${FREQUENCY_MIN}m`)
   browser.alarms.onAlarm.addListener((alarm) => {
     if (alarm.name == 'bridgy-facebook-poll') {
       Facebook.poll()
@@ -33,12 +32,15 @@ function schedulePoll() {
 
   for (const silo of [Instagram, Facebook]) {
     const name = silo.alarmName()
-    if (!await browser.alarms.get(name)) {
-      browser.alarms.create(name, {
-        delayInMinutes: 5,
-        periodInMinutes: FREQUENCY_MIN,
-      })
-    }
+    browser.alarms.get(name).then(function(alarm) {
+      if (!alarm) {
+        console.log(`Scheduling ${silo.NAME} poll every ${FREQUENCY_MIN}m`)
+        browser.alarms.create(name, {
+          delayInMinutes: 5,
+          periodInMinutes: FREQUENCY_MIN,
+        })
+      }
+    })
   }
 }
 
