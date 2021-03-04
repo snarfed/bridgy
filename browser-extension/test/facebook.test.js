@@ -35,6 +35,7 @@ const activities = [{
 
 
 test('poll', async () => {
+  fetch.mockResponseOnce('{}')
   fetch.mockResponseOnce('fb feed')
   fetch.mockResponseOnce(JSON.stringify(activities))
   fetch.mockResponseOnce('post 246')
@@ -48,19 +49,19 @@ test('poll', async () => {
   fetch.mockResponseOnce('"OK"')
 
   await Facebook.poll()
-  expect(fetch.mock.calls.length).toBe(11)
+  expect(fetch.mock.calls.length).toBe(12)
 
   expect(await browser.storage.local.get()).toMatchObject({
     'facebook-post-246': {c: 2, r: 3},
     'facebook-post-357': {c: 0, r: 0},
   })
 
-  expect(fetch.mock.calls[0][0]).toBe('https://mbasic.facebook.com/me')
-  expect(fetch.mock.calls[1][0]).toBe(
+  expect(fetch.mock.calls[1][0]).toBe('https://mbasic.facebook.com/me')
+  expect(fetch.mock.calls[2][0]).toBe(
     `${BRIDGY_BASE_URL}/facebook/browser/feed?token=towkin&key=KEE`)
-  expect(fetch.mock.calls[1][1].body).toBe('fb feed')
+  expect(fetch.mock.calls[2][1].body).toBe('fb feed')
 
-  for (const [i, fb_id, id] of [[2, '222', '246'], [6, '333', '357']]) {
+  for (const [i, fb_id, id] of [[3, '222', '246'], [7, '333', '357']]) {
     expect(fetch.mock.calls[i][0]).toBe(`https://mbasic.facebook.com/${id}`)
     expect(fetch.mock.calls[i + 1][0]).toBe(
       `${BRIDGY_BASE_URL}/facebook/browser/post?token=towkin&key=KEE`)
@@ -72,6 +73,6 @@ test('poll', async () => {
     expect(fetch.mock.calls[i + 3][1].body).toBe(`reactions ${id}`)
   }
 
-  expect(fetch.mock.calls[10][0]).toBe(
+  expect(fetch.mock.calls[11][0]).toBe(
     `${BRIDGY_BASE_URL}/facebook/browser/poll?token=towkin&key=KEE`)
 })

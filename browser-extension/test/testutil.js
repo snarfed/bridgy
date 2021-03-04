@@ -7,6 +7,11 @@ beforeAll(() => {
     // browser is a namespace, so we can't use jest.mock(), have to mock and inject
     // it manually like this.
     browser: {
+      alarms: {
+        alarms: {},
+        create: function (name, info) { this.alarms[name] = info },
+        get: async function (name) { return this.alarms[name] },
+      },
       cookies: {
         getAll: jest.fn(),
         getAllCookieStores: async () => [{id: '1'}],
@@ -46,6 +51,7 @@ beforeAll(() => {
 beforeEach(() => {
   jest.resetAllMocks()
   fetch.resetMocks()
+  browser.alarms.alarms = {}
   browser.storage.sync.data = {'token': 'towkin'}
 })
 

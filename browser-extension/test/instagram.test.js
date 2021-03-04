@@ -55,6 +55,7 @@ test('poll, no stored username', async () => {
   // no username stored
   expect(browser.storage.local.data['instagram-username']).toBeUndefined()
 
+  fetch.mockResponseOnce('{}')
   fetch.mockResponseOnce('ig home page')
   fetch.mockResponseOnce('"snarfed"')
   fetch.mockResponseOnce('ig profile')
@@ -70,10 +71,10 @@ test('poll, no stored username', async () => {
   fetch.mockResponseOnce('"OK"')
 
   await Instagram.poll()
-  expect(fetch.mock.calls.length).toBe(13)
+  expect(fetch.mock.calls.length).toBe(14)
 
-  expect(fetch.mock.calls[0][0]).toBe('https://www.instagram.com/')
-  expect(fetch.mock.calls[1][0]).toBe(
+  expect(fetch.mock.calls[1][0]).toBe('https://www.instagram.com/')
+  expect(fetch.mock.calls[2][0]).toBe(
     `${BRIDGY_BASE_URL}/instagram/browser/homepage?token=towkin&key=KEE`)
 
   expect(await browser.storage.local.get()).toMatchObject({
@@ -82,12 +83,12 @@ test('poll, no stored username', async () => {
     'instagram-post-357': {c: 0, r: 0},
   })
 
-  expect(fetch.mock.calls[2][0]).toBe('https://www.instagram.com/snarfed/')
-  expect(fetch.mock.calls[3][0]).toBe(
+  expect(fetch.mock.calls[3][0]).toBe('https://www.instagram.com/snarfed/')
+  expect(fetch.mock.calls[4][0]).toBe(
     `${BRIDGY_BASE_URL}/instagram/browser/feed?token=towkin&key=KEE`)
-  expect(fetch.mock.calls[3][1].body).toBe('ig profile')
+  expect(fetch.mock.calls[4][1].body).toBe('ig profile')
 
-  for (const [i, shortcode, id] of [[4, 'abc', '246'], [8, 'xyz', '357']]) {
+  for (const [i, shortcode, id] of [[5, 'abc', '246'], [9, 'xyz', '357']]) {
     expect(fetch.mock.calls[i][0]).toBe(`https://www.instagram.com/${id}`)
     expect(fetch.mock.calls[i + 1][0]).toBe(
       `${BRIDGY_BASE_URL}/instagram/browser/post?token=towkin&key=KEE`)
@@ -99,7 +100,7 @@ test('poll, no stored username', async () => {
     expect(fetch.mock.calls[i + 3][1].body).toBe(`reactions ${id}`)
   }
 
-  expect(fetch.mock.calls[12][0]).toBe(
+  expect(fetch.mock.calls[13][0]).toBe(
     `${BRIDGY_BASE_URL}/instagram/browser/poll?token=towkin&key=KEE`)
 })
 
@@ -107,11 +108,12 @@ test('poll, bridgy homepage error', async () => {
   // no username stored
   expect(browser.storage.local.data['instagram-username']).toBeUndefined()
 
+  fetch.mockResponseOnce('{}')
   fetch.mockResponseOnce('ig home page')
   fetch.mockResponseOnce('{}', {status: 400})  // Bridgy returns an HTTP error
   await Instagram.poll()
 
-  expect(fetch.mock.calls.length).toBe(2)
+  expect(fetch.mock.calls.length).toBe(3)
   expect(browser.storage.local.data['instagram-username']).toBeUndefined()
   expect(browser.storage.local.data['instagram-lastStart']).toBeDefined()
   expect(browser.storage.local.data['instagram-lastSuccess']).toBeUndefined()
@@ -120,29 +122,31 @@ test('poll, bridgy homepage error', async () => {
 test('poll, existing username stored', async () => {
   await browser.storage.local.set({'instagram-username': 'snarfed'})
   await Instagram.poll()
-  expect(fetch.mock.calls[0][0]).toBe('https://www.instagram.com/snarfed/')
+  expect(fetch.mock.calls[1][0]).toBe('https://www.instagram.com/snarfed/')
 })
 
 test('poll, feed error', async () => {
+  fetch.mockResponseOnce('{}')
   fetch.mockResponseOnce('ig feed')
   fetch.mockResponseOnce('{}', {status: 400})  // Bridgy returns an HTTP error
 
   await browser.storage.local.set({'instagram-username': 'snarfed'})
   await Instagram.poll()
 
-  expect(fetch.mock.calls.length).toBe(2)
+  expect(fetch.mock.calls.length).toBe(3)
   expect(browser.storage.local.data['instagram-lastStart']).toBeDefined()
   expect(browser.storage.local.data['instagram-lastSuccess']).toBeUndefined()
 })
 
 test('poll, Bridgy non-JSON response', async () => {
+  fetch.mockResponseOnce('{}')
   fetch.mockResponseOnce('ig profile')
   fetch.mockResponseOnce('xyz')  // Bridgy returns invalid JSON
 
   await browser.storage.local.set({'instagram-username': 'snarfed'})
   await Instagram.poll()
 
-  expect(fetch.mock.calls.length).toBe(2)
+  expect(fetch.mock.calls.length).toBe(3)
   expect(browser.storage.local.data['instagram-lastStart']).toBeDefined()
   expect(browser.storage.local.data['instagram-lastSuccess']).toBeUndefined()
 })

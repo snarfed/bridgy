@@ -32,10 +32,13 @@ function schedulePoll() {
   })
 
   for (const silo of [Instagram, Facebook]) {
-    browser.alarms.create(`bridgy-${silo.NAME}-poll`, {
-      delayInMinutes: 5,
-      periodInMinutes: FREQUENCY_MIN,
-    })
+    const name = silo.alarmName()
+    if (!await browser.alarms.get(name)) {
+      browser.alarms.create(name, {
+        delayInMinutes: 5,
+        periodInMinutes: FREQUENCY_MIN,
+      })
+    }
   }
 }
 

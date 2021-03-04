@@ -94,6 +94,20 @@ class Silo {
       return
     }
 
+    const status = await this.postBridgy(`/status`)
+    if (status && status['poll-seconds']) {
+      const mins = status['poll-seconds'] / 60
+      // this overwrites the existing alarm.
+      // https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/alarms/create
+      browser.alarms.create(this.alarmName(), {
+        delayInMinutes: mins,
+        periodInMinutes: mins,
+      })
+    }
+    if (status && status.status == 'disabled') {
+      return
+    }
+
     console.log('Starting poll...')
     await this.storageSet('lastStart', Date.now())
 
@@ -375,6 +389,15 @@ class Silo {
    */
   static siloKey(key) {
     return `${this.NAME}-${key}`
+  }
+
+  /**
+   * Returns the name of the poll alarm for this silo.
+   *
+   * @returns {String} alarm name
+   */
+  static alarmName() {
+    return `bridgy-${this.NAME}-poll`
   }
 }
 
