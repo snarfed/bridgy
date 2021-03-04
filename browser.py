@@ -188,6 +188,27 @@ class BrowserHandler(util.Handler):
     self.abort(403, f'Token {token} is not authorized for any of: {source.domains}')
 
 
+class StatusHandler(BrowserHandler):
+  """Runs preflight checks for a source and returns status and config info.
+
+  Response body is a JSON map with these fields:
+    status: string, 'enabled' or 'disabled'
+    poll-seconds: integer, current poll frequency for this source in seconds
+  """
+  def get(self):
+    source = self.auth()
+    logging.info(f'Got source: {source}')
+
+    out = {
+      'status': source.status,
+      'poll-seconds': source.poll_period().total_seconds(),
+    }
+    logging.info(f'Returning {out}')
+    self.output(out)
+
+  post = get
+
+
 class HomepageHandler(BrowserHandler):
   """Parses a silo home page and returns the logged in user's username.
 
@@ -360,6 +381,7 @@ def routes(source_cls):
   ...specifically, with the source's short name as the routes' URL prefix.
   """
   return [
+    (f'/{source_cls.SHORT_NAME}/browser/status', StatusHandler),
     (f'/{source_cls.SHORT_NAME}/browser/homepage', HomepageHandler),
     (f'/{source_cls.SHORT_NAME}/browser/profile', ProfileHandler),
     (f'/{source_cls.SHORT_NAME}/browser/feed', FeedHandler),

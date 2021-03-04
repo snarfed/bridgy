@@ -1,6 +1,7 @@
 """Unit tests for browser.py.
 """
 import copy
+import datetime
 
 from mox3 import mox
 from oauth_dropins.webutil.testutil import TestCase
@@ -11,6 +12,7 @@ import webapp2
 import browser
 from models import Activity, Domain
 from .testutil import FakeGrSource, FakeSource, ModelsTest
+import util
 
 
 class FakeBrowserSource(browser.BrowserSource):
@@ -114,6 +116,15 @@ class BrowserHandlerTest(ModelsTest):
       path_query += f'?{self.auth}'
     return self.app.get_response(f'/fbs/browser/{path_query}',
                                  method='POST', **kwargs)
+
+  def test_status(self):
+    resp = self.get_response('status')
+    self.assertEqual(200, resp.status_int, resp.text)
+
+    self.assertEqual({
+      'status': 'enabled',
+      'poll-seconds': FakeBrowserSource.SLOW_POLL.total_seconds(),
+    }, resp.json)
 
   def test_homepage(self):
     resp = self.get_response('homepage', text='homepage html', auth=False)
