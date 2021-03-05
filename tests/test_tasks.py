@@ -159,7 +159,7 @@ class PollTest(TaskTest):
     self.assertEqual('ok', self.sources[0].key.get().poll_status)
 
   def test_poll_error(self):
-    """If anything goes wrong, the source status should be set to 'error'."""
+    """If anything goes wrong, the poll status should be set to 'error'."""
     self.expect_get_activities().AndRaise(Exception('foo'))
     self.mox.ReplayAll()
 
@@ -183,20 +183,6 @@ class PollTest(TaskTest):
 
     self.post_task(expected_status=ERROR_HTTP_RETURN_CODE)
     self.assertEqual('error', self.sources[0].key.get().poll_status)
-
-  def test_reset_status_to_enabled(self):
-    """After a successful poll, status should be set to 'enabled' and 'ok'."""
-    source = self.sources[0]
-    source.status = 'error'
-    source.poll_status = 'error'
-    source.rate_limited = True
-    source.put()
-
-    self.post_task()
-    source = source.key.get()
-    self.assertEqual('enabled', source.status)
-    self.assertEqual('ok', source.poll_status)
-    self.assertFalse(source.rate_limited)
 
   def test_original_post_discovery(self):
     """Target URLs should be extracted from attachments, tags, and text."""

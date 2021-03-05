@@ -81,7 +81,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
   # https://github.com/snarfed/bridgy/issues/68
   _use_cache = False
 
-  STATUSES = ('enabled', 'disabled', 'error')  # 'error' is deprecated
+  STATUSES = ('enabled', 'disabled')
   POLL_STATUSES = ('ok', 'error', 'polling')
   FEATURES = ('listen', 'publish', 'webmention', 'email')
 
@@ -310,10 +310,6 @@ class Source(StringIdModel, metaclass=SourceMeta):
     source.updates = updates
     for name, val in updates.items():
       setattr(source, name, val)
-
-    if source.status == 'error':  # deprecated
-      logging.warning('Resetting status from error to enabled')
-      source.status = 'enabled'
 
     source.put()
     return source
