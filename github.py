@@ -70,6 +70,11 @@ class GitHub(Source):
     """Returns the username."""
     return self.key_id()
 
+  def user_tag_id(self):
+    """Returns this user's tag URI, eg 'tag:github.com:2013,MDQ6VXNlcjc3OD='."""
+    id = json_loads(self.auth_entity.get().user_json)['id']
+    return self.gr_source.tag_uri(id)
+
   def get_activities_response(self, *args, **kwargs):
     """Drop kwargs that granary doesn't currently support for github."""
     kwargs.update({

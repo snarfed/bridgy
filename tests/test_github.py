@@ -27,3 +27,4 @@ class GitHubTest(testutil.ModelsTest):
     self.assertEqual('https://github.com/snarfed', self.gh.silo_url())
     self.assertEqual('https://avatars2.githubusercontent.com/u/778068?v=4',
                      self.gh.picture)
+    self.assertEqual('tag:github.com,2013:MDQ6VXNlcjc3ODA2OA==', self.gh.user_tag_id())
