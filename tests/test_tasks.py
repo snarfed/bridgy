@@ -379,11 +379,11 @@ class PollTest(TaskTest):
 
     self.activities[1]['object']['to'] = [{'objectType':'group', 'alias':'@private'}]
     now = testutil.NOW.replace(microsecond=0)
-    self.activities[1]['published'] = now.isoformat()
+    self.activities[1]['object']['published'] = now.isoformat()
 
     self.activities[2]['object']['to'] = [{'objectType':'group', 'alias':'@public'}]
     public_date = now - datetime.timedelta(weeks=1)
-    self.activities[2]['published'] = public_date.isoformat()
+    self.activities[2]['object']['published'] = public_date.isoformat()
 
     # Facebook returns 'unknown' for wall posts
     unknown = copy.deepcopy(self.activities[1])

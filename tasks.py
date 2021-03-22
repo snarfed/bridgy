@@ -239,7 +239,8 @@ class Poll(webapp2.RequestHandler):
     logging.info('Found %d private activities: %s', len(private), private.keys())
 
     last_public_post = (source.last_public_post or util.EPOCH).isoformat()
-    public_published = util.trim_nulls([a.get('published') for a in public.values()])
+    public_published = util.trim_nulls(
+      [a.get('object', {}).get('published') for a in public.values()])
     if public_published:
       max_published = max(public_published)
       if max_published > last_public_post:
@@ -249,7 +250,7 @@ class Poll(webapp2.RequestHandler):
 
     source.updates['recent_private_posts'] = \
       len([a for a in private.values()
-           if a.get('published', util.EPOCH_ISO) > last_public_post])
+           if a.get('object', {}).get('published', util.EPOCH_ISO) > last_public_post])
 
     #
     # Step 2: extract responses, store their activities in response['activities']
