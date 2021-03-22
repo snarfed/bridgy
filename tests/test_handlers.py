@@ -40,6 +40,13 @@ class HandlersTest(testutil.HandlerTest):
         'upstreamDuplicates': ['http://or.ig/post'],
       }}]
     FakeGrSource.activities = self.activities
+    FakeGrSource.comment = {
+      'id': 'tag:fa.ke,2013:a1-b2.c3',  # test alphanumeric id (like G+)
+      'content': 'qwert',
+      'inReplyTo': [{'url': 'http://fa.ke/000'}],
+      'author': {'image': {'url': 'http://example.com/ryan/image'}},
+      'tags': self.activities[0]['object']['tags'],
+    }
     FakeGrSource.event = {
       'object': {
         'id': 'tag:fa.ke,2013:123',
@@ -207,14 +214,6 @@ asdf http://other/link qwert
     self.assertIn('FakeSource error: foo bar', resp.text)
 
   def test_comment(self):
-    FakeGrSource.comment = {
-      'id': 'tag:fa.ke,2013:a1-b2.c3',  # test alphanumeric id (like G+)
-      'content': 'qwert',
-      'inReplyTo': [{'url': 'http://fa.ke/000'}],
-      'author': {'image': {'url': 'http://example.com/ryan/image'}},
-      'tags': self.activities[0]['object']['tags'],
-    }
-
     self.check_response('/comment/fake/%s/000/a1-b2.c3', """\
 <article class="h-entry">
 <span class="p-uid">tag:fa.ke,2013:a1-b2.c3</span>
@@ -234,6 +233,18 @@ asdf http://other/link qwert
 <a class="u-in-reply-to" href="http://or.ig/post"></a>
 </article>
 """ % self.source.user_tag_id())
+
+  def test_comment_optimized_comments(self):
+    self.mox.StubOutWithMock(self.source.gr_source, 'OPTIMIZED_COMMENTS')
+    self.source.gr_source.OPTIMIZED_COMMENTS = True
+
+    self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities')
+    testutil.FakeSource.get_activities(
+      activity_id='000', user_id=self.source.key.string_id(), fetch_replies=False,
+      ).AndReturn(self.activities[0])
+    self.mox.ReplayAll()
+
+    self.check_response('/comment/fake/%s/000/a1')
 
   def test_like(self):
     FakeGrSource.like = {

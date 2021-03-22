@@ -119,6 +119,8 @@ class ItemHandler(util.Handler):
       if posts:
         return posts[0]
       logging.warning('Source post %s not found', id)
+    except AssertionError:
+      raise
     except Exception as e:
       util.interpret_http_exception(e)
 
@@ -252,10 +254,11 @@ class CommentHandler(ItemHandler):
   cache = TTLCache(100, CACHE_TIME)
   @cachedmethod(lambda self: self.cache)
   def get_item(self, post_id, id):
-    post = self.get_post(post_id, fetch_replies=True)
+    fetch_replies = not self.source.gr_source.OPTIMIZED_COMMENTS
+    post = self.get_post(post_id, fetch_replies=fetch_replies)
     cmt = self.source.get_comment(
       id, activity_id=post_id, activity_author_id=self.source.key_id(),
-      activity=post)
+      activity=post if fetch_replies else None)
     if post:
       originals, mentions = original_post_discovery.discover(
         self.source, post, fetch_hfeed=False)
