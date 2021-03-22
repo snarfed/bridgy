@@ -18,6 +18,7 @@
 __pycache__/
 .coverage/
 .git*/
+browser-extension/
 coverage/
 debian/
 doc/
