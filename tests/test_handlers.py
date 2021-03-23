@@ -272,7 +272,6 @@ asdf http://other/link qwert
   <a class="u-like-of" href="http://or.ig/post"></a>
 </article>
 """)
-    self.assertIn('<title>Alice</title>', resp.text)
 
   def test_reaction(self):
     FakeGrSource.reaction = {
