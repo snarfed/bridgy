@@ -161,7 +161,6 @@ def add_task(queue, eta_seconds=None, **kwargs):
     'app_engine_http_request': {
       'http_method': 'POST',
       'relative_uri': '/_ah/queue/%s' % queue,
-      'app_engine_routing': {'service': 'background'},
       'body': urllib.parse.urlencode(util.trim_nulls(kwargs)).encode(),
       # https://googleapis.dev/python/cloudtasks/latest/gapic/v2/types.html#google.cloud.tasks_v2.types.AppEngineHttpRequest.headers
       'headers': {'Content-Type': 'application/x-www-form-urlencoded'},
