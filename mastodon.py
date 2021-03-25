@@ -40,10 +40,7 @@ class StartHandler(oauth_dropins.mastodon.StartHandler):
     return 'Bridgy'
 
   def app_url(self):
-    if self.request.host in util.OTHER_DOMAINS:
-      return util.HOST_URL
-
-    return super().app_url()
+    return util.host_url(self)
 
 
 class Mastodon(models.Source):

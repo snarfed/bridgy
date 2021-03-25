@@ -798,12 +798,7 @@ activities: %s""", target_url, self.entity.urls_to_activity, self.activities)
     id = activity['id']
     parsed = util.parse_tag_uri(id)
     post_id = parsed[1] if parsed else id
-    host_url = self.request.host_url
-    domain = util.domain_from_link(host_url)
-    if domain in util.OTHER_DOMAINS:
-      host_url = util.HOST_URL  # brid.gy
-
-    path = [host_url, self.entity.type, self.source.SHORT_NAME,
+    parts = [util.host_url(self), self.entity.type, self.source.SHORT_NAME,
             self.source.key.string_id(), post_id]
 
     if self.entity.type != 'post':
@@ -812,11 +807,11 @@ activities: %s""", target_url, self.entity.urls_to_activity, self.activities)
       reaction_id = response_id
       if self.entity.type in ('like', 'react', 'repost', 'rsvp'):
         response_id = response_id.split('_')[-1]  # extract responder user id
-      path.append(response_id)
+      parts.append(response_id)
       if self.entity.type == 'react':
-        path.append(reaction_id)
+        parts.append(reaction_id)
 
-    return '/'.join(path)
+    return '/'.join(parts)
 
 
 class PropagateBlogPost(SendWebmentions):

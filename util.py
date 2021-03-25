@@ -375,7 +375,8 @@ def replace_test_domains_with_localhost(url):
 
 def host_url(handler):
   domain = util.domain_from_link(handler.request.host_url)
-  return HOST_URL if domain in OTHER_DOMAINS else handler.request.host_url
+  return (HOST_URL if util.domain_or_parent_in(domain, OTHER_DOMAINS)
+          else handler.request.host_url)
 
 
 def load_source(handler, param='source_key'):
