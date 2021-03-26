@@ -70,7 +70,7 @@ class Reddit(models.Source):
     url_query = ' OR '.join([f'site:"{u}" OR selftext:"{u}"' for u in urls])
     return self.get_activities(
       search_query=url_query, group_id=gr_source.SEARCH, etag=self.last_activities_etag,
-      fetch_replies=True, fetch_likes=False, fetch_shares=False, count=50)
+      fetch_replies=False, fetch_likes=False, fetch_shares=False, count=50)
 
 class AuthHandler(util.Handler):
   """Base OAuth handler class."""

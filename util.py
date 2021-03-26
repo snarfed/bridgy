@@ -281,6 +281,9 @@ def get_webmention_target(url, resolve=True, replace_test_domains=True):
     logging.info('Dropping bad URL %s.', url)
     return url, None, False
 
+  if domain in ('puzzleadventura.com', 'sweetgamesbox.com'):
+    return url, domain, False
+
   send = True
   if resolve:
     # this follows *all* redirects, until the end
