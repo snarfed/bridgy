@@ -90,7 +90,7 @@ class FacebookTest(ModelsTest):
     self.assertIsNone(Facebook.get_by_id('212038'))
 
     # webmention discovery
-    self.expect_requests_get('https://snarfed.org/', '', stream=None, verify=False)
+    self.expect_requests_get('https://snarfed.org/', '', stream=None)
     self.mox.ReplayAll()
 
     resp = self.get_response('profile?token=towkin', text=MBASIC_HTML_ABOUT)

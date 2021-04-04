@@ -1676,7 +1676,7 @@ class PropagateTest(TaskTest):
     self.expect_requests_post(
       'http://my/endpoint',
       data={'source': source_url, 'target': 'http://html/charset'},
-      stream=None, timeout=999, verify=False, allow_redirects=False, headers={'Accept': '*/*'})
+      stream=None, timeout=999, allow_redirects=False, headers={'Accept': '*/*'})
 
     self.mox.ReplayAll()
     self.post_task()
@@ -1712,7 +1712,7 @@ class PropagateTest(TaskTest):
     source_url = ('http://localhost/comment/fake/%s/a/1_2_a' %
                   self.sources[0].key.string_id())
     self.expect_requests_post(
-      'http://my/endpoint', timeout=999, verify=False,
+      'http://my/endpoint', timeout=999,
       data={'source': source_url, 'target': 'http://my/post'},
       stream=None, allow_redirects=False, headers={'Accept': '*/*'})
 
@@ -1734,7 +1734,7 @@ class PropagateTest(TaskTest):
       response_headers={'Link': '<http://my/endpoint>; rel=webmention'})
 
     self.expect_requests_post(
-      'http://my/endpoint', timeout=999, verify=False,
+      'http://my/endpoint', timeout=999,
       data={'source': 'http://localhost/comment/twitter/rhiaro/a/1_2_a',
             'target': 'http://target1/post/url'},
       stream=None, allow_redirects=False, headers={'Accept': '*/*'})

@@ -349,7 +349,7 @@ class HandlerTest(testutil.HandlerTest):
   def expect_webmention_requests_get(self, *args, **kwargs):
     kwargs.setdefault('headers', {}).update(util.REQUEST_HEADERS)
     return super(HandlerTest, self).expect_requests_get(
-      *args, stream=None, verify=False, **kwargs)
+      *args, stream=None, **kwargs)
 
   def expect_requests_post(self, *args, **kwargs):
     kwargs.setdefault('headers', {}).update(util.REQUEST_HEADERS)

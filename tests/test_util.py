@@ -147,7 +147,7 @@ class UtilTest(testutil.ModelsTest):
       self.assert_equals(expected, util.prune_activity(orig, self.sources[0]))
 
   def test_webmention_tools_relative_webmention_endpoint_in_body(self):
-    requests.get('http://target/', verify=False).AndReturn(requests_response("""
+    requests.get('http://target/').AndReturn(requests_response("""
 <html><meta>
 <link rel="webmention" href="/endpoint">
 </meta></html>"""))
@@ -159,7 +159,7 @@ class UtilTest(testutil.ModelsTest):
     self.assertEqual('http://target/endpoint', mention.receiver_endpoint)
 
   def test_webmention_tools_relative_webmention_endpoint_in_header(self):
-    requests.get('http://target/', verify=False).AndReturn(requests_response(
+    requests.get('http://target/').AndReturn(requests_response(
       '', headers={'Link': '</endpoint>; rel="webmention"'}))
     self.mox.ReplayAll()
 
