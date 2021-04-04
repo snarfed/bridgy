@@ -143,9 +143,15 @@ class Poll(webapp2.RequestHandler):
     etag = resp.get('etag')  # used later
     user_activities = resp.get('items', [])
 
-    # these map ids to AS objects
+    # these map ids to AS objects.
+    # backfeed all links as responses, but only include the user's own links as
+    # activities, since their responses also get backfeed.
     responses = {a['id']: a for a in links}
-    activities = {a['id']: a for a in links + user_activities}
+
+    user_id = source.user_tag_id()
+    links_by_user = [a for a in links
+                     if a.get('object', {}).get('author', {}).get('id') == user_id]
+    activities = {a['id']: a for a in links_by_user + user_activities}
 
     # extract silo activity ids, update last_activity_id
     silo_activity_ids = set()

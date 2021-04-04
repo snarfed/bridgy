@@ -483,6 +483,7 @@ class PollTest(TaskTest):
 
     Backfeed those posts and their comments, but not likes, reposts, or rsvps.
 
+    https://github.com/snarfed/bridgy/issues/51
     https://github.com/snarfed/bridgy/issues/456
     """
     source = self.sources[0]
@@ -511,6 +512,7 @@ class PollTest(TaskTest):
          'objectType': 'note',
          'content': 'foo http://target9/post/url bar',
          'replies': {'items': [reply]},
+         'author': {'id': source.user_tag_id()},
        },
      },
       # this will be returned by the link search, and should be overriden by the
@@ -546,6 +548,41 @@ class PollTest(TaskTest):
 
     self.assert_responses(expected, ignore=('activities_json', 'response_json',
                                             'source', 'original_posts'))
+
+  def test_other_peoples_links_dont_backfeed_comments(self):
+    """Don't backfeed comments on links from other people (ie not the user).
+
+    https://github.com/snarfed/bridgy/issues/51
+    https://github.com/snarfed/bridgy/issues/456
+    """
+    source = self.sources[0]
+    source.domains = ['target']
+    source.put()
+
+    FakeGrSource.activities = []
+    FakeGrSource.search_results = [{
+       'id': 'tag:source.com,2013:777',
+       'object': {
+         'objectType': 'note',
+         'content': 'foo http://target/777 bar',
+         'replies': {'items': [{
+           'objectType': 'comment',
+           'id': 'tag:source.com,2013:777_comment',
+           'content': 'baz biff',
+         }]},
+         'author': {'id': 'tag:fa.ke,2013:not_the_user'},
+       },
+     },
+    ]
+
+    self.post_task()
+
+    # only the link post should be backfed, not the comment
+    self.assert_responses([Response(
+      id='tag:source.com,2013:777',
+      type='post',
+      unsent=['http://target/777'],
+    )], ignore=('activities_json', 'response_json', 'source', 'original_posts'))
 
   def test_search_for_links_skips_posse_posts(self):
     """When mention search finds a POSSE post, it shouldn't backfeed it.
