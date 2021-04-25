@@ -20,7 +20,6 @@ from oauth_dropins.webutil.appengine_config import tasks_client
 from oauth_dropins.webutil import appengine_info
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
-from webmentiontools import send
 
 import models
 from models import Response, SyndicatedPost
@@ -277,30 +276,17 @@ class PollTest(TaskTest):
 
   def test_resolve_url_fails(self):
     """A URL that fails to resolve should still be handled ok."""
-    obj = self.activities[0]['object']
-    obj['tags'] = []
-    obj['content'] = 'http://fails/resolve'
+    self.activities[0]['object'].update({
+      'tags': [],
+      'content': 'http://fails/resolve',
+    })
     FakeGrSource.activities = [self.activities[0]]
-
     self.expect_requests_head('http://fails/resolve', status_code=400)
 
     self.mox.ReplayAll()
     self.post_task()
     self.assert_equals(['http://fails/resolve'],
                        self.responses[0].key.get().unsent)
-
-  def test_non_html_file_extension(self):
-    """If our HEAD request fails, we should infer type from file extension."""
-    self.activities[0]['object'].update({'tags': [], 'content': 'http://x/a.zip'})
-    FakeGrSource.activities = [self.activities[0]]
-
-    self.expect_requests_head('http://x/a.zip', status_code=405,
-                              # we should ignore an error response's content type
-                              content_type='text/html')
-
-    self.mox.ReplayAll()
-    self.post_task()
-    self.assert_equals([], self.responses[0].key.get().unsent)
 
   def test_invalid_and_blocklisted_urls(self):
     """Target URLs with domains in the blocklist should be ignored.
@@ -1398,6 +1384,7 @@ class DiscoverTest(TaskTest):
       status='complete',
     )], ignore=('activities_json', 'response_json', 'original_posts'))
 
+
 class PropagateTest(TaskTest):
 
   post_url = '/_ah/queue/propagate'
@@ -1406,11 +1393,6 @@ class PropagateTest(TaskTest):
     super(PropagateTest, self).setUp()
     for r in self.responses[:4]:
       r.put()
-    self.mox.StubOutClassWithMocks(send, 'WebmentionSend')
-
-  def tearDown(self):
-    self.mox.UnsetStubs()
-    super(PropagateTest, self).tearDown()
 
   def post_task(self, expected_status=200, response=None, **kwargs):
     if response is None:
@@ -1437,20 +1419,32 @@ class PropagateTest(TaskTest):
     self.assert_equals(failed, response.failed)
 
   def expect_webmention(self, source_url=None, target='http://target1/post/url',
-                        error=None, input_endpoint=None, discovered_endpoint=None,
-                        headers=util.REQUEST_HEADERS):
+                        endpoint='http://webmention/endpoint',
+                        discover=True, send=None, headers=util.REQUEST_HEADERS,
+                        discover_status=200, send_status=200, **kwargs):
     if source_url is None:
       source_url = 'http://localhost/comment/fake/%s/a/1_2_a' % \
           self.sources[0].key.string_id()
-    mock_send = send.WebmentionSend(source_url, target, endpoint=input_endpoint)
-    mock_send.source_url = source_url
-    mock_send.target_url = target
-    mock_send.receiver_endpoint = (discovered_endpoint if discovered_endpoint
-                                   else input_endpoint if input_endpoint
-                                   else 'http://webmention/endpoint')
-    mock_send.response = 'used in logging'
-    mock_send.error = error
-    return mock_send.send(timeout=999, headers=headers)
+
+    # discover
+    if discover:
+      html = f'<html><link rel="webmention" href="{endpoint or ""}"></html>'
+      call = self.expect_requests_get(target, html, headers=headers,
+                                      status_code=discover_status, **kwargs
+                                      ).InAnyOrder()
+
+    # send
+    discovered = endpoint and discover_status // 100 == 2
+    if send:
+      assert discovered
+    if send or (send is None and discovered):
+      call = self.expect_requests_post(endpoint, data={
+        'source': source_url,
+        'target': target,
+      }, status_code=send_status, headers=headers, allow_redirects=False,
+        timeout=999, **kwargs).InAnyOrder()
+
+    return call
 
   def test_propagate(self):
     """Normal propagate tasks."""
@@ -1463,7 +1457,7 @@ class PropagateTest(TaskTest):
         'http://localhost/repost/fake/%s/a/bob' % id,
         'http://localhost/react/fake/%s/a/bob/a_scissors_by_bob' % id,
     ):
-      self.expect_webmention(source_url=url).AndReturn(True)
+      self.expect_webmention(source_url=url)
     self.mox.ReplayAll()
 
     now = NOW
@@ -1482,7 +1476,7 @@ class PropagateTest(TaskTest):
     self.responses[0].status = 'error'
     self.responses[0].put()
 
-    self.expect_webmention().AndReturn(True)
+    self.expect_webmention()
     self.mox.ReplayAll()
     self.post_task()
     self.assert_response_is('complete', NOW + LEASE_LENGTH,
@@ -1496,39 +1490,30 @@ class PropagateTest(TaskTest):
     self.responses[0].sent = ['http://7']
     self.responses[0].put()
 
-    self.expect_webmention(target='http://1').InAnyOrder().AndReturn(True)
-    self.expect_webmention(target='http://2', error={'code': 'NO_ENDPOINT'})\
-        .InAnyOrder().AndReturn(False)
-    self.expect_webmention(target='http://3', error={'code': 'RECEIVER_ERROR'})\
-        .InAnyOrder().AndReturn(False)
-    self.expect_webmention(target='http://4',  # 4XX should go into 'failed'
-                           error={'code': 'BAD_TARGET_URL', 'http_status': 404})\
-        .InAnyOrder().AndReturn(False)
-    self.expect_webmention(target='http://5',
-                           error={'code': 'RECEIVER_ERROR', 'http_status': 403})\
-        .InAnyOrder().AndReturn(False)
-    self.expect_webmention(target='http://6',  # 5XX should go into 'error'
-                           error={'code': 'BAD_TARGET_URL', 'http_status': 500})\
-        .InAnyOrder().AndReturn(False)
-    self.expect_webmention(target='http://8',  # 204 should go into 'skipped'
-                           error={'code': 'BAD_TARGET_URL', 'http_status': 204})\
-        .InAnyOrder().AndReturn(False)
+    self.expect_webmention(target='http://1')
+    self.expect_webmention(target='http://8', discover_status=204)
+    self.expect_webmention(target='http://2', endpoint=None)
+    self.expect_webmention(target='http://3', send_status=500)
+    # 4XX should go into 'failed'
+    self.expect_webmention(target='http://4', discover_status=404)
+    self.expect_webmention(target='http://5', discover_status=403)
+    # 5XX should go into 'error'
+    self.expect_webmention(target='http://6', discover_status=500)
 
     self.mox.ReplayAll()
     self.post_task(expected_status=ERROR_HTTP_RETURN_CODE)
     self.assert_response_is('error',
-                            sent=['http://7', 'http://1'],
+                            sent=['http://7', 'http://1', 'http://8'],
                             error=['http://3', 'http://6'],
                             failed=['http://4', 'http://5'],
-                            skipped=['http://2', 'http://8'])
+                            skipped=['http://2'])
     self.assertEqual(NOW, self.sources[0].key.get().last_webmention_sent)
 
   def test_cached_webmention_discovery(self):
     """Webmention endpoints should be cached."""
-    self.expect_webmention().AndReturn(True)
+    self.expect_webmention()
     # second webmention should use the cached endpoint
-    self.expect_webmention(input_endpoint='http://webmention/endpoint'
-                           ).AndReturn(True)
+    self.expect_webmention(discover=False)
 
     self.mox.ReplayAll()
     self.post_task()
@@ -1539,7 +1524,7 @@ class PropagateTest(TaskTest):
 
   def test_cached_webmention_discovery_error(self):
     """Failed webmention discovery should be cached too."""
-    self.expect_webmention(error={'code': 'NO_ENDPOINT'}).AndReturn(False)
+    self.expect_webmention(endpoint=None)
     # second time shouldn't try to send a webmention
 
     self.mox.ReplayAll()
@@ -1552,14 +1537,12 @@ class PropagateTest(TaskTest):
     self.assert_response_is('complete', skipped=['http://target1/post/url'])
 
   def test_errors_and_caching_endpoint(self):
-    """BAD_TARGET_URL shouldn't cache anything. RECEIVER_ERROR should cache
-    endpoint, not error."""
-    self.expect_webmention(error={'code': 'BAD_TARGET_URL'}).AndReturn(False)
+    """Only cache on wm endpoint failures, not discovery failures."""
+    self.expect_webmention(discover_status=500)
     # shouldn't have a cached endpoint
-    self.expect_webmention(error={'code': 'RECEIVER_ERROR'}).AndReturn(False)
+    self.expect_webmention(send_status=500)
     # should have and use a cached endpoint
-    self.expect_webmention(input_endpoint='http://webmention/endpoint'
-                           ).AndReturn(True)
+    self.expect_webmention(discover=False)
     self.mox.ReplayAll()
 
     self.post_task(expected_status=ERROR_HTTP_RETURN_CODE)
@@ -1578,8 +1561,8 @@ class PropagateTest(TaskTest):
   def test_cached_webmention_discovery_shouldnt_refresh_cache(self):
     """A cached webmention discovery shouldn't be written back to the cache."""
     # first wm discovers and finds no endpoint, second uses cache, third rediscovers
-    self.expect_webmention(error={'code': 'NO_ENDPOINT'}).AndReturn(False)
-    self.expect_webmention().AndReturn(True)
+    self.expect_webmention(endpoint=None)
+    self.expect_webmention()
     self.mox.ReplayAll()
 
     # inject a fake time.time into the cache
@@ -1612,7 +1595,7 @@ class PropagateTest(TaskTest):
                                'http://foo]']
     self.responses[0].put()
 
-    self.expect_webmention(target='http://foo/good').AndReturn(True)
+    self.expect_webmention(target='http://foo/good')
     self.mox.ReplayAll()
 
     self.post_task()
@@ -1620,124 +1603,69 @@ class PropagateTest(TaskTest):
 
   def test_non_html_url(self):
     """Target URLs that aren't HTML should be ignored."""
-    self.responses[0].unsent = ['http://not/html']
-    self.responses[0].put()
-
-    self.expect_requests_head('http://not/html', content_type='application/mpeg')
-
+    self.expect_requests_head('http://target1/post/url',
+                              content_type='application/mpeg')
     self.mox.ReplayAll()
     self.post_task()
     self.assert_response_is('complete')
 
   def test_non_html_file(self):
     """If our HEAD fails, we should still require content-type text/html."""
-    self.mox.UnsetStubs()  # drop WebmentionSend mock; let it run
-    super(PropagateTest, self).setUp()
-
-    self.responses[0].unsent = ['http://not/html']
-    self.responses[0].put()
-    self.expect_requests_head('http://not/html', status_code=405)
-    self.expect_webmention_requests_get(
-      'http://not/html', content_type='image/gif', timeout=999)
+    self.expect_requests_head('http://target1/post/url', status_code=405)
+    self.expect_webmention(content_type='image/gif', send=False)
 
     self.mox.ReplayAll()
     self.post_task()
-    self.assert_response_is('complete', skipped=['http://not/html'])
+    self.assert_response_is('complete', skipped=['http://target1/post/url'])
 
   def test_non_html_file_extension(self):
     """If our HEAD fails, we should infer type from file extension."""
     self.responses[0].unsent = ['http://this/is/a.pdf']
     self.responses[0].put()
 
-    self.expect_requests_head('http://this/is/a.pdf', status_code=405,
-                              # we should ignore an error response's content type
-                              content_type='text/html')
+    self.expect_webmention(target='http://this/is/a.pdf', discover_status=405,
+                           # we should ignore an error response's content type
+                           content_type='text/html')
 
     self.mox.ReplayAll()
     self.post_task()
-    self.assert_response_is('complete')
+    self.assert_response_is('complete', failed=['http://this/is/a.pdf'])
 
   def test_content_type_html_with_charset(self):
     """We should handle Content-Type: text/html; charset=... ok."""
-    self.mox.UnsetStubs()  # drop WebmentionSend mock; let it run
-    super(PropagateTest, self).setUp()
-
-    self.responses[0].unsent = ['http://html/charset']
-    self.responses[0].put()
-    self.expect_requests_head('http://html/charset', status_code=405)
-    self.expect_webmention_requests_get(
-      'http://html/charset',
-      content_type='text/html; charset=utf-8',
-      response_headers={'Link': '<http://my/endpoint>; rel="webmention"'},
-      timeout=999)
-
-    source_url = ('http://localhost/comment/fake/%s/a/1_2_a' %
-                  self.sources[0].key.string_id())
-    self.expect_requests_post(
-      'http://my/endpoint',
-      data={'source': source_url, 'target': 'http://html/charset'},
-      stream=None, timeout=999, allow_redirects=False, headers={'Accept': '*/*'})
-
+    self.expect_webmention(content_type='text/html; charset=utf-8')
     self.mox.ReplayAll()
     self.post_task()
-    self.assert_response_is('complete', sent=['http://html/charset'])
+    self.assert_response_is('complete', sent=['http://target1/post/url'])
 
   def test_no_content_type_header(self):
     """If the Content-Type header is missing, we should assume text/html."""
-    self.mox.UnsetStubs()  # drop WebmentionSend mock; let it run
-    super(PropagateTest, self).setUp()
-
-    self.responses[0].unsent = ['http://unknown/type']
-    self.responses[0].put()
-    self.expect_requests_head('http://unknown/type', status_code=405)
-    self.expect_webmention_requests_get('http://unknown/type', content_type=None,
-                                        timeout=999)
-
+    self.expect_webmention(content_type=None)
     self.mox.ReplayAll()
     self.post_task()
-    self.assert_response_is('complete', skipped=['http://unknown/type'])
+    self.assert_response_is('complete', sent=['http://target1/post/url'])
 
   def test_link_header_rel_webmention_unquoted(self):
     """We should support rel=webmention (no quotes) in the Link header."""
-    self.mox.UnsetStubs()  # drop WebmentionSend mock; let it run
-    super(PropagateTest, self).setUp()
-
-    self.responses[0].unsent = ['http://my/post']
-    self.responses[0].put()
-    self.expect_requests_head('http://my/post')
-    self.expect_webmention_requests_get(
-      'http://my/post', timeout=999,
-      response_headers={'Link': '<http://my/endpoint>; rel=webmention'})
-
-    source_url = ('http://localhost/comment/fake/%s/a/1_2_a' %
-                  self.sources[0].key.string_id())
-    self.expect_requests_post(
-      'http://my/endpoint', timeout=999,
-      data={'source': source_url, 'target': 'http://my/post'},
-      stream=None, allow_redirects=False, headers={'Accept': '*/*'})
-
+    self.expect_webmention(
+      response_headers={'Link': '<http://webmention/endpoint>; rel=webmention'})
     self.mox.ReplayAll()
     self.post_task()
-    self.assert_response_is('complete', sent=['http://my/post'])
+    self.assert_response_is('complete', sent=['http://target1/post/url'])
 
-  def test_webmention_post_omits_accept_header(self):
-    """The webmention POST request should never send the Accept header."""
-    self.mox.UnsetStubs()  # drop WebmentionSend mock; let it run
-    super(PropagateTest, self).setUp()
-
+  def test_webmention_post_accept_header(self):
+    """The webmention POST request should send Accept: */*."""
     self.responses[0].source = Twitter(id='rhiaro').put()
     self.responses[0].put()
-    # self.expect_requests_head('http://my/post')
-    self.expect_webmention_requests_get(
-      'http://target1/post/url', timeout=999,
-      headers=util.REQUEST_HEADERS_CONNEG,
+    self.expect_requests_get(
+      'http://target1/post/url', timeout=15, headers=util.REQUEST_HEADERS_CONNEG,
       response_headers={'Link': '<http://my/endpoint>; rel=webmention'})
 
     self.expect_requests_post(
       'http://my/endpoint', timeout=999,
       data={'source': 'http://localhost/comment/twitter/rhiaro/a/1_2_a',
             'target': 'http://target1/post/url'},
-      stream=None, allow_redirects=False, headers={'Accept': '*/*'})
+      allow_redirects=False, headers={'Accept': '*/*'})
 
     self.mox.ReplayAll()
     self.post_task()
@@ -1760,7 +1688,7 @@ class PropagateTest(TaskTest):
     self.responses[0].unsent = [url]
     self.responses[0].put()
 
-    self.expect_webmention(target=url).AndReturn(True)
+    self.expect_webmention(target=url)
     self.mox.ReplayAll()
 
     self.post_task()
@@ -1784,15 +1712,13 @@ class PropagateTest(TaskTest):
     self.sources[0].put()
 
     # target isn't in source.domains
-    self.expect_webmention(target='http://bar/1', discovered_endpoint='no'
-                           ).AndReturn(True)
+    self.expect_webmention(target='http://bar/1', endpoint='http://no')
     # target is in source.domains
-    self.expect_webmention(target='http://foo/2', discovered_endpoint='yes'
-                           ).AndReturn(True)
+    self.expect_webmention(target='http://foo/2', endpoint='http://yes')
 
     self.mox.ReplayAll()
     self.post_task()
-    self.assert_equals('yes', self.sources[0].key.get().webmention_endpoint)
+    self.assert_equals('http://yes', self.sources[0].key.get().webmention_endpoint)
 
   def test_leased(self):
     """If the response is processing and the lease hasn't expired, do nothing."""
@@ -1815,7 +1741,7 @@ class PropagateTest(TaskTest):
     self.responses[0].leased_until = NOW - datetime.timedelta(minutes=1)
     self.responses[0].put()
 
-    self.expect_webmention().AndReturn(True)
+    self.expect_webmention()
     self.mox.ReplayAll()
     self.post_task()
     self.assert_response_is('complete', NOW + LEASE_LENGTH,
@@ -1851,35 +1777,48 @@ class PropagateTest(TaskTest):
     self.post_task()
     self.assert_response_is('complete', unsent=['http://target1/post/url'], sent=[])
 
-  def test_webmention_fail(self):
-    """If sending the webmention fails, the lease should be released."""
-    for error, status, bucket in (
-        ({'code': 'NO_ENDPOINT'}, 'complete', 'skipped'),
-        ({'code': 'BAD_TARGET_URL'}, 'error', 'error'),
-        ({'code': 'RECEIVER_ERROR', 'http_status': 400}, 'complete', 'failed'),
-        ({'code': 400, 'http_status': 400}, 'complete', 'failed'),
-        ({'code': 'RECEIVER_ERROR', 'http_status': 500}, 'error', 'error')
-      ):
-      self.mox.UnsetStubs()
-      self.setUp()
-      self.responses[0].status = 'new'
-      self.responses[0].put()
-      self.expect_webmention(error=error).AndReturn(False)
-      self.mox.ReplayAll()
+  def test_webmention_no_endpoint(self):
+    self.expect_webmention(endpoint=None)
+    self.mox.ReplayAll()
+    self.post_task()
+    self.assert_response_is('complete', skipped=['http://target1/post/url'])
 
-      logging.debug('Testing %s', error)
-      expected_status = ERROR_HTTP_RETURN_CODE if bucket == 'error' else 200
-      self.post_task(expected_status=expected_status)
-      self.assert_response_is(status, **{bucket: ['http://target1/post/url']})
-      self.mox.VerifyAll()
+  def test_webmention_discover_400(self):
+    self.expect_webmention(discover_status=400)
+    self.mox.ReplayAll()
+    self.post_task()
+    self.assert_response_is('complete', failed=['http://target1/post/url'])
+
+  def test_webmention_send_400(self):
+    self.expect_webmention(send_status=400)
+    self.mox.ReplayAll()
+    self.post_task()
+    self.assert_response_is('complete', failed=['http://target1/post/url'])
+
+  def test_webmention_discover_500(self):
+    self.expect_webmention(discover_status=500)
+    self.mox.ReplayAll()
+    self.post_task(expected_status=ERROR_HTTP_RETURN_CODE)
+    self.assert_response_is('error', error=['http://target1/post/url'])
+
+  def test_webmention_send_500(self):
+    self.expect_webmention(send_status=500)
+    self.mox.ReplayAll()
+    self.post_task(expected_status=ERROR_HTTP_RETURN_CODE)
+    self.assert_response_is('error', error=['http://target1/post/url'])
+
+  def test_webmention_bad_target_url(self):
+    self.responses[0].unsent = ['not a url']
+    self.responses[0].put()
+    self.post_task()
+    self.assert_response_is('complete')
 
   def test_webmention_fail_and_succeed(self):
     """All webmentions should be attempted, but any failure sets error status."""
     self.responses[0].unsent = ['http://first', 'http://second']
     self.responses[0].put()
-    self.expect_webmention(target='http://first', error={'code': 'FOO'})\
-        .AndReturn(False)
-    self.expect_webmention(target='http://second').AndReturn(True)
+    self.expect_webmention(target='http://first', send_status=500)
+    self.expect_webmention(target='http://second')
 
     self.mox.ReplayAll()
     self.post_task(expected_status=ERROR_HTTP_RETURN_CODE)
@@ -1892,7 +1831,7 @@ class PropagateTest(TaskTest):
     self.responses[0].unsent = ['http://error', 'http://good']
     self.responses[0].put()
     self.expect_webmention(target='http://error').AndRaise(Exception('foo'))
-    self.expect_webmention(target='http://good').AndReturn(True)
+    self.expect_webmention(target='http://good')
     self.mox.ReplayAll()
 
     self.post_task(expected_status=ERROR_HTTP_RETURN_CODE)
@@ -1905,8 +1844,8 @@ class PropagateTest(TaskTest):
     https://github.com/snarfed/bridgy/issues/254
     """
     self.responses[0].put()
-    self.expect_webmention().AndRaise(requests.exceptions.ConnectionError(
-        'Max retries exceeded: DNS lookup failed for URL: foo'))
+    self.expect_webmention(send=False).AndRaise(
+      requests.exceptions.ConnectionError('DNS lookup failed for URL: foo'))
     self.mox.ReplayAll()
 
     self.post_task()
@@ -1930,8 +1869,7 @@ class PropagateTest(TaskTest):
     self.responses[0].put()
     source_url = 'https://brid.gy/comment/fake/%s/a/1_2_a' % \
         self.sources[0].key.string_id()
-    self.expect_webmention(source_url=source_url, target='http://good')\
-        .AndReturn(True)
+    self.expect_webmention(source_url=source_url, target='http://good')
 
     self.mox.ReplayAll()
     self.post_task(base_url='http://brid-gy.appspot.com')
@@ -1947,8 +1885,7 @@ class PropagateTest(TaskTest):
 
     source_url = 'https://brid.gy/comment/fake/%s/AAA/1_2_a' % \
         self.sources[0].key.string_id()
-    self.expect_webmention(source_url=source_url, target='http://good')\
-        .AndReturn(True)
+    self.expect_webmention(source_url=source_url, target='http://good')
 
     self.mox.ReplayAll()
     self.post_task(base_url='https://brid.gy')
@@ -1965,19 +1902,16 @@ class PropagateTest(TaskTest):
 
     source_url = 'https://brid.gy/comment/fake/%s/%%s/1_2_a' % \
         self.sources[0].key.string_id()
-    self.expect_webmention(source_url=source_url % '000', target='http://AAA')\
-        .AndReturn(True)
-    self.expect_webmention(source_url=source_url % '111', target='http://BBB')\
-        .AndReturn(True)
-    self.expect_webmention(source_url=source_url % '222', target='http://CCC')\
-        .AndReturn(True)
+    self.expect_webmention(source_url=source_url % '000', target='http://AAA')
+    self.expect_webmention(source_url=source_url % '111', target='http://BBB')
+    self.expect_webmention(source_url=source_url % '222', target='http://CCC')
 
     self.mox.ReplayAll()
     self.post_task(base_url='https://brid.gy')
 
   def test_complete_exception(self):
     """If completing raises an exception, the lease should be released."""
-    self.expect_webmention().AndReturn(True)
+    self.expect_webmention()
     self.mox.StubOutWithMock(tasks.PropagateResponse, 'complete')
     tasks.PropagateResponse.complete().AndRaise(Exception('foo'))
     self.mox.ReplayAll()
@@ -2011,13 +1945,13 @@ class PropagateTest(TaskTest):
     links = ['http://fake/post', '/no/domain', 'http://ok/one.png',
              'http://ok/two', 'http://ok/two', # repeated
              ]
-    blogpost = models.BlogPost(id='x', source=source_key, unsent=links)
+    blogpost = models.BlogPost(id='http://x', source=source_key, unsent=links)
     blogpost.put()
 
     self.expect_requests_head('http://fake/post')
     self.expect_requests_head('http://ok/one.png', content_type='image/png')
     self.expect_requests_head('http://ok/two')
-    self.expect_webmention(source_url='x', target='http://ok/two').AndReturn(True)
+    self.expect_webmention(source_url='http://x', target='http://ok/two')
     self.mox.ReplayAll()
 
     self.post_url = '/_ah/queue/propagate-blogpost'
@@ -2029,16 +1963,15 @@ class PropagateTest(TaskTest):
 
   def test_propagate_blogpost_allows_bridgy_publish_links(self):
     source_key = FakeSource.new(None, domains=['fake']).put()
-    blogpost = models.BlogPost(id='x', source=source_key,
+    blogpost = models.BlogPost(id='http://x', source=source_key,
                                unsent=['https://brid.gy/publish/twitter'])
     blogpost.put()
 
     self.expect_requests_head('https://brid.gy/publish/twitter')
     self.expect_webmention(
-      source_url='x',
+      source_url='http://x',
       target='https://brid.gy/publish/twitter',
-      discovered_endpoint='https://brid.gy/publish/webmention',
-      ).AndReturn(True)
+      endpoint='https://brid.gy/publish/webmention')
     self.mox.ReplayAll()
 
     self.post_url = '/_ah/queue/propagate-blogpost'
@@ -2049,7 +1982,7 @@ class PropagateTest(TaskTest):
 
   def test_propagate_blogpost_follows_redirects_before_checking_self_link(self):
     source_key = FakeSource.new(None, domains=['fake']).put()
-    blogpost = models.BlogPost(id='x', source=source_key,
+    blogpost = models.BlogPost(id='http://x', source=source_key,
                                unsent=['http://will/redirect'])
     blogpost.put()
 
@@ -2072,8 +2005,7 @@ class PropagateTest(TaskTest):
       self.responses[0].activities_json[0]))
     self.responses[0].put()
 
-    self.expect_webmention(source_url='http://localhost/post/fake/0123456789/a'
-                          ).AndReturn(True)
+    self.expect_webmention(source_url='http://localhost/post/fake/0123456789/a')
     self.mox.ReplayAll()
     self.post_task()
 

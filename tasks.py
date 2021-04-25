@@ -8,13 +8,12 @@ import logging
 from google.cloud import ndb
 from google.cloud.ndb._datastore_types import _MAX_STRING_LENGTH
 from granary.source import Source
-from oauth_dropins.webutil import appengine_info
+from oauth_dropins.webutil import appengine_info, logs, webmention
 from oauth_dropins.webutil import handlers as webutil_handlers
-from oauth_dropins.webutil import logs
 from oauth_dropins.webutil.appengine_config import ndb_client
 from oauth_dropins.webutil.util import json_dumps, json_loads
+from requests import HTTPError
 import webapp2
-from webmentiontools import send
 
 import appengine_config
 import cron
@@ -24,6 +23,9 @@ import original_post_discovery
 import util
 # need to import model class definitions since poll creates and saves entities.
 import blogger, facebook, flickr, github, instagram, mastodon, medium, reddit, tumblr, twitter, wordpress_rest
+
+# Used as a sentinel value in the webmention endpoint cache
+NO_ENDPOINT = 'NONE'
 
 
 class Poll(webapp2.RequestHandler):
@@ -586,54 +588,46 @@ class SendWebmentions(webapp2.RequestHandler):
       logging.info('Webmention from %s to %s', source_url, target)
 
       # see if we've cached webmention discovery for this domain. the cache
-      # value is a string URL endpoint if discovery succeeded, a
-      # WebmentionSend error dict if it failed (semi-)permanently, or None.
+      # value is a string URL endpoint if discovery succeeded, NO_ENDPOINT if
+      # no endpoint was ofund.
       cache_key = util.webmention_endpoint_cache_key(target)
-      cached = util.webmention_endpoint_cache.get(cache_key)
-      if cached:
-        logging.info('Using cached webmention endpoint %r: %s', cache_key, cached)
+      endpoint = util.webmention_endpoint_cache.get(cache_key)
+      if endpoint:
+        logging.info('Using cached webmention endpoint %r: %s', cache_key, endpoint)
 
       # send! and handle response or error
-      error = None
-      if isinstance(cached, dict):
-        error = cached
-      else:
-        mention = send.WebmentionSend(source_url, target, endpoint=cached)
+      try:
+        resp = None
         headers = util.request_headers(source=self.source)
-        logging.info('Sending...')
-        try:
-          if not mention.send(timeout=999, headers=headers):
-            error = mention.error
-        except BaseException as e:
-          logging.info('', stack_info=True)
-          error = getattr(mention, 'error')
-          if not error:
-            error = ({'code': 'BAD_TARGET_URL', 'http_status': 499}
-                     if 'DNS lookup failed for URL:' in str(e)
-                     else {'code': 'EXCEPTION'})
+        if not endpoint:
+          endpoint, resp = webmention.discover(target, headers=headers)
+          with util.webmention_endpoint_cache_lock:
+            util.webmention_endpoint_cache[cache_key] = endpoint or NO_ENDPOINT
 
-      error_code = error['code'] if error else None
-      if error_code != 'BAD_TARGET_URL' and not cached:
-        val = error if error_code == 'NO_ENDPOINT' else mention.receiver_endpoint
-        with util.webmention_endpoint_cache_lock:
-          util.webmention_endpoint_cache[cache_key] = val
-
-      if error is None:
-        logging.info('Sent! %s', mention.response)
-        self.record_source_webmention(mention)
-        self.entity.sent.append(target)
-      else:
-        status = error.get('http_status', 0)
-        if (error_code == 'NO_ENDPOINT' or
-            (error_code == 'BAD_TARGET_URL' and status == 204)):  # No Content
-          logging.info('Giving up this target. %s', error)
+        if endpoint and endpoint != NO_ENDPOINT:
+          logging.info('Sending...')
+          resp = webmention.send(endpoint, source_url, target, timeout=999,
+                                 headers=headers)
+          logging.info('Sent! %s', resp)
+          self.record_source_webmention(endpoint, target)
+          self.entity.sent.append(target)
+        else:
+          logging.info('Giving up this target.')
           self.entity.skipped.append(target)
-        elif status // 100 == 4:
-          # Give up on 4XX errors; we don't expect later retries to succeed.
-          logging.info('Giving up this target. %s', error)
+
+      except ValueError:
+        logging.info('Bad URL; giving up this target.')
+        self.entity.skipped.append(target)
+
+      except BaseException as e:
+        logging.info('', exc_info=True)
+        # Give up on 4XX and DNS errors; we don't expect retries to succeed.
+        code, _ = util.interpret_http_exception(e)
+        if (code and code.startswith('4')) or 'DNS lookup failed' in str(e):
+          logging.info('Giving up this target.')
           self.entity.failed.append(target)
         else:
-          self.fail('Error sending to endpoint: %s' % error, level=logging.INFO)
+          self.fail(f'Error sending to endpoint: {resp}', level=logging.INFO)
           self.entity.error.append(target)
 
       if target in self.entity.unsent:
@@ -732,22 +726,22 @@ class SendWebmentions(webapp2.RequestHandler):
     self.response.out.write(message)
 
   @ndb.transactional()
-  def record_source_webmention(self, mention):
+  def record_source_webmention(self, endpoint, target):
     """Sets this source's last_webmention_sent and maybe webmention_endpoint.
 
     Args:
-      mention: :class:`webmentiontools.send.WebmentionSend`
+      endpoint: str, URL
+      target: str, URL
     """
     self.source = self.source.key.get()
     logging.info('Setting last_webmention_sent')
     self.source.last_webmention_sent = util.now_fn()
 
-    if (mention.receiver_endpoint != self.source.webmention_endpoint and
-        util.domain_from_link(mention.target_url) in self.source.domains):
+    if (endpoint != self.source.webmention_endpoint and
+        util.domain_from_link(target) in self.source.domains):
       logging.info('Also setting webmention_endpoint to %s (discovered in %s; was %s)',
-                   mention.receiver_endpoint, mention.target_url,
-                   self.source.webmention_endpoint)
-      self.source.webmention_endpoint = mention.receiver_endpoint
+                   endpoint, target, self.source.webmention_endpoint)
+      self.source.webmention_endpoint = endpoint
 
     self.source.put()
 

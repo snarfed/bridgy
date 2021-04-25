@@ -10,10 +10,10 @@ from granary import microformats2
 from granary import source as gr_source
 from oauth_dropins.indieauth import IndieAuth
 from oauth_dropins.instagram import INSTAGRAM_SESSIONID_COOKIE
+from oauth_dropins.webutil import webmention
 from oauth_dropins.webutil.models import StringIdModel
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
-from webmentiontools import send
 
 import superfeedr
 import util
@@ -602,24 +602,14 @@ class Source(StringIdModel, metaclass=SourceMeta):
 
     author_url = author_urls[0]
     logging.info('Attempting to discover webmention endpoint on %s', author_url)
-    mention = send.WebmentionSend('https://brid.gy/', author_url)
-    mention.requests_kwargs = {'timeout': util.HTTP_TIMEOUT,
-                               'headers': util.REQUEST_HEADERS}
     try:
-      mention._discoverEndpoint()
+      got = webmention.discover(author_url, timeout=util.HTTP_TIMEOUT,
+                                headers=util.REQUEST_HEADERS)
+      self.webmention_endpoint = got.endpoint
+      self._fetched_html = got.response.text
     except BaseException as e:
       logging.info('Error discovering webmention endpoint', exc_info=e)
-      mention.error = {'code': 'EXCEPTION'}
-
-    self._fetched_html = getattr(mention, 'html', None)
-    error = getattr(mention, 'error', None)
-    endpoint = getattr(mention, 'receiver_endpoint', None)
-    if error or not endpoint:
-      logging.info("No webmention endpoint found: %s %r", error, endpoint)
       self.webmention_endpoint = None
-    else:
-      logging.info("Discovered webmention endpoint %s", endpoint)
-      self.webmention_endpoint = endpoint
 
     self.put()
 

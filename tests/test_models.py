@@ -336,7 +336,7 @@ class SourceTest(testutil.HandlerTest):
 
   def test_create_new_webmention(self):
     """We should subscribe to webmention sources in Superfeedr."""
-    self.expect_webmention_requests_get('http://primary/', 'no webmention endpoint')
+    self.expect_requests_get('http://primary/', 'no webmention endpoint')
     self.mox.StubOutWithMock(superfeedr, 'subscribe')
 
     def check_source(source):
@@ -463,7 +463,7 @@ class SourceTest(testutil.HandlerTest):
     FakeSource.string_id_counter -= 1
     auth_entity = testutil.FakeAuthEntity(id='x', user_json=json_dumps(
         {'urls': [{'value': 'http://bar'}, {'value': 'http://baz'}]}))
-    self.expect_webmention_requests_get('http://bar/', 'no webmention endpoint')
+    self.expect_requests_get('http://bar/', 'no webmention endpoint')
 
     for queue in 'poll-now', 'poll':
       self.expect_task(queue, source_key=key, last_polled='1970-01-01-00-00-00')
@@ -481,7 +481,7 @@ class SourceTest(testutil.HandlerTest):
     FakeSource.string_id_counter -= 1
     auth_entity = testutil.FakeAuthEntity(id='x', user_json=json_dumps(
         {'urls': [{'value': 'http://bar'}, {'value': 'http://baz'}]}))
-    self.expect_webmention_requests_get('http://bar/', 'no webmention endpoint')
+    self.expect_requests_get('http://bar/', 'no webmention endpoint')
 
     self.mox.ReplayAll()
     source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
@@ -536,8 +536,7 @@ class SourceTest(testutil.HandlerTest):
     self.assertEqual(['flaky'], source.domains)
 
   def test_verify(self):
-    # this requests.get is called by webmention-tools
-    self.expect_webmention_requests_get('http://primary/', """
+    self.expect_requests_get('http://primary/', """
 <html><meta>
 <link rel="webmention" href="http://web.ment/ion">
 </meta></html>""")
@@ -553,8 +552,7 @@ class SourceTest(testutil.HandlerTest):
     documents to make sure the user wasn't accidentally passing a URL,
     but converting the utf-8 document to ascii caused exceptions in some cases.
     """
-    # this requests.get is called by webmention-tools
-    self.expect_webmention_requests_get(
+    self.expect_requests_get(
       'http://primary/', """\xef\xbb\xbf<html><head>
 <link rel="webmention" href="http://web.ment/ion"></head>
 </html>""")
@@ -567,8 +565,7 @@ class SourceTest(testutil.HandlerTest):
     self.assertEqual('http://web.ment/ion', source.webmention_endpoint)
 
   def test_verify_without_webmention_endpoint(self):
-    self.expect_webmention_requests_get(
-      'http://primary/', 'no webmention endpoint here!')
+    self.expect_requests_get('http://primary/', 'no webmention endpoint here!')
     self.mox.ReplayAll()
 
     source = FakeSource.new(self.handler, features=['webmention'],
@@ -577,7 +574,7 @@ class SourceTest(testutil.HandlerTest):
     self.assertIsNone(source.webmention_endpoint)
 
   def test_verify_checks_blocklist(self):
-    self.expect_webmention_requests_get('http://good/', """
+    self.expect_requests_get('http://good/', """
 <html><meta>
 <link rel="webmention" href="http://web.ment/ion">
 </meta></html>""")

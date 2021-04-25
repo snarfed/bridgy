@@ -101,11 +101,10 @@ there <https://github.com/snarfed/oauth-dropins#troubleshootingfaq>`__:
    error: option --home not recognized
 
 There’s a good chance you’ll need to make changes to
-`granary <https://github.com/snarfed/granary>`__,
-`oauth-dropins <https://github.com/snarfed/oauth-dropins>`__, or
-`webmention-tools <https://github.com/snarfed/webmention-tools>`__ at
-the same time as bridgy. To do that, clone their repos elsewhere, then
-install them in “source” mode with:
+`granary <https://github.com/snarfed/granary>`__ or
+`oauth-dropins <https://github.com/snarfed/oauth-dropins>`__ at the same
+time as bridgy. To do that, clone their repos elsewhere, then install
+them in “source” mode with:
 
 ::
 
@@ -115,9 +114,6 @@ install them in “source” mode with:
 
    pip uninstall -y granary
    pip install -e <path to granary>
-
-   pip uninstall -y webmentiontools
-   pip install <path to webmention-tools>
 
 To deploy to App Engine, run
 `scripts/deploy.sh <https://github.com/snarfed/bridgy/blob/master/scripts/deploy.sh>`__.
@@ -144,6 +140,22 @@ to OTHER_DOMAINS in util.py and set ``host_url`` in ``tasks.py`` to your
 base app url (eg ``app-dot-YOUR-APP-NAME.wn.r.appspot.com``). Finally,
 deploy (after testing) with
 ``gcloud -q beta app deploy --no-cache --project YOUR-APP-NAME *.yaml``
+
+To work on the browser extension:
+
+.. code:: sh
+
+   cd browser-extension
+   npm install
+   npm run test
+
+You need to be logged into Instagram in your browser. The extension
+doesn’t have a UI, but you can see what it’s doing on your Bridgy user
+page, eg brid.gy/instagram/[username]. Note that it doesn’t work with
+`Firefox’s Facebook Container
+tabs <https://github.com/mozilla/contain-facebook>`__ add-on. If you
+have that enabled, you’ll need to disable it to use Bridgy’s browser
+extension.
 
 Adding a new silo
 -----------------
@@ -272,7 +284,7 @@ dataset <https://console.cloud.google.com/bigquery?p=brid-gy&d=datastore&page=da
 
    ::
 
-      gcloud datastore export --async gs://brid-gy.appspot.com/stats/ --kinds Blogger,BlogPost,BlogWebmention,FacebookPage,Flickr,GitHub,GooglePlusPage,Instagram,Mastodon,Medium,Meetup,Publish,PublishedPage,Reddit,Response,SyndicatedPost,Tumblr,Twitter,WordPress
+      gcloud datastore export --async gs://brid-gy.appspot.com/stats/ --kinds Blogger,BlogPost,BlogWebmention,Facebook,FacebookPage,Flickr,GitHub,GooglePlusPage,Instagram,Mastodon,Medium,Meetup,Publish,PublishedPage,Reddit,Response,SyndicatedPost,Tumblr,Twitter,WordPress
 
    Note that ``--kinds`` is required. `From the export
    docs <https://cloud.google.com/datastore/docs/export-import-entities#limitations>`__,
@@ -291,7 +303,7 @@ dataset <https://console.cloud.google.com/bigquery?p=brid-gy&d=datastore&page=da
         bq load --replace --nosync --source_format=DATASTORE_BACKUP datastore.$kind gs://brid-gy.appspot.com/stats/all_namespaces/kind_$kind/all_namespaces_kind_$kind.export_metadata
       done
 
-      for kind in Blogger FacebookPage Flickr GitHub GooglePlusPage Instagram Mastodon Medium Meetup Reddit Tumblr Twitter WordPress; do
+      for kind in Blogger Facebook FacebookPage Flickr GitHub GooglePlusPage Instagram Mastodon Medium Meetup Reddit Tumblr Twitter WordPress; do
         bq load --replace --nosync --source_format=DATASTORE_BACKUP sources.$kind gs://brid-gy.appspot.com/stats/all_namespaces/kind_$kind/all_namespaces_kind_$kind.export_metadata
       done
 

@@ -75,7 +75,7 @@ TweepError: must be _socket.socket, not socket
 error: option --home not recognized
 ```
 
-There's a good chance you'll need to make changes to [granary](https://github.com/snarfed/granary), [oauth-dropins](https://github.com/snarfed/oauth-dropins), or [webmention-tools](https://github.com/snarfed/webmention-tools) at the same time as bridgy. To do that, clone their repos elsewhere, then install them in "source" mode with:
+There's a good chance you'll need to make changes to [granary](https://github.com/snarfed/granary) or [oauth-dropins](https://github.com/snarfed/oauth-dropins) at the same time as bridgy. To do that, clone their repos elsewhere, then install them in "source" mode with:
 
 ```
 pip uninstall -y oauth-dropins
@@ -84,9 +84,6 @@ ln -sf <path-to-oauth-dropins-repo>/oauth_dropins  # needed to serve static file
 
 pip uninstall -y granary
 pip install -e <path to granary>
-
-pip uninstall -y webmentiontools
-pip install <path to webmention-tools>
 ```
 
 To deploy to App Engine, run [`scripts/deploy.sh`](https://github.com/snarfed/bridgy/blob/master/scripts/deploy.sh).

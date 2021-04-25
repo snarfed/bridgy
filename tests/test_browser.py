@@ -140,7 +140,7 @@ class BrowserHandlerTest(ModelsTest):
   def test_profile_new_user(self):
     self.source.delete()
 
-    self.expect_webmention_requests_get('https://snarfed.org/', '')
+    self.expect_requests_get('https://snarfed.org/', '')
     self.mox.ReplayAll()
 
     resp = self.get_response('profile?token=towkin')
@@ -177,7 +177,7 @@ class BrowserHandlerTest(ModelsTest):
     self.mox.StubOutWithMock(FakeGrSource, 'scraped_to_activities')
     FakeGrSource.scraped_to_activities('').AndReturn(([], None))
 
-    self.expect_webmention_requests_get('https://snarfed.org/', '')
+    self.expect_requests_get('https://snarfed.org/', '')
     self.mox.ReplayAll()
 
     resp = self.get_response('profile?token=towkin')

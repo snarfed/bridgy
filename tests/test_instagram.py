@@ -141,7 +141,7 @@ class InstagramTest(ModelsTest):
   def test_profile_new_user(self):
     self.assertIsNone(Instagram.get_by_id('snarfed'))
 
-    self.expect_webmention_requests_get('https://snarfed.org/', '')
+    self.expect_requests_get('https://snarfed.org/', '')
     self.mox.ReplayAll()
 
     resp = self.get_response('profile?token=towkin', text=HTML_PROFILE_COMPLETE)

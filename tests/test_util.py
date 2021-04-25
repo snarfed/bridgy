@@ -9,7 +9,6 @@ from oauth_dropins.webutil.testutil import requests_response
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
 import webapp2
-from webmentiontools import send
 from webob import exc
 
 from . import testutil
@@ -146,28 +145,6 @@ class UtilTest(testutil.ModelsTest):
       ):
       self.assert_equals(expected, util.prune_activity(orig, self.sources[0]))
 
-  def test_webmention_tools_relative_webmention_endpoint_in_body(self):
-    requests.get('http://target/').AndReturn(requests_response("""
-<html><meta>
-<link rel="webmention" href="/endpoint">
-</meta></html>"""))
-    self.mox.ReplayAll()
-
-    mention = send.WebmentionSend('http://source/', 'http://target/')
-    mention.requests_kwargs = {}
-    mention._discoverEndpoint()
-    self.assertEqual('http://target/endpoint', mention.receiver_endpoint)
-
-  def test_webmention_tools_relative_webmention_endpoint_in_header(self):
-    requests.get('http://target/').AndReturn(requests_response(
-      '', headers={'Link': '</endpoint>; rel="webmention"'}))
-    self.mox.ReplayAll()
-
-    mention = send.WebmentionSend('http://source/', 'http://target/')
-    mention.requests_kwargs = {}
-    mention._discoverEndpoint()
-    self.assertEqual('http://target/endpoint', mention.receiver_endpoint)
-
   def test_get_webmention_target_blocklisted_urls(self):
     for resolve in True, False:
       self.assertTrue(util.get_webmention_target(
@@ -233,7 +210,7 @@ class UtilTest(testutil.ModelsTest):
       ('/fakesource/add', testutil.FakeAddHandler),
     ])
 
-    self.expect_webmention_requests_get(
+    self.expect_requests_get(
       'http://fakeuser.com/',
       response='<html><link rel="webmention" href="/webmention"></html>')
 
@@ -290,7 +267,7 @@ class UtilTest(testutil.ModelsTest):
       ('/fakesource/add', testutil.FakeAddHandler),
     ])
 
-    self.expect_webmention_requests_get(
+    self.expect_requests_get(
       'https://kylewm.com/',
       response='<html><link rel="webmention" href="/webmention"></html>')
 
