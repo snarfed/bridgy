@@ -116,6 +116,7 @@ findings.com
 flattr.com
 flickr.com
 flipboard.com
+fortune.com
 foursquare.com
 friendfeed.com
 friendster.com
