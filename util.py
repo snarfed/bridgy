@@ -109,7 +109,7 @@ webutil_handlers.JINJA_ENV.globals.update({
 TASKS_LOCATION = 'us-central1'
 
 webmention_endpoint_cache_lock = threading.RLock()
-webmention_endpoint_cache = TTLCache(500, 60 * 60 * 2)  # 2h expiration
+webmention_endpoint_cache = TTLCache(5000, 60 * 60 * 2)  # 2h expiration
 
 
 def add_poll_task(source, now=False):
