@@ -50,7 +50,7 @@ To run the entire app locally, run this in the repo root directory:
 ```
 dev_appserver.py --log_level debug --enable_host_checking false \
   --support_datastore_emulator --datastore_emulator_port=8089 \
-  --application=brid-gy ~/src/bridgy/app.yaml ~/src/bridgy/background.yaml
+  --application=brid-gy ./app.yaml ./background.yaml
 ```
 
 (Note: dev_appserver.py is incompatible with python3. if python3 is your default python, you can run `python2 /location/of/dev_appserver.py ...` instead.)
