@@ -194,6 +194,7 @@ photobucket.com
 photoshop.com
 pinboard.in
 pinterest.com
+pinterest.co.uk
 plancast.com
 plaxo.com
 plazes.com
@@ -240,7 +241,9 @@ strikingly.com
 stumbleupon.com
 sweetgamesbox.com
 switter.at
+t.me
 technorati.com
+telegram.org
 tent.is
 theonion.com
 thesession.org
