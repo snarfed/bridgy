@@ -4,9 +4,9 @@
 # https://cloud.google.com/appengine/docs/standard/python3/specifying-dependencies
 #
 # Use this to bust that cache: gcloud -q beta app deploy --no-cache ...
-git+https://github.com/snarfed/oauth-dropins.git@master#egg=oauth_dropins
-git+https://github.com/snarfed/granary.git@master#egg=granary
-git+https://github.com/kylewm/mf2util.git@master#egg=mf2util
+git+https://github.com/snarfed/oauth-dropins.git#egg=oauth_dropins
+git+https://github.com/snarfed/granary.git#egg=granary
+git+https://github.com/kylewm/mf2util.git#egg=mf2util
 git+https://github.com/snarfed/html2text.git@all#egg=html2text
 cachetools~=4.2
 gdata-python3~=3.0

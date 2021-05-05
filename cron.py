@@ -151,12 +151,12 @@ def maybe_update_picture(source, new_actor, handler):
 
 
 class BuildCircle(webapp2.RequestHandler):
-  """Trigger CircleCI to build and test the master branch.
+  """Trigger CircleCI to build and test the main branch.
 
   ...to run twitter_live_test.py, to check that scraping likes is still working.
   """
   def get(self):
-    resp = requests.post('https://circleci.com/api/v1.1/project/github/snarfed/bridgy/tree/master?circle-token=%s' % CIRCLECI_TOKEN)
+    resp = requests.post('https://circleci.com/api/v1.1/project/github/snarfed/bridgy/tree/main?circle-token=%s' % CIRCLECI_TOKEN)
     resp.raise_for_status()
 
 
