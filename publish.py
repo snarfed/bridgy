@@ -190,12 +190,12 @@ class Handler(webmention.WebmentionHandler):
           return self.error(
             "Looks like that's your home page. Try one of your posts instead!")
 
-    # done with the sanity checks, ready to fetch the source url. create the
-    # Publish entity so we can store the result.
+    # done with the sanity checks, create the Publish entity
     self.entity = self.get_or_add_publish_entity(resolved_url)
     if not self.entity:
       return None
 
+    # fetch the source page!
     fragment = urllib.parse.urlparse(source_url).fragment
     try:
       resp = self.fetch_mf2(resolved_url, id=fragment, raise_errors=True)
@@ -209,7 +209,8 @@ class Handler(webmention.WebmentionHandler):
       return
     self.fetched, mf2 = resp
 
-    # create the Publish entity so we can store the result.
+    # check that we haven't already published this URL. (we can't do this before
+    # fetching because it might be a 410 delete, which we only know by fetching.)
     if (self.entity.status == 'complete' and self.entity.type != 'preview' and
         not self.PREVIEW and not appengine_info.LOCAL):
       return self.error("Sorry, you've already published that page, and Bridgy Publish doesn't support updating existing posts. Details: https://github.com/snarfed/bridgy/issues/84",
