@@ -103,6 +103,25 @@ npm run test
 You need to be logged into Instagram in your browser. The extension doesn't have a UI, but you can see what it's doing on your Bridgy user page, eg <code>brid.gy/instagram/[username]</code>.  Note that it doesn't work with [Firefox's Facebook Container tabs](https://github.com/mozilla/contain-facebook) add-on. If you have that enabled, you'll need to disable it to use Bridgy's browser extension.
 
 
+Extension logs in the JavaScript console
+---
+If you're working on the browser extension, or [you're sending in a bug report for it,](https://github.com/snarfed/bridgy/issues), its JavaScript console logs are invaluable for debugging. Here's how to get them in Firefox:
+
+Thanks for trying! And for offering to send logs, those would definitely be helpful. Here's how to get them:
+1. Open `about:debugging`
+2. Click _This Firefox_ on the left
+3. Scroll down to Bridgy
+4. Click _Inspect_
+5. Click on the _Console_ tab
+
+<img src="https://user-images.githubusercontent.com/778068/119147612-9c4d2580-ba00-11eb-8d91-39487a662288.png" />
+
+Here's how to send them in with a bug report:
+1. Right click, _Export Visible Messages To_, _File_, save the file.
+2. Email the file to bridgy @ ryanb.org. _Do not_ post or attach it to a GitHub issue, or anywhere else public, because it contains sensitive tokens and cookies.
+
+<img src="https://user-images.githubusercontent.com/778068/119147959-e6360b80-ba00-11eb-8e35-647850177f4c.png">
+
 Adding a new silo
 ---
 So you want to add a new [silo](http://indiewebcamp.com/silo)? Maybe MySpace, or Friendster, or even Tinder? Great! Here are the steps to do it. It looks like a lot, but it's not that bad, honest.
