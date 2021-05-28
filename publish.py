@@ -8,8 +8,10 @@ import collections
 import logging
 import pprint
 import re
+import threading
 import urllib.request, urllib.parse, urllib.error
 
+from cachetools import TTLCache
 from google.cloud import ndb
 from granary import microformats2
 from granary import source as gr_source
@@ -58,6 +60,10 @@ PUBLISHABLE_TYPES = frozenset((
   'h-resume',
   'h-review',
 ))
+
+jvt_cache_lock = threading.RLock()
+jvt_cache = TTLCache(1000, 365 * 24 * 60 * 60)  # 1y expiration
+
 
 class CollisionError(RuntimeError):
   """Multiple publish requests for the same page at the same time."""
@@ -138,6 +144,14 @@ class Handler(webmention.WebmentionHandler):
     """Returns CreationResult on success, None otherwise."""
     logging.info('Params: %s', list(self.request.params.items()))
     assert self.PREVIEW in (True, False)
+
+    # XXX TEMPORARY HACK to throttle jamietanna's mini DoS :/
+    source_url = self.source_url()
+    if source_url.startswith('https://www.jvt.me/'):
+      if jvt_cache.get(source_url):
+        return self.error('Hi Jamie! Throttling this unnecessary retry.', status=429)
+      with jvt_cache_lock:
+        jvt_cache[source_url] = True
 
     # parse and validate target URL
     try:
