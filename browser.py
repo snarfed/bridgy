@@ -19,6 +19,9 @@ import util
 
 JSON_CONTENT_TYPE = 'application/json'
 
+# See https://www.cloudimage.io/
+IMAGE_PROXY_URL_BASE = 'https://aujtzahimq.cloudimg.io/v7/'
+
 
 def merge_by_id(existing, updates):
   """Merges two lists of AS1 objects by id.
@@ -106,8 +109,11 @@ class BrowserSource(Source):
       activities = Activity.query(Activity.source == self.key)\
                            .order(-Activity.updated).fetch(50)
 
-    return self.gr_source.make_activities_base_response(
-      [json_loads(a.activity_json) for a in activities])
+    activities = [json_loads(a.activity_json) for a in activities]
+    for a in activities:
+      microformats2.prefix_image_urls(a, IMAGE_PROXY_URL_BASE)
+
+    return self.gr_source.make_activities_base_response(activities)
 
   def get_comment(self, comment_id,  activity=None, **kwargs):
     """Uses the activity passed in the activity kwarg."""

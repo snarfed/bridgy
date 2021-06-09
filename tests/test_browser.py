@@ -3,6 +3,7 @@
 import copy
 import datetime
 
+from granary import microformats2
 from mox3 import mox
 from oauth_dropins.webutil.testutil import TestCase
 from oauth_dropins.webutil.util import json_dumps, json_loads
@@ -65,9 +66,11 @@ class BrowserSourceTest(ModelsTest):
     self.assertEqual([], resp['items'])
 
   def test_get_comment(self):
-    self.assert_equals(
-      self.activities[0]['object']['replies']['items'][0],
-      self.source.get_comment('1_2_a', activity=self.activities[0]))
+    expected = copy.deepcopy(self.activities[0]['object']['replies']['items'][0])
+    microformats2.prefix_image_urls(expected, browser.IMAGE_PROXY_URL_BASE)
+
+    got = self.source.get_comment('1_2_a', activity=self.activities[0])
+    self.assert_equals(expected, got)
 
   def test_get_comment_no_matching_id(self):
     self.assertIsNone(self.source.get_comment('333', activity=self.activities[0]))
@@ -76,9 +79,12 @@ class BrowserSourceTest(ModelsTest):
     self.assertIsNone(self.source.get_comment('020'))
 
   def test_get_like(self):
-    self.assert_equals(
-      self.activities[0]['object']['tags'][0],
-      self.source.get_like('unused', 'unused', 'alice', activity=self.activities[0]))
+    expected = copy.deepcopy(self.activities[0]['object']['tags'][0])
+    microformats2.prefix_image_urls(expected, browser.IMAGE_PROXY_URL_BASE)
+
+    got = self.source.get_like('unused', 'unused', 'alice',
+                               activity=self.activities[0])
+    self.assert_equals(expected, got)
 
   def test_get_like_no_matching_user(self):
     self.assertIsNone(self.source.get_like(
