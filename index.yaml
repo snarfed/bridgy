@@ -12,15 +12,6 @@ indexes:
   - name: "source"
   - name: "updated"
     direction: desc
-- kind: "Activity"
-  properties:
-  - name: "source"
-  - name: "updated"
-    direction: desc
-- kind: "Response"
-  properties:
-  - name: "source"
-  - name: "updated"
 - kind: "Publish"
   properties:
   - name: "source"
@@ -32,6 +23,15 @@ indexes:
   - name: "source"
   - name: "status"
   - name: "type"
+- kind: "Activity"
+  properties:
+  - name: "source"
+  - name: "updated"
+    direction: desc
+- kind: "Response"
+  properties:
+  - name: "source"
+  - name: "updated"
 - kind: "SyndicatedPost"
   ancestor: yes
   properties:

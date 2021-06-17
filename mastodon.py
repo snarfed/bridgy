@@ -127,8 +127,8 @@ class Mastodon(models.Source):
   def is_private(self):
     """Returns True if this Mastodon account is protected.
 
-    https://docs.joinmastodon.org/usage/privacy/#account-locking
-    https://docs.joinmastodon.org/api/entities/#account
+    https://docs.joinmastodon.org/user/preferences/#misc
+    https://docs.joinmastodon.org/entities/account/
     """
     return json_loads(self.auth_entity.get().user_json).get('locked')
 
