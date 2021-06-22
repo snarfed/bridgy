@@ -246,6 +246,33 @@ asdf http://other/link qwert
 
     self.check_response('/comment/fake/%s/000/a1')
 
+  def test_comment_optimized_comments_activity_has_replies(self):
+    self.mox.StubOutWithMock(self.source.gr_source, 'OPTIMIZED_COMMENTS')
+    self.source.gr_source.OPTIMIZED_COMMENTS = True
+
+    replies = self.activities[0]['object']['replies'] = {
+      'items': [{
+        'objectType': 'comment',
+        'id': 'tag:source.com,2013:1_2_%s' % id,
+        'url': 'http://fa.ke/comment/url',
+        'content': 'foo bar',
+      }],
+    }
+
+    self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities')
+    testutil.FakeSource.get_activities(
+      activity_id='000', user_id=self.source.key.string_id(), fetch_replies=False,
+      ).AndReturn([self.activities[0]])
+
+    self.mox.StubOutWithMock(FakeSource, 'get_comment')
+    FakeSource.get_comment('a1', activity_id='000',
+                           activity_author_id=self.source.key_id(),
+                           activity=self.activities[0]).AndReturn(
+                             replies['items'][0])
+    self.mox.ReplayAll()
+
+    self.check_response('/comment/fake/%s/000/a1')
+
   def test_like(self):
     FakeGrSource.like = {
       'objectType': 'activity',

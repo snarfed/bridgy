@@ -248,9 +248,11 @@ class CommentHandler(ItemHandler):
   def get_item(self, post_id, id):
     fetch_replies = not self.source.gr_source.OPTIMIZED_COMMENTS
     post = self.get_post(post_id, fetch_replies=fetch_replies)
+    has_replies = (post.get('object', {}).get('replies', {}).get('items')
+                   if post else False)
     cmt = self.source.get_comment(
       id, activity_id=post_id, activity_author_id=self.source.key_id(),
-      activity=post if fetch_replies else None)
+      activity=post if fetch_replies or has_replies else None)
     if post:
       originals, mentions = original_post_discovery.discover(
         self.source, post, fetch_hfeed=False)
