@@ -224,6 +224,7 @@ rhapsody.com
 scribd.com
 secondlife.com
 seesmic.com
+setup.py
 shelfari.com
 shutterfly.com
 skitch.com
