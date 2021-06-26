@@ -182,6 +182,7 @@ myspace.com
 myvideo.de
 netlify.com
 news.ycombinator.com
+notion.so
 openstreetmap.org
 orkut.com
 pandora.com
