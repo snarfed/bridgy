@@ -601,7 +601,6 @@ class Source(StringIdModel, metaclass=SourceMeta):
       return
 
     author_url = author_urls[0]
-    logging.info('Attempting to discover webmention endpoint on %s', author_url)
     try:
       got = webmention.discover(author_url, timeout=util.HTTP_TIMEOUT,
                                 headers=util.REQUEST_HEADERS)

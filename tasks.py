@@ -593,7 +593,7 @@ class SendWebmentions(webapp2.RequestHandler):
       cache_key = util.webmention_endpoint_cache_key(target)
       endpoint = util.webmention_endpoint_cache.get(cache_key)
       if endpoint:
-        logging.info('Using cached webmention endpoint %r: %s', cache_key, endpoint)
+        logging.info(f'Webmention discovery: using cached endpoint {cache_key}: {endpoint}')
 
       # send! and handle response or error
       try:
