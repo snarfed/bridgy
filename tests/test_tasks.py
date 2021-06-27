@@ -1434,10 +1434,9 @@ class PropagateTest(TaskTest):
                                       ).InAnyOrder()
 
     # send
-    discovered = endpoint and discover_status // 100 == 2
     if send:
-      assert discovered
-    if send or (send is None and discovered):
+      assert endpoint
+    if send or (send is None and endpoint):
       call = self.expect_requests_post(endpoint, data={
         'source': source_url,
         'target': target,
@@ -1495,10 +1494,10 @@ class PropagateTest(TaskTest):
     self.expect_webmention(target='http://2', endpoint=None)
     self.expect_webmention(target='http://3', send_status=500)
     # 4XX should go into 'failed'
-    self.expect_webmention(target='http://4', discover_status=404)
-    self.expect_webmention(target='http://5', discover_status=403)
+    self.expect_webmention(target='http://4', send_status=404)
+    self.expect_webmention(target='http://5', send_status=403)
     # 5XX should go into 'error'
-    self.expect_webmention(target='http://6', discover_status=500)
+    self.expect_webmention(target='http://6', send_status=500)
 
     self.mox.ReplayAll()
     self.post_task(expected_status=ERROR_HTTP_RETURN_CODE)
@@ -1538,7 +1537,7 @@ class PropagateTest(TaskTest):
 
   def test_errors_and_caching_endpoint(self):
     """Only cache on wm endpoint failures, not discovery failures."""
-    self.expect_webmention(discover_status=500)
+    self.expect_webmention(send=False).AndRaise(requests.ConnectionError())
     # shouldn't have a cached endpoint
     self.expect_webmention(send_status=500)
     # should have and use a cached endpoint
@@ -1623,7 +1622,7 @@ class PropagateTest(TaskTest):
     self.responses[0].unsent = ['http://this/is/a.pdf']
     self.responses[0].put()
 
-    self.expect_webmention(target='http://this/is/a.pdf', discover_status=405,
+    self.expect_webmention(target='http://this/is/a.pdf', send_status=405,
                            # we should ignore an error response's content type
                            content_type='text/html')
 
@@ -1787,7 +1786,7 @@ class PropagateTest(TaskTest):
     self.expect_webmention(discover_status=400)
     self.mox.ReplayAll()
     self.post_task()
-    self.assert_response_is('complete', failed=['http://target1/post/url'])
+    self.assert_response_is('complete', sent=['http://target1/post/url'])
 
   def test_webmention_send_400(self):
     self.expect_webmention(send_status=400)
@@ -1798,8 +1797,8 @@ class PropagateTest(TaskTest):
   def test_webmention_discover_500(self):
     self.expect_webmention(discover_status=500)
     self.mox.ReplayAll()
-    self.post_task(expected_status=ERROR_HTTP_RETURN_CODE)
-    self.assert_response_is('error', error=['http://target1/post/url'])
+    self.post_task()
+    self.assert_response_is('complete', sent=['http://target1/post/url'])
 
   def test_webmention_send_500(self):
     self.expect_webmention(send_status=500)
