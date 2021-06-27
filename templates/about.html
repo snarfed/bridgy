@@ -73,6 +73,7 @@ service.</a>
 <li><a href="#appspot">What are all these brid.gy links in the comments that Bridgy sends to my site?</a></li>
 <li><a href="#source-urls">What's the format for Bridgy's webmention source URLs?</a></li>
 <li><a href="#browser-extension">Wait, Instagram needs a browser extension now?</a></li>
+<li><a href="#facebook-profile-pictures">Where are the profile pictures for Facebook comments and likes?</a></li>
 
 <br />
 <p><em>Publishing</em></p>
@@ -668,6 +669,13 @@ so that recipients can fetch and parse them.
 <p>Fortunately, you can log into Instagram and Facebook legitimately, in your own browser, so the browser extension lets you send your own data from those silos to Bridgy.
 </p>
 </li>
+
+<li id="facebook-profile-pictures" class="question">Where are the profile pictures for Facebook comments and likes?</li>
+<li class="answer">
+<p>We scrape Facebook via <a href="https://mbasic.facebook.com/">mbasic.facebook.com</a> (details above), which is imperfect in a number of ways. Notably, it doesn't show profile pictures on comments or likes, so we can't easily include those in the webmentions we send to your site.
+</p>
+</li>
+
 
 <!-- Publish -->
 <br />
