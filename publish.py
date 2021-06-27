@@ -643,7 +643,7 @@ class PreviewHandler(Handler):
             else gr_source.OMIT_LINK)
 
   def error(self, error, html=None, status=400, data=None, report=False, **kwargs):
-    logging.info(error)
+    logging.info(f'publish: {error}')
     self.response.set_status(status)
     error = html if html else util.linkify(error)
     self.response.write(error)
@@ -692,7 +692,7 @@ class SendHandler(Handler):
     return self.state['include_link']
 
   def error(self, error, html=None, status=400, data=None, report=False, **kwargs):
-    logging.info(error)
+    logging.info(f'publish: {error}')
     error = html if html else util.linkify(error)
     self.messages.add('%s' % error)
     if report:

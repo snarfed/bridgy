@@ -1400,6 +1400,7 @@ Join us!"""
 """)
     self.mox.ReplayAll()
     self.assert_error("doesn't support type(s) h-as-entry")
+    self.assertEqual('failed', Publish.query().get().status)
 
   def test_nested_object_without_url(self):
     """p-repost-of creates an inner object, this one without a u-url.
