@@ -12,9 +12,10 @@ entrypoint: gunicorn --workers 1 --threads 10 --timeout 60 -b :$PORT app:applica
 automatic_scaling:
   # i tried this in feb 2020 and it increased frontend costs by $1-1.50 per day
   # min_instances: 1
-  # max_idle_instances: 1
-  max_pending_latency: 100ms  # default is 30
-  max_concurrent_requests: 12
+  max_idle_instances: 1
+  target_cpu_utilization: .9
+  min_pending_latency: 100ms
+  max_concurrent_requests: 30
 
 handlers:
 

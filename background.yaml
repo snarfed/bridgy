@@ -1,7 +1,6 @@
 # https://cloud.google.com/appengine/docs/standard/python3/config/appref
-
 service: background
-runtime: python38
+runtime: python39
 
 # https://cloud.google.com/appengine/docs/standard/python3/runtime#entrypoint_best_practices
 # https://docs.gunicorn.org/en/latest/settings.html#timeout
