@@ -32,6 +32,7 @@ import urllib.parse
 
 from granary import microformats2
 from granary import source as gr_source
+from oauth_dropins.webutil.appengine_info import DEBUG
 import models
 from models import SyndicatedPost
 import util
@@ -80,6 +81,7 @@ def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True,
   originals, mentions = gr_source.Source.original_post_discovery(
     activity, domains=source.domains,
     include_redirect_sources=include_redirect_sources,
+    include_reserved_hosts=DEBUG,
     headers=util.request_headers(source=source))
 
   # only include mentions of the author themselves.

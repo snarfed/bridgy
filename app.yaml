@@ -9,6 +9,7 @@ runtime: python39
 entrypoint: gunicorn --workers 1 --threads 10 --timeout 60 -b :$PORT app:application
 
 # background: https://github.com/snarfed/bridgy/issues/578
+# https://github.com/snarfed/bridgy/issues/1051
 automatic_scaling:
   # i tried this in feb 2020 and it increased frontend costs by $1-1.50 per day
   # min_instances: 1

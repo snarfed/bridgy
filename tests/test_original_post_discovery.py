@@ -111,8 +111,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
                                   'https://fa.ke/post/url'))
 
   def test_nested_hfeed(self):
-    """Test that we find an h-feed nested inside an h-card like on
-    tantek.com"""
+    """Test that we find an h-feed nested inside an h-card like on tantek.com"""
     self.expect_requests_get('http://author/', """
     <html class="h-card">
       <span class="p-name">Author</span>
@@ -138,6 +137,7 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
 
   def test_multiple_hfeeds(self):
     """That that we search all the h-feeds on a page if there are more than one.
+
     Inspired by https://sixtwothree.org/
     """
     for i, activity in enumerate(self.activities):
@@ -1509,6 +1509,15 @@ class OriginalPostDiscoveryTest(testutil.ModelsTest):
     result = refetch(self.source)
     self.assertCountEqual(['https://fa.ke/post'], result.keys(), result.keys())
     self.assert_syndicated_posts(('http://author/post', 'https://fa.ke/post'))
+
+  def test_drop_reserved_hosts(self):
+    """We should should drop URLs with reserved and local hostnames."""
+    self.mox.StubOutWithMock(original_post_discovery, 'DEBUG')
+    original_post_discovery.DEBUG = False
+
+    self.mox.ReplayAll()
+    self.activity['object']['content'] = 'http://localhost http://other/link https://x.test/ http://y.local/path'
+    self.assert_discover([], fetch_hfeed=False)
 
   def test_github_preserve_fragments(self):
     """GitHub sources should preserve fragments in syndication URLs.
