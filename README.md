@@ -18,7 +18,8 @@ You'll need the [Google Cloud SDK](https://cloud.google.com/sdk/gcloud/) (aka `g
 python3 -m venv local
 source local/bin/activate
 pip install -r requirements.txt
-ln -s local/lib/python3*/site-packages/oauth_dropins  # needed to serve static file assets in dev_appserver
+# needed to serve static file assets in dev_appserver
+ln -s local/lib/python3*/site-packages/oauth_dropins/static oauth_dropins_static
 gcloud config set project brid-gy
 ```
 
@@ -80,11 +81,13 @@ There's a good chance you'll need to make changes to [granary](https://github.co
 ```
 pip uninstall -y oauth-dropins
 pip install -e <path-to-oauth-dropins-repo>
-ln -sf <path-to-oauth-dropins-repo>/oauth_dropins  # needed to serve static file assets in dev_appserver
+ln -sf <path-to-oauth-dropins-repo>/oauth_dropins/static oauth_dropins_static
 
 pip uninstall -y granary
 pip install -e <path to granary>
 ```
+
+To use dev_appserver with local granary and oauth-dropins, you'll need to either replace their GitHub lines in `requirements.txt` with `-e <path-to-local-repo>`, or [apply this patch to dev_appserver.py to make it use your virtualenv in place](https://issuetracker.google.com/issues/144150446).
 
 To deploy to App Engine, run [`scripts/deploy.sh`](https://github.com/snarfed/bridgy/blob/master/scripts/deploy.sh).
 

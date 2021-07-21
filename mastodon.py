@@ -118,7 +118,7 @@ class Mastodon(models.Source):
     return """\
 <form method="%s" action="/mastodon/start">
   <input type="image" class="mastodon-button shadow" alt="Sign in with Mastodon"
-         src="/oauth_dropins/static/mastodon_large.png" />
+         src="/oauth_dropins_static/mastodon_large.png" />
   <input name="feature" type="hidden" value="%s" />
   <input name="instance" type="hidden" value="%s" />
 </form>

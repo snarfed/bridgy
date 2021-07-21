@@ -494,7 +494,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
       return cls.OAUTH_START_HANDLER.button_html(
         '/%s/start' % cls.SHORT_NAME,
         form_extra=form_extra,
-        image_prefix='/oauth_dropins/static/',
+        image_prefix='/oauth_dropins_static/',
         **kwargs)
 
     return ''

@@ -94,7 +94,7 @@ class BrowserSource(Source):
     return cls.OAUTH_START_HANDLER.button_html(
       '/about#browser-extension',
       form_method='get',
-      image_prefix='/oauth_dropins/static/')
+      image_prefix='/oauth_dropins_static/')
 
   def get_activities_response(self, *args, **kwargs):
     """Uses Activity entities stored in the datastore."""

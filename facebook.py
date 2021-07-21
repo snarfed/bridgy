@@ -74,7 +74,7 @@ class Facebook(browser.BrowserSource):
     return oauth_instagram.StartHandler.button_html(
       '/about#browser-extension',
       form_method='get',
-      image_prefix='/oauth_dropins/static/')
+      image_prefix='/oauth_dropins_static/')
 
   def canonicalize_url(self, url, **kwargs):
     """Facebook-specific standardization of syndicated urls.

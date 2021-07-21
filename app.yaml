@@ -21,29 +21,11 @@ automatic_scaling:
 handlers:
 
 # static
-- url: /(static/bootstrap.*\.css)
-  static_files: oauth_dropins/\1
-  upload: oauth_dropins/static/bootstrap.*\.css
-
 - url: /static
   static_dir: static
 
-- url: /.well-known
-  static_dir: .well-known
-
-- url: /static/style.css
-  static_files: static/style.css
-  upload: static/style.css
-
-- url: /static/bridgy.js
-  static_files: static/bridgy.js
-  upload: static/bridgy.js
-
-- url: /oauth_dropins/static
-  static_dir: oauth_dropins/static
-
-- url: /fonts
-  static_dir: oauth_dropins/fonts
+- url: /oauth_dropins_static
+  static_dir: oauth_dropins_static
 
 - url: /favicon.ico
   static_files: static/favicon.ico
