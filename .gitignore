@@ -4,6 +4,7 @@
 /l
 /local*/
 /mapreduce
+/oauth_dropins_fonts
 /oauth_dropins_static
 circleci_token
 datastore.dat*
