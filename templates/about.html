@@ -72,7 +72,7 @@ service.</a>
 <li><a href="#order">Why are the Bridgy comments on my site out of order?</a></li>
 <li><a href="#appspot">What are all these brid.gy links in the comments that Bridgy sends to my site?</a></li>
 <li><a href="#source-urls">What's the format for Bridgy's webmention source URLs?</a></li>
-<li><a href="#browser-extension">Wait, Instagram needs a browser extension now?</a></li>
+<li><a href="#browser-extension">Wait, Instagram and Facebook need a browser extension now?</a></li>
 <li><a href="#facebook-profile-pictures">Where are the profile pictures for Facebook comments and likes?</a></li>
 
 <br />
@@ -213,7 +213,7 @@ web</a> and like <a href="https://indieweb.org/why">owning our data</a>.
 
 <p>We tried hard to keep Facebook support alive even without the API. <a href="https://github.com/snarfed/bridgy/issues/854">We first tried using email notifications</a> for backfeed. Users forwarded emails from Facebook to Bridgy, which extracted comment text, likes, and shares, and sent webmentions as normal. This was surprisingly difficult to set up, though: many users struggled to get Facebook to actually send notification emails, even after they were turned on in settings.</p>
 
-<p>After that, <a href="https://github.com/snarfed/granary/search?q=m.facebook.com&type=Commits">we tried scraping m.facebook.com</a>, like <a href="https://facebook-atom.appspot.com/">facebook-atom</a> does. The scraping itself worked fine, but we never managed to consistently evade Facebook's bot detection. They always ended up rate limiting or blocking us, even after we started rotating IP addresses, spoofing User Agent headers, and even running some JavaScript for browser fingerprinting. They have way more resources for that arms race than we do, so we gave up on server side fetching altogether.</p>
+<p>After that, <a href="https://github.com/snarfed/granary/search?q=m.facebook.com&type=Commits">we tried scraping m.facebook.com</a>, like <a href="https://facebook-atom.appspot.com/">facebook-atom</a> does. The scraping itself worked fine, but we never managed to consistently evade Facebook's bot detection. They always ended up rate limiting or blocking us, even after we started rotating IP addresses, spoofing User Agent headers, and even running some JavaScript for browser fingerprinting. They have way more resources for that arms race than we do, so we gave up on server side fetching altogether...</p>
 </li>
 
 <li id="rip-google+" class="question">What happened to Google+?</li>
@@ -1158,7 +1158,7 @@ data from your original post, which is often helpful for debugging.
 
 <li id="silos" class="question">Why not Instagram?</li>
 <li class="answer">
-<p>Sadly, <a href="http://developers.instagram.com/post/133424514006/instagram-platform-update">Instagram's API is locked down to limited manual approval.</a> Shameless plug: check out <a href="http://ownyourgram.com/">#OwnYourGram</a> for an Instagram alternative!</p>
+<p>Sadly, <a href="http://developers.instagram.com/post/133424514006/instagram-platform-update">Instagram's API is locked down to limited manual approval.</a></p>
 </li>
 
 <li id="extended-tweets" class="question">Can I take advantage of Twitter's new
