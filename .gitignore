@@ -13,6 +13,7 @@ disqus_api_*
 facebook_app_*
 facebook_test_user_access_token
 fake_service_account.json
+flask_secret_key
 flickr_app_*
 github-app*.private-key.pem
 github_app_client_*

@@ -25,11 +25,12 @@ import models
 from models import BlogPost, BlogWebmention, Publish, Response, Source, Webmentions
 import original_post_discovery
 import util
+# TODO: remove once Flask port is complete
+from werkzeug.middleware.dispatcher import DispatcherMiddleware
 
 # import handler classes for URL routes, and for source model class definitions
 # for template rendering.
 MODULES = [importlib.import_module(name) for name in (
-  'admin',
   'blog_webmention',
   'blogger',
   'facebook',
@@ -756,3 +757,9 @@ routes += [
 
 application = webutil_handlers.ndb_context_middleware(
   webapp2.WSGIApplication(routes, debug=appengine_info.DEBUG), client=ndb_client)
+
+# import admin
+
+# application = DispatcherMiddleware(application, {
+#     '/admin': admin.app,
+# })
