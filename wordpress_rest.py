@@ -192,7 +192,7 @@ class AddWordPress(oauth_wordpress.CallbackHandler, util.Handler):
       if int(auth_entity.blog_id) == 0:
         self.messages.add(
           'Please try again and choose a blog before clicking Authorize.')
-        return self.redirect('/')
+        return redirect('/')
 
       # Check if this is a self-hosted WordPress blog
       site_info = WordPress.get_site_info(self, auth_entity)

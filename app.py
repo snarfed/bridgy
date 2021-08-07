@@ -7,13 +7,14 @@ import logging
 import string
 import urllib.request, urllib.parse, urllib.error
 
+from flask import Flask, redirect, render_template, request
+from flask_caching import Cache
 from google.cloud import ndb
 from google.cloud.ndb.stats import KindStat, KindPropertyNamePropertyTypeStat
 from oauth_dropins import indieauth
-from oauth_dropins.webutil import appengine_info
+from oauth_dropins.webutil import appengine_info, flask_util, logs
 from oauth_dropins.webutil import handlers as webutil_handlers
 from oauth_dropins.webutil.appengine_config import ndb_client
-from oauth_dropins.webutil import logs
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import webapp2
 
@@ -25,8 +26,6 @@ import models
 from models import BlogPost, BlogWebmention, Publish, Response, Source, Webmentions
 import original_post_discovery
 import util
-# TODO: remove once Flask port is complete
-from werkzeug.middleware.dispatcher import DispatcherMiddleware
 
 # import handler classes for URL routes, and for source model class definitions
 # for template rendering.
@@ -52,14 +51,34 @@ MODULES = [importlib.import_module(name) for name in (
 RECENT_PRIVATE_POSTS_THRESHOLD = 5
 
 
+# Flask app
+from oauth_dropins.webutil import appengine_config, appengine_info
+app = Flask('bridgy')
+app.template_folder = './templates'
+app.config.from_mapping(
+    ENV='development' if appengine_info.DEBUG else 'PRODUCTION',
+    CACHE_TYPE='SimpleCache',
+    SECRET_KEY=util.read('flask_secret_key'),
+    JSONIFY_PRETTYPRINT_REGULAR=True,
+)
+app.url_map.converters['regex'] = flask_util.RegexConverter
+app.after_request(flask_util.default_modern_headers)
+app.register_error_handler(Exception, flask_util.handle_exception)
+app.before_request(flask_util.canonicalize_domain(
+  util.OTHER_DOMAINS, util.PRIMARY_DOMAIN))
+
+app.wsgi_app = flask_util.ndb_context_middleware(
+    app.wsgi_app, client=appengine_config.ndb_client)
+
+cache = Cache(app)
+
+
 class DashboardHandler(webutil_handlers.TemplateHandler, util.Handler):
   """Base handler for both the front page and user pages."""
 
-  @util.canonicalize_domain
   def head(self, *args, **kwargs):
     """Return an empty 200 with no caching directives."""
 
-  @util.canonicalize_domain
   def get(self, *args, **kwargs):
     return super(DashboardHandler, self).get(*args, **kwargs)
 
@@ -91,7 +110,6 @@ class CachedPageHandler(DashboardHandler):
 
   EXPIRES = None  # subclasses can override
 
-  @util.canonicalize_domain
   def get(self, cache=True):
     if (not cache or appengine_info.LOCAL or self.request.params or
         self.get_logins()):
@@ -172,7 +190,6 @@ class UsersHandler(CachedPageHandler):
   """
   PAGE_SIZE = 50
 
-  @util.canonicalize_domain
   def get(self):
     # only cache the first page
     return super(UsersHandler, self).get(cache=not self.request.params)
@@ -204,7 +221,6 @@ class UsersHandler(CachedPageHandler):
 class UserHandler(DashboardHandler):
   """Handler for a user page."""
 
-  @util.canonicalize_domain
   def get(self, source_short_name, id):
     cls = models.sources[source_short_name]
     self.source = cls.lookup(id)
@@ -214,7 +230,7 @@ class UserHandler(DashboardHandler):
                                ('domains', 'inferred_username', 'name', 'username')])
                       ).get(keys_only=True)
       if key:
-        return self.redirect(cls(key=key).bridgy_path(), permanent=True)
+        return redirect(cls(key=key).bridgy_path(), permanent=True)
 
     if self.source and self.source.features:
       self.source.verify()
@@ -459,7 +475,7 @@ class DeleteStartHandler(util.Handler):
 
     # Blogger don't support redirect_url() yet
     if kind == 'Blogger':
-      return self.redirect('/blogger/delete/start?state=%s' % state)
+      return redirect('/blogger/delete/start?state=%s' % state)
 
     path = ('/reddit/callback' if kind == 'Reddit'
             else '/wordpress/add' if kind == 'WordPress'
@@ -470,7 +486,7 @@ class DeleteStartHandler(util.Handler):
 
     handler = source.OAUTH_START_HANDLER.to(path, **kwargs)(self.request, self.response)
     try:
-      self.redirect(handler.redirect_url(state=state))
+      return redirect(handler.redirect_url(state=state))
     except Exception as e:
       code, body = util.interpret_http_exception(e)
       if not code and util.is_connection_failure(e):
@@ -478,7 +494,7 @@ class DeleteStartHandler(util.Handler):
         body = str(e)
       if code:
         self.messages.add('%s API error %s: %s' % (source.GR_CLASS.NAME, code, body))
-        self.redirect(source.bridgy_url(self))
+        return redirect(source.bridgy_url(self))
       else:
         raise
 
@@ -492,10 +508,10 @@ class DeleteFinishHandler(util.Handler):
       # disable declined means no change took place
       if callback:
         callback = util.add_query_params(callback, {'result': 'declined'})
-        self.redirect(callback)
+        return redirect(callback)
       else:
         self.messages.add('If you want to disable, please approve the prompt.')
-        self.redirect('/')
+        return redirect('/')
       return
 
     if (not parts or 'feature' not in parts or 'source' not in parts):
@@ -543,7 +559,7 @@ class DeleteFinishHandler(util.Handler):
         self.messages.add('Please log into %s as %s to disable it here.' %
                           (source.GR_CLASS.NAME, source.name))
 
-    self.redirect(callback if callback
+    return redirect(callback if callback
                   else source.bridgy_url(self) if source.features
                   else '/')
 
@@ -555,7 +571,7 @@ class PollNowHandler(util.Handler):
     self.get_source()
     util.add_poll_task(self.source, now=True)
     self.messages.add("Polling now. Refresh in a minute to see what's new!")
-    self.redirect(self.source.bridgy_url(self))
+    return redirect(self.source.bridgy_url(self))
 
   def get_source(self):
     if not self.source:
@@ -568,7 +584,7 @@ class CrawlNowHandler(PollNowHandler):
     self.setup_refetch_hfeed()
     util.add_poll_task(self.source, now=True)
     self.messages.add("Crawling now. Refresh in a minute to see what's new!")
-    self.redirect(self.source.bridgy_url(self))
+    return redirect(self.source.bridgy_url(self))
 
   @ndb.transactional()
   def setup_refetch_hfeed(self):
@@ -597,7 +613,7 @@ class RetryHandler(util.Handler):
 
     entity.restart()
     self.messages.add('Retrying. Refresh in a minute to see the results!')
-    self.redirect(self.request.get('redirect_to') or
+    return redirect(self.request.get('redirect_to') or
                   entity.source.get().bridgy_url(self))
 
 
@@ -635,7 +651,7 @@ class DiscoverHandler(util.Handler):
       msg = 'Please enter a URL on either your web site or %s.' % gr_source.NAME
 
     self.messages.add(msg)
-    self.redirect(source.bridgy_url(self))
+    return redirect(source.bridgy_url(self))
 
 
 class EditWebsites(webutil_handlers.TemplateHandler, util.Handler):
@@ -686,7 +702,7 @@ class EditWebsites(webutil_handlers.TemplateHandler, util.Handler):
       source.put()
       self.messages.add('Removed %s.' % link)
 
-    self.redirect(redirect_url)
+    return redirect(redirect_url)
 
   def template_vars(self):
     return {
@@ -695,40 +711,36 @@ class EditWebsites(webutil_handlers.TemplateHandler, util.Handler):
     }
 
 
-class RedirectToFrontPageHandler(util.Handler):
-  @util.canonicalize_domain
-  def get(self, feature):
-    """Redirect to the front page."""
-    self.redirect(util.add_query_params('/', self.request.params.items()),
-                  permanent=True)
-
-  head = get
+@app.route('/<any(listen, publish):_>', methods=('GET', 'HEAD'))
+def redirect_to_front_page(_):
+  """Redirect to the front page."""
+  return redirect(util.add_query_params('/', request.values.items()), code=301)
 
 
-class LogoutHandler(util.Handler):
-  @util.canonicalize_domain
-  def get(self):
-    """Redirect to the front page."""
-    self.set_logins([])
-    self.messages.add('Logged out.')
-    self.redirect('/')
+@app.route('/logout')
+def logout():
+  """Redirect to the front page."""
+  self.set_logins([])
+  self.messages.add('Logged out.')
+  return redirect('/')
 
 
-class CspReportHandler(util.Handler):
+@app.route('/csp-report')
+def csp_report():
   """Log Content-Security-Policy reports. https://content-security-policy.com/"""
-  def post(self):
-    logging.info(self.request.body)
+  logging.info(request.get_data(as_text=True))
+  return 'OK'
 
 
-class FacebookIsDeadHandler(util.Handler):
-  def get(self):
-    self.redirect('/about#rip-facebook')
+@app.route('/log')
+@cache.cached(logs.CACHE_TIME.total_seconds())
+def log():
+    return logs.log()
 
 
-class GooglePlusIsDeadHandler(util.Handler):
-  def get(self):
-    self.redirect('/about#rip-google+')
-
+@app.route('/_ah/<any(start, stop, warmup):_>')
+def noop(_):
+  return 'OK'
 
 
 routes = []
@@ -737,9 +749,8 @@ for module in MODULES:
 routes += [
   ('/?', FrontPageHandler),
   ('/users/?', UsersHandler),
-  ('/(blogger|facebook|fake|fake_blog|flickr|github|instagram|mastodon|medium|meetup|reddit|tumblr|twitter|wordpress)/([^/]+)/?',
+  ('/(blogger|fake|fake_blog|flickr|github|instagram|mastodon|medium|meetup|reddit|tumblr|twitter|wordpress)/([^/]+)/?',
    UserHandler),
-  ('/googleplus/.*', GooglePlusIsDeadHandler),
   ('/about/?', AboutHandler),
   ('/delete/start', DeleteStartHandler),
   ('/delete/finish', DeleteFinishHandler),
@@ -747,19 +758,5 @@ routes += [
   ('/poll-now', PollNowHandler),
   ('/crawl-now', CrawlNowHandler),
   ('/retry', RetryHandler),
-  ('/(listen|publish)/?', RedirectToFrontPageHandler),
   ('/edit-websites', EditWebsites),
-  ('/logout', LogoutHandler),
-  ('/csp-report', CspReportHandler),
-  ('/log', logs.LogHandler),
-  ('/_ah/(start|stop|warmup)', util.NoopHandler),
 ]
-
-application = webutil_handlers.ndb_context_middleware(
-  webapp2.WSGIApplication(routes, debug=appengine_info.DEBUG), client=ndb_client)
-
-# import admin
-
-# application = DispatcherMiddleware(application, {
-#     '/admin': admin.app,
-# })

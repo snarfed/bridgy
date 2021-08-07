@@ -6,37 +6,18 @@ haven't completed yet.
 import datetime
 import itertools
 
-
-from flask import Flask, redirect, render_template
+from flask import redirect, render_template
 from google.cloud import ndb
 from oauth_dropins.webutil import flask_util, logs
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
+from app import app
 from models import BlogPost, Response, Source
 import util
 # Import source class files so their metaclasses are initialized.
 import blogger, flickr, github, instagram, mastodon, medium, tumblr, twitter, wordpress_rest
 
 NUM_ENTITIES = 10
-
-
-from oauth_dropins.webutil import appengine_config, appengine_info
-app = Flask('bridgy')
-app.template_folder = './templates'
-app.config.from_mapping(
-    ENV='development' if appengine_info.DEBUG else 'PRODUCTION',
-    CACHE_TYPE='SimpleCache',
-    SECRET_KEY=util.read('flask_secret_key'),
-    JSONIFY_PRETTYPRINT_REGULAR=True,
-)
-app.url_map.converters['regex'] = flask_util.RegexConverter
-app.after_request(flask_util.default_modern_headers)
-app.register_error_handler(Exception, flask_util.handle_exception)
-app.before_request(flask_util.canonicalize_domain(
-  util.OTHER_DOMAINS, util.PRIMARY_DOMAIN))
-
-app.wsgi_app = flask_util.ndb_context_middleware(
-    app.wsgi_app, client=appengine_config.ndb_client)
 
 
 @app.route('/admin/responses')

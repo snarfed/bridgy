@@ -21,11 +21,11 @@ class StartHandler(TemplateHandler, indieauth.StartHandler, util.Handler):
 
   def post(self):
     try:
-      self.redirect(self.redirect_url(state=util.get_required_param(self, 'token')))
+      return redirect(redirect_url(state=util.get_required_param(self, 'token')))
     except Exception as e:
       if util.is_connection_failure(e) or util.interpret_http_exception(e)[0]:
         self.messages.add("Couldn't fetch your web site: %s" % e)
-        return self.redirect('/')
+        return redirect('/')
       raise
 
 
@@ -45,7 +45,7 @@ class CallbackHandler(indieauth.CallbackHandler, util.Handler):
     domain.put()
 
     self.messages.add(f'Authorized you for {domain.key.id()}.')
-    self.redirect('/')
+    return redirect('/')
 
 
 ROUTES = [

@@ -99,7 +99,6 @@ LOCAL_DOMAINS = (
   'my.dev.com:8080',
 )
 DOMAINS = (PRIMARY_DOMAIN,) + OTHER_DOMAINS + LOCAL_DOMAINS
-canonicalize_domain = webutil_handlers.redirect(OTHER_DOMAINS, PRIMARY_DOMAIN)
 
 webutil_handlers.JINJA_ENV.globals.update({
   'naturaltime': humanize.naturaltime,
@@ -461,7 +460,7 @@ class Handler(webutil_handlers.ModernHandler):
           # call super.redirect so the callback url is unmodified
           super(Handler, self).redirect(callback)
         else:
-          self.redirect('/')
+          return redirect('/')
         return
 
       CachedPage.invalidate('/users')
@@ -490,18 +489,18 @@ class Handler(webutil_handlers.ModernHandler):
         super(Handler, self).redirect(callback)
 
       elif source and not source.domains:
-        self.redirect('/edit-websites?' + urllib.parse.urlencode({
+        return redirect('/edit-websites?' + urllib.parse.urlencode({
           'source_key': source.key.urlsafe().decode(),
         }))
 
       else:
-        self.redirect(source.bridgy_url(self) if source else '/')
+        return redirect(source.bridgy_url(self) if source else '/')
 
       return source
 
     else:  # this is a delete
       if auth_entity:
-        self.redirect('/delete/finish?auth_entity=%s&state=%s' %
+        return redirect('/delete/finish?auth_entity=%s&state=%s' %
                       (auth_entity.key.urlsafe().decode(), state))
       else:
         self.messages.add('If you want to disable, please approve the %s prompt.' %
@@ -510,9 +509,9 @@ class Handler(webutil_handlers.ModernHandler):
         if source_key:
           source = ndb.Key(urlsafe=source_key).get()
           if source:
-            return self.redirect(source.bridgy_url(self))
+            return redirect(source.bridgy_url(self))
 
-        self.redirect('/')
+        return redirect('/')
 
   def construct_state_param_for_add(self, state=None, **kwargs):
     """Construct the state parameter if one isn't explicitly passed in.

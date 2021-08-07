@@ -662,7 +662,7 @@ class SendHandler(Handler):
     self.state = util.decode_oauth_state(state)
     if not state:
       self.error('If you want to publish or preview, please approve the prompt.')
-      return self.redirect('/')
+      return redirect('/')
 
     source = ndb.Key(urlsafe=self.state['source_key']).get()
     if auth_entity is None:
@@ -680,7 +680,7 @@ class SendHandler(Handler):
           self.messages.add(granary_message)
       # otherwise error() added an error message
 
-    return self.redirect(source.bridgy_url(self))
+    return redirect(source.bridgy_url(self))
 
   def source_url(self):
     return self.state['source_url']

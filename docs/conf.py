@@ -332,4 +332,5 @@ intersphinx_mapping = {
   'urllib3': ('https://urllib3.readthedocs.io/en/latest', None),
   'webapp2': ('https://webapp2.readthedocs.io/en/latest', None),
   'webob': ('https://webob.readthedocs.io/en/latest', None),
+  'werkzeug': ('https://werkzeug.palletsprojects.com/en/latest/', None),
 }
