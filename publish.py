@@ -10,6 +10,7 @@ import pprint
 import re
 import urllib.request, urllib.parse, urllib.error
 
+from flask import request
 from google.cloud import ndb
 from granary import microformats2
 from granary import source as gr_source
@@ -22,7 +23,6 @@ from oauth_dropins import (
   twitter as oauth_twitter,
 )
 from oauth_dropins.webutil import appengine_info
-from oauth_dropins.webutil.handlers import JINJA_ENV
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import webapp2
 
@@ -88,13 +88,13 @@ class Handler(webmention.WebmentionHandler):
     return True
 
   def source_url(self):
-    return util.get_required_param(self, 'source').strip()
+    return flask_util.get_required_param('source').strip()
 
   def target_url(self):
-    return util.get_required_param(self, 'target').strip()
+    return flask_util.get_required_param('target').strip()
 
   def include_link(self, item):
-    val = self.request.get('bridgy_omit_link', None)
+    val = request.values.get('bridgy_omit_link', None)
 
     if val is None:
       # _run has already parsed and validated the target URL
@@ -113,7 +113,7 @@ class Handler(webmention.WebmentionHandler):
     return result
 
   def ignore_formatting(self, item):
-    val = self.request.get('bridgy_ignore_formatting', None)
+    val = request.values.get('bridgy_ignore_formatting', None)
 
     if val is None:
       # _run has already parsed and validated the target URL
@@ -136,7 +136,7 @@ class Handler(webmention.WebmentionHandler):
 
   def _run(self):
     """Returns CreationResult on success, None otherwise."""
-    logging.info('Params: %s', list(self.request.params.items()))
+    logging.info('Params: %s', list(request.params.items()))
     assert self.PREVIEW in (True, False)
 
     # parse and validate target URL
@@ -176,7 +176,7 @@ class Handler(webmention.WebmentionHandler):
       return  # _find_source rendered the error
 
     content_param = 'bridgy_%s_content' % self.source.SHORT_NAME
-    if content_param in self.request.params:
+    if content_param in request.params:
       return self.error('The %s parameter is not supported' % content_param)
 
     # show nice error message if they're trying to publish their home page
@@ -331,9 +331,9 @@ class Handler(webmention.WebmentionHandler):
       return best_match
 
     if sources_ready:
-      msg = 'No account found that matches %s. Check that <a href="%s/about#profile-link">the web site URL is in your silo profile</a>, then <a href="%s/">sign up again</a>.' % (self.request.host_url, util.pretty_link(url), self.request.host_url)
+      msg = 'No account found that matches %s. Check that <a href="%s/about#profile-link">the web site URL is in your silo profile</a>, then <a href="%s/">sign up again</a>.' % (request.host_url, util.pretty_link(url), request.host_url)
     else:
-      msg = 'Publish is not enabled for your account. <a href="%s/">Try signing up!</a>' % self.request.host_url
+      msg = 'Publish is not enabled for your account. <a href="%s/">Try signing up!</a>' % request.host_url
     return self.error(msg, html=msg)
 
   def attempt_single_item(self, item):
@@ -637,7 +637,7 @@ class PreviewHandler(Handler):
 
   def include_link(self, item):
     # always use query param because there's a checkbox in the UI
-    val = self.request.get('bridgy_omit_link', None)
+    val = request.values.get('bridgy_omit_link', None)
     return (gr_source.INCLUDE_LINK if val is None or val.lower() == 'false'
             else gr_source.INCLUDE_IF_TRUNCATED if val.lower() == 'maybe'
             else gr_source.OMIT_LINK)
@@ -699,25 +699,25 @@ class SendHandler(Handler):
       self.report_error(error)
 
 
-# We want CallbackHandler.get() and SendHandler.finish(), so put
-# CallbackHandler first and override finish.
-class FlickrSendHandler(oauth_flickr.CallbackHandler, SendHandler):
+# We want Callback.get() and SendHandler.finish(), so put
+# Callback first and override finish.
+class FlickrSendHandler(oauth_flickr.Callback, SendHandler):
   finish = SendHandler.finish
 
 
-class GitHubSendHandler(oauth_github.CallbackHandler, SendHandler):
+class GitHubSendHandler(oauth_github.Callback, SendHandler):
   finish = SendHandler.finish
 
 
-class MastodonSendHandler(oauth_mastodon.CallbackHandler, SendHandler):
+class MastodonSendHandler(oauth_mastodon.Callback, SendHandler):
   finish = SendHandler.finish
 
 
-class MeetupSendHandler(oauth_meetup.CallbackHandler, SendHandler):
+class MeetupSendHandler(oauth_meetup.Callback, SendHandler):
   finish = SendHandler.finish
 
 
-class TwitterSendHandler(oauth_twitter.CallbackHandler, SendHandler):
+class TwitterSendHandler(oauth_twitter.Callback, SendHandler):
   finish = SendHandler.finish
 
 
@@ -734,11 +734,11 @@ class WebmentionHandler(Handler):
   def authorize(self):
     """Check for a backlink to brid.gy/publish/SILO."""
     bases = set()
-    if util.domain_from_link(self.request.host_url) == 'brid.gy':
+    if util.domain_from_link(request.host_url) == 'brid.gy':
       bases.add('brid.gy')
       bases.add('www.brid.gy')  # also accept www
     else:
-      bases.add(self.request.host_url)
+      bases.add(request.host_url)
 
     expected = ['%s/publish/%s' % (base, self.source.SHORT_NAME) for base in bases]
 
@@ -751,14 +751,14 @@ class WebmentionHandler(Handler):
     return False
 
 
-ROUTES = [
-  ('/publish/preview', PreviewHandler),
-  ('/publish/webmention', WebmentionHandler),
-  ('/publish/(flickr|github|mastodon|meetup|twitter)',
-   webmention.WebmentionGetHandler),
-  ('/publish/flickr/finish', FlickrSendHandler),
-  ('/publish/github/finish', GitHubSendHandler),
-  ('/publish/mastodon/finish', MastodonSendHandler),
-  ('/meetup/publish/finish', MeetupSendHandler), # because Meetup's `redirect_uri` handling is a little more restrictive
-  ('/publish/twitter/finish', TwitterSendHandler),
-]
+# ROUTES = [
+#   ('/publish/preview', PreviewHandler),
+#   ('/publish/webmention', WebmentionHandler),
+#   ('/publish/(flickr|github|mastodon|meetup|twitter)',
+#    webmention.WebmentionGetHandler),
+#   ('/publish/flickr/finish', FlickrSendHandler),
+#   ('/publish/github/finish', GitHubSendHandler),
+#   ('/publish/mastodon/finish', MastodonSendHandler),
+#   ('/meetup/publish/finish', MeetupSendHandler), # because Meetup's `redirect_uri` handling is a little more restrictive
+#   ('/publish/twitter/finish', TwitterSendHandler),
+# ]

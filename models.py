@@ -89,8 +89,8 @@ class Source(StringIdModel, metaclass=SourceMeta):
   SHORT_NAME = None
   # the corresponding granary class
   GR_CLASS = None
-  # oauth-dropins StartHandler class
-  OAUTH_START_HANDLER = None
+  # oauth-dropins Start class
+  OAUTH_START = None
   # whether Bridgy supports listen for this silo - this is unlikely, so we default to True
   CAN_LISTEN = True
   # whether Bridgy supports publish for this silo
@@ -200,7 +200,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
     return id[1:] if id[0] == '\\' else id
 
   @classmethod
-  def new(cls, handler, **kwargs):
+  def new(cls, **kwargs):
     """Factory method. Creates and returns a new instance for the current user.
 
     To be implemented by subclasses.
@@ -214,7 +214,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
     :attr:`gr_source` will be returned normally.
     """
     if name =='gr_source':
-      super_attr = getattr(super(Source, self), name, None)
+      super_attr = getattr(super(), name, None)
       if super_attr:
         return super_attr
       elif not self.auth_entity:
@@ -251,7 +251,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
       self.gr_source = self.GR_CLASS(*args, **kwargs)
       return self.gr_source
 
-    return getattr(super(Source, self), name)
+    return getattr(super(), name)
 
   @classmethod
   def lookup(cls, id):
@@ -477,7 +477,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
     """Returns an HTML string with a login form and button for this site.
 
     Mostly just passes through to
-    :meth:`oauth_dropins.handlers.StartHandler.button_html`.
+    :meth:`oauth_dropins.handlers.Start.button_html`.
 
     Returns: string, HTML
     """
@@ -490,8 +490,8 @@ class Source(StringIdModel, metaclass=SourceMeta):
       form_extra += ('\n<input name="id" type="hidden" value="%s" />' %
                      source.key_id())
 
-    if cls.OAUTH_START_HANDLER:
-      return cls.OAUTH_START_HANDLER.button_html(
+    if cls.OAUTH_START:
+      return cls.OAUTH_START.button_html(
         '/%s/start' % cls.SHORT_NAME,
         form_extra=form_extra,
         image_prefix='/oauth_dropins_static/',
@@ -511,7 +511,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
 
     Returns: newly created :class:`Source`
     """
-    source = cls.new(handler, **kwargs)
+    source = cls.new(**kwargs)
     if source is None:
       return None
 
@@ -544,7 +544,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
       'Try previewing a post from your web site!' if feature == 'publish'
       else '<a href="%s">Try a webmention!</a>' % link if feature == 'webmention'
       else "Refresh in a minute to see what we've found!")
-    logging.info('%s %s', blurb, source.bridgy_url(handler))
+    logging.info('%s %s', blurb, source.bridgy_url())
     # uncomment to send email notification for each new user
     # if not existing:
     #   util.email_me(subject=blurb, body=source.bridgy_url(handler))
@@ -922,7 +922,7 @@ class Response(Webmentions):
     return type if type in VERB_TYPES else 'comment'
 
   def get_or_save(self, source, restart=False):
-    resp = super(Response, self).get_or_save()
+    resp = super().get_or_save()
 
     if (self.type != resp.type or
         source.gr_source.activity_changed(json_loads(resp.response_json),
@@ -963,7 +963,7 @@ class Response(Webmentions):
                       SyndicatedPost.query(SyndicatedPost.syndication.IN(synd_urls))
                       if synd.original]
 
-    return super(Response, self).restart()
+    return super().restart()
 
 
 class Activity(StringIdModel):

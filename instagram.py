@@ -1,9 +1,10 @@
-"""Instagram browser extension source class and request handlers.
+"""Instagram browser extension source class and views.
 """
 from granary import instagram as gr_instagram
 from oauth_dropins import instagram as oauth_instagram
 
 import browser
+from flask import request
 import util
 
 
@@ -16,7 +17,7 @@ class Instagram(browser.BrowserSource):
   """
   GR_CLASS = gr_instagram.Instagram
   SHORT_NAME = 'instagram'
-  OAUTH_START_HANDLER = oauth_instagram.StartHandler
+  OAUTH_START = oauth_instagram.Start
   URL_CANONICALIZER = util.UrlCanonicalizer(
     domain=GR_CLASS.DOMAIN,
     subdomain='www',
@@ -42,4 +43,4 @@ class Instagram(browser.BrowserSource):
     return self.key_id()
 
 
-ROUTES = browser.routes(Instagram)
+# ROUTES = browser.routes(Instagram)

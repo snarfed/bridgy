@@ -19,7 +19,7 @@ class Facebook(browser.BrowserSource):
   """
   GR_CLASS = gr_facebook.Facebook
   SHORT_NAME = 'facebook'
-  OAUTH_START_HANDLER = oauth_facebook.StartHandler
+  OAUTH_START = oauth_facebook.Start
   URL_CANONICALIZER = util.UrlCanonicalizer(
     domain=GR_CLASS.DOMAIN,
     subdomain='www',
@@ -37,7 +37,7 @@ class Facebook(browser.BrowserSource):
   @classmethod
   def new(cls, handler, auth_entity=None, actor=None, **kwargs):
     """Creates and returns an entity based on an AS1 actor."""
-    src = super().new(handler, auth_entity=None, actor=actor, **kwargs)
+    src = super().new(auth_entity=None, actor=actor, **kwargs)
     src.username = actor.get('username')
     return src
 
@@ -71,7 +71,7 @@ class Facebook(browser.BrowserSource):
   @classmethod
   def button_html(cls, feature, **kwargs):
     return super(cls, cls).button_html(feature, form_method='get', **kwargs)
-    return oauth_instagram.StartHandler.button_html(
+    return oauth_instagram.Start.button_html(
       '/about#browser-extension',
       form_method='get',
       image_prefix='/oauth_dropins_static/')
@@ -107,7 +107,7 @@ class Facebook(browser.BrowserSource):
     url = url.replace('facebook.com/%s/' % self.username,
                       'facebook.com/%s/' % self.key.id())
 
-    return super(Facebook, self).canonicalize_url(url)
+    return super().canonicalize_url(url)
 
 
-ROUTES = browser.routes(Facebook)
+# ROUTES = browser.routes(Facebook)

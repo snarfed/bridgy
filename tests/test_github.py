@@ -11,13 +11,13 @@ from . import testutil
 class GitHubTest(testutil.ModelsTest):
 
   def setUp(self):
-    super(GitHubTest, self).setUp()
+    super().setUp()
     self.auth_entity = oauth_dropins.github.GitHubAuth(
       id='snarfed', access_token_str='towkin',
       user_json=json_dumps(gr_test_github.USER_GRAPHQL))
 
     self.auth_entity.put()
-    self.gh = github.GitHub.new(self.handler, self.auth_entity)
+    self.gh = github.GitHub.new(self.auth_entity)
 
   def test_new(self):
     self.assertEqual(self.auth_entity, self.gh.auth_entity.get())

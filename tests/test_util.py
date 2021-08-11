@@ -9,7 +9,7 @@ from oauth_dropins.webutil.testutil import requests_response
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
 import webapp2
-from webob import exc
+from werkzeug.exceptions import BadRequest
 
 from . import testutil
 from .testutil import FakeAuthEntity, FakeSource
@@ -31,12 +31,12 @@ class UtilTest(testutil.ModelsTest):
     auth_entity = FakeAuthEntity(id='x', user_json=json_dumps(
         {'url': 'http://foo.com/', 'name': UNICODE_STR}))
     auth_entity.put()
-    src = self.handler.maybe_add_or_delete_source(
+    src = self.view.maybe_add_or_delete_source(
       FakeSource, auth_entity,
-      self.handler.construct_state_param_for_add(feature='publish'))
+      self.view.construct_state_param_for_add(feature='publish'))
     self.assertEqual(['publish'], src.features)
 
-    self.assertEqual(302, self.response.status_int)
+    self.assertEqual(302, self.response.status_code)
     parsed = urllib.parse.urlparse(self.response.headers['Location'])
     self.assertIn(UNICODE_STR, urllib.parse.unquote_plus(parsed.fragment))
     self.assertEqual(
@@ -45,16 +45,16 @@ class UtilTest(testutil.ModelsTest):
       self.response.headers['Set-Cookie'])
 
     for feature in None, '':
-      src = self.handler.maybe_add_or_delete_source(
+      src = self.view.maybe_add_or_delete_source(
         FakeSource, auth_entity,
-        self.handler.construct_state_param_for_add(feature))
+        self.view.construct_state_param_for_add(feature))
       self.assertEqual([], src.features)
 
   def test_maybe_add_or_delete_source_bad_state(self):
     auth_entity = FakeAuthEntity(id='x', user_json='{}')
     auth_entity.put()
-    with self.assertRaises(exc.HTTPBadRequest):
-      self.handler.maybe_add_or_delete_source(FakeSource, auth_entity, 'bad')
+    with self.assertRaises(BadRequest):
+      self.view.maybe_add_or_delete_source(FakeSource, auth_entity, 'bad')
 
   def test_maybe_add_or_delete_source_delete_declined(self):
     state = {
@@ -64,43 +64,43 @@ class UtilTest(testutil.ModelsTest):
     msg = '#!If%20you%20want%20to%20disable%2C%20please%20approve%20the%20FakeSource%20prompt.'
 
     # no source
-    self.assertIsNone(self.handler.maybe_add_or_delete_source(
+    self.assertIsNone(self.view.maybe_add_or_delete_source(
       FakeSource, None, util.encode_oauth_state(state)))
-    self.assert_equals(302, self.handler.response.status_code)
+    self.assert_equals(302, self.view.response.status_code)
     self.assert_equals('http://localhost/' + msg,
-                       self.handler.response.headers['location'])
+                       self.view.response.headers['location'])
 
     # source
     state['source'] = self.sources[0].key.urlsafe().decode()
-    self.assertIsNone(self.handler.maybe_add_or_delete_source(
+    self.assertIsNone(self.view.maybe_add_or_delete_source(
       FakeSource, None, util.encode_oauth_state(state)))
-    self.assert_equals(302, self.handler.response.status_code)
-    self.assert_equals(self.sources[0].bridgy_url(self.handler) + msg,
-                       self.handler.response.headers['location'])
+    self.assert_equals(302, self.view.response.status_code)
+    self.assert_equals(self.sources[0].bridgy_url(self.view) + msg,
+                       self.view.response.headers['location'])
 
   def test_maybe_add_or_delete_without_web_site_redirects_to_edit_websites(self):
     for bad_url in None, 'not>a<url', 'http://fa.ke/xyz':
       auth_entity = FakeAuthEntity(id='x', user_json=json_dumps({'url': bad_url}))
       auth_entity.put()
-      source = self.handler.maybe_add_or_delete_source(FakeSource, auth_entity, '{}')
+      source = self.view.maybe_add_or_delete_source(FakeSource, auth_entity, '{}')
 
-      self.assertEqual(302, self.handler.response.status_code)
+      self.assertEqual(302, self.view.response.status_code)
       self.assert_equals(
         'http://localhost/edit-websites?source_key=%s' % source.key.urlsafe().decode(),
-        self.handler.response.headers['Location'])
+        self.view.response.headers['Location'])
 
   def test_add_to_logins_cookie(self):
-    listen = self.handler.construct_state_param_for_add(feature='listen')
+    listen = self.view.construct_state_param_for_add(feature='listen')
     auth_entity = FakeAuthEntity(id='x', user_json='{}')
     auth_entity.put()
 
-    self.request.headers['Cookie'] = 'logins=/other/1?bob'
-    src1 = self.handler.maybe_add_or_delete_source(FakeSource, auth_entity, listen)
+    request.headers['Cookie'] = 'logins=/other/1?bob'
+    src1 = self.view.maybe_add_or_delete_source(FakeSource, auth_entity, listen)
     cookie = 'logins="/fake/%s?fake|/other/1?bob"; expires="2001-12-31 00:00:00"; Path=/'
     self.assertEqual(cookie % src1.key.id(), self.response.headers['Set-Cookie'])
 
-    src2 = self.handler.maybe_add_or_delete_source(FakeSource, auth_entity, listen)
-    self.request.headers['Cookie'] = \
+    src2 = self.view.maybe_add_or_delete_source(FakeSource, auth_entity, listen)
+    request.headers['Cookie'] = \
       'logins="/fake/%s?fake|/other/1?bob"' % src2.key.id()
     self.assertEqual(cookie % src2.key.id(), self.response.headers['Set-Cookie'])
 
@@ -118,19 +118,19 @@ class UtilTest(testutil.ModelsTest):
           Login('blogger', 'Nombre', '/blogger/456'),
          ]),
     ):
-      self.request.headers['Cookie'] = cookie
-      self.assertCountEqual(expected, self.handler.get_logins())
+      request.headers['Cookie'] = cookie
+      self.assertCountEqual(expected, self.view.get_logins())
 
   def test_logins_cookie_url_decode(self):
     """https://console.cloud.google.com/errors/10588536940780707768?project=brid-gy"""
-    self.request.headers['Cookie'] = 'logins="/fake/123?question%3Fmark"'
+    request.headers['Cookie'] = 'logins="/fake/123?question%3Fmark"'
     self.assertEqual([Login(site='fake', name='question?mark', path='/fake/123')],
-                      self.handler.get_logins())
+                      self.view.get_logins())
 
   def test_bad_logins_cookies(self):
     """https://github.com/snarfed/bridgy/issues/601"""
-    self.request.headers['Cookie'] = 'OAMAuthnCookie_www.arbeitsagentur.de:443=xyz'
-    self.assertEqual([], self.handler.get_logins())
+    request.headers['Cookie'] = 'OAMAuthnCookie_www.arbeitsagentur.de:443=xyz'
+    self.assertEqual([], self.view.get_logins())
 
   def test_prune_activity(self):
     for orig, expected in (
@@ -206,7 +206,7 @@ class UtilTest(testutil.ModelsTest):
     }, sort_keys=True))
 
     application = webapp2.WSGIApplication([
-      ('/fakesource/start', testutil.FakeStartHandler),
+      ('/fakesource/start', testutil.FakeStart),
       ('/fakesource/add', testutil.FakeAddHandler),
     ])
 
@@ -263,7 +263,7 @@ class UtilTest(testutil.ModelsTest):
     }, sort_keys=True))
 
     application = webapp2.WSGIApplication([
-      ('/fakesource/start', testutil.FakeStartHandler),
+      ('/fakesource/start', testutil.FakeStart),
       ('/fakesource/add', testutil.FakeAddHandler),
     ])
 
@@ -324,7 +324,7 @@ class UtilTest(testutil.ModelsTest):
     }, sort_keys=True))
 
     application = webapp2.WSGIApplication([
-      ('/fakesource/start', testutil.FakeStartHandler),
+      ('/fakesource/start', testutil.FakeStart),
       ('/fakesource/add', testutil.FakeAddHandler.with_auth(None)),
     ])
 
@@ -357,7 +357,7 @@ class UtilTest(testutil.ModelsTest):
 
     resp = util.requests_get('http://foo/bar')
     self.assertEqual(util.HTTP_RESPONSE_TOO_BIG_STATUS_CODE, resp.status_code)
-    self.assertIn(' larger than our limit ', resp.text)
+    self.assertIn(' larger than our limit ', resp.get_data(as_text=True))
 
   def test_requests_get_content_length_not_int(self):
     self.expect_requests_get('http://foo/bar', 'xyz',
@@ -366,12 +366,12 @@ class UtilTest(testutil.ModelsTest):
 
     resp = util.requests_get('http://foo/bar')
     self.assertEqual(200, resp.status_code)
-    self.assertEqual('xyz', resp.text)
+    self.assertEqual('xyz', resp.get_data(as_text=True))
 
   def test_requests_get_url_blocklist(self):
     resp = util.requests_get(next(iter(util.URL_BLOCKLIST)))
     self.assertEqual(util.HTTP_REQUEST_REFUSED_STATUS_CODE, resp.status_code)
-    self.assertEqual('Sorry, Bridgy has blocklisted this URL.', resp.text)
+    self.assertEqual('Sorry, Bridgy has blocklisted this URL.', resp.get_data(as_text=True))
 
   def test_blocklist_localhost_when_deployed(self):
     self.mox.StubOutWithMock(util, 'LOCAL')
@@ -379,7 +379,7 @@ class UtilTest(testutil.ModelsTest):
     for bad in 'http://localhost:8080/', 'http://127.0.0.1/':
       resp = util.requests_get(bad)
       self.assertEqual(util.HTTP_REQUEST_REFUSED_STATUS_CODE, resp.status_code)
-      self.assertEqual('Sorry, Bridgy has blocklisted this URL.', resp.text)
+      self.assertEqual('Sorry, Bridgy has blocklisted this URL.', resp.get_data(as_text=True))
 
   def test_no_accept_header(self):
     self.assertEqual(util.REQUEST_HEADERS,

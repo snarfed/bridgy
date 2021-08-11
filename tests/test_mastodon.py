@@ -12,7 +12,7 @@ from mastodon import Mastodon
 class MastodonTest(testutil.ModelsTest):
 
   def setUp(self):
-    super(MastodonTest, self).setUp()
+    super().setUp()
 
     app = oauth_mastodon.MastodonApp(instance='https://foo.com', data='')
     app.put()
@@ -26,7 +26,7 @@ class MastodonTest(testutil.ModelsTest):
         'avatar': 'http://pi.ct/ure',
       }))
     self.auth_entity.put()
-    self.m = Mastodon.new(self.handler, auth_entity=self.auth_entity)
+    self.m = Mastodon.new(auth_entity=self.auth_entity)
 
   def test_new(self):
     self.assertEqual(self.auth_entity, self.m.auth_entity.get())

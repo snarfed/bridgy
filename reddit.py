@@ -3,6 +3,7 @@
 """
 import logging
 
+from flask import request
 from granary import reddit as gr_reddit
 from granary import source as gr_source
 from oauth_dropins import reddit as oauth_reddit
@@ -20,7 +21,7 @@ class Reddit(models.Source):
   The key name is the username.
   """
   GR_CLASS = gr_reddit.Reddit
-  OAUTH_START_HANDLER = oauth_reddit.StartHandler
+  OAUTH_START = oauth_reddit.Start
   SHORT_NAME = 'reddit'
   TYPE_LABELS = {
     'post': 'submission',
@@ -72,7 +73,7 @@ class Reddit(models.Source):
       search_query=url_query, group_id=gr_source.SEARCH, etag=self.last_activities_etag,
       fetch_replies=False, fetch_likes=False, fetch_shares=False, count=50)
 
-class AuthHandler(util.Handler):
+class AuthHandler(util.View):
   """Base OAuth handler class."""
 
   def start_oauth_flow(self, feature, operation):
@@ -86,25 +87,25 @@ class AuthHandler(util.Handler):
       if feature not in models.Source.FEATURES:
         raise exc.HTTPBadRequest('Unknown feature: %s' % feature)
 
-    handler = util.oauth_starter(oauth_reddit.StartHandler, feature=feature, operation=operation).to(
-      '/reddit/callback')(self.request, self.response)
+    handler = util.oauth_starter(oauth_reddit.Start, feature=feature, operation=operation).to(
+      '/reddit/callback')(request, self.response)
     return handler.post()
 
 
-class CallbackHandler(oauth_reddit.CallbackHandler, util.Handler):
+class Callback(oauth_reddit.Callback, util.View):
   def finish(self, auth_entity, state=None):
     logging.debug('finish with %s, %s', auth_entity, state)
     self.maybe_add_or_delete_source(Reddit, auth_entity, state)
 
 
-class StartHandler(AuthHandler):
+class Start(AuthHandler):
   """Custom OAuth start handler so we can use access_type=read for state=listen.
   """
   def post(self):
-    return self.start_oauth_flow(util.get_required_param(self, 'feature'), self.request.get('operation'))
+    return self.start_oauth_flow(util.get_required_param(self, 'feature'), request.get('operation'))
 
 
-ROUTES = [
-  ('/reddit/start', StartHandler),
-  ('/reddit/callback', CallbackHandler),
-]
+# ROUTES = [
+#   ('/reddit/start', Start),
+#   ('/reddit/callback', Callback),
+# ]

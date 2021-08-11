@@ -1,10 +1,11 @@
-"""Browser extension request handlers.
+"""Browser extension views.
 """
 import copy
 from datetime import timedelta
 import logging
 from operator import itemgetter
 
+from flask import request
 from google.cloud import ndb
 from granary import instagram as gr_instagram
 from granary import microformats2
@@ -51,7 +52,7 @@ class BrowserSource(Source):
 
   # set by subclasses
   GR_CLASS = None
-  OAUTH_START_HANDLER = None
+  OAUTH_START = None
   gr_source = None
 
   @classmethod
@@ -91,7 +92,7 @@ class BrowserSource(Source):
 
   @classmethod
   def button_html(cls, feature, **kwargs):
-    return cls.OAUTH_START_HANDLER.button_html(
+    return cls.OAUTH_START.button_html(
       '/about#browser-extension',
       form_method='get',
       image_prefix='/oauth_dropins_static/')
@@ -134,14 +135,14 @@ class BrowserSource(Source):
             return tag
 
 
-class BrowserHandler(util.Handler):
+class BrowserView(util.View):
   """Base class for requests from the browser extension."""
   def output(self, obj):
     self.response.headers['Content-Type'] = JSON_CONTENT_TYPE
     self.response.write(json_dumps(obj, indent=2))
 
   def source_class(self):
-    return models.sources.get(self.request.path.strip('/').split('/')[0])
+    return models.sources.get(request.path.strip('/').split('/')[0])
 
   def gr_source(self):
     return self.source_class().gr_source
@@ -152,12 +153,12 @@ class BrowserHandler(util.Handler):
     Raises: :class:`HTTPException` with HTTP 400
     """
     if not actor:
-      self.abort(400, f'Missing actor!')
+      abort(400, f'Missing actor!')
 
     if not gr_source.Source.is_public(actor):
-      self.abort(400, f'Your {self.gr_source().NAME} account is private. Bridgy only supports public accounts.')
+      abort(400, f'Your {self.gr_source().NAME} account is private. Bridgy only supports public accounts.')
 
-    token = util.get_required_param(self, 'token')
+    token = flask_util.get_required_param('token')
     domains = set(util.domain_from_link(util.replace_test_domains_with_localhost(u))
                   for u in microformats2.object_urls(actor))
     domains.discard(self.source_class().GR_CLASS.DOMAIN)
@@ -167,7 +168,7 @@ class BrowserHandler(util.Handler):
       if domain and token in domain.tokens:
         return
 
-    self.abort(403, f'Token {token} is not authorized for any of: {domains}')
+    abort(403, f'Token {token} is not authorized for any of: {domains}')
 
   def auth(self):
     """Loads the source and token and checks that they're valid.
@@ -182,18 +183,18 @@ class BrowserHandler(util.Handler):
     # Load source
     source = util.load_source(self, param='key')
     if not source:
-      self.abort(404, f'No account found for {self.gr_source().NAME} user {key or username}')
+      abort(404, f'No account found for {self.gr_source().NAME} user {key or username}')
 
     # Load and check token
-    token = util.get_required_param(self, 'token')
+    token = flask_util.get_required_param('token')
     for domain in Domain.query(Domain.tokens == token):
       if domain.key.id() in source.domains:
         return source
 
-    self.abort(403, f'Token {token} is not authorized for any of: {source.domains}')
+    abort(403, f'Token {token} is not authorized for any of: {source.domains}')
 
 
-class StatusHandler(BrowserHandler):
+class Status(BrowserView):
   """Runs preflight checks for a source and returns status and config info.
 
   Response body is a JSON map with these fields:
@@ -214,14 +215,14 @@ class StatusHandler(BrowserHandler):
   post = get
 
 
-class HomepageHandler(BrowserHandler):
+class Homepage(BrowserView):
   """Parses a silo home page and returns the logged in user's username.
 
   Request body is https://www.instagram.com/ HTML for a logged in user.
   """
   def post(self):
     gr_src = self.gr_source()
-    _, actor = gr_src.scraped_to_activities(self.request.text)
+    _, actor = gr_src.scraped_to_activities(request.text)
     logging.info(f'Got actor: {actor}')
 
     if actor:
@@ -230,10 +231,10 @@ class HomepageHandler(BrowserHandler):
         logging.info(f"Returning {username}")
         return self.output(username)
 
-    self.abort(400, f"Couldn't determine logged in {gr_src.NAME} user or username")
+    abort(400, f"Couldn't determine logged in {gr_src.NAME} user or username")
 
 
-class FeedHandler(BrowserHandler):
+class Feed(BrowserView):
   """Parses a silo feed page and returns the posts.
 
   Request body is HTML from a silo profile with posts, eg
@@ -248,13 +249,13 @@ class FeedHandler(BrowserHandler):
     self.output(activities)
 
   def scrape(self):
-    activities, actor = self.gr_source().scraped_to_activities(self.request.text)
+    activities, actor = self.gr_source().scraped_to_activities(request.text)
     ids = ' '.join(a['id'] for a in activities)
     logging.info(f"Returning activities: {ids}")
     return activities, actor
 
 
-class ProfileHandler(FeedHandler):
+class Profile(Feed):
   """Parses a silo profile page and creates or updates its Bridgy user.
 
   Request body is HTML from an IG profile, eg https://www.instagram.com/name/ ,
@@ -265,7 +266,7 @@ class ProfileHandler(FeedHandler):
   def post(self):
     _, actor = self.scrape()
     if not actor:
-      actor = self.gr_source().scraped_to_actor(self.request.text)
+      actor = self.gr_source().scraped_to_actor(request.text)
     self.check_token_for_actor(actor)
 
     # create/update the Bridgy account
@@ -273,7 +274,7 @@ class ProfileHandler(FeedHandler):
     self.output(source.key.urlsafe().decode())
 
 
-class PostHandler(BrowserHandler):
+class Post(BrowserView):
   """Parses a silo post's HTML and creates or updates an Activity.
 
   Request body is HTML from a silo post, eg https://www.instagram.com/p/ABC123/
@@ -284,15 +285,15 @@ class PostHandler(BrowserHandler):
     source = self.auth()
 
     gr_src = self.gr_source()
-    new_activity, actor = gr_src.scraped_to_activity(self.request.text)
+    new_activity, actor = gr_src.scraped_to_activity(request.text)
     if not new_activity:
-      self.abort(400, f'No {gr_src.NAME} post found in HTML')
+      abort(400, f'No {gr_src.NAME} post found in HTML')
 
     @ndb.transactional()
     def update_activity():
       id = new_activity.get('id')
       if not id:
-        self.abort(400, 'Scraped post missing id')
+        abort(400, 'Scraped post missing id')
       activity = Activity.get_by_id(id)
 
       if activity:
@@ -307,7 +308,7 @@ class PostHandler(BrowserHandler):
         # TODO: merge tags too
         activity.activity_json = json_dumps(merged_activity)
       else:
-        activity = Activity(id=id, source=source.key, html=self.request.text,
+        activity = Activity(id=id, source=source.key, html=request.text,
                             activity_json=json_dumps(new_activity))
 
       # store and return the activity
@@ -318,7 +319,7 @@ class PostHandler(BrowserHandler):
     update_activity()
 
 
-class ReactionsHandler(BrowserHandler):
+class Reactions(BrowserView):
   """Parses reactions/likes from silo HTML and adds them to an existing Activity.
 
   Requires the request parameter `id` with the silo post's id (not shortcode!).
@@ -329,28 +330,28 @@ class ReactionsHandler(BrowserHandler):
     source = self.auth()
 
     gr_src = self.gr_source()
-    id = util.get_required_param(self, 'id')
+    id = flask_util.get_required_param('id')
 
     # validate request
     parsed_id = util.parse_tag_uri(id)
     if not parsed_id:
-      self.abort(400, f'Expected id to be tag URI; got {id}')
+      abort(400, f'Expected id to be tag URI; got {id}')
 
     activity = Activity.get_by_id(id)
     if not activity:
-      self.abort(404, f'No {gr_src.NAME} post found for id {id}')
+      abort(404, f'No {gr_src.NAME} post found for id {id}')
     elif activity.source != source.key:
-      self.abort(403, f'Activity {id} is owned by {activity.source}, not {source.key}')
+      abort(403, f'Activity {id} is owned by {activity.source}, not {source.key}')
 
     activity_data = json_loads(activity.activity_json)
 
     # convert new reactions to AS, merge into existing activity
     try:
-      new_reactions = gr_src.merge_scraped_reactions(self.request.text, activity_data)
+      new_reactions = gr_src.merge_scraped_reactions(request.text, activity_data)
     except ValueError as e:
       msg = "Couldn't parse scraped reactions: %s" % e
       logging.error(msg, stack_info=True)
-      self.abort(400, msg)
+      abort(400, msg)
 
     activity.activity_json = json_dumps(activity_data)
     activity.put()
@@ -360,7 +361,7 @@ class ReactionsHandler(BrowserHandler):
     self.output(new_reactions)
 
 
-class PollHandler(BrowserHandler):
+class Poll(BrowserView):
   """Triggers a poll for a browser-based account."""
   def post(self):
     source = self.auth()
@@ -368,14 +369,14 @@ class PollHandler(BrowserHandler):
     self.output('OK')
 
 
-class TokenDomainsHandler(BrowserHandler):
+class TokenDomains(BrowserView):
   """Returns the domains that a token is registered for."""
   def post(self):
-    token = util.get_required_param(self, 'token')
+    token = flask_util.get_required_param('token')
 
     domains = [d.key.id() for d in Domain.query(Domain.tokens == token)]
     if not domains:
-      self.abort(404, f'No registered domains for token {token}')
+      abort(404, f'No registered domains for token {token}')
 
     self.output(domains)
 

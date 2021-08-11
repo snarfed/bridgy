@@ -24,7 +24,6 @@ import urllib.request, urllib.parse, urllib.error
 
 from google.cloud import ndb
 from oauth_dropins import wordpress_rest as oauth_wordpress
-from oauth_dropins.webutil.handlers import JINJA_ENV
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import webapp2
 
@@ -44,7 +43,7 @@ class WordPress(models.Source):
   The key name is the blog hostname.
   """
   GR_CLASS = collections.namedtuple('FakeGrClass', ('NAME',))(NAME='WordPress.com')
-  OAUTH_START_HANDLER = oauth_wordpress.StartHandler
+  OAUTH_START = oauth_wordpress.Start
   SHORT_NAME = 'wordpress'
 
   site_info = ndb.JsonProperty(compressed=True)  # from /sites/$site API call
@@ -186,7 +185,7 @@ class WordPress(models.Source):
     return json_loads(resp)
 
 
-class AddWordPress(oauth_wordpress.CallbackHandler, util.Handler):
+class AddWordPress(oauth_wordpress.Callback, util.View):
   def finish(self, auth_entity, state=None):
     if auth_entity:
       if int(auth_entity.blog_id) == 0:
@@ -212,26 +211,26 @@ class AddWordPress(oauth_wordpress.CallbackHandler, util.Handler):
     self.maybe_add_or_delete_source(WordPress, auth_entity, state)
 
 
-class ConfirmSelfHosted(util.Handler):
+class ConfirmSelfHosted(util.View):
   def post(self):
     self.maybe_add_or_delete_source(
       WordPress,
-      ndb.Key(urlsafe=util.get_required_param(self, 'auth_entity_key')).get(),
-      util.get_required_param(self, 'state'))
+      ndb.Key(urlsafe=flask_util.get_required_param('auth_entity_key')).get(),
+      flask_util.get_required_param('state'))
 
 
 class SuperfeedrNotifyHandler(superfeedr.NotifyHandler):
   SOURCE_CLS = WordPress
 
 
-ROUTES = [
-  # wordpress.com doesn't seem to use scope
-  # https://developer.wordpress.com/docs/oauth2/
-  ('/wordpress/start', util.oauth_starter(oauth_wordpress.StartHandler).to(
-    '/wordpress/add')),
-  ('/wordpress/confirm', ConfirmSelfHosted),
-  # This handles both add and delete. (WordPress.com only allows a single
-  # OAuth redirect URL.)
-  ('/wordpress/add', AddWordPress),
-  ('/wordpress/notify/(.+)', SuperfeedrNotifyHandler),
-]
+# ROUTES = [
+#   # wordpress.com doesn't seem to use scope
+#   # https://developer.wordpress.com/docs/oauth2/
+#   ('/wordpress/start', util.oauth_starter(oauth_wordpress.Start).to(
+#     '/wordpress/add')),
+#   ('/wordpress/confirm', ConfirmSelfHosted),
+#   # This handles both add and delete. (WordPress.com only allows a single
+#   # OAuth redirect URL.)
+#   ('/wordpress/add', AddWordPress),
+#   ('/wordpress/notify/(.+)', SuperfeedrNotifyHandler),
+# ]

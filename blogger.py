@@ -25,11 +25,11 @@ import logging
 import re
 import urllib.parse
 
+from flask import request
 from gdata.blogger.client import Query
 from gdata.client import Error
 from google.cloud import ndb
 from oauth_dropins import blogger as oauth_blogger
-from oauth_dropins.webutil.handlers import JINJA_ENV
 
 import models
 import superfeedr
@@ -48,7 +48,7 @@ class Blogger(models.Source):
   The key name is the blog id.
   """
   GR_CLASS = collections.namedtuple('FakeGrClass', ('NAME',))(NAME='Blogger')
-  OAUTH_START_HANDLER = oauth_blogger.StartHandler
+  OAUTH_START = oauth_blogger.Start
   SHORT_NAME = 'blogger'
   PATH_BLOCKLIST = (re.compile('^/search/.*'),)
 
@@ -63,11 +63,10 @@ class Blogger(models.Source):
     return 'https://www.blogger.com/blogger.g?blogID=%s#template' % self.key_id()
 
   @staticmethod
-  def new(handler, auth_entity=None, blog_id=None, **kwargs):
+  def new(auth_entity=None, blog_id=None, **kwargs):
     """Creates and returns a Blogger for the logged in user.
 
     Args:
-      handler: the current :class:`webapp2.RequestHandler`
       auth_entity: :class:`oauth_dropins.blogger.BloggerV2Auth`
       blog_id: which blog. optional. if not provided, uses the first available.
     """
@@ -164,7 +163,7 @@ class Blogger(models.Source):
     return resp
 
 
-class OAuthCallback(util.Handler):
+class OAuthCallback(util.View):
   """OAuth callback handler.
 
   Both the add and delete flows have to share this because Blogger's
@@ -172,7 +171,7 @@ class OAuthCallback(util.Handler):
   """
   def get(self):
     auth_entity = None
-    auth_entity_str_key = self.request.get('auth_entity')
+    auth_entity_str_key = request.values.get('auth_entity')
     if auth_entity_str_key:
       auth_entity = ndb.Key(urlsafe=auth_entity_str_key).get()
       if not auth_entity.blog_ids or not auth_entity.blog_hostnames:
@@ -182,7 +181,7 @@ class OAuthCallback(util.Handler):
       self.messages.add(
         "Couldn't fetch your blogs. Maybe you're not a Blogger user?")
 
-    state = self.request.get('state')
+    state = request.values.get('state')
     if not state:
       # state doesn't currently come through for Blogger. not sure why. doesn't
       # matter for now since we don't plan to implement listen or publish.
@@ -207,14 +206,14 @@ class OAuthCallback(util.Handler):
     self.response.out.write(JINJA_ENV.get_template('choose_blog.html').render(**vars))
 
 
-class AddBlogger(util.Handler):
+class AddBlogger(util.View):
   def post(self):
-    auth_entity_key = util.get_required_param(self, 'auth_entity_key')
+    auth_entity_key = flask_util.get_required_param('auth_entity_key')
     self.maybe_add_or_delete_source(
       Blogger,
       ndb.Key(urlsafe=auth_entity_key).get(),
-      util.get_required_param(self, 'state'),
-      blog_id=util.get_required_param(self, 'blog'),
+      flask_util.get_required_param('state'),
+      blog_id=flask_util.get_required_param('blog'),
     )
 
 
@@ -222,14 +221,14 @@ class SuperfeedrNotifyHandler(superfeedr.NotifyHandler):
   SOURCE_CLS = Blogger
 
 
-ROUTES = [
-  # Blogger only has one OAuth scope. oauth-dropins fills it in.
-  # https://developers.google.com/blogger/docs/2.0/developers_guide_protocol#OAuth2Authorizing
-  ('/blogger/start', util.oauth_starter(oauth_blogger.StartHandler).to(
-    '/blogger/oauth2callback')),
-  ('/blogger/oauth2callback', oauth_blogger.CallbackHandler.to('/blogger/oauth_handler')),
-  ('/blogger/oauth_handler', OAuthCallback),
-  ('/blogger/add', AddBlogger),
-  ('/blogger/delete/start', oauth_blogger.StartHandler.to('/blogger/oauth2callback')),
-  ('/blogger/notify/(.+)', SuperfeedrNotifyHandler),
-]
+# ROUTES = [
+#   # Blogger only has one OAuth scope. oauth-dropins fills it in.
+#   # https://developers.google.com/blogger/docs/2.0/developers_guide_protocol#OAuth2Authorizing
+#   ('/blogger/start', util.oauth_starter(oauth_blogger.Start).to(
+#     '/blogger/oauth2callback')),
+#   ('/blogger/oauth2callback', oauth_blogger.Callback.to('/blogger/oauth_handler')),
+#   ('/blogger/oauth_handler', OAuthCallback),
+#   ('/blogger/add', AddBlogger),
+#   ('/blogger/delete/start', oauth_blogger.Start.to('/blogger/oauth2callback')),
+#   ('/blogger/notify/(.+)', SuperfeedrNotifyHandler),
+# ]

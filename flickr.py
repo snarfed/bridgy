@@ -5,6 +5,7 @@ import models
 import util
 import webapp2
 
+from flask import request
 from google.cloud import ndb
 from granary import flickr as gr_flickr
 from granary.source import SELF
@@ -21,7 +22,7 @@ class Flickr(models.Source):
   # back the frequency for now.
   FAST_POLL = datetime.timedelta(minutes=60)
   GR_CLASS = gr_flickr.Flickr
-  OAUTH_START_HANDLER = oauth_flickr.StartHandler
+  OAUTH_START = oauth_flickr.Start
   SHORT_NAME = 'flickr'
   TRANSIENT_ERROR_HTTP_CODES = ('400',)
   CAN_PUBLISH = True
@@ -87,14 +88,14 @@ class Flickr(models.Source):
                         'flickr.com/photos/%s/' % self.key_id())
       url = url.replace('flickr.com/people/%s/' % self.username,
                         'flickr.com/people/%s/' % self.key_id())
-    return super(Flickr, self).canonicalize_url(url, **kwargs)
+    return super().canonicalize_url(url, **kwargs)
 
 
-class AuthHandler(util.Handler):
+class AuthHandler(util.View):
   """Base OAuth handler for Flickr."""
   def start_oauth_flow(self, feature):
     starter = util.oauth_starter(
-      oauth_flickr.StartHandler, feature=feature
+      oauth_flickr.Start, feature=feature
     ).to(
       # TODO: delete instead of write. if we do that below, it works, and we get
       # granted delete permissions. however, if we then attempt to actually
@@ -104,16 +105,16 @@ class AuthHandler(util.Handler):
       # permissions for the Bridgy app are back to write, not delete. wtf?!
       '/flickr/add', scopes='write' if feature == 'publish' else 'read'
     )
-    return starter(self.request, self.response).post()
+    return starter(request, self.response).post()
 
 
-class StartHandler(AuthHandler):
+class Start(AuthHandler):
   """Custom handler to start Flickr auth process."""
   def post(self):
-    return self.start_oauth_flow(self.request.get('feature'))
+    return self.start_oauth_flow(request.get('feature'))
 
 
-class AddFlickr(oauth_flickr.CallbackHandler, AuthHandler):
+class AddFlickr(oauth_flickr.Callback, AuthHandler):
   """Custom handler to add Flickr source when auth completes.
 
   If this account was previously authorized with greater permissions, this will
@@ -132,11 +133,11 @@ class AddFlickr(oauth_flickr.CallbackHandler, AuthHandler):
       return self.start_oauth_flow('publish')
 
 
-ROUTES = [
-  ('/flickr/start', StartHandler),
-  ('/flickr/add', AddFlickr),
-  ('/flickr/delete/finish',
-   oauth_flickr.CallbackHandler.to('/delete/finish')),
-  ('/flickr/publish/start',
-   oauth_flickr.StartHandler.to('/publish/flickr/finish')),
-]
+# ROUTES = [
+#   ('/flickr/start', Start),
+#   ('/flickr/add', AddFlickr),
+#   ('/flickr/delete/finish',
+#    oauth_flickr.Callback.to('/delete/finish')),
+#   ('/flickr/publish/start',
+#    oauth_flickr.Start.to('/publish/flickr/finish')),
+# ]

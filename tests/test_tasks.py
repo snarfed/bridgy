@@ -46,7 +46,7 @@ class TaskTest(testutil.ModelsTest):
     resp = tasks.application.get_response(
       self.post_url, method='POST',
       text=urllib.parse.urlencode(params), **kwargs)
-    self.assertEqual(expected_status, resp.status_int)
+    self.assertEqual(expected_status, resp.status_code)
 
   def assert_responses(self, expected=None, ignore=tuple()):
     """Asserts that all of self.responses are saved."""
@@ -1940,7 +1940,7 @@ class PropagateTest(TaskTest):
 
   def test_propagate_blogpost(self):
     """Blog post propagate task."""
-    source_key = FakeSource.new(None, domains=['fake']).put()
+    source_key = FakeSource.new(domains=['fake']).put()
     links = ['http://fake/post', '/no/domain', 'http://ok/one.png',
              'http://ok/two', 'http://ok/two', # repeated
              ]
@@ -1961,7 +1961,7 @@ class PropagateTest(TaskTest):
     self.assert_equals(NOW, source_key.get().last_webmention_sent)
 
   def test_propagate_blogpost_allows_bridgy_publish_links(self):
-    source_key = FakeSource.new(None, domains=['fake']).put()
+    source_key = FakeSource.new(domains=['fake']).put()
     blogpost = models.BlogPost(id='http://x', source=source_key,
                                unsent=['https://brid.gy/publish/twitter'])
     blogpost.put()
@@ -1980,7 +1980,7 @@ class PropagateTest(TaskTest):
                             sent=['https://brid.gy/publish/twitter'])
 
   def test_propagate_blogpost_follows_redirects_before_checking_self_link(self):
-    source_key = FakeSource.new(None, domains=['fake']).put()
+    source_key = FakeSource.new(domains=['fake']).put()
     blogpost = models.BlogPost(id='http://x', source=source_key,
                                unsent=['http://will/redirect'])
     blogpost.put()

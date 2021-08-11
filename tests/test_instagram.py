@@ -37,16 +37,16 @@ HTML_VIDEO_COMPLETE = HTML_HEADER + json_dumps(HTML_VIDEO_WITH_VIEWER) + HTML_FO
 class InstagramTest(ModelsTest):
 
   def setUp(self):
-    super(InstagramTest, self).setUp()
-    self.source = Instagram.new(self.handler, actor=self.actor)
+    super().setUp()
+    self.source = Instagram.new(actor=self.actor)
     self.domain = Domain(id='snarfed.org', tokens=['towkin']).put()
     self.auth = f'token=towkin&key={self.source.key.urlsafe().decode()}'
 
   def get_response(self, path_query, auth=True, **kwargs):
     if auth and '?' not in path_query:
       path_query += f'?{self.auth}'
-    return app.application.get_response(f'/instagram/browser/{path_query}',
-                                        method='POST', **kwargs)
+    return self.client.get(f'/instagram/browser/{path_query}',
+                           method='POST', **kwargs)
 
   def store_activity(self):
     activity = copy.deepcopy(HTML_PHOTO_ACTIVITY)
@@ -95,7 +95,7 @@ class InstagramTest(ModelsTest):
     Activity(id='tag:instagram.com,2013:456', source=self.source.key,
              activity_json=json_dumps({'baz': 'biff'})).put()
 
-    other = Instagram.new(self.handler, actor={'username': 'other'}).put()
+    other = Instagram.new(actor={'username': 'other'}).put()
     Activity(id='tag:instagram.com,2013:789', source=other,
              activity_json=json_dumps({'boo': 'bah'})).put()
 
@@ -130,13 +130,13 @@ class InstagramTest(ModelsTest):
 
   def test_homepage(self):
     resp = self.get_response('homepage', text=HTML_FEED_COMPLETE)
-    self.assertEqual(200, resp.status_int)
+    self.assertEqual(200, resp.status_code)
     self.assertEqual('snarfed', resp.json)
 
   def test_homepage_bad_html(self):
     resp = self.get_response('homepage', text='not a logged in IG feed')
-    self.assertEqual(400, resp.status_int)
-    self.assertIn("Couldn't determine logged in Instagram user", resp.text)
+    self.assertEqual(400, resp.status_code)
+    self.assertIn("Couldn't determine logged in Instagram user", resp.get_data(as_text=True))
 
   def test_profile_new_user(self):
     self.assertIsNone(Instagram.get_by_id('snarfed'))
@@ -146,7 +146,7 @@ class InstagramTest(ModelsTest):
 
     resp = self.get_response('profile?token=towkin', text=HTML_PROFILE_COMPLETE)
 
-    self.assertEqual(200, resp.status_int)
+    self.assertEqual(200, resp.status_code)
     self.assertEqual(self.source.key.urlsafe().decode(), resp.json)
 
     ig = Instagram.get_by_id('snarfed')
@@ -158,14 +158,14 @@ class InstagramTest(ModelsTest):
 
   def test_profile_private_account(self):
     resp = self.get_response('profile', text=HTML_PROFILE_PRIVATE_COMPLETE)
-    self.assertEqual(400, resp.status_int)
-    self.assertIn('Your Instagram account is private.', resp.text)
+    self.assertEqual(400, resp.status_code)
+    self.assertIn('Your Instagram account is private.', resp.get_data(as_text=True))
 
   def test_post(self):
     self.source.put()
 
     resp = self.get_response('post', text=HTML_VIDEO_COMPLETE)
-    self.assertEqual(200, resp.status_int, resp.text)
+    self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
     self.assertEqual(HTML_VIDEO_ACTIVITY_FULL, resp.json)
 
     activities = Activity.query().fetch()
@@ -177,8 +177,8 @@ class InstagramTest(ModelsTest):
     self.source.put()
     empty = HTML_HEADER + json_dumps({'config': HTML_VIEWER_CONFIG}) + HTML_FOOTER
     resp = self.get_response('post', text=empty)
-    self.assertEqual(400, resp.status_int)
-    self.assertIn('No Instagram post found in HTML', resp.text)
+    self.assertEqual(400, resp.status_code)
+    self.assertIn('No Instagram post found in HTML', resp.get_data(as_text=True))
 
   def test_post_merge_comments(self):
     self.source.put()
@@ -195,7 +195,7 @@ class InstagramTest(ModelsTest):
     # send HTML_VIDEO_COMPLETE to /post, check that the response and stored
     # activity have both of its comments
     resp = self.get_response('post', text=HTML_VIDEO_COMPLETE)
-    self.assertEqual(200, resp.status_int, resp.text)
+    self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
     self.assert_equals(HTML_VIDEO_ACTIVITY_FULL, resp.json)
 
     activity = activity_key.get()
@@ -207,7 +207,7 @@ class InstagramTest(ModelsTest):
 
     resp = self.get_response(f'likes?id=tag:instagram.com,2013:123_456&{self.auth}',
                              text=json_dumps(HTML_PHOTO_LIKES_RESPONSE))
-    self.assertEqual(200, resp.status_int, resp.text)
+    self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
     self.assertEqual(LIKE_OBJS, resp.json)
 
     activity = json_loads(key.get().activity_json)
@@ -220,5 +220,5 @@ class InstagramTest(ModelsTest):
     self.mox.ReplayAll()
 
     resp = self.get_response(f'poll')
-    self.assertEqual(200, resp.status_int, resp.text)
+    self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
     self.assertEqual('OK', resp.json)

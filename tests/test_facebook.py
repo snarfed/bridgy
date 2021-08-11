@@ -31,9 +31,9 @@ from .testutil import ModelsTest
 class FacebookTest(ModelsTest):
 
   def setUp(self):
-    super(FacebookTest, self).setUp()
+    super().setUp()
     self.actor['numeric_id'] = '212038'
-    self.source = Facebook.new(self.handler, actor=self.actor)
+    self.source = Facebook.new(actor=self.actor)
     self.domain = Domain(id='snarfed.org', tokens=['towkin']).put()
     self.auth = f'token=towkin&key={self.source.key.urlsafe().decode()}'
     self.mox.StubOutWithMock(gr_facebook, 'now_fn')
@@ -41,7 +41,7 @@ class FacebookTest(ModelsTest):
   def get_response(self, path_query, auth=True, **kwargs):
     if auth and '?' not in path_query:
       path_query += f'?{self.auth}'
-    return app.application.get_response(f'/facebook/browser/{path_query}',
+    return self.client.get(f'/facebook/browser/{path_query}',
                             method='POST', **kwargs)
 
   def store_activity(self):
@@ -94,7 +94,7 @@ class FacebookTest(ModelsTest):
     self.mox.ReplayAll()
 
     resp = self.get_response('profile?token=towkin', text=MBASIC_HTML_ABOUT)
-    self.assertEqual(200, resp.status_int, resp.text)
+    self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
     self.assertEqual(self.source.key.urlsafe().decode(), resp.json)
 
     fb = Facebook.get_by_id('212038')
@@ -109,7 +109,7 @@ class FacebookTest(ModelsTest):
     self.mox.ReplayAll()
 
     resp = self.get_response('feed', text=MBASIC_HTML_TIMELINE)
-    self.assertEqual(200, resp.status_int, resp.text)
+    self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
     self.assertEqual(MBASIC_ACTIVITIES, resp.json)
 
   def test_post(self):
@@ -118,7 +118,7 @@ class FacebookTest(ModelsTest):
     self.mox.ReplayAll()
 
     resp = self.get_response(f'post', text=MBASIC_HTML_POST)
-    self.assertEqual(200, resp.status_int, resp.text)
+    self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
     self.assertEqual(MBASIC_ACTIVITY, resp.json)
 
     activities = Activity.query().fetch()
@@ -133,8 +133,8 @@ class FacebookTest(ModelsTest):
                              text="""\
     <!DOCTYPE html>
     <html><body></body></html>""")
-    self.assertEqual(400, resp.status_int, resp.text)
-    self.assertIn('No Facebook post found in HTML', resp.text)
+    self.assertEqual(400, resp.status_code, resp.get_data(as_text=True))
+    self.assertIn('No Facebook post found in HTML', resp.get_data(as_text=True))
 
   def test_post_merge_comments(self):
     key = self.source.put()
@@ -153,7 +153,7 @@ class FacebookTest(ModelsTest):
     # send MBASIC_HTML_POST to /post, check that the response and stored
     # activity have both of its comments
     resp = self.get_response('post', text=MBASIC_HTML_POST)
-    self.assertEqual(200, resp.status_int, resp.text)
+    self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
     self.assert_equals(MBASIC_ACTIVITY, resp.json)
 
     activity = activity_key.get()
@@ -165,7 +165,7 @@ class FacebookTest(ModelsTest):
     resp = self.get_response(f'likes?id=tag:facebook.com,2013:123&{self.auth}',
                              text=MBASIC_HTML_REACTIONS)
 
-    self.assertEqual(200, resp.status_int, resp.text)
+    self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
     self.assert_equals(MBASIC_REACTION_TAGS('123'), resp.json)
 
     activity = json_loads(key.get().activity_json)
@@ -178,5 +178,5 @@ class FacebookTest(ModelsTest):
     self.mox.ReplayAll()
 
     resp = self.get_response(f'poll')
-    self.assertEqual(200, resp.status_int, resp.text)
+    self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
     self.assertEqual('OK', resp.json)

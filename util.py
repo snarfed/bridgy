@@ -16,6 +16,8 @@ import urllib.request, urllib.parse, urllib.error
 import zlib
 
 from cachetools import TTLCache
+from flask import request
+import flask.views
 from google.cloud import ndb
 from google.cloud.tasks_v2 import CreateTaskRequest
 from google.protobuf.timestamp_pb2 import Timestamp
@@ -23,7 +25,6 @@ import google.protobuf.message
 import humanize
 from oauth_dropins.webutil.appengine_config import error_reporting_client, tasks_client
 from oauth_dropins.webutil.appengine_info import APP_ID, LOCAL
-from oauth_dropins.webutil import handlers as webutil_handlers
 from oauth_dropins.webutil.models import StringIdModel
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import *
@@ -99,10 +100,6 @@ LOCAL_DOMAINS = (
   'my.dev.com:8080',
 )
 DOMAINS = (PRIMARY_DOMAIN,) + OTHER_DOMAINS + LOCAL_DOMAINS
-
-webutil_handlers.JINJA_ENV.globals.update({
-  'naturaltime': humanize.naturaltime,
-})
 
 # https://cloud.google.com/appengine/docs/locations
 TASKS_LOCATION = 'us-central1'
@@ -401,8 +398,8 @@ def load_source(handler, param='source_key'):
   return source
 
 
-class Handler(webutil_handlers.ModernHandler):
-  """Includes misc request handler utilities.
+class View(flask.views.View):
+  """Includes misc view utilities.
 
   Attributes:
     messages: list of notification messages to be rendered in this page or
@@ -410,7 +407,7 @@ class Handler(webutil_handlers.ModernHandler):
   """
 
   def __init__(self, *args, **kwargs):
-    super(Handler, self).__init__(*args, **kwargs)
+    super().__init__(*args, **kwargs)
     self.messages = set()
 
   def redirect(self, uri, **kwargs):
@@ -419,13 +416,13 @@ class Handler(webutil_handlers.ModernHandler):
     if self.messages and not parts[5]:  # parts[5] is fragment
       parts[5] = '!' + urllib.parse.quote('\n'.join(self.messages).encode())
     uri = urllib.parse.urlunparse(parts)
-    super(Handler, self).redirect(uri, **kwargs)
+    super().redirect(uri, **kwargs)
 
   def maybe_add_or_delete_source(self, source_cls, auth_entity, state, **kwargs):
     """Adds or deletes a source if auth_entity is not None.
 
-    Used in each source's oauth-dropins :meth:`CallbackHandler.finish()` and
-    :meth:`CallbackHandler.get()` methods, respectively.
+    Used in each source's oauth-dropins :meth:`Callback.finish()` and
+    :meth:`Callback.get()` methods, respectively.
 
     Args:
       source_cls: source class, e.g. :class:`instagram.Instagram`
@@ -458,7 +455,7 @@ class Handler(webutil_handlers.ModernHandler):
             'user declined adding source, redirect to external callback %s',
             callback)
           # call super.redirect so the callback url is unmodified
-          super(Handler, self).redirect(callback)
+          super().redirect(callback)
         else:
           return redirect('/')
         return
@@ -486,7 +483,7 @@ class Handler(webutil_handlers.ModernHandler):
         logging.debug(
           'finished adding source, redirect to external callback %s', callback)
         # call super.redirect so the callback url is unmodified
-        super(Handler, self).redirect(callback)
+        super().redirect(callback)
 
       elif source and not source.domains:
         return redirect('/edit-websites?' + urllib.parse.urlencode({
@@ -525,7 +522,7 @@ class Handler(webutil_handlers.ModernHandler):
     """
     state_obj = util.decode_oauth_state(state)
     if not state_obj:
-      state_obj = {field: self.request.get(field) for field in
+      state_obj = {field: request.values.get(field) for field in
                    ('callback', 'feature', 'id', 'user_url')}
       state_obj['operation'] = 'add'
 
@@ -540,7 +537,7 @@ class Handler(webutil_handlers.ModernHandler):
     Returns:
       list of :class:`Login` objects
     """
-    cookie = self.request.headers.get('Cookie', '')
+    cookie = request.headers.get('Cookie', '')
     if cookie:
       logging.info('Cookie: %s', cookie)
 
@@ -604,22 +601,6 @@ class Handler(webutil_handlers.ModernHandler):
 
   def load_source(self, **kwargs):
     return load_source(self, **kwargs)
-
-
-def oauth_starter(oauth_start_handler, **kwargs):
-  """Returns an oauth-dropins start handler that injects the state param.
-
-  Args:
-    oauth_start_handler: oauth-dropins :class:`StartHandler` to use,
-      e.g. :class:`oauth_dropins.twitter.StartHandler`.
-    kwargs: passed to :meth:`construct_state_param_for_add()`
-  """
-  class StartHandler(oauth_start_handler, Handler):
-    def redirect_url(self, state=None, **ru_kwargs):
-      return super(StartHandler, self).redirect_url(
-        self.construct_state_param_for_add(state, **kwargs), **ru_kwargs)
-
-  return StartHandler
 
 
 class CachedPage(StringIdModel):
@@ -708,16 +689,3 @@ def background_handle_exception(handler, e, debug):
     handler.abort(ERROR_HTTP_RETURN_CODE)
   else:
     raise
-
-
-class NoopHandler(Handler):
-  """Returns 200 and does nothing. Useful for /_ah/start, /_ah/stop, etc.
-
-  https://cloud.google.com/appengine/docs/standard/python3/how-instances-are-managed#startup
-  """
-
-  def get(self, *args):
-    pass
-
-  def post(self, *args):
-    pass

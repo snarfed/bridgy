@@ -1,4 +1,4 @@
-"""Common handlers, e.g. post and comment permalinks.
+"""Common views, e.g. post and comment permalinks.
 
 Docs: https://brid.gy/about#source-urls
 
@@ -19,17 +19,20 @@ URL paths are:
 /rsvp/SITE/USER_ID/EVENT_ID/RSVP_USER_ID
   e.g. /rsvp/facebook/212038/12345/67890
 """
+import datetime
 import logging
 import re
 import string
 
-from cachetools import cachedmethod, TTLCache
+from flask import abort, request
+from flask.views import View
 from granary import microformats2
 from granary.microformats2 import first_props
 from oauth_dropins.webutil import handlers
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import webapp2
 
+from app import app, cache
 import models
 import original_post_discovery
 import util
@@ -37,7 +40,7 @@ import util
 # Import source class files so their metaclasses are initialized.
 import blogger, flickr, github, instagram, mastodon, medium, reddit, tumblr, twitter, wordpress_rest
 
-CACHE_TIME = 60 * 15  # 15m
+CACHE_TIME = datetime.timedelta(minutes=15)
 
 TEMPLATE = string.Template("""\
 <!DOCTYPE html>
@@ -68,18 +71,14 @@ $body
 """)
 
 
-class ItemHandler(util.Handler):
+class Item(util.View):
   """Fetches a post, repost, like, or comment and serves it as mf2 HTML or JSON.
   """
-  handle_exception = handlers.handle_exception
   source = None
 
   VALID_ID = re.compile(r'^[\w.+:@=<>-]+$')
 
-  def head(self, *args):
-    """Return an empty 200 with no caching directives."""
-
-  def get_item(self, id, **kwargs):
+  def get_item(self, **kwargs):
     """Fetches and returns an object from the given source.
 
     To be implemented by subclasses.
@@ -115,50 +114,45 @@ class ItemHandler(util.Handler):
     except Exception as e:
       util.interpret_http_exception(e)
 
-  def get(self, type, source_short_name, string_id, *ids):
-    source_cls = models.sources.get(source_short_name)
-    if not source_cls:
-      self.abort(400, "Source type '%s' not found. Known sources: %s" %
-                 (source_short_name, filter(None, models.sources.keys())))
+  @cache.cached(CACHE_TIME.total_seconds())
+  def dispatch_request(self, site, key_id, **kwargs):
+    """Handle HTTP request."""
+    if request.method == 'HEAD':
+      # Return an empty 200 with no caching directives.
+      return ''
 
-    self.source = source_cls.get_by_id(string_id)
+    source_cls = models.sources.get(site)
+    if not source_cls:
+      abort(400, "Source type '%s' not found. Known sources: %s" %
+            (site, filter(None, models.sources.keys())))
+
+    self.source = source_cls.get_by_id(key_id)
     if not self.source:
-      self.abort(400, 'Source %s %s not found' % (source_short_name, string_id))
+      abort(400, f'Source {site} {key_id} not found')
     elif (self.source.status == 'disabled' or
           'listen' not in self.source.features):
-      self.abort(400, 'Source %s is disabled for backfeed' % self.source.bridgy_path())
+      abort(400, f'Source {self.source.bridgy_path()} is disabled for backfeed')
 
-    format = self.request.get('format', 'html')
+    format = request.values.get('format', 'html')
     if format not in ('html', 'json'):
-      self.abort(400, 'Invalid format %s, expected html or json' % format)
+      abort(400, f'Invalid format {format}, expected html or json')
 
-    for id in ids:
+    for id in kwargs.values():
       if not self.VALID_ID.match(id):
-        self.abort(404, 'Invalid id %s' % id)
+        abort(404, f'Invalid id {id}')
 
     try:
-      obj = self.get_item(*ids)
+      obj = self.get_item(**kwargs)
     except models.DisableSource as e:
-      self.abort(401, "Bridgy's access to your account has expired. Please visit https://brid.gy/ to refresh it!")
+      abort(401, "Bridgy's access to your account has expired. Please visit https://brid.gy/ to refresh it!")
     except ValueError as e:
-      self.abort(400, '%s error:\n%s' % (self.source.GR_CLASS.NAME, e))
-    except Exception as e:
-      # pass through all API HTTP errors if we can identify them
-      code, body = util.interpret_http_exception(e)
-      if code:
-        self.response.status_int = int(code)
-        self.response.headers['Content-Type'] = 'text/plain'
-        self.response.write('%s error:\n%s' % (self.source.GR_CLASS.NAME, body))
-        return
-      else:
-        raise
+      abort(400, f'{self.source.GR_CLASS.NAME} error: {e}')
 
     if not obj:
-      self.abort(404, 'Not found: %s:%s %s %s' %
-                      (source_short_name, string_id, type, ids))
+      abort(404, f'Not found: {site}:{key_id} {kwargs}')
 
     if self.source.is_blocked(obj):
-      self.abort(410, 'That user is currently blocked')
+      abort(410, 'That user is currently blocked')
 
     # use https for profile pictures so we don't cause SSL mixed mode errors
     # when serving over https.
@@ -166,7 +160,7 @@ class ItemHandler(util.Handler):
     image = author.get('image', {})
     url = image.get('url')
     if url:
-      image['url'] = util.update_scheme(url, self)
+      image['url'] = util.update_scheme(url, request)
 
     mf2_json = microformats2.object_to_json(obj, synthesize_content=False)
 
@@ -185,20 +179,17 @@ class ItemHandler(util.Handler):
           pass
 
     # write the response!
-    self.response.headers['Access-Control-Allow-Origin'] = '*'
     if format == 'html':
-      self.response.headers['Content-Type'] = 'text/html; charset=utf-8'
       url = obj.get('url', '')
-      self.response.out.write(TEMPLATE.substitute({
-        'refresh': (('<meta http-equiv="refresh" content="0;url=%s">' % url)
+      return TEMPLATE.substitute({
+        'refresh': (f'<meta http-equiv="refresh" content="0;url={url}">'
                     if url else ''),
         'url': url,
         'body': microformats2.json_to_html(mf2_json),
         'title': obj.get('title') or obj.get('content') or 'Bridgy Response',
-      }))
+      })
     elif format == 'json':
-      self.response.headers['Content-Type'] = 'application/json; charset=utf-8'
-      self.response.out.write(json_dumps(mf2_json, indent=2))
+      return mf2_json
 
   def merge_urls(self, obj, property, urls, object_type='article'):
     """Updates an object's ActivityStreams URL objects in place.
@@ -223,11 +214,10 @@ class ItemHandler(util.Handler):
 
 # Note that mention links are included in posts and comments, but not
 # likes, reposts, or rsvps. Matches logic in poll() (step 4) in tasks.py!
-class PostHandler(ItemHandler):
-  cache = TTLCache(100, CACHE_TIME)
-  @cachedmethod(lambda self: self.cache)
-  def get_item(self, id):
-    posts = self.source.get_activities(activity_id=id, user_id=self.source.key_id())
+class Post(Item):
+  def get_item(self, post_id):
+    posts = self.source.get_activities(activity_id=post_id,
+                                       user_id=self.source.key_id())
     if not posts:
       return None
 
@@ -240,16 +230,14 @@ class PostHandler(ItemHandler):
     self.merge_urls(obj, 'tags', mentions, object_type='mention')
     return obj
 
-class CommentHandler(ItemHandler):
-  cache = TTLCache(100, CACHE_TIME)
-  @cachedmethod(lambda self: self.cache)
-  def get_item(self, post_id, id):
+class Comment(Item):
+  def get_item(self, post_id, comment_id):
     fetch_replies = not self.source.gr_source.OPTIMIZED_COMMENTS
     post = self.get_post(post_id, fetch_replies=fetch_replies)
     has_replies = (post.get('object', {}).get('replies', {}).get('items')
                    if post else False)
     cmt = self.source.get_comment(
-      id, activity_id=post_id, activity_author_id=self.source.key_id(),
+      comment_id, activity_id=post_id, activity_author_id=self.source.key_id(),
       activity=post if fetch_replies or has_replies else None)
     if post:
       originals, mentions = original_post_discovery.discover(
@@ -259,9 +247,7 @@ class CommentHandler(ItemHandler):
     return cmt
 
 
-class LikeHandler(ItemHandler):
-  cache = TTLCache(200, CACHE_TIME)
-  @cachedmethod(lambda self: self.cache)
+class Like(Item):
   def get_item(self, post_id, user_id):
     post = self.get_post(post_id, fetch_likes=True)
     like = self.source.get_like(self.source.key_id(), post_id, user_id,
@@ -273,9 +259,7 @@ class LikeHandler(ItemHandler):
     return like
 
 
-class ReactionHandler(ItemHandler):
-  cache = TTLCache(100, CACHE_TIME)
-  @cachedmethod(lambda self: self.cache)
+class Reaction(Item):
   def get_item(self, post_id, user_id, reaction_id):
     post = self.get_post(post_id)
     reaction = self.source.gr_source.get_reaction(
@@ -287,9 +271,7 @@ class ReactionHandler(ItemHandler):
     return reaction
 
 
-class RepostHandler(ItemHandler):
-  cache = TTLCache(100, CACHE_TIME)
-  @cachedmethod(lambda self: self.cache)
+class Repost(Item):
   def get_item(self, post_id, share_id):
     post = self.get_post(post_id, fetch_shares=True)
     repost = self.source.gr_source.get_share(
@@ -305,9 +287,7 @@ class RepostHandler(ItemHandler):
     return repost
 
 
-class RsvpHandler(ItemHandler):
-  cache = TTLCache(100, CACHE_TIME)
-  @cachedmethod(lambda self: self.cache)
+class Rsvp(Item):
   def get_item(self, event_id, user_id):
     event = self.source.gr_source.get_event(event_id)
     rsvp = self.source.gr_source.get_rsvp(
@@ -319,11 +299,21 @@ class RsvpHandler(ItemHandler):
     return rsvp
 
 
-ROUTES = [
-  ('/(post)/(.+)/(.+)/(.+)', PostHandler),
-  ('/(comment)/(.+)/(.+)/(.+)/(.+)', CommentHandler),
-  ('/(like)/(.+)/(.+)/(.+)/(.+)', LikeHandler),
-  ('/(react)/(.+)/(.+)/(.+)/(.+)/(.+)', ReactionHandler),
-  ('/(repost)/(.+)/(.+)/(.+)/(.+)', RepostHandler),
-  ('/(rsvp)/(.+)/(.+)/(.+)/(.+)', RsvpHandler),
-]
+app.add_url_rule('/post/<site>/<key_id>/<post_id>',
+                 view_func=Post.as_view('post'),
+                 methods=('GET', 'HEAD'))
+app.add_url_rule('/comment/<site>/<key_id>/<post_id>/<comment_id>',
+                 view_func=Comment.as_view('comment'),
+                 methods=('GET', 'HEAD'))
+app.add_url_rule('/like/<site>/<key_id>/<post_id>/<user_id>',
+                 view_func=Like.as_view('like'),
+                 methods=('GET', 'HEAD'))
+app.add_url_rule('/react/<site>/<key_id>/<post_id>/<user_id>/<reaction_id>',
+                 view_func=Reaction.as_view('react'),
+                 methods=('GET', 'HEAD'))
+app.add_url_rule('/repost/<site>/<key_id>/<post_id>/<share_id>',
+                 view_func=Repost.as_view('repost'),
+                 methods=('GET', 'HEAD'))
+app.add_url_rule('/rsvp/<site>/<key_id>/<event_id>/<user_id>',
+                 view_func=Rsvp.as_view('rsvp'),
+                 methods=('GET', 'HEAD'))

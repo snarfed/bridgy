@@ -18,7 +18,7 @@ class FakeNotifyHandler(superfeedr.NotifyHandler):
 fake_app = webapp2.WSGIApplication([('/notify/(.+)', FakeNotifyHandler)], debug=True)
 
 
-class SuperfeedrTest(testutil.HandlerTest):
+class SuperfeedrTest(testutil.TestCase):
 
   def setUp(self):
     super(SuperfeedrTest, self).setUp()
@@ -54,7 +54,7 @@ class SuperfeedrTest(testutil.HandlerTest):
     self.expect_task('propagate-blogpost', key=post_b)
     self.mox.ReplayAll()
 
-    superfeedr.subscribe(self.source, self.handler)
+    superfeedr.subscribe(self.source, self.view)
     self.assert_blogposts([post_a, post_b])
 
   def test_handle_feed(self):
@@ -122,7 +122,7 @@ class SuperfeedrTest(testutil.HandlerTest):
     superfeedr.handle_feed(json_dumps({'items': [item]}), self.source)
     self.assert_blogposts([post])
 
-  def test_notify_handler(self):
+  def test_notify_view(self):
     item = {'id': 'X', 'content': 'a http://x/y z'}
     post = BlogPost(id='X', source=self.source.key, feed_item=item,
                     unsent=['http://x/y'])
@@ -132,7 +132,7 @@ class SuperfeedrTest(testutil.HandlerTest):
     self.feed = json_dumps({'items': [item]})
     resp = fake_app.get_response('/notify/foo.com', method='POST', text=self.feed)
 
-    self.assertEqual(200, resp.status_int)
+    self.assertEqual(200, resp.status_code)
     self.assert_blogposts([post])
 
   def test_notify_url_too_long(self):
@@ -140,7 +140,7 @@ class SuperfeedrTest(testutil.HandlerTest):
     self.feed = json_dumps({'items': [item]})
     resp = fake_app.get_response('/notify/foo.com', method='POST', text=self.feed)
 
-    self.assertEqual(200, resp.status_int)
+    self.assertEqual(200, resp.status_code)
     self.assert_blogposts([BlogPost(id='X' * _MAX_KEYPART_BYTES,
                                     source=self.source.key, feed_item=item,
                                     failed=['http://x/y'], status='complete')])
@@ -156,7 +156,7 @@ class SuperfeedrTest(testutil.HandlerTest):
     self.feed = json_dumps({'items': [item]})
     resp = fake_app.get_response('/notify/foo.com', method='POST', text=self.feed)
 
-    self.assertEqual(200, resp.status_int)
+    self.assertEqual(200, resp.status_code)
     self.assert_blogposts([post])
 
   def test_notify_utf8(self):
@@ -164,7 +164,7 @@ class SuperfeedrTest(testutil.HandlerTest):
     self.feed = '{"items": [{"id": "X", "content": "a ☕ z"}]}'
     resp = fake_app.get_response('/notify/foo.com', method='POST', text=self.feed)
 
-    self.assertEqual(200, resp.status_int)
+    self.assertEqual(200, resp.status_code)
     self.assert_blogposts([BlogPost(id='X', source=self.source.key,
                                     feed_item={'id': 'X', 'content': 'a ☕ z'},
                                     status='complete')])

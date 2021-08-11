@@ -189,7 +189,7 @@ class ResponseTest(testutil.ModelsTest):
 
   def test_url(self):
     self.assertEqual('http://localhost/fake/%s' % self.sources[0].key.string_id(),
-                     self.sources[0].bridgy_url(self.handler))
+                     self.sources[0].bridgy_url(self.view))
 
   def test_get_or_save_empty_unsent_no_task(self):
     self.responses[0].unsent = []
@@ -219,7 +219,7 @@ class ResponseTest(testutil.ModelsTest):
     }))
 
 
-class SourceTest(testutil.HandlerTest):
+class SourceTest(testutil.ViewTest):
 
   def test_sources_global(self):
     self.assertEqual(blogger.Blogger, models.sources['blogger'])
@@ -230,7 +230,7 @@ class SourceTest(testutil.HandlerTest):
     self.assertEqual(wordpress_rest.WordPress, models.sources['wordpress'])
 
   def _test_create_new(self, **kwargs):
-    FakeSource.create_new(self.handler, domains=['foo'],
+    FakeSource.create.new(domains=['foo'],
                           domain_urls=['http://foo.com'],
                           webmention_endpoint='http://x/y',
                           **kwargs)
@@ -248,7 +248,7 @@ class SourceTest(testutil.HandlerTest):
 
     self._test_create_new(features=['listen'])
     msg = "Added fake (FakeSource). Refresh in a minute to see what we've found!"
-    self.assert_equals({msg}, self.handler.messages)
+    self.assert_equals({msg}, self.view.messages)
 
   def test_escape_key_id(self):
     s = Source(id='__foo__')
@@ -256,7 +256,7 @@ class SourceTest(testutil.HandlerTest):
     self.assert_equals('__foo__', s.key_id())
 
   def test_get_activities_injects_web_site_urls_into_user_mentions(self):
-    source = FakeSource.new(None, domain_urls=['http://site1/', 'http://site2/'])
+    source = FakeSource.new(domain_urls=['http://site1/', 'http://site2/'])
     source.put()
 
     mention = {
@@ -280,7 +280,7 @@ class SourceTest(testutil.HandlerTest):
     self.assert_equals([mention], got['items'])
 
   def test_get_comment_injects_web_site_urls_into_user_mentions(self):
-    source = FakeSource.new(None, domain_urls=['http://site1/', 'http://site2/'])
+    source = FakeSource.new(domain_urls=['http://site1/', 'http://site2/'])
     source.put()
 
     user_id = 'tag:fa.ke,2013:%s' % source.key.id()
@@ -308,7 +308,7 @@ class SourceTest(testutil.HandlerTest):
       'last_syndication_url': long_ago + datetime.timedelta(days=4),
       'superfeedr_secret': 'asdfqwert',
       }
-    key = FakeSource.new(None, features=['listen'], **props).put()
+    key = FakeSource.new(features=['listen'], **props).put()
     self.assert_equals(['listen'], FakeSource.query().get().features)
 
     for queue in 'poll-now', 'poll':
@@ -326,12 +326,12 @@ class SourceTest(testutil.HandlerTest):
     for prop, value in props.items():
       self.assert_equals(value, getattr(source, prop), prop)
 
-    msg = next(iter(self.handler.messages))
+    msg = next(iter(self.view.messages))
     self.assertIn('Updated fake (FakeSource)', msg)
 
   def test_create_new_publish(self):
     """If a source is publish only, we shouldn't insert a poll task."""
-    FakeSource.create_new(self.handler, features=['publish'])
+    FakeSource.create.new(features=['publish'])
     # tasks_client is stubbed out, it will complain if it gets called
 
   def test_create_new_webmention(self):
@@ -343,10 +343,10 @@ class SourceTest(testutil.HandlerTest):
       assert isinstance(source, FakeSource)
       assert source.is_saved
       return True
-    superfeedr.subscribe(mox.Func(check_source), self.handler)
+    superfeedr.subscribe(mox.Func(check_source), self.view)
 
     self.mox.ReplayAll()
-    FakeSource.create_new(self.handler, features=['webmention'],
+    FakeSource.create.new(features=['webmention'],
                           domains=['primary/'], domain_urls=['http://primary/'])
 
   def test_create_new_domain(self):
@@ -370,7 +370,7 @@ class SourceTest(testutil.HandlerTest):
       if user_json is not None:
         auth_entity = testutil.FakeAuthEntity(id='x', user_json=json_dumps(user_json))
         auth_entity.put()
-      source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
+      source = FakeSource.create.new(auth_entity=auth_entity)
       self.assertEqual([], source.domains)
       self.assertEqual([], source.domain_urls)
 
@@ -381,7 +381,7 @@ class SourceTest(testutil.HandlerTest):
       auth_entity = testutil.FakeAuthEntity(
         id='x', user_json=json_dumps({'url': url}))
       auth_entity.put()
-      source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
+      source = FakeSource.create.new(auth_entity=auth_entity)
       self.assertEqual([url.lower()], source.domain_urls)
       self.assertEqual(['foo.com'], source.domains)
 
@@ -394,7 +394,7 @@ class SourceTest(testutil.HandlerTest):
                    'https://baj/biff?utm_campaign=x&utm_source=y')],
           }))
     auth_entity.put()
-    source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
+    source = FakeSource.create.new(auth_entity=auth_entity)
     self.assertEqual(['http://foo.org/', 'http://bar.com/', 'http://baz/',
                        'https://baj/biff'],
                       source.domain_urls)
@@ -408,7 +408,7 @@ class SourceTest(testutil.HandlerTest):
     self.expect_requests_head('http://orig', redirected_url='http://final')
     self.mox.ReplayAll()
 
-    source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
+    source = FakeSource.create.new(auth_entity=auth_entity)
     self.assertEqual(['http://final/'], source.domain_urls)
     self.assertEqual(['final'], source.domains)
 
@@ -421,7 +421,7 @@ class SourceTest(testutil.HandlerTest):
     self.expect_requests_head('http://site', redirected_url='https://site/path')
     self.mox.ReplayAll()
 
-    source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
+    source = FakeSource.create.new(auth_entity=auth_entity)
     self.assertEqual(['http://site/'], source.domain_urls)
     self.assertEqual(['site'], source.domains)
 
@@ -434,7 +434,7 @@ class SourceTest(testutil.HandlerTest):
     self.expect_requests_get('http://site', '<html><a href="http://site/path" rel="me">http://site/path</a></html>')
     self.mox.ReplayAll()
 
-    source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
+    source = FakeSource.create.new(auth_entity=auth_entity)
     self.assertEqual(['http://site/'], source.domain_urls)
     self.assertEqual(['site'], source.domains)
 
@@ -447,17 +447,17 @@ class SourceTest(testutil.HandlerTest):
     self.expect_requests_get('http://site')
     self.mox.ReplayAll()
 
-    source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
+    source = FakeSource.create.new(auth_entity=auth_entity)
     self.assertEqual(['http://site/path'], source.domain_urls)
     self.assertEqual(['site'], source.domains)
 
   def test_create_new_unicode_chars(self):
     """We should handle unusual unicode chars in the source's name ok."""
     # the invisible character in the middle is an unusual unicode character
-    FakeSource.create_new(self.handler, name='a ✁ b')
+    FakeSource.create.new(name='a ✁ b')
 
   def test_create_new_rereads_domains(self):
-    key = FakeSource.new(None, features=['listen'],
+    key = FakeSource.new(features=['listen'],
                          domain_urls=['http://foo'], domains=['foo']).put()
 
     FakeSource.string_id_counter -= 1
@@ -469,13 +469,13 @@ class SourceTest(testutil.HandlerTest):
       self.expect_task(queue, source_key=key, last_polled='1970-01-01-00-00-00')
 
     self.mox.ReplayAll()
-    source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
+    source = FakeSource.create.new(auth_entity=auth_entity)
     self.assertEqual(['http://bar/', 'http://baz/'], source.domain_urls)
     self.assertEqual(['bar', 'baz'], source.domains)
 
   @skip("can't keep old domains on signup until edit websites works. #623")
   def test_create_new_merges_domains(self):
-    FakeSource.new(None, features=['listen'],
+    FakeSource.new(features=['listen'],
                    domain_urls=['http://foo'], domains=['foo']).put()
 
     FakeSource.string_id_counter -= 1
@@ -484,7 +484,7 @@ class SourceTest(testutil.HandlerTest):
     self.expect_requests_get('http://bar/', 'no webmention endpoint')
 
     self.mox.ReplayAll()
-    source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
+    source = FakeSource.create.new(auth_entity=auth_entity)
     self.assertEqual(['http://bar/', 'http://baz/', 'http://foo/'], source.domain_urls)
     self.assertEqual(['baz', 'foo', 'bar'], source.domains)
 
@@ -496,7 +496,7 @@ class SourceTest(testutil.HandlerTest):
                   {'value': 'http://foo'},
                 ]}))
     self.mox.ReplayAll()
-    source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
+    source = FakeSource.create.new(auth_entity=auth_entity)
     self.assertEqual(['https://foo/'], source.domain_urls)
     self.assertEqual(['foo'], source.domains)
 
@@ -510,7 +510,7 @@ class SourceTest(testutil.HandlerTest):
       self.expect_requests_head(url)
     self.mox.ReplayAll()
 
-    source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
+    source = FakeSource.create.new(auth_entity=auth_entity)
     self.assertEqual(urls, source.domain_urls)
     self.assertEqual([str(i) for i in range(10)], source.domains)
 
@@ -520,7 +520,7 @@ class SourceTest(testutil.HandlerTest):
     self.expect_requests_get('http://flaky', status_code=500)
     self.mox.ReplayAll()
 
-    source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
+    source = FakeSource.create.new(auth_entity=auth_entity)
     self.assertEqual(['http://flaky/foo'], source.domain_urls)
     self.assertEqual(['flaky'], source.domains)
 
@@ -531,7 +531,7 @@ class SourceTest(testutil.HandlerTest):
       requests.ConnectionError('DNS lookup failed for URL: http://bad/'))
     self.mox.ReplayAll()
 
-    source = FakeSource.create_new(self.handler, auth_entity=auth_entity)
+    source = FakeSource.create.new(auth_entity=auth_entity)
     self.assertEqual(['http://flaky/foo'], source.domain_urls)
     self.assertEqual(['flaky'], source.domains)
 
@@ -542,7 +542,7 @@ class SourceTest(testutil.HandlerTest):
 </meta></html>""")
     self.mox.ReplayAll()
 
-    source = FakeSource.new(self.handler, features=['webmention'],
+    source = FakeSource.new(features=['webmention'],
                             domain_urls=['http://primary/'], domains=['primary'])
     source.verify()
     self.assertEqual('http://web.ment/ion', source.webmention_endpoint)
@@ -558,7 +558,7 @@ class SourceTest(testutil.HandlerTest):
 </html>""")
     self.mox.ReplayAll()
 
-    source = FakeSource.new(self.handler, features=['webmention'],
+    source = FakeSource.new(features=['webmention'],
                             domain_urls=['http://primary/'],
                             domains=['primary'])
     source.verify()
@@ -568,7 +568,7 @@ class SourceTest(testutil.HandlerTest):
     self.expect_requests_get('http://primary/', 'no webmention endpoint here!')
     self.mox.ReplayAll()
 
-    source = FakeSource.new(self.handler, features=['webmention'],
+    source = FakeSource.new(features=['webmention'],
                             domain_urls=['http://primary/'], domains=['primary'])
     source.verify()
     self.assertIsNone(source.webmention_endpoint)
@@ -580,7 +580,7 @@ class SourceTest(testutil.HandlerTest):
 </meta></html>""")
     self.mox.ReplayAll()
 
-    source = FakeSource.new(self.handler, features=['webmention'],
+    source = FakeSource.new(features=['webmention'],
                             domain_urls=['http://bad.www/', 'http://good/'],
                             domains=['bad.www', 'good'])
     source.verify()

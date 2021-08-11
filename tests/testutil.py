@@ -13,13 +13,14 @@ from google.cloud import ndb
 from google.cloud.tasks_v2.types import Task
 from granary import source as gr_source
 from mox3 import mox
-from oauth_dropins import handlers as oauth_handlers
+from oauth_dropins import views as oauth_views
 from oauth_dropins.models import BaseAuth
 from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
 from requests import post as orig_requests_post
 
+from app import app, cache
 import appengine_config
 from models import BlogPost, Publish, PublishedPage, Response, Source
 import util
@@ -194,12 +195,10 @@ class FakeGrSource(gr_source.Source):
     return [image['url'] for image in util.get_list(obj, 'image')]
 
 
-class OAuthStartHandler(oauth_handlers.StartHandler):
-  """Stand-in for the oauth-dropins StartHandler, redirects to
-  a made-up silo url.
-  """
+class OAuthStart(oauth_views.Start):
+  """Stand-in for the oauth-dropins Start, redirects to a made-up silo url."""
   def redirect_url(self, state=None):
-    logging.debug('oauth handler redirect')
+    logging.debug('oauth view redirect')
     return 'http://fake/auth/url?' + urllib.parse.urlencode({
       'redirect_uri': self.to_url(state),
     })
@@ -207,7 +206,7 @@ class OAuthStartHandler(oauth_handlers.StartHandler):
 
 class FakeSource(Source):
   GR_CLASS = FakeGrSource
-  OAUTH_START_HANDLER = OAuthStartHandler
+  OAUTH_START = OAuthStart
   SHORT_NAME = 'fake'
   TYPE_LABELS = {'post': 'FakeSource post label'}
   RATE_LIMITED_POLL = datetime.timedelta(hours=30)
@@ -235,7 +234,7 @@ class FakeSource(Source):
     return copy.deepcopy(FakeGrSource.search_results)
 
   @classmethod
-  def new(cls, handler, **props):
+  def new(cls, **props):
     id = None
     if 'url' not in props:
       props['url'] = 'http://fake/url'
@@ -267,12 +266,12 @@ class FakeBlogSource(FakeSource):
   SHORT_NAME = 'fake_blog'
 
 
-class HandlerTest(testutil.HandlerTest):
-  """Base test class.
-  """
+class ViewTest(testutil.TestCase):
+  """Base test class."""
   def setUp(self):
-    super(HandlerTest, self).setUp()
-    self.handler = util.Handler(self.request, self.response)
+    super(ViewTest, self).setUp()
+    self.client = app.test_client()
+    cache.clear()
     FakeGrSource.clear()
     util.now_fn = lambda: NOW
 
@@ -290,7 +289,7 @@ class HandlerTest(testutil.HandlerTest):
 
   def tearDown(self):
     self.ndb_context.__exit__(None, None, None)
-    super(HandlerTest, self).tearDown()
+    super().tearDown()
 
   def stub_create_task(self):
     if not self.stubbed_create_task:
@@ -343,19 +342,18 @@ class HandlerTest(testutil.HandlerTest):
   def expect_requests_get(self, *args, **kwargs):
     if 'headers' not in kwargs:
       kwargs['headers'] = util.REQUEST_HEADERS
-
-    return super(HandlerTest, self).expect_requests_get(*args, **kwargs)
+    return super().expect_requests_get(*args, **kwargs)
 
   def expect_requests_post(self, *args, **kwargs):
     kwargs.setdefault('headers', {}).update(util.REQUEST_HEADERS)
-    return super(HandlerTest, self).expect_requests_post(*args, **kwargs)
+    return super().expect_requests_post(*args, **kwargs)
 
   def expect_requests_head(self, *args, **kwargs):
     kwargs.setdefault('headers', {}).update(util.REQUEST_HEADERS)
-    return super(HandlerTest, self).expect_requests_head(*args, **kwargs)
+    return super().expect_requests_head(*args, **kwargs)
 
 
-class ModelsTest(HandlerTest):
+class ModelsTest(testutil.TestCase):
   """Sets up some test sources and responses.
 
   Attributes:
@@ -366,7 +364,7 @@ class ModelsTest(HandlerTest):
   """
 
   def setUp(self):
-    super(ModelsTest, self).setUp()
+    super().setUp()
 
     # sources
     auth_entities = [
@@ -389,8 +387,8 @@ class ModelsTest(HandlerTest):
       entity.put()
 
     self.sources = [
-      FakeSource.new(None, auth_entity=auth_entities[0]),
-      FakeSource.new(None, auth_entity=auth_entities[1])]
+      FakeSource.new(auth_entity=auth_entities[0]),
+      FakeSource.new(auth_entity=auth_entities[1])]
     for entity in self.sources:
       entity.features = ['listen']
       entity.put()
@@ -529,10 +527,10 @@ class ModelsTest(HandlerTest):
     )]
 
 
-FakeStartHandler = util.oauth_starter(OAuthStartHandler).to('/fakesource/add')
+FakeStart = OAuthStart#).to('/fakesource/add')
 
 
-class FakeAddHandler(util.Handler):
+class FakeAdd(util.View):
   """Handles the authorization callback when handling a fake source
   """
   auth_entity = FakeAuthEntity(user_json=json_dumps({
@@ -543,10 +541,10 @@ class FakeAddHandler(util.Handler):
 
   @staticmethod
   def with_auth(auth):
-    class HandlerWithAuth(FakeAddHandler):
+    class HandlerWithAuth(FakeAdd):
       auth_entity = auth
     return HandlerWithAuth
 
   def get(self):
     self.maybe_add_or_delete_source(FakeSource, self.auth_entity,
-                                    self.request.get('state'))
+                                    request.values.get('state'))

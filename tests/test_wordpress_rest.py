@@ -10,7 +10,7 @@ from . import testutil
 from wordpress_rest import WordPress, AddWordPress
 
 
-class WordPressTest(testutil.HandlerTest):
+class WordPressTest(testutil.ViewTest):
 
   def setUp(self):
     super(WordPressTest, self).setUp()
@@ -44,7 +44,7 @@ class WordPressTest(testutil.HandlerTest):
       json_dumps({}))
     self.mox.ReplayAll()
 
-    w = WordPress.new(self.handler, auth_entity=self.auth_entity)
+    w = WordPress.new(auth_entity=self.auth_entity)
     self.assertEqual(self.auth_entity.key, w.auth_entity)
     self.assertEqual('my.wp.com', w.key.id())
     self.assertEqual('Ryan', w.name)
@@ -58,7 +58,7 @@ class WordPressTest(testutil.HandlerTest):
       json_dumps({'ID': 123, 'URL': 'https://vanity.domain/'}))
     self.mox.ReplayAll()
 
-    w = WordPress.new(self.handler, auth_entity=self.auth_entity)
+    w = WordPress.new(auth_entity=self.auth_entity)
     self.assertEqual('vanity.domain', w.key.id())
     self.assertEqual('https://vanity.domain/', w.url)
     self.assertEqual(['https://vanity.domain/', 'http://my.wp.com/'],
@@ -71,7 +71,7 @@ class WordPressTest(testutil.HandlerTest):
       json_dumps({'ID': 123, 'URL': 'http://my.wp.com/'}))
     self.mox.ReplayAll()
 
-    w = WordPress.new(self.handler, auth_entity=self.auth_entity)
+    w = WordPress.new(auth_entity=self.auth_entity)
     self.assertEqual(['http://my.wp.com/'], w.domain_urls)
     self.assertEqual(['my.wp.com'], w.domains)
 
@@ -80,7 +80,7 @@ class WordPressTest(testutil.HandlerTest):
       'https://public-api.wordpress.com/rest/v1/sites/123?pretty=true',
       'my resp body', status=402)
     self.mox.ReplayAll()
-    self.assertRaises(urllib.error.HTTPError, WordPress.new, self.handler,
+    self.assertRaises(urllib.error.HTTPError, WordPress.new, self.view,
                       auth_entity=self.auth_entity)
 
   def test_site_lookup_api_disabled_error_start(self):
@@ -91,9 +91,9 @@ class WordPressTest(testutil.HandlerTest):
       status=403)
     self.mox.ReplayAll()
 
-    self.assertIsNone(WordPress.new(self.handler, auth_entity=self.auth_entity))
+    self.assertIsNone(WordPress.new(auth_entity=self.auth_entity))
     self.assertIsNone(WordPress.query().get())
-    self.assertIn('enable the Jetpack JSON API', next(iter(self.handler.messages)))
+    self.assertIn('enable the Jetpack JSON API', next(iter(self.view.messages)))
 
   def test_site_lookup_api_disabled_error_finish(self):
     self.expect_urlopen(
@@ -103,10 +103,10 @@ class WordPressTest(testutil.HandlerTest):
       status=403)
     self.mox.ReplayAll()
 
-    handler = AddWordPress(self.request, self.response)
-    handler.finish(self.auth_entity)
+    view = AddWordPress()
+    view.finish(self.auth_entity)
     self.assertIsNone(WordPress.query().get())
-    self.assertIn('enable the Jetpack JSON API', next(iter(handler.messages)))
+    self.assertIn('enable the Jetpack JSON API', next(iter(view.messages)))
 
   def test_create_comment_with_slug_lookup(self):
     self.expect_urlopen(

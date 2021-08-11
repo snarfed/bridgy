@@ -5,16 +5,17 @@ import datetime
 import gc
 import logging
 
+from flask import request
 from google.cloud import ndb
 from google.cloud.ndb._datastore_types import _MAX_STRING_LENGTH
 from granary.source import Source
 from oauth_dropins.webutil import appengine_info, logs, webmention
-from oauth_dropins.webutil import handlers as webutil_handlers
 from oauth_dropins.webutil.appengine_config import ndb_client
 from oauth_dropins.webutil.util import json_dumps, json_loads
 from requests import HTTPError
 import webapp2
 
+from app import app
 import appengine_config
 import cron
 import models
@@ -57,10 +58,10 @@ class Poll(webapp2.RequestHandler):
                       logs.url(source.last_poll_attempt, source.key))
 
   def post(self, *path_args):
-    self.request.headers['Content-Type'] = 'application/x-www-form-urlencoded'
-    logging.debug('Params: %s', list(self.request.params.items()))
+    request.headers['Content-Type'] = 'application/x-www-form-urlencoded'
+    logging.debug('Params: %s', list(request.params.items()))
 
-    key = self.request.params['source_key']
+    key = request.params['source_key']
     source = self.source = ndb.Key(urlsafe=key).get()
     if not source or source.status == 'disabled' or 'listen' not in source.features:
       logging.error('Source not found or disabled. Dropping task.')
@@ -69,7 +70,7 @@ class Poll(webapp2.RequestHandler):
                  source.bridgy_url(self))
 
     if source.AUTO_POLL:
-      last_polled = self.request.params['last_polled']
+      last_polled = request.params['last_polled']
       if last_polled != source.last_polled.strftime(util.POLL_TASK_DATETIME_FORMAT):
         logging.warning('duplicate poll task! deferring to the other task.')
         return
@@ -480,9 +481,9 @@ class Discover(Poll):
   handle_exception = util.background_handle_exception
 
   def post(self):
-    logging.debug('Params: %s', list(self.request.params.items()))
+    logging.debug('Params: %s', list(request.params.items()))
 
-    type = self.request.get('type')
+    type = request.get('type')
     if type:
       assert type in ('event',)
 
@@ -759,9 +760,9 @@ class PropagateResponse(SendWebmentions):
   """
 
   def post(self):
-    self.request.headers['Content-Type'] = 'application/x-www-form-urlencoded'
-    logging.debug('Params: %s', list(self.request.params.items()))
-    if not self.lease(ndb.Key(urlsafe=self.request.params['response_key'])):
+    request.headers['Content-Type'] = 'application/x-www-form-urlencoded'
+    logging.debug('Params: %s', list(request.params.items()))
+    if not self.lease(ndb.Key(urlsafe=request.params['response_key'])):
       return
 
     source = self.source
@@ -792,7 +793,7 @@ class PropagateResponse(SendWebmentions):
 Hit https://github.com/snarfed/bridgy/issues/237 KeyError!
 target url %s not in urls_to_activity: %s
 activities: %s""", target_url, self.entity.urls_to_activity, self.activities)
-      self.abort(util.ERROR_HTTP_RETURN_CODE)
+      abort(util.ERROR_HTTP_RETURN_CODE)
 
     # generate source URL
     id = activity['id']
@@ -823,9 +824,9 @@ class PropagateBlogPost(SendWebmentions):
   """
 
   def post(self):
-    logging.debug('Params: %s', list(self.request.params.items()))
+    logging.debug('Params: %s', list(request.params.items()))
 
-    if not self.lease(ndb.Key(urlsafe=self.request.params['key'])):
+    if not self.lease(ndb.Key(urlsafe=request.params['key'])):
       return
 
     to_send = set()
@@ -842,11 +843,14 @@ class PropagateBlogPost(SendWebmentions):
     return self.entity.key.id()
 
 
-application = webutil_handlers.ndb_context_middleware(
-  webapp2.WSGIApplication([
-    ('/_ah/queue/poll(-now)?', Poll),
-    ('/_ah/queue/discover', Discover),
-    ('/_ah/queue/propagate', PropagateResponse),
-    ('/_ah/queue/propagate-blogpost', PropagateBlogPost),
-    ('/_ah/(start|stop|warmup)', util.NoopHandler),
-  ] + cron.ROUTES, debug=appengine_info.DEBUG), client=ndb_client)
+@app.route('/_ah/<any(start, stop, warmup):_>')
+def noop(_):
+  return 'OK'
+
+
+# webapp2.WSGIApplication([
+#     ('/_ah/queue/poll(-now)?', Poll),
+#     ('/_ah/queue/discover', Discover),
+#     ('/_ah/queue/propagate', PropagateResponse),
+#     ('/_ah/queue/propagate-blogpost', PropagateBlogPost),
+#   ] + cron.ROUTES, debug=appengine_info.DEBUG), client=ndb_client)

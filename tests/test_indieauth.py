@@ -17,8 +17,8 @@ import util
 class IndieAuthTest(ModelsTest):
 
   def setUp(self):
-    super(IndieAuthTest, self).setUp()
-    self.handler.messages = []
+    super().setUp()
+    self.view.messages = []
     self.auth_entity = indieauth.IndieAuth(id='http://snarfed.org')
 
   def expect_indieauth_check(self):
@@ -41,13 +41,13 @@ class IndieAuthTest(ModelsTest):
     return TestCase.expect_requests_get(self, 'http://snarfed.org', body)
 
   def callback(self, token='towkin'):
-    resp = app.application.get_response(
+    resp = self.client.get(
       '/indieauth/callback?code=my_code&state=%s' % util.encode_oauth_state({
         'endpoint': indieauth.INDIEAUTH_URL,
         'me': 'http://snarfed.org',
         'state': token,
       }))
-    self.assertEqual(302, resp.status_int)
+    self.assertEqual(302, resp.status_code)
     return resp
 
   def test_callback_new_domain(self):

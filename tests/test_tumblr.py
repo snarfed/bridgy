@@ -11,7 +11,7 @@ from tumblr import Tumblr
 from . import testutil
 
 
-class TumblrTest(testutil.HandlerTest):
+class TumblrTest(testutil.ViewTest):
 
   def setUp(self):
     super(TumblrTest, self).setUp()
@@ -43,7 +43,7 @@ class TumblrTest(testutil.HandlerTest):
       **kwargs)
 
   def test_new(self):
-    t = Tumblr.new(self.handler, auth_entity=self.auth_entity)
+    t = Tumblr.new(auth_entity=self.auth_entity)
     self.assertEqual(self.auth_entity.key, t.auth_entity)
     self.assertEqual('name', t.name)
     self.assertEqual(['http://primary/'], t.domain_urls)
@@ -52,8 +52,8 @@ class TumblrTest(testutil.HandlerTest):
 
   def test_new_no_primary_blog(self):
     self.auth_entity.user_json = json_dumps({'user': {'blogs': [{'url': 'foo'}]}})
-    self.assertIsNone(Tumblr.new(self.handler, auth_entity=self.auth_entity))
-    self.assertIn('Tumblr blog not found', next(iter(self.handler.messages)))
+    self.assertIsNone(Tumblr.new(auth_entity=self.auth_entity))
+    self.assertIn('Tumblr blog not found', next(iter(self.view.messages)))
 
   def test_new_with_blog_name(self):
     self.auth_entity.user_json = json_dumps({
@@ -61,7 +61,7 @@ class TumblrTest(testutil.HandlerTest):
                            {'name': 'bar', 'url': 'baz'},
                            {'name': 'biff', 'url': 'http://boff/'},
                            ]}})
-    got = Tumblr.new(self.handler, auth_entity=self.auth_entity, blog_name='biff')
+    got = Tumblr.new(auth_entity=self.auth_entity, blog_name='biff')
     self.assertEqual(['http://boff/'], got.domain_urls)
     self.assertEqual(['boff'], got.domains)
 
@@ -86,14 +86,14 @@ class TumblrTest(testutil.HandlerTest):
     self.expect_requests_get(
       'http://primary/', '<html>\nstuff\n%s\n</html>' % snippet)
     self.mox.ReplayAll()
-    t = Tumblr.new(self.handler, auth_entity=self.auth_entity, features=['webmention'])
+    t = Tumblr.new(auth_entity=self.auth_entity, features=['webmention'])
     t.verify()
     self.assertEqual('my-disqus-name', t.disqus_shortname)
 
   def test_verify_without_disqus(self):
     self.expect_requests_get('http://primary/', 'no disqus here!')
     self.mox.ReplayAll()
-    t = Tumblr.new(self.handler, auth_entity=self.auth_entity, features=['webmention'])
+    t = Tumblr.new(auth_entity=self.auth_entity, features=['webmention'])
     t.verify()
     self.assertIsNone(t.disqus_shortname)
 
@@ -146,7 +146,7 @@ class TumblrTest(testutil.HandlerTest):
     self.mox.ReplayAll()
 
     self.assertRaises(
-      exc.HTTPBadRequest,#("Bridgy hasn't found your Disqus account yet. "
+      BadRequest,#("Bridgy hasn't found your Disqus account yet. "
                          #"See http://localhost/tumblr/name for details."),
       self.tumblr.create_comment, 'http://primary/post/123999', '', '', '')
 

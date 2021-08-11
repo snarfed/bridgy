@@ -6,13 +6,14 @@ Webmention spec: http://webmention.org/
 """
 import logging
 
+from flask import request
 from google.cloud import error_reporting
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
 import util
 
 
-class WebmentionGetHandler(util.Handler):
+class WebmentionGetHandler(util.View):
   """Renders a simple placeholder HTTP page for GETs to webmention endpoints.
   """
   def head(self, site=None):
@@ -190,7 +191,7 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
     http_context = None
     util.report_error(subject, user=user,
                       http_context=error_reporting.HTTPContext(
-                        method=self.request.method,
-                        url=self.request.url,
+                        method=request.method,
+                        url=request.url,
                         response_status_code=self.response.status,
-                        remote_ip=self.request.client_addr))
+                        remote_ip=request.client_addr))

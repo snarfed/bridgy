@@ -1,10 +1,10 @@
 """Mastodon source and datastore model classes."""
 import logging
 
+from flask import request
 from granary import mastodon as gr_mastodon
 from granary import source as gr_source
 import oauth_dropins.mastodon
-from oauth_dropins.webutil.handlers import TemplateHandler
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
 import webapp2
@@ -27,7 +27,7 @@ PUBLISH_SCOPES = LISTEN_SCOPES + (
 )
 
 
-class StartHandler(oauth_dropins.mastodon.StartHandler):
+class Start(oauth_dropins.mastodon.Start):
   """Abstract base OAuth starter class with our redirect URLs."""
   REDIRECT_PATHS = (
     '/mastodon/callback',
@@ -49,7 +49,7 @@ class Mastodon(models.Source):
   The key name is the fully qualified address, eg '@snarfed@mastodon.technology'.
   """
   GR_CLASS = gr_mastodon.Mastodon
-  OAUTH_START_HANDLER = StartHandler
+  OAUTH_START = Start
   SHORT_NAME = 'mastodon'
   CAN_PUBLISH = True
   HAS_BLOCKS = True
@@ -148,7 +148,7 @@ class Mastodon(models.Source):
 
   def load_blocklist(self):
     try:
-      return super(Mastodon, self).load_blocklist()
+      return super().load_blocklist()
     except requests.HTTPError as e:
       if e.response.status_code == 403:
         # this user signed up before we started asking for the 'follow' OAuth
@@ -161,28 +161,28 @@ class Mastodon(models.Source):
         raise
 
 
-class InstanceHandler(TemplateHandler, util.Handler):
+class InstanceHandler(util.View):
   """Serves the "Enter your instance" form page."""
   def template_file(self):
     return 'mastodon_instance.html'
 
   def post(self):
-    features = (self.request.get('feature') or '').split(',')
-    start_cls = util.oauth_starter(StartHandler).to('/mastodon/callback',
+    features = (request.values.get('feature') or '').split(',')
+    start_cls = util.oauth_starter(Start).to('/mastodon/callback',
       scopes=PUBLISH_SCOPES if 'publish' in features else LISTEN_SCOPES)
-    start = start_cls(self.request, self.response)
+    start = start_cls(request, self.response)
 
-    instance = util.get_required_param(self, 'instance')
+    instance = flask_util.get_required_param('instance')
     try:
       return redirect(start.redirect_url(instance=instance))
     except ValueError as e:
       logging.warning('Bad Mastodon instance', stack_info=True)
       self.messages.add(util.linkify(str(e), pretty=True))
-      return redirect(self.request.path)
+      return redirect(request.path)
 
 
 
-class CallbackHandler(oauth_dropins.mastodon.CallbackHandler, util.Handler):
+class Callback(oauth_dropins.mastodon.Callback, util.View):
   def finish(self, auth_entity, state=None):
     source = self.maybe_add_or_delete_source(Mastodon, auth_entity, state)
 
@@ -195,10 +195,10 @@ class CallbackHandler(oauth_dropins.mastodon.CallbackHandler, util.Handler):
       source.put()
 
 
-ROUTES = [
-  ('/mastodon/start', InstanceHandler),
-  ('/mastodon/callback', CallbackHandler),
-  ('/mastodon/delete/finish', oauth_dropins.mastodon.CallbackHandler.to('/delete/finish')),
-  ('/mastodon/publish/start', StartHandler.to('/publish/mastodon/finish',
-                                              scopes=PUBLISH_SCOPES)),
-]
+# ROUTES = [
+#   ('/mastodon/start', InstanceHandler),
+#   ('/mastodon/callback', Callback),
+#   ('/mastodon/delete/finish', oauth_dropins.mastodon.Callback.to('/delete/finish')),
+#   ('/mastodon/publish/start', Start.to('/publish/mastodon/finish',
+#                                               scopes=PUBLISH_SCOPES)),
+# ]

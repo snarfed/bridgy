@@ -29,9 +29,9 @@ class FakeBrowserSource(browser.BrowserSource):
 class BrowserSourceTest(ModelsTest):
 
   def setUp(self):
-    super(BrowserSourceTest, self).setUp()
+    super().setUp()
     self.actor['fbs_id'] = '222yyy'
-    self.source = FakeBrowserSource.new(self.handler, actor=self.actor)
+    self.source = FakeBrowserSource.new(actor=self.actor)
     FakeBrowserSource.gr_source.actor = {}
 
   def test_new(self):
@@ -53,7 +53,7 @@ class BrowserSourceTest(ModelsTest):
     Activity(id='tag:fa.ke,2013:456', source=self.source.key,
              activity_json=json_dumps({'baz': 'biff'})).put()
 
-    other = FakeBrowserSource.new(self.handler, actor={'fbs_id': 'other'}).put()
+    other = FakeBrowserSource.new(actor={'fbs_id': 'other'}).put()
     Activity(id='tag:fa.ke,2013:789', source=other,
              activity_json=json_dumps({'boo': 'bah'})).put()
 
@@ -94,7 +94,7 @@ class BrowserSourceTest(ModelsTest):
     self.assertIsNone(self.source.get_like('unused', 'unused', 'alice'))
 
 
-class BrowserHandlerTest(ModelsTest):
+class BrowserViewTest(ModelsTest):
   app = webapp2.WSGIApplication(browser.routes(FakeBrowserSource))
 
   def setUp(self):
@@ -102,7 +102,7 @@ class BrowserHandlerTest(ModelsTest):
     self.domain = Domain(id='snarfed.org', tokens=['towkin']).put()
     FakeBrowserSource.gr_source = FakeGrSource()
     self.actor['fbs_id'] = '222yyy'
-    self.source = FakeBrowserSource.new(self.handler, actor=self.actor).put()
+    self.source = FakeBrowserSource.new(actor=self.actor).put()
     self.auth = f'token=towkin&key={self.source.urlsafe().decode()}'
     self.other_source = FakeBrowserSource(id='333zzz', domains=['foo.com']).put()
 
@@ -125,7 +125,7 @@ class BrowserHandlerTest(ModelsTest):
 
   def test_status(self):
     resp = self.get_response('status')
-    self.assertEqual(200, resp.status_int, resp.text)
+    self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
 
     self.assertEqual({
       'status': 'enabled',
@@ -134,14 +134,14 @@ class BrowserHandlerTest(ModelsTest):
 
   def test_homepage(self):
     resp = self.get_response('homepage', text='homepage html', auth=False)
-    self.assertEqual(200, resp.status_int, resp.text)
+    self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
     self.assertEqual('snarfed', resp.json)
 
   def test_homepage_no_logged_in_user(self):
     FakeBrowserSource.gr_source.actor = {}
     resp = self.get_response('homepage', text='not logged in', auth=False)
-    self.assertEqual(400, resp.status_int)
-    self.assertIn("Couldn't determine logged in FakeSource user", resp.text)
+    self.assertEqual(400, resp.status_code)
+    self.assertIn("Couldn't determine logged in FakeSource user", resp.get_data(as_text=True))
 
   def test_profile_new_user(self):
     self.source.delete()
@@ -151,7 +151,7 @@ class BrowserHandlerTest(ModelsTest):
 
     resp = self.get_response('profile?token=towkin')
 
-    self.assertEqual(200, resp.status_int, resp.text)
+    self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
     self.assert_equals(self.source.urlsafe().decode(), resp.json)
 
     src = self.source.get()
@@ -170,7 +170,7 @@ class BrowserHandlerTest(ModelsTest):
     self.mox.ReplayAll()
 
     resp = self.get_response('profile?token=towkin')
-    self.assertEqual(200, resp.status_int, resp.text)
+    self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
     self.assert_equals(self.source.urlsafe().decode(), resp.json)
 
     src = self.source.get()
@@ -187,7 +187,7 @@ class BrowserHandlerTest(ModelsTest):
     self.mox.ReplayAll()
 
     resp = self.get_response('profile?token=towkin')
-    self.assertEqual(200, resp.status_int, resp.text)
+    self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
     self.assert_equals(self.source.urlsafe().decode(), resp.json)
 
     src = self.source.get()
@@ -199,70 +199,70 @@ class BrowserHandlerTest(ModelsTest):
     self.source.delete()
     FakeGrSource.actor = None
     resp = self.get_response('profile?token=towkin')
-    self.assertEqual(400, resp.status_int, resp.text)
-    self.assertIn('Missing actor', resp.text)
+    self.assertEqual(400, resp.status_code, resp.get_data(as_text=True))
+    self.assertIn('Missing actor', resp.get_data(as_text=True))
 
   def test_profile_private_account(self):
     FakeBrowserSource.gr_source.actor['to'] = \
       [{'objectType':'group', 'alias':'@private'}]
     resp = self.get_response('profile?token=towkin')
-    self.assertEqual(400, resp.status_int)
-    self.assertIn('Your FakeSource account is private.', resp.text)
+    self.assertEqual(400, resp.status_code)
+    self.assertIn('Your FakeSource account is private.', resp.get_data(as_text=True))
 
   def test_profile_missing_token(self):
     resp = self.get_response('profile', auth=False)
-    self.assertEqual(400, resp.status_int)
-    self.assertIn('Missing required parameter: token', resp.text)
+    self.assertEqual(400, resp.status_code)
+    self.assertIn('Missing required parameter: token', resp.get_data(as_text=True))
 
   def test_profile_no_stored_token(self):
     self.domain.delete()
     resp = self.get_response('profile?token=towkin')
-    self.assertEqual(403, resp.status_int)
-    self.assertIn("towkin is not authorized for any of: {'snarfed.org'}", resp.text)
+    self.assertEqual(403, resp.status_code)
+    self.assertIn("towkin is not authorized for any of: {'snarfed.org'}", resp.get_data(as_text=True))
 
   def test_profile_bad_token(self):
     resp = self.get_response('profile?token=nope')
-    self.assertEqual(403, resp.status_int)
-    self.assertIn("nope is not authorized for any of: {'snarfed.org'}", resp.text)
+    self.assertEqual(403, resp.status_code)
+    self.assertIn("nope is not authorized for any of: {'snarfed.org'}", resp.get_data(as_text=True))
 
   def test_feed(self):
     resp = self.get_response('feed')
-    self.assertEqual(200, resp.status_int, resp.text)
+    self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
     self.assertEqual(self.activities_no_replies, util.trim_nulls(resp.json))
 
   def test_feed_empty(self):
     FakeGrSource.activities = []
     resp = self.get_response('feed')
-    self.assertEqual(200, resp.status_int, resp.text)
+    self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
     self.assertEqual([], resp.json)
 
   def test_feed_missing_token(self):
     resp = self.get_response('feed?key={self.source.urlsafe().decode()}')
-    self.assertEqual(400, resp.status_int, resp.text)
+    self.assertEqual(400, resp.status_code, resp.get_data(as_text=True))
 
   def test_feed_bad_token(self):
     resp = self.get_response(f'feed?token=nope&key={self.source.urlsafe().decode()}')
-    self.assertEqual(403, resp.status_int, resp.text)
-    self.assertIn("nope is not authorized for any of: ['snarfed.org']", resp.text)
+    self.assertEqual(403, resp.status_code, resp.get_data(as_text=True))
+    self.assertIn("nope is not authorized for any of: ['snarfed.org']", resp.get_data(as_text=True))
 
   def test_feed_missing_key(self):
     resp = self.get_response('feed?token=towkin')
-    self.assertEqual(400, resp.status_int, resp.text)
+    self.assertEqual(400, resp.status_code, resp.get_data(as_text=True))
 
   def test_feed_bad_key(self):
     resp = self.get_response('feed?token=towkin&key=asdf')
-    self.assertEqual(400, resp.status_int, resp.text)
+    self.assertEqual(400, resp.status_code, resp.get_data(as_text=True))
     # this comes from util.load_source() since the urlsafe key is malformed
-    self.assertIn('Bad value for key', resp.text)
+    self.assertIn('Bad value for key', resp.get_data(as_text=True))
 
   def test_feed_token_domain_not_in_source(self):
     resp = self.get_response(
       f'feed?token=towkin&key={self.other_source.urlsafe().decode()}')
-    self.assertEqual(403, resp.status_int, resp.text)
+    self.assertEqual(403, resp.status_code, resp.get_data(as_text=True))
 
   def test_post(self):
     resp = self.get_response('post', text='silowe html')
-    self.assertEqual(200, resp.status_int, resp.text)
+    self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
     self.assert_equals(self.activities_no_extras[0], util.trim_nulls(resp.json))
 
     activities = Activity.query().fetch()
@@ -275,8 +275,8 @@ class BrowserHandlerTest(ModelsTest):
   def test_post_empty(self):
     FakeGrSource.activities = []
     resp = self.get_response('post')
-    self.assertEqual(400, resp.status_int)
-    self.assertIn('No FakeSource post found in HTML', resp.text)
+    self.assertEqual(400, resp.status_code)
+    self.assertIn('No FakeSource post found in HTML', resp.get_data(as_text=True))
 
   def test_post_merge_comments(self):
     # existing activity with two comments
@@ -294,7 +294,7 @@ class BrowserHandlerTest(ModelsTest):
     FakeGrSource.activities = [activity]
 
     resp = self.get_response('post')
-    self.assertEqual(200, resp.status_int, resp.text)
+    self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
     self.assert_equals(activity, util.trim_nulls(resp.json))
 
     merged = json_loads(key.get().activity_json)
@@ -305,28 +305,28 @@ class BrowserHandlerTest(ModelsTest):
 
   def test_post_missing_key(self):
     resp = self.get_response('post?token=towkin')
-    self.assertEqual(400, resp.status_int, resp.text)
+    self.assertEqual(400, resp.status_code, resp.get_data(as_text=True))
 
   def test_post_bad_key(self):
     resp = self.get_response('post?token=towkin&key=asdf')
-    self.assertEqual(400, resp.status_int, resp.text)
+    self.assertEqual(400, resp.status_code, resp.get_data(as_text=True))
     # this comes from util.load_source() since the urlsafe key is malformed
-    self.assertIn('Bad value for key', resp.text)
+    self.assertIn('Bad value for key', resp.get_data(as_text=True))
 
   def test_post_missing_token(self):
     resp = self.get_response(f'post?key={self.source.urlsafe().decode()}')
-    self.assertEqual(400, resp.status_int, resp.text)
-    self.assertIn('Missing required parameter: token', resp.text)
+    self.assertEqual(400, resp.status_code, resp.get_data(as_text=True))
+    self.assertIn('Missing required parameter: token', resp.get_data(as_text=True))
 
   def test_post_bad_token(self):
     resp = self.get_response(f'post?token=nope&key={self.source.urlsafe().decode()}')
-    self.assertEqual(403, resp.status_int, resp.text)
-    self.assertIn("nope is not authorized for any of: ['snarfed.org']", resp.text)
+    self.assertEqual(403, resp.status_code, resp.get_data(as_text=True))
+    self.assertIn("nope is not authorized for any of: ['snarfed.org']", resp.get_data(as_text=True))
 
   def test_post_token_domain_not_in_source(self):
     resp = self.get_response(
       f'post?token=towkin&key={self.other_source.urlsafe().decode()}')
-    self.assertEqual(403, resp.status_int, resp.text)
+    self.assertEqual(403, resp.status_code, resp.get_data(as_text=True))
 
   def test_reactions(self):
     key = Activity(id='tag:fa.ke,2013:123_456', source=self.source,
@@ -338,7 +338,7 @@ class BrowserHandlerTest(ModelsTest):
     }
 
     resp = self.get_response(f'reactions?id=tag:fa.ke,2013:123_456&{self.auth}')
-    self.assertEqual(200, resp.status_int, resp.text)
+    self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
     self.assert_equals([like], resp.json)
 
     stored = json_loads(key.get().activity_json)
@@ -347,8 +347,8 @@ class BrowserHandlerTest(ModelsTest):
 
   def test_reactions_bad_id(self):
     resp = self.get_response(f'reactions?id=789&{self.auth}')
-    self.assertEqual(400, resp.status_int)
-    self.assertIn('Expected id to be tag URI', resp.text)
+    self.assertEqual(400, resp.status_code)
+    self.assertIn('Expected id to be tag URI', resp.get_data(as_text=True))
 
   def test_reactions_bad_scraped_data(self):
     Activity(id='tag:fa.ke,2013:123_456', source=self.source,
@@ -362,79 +362,79 @@ class BrowserHandlerTest(ModelsTest):
 
     resp = self.get_response(f'reactions?id=tag:fa.ke,2013:123_456&{self.auth}',
                              text=bad_json)
-    self.assertEqual(400, resp.status_int)
-    self.assertIn("Couldn't parse scraped reactions: fooey", resp.text)
+    self.assertEqual(400, resp.status_code)
+    self.assertIn("Couldn't parse scraped reactions: fooey", resp.get_data(as_text=True))
 
   def test_reactions_no_activity(self):
     resp = self.get_response(f'reactions?id=tag:fa.ke,2013:789&{self.auth}')
-    self.assertEqual(404, resp.status_int)
-    self.assertIn('No FakeSource post found for id tag:fa.ke,2013:789', resp.text)
+    self.assertEqual(404, resp.status_code)
+    self.assertIn('No FakeSource post found for id tag:fa.ke,2013:789', resp.get_data(as_text=True))
 
   def test_reactions_missing_token(self):
     resp = self.get_response(f'reactions?key={self.source.urlsafe().decode()}')
-    self.assertEqual(400, resp.status_int, resp.text)
+    self.assertEqual(400, resp.status_code, resp.get_data(as_text=True))
 
   def test_reactions_bad_token(self):
     resp = self.get_response(f'reactions?token=nope&key={self.source.urlsafe().decode()}')
-    self.assertEqual(403, resp.status_int, resp.text)
-    self.assertIn("nope is not authorized for any of: ['snarfed.org']", resp.text)
+    self.assertEqual(403, resp.status_code, resp.get_data(as_text=True))
+    self.assertIn("nope is not authorized for any of: ['snarfed.org']", resp.get_data(as_text=True))
 
   def test_reactions_missing_key(self):
     resp = self.get_response('reactions?token=towkin')
-    self.assertEqual(400, resp.status_int, resp.text)
+    self.assertEqual(400, resp.status_code, resp.get_data(as_text=True))
 
   def test_reactions_bad_key(self):
     resp = self.get_response('reactions?token=towkin&key=asdf')
-    self.assertEqual(400, resp.status_int, resp.text)
+    self.assertEqual(400, resp.status_code, resp.get_data(as_text=True))
 
   def test_reactions_token_domain_not_in_source(self):
     resp = self.get_response(
       f'reactions?token=towkin&key={self.other_source.urlsafe().decode()}')
-    self.assertEqual(403, resp.status_int, resp.text)
+    self.assertEqual(403, resp.status_code, resp.get_data(as_text=True))
 
   def test_reactions_wrong_activity_source(self):
     Activity(id='tag:fa.ke,2013:123_456', source=self.other_source).put()
     resp = self.get_response(f'reactions?id=tag:fa.ke,2013:123_456&{self.auth}')
-    self.assertEqual(403, resp.status_int)
+    self.assertEqual(403, resp.status_code)
     self.assertIn(
       "tag:fa.ke,2013:123_456 is owned by Key('FakeBrowserSource', '333zzz')",
-      resp.text)
+      resp.get_data(as_text=True))
 
   def test_poll(self):
     self.expect_task('poll', eta_seconds=0, source_key=self.source,
                      last_polled='1970-01-01-00-00-00')
     self.mox.ReplayAll()
     resp = self.get_response('poll')
-    self.assertEqual(200, resp.status_int, resp.text)
+    self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
     self.assertEqual('OK', resp.json)
 
   def test_poll_missing_token(self):
     resp = self.get_response('poll?key={self.source.urlsafe().decode()}')
-    self.assertEqual(400, resp.status_int, resp.text)
+    self.assertEqual(400, resp.status_code, resp.get_data(as_text=True))
 
   def test_poll_bad_token(self):
     resp = self.get_response(f'poll?token=nope&key={self.source.urlsafe().decode()}')
-    self.assertEqual(403, resp.status_int, resp.text)
-    self.assertIn("nope is not authorized for any of: ['snarfed.org']", resp.text)
+    self.assertEqual(403, resp.status_code, resp.get_data(as_text=True))
+    self.assertIn("nope is not authorized for any of: ['snarfed.org']", resp.get_data(as_text=True))
 
   def test_poll_missing_key(self):
     resp = self.get_response('poll?token=towkin')
-    self.assertEqual(400, resp.status_int, resp.text)
+    self.assertEqual(400, resp.status_code, resp.get_data(as_text=True))
 
   def test_poll_bad_key(self):
     resp = self.get_response('poll?token=towkin&key=asdf')
-    self.assertEqual(400, resp.status_int, resp.text)
+    self.assertEqual(400, resp.status_code, resp.get_data(as_text=True))
 
   def test_poll_token_domain_not_in_source(self):
     resp = self.get_response(
       f'poll?token=towkin&key={self.other_source.urlsafe().decode()}')
-    self.assertEqual(403, resp.status_int, resp.text)
+    self.assertEqual(403, resp.status_code, resp.get_data(as_text=True))
 
   def test_token_domains(self):
     resp = self.get_response('token-domains?token=towkin')
-    self.assertEqual(200, resp.status_int)
+    self.assertEqual(200, resp.status_code)
     self.assertEqual(['snarfed.org'], resp.json)
 
   def test_token_domains_missing(self):
     resp = self.get_response('token-domains?token=unknown')
-    self.assertEqual(404, resp.status_int)
+    self.assertEqual(404, resp.status_code)

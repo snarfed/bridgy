@@ -15,7 +15,7 @@ from . import testutil
 class FlickrTest(testutil.ModelsTest):
 
   def setUp(self):
-    super(FlickrTest, self).setUp()
+    super().setUp()
     oauth_dropins.flickr_auth.FLICKR_APP_KEY = 'my_app_key'
     oauth_dropins.flickr_auth.FLICKR_APP_SECRET = 'my_app_secret'
 
@@ -25,7 +25,7 @@ class FlickrTest(testutil.ModelsTest):
       user_json=json_dumps(gr_test_flickr.PERSON_INFO))
 
     self.auth_entity.put()
-    self.flickr = flickr.Flickr.new(self.handler, self.auth_entity)
+    self.flickr = flickr.Flickr.new(self.auth_entity)
 
   def test_new(self):
     self.assertEqual(self.auth_entity, self.flickr.auth_entity.get())

@@ -2,26 +2,25 @@
 """
 from google.cloud import ndb
 from oauth_dropins import indieauth
-from oauth_dropins.webutil.handlers import TemplateHandler
 
 from models import Domain
 import util
 
 
-class StartHandler(TemplateHandler, indieauth.StartHandler, util.Handler):
+class Start(indieauth.Start, util.View):
   """Serves the "Enter your web site" form page; starts the IndieAuth flow."""
   def template_file(self):
     return 'indieauth.html'
 
   def template_vars(self):
     return {
-      'token': util.get_required_param(self, 'token'),
+      'token': flask_util.get_required_param('token'),
       **super().template_vars(),
     }
 
   def post(self):
     try:
-      return redirect(redirect_url(state=util.get_required_param(self, 'token')))
+      return redirect(redirect_url(state=flask_util.get_required_param('token')))
     except Exception as e:
       if util.is_connection_failure(e) or util.interpret_http_exception(e)[0]:
         self.messages.add("Couldn't fetch your web site: %s" % e)
@@ -29,7 +28,7 @@ class StartHandler(TemplateHandler, indieauth.StartHandler, util.Handler):
       raise
 
 
-class CallbackHandler(indieauth.CallbackHandler, util.Handler):
+class Callback(indieauth.Callback, util.View):
   """IndieAuth callback handler."""
   @ndb.transactional()
   def finish(self, auth_entity, state=None):
@@ -48,7 +47,7 @@ class CallbackHandler(indieauth.CallbackHandler, util.Handler):
     return redirect('/')
 
 
-ROUTES = [
-  ('/indieauth/start', StartHandler.to('/indieauth/callback')),
-  ('/indieauth/callback', CallbackHandler),
-]
+# ROUTES = [
+#   ('/indieauth/start', Start.to('/indieauth/callback')),
+#   ('/indieauth/callback', Callback),
+# ]

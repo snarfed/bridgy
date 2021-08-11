@@ -160,10 +160,10 @@ class BuildCircle(webapp2.RequestHandler):
     resp.raise_for_status()
 
 
-ROUTES = [
-  ('/cron/build_circle', BuildCircle),
-  ('/cron/replace_poll_tasks', ReplacePollTasks),
-  ('/cron/update_flickr_pictures', UpdateFlickrPictures),
-  ('/cron/update_mastodon_pictures', UpdateMastodonPictures),
-  ('/cron/update_twitter_pictures', UpdateTwitterPictures),
-]
+# ROUTES = [
+#   ('/cron/build_circle', BuildCircle),
+#   ('/cron/replace_poll_tasks', ReplacePollTasks),
+#   ('/cron/update_flickr_pictures', UpdateFlickrPictures),
+#   ('/cron/update_mastodon_pictures', UpdateMastodonPictures),
+#   ('/cron/update_twitter_pictures', UpdateTwitterPictures),
+# ]

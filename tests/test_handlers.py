@@ -1,25 +1,26 @@
 # coding=utf-8
 """Unit tests for handlers.py.
 """
+import html
 import io
 import urllib.request, urllib.error, urllib.parse
 
 from mox3 import mox
 from util import json_dumps, json_loads
 
-import app
+from app import app, cache
 import handlers
 import models
 from . import testutil
 from .testutil import FakeGrSource, FakeSource
 
 
-class HandlersTest(testutil.HandlerTest):
+class HandlersTest(testutil.ViewTest):
 
   def setUp(self):
-    super(HandlersTest, self).setUp()
+    super().setUp()
     self.source = testutil.FakeSource.new(
-      self.handler, features=['listen'], domains=['or.ig', 'fa.ke'],
+      features=['listen'], domains=['or.ig', 'fa.ke'],
       domain_urls=['http://or.ig', 'https://fa.ke'])
     self.source.put()
     self.activities = [{
@@ -58,21 +59,15 @@ class HandlersTest(testutil.HandlerTest):
       'url': 'http://fa.ke/events/123',
     }
 
-    for handler in (handlers.PostHandler, handlers.CommentHandler,
-                    handlers.ReactionHandler, handlers.LikeHandler,
-                    handlers.RepostHandler, handlers.RsvpHandler):
-      handler.cache.clear()
-
   def check_response(self, url_template, expected_body=None, expected_status=200):
-    # use an HTTPS request so that URL schemes are converted
-    resp = app.application.get_response(
-      url_template % self.source.key.string_id(), scheme='https')
-    self.assertEqual(expected_status, resp.status_int,
-                     '%s %s' % (resp.status_int, resp.text))
+    resp = self.client.get(url_template % self.source.key.string_id(),
+                           # use an HTTPS request so that URL schemes are converted
+                           base_url='https://localhost/')
+    self.assertEqual(expected_status, resp.status_code)
 
     if expected_body:
       header_lines = len(handlers.TEMPLATE.template.splitlines()) - 2
-      actual = '\n'.join(resp.text.splitlines()[header_lines:-1])
+      actual = '\n'.join(resp.get_data(as_text=True).splitlines()[header_lines:-1])
       self.assert_multiline_equals(expected_body, actual, ignore_blanks=True)
 
     return resp
@@ -101,9 +96,10 @@ class HandlersTest(testutil.HandlerTest):
 """ % {'key': self.source.key.id(), 'id': self.source.user_tag_id()})
 
   def test_post_json(self):
-    resp = app.application.get_response(
-      '/post/fake/%s/000?format=json' % self.source.key.string_id(), scheme='https')
-    self.assertEqual(200, resp.status_int, resp.text)
+    resp = self.client.get(
+      f'/post/fake/{self.source.key.string_id()}/000?format=json',
+      base_url='https://localhost/')
+    self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
     self.assert_equals({
       'type': ['h-entry'],
       'properties': {
@@ -131,7 +127,7 @@ asdf http://other/link qwert
           },
         }],
       },
-    }, json_loads(resp.text))
+    }, resp.json)
 
   def test_post_missing(self):
     FakeGrSource.activities = []
@@ -159,12 +155,14 @@ asdf http://other/link qwert
   def test_bad_id(self):
     for url in ('/post/fake/%s/x"1', '/comment/fake/%s/123/y(2',
                 '/like/fake/%s/abc/z$3'):
-      self.check_response(url, expected_status=404)
+      with self.subTest(url):
+        resp = self.check_response(url, expected_status=404)
+        self.assertIn('Invalid id', resp.get_data(as_text=True))
 
   def test_author_uid_not_tag_uri(self):
     self.activities[0]['object']['author']['id'] = 'not a tag uri'
     resp = self.check_response('/post/fake/%s/000?format=json', expected_status=200)
-    props = json_loads(resp.text)['properties']['author'][0]['properties']
+    props = resp.json['properties']['author'][0]['properties']
     self.assert_equals(['not a tag uri'], props['uid'])
     self.assertNotIn('url', props)
 
@@ -182,7 +180,7 @@ asdf http://other/link qwert
 
     resp = self.check_response('/post/fake/%s/000', expected_status=410)
     self.assertEqual('text/plain; charset=utf-8', resp.headers['Content-Type'])
-    self.assertEqual('FakeSource error:\nGone baby gone', resp.text)
+    self.assertIn('Gone baby gone', resp.get_data(as_text=True))
 
   def test_connection_failures_504(self):
     user_id = self.source.key.string_id()
@@ -191,7 +189,7 @@ asdf http://other/link qwert
         ).AndRaise(Exception('Connection closed unexpectedly'))
     self.mox.ReplayAll()
     resp = self.check_response('/post/fake/%s/000', expected_status=504)
-    self.assertEqual('FakeSource error:\nConnection closed unexpectedly', resp.text)
+    self.assertIn('Connection closed unexpectedly', resp.get_data(as_text=True))
 
   def test_handle_disable_source(self):
     self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities')
@@ -201,7 +199,8 @@ asdf http://other/link qwert
     self.mox.ReplayAll()
 
     resp = self.check_response('/post/fake/%s/000', expected_status=401)
-    self.assertIn("Bridgy's access to your account has expired", resp.text)
+    self.assertIn("Bridgy's access to your account has expired",
+                  html.unescape(resp.get_data(as_text=True)))
 
   def test_handle_value_error(self):
     self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities')
@@ -211,7 +210,7 @@ asdf http://other/link qwert
     self.mox.ReplayAll()
 
     resp = self.check_response('/post/fake/%s/000', expected_status=400)
-    self.assertIn('FakeSource error: foo bar', resp.text)
+    self.assertIn('FakeSource error: foo bar', resp.get_data(as_text=True))
 
   def test_comment(self):
     self.check_response('/comment/fake/%s/000/a1-b2.c3', """\
@@ -443,8 +442,8 @@ asdf http://other/link qwert
       'author': {'id': 'tag:fa.ke,2013:reposter_id'},
     }
     resp = self.check_response('/repost/fake/%s/000/111')
-    self.assertIn('<data class="p-uid" value="tag:fa.ke,2013:reposter_id">', resp.text)
-    self.assertNotIn('u-url', resp.text)
+    self.assertIn('<data class="p-uid" value="tag:fa.ke,2013:reposter_id">', resp.get_data(as_text=True))
+    self.assertNotIn('u-url', resp.get_data(as_text=True))
 
   def test_original_post_urls_follow_redirects(self):
     FakeGrSource.comment = {
@@ -544,7 +543,7 @@ asdf http://other/link qwert
     self.mox.ReplayAll()
 
     cached = self.check_response('/post/fake/%s/000')
-    self.assert_multiline_equals(orig.text, cached.text)
+    self.assert_multiline_equals(orig.get_data(as_text=True), cached.get_data(as_text=True))
 
   def test_in_blocklist(self):
     self.mox.StubOutWithMock(FakeSource, 'is_blocked')
@@ -552,3 +551,8 @@ asdf http://other/link qwert
     self.mox.ReplayAll()
 
     self.check_response('/comment/fake/%s/000/111', expected_status=410)
+
+  def test_head(self):
+    resp = self.client.get(
+      f'/post/fake/{self.source.key.string_id()}/000', method='HEAD')
+    self.assertEqual(200, resp.status_code)

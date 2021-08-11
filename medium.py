@@ -14,7 +14,6 @@ import logging
 
 from google.cloud import ndb
 from oauth_dropins import medium as oauth_medium
-from oauth_dropins.webutil.handlers import JINJA_ENV
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import webapp2
 
@@ -29,7 +28,7 @@ class Medium(models.Source):
   The key name is the username (with @ prefix) or publication name.
   """
   GR_CLASS = collections.namedtuple('FakeGrClass', ('NAME',))(NAME='Medium')
-  OAUTH_START_HANDLER = oauth_medium.StartHandler
+  OAUTH_START = oauth_medium.Start
   SHORT_NAME = 'medium'
 
 
@@ -114,16 +113,16 @@ class Medium(models.Source):
     return [], []
 
 
-class AddMedium(util.Handler):
+class AddMedium(util.View):
   def post(self):
     auth_entity = ndb.Key(
-      urlsafe=util.get_required_param(self, 'auth_entity_key')).get()
-    state = util.get_required_param(self, 'state')
-    id = util.get_required_param(self, 'blog')
+      urlsafe=flask_util.get_required_param('auth_entity_key')).get()
+    state = flask_util.get_required_param('state')
+    id = flask_util.get_required_param('blog')
     self.maybe_add_or_delete_source(Medium, auth_entity, state, id=id)
 
 
-class ChooseBlog(oauth_medium.CallbackHandler, util.Handler):
+class ChooseBlog(oauth_medium.Callback, util.View):
   def finish(self, auth_entity, state=None):
     if not auth_entity:
       self.maybe_add_or_delete_source(Medium, auth_entity, state)
@@ -172,12 +171,12 @@ class SuperfeedrNotifyHandler(superfeedr.NotifyHandler):
   SOURCE_CLS = Medium
 
 
-ROUTES = [
-  # https://github.com/Medium/medium-api-docs#user-content-21-browser-based-authentication
-  ('/medium/start', util.oauth_starter(oauth_medium.StartHandler).to(
-    '/medium/choose_blog', scopes=('basicProfile', 'listPublications'))),
-  ('/medium/add', AddMedium),
-  ('/medium/choose_blog', ChooseBlog),
-  ('/medium/delete/finish', oauth_medium.CallbackHandler.to('/delete/finish')),
-  ('/medium/notify/(.+)', SuperfeedrNotifyHandler),
-]
+# ROUTES = [
+#   # https://github.com/Medium/medium-api-docs#user-content-21-browser-based-authentication
+#   ('/medium/start', util.oauth_starter(oauth_medium.Start).to(
+#     '/medium/choose_blog', scopes=('basicProfile', 'listPublications'))),
+#   ('/medium/add', AddMedium),
+#   ('/medium/choose_blog', ChooseBlog),
+#   ('/medium/delete/finish', oauth_medium.Callback.to('/delete/finish')),
+#   ('/medium/notify/(.+)', SuperfeedrNotifyHandler),
+# ]

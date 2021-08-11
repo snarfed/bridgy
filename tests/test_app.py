@@ -23,14 +23,14 @@ import twitter
 class AppTest(testutil.ModelsTest):
 
   def setUp(self):
-    super(AppTest, self).setUp()
+    super().setUp()
     util.now_fn = lambda: testutil.NOW
 
   def test_front_page(self):
     self.assertEqual(0, util.CachedPage.query().count())
 
     resp = app.application.get_response('/')
-    self.assertEqual(200, resp.status_int)
+    self.assertEqual(200, resp.status_code)
     self.assertEqual('no-cache', resp.headers['Cache-Control'])
 
     cached = util.CachedPage.get_by_id('/')
@@ -43,8 +43,8 @@ class AppTest(testutil.ModelsTest):
 
     resp = app.application.get_response('/poll-now', method='POST',
                                         text=urlencode({'key': key}))
-    self.assertEqual(302, resp.status_int)
-    self.assertEqual(self.sources[0].bridgy_url(self.handler),
+    self.assertEqual(302, resp.status_code)
+    self.assertEqual(self.sources[0].bridgy_url(self.view),
                       resp.headers['Location'].split('#')[0])
 
   def test_retry(self):
@@ -82,8 +82,8 @@ class AppTest(testutil.ModelsTest):
 
     response = app.application.get_response(
       '/retry', method='POST', text=urlencode({'key': key}))
-    self.assertEqual(302, response.status_int)
-    self.assertEqual(source.bridgy_url(self.handler),
+    self.assertEqual(302, response.status_code)
+    self.assertEqual(source.bridgy_url(self.view),
                       response.headers['Location'].split('#')[0])
 
     # status and URLs should be refreshed
@@ -112,7 +112,7 @@ class AppTest(testutil.ModelsTest):
         'key': key,
         'redirect_to': '/foo/bar',
       }))
-    self.assertEqual(302, response.status_int)
+    self.assertEqual(302, response.status_code)
     self.assertEqual('http://localhost/foo/bar',
                       response.headers['Location'].split('#')[0])
 
@@ -128,8 +128,8 @@ class AppTest(testutil.ModelsTest):
 
     response = app.application.get_response(
       '/crawl-now', method='POST', text=urlencode({'key': key}))
-    self.assertEqual(302, response.status_int)
-    self.assertEqual(source.bridgy_url(self.handler),
+    self.assertEqual(302, response.status_code)
+    self.assertEqual(source.bridgy_url(self.view),
                       response.headers['Location'].split('#')[0])
 
     source = source.key.get()
@@ -141,7 +141,7 @@ class AppTest(testutil.ModelsTest):
       for body in {}, {'key': self.responses[0].key.urlsafe().decode()}:  # hasn't been stored
         resp = app.application.get_response(endpoint, method='POST',
                                             text=urlencode(body))
-        self.assertEqual(400, resp.status_int)
+        self.assertEqual(400, resp.status_code)
 
   def test_delete_source_callback(self):
     key = self.sources[0].key.urlsafe().decode()
@@ -167,7 +167,7 @@ class AppTest(testutil.ModelsTest):
       + encoded_state,
     })
 
-    self.assertEqual(302, resp.status_int)
+    self.assertEqual(302, resp.status_code)
     self.assertEqual(expected_auth_url, resp.headers['Location'])
 
     # assume that the silo auth finishes and redirects to /delete/finish
@@ -176,7 +176,7 @@ class AppTest(testutil.ModelsTest):
       + 'auth_entity=' + self.sources[0].auth_entity.urlsafe().decode()
       + '&state=' + encoded_state)
 
-    self.assertEqual(302, resp.status_int)
+    self.assertEqual(302, resp.status_code)
     self.assertEqual(
       'http://withknown.com/bridgy_callback?' + urlencode([
         ('result', 'success'),
@@ -207,22 +207,22 @@ class AppTest(testutil.ModelsTest):
       + encoded_state,
     })
 
-    self.assertEqual(302, resp.status_int)
+    self.assertEqual(302, resp.status_code)
     self.assertEqual(expected_auth_url, resp.headers['Location'])
 
     # assume that the silo auth finishes
     resp = app.application.get_response(
       '/delete/finish?declined=True&state=' + encoded_state)
 
-    self.assertEqual(302, resp.status_int)
+    self.assertEqual(302, resp.status_code)
     self.assertEqual(
       'http://withknown.com/bridgy_callback?' + urlencode([
         ('result', 'declined')
       ]), resp.headers['Location'])
 
   def test_delete_start_redirect_url_error(self):
-    self.mox.StubOutWithMock(testutil.OAuthStartHandler, 'redirect_url')
-    testutil.OAuthStartHandler.redirect_url(state=mox.IgnoreArg()
+    self.mox.StubOutWithMock(testutil.OAuthStart, 'redirect_url')
+    testutil.OAuthStart.redirect_url(state=mox.IgnoreArg()
       ).AndRaise(tweepy.TweepError('Connection closed unexpectedly...'))
     self.mox.ReplayAll()
 
@@ -231,7 +231,7 @@ class AppTest(testutil.ModelsTest):
         'feature': 'listen',
         'key': self.sources[0].key.urlsafe().decode(),
       }))
-    self.assertEqual(302, resp.status_int)
+    self.assertEqual(302, resp.status_code)
     location = urllib.parse.urlparse(resp.headers['Location'])
     self.assertEqual('/fake/0123456789', location.path)
     self.assertEqual('!FakeSource API error 504: Connection closed unexpectedly...',
@@ -241,28 +241,28 @@ class AppTest(testutil.ModelsTest):
     cookie = ('logins="/fake/%s?Fake%%20User|/other/1?bob"; '
               'expires="2999-12-31 00:00:00"; Path=/' % self.sources[0].key.id())
 
-    state = self.handler.construct_state_param_for_add(
+    state = self.view.construct_state_param_for_add(
       feature='listen', operation='delete',
       source=self.sources[0].key.urlsafe().decode())
-    resp = app.application.get_response(
+    resp = self.client.get(
       '/delete/finish?auth_entity=%s&state=%s' %
       (self.sources[0].auth_entity.urlsafe().decode(), state),
       headers={'Cookie': cookie})
 
-    self.assertEqual(302, resp.status_int)
+    self.assertEqual(302, resp.status_code)
     location = resp.headers['Location']
     self.assertTrue(location.startswith('http://localhost/#'), location)
     new_cookie = resp.headers['Set-Cookie']
     self.assertTrue(new_cookie.startswith('logins="/other/1?bob"; '), new_cookie)
 
   def test_user_page(self):
-    resp = app.application.get_response(self.sources[0].bridgy_path())
-    self.assertEqual(200, resp.status_int)
+    resp = self.client.get(self.sources[0].bridgy_path())
+    self.assertEqual(200, resp.status_code)
     self.assertEqual('no-cache', resp.headers['Cache-Control'])
 
   def test_user_page_trailing_slash(self):
-    resp = app.application.get_response(self.sources[0].bridgy_path() + '/')
-    self.assertEqual(200, resp.status_int)
+    resp = self.client.get(self.sources[0].bridgy_path() + '/')
+    self.assertEqual(200, resp.status_code)
 
   def test_user_page_lookup_with_username_etc(self):
     self.sources[0].username = 'FooBar'
@@ -271,21 +271,21 @@ class AppTest(testutil.ModelsTest):
     self.sources[0].put()
 
     for id in 'FooBar', 'Snoøpy Barrett', 'foox.com':
-      resp = app.application.get_response(
+      resp = self.client.get(
         '/fake/%s' % urllib.parse.quote(id.encode()))
-      self.assertEqual(301, resp.status_int)
+      self.assertEqual(301, resp.status_code)
       self.assertEqual('http://localhost/fake/%s' % self.sources[0].key.id(),
                         resp.headers['Location'])
 
-    resp = app.application.get_response('/fake/nope')
-    self.assertEqual(404, resp.status_int)
+    resp = self.client.get('/fake/nope')
+    self.assertEqual(404, resp.status_code)
 
   def test_user_page_with_no_features_404s(self):
     self.sources[0].features = []
     self.sources[0].put()
 
-    resp = app.application.get_response(self.sources[0].bridgy_path())
-    self.assertEqual(404, resp.status_int)
+    resp = self.client.get(self.sources[0].bridgy_path())
+    self.assertEqual(404, resp.status_code)
 
   def test_social_user_page_mf2(self):
     """Check the custom mf2 we render on social user pages."""
@@ -322,10 +322,10 @@ class AppTest(testutil.ModelsTest):
       entity.put()
 
     user_url = self.sources[0].bridgy_path()
-    response = app.application.get_response(user_url)
-    self.assertEqual(200, response.status_int)
+    response = self.client.get(user_url)
+    self.assertEqual(200, response.status_code)
 
-    parsed = util.parse_mf2(response.text, user_url)
+    parsed = util.parse_mf2(response.get_data(as_text=True), user_url)
     hcard = parsed.get('items', [])[0]
     self.assertEqual(['h-card'], hcard['type'])
     self.assertEqual(
@@ -349,8 +349,8 @@ class AppTest(testutil.ModelsTest):
       self.assertEqual(resp.unsent, props['bridgy-target'])
 
     # check invite
-    self.assertIn('Ms. Guest is invited.', response.text)
-    self.assertNotIn('Mrs. Host is invited.', response.text)
+    self.assertIn('Ms. Guest is invited.', response.get_data(as_text=True))
+    self.assertNotIn('Mrs. Host is invited.', response.get_data(as_text=True))
 
     publish = hcard['children'][len(expected_resps)]
     self.assertIn('h-bridgy-publish', publish['type'])
@@ -367,26 +367,26 @@ class AppTest(testutil.ModelsTest):
     tw = twitter.Twitter(id='foo', auth_entity=auth_entity, features=['listen'])
     tw.put()
 
-    resp = app.application.get_response(tw.bridgy_path())
-    self.assertEqual(200, resp.status_int)
-    self.assertIn('Your Twitter account is private!', resp.text)
-    self.assertNotIn('most of your recent posts are private', resp.text)
+    resp = self.client.get(tw.bridgy_path())
+    self.assertEqual(200, resp.status_code)
+    self.assertIn('Your Twitter account is private!', resp.get_data(as_text=True))
+    self.assertNotIn('most of your recent posts are private', resp.get_data(as_text=True))
 
   def test_user_page_recent_private_posts(self):
     self.sources[0].recent_private_posts = app.RECENT_PRIVATE_POSTS_THRESHOLD
     self.sources[0].put()
 
-    resp = app.application.get_response(self.sources[0].bridgy_path())
-    self.assertEqual(200, resp.status_int)
-    self.assertIn('most of your recent posts are private', resp.text)
+    resp = self.client.get(self.sources[0].bridgy_path())
+    self.assertEqual(200, resp.status_code)
+    self.assertIn('most of your recent posts are private', resp.get_data(as_text=True))
 
   def test_user_page_recent_private_posts_none(self):
     self.sources[0].recent_private_posts = None
     self.sources[0].put()
 
-    resp = app.application.get_response(self.sources[0].bridgy_path())
-    self.assertEqual(200, resp.status_int)
-    self.assertNotIn('most of your recent posts are private', resp.text)
+    resp = self.client.get(self.sources[0].bridgy_path())
+    self.assertEqual(200, resp.status_code)
+    self.assertNotIn('most of your recent posts are private', resp.get_data(as_text=True))
 
   def test_user_page_publish_url_with_unicode_char(self):
     """Check the custom mf2 we render on social user pages."""
@@ -398,10 +398,10 @@ class AppTest(testutil.ModelsTest):
             source=self.sources[0].key).put()
 
     user_url = self.sources[0].bridgy_path()
-    resp = app.application.get_response(user_url)
-    self.assertEqual(200, resp.status_int)
+    resp = self.client.get(user_url)
+    self.assertEqual(200, resp.status_code)
 
-    parsed = util.parse_mf2(resp.text, user_url)
+    parsed = util.parse_mf2(resp.get_data(as_text=True), user_url)
     publish = parsed['items'][0]['children'][0]
 
   def test_user_page_escapes_html_chars(self):
@@ -418,28 +418,28 @@ class AppTest(testutil.ModelsTest):
     self.responses[0].status = 'processing'
     self.responses[0].put()
 
-    resp = app.application.get_response(self.sources[0].bridgy_path())
-    self.assertEqual(200, resp.status_int)
-    self.assertNotIn(html, resp.text)
-    self.assertIn(escaped, resp.text)
+    resp = self.client.get(self.sources[0].bridgy_path())
+    self.assertEqual(200, resp.status_code)
+    self.assertNotIn(html, resp.get_data(as_text=True))
+    self.assertIn(escaped, resp.get_data(as_text=True))
 
-    self.assertNotIn('&lt;span class="glyphicon glyphicon-transfer"&gt;', resp.text)
-    self.assertIn('<span class="glyphicon glyphicon-transfer">', resp.text)
+    self.assertNotIn('&lt;span class="glyphicon glyphicon-transfer"&gt;', resp.get_data(as_text=True))
+    self.assertIn('<span class="glyphicon glyphicon-transfer">', resp.get_data(as_text=True))
 
   def test_user_page_rate_limited_never_successfully_polled(self):
     self.sources[0].rate_limited = True
     self.sources[0].last_poll_attempt = datetime.datetime(2019, 1, 1)
     self.sources[0].put()
 
-    resp = app.application.get_response(self.sources[0].bridgy_path())
-    self.assertEqual(200, resp.status_int)
-    self.assertIn('Not polled yet,', resp.text)
+    resp = self.client.get(self.sources[0].bridgy_path())
+    self.assertEqual(200, resp.status_code)
+    self.assertIn('Not polled yet,', resp.get_data(as_text=True))
 
   def test_blog_user_page_escapes_html_chars(self):
     html = '<xyz> a&b'
     escaped = '&lt;xyz&gt; a&amp;b'
 
-    source = FakeBlogSource.new(None)
+    source = FakeBlogSource.new()
     source.features = ['webmention']
     source.put()
 
@@ -447,47 +447,47 @@ class AppTest(testutil.ModelsTest):
     self.blogposts[0].feed_item['title'] = html
     self.blogposts[0].put()
 
-    resp = app.application.get_response(source.bridgy_path())
-    self.assertEqual(200, resp.status_int)
-    self.assertNotIn(html, resp.text)
-    self.assertIn(escaped, resp.text)
+    resp = self.client.get(source.bridgy_path())
+    self.assertEqual(200, resp.status_code)
+    self.assertNotIn(html, resp.get_data(as_text=True))
+    self.assertIn(escaped, resp.get_data(as_text=True))
 
   def test_users_page(self):
-    resp = app.application.get_response('/users')
+    resp = self.client.get('/users')
     for source in self.sources:
       self.assertIn(
         '<a href="%s" title="%s"' % (source.bridgy_path(), source.label()),
-        resp.text)
-    self.assertEqual(200, resp.status_int)
+        resp.get_data(as_text=True))
+    self.assertEqual(200, resp.status_code)
 
   def test_users_page_hides_deleted_and_disabled(self):
-    deleted = testutil.FakeSource.new(None, features=[])
+    deleted = testutil.FakeSource.new(features=[])
     deleted.put()
-    disabled = testutil.FakeSource.new(None, status='disabled', features=['publish'])
+    disabled = testutil.FakeSource.new(status='disabled', features=['publish'])
     disabled.put()
 
-    resp = app.application.get_response('/users')
+    resp = self.client.get('/users')
     for entity in deleted, disabled:
       self.assertNotIn(
         '<a href="%s" title="%s"' % (entity.bridgy_path(), entity.label()),
-        resp.text)
+        resp.get_data(as_text=True))
 
   def test_logout(self):
     util.now_fn = lambda: datetime.datetime(2000, 1, 1)
-    resp = app.application.get_response('/logout')
+    resp = self.client.get('/logout')
     self.assertEqual('logins=""; expires="2001-12-31 00:00:00"; Path=/',
                       resp.headers['Set-Cookie'])
-    self.assertEqual(302, resp.status_int)
+    self.assertEqual(302, resp.status_code)
     self.assertEqual('http://localhost/#!Logged%20out.', resp.headers['Location'])
 
   def test_edit_web_sites_add(self):
     source = self.sources[0]
     self.assertNotIn('foo.com', source.domains)
-    resp = app.application.get_response(
+    resp = self.client.get(
       '/edit-websites', method='POST',
       text=urlencode({'source_key': source.key.urlsafe().decode(),
                       'add': 'http://foo.com/'}))
-    self.assertEqual(302, resp.status_int)
+    self.assertEqual(302, resp.status_code)
     self.assertEqual('http://localhost/edit-websites?source_key=%s#!%s' % (
       (source.key.urlsafe().decode(),
        urllib.parse.quote('Added <a href="http://foo.com/">foo.com</a>.'))),
@@ -503,11 +503,11 @@ class AppTest(testutil.ModelsTest):
     source.domains = ['foo.com']
     source.put()
 
-    resp = app.application.get_response(
+    resp = self.client.get(
       '/edit-websites', method='POST',
       text=urlencode({'source_key': source.key.urlsafe().decode(),
                       'add': 'http://foo.com/'}))
-    self.assertEqual(302, resp.status_int)
+    self.assertEqual(302, resp.status_code)
     self.assertEqual('http://localhost/edit-websites?source_key=%s#!%s' % (
       (source.key.urlsafe().decode(),
        urllib.parse.quote('<a href="http://foo.com/">foo.com</a> already exists.'))),
@@ -519,11 +519,11 @@ class AppTest(testutil.ModelsTest):
 
   def test_edit_web_sites_add_bad(self):
     source = self.sources[0]
-    resp = app.application.get_response(
+    resp = self.client.get(
       '/edit-websites', method='POST',
       text=urlencode({'source_key': source.key.urlsafe().decode(),
                       'add': 'http://facebook.com/'}))
-    self.assertEqual(302, resp.status_int)
+    self.assertEqual(302, resp.status_code)
     self.assertEqual('http://localhost/edit-websites?source_key=%s#!%s' % (
       (source.key.urlsafe().decode(),
        urllib.parse.quote('<a href="http://facebook.com/">facebook.com</a> doesn\'t look like your web site. Try again?'))),
@@ -539,11 +539,11 @@ class AppTest(testutil.ModelsTest):
     source.domains = ['foo', 'bar']
     source.put()
 
-    resp = app.application.get_response(
+    resp = self.client.get(
       '/edit-websites', method='POST',
       text=urlencode({'source_key': source.key.urlsafe().decode(),
                       'delete': 'https://bar'}))
-    self.assertEqual(302, resp.status_int)
+    self.assertEqual(302, resp.status_code)
     self.assertEqual('http://localhost/edit-websites?source_key=%s#!%s' % (
       (source.key.urlsafe().decode(),
        urllib.parse.quote('Removed <a href="https://bar">bar</a>.'))),
@@ -559,11 +559,11 @@ class AppTest(testutil.ModelsTest):
     source.domains = ['foo.com']
     source.put()
 
-    resp = app.application.get_response(
+    resp = self.client.get(
       '/edit-websites', method='POST',
       text=urlencode({'source_key': source.key.urlsafe().decode(),
                       'delete': 'https://foo.com/baz'}))
-    self.assertEqual(302, resp.status_int)
+    self.assertEqual(302, resp.status_code)
     self.assertEqual('http://localhost/edit-websites?source_key=%s#!%s' % (
       (source.key.urlsafe().decode(),
        urllib.parse.quote('Removed <a href="https://foo.com/baz">foo.com/baz</a>.'))),
@@ -585,26 +585,26 @@ class AppTest(testutil.ModelsTest):
         {'source_key': 'asdf', 'delete': 'http://foo', 'add': 'http://bar'},
         {'source_key': source_key, 'delete': 'http://missing'},
     ):
-      resp = app.application.get_response('/edit-websites', method='POST',
+      resp = self.client.get('/edit-websites', method='POST',
                                           text=urlencode(data))
-      self.assertEqual(400, resp.status_int)
+      self.assertEqual(400, resp.status_code)
 
 
 class DiscoverTest(testutil.ModelsTest):
 
   def setUp(self):
-    super(DiscoverTest, self).setUp()
+    super().setUp()
     self.source = self.sources[0]
     self.source.domains = ['si.te']
     self.source.put()
 
   def check_discover(self, url, expected_message):
-      resp = app.application.get_response(
+      resp = self.client.get(
         '/discover?source_key=%s&url=%s' % (self.source.key.urlsafe().decode(), url),
         method='POST')
       location = urllib.parse.urlparse(resp.headers['Location'])
-      detail = ' '.join((url, str(resp.status_int), repr(location), repr(resp.text)))
-      self.assertEqual(302, resp.status_int, detail)
+      detail = ' '.join((url, str(resp.status_code), repr(location), repr(resp.get_data(as_text=True))))
+      self.assertEqual(302, resp.status_code, detail)
       self.assertEqual(self.source.bridgy_path(), location.path, detail)
       self.assertEqual('!' + expected_message, urllib.parse.unquote(location.fragment),
                        detail)
@@ -627,8 +627,8 @@ class DiscoverTest(testutil.ModelsTest):
                 '/discover?url=bad',
                 '/discover?url=http://foo/bar',
                 ):
-      resp = app.application.get_response(url, method='POST')
-      self.assertEqual(400, resp.status_int)
+      resp = self.client.get(url, method='POST')
+      self.assertEqual(400, resp.status_code)
 
   def test_discover_url_not_site_or_silo_error(self):
     msg = 'Please enter a URL on either your web site or FakeSource.'

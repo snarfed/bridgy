@@ -21,15 +21,15 @@ from flickr import Flickr
 from mastodon import Mastodon
 import models
 from . import testutil
-from .testutil import FakeSource, HandlerTest
+from .testutil import FakeSource, ViewTest
 from twitter import Twitter
 import tasks
 import util
 
 
-class CronTest(HandlerTest):
+class CronTest(ViewTest):
   def setUp(self):
-    super(CronTest, self).setUp()
+    super().setUp()
     oauth_dropins.flickr_auth.FLICKR_APP_KEY = 'my_app_key'
     oauth_dropins.flickr_auth.FLICKR_APP_SECRET = 'my_app_secret'
     oauth_dropins.twitter_auth.TWITTER_APP_KEY = 'my_app_key'
@@ -75,7 +75,7 @@ class CronTest(HandlerTest):
     self.mox.ReplayAll()
 
     resp = tasks.application.get_response('/cron/replace_poll_tasks')
-    self.assertEqual(200, resp.status_int)
+    self.assertEqual(200, resp.status_code)
 
   def test_update_twitter_pictures(self):
     sources = []
@@ -103,7 +103,7 @@ class CronTest(HandlerTest):
     self.mox.ReplayAll()
 
     resp = tasks.application.get_response('/cron/update_twitter_pictures')
-    self.assertEqual(200, resp.status_int)
+    self.assertEqual(200, resp.status_code)
 
     self.assertEqual('http://pi.ct/ure', sources[0].get().picture)
     self.assertEqual('http://new/pic.jpg', sources[1].get().picture)
@@ -123,7 +123,7 @@ class CronTest(HandlerTest):
     self.mox.ReplayAll()
 
     resp = tasks.application.get_response('/cron/update_twitter_pictures')
-    self.assertEqual(200, resp.status_int)
+    self.assertEqual(200, resp.status_code)
 
     self.assertEqual('http://pi.ct/ure', source.get().picture)
 
@@ -143,7 +143,7 @@ class CronTest(HandlerTest):
 
     self.flickr.put()
     resp = tasks.application.get_response('/cron/update_flickr_pictures')
-    self.assertEqual(200, resp.status_int)
+    self.assertEqual(200, resp.status_code)
     self.assertEqual(
       'https://farm9.staticflickr.com/9876/buddyicons/123@N00.jpg',
       self.flickr.key.get().picture)
@@ -156,7 +156,7 @@ class CronTest(HandlerTest):
 
     mastodon = self._setup_mastodon()
     resp = tasks.application.get_response('/cron/update_mastodon_pictures')
-    self.assertEqual(200, resp.status_int)
+    self.assertEqual(200, resp.status_code)
     self.assertEqual(test_mastodon.ACCOUNT['avatar'], mastodon.key.get().picture)
 
   def test_update_mastodon_pictures_get_actor_404(self):
@@ -170,7 +170,7 @@ class CronTest(HandlerTest):
 
     mastodon = self._setup_mastodon()
     resp = tasks.application.get_response('/cron/update_mastodon_pictures')
-    self.assertEqual(200, resp.status_int)
+    self.assertEqual(200, resp.status_code)
     self.assertEqual('http://before', mastodon.key.get().picture)
 
   def _setup_mastodon(self):
@@ -186,6 +186,6 @@ class CronTest(HandlerTest):
         'avatar': 'http://before',
       }))
     auth.put()
-    mastodon = Mastodon.new(self.handler, auth_entity=auth, features=['listen'])
+    mastodon = Mastodon.new(auth_entity=auth, features=['listen'])
     mastodon.put()
     return mastodon

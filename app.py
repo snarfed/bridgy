@@ -11,9 +11,9 @@ from flask import Flask, redirect, render_template, request
 from flask_caching import Cache
 from google.cloud import ndb
 from google.cloud.ndb.stats import KindStat, KindPropertyNamePropertyTypeStat
+import humanize
 from oauth_dropins import indieauth
 from oauth_dropins.webutil import appengine_info, flask_util, logs
-from oauth_dropins.webutil import handlers as webutil_handlers
 from oauth_dropins.webutil.appengine_config import ndb_client
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import webapp2
@@ -26,27 +26,6 @@ import models
 from models import BlogPost, BlogWebmention, Publish, Response, Source, Webmentions
 import original_post_discovery
 import util
-
-# import handler classes for URL routes, and for source model class definitions
-# for template rendering.
-MODULES = [importlib.import_module(name) for name in (
-  'blog_webmention',
-  'blogger',
-  'facebook',
-  'flickr',
-  'github',
-  'handlers',
-  'indieauth',
-  'instagram',
-  'mastodon',
-  'medium',
-  'meetup',
-  'publish',
-  'reddit',
-  'tumblr',
-  'twitter',
-  'wordpress_rest',
-)]
 
 RECENT_PRIVATE_POSTS_THRESHOLD = 5
 
@@ -70,31 +49,33 @@ app.before_request(flask_util.canonicalize_domain(
 app.wsgi_app = flask_util.ndb_context_middleware(
     app.wsgi_app, client=appengine_config.ndb_client)
 
+app.jinja_env.globals['naturaltime'] = humanize.naturaltime
+
 cache = Cache(app)
 
 
-class DashboardHandler(webutil_handlers.TemplateHandler, util.Handler):
+class DashboardHandler(util.View):
   """Base handler for both the front page and user pages."""
 
   def head(self, *args, **kwargs):
     """Return an empty 200 with no caching directives."""
 
   def get(self, *args, **kwargs):
-    return super(DashboardHandler, self).get(*args, **kwargs)
+    return super().get(*args, **kwargs)
 
   def content_type(self):
     return 'text/html; charset=utf-8'
 
   def template_vars(self):
     return {
-      'request': self.request,
+      'request': request,
       'logins': self.get_logins(),
       'DEBUG': appengine_info.DEBUG,
     }
 
   def headers(self):
     """Omit Cache-Control header."""
-    headers = super(DashboardHandler, self).headers()
+    headers = super().headers()
     headers.pop('Cache-Control', None)
     return headers
 
@@ -111,17 +92,17 @@ class CachedPageHandler(DashboardHandler):
   EXPIRES = None  # subclasses can override
 
   def get(self, cache=True):
-    if (not cache or appengine_info.LOCAL or self.request.params or
+    if (not cache or appengine_info.LOCAL or request.params or
         self.get_logins()):
-      return super(CachedPageHandler, self).get()
+      return super().get()
 
     self.response.headers['Content-Type'] = self.content_type()
-    cached = util.CachedPage.load(self.request.path)
+    cached = util.CachedPage.load(request.path)
     if cached:
       self.response.write(cached.html)
     else:
-      super(CachedPageHandler, self).get()
-      util.CachedPage.store(self.request.path, self.response.body,
+      super().get()
+      util.CachedPage.store(request.path, self.response.body,
                             expires=self.EXPIRES)
 
 
@@ -161,7 +142,7 @@ class FrontPageHandler(CachedPageHandler):
                     for kind in ('BlogPost', 'Response'))
       for property in ('sent', 'unsent', 'error', 'failed', 'skipped')}
 
-    vars = super(FrontPageHandler, self).template_vars()
+    vars = super().template_vars()
     vars['sources'] = models.sources
 
     # stats; add comma separator between thousands
@@ -192,13 +173,13 @@ class UsersHandler(CachedPageHandler):
 
   def get(self):
     # only cache the first page
-    return super(UsersHandler, self).get(cache=not self.request.params)
+    return super().get(cache=not request.params)
 
   def template_file(self):
     return 'users.html'
 
   def template_vars(self):
-    start_name = self.request.get('start_name')
+    start_name = request.values.get('start_name')
     queries = [cls.query(cls.name >= start_name).fetch_async(self.PAGE_SIZE)
                for cls in models.sources.values()]
 
@@ -209,7 +190,7 @@ class UsersHandler(CachedPageHandler):
                   and s.status != 'disabled'
                ][:self.PAGE_SIZE]
 
-    vars = super(UsersHandler, self).template_vars()
+    vars = super().template_vars()
     vars.update({
         'sources': sources,
         'string': string,  # module, used in template
@@ -237,7 +218,7 @@ class UserHandler(DashboardHandler):
       self.source = self.preprocess_source(self.source)
     else:
       self.response.status_int = 404
-    super(UserHandler, self).get()
+    super().get()
 
   def template_file(self):
     return ('%s_user.html' % self.source.SHORT_NAME
@@ -249,7 +230,7 @@ class UserHandler(DashboardHandler):
     return {'Access-Control-Allow-Origin': '*'}
 
   def template_vars(self):
-    vars = super(UserHandler, self).template_vars()
+    vars = super().template_vars()
     vars.update({
       'source': self.source,
       'sources': models.sources,
@@ -285,18 +266,18 @@ class UserHandler(DashboardHandler):
       # if there's a paging param (responses_before or responses_after), update
       # query with it
       def get_paging_param(param):
-        val = self.request.get(param)
+        val = request.values.get(param)
         try:
           return util.parse_iso8601(val) if val else None
         except:
           msg = "Couldn't parse %s %r as ISO8601" % (param, val)
           logging.warning(msg, stack_info=True)
-          self.abort(400, msg)
+          abort(400, msg)
 
       before = get_paging_param('responses_before')
       after = get_paging_param('responses_after')
       if before and after:
-        self.abort(400, "can't handle both responses_before and responses_after")
+        abort(400, "can't handle both responses_before and responses_after")
       elif after:
         query = query.filter(Response.updated > after).order(Response.updated)
       elif before:
@@ -461,16 +442,16 @@ class AboutHandler(DashboardHandler):
   post = DashboardHandler.get
 
 
-class DeleteStartHandler(util.Handler):
+class DeleteStart(util.View):
   def post(self):
     source = self.load_source(param='key')
     kind = source.key.kind()
-    feature = util.get_required_param(self, 'feature')
+    feature = flask_util.get_required_param('feature')
     state = util.encode_oauth_state({
       'operation': 'delete',
       'feature': feature,
       'source': source.key.urlsafe().decode(),
-      'callback': self.request.get('callback'),
+      'callback': request.values.get('callback'),
     })
 
     # Blogger don't support redirect_url() yet
@@ -484,7 +465,7 @@ class DeleteStartHandler(util.Handler):
     if kind == 'Twitter':
       kwargs['access_type'] = 'read' if feature == 'listen' else 'write'
 
-    handler = source.OAUTH_START_HANDLER.to(path, **kwargs)(self.request, self.response)
+    handler = source.OAUTH_START.to(path, **kwargs)(request, self.response)
     try:
       return redirect(handler.redirect_url(state=state))
     except Exception as e:
@@ -499,12 +480,12 @@ class DeleteStartHandler(util.Handler):
         raise
 
 
-class DeleteFinishHandler(util.Handler):
+class DeleteFinishHandler(util.View):
   def get(self):
-    parts = util.decode_oauth_state(self.request.get('state') or '')
+    parts = util.decode_oauth_state(request.values.get('state') or '')
     callback = parts and parts.get('callback')
 
-    if self.request.get('declined'):
+    if request.values.get('declined'):
       # disable declined means no change took place
       if callback:
         callback = util.add_query_params(callback, {'result': 'declined'})
@@ -515,14 +496,14 @@ class DeleteFinishHandler(util.Handler):
       return
 
     if (not parts or 'feature' not in parts or 'source' not in parts):
-      self.abort(400, 'state query parameter must include "feature" and "source"')
+      abort(400, 'state query parameter must include "feature" and "source"')
 
     feature = parts['feature']
     if feature not in (Source.FEATURES):
-      self.abort(400, 'cannot delete unknown feature %s' % feature)
+      abort(400, 'cannot delete unknown feature %s' % feature)
 
     logged_in_as = ndb.Key(
-      urlsafe=util.get_required_param(self, 'auth_entity')).get()
+      urlsafe=flask_util.get_required_param('auth_entity')).get()
     source = ndb.Key(urlsafe=parts['source']).get()
 
     if logged_in_as and logged_in_as.is_authority_for(source.auth_entity):
@@ -564,7 +545,7 @@ class DeleteFinishHandler(util.Handler):
                   else '/')
 
 
-class PollNowHandler(util.Handler):
+class PollNowHandler(util.View):
   source = None
 
   def post(self):
@@ -594,11 +575,11 @@ class CrawlNowHandler(PollNowHandler):
     self.source.put()
 
 
-class RetryHandler(util.Handler):
+class RetryHandler(util.View):
   def post(self):
     entity = self.load_source(param='key')
     if not isinstance(entity, Webmentions):
-      self.abort(400, 'Unexpected key kind %s', entity.key.kind())
+      abort(400, 'Unexpected key kind %s', entity.key.kind())
 
     # run OPD to pick up any new SyndicatedPosts. note that we don't refetch
     # their h-feed, so if they've added a syndication URL since we last crawled,
@@ -613,16 +594,16 @@ class RetryHandler(util.Handler):
 
     entity.restart()
     self.messages.add('Retrying. Refresh in a minute to see the results!')
-    return redirect(self.request.get('redirect_to') or
+    return redirect(request.values.get('redirect_to') or
                   entity.source.get().bridgy_url(self))
 
 
-class DiscoverHandler(util.Handler):
+class DiscoverHandler(util.View):
   def post(self):
     source = self.load_source()
 
     # validate URL, find silo post
-    url = util.get_required_param(self, 'url')
+    url = flask_util.get_required_param('url')
     domain = util.domain_from_link(url)
     path = urllib.parse.urlparse(url).path
     msg = 'Discovering now. Refresh in a minute to see the results!'
@@ -654,7 +635,7 @@ class DiscoverHandler(util.Handler):
     return redirect(source.bridgy_url(self))
 
 
-class EditWebsites(webutil_handlers.TemplateHandler, util.Handler):
+class EditWebsites(util.View):
 
   def template_file(self):
     return 'edit_websites.html'
@@ -664,14 +645,14 @@ class EditWebsites(webutil_handlers.TemplateHandler, util.Handler):
 
   def post(self):
     source = self.load_source()
-    redirect_url = '%s?%s' % (self.request.path, urllib.parse.urlencode({
+    redirect_url = '%s?%s' % (request.path, urllib.parse.urlencode({
       'source_key': source.key.urlsafe().decode(),
     }))
 
-    add = self.request.get('add')
-    delete = self.request.get('delete')
+    add = request.values.get('add')
+    delete = request.values.get('delete')
     if (add and delete) or (not add and not delete):
-      self.abort(400, 'Either add or delete param (but not both) required')
+      abort(400, 'Either add or delete param (but not both) required')
 
     link = util.pretty_link(add or delete)
 
@@ -694,7 +675,7 @@ class EditWebsites(webutil_handlers.TemplateHandler, util.Handler):
       try:
         source.domain_urls.remove(delete)
       except ValueError:
-        self.abort(400, "%s not found in %s's current web sites" % (
+        abort(400, "%s not found in %s's current web sites" % (
                           delete, source.label()))
       domain = util.domain_from_link(delete)
       if domain not in set(util.domain_from_link(url) for url in source.domain_urls):
@@ -728,7 +709,7 @@ def logout():
 @app.route('/csp-report')
 def csp_report():
   """Log Content-Security-Policy reports. https://content-security-policy.com/"""
-  logging.info(request.get_data(as_text=True))
+  logging.info(request.values.get_data(as_text=True))
   return 'OK'
 
 
@@ -743,20 +724,17 @@ def noop(_):
   return 'OK'
 
 
-routes = []
-for module in MODULES:
-  routes += module.ROUTES
-routes += [
-  ('/?', FrontPageHandler),
-  ('/users/?', UsersHandler),
-  ('/(blogger|fake|fake_blog|flickr|github|instagram|mastodon|medium|meetup|reddit|tumblr|twitter|wordpress)/([^/]+)/?',
-   UserHandler),
-  ('/about/?', AboutHandler),
-  ('/delete/start', DeleteStartHandler),
-  ('/delete/finish', DeleteFinishHandler),
-  ('/discover', DiscoverHandler),
-  ('/poll-now', PollNowHandler),
-  ('/crawl-now', CrawlNowHandler),
-  ('/retry', RetryHandler),
-  ('/edit-websites', EditWebsites),
-]
+# routes += [
+#   ('/?', FrontPage),
+#   ('/users/?', Users),
+#   ('/(blogger|fake|fake_blog|flickr|github|instagram|mastodon|medium|meetup|reddit|tumblr|twitter|wordpress)/([^/]+)/?',
+#    User),
+#   ('/about/?', About),
+#   ('/delete/start', DeleteStart),
+#   ('/delete/finish', DeleteFinish),
+#   ('/discover', Discover),
+#   ('/poll-now', PollNow),
+#   ('/crawl-now', CrawlNow),
+#   ('/retry', Retry),
+#   ('/edit-websites', EditWebsites),
+# ]

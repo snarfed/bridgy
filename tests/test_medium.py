@@ -37,10 +37,10 @@ PUBLICATIONS = {
   }],
 }
 
-class MediumTest(testutil.HandlerTest):
+class MediumTest(testutil.ViewTest):
 
   def setUp(self):
-    super(MediumTest, self).setUp()
+    super().setUp()
     self.auth_entity = oauth_medium.MediumAuth(
       id='abcdef01234', access_token_str='my token', user_json=json_dumps(USER),
       publications_json=json_dumps(PUBLICATIONS))
@@ -52,10 +52,10 @@ class MediumTest(testutil.HandlerTest):
 
   def tearDown(self):
     appengine_info.LOCAL = self.orig_local
-    super(MediumTest, self).tearDown()
+    super().tearDown()
 
   def expect_requests_get(self, path, *args, **kwargs):
-    return super(testutil.HandlerTest, self).expect_requests_get(
+    return super(k).expect_requests_get(
       oauth_medium.API_BASE + path,
       *args,
       headers={
@@ -101,59 +101,59 @@ class MediumTest(testutil.HandlerTest):
 
   def test_new_profile(self):
     self.assert_created_profile(
-      Medium.new(self.handler, auth_entity=self.auth_entity, id='@ry'))
+      Medium.new(auth_entity=self.auth_entity, id='@ry'))
 
   def test_new_publication(self):
     self.assert_created_publication(
-      Medium.new(self.handler, auth_entity=self.auth_entity, id='b45573563f5a'))
+      Medium.new(auth_entity=self.auth_entity, id='b45573563f5a'))
 
   def test_choose_blog_decline(self):
-    ChooseBlog(self.request, self.response).finish(None)
+    ChooseBlog(request, self.response).finish(None)
     self.assertEqual(0, Medium.query().count())
-    self.assertEqual(302, self.response.status_int)
+    self.assertEqual(302, self.response.status_code)
     self.assertEqual(
       "http://localhost/#!OK, you're not signed up. Hope you reconsider!",
       urllib.parse.unquote_plus(self.response.headers['Location']))
 
   def test_choose_blog_no_publications(self):
     self.expect_get_publications({})
-    ChooseBlog(self.request, self.response).finish(self.auth_entity)
-    self.assertEqual(302, self.response.status_int)
+    ChooseBlog(request, self.response).finish(self.auth_entity)
+    self.assertEqual(302, self.response.status_code)
     loc = urllib.parse.unquote_plus(self.response.headers['Location'])
     self.assertTrue(loc.startswith('http://localhost/'), loc)
     self.assert_created_profile()
 
   def test_choose_blog_publications(self):
     self.expect_get_publications(PUBLICATIONS)
-    ChooseBlog(self.request, self.response).finish(self.auth_entity)
+    ChooseBlog(request, self.response).finish(self.auth_entity)
     self.assert_equals(200, self.response.status_code)
     for expected in ('action="/medium/add" method="post"',
                      '<input type="radio" name="blog" id="@ry"',
                      '<input type="radio" name="blog" id="b969ac62a46b"',
                      '<input type="radio" name="blog" id="b45573563f5a"',
                      ):
-      self.assertIn(expected, self.response.text)
+      self.assertIn(expected, self.response.get_data(as_text=True))
 
     self.assertEqual(0, Medium.query().count())
 
   def test_add_profile(self):
-    resp = app.application.get_response(
+    resp = self.client.get(
       '/medium/add?auth_entity_key=%s&state={"feature":"webmention"}&blog=@ry' %
       self.auth_entity.key.urlsafe().decode(),
       method='POST')
 
-    self.assertEqual(302, resp.status_int)
+    self.assertEqual(302, resp.status_code)
     loc = urllib.parse.unquote_plus(resp.headers['Location'])
     self.assertTrue(loc.startswith('http://localhost/'), loc)
     self.assert_created_profile()
 
   def test_add_publication(self):
-    resp = app.application.get_response(
+    resp = self.client.get(
       '/medium/add?auth_entity_key=%s&state={"feature":"webmention"}&blog=b45573563f5a' %
       self.auth_entity.key.urlsafe().decode(),
       method='POST')
 
-    self.assertEqual(302, resp.status_int)
+    self.assertEqual(302, resp.status_code)
     loc = urllib.parse.unquote_plus(resp.headers['Location'])
     self.assertTrue(loc.startswith('http://localhost/'), loc)
     self.assert_created_publication()

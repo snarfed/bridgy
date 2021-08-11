@@ -31,10 +31,9 @@ import urllib.parse
 
 from google.cloud import ndb
 from oauth_dropins import tumblr as oauth_tumblr
-from oauth_dropins.webutil.handlers import JINJA_ENV
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import webapp2
-from webob import exc
+from werkzeug.exceptions import BadRequest
 
 import models
 import superfeedr
@@ -67,7 +66,7 @@ class Tumblr(models.Source):
   The key name is the blog domain.
   """
   GR_CLASS = collections.namedtuple('FakeGrClass', ('NAME',))(NAME='Tumblr')
-  OAUTH_START_HANDLER = oauth_tumblr.StartHandler
+  OAUTH_START = oauth_tumblr.Start
   SHORT_NAME = 'tumblr'
 
   disqus_shortname = ndb.StringProperty()
@@ -137,7 +136,7 @@ class Tumblr(models.Source):
     if self.verified():
       return
 
-    super(Tumblr, self).verify(force=True)
+    super().verify(force=True)
 
     html = getattr(self, '_fetched_html', None)  # set by Source.verify()
     if not self.disqus_shortname and html:
@@ -172,7 +171,7 @@ class Tumblr(models.Source):
       resp.raise_for_status()
       self.discover_disqus_shortname(resp.text)
       if not self.disqus_shortname:
-        raise exc.HTTPBadRequest("Your Bridgy account isn't fully set up yet: "
+        raise BadRequest("Your Bridgy account isn't fully set up yet: "
                                  "we haven't found your Disqus account.")
 
     # strip slug, query and fragment from post url
@@ -229,7 +228,7 @@ class Tumblr(models.Source):
     return resp
 
 
-class ChooseBlog(oauth_tumblr.CallbackHandler, util.Handler):
+class ChooseBlog(oauth_tumblr.Callback, util.View):
   def finish(self, auth_entity, state=None):
     if not auth_entity:
       self.maybe_add_or_delete_source(Tumblr, auth_entity, state)
@@ -253,14 +252,14 @@ class ChooseBlog(oauth_tumblr.CallbackHandler, util.Handler):
     self.response.out.write(JINJA_ENV.get_template('choose_blog.html').render(**vars))
 
 
-class AddTumblr(util.Handler):
+class AddTumblr(util.View):
   def post(self):
-    auth_entity_key = util.get_required_param(self, 'auth_entity_key')
+    auth_entity_key = flask_util.get_required_param('auth_entity_key')
     self.maybe_add_or_delete_source(
       Tumblr,
       ndb.Key(urlsafe=auth_entity_key).get(),
-      util.get_required_param(self, 'state'),
-      blog_name=util.get_required_param(self, 'blog'),
+      flask_util.get_required_param('state'),
+      blog_name=flask_util.get_required_param('blog'),
       )
 
 
@@ -268,13 +267,13 @@ class SuperfeedrNotifyHandler(superfeedr.NotifyHandler):
   SOURCE_CLS = Tumblr
 
 
-ROUTES = [
-  # Tumblr doesn't seem to use scope
-  # http://www.tumblr.com/docs/en/api/v2#oauth
-  ('/tumblr/start', util.oauth_starter(oauth_tumblr.StartHandler).to(
-    '/tumblr/choose_blog')),
-  ('/tumblr/choose_blog', ChooseBlog),
-  ('/tumblr/add', AddTumblr),
-  ('/tumblr/delete/finish', oauth_tumblr.CallbackHandler.to('/delete/finish')),
-  ('/tumblr/notify/(.+)', SuperfeedrNotifyHandler),
-]
+# ROUTES = [
+#   # Tumblr doesn't seem to use scope
+#   # http://www.tumblr.com/docs/en/api/v2#oauth
+#   ('/tumblr/start', util.oauth_starter(oauth_tumblr.Start).to(
+#     '/tumblr/choose_blog')),
+#   ('/tumblr/choose_blog', ChooseBlog),
+#   ('/tumblr/add', AddTumblr),
+#   ('/tumblr/delete/finish', oauth_tumblr.Callback.to('/delete/finish')),
+#   ('/tumblr/notify/(.+)', SuperfeedrNotifyHandler),
+# ]

@@ -10,6 +10,7 @@ http://feediscovery.appspot.com/ for feed discovery based on front page URL.
 import json
 import logging
 
+from flask import request
 from google.cloud.ndb.key import _MAX_KEYPART_BYTES
 from google.cloud.ndb._datastore_types import _MAX_STRING_LENGTH
 from oauth_dropins.webutil import appengine_info
@@ -123,7 +124,7 @@ def handle_feed(feed, source):
     bp.get_or_save()
 
 
-class NotifyHandler(util.Handler):
+class NotifyHandler(util.View):
   """Handles a Superfeedr notification.
 
   Abstract; subclasses must set the SOURCE_CLS attr.
@@ -135,4 +136,4 @@ class NotifyHandler(util.Handler):
   def post(self, id):
     source = self.SOURCE_CLS.get_by_id(id)
     if source:
-      handle_feed(self.request.text, source)
+      handle_feed(request.text, source)

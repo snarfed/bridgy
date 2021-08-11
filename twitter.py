@@ -7,6 +7,7 @@ https://dev.twitter.com/docs/rate-limiting/1.1/limits
 """
 import logging
 
+from flask import request
 from granary import twitter as gr_twitter
 from granary import source as gr_source
 from oauth_dropins import twitter as oauth_twitter
@@ -24,7 +25,7 @@ class Twitter(models.Source):
   The key name is the username.
   """
   GR_CLASS = gr_twitter.Twitter
-  OAUTH_START_HANDLER = oauth_twitter.StartHandler
+  OAUTH_START = oauth_twitter.Start
   SHORT_NAME = 'twitter'
   TYPE_LABELS = {
     'post': 'tweet',
@@ -39,11 +40,10 @@ class Twitter(models.Source):
   URL_CANONICALIZER.headers = util.REQUEST_HEADERS
 
   @staticmethod
-  def new(handler, auth_entity=None, **kwargs):
+  def new(auth_entity=None, **kwargs):
     """Creates and returns a :class:`Twitter` entity.
 
     Args:
-      handler: the current :class:`webapp2.RequestHandler`
       auth_entity: :class:`oauth_dropins.twitter.TwitterAuth`
       kwargs: property values
     """
@@ -124,7 +124,7 @@ class Twitter(models.Source):
     if resp:
       return json_loads(resp.response_json)
     else:
-      return super(Twitter, self).get_like(activity_user_id, activity_id,
+      return super().get_like(activity_user_id, activity_id,
                                            like_user_id, **kwargs)
 
   def is_private(self):
@@ -142,10 +142,10 @@ class Twitter(models.Source):
     https://github.com/snarfed/bridgy/issues/618
     """
     url = url.replace('/statuses/', '/status/')
-    return super(Twitter, self).canonicalize_url(url, **kwargs)
+    return super().canonicalize_url(url, **kwargs)
 
 
-class AuthHandler(util.Handler):
+class Auth(util.View):
   """Base OAuth handler class."""
 
   def start_oauth_flow(self, feature):
@@ -163,12 +163,12 @@ class AuthHandler(util.Handler):
     # (and tweepy) don't use signin_with_twitter ie /authorize. this works
     # around a twitter API bug: https://dev.twitter.com/discussions/21281
     access_type = 'write' if 'publish' in features else 'read'
-    handler = util.oauth_starter(oauth_twitter.StartHandler, feature=feature).to(
-      '/twitter/add', access_type=access_type)(self.request, self.response)
+    handler = util.oauth_starter(oauth_twitter.Start, feature=feature).to(
+      '/twitter/add', access_type=access_type)(request, self.response)
     return handler.post()
 
 
-class AddTwitter(oauth_twitter.CallbackHandler, AuthHandler):
+class AddTwitter(oauth_twitter.Callback, Auth):
   def finish(self, auth_entity, state=None):
     source = self.maybe_add_or_delete_source(Twitter, auth_entity, state)
     feature = util.decode_oauth_state(state).get('feature')
@@ -184,7 +184,7 @@ class AddTwitter(oauth_twitter.CallbackHandler, AuthHandler):
       return self.start_oauth_flow('publish')
 
 
-class StartHandler(AuthHandler):
+class Start(Auth):
   """Custom OAuth start handler so we can use access_type=read for state=listen.
 
   Tweepy converts access_type to x_auth_access_type for Twitter's
@@ -192,13 +192,13 @@ class StartHandler(AuthHandler):
   https://dev.twitter.com/docs/api/1/post/oauth/request_token
   """
   def post(self):
-    return self.start_oauth_flow(util.get_required_param(self, 'feature'))
+    return self.start_oauth_flow(flask_util.get_required_param('feature'))
 
 
-ROUTES = [
-  ('/twitter/start', StartHandler),
-  ('/twitter/add', AddTwitter),
-  ('/twitter/delete/finish', oauth_twitter.CallbackHandler.to('/delete/finish')),
-  ('/twitter/publish/start', oauth_twitter.StartHandler.to(
-    '/publish/twitter/finish')),
-]
+# ROUTES = [
+#   ('/twitter/start', Start),
+#   ('/twitter/add', AddTwitter),
+#   ('/twitter/delete/finish', oauth_twitter.Callback.to('/delete/finish')),
+#   ('/twitter/publish/start', oauth_twitter.Start.to(
+#     '/publish/twitter/finish')),
+# ]

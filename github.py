@@ -2,6 +2,7 @@
 """
 import logging
 
+from flask import request
 from granary import github as gr_github
 from oauth_dropins import github as oauth_github
 from oauth_dropins.webutil.util import json_dumps, json_loads
@@ -27,7 +28,7 @@ class GitHub(Source):
   The key name is the GitHub username.
   """
   GR_CLASS = gr_github.GitHub
-  OAUTH_START_HANDLER = oauth_github.StartHandler
+  OAUTH_START = oauth_github.Start
   SHORT_NAME = 'github'
   TYPE_LABELS = {
     'post': 'issue',
@@ -84,25 +85,25 @@ class GitHub(Source):
     return self.gr_source.get_activities_response(*args, **kwargs)
 
 
-class StartHandler(util.Handler):
+class Start(util.View):
   def post(self):
     features = util.get_required_param(self, 'feature')
     scopes = PUBLISH_SCOPES if 'publish' in features else LISTEN_SCOPES
-    starter = util.oauth_starter(oauth_github.StartHandler, feature=features
+    starter = util.oauth_starter(oauth_github.Start, feature=features
                                  ).to('/github/add', scopes=scopes)
-    return starter(self.request, self.response).post()
+    return starter(request, self.response).post()
 
 
-class AddGitHub(oauth_github.CallbackHandler, util.Handler):
+class AddGitHub(oauth_github.Callback, util.View):
   def finish(self, auth_entity, state=None):
     logging.debug('finish with %s, %s', auth_entity, state)
     self.maybe_add_or_delete_source(GitHub, auth_entity, state)
 
 
-ROUTES = [
-  ('/github/start', StartHandler),
-  ('/github/add', AddGitHub),
-  ('/github/delete/finish', oauth_github.CallbackHandler.to('/delete/finish')),
-  ('/github/publish/start', oauth_github.StartHandler.to(
-    '/publish/github/finish', scopes=PUBLISH_SCOPES)),
-]
+# ROUTES = [
+#   ('/github/start', Start),
+#   ('/github/add', AddGitHub),
+#   ('/github/delete/finish', oauth_github.Callback.to('/delete/finish')),
+#   ('/github/publish/start', oauth_github.Start.to(
+#     '/publish/github/finish', scopes=PUBLISH_SCOPES)),
+# ]

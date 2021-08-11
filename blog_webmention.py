@@ -4,6 +4,7 @@ import logging
 import urllib.parse
 
 
+from flask import request
 from granary import microformats2
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
@@ -21,14 +22,14 @@ def first_value(props, name):
   return next(iter(props.get(name, [])), None)
 
 
-class BlogWebmentionHandler(webmention.WebmentionHandler):
-  """Handler for incoming webmentions against blog providers."""
+class BlogWebmention(webmention.Webmention):
+  """View for incoming webmentions against blog providers."""
 
   def post(self, source_short_name):
-    logging.info('Params: %s', list(self.request.params.items()))
+    logging.info('Params: %s', list(request.params.items()))
     # strip fragments from source and target url
-    self.source_url = urllib.parse.urldefrag(util.get_required_param(self, 'source'))[0]
-    self.target_url = urllib.parse.urldefrag(util.get_required_param(self, 'target'))[0]
+    self.source_url = urllib.parse.urldefrag(flask_util.get_required_param('source'))[0]
+    self.target_url = urllib.parse.urldefrag(flask_util.get_required_param('target'))[0]
 
     # follow target url through any redirects, strip utm_* query params
     resp = util.follow_redirects(self.target_url)
@@ -227,6 +228,6 @@ class BlogWebmentionHandler(webmention.WebmentionHandler):
 
 
 
-ROUTES = [
-  ('/webmention/(blogger|fake|tumblr|wordpress)', BlogWebmentionHandler),
+# ROUTES = [
+#   ('/webmention/(blogger|fake|tumblr|wordpress)', BlogWebmention),
 ]

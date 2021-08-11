@@ -19,7 +19,7 @@ PUBLISH_SCOPES = [
 
 class Meetup(Source):
   GR_CLASS = gr_meetup.Meetup
-  OAUTH_START_HANDLER = oauth_meetup.StartHandler
+  OAUTH_START = oauth_meetup.Start
   SHORT_NAME = 'meetup'
   BACKFEED_REQUIRES_SYNDICATION_LINK = True
   CAN_LISTEN = False
@@ -56,16 +56,16 @@ class Meetup(Source):
     return self.name
 
 
-class AddMeetup(oauth_meetup.CallbackHandler, util.Handler):
+class AddMeetup(oauth_meetup.Callback, util.View):
   def finish(self, auth_entity, state=None):
     logging.debug('finish with %s, %s', auth_entity, state)
     self.maybe_add_or_delete_source(Meetup, auth_entity, state)
 
-ROUTES = [
-  ('/meetup/start', util.oauth_starter(oauth_meetup.StartHandler).to(
-    '/meetup/add', scopes=PUBLISH_SCOPES)), # we don't support listen
-  ('/meetup/add', AddMeetup),
-  ('/meetup/delete/finish', oauth_meetup.CallbackHandler.to('/delete/finish')),
-  ('/meetup/publish/start', oauth_meetup.StartHandler.to(
-    '/meetup/publish/finish', scopes=PUBLISH_SCOPES)),
-]
+# ROUTES = [
+#   ('/meetup/start', util.oauth_starter(oauth_meetup.Start).to(
+#     '/meetup/add', scopes=PUBLISH_SCOPES)), # we don't support listen
+#   ('/meetup/add', AddMeetup),
+#   ('/meetup/delete/finish', oauth_meetup.Callback.to('/delete/finish')),
+#   ('/meetup/publish/start', oauth_meetup.Start.to(
+#     '/meetup/publish/finish', scopes=PUBLISH_SCOPES)),
+# ]

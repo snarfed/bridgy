@@ -15,10 +15,10 @@ from . import testutil
 import util
 
 
-class BlogWebmentionTest(testutil.HandlerTest):
+class BlogWebmentionTest(testutil.TestCase):
 
   def setUp(self):
-    super(BlogWebmentionTest, self).setUp()
+    super().setUp()
     self.source = testutil.FakeSource(id='foo.com',
                                       domains=['x.com', 'foo.com', 'y.com'],
                                       features=['webmention'])
@@ -37,13 +37,13 @@ http://foo.com/post/1
     if target is None:
       target = 'http://foo.com/post/1'
     body = ('source=%s&target=%s' % (source, target))
-    return app.application.get_response(
+    return self.client.get(
       '/webmention/fake', method='POST', text=body)
 
   def assert_error(self, expected_error, status=400, **kwargs):
     resp = self.get_response(**kwargs)
-    self.assertEqual(status, resp.status_int)
-    self.assertIn(expected_error, json_loads(resp.body)['error'])
+    self.assertEqual(status, resp.status_code)
+    self.assertIn(expected_error, resp.json['error'])
 
   def expect_mention(self):
     self.expect_requests_get('http://bar.com/reply', self.mention_html)
@@ -84,8 +84,8 @@ i hereby reply
     self.mox.ReplayAll()
 
     resp = self.get_response()
-    self.assertEqual(200, resp.status_int, resp.body)
-    self.assertEqual({'id': 'fake id'}, json_loads(resp.body))
+    self.assertEqual(200, resp.status_code, resp.body)
+    self.assertEqual({'id': 'fake id'}, resp.json)
 
     bw = BlogWebmention.get_by_id('http://bar.com/reply http://foo.com/post/1')
     self.assertEqual(self.source.key, bw.source)
@@ -111,7 +111,7 @@ i hereby reply
     self.mox.ReplayAll()
 
     resp = self.get_response()
-    self.assertEqual(200, resp.status_int, resp.body)
+    self.assertEqual(200, resp.status_code, resp.body)
 
     bw = BlogWebmention.get_by_id('http://bar.com/reply http://foo.com/post/1')
     self.assertEqual('complete', bw.status)
@@ -174,7 +174,7 @@ i hereby <a href="http://foo.zz/post/1">mention</a>
     self.mox.ReplayAll()
 
     resp = self.get_response('http://bar.com/mention', 'http://foo.zz/post/1')
-    self.assertEqual(200, resp.status_int, resp.body)
+    self.assertEqual(200, resp.status_code, resp.body)
 
     bw = BlogWebmention.get_by_id('http://bar.com/mention http://foo.zz/post/1')
     self.assertEqual('complete', bw.status)
@@ -199,7 +199,7 @@ i hereby <a href="http://foo.zz/post/1">mention</a>
     self.mox.ReplayAll()
 
     resp = self.get_response('http://bar.com/mention')
-    self.assertEqual(200, resp.status_int, resp.body)
+    self.assertEqual(200, resp.status_code, resp.body)
 
   def test_domain_translates_to_lowercase(self):
     html = """\
@@ -215,7 +215,7 @@ X http://FoO.cOm/post/1
     self.mox.ReplayAll()
 
     resp = self.get_response(target='http://FoO.cOm/post/1')
-    self.assertEqual(200, resp.status_int, resp.body)
+    self.assertEqual(200, resp.status_code, resp.body)
     bw = BlogWebmention.get_by_id('http://bar.com/reply http://FoO.cOm/post/1')
     self.assertEqual('complete', bw.status)
 
@@ -242,7 +242,7 @@ X http://FoO.cOm/post/1
 
     resp = self.get_response(target=urllib.parse.quote(
         'http://foo.com/post/1?utm_source=x&utm_medium=y'))
-    self.assertEqual(200, resp.status_int, resp.body)
+    self.assertEqual(200, resp.status_code, resp.body)
     bw = BlogWebmention.get_by_id('http://bar.com/reply http://foo.com/post/1')
     self.assertEqual('complete', bw.status)
 
@@ -265,7 +265,7 @@ X http://FoO.cOm/post/1
     self.mox.ReplayAll()
 
     resp = self.get_response(source=source, target=target)
-    self.assertEqual(200, resp.status_int, resp.body)
+    self.assertEqual(200, resp.status_code, resp.body)
     bw = BlogWebmention.get_by_id(' '.join((source, target)))
     self.assertEqual('complete', bw.status)
 
@@ -282,7 +282,7 @@ http://second/
     self.mox.ReplayAll()
 
     resp = self.get_response(target='http://first/')
-    self.assertEqual(200, resp.status_int, resp.body)
+    self.assertEqual(200, resp.status_code, resp.body)
     bw = BlogWebmention.get_by_id('http://bar.com/reply http://foo.com/final')
     self.assertEqual('complete', bw.status)
     self.assertEqual(['http://first/', 'http://second/'], bw.redirected_target_urls)
@@ -301,7 +301,7 @@ http://second/
     self.mox.ReplayAll()
 
     resp = self.get_response()
-    self.assertEqual(200, resp.status_int, resp.body)
+    self.assertEqual(200, resp.status_code, resp.body)
     bw = BlogWebmention.get_by_id('http://bar.com/reply http://foo.com/post/1')
     self.assertEqual('complete', bw.status)
 
@@ -332,7 +332,7 @@ i hereby mention
     self.mox.ReplayAll()
 
     resp = self.get_response()
-    self.assertEqual(200, resp.status_int, resp.body)
+    self.assertEqual(200, resp.status_code, resp.body)
     bw = BlogWebmention.get_by_id('http://bar.com/reply http://foo.com/post/1')
     self.assertEqual('complete', bw.status)
     self.assertEqual('post', bw.type)
@@ -364,7 +364,7 @@ i hereby mention
 
     # 2) success
     resp = self.get_response()
-    self.assertEqual(200, resp.status_int, resp.body)
+    self.assertEqual(200, resp.status_code, resp.body)
     bw = BlogWebmention.get_by_id('http://bar.com/reply http://foo.com/post/1')
     self.assertEqual('complete', bw.status)
     self.assertEqual('repost', bw.type)
@@ -372,7 +372,7 @@ i hereby mention
     # 3) noop repeated success
     # source without webmention feature
     resp = self.get_response()
-    self.assertEqual(200, resp.status_int, resp.body)
+    self.assertEqual(200, resp.status_code, resp.body)
     bw = BlogWebmention.get_by_id('http://bar.com/reply http://foo.com/post/1')
     self.assertEqual('complete', bw.status)
 
@@ -381,7 +381,7 @@ i hereby mention
     self.mox.ReplayAll()
 
     resp = self.get_response()
-    self.assertEqual(402, resp.status_int, resp.body)
+    self.assertEqual(402, resp.status_code, resp.body)
     bw = BlogWebmention.get_by_id('http://bar.com/reply http://foo.com/post/1')
     self.assertEqual('failed', bw.status)
     self.assertEqual(self.mention_html, bw.html)
