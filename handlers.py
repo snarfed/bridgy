@@ -5,7 +5,7 @@ Docs: https://brid.gy/about#source-urls
 URL paths are:
 
 /post/SITE/USER_ID/POST_ID
-  e.g. /post/fflickr/212038/10100823411094363
+  e.g. /post/flickr/212038/10100823411094363
 
 /comment/SITE/USER_ID/POST_ID/COMMENT_ID
   e.g. /comment/twitter/snarfed_org/10100823411094363/999999

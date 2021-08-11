@@ -15,7 +15,6 @@ from oauth_dropins.webutil.util import json_dumps, json_loads
 from requests import HTTPError
 import webapp2
 
-from app import app
 import appengine_config
 import cron
 import models
@@ -843,7 +842,7 @@ class PropagateBlogPost(SendWebmentions):
     return self.entity.key.id()
 
 
-@app.route('/_ah/<any(start, stop, warmup):_>')
+# @app.route('/_ah/<any(start, stop, warmup):_>')
 def noop(_):
   return 'OK'
 
