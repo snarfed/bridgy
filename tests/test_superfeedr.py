@@ -130,7 +130,7 @@ class SuperfeedrTest(testutil.TestCase):
     self.mox.ReplayAll()
 
     self.feed = json_dumps({'items': [item]})
-    resp = fake_app.get_response('/notify/foo.com', method='POST', text=self.feed)
+    resp = self.client.post('/notify/foo.com', json=self.feed)
 
     self.assertEqual(200, resp.status_code)
     self.assert_blogposts([post])
@@ -138,7 +138,7 @@ class SuperfeedrTest(testutil.TestCase):
   def test_notify_url_too_long(self):
     item = {'id': 'X' * (_MAX_KEYPART_BYTES + 1), 'content': 'a http://x/y z'}
     self.feed = json_dumps({'items': [item]})
-    resp = fake_app.get_response('/notify/foo.com', method='POST', text=self.feed)
+    resp = self.client.post('/notify/foo.com', json=self.feed)
 
     self.assertEqual(200, resp.status_code)
     self.assert_blogposts([BlogPost(id='X' * _MAX_KEYPART_BYTES,
@@ -154,7 +154,7 @@ class SuperfeedrTest(testutil.TestCase):
     self.mox.ReplayAll()
 
     self.feed = json_dumps({'items': [item]})
-    resp = fake_app.get_response('/notify/foo.com', method='POST', text=self.feed)
+    resp = self.client.post('/notify/foo.com', json=self.feed)
 
     self.assertEqual(200, resp.status_code)
     self.assert_blogposts([post])
@@ -162,7 +162,7 @@ class SuperfeedrTest(testutil.TestCase):
   def test_notify_utf8(self):
     """Check that we handle unicode chars in content ok, including logging."""
     self.feed = '{"items": [{"id": "X", "content": "a ☕ z"}]}'
-    resp = fake_app.get_response('/notify/foo.com', method='POST', text=self.feed)
+    resp = self.client.post('/notify/foo.com', json=self.feed)
 
     self.assertEqual(200, resp.status_code)
     self.assert_blogposts([BlogPost(id='X', source=self.source.key,

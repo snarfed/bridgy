@@ -39,6 +39,7 @@ ga('send', 'pageview');
 <main class="tp-main lead container">
 
 <div id="logins">
+{% with logins = get_logins() %}
 {% if logins %}
   {% for login in logins %}
   <nobr><a href="{{ login.path }}" class="h-card u-url">
@@ -48,6 +49,7 @@ ga('send', 'pageview');
   {% endfor %}
   <a href="/logout">Log out</a>
 {% endif %}
+{% endwith %}
 </div>
 
 <div id="intro" class="row">
@@ -70,6 +72,7 @@ Likes, retweets, mentions, cross-posting, <a href="/about">and more...</a>
 <div id="footer">
   <a href="/about">Help</a>
   | <a href="https://github.com/snarfed/bridgy/issues">Bugs</a>
+  | <a href="https://snarfed.org/?s=bridgy%20stats">Stats</a>
   | <a href="https://github.com/snarfed/bridgy">Source</a>
   | <a href="https://indieweb.org/">#IndieWeb</a>
   | <a href="https://fed.brid.gy/">Bridgy Fed</a>

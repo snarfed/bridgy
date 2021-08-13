@@ -9,7 +9,7 @@ from flask import request
 from google.cloud import ndb
 from google.cloud.ndb._datastore_types import _MAX_STRING_LENGTH
 from granary.source import Source
-from oauth_dropins.webutil import appengine_info, logs, webmention
+from oauth_dropins.webutil import appengine_info, flask_util, logs, webmention
 from oauth_dropins.webutil.appengine_config import ndb_client
 from oauth_dropins.webutil.util import json_dumps, json_loads
 from requests import HTTPError
@@ -486,7 +486,7 @@ class Discover(Poll):
     if type:
       assert type in ('event',)
 
-    source = self.source = util.load_source(self)
+    source = self.source = util.load_source()
     if not source or source.status == 'disabled' or 'listen' not in source.features:
       logging.error('Source not found or disabled. Dropping task.')
       return
@@ -792,7 +792,7 @@ class PropagateResponse(SendWebmentions):
 Hit https://github.com/snarfed/bridgy/issues/237 KeyError!
 target url %s not in urls_to_activity: %s
 activities: %s""", target_url, self.entity.urls_to_activity, self.activities)
-      abort(util.ERROR_HTTP_RETURN_CODE)
+      error(util.ERROR_HTTP_RETURN_CODE)
 
     # generate source URL
     id = activity['id']

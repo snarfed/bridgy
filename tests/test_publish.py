@@ -65,8 +65,7 @@ class PublishTest(testutil.TestCase):
       appl = webapp2.WSGIApplication([('.*', FakeSendHandler)])
 
     return appl.get_response(
-      '/publish/preview' if preview else '/publish/webmention',
-      method='POST', text=urllib.parse.urlencode(params))
+      '/publish/preview' if preview else '/publish/webmention', data=params)
 
   def expect_requests_get(self, url, body='', backlink=None, **kwargs):
     body += backlink or self.backlink

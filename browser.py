@@ -11,6 +11,7 @@ from granary import instagram as gr_instagram
 from granary import microformats2
 from granary import source as gr_source
 from oauth_dropins import indieauth
+from oauth_dropins.webutil.flask_util import error
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import webapp2
 
@@ -153,10 +154,10 @@ class BrowserView(util.View):
     Raises: :class:`HTTPException` with HTTP 400
     """
     if not actor:
-      abort(400, f'Missing actor!')
+      error(f'Missing actor!')
 
     if not gr_source.Source.is_public(actor):
-      abort(400, f'Your {self.gr_source().NAME} account is private. Bridgy only supports public accounts.')
+      error(f'Your {self.gr_source().NAME} account is private. Bridgy only supports public accounts.')
 
     token = flask_util.get_required_param('token')
     domains = set(util.domain_from_link(util.replace_test_domains_with_localhost(u))
@@ -168,7 +169,7 @@ class BrowserView(util.View):
       if domain and token in domain.tokens:
         return
 
-    abort(403, f'Token {token} is not authorized for any of: {domains}')
+    error(f'Token {token} is not authorized for any of: {domains}', 403)
 
   def auth(self):
     """Loads the source and token and checks that they're valid.
@@ -181,9 +182,7 @@ class BrowserView(util.View):
     Returns: BrowserSource or None
     """
     # Load source
-    source = util.load_source(self, param='key')
-    if not source:
-      abort(404, f'No account found for {self.gr_source().NAME} user {key or username}')
+    source = util.load_source()
 
     # Load and check token
     token = flask_util.get_required_param('token')
@@ -191,7 +190,7 @@ class BrowserView(util.View):
       if domain.key.id() in source.domains:
         return source
 
-    abort(403, f'Token {token} is not authorized for any of: {source.domains}')
+    error(f'Token {token} is not authorized for any of: {source.domains}', 403)
 
 
 class Status(BrowserView):
@@ -231,7 +230,7 @@ class Homepage(BrowserView):
         logging.info(f"Returning {username}")
         return self.output(username)
 
-    abort(400, f"Couldn't determine logged in {gr_src.NAME} user or username")
+    error(f"Couldn't determine logged in {gr_src.NAME} user or username")
 
 
 class Feed(BrowserView):
@@ -287,13 +286,13 @@ class Post(BrowserView):
     gr_src = self.gr_source()
     new_activity, actor = gr_src.scraped_to_activity(request.text)
     if not new_activity:
-      abort(400, f'No {gr_src.NAME} post found in HTML')
+      error(f'No {gr_src.NAME} post found in HTML')
 
     @ndb.transactional()
     def update_activity():
       id = new_activity.get('id')
       if not id:
-        abort(400, 'Scraped post missing id')
+        error('Scraped post missing id')
       activity = Activity.get_by_id(id)
 
       if activity:
@@ -335,13 +334,13 @@ class Reactions(BrowserView):
     # validate request
     parsed_id = util.parse_tag_uri(id)
     if not parsed_id:
-      abort(400, f'Expected id to be tag URI; got {id}')
+      error(f'Expected id to be tag URI; got {id}')
 
     activity = Activity.get_by_id(id)
     if not activity:
-      abort(404, f'No {gr_src.NAME} post found for id {id}')
+      error(f'No {gr_src.NAME} post found for id {id}', 404)
     elif activity.source != source.key:
-      abort(403, f'Activity {id} is owned by {activity.source}, not {source.key}')
+      error(f'Activity {id} is owned by {activity.source}, not {source.key}', 403)
 
     activity_data = json_loads(activity.activity_json)
 
@@ -351,7 +350,7 @@ class Reactions(BrowserView):
     except ValueError as e:
       msg = "Couldn't parse scraped reactions: %s" % e
       logging.error(msg, stack_info=True)
-      abort(400, msg)
+      error(msg)
 
     activity.activity_json = json_dumps(activity_data)
     activity.put()
@@ -376,7 +375,7 @@ class TokenDomains(BrowserView):
 
     domains = [d.key.id() for d in Domain.query(Domain.tokens == token)]
     if not domains:
-      abort(404, f'No registered domains for token {token}')
+      error(f'No registered domains for token {token}', 404)
 
     self.output(domains)
 

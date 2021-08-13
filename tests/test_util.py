@@ -216,11 +216,10 @@ class UtilTest(testutil.ModelsTest):
 
     self.mox.ReplayAll()
 
-    resp = application.get_response(
-      '/fakesource/start', method='POST', text=urllib.parse.urlencode({
+    resp = self.client.post('/fakesource/start', data={
         'feature': 'listen',
         'callback': 'http://withknown.com/bridgy_callback',
-      }))
+      })
 
     expected_auth_url = 'http://fake/auth/url?' + urllib.parse.urlencode({
       'redirect_uri': 'http://localhost/fakesource/add?state='
@@ -273,12 +272,11 @@ class UtilTest(testutil.ModelsTest):
 
     self.mox.ReplayAll()
 
-    resp = application.get_response(
-      '/fakesource/start', method='POST', text=urllib.parse.urlencode({
+    resp = application.get_response('/fakesource/start', data={
         'feature': 'listen',
         'callback': 'http://withknown.com/bridgy_callback',
         'user_url': 'https://kylewm.com',
-      }))
+      })
 
     expected_auth_url = 'http://fake/auth/url?' + urllib.parse.urlencode({
       'redirect_uri': 'http://localhost/fakesource/add?state='
@@ -328,11 +326,10 @@ class UtilTest(testutil.ModelsTest):
       ('/fakesource/add', testutil.FakeAddHandler.with_auth(None)),
     ])
 
-    resp = application.get_response(
-      '/fakesource/start', method='POST', text=urllib.parse.urlencode({
+    resp = application.get_response('/fakesource/start', data={
         'feature': 'publish',
         'callback': 'http://withknown.com/bridgy_callback',
-      }))
+      })
 
     expected_auth_url = 'http://fake/auth/url?' + urllib.parse.urlencode({
       'redirect_uri': 'http://localhost/fakesource/add?state='

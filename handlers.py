@@ -24,11 +24,11 @@ import logging
 import re
 import string
 
-from flask import abort, request
+from flask import request
 from flask.views import View
 from granary import microformats2
 from granary.microformats2 import first_props
-from oauth_dropins.webutil import handlers
+from oauth_dropins.webutil.flask_util import error
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import webapp2
 
@@ -36,9 +36,6 @@ from app import app, cache
 import models
 import original_post_discovery
 import util
-
-# Import source class files so their metaclasses are initialized.
-import blogger, flickr, github, instagram, mastodon, medium, reddit, tumblr, twitter, wordpress_rest
 
 CACHE_TIME = datetime.timedelta(minutes=15)
 
@@ -123,36 +120,36 @@ class Item(util.View):
 
     source_cls = models.sources.get(site)
     if not source_cls:
-      abort(400, "Source type '%s' not found. Known sources: %s" %
+      error("Source type '%s' not found. Known sources: %s" %
             (site, filter(None, models.sources.keys())))
 
     self.source = source_cls.get_by_id(key_id)
     if not self.source:
-      abort(400, f'Source {site} {key_id} not found')
+      error(f'Source {site} {key_id} not found')
     elif (self.source.status == 'disabled' or
           'listen' not in self.source.features):
-      abort(400, f'Source {self.source.bridgy_path()} is disabled for backfeed')
+      error(f'Source {self.source.bridgy_path()} is disabled for backfeed')
 
     format = request.values.get('format', 'html')
     if format not in ('html', 'json'):
-      abort(400, f'Invalid format {format}, expected html or json')
+      error(f'Invalid format {format}, expected html or json')
 
     for id in kwargs.values():
       if not self.VALID_ID.match(id):
-        abort(404, f'Invalid id {id}')
+        error(f'Invalid id {id}', 404)
 
     try:
       obj = self.get_item(**kwargs)
     except models.DisableSource as e:
-      abort(401, "Bridgy's access to your account has expired. Please visit https://brid.gy/ to refresh it!")
+      error("Bridgy's access to your account has expired. Please visit https://brid.gy/ to refresh it!", 401)
     except ValueError as e:
-      abort(400, f'{self.source.GR_CLASS.NAME} error: {e}')
+      error(f'{self.source.GR_CLASS.NAME} error: {e}')
 
     if not obj:
-      abort(404, f'Not found: {site}:{key_id} {kwargs}')
+      error(f'Not found: {site}:{key_id} {kwargs}', 404)
 
     if self.source.is_blocked(obj):
-      abort(410, 'That user is currently blocked')
+      error('That user is currently blocked', 410)
 
     # use https for profile pictures so we don't cause SSL mixed mode errors
     # when serving over https.

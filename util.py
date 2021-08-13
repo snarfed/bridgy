@@ -25,6 +25,7 @@ import google.protobuf.message
 import humanize
 from oauth_dropins.webutil.appengine_config import error_reporting_client, tasks_client
 from oauth_dropins.webutil.appengine_info import APP_ID, LOCAL
+from oauth_dropins.webutil.flask_util import error
 from oauth_dropins.webutil.models import StringIdModel
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import *
@@ -368,13 +369,13 @@ def replace_test_domains_with_localhost(url):
   return url
 
 
-def host_url(handler):
-  domain = util.domain_from_link(handler.request.host_url)
+def host_url():
+  domain = util.domain_from_link(request.host_url)
   return (HOST_URL if util.domain_or_parent_in(domain, OTHER_DOMAINS)
-          else handler.request.host_url)
+          else request.host_url)
 
 
-def load_source(handler, param='source_key'):
+def load_source():
   """Extracts a URL-safe key from a query parameter and loads a source object.
 
   Returns HTTP 400 if the parameter is not provided or the source doesn't exist.
@@ -385,17 +386,17 @@ def load_source(handler, param='source_key'):
 
   Returns: Source object
   """
-  try:
-    source = ndb.Key(urlsafe=util.get_required_param(handler, param)).get()
-  except (binascii.Error, google.protobuf.message.DecodeError):
-    msg = 'Bad value for %s' % param
-    logging.warning(msg, exc_info=True)
-    handler.abort(400, msg)
+  for param in 'source_key', 'key':
+    try:
+      val = request.values.get(param)
+      if val:
+        source = ndb.Key(urlsafe=val).get()
+        if source:
+          return source
+    except (binascii.Error, google.protobuf.message.DecodeError):
+      error(f'Bad value for {param}')
 
-  if not source:
-    handler.abort(400, 'Source key not found')
-
-  return source
+  error('Source key not found')
 
 
 class View(flask.views.View):
@@ -472,7 +473,7 @@ class View(flask.views.View):
         logins = self.get_logins()
         logins.append(Login(path=source.bridgy_path(), site=source.SHORT_NAME,
                             name=source.label_name()))
-        self.set_logins(logins)
+        set_logins(logins)
 
       if callback:
         callback = util.add_query_params(callback, {
@@ -510,97 +511,97 @@ class View(flask.views.View):
 
         return redirect('/')
 
-  def construct_state_param_for_add(self, state=None, **kwargs):
-    """Construct the state parameter if one isn't explicitly passed in.
+def construct_state_param_for_add(state=None, **kwargs):
+  """Construct the state parameter if one isn't explicitly passed in.
 
-    The following keys are common:
-    - operation: 'add' or 'delete'
-    - feature: 'listen', 'publish', or 'webmention'
-    - callback: an optional external callback, that we will redirect to at
-                the end of the authorization handshake
-    - source: the source key, only applicable to deletes
-    """
-    state_obj = util.decode_oauth_state(state)
-    if not state_obj:
-      state_obj = {field: request.values.get(field) for field in
-                   ('callback', 'feature', 'id', 'user_url')}
-      state_obj['operation'] = 'add'
+  The following keys are common:
+  - operation: 'add' or 'delete'
+  - feature: 'listen', 'publish', or 'webmention'
+  - callback: an optional external callback, that we will redirect to at
+              the end of the authorization handshake
+  - source: the source key, only applicable to deletes
+  """
+  state_obj = util.decode_oauth_state(state)
+  if not state_obj:
+    state_obj = {field: request.values.get(field) for field in
+                 ('callback', 'feature', 'id', 'user_url')}
+    state_obj['operation'] = 'add'
 
-    if kwargs:
-      state_obj.update(kwargs)
+  if kwargs:
+    state_obj.update(kwargs)
 
-    return util.encode_oauth_state(state_obj)
+  return util.encode_oauth_state(state_obj)
 
-  def get_logins(self):
-    """Extracts the current user page paths from the logins cookie.
 
-    Returns:
-      list of :class:`Login` objects
-    """
-    cookie = request.headers.get('Cookie', '')
-    if cookie:
-      logging.info('Cookie: %s', cookie)
+def get_logins():
+  """Extracts the current user page paths from the logins cookie.
 
-    try:
-      logins_str = SimpleCookie(cookie).get('logins')
-    except CookieError as e:
-      logging.warning("Bad cookie: %s", e)
-      return []
+  Returns:
+    list of :class:`Login` objects
+  """
+  cookie = request.headers.get('Cookie', '')
+  if cookie:
+    logging.info('Cookie: %s', cookie)
 
-    if not logins_str or not logins_str.value:
-      return []
+  try:
+    logins_str = SimpleCookie(cookie).get('logins')
+  except CookieError as e:
+    logging.warning("Bad cookie: %s", e)
+    return []
 
-    logins = []
-    for val in set(urllib.parse.unquote_plus(logins_str.value).split('|')):
-      parts = val.split('?', 1)
-      path = parts[0]
-      if not path:
-        continue
-      name = parts[1] if len(parts) > 1 else ''
-      site, _ = path.strip('/').split('/')
-      logins.append(Login(path=path, site=site, name=name))
+  if not logins_str or not logins_str.value:
+    return []
 
-    return logins
+  logins = []
+  for val in set(urllib.parse.unquote_plus(logins_str.value).split('|')):
+    parts = val.split('?', 1)
+    path = parts[0]
+    if not path:
+      continue
+    name = parts[1] if len(parts) > 1 else ''
+    site, _ = path.strip('/').split('/')
+    logins.append(Login(path=path, site=site, name=name))
 
-  def set_logins(self, logins):
-    """Sets a logins cookie.
+  return logins
 
-    Args:
-      logins: sequence of :class:`Login` objects
-    """
-    # cookie docs: http://curl.haxx.se/rfc/cookie_spec.html
-    cookie = SimpleCookie()
-    cookie['logins'] = '|'.join(sorted(set(
-      '%s?%s' % (login.path, urllib.parse.quote_plus(login.name))
-      for login in logins)))
-    cookie['logins']['path'] = '/'
+def set_logins(logins):
+  """Sets a logins cookie.
 
-    expires = (now_fn() + datetime.timedelta(days=365 * 2)).replace(microsecond=0)
-    # this will have a space in it, eg '2021-12-08 15:48:34', so quote it
-    cookie['logins']['expires'] = '"%s"' % expires
+  Args:
+    logins: sequence of :class:`Login` objects
+  """
+  # cookie docs: http://curl.haxx.se/rfc/cookie_spec.html
+  cookie = SimpleCookie()
+  cookie['logins'] = '|'.join(sorted(set(
+    '%s?%s' % (login.path, urllib.parse.quote_plus(login.name))
+    for login in logins)))
+  cookie['logins']['path'] = '/'
 
-    header = cookie['logins'].OutputString()
-    logging.info('Set-Cookie: %s', header)
-    self.response.headers['Set-Cookie'] = header
+  expires = (now_fn() + datetime.timedelta(days=365 * 2)).replace(microsecond=0)
+  # this will have a space in it, eg '2021-12-08 15:48:34', so quote it
+  cookie['logins']['expires'] = '"%s"' % expires
 
-  def preprocess_source(self, source):
-    """Prepares a source entity for rendering in the source.html template.
+  header = cookie['logins'].OutputString()
+  logging.info('Set-Cookie: %s', header)
+  # XXX: return instead?
+  self.response.headers['Set-Cookie'] = header
 
-    - convert image URLs to https if we're serving over SSL
-    - set 'website_links' attr to list of pretty HTML links to domain_urls
 
-    Args:
-      source: :class:`models.Source` entity
-    """
-    if source.picture:
-      source.picture = util.update_scheme(source.picture, self)
-    source.website_links = [
-      util.pretty_link(url, attrs={'rel': 'me', 'class': 'u-url'})
-      for url in source.domain_urls]
-    return source
+def preprocess_source(source):
+  """Prepares a source entity for rendering in the source.html template.
 
-  def load_source(self, **kwargs):
-    return load_source(self, **kwargs)
+  - convert image URLs to https if we're serving over SSL
+  - set 'website_links' attr to list of pretty HTML links to domain_urls
+
+  Args:
+    source: :class:`models.Source` entity
+  """
+  if source.picture:
+    source.picture = util.update_scheme(source.picture)
+  source.website_links = [
+    util.pretty_link(url, attrs={'rel': 'me', 'class': 'u-url'})
+    for url in source.domain_urls]
+  return source
 
 
 class CachedPage(StringIdModel):
@@ -666,6 +667,7 @@ def unwrap_t_umblr_com(url):
           else url)
 
 
+# TODO
 def background_handle_exception(handler, e, debug):
   """Common exception handler for background tasks.
 
@@ -686,6 +688,6 @@ def background_handle_exception(handler, e, debug):
   if ((code and int(code) // 100 == 5) or code in transients or
       util.is_connection_failure(e)):
     logging.error('Marking as error and finishing. %s: %s\n%s', code, body, e)
-    handler.abort(ERROR_HTTP_RETURN_CODE)
+    error(ERROR_HTTP_RETURN_CODE)
   else:
-    raise
+    return e

@@ -627,7 +627,7 @@ class PreviewHandler(Handler):
       self.response.write(result.content)
 
   def authorize(self):
-    from_source = self.load_source()
+    from_source = util.load_source()
     if from_source.key != self.source.key:
       msg = 'Try publishing that page from <a href="%s">%s</a> instead.' % (self.source.bridgy_path(), self.source.label())
       self.error(msg, html=msg)

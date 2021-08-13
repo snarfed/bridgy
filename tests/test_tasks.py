@@ -43,9 +43,7 @@ class TaskTest(testutil.ModelsTest):
     """Args:
       expected_status: integer, the expected HTTP return code
     """
-    resp = tasks.application.get_response(
-      self.post_url, method='POST',
-      text=urllib.parse.urlencode(params), **kwargs)
+    resp = self.client.post(self.post_url, data=params, **kwargs)
     self.assertEqual(expected_status, resp.status_code)
 
   def assert_responses(self, expected=None, ignore=tuple()):

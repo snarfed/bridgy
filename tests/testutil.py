@@ -282,15 +282,6 @@ class ViewTest(testutil.TestCase):
     self.stubbed_create_task = False
     tasks_client.create_task = lambda *args, **kwargs: Task(name='foo')
 
-    # clear datastore
-    orig_requests_post('http://%s/reset' % ndb_client.host)
-    self.ndb_context = ndb_client.context()
-    self.ndb_context.__enter__()
-
-  def tearDown(self):
-    self.ndb_context.__exit__(None, None, None)
-    super().tearDown()
-
   def stub_create_task(self):
     if not self.stubbed_create_task:
       self.mox.StubOutWithMock(tasks_client, 'create_task')
@@ -365,6 +356,11 @@ class ModelsTest(testutil.TestCase):
 
   def setUp(self):
     super().setUp()
+
+    # clear datastore
+    orig_requests_post('http://%s/reset' % ndb_client.host)
+    self.ndb_context = ndb_client.context()
+    self.ndb_context.__enter__()
 
     # sources
     auth_entities = [
@@ -525,6 +521,10 @@ class ModelsTest(testutil.TestCase):
       feed_item={'title': 'a post'},
       sent=['http://a/link'],
     )]
+
+  def tearDown(self):
+    self.ndb_context.__exit__(None, None, None)
+    super().tearDown()
 
 
 FakeStart = OAuthStart#).to('/fakesource/add')
