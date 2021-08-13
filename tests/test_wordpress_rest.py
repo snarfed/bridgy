@@ -3,6 +3,7 @@
 """
 import urllib.request, urllib.parse, urllib.error
 
+from flask import get_flashed_messages
 from oauth_dropins.webutil.util import json_dumps, json_loads
 from oauth_dropins.wordpress_rest import WordPressAuth
 
@@ -93,7 +94,7 @@ class WordPressTest(testutil.ViewTest):
 
     self.assertIsNone(WordPress.new(auth_entity=self.auth_entity))
     self.assertIsNone(WordPress.query().get())
-    self.assertIn('enable the Jetpack JSON API', next(iter(self.view.messages)))
+    self.assertIn('enable the Jetpack JSON API', get_flashed_messages()[0])
 
   def test_site_lookup_api_disabled_error_finish(self):
     self.expect_urlopen(
@@ -106,7 +107,7 @@ class WordPressTest(testutil.ViewTest):
     view = AddWordPress()
     view.finish(self.auth_entity)
     self.assertIsNone(WordPress.query().get())
-    self.assertIn('enable the Jetpack JSON API', next(iter(view.messages)))
+    self.assertIn('enable the Jetpack JSON API', get_flashed_message()[0])
 
   def test_create_comment_with_slug_lookup(self):
     self.expect_urlopen(

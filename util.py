@@ -16,7 +16,7 @@ import urllib.request, urllib.parse, urllib.error
 import zlib
 
 from cachetools import TTLCache
-from flask import request
+from flask import flash, get_flashed_messages, request
 import flask.views
 from google.cloud import ndb
 from google.cloud.tasks_v2 import CreateTaskRequest
@@ -369,6 +369,7 @@ def replace_test_domains_with_localhost(url):
   return url
 
 
+# STATE: add optional path_query param, use urljoin, then remove urljoin elsewhere
 def host_url():
   domain = util.domain_from_link(request.host_url)
   return (HOST_URL if util.domain_or_parent_in(domain, OTHER_DOMAINS)
@@ -400,24 +401,10 @@ def load_source():
 
 
 class View(flask.views.View):
-  """Includes misc view utilities.
-
-  Attributes:
-    messages: list of notification messages to be rendered in this page or
-      wherever it redirects
-  """
+  """Includes misc view utilities."""
 
   def __init__(self, *args, **kwargs):
     super().__init__(*args, **kwargs)
-    self.messages = set()
-
-  def redirect(self, uri, **kwargs):
-    """Adds self.messages to the fragment, separated by newlines."""
-    parts = list(urllib.parse.urlparse(uri))
-    if self.messages and not parts[5]:  # parts[5] is fragment
-      parts[5] = '!' + urllib.parse.quote('\n'.join(self.messages).encode())
-    uri = urllib.parse.urlunparse(parts)
-    super().redirect(uri, **kwargs)
 
   def maybe_add_or_delete_source(self, source_cls, auth_entity, state, **kwargs):
     """Adds or deletes a source if auth_entity is not None.
@@ -448,8 +435,8 @@ class View(flask.views.View):
 
     if operation == 'add':  # this is an add/update
       if not auth_entity:
-        if not self.messages:
-          self.messages.add("OK, you're not signed up. Hope you reconsider!")
+        if not get_flashed_messages():
+          flash("OK, you're not signed up. Hope you reconsider!")
         if callback:
           callback = util.add_query_params(callback, {'result': 'declined'})
           logging.debug(
@@ -501,8 +488,8 @@ class View(flask.views.View):
         return redirect('/delete/finish?auth_entity=%s&state=%s' %
                       (auth_entity.key.urlsafe().decode(), state))
       else:
-        self.messages.add('If you want to disable, please approve the %s prompt.' %
-                          source_cls.GR_CLASS.NAME)
+        flash('If you want to disable, please approve the %s prompt.' %
+              source_cls.GR_CLASS.NAME)
         source_key = state_obj.get('source')
         if source_key:
           source = ndb.Key(urlsafe=source_key).get()

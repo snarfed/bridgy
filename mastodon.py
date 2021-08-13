@@ -177,7 +177,7 @@ class InstanceHandler(util.View):
       return redirect(start.redirect_url(instance=instance))
     except ValueError as e:
       logging.warning('Bad Mastodon instance', stack_info=True)
-      self.messages.add(util.linkify(str(e), pretty=True))
+      flash(util.linkify(str(e), pretty=True))
       return redirect(request.path)
 
 

@@ -3,6 +3,7 @@
 """
 import urllib.request, urllib.parse, urllib.error
 
+from flask import get_flashed_messages
 from gdata.blogger import data
 from gdata.blogger.client import BloggerClient
 from gdata.client import RequestError
@@ -79,7 +80,7 @@ class BloggerTest(testutil.ViewTest):
   def test_new_no_blogs(self):
     self.auth_entity.blog_hostnames = []
     self.assertIsNone(Blogger.new(auth_entity=self.auth_entity))
-    self.assertIn('Blogger blog not found', next(iter(self.view.messages)))
+    self.assertIn('Blogger blog not found', get_flashed_messages()[0])
 
   def test_create_comment(self):
     self.expect_get_posts()

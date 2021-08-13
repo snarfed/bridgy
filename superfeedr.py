@@ -44,8 +44,8 @@ def subscribe(source, handler):
   data = {
     'hub.mode': 'subscribe',
     'hub.topic': source.feed_url(),
-    'hub.callback': '%s/%s/notify/%s' % (
-      util.host_url(handler), source.SHORT_NAME, source.key_id()),
+    'hub.callback': urllib.parse.urljoin(
+      util.host_url(), '/{source.SHORT_NAME}/notify/{source.key_id()}'),
     # TODO
     # 'hub.secret': 'xxx',
     'format': 'json',

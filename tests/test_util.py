@@ -4,6 +4,7 @@ import datetime
 import time
 import urllib.request, urllib.parse, urllib.error
 
+from flask import get_flashed_messages
 from google.cloud import ndb
 from oauth_dropins.webutil.testutil import requests_response
 from oauth_dropins.webutil.util import json_dumps, json_loads
@@ -61,22 +62,24 @@ class UtilTest(testutil.ModelsTest):
       'feature': 'webmention',
       'operation': 'delete',
     }
-    msg = '#!If%20you%20want%20to%20disable%2C%20please%20approve%20the%20FakeSource%20prompt.'
+    msg = 'If you want to disable, please approve the FakeSource prompt.'
 
     # no source
     self.assertIsNone(self.view.maybe_add_or_delete_source(
       FakeSource, None, util.encode_oauth_state(state)))
     self.assert_equals(302, self.view.response.status_code)
-    self.assert_equals('http://localhost/' + msg,
+    self.assert_equals('http://localhost/',
                        self.view.response.headers['location'])
+    self.assertEqual([msg], get_flashed_messages())
 
     # source
     state['source'] = self.sources[0].key.urlsafe().decode()
     self.assertIsNone(self.view.maybe_add_or_delete_source(
       FakeSource, None, util.encode_oauth_state(state)))
     self.assert_equals(302, self.view.response.status_code)
-    self.assert_equals(self.sources[0].bridgy_url(self.view) + msg,
+    self.assert_equals(self.sources[0].bridgy_url(self.view),
                        self.view.response.headers['location'])
+    self.assertEqual([msg], get_flashed_messages())
 
   def test_maybe_add_or_delete_without_web_site_redirects_to_edit_websites(self):
     for bad_url in None, 'not>a<url', 'http://fa.ke/xyz':

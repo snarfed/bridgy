@@ -4,6 +4,7 @@
 import datetime
 import gc
 import logging
+import urllib.parse
 
 from flask import request
 from google.cloud import ndb
@@ -53,8 +54,8 @@ class Poll(webapp2.RequestHandler):
   handle_exception = util.background_handle_exception
 
   def _last_poll_url(self, source):
-    return '%s/%s' % (util.host_url(self),
-                      logs.url(source.last_poll_attempt, source.key))
+    return urllib.parse.urljoin(util.host_url(),
+                                logs.url(source.last_poll_attempt, source.key))
 
   def post(self, *path_args):
     request.headers['Content-Type'] = 'application/x-www-form-urlencoded'
@@ -766,8 +767,9 @@ class PropagateResponse(SendWebmentions):
 
     source = self.source
     poll_estimate = self.entity.created - datetime.timedelta(seconds=61)
-    logging.info('Created by this poll: %s/%s', util.host_url(self),
-                 logs.url(poll_estimate, source.key))
+    poll_url = urllib.parse.urljoin(
+      util.host_url(), logs.url(poll_estimate, source.key))
+    logging.info('Created by this poll: {poll_url}')
 
     self.activities = [json_loads(a) for a in self.entity.activities_json]
     response_obj = json_loads(self.entity.response_json)

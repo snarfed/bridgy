@@ -4,7 +4,7 @@
 import socket
 import urllib.request, urllib.parse, urllib.error
 
-
+from flask import get_flashed_messages
 from granary import source as gr_source
 import grpc
 from mox3 import mox
@@ -131,9 +131,10 @@ class PublishTest(testutil.TestCase):
     self.assertEqual(302, resp.status_code)
 
     loc = urllib.parse.unquote_plus(resp.headers['Location'])
-    self.assertTrue(loc.startswith('http://localhost/fake/foo.com#!'), loc)
-    self.assertIn('Done! <a href="http://fake/url">Click here to view.</a>', loc)
-    self.assertIn('granary message', loc)
+    self.assertEqual('http://localhost/fake/foo.com', loc)
+    self.assertIn('Done! <a href="http://fake/url">Click here to view.</a>',
+                  get_flashed_messages()[0])
+    self.assertIn('granary message', get_flashed_messages()[0])
 
     self._check_entity()
 
@@ -143,11 +144,10 @@ class PublishTest(testutil.TestCase):
 
     resp = self.get_response(interactive=True)
     self.assertEqual(302, resp.status_code)
-    self.assertEqual(
-      'http://localhost/fake/%s#!'
-        'Please log into FakeSource as fake to publish that page.' %
-        other_source.id(),
-      urllib.parse.unquote_plus(resp.headers['Location']))
+    self.assertEqual(f'http://localhost/fake/{other_source.id()}',
+                     resp.headers['Location'])
+    self.assertEqual(['Please log into FakeSource as fake to publish that page.'],
+                     get_flashed_messages())
 
     self.assertIsNone(Publish.query().get())
 
@@ -155,10 +155,10 @@ class PublishTest(testutil.TestCase):
     self.auth_entity = None
     resp = self.get_response(interactive=True)
     self.assertEqual(302, resp.status_code)
+    self.assertEqual('http://localhost/fake/foo.com', resp.headers['Location'])
     self.assertEqual(
-      'http://localhost/fake/foo.com#!'
-        'If you want to publish or preview, please approve the prompt.',
-      urllib.parse.unquote_plus(resp.headers['Location']))
+      ['If you want to publish or preview, please approve the prompt.'],
+      get_flashed_messages())
 
     self.assertIsNone(Publish.query().get())
 
@@ -167,10 +167,10 @@ class PublishTest(testutil.TestCase):
     self.oauth_state = None
     resp = self.get_response(interactive=True)
     self.assertEqual(302, resp.status_code)
+    self.assertEqual('http://localhost/', resp.headers['Location'])
     self.assertEqual(
-      'http://localhost/#!'
-        'If you want to publish or preview, please approve the prompt.',
-      urllib.parse.unquote_plus(resp.headers['Location']))
+      ['If you want to publish or preview, please approve the prompt.'],
+      get_flashed_messages())
 
     self.assertIsNone(Publish.query().get())
 
@@ -1471,10 +1471,9 @@ Join us!"""
 
     resp = self.assert_success('delete the_id', preview=True)
     resp = self.assert_response('', status=302, interactive=True)
-    self.assertEqual(
-      'http://localhost/fake/foo.com#!'
-        'Done! <a href="http://fake/url">Click here to view.</a>',
-      urllib.parse.unquote_plus(resp.headers['Location']))
+    self.assertEqual('http://localhost/fake/foo.com', resp.headers['Location'])
+    self.assertEqual(['Done! <a href="http://fake/url">Click here to view.</a>'],
+                     get_flashed_messages())
 
     delete = list(Publish.query())[-1]
     self.assertEqual(delete.key.parent(), page.key)

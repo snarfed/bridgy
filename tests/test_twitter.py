@@ -22,7 +22,6 @@ class TwitterTest(testutil.ModelsTest):
     super(TwitterTest, self).setUp()
     oauth_dropins.twitter.TWITTER_APP_KEY = 'my_app_key'
     oauth_dropins.twitter.TWITTER_APP_SECRET = 'my_app_secret'
-    self.view.messages = []
     self.auth_entity = oauth_dropins.twitter.TwitterAuth(
       id='my_string_id',
       token_key='my_key', token_secret='my_secret',

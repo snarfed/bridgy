@@ -5,6 +5,7 @@ import datetime
 from unittest import skip
 import copy
 
+from flask import get_flashed_messages
 from google.cloud import ndb
 from granary import source as gr_source
 from mox3 import mox
@@ -248,7 +249,7 @@ class SourceTest(testutil.ViewTest):
 
     self._test_create_new(features=['listen'])
     msg = "Added fake (FakeSource). Refresh in a minute to see what we've found!"
-    self.assert_equals({msg}, self.view.messages)
+    self.assert_equals([msg], get_flashed_messages())
 
   def test_escape_key_id(self):
     s = Source(id='__foo__')
@@ -326,8 +327,7 @@ class SourceTest(testutil.ViewTest):
     for prop, value in props.items():
       self.assert_equals(value, getattr(source, prop), prop)
 
-    msg = next(iter(self.view.messages))
-    self.assertIn('Updated fake (FakeSource)', msg)
+    self.assertIn('Updated fake (FakeSource)', get_flashed_messages()[0])
 
   def test_create_new_publish(self):
     """If a source is publish only, we shouldn't insert a poll task."""

@@ -5,6 +5,7 @@ Used in publish.py and blog_webmention.py.
 Webmention spec: http://webmention.org/
 """
 import logging
+import urllib.parse
 
 from flask import request
 from google.cloud import error_reporting
@@ -17,18 +18,18 @@ class WebmentionGetHandler(util.View):
   """Renders a simple placeholder HTTP page for GETs to webmention endpoints.
   """
   def head(self, site=None):
-    self.response.headers['Link'] = (
-      '<%s/publish/webmention>; rel="webmention"' % util.host_url(self))
+    wm_url = urllib.parse.urljoin(util.host_url(), '/publish/webmention')
+    self.response.headers['Link'] = f'<{wm_url}>; rel="webmention"'
 
   def get(self, site=None):
     self.head(site)
-    self.response.out.write("""\
+    self.response.out.write(f"""\
 <!DOCTYPE html>
 <html><head>
-<link rel="webmention" href="%s/publish/webmention">
+<link rel="webmention" href="{wm_url}">
 </head>
 <body>Nothing here! <a href="/about">Try the docs instead.</a></body>
-</html>""" % util.host_url(self))
+</html>""")
 
 
 class WebmentionHandler(WebmentionGetHandler):

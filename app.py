@@ -1,4 +1,4 @@
-"""Bridgy user-facing handlers: front page, user pages, and delete POSTs.
+"""Bridgy user-facing views: front page, user pages, and delete POSTs.
 """
 import datetime
 import importlib
@@ -7,7 +7,7 @@ import logging
 import string
 import urllib.request, urllib.parse, urllib.error
 
-from flask import Flask, redirect, render_template, request
+from flask import flash, Flask, redirect, render_template, request
 from flask_caching import Cache
 from google.cloud import ndb
 from google.cloud.ndb.stats import KindStat, KindPropertyNamePropertyTypeStat
@@ -70,7 +70,7 @@ def head(site=None, id=None):
 @app.route('/')
 @cache.cached(datetime.timedelta(days=1).total_seconds())
 def front_page():
-  """Handler for the front page."""
+  """View for the front page."""
   return render_template('index.html')
 
 
@@ -83,7 +83,7 @@ def about():
 @cache.cached(datetime.timedelta(hours=1).total_seconds(),
               unless=lambda: request.query_string)
 def users():
-  """Handler for /users.
+  """View for /users.
 
   Semi-optimized. Pages by source name. Queries each source type for results
   with name greater than the start_name query param, then merge sorts the
@@ -111,7 +111,7 @@ def users():
 
 @app.route('/<site>/<id>')
 def user(site, id):
-  """Handler for a user page."""
+  """View for a user page."""
   cls = models.sources.get(site)
   if not cls:
     return render_template('user_not_found.html'), 404
@@ -348,22 +348,20 @@ def delete_start():
 
   path = ('/reddit/callback' if kind == 'Reddit'
           else '/wordpress/add' if kind == 'WordPress'
-          else '/%s/delete/finish' % source.SHORT_NAME)
+          else f'/{source.SHORT_NAME}/delete/finish')
   kwargs = {}
   if kind == 'Twitter':
     kwargs['access_type'] = 'read' if feature == 'listen' else 'write'
 
-  handler = source.OAUTH_START.to(path, **kwargs)(request, self.response)
   try:
-    return redirect(handler.redirect_url(state=state))
+    return redirect(source.OAUTH_START(path).redirect_url(state=state))
   except Exception as e:
     code, body = util.interpret_http_exception(e)
     if not code and util.is_connection_failure(e):
       code = '-'
       body = str(e)
     if code:
-      STATE: port to flashing
-      self.messages.add('%s API error %s: %s' % (source.GR_CLASS.NAME, code, body))
+      flash('%s API error %s: %s' % (source.GR_CLASS.NAME, code, body))
       return redirect(source.bridgy_url(self))
     else:
       raise
@@ -380,11 +378,11 @@ def delete_finish():
       callback = util.add_query_params(callback, {'result': 'declined'})
       return redirect(callback)
     else:
-      self.messages.add('If you want to disable, please approve the prompt.')
+      flash('If you want to disable, please approve the prompt.')
       return redirect('/')
     return
 
-  if (not parts or 'feature' not in parts or 'source' not in parts):
+  if not parts or 'feature' not in parts or 'source' not in parts:
     error('state query parameter must include "feature" and "source"')
 
   feature = parts['feature']
@@ -417,14 +415,12 @@ def delete_finish():
         'key': source.key.urlsafe().decode(),
       })
     else:
-      self.messages.add('Disabled %s for %s. Sorry to see you go!' %
-                        (noun, source.label()))
+      flash(f'Disabled {noun} for {source.label()}. Sorry to see you go!')
   else:
     if callback:
       callback = util.add_query_params(callback, {'result': 'failure'})
     else:
-      self.messages.add('Please log into %s as %s to disable it here.' %
-                        (source.GR_CLASS.NAME, source.name))
+      flash(f'Please log into {source.GR_CLASS.NAME} as {source.name} to disable it here.')
 
   return redirect(callback if callback
                   else source.bridgy_url() if source.features
@@ -435,7 +431,7 @@ def delete_finish():
 def poll_now():
   source = util.load_source()
   util.add_poll_task(source, now=True)
-  self.messages.add("Polling now. Refresh in a minute to see what's new!")
+  flash("Polling now. Refresh in a minute to see what's new!")
   return redirect(source.bridgy_url())
 
 
@@ -452,7 +448,7 @@ def crawl_now():
 
   setup_refetch_hfeed()
   util.add_poll_task(source, now=True)
-  self.messages.add("Crawling now. Refresh in a minute to see what's new!")
+  flash("Crawling now. Refresh in a minute to see what's new!")
   return redirect(source.bridgy_url())
 
 
@@ -476,7 +472,7 @@ def retry():
         json_loads(entity.response_json), originals=originals, mentions=mentions)
 
   entity.restart()
-  self.messages.add('Retrying. Refresh in a minute to see the results!')
+  flash('Retrying. Refresh in a minute to see the results!')
   return redirect(request.values.get('redirect_to') or source.bridgy_url())
 
 
@@ -513,7 +509,7 @@ def discover():
   else:
     msg = 'Please enter a URL on either your web site or %s.' % gr_source.NAME
 
-  self.messages.add(msg)
+  flash(msg)
   return redirect(source.bridgy_url())
 
 
@@ -541,15 +537,15 @@ def edit_websites_post():
     resolved = Source.resolve_profile_url(add)
     if resolved:
       if resolved in source.domain_urls:
-        self.messages.add('%s already exists.' % link)
+        flash('%s already exists.' % link)
       else:
         source.domain_urls.append(resolved)
         domain = util.domain_from_link(resolved)
         source.domains.append(domain)
         source.put()
-        self.messages.add('Added %s.' % link)
+        flash('Added %s.' % link)
     else:
-      self.messages.add("%s doesn't look like your web site. Try again?" % link)
+      flash("%s doesn't look like your web site. Try again?" % link)
 
   else:
     assert delete
@@ -561,7 +557,7 @@ def edit_websites_post():
     if domain not in set(util.domain_from_link(url) for url in source.domain_urls):
       source.domains.remove(domain)
     source.put()
-    self.messages.add(f'Removed {link}.')
+    flash(f'Removed {link}.')
 
   return redirect(redirect_url)
 
@@ -576,7 +572,7 @@ def redirect_to_front_page(_):
 def logout():
   """Redirect to the front page."""
   util.set_logins([])
-  self.messages.add('Logged out.')
+  flash('Logged out.')
   return redirect('/')
 
 

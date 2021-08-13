@@ -15,7 +15,6 @@ class RedditTest(testutil.ModelsTest):
     super(RedditTest, self).setUp()
     oauth_dropins.reddit.REDDIT_APP_KEY = 'my_app_key'
     oauth_dropins.reddit.REDDIT_APP_SECRET = 'my_app_secret'
-    self.view.messages = []
     user = oauth_dropins.reddit.praw_to_user(gr_reddit_test.FakeRedditor())
     self.auth_entity = oauth_dropins.reddit.RedditAuth(
       id='my_string_id',

@@ -274,7 +274,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
 
   def bridgy_url(self):
     """Returns the Bridgy page URL for this source."""
-    return util.host_url() + self.bridgy_path()
+    return urllib.parse.urljoin(util.host_url(), self.bridgy_path())
 
   def silo_url(self, handler):
     """Returns the silo account URL, e.g. https://twitter.com/foo."""
@@ -551,7 +551,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
 
     source.verify()
     if source.verified():
-      handler.messages = {blurb}
+      flash(blurb)
 
     # TODO: ugh, *all* of this should be transactional
     source.put()

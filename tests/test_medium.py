@@ -3,6 +3,7 @@
 """
 import urllib.request, urllib.parse, urllib.error
 
+from flask import get_flashed_messages
 from oauth_dropins import medium as oauth_medium
 from oauth_dropins.webutil.util import json_dumps, json_loads
 from oauth_dropins.webutil import appengine_info
@@ -111,9 +112,9 @@ class MediumTest(testutil.ViewTest):
     ChooseBlog(request, self.response).finish(None)
     self.assertEqual(0, Medium.query().count())
     self.assertEqual(302, self.response.status_code)
-    self.assertEqual(
-      "http://localhost/#!OK, you're not signed up. Hope you reconsider!",
-      urllib.parse.unquote_plus(self.response.headers['Location']))
+    self.assertEqual('http://localhost/', self.response.headers['Location'])
+    self.assertEqual("OK, you're not signed up. Hope you reconsider!",
+                     get_flashed_messages())
 
   def test_choose_blog_no_publications(self):
     self.expect_get_publications({})

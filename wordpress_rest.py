@@ -22,6 +22,7 @@ import collections
 import logging
 import urllib.request, urllib.parse, urllib.error
 
+from flask import flash
 from google.cloud import ndb
 from oauth_dropins import wordpress_rest as oauth_wordpress
 from oauth_dropins.webutil.util import json_dumps, json_loads
@@ -170,10 +171,7 @@ class WordPress(models.Source):
     except urllib.error.HTTPError as e:
       code, body = util.interpret_http_exception(e)
       if (code == '403' and '"API calls to this blog have been disabled."' in body):
-        handler.messages.add(
-          'You need to <a href="http://jetpack.me/support/json-api/">enable '
-          'the Jetpack JSON API</a> in %s\'s WordPress admin console.' %
-          util.pretty_link(auth_entity.blog_url))
+        flash(f'You need to <a href="http://jetpack.me/support/json-api/">enable the Jetpack JSON API</a> in {util.pretty_link(auth_entity.blog_url)}\'s WordPress admin console.')
         handler.redirect('/')
         return None
       raise
@@ -189,7 +187,7 @@ class AddWordPress(oauth_wordpress.Callback, util.View):
   def finish(self, auth_entity, state=None):
     if auth_entity:
       if int(auth_entity.blog_id) == 0:
-        self.messages.add(
+        flash(
           'Please try again and choose a blog before clicking Authorize.')
         return redirect('/')
 

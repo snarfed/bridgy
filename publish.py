@@ -331,9 +331,9 @@ class Handler(webmention.WebmentionHandler):
       return best_match
 
     if sources_ready:
-      msg = 'No account found that matches %s. Check that <a href="%s/about#profile-link">the web site URL is in your silo profile</a>, then <a href="%s/">sign up again</a>.' % (request.host_url, util.pretty_link(url), request.host_url)
+      msg = 'No account found that matches {util.pretty_link(url)}. Check that <a href="{urllib.parse.urljoin(request.host_url, "/about#profile-link")}">the web site URL is in your silo profile</a>, then <a href="{request.host_url}">sign up again</a>.'
     else:
-      msg = 'Publish is not enabled for your account. <a href="%s/">Try signing up!</a>' % request.host_url
+      msg = 'Publish is not enabled for your account. <a href="{request.host_url}">Try signing up!</a>'
     return self.error(msg, html=msg)
 
   def attempt_single_item(self, item):
@@ -607,7 +607,7 @@ class Handler(webmention.WebmentionHandler):
       'source': self.preprocess_source(self.source),
       'preview': result.content,
       'description': result.description,
-      'webmention_endpoint': util.host_url(self) + '/publish/webmention',
+      'webmention_endpoint': urllib.parse.urljoin(util.host_url(), '/publish/webmention'),
       'state': util.encode_oauth_state(state),
     }
     vars.update(state)
@@ -673,11 +673,11 @@ class SendHandler(Handler):
     else:
       result = self._run()
       if result and result.content:
-        self.messages.add('Done! <a href="%s">Click here to view.</a>' %
+        flash('Done! <a href="%s">Click here to view.</a>' %
                           self.entity.published.get('url'))
         granary_message = self.entity.published.get('granary_message')
         if granary_message:
-          self.messages.add(granary_message)
+          flash(granary_message)
       # otherwise error() added an error message
 
     return redirect(source.bridgy_url(self))
@@ -694,7 +694,7 @@ class SendHandler(Handler):
   def error(self, error, html=None, status=400, data=None, report=False, **kwargs):
     logging.info(f'publish: {error}')
     error = html if html else util.linkify(error)
-    self.messages.add('%s' % error)
+    flash('%s' % error)
     if report:
       self.report_error(error)
 

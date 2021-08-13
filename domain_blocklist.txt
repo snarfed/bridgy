@@ -180,6 +180,7 @@ mstdn.jp
 myopenid.com
 myspace.com
 myvideo.de
+nasdaq.com
 netlify.com
 news.ycombinator.com
 notion.so

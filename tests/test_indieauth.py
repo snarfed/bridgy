@@ -3,6 +3,7 @@
 import copy
 import urllib.request, urllib.parse, urllib.error
 
+from flask import get_flashed_messages
 from oauth_dropins.webutil.testutil import TestCase
 from oauth_dropins.webutil.util import json_dumps, json_loads
 from oauth_dropins import indieauth
@@ -18,7 +19,6 @@ class IndieAuthTest(ModelsTest):
 
   def setUp(self):
     super().setUp()
-    self.view.messages = []
     self.auth_entity = indieauth.IndieAuth(id='http://snarfed.org')
 
   def expect_indieauth_check(self):
@@ -56,8 +56,8 @@ class IndieAuthTest(ModelsTest):
     self.mox.ReplayAll()
 
     resp = self.callback()
-    self.assertEqual('http://localhost/#!Authorized you for snarfed.org.',
-                     urllib.parse.unquote_plus(resp.headers['Location']))
+    self.assertEqual('http://localhost/',resp.headers['Location'])
+    self.assertEqual('Authorized you for snarfed.org.', get_flashed_messages())
 
     self.assert_entities_equal([
       Domain(id='snarfed.org', tokens=['towkin'], auth=self.auth_entity.key),

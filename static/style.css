@@ -12,7 +12,7 @@
 }
 
 #messages > p {
-  display: none;
+  display: block;
   opacity: 1;
   background-color: gold;
   color: #444;

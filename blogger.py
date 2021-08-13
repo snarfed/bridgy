@@ -25,7 +25,7 @@ import logging
 import re
 import urllib.parse
 
-from flask import request
+from flask import flash, request
 from gdata.blogger.client import Query
 from gdata.client import Error
 from google.cloud import ndb
@@ -72,7 +72,7 @@ class Blogger(models.Source):
     """
     urls, domains = Blogger._urls_and_domains(auth_entity, blog_id=blog_id)
     if not urls or not domains:
-      handler.messages = {'Blogger blog not found. Please create one first!'}
+      flash('Blogger blog not found. Please create one first!')
       return None
 
     if blog_id is None:
@@ -178,7 +178,7 @@ class OAuthCallback(util.View):
         auth_entity = None
 
     if not auth_entity:
-      self.messages.add(
+      flash(
         "Couldn't fetch your blogs. Maybe you're not a Blogger user?")
 
     state = request.values.get('state')

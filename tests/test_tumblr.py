@@ -1,6 +1,7 @@
 # coding=utf-8
 """Unit tests for tumblr.py.
 """
+from flask import get_flashed_messages
 from mox3 import mox
 from oauth_dropins.tumblr import TumblrAuth
 from oauth_dropins.webutil.util import json_dumps, json_loads
@@ -53,7 +54,7 @@ class TumblrTest(testutil.ViewTest):
   def test_new_no_primary_blog(self):
     self.auth_entity.user_json = json_dumps({'user': {'blogs': [{'url': 'foo'}]}})
     self.assertIsNone(Tumblr.new(auth_entity=self.auth_entity))
-    self.assertIn('Tumblr blog not found', next(iter(self.view.messages)))
+    self.assertIn('Tumblr blog not found', get_flashed_messages()[0])
 
   def test_new_with_blog_name(self):
     self.auth_entity.user_json = json_dumps({

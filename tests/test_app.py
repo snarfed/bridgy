@@ -4,6 +4,7 @@ import datetime
 import urllib.request, urllib.parse, urllib.error
 from urllib.parse import urlencode
 
+from flask import get_flashed_messages
 from google.cloud import ndb
 from mox3 import mox
 from oauth_dropins.twitter import TwitterAuth
@@ -234,7 +235,7 @@ class AppTest(testutil.ModelsTest, testutil.ViewTest):
 
     self.assertEqual(302, resp.status_code)
     location = resp.headers['Location']
-    self.assertTrue(location.startswith('http://localhost/#'), location)
+    self.assertEqual('http://localhost/', location)
     new_cookie = resp.headers['Set-Cookie']
     self.assertTrue(new_cookie.startswith('logins="/other/1?bob"; '), new_cookie)
 
@@ -456,7 +457,8 @@ class AppTest(testutil.ModelsTest, testutil.ViewTest):
     self.assertEqual('logins=""; expires="2001-12-31 00:00:00"; Path=/',
                      resp.headers['Set-Cookie'])
     self.assertEqual(302, resp.status_code)
-    self.assertEqual('http://localhost/#!Logged%20out.', resp.headers['Location'])
+    self.assertEqual('http://localhost/', resp.headers['Location'])
+    self.assertEqual('Logged out.', get_flashed_messages())
 
   def test_edit_web_sites_add(self):
     source = self.sources[0]
@@ -466,10 +468,11 @@ class AppTest(testutil.ModelsTest, testutil.ViewTest):
       'add': 'http://foo.com/',
     })
     self.assertEqual(302, resp.status_code)
-    self.assertEqual('http://localhost/edit-websites?source_key=%s#!%s' % (
-      (source.key.urlsafe().decode(),
-       urllib.parse.quote('Added <a href="http://foo.com/">foo.com</a>.'))),
+    self.assertEqual(
+      f'http://localhost/edit-websites?source_key={source.key.urlsafe().decode()}',
       resp.headers['Location'])
+    self.assertEqual('Added <a href="http://foo.com/">foo.com</a>.',
+                     get_flashed_messages())
 
     source = source.key.get()
     self.assertIn('foo.com', source.domains)
@@ -486,10 +489,12 @@ class AppTest(testutil.ModelsTest, testutil.ViewTest):
       'add': 'http://foo.com/',
     })
     self.assertEqual(302, resp.status_code)
-    self.assertEqual('http://localhost/edit-websites?source_key=%s#!%s' % (
-      (source.key.urlsafe().decode(),
-       urllib.parse.quote('<a href="http://foo.com/">foo.com</a> already exists.'))),
+    self.assertEqual(
+      f'http://localhost/edit-websites?source_key={source.key.urlsafe().decode()}',
       resp.headers['Location'])
+    self.assertEqual(
+      f'<a href="http://foo.com/">foo.com</a> already exists.',
+      get_flashed_messages())
 
     source = source.key.get()
     self.assertEqual(['foo.com'], source.domains)
@@ -502,10 +507,12 @@ class AppTest(testutil.ModelsTest, testutil.ViewTest):
       'add': 'http://facebook.com/',
     })
     self.assertEqual(302, resp.status_code)
-    self.assertEqual('http://localhost/edit-websites?source_key=%s#!%s' % (
-      (source.key.urlsafe().decode(),
-       urllib.parse.quote('<a href="http://facebook.com/">facebook.com</a> doesn\'t look like your web site. Try again?'))),
+    self.assertEqual(
+      f'http://localhost/edit-websites?source_key={source.key.urlsafe().decode()}',
       resp.headers['Location'])
+    self.assertEqual(
+      '<a href="http://facebook.com/">facebook.com</a> doesn\'t look like your web site. Try again?',
+      get_flashed_messages())
 
     source = source.key.get()
     self.assertEqual([], source.domains)
@@ -522,10 +529,11 @@ class AppTest(testutil.ModelsTest, testutil.ViewTest):
       'delete': 'https://bar',
     })
     self.assertEqual(302, resp.status_code)
-    self.assertEqual('http://localhost/edit-websites?source_key=%s#!%s' % (
-      (source.key.urlsafe().decode(),
-       urllib.parse.quote('Removed <a href="https://bar">bar</a>.'))),
+    self.assertEqual(
+      f'http://localhost/edit-websites?source_key={source.key.urlsafe().decode()}',
       resp.headers['Location'])
+    self.assertEqual('Removed <a href="https://bar">bar</a>.',
+                     get_flashed_messages())
 
     source = source.key.get()
     self.assertEqual(['foo'], source.domains)
@@ -542,10 +550,11 @@ class AppTest(testutil.ModelsTest, testutil.ViewTest):
       'delete': 'https://foo.com/baz',
     })
     self.assertEqual(302, resp.status_code)
-    self.assertEqual('http://localhost/edit-websites?source_key=%s#!%s' % (
-      (source.key.urlsafe().decode(),
-       urllib.parse.quote('Removed <a href="https://foo.com/baz">foo.com/baz</a>.'))),
+    self.assertEqual(
+      f'http://localhost/edit-websites?source_key={source.key.urlsafe().decode()}',
       resp.headers['Location'])
+    self.assertEqual(['Removed <a href="https://foo.com/baz">foo.com/baz</a>.'],
+                    get_flashed_messages())
 
     source = source.key.get()
     self.assertEqual(['foo.com'], source.domains)

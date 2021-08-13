@@ -29,6 +29,7 @@ import logging
 import re
 import urllib.parse
 
+from flask import flash
 from google.cloud import ndb
 from oauth_dropins import tumblr as oauth_tumblr
 from oauth_dropins.webutil.util import json_dumps, json_loads
@@ -92,7 +93,7 @@ class Tumblr(models.Source):
     """
     urls, domains = Tumblr._urls_and_domains(auth_entity, blog_name=blog_name)
     if not urls or not domains:
-      handler.messages = {'Tumblr blog not found. Please create one first!'}
+      flash('Tumblr blog not found. Please create one first!')
       return None
 
     id = domains[0]

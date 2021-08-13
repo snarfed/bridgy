@@ -23,7 +23,7 @@ class Start(indieauth.Start, util.View):
       return redirect(redirect_url(state=flask_util.get_required_param('token')))
     except Exception as e:
       if util.is_connection_failure(e) or util.interpret_http_exception(e)[0]:
-        self.messages.add("Couldn't fetch your web site: %s" % e)
+        flash("Couldn't fetch your web site: %s" % e)
         return redirect('/')
       raise
 
@@ -43,7 +43,7 @@ class Callback(indieauth.Callback, util.View):
       domain.tokens.append(state)
     domain.put()
 
-    self.messages.add(f'Authorized you for {domain.key.id()}.')
+    flash(f'Authorized you for {domain.key.id()}.')
     return redirect('/')
 
 
