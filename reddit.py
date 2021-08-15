@@ -9,7 +9,6 @@ from granary import source as gr_source
 from oauth_dropins import reddit as oauth_reddit
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import webapp2
-from webob import exc
 
 import models
 import util
@@ -73,7 +72,7 @@ class Reddit(models.Source):
       search_query=url_query, group_id=gr_source.SEARCH, etag=self.last_activities_etag,
       fetch_replies=False, fetch_likes=False, fetch_shares=False, count=50)
 
-class AuthHandler(util.View):
+class AuthHandler():
   """Base OAuth handler class."""
 
   def start_oauth_flow(self, feature, operation):
@@ -85,17 +84,17 @@ class AuthHandler(util.View):
     features = feature.split(',') if feature else []
     for feature in features:
       if feature not in models.Source.FEATURES:
-        raise exc.HTTPBadRequest('Unknown feature: %s' % feature)
+        util.error(f'Unknown feature: {feature}')
 
     handler = util.oauth_starter(oauth_reddit.Start, feature=feature, operation=operation).to(
       '/reddit/callback')(request, self.response)
     return handler.post()
 
 
-class Callback(oauth_reddit.Callback, util.View):
+class Callback(oauth_reddit.Callback):
   def finish(self, auth_entity, state=None):
     logging.debug('finish with %s, %s', auth_entity, state)
-    self.maybe_add_or_delete_source(Reddit, auth_entity, state)
+    util.maybe_add_or_delete_source(Reddit, auth_entity, state)
 
 
 class Start(AuthHandler):

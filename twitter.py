@@ -13,7 +13,6 @@ from granary import source as gr_source
 from oauth_dropins import twitter as oauth_twitter
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import webapp2
-from webob import exc
 
 import models
 import util
@@ -145,7 +144,7 @@ class Twitter(models.Source):
     return super().canonicalize_url(url, **kwargs)
 
 
-class Auth(util.View):
+class Auth():
   """Base OAuth handler class."""
 
   def start_oauth_flow(self, feature):
@@ -157,7 +156,7 @@ class Auth(util.View):
     features = feature.split(',') if feature else []
     for feature in features:
       if feature not in models.Source.FEATURES:
-        raise exc.HTTPBadRequest('Unknown feature: %s' % feature)
+        util.error(f'Unknown feature: {feature}')
 
     # pass explicit 'write' instead of None for publish so that oauth-dropins
     # (and tweepy) don't use signin_with_twitter ie /authorize. this works
@@ -170,7 +169,7 @@ class Auth(util.View):
 
 class AddTwitter(oauth_twitter.Callback, Auth):
   def finish(self, auth_entity, state=None):
-    source = self.maybe_add_or_delete_source(Twitter, auth_entity, state)
+    source = util.maybe_add_or_delete_source(Twitter, auth_entity, state)
     feature = util.decode_oauth_state(state).get('feature')
 
     if source is not None and feature == 'listen' and 'publish' in source.features:

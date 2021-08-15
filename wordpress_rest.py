@@ -31,6 +31,7 @@ import webapp2
 import models
 import superfeedr
 import util
+from util import redirect
 
 
 API_CREATE_COMMENT_URL = 'https://public-api.wordpress.com/rest/v1/sites/%s/posts/%d/replies/new?pretty=true'
@@ -172,7 +173,7 @@ class WordPress(models.Source):
       code, body = util.interpret_http_exception(e)
       if (code == '403' and '"API calls to this blog have been disabled."' in body):
         flash(f'You need to <a href="http://jetpack.me/support/json-api/">enable the Jetpack JSON API</a> in {util.pretty_link(auth_entity.blog_url)}\'s WordPress admin console.')
-        handler.redirect('/')
+        redirect('/')
         return None
       raise
 
@@ -183,7 +184,7 @@ class WordPress(models.Source):
     return json_loads(resp)
 
 
-class AddWordPress(oauth_wordpress.Callback, util.View):
+class AddWordPress(oauth_wordpress.Callback):
   def finish(self, auth_entity, state=None):
     if auth_entity:
       if int(auth_entity.blog_id) == 0:
@@ -206,12 +207,12 @@ class AddWordPress(oauth_wordpress.Callback, util.View):
           ))
         return
 
-    self.maybe_add_or_delete_source(WordPress, auth_entity, state)
+    util.maybe_add_or_delete_source(WordPress, auth_entity, state)
 
 
-class ConfirmSelfHosted(util.View):
+class ConfirmSelfHosted():
   def post(self):
-    self.maybe_add_or_delete_source(
+    util.maybe_add_or_delete_source(
       WordPress,
       ndb.Key(urlsafe=flask_util.get_required_param('auth_entity_key')).get(),
       flask_util.get_required_param('state'))

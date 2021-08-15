@@ -190,7 +190,7 @@ class ResponseTest(testutil.ModelsTest):
 
   def test_url(self):
     self.assertEqual('http://localhost/fake/%s' % self.sources[0].key.string_id(),
-                     self.sources[0].bridgy_url(self.view))
+                     self.source_bridgy_url)
 
   def test_get_or_save_empty_unsent_no_task(self):
     self.responses[0].unsent = []

@@ -7,7 +7,7 @@ import logging
 import string
 import urllib.request, urllib.parse, urllib.error
 
-from flask import flash, Flask, redirect, render_template, request
+from flask import flash, Flask, render_template, request
 from flask_caching import Cache
 from google.cloud import ndb
 from google.cloud.ndb.stats import KindStat, KindPropertyNamePropertyTypeStat
@@ -15,6 +15,7 @@ import humanize
 from oauth_dropins import indieauth
 from oauth_dropins.webutil import appengine_info, flask_util, logs
 from oauth_dropins.webutil.appengine_config import ndb_client
+from oauth_dropins.webutil.flask_util import error
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import webapp2
 
@@ -26,6 +27,7 @@ import models
 from models import BlogPost, BlogWebmention, Publish, Response, Source, Webmentions
 import original_post_discovery
 import util
+from util import redirect
 
 RECENT_PRIVATE_POSTS_THRESHOLD = 5
 
@@ -95,7 +97,7 @@ def users():
   """
   PAGE_SIZE = 50
 
-  start_name = request.values.get('start_name')
+  start_name = request.values.get('start_name', '')
   queries = [cls.query(cls.name >= start_name).fetch_async(PAGE_SIZE)
              for cls in models.sources.values()]
 
@@ -106,7 +108,7 @@ def users():
                 and s.status != 'disabled'
              ][:PAGE_SIZE]
 
-  return render_template('users.html', PAGE_SIZE=PAGE_SIZE)
+  return render_template('users.html', PAGE_SIZE=PAGE_SIZE, sources=sources)
 
 
 @app.route('/<site>/<id>')
@@ -362,7 +364,7 @@ def delete_start():
       body = str(e)
     if code:
       flash('%s API error %s: %s' % (source.GR_CLASS.NAME, code, body))
-      return redirect(source.bridgy_url(self))
+      return redirect(source.bridgy_url())
     else:
       raise
 
@@ -441,6 +443,7 @@ def crawl_now():
 
   @ndb.transactional()
   def setup_refetch_hfeed():
+    nonlocal source
     source = util.load_source()
     source.last_hfeed_refetch = models.REFETCH_HFEED_TRIGGER
     source.last_feed_syndication_url = None

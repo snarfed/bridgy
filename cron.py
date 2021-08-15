@@ -35,7 +35,7 @@ class ReplacePollTasks(webapp2.RequestHandler):
       age = now - source.last_poll_attempt
       if age > max(source.poll_period() * 2, datetime.timedelta(hours=2)):
         logging.info('%s last polled %s ago. Adding new poll task.',
-                     source.bridgy_url(self), age)
+                     source.bridgy_url(), age)
         util.add_poll_task(source)
 
 
@@ -98,7 +98,7 @@ class UpdatePictures(webapp2.RequestHandler):
     for source in self.source_query():
       if source.features and source.status != 'disabled':
         logging.debug('checking for updated profile pictures for: %s',
-                      source.bridgy_url(self))
+                      source.bridgy_url())
         try:
           actor = source.gr_source.get_actor(self.user_id(source))
         except requests.HTTPError as e:
@@ -145,7 +145,7 @@ def maybe_update_picture(source, new_actor, handler):
     src.put()
 
   logging.info('Updating profile picture for %s from %s to %s',
-               source.bridgy_url(handler), source.picture, new_pic)
+               source.bridgy_url(), source.picture, new_pic)
   update()
   return True
 

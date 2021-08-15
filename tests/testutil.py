@@ -282,6 +282,12 @@ class ViewTest(testutil.TestCase):
     self.stubbed_create_task = False
     tasks_client.create_task = lambda *args, **kwargs: Task(name='foo')
 
+    self.client.__enter__()
+
+  def tearDown(self):
+    self.client.__exit__(None, None, None)
+    super().tearDown()
+
   def stub_create_task(self):
     if not self.stubbed_create_task:
       self.mox.StubOutWithMock(tasks_client, 'create_task')
@@ -388,6 +394,9 @@ class ModelsTest(testutil.TestCase):
     for entity in self.sources:
       entity.features = ['listen']
       entity.put()
+
+    with app.test_request_context():
+      self.source_bridgy_url = self.sources[0].bridgy_url()
 
     self.actor = FakeGrSource.actor = {
       'objectType': 'person',
@@ -530,7 +539,7 @@ class ModelsTest(testutil.TestCase):
 FakeStart = OAuthStart#).to('/fakesource/add')
 
 
-class FakeAdd(util.View):
+class FakeAdd():
   """Handles the authorization callback when handling a fake source
   """
   auth_entity = FakeAuthEntity(user_json=json_dumps({
@@ -546,5 +555,5 @@ class FakeAdd(util.View):
     return HandlerWithAuth
 
   def get(self):
-    self.maybe_add_or_delete_source(FakeSource, self.auth_entity,
+    util.maybe_add_or_delete_source(FakeSource, self.auth_entity,
                                     request.values.get('state'))

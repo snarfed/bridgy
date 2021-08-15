@@ -136,7 +136,7 @@ class BrowserSource(Source):
             return tag
 
 
-class BrowserView(util.View):
+class BrowserView():
   """Base class for requests from the browser extension."""
   def output(self, obj):
     self.response.headers['Content-Type'] = JSON_CONTENT_TYPE

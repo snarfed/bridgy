@@ -6,7 +6,7 @@ haven't completed yet.
 import datetime
 import itertools
 
-from flask import redirect, render_template, request
+from flask import render_template, request
 from google.cloud import ndb
 from oauth_dropins.webutil import flask_util, logs
 from oauth_dropins.webutil.util import json_dumps, json_loads
@@ -72,4 +72,4 @@ def mark_complete():
   for e in entities:
     e.status = 'complete'
   ndb.put_multi(entities)
-  return redirect('/admin/responses')
+  return util.redirect('/admin/responses')

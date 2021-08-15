@@ -68,7 +68,7 @@ $body
 """)
 
 
-class Item(util.View):
+class Item(View):
   """Fetches a post, repost, like, or comment and serves it as mf2 HTML or JSON.
   """
   source = None

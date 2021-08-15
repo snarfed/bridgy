@@ -26,7 +26,7 @@ PUSH_API_URL = 'https://push.superfeedr.com'
 MAX_BLOGPOST_LINKS = 10
 
 
-def subscribe(source, handler):
+def subscribe(source):
   """Subscribes to a source.
 
   Also receives some past posts and adds propagate tasks for them.
@@ -35,7 +35,6 @@ def subscribe(source, handler):
 
   Args:
     source: Blogger, Tumblr, or WordPress
-    handler: :class:`webapp2.RequestHandler`
   """
   if appengine_info.LOCAL:
     logging.info('Running in dev_appserver, not subscribing to Superfeedr')
@@ -124,7 +123,7 @@ def handle_feed(feed, source):
     bp.get_or_save()
 
 
-class NotifyHandler(util.View):
+class NotifyHandler():
   """Handles a Superfeedr notification.
 
   Abstract; subclasses must set the SOURCE_CLS attr.

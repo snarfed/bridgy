@@ -5,9 +5,10 @@ from oauth_dropins import indieauth
 
 from models import Domain
 import util
+from util import redirect
 
 
-class Start(indieauth.Start, util.View):
+class Start(indieauth.Start):
   """Serves the "Enter your web site" form page; starts the IndieAuth flow."""
   def template_file(self):
     return 'indieauth.html'
@@ -28,7 +29,7 @@ class Start(indieauth.Start, util.View):
       raise
 
 
-class Callback(indieauth.Callback, util.View):
+class Callback(indieauth.Callback):
   """IndieAuth callback handler."""
   @ndb.transactional()
   def finish(self, auth_entity, state=None):

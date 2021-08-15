@@ -113,19 +113,19 @@ class Medium(models.Source):
     return [], []
 
 
-class AddMedium(util.View):
+class AddMedium():
   def post(self):
     auth_entity = ndb.Key(
       urlsafe=flask_util.get_required_param('auth_entity_key')).get()
     state = flask_util.get_required_param('state')
     id = flask_util.get_required_param('blog')
-    self.maybe_add_or_delete_source(Medium, auth_entity, state, id=id)
+    util.maybe_add_or_delete_source(Medium, auth_entity, state, id=id)
 
 
-class ChooseBlog(oauth_medium.Callback, util.View):
+class ChooseBlog(oauth_medium.Callback):
   def finish(self, auth_entity, state=None):
     if not auth_entity:
-      self.maybe_add_or_delete_source(Medium, auth_entity, state)
+      util.maybe_add_or_delete_source(Medium, auth_entity, state)
       return
 
     user = json_loads(auth_entity.user_json)['data']
@@ -142,7 +142,7 @@ class ChooseBlog(oauth_medium.Callback, util.View):
     auth_entity.put()
     pubs = json_loads(auth_entity.publications_json).get('data')
     if not pubs:
-      self.maybe_add_or_delete_source(Medium, auth_entity, state,
+      util.maybe_add_or_delete_source(Medium, auth_entity, state,
                                       id=username)
       return
 

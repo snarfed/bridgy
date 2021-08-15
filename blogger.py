@@ -163,7 +163,7 @@ class Blogger(models.Source):
     return resp
 
 
-class OAuthCallback(util.View):
+class OAuthCallback():
   """OAuth callback handler.
 
   Both the add and delete flows have to share this because Blogger's
@@ -188,7 +188,7 @@ class OAuthCallback(util.View):
       state = self.construct_state_param_for_add(feature='webmention')
 
     if not auth_entity:
-      self.maybe_add_or_delete_source(Blogger, auth_entity, state)
+      util.maybe_add_or_delete_source(Blogger, auth_entity, state)
       return
 
     vars = {
@@ -206,10 +206,10 @@ class OAuthCallback(util.View):
     self.response.out.write(JINJA_ENV.get_template('choose_blog.html').render(**vars))
 
 
-class AddBlogger(util.View):
+class AddBlogger():
   def post(self):
     auth_entity_key = flask_util.get_required_param('auth_entity_key')
-    self.maybe_add_or_delete_source(
+    util.maybe_add_or_delete_source(
       Blogger,
       ndb.Key(urlsafe=auth_entity_key).get(),
       flask_util.get_required_param('state'),

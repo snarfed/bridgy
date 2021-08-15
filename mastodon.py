@@ -11,6 +11,7 @@ import webapp2
 
 import models
 import util
+from util import redirect
 
 # https://docs.joinmastodon.org/api/oauth-scopes/
 LISTEN_SCOPES = (
@@ -161,7 +162,7 @@ class Mastodon(models.Source):
         raise
 
 
-class InstanceHandler(util.View):
+class InstanceHandler():
   """Serves the "Enter your instance" form page."""
   def template_file(self):
     return 'mastodon_instance.html'
@@ -182,9 +183,9 @@ class InstanceHandler(util.View):
 
 
 
-class Callback(oauth_dropins.mastodon.Callback, util.View):
+class Callback(oauth_dropins.mastodon.Callback):
   def finish(self, auth_entity, state=None):
-    source = self.maybe_add_or_delete_source(Mastodon, auth_entity, state)
+    source = util.maybe_add_or_delete_source(Mastodon, auth_entity, state)
 
     features = util.decode_oauth_state(state).get('feature', '').split(',')
     if set(features) != set(source.features):

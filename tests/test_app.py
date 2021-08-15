@@ -33,8 +33,7 @@ class AppTest(testutil.ModelsTest, testutil.ViewTest):
 
     resp = self.client.post('/poll-now', data={'key': key})
     self.assertEqual(302, resp.status_code)
-    self.assertEqual(self.sources[0].bridgy_url(),
-                      resp.headers['Location'].split('#')[0])
+    self.assertEqual(self.source_bridgy_url, resp.headers['Location'])
 
   def test_retry(self):
     source = self.sources[0]
@@ -71,8 +70,7 @@ class AppTest(testutil.ModelsTest, testutil.ViewTest):
 
     response = self.client.post('/retry', data={'key': key})
     self.assertEqual(302, response.status_code)
-    self.assertEqual(source.bridgy_url(),
-                     response.headers['Location'].split('#')[0])
+    self.assertEqual(self.source_bridgy_url, response.headers['Location'])
 
     # status and URLs should be refreshed
     got = resp.key.get()
@@ -100,8 +98,7 @@ class AppTest(testutil.ModelsTest, testutil.ViewTest):
         'redirect_to': '/foo/bar',
       })
     self.assertEqual(302, response.status_code)
-    self.assertEqual('http://localhost/foo/bar',
-                      response.headers['Location'].split('#')[0])
+    self.assertEqual('http://localhost/foo/bar', response.headers['Location'])
 
   def test_crawl_now(self):
     source = self.sources[0]
@@ -115,8 +112,7 @@ class AppTest(testutil.ModelsTest, testutil.ViewTest):
 
     response = self.client.post('/crawl-now', data={'key': key})
     self.assertEqual(302, response.status_code)
-    self.assertEqual(source.bridgy_url(),
-                     response.headers['Location'].split('#')[0])
+    self.assertEqual(self.source_bridgy_url, response.headers['Location'])
 
     source = source.key.get()
     self.assertEqual(models.REFETCH_HFEED_TRIGGER, source.last_hfeed_refetch)
@@ -216,28 +212,28 @@ class AppTest(testutil.ModelsTest, testutil.ViewTest):
     self.assertEqual(302, resp.status_code)
     location = urllib.parse.urlparse(resp.headers['Location'])
     self.assertEqual('/fake/0123456789', location.path)
-    self.assertEqual('!FakeSource API error 504: Connection closed unexpectedly...',
-                      urllib.parse.unquote(location.fragment))
+    self.assertEqual(['FakeSource API error 504: Connection closed unexpectedly...'],
+                      get_flashed_messages())
 
   def test_delete_removes_from_logins_cookie(self):
-    cookie = ('logins="/fake/%s?Fake%%20User|/other/1?bob"; '
-              'expires="2999-12-31 00:00:00"; Path=/' % self.sources[0].key.id())
+    self.client.set_cookie(
+      'localhost', 'logins',
+      f'/fake/{self.sources[0].key.id()}?Fake%20User|/other/1?bob')
 
     with app.app.test_request_context():
       state = util.construct_state_param_for_add(
         feature='listen', operation='delete',
         source=self.sources[0].key.urlsafe().decode())
 
+    auth_entity_key = self.sources[0].auth_entity.urlsafe().decode()
     resp = self.client.get(
-      '/delete/finish?auth_entity=%s&state=%s' %
-      (self.sources[0].auth_entity.urlsafe().decode(), state),
-      headers={'Cookie': cookie})
+      f'/delete/finish?auth_entity={auth_entity_key}&state={state}')
 
     self.assertEqual(302, resp.status_code)
     location = resp.headers['Location']
     self.assertEqual('http://localhost/', location)
-    new_cookie = resp.headers['Set-Cookie']
-    self.assertTrue(new_cookie.startswith('logins="/other/1?bob"; '), new_cookie)
+    self.assertIn('logins="/other/1?bob";',
+                  resp.headers['Set-Cookie'].split(' '))
 
   def test_user_page(self):
     resp = self.client.get(self.sources[0].bridgy_path())
@@ -434,9 +430,8 @@ class AppTest(testutil.ModelsTest, testutil.ViewTest):
   def test_users_page(self):
     resp = self.client.get('/users')
     for source in self.sources:
-      self.assertIn(
-        '<a href="%s" title="%s"' % (source.bridgy_path(), source.label()),
-        resp.get_data(as_text=True))
+      self.assertIn(f'<a href="{source.bridgy_path()}" title="{source.label()}"',
+                    resp.get_data(as_text=True))
     self.assertEqual(200, resp.status_code)
 
   def test_users_page_hides_deleted_and_disabled(self):
@@ -454,15 +449,17 @@ class AppTest(testutil.ModelsTest, testutil.ViewTest):
   def test_logout(self):
     util.now_fn = lambda: datetime.datetime(2000, 1, 1)
     resp = self.client.get('/logout')
-    self.assertEqual('logins=""; expires="2001-12-31 00:00:00"; Path=/',
-                     resp.headers['Set-Cookie'])
+    self.assertEqual(
+      'logins=; Expires=Mon, 31 Dec 2001 00:00:00 GMT; Max-Age=63072000; Path=/',
+      resp.headers['Set-Cookie'])
     self.assertEqual(302, resp.status_code)
     self.assertEqual('http://localhost/', resp.headers['Location'])
-    self.assertEqual('Logged out.', get_flashed_messages())
+    self.assertEqual(['Logged out.'], get_flashed_messages())
 
   def test_edit_web_sites_add(self):
     source = self.sources[0]
     self.assertNotIn('foo.com', source.domains)
+
     resp = self.client.post('/edit-websites', data={
       'source_key': source.key.urlsafe().decode(),
       'add': 'http://foo.com/',
@@ -471,7 +468,7 @@ class AppTest(testutil.ModelsTest, testutil.ViewTest):
     self.assertEqual(
       f'http://localhost/edit-websites?source_key={source.key.urlsafe().decode()}',
       resp.headers['Location'])
-    self.assertEqual('Added <a href="http://foo.com/">foo.com</a>.',
+    self.assertEqual(['Added <a href="http://foo.com/">foo.com</a>.'],
                      get_flashed_messages())
 
     source = source.key.get()
@@ -492,9 +489,8 @@ class AppTest(testutil.ModelsTest, testutil.ViewTest):
     self.assertEqual(
       f'http://localhost/edit-websites?source_key={source.key.urlsafe().decode()}',
       resp.headers['Location'])
-    self.assertEqual(
-      f'<a href="http://foo.com/">foo.com</a> already exists.',
-      get_flashed_messages())
+    self.assertEqual(['<a href="http://foo.com/">foo.com</a> already exists.'],
+                     get_flashed_messages())
 
     source = source.key.get()
     self.assertEqual(['foo.com'], source.domains)
@@ -511,7 +507,7 @@ class AppTest(testutil.ModelsTest, testutil.ViewTest):
       f'http://localhost/edit-websites?source_key={source.key.urlsafe().decode()}',
       resp.headers['Location'])
     self.assertEqual(
-      '<a href="http://facebook.com/">facebook.com</a> doesn\'t look like your web site. Try again?',
+      ['<a href="http://facebook.com/">facebook.com</a> doesn\'t look like your web site. Try again?'],
       get_flashed_messages())
 
     source = source.key.get()
@@ -532,7 +528,7 @@ class AppTest(testutil.ModelsTest, testutil.ViewTest):
     self.assertEqual(
       f'http://localhost/edit-websites?source_key={source.key.urlsafe().decode()}',
       resp.headers['Location'])
-    self.assertEqual('Removed <a href="https://bar">bar</a>.',
+    self.assertEqual(['Removed <a href="https://bar">bar</a>.'],
                      get_flashed_messages())
 
     source = source.key.get()
@@ -585,16 +581,16 @@ class DiscoverTest(testutil.ModelsTest, testutil.ViewTest):
     self.source.put()
 
   def check_discover(self, url, expected_message):
-      resp = self.client.get('/discover', data={
+      resp = self.client.post('/discover', data={
         'source_key': self.source.key.urlsafe().decode(),
         'url': url,
       })
+      print(resp.headers)
+      self.assertEqual(302, resp.status_code)
       location = urllib.parse.urlparse(resp.headers['Location'])
       detail = ' '.join((url, str(resp.status_code), repr(location), repr(resp.get_data(as_text=True))))
-      self.assertEqual(302, resp.status_code, detail)
       self.assertEqual(self.source.bridgy_path(), location.path, detail)
-      self.assertEqual('!' + expected_message, urllib.parse.unquote(location.fragment),
-                       detail)
+      self.assertEqual([expected_message], get_flashed_messages())
 
   def check_fail(self, body, **kwargs):
     self.expect_requests_get('http://si.te/123', body, **kwargs)

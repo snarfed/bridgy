@@ -5,6 +5,7 @@ import logging
 import os
 import re
 
+from flask import flash
 from google.cloud import ndb
 from granary import microformats2
 from granary import source as gr_source
@@ -65,7 +66,8 @@ class SourceMeta(ndb.MetaModel):
   """:class:`Source` metaclass. Registers all subclasses in the sources global."""
   def __new__(meta, name, bases, class_dict):
     cls = ndb.MetaModel.__new__(meta, name, bases, class_dict)
-    sources[cls.SHORT_NAME] = cls
+    if cls.SHORT_NAME:
+      sources[cls.SHORT_NAME] = cls
     return cls
 
 
@@ -274,7 +276,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
 
   def bridgy_url(self):
     """Returns the Bridgy page URL for this source."""
-    return urllib.parse.urljoin(util.host_url(), self.bridgy_path())
+    return util.host_url(self.bridgy_path())
 
   def silo_url(self, handler):
     """Returns the silo account URL, e.g. https://twitter.com/foo."""
@@ -500,11 +502,10 @@ class Source(StringIdModel, metaclass=SourceMeta):
     return ''
 
   @classmethod
-  def create_new(cls, handler, user_url=None, **kwargs):
+  def create_new(cls, user_url=None, **kwargs):
     """Creates and saves a new :class:`Source` and adds a poll task for it.
 
     Args:
-      handler: the current :class:`webapp2.RequestHandler`
       user_url: a string, optional. if provided, supersedes other urls when
         determining the author_url
       **kwargs: passed to :meth:`new()`
@@ -545,9 +546,6 @@ class Source(StringIdModel, metaclass=SourceMeta):
       else '<a href="%s">Try a webmention!</a>' % link if feature == 'webmention'
       else "Refresh in a minute to see what we've found!")
     logging.info('%s %s', blurb, source.bridgy_url())
-    # uncomment to send email notification for each new user
-    # if not existing:
-    #   util.email_me(subject=blurb, body=source.bridgy_url(handler))
 
     source.verify()
     if source.verified():
@@ -557,7 +555,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
     source.put()
 
     if 'webmention' in source.features:
-      superfeedr.subscribe(source, handler)
+      superfeedr.subscribe(source)
 
     if 'listen' in source.features and source.AUTO_POLL:
       util.add_poll_task(source, now=True)

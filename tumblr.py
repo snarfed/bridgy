@@ -229,10 +229,10 @@ class Tumblr(models.Source):
     return resp
 
 
-class ChooseBlog(oauth_tumblr.Callback, util.View):
+class ChooseBlog(oauth_tumblr.Callback):
   def finish(self, auth_entity, state=None):
     if not auth_entity:
-      self.maybe_add_or_delete_source(Tumblr, auth_entity, state)
+      util.maybe_add_or_delete_source(Tumblr, auth_entity, state)
       return
 
     vars = {
@@ -253,10 +253,10 @@ class ChooseBlog(oauth_tumblr.Callback, util.View):
     self.response.out.write(JINJA_ENV.get_template('choose_blog.html').render(**vars))
 
 
-class AddTumblr(util.View):
+class AddTumblr():
   def post(self):
     auth_entity_key = flask_util.get_required_param('auth_entity_key')
-    self.maybe_add_or_delete_source(
+    util.maybe_add_or_delete_source(
       Tumblr,
       ndb.Key(urlsafe=auth_entity_key).get(),
       flask_util.get_required_param('state'),

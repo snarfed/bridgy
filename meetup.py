@@ -56,10 +56,10 @@ class Meetup(Source):
     return self.name
 
 
-class AddMeetup(oauth_meetup.Callback, util.View):
+class AddMeetup(oauth_meetup.Callback):
   def finish(self, auth_entity, state=None):
     logging.debug('finish with %s, %s', auth_entity, state)
-    self.maybe_add_or_delete_source(Meetup, auth_entity, state)
+    util.maybe_add_or_delete_source(Meetup, auth_entity, state)
 
 # ROUTES = [
 #   ('/meetup/start', util.oauth_starter(oauth_meetup.Start).to(

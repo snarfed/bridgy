@@ -67,7 +67,7 @@ class Poll(webapp2.RequestHandler):
       logging.error('Source not found or disabled. Dropping task.')
       return
     logging.info('Source: %s %s, %s', source.label(), source.key_id(),
-                 source.bridgy_url(self))
+                 source.bridgy_url())
 
     if source.AUTO_POLL:
       last_polled = request.params['last_polled']
@@ -99,8 +99,7 @@ class Poll(webapp2.RequestHandler):
           'status': 'disabled',
           'poll_status': 'ok',
         })
-        body = '%s\nLast poll: %s' % (source.bridgy_url(self),
-                                      self._last_poll_url(source))
+        body = f'{source.bridgy_url()}\nLast poll: {self._last_poll_url(source)}'
       elif code in source.RATE_LIMIT_HTTP_CODES:
         logging.info('Rate limited. Marking as error and finishing. %s', e)
         source.updates['rate_limited'] = True
@@ -492,7 +491,7 @@ class Discover(Poll):
       logging.error('Source not found or disabled. Dropping task.')
       return
     logging.info('Source: %s %s, %s', source.label(), source.key_id(),
-                 source.bridgy_url(self))
+                 source.bridgy_url())
 
     post_id = util.get_required_param(self, 'post_id')
     source.updates = {}
@@ -671,7 +670,7 @@ class SendWebmentions(webapp2.RequestHandler):
       logging.error('Source not found or disabled. Dropping task.')
       return False
     logging.info('Source: %s %s, %s', self.source.label(), self.source.key_id(),
-                 self.source.bridgy_url(self))
+                 self.source.bridgy_url())
 
     assert self.entity.status in ('new', 'processing', 'error'), self.entity.status
     self.entity.status = 'processing'

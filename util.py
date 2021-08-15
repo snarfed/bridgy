@@ -16,6 +16,7 @@ import urllib.request, urllib.parse, urllib.error
 import zlib
 
 from cachetools import TTLCache
+import flask
 from flask import flash, get_flashed_messages, request
 import flask.views
 from google.cloud import ndb
@@ -172,6 +173,11 @@ def add_task(queue, eta_seconds=None, **kwargs):
   else:
     task = tasks_client.create_task(CreateTaskRequest(parent=queue_path, task=params))
     logging.info('Added %s task %s with ETA %s', queue, task.name, eta_seconds)
+
+
+def redirect(path, **kwargs):
+  """Redirects to the absolute Bridgy URL for a given path."""
+  return flask.redirect(host_url(path), **kwargs)
 
 
 def webmention_endpoint_cache_key(url):
@@ -369,11 +375,11 @@ def replace_test_domains_with_localhost(url):
   return url
 
 
-# STATE: add optional path_query param, use urljoin, then remove urljoin elsewhere
-def host_url():
+def host_url(path_query=None):
   domain = util.domain_from_link(request.host_url)
-  return (HOST_URL if util.domain_or_parent_in(domain, OTHER_DOMAINS)
+  base = (HOST_URL if util.domain_or_parent_in(domain, OTHER_DOMAINS)
           else request.host_url)
+  return urllib.parse.urljoin(base, path_query)
 
 
 def load_source():
@@ -400,103 +406,93 @@ def load_source():
   error('Source key not found')
 
 
-class View(flask.views.View):
-  """Includes misc view utilities."""
+def maybe_add_or_delete_source(source_cls, auth_entity, state, **kwargs):
+  """Adds or deletes a source if auth_entity is not None.
 
-  def __init__(self, *args, **kwargs):
-    super().__init__(*args, **kwargs)
+  Used in each source's oauth-dropins :meth:`Callback.finish()` and
+  :meth:`Callback.get()` methods, respectively.
 
-  def maybe_add_or_delete_source(self, source_cls, auth_entity, state, **kwargs):
-    """Adds or deletes a source if auth_entity is not None.
+  Args:
+    source_cls: source class, e.g. :class:`instagram.Instagram`
+    auth_entity: ouath-dropins auth entity
+    state: string, OAuth callback state parameter. a JSON serialized dict
+      with operation, feature, and an optional callback URL. For deletes,
+      it will also include the source key
+    kwargs: passed through to the source_cls constructor
 
-    Used in each source's oauth-dropins :meth:`Callback.finish()` and
-    :meth:`Callback.get()` methods, respectively.
+  Returns:
+    source entity if it was created or updated, otherwise None
+  """
+  state_obj = util.decode_oauth_state(state)
+  operation = state_obj.get('operation', 'add')
+  feature = state_obj.get('feature')
+  callback = state_obj.get('callback')
+  user_url = state_obj.get('user_url')
 
-    Args:
-      source_cls: source class, e.g. :class:`instagram.Instagram`
-      auth_entity: ouath-dropins auth entity
-      state: string, OAuth callback state parameter. a JSON serialized dict
-        with operation, feature, and an optional callback URL. For deletes,
-        it will also include the source key
-      kwargs: passed through to the source_cls constructor
+  logging.debug(
+    'maybe_add_or_delete_source with operation=%s, feature=%s, callback=%s',
+    operation, feature, callback)
 
-    Returns:
-      source entity if it was created or updated, otherwise None
-    """
-    state_obj = util.decode_oauth_state(state)
-    operation = state_obj.get('operation', 'add')
-    feature = state_obj.get('feature')
-    callback = state_obj.get('callback')
-    user_url = state_obj.get('user_url')
-
-    logging.debug(
-      'maybe_add_or_delete_source with operation=%s, feature=%s, callback=%s',
-      operation, feature, callback)
-
-    if operation == 'add':  # this is an add/update
-      if not auth_entity:
-        if not get_flashed_messages():
-          flash("OK, you're not signed up. Hope you reconsider!")
-        if callback:
-          callback = util.add_query_params(callback, {'result': 'declined'})
-          logging.debug(
-            'user declined adding source, redirect to external callback %s',
-            callback)
-          # call super.redirect so the callback url is unmodified
-          super().redirect(callback)
-        else:
-          return redirect('/')
-        return
-
-      CachedPage.invalidate('/users')
-      logging.info('%s.create_new with %s', source_cls.__class__.__name__,
-                   (auth_entity.key, state, kwargs))
-      source = source_cls.create_new(self, auth_entity=auth_entity,
-                                     features=feature.split(',') if feature else [],
-                                     user_url=user_url, **kwargs)
-
-      if source:
-        # add to login cookie
-        logins = self.get_logins()
-        logins.append(Login(path=source.bridgy_path(), site=source.SHORT_NAME,
-                            name=source.label_name()))
-        set_logins(logins)
-
+  if operation == 'add':  # this is an add/update
+    if not auth_entity:
+      if not get_flashed_messages():
+        flash("OK, you're not signed up. Hope you reconsider!")
       if callback:
-        callback = util.add_query_params(callback, {
-          'result': 'success',
-          'user': source.bridgy_url(self),
-          'key': source.key.urlsafe().decode(),
-        } if source else {'result': 'failure'})
+        callback = util.add_query_params(callback, {'result': 'declined'})
         logging.debug(
-          'finished adding source, redirect to external callback %s', callback)
-        # call super.redirect so the callback url is unmodified
-        super().redirect(callback)
+          'user declined adding source, redirect to external callback %s',
+          callback)
+      return redirect(host_url())
 
-      elif source and not source.domains:
-        return redirect('/edit-websites?' + urllib.parse.urlencode({
-          'source_key': source.key.urlsafe().decode(),
-        }))
+    CachedPage.invalidate('/users')
+    logging.info('%s.create_new with %s', source_cls.__class__.__name__,
+                 (auth_entity.key, state, kwargs))
+    source = source_cls.create_new(auth_entity=auth_entity,
+                                   features=feature.split(',') if feature else [],
+                                   user_url=user_url, **kwargs)
 
-      else:
-        return redirect(source.bridgy_url(self) if source else '/')
+    if source:
+      # add to login cookie
+      logins = get_logins()
+      logins.append(Login(path=source.bridgy_path(), site=source.SHORT_NAME,
+                          name=source.label_name()))
+      set_logins(logins)
 
-      return source
+    if callback:
+      callback = util.add_query_params(callback, {
+        'result': 'success',
+        'user': source.bridgy_url(),
+        'key': source.key.urlsafe().decode(),
+      } if source else {'result': 'failure'})
+      logging.debug(
+        'finished adding source, redirect to external callback %s', callback)
+      return redirect(callback)
 
-    else:  # this is a delete
-      if auth_entity:
-        return redirect('/delete/finish?auth_entity=%s&state=%s' %
-                      (auth_entity.key.urlsafe().decode(), state))
-      else:
-        flash('If you want to disable, please approve the %s prompt.' %
-              source_cls.GR_CLASS.NAME)
-        source_key = state_obj.get('source')
-        if source_key:
-          source = ndb.Key(urlsafe=source_key).get()
-          if source:
-            return redirect(source.bridgy_url(self))
+    elif source and not source.domains:
+      return redirect('/edit-websites?' + urllib.parse.urlencode({
+        'source_key': source.key.urlsafe().decode(),
+      }))
 
-        return redirect('/')
+    else:
+      return redirect(source.bridgy_url() if source else '/')
+
+    return source
+
+  else:  # this is a delete
+    if auth_entity:
+      return redirect('/delete/finish?auth_entity=%s&state=%s' %
+                    (auth_entity.key.urlsafe().decode(), state))
+    else:
+      flash('If you want to disable, please approve the %s prompt.' %
+            source_cls.GR_CLASS.NAME)
+      source_key = state_obj.get('source')
+      if source_key:
+        source = ndb.Key(urlsafe=source_key).get()
+        if source:
+          return redirect(source.bridgy_url())
+
+      return redirect('/')
+
 
 def construct_state_param_for_add(state=None, **kwargs):
   """Construct the state parameter if one isn't explicitly passed in.
@@ -526,21 +522,12 @@ def get_logins():
   Returns:
     list of :class:`Login` objects
   """
-  cookie = request.headers.get('Cookie', '')
-  if cookie:
-    logging.info('Cookie: %s', cookie)
-
-  try:
-    logins_str = SimpleCookie(cookie).get('logins')
-  except CookieError as e:
-    logging.warning("Bad cookie: %s", e)
-    return []
-
-  if not logins_str or not logins_str.value:
+  logins_str = request.cookies.get('logins')
+  if not logins_str:
     return []
 
   logins = []
-  for val in set(urllib.parse.unquote_plus(logins_str.value).split('|')):
+  for val in set(urllib.parse.unquote_plus(logins_str).split('|')):
     parts = val.split('?', 1)
     path = parts[0]
     if not path:
@@ -551,6 +538,7 @@ def get_logins():
 
   return logins
 
+
 def set_logins(logins):
   """Sets a logins cookie.
 
@@ -558,20 +546,18 @@ def set_logins(logins):
     logins: sequence of :class:`Login` objects
   """
   # cookie docs: http://curl.haxx.se/rfc/cookie_spec.html
-  cookie = SimpleCookie()
-  cookie['logins'] = '|'.join(sorted(set(
-    '%s?%s' % (login.path, urllib.parse.quote_plus(login.name))
+  cookie = '|'.join(sorted(set(
+    f'{login.path}?{urllib.parse.quote_plus(login.name)}'
     for login in logins)))
-  cookie['logins']['path'] = '/'
 
-  expires = (now_fn() + datetime.timedelta(days=365 * 2)).replace(microsecond=0)
-  # this will have a space in it, eg '2021-12-08 15:48:34', so quote it
-  cookie['logins']['expires'] = '"%s"' % expires
+  age = datetime.timedelta(days=365 * 2)
+  expires = (now_fn() + age).replace(microsecond=0)
 
-  header = cookie['logins'].OutputString()
-  logging.info('Set-Cookie: %s', header)
-  # XXX: return instead?
-  self.response.headers['Set-Cookie'] = header
+  @flask.after_this_request
+  def set_cookie(response):
+    logging.info(f'setting logins cookie: {cookie}')
+    response.set_cookie('logins', cookie, max_age=age, expires=expires)
+    return response
 
 
 def preprocess_source(source):

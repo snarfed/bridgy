@@ -85,7 +85,7 @@ class GitHub(Source):
     return self.gr_source.get_activities_response(*args, **kwargs)
 
 
-class Start(util.View):
+class Start():
   def post(self):
     features = util.get_required_param(self, 'feature')
     scopes = PUBLISH_SCOPES if 'publish' in features else LISTEN_SCOPES
@@ -94,10 +94,10 @@ class Start(util.View):
     return starter(request, self.response).post()
 
 
-class AddGitHub(oauth_github.Callback, util.View):
+class AddGitHub(oauth_github.Callback):
   def finish(self, auth_entity, state=None):
     logging.debug('finish with %s, %s', auth_entity, state)
-    self.maybe_add_or_delete_source(GitHub, auth_entity, state)
+    util.maybe_add_or_delete_source(GitHub, auth_entity, state)
 
 
 # ROUTES = [

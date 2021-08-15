@@ -61,7 +61,7 @@ class BloggerTest(testutil.ViewTest):
     self.assertEqual(302, resp.status_code)
     location = urllib.parse.urlparse(resp.headers['Location'])
     self.assertEqual('/', location.path)
-    self.assertIn("Couldn't fetch your blogs", urllib.parse.unquote(location.fragment))
+    self.assertIn("Couldn't fetch your blogs", get_flashed_messages()[0])
     self.assertEqual(0, BloggerV2Auth.query().count())
     self.assertEqual(0, Blogger.query().count())
 
@@ -75,7 +75,7 @@ class BloggerTest(testutil.ViewTest):
     self.assertEqual(302, resp.status_code)
     location = urllib.parse.urlparse(resp.headers['Location'])
     self.assertEqual('/', location.path)
-    self.assertIn("Couldn't fetch your blogs", urllib.parse.unquote(location.fragment))
+    self.assertIn("Couldn't fetch your blogs", get_flashed_messages()[0])
 
   def test_new_no_blogs(self):
     self.auth_entity.blog_hostnames = []

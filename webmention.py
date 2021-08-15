@@ -14,11 +14,11 @@ from oauth_dropins.webutil.util import json_dumps, json_loads
 import util
 
 
-class WebmentionGetHandler(util.View):
+class WebmentionGetHandler():
   """Renders a simple placeholder HTTP page for GETs to webmention endpoints.
   """
   def head(self, site=None):
-    wm_url = urllib.parse.urljoin(util.host_url(), '/publish/webmention')
+    wm_url = util.host_url('/publish/webmention')
     self.response.headers['Link'] = f'<{wm_url}>; rel="webmention"'
 
   def get(self, site=None):
@@ -188,7 +188,7 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
     subject = '%s %s' % (self.__class__.__name__,
                          '%s %s' % (self.entity.type, self.entity.status)
                          if self.entity else 'failed')
-    user = self.source.bridgy_url(self) if self.source else None
+    user = self.source.bridgy_url() if self.source else None
     http_context = None
     util.report_error(subject, user=user,
                       http_context=error_reporting.HTTPContext(

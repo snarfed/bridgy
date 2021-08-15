@@ -91,7 +91,7 @@ class Flickr(models.Source):
     return super().canonicalize_url(url, **kwargs)
 
 
-class AuthHandler(util.View):
+class AuthHandler():
   """Base OAuth handler for Flickr."""
   def start_oauth_flow(self, feature):
     starter = util.oauth_starter(
@@ -122,7 +122,7 @@ class AddFlickr(oauth_flickr.Callback, AuthHandler):
   """
   def finish(self, auth_entity, state=None):
     logging.debug('finish with %s, %s', auth_entity, state)
-    source = self.maybe_add_or_delete_source(Flickr, auth_entity, state)
+    source = util.maybe_add_or_delete_source(Flickr, auth_entity, state)
     feature = util.decode_oauth_state(state).get('feature')
     if source and feature == 'listen' and 'publish' in source.features:
       # we had signed up previously with publish, so we'll reauth to

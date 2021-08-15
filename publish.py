@@ -35,6 +35,7 @@ from models import Publish, PublishedPage
 from twitter import Twitter
 import models
 import util
+from util import redirect
 import webmention
 
 
@@ -313,7 +314,7 @@ class Handler(webmention.WebmentionHandler):
     best_match = None
     for source in sources:
       logging.info('Source: %s , features %s, status %s, poll status %s',
-                   source.bridgy_url(self), source.features, source.status,
+                   source.bridgy_url(), source.features, source.status,
                    source.poll_status)
       if source.status != 'disabled' and 'publish' in source.features:
         # use a source that has a domain_url matching the url provided,
@@ -607,7 +608,7 @@ class Handler(webmention.WebmentionHandler):
       'source': self.preprocess_source(self.source),
       'preview': result.content,
       'description': result.description,
-      'webmention_endpoint': urllib.parse.urljoin(util.host_url(), '/publish/webmention'),
+      'webmention_endpoint': util.host_url('/publish/webmention'),
       'state': util.encode_oauth_state(state),
     }
     vars.update(state)
@@ -680,7 +681,7 @@ class SendHandler(Handler):
           flash(granary_message)
       # otherwise error() added an error message
 
-    return redirect(source.bridgy_url(self))
+    return redirect(source.bridgy_url())
 
   def source_url(self):
     return self.state['source_url']
