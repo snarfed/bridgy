@@ -5,16 +5,18 @@ from datetime import timedelta
 import logging
 from operator import itemgetter
 
-from flask import request
+from flask import jsonify, request
+from flask.views import View
 from google.cloud import ndb
 from granary import instagram as gr_instagram
 from granary import microformats2
 from granary import source as gr_source
 from oauth_dropins import indieauth
+from oauth_dropins.webutil import flask_util
 from oauth_dropins.webutil.flask_util import error
 from oauth_dropins.webutil.util import json_dumps, json_loads
-import webapp2
 
+from app import app
 import models
 from models import Activity, Domain, Source, MAX_AUTHOR_URLS
 import util
@@ -70,11 +72,10 @@ class BrowserSource(Source):
     raise NotImplementedError()
 
   @classmethod
-  def new(cls, handler, auth_entity=None, actor=None, **kwargs):
+  def new(cls, auth_entity=None, actor=None, **kwargs):
     """Creates and returns an entity based on an AS1 actor.
 
     Args:
-      handler: the current :class:`webapp2.RequestHandler`
       auth_entity: unused
       actor: dict AS1 actor
     """
@@ -136,12 +137,8 @@ class BrowserSource(Source):
             return tag
 
 
-class BrowserView():
+class BrowserView(View):
   """Base class for requests from the browser extension."""
-  def output(self, obj):
-    self.response.headers['Content-Type'] = JSON_CONTENT_TYPE
-    self.response.write(json_dumps(obj, indent=2))
-
   def source_class(self):
     return models.sources.get(request.path.strip('/').split('/')[0])
 
@@ -200,7 +197,7 @@ class Status(BrowserView):
     status: string, 'enabled' or 'disabled'
     poll-seconds: integer, current poll frequency for this source in seconds
   """
-  def get(self):
+  def dispatch_request(self):
     source = self.auth()
     logging.info(f'Got source: {source}')
 
@@ -209,9 +206,7 @@ class Status(BrowserView):
       'poll-seconds': source.poll_period().total_seconds(),
     }
     logging.info(f'Returning {out}')
-    self.output(out)
-
-  post = get
+    return out
 
 
 class Homepage(BrowserView):
@@ -219,16 +214,16 @@ class Homepage(BrowserView):
 
   Request body is https://www.instagram.com/ HTML for a logged in user.
   """
-  def post(self):
+  def dispatch_request(self):
     gr_src = self.gr_source()
-    _, actor = gr_src.scraped_to_activities(request.text)
+    _, actor = gr_src.scraped_to_activities(request.get_data(as_text=True))
     logging.info(f'Got actor: {actor}')
 
     if actor:
       username = actor.get('username')
       if username:
-        logging.info(f"Returning {username}")
-        return self.output(username)
+        logging.info(f'Returning {username}')
+        return jsonify(username)
 
     error(f"Couldn't determine logged in {gr_src.NAME} user or username")
 
@@ -241,14 +236,14 @@ class Feed(BrowserView):
 
   Response body is the JSON list of translated ActivityStreams activities.
   """
-  def post(self):
+  def dispatch_request(self):
     self.auth()
-
     activities, _ = self.scrape()
-    self.output(activities)
+    return jsonify(activities)
 
   def scrape(self):
-    activities, actor = self.gr_source().scraped_to_activities(request.text)
+    activities, actor = self.gr_source().scraped_to_activities(
+      request.get_data(as_text=True))
     ids = ' '.join(a['id'] for a in activities)
     logging.info(f"Returning activities: {ids}")
     return activities, actor
@@ -262,15 +257,15 @@ class Profile(Feed):
 
   Response body is the JSON string URL-safe key of the Bridgy source entity.
   """
-  def post(self):
+  def dispatch_request(self):
     _, actor = self.scrape()
     if not actor:
-      actor = self.gr_source().scraped_to_actor(request.text)
+      actor = self.gr_source().scraped_to_actor(request.get_data(as_text=True))
     self.check_token_for_actor(actor)
 
     # create/update the Bridgy account
     source = self.source_class().create_new(self, actor=actor)
-    self.output(source.key.urlsafe().decode())
+    return jsonify(source.key.urlsafe().decode())
 
 
 class Post(BrowserView):
@@ -280,11 +275,11 @@ class Post(BrowserView):
 
   Response body is the translated ActivityStreams activity JSON.
   """
-  def post(self):
+  def dispatch_request(self):
     source = self.auth()
 
     gr_src = self.gr_source()
-    new_activity, actor = gr_src.scraped_to_activity(request.text)
+    new_activity, actor = gr_src.scraped_to_activity(request.get_data(as_text=True))
     if not new_activity:
       error(f'No {gr_src.NAME} post found in HTML')
 
@@ -307,15 +302,16 @@ class Post(BrowserView):
         # TODO: merge tags too
         activity.activity_json = json_dumps(merged_activity)
       else:
-        activity = Activity(id=id, source=source.key, html=request.text,
+        activity = Activity(id=id, source=source.key,
+                            html=request.get_data(as_text=True),
                             activity_json=json_dumps(new_activity))
 
       # store and return the activity
       activity.put()
       logging.info(f"Stored activity {id}")
-      self.output(new_activity)
 
     update_activity()
+    return new_activity
 
 
 class Reactions(BrowserView):
@@ -325,7 +321,7 @@ class Reactions(BrowserView):
 
   Response body is the translated ActivityStreams JSON for the reactions.
   """
-  def post(self, *args):
+  def dispatch_request(self, *args):
     source = self.auth()
 
     gr_src = self.gr_source()
@@ -346,7 +342,8 @@ class Reactions(BrowserView):
 
     # convert new reactions to AS, merge into existing activity
     try:
-      new_reactions = gr_src.merge_scraped_reactions(request.text, activity_data)
+      new_reactions = gr_src.merge_scraped_reactions(
+        request.get_data(as_text=True), activity_data)
     except ValueError as e:
       msg = "Couldn't parse scraped reactions: %s" % e
       logging.error(msg, stack_info=True)
@@ -357,41 +354,44 @@ class Reactions(BrowserView):
 
     reaction_ids = ' '.join(r['id'] for r in new_reactions)
     logging.info(f"Stored reactions for activity {id}: {reaction_ids}")
-    self.output(new_reactions)
+    return jsonify(new_reactions)
 
 
 class Poll(BrowserView):
   """Triggers a poll for a browser-based account."""
-  def post(self):
+  def dispatch_request(self):
     source = self.auth()
     util.add_poll_task(source)
-    self.output('OK')
+    return jsonify('OK')
 
 
 class TokenDomains(BrowserView):
   """Returns the domains that a token is registered for."""
-  def post(self):
+  def dispatch_request(self):
     token = flask_util.get_required_param('token')
 
     domains = [d.key.id() for d in Domain.query(Domain.tokens == token)]
     if not domains:
       error(f'No registered domains for token {token}', 404)
 
-    self.output(domains)
+    return jsonify(domains)
 
 
-def routes(source_cls):
-  """Returns browser extension webapp2 routes for a given source class.
+def route(source_cls):
+  """Registers browser extension URL routes for a given source class.
 
   ...specifically, with the source's short name as the routes' URL prefix.
   """
-  return [
-    (f'/{source_cls.SHORT_NAME}/browser/status', StatusHandler),
-    (f'/{source_cls.SHORT_NAME}/browser/homepage', HomepageHandler),
-    (f'/{source_cls.SHORT_NAME}/browser/profile', ProfileHandler),
-    (f'/{source_cls.SHORT_NAME}/browser/feed', FeedHandler),
-    (f'/{source_cls.SHORT_NAME}/browser/post', PostHandler),
-    (f'/{source_cls.SHORT_NAME}/browser/(likes|reactions)', ReactionsHandler),
-    (f'/{source_cls.SHORT_NAME}/browser/poll', PollHandler),
-    (f'/{source_cls.SHORT_NAME}/browser/token-domains', TokenDomainsHandler),
-  ]
+  for route, cls in (
+      (f'/{source_cls.SHORT_NAME}/browser/status', Status),
+      (f'/{source_cls.SHORT_NAME}/browser/homepage', Homepage),
+      (f'/{source_cls.SHORT_NAME}/browser/profile', Profile),
+      (f'/{source_cls.SHORT_NAME}/browser/feed', Feed),
+      (f'/{source_cls.SHORT_NAME}/browser/post', Post),
+      (f'/{source_cls.SHORT_NAME}/browser/likes', Reactions),
+      (f'/{source_cls.SHORT_NAME}/browser/reactions', Reactions),
+      (f'/{source_cls.SHORT_NAME}/browser/poll', Poll),
+      (f'/{source_cls.SHORT_NAME}/browser/token-domains', TokenDomains),
+    ):
+    app.add_url_rule(route, view_func=cls.as_view(route),
+                     methods=['GET' if cls == Status else 'POST'])

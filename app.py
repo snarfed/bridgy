@@ -55,7 +55,7 @@ app.jinja_env.globals.update({
 cache = Cache(app)
 
 # Import source class files so their metaclasses are initialized.
-import blogger, facebook, flickr, github, instagram, mastodon, meetup, medium, reddit, tumblr, twitter, wordpress_rest
+# import blogger, facebook, flickr, github, instagram, mastodon, meetup, medium, reddit, tumblr, twitter, wordpress_rest
 
 @app.route('/', methods=['HEAD'])
 @app.route('/users', methods=['HEAD'])
