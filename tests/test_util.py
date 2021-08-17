@@ -4,13 +4,15 @@ import datetime
 import time
 import urllib.request, urllib.parse, urllib.error
 
-from flask import get_flashed_messages, request
+from flask import Flask, get_flashed_messages, request
+from flask.views import View
 from google.cloud import ndb
-from oauth_dropins.webutil.testutil import requests_response
+from oauth_dropins import views as oauth_views
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
 import webapp2
 from werkzeug.exceptions import BadRequest
+from werkzeug.routing import RequestRedirect
 
 from app import app
 from . import testutil
@@ -68,19 +70,23 @@ class UtilTest(testutil.ModelsTest, testutil.ViewTest):
 
     # no source
     with app.test_request_context():
-      response = util.maybe_add_or_delete_source(
-        FakeSource, None, util.encode_oauth_state(state))
-      self.assert_equals(302, response.status_code)
-      self.assert_equals('http://localhost/', response.headers['Location'])
+      with self.assertRaises(RequestRedirect) as rr:
+        util.maybe_add_or_delete_source(
+          FakeSource, None, util.encode_oauth_state(state))
+
+      self.assert_equals(302, rr.exception.code)
+      self.assert_equals('http://localhost/', rr.exception.new_url)
       self.assertEqual([msg], get_flashed_messages())
 
     # source
     state['source'] = self.sources[0].key.urlsafe().decode()
     with app.test_request_context():
-      response = util.maybe_add_or_delete_source(
-        FakeSource, None, util.encode_oauth_state(state))
-      self.assert_equals(302, response.status_code)
-      self.assert_equals(self.source_bridgy_url, response.headers['Location'])
+      with self.assertRaises(RequestRedirect) as rr:
+        util.maybe_add_or_delete_source(
+          FakeSource, None, util.encode_oauth_state(state))
+
+      self.assert_equals(302, rr.exception.code)
+      self.assert_equals(self.source_bridgy_url, rr.exception.new_url)
       self.assertEqual([msg], get_flashed_messages())
 
   def test_maybe_add_or_delete_without_web_site_redirects_to_edit_websites(self):
@@ -88,12 +94,13 @@ class UtilTest(testutil.ModelsTest, testutil.ViewTest):
       auth_entity = FakeAuthEntity(id='x', user_json=json_dumps({'url': bad_url}))
       auth_entity.put()
 
-      with app.test_request_context():
-        source = util.maybe_add_or_delete_source(FakeSource, auth_entity, '{}')
-        self.assertEqual(302, response.status_code)
-        self.assert_equals(
-          f'http://localhost/edit-websites?source_key={source.key.urlsafe().decode()}',
-          response.headers['Location'])
+      with app.test_request_context(), self.assertRaises(RequestRedirect) as rr:
+        util.maybe_add_or_delete_source(FakeSource, auth_entity, '{}')
+
+      self.assertEqual(302, rr.exception.code)
+      self.assert_equals(
+        f'http://localhost/edit-websites?source_key={source.key.urlsafe().decode()}',
+        rr.exception.new_url)
 
   def test_add_to_logins_cookie(self):
     with app.test_request_context(headers={'Cookie': 'logins=/other/1?bob'}):
@@ -202,157 +209,6 @@ class UtilTest(testutil.ModelsTest, testutil.ViewTest):
     self.assert_equals(('chrome://flags', 'flags', False),
                        util.get_webmention_target('chrome://flags'))
 
-  def test_registration_callback(self):
-    """Run through an authorization back and forth and make sure that
-    the external callback makes it all the way through.
-    """
-    encoded_state = urllib.parse.quote_plus(json_dumps({
-      'callback': 'http://withknown.com/bridgy_callback',
-      'feature': 'listen',
-      'operation': 'add',
-    }, sort_keys=True))
-
-    application = webapp2.WSGIApplication([
-      ('/fakesource/start', testutil.FakeStart),
-      ('/fakesource/add', testutil.FakeAddHandler),
-    ])
-
-    self.expect_requests_get(
-      'http://fakeuser.com/',
-      response='<html><link rel="webmention" href="/webmention"></html>')
-
-    self.mox.ReplayAll()
-
-    resp = self.client.post('/fakesource/start', data={
-        'feature': 'listen',
-        'callback': 'http://withknown.com/bridgy_callback',
-      })
-
-    expected_auth_url = 'http://fake/auth/url?' + urllib.parse.urlencode({
-      'redirect_uri': 'http://localhost/fakesource/add?state='
-      + encoded_state,
-    })
-
-    self.assert_equals(302, resp.status_code)
-    self.assert_equals(expected_auth_url, resp.headers['location'])
-
-    resp = application.get_response(
-      '/fakesource/add?state=' + encoded_state +
-      '&oauth_token=fake-token&oauth_token_secret=fake-secret')
-
-    self.assert_equals(302, resp.status_code)
-    self.assert_equals(
-      'http://withknown.com/bridgy_callback?' + urllib.parse.urlencode([
-        ('result', 'success'),
-        ('user', 'http://localhost/fake/0123456789'),
-        ('key', ndb.Key('FakeSource', '0123456789').urlsafe().decode()),
-      ]),
-      resp.headers['location'])
-    self.assertEqual(
-      'logins="/fake/0123456789?Fake+User"; expires="2001-12-31 00:00:00"; Path=/',
-      resp.headers['Set-Cookie'])
-
-    source = FakeSource.get_by_id('0123456789')
-    self.assertTrue(source)
-    self.assert_equals('Fake User', source.name)
-    self.assert_equals(['listen'], source.features)
-
-  def test_registration_with_user_url(self):
-    """Run through an authorization back and forth with a custom user url
-    provided to the auth mechanism
-    """
-    encoded_state = urllib.parse.quote_plus(json_dumps({
-      'callback': 'http://withknown.com/bridgy_callback',
-      'feature': 'listen',
-      'operation': 'add',
-      'user_url': 'https://kylewm.com',
-    }, sort_keys=True))
-
-    application = webapp2.WSGIApplication([
-      ('/fakesource/start', testutil.FakeStart),
-      ('/fakesource/add', testutil.FakeAddHandler),
-    ])
-
-    self.expect_requests_get(
-      'https://kylewm.com/',
-      response='<html><link rel="webmention" href="/webmention"></html>')
-
-    self.mox.ReplayAll()
-
-    resp = application.get_response('/fakesource/start', data={
-        'feature': 'listen',
-        'callback': 'http://withknown.com/bridgy_callback',
-        'user_url': 'https://kylewm.com',
-      })
-
-    expected_auth_url = 'http://fake/auth/url?' + urllib.parse.urlencode({
-      'redirect_uri': 'http://localhost/fakesource/add?state='
-      + encoded_state,
-    })
-
-    self.assert_equals(302, resp.status_code)
-    self.assert_equals(expected_auth_url, resp.headers['location'])
-
-    resp = application.get_response(
-      '/fakesource/add?state=' + encoded_state +
-      '&oauth_token=fake-token&oauth_token_secret=fake-secret')
-
-    self.assert_equals(302, resp.status_code)
-    self.assert_equals(
-      'http://withknown.com/bridgy_callback?' + urllib.parse.urlencode([
-        ('result', 'success'),
-        ('user', 'http://localhost/fake/0123456789'),
-        ('key', ndb.Key('FakeSource', '0123456789').urlsafe().decode()),
-      ]),
-      resp.headers['location'])
-    self.assertEqual(
-      'logins="/fake/0123456789?Fake+User"; expires="2001-12-31 00:00:00"; Path=/',
-      resp.headers['Set-Cookie'])
-
-    source = FakeSource.get_by_id('0123456789')
-    self.assertTrue(source)
-    self.assert_equals('Fake User', source.name)
-    self.assert_equals(['listen'], source.features)
-    self.assert_equals(['https://kylewm.com/', 'http://fakeuser.com/'],
-                       source.domain_urls)
-    self.assert_equals(['kylewm.com', 'fakeuser.com'], source.domains)
-
-  def test_registration_decline(self):
-    """Run through an authorization back and forth in the case of a
-    decline and make sure that the callback makes it all the way
-    through.
-    """
-    encoded_state = urllib.parse.quote_plus(json_dumps({
-      'callback': 'http://withknown.com/bridgy_callback',
-      'feature': 'publish',
-      'operation': 'add',
-    }, sort_keys=True))
-
-    application = webapp2.WSGIApplication([
-      ('/fakesource/start', testutil.FakeStart),
-      ('/fakesource/add', testutil.FakeAddHandler.with_auth(None)),
-    ])
-
-    resp = application.get_response('/fakesource/start', data={
-        'feature': 'publish',
-        'callback': 'http://withknown.com/bridgy_callback',
-      })
-
-    expected_auth_url = 'http://fake/auth/url?' + urllib.parse.urlencode({
-      'redirect_uri': 'http://localhost/fakesource/add?state='
-      + encoded_state,
-    })
-
-    self.assert_equals(302, resp.status_code)
-    self.assert_equals(expected_auth_url, resp.headers['location'])
-    self.assertNotIn('Set-Cookie', resp.headers)
-
-    resp = application.get_response(
-      '/fakesource/add?state=%s&denied=1' % encoded_state)
-    self.assert_equals(302, resp.status_code)
-    self.assert_equals('http://withknown.com/bridgy_callback?result=declined',
-                       resp.headers['location'])
-
   def test_requests_get_too_big(self):
     self.expect_requests_get(
       'http://foo/bar', '',
@@ -449,3 +305,157 @@ class UtilTest(testutil.ModelsTest, testutil.ViewTest):
       self.assertEqual('https://a.xyz/', util.host_url())
       self.assertEqual('https://a.xyz/asdf', util.host_url('asdf'))
       self.assertEqual('https://a.xyz/foo/bar', util.host_url('/foo/bar'))
+
+
+class RegistrationCallbackTest(testutil.ModelsTest, testutil.ViewTest):
+
+  class FakeAdd(oauth_views.Callback):
+    """Serves the authorization callback when handling a fake source.
+    """
+    auth_entity = FakeAuthEntity(user_json=json_dumps({
+      'id': '0123456789',
+      'name': 'Fake User',
+      'url': 'http://fakeuser.com/',
+    }))
+
+    def dispatch_request(self):
+      util.maybe_add_or_delete_source(FakeSource, self.auth_entity,
+                                      request.values.get('state'))
+      return ''
+
+  def setUp(self):
+    super().setUp()
+
+    self.app = Flask('RegistrationCallbackTest')
+    self.app.config.from_mapping({
+      'ENV': 'development',
+      'SECRET_KEY': 'sooper seekret',
+    })
+
+    self.start = testutil.FakeStart.as_view('start', '/fake/add')
+    self.app.add_url_rule('/fake/start', view_func=self.start, methods=['POST'])
+    self.add = self.FakeAdd.as_view('callback', '/fake/callback')
+    self.app.add_url_rule('/fake/add', view_func=self.add)
+
+    self.client = self.app.test_client()
+
+  @staticmethod
+  def state(**kwargs):
+    return urllib.parse.quote_plus(json_dumps({
+      'callback': 'http://withknown.com/bridgy_callback',
+      'feature': 'listen',
+      'operation': 'add',
+      **kwargs,
+    }, sort_keys=True))
+
+  def assert_auth_url_state(self, response, state):
+    self.assertEqual('http://fake/auth/url?' + urllib.parse.urlencode({
+      'redirect_uri': f'http://localhost/fake/add?state={state}',
+    }), response.headers['Location'])
+
+  def test_basic(self):
+    """Run through an authorization back and forth and make sure that
+    the external callback makes it all the way through.
+    """
+    state = self.state()
+
+    self.expect_requests_get(
+      'http://fakeuser.com/',
+      response='<html><link rel="webmention" href="/webmention"></html>')
+    self.mox.ReplayAll()
+
+    resp = self.client.post('/fake/start', data={
+        'feature': 'listen',
+        'callback': 'http://withknown.com/bridgy_callback',
+      })
+    self.assert_equals(302, resp.status_code)
+    self.assert_auth_url_state(resp, state)
+
+    resp = self.client.get(f'/fake/add?state={state}&oauth_token=fake-token&oauth_token_secret=fake-secret')
+    self.assert_equals(302, resp.status_code)
+    self.assert_equals(
+      'http://withknown.com/bridgy_callback?' + urllib.parse.urlencode([
+        ('result', 'success'),
+        ('user', 'http://localhost/fake/0123456789'),
+        ('key', ndb.Key('FakeSource', '0123456789').urlsafe().decode()),
+      ]),
+      resp.headers['Location'])
+
+    source = FakeSource.get_by_id('0123456789')
+    self.assertTrue(source)
+    self.assert_equals('Fake User', source.name)
+    self.assert_equals(['listen'], source.features)
+
+  def test_user_url(self):
+    """Run through an authorization back and forth with a custom user url
+    provided to the auth mechanism
+    """
+    state = self.state(user_url='https://kylewm.com')
+
+    self.expect_requests_get(
+      'https://kylewm.com/',
+      response='<html><link rel="webmention" href="/webmention"></html>')
+    self.mox.ReplayAll()
+
+    resp = self.client.post('/fake/start', data={
+        'feature': 'listen',
+        'callback': 'http://withknown.com/bridgy_callback',
+        'user_url': 'https://kylewm.com',
+      })
+
+    self.assert_equals(302, resp.status_code)
+    self.assert_auth_url_state(resp, state)
+
+    resp = self.client.get(f'/fake/add?state={state}&oauth_token=fake-token&oauth_token_secret=fake-secret')
+    self.assert_equals(302, resp.status_code)
+    self.assert_equals(
+      'http://withknown.com/bridgy_callback?' + urllib.parse.urlencode([
+        ('result', 'success'),
+        ('user', 'http://localhost/fake/0123456789'),
+        ('key', ndb.Key('FakeSource', '0123456789').urlsafe().decode()),
+      ]),
+      resp.headers['Location'])
+
+    source = FakeSource.get_by_id('0123456789')
+    self.assertTrue(source)
+    self.assert_equals('Fake User', source.name)
+    self.assert_equals(['listen'], source.features)
+    self.assert_equals(['https://kylewm.com/', 'http://fakeuser.com/'],
+                       source.domain_urls)
+    self.assert_equals(['kylewm.com', 'fakeuser.com'], source.domains)
+
+  def test_decline(self):
+    """Run through an authorization back and forth in the case of a
+    decline and make sure that the callback makes it all the way
+    through.
+    """
+    state = self.state(feature='publish')
+    self.add.auth_entity = None
+
+    self.expect_requests_get('http://fakeuser.com/')
+    self.mox.ReplayAll()
+
+    self.app = Flask('RegistrationCallbackTest')
+    self.app.config.from_mapping({
+      'ENV': 'development',
+      'SECRET_KEY': 'sooper seekret',
+    })
+
+    self.start = testutil.FakeStart.as_view('start', '/fake/add')
+    self.app.add_url_rule('/fake/start', view_func=self.start, methods=['POST'])
+    self.add = self.FakeAdd.as_view('callback', '/fake/callback')
+    self.add.auth_entity = None
+    self.app.add_url_rule('/fake/add', view_func=self.add)
+    self.client = self.app.test_client()
+
+    resp = self.client.post('/fake/start', data={
+        'feature': 'publish',
+        'callback': 'http://withknown.com/bridgy_callback',
+      })
+    self.assert_equals(302, resp.status_code)
+    self.assert_auth_url_state(resp, state)
+
+    resp = self.client.get(f'/fake/add?state={state}&denied=1')
+    self.assert_equals(302, resp.status_code)
+    self.assert_equals('http://withknown.com/bridgy_callback?result=declined',
+                       resp.headers['Location'])

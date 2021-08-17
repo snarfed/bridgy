@@ -30,6 +30,7 @@ from oauth_dropins.webutil.flask_util import error
 from oauth_dropins.webutil.models import StringIdModel
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import *
+from werkzeug.routing import RequestRedirect
 
 # when running in dev_appserver, replace these domains in links with localhost
 LOCALHOST_TEST_DOMAINS = frozenset([
@@ -176,8 +177,17 @@ def add_task(queue, eta_seconds=None, **kwargs):
 
 
 def redirect(path, **kwargs):
-  """Redirects to the absolute Bridgy URL for a given path."""
-  return flask.redirect(host_url(path), **kwargs)
+  """Stops execution and redirects to the absolute URL for a given path.
+
+  Specifically, raises :class:`werkzeug.routing.RequestRedirect`.
+
+  Args:
+    url: str
+  """
+  logging.info(f'Redirecting to {path}')
+  rr = RequestRedirect(host_url(path))
+  rr.code = 302
+  raise rr
 
 
 def webmention_endpoint_cache_key(url):
@@ -442,7 +452,7 @@ def maybe_add_or_delete_source(source_cls, auth_entity, state, **kwargs):
         logging.debug(
           'user declined adding source, redirect to external callback %s',
           callback)
-      return redirect(host_url())
+      redirect('/')
 
     CachedPage.invalidate('/users')
     logging.info('%s.create_new with %s', source_cls.__class__.__name__,
@@ -466,22 +476,22 @@ def maybe_add_or_delete_source(source_cls, auth_entity, state, **kwargs):
       } if source else {'result': 'failure'})
       logging.debug(
         'finished adding source, redirect to external callback %s', callback)
-      return redirect(callback)
+      redirect(callback)
 
     elif source and not source.domains:
-      return redirect('/edit-websites?' + urllib.parse.urlencode({
+      redirect('/edit-websites?' + urllib.parse.urlencode({
         'source_key': source.key.urlsafe().decode(),
       }))
 
     else:
-      return redirect(source.bridgy_url() if source else '/')
+      redirect(source.bridgy_url() if source else '/')
 
     return source
 
   else:  # this is a delete
     if auth_entity:
-      return redirect('/delete/finish?auth_entity=%s&state=%s' %
-                    (auth_entity.key.urlsafe().decode(), state))
+      redirect('/delete/finish?auth_entity=%s&state=%s' %
+               (auth_entity.key.urlsafe().decode(), state))
     else:
       flash('If you want to disable, please approve the %s prompt.' %
             source_cls.GR_CLASS.NAME)
@@ -489,9 +499,9 @@ def maybe_add_or_delete_source(source_cls, auth_entity, state, **kwargs):
       if source_key:
         source = ndb.Key(urlsafe=source_key).get()
         if source:
-          return redirect(source.bridgy_url())
+          redirect(source.bridgy_url())
 
-      return redirect('/')
+      redirect('/')
 
 
 def construct_state_param_for_add(state=None, **kwargs):
@@ -622,6 +632,22 @@ class CachedPage(StringIdModel):
   def invalidate(cls, path):
     logging.info('Deleting cached page for %s', path)
     CachedPage(id=path).key.delete()
+
+
+def oauth_starter(oauth_start_view, **kwargs):
+  """Returns an oauth-dropins start view that injects the state param.
+
+  Args:
+    oauth_start_view: oauth-dropins :class:`Start` to use,
+      e.g. :class:`oauth_dropins.twitter.Start`.
+    kwargs: passed to :meth:`construct_state_param_for_add()`
+  """
+  class Start(oauth_start_view):
+    def redirect_url(self, state=None, **ru_kwargs):
+      return super(Start, self).redirect_url(
+        construct_state_param_for_add(state, **kwargs), **ru_kwargs)
+
+  return Start
 
 
 def unwrap_t_umblr_com(url):

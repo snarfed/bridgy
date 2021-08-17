@@ -198,15 +198,17 @@ class FakeGrSource(gr_source.Source):
 class OAuthStart(oauth_views.Start):
   """Stand-in for the oauth-dropins Start, redirects to a made-up silo url."""
   def redirect_url(self, state=None):
-    logging.debug('oauth view redirect')
+    logging.debug(f'oauth view redirect with state {state}')
     return 'http://fake/auth/url?' + urllib.parse.urlencode({
       'redirect_uri': self.to_url(state),
     })
 
+FakeStart = util.oauth_starter(OAuthStart)
+
 
 class FakeSource(Source):
   GR_CLASS = FakeGrSource
-  OAUTH_START = OAuthStart
+  OAUTH_START = FakeStart
   SHORT_NAME = 'fake'
   TYPE_LABELS = {'post': 'FakeSource post label'}
   RATE_LIMITED_POLL = datetime.timedelta(hours=30)
@@ -364,7 +366,7 @@ class ModelsTest(testutil.TestCase):
     super().setUp()
 
     # clear datastore
-    orig_requests_post('http://%s/reset' % ndb_client.host)
+    orig_requests_post(f'http://{ndb_client.host}/reset')
     self.ndb_context = ndb_client.context()
     self.ndb_context.__enter__()
 
@@ -388,9 +390,8 @@ class ModelsTest(testutil.TestCase):
     for entity in auth_entities:
       entity.put()
 
-    self.sources = [
-      FakeSource.new(auth_entity=auth_entities[0]),
-      FakeSource.new(auth_entity=auth_entities[1])]
+    self.sources = [FakeSource.new(auth_entity=auth_entities[0]),
+                    FakeSource.new(auth_entity=auth_entities[1])]
     for entity in self.sources:
       entity.features = ['listen']
       entity.put()
@@ -534,26 +535,3 @@ class ModelsTest(testutil.TestCase):
   def tearDown(self):
     self.ndb_context.__exit__(None, None, None)
     super().tearDown()
-
-
-FakeStart = OAuthStart#).to('/fakesource/add')
-
-
-class FakeAdd():
-  """Handles the authorization callback when handling a fake source
-  """
-  auth_entity = FakeAuthEntity(user_json=json_dumps({
-    'id': '0123456789',
-    'name': 'Fake User',
-    'url': 'http://fakeuser.com/',
-  }))
-
-  @staticmethod
-  def with_auth(auth):
-    class HandlerWithAuth(FakeAdd):
-      auth_entity = auth
-    return HandlerWithAuth
-
-  def get(self):
-    util.maybe_add_or_delete_source(FakeSource, self.auth_entity,
-                                    request.values.get('state'))
