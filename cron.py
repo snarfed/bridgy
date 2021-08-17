@@ -76,9 +76,6 @@ class UpdateTwitterPictures(webapp2.RequestHandler):
         new_actor = auther.gr_source.user_to_actor(user)
         updated = maybe_update_picture(source, new_actor, self)
 
-    if updated:
-      util.CachedPage.invalidate('/users')
-
 
 class UpdatePictures(webapp2.RequestHandler):
   """Finds sources with new profile pictures and updates them."""
@@ -106,9 +103,6 @@ class UpdatePictures(webapp2.RequestHandler):
           util.interpret_http_exception(e)
           continue
         updated = maybe_update_picture(source, actor, self)
-
-    if updated:
-      util.CachedPage.invalidate('/users')
 
 
 class UpdateFlickrPictures(UpdatePictures):

@@ -454,7 +454,6 @@ def maybe_add_or_delete_source(source_cls, auth_entity, state, **kwargs):
           callback)
       redirect('/')
 
-    CachedPage.invalidate('/users')
     logging.info('%s.create_new with %s', source_cls.__class__.__name__,
                  (auth_entity.key, state, kwargs))
     source = source_cls.create_new(auth_entity=auth_entity,
@@ -585,53 +584,6 @@ def preprocess_source(source):
     util.pretty_link(url, attrs={'rel': 'me', 'class': 'u-url'})
     for url in source.domain_urls]
   return source
-
-
-class CachedPage(StringIdModel):
-  """Cached HTML for pages that changes rarely. Key id is path.
-
-  Stored in the datastore since datastore entities in memcache (mostly
-  :class:`models.Response`) are requested way more often, so it would get
-  evicted out of memcache easily.
-
-  Keys, useful for deleting from memcache:
-  /: aglzfmJyaWQtZ3lyEQsSCkNhY2hlZFBhZ2UiAS8M
-  /users: aglzfmJyaWQtZ3lyFgsSCkNhY2hlZFBhZ2UiBi91c2Vycww
-  """
-  html = ndb.TextProperty()
-  expires = ndb.DateTimeProperty()
-
-  @classmethod
-  def load(cls, path):
-    cached = CachedPage.get_by_id(path)
-    if cached:
-      if cached.expires and now_fn() > cached.expires:
-        logging.info('Deleting expired cached page for %s', path)
-        cached.key.delete()
-        return None
-      else:
-        logging.info('Found cached page for %s', path)
-    return cached
-
-  @classmethod
-  def store(cls, path, html, expires=None):
-    """Stores new page contents.
-
-    Args:
-      path: string
-      html: string
-      expires: :class:`datetime.timedelta`
-    """
-    logging.info('Storing new page in cache for %s', path)
-    if expires is not None:
-      logging.info('  (expires in %s)', expires)
-      expires = now_fn() + expires
-    CachedPage(id=path, html=html, expires=expires).put()
-
-  @classmethod
-  def invalidate(cls, path):
-    logging.info('Deleting cached page for %s', path)
-    CachedPage(id=path).key.delete()
 
 
 def oauth_starter(oauth_start_view, **kwargs):
