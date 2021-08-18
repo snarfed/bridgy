@@ -612,7 +612,7 @@ class Handler(webmention.WebmentionHandler):
       'state': util.encode_oauth_state(state),
     }
     vars.update(state)
-    logging.info('Rendering preview with template vars %s', pprint.pformat(vars))
+    logging.info(f'Rendering preview with template vars {pprint.pformat(vars)}')
     return gr_source.creation_result(
       JINJA_ENV.get_template('preview.html').render(**vars))
 
@@ -649,7 +649,7 @@ class PreviewHandler(Handler):
     error = html if html else util.linkify(error)
     self.response.write(error)
     if report:
-      self.report_error(error)
+      self.report_error(error, status=status)
 
 
 class SendHandler(Handler):
@@ -697,7 +697,7 @@ class SendHandler(Handler):
     error = html if html else util.linkify(error)
     flash('%s' % error)
     if report:
-      self.report_error(error)
+      self.report_error(error, status=status, status=status)
 
 
 # We want Callback.get() and SendHandler.finish(), so put

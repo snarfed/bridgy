@@ -6,8 +6,10 @@ import urllib.parse
 
 from flask import request
 from granary import microformats2
-from oauth_dropins.webutil.util import json_dumps, json_loads
+from oauth_dropins.webutil import flask_util
+from oauth_dropins.webutil.util import get_first, json_dumps, json_loads
 
+from app import app
 import blogger
 import models
 from models import BlogWebmention
@@ -18,15 +20,11 @@ import webmention
 import wordpress_rest
 
 
-def first_value(props, name):
-  return next(iter(props.get(name, [])), None)
-
-
-class BlogWebmention(webmention.Webmention):
+class BlogWebmentionView(webmention.Webmention):
   """View for incoming webmentions against blog providers."""
 
-  def post(self, source_short_name):
-    logging.info('Params: %s', list(request.params.items()))
+  def dispatch_request(self, site):
+    logging.info('Params: %s', list(request.values.items()))
     # strip fragments from source and target url
     self.source_url = urllib.parse.urldefrag(flask_util.get_required_param('source'))[0]
     self.target_url = urllib.parse.urldefrag(flask_util.get_required_param('target'))[0]
@@ -39,10 +37,10 @@ class BlogWebmention(webmention.Webmention):
     # parse and validate target URL
     domain = util.domain_from_link(self.target_url)
     if not domain:
-      return self.error('Could not parse target URL %s' % self.target_url)
+      self.error('Could not parse target URL %s' % self.target_url)
 
     # look up source by domain
-    source_cls = models.sources[source_short_name]
+    source_cls = models.sources[site]
     domain = domain.lower()
     self.source = (source_cls.query()
                    .filter(source_cls.domains == domain)
@@ -69,19 +67,18 @@ class BlogWebmention(webmention.Webmention):
                        .get())
 
     if not self.source:
-      return self.error(
+      self.error(
         'Could not find %s account for %s. Is it registered with Bridgy?' %
         (source_cls.GR_CLASS.NAME, domain))
 
     # check that the target URL path is supported
     target_path = urllib.parse.urlparse(self.target_url).path
     if target_path in ('', '/'):
-      return self.error('Home page webmentions are not currently supported.',
-                        status=202)
+      self.error('Home page webmentions are not currently supported.', status=202)
     for pattern in self.source.PATH_BLOCKLIST:
       if pattern.match(target_path):
-        return self.error('%s webmentions are not supported for URL path: %s' %
-                          (self.source.GR_CLASS.NAME, target_path), status=202)
+        self.error('%s webmentions are not supported for URL path: %s' %
+                   (self.source.GR_CLASS.NAME, target_path), status=202)
 
     # create BlogWebmention entity
     id = '%s %s' % (self.source_url, self.target_url)
@@ -89,8 +86,7 @@ class BlogWebmention(webmention.Webmention):
       id, source=self.source.key, redirected_target_urls=redirected_target_urls)
     if self.entity.status == 'complete':
       # TODO: response message saying update isn't supported
-      self.response.write(self.entity.published)
-      return
+      return self.entity.published
     logging.debug("BlogWebmention entity: '%s'", self.entity.key.urlsafe().decode())
 
     # fetch source page
@@ -101,8 +97,8 @@ class BlogWebmention(webmention.Webmention):
 
     item = self.find_mention_item(mf2.get('items', []))
     if not item:
-      return self.error('Could not find target URL %s in source page %s' %
-                        (self.target_url, resp.url), data=mf2, log_exception=False)
+      self.error('Could not find target URL %s in source page %s' %
+                 (self.target_url, resp.url), data=mf2, log_exception=False)
 
     # default author to target domain
     author_name = domain
@@ -110,17 +106,17 @@ class BlogWebmention(webmention.Webmention):
 
     # extract author name and URL from h-card, if any
     props = item['properties']
-    author = first_value(props, 'author')
+    author = get_first(props, 'author')
     if author:
       if isinstance(author, str):
         author_name = author
       else:
         author_props = author.get('properties', {})
-        author_name = first_value(author_props, 'name')
-        author_url = first_value(author_props, 'url')
+        author_name = get_first(author_props, 'name')
+        author_url = get_first(author_props, 'url')
 
     # if present, u-url overrides source url
-    u_url = first_value(props, 'url')
+    u_url = get_first(props, 'url')
     if u_url:
       self.entity.u_url = u_url
 
@@ -142,21 +138,22 @@ class BlogWebmention(webmention.Webmention):
         logging.warning('Disabling source due to: %s' % e, stack_info=True)
         self.source.status = 'disabled'
         self.source.put()
-        return self.error(msg, status=code, report=self.source.is_beta_user())
+        self.error(msg, status=code, report=self.source.is_beta_user())
       elif code == '404':
         # post is gone
-        return self.error(msg, status=code, report=False)
+        self.error(msg, status=code, report=False)
       elif util.is_connection_failure(e) or (code and int(code) // 100 == 5):
-        return self.error(msg, status=util.ERROR_HTTP_RETURN_CODE, report=False)
+        self.error(msg, status=util.ERROR_HTTP_RETURN_CODE, report=False)
       elif code or body:
-        return self.error(msg, status=code, report=True)
+        self.error(msg, status=code, report=True)
       else:
         raise
 
     # write results to datastore
     self.entity.status = 'complete'
     self.entity.put()
-    self.response.write(json_dumps(self.entity.published))
+
+    return self.entity.published
 
   def find_mention_item(self, items):
     """Returns the mf2 item that mentions (or replies to, likes, etc) the target.
@@ -186,8 +183,8 @@ class BlogWebmention(webmention.Webmention):
       else:
         if text and self.any_target_in(text):
           type = 'post'
-          url = first_value(props, 'url') or self.source_url
-          name = first_value(props, 'name') or first_value(props, 'summary')
+          url = get_first(props, 'url') or self.source_url
+          name = get_first(props, 'name') or get_first(props, 'summary')
           text = content['html'] = ('mentioned this in %s.' %
                                     util.pretty_link(url, text=name, max_length=280))
         else:
@@ -195,7 +192,7 @@ class BlogWebmention(webmention.Webmention):
 
       if type:
         # found the target!
-        rsvp = first_value(props, 'rsvp')
+        rsvp = get_first(props, 'rsvp')
         if rsvp:
           self.entity.type = 'rsvp'
           if not text:
@@ -227,7 +224,5 @@ class BlogWebmention(webmention.Webmention):
     return False
 
 
-
-# ROUTES = [
-#   ('/webmention/(blogger|fake|tumblr|wordpress)', BlogWebmention),
-]
+app.add_url_rule('/webmention/<any(blogger,fake,tumblr,wordpress):site>',
+                 view_func=BlogWebmentionView.as_view('blog_wm'), methods=['POST'])

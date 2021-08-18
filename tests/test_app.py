@@ -585,7 +585,6 @@ class DiscoverTest(testutil.ModelsTest, testutil.ViewTest):
         'source_key': self.source.key.urlsafe().decode(),
         'url': url,
       })
-      print(resp.headers)
       self.assertEqual(302, resp.status_code)
       location = urllib.parse.urlparse(resp.headers['Location'])
       detail = ' '.join((url, str(resp.status_code), repr(location), repr(resp.get_data(as_text=True))))

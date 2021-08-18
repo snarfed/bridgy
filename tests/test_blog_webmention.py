@@ -6,15 +6,14 @@ import urllib.request, urllib.parse, urllib.error
 from mox3 import mox
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
+from werkzeug import exceptions
 
-import app
-import models
+import blog_webmention, models, util
 from models import BlogWebmention
 from . import testutil
-import util
 
 
-class BlogWebmentionTest(testutil.TestCase):
+class BlogWebmentionTest(testutil.ModelsTest, testutil.ViewTest):
 
   def setUp(self):
     super().setUp()
@@ -30,25 +29,29 @@ class BlogWebmentionTest(testutil.TestCase):
 http://foo.com/post/1
 </p></article>"""
 
-  def get_response(self, source=None, target=None):
+  def post(self, source=None, target=None):
     if source is None:
       source = 'http://bar.com/reply'
     if target is None:
       target = 'http://foo.com/post/1'
-    body = ('source=%s&target=%s' % (source, target))
-    return self.client.get(
-      '/webmention/fake', method='POST', text=body)
+    return self.client.post('/webmention/fake', data={
+      'source': source,
+      'target': target,
+    })
 
   def assert_error(self, expected_error, status=400, **kwargs):
-    resp = self.get_response(**kwargs)
+    resp = self.post(**kwargs)
     self.assertEqual(status, resp.status_code)
     self.assertIn(expected_error, resp.json['error'])
 
   def expect_mention(self):
     self.expect_requests_get('http://bar.com/reply', self.mention_html)
-    return testutil.FakeSource.create_comment(
+    mock = testutil.FakeSource.create_comment(
       'http://foo.com/post/1', 'foo.com', 'http://foo.com/',
-      'mentioned this in <a href="http://bar.com/reply">my post</a>. <br /> <a href="http://bar.com/reply">via bar.com</a>')
+      'mentioned this in <a href="http://bar.com/reply">my post</a>. <br /> <a href="http://bar.com/reply">via bar.com</a>'
+    )
+    mock.AndReturn({'id': 'fake id'})
+    return mock
 
   def test_success(self):
     self._test_success("""
@@ -82,8 +85,8 @@ i hereby reply
       ).AndReturn({'id': 'fake id'})
     self.mox.ReplayAll()
 
-    resp = self.get_response()
-    self.assertEqual(200, resp.status_code, resp.body)
+    resp = self.post()
+    self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
     self.assertEqual({'id': 'fake id'}, resp.json)
 
     bw = BlogWebmention.get_by_id('http://bar.com/reply http://foo.com/post/1')
@@ -109,8 +112,8 @@ i hereby reply
       ).AndReturn({'id': 'fake id'})
     self.mox.ReplayAll()
 
-    resp = self.get_response()
-    self.assertEqual(200, resp.status_code, resp.body)
+    resp = self.post()
+    self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
 
     bw = BlogWebmention.get_by_id('http://bar.com/reply http://foo.com/post/1')
     self.assertEqual('complete', bw.status)
@@ -169,11 +172,12 @@ i hereby <a href="http://foo.zz/post/1">mention</a>
 
     testutil.FakeSource.create_comment(
       'http://foo.zz/post/1', 'foo.zz', 'http://foo.zz/',
-      'mentioned this in <a href="http://bar.com/mention">bar.com/mention</a>. <br /> <a href="http://bar.com/mention">via bar.com</a>')
+      'mentioned this in <a href="http://bar.com/mention">bar.com/mention</a>. <br /> <a href="http://bar.com/mention">via bar.com</a>'
+    ).AndReturn({'id': 'fake id'})
     self.mox.ReplayAll()
 
-    resp = self.get_response('http://bar.com/mention', 'http://foo.zz/post/1')
-    self.assertEqual(200, resp.status_code, resp.body)
+    resp = self.post('http://bar.com/mention', 'http://foo.zz/post/1')
+    self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
 
     bw = BlogWebmention.get_by_id('http://bar.com/mention http://foo.zz/post/1')
     self.assertEqual('complete', bw.status)
@@ -194,11 +198,12 @@ i hereby <a href="http://foo.zz/post/1">mention</a>
     self.expect_requests_get('http://bar.com/mention', html)
     testutil.FakeSource.create_comment(
       'http://foo.com/post/1', 'foo.com', 'http://foo.com/',
-      'mentioned this in <a href="http://bar.com/mention">my post</a>. <br /> <a href="http://bar.com/mention">via bar.com</a>')
+      'mentioned this in <a href="http://bar.com/mention">my post</a>. <br /> <a href="http://bar.com/mention">via bar.com</a>'
+    ).AndReturn({'id': 'fake id'})
     self.mox.ReplayAll()
 
-    resp = self.get_response('http://bar.com/mention')
-    self.assertEqual(200, resp.status_code, resp.body)
+    resp = self.post('http://bar.com/mention')
+    self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
 
   def test_domain_translates_to_lowercase(self):
     html = """\
@@ -210,11 +215,12 @@ X http://FoO.cOm/post/1
 
     testutil.FakeSource.create_comment(
       'http://FoO.cOm/post/1', 'foo.com', 'http://foo.com/',
-      'mentioned this in <a href="http://bar.com/reply">my post</a>. <br /> <a href="http://bar.com/reply">via bar.com</a>')
+      'mentioned this in <a href="http://bar.com/reply">my post</a>. <br /> <a href="http://bar.com/reply">via bar.com</a>'
+    ).AndReturn({'id': 'fake id'})
     self.mox.ReplayAll()
 
-    resp = self.get_response(target='http://FoO.cOm/post/1')
-    self.assertEqual(200, resp.status_code, resp.body)
+    resp = self.post(target='http://FoO.cOm/post/1')
+    self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
     bw = BlogWebmention.get_by_id('http://bar.com/reply http://FoO.cOm/post/1')
     self.assertEqual('complete', bw.status)
 
@@ -239,9 +245,9 @@ X http://FoO.cOm/post/1
     self.expect_mention()
     self.mox.ReplayAll()
 
-    resp = self.get_response(target=urllib.parse.quote(
+    resp = self.post(target=urllib.parse.quote(
         'http://foo.com/post/1?utm_source=x&utm_medium=y'))
-    self.assertEqual(200, resp.status_code, resp.body)
+    self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
     bw = BlogWebmention.get_by_id('http://bar.com/reply http://foo.com/post/1')
     self.assertEqual('complete', bw.status)
 
@@ -260,11 +266,12 @@ X http://FoO.cOm/post/1
     self.expect_requests_get(source, html)
 
     comment = 'mentioned this in <a href="%s">my post</a>. <br /> <a href="%s">via bar.com</a>' % (source, source)
-    testutil.FakeSource.create_comment(target, 'foo.com', 'http://foo.com/', comment)
+    testutil.FakeSource.create_comment(target, 'foo.com', 'http://foo.com/', comment
+                                       ).AndReturn({'id': 'fake id'})
     self.mox.ReplayAll()
 
-    resp = self.get_response(source=source, target=target)
-    self.assertEqual(200, resp.status_code, resp.body)
+    resp = self.post(source=source, target=target)
+    self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
     bw = BlogWebmention.get_by_id(' '.join((source, target)))
     self.assertEqual('complete', bw.status)
 
@@ -277,11 +284,12 @@ http://second/
     self.expect_requests_head('http://first/', redirected_url=redirects)
     self.expect_requests_get('http://bar.com/reply', html)
     testutil.FakeSource.create_comment(
-      'http://foo.com/final', 'foo.com', 'http://foo.com/', mox.IgnoreArg())
+      'http://foo.com/final', 'foo.com', 'http://foo.com/', mox.IgnoreArg()
+    ).AndReturn({'id': 'fake id'})
     self.mox.ReplayAll()
 
-    resp = self.get_response(target='http://first/')
-    self.assertEqual(200, resp.status_code, resp.body)
+    resp = self.post(target='http://first/')
+    self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
     bw = BlogWebmention.get_by_id('http://bar.com/reply http://foo.com/final')
     self.assertEqual('complete', bw.status)
     self.assertEqual(['http://first/', 'http://second/'], bw.redirected_target_urls)
@@ -296,11 +304,12 @@ http://second/
     self.expect_requests_get('http://bar.com/reply', html)
     testutil.FakeSource.create_comment(
       'http://foo.com/post/1', 'foo.com', 'http://foo.com/',
-      'mentioned this in <a href="http://bar.com/reply">my post</a>. <br /> <a href="http://bar.com/reply">via bar.com</a>')
+      'mentioned this in <a href="http://bar.com/reply">my post</a>. <br /> <a href="http://bar.com/reply">via bar.com</a>'
+    ).AndReturn({'id': 'fake id'})
     self.mox.ReplayAll()
 
-    resp = self.get_response()
-    self.assertEqual(200, resp.status_code, resp.body)
+    resp = self.post()
+    self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
     bw = BlogWebmention.get_by_id('http://bar.com/reply http://foo.com/post/1')
     self.assertEqual('complete', bw.status)
 
@@ -327,11 +336,11 @@ i hereby mention
 
     testutil.FakeSource.create_comment(
       'http://foo.com/post/1', 'my name', 'http://foo.com/', """mentioned this in <a href="http://barzz.com/u/url">barzz.com/u/url</a>. <br /> <a href="http://barzz.com/u/url">via barzz.com</a>"""
-      ).AndReturn({'id': 'fake id'})
+    ).AndReturn({'id': 'fake id'})
     self.mox.ReplayAll()
 
-    resp = self.get_response()
-    self.assertEqual(200, resp.status_code, resp.body)
+    resp = self.post()
+    self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
     bw = BlogWebmention.get_by_id('http://bar.com/reply http://foo.com/post/1')
     self.assertEqual('complete', bw.status)
     self.assertEqual('post', bw.type)
@@ -350,7 +359,8 @@ i hereby mention
 </article>""")
     testutil.FakeSource.create_comment(
       'http://foo.com/post/1', 'foo.com', 'http://foo.com/',
-      'reposted this. <br /> <a href="http://bar.com/reply">via bar.com</a>')
+      'reposted this. <br /> <a href="http://bar.com/reply">via bar.com</a>'
+    ).AndReturn({'id': 'fake id'})
 
     # 3) after success, another is a noop and returns 200
     # TODO: check for "updates not supported" message
@@ -362,31 +372,31 @@ i hereby mention
     self.assertEqual('failed', bw.status)
 
     # 2) success
-    resp = self.get_response()
-    self.assertEqual(200, resp.status_code, resp.body)
+    resp = self.post()
+    self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
     bw = BlogWebmention.get_by_id('http://bar.com/reply http://foo.com/post/1')
     self.assertEqual('complete', bw.status)
     self.assertEqual('repost', bw.type)
 
     # 3) noop repeated success
     # source without webmention feature
-    resp = self.get_response()
-    self.assertEqual(200, resp.status_code, resp.body)
+    resp = self.post()
+    self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
     bw = BlogWebmention.get_by_id('http://bar.com/reply http://foo.com/post/1')
     self.assertEqual('complete', bw.status)
 
   def test_create_comment_exception(self):
-    self.expect_mention().AndRaise(exc.HTTPPaymentRequired())
+    self.expect_mention().AndRaise(exceptions.NotAcceptable())
     self.mox.ReplayAll()
 
-    resp = self.get_response()
-    self.assertEqual(402, resp.status_code, resp.body)
+    resp = self.post()
+    self.assertEqual(406, resp.status_code, resp.get_data(as_text=True))
     bw = BlogWebmention.get_by_id('http://bar.com/reply http://foo.com/post/1')
     self.assertEqual('failed', bw.status)
     self.assertEqual(self.mention_html, bw.html)
 
   def test_create_comment_401_disables_source(self):
-    self.expect_mention().AndRaise(exc.HTTPUnauthorized('no way'))
+    self.expect_mention().AndRaise(exceptions.Unauthorized('no way'))
     self.mox.ReplayAll()
 
     self.assert_error('no way', status=401)
@@ -398,7 +408,7 @@ i hereby mention
     self.assertEqual(self.mention_html, bw.html)
 
   def test_create_comment_404s(self):
-    self.expect_mention().AndRaise(exc.HTTPNotFound('gone baby gone'))
+    self.expect_mention().AndRaise(exceptions.NotFound('gone baby gone'))
     self.mox.ReplayAll()
 
     self.assert_error('gone baby gone', status=404)
@@ -408,7 +418,7 @@ i hereby mention
     self.assertEqual(self.mention_html, bw.html)
 
   def test_create_comment_500s(self):
-    self.expect_mention().AndRaise(exc.HTTPInternalServerError('oops'))
+    self.expect_mention().AndRaise(exceptions.InternalServerError('oops'))
     self.mox.ReplayAll()
     self.assert_error('oops', status=util.ERROR_HTTP_RETURN_CODE)
 

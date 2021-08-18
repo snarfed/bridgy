@@ -7,33 +7,33 @@ Webmention spec: http://webmention.org/
 import logging
 import urllib.parse
 
-from flask import request
+from flask import jsonify, request
+from flask.views import View
 from google.cloud import error_reporting
 from oauth_dropins.webutil.util import json_dumps, json_loads
+from oauth_dropins.webutil import flask_util
 
 import util
 
 
-class WebmentionGetHandler():
-  """Renders a simple placeholder HTTP page for GETs to webmention endpoints.
-  """
-  def head(self, site=None):
-    wm_url = util.host_url('/publish/webmention')
-    self.response.headers['Link'] = f'<{wm_url}>; rel="webmention"'
+def webmention_head():
+  """Serves webmention discovery for HEADs to webmention endpoints."""
+  return '', {'Link': f'<{util.host_url("/publish/webmention")}>; rel="webmention"'}
 
-  def get(self, site=None):
-    self.head(site)
-    self.response.out.write(f"""\
+
+def webmention_get():
+  """Renders a simple placeholder HTTP page for GETs to webmention endpoints."""
+  return f"""\
 <!DOCTYPE html>
 <html><head>
-<link rel="webmention" href="{wm_url}">
+<link rel="webmention" href="{util.host_url('/publish/webmention')}">
 </head>
 <body>Nothing here! <a href="/about">Try the docs instead.</a></body>
-</html>""")
+</html>"""
 
 
-class WebmentionHandler(WebmentionGetHandler):
-  """Webmention handler.
+class Webmention(View):
+  """Webmention base view.
 
   Attributes:
 
@@ -68,7 +68,7 @@ class WebmentionHandler(WebmentionGetHandler):
       if raise_errors:
         raise
       util.interpret_http_exception(e)  # log exception
-      return self.error('Could not fetch source URL %s' % url)
+      self.error('Could not fetch source URL %s' % url)
 
     if self.entity:
       self.entity.html = resp.text
@@ -77,7 +77,7 @@ class WebmentionHandler(WebmentionGetHandler):
     soup = util.parse_html(resp)
     mf2 = util.parse_mf2(soup, url=resp.url, id=id)
     if id and not mf2:
-      return self.error('Got fragment %s but no element found with that id.' % id)
+      self.error('Got fragment %s but no element found with that id.' % id)
 
     # special case tumblr's markup: div#content > div.post > div.copy
     # convert to mf2 and re-parse
@@ -103,8 +103,7 @@ class WebmentionHandler(WebmentionGetHandler):
     logging.debug('Parsed microformats2: %s', json_dumps(mf2, indent=2))
     items = mf2.get('items', [])
     if require_mf2 and (not items or not items[0]):
-      return self.error('No microformats2 data found in ' + resp.url,
-                        data=mf2, html="""
+      self.error('No microformats2 data found in ' + resp.url, data=mf2, html="""
 No <a href="http://microformats.org/get-started">microformats</a> or
 <a href="http://microformats.org/wiki/microformats2">microformats2</a> found in
 <a href="%s">%s</a>! See <a href="http://indiewebify.me/">indiewebify.me</a>
@@ -132,7 +131,6 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
       self.entity.status = 'failed'
       self.entity.put()
 
-    self.response.set_status(status)
     resp = {'error': error}
     if data:
       resp['parsed'] = data
@@ -141,15 +139,12 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
       assert 'parsed' not in extra_json
       resp.update(extra_json)
 
-    resp = json_dumps(resp, indent=2)
-
     if report and status != 404:
-      self.report_error(error)
+      self.report_error(error, status=status)
 
-    self.response.headers['Content-Type'] = 'application/json'
-    self.response.write(resp)
+    flask_util.error('', status=status, response=jsonify(resp))
 
-  def report_error(self, resp):
+  def report_error(self, resp, status=None):
     """Report an error to StackDriver Error reporting."""
     # don't report specific known failures
     if ('Deadline exceeded while waiting for HTTP response' in resp or
@@ -194,5 +189,5 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
                       http_context=error_reporting.HTTPContext(
                         method=request.method,
                         url=request.url,
-                        response_status_code=self.response.status,
-                        remote_ip=request.client_addr))
+                        response_status_code=status,
+                        remote_ip=request.remote_addr))
