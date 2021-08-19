@@ -11,11 +11,11 @@ import requests
 
 import app
 from models import Domain
-from .testutil import ModelsTest
+from . import testutil
 import util
 
 
-class IndieAuthTest(ModelsTest):
+class IndieAuthTest(testutil.TestCase):
 
   def setUp(self):
     super().setUp()

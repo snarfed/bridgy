@@ -6,12 +6,13 @@ from mox3 import mox
 from oauth_dropins.tumblr import TumblrAuth
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
+from app import app
 import tumblr
 from tumblr import Tumblr
 from . import testutil
 
 
-class TumblrTest(testutil.ViewTest):
+class TumblrTest(testutil.TestCase):
 
   def setUp(self):
     super(TumblrTest, self).setUp()

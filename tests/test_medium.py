@@ -38,7 +38,7 @@ PUBLICATIONS = {
   }],
 }
 
-class MediumTest(testutil.ViewTest):
+class MediumTest(testutil.TestCase):
 
   def setUp(self):
     super().setUp()

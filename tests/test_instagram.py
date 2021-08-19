@@ -27,14 +27,14 @@ from oauth_dropins.webutil.util import HTTP_TIMEOUT, json_dumps, json_loads
 import app
 from instagram import Instagram
 from models import Activity, Domain
-from .testutil import ModelsTest
+from . import testutil
 
 HTML_VIDEO_WITH_VIEWER = copy.deepcopy(HTML_VIDEO_PAGE)
 HTML_VIDEO_WITH_VIEWER['config'] = HTML_VIEWER_CONFIG
 HTML_VIDEO_COMPLETE = HTML_HEADER + json_dumps(HTML_VIDEO_WITH_VIEWER) + HTML_FOOTER
 
 
-class InstagramTest(ModelsTest):
+class InstagramTest(testutil.TestCase):
 
   def setUp(self):
     super().setUp()
@@ -45,8 +45,7 @@ class InstagramTest(ModelsTest):
   def get_response(self, path_query, auth=True, **kwargs):
     if auth and '?' not in path_query:
       path_query += f'?{self.auth}'
-    return self.client.get(f'/instagram/browser/{path_query}',
-                           method='POST', **kwargs)
+    return self.client.post(f'/instagram/browser/{path_query}', **kwargs)
 
   def store_activity(self):
     activity = copy.deepcopy(HTML_PHOTO_ACTIVITY)
@@ -129,14 +128,15 @@ class InstagramTest(ModelsTest):
     self.assertIsNone(self.source.get_like('unused', '123', '9'))
 
   def test_homepage(self):
-    resp = self.get_response('homepage', text=HTML_FEED_COMPLETE)
+    resp = self.get_response('homepage', data=HTML_FEED_COMPLETE)
     self.assertEqual(200, resp.status_code)
     self.assertEqual('snarfed', resp.json)
 
   def test_homepage_bad_html(self):
-    resp = self.get_response('homepage', text='not a logged in IG feed')
+    resp = self.get_response('homepage', data='not a logged in IG feed')
     self.assertEqual(400, resp.status_code)
-    self.assertIn("Couldn't determine logged in Instagram user", resp.get_data(as_text=True))
+    self.assertIn("Couldn't determine logged in Instagram user",
+                  resp.get_data(as_text=True))
 
   def test_profile_new_user(self):
     self.assertIsNone(Instagram.get_by_id('snarfed'))
@@ -144,7 +144,7 @@ class InstagramTest(ModelsTest):
     self.expect_requests_get('https://snarfed.org/', '')
     self.mox.ReplayAll()
 
-    resp = self.get_response('profile?token=towkin', text=HTML_PROFILE_COMPLETE)
+    resp = self.get_response('profile?token=towkin', data=HTML_PROFILE_COMPLETE)
 
     self.assertEqual(200, resp.status_code)
     self.assertEqual(self.source.key.urlsafe().decode(), resp.json)
@@ -157,14 +157,14 @@ class InstagramTest(ModelsTest):
     self.assertEqual(['snarfed.org'], ig.domains)
 
   def test_profile_private_account(self):
-    resp = self.get_response('profile', text=HTML_PROFILE_PRIVATE_COMPLETE)
+    resp = self.get_response('profile', data=HTML_PROFILE_PRIVATE_COMPLETE)
     self.assertEqual(400, resp.status_code)
     self.assertIn('Your Instagram account is private.', resp.get_data(as_text=True))
 
   def test_post(self):
     self.source.put()
 
-    resp = self.get_response('post', text=HTML_VIDEO_COMPLETE)
+    resp = self.get_response('post', data=HTML_VIDEO_COMPLETE)
     self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
     self.assertEqual(HTML_VIDEO_ACTIVITY_FULL, resp.json)
 
@@ -176,7 +176,7 @@ class InstagramTest(ModelsTest):
   def test_post_empty(self):
     self.source.put()
     empty = HTML_HEADER + json_dumps({'config': HTML_VIEWER_CONFIG}) + HTML_FOOTER
-    resp = self.get_response('post', text=empty)
+    resp = self.get_response('post', data=empty)
     self.assertEqual(400, resp.status_code)
     self.assertIn('No Instagram post found in HTML', resp.get_data(as_text=True))
 
@@ -194,7 +194,7 @@ class InstagramTest(ModelsTest):
 
     # send HTML_VIDEO_COMPLETE to /post, check that the response and stored
     # activity have both of its comments
-    resp = self.get_response('post', text=HTML_VIDEO_COMPLETE)
+    resp = self.get_response('post', data=HTML_VIDEO_COMPLETE)
     self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
     self.assert_equals(HTML_VIDEO_ACTIVITY_FULL, resp.json)
 
@@ -206,7 +206,7 @@ class InstagramTest(ModelsTest):
     key = self.store_activity()
 
     resp = self.get_response(f'likes?id=tag:instagram.com,2013:123_456&{self.auth}',
-                             text=json_dumps(HTML_PHOTO_LIKES_RESPONSE))
+                             json=HTML_PHOTO_LIKES_RESPONSE)
     self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
     self.assertEqual(LIKE_OBJS, resp.json)
 

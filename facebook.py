@@ -1,6 +1,6 @@
 """Facebook API code and datastore model classes.
 """
-import urllib.request, urllib.parse, urllib.error
+import urllib.parse
 
 from google.cloud import ndb
 from granary import facebook as gr_facebook
@@ -35,7 +35,7 @@ class Facebook(browser.BrowserSource):
   username = ndb.StringProperty()
 
   @classmethod
-  def new(cls, handler, auth_entity=None, actor=None, **kwargs):
+  def new(cls, auth_entity=None, actor=None, **kwargs):
     """Creates and returns an entity based on an AS1 actor."""
     src = super().new(auth_entity=None, actor=actor, **kwargs)
     src.username = actor.get('username')
@@ -108,6 +108,3 @@ class Facebook(browser.BrowserSource):
                       'facebook.com/%s/' % self.key.id())
 
     return super().canonicalize_url(url)
-
-
-# ROUTES = browser.routes(Facebook)

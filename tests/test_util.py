@@ -25,7 +25,7 @@ from util import Login
 UNICODE_STR = 'a ✁ b'
 
 
-class UtilTest(testutil.ModelsTest, testutil.ViewTest):
+class UtilTest(testutil.TestCase):
 
   def setUp(self):
     super(UtilTest, self).setUp()
@@ -307,7 +307,7 @@ class UtilTest(testutil.ModelsTest, testutil.ViewTest):
       self.assertEqual('https://a.xyz/foo/bar', util.host_url('/foo/bar'))
 
 
-class RegistrationCallbackTest(testutil.ModelsTest, testutil.ViewTest):
+class RegistrationCallbackTest(testutil.TestCase):
 
   class FakeAdd(oauth_views.Callback):
     """Serves the authorization callback when handling a fake source.

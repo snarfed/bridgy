@@ -26,7 +26,7 @@ import util
 import wordpress_rest
 
 
-class ResponseTest(testutil.ModelsTest):
+class ResponseTest(testutil.TestCase):
 
   def test_get_or_save_new(self):
     """new. should add a propagate task."""
@@ -220,7 +220,7 @@ class ResponseTest(testutil.ModelsTest):
     }))
 
 
-class SourceTest(testutil.ViewTest):
+class SourceTest(testutil.TestCase):
 
   def test_sources_global(self):
     self.assertEqual(blogger.Blogger, models.sources['blogger'])
@@ -688,7 +688,7 @@ class SourceTest(testutil.ViewTest):
       source.bad
 
 
-class BlogPostTest(testutil.ModelsTest):
+class BlogPostTest(testutil.TestCase):
 
   def test_label(self):
     for feed_item in None, {}:
@@ -712,7 +712,7 @@ class BlogPostTest(testutil.ModelsTest):
     self.assert_equals([], blogpost.sent)
 
 
-class SyndicatedPostTest(testutil.ModelsTest):
+class SyndicatedPostTest(testutil.TestCase):
 
   def setUp(self):
     super(SyndicatedPostTest, self).setUp()

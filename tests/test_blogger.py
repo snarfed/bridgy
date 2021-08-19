@@ -17,7 +17,7 @@ import util
 from . import testutil
 
 
-class BloggerTest(testutil.ViewTest):
+class BloggerTest(testutil.TestCase):
 
   def setUp(self):
     super().setUp()

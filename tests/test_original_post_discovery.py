@@ -14,7 +14,7 @@ from . import testutil
 import util
 
 
-class OriginalPostDiscoveryTest(testutil.ModelsTest):
+class OriginalPostDiscoveryTest(testutil.TestCase):
 
   def setUp(self):
     super(OriginalPostDiscoveryTest, self).setUp()

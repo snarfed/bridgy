@@ -15,7 +15,7 @@ class FakeNotify(superfeedr.Notify):
   SOURCE_CLS = testutil.FakeSource
 
 
-class SuperfeedrTest(testutil.ModelsTest, testutil.ViewTest):
+class SuperfeedrTest(testutil.TestCase):
 
   def setUp(self):
     super(SuperfeedrTest, self).setUp()

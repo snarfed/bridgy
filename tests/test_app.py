@@ -20,7 +20,7 @@ from .testutil import FakeBlogSource
 import twitter
 
 
-class AppTest(testutil.ModelsTest, testutil.ViewTest):
+class AppTest(testutil.TestCase):
 
   def test_front_page(self):
     resp = self.client.get('/')
@@ -572,7 +572,7 @@ class AppTest(testutil.ModelsTest, testutil.ViewTest):
       self.assertEqual(400, resp.status_code)
 
 
-class DiscoverTest(testutil.ModelsTest, testutil.ViewTest):
+class DiscoverTest(testutil.TestCase):
 
   def setUp(self):
     super().setUp()

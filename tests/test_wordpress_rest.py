@@ -13,7 +13,7 @@ from . import testutil
 from wordpress_rest import WordPress, Add
 
 
-class WordPressTest(testutil.ModelsTest, testutil.ViewTest):
+class WordPressTest(testutil.TestCase):
 
   def setUp(self):
     super().setUp()

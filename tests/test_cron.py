@@ -21,13 +21,13 @@ from flickr import Flickr
 from mastodon import Mastodon
 import models
 from . import testutil
-from .testutil import FakeSource, ViewTest
+from .testutil import FakeSource
 from twitter import Twitter
 import tasks
 import util
 
 
-class CronTest(ViewTest):
+class CronTest(testutil.TestCase):
   def setUp(self):
     super().setUp()
     oauth_dropins.flickr_auth.FLICKR_APP_KEY = 'my_app_key'

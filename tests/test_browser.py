@@ -11,7 +11,8 @@ from oauth_dropins.webutil import util
 from app import app
 import browser
 from models import Activity, Domain
-from .testutil import FakeGrSource, FakeSource, ModelsTest, ViewTest
+from . import testutil
+from .testutil import FakeGrSource
 import util
 
 
@@ -25,7 +26,7 @@ class FakeBrowserSource(browser.BrowserSource):
     return actor['fbs_id']
 
 
-class BrowserSourceTest(ModelsTest):
+class BrowserSourceTest(testutil.TestCase):
 
   def setUp(self):
     super().setUp()
@@ -95,7 +96,7 @@ class BrowserSourceTest(ModelsTest):
 
 browser.route(FakeBrowserSource)
 
-class BrowserViewTest(ModelsTest, ViewTest):
+class BrowserViewTest(testutil.TestCase):
   def setUp(self):
     super().setUp()
 

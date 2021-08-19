@@ -9,7 +9,7 @@ from . import testutil
 from mastodon import Mastodon
 
 
-class MastodonTest(testutil.ModelsTest):
+class MastodonTest(testutil.TestCase):
 
   def setUp(self):
     super().setUp()

@@ -15,7 +15,7 @@ from . import testutil
 from .testutil import FakeGrSource, FakeSource
 
 
-class HandlersTest(testutil.ViewTest):
+class HandlersTest(testutil.TestCase):
 
   def setUp(self):
     super().setUp()

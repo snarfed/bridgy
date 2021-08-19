@@ -268,10 +268,18 @@ class FakeBlogSource(FakeSource):
   SHORT_NAME = 'fake_blog'
 
 
-class ViewTest(testutil.TestCase):
-  """Base test class."""
+class TestCase(testutil.TestCase):
+  """Base test class. Sets up Flask client and test data.
+
+  Attributes:
+    client: :class:`werkzeug.test.Client`
+    sources: list of FakeSource
+    responses: list of unsaved Response
+    publishes: list of one unsaved Publish
+    blogposts: list of one unsaved BlogPost
+  """
   def setUp(self):
-    super(ViewTest, self).setUp()
+    super().setUp()
     self.client = app.test_client()
     cache.clear()
     FakeGrSource.clear()
@@ -285,85 +293,6 @@ class ViewTest(testutil.TestCase):
     tasks_client.create_task = lambda *args, **kwargs: Task(name='foo')
 
     self.client.__enter__()
-
-  def tearDown(self):
-    self.client.__exit__(None, None, None)
-    super().tearDown()
-
-  def stub_create_task(self):
-    if not self.stubbed_create_task:
-      self.mox.StubOutWithMock(tasks_client, 'create_task')
-      self.stubbed_create_task = True
-
-  def expect_task(self, queue, eta_seconds=None, **kwargs):
-    self.stub_create_task()
-
-    def check_task(task):
-      if not task.parent.endswith('/' + queue):
-        # These can help for debugging, but can also be misleading, since many
-        # tests insert multiple tasks, so check_task() runs on all of them (due
-        # to InAnyOrder() below) until it finds one that matches.
-        # print("expect_task: %s doesn't end with /%s!" % (task.parent, queue))
-        return False
-
-      req = task.task.app_engine_http_request
-      if not req.relative_uri.endswith('/' + queue):
-        # print("expect_task: relative_uri %s doesn't end with /%s!" % (
-        #   req.relative_uri, queue))
-        return False
-
-      # convert model objects and keys to url-safe key strings for comparison
-      for name, val in kwargs.items():
-        if isinstance(val, ndb.Model):
-          kwargs[name] = val.key.urlsafe().decode()
-        elif isinstance(val, ndb.Key):
-          kwargs[name] = val.urlsafe().decode()
-
-      got = set(urllib.parse.parse_qsl(req.body.decode()))
-      expected = set(kwargs.items())
-      if got != expected:
-        # print('expect_task: expected %s, got %s' % (expected, got))
-        return False
-
-      if eta_seconds is not None:
-        got = (util.to_utc_timestamp(task.task.schedule_time) -
-               util.to_utc_timestamp(util.now_fn()))
-        delta = eta_seconds * .2 + 10
-        if not (got + delta >= eta_seconds >= got - delta):
-          # print('expect_task: expected schedule_time %r, got %r' % (eta_seconds, got))
-          return False
-
-      return True
-
-    return tasks_client.create_task(
-      mox.Func(check_task)).InAnyOrder().AndReturn(Task(name='my task'))
-
-  def expect_requests_get(self, *args, **kwargs):
-    if 'headers' not in kwargs:
-      kwargs['headers'] = util.REQUEST_HEADERS
-    return super().expect_requests_get(*args, **kwargs)
-
-  def expect_requests_post(self, *args, **kwargs):
-    kwargs.setdefault('headers', {}).update(util.REQUEST_HEADERS)
-    return super().expect_requests_post(*args, **kwargs)
-
-  def expect_requests_head(self, *args, **kwargs):
-    kwargs.setdefault('headers', {}).update(util.REQUEST_HEADERS)
-    return super().expect_requests_head(*args, **kwargs)
-
-
-class ModelsTest(testutil.TestCase):
-  """Sets up some test sources and responses.
-
-  Attributes:
-    sources: list of FakeSource
-    responses: list of unsaved Response
-    publishes: list of one unsaved Publish
-    blogposts: list of one unsaved BlogPost
-  """
-
-  def setUp(self):
-    super().setUp()
 
     # clear datastore
     orig_requests_post(f'http://{ndb_client.host}/reset')
@@ -534,4 +463,66 @@ class ModelsTest(testutil.TestCase):
 
   def tearDown(self):
     self.ndb_context.__exit__(None, None, None)
+    self.client.__exit__(None, None, None)
     super().tearDown()
+
+  def stub_create_task(self):
+    if not self.stubbed_create_task:
+      self.mox.StubOutWithMock(tasks_client, 'create_task')
+      self.stubbed_create_task = True
+
+  def expect_task(self, queue, eta_seconds=None, **kwargs):
+    self.stub_create_task()
+
+    def check_task(task):
+      if not task.parent.endswith('/' + queue):
+        # These can help for debugging, but can also be misleading, since many
+        # tests insert multiple tasks, so check_task() runs on all of them (due
+        # to InAnyOrder() below) until it finds one that matches.
+        # print("expect_task: %s doesn't end with /%s!" % (task.parent, queue))
+        return False
+
+      req = task.task.app_engine_http_request
+      if not req.relative_uri.endswith('/' + queue):
+        # print("expect_task: relative_uri %s doesn't end with /%s!" % (
+        #   req.relative_uri, queue))
+        return False
+
+      # convert model objects and keys to url-safe key strings for comparison
+      for name, val in kwargs.items():
+        if isinstance(val, ndb.Model):
+          kwargs[name] = val.key.urlsafe().decode()
+        elif isinstance(val, ndb.Key):
+          kwargs[name] = val.urlsafe().decode()
+
+      got = set(urllib.parse.parse_qsl(req.body.decode()))
+      expected = set(kwargs.items())
+      if got != expected:
+        # print('expect_task: expected %s, got %s' % (expected, got))
+        return False
+
+      if eta_seconds is not None:
+        got = (util.to_utc_timestamp(task.task.schedule_time) -
+               util.to_utc_timestamp(util.now_fn()))
+        delta = eta_seconds * .2 + 10
+        if not (got + delta >= eta_seconds >= got - delta):
+          # print('expect_task: expected schedule_time %r, got %r' % (eta_seconds, got))
+          return False
+
+      return True
+
+    return tasks_client.create_task(
+      mox.Func(check_task)).InAnyOrder().AndReturn(Task(name='my task'))
+
+  def expect_requests_get(self, *args, **kwargs):
+    if 'headers' not in kwargs:
+      kwargs['headers'] = util.REQUEST_HEADERS
+    return super().expect_requests_get(*args, **kwargs)
+
+  def expect_requests_post(self, *args, **kwargs):
+    kwargs.setdefault('headers', {}).update(util.REQUEST_HEADERS)
+    return super().expect_requests_post(*args, **kwargs)
+
+  def expect_requests_head(self, *args, **kwargs):
+    kwargs.setdefault('headers', {}).update(util.REQUEST_HEADERS)
+    return super().expect_requests_head(*args, **kwargs)
