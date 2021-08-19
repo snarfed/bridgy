@@ -20,9 +20,9 @@ from oauth_dropins.webutil.util import json_dumps, json_loads
 import webapp2
 
 import appengine_config
-from blogger import Blogger
-from tumblr import Tumblr
-from wordpress_rest import WordPress
+# from blogger import Blogger
+# from tumblr import Tumblr
+# from wordpress_rest import WordPress
 import models
 from models import BlogPost, BlogWebmention, Publish, Response, Source, Webmentions
 import original_post_discovery
@@ -55,7 +55,7 @@ app.jinja_env.globals.update({
 cache = Cache(app)
 
 # Import source class files so their metaclasses are initialized.
-import blogger, facebook, flickr, github, instagram, mastodon, meetup, medium, reddit, tumblr, twitter, wordpress_rest
+# import blogger, facebook, flickr, github, instagram, mastodon, meetup, medium, reddit, tumblr, twitter, wordpress_rest
 
 @app.route('/', methods=['HEAD'])
 @app.route('/users', methods=['HEAD'])

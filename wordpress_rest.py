@@ -22,12 +22,13 @@ import collections
 import logging
 import urllib.request, urllib.parse, urllib.error
 
-from flask import flash
+from flask import flash, render_template
 from google.cloud import ndb
 from oauth_dropins import wordpress_rest as oauth_wordpress
+from oauth_dropins.webutil import flask_util
 from oauth_dropins.webutil.util import json_dumps, json_loads
-import webapp2
 
+from app import app
 import models
 import superfeedr
 import util
@@ -61,14 +62,13 @@ class WordPress(models.Source):
     return urllib.parse.urljoin(self.silo_url(), 'wp-admin/widgets.php')
 
   @staticmethod
-  def new(handler, auth_entity=None, **kwargs):
+  def new(auth_entity=None, **kwargs):
     """Creates and returns a WordPress for the logged in user.
 
     Args:
-      handler: the current :class:`webapp2.RequestHandler`
       auth_entity: :class:`oauth_dropins.wordpress_rest.WordPressAuth`
     """
-    site_info = WordPress.get_site_info(handler, auth_entity)
+    site_info = WordPress.get_site_info(auth_entity)
     if site_info is None:
       return
 
@@ -157,11 +157,10 @@ class WordPress(models.Source):
     return resp
 
   @classmethod
-  def get_site_info(cls, handler, auth_entity):
+  def get_site_info(cls, auth_entity):
     """Fetches the site info from the API.
 
     Args:
-      handler: the current :class:`webapp2.RequestHandler`
       auth_entity: :class:`oauth_dropins.wordpress_rest.WordPressAuth`
 
     Returns:
@@ -184,52 +183,48 @@ class WordPress(models.Source):
     return json_loads(resp)
 
 
-class AddWordPress(oauth_wordpress.Callback):
+class Add(oauth_wordpress.Callback):
+  """This handles both add and delete.
+
+  (WordPress.com only allows a single OAuth redirect URL.)
+  """
   def finish(self, auth_entity, state=None):
     if auth_entity:
       if int(auth_entity.blog_id) == 0:
-        flash(
-          'Please try again and choose a blog before clicking Authorize.')
+        flash('Please try again and choose a blog before clicking Authorize.')
         return redirect('/')
 
       # Check if this is a self-hosted WordPress blog
-      site_info = WordPress.get_site_info(self, auth_entity)
+      site_info = WordPress.get_site_info(auth_entity)
       if site_info is None:
         return
       elif site_info.get('jetpack'):
         logging.info('This is a self-hosted WordPress blog! %s %s',
                      auth_entity.key_id(), auth_entity.blog_id)
-        self.response.headers['Content-Type'] = 'text/html'
-        self.response.out.write(
-          JINJA_ENV.get_template('confirm_self_hosted_wordpress.html').render(
-            auth_entity_key=auth_entity.key.urlsafe().decode(),
-            state=state,
-          ))
-        return
+        return render_template('confirm_self_hosted_wordpress.html',
+                               auth_entity_key=auth_entity.key.urlsafe().decode(),
+                               state=state)
 
     util.maybe_add_or_delete_source(WordPress, auth_entity, state)
 
 
-class ConfirmSelfHosted():
-  def post(self):
-    util.maybe_add_or_delete_source(
-      WordPress,
-      ndb.Key(urlsafe=flask_util.get_required_param('auth_entity_key')).get(),
-      flask_util.get_required_param('state'))
+@app.route('/wordpress/confirm', methods=['POST'])
+def confirm_self_hosted():
+  util.maybe_add_or_delete_source(
+    WordPress,
+    ndb.Key(urlsafe=flask_util.get_required_param('auth_entity_key')).get(),
+    flask_util.get_required_param('state'))
 
 
 class SuperfeedrNotify(superfeedr.Notify):
   SOURCE_CLS = WordPress
 
 
-# ROUTES = [
-#   # wordpress.com doesn't seem to use scope
-#   # https://developer.wordpress.com/docs/oauth2/
-#   ('/wordpress/start', util.oauth_starter(oauth_wordpress.Start).to(
-#     '/wordpress/add')),
-#   ('/wordpress/confirm', ConfirmSelfHosted),
-#   # This handles both add and delete. (WordPress.com only allows a single
-#   # OAuth redirect URL.)
-#   ('/wordpress/add', AddWordPress),
-#   ('/wordpress/notify/(.+)', SuperfeedrNotifyHandler),
-# ]
+# wordpress.com doesn't seem to use scope
+# https://developer.wordpress.com/docs/oauth2/
+start = util.oauth_starter(oauth_wordpress.Start).as_view('wordpress_start')
+app.add_url_rule('/wordpress/start', view_func=start),
+
+app.add_url_rule('/wordpress/add', view_func=Add.as_view('wordpress_add'))
+app.add_url_rule('/wordpress/notify/(.+)',
+                 view_func=SuperfeedrNotify.as_view('wordpress_notify'))

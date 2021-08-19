@@ -6,15 +6,17 @@ import urllib.request, urllib.parse, urllib.error
 from flask import get_flashed_messages
 from oauth_dropins.webutil.util import json_dumps, json_loads
 from oauth_dropins.wordpress_rest import WordPressAuth
+from werkzeug.routing import RequestRedirect
 
+from app import app
 from . import testutil
-from wordpress_rest import WordPress, AddWordPress
+from wordpress_rest import WordPress, Add
 
 
-class WordPressTest(testutil.ViewTest):
+class WordPressTest(testutil.ModelsTest, testutil.ViewTest):
 
   def setUp(self):
-    super(WordPressTest, self).setUp()
+    super().setUp()
     self.auth_entity = WordPressAuth(id='my.wp.com',
                                      user_json=json_dumps({
                                        'display_name': 'Ryan',
@@ -81,33 +83,35 @@ class WordPressTest(testutil.ViewTest):
       'https://public-api.wordpress.com/rest/v1/sites/123?pretty=true',
       'my resp body', status=402)
     self.mox.ReplayAll()
-    self.assertRaises(urllib.error.HTTPError, WordPress.new, self.view,
-                      auth_entity=self.auth_entity)
+
+    with self.assertRaises(urllib.error.HTTPError):
+      WordPress.new(auth_entity=self.auth_entity)
 
   def test_site_lookup_api_disabled_error_start(self):
     self.expect_urlopen(
       'https://public-api.wordpress.com/rest/v1/sites/123?pretty=true',
-      '{"error": "unauthorized",'
-      ' "message": "API calls to this blog have been disabled."}',
+      '{"error": "unauthorized", "message": "API calls to this blog have been disabled."}',
       status=403)
     self.mox.ReplayAll()
 
-    self.assertIsNone(WordPress.new(auth_entity=self.auth_entity))
-    self.assertIsNone(WordPress.query().get())
-    self.assertIn('enable the Jetpack JSON API', get_flashed_messages()[0])
+    with app.test_request_context():
+      with self.assertRaises(RequestRedirect):
+        self.assertIsNone(WordPress.new(auth_entity=self.auth_entity))
+      self.assertIsNone(WordPress.query().get())
+      self.assertIn('enable the Jetpack JSON API', get_flashed_messages()[0])
 
   def test_site_lookup_api_disabled_error_finish(self):
     self.expect_urlopen(
       'https://public-api.wordpress.com/rest/v1/sites/123?pretty=true',
-      '{"error": "unauthorized",'
-      ' "message": "API calls to this blog have been disabled."}',
+      '{"error": "unauthorized", "message": "API calls to this blog have been disabled."}',
       status=403)
     self.mox.ReplayAll()
 
-    view = AddWordPress()
-    view.finish(self.auth_entity)
-    self.assertIsNone(WordPress.query().get())
-    self.assertIn('enable the Jetpack JSON API', get_flashed_message()[0])
+    with app.test_request_context():
+      with self.assertRaises(RequestRedirect):
+        Add('test_site_lookup_api_disabled_error_finish').finish(self.auth_entity)
+      self.assertIsNone(WordPress.query().get())
+      self.assertIn('enable the Jetpack JSON API', get_flashed_messages()[0])
 
   def test_create_comment_with_slug_lookup(self):
     self.expect_urlopen(

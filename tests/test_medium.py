@@ -138,10 +138,9 @@ class MediumTest(testutil.ViewTest):
     self.assertEqual(0, Medium.query().count())
 
   def test_add_profile(self):
-    resp = self.client.get(
+    resp = self.client.post(
       '/medium/add?auth_entity_key=%s&state={"feature":"webmention"}&blog=@ry' %
-      self.auth_entity.key.urlsafe().decode(),
-      method='POST')
+      self.auth_entity.key.urlsafe().decode())
 
     self.assertEqual(302, resp.status_code)
     loc = urllib.parse.unquote_plus(resp.headers['Location'])
@@ -149,10 +148,9 @@ class MediumTest(testutil.ViewTest):
     self.assert_created_profile()
 
   def test_add_publication(self):
-    resp = self.client.get(
+    resp = self.client.post(
       '/medium/add?auth_entity_key=%s&state={"feature":"webmention"}&blog=b45573563f5a' %
-      self.auth_entity.key.urlsafe().decode(),
-      method='POST')
+      self.auth_entity.key.urlsafe().decode())
 
     self.assertEqual(302, resp.status_code)
     loc = urllib.parse.unquote_plus(resp.headers['Location'])
