@@ -715,7 +715,7 @@ class BlogPostTest(testutil.TestCase):
 class SyndicatedPostTest(testutil.TestCase):
 
   def setUp(self):
-    super(SyndicatedPostTest, self).setUp()
+    super().setUp()
 
     self.source = FakeSource.new(None)
     self.source.put()

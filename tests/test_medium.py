@@ -56,7 +56,7 @@ class MediumTest(testutil.TestCase):
     super().tearDown()
 
   def expect_requests_get(self, path, *args, **kwargs):
-    return super(k).expect_requests_get(
+    return super().expect_requests_get(
       oauth_medium.API_BASE + path,
       *args,
       headers={

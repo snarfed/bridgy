@@ -19,7 +19,7 @@ from twitter import Twitter
 class TwitterTest(testutil.TestCase):
 
   def setUp(self):
-    super(TwitterTest, self).setUp()
+    super().setUp()
     oauth_dropins.twitter.TWITTER_APP_KEY = 'my_app_key'
     oauth_dropins.twitter.TWITTER_APP_SECRET = 'my_app_secret'
     self.auth_entity = oauth_dropins.twitter.TwitterAuth(

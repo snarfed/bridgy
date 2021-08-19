@@ -25,7 +25,7 @@ import util
 class PublishTest(testutil.TestCase):
 
   def setUp(self):
-    super(PublishTest, self).setUp()
+    super().setUp()
     publish.SOURCE_NAMES['fake'] = testutil.FakeSource
     publish.SOURCE_DOMAINS['fa.ke'] = testutil.FakeSource
 
@@ -69,7 +69,7 @@ class PublishTest(testutil.TestCase):
 
   def expect_requests_get(self, url, body='', backlink=None, **kwargs):
     body += backlink or self.backlink
-    resp = super(PublishTest, self).expect_requests_get(url, body, **kwargs)
+    resp = super().expect_requests_get(url, body, **kwargs)
     return resp
 
   def assert_response(self, expected, status=None, preview=False, **kwargs):
@@ -1234,7 +1234,7 @@ Join us!"""
 
   def test_missing_backlink(self):
     # use super to avoid this class's override that adds backlink
-    super(PublishTest, self).expect_requests_get(
+    super().expect_requests_get(
       'http://foo.com/bar', self.post_html % 'foo')
     self.mox.ReplayAll()
     self.assert_error("Couldn't find link to http://localhost/publish/fake")

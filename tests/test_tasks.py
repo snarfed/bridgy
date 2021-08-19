@@ -80,14 +80,14 @@ class PollTest(TaskTest):
   post_url = '/_ah/queue/poll'
 
   def setUp(self):
-    super(PollTest, self).setUp()
+    super().setUp()
     FakeGrSource.DOMAIN = 'source'
     appengine_info.LOCAL = True
 
   def tearDown(self):
     FakeGrSource.DOMAIN = 'fa.ke'
     appengine_info.LOCAL = False
-    super(PollTest, self).tearDown()
+    super().tearDown()
 
   def post_task(self, expected_status=200, source=None, reset=False,
                 expect_poll=None, expect_last_polled=None):
@@ -106,7 +106,7 @@ class PollTest(TaskTest):
       source.last_polled = util.EPOCH
       source.put()
 
-    super(PollTest, self).post_task(expected_status=expected_status, params={
+    super().post_task(expected_status=expected_status, params={
         'source_key': source.key.urlsafe().decode(),
         'last_polled': '1970-01-01-00-00-00',
       })
@@ -121,7 +121,7 @@ class PollTest(TaskTest):
       'cache': mox.IgnoreArg(),
     }
     full_kwargs.update(kwargs)
-    return super(PollTest, self).expect_get_activities(**full_kwargs)
+    return super().expect_get_activities(**full_kwargs)
 
   def test_poll(self):
     """A normal poll task."""
@@ -1239,15 +1239,15 @@ class DiscoverTest(TaskTest):
   post_url = '/_ah/queue/discover'
 
   def setUp(self):
-    super(DiscoverTest, self).setUp()
+    super().setUp()
     appengine_info.LOCAL = True
 
   def tearDown(self):
     appengine_info.LOCAL = False
-    super(DiscoverTest, self).tearDown()
+    super().tearDown()
 
   def discover(self, **kwargs):
-    super(DiscoverTest, self).post_task(params={
+    super().post_task(params={
       'source_key': self.sources[0].key.urlsafe().decode(),
       'post_id': 'b',
     }, **kwargs)
@@ -1388,14 +1388,14 @@ class PropagateTest(TaskTest):
   post_url = '/_ah/queue/propagate'
 
   def setUp(self):
-    super(PropagateTest, self).setUp()
+    super().setUp()
     for r in self.responses[:4]:
       r.put()
 
   def post_task(self, expected_status=200, response=None, **kwargs):
     if response is None:
       response = self.responses[0]
-    super(PropagateTest, self).post_task(
+    super().post_task(
       expected_status=expected_status,
       params={'response_key': response.key.urlsafe().decode()},
       **kwargs)
@@ -1952,8 +1952,7 @@ class PropagateTest(TaskTest):
     self.mox.ReplayAll()
 
     self.post_url = '/_ah/queue/propagate-blogpost'
-    super(PropagateTest, self).post_task(
-      params={'key': blogpost.key.urlsafe().decode()})
+    super().post_task(params={'key': blogpost.key.urlsafe().decode()})
     self.assert_response_is('complete', NOW + LEASE_LENGTH,
                             sent=['http://ok/two'], response=blogpost)
     self.assert_equals(NOW, source_key.get().last_webmention_sent)
@@ -1972,8 +1971,7 @@ class PropagateTest(TaskTest):
     self.mox.ReplayAll()
 
     self.post_url = '/_ah/queue/propagate-blogpost'
-    super(PropagateTest, self).post_task(
-      params={'key': blogpost.key.urlsafe().decode()})
+    super().post_task(params={'key': blogpost.key.urlsafe().decode()})
     self.assert_response_is('complete', response=blogpost,
                             sent=['https://brid.gy/publish/twitter'])
 
@@ -1988,8 +1986,7 @@ class PropagateTest(TaskTest):
     self.mox.ReplayAll()
 
     self.post_url = '/_ah/queue/propagate-blogpost'
-    super(PropagateTest, self).post_task(
-      params={'key': blogpost.key.urlsafe().decode()})
+    super().post_task(params={'key': blogpost.key.urlsafe().decode()})
     self.assert_response_is('complete', response=blogpost)
 
   def test_post_response(self):
@@ -2012,15 +2009,14 @@ class PropagateBlogPostTest(TaskTest):
   post_url = '/_ah/queue/propagate-blogpost'
 
   def setUp(self):
-    super(PropagateBlogPostTest, self).setUp()
+    super().setUp()
     self.blogposts[0].unsent = ['http://foo', 'http://bar']
     self.blogposts[0].status = 'new'
     self.blogposts[0].put()
 
   def post_task(self, **kwargs):
-    super(PropagateBlogPostTest, self).post_task(
-      params={'key': self.blogposts[0].key.urlsafe().decode()},
-      **kwargs)
+    super().post_task(params={'key': self.blogposts[0].key.urlsafe().decode()},
+                      **kwargs)
 
   def test_no_source(self):
     """If the source doesn't exist, do nothing and let the task die."""

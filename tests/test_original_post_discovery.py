@@ -17,7 +17,7 @@ import util
 class OriginalPostDiscoveryTest(testutil.TestCase):
 
   def setUp(self):
-    super(OriginalPostDiscoveryTest, self).setUp()
+    super().setUp()
     self.source = self.sources[0]
     self.source.domain_urls = ['http://author/']
     self.source.domains = ['author']

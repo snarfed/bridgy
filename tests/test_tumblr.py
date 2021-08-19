@@ -15,7 +15,7 @@ from . import testutil
 class TumblrTest(testutil.TestCase):
 
   def setUp(self):
-    super(TumblrTest, self).setUp()
+    super().setUp()
     self.auth_entity = TumblrAuth(id='name', user_json=json_dumps({
           'user': {'blogs': [{'url': 'other'},
                              {'url': 'http://primary/', 'primary': True}]}}))

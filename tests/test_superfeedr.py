@@ -18,7 +18,7 @@ class FakeNotify(superfeedr.Notify):
 class SuperfeedrTest(testutil.TestCase):
 
   def setUp(self):
-    super(SuperfeedrTest, self).setUp()
+    super().setUp()
 
     self.app = Flask('test_superfeedr')
     self.app.add_url_rule('/notify/<id>', methods=['POST'],

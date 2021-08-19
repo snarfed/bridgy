@@ -257,7 +257,7 @@ class FakeSource(Source):
 
   def put(self, **kwargs):
     self.is_saved = True
-    return super(FakeSource, self).put(**kwargs)
+    return super().put(**kwargs)
 
   @classmethod
   def next_key(cls):

@@ -597,7 +597,7 @@ def oauth_starter(oauth_start_view, **kwargs):
   """
   class Start(oauth_start_view):
     def redirect_url(self, state=None, **ru_kwargs):
-      return super(Start, self).redirect_url(
+      return super().redirect_url(
         construct_state_param_for_add(state, **kwargs), **ru_kwargs)
 
   return Start

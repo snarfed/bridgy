@@ -28,7 +28,7 @@ UNICODE_STR = 'a ✁ b'
 class UtilTest(testutil.TestCase):
 
   def setUp(self):
-    super(UtilTest, self).setUp()
+    super().setUp()
     util.now_fn = lambda: datetime.datetime(2000, 1, 1)
 
   def test_maybe_add_or_delete_source(self):

@@ -12,7 +12,7 @@ from reddit import Reddit
 class RedditTest(testutil.TestCase):
 
   def setUp(self):
-    super(RedditTest, self).setUp()
+    super().setUp()
     oauth_dropins.reddit.REDDIT_APP_KEY = 'my_app_key'
     oauth_dropins.reddit.REDDIT_APP_SECRET = 'my_app_secret'
     user = oauth_dropins.reddit.praw_to_user(gr_reddit_test.FakeRedditor())
