@@ -5,6 +5,7 @@ from flask import get_flashed_messages
 from mox3 import mox
 from oauth_dropins.tumblr import TumblrAuth
 from oauth_dropins.webutil.util import json_dumps, json_loads
+from werkzeug.exceptions import BadRequest
 
 from app import app
 import tumblr
@@ -53,8 +54,9 @@ class TumblrTest(testutil.TestCase):
 
   def test_new_no_primary_blog(self):
     self.auth_entity.user_json = json_dumps({'user': {'blogs': [{'url': 'foo'}]}})
-    self.assertIsNone(Tumblr.new(auth_entity=self.auth_entity))
-    self.assertIn('Tumblr blog not found', get_flashed_messages()[0])
+    with app.test_request_context():
+      self.assertIsNone(Tumblr.new(auth_entity=self.auth_entity))
+      self.assertIn('Tumblr blog not found', get_flashed_messages()[0])
 
   def test_new_with_blog_name(self):
     self.auth_entity.user_json = json_dumps({
@@ -146,10 +148,8 @@ class TumblrTest(testutil.TestCase):
     self.expect_requests_get('http://primary/post/123999', 'no shortname here')
     self.mox.ReplayAll()
 
-    self.assertRaises(
-      BadRequest,#("Bridgy hasn't found your Disqus account yet. "
-                         #"See http://localhost/tumblr/name for details."),
-      self.tumblr.create_comment, 'http://primary/post/123999', '', '', '')
+    with self.assertRaises(BadRequest):
+      self.tumblr.create_comment('http://primary/post/123999', '', '', '')
 
   # not implemented yet. see https://github.com/snarfed/bridgy/issues/177.
   # currently handled in webmention.error().

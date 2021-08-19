@@ -54,8 +54,7 @@ class Poll(webapp2.RequestHandler):
   handle_exception = util.background_handle_exception
 
   def _last_poll_url(self, source):
-    return urllib.parse.urljoin(util.host_url(),
-                                logs.url(source.last_poll_attempt, source.key))
+    return util.host_url(logs.url(source.last_poll_attempt, source.key))
 
   def post(self, *path_args):
     request.headers['Content-Type'] = 'application/x-www-form-urlencoded'
@@ -799,7 +798,7 @@ activities: %s""", target_url, self.entity.urls_to_activity, self.activities)
     id = activity['id']
     parsed = util.parse_tag_uri(id)
     post_id = parsed[1] if parsed else id
-    parts = [util.host_url(self), self.entity.type, self.source.SHORT_NAME,
+    parts = [util.host_url(), self.entity.type, self.source.SHORT_NAME,
             self.source.key.string_id(), post_id]
 
     if self.entity.type != 'post':

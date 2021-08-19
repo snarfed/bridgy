@@ -12,11 +12,13 @@ https://medium.com/developers/welcome-to-the-medium-api-3418f956552
 import collections
 import logging
 
+from flask import render_template
 from google.cloud import ndb
 from oauth_dropins import medium as oauth_medium
+from oauth_dropins.webutil import flask_util
 from oauth_dropins.webutil.util import json_dumps, json_loads
-import webapp2
 
+from app import app
 import models
 import superfeedr
 import util
@@ -31,7 +33,6 @@ class Medium(models.Source):
   OAUTH_START = oauth_medium.Start
   SHORT_NAME = 'medium'
 
-
   def is_publication(self):
     return not self.key_id().startswith('@')
 
@@ -43,11 +44,10 @@ class Medium(models.Source):
     return self.url
 
   @staticmethod
-  def new(handler, auth_entity=None, id=None, **kwargs):
+  def new(auth_entity=None, id=None, **kwargs):
     """Creates and returns a Medium for the logged in user.
 
     Args:
-      handler: the current :class:`webapp2.RequestHandler`
       auth_entity: :class:`oauth_dropins.medium.MediumAuth`
       id: string, either username (starting with @) or publication id
     """
@@ -113,13 +113,13 @@ class Medium(models.Source):
     return [], []
 
 
-class AddMedium():
-  def post(self):
-    auth_entity = ndb.Key(
-      urlsafe=flask_util.get_required_param('auth_entity_key')).get()
-    state = flask_util.get_required_param('state')
-    id = flask_util.get_required_param('blog')
-    util.maybe_add_or_delete_source(Medium, auth_entity, state, id=id)
+@app.route('/medium/add', methods=['POST'])
+def add():
+  auth_entity = ndb.Key(
+    urlsafe=flask_util.get_required_param('auth_entity_key')).get()
+  state = flask_util.get_required_param('state')
+  id = flask_util.get_required_param('blog')
+  util.maybe_add_or_delete_source(Medium, auth_entity, state, id=id)
 
 
 class ChooseBlog(oauth_medium.Callback):
@@ -162,21 +162,21 @@ class ChooseBlog(oauth_medium.Callback):
         'image': p.get('imageUrl', ''),
       } for p in pubs if p.get('id')],
     }
-    logging.info('Rendering choose_blog.html with %s', vars)
-    self.response.headers['Content-Type'] = 'text/html'
-    self.response.out.write(JINJA_ENV.get_template('choose_blog.html').render(**vars))
+    logging.info(f'Rendering choose_blog.html with {vars}')
+    return render_template('choose_blog.html', **vars)
 
 
 class SuperfeedrNotify(superfeedr.Notify):
   SOURCE_CLS = Medium
 
 
-# ROUTES = [
-#   # https://github.com/Medium/medium-api-docs#user-content-21-browser-based-authentication
-#   ('/medium/start', util.oauth_starter(oauth_medium.Start).to(
-#     '/medium/choose_blog', scopes=('basicProfile', 'listPublications'))),
-#   ('/medium/add', AddMedium),
-#   ('/medium/choose_blog', ChooseBlog),
-#   ('/medium/delete/finish', oauth_medium.Callback.to('/delete/finish')),
-#   ('/medium/notify/(.+)', SuperfeedrNotifyHandler),
-# ]
+# https://github.com/Medium/medium-api-docs#user-content-21-browser-based-authentication
+start = util.oauth_starter(oauth_medium.Start).as_view(
+  'medium_start', '/medium/choose_blog', scopes=('basicProfile', 'listPublications'))
+app.add_url_rule('/medium/start', view_func=start)
+app.add_url_rule('/medium/choose_blog', view_func=ChooseBlog.as_view(
+  'medium_choose_blog'))
+app.add_url_rule('/medium/delete/finish', view_func=oauth_medium.Callback.as_view(
+  'medium_delete', '/delete/finish')),
+app.add_url_rule('/medium/notify/(.+)',
+                 view_func=SuperfeedrNotify.as_view('medium_notify'))

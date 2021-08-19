@@ -33,9 +33,9 @@ from flask import flash
 from google.cloud import ndb
 from oauth_dropins import tumblr as oauth_tumblr
 from oauth_dropins.webutil.util import json_dumps, json_loads
-import webapp2
 from werkzeug.exceptions import BadRequest
 
+from app import app
 import models
 import superfeedr
 import util
@@ -83,11 +83,10 @@ class Tumblr(models.Source):
     return 'http://www.tumblr.com/customize/%s' % self.auth_entity.id()
 
   @staticmethod
-  def new(handler, auth_entity=None, blog_name=None, **kwargs):
+  def new(auth_entity=None, blog_name=None, **kwargs):
     """Creates and returns a :class:`Tumblr` for the logged in user.
 
     Args:
-      handler: the current :class:`webapp2.RequestHandler`
       auth_entity: :class:`oauth_dropins.tumblr.TumblrAuth`
       blog_name: which blog. optional. passed to _urls_and_domains.
     """
@@ -253,28 +252,29 @@ class ChooseBlog(oauth_tumblr.Callback):
     self.response.out.write(JINJA_ENV.get_template('choose_blog.html').render(**vars))
 
 
-class AddTumblr():
-  def post(self):
-    auth_entity_key = flask_util.get_required_param('auth_entity_key')
-    util.maybe_add_or_delete_source(
-      Tumblr,
-      ndb.Key(urlsafe=auth_entity_key).get(),
-      flask_util.get_required_param('state'),
-      blog_name=flask_util.get_required_param('blog'),
-      )
+@app.route('/tumblr/add')
+def add():
+  auth_entity_key = flask_util.get_required_param('auth_entity_key')
+  util.maybe_add_or_delete_source(
+    Tumblr,
+    ndb.Key(urlsafe=auth_entity_key).get(),
+    flask_util.get_required_param('state'),
+    blog_name=flask_util.get_required_param('blog'),
+  )
 
 
 class SuperfeedrNotify(superfeedr.Notify):
   SOURCE_CLS = Tumblr
 
 
-# ROUTES = [
-#   # Tumblr doesn't seem to use scope
-#   # http://www.tumblr.com/docs/en/api/v2#oauth
-#   ('/tumblr/start', util.oauth_starter(oauth_tumblr.Start).to(
-#     '/tumblr/choose_blog')),
-#   ('/tumblr/choose_blog', ChooseBlog),
-#   ('/tumblr/add', AddTumblr),
-#   ('/tumblr/delete/finish', oauth_tumblr.Callback.to('/delete/finish')),
-#   ('/tumblr/notify/(.+)', SuperfeedrNotifyHandler),
-# ]
+# Tumblr doesn't seem to use scope
+# http://www.tumblr.com/docs/en/api/v2#oauth
+start = util.oauth_starter(oauth_tumblr.Start).as_view(
+  'tumblr_start', '/tumblr/choose_blog')
+app.add_url_rule('/tumblr/start', view_func=start)
+app.add_url_rule('/tumblr/choose_blog', view_func=ChooseBlog.as_view(
+  'tumblr_choose_blog'))
+app.add_url_rule('/tumblr/delete/finish', view_func=oauth_tumblr.Callback.as_view(
+  'tumblr_delete_finish'))
+app.add_url_rule('/tumblr/notify/(.+)',
+                 view_func=SuperfeedrNotify.as_view('tumblr_notify'))

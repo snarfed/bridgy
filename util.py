@@ -17,7 +17,7 @@ import zlib
 
 from cachetools import TTLCache
 import flask
-from flask import flash, get_flashed_messages, request
+from flask import flash, request
 import flask.views
 from google.cloud import ndb
 from google.cloud.tasks_v2 import CreateTaskRequest
@@ -446,8 +446,11 @@ def maybe_add_or_delete_source(source_cls, auth_entity, state, **kwargs):
 
   if operation == 'add':  # this is an add/update
     if not auth_entity:
-      if not get_flashed_messages():
-        flash("OK, you're not signed up. Hope you reconsider!")
+      # TODO: only show if we haven't already flashed another message?
+      # get_flashed_messages() caches so it's dangerous to call to check;
+      # use eg session.get('_flashes', []) instead.
+      # https://stackoverflow.com/a/17243946/186123
+      flash("OK, you're not signed up. Hope you reconsider!")
       if callback:
         callback = util.add_query_params(callback, {'result': 'declined'})
         logging.debug(

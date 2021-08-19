@@ -10,7 +10,7 @@ from gdata.client import RequestError
 from oauth_dropins.blogger import BloggerV2Auth
 from mox3 import mox
 
-import app
+from app import app
 import blogger
 from blogger import Blogger
 import util
@@ -25,7 +25,7 @@ class BloggerTest(testutil.TestCase):
                                      blog_ids=['111'],
                                      blog_hostnames=['my.blawg'],
                                      picture_url='http://pic')
-    self.client = self.mox.CreateMock(BloggerClient)
+    self.blogger_client = self.mox.CreateMock(BloggerClient)
 
     self.comment = data.Comment()
     self.comment.id = util.Struct(
@@ -41,7 +41,7 @@ class BloggerTest(testutil.TestCase):
     def check_path(query):
       return query.custom_parameters['path'] == '/path/to/post'
 
-    self.client.get_posts('111', query=mox.Func(check_path)).AndReturn(feed)
+    self.blogger_client.get_posts('111', query=mox.Func(check_path)).AndReturn(feed)
 
   def test_new(self):
     b = Blogger.new(auth_entity=self.auth_entity)
@@ -57,7 +57,7 @@ class BloggerTest(testutil.TestCase):
     we can differentiate from a user decline because oauth-dropins can't
     currently intercept Blogger declines.
     """
-    resp = app.application.get_response('/blogger/oauth_view')
+    resp = self.client.get('/blogger/oauth_handler')
     self.assertEqual(302, resp.status_code)
     location = urllib.parse.urlparse(resp.headers['Location'])
     self.assertEqual('/', location.path)
@@ -70,8 +70,8 @@ class BloggerTest(testutil.TestCase):
                                      blogs_atom='x', user_atom='y', creds_json='z')
     self.auth_entity.put()
 
-    resp = app.application.get_response('/blogger/oauth_view?auth_entity=%s' %
-                                        self.auth_entity.key.urlsafe().decode())
+    resp = self.client.get('/blogger/oauth_handler?auth_entity=%s' %
+                           self.auth_entity.key.urlsafe().decode())
     self.assertEqual(302, resp.status_code)
     location = urllib.parse.urlparse(resp.headers['Location'])
     self.assertEqual('/', location.path)
@@ -79,18 +79,19 @@ class BloggerTest(testutil.TestCase):
 
   def test_new_no_blogs(self):
     self.auth_entity.blog_hostnames = []
-    self.assertIsNone(Blogger.new(auth_entity=self.auth_entity))
-    self.assertIn('Blogger blog not found', get_flashed_messages()[0])
+    with app.test_request_context():
+      self.assertIsNone(Blogger.new(auth_entity=self.auth_entity))
+      self.assertIn('Blogger blog not found', get_flashed_messages()[0])
 
   def test_create_comment(self):
     self.expect_get_posts()
-    self.client.add_comment('111', '222', '<a href="http://who">who</a>: foo bar'
-                            ).AndReturn(self.comment)
+    self.blogger_client.add_comment(
+      '111', '222', '<a href="http://who">who</a>: foo bar').AndReturn(self.comment)
     self.mox.ReplayAll()
 
     b = Blogger.new(auth_entity=self.auth_entity)
     resp = b.create_comment('http://blawg/path/to/post', 'who', 'http://who',
-                            'foo bar', client=self.client)
+                            'foo bar', client=self.blogger_client)
     self.assert_equals({'id': '333', 'response': '<foo></foo>'}, resp)
 
   def test_create_comment_with_unicode_chars(self):
@@ -100,37 +101,39 @@ class BloggerTest(testutil.TestCase):
 
     prefix = '<a href="http://who">Degenève</a>: '
     content = prefix + 'x' * (blogger.MAX_COMMENT_LENGTH - len(prefix) - 3) + '...'
-    self.client.add_comment('111', '222', content).AndReturn(self.comment)
+    self.blogger_client.add_comment('111', '222', content).AndReturn(self.comment)
     self.mox.ReplayAll()
 
     b = Blogger.new(auth_entity=self.auth_entity)
     resp = b.create_comment('http://blawg/path/to/post', 'Degenève', 'http://who',
-                            'x' * blogger.MAX_COMMENT_LENGTH, client=self.client)
+                            'x' * blogger.MAX_COMMENT_LENGTH,
+                            client=self.blogger_client)
     self.assert_equals({'id': '333', 'response': '<foo></foo>'}, resp)
 
   def test_create_too_long_comment(self):
     """Blogger caps HTML comment length at 4096 chars."""
     self.expect_get_posts()
-    self.client.add_comment(
+    self.blogger_client.add_comment(
       '111', '222', '<a href="http://who">Degenève</a>: foo Degenève bar'
       ).AndReturn(self.comment)
     self.mox.ReplayAll()
 
     b = Blogger.new(auth_entity=self.auth_entity)
     resp = b.create_comment('http://blawg/path/to/post', 'Degenève', 'http://who',
-                            'foo Degenève bar', client=self.client)
+                            'foo Degenève bar', client=self.blogger_client)
     self.assert_equals({'id': '333', 'response': '<foo></foo>'}, resp)
 
   def test_create_comment_gives_up_on_internal_error_bX2i87au(self):
     # see https://github.com/snarfed/bridgy/issues/175
     self.expect_get_posts()
-    self.client.add_comment('111', '222', '<a href="http://who">who</a>: foo bar'
-                            ).AndRaise(RequestError('500, Internal error: bX-2i87au'))
+    self.blogger_client.add_comment(
+      '111', '222', '<a href="http://who">who</a>: foo bar'
+    ).AndRaise(RequestError('500, Internal error: bX-2i87au'))
     self.mox.ReplayAll()
 
     b = Blogger.new(auth_entity=self.auth_entity)
     resp = b.create_comment('http://blawg/path/to/post', 'who', 'http://who',
-                            'foo bar', client=self.client)
+                            'foo bar', client=self.blogger_client)
     # the key point is that create_comment doesn't raise an exception
     self.assert_equals({'error': '500, Internal error: bX-2i87au'}, resp)
 

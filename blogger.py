@@ -31,10 +31,10 @@ from gdata.client import Error
 from google.cloud import ndb
 from oauth_dropins import blogger as oauth_blogger
 
+from app import app
 import models
 import superfeedr
 import util
-import webapp2
 
 # Blogger says it's 4096 in an error message. (Couldn't find it in their docs.)
 # We include some padding.
@@ -159,76 +159,73 @@ class Blogger(models.Source):
         raise
 
     resp = {'id': comment.get_comment_id(), 'response': comment.to_string()}
-    logging.info('Response: %s', resp)
+    logging.info(f'Response: {resp}')
     return resp
 
 
-class OAuthCallback():
+@app.route('/blogger/oauth_handler')
+def oauth_callback():
   """OAuth callback handler.
 
   Both the add and delete flows have to share this because Blogger's
   oauth-dropin doesn't yet allow multiple callback handlers. :/
   """
-  def get(self):
-    auth_entity = None
-    auth_entity_str_key = request.values.get('auth_entity')
-    if auth_entity_str_key:
-      auth_entity = ndb.Key(urlsafe=auth_entity_str_key).get()
-      if not auth_entity.blog_ids or not auth_entity.blog_hostnames:
-        auth_entity = None
+  auth_entity = None
+  auth_entity_str_key = request.values.get('auth_entity')
+  if auth_entity_str_key:
+    auth_entity = ndb.Key(urlsafe=auth_entity_str_key).get()
+    if not auth_entity.blog_ids or not auth_entity.blog_hostnames:
+      auth_entity = None
 
-    if not auth_entity:
-      flash(
-        "Couldn't fetch your blogs. Maybe you're not a Blogger user?")
+  if not auth_entity:
+    flash("Couldn't fetch your blogs. Maybe you're not a Blogger user?")
 
-    state = request.values.get('state')
-    if not state:
-      # state doesn't currently come through for Blogger. not sure why. doesn't
-      # matter for now since we don't plan to implement listen or publish.
-      state = self.construct_state_param_for_add(feature='webmention')
+  state = request.values.get('state')
+  if not state:
+    # state doesn't currently come through for Blogger. not sure why. doesn't
+    # matter for now since we don't plan to implement listen or publish.
+    state = util.construct_state_param_for_add(feature='webmention')
 
-    if not auth_entity:
-      util.maybe_add_or_delete_source(Blogger, auth_entity, state)
-      return
+  if not auth_entity:
+    util.maybe_add_or_delete_source(Blogger, auth_entity, state)
+    return
 
-    vars = {
-      'action': '/blogger/add',
-      'state': state,
-      'auth_entity_key': auth_entity.key.urlsafe().decode(),
-      'blogs': [{'id': id, 'title': title, 'domain': host}
-                for id, title, host in zip(auth_entity.blog_ids,
-                                           auth_entity.blog_titles,
-                                           auth_entity.blog_hostnames)],
-      }
-    logging.info('Rendering choose_blog.html with %s', vars)
-
-    self.response.headers['Content-Type'] = 'text/html'
-    self.response.out.write(JINJA_ENV.get_template('choose_blog.html').render(**vars))
+  vars = {
+    'action': '/blogger/add',
+    'state': state,
+    'auth_entity_key': auth_entity.key.urlsafe().decode(),
+    'blogs': [{'id': id, 'title': title, 'domain': host}
+              for id, title, host in zip(auth_entity.blog_ids,
+                                         auth_entity.blog_titles,
+                                         auth_entity.blog_hostnames)],
+    }
+  logging.info(f'Rendering choose_blog.html with {vars}')
+  return render_template('choose_blog.html', **vars)
 
 
-class AddBlogger():
-  def post(self):
-    auth_entity_key = flask_util.get_required_param('auth_entity_key')
-    util.maybe_add_or_delete_source(
-      Blogger,
-      ndb.Key(urlsafe=auth_entity_key).get(),
-      flask_util.get_required_param('state'),
-      blog_id=flask_util.get_required_param('blog'),
-    )
+@app.route('/blogger/add', methods=['POST'])
+def add():
+  auth_entity_key = flask_util.get_required_param('auth_entity_key')
+  util.maybe_add_or_delete_source(
+    Blogger,
+    ndb.Key(urlsafe=auth_entity_key).get(),
+    flask_util.get_required_param('state'),
+    blog_id=flask_util.get_required_param('blog'),
+  )
 
 
 class SuperfeedrNotify(superfeedr.Notify):
   SOURCE_CLS = Blogger
 
 
-# ROUTES = [
-#   # Blogger only has one OAuth scope. oauth-dropins fills it in.
-#   # https://developers.google.com/blogger/docs/2.0/developers_guide_protocol#OAuth2Authorizing
-#   ('/blogger/start', util.oauth_starter(oauth_blogger.Start).to(
-#     '/blogger/oauth2callback')),
-#   ('/blogger/oauth2callback', oauth_blogger.Callback.to('/blogger/oauth_handler')),
-#   ('/blogger/oauth_handler', OAuthCallback),
-#   ('/blogger/add', AddBlogger),
-#   ('/blogger/delete/start', oauth_blogger.Start.to('/blogger/oauth2callback')),
-#   ('/blogger/notify/(.+)', SuperfeedrNotifyHandler),
-# ]
+# Blogger only has one OAuth scope. oauth-dropins fills it in.
+# https://developers.google.com/blogger/docs/2.0/developers_guide_protocol#OAuth2Authorizing
+start = util.oauth_starter(oauth_blogger.Start).as_view(
+  'blogger_start', '/blogger/oauth2callback')
+app.add_url_rule('/blogger/start', view_func=start)
+app.add_url_rule('/blogger/oauth2callback', view_func=oauth_blogger.Callback.as_view(
+  'blogger_oauth2callback', '/blogger/oauth_handler'))
+app.add_url_rule('/blogger/delete/start', view_func=oauth_blogger.Start.as_view(
+  'blogger_delete_start', '/blogger/oauth2callback')),
+app.add_url_rule('/blogger/notify/(.+)',
+                 view_func=SuperfeedrNotify.as_view('blogger_notify'))

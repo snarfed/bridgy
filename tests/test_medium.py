@@ -7,8 +7,9 @@ from flask import get_flashed_messages
 from oauth_dropins import medium as oauth_medium
 from oauth_dropins.webutil.util import json_dumps, json_loads
 from oauth_dropins.webutil import appengine_info
+from werkzeug.routing import RequestRedirect
 
-import app
+from app import app
 from medium import ChooseBlog, Medium
 from . import testutil
 
@@ -109,31 +110,36 @@ class MediumTest(testutil.TestCase):
       Medium.new(auth_entity=self.auth_entity, id='b45573563f5a'))
 
   def test_choose_blog_decline(self):
-    ChooseBlog(request, self.response).finish(None)
-    self.assertEqual(0, Medium.query().count())
-    self.assertEqual(302, self.response.status_code)
-    self.assertEqual('http://localhost/', self.response.headers['Location'])
-    self.assertEqual("OK, you're not signed up. Hope you reconsider!",
-                     get_flashed_messages())
+    with app.test_request_context():
+      with self.assertRaises(RequestRedirect) as rr:
+        ChooseBlog('/unused').finish(None)
+      self.assertEqual(0, Medium.query().count())
+      self.assertEqual(302, rr.exception.code)
+      self.assertEqual('http://localhost/', rr.exception.new_url)
+      self.assertEqual(["OK, you're not signed up. Hope you reconsider!"],
+                       get_flashed_messages())
 
   def test_choose_blog_no_publications(self):
     self.expect_get_publications({})
-    ChooseBlog(request, self.response).finish(self.auth_entity)
-    self.assertEqual(302, self.response.status_code)
-    loc = urllib.parse.unquote_plus(self.response.headers['Location'])
-    self.assertTrue(loc.startswith('http://localhost/'), loc)
-    self.assert_created_profile()
+
+    with app.test_request_context():
+      with self.assertRaises(RequestRedirect) as rr:
+        ChooseBlog('/unused').finish(self.auth_entity)
+      self.assertEqual(302, rr.exception.code)
+      self.assertEqual('http://localhost/medium/@ry', rr.exception.new_url)
+      self.assert_created_profile()
 
   def test_choose_blog_publications(self):
     self.expect_get_publications(PUBLICATIONS)
-    ChooseBlog(request, self.response).finish(self.auth_entity)
-    self.assert_equals(200, self.response.status_code)
-    for expected in ('action="/medium/add" method="post"',
-                     '<input type="radio" name="blog" id="@ry"',
-                     '<input type="radio" name="blog" id="b969ac62a46b"',
-                     '<input type="radio" name="blog" id="b45573563f5a"',
-                     ):
-      self.assertIn(expected, self.response.get_data(as_text=True))
+
+    with app.test_request_context():
+      resp = ChooseBlog('/unused').finish(self.auth_entity)
+      for expected in ('action="/medium/add" method="post"',
+                       '<input type="radio" name="blog" id="@ry"',
+                       '<input type="radio" name="blog" id="b969ac62a46b"',
+                       '<input type="radio" name="blog" id="b45573563f5a"',
+                       ):
+        self.assertIn(expected, resp)
 
     self.assertEqual(0, Medium.query().count())
 

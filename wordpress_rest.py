@@ -222,9 +222,9 @@ class SuperfeedrNotify(superfeedr.Notify):
 
 # wordpress.com doesn't seem to use scope
 # https://developer.wordpress.com/docs/oauth2/
-start = util.oauth_starter(oauth_wordpress.Start).as_view('wordpress_start')
-app.add_url_rule('/wordpress/start', view_func=start),
-
+start = util.oauth_starter(oauth_wordpress.Start).as_view(
+  'wordpress_start', '/wordpress/add')
+app.add_url_rule('/wordpress/start', view_func=start)
 app.add_url_rule('/wordpress/add', view_func=Add.as_view('wordpress_add'))
 app.add_url_rule('/wordpress/notify/(.+)',
                  view_func=SuperfeedrNotify.as_view('wordpress_notify'))
