@@ -262,7 +262,7 @@ class Handler(webmention.WebmentionHandler):
         if code in self.source.DISABLE_HTTP_CODES or isinstance(e, models.DisableSource):
           # the user deauthorized the bridgy app, or the token expired, so
           # disable this source.
-          logging.warning('Disabling source due to: %s' % e, stack_info=True)
+          logging.warning(f'Disabling source due to: {e}', exc_info=True)
           self.source.status = 'disabled'
           self.source.put()
           # util.email_me(subject='Bridgy Publish: disabled %s' % self.source.label(),

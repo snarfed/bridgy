@@ -167,7 +167,7 @@ class ChooseBlog(oauth_medium.Callback):
     self.response.out.write(JINJA_ENV.get_template('choose_blog.html').render(**vars))
 
 
-class SuperfeedrNotifyHandler(superfeedr.NotifyHandler):
+class SuperfeedrNotify(superfeedr.Notify):
   SOURCE_CLS = Medium
 
 

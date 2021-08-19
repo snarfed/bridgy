@@ -74,11 +74,14 @@ class BlogWebmentionView(webmention.Webmention):
     # check that the target URL path is supported
     target_path = urllib.parse.urlparse(self.target_url).path
     if target_path in ('', '/'):
-      self.error('Home page webmentions are not currently supported.', status=202)
+      msg = 'Home page webmentions are not currently supported.'
+      logging.info(msg)
+      return {'error': msg}, 202
     for pattern in self.source.PATH_BLOCKLIST:
       if pattern.match(target_path):
-        self.error('%s webmentions are not supported for URL path: %s' %
-                   (self.source.GR_CLASS.NAME, target_path), status=202)
+        msg = f'{self.source.GR_CLASS.NAME} webmentions are not supported for URL path: {target_path}'
+        logging.info(msg)
+        return {'error': msg}, 202
 
     # create BlogWebmention entity
     id = '%s %s' % (self.source_url, self.target_url)
@@ -133,9 +136,9 @@ class BlogWebmentionView(webmention.Webmention):
         self.target_url, author_name, author_url, text)
     except Exception as e:
       code, body = util.interpret_http_exception(e)
-      msg = 'Error: %s %s; %s' % (code, e, body)
+      msg = 'Error: %s: %s; %s' % (code, e, body)
       if code == '401':
-        logging.warning('Disabling source due to: %s' % e, stack_info=True)
+        logging.warning(f'Disabling source due to: {e}', exc_info=True)
         self.source.status = 'disabled'
         self.source.put()
         self.error(msg, status=code, report=self.source.is_beta_user())
@@ -143,7 +146,7 @@ class BlogWebmentionView(webmention.Webmention):
         # post is gone
         self.error(msg, status=code, report=False)
       elif util.is_connection_failure(e) or (code and int(code) // 100 == 5):
-        self.error(msg, status=util.ERROR_HTTP_RETURN_CODE, report=False)
+        self.error(msg, status=502, report=False)
       elif code or body:
         self.error(msg, status=code, report=True)
       else:

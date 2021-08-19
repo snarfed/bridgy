@@ -1,10 +1,10 @@
 # coding=utf-8
 """Unit tests for superfeedr.py.
 """
+from flask import Flask
 from google.cloud.ndb.key import _MAX_KEYPART_BYTES
 from google.cloud.ndb._datastore_types import _MAX_STRING_LENGTH
 from mox3 import mox
-from oauth_dropins.webutil.util import json_dumps, json_loads
 import webapp2
 
 from models import BlogPost
@@ -12,21 +12,26 @@ import superfeedr
 from . import testutil
 
 
-class FakeNotifyHandler(superfeedr.NotifyHandler):
+class FakeNotify(superfeedr.Notify):
   SOURCE_CLS = testutil.FakeSource
 
-fake_app = webapp2.WSGIApplication([('/notify/(.+)', FakeNotifyHandler)], debug=True)
 
-
-class SuperfeedrTest(testutil.TestCase):
+class SuperfeedrTest(testutil.ModelsTest, testutil.ViewTest):
 
   def setUp(self):
     super(SuperfeedrTest, self).setUp()
+
+    self.app = Flask('test_superfeedr')
+    self.app.add_url_rule('/notify/<id>', methods=['POST'],
+                          view_func=FakeNotify.as_view('test_superfeedr'))
+    self.app.config['ENV'] = 'development'
+    self.client = self.app.test_client()
+
     self.source = testutil.FakeSource(id='foo.com', domains=['foo.com'],
                                       features=['webmention'])
     self.source.put()
     self.item = {'id': 'A', 'content': 'B'}
-    self.feed = json_dumps({'items': [self.item]})
+    self.feed = {'items': [self.item]}
 
   def assert_blogposts(self, expected):
     got = list(BlogPost.query())
@@ -42,7 +47,7 @@ class SuperfeedrTest(testutil.TestCase):
       }
     item_a = {'permalinkUrl': 'A', 'content': 'a http://a.com a'}
     item_b = {'permalinkUrl': 'B', 'summary': 'b http://b.com b'}
-    feed = json_dumps({'items': [item_a, {}, item_b]})
+    feed = {'items': [item_a, {}, item_b]}
     self.expect_requests_post(superfeedr.PUSH_API_URL, feed,
                               data=expected, auth=mox.IgnoreArg())
 
@@ -54,8 +59,9 @@ class SuperfeedrTest(testutil.TestCase):
     self.expect_task('propagate-blogpost', key=post_b)
     self.mox.ReplayAll()
 
-    superfeedr.subscribe(self.source, self.view)
-    self.assert_blogposts([post_a, post_b])
+    with self.app.test_request_context():
+      superfeedr.subscribe(self.source)
+      self.assert_blogposts([post_a, post_b])
 
   def test_handle_feed(self):
     item_a = {'permalinkUrl': 'A',
@@ -66,11 +72,11 @@ class SuperfeedrTest(testutil.TestCase):
     self.expect_task('propagate-blogpost', key=post_a)
     self.mox.ReplayAll()
 
-    superfeedr.handle_feed(json_dumps({'items': [item_a]}), self.source)
+    superfeedr.handle_feed({'items': [item_a]}, self.source)
     self.assert_blogposts([post_a])
 
   def test_handle_feed_no_items(self):
-    superfeedr.handle_feed('{}', self.source)
+    superfeedr.handle_feed({}, self.source)
     self.assert_blogposts([])
 
   def test_handle_feed_disabled_source(self):
@@ -90,7 +96,7 @@ class SuperfeedrTest(testutil.TestCase):
     self.expect_task('propagate-blogpost', key=BlogPost(id='A'))
     self.mox.ReplayAll()
 
-    superfeedr.handle_feed(json_dumps({'items': [item]}), self.source)
+    superfeedr.handle_feed({'items': [item]}, self.source)
     self.assert_equals(['https://brid.gy/publish/twitter'],
                        BlogPost.get_by_id('A').unsent)
 
@@ -105,7 +111,7 @@ class SuperfeedrTest(testutil.TestCase):
     self.expect_task('propagate-blogpost', key=post)
     self.mox.ReplayAll()
 
-    superfeedr.handle_feed(json_dumps({'items': [item]}), self.source)
+    superfeedr.handle_feed({'items': [item]}, self.source)
     self.assert_blogposts([post])
 
   def test_handle_feed_cleans_links(self):
@@ -119,7 +125,7 @@ class SuperfeedrTest(testutil.TestCase):
     self.expect_task('propagate-blogpost', key=post)
     self.mox.ReplayAll()
 
-    superfeedr.handle_feed(json_dumps({'items': [item]}), self.source)
+    superfeedr.handle_feed({'items': [item]}, self.source)
     self.assert_blogposts([post])
 
   def test_notify_view(self):
@@ -129,16 +135,13 @@ class SuperfeedrTest(testutil.TestCase):
     self.expect_task('propagate-blogpost', key=post)
     self.mox.ReplayAll()
 
-    self.feed = json_dumps({'items': [item]})
-    resp = self.client.post('/notify/foo.com', json=self.feed)
-
+    resp = self.client.post('/notify/foo.com', json={'items': [item]})
     self.assertEqual(200, resp.status_code)
     self.assert_blogposts([post])
 
   def test_notify_url_too_long(self):
     item = {'id': 'X' * (_MAX_KEYPART_BYTES + 1), 'content': 'a http://x/y z'}
-    self.feed = json_dumps({'items': [item]})
-    resp = self.client.post('/notify/foo.com', json=self.feed)
+    resp = self.client.post('/notify/foo.com', json={'items': [item]})
 
     self.assertEqual(200, resp.status_code)
     self.assert_blogposts([BlogPost(id='X' * _MAX_KEYPART_BYTES,
@@ -153,15 +156,13 @@ class SuperfeedrTest(testutil.TestCase):
     self.expect_task('propagate-blogpost', key=post)
     self.mox.ReplayAll()
 
-    self.feed = json_dumps({'items': [item]})
-    resp = self.client.post('/notify/foo.com', json=self.feed)
-
+    resp = self.client.post('/notify/foo.com', json={'items': [item]})
     self.assertEqual(200, resp.status_code)
     self.assert_blogposts([post])
 
   def test_notify_utf8(self):
     """Check that we handle unicode chars in content ok, including logging."""
-    self.feed = '{"items": [{"id": "X", "content": "a ☕ z"}]}'
+    self.feed = {'items': [{'id': 'X', 'content': 'a ☕ z'}]}
     resp = self.client.post('/notify/foo.com', json=self.feed)
 
     self.assertEqual(200, resp.status_code)
@@ -179,5 +180,5 @@ class SuperfeedrTest(testutil.TestCase):
     self.expect_task('propagate-blogpost', key=post_a)
     self.mox.ReplayAll()
 
-    superfeedr.handle_feed(json_dumps({'items': [item_a]}), self.source)
+    superfeedr.handle_feed({'items': [item_a]}, self.source)
     self.assert_blogposts([post_a])

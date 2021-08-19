@@ -25,7 +25,7 @@ from google.protobuf.timestamp_pb2 import Timestamp
 import google.protobuf.message
 import humanize
 from oauth_dropins.webutil.appengine_config import error_reporting_client, tasks_client
-from oauth_dropins.webutil.appengine_info import APP_ID, LOCAL
+from oauth_dropins.webutil.appengine_info import APP_ID, DEBUG, LOCAL
 from oauth_dropins.webutil.flask_util import error
 from oauth_dropins.webutil.models import StringIdModel
 from oauth_dropins.webutil import util
@@ -220,8 +220,9 @@ def report_error(msg, **kwargs):
   try:
     error_reporting_client.report(msg, **kwargs)
   except BaseException:
-    logging.warning('Failed to report error to StackDriver! %s %s', msg, kwargs,
-                    stack_info=True)
+    if not DEBUG:
+      logging.warning('Failed to report error to StackDriver! %s %s', msg, kwargs,
+                      exc_info=True)
 
 
 def requests_get(url, **kwargs):

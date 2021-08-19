@@ -94,7 +94,7 @@ class Poll(webapp2.RequestHandler):
       if code in source.DISABLE_HTTP_CODES or isinstance(e, models.DisableSource):
         # the user deauthorized the bridgy app, so disable this source.
         # let the task complete successfully so that it's not retried.
-        logging.warning('Disabling source due to: %s' % e, stack_info=True)
+        logging.warning(f'Disabling source due to: {e}', exc_info=True)
         source.updates.update({
           'status': 'disabled',
           'poll_status': 'ok',

@@ -11,10 +11,10 @@ import json
 import logging
 
 from flask import request
+from flask.views import View
 from google.cloud.ndb.key import _MAX_KEYPART_BYTES
 from google.cloud.ndb._datastore_types import _MAX_STRING_LENGTH
 from oauth_dropins.webutil import appengine_info
-from oauth_dropins.webutil.util import json_dumps, json_loads
 from requests.auth import HTTPBasicAuth
 
 import models
@@ -43,8 +43,7 @@ def subscribe(source):
   data = {
     'hub.mode': 'subscribe',
     'hub.topic': source.feed_url(),
-    'hub.callback': urllib.parse.urljoin(
-      util.host_url(), '/{source.SHORT_NAME}/notify/{source.key_id()}'),
+    'hub.callback': util.host_url(f'/{source.SHORT_NAME}/notify/{source.key_id()}'),
     # TODO
     # 'hub.secret': 'xxx',
     'format': 'json',
@@ -56,8 +55,7 @@ def subscribe(source):
     PUSH_API_URL, data=data,
     auth=HTTPBasicAuth(SUPERFEEDR_USERNAME, SUPERFEEDR_TOKEN),
     headers=util.REQUEST_HEADERS)
-  resp.raise_for_status()
-  handle_feed(resp.text, source)
+  handle_feed(resp.json(), source)
 
 
 def handle_feed(feed, source):
@@ -83,7 +81,7 @@ def handle_feed(feed, source):
     logging.info("Dropping because source doesn't have webmention feature")
     return
 
-  for item in json_loads(feed).get('items', []):
+  for item in feed.get('items', []):
     url = item.get('permalinkUrl') or item.get('id')
     if not url:
       logging.error('Dropping feed item without permalinkUrl or id!')
@@ -123,7 +121,7 @@ def handle_feed(feed, source):
     bp.get_or_save()
 
 
-class NotifyHandler():
+class Notify(View):
   """Handles a Superfeedr notification.
 
   Abstract; subclasses must set the SOURCE_CLS attr.
@@ -132,7 +130,9 @@ class NotifyHandler():
   """
   SOURCE_CLS = None
 
-  def post(self, id):
+  def dispatch_request(self, id):
     source = self.SOURCE_CLS.get_by_id(id)
     if source:
-      handle_feed(request.text, source)
+      handle_feed(request.json, source)
+
+    return ''

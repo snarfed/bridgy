@@ -245,8 +245,7 @@ X http://FoO.cOm/post/1
     self.expect_mention()
     self.mox.ReplayAll()
 
-    resp = self.post(target=urllib.parse.quote(
-        'http://foo.com/post/1?utm_source=x&utm_medium=y'))
+    resp = self.post(target='http://foo.com/post/1?utm_source=x&utm_medium=y')
     self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
     bw = BlogWebmention.get_by_id('http://bar.com/reply http://foo.com/post/1')
     self.assertEqual('complete', bw.status)
@@ -420,12 +419,12 @@ i hereby mention
   def test_create_comment_500s(self):
     self.expect_mention().AndRaise(exceptions.InternalServerError('oops'))
     self.mox.ReplayAll()
-    self.assert_error('oops', status=util.ERROR_HTTP_RETURN_CODE)
+    self.assert_error('oops', status=502)
 
   def test_create_comment_raises_connection_error(self):
     self.expect_mention().AndRaise(requests.ConnectionError('oops'))
     self.mox.ReplayAll()
-    self.assert_error('oops', status=util.ERROR_HTTP_RETURN_CODE)
+    self.assert_error('oops', status=502)
 
   def test_sources_global(self):
     self.assertIsNotNone(models.sources['blogger'])

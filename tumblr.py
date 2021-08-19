@@ -264,7 +264,7 @@ class AddTumblr():
       )
 
 
-class SuperfeedrNotifyHandler(superfeedr.NotifyHandler):
+class SuperfeedrNotify(superfeedr.Notify):
   SOURCE_CLS = Tumblr
 
 

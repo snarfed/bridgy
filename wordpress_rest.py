@@ -218,7 +218,7 @@ class ConfirmSelfHosted():
       flask_util.get_required_param('state'))
 
 
-class SuperfeedrNotifyHandler(superfeedr.NotifyHandler):
+class SuperfeedrNotify(superfeedr.Notify):
   SOURCE_CLS = WordPress
 
 

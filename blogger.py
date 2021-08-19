@@ -217,7 +217,7 @@ class AddBlogger():
     )
 
 
-class SuperfeedrNotifyHandler(superfeedr.NotifyHandler):
+class SuperfeedrNotify(superfeedr.Notify):
   SOURCE_CLS = Blogger
 
 
