@@ -3,7 +3,6 @@ import datetime
 import logging
 import models
 import util
-import webapp2
 
 from flask import request
 from google.cloud import ndb
@@ -39,11 +38,10 @@ class Flickr(models.Source):
   username = ndb.StringProperty()
 
   @staticmethod
-  def new(handler, auth_entity=None, **kwargs):
+  def new(auth_entity=None, **kwargs):
     """Creates and returns a :class:`Flickr` for the logged in user.
 
     Args:
-      handler: the current :class:`webapp2.RequestHandler`
       auth_entity: :class:`oauth_dropins.flickr.FlickrAuth`
     """
     person = json_loads(auth_entity.user_json).get('person', {})

@@ -23,7 +23,7 @@ TWITTER_API_USER_LOOKUP = 'users/lookup.json?screen_name=%s'
 TWITTER_USERS_PER_LOOKUP = 100  # max # of users per API call
 
 
-class replace_poll_tasks():
+def replace_poll_tasks():
   """Finds sources missing their poll tasks and adds new ones."""
   now = datetime.datetime.now()
   queries = [cls.query(Source.features == 'listen', Source.status == 'enabled')
@@ -36,7 +36,7 @@ class replace_poll_tasks():
       util.add_poll_task(source)
 
 
-class update_twitter_pictures():
+def update_twitter_pictures():
   """Finds :class:`Twitter` sources with new profile pictures and updates them.
 
   https://github.com/snarfed/granary/commit/dfc3d406a20965a5ed14c9705e3d3c2223c8c3ff
@@ -71,7 +71,7 @@ class update_twitter_pictures():
       updated = maybe_update_picture(source, new_actor, self)
 
 
-class UpdatePictures(webapp2.RequestHandler):
+class UpdatePictures(util.View):
   """Finds sources with new profile pictures and updates them."""
   SOURCE_CLS = None
 
@@ -138,7 +138,7 @@ def maybe_update_picture(source, new_actor, handler):
   return True
 
 
-class BuildCircle(webapp2.RequestHandler):
+class BuildCircle(util.View):
   """Trigger CircleCI to build and test the main branch.
 
   ...to run twitter_live_test.py, to check that scraping likes is still working.

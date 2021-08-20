@@ -12,7 +12,6 @@ from granary import twitter as gr_twitter
 from granary import source as gr_source
 from oauth_dropins import twitter as oauth_twitter
 from oauth_dropins.webutil.util import json_dumps, json_loads
-import webapp2
 
 import models
 import util

@@ -15,7 +15,6 @@ import models
 from models import BlogWebmention
 import util
 import tumblr
-import webapp2
 import webmention
 import wordpress_rest
 

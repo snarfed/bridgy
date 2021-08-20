@@ -8,7 +8,6 @@ from granary import reddit as gr_reddit
 from granary import source as gr_source
 from oauth_dropins import reddit as oauth_reddit
 from oauth_dropins.webutil.util import json_dumps, json_loads
-import webapp2
 
 import models
 import util
@@ -29,11 +28,10 @@ class Reddit(models.Source):
   CAN_PUBLISH = False
 
   @staticmethod
-  def new(handler, auth_entity=None, **kwargs):
+  def new(auth_entity=None, **kwargs):
     """Creates and returns a :class:`Reddit` entity.
 
     Args:
-      handler: the current :class:`webapp2.RequestHandler`
       auth_entity: :class:`oauth_dropins.reddit.RedditAuth`
       kwargs: property values
     """

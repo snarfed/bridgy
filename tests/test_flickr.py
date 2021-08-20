@@ -66,6 +66,7 @@ class FlickrTest(testutil.TestCase):
     self.flickr.features = ['listen']
     self.flickr.put()
     self.assertEqual('enabled', self.flickr.status)
+
     self.client.post('/_ah/queue/poll', data={
       'source_key': self.flickr.key.urlsafe().decode(),
       'last_polled': '1970-01-01-00-00-00',

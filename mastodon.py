@@ -7,7 +7,6 @@ from granary import source as gr_source
 import oauth_dropins.mastodon
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
-import webapp2
 
 import models
 import util
@@ -70,11 +69,10 @@ class Mastodon(models.Source):
       headers=util.REQUEST_HEADERS)
 
   @staticmethod
-  def new(handler, auth_entity=None, **kwargs):
+  def new(auth_entity=None, **kwargs):
     """Creates and returns a :class:`Mastodon` entity.
 
     Args:
-      handler: the current :class:`webapp2.RequestHandler`
       auth_entity: :class:`oauth_dropins.mastodon.MastodonAuth`
       kwargs: property values
     """

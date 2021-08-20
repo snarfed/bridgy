@@ -24,7 +24,6 @@ from oauth_dropins import (
 )
 from oauth_dropins.webutil import appengine_info
 from oauth_dropins.webutil.util import json_dumps, json_loads
-import webapp2
 
 from flickr import Flickr
 from github import GitHub

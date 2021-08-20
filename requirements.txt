@@ -22,4 +22,3 @@ humanize~=3.10
 lxml~=4.6.3
 mox3~=1.1
 requests~=2.26
-webapp2>=3.0.0b1

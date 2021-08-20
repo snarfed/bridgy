@@ -6,7 +6,6 @@ from flask import request
 from granary import github as gr_github
 from oauth_dropins import github as oauth_github
 from oauth_dropins.webutil.util import json_dumps, json_loads
-import webapp2
 
 from models import Source
 import util
@@ -45,11 +44,10 @@ class GitHub(Source):
   IGNORE_SYNDICATION_LINK_FRAGMENTS = True
 
   @staticmethod
-  def new(handler, auth_entity=None, **kwargs):
+  def new(auth_entity=None, **kwargs):
     """Creates and returns a :class:`GitHub` for the logged in user.
 
     Args:
-      handler: the current :class:`webapp2.RequestHandler`
       auth_entity: :class:`oauth_dropins.github.GitHubAuth`
       kwargs: property values
     """

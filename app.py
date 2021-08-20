@@ -17,7 +17,6 @@ from oauth_dropins.webutil import appengine_info, flask_util, logs
 from oauth_dropins.webutil.appengine_config import ndb_client
 from oauth_dropins.webutil.flask_util import error
 from oauth_dropins.webutil.util import json_dumps, json_loads
-import webapp2
 
 import appengine_config
 # from blogger import Blogger

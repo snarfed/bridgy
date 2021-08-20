@@ -5,7 +5,6 @@ import logging
 from granary import meetup as gr_meetup
 from oauth_dropins import meetup as oauth_meetup
 from oauth_dropins.webutil.util import json_dumps, json_loads
-import webapp2
 
 from models import Source
 import util
@@ -29,11 +28,10 @@ class Meetup(Source):
     headers=util.REQUEST_HEADERS)
 
   @staticmethod
-  def new(handler, auth_entity=None, **kwargs):
+  def new(auth_entity=None, **kwargs):
     """Creates and returns a :class:`Meetup` for the logged in user.
 
     Args:
-      handler: the current :class:`webapp2.RequestHandler`
       auth_entity: :class:`oauth_dropins.meetup.MeetupAuth`
       kwargs: property values
     """
