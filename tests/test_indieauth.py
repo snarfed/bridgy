@@ -9,6 +9,7 @@ from oauth_dropins.webutil.util import json_dumps, json_loads
 from oauth_dropins import indieauth
 import requests
 
+import indieauth as _  # just need to register the endpoints
 from models import Domain
 from . import testutil
 import util
@@ -56,7 +57,7 @@ class IndieAuthTest(testutil.AppTest):
 
     resp = self.callback()
     self.assertEqual('http://localhost/',resp.headers['Location'])
-    self.assertEqual('Authorized you for snarfed.org.', get_flashed_messages())
+    self.assertEqual(['Authorized you for snarfed.org.'], get_flashed_messages())
 
     self.assert_entities_equal([
       Domain(id='snarfed.org', tokens=['towkin'], auth=self.auth_entity.key),

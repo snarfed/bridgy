@@ -1,24 +1,23 @@
-"""IndieAuth handlers for authenticating and proving ownership of a domain.
-"""
+"""IndieAuth handlers for authenticating and proving ownership of a domain."""
+from flask import flash
 from google.cloud import ndb
 from oauth_dropins import indieauth
 
+from flask_app import app
 from models import Domain
 import util
 from util import redirect
 
 
+app.route('/indieauth/start', methods=['GET'])
+def indieauth_enter_web_site():
+  """Serves the "Enter your web site" form page."""
+  return render_template('indieauth.html',
+                         token=flask_util.get_required_param('token'))
+
+
 class Start(indieauth.Start):
-  """Serves the "Enter your web site" form page; starts the IndieAuth flow."""
-  def template_file(self):
-    return 'indieauth.html'
-
-  def template_vars(self):
-    return {
-      'token': flask_util.get_required_param('token'),
-      **super().template_vars(),
-    }
-
+  """Starts the IndieAuth flow."""
   def post(self):
     try:
       return redirect(redirect_url(state=flask_util.get_required_param('token')))
@@ -31,24 +30,31 @@ class Start(indieauth.Start):
 
 class Callback(indieauth.Callback):
   """IndieAuth callback handler."""
-  @ndb.transactional()
+  def __init__(self, *args, **kwargs):
+    super().__init__('unused to_path', *args, **kwargs)
+
   def finish(self, auth_entity, state=None):
     if not auth_entity:
       return
 
     assert state
-    domain = Domain.get_or_insert(util.domain_from_link(
-      util.replace_test_domains_with_localhost(auth_entity.key.id())))
-    domain.auth = auth_entity.key
-    if state not in domain.tokens:
-      domain.tokens.append(state)
-    domain.put()
 
-    flash(f'Authorized you for {domain.key.id()}.')
+    @ndb.transactional()
+    def add_or_update_domain():
+      domain = Domain.get_or_insert(util.domain_from_link(
+        util.replace_test_domains_with_localhost(auth_entity.key.id())))
+      domain.auth = auth_entity.key
+      if state not in domain.tokens:
+        domain.tokens.append(state)
+      domain.put()
+      flash(f'Authorized you for {domain.key.id()}.')
+
+    add_or_update_domain()
     return redirect('/')
 
 
-# ROUTES = [
-#   ('/indieauth/start', Start.to('/indieauth/callback')),
-#   ('/indieauth/callback', Callback),
-# ]
+app.add_url_rule('/indieauth/start',
+                 view_func=Start.as_view('indieauth_start', '/indieauth/callback'),
+                 methods=['POST'])
+app.add_url_rule('/indieauth/callback',
+                 view_func=Callback.as_view('indieauth_callback'))
