@@ -1,7 +1,7 @@
 """Mastodon source and datastore model classes."""
 import logging
 
-from flask import request
+from flask import flash, render_template, request
 from granary import mastodon as gr_mastodon
 from granary import source as gr_source
 import oauth_dropins.mastodon
@@ -117,7 +117,7 @@ class Mastodon(models.Source):
     source = kwargs.get('source')
     instance = source.instance() if source else ''
     scopes = SCOPE_SEPARATOR.join(
-      PUBLISH_SCOPES if 'publish' in features else LISTEN_SCOPES)
+      PUBLISH_SCOPES if 'publish' in feature else LISTEN_SCOPES)
     return """\
 <form method="%s" action="/mastodon/start">
   <input type="image" class="mastodon-button shadow" alt="Sign in with Mastodon"
@@ -174,6 +174,14 @@ def enter_your_instance():
 class Start(oauth_dropins.mastodon.Start):
   DEFAULT_SCOPE = SCOPE_SEPARATOR.join(LISTEN_SCOPES)
 
+  def redirect_url(self, *args, **kwargs):
+    try:
+      return super().redirect_url(*args, **kwargs)
+    except ValueError as e:
+      logging.warning('Bad Mastodon instance', exc_info=True)
+      flash(util.linkify(str(e), pretty=True))
+      return redirect(request.path)
+
 
 class Callback(oauth_dropins.mastodon.Callback):
   def finish(self, auth_entity, state=None):
@@ -189,8 +197,8 @@ class Callback(oauth_dropins.mastodon.Callback):
 
 
 app.add_url_rule('/mastodon/start',
-                 view_func=oauth_dropins.mastodon.Start.as_view('mastodon_start'), methods=['POST'])
-app.add_url_rule('/mastodon/callback', view_func=Callback.as_view('mastodon_callback'))
+                 view_func=Start.as_view('mastodon_start', '/mastodon/callback'), methods=['POST'])
+app.add_url_rule('/mastodon/callback', view_func=Callback.as_view('mastodon_callback', 'unused'))
 app.add_url_rule('/mastodon/delete/finish',
                  view_func=oauth_dropins.mastodon.Callback.as_view('mastodon_delete_finish', '/delete/finish'))
 app.add_url_rule('/mastodon/publish/start',
