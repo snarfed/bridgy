@@ -524,8 +524,11 @@ class Source(StringIdModel, metaclass=SourceMeta):
     logging.debug('URLs/domains: %s %s', source.domain_urls, source.domains)
 
     # check if this source already exists
+    print('@@', source.key)
     existing = source.key.get()
+    print(repr(existing))
     if existing:
+      print('@@@')
       # merge some fields
       source.features = set(source.features + existing.features)
       source.populate(**existing.to_dict(include=(

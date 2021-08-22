@@ -230,26 +230,31 @@ class SourceTest(testutil.AppTest):
     self.assertEqual(twitter.Twitter, models.sources['twitter'])
     self.assertEqual(wordpress_rest.WordPress, models.sources['wordpress'])
 
-  def _test_create_new(self, **kwargs):
-    FakeSource.create.new(domains=['foo'],
-                          domain_urls=['http://foo.com'],
-                          webmention_endpoint='http://x/y',
-                          **kwargs)
+  def _test_create_new(self, expected_msg, **kwargs):
+    self.clear_datastore()
+
+    with self.app.test_request_context():
+      FakeSource.create_new(domains=['foo'],
+                            domain_urls=['http://foo.com'],
+                            webmention_endpoint='http://x/y',
+                            **kwargs)
+      flashed = get_flashed_messages()
+      self.assertEqual(1, len(flashed))
+      self.assertIn(expected_msg, flashed[0])
+
     self.assertEqual(1, FakeSource.query().count())
     source = FakeSource.query().get()
     self.assertEqual('fake (FakeSource)', source.label())
 
   def test_create_new(self):
-    self.assertEqual(0, FakeSource.query().count())
-
     key = FakeSource.next_key()
     for queue in 'poll-now', 'poll':
       self.expect_task(queue, source_key=key, last_polled='1970-01-01-00-00-00')
     self.mox.ReplayAll()
 
-    self._test_create_new(features=['listen'])
-    msg = "Added fake (FakeSource). Refresh in a minute to see what we've found!"
-    self.assert_equals([msg], get_flashed_messages())
+    self._test_create_new(
+      "Added fake (FakeSource). Refresh in a minute to see what we've found!",
+      features=['listen'])
 
   def test_escape_key_id(self):
     s = Source(id='__foo__')
@@ -310,6 +315,7 @@ class SourceTest(testutil.AppTest):
       'superfeedr_secret': 'asdfqwert',
       }
     key = FakeSource.new(features=['listen'], **props).put()
+    print('@', key)
     self.assert_equals(['listen'], FakeSource.query().get().features)
 
     for queue in 'poll-now', 'poll':
@@ -320,18 +326,20 @@ class SourceTest(testutil.AppTest):
     auth_entity = testutil.FakeAuthEntity(
       id='x', user_json=json_dumps({'url': 'http://foo.com/'}))
     auth_entity.put()
-    self._test_create_new(auth_entity=auth_entity, features=['publish'])
+    # XXX TODO create_new() has the same key, FakeSource 1, that was put()
+    # above, but its get() doesn't see it. ?!?
+    self._test_create_new('Updated fake (FakeSource)', auth_entity=auth_entity,
+                          features=['publish'])
 
     source = FakeSource.query().get()
     self.assert_equals(['listen', 'publish'], source.features)
     for prop, value in props.items():
       self.assert_equals(value, getattr(source, prop), prop)
 
-    self.assertIn('Updated fake (FakeSource)', get_flashed_messages()[0])
-
   def test_create_new_publish(self):
     """If a source is publish only, we shouldn't insert a poll task."""
-    FakeSource.create.new(features=['publish'])
+    with self.app.test_request_context():
+      FakeSource.create_new(features=['publish'])
     # tasks_client is stubbed out, it will complain if it gets called
 
   def test_create_new_webmention(self):
@@ -343,11 +351,12 @@ class SourceTest(testutil.AppTest):
       assert isinstance(source, FakeSource)
       assert source.is_saved
       return True
-    superfeedr.subscribe(mox.Func(check_source), self.view)
+    superfeedr.subscribe(mox.Func(check_source))
 
     self.mox.ReplayAll()
-    FakeSource.create.new(features=['webmention'],
-                          domains=['primary/'], domain_urls=['http://primary/'])
+    with self.app.test_request_context():
+      FakeSource.create_new(features=['webmention'],
+                            domains=['primary/'], domain_urls=['http://primary/'])
 
   def test_create_new_domain(self):
     """If the source has a URL set, extract its domain."""
@@ -370,7 +379,8 @@ class SourceTest(testutil.AppTest):
       if user_json is not None:
         auth_entity = testutil.FakeAuthEntity(id='x', user_json=json_dumps(user_json))
         auth_entity.put()
-      source = FakeSource.create.new(auth_entity=auth_entity)
+      with self.app.test_request_context():
+        source = FakeSource.create_new(auth_entity=auth_entity)
       self.assertEqual([], source.domains)
       self.assertEqual([], source.domain_urls)
 
@@ -381,7 +391,8 @@ class SourceTest(testutil.AppTest):
       auth_entity = testutil.FakeAuthEntity(
         id='x', user_json=json_dumps({'url': url}))
       auth_entity.put()
-      source = FakeSource.create.new(auth_entity=auth_entity)
+      with self.app.test_request_context():
+        source = FakeSource.create_new(auth_entity=auth_entity)
       self.assertEqual([url.lower()], source.domain_urls)
       self.assertEqual(['foo.com'], source.domains)
 
@@ -394,7 +405,8 @@ class SourceTest(testutil.AppTest):
                    'https://baj/biff?utm_campaign=x&utm_source=y')],
           }))
     auth_entity.put()
-    source = FakeSource.create.new(auth_entity=auth_entity)
+    with self.app.test_request_context():
+      source = FakeSource.create_new(auth_entity=auth_entity)
     self.assertEqual(['http://foo.org/', 'http://bar.com/', 'http://baz/',
                        'https://baj/biff'],
                       source.domain_urls)
@@ -408,7 +420,8 @@ class SourceTest(testutil.AppTest):
     self.expect_requests_head('http://orig', redirected_url='http://final')
     self.mox.ReplayAll()
 
-    source = FakeSource.create.new(auth_entity=auth_entity)
+    with self.app.test_request_context():
+      source = FakeSource.create_new(auth_entity=auth_entity)
     self.assertEqual(['http://final/'], source.domain_urls)
     self.assertEqual(['final'], source.domains)
 
@@ -421,7 +434,8 @@ class SourceTest(testutil.AppTest):
     self.expect_requests_head('http://site', redirected_url='https://site/path')
     self.mox.ReplayAll()
 
-    source = FakeSource.create.new(auth_entity=auth_entity)
+    with self.app.test_request_context():
+      source = FakeSource.create_new(auth_entity=auth_entity)
     self.assertEqual(['http://site/'], source.domain_urls)
     self.assertEqual(['site'], source.domains)
 
@@ -434,7 +448,8 @@ class SourceTest(testutil.AppTest):
     self.expect_requests_get('http://site', '<html><a href="http://site/path" rel="me">http://site/path</a></html>')
     self.mox.ReplayAll()
 
-    source = FakeSource.create.new(auth_entity=auth_entity)
+    with self.app.test_request_context():
+      source = FakeSource.create_new(auth_entity=auth_entity)
     self.assertEqual(['http://site/'], source.domain_urls)
     self.assertEqual(['site'], source.domains)
 
@@ -447,14 +462,16 @@ class SourceTest(testutil.AppTest):
     self.expect_requests_get('http://site')
     self.mox.ReplayAll()
 
-    source = FakeSource.create.new(auth_entity=auth_entity)
+    with self.app.test_request_context():
+      source = FakeSource.create_new(auth_entity=auth_entity)
     self.assertEqual(['http://site/path'], source.domain_urls)
     self.assertEqual(['site'], source.domains)
 
   def test_create_new_unicode_chars(self):
     """We should handle unusual unicode chars in the source's name ok."""
     # the invisible character in the middle is an unusual unicode character
-    FakeSource.create.new(name='a ✁ b')
+    with self.app.test_request_context():
+      FakeSource.create_new(name='a ✁ b')
 
   def test_create_new_rereads_domains(self):
     key = FakeSource.new(features=['listen'],
@@ -469,7 +486,8 @@ class SourceTest(testutil.AppTest):
       self.expect_task(queue, source_key=key, last_polled='1970-01-01-00-00-00')
 
     self.mox.ReplayAll()
-    source = FakeSource.create.new(auth_entity=auth_entity)
+    with self.app.test_request_context():
+      source = FakeSource.create_new(auth_entity=auth_entity)
     self.assertEqual(['http://bar/', 'http://baz/'], source.domain_urls)
     self.assertEqual(['bar', 'baz'], source.domains)
 
@@ -484,7 +502,8 @@ class SourceTest(testutil.AppTest):
     self.expect_requests_get('http://bar/', 'no webmention endpoint')
 
     self.mox.ReplayAll()
-    source = FakeSource.create.new(auth_entity=auth_entity)
+    with self.app.test_request_context():
+      source = FakeSource.create_new(auth_entity=auth_entity)
     self.assertEqual(['http://bar/', 'http://baz/', 'http://foo/'], source.domain_urls)
     self.assertEqual(['baz', 'foo', 'bar'], source.domains)
 
@@ -496,7 +515,8 @@ class SourceTest(testutil.AppTest):
                   {'value': 'http://foo'},
                 ]}))
     self.mox.ReplayAll()
-    source = FakeSource.create.new(auth_entity=auth_entity)
+    with self.app.test_request_context():
+      source = FakeSource.create_new(auth_entity=auth_entity)
     self.assertEqual(['https://foo/'], source.domain_urls)
     self.assertEqual(['foo'], source.domains)
 
@@ -510,7 +530,8 @@ class SourceTest(testutil.AppTest):
       self.expect_requests_head(url)
     self.mox.ReplayAll()
 
-    source = FakeSource.create.new(auth_entity=auth_entity)
+    with self.app.test_request_context():
+      source = FakeSource.create_new(auth_entity=auth_entity)
     self.assertEqual(urls, source.domain_urls)
     self.assertEqual([str(i) for i in range(10)], source.domains)
 
@@ -520,7 +541,8 @@ class SourceTest(testutil.AppTest):
     self.expect_requests_get('http://flaky', status_code=500)
     self.mox.ReplayAll()
 
-    source = FakeSource.create.new(auth_entity=auth_entity)
+    with self.app.test_request_context():
+      source = FakeSource.create_new(auth_entity=auth_entity)
     self.assertEqual(['http://flaky/foo'], source.domain_urls)
     self.assertEqual(['flaky'], source.domains)
 
@@ -531,7 +553,8 @@ class SourceTest(testutil.AppTest):
       requests.ConnectionError('DNS lookup failed for URL: http://bad/'))
     self.mox.ReplayAll()
 
-    source = FakeSource.create.new(auth_entity=auth_entity)
+    with self.app.test_request_context():
+      source = FakeSource.create_new(auth_entity=auth_entity)
     self.assertEqual(['http://flaky/foo'], source.domain_urls)
     self.assertEqual(['flaky'], source.domains)
 
