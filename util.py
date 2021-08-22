@@ -521,7 +521,7 @@ def construct_state_param_for_add(state=None, **kwargs):
   if not state_obj:
     state_obj = {field: request.values.get(field) for field in
                  ('callback', 'feature', 'id', 'user_url')}
-    state_obj['operation'] = 'add'
+    state_obj['operation'] = request.values.get('operation') or 'add'
 
   if kwargs:
     state_obj.update(kwargs)

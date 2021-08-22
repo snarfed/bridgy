@@ -8,6 +8,7 @@ import oauth_dropins.mastodon
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
 
+from flask_app import app
 import models
 import util
 from util import redirect
@@ -25,6 +26,7 @@ PUBLISH_SCOPES = LISTEN_SCOPES + (
   'write:favourites',
   'write:media',
 )
+SCOPE_SEPARATOR = oauth_dropins.mastodon.Start.SCOPE_SEPARATOR
 
 
 class Start(oauth_dropins.mastodon.Start):
@@ -114,14 +116,17 @@ class Mastodon(models.Source):
     """Override oauth-dropins's button_html() to not show the instance text box."""
     source = kwargs.get('source')
     instance = source.instance() if source else ''
+    scopes = SCOPE_SEPARATOR.join(
+      PUBLISH_SCOPES if 'publish' in features else LISTEN_SCOPES)
     return """\
 <form method="%s" action="/mastodon/start">
   <input type="image" class="mastodon-button shadow" alt="Sign in with Mastodon"
          src="/oauth_dropins_static/mastodon_large.png" />
   <input name="feature" type="hidden" value="%s" />
   <input name="instance" type="hidden" value="%s" />
+  <input name="scope" type="hidden" value="%s" />
 </form>
-""" % ('post' if instance else 'get', feature, instance)
+""" % ('post' if instance else 'get', feature, instance, scopes)
 
   def is_private(self):
     """Returns True if this Mastodon account is protected.
@@ -160,25 +165,14 @@ class Mastodon(models.Source):
         raise
 
 
-class InstanceHandler():
+@app.route('/mastodon/start', methods=['GET'])
+def enter_your_instance():
   """Serves the "Enter your instance" form page."""
-  def template_file(self):
-    return 'mastodon_instance.html'
+  return render_template('mastodon_instance.html')
 
-  def post(self):
-    features = (request.values.get('feature') or '').split(',')
-    start_cls = util.oauth_starter(Start).to('/mastodon/callback',
-      scopes=PUBLISH_SCOPES if 'publish' in features else LISTEN_SCOPES)
-    start = start_cls(request, self.response)
 
-    instance = flask_util.get_required_param('instance')
-    try:
-      return redirect(start.redirect_url(instance=instance))
-    except ValueError as e:
-      logging.warning('Bad Mastodon instance', stack_info=True)
-      flash(util.linkify(str(e), pretty=True))
-      return redirect(request.path)
-
+class Start(oauth_dropins.mastodon.Start):
+  DEFAULT_SCOPE = SCOPE_SEPARATOR.join(LISTEN_SCOPES)
 
 
 class Callback(oauth_dropins.mastodon.Callback):
@@ -194,10 +188,10 @@ class Callback(oauth_dropins.mastodon.Callback):
       source.put()
 
 
-# ROUTES = [
-#   ('/mastodon/start', InstanceHandler),
-#   ('/mastodon/callback', Callback),
-#   ('/mastodon/delete/finish', oauth_dropins.mastodon.Callback.to('/delete/finish')),
-#   ('/mastodon/publish/start', Start.to('/publish/mastodon/finish',
-#                                               scopes=PUBLISH_SCOPES)),
-# ]
+app.add_url_rule('/mastodon/start',
+                 view_func=oauth_dropins.mastodon.Start.as_view('mastodon_start'), methods=['POST'])
+app.add_url_rule('/mastodon/callback', view_func=Callback.as_view('mastodon_callback'))
+app.add_url_rule('/mastodon/delete/finish',
+                 view_func=oauth_dropins.mastodon.Callback.as_view('mastodon_delete_finish', '/delete/finish'))
+app.add_url_rule('/mastodon/publish/start',
+                 view_func=Start.as_view('mastodon_publish_finish', '/publish/mastodon/finish', scopes=PUBLISH_SCOPES), methods=['POST'])

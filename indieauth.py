@@ -18,7 +18,7 @@ def indieauth_enter_web_site():
 
 class Start(indieauth.Start):
   """Starts the IndieAuth flow."""
-  def post(self):
+  def dispatch_request(self):
     try:
       return redirect(redirect_url(state=flask_util.get_required_param('token')))
     except Exception as e:
@@ -30,9 +30,6 @@ class Start(indieauth.Start):
 
 class Callback(indieauth.Callback):
   """IndieAuth callback handler."""
-  def __init__(self, *args, **kwargs):
-    super().__init__('unused to_path', *args, **kwargs)
-
   def finish(self, auth_entity, state=None):
     if not auth_entity:
       return
@@ -57,4 +54,4 @@ app.add_url_rule('/indieauth/start',
                  view_func=Start.as_view('indieauth_start', '/indieauth/callback'),
                  methods=['POST'])
 app.add_url_rule('/indieauth/callback',
-                 view_func=Callback.as_view('indieauth_callback'))
+                 view_func=Callback.as_view('indieauth_callback', 'unused to_path'))
