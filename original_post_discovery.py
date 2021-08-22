@@ -294,7 +294,7 @@ def _process_author(source, author_url, refetch=False, store_blanks=True):
   except BaseException:
     # TODO limit allowed failures, cache the author's h-feed url
     # or the # of times we've failed to fetch it
-    logging.info('Could not fetch author url %s', author_url, stack_info=True)
+    logging.info('Could not fetch author url %s', author_url, exc_info=True)
     return {}
 
   feeditems = _find_feed_items(author_mf2)
@@ -326,7 +326,7 @@ def _process_author(source, author_url, refetch=False, store_blanks=True):
     except AssertionError:
       raise  # reraise assertions for unit tests
     except BaseException:
-      logging.info('Could not fetch h-feed url %s.', feed_url, stack_info=True)
+      logging.info('Could not fetch h-feed url %s.', feed_url, exc_info=True)
 
   # sort by dt-updated/dt-published
   def updated_or_published(item):
@@ -486,7 +486,7 @@ def process_entry(source, permalink, feed_entry, refetch, preexisting,
       raise  # for unit tests
     except BaseException:
       # TODO limit the number of allowed failures
-      logging.info('Could not fetch permalink %s', permalink, stack_info=True)
+      logging.info('Could not fetch permalink %s', permalink, exc_info=True)
       success = False
 
     if mf2:

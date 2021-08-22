@@ -207,7 +207,7 @@ class Poll(webapp2.RequestHandler):
           if ('BadRequestError' in str(e.__class__) or
               'Timeout' in str(e.__class__) or
               util.is_connection_failure(e)):
-            logging.info('Timeout while repropagating responses.', stack_info=True)
+            logging.info('Timeout while repropagating responses.', exc_info=True)
           else:
             raise
     else:
@@ -555,7 +555,7 @@ class SendWebmentions(webapp2.RequestHandler):
     try:
       self.do_send_webmentions()
     except:
-      logging.info('Propagate task failed', stack_info=True)
+      logging.info('Propagate task failed', exc_info=True)
       self.release('error')
       raise
 

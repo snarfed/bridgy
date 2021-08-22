@@ -517,7 +517,7 @@ class Handler(webmention.WebmentionHandler):
         except BaseException:
           # it's not a big deal if we can't fetch an in-reply-to url
           logging.info('expand_target_urls could not fetch field=%s, url=%s',
-                       field, url, stack_info=True)
+                       field, url, exc_info=True)
           continue
 
         synd_urls = mf2['rels'].get('syndication', [])

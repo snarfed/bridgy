@@ -685,7 +685,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
           final = root
       except requests.RequestException:
         logging.warning("Couldn't fetch %s, preserving path in %s",
-                        root, final, stack_info=True)
+                        root, final, exc_info=True)
 
     return final
 

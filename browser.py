@@ -346,7 +346,7 @@ class Reactions(BrowserView):
         request.get_data(as_text=True), activity_data)
     except ValueError as e:
       msg = "Couldn't parse scraped reactions: %s" % e
-      logging.error(msg, stack_info=True)
+      logging.error(msg, exc_info=True)
       error(msg)
 
     activity.activity_json = json_dumps(activity_data)

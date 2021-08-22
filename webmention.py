@@ -125,7 +125,7 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
       report: boolean, whether to report to StackDriver Error Reporting
       extra_json: dict to be merged into the JSON response body
     """
-    logging.info(f'{self.__class__.__module__}: {error}', stack_info=log_exception)
+    logging.info(f'{self.__class__.__module__}: {error}', exc_info=log_exception)
 
     if self.entity and self.entity.status == 'new':
       self.entity.status = 'failed'
