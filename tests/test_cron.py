@@ -55,6 +55,8 @@ class CronTest(testutil.BackgroundTest):
       'features': ['listen'],
       'last_webmention_sent': day_and_half_ago,
       }
+
+    self.clear_datastore()
     sources = [
       # doesn't need a new poll task
       FakeSource.new(last_poll_attempt=now, **defaults).put(),

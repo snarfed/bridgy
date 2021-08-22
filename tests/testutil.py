@@ -295,8 +295,7 @@ class TestCase(testutil.TestCase):
     self.client = self.app.test_client()
     self.client.__enter__()
 
-    # clear datastore
-    orig_requests_post(f'http://{ndb_client.host}/reset')
+    self.clear_datastore()
     self.ndb_context = ndb_client.context()
     self.ndb_context.__enter__()
 
@@ -466,6 +465,10 @@ class TestCase(testutil.TestCase):
     self.ndb_context.__exit__(None, None, None)
     self.client.__exit__(None, None, None)
     super().tearDown()
+
+  @staticmethod
+  def clear_datastore():
+    orig_requests_post(f'http://{ndb_client.host}/reset')
 
   def stub_create_task(self):
     if not self.stubbed_create_task:
