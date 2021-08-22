@@ -8,14 +8,14 @@ import urllib.request, urllib.error, urllib.parse
 from mox3 import mox
 from util import json_dumps, json_loads
 
-from app import app, cache
+from flask_app import app, cache
 import handlers
 import models
 from . import testutil
 from .testutil import FakeGrSource, FakeSource
 
 
-class HandlersTest(testutil.TestCase):
+class HandlersTest(testutil.AppTest):
 
   def setUp(self):
     super().setUp()

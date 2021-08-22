@@ -9,7 +9,7 @@ from . import testutil
 from reddit import Reddit
 
 
-class RedditTest(testutil.TestCase):
+class RedditTest(testutil.AppTest):
 
   def setUp(self):
     super().setUp()

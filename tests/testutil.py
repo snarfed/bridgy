@@ -20,10 +20,8 @@ from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
 from requests import post as orig_requests_post
 
-from app import app, cache
-import appengine_config
+import appengine_config, flask_app, flask_background, util
 from models import BlogPost, Publish, PublishedPage, Response, Source
-import util
 
 NOW = datetime.datetime.utcnow()
 
@@ -271,6 +269,8 @@ class FakeBlogSource(FakeSource):
 class TestCase(testutil.TestCase):
   """Base test class. Sets up Flask client and test data.
 
+  Use AppTest or BackgroundTest instead!
+
   Attributes:
     client: :class:`werkzeug.test.Client`
     sources: list of FakeSource
@@ -278,10 +278,10 @@ class TestCase(testutil.TestCase):
     publishes: list of one unsaved Publish
     blogposts: list of one unsaved BlogPost
   """
+  app = None  # overridden by subclasses
+
   def setUp(self):
     super().setUp()
-    self.client = app.test_client()
-    cache.clear()
     FakeGrSource.clear()
     util.now_fn = lambda: NOW
 
@@ -292,6 +292,7 @@ class TestCase(testutil.TestCase):
     self.stubbed_create_task = False
     tasks_client.create_task = lambda *args, **kwargs: Task(name='foo')
 
+    self.client = self.app.test_client()
     self.client.__enter__()
 
     # clear datastore
@@ -325,7 +326,7 @@ class TestCase(testutil.TestCase):
       entity.features = ['listen']
       entity.put()
 
-    with app.test_request_context():
+    with self.app.test_request_context():
       self.source_bridgy_url = self.sources[0].bridgy_url()
 
     self.actor = FakeGrSource.actor = {
@@ -526,3 +527,11 @@ class TestCase(testutil.TestCase):
   def expect_requests_head(self, *args, **kwargs):
     kwargs.setdefault('headers', {}).update(util.REQUEST_HEADERS)
     return super().expect_requests_head(*args, **kwargs)
+
+
+class AppTest(TestCase):
+  app = flask_app.app
+
+
+class BackgroundTest(TestCase):
+  app = flask_background.app

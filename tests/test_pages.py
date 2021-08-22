@@ -1,5 +1,5 @@
 # coding=utf-8
-"""Unit tests for app.py."""
+"""Unit tests for pages.py."""
 import datetime
 import urllib.request, urllib.parse, urllib.error
 from urllib.parse import urlencode
@@ -11,16 +11,19 @@ from oauth_dropins.twitter import TwitterAuth
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import tweepy
 
-import app
+from flask_app import app
 import models
 from models import Publish, PublishedPage, SyndicatedPost
+import pages
 import util
 from . import testutil
 from .testutil import FakeBlogSource
-import twitter
+
+# sources etc
+import blogger, facebook, flickr, github, indieauth, instagram, mastodon, meetup, medium, reddit, tumblr, twitter, wordpress_rest
 
 
-class AppTest(testutil.TestCase):
+class PagesTest(testutil.TestCase):
 
   def test_front_page(self):
     resp = self.client.get('/')
@@ -28,7 +31,7 @@ class AppTest(testutil.TestCase):
 
   def test_poll_now(self):
     key = self.sources[0].key.urlsafe().decode()
-    self.expect_task('poll-now', source_key=key, last_polled='1970-01-01-00-00-00')
+    self.expect_task ('poll-now', source_key=key, last_polled='1970-01-01-00-00-00')
     self.mox.ReplayAll()
 
     resp = self.client.post('/poll-now', data={'key': key})
@@ -220,7 +223,7 @@ class AppTest(testutil.TestCase):
       'localhost', 'logins',
       f'/fake/{self.sources[0].key.id()}?Fake%20User|/other/1?bob')
 
-    with app.app.test_request_context():
+    with app.test_request_context():
       state = util.construct_state_param_for_add(
         feature='listen', operation='delete',
         source=self.sources[0].key.urlsafe().decode())
@@ -246,11 +249,10 @@ class AppTest(testutil.TestCase):
     self.sources[0].put()
 
     for id in 'FooBar', 'Snoøpy Barrett', 'foox.com':
-      resp = self.client.get(
-        '/fake/%s' % urllib.parse.quote(id.encode()))
+      resp = self.client.get(f'/fake/{urllib.parse.quote(id.encode())}')
       self.assertEqual(301, resp.status_code)
-      self.assertEqual('http://localhost/fake/%s' % self.sources[0].key.id(),
-                        resp.headers['Location'])
+      self.assertEqual(f'http://localhost/fake/{self.sources[0].key.id()}',
+                       resp.headers['Location'])
 
     resp = self.client.get('/fake/nope')
     self.assertEqual(404, resp.status_code)
@@ -348,7 +350,7 @@ class AppTest(testutil.TestCase):
     self.assertNotIn('most of your recent posts are private', resp.get_data(as_text=True))
 
   def test_user_page_recent_private_posts(self):
-    self.sources[0].recent_private_posts = app.RECENT_PRIVATE_POSTS_THRESHOLD
+    self.sources[0].recent_private_posts = pages.RECENT_PRIVATE_POSTS_THRESHOLD
     self.sources[0].put()
 
     resp = self.client.get(self.sources[0].bridgy_path())

@@ -33,7 +33,7 @@ from util import ERROR_HTTP_RETURN_CODE, POLL_TASK_DATETIME_FORMAT
 LEASE_LENGTH = tasks.SendWebmentions.LEASE_LENGTH
 
 
-class TaskTest(testutil.TestCase):
+class TaskTest(testutil.BackgroundTest):
   """Attributes:
       post_url: the URL for post_task() to post to
   """

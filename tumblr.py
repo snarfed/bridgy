@@ -35,7 +35,7 @@ from oauth_dropins import tumblr as oauth_tumblr
 from oauth_dropins.webutil.util import json_dumps, json_loads
 from werkzeug.exceptions import BadRequest
 
-from app import app
+from flask_app import app
 import models
 import superfeedr
 import util
@@ -253,7 +253,7 @@ class ChooseBlog(oauth_tumblr.Callback):
 
 
 @app.route('/tumblr/add')
-def add():
+def tumblr_add():
   auth_entity_key = flask_util.get_required_param('auth_entity_key')
   util.maybe_add_or_delete_source(
     Tumblr,

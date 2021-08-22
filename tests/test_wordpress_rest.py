@@ -8,12 +8,12 @@ from oauth_dropins.webutil.util import json_dumps, json_loads
 from oauth_dropins.wordpress_rest import WordPressAuth
 from werkzeug.routing import RequestRedirect
 
-from app import app
+from flask_app import app
 from . import testutil
 from wordpress_rest import WordPress, Add
 
 
-class WordPressTest(testutil.TestCase):
+class WordPressTest(testutil.AppTest):
 
   def setUp(self):
     super().setUp()

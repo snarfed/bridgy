@@ -21,13 +21,12 @@ from granary.tests.test_facebook import (
 )
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
-import app
 from facebook import Facebook
 from models import Activity, Domain
 from . import testutil
 
 
-class FacebookTest(testutil.TestCase):
+class FacebookTest(testutil.AppTest):
 
   def setUp(self):
     super().setUp()

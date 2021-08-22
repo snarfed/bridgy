@@ -9,7 +9,7 @@ from oauth_dropins.webutil.util import json_dumps, json_loads
 from oauth_dropins.webutil import appengine_info
 from werkzeug.routing import RequestRedirect
 
-from app import app
+from flask_app import app
 from medium import ChooseBlog, Medium
 from . import testutil
 
@@ -39,7 +39,7 @@ PUBLICATIONS = {
   }],
 }
 
-class MediumTest(testutil.TestCase):
+class MediumTest(testutil.AppTest):
 
   def setUp(self):
     super().setUp()

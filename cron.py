@@ -6,11 +6,12 @@ import itertools
 import logging
 import math
 
+from flask.views import View
 from google.cloud import ndb
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
 
-from app import app
+from flask_background import app
 import models
 from models import Source
 from flickr import Flickr
@@ -23,6 +24,7 @@ TWITTER_API_USER_LOOKUP = 'users/lookup.json?screen_name=%s'
 TWITTER_USERS_PER_LOOKUP = 100  # max # of users per API call
 
 
+@app.route('/cron/replace_poll_tasks')
 def replace_poll_tasks():
   """Finds sources missing their poll tasks and adds new ones."""
   now = datetime.datetime.now()
@@ -35,7 +37,10 @@ def replace_poll_tasks():
                    source.bridgy_url(), age)
       util.add_poll_task(source)
 
+  return ''
 
+
+@app.route('/cron/update_twitter_pictures')
 def update_twitter_pictures():
   """Finds :class:`Twitter` sources with new profile pictures and updates them.
 
@@ -68,10 +73,12 @@ def update_twitter_pictures():
     source = sources.get(user['screen_name'])
     if source:
       new_actor = auther.gr_source.user_to_actor(user)
-      updated = maybe_update_picture(source, new_actor, self)
+      updated = maybe_update_picture(source, new_actor)
+
+  return ''
 
 
-class UpdatePictures(util.View):
+class UpdatePictures(View):
   """Finds sources with new profile pictures and updates them."""
   SOURCE_CLS = None
 
@@ -84,7 +91,7 @@ class UpdatePictures(util.View):
   def user_id(cls, source):
     return source.key_id()
 
-  def get(self):
+  def dispatch_request(self):
     updated = False
     for source in self.source_query():
       if source.features and source.status != 'disabled':
@@ -96,7 +103,9 @@ class UpdatePictures(util.View):
           # Mastodon API returns HTTP 404 for deleted (etc) users
           util.interpret_http_exception(e)
           continue
-        updated = maybe_update_picture(source, actor, self)
+        updated = maybe_update_picture(source, actor)
+
+    return ''
 
 
 class UpdateFlickrPictures(UpdatePictures):
@@ -105,6 +114,10 @@ class UpdateFlickrPictures(UpdatePictures):
   SOURCE_CLS = Flickr
   TRANSIENT_ERROR_HTTP_CODES = (Flickr.TRANSIENT_ERROR_HTTP_CODES +
                                 Flickr.RATE_LIMIT_HTTP_CODES)
+
+
+app.add_url_rule('/cron/update_flickr_pictures',
+                 view_func=UpdateFlickrPictures.as_view('update_flickr_pictures'))
 
 
 class UpdateMastodonPictures(UpdatePictures):
@@ -119,7 +132,7 @@ class UpdateMastodonPictures(UpdatePictures):
     return source.auth_entity.get().user_id()
 
 
-def maybe_update_picture(source, new_actor, handler):
+def maybe_update_picture(source, new_actor):
   if not new_actor:
     return False
   new_pic = new_actor.get('image', {}).get('url')
@@ -137,21 +150,15 @@ def maybe_update_picture(source, new_actor, handler):
   update()
   return True
 
+app.add_url_rule('/cron/update_mastodon_pictures',
+                 view_func=UpdateMastodonPictures.as_view('update_mastodon_pictures')),
 
-class BuildCircle(util.View):
+
+@app.route('/cron/build_circle')
+def build_circle():
   """Trigger CircleCI to build and test the main branch.
 
   ...to run twitter_live_test.py, to check that scraping likes is still working.
   """
-  def get(self):
-    resp = requests.post('https://circleci.com/api/v1.1/project/github/snarfed/bridgy/tree/main?circle-token=%s' % CIRCLECI_TOKEN)
-    resp.raise_for_status()
-
-
-# ROUTES = [
-#   ('/cron/build_circle', BuildCircle),
-#   ('/cron/replace_poll_tasks', ReplacePollTasks),
-#   ('/cron/update_flickr_pictures', UpdateFlickrPictures),
-#   ('/cron/update_mastodon_pictures', UpdateMastodonPictures),
-#   ('/cron/update_twitter_pictures', UpdateTwitterPictures),
-# ]
+  resp = requests.post('https://circleci.com/api/v1.1/project/github/snarfed/bridgy/tree/main?circle-token=%s' % CIRCLECI_TOKEN)
+  resp.raise_for_status()

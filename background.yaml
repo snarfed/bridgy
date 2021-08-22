@@ -4,7 +4,7 @@ runtime: python39
 
 # https://cloud.google.com/appengine/docs/standard/python3/runtime#entrypoint_best_practices
 # https://docs.gunicorn.org/en/latest/settings.html#timeout
-entrypoint: gunicorn --workers 1 --threads 10 --timeout 600 -b :$PORT tasks:application
+entrypoint: gunicorn --workers 1 --threads 10 --timeout 600 -b :$PORT background:app
 
 instance_class: B1
 manual_scaling:

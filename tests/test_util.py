@@ -14,7 +14,7 @@ import webapp2
 from werkzeug.exceptions import BadRequest
 from werkzeug.routing import RequestRedirect
 
-from app import app
+from flask_app import app
 from . import testutil
 from .testutil import FakeAuthEntity, FakeSource
 from twitter import Twitter
@@ -25,7 +25,7 @@ from util import Login
 UNICODE_STR = 'a ✁ b'
 
 
-class UtilTest(testutil.TestCase):
+class UtilTest(testutil.AppTest):
 
   def setUp(self):
     super().setUp()
@@ -307,7 +307,7 @@ class UtilTest(testutil.TestCase):
       self.assertEqual('https://a.xyz/foo/bar', util.host_url('/foo/bar'))
 
 
-class RegistrationCallbackTest(testutil.TestCase):
+class RegistrationCallbackTest(testutil.AppTest):
 
   class FakeAdd(oauth_views.Callback):
     """Serves the authorization callback when handling a fake source.

@@ -8,7 +8,7 @@ from mox3 import mox
 from oauth_dropins.webutil.util import json_dumps, json_loads
 from oauth_dropins.webutil import util
 
-from app import app
+from flask_app import app
 import browser
 from models import Activity, Domain
 from . import testutil
@@ -26,7 +26,7 @@ class FakeBrowserSource(browser.BrowserSource):
     return actor['fbs_id']
 
 
-class BrowserSourceTest(testutil.TestCase):
+class BrowserSourceTest(testutil.AppTest):
 
   def setUp(self):
     super().setUp()
@@ -96,7 +96,7 @@ class BrowserSourceTest(testutil.TestCase):
 
 browser.route(FakeBrowserSource)
 
-class BrowserViewTest(testutil.TestCase):
+class BrowserViewTest(testutil.AppTest):
   def setUp(self):
     super().setUp()
 

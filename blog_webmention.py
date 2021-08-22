@@ -9,7 +9,7 @@ from granary import microformats2
 from oauth_dropins.webutil import flask_util
 from oauth_dropins.webutil.util import get_first, json_dumps, json_loads
 
-from app import app
+from flask_app import app
 import blogger
 import models
 from models import BlogWebmention

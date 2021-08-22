@@ -24,7 +24,6 @@ from granary.tests.test_instagram import (
 )
 from oauth_dropins.webutil.util import HTTP_TIMEOUT, json_dumps, json_loads
 
-import app
 from instagram import Instagram
 from models import Activity, Domain
 from . import testutil
@@ -34,7 +33,7 @@ HTML_VIDEO_WITH_VIEWER['config'] = HTML_VIEWER_CONFIG
 HTML_VIDEO_COMPLETE = HTML_HEADER + json_dumps(HTML_VIDEO_WITH_VIEWER) + HTML_FOOTER
 
 
-class InstagramTest(testutil.TestCase):
+class InstagramTest(testutil.AppTest):
 
   def setUp(self):
     super().setUp()

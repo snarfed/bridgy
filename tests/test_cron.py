@@ -27,7 +27,7 @@ import tasks
 import util
 
 
-class CronTest(testutil.TestCase):
+class CronTest(testutil.BackgroundTest):
   def setUp(self):
     super().setUp()
     oauth_dropins.flickr_auth.FLICKR_APP_KEY = 'my_app_key'
@@ -39,7 +39,7 @@ class CronTest(testutil.TestCase):
       id='123@N00', user_json=json_dumps(test_flickr.PERSON_INFO),
       token_key='my_key', token_secret='my_secret')
     flickr_auth.put()
-    self.flickr = Flickr.new(None, auth_entity=flickr_auth, features=['listen'])
+    self.flickr = Flickr.new(auth_entity=flickr_auth, features=['listen'])
     self.assertEqual(
       'https://farm5.staticflickr.com/4068/buddyicons/39216764@N00.jpg',
       self.flickr.picture)
@@ -57,24 +57,24 @@ class CronTest(testutil.TestCase):
       }
     sources = [
       # doesn't need a new poll task
-      FakeSource.new(None, last_poll_attempt=now, **defaults).put(),
-      FakeSource.new(None, last_poll_attempt=five_min_ago, **defaults).put(),
-      FakeSource.new(None, status='disabled', **defaults).put(),
-      FakeSource.new(None, status='disabled', **defaults).put(),
+      FakeSource.new(last_poll_attempt=now, **defaults).put(),
+      FakeSource.new(last_poll_attempt=five_min_ago, **defaults).put(),
+      FakeSource.new(status='disabled', **defaults).put(),
+      FakeSource.new(status='disabled', **defaults).put(),
       # need a new poll task
-      FakeSource.new(None, status='enabled', **defaults).put(),
+      FakeSource.new(status='enabled', **defaults).put(),
       # not signed up for listen
-      FakeSource.new(None, last_webmention_sent=day_and_half_ago).put(),
+      FakeSource.new(last_webmention_sent=day_and_half_ago).put(),
       # never sent a webmention, past grace period. last polled is older than 2x
       # fast poll, but within 2x slow poll.
-      FakeSource.new(None, features=['listen'], created=month_ago,
+      FakeSource.new(features=['listen'], created=month_ago,
                      last_poll_attempt=day_and_half_ago).put(),
       ]
 
     self.expect_task('poll', source_key=sources[4], last_polled='1970-01-01-00-00-00')
     self.mox.ReplayAll()
 
-    resp = tasks.application.get_response('/cron/replace_poll_tasks')
+    resp = self.client.get('/cron/replace_poll_tasks')
     self.assertEqual(200, resp.status_code)
 
   def test_update_twitter_pictures(self):
@@ -87,7 +87,7 @@ class CronTest(testutil.TestCase):
                               'profile_image_url': 'http://pi.ct/ure',
                               }))
       auth_entity.put()
-      sources.append(Twitter.new(None, auth_entity=auth_entity).put())
+      sources.append(Twitter.new(auth_entity=auth_entity).put())
 
     user_objs = [{'screen_name': sources[0].id(),
                   'profile_image_url': 'http://pi.ct/ure',
@@ -102,7 +102,7 @@ class CronTest(testutil.TestCase):
     self.expect_urlopen(lookup_url % 'c', json_dumps(user_objs))
     self.mox.ReplayAll()
 
-    resp = tasks.application.get_response('/cron/update_twitter_pictures')
+    resp = self.client.get('/cron/update_twitter_pictures')
     self.assertEqual(200, resp.status_code)
 
     self.assertEqual('http://pi.ct/ure', sources[0].get().picture)
@@ -116,13 +116,13 @@ class CronTest(testutil.TestCase):
                             'profile_image_url': 'http://pi.ct/ure',
                            }))
     auth_entity.put()
-    source = Twitter.new(None, auth_entity=auth_entity).put()
+    source = Twitter.new(auth_entity=auth_entity).put()
 
     lookup_url = gr_twitter.API_BASE + cron.TWITTER_API_USER_LOOKUP
     self.expect_urlopen(lookup_url % 'bad', status=404)
     self.mox.ReplayAll()
 
-    resp = tasks.application.get_response('/cron/update_twitter_pictures')
+    resp = self.client.get('/cron/update_twitter_pictures')
     self.assertEqual(200, resp.status_code)
 
     self.assertEqual('http://pi.ct/ure', source.get().picture)
@@ -142,7 +142,7 @@ class CronTest(testutil.TestCase):
     self.mox.ReplayAll()
 
     self.flickr.put()
-    resp = tasks.application.get_response('/cron/update_flickr_pictures')
+    resp = self.client.get('/cron/update_flickr_pictures')
     self.assertEqual(200, resp.status_code)
     self.assertEqual(
       'https://farm9.staticflickr.com/9876/buddyicons/123@N00.jpg',
@@ -155,7 +155,7 @@ class CronTest(testutil.TestCase):
     self.mox.ReplayAll()
 
     mastodon = self._setup_mastodon()
-    resp = tasks.application.get_response('/cron/update_mastodon_pictures')
+    resp = self.client.get('/cron/update_mastodon_pictures')
     self.assertEqual(200, resp.status_code)
     self.assertEqual(test_mastodon.ACCOUNT['avatar'], mastodon.key.get().picture)
 
@@ -169,7 +169,7 @@ class CronTest(testutil.TestCase):
     self.mox.ReplayAll()
 
     mastodon = self._setup_mastodon()
-    resp = tasks.application.get_response('/cron/update_mastodon_pictures')
+    resp = self.client.get('/cron/update_mastodon_pictures')
     self.assertEqual(200, resp.status_code)
     self.assertEqual('http://before', mastodon.key.get().picture)
 

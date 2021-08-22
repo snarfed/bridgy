@@ -26,7 +26,7 @@ import util
 import wordpress_rest
 
 
-class ResponseTest(testutil.TestCase):
+class ResponseTest(testutil.AppTest):
 
   def test_get_or_save_new(self):
     """new. should add a propagate task."""
@@ -220,7 +220,7 @@ class ResponseTest(testutil.TestCase):
     }))
 
 
-class SourceTest(testutil.TestCase):
+class SourceTest(testutil.AppTest):
 
   def test_sources_global(self):
     self.assertEqual(blogger.Blogger, models.sources['blogger'])
@@ -587,7 +587,7 @@ class SourceTest(testutil.TestCase):
     self.assertEqual('http://web.ment/ion', source.webmention_endpoint)
 
   def test_has_bridgy_webmention_endpoint(self):
-    source = FakeSource.new(None)
+    source = FakeSource.new()
     for endpoint, has in ((None, False),
                           ('http://foo', False ),
                           ('https://brid.gy/webmention/fake', True),
@@ -597,7 +597,7 @@ class SourceTest(testutil.TestCase):
       self.assertEqual(has, source.has_bridgy_webmention_endpoint(), endpoint)
 
   def test_put_updates(self):
-    source = FakeSource.new(None)
+    source = FakeSource.new()
     source.put()
     updates = source.updates = {'status': 'disabled'}
 
@@ -605,7 +605,7 @@ class SourceTest(testutil.TestCase):
     self.assertEqual('disabled', source.key.get().status)
 
   def test_poll_period(self):
-    source = FakeSource.new(None)
+    source = FakeSource.new()
     source.put()
 
     self.assertEqual(source.FAST_POLL, source.poll_period())
@@ -624,7 +624,7 @@ class SourceTest(testutil.TestCase):
     self.assertEqual(source.RATE_LIMITED_POLL, source.poll_period())
 
   def test_should_refetch(self):
-    source = FakeSource.new(None)  # haven't found a synd url yet
+    source = FakeSource.new()  # haven't found a synd url yet
     self.assertFalse(source.should_refetch())
 
     source.last_hfeed_refetch = models.REFETCH_HFEED_TRIGGER  # override
@@ -688,7 +688,7 @@ class SourceTest(testutil.TestCase):
       source.bad
 
 
-class BlogPostTest(testutil.TestCase):
+class BlogPostTest(testutil.AppTest):
 
   def test_label(self):
     for feed_item in None, {}:
@@ -712,12 +712,12 @@ class BlogPostTest(testutil.TestCase):
     self.assert_equals([], blogpost.sent)
 
 
-class SyndicatedPostTest(testutil.TestCase):
+class SyndicatedPostTest(testutil.AppTest):
 
   def setUp(self):
     super().setUp()
 
-    self.source = FakeSource.new(None)
+    self.source = FakeSource.new()
     self.source.put()
 
     self.relationships = []

@@ -10,14 +10,14 @@ from gdata.client import RequestError
 from oauth_dropins.blogger import BloggerV2Auth
 from mox3 import mox
 
-from app import app
+from flask_app import app
 import blogger
 from blogger import Blogger
 import util
 from . import testutil
 
 
-class BloggerTest(testutil.TestCase):
+class BloggerTest(testutil.AppTest):
 
   def setUp(self):
     super().setUp()

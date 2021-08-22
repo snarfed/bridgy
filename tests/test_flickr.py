@@ -12,7 +12,7 @@ import tasks
 from . import testutil
 
 
-class FlickrTest(testutil.TestCase):
+class FlickrTest(testutil.AppTest):
 
   def setUp(self):
     super().setUp()

@@ -16,12 +16,9 @@ from oauth_dropins.webutil.util import json_dumps, json_loads
 from requests import HTTPError
 import webapp2
 
-import appengine_config
-import cron
-import models
+import appengine_config, models, original_post_discovery, util
+from flask_background import app
 from models import Response
-import original_post_discovery
-import util
 # need to import model class definitions since poll creates and saves entities.
 import blogger, facebook, flickr, github, instagram, mastodon, medium, reddit, tumblr, twitter, wordpress_rest
 

@@ -8,7 +8,7 @@ import github
 from . import testutil
 
 
-class GitHubTest(testutil.TestCase):
+class GitHubTest(testutil.AppTest):
 
   def setUp(self):
     super().setUp()

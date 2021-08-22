@@ -16,7 +16,7 @@ from oauth_dropins.webutil import flask_util
 from oauth_dropins.webutil.flask_util import error
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
-from app import app
+from flask_app import app
 import models
 from models import Activity, Domain, Source, MAX_AUTHOR_URLS
 import util

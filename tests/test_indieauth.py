@@ -9,13 +9,12 @@ from oauth_dropins.webutil.util import json_dumps, json_loads
 from oauth_dropins import indieauth
 import requests
 
-import app
 from models import Domain
 from . import testutil
 import util
 
 
-class IndieAuthTest(testutil.TestCase):
+class IndieAuthTest(testutil.AppTest):
 
   def setUp(self):
     super().setUp()

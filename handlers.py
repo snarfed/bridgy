@@ -31,7 +31,7 @@ from granary.microformats2 import first_props
 from oauth_dropins.webutil.flask_util import error
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
-from app import app, cache
+from flask_app import app, cache
 import models
 import original_post_discovery
 import util

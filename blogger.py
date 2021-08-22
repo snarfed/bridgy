@@ -31,7 +31,7 @@ from gdata.client import Error
 from google.cloud import ndb
 from oauth_dropins import blogger as oauth_blogger
 
-from app import app
+from flask_app import app
 import models
 import superfeedr
 import util
@@ -204,7 +204,7 @@ def oauth_callback():
 
 
 @app.route('/blogger/add', methods=['POST'])
-def add():
+def blogger_add():
   auth_entity_key = flask_util.get_required_param('auth_entity_key')
   util.maybe_add_or_delete_source(
     Blogger,

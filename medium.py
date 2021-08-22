@@ -18,7 +18,7 @@ from oauth_dropins import medium as oauth_medium
 from oauth_dropins.webutil import flask_util
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
-from app import app
+from flask_app import app
 import models
 import superfeedr
 import util
@@ -114,7 +114,7 @@ class Medium(models.Source):
 
 
 @app.route('/medium/add', methods=['POST'])
-def add():
+def medium_add():
   auth_entity = ndb.Key(
     urlsafe=flask_util.get_required_param('auth_entity_key')).get()
   state = flask_util.get_required_param('state')

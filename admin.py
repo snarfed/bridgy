@@ -11,7 +11,7 @@ from google.cloud import ndb
 from oauth_dropins.webutil import flask_util, logs
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
-from app import app
+from flask_app import app
 from models import BlogPost, Response, Source
 import util
 # Import source class files so their metaclasses are initialized.

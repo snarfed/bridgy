@@ -13,7 +13,7 @@ from models import BlogWebmention
 from . import testutil
 
 
-class BlogWebmentionTest(testutil.TestCase):
+class BlogWebmentionTest(testutil.AppTest):
 
   def setUp(self):
     super().setUp()

@@ -15,14 +15,13 @@ import requests
 import webapp2
 from werkzeug.exceptions import BadRequest
 
-import app
 from models import Publish, PublishedPage
 import publish
 from . import testutil
 import util
 
 
-class PublishTest(testutil.TestCase):
+class PublishTest(testutil.AppTest):
 
   def setUp(self):
     super().setUp()

@@ -16,7 +16,7 @@ import twitter
 from twitter import Twitter
 
 
-class TwitterTest(testutil.TestCase):
+class TwitterTest(testutil.AppTest):
 
   def setUp(self):
     super().setUp()

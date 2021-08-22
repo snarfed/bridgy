@@ -28,7 +28,7 @@ from oauth_dropins import wordpress_rest as oauth_wordpress
 from oauth_dropins.webutil import flask_util
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
-from app import app
+from flask_app import app
 import models
 import superfeedr
 import util

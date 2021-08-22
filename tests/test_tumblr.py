@@ -7,13 +7,13 @@ from oauth_dropins.tumblr import TumblrAuth
 from oauth_dropins.webutil.util import json_dumps, json_loads
 from werkzeug.exceptions import BadRequest
 
-from app import app
+from flask_app import app
 import tumblr
 from tumblr import Tumblr
 from . import testutil
 
 
-class TumblrTest(testutil.TestCase):
+class TumblrTest(testutil.AppTest):
 
   def setUp(self):
     super().setUp()
