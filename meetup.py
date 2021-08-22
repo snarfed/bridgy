@@ -54,16 +54,12 @@ class Meetup(Source):
     return self.name
 
 
-class AddMeetup(oauth_meetup.Callback):
+class Callback(oauth_meetup.Callback):
   def finish(self, auth_entity, state=None):
-    logging.debug('finish with %s, %s', auth_entity, state)
     util.maybe_add_or_delete_source(Meetup, auth_entity, state)
 
-# ROUTES = [
-#   ('/meetup/start', util.oauth_starter(oauth_meetup.Start).to(
-#     '/meetup/add', scopes=PUBLISH_SCOPES)), # we don't support listen
-#   ('/meetup/add', AddMeetup),
-#   ('/meetup/delete/finish', oauth_meetup.Callback.to('/delete/finish')),
-#   ('/meetup/publish/start', oauth_meetup.Start.to(
-#     '/meetup/publish/finish', scopes=PUBLISH_SCOPES)),
-# ]
+
+app.add_url_rule('/meetup/start', view_func=util.oauth_starter(oauth_meetup.Start).as_view('meetup_start', '/meetup/add', scopes=PUBLISH_SCOPES)) # we don't support listen
+app.add_url_rule('/meetup/add', view_func=Callback.as_view('meetup_add'))
+app.add_url_rule('/meetup/delete/finish', view_func=oauth_meetup.Callback.as_view('meetup_delete_finish', '/delete/finish'))
+app.add_url_rule('/meetup/publish/start', view_func=oauth_meetup.Start.as_view('meetup_publish_finish', '/meetup/publish/finish', scopes=PUBLISH_SCOPES))

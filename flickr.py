@@ -11,6 +11,8 @@ from granary.source import SELF
 from oauth_dropins import flickr as oauth_flickr
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
+from flask_app import app
+
 
 class Flickr(models.Source):
   """A Flickr account.
@@ -106,9 +108,9 @@ class AuthHandler():
     return starter(request, self.response).post()
 
 
-class Start(AuthHandler):
+class Start(oauth_flickr.Start, AuthHandler):
   """Custom handler to start Flickr auth process."""
-  def post(self):
+  def dispatch_request(self):
     return self.start_oauth_flow(request.get('feature'))
 
 
@@ -131,11 +133,7 @@ class AddFlickr(oauth_flickr.Callback, AuthHandler):
       return self.start_oauth_flow('publish')
 
 
-# ROUTES = [
-#   ('/flickr/start', Start),
-#   ('/flickr/add', AddFlickr),
-#   ('/flickr/delete/finish',
-#    oauth_flickr.Callback.to('/delete/finish')),
-#   ('/flickr/publish/start',
-#    oauth_flickr.Start.to('/publish/flickr/finish')),
-# ]
+app.add_url_rule('/flickr/start', view_func=Start.as_view('flickr_start', '/flickr/add'))
+app.add_url_rule('/flickr/add', view_func=AddFlickr.as_view('flickr_add', 'unused'))
+app.add_url_rule('/flickr/delete/finish', view_func=oauth_flickr.Callback.as_view('flickr_delete_finish', '/delete/finish'))
+app.add_url_rule('/flickr/publish/start', view_func=oauth_flickr.Start.as_view('flickr_publish_start', '/publish/flickr/finish'))
