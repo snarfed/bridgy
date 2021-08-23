@@ -20,6 +20,7 @@ from requests import HTTPError
 import appengine_config, models, original_post_discovery, util
 from flask_background import app
 from models import Response
+from util import ERROR_HTTP_RETURN_CODE
 # need to import model class definitions since poll creates and saves entities.
 import blogger, facebook, flickr, github, instagram, mastodon, medium, reddit, tumblr, twitter, wordpress_rest
 
@@ -107,6 +108,7 @@ class Poll(View):
     # feeble attempt to avoid hitting the instance memory limit
     source = None
     gc.collect()
+
     return 'OK'
 
   def poll(self, source):
@@ -618,14 +620,14 @@ class SendWebmentions(View):
           logging.info('Giving up this target.')
           self.entity.failed.append(target)
         else:
-          error(f'Error sending to endpoint: {resp}')
+          self.fail(f'Error sending to endpoint: {resp}')
           self.entity.error.append(target)
 
       if target in self.entity.unsent:
         self.entity.unsent.remove(target)
 
     if self.entity.error:
-      logging.info('Propagate task failed')
+      logging.info('Some targets failed')
       self.release('error')
     else:
       self.complete()
@@ -647,14 +649,14 @@ class SendWebmentions(View):
     self.entity = key.get()
 
     if self.entity is None:
-      error('no entity!')
+      return self.fail('no entity!')
     elif self.entity.status == 'complete':
       # let this task return 200 and finish
       logging.warning('duplicate task already propagated this')
       return
     elif (self.entity.status == 'processing' and
           util.now_fn() < self.entity.leased_until):
-      error('duplicate task is currently processing!')
+      return self.fail('duplicate task is currently processing!')
 
     g.source = self.entity.source.get()
     if not g.source or g.source.status == 'disabled':
@@ -677,7 +679,7 @@ class SendWebmentions(View):
     """
     existing = self.entity.key.get()
     if existing is None:
-      error('entity disappeared!')
+      self.fail('entity disappeared!')
     elif existing.status == 'complete':
       # let this task return 200 and finish
       logging.warning('another task stole and finished this. did my lease expire?')
@@ -686,7 +688,7 @@ class SendWebmentions(View):
       logging.error('i already completed this task myself somehow?! '
                     'https://github.com/snarfed/bridgy/issues/610')
     elif existing.status == 'new':
-      error('went backward from processing to new!')
+      self.fail('went backward from processing to new!')
     else:
       assert existing.status == 'processing', existing.status
       assert self.entity.status == 'processing', self.entity.status
@@ -708,6 +710,11 @@ class SendWebmentions(View):
       self.entity.status = new_status
       self.entity.leased_until = None
       self.entity.put()
+
+  def fail(self, message):
+    """Marks the request failed and logs an error message."""
+    logging.warning(message)
+    g.failed = True
 
   @ndb.transactional()
   def record_source_webmention(self, endpoint, target):
@@ -745,12 +752,11 @@ class PropagateResponse(SendWebmentions):
   def dispatch_request(self):
     logging.debug('Params: %s', list(request.values.items()))
     if not self.lease(ndb.Key(urlsafe=request.values['response_key'])):
-      return ''
+      return ('', ERROR_HTTP_RETURN_CODE) if getattr(g, 'failed', None) else 'OK'
 
     source = g.source
     poll_estimate = self.entity.created - datetime.timedelta(seconds=61)
-    poll_url = urllib.parse.urljoin(
-      util.host_url(), logs.url(poll_estimate, source.key))
+    poll_url = util.host_url(logs.url(poll_estimate, source.key))
     logging.info('Created by this poll: {poll_url}')
 
     self.activities = [json_loads(a) for a in self.entity.activities_json]
@@ -762,6 +768,7 @@ class PropagateResponse(SendWebmentions):
       return ''
 
     self.send_webmentions()
+    return ('', ERROR_HTTP_RETURN_CODE) if getattr(g, 'failed', None) else 'OK'
 
   def source_url(self, target_url):
     # determine which activity to use
@@ -772,18 +779,15 @@ class PropagateResponse(SendWebmentions):
         if urls_to_activity:
           activity = self.activities[urls_to_activity[target_url]]
     except (KeyError, IndexError):
-      logging.warning("""\
-Hit https://github.com/snarfed/bridgy/issues/237 KeyError!
-target url %s not in urls_to_activity: %s
-activities: %s""", target_url, self.entity.urls_to_activity, self.activities)
-      error(util.ERROR_HTTP_RETURN_CODE)
+      error("""Hit https://github.com/snarfed/bridgy/issues/237 KeyError!
+target url {target_url} not in urls_to_activity: {self.entity.urls_to_activity}
+activities: {self.activities}""", status=ERROR_HTTP_RETURN_CODE)
 
     # generate source URL
     id = activity['id']
     parsed = util.parse_tag_uri(id)
     post_id = parsed[1] if parsed else id
-    parts = [util.host_url(), self.entity.type, g.source.SHORT_NAME,
-            g.source.key.string_id(), post_id]
+    parts = [self.entity.type, g.source.SHORT_NAME, g.source.key.string_id(), post_id]
 
     if self.entity.type != 'post':
       # parse and add response id. (we know Response key ids are always tag URIs)
@@ -795,7 +799,7 @@ activities: %s""", target_url, self.entity.urls_to_activity, self.activities)
       if self.entity.type == 'react':
         parts.append(reaction_id)
 
-    return '/'.join(parts)
+    return util.host_url('/'.join(parts))
 
 
 class PropagateBlogPost(SendWebmentions):
@@ -810,7 +814,7 @@ class PropagateBlogPost(SendWebmentions):
     logging.debug('Params: %s', list(request.values.items()))
 
     if not self.lease(ndb.Key(urlsafe=request.values['key'])):
-      return ''
+      return '', ERROR_HTTP_RETURN_CODE
 
     to_send = set()
     for url in self.entity.unsent:
@@ -821,6 +825,7 @@ class PropagateBlogPost(SendWebmentions):
 
     self.entity.unsent = list(to_send)
     self.send_webmentions()
+    return ('', ERROR_HTTP_RETURN_CODE) if getattr(g, 'failed', None) else 'OK'
 
   def source_url(self, target_url):
     return self.entity.key.id()
