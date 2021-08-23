@@ -8,10 +8,12 @@ import itertools
 
 from flask import render_template, request
 from google.cloud import ndb
+from google.cloud.ndb.stats import KindStat, KindPropertyNamePropertyTypeStat
 from oauth_dropins.webutil import flask_util, logs
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
 from flask_app import app
+import models
 from models import BlogPost, Response, Source
 import util
 # Import source class files so their metaclasses are initialized.
@@ -73,3 +75,43 @@ def mark_complete():
     e.status = 'complete'
   ndb.put_multi(entities)
   return util.redirect('/admin/responses')
+
+
+@app.route('/admin/stats')
+def stats():
+  """Collect and report misc lifetime stats.
+
+  https://developers.google.com/appengine/docs/python/ndb/admin#Statistics_queries
+
+  Used to be on the front page, dropped them during the Flask port in August 2021.
+  """
+  def count(query):
+    stat = query.get()  # no datastore stats in dev_appserver
+    return stat.count if stat else 0
+
+  def kind_count(kind):
+    return count(KindStat.query(KindStat.kind_name == kind))
+
+  num_users = sum(kind_count(cls.__name__) for cls in models.sources.values())
+  link_counts = {
+    property: sum(count(KindPropertyNamePropertyTypeStat.query(
+      KindPropertyNamePropertyTypeStat.kind_name == kind,
+      KindPropertyNamePropertyTypeStat.property_name == property,
+      # specify string because there are also >2M Response entities with null
+      # values for some of these properties, as opposed to missing altogether,
+      # which we don't want to include.
+      KindPropertyNamePropertyTypeStat.property_type == 'String'))
+                  for kind in ('BlogPost', 'Response'))
+    for property in ('sent', 'unsent', 'error', 'failed', 'skipped')}
+
+  return render_template('admin_stats.html', **{
+    # add comma separator between thousands
+    k: '{:,}'.format(v) for k, v in {
+      'users': num_users,
+      'responses': kind_count('Response'),
+      'links': sum(link_counts.values()),
+      'webmentions': link_counts['sent'] + kind_count('BlogPost'),
+      'publishes': kind_count('Publish'),
+      'blogposts': kind_count('BlogPost'),
+      'webmentions_received': kind_count('BlogWebmention'),
+    }.items()})
