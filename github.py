@@ -3,11 +3,13 @@
 import logging
 
 from flask import request
+from flask.views import View
 from granary import github as gr_github
 from oauth_dropins import github as oauth_github
 from oauth_dropins.webutil import flask_util
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
+from flask_app import app
 from models import Source
 import util
 
@@ -84,8 +86,8 @@ class GitHub(Source):
     return self.gr_source.get_activities_response(*args, **kwargs)
 
 
-class Start():
-  def post(self):
+class Start(View):
+  def dispatch_request(self):
     features = flask_util.get_required_param('feature')
     scopes = PUBLISH_SCOPES if 'publish' in features else LISTEN_SCOPES
     starter = util.oauth_starter(oauth_github.Start, feature=features
@@ -99,10 +101,7 @@ class AddGitHub(oauth_github.Callback):
     util.maybe_add_or_delete_source(GitHub, auth_entity, state)
 
 
-# ROUTES = [
-#   ('/github/start', Start),
-#   ('/github/add', AddGitHub),
-#   ('/github/delete/finish', oauth_github.Callback.to('/delete/finish')),
-#   ('/github/publish/start', oauth_github.Start.to(
-#     '/publish/github/finish', scopes=PUBLISH_SCOPES)),
-# ]
+app.add_url_rule('/github/start', view_func=Start.as_view('github_start', '/github/add'))
+app.add_url_rule('/github/add', view_func=AddGitHub.as_view('github_add', 'unused'))
+app.add_url_rule('/github/delete/finish', view_func=oauth_github.Callback.as_view('github_delete_finish', '/delete/finish'))
+app.add_url_rule('/github/publish/start', view_func=oauth_github.Start.as_view('github_publish_start', '/publish/github/finish', scopes=PUBLISH_SCOPES))
