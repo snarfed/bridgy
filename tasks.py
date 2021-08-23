@@ -6,15 +6,16 @@ import gc
 import logging
 import urllib.parse
 
-from flask import request
+from flask import g, request
+from flask.views import View
 from google.cloud import ndb
 from google.cloud.ndb._datastore_types import _MAX_STRING_LENGTH
 from granary.source import Source
 from oauth_dropins.webutil import appengine_info, flask_util, logs, webmention
 from oauth_dropins.webutil.appengine_config import ndb_client
+from oauth_dropins.webutil.flask_util import error
 from oauth_dropins.webutil.util import json_dumps, json_loads
 from requests import HTTPError
-import webapp2
 
 import appengine_config, models, original_post_discovery, util
 from flask_background import app
@@ -26,7 +27,7 @@ import blogger, facebook, flickr, github, instagram, mastodon, medium, reddit, t
 NO_ENDPOINT = 'NONE'
 
 
-class Poll(webapp2.RequestHandler):
+class Poll(View):
   """Task handler that fetches and processes new responses from a single source.
 
   Request parameters:
@@ -46,30 +47,26 @@ class Poll(webapp2.RequestHandler):
   1-4 are in backfeed(); 5 is in poll().
   """
   RESTART_EXISTING_TASKS = False  # overridden in Discover
-  TRANSIENT_ERROR_HTTP_CODES = ()
-
-  handle_exception = util.background_handle_exception
 
   def _last_poll_url(self, source):
     return util.host_url(logs.url(source.last_poll_attempt, source.key))
 
-  def post(self, *path_args):
-    request.headers['Content-Type'] = 'application/x-www-form-urlencoded'
-    logging.debug('Params: %s', list(request.params.items()))
+  def dispatch_request(self):
+    logging.debug('Params: %s', list(request.values.items()))
 
-    key = request.params['source_key']
-    source = self.source = ndb.Key(urlsafe=key).get()
+    key = request.values['source_key']
+    source = g.source = ndb.Key(urlsafe=key).get()
     if not source or source.status == 'disabled' or 'listen' not in source.features:
       logging.error('Source not found or disabled. Dropping task.')
-      return
+      return ''
     logging.info('Source: %s %s, %s', source.label(), source.key_id(),
                  source.bridgy_url())
 
     if source.AUTO_POLL:
-      last_polled = request.params['last_polled']
+      last_polled = request.values['last_polled']
       if last_polled != source.last_polled.strftime(util.POLL_TASK_DATETIME_FORMAT):
         logging.warning('duplicate poll task! deferring to the other task.')
-        return
+        return ''
 
     logging.info('Last poll: %s', self._last_poll_url(source))
 
@@ -110,6 +107,7 @@ class Poll(webapp2.RequestHandler):
     # feeble attempt to avoid hitting the instance memory limit
     source = None
     gc.collect()
+    return 'OK'
 
   def poll(self, source):
     """Actually runs the poll.
@@ -471,21 +469,19 @@ class Discover(Poll):
   Original feature request: https://github.com/snarfed/bridgy/issues/579
   """
   RESTART_EXISTING_TASKS = True
-  TRANSIENT_ERROR_HTTP_CODES = ('400', '404')
 
-  handle_exception = util.background_handle_exception
+  def dispatch_request(self):
+    logging.debug('Params: %s', list(request.values.items()))
+    g.TRANSIENT_ERROR_HTTP_CODES = ('400', '404')
 
-  def post(self):
-    logging.debug('Params: %s', list(request.params.items()))
-
-    type = request.get('type')
+    type = request.values.get('type')
     if type:
       assert type in ('event',)
 
-    source = self.source = util.load_source()
+    source = g.source = util.load_source()
     if not source or source.status == 'disabled' or 'listen' not in source.features:
       logging.error('Source not found or disabled. Dropping task.')
-      return
+      return ''
     logging.info('Source: %s %s, %s', source.label(), source.key_id(),
                  source.bridgy_url())
 
@@ -501,7 +497,7 @@ class Discover(Poll):
 
     if not activities or not activities[0]:
       logging.info('Post %s not found.', post_id)
-      return
+      return ''
     assert len(activities) == 1, activities
     activity = activities[0]
     activities = {activity['id']: activity}
@@ -514,8 +510,10 @@ class Discover(Poll):
       if parsed:
         util.add_discover_task(source, parsed[1])
 
+    return 'OK'
 
-class SendWebmentions(webapp2.RequestHandler):
+
+class SendWebmentions(View):
   """Abstract base task handler that can send webmentions.
 
   Attributes:
@@ -525,9 +523,6 @@ class SendWebmentions(webapp2.RequestHandler):
   """
   # request deadline (10m) plus some padding
   LEASE_LENGTH = datetime.timedelta(minutes=12)
-  TRANSIENT_ERROR_HTTP_CODES = ()
-
-  handle_exception = util.background_handle_exception
 
   def source_url(self, target_url):
     """Return the source URL to use for a given target URL.
@@ -594,7 +589,7 @@ class SendWebmentions(webapp2.RequestHandler):
       # send! and handle response or error
       try:
         resp = None
-        headers = util.request_headers(source=self.source)
+        headers = util.request_headers(source=g.source)
         if not endpoint:
           endpoint, resp = webmention.discover(target, headers=headers)
           with util.webmention_endpoint_cache_lock:
@@ -623,7 +618,7 @@ class SendWebmentions(webapp2.RequestHandler):
           logging.info('Giving up this target.')
           self.entity.failed.append(target)
         else:
-          self.fail(f'Error sending to endpoint: {resp}', level=logging.INFO)
+          error(f'Error sending to endpoint: {resp}')
           self.entity.error.append(target)
 
       if target in self.entity.unsent:
@@ -639,7 +634,7 @@ class SendWebmentions(webapp2.RequestHandler):
   def lease(self, key):
     """Attempts to acquire and lease the :class:`models.Webmentions` entity.
 
-    Also loads and sets `self.source`, and returns False if the source doesn't
+    Also loads and sets `g.source`, and returns False if the source doesn't
     exist or is disabled.
 
     TODO: unify with :meth:`complete()`
@@ -652,21 +647,21 @@ class SendWebmentions(webapp2.RequestHandler):
     self.entity = key.get()
 
     if self.entity is None:
-      return self.fail('no entity!')
+      error('no entity!')
     elif self.entity.status == 'complete':
       # let this task return 200 and finish
       logging.warning('duplicate task already propagated this')
       return
     elif (self.entity.status == 'processing' and
           util.now_fn() < self.entity.leased_until):
-      return self.fail('duplicate task is currently processing!')
+      error('duplicate task is currently processing!')
 
-    self.source = self.entity.source.get()
-    if not self.source or self.source.status == 'disabled':
+    g.source = self.entity.source.get()
+    if not g.source or g.source.status == 'disabled':
       logging.error('Source not found or disabled. Dropping task.')
       return False
-    logging.info('Source: %s %s, %s', self.source.label(), self.source.key_id(),
-                 self.source.bridgy_url())
+    logging.info('Source: %s %s, %s', g.source.label(), g.source.key_id(),
+                 g.source.bridgy_url())
 
     assert self.entity.status in ('new', 'processing', 'error'), self.entity.status
     self.entity.status = 'processing'
@@ -682,7 +677,7 @@ class SendWebmentions(webapp2.RequestHandler):
     """
     existing = self.entity.key.get()
     if existing is None:
-      self.fail('entity disappeared!', level=logging.ERROR)
+      error('entity disappeared!')
     elif existing.status == 'complete':
       # let this task return 200 and finish
       logging.warning('another task stole and finished this. did my lease expire?')
@@ -691,7 +686,7 @@ class SendWebmentions(webapp2.RequestHandler):
       logging.error('i already completed this task myself somehow?! '
                     'https://github.com/snarfed/bridgy/issues/610')
     elif existing.status == 'new':
-      self.fail('went backward from processing to new!', level=logging.ERROR)
+      error('went backward from processing to new!')
     else:
       assert existing.status == 'processing', existing.status
       assert self.entity.status == 'processing', self.entity.status
@@ -714,13 +709,6 @@ class SendWebmentions(webapp2.RequestHandler):
       self.entity.leased_until = None
       self.entity.put()
 
-  def fail(self, message, level=logging.WARNING):
-    """Fills in an error response status code and message.
-    """
-    self.error(util.ERROR_HTTP_RETURN_CODE)
-    logging.log(level, message)
-    self.response.out.write(message)
-
   @ndb.transactional()
   def record_source_webmention(self, endpoint, target):
     """Sets this source's last_webmention_sent and maybe webmention_endpoint.
@@ -729,17 +717,17 @@ class SendWebmentions(webapp2.RequestHandler):
       endpoint: str, URL
       target: str, URL
     """
-    self.source = self.source.key.get()
+    g.source = g.source.key.get()
     logging.info('Setting last_webmention_sent')
-    self.source.last_webmention_sent = util.now_fn()
+    g.source.last_webmention_sent = util.now_fn()
 
-    if (endpoint != self.source.webmention_endpoint and
-        util.domain_from_link(target) in self.source.domains):
+    if (endpoint != g.source.webmention_endpoint and
+        util.domain_from_link(target) in g.source.domains):
       logging.info('Also setting webmention_endpoint to %s (discovered in %s; was %s)',
-                   endpoint, target, self.source.webmention_endpoint)
-      self.source.webmention_endpoint = endpoint
+                   endpoint, target, g.source.webmention_endpoint)
+      g.source.webmention_endpoint = endpoint
 
-    self.source.put()
+    g.source.put()
 
 
 class PropagateResponse(SendWebmentions):
@@ -754,13 +742,12 @@ class PropagateResponse(SendWebmentions):
   * response_key: string key of :class:`models.Response` entity
   """
 
-  def post(self):
-    request.headers['Content-Type'] = 'application/x-www-form-urlencoded'
-    logging.debug('Params: %s', list(request.params.items()))
-    if not self.lease(ndb.Key(urlsafe=request.params['response_key'])):
-      return
+  def dispatch_request(self):
+    logging.debug('Params: %s', list(request.values.items()))
+    if not self.lease(ndb.Key(urlsafe=request.values['response_key'])):
+      return ''
 
-    source = self.source
+    source = g.source
     poll_estimate = self.entity.created - datetime.timedelta(seconds=61)
     poll_url = urllib.parse.urljoin(
       util.host_url(), logs.url(poll_estimate, source.key))
@@ -772,7 +759,7 @@ class PropagateResponse(SendWebmentions):
         not all(source.is_activity_public(a) for a in self.activities)):
       logging.info('Response or activity is non-public. Dropping.')
       self.complete()
-      return
+      return ''
 
     self.send_webmentions()
 
@@ -795,8 +782,8 @@ activities: %s""", target_url, self.entity.urls_to_activity, self.activities)
     id = activity['id']
     parsed = util.parse_tag_uri(id)
     post_id = parsed[1] if parsed else id
-    parts = [util.host_url(), self.entity.type, self.source.SHORT_NAME,
-            self.source.key.string_id(), post_id]
+    parts = [util.host_url(), self.entity.type, g.source.SHORT_NAME,
+            g.source.key.string_id(), post_id]
 
     if self.entity.type != 'post':
       # parse and add response id. (we know Response key ids are always tag URIs)
@@ -819,17 +806,17 @@ class PropagateBlogPost(SendWebmentions):
   * key: string key of :class:`models.BlogPost` entity
   """
 
-  def post(self):
-    logging.debug('Params: %s', list(request.params.items()))
+  def dispatch_request(self):
+    logging.debug('Params: %s', list(request.values.items()))
 
-    if not self.lease(ndb.Key(urlsafe=request.params['key'])):
-      return
+    if not self.lease(ndb.Key(urlsafe=request.values['key'])):
+      return ''
 
     to_send = set()
     for url in self.entity.unsent:
       url, domain, ok = util.get_webmention_target(url)
       # skip "self" links to this blog's domain
-      if ok and domain not in self.source.domains:
+      if ok and domain not in g.source.domains:
         to_send.add(url)
 
     self.entity.unsent = list(to_send)
@@ -839,14 +826,8 @@ class PropagateBlogPost(SendWebmentions):
     return self.entity.key.id()
 
 
-# @app.route('/_ah/<any(start, stop, warmup):_>')
-def noop(_):
-  return 'OK'
-
-
-# webapp2.WSGIApplication([
-#     ('/_ah/queue/poll(-now)?', Poll),
-#     ('/_ah/queue/discover', Discover),
-#     ('/_ah/queue/propagate', PropagateResponse),
-#     ('/_ah/queue/propagate-blogpost', PropagateBlogPost),
-#   ] + cron.ROUTES, debug=appengine_info.DEBUG), client=ndb_client)
+app.add_url_rule('/_ah/queue/poll', view_func=Poll.as_view('poll'), methods=['POST'])
+app.add_url_rule('/_ah/queue/poll-now', view_func=Poll.as_view('poll-now'), methods=['POST'])
+app.add_url_rule('/_ah/queue/discover', view_func=Discover.as_view('discover'), methods=['POST'])
+app.add_url_rule('/_ah/queue/propagate', view_func=PropagateResponse.as_view('propagate'), methods=['POST'])
+app.add_url_rule('/_ah/queue/propagate-blogpost', view_func=PropagateBlogPost.as_view('propagate_blogpost'), methods=['POST'])

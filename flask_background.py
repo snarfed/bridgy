@@ -1,17 +1,37 @@
 """Bridgy background flask app, mostly task queue handlers: poll, propagate, etc."""
-from flask import Flask
+import logging
+
+from flask import Flask, g
 from oauth_dropins.webutil import flask_util
 from oauth_dropins.webutil.appengine_config import ndb_client
 
-import appengine_config
+import appengine_config, util
 
 
 # Flask app
 app = Flask('background')
 app.config.from_pyfile('config.py')
-# XXX TODO background_handle_exception
-app.register_error_handler(Exception, flask_util.handle_exception)
 app.wsgi_app = flask_util.ndb_context_middleware(app.wsgi_app, client=ndb_client)
+
+
+@app.errorhandler(Exception)
+def background_handle_exception(e):
+  """Common exception handler for background tasks.
+
+  Catches failed outbound HTTP requests and returns HTTP 304.
+  """
+  transients = getattr(g, 'TRANSIENT_ERROR_HTTP_CODES', ())
+  source = getattr(g, 'source', None)
+  if source:
+    transients += source.RATE_LIMIT_HTTP_CODES + source.TRANSIENT_ERROR_HTTP_CODES
+
+  code, body = util.interpret_http_exception(e)
+  if ((code and int(code) // 100 == 5) or code in transients or
+      util.is_connection_failure(e)):
+    logging.error('Marking as error and finishing. {code}: {body}\n{e}')
+    return '', util.ERROR_HTTP_RETURN_CODE
+
+  raise e
 
 
 @app.route('/_ah/<any(start, stop, warmup):_>')

@@ -620,29 +620,3 @@ def unwrap_t_umblr_com(url):
   return (urllib.parse.parse_qs(parsed.query).get('z', [''])[0]
           if parsed.netloc == 't.umblr.com'
           else url)
-
-
-# TODO
-def background_handle_exception(handler, e, debug):
-  """Common exception handler for background tasks.
-
-  Catches failed outbound HTTP requests and returns HTTP 304.
-
-  Install with eg:
-
-  class MyHandler(webapp2.RequestHandler):
-    handle_exception = util.background_handle_exception
-    ...
-  """
-  transients = getattr(handler, 'TRANSIENT_ERROR_HTTP_CODES', ())
-  source = getattr(handler, 'source', None)
-  if source:
-    transients += source.RATE_LIMIT_HTTP_CODES + source.TRANSIENT_ERROR_HTTP_CODES
-
-  code, body = util.interpret_http_exception(e)
-  if ((code and int(code) // 100 == 5) or code in transients or
-      util.is_connection_failure(e)):
-    logging.error('Marking as error and finishing. %s: %s\n%s', code, body, e)
-    error(ERROR_HTTP_RETURN_CODE)
-  else:
-    return e

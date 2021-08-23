@@ -6,6 +6,7 @@ import itertools
 import logging
 import math
 
+from flask import g
 from flask.views import View
 from google.cloud import ndb
 from oauth_dropins.webutil.util import json_dumps, json_loads
@@ -47,8 +48,8 @@ def update_twitter_pictures():
   https://github.com/snarfed/granary/commit/dfc3d406a20965a5ed14c9705e3d3c2223c8c3ff
   http://indiewebcamp.com/Twitter#Profile_Image_URLs
   """
-  TRANSIENT_ERROR_HTTP_CODES = (Twitter.TRANSIENT_ERROR_HTTP_CODES +
-                                Twitter.RATE_LIMIT_HTTP_CODES)
+  g.TRANSIENT_ERROR_HTTP_CODES = (Twitter.TRANSIENT_ERROR_HTTP_CODES +
+                                  Twitter.RATE_LIMIT_HTTP_CODES)
   sources = {source.key_id(): source for source in Twitter.query()}
   if not sources:
     return
@@ -82,8 +83,6 @@ class UpdatePictures(View):
   """Finds sources with new profile pictures and updates them."""
   SOURCE_CLS = None
 
-  handle_exception = util.background_handle_exception
-
   def source_query(self):
     return self.SOURCE_CLS.query()
 
@@ -112,8 +111,11 @@ class UpdateFlickrPictures(UpdatePictures):
   """Finds :class:`Flickr` sources with new profile pictures and updates them.
   """
   SOURCE_CLS = Flickr
-  TRANSIENT_ERROR_HTTP_CODES = (Flickr.TRANSIENT_ERROR_HTTP_CODES +
-                                Flickr.RATE_LIMIT_HTTP_CODES)
+
+  def dispatch_request(self):
+    g.TRANSIENT_ERROR_HTTP_CODES = (Flickr.TRANSIENT_ERROR_HTTP_CODES +
+                                    Flickr.RATE_LIMIT_HTTP_CODES)
+    return super().dispatch_request()
 
 
 app.add_url_rule('/cron/update_flickr_pictures',
@@ -124,8 +126,11 @@ class UpdateMastodonPictures(UpdatePictures):
   """Finds :class:`Mastodon` sources with new profile pictures and updates them.
   """
   SOURCE_CLS = Mastodon
-  TRANSIENT_ERROR_HTTP_CODES = (Mastodon.TRANSIENT_ERROR_HTTP_CODES +
+
+  def dispatch_request(self):
+    g.TRANSIENT_ERROR_HTTP_CODES = (Mastodon.TRANSIENT_ERROR_HTTP_CODES +
                                 Mastodon.RATE_LIMIT_HTTP_CODES)
+    return super().dispatch_request()
 
   @classmethod
   def user_id(cls, source):
