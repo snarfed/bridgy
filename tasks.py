@@ -485,7 +485,7 @@ class Discover(Poll):
     logging.info('Source: %s %s, %s', source.label(), source.key_id(),
                  source.bridgy_url())
 
-    post_id = util.get_required_param(self, 'post_id')
+    post_id = flask_util.get_required_param('post_id')
     source.updates = {}
 
     if type == 'event':
