@@ -814,7 +814,7 @@ class PropagateBlogPost(SendWebmentions):
     logging.debug('Params: %s', list(request.values.items()))
 
     if not self.lease(ndb.Key(urlsafe=request.values['key'])):
-      return '', ERROR_HTTP_RETURN_CODE
+      return ('', ERROR_HTTP_RETURN_CODE) if getattr(g, 'failed', None) else 'OK'
 
     to_send = set()
     for url in self.entity.unsent:
