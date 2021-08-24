@@ -10,7 +10,7 @@ import pprint
 import re
 import urllib.request, urllib.parse, urllib.error
 
-from flask import request
+from flask import flash, render_template, request
 from google.cloud import ndb
 from granary import microformats2
 from granary import source as gr_source
@@ -23,8 +23,11 @@ from oauth_dropins import (
   twitter as oauth_twitter,
 )
 from oauth_dropins.webutil import appengine_info
+from oauth_dropins.webutil import flask_util
 from oauth_dropins.webutil.util import json_dumps, json_loads
+import werkzeug.exceptions
 
+from flask_app import app
 from flickr import Flickr
 from github import GitHub
 from instagram import Instagram
@@ -59,12 +62,13 @@ PUBLISHABLE_TYPES = frozenset((
   'h-review',
 ))
 
+
 class CollisionError(RuntimeError):
   """Multiple publish requests for the same page at the same time."""
   pass
 
 
-class Handler(webmention.WebmentionHandler):
+class PublishBase(webmention.Webmention):
   """Base handler for both previews and publishes.
 
   Subclasses must set the :attr:`PREVIEW` attribute to True or False. They may
@@ -136,25 +140,24 @@ class Handler(webmention.WebmentionHandler):
 
   def _run(self):
     """Returns CreationResult on success, None otherwise."""
-    logging.info('Params: %s', list(request.params.items()))
+    logging.info('Params: %s', list(request.values.items()))
     assert self.PREVIEW in (True, False)
 
     # parse and validate target URL
     try:
       parsed = urllib.parse.urlparse(self.target_url())
     except BaseException:
-      return self.error('Could not parse target URL %s' % self.target_url())
+      self.error(f'Could not parse target URL {self.target_url()}')
 
     domain = parsed.netloc
     path_parts = parsed.path.rsplit('/', 1)
     source_cls = SOURCE_NAMES.get(path_parts[-1])
     if (domain not in util.DOMAINS or
         len(path_parts) != 2 or path_parts[0] != '/publish' or not source_cls):
-      return self.error(
+      self.error(
         'Target must be brid.gy/publish/{flickr,github,mastodon,meetup,twitter}')
     elif source_cls == Instagram:
-      return self.error('Sorry, %s is not supported.' %
-                        source_cls.GR_CLASS.NAME)
+      self.error(f'Sorry, {source_cls.GR_CLASS.NAME} is not supported.')
 
     # resolve source URL
     source_url = self.source_url()
@@ -172,11 +175,9 @@ class Handler(webmention.WebmentionHandler):
 
     # look up source by domain
     self.source = self._find_source(source_cls, resolved_url, domain)
-    if not self.source:
-      return  # _find_source rendered the error
 
     content_param = 'bridgy_%s_content' % self.source.SHORT_NAME
-    if content_param in request.params:
+    if content_param in request.values:
       return self.error('The %s parameter is not supported' % content_param)
 
     # show nice error message if they're trying to publish their home page
@@ -199,6 +200,9 @@ class Handler(webmention.WebmentionHandler):
     fragment = urllib.parse.urlparse(source_url).fragment
     try:
       resp = self.fetch_mf2(resolved_url, id=fragment, raise_errors=True)
+    except werkzeug.exceptions.HTTPException:
+      # raised by us, probably via self.error()
+      raise
     except BaseException as e:
       status, body = util.interpret_http_exception(e)
       if status == '410':
@@ -256,6 +260,9 @@ class Handler(webmention.WebmentionHandler):
           item_types, result.error_plain)
         types = types.union(item_types)
         queue.extend(item.get('children', []))
+      except werkzeug.exceptions.HTTPException:
+        # raised by us, probably via self.error()
+        raise
       except BaseException as e:
         code, body = util.interpret_http_exception(e)
         if code in self.source.DISABLE_HTTP_CODES or isinstance(e, models.DisableSource):
@@ -331,10 +338,10 @@ class Handler(webmention.WebmentionHandler):
       return best_match
 
     if sources_ready:
-      msg = 'No account found that matches {util.pretty_link(url)}. Check that <a href="{urllib.parse.urljoin(request.host_url, "/about#profile-link")}">the web site URL is in your silo profile</a>, then <a href="{request.host_url}">sign up again</a>.'
+      msg = 'No account found that matches {util.pretty_link(url)}. Check that <a href="{util.host_url("/about#profile-link")}">the web site URL is in your silo profile</a>, then <a href="{request.host_url}">sign up again</a>.'
     else:
       msg = 'Publish is not enabled for your account. <a href="{request.host_url}">Try signing up!</a>'
-    return self.error(msg, html=msg)
+    self.error(msg, html=msg)
 
   def attempt_single_item(self, item):
     """Attempts to preview or publish a single mf2 item.
@@ -404,10 +411,7 @@ class Handler(webmention.WebmentionHandler):
       if 'url' not in self.entity.published:
         self.entity.published['url'] = obj.get('url')
       self.entity.type = self.entity.published.get('type') or models.get_type(obj)
-      self.response.headers['Content-Type'] = 'application/json'
       logging.info('Returning %s', json_dumps(self.entity.published, indent=2))
-      self.response.headers['Location'] = self.entity.published['url']
-      self.response.status = 201
       return gr_source.creation_result(
         json_dumps(self.entity.published, indent=2))
 
@@ -514,6 +518,9 @@ class Handler(webmention.WebmentionHandler):
           mf2 = util.fetch_mf2(url)
         except AssertionError:
           raise  # for unit tests
+        except werkzeug.exceptions.HTTPException:
+          # raised by us, probably via self.error()
+          raise
         except BaseException:
           # it's not a big deal if we can't fetch an in-reply-to url
           logging.info('expand_target_urls could not fetch field=%s, url=%s',
@@ -604,27 +611,25 @@ class Handler(webmention.WebmentionHandler):
       'include_link': include_link,
     }
     vars = {
-      'source': self.preprocess_source(self.source),
+      'source': util.preprocess_source(self.source),
       'preview': result.content,
       'description': result.description,
       'webmention_endpoint': util.host_url('/publish/webmention'),
       'state': util.encode_oauth_state(state),
+      **state,
     }
-    vars.update(state)
     logging.info(f'Rendering preview with template vars {pprint.pformat(vars)}')
-    return gr_source.creation_result(
-      JINJA_ENV.get_template('preview.html').render(**vars))
+    return gr_source.creation_result(render_template('preview.html', **vars))
 
 
-class PreviewHandler(Handler):
+class Preview(PublishBase):
   """Renders a preview HTML snippet of how a webmention would be handled.
   """
   PREVIEW = True
 
-  def post(self):
+  def dispatch_request(self):
     result = self._run()
-    if result and result.content:
-      self.response.write(result.content)
+    return result.content if result else ''
 
   def authorize(self):
     from_source = util.load_source()
@@ -644,14 +649,12 @@ class PreviewHandler(Handler):
 
   def error(self, error, html=None, status=400, data=None, report=False, **kwargs):
     logging.info(f'publish: {error}')
-    self.response.set_status(status)
-    error = html if html else util.linkify(error)
-    self.response.write(error)
     if report:
       self.report_error(error, status=status)
+    flask_util.error(html if html else util.linkify(error), status=status)
 
 
-class SendHandler(Handler):
+class Send(PublishBase):
   """Interactive publish handler. Redirected to after each silo's OAuth dance.
 
   Note that this is GET, not POST, since HTTP redirects always GET.
@@ -696,49 +699,53 @@ class SendHandler(Handler):
     error = html if html else util.linkify(error)
     flash('%s' % error)
     if report:
-      self.report_error(error, status=status, status=status)
+      self.report_error(error, status=status)
 
 
-# We want Callback.get() and SendHandler.finish(), so put
+# We want Callback.get() and Send.finish(), so put
 # Callback first and override finish.
-class FlickrSendHandler(oauth_flickr.Callback, SendHandler):
-  finish = SendHandler.finish
+class FlickrSend(oauth_flickr.Callback, Send):
+  finish = Send.finish
 
 
-class GitHubSendHandler(oauth_github.Callback, SendHandler):
-  finish = SendHandler.finish
+class GitHubSend(oauth_github.Callback, Send):
+  finish = Send.finish
 
 
-class MastodonSendHandler(oauth_mastodon.Callback, SendHandler):
-  finish = SendHandler.finish
+class MastodonSend(oauth_mastodon.Callback, Send):
+  finish = Send.finish
 
 
-class MeetupSendHandler(oauth_meetup.Callback, SendHandler):
-  finish = SendHandler.finish
+class MeetupSend(oauth_meetup.Callback, Send):
+  finish = Send.finish
 
 
-class TwitterSendHandler(oauth_twitter.Callback, SendHandler):
-  finish = SendHandler.finish
+class TwitterSend(oauth_twitter.Callback, Send):
+  finish = Send.finish
 
 
-class WebmentionHandler(Handler):
-  """Accepts webmentions and translates them to publish requests.
-  """
+class Webmention(PublishBase):
+  """Accepts webmentions and translates them to publish requests."""
   PREVIEW = False
 
-  def post(self):
+  def dispatch_request(self):
     result = self._run()
     if result:
-      self.response.write(result.content)
+      return result.content, 201, {
+        'Content-Type': 'application/json',
+        'Location': self.entity.published['url'],
+      }
+
+    return ''
 
   def authorize(self):
     """Check for a backlink to brid.gy/publish/SILO."""
     bases = set()
-    if util.domain_from_link(request.host_url) == 'brid.gy':
+    if request.host == 'brid.gy':
       bases.add('brid.gy')
       bases.add('www.brid.gy')  # also accept www
     else:
-      bases.add(request.host_url)
+      bases.add(request.host)
 
     expected = ['%s/publish/%s' % (base, self.source.SHORT_NAME) for base in bases]
 
@@ -751,14 +758,12 @@ class WebmentionHandler(Handler):
     return False
 
 
-# ROUTES = [
-#   ('/publish/preview', PreviewHandler),
-#   ('/publish/webmention', WebmentionHandler),
-#   ('/publish/(flickr|github|mastodon|meetup|twitter)',
-#    webmention.WebmentionGetHandler),
-#   ('/publish/flickr/finish', FlickrSendHandler),
-#   ('/publish/github/finish', GitHubSendHandler),
-#   ('/publish/mastodon/finish', MastodonSendHandler),
-#   ('/meetup/publish/finish', MeetupSendHandler), # because Meetup's `redirect_uri` handling is a little more restrictive
-#   ('/publish/twitter/finish', TwitterSendHandler),
-# ]
+app.add_url_rule('/publish/preview', view_func=Preview.as_view('publish_preview'), methods=['POST'])
+app.add_url_rule('/publish/webmention', view_func=Webmention.as_view('publish_webmention'), methods=['POST'])
+app.add_url_rule('/publish/<any(flickr,github,mastodon,meetup,twitter):silo>', view_func=webmention.Webmention.as_view('publish_oauth_start'), methods=['POST'])
+app.add_url_rule('/publish/flickr/finish', view_func=FlickrSend.as_view('publish_flickr_finish'))
+app.add_url_rule('/publish/github/finish', view_func=GitHubSend.as_view('publish_github_finish'))
+app.add_url_rule('/publish/mastodon/finish', view_func=MastodonSend.as_view('publish_mastodon_finish'))
+# because Meetup's `redirect_uri` handling is a little more restrictive
+app.add_url_rule('/meetup/publish/finish', view_func=MeetupSend.as_view('publish_meetup_finish'))
+app.add_url_rule('/publish/twitter/finish', view_func=TwitterSend.as_view('publish_twitter_finish'))

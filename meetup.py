@@ -6,6 +6,7 @@ from granary import meetup as gr_meetup
 from oauth_dropins import meetup as oauth_meetup
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
+from flask_app import app
 from models import Source
 import util
 

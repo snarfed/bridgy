@@ -1,6 +1,7 @@
 # coding=utf-8
 """Unit tests for publish.py.
 """
+import html
 import socket
 import urllib.request, urllib.parse, urllib.error
 
@@ -12,13 +13,26 @@ from oauth_dropins.webutil.appengine_config import error_reporting_client
 from oauth_dropins.webutil.testutil import requests_response
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
-import webapp2
 from werkzeug.exceptions import BadRequest
 
+from flask_app import app
 from models import Publish, PublishedPage
 import publish
 from . import testutil
 import util
+
+
+class FakeSend(publish.Send):
+  # populated in setUp()
+  auth_entity = None
+  oauth_state = None
+
+  def dispatch_request(self):
+    state = (util.encode_oauth_state(self.oauth_state)
+             if self.oauth_state else None)
+    return self.finish(self.auth_entity, state)
+
+app.add_url_rule('/publish/fake', view_func=FakeSend.as_view('test_publish_fake'))
 
 
 class PublishTest(testutil.AppTest):
@@ -28,13 +42,13 @@ class PublishTest(testutil.AppTest):
     publish.SOURCE_NAMES['fake'] = testutil.FakeSource
     publish.SOURCE_DOMAINS['fa.ke'] = testutil.FakeSource
 
-    self.auth_entity = testutil.FakeAuthEntity(id='0123456789')
+    self.auth_entity = FakeSend.auth_entity = testutil.FakeAuthEntity(id='0123456789')
     self.source = testutil.FakeSource(
       id='foo.com', features=['publish'], domains=['foo.com'],
       domain_urls=['http://foo.com/'], auth_entity=self.auth_entity.key)
     self.source.put()
 
-    self.oauth_state = {
+    FakeSend.oauth_state = {
       'source_url': 'http://foo.com/bar',
       'target_url': 'https://brid.gy/publish/fake',
       'source_key': self.source.key.urlsafe().decode(),
@@ -53,18 +67,13 @@ class PublishTest(testutil.AppTest):
       'source_key': self.source.key.urlsafe().decode(),
       })
 
-    appl = app.application
     assert not (preview and interactive)
     if interactive:
-      class FakeSendHandler(publish.SendHandler):
-        def post(fsh_self):
-          state = (util.encode_oauth_state(self.oauth_state)
-                   if self.oauth_state else None)
-          fsh_self.finish(self.auth_entity, state)
-      appl = webapp2.WSGIApplication([('.*', FakeSendHandler)])
-
-    return appl.get_response(
-      '/publish/preview' if preview else '/publish/webmention', data=params)
+      return self.client.get('/publish/fake', data=params)
+    elif preview:
+      return self.client.post('/publish/preview', data=params)
+    else:
+      return self.client.post('/publish/webmention', data=params)
 
   def expect_requests_get(self, url, body='', backlink=None, **kwargs):
     body += backlink or self.backlink
@@ -73,7 +82,7 @@ class PublishTest(testutil.AppTest):
 
   def assert_response(self, expected, status=None, preview=False, **kwargs):
     resp = self.get_response(preview=preview, **kwargs)
-    body = resp.get_data(as_text=True)
+    body = html.unescape(resp.get_data(as_text=True))
     self.assertEqual(status, resp.status_code,
                       '%s != %s: %s' % (status, resp.status_code, body))
     if preview:
@@ -131,15 +140,15 @@ class PublishTest(testutil.AppTest):
 
     loc = urllib.parse.unquote_plus(resp.headers['Location'])
     self.assertEqual('http://localhost/fake/foo.com', loc)
-    self.assertIn('Done! <a href="http://fake/url">Click here to view.</a>',
-                  get_flashed_messages()[0])
-    self.assertIn('granary message', get_flashed_messages()[0])
+    self.assertEqual(['Done! <a href="http://fake/url">Click here to view.</a>',
+                      'granary message'],
+                     get_flashed_messages())
 
     self._check_entity()
 
   def test_interactive_from_wrong_user_page(self):
-    other_source = testutil.FakeSource.new(None).put()
-    self.oauth_state['source_key'] = other_source.urlsafe().decode()
+    other_source = testutil.FakeSource.new().put()
+    FakeSend.oauth_state['source_key'] = other_source.urlsafe().decode()
 
     resp = self.get_response(interactive=True)
     self.assertEqual(302, resp.status_code)
@@ -151,7 +160,7 @@ class PublishTest(testutil.AppTest):
     self.assertIsNone(Publish.query().get())
 
   def test_interactive_oauth_decline(self):
-    self.auth_entity = None
+    FakeSend.auth_entity = None
     resp = self.get_response(interactive=True)
     self.assertEqual(302, resp.status_code)
     self.assertEqual('http://localhost/fake/foo.com', resp.headers['Location'])
@@ -163,7 +172,7 @@ class PublishTest(testutil.AppTest):
 
   def test_interactive_no_state(self):
     """https://github.com/snarfed/bridgy/issues/449"""
-    self.oauth_state = None
+    FakeSend.oauth_state = None
     resp = self.get_response(interactive=True)
     self.assertEqual(302, resp.status_code)
     self.assertEqual('http://localhost/', resp.headers['Location'])
@@ -231,7 +240,7 @@ class PublishTest(testutil.AppTest):
 
     resp = self.assert_response('', status=302, interactive=True)
     self.assertIn("Sorry, you've already published that page",
-                  urllib.parse.unquote_plus(resp.headers['Location']))
+                  get_flashed_messages()[0])
 
   def test_publish_entity_collision(self):
     page = PublishedPage(id='http://foo.com/bar')
@@ -240,7 +249,7 @@ class PublishTest(testutil.AppTest):
                       status=429)
 
   def test_publish_entity_too_much_contention(self):
-    self.mox.StubOutWithMock(publish.Handler, '_get_or_add_publish_entity',
+    self.mox.StubOutWithMock(publish.PublishBase, '_get_or_add_publish_entity',
                              use_mock_anything=True)
 
     class GrpcError(Exception):
@@ -249,7 +258,7 @@ class PublishTest(testutil.AppTest):
       def details(self):
         return 'too much contention on these datastore entities...'
 
-    publish.Handler._get_or_add_publish_entity('http://foo.com/bar'
+    publish.PublishBase._get_or_add_publish_entity('http://foo.com/bar'
         ).AndRaise(GrpcError())
 
     self.mox.ReplayAll()
@@ -627,8 +636,7 @@ this is my article
 
     self.mox.StubOutWithMock(error_reporting_client, 'report',
                              use_mock_anything=True)
-    for subject in ('WebmentionHandler None failed',
-                    'PreviewHandler preview new'):
+    for subject in 'Webmention None failed', 'Preview preview new':
       error_reporting_client.report(subject, http_context=mox.IgnoreArg(),
                                     user=u'http://localhost/fake/foo.com')
 
@@ -1148,7 +1156,6 @@ foo<br /> <blockquote>bar</blockquote>
 
   def test_dont_expand_home_page_target_url(self):
     """Replying to a home page shouldn't expand syndication etc. URLs."""
-      # <a class="u-url" href="http://foo.com/bar"></a>
     self.expect_requests_get('http://foo.com/bar', """
     <article class="h-entry">
       <div class="p-name e-content">
@@ -1236,7 +1243,7 @@ Join us!"""
     super().expect_requests_get(
       'http://foo.com/bar', self.post_html % 'foo')
     self.mox.ReplayAll()
-    self.assert_error("Couldn't find link to http://localhost/publish/fake")
+    self.assert_error("Couldn't find link to localhost/publish/fake")
 
   def test_require_like_of_repost_of(self):
     """We only trigger on like-of and repost-of, not like or repost."""
@@ -1496,4 +1503,5 @@ Join us!"""
       mox.IgnoreArg()).AndRaise(NotImplementedError())
     self.mox.ReplayAll()
 
-    self.assert_error("Sorry, deleting isn't supported for FakeSource yet", preview=True)
+    self.assert_error("Sorry, deleting isn't supported for FakeSource yet",
+                      preview=True)

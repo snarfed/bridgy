@@ -12,6 +12,7 @@ from flask.views import View
 from google.cloud import error_reporting
 from oauth_dropins.webutil.util import json_dumps, json_loads
 from oauth_dropins.webutil import flask_util
+import werkzeug.exceptions
 
 import util
 
@@ -64,6 +65,9 @@ class Webmention(View):
     try:
       resp = util.requests_get(url)
       resp.raise_for_status()
+    except werkzeug.exceptions.HTTPException:
+      # raised by us, probably via self.error()
+      raise
     except BaseException as e:
       if raise_errors:
         raise
@@ -125,8 +129,6 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
       report: boolean, whether to report to StackDriver Error Reporting
       extra_json: dict to be merged into the JSON response body
     """
-    logging.info(f'{self.__class__.__module__}: {error}', exc_info=log_exception)
-
     if self.entity and self.entity.status == 'new':
       self.entity.status = 'failed'
       self.entity.put()
@@ -142,7 +144,8 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
     if report and status != 404:
       self.report_error(error, status=status)
 
-    flask_util.error('', status=status, response=jsonify(resp))
+    flask_util.error('', status=status, response=jsonify(resp),
+                     exc_info=log_exception)
 
   def report_error(self, resp, status=None):
     """Report an error to StackDriver Error reporting."""
