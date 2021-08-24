@@ -20,7 +20,7 @@ class Start(indieauth.Start):
   """Starts the IndieAuth flow."""
   def dispatch_request(self):
     try:
-      return redirect(redirect_url(state=flask_util.get_required_param('token')))
+      return redirect(self.redirect_url(state=flask_util.get_required_param('token')))
     except Exception as e:
       if util.is_connection_failure(e) or util.interpret_http_exception(e)[0]:
         flash("Couldn't fetch your web site: %s" % e)

@@ -23,7 +23,7 @@ from .testutil import FakeBlogSource
 import blogger, facebook, flickr, github, indieauth, instagram, mastodon, meetup, medium, reddit, tumblr, twitter, wordpress_rest
 
 
-class PagesTest(testutil.TestCase):
+class PagesTest(testutil.AppTest):
 
   def test_front_page(self):
     resp = self.client.get('/')
@@ -574,7 +574,7 @@ class PagesTest(testutil.TestCase):
       self.assertEqual(400, resp.status_code)
 
 
-class DiscoverTest(testutil.TestCase):
+class DiscoverTest(testutil.AppTest):
 
   def setUp(self):
     super().setUp()
@@ -607,7 +607,7 @@ class DiscoverTest(testutil.TestCase):
   def test_discover_param_errors(self):
     for url in ('/discover',
                 '/discover?key=bad',
-                '/discover?key=%s' % self.source.key,
+                f'/discover?key={self.source.key.urlsafe().decode()}',
                 '/discover?url=bad',
                 '/discover?url=http://foo/bar',
                 ):

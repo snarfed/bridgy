@@ -36,24 +36,27 @@ class UtilTest(testutil.AppTest):
         {'url': 'http://foo.com/', 'name': UNICODE_STR}))
     auth_entity.put()
 
-    with app.test_request_context():
+    key = FakeSource.next_key()
+    with app.test_request_context(), self.assertRaises(RequestRedirect) as rr:
       state = util.construct_state_param_for_add(feature='publish')
-      src = util.maybe_add_or_delete_source(FakeSource, auth_entity, state)
-      self.assertEqual(['publish'], src.features)
+      util.maybe_add_or_delete_source(FakeSource, auth_entity, state)
+      self.assertIn(UNICODE_STR, get_flashed_messages()[0])
 
-    self.assertEqual(302, self.response.status_code)
-    parsed = urllib.parse.urlparse(self.response.headers['Location'])
-    self.assertIn(UNICODE_STR, get_flashed_messages()[0])
+    self.assertEqual(302, rr.exception.code)
+    self.assertEqual(['publish'], key.get().features)
+
+    print('@', rr.exception.get_headers())
     self.assertEqual(
       'logins="/fake/%s?%s"; expires="2001-12-31 00:00:00"; Path=/' %
-        (src.key.id(), urllib.parse.quote_plus(UNICODE_STR.encode())),
-      self.response.headers['Set-Cookie'])
+        (key.id(), urllib.parse.quote_plus(UNICODE_STR.encode())),
+      dict(rr.exception.get_headers())['Set-Cookie'])
 
     for feature in None, '':
-      with app.test_request_context():
+      key = FakeSource.next_key()
+      with app.test_request_context(), self.assertRaises(RequestRedirect) as rr:
         state = util.construct_state_param_for_add(feature)
-      src = util.maybe_add_or_delete_source(FakeSource, auth_entity, state)
-      self.assertEqual([], src.features)
+        util.maybe_add_or_delete_source(FakeSource, auth_entity, state)
+      self.assertEqual([], key.get().features)
 
   def test_maybe_add_or_delete_source_bad_state(self):
     auth_entity = FakeAuthEntity(id='x', user_json='{}')
@@ -94,27 +97,35 @@ class UtilTest(testutil.AppTest):
       auth_entity = FakeAuthEntity(id='x', user_json=json_dumps({'url': bad_url}))
       auth_entity.put()
 
+      key = FakeSource.next_key().urlsafe().decode()
       with app.test_request_context(), self.assertRaises(RequestRedirect) as rr:
         util.maybe_add_or_delete_source(FakeSource, auth_entity, '{}')
 
       self.assertEqual(302, rr.exception.code)
-      self.assert_equals(
-        f'http://localhost/edit-websites?source_key={source.key.urlsafe().decode()}',
-        rr.exception.new_url)
+      self.assert_equals(f'http://localhost/edit-websites?source_key={key}',
+                         rr.exception.new_url)
 
   def test_add_to_logins_cookie(self):
     with app.test_request_context(headers={'Cookie': 'logins=/other/1?bob'}):
       listen = util.construct_state_param_for_add(feature='listen')
       auth_entity = FakeAuthEntity(id='x', user_json='{}')
       auth_entity.put()
-      src1 = util.maybe_add_or_delete_source(FakeSource, auth_entity, listen)
-      cookie = 'logins="/fake/%s?fake|/other/1?bob"; expires="2001-12-31 00:00:00"; Path=/'
-      self.assertEqual(cookie % src1.key.id(), self.response.headers['Set-Cookie'])
 
-      src2 = util.maybe_add_or_delete_source(FakeSource, auth_entity, listen)
-      request.headers['Cookie'] = \
-        'logins="/fake/%s?fake|/other/1?bob"' % src2.key.id()
-      self.assertEqual(cookie % src2.key.id(), self.response.headers['Set-Cookie'])
+      id = FakeSource.next_key().id()
+      with self.assertRaises(RequestRedirect) as rr:
+        util.maybe_add_or_delete_source(FakeSource, auth_entity, listen)
+
+      cookie = 'logins="/fake/{id}?fake|/other/1?bob"; expires="2001-12-31 00:00:00"; Path=/'
+      self.assertEqual(cookie.format(id=id),
+                       dict(rr.exception.get_headers())['Set-Cookie'])
+
+      id = FakeSource.next_key().id()
+      with self.assertRaises(RequestRedirect) as rr:
+        util.maybe_add_or_delete_source(FakeSource, auth_entity, listen)
+      # request.headers['Cookie'] = \
+      #   'logins="/fake/%s?fake|/other/1?bob"' % src2.key.id()
+      self.assertEqual(cookie.format(id=id),
+                       dict(rr.exception.get_headers())['Set-Cookie'])
 
   def test_get_logins(self):
     for cookie, expected in (

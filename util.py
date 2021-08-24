@@ -176,17 +176,18 @@ def add_task(queue, eta_seconds=None, **kwargs):
     logging.info('Added %s task %s with ETA %s', queue, task.name, eta_seconds)
 
 
-def redirect(path, **kwargs):
+def redirect(path, code=302):
   """Stops execution and redirects to the absolute URL for a given path.
 
   Specifically, raises :class:`werkzeug.routing.RequestRedirect`.
 
   Args:
     url: str
+    code: int, HTTP status code
   """
   logging.info(f'Redirecting to {path}')
   rr = RequestRedirect(host_url(path))
-  rr.code = 302
+  rr.code = code
   raise rr
 
 
@@ -489,8 +490,6 @@ def maybe_add_or_delete_source(source_cls, auth_entity, state, **kwargs):
     else:
       redirect(source.bridgy_url() if source else '/')
 
-    return source
-
   else:  # this is a delete
     if auth_entity:
       redirect('/delete/finish?auth_entity=%s&state=%s' %
@@ -601,7 +600,7 @@ def oauth_starter(oauth_start_view, **kwargs):
   class Start(oauth_start_view):
     def redirect_url(self, state=None, **ru_kwargs):
       return super().redirect_url(
-        construct_state_param_for_add(state, **kwargs), **ru_kwargs)
+        state=construct_state_param_for_add(state, **kwargs), **ru_kwargs)
 
   return Start
 

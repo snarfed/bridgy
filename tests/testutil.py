@@ -262,6 +262,7 @@ class FakeSource(Source):
     return ndb.Key(cls, str(cls.string_id_counter))
 
 
+
 class FakeBlogSource(FakeSource):
   SHORT_NAME = 'fake_blog'
 

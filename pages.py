@@ -9,6 +9,7 @@ from google.cloud import ndb
 from oauth_dropins.webutil import appengine_info, flask_util, logs
 from oauth_dropins.webutil.flask_util import error
 from oauth_dropins.webutil.util import json_dumps, json_loads
+import werkzeug.exceptions
 
 from flask_app import app, cache
 from blogger import Blogger
@@ -323,6 +324,9 @@ def delete_start():
 
   try:
     return redirect(source.OAUTH_START(path).redirect_url(state=state))
+  except werkzeug.exceptions.HTTPException:
+    # raised by us, probably via self.error()
+    raise
   except Exception as e:
     code, body = util.interpret_http_exception(e)
     if not code and util.is_connection_failure(e):
