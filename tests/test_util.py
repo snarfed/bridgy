@@ -319,11 +319,7 @@ class RegistrationCallbackTest(testutil.AppTest):
   class FakeAdd(oauth_views.Callback):
     """Serves the authorization callback when handling a fake source.
     """
-    auth_entity = FakeAuthEntity(user_json=json_dumps({
-      'id': '0123456789',
-      'name': 'Fake User',
-      'url': 'http://fakeuser.com/',
-    }))
+    auth_entity = None  # populated in setUp()
 
     def dispatch_request(self):
       util.maybe_add_or_delete_source(FakeSource, self.auth_entity,
@@ -338,6 +334,12 @@ class RegistrationCallbackTest(testutil.AppTest):
       'ENV': 'development',
       'SECRET_KEY': 'sooper seekret',
     })
+
+    self.FakeAdd.auth_entity = FakeAuthEntity(user_json=json_dumps({
+      'id': '0123456789',
+      'name': 'Fake User',
+      'url': 'http://fakeuser.com/',
+    }))
 
     self.start = testutil.FakeStart.as_view('start', '/fake/add')
     self.app.add_url_rule('/fake/start', view_func=self.start, methods=['POST'])
@@ -437,28 +439,12 @@ class RegistrationCallbackTest(testutil.AppTest):
     through.
     """
     state = self.state(feature='publish')
-    self.add.auth_entity = None
-
-    self.expect_requests_get('http://fakeuser.com/')
-    self.mox.ReplayAll()
-
-    self.app = Flask('RegistrationCallbackTest')
-    self.app.config.from_mapping({
-      'ENV': 'development',
-      'SECRET_KEY': 'sooper seekret',
-    })
-
-    self.start = testutil.FakeStart.as_view('start', '/fake/add')
-    self.app.add_url_rule('/fake/start', view_func=self.start, methods=['POST'])
-    self.add = self.FakeAdd.as_view('callback', '/fake/callback')
-    self.add.auth_entity = None
-    self.app.add_url_rule('/fake/add', view_func=self.add)
-    self.client = self.app.test_client()
+    self.FakeAdd.auth_entity = None
 
     resp = self.client.post('/fake/start', data={
-        'feature': 'publish',
-        'callback': 'http://withknown.com/bridgy_callback',
-      })
+      'feature': 'publish',
+      'callback': 'http://withknown.com/bridgy_callback',
+    })
     self.assert_equals(302, resp.status_code)
     self.assert_auth_url_state(resp, state)
 

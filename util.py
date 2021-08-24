@@ -479,9 +479,10 @@ def maybe_add_or_delete_source(source_cls, auth_entity, state, **kwargs):
       if callback:
         callback = util.add_query_params(callback, {'result': 'declined'})
         logging.debug(
-          'user declined adding source, redirect to external callback %s',
-          callback)
-      redirect('/')
+          f'user declined adding source, redirect to external callback {callback}')
+        redirect(callback)
+      else:
+        redirect('/')
 
     logging.info('%s.create_new with %s', source_cls.__class__.__name__,
                  (auth_entity.key, state, kwargs))
