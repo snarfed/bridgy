@@ -113,15 +113,15 @@ class UtilTest(testutil.AppTest):
       with self.assertRaises(RequestRedirect) as rr:
         util.maybe_add_or_delete_source(FakeSource, auth_entity, listen)
 
-      cookie = 'logins="/fake/{id}?fake|/other/1?bob"'
-      self.assertEqual(cookie.format(id=id), rr.get_response().headers['Set-Cookie'])
+      cookie = 'logins="/fake/{id}?fake|/other/1?bob";'
+      self.assertIn(cookie.format(id=id),
+                    rr.exception.get_response().headers['Set-Cookie'])
 
       id = FakeSource.next_key().id()
       with self.assertRaises(RequestRedirect) as rr:
         util.maybe_add_or_delete_source(FakeSource, auth_entity, listen)
-      # request.headers['Cookie'] = \
-      #   'logins="/fake/%s?fake|/other/1?bob"' % src2.key.id()
-      self.assertEqual(cookie.format(id=id), rr.get_response().headers['Set-Cookie'])
+      self.assertIn(cookie.format(id=id),
+                    rr.exception.get_response().headers['Set-Cookie'])
 
   def test_get_logins(self):
     for cookie, expected in (
