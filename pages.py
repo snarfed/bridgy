@@ -365,6 +365,7 @@ def delete_finish():
     urlsafe=flask_util.get_required_param('auth_entity')).get()
   source = ndb.Key(urlsafe=parts['source']).get()
 
+  logins = None
   if logged_in_as and logged_in_as.is_authority_for(source.auth_entity):
     # TODO: remove credentials
     if feature in source.features:
@@ -377,7 +378,6 @@ def delete_finish():
                          name=source.label_name())
       if login in logins:
         logins.remove(login)
-        util.set_logins(logins)
 
     noun = 'webmentions' if feature == 'webmention' else feature + 'ing'
     if callback:
@@ -394,9 +394,8 @@ def delete_finish():
     else:
       flash(f'Please log into {source.GR_CLASS.NAME} as {source.name} to disable it here.')
 
-  return redirect(callback if callback
-                  else source.bridgy_url() if source.features
-                  else '/')
+  url = callback if callback else source.bridgy_url() if source.features else '/'
+  return redirect(url, logins=logins)
 
 
 @app.route('/poll-now', methods=['POST'])
@@ -544,9 +543,8 @@ def redirect_to_front_page(_):
 @app.route('/logout')
 def logout():
   """Redirect to the front page."""
-  util.set_logins([])
   flash('Logged out.')
-  return redirect('/')
+  return redirect('/', logins=[])
 
 
 @app.route('/csp-report')

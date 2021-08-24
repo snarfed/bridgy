@@ -45,11 +45,9 @@ class UtilTest(testutil.AppTest):
     self.assertEqual(302, rr.exception.code)
     self.assertEqual(['publish'], key.get().features)
 
-    print('@', rr.exception.get_headers())
-    self.assertEqual(
-      'logins="/fake/%s?%s"; expires="2001-12-31 00:00:00"; Path=/' %
-        (key.id(), urllib.parse.quote_plus(UNICODE_STR.encode())),
-      dict(rr.exception.get_headers())['Set-Cookie'])
+    name = urllib.parse.quote_plus(UNICODE_STR.encode())
+    self.assertIn(f'logins="/fake/{key.id()}?{name}";',
+                  rr.exception.get_response().headers['Set-Cookie'])
 
     for feature in None, '':
       key = FakeSource.next_key()
@@ -115,17 +113,15 @@ class UtilTest(testutil.AppTest):
       with self.assertRaises(RequestRedirect) as rr:
         util.maybe_add_or_delete_source(FakeSource, auth_entity, listen)
 
-      cookie = 'logins="/fake/{id}?fake|/other/1?bob"; expires="2001-12-31 00:00:00"; Path=/'
-      self.assertEqual(cookie.format(id=id),
-                       dict(rr.exception.get_headers())['Set-Cookie'])
+      cookie = 'logins="/fake/{id}?fake|/other/1?bob"'
+      self.assertEqual(cookie.format(id=id), rr.get_response().headers['Set-Cookie'])
 
       id = FakeSource.next_key().id()
       with self.assertRaises(RequestRedirect) as rr:
         util.maybe_add_or_delete_source(FakeSource, auth_entity, listen)
       # request.headers['Cookie'] = \
       #   'logins="/fake/%s?fake|/other/1?bob"' % src2.key.id()
-      self.assertEqual(cookie.format(id=id),
-                       dict(rr.exception.get_headers())['Set-Cookie'])
+      self.assertEqual(cookie.format(id=id), rr.get_response().headers['Set-Cookie'])
 
   def test_get_logins(self):
     for cookie, expected in (

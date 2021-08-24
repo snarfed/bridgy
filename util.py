@@ -176,7 +176,28 @@ def add_task(queue, eta_seconds=None, **kwargs):
     logging.info('Added %s task %s with ETA %s', queue, task.name, eta_seconds)
 
 
-def redirect(path, code=302):
+class Redirect(RequestRedirect):
+  """Adds login cookie support to :class:`werkzeug.exceptions.RequestRedirect`."""
+  logins = None
+
+  def get_response(self, *args, **kwargs):
+    resp = super().get_response()
+
+    if self.logins:
+      # cookie docs: http://curl.haxx.se/rfc/cookie_spec.html
+      cookie = '|'.join(sorted(set(
+        f'{login.path}?{urllib.parse.quote_plus(login.name)}'
+        for login in self.logins)))
+
+      logging.info(f'setting logins cookie: {cookie}')
+      age = datetime.timedelta(days=365 * 2)
+      expires = (now_fn() + age).replace(microsecond=0)
+      resp.set_cookie('logins', cookie, max_age=age, expires=expires)
+
+    return resp
+
+
+def redirect(path, code=302, logins=None):
   """Stops execution and redirects to the absolute URL for a given path.
 
   Specifically, raises :class:`werkzeug.routing.RequestRedirect`.
@@ -184,10 +205,13 @@ def redirect(path, code=302):
   Args:
     url: str
     code: int, HTTP status code
+    logins: optional, list of :class:`util.Login` to be set in a Set-Cookie HTTP
+      header
   """
   logging.info(f'Redirecting to {path}')
-  rr = RequestRedirect(host_url(path))
+  rr = Redirect(host_url(path))
   rr.code = code
+  rr.logins = logins
   raise rr
 
 
@@ -465,12 +489,12 @@ def maybe_add_or_delete_source(source_cls, auth_entity, state, **kwargs):
                                    features=feature.split(',') if feature else [],
                                    user_url=user_url, **kwargs)
 
+    logins = None
     if source:
       # add to login cookie
       logins = get_logins()
       logins.append(Login(path=source.bridgy_path(), site=source.SHORT_NAME,
                           name=source.label_name()))
-      set_logins(logins)
 
     if callback:
       callback = util.add_query_params(callback, {
@@ -480,20 +504,20 @@ def maybe_add_or_delete_source(source_cls, auth_entity, state, **kwargs):
       } if source else {'result': 'failure'})
       logging.debug(
         'finished adding source, redirect to external callback %s', callback)
-      redirect(callback)
+      redirect(callback, logins=logins)
 
     elif source and not source.domains:
       redirect('/edit-websites?' + urllib.parse.urlencode({
         'source_key': source.key.urlsafe().decode(),
-      }))
+      }), logins=logins)
 
     else:
-      redirect(source.bridgy_url() if source else '/')
+      redirect(source.bridgy_url() if source else '/', logins=logins)
 
   else:  # this is a delete
     if auth_entity:
       redirect('/delete/finish?auth_entity=%s&state=%s' %
-               (auth_entity.key.urlsafe().decode(), state))
+               (auth_entity.key.urlsafe().decode(), state), logins=logins)
     else:
       flash('If you want to disable, please approve the %s prompt.' %
             source_cls.GR_CLASS.NAME)
@@ -531,6 +555,8 @@ def construct_state_param_for_add(state=None, **kwargs):
 def get_logins():
   """Extracts the current user page paths from the logins cookie.
 
+  The logins cookie is set in :meth:`redirect` and :class:`Redirect`.
+
   Returns:
     list of :class:`Login` objects
   """
@@ -549,27 +575,6 @@ def get_logins():
     logins.append(Login(path=path, site=site, name=name))
 
   return logins
-
-
-def set_logins(logins):
-  """Sets a logins cookie.
-
-  Args:
-    logins: sequence of :class:`Login` objects
-  """
-  # cookie docs: http://curl.haxx.se/rfc/cookie_spec.html
-  cookie = '|'.join(sorted(set(
-    f'{login.path}?{urllib.parse.quote_plus(login.name)}'
-    for login in logins)))
-
-  age = datetime.timedelta(days=365 * 2)
-  expires = (now_fn() + age).replace(microsecond=0)
-
-  @flask.after_this_request
-  def set_cookie(response):
-    logging.info(f'setting logins cookie: {cookie}')
-    response.set_cookie('logins', cookie, max_age=age, expires=expires)
-    return response
 
 
 def preprocess_source(source):
