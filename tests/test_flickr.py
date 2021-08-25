@@ -12,8 +12,7 @@ import tasks
 from . import testutil
 
 
-class FlickrTest(testutil.AppTest):
-
+class FlickrBaseTest():
   def setUp(self):
     super().setUp()
     oauth_dropins.flickr_auth.FLICKR_APP_KEY = 'my_app_key'
@@ -27,18 +26,7 @@ class FlickrTest(testutil.AppTest):
     self.auth_entity.put()
     self.flickr = flickr.Flickr.new(self.auth_entity)
 
-  def test_new(self):
-    self.assertEqual(self.auth_entity, self.flickr.auth_entity.get())
-    self.assertEqual('39216764@N00', self.flickr.key.id())
-    self.assertEqual('Kyle Mahan', self.flickr.name)
-    self.assertEqual('kindofblue115', self.flickr.username)
-    self.assertEqual('https://www.flickr.com/people/kindofblue115/',
-                     self.flickr.silo_url())
-    self.assertEqual('tag:flickr.com,2013:kindofblue115', self.flickr.user_tag_id())
-
   def expect_call_api_method(self, method, params, result):
-    # FIXME duplicated from granary.test_flickr.FlickrTest, not sure
-    # how to share
     full_params = {
       'nojsoncallback': 1,
       'format': 'json',
@@ -48,30 +36,17 @@ class FlickrTest(testutil.AppTest):
     self.expect_urlopen('https://api.flickr.com/services/rest?'
                         + urllib.parse.urlencode(full_params), result)
 
-  def test_revoked_disables_source(self):
-    """ Make sure polling Flickr with a revoked token will
-    disable it as a source.
-    """
-    self.expect_call_api_method('flickr.people.getPhotos', {
-      'extras': granary.flickr.Flickr.API_EXTRAS,
-      'per_page': 50,
-      'user_id': 'me',
-    }, json_dumps({
-      'stat': 'fail',
-      'code': 98,
-      'message': 'Invalid auth token',
-    }))
-    self.mox.ReplayAll()
 
-    self.flickr.features = ['listen']
-    self.flickr.put()
-    self.assertEqual('enabled', self.flickr.status)
+class FlickrTest(FlickrBaseTest, testutil.AppTest):
 
-    self.client.post('/_ah/queue/poll', data={
-      'source_key': self.flickr.key.urlsafe().decode(),
-      'last_polled': '1970-01-01-00-00-00',
-    })
-    self.assertEqual('disabled', self.flickr.key.get().status)
+  def test_new(self):
+    self.assertEqual(self.auth_entity, self.flickr.auth_entity.get())
+    self.assertEqual('39216764@N00', self.flickr.key.id())
+    self.assertEqual('Kyle Mahan', self.flickr.name)
+    self.assertEqual('kindofblue115', self.flickr.username)
+    self.assertEqual('https://www.flickr.com/people/kindofblue115/',
+                     self.flickr.silo_url())
+    self.assertEqual('tag:flickr.com,2013:kindofblue115', self.flickr.user_tag_id())
 
   @staticmethod
   def prepare_person_tags():
@@ -137,3 +112,32 @@ class FlickrTest(testutil.AppTest):
     # final fallback to key id
     self.flickr.username = None
     self.assertEqual('39216764@N00', self.flickr.label_name())
+
+
+class FlickrPollTest(FlickrBaseTest, testutil.BackgroundTest):
+
+  def test_revoked_disables_source(self):
+    """ Make sure polling Flickr with a revoked token will
+    disable it as a source.
+    """
+    self.expect_call_api_method('flickr.people.getPhotos', {
+      'extras': granary.flickr.Flickr.API_EXTRAS,
+      'per_page': 50,
+      'user_id': 'me',
+    }, json_dumps({
+      'stat': 'fail',
+      'code': 98,
+      'message': 'Invalid auth token',
+    }))
+    self.mox.ReplayAll()
+
+    self.flickr.features = ['listen']
+    self.flickr.put()
+    self.assertEqual('enabled', self.flickr.status)
+
+    self.client.post('/_ah/queue/poll', data={
+      'source_key': self.flickr.key.urlsafe().decode(),
+      'last_polled': '1970-01-01-00-00-00',
+    })
+    self.assertEqual('disabled', self.flickr.key.get().status)
+
