@@ -451,9 +451,7 @@ class PagesTest(testutil.AppTest):
   def test_logout(self):
     util.now_fn = lambda: datetime.datetime(2000, 1, 1)
     resp = self.client.get('/logout')
-    self.assertEqual(
-      'logins=; Expires=Mon, 31 Dec 2001 00:00:00 GMT; Max-Age=63072000; Path=/',
-      resp.headers['Set-Cookie'])
+    self.assertNotIn('logins=', resp.headers['Set-Cookie'])
     self.assertEqual(302, resp.status_code)
     self.assertEqual('http://localhost/', resp.headers['Location'])
     self.assertEqual(['Logged out.'], get_flashed_messages())

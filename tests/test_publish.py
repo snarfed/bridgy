@@ -642,7 +642,7 @@ this is my article
 
     self.mox.StubOutWithMock(self.source.gr_source, 'create',
                              use_mock_anything=True)
-    err = exc.HTTPPaymentRequired('fooey')
+    err = requests.HTTPError(response=util.Struct(status_code='429', text='fooey'))
     self.source.gr_source.create(mox.IgnoreArg(),
                                  include_link=gr_source.INCLUDE_LINK,
                                  ignore_formatting=False
@@ -656,8 +656,8 @@ this is my article
                                          ).AndRaise(err)
 
     self.mox.ReplayAll()
-    self.assert_error('fooey', status=402)
-    self.assertEqual(402, self.get_response(preview=True).status_code)
+    self.assert_error('fooey', status=429)
+    self.assertEqual(429, self.get_response(preview=True).status_code)
 
   def test_silo_500_returns_502(self):
     self.expect_requests_get('http://foo.com/bar', self.post_html % 'xyz')

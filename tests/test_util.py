@@ -10,7 +10,6 @@ from google.cloud import ndb
 from oauth_dropins import views as oauth_views
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
-import webapp2
 from werkzeug.exceptions import BadRequest
 from werkzeug.routing import RequestRedirect
 
