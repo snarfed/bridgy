@@ -21,9 +21,12 @@ from granary.tests.test_facebook import (
 )
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
+import browser
 from facebook import Facebook
 from models import Activity, Domain
 from . import testutil
+
+browser.route(Facebook)
 
 
 class FacebookTest(testutil.AppTest):
@@ -87,7 +90,7 @@ class FacebookTest(testutil.AppTest):
     self.assertIsNone(Facebook.get_by_id('212038'))
 
     # webmention discovery
-    self.expect_requests_get('https://snarfed.org/', '', stream=None)
+    self.expect_requests_get('https://snarfed.org/', '')
     self.mox.ReplayAll()
 
     resp = self.get_response('profile?token=towkin', data=MBASIC_HTML_ABOUT)

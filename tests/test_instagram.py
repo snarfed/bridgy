@@ -1,7 +1,7 @@
 """Unit tests for instagram.py.
 """
 import copy
-import urllib.request, urllib.parse, urllib.error
+import html
 
 import appengine_config  # injects 2013 into tag URIs in test_instagram objects
 
@@ -24,6 +24,7 @@ from granary.tests.test_instagram import (
 )
 from oauth_dropins.webutil.util import HTTP_TIMEOUT, json_dumps, json_loads
 
+import browser
 from instagram import Instagram
 from models import Activity, Domain
 from . import testutil
@@ -31,6 +32,8 @@ from . import testutil
 HTML_VIDEO_WITH_VIEWER = copy.deepcopy(HTML_VIDEO_PAGE)
 HTML_VIDEO_WITH_VIEWER['config'] = HTML_VIEWER_CONFIG
 HTML_VIDEO_COMPLETE = HTML_HEADER + json_dumps(HTML_VIDEO_WITH_VIEWER) + HTML_FOOTER
+
+browser.route(Instagram)
 
 
 class InstagramTest(testutil.AppTest):
@@ -135,7 +138,7 @@ class InstagramTest(testutil.AppTest):
     resp = self.get_response('homepage', data='not a logged in IG feed')
     self.assertEqual(400, resp.status_code)
     self.assertIn("Couldn't determine logged in Instagram user",
-                  resp.get_data(as_text=True))
+                  html.unescape(resp.get_data(as_text=True)))
 
   def test_profile_new_user(self):
     self.assertIsNone(Instagram.get_by_id('snarfed'))
