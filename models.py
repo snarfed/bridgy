@@ -502,6 +502,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
     return ''
 
   @classmethod
+  @ndb.transactional()
   def create_new(cls, user_url=None, **kwargs):
     """Creates and saves a new :class:`Source` and adds a poll task for it.
 
@@ -524,11 +525,8 @@ class Source(StringIdModel, metaclass=SourceMeta):
     logging.debug('URLs/domains: %s %s', source.domain_urls, source.domains)
 
     # check if this source already exists
-    print('@@', source.key)
     existing = source.key.get()
-    print(repr(existing))
     if existing:
-      print('@@@')
       # merge some fields
       source.features = set(source.features + existing.features)
       source.populate(**existing.to_dict(include=(
@@ -554,7 +552,6 @@ class Source(StringIdModel, metaclass=SourceMeta):
     if source.verified():
       flash(blurb)
 
-    # TODO: ugh, *all* of this should be transactional
     source.put()
 
     if 'webmention' in source.features:

@@ -231,20 +231,18 @@ class SourceTest(testutil.AppTest):
     self.assertEqual(wordpress_rest.WordPress, models.sources['wordpress'])
 
   def _test_create_new(self, expected_msg, **kwargs):
-    self.clear_datastore()
-
     with self.app.test_request_context():
-      FakeSource.create_new(domains=['foo'],
-                            domain_urls=['http://foo.com'],
-                            webmention_endpoint='http://x/y',
-                            **kwargs)
+      source = FakeSource.create_new(domains=['foo'],
+                                  domain_urls=['http://foo.com'],
+                                  webmention_endpoint='http://x/y',
+                                  **kwargs)
       flashed = get_flashed_messages()
       self.assertEqual(1, len(flashed))
       self.assertIn(expected_msg, flashed[0])
 
-    self.assertEqual(1, FakeSource.query().count())
-    source = FakeSource.query().get()
+    source = source.key.get()
     self.assertEqual('fake (FakeSource)', source.label())
+    return source
 
   def test_create_new(self):
     key = FakeSource.next_key()
@@ -252,9 +250,11 @@ class SourceTest(testutil.AppTest):
       self.expect_task(queue, source_key=key, last_polled='1970-01-01-00-00-00')
     self.mox.ReplayAll()
 
+    orig_count = FakeSource.query().count()
     self._test_create_new(
       "Added fake (FakeSource). Refresh in a minute to see what we've found!",
       features=['listen'])
+    self.assertEqual(orig_count + 1, FakeSource.query().count())
 
   def test_escape_key_id(self):
     s = Source(id='__foo__')
@@ -315,7 +315,6 @@ class SourceTest(testutil.AppTest):
       'superfeedr_secret': 'asdfqwert',
       }
     key = FakeSource.new(features=['listen'], **props).put()
-    print('@', key)
     self.assert_equals(['listen'], FakeSource.query().get().features)
 
     for queue in 'poll-now', 'poll':
@@ -326,12 +325,13 @@ class SourceTest(testutil.AppTest):
     auth_entity = testutil.FakeAuthEntity(
       id='x', user_json=json_dumps({'url': 'http://foo.com/'}))
     auth_entity.put()
-    # XXX TODO create_new() has the same key, FakeSource 1, that was put()
-    # above, but its get() doesn't see it. ?!?
-    self._test_create_new('Updated fake (FakeSource)', auth_entity=auth_entity,
-                          features=['publish'])
 
-    source = FakeSource.query().get()
+    orig_count = FakeSource.query().count()
+    source = self._test_create_new(
+      'Updated fake (FakeSource)', auth_entity=auth_entity, features=['publish'])
+    self.assertEqual(orig_count, FakeSource.query().count())
+
+    source = source.key.get()
     self.assert_equals(['listen', 'publish'], source.features)
     for prop, value in props.items():
       self.assert_equals(value, getattr(source, prop), prop)
