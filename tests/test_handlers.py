@@ -536,14 +536,23 @@ asdf http://other/link qwert
 """)
 
   def test_cache(self):
-    orig = self.check_response('/post/fake/%s/000')
+    orig_cache_type = self.app.config['CACHE_TYPE']
+    try:
+      self.app.config['CACHE_TYPE'] = 'SimpleCache'
+      cache.init_app(self.app)
 
-    # should serve the cached response and not refetch
-    self.mox.StubOutWithMock(FakeGrSource, 'get_activities_response')
-    self.mox.ReplayAll()
+      orig = self.check_response('/post/fake/%s/000')
 
-    cached = self.check_response('/post/fake/%s/000')
-    self.assert_multiline_equals(orig.get_data(as_text=True), cached.get_data(as_text=True))
+      # should serve the cached response and not refetch
+      self.mox.StubOutWithMock(FakeGrSource, 'get_activities_response')
+      self.mox.ReplayAll()
+
+      cached = self.check_response('/post/fake/%s/000')
+      self.assert_multiline_equals(orig.get_data(as_text=True),
+                                   cached.get_data(as_text=True))
+    finally:
+      self.app.config['CACHE_TYPE'] = orig_cache_type
+      cache.init_app(self.app)
 
   def test_in_blocklist(self):
     self.mox.StubOutWithMock(FakeSource, 'is_blocked')
