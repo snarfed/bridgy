@@ -12,6 +12,11 @@ indexes:
   - name: "source"
   - name: "updated"
     direction: desc
+- kind: "Publish"
+  properties:
+  - name: "source"
+  - name: "updated"
+    direction: desc
 - kind: "Activity"
   properties:
   - name: "source"
@@ -21,11 +26,6 @@ indexes:
   properties:
   - name: "source"
   - name: "updated"
-- kind: "Publish"
-  properties:
-  - name: "source"
-  - name: "updated"
-    direction: desc
 - kind: "Publish"
   ancestor: yes
   properties:

@@ -11,8 +11,10 @@ from flask import request
 from granary import twitter as gr_twitter
 from granary import source as gr_source
 from oauth_dropins import twitter as oauth_twitter
+from oauth_dropins.webutil import flask_util
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
+from flask_app import app
 import models
 import util
 
@@ -161,12 +163,12 @@ class Auth():
     # (and tweepy) don't use signin_with_twitter ie /authorize. this works
     # around a twitter API bug: https://dev.twitter.com/discussions/21281
     access_type = 'write' if 'publish' in features else 'read'
-    handler = util.oauth_starter(oauth_twitter.Start, feature=feature).to(
-      '/twitter/add', access_type=access_type)(request, self.response)
-    return handler.post()
+    view = util.oauth_starter(oauth_twitter.Start, feature=feature)(
+      '/twitter/add', access_type=access_type)
+    return view.dispatch_request()
 
 
-class AddTwitter(oauth_twitter.Callback, Auth):
+class Add(oauth_twitter.Callback, Auth):
   def finish(self, auth_entity, state=None):
     source = util.maybe_add_or_delete_source(Twitter, auth_entity, state)
     feature = util.decode_oauth_state(state).get('feature')
@@ -182,21 +184,18 @@ class AddTwitter(oauth_twitter.Callback, Auth):
       return self.start_oauth_flow('publish')
 
 
-class Start(Auth):
+class Start(oauth_twitter.Start, Auth):
   """Custom OAuth start handler so we can use access_type=read for state=listen.
 
   Tweepy converts access_type to x_auth_access_type for Twitter's
   oauth/request_token endpoint. Details:
   https://dev.twitter.com/docs/api/1/post/oauth/request_token
   """
-  def post(self):
+  def dispatch_request(self):
     return self.start_oauth_flow(flask_util.get_required_param('feature'))
 
 
-# ROUTES = [
-#   ('/twitter/start', Start),
-#   ('/twitter/add', AddTwitter),
-#   ('/twitter/delete/finish', oauth_twitter.Callback.to('/delete/finish')),
-#   ('/twitter/publish/start', oauth_twitter.Start.to(
-#     '/publish/twitter/finish')),
-# ]
+app.add_url_rule('/twitter/start', view_func=Start.as_view('twitter_start', '/twitter/add'), methods=['POST'])
+app.add_url_rule('/twitter/add', view_func=Add.as_view('twitter_add', 'unused'))
+app.add_url_rule('/twitter/delete/finish', view_func=oauth_twitter.Callback.as_view('twitter_delete_finish', '/delete/finish'))
+app.add_url_rule('/twitter/publish/start', view_func=oauth_twitter.Start.as_view('twitter_publish_finish', '/publish/twitter/finish'), methods=['POST'])

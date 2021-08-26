@@ -11,9 +11,7 @@ import logging
 import random
 import re
 import threading
-import time
 import urllib.request, urllib.parse, urllib.error
-import zlib
 
 from cachetools import TTLCache
 import flask
@@ -588,7 +586,7 @@ def preprocess_source(source):
     source: :class:`models.Source` entity
   """
   if source.picture:
-    source.picture = util.update_scheme(source.picture)
+    source.picture = util.update_scheme(source.picture, request)
   source.website_links = [
     util.pretty_link(url, attrs={'rel': 'me', 'class': 'u-url'})
     for url in source.domain_urls]
