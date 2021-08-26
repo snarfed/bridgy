@@ -466,6 +466,7 @@ def maybe_add_or_delete_source(source_cls, auth_entity, state, **kwargs):
   logging.debug(
     'maybe_add_or_delete_source with operation=%s, feature=%s, callback=%s',
     operation, feature, callback)
+  logins = None
 
   if operation == 'add':  # this is an add/update
     if not auth_entity:
@@ -488,7 +489,6 @@ def maybe_add_or_delete_source(source_cls, auth_entity, state, **kwargs):
                                    features=feature.split(',') if feature else [],
                                    user_url=user_url, **kwargs)
 
-    logins = None
     if source:
       # add to login cookie
       logins = get_logins()

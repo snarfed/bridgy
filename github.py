@@ -91,8 +91,8 @@ class Start(View):
     features = flask_util.get_required_param('feature')
     scopes = PUBLISH_SCOPES if 'publish' in features else LISTEN_SCOPES
     starter = util.oauth_starter(oauth_github.Start, feature=features
-                                 ).to('/github/add', scopes=scopes)
-    return starter(request, self.response).post()
+                                 )('/github/add', scopes=scopes)
+    return starter.dispatch_request()
 
 
 class AddGitHub(oauth_github.Callback):
@@ -101,7 +101,7 @@ class AddGitHub(oauth_github.Callback):
     util.maybe_add_or_delete_source(GitHub, auth_entity, state)
 
 
-app.add_url_rule('/github/start', view_func=Start.as_view('github_start', '/github/add'))
+app.add_url_rule('/github/start', view_func=Start.as_view('github_start'), methods=['POST'])
 app.add_url_rule('/github/add', view_func=AddGitHub.as_view('github_add', 'unused'))
 app.add_url_rule('/github/delete/finish', view_func=oauth_github.Callback.as_view('github_delete_finish', '/delete/finish'))
-app.add_url_rule('/github/publish/start', view_func=oauth_github.Start.as_view('github_publish_start', '/publish/github/finish', scopes=PUBLISH_SCOPES))
+app.add_url_rule('/github/publish/start', view_func=oauth_github.Start.as_view('github_publish_start', '/publish/github/finish', scopes=PUBLISH_SCOPES), methods=['POST'])

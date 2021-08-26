@@ -1,7 +1,6 @@
 """Reddit source code and datastore model classes."""
 import logging
 
-from flask import request
 from granary import reddit as gr_reddit
 from granary import source as gr_source
 from oauth_dropins import reddit as oauth_reddit
@@ -76,6 +75,6 @@ class Callback(oauth_reddit.Callback):
 
 
 app.add_url_rule('/reddit/start',
-                 view_func=oauth_reddit.Start.as_view('reddit_start', '/reddit/callback'), methods=['POST'])
+                 view_func=util.oauth_starter(oauth_reddit.Start).as_view('reddit_start', '/reddit/callback'), methods=['POST'])
 app.add_url_rule('/reddit/callback',
                  view_func=Callback.as_view('reddit_callback', 'unused to_path'))
