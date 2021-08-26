@@ -3,10 +3,8 @@
 import logging
 import urllib.parse
 
-
 from flask import request
 from granary import microformats2
-from oauth_dropins.webutil import flask_util
 from oauth_dropins.webutil.util import get_first, json_dumps, json_loads
 
 from flask_app import app
@@ -25,8 +23,8 @@ class BlogWebmentionView(webmention.Webmention):
   def dispatch_request(self, site):
     logging.info('Params: %s', list(request.values.items()))
     # strip fragments from source and target url
-    self.source_url = urllib.parse.urldefrag(flask_util.get_required_param('source'))[0]
-    self.target_url = urllib.parse.urldefrag(flask_util.get_required_param('target'))[0]
+    self.source_url = urllib.parse.urldefrag(request.form['source'])[0]
+    self.target_url = urllib.parse.urldefrag(request.form['target'])[0]
 
     # follow target url through any redirects, strip utm_* query params
     resp = util.follow_redirects(self.target_url)

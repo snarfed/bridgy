@@ -6,7 +6,7 @@ import urllib.request, urllib.parse, urllib.error
 
 from flask import flash, Flask, render_template, request
 from google.cloud import ndb
-from oauth_dropins.webutil import appengine_info, flask_util, logs
+from oauth_dropins.webutil import appengine_info, logs
 from oauth_dropins.webutil.flask_util import error
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import werkzeug.exceptions
@@ -303,7 +303,7 @@ def process_webmention_links(e):
 def delete_start():
   source = util.load_source()
   kind = source.key.kind()
-  feature = flask_util.get_required_param('feature')
+  feature = request.form['feature']
   state = util.encode_oauth_state({
     'operation': 'delete',
     'feature': feature,
@@ -361,8 +361,7 @@ def delete_finish():
   if feature not in (Source.FEATURES):
     error('cannot delete unknown feature %s' % feature)
 
-  logged_in_as = ndb.Key(
-    urlsafe=flask_util.get_required_param('auth_entity')).get()
+  logged_in_as = ndb.Key(urlsafe=request.args['auth_entity']).get()
   source = ndb.Key(urlsafe=parts['source']).get()
 
   logins = None
@@ -456,7 +455,7 @@ def discover():
   source = util.load_source()
 
   # validate URL, find silo post
-  url = flask_util.get_required_param('url')
+  url = request.form['url']
   domain = util.domain_from_link(url)
   path = urllib.parse.urlparse(url).path
   msg = 'Discovering now. Refresh in a minute to see the results!'

@@ -1,5 +1,5 @@
 """IndieAuth handlers for authenticating and proving ownership of a domain."""
-from flask import flash
+from flask import flash, request
 from google.cloud import ndb
 from oauth_dropins import indieauth
 
@@ -12,15 +12,14 @@ from util import redirect
 app.route('/indieauth/start', methods=['GET'])
 def indieauth_enter_web_site():
   """Serves the "Enter your web site" form page."""
-  return render_template('indieauth.html',
-                         token=flask_util.get_required_param('token'))
+  return render_template('indieauth.html', token=request.form['token'])
 
 
 class Start(indieauth.Start):
   """Starts the IndieAuth flow."""
   def dispatch_request(self):
     try:
-      return redirect(self.redirect_url(state=flask_util.get_required_param('token')))
+      return redirect(self.redirect_url(state=request.form['token']))
     except Exception as e:
       if util.is_connection_failure(e) or util.interpret_http_exception(e)[0]:
         flash("Couldn't fetch your web site: %s" % e)

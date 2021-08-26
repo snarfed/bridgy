@@ -30,7 +30,6 @@ from gdata.blogger.client import Query
 from gdata.client import Error
 from google.cloud import ndb
 from oauth_dropins import blogger as oauth_blogger
-from oauth_dropins.webutil import flask_util
 
 from flask_app import app
 import models
@@ -205,12 +204,11 @@ def oauth_callback():
 
 @app.route('/blogger/add', methods=['POST'])
 def blogger_add():
-  auth_entity_key = flask_util.get_required_param('auth_entity_key')
   util.maybe_add_or_delete_source(
     Blogger,
-    ndb.Key(urlsafe=auth_entity_key).get(),
-    flask_util.get_required_param('state'),
-    blog_id=flask_util.get_required_param('blog'),
+    ndb.Key(urlsafe=request.form['auth_entity_key']).get(),
+    request.form['state'],
+    blog_id=request.form['blog'],
   )
 
 

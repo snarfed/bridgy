@@ -92,10 +92,10 @@ class PublishBase(webmention.Webmention):
     return True
 
   def source_url(self):
-    return flask_util.get_required_param('source').strip()
+    return request.values['source'].strip()
 
   def target_url(self):
-    return flask_util.get_required_param('target').strip()
+    return request.values['target'].strip()
 
   def include_link(self, item):
     val = request.values.get('bridgy_omit_link', None)

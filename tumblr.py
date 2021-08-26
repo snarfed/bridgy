@@ -29,10 +29,9 @@ import logging
 import re
 import urllib.parse
 
-from flask import flash, render_template
+from flask import flash, render_template, request
 from google.cloud import ndb
 from oauth_dropins import tumblr as oauth_tumblr
-from oauth_dropins.webutil import flask_util
 from oauth_dropins.webutil.util import json_dumps, json_loads
 from werkzeug.exceptions import BadRequest
 
@@ -253,12 +252,11 @@ class ChooseBlog(oauth_tumblr.Callback):
 
 @app.route('/tumblr/add', methods=['POST'])
 def tumblr_add():
-  auth_entity_key = flask_util.get_required_param('auth_entity_key')
   util.maybe_add_or_delete_source(
     Tumblr,
-    ndb.Key(urlsafe=auth_entity_key).get(),
-    flask_util.get_required_param('state'),
-    blog_name=flask_util.get_required_param('blog'),
+    ndb.Key(urlsafe=request.form['auth_entity_key']).get(),
+    request.form['state'],
+    blog_name=request.form['blog'],
   )
 
 

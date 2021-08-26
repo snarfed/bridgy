@@ -22,10 +22,9 @@ import collections
 import logging
 import urllib.request, urllib.parse, urllib.error
 
-from flask import flash, render_template
+from flask import flash, render_template, request
 from google.cloud import ndb
 from oauth_dropins import wordpress_rest as oauth_wordpress
-from oauth_dropins.webutil import flask_util
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
 from flask_app import app
@@ -212,8 +211,8 @@ class Add(oauth_wordpress.Callback):
 def confirm_self_hosted():
   util.maybe_add_or_delete_source(
     WordPress,
-    ndb.Key(urlsafe=flask_util.get_required_param('auth_entity_key')).get(),
-    flask_util.get_required_param('state'))
+    ndb.Key(urlsafe=request.form['auth_entity_key']).get(),
+    request.form['state'])
 
 
 class SuperfeedrNotify(superfeedr.Notify):

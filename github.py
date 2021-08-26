@@ -6,7 +6,6 @@ from flask import request
 from flask.views import View
 from granary import github as gr_github
 from oauth_dropins import github as oauth_github
-from oauth_dropins.webutil import flask_util
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
 from flask_app import app
@@ -88,7 +87,7 @@ class GitHub(Source):
 
 class Start(View):
   def dispatch_request(self):
-    features = flask_util.get_required_param('feature')
+    features = request.form['feature']
     scopes = PUBLISH_SCOPES if 'publish' in features else LISTEN_SCOPES
     starter = util.oauth_starter(oauth_github.Start, feature=features
                                  )('/github/add', scopes=scopes)

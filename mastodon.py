@@ -5,7 +5,6 @@ from flask import flash, render_template, request
 from granary import mastodon as gr_mastodon
 from granary import source as gr_source
 import oauth_dropins.mastodon
-from oauth_dropins.webutil import flask_util
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
 
@@ -176,12 +175,11 @@ def enter_your_instance():
 class Start(StartBase):
   def redirect_url(self, *args, **kwargs):
     features = (request.form.get('feature') or '').split(',')
-    instance = flask_util.get_required_param('instance')
     starter = util.oauth_starter(StartBase)('/mastodon/callback',
       scopes=PUBLISH_SCOPES if 'publish' in features else LISTEN_SCOPES)
 
     try:
-      return starter.redirect_url(*args, instance=instance, **kwargs)
+      return starter.redirect_url(*args, instance=request.form['instance'], **kwargs)
     except ValueError as e:
       logging.warning('Bad Mastodon instance', exc_info=True)
       flash(util.linkify(str(e), pretty=True))

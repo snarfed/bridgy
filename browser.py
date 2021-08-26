@@ -12,7 +12,6 @@ from granary import instagram as gr_instagram
 from granary import microformats2
 from granary import source as gr_source
 from oauth_dropins import indieauth
-from oauth_dropins.webutil import flask_util
 from oauth_dropins.webutil.flask_util import error
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
@@ -148,7 +147,7 @@ class BrowserView(View):
   def check_token_for_actor(self, actor):
     """Checks that the given actor is public and matches the request's token.
 
-    Raises: :class:`HTTPException` with HTTP 400
+    Raises: :class:`HTTPException` with HTTP 403
     """
     if not actor:
       error(f'Missing actor!')
@@ -156,7 +155,7 @@ class BrowserView(View):
     if not gr_source.Source.is_public(actor):
       error(f'Your {self.gr_source().NAME} account is private. Bridgy only supports public accounts.')
 
-    token = flask_util.get_required_param('token')
+    token = request.values['token']
     domains = set(util.domain_from_link(util.replace_test_domains_with_localhost(u))
                   for u in microformats2.object_urls(actor))
     domains.discard(self.source_class().GR_CLASS.DOMAIN)
@@ -182,7 +181,7 @@ class BrowserView(View):
     source = util.load_source()
 
     # Load and check token
-    token = flask_util.get_required_param('token')
+    token = request.values['token']
     for domain in Domain.query(Domain.tokens == token):
       if domain.key.id() in source.domains:
         return source
@@ -325,7 +324,7 @@ class Reactions(BrowserView):
     source = self.auth()
 
     gr_src = self.gr_source()
-    id = flask_util.get_required_param('id')
+    id = request.values['id']
 
     # validate request
     parsed_id = util.parse_tag_uri(id)
@@ -368,7 +367,7 @@ class Poll(BrowserView):
 class TokenDomains(BrowserView):
   """Returns the domains that a token is registered for."""
   def dispatch_request(self):
-    token = flask_util.get_required_param('token')
+    token = request.values['token']
 
     domains = [d.key.id() for d in Domain.query(Domain.tokens == token)]
     if not domains:

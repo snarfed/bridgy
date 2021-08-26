@@ -12,10 +12,9 @@ https://medium.com/developers/welcome-to-the-medium-api-3418f956552
 import collections
 import logging
 
-from flask import render_template
+from flask import render_template, request
 from google.cloud import ndb
 from oauth_dropins import medium as oauth_medium
-from oauth_dropins.webutil import flask_util
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
 from flask_app import app
@@ -115,11 +114,9 @@ class Medium(models.Source):
 
 @app.route('/medium/add', methods=['POST'])
 def medium_add():
-  auth_entity = ndb.Key(
-    urlsafe=flask_util.get_required_param('auth_entity_key')).get()
-  state = flask_util.get_required_param('state')
-  id = flask_util.get_required_param('blog')
-  util.maybe_add_or_delete_source(Medium, auth_entity, state, id=id)
+  auth_entity = ndb.Key(urlsafe=request.values['auth_entity_key']).get()
+  util.maybe_add_or_delete_source(Medium, auth_entity, request.values['state'],
+                                  id=request.values['blog'])
 
 
 class ChooseBlog(oauth_medium.Callback):

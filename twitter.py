@@ -11,7 +11,6 @@ from flask import request
 from granary import twitter as gr_twitter
 from granary import source as gr_source
 from oauth_dropins import twitter as oauth_twitter
-from oauth_dropins.webutil import flask_util
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
 from flask_app import app
@@ -192,7 +191,7 @@ class Start(oauth_twitter.Start, Auth):
   https://dev.twitter.com/docs/api/1/post/oauth/request_token
   """
   def dispatch_request(self):
-    return self.start_oauth_flow(flask_util.get_required_param('feature'))
+    return self.start_oauth_flow(request.form['feature'])
 
 
 app.add_url_rule('/twitter/start', view_func=Start.as_view('twitter_start', '/twitter/add'), methods=['POST'])

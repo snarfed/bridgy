@@ -11,7 +11,7 @@ from flask.views import View
 from google.cloud import ndb
 from google.cloud.ndb._datastore_types import _MAX_STRING_LENGTH
 from granary.source import Source
-from oauth_dropins.webutil import appengine_info, flask_util, logs, webmention
+from oauth_dropins.webutil import appengine_info, logs, webmention
 from oauth_dropins.webutil.appengine_config import ndb_client
 from oauth_dropins.webutil.flask_util import error
 from oauth_dropins.webutil.util import json_dumps, json_loads
@@ -487,7 +487,7 @@ class Discover(Poll):
     logging.info('Source: %s %s, %s', source.label(), source.key_id(),
                  source.bridgy_url())
 
-    post_id = flask_util.get_required_param('post_id')
+    post_id = request.values['post_id']
     source.updates = {}
 
     if type == 'event':
