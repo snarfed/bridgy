@@ -11,7 +11,7 @@
   z-index: 999;
 }
 
-#messages > p {
+.message {
   display: block;
   opacity: 1;
   background-color: gold;

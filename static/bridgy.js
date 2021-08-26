@@ -9,15 +9,15 @@ function toggle(id) {
 
 // Hide flashed messages. CSS transition in style.css fades them slowly.
 window.onload = function () {
-  var p = document.getElementById('messages');
+  for (const p of document.getElementsByClassName('message')) {
+    window.setTimeout(function() {
+      p.style.opacity = 0;  // uses delayed transition
+    }, 5 /* ms; needed for transition after setting display to non-none */);
 
-  window.setTimeout(function() {
-    p.style.opacity = 0;  // uses delayed transition
-  }, 5 /* ms; needed for transition after setting display to non-none */);
-
-  window.setTimeout(function() {
-    p.style.display = 'none';
-  }, (20 + 5) * 1000 /* ms; match transition duration + delay */);
+    window.setTimeout(function() {
+      p.style.display = 'none';
+    }, (20 + 5) * 1000 /* ms; match transition duration + delay */);
+  }
 }
 
 // AJAX publish previews on user pages.
@@ -55,9 +55,8 @@ function do_preview(site) {
 // used in /admin/responses
 function maybeShowInputs(event) {
   if (String.fromCharCode(event.charCode) == "x") {
-    elems = document.getElementsByTagName("input");
-    for (i = 0; i < elems.length; i++) {
-      elems[i].style.display = "inline";
+    for (const elem of document.getElementsByTagName("input")) {
+      elem.style.display = "inline";
     }
   }
 }
@@ -65,9 +64,8 @@ function maybeShowInputs(event) {
 // used in /admin/responses
 function selectAll() {
   checked = document.getElementById("all").checked;
-  elems = document.getElementsByTagName("input");
-  for (i = 0; i < elems.length; i++) {
-    elems[i].checked = checked;
+  for (const elem of document.getElementsByTagName("input")) {
+    elem.checked = checked;
   }
 }
 
