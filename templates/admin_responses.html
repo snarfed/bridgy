@@ -6,14 +6,11 @@
   table { border-spacing: .5em; }
   th, td { border: none; }
   li { list-style: none; }
-  input { display: none; }
 </style>
-<script async type="text/javascript" src="/static/bridgy.js"></script>
 </head>
 
-<body onkeypress="maybeShowInputs(event)">
+<body>
 <h2>Active responses</h2>
-<form method="post" action="/admin/mark_complete">
 <table>
   <tr>
     <th>Source</th>
@@ -22,7 +19,6 @@
     <th>Last attempt</th>
     <th>Created</th>
     <th>Error URLs</th>
-    <th><input id="all" type="checkbox" onclick="selectAll()" /></th>
   </tr>
 
   {% for r in responses %}
@@ -45,15 +41,8 @@
     <td>{{ naturaltime(r.created) }}</td>
 
     <td>{{ r.links|join('<br>')|safe }}</td>
-
-    <td class="hidden">
-      <input name="key" value="{{ r.key.urlsafe().decode() }}" type="checkbox" />
-    </td>
   </tr>
   {% endfor %}
 </table>
-
-<div style="text-align: right"><input type="submit" value="Mark complete" /></div>
-</form>
 </body>
 </html>
