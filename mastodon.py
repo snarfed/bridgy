@@ -5,6 +5,7 @@ from flask import flash, render_template, request
 from granary import mastodon as gr_mastodon
 from granary import source as gr_source
 import oauth_dropins.mastodon
+from oauth_dropins.webutil import flask_util
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
 
@@ -29,8 +30,9 @@ PUBLISH_SCOPES = LISTEN_SCOPES + (
 SCOPE_SEPARATOR = oauth_dropins.mastodon.Start.SCOPE_SEPARATOR
 
 
-class Start(oauth_dropins.mastodon.Start):
+class StartBase(oauth_dropins.mastodon.Start):
   """Abstract base OAuth starter class with our redirect URLs."""
+  DEFAULT_SCOPE = ''
   REDIRECT_PATHS = (
     '/mastodon/callback',
     '/publish/mastodon/finish',
@@ -42,7 +44,7 @@ class Start(oauth_dropins.mastodon.Start):
     return 'Bridgy'
 
   def app_url(self):
-    return util.host_url(self)
+    return util.host_url()
 
 
 class Mastodon(models.Source):
@@ -51,7 +53,7 @@ class Mastodon(models.Source):
   The key name is the fully qualified address, eg '@snarfed@mastodon.technology'.
   """
   GR_CLASS = gr_mastodon.Mastodon
-  OAUTH_START = Start
+  OAUTH_START = StartBase
   SHORT_NAME = 'mastodon'
   CAN_PUBLISH = True
   HAS_BLOCKS = True
@@ -171,16 +173,19 @@ def enter_your_instance():
   return render_template('mastodon_instance.html')
 
 
-class Start(oauth_dropins.mastodon.Start):
-  DEFAULT_SCOPE = SCOPE_SEPARATOR.join(LISTEN_SCOPES)
-
+class Start(StartBase):
   def redirect_url(self, *args, **kwargs):
+    features = (request.form.get('feature') or '').split(',')
+    instance = flask_util.get_required_param('instance')
+    starter = util.oauth_starter(StartBase)('/mastodon/callback',
+      scopes=PUBLISH_SCOPES if 'publish' in features else LISTEN_SCOPES)
+
     try:
-      return super().redirect_url(*args, **kwargs)
+      return starter.redirect_url(*args, instance=instance, **kwargs)
     except ValueError as e:
       logging.warning('Bad Mastodon instance', exc_info=True)
       flash(util.linkify(str(e), pretty=True))
-      return redirect(request.path)
+      redirect(request.path)
 
 
 class Callback(oauth_dropins.mastodon.Callback):
@@ -202,4 +207,4 @@ app.add_url_rule('/mastodon/callback', view_func=Callback.as_view('mastodon_call
 app.add_url_rule('/mastodon/delete/finish',
                  view_func=oauth_dropins.mastodon.Callback.as_view('mastodon_delete_finish', '/delete/finish'))
 app.add_url_rule('/mastodon/publish/start',
-                 view_func=Start.as_view('mastodon_publish_finish', '/publish/mastodon/finish', scopes=PUBLISH_SCOPES), methods=['POST'])
+                 view_func=StartBase.as_view('mastodon_publish_finish', '/publish/mastodon/finish', scopes=PUBLISH_SCOPES), methods=['POST'])
