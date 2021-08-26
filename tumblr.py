@@ -29,9 +29,10 @@ import logging
 import re
 import urllib.parse
 
-from flask import flash
+from flask import flash, render_template
 from google.cloud import ndb
 from oauth_dropins import tumblr as oauth_tumblr
+from oauth_dropins.webutil import flask_util
 from oauth_dropins.webutil.util import json_dumps, json_loads
 from werkzeug.exceptions import BadRequest
 
@@ -247,12 +248,10 @@ class ChooseBlog(oauth_tumblr.Callback):
                 if b.get('name') and b.get('url')],
       }
     logging.info('Rendering choose_blog.html with %s', vars)
-
-    self.response.headers['Content-Type'] = 'text/html'
-    self.response.out.write(JINJA_ENV.get_template('choose_blog.html').render(**vars))
+    return render_template('choose_blog.html', **vars)
 
 
-@app.route('/tumblr/add')
+@app.route('/tumblr/add', methods=['POST'])
 def tumblr_add():
   auth_entity_key = flask_util.get_required_param('auth_entity_key')
   util.maybe_add_or_delete_source(
@@ -271,10 +270,10 @@ class SuperfeedrNotify(superfeedr.Notify):
 # http://www.tumblr.com/docs/en/api/v2#oauth
 start = util.oauth_starter(oauth_tumblr.Start).as_view(
   'tumblr_start', '/tumblr/choose_blog')
-app.add_url_rule('/tumblr/start', view_func=start)
+app.add_url_rule('/tumblr/start', view_func=start, methods=['POST'])
 app.add_url_rule('/tumblr/choose_blog', view_func=ChooseBlog.as_view(
-  'tumblr_choose_blog'))
+  'tumblr_choose_blog', 'unused'))
 app.add_url_rule('/tumblr/delete/finish', view_func=oauth_tumblr.Callback.as_view(
-  'tumblr_delete_finish'))
+  'tumblr_delete_finish', '/delete/finish'))
 app.add_url_rule('/tumblr/notify/(.+)',
-                 view_func=SuperfeedrNotify.as_view('tumblr_notify'))
+                 view_func=SuperfeedrNotify.as_view('tumblr_notify'), methods=['POST'])

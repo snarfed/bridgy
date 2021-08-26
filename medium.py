@@ -173,10 +173,10 @@ class SuperfeedrNotify(superfeedr.Notify):
 # https://github.com/Medium/medium-api-docs#user-content-21-browser-based-authentication
 start = util.oauth_starter(oauth_medium.Start).as_view(
   'medium_start', '/medium/choose_blog', scopes=('basicProfile', 'listPublications'))
-app.add_url_rule('/medium/start', view_func=start)
+app.add_url_rule('/medium/start', view_func=start, methods=['POST'])
 app.add_url_rule('/medium/choose_blog', view_func=ChooseBlog.as_view(
-  'medium_choose_blog'))
+  'medium_choose_blog'), methods=['POST'])
 app.add_url_rule('/medium/delete/finish', view_func=oauth_medium.Callback.as_view(
   'medium_delete', '/delete/finish')),
 app.add_url_rule('/medium/notify/(.+)',
-                 view_func=SuperfeedrNotify.as_view('medium_notify'))
+                 view_func=SuperfeedrNotify.as_view('medium_notify'), methods=['POST'])

@@ -25,11 +25,12 @@ import logging
 import re
 import urllib.parse
 
-from flask import flash, request
+from flask import flash, render_template, request
 from gdata.blogger.client import Query
 from gdata.client import Error
 from google.cloud import ndb
 from oauth_dropins import blogger as oauth_blogger
+from oauth_dropins.webutil import flask_util
 
 from flask_app import app
 import models
@@ -182,8 +183,6 @@ def oauth_callback():
 
   state = request.values.get('state')
   if not state:
-    # state doesn't currently come through for Blogger. not sure why. doesn't
-    # matter for now since we don't plan to implement listen or publish.
     state = util.construct_state_param_for_add(feature='webmention')
 
   if not auth_entity:
@@ -193,6 +192,7 @@ def oauth_callback():
   vars = {
     'action': '/blogger/add',
     'state': state,
+    'operation': util.decode_oauth_state(state).get('operation'),
     'auth_entity_key': auth_entity.key.urlsafe().decode(),
     'blogs': [{'id': id, 'title': title, 'domain': host}
               for id, title, host in zip(auth_entity.blog_ids,
@@ -222,10 +222,10 @@ class SuperfeedrNotify(superfeedr.Notify):
 # https://developers.google.com/blogger/docs/2.0/developers_guide_protocol#OAuth2Authorizing
 start = util.oauth_starter(oauth_blogger.Start).as_view(
   'blogger_start', '/blogger/oauth2callback')
-app.add_url_rule('/blogger/start', view_func=start)
+app.add_url_rule('/blogger/start', view_func=start, methods=['POST'])
 app.add_url_rule('/blogger/oauth2callback', view_func=oauth_blogger.Callback.as_view(
   'blogger_oauth2callback', '/blogger/oauth_handler'))
 app.add_url_rule('/blogger/delete/start', view_func=oauth_blogger.Start.as_view(
-  'blogger_delete_start', '/blogger/oauth2callback')),
+  'blogger_delete_start', '/blogger/oauth2callback'))
 app.add_url_rule('/blogger/notify/(.+)',
-                 view_func=SuperfeedrNotify.as_view('blogger_notify'))
+                 view_func=SuperfeedrNotify.as_view('blogger_notify'), methods=['POST'])
