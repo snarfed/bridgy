@@ -94,24 +94,21 @@ class Flickr(models.Source):
 class AuthHandler():
   """Base OAuth handler for Flickr."""
   def start_oauth_flow(self, feature):
-    starter = util.oauth_starter(
-      oauth_flickr.Start, feature=feature
-    ).to(
+    starter = util.oauth_starter(oauth_flickr.Start, feature=feature)(
       # TODO: delete instead of write. if we do that below, it works, and we get
       # granted delete permissions. however, if we then attempt to actually
       # delete something, it fails with code 99 "Insufficient permissions.
       # Method requires delete privileges; write granted." and
       # https://www.flickr.com/services/auth/list.gne shows that my user's
       # permissions for the Bridgy app are back to write, not delete. wtf?!
-      '/flickr/add', scopes='write' if feature == 'publish' else 'read'
-    )
-    return starter(request, self.response).post()
+      '/flickr/add', scopes='write' if feature == 'publish' else 'read')
+    return starter.dispatch_request()
 
 
 class Start(oauth_flickr.Start, AuthHandler):
   """Custom handler to start Flickr auth process."""
   def dispatch_request(self):
-    return self.start_oauth_flow(request.get('feature'))
+    return self.start_oauth_flow(request.form.get('feature'))
 
 
 class AddFlickr(oauth_flickr.Callback, AuthHandler):
@@ -133,7 +130,7 @@ class AddFlickr(oauth_flickr.Callback, AuthHandler):
       return self.start_oauth_flow('publish')
 
 
-app.add_url_rule('/flickr/start', view_func=Start.as_view('flickr_start', '/flickr/add'))
+app.add_url_rule('/flickr/start', view_func=Start.as_view('flickr_start', '/flickr/add'), methods=['POST'])
 app.add_url_rule('/flickr/add', view_func=AddFlickr.as_view('flickr_add', 'unused'))
 app.add_url_rule('/flickr/delete/finish', view_func=oauth_flickr.Callback.as_view('flickr_delete_finish', '/delete/finish'))
-app.add_url_rule('/flickr/publish/start', view_func=oauth_flickr.Start.as_view('flickr_publish_start', '/publish/flickr/finish'))
+app.add_url_rule('/flickr/publish/start', view_func=oauth_flickr.Start.as_view('flickr_publish_start', '/publish/flickr/finish'), methods=['POST'])

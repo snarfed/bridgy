@@ -181,7 +181,7 @@ class Redirect(RequestRedirect):
   def get_response(self, *args, **kwargs):
     resp = super().get_response()
 
-    if self.logins:
+    if self.logins is not None:
       # cookie docs: http://curl.haxx.se/rfc/cookie_spec.html
       cookie = '|'.join(sorted(set(
         f'{login.path}?{urllib.parse.quote_plus(login.name)}'

@@ -387,7 +387,10 @@ def delete_finish():
         'key': source.key.urlsafe().decode(),
       })
     else:
-      flash(f'Disabled {noun} for {source.label()}. Sorry to see you go!')
+      msg = f'Disabled {noun} for {source.label()}.'
+      if not source.features:
+        msg += ' Sorry to see you go!'
+      flash(msg)
   else:
     if callback:
       callback = util.add_query_params(callback, {'result': 'failure'})
