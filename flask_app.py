@@ -31,6 +31,7 @@ app.jinja_env.globals.update({
   'sources': models.sources,
   'string': string,
   'util': util,
+  'EPOCH': util.EPOCH,
 })
 
 cache = Cache(app)

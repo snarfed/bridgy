@@ -26,8 +26,6 @@ from facebook import Facebook
 from models import Activity, Domain
 from . import testutil
 
-browser.route(Facebook)
-
 
 class FacebookTest(testutil.AppTest):
 

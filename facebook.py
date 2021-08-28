@@ -108,3 +108,6 @@ class Facebook(browser.BrowserSource):
                       'facebook.com/%s/' % self.key.id())
 
     return super().canonicalize_url(url)
+
+
+browser.route(Facebook)

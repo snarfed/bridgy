@@ -28,6 +28,7 @@ from flask import request
 from flask.views import View
 from granary import microformats2
 from granary.microformats2 import first_props
+from oauth_dropins.webutil import flask_util
 from oauth_dropins.webutil.flask_util import error
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
@@ -110,7 +111,7 @@ class Item(View):
     except Exception as e:
       util.interpret_http_exception(e)
 
-  @cache.cached(CACHE_TIME.total_seconds())
+  @flask_util.cached(cache, CACHE_TIME)
   def dispatch_request(self, site, key_id, **kwargs):
     """Handle HTTP request."""
     if request.method == 'HEAD':

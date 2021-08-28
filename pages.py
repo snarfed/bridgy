@@ -7,6 +7,7 @@ import urllib.request, urllib.parse, urllib.error
 from flask import flash, Flask, render_template, request
 from google.cloud import ndb
 from oauth_dropins.webutil import appengine_info, logs
+from oauth_dropins.webutil import flask_util
 from oauth_dropins.webutil.flask_util import error
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import werkzeug.exceptions
@@ -37,7 +38,7 @@ def head(site=None, id=None):
 
 
 @app.route('/')
-@cache.cached(datetime.timedelta(days=1).total_seconds())
+@flask_util.cached(cache, datetime.timedelta(days=1))
 def front_page():
   """View for the front page."""
   return render_template('index.html')
@@ -49,8 +50,7 @@ def about():
 
 
 @app.route('/users')
-@cache.cached(datetime.timedelta(hours=1).total_seconds(),
-              unless=lambda: request.query_string)
+@flask_util.cached(cache, datetime.timedelta(hours=1))
 def users():
   """View for /users.
 
@@ -103,7 +103,6 @@ def user(site, id):
   vars = {
     'source': source,
     'logs': logs,
-    'EPOCH': util.EPOCH,
     'REFETCH_HFEED_TRIGGER': models.REFETCH_HFEED_TRIGGER,
     'RECENT_PRIVATE_POSTS_THRESHOLD': RECENT_PRIVATE_POSTS_THRESHOLD,
   }
@@ -557,6 +556,6 @@ def csp_report():
 
 
 @app.route('/log')
-@cache.cached(logs.CACHE_TIME.total_seconds())
+@flask_util.cached(cache, logs.CACHE_TIME)
 def log():
     return logs.log()

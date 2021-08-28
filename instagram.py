@@ -41,3 +41,6 @@ class Instagram(browser.BrowserSource):
   def label_name(self):
     """Returns the username."""
     return self.key_id()
+
+
+browser.route(Instagram)

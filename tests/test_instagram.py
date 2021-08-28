@@ -33,8 +33,6 @@ HTML_VIDEO_WITH_VIEWER = copy.deepcopy(HTML_VIDEO_PAGE)
 HTML_VIDEO_WITH_VIEWER['config'] = HTML_VIEWER_CONFIG
 HTML_VIDEO_COMPLETE = HTML_HEADER + json_dumps(HTML_VIDEO_WITH_VIEWER) + HTML_FOOTER
 
-browser.route(Instagram)
-
 
 class InstagramTest(testutil.AppTest):
 
