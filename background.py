@@ -3,5 +3,5 @@
 Import all modules that define views in the background app so that their URL
 routes get registered.
 """
-from background import app
+from flask_background import app
 import cron, tasks
