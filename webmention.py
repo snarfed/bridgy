@@ -144,7 +144,7 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
     if report and status != 404:
       self.report_error(error, status=status)
 
-    flask_util.error('', status=status, response=jsonify(resp),
+    flask_util.error(str(resp), status=status, response=jsonify(resp),
                      exc_info=log_exception)
 
   def report_error(self, resp, status=None):
