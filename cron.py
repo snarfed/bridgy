@@ -167,3 +167,4 @@ def build_circle():
   """
   resp = requests.post('https://circleci.com/api/v1.1/project/github/snarfed/bridgy/tree/main?circle-token=%s' % CIRCLECI_TOKEN)
   resp.raise_for_status()
+  return ''

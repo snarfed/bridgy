@@ -61,6 +61,6 @@ class Callback(oauth_meetup.Callback):
 
 
 app.add_url_rule('/meetup/start', view_func=util.oauth_starter(oauth_meetup.Start).as_view('meetup_start', '/meetup/add', scopes=PUBLISH_SCOPES), methods=['POST']) # we don't support listen
-app.add_url_rule('/meetup/add', view_func=Callback.as_view('meetup_add'))
+app.add_url_rule('/meetup/add', view_func=Callback.as_view('meetup_add', 'unused'))
 app.add_url_rule('/meetup/delete/finish', view_func=oauth_meetup.Callback.as_view('meetup_delete_finish', '/delete/finish'))
 app.add_url_rule('/meetup/publish/start', view_func=oauth_meetup.Start.as_view('meetup_publish_finish', '/meetup/publish/finish', scopes=PUBLISH_SCOPES), methods=['POST'])
