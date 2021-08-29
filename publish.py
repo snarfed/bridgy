@@ -760,7 +760,6 @@ class Webmention(PublishBase):
 
 app.add_url_rule('/publish/preview', view_func=Preview.as_view('publish_preview'), methods=['POST'])
 app.add_url_rule('/publish/webmention', view_func=Webmention.as_view('publish_webmention'), methods=['POST'])
-app.add_url_rule('/publish/<any(flickr,github,mastodon,meetup,twitter):silo>', view_func=webmention.Webmention.as_view('publish_oauth_start'), methods=['POST'])
 app.add_url_rule('/publish/flickr/finish', view_func=FlickrSend.as_view('publish_flickr_finish'))
 app.add_url_rule('/publish/github/finish', view_func=GitHubSend.as_view('publish_github_finish'))
 app.add_url_rule('/publish/mastodon/finish', view_func=MastodonSend.as_view('publish_mastodon_finish'))

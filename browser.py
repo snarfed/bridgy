@@ -393,4 +393,4 @@ def route(source_cls):
       (f'/{source_cls.SHORT_NAME}/browser/token-domains', TokenDomains),
     ):
     app.add_url_rule(route, view_func=cls.as_view(route),
-                     methods=['GET' if cls == Status else 'POST'])
+                     methods=['GET', 'POST'] if cls == Status else ['POST'])

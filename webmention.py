@@ -14,23 +14,23 @@ from oauth_dropins.webutil.util import json_dumps, json_loads
 from oauth_dropins.webutil import flask_util
 import werkzeug.exceptions
 
+from flask_app import app
 import util
 
 
-def webmention_head():
+@app.route('/publish/<any(flickr,github,mastodon,meetup,twitter):silo>',
+           methods=['GET', 'HEAD'])
+def webmention_get_or_head(silo):
   """Serves webmention discovery for HEADs to webmention endpoints."""
-  return '', {'Link': f'<{util.host_url("/publish/webmention")}>; rel="webmention"'}
-
-
-def webmention_get():
-  """Renders a simple placeholder HTTP page for GETs to webmention endpoints."""
   return f"""\
 <!DOCTYPE html>
 <html><head>
 <link rel="webmention" href="{util.host_url('/publish/webmention')}">
 </head>
 <body>Nothing here! <a href="/about">Try the docs instead.</a></body>
-</html>"""
+</html>""", {
+    'Link': f'<{util.host_url("/publish/webmention")}>; rel="webmention"',
+  }
 
 
 class Webmention(View):
