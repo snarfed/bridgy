@@ -22,7 +22,10 @@ window.onload = function () {
 
 // AJAX publish previews on user pages.
 function do_preview(site) {
-  document.getElementById('messages').style.display = 'none';
+  var msgs = document.getElementById('messages');
+  if (msgs) {
+      msgs.style.display = 'none';
+  }
 
   var preview = document.getElementById('preview');
   var req = new XMLHttpRequest();
