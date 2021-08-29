@@ -1,5 +1,5 @@
 """IndieAuth handlers for authenticating and proving ownership of a domain."""
-from flask import flash, request
+from flask import flash, render_template, request
 from google.cloud import ndb
 from oauth_dropins import indieauth
 
@@ -9,22 +9,26 @@ import util
 from util import redirect
 
 
-app.route('/indieauth/start', methods=['GET'])
+@app.route('/indieauth/start', methods=['GET'])
 def indieauth_enter_web_site():
   """Serves the "Enter your web site" form page."""
-  return render_template('indieauth.html', token=request.form['token'])
+  return render_template('indieauth.html', token=request.args['token'])
 
 
 class Start(indieauth.Start):
   """Starts the IndieAuth flow."""
   def dispatch_request(self):
+    token = state=request.form['token']
+
     try:
-      return redirect(self.redirect_url(state=request.form['token']))
+      to_url = self.redirect_url(state=token)
     except Exception as e:
       if util.is_connection_failure(e) or util.interpret_http_exception(e)[0]:
         flash("Couldn't fetch your web site: %s" % e)
         return redirect('/')
       raise
+
+    return redirect(to_url)
 
 
 class Callback(indieauth.Callback):
@@ -53,4 +57,4 @@ app.add_url_rule('/indieauth/start',
                  view_func=Start.as_view('indieauth_start', '/indieauth/callback'),
                  methods=['POST'])
 app.add_url_rule('/indieauth/callback',
-                 view_func=Callback.as_view('indieauth_callback', 'unused to_path'))
+                 view_func=Callback.as_view('indieauth_callback', 'unused'))

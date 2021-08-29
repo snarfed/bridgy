@@ -62,3 +62,19 @@ class IndieAuthTest(testutil.AppTest):
     self.assert_entities_equal([
       Domain(id='snarfed.org', tokens=['towkin'], auth=self.auth_entity.key),
     ], Domain.query().fetch(), ignore=('created', 'updated'))
+
+  def test_start_get(self):
+    resp = self.client.get('/indieauth/start?token=foo')
+    self.assertEqual(200, resp.status_code)
+
+  def test_start_post(self):
+    self.expect_site_fetch()
+    self.mox.ReplayAll()
+
+    resp = self.client.post('/indieauth/start', data={
+      'token': 'foo',
+      'me': 'http://snarfed.org',
+    })
+    self.assertEqual(302, resp.status_code)
+    self.assertTrue(resp.headers['Location'].startswith(indieauth.INDIEAUTH_URL),
+                    resp.headers['Location'])

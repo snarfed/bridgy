@@ -68,7 +68,7 @@ $body
 """)
 
 
-app.route('/<any(post,comment,like,react,repost,rsvp):_>/<path:__>',
+@app.route('/<any(post,comment,like,react,repost,rsvp):_>/<path:__>',
           methods=['HEAD'])
 def mf2_handler_head(_, __):
   return ''

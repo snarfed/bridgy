@@ -754,7 +754,7 @@ class Webmention(PublishBase):
         if url in self.entity.html or urllib.parse.quote(url, safe='') in self.entity.html:
           return True
 
-    self.error("Couldn't find link to %s" % expected[0])
+    self.error(f"Couldn't find link to {expected[0]}")
     return False
 
 

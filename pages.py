@@ -22,12 +22,17 @@ import util
 from util import redirect
 from wordpress_rest import WordPress
 
+# populate models.sources
+import blogger, facebook, flickr, github, indieauth, instagram, mastodon, medium, meetup, reddit, tumblr, twitter, wordpress_rest
+
+SITES = ','.join(list(models.sources.keys()) + ['fake'])  # for unit tests
+
 RECENT_PRIVATE_POSTS_THRESHOLD = 5
 
 
 @app.route('/', methods=['HEAD'])
 @app.route('/users', methods=['HEAD'])
-@app.route('/<site>/<id>', methods=['HEAD'])
+@app.route(f'/<any({SITES}):site>/<id>', methods=['HEAD'])
 @app.route('/about', methods=['HEAD'])
 def head(site=None, id=None):
   """Return an empty 200 with no caching directives."""
@@ -78,7 +83,7 @@ def users():
   return render_template('users.html', PAGE_SIZE=PAGE_SIZE, sources=sources)
 
 
-@app.route('/<site>/<id>')
+@app.route(f'/<any({SITES}):site>/<id>')
 def user(site, id):
   """View for a user page."""
   cls = models.sources.get(site)
