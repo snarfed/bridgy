@@ -68,6 +68,12 @@ $body
 """)
 
 
+app.route('/<any(post,comment,like,react,repost,rsvp):_>/<path:__>',
+          methods=['HEAD'])
+def mf2_handler_head(_, __):
+  return ''
+
+
 class Item(View):
   """Fetches a post, repost, like, or comment and serves it as mf2 HTML or JSON.
   """
@@ -114,10 +120,6 @@ class Item(View):
   @flask_util.cached(cache, CACHE_TIME)
   def dispatch_request(self, site, key_id, **kwargs):
     """Handle HTTP request."""
-    if request.method == 'HEAD':
-      # Return an empty 200 with no caching directives.
-      return ''
-
     source_cls = models.sources.get(site)
     if not source_cls:
       error("Source type '%s' not found. Known sources: %s" %
@@ -297,20 +299,14 @@ class Rsvp(Item):
 
 
 app.add_url_rule('/post/<site>/<key_id>/<post_id>',
-                 view_func=Post.as_view('post'),
-                 methods=('GET', 'HEAD'))
+                 view_func=Post.as_view('post'))
 app.add_url_rule('/comment/<site>/<key_id>/<post_id>/<comment_id>',
-                 view_func=Comment.as_view('comment'),
-                 methods=('GET', 'HEAD'))
+                 view_func=Comment.as_view('comment'))
 app.add_url_rule('/like/<site>/<key_id>/<post_id>/<user_id>',
-                 view_func=Like.as_view('like'),
-                 methods=('GET', 'HEAD'))
+                 view_func=Like.as_view('like'))
 app.add_url_rule('/react/<site>/<key_id>/<post_id>/<user_id>/<reaction_id>',
-                 view_func=Reaction.as_view('react'),
-                 methods=('GET', 'HEAD'))
+                 view_func=Reaction.as_view('react'))
 app.add_url_rule('/repost/<site>/<key_id>/<post_id>/<share_id>',
-                 view_func=Repost.as_view('repost'),
-                 methods=('GET', 'HEAD'))
+                 view_func=Repost.as_view('repost'))
 app.add_url_rule('/rsvp/<site>/<key_id>/<event_id>/<user_id>',
-                 view_func=Rsvp.as_view('rsvp'),
-                 methods=('GET', 'HEAD'))
+                 view_func=Rsvp.as_view('rsvp'))
