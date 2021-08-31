@@ -914,6 +914,18 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
     del self.activity['object']['author']
     self.assert_discover(['http://author/post'], [])
 
+  def test_compare_username(self):
+    """Accept posts with author id with the user's username."""
+    self.activity['object']['content'] = 'x http://author/post y'
+    self.expect_requests_get('http://author/', '')
+    self.mox.ReplayAll()
+
+    self.activity['object']['author'] = {
+      'id': 'tag:fa.ke,2013:someone_else',
+      'username': self.source.key.id(),
+    }
+    self.assert_discover(['http://author/post'], [])
+
   def test_attachments(self):
     """Discovery should search for original URL of attachments when the
     attachment is by our user.
