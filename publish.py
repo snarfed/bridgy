@@ -25,7 +25,7 @@ from oauth_dropins import (
 from oauth_dropins.webutil import appengine_info
 from oauth_dropins.webutil import flask_util
 from oauth_dropins.webutil.util import json_dumps, json_loads
-import werkzeug.exceptions
+from werkzeug.exceptions import HTTPException
 
 from flask_app import app
 from flickr import Flickr
@@ -200,7 +200,7 @@ class PublishBase(webmention.Webmention):
     fragment = urllib.parse.urlparse(source_url).fragment
     try:
       resp = self.fetch_mf2(resolved_url, id=fragment, raise_errors=True)
-    except werkzeug.exceptions.HTTPException:
+    except HTTPException:
       # raised by us, probably via self.error()
       raise
     except BaseException as e:
@@ -260,7 +260,7 @@ class PublishBase(webmention.Webmention):
           item_types, result.error_plain)
         types = types.union(item_types)
         queue.extend(item.get('children', []))
-      except werkzeug.exceptions.HTTPException:
+      except HTTPException:
         # raised by us, probably via self.error()
         raise
       except BaseException as e:
@@ -518,7 +518,7 @@ class PublishBase(webmention.Webmention):
           mf2 = util.fetch_mf2(url)
         except AssertionError:
           raise  # for unit tests
-        except werkzeug.exceptions.HTTPException:
+        except HTTPException:
           # raised by us, probably via self.error()
           raise
         except BaseException:
@@ -628,8 +628,11 @@ class Preview(PublishBase):
   PREVIEW = True
 
   def dispatch_request(self):
-    result = self._run()
-    return result.content if result and result.content else ''
+    try:
+      result = self._run()
+      return result.content if result and result.content else r'¯\_(ツ)_/¯'
+    except HTTPException as e:
+      return e.description, e.code
 
   def authorize(self):
     from_source = util.load_source()

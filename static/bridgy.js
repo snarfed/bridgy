@@ -46,7 +46,7 @@ function do_preview(site) {
       preview.innerHTML =
         '<span title="Error" class="glyphicon glyphicon-exclamation-sign"></span> ' +
         this.responseText;
-      preview.class = 'error';
+      preview.classList = 'row error';
   }
 
   preview.innerHTML = '<img src="/static/spinner.gif" width="30" />';
