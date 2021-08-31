@@ -629,7 +629,7 @@ class Preview(PublishBase):
 
   def dispatch_request(self):
     result = self._run()
-    return result.content if result else ''
+    return result.content if result and result.content else ''
 
   def authorize(self):
     from_source = util.load_source()
@@ -648,10 +648,11 @@ class Preview(PublishBase):
             else gr_source.OMIT_LINK)
 
   def error(self, error, html=None, status=400, data=None, report=False, **kwargs):
+    error = html if html else util.linkify(error)
     logging.info(f'publish: {error}')
     if report:
       self.report_error(error, status=status)
-    flask_util.error(html if html else util.linkify(error), status=status)
+    flask_util.error(error, status=status)
 
 
 class Send(PublishBase):
