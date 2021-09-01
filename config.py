@@ -8,8 +8,7 @@ JSONIFY_PRETTYPRINT_REGULAR = True
 
 if appengine_info.DEBUG:
   ENV = 'development'
-  CACHE_TYPE = 'SimpleCache'
-  # CACHE_TYPE = 'NullCache'
+  CACHE_TYPE = 'NullCache'
   SECRET_KEY = 'sooper seekret'
 else:
   ENV = 'production'
