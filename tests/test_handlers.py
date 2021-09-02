@@ -6,6 +6,7 @@ import io
 import urllib.request, urllib.error, urllib.parse
 
 from mox3 import mox
+from oauth_dropins.webutil.testutil import enable_flask_caching
 from util import json_dumps, json_loads
 
 from flask_app import app, cache
@@ -535,24 +536,17 @@ asdf http://other/link qwert
 </article>
 """)
 
+  @enable_flask_caching(app, cache)
   def test_cache(self):
-    orig_cache_type = self.app.config['CACHE_TYPE']
-    try:
-      self.app.config['CACHE_TYPE'] = 'SimpleCache'
-      cache.init_app(self.app)
+    orig = self.check_response('/post/fake/%s/000')
 
-      orig = self.check_response('/post/fake/%s/000')
+    # should serve the cached response and not refetch
+    self.mox.StubOutWithMock(FakeGrSource, 'get_activities_response')
+    self.mox.ReplayAll()
 
-      # should serve the cached response and not refetch
-      self.mox.StubOutWithMock(FakeGrSource, 'get_activities_response')
-      self.mox.ReplayAll()
-
-      cached = self.check_response('/post/fake/%s/000')
-      self.assert_multiline_equals(orig.get_data(as_text=True),
-                                   cached.get_data(as_text=True))
-    finally:
-      self.app.config['CACHE_TYPE'] = orig_cache_type
-      cache.init_app(self.app)
+    cached = self.check_response('/post/fake/%s/000')
+    self.assert_multiline_equals(orig.get_data(as_text=True),
+                                 cached.get_data(as_text=True))
 
   def test_in_blocklist(self):
     self.mox.StubOutWithMock(FakeSource, 'is_blocked')
