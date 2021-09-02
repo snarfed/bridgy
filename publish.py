@@ -271,8 +271,6 @@ class PublishBase(webmention.Webmention):
           logging.warning(f'Disabling source due to: {e}', exc_info=True)
           self.source.status = 'disabled'
           self.source.put()
-          # util.email_me(subject='Bridgy Publish: disabled %s' % self.source.label(),
-          #               body=body)
         if isinstance(e, (NotImplementedError, ValueError, urllib.error.URLError)):
           code = '400'
         elif not code:
@@ -760,6 +758,10 @@ class Webmention(PublishBase):
 
     self.error(f"Couldn't find link to {expected[0]}")
     return False
+
+  def error(self, error, **kwargs):
+    logging.info(f'publish: {error}')
+    return super().error(error, **kwargs)
 
 
 app.add_url_rule('/publish/preview', view_func=Preview.as_view('publish_preview'), methods=['POST'])
