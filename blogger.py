@@ -225,5 +225,4 @@ app.add_url_rule('/blogger/oauth2callback', view_func=oauth_blogger.Callback.as_
   'blogger_oauth2callback', '/blogger/oauth_handler'))
 app.add_url_rule('/blogger/delete/start', view_func=oauth_blogger.Start.as_view(
   'blogger_delete_start', '/blogger/oauth2callback'))
-app.add_url_rule('/blogger/notify/(.+)',
-                 view_func=SuperfeedrNotify.as_view('blogger_notify'), methods=['POST'])
+app.add_url_rule('/blogger/notify/<id>', view_func=SuperfeedrNotify.as_view('blogger_notify'), methods=['POST'])

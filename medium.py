@@ -175,5 +175,4 @@ app.add_url_rule('/medium/choose_blog', view_func=ChooseBlog.as_view(
   'medium_choose_blog'), methods=['POST'])
 app.add_url_rule('/medium/delete/finish', view_func=oauth_medium.Callback.as_view(
   'medium_delete', '/delete/finish')),
-app.add_url_rule('/medium/notify/(.+)',
-                 view_func=SuperfeedrNotify.as_view('medium_notify'), methods=['POST'])
+app.add_url_rule('/medium/notify/<id>', view_func=SuperfeedrNotify.as_view('medium_notify'), methods=['POST'])

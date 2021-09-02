@@ -273,5 +273,4 @@ app.add_url_rule('/tumblr/choose_blog', view_func=ChooseBlog.as_view(
   'tumblr_choose_blog', 'unused'))
 app.add_url_rule('/tumblr/delete/finish', view_func=oauth_tumblr.Callback.as_view(
   'tumblr_delete_finish', '/delete/finish'))
-app.add_url_rule('/tumblr/notify/(.+)',
-                 view_func=SuperfeedrNotify.as_view('tumblr_notify'), methods=['POST'])
+app.add_url_rule('/tumblr/notify/<id>', view_func=SuperfeedrNotify.as_view('tumblr_notify'), methods=['POST'])
