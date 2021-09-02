@@ -1,23 +1,20 @@
 """Browser extension views.
 """
 import copy
-from datetime import timedelta
 import logging
 from operator import itemgetter
 
 from flask import jsonify, request
 from flask.views import View
 from google.cloud import ndb
-from granary import instagram as gr_instagram
 from granary import microformats2
 from granary import source as gr_source
-from oauth_dropins import indieauth
 from oauth_dropins.webutil.flask_util import error
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
 from flask_app import app
 import models
-from models import Activity, Domain, Source, MAX_AUTHOR_URLS
+from models import Activity, Domain, Source
 import util
 
 JSON_CONTENT_TYPE = 'application/json'
@@ -117,7 +114,7 @@ class BrowserSource(Source):
 
     return self.gr_source.make_activities_base_response(activities)
 
-  def get_comment(self, comment_id,  activity=None, **kwargs):
+  def get_comment(self, comment_id, activity=None, **kwargs):
     """Uses the activity passed in the activity kwarg."""
     if activity:
       for reply in activity.get('object', {}).get('replies', {}).get('items', []):
@@ -150,7 +147,7 @@ class BrowserView(View):
     Raises: :class:`HTTPException` with HTTP 403
     """
     if not actor:
-      error(f'Missing actor!')
+      error('Missing actor!')
 
     if not gr_source.Source.is_public(actor):
       error(f'Your {self.gr_source().NAME} account is private. Bridgy only supports public accounts.')

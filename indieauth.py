@@ -18,7 +18,7 @@ def indieauth_enter_web_site():
 class Start(indieauth.Start):
   """Starts the IndieAuth flow."""
   def dispatch_request(self):
-    token = state=request.form['token']
+    token = request.form['token']
 
     try:
       to_url = self.redirect_url(state=token)

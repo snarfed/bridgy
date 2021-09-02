@@ -9,14 +9,14 @@ import itertools
 from flask import render_template, request
 from google.cloud import ndb
 from google.cloud.ndb.stats import KindStat, KindPropertyNamePropertyTypeStat
-from oauth_dropins.webutil import flask_util, logs
+from oauth_dropins.webutil import logs
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
 from flask_app import app
 import models
-from models import BlogPost, Response, Source
 import util
 # Import source class files so their metaclasses are initialized.
+from models import BlogPost, Response, Source
 import blogger, flickr, github, instagram, mastodon, medium, tumblr, twitter, wordpress_rest
 
 NUM_ENTITIES = 10

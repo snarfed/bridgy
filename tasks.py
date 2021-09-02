@@ -4,20 +4,17 @@
 import datetime
 import gc
 import logging
-import urllib.parse
 
 from flask import g, request
 from flask.views import View
 from google.cloud import ndb
 from google.cloud.ndb._datastore_types import _MAX_STRING_LENGTH
 from granary.source import Source
-from oauth_dropins.webutil import appengine_info, logs, webmention
-from oauth_dropins.webutil.appengine_config import ndb_client
+from oauth_dropins.webutil import logs, webmention
 from oauth_dropins.webutil.flask_util import error
 from oauth_dropins.webutil.util import json_dumps, json_loads
-from requests import HTTPError
 
-import appengine_config, models, original_post_discovery, util
+import models, original_post_discovery, util
 from flask_background import app
 from models import Response
 from util import ERROR_HTTP_RETURN_CODE
@@ -84,7 +81,7 @@ class Poll(View):
       self.poll(source)
     except Exception as e:
       source.updates['poll_status'] = 'error'
-      code, body = util.interpret_http_exception(e)
+      code, _ = util.interpret_http_exception(e)
       if code in source.DISABLE_HTTP_CODES or isinstance(e, models.DisableSource):
         # the user deauthorized the bridgy app, so disable this source.
         # let the task complete successfully so that it's not retried.
@@ -93,7 +90,6 @@ class Poll(View):
           'status': 'disabled',
           'poll_status': 'ok',
         })
-        body = f'{source.bridgy_url()}\nLast poll: {self._last_poll_url(source)}'
       elif code in source.RATE_LIMIT_HTTP_CODES:
         logging.info('Rate limited. Marking as error and finishing. %s', e)
         source.updates['rate_limited'] = True
@@ -757,7 +753,7 @@ class PropagateResponse(SendWebmentions):
     source = g.source
     poll_estimate = self.entity.created - datetime.timedelta(seconds=61)
     poll_url = util.host_url(logs.url(poll_estimate, source.key))
-    logging.info('Created by this poll: {poll_url}')
+    logging.info(f'Created by this poll: {poll_url}')
 
     self.activities = [json_loads(a) for a in self.entity.activities_json]
     response_obj = json_loads(self.entity.response_json)

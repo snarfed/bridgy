@@ -30,7 +30,6 @@ from granary import microformats2
 from granary.microformats2 import first_props
 from oauth_dropins.webutil import flask_util
 from oauth_dropins.webutil.flask_util import error
-from oauth_dropins.webutil.util import json_dumps, json_loads
 
 from flask_app import app, cache
 import models
@@ -69,7 +68,7 @@ $body
 
 
 @app.route('/<any(post,comment,like,react,repost,rsvp):_>/<path:__>',
-          methods=['HEAD'])
+           methods=['HEAD'])
 def mf2_handler_head(_, __):
   return ''
 
@@ -142,7 +141,7 @@ class Item(View):
 
     try:
       obj = self.get_item(**kwargs)
-    except models.DisableSource as e:
+    except models.DisableSource:
       error("Bridgy's access to your account has expired. Please visit https://brid.gy/ to refresh it!", 401)
     except ValueError as e:
       error(f'{self.source.GR_CLASS.NAME} error: {e}')
@@ -228,6 +227,7 @@ class Post(Item):
       set(util.get_list(obj, 'upstreamDuplicates')) | originals)
     self.merge_urls(obj, 'tags', mentions, object_type='mention')
     return obj
+
 
 class Comment(Item):
   def get_item(self, post_id, comment_id):

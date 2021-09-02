@@ -4,10 +4,9 @@
 import binascii
 import collections
 import copy
-from http.cookies import CookieError, SimpleCookie
-import contextlib
 import datetime
 import logging
+import os
 import random
 import re
 import threading
@@ -16,18 +15,16 @@ import urllib.request, urllib.parse, urllib.error
 from cachetools import TTLCache
 import flask
 from flask import flash, request
-import flask.views
 from google.cloud import ndb
 from google.cloud.tasks_v2 import CreateTaskRequest
 from google.protobuf.timestamp_pb2 import Timestamp
 import google.protobuf.message
-import humanize
 from oauth_dropins.webutil.appengine_config import error_reporting_client, tasks_client
 from oauth_dropins.webutil.appengine_info import APP_ID, DEBUG, LOCAL
 from oauth_dropins.webutil.flask_util import error
-from oauth_dropins.webutil.models import StringIdModel
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import *
+import requests
 from werkzeug.routing import RequestRedirect
 
 # when running in dev_appserver, replace these domains in links with localhost

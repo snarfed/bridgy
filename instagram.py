@@ -4,7 +4,6 @@ from granary import instagram as gr_instagram
 from oauth_dropins import instagram as oauth_instagram
 
 import browser
-from flask import request
 import util
 
 
@@ -19,12 +18,12 @@ class Instagram(browser.BrowserSource):
   SHORT_NAME = 'instagram'
   OAUTH_START = oauth_instagram.Start
   URL_CANONICALIZER = util.UrlCanonicalizer(
+    # no reject regexp; non-private Instagram post URLs just 404
     domain=GR_CLASS.DOMAIN,
     subdomain='www',
     approve=r'https://www.instagram.com/p/[^/?]+/$',
     trailing_slash=True,
     headers=util.REQUEST_HEADERS)
-    # no reject regexp; non-private Instagram post URLs just 404
 
   # blank granary Instagram object, shared across all instances
   gr_source = gr_instagram.Instagram()

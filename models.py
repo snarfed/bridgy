@@ -215,7 +215,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
     Once :attr:`self.gr_source` is set, this method will *not* be called;
     :attr:`gr_source` will be returned normally.
     """
-    if name =='gr_source':
+    if name == 'gr_source':
       super_attr = getattr(super(), name, None)
       if super_attr:
         return super_attr

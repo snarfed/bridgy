@@ -4,9 +4,9 @@ import itertools
 import logging
 import urllib.request, urllib.parse, urllib.error
 
-from flask import flash, Flask, render_template, request
+from flask import flash, render_template, request
 from google.cloud import ndb
-from oauth_dropins.webutil import appengine_info, logs
+from oauth_dropins.webutil import logs
 from oauth_dropins.webutil import flask_util
 from oauth_dropins.webutil.flask_util import error
 from oauth_dropins.webutil.util import json_dumps, json_loads
@@ -139,8 +139,8 @@ def user(site, id):
       val = request.values.get(param)
       try:
         return util.parse_iso8601(val) if val else None
-      except:
-        error("Couldn't parse %s %r as ISO8601" % (param, val))
+      except BaseException:
+        error(f"Couldn't parse {param}, {val!r} as ISO8601")
 
     before = get_paging_param('responses_before')
     after = get_paging_param('responses_after')
@@ -290,8 +290,11 @@ def process_webmention_links(e):
   Args:
     e: :class:`Webmentions` subclass (:class:`Response` or :class:`BlogPost`)
   """
-  link = lambda url, g: util.pretty_link(
-    url, glyphicon=g, attrs={'class': 'original-post u-bridgy-target'}, new_tab=True)
+  def link(url, g):
+    return util.pretty_link(
+      url, glyphicon=g, attrs={'class': 'original-post u-bridgy-target'},
+      new_tab=True)
+
   return util.trim_nulls({
       'Failed': set(link(url, 'exclamation-sign') for url in e.error + e.failed),
       'Sending': set(link(url, 'transfer') for url in e.unsent

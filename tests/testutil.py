@@ -20,7 +20,7 @@ from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
 from requests import post as orig_requests_post
 
-import appengine_config, flask_app, flask_background, util
+import flask_app, flask_background, util
 from models import BlogPost, Publish, PublishedPage, Response, Source
 
 NOW = datetime.datetime.utcnow()

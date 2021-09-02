@@ -3,8 +3,6 @@
 import copy
 import html
 
-import appengine_config  # injects 2013 into tag URIs in test_instagram objects
-
 from granary import instagram as gr_instagram
 from granary.tests.test_instagram import (
   HTML_FEED_COMPLETE,

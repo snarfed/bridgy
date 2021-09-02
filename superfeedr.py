@@ -47,7 +47,7 @@ def subscribe(source):
     # 'hub.secret': 'xxx',
     'format': 'json',
     'retrieve': 'true',
-    }
+  }
 
   logging.info('Adding Superfeedr subscription: %s', data)
   resp = util.requests_post(
@@ -95,9 +95,9 @@ def handle_feed(feed, source):
     # TODO: extract_links currently has a bug that makes it drop trailing
     # slashes. ugh. fix that.
     content = item.get('content') or item.get('summary', '')
-    links = [util.clean_url(util.unwrap_t_umblr_com(l))
-             for l in util.extract_links(content)
-             if util.domain_from_link(l) not in source.domains]
+    links = [util.clean_url(util.unwrap_t_umblr_com(url))
+             for url in util.extract_links(content)
+             if util.domain_from_link(url) not in source.domains]
 
     unique = []
     for link in util.dedupe_urls(links):

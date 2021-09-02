@@ -1,7 +1,5 @@
 """Meetup API code and datastore model classes.
 """
-import logging
-
 from granary import meetup as gr_meetup
 from oauth_dropins import meetup as oauth_meetup
 from oauth_dropins.webutil.util import json_dumps, json_loads
@@ -60,7 +58,7 @@ class Callback(oauth_meetup.Callback):
     util.maybe_add_or_delete_source(Meetup, auth_entity, state)
 
 
-app.add_url_rule('/meetup/start', view_func=util.oauth_starter(oauth_meetup.Start).as_view('meetup_start', '/meetup/add', scopes=PUBLISH_SCOPES), methods=['POST']) # we don't support listen
+app.add_url_rule('/meetup/start', view_func=util.oauth_starter(oauth_meetup.Start).as_view('meetup_start', '/meetup/add', scopes=PUBLISH_SCOPES), methods=['POST'])  # we don't support listen
 app.add_url_rule('/meetup/add', view_func=Callback.as_view('meetup_add', 'unused'))
 app.add_url_rule('/meetup/delete/finish', view_func=oauth_meetup.Callback.as_view('meetup_delete_finish', '/delete/finish'))
 app.add_url_rule('/meetup/publish/start', view_func=oauth_meetup.Start.as_view('meetup_publish_finish', '/meetup/publish/finish', scopes=PUBLISH_SCOPES), methods=['POST'])

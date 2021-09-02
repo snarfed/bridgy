@@ -5,7 +5,6 @@ Used in publish.py and blog_webmention.py.
 Webmention spec: http://webmention.org/
 """
 import logging
-import urllib.parse
 
 from flask import jsonify, request
 from flask.views import View
@@ -189,7 +188,6 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
                          '%s %s' % (self.entity.type, self.entity.status)
                          if self.entity else 'failed')
     user = self.source.bridgy_url() if self.source else None
-    http_context = None
     util.report_error(subject, user=user,
                       http_context=error_reporting.HTTPContext(
                         method=request.method,

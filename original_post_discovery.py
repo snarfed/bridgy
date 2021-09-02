@@ -28,7 +28,6 @@ import collections
 import itertools
 import logging
 import mf2util
-import urllib.parse
 
 from granary import microformats2
 from granary import source as gr_source
@@ -52,8 +51,8 @@ def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True,
   reverse lookup that supports posts without a backlink or citation.
 
   If fetch_hfeed is False, then we will check the db for previously found
-  :class:`models.SyndicatedPost`\ s but will not do posse-post-discovery to find new
-  ones.
+  :class:`models.SyndicatedPost`\ s but will not do posse-post-discovery to find
+  new ones.
 
   Args:
     source: :class:`models.Source` subclass. Changes to property values (e.g.
@@ -68,6 +67,7 @@ def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True,
 
   Returns:
     (set(string original post URLs), set(string mention URLs)) tuple
+
   """
   logging.debug('discovering original posts for: %s',
                 activity.get('url') or activity.get('id'))

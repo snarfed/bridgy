@@ -1,6 +1,4 @@
 """Reddit source code and datastore model classes."""
-import logging
-
 from granary import reddit as gr_reddit
 from granary import source as gr_source
 from oauth_dropins import reddit as oauth_reddit

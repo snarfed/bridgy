@@ -5,9 +5,7 @@ import urllib.parse
 from google.cloud import ndb
 from granary import facebook as gr_facebook
 from oauth_dropins import facebook as oauth_facebook
-from oauth_dropins.webutil.util import json_dumps, json_loads
 
-import appengine_config
 import browser
 import util
 
@@ -21,12 +19,12 @@ class Facebook(browser.BrowserSource):
   SHORT_NAME = 'facebook'
   OAUTH_START = oauth_facebook.Start
   URL_CANONICALIZER = util.UrlCanonicalizer(
+    # no reject regexp; non-private FB post URLs just 404
     domain=GR_CLASS.DOMAIN,
     subdomain='www',
     query=True,
     approve=r'https://www\.facebook\.com/[^/?]+/posts/[^/?]+$',
     headers=util.REQUEST_HEADERS)
-    # no reject regexp; non-private FB post URLs just 404
 
   # blank granary Facebook object, shared across all instances
   gr_source = gr_facebook.Facebook()
@@ -65,13 +63,14 @@ class Facebook(browser.BrowserSource):
       return self.gr_source.user_url(self.username)
 
     user_id = self.key.id()
+    # STATE: define this, where is it? not here or granary or o-d
     if util.is_int(id) and int(id) < MIN_APP_SCOPED_ID:
       return self.gr_source.user_url(user_id)
 
   @classmethod
   def button_html(cls, feature, **kwargs):
     return super(cls, cls).button_html(feature, form_method='get', **kwargs)
-    return oauth_instagram.Start.button_html(
+    return oauth_facebook.Start.button_html(
       '/about#browser-extension',
       form_method='get',
       image_prefix='/oauth_dropins_static/')
@@ -96,7 +95,6 @@ class Facebook(browser.BrowserSource):
 
     parsed = urllib.parse.urlparse(url)
     params = urllib.parse.parse_qs(parsed.query)
-    path = parsed.path.strip('/').split('/')
     url_id = self.gr_source.post_id(url)
     ids = params.get('story_fbid') or params.get('fbid')
 

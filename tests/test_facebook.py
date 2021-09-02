@@ -3,8 +3,6 @@ import copy
 from datetime import datetime
 import logging
 
-import appengine_config  # injects 2013 into tag URIs in test_facebook objects
-
 from granary import facebook as gr_facebook
 from granary.tests.test_facebook import (
   MBASIC_HTML_TIMELINE,
