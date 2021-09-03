@@ -73,6 +73,9 @@ def handle_feed(feed, source):
   logging.info('Source: %s %s', source.label(), source.key_id())
   logging.info('Raw feed: %s', feed)
 
+  if not feed:
+    return
+
   if source.status != 'enabled':
     logging.info('Dropping because source is %s', source.status)
     return

@@ -78,6 +78,9 @@ class SuperfeedrTest(testutil.AppTest):
     superfeedr.handle_feed({}, self.source)
     self.assert_blogposts([])
 
+    superfeedr.handle_feed(None, self.source)
+    self.assert_blogposts([])
+
   def test_handle_feed_disabled_source(self):
     self.source.status = 'disabled'
     self.source.put()
