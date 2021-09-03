@@ -4,19 +4,18 @@ from builtins import range
 import datetime
 import itertools
 import logging
-import math
 
 from flask import g
 from flask.views import View
 from google.cloud import ndb
-from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
 
+from blogger import Blogger
 from flask_background import app
-import models
-from models import Source
 from flickr import Flickr
 from mastodon import Mastodon
+import models
+from models import Source
 from twitter import Twitter
 import util
 
@@ -69,14 +68,13 @@ def update_twitter_pictures():
         # 404 for a single user means they deleted their account. otherwise...
         raise
 
-  updated = False
   for user in users:
     source = sources.get(user['screen_name'])
     if source:
       new_actor = auther.gr_source.user_to_actor(user)
-      updated = maybe_update_picture(source, new_actor)
+      maybe_update_picture(source, new_actor)
 
-  return ''
+  return 'OK'
 
 
 class UpdatePictures(View):
@@ -91,20 +89,21 @@ class UpdatePictures(View):
     return source.key_id()
 
   def dispatch_request(self):
-    updated = False
     for source in self.source_query():
       if source.features and source.status != 'disabled':
         logging.debug('checking for updated profile pictures for: %s',
                       source.bridgy_url())
         try:
           actor = source.gr_source.get_actor(self.user_id(source))
-        except requests.HTTPError as e:
-          # Mastodon API returns HTTP 404 for deleted (etc) users
-          util.interpret_http_exception(e)
-          continue
-        updated = maybe_update_picture(source, actor)
+        except BaseException as e:
+          # Mastodon API returns HTTP 404 for deleted (etc) users, and
+          # often one or more users' Mastodon instances are down.
+          code, _ = util.interpret_http_exception(e)
+          if code:
+            continue
+        maybe_update_picture(source, actor)
 
-    return ''
+    return 'OK'
 
 
 class UpdateFlickrPictures(UpdatePictures):
@@ -118,10 +117,6 @@ class UpdateFlickrPictures(UpdatePictures):
     return super().dispatch_request()
 
 
-app.add_url_rule('/cron/update_flickr_pictures',
-                 view_func=UpdateFlickrPictures.as_view('update_flickr_pictures'))
-
-
 class UpdateMastodonPictures(UpdatePictures):
   """Finds :class:`Mastodon` sources with new profile pictures and updates them.
   """
@@ -129,7 +124,7 @@ class UpdateMastodonPictures(UpdatePictures):
 
   def dispatch_request(self):
     g.TRANSIENT_ERROR_HTTP_CODES = (Mastodon.TRANSIENT_ERROR_HTTP_CODES +
-                                Mastodon.RATE_LIMIT_HTTP_CODES)
+                                    Mastodon.RATE_LIMIT_HTTP_CODES)
     return super().dispatch_request()
 
   @classmethod
@@ -137,12 +132,21 @@ class UpdateMastodonPictures(UpdatePictures):
     return source.auth_entity.get().user_id()
 
 
+# class UpdateBloggerPictures(UpdatePictures):
+#   """Finds :class:`Blogger` sources with new profile pictures and updates them.
+#   """
+#   SOURCE_CLS = Blogger
+
+#   # TODO: no granary.Blogger!
+
+
 def maybe_update_picture(source, new_actor):
   if not new_actor:
     return False
   new_pic = new_actor.get('image', {}).get('url')
   if not new_pic or source.picture == new_pic:
-    return False
+    logging.info(f'No new picture found for {source.bridgy_url()}')
+    return
 
   @ndb.transactional()
   def update():
@@ -150,13 +154,8 @@ def maybe_update_picture(source, new_actor):
     src.picture = new_pic
     src.put()
 
-  logging.info('Updating profile picture for %s from %s to %s',
-               source.bridgy_url(), source.picture, new_pic)
+  logging.info(f'Updating profile picture for {source.bridgy_url()} from {source.picture} to {new_pic}')
   update()
-  return True
-
-app.add_url_rule('/cron/update_mastodon_pictures',
-                 view_func=UpdateMastodonPictures.as_view('update_mastodon_pictures')),
 
 
 @app.route('/cron/build_circle')
@@ -167,4 +166,10 @@ def build_circle():
   """
   resp = requests.post('https://circleci.com/api/v1.1/project/github/snarfed/bridgy/tree/main?circle-token=%s' % CIRCLECI_TOKEN)
   resp.raise_for_status()
-  return ''
+  return 'OK'
+
+
+app.add_url_rule('/cron/update_flickr_pictures',
+                 view_func=UpdateFlickrPictures.as_view('update_flickr_pictures'))
+app.add_url_rule('/cron/update_mastodon_pictures',
+                 view_func=UpdateMastodonPictures.as_view('update_mastodon_pictures'))

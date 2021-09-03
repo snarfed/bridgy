@@ -15,6 +15,7 @@ import oauth_dropins.twitter
 import oauth_dropins.twitter_auth
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
+from urllib3.exceptions import NewConnectionError
 
 import cron
 from flickr import Flickr
@@ -168,6 +169,18 @@ class CronTest(testutil.BackgroundTest):
     ).AndRaise(
       requests.exceptions.HTTPError(
         response=util.Struct(status_code='404', text='foo')))
+    self.mox.ReplayAll()
+
+    mastodon = self._setup_mastodon()
+    resp = self.client.get('/cron/update_mastodon_pictures')
+    self.assertEqual(200, resp.status_code)
+    self.assertEqual('http://before', mastodon.key.get().picture)
+
+  def test_update_mastodon_pictures_get_actor_connection_failure(self):
+    self.expect_requests_get(
+      'https://foo.com' + test_mastodon.API_ACCOUNT % 123,
+      headers={'Authorization': 'Bearer towkin'},
+    ).AndRaise(NewConnectionError(None, None))
     self.mox.ReplayAll()
 
     mastodon = self._setup_mastodon()
