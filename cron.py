@@ -8,6 +8,7 @@ import logging
 from flask import g
 from flask.views import View
 from google.cloud import ndb
+from oauth_dropins.webutil.models import StringIdModel
 import requests
 
 from blogger import Blogger
@@ -20,8 +21,17 @@ from twitter import Twitter
 import util
 
 CIRCLECI_TOKEN = util.read('circleci_token')
-TWITTER_API_USER_LOOKUP = 'users/lookup.json?screen_name=%s'
-TWITTER_USERS_PER_LOOKUP = 100  # max # of users per API call
+PAGE_SIZE = 20
+
+
+class LastUpdatedPicture(StringIdModel):
+  """Stores the last user in a given silo that we updated profile picture for.
+
+  Key id is the silo's SHORT_NAME.
+  """
+  last = ndb.KeyProperty()
+  created = ndb.DateTimeProperty(auto_now_add=True, required=True)
+  updated = ndb.DateTimeProperty(auto_now=True)
 
 
 @app.route('/cron/replace_poll_tasks')
@@ -40,56 +50,25 @@ def replace_poll_tasks():
   return ''
 
 
-@app.route('/cron/update_twitter_pictures')
-def update_twitter_pictures():
-  """Finds :class:`Twitter` sources with new profile pictures and updates them.
-
-  https://github.com/snarfed/granary/commit/dfc3d406a20965a5ed14c9705e3d3c2223c8c3ff
-  http://indiewebcamp.com/Twitter#Profile_Image_URLs
-  """
-  g.TRANSIENT_ERROR_HTTP_CODES = (Twitter.TRANSIENT_ERROR_HTTP_CODES +
-                                  Twitter.RATE_LIMIT_HTTP_CODES)
-  sources = {source.key_id(): source for source in Twitter.query()}
-  if not sources:
-    return
-
-  # just auth as me or the first user. TODO: use app-only auth instead.
-  auther = sources.get('schnarfed') or list(sources.values())[0]
-  usernames = list(sources.keys())
-  users = []
-  for i in range(0, len(usernames), TWITTER_USERS_PER_LOOKUP):
-    username_batch = usernames[i:i + TWITTER_USERS_PER_LOOKUP]
-    url = TWITTER_API_USER_LOOKUP % ','.join(username_batch)
-    try:
-      users += auther.gr_source.urlopen(url)
-    except Exception as e:
-      code, body = util.interpret_http_exception(e)
-      if not (code == '404' and len(username_batch) == 1):
-        # 404 for a single user means they deleted their account. otherwise...
-        raise
-
-  for user in users:
-    source = sources.get(user['screen_name'])
-    if source:
-      new_actor = auther.gr_source.user_to_actor(user)
-      maybe_update_picture(source, new_actor)
-
-  return 'OK'
-
-
 class UpdatePictures(View):
   """Finds sources with new profile pictures and updates them."""
   SOURCE_CLS = None
-
-  def source_query(self):
-    return self.SOURCE_CLS.query()
 
   @classmethod
   def user_id(cls, source):
     return source.key_id()
 
   def dispatch_request(self):
-    for source in self.source_query():
+    g.TRANSIENT_ERROR_HTTP_CODES = (self.SOURCE_CLS.TRANSIENT_ERROR_HTTP_CODES +
+                                    self.SOURCE_CLS.RATE_LIMIT_HTTP_CODES)
+
+    query = self.SOURCE_CLS.query().order(self.SOURCE_CLS.key)
+    last = LastUpdatedPicture.get_by_id(self.SOURCE_CLS.SHORT_NAME)
+    if last and last.last:
+      query = query.filter(self.SOURCE_CLS.key > last.last)
+
+    results, _, more = query.fetch_page(PAGE_SIZE)
+    for source in results:
       if source.features and source.status != 'disabled':
         logging.debug('checking for updated profile pictures for: %s',
                       source.bridgy_url())
@@ -101,61 +80,59 @@ class UpdatePictures(View):
           code, _ = util.interpret_http_exception(e)
           if code:
             continue
-        maybe_update_picture(source, actor)
+          raise
 
+        if not actor:
+          logging.info(f"Couldn't fetch {source.bridgy_url()} 's user")
+          continue
+
+        new_pic = actor.get('image', {}).get('url')
+        if not new_pic or source.picture == new_pic:
+          logging.info(f'No new picture found for {source.bridgy_url()}')
+          continue
+
+        @ndb.transactional()
+        def update():
+          src = source.key.get()
+          src.picture = new_pic
+          src.put()
+
+        logging.info(f'Updating profile picture for {source.bridgy_url()} from {source.picture} to {new_pic}')
+        update()
+
+    LastUpdatedPicture(id=self.SOURCE_CLS.SHORT_NAME,
+                       last=source.key if more else None).put()
     return 'OK'
 
 
 class UpdateFlickrPictures(UpdatePictures):
-  """Finds :class:`Flickr` sources with new profile pictures and updates them.
-  """
+  """Finds :class:`Flickr` sources with new profile pictures and updates them."""
   SOURCE_CLS = Flickr
-
-  def dispatch_request(self):
-    g.TRANSIENT_ERROR_HTTP_CODES = (Flickr.TRANSIENT_ERROR_HTTP_CODES +
-                                    Flickr.RATE_LIMIT_HTTP_CODES)
-    return super().dispatch_request()
 
 
 class UpdateMastodonPictures(UpdatePictures):
-  """Finds :class:`Mastodon` sources with new profile pictures and updates them.
-  """
+  """Finds :class:`Mastodon` sources with new profile pictures and updates them."""
   SOURCE_CLS = Mastodon
-
-  def dispatch_request(self):
-    g.TRANSIENT_ERROR_HTTP_CODES = (Mastodon.TRANSIENT_ERROR_HTTP_CODES +
-                                    Mastodon.RATE_LIMIT_HTTP_CODES)
-    return super().dispatch_request()
 
   @classmethod
   def user_id(cls, source):
     return source.auth_entity.get().user_id()
 
 
+class UpdateTwitterPictures(UpdatePictures):
+  """Finds :class:`Twitter` sources with new profile pictures and updates them.
+
+  https://github.com/snarfed/granary/commit/dfc3d406a20965a5ed14c9705e3d3c2223c8c3ff
+  http://indiewebcamp.com/Twitter#Profile_Image_URLs
+  """
+  SOURCE_CLS = Twitter
+
+
 # class UpdateBloggerPictures(UpdatePictures):
-#   """Finds :class:`Blogger` sources with new profile pictures and updates them.
-#   """
+#   """Finds :class:`Blogger` sources with new profile pictures and updates them."""
 #   SOURCE_CLS = Blogger
 
 #   # TODO: no granary.Blogger!
-
-
-def maybe_update_picture(source, new_actor):
-  if not new_actor:
-    return False
-  new_pic = new_actor.get('image', {}).get('url')
-  if not new_pic or source.picture == new_pic:
-    logging.info(f'No new picture found for {source.bridgy_url()}')
-    return
-
-  @ndb.transactional()
-  def update():
-    src = source.key.get()
-    src.picture = new_pic
-    src.put()
-
-  logging.info(f'Updating profile picture for {source.bridgy_url()} from {source.picture} to {new_pic}')
-  update()
 
 
 @app.route('/cron/build_circle')
@@ -173,3 +150,5 @@ app.add_url_rule('/cron/update_flickr_pictures',
                  view_func=UpdateFlickrPictures.as_view('update_flickr_pictures'))
 app.add_url_rule('/cron/update_mastodon_pictures',
                  view_func=UpdateMastodonPictures.as_view('update_mastodon_pictures'))
+app.add_url_rule('/cron/update_twitter_pictures',
+                 view_func=UpdateTwitterPictures.as_view('update_twitter_pictures'))

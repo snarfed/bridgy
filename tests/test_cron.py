@@ -36,15 +36,6 @@ class CronTest(testutil.BackgroundTest):
     oauth_dropins.twitter_auth.TWITTER_APP_KEY = 'my_app_key'
     oauth_dropins.twitter_auth.TWITTER_APP_SECRET = 'my_app_secret'
 
-    flickr_auth = oauth_dropins.flickr.FlickrAuth(
-      id='123@N00', user_json=json_dumps(test_flickr.PERSON_INFO),
-      token_key='my_key', token_secret='my_secret')
-    flickr_auth.put()
-    self.flickr = Flickr.new(auth_entity=flickr_auth, features=['listen'])
-    self.assertEqual(
-      'https://farm5.staticflickr.com/4068/buddyicons/39216764@N00.jpg',
-      self.flickr.picture)
-
   def test_replace_poll_tasks(self):
     now = datetime.datetime.now()
 
@@ -90,26 +81,25 @@ class CronTest(testutil.BackgroundTest):
                               'profile_image_url': 'http://pi.ct/ure',
                               }))
       auth_entity.put()
-      sources.append(Twitter.new(auth_entity=auth_entity).put())
+      sources.append(Twitter.new(auth_entity=auth_entity, features=['listen']).put())
 
-    user_objs = [{'screen_name': sources[0].id(),
-                  'profile_image_url': 'http://pi.ct/ure',
-                  }, {'screen_name': sources[1].id(),
-                      'profile_image_url_https': 'http://new/pic_normal.jpg',
-                      'profile_image_url': 'http://bad/http',
-                  }]
+    user_obj = {
+      'screen_name': sources[1].id(),
+      'profile_image_url_https': 'http://new/pic_normal.jpg',
+      'profile_image_url': 'http://bad/http',
+    }
 
-    cron.TWITTER_USERS_PER_LOOKUP = 2
-    lookup_url = gr_twitter.API_BASE + cron.TWITTER_API_USER_LOOKUP
-    self.expect_urlopen(lookup_url % 'a,b', json_dumps(user_objs))
-    self.expect_urlopen(lookup_url % 'c', json_dumps(user_objs))
+    lookup_url = gr_twitter.API_BASE + gr_twitter.API_USER
+    self.expect_urlopen(lookup_url % 'a', json_dumps(user_obj))
+    self.expect_urlopen(lookup_url % 'b', json_dumps(user_obj))
+    self.expect_urlopen(lookup_url % 'c', json_dumps(user_obj))
     self.mox.ReplayAll()
 
     resp = self.client.get('/cron/update_twitter_pictures')
     self.assertEqual(200, resp.status_code)
 
-    self.assertEqual('http://pi.ct/ure', sources[0].get().picture)
-    self.assertEqual('http://new/pic.jpg', sources[1].get().picture)
+    for source in sources:
+      self.assertEqual('http://new/pic.jpg', source.get().picture)
 
   def test_update_twitter_picture_user_lookup_404s(self):
     auth_entity = oauth_dropins.twitter.TwitterAuth(
@@ -119,9 +109,9 @@ class CronTest(testutil.BackgroundTest):
                             'profile_image_url': 'http://pi.ct/ure',
                            }))
     auth_entity.put()
-    source = Twitter.new(auth_entity=auth_entity).put()
+    source = Twitter.new(auth_entity=auth_entity, features=['publish']).put()
 
-    lookup_url = gr_twitter.API_BASE + cron.TWITTER_API_USER_LOOKUP
+    lookup_url = gr_twitter.API_BASE + gr_twitter.API_USER
     self.expect_urlopen(lookup_url % 'bad', status=404)
     self.mox.ReplayAll()
 
@@ -131,25 +121,49 @@ class CronTest(testutil.BackgroundTest):
     self.assertEqual('http://pi.ct/ure', source.get().picture)
 
   def test_update_flickr_pictures(self):
+    flickrs = self._setup_flickr()
+
+    self.mox.StubOutWithMock(cron, 'PAGE_SIZE')
+    cron.PAGE_SIZE = 1
+
+    # first
     self.expect_urlopen(
-      'https://api.flickr.com/services/rest?'
-        'nojsoncallback=1&format=json&'
-        'method=flickr.people.getInfo&user_id=39216764%40N00',
+      'https://api.flickr.com/services/rest?nojsoncallback=1&format=json&method=flickr.people.getInfo&user_id=123%40N00',
       json_dumps({
         'person': {
-          'id': '123@N00',
-          'nsid': '123@N00',
+          'id': '789@N99',
+          'nsid': '789@N99',
           'iconfarm': 9,
           'iconserver': '9876',
         }}))
+    # second has no features, gets skipped
     self.mox.ReplayAll()
 
-    self.flickr.put()
+    # first
+    self.assertEqual(
+      'https://farm5.staticflickr.com/4068/buddyicons/123@N00.jpg',
+      flickrs[0].picture)
+
     resp = self.client.get('/cron/update_flickr_pictures')
     self.assertEqual(200, resp.status_code)
     self.assertEqual(
-      'https://farm9.staticflickr.com/9876/buddyicons/123@N00.jpg',
-      self.flickr.key.get().picture)
+      'https://farm9.staticflickr.com/9876/buddyicons/789@N99.jpg',
+      flickrs[0].key.get().picture)
+
+    cursor = cron.LastUpdatedPicture.get_by_id('flickr')
+    self.assertEqual(flickrs[0].key, cursor.last)
+
+    # second
+    resp = self.client.get('/cron/update_flickr_pictures')
+    self.assertEqual(200, resp.status_code)
+    # unchanged
+    self.assertEqual(flickrs[1].picture, flickrs[1].key.get().picture)
+
+    cursor = cron.LastUpdatedPicture.get_by_id('flickr')
+    # this would be None on prod, but the datastore emulator always returns
+    # more=True even when there aren't more results. :(
+    # https://github.com/googleapis/python-ndb/issues/241
+    self.assertEqual(flickrs[1].key, cursor.last)
 
   def test_update_mastodon_pictures(self):
     self.expect_requests_get(
@@ -187,6 +201,23 @@ class CronTest(testutil.BackgroundTest):
     resp = self.client.get('/cron/update_mastodon_pictures')
     self.assertEqual(200, resp.status_code)
     self.assertEqual('http://before', mastodon.key.get().picture)
+
+  def _setup_flickr(self):
+    """Creates and test :class:`Flickr` entities."""
+    flickrs = []
+
+    for id, features in (('123@N00', ['listen']), ('456@N11', [])):
+      info = copy.deepcopy(test_flickr.PERSON_INFO)
+      info['person']['nsid'] = id
+      flickr_auth = oauth_dropins.flickr.FlickrAuth(
+        id=id, user_json=json_dumps(info),
+        token_key='my_key', token_secret='my_secret')
+      flickr_auth.put()
+      flickr = Flickr.new(auth_entity=flickr_auth, features=features)
+      flickr.put()
+      flickrs.append(flickr)
+
+    return flickrs
 
   def _setup_mastodon(self):
     """Creates and returns a test :class:`Mastodon`."""

@@ -1,5 +1,5 @@
 # timezone defaults to UTC
-# docs: https://developers.google.com/appengine/docs/python/config/cron
+# docs: https://cloud.google.com/appengine/docs/standard/python3/scheduling-jobs-with-cron-yaml
 
 cron:
 - description: replace missing poll tasks
@@ -9,20 +9,20 @@ cron:
 
 - description: update changed twitter profile pictures
   url: /cron/update_twitter_pictures
-  schedule: every day 08:00  # 1am pst
+  schedule: every hour
   target: background
 
 - description: update changed flickr profile pictures
   url: /cron/update_flickr_pictures
-  schedule: every day 09:00  # 2am pst
+  schedule: every hour
   target: background
 
 - description: update changed mastodon profile pictures
   url: /cron/update_mastodon_pictures
-  schedule: every day 10:00  # 3am pst
+  schedule: every hour
   target: background
 
-- description: nightly CircleCI build
+- description: daily CircleCI build
   url: /cron/build_circle
   schedule: every 24 hours
   target: background
