@@ -9,17 +9,17 @@ cron:
 
 - description: update changed twitter profile pictures
   url: /cron/update_twitter_pictures
-  schedule: every hour
+  schedule: every 1 hours
   target: background
 
 - description: update changed flickr profile pictures
   url: /cron/update_flickr_pictures
-  schedule: every hour
+  schedule: every 1 hours
   target: background
 
 - description: update changed mastodon profile pictures
   url: /cron/update_mastodon_pictures
-  schedule: every hour
+  schedule: every 1 hours
   target: background
 
 - description: daily CircleCI build
