@@ -41,236 +41,267 @@ import superfeedr
 import util
 
 
-TUMBLR_AVATAR_URL = 'http://api.tumblr.com/v2/blog/%s/avatar/512'
-DISQUS_API_CREATE_POST_URL = 'https://disqus.com/api/3.0/posts/create.json'
-DISQUS_API_THREAD_DETAILS_URL = 'http://disqus.com/api/3.0/threads/details.json'
-DISQUS_ACCESS_TOKEN = util.read('disqus_access_token')
-DISQUS_API_KEY = util.read('disqus_api_key')
-DISQUS_API_SECRET = util.read('disqus_api_secret')
+TUMBLR_AVATAR_URL = "http://api.tumblr.com/v2/blog/%s/avatar/512"
+DISQUS_API_CREATE_POST_URL = "https://disqus.com/api/3.0/posts/create.json"
+DISQUS_API_THREAD_DETAILS_URL = "http://disqus.com/api/3.0/threads/details.json"
+DISQUS_ACCESS_TOKEN = util.read("disqus_access_token")
+DISQUS_API_KEY = util.read("disqus_api_key")
+DISQUS_API_SECRET = util.read("disqus_api_secret")
 
 # Tumblr has no single standard markup or JS for integrating Disqus. It does
 # have a default way, but themes often do it themselves, differently. Sigh.
 # Details in https://github.com/snarfed/bridgy/issues/278
 DISQUS_SHORTNAME_RES = (
-  re.compile("""
+    re.compile(
+        """
     (?:https?://disqus\.com/forums|disqus[ -_]?(?:user|short)?name)
     \ *[=:/]\ *['"]?
     ([^/"\' ]+)     # the actual shortname
-    """, re.IGNORECASE | re.VERBOSE),
-  re.compile('https?://([^./"\' ]+)\.disqus\.com/embed\.js'),
-  )
+    """,
+        re.IGNORECASE | re.VERBOSE,
+    ),
+    re.compile("https?://([^./\"' ]+)\.disqus\.com/embed\.js"),
+)
 
 
 class Tumblr(models.Source):
-  """A Tumblr blog.
+    """A Tumblr blog.
 
-  The key name is the blog domain.
-  """
-  GR_CLASS = collections.namedtuple('FakeGrClass', ('NAME',))(NAME='Tumblr')
-  OAUTH_START = oauth_tumblr.Start
-  SHORT_NAME = 'tumblr'
-
-  disqus_shortname = ndb.StringProperty()
-
-  def feed_url(self):
-    # http://www.tumblr.com/help  (search for feed)
-    return urllib.parse.urljoin(self.silo_url(), '/rss')
-
-  def silo_url(self):
-    return self.domain_urls[0]
-
-  def edit_template_url(self):
-    return 'http://www.tumblr.com/customize/%s' % self.auth_entity.id()
-
-  @staticmethod
-  def new(auth_entity=None, blog_name=None, **kwargs):
-    """Creates and returns a :class:`Tumblr` for the logged in user.
-
-    Args:
-      auth_entity: :class:`oauth_dropins.tumblr.TumblrAuth`
-      blog_name: which blog. optional. passed to _urls_and_domains.
+    The key name is the blog domain.
     """
-    urls, domains = Tumblr._urls_and_domains(auth_entity, blog_name=blog_name)
-    if not urls or not domains:
-      flash('Tumblr blog not found. Please create one first!')
-      return None
 
-    id = domains[0]
-    return Tumblr(id=id,
-                  auth_entity=auth_entity.key,
-                  domains=domains,
-                  domain_urls=urls,
-                  name=auth_entity.user_display_name(),
-                  picture=TUMBLR_AVATAR_URL % id,
-                  superfeedr_secret=util.generate_secret(),
-                  **kwargs)
+    GR_CLASS = collections.namedtuple("FakeGrClass", ("NAME",))(NAME="Tumblr")
+    OAUTH_START = oauth_tumblr.Start
+    SHORT_NAME = "tumblr"
 
-  @staticmethod
-  def _urls_and_domains(auth_entity, blog_name=None):
-    """Returns this blog's URL and domain.
+    disqus_shortname = ndb.StringProperty()
 
-    Args:
-      auth_entity: :class:`oauth_dropins.tumblr.TumblrAuth`
-      blog_name: which blog. optional. matches the 'name' field for one of the
-        blogs in auth_entity.user_json['user']['blogs'].
+    def feed_url(self):
+        # http://www.tumblr.com/help  (search for feed)
+        return urllib.parse.urljoin(self.silo_url(), "/rss")
 
-    Returns:
-      ([string url], [string domain])
-    """
-    for blog in json_loads(auth_entity.user_json).get('user', {}).get('blogs', []):
-      if ((blog_name and blog_name == blog.get('name')) or
-          (not blog_name and blog.get('primary'))):
-        return [blog['url']], [util.domain_from_link(blog['url']).lower()]
+    def silo_url(self):
+        return self.domain_urls[0]
 
-    return [], []
+    def edit_template_url(self):
+        return "http://www.tumblr.com/customize/%s" % self.auth_entity.id()
 
-  def verified(self):
-    """Returns True if we've found the webmention endpoint and Disqus."""
-    return self.webmention_endpoint and self.disqus_shortname
+    @staticmethod
+    def new(auth_entity=None, blog_name=None, **kwargs):
+        """Creates and returns a :class:`Tumblr` for the logged in user.
 
-  def verify(self):
-    """Checks that Disqus is installed as well as the webmention endpoint.
+        Args:
+          auth_entity: :class:`oauth_dropins.tumblr.TumblrAuth`
+          blog_name: which blog. optional. passed to _urls_and_domains.
+        """
+        urls, domains = Tumblr._urls_and_domains(auth_entity, blog_name=blog_name)
+        if not urls or not domains:
+            flash("Tumblr blog not found. Please create one first!")
+            return None
 
-    Stores the result in webmention_endpoint.
-    """
-    if self.verified():
-      return
+        id = domains[0]
+        return Tumblr(
+            id=id,
+            auth_entity=auth_entity.key,
+            domains=domains,
+            domain_urls=urls,
+            name=auth_entity.user_display_name(),
+            picture=TUMBLR_AVATAR_URL % id,
+            superfeedr_secret=util.generate_secret(),
+            **kwargs
+        )
 
-    super().verify(force=True)
+    @staticmethod
+    def _urls_and_domains(auth_entity, blog_name=None):
+        """Returns this blog's URL and domain.
 
-    html = getattr(self, '_fetched_html', None)  # set by Source.verify()
-    if not self.disqus_shortname and html:
-      self.discover_disqus_shortname(html)
+        Args:
+          auth_entity: :class:`oauth_dropins.tumblr.TumblrAuth`
+          blog_name: which blog. optional. matches the 'name' field for one of the
+            blogs in auth_entity.user_json['user']['blogs'].
 
-  def discover_disqus_shortname(self, html):
-    # scrape the disqus shortname out of the page
-    logging.info("Looking for Disqus shortname in fetched HTML")
-    for regex in DISQUS_SHORTNAME_RES:
-      match = regex.search(html)
-      if match:
-        self.disqus_shortname = match.group(1)
-        logging.info("Found Disqus shortname %s", self.disqus_shortname)
-        self.put()
+        Returns:
+          ([string url], [string domain])
+        """
+        for blog in json_loads(auth_entity.user_json).get("user", {}).get("blogs", []):
+            if (blog_name and blog_name == blog.get("name")) or (
+                not blog_name and blog.get("primary")
+            ):
+                return [blog["url"]], [util.domain_from_link(blog["url"]).lower()]
 
-  def create_comment(self, post_url, author_name, author_url, content):
-    """Creates a new comment in the source silo.
+        return [], []
 
-    Must be implemented by subclasses.
+    def verified(self):
+        """Returns True if we've found the webmention endpoint and Disqus."""
+        return self.webmention_endpoint and self.disqus_shortname
 
-    Args:
-      post_url: string
-      author_name: string
-      author_url: string
-      content: string
+    def verify(self):
+        """Checks that Disqus is installed as well as the webmention endpoint.
 
-    Returns:
-      JSON response dict with 'id' and other fields
-    """
-    if not self.disqus_shortname:
-      resp = util.requests_get(post_url)
-      resp.raise_for_status()
-      self.discover_disqus_shortname(resp.text)
-      if not self.disqus_shortname:
-        raise BadRequest("Your Bridgy account isn't fully set up yet: "
-                                 "we haven't found your Disqus account.")
+        Stores the result in webmention_endpoint.
+        """
+        if self.verified():
+            return
 
-    # strip slug, query and fragment from post url
-    parsed = urllib.parse.urlparse(post_url)
-    path = parsed.path.split('/')
-    if not util.is_int(path[-1]):
-      path.pop(-1)
-    post_url = urllib.parse.urlunparse(parsed[:2] + ('/'.join(path), '', '', ''))
+        super().verify(force=True)
 
-    # get the disqus thread id. details on thread queries:
-    # http://stackoverflow.com/questions/4549282/disqus-api-adding-comment
-    # https://disqus.com/api/docs/threads/details/
-    resp = self.disqus_call(util.requests_get, DISQUS_API_THREAD_DETAILS_URL,
-                            {'forum': self.disqus_shortname,
-                             # ident:[tumblr_post_id] should work, but doesn't :/
-                             'thread': 'link:%s' % post_url,
-                             })
-    thread_id = resp['id']
+        html = getattr(self, "_fetched_html", None)  # set by Source.verify()
+        if not self.disqus_shortname and html:
+            self.discover_disqus_shortname(html)
 
-    # create the comment
-    message = '<a href="%s">%s</a>: %s' % (author_url, author_name, content)
-    resp = self.disqus_call(util.requests_post, DISQUS_API_CREATE_POST_URL,
-                            {'thread': thread_id,
-                             'message': message,
-                             # only allowed when authed as moderator/owner
-                             # 'state': 'approved',
-                             })
-    return resp
+    def discover_disqus_shortname(self, html):
+        # scrape the disqus shortname out of the page
+        logging.info("Looking for Disqus shortname in fetched HTML")
+        for regex in DISQUS_SHORTNAME_RES:
+            match = regex.search(html)
+            if match:
+                self.disqus_shortname = match.group(1)
+                logging.info("Found Disqus shortname %s", self.disqus_shortname)
+                self.put()
 
-  @staticmethod
-  def disqus_call(method, url, params, **kwargs):
-    """Makes a Disqus API call.
+    def create_comment(self, post_url, author_name, author_url, content):
+        """Creates a new comment in the source silo.
 
-    Args:
-      method: requests function to use, e.g. requests.get
-      url: string
-      params: query parameters
-      kwargs: passed through to method
+        Must be implemented by subclasses.
 
-    Returns:
-      dict, JSON response
-    """
-    logging.info('Calling Disqus %s with %s', url.split('/')[-2:], params)
-    params.update({
-        'api_key': DISQUS_API_KEY,
-        'api_secret': DISQUS_API_SECRET,
-        'access_token': DISQUS_ACCESS_TOKEN,
-        })
-    kwargs.setdefault('headers', {}).update(util.REQUEST_HEADERS)
-    resp = method(url, params=params, **kwargs)
-    resp.raise_for_status()
-    resp = resp.json().get('response', {})
-    logging.info('Response: %s', resp)
-    return resp
+        Args:
+          post_url: string
+          author_name: string
+          author_url: string
+          content: string
+
+        Returns:
+          JSON response dict with 'id' and other fields
+        """
+        if not self.disqus_shortname:
+            resp = util.requests_get(post_url)
+            resp.raise_for_status()
+            self.discover_disqus_shortname(resp.text)
+            if not self.disqus_shortname:
+                raise BadRequest(
+                    "Your Bridgy account isn't fully set up yet: "
+                    "we haven't found your Disqus account."
+                )
+
+        # strip slug, query and fragment from post url
+        parsed = urllib.parse.urlparse(post_url)
+        path = parsed.path.split("/")
+        if not util.is_int(path[-1]):
+            path.pop(-1)
+        post_url = urllib.parse.urlunparse(parsed[:2] + ("/".join(path), "", "", ""))
+
+        # get the disqus thread id. details on thread queries:
+        # http://stackoverflow.com/questions/4549282/disqus-api-adding-comment
+        # https://disqus.com/api/docs/threads/details/
+        resp = self.disqus_call(
+            util.requests_get,
+            DISQUS_API_THREAD_DETAILS_URL,
+            {
+                "forum": self.disqus_shortname,
+                # ident:[tumblr_post_id] should work, but doesn't :/
+                "thread": "link:%s" % post_url,
+            },
+        )
+        thread_id = resp["id"]
+
+        # create the comment
+        message = '<a href="%s">%s</a>: %s' % (author_url, author_name, content)
+        resp = self.disqus_call(
+            util.requests_post,
+            DISQUS_API_CREATE_POST_URL,
+            {
+                "thread": thread_id,
+                "message": message,
+                # only allowed when authed as moderator/owner
+                # 'state': 'approved',
+            },
+        )
+        return resp
+
+    @staticmethod
+    def disqus_call(method, url, params, **kwargs):
+        """Makes a Disqus API call.
+
+        Args:
+          method: requests function to use, e.g. requests.get
+          url: string
+          params: query parameters
+          kwargs: passed through to method
+
+        Returns:
+          dict, JSON response
+        """
+        logging.info("Calling Disqus %s with %s", url.split("/")[-2:], params)
+        params.update(
+            {
+                "api_key": DISQUS_API_KEY,
+                "api_secret": DISQUS_API_SECRET,
+                "access_token": DISQUS_ACCESS_TOKEN,
+            }
+        )
+        kwargs.setdefault("headers", {}).update(util.REQUEST_HEADERS)
+        resp = method(url, params=params, **kwargs)
+        resp.raise_for_status()
+        resp = resp.json().get("response", {})
+        logging.info("Response: %s", resp)
+        return resp
 
 
 class ChooseBlog(oauth_tumblr.Callback):
-  def finish(self, auth_entity, state=None):
-    if not auth_entity:
-      util.maybe_add_or_delete_source(Tumblr, auth_entity, state)
-      return
+    def finish(self, auth_entity, state=None):
+        if not auth_entity:
+            util.maybe_add_or_delete_source(Tumblr, auth_entity, state)
+            return
 
-    vars = {
-      'action': '/tumblr/add',
-      'state': state,
-      'auth_entity_key': auth_entity.key.urlsafe().decode(),
-      'blogs': [{'id': b['name'],
-                 'title': b.get('title', ''),
-                 'domain': util.domain_from_link(b['url'])}
+        vars = {
+            "action": "/tumblr/add",
+            "state": state,
+            "auth_entity_key": auth_entity.key.urlsafe().decode(),
+            "blogs": [
+                {
+                    "id": b["name"],
+                    "title": b.get("title", ""),
+                    "domain": util.domain_from_link(b["url"]),
+                }
                 # user_json is the user/info response:
                 # http://www.tumblr.com/docs/en/api/v2#user-methods
-                for b in json_loads(auth_entity.user_json)['user']['blogs']
-                if b.get('name') and b.get('url')],
-      }
-    logging.info('Rendering choose_blog.html with %s', vars)
-    return render_template('choose_blog.html', **vars)
+                for b in json_loads(auth_entity.user_json)["user"]["blogs"]
+                if b.get("name") and b.get("url")
+            ],
+        }
+        logging.info("Rendering choose_blog.html with %s", vars)
+        return render_template("choose_blog.html", **vars)
 
 
-@app.route('/tumblr/add', methods=['POST'])
+@app.route("/tumblr/add", methods=["POST"])
 def tumblr_add():
-  util.maybe_add_or_delete_source(
-    Tumblr,
-    ndb.Key(urlsafe=request.form['auth_entity_key']).get(),
-    request.form['state'],
-    blog_name=request.form['blog'],
-  )
+    util.maybe_add_or_delete_source(
+        Tumblr,
+        ndb.Key(urlsafe=request.form["auth_entity_key"]).get(),
+        request.form["state"],
+        blog_name=request.form["blog"],
+    )
 
 
 class SuperfeedrNotify(superfeedr.Notify):
-  SOURCE_CLS = Tumblr
+    SOURCE_CLS = Tumblr
 
 
 # Tumblr doesn't seem to use scope
 # http://www.tumblr.com/docs/en/api/v2#oauth
 start = util.oauth_starter(oauth_tumblr.Start).as_view(
-  'tumblr_start', '/tumblr/choose_blog')
-app.add_url_rule('/tumblr/start', view_func=start, methods=['POST'])
-app.add_url_rule('/tumblr/choose_blog', view_func=ChooseBlog.as_view(
-  'tumblr_choose_blog', 'unused'))
-app.add_url_rule('/tumblr/delete/finish', view_func=oauth_tumblr.Callback.as_view(
-  'tumblr_delete_finish', '/delete/finish'))
-app.add_url_rule('/tumblr/notify/<id>', view_func=SuperfeedrNotify.as_view('tumblr_notify'), methods=['POST'])
+    "tumblr_start", "/tumblr/choose_blog"
+)
+app.add_url_rule("/tumblr/start", view_func=start, methods=["POST"])
+app.add_url_rule(
+    "/tumblr/choose_blog", view_func=ChooseBlog.as_view("tumblr_choose_blog", "unused")
+)
+app.add_url_rule(
+    "/tumblr/delete/finish",
+    view_func=oauth_tumblr.Callback.as_view("tumblr_delete_finish", "/delete/finish"),
+)
+app.add_url_rule(
+    "/tumblr/notify/<id>",
+    view_func=SuperfeedrNotify.as_view("tumblr_notify"),
+    methods=["POST"],
+)

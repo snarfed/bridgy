@@ -17,35 +17,39 @@ from granary import twitter
 
 from models import TWITTER_SCRAPE_HEADERS
 
-twitter_auth.TWITTER_APP_KEY = (os.getenv('TWITTER_LIVE_TEST_APP_KEY') or
-                                util.read('twitter_live_test_app_key'))
+twitter_auth.TWITTER_APP_KEY = os.getenv("TWITTER_LIVE_TEST_APP_KEY") or util.read(
+    "twitter_live_test_app_key"
+)
 assert twitter_auth.TWITTER_APP_KEY
-twitter_auth.TWITTER_APP_SECRET = (os.getenv('TWITTER_LIVE_TEST_APP_SECRET') or
-                                   util.read('twitter_live_test_app_secret'))
+twitter_auth.TWITTER_APP_SECRET = os.getenv(
+    "TWITTER_LIVE_TEST_APP_SECRET"
+) or util.read("twitter_live_test_app_secret")
 assert twitter_auth.TWITTER_APP_SECRET
-TOKEN_KEY = (os.getenv('TWITTER_ACCESS_TOKEN_KEY') or
-             util.read('twitter_access_token_key'))
+TOKEN_KEY = os.getenv("TWITTER_ACCESS_TOKEN_KEY") or util.read(
+    "twitter_access_token_key"
+)
 assert TOKEN_KEY
-TOKEN_SECRET = (os.getenv('TWITTER_ACCESS_TOKEN_SECRET') or
-                util.read('twitter_access_token_secret'))
+TOKEN_SECRET = os.getenv("TWITTER_ACCESS_TOKEN_SECRET") or util.read(
+    "twitter_access_token_secret"
+)
 assert TOKEN_SECRET
-TWEET_ID = '1270018109630369797'
+TWEET_ID = "1270018109630369797"
 
 
 class TwitterLiveTest(unittest.TestCase):
+    def test_like_scraping(self):
+        tw = twitter.Twitter(
+            TOKEN_KEY, TOKEN_SECRET, scrape_headers=TWITTER_SCRAPE_HEADERS
+        )
+        activities = tw.get_activities(activity_id=TWEET_ID, fetch_likes=True)
+        likes = [t for t in activities[0]["object"]["tags"] if t.get("verb") == "like"]
+        self.assertGreater(len(likes), 0)
 
-  def test_like_scraping(self):
-    tw = twitter.Twitter(TOKEN_KEY, TOKEN_SECRET,
-                         scrape_headers=TWITTER_SCRAPE_HEADERS)
-    activities = tw.get_activities(activity_id=TWEET_ID, fetch_likes=True)
-    likes = [t for t in activities[0]['object']['tags'] if t.get('verb') == 'like']
-    self.assertGreater(len(likes), 0)
 
-
-if __name__ == '__main__':
-  if '--debug' in sys.argv:
-    sys.argv.remove('--debug')
-    logging.getLogger().setLevel(logging.DEBUG)
-  else:
-    logging.getLogger().setLevel(logging.CRITICAL + 1)
-  unittest.main()
+if __name__ == "__main__":
+    if "--debug" in sys.argv:
+        sys.argv.remove("--debug")
+        logging.getLogger().setLevel(logging.DEBUG)
+    else:
+        logging.getLogger().setLevel(logging.CRITICAL + 1)
+    unittest.main()

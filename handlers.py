@@ -38,7 +38,8 @@ import util
 
 CACHE_TIME = datetime.timedelta(minutes=15)
 
-TEMPLATE = string.Template("""\
+TEMPLATE = string.Template(
+    """\
 <!DOCTYPE html>
 <html>
 <head>
@@ -64,249 +65,286 @@ body {
 </head>
 $body
 </html>
-""")
+"""
+)
 
 
-@app.route('/<any(post,comment,like,react,repost,rsvp):_>/<path:__>',
-           methods=['HEAD'])
+@app.route("/<any(post,comment,like,react,repost,rsvp):_>/<path:__>", methods=["HEAD"])
 def mf2_handler_head(_, __):
-  return ''
+    return ""
 
 
 class Item(View):
-  """Fetches a post, repost, like, or comment and serves it as mf2 HTML or JSON.
-  """
-  source = None
+    """Fetches a post, repost, like, or comment and serves it as mf2 HTML or JSON."""
 
-  VALID_ID = re.compile(r'^[\w.+:@=<>-]+$')
+    source = None
 
-  def get_item(self, **kwargs):
-    """Fetches and returns an object from the given source.
+    VALID_ID = re.compile(r"^[\w.+:@=<>-]+$")
 
-    To be implemented by subclasses.
+    def get_item(self, **kwargs):
+        """Fetches and returns an object from the given source.
 
-    Args:
-      source: :class:`models.Source` subclass
-      id: string
+        To be implemented by subclasses.
 
-    Returns:
-      ActivityStreams object dict
-    """
-    raise NotImplementedError()
+        Args:
+          source: :class:`models.Source` subclass
+          id: string
 
-  def get_post(self, id, **kwargs):
-    """Fetch a post.
+        Returns:
+          ActivityStreams object dict
+        """
+        raise NotImplementedError()
 
-    Args:
-      id: string, site-specific post id
-      is_event: bool
-      kwargs: passed through to :meth:`get_activities`
+    def get_post(self, id, **kwargs):
+        """Fetch a post.
 
-    Returns:
-      ActivityStreams object dict
-    """
-    try:
-      posts = self.source.get_activities(
-          activity_id=id, user_id=self.source.key_id(), **kwargs)
-      if posts:
-        return posts[0]
-      logging.warning('Source post %s not found', id)
-    except AssertionError:
-      raise
-    except Exception as e:
-      util.interpret_http_exception(e)
+        Args:
+          id: string, site-specific post id
+          is_event: bool
+          kwargs: passed through to :meth:`get_activities`
 
-  @flask_util.cached(cache, CACHE_TIME)
-  def dispatch_request(self, site, key_id, **kwargs):
-    """Handle HTTP request."""
-    source_cls = models.sources.get(site)
-    if not source_cls:
-      error("Source type '%s' not found. Known sources: %s" %
-            (site, filter(None, models.sources.keys())))
-
-    self.source = source_cls.get_by_id(key_id)
-    if not self.source:
-      error(f'Source {site} {key_id} not found')
-    elif (self.source.status == 'disabled' or
-          'listen' not in self.source.features):
-      error(f'Source {self.source.bridgy_path()} is disabled for backfeed')
-
-    format = request.values.get('format', 'html')
-    if format not in ('html', 'json'):
-      error(f'Invalid format {format}, expected html or json')
-
-    for id in kwargs.values():
-      if not self.VALID_ID.match(id):
-        error(f'Invalid id {id}', 404)
-
-    try:
-      obj = self.get_item(**kwargs)
-    except models.DisableSource:
-      error("Bridgy's access to your account has expired. Please visit https://brid.gy/ to refresh it!", 401)
-    except ValueError as e:
-      error(f'{self.source.GR_CLASS.NAME} error: {e}')
-
-    if not obj:
-      error(f'Not found: {site}:{key_id} {kwargs}', 404)
-
-    if self.source.is_blocked(obj):
-      error('That user is currently blocked', 410)
-
-    # use https for profile pictures so we don't cause SSL mixed mode errors
-    # when serving over https.
-    author = obj.get('author', {})
-    image = author.get('image', {})
-    url = image.get('url')
-    if url:
-      image['url'] = util.update_scheme(url, request)
-
-    mf2_json = microformats2.object_to_json(obj, synthesize_content=False)
-
-    # try to include the author's silo profile url
-    author = first_props(mf2_json.get('properties', {})).get('author', {})
-    author_uid = first_props(author.get('properties', {})).get('uid', '')
-    if author_uid:
-      parsed = util.parse_tag_uri(author_uid)
-      if parsed:
-        urls = author.get('properties', {}).setdefault('url', [])
+        Returns:
+          ActivityStreams object dict
+        """
         try:
-          silo_url = self.source.gr_source.user_url(parsed[1])
-          if silo_url not in microformats2.get_string_urls(urls):
-            urls.append(silo_url)
-        except NotImplementedError:  # from gr_source.user_url()
-          pass
+            posts = self.source.get_activities(
+                activity_id=id, user_id=self.source.key_id(), **kwargs
+            )
+            if posts:
+                return posts[0]
+            logging.warning("Source post %s not found", id)
+        except AssertionError:
+            raise
+        except Exception as e:
+            util.interpret_http_exception(e)
 
-    # write the response!
-    if format == 'html':
-      url = obj.get('url', '')
-      return TEMPLATE.substitute({
-        'refresh': (f'<meta http-equiv="refresh" content="0;url={url}">'
-                    if url else ''),
-        'url': url,
-        'body': microformats2.json_to_html(mf2_json),
-        'title': obj.get('title') or obj.get('content') or 'Bridgy Response',
-      })
-    elif format == 'json':
-      return mf2_json
+    @flask_util.cached(cache, CACHE_TIME)
+    def dispatch_request(self, site, key_id, **kwargs):
+        """Handle HTTP request."""
+        source_cls = models.sources.get(site)
+        if not source_cls:
+            error(
+                "Source type '%s' not found. Known sources: %s"
+                % (site, filter(None, models.sources.keys()))
+            )
 
-  def merge_urls(self, obj, property, urls, object_type='article'):
-    """Updates an object's ActivityStreams URL objects in place.
+        self.source = source_cls.get_by_id(key_id)
+        if not self.source:
+            error(f"Source {site} {key_id} not found")
+        elif self.source.status == "disabled" or "listen" not in self.source.features:
+            error(f"Source {self.source.bridgy_path()} is disabled for backfeed")
 
-    Adds all URLs in urls that don't already exist in obj[property].
+        format = request.values.get("format", "html")
+        if format not in ("html", "json"):
+            error(f"Invalid format {format}, expected html or json")
 
-    ActivityStreams schema details:
-    http://activitystrea.ms/specs/json/1.0/#id-comparison
+        for id in kwargs.values():
+            if not self.VALID_ID.match(id):
+                error(f"Invalid id {id}", 404)
 
-    Args:
-      obj: ActivityStreams object to merge URLs into
-      property: string property to merge URLs into
-      urls: sequence of string URLs to add
-      object_type: stored as the objectType alongside each URL
-    """
-    if obj:
-      obj[property] = util.get_list(obj, property)
-      existing = set(filter(None, (u.get('url') for u in obj[property])))
-      obj[property] += [{'url': url, 'objectType': object_type} for url in urls
-                        if url not in existing]
+        try:
+            obj = self.get_item(**kwargs)
+        except models.DisableSource:
+            error(
+                "Bridgy's access to your account has expired. Please visit https://brid.gy/ to refresh it!",
+                401,
+            )
+        except ValueError as e:
+            error(f"{self.source.GR_CLASS.NAME} error: {e}")
+
+        if not obj:
+            error(f"Not found: {site}:{key_id} {kwargs}", 404)
+
+        if self.source.is_blocked(obj):
+            error("That user is currently blocked", 410)
+
+        # use https for profile pictures so we don't cause SSL mixed mode errors
+        # when serving over https.
+        author = obj.get("author", {})
+        image = author.get("image", {})
+        url = image.get("url")
+        if url:
+            image["url"] = util.update_scheme(url, request)
+
+        mf2_json = microformats2.object_to_json(obj, synthesize_content=False)
+
+        # try to include the author's silo profile url
+        author = first_props(mf2_json.get("properties", {})).get("author", {})
+        author_uid = first_props(author.get("properties", {})).get("uid", "")
+        if author_uid:
+            parsed = util.parse_tag_uri(author_uid)
+            if parsed:
+                urls = author.get("properties", {}).setdefault("url", [])
+                try:
+                    silo_url = self.source.gr_source.user_url(parsed[1])
+                    if silo_url not in microformats2.get_string_urls(urls):
+                        urls.append(silo_url)
+                except NotImplementedError:  # from gr_source.user_url()
+                    pass
+
+        # write the response!
+        if format == "html":
+            url = obj.get("url", "")
+            return TEMPLATE.substitute(
+                {
+                    "refresh": (
+                        f'<meta http-equiv="refresh" content="0;url={url}">'
+                        if url
+                        else ""
+                    ),
+                    "url": url,
+                    "body": microformats2.json_to_html(mf2_json),
+                    "title": obj.get("title")
+                    or obj.get("content")
+                    or "Bridgy Response",
+                }
+            )
+        elif format == "json":
+            return mf2_json
+
+    def merge_urls(self, obj, property, urls, object_type="article"):
+        """Updates an object's ActivityStreams URL objects in place.
+
+        Adds all URLs in urls that don't already exist in obj[property].
+
+        ActivityStreams schema details:
+        http://activitystrea.ms/specs/json/1.0/#id-comparison
+
+        Args:
+          obj: ActivityStreams object to merge URLs into
+          property: string property to merge URLs into
+          urls: sequence of string URLs to add
+          object_type: stored as the objectType alongside each URL
+        """
+        if obj:
+            obj[property] = util.get_list(obj, property)
+            existing = set(filter(None, (u.get("url") for u in obj[property])))
+            obj[property] += [
+                {"url": url, "objectType": object_type}
+                for url in urls
+                if url not in existing
+            ]
 
 
 # Note that mention links are included in posts and comments, but not
 # likes, reposts, or rsvps. Matches logic in poll() (step 4) in tasks.py!
 class Post(Item):
-  def get_item(self, post_id):
-    posts = self.source.get_activities(activity_id=post_id,
-                                       user_id=self.source.key_id())
-    if not posts:
-      return None
+    def get_item(self, post_id):
+        posts = self.source.get_activities(
+            activity_id=post_id, user_id=self.source.key_id()
+        )
+        if not posts:
+            return None
 
-    post = posts[0]
-    originals, mentions = original_post_discovery.discover(
-      self.source, post, fetch_hfeed=False)
-    obj = post['object']
-    obj['upstreamDuplicates'] = list(
-      set(util.get_list(obj, 'upstreamDuplicates')) | originals)
-    self.merge_urls(obj, 'tags', mentions, object_type='mention')
-    return obj
+        post = posts[0]
+        originals, mentions = original_post_discovery.discover(
+            self.source, post, fetch_hfeed=False
+        )
+        obj = post["object"]
+        obj["upstreamDuplicates"] = list(
+            set(util.get_list(obj, "upstreamDuplicates")) | originals
+        )
+        self.merge_urls(obj, "tags", mentions, object_type="mention")
+        return obj
 
 
 class Comment(Item):
-  def get_item(self, post_id, comment_id):
-    fetch_replies = not self.source.gr_source.OPTIMIZED_COMMENTS
-    post = self.get_post(post_id, fetch_replies=fetch_replies)
-    has_replies = (post.get('object', {}).get('replies', {}).get('items')
-                   if post else False)
-    cmt = self.source.get_comment(
-      comment_id, activity_id=post_id, activity_author_id=self.source.key_id(),
-      activity=post if fetch_replies or has_replies else None)
-    if post:
-      originals, mentions = original_post_discovery.discover(
-        self.source, post, fetch_hfeed=False)
-      self.merge_urls(cmt, 'inReplyTo', originals)
-      self.merge_urls(cmt, 'tags', mentions, object_type='mention')
-    return cmt
+    def get_item(self, post_id, comment_id):
+        fetch_replies = not self.source.gr_source.OPTIMIZED_COMMENTS
+        post = self.get_post(post_id, fetch_replies=fetch_replies)
+        has_replies = (
+            post.get("object", {}).get("replies", {}).get("items") if post else False
+        )
+        cmt = self.source.get_comment(
+            comment_id,
+            activity_id=post_id,
+            activity_author_id=self.source.key_id(),
+            activity=post if fetch_replies or has_replies else None,
+        )
+        if post:
+            originals, mentions = original_post_discovery.discover(
+                self.source, post, fetch_hfeed=False
+            )
+            self.merge_urls(cmt, "inReplyTo", originals)
+            self.merge_urls(cmt, "tags", mentions, object_type="mention")
+        return cmt
 
 
 class Like(Item):
-  def get_item(self, post_id, user_id):
-    post = self.get_post(post_id, fetch_likes=True)
-    like = self.source.get_like(self.source.key_id(), post_id, user_id,
-                                activity=post)
-    if post:
-      originals, mentions = original_post_discovery.discover(
-        self.source, post, fetch_hfeed=False)
-      self.merge_urls(like, 'object', originals)
-    return like
+    def get_item(self, post_id, user_id):
+        post = self.get_post(post_id, fetch_likes=True)
+        like = self.source.get_like(
+            self.source.key_id(), post_id, user_id, activity=post
+        )
+        if post:
+            originals, mentions = original_post_discovery.discover(
+                self.source, post, fetch_hfeed=False
+            )
+            self.merge_urls(like, "object", originals)
+        return like
 
 
 class Reaction(Item):
-  def get_item(self, post_id, user_id, reaction_id):
-    post = self.get_post(post_id)
-    reaction = self.source.gr_source.get_reaction(
-      self.source.key_id(), post_id, user_id, reaction_id, activity=post)
-    if post:
-      originals, mentions = original_post_discovery.discover(
-        self.source, post, fetch_hfeed=False)
-      self.merge_urls(reaction, 'object', originals)
-    return reaction
+    def get_item(self, post_id, user_id, reaction_id):
+        post = self.get_post(post_id)
+        reaction = self.source.gr_source.get_reaction(
+            self.source.key_id(), post_id, user_id, reaction_id, activity=post
+        )
+        if post:
+            originals, mentions = original_post_discovery.discover(
+                self.source, post, fetch_hfeed=False
+            )
+            self.merge_urls(reaction, "object", originals)
+        return reaction
 
 
 class Repost(Item):
-  def get_item(self, post_id, share_id):
-    post = self.get_post(post_id, fetch_shares=True)
-    repost = self.source.gr_source.get_share(
-      self.source.key_id(), post_id, share_id, activity=post)
-    # webmention receivers don't want to see their own post in their
-    # comments, so remove attachments before rendering.
-    if repost and 'attachments' in repost:
-      del repost['attachments']
-    if post:
-      originals, mentions = original_post_discovery.discover(
-        self.source, post, fetch_hfeed=False)
-      self.merge_urls(repost, 'object', originals)
-    return repost
+    def get_item(self, post_id, share_id):
+        post = self.get_post(post_id, fetch_shares=True)
+        repost = self.source.gr_source.get_share(
+            self.source.key_id(), post_id, share_id, activity=post
+        )
+        # webmention receivers don't want to see their own post in their
+        # comments, so remove attachments before rendering.
+        if repost and "attachments" in repost:
+            del repost["attachments"]
+        if post:
+            originals, mentions = original_post_discovery.discover(
+                self.source, post, fetch_hfeed=False
+            )
+            self.merge_urls(repost, "object", originals)
+        return repost
 
 
 class Rsvp(Item):
-  def get_item(self, event_id, user_id):
-    event = self.source.gr_source.get_event(event_id)
-    rsvp = self.source.gr_source.get_rsvp(
-      self.source.key_id(), event_id, user_id, event=event)
-    if event:
-      originals, mentions = original_post_discovery.discover(
-        self.source, event, fetch_hfeed=False)
-      self.merge_urls(rsvp, 'inReplyTo', originals)
-    return rsvp
+    def get_item(self, event_id, user_id):
+        event = self.source.gr_source.get_event(event_id)
+        rsvp = self.source.gr_source.get_rsvp(
+            self.source.key_id(), event_id, user_id, event=event
+        )
+        if event:
+            originals, mentions = original_post_discovery.discover(
+                self.source, event, fetch_hfeed=False
+            )
+            self.merge_urls(rsvp, "inReplyTo", originals)
+        return rsvp
 
 
-app.add_url_rule('/post/<site>/<key_id>/<post_id>',
-                 view_func=Post.as_view('post'))
-app.add_url_rule('/comment/<site>/<key_id>/<post_id>/<comment_id>',
-                 view_func=Comment.as_view('comment'))
-app.add_url_rule('/like/<site>/<key_id>/<post_id>/<user_id>',
-                 view_func=Like.as_view('like'))
-app.add_url_rule('/react/<site>/<key_id>/<post_id>/<user_id>/<reaction_id>',
-                 view_func=Reaction.as_view('react'))
-app.add_url_rule('/repost/<site>/<key_id>/<post_id>/<share_id>',
-                 view_func=Repost.as_view('repost'))
-app.add_url_rule('/rsvp/<site>/<key_id>/<event_id>/<user_id>',
-                 view_func=Rsvp.as_view('rsvp'))
+app.add_url_rule("/post/<site>/<key_id>/<post_id>", view_func=Post.as_view("post"))
+app.add_url_rule(
+    "/comment/<site>/<key_id>/<post_id>/<comment_id>",
+    view_func=Comment.as_view("comment"),
+)
+app.add_url_rule(
+    "/like/<site>/<key_id>/<post_id>/<user_id>", view_func=Like.as_view("like")
+)
+app.add_url_rule(
+    "/react/<site>/<key_id>/<post_id>/<user_id>/<reaction_id>",
+    view_func=Reaction.as_view("react"),
+)
+app.add_url_rule(
+    "/repost/<site>/<key_id>/<post_id>/<share_id>", view_func=Repost.as_view("repost")
+)
+app.add_url_rule(
+    "/rsvp/<site>/<key_id>/<event_id>/<user_id>", view_func=Rsvp.as_view("rsvp")
+)

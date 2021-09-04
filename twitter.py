@@ -19,182 +19,211 @@ import util
 
 
 class Twitter(models.Source):
-  """A Twitter account.
+    """A Twitter account.
 
-  The key name is the username.
-  """
-  GR_CLASS = gr_twitter.Twitter
-  OAUTH_START = oauth_twitter.Start
-  SHORT_NAME = 'twitter'
-  TYPE_LABELS = {
-    'post': 'tweet',
-    'comment': '@-reply',
-    'repost': 'retweet',
-    'like': 'favorite',
-  }
-  TRANSIENT_ERROR_HTTP_CODES = ('404',)
-  CAN_PUBLISH = True
-  HAS_BLOCKS = True
-  URL_CANONICALIZER = gr_twitter.Twitter.URL_CANONICALIZER
-  URL_CANONICALIZER.headers = util.REQUEST_HEADERS
-
-  @staticmethod
-  def new(auth_entity=None, **kwargs):
-    """Creates and returns a :class:`Twitter` entity.
-
-    Args:
-      auth_entity: :class:`oauth_dropins.twitter.TwitterAuth`
-      kwargs: property values
+    The key name is the username.
     """
-    user = json_loads(auth_entity.user_json)
-    gr_source = gr_twitter.Twitter(*auth_entity.access_token())
-    actor = gr_source.user_to_actor(user)
-    return Twitter(id=user['screen_name'],
-                   auth_entity=auth_entity.key,
-                   url=actor.get('url'),
-                   name=actor.get('displayName'),
-                   picture=actor.get('image', {}).get('url'),
-                   **kwargs)
 
-  def silo_url(self):
-    """Returns the Twitter account URL, e.g. https://twitter.com/foo."""
-    return self.gr_source.user_url(self.key_id())
+    GR_CLASS = gr_twitter.Twitter
+    OAUTH_START = oauth_twitter.Start
+    SHORT_NAME = "twitter"
+    TYPE_LABELS = {
+        "post": "tweet",
+        "comment": "@-reply",
+        "repost": "retweet",
+        "like": "favorite",
+    }
+    TRANSIENT_ERROR_HTTP_CODES = ("404",)
+    CAN_PUBLISH = True
+    HAS_BLOCKS = True
+    URL_CANONICALIZER = gr_twitter.Twitter.URL_CANONICALIZER
+    URL_CANONICALIZER.headers = util.REQUEST_HEADERS
 
-  def label_name(self):
-    """Returns the username."""
-    return self.key_id()
+    @staticmethod
+    def new(auth_entity=None, **kwargs):
+        """Creates and returns a :class:`Twitter` entity.
 
-  def search_for_links(self):
-    """Searches for activities with links to any of this source's web sites.
+        Args:
+          auth_entity: :class:`oauth_dropins.twitter.TwitterAuth`
+          kwargs: property values
+        """
+        user = json_loads(auth_entity.user_json)
+        gr_source = gr_twitter.Twitter(*auth_entity.access_token())
+        actor = gr_source.user_to_actor(user)
+        return Twitter(
+            id=user["screen_name"],
+            auth_entity=auth_entity.key,
+            url=actor.get("url"),
+            name=actor.get("displayName"),
+            picture=actor.get("image", {}).get("url"),
+            **kwargs,
+        )
 
-    Twitter search supports OR:
-    https://dev.twitter.com/rest/public/search
+    def silo_url(self):
+        """Returns the Twitter account URL, e.g. https://twitter.com/foo."""
+        return self.gr_source.user_url(self.key_id())
 
-    ...but it only returns complete(ish) results if we strip scheme from URLs,
-    ie search for example.com instead of http://example.com/, and that also
-    returns false positivies, so we check that the returned tweets actually have
-    matching links. https://github.com/snarfed/bridgy/issues/565
+    def label_name(self):
+        """Returns the username."""
+        return self.key_id()
 
-    Returns:
-      sequence of ActivityStreams activity dicts
-    """
-    urls = set(util.schemeless(util.fragmentless(url), slashes=False)
-               for url in self.domain_urls
-               if not util.in_webmention_blocklist(util.domain_from_link(url)))
-    if not urls:
-      return []
+    def search_for_links(self):
+        """Searches for activities with links to any of this source's web sites.
 
-    query = ' OR '.join(sorted(urls))
-    candidates = self.get_activities(
-      search_query=query, group_id=gr_source.SEARCH, etag=self.last_activities_etag,
-      fetch_replies=False, fetch_likes=False, fetch_shares=False, count=50)
+        Twitter search supports OR:
+        https://dev.twitter.com/rest/public/search
 
-    # filter out retweets and search false positives that don't actually link to us
-    results = []
-    for candidate in candidates:
-      if candidate.get('verb') == 'share':
-        continue
-      obj = candidate['object']
-      tags = obj.get('tags', [])
-      atts = obj.get('attachments', [])
-      for url in urls:
-        if (any(util.schemeless(t.get('url', ''), slashes=False).startswith(url)
-                for t in tags + atts)):
-          results.append(candidate)
-          break
+        ...but it only returns complete(ish) results if we strip scheme from URLs,
+        ie search for example.com instead of http://example.com/, and that also
+        returns false positivies, so we check that the returned tweets actually have
+        matching links. https://github.com/snarfed/bridgy/issues/565
 
-    return results
+        Returns:
+          sequence of ActivityStreams activity dicts
+        """
+        urls = set(
+            util.schemeless(util.fragmentless(url), slashes=False)
+            for url in self.domain_urls
+            if not util.in_webmention_blocklist(util.domain_from_link(url))
+        )
+        if not urls:
+            return []
 
-  def get_like(self, activity_user_id, activity_id, like_user_id, **kwargs):
-    """Returns an ActivityStreams 'like' activity object for a favorite.
+        query = " OR ".join(sorted(urls))
+        candidates = self.get_activities(
+            search_query=query,
+            group_id=gr_source.SEARCH,
+            etag=self.last_activities_etag,
+            fetch_replies=False,
+            fetch_likes=False,
+            fetch_shares=False,
+            count=50,
+        )
 
-    We get Twitter favorites by scraping HTML, and we only get the first page,
-    which only has 25. So, use a :class:`models.Response` in the datastore
-    first, if we have one, and only re-scrape HTML as a fallback.
+        # filter out retweets and search false positives that don't actually link to us
+        results = []
+        for candidate in candidates:
+            if candidate.get("verb") == "share":
+                continue
+            obj = candidate["object"]
+            tags = obj.get("tags", [])
+            atts = obj.get("attachments", [])
+            for url in urls:
+                if any(
+                    util.schemeless(t.get("url", ""), slashes=False).startswith(url)
+                    for t in tags + atts
+                ):
+                    results.append(candidate)
+                    break
 
-    Args:
-      activity_user_id: string id of the user who posted the original activity
-      activity_id: string activity id
-      like_user_id: string id of the user who liked the activity
-      kwargs: passed to :meth:`granary.source.Source.get_comment`
-    """
-    id = self.gr_source.tag_uri('%s_favorited_by_%s' % (activity_id, like_user_id))
-    resp = models.Response.get_by_id(id)
-    if resp:
-      return json_loads(resp.response_json)
-    else:
-      return super().get_like(activity_user_id, activity_id,
-                                           like_user_id, **kwargs)
+        return results
 
-  def is_private(self):
-    """Returns True if this Twitter account is protected.
+    def get_like(self, activity_user_id, activity_id, like_user_id, **kwargs):
+        """Returns an ActivityStreams 'like' activity object for a favorite.
 
-    https://dev.twitter.com/rest/reference/get/users/show#highlighter_25173
-    https://support.twitter.com/articles/14016
-    https://support.twitter.com/articles/20169886
-    """
-    return json_loads(self.auth_entity.get().user_json).get('protected')
+        We get Twitter favorites by scraping HTML, and we only get the first page,
+        which only has 25. So, use a :class:`models.Response` in the datastore
+        first, if we have one, and only re-scrape HTML as a fallback.
 
-  def canonicalize_url(self, url, activity=None, **kwargs):
-    """Normalize /statuses/ to /status/.
+        Args:
+          activity_user_id: string id of the user who posted the original activity
+          activity_id: string activity id
+          like_user_id: string id of the user who liked the activity
+          kwargs: passed to :meth:`granary.source.Source.get_comment`
+        """
+        id = self.gr_source.tag_uri("%s_favorited_by_%s" % (activity_id, like_user_id))
+        resp = models.Response.get_by_id(id)
+        if resp:
+            return json_loads(resp.response_json)
+        else:
+            return super().get_like(
+                activity_user_id, activity_id, like_user_id, **kwargs
+            )
 
-    https://github.com/snarfed/bridgy/issues/618
-    """
-    url = url.replace('/statuses/', '/status/')
-    return super().canonicalize_url(url, **kwargs)
+    def is_private(self):
+        """Returns True if this Twitter account is protected.
+
+        https://dev.twitter.com/rest/reference/get/users/show#highlighter_25173
+        https://support.twitter.com/articles/14016
+        https://support.twitter.com/articles/20169886
+        """
+        return json_loads(self.auth_entity.get().user_json).get("protected")
+
+    def canonicalize_url(self, url, activity=None, **kwargs):
+        """Normalize /statuses/ to /status/.
+
+        https://github.com/snarfed/bridgy/issues/618
+        """
+        url = url.replace("/statuses/", "/status/")
+        return super().canonicalize_url(url, **kwargs)
 
 
-class Auth():
-  """Base OAuth handler class."""
+class Auth:
+    """Base OAuth handler class."""
 
-  def start_oauth_flow(self, feature):
-    """Redirects to Twitter's OAuth endpoint to start the OAuth flow.
+    def start_oauth_flow(self, feature):
+        """Redirects to Twitter's OAuth endpoint to start the OAuth flow.
 
-    Args:
-      feature: 'listen' or 'publish'
-    """
-    features = feature.split(',') if feature else []
-    for feature in features:
-      if feature not in models.Source.FEATURES:
-        util.error(f'Unknown feature: {feature}')
+        Args:
+          feature: 'listen' or 'publish'
+        """
+        features = feature.split(",") if feature else []
+        for feature in features:
+            if feature not in models.Source.FEATURES:
+                util.error(f"Unknown feature: {feature}")
 
-    # pass explicit 'write' instead of None for publish so that oauth-dropins
-    # (and tweepy) don't use signin_with_twitter ie /authorize. this works
-    # around a twitter API bug: https://dev.twitter.com/discussions/21281
-    access_type = 'write' if 'publish' in features else 'read'
-    view = util.oauth_starter(oauth_twitter.Start, feature=feature)(
-      '/twitter/add', access_type=access_type)
-    return view.dispatch_request()
+        # pass explicit 'write' instead of None for publish so that oauth-dropins
+        # (and tweepy) don't use signin_with_twitter ie /authorize. this works
+        # around a twitter API bug: https://dev.twitter.com/discussions/21281
+        access_type = "write" if "publish" in features else "read"
+        view = util.oauth_starter(oauth_twitter.Start, feature=feature)(
+            "/twitter/add", access_type=access_type
+        )
+        return view.dispatch_request()
 
 
 class Add(oauth_twitter.Callback, Auth):
-  def finish(self, auth_entity, state=None):
-    source = util.maybe_add_or_delete_source(Twitter, auth_entity, state)
-    feature = util.decode_oauth_state(state).get('feature')
+    def finish(self, auth_entity, state=None):
+        source = util.maybe_add_or_delete_source(Twitter, auth_entity, state)
+        feature = util.decode_oauth_state(state).get("feature")
 
-    if source is not None and feature == 'listen' and 'publish' in source.features:
-      # if we were already signed up for publish, we had a read/write token.
-      # when we sign up for listen, we use x_auth_access_type=read to request
-      # just read permissions, which *demotes* us to a read only token! ugh.
-      # so, do the whole oauth flow again to get a read/write token.
-      logging.info('Restarting OAuth flow to get publish permissions.')
-      source.features.remove('publish')
-      source.put()
-      return self.start_oauth_flow('publish')
+        if source is not None and feature == "listen" and "publish" in source.features:
+            # if we were already signed up for publish, we had a read/write token.
+            # when we sign up for listen, we use x_auth_access_type=read to request
+            # just read permissions, which *demotes* us to a read only token! ugh.
+            # so, do the whole oauth flow again to get a read/write token.
+            logging.info("Restarting OAuth flow to get publish permissions.")
+            source.features.remove("publish")
+            source.put()
+            return self.start_oauth_flow("publish")
 
 
 class Start(oauth_twitter.Start, Auth):
-  """Custom OAuth start handler so we can use access_type=read for state=listen.
+    """Custom OAuth start handler so we can use access_type=read for state=listen.
 
-  Tweepy converts access_type to x_auth_access_type for Twitter's
-  oauth/request_token endpoint. Details:
-  https://dev.twitter.com/docs/api/1/post/oauth/request_token
-  """
-  def dispatch_request(self):
-    return self.start_oauth_flow(request.form['feature'])
+    Tweepy converts access_type to x_auth_access_type for Twitter's
+    oauth/request_token endpoint. Details:
+    https://dev.twitter.com/docs/api/1/post/oauth/request_token
+    """
+
+    def dispatch_request(self):
+        return self.start_oauth_flow(request.form["feature"])
 
 
-app.add_url_rule('/twitter/start', view_func=Start.as_view('twitter_start', '/twitter/add'), methods=['POST'])
-app.add_url_rule('/twitter/add', view_func=Add.as_view('twitter_add', 'unused'))
-app.add_url_rule('/twitter/delete/finish', view_func=oauth_twitter.Callback.as_view('twitter_delete_finish', '/delete/finish'))
-app.add_url_rule('/twitter/publish/start', view_func=oauth_twitter.Start.as_view('twitter_publish_finish', '/publish/twitter/finish'), methods=['POST'])
+app.add_url_rule(
+    "/twitter/start",
+    view_func=Start.as_view("twitter_start", "/twitter/add"),
+    methods=["POST"],
+)
+app.add_url_rule("/twitter/add", view_func=Add.as_view("twitter_add", "unused"))
+app.add_url_rule(
+    "/twitter/delete/finish",
+    view_func=oauth_twitter.Callback.as_view("twitter_delete_finish", "/delete/finish"),
+)
+app.add_url_rule(
+    "/twitter/publish/start",
+    view_func=oauth_twitter.Start.as_view(
+        "twitter_publish_finish", "/publish/twitter/finish"
+    ),
+    methods=["POST"],
+)
