@@ -77,8 +77,7 @@ class PublishTest(testutil.AppTest):
 
   def expect_requests_get(self, url, body='', backlink=None, **kwargs):
     body += backlink or self.backlink
-    resp = super().expect_requests_get(url, body, **kwargs)
-    return resp
+    return super().expect_requests_get(url, body, **kwargs)
 
   def assert_response(self, expected, status=None, preview=False, **kwargs):
     resp = self.get_response(preview=preview, **kwargs)
@@ -201,7 +200,7 @@ class PublishTest(testutil.AppTest):
     Publish(parent=page.key, source=self.source.key, status='complete',
             type='preview', published={'content': 'foo'}).put()
 
-    for i in range(5):
+    for _ in range(5):
       self.expect_requests_get('http://foo.com/bar', self.post_html % 'foo')
     self.mox.ReplayAll()
 
@@ -631,7 +630,7 @@ this is my article
 
   def test_report_error(self):
     """Should report most errors from create() or preview_create()."""
-    for i in range(2):
+    for _ in range(2):
       self.expect_requests_get('http://foo.com/bar', self.post_html % 'foo')
 
     self.mox.StubOutWithMock(error_reporting_client, 'report',
@@ -863,7 +862,7 @@ foo<br /> <blockquote>bar</blockquote>
                       preview=True, params=params)
 
   def test_bridgy_content_mf2(self):
-    for i in range(2):
+    for _ in range(2):
       self.expect_requests_get('http://foo.com/bar', """\
 <article class="h-entry">
 <div class="e-content">unused</div>
@@ -1171,7 +1170,7 @@ foo<br /> <blockquote>bar</blockquote>
   def test_html2text(self):
     """Test that using html2text renders whitespace ok in publish content."""
     # based on https://snarfed.org/2014-01-15_homebrew-website-club-tonight
-    for i in range(2):
+    for _ in range(2):
       self.expect_requests_get('http://foo.com/bar', """\
     <article class="h-entry"><div class="e-content">
       <p class="h-event">
@@ -1201,7 +1200,7 @@ Join us!"""
   def test_unicode(self):
     """Test that we pass through unicode chars correctly."""
     text = 'Démo pour les développeur. Je suis navrée de ce problème.'
-    for i in range(2):
+    for _ in range(2):
       self.expect_requests_get('http://foo.com/bår', self.post_html % text,
                                content_type='text/html; charset=utf-8')
     self.mox.ReplayAll()
@@ -1355,7 +1354,7 @@ Join us!"""
 
     ...not u-photos in children, e.g. h-cards.
     """
-    for i in range(2):
+    for _ in range(2):
       self.expect_requests_get('http://foo.com/bar', """
 <div class="h-entry">
   <div class="e-content">
@@ -1376,7 +1375,7 @@ Join us!"""
 
   def test_ignore_jetpack_lazy_loaded_imgs(self):
     """https://github.com/snarfed/bridgy/issues/798"""
-    for i in range(2):
+    for _ in range(2):
       self.expect_requests_get('http://foo.com/bar', """
 <div class="h-entry">
 <img src="http://example.com/wp-content/plugins/jetpack/modules/lazy-images/images/1x1.trans.gif"
@@ -1471,7 +1470,7 @@ Join us!"""
     Publish(parent=page.key, source=self.source.key, status='complete',
             published={'id': 'the_id'}).put()
 
-    for i in range(2):
+    for _ in range(2):
       self.expect_requests_get('http://foo.com/bar', status_code=410)
     self.mox.ReplayAll()
 

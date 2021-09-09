@@ -54,14 +54,16 @@ class Reddit(models.Source):
     Returns:
       sequence of ActivityStreams activity dicts
     """
-    urls = set(util.schemeless(util.fragmentless(url), slashes=False)
-               for url in self.domain_urls
-               if not util.in_webmention_blocklist(util.domain_from_link(url)))
+    urls = {
+        util.schemeless(util.fragmentless(url), slashes=False)
+        for url in self.domain_urls
+        if not util.in_webmention_blocklist(util.domain_from_link(url))
+    }
     if not urls:
       return []
 
     # Search syntax: https://www.reddit.com/wiki/search
-    url_query = ' OR '.join([f'site:"{u}" OR selftext:"{u}"' for u in urls])
+    url_query = ' OR '.join(f'site:"{u}" OR selftext:"{u}"' for u in urls)
     return self.get_activities(
       search_query=url_query, group_id=gr_source.SEARCH, etag=self.last_activities_etag,
       fetch_replies=False, fetch_likes=False, fetch_shares=False, count=50)

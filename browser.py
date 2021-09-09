@@ -153,8 +153,10 @@ class BrowserView(View):
       error(f'Your {self.gr_source().NAME} account is private. Bridgy only supports public accounts.')
 
     token = request.values['token']
-    domains = set(util.domain_from_link(util.replace_test_domains_with_localhost(u))
-                  for u in microformats2.object_urls(actor))
+    domains = {
+        util.domain_from_link(util.replace_test_domains_with_localhost(u))
+        for u in microformats2.object_urls(actor)
+    }
     domains.discard(self.source_class().GR_CLASS.DOMAIN)
 
     logging.info(f'Checking token against domains {domains}')

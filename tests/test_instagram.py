@@ -217,6 +217,6 @@ class InstagramTest(testutil.AppTest):
                      last_polled='1970-01-01-00-00-00')
     self.mox.ReplayAll()
 
-    resp = self.get_response(f'poll')
+    resp = self.get_response('poll')
     self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
     self.assertEqual('OK', resp.json)

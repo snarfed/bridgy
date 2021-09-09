@@ -471,8 +471,13 @@ def process_entry(source, permalink, feed_entry, refetch, preexisting,
   usynd = feed_entry.get('properties', {}).get('syndication', [])
   if usynd:
     logging.debug('u-syndication links on the h-feed h-entry: %s', usynd)
-  results = _process_syndication_urls(source, permalink, set(
-    url for url in usynd if isinstance(url, str)), preexisting)
+  results = _process_syndication_urls(
+      source,
+      permalink,
+      {url
+       for url in usynd if isinstance(url, str)},
+      preexisting,
+  )
   success = True
 
   if results:

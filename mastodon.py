@@ -155,15 +155,15 @@ class Mastodon(models.Source):
     try:
       return super().load_blocklist()
     except requests.HTTPError as e:
-      if e.response.status_code == 403:
-        # this user signed up before we started asking for the 'follow' OAuth
-        # scope, which the block list API endpoint requires. just skip them.
-        # https://console.cloud.google.com/errors/CMfA_KfIld6Q2AE
-        logging.info("Couldn't fetch block list due to missing OAuth scope")
-        self.blocked_ids = []
-        self.put()
-      else:
+      if e.response.status_code != 403:
         raise
+
+      # this user signed up before we started asking for the 'follow' OAuth
+      # scope, which the block list API endpoint requires. just skip them.
+      # https://console.cloud.google.com/errors/CMfA_KfIld6Q2AE
+      logging.info("Couldn't fetch block list due to missing OAuth scope")
+      self.blocked_ids = []
+      self.put()
 
 
 @app.route('/mastodon/start', methods=['GET'])
