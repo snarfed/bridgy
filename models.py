@@ -215,45 +215,45 @@ class Source(StringIdModel, metaclass=SourceMeta):
     Once :attr:`self.gr_source` is set, this method will *not* be called;
     :attr:`gr_source` will be returned normally.
     """
-    if name == 'gr_source':
-      super_attr = getattr(super(), name, None)
-      if super_attr:
-        return super_attr
-      elif not self.auth_entity:
-        return None
+    if name != 'gr_source':
+      return getattr(super(), name)
 
-      auth_entity = self.auth_entity.get()
-      try:
-        refresh_token = auth_entity.refresh_token
-        self.gr_source = self.GR_CLASS(refresh_token)
-        return self.gr_source
-      except AttributeError:
-        logging.info('no refresh_token')
-      args = auth_entity.access_token()
-      if not isinstance(args, tuple):
-        args = (args,)
+    super_attr = getattr(super(), name, None)
+    if super_attr:
+      return super_attr
+    elif not self.auth_entity:
+      return None
 
-      kwargs = {}
-      if self.key.kind() == 'FacebookPage' and auth_entity.type == 'user':
-        kwargs = {'user_id': self.key_id()}
-      elif self.key.kind() == 'Instagram':
-        kwargs = {'scrape': True, 'cookie': INSTAGRAM_SESSIONID_COOKIE}
-      elif self.key.kind() == 'Mastodon':
-        args = (auth_entity.instance(),) + args
-        inst = auth_entity.app.get().instance_info
-        kwargs = {
-          'user_id': json_loads(auth_entity.user_json).get('id'),
-          # https://docs-develop.pleroma.social/backend/API/differences_in_mastoapi_responses/#instance
-          'truncate_text_length':
-            json_loads(inst).get('max_toot_chars') if inst else None,
-        }
-      elif self.key.kind() == 'Twitter':
-        kwargs = {'username': self.key_id(), 'scrape_headers': TWITTER_SCRAPE_HEADERS}
-
-      self.gr_source = self.GR_CLASS(*args, **kwargs)
+    auth_entity = self.auth_entity.get()
+    try:
+      refresh_token = auth_entity.refresh_token
+      self.gr_source = self.GR_CLASS(refresh_token)
       return self.gr_source
+    except AttributeError:
+      logging.info('no refresh_token')
+    args = auth_entity.access_token()
+    if not isinstance(args, tuple):
+      args = (args,)
 
-    return getattr(super(), name)
+    kwargs = {}
+    if self.key.kind() == 'FacebookPage' and auth_entity.type == 'user':
+      kwargs = {'user_id': self.key_id()}
+    elif self.key.kind() == 'Instagram':
+      kwargs = {'scrape': True, 'cookie': INSTAGRAM_SESSIONID_COOKIE}
+    elif self.key.kind() == 'Mastodon':
+      args = (auth_entity.instance(),) + args
+      inst = auth_entity.app.get().instance_info
+      kwargs = {
+        'user_id': json_loads(auth_entity.user_json).get('id'),
+        # https://docs-develop.pleroma.social/backend/API/differences_in_mastoapi_responses/#instance
+        'truncate_text_length':
+          json_loads(inst).get('max_toot_chars') if inst else None,
+      }
+    elif self.key.kind() == 'Twitter':
+      kwargs = {'username': self.key_id(), 'scrape_headers': TWITTER_SCRAPE_HEADERS}
+
+    self.gr_source = self.GR_CLASS(*args, **kwargs)
+    return self.gr_source
 
   @classmethod
   def lookup(cls, id):
@@ -986,9 +986,7 @@ class BlogPost(Webmentions):
   feed_item = ndb.JsonProperty(compressed=True)  # from Superfeedr
 
   def label(self):
-    url = None
-    if self.feed_item:
-      url = self.feed_item.get('permalinkUrl')
+    url = self.feed_item.get('permalinkUrl') if self.feed_item else None
     return ' '.join((self.key.kind(), self.key.id(), url or '[no url]'))
 
   def add_task(self):

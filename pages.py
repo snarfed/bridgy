@@ -397,11 +397,10 @@ def delete_finish():
       if not source.features:
         msg += ' Sorry to see you go!'
       flash(msg)
+  elif callback:
+    callback = util.add_query_params(callback, {'result': 'failure'})
   else:
-    if callback:
-      callback = util.add_query_params(callback, {'result': 'failure'})
-    else:
-      flash(f'Please log into {source.GR_CLASS.NAME} as {source.name} to disable it here.')
+    flash(f'Please log into {source.GR_CLASS.NAME} as {source.name} to disable it here.')
 
   url = callback if callback else source.bridgy_url() if source.features else '/'
   return redirect(url, logins=logins)
@@ -535,7 +534,7 @@ def edit_websites_post():
     except ValueError:
       error(f"{delete} not found in {source.label()}'s current web sites")
     domain = util.domain_from_link(delete)
-    if domain not in set(util.domain_from_link(url) for url in source.domain_urls):
+    if domain not in {util.domain_from_link(url) for url in source.domain_urls}:
       source.domains.remove(domain)
     source.put()
     flash(f'Removed {link}.')

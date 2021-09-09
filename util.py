@@ -180,9 +180,9 @@ class Redirect(RequestRedirect):
 
     if self.logins is not None:
       # cookie docs: http://curl.haxx.se/rfc/cookie_spec.html
-      cookie = '|'.join(sorted(set(
-        f'{login.path}?{urllib.parse.quote_plus(login.name)}'
-        for login in self.logins)))
+      cookie = '|'.join(sorted(
+        {f'{login.path}?{urllib.parse.quote_plus(login.name)}'
+         for login in self.logins}))
 
       logging.info(f'setting logins cookie: {cookie}')
       age = datetime.timedelta(days=365 * 2)

@@ -469,10 +469,10 @@ def process_entry(source, permalink, feed_entry, refetch, preexisting,
   # we're looking for, we don't have to fetch the permalink
   permalink, _, type_ok = util.get_webmention_target(permalink)
   usynd = feed_entry.get('properties', {}).get('syndication', [])
-  if usynd:
-    logging.debug('u-syndication links on the h-feed h-entry: %s', usynd)
-  results = _process_syndication_urls(source, permalink, set(
-    url for url in usynd if isinstance(url, str)), preexisting)
+  usynd_urls = {url for url in usynd if isinstance(url, str)}
+  if usynd_urls:
+    logging.debug(f'u-syndication links on the h-feed h-entry: {usynd_urls}')
+  results = _process_syndication_urls(source, permalink, usynd_urls, preexisting)
   success = True
 
   if results:
