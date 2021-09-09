@@ -110,11 +110,9 @@ class PublishBase(webmention.Webmention):
       vals = item.get('properties', {}).get('bridgy-omit-link')
       val = vals[0] if vals else None
 
-    result = (gr_source.INCLUDE_LINK if val is None or val.lower() == 'false'
+    return (gr_source.INCLUDE_LINK if val is None or val.lower() == 'false'
               else gr_source.INCLUDE_IF_TRUNCATED if val.lower() == 'maybe'
               else gr_source.OMIT_LINK)
-
-    return result
 
   def ignore_formatting(self, item):
     val = request.values.get('bridgy_ignore_formatting', None)
@@ -375,13 +373,14 @@ class PublishBase(webmention.Webmention):
 
     # posts and comments need content
     obj_type = obj.get('objectType')
-    if obj_type in ('note', 'article', 'comment'):
-      if (not obj.get('content') and not obj.get('summary') and
-          not obj.get('displayName')):
-        return gr_source.creation_result(
-          abort=False,
-          error_plain='Could not find content in %s' % self.fetched.url,
-          error_html='Could not find <a href="http://microformats.org/">content</a> in %s' % self.fetched.url)
+    if obj_type in ('note', 'article',
+                    'comment') and (not obj.get('content')
+                                    and not obj.get('summary')
+                                    and not obj.get('displayName')):
+      return gr_source.creation_result(
+        abort=False,
+        error_plain='Could not find content in %s' % self.fetched.url,
+        error_html='Could not find <a href="http://microformats.org/">content</a> in %s' % self.fetched.url)
 
     self.preprocess(obj)
 
@@ -514,11 +513,8 @@ class PublishBase(webmention.Webmention):
         logging.debug('expand_target_urls fetching field=%s, url=%s', field, url)
         try:
           mf2 = util.fetch_mf2(url)
-        except AssertionError:
+        except (AssertionError, HTTPException):
           raise  # for unit tests
-        except HTTPException:
-          # raised by us, probably via self.error()
-          raise
         except BaseException:
           # it's not a big deal if we can't fetch an in-reply-to url
           logging.info('expand_target_urls could not fetch field=%s, url=%s',
@@ -649,7 +645,7 @@ class Preview(PublishBase):
             else gr_source.OMIT_LINK)
 
   def error(self, error, html=None, status=400, data=None, report=False, **kwargs):
-    error = html if html else util.linkify(error)
+    error = html or util.linkify(error)
     logging.info(f'publish: {error}')
     if report:
       self.report_error(error, status=status)
@@ -698,7 +694,7 @@ class Send(PublishBase):
 
   def error(self, error, html=None, status=400, data=None, report=False, **kwargs):
     logging.info(f'publish: {error}')
-    error = html if html else util.linkify(error)
+    error = html or util.linkify(error)
     flash('%s' % error)
     if report:
       self.report_error(error, status=status)

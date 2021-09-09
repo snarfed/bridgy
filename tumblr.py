@@ -170,9 +170,9 @@ class Tumblr(models.Source):
       resp = util.requests_get(post_url)
       resp.raise_for_status()
       self.discover_disqus_shortname(resp.text)
-      if not self.disqus_shortname:
-        raise BadRequest("Your Bridgy account isn't fully set up yet: "
-                                 "we haven't found your Disqus account.")
+    if not self.disqus_shortname:
+      raise BadRequest("Your Bridgy account isn't fully set up yet: "
+                               "we haven't found your Disqus account.")
 
     # strip slug, query and fragment from post url
     parsed = urllib.parse.urlparse(post_url)

@@ -70,10 +70,6 @@ class Facebook(browser.BrowserSource):
   @classmethod
   def button_html(cls, feature, **kwargs):
     return super(cls, cls).button_html(feature, form_method='get', **kwargs)
-    return oauth_facebook.Start.button_html(
-      '/about#browser-extension',
-      form_method='get',
-      image_prefix='/oauth_dropins_static/')
 
   def canonicalize_url(self, url, **kwargs):
     """Facebook-specific standardization of syndicated urls.

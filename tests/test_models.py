@@ -714,7 +714,7 @@ class SourceTest(testutil.AppTest):
 class BlogPostTest(testutil.AppTest):
 
   def test_label(self):
-    for feed_item in None, {}:
+    for _ in None, {}:
       bp = BlogPost(id='x')
       bp.put()
       self.assertEqual('BlogPost x [no url]', bp.label())

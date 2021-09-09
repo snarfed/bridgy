@@ -180,9 +180,11 @@ class Redirect(RequestRedirect):
 
     if self.logins is not None:
       # cookie docs: http://curl.haxx.se/rfc/cookie_spec.html
-      cookie = '|'.join(sorted(set(
-        f'{login.path}?{urllib.parse.quote_plus(login.name)}'
-        for login in self.logins)))
+      cookie = '|'.join(
+          sorted({
+              f'{login.path}?{urllib.parse.quote_plus(login.name)}'
+              for login in self.logins
+          }))
 
       logging.info(f'setting logins cookie: {cookie}')
       age = datetime.timedelta(days=365 * 2)
@@ -510,20 +512,19 @@ def maybe_add_or_delete_source(source_cls, auth_entity, state, **kwargs):
     else:
       redirect(source.bridgy_url() if source else '/', logins=logins)
 
-  else:  # this is a delete
-    if auth_entity:
-      redirect('/delete/finish?auth_entity=%s&state=%s' %
-               (auth_entity.key.urlsafe().decode(), state), logins=logins)
-    else:
-      flash('If you want to disable, please approve the %s prompt.' %
-            source_cls.GR_CLASS.NAME)
-      source_key = state_obj.get('source')
-      if source_key:
-        source = ndb.Key(urlsafe=source_key).get()
-        if source:
-          redirect(source.bridgy_url())
+  elif auth_entity:
+    redirect('/delete/finish?auth_entity=%s&state=%s' %
+             (auth_entity.key.urlsafe().decode(), state), logins=logins)
+  else:
+    flash('If you want to disable, please approve the %s prompt.' %
+          source_cls.GR_CLASS.NAME)
+    source_key = state_obj.get('source')
+    if source_key:
+      source = ndb.Key(urlsafe=source_key).get()
+      if source:
+        redirect(source.bridgy_url())
 
-      redirect('/')
+    redirect('/')
 
 
 def construct_state_param_for_add(state=None, **kwargs):

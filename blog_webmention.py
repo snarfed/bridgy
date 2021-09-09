@@ -215,10 +215,9 @@ class BlogWebmentionView(webmention.Webmention):
 
   def any_target_in(self, haystack):
     """Returns true if any target URL (including redirects) is in haystack."""
-    for target in self.entity.redirected_target_urls + [self.target_url]:
-      if target in haystack:
-        return True
-    return False
+    return any(
+        target in haystack
+        for target in self.entity.redirected_target_urls + [self.target_url])
 
 
 app.add_url_rule('/webmention/<any(blogger,fake,tumblr,wordpress):site>',

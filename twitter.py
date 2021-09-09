@@ -78,9 +78,11 @@ class Twitter(models.Source):
     Returns:
       sequence of ActivityStreams activity dicts
     """
-    urls = set(util.schemeless(util.fragmentless(url), slashes=False)
-               for url in self.domain_urls
-               if not util.in_webmention_blocklist(util.domain_from_link(url)))
+    urls = {
+        util.schemeless(util.fragmentless(url), slashes=False)
+        for url in self.domain_urls
+        if not util.in_webmention_blocklist(util.domain_from_link(url))
+    }
     if not urls:
       return []
 

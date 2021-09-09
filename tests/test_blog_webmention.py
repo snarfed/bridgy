@@ -122,7 +122,7 @@ i hereby reply
 
   def test_domain_not_found(self):
     self.expect_requests_get('http://foo.com/post/1', status_code=404)
-    for i in range(4):
+    for _ in range(4):
       self.expect_requests_get('http://foo.com/post/1', '')
     self.mox.ReplayAll()
 
