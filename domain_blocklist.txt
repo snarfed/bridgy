@@ -167,6 +167,7 @@ linkin.bio
 linktr.ee
 live.com
 livestream.com
+manage.py
 mastodon.cloud
 mastodon.social
 mastodon.technology
