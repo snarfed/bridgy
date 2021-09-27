@@ -6,9 +6,9 @@ Reference documentation.
 .. toctree::
    modules
 
-app
----
-.. automodule:: app
+admin
+-----
+.. automodule:: admin
 
 blog_webmention
 ---------------
@@ -18,17 +18,33 @@ blogger
 -------
 .. automodule:: blogger
 
+browser
+-------
+.. automodule:: browser
+
 cron
 ----
 .. automodule:: cron
+
+facebook
+--------
+.. automodule:: facebook
 
 flickr
 ------
 .. automodule:: flickr
 
+github
+------
+.. automodule:: github
+
 handlers
 --------
 .. automodule:: handlers
+
+indieauth
+---------
+.. automodule:: indieauth
 
 instagram
 ---------
@@ -54,9 +70,17 @@ original_post_discovery
 -----------------------
 .. automodule:: original_post_discovery
 
+pages
+-----
+.. automodule:: pages
+
 publish
 -------
 .. automodule:: publish
+
+reddit
+------
+.. automodule:: reddit
 
 superfeedr
 ----------

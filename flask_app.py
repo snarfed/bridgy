@@ -1,5 +1,6 @@
 """Bridgy user-facing views: front page, user pages, and delete POSTs.
 """
+from pathlib import Path
 import string
 
 from flask import Flask
@@ -16,7 +17,7 @@ import util
 # Flask app
 app = Flask('default')
 app.template_folder = './templates'
-app.config.from_pyfile('config.py')
+app.config.from_pyfile(Path(__file__).parent / 'config.py')
 app.url_map.converters['regex'] = flask_util.RegexConverter
 app.after_request(flask_util.default_modern_headers)
 app.register_error_handler(Exception, flask_util.handle_exception)

@@ -32,7 +32,8 @@ Then, create a Python 3 virtualenv and install the dependencies with:
    python3 -m venv local
    source local/bin/activate
    pip install -r requirements.txt
-   ln -s local/lib/python3*/site-packages/oauth_dropins  # needed to serve static file assets in dev_appserver
+   # needed to serve static file assets in dev_appserver
+   ln -s local/lib/python3*/site-packages/oauth_dropins/static oauth_dropins_static
    gcloud config set project brid-gy
 
 Now, you can fire up the gcloud emulator and run the tests:
@@ -68,7 +69,7 @@ To run the entire app locally, run this in the repo root directory:
 
    dev_appserver.py --log_level debug --enable_host_checking false \
      --support_datastore_emulator --datastore_emulator_port=8089 \
-     --application=brid-gy ~/src/bridgy/app.yaml ~/src/bridgy/background.yaml
+     --application=brid-gy ./app.yaml ./background.yaml
 
 (Note: dev_appserver.py is incompatible with python3. if python3 is your
 default python, you can run
@@ -110,10 +111,16 @@ them in “source” mode with:
 
    pip uninstall -y oauth-dropins
    pip install -e <path-to-oauth-dropins-repo>
-   ln -sf <path-to-oauth-dropins-repo>/oauth_dropins  # needed to serve static file assets in dev_appserver
+   ln -sf <path-to-oauth-dropins-repo>/oauth_dropins/static oauth_dropins_static
 
    pip uninstall -y granary
    pip install -e <path to granary>
+
+To use dev_appserver with local granary and oauth-dropins, you’ll need
+to either replace their GitHub lines in ``requirements.txt`` with
+``-e <path-to-local-repo>``, or `apply this patch to dev_appserver.py to
+make it use your virtualenv in
+place <https://issuetracker.google.com/issues/144150446>`__.
 
 To deploy to App Engine, run
 `scripts/deploy.sh <https://github.com/snarfed/bridgy/blob/master/scripts/deploy.sh>`__.
@@ -156,6 +163,24 @@ page, eg brid.gy/instagram/[username]. Note that it doesn’t work with
 tabs <https://github.com/mozilla/contain-facebook>`__ add-on. If you
 have that enabled, you’ll need to disable it to use Bridgy’s browser
 extension.
+
+Extension logs in the JavaScript console
+----------------------------------------
+
+If you’re working on the browser extension, or `you’re sending in a bug
+report for it, <https://github.com/snarfed/bridgy/issues>`__, its
+JavaScript console logs are invaluable for debugging. Here’s how to get
+them in Firefox:
+
+Thanks for trying! And for offering to send logs, those would definitely
+be helpful. Here’s how to get them: 1. Open ``about:debugging`` 2. Click
+*This Firefox* on the left 3. Scroll down to Bridgy 4. Click *Inspect*
+5. Click on the *Console* tab
+
+Here’s how to send them in with a bug report: 1. Right click, *Export
+Visible Messages To*, *File*, save the file. 2. Email the file to bridgy
+@ ryanb.org. *Do not* post or attach it to a GitHub issue, or anywhere
+else public, because it contains sensitive tokens and cookies.
 
 Adding a new silo
 -----------------
@@ -284,7 +309,7 @@ dataset <https://console.cloud.google.com/bigquery?p=brid-gy&d=datastore&page=da
 
    ::
 
-      gcloud datastore export --async gs://brid-gy.appspot.com/stats/ --kinds Blogger,BlogPost,BlogWebmention,Facebook,FacebookPage,Flickr,GitHub,GooglePlusPage,Instagram,Mastodon,Medium,Meetup,Publish,PublishedPage,Reddit,Response,SyndicatedPost,Tumblr,Twitter,WordPress
+      gcloud datastore export --async gs://brid-gy.appspot.com/stats/ --kinds Activity, Blogger,BlogPost,BlogWebmention,Facebook,FacebookPage,Flickr,GitHub,GooglePlusPage,Instagram,Mastodon,Medium,Meetup,Publish,PublishedPage,Reddit,Response,SyndicatedPost,Tumblr,Twitter,WordPress
 
    Note that ``--kinds`` is required. `From the export
    docs <https://cloud.google.com/datastore/docs/export-import-entities#limitations>`__,
@@ -299,7 +324,7 @@ dataset <https://console.cloud.google.com/bigquery?p=brid-gy&d=datastore&page=da
 
    ::
 
-      for kind in BlogPost BlogWebmention Publish Response SyndicatedPost; do
+      for kind in Activity BlogPost BlogWebmention Publish Response SyndicatedPost; do
         bq load --replace --nosync --source_format=DATASTORE_BACKUP datastore.$kind gs://brid-gy.appspot.com/stats/all_namespaces/kind_$kind/all_namespaces_kind_$kind.export_metadata
       done
 
