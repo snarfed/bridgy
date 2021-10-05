@@ -205,7 +205,7 @@ class PagesTest(testutil.AppTest):
   def test_delete_start_redirect_url_error(self):
     self.mox.StubOutWithMock(testutil.OAuthStart, 'redirect_url')
     testutil.OAuthStart.redirect_url(state=mox.IgnoreArg()
-      ).AndRaise(tweepy.TweepError('Connection closed unexpectedly...'))
+      ).AndRaise(tweepy.TweepyException('Connection closed unexpectedly...'))
     self.mox.ReplayAll()
 
     resp = self.client.post('/delete/start', data={
