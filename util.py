@@ -319,7 +319,8 @@ def get_webmention_target(url, resolve=True, replace_test_domains=True):
   if resolve:
     # this follows *all* redirects, until the end
     resolved = follow_redirects(url)
-    html = resolved.headers.get('content-type', '').startswith('text/html')
+    html = (resolved.headers.get('content-type', '').split(';')[0]
+            in ('text/html', 'text/mf2+html'))
     send = html and resolved.status_code != util.HTTP_RESPONSE_TOO_BIG_STATUS_CODE
     url, domain, _ = get_webmention_target(
       resolved.url, resolve=False, replace_test_domains=replace_test_domains)

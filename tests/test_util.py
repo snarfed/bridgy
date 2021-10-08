@@ -215,6 +215,12 @@ class UtilTest(testutil.AppTest):
     self.assert_equals(('chrome://flags', 'flags', False),
                        util.get_webmention_target('chrome://flags'))
 
+  def test_get_webmention_text_mf2_html(self):
+    self.expect_requests_head('http://orig', content_type='text/mf2+html')
+    self.mox.ReplayAll()
+    self.assert_equals(('http://orig', 'orig', True),
+                       util.get_webmention_target('http://orig'))
+
   def test_requests_get_too_big(self):
     self.expect_requests_get(
       'http://foo/bar', '',
