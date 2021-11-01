@@ -27,7 +27,7 @@ from oauth_dropins.webutil.util import *
 import requests
 from werkzeug.routing import RequestRedirect
 
-# when running in dev_appserver, replace these domains in links with localhost
+# when running locally, replace these domains in links with localhost
 LOCALHOST_TEST_DOMAINS = frozenset([
   ('snarfed.org', 'localhost'),
   ('kylewm.com', 'redwind.dev'),

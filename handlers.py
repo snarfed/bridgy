@@ -122,7 +122,7 @@ class Item(View):
     source_cls = models.sources.get(site)
     if not source_cls:
       error("Source type '%s' not found. Known sources: %s" %
-            (site, filter(None, models.sources.keys())))
+            (site, [s for s in models.sources.keys() if s]))
 
     self.source = source_cls.get_by_id(key_id)
     if not self.source:

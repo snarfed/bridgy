@@ -86,7 +86,7 @@ def stats():
   Used to be on the front page, dropped them during the Flask port in August 2021.
   """
   def count(query):
-    stat = query.get()  # no datastore stats in dev_appserver
+    stat = query.get()  # no datastore stats when running locally
     return stat.count if stat else 0
 
   def kind_count(kind):

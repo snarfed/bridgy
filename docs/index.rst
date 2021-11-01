@@ -32,7 +32,7 @@ Then, create a Python 3 virtualenv and install the dependencies with:
    python3 -m venv local
    source local/bin/activate
    pip install -r requirements.txt
-   # needed to serve static file assets in dev_appserver
+   # needed to serve static file handlers locally
    ln -s local/lib/python3*/site-packages/oauth_dropins/static oauth_dropins_static
    gcloud config set project brid-gy
 
@@ -63,17 +63,15 @@ runs on http://localhost:8081/, eg:
    curl -d 'source_key=agNhcHByFgsSB1R3aXR0ZXIiCXNjaG5hcmZlZAw&last_polled=1970-01-01-00-00-00' \
      http://localhost:8081/_ah/queue/poll
 
-To run the entire app locally, run this in the repo root directory:
+To run the entire app locally in
+`app_server <https://github.com/XeoN-GHMB/app_server>`__ (`which
+also serves the static file
+handlers <https://groups.google.com/d/topic/google-appengine/BJDE8y2KISM/discussion>`__),
+run this in the repo root directory:
 
-::
+.. code:: shell
 
-   dev_appserver.py --log_level debug --enable_host_checking false \
-     --support_datastore_emulator --datastore_emulator_port=8089 \
-     --application=brid-gy ./app.yaml ./background.yaml
-
-(Note: dev_appserver.py is incompatible with python3. if python3 is your
-default python, you can run
-``python2 /location/of/dev_appserver.py ...`` instead.)
+   app_server -A oauth-dropins .
 
 Open `localhost:8080 <http://localhost:8080/>`__ and you should see the
 Bridgy home page!
@@ -90,8 +88,6 @@ there <https://github.com/snarfed/oauth-dropins#troubleshootingfaq>`__:
    bash: ./bin/easy_install: ...bad interpreter: No such file or directory
 
    ImportError: cannot import name certs
-
-   ImportError: No module named dev_appserver
 
    ImportError: cannot import name tweepy
 
@@ -115,12 +111,6 @@ them in “source” mode with:
 
    pip uninstall -y granary
    pip install -e <path to granary>
-
-To use dev_appserver with local granary and oauth-dropins, you’ll need
-to either replace their GitHub lines in ``requirements.txt`` with
-``-e <path-to-local-repo>``, or `apply this patch to dev_appserver.py to
-make it use your virtualenv in
-place <https://issuetracker.google.com/issues/144150446>`__.
 
 To deploy to App Engine, run
 `scripts/deploy.sh <https://github.com/snarfed/bridgy/blob/master/scripts/deploy.sh>`__.
@@ -350,43 +340,25 @@ dataset <https://console.cloud.google.com/bigquery?p=brid-gy&d=datastore&page=da
 Misc
 ----
 
-The datastore is automatically backed up by an App Engine cron job that
-runs `Datastore managed
-export <https://cloud.google.com/datastore/docs/schedule-export>`__
-(`details <https://cloud.google.com/datastore/docs/export-import-entities>`__)
-and stores the results in `Cloud
-Storage <https://developers.google.com/storage/docs/>`__, in the
-`brid-gy.appspot.com
-bucket <https://console.developers.google.com/project/apps~brid-gy/storage/brid-gy.appspot.com/>`__.
-It backs up weekly and includes all entities except ``Response`` and
-``SyndicatedPost``, since they make up 92% of all entities by size and
-they aren’t as critical to keep.
-
-(We used to use `Datastore Admin
-Backup <https://cloud.google.com/appengine/docs/standard/python/console/datastore-backing-up-restoring>`__,
-but `it shut down in Feb
-2019 <https://cloud.google.com/appengine/docs/deprecations/datastore-admin-backups.>`__.)
+The datastore is `exported to
+BigQuery <https://console.cloud.google.com/bigquery?p=brid-gy&d=datastore&page=dataset>`__
+(`#715 <https://github.com/snarfed/bridgy/issues/715>`__) twice a year.
 
 We use this command to set a `Cloud Storage lifecycle
-policy <https://developers.google.com/storage/docs/lifecycle>`__ on that
-bucket that prunes older backups:
+policy <https://developers.google.com/storage/docs/lifecycle>`__ on our
+buckets to prune older backups and other files:
 
 ::
 
    gsutil lifecycle set cloud_storage_lifecycle.json gs://brid-gy.appspot.com
+   gsutil lifecycle set cloud_storage_lifecycle.json gs://brid-gy_cloudbuild
+   gsutil lifecycle set cloud_storage_lifecycle.json gs://staging.brid-gy.appspot.com
+   gsutil lifecycle set cloud_storage_lifecycle.json gs://us.artifacts.brid-gy.appspot.com
 
-Run this to see how much space we’re currently using:
-
-::
-
-   gsutil du -hsc gs://brid-gy.appspot.com/\*
-
+`See how much space we’re currently using in this
+dashboard. <https://console.cloud.google.com/monitoring/dashboards/resourceList/gcs_bucket?project=brid-gy>`__
 Run this to download a single complete backup:
 
 ::
 
    gsutil -m cp -r gs://brid-gy.appspot.com/weekly/datastore_backup_full_YYYY_MM_DD_\* .
-
-Also see the `BigQuery
-dataset <https://console.cloud.google.com/bigquery?p=brid-gy&d=datastore&page=dataset>`__
-(`#715 <https://github.com/snarfed/bridgy/issues/715>`__).
