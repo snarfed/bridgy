@@ -184,6 +184,27 @@ I occasionally generate [stats and graphs of usage and growth](https://snarfed.o
 1. Check out the graphs! Save full size images with OS or browser screenshots, thumbnails with the _Download Chart_ button. Then post them!
 
 
+Delete old responses
+---
+Bridgy only keeps responses that are over a year or two old. I garbage collect (ie delete) older responses manually, generally just once a year when I generate statistics (above).
+
+I use the [Datastore Bulk Delete Dataflow template](https://cloud.google.com/dataflow/docs/guides/templates/provided-utilities#datastore-bulk-delete) with this GQL query:
+
+```sql
+SELECT * FROM `Response` WHERE updated < DATETIME('2020-11-01T00:00:00Z')
+```
+
+I either [use the interactive web UI](https://console.cloud.google.com/dataflow/createjob?_ga=2.30358207.1290853518.1636209407-621750517.1595350949) or this command line:
+
+```sh
+gcloud dataflow jobs run 'Delete Response datastore entities over 1y old'
+  --gcs-location gs://dataflow-templates-us-central1/latest/Datastore_to_Datastore_Delete
+  --region us-central1
+  --staging-location gs://brid-gy.appspot.com/tmp-datastore-delete
+  --parameters datastoreReadGqlQuery="SELECT * FROM `Response` WHERE updated < DATETIME('2020-11-01T00:00:00Z'),datastoreReadProjectId=brid-gy,datastoreDeleteProjectId=brid-gy"
+```
+
+
 Misc
 ---
 
