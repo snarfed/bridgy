@@ -44,6 +44,7 @@ service.</a>
 <li><a href="#how">How does it work?</a></li>
 <li><a href="#cost">How much does it cost?</a></li>
 <li><a href="#privacy">What do you do with my data?</a></li>
+<li><a href="#garbage-collecting">How long do you store data?</a></li>
 <li><a href="#who">Who are you? Why did you make this?</a></li>
 <li><a href="#history">How long has this been around?</a></li>
 <li><a href="#stats">How big is this?</a></li>
@@ -178,11 +179,11 @@ access to any of your passwords.
 </p>
 </li>
 
-<li id="privacy" class="question">How long do you store data?</li>
+<li id="garbage-collecting" class="question">How long do you store data?</li>
 <li class="answer">
-<p>Currently, we store all data permanently, but not all in the same place. Notably we archive responses (other people's likes and comments on your posts) to long term storage after 1-2 years. They're [still visible in BigQuery then](https://github.com/snarfed/bridgy/#stats), just not in Bridgy itself.
+<p>We store all data permanently, but not all in Bridgy itself. Notably, we archive responses (eg other people's likes and comments on your posts) to long term storage after 1-2 years. Archived responses are <a href="https://github.com/snarfed/bridgy/#stats">still visible in BigQuery</a>, but not inside Bridgy.
 </p>
-<p>Bridgy is a service, not a data storage provider. Its main job is to translate and move data between social networks and web sites. It's useful to store this data for an extended period of time, so you can see what it's done recently, retry failed responses, but it's not intended or designed to store data permanently. Garbage collecting responses after a while is one way we communicate that.
+<p>Bridgy is a service, not a data storage provider. Its main job is to translate and move data between sites. It's useful to store this data for an extended period of time, so you can see what it's done recently and retry failed responses, but it's not intended to store data permanently. Garbage collecting old responses is one way to enforce and communicate that.
 </p>
 <p>
 </li>
