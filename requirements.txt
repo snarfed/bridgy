@@ -20,6 +20,6 @@ google-cloud-ndb~=1.11
 google-cloud-tasks~=2.7
 gunicorn~=20.1
 humanize~=3.12
-lxml~=4.6.3
+lxml~=4.6.4
 mox3~=1.1
 requests~=2.26
