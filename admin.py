@@ -21,6 +21,22 @@ import blogger, flickr, github, instagram, mastodon, medium, tumblr, twitter, wo
 
 NUM_ENTITIES = 10
 
+# Result of this query in BigQuery:
+# SELECT count(*) FROM `brid-gy.datastore.Response` WHERE updated < timestamp('2020-11-01T00:00:00Z')
+ARCHIVED_RESPONSES = 19988618
+
+# Result of this query in BigQuery:
+# SELECT SUM(ARRAY_LENGTH(sent) + ARRAY_LENGTH(unsent) + ARRAY_LENGTH(error) + ARRAY_LENGTH(failed) + ARRAY_LENGTH(skipped))
+# FROM `brid-gy.datastore.Response`
+# WHERE updated < timestamp('2020-11-01T00:00:00Z')
+ARCHIVED_LINKS = 3706943
+
+# Result of this query in BigQuery:
+# SELECT SUM(ARRAY_LENGTH(sent))
+# FROM `brid-gy.datastore.Response`
+# WHERE updated < timestamp('2020-11-01T00:00:00Z')
+ARCHIVED_SENT_LINKS = 1655743
+
 
 @app.route('/admin/responses')
 def responses():
@@ -108,9 +124,9 @@ def stats():
     # add comma separator between thousands
     k: '{:,}'.format(v) for k, v in {
       'users': num_users,
-      'responses': kind_count('Response'),
-      'links': sum(link_counts.values()),
-      'webmentions': link_counts['sent'] + kind_count('BlogPost'),
+      'responses': kind_count('Response') + ARCHIVED_RESPONSES,
+      'links': sum(link_counts.values()) + ARCHIVED_LINKS,
+      'webmentions': link_counts['sent'] + kind_count('BlogPost') + ARCHIVED_SENT_LINKS,
       'publishes': kind_count('Publish'),
       'blogposts': kind_count('BlogPost'),
       'webmentions_received': kind_count('BlogWebmention'),
