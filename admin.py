@@ -5,6 +5,7 @@ haven't completed yet.
 """
 import datetime
 import itertools
+import logging
 
 from flask import render_template, request
 from google.cloud import ndb
@@ -91,6 +92,15 @@ def mark_complete():
     e.status = 'complete'
   ndb.put_multi(entities)
   return util.redirect('/admin/responses')
+
+
+@app.route('/admin/disable', methods=['POST'])
+def disable():
+  source = util.load_source()
+  logging.info(f'Disabling {source.label()}')
+  source.status = 'disabled'
+  source.put()
+  return util.redirect(source.bridgy_path())
 
 
 @app.route('/admin/stats')
