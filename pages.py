@@ -385,7 +385,6 @@ def delete_finish():
       if login in logins:
         logins.remove(login)
 
-    noun = 'webmentions' if feature == 'webmention' else feature + 'ing'
     if callback:
       callback = util.add_query_params(callback, {
         'result': 'success',
@@ -393,7 +392,12 @@ def delete_finish():
         'key': source.key.urlsafe().decode(),
       })
     else:
-      msg = f'Disabled {noun} for {source.label()}.'
+      nouns = {
+        'webmention': 'webmentions',
+        'listen': 'backfeed',
+        'publish': 'publishing',
+      }
+      msg = f'Disabled {nouns[feature]} for {source.label()}.'
       if not source.features:
         msg += ' Sorry to see you go!'
       flash(msg)

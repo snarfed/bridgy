@@ -63,7 +63,7 @@ service.</a>
 <li><a href="#cute">Brid.gy? Really?</a></li>
 
 <br />
-<p><em>Pulling back responses</em></p>
+<p><em>Backfeed</em></p>
 <li><a href="#which">Which things does it send, specifically?</a></li>
 <li><a href="#accept">How can I get my web site to accept webmentions?</a></li>
 <li><a href="#missing">Bridgy isn't seeing one of my comments or likes or reshares!</a></li>
@@ -283,7 +283,7 @@ without leaving my site or application?</li>
 <code>twitter</code>, <code>flickr</code>, <code>github</code>, <code>mastodon</code>, or <code>reddit</code>) with the parameters:</p>
 
 <ul>
-<li><code>feature</code>, a comma-separated list of features, usually <code>listen</code>, <code>publish</code>, or <code>listen,publish</code></li>
+<li><code>feature</code>, a comma-separated list of features, usually <code>listen</code> (ie backfeed), <code>publish</code>, or <code>listen,publish</code></li>
 <li><code>callback</code>, a URL pointing back to your site</li>
 <li> <code>user_url</code> (optional), the user's URL. Allows callers to set this value without requiring it to be present in the user's silo profile</li>
 </ul>
@@ -302,16 +302,16 @@ POST <a href="https://brid.gy/twitter/start">https://brid.gy/twitter/start</a>
 
 <li id="permissions" class="question">Why does Bridgy ask for all these permissions?</li>
 <li class="answer">
-<p>Bridgy needs various permissions to access each social network accounts you connect. It prompts you when you first connect an acount, and also when you enable <a href="#listen">listening</a> or <a href="#publish">publishing</a> afterward. It <a href="https://en.wikipedia.org/wiki/Principle_of_least_privilege">asks for as little access as possible</a>, to only public data, but still often has to ask for more access than it needs, since many social networks have overly coarse permissions. Details:
+<p>Bridgy needs various permissions to access each social network accounts you connect. It prompts you when you first connect an acount, and also when you enable <a href="#backfeed">backfeed</a> or <a href="#publish">publishing</a> afterward. It <a href="https://en.wikipedia.org/wiki/Principle_of_least_privilege">asks for as little access as possible</a>, to only public data, but still often has to ask for more access than it needs, since many social networks have overly coarse permissions. Details:
 </p>
 <ul>
   <li><b>Blogger</b> doesn't have permissions at all, <a href="https://developers.google.com/blogger/docs/2.0/developers_guide_protocol#OAuth2Authorizing">just full access or none.</a> <a href="/static/permissions_screenshots/blogger.png">Screenshot.</a></li>
-  <li><b>Flickr</b> has <a href="https://www.flickr.com/services/api/auth.oauth.html#authorization">read, write, and delete permissions</a>. We ask for read for listen, write for publish. Screenshots: <a href="/static/permissions_screenshots/flickr_read.png">listen</a>, <a href="/static/permissions_screenshots/flickr_write.png">publish</a>.</li>
+  <li><b>Flickr</b> has <a href="https://www.flickr.com/services/api/auth.oauth.html#authorization">read, write, and delete permissions</a>. We ask for read for backfeed, write for publish. Screenshots: <a href="/static/permissions_screenshots/flickr_read.png">backfeed</a>, <a href="/static/permissions_screenshots/flickr_write.png">publish</a>.</li>
   <li><b>GitHub</b> has a few different permission models. We use an <a href="https://developer.github.com/apps/building-oauth-apps/scopes-for-oauth-apps/">OAuth app</a> to request read/write permission to public repository data, and notifications to see new comments and reactions. The alternative would have been a <a href="https://developer.github.com/apps/building-github-apps/">GitHub app,</a> which lets you grant read vs write permission to individual repos, but includes private repos, and doesn't include notifications. <a href="https://developer.github.com/apps/differences-between-apps/">More on the tradeoff here.</a> <a href="/static/permissions_screenshots/github.png">Screenshot.</a></li>
-  <li><b>Mastodon</b> has <a href="https://docs.joinmastodon.org/api/permissions/">a number of fine grained permissions</a>, but listen needs most of the read categories, and publish needs most of the write ones, so Bridgy just asks for blanket read and write permission for each. Listen also uses your block list to suppress responses from accounts you've blocked, which <a href="https://docs.joinmastodon.org/api/rest/blocks/#get-api-v1-blocks">Mastodon unfortunately bundles with write access</a> and reports as <em>modify account relationships</em>. We don't actually modify any account relationships, promise!</li>
+  <li><b>Mastodon</b> has <a href="https://docs.joinmastodon.org/api/permissions/">a number of fine grained permissions</a>, but backfeed needs most of the read categories, and publish needs most of the write ones, so Bridgy just asks for blanket read and write permission for each. Backfeed also uses your block list to suppress responses from accounts you've blocked, which <a href="https://docs.joinmastodon.org/api/rest/blocks/#get-api-v1-blocks">Mastodon unfortunately bundles with write access</a> and reports as <em>modify account relationships</em>. We don't actually modify any account relationships, promise!</li>
   <li><b>Medium</b> has <a href="https://github.com/Medium/medium-api-docs/#user-content-21-browser-based-authentication">a few different permissions</a>. We ask for read acces to your profile, public posts, and publications. <a href="/static/permissions_screenshots/medium.png">Screenshot.</a></li>
   <li><b>Tumblr</b> doesn't have permissions at all, <a href="https://www.tumblr.com/docs/en/api/v2#oauth">just full access or nothing.</a> <a href="/static/permissions_screenshots/tumblr.png">Screenshot.</a></li>
-  <li><b>Twitter</b> <a href="https://developer.twitter.com/en/docs/basics/authentication/faq">distinguishes between read and write access,</a> but not between different types of data. We ask for read access to your tweets and profile for listen, write access for publish. We don't ask for access to your direct messages. Screenshots: <a href="/static/permissions_screenshots/twitter_read.png">listen</a>, <a href="/static/permissions_screenshots/twitter_write.png">publish</a>.</li>
+  <li><b>Twitter</b> <a href="https://developer.twitter.com/en/docs/basics/authentication/faq">distinguishes between read and write access,</a> but not between different types of data. We ask for read access to your tweets and profile for backfeed, write access for publish. We don't ask for access to your direct messages. Screenshots: <a href="/static/permissions_screenshots/twitter_read.png">backfeed</a>, <a href="/static/permissions_screenshots/twitter_write.png">publish</a>.</li>
   <li><b>WordPress.com</b>: doesn't have permissions at all, <a href="https://developer.wordpress.com/docs/oauth2/">just full access or nothing.</a> We ask for read and write access to a single blog that you specify, so we can see and handle new blog posts and to create comments. <a href="/static/permissions_screenshots/wordpress.com.png">Screenshot.</a></li>
   <li><b>Reddit</b> allows you to permit access to different <a href="https://www.reddit.com/api/v1/scopes.json">scopes</a>, we're asking for permission to confirm your identity and read posts that you can read.</li>
 </ul>
@@ -326,7 +326,7 @@ my API</a></em>, Bridgy's HTML is its API. User pages
 include standard and custom
 <a href="http://microformats.org/wiki/microformats2">microformats2</a>
 properties that you can use to get information about users and their
-<a href="#listen">responses</a>,
+<a href="#backfeed">responses</a>,
 <a href="#publish">publishes</a>, and
 <a href="#blogs">blog posts</a>.
 </p>
@@ -422,9 +422,10 @@ GitHub</a>. Thank you!
 </li>
 
 
-<!-- Listen -->
+<!-- Backfeed -->
 <br />
-<h3 id="listen">Pulling back responses</h3>
+<a name="listen"></a>
+<h3 id="backfeed">Backfeed</h3>
 
 <li id="which" class="question">Which things does it send, specifically?</li>
 <li class="answer">
@@ -668,7 +669,7 @@ so that recipients can fetch and parse them.
 
 <li id="browser-extension" class="question">Wait, Instagram and Facebook need a browser extension now?</li>
 <li class="answer">
-<p>Bridgy now uses a browser extension to pull back Instagram and Facebook responses (ie <a href="https://indieweb.org/backfeed">backfeed</a>). Grab it for <a href="https://chrome.google.com/webstore/detail/bridgy/lcpeamdhminbbjdfjbpmhgjgliaknflj" style="white-space: nowrap"><img src="/static/chrome_logo.png" style="height: 1em; margin-top: -.2em; white-space: nowrap" /> Chrome</a> or <a href="https://addons.mozilla.org/en-US/firefox/addon/bridgy/" style="white-space: nowrap"><img src="/static/firefox_logo.png" style="height: 1em; margin-top: -.2em" /> Firefox</a>, try it out, and <a href="https://indieweb.org/discuss">let us know what you think</a>!
+<p>Bridgy now uses a browser extension to backfeed Instagram and Facebook responses (ie <a href="https://indieweb.org/backfeed">backfeed</a>). Grab it for <a href="https://chrome.google.com/webstore/detail/bridgy/lcpeamdhminbbjdfjbpmhgjgliaknflj" style="white-space: nowrap"><img src="/static/chrome_logo.png" style="height: 1em; margin-top: -.2em; white-space: nowrap" /> Chrome</a> or <a href="https://addons.mozilla.org/en-US/firefox/addon/bridgy/" style="white-space: nowrap"><img src="/static/firefox_logo.png" style="height: 1em; margin-top: -.2em" /> Firefox</a>, try it out, and <a href="https://indieweb.org/discuss">let us know what you think</a>!
 </p>
 <p>When you first install the extension, it opens a Bridgy tab for you to <a href="https://indieauth.net/">IndieAuth</a> into your web site. (Your site needs to support IndieAuth, like before.) After that, it runs in the background, forwarding responses to Bridgy to send back to your site like normal. You can see status info and poke it on the extension's settings page.
 </p>
