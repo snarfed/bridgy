@@ -7,7 +7,6 @@ in the head section:
 
 http://disqus.com/api/docs/
 http://disqus.com/api/docs/posts/create/
-https://github.com/disqus/DISQUS-API-Recipes/blob/master/snippets/php/create-guest-comment.php
 http://help.disqus.com/customer/portal/articles/466253-what-html-tags-are-allowed-within-comments-
 create returns id, can lookup by id w/getContext?
 

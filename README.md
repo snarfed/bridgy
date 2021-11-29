@@ -1,4 +1,4 @@
-<img src="https://raw.github.com/snarfed/bridgy/master/static/bridgy_logo.jpg" alt="Bridgy" width="128" /> [Bridgy](https://brid.gy/) [![Circle CI](https://circleci.com/gh/snarfed/bridgy.svg?style=svg)](https://circleci.com/gh/snarfed/bridgy) [![Coverage Status](https://coveralls.io/repos/github/snarfed/bridgy/badge.svg?branch=master)](https://coveralls.io/github/snarfed/bridgy?branch=master)
+<img src="https://raw.github.com/snarfed/bridgy/main/static/bridgy_logo_with_alpha.png" alt="Bridgy" width="128" /> [Bridgy](https://brid.gy/) [![Circle CI](https://circleci.com/gh/snarfed/bridgy.svg?style=svg)](https://circleci.com/gh/snarfed/bridgy) [![Coverage Status](https://coveralls.io/repos/github/snarfed/bridgy/badge.svg?branch=main)](https://coveralls.io/github/snarfed/bridgy?branch=main)
 ===
 
 Bridgy connects your web site to social media. Likes, retweets, mentions, cross-posting, and more. [See the user docs](https://brid.gy/about) for more details, or the [developer docs](https://bridgy.readthedocs.io/) if you want to contribute.
@@ -81,7 +81,7 @@ pip uninstall -y granary
 pip install -e <path to granary>
 ```
 
-To deploy to App Engine, run [`scripts/deploy.sh`](https://github.com/snarfed/bridgy/blob/master/scripts/deploy.sh).
+To deploy to App Engine, run [`scripts/deploy.sh`](https://github.com/snarfed/bridgy/blob/main/scripts/deploy.sh).
 
 [`remote_api_shell`](https://cloud.google.com/appengine/docs/python/tools/remoteapi#using_the_remote_api_shell) is a useful interactive Python shell that can interact with the production app's datastore, memcache, etc. To use it, [create a service account and download its JSON credentials](https://console.developers.google.com/project/brid-gy/apiui/credential), put it somewhere safe, and put its path in your `GOOGLE_APPLICATION_CREDENTIALS` environment variable.
 
@@ -127,22 +127,22 @@ So you want to add a new [silo](http://indiewebcamp.com/silo)? Maybe MySpace, or
 1. Create an app (aka client) in the silo's developer console, grab your app's id (aka key) and secret, put them into new local files in the repo root dir, [following this pattern](https://github.com/snarfed/oauth-dropins/blob/6c3628b76aa198d1f9ea1ce0d49322c74b94eabc/oauth_dropins/twitter_auth.py#L16-L17). You'll eventually want to send them to @snarfed too, but no hurry.
 1. Add the silo to [oauth-dropins](https://github.com/snarfed/oauth-dropins) if it's not already there:
     1. Add a new `.py` file for your silo with an auth model and handler classes. Follow the existing examples.
-    1. Add a 100 pixel tall [button image](https://github.com/snarfed/oauth-dropins/tree/master/oauth_dropins/static) named `[NAME]_2x.png`, where `[NAME]` is your start handler class's `NAME` constant, eg `'twitter'`.
-    1. Add it to the [app front page](https://github.com/snarfed/oauth-dropins/blob/master/templates/index.html) and the [README](https://github.com/snarfed/oauth-dropins/blob/master/README.md).
+    1. Add a 100 pixel tall [button image](https://github.com/snarfed/oauth-dropins/tree/main/oauth_dropins/static) named `[NAME]_2x.png`, where `[NAME]` is your start handler class's `NAME` constant, eg `'twitter'`.
+    1. Add it to the [app front page](https://github.com/snarfed/oauth-dropins/blob/main/templates/index.html) and the [README](https://github.com/snarfed/oauth-dropins/blob/main/README.md).
 1. Add the silo to [granary](https://github.com/snarfed/granary):
     1. Add a new `.py` file for your silo. Follow the existing examples. At minimum, you'll need to implement [`get_activities_response`](https://github.com/snarfed/granary/blob/845afbbd521f7ba43b3339bcc1ce3afddd205047/granary/source.py#L137) and convert your silo's API data to [ActivityStreams](http://activitystrea.ms/).
     1. Add a new unit test file and write some tests!
-    1. Add it to [`api.py`](https://github.com/snarfed/granary/blob/master/api.py) (specifically `Handler.get`), [`app.py`](https://github.com/snarfed/granary/blob/master/app.py), [`index.html`](https://github.com/snarfed/granary/blob/master/granary/templates/index.html), and the [README](https://github.com/snarfed/granary/blob/master/README.md).
+    1. Add it to [`api.py`](https://github.com/snarfed/granary/blob/main/api.py) (specifically `Handler.get`), [`app.py`](https://github.com/snarfed/granary/blob/main/app.py), [`index.html`](https://github.com/snarfed/granary/blob/main/granary/templates/index.html), and the [README](https://github.com/snarfed/granary/blob/main/README.md).
 1. Add the silo to Bridgy:
     1. Add a new `.py` file for your silo with a model class. Follow the existing examples.
-    1. Add it to [`app.py`](https://github.com/snarfed/bridgy/blob/master/app.py) and [`handlers.py`](https://github.com/snarfed/bridgy/blob/master/handlers.py) (just import the module).
-    1. Add a 48x48 PNG icon to [`static/`](https://github.com/snarfed/bridgy/tree/master/static).
-    1. Add a new `[SILO]_user.html` file in [`templates/`](https://github.com/snarfed/bridgy/tree/master/templates) and add the silo to [`index.html`](https://github.com/snarfed/bridgy/blob/master/templates/index.html). Follow the existing examples.
-    1. Add the silo to [`about.html`](https://github.com/snarfed/bridgy/blob/master/templates/about.html) and this README.
-    1. If users' profile picture URLs can change, add a cron job that updates them to [`cron.py`](https://github.com/snarfed/bridgy/blob/master/cron.py).
+    1. Add it to [`app.py`](https://github.com/snarfed/bridgy/blob/main/app.py) and [`handlers.py`](https://github.com/snarfed/bridgy/blob/main/handlers.py) (just import the module).
+    1. Add a 48x48 PNG icon to [`static/`](https://github.com/snarfed/bridgy/tree/main/static).
+    1. Add a new `[SILO]_user.html` file in [`templates/`](https://github.com/snarfed/bridgy/tree/main/templates) and add the silo to [`index.html`](https://github.com/snarfed/bridgy/blob/main/templates/index.html). Follow the existing examples.
+    1. Add the silo to [`about.html`](https://github.com/snarfed/bridgy/blob/main/templates/about.html) and this README.
+    1. If users' profile picture URLs can change, add a cron job that updates them to [`cron.py`](https://github.com/snarfed/bridgy/blob/main/cron.py).
 1. Optionally add publish support:
     1. Implement [`create`](https://github.com/snarfed/granary/blob/845afbbd521f7ba43b3339bcc1ce3afddd205047/granary/source.py#L223) and [`preview_create`](https://github.com/snarfed/granary/blob/845afbbd521f7ba43b3339bcc1ce3afddd205047/granary/source.py#L247) for the silo in granary.
-    1. Add the silo to [`publish.py`](https://github.com/snarfed/bridgy/blob/master/publish.py): import its module, add it to `SOURCES`, and update [this error message](https://github.com/snarfed/bridgy/blob/424bbb28c769eea5636534aba5791e868d63b987/publish.py#L130).
+    1. Add the silo to [`publish.py`](https://github.com/snarfed/bridgy/blob/main/publish.py): import its module, add it to `SOURCES`, and update [this error message](https://github.com/snarfed/bridgy/blob/424bbb28c769eea5636534aba5791e868d63b987/publish.py#L130).
 
 Good luck, and happy hacking!
 

@@ -113,7 +113,7 @@ them in “source” mode with:
    pip install -e <path to granary>
 
 To deploy to App Engine, run
-`scripts/deploy.sh <https://github.com/snarfed/bridgy/blob/master/scripts/deploy.sh>`__.
+`scripts/deploy.sh <https://github.com/snarfed/bridgy/blob/main/scripts/deploy.sh>`__.
 
 `remote_api_shell <https://cloud.google.com/appengine/docs/python/tools/remoteapi#using_the_remote_api_shell>`__
 is a useful interactive Python shell that can interact with the
@@ -198,13 +198,13 @@ it. It looks like a lot, but it’s not that bad, honest.
    1. Add a new ``.py`` file for your silo with an auth model and
       handler classes. Follow the existing examples.
    2. Add a 100 pixel tall `button
-      image <https://github.com/snarfed/oauth-dropins/tree/master/oauth_dropins/static>`__
+      image <https://github.com/snarfed/oauth-dropins/tree/main/oauth_dropins/static>`__
       named ``[NAME]_2x.png``, where ``[NAME]`` is your start handler
       class’s ``NAME`` constant, eg ``'twitter'``.
    3. Add it to the `app front
-      page <https://github.com/snarfed/oauth-dropins/blob/master/templates/index.html>`__
+      page <https://github.com/snarfed/oauth-dropins/blob/main/templates/index.html>`__
       and the
-      `README <https://github.com/snarfed/oauth-dropins/blob/master/README.md>`__.
+      `README <https://github.com/snarfed/oauth-dropins/blob/main/README.md>`__.
 
 5. Add the silo to `granary <https://github.com/snarfed/granary>`__:
 
@@ -215,35 +215,35 @@ it. It looks like a lot, but it’s not that bad, honest.
       `ActivityStreams <http://activitystrea.ms/>`__.
    2. Add a new unit test file and write some tests!
    3. Add it to
-      `api.py <https://github.com/snarfed/granary/blob/master/api.py>`__
+      `api.py <https://github.com/snarfed/granary/blob/main/api.py>`__
       (specifically ``Handler.get``),
-      `app.py <https://github.com/snarfed/granary/blob/master/app.py>`__,
-      `index.html <https://github.com/snarfed/granary/blob/master/granary/templates/index.html>`__,
+      `app.py <https://github.com/snarfed/granary/blob/main/app.py>`__,
+      `index.html <https://github.com/snarfed/granary/blob/main/granary/templates/index.html>`__,
       and the
-      `README <https://github.com/snarfed/granary/blob/master/README.md>`__.
+      `README <https://github.com/snarfed/granary/blob/main/README.md>`__.
 
 6. Add the silo to Bridgy:
 
    1. Add a new ``.py`` file for your silo with a model class. Follow
       the existing examples.
    2. Add it to
-      `app.py <https://github.com/snarfed/bridgy/blob/master/app.py>`__
+      `app.py <https://github.com/snarfed/bridgy/blob/main/app.py>`__
       and
-      `handlers.py <https://github.com/snarfed/bridgy/blob/master/handlers.py>`__
+      `handlers.py <https://github.com/snarfed/bridgy/blob/main/handlers.py>`__
       (just import the module).
    3. Add a 48x48 PNG icon to
-      `static/ <https://github.com/snarfed/bridgy/tree/master/static>`__.
+      `static/ <https://github.com/snarfed/bridgy/tree/main/static>`__.
    4. Add a new ``[SILO]_user.html`` file in
-      `templates/ <https://github.com/snarfed/bridgy/tree/master/templates>`__
+      `templates/ <https://github.com/snarfed/bridgy/tree/main/templates>`__
       and add the silo to
-      `index.html <https://github.com/snarfed/bridgy/blob/master/templates/index.html>`__.
+      `index.html <https://github.com/snarfed/bridgy/blob/main/templates/index.html>`__.
       Follow the existing examples.
    5. Add the silo to
-      `about.html <https://github.com/snarfed/bridgy/blob/master/templates/about.html>`__
+      `about.html <https://github.com/snarfed/bridgy/blob/main/templates/about.html>`__
       and this README.
    6. If users’ profile picture URLs can change, add a cron job that
       updates them to
-      `cron.py <https://github.com/snarfed/bridgy/blob/master/cron.py>`__.
+      `cron.py <https://github.com/snarfed/bridgy/blob/main/cron.py>`__.
 
 7. Optionally add publish support:
 
@@ -253,7 +253,7 @@ it. It looks like a lot, but it’s not that bad, honest.
       `preview_create <https://github.com/snarfed/granary/blob/845afbbd521f7ba43b3339bcc1ce3afddd205047/granary/source.py#L247>`__
       for the silo in granary.
    2. Add the silo to
-      `publish.py <https://github.com/snarfed/bridgy/blob/master/publish.py>`__:
+      `publish.py <https://github.com/snarfed/bridgy/blob/main/publish.py>`__:
       import its module, add it to ``SOURCES``, and update `this error
       message <https://github.com/snarfed/bridgy/blob/424bbb28c769eea5636534aba5791e868d63b987/publish.py#L130>`__.
 
