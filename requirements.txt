@@ -23,3 +23,4 @@ humanize~=3.13
 lxml~=4.6.4
 mox3~=1.1
 requests~=2.26
+tlslite-ng>=0.8.0-alpha3 # not directly required, pinned by Snyk to avoid a vulnerability
