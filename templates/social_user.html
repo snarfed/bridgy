@@ -132,21 +132,21 @@ WordPress.com, <a href="/">sign up here!</a>
 <form method="post" action="/crawl-now">
 {% with %}
 {% set s = '' if source.domain_urls|length == 1 else 's' %}
-{% if source.last_hfeed_refetch == EPOCH %}
-  Web site{{ s }} not <a href="/about#link">crawled</a> yet.
-{% else %}
 {% if source.last_hfeed_refetch == REFETCH_HFEED_TRIGGER %}
   <span title="Crawling now" class="glyphicon glyphicon-transfer"></span>
   <a href="/about#link">Crawling</a> now. Check back in a minute!
+{% else %}
+{% if source.last_hfeed_refetch == EPOCH %}
+  Web site{{ s }} not <a href="/about#link">crawled</a> yet.
 {% else %}
   Web site{{ s }} <a href="/about#link">crawled</a>
   {{ logs.maybe_link(source.last_hfeed_refetch, source.key,
                      time_class='dt-bridgy-last-refetched')|safe }}.
 {% endif %}
-{% endif %}
-{% endwith %}
 <input name="key" type="hidden" value="{{ source.key.urlsafe().decode() }}" />
 <button id="crawl-now-button" type="submit" class="btn btn-default">Crawl now</button>
+{% endif %}
+{% endwith %}
 </form>
 {% endif %}
 </span>
