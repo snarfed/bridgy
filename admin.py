@@ -119,6 +119,7 @@ def stats():
     return count(KindStat.query(KindStat.kind_name == kind))
 
   num_users = sum(kind_count(cls.__name__) for cls in models.sources.values())
+  response_count = kind_count('Response')
   link_counts = {
     property: sum(count(KindPropertyNamePropertyTypeStat.query(
       KindPropertyNamePropertyTypeStat.kind_name == kind,
@@ -134,7 +135,8 @@ def stats():
     # add comma separator between thousands
     k: '{:,}'.format(v) for k, v in {
       'users': num_users,
-      'responses': kind_count('Response') + ARCHIVED_RESPONSES,
+      'responses': response_count + ARCHIVED_RESPONSES,
+      'responses_stored': response_count,
       'links': sum(link_counts.values()) + ARCHIVED_LINKS,
       'webmentions': link_counts['sent'] + kind_count('BlogPost') + ARCHIVED_SENT_LINKS,
       'publishes': kind_count('Publish'),
