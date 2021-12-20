@@ -19,6 +19,9 @@ import util
 from . import testutil
 from .testutil import FakeBlogSource
 
+
+import admin, app as _app, background, flask_app, flask_background, meetup
+
 # sources etc
 import blogger, facebook, flickr, github, indieauth, instagram, mastodon, meetup, medium, reddit, tumblr, twitter, wordpress_rest
 
