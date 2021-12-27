@@ -197,7 +197,7 @@ class PollTest(TaskTest):
     FakeGrSource.activities = [self.activities[0]]
 
     self.post_task()
-    expected = ['http://tar.get/%s' % i for i in ('a', 'b', 'c', 'd', 'e', 'f')]
+    expected = [f'http://tar.get/{i}' for i in ('a', 'b', 'c', 'd', 'e', 'f')]
     self.assert_equals(expected, self.responses[0].key.get().unsent)
 
   def test_original_post_discovery_dedupes(self):
@@ -439,7 +439,7 @@ class PollTest(TaskTest):
     self.post_task(expect_poll=FakeSource.FAST_POLL)
     self.assertEqual(1, Response.query().count())
     resp = Response.query().get()
-    self.assert_equals(['tag:source.com,2013:%s' % id for id in ('a', 'b', 'c')],
+    self.assert_equals([f'tag:source.com,2013:{id}' for id in ('a', 'b', 'c')],
                        [json_loads(a)['id'] for a in resp.activities_json])
 
     urls = ['http://from/tag', 'http://from/synd/post', 'http://target1/post/url']
@@ -641,8 +641,8 @@ class PollTest(TaskTest):
       'id': 'tag:source,2013:9',
       'tags': [{
         'objectType': 'person',
-        'id': 'tag:source,2013:%s' % source.key.id(),
-        'url': 'https://fa.ke/%s' % source.key.id(),
+        'id': f'tag:source,2013:{source.key.id()}',
+        'url': f'https://fa.ke/{source.key.id()}',
       }, {
         'objectType': 'person',
         'id': 'tag:source,2013:other',
@@ -693,7 +693,7 @@ class PollTest(TaskTest):
         'content': 'http://foo/post @foo',
         'tags': [{
           'objectType': 'person',
-          'id': 'tag:source,2013:%s' % source.key.id(),
+          'id': f'tag:source,2013:{source.key.id()}',
         }],
       },
     }
@@ -1421,8 +1421,7 @@ class PropagateTest(TaskTest):
                         discover=True, send=None, headers=util.REQUEST_HEADERS,
                         discover_status=200, send_status=200, **kwargs):
     if source_url is None:
-      source_url = 'http://localhost/comment/fake/%s/a/1_2_a' % \
-          self.sources[0].key.string_id()
+      source_url = f'http://localhost/comment/fake/{self.sources[0].key.string_id()}/a/1_2_a'
 
     # discover
     if discover:
@@ -1449,10 +1448,10 @@ class PropagateTest(TaskTest):
 
     id = self.sources[0].key.string_id()
     for url in (
-        'http://localhost/comment/fake/%s/a/1_2_a' % id,
-        'http://localhost/like/fake/%s/a/alice' % id,
-        'http://localhost/repost/fake/%s/a/bob' % id,
-        'http://localhost/react/fake/%s/a/bob/a_scissors_by_bob' % id,
+        f'http://localhost/comment/fake/{id}/a/1_2_a',
+        f'http://localhost/like/fake/{id}/a/alice',
+        f'http://localhost/repost/fake/{id}/a/bob',
+        f'http://localhost/react/fake/{id}/a/bob/a_scissors_by_bob',
     ):
       self.expect_webmention(source_url=url)
     self.mox.ReplayAll()
@@ -1864,8 +1863,7 @@ class PropagateTest(TaskTest):
     """Tasks on brid-gy.appspot.com should translate source URLs to brid.gy."""
     self.responses[0].unsent = ['http://good']
     self.responses[0].put()
-    source_url = 'https://brid.gy/comment/fake/%s/a/1_2_a' % \
-        self.sources[0].key.string_id()
+    source_url = f'https://brid.gy/comment/fake/{self.sources[0].key.string_id()}/a/1_2_a'
     self.expect_webmention(source_url=source_url, target='http://good')
 
     self.mox.ReplayAll()
@@ -1880,8 +1878,7 @@ class PropagateTest(TaskTest):
     self.responses[0].unsent = ['http://good']
     self.responses[0].put()
 
-    source_url = 'https://brid.gy/comment/fake/%s/AAA/1_2_a' % \
-        self.sources[0].key.string_id()
+    source_url = f'https://brid.gy/comment/fake/{self.sources[0].key.string_id()}/AAA/1_2_a'
     self.expect_webmention(source_url=source_url, target='http://good')
 
     self.mox.ReplayAll()
@@ -1897,8 +1894,7 @@ class PropagateTest(TaskTest):
       {'http://AAA': 0, 'http://BBB': 1, 'http://CCC': 2})
     self.responses[0].put()
 
-    source_url = 'https://brid.gy/comment/fake/%s/%%s/1_2_a' % \
-        self.sources[0].key.string_id()
+    source_url = f'https://brid.gy/comment/fake/{self.sources[0].key.string_id()}/%s/1_2_a'
     self.expect_webmention(source_url=source_url % '000', target='http://AAA')
     self.expect_webmention(source_url=source_url % '111', target='http://BBB')
     self.expect_webmention(source_url=source_url % '222', target='http://CCC')

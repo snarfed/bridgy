@@ -154,7 +154,7 @@ def add_task(queue, eta_seconds=None, **kwargs):
   params = {
     'app_engine_http_request': {
       'http_method': 'POST',
-      'relative_uri': '/_ah/queue/%s' % queue,
+      'relative_uri': f'/_ah/queue/{queue}',
       'body': urllib.parse.urlencode(util.trim_nulls(kwargs)).encode(),
       # https://googleapis.dev/python/cloudtasks/latest/gapic/v2/types.html#google.cloud.tasks_v2.types.AppEngineHttpRequest.headers
       'headers': {'Content-Type': 'application/x-www-form-urlencoded'},
@@ -513,11 +513,9 @@ def maybe_add_or_delete_source(source_cls, auth_entity, state, **kwargs):
 
   else:  # this is a delete
     if auth_entity:
-      redirect('/delete/finish?auth_entity=%s&state=%s' %
-               (auth_entity.key.urlsafe().decode(), state), logins=logins)
+      redirect(f'/delete/finish?auth_entity={auth_entity.key.urlsafe().decode()}&state={state}', logins=logins)
     else:
-      flash('If you want to disable, please approve the %s prompt.' %
-            source_cls.GR_CLASS.NAME)
+      flash(f'If you want to disable, please approve the {source_cls.GR_CLASS.NAME} prompt.')
       source_key = state_obj.get('source')
       if source_key:
         source = ndb.Key(urlsafe=source_key).get()

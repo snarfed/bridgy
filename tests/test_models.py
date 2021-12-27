@@ -183,13 +183,13 @@ class ResponseTest(testutil.AppTest):
 
     response.response_json = json_dumps({
       'objectType': 'note',
-      'id': 'tag:source.com,2013:1_2_%s' % id,
+      'id': f'tag:source.com,2013:1_2_{id}',
       })
     saved = response.get_or_save(self.sources[0])
     self.assertEqual('comment', saved.type)
 
   def test_url(self):
-    self.assertEqual('http://localhost/fake/%s' % self.sources[0].key.string_id(),
+    self.assertEqual(f'http://localhost/fake/{self.sources[0].key.string_id()}',
                      self.source_bridgy_url)
 
   def test_get_or_save_empty_unsent_no_task(self):
@@ -269,7 +269,7 @@ class SourceTest(testutil.AppTest):
       'object': {
         'tags': [{
           'objectType': 'person',
-          'id': 'tag:fa.ke,2013:%s' % source.key.id(),
+          'id': f'tag:fa.ke,2013:{source.key.id()}',
           'url': 'https://fa.ke/me',
         }, {
           'objectType': 'person',
@@ -289,7 +289,7 @@ class SourceTest(testutil.AppTest):
     source = FakeSource.new(domain_urls=['http://site1/', 'http://site2/'])
     source.put()
 
-    user_id = 'tag:fa.ke,2013:%s' % source.key.id()
+    user_id = f'tag:fa.ke,2013:{source.key.id()}'
     FakeGrSource.comment = {
       'id': 'tag:fa.ke,2013:a1-b2.c3',
       'tags': [
@@ -300,7 +300,7 @@ class SourceTest(testutil.AppTest):
 
     # check that we inject their web sites
     self.assert_equals({
-      'id': 'tag:fa.ke,2013:%s' % source.key.id(),
+      'id': f'tag:fa.ke,2013:{source.key.id()}',
       'urls': [{'value': 'http://site1/'}, {'value': 'http://site2/'}],
     }, super(FakeSource, source).get_comment('x')['tags'][1])
 
@@ -521,7 +521,7 @@ class SourceTest(testutil.AppTest):
     self.assertEqual(['foo'], source.domains)
 
   def test_create_new_too_many_domains(self):
-    urls = ['http://%s/' % i for i in range(10)]
+    urls = [f'http://{i}/' for i in range(10)]
     auth_entity = testutil.FakeAuthEntity(id='x', user_json=json_dumps(
         {'urls': [{'value': u} for u in urls]}))
 

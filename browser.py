@@ -341,7 +341,7 @@ class Reactions(BrowserView):
       new_reactions = gr_src.merge_scraped_reactions(
         request.get_data(as_text=True), activity_data)
     except ValueError as e:
-      msg = "Couldn't parse scraped reactions: %s" % e
+      msg = f"Couldn't parse scraped reactions: {e}"
       logging.error(msg, exc_info=True)
       error(msg)
 

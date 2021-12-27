@@ -139,12 +139,12 @@ class FakeGrSource(gr_source.Source):
       if not base_url:
         return gr_source.creation_result(
           abort=True,
-          error_plain='no %s url to reply to' % self.DOMAIN,
-          error_html='no %s url to reply to' % self.DOMAIN)
+          error_plain=f'no {self.DOMAIN} url to reply to',
+          error_html=f'no {self.DOMAIN} url to reply to')
 
     content = self._content_for_create(obj, ignore_formatting=ignore_formatting)
     if include_link == gr_source.INCLUDE_LINK:
-        content += ' - %s' % obj['url']
+        content += f' - {obj["url"]}'
     ret = {
       'id': 'fake id',
       'url': 'http://fake/url',
@@ -169,24 +169,24 @@ class FakeGrSource(gr_source.Source):
 
     content = self._content_for_create(obj, ignore_formatting=ignore_formatting)
     if include_link == gr_source.INCLUDE_LINK:
-        content += ' - %s' % obj['url']
+        content += f" - {obj['url']}"
 
     content = 'preview of ' + content
 
     images = self._images(obj)
     if images:
-      content += ' with images %s' % ','.join(images)
+      content += f" with images {','.join(images)}"
 
     return gr_source.creation_result(description=content)
 
   def delete(self, id):
     return gr_source.creation_result({
       'url': 'http://fake/url',
-      'msg': 'delete %s' % id,
+      'msg': f'delete {id}',
     })
 
   def preview_delete(self, id):
-    return gr_source.creation_result(description='delete %s' % id)
+    return gr_source.creation_result(description=f'delete {id}')
 
   @staticmethod
   def _images(obj):
@@ -340,18 +340,18 @@ class TestCase(testutil.TestCase):
 
     # activities
     self.activities = FakeGrSource.activities = [{
-      'id': 'tag:source.com,2013:%s' % id,
+      'id': f'tag:source.com,2013:{id}',
       'url': 'http://fa.ke/post/url',
       'object': {
         'objectType': 'note',
-        'id': 'tag:source.com,2013:%s' % id,
+        'id': f'tag:source.com,2013:{id}',
         'url': 'http://fa.ke/post/url',
         'content': 'foo http://target1/post/url bar',
         'to': [{'objectType':'group', 'alias':'@public'}],
         'replies': {
           'items': [{
             'objectType': 'comment',
-            'id': 'tag:source.com,2013:1_2_%s' % id,
+            'id': f'tag:source.com,2013:1_2_{id}',
             'url': 'http://fa.ke/comment/url',
             'content': 'foo bar',
           }],
@@ -360,20 +360,20 @@ class TestCase(testutil.TestCase):
         'tags': [{
           'objectType': 'activity',
           'verb': 'like',
-          'id': 'tag:source.com,2013:%s_liked_by_alice' % id,
+          'id': f'tag:source.com,2013:{id}_liked_by_alice',
           'object': {'url': 'http://example.com/abc'},
           'author': {
             'id': 'tag:source.com,2013:alice',
             'url': 'http://example.com/alice',
           },
         }, {
-          'id': 'tag:source.com,2013:%s_reposted_by_bob' % id,
+          'id': f'tag:source.com,2013:{id}_reposted_by_bob',
           'objectType': 'activity',
           'verb': 'share',
           'object': {'url': 'http://example.com/def'},
           'author': {'url': 'http://example.com/bob'},
         }, {
-          'id': 'tag:source.com,2013:%s_scissors_by_bob' % id,
+          'id': f'tag:source.com,2013:{id}_scissors_by_bob',
           'objectType': 'activity',
           'verb': 'react',
           'content': '✁',

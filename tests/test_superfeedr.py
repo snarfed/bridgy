@@ -152,7 +152,7 @@ class SuperfeedrTest(testutil.AppTest):
 
   def test_notify_link_too_long(self):
     too_long = 'http://a/' + 'b' * _MAX_STRING_LENGTH
-    item = {'id': 'X', 'content': 'a http://x/y %s z' % too_long}
+    item = {'id': 'X', 'content': f'a http://x/y {too_long} z'}
     post = BlogPost(id='X', source=self.source.key, feed_item=item,
                     unsent=['http://x/y'], status='new')
     self.expect_task('propagate-blogpost', key=post)

@@ -74,12 +74,12 @@ class HandlersTest(testutil.AppTest):
     return resp
 
   def test_post_html(self):
-    self.check_response('/post/fake/%s/000', """\
+    self.check_response('/post/fake/%s/000', f"""\
 <article class="h-entry">
 <span class="p-uid">tag:fa.ke,2013:000</span>
   <span class="p-author h-card">
-    <data class="p-uid" value="%(id)s"></data>
-    <a class="u-url" href="http://fa.ke/%(key)s">http://fa.ke/%(key)s</a>
+    <data class="p-uid" value="{self.source.user_tag_id()}"></data>
+    <a class="u-url" href="http://fa.ke/{self.source.key.id()}">http://fa.ke/{self.source.key.id()}</a>
     <img class="u-photo" src="https://example.com/ryan/image" alt="" />
   </span>
 <a class="u-url" href="http://fa.ke/000">http://fa.ke/000</a>
@@ -89,12 +89,12 @@ class HandlersTest(testutil.AppTest):
   <a class="u-mention" aria-hidden="true" href="http://other/link"></a>
   </div>
 <span class="u-category h-card">
-<data class="p-uid" value="%(id)s"></data>
+<data class="p-uid" value="{self.source.user_tag_id()}"></data>
 <a class="u-url" href="http://or.ig">http://or.ig</a>
 <a class="u-url" href="https://fa.ke"></a>
 </span>
 </article>
-""" % {'key': self.source.key.id(), 'id': self.source.user_tag_id()})
+""")
 
   def test_post_json(self):
     resp = self.client.get(
@@ -116,7 +116,7 @@ asdf http://other/link qwert
             'type': ['h-card'],
             'properties': {
               'uid': [self.source.user_tag_id()],
-              'url': ['http://fa.ke/%s' % self.source.key.id()],
+              'url': [f'http://fa.ke/{self.source.key.id()}'],
               'photo': ['https://example.com/ryan/image'],
             },
         }],
@@ -214,7 +214,7 @@ asdf http://other/link qwert
     self.assertIn('FakeSource error: foo bar', resp.get_data(as_text=True))
 
   def test_comment(self):
-    self.check_response('/comment/fake/%s/000/a1-b2.c3', """\
+    self.check_response('/comment/fake/%s/000/a1-b2.c3', f"""\
 <article class="h-entry">
 <span class="p-uid">tag:fa.ke,2013:a1-b2.c3</span>
   <span class="p-author h-card">
@@ -225,14 +225,14 @@ asdf http://other/link qwert
   <a class="u-mention" aria-hidden="true" href="http://other/link"></a>
   </div>
 <span class="u-category h-card">
-<data class="p-uid" value="%s"></data>
+<data class="p-uid" value="{self.source.user_tag_id()}"></data>
 <a class="u-url" href="http://or.ig">http://or.ig</a>
 <a class="u-url" href="https://fa.ke"></a>
 </span>
 <a class="u-in-reply-to" href="http://fa.ke/000"></a>
 <a class="u-in-reply-to" href="http://or.ig/post"></a>
 </article>
-""" % self.source.user_tag_id())
+""")
 
   def test_comment_optimized_comments(self):
     self.mox.StubOutWithMock(self.source.gr_source, 'OPTIMIZED_COMMENTS')
@@ -253,7 +253,7 @@ asdf http://other/link qwert
     replies = self.activities[0]['object']['replies'] = {
       'items': [{
         'objectType': 'comment',
-        'id': 'tag:source.com,2013:1_2_%s' % id,
+        'id': f'tag:source.com,2013:1_2_{id}',
         'url': 'http://fa.ke/comment/url',
         'content': 'foo bar',
       }],

@@ -83,10 +83,10 @@ class PublishTest(testutil.AppTest):
     resp = self.get_response(preview=preview, **kwargs)
     body = html.unescape(resp.get_data(as_text=True))
     self.assertEqual(status, resp.status_code,
-                      '%s != %s: %s' % (status, resp.status_code, body))
+                      f'{status} != {resp.status_code}: {body}')
     if preview:
       self.assertIn(expected, body,
-                    '%r\n\n=== vs ===\n\n%r' % (expected, body))
+                    f'{expected!r}\n\n=== vs ===\n\n{body!r}')
     else:
       if resp.headers['Content-Type'].startswith('application/json'):
         body = json_loads(body)['content' if status < 300 else 'error']
@@ -119,7 +119,7 @@ class PublishTest(testutil.AppTest):
     self.assertEqual({
       'id': 'fake id',
       'url': 'http://fake/url',
-      'content': '%s - %s' % (content, url),
+      'content': f'{content} - {url}',
       'granary_message': 'granary message',
     }, publish.published)
 
@@ -609,14 +609,14 @@ this is my article
     """(The code that handles this is in granary.Source.base_object.)"""
     subdomains = 'www.', 'mobile.', ''
     for i, subdomain in enumerate(subdomains):
-      self.expect_requests_get('http://foo.com/%d' % i,
-"""<div class="h-entry"><p class="e-content">
-<a class="u-in-reply-to" href="http://%sfa.ke/a/b/d">foo</a>
-</p></div>""" % subdomain)
+      self.expect_requests_get(f'http://foo.com/{i}',
+f"""<div class="h-entry"><p class="e-content">
+<a class="u-in-reply-to" href="http://{subdomain}fa.ke/a/b/d">foo</a>
+</p></div>""")
     self.mox.ReplayAll()
 
     for i in range(len(subdomains)):
-      resp = self.get_response(source='http://foo.com/%d' % i)
+      resp = self.get_response(source=f'http://foo.com/{i}')
       self.assertEqual(201, resp.status_code, resp.get_data(as_text=True))
 
   def test_relative_u_url(self):
@@ -1221,13 +1221,13 @@ Join us!"""
     text = 'Démo pour les développeur. Je suis navrée de ce problème.'
 
     resp = requests.Response()
-    resp._content = (u"""
+    resp._content = f"""\
 <html>
-<head><meta charset="%s"></head>
-<body><article class="h-entry"><p class="e-content">%s</p></article></body>
+<head><meta charset="{charset}"></head>
+<body><article class="h-entry"><p class="e-content">{text}</p></article></body>
 <a href="http://localhost/publish/fake"></a>
 </html>
-""" % (charset, text)).encode(charset)
+""".encode(charset)
     resp._text = "shouldn't use this! " + text
     resp.url = 'http://foo.com/bar'
     resp.status_code = 200
@@ -1247,19 +1247,19 @@ Join us!"""
   def test_require_like_of_repost_of(self):
     """We only trigger on like-of and repost-of, not like or repost."""
     for prop in 'like', 'repost':
-      url = 'http://foo.com/%s' % prop
-      self.expect_requests_get(url, """
+      url = f'http://foo.com/{prop}'
+      self.expect_requests_get(url, f"""
       <article class="h-entry">
         <p class="e-content">foo</p>
-        <a class="u-url" href="%s"></a>
-        <a class="u-%s" href="http://a/like"></a>
+        <a class="u-url" href="{url}"></a>
+        <a class="u-{prop}" href="http://a/like"></a>
       </article>
-      """ % (url, prop))
+      """)
 
     self.mox.ReplayAll()
     for prop in 'like', 'repost':
-      url = 'http://foo.com/%s' % prop
-      self.assert_created('foo - %s' % url, source=url)
+      url = f'http://foo.com/{prop}'
+      self.assert_created(f'foo - {url}', source=url)
 
   def test_unescape(self):
     self.expect_requests_get('http://foo.com/bar', self.post_html % 'abc &amp; xyz')

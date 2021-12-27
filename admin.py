@@ -133,7 +133,7 @@ def stats():
 
   return render_template('admin_stats.html', **{
     # add comma separator between thousands
-    k: '{:,}'.format(v) for k, v in {
+    k: f'{v:,}' for k, v in {
       'users': num_users,
       'responses': response_count + ARCHIVED_RESPONSES,
       'responses_stored': response_count,

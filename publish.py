@@ -130,7 +130,7 @@ class PublishBase(webmention.Webmention):
 
   def maybe_inject_silo_content(self, item):
     props = item.setdefault('properties', {})
-    silo_content = props.get('bridgy-%s-content' % self.source.SHORT_NAME, [])
+    silo_content = props.get(f'bridgy-{self.source.SHORT_NAME}-content', [])
     if silo_content:
       props['content'] = silo_content
       props.pop('name', None)
@@ -164,19 +164,18 @@ class PublishBase(webmention.Webmention):
     # show nice error message if they're trying to publish a silo post
     if domain in SOURCE_DOMAINS:
       return self.error(
-        "Looks like that's a %s URL. Try one from your web site instead!" %
-        SOURCE_DOMAINS[domain].GR_CLASS.NAME)
+        f"Looks like that's a {SOURCE_DOMAINS[domain].GR_CLASS.NAME} URL. Try one from your web site instead!")
     elif not ok:
-      return self.error('Unsupported source URL %s' % resolved_url)
+      return self.error(f'Unsupported source URL {resolved_url}')
     elif not domain:
-      return self.error('Could not parse source URL %s' % resolved_url)
+      return self.error(f'Could not parse source URL {resolved_url}')
 
     # look up source by domain
     self.source = self._find_source(source_cls, resolved_url, domain)
 
-    content_param = 'bridgy_%s_content' % self.source.SHORT_NAME
+    content_param = f'bridgy_{self.source.SHORT_NAME}_content'
     if content_param in request.values:
-      return self.error('The %s parameter is not supported' % content_param)
+      return self.error(f'The {content_param} parameter is not supported')
 
     # show nice error message if they're trying to publish their home page
     for domain_url in self.source.domain_urls:
@@ -205,7 +204,7 @@ class PublishBase(webmention.Webmention):
       status, body = util.interpret_http_exception(e)
       if status == '410':
         return self.delete(resolved_url)
-      return self.error('Could not fetch source URL %s' % resolved_url)
+      return self.error(f'Could not fetch source URL {resolved_url}')
 
     if not resp:
       return
@@ -273,7 +272,7 @@ class PublishBase(webmention.Webmention):
           code = '400'
         elif not code:
           raise
-        msg = 'Error: %s %s' % (body or '', e)
+        msg = f"Error: {body or ''} {e}"
         return self.error(msg, status=code, report=code not in
                           ('400', '403', '404', '406', '502', '503', '504'))
 
@@ -281,8 +280,7 @@ class PublishBase(webmention.Webmention):
       types.discard('h-entry')
       types.discard('h-note')
       if types:
-        msg = ("%s doesn't support type(s) %s, or no content was found." %
-               (source_cls.GR_CLASS.NAME, ' + '.join(types)))
+        msg = f"{source_cls.GR_CLASS.NAME} doesn't support type(s) {' + '.join(types)}, or no content was found."
         return self.error(msg, data=mf2)
       else:
         msg = 'Could not find content in <a href="http://microformats.org/wiki/h-entry">h-entry</a> or any other element!'
@@ -309,7 +307,7 @@ class PublishBase(webmention.Webmention):
     domain = domain.lower()
     sources = source_cls.query().filter(source_cls.domains == domain).fetch(100)
     if not sources:
-      msg = "Could not find <b>%(type)s</b> account for <b>%(domain)s</b>. Check that your %(type)s profile has %(domain)s in its <em>web site</em> or <em>link</em> field, then try signing up again." % {'type': source_cls.GR_CLASS.NAME, 'domain': domain}
+      msg = f'Could not find <b>{source_cls.GR_CLASS.NAME}</b> account for <b>{domain}</b>. Check that your {source_cls.GR_CLASS.NAME} profile has {domain} in its <em>web site</em> or <em>link</em> field, then try signing up again.'
       return self.error(msg, html=msg)
 
     current_url = ''
@@ -379,8 +377,8 @@ class PublishBase(webmention.Webmention):
          and not obj.get('displayName'))):
       return gr_source.creation_result(
         abort=False,
-        error_plain='Could not find content in %s' % self.fetched.url,
-        error_html='Could not find <a href="http://microformats.org/">content</a> in %s' % self.fetched.url)
+        error_plain=f'Could not find content in {self.fetched.url}',
+        error_html=f'Could not find <a href="http://microformats.org/">content</a> in {self.fetched.url}')
 
     self.preprocess(obj)
 
@@ -424,7 +422,7 @@ class PublishBase(webmention.Webmention):
     assert self.entity
     if ((self.entity.status != 'complete' or self.entity.type == 'preview') and
         not appengine_info.LOCAL):
-      return self.error("Can't delete this post from %s because Bridgy Publish didn't originally POSSE it there" % self.source.gr_source.NAME)
+      return self.error(f"Can't delete this post from {self.source.gr_source.NAME} because Bridgy Publish didn't originally POSSE it there")
 
     id = self.entity.published.get('id')
     url = self.entity.published.get('url')
@@ -433,15 +431,13 @@ class PublishBase(webmention.Webmention):
 
     if not id:
       return self.error(
-        "Bridgy Publish can't find the id of the %s post that it originally published for %s" %
-        self.source.gr_source.NAME, source_url)
+        f"Bridgy Publish can't find the id of the {self.source.gr_source.NAME} post that it originally published for {source_url}")
 
     if self.PREVIEW:
       try:
         return self._render_preview(self.source.gr_source.preview_delete(id))
       except NotImplementedError:
-        return self.error("Sorry, deleting isn't supported for %s yet" %
-                          self.source.gr_source.NAME)
+        return self.error(f"Sorry, deleting isn't supported for {self.source.gr_source.NAME} yet")
 
     logging.info('Deleting silo post id %s', id)
     self.entity = models.Publish(parent=self.entity.key.parent(),
@@ -634,7 +630,7 @@ class Preview(PublishBase):
   def authorize(self):
     from_source = util.load_source()
     if from_source.key != self.source.key:
-      msg = 'Try publishing that page from <a href="%s">%s</a> instead.' % (self.source.bridgy_path(), self.source.label())
+      msg = f'Try publishing that page from <a href="{self.source.bridgy_path()}">{self.source.label()}</a> instead.'
       self.error(msg, html=msg)
       return False
 
@@ -672,13 +668,11 @@ class Send(PublishBase):
     if auth_entity is None:
       self.error('If you want to publish or preview, please approve the prompt.')
     elif not auth_entity.is_authority_for(source.auth_entity):
-      self.error('Please log into %s as %s to publish that page.' %
-                 (source.GR_CLASS.NAME, source.name))
+      self.error(f'Please log into {source.GR_CLASS.NAME} as {source.name} to publish that page.')
     else:
       result = self._run()
       if result and result.content:
-        flash('Done! <a href="%s">Click here to view.</a>' %
-                          self.entity.published.get('url'))
+        flash(f"Done! <a href=\"{self.entity.published.get('url')}\">Click here to view.</a>")
         granary_message = self.entity.published.get('granary_message')
         if granary_message:
           flash(granary_message)
@@ -698,7 +692,7 @@ class Send(PublishBase):
   def error(self, error, html=None, status=400, data=None, report=False, **kwargs):
     logging.info(f'publish: {error}')
     error = html or util.linkify(error)
-    flash('%s' % error)
+    flash(f'{error}')
     if report:
       self.report_error(error, status=status)
 
@@ -748,7 +742,7 @@ class Webmention(PublishBase):
     else:
       bases.add(request.host)
 
-    expected = ['%s/publish/%s' % (base, self.source.SHORT_NAME) for base in bases]
+    expected = [f'{base}/publish/{self.source.SHORT_NAME}' for base in bases]
 
     if self.entity.html:
       for url in expected:

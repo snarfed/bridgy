@@ -141,7 +141,7 @@ def build_circle():
 
   ...to run twitter_live_test.py, to check that scraping likes is still working.
   """
-  resp = requests.post('https://circleci.com/api/v1.1/project/github/snarfed/bridgy/tree/main?circle-token=%s' % CIRCLECI_TOKEN)
+  resp = requests.post(f'https://circleci.com/api/v1.1/project/github/snarfed/bridgy/tree/main?circle-token={CIRCLECI_TOKEN}')
   resp.raise_for_status()
   return 'OK'
 

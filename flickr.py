@@ -55,9 +55,7 @@ class Flickr(models.Source):
       # I think this is an artifact of the conversion to Yahoo.
       username=(person.get('path_alias')
                 or person.get('username', {}).get('_content')),
-      picture='https://farm{}.staticflickr.com/{}/buddyicons/{}.jpg' .format(
-        person.get('iconfarm'), person.get('iconserver'),
-        person.get('nsid')),
+      picture='https://farm{iconfarm}.staticflickr.com/{iconserver}/buddyicons/{nsid}.jpg'.format(**person),
       url=person.get('profileurl', {}).get('_content'),
       **kwargs)
 
@@ -84,10 +82,10 @@ class Flickr(models.Source):
     if not url.endswith('/'):
       url = url + '/'
     if self.username:
-      url = url.replace('flickr.com/photos/%s/' % self.username,
-                        'flickr.com/photos/%s/' % self.key_id())
-      url = url.replace('flickr.com/people/%s/' % self.username,
-                        'flickr.com/people/%s/' % self.key_id())
+      url = url.replace(f'flickr.com/photos/{self.username}/',
+                        f'flickr.com/photos/{self.key_id()}/')
+      url = url.replace(f'flickr.com/people/{self.username}/',
+                        f'flickr.com/people/{self.key_id()}/')
     return super().canonicalize_url(url, **kwargs)
 
 

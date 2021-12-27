@@ -119,15 +119,15 @@ class Mastodon(models.Source):
     instance = source.instance() if source else ''
     scopes = SCOPE_SEPARATOR.join(
       PUBLISH_SCOPES if 'publish' in feature else LISTEN_SCOPES)
-    return """\
-<form method="%s" action="/mastodon/start">
+    return f"""\
+<form method="{'post' if instance else 'get'}" action="/mastodon/start">
   <input type="image" class="mastodon-button shadow" alt="Sign in with Mastodon"
          src="/oauth_dropins_static/mastodon_large.png" />
-  <input name="feature" type="hidden" value="%s" />
-  <input name="instance" type="hidden" value="%s" />
-  <input name="scope" type="hidden" value="%s" />
+  <input name="feature" type="hidden" value="{feature}" />
+  <input name="instance" type="hidden" value="{instance}" />
+  <input name="scope" type="hidden" value="{scopes}" />
 </form>
-""" % ('post' if instance else 'get', feature, instance, scopes)
+"""
 
   def is_private(self):
     """Returns True if this Mastodon account is protected.

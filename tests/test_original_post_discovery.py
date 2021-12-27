@@ -143,7 +143,7 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
     for i, activity in enumerate(self.activities):
       activity['object'].update({
         'content': 'post content without backlinks',
-        'url': 'https://fa.ke/post/url%d' % (i + 1),
+        'url': f'https://fa.ke/post/url{i + 1}',
       })
 
     # silo domain is fa.ke
@@ -180,7 +180,7 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
     for i, activity in enumerate(self.activities):
       activity['object'].update({
         'content': 'post content without backlinks',
-        'url': 'https://fa.ke/post/url%d' % (i + 1),
+        'url': f'https://fa.ke/post/url{i + 1}',
       })
 
     author_feed = u"""
@@ -259,17 +259,17 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
     self.activity['object']['content'] = 'with a link http://author/post/url'
     original = 'http://author/post/url'
 
-    self.expect_requests_get('http://author/', """
+    self.expect_requests_get('http://author/', f"""
     <html class="h-feed">
       <div class="h-entry">
-        <a class="u-url" href="%s"></a>
+        <a class="u-url" href="{original}"></a>
       </div>
-    </html>""" % original)
-    self.expect_requests_get(original, """
+    </html>""")
+    self.expect_requests_get(original, f"""
     <div class="h-entry">
-      <a class="u-url" href="%s"></a>
-      <a class="u-syndication" href="%s"></a>
-    </div>""" % (original, 'https://fa.ke/post/url'))
+      <a class="u-url" href="{original}"></a>
+      <a class="u-syndication" href="{'https://fa.ke/post/url'}"></a>
+    </div>""")
 
     self.mox.ReplayAll()
     self.assert_discover([original])
@@ -1100,11 +1100,11 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
     </html>"""
 
     hentries = [
-      ('http://author/post%d' % (i + 1),
-       """<html class="h-entry">
-       <a class="u-url" href="/post%d"></a>
+      (f'http://author/post{i + 1}',
+       f"""<html class="h-entry">
+       <a class="u-url" href="/post{i + 1}"></a>
        <a class="u-syndication" href="https://fa.ke/post/url"></a>
-       </html>""" % (i + 1)) for i in range(2)
+       </html>""") for i in range(2)
     ]
 
     self.expect_requests_get('http://author/', hfeed)
@@ -1133,7 +1133,7 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
     for idx, activity in enumerate(self.activities):
       activity['object'].update({
         'content': 'post content without backlinks',
-        'url': 'https://fa.ke/post/url%d' % (idx + 1),
+        'url': f'https://fa.ke/post/url{idx + 1}',
       })
 
     hfeed = """<html class="h-feed">
@@ -1431,10 +1431,10 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
     </html>""")
 
     for orig in ('/only-on-frontpage', '/on-both', '/only-on-feed'):
-      self.expect_requests_get('http://author%s' % orig,
-                               """<div class="h-entry">
-                                 <a class="u-url" href="%s"></a>
-                               </div>""" % orig).InAnyOrder()
+      self.expect_requests_get(f'http://author{orig}',
+                               f"""<div class="h-entry">
+                                 <a class="u-url" href="{orig}"></a>
+                               </div>""").InAnyOrder()
 
     self.mox.ReplayAll()
     discover(self.source, self.activity)
@@ -1491,10 +1491,10 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
     </html>""")
 
     for orig in ('/post-with-mistake', '/only-on-feed'):
-      self.expect_requests_get('http://author%s' % orig,
-                               """<div class="h-entry">
-                                 <a class="u-url" href="%s"></a>
-                               </div>""" % orig).InAnyOrder()
+      self.expect_requests_get(f'http://author{orig}',
+                               f"""<div class="h-entry">
+                                 <a class="u-url" href="{orig}"></a>
+                               </div>""").InAnyOrder()
 
     self.mox.ReplayAll()
     discover(self.source, self.activity)

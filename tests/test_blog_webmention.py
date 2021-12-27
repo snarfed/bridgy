@@ -256,15 +256,15 @@ X http://FoO.cOm/post/1
     target = 'http://foo.com/2014/11/23/england-german…iendly-wembley'
     source = 'http://bar.com/✁/1'
 
-    html = u"""\
+    html = f"""
 <meta charset="utf-8">
 <article class="h-entry"><p class="e-content">
 <span class="p-name">my post</span>
-%s
-</p></article>""" % target
+{target}
+</p></article>"""
     self.expect_requests_get(source, html)
 
-    comment = 'mentioned this in <a href="%s">my post</a>. <br /> <a href="%s">via bar.com</a>' % (source, source)
+    comment = f'mentioned this in <a href="{source}">my post</a>. <br /> <a href="{source}">via bar.com</a>'
     testutil.FakeSource.create_comment(target, 'foo.com', 'http://foo.com/', comment
                                        ).AndReturn({'id': 'fake id'})
     self.mox.ReplayAll()

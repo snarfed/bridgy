@@ -118,7 +118,7 @@ class Twitter(models.Source):
       like_user_id: string id of the user who liked the activity
       kwargs: passed to :meth:`granary.source.Source.get_comment`
     """
-    id = self.gr_source.tag_uri('%s_favorited_by_%s' % (activity_id, like_user_id))
+    id = self.gr_source.tag_uri(f'{activity_id}_favorited_by_{like_user_id}')
     resp = models.Response.get_by_id(id)
     if resp:
       return json_loads(resp.response_json)

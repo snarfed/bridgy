@@ -87,7 +87,7 @@ class TumblrTest(testutil.AppTest):
 
   def _test_verify_finds_disqus(self, snippet):
     self.expect_requests_get(
-      'http://primary/', '<html>\nstuff\n%s\n</html>' % snippet)
+      'http://primary/', f'<html>\nstuff\n{snippet}\n</html>')
     self.mox.ReplayAll()
     t = Tumblr.new(auth_entity=self.auth_entity, features=['webmention'])
     t.verify()

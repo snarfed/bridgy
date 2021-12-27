@@ -41,12 +41,12 @@ class IndieAuthTest(testutil.AppTest):
     return TestCase.expect_requests_get(self, 'http://snarfed.org', body)
 
   def callback(self, token='towkin'):
-    resp = self.client.get(
-      '/indieauth/callback?code=my_code&state=%s' % util.encode_oauth_state({
-        'endpoint': indieauth.INDIEAUTH_URL,
-        'me': 'http://snarfed.org',
-        'state': token,
-      }))
+    state = util.encode_oauth_state({
+      'endpoint': indieauth.INDIEAUTH_URL,
+      'me': 'http://snarfed.org',
+      'state': token,
+    })
+    resp = self.client.get(f'/indieauth/callback?code=my_code&state={state}')
     self.assertEqual(302, resp.status_code)
     return resp
 

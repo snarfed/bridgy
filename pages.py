@@ -191,8 +191,7 @@ def user(site, id):
       phrase = phrases.get(r.type) or phrases.get(verb)
       if phrase and (r.type != 'repost' or
                      activity_content.startswith(response_content)):
-        r.response['content'] = '%s %s.' % (
-          r.actor.get('displayName') or '', phrase)
+        r.response['content'] = f'{r.actor.get("displayName") or ""} {phrase}.'
 
       # convert image URL to https if we're serving over SSL
       image_url = r.actor.setdefault('image', {}).get('url')
@@ -217,8 +216,7 @@ def user(site, id):
         vars['responses'] and query_iter.probably_has_next() and (before or after)
       else None)
     if new_after:
-      vars['responses_after_link'] = ('?responses_after=%s#responses' %
-                                       new_after.isoformat())
+      vars['responses_after_link'] = f'?responses_after={new_after.isoformat()}#responses'
 
     new_before = (
       after if after else
@@ -226,8 +224,7 @@ def user(site, id):
         vars['responses'] and query_iter.probably_has_next()
       else None)
     if new_before:
-      vars['responses_before_link'] = ('?responses_before=%s#responses' %
-                                       new_before.isoformat())
+      vars['responses_before_link'] = f'?responses_before={new_before.isoformat()}#responses'
 
     vars['next_poll'] = max(
       source.last_poll_attempt + source.poll_period(),
@@ -320,7 +317,7 @@ def delete_start():
 
   # Blogger don't support redirect_url() yet
   if kind == 'Blogger':
-    return redirect('/blogger/delete/start?state=%s' % state)
+    return redirect(f'/blogger/delete/start?state={state}')
 
   path = ('/reddit/callback' if kind == 'Reddit'
           else '/wordpress/add' if kind == 'WordPress'
@@ -366,7 +363,7 @@ def delete_finish():
 
   feature = parts['feature']
   if feature not in (Source.FEATURES):
-    error('cannot delete unknown feature %s' % feature)
+    error(f'cannot delete unknown feature {feature}')
 
   logged_in_as = ndb.Key(urlsafe=request.args['auth_entity']).get()
   source = ndb.Key(urlsafe=parts['source']).get()
@@ -477,7 +474,7 @@ def discover():
       type = 'event' if path.startswith('/events/') else None
       util.add_discover_task(source, post_id, type=type)
     else:
-      msg = "Sorry, that doesn't look like a %s post URL." % gr_source.NAME
+      msg = f"Sorry, that doesn't look like a {gr_source.NAME} post URL."
 
   elif util.domain_or_parent_in(domain, source.domains):
     synd_links = original_post_discovery.process_entry(source, url, {}, False, [])
@@ -487,11 +484,10 @@ def discover():
       source.updates = {'last_syndication_url': util.now_fn()}
       models.Source.put_updates(source)
     else:
-      msg = 'Failed to fetch %s or find a %s syndication link.' % (
-        util.pretty_link(url), gr_source.NAME)
+      msg = f'Failed to fetch {util.pretty_link(url)} or find a {gr_source.NAME} syndication link.'
 
   else:
-    msg = 'Please enter a URL on either your web site or %s.' % gr_source.NAME
+    msg = f'Please enter a URL on either your web site or {gr_source.NAME}.'
 
   flash(msg)
   return redirect(source.bridgy_url())
@@ -506,9 +502,7 @@ def edit_websites_get():
 @app.route('/edit-websites', methods=['POST'])
 def edit_websites_post():
   source = util.load_source()
-  redirect_url = '%s?%s' % (request.path, urllib.parse.urlencode({
-    'source_key': source.key.urlsafe().decode(),
-  }))
+  redirect_url = f'{request.path}?{urllib.parse.urlencode({"source_key": source.key.urlsafe().decode()})}'
 
   add = request.values.get('add')
   delete = request.values.get('delete')
@@ -521,15 +515,15 @@ def edit_websites_post():
     resolved = Source.resolve_profile_url(add)
     if resolved:
       if resolved in source.domain_urls:
-        flash('%s already exists.' % link)
+        flash(f'{link} already exists.')
       else:
         source.domain_urls.append(resolved)
         domain = util.domain_from_link(resolved)
         source.domains.append(domain)
         source.put()
-        flash('Added %s.' % link)
+        flash(f'Added {link}.')
     else:
-      flash("%s doesn't look like your web site. Try again?" % link)
+      flash(f"{link} doesn't look like your web site. Try again?")
 
   else:
     assert delete

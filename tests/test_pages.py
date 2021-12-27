@@ -448,7 +448,7 @@ class PagesTest(testutil.AppTest):
     resp = self.client.get('/users')
     for entity in deleted, disabled:
       self.assertNotIn(
-        '<a href="%s" title="%s"' % (entity.bridgy_path(), entity.label()),
+        f'<a href="{entity.bridgy_path()}" title="{entity.label()}"',
         resp.get_data(as_text=True))
 
   def test_logout(self):

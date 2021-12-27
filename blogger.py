@@ -60,7 +60,7 @@ class Blogger(models.Source):
     return self.url
 
   def edit_template_url(self):
-    return 'https://www.blogger.com/blogger.g?blogID=%s#template' % self.key_id()
+    return f'https://www.blogger.com/blogger.g?blogID={self.key_id()}#template'
 
   @staticmethod
   def new(auth_entity=None, blog_id=None, **kwargs):
@@ -105,7 +105,7 @@ class Blogger(models.Source):
     """
     for id, host in zip(auth_entity.blog_ids, auth_entity.blog_hostnames):
       if blog_id == id or (not blog_id and host):
-        return ['http://%s/' % host], [host]
+        return [f'http://{host}/'], [host]
 
     return [], []
 
@@ -135,14 +135,14 @@ class Blogger(models.Source):
     feed = client.get_posts(self.key_id(), query=Query(path=path))
 
     if not feed.entry:
-      return self.error('Could not find Blogger post %s' % post_url)
+      return self.error(f'Could not find Blogger post {post_url}')
     elif len(feed.entry) > 1:
       logging.warning('Found %d Blogger posts for path %s , expected 1',
                       len(feed.entry), path)
     post_id = feed.entry[0].get_post_id()
 
     # create the comment
-    content = '<a href="%s">%s</a>: %s' % (author_url, author_name, content)
+    content = f'<a href="{author_url}">{author_name}</a>: {content}'
     if len(content) > MAX_COMMENT_LENGTH:
       content = content[:MAX_COMMENT_LENGTH - 3] + '...'
     logging.info('Creating comment on blog %s, post %s: %s', self.key.id(),

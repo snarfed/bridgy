@@ -272,7 +272,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
 
   def bridgy_path(self):
     """Returns the Bridgy page URL path for this source."""
-    return '/%s/%s' % (self.SHORT_NAME, self.key_id())
+    return f'/{self.SHORT_NAME}/{self.key_id()}'
 
   def bridgy_url(self):
     """Returns the Bridgy page URL for this source."""
@@ -284,7 +284,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
 
   def label(self):
     """Human-readable label for this source."""
-    return '%s (%s)' % (self.label_name(), self.GR_CLASS.NAME)
+    return f'{self.label_name()} ({self.GR_CLASS.NAME})'
 
   def label_name(self):
     """Human-readable name or username for this source, whichever is preferred."""
@@ -353,7 +353,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
   @classmethod
   def bridgy_webmention_endpoint(cls, domain='brid.gy'):
     """Returns the Bridgy webmention endpoint for this source type."""
-    return 'https://%s/webmention/%s' % (domain, cls.SHORT_NAME)
+    return f'https://{domain}/webmention/{cls.SHORT_NAME}'
 
   def has_bridgy_webmention_endpoint(self):
     """Returns True if this source uses Bridgy's webmention endpoint."""
@@ -485,16 +485,15 @@ class Source(StringIdModel, metaclass=SourceMeta):
     """
     assert set(feature.split(',')) <= set(cls.FEATURES)
     form_extra = (kwargs.pop('form_extra', '') +
-                  '<input name="feature" type="hidden" value="%s" />' % feature)
+                  f'<input name="feature" type="hidden" value="{feature}" />')
 
     source = kwargs.pop('source', None)
     if source:
-      form_extra += ('\n<input name="id" type="hidden" value="%s" />' %
-                     source.key_id())
+      form_extra += f'\n<input name="id" type="hidden" value="{source.key_id()}" />'
 
     if cls.OAUTH_START:
       return cls.OAUTH_START.button_html(
-        '/%s/start' % cls.SHORT_NAME,
+        f'/{cls.SHORT_NAME}/start',
         form_extra=form_extra,
         image_prefix='/oauth_dropins_static/',
         **kwargs)
@@ -926,7 +925,7 @@ class Response(Webmentions):
         source.gr_source.activity_changed(json_loads(resp.response_json),
                                           json_loads(self.response_json),
                                           log=True)):
-      logging.info('Response changed! Re-propagating. Original: %s' % resp)
+      logging.info(f'Response changed! Re-propagating. Original: {resp}')
 
       resp.old_response_jsons = resp.old_response_jsons[:10] + [resp.response_json]
 

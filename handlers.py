@@ -121,8 +121,7 @@ class Item(View):
     """Handle HTTP request."""
     source_cls = models.sources.get(site)
     if not source_cls:
-      error("Source type '%s' not found. Known sources: %s" %
-            (site, [s for s in models.sources.keys() if s]))
+      error(f"Source type '{site}' not found. Known sources: {[s for s in models.sources.keys() if s]}")
 
     self.source = source_cls.get_by_id(key_id)
     if not self.source:

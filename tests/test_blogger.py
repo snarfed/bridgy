@@ -70,8 +70,7 @@ class BloggerTest(testutil.AppTest):
                                      blogs_atom='x', user_atom='y', creds_json='z')
     self.auth_entity.put()
 
-    resp = self.client.get('/blogger/oauth_handler?auth_entity=%s' %
-                           self.auth_entity.key.urlsafe().decode())
+    resp = self.client.get(f'/blogger/oauth_handler?auth_entity={self.auth_entity.key.urlsafe().decode()}')
     self.assertEqual(302, resp.status_code)
     location = urllib.parse.urlparse(resp.headers['Location'])
     self.assertEqual('/', location.path)

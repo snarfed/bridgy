@@ -71,7 +71,7 @@ class Webmention(View):
       if raise_errors:
         raise
       util.interpret_http_exception(e)  # log exception
-      self.error('Could not fetch source URL %s' % url)
+      self.error(f'Could not fetch source URL {url}')
 
     if self.entity:
       self.entity.html = resp.text
@@ -80,7 +80,7 @@ class Webmention(View):
     soup = util.parse_html(resp)
     mf2 = util.parse_mf2(soup, url=resp.url, id=id)
     if id and not mf2:
-      self.error('Got fragment %s but no element found with that id.' % id)
+      self.error(f'Got fragment {id} but no element found with that id.')
 
     # special case tumblr's markup: div#content > div.post > div.copy
     # convert to mf2 and re-parse
@@ -106,12 +106,12 @@ class Webmention(View):
     logging.debug('Parsed microformats2: %s', json_dumps(mf2, indent=2))
     items = mf2.get('items', [])
     if require_mf2 and (not items or not items[0]):
-      self.error('No microformats2 data found in ' + resp.url, data=mf2, html="""
+      self.error('No microformats2 data found in ' + resp.url, data=mf2, html=f"""
 No <a href="http://microformats.org/get-started">microformats</a> or
 <a href="http://microformats.org/wiki/microformats2">microformats2</a> found in
-<a href="%s">%s</a>! See <a href="http://indiewebify.me/">indiewebify.me</a>
+<a href="{resp.url}">{util.pretty_link(resp.url)}</a>! See <a href="http://indiewebify.me/">indiewebify.me</a>
 for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
-""" % (resp.url, util.pretty_link(resp.url)))
+""")
 
     return resp, mf2
 

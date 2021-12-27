@@ -24,7 +24,7 @@ for cls in models.sources.values():
 with open('domains.txt', 'w') as f:
   f.write('domain,num_users\n')
   f.write('\n'.join(str(item) for item in reversed(sorted(
-    '%s,%s' % (item[1], item[0]) for item in domains.items()))))
+    f'{item[1]},{item[0]}' for item in domains.items()))))
 
 with open('domains_sent.txt', 'w') as f:
   url = ''

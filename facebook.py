@@ -87,7 +87,7 @@ class Facebook(browser.BrowserSource):
       return None
 
     def post_url(id):
-      return 'https://www.facebook.com/%s/posts/%s' % (self.key.id(), id)
+      return f'https://www.facebook.com/{self.key.id()}/posts/{id}'
 
     parsed = urllib.parse.urlparse(url)
     params = urllib.parse.parse_qs(parsed.query)
@@ -98,8 +98,8 @@ class Facebook(browser.BrowserSource):
     if post_id:
       url = post_url(post_id)
 
-    url = url.replace('facebook.com/%s/' % self.username,
-                      'facebook.com/%s/' % self.key.id())
+    url = url.replace(f'facebook.com/{self.username}/',
+                      f'facebook.com/{self.key.id()}/')
 
     return super().canonicalize_url(url)
 

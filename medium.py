@@ -135,7 +135,7 @@ class ChooseBlog(oauth_medium.Callback):
     # pub's metadata separately.)
     # https://github.com/Medium/medium-api-docs/#user-content-listing-the-users-publications
     auth_entity.publications_json = auth_entity.get(
-      oauth_medium.API_BASE + 'users/%s/publications' % user['id']).text
+      oauth_medium.API_BASE + f'users/{user["id"]}/publications').text
     auth_entity.put()
     pubs = json_loads(auth_entity.publications_json).get('data')
     if not pubs:

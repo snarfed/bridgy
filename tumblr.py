@@ -79,7 +79,7 @@ class Tumblr(models.Source):
     return self.domain_urls[0]
 
   def edit_template_url(self):
-    return 'http://www.tumblr.com/customize/%s' % self.auth_entity.id()
+    return f'http://www.tumblr.com/customize/{self.auth_entity.id()}'
 
   @staticmethod
   def new(auth_entity=None, blog_name=None, **kwargs):
@@ -185,12 +185,12 @@ class Tumblr(models.Source):
     resp = self.disqus_call(util.requests_get, DISQUS_API_THREAD_DETAILS_URL,
                             {'forum': self.disqus_shortname,
                              # ident:[tumblr_post_id] should work, but doesn't :/
-                             'thread': 'link:%s' % post_url,
+                             'thread': f'link:{post_url}',
                              })
     thread_id = resp['id']
 
     # create the comment
-    message = '<a href="%s">%s</a>: %s' % (author_url, author_name, content)
+    message = f'<a href="{author_url}">{author_name}</a>: {content}'
     resp = self.disqus_call(util.requests_post, DISQUS_API_CREATE_POST_URL,
                             {'thread': thread_id,
                              'message': message,

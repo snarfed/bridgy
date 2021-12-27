@@ -31,7 +31,7 @@ class BlogWebmentionView(webmention.Webmention):
     # parse and validate target URL
     domain = util.domain_from_link(self.target_url)
     if not domain:
-      self.error('Could not parse target URL %s' % self.target_url)
+      self.error(f'Could not parse target URL {self.target_url}')
 
     # look up source by domain
     source_cls = models.sources[site]
@@ -62,8 +62,7 @@ class BlogWebmentionView(webmention.Webmention):
 
     if not self.source:
       self.error(
-        'Could not find %s account for %s. Is it registered with Bridgy?' %
-        (source_cls.GR_CLASS.NAME, domain))
+        f'Could not find {source_cls.GR_CLASS.NAME} account for {domain}. Is it registered with Bridgy?')
 
     # check that the target URL path is supported
     target_path = urllib.parse.urlparse(self.target_url).path
@@ -78,7 +77,7 @@ class BlogWebmentionView(webmention.Webmention):
         return {'error': msg}, 202
 
     # create BlogWebmention entity
-    id = '%s %s' % (self.source_url, self.target_url)
+    id = f'{self.source_url} {self.target_url}'
     self.entity = BlogWebmention.get_or_insert(
       id, source=self.source.key, redirected_target_urls=redirected_target_urls)
     if self.entity.status == 'complete':
@@ -94,12 +93,11 @@ class BlogWebmentionView(webmention.Webmention):
 
     item = self.find_mention_item(mf2.get('items', []))
     if not item:
-      self.error('Could not find target URL %s in source page %s' %
-                 (self.target_url, resp.url), data=mf2, log_exception=False)
+      self.error(f'Could not find target URL {self.target_url} in source page {resp.url}', data=mf2, log_exception=False)
 
     # default author to target domain
     author_name = domain
-    author_url = 'http://%s/' % domain
+    author_url = f'http://{domain}/'
 
     # extract author name and URL from h-card, if any
     props = item['properties']
@@ -121,8 +119,7 @@ class BlogWebmentionView(webmention.Webmention):
     content = props['content'][0]  # find_mention_item() guaranteed this is here
     text = (content.get('html') or content.get('value')).strip()
     source_url = self.entity.source_url()
-    text += ' <br /> <a href="%s">via %s</a>' % (
-      source_url, util.domain_from_link(source_url))
+    text += f' <br /> <a href="{source_url}">via {util.domain_from_link(source_url)}</a>'
 
     # write comment
     try:
@@ -130,7 +127,7 @@ class BlogWebmentionView(webmention.Webmention):
         self.target_url, author_name, author_url, text)
     except Exception as e:
       code, body = util.interpret_http_exception(e)
-      msg = 'Error: %s: %s; %s' % (code, e, body)
+      msg = f'Error: {code}: {e}; {body}'
       if code == '401':
         logging.warning(f'Disabling source due to: {e}', exc_info=True)
         self.source.status = 'disabled'
@@ -182,8 +179,7 @@ class BlogWebmentionView(webmention.Webmention):
           type = 'post'
           url = get_first(props, 'url') or self.source_url
           name = get_first(props, 'name') or get_first(props, 'summary')
-          text = content['html'] = ('mentioned this in %s.' %
-                                    util.pretty_link(url, text=name, max_length=280))
+          text = content['html'] = f'mentioned this in {util.pretty_link(url, text=name, max_length=280)}.'
         else:
           type = None
 
@@ -193,7 +189,7 @@ class BlogWebmentionView(webmention.Webmention):
         if rsvp:
           self.entity.type = 'rsvp'
           if not text:
-            content['value'] = 'RSVPed %s.' % rsvp
+            content['value'] = f'RSVPed {rsvp}.'
         else:
           self.entity.type = {'in-reply-to': 'comment',
                               'like-of': 'like',
