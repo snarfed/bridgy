@@ -10,7 +10,7 @@ git+https://github.com/kylewm/mf2util.git#egg=mf2util
 git+https://github.com/Alir3z4/html2text.git#egg=html2text
 app-server~=0.7.0; python_version>="3.8"
 brotli~=1.0
-cachetools~=4.2
+cachetools~=5.0
 flask~=2.0.2
 flask-caching~=1.10.1
 gdata-python3~=3.0
