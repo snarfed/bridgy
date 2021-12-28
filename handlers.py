@@ -110,7 +110,7 @@ class Item(View):
           activity_id=id, user_id=self.source.key_id(), **kwargs)
       if posts:
         return posts[0]
-      logging.warning('Source post %s not found', id)
+      logging.warning(f'Source post {id} not found')
     except AssertionError:
       raise
     except Exception as e:

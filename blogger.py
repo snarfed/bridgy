@@ -131,22 +131,20 @@ class Blogger(models.Source):
 
     # extract the post's path and look up its post id
     path = urllib.parse.urlparse(post_url).path
-    logging.info('Looking up post id for %s', path)
+    logging.info(f'Looking up post id for {path}')
     feed = client.get_posts(self.key_id(), query=Query(path=path))
 
     if not feed.entry:
       return self.error(f'Could not find Blogger post {post_url}')
     elif len(feed.entry) > 1:
-      logging.warning('Found %d Blogger posts for path %s , expected 1',
-                      len(feed.entry), path)
+      logging.warning(f'Found {len(feed.entry)} Blogger posts for path {path} , expected 1')
     post_id = feed.entry[0].get_post_id()
 
     # create the comment
     content = f'<a href="{author_url}">{author_name}</a>: {content}'
     if len(content) > MAX_COMMENT_LENGTH:
       content = content[:MAX_COMMENT_LENGTH - 3] + '...'
-    logging.info('Creating comment on blog %s, post %s: %s', self.key.id(),
-                 post_id, content.encode('utf-8'))
+    logging.info(f"Creating comment on blog {self.key.id()}, post {post_id}: {content.encode('utf-8')}")
     try:
       comment = client.add_comment(self.key.id(), post_id, content)
     except Error as e:

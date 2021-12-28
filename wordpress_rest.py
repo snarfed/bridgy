@@ -117,7 +117,7 @@ class WordPress(models.Source):
       JSON response dict with 'id' and other fields
     """
     auth_entity = self.auth_entity.get()
-    logging.info('Determining WordPress.com post id for %s', post_url)
+    logging.info(f'Determining WordPress.com post id for {post_url}')
 
     # extract the post's slug and look up its post id
     path = urllib.parse.urlparse(post_url).path
@@ -127,13 +127,13 @@ class WordPress(models.Source):
     try:
       post_id = int(slug)
     except ValueError:
-      logging.info('Looking up post id for slug %s', slug)
+      logging.info(f'Looking up post id for slug {slug}')
       url = API_POST_SLUG_URL % (auth_entity.blog_id, slug)
       post_id = self.urlopen(auth_entity, url).get('ID')
       if not post_id:
         return self.error('Could not find post id', report=False)
 
-    logging.info('Post id is %d', post_id)
+    logging.info(f'Post id is {post_id}')
 
     # create the comment
     url = API_CREATE_COMMENT_URL % (auth_entity.blog_id, post_id)
@@ -198,8 +198,7 @@ class Add(oauth_wordpress.Callback):
       if site_info is None:
         return
       elif site_info.get('jetpack'):
-        logging.info('This is a self-hosted WordPress blog! %s %s',
-                     auth_entity.key_id(), auth_entity.blog_id)
+        logging.info(f'This is a self-hosted WordPress blog! {auth_entity.key_id()} {auth_entity.blog_id}')
         return render_template('confirm_self_hosted_wordpress.html',
                                auth_entity_key=auth_entity.key.urlsafe().decode(),
                                state=state)

@@ -96,7 +96,7 @@ class Start(View):
 
 class AddGitHub(oauth_github.Callback):
   def finish(self, auth_entity, state=None):
-    logging.debug('finish with %s, %s', auth_entity, state)
+    logging.debug(f'finish with {auth_entity}, {state}')
     util.maybe_add_or_delete_source(GitHub, auth_entity, state)
 
 

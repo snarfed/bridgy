@@ -49,7 +49,7 @@ def subscribe(source):
     'retrieve': 'true',
   }
 
-  logging.info('Adding Superfeedr subscription: %s', data)
+  logging.info(f'Adding Superfeedr subscription: {data}')
   resp = util.requests_post(
     PUSH_API_URL, data=data,
     auth=HTTPBasicAuth(SUPERFEEDR_USERNAME, SUPERFEEDR_TOKEN),
@@ -70,14 +70,14 @@ def handle_feed(feed, source):
     feed: unicode string, Superfeedr JSON feed
     source: Blogger, Tumblr, or WordPress
   """
-  logging.info('Source: %s %s', source.label(), source.key_id())
-  logging.info('Raw feed: %s', feed)
+  logging.info(f'Source: {source.label()} {source.key_id()}')
+  logging.info(f'Raw feed: {feed}')
 
   if not feed:
     return
 
   if source.status != 'enabled':
-    logging.info('Dropping because source is %s', source.status)
+    logging.info(f'Dropping because source is {source.status}')
     return
   elif 'webmention' not in source.features:
     logging.info("Dropping because source doesn't have webmention feature")
@@ -107,12 +107,12 @@ def handle_feed(feed, source):
       if len(link) <= _MAX_STRING_LENGTH:
         unique.append(link)
       else:
-        logging.info('Giving up on link over %s chars! %s', _MAX_STRING_LENGTH, link)
+        logging.info(f'Giving up on link over {_MAX_STRING_LENGTH} chars! {link}')
       if len(unique) >= MAX_BLOGPOST_LINKS:
         logging.info('Stopping at 10 links! Skipping the rest.')
         break
 
-    logging.info('Found links: %s', unique)
+    logging.info(f'Found links: {unique}')
     if len(url) > _MAX_KEYPART_BYTES:
       logging.warning('Blog post URL is too long (over 500 chars)! Giving up.')
       bp = models.BlogPost(id=url[:_MAX_KEYPART_BYTES], source=source.key,

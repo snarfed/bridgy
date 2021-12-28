@@ -43,8 +43,7 @@ def replace_poll_tasks():
   for source in itertools.chain(*queries):
     age = now - source.last_poll_attempt
     if age > max(source.poll_period() * 2, datetime.timedelta(hours=2)):
-      logging.info('%s last polled %s ago. Adding new poll task.',
-                   source.bridgy_url(), age)
+      logging.info(f'{source.bridgy_url()} last polled {age} ago. Adding new poll task.')
       util.add_poll_task(source)
 
   return ''
@@ -70,8 +69,7 @@ class UpdatePictures(View):
     results, _, more = query.fetch_page(PAGE_SIZE)
     for source in results:
       if source.features and source.status != 'disabled':
-        logging.debug('checking for updated profile pictures for: %s',
-                      source.bridgy_url())
+        logging.debug(f'checking for updated profile pictures for: {source.bridgy_url()}')
         try:
           actor = source.gr_source.get_actor(self.user_id(source))
         except BaseException as e:

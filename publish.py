@@ -138,7 +138,7 @@ class PublishBase(webmention.Webmention):
 
   def _run(self):
     """Returns CreationResult on success, None otherwise."""
-    logging.info('Params: %s', list(request.values.items()))
+    logging.info(f'Params: {list(request.values.items())}')
     assert self.PREVIEW in (True, False)
 
     # parse and validate target URL
@@ -314,9 +314,7 @@ class PublishBase(webmention.Webmention):
     sources_ready = []
     best_match = None
     for source in sources:
-      logging.info('Source: %s , features %s, status %s, poll status %s',
-                   source.bridgy_url(), source.features, source.status,
-                   source.poll_status)
+      logging.info(f'Source: {source.bridgy_url()} , features {source.features}, status {source.status}, poll status {source.poll_status}')
       if source.status != 'disabled' and 'publish' in source.features:
         # use a source that has a domain_url matching the url provided,
         # including path. find the source with the closest match.
@@ -368,7 +366,7 @@ class PublishBase(webmention.Webmention):
       obj['url'] = self.source_url()
     elif 'url' not in obj:
       obj['url'] = self.fetched.url
-    logging.debug('Converted to ActivityStreams object: %s', json_dumps(obj, indent=2))
+    logging.debug(f'Converted to ActivityStreams object: {json_dumps(obj, indent=2)}')
 
     # posts and comments need content
     obj_type = obj.get('objectType')
@@ -406,9 +404,10 @@ class PublishBase(webmention.Webmention):
       if 'url' not in self.entity.published:
         self.entity.published['url'] = obj.get('url')
       self.entity.type = self.entity.published.get('type') or models.get_type(obj)
-      logging.info('Returning %s', json_dumps(self.entity.published, indent=2))
-      return gr_source.creation_result(
-        json_dumps(self.entity.published, indent=2))
+
+      ret = json_dumps(self.entity.published, indent=2)
+      logging.info(f'Returning {ret}')
+      return gr_source.creation_result(ret)
 
   def delete(self, source_url):
     """Attempts to delete or preview delete a published post.
@@ -439,12 +438,11 @@ class PublishBase(webmention.Webmention):
       except NotImplementedError:
         return self.error(f"Sorry, deleting isn't supported for {self.source.gr_source.NAME} yet")
 
-    logging.info('Deleting silo post id %s', id)
+    logging.info(f'Deleting silo post id {id}')
     self.entity = models.Publish(parent=self.entity.key.parent(),
                                  source=self.source.key, type='delete')
     self.entity.put()
-    logging.debug("Publish entity for delete: '%s'",
-                  self.entity.key.urlsafe().decode())
+    logging.debug(f"Publish entity for delete: {self.entity.key.urlsafe().decode()}")
 
     resp = self.source.gr_source.delete(id)
     resp.content.setdefault('id', id)
@@ -506,7 +504,7 @@ class PublishBase(webmention.Webmention):
         if not ok:
           continue
 
-        logging.debug('expand_target_urls fetching field=%s, url=%s', field, url)
+        logging.debug(f'expand_target_urls fetching field={field}, url={url}')
         try:
           mf2 = util.fetch_mf2(url)
         except AssertionError:
@@ -516,8 +514,7 @@ class PublishBase(webmention.Webmention):
           raise
         except BaseException:
           # it's not a big deal if we can't fetch an in-reply-to url
-          logging.info('expand_target_urls could not fetch field=%s, url=%s',
-                       field, url, exc_info=True)
+          logging.info(f'expand_target_urls could not fetch field={field}, url={url}', exc_info=True)
           continue
 
         synd_urls = mf2['rels'].get('syndication', [])
@@ -535,7 +532,7 @@ class PublishBase(webmention.Webmention):
           synd_urls += microformats2.get_string_urls(
             item.get('properties', {}).get('syndication', []))
 
-        logging.debug('expand_target_urls found rel=syndication for url=%s: %r', url, synd_urls)
+        logging.debug(f'expand_target_urls found rel=syndication for url={url} : {synd_urls!r}')
         augmented += [{'url': u} for u in synd_urls]
 
       activity[field] = augmented
@@ -585,7 +582,7 @@ class PublishBase(webmention.Webmention):
         entity.type = 'preview'
       entity.put()
 
-    logging.debug("Publish entity: '%s'", entity.key.urlsafe().decode())
+    logging.debug(f"Publish entity: {entity.key.urlsafe().decode()}")
     return entity
 
   def _render_preview(self, result, include_link=False):

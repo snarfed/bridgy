@@ -116,7 +116,7 @@ class AddFlickr(oauth_flickr.Callback, AuthHandler):
   trigger another round of auth with elevated permissions.
   """
   def finish(self, auth_entity, state=None):
-    logging.debug('finish with %s, %s', auth_entity, state)
+    logging.debug(f'finish with {auth_entity}, {state}')
     source = util.maybe_add_or_delete_source(Flickr, auth_entity, state)
     feature = util.decode_oauth_state(state).get('feature')
     if source and feature == 'listen' and 'publish' in source.features:

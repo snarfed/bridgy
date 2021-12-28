@@ -148,7 +148,7 @@ class Tumblr(models.Source):
       match = regex.search(html)
       if match:
         self.disqus_shortname = match.group(1)
-        logging.info("Found Disqus shortname %s", self.disqus_shortname)
+        logging.info(f"Found Disqus shortname {self.disqus_shortname}")
         self.put()
 
   def create_comment(self, post_url, author_name, author_url, content):
@@ -212,7 +212,7 @@ class Tumblr(models.Source):
     Returns:
       dict, JSON response
     """
-    logging.info('Calling Disqus %s with %s', url.split('/')[-2:], params)
+    logging.info(f"Calling Disqus {url.split('/')[-2:]} with {params}")
     params.update({
         'api_key': DISQUS_API_KEY,
         'api_secret': DISQUS_API_SECRET,
@@ -222,7 +222,7 @@ class Tumblr(models.Source):
     resp = method(url, params=params, **kwargs)
     resp.raise_for_status()
     resp = resp.json().get('response', {})
-    logging.info('Response: %s', resp)
+    logging.info(f'Response: {resp}')
     return resp
 
 
@@ -244,7 +244,7 @@ class ChooseBlog(oauth_tumblr.Callback):
                 for b in json_loads(auth_entity.user_json)['user']['blogs']
                 if b.get('name') and b.get('url')],
       }
-    logging.info('Rendering choose_blog.html with %s', vars)
+    logging.info(f'Rendering choose_blog.html with {vars}')
     return render_template('choose_blog.html', **vars)
 
 

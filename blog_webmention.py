@@ -18,7 +18,7 @@ class BlogWebmentionView(webmention.Webmention):
   """View for incoming webmentions against blog providers."""
 
   def dispatch_request(self, site):
-    logging.info('Params: %s', list(request.values.items()))
+    logging.info(f'Params: {list(request.values.items())}')
     # strip fragments from source and target url
     self.source_url = urllib.parse.urldefrag(request.form['source'])[0]
     self.target_url = urllib.parse.urldefrag(request.form['target'])[0]
@@ -83,7 +83,7 @@ class BlogWebmentionView(webmention.Webmention):
     if self.entity.status == 'complete':
       # TODO: response message saying update isn't supported
       return self.entity.published
-    logging.debug("BlogWebmention entity: '%s'", self.entity.key.urlsafe().decode())
+    logging.debug(f'BlogWebmention entity: {self.entity.key.urlsafe().decode()}')
 
     # fetch source page
     fetched = self.fetch_mf2(self.source_url)

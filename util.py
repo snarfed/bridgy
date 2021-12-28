@@ -165,10 +165,10 @@ def add_task(queue, eta_seconds=None, **kwargs):
 
   queue_path = tasks_client.queue_path(APP_ID, TASKS_LOCATION, queue)
   if LOCAL:
-    logging.info('Would add task: %s %s', queue_path, params)
+    logging.info(f'Would add task: {queue_path} {params}')
   else:
     task = tasks_client.create_task(CreateTaskRequest(parent=queue_path, task=params))
-    logging.info('Added %s task %s with ETA %s', queue, task.name, eta_seconds)
+    logging.info(f'Added {queue} task {task.name} with ETA {eta_seconds}')
 
 
 class Redirect(RequestRedirect):
@@ -241,8 +241,7 @@ def report_error(msg, **kwargs):
     error_reporting_client.report(msg, **kwargs)
   except BaseException:
     if not DEBUG:
-      logging.warning('Failed to report error to StackDriver! %s %s', msg, kwargs,
-                      exc_info=True)
+      logging.warning(f'Failed to report error to StackDriver! {msg} {kwargs}', exc_info=True)
 
 
 def requests_get(url, **kwargs):
@@ -312,7 +311,7 @@ def get_webmention_target(url, resolve=True, replace_test_domains=True):
   try:
     domain = domain_from_link(url).lower()
   except BaseException:
-    logging.info('Dropping bad URL: %r.', url)
+    logging.info(f'Dropping bad URL: {url!r}.')
     return url, None, False
 
   send = True
@@ -481,8 +480,7 @@ def maybe_add_or_delete_source(source_cls, auth_entity, state, **kwargs):
       else:
         redirect('/')
 
-    logging.info('%s.create_new with %s', source_cls.__class__.__name__,
-                 (auth_entity.key, state, kwargs))
+    logging.info(f'{source_cls.__class__.__name__}.create_new with {auth_entity.key}, {state}, {kwargs}')
     source = source_cls.create_new(auth_entity=auth_entity,
                                    features=feature.split(',') if feature else [],
                                    user_url=user_url, **kwargs)

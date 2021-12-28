@@ -304,8 +304,8 @@ class Source(StringIdModel, metaclass=SourceMeta):
     if not source.updates:
       return source
 
-    logging.info('Updating %s %s : %r', source.label(), source.bridgy_path(),
-                 {k: v for k, v in source.updates.items() if not k.endswith('_json')})
+    to_log = {k: v for k, v in source.updates.items() if not k.endswith('_json')}
+    logging.info(f'Updating {source.label()} {source.bridgy_path()} : {to_log!r}')
 
     updates = source.updates
     source = source.key.get()
@@ -521,7 +521,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
       if auth_entity and hasattr(auth_entity, 'user_json'):
         source.domain_urls, source.domains = source._urls_and_domains(
           auth_entity, user_url)
-    logging.debug('URLs/domains: %s %s', source.domain_urls, source.domains)
+    logging.debug(f'URLs/domains: {source.domain_urls} {source.domains}')
 
     # check if this source already exists
     existing = source.key.get()
@@ -545,7 +545,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
       'Try previewing a post from your web site!' if feature == 'publish'
       else '<a href="%s">Try a webmention!</a>' % link if feature == 'webmention'
       else "Refresh in a minute to see what we've found!")
-    logging.info('%s %s', blurb, source.bridgy_url())
+    logging.info(f'{blurb} {source.bridgy_url()}')
 
     source.verify()
     if source.verified():
@@ -626,15 +626,13 @@ class Source(StringIdModel, metaclass=SourceMeta):
     """
     if not actor:
       actor = self.gr_source.user_to_actor(json_loads(auth_entity.user_json))
-    logging.debug('Extracting URLs and domains from actor: %s',
-                  json_dumps(actor, indent=2))
+    logging.debug('Extracting URLs and domains from actor: {json_dumps(actor, indent=2)}')
 
     candidates = util.trim_nulls(util.uniquify(
         [user_url] + microformats2.object_urls(actor)))
 
     if len(candidates) > MAX_AUTHOR_URLS:
-      logging.info('Too many profile links! Only resolving the first %s: %s',
-                   MAX_AUTHOR_URLS, candidates)
+      logging.info(f'Too many profile links! Only resolving the first {MAX_AUTHOR_URLS}: {candidates}')
 
     urls = []
     for i, url in enumerate(candidates):
@@ -683,8 +681,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
         if final in me_urls:
           final = root
       except requests.RequestException:
-        logging.warning("Couldn't fetch %s, preserving path in %s",
-                        root, final, exc_info=True)
+        logging.warning(f"Couldn't fetch {root}, preserving path in {final}", exc_info=True)
 
     return final
 
@@ -858,7 +855,7 @@ class Webmentions(StringIdModel):
       propagate = self.unsent or self.error
 
     if propagate:
-      logging.debug('New webmentions to propagate! %s', entity.label())
+      logging.debug(f'New webmentions to propagate! {entity.label()}')
       entity.add_task()
     elif not existing:
       entity.status = 'complete'
