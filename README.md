@@ -46,10 +46,10 @@ curl -d 'source_key=agNhcHByFgsSB1R3aXR0ZXIiCXNjaG5hcmZlZAw&last_polled=1970-01-
   http://localhost:8081/_ah/queue/poll
 ```
 
-To run the entire app locally in [`app_server`](https://github.com/XeoN-GHMB/app_server) ([which also serves the static file handlers](https://groups.google.com/d/topic/google-appengine/BJDE8y2KISM/discussion)), run this in the repo root directory:
+To run the app locally, use [`flask run`](https://flask.palletsprojects.com/en/2.0.x/cli/#run-the-development-server):
 
 ```shell
-app_server -A oauth-dropins .
+env FLASK_ENV=development flask run -p 8080
 ```
 
 Open [localhost:8080](http://localhost:8080/) and you should see the Bridgy home page!
