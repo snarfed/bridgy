@@ -26,7 +26,7 @@ gcloud config set project brid-gy
 Now, you can fire up the gcloud emulator and run the tests:
 
 ```sh
-gcloud beta emulators datastore start --no-store-on-disk --consistency=1.0 --host-port=localhost:8089 < /dev/null >& /dev/null
+gcloud beta emulators datastore start --no-store-on-disk --consistency=1.0 --host-port=localhost:8089 --quiet
 python3 -m unittest discover -s tests -t .
 kill %1
 ```
@@ -49,6 +49,7 @@ curl -d 'source_key=agNhcHByFgsSB1R3aXR0ZXIiCXNjaG5hcmZlZAw&last_polled=1970-01-
 To run the app locally, use [`flask run`](https://flask.palletsprojects.com/en/2.0.x/cli/#run-the-development-server):
 
 ```shell
+gcloud beta emulators datastore start --no-store-on-disk --consistency=1.0 --host-port=localhost:8089 --quiet
 env FLASK_ENV=development flask run -p 8080
 ```
 

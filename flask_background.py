@@ -10,7 +10,7 @@ import appengine_config, util
 
 
 # Flask app
-app = Flask('background')
+app = Flask(__name__)
 app.config.from_pyfile('config.py')
 app.wsgi_app = flask_util.ndb_context_middleware(app.wsgi_app, client=ndb_client)
 
