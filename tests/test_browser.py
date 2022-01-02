@@ -409,7 +409,7 @@ class BrowserViewTest(testutil.AppTest):
       html.unescape(resp.get_data(as_text=True)))
 
   def test_poll(self):
-    self.expect_task('poll', eta_seconds=0, source_key=self.source,
+    self.expect_task('poll-now', source_key=self.source,
                      last_polled='1970-01-01-00-00-00')
     self.mox.ReplayAll()
     resp = self.post('poll')

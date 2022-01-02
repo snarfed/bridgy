@@ -213,8 +213,7 @@ class InstagramTest(testutil.AppTest):
 
   def test_poll(self):
     key = self.source.put()
-    self.expect_task('poll', eta_seconds=0, source_key=key,
-                     last_polled='1970-01-01-00-00-00')
+    self.expect_task('poll-now', source_key=key, last_polled='1970-01-01-00-00-00')
     self.mox.ReplayAll()
 
     resp = self.get_response('poll')

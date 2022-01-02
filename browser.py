@@ -357,7 +357,7 @@ class Poll(BrowserView):
   """Triggers a poll for a browser-based account."""
   def dispatch_request(self):
     source = self.auth()
-    util.add_poll_task(source)
+    util.add_poll_task(source, now=True)
     return jsonify('OK')
 
 
