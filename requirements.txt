@@ -23,5 +23,5 @@ gunicorn~=20.1
 humanize~=3.13
 lxml~=4.7.1
 mox3~=1.1
-requests~=2.26
+requests~=2.27
 tlslite-ng>=0.8.0-alpha3 # not directly required, pinned by Snyk to avoid a vulnerability
