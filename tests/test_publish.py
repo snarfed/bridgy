@@ -400,6 +400,12 @@ foo
     self.assert_created('xyz - http://foo.com/bar')
     self.assertEqual(self.source.key, Publish.query().get().source)
 
+  def test_source_bridgy_domain(self):
+    """Source domain is brid.gy."""
+    for domain in 'brid.gy', 'foo.brid.gy', 'bridgy.org':
+      self.assert_error(f'Source URL should be on your own site, not {domain}',
+                        source=f'http://{domain}/post')
+
   def test_source_missing_mf2(self):
     self.expect_requests_get('http://foo.com/bar', '')
     self.mox.ReplayAll()

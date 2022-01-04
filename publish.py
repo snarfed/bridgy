@@ -305,6 +305,9 @@ class PublishBase(webmention.Webmention):
     Returns: :class:`models.Source`
     """
     domain = domain.lower()
+    if util.domain_or_parent_in(domain, util.DOMAINS):
+      return self.error(f'Source URL should be on your own site, not {domain}')
+
     sources = source_cls.query().filter(source_cls.domains == domain).fetch(100)
     if not sources:
       msg = f'Could not find <b>{source_cls.GR_CLASS.NAME}</b> account for <b>{domain}</b>. Check that your {source_cls.GR_CLASS.NAME} profile has {domain} in its <em>web site</em> or <em>link</em> field, then try signing up again.'
