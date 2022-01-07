@@ -1,0 +1,142 @@
+.dialog-birthday_message {
+    position: fixed;
+    /* border: 1px solid #bce3ff; */
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: 5%;
+    z-index: 99;
+  /* width: 480px; */
+  /* height:520px; */
+    -webkit-transform: none;
+    margin: auto;
+  background:transparent;
+}
+.birthday_container {
+  position: relative;
+  margin: 0 auto;
+  width: 100%;
+  height:100%;
+  display: block;
+  background:transparent;
+  overflow: hidden;
+}
+.balloons {
+  z-index:1;
+  position:absolute;
+  top:40px;
+  left: 50%;
+  margin-left:-25%;
+  background:transparent;
+}
+.birthday_container p {
+  z-index:1;
+  position:absolute;
+  bottom:40px;
+  font-weight: 500;
+  font-size: 28px;
+ margin:0 auto;
+  width:100%;
+  text-align:center;
+  background:transparent;
+}
+#canvas_confetti {
+  display:inline-block;
+  position: absolute;
+  top:0;
+  left:0;
+  z-index:0;
+  width: 100%;
+  height: 100%;
+  background:transparent;
+}
+.balloon {
+  display: inline-block;
+  width: 50px;
+  height: 60px;
+  background: hsl(215, 50%, 65%);
+  background: rgba(102, 145, 204,1);
+  border-radius: 80%;
+  position: relative;
+  box-shadow: inset -10px -10px 0 rgba(0, 0, 0, 0.07);  
+  margin: 10px 1px;
+  transition: transform 0.5s ease;
+  z-index: 2;
+  animation: balloons 4s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+
+@keyframes balloons {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-4deg);
+  }
+  50% {
+    transform: translateY(-25px) rotate(4deg);
+  }
+}
+
+.balloon:before {
+  content: "▲";
+  font-size: 20px;
+  color: hsl(215, 30%, 50%);
+  color: rgba(88, 125, 176,1);
+  display: block;
+  text-align: center;
+  width: 100%;
+  position: absolute;
+  bottom: -13px;
+  z-index: -100;
+}
+
+.balloon:after {  
+  display: inline-block;
+  top: 65px;
+  position: absolute;
+  height: 100px;
+  width: 2px;
+  margin: 0 auto;
+  left:24px;
+  
+  content: "";
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.ballon:nth-child(1) {
+  box-shadow: inset -10px -10px 0 rgba(88, 125, 176,1);
+}
+.balloon:nth-child(2) {
+  background: hsl(245, 40%, 65%);
+  animation-duration: 3.5s;
+}
+
+.balloon:nth-child(2):before {
+  color: hsl(245, 40%, 65%);
+}
+
+.balloon:nth-child(3) {
+  background: hsl(139, 50%, 60%);
+  animation-duration: 3s;
+}
+
+.balloon:nth-child(3):before {
+  color: hsl(139, 30%, 50%);
+}
+
+.balloon:nth-child(4) {
+  background: hsl(59, 50%, 58%);
+  animation-duration: 4.5s;
+}
+
+.balloon:nth-child(4):before {
+  color: hsl(59, 30%, 52%);
+}
+
+.balloon:nth-child(5) {
+  background: hsl(23, 55%, 57%);
+  animation-duration: 5s;
+}
+
+.balloon:nth-child(5):before {
+  color: hsl(23, 44%, 46%);
+}

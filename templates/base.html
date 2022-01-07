@@ -27,6 +27,10 @@ ga('send', 'pageview');
 <!-- Not async because it adds a DOMContentLoaded event listener, which may
   -- happen before an async script loads. -->
 <script src="/oauth_dropins_static/util.js"></script>
+
+<!-- Thanks Paul J for the birthday JS/CSS! https://codepen.io/paul/pen/kXqAGJ -->
+<script async src="/static/birthday/script.js"></script>
+<link rel="stylesheet" href="/static/birthday/style.css" type="text/css" />
 </head>
 
 <!-- Content starts here -->
@@ -41,6 +45,20 @@ ga('send', 'pageview');
   </div>
 {% endif %}
 {% endwith %}
+
+<div class="dialog-birthday_message">
+  <div id="birthday_container" class="birthday_container">
+  <div class="balloons">
+    <div class="balloon"></div>
+    <div class="balloon"></div>
+    <div class="balloon"></div>
+    <div class="balloon"></div>
+    <div class="balloon"></div>
+  </div>
+  <p>Happy 10th Birthday, Bridgy! </p>
+  <canvas id="canvas_confetti" width="600px" height="400px"></canvas>
+</div>
+</div>
 
 <main class="tp-main lead container">
 
