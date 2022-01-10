@@ -37,18 +37,18 @@ ga('send', 'pageview');
 <body class="{% block body_class %}{% endblock %}">
 
 {% with messages = get_flashed_messages() %}
+{% if messages %}
   <div id="messages">
-    <p class="message shadow">
-      <a href="https://snarfed.org/2022-01-08_happy-10th-birthday-bridgy">Happy 10th Birthday, Bridgy!</a>
-    </p>
   {% for message in messages %}
     <p class="message shadow">{{ message|safe }}</p>
   {% endfor %}
   </div>
+{% endif %}
 {% endwith %}
 
 <div class="dialog-birthday_message">
   <div id="birthday_container" class="birthday_container">
+    <p>Happy 10th Birthday, Bridgy! </p>
     <div class="balloons">
       <div class="balloon"></div>
       <div class="balloon"></div>
