@@ -24,15 +24,15 @@
 .balloons {
   z-index:1;
   position:absolute;
-  top:100px;
+  top:40px;
   left: 50%;
-  margin-left:-148px;
+  margin-left:-25%;
   background:transparent;
 }
 .birthday_container p {
   z-index:1;
   position:absolute;
-  top:40px;
+  bottom:40px;
   font-weight: 500;
   font-size: 28px;
  margin:0 auto;

@@ -4,7 +4,7 @@ var context = canvas.getContext('2d');
 canvas.width = document.getElementById('birthday_container').clientWidth;
 canvas.height = document.getElementById('birthday_container').clientHeight;
 //document.body.appendChild(canvas);
-document.getElementById('birthday_container').appendChild(canvas);
+t.getElementById('birthday_container').appendChild(canvas);
 var calculatedDensity = canvas.width * 0.0085;
 var calculatedVelocity = canvas.width * 0.0037;
 var calculatedLife = canvas.height * .65;
@@ -108,8 +108,8 @@ setInterval(function() {
     //#009688 teal
     //#FFEB3B yellow
     // "rgba(39,174,96,.98)"; green
-    // context.fillStyle = '#f7fcfd'
-    // context.fillRect(0, 0, canvas.width, canvas.height);
+    context.fillStyle = '#f7fcfd'
+    context.fillRect(0, 0, canvas.width, canvas.height);
 
     // Draw the particles
     for (var i = 0; i < settings.density; i++) {
@@ -120,7 +120,6 @@ setInterval(function() {
     }
 
     //Use the draw method for all the particles in particles[]
-    context.clearRect(0, 0, canvas.width, canvas.height);
     for (var i in particles) {
       particles[i].draw();
     }
