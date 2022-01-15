@@ -133,17 +133,6 @@ class UpdateTwitterPictures(UpdatePictures):
 #   # TODO: no granary.Blogger!
 
 
-@app.route('/cron/build_circle')
-def build_circle():
-  """Trigger CircleCI to build and test the main branch.
-
-  ...to run twitter_live_test.py, to check that scraping likes is still working.
-  """
-  resp = requests.post(f'https://circleci.com/api/v1.1/project/github/snarfed/bridgy/tree/main?circle-token={CIRCLECI_TOKEN}')
-  resp.raise_for_status()
-  return 'OK'
-
-
 app.add_url_rule('/cron/update_flickr_pictures',
                  view_func=UpdateFlickrPictures.as_view('update_flickr_pictures'))
 app.add_url_rule('/cron/update_mastodon_pictures',

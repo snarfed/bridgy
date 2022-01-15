@@ -21,8 +21,3 @@ cron:
   url: /cron/update_mastodon_pictures
   schedule: every 1 hours
   target: background
-
-- description: daily CircleCI build
-  url: /cron/build_circle
-  schedule: every 24 hours
-  target: background
