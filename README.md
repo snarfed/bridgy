@@ -50,7 +50,7 @@ To run the app locally, use [`flask run`](https://flask.palletsprojects.com/en/2
 
 ```shell
 gcloud beta emulators datastore start --no-store-on-disk --consistency=1.0 --host-port=localhost:8089 --quiet
-env FLASK_ENV=development flask run -p 8080
+GAE_ENV=localdev FLASK_ENV=development flask run -p 8080
 ```
 
 Open [localhost:8080](http://localhost:8080/) and you should see the Bridgy home page!

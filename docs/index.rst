@@ -40,7 +40,7 @@ Now, you can fire up the gcloud emulator and run the tests:
 
 .. code:: sh
 
-   gcloud beta emulators datastore start --no-store-on-disk --consistency=1.0 --host-port=localhost:8089 < /dev/null >& /dev/null
+   gcloud beta emulators datastore start --no-store-on-disk --consistency=1.0 --host-port=localhost:8089 --quiet
    python3 -m unittest discover -s tests -t .
    kill %1
 
@@ -63,15 +63,13 @@ runs on http://localhost:8081/, eg:
    curl -d 'source_key=agNhcHByFgsSB1R3aXR0ZXIiCXNjaG5hcmZlZAw&last_polled=1970-01-01-00-00-00' \
      http://localhost:8081/_ah/queue/poll
 
-To run the entire app locally in
-`app_server <https://github.com/XeoN-GHMB/app_server>`__ (`which
-also serves the static file
-handlers <https://groups.google.com/d/topic/google-appengine/BJDE8y2KISM/discussion>`__),
-run this in the repo root directory:
+To run the app locally, use
+`flask run <https://flask.palletsprojects.com/en/2.0.x/cli/#run-the-development-server>`__:
 
 .. code:: shell
 
-   app_server -A oauth-dropins .
+   gcloud beta emulators datastore start --no-store-on-disk --consistency=1.0 --host-port=localhost:8089 --quiet
+   GAE_ENV=localdev FLASK_ENV=development flask run -p 8080
 
 Open `localhost:8080 <http://localhost:8080/>`__ and you should see the
 Bridgy home page!
