@@ -626,7 +626,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
     """
     if not actor:
       actor = self.gr_source.user_to_actor(json_loads(auth_entity.user_json))
-    logging.debug('Extracting URLs and domains from actor: {json_dumps(actor, indent=2)}')
+    logging.debug(f'Extracting URLs and domains from actor: {json_dumps(actor, indent=2)}')
 
     candidates = util.trim_nulls(util.uniquify(
         [user_url] + microformats2.object_urls(actor)))

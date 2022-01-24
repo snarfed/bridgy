@@ -241,7 +241,7 @@ class BrowserViewTest(testutil.AppTest):
     self.assertEqual([], resp.json)
 
   def test_feed_missing_token(self):
-    resp = self.post('feed?key={self.source.urlsafe().decode()}')
+    resp = self.post(f'feed?key={self.source.urlsafe().decode()}')
     self.assertEqual(400, resp.status_code, resp.get_data(as_text=True))
 
   def test_feed_bad_token(self):
@@ -417,7 +417,7 @@ class BrowserViewTest(testutil.AppTest):
     self.assertEqual('OK', resp.json)
 
   def test_poll_missing_token(self):
-    resp = self.post('poll?key={self.source.urlsafe().decode()}')
+    resp = self.post(f'poll?key={self.source.urlsafe().decode()}')
     self.assertEqual(400, resp.status_code, resp.get_data(as_text=True))
 
   def test_poll_bad_token(self):

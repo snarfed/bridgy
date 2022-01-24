@@ -334,9 +334,9 @@ class PublishBase(webmention.Webmention):
       return best_match
 
     if sources_ready:
-      msg = 'No account found that matches {util.pretty_link(url)}. Check that <a href="{util.host_url("/about#profile-link")}">the web site URL is in your silo profile</a>, then <a href="{request.host_url}">sign up again</a>.'
+      msg = f'No account found that matches {util.pretty_link(url)}. Check that <a href="{util.host_url("/about#profile-link")}">the web site URL is in your silo profile</a>, then <a href="{request.host_url}">sign up again</a>.'
     else:
-      msg = 'Publish is not enabled for your account. <a href="{request.host_url}">Try signing up!</a>'
+      msg = f'Publish is not enabled for your account. <a href="{request.host_url}">Try signing up!</a>'
     self.error(msg, html=msg)
 
   def attempt_single_item(self, item):
