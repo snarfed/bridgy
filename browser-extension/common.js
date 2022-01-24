@@ -349,9 +349,11 @@ class Silo {
         console.debug(json)
         return json
       } else {
+        // TODO: surface in UI?
         console.debug(await res.text())
       }
     } catch (err) {
+      // TODO: surface in UI?
       console.error(err)
       return null
     }
