@@ -72,13 +72,27 @@ class Silo {
   /**
    * Returns the URL path for a given AS1 activity's reactions.
    *
-   * To be implemented by subclasses.
+   * Defaults to null. Optional, only implement for silos that need a separate
+   * fetch for reactions.
    *
    * @param {Object} AS1 activity
    * @returns {String} silo URL path
    */
   static reactionsPath(activity) {
     throw new Error('Not implemented')
+  }
+
+  /**
+   * Returns the URL path for a given AS1 activity's comments.
+   *
+   * Defaults to null. Optional, only implement for silos that need a separate
+   * fetch for comments.
+   *
+   * @param {Object} AS1 activity
+   * @returns {String} silo URL path
+   */
+  static commentsPath(activity) {
+    return null
   }
 
   /**
@@ -139,27 +153,41 @@ class Silo {
         }
       }
 
-      // fetch post permalink for comments
+      // fetch post permalink
       const resolved = await this.forward(activity.url, `/post`)
       if (!resolved) {
         console.warn(`Bridgy couldn't translate post HTML`)
         continue
       }
-
-      // fetch reactions
-      const reactions = await this.forward(this.reactionsPath(activity),
-                                           `/reactions?id=${activity.id}`)
-      if (!reactions) {
-        console.warn(`Bridgy couldn't translate reactions`)
-        continue
-      }
-
-      const numComments = (resolved.object && resolved.object.replies &&
+      var numComments = (resolved.object && resolved.object.replies &&
                            resolved.object.replies.items)
           ? resolved.object.replies.items.length : 0
-      await this.storageSet(cacheKey, {c: numComments, r: reactions.length})
 
-      if (numComments > 0 || reactions.length > 0) {
+      // fetch comments
+      if (this.commentsPath(activity)) {
+        const comments = await this.forward(this.commentsPath(activity),
+                                            `/comments?id=${activity.id}`)
+        if (!comments) {
+          console.warn(`Bridgy couldn't translate comments`)
+          continue
+        }
+        numComments = comments.length
+      }
+
+      // fetch reactions
+      var numReactions = 0
+      if (this.reactionsPath(activity)) {
+        const reactions = await this.forward(this.reactionsPath(activity),
+                                             `/reactions?id=${activity.id}`)
+        if (!reactions) {
+          console.warn(`Bridgy couldn't translate reactions`)
+          continue
+        }
+        numReactions = reactions.length
+      }
+
+      await this.storageSet(cacheKey, {c: numComments, r: numReactions})
+      if (numComments > 0 || numReactions > 0) {
         await this.storageSet('lastResponse', Date.now())
       }
     }

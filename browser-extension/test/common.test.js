@@ -37,6 +37,12 @@ class FakeSilo extends Silo {
   }
 }
 
+class FakeCommentsSilo extends FakeSilo {
+  static commentsPath(activity) {
+    return `/comments/${activity.id}`
+  }
+}
+
 Silo.DOMAIN = 'fa.ke'
 Silo.NAME = 'fake'
 Silo.BASE_URL = 'http://fa.ke'
@@ -131,27 +137,33 @@ test('poll, no stored token', async () => {
   expect(browser.storage.local.data['fake-lastResponse']).toBeUndefined()
 })
 
-async function pollWithResponses() {
+async function pollWithResponses(cls) {
   fetch.mockResponseOnce('{}')
   fetch.mockResponseOnce('fake feed')
   fetch.mockResponseOnce(JSON.stringify(activities))
   fetch.mockResponseOnce('post 246')
-  fetch.mockResponseOnce('{"object": {"replies": {"items": [1,2]}}}')
+  if (cls == FakeCommentsSilo) {
+    fetch.mockResponseOnce('{"id": "tag:instagram.com:123", "object": {}}')
+    fetch.mockResponseOnce('fake comments')
+    fetch.mockResponseOnce('[1, 2]')
+  } else {
+    fetch.mockResponseOnce('{"object": {"replies": {"items": [1, 2]}}}')
+  }
   fetch.mockResponseOnce('reactions 246')
   fetch.mockResponseOnce('[1, 2, 3, 4]')
   fetch.mockResponseOnce('post 357')
-  fetch.mockResponseOnce('{"object": {}}')
+  fetch.mockResponseOnce('{"id": "tag:instagram.com:456", "object": {"replies": {"totalItems": 0}}}')
   fetch.mockResponseOnce('reactions 357')
   fetch.mockResponseOnce('[]')
   fetch.mockResponseOnce('"OK"')
 
-  await FakeSilo.poll()
-  expect(fetch.mock.calls.length).toBe(12)
+  await cls.poll()
+  expect(fetch.mock.calls.length).toBe(cls == FakeCommentsSilo ? 16 : 12)
 }
 
 test('poll', async () => {
   const start = Date.now()
-  await pollWithResponses()
+  await pollWithResponses(FakeSilo)
   const end = Date.now()
 
   expect(browser.storage.local.data).toMatchObject({
@@ -344,14 +356,19 @@ test('poll, existing lastResponse, no comments or reactions', async () => {
 
 
 test('poll, initial, with comments/reactions', async () => {
-  await pollWithResponses()
+  await pollWithResponses(FakeSilo)
+  expect(browser.storage.local.data['fake-lastResponse']).toBeDefined()
+})
+
+
+test('poll, initial, comments fetch', async () => {
+  await pollWithResponses(FakeCommentsSilo)
   expect(browser.storage.local.data['fake-lastResponse']).toBeDefined()
 })
 
 test('poll, existing lastResponse, with comments/reactions', async () => {
   browser.storage.local.data['fake-lastResponse'] = 123
   const start = Date.now()
-  await pollWithResponses()
+  await pollWithResponses(FakeSilo)
   expect(browser.storage.local.data['fake-lastResponse']).toBeGreaterThanOrEqual(start)
 })
-
