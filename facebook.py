@@ -63,8 +63,7 @@ class Facebook(browser.BrowserSource):
       return self.gr_source.user_url(self.username)
 
     user_id = self.key.id()
-    # STATE: define this, where is it? not here or granary or o-d
-    if util.is_int(id) and int(id) < MIN_APP_SCOPED_ID:
+    if util.is_int(user_id) and int(user_id) < oauth_facebook.MIN_APP_SCOPED_ID:
       return self.gr_source.user_url(user_id)
 
   @classmethod

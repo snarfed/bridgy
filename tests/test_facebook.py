@@ -175,3 +175,16 @@ class FacebookTest(testutil.AppTest):
     resp = self.get_response('poll')
     self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
     self.assertEqual('OK', resp.json)
+
+  def test_silo_url(self):
+    self.source.username = None
+    self.assertEqual('https://www.facebook.com/212038', self.source.silo_url())
+
+    self.source.username = 'foo'
+    self.assertEqual('https://www.facebook.com/foo', self.source.silo_url())
+
+    self.actor.update({
+      'numeric_id': '1000000000000001',
+      'username': None,
+    })
+    self.assertIsNone(Facebook.new(actor=self.actor).silo_url())
