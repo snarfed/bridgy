@@ -118,8 +118,9 @@ class FakeGrSource(gr_source.Source):
     return self.actor
 
   def merge_scraped_reactions(self, scraped, activity):
-    gr_source.merge_by_id(activity['object'], 'tags', [self.like])
-    return [self.like]
+    likes = json_loads(scraped)
+    gr_source.merge_by_id(activity['object'], 'tags', likes)
+    return likes
 
   def create(self, obj, include_link=gr_source.OMIT_LINK,
              ignore_formatting=False):

@@ -334,21 +334,40 @@ class BrowserViewTest(testutil.AppTest):
       f'post?token=towkin&key={self.other_source.urlsafe().decode()}')
     self.assertEqual(403, resp.status_code, resp.get_data(as_text=True))
 
-  def test_reactions(self):
+  def test_comments(self):
     key = Activity(id='tag:fa.ke,2013:123_456', source=self.source,
                    activity_json=json_dumps(self.activities[0])).put()
-    like = FakeBrowserSource.gr_source.like = {
+    comments = [{
       'objectType': 'activity',
       'verb': 'like',
       'id': 'new',
-    }
+    }]
 
-    resp = self.post(f'reactions?id=tag:fa.ke,2013:123_456&{self.auth}')
+    resp = self.post(f'comments?id=tag:fa.ke,2013:123_456&{self.auth}',
+                     json=comments)
     self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
-    self.assert_equals([like], resp.json)
+    self.assert_equals(comments, resp.json)
 
     stored = json_loads(key.get().activity_json)
-    self.assert_equals(self.activities[0]['object']['tags'] + [like],
+    self.assert_equals(self.activities[0]['object']['tags'] + likes,
+                       stored['object']['tags'])
+
+  def test_reactions(self):
+    key = Activity(id='tag:fa.ke,2013:123_456', source=self.source,
+                   activity_json=json_dumps(self.activities[0])).put()
+    likes = [{
+      'objectType': 'activity',
+      'verb': 'like',
+      'id': 'new',
+    }]
+
+    resp = self.post(f'reactions?id=tag:fa.ke,2013:123_456&{self.auth}',
+                     json=likes)
+    self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
+    self.assert_equals(likes, resp.json)
+
+    stored = json_loads(key.get().activity_json)
+    self.assert_equals(self.activities[0]['object']['tags'] + likes,
                        stored['object']['tags'])
 
   def test_reactions_bad_id(self):
