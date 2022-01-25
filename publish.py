@@ -153,7 +153,7 @@ class PublishBase(webmention.Webmention):
     if (domain not in util.DOMAINS or
         len(path_parts) != 2 or path_parts[0] != '/publish' or not source_cls):
       self.error(
-        'Target must be brid.gy/publish/{flickr,github,mastodon,meetup,twitter}')
+        'Target must be brid.gy/publish/[flickr,github,mastodon,meetup,twitter]')
     elif source_cls == Instagram:
       self.error(f'Sorry, {source_cls.GR_CLASS.NAME} is not supported.')
 
