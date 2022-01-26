@@ -122,6 +122,12 @@ class FakeGrSource(gr_source.Source):
     gr_source.merge_by_id(activity['object'], 'tags', likes)
     return likes
 
+  def merge_scraped_comments(self, scraped, activity):
+    comments = json_loads(scraped)
+    gr_source.merge_by_id(activity['object'].setdefault('replies', {}),
+                          'items', comments)
+    return comments
+
   def create(self, obj, include_link=gr_source.OMIT_LINK,
              ignore_formatting=False):
     verb = obj.get('verb')

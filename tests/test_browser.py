@@ -338,9 +338,10 @@ class BrowserViewTest(testutil.AppTest):
     key = Activity(id='tag:fa.ke,2013:123_456', source=self.source,
                    activity_json=json_dumps(self.activities[0])).put()
     comments = [{
-      'objectType': 'activity',
-      'verb': 'like',
-      'id': 'new',
+      'objectType': 'comment',
+      'content': '太可爱了。cute，@a_person, very cute',
+      'id': '110',
+      'url': 'https://www.instagram.com/p/ABC123/#comment-110',
     }]
 
     resp = self.post(f'comments?id=tag:fa.ke,2013:123_456&{self.auth}',
@@ -349,8 +350,8 @@ class BrowserViewTest(testutil.AppTest):
     self.assert_equals(comments, resp.json)
 
     stored = json_loads(key.get().activity_json)
-    self.assert_equals(self.activities[0]['object']['tags'] + likes,
-                       stored['object']['tags'])
+    self.assert_equals(self.activities[0]['object']['replies']['items'] + comments,
+                       stored['object']['replies']['items'])
 
   def test_reactions(self):
     key = Activity(id='tag:fa.ke,2013:123_456', source=self.source,
@@ -388,7 +389,7 @@ class BrowserViewTest(testutil.AppTest):
     resp = self.post(f'reactions?id=tag:fa.ke,2013:123_456&{self.auth}',
                      data=bad_json)
     self.assertEqual(400, resp.status_code)
-    self.assertIn("Couldn't parse scraped reactions: fooey",
+    self.assertIn("Couldn't parse scraped extras: fooey",
                   html.unescape(resp.get_data(as_text=True)))
 
   def test_reactions_no_activity(self):

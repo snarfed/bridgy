@@ -310,13 +310,19 @@ class Post(BrowserView):
     return new_activity
 
 
-class Reactions(BrowserView):
-  """Parses reactions/likes from silo HTML and adds them to an existing Activity.
+class Extras(BrowserView):
+  """Merges extras (comments, reactions) from silo HTML into an existing Activity.
 
   Requires the request parameter `id` with the silo post's id (not shortcode!).
 
-  Response body is the translated ActivityStreams JSON for the reactions.
+  Response body is the translated ActivityStreams JSON for the extras.
+
+  Subclasses must populate the MERGE_METHOD constant with the string name of the
+  granary source class's method that parses extras from silo HTML and merges
+  them into an activity.
   """
+  MERGE_METHOD = None
+
   def dispatch_request(self, *args):
     source = self.auth()
 
@@ -336,21 +342,41 @@ class Reactions(BrowserView):
 
     activity_data = json_loads(activity.activity_json)
 
-    # convert new reactions to AS, merge into existing activity
+    # convert new extras to AS, merge into existing activity
     try:
-      new_reactions = gr_src.merge_scraped_reactions(
+      new_extras = getattr(gr_src, self.MERGE_METHOD)(
         request.get_data(as_text=True), activity_data)
     except ValueError as e:
-      msg = f"Couldn't parse scraped reactions: {e}"
+      msg = f"Couldn't parse scraped extras: {e}"
       logging.error(msg, exc_info=True)
       error(msg)
 
     activity.activity_json = json_dumps(activity_data)
     activity.put()
 
-    reaction_ids = ' '.join(r['id'] for r in new_reactions)
-    logging.info(f"Stored reactions for activity {id}: {reaction_ids}")
-    return jsonify(new_reactions)
+    extra_ids = ' '.join(c['id'] for c in new_extras)
+    logging.info(f"Stored extras for activity {id}: {extra_ids}")
+    return jsonify(new_extras)
+
+
+class Comments(Extras):
+  """Parses comments from silo HTML and adds them to an existing Activity.
+
+  Requires the request parameter `id` with the silo post's id (not shortcode!).
+
+  Response body is the translated ActivityStreams JSON for the comments.
+  """
+  MERGE_METHOD = 'merge_scraped_comments'
+
+
+class Reactions(Extras):
+  """Parses reactions/likes from silo HTML and adds them to an existing Activity.
+
+  Requires the request parameter `id` with the silo post's id (not shortcode!).
+
+  Response body is the translated ActivityStreams JSON for the reactions.
+  """
+  MERGE_METHOD = 'merge_scraped_reactions'
 
 
 class Poll(BrowserView):
@@ -385,6 +411,7 @@ def route(source_cls):
       (f'/{source_cls.SHORT_NAME}/browser/feed', Feed),
       (f'/{source_cls.SHORT_NAME}/browser/post', Post),
       (f'/{source_cls.SHORT_NAME}/browser/likes', Reactions),
+      (f'/{source_cls.SHORT_NAME}/browser/comments', Comments),
       (f'/{source_cls.SHORT_NAME}/browser/reactions', Reactions),
       (f'/{source_cls.SHORT_NAME}/browser/poll', Poll),
       (f'/{source_cls.SHORT_NAME}/browser/token-domains', TokenDomains),
