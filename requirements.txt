@@ -8,7 +8,6 @@ git+https://github.com/snarfed/oauth-dropins.git#egg=oauth_dropins
 git+https://github.com/snarfed/granary.git#egg=granary
 git+https://github.com/kylewm/mf2util.git#egg=mf2util
 git+https://github.com/Alir3z4/html2text.git#egg=html2text
-app-server~=0.7.0; python_version>="3.8"
 brotli~=1.0
 cachetools~=4.2
 flask~=2.0.2
