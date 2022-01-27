@@ -116,6 +116,7 @@ class Silo {
     let key = await this.storageGet('bridgySourceKey')
     if (!key) {
       key = await this.forward(await this.profilePath(), '/profile')
+      // TODO: detect no profile links, token isn't IndieAuthed for any domain in profile links, and private accounts, short circuit out.
       await this.storageSet('bridgySourceKey', key)
     }
 
