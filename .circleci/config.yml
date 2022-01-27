@@ -31,6 +31,8 @@ jobs:
           command: |
             pip install -U pip
             pip -V
+            # make sure we install these at head, below
+            pip uninstall -y granary oauth-dropins
             pip install -U -r requirements.txt
             pip install coverage coveralls
 
