@@ -96,6 +96,15 @@ class Silo {
   }
 
   /**
+   * Returns HTTP headers to include in silo requests.
+   *
+   * Defaults to none. Optional, only implement for silos that need specific headers.
+   */
+  static headers() {
+    return {}
+  }
+
+  /**
    * Polls the user's posts, forwards new comments and likes to Bridgy.
    */
   static async poll() {
@@ -327,11 +336,13 @@ class Silo {
 
     // Make HTTP request
     console.debug(`Fetching ${url}`)
+    const headers = {'X-Bridgy': '1'}
+    Object.assign(headers, this.headers())
     const res = await fetch(url, {
       method: 'GET',
       redirect: 'follow',
       // replaced in injectCookies()
-      headers: {'X-Bridgy': '1'},
+      headers: headers,
     })
 
     console.debug(`Got ${res.status}`)

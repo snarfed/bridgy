@@ -35,6 +35,10 @@ class FakeSilo extends Silo {
   static reactionsPath(activity) {
     return `/reactions/${activity.id}`
   }
+
+  static headers() {
+    return {'foo': 'bar'}
+  }
 }
 
 class FakeCommentsSilo extends FakeSilo {
@@ -91,7 +95,7 @@ test('forward', async () => {
     {
       method: 'GET',
       redirect: 'follow',
-      headers: {'X-Bridgy': '1'},
+      headers: {'X-Bridgy': '1', 'foo': 'bar'},
     },
   ])
   expect(fetch.mock.calls[1]).toEqual([

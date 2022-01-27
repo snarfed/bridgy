@@ -52,6 +52,17 @@ class Instagram extends Silo {
     const id = activity.id.split(':')[2].split('_')[0]
     return `https://i.instagram.com/api/v1/media/${id}/comments/?can_support_threading=true&permalink_enabled=false`
   }
+
+  /**
+   * Returns HTTP headers to include in silo requests.
+   */
+  static headers() {
+    return {
+      // duplicated in granary/instagram.py
+      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:96.0) Gecko/20100101 Firefox/96.0',
+      'X-IG-App-ID': '936619743392459',  // desktop web
+    }
+  }
 }
 
 Instagram.DOMAIN = 'instagram.com'
