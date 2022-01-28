@@ -4,12 +4,12 @@ import copy
 import logging
 from operator import itemgetter
 
-from flask import jsonify, request
+from flask import jsonify, make_response, request
 from flask.views import View
 from google.cloud import ndb
 from granary import microformats2
 from granary import source as gr_source
-from oauth_dropins.webutil.flask_util import error
+from oauth_dropins.webutil import flask_util
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
 from flask_app import app
@@ -147,10 +147,10 @@ class BrowserView(View):
     Raises: :class:`HTTPException` with HTTP 403
     """
     if not actor:
-      error('Missing actor!')
+      self.error('Missing actor!')
 
     if not gr_source.Source.is_public(actor):
-      error(f'Your {self.gr_source().NAME} account is private. Bridgy only supports public accounts.')
+      self.error(f'Your {self.gr_source().NAME} account is private. Bridgy only supports public accounts.')
 
     token = request.values['token']
     domains = {util.domain_from_link(util.replace_test_domains_with_localhost(u))
@@ -162,7 +162,7 @@ class BrowserView(View):
       if domain and token in domain.tokens:
         return
 
-    error(f'Token {token} is not authorized for any of: {domains}', 403)
+    self.error(f'Token {token} is not authorized for any of: {domains}', 403)
 
   def auth(self):
     """Loads the source and token and checks that they're valid.
@@ -175,7 +175,7 @@ class BrowserView(View):
     Returns: BrowserSource or None
     """
     # Load source
-    source = util.load_source()
+    source = util.load_source(error_fn=self.error)
 
     # Load and check token
     token = request.values['token']
@@ -183,7 +183,13 @@ class BrowserView(View):
       if domain.key.id() in source.domains:
         return source
 
-    error(f'Token {token} is not authorized for any of: {source.domains}', 403)
+    self.error(f'Token {token} is not authorized for any of: {source.domains}', 403)
+
+  @staticmethod
+  def error(msg, status=400):
+    """Return plain text errors for display in the browser extension."""
+    flask_util.error(msg, status=status, response=make_response(
+      msg, status, {'Content-Type': 'text/plain; charset=utf-8'}))
 
 
 class Status(BrowserView):
@@ -221,7 +227,7 @@ class Homepage(BrowserView):
         logging.info(f'Returning {username}')
         return jsonify(username)
 
-    error(f"Couldn't determine logged in {gr_src.NAME} user or username")
+    self.error(f"Couldn't determine logged in {gr_src.NAME} user or username")
 
 
 class Feed(BrowserView):
@@ -277,13 +283,13 @@ class Post(BrowserView):
     gr_src = self.gr_source()
     new_activity, actor = gr_src.scraped_to_activity(request.get_data(as_text=True))
     if not new_activity:
-      error(f'No {gr_src.NAME} post found in HTML')
+      self.error(f'No {gr_src.NAME} post found in HTML')
 
     @ndb.transactional()
     def update_activity():
       id = new_activity.get('id')
       if not id:
-        error('Scraped post missing id')
+        self.error('Scraped post missing id')
       activity = Activity.get_by_id(id)
 
       if activity:
@@ -332,13 +338,13 @@ class Extras(BrowserView):
     # validate request
     parsed_id = util.parse_tag_uri(id)
     if not parsed_id:
-      error(f'Expected id to be tag URI; got {id}')
+      self.error(f'Expected id to be tag URI; got {id}')
 
     activity = Activity.get_by_id(id)
     if not activity:
-      error(f'No {gr_src.NAME} post found for id {id}', 404)
+      self.error(f'No {gr_src.NAME} post found for id {id}', 404)
     elif activity.source != source.key:
-      error(f'Activity {id} is owned by {activity.source}, not {source.key}', 403)
+      self.error(f'Activity {id} is owned by {activity.source}, not {source.key}', 403)
 
     activity_data = json_loads(activity.activity_json)
 
@@ -349,7 +355,7 @@ class Extras(BrowserView):
     except ValueError as e:
       msg = f"Couldn't parse scraped extras: {e}"
       logging.error(msg, exc_info=True)
-      error(msg)
+      self.error(msg)
 
     activity.activity_json = json_dumps(activity_data)
     activity.put()
@@ -394,7 +400,7 @@ class TokenDomains(BrowserView):
 
     domains = [d.key.id() for d in Domain.query(Domain.tokens == token)]
     if not domains:
-      error(f'No registered domains for token {token}', 404)
+      self.error(f'No registered domains for token {token}', 404)
 
     return jsonify(domains)
 

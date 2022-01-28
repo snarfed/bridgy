@@ -413,17 +413,21 @@ def host_url(path_query=None):
   return urllib.parse.urljoin(base, path_query)
 
 
-def load_source():
-  """Extracts a URL-safe key from a query parameter and loads a source object.
+def load_source(error_fn=None):
+  """Loads a source from the `source_key` or `key` query parameter.
 
-  Returns HTTP 400 if the parameter is not provided or the source doesn't exist.
+  Expects the query parameter value to be a URL-safe key. Returns HTTP 400 if
+  neither parameter is provided or the source doesn't exist.
 
   Args:
-    handler: RequestHandler
-    param: string
+    error_fn: callable to be called with errors. Takes one parameter, the string
+      error message.
 
-  Returns: Source object
+  Returns: :class:`models.Source`
   """
+  if error_fn is None:
+    error_fn = error
+
   for param in 'source_key', 'key':
     try:
       val = request.values.get(param)
@@ -432,9 +436,9 @@ def load_source():
         if source:
           return source
     except (binascii.Error, google.protobuf.message.DecodeError):
-      error(f'Bad value for {param}')
+      error_fn(f'Bad value for {param}')
 
-  error('Source key not found')
+  error_fn('Source key not found')
 
 
 def maybe_add_or_delete_source(source_cls, auth_entity, state, **kwargs):

@@ -142,8 +142,9 @@ class BrowserViewTest(testutil.AppTest):
     FakeBrowserSource.gr_source.actor = {}
     resp = self.post('homepage', data='not logged in', auth=False)
     self.assertEqual(400, resp.status_code)
-    self.assertIn("Couldn't determine logged in FakeSource user",
-                  html.unescape(resp.get_data(as_text=True)))
+    self.assertEqual("Couldn't determine logged in FakeSource user or username",
+                     resp.get_data(as_text=True))
+    self.assertEqual('text/plain; charset=utf-8', resp.headers['Content-Type'])
 
   def test_profile_new_user(self):
     self.source.delete()
@@ -202,14 +203,14 @@ class BrowserViewTest(testutil.AppTest):
     FakeGrSource.actor = None
     resp = self.post('profile?token=towkin')
     self.assertEqual(400, resp.status_code, resp.get_data(as_text=True))
-    self.assertIn('Missing actor', html.unescape(resp.get_data(as_text=True)))
+    self.assertEqual('Missing actor!', resp.get_data(as_text=True))
 
   def test_profile_private_account(self):
     FakeBrowserSource.gr_source.actor['to'] = \
       [{'objectType':'group', 'alias':'@private'}]
     resp = self.post('profile?token=towkin')
     self.assertEqual(400, resp.status_code)
-    self.assertIn('Your FakeSource account is private.', resp.get_data(as_text=True))
+    self.assertIn('Your FakeSource account is private. ', resp.get_data(as_text=True))
 
   def test_profile_missing_token(self):
     resp = self.post('profile', auth=False)
@@ -220,14 +221,14 @@ class BrowserViewTest(testutil.AppTest):
     self.domain.delete()
     resp = self.post('profile?token=towkin')
     self.assertEqual(403, resp.status_code)
-    self.assertIn("towkin is not authorized for any of: {'snarfed.org'}",
-                  html.unescape(resp.get_data(as_text=True)))
+    self.assertEqual("Token towkin is not authorized for any of: {'snarfed.org'}",
+                     resp.get_data(as_text=True))
 
   def test_profile_bad_token(self):
     resp = self.post('profile?token=nope')
     self.assertEqual(403, resp.status_code)
-    self.assertIn("nope is not authorized for any of: {'snarfed.org'}",
-                  html.unescape(resp.get_data(as_text=True)))
+    self.assertEqual("Token nope is not authorized for any of: {'snarfed.org'}",
+                     resp.get_data(as_text=True))
 
   def test_feed(self):
     resp = self.post('feed')
@@ -247,8 +248,8 @@ class BrowserViewTest(testutil.AppTest):
   def test_feed_bad_token(self):
     resp = self.post(f'feed?token=nope&key={self.source.urlsafe().decode()}')
     self.assertEqual(403, resp.status_code, resp.get_data(as_text=True))
-    self.assertIn("nope is not authorized for any of: ['snarfed.org']",
-                  html.unescape(resp.get_data(as_text=True)))
+    self.assertEqual("Token nope is not authorized for any of: ['snarfed.org']",
+                     resp.get_data(as_text=True))
 
   def test_feed_missing_key(self):
     resp = self.post('feed?token=towkin')
@@ -258,7 +259,7 @@ class BrowserViewTest(testutil.AppTest):
     resp = self.post('feed?token=towkin&key=asdf')
     self.assertEqual(400, resp.status_code, resp.get_data(as_text=True))
     # this comes from util.load_source() since the urlsafe key is malformed
-    self.assertIn('Bad value for key', resp.get_data(as_text=True))
+    self.assertEqual('Bad value for key', resp.get_data(as_text=True))
 
   def test_feed_token_domain_not_in_source(self):
     resp = self.post(
@@ -281,7 +282,7 @@ class BrowserViewTest(testutil.AppTest):
     FakeGrSource.activities = []
     resp = self.post('post')
     self.assertEqual(400, resp.status_code)
-    self.assertIn('No FakeSource post found in HTML', resp.get_data(as_text=True))
+    self.assertEqual('No FakeSource post found in HTML', resp.get_data(as_text=True))
 
   def test_post_merge_comments(self):
     # existing activity with two comments
@@ -316,7 +317,7 @@ class BrowserViewTest(testutil.AppTest):
     resp = self.post('post?token=towkin&key=asdf')
     self.assertEqual(400, resp.status_code, resp.get_data(as_text=True))
     # this comes from util.load_source() since the urlsafe key is malformed
-    self.assertIn('Bad value for key', resp.get_data(as_text=True))
+    self.assertEqual('Bad value for key', resp.get_data(as_text=True))
 
   def test_post_missing_token(self):
     resp = self.post(f'post?key={self.source.urlsafe().decode()}')
@@ -326,8 +327,8 @@ class BrowserViewTest(testutil.AppTest):
   def test_post_bad_token(self):
     resp = self.post(f'post?token=nope&key={self.source.urlsafe().decode()}')
     self.assertEqual(403, resp.status_code, resp.get_data(as_text=True))
-    self.assertIn("nope is not authorized for any of: ['snarfed.org']",
-                  html.unescape(resp.get_data(as_text=True)))
+    self.assertEqual("Token nope is not authorized for any of: ['snarfed.org']",
+                     resp.get_data(as_text=True))
 
   def test_post_token_domain_not_in_source(self):
     resp = self.post(
@@ -374,7 +375,7 @@ class BrowserViewTest(testutil.AppTest):
   def test_reactions_bad_id(self):
     resp = self.post(f'reactions?id=789&{self.auth}')
     self.assertEqual(400, resp.status_code)
-    self.assertIn('Expected id to be tag URI', resp.get_data(as_text=True))
+    self.assertEqual('Expected id to be tag URI; got 789', resp.get_data(as_text=True))
 
   def test_reactions_bad_scraped_data(self):
     Activity(id='tag:fa.ke,2013:123_456', source=self.source,
@@ -389,13 +390,14 @@ class BrowserViewTest(testutil.AppTest):
     resp = self.post(f'reactions?id=tag:fa.ke,2013:123_456&{self.auth}',
                      data=bad_json)
     self.assertEqual(400, resp.status_code)
-    self.assertIn("Couldn't parse scraped extras: fooey",
-                  html.unescape(resp.get_data(as_text=True)))
+    self.assertEqual("Couldn't parse scraped extras: fooey",
+                  resp.get_data(as_text=True))
 
   def test_reactions_no_activity(self):
     resp = self.post(f'reactions?id=tag:fa.ke,2013:789&{self.auth}')
     self.assertEqual(404, resp.status_code)
-    self.assertIn('No FakeSource post found for id tag:fa.ke,2013:789', resp.get_data(as_text=True))
+    self.assertEqual('No FakeSource post found for id tag:fa.ke,2013:789',
+                     resp.get_data(as_text=True))
 
   def test_reactions_missing_token(self):
     resp = self.post(f'reactions?key={self.source.urlsafe().decode()}')
@@ -404,8 +406,8 @@ class BrowserViewTest(testutil.AppTest):
   def test_reactions_bad_token(self):
     resp = self.post(f'reactions?token=nope&key={self.source.urlsafe().decode()}')
     self.assertEqual(403, resp.status_code, resp.get_data(as_text=True))
-    self.assertIn("nope is not authorized for any of: ['snarfed.org']",
-                  html.unescape(resp.get_data(as_text=True)))
+    self.assertEqual("Token nope is not authorized for any of: ['snarfed.org']",
+                     resp.get_data(as_text=True))
 
   def test_reactions_missing_key(self):
     resp = self.post('reactions?token=towkin')
@@ -426,7 +428,7 @@ class BrowserViewTest(testutil.AppTest):
     self.assertEqual(403, resp.status_code)
     self.assertIn(
       "tag:fa.ke,2013:123_456 is owned by Key('FakeBrowserSource', '333zzz')",
-      html.unescape(resp.get_data(as_text=True)))
+      resp.get_data(as_text=True))
 
   def test_poll(self):
     self.expect_task('poll-now', source_key=self.source,
@@ -443,8 +445,8 @@ class BrowserViewTest(testutil.AppTest):
   def test_poll_bad_token(self):
     resp = self.post(f'poll?token=nope&key={self.source.urlsafe().decode()}')
     self.assertEqual(403, resp.status_code, resp.get_data(as_text=True))
-    self.assertIn("nope is not authorized for any of: ['snarfed.org']",
-                  html.unescape(resp.get_data(as_text=True)))
+    self.assertEqual("Token nope is not authorized for any of: ['snarfed.org']",
+                     resp.get_data(as_text=True))
 
   def test_poll_missing_key(self):
     resp = self.post('poll?token=towkin')
