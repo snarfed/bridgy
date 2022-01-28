@@ -279,13 +279,14 @@ test('poll, skip comments and reactions', async () => {
 test('poll, feed error', async () => {
   fetch.mockResponseOnce('{}')
   fetch.mockResponseOnce('fake feed')
-  fetch.mockResponseOnce('{}', {status: 400})  // Bridgy returns an HTTP error
+  fetch.mockResponseOnce('air-roar', {status: 400})  // Bridgy returns an HTTP error
   await FakeSilo.poll()
 
   expect(fetch.mock.calls.length).toBe(3)
   expect(browser.storage.local.data['fake-lastStart']).toBeDefined()
   expect(browser.storage.local.data['fake-lastSuccess']).toBeUndefined()
   expect(browser.storage.local.data['fake-lastResponse']).toBeUndefined()
+  expect(browser.storage.local.data['fake-lastError']).toEqual('air-roar')
 })
 
 test('poll, Bridgy non-JSON response', async () => {

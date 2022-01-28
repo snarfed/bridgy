@@ -165,7 +165,7 @@ class Silo {
       // fetch post permalink
       const resolved = await this.forward(activity.url, `/post`)
       if (!resolved) {
-        console.warn(`Bridgy couldn't translate post HTML`)
+        await this.recordError("Bridgy couldn't translate post HTML")
         continue
       }
       var numComments = (resolved.object && resolved.object.replies &&
@@ -177,7 +177,7 @@ class Silo {
         const comments = await this.forward(this.commentsPath(activity),
                                             `/comments?id=${activity.id}`)
         if (!comments) {
-          console.warn(`Bridgy couldn't translate comments`)
+          await this.recordError(`Bridgy couldn't translate comments`)
           continue
         }
         numComments = comments.length
@@ -189,7 +189,7 @@ class Silo {
         const reactions = await this.forward(this.reactionsPath(activity),
                                              `/reactions?id=${activity.id}`)
         if (!reactions) {
-          console.warn(`Bridgy couldn't translate reactions`)
+          await this.recordError(`Bridgy couldn't translate reactions`)
           continue
         }
         numReactions = reactions.length
@@ -327,7 +327,7 @@ class Silo {
       const parsed = new URL(url)
       if (parsed.hostname != this.DOMAIN &&
           !parsed.hostname.endsWith(`.${this.DOMAIN}`)) {
-        console.error(`Got non-${this.NAME} URL: ${url}`)
+        await this.recordError(`Got non-${this.NAME} URL: ${url}`)
         return
       }
     } catch (err) {
@@ -344,6 +344,10 @@ class Silo {
       // replaced in injectCookies()
       headers: headers,
     })
+
+    if (res.redirected) {
+      console.warning(`Got redirected! ${res.url}`)
+    }
 
     console.debug(`Got ${res.status}`)
     const text = await res.text()
@@ -363,7 +367,7 @@ class Silo {
   static async postBridgy(path_query, body) {
     const token = (await browser.storage.sync.get(['token'])).token
     if (!token) {
-      console.error('No stored token!')
+      await this.recordError('No stored token!')
       return
     }
 
@@ -390,13 +394,23 @@ class Silo {
         return json
       } else {
         // TODO: surface in UI?
-        console.debug(await res.text())
+        await this.recordError(await res.text())
       }
     } catch (err) {
       // TODO: surface in UI?
-      console.error(err)
+      await this.recordError(err)
       return null
     }
+  }
+
+  /**
+   * Logs an error to the console and stores it in lastError.
+   *
+   * @param {String} msg
+   */
+  static async recordError(msg) {
+    console.warn(msg)
+    await this.storageSet('lastError', msg)
   }
 
   /**

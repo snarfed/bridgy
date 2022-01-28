@@ -55,6 +55,7 @@ async function update() {
 
     const cookies = await silo.findCookies()
     let status = document.querySelector(`#${silo.NAME}-status`)
+    const lastError = data[`${silo.NAME}-lastError`]
     if (!enabled) {
       status.innerHTML = `Disabled`
       status.className = 'disabled'
@@ -75,9 +76,15 @@ async function update() {
       status.className = 'pending'
     } else if (!lastSuccess) {
       status.innerHTML = 'Initial poll did not succeed'
+      if (lastError) {
+        status.innerHTML += `: ${lastError}`
+      }
       status.className = 'error'
     } else if (lastStart > lastSuccess) {
-      status.innerHTML = 'Last poll did not succeed'
+      status.innerHTML = `Last poll did not succeed: ${lastError}`
+      if (lastError) {
+        status.innerHTML += `: ${lastError}`
+      }
       // want to include this but can't get it to work. Firefox says
       // "Uncaught SyntaxError: private fields are not currently supported"
       // '<a href="#" onclick="document.querySelector('#poll').click()">Retry now!</a>
