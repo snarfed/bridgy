@@ -297,6 +297,15 @@ class BrowserViewTest(testutil.AppTest):
       f'feed?token=towkin&key={self.other_source.urlsafe().decode()}')
     self.assertEqual(403, resp.status_code, resp.get_data(as_text=True))
 
+  def test_feed_no_public_posts(self):
+    for a in FakeGrSource.activities:
+      a['object']['to'] = [{'objectType':'group', 'alias':'@private'}]
+
+    resp = self.post('feed')
+    self.assertEqual(400, resp.status_code)
+    self.assertIn('None of your recent FakeSource posts are public',
+                  resp.get_data(as_text=True))
+
   def test_post(self):
     resp = self.post('post', data='silowe html')
     self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))

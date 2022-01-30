@@ -253,10 +253,14 @@ class Feed(BrowserView):
     return jsonify(activities)
 
   def scrape(self):
-    activities, actor = self.gr_source().scraped_to_activities(
-      request.get_data(as_text=True))
+    gr_src = self.gr_source()
+    activities, actor = gr_src.scraped_to_activities(request.get_data(as_text=True))
     ids = ' '.join(a['id'] for a in activities)
-    logging.info(f"Returning activities: {ids}")
+    logging.info(f"Activities: {ids}")
+
+    if activities and not any(gr_src.is_public(a) for a in activities):
+      self.error(f'None of your recent {gr_src.NAME} posts are public. <a href="https://brid.gy/about#fully+public+posts">Bridgy only handles fully public posts.</a>')
+
     return activities, actor
 
 
