@@ -317,7 +317,7 @@ class Silo {
     if (!browser.webRequest.onBeforeSendHeaders.hasListener(inject)) {
       browser.webRequest.onBeforeSendHeaders.addListener(
         inject,
-        {urls: [`${this.BASE_URL}/*`]},
+        {urls: [`*://*.${this.DOMAIN}/*`]},
         ['blocking', 'requestHeaders']
       );
     }
@@ -346,7 +346,7 @@ class Silo {
     })
 
     if (res.redirected) {
-      console.warning(`Got redirected! ${res.url}`)
+      console.warn(`Got redirected! Final URL: ${res.url}`)
     }
 
     console.debug(`Got ${res.status}`)

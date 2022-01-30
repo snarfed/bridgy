@@ -43,7 +43,7 @@ class FakeSilo extends Silo {
 
 class FakeCommentsSilo extends FakeSilo {
   static commentsPath(activity) {
-    return `/comments/${activity.id}`
+    return `https://sub.fa.ke/comments/${activity.id}`
   }
 }
 
