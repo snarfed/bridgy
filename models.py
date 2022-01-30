@@ -609,8 +609,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
 
     self.put()
 
-  @classmethod
-  def urls_and_domains(cls, auth_entity, user_url, actor=None):
+  def urls_and_domains(self, auth_entity, user_url, actor=None):
     """Returns this user's valid (not webmention-blocklisted) URLs and domains.
 
     Converts the auth entity's user_json to an ActivityStreams actor and uses
@@ -626,7 +625,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
       ([string url, ...], [string domain, ...])
     """
     if not actor:
-      actor = cls.gr_source.user_to_actor(json_loads(auth_entity.user_json))
+      actor = self.gr_source.user_to_actor(json_loads(auth_entity.user_json))
     logging.debug(f'Extracting URLs and domains from actor: {json_dumps(actor, indent=2)}')
 
     candidates = util.trim_nulls(util.uniquify(
@@ -637,7 +636,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
 
     urls = []
     for i, url in enumerate(candidates):
-      resolved = cls.resolve_profile_url(url, resolve=i < MAX_AUTHOR_URLS)
+      resolved = self.resolve_profile_url(url, resolve=i < MAX_AUTHOR_URLS)
       if resolved:
         urls.append(resolved)
 
@@ -647,7 +646,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
       # skip links on this source's domain itself. only currently needed for
       # Mastodon; the other silo domains are in the webmention blocklist.
       domain = util.domain_from_link(url)
-      if domain != cls.gr_source.DOMAIN:
+      if domain != self.gr_source.DOMAIN:
         final_urls.append(url)
         domains.append(domain)
 

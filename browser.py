@@ -156,21 +156,22 @@ class BrowserView(View):
       self.error(f'Your {self.gr_source().NAME} account is private. Bridgy only supports public accounts.')
 
     token = request.values['token']
-    urls, domains = self.source_class().urls_and_domains(None, None, actor=actor)
-    if not domains:
+    # create temporary source instance to get domains from actor
+    src = self.source_class().new(actor=actor)
+    if not src.domains:
       self.error(f'No usable web sites found in your {self.gr_source().NAME} profile. Add one of your registered domains above!')
 
 
     # update actor so resolved URLs can be reused
     actor.pop('url', None)
-    actor['urls'] = [{'value': url} for url in urls]
+    actor['urls'] = [{'value': url} for url in src.domain_urls]
 
-    logging.info(f'Checking token against domains {domains}')
-    for domain in ndb.get_multi(ndb.Key(Domain, d) for d in domains):
+    logging.info(f'Checking token against domains {src.domains}')
+    for domain in ndb.get_multi(ndb.Key(Domain, d) for d in src.domains):
       if domain and token in domain.tokens:
         return actor
 
-    self.error(f'Found link(s) to {domains} in your {self.gr_source().NAME} profile. Add one of your registered domains above!')
+    self.error(f'Found link(s) to {src.domains} in your {self.gr_source().NAME} profile. Add one of your registered domains above!')
 
   def auth(self):
     """Loads the source and token and checks that they're valid.
