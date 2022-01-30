@@ -50,7 +50,7 @@ jobs:
             python3 -m coverage run --source=. --omit=admin.py,appengine_config.py,local3/\*,logs.py,scripts/\*,tests/\* -m unittest discover -v
             if [ "$TWITTER_LIVE_TEST_APP_KEY" != "" ]; then PYTHONPATH=. python3 tests/twitter_live_test.py --debug; fi
             python3 -m coverage html -d /tmp/coverage_html
-            if [ "$COVERALLS_REPO_TOKEN" != "" ]; then coveralls || true; fi
+            if [ "$COVERALLS_REPO_TOKEN" != "" ]; then python3 -m coveralls || true; fi
 
       - run:
           name: JavaScript tests
