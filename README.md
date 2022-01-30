@@ -106,7 +106,7 @@ npm run test -- -t 'part of test name'
 You need to be logged into Instagram in your browser. The extension doesn't have a UI, but you can see what it's doing on your Bridgy user page, eg <code>brid.gy/instagram/[username]</code>.  Note that it doesn't work with [Firefox's Facebook Container tabs](https://github.com/mozilla/contain-facebook) add-on. If you have that enabled, you'll need to disable it to use Bridgy's browser extension.
 
 
-Extension logs in the JavaScript console
+Browser extension: logs in the JavaScript console
 ---
 If you're working on the browser extension, or [you're sending in a bug report for it,](https://github.com/snarfed/bridgy/issues), its JavaScript console logs are invaluable for debugging. Here's how to get them in Firefox:
 
@@ -124,6 +124,84 @@ Here's how to send them in with a bug report:
 2. Email the file to bridgy @ ryanb.org. _Do not_ post or attach it to a GitHub issue, or anywhere else public, because it contains sensitive tokens and cookies.
 
 <img src="https://user-images.githubusercontent.com/778068/119147959-e6360b80-ba00-11eb-8e35-647850177f4c.png">
+
+
+Browser extension: release
+---
+Here's how to cut a new release of the browser extension and publish it [to addons.mozilla.org](https://addons.mozilla.org/en-US/firefox/addon/bridgy/) [and the Chrome Web Store](https://chrome.google.com/webstore/detail/bridgy/lcpeamdhminbbjdfjbpmhgjgliaknflj):
+
+1. Load the extension in Firefox, in `[about:debugging](about:debugging)`) and Chrome (`[chrome://extensions/](chrome://extensions/)`, Developer mode on). Check that it works in both.
+1. Bump the version in `browser-extension/manifest.json`.
+1. Update the Changelog in the README.md section below this one.
+1. Build and sign the artifact:
+    ```sh
+    cd browser-extension/
+    npm test
+    ./node_modules/web-ext/bin/web-ext build
+    ```
+1. Submit it to AMO.
+    ```sh
+    # get API secret from Ryan if you don't have it
+    ./node_modules/web-ext/bin/web-ext sign --api-key user:14645521:476 --api-secret ...
+
+    # If this succeeds, it will say:
+    ...
+    Your add-on has been submitted for review. It passed validation but could not be automatically signed because this is a listed add-on.
+    FAIL
+    ...
+    ```
+    It's usually auto-approved within minutes. [Check the public listing here.](https://addons.mozilla.org/en-US/firefox/addon/bridgy/)
+1. Submit it to the Chrome Web Store:
+  1. [Open the console.](https://chrome.google.com/webstore/devconsole/)
+  1. Open the Bridgy item. Ryan to add you if you don't see it.
+  1. Choose _Package_ on the left.
+  1. Click the _Upload new package_ button.
+  1. Upload the new version's zip file from `browser-extension/web-ext-artifacts/`.
+  1. Update the Changelog in the _Description_ box. Leave the rest unchanged.
+  1. Click _Save draft_, then _Submit for review_.
+
+
+Browser extension: Changelog
+---
+0.4, 2022-01-30
+
+* Fix Instagram comments. Add extra client side API fetch, forward to new Bridgy endpoint.
+* Expand error messages in options UI.
+
+0.3.5, 2021-03-04
+
+* Dynamically adjust polling frequency per silo based on how often we're seeing new comments and reactions, how recent the last successful webmention was, etc.
+
+0.3.4, 2021-02-22
+
+* Allow individually enabling or disabling Instagram and Facebook.
+
+0.3.3, 2021-02-20
+
+* Only override requests from the browser extension, not all requests to the silos' domains.
+
+0.3.2, 2021-02-18
+
+* Fix compatibility with Facebook Container Tabs.
+
+0.3.1, 2021-02-17
+
+* Add Facebook support!
+
+0.2.1, 2021-01-09
+
+* Add more details to extensions option page: Instagram login, Bridgy IndieAuth registration, etc.
+* Support Firefox's Facebook Container Tabs addon.
+
+0.2, 2021-01-03
+
+* Add IndieAuth login on https://brid.gy/ and token handling.
+* Add extension settings page with status info and buttons to login again and poll now.
+* Better error handling.
+
+0.1.5, 2020-12-25
+
+* Initial beta release!
 
 
 Adding a new silo
