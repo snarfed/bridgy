@@ -373,7 +373,9 @@ test('poll, initial, comments fetch', async () => {
 
 test('poll, existing lastResponse, with comments/reactions', async () => {
   browser.storage.local.data['fake-lastResponse'] = 123
+  browser.storage.local.data['fake-lastError'] = 'foo'
   const start = Date.now()
   await pollWithResponses(FakeSilo)
   expect(browser.storage.local.data['fake-lastResponse']).toBeGreaterThanOrEqual(start)
+  expect(browser.storage.local.data['fake-lastError']).toBeNull()
 })

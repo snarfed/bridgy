@@ -139,7 +139,9 @@ class Silo {
     let key = await this.storageGet('bridgySourceKey')
     if (!key) {
       key = await this.forward(await this.profilePath(), '/profile')
-      // TODO: detect no profile links, token isn't IndieAuthed for any domain in profile links, and private accounts, short circuit out.
+      if (!key) {
+        return
+      }
       await this.storageSet('bridgySourceKey', key)
     }
 
@@ -203,6 +205,7 @@ class Silo {
 
     await this.postBridgy(`/poll`)
     await this.storageSet('lastSuccess', Date.now())
+    await this.storageSet('lastError', null)
     if (!(await this.storageGet('lastResponse'))) {
       await this.storageSet('lastResponse', Date.now())
     }
@@ -310,6 +313,7 @@ class Silo {
     // cross-browser standard yet? Argh!)
     const cookies = await this.findCookies()
     if (!cookies) {
+      await this.recordError(`Not logged into ${this.NAME}`)
       return
     }
 
@@ -393,11 +397,9 @@ class Silo {
         console.debug(json)
         return json
       } else {
-        // TODO: surface in UI?
         await this.recordError(await res.text())
       }
     } catch (err) {
-      // TODO: surface in UI?
       await this.recordError(err)
       return null
     }

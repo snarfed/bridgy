@@ -68,10 +68,10 @@ async function update() {
     } else if (!lastStart) {
       status.innerHTML = 'Not started yet'
       status.className = 'pending'
-    } else if (lastSuccess >= lastStart) {
+    } else if (lastSuccess >= lastStart || !lastError) {
       status.innerHTML = 'OK'
       status.className = 'ok'
-    } else if (lastStart > Date.now() - 2 * 60 * 1000) {
+    } else if (lastStart > Date.now() - 1 * 60 * 1000) {
       status.innerHTML = 'Polling now...'
       status.className = 'pending'
     } else if (!lastSuccess) {
