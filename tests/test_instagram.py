@@ -133,8 +133,8 @@ class InstagramTest(testutil.AppTest):
   def test_homepage_bad_html(self):
     resp = self.get_response('homepage', data='not a logged in IG feed')
     self.assertEqual(400, resp.status_code)
-    self.assertIn("Couldn't determine logged in Instagram user",
-                  html.unescape(resp.get_data(as_text=True)))
+    self.assertEqual("Scrape error: couldn't determine logged in Instagram user or username",
+                     resp.get_data(as_text=True))
 
   def test_profile_new_user(self):
     self.assertIsNone(Instagram.get_by_id('snarfed'))
@@ -176,7 +176,8 @@ class InstagramTest(testutil.AppTest):
     empty = HTML_HEADER + json_dumps({'config': HTML_VIEWER_CONFIG}) + HTML_FOOTER
     resp = self.get_response('post', data=empty)
     self.assertEqual(400, resp.status_code)
-    self.assertIn('No Instagram post found in HTML', resp.get_data(as_text=True))
+    self.assertEqual('Scrape error: no Instagram post found in HTML',
+                     resp.get_data(as_text=True))
 
   def test_post_merge_comments(self):
     self.source.put()

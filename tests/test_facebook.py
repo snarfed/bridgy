@@ -130,7 +130,8 @@ class FacebookTest(testutil.AppTest):
     <!DOCTYPE html>
     <html><body></body></html>""")
     self.assertEqual(400, resp.status_code, resp.get_data(as_text=True))
-    self.assertIn('No Facebook post found in HTML', resp.get_data(as_text=True))
+    self.assertEqual('Scrape error: no Facebook post found in HTML',
+                     resp.get_data(as_text=True))
 
   def test_post_merge_comments(self):
     key = self.source.put()
