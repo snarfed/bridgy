@@ -150,13 +150,16 @@ class BrowserView(View):
     Raises: :class:`HTTPException` with HTTP 403
     """
     if not actor:
-      self.error('Missing actor!')
+      self.error('Scrape error: missing actor!')
 
     if not gr_source.Source.is_public(actor):
       self.error(f'Your {self.gr_source().NAME} account is private. Bridgy only supports public accounts.')
 
     token = request.values['token']
     urls, domains = self.source_class().urls_and_domains(None, None, actor=actor)
+    if not domains:
+      self.error(f'No usable web sites found in your {self.gr_source().NAME} profile. Add one of your registered domains above!')
+
 
     # update actor so resolved URLs can be reused
     actor.pop('url', None)
@@ -167,7 +170,7 @@ class BrowserView(View):
       if domain and token in domain.tokens:
         return actor
 
-    self.error(f'Token {token} is not authorized for any of: {domains}', 403)
+    self.error(f'Found link(s) to {domains} in your {self.gr_source().NAME} profile. Add one of your registered domains above!')
 
   def auth(self):
     """Loads the source and token and checks that they're valid.
@@ -232,7 +235,7 @@ class Homepage(BrowserView):
         logging.info(f'Returning {username}')
         return jsonify(username)
 
-    self.error(f"Couldn't determine logged in {gr_src.NAME} user or username")
+    self.error(f"Scrape error: couldn't determine logged in {gr_src.NAME} user or username")
 
 
 class Feed(BrowserView):
@@ -289,13 +292,13 @@ class Post(BrowserView):
     gr_src = self.gr_source()
     new_activity, actor = gr_src.scraped_to_activity(request.get_data(as_text=True))
     if not new_activity:
-      self.error(f'No {gr_src.NAME} post found in HTML')
+      self.error(f'Scrape error: no {gr_src.NAME} post found in HTML')
 
     @ndb.transactional()
     def update_activity():
       id = new_activity.get('id')
       if not id:
-        self.error('Scraped post missing id')
+        self.error('Scrape error: post missing id')
       activity = Activity.get_by_id(id)
 
       if activity:
@@ -344,7 +347,7 @@ class Extras(BrowserView):
     # validate request
     parsed_id = util.parse_tag_uri(id)
     if not parsed_id:
-      self.error(f'Expected id to be tag URI; got {id}')
+      self.error(f'Scrape error: expected id to be tag URI; got {id}')
 
     activity = Activity.get_by_id(id)
     if not activity:
@@ -359,7 +362,7 @@ class Extras(BrowserView):
       new_extras = getattr(gr_src, self.MERGE_METHOD)(
         request.get_data(as_text=True), activity_data)
     except ValueError as e:
-      msg = f"Couldn't parse scraped extras: {e}"
+      msg = f"Scrape error: couldn't parse extras: {e}"
       logging.error(msg, exc_info=True)
       self.error(msg)
 
@@ -406,7 +409,8 @@ class TokenDomains(BrowserView):
 
     domains = [d.key.id() for d in Domain.query(Domain.tokens == token)]
     if not domains:
-      self.error(f'No registered domains for token {token}', 404)
+      indieauth_start = util.host_url(f'/indieauth/start?token={token}')
+      self.error(f'Not connected to Bridgy. <a href="{indieauth_start}" target="_blank"">Connect now!</a>', 404)
 
     return jsonify(domains)
 

@@ -142,7 +142,7 @@ class BrowserViewTest(testutil.AppTest):
     FakeBrowserSource.gr_source.actor = {}
     resp = self.post('homepage', data='not logged in', auth=False)
     self.assertEqual(400, resp.status_code)
-    self.assertEqual("Couldn't determine logged in FakeSource user or username",
+    self.assertEqual("Scrape error: couldn't determine logged in FakeSource user or username",
                      resp.get_data(as_text=True))
     self.assertEqual('text/plain; charset=utf-8', resp.headers['Content-Type'])
 
@@ -203,7 +203,8 @@ class BrowserViewTest(testutil.AppTest):
     FakeGrSource.actor = None
     resp = self.post('profile?token=towkin')
     self.assertEqual(400, resp.status_code, resp.get_data(as_text=True))
-    self.assertEqual('Missing actor!', resp.get_data(as_text=True))
+    self.assertEqual('Scrape error: missing actor!',
+                     resp.get_data(as_text=True))
 
   def test_profile_private_account(self):
     FakeBrowserSource.gr_source.actor['to'] = \
@@ -212,7 +213,7 @@ class BrowserViewTest(testutil.AppTest):
     self.assertEqual(400, resp.status_code)
     self.assertIn('Your FakeSource account is private. ', resp.get_data(as_text=True))
 
-  def test_profile_actor_urls(self):
+  def test_profile_links(self):
     FakeBrowserSource.gr_source.actor.update({
       'url': 'https://patreon.com/bar',  # blocklisted
       'urls': [
@@ -235,6 +236,13 @@ class BrowserViewTest(testutil.AppTest):
     self.assertEqual(['https://snarfed.org/', 'http://another.com/me'], src.domain_urls)
     self.assertEqual(['snarfed.org', 'another.com'], src.domains)
 
+  def test_profile_no_links(self):
+    del FakeBrowserSource.gr_source.actor['url']
+    resp = self.post('profile?token=towkin')
+    self.assertEqual(400, resp.status_code)
+    self.assertIn("No usable web sites found in your FakeSource profile.",
+                  resp.get_data(as_text=True))
+
   def test_profile_missing_token(self):
     resp = self.post('profile', auth=False)
     self.assertEqual(400, resp.status_code)
@@ -243,15 +251,15 @@ class BrowserViewTest(testutil.AppTest):
   def test_profile_no_stored_token(self):
     self.domain.delete()
     resp = self.post('profile?token=towkin')
-    self.assertEqual(403, resp.status_code)
-    self.assertEqual("Token towkin is not authorized for any of: ['snarfed.org']",
-                     resp.get_data(as_text=True))
+    self.assertEqual(400, resp.status_code)
+    self.assertIn("Found link(s) to ['snarfed.org'] in your FakeSource profile",
+                  resp.get_data(as_text=True))
 
   def test_profile_bad_token(self):
     resp = self.post('profile?token=nope')
-    self.assertEqual(403, resp.status_code)
-    self.assertEqual("Token nope is not authorized for any of: ['snarfed.org']",
-                     resp.get_data(as_text=True))
+    self.assertEqual(400, resp.status_code)
+    self.assertIn("Found link(s) to ['snarfed.org'] in your FakeSource profile",
+                  resp.get_data(as_text=True))
 
   def test_feed(self):
     resp = self.post('feed')
@@ -305,7 +313,8 @@ class BrowserViewTest(testutil.AppTest):
     FakeGrSource.activities = []
     resp = self.post('post')
     self.assertEqual(400, resp.status_code)
-    self.assertEqual('No FakeSource post found in HTML', resp.get_data(as_text=True))
+    self.assertEqual('Scrape error: no FakeSource post found in HTML',
+                     resp.get_data(as_text=True))
 
   def test_post_merge_comments(self):
     # existing activity with two comments
@@ -398,7 +407,8 @@ class BrowserViewTest(testutil.AppTest):
   def test_reactions_bad_id(self):
     resp = self.post(f'reactions?id=789&{self.auth}')
     self.assertEqual(400, resp.status_code)
-    self.assertEqual('Expected id to be tag URI; got 789', resp.get_data(as_text=True))
+    self.assertEqual('Scrape error: expected id to be tag URI; got 789',
+                     resp.get_data(as_text=True))
 
   def test_reactions_bad_scraped_data(self):
     Activity(id='tag:fa.ke,2013:123_456', source=self.source,
@@ -413,8 +423,8 @@ class BrowserViewTest(testutil.AppTest):
     resp = self.post(f'reactions?id=tag:fa.ke,2013:123_456&{self.auth}',
                      data=bad_json)
     self.assertEqual(400, resp.status_code)
-    self.assertEqual("Couldn't parse scraped extras: fooey",
-                  resp.get_data(as_text=True))
+    self.assertEqual("Scrape error: couldn't parse extras: fooey",
+                     resp.get_data(as_text=True))
 
   def test_reactions_no_activity(self):
     resp = self.post(f'reactions?id=tag:fa.ke,2013:789&{self.auth}')
