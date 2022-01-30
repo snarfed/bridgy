@@ -88,7 +88,7 @@ class WordPress(models.Source):
                      site_info=site_info,
                      **kwargs)
 
-  def _urls_and_domains(self, auth_entity):
+  def urls_and_domains(self, auth_entity):
     """Returns this blog's URL and domain.
 
     Args:

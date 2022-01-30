@@ -87,9 +87,9 @@ class Tumblr(models.Source):
 
     Args:
       auth_entity: :class:`oauth_dropins.tumblr.TumblrAuth`
-      blog_name: which blog. optional. passed to _urls_and_domains.
+      blog_name: which blog. optional. passed to urls_and_domains.
     """
-    urls, domains = Tumblr._urls_and_domains(auth_entity, blog_name=blog_name)
+    urls, domains = Tumblr.urls_and_domains(auth_entity, blog_name=blog_name)
     if not urls or not domains:
       flash('Tumblr blog not found. Please create one first!')
       return None
@@ -105,7 +105,7 @@ class Tumblr(models.Source):
                   **kwargs)
 
   @staticmethod
-  def _urls_and_domains(auth_entity, blog_name=None):
+  def urls_and_domains(auth_entity, blog_name=None):
     """Returns this blog's URL and domain.
 
     Args:

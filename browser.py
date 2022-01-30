@@ -85,7 +85,7 @@ class BrowserSource(Source):
               name=actor.get('displayName'),
               picture=actor.get('image', {}).get('url'),
               **kwargs)
-    src.domain_urls, src.domains = src._urls_and_domains(None, None, actor=actor)
+    src.domain_urls, src.domains = src.urls_and_domains(None, None, actor=actor)
     return src
 
   @classmethod
@@ -144,6 +144,9 @@ class BrowserView(View):
   def check_token_for_actor(self, actor):
     """Checks that the given actor is public and matches the request's token.
 
+    Returns: actor, with 'url' field removed and 'urls' set to only the resolved,
+      non-blocklisted urls
+
     Raises: :class:`HTTPException` with HTTP 403
     """
     if not actor:
@@ -153,14 +156,16 @@ class BrowserView(View):
       self.error(f'Your {self.gr_source().NAME} account is private. Bridgy only supports public accounts.')
 
     token = request.values['token']
-    domains = {util.domain_from_link(util.replace_test_domains_with_localhost(u))
-               for u in microformats2.object_urls(actor)}
-    domains.discard(self.source_class().GR_CLASS.DOMAIN)
+    urls, domains = self.source_class().urls_and_domains(None, None, actor=actor)
+
+    # update actor so resolved URLs can be reused
+    actor.pop('url', None)
+    actor['urls'] = [{'value': url} for url in urls]
 
     logging.info(f'Checking token against domains {domains}')
     for domain in ndb.get_multi(ndb.Key(Domain, d) for d in domains):
       if domain and token in domain.tokens:
-        return
+        return actor
 
     self.error(f'Token {token} is not authorized for any of: {domains}', 403)
 
@@ -263,7 +268,8 @@ class Profile(Feed):
     _, actor = self.scrape()
     if not actor:
       actor = self.gr_source().scraped_to_actor(request.get_data(as_text=True))
-    self.check_token_for_actor(actor)
+    # updated actor here has only non-silo, non-blocklisted 'urls' field
+    actor = self.check_token_for_actor(actor)
 
     # create/update the Bridgy account
     source = self.source_class().create_new(self, actor=actor)

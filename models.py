@@ -519,7 +519,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
     if not source.domain_urls:  # defer to the source if it already set this
       auth_entity = kwargs.get('auth_entity')
       if auth_entity and hasattr(auth_entity, 'user_json'):
-        source.domain_urls, source.domains = source._urls_and_domains(
+        source.domain_urls, source.domains = source.urls_and_domains(
           auth_entity, user_url)
     logging.debug(f'URLs/domains: {source.domain_urls} {source.domains}')
 
@@ -609,7 +609,8 @@ class Source(StringIdModel, metaclass=SourceMeta):
 
     self.put()
 
-  def _urls_and_domains(self, auth_entity, user_url, actor=None):
+  @classmethod
+  def urls_and_domains(cls, auth_entity, user_url, actor=None):
     """Returns this user's valid (not webmention-blocklisted) URLs and domains.
 
     Converts the auth entity's user_json to an ActivityStreams actor and uses
@@ -625,7 +626,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
       ([string url, ...], [string domain, ...])
     """
     if not actor:
-      actor = self.gr_source.user_to_actor(json_loads(auth_entity.user_json))
+      actor = cls.gr_source.user_to_actor(json_loads(auth_entity.user_json))
     logging.debug(f'Extracting URLs and domains from actor: {json_dumps(actor, indent=2)}')
 
     candidates = util.trim_nulls(util.uniquify(
@@ -636,7 +637,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
 
     urls = []
     for i, url in enumerate(candidates):
-      resolved = self.resolve_profile_url(url, resolve=i < MAX_AUTHOR_URLS)
+      resolved = cls.resolve_profile_url(url, resolve=i < MAX_AUTHOR_URLS)
       if resolved:
         urls.append(resolved)
 
@@ -646,7 +647,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
       # skip links on this source's domain itself. only currently needed for
       # Mastodon; the other silo domains are in the webmention blocklist.
       domain = util.domain_from_link(url)
-      if domain != self.gr_source.DOMAIN:
+      if domain != cls.gr_source.DOMAIN:
         final_urls.append(url)
         domains.append(domain)
 

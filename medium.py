@@ -105,7 +105,7 @@ class Medium(models.Source):
       if pub.get('id') == id:
         return pub
 
-  def _urls_and_domains(self, auth_entity, user_url):
+  def urls_and_domains(self, auth_entity, user_url):
     if self.url:
       return [self.url], [util.domain_from_link(self.url)]
 

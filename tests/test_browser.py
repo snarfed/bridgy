@@ -212,6 +212,29 @@ class BrowserViewTest(testutil.AppTest):
     self.assertEqual(400, resp.status_code)
     self.assertIn('Your FakeSource account is private. ', resp.get_data(as_text=True))
 
+  def test_profile_actor_urls(self):
+    FakeBrowserSource.gr_source.actor.update({
+      'url': 'https://patreon.com/bar',  # blocklisted
+      'urls': [
+        {'value': 'http:/fa.ke/foo'},  # silo profile
+        {'value': 'https://snarfed.org/'},
+        {'value': 'http://another.com/me'},
+        {'value': 'https://snarfed.org/'},  # duplicate
+      ],
+    })
+
+    self.expect_requests_get('http://another.com', '')
+    self.expect_requests_get('http://another.com', '')
+    self.expect_requests_get('https://snarfed.org/', '')
+    self.mox.ReplayAll()
+
+    resp = self.post('profile?token=towkin')
+    self.assertEqual(200, resp.status_code)
+
+    src = self.source.get()
+    self.assertEqual(['https://snarfed.org/', 'http://another.com/me'], src.domain_urls)
+    self.assertEqual(['snarfed.org', 'another.com'], src.domains)
+
   def test_profile_missing_token(self):
     resp = self.post('profile', auth=False)
     self.assertEqual(400, resp.status_code)
@@ -221,13 +244,13 @@ class BrowserViewTest(testutil.AppTest):
     self.domain.delete()
     resp = self.post('profile?token=towkin')
     self.assertEqual(403, resp.status_code)
-    self.assertEqual("Token towkin is not authorized for any of: {'snarfed.org'}",
+    self.assertEqual("Token towkin is not authorized for any of: ['snarfed.org']",
                      resp.get_data(as_text=True))
 
   def test_profile_bad_token(self):
     resp = self.post('profile?token=nope')
     self.assertEqual(403, resp.status_code)
-    self.assertEqual("Token nope is not authorized for any of: {'snarfed.org'}",
+    self.assertEqual("Token nope is not authorized for any of: ['snarfed.org']",
                      resp.get_data(as_text=True))
 
   def test_feed(self):

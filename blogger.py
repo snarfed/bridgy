@@ -70,7 +70,7 @@ class Blogger(models.Source):
       auth_entity: :class:`oauth_dropins.blogger.BloggerV2Auth`
       blog_id: which blog. optional. if not provided, uses the first available.
     """
-    urls, domains = Blogger._urls_and_domains(auth_entity, blog_id=blog_id)
+    urls, domains = Blogger.urls_and_domains(auth_entity, blog_id=blog_id)
     if not urls or not domains:
       flash('Blogger blog not found. Please create one first!')
       return None
@@ -93,7 +93,7 @@ class Blogger(models.Source):
                    **kwargs)
 
   @staticmethod
-  def _urls_and_domains(auth_entity, blog_id=None):
+  def urls_and_domains(auth_entity, blog_id=None):
     """Returns an auth entity's URL and domain.
 
     Args:
