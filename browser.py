@@ -307,16 +307,19 @@ class Post(BrowserView):
       activity = Activity.get_by_id(id)
 
       if activity:
-        # we already have this activity! merge in any new comments.
+        # we already have this activity! merge in any new comments and likes
         merged_activity = copy.deepcopy(new_activity)
+        merged_obj = merged_activity.setdefault('object', {})
         existing_activity = json_loads(activity.activity_json)
-        # TODO: extract out merging replies
-        replies = merged_activity.setdefault('object', {}).setdefault('replies', {})
+        existing_obj = existing_activity.get('object', {})
+
+        replies = merged_obj.setdefault('replies', {})
         gr_source.merge_by_id(replies, 'items',
-          existing_activity.get('object', {}).get('replies', {}).get('items', []))
+          existing_obj.get('replies', {}).get('items', []))
         replies['totalItems'] = len(replies.get('items', []))
-        # TODO: merge tags too
+        gr_source.merge_by_id(merged_obj, 'tags', existing_obj.get('tags', []))
         activity.activity_json = json_dumps(merged_activity)
+
       else:
         activity = Activity(id=id, source=source.key,
                             html=request.get_data(as_text=True),

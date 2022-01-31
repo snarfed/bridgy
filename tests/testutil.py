@@ -111,7 +111,8 @@ class FakeGrSource(gr_source.Source):
     return activities, self.actor
 
   def scraped_to_activity(self, scraped):
-    activities = self.get_activities(count=1, fetch_replies=True)
+    activities = self.get_activities(count=1, fetch_replies=True,
+                                     fetch_likes=True, fetch_shares=True)
     return activities[0] if activities else None, self.actor
 
   def scraped_to_actor(self, scraped):

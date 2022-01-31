@@ -17,7 +17,7 @@ from granary.tests.test_facebook import (
   MBASIC_ACTIVITY,
   MBASIC_REACTION_TAGS,
 )
-from oauth_dropins.webutil.util import json_dumps, json_loads
+from oauth_dropins.webutil.util import json_dumps, json_loads, trim_nulls
 
 import browser
 from facebook import Facebook
@@ -154,7 +154,7 @@ class FacebookTest(testutil.AppTest):
     self.assert_equals(MBASIC_ACTIVITY, resp.json)
 
     activity = activity_key.get()
-    self.assert_equals(MBASIC_ACTIVITY, json_loads(activity.activity_json))
+    self.assert_equals(MBASIC_ACTIVITY, trim_nulls(json_loads(activity.activity_json)))
 
   def test_likes(self):
     self.source.put()

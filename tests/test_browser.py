@@ -111,13 +111,10 @@ class BrowserViewTest(testutil.AppTest):
     for a in self.activities:
       a['object']['author'] = self.actor
 
-    self.activities_no_extras = copy.deepcopy(self.activities)
-    for a in self.activities_no_extras:
-      del a['object']['tags']
-
-    self.activities_no_replies = copy.deepcopy(self.activities_no_extras)
+    self.activities_no_replies = copy.deepcopy(self.activities)
     for a in self.activities_no_replies:
       del a['object']['replies']
+      del a['object']['tags']
 
   def post(self, path_query, auth=True, **kwargs):
     if auth and '?' not in path_query:
@@ -309,12 +306,12 @@ class BrowserViewTest(testutil.AppTest):
   def test_post(self):
     resp = self.post('post', data='silowe html')
     self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
-    self.assert_equals(self.activities_no_extras[0], util.trim_nulls(resp.json))
+    self.assert_equals(self.activities[0], util.trim_nulls(resp.json))
 
     activities = Activity.query().fetch()
     self.assertEqual(1, len(activities))
     self.assertEqual(self.source, activities[0].source)
-    self.assert_equals(self.activities_no_extras[0],
+    self.assert_equals(self.activities[0],
                        util.trim_nulls(json_loads(activities[0].activity_json)))
     self.assertEqual('silowe html', activities[0].html)
 
@@ -325,19 +322,32 @@ class BrowserViewTest(testutil.AppTest):
     self.assertEqual('Scrape error: no FakeSource post found in HTML',
                      resp.get_data(as_text=True))
 
-  def test_post_merge_comments(self):
-    # existing activity with two comments
-    activity = self.activities_no_extras[0]
-    reply = self.activities[0]['object']['replies']['items'][0]
-    activity['object']['replies'] = {
-      'items': [reply, copy.deepcopy(reply)],
-      'totalItems': 2,
-    }
-    activity['object']['replies']['items'][1]['id'] = 'abc'
+  def test_post_updated(self):
+    # existing activity with two comments, three tags, private audience
+    activity = self.activities[0]
+    obj = activity['object']
+    reply = obj['replies']['items'][0]
+    obj.update({
+      'replies': {
+        'items': [reply, copy.deepcopy(reply)],
+        'totalItems': 2,
+      },
+      'to': [{'objectType': 'group', 'alias': '@private'}],
+    })
+    obj['replies']['items'][1]['id'] = 'abc'
     key = Activity(id=activity['id'], activity_json=json_dumps(activity)).put()
 
-    # scraped activity has different second comment
-    activity['object']['replies']['items'][1]['id'] = 'xyz'
+    # scraped activity has different second comment, new like, public audience
+    public = [{'objectType': 'group', 'alias': '@public'}]
+    orig_tags = copy.deepcopy(obj['tags'])
+    like = obj['tags'][0]
+    like_2 = copy.deepcopy(like)
+    like_2['id'] += '-foo'
+    obj.update({
+      'tags': [like, like_2],
+      'to': public,
+    })
+    obj['replies']['items'][1]['id'] = 'xyz'
     FakeGrSource.activities = [activity]
 
     resp = self.post('post')
@@ -349,6 +359,8 @@ class BrowserViewTest(testutil.AppTest):
     self.assert_equals(3, replies['totalItems'], replies)
     self.assert_equals([reply['id'], 'abc', 'xyz'],
                        [r['id'] for r in replies['items']])
+    self.assert_equals(public, merged['object']['to'])
+    self.assert_equals(orig_tags + [like_2], merged['object']['tags'])
 
   def test_post_missing_key(self):
     resp = self.post('post?token=towkin')
