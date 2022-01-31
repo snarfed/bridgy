@@ -22,9 +22,10 @@ import collections
 import logging
 import urllib.request, urllib.parse, urllib.error
 
-from flask import flash, render_template, request
+from flask import render_template, request
 from google.cloud import ndb
 from oauth_dropins import wordpress_rest as oauth_wordpress
+from oauth_dropins.webutil.flask_util import flash
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
 from flask_app import app

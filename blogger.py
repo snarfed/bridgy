@@ -25,11 +25,12 @@ import logging
 import re
 import urllib.parse
 
-from flask import flash, render_template, request
+from flask import render_template, request
 from gdata.blogger.client import Query
 from gdata.client import Error
 from google.cloud import ndb
 from oauth_dropins import blogger as oauth_blogger
+from oauth_dropins.webutil.flask_util import flash
 
 from flask_app import app
 import models

@@ -1,7 +1,8 @@
 """IndieAuth handlers for authenticating and proving ownership of a domain."""
-from flask import flash, render_template, request
+from flask import render_template, request
 from google.cloud import ndb
 from oauth_dropins import indieauth
+from oauth_dropins.webutil.flask_util import flash
 
 from flask_app import app
 from models import Domain

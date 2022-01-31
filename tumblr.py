@@ -28,9 +28,10 @@ import logging
 import re
 import urllib.parse
 
-from flask import flash, render_template, request
+from flask import render_template, request
 from google.cloud import ndb
 from oauth_dropins import tumblr as oauth_tumblr
+from oauth_dropins.webutil.flask_util import flash
 from oauth_dropins.webutil.util import json_dumps, json_loads
 from werkzeug.exceptions import BadRequest
 

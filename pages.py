@@ -4,11 +4,11 @@ import itertools
 import logging
 import urllib.request, urllib.parse, urllib.error
 
-from flask import flash, render_template, request
+from flask import render_template, request
 from google.cloud import ndb
 from oauth_dropins.webutil import logs
 from oauth_dropins.webutil import flask_util
-from oauth_dropins.webutil.flask_util import error
+from oauth_dropins.webutil.flask_util import error, flash
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import werkzeug.exceptions
 

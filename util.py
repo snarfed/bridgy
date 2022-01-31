@@ -14,14 +14,14 @@ import urllib.request, urllib.parse, urllib.error
 
 from cachetools import TTLCache
 import flask
-from flask import flash, request
+from flask import request
 from google.cloud import ndb
 from google.cloud.tasks_v2 import CreateTaskRequest
 from google.protobuf.timestamp_pb2 import Timestamp
 import google.protobuf.message
 from oauth_dropins.webutil.appengine_config import error_reporting_client, tasks_client
 from oauth_dropins.webutil.appengine_info import APP_ID, DEBUG, LOCAL
-from oauth_dropins.webutil.flask_util import error
+from oauth_dropins.webutil.flask_util import error, flash
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import *
 import requests

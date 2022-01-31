@@ -10,7 +10,7 @@ import pprint
 import re
 import urllib.request, urllib.parse, urllib.error
 
-from flask import flash, render_template, request
+from flask import render_template, request
 from google.cloud import ndb
 from granary import microformats2
 from granary import source as gr_source
@@ -24,6 +24,7 @@ from oauth_dropins import (
 )
 from oauth_dropins.webutil import appengine_info
 from oauth_dropins.webutil import flask_util
+from oauth_dropins.webutil.flask_util import flash
 from oauth_dropins.webutil.util import json_dumps, json_loads
 from werkzeug.exceptions import HTTPException
 

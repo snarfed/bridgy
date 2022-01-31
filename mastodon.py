@@ -1,10 +1,11 @@
 """Mastodon source and datastore model classes."""
 import logging
 
-from flask import flash, render_template, request
+from flask import render_template, request
 from granary import mastodon as gr_mastodon
 from granary import source as gr_source
 import oauth_dropins.mastodon
+from oauth_dropins.webutil.flask_util import flash
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
 
