@@ -76,6 +76,7 @@ class Flickr(models.Source):
     kwargs.setdefault('group_id', SELF)
     if 'min_id' in kwargs:
       del kwargs['min_id']
+    kwargs['count'] = min(10, kwargs.get('count', 0))
     return self.gr_source.get_activities_response(*args, **kwargs)
 
   def canonicalize_url(self, url, activity=None, **kwargs):
