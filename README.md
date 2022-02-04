@@ -33,27 +33,36 @@ kill %1
 
 If you send a pull request, please include or update a test for your new code!
 
+To run the app locally, use [`flask run`](https://flask.palletsprojects.com/en/2.0.x/cli/#run-the-development-server):
+
+```shell
+gcloud beta emulators datastore start --consistency=1.0 --host-port=localhost:8089 --quiet
+GAE_ENV=localdev FLASK_ENV=development flask run -p 8080
+```
+
+Open [localhost:8080](http://localhost:8080/) and you should see the Bridgy home page!
+
 To test a poll or propagate task, find the relevant _Would add task_ line in the logs, eg:
 
 ```
 INFO:root:Would add task: projects//locations/us-central1/queues/poll {'app_engine_http_request': {'http_method': 'POST', 'relative_uri': '/_ah/queue/poll', 'app_engine_routing': {'service': 'background'}, 'body': b'source_key=agNhcHByFgsSB1R3aXR0ZXIiCXNjaG5hcmZlZAw&last_polled=1970-01-01-00-00-00', 'headers': {'Content-Type': 'application/x-www-form-urlencoded'}}, 'schedule_time': seconds: 1591176072
 ```
 
-...pull out the `relative_uri` and `body`, and then put them together in a `curl` command against the `background` service, which usually runs on http://localhost:8081/, eg:
+...pull out the `relative_uri` and `body`, and then put them together in a `curl` command against localhost:8080 (but don't run it yet!), eg:
 
 ```
 curl -d 'source_key=agNhcHByFgsSB1R3aXR0ZXIiCXNjaG5hcmZlZAw&last_polled=1970-01-01-00-00-00' \
-  http://localhost:8081/_ah/queue/poll
+  http://localhost:8080/_ah/queue/poll
 ```
 
-To run the app locally, use [`flask run`](https://flask.palletsprojects.com/en/2.0.x/cli/#run-the-development-server):
+Then, restart the app with `FLASK_APP=background` to run the background task processing service, eg:
 
 ```shell
-gcloud beta emulators datastore start --no-store-on-disk --consistency=1.0 --host-port=localhost:8089 --quiet
+gcloud beta emulators datastore start --consistency=1.0 --host-port=localhost:8089 --quiet
 GAE_ENV=localdev FLASK_ENV=development flask run -p 8080
 ```
 
-Open [localhost:8080](http://localhost:8080/) and you should see the Bridgy home page!
+Now, run the `curl` command you constructed above.
 
 If you hit an error during setup, check out the [oauth-dropins Troubleshooting/FAQ section](https://github.com/snarfed/oauth-dropins#troubleshootingfaq). For searchability, here are a handful of error messages that [have solutions there](https://github.com/snarfed/oauth-dropins#troubleshootingfaq):
 
@@ -86,7 +95,7 @@ To deploy to App Engine, run [`scripts/deploy.sh`](https://github.com/snarfed/br
 
 [`remote_api_shell`](https://cloud.google.com/appengine/docs/python/tools/remoteapi#using_the_remote_api_shell) is a useful interactive Python shell that can interact with the production app's datastore, memcache, etc. To use it, [create a service account and download its JSON credentials](https://console.developers.google.com/project/brid-gy/apiui/credential), put it somewhere safe, and put its path in your `GOOGLE_APPLICATION_CREDENTIALS` environment variable.
 
-Deploying to your own app-engine project can be useful for testing, but is not recommended for production.  To deploy to your own app-engine project, create a project on [gcloud console](https://console.cloud.google.com/) and activate the [Tasks API](https://console.cloud.google.com/apis/api/cloudtasks.googleapis.com).  Initialize the project on the command line using `gcloud config set project <project-name>` followed by `gcloud app create`.  You will need to update  `TASKS_LOCATION` in util.py to match your project's location.  Finally, you will need to add your "background" domain (eg `background.YOUR-APP-NAME.appspot.com`) to OTHER_DOMAINS in util.py and set `host_url` in `tasks.py` to your base app url (eg `app-dot-YOUR-APP-NAME.wn.r.appspot.com`).  Finally, deploy (after testing) with `gcloud -q beta app deploy --no-cache --project YOUR-APP-NAME *.yaml`
+Deploying to your own App Engine project can be useful for testing, but is not recommended for production.  To deploy to your own App Engine project, create a project on [gcloud console](https://console.cloud.google.com/) and activate the [Tasks API](https://console.cloud.google.com/apis/api/cloudtasks.googleapis.com).  Initialize the project on the command line using `gcloud config set project <project-name>` followed by `gcloud app create`.  You will need to update  `TASKS_LOCATION` in util.py to match your project's location.  Finally, you will need to add your "background" domain (eg `background.YOUR-APP-NAME.appspot.com`) to OTHER_DOMAINS in util.py and set `host_url` in `tasks.py` to your base app url (eg `app-dot-YOUR-APP-NAME.wn.r.appspot.com`).  Finally, deploy (after testing) with `gcloud -q beta app deploy --no-cache --project YOUR-APP-NAME *.yaml`
 
 To work on the browser extension:
 
@@ -103,14 +112,10 @@ npm run test -- -t 'part of test name'
 ```
 
 
-You need to be logged into Instagram in your browser. The extension doesn't have a UI, but you can see what it's doing on your Bridgy user page, eg <code>brid.gy/instagram/[username]</code>.  Note that it doesn't work with [Firefox's Facebook Container tabs](https://github.com/mozilla/contain-facebook) add-on. If you have that enabled, you'll need to disable it to use Bridgy's browser extension.
-
-
 Browser extension: logs in the JavaScript console
 ---
 If you're working on the browser extension, or [you're sending in a bug report for it,](https://github.com/snarfed/bridgy/issues), its JavaScript console logs are invaluable for debugging. Here's how to get them in Firefox:
 
-Thanks for trying! And for offering to send logs, those would definitely be helpful. Here's how to get them:
 1. Open `about:debugging`
 2. Click _This Firefox_ on the left
 3. Scroll down to Bridgy
