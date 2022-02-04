@@ -146,6 +146,10 @@ form input {
   list-style: none;
 }
 
+#users-paging {
+  clear: both;
+}
+
 .source {
   text-align: left;
   margin-top: .5em;
