@@ -114,6 +114,7 @@ fb.com
 feedburner.com
 ffffound.com
 findings.com
+fitbit.com
 flattr.com
 flickr.com
 flipboard.com
@@ -125,6 +126,7 @@ gab.com
 getglue.com
 getsatisfaction.com
 genius.com
+getpebble.com
 ggpht.com
 github.com
 gitorious.org
