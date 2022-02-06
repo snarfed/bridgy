@@ -49,6 +49,14 @@ class Reddit(models.Source):
     """Returns the username."""
     return self.key_id()
 
+  def get_activities_response(self, *args, **kwargs):
+    """Set user_id manually.
+
+    ...since Reddit sometimes (always?) 400s our calls to
+    https://oauth.reddit.com/api/v1/me (via PRAW's Reddit.user.me() ).
+    """
+    return super().get_activities_response(*args, **kwargs, user_id=self.key_id())
+
   def search_for_links(self):
     """Searches for activities with links to any of this source's web sites.
 

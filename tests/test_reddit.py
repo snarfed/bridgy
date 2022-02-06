@@ -22,6 +22,9 @@ class RedditTest(testutil.AppTest):
       user_json=json_dumps(user))
     self.auth_entity.put()
     self.r = Reddit.new(auth_entity=self.auth_entity)
+    # TODO
+    # self.api = self.r.reddit_api = self.mox.CreateMockAnything(praw.Reddit)
+    # reddit.user_cache.clear()
 
   def test_new(self):
     self.assertEqual(self.auth_entity, self.r.auth_entity.get())
@@ -39,3 +42,7 @@ class RedditTest(testutil.AppTest):
     self.r.domain_urls = ['https://t.co/xyz']
     self.r.put()
     self.assert_equals([], self.r.search_for_links())
+
+  # TODO
+  # def test_get_activities_user_id(self):
+  #   self.assert_equals([], self.r.get_activities_response())
