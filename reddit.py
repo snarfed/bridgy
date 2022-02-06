@@ -22,6 +22,7 @@ class Reddit(models.Source):
     'comment': 'comment',
   }
   CAN_PUBLISH = False
+  DISABLE_HTTP_CODES = ('401', '403')
 
   @staticmethod
   def new(auth_entity=None, **kwargs):
