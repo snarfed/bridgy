@@ -3,6 +3,7 @@ from granary import reddit as gr_reddit
 from granary import source as gr_source
 from oauth_dropins import reddit as oauth_reddit
 from oauth_dropins.webutil.util import json_dumps, json_loads
+from prawcore.exceptions import NotFound
 
 from flask_app import app
 import models
@@ -55,7 +56,11 @@ class Reddit(models.Source):
     ...since Reddit sometimes (always?) 400s our calls to
     https://oauth.reddit.com/api/v1/me (via PRAW's Reddit.user.me() ).
     """
-    return super().get_activities_response(*args, **kwargs, user_id=self.key_id())
+    try:
+      return super().get_activities_response(*args, **kwargs, user_id=self.key_id())
+    except NotFound:
+      # this user was deleted or banned
+      raise models.DisableSource()
 
   def search_for_links(self):
     """Searches for activities with links to any of this source's web sites.

@@ -46,3 +46,7 @@ class RedditTest(testutil.AppTest):
   # TODO
   # def test_get_activities_user_id(self):
   #   self.assert_equals([], self.r.get_activities_response())
+
+  # TODO
+  # def test_get_activities_converts_404_to_disable_source(self):
+  #   self.assert_equals([], self.r.get_activities_response())
