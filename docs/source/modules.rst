@@ -1,10 +1,9 @@
 bridgy package
-==============
+--------------
 
 Reference documentation.
 
-.. toctree::
-   modules
+.. contents::
 
 admin
 -----

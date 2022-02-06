@@ -533,8 +533,7 @@ def construct_state_param_for_add(state=None, **kwargs):
   The following keys are common:
   - operation: 'add' or 'delete'
   - feature: 'listen', 'publish', or 'webmention'
-  - callback: an optional external callback, that we will redirect to at
-              the end of the authorization handshake
+  - callback: an optional external callback, that we will redirect to at the end of the authorization handshake
   - source: the source key, only applicable to deletes
   """
   state_obj = util.decode_oauth_state(state)

@@ -1,5 +1,5 @@
 Bridgy developer documentation
-==============================
+------------------------------
 
 Bridgy connects your web site to social media. Likes, retweets,
 mentions, cross-posting, and more. `See the user
@@ -47,6 +47,17 @@ Now, you can fire up the gcloud emulator and run the tests:
 If you send a pull request, please include or update a test for your new
 code!
 
+To run the app locally, use
+`flask run <https://flask.palletsprojects.com/en/2.0.x/cli/#run-the-development-server>`__:
+
+.. code:: shell
+
+   gcloud beta emulators datastore start --consistency=1.0 --host-port=localhost:8089 --quiet
+   GAE_ENV=localdev FLASK_ENV=development flask run -p 8080
+
+Open `localhost:8080 <http://localhost:8080/>`__ and you should see the
+Bridgy home page!
+
 To test a poll or propagate task, find the relevant *Would add task*
 line in the logs, eg:
 
@@ -55,24 +66,23 @@ line in the logs, eg:
    INFO:root:Would add task: projects//locations/us-central1/queues/poll {'app_engine_http_request': {'http_method': 'POST', 'relative_uri': '/_ah/queue/poll', 'app_engine_routing': {'service': 'background'}, 'body': b'source_key=agNhcHByFgsSB1R3aXR0ZXIiCXNjaG5hcmZlZAw&last_polled=1970-01-01-00-00-00', 'headers': {'Content-Type': 'application/x-www-form-urlencoded'}}, 'schedule_time': seconds: 1591176072
 
 …pull out the ``relative_uri`` and ``body``, and then put them together
-in a ``curl`` command against the ``background`` service, which usually
-runs on http://localhost:8081/, eg:
+in a ``curl`` command against localhost:8080 (but don’t run it yet!),
+eg:
 
 ::
 
    curl -d 'source_key=agNhcHByFgsSB1R3aXR0ZXIiCXNjaG5hcmZlZAw&last_polled=1970-01-01-00-00-00' \
-     http://localhost:8081/_ah/queue/poll
+     http://localhost:8080/_ah/queue/poll
 
-To run the app locally, use
-`flask run <https://flask.palletsprojects.com/en/2.0.x/cli/#run-the-development-server>`__:
+Then, restart the app with ``FLASK_APP=background`` to run the
+background task processing service, eg:
 
 .. code:: shell
 
-   gcloud beta emulators datastore start --no-store-on-disk --consistency=1.0 --host-port=localhost:8089 --quiet
+   gcloud beta emulators datastore start --consistency=1.0 --host-port=localhost:8089 --quiet
    GAE_ENV=localdev FLASK_ENV=development flask run -p 8080
 
-Open `localhost:8080 <http://localhost:8080/>`__ and you should see the
-Bridgy home page!
+Now, run the ``curl`` command you constructed above.
 
 If you hit an error during setup, check out the `oauth-dropins
 Troubleshooting/FAQ
@@ -121,8 +131,8 @@ credentials <https://console.developers.google.com/project/brid-gy/apiui/credent
 put it somewhere safe, and put its path in your
 ``GOOGLE_APPLICATION_CREDENTIALS`` environment variable.
 
-Deploying to your own app-engine project can be useful for testing, but
-is not recommended for production. To deploy to your own app-engine
+Deploying to your own App Engine project can be useful for testing, but
+is not recommended for production. To deploy to your own App Engine
 project, create a project on `gcloud
 console <https://console.cloud.google.com/>`__ and activate the `Tasks
 API <https://console.cloud.google.com/apis/api/cloudtasks.googleapis.com>`__.
@@ -144,31 +154,122 @@ To work on the browser extension:
    npm install
    npm run test
 
-You need to be logged into Instagram in your browser. The extension
-doesn’t have a UI, but you can see what it’s doing on your Bridgy user
-page, eg brid.gy/instagram/[username]. Note that it doesn’t work with
-`Firefox’s Facebook Container
-tabs <https://github.com/mozilla/contain-facebook>`__ add-on. If you
-have that enabled, you’ll need to disable it to use Bridgy’s browser
-extension.
+To run just one test:
 
-Extension logs in the JavaScript console
-----------------------------------------
+.. code:: sh
+
+   npm run test -- -t 'part of test name'
+
+Browser extension: logs in the JavaScript console
+-------------------------------------------------
 
 If you’re working on the browser extension, or `you’re sending in a bug
 report for it, <https://github.com/snarfed/bridgy/issues>`__, its
 JavaScript console logs are invaluable for debugging. Here’s how to get
 them in Firefox:
 
-Thanks for trying! And for offering to send logs, those would definitely
-be helpful. Here’s how to get them: 1. Open ``about:debugging`` 2. Click
-*This Firefox* on the left 3. Scroll down to Bridgy 4. Click *Inspect*
+1. Open ``about:debugging``
+2. Click *This Firefox* on the left
+3. Scroll down to Bridgy
+4. Click *Inspect*
 5. Click on the *Console* tab
 
 Here’s how to send them in with a bug report: 1. Right click, *Export
 Visible Messages To*, *File*, save the file. 2. Email the file to bridgy
 @ ryanb.org. *Do not* post or attach it to a GitHub issue, or anywhere
 else public, because it contains sensitive tokens and cookies.
+
+Browser extension: release
+--------------------------
+
+Here’s how to cut a new release of the browser extension and publish it
+`to
+addons.mozilla.org <https://addons.mozilla.org/en-US/firefox/addon/bridgy/>`__
+and `to the Chrome Web
+Store <https://chrome.google.com/webstore/detail/bridgy/lcpeamdhminbbjdfjbpmhgjgliaknflj>`__:
+
+1. Load the extension in Firefox (``about:debugging``) and Chrome
+   (``chrome://extensions/``, Developer mode on). Check that it works in
+   both.
+
+2. Bump the version in ``browser-extension/manifest.json``.
+
+3. Update the Changelog in the README.md section below this one.
+
+4. Build and sign the artifact:
+   ``sh     cd browser-extension/     npm test     ./node_modules/web-ext/bin/web-ext build``
+
+5. Submit it to AMO. \`sh # get API secret from Ryan if you don’t have
+   it ./node_modules/web-ext/bin/web-ext sign –api-key user:14645521:476
+   –api-secret …
+
+   # If this succeeds, it will say: … Your add-on has been submitted for
+   review. It passed validation but could not be automatically signed
+   because this is a listed add-on. FAIL … \``\` It’s usually
+   auto-approved within minutes. `Check the public listing
+   here. <https://addons.mozilla.org/en-US/firefox/addon/bridgy/>`__
+
+6. Submit it to the Chrome Web Store:
+
+   1. `Open the
+      console. <https://chrome.google.com/webstore/devconsole/>`__
+   2. Open the Bridgy item. Ryan to add you if you don’t see it.
+   3. Choose *Package* on the left.
+   4. Click the *Upload new package* button.
+   5. Upload the new version’s zip file from
+      ``browser-extension/web-ext-artifacts/``.
+   6. Update the Changelog in the *Description* box. Leave the rest
+      unchanged.
+   7. Click *Save draft*, then *Submit for review*.
+
+Browser extension: Changelog
+----------------------------
+
+0.4, 2022-01-30
+
+-  Fix Instagram comments. Add extra client side API fetch, forward to
+   new Bridgy endpoint.
+-  Expand error messages in options UI.
+
+0.3.5, 2021-03-04
+
+-  Dynamically adjust polling frequency per silo based on how often
+   we’re seeing new comments and reactions, how recent the last
+   successful webmention was, etc.
+
+0.3.4, 2021-02-22
+
+-  Allow individually enabling or disabling Instagram and Facebook.
+
+0.3.3, 2021-02-20
+
+-  Only override requests from the browser extension, not all requests
+   to the silos’ domains.
+
+0.3.2, 2021-02-18
+
+-  Fix compatibility with Facebook Container Tabs.
+
+0.3.1, 2021-02-17
+
+-  Add Facebook support!
+
+0.2.1, 2021-01-09
+
+-  Add more details to extensions option page: Instagram login, Bridgy
+   IndieAuth registration, etc.
+-  Support Firefox’s Facebook Container Tabs addon.
+
+0.2, 2021-01-03
+
+-  Add IndieAuth login on https://brid.gy/ and token handling.
+-  Add extension settings page with status info and buttons to login
+   again and poll now.
+-  Better error handling.
+
+0.1.5, 2020-12-25
+
+-  Initial beta release!
 
 Adding a new silo
 -----------------

@@ -15,7 +15,7 @@ cd `dirname $absfile`
 rm -f index.rst
 cat > index.rst <<EOF
 Bridgy developer documentation
-==============================
+------------------------------
 
 EOF
 

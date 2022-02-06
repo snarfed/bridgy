@@ -13,6 +13,7 @@
 
 import sys
 import os
+import sphinx_rtd_theme
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -36,6 +37,7 @@ extensions = [
     'sphinx.ext.intersphinx',
     # 'sphinx.ext.coverage',
     'sphinx.ext.viewcode',
+    'sphinx_rtd_theme',
 ]
 
 # autodoc settings
@@ -77,7 +79,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'Bridgy'
-copyright = '2011-2020, Ryan Barrett'
+copyright = '2011-2022, Ryan Barrett'
 author = 'Ryan Barrett'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -143,12 +145,15 @@ autosummary_generate = True
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'alabaster'
+html_theme = 'sphinx_rtd_theme'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-#html_theme_options = {}
+# https://sphinx-rtd-theme.readthedocs.io/en/stable/configuring.html
+html_theme_options = {
+    'collapse_navigation': False,
+}
 
 # Add any paths that contain custom themes here, relative to this directory.
 #html_theme_path = []
@@ -162,7 +167,7 @@ html_theme = 'alabaster'
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-html_logo = '../static/bridgy_logo_with_alpha.png'
+html_logo = '../static/bridgy_logo.jpg'
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
@@ -172,7 +177,7 @@ html_favicon = '../static/favicon.png'
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = []
+html_static_path = ['_static']
 
 # Add any extra paths that contain custom files (such as robots.txt or
 # .htaccess) here, relative to this directory. These files are copied
@@ -188,9 +193,16 @@ html_static_path = []
 #html_use_smartypants = True
 
 # Custom sidebar templates, maps document names to template names.
-html_sidebars = {
-  '**': ['description.html', 'localtoc.html', 'searchbox.html'],
-}
+# html_sidebars = {
+#   '**': ['description.html', 'localtoc.html', 'searchbox.html'],
+# }
+
+# These paths are either relative to html_static_path
+# or fully qualified paths (eg. https://...)
+# https://docs.readthedocs.io/en/stable/guides/adding-custom-css.html
+html_css_files = [
+    'custom.css',
+]
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
