@@ -56,8 +56,9 @@ class Reddit(models.Source):
     ...since Reddit sometimes (always?) 400s our calls to
     https://oauth.reddit.com/api/v1/me (via PRAW's Reddit.user.me() ).
     """
+    kwargs.setdefault('user_id', self.key_id())
     try:
-      return super().get_activities_response(*args, **kwargs, user_id=self.key_id())
+      return super().get_activities_response(*args, **kwargs)
     except NotFound:
       # this user was deleted or banned
       raise models.DisableSource()
