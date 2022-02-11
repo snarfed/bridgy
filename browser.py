@@ -17,6 +17,8 @@ import models
 from models import Activity, Domain, Source
 import util
 
+logger = logging.getLogger(__name__)
+
 JSON_CONTENT_TYPE = 'application/json'
 
 # See https://www.cloudimage.io/
@@ -166,7 +168,7 @@ class BrowserView(View):
     actor.pop('url', None)
     actor['urls'] = [{'value': url} for url in src.domain_urls]
 
-    logging.info(f'Checking token against domains {src.domains}')
+    logger.info(f'Checking token against domains {src.domains}')
     for domain in ndb.get_multi(ndb.Key(Domain, d) for d in src.domains):
       if domain and token in domain.tokens:
         return actor
@@ -210,13 +212,13 @@ class Status(BrowserView):
   """
   def dispatch_request(self):
     source = self.auth()
-    logging.info(f'Got source: {source}')
+    logger.info(f'Got source: {source}')
 
     out = {
       'status': source.status,
       'poll-seconds': source.poll_period().total_seconds(),
     }
-    logging.info(f'Returning {out}')
+    logger.info(f'Returning {out}')
     return out
 
 
@@ -228,12 +230,12 @@ class Homepage(BrowserView):
   def dispatch_request(self):
     gr_src = self.gr_source()
     _, actor = gr_src.scraped_to_activities(request.get_data(as_text=True))
-    logging.info(f'Got actor: {actor}')
+    logger.info(f'Got actor: {actor}')
 
     if actor:
       username = actor.get('username')
       if username:
-        logging.info(f'Returning {username}')
+        logger.info(f'Returning {username}')
         return jsonify(username)
 
     self.error(f"Scrape error: couldn't determine logged in {gr_src.NAME} user or username")
@@ -256,7 +258,7 @@ class Feed(BrowserView):
     gr_src = self.gr_source()
     activities, actor = gr_src.scraped_to_activities(request.get_data(as_text=True))
     ids = ' '.join(a['id'] for a in activities)
-    logging.info(f"Activities: {ids}")
+    logger.info(f"Activities: {ids}")
 
     if activities and not any(gr_src.is_public(a) for a in activities):
       self.error(f'None of your recent {gr_src.NAME} posts are public. <a href="https://brid.gy/about#fully+public+posts">Bridgy only handles fully public posts.</a>')
@@ -327,7 +329,7 @@ class Post(BrowserView):
 
       # store and return the activity
       activity.put()
-      logging.info(f"Stored activity {id}")
+      logger.info(f"Stored activity {id}")
 
     update_activity()
     return new_activity
@@ -371,14 +373,14 @@ class Extras(BrowserView):
         request.get_data(as_text=True), activity_data)
     except ValueError as e:
       msg = f"Scrape error: couldn't parse extras: {e}"
-      logging.error(msg, exc_info=True)
+      logger.error(msg, exc_info=True)
       self.error(msg)
 
     activity.activity_json = json_dumps(activity_data)
     activity.put()
 
     extra_ids = ' '.join(c['id'] for c in new_extras)
-    logging.info(f"Stored extras for activity {id}: {extra_ids}")
+    logger.info(f"Stored extras for activity {id}: {extra_ids}")
     return jsonify(new_extras)
 
 

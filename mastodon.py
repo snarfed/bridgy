@@ -14,6 +14,8 @@ import models
 import util
 from util import redirect
 
+logger = logging.getLogger(__name__)
+
 # https://docs.joinmastodon.org/api/oauth-scopes/
 LISTEN_SCOPES = (
   'read:accounts',
@@ -160,7 +162,7 @@ class Mastodon(models.Source):
         # this user signed up before we started asking for the 'follow' OAuth
         # scope, which the block list API endpoint requires. just skip them.
         # https://console.cloud.google.com/errors/CMfA_KfIld6Q2AE
-        logging.info("Couldn't fetch block list due to missing OAuth scope")
+        logger.info("Couldn't fetch block list due to missing OAuth scope")
         self.blocked_ids = []
         self.put()
       else:
@@ -182,7 +184,7 @@ class Start(StartBase):
     try:
       return starter.redirect_url(*args, instance=request.form['instance'], **kwargs)
     except ValueError as e:
-      logging.warning('Bad Mastodon instance', exc_info=True)
+      logger.warning('Bad Mastodon instance', exc_info=True)
       flash(util.linkify(str(e), pretty=True))
       redirect(request.path)
 

@@ -37,6 +37,8 @@ import models
 import superfeedr
 import util
 
+logger = logging.getLogger(__name__)
+
 # Blogger says it's 4096 in an error message. (Couldn't find it in their docs.)
 # We include some padding.
 # Background: https://github.com/snarfed/bridgy/issues/242
@@ -132,20 +134,20 @@ class Blogger(models.Source):
 
     # extract the post's path and look up its post id
     path = urllib.parse.urlparse(post_url).path
-    logging.info(f'Looking up post id for {path}')
+    logger.info(f'Looking up post id for {path}')
     feed = client.get_posts(self.key_id(), query=Query(path=path))
 
     if not feed.entry:
       return self.error(f'Could not find Blogger post {post_url}')
     elif len(feed.entry) > 1:
-      logging.warning(f'Found {len(feed.entry)} Blogger posts for path {path} , expected 1')
+      logger.warning(f'Found {len(feed.entry)} Blogger posts for path {path} , expected 1')
     post_id = feed.entry[0].get_post_id()
 
     # create the comment
     content = f'<a href="{author_url}">{author_name}</a>: {content}'
     if len(content) > MAX_COMMENT_LENGTH:
       content = content[:MAX_COMMENT_LENGTH - 3] + '...'
-    logging.info(f"Creating comment on blog {self.key.id()}, post {post_id}: {content.encode('utf-8')}")
+    logger.info(f"Creating comment on blog {self.key.id()}, post {post_id}: {content.encode('utf-8')}")
     try:
       comment = client.add_comment(self.key.id(), post_id, content)
     except Error as e:
@@ -158,7 +160,7 @@ class Blogger(models.Source):
         raise
 
     resp = {'id': comment.get_comment_id(), 'response': comment.to_string()}
-    logging.info(f'Response: {resp}')
+    logger.info(f'Response: {resp}')
     return resp
 
 
@@ -197,7 +199,7 @@ def oauth_callback():
                                          auth_entity.blog_titles,
                                          auth_entity.blog_hostnames)],
     }
-  logging.info(f'Rendering choose_blog.html with {vars}')
+  logger.info(f'Rendering choose_blog.html with {vars}')
   return render_template('choose_blog.html', **vars)
 
 

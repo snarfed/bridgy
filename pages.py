@@ -25,6 +25,8 @@ from wordpress_rest import WordPress
 # populate models.sources
 import blogger, facebook, flickr, github, indieauth, instagram, mastodon, medium, meetup, reddit, tumblr, twitter, wordpress_rest
 
+logger = logging.getLogger(__name__)
+
 SITES = ','.join(list(models.sources.keys()) + ['fake'])  # for unit tests
 
 RECENT_PRIVATE_POSTS_THRESHOLD = 5
@@ -556,7 +558,7 @@ def logout():
 @app.route('/csp-report')
 def csp_report():
   """Log Content-Security-Policy reports. https://content-security-policy.com/"""
-  logging.info(request.values.get_data(as_text=True))
+  logger.info(request.values.get_data(as_text=True))
   return 'OK'
 
 

@@ -4,7 +4,6 @@
 import copy
 import datetime
 import http.client
-import logging
 import socket
 import string
 import io

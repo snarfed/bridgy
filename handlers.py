@@ -36,6 +36,8 @@ import models
 import original_post_discovery
 import util
 
+logger = logging.getLogger(__name__)
+
 CACHE_TIME = datetime.timedelta(minutes=15)
 
 TEMPLATE = string.Template("""\
@@ -110,7 +112,7 @@ class Item(View):
           activity_id=id, user_id=self.source.key_id(), **kwargs)
       if posts:
         return posts[0]
-      logging.warning(f'Source post {id} not found')
+      logger.warning(f'Source post {id} not found')
     except AssertionError:
       raise
     except Exception as e:

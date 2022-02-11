@@ -23,6 +23,8 @@ from requests import post as orig_requests_post
 import flask_app, flask_background, util
 from models import BlogPost, Publish, PublishedPage, Response, Source
 
+logger = logging.getLogger(__name__)
+
 NOW = datetime.datetime.utcnow()
 
 
@@ -204,7 +206,7 @@ class FakeGrSource(gr_source.Source):
 class OAuthStart(oauth_views.Start):
   """Stand-in for the oauth-dropins Start, redirects to a made-up silo url."""
   def redirect_url(self, state=None):
-    logging.debug(f'oauth view redirect with state {state}')
+    logger.debug(f'oauth view redirect with state {state}')
     return 'http://fake/auth/url?' + urllib.parse.urlencode({
       'redirect_uri': self.to_url(state),
     })

@@ -36,6 +36,8 @@ import models
 from models import SyndicatedPost
 import util
 
+logger = logging.getLogger(__name__)
+
 MAX_PERMALINK_FETCHES = 10
 MAX_PERMALINK_FETCHES_BETA = 50
 MAX_FEED_ENTRIES = 100
@@ -70,7 +72,7 @@ def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True,
 
   """
   label = activity.get('url') or activity.get('id')
-  logging.debug(f'discovering original posts for: {label}')
+  logger.debug(f'discovering original posts for: {label}')
 
   if not source.updates:
     source.updates = {}
@@ -102,7 +104,7 @@ def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True,
   author_username = obj_author.get('username') or activity_author.get('username')
   if (author_id and author_id != source.user_tag_id() and
       author_username != source.key.id()):
-    logging.info(f"Demoting original post links because user {source.user_tag_id()} doesn't match author id {author_id} username {author_username}")
+    logger.info(f"Demoting original post links because user {source.user_tag_id()} doesn't match author id {author_id} username {author_username}")
     # this is someone else's post, so all links must be mentions
     mentions.update(originals)
     originals = set()
@@ -111,10 +113,10 @@ def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True,
   for att in obj.get('attachments', []):
     if (att.get('objectType') in ('note', 'article')
         and att.get('author', {}).get('id') == source.user_tag_id()):
-      logging.debug(f"running original post discovery on attachment: {att.get('id')}")
+      logger.debug(f"running original post discovery on attachment: {att.get('id')}")
       att_origs, _ = discover(
         source, att, include_redirect_sources=include_redirect_sources)
-      logging.debug(f'original post discovery found originals for attachment, {att_origs}')
+      logger.debug(f'original post discovery found originals for attachment, {att_origs}')
       mentions.update(att_origs)
 
   def resolve(urls):
@@ -131,7 +133,7 @@ def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True,
   mentions = resolve(mentions)
 
   if not source.get_author_urls():
-    logging.debug('no author url(s), cannot find h-feed')
+    logger.debug('no author url(s), cannot find h-feed')
     return ((originals, mentions) if not source.BACKFEED_REQUIRES_SYNDICATION_LINK
             else (set(), set()))
 
@@ -152,7 +154,7 @@ def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True,
     originals = set(util.dedupe_urls(originals))
 
   if not syndication_url:
-    logging.debug(f'no {source.SHORT_NAME} syndication url, cannot process h-entries')
+    logger.debug(f'no {source.SHORT_NAME} syndication url, cannot process h-entries')
 
   return ((originals, mentions) if not source.BACKFEED_REQUIRES_SYNDICATION_LINK
           else (set(syndicated), set()))
@@ -170,7 +172,7 @@ def refetch(source):
   Returns:
     dict: mapping syndicated_url to a list of new :class:`models.SyndicatedPost`\ s
   """
-  logging.debug(f'attempting to refetch h-feed for {source.label()}')
+  logger.debug(f'attempting to refetch h-feed for {source.label()}')
 
   if not source.updates:
     source.updates = {}
@@ -222,7 +224,7 @@ def _posse_post_discovery(source, activity, syndication_url, fetch_hfeed,
   Return:
     sequence of string original post urls, possibly empty
   """
-  logging.info(f'starting posse post discovery with syndicated {syndication_url}')
+  logger.info(f'starting posse post discovery with syndicated {syndication_url}')
 
   relationships = SyndicatedPost.query(
     SyndicatedPost.syndication == syndication_url,
@@ -247,20 +249,20 @@ def _posse_post_discovery(source, activity, syndication_url, fetch_hfeed,
         results.update(_process_author(source, url))
         already_fetched_hfeeds.add(url)
       else:
-        logging.debug(f'skipping {url}, already fetched this round')
+        logger.debug(f'skipping {url}, already fetched this round')
 
     relationships = results.get(syndication_url, [])
 
   if not relationships:
     # No relationships were found. Remember that we've seen this
     # syndicated post to avoid reprocessing it every time
-    logging.debug(f'posse post discovery found no relationship for {syndication_url}')
+    logger.debug(f'posse post discovery found no relationship for {syndication_url}')
     if fetch_hfeed:
       SyndicatedPost.insert_syndication_blank(source, syndication_url)
 
   originals = [r.original for r in relationships if r.original]
   if originals:
-    logging.debug(f'posse post discovery found relationship(s) {syndication_url} -> {originals}')
+    logger.debug(f'posse post discovery found relationship(s) {syndication_url} -> {originals}')
   return originals
 
 
@@ -283,7 +285,7 @@ def _process_author(source, author_url, refetch=False, store_blanks=True):
   if not ok:
     return {}
 
-  logging.debug(f'fetching author url {author_url}')
+  logger.debug(f'fetching author url {author_url}')
   try:
     author_mf2 = util.fetch_mf2(author_url)
   except AssertionError:
@@ -291,7 +293,7 @@ def _process_author(source, author_url, refetch=False, store_blanks=True):
   except BaseException:
     # TODO limit allowed failures, cache the author's h-feed url
     # or the # of times we've failed to fetch it
-    logging.info(f'Could not fetch author url {author_url}', exc_info=True)
+    logger.info(f'Could not fetch author url {author_url}', exc_info=True)
     return {}
 
   feeditems = _find_feed_items(author_mf2)
@@ -302,28 +304,28 @@ def _process_author(source, author_url, refetch=False, store_blanks=True):
     # check that it's html, not too big, etc
     feed_url, _, feed_ok = util.get_webmention_target(feed_url)
     if feed_url == author_url:
-      logging.debug('author url is the feed url, ignoring')
+      logger.debug('author url is the feed url, ignoring')
     elif not feed_ok:
-      logging.debug("skipping feed since it's not HTML or otherwise bad")
+      logger.debug("skipping feed since it's not HTML or otherwise bad")
     else:
       feed_urls.add(feed_url)
 
   for feed_url in feed_urls:
     try:
-      logging.debug(f"fetching author's rel-feed {feed_url}")
+      logger.debug(f"fetching author's rel-feed {feed_url}")
       feed_mf2 = util.fetch_mf2(feed_url)
       feeditems = _merge_hfeeds(feeditems, _find_feed_items(feed_mf2))
       domain = util.domain_from_link(feed_url)
       if source.updates is not None and domain not in source.domains:
         domains = source.updates.setdefault('domains', source.domains)
         if domain not in domains:
-          logging.info(f'rel-feed found new domain {domain}! adding to source')
+          logger.info(f'rel-feed found new domain {domain}! adding to source')
           domains.append(domain)
 
     except AssertionError:
       raise  # reraise assertions for unit tests
     except BaseException:
-      logging.info(f'Could not fetch h-feed url {feed_url}.', exc_info=True)
+      logger.info(f'Could not fetch h-feed url {feed_url}.', exc_info=True)
 
   # sort by dt-updated/dt-published
   def updated_or_published(item):
@@ -337,17 +339,17 @@ def _process_author(source, author_url, refetch=False, store_blanks=True):
     if 'h-entry' in child['type']:
       permalinks = child['properties'].get('url', [])
       if not permalinks:
-        logging.debug('ignoring h-entry with no u-url!')
+        logger.debug('ignoring h-entry with no u-url!')
       for permalink in permalinks:
         if isinstance(permalink, str):
           permalink_to_entry[permalink] = child
         else:
-          logging.warning(f'unexpected non-string "url" property: {permalink}')
+          logger.warning(f'unexpected non-string "url" property: {permalink}')
 
     max = (MAX_PERMALINK_FETCHES_BETA if source.is_beta_user()
            else MAX_PERMALINK_FETCHES)
     if len(permalink_to_entry) >= max:
-      logging.info(f'Hit cap of {max} permalinks. Stopping.')
+      logger.info(f'Hit cap of {max} permalinks. Stopping.')
       break
 
   # query all preexisting permalinks at once, instead of once per link
@@ -364,7 +366,7 @@ def _process_author(source, author_url, refetch=False, store_blanks=True):
 
   results = {}
   for permalink, entry in permalink_to_entry.items():
-    logging.debug(f'processing permalink: {permalink}')
+    logger.debug(f'processing permalink: {permalink}')
     new_results = process_entry(
       source, permalink, entry, refetch, preexisting.get(permalink, []),
       store_blanks=store_blanks)
@@ -419,10 +421,10 @@ def _find_feed_items(mf2):
     feeditems = list(itertools.chain.from_iterable(
       hfeed.get('children', []) for hfeed in hfeeds))
   else:
-    logging.debug('No h-feed found, fallback to top-level h-entrys.')
+    logger.debug('No h-feed found, fallback to top-level h-entrys.')
 
   if len(feeditems) > MAX_FEED_ENTRIES:
-    logging.info(f'Feed has {len(feeditems)} entries! only processing the first {MAX_FEED_ENTRIES}.')
+    logger.info(f'Feed has {len(feeditems)} entries! only processing the first {MAX_FEED_ENTRIES}.')
     feeditems = feeditems[:MAX_FEED_ENTRIES]
 
   return feeditems
@@ -456,7 +458,7 @@ def process_entry(source, permalink, feed_entry, refetch, preexisting,
       return {}
     synds = [s.syndication for s in preexisting if s.syndication]
     if synds:
-      logging.debug(f'previously found relationship(s) for original {permalink}: {synds}')
+      logger.debug(f'previously found relationship(s) for original {permalink}: {synds}')
 
   # first try with the h-entry from the h-feed. if we find the syndication url
   # we're looking for, we don't have to fetch the permalink
@@ -464,7 +466,7 @@ def process_entry(source, permalink, feed_entry, refetch, preexisting,
   usynd = feed_entry.get('properties', {}).get('syndication', [])
   usynd_urls = {url for url in usynd if isinstance(url, str)}
   if usynd_urls:
-    logging.debug(f'u-syndication links on the h-feed h-entry: {usynd_urls}')
+    logger.debug(f'u-syndication links on the h-feed h-entry: {usynd_urls}')
   results = _process_syndication_urls(source, permalink, usynd_urls, preexisting)
   success = True
 
@@ -475,20 +477,20 @@ def process_entry(source, permalink, feed_entry, refetch, preexisting,
     mf2 = None
     try:
       if type_ok:
-        logging.debug(f'fetching post permalink {permalink}')
+        logger.debug(f'fetching post permalink {permalink}')
         mf2 = util.fetch_mf2(permalink)
     except AssertionError:
       raise  # for unit tests
     except BaseException:
       # TODO limit the number of allowed failures
-      logging.info(f'Could not fetch permalink {permalink}', exc_info=True)
+      logger.info(f'Could not fetch permalink {permalink}', exc_info=True)
       success = False
 
     if mf2:
       syndication_urls = set()
       relsynd = mf2['rels'].get('syndication', [])
       if relsynd:
-        logging.debug(f'rel-syndication links: {relsynd}')
+        logger.debug(f'rel-syndication links: {relsynd}')
       syndication_urls.update(url for url in relsynd
                               if isinstance(url, str))
       # there should only be one h-entry on a permalink page, but
@@ -497,7 +499,7 @@ def process_entry(source, permalink, feed_entry, refetch, preexisting,
                      if 'h-entry' in item['type']):
         usynd = hentry.get('properties', {}).get('syndication', [])
         if usynd:
-          logging.debug(f'u-syndication links: {usynd}')
+          logger.debug(f'u-syndication links: {usynd}')
         syndication_urls.update(url for url in usynd
                                 if isinstance(url, str))
       results = _process_syndication_urls(
@@ -508,17 +510,17 @@ def process_entry(source, permalink, feed_entry, refetch, preexisting,
     result_syndposts = list(itertools.chain(*results.values()))
     for syndpost in preexisting:
       if syndpost.syndication and syndpost not in result_syndposts:
-        logging.info(f'deleting relationship that disappeared: {syndpost}')
+        logger.info(f'deleting relationship that disappeared: {syndpost}')
         syndpost.key.delete()
         preexisting.remove(syndpost)
 
   if not results:
-    logging.debug(f'no syndication links from {permalink} to current source {source.label()}.')
+    logger.debug(f'no syndication links from {permalink} to current source {source.label()}.')
     results = {}
     if store_blanks and not preexisting:
       # remember that this post doesn't have syndication links for this
       # particular source
-      logging.debug(f'saving empty relationship so that {permalink} will not be searched again')
+      logger.debug(f'saving empty relationship so that {permalink} will not be searched again')
       SyndicatedPost.insert_original_blank(source, permalink)
 
   # only return results that are not in the preexisting list
@@ -529,7 +531,7 @@ def process_entry(source, permalink, feed_entry, refetch, preexisting,
         new_results.setdefault(syndurl, []).append(syndpost)
 
   if new_results:
-    logging.debug(f'discovered relationships {new_results}')
+    logger.debug(f'discovered relationships {new_results}')
   return new_results
 
 
@@ -568,7 +570,7 @@ def _process_syndication_urls(source, permalink, syndication_urls,
                          if sp.syndication == url
                          and sp.original == permalink), None)
     if not relationship:
-      logging.debug(f'saving discovered relationship {url} -> {permalink}')
+      logger.debug(f'saving discovered relationship {url} -> {permalink}')
       relationship = SyndicatedPost.insert(source, syndication=url, original=permalink)
     results.setdefault(url, []).append(relationship)
 
@@ -579,7 +581,7 @@ def _get_author_urls(source):
   max = models.MAX_AUTHOR_URLS
   urls = source.get_author_urls()
   if len(urls) > max:
-    logging.warning(f'user has over {max} URLs! only running PPD on {urls[:max]}. skipping {urls[max:]}.')
+    logger.warning(f'user has over {max} URLs! only running PPD on {urls[:max]}. skipping {urls[max:]}.')
     urls = urls[:max]
 
   return urls

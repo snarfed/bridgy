@@ -16,6 +16,8 @@ import werkzeug.exceptions
 from flask_app import app
 import util
 
+logger = logging.getLogger(__name__)
+
 
 @app.route('/publish/<any(flickr,github,mastodon,meetup,twitter):silo>',
            methods=['GET', 'HEAD'])
@@ -103,7 +105,7 @@ class Webmention(View):
           doc = str(post)
           mf2 = util.parse_mf2(doc, resp.url)
 
-    logging.debug(f'Parsed microformats2: {json_dumps(mf2, indent=2)}')
+    logger.debug(f'Parsed microformats2: {json_dumps(mf2, indent=2)}')
     items = mf2.get('items', [])
     if require_mf2 and (not items or not items[0]):
       self.error('No microformats2 data found in ' + resp.url, data=mf2, html=f"""

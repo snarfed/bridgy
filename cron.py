@@ -20,6 +20,8 @@ from models import Source
 from twitter import Twitter
 import util
 
+logger = logging.getLogger(__name__)
+
 CIRCLECI_TOKEN = util.read('circleci_token')
 PAGE_SIZE = 20
 
@@ -43,7 +45,7 @@ def replace_poll_tasks():
   for source in itertools.chain(*queries):
     age = now - source.last_poll_attempt
     if age > max(source.poll_period() * 2, datetime.timedelta(hours=2)):
-      logging.info(f'{source.bridgy_url()} last polled {age} ago. Adding new poll task.')
+      logger.info(f'{source.bridgy_url()} last polled {age} ago. Adding new poll task.')
       util.add_poll_task(source)
 
   return ''
@@ -69,7 +71,7 @@ class UpdatePictures(View):
     results, _, more = query.fetch_page(PAGE_SIZE)
     for source in results:
       if source.features and source.status != 'disabled':
-        logging.debug(f'checking for updated profile pictures for: {source.bridgy_url()}')
+        logger.debug(f'checking for updated profile pictures for: {source.bridgy_url()}')
         try:
           actor = source.gr_source.get_actor(self.user_id(source))
         except BaseException as e:
@@ -81,12 +83,12 @@ class UpdatePictures(View):
           raise
 
         if not actor:
-          logging.info(f"Couldn't fetch {source.bridgy_url()} 's user")
+          logger.info(f"Couldn't fetch {source.bridgy_url()} 's user")
           continue
 
         new_pic = actor.get('image', {}).get('url')
         if not new_pic or source.picture == new_pic:
-          logging.info(f'No new picture found for {source.bridgy_url()}')
+          logger.info(f'No new picture found for {source.bridgy_url()}')
           continue
 
         @ndb.transactional()
@@ -95,7 +97,7 @@ class UpdatePictures(View):
           src.picture = new_pic
           src.put()
 
-        logging.info(f'Updating profile picture for {source.bridgy_url()} from {source.picture} to {new_pic}')
+        logger.info(f'Updating profile picture for {source.bridgy_url()} from {source.picture} to {new_pic}')
         update()
 
     LastUpdatedPicture(id=self.SOURCE_CLS.SHORT_NAME,

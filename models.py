@@ -19,6 +19,8 @@ import requests
 import superfeedr
 import util
 
+logger = logging.getLogger(__name__)
+
 VERB_TYPES = ('post', 'comment', 'like', 'react', 'repost', 'rsvp', 'tag')
 PUBLISH_TYPES = VERB_TYPES + ('preview', 'delete')
 
@@ -230,7 +232,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
       self.gr_source = self.GR_CLASS(refresh_token)
       return self.gr_source
     except AttributeError:
-      logging.info('no refresh_token')
+      logger.info('no refresh_token')
     args = auth_entity.access_token()
     if not isinstance(args, tuple):
       args = (args,)
@@ -305,7 +307,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
       return source
 
     to_log = {k: v for k, v in source.updates.items() if not k.endswith('_json')}
-    logging.info(f'Updating {source.label()} {source.bridgy_path()} : {to_log!r}')
+    logger.info(f'Updating {source.label()} {source.bridgy_path()} : {to_log!r}')
 
     updates = source.updates
     source = source.key.get()
@@ -521,7 +523,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
       if auth_entity and hasattr(auth_entity, 'user_json'):
         source.domain_urls, source.domains = source.urls_and_domains(
           auth_entity, user_url)
-    logging.debug(f'URLs/domains: {source.domain_urls} {source.domains}')
+    logger.debug(f'URLs/domains: {source.domain_urls} {source.domains}')
 
     # check if this source already exists
     existing = source.key.get()
@@ -545,7 +547,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
       'Try previewing a post from your web site!' if feature == 'publish'
       else '<a href="%s">Try a webmention!</a>' % link if feature == 'webmention'
       else "Refresh in a minute to see what we've found!")
-    logging.info(f'{blurb} {source.bridgy_url()}')
+    logger.info(f'{blurb} {source.bridgy_url()}')
 
     source.verify()
     if source.verified():
@@ -604,7 +606,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
       self.webmention_endpoint = got.endpoint
       self._fetched_html = got.response.text
     except BaseException as e:
-      logging.info('Error discovering webmention endpoint', exc_info=e)
+      logger.info('Error discovering webmention endpoint', exc_info=e)
       self.webmention_endpoint = None
 
     self.put()
@@ -626,13 +628,13 @@ class Source(StringIdModel, metaclass=SourceMeta):
     """
     if not actor:
       actor = self.gr_source.user_to_actor(json_loads(auth_entity.user_json))
-    logging.debug(f'Extracting URLs and domains from actor: {json_dumps(actor, indent=2)}')
+    logger.debug(f'Extracting URLs and domains from actor: {json_dumps(actor, indent=2)}')
 
     candidates = util.trim_nulls(util.uniquify(
         [user_url] + microformats2.object_urls(actor)))
 
     if len(candidates) > MAX_AUTHOR_URLS:
-      logging.info(f'Too many profile links! Only resolving the first {MAX_AUTHOR_URLS}: {candidates}')
+      logger.info(f'Too many profile links! Only resolving the first {MAX_AUTHOR_URLS}: {candidates}')
 
     urls = []
     for i, url in enumerate(candidates):
@@ -681,7 +683,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
         if final in me_urls:
           final = root
       except requests.RequestException:
-        logging.warning(f"Couldn't fetch {root}, preserving path in {final}", exc_info=True)
+        logger.warning(f"Couldn't fetch {root}, preserving path in {final}", exc_info=True)
 
     return final
 
@@ -855,7 +857,7 @@ class Webmentions(StringIdModel):
       propagate = self.unsent or self.error
 
     if propagate:
-      logging.debug(f'New webmentions to propagate! {entity.label()}')
+      logger.debug(f'New webmentions to propagate! {entity.label()}')
       entity.add_task()
     elif not existing:
       entity.status = 'complete'
@@ -922,7 +924,7 @@ class Response(Webmentions):
         source.gr_source.activity_changed(json_loads(resp.response_json),
                                           json_loads(self.response_json),
                                           log=True)):
-      logging.info(f'Response changed! Re-propagating. Original: {resp}')
+      logger.info(f'Response changed! Re-propagating. Original: {resp}')
 
       resp.old_response_jsons = resp.old_response_jsons[:10] + [resp.response_json]
 

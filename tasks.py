@@ -21,6 +21,8 @@ from util import ERROR_HTTP_RETURN_CODE
 # need to import model class definitions since poll creates and saves entities.
 import blogger, facebook, flickr, github, instagram, mastodon, medium, reddit, tumblr, twitter, wordpress_rest
 
+logger = logging.getLogger(__name__)
+
 # Used as a sentinel value in the webmention endpoint cache
 NO_ENDPOINT = 'NONE'
 
@@ -50,22 +52,22 @@ class Poll(View):
     return util.host_url(logs.url(source.last_poll_attempt, source.key))
 
   def dispatch_request(self):
-    logging.debug(f'Params: {list(request.values.items())}')
+    logger.debug(f'Params: {list(request.values.items())}')
 
     key = request.values['source_key']
     source = g.source = ndb.Key(urlsafe=key).get()
     if not source or source.status == 'disabled' or 'listen' not in source.features:
-      logging.error('Source not found or disabled. Dropping task.')
+      logger.error('Source not found or disabled. Dropping task.')
       return ''
-    logging.info(f'Source: {source.label()} {source.key_id()}, {source.bridgy_url()}')
+    logger.info(f'Source: {source.label()} {source.key_id()}, {source.bridgy_url()}')
 
     if source.AUTO_POLL:
       last_polled = request.values['last_polled']
       if last_polled != source.last_polled.strftime(util.POLL_TASK_DATETIME_FORMAT):
-        logging.warning('duplicate poll task! deferring to the other task.')
+        logger.warning('duplicate poll task! deferring to the other task.')
         return ''
 
-    logging.info(f'Last poll: {self._last_poll_url(source)}')
+    logger.info(f'Last poll: {self._last_poll_url(source)}')
 
     # mark this source as polling
     source.updates = {
@@ -84,13 +86,13 @@ class Poll(View):
       if code in source.DISABLE_HTTP_CODES or isinstance(e, models.DisableSource):
         # the user deauthorized the bridgy app, so disable this source.
         # let the task complete successfully so that it's not retried.
-        logging.warning(f'Disabling source due to: {e}', exc_info=True)
+        logger.warning(f'Disabling source due to: {e}', exc_info=True)
         source.updates.update({
           'status': 'disabled',
           'poll_status': 'ok',
         })
       elif code in source.RATE_LIMIT_HTTP_CODES:
-        logging.info(f'Rate limited. Marking as error and finishing. {e}')
+        logger.info(f'Rate limited. Marking as error and finishing. {e}')
         source.updates['rate_limited'] = True
       else:
         raise
@@ -112,7 +114,7 @@ class Poll(View):
     Stores property names and values to update in source.updates.
     """
     if source.last_activities_etag or source.last_activity_id:
-      logging.debug(f'Using ETag {source.last_activities_etag}, last activity id {source.last_activity_id}')
+      logger.debug(f'Using ETag {source.last_activities_etag}, last activity id {source.last_activity_id}')
 
     #
     # Step 1: fetch activities:
@@ -186,25 +188,25 @@ class Poll(View):
     # periodically check for updated urls. only kicks in if the author has
     # *ever* published a rel=syndication url
     if source.should_refetch():
-      logging.info(f'refetching h-feed for source {source.label()}')
+      logger.info(f'refetching h-feed for source {source.label()}')
       relationships = original_post_discovery.refetch(source)
 
       now = util.now_fn()
       source.updates['last_hfeed_refetch'] = now
 
       if relationships:
-        logging.info(f'refetch h-feed found new rel=syndication relationships: {relationships}')
+        logger.info(f'refetch h-feed found new rel=syndication relationships: {relationships}')
         try:
           self.repropagate_old_responses(source, relationships)
         except BaseException as e:
           if ('BadRequestError' in str(e.__class__) or
               'Timeout' in str(e.__class__) or
               util.is_connection_failure(e)):
-            logging.info('Timeout while repropagating responses.', exc_info=True)
+            logger.info('Timeout while repropagating responses.', exc_info=True)
           else:
             raise
     else:
-      logging.info(
+      logger.info(
           'skipping refetch h-feed. last-syndication-url %s, last-refetch %s',
           source.last_syndication_url, source.last_hfeed_refetch)
 
@@ -232,8 +234,8 @@ class Poll(View):
     private = {}
     for id, activity in activities.items():
       (public if source.is_activity_public(activity) else private)[id] = activity
-    logging.info(f'Found {len(public)} public activities: {public.keys()}')
-    logging.info(f'Found {len(private)} private activities: {private.keys()}')
+    logger.info(f'Found {len(public)} public activities: {public.keys()}')
+    logger.info(f'Found {len(private)} private activities: {private.keys()}')
 
     last_public_post = (source.last_public_post or util.EPOCH).isoformat()
     public_published = util.trim_nulls(
@@ -302,12 +304,12 @@ class Poll(View):
       for resp in replies + likes + reactions + reposts + rsvps:
         id = resp.get('id')
         if not id:
-          logging.error(f'Skipping response without id: {json_dumps(resp, indent=2)}')
+          logger.error(f'Skipping response without id: {json_dumps(resp, indent=2)}')
           continue
 
         if source.is_blocked(resp):
           dump = json_dumps(resp.get('author') or resp.get('actor'), indent=2)
-          logging.info(f'Skipping response by blocked user: {dump}')
+          logger.info(f'Skipping response by blocked user: {dump}')
           continue
 
         resp.setdefault('activities', []).append(activity)
@@ -319,7 +321,7 @@ class Poll(View):
         existing = responses.get(id)
         if existing:
           if source.gr_source.activity_changed(resp, existing, log=True):
-            logging.warning(f'Got two different versions of same response!\n{existing}\n{resp}')
+            logger.warning(f'Got two different versions of same response!\n{existing}\n{resp}')
           resp['activities'].extend(existing.get('activities', []))
 
         responses[id] = resp
@@ -364,7 +366,7 @@ class Poll(View):
         targets = original_post_discovery.targets_for_response(
           resp, originals=activity['originals'], mentions=activity['mentions'])
         if targets:
-          logging.info(f"{activity.get('url')} has {len(targets)} webmention target(s): {' '.join(targets)}")
+          logger.info(f"{activity.get('url')} has {len(targets)} webmention target(s): {' '.join(targets)}")
           # new response to propagate! load block list if we haven't already
           if source.blocked_ids is None:
             source.load_blocklist()
@@ -373,7 +375,7 @@ class Poll(View):
           if len(t) <= _MAX_STRING_LENGTH:
             urls_to_activity[t] = i
           else:
-            logging.info(f'Giving up on target URL over {_MAX_STRING_LENGTH} chars! {t}')
+            logger.info(f'Giving up on target URL over {_MAX_STRING_LENGTH} chars! {t}')
             too_long.add(t[:_MAX_STRING_LENGTH - 4] + '...')
 
       # store/update response entity. the prune_*() calls are important to
@@ -416,7 +418,7 @@ class Poll(View):
         activity = json_loads(activity_json)
         activity_url = activity.get('url') or activity.get('object', {}).get('url')
         if not activity_url:
-          logging.warning(f'activity has no url {activity_json}')
+          logger.warning(f'activity has no url {activity_json}')
           continue
 
         activity_url = source.canonicalize_url(activity_url, activity=activity)
@@ -429,12 +431,12 @@ class Poll(View):
           # these well-known upstream duplicates
           if (relationship.original in response.sent or
               relationship.original in response.original_posts):
-            logging.info(
+            logger.info(
               '%s found a new rel=syndication link %s -> %s, but the '
               'relationship had already been discovered by another method',
               response.label(), relationship.original, relationship.syndication)
           else:
-            logging.info(
+            logger.info(
               '%s found a new rel=syndication link %s -> %s, and '
               'will be repropagated with a new target!',
               response.label(), relationship.original, relationship.syndication)
@@ -463,7 +465,7 @@ class Discover(Poll):
   RESTART_EXISTING_TASKS = True
 
   def dispatch_request(self):
-    logging.debug(f'Params: {list(request.values.items())}')
+    logger.debug(f'Params: {list(request.values.items())}')
     g.TRANSIENT_ERROR_HTTP_CODES = ('400', '404')
 
     type = request.values.get('type')
@@ -472,9 +474,9 @@ class Discover(Poll):
 
     source = g.source = util.load_source()
     if not source or source.status == 'disabled' or 'listen' not in source.features:
-      logging.error('Source not found or disabled. Dropping task.')
+      logger.error('Source not found or disabled. Dropping task.')
       return ''
-    logging.info(f'Source: {source.label()} {source.key_id()}, {source.bridgy_url()}')
+    logger.info(f'Source: {source.label()} {source.key_id()}, {source.bridgy_url()}')
 
     post_id = request.values['post_id']
     source.updates = {}
@@ -487,7 +489,7 @@ class Discover(Poll):
         activity_id=post_id, user_id=source.key_id())
 
     if not activities or not activities[0]:
-      logging.info(f'Post {post_id} not found.')
+      logger.info(f'Post {post_id} not found.')
       return ''
     assert len(activities) == 1, activities
     activity = activities[0]
@@ -536,12 +538,12 @@ class SendWebmentions(View):
 
     :meth:`lease()` *must* be called before this!
     """
-    logging.info(f'Starting {self.entity.label()}')
+    logger.info(f'Starting {self.entity.label()}')
 
     try:
       self.do_send_webmentions()
     except:
-      logging.info('Propagate task failed', exc_info=True)
+      logger.info('Propagate task failed', exc_info=True)
       self.release('error')
       raise
 
@@ -559,14 +561,14 @@ class SendWebmentions(View):
         if len(url) <= _MAX_STRING_LENGTH:
           unsent.add(url)
         else:
-          logging.info(f'Giving up on target URL over {_MAX_STRING_LENGTH} chars! {url}')
+          logger.info(f'Giving up on target URL over {_MAX_STRING_LENGTH} chars! {url}')
           self.entity.failed.append(orig_url)
     self.entity.unsent = sorted(unsent)
 
     while self.entity.unsent:
       target = self.entity.unsent.pop(0)
       source_url = self.source_url(target)
-      logging.info(f'Webmention from {source_url} to {target}')
+      logger.info(f'Webmention from {source_url} to {target}')
 
       # see if we've cached webmention discovery for this domain. the cache
       # value is a string URL endpoint if discovery succeeded, NO_ENDPOINT if
@@ -574,7 +576,7 @@ class SendWebmentions(View):
       cache_key = util.webmention_endpoint_cache_key(target)
       endpoint = util.webmention_endpoint_cache.get(cache_key)
       if endpoint:
-        logging.info(f'Webmention discovery: using cached endpoint {cache_key}: {endpoint}')
+        logger.info(f'Webmention discovery: using cached endpoint {cache_key}: {endpoint}')
 
       # send! and handle response or error
       try:
@@ -586,26 +588,26 @@ class SendWebmentions(View):
             util.webmention_endpoint_cache[cache_key] = endpoint or NO_ENDPOINT
 
         if endpoint and endpoint != NO_ENDPOINT:
-          logging.info('Sending...')
+          logger.info('Sending...')
           resp = webmention.send(endpoint, source_url, target, timeout=999,
                                  headers=headers)
-          logging.info(f'Sent! {resp}')
+          logger.info(f'Sent! {resp}')
           self.record_source_webmention(endpoint, target)
           self.entity.sent.append(target)
         else:
-          logging.info('Giving up this target.')
+          logger.info('Giving up this target.')
           self.entity.skipped.append(target)
 
       except ValueError:
-        logging.info('Bad URL; giving up this target.')
+        logger.info('Bad URL; giving up this target.')
         self.entity.skipped.append(target)
 
       except BaseException as e:
-        logging.info('', exc_info=True)
+        logger.info('', exc_info=True)
         # Give up on 4XX and DNS errors; we don't expect retries to succeed.
         code, _ = util.interpret_http_exception(e)
         if (code and code.startswith('4')) or 'DNS lookup failed' in str(e):
-          logging.info('Giving up this target.')
+          logger.info('Giving up this target.')
           self.entity.failed.append(target)
         else:
           self.fail(f'Error sending to endpoint: {resp}')
@@ -615,7 +617,7 @@ class SendWebmentions(View):
         self.entity.unsent.remove(target)
 
     if self.entity.error:
-      logging.info('Some targets failed')
+      logger.info('Some targets failed')
       self.release('error')
     else:
       self.complete()
@@ -640,7 +642,7 @@ class SendWebmentions(View):
       return self.fail('no entity!')
     elif self.entity.status == 'complete':
       # let this task return 200 and finish
-      logging.warning('duplicate task already propagated this')
+      logger.warning('duplicate task already propagated this')
       return
     elif (self.entity.status == 'processing' and
           util.now_fn() < self.entity.leased_until):
@@ -648,9 +650,9 @@ class SendWebmentions(View):
 
     g.source = self.entity.source.get()
     if not g.source or g.source.status == 'disabled':
-      logging.error('Source not found or disabled. Dropping task.')
+      logger.error('Source not found or disabled. Dropping task.')
       return False
-    logging.info(f'Source: {g.source.label()} {g.source.key_id()}, {g.source.bridgy_url()}')
+    logger.info(f'Source: {g.source.label()} {g.source.key_id()}, {g.source.bridgy_url()}')
 
     assert self.entity.status in ('new', 'processing', 'error'), self.entity.status
     self.entity.status = 'processing'
@@ -669,10 +671,10 @@ class SendWebmentions(View):
       self.fail('entity disappeared!')
     elif existing.status == 'complete':
       # let this task return 200 and finish
-      logging.warning('another task stole and finished this. did my lease expire?')
+      logger.warning('another task stole and finished this. did my lease expire?')
     elif self.entity.status == 'complete':
       # let this task return 200 and finish
-      logging.error('i already completed this task myself somehow?! '
+      logger.error('i already completed this task myself somehow?! '
                     'https://github.com/snarfed/bridgy/issues/610')
     elif existing.status == 'new':
       self.fail('went backward from processing to new!')
@@ -700,7 +702,7 @@ class SendWebmentions(View):
 
   def fail(self, message):
     """Marks the request failed and logs an error message."""
-    logging.warning(message)
+    logger.warning(message)
     g.failed = True
 
   @ndb.transactional()
@@ -712,12 +714,12 @@ class SendWebmentions(View):
       target: str, URL
     """
     g.source = g.source.key.get()
-    logging.info('Setting last_webmention_sent')
+    logger.info('Setting last_webmention_sent')
     g.source.last_webmention_sent = util.now_fn()
 
     if (endpoint != g.source.webmention_endpoint and
         util.domain_from_link(target) in g.source.domains):
-      logging.info(f'Also setting webmention_endpoint to {endpoint} (discovered in {target}; was {g.source.webmention_endpoint})')
+      logger.info(f'Also setting webmention_endpoint to {endpoint} (discovered in {target}; was {g.source.webmention_endpoint})')
       g.source.webmention_endpoint = endpoint
 
     g.source.put()
@@ -736,20 +738,20 @@ class PropagateResponse(SendWebmentions):
   """
 
   def dispatch_request(self):
-    logging.debug(f'Params: {list(request.values.items())}')
+    logger.debug(f'Params: {list(request.values.items())}')
     if not self.lease(ndb.Key(urlsafe=request.values['response_key'])):
       return ('', ERROR_HTTP_RETURN_CODE) if getattr(g, 'failed', None) else 'OK'
 
     source = g.source
     poll_estimate = self.entity.created - datetime.timedelta(seconds=61)
     poll_url = util.host_url(logs.url(poll_estimate, source.key))
-    logging.info(f'Created by this poll: {poll_url}')
+    logger.info(f'Created by this poll: {poll_url}')
 
     self.activities = [json_loads(a) for a in self.entity.activities_json]
     response_obj = json_loads(self.entity.response_json)
     if (not source.is_activity_public(response_obj) or
         not all(source.is_activity_public(a) for a in self.activities)):
-      logging.info('Response or activity is non-public. Dropping.')
+      logger.info('Response or activity is non-public. Dropping.')
       self.complete()
       return ''
 
@@ -797,7 +799,7 @@ class PropagateBlogPost(SendWebmentions):
   """
 
   def dispatch_request(self):
-    logging.debug(f'Params: {list(request.values.items())}')
+    logger.debug(f'Params: {list(request.values.items())}')
 
     if not self.lease(ndb.Key(urlsafe=request.values['key'])):
       return ('', ERROR_HTTP_RETURN_CODE) if getattr(g, 'failed', None) else 'OK'

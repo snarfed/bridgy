@@ -1,7 +1,6 @@
 """Unit tests for facebook.py."""
 import copy
 from datetime import datetime
-import logging
 
 from granary import facebook as gr_facebook
 from granary.tests.test_facebook import (

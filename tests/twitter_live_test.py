@@ -17,6 +17,8 @@ from granary import twitter
 
 from models import TWITTER_SCRAPE_HEADERS
 
+logger = logging.getLogger(__name__)
+
 twitter_auth.TWITTER_APP_KEY = (os.getenv('TWITTER_LIVE_TEST_APP_KEY') or
                                 util.read('twitter_live_test_app_key'))
 assert twitter_auth.TWITTER_APP_KEY
@@ -45,7 +47,7 @@ class TwitterLiveTest(unittest.TestCase):
 if __name__ == '__main__':
   if '--debug' in sys.argv:
     sys.argv.remove('--debug')
-    logging.getLogger().setLevel(logging.DEBUG)
+    logging.getLogger().setLevel(logger.DEBUG)
   else:
     logging.getLogger().setLevel(logging.CRITICAL + 1)
   unittest.main()

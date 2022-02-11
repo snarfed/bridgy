@@ -27,6 +27,8 @@ from oauth_dropins.webutil.util import *
 import requests
 from werkzeug.routing import RequestRedirect
 
+logger = logging.getLogger(__name__)
+
 # when running locally, replace these domains in links with localhost
 LOCALHOST_TEST_DOMAINS = frozenset([
   ('snarfed.org', 'localhost'),
@@ -165,10 +167,10 @@ def add_task(queue, eta_seconds=None, **kwargs):
 
   queue_path = tasks_client.queue_path(APP_ID, TASKS_LOCATION, queue)
   if LOCAL:
-    logging.info(f'Would add task: {queue_path} {params}')
+    logger.info(f'Would add task: {queue_path} {params}')
   else:
     task = tasks_client.create_task(CreateTaskRequest(parent=queue_path, task=params))
-    logging.info(f'Added {queue} task {task.name} with ETA {eta_seconds}')
+    logger.info(f'Added {queue} task {task.name} with ETA {eta_seconds}')
 
 
 class Redirect(RequestRedirect):
@@ -184,7 +186,7 @@ class Redirect(RequestRedirect):
         {f'{login.path}?{urllib.parse.quote_plus(login.name)}'
          for login in self.logins}))
 
-      logging.info(f'setting logins cookie: {cookie}')
+      logger.info(f'setting logins cookie: {cookie}')
       age = datetime.timedelta(days=365 * 2)
       expires = (now_fn() + age).replace(microsecond=0)
       resp.set_cookie('logins', cookie, max_age=age, expires=expires)
@@ -203,7 +205,7 @@ def redirect(path, code=302, logins=None):
     logins: optional, list of :class:`util.Login` to be set in a Set-Cookie HTTP
       header
   """
-  logging.info(f'Redirecting to {path}')
+  logger.info(f'Redirecting to {path}')
   rr = Redirect(host_url(path))
   rr.code = code
   rr.logins = logins
@@ -241,7 +243,7 @@ def report_error(msg, **kwargs):
     error_reporting_client.report(msg, **kwargs)
   except BaseException:
     if not DEBUG:
-      logging.warning(f'Failed to report error to StackDriver! {msg} {kwargs}', exc_info=True)
+      logger.warning(f'Failed to report error to StackDriver! {msg} {kwargs}', exc_info=True)
 
 
 def requests_get(url, **kwargs):
@@ -311,7 +313,7 @@ def get_webmention_target(url, resolve=True, replace_test_domains=True):
   try:
     domain = domain_from_link(url).lower()
   except BaseException:
-    logging.info(f'Dropping bad URL: {url!r}.')
+    logger.info(f'Dropping bad URL: {url!r}.')
     return url, None, False
 
   send = True
@@ -464,7 +466,7 @@ def maybe_add_or_delete_source(source_cls, auth_entity, state, **kwargs):
   callback = state_obj.get('callback')
   user_url = state_obj.get('user_url')
 
-  logging.debug(
+  logger.debug(
     'maybe_add_or_delete_source with operation=%s, feature=%s, callback=%s',
     operation, feature, callback)
   logins = None
@@ -478,13 +480,13 @@ def maybe_add_or_delete_source(source_cls, auth_entity, state, **kwargs):
       flash("OK, you're not signed up. Hope you reconsider!")
       if callback:
         callback = util.add_query_params(callback, {'result': 'declined'})
-        logging.debug(
+        logger.debug(
           f'user declined adding source, redirect to external callback {callback}')
         redirect(callback)
       else:
         redirect('/')
 
-    logging.info(f'{source_cls.__class__.__name__}.create_new with {auth_entity.key}, {state}, {kwargs}')
+    logger.info(f'{source_cls.__class__.__name__}.create_new with {auth_entity.key}, {state}, {kwargs}')
     source = source_cls.create_new(auth_entity=auth_entity,
                                    features=feature.split(',') if feature else [],
                                    user_url=user_url, **kwargs)
@@ -501,7 +503,7 @@ def maybe_add_or_delete_source(source_cls, auth_entity, state, **kwargs):
         'user': source.bridgy_url(),
         'key': source.key.urlsafe().decode(),
       } if source else {'result': 'failure'})
-      logging.debug(
+      logger.debug(
         'finished adding source, redirect to external callback %s', callback)
       redirect(callback, logins=logins)
 

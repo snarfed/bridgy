@@ -8,6 +8,8 @@ from werkzeug.exceptions import HTTPException
 
 import appengine_config, util
 
+logger = logging.getLogger(__name__)
+
 
 # Flask app
 app = Flask(__name__)
@@ -33,7 +35,7 @@ def background_handle_exception(e):
   code, body = util.interpret_http_exception(e)
   if ((code and int(code) // 100 == 5) or code in transients or
       util.is_connection_failure(e)):
-    logging.error(f'Marking as error and finishing. {code}: {body}\n{e}')
+    logger.error(f'Marking as error and finishing. {code}: {body}\n{e}')
     return '', util.ERROR_HTTP_RETURN_CODE
 
   raise e

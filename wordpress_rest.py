@@ -34,6 +34,8 @@ import superfeedr
 import util
 from util import redirect
 
+logger = logging.getLogger(__name__)
+
 
 API_CREATE_COMMENT_URL = 'https://public-api.wordpress.com/rest/v1/sites/%s/posts/%d/replies/new?pretty=true'
 API_POST_SLUG_URL = 'https://public-api.wordpress.com/rest/v1/sites/%s/posts/slug:%s?pretty=true'
@@ -118,7 +120,7 @@ class WordPress(models.Source):
       JSON response dict with 'id' and other fields
     """
     auth_entity = self.auth_entity.get()
-    logging.info(f'Determining WordPress.com post id for {post_url}')
+    logger.info(f'Determining WordPress.com post id for {post_url}')
 
     # extract the post's slug and look up its post id
     path = urllib.parse.urlparse(post_url).path
@@ -128,13 +130,13 @@ class WordPress(models.Source):
     try:
       post_id = int(slug)
     except ValueError:
-      logging.info(f'Looking up post id for slug {slug}')
+      logger.info(f'Looking up post id for slug {slug}')
       url = API_POST_SLUG_URL % (auth_entity.blog_id, slug)
       post_id = self.urlopen(auth_entity, url).get('ID')
       if not post_id:
         return self.error('Could not find post id', report=False)
 
-    logging.info(f'Post id is {post_id}')
+    logger.info(f'Post id is {post_id}')
 
     # create the comment
     url = API_CREATE_COMMENT_URL % (auth_entity.blog_id, post_id)
@@ -179,7 +181,7 @@ class WordPress(models.Source):
   @staticmethod
   def urlopen(auth_entity, url, **kwargs):
     resp = auth_entity.urlopen(url, **kwargs).read()
-    logging.debug(resp)
+    logger.debug(resp)
     return json_loads(resp)
 
 
@@ -199,7 +201,7 @@ class Add(oauth_wordpress.Callback):
       if site_info is None:
         return
       elif site_info.get('jetpack'):
-        logging.info(f'This is a self-hosted WordPress blog! {auth_entity.key_id()} {auth_entity.blog_id}')
+        logger.info(f'This is a self-hosted WordPress blog! {auth_entity.key_id()} {auth_entity.blog_id}')
         return render_template('confirm_self_hosted_wordpress.html',
                                auth_entity_key=auth_entity.key.urlsafe().decode(),
                                state=state)

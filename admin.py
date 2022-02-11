@@ -20,6 +20,8 @@ import util
 from models import BlogPost, Response, Source
 import blogger, flickr, github, instagram, mastodon, medium, tumblr, twitter, wordpress_rest
 
+logger = logging.getLogger(__name__)
+
 NUM_ENTITIES = 10
 
 # Result of this query in BigQuery:
@@ -97,7 +99,7 @@ def mark_complete():
 @app.route('/admin/disable', methods=['POST'])
 def disable():
   source = util.load_source()
-  logging.info(f'Disabling {source.label()}')
+  logger.info(f'Disabling {source.label()}')
   source.status = 'disabled'
   source.put()
   return util.redirect(source.bridgy_path())

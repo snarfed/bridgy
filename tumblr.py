@@ -40,6 +40,8 @@ import models
 import superfeedr
 import util
 
+logger = logging.getLogger(__name__)
+
 
 TUMBLR_AVATAR_URL = 'http://api.tumblr.com/v2/blog/%s/avatar/512'
 DISQUS_API_CREATE_POST_URL = 'https://disqus.com/api/3.0/posts/create.json'
@@ -144,12 +146,12 @@ class Tumblr(models.Source):
 
   def discover_disqus_shortname(self, html):
     # scrape the disqus shortname out of the page
-    logging.info("Looking for Disqus shortname in fetched HTML")
+    logger.info("Looking for Disqus shortname in fetched HTML")
     for regex in DISQUS_SHORTNAME_RES:
       match = regex.search(html)
       if match:
         self.disqus_shortname = match.group(1)
-        logging.info(f"Found Disqus shortname {self.disqus_shortname}")
+        logger.info(f"Found Disqus shortname {self.disqus_shortname}")
         self.put()
 
   def create_comment(self, post_url, author_name, author_url, content):
@@ -213,7 +215,7 @@ class Tumblr(models.Source):
     Returns:
       dict, JSON response
     """
-    logging.info(f"Calling Disqus {url.split('/')[-2:]} with {params}")
+    logger.info(f"Calling Disqus {url.split('/')[-2:]} with {params}")
     params.update({
         'api_key': DISQUS_API_KEY,
         'api_secret': DISQUS_API_SECRET,
@@ -223,7 +225,7 @@ class Tumblr(models.Source):
     resp = method(url, params=params, **kwargs)
     resp.raise_for_status()
     resp = resp.json().get('response', {})
-    logging.info(f'Response: {resp}')
+    logger.info(f'Response: {resp}')
     return resp
 
 
@@ -245,7 +247,9 @@ class ChooseBlog(oauth_tumblr.Callback):
                 for b in json_loads(auth_entity.user_json)['user']['blogs']
                 if b.get('name') and b.get('url')],
       }
-    logging.info(f'Rendering choose_blog.html with {vars}')
+    print(logger.getEffectiveLevel())
+    assert logger.isEnabledFor(logging.DEBUG)
+    logger.info(f'Rendering choose_blog.html with {vars}')
     return render_template('choose_blog.html', **vars)
 
 

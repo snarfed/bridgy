@@ -19,6 +19,8 @@ from requests.auth import HTTPBasicAuth
 import models
 import util
 
+logger = logging.getLogger(__name__)
+
 SUPERFEEDR_TOKEN = util.read('superfeedr_token')
 SUPERFEEDR_USERNAME = util.read('superfeedr_username')
 PUSH_API_URL = 'https://push.superfeedr.com'
@@ -36,7 +38,7 @@ def subscribe(source):
     source: Blogger, Tumblr, or WordPress
   """
   if appengine_info.LOCAL:
-    logging.info('Running locally, not subscribing to Superfeedr')
+    logger.info('Running locally, not subscribing to Superfeedr')
     return
 
   data = {
@@ -49,7 +51,7 @@ def subscribe(source):
     'retrieve': 'true',
   }
 
-  logging.info(f'Adding Superfeedr subscription: {data}')
+  logger.info(f'Adding Superfeedr subscription: {data}')
   resp = util.requests_post(
     PUSH_API_URL, data=data,
     auth=HTTPBasicAuth(SUPERFEEDR_USERNAME, SUPERFEEDR_TOKEN),
@@ -70,23 +72,23 @@ def handle_feed(feed, source):
     feed: unicode string, Superfeedr JSON feed
     source: Blogger, Tumblr, or WordPress
   """
-  logging.info(f'Source: {source.label()} {source.key_id()}')
-  logging.info(f'Raw feed: {feed}')
+  logger.info(f'Source: {source.label()} {source.key_id()}')
+  logger.info(f'Raw feed: {feed}')
 
   if not feed:
     return
 
   if source.status != 'enabled':
-    logging.info(f'Dropping because source is {source.status}')
+    logger.info(f'Dropping because source is {source.status}')
     return
   elif 'webmention' not in source.features:
-    logging.info("Dropping because source doesn't have webmention feature")
+    logger.info("Dropping because source doesn't have webmention feature")
     return
 
   for item in feed.get('items', []):
     url = item.get('permalinkUrl') or item.get('id')
     if not url:
-      logging.error('Dropping feed item without permalinkUrl or id!')
+      logger.error('Dropping feed item without permalinkUrl or id!')
       continue
 
     # extract links from content, discarding self links.
@@ -107,14 +109,14 @@ def handle_feed(feed, source):
       if len(link) <= _MAX_STRING_LENGTH:
         unique.append(link)
       else:
-        logging.info(f'Giving up on link over {_MAX_STRING_LENGTH} chars! {link}')
+        logger.info(f'Giving up on link over {_MAX_STRING_LENGTH} chars! {link}')
       if len(unique) >= MAX_BLOGPOST_LINKS:
-        logging.info('Stopping at 10 links! Skipping the rest.')
+        logger.info('Stopping at 10 links! Skipping the rest.')
         break
 
-    logging.info(f'Found links: {unique}')
+    logger.info(f'Found links: {unique}')
     if len(url) > _MAX_KEYPART_BYTES:
-      logging.warning('Blog post URL is too long (over 500 chars)! Giving up.')
+      logger.warning('Blog post URL is too long (over 500 chars)! Giving up.')
       bp = models.BlogPost(id=url[:_MAX_KEYPART_BYTES], source=source.key,
                            feed_item=item, failed=unique)
     else:

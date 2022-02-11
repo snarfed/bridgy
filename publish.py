@@ -43,6 +43,8 @@ import util
 from util import redirect
 import webmention
 
+logger = logging.getLogger(__name__)
+
 
 SOURCES = (Flickr, GitHub, Mastodon, Meetup, Twitter)
 SOURCE_NAMES = {cls.SHORT_NAME: cls for cls in SOURCES}

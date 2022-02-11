@@ -12,6 +12,8 @@ from flask_app import app
 from models import Source
 import util
 
+logger = logging.getLogger(__name__)
+
 # https://developer.github.com/apps/building-oauth-apps/scopes-for-oauth-apps/
 # https://github.com/dear-github/dear-github/issues/113#issuecomment-365121631
 LISTEN_SCOPES = [
@@ -97,7 +99,7 @@ class Start(View):
 
 class AddGitHub(oauth_github.Callback):
   def finish(self, auth_entity, state=None):
-    logging.debug(f'finish with {auth_entity}, {state}')
+    logger.debug(f'finish with {auth_entity}, {state}')
     util.maybe_add_or_delete_source(GitHub, auth_entity, state)
 
 

@@ -22,6 +22,8 @@ import models
 import superfeedr
 import util
 
+logger = logging.getLogger(__name__)
+
 
 class Medium(models.Source):
   """A Medium publication or user blog.
@@ -159,7 +161,7 @@ class ChooseBlog(oauth_medium.Callback):
         'image': p.get('imageUrl', ''),
       } for p in pubs if p.get('id')],
     }
-    logging.info(f'Rendering choose_blog.html with {vars}')
+    logger.info(f'Rendering choose_blog.html with {vars}')
     return render_template('choose_blog.html', **vars)
 
 

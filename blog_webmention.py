@@ -13,12 +13,14 @@ from models import BlogWebmention
 import util
 import webmention
 
+logger = logging.getLogger(__name__)
+
 
 class BlogWebmentionView(webmention.Webmention):
   """View for incoming webmentions against blog providers."""
 
   def dispatch_request(self, site):
-    logging.info(f'Params: {list(request.values.items())}')
+    logger.info(f'Params: {list(request.values.items())}')
     # strip fragments from source and target url
     self.source_url = urllib.parse.urldefrag(request.form['source'])[0]
     self.target_url = urllib.parse.urldefrag(request.form['target'])[0]
@@ -68,12 +70,12 @@ class BlogWebmentionView(webmention.Webmention):
     target_path = urllib.parse.urlparse(self.target_url).path
     if target_path in ('', '/'):
       msg = 'Home page webmentions are not currently supported.'
-      logging.info(msg)
+      logger.info(msg)
       return {'error': msg}, 202
     for pattern in self.source.PATH_BLOCKLIST:
       if pattern.match(target_path):
         msg = f'{self.source.GR_CLASS.NAME} webmentions are not supported for URL path: {target_path}'
-        logging.info(msg)
+        logger.info(msg)
         return {'error': msg}, 202
 
     # create BlogWebmention entity
@@ -83,7 +85,7 @@ class BlogWebmentionView(webmention.Webmention):
     if self.entity.status == 'complete':
       # TODO: response message saying update isn't supported
       return self.entity.published
-    logging.debug(f'BlogWebmention entity: {self.entity.key.urlsafe().decode()}')
+    logger.debug(f'BlogWebmention entity: {self.entity.key.urlsafe().decode()}')
 
     # fetch source page
     fetched = self.fetch_mf2(self.source_url)
@@ -129,7 +131,7 @@ class BlogWebmentionView(webmention.Webmention):
       code, body = util.interpret_http_exception(e)
       msg = f'Error: {code}: {e}; {body}'
       if code == '401':
-        logging.warning(f'Disabling source due to: {e}', exc_info=True)
+        logger.warning(f'Disabling source due to: {e}', exc_info=True)
         self.source.status = 'disabled'
         self.source.put()
         self.error(msg, status=code, report=self.source.is_beta_user())
