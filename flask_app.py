@@ -9,6 +9,7 @@ import flask_gae_static
 import humanize
 from oauth_dropins.webutil import flask_util
 from oauth_dropins.webutil.appengine_config import ndb_client
+from oauth_dropins.webutil.appengine_info import DEBUG
 
 import appengine_config
 import models
@@ -24,7 +25,8 @@ app.after_request(flask_util.default_modern_headers)
 app.register_error_handler(Exception, flask_util.handle_exception)
 app.before_request(flask_util.canonicalize_domain(
   util.OTHER_DOMAINS, util.PRIMARY_DOMAIN))
-flask_gae_static.init_app(app)
+if DEBUG:
+  flask_gae_static.init_app(app)
 
 app.wsgi_app = flask_util.ndb_context_middleware(app.wsgi_app, client=ndb_client)
 
