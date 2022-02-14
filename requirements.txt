@@ -33,7 +33,7 @@ google-api-core==1.31.5
 google-auth==1.35.0
 google-cloud-appengine-logging==1.1.0
 google-cloud-audit-log==0.2.0
-google-cloud-core==1.7.2
+google-cloud-core==2.2.2
 google-cloud-datastore==1.15.3
 google-cloud-error-reporting==1.4.1
 google-cloud-logging==2.7.0
