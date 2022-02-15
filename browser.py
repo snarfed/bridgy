@@ -372,9 +372,7 @@ class Extras(BrowserView):
       new_extras = getattr(gr_src, self.MERGE_METHOD)(
         request.get_data(as_text=True), activity_data)
     except ValueError as e:
-      msg = f"Scrape error: couldn't parse extras: {e}"
-      logger.error(msg, exc_info=True)
-      self.error(msg)
+      self.error(f"Scrape error: couldn't parse extras: {e}")
 
     activity.activity_json = json_dumps(activity_data)
     activity.put()
