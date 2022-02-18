@@ -211,19 +211,24 @@ class BrowserViewTest(testutil.AppTest):
     self.assertIn('Your FakeSource account is private. ', resp.get_data(as_text=True))
 
   def test_profile_links(self):
+    # check HEAD requests, make sure we don't HEAD blocklisted domains
+    self.unstub_requests_head()
+
     FakeBrowserSource.gr_source.actor.update({
       'url': 'https://patreon.com/bar',  # blocklisted
       'urls': [
-        {'value': 'http:/fa.ke/foo'},  # silo profile
+        {'value': 'http://fa.ke/foo'},  # silo profile
         {'value': 'https://snarfed.org/'},
         {'value': 'http://another.com/me'},
         {'value': 'https://snarfed.org/'},  # duplicate
       ],
     })
 
-    self.expect_requests_get('http://another.com', '')
-    self.expect_requests_get('http://another.com', '')
-    self.expect_requests_get('https://snarfed.org/', '')
+    self.expect_requests_get('http://another.com')
+    self.expect_requests_head('https://patreon.com/bar')
+    self.expect_requests_head('http://another.com/me')
+    self.expect_requests_get('http://another.com')
+    self.expect_requests_get('https://snarfed.org/')
     self.mox.ReplayAll()
 
     resp = self.post('profile?token=towkin')

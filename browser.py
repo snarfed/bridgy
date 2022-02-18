@@ -87,7 +87,8 @@ class BrowserSource(Source):
               name=actor.get('displayName'),
               picture=actor.get('image', {}).get('url'),
               **kwargs)
-    src.domain_urls, src.domains = src.urls_and_domains(None, None, actor=actor)
+    src.domain_urls, src.domains = src.urls_and_domains(None, None, actor=actor,
+                                                        resolve_source_domain=False)
     return src
 
   @classmethod

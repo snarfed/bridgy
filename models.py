@@ -611,7 +611,8 @@ class Source(StringIdModel, metaclass=SourceMeta):
 
     self.put()
 
-  def urls_and_domains(self, auth_entity, user_url, actor=None):
+  def urls_and_domains(self, auth_entity, user_url, actor=None,
+                       resolve_source_domain=True):
     """Returns this user's valid (not webmention-blocklisted) URLs and domains.
 
     Converts the auth entity's user_json to an ActivityStreams actor and uses
@@ -622,6 +623,8 @@ class Source(StringIdModel, metaclass=SourceMeta):
       user_url: string, optional URL passed in when authorizing
       actor: dict, optional AS actor for the user. If provided, overrides
         auth_entity
+      resolve_source_domain: boolean, whether to follow redirects on URLs on
+        this source's domain
 
     Returns:
       ([string url, ...], [string domain, ...])
@@ -638,7 +641,10 @@ class Source(StringIdModel, metaclass=SourceMeta):
 
     urls = []
     for i, url in enumerate(candidates):
-      resolved = self.resolve_profile_url(url, resolve=i < MAX_AUTHOR_URLS)
+      on_source_domain = util.domain_from_link(url) == self.gr_source.DOMAIN
+      resolve = ((resolve_source_domain or not on_source_domain) and
+                 i < MAX_AUTHOR_URLS)
+      resolved = self.resolve_profile_url(url, resolve=resolve)
       if resolved:
         urls.append(resolved)
 
