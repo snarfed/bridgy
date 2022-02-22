@@ -41,7 +41,7 @@ google-cloud-ndb==1.11.1
 google-cloud-tasks==2.7.2
 googleapis-common-protos==1.54.0
 grpc-google-iam-v1==0.12.3
-grpcio==1.43.0
+grpcio==1.44.0
 gunicorn==20.1.0
 html5lib==1.1
 humanfriendly==10.0
@@ -49,7 +49,7 @@ humanize==4.0.0
 idna==3.3
 itsdangerous==2.1.0
 Jinja2==3.0.3
-lxml==4.7.1
+lxml==4.8.0
 MarkupSafe==2.0.1
 mf2py==1.1.2
 mox3==1.1.0
@@ -62,13 +62,13 @@ proto-plus==1.20.3
 protobuf==3.19.4
 pyasn1==0.4.8
 pyasn1-modules==0.2.8
-pymemcache==3.5.0
+pymemcache==3.5.1
 pyparsing==3.0.7
 python-dateutil==2.8.2
 python-tumblpy==1.1.4
 pytz==2021.3
 PyYAML==6.0
-redis==4.1.3
+redis==4.1.4
 requests==2.27.1
 requests-oauthlib==1.3.1
 rsa==4.8
