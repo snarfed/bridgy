@@ -17,7 +17,7 @@ Brotli==1.0.9
 cachetools==4.2.4
 certifi==2021.10.8
 charset-normalizer==2.0.12
-click==8.0.3
+click==8.0.4
 colorama==0.4.4
 Deprecated==1.2.13
 domain2idna==1.12.0
@@ -47,7 +47,7 @@ html5lib==1.1
 humanfriendly==10.0
 humanize==4.0.0
 idna==3.3
-itsdangerous==2.0.1
+itsdangerous==2.1.0
 Jinja2==3.0.3
 lxml==4.7.1
 MarkupSafe==2.0.1
@@ -62,7 +62,7 @@ proto-plus==1.20.3
 protobuf==3.19.4
 pyasn1==0.4.8
 pyasn1-modules==0.2.8
-pymemcache==3.5.0
+pymemcache==3.5.1
 pyparsing==3.0.7
 python-dateutil==2.8.2
 python-tumblpy==1.1.4
