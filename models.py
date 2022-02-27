@@ -903,7 +903,7 @@ class Response(Webmentions):
   response_json = ndb.TextProperty()
   # Old values for response_json. Populated when the silo reports that the
   # response has changed, e.g. the user edited a comment or changed their RSVP
-  # to an event.
+  # to an event. Currently unused, kept for historical records only.
   old_response_jsons = ndb.TextProperty(repeated=True)
   # JSON dict mapping original post url to activity index in activities_json.
   # only set when there's more than one activity.
@@ -932,7 +932,7 @@ class Response(Webmentions):
                                           log=True)):
       logger.info(f'Response changed! Re-propagating. Original: {resp}')
 
-      resp.old_response_jsons = resp.old_response_jsons[:10] + [resp.response_json]
+      resp.old_response_jsons = [resp.response_json] + resp.old_response_jsons[:10]
 
       response_json_to_append = json_loads(self.response_json)
       source.gr_source.append_in_reply_to(json_loads(resp.response_json), response_json_to_append)

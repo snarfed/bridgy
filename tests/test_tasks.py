@@ -1190,7 +1190,7 @@ class PollTest(TaskTest):
 
   def _change_response_and_poll(self):
     resp = self.responses[0].key.get() or self.responses[0]
-    old_resp_jsons = resp.old_response_jsons + [resp.response_json]
+    old_resp_jsons = [resp.response_json] + resp.old_response_jsons
     targets = resp.sent = resp.unsent
     resp.unsent = []
     resp.status = 'complete'
