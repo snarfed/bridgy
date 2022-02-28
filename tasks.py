@@ -27,6 +27,15 @@ logger = logging.getLogger(__name__)
 NO_ENDPOINT = 'NONE'
 
 
+# TODO: move into granary.microformats2?
+def is_quote_mention(activity, source):
+  obj = activity.get('object') or activity
+  for att in obj.get('attachments', []):
+    if (att.get('objectType') in ('note', 'article')
+        and att.get('author', {}).get('id') == source.user_tag_id()):
+      return True
+
+
 class Poll(View):
   """Task handler that fetches and processes new responses from a single source.
 
@@ -278,19 +287,16 @@ class Poll(View):
             break
 
       # handle quote mentions
-      for att in obj.get('attachments', []):
-        if (att.get('objectType') in ('note', 'article')
-                and att.get('author', {}).get('id') == source.user_tag_id()):
-          # now that we've confirmed that one exists, OPD will dig
-          # into the actual attachments
-          if 'originals' not in activity or 'mentions' not in activity:
-            activity['originals'], activity['mentions'] = \
-              original_post_discovery.discover(
-                source, activity, fetch_hfeed=True,
-                include_redirect_sources=False,
-                already_fetched_hfeeds=fetched_hfeeds)
-          responses[id] = activity
-          break
+      if is_quote_mention(activity, source):
+        # now that we've confirmed that one exists, OPD will dig
+        # into the actual attachments
+        if 'originals' not in activity or 'mentions' not in activity:
+          activity['originals'], activity['mentions'] = \
+            original_post_discovery.discover(
+              source, activity, fetch_hfeed=True,
+              include_redirect_sources=False,
+              already_fetched_hfeeds=fetched_hfeeds)
+        responses[id] = activity
 
       # extract replies, likes, reactions, reposts, and rsvps
       replies = obj.get('replies', {}).get('items', [])
@@ -348,7 +354,7 @@ class Poll(View):
     for id, resp in responses.items():
       resp_type = Response.get_type(resp)
       activities = resp.pop('activities', [])
-      if not activities and resp_type == 'post':
+      if not activities and (resp_type == 'post' or is_quote_mention(resp)):
         activities = [resp]
       too_long = set()
       urls_to_activity = {}

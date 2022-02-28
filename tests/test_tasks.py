@@ -8,6 +8,7 @@ import socket
 import string
 import io
 import time
+from unittest import skip
 import urllib.request, urllib.parse, urllib.error
 
 from cachetools import TTLCache
@@ -82,6 +83,22 @@ class PollTest(TaskTest):
     super().setUp()
     FakeGrSource.DOMAIN = 'source'
     appengine_info.LOCAL = True
+
+    self.quote_post = {
+      'id': 'tag:source,2013:1234',
+      'object': {
+        'author': {
+          'id': 'tag:source,2013:someone_else',
+        },
+        'content': 'That was a pretty great post',
+        'attachments': [{
+          'objectType': 'note',
+          'content': 'This note is being referenced or otherwise quoted http://author/permalink',
+          'author': {'id': self.sources[0].user_tag_id()},
+          'url': 'https://fa.ke/post/quoted',
+        }]
+      }
+    }
 
   def tearDown(self):
     FakeGrSource.DOMAIN = 'fa.ke'
@@ -706,62 +723,31 @@ class PollTest(TaskTest):
       unsent=['http://foo/post', 'http://foo/'],
     )], ignore=('activities_json', 'response_json', 'source', 'original_posts'))
 
-  def test_post_attachment(self):
-    """One silo post references another one; second should be propagated
+  def test_quote_post_attachment(self):
+    """One silo post references (quotes) another one; second should be propagated
     as a mention of the first.
     """
     source = self.sources[0]
-
-    post = {
-      'id': 'tag:source,2013:1234',
-      'object': {
-        'author': {
-          'id': 'tag:source,2013:someone_else',
-        },
-        'content': 'That was a pretty great post',
-        'attachments': [{
-          'objectType': 'note',
-          'content': 'This note is being referenced or otherwise quoted http://author/permalink',
-          'author': {'id': source.user_tag_id()},
-          'url': 'https://fa.ke/post/quoted',
-        }]
-      }
-    }
-
-    FakeGrSource.activities = [post]
+    FakeGrSource.activities = [self.quote_post]
     self.post_task()
     self.assert_responses([Response(
       id='tag:source,2013:1234',
       type='post',
       unsent=['http://author/permalink'],
-    )], ignore=('activities_json', 'response_json', 'source', 'original_posts'))
+      activities_json=[json_dumps(util.prune_activity(self.quote_post, source))],
+    )], ignore=('response_json', 'source', 'original_posts'))
 
-  def test_post_attachment_and_user_mention(self):
-    """One silo post references another one and also user mentions the
+  def test_quote_post_attachment_and_user_mention(self):
+    """One silo post references (quotes) another one and also user mentions the
     other post's author. We should send webmentions for both references.
     """
     source = self.sources[0]
-
-    post = {
-      'id': 'tag:source,2013:1234',
-      'object': {
-        'author': {
-          'id': 'tag:source,2013:someone_else',
-        },
-        'content': 'That was a pretty great post',
-        'attachments': [{
-          'objectType': 'note',
-          'content': 'This note is being referenced or otherwise quoted http://author/permalink',
-          'author': {'id': source.user_tag_id()},
-          'url': 'https://fa.ke/post/quoted',
-        }],
-        'tags': [{
-          'objectType': 'person',
-          'id': source.user_tag_id(),
-          'urls': [{'value': 'http://author'}],
-        }],
-      }
-    }
+    post = copy.deepcopy(self.quote_post)
+    post['object']['tags'] = [{
+      'objectType': 'person',
+      'id': source.user_tag_id(),
+      'urls': [{'value': 'http://author'}],
+    }]
 
     FakeGrSource.activities = [post]
     self.post_task()
@@ -769,7 +755,25 @@ class PollTest(TaskTest):
       id='tag:source,2013:1234',
       type='post',
       unsent=['http://author', 'http://author/permalink'],
-    )], ignore=('activities_json', 'response_json', 'source', 'original_posts'))
+      activities_json=[json_dumps(util.prune_activity(post, source))],
+    )], ignore=('response_json', 'source', 'original_posts'))
+
+  @skip("can't get quote reply to register as Response.type comment. #1124")
+  def test_quote_reply_attachment(self):
+    """One silo *reply* references (quotes) another post."""
+    source = self.sources[0]
+    reply = copy.deepcopy(self.quote_post)
+    reply['object']['inReplyTo'] = [{'id': 'tag:fake.com:456'}]
+
+    FakeGrSource.activities = []
+    FakeGrSource.search_results = [reply]
+    self.post_task()
+    self.assert_responses([Response(
+      id='tag:source,2013:1234',
+      type='comment',
+      unsent=['http://author/permalink'],
+      activities_json=[json_dumps(util.prune_activity(reply, source))],
+    )], ignore=('response_json', 'source', 'original_posts'))
 
   def test_wrong_last_polled(self):
     """If the source doesn't have our last polled value, we should quit.
