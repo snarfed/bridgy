@@ -566,21 +566,22 @@ class SendWebmentions(View):
     self.entity.unsent = sorted(unsent)
 
     while self.entity.unsent:
+      resp = None
       target = self.entity.unsent.pop(0)
-      source_url = self.source_url(target)
-      logger.info(f'Webmention from {source_url} to {target}')
 
-      # see if we've cached webmention discovery for this domain. the cache
-      # value is a string URL endpoint if discovery succeeded, NO_ENDPOINT if
-      # no endpoint was ofund.
-      cache_key = util.webmention_endpoint_cache_key(target)
-      endpoint = util.webmention_endpoint_cache.get(cache_key)
-      if endpoint:
-        logger.info(f'Webmention discovery: using cached endpoint {cache_key}: {endpoint}')
-
-      # send! and handle response or error
       try:
-        resp = None
+        source_url = self.source_url(target)
+        logger.info(f'Webmention from {source_url} to {target}')
+
+        # see if we've cached webmention discovery for this domain. the cache
+        # value is a string URL endpoint if discovery succeeded, NO_ENDPOINT if
+        # no endpoint was ofund.
+        cache_key = util.webmention_endpoint_cache_key(target)
+        endpoint = util.webmention_endpoint_cache.get(cache_key)
+        if endpoint:
+          logger.info(f'Webmention discovery: using cached endpoint {cache_key}: {endpoint}')
+
+        # send! and handle response or error
         headers = util.request_headers(source=g.source)
         if not endpoint:
           endpoint, resp = webmention.discover(target, headers=headers)
@@ -767,7 +768,7 @@ class PropagateResponse(SendWebmentions):
         if urls_to_activity:
           activity = self.activities[urls_to_activity[target_url]]
     except (KeyError, IndexError):
-      error("""Hit https://github.com/snarfed/bridgy/issues/237 KeyError!
+      error(f"""Hit https://github.com/snarfed/bridgy/issues/237 KeyError!
 target url {target_url} not in urls_to_activity: {self.entity.urls_to_activity}
 activities: {self.activities}""", status=ERROR_HTTP_RETURN_CODE)
 

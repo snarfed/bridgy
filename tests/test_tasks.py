@@ -1914,22 +1914,32 @@ class PropagateTest(TaskTest):
   def test_source_url_key_error(self):
     """We should gracefully retry when we hit the KeyError bug.
 
+    ...or any other exception outside the per-webmention try/except,
+    eg from source_url().
+
     https://github.com/snarfed/bridgy/issues/237
     """
+    orig = list(self.responses[0].unsent)
     self.responses[0].urls_to_activity = json_dumps({'bad': 9})
     self.responses[0].put()
     self.mox.ReplayAll()
     self.post_task(expected_status=ERROR_HTTP_RETURN_CODE)
+    self.assert_response_is('error', error=orig)
 
   def test_source_url_index_error(self):
     """We should gracefully retry when we hit the IndexError bug.
 
+    ...or any other exception outside the per-webmention try/except,
+    eg from source_url().
+
     https://github.com/snarfed/bridgy/issues/237
     """
+    orig = list(self.responses[0].unsent)
     self.responses[0].activities_json = []
     self.responses[0].put()
     self.mox.ReplayAll()
     self.post_task(expected_status=ERROR_HTTP_RETURN_CODE)
+    self.assert_response_is('error', error=orig)
 
   def test_propagate_blogpost(self):
     """Blog post propagate task."""

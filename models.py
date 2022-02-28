@@ -886,6 +886,12 @@ class Webmentions(StringIdModel):
     # this datastore put and task add should be transactional, but Cloud Tasks
     # doesn't support that :(
     # https://cloud.google.com/appengine/docs/standard/python/taskqueue/push/migrating-push-queues#features-not-available
+    # https://github.com/googleapis/python-tasks/issues/26
+    #
+    # The new "bundled services" bridge for the old App Engine APIs still
+    # supports them, but only because that's literally on the old backends,
+    # which seems like a dead end.
+    # https://groups.google.com/g/google-appengine/c/22BKInlWty0/m/05ObNEdsAgAJ
     self.put()
     self.add_task()
 
