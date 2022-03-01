@@ -46,6 +46,8 @@ MAX_FEED_ENTRIES = 100
 # let's just keep it as is for now.
 MAX_ALLOWABLE_QUERIES = 30
 
+MF2_HTML_MIME_TYPE= 'text/mf2+html'
+
 
 def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True,
              already_fetched_hfeeds=None):
@@ -298,9 +300,12 @@ def _process_author(source, author_url, refetch=False, store_blanks=True):
 
   feeditems = _find_feed_items(author_mf2)
 
-  # try rel=feeds
+  # try rel=feeds and rel=alternates
   feed_urls = set()
-  for feed_url in author_mf2['rels'].get('feed', []):
+  candidates = (author_mf2['rels'].get('feed', []) +
+                [a.get('url') for a in author_mf2.get('alternates', [])
+                 if a.get('type') == MF2_HTML_MIME_TYPE])
+  for feed_url in candidates:
     # check that it's html, not too big, etc
     feed_url, _, feed_ok = util.get_webmention_target(feed_url)
     if feed_url == author_url:

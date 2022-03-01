@@ -327,25 +327,26 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
     self.assert_syndicated_posts(('http://author/post/url', None),
                                  (None, 'https://fa.ke/post/url'))
 
-  def test_rel_feed_link(self):
-    """Check that we follow the rel=feed link when looking for the
-    author's full feed URL
-    """
+  def test_rel_feed_alternate_links(self):
+    """Check that we follow rel=feed and rel=alternate type=mf2+html links."""
     self.expect_requests_get('http://author/', """
     <html>
       <head>
         <link rel="feed" type="text/html" href="try_this.html">
         <link rel="alternate" type="application/xml" href="not_this.html">
+        <link rel="alternate" type="text/mf2+html" href="and_this.html">
         <link rel="alternate" type="application/xml" href="nor_this.html">
       </head>
     </html>""")
 
-    self.expect_requests_get('http://author/try_this.html', """
+    html = """\
     <html class="h-feed">
       <body>
         <div class="h-entry">Hi</div>
       </body>
-    </html>""")
+    </html>"""
+    self.expect_requests_get('http://author/try_this.html', html).InAnyOrder()
+    self.expect_requests_get('http://author/and_this.html', html).InAnyOrder()
 
     self.mox.ReplayAll()
     discover(self.source, self.activity)
