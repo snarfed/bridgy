@@ -21,7 +21,6 @@ from oauth_dropins import (
   flickr as oauth_flickr,
   github as oauth_github,
   mastodon as oauth_mastodon,
-  meetup as oauth_meetup,
   twitter as oauth_twitter,
 )
 from oauth_dropins.webutil import appengine_info
@@ -35,7 +34,6 @@ from flickr import Flickr
 from github import GitHub
 from instagram import Instagram
 from mastodon import Mastodon
-from meetup import Meetup
 from models import Publish, PublishedPage
 from twitter import Twitter
 import models
@@ -46,7 +44,7 @@ import webmention
 logger = logging.getLogger(__name__)
 
 
-SOURCES = (Flickr, GitHub, Mastodon, Meetup, Twitter)
+SOURCES = (Flickr, GitHub, Mastodon, Twitter)
 SOURCE_NAMES = {cls.SHORT_NAME: cls for cls in SOURCES}
 SOURCE_DOMAINS = {cls.GR_CLASS.DOMAIN: cls for cls in SOURCES}
 # image URLs matching this regexp should be ignored.
@@ -169,7 +167,7 @@ class PublishBase(webmention.Webmention):
     if (domain not in util.DOMAINS or
         len(path_parts) != 2 or path_parts[0] != '/publish' or not source_cls):
       self.error(
-        'Target must be brid.gy/publish/[flickr,github,mastodon,meetup,twitter]')
+        'Target must be brid.gy/publish/[flickr,github,mastodon,twitter]')
     elif source_cls == Instagram:
       self.error(f'Sorry, {source_cls.GR_CLASS.NAME} is not supported.')
 
@@ -727,10 +725,6 @@ class MastodonSend(oauth_mastodon.Callback, Send):
   finish = Send.finish
 
 
-class MeetupSend(oauth_meetup.Callback, Send):
-  finish = Send.finish
-
-
 class TwitterSend(oauth_twitter.Callback, Send):
   finish = Send.finish
 
@@ -778,6 +772,4 @@ app.add_url_rule('/publish/webmention', view_func=Webmention.as_view('publish_we
 app.add_url_rule('/publish/flickr/finish', view_func=FlickrSend.as_view('publish_flickr_finish', 'unused'))
 app.add_url_rule('/publish/github/finish', view_func=GitHubSend.as_view('publish_github_finish', 'unused'))
 app.add_url_rule('/publish/mastodon/finish', view_func=MastodonSend.as_view('publish_mastodon_finish', 'unused'))
-# because Meetup's `redirect_uri` handling is a little more restrictive
-app.add_url_rule('/meetup/publish/finish', view_func=MeetupSend.as_view('publish_meetup_finish', 'unused'))
 app.add_url_rule('/publish/twitter/finish', view_func=TwitterSend.as_view('publish_twitter_finish', 'unused'))

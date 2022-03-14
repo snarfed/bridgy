@@ -57,10 +57,6 @@ medium
 ------
 .. automodule:: medium
 
-meetup
-------
-.. automodule:: meetup
-
 models
 ------
 .. automodule:: models
