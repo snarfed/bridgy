@@ -50,6 +50,7 @@ service.</a>
 <li><a href="#stats">How big is this?</a></li>
 <li><a href="#rip-facebook">What happened to Facebook?</li>
 <li><a href="#rip-google+">What happened to Google+?</li>
+<li><a href="#rip-meetup">What happened to Meetup?</li>
 <li><a href="#profile-link">Why does my web site URL need to be in my social network profile?</a></li>
 <li><a href="#add-remove-url">How do I add or remove a web site URL from my Bridgy profile?</a></li>
 <li><a href="#disconnected">Bridgy stopped working for me!</a></li>
@@ -97,7 +98,6 @@ service.</a>
 <li><a href="#add-label">How do I add a label to a GitHub issue?</a></li>
 <li><a href="#add-tag">How do I add a tag to a Flickr photo?</a></li>
 <li><a href="#github-star">How do I star a GitHub repo?</a></li>
-<li><a href="#meetup-rsvp">How do I RSVP to an event on Meetup?</a></li>
 <li><a href="#omit-link">Can I disable the link back to my post?</a></li>
 <li><a href="#ignore-formatting">Can I disable the plain text whitespace and formatting?</a></li>
 <li><a href="#fragment">Can I publish just one part of a page?</a></li>
@@ -230,6 +230,12 @@ web</a> and like <a href="https://indieweb.org/why">owning our data</a>.
 <li id="rip-google+" class="question">What happened to Google+?</li>
 <li class="answer">
 <p>Bridgy included support Google+ from the very beginning, <a href="https://snarfed.org/2012-01-08_bridgy_launched">when it launched in January 2012</a>. Sadly, Google+ <a href="https://developers.googleblog.com/2018/12/google-apis-shutting-down-march-7-2019.html">turned off its API in February 2019</a> and <a href="https://support.google.com/plus/answer/9217723">shut down entirely in April</a>, at least for end users. Gory details in <a href="https://github.com/snarfed/bridgy/issues/846">this issue</a>. RIP, we'll miss you!
+</p>
+</li>
+
+<li id="rip-meetup" class="question">What happened to Meetup?</li>
+<li class="answer">
+<p>Bridgy Publish supported creating Meetup RSVPs from <a href="https://www.jvt.me/posts/2020/02/17/meetup-bridgy-support/">February 2020 to March 2020. This used their REST API, which they <a href="https://www.meetup.com/api/migrating/#graphQl-migrating">decommissioned in 2022 in favor of a new GraphQL API</a> that sadly <a href="https://www.meetup.com/api/schema/#p02-mutations-section">doesn't support creating RSVPs</a>. Ah well!
 </p>
 </li>
 
@@ -762,7 +768,6 @@ previewing a post to see how it will look!
 <li>Flickr photos, videos, comments, favorites, and <a href="#add-tag">tags onto existing photos</a>. Photos may include <a href="#location">location</a>, <a href="https://indieweb.org/tags">tags</a>, and/or <a href="#person-tag">people tags</a>.</li>
 <li>GitHub issues, <a href="https://help.github.com/articles/about-stars">stars</a>, comments on issues and PRs, <a href="#add-label">labels onto existing issues</a>, and <a href="https://help.github.com/articles/about-conversations-on-github/#reacting-to-ideas-in-comments">emoji reactions</a> to issues, PRs, and comments.</li>
 <li>Mastodon toots, replies, favorites, and boosts. Toots and replies may include <a href="#picture">pictures</a> and <a href="#video">videos</a>. Toots may also be <a href="#delete">deleted</a>.</li>
-<li><a href="#meetup-rsvp">Meetup RSVPs.</a></li>
 <li>Nothing on Instagram, sorry. Likes used to be possible, but not since Instagram <a href="http://developers.instagram.com/post/133424514006/instagram-platform-update"> started locking down their API.</a> <a href="http://instagram.com/developer/endpoints/media/#get_media_popular">Photos, videos,</a> <a href="http://instagram.com/developer/endpoints/comments/#post_media_comments">and comments</a> were never possible.</li>
 </ul>
 </li>
@@ -789,7 +794,6 @@ should be one of:
 <li><code>https://brid.gy/publish/flickr</code></li>
 <li><code>https://brid.gy/publish/github</code></li>
 <li><code>https://brid.gy/publish/mastodon</code></li>
-<li><code>https://brid.gy/publish/meetup</code></li>
 <li><code>https://brid.gy/publish/twitter</code></li>
 </ul>
 Your post HTML must also include that same
@@ -802,7 +806,6 @@ in your post to publish automatically!
 <pre>&lt;a href="<a href='https://brid.gy/publish/flickr'>https://brid.gy/publish/flickr</a>"&gt;&lt;/a&gt;
 &lt;a href="<a href='https://brid.gy/publish/github'>https://brid.gy/publish/github</a>"&gt;&lt;/a&gt;
 &lt;a href="<a href='https://brid.gy/publish/mastodon'>https://brid.gy/publish/mastodon</a>"&gt;&lt;/a&gt;
-&lt;a href="<a href='https://brid.gy/publish/meetup'>https://brid.gy/publish/meetup</a>"&gt;&lt;/a&gt;
 &lt;a href="<a href='https://brid.gy/publish/twitter'>https://brid.gy/publish/twitter</a>"&gt;&lt;/a&gt;
 </pre>
 </p>
@@ -1002,19 +1005,6 @@ to
 <p>Just post a <a href="#like">like</a> of the repo URL! For example:</p>
 <pre>
 &lt;a class="<span class='keyword'>u-like-of</span>" href="<a href='https://github.com/snarfed/bridgy'>https://github.com/snarfed/bridgy</a>"&gt;&lt;/a&gt;
-</pre>
-</li>
-
-<li id="meetup-rsvp" class="question">How do I RSVP to an event on Meetup?</li>
-<li class="answer">
-<p>Just post an RSVP to the event's URL! For example:</p>
-<pre>
-&lt;div class="<span class='keyword'>h-entry</span>"&gt;
-  &lt;p&gt;
-    &lt;data class="<span class='keyword'>p-rsvp</span>" value="<span class='value'>no</span>"&gt;I will not be attending&lt;/data&gt;
-    &lt;a class="<span class="keyword">u-in-reply-to</span>" href="<a href="https://www.meetup.com/PHPMiNDS-in-Nottingham/events/264008439/">https://www.meetup.com/PHPMiNDS-in-Nottingham/events/264008439/</a>"&gt;https://www.meetup.com/PHPMiNDS-in-Nottingham/events/264008439/&lt;/a&gt;
-  &lt;/p&gt;
-&lt;/div&gt;
 </pre>
 </li>
 
