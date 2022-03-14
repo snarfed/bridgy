@@ -20,10 +20,10 @@ from . import testutil
 from .testutil import FakeBlogSource
 
 
-import admin, app as _app, background, flask_app, flask_background, meetup
+import admin, app as _app, background, flask_app, flask_background
 
 # sources etc
-import blogger, facebook, flickr, github, indieauth, instagram, mastodon, meetup, medium, reddit, tumblr, twitter, wordpress_rest
+import blogger, facebook, flickr, github, indieauth, instagram, mastodon, medium, reddit, tumblr, twitter, wordpress_rest
 
 
 class PagesTest(testutil.AppTest):
