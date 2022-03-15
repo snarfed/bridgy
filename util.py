@@ -427,6 +427,7 @@ def load_source(error_fn=None):
 
   Returns: :class:`models.Source`
   """
+  logger.debug(f'Params: {list(request.values.items())}')
   if error_fn is None:
     error_fn = error
 
