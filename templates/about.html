@@ -424,11 +424,14 @@ GitHub</a>. Thank you!
 
 <li id="vulnerability" class="question">I found a security vulnerability!</li>
 <li class="answer">
-<p>Oof. Thank you for reporting it! Please send details to <a href="mailto:security@brid.gy">security@brid.gy</a>. We may provide monetary awards for reports of significant vulnerabilities, eg reading or modifying stored access tokens.</p>
-
-<p>Examples that are <em>not</em> severe enough to warrant awards: email SPF/DKIM/DMARC, lack of rate limiting, XSS (Bridgy does not have its own user accounts!), etc.</p>
-
-<p>Otherwise, the code is open source, feel free to try to break in, let us know if you succeed!</p>
+<p>Oof. Thank you for reporting it! Please send details to <a href="mailto:security@brid.gy">security@brid.gy</a>. We may provide monetary awards for reports of significant vulnerabilities, eg reading or modifying stored access tokens, <em>if</em> you follow these rules:</p>
+<ul>
+<li>Vulnerabilities must be in the application itself, not unrelated services like email (eg SPF/DKIM/DMARC).</li>
+<li>Out of scope: rate limiting, XSS attacks (Bridgy has no authenticated sessions or private data accessible to users), <code>/admin/*</code> pages.
+<li>User data is intentionally public. That's not a vulnerability.</li>
+<li>No automated fuzzing, DoSes, or other high volume traffic. We block this traffic, and it will disqualify you from any possible award.</li>
+</ul>
+<p>Otherwise, <a href="https://github.com/snarfed/bridgy/">the code is open source</a>, feel free to try to break in, let us know if you succeed!</p>
 </li>
 
 <li id="cute" class="question">Brid.gy? Really?</li>
