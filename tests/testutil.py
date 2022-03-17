@@ -220,9 +220,7 @@ class FakeSource(Source):
   SHORT_NAME = 'fake'
   TYPE_LABELS = {'post': 'FakeSource post label'}
   RATE_LIMITED_POLL = datetime.timedelta(hours=30)
-  URL_CANONICALIZER = util.UrlCanonicalizer(
-    domain=GR_CLASS.DOMAIN,
-    headers=util.REQUEST_HEADERS)
+  URL_CANONICALIZER = util.UrlCanonicalizer(domain=GR_CLASS.DOMAIN)
   PATH_BLOCKLIST = (re.compile('^/blocklisted/.*'),)
   HAS_BLOCKS = True
 
@@ -528,19 +526,6 @@ class TestCase(testutil.TestCase):
 
     return tasks_client.create_task(
       mox.Func(check_task)).InAnyOrder().AndReturn(Task(name='my task'))
-
-  def expect_requests_get(self, *args, **kwargs):
-    if 'headers' not in kwargs:
-      kwargs['headers'] = util.REQUEST_HEADERS
-    return super().expect_requests_get(*args, **kwargs)
-
-  def expect_requests_post(self, *args, **kwargs):
-    kwargs.setdefault('headers', {}).update(util.REQUEST_HEADERS)
-    return super().expect_requests_post(*args, **kwargs)
-
-  def expect_requests_head(self, *args, **kwargs):
-    kwargs.setdefault('headers', {}).update(util.REQUEST_HEADERS)
-    return super().expect_requests_head(*args, **kwargs)
 
 
 class AppTest(TestCase):

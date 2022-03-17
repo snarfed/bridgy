@@ -427,7 +427,7 @@ GitHub</a>. Thank you!
 <p>Oof. Thank you for reporting it! Please send details to <a href="mailto:security@brid.gy">security@brid.gy</a>. We may provide monetary awards for reports of significant vulnerabilities, eg reading or modifying stored access tokens, <em>if</em> you follow these rules:</p>
 <ul>
 <li>Vulnerabilities must be in the application itself, not unrelated services like email (eg SPF/DKIM/DMARC).</li>
-<li>Out of scope: rate limiting, XSS attacks (Bridgy has no authenticated sessions or private data accessible to users), <code>/admin/*</code> pages.
+<li>Out of scope: rate limiting, XSS/CSRF attacks (Bridgy has no authenticated sessions or private data accessible to users), <code>/admin/*</code> pages.
 <li>User data is intentionally public. That's not a vulnerability.</li>
 <li>No automated fuzzing, DoSes, or other high volume traffic. We block this traffic, and it will disqualify you from any possible award.</li>
 </ul>

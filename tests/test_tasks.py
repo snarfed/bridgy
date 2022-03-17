@@ -1421,17 +1421,16 @@ class PropagateTest(TaskTest):
 
   def expect_webmention(self, source_url=None, target='http://target1/post/url',
                         endpoint='http://webmention/endpoint',
-                        discover=True, send=None, headers=util.REQUEST_HEADERS,
-                        discover_status=200, send_status=200, **kwargs):
+                        discover=True, send=None, discover_status=200,
+                        send_status=200, **kwargs):
     if source_url is None:
       source_url = f'http://localhost/comment/fake/{self.sources[0].key.string_id()}/a/1_2_a'
 
     # discover
     if discover:
       html = f'<html><link rel="webmention" href="{endpoint or ""}"></html>'
-      call = self.expect_requests_get(target, html, headers=headers,
-                                      status_code=discover_status, **kwargs
-                                      ).InAnyOrder()
+      call = self.expect_requests_get(target, html, status_code=discover_status,
+                                      **kwargs).InAnyOrder()
 
     # send
     if send:
@@ -1440,8 +1439,8 @@ class PropagateTest(TaskTest):
       call = self.expect_requests_post(endpoint, data={
         'source': source_url,
         'target': target,
-      }, status_code=send_status, headers=headers, allow_redirects=False,
-        timeout=999, **kwargs).InAnyOrder()
+      }, status_code=send_status, allow_redirects=False, timeout=999,
+        **kwargs).InAnyOrder()
 
     return call
 

@@ -70,9 +70,7 @@ class Mastodon(models.Source):
   @property
   def URL_CANONICALIZER(self):
     """Generate URL_CANONICALIZER dynamically to use the instance's domain."""
-    return util.UrlCanonicalizer(
-      domain=self.gr_source.DOMAIN,
-      headers=util.REQUEST_HEADERS)
+    return util.UrlCanonicalizer(domain=self.gr_source.DOMAIN)
 
   @staticmethod
   def new(auth_entity=None, **kwargs):

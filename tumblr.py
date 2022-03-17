@@ -221,7 +221,6 @@ class Tumblr(models.Source):
         'api_secret': DISQUS_API_SECRET,
         'access_token': DISQUS_ACCESS_TOKEN,
         })
-    kwargs.setdefault('headers', {}).update(util.REQUEST_HEADERS)
     resp = method(url, params=params, **kwargs)
     resp.raise_for_status()
     resp = resp.json().get('response', {})

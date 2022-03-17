@@ -254,12 +254,10 @@ class UtilTest(testutil.AppTest):
       self.assertEqual('Sorry, Bridgy has blocklisted this URL.', resp.text)
 
   def test_no_accept_header(self):
-    self.assertEqual(util.REQUEST_HEADERS,
-                      util.request_headers(url='http://foo/bar'))
-    self.assertEqual(util.REQUEST_HEADERS,
-                      util.request_headers(source=Twitter(id='not-rhiaro')))
+    self.assertEqual({}, util.request_headers(url='http://foo/bar'))
+    self.assertEqual({}, util.request_headers(source=Twitter(id='not-rhiaro')))
 
-    self.expect_requests_get('http://foo/bar', '', headers=util.REQUEST_HEADERS)
+    self.expect_requests_get('http://foo/bar', '')
     self.mox.ReplayAll()
     util.requests_get('http://foo/bar')
 

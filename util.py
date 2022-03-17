@@ -39,14 +39,10 @@ LOCAL_HOSTS = {'localhost', '127.0.0.1'}
 
 POLL_TASK_DATETIME_FORMAT = '%Y-%m-%d-%H-%M-%S'
 
-REQUEST_HEADERS = {
-  'User-Agent': 'Bridgy (https://brid.gy/about)',
-}
 # Only send Accept header to rhiaro.co.uk right now because it needs it, but
 # Known breaks on it.
 # https://github.com/snarfed/bridgy/issues/713
-REQUEST_HEADERS_CONNEG = copy.copy(REQUEST_HEADERS)
-REQUEST_HEADERS_CONNEG['Accept'] = 'text/html, application/json; q=0.9, */*; q=0.8'
+REQUEST_HEADERS_CONNEG = {'Accept': 'text/html, application/json; q=0.9, */*; q=0.8'}
 CONNEG_DOMAINS = {'rhiaro.co.uk'}
 CONNEG_PATHS = {'/twitter/rhiaro'}
 
@@ -290,7 +286,7 @@ def request_headers(url=None, source=None):
       source and source.bridgy_path() in CONNEG_PATHS):
     return REQUEST_HEADERS_CONNEG
 
-  return REQUEST_HEADERS
+  return {}
 
 
 def get_webmention_target(url, resolve=True, replace_test_domains=True):

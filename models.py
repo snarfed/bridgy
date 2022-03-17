@@ -132,7 +132,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
   TYPE_LABELS = {}
 
   # subclasses should override this
-  URL_CANONICALIZER = util.UrlCanonicalizer(headers=util.REQUEST_HEADERS)
+  URL_CANONICALIZER = util.UrlCanonicalizer()
 
   # Regexps for URL paths that don't accept incoming webmentions. Currently used
   # by Blogger.
@@ -601,8 +601,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
 
     author_url = author_urls[0]
     try:
-      got = webmention.discover(author_url, timeout=util.HTTP_TIMEOUT,
-                                headers=util.REQUEST_HEADERS)
+      got = webmention.discover(author_url, timeout=util.HTTP_TIMEOUT)
       self.webmention_endpoint = got.endpoint
       self._fetched_html = got.response.text
     except BaseException as e:

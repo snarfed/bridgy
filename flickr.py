@@ -34,8 +34,7 @@ class Flickr(models.Source):
     approve=r'https://www\.flickr\.com/(photos|people)/[^/?]+/([^/?]+/)?$',
     reject=r'https://login\.yahoo\.com/.*',
     subdomain='www',
-    trailing_slash=True,
-    headers=util.REQUEST_HEADERS)
+    trailing_slash=True)
 
   # unique name optionally used in URLs instead of nsid (e.g.,
   # flickr.com/photos/username)

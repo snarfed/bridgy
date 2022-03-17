@@ -60,10 +60,7 @@ class MediumTest(testutil.AppTest):
     return super().expect_requests_get(
       oauth_medium.API_BASE + path,
       *args,
-      headers={
-        'Authorization': 'Bearer my token',
-        'User-Agent': oauth_medium.USER_AGENT,
-      },
+      headers={'Authorization': 'Bearer my token'},
       **kwargs)
 
   def expect_get_publications(self, pubs):

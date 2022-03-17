@@ -23,8 +23,7 @@ class Facebook(browser.BrowserSource):
     domain=GR_CLASS.DOMAIN,
     subdomain='www',
     query=True,
-    approve=r'https://www\.facebook\.com/[^/?]+/posts/[^/?]+$',
-    headers=util.REQUEST_HEADERS)
+    approve=r'https://www\.facebook\.com/[^/?]+/posts/[^/?]+$')
 
   # blank granary Facebook object, shared across all instances
   gr_source = gr_facebook.Facebook()

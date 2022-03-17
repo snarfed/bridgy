@@ -38,7 +38,6 @@ class Twitter(models.Source):
   CAN_PUBLISH = True
   HAS_BLOCKS = True
   URL_CANONICALIZER = gr_twitter.Twitter.URL_CANONICALIZER
-  URL_CANONICALIZER.headers = util.REQUEST_HEADERS
 
   @staticmethod
   def new(auth_entity=None, **kwargs):

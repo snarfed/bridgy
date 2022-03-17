@@ -22,8 +22,7 @@ class Instagram(browser.BrowserSource):
     domain=GR_CLASS.DOMAIN,
     subdomain='www',
     approve=r'https://www.instagram.com/p/[^/?]+/$',
-    trailing_slash=True,
-    headers=util.REQUEST_HEADERS)
+    trailing_slash=True)
 
   # blank granary Instagram object, shared across all instances
   gr_source = gr_instagram.Instagram()

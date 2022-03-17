@@ -54,8 +54,7 @@ def subscribe(source):
   logger.info(f'Adding Superfeedr subscription: {data}')
   resp = util.requests_post(
     PUSH_API_URL, data=data,
-    auth=HTTPBasicAuth(SUPERFEEDR_USERNAME, SUPERFEEDR_TOKEN),
-    headers=util.REQUEST_HEADERS)
+    auth=HTTPBasicAuth(SUPERFEEDR_USERNAME, SUPERFEEDR_TOKEN))
   handle_feed(resp.json(), source)
 
 
