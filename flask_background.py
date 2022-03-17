@@ -6,7 +6,9 @@ from oauth_dropins.webutil import flask_util
 from oauth_dropins.webutil.appengine_config import ndb_client
 from werkzeug.exceptions import HTTPException
 
-import appengine_config, util
+import granary
+import appengine_config  # *after* import granary to overridde set_user_agent()
+import util
 
 logger = logging.getLogger(__name__)
 
