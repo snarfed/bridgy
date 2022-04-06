@@ -73,7 +73,7 @@ requests==2.27.1
 requests-oauthlib==1.3.1
 rsa==4.8
 six==1.16.0
-soupsieve==2.3.1
+soupsieve==2.3.2
 testtools==2.5.0
 tlslite-ng==0.8.0a42
 tweepy==4.8.0
