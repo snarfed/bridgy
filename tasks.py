@@ -613,7 +613,8 @@ class SendWebmentions(View):
         logger.info('', exc_info=True)
         # Give up on 4XX and DNS errors; we don't expect retries to succeed.
         code, _ = util.interpret_http_exception(e)
-        if (code and code.startswith('4')) or 'DNS lookup failed' in str(e):
+        if ((code and code.startswith('4') and code != '429')
+            or 'DNS lookup failed' in str(e)):
           logger.info('Giving up this target.')
           self.entity.failed.append(target)
         else:
