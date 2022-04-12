@@ -83,7 +83,12 @@ class BrowserSource(Source):
     if not kwargs.get('features'):
       kwargs['features'] = ['listen']
 
-    src = cls(id=cls.key_id_from_actor(actor),
+    try:
+      id = cls.key_id_from_actor(actor)
+    except KeyError as e:
+      flask_util.error(f'Missing AS1 actor field: {e}')
+
+    src = cls(id=id,
               name=actor.get('displayName'),
               picture=actor.get('image', {}).get('url'),
               **kwargs)

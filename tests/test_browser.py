@@ -8,6 +8,7 @@ from granary import microformats2
 from mox3 import mox
 from oauth_dropins.webutil.util import json_dumps, json_loads
 from oauth_dropins.webutil import util
+from werkzeug.exceptions import BadRequest
 
 from flask_app import app
 import browser
@@ -34,6 +35,11 @@ class BrowserSourceTest(testutil.AppTest):
     self.actor['fbs_id'] = '222yyy'
     self.source = FakeBrowserSource.new(actor=self.actor)
     FakeBrowserSource.gr_source.actor = {}
+
+  def test_new_missing_key_id_field(self):
+    del self.actor['fbs_id']
+    with self.assertRaises(BadRequest):
+      FakeBrowserSource.new(actor=self.actor)
 
   def test_new(self):
     self.assertIsNone(self.source.auth_entity)
