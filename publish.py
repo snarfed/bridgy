@@ -173,6 +173,9 @@ class PublishBase(webmention.Webmention):
 
     # look up source by domain
     self.source = self._find_source(source_cls, resolved_url, domain)
+    if not self.source:
+      # _find_source called self.error()
+      return
 
     content_param = f'bridgy_{self.source.SHORT_NAME}_content'
     if content_param in request.values:

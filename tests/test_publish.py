@@ -79,14 +79,19 @@ class PublishTest(testutil.AppTest):
     body += backlink or self.backlink
     return super().expect_requests_get(url, body, **kwargs)
 
-  def assert_response(self, expected, status=None, preview=False, **kwargs):
-    resp = self.get_response(preview=preview, **kwargs)
+  def assert_response(self, expected, status=None, preview=False,
+                      interactive=False, **kwargs):
+    resp = self.get_response(preview=preview, interactive=interactive, **kwargs)
     body = html.unescape(resp.get_data(as_text=True))
     self.assertEqual(status, resp.status_code,
                       f'{status} != {resp.status_code}: {body}')
     if preview:
       self.assertIn(expected, body,
                     f'{expected!r}\n\n=== vs ===\n\n{body!r}')
+    elif interactive:
+      for exp, got in zip([expected] if isinstance(expected, str) else expected,
+                          get_flashed_messages()):
+        self.assertIn(exp, got)
     else:
       if resp.headers['Content-Type'].startswith('application/json'):
         body = json_loads(body)['content' if status < 300 else 'error']
@@ -94,14 +99,19 @@ class PublishTest(testutil.AppTest):
 
     return resp
 
-  def assert_success(self, expected, **kwargs):
-    return self.assert_response(expected, status=200, **kwargs)
+  def assert_success(self, expected, interactive=False, **kwargs):
+    status = 302 if interactive else 200
+    return self.assert_response(expected, status=status,
+                                interactive=interactive, **kwargs)
 
-  def assert_created(self, expected, **kwargs):
-    return self.assert_response(expected, status=201, **kwargs)
+  def assert_created(self, expected, interactive=False, **kwargs):
+    status = 302 if interactive else 201
+    return self.assert_response(expected, status=status,
+                                interactive=interactive, **kwargs)
 
-  def assert_error(self, expected, status=400, **kwargs):
-    return self.assert_response(expected, status=status, **kwargs)
+  def assert_error(self, expected, status=400, interactive=False, **kwargs):
+    status = 302 if interactive else status
+    return self.assert_response(expected, status=status, interactive=interactive, **kwargs)
 
   def _check_entity(self, url='http://foo.com/bar', content='foo',
                     html_content=None, expected_html=None):
@@ -149,35 +159,27 @@ class PublishTest(testutil.AppTest):
     other_source = testutil.FakeSource.new().put()
     FakeSend.oauth_state['source_key'] = other_source.urlsafe().decode()
 
-    resp = self.get_response(interactive=True)
-    self.assertEqual(302, resp.status_code)
+    resp = self.assert_error('Please log into FakeSource as fake to publish that page.',
+                             interactive=True)
     self.assertEqual(f'http://localhost/fake/{other_source.id()}',
                      resp.headers['Location'])
-    self.assertEqual(['Please log into FakeSource as fake to publish that page.'],
-                     get_flashed_messages())
-
     self.assertIsNone(Publish.query().get())
 
   def test_interactive_oauth_decline(self):
     FakeSend.auth_entity = None
-    resp = self.get_response(interactive=True)
-    self.assertEqual(302, resp.status_code)
+    resp = self.assert_error(
+      'If you want to publish or preview, please approve the prompt.',
+      interactive=True)
     self.assertEqual('http://localhost/fake/foo.com', resp.headers['Location'])
-    self.assertEqual(
-      ['If you want to publish or preview, please approve the prompt.'],
-      get_flashed_messages())
-
     self.assertIsNone(Publish.query().get())
 
   def test_interactive_no_state(self):
     """https://github.com/snarfed/bridgy/issues/449"""
     FakeSend.oauth_state = None
-    resp = self.get_response(interactive=True)
-    self.assertEqual(302, resp.status_code)
+    resp = self.assert_error(
+      'If you want to publish or preview, please approve the prompt.',
+      interactive=True)
     self.assertEqual('http://localhost/', resp.headers['Location'])
-    self.assertEqual(
-      ['If you want to publish or preview, please approve the prompt.'],
-      get_flashed_messages())
 
     self.assertIsNone(Publish.query().get())
 
@@ -218,7 +220,8 @@ class PublishTest(testutil.AppTest):
 
     # now that there's a complete Publish entity, more attempts should fail
     resp = self.assert_error("Sorry, you've already published that page")
-    self.assertEqual(json_loads(created.get_data(as_text=True)), json_loads(resp.get_data(as_text=True))['original'])
+    self.assertEqual(json_loads(created.get_data(as_text=True)),
+                     json_loads(resp.get_data(as_text=True))['original'])
     self.assertEqual('complete', completed.key.get().status)
 
     # try again to test for a bug we had where a second try would succeed
@@ -237,9 +240,8 @@ class PublishTest(testutil.AppTest):
     Publish(parent=page.key, source=self.source.key, status='complete',
             type='post', published={'content': 'foo'}).put()
 
-    resp = self.assert_response('', status=302, interactive=True)
-    self.assertIn("Sorry, you've already published that page",
-                  get_flashed_messages()[0])
+    resp = self.assert_error("Sorry, you've already published that page",
+                             interactive=True)
 
   def test_publish_entity_collision(self):
     page = PublishedPage(id='http://foo.com/bar')
@@ -367,12 +369,14 @@ foo
     self.source.put()
     msg = 'Publish is not enabled'
     self.assert_error(msg)
+    self.assert_error(msg, interactive=True)
 
     # status disabled
     self.source.features = ['publish']
     self.source.status = 'disabled'
     self.source.put()
     self.assert_error(msg)
+    self.assert_error(msg, interactive=True)
 
     # two bad sources with same domain
     source_2 = self.source = testutil.FakeSource(id='z', **self.source.to_dict())
@@ -380,6 +384,7 @@ foo
     source_2.features = ['listen']
     source_2.put()
     self.assert_error(msg)
+    self.assert_error(msg, interactive=True)
 
     # one bad source, one good source, same domain. should automatically use the
     # good source.
