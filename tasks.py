@@ -353,7 +353,9 @@ class Poll(View):
 
     for id, resp in responses.items():
       resp_type = Response.get_type(resp)
-      activities = resp.pop('activities', []) or [resp]
+      activities = resp.pop('activities', [])
+      if not activities and (resp_type == 'post' or is_quote_mention(resp, source)):
+        activities = [resp]
       too_long = set()
       urls_to_activity = {}
       for i, activity in enumerate(activities):
