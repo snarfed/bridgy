@@ -38,7 +38,7 @@ google-cloud-datastore==1.15.4
 google-cloud-error-reporting==1.5.2
 google-cloud-logging==3.0.0
 google-cloud-ndb==1.11.1
-google-cloud-tasks==2.8.1
+google-cloud-tasks==2.9.0
 googleapis-common-protos==1.56.0
 grpc-google-iam-v1==0.12.4
 grpcio==1.46.0
