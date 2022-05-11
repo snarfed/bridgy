@@ -228,10 +228,9 @@ def user(site, id):
     if new_before:
       vars['responses_before_link'] = f'?responses_before={new_before.isoformat()}#responses'
 
-    vars['next_poll'] = max(
-      source.last_poll_attempt + source.poll_period(),
-      # lower bound is 1 minute from now
-      util.now_fn() + datetime.timedelta(seconds=90))
+    vars['next_poll'] = max(source.last_poll_attempt + source.poll_period(),
+                            # lower bound is 1 minute from now
+                            util.now_fn() + datetime.timedelta(seconds=90))
 
   # Publishes
   if 'publish' in source.features:

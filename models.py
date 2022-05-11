@@ -1,6 +1,6 @@
 """Datastore model classes.
 """
-import datetime
+from datetime import datetime, timedelta, timezone
 import logging
 import os
 import re
@@ -26,7 +26,7 @@ PUBLISH_TYPES = VERB_TYPES + ('preview', 'delete')
 
 MAX_AUTHOR_URLS = 5
 
-REFETCH_HFEED_TRIGGER = datetime.datetime.utcfromtimestamp(-1)
+REFETCH_HFEED_TRIGGER = datetime.fromtimestamp(-1, tz=timezone.utc)
 
 # limit size of block lists stored in source entities to try to keep whole
 # entiry under 1MB datastore limit:
@@ -103,18 +103,18 @@ class Source(StringIdModel, metaclass=SourceMeta):
   # (eg Instagram)
   AUTO_POLL = True
   # how often to poll for responses
-  FAST_POLL = datetime.timedelta(minutes=30)
+  FAST_POLL = timedelta(minutes=30)
   # how often to poll sources that have never sent a webmention
-  SLOW_POLL = datetime.timedelta(days=1)
+  SLOW_POLL = timedelta(days=1)
   # how often to poll sources that are currently rate limited by their silo
   RATE_LIMITED_POLL = SLOW_POLL
   # how long to wait after signup for a successful webmention before dropping to
   # the lower frequency poll
-  FAST_POLL_GRACE_PERIOD = datetime.timedelta(days=7)
+  FAST_POLL_GRACE_PERIOD = timedelta(days=7)
   # how often refetch author url to look for updated syndication links
-  FAST_REFETCH = datetime.timedelta(hours=6)
+  FAST_REFETCH = timedelta(hours=6)
   # refetch less often (this often) if it's been >2w since the last synd link
-  SLOW_REFETCH = datetime.timedelta(days=2)
+  SLOW_REFETCH = timedelta(days=2)
   # rate limiting HTTP status codes returned by this silo. e.g. twitter returns
   # 429, instagram 503, google+ 403.
   RATE_LIMIT_HTTP_CODES = ('429',)
@@ -138,7 +138,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
   # by Blogger.
   PATH_BLOCKLIST = ()
 
-  created = ndb.DateTimeProperty(auto_now_add=True, required=True)
+  created = ndb.DateTimeProperty(auto_now_add=True, required=True, tzinfo=timezone.utc)
   url = ndb.StringProperty()
   status = ndb.StringProperty(choices=STATUSES, default='enabled')
   poll_status = ndb.StringProperty(choices=POLL_STATUSES, default='ok')
@@ -159,23 +159,23 @@ class Source(StringIdModel, metaclass=SourceMeta):
   #
   # listen-only properties
   #
-  last_polled = ndb.DateTimeProperty(default=util.EPOCH)
-  last_poll_attempt = ndb.DateTimeProperty(default=util.EPOCH)
-  last_webmention_sent = ndb.DateTimeProperty()
-  last_public_post = ndb.DateTimeProperty()
+  last_polled = ndb.DateTimeProperty(default=util.EPOCH, tzinfo=timezone.utc)
+  last_poll_attempt = ndb.DateTimeProperty(default=util.EPOCH, tzinfo=timezone.utc)
+  last_webmention_sent = ndb.DateTimeProperty(tzinfo=timezone.utc)
+  last_public_post = ndb.DateTimeProperty(tzinfo=timezone.utc)
   recent_private_posts = ndb.IntegerProperty(default=0)
 
   # the last time we re-fetched the author's url looking for updated
   # syndication links
-  last_hfeed_refetch = ndb.DateTimeProperty(default=util.EPOCH)
+  last_hfeed_refetch = ndb.DateTimeProperty(default=util.EPOCH, tzinfo=timezone.utc)
 
   # the last time we've seen a rel=syndication link for this Source.
   # we won't spend the time to re-fetch and look for updates if there's
   # never been one
-  last_syndication_url = ndb.DateTimeProperty()
+  last_syndication_url = ndb.DateTimeProperty(tzinfo=timezone.utc)
   # the last time we saw a syndication link in an h-feed, as opposed to just on
   # permalinks. background: https://github.com/snarfed/bridgy/issues/624
-  last_feed_syndication_url = ndb.DateTimeProperty()
+  last_feed_syndication_url = ndb.DateTimeProperty(tzinfo=timezone.utc)
 
   last_activity_id = ndb.StringProperty()
   last_activities_etag = ndb.StringProperty()
@@ -325,30 +325,30 @@ class Source(StringIdModel, metaclass=SourceMeta):
     this source, or the last one we sent was over a month ago, we drop them down
     to ~1d after a week long grace period.
     """
-    now = datetime.datetime.now()
+    now = util.now_fn()
     if self.rate_limited:
       return self.RATE_LIMITED_POLL
     elif now < self.created + self.FAST_POLL_GRACE_PERIOD:
       return self.FAST_POLL
     elif not self.last_webmention_sent:
       return self.SLOW_POLL
-    elif self.last_webmention_sent > now - datetime.timedelta(days=7):
+    elif self.last_webmention_sent > now - timedelta(days=7):
       return self.FAST_POLL
-    elif self.last_webmention_sent > now - datetime.timedelta(days=30):
+    elif self.last_webmention_sent > now - timedelta(days=30):
       return self.FAST_POLL * 10
     else:
       return self.SLOW_POLL
 
   def should_refetch(self):
     """Returns True if we should run OPD refetch on this source now."""
-    now = datetime.datetime.now()
+    now = util.now_fn()
     if self.last_hfeed_refetch == REFETCH_HFEED_TRIGGER:
       return True
     elif not self.last_syndication_url:
       return False
 
     period = (self.FAST_REFETCH
-              if self.last_syndication_url > now - datetime.timedelta(days=14)
+              if self.last_syndication_url > now - timedelta(days=14)
               else self.SLOW_REFETCH)
     return self.last_poll_attempt >= self.last_hfeed_refetch + period
 
@@ -817,9 +817,9 @@ class Webmentions(StringIdModel):
 
   source = ndb.KeyProperty()
   status = ndb.StringProperty(choices=STATUSES, default='new')
-  leased_until = ndb.DateTimeProperty()
-  created = ndb.DateTimeProperty(auto_now_add=True)
-  updated = ndb.DateTimeProperty(auto_now=True)
+  leased_until = ndb.DateTimeProperty(tzinfo=timezone.utc)
+  created = ndb.DateTimeProperty(auto_now_add=True, tzinfo=timezone.utc)
+  updated = ndb.DateTimeProperty(auto_now=True, tzinfo=timezone.utc)
 
   # Original post links, ie webmention targets
   sent = ndb.StringProperty(repeated=True)
@@ -981,8 +981,8 @@ class Activity(StringIdModel):
   Currently only used for posts sent to us by the browser extension.
   """
   source = ndb.KeyProperty()
-  created = ndb.DateTimeProperty(auto_now_add=True)
-  updated = ndb.DateTimeProperty(auto_now=True)
+  created = ndb.DateTimeProperty(auto_now_add=True, tzinfo=timezone.utc)
+  updated = ndb.DateTimeProperty(auto_now=True, tzinfo=timezone.utc)
   activity_json = ndb.TextProperty()
   html = ndb.TextProperty()
 
@@ -1026,8 +1026,8 @@ class Publish(ndb.Model):
   source = ndb.KeyProperty()
   html = ndb.TextProperty()  # raw HTML fetched from source
   published = ndb.JsonProperty(compressed=True)
-  created = ndb.DateTimeProperty(auto_now_add=True)
-  updated = ndb.DateTimeProperty(auto_now=True)
+  created = ndb.DateTimeProperty(auto_now_add=True, tzinfo=timezone.utc)
+  updated = ndb.DateTimeProperty(auto_now=True, tzinfo=timezone.utc)
 
   def type_label(self):
     """Returns silo-specific string type, e.g. 'favorite' instead of 'like'."""
@@ -1080,8 +1080,8 @@ class SyndicatedPost(ndb.Model):
 
   syndication = ndb.StringProperty()
   original = ndb.StringProperty()
-  created = ndb.DateTimeProperty(auto_now_add=True)
-  updated = ndb.DateTimeProperty(auto_now=True)
+  created = ndb.DateTimeProperty(auto_now_add=True, tzinfo=timezone.utc)
+  updated = ndb.DateTimeProperty(auto_now=True, tzinfo=timezone.utc)
 
   @classmethod
   @ndb.transactional()
@@ -1163,5 +1163,5 @@ class Domain(StringIdModel):
   """
   tokens = ndb.StringProperty(repeated=True)
   auth = ndb.KeyProperty(IndieAuth)
-  created = ndb.DateTimeProperty(auto_now_add=True)
-  updated = ndb.DateTimeProperty(auto_now=True)
+  created = ndb.DateTimeProperty(auto_now_add=True, tzinfo=timezone.utc)
+  updated = ndb.DateTimeProperty(auto_now=True, tzinfo=timezone.utc)

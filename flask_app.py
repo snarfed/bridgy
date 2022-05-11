@@ -32,7 +32,7 @@ if DEBUG:
 app.wsgi_app = flask_util.ndb_context_middleware(app.wsgi_app, client=ndb_client)
 
 app.jinja_env.globals.update({
-  'naturaltime': humanize.naturaltime,
+  'naturaltime': util.naturaltime,
   'get_logins': util.get_logins,
   'sources': models.sources,
   'string': string,

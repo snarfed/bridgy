@@ -100,7 +100,7 @@ WordPress.com, <a href="/">sign up here!</a>
 
   }}{% endif %}{% if source.AUTO_POLL %},
   <!-- next poll -->
-  next in
+  next poll
   {{ logs.maybe_link(next_poll, source.key, time_class="dt-bridgy-next-poll")|safe }}{% endif %}.
 
   <input name="key" type="hidden" value="{{ source.key.urlsafe().decode() }}" />

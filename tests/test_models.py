@@ -1,7 +1,7 @@
 # coding=utf-8
 """Unit tests for models.py.
 """
-import datetime
+from datetime import datetime, timedelta, timezone
 from unittest import skip
 import copy
 
@@ -305,13 +305,13 @@ class SourceTest(testutil.AppTest):
     }, super(FakeSource, source).get_comment('x')['tags'][1])
 
   def test_create_new_already_exists(self):
-    long_ago = datetime.datetime(year=1901, month=2, day=3)
+    long_ago = datetime(year=1901, month=2, day=3, tzinfo=timezone.utc)
     props = {
       'created': long_ago,
-      'last_webmention_sent': long_ago + datetime.timedelta(days=1),
-      'last_polled': long_ago + datetime.timedelta(days=2),
-      'last_hfeed_refetch': long_ago + datetime.timedelta(days=3),
-      'last_syndication_url': long_ago + datetime.timedelta(days=4),
+      'last_webmention_sent': long_ago + timedelta(days=1),
+      'last_polled': long_ago + timedelta(days=2),
+      'last_hfeed_refetch': long_ago + timedelta(days=3),
+      'last_syndication_url': long_ago + timedelta(days=4),
       'superfeedr_secret': 'asdfqwert',
       }
     key = FakeSource.new(features=['listen'], **props).put()
@@ -633,11 +633,11 @@ class SourceTest(testutil.AppTest):
 
     self.assertEqual(source.FAST_POLL, source.poll_period())
 
-    source.created = datetime.datetime(2000, 1, 1)
+    source.created = datetime(2000, 1, 1, tzinfo=timezone.utc)
     self.assertEqual(source.SLOW_POLL, source.poll_period())
 
-    now = datetime.datetime.now()
-    source.last_webmention_sent = now - datetime.timedelta(days=8)
+    now = util.now_fn()
+    source.last_webmention_sent = now - timedelta(days=8)
     self.assertEqual(source.FAST_POLL * 10, source.poll_period())
 
     source.last_webmention_sent = now
@@ -659,11 +659,11 @@ class SourceTest(testutil.AppTest):
     source.last_poll_attempt = testutil.NOW  # too soon
     self.assertFalse(source.should_refetch())
 
-    hour = datetime.timedelta(hours=1)
+    hour = timedelta(hours=1)
     source.last_hfeed_refetch -= (Source.FAST_REFETCH + hour)
     self.assertTrue(source.should_refetch())
 
-    source.last_syndication_url -= datetime.timedelta(days=15)  # slow refetch
+    source.last_syndication_url -= timedelta(days=15)  # slow refetch
     self.assertFalse(source.should_refetch())
 
     source.last_hfeed_refetch -= (Source.SLOW_REFETCH + hour)

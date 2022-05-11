@@ -1,7 +1,7 @@
 # coding=utf-8
 """Unit tests for original_post_discovery.py
 """
-import datetime
+from datetime import datetime, timezone
 
 from oauth_dropins.webutil.util import json_dumps, json_loads
 from requests.exceptions import HTTPError
@@ -1311,7 +1311,7 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
     self.assert_entities_equal([synd], list(SyndicatedPost.query()))
 
   def test_refetch_with_last_feed_syndication_url_skips_permalinks(self):
-    self.source.last_feed_syndication_url = datetime.datetime(1970, 1, 1)
+    self.source.last_feed_syndication_url = datetime(1970, 1, 1, tzinfo=timezone.utc)
     self.source.put()
 
     self.expect_requests_get('http://author/', """

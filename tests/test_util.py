@@ -1,6 +1,6 @@
 # coding=utf-8
 """Unit tests for util.py."""
-import datetime
+from datetime import datetime, timezone
 import time
 import urllib.request, urllib.parse, urllib.error
 
@@ -28,7 +28,7 @@ class UtilTest(testutil.AppTest):
 
   def setUp(self):
     super().setUp()
-    util.now_fn = lambda: datetime.datetime(2000, 1, 1)
+    util.now_fn = lambda: datetime(2000, 1, 1, tzinfo=timezone.utc)
 
   def test_maybe_add_or_delete_source(self):
     auth_entity = FakeAuthEntity(id='x', user_json=json_dumps(

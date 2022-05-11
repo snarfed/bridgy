@@ -49,7 +49,7 @@ def responses():
   for cls in (Response,):  # BlogPost
     for e in cls.query().order(-cls.updated):
       if (len(entities) >= NUM_ENTITIES or
-          e.updated < datetime.datetime.now() - datetime.timedelta(hours=1)):
+          e.updated < util.now_fn() - datetime.timedelta(hours=1)):
         break
       elif (not e.error and not e.unsent) or e.status == 'complete':
         continue

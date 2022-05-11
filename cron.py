@@ -1,7 +1,7 @@
 """Cron jobs. Currently just minor cleanup tasks.
 """
 from builtins import range
-import datetime
+from datetime import datetime, timedelta, timezone
 import itertools
 import logging
 
@@ -32,19 +32,19 @@ class LastUpdatedPicture(StringIdModel):
   Key id is the silo's SHORT_NAME.
   """
   last = ndb.KeyProperty()
-  created = ndb.DateTimeProperty(auto_now_add=True, required=True)
-  updated = ndb.DateTimeProperty(auto_now=True)
+  created = ndb.DateTimeProperty(auto_now_add=True, required=True, tzinfo=timezone.utc)
+  updated = ndb.DateTimeProperty(auto_now=True, tzinfo=timezone.utc)
 
 
 @app.route('/cron/replace_poll_tasks')
 def replace_poll_tasks():
   """Finds sources missing their poll tasks and adds new ones."""
-  now = datetime.datetime.now()
+  now = util.now_fn()
   queries = [cls.query(Source.features == 'listen', Source.status == 'enabled')
              for cls in models.sources.values() if cls.AUTO_POLL]
   for source in itertools.chain(*queries):
     age = now - source.last_poll_attempt
-    if age > max(source.poll_period() * 2, datetime.timedelta(hours=2)):
+    if age > max(source.poll_period() * 2, timedelta(hours=2)):
       logger.info(f'{source.bridgy_url()} last polled {age} ago. Adding new poll task.')
       util.add_poll_task(source)
 

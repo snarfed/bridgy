@@ -37,7 +37,7 @@ class CronTest(testutil.BackgroundTest):
     oauth_dropins.twitter_auth.TWITTER_APP_SECRET = 'my_app_secret'
 
   def test_replace_poll_tasks(self):
-    now = datetime.datetime.now()
+    now = util.now_fn()
 
     # a bunch of sources, one needs a new poll task
     five_min_ago = now - datetime.timedelta(minutes=5)

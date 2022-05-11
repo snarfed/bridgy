@@ -2,7 +2,7 @@
 """Unit test utilities.
 """
 import copy
-import datetime
+from datetime import datetime, timedelta, timezone
 import logging
 import re
 import urllib.request, urllib.parse, urllib.error
@@ -25,7 +25,7 @@ from models import BlogPost, Publish, PublishedPage, Response, Source
 
 logger = logging.getLogger(__name__)
 
-NOW = datetime.datetime.utcnow()
+NOW = datetime.now(timezone.utc)
 
 
 class FakeAuthEntity(BaseAuth):
@@ -219,7 +219,7 @@ class FakeSource(Source):
   OAUTH_START = FakeStart
   SHORT_NAME = 'fake'
   TYPE_LABELS = {'post': 'FakeSource post label'}
-  RATE_LIMITED_POLL = datetime.timedelta(hours=30)
+  RATE_LIMITED_POLL = timedelta(hours=30)
   URL_CANONICALIZER = util.UrlCanonicalizer(domain=GR_CLASS.DOMAIN)
   PATH_BLOCKLIST = (re.compile('^/blocklisted/.*'),)
   HAS_BLOCKS = True
@@ -393,7 +393,7 @@ class TestCase(testutil.TestCase):
 
     # responses
     self.responses = []
-    created = datetime.datetime.utcnow() - datetime.timedelta(days=10)
+    created = datetime.now(timezone.utc) - timedelta(days=10)
 
     for activity in self.activities:
       obj = activity['object']
@@ -415,7 +415,7 @@ class TestCase(testutil.TestCase):
           unsent=['http://target1/post/url'],
           created=created))
 
-      created += datetime.timedelta(hours=1)
+      created += timedelta(hours=1)
 
       like = obj['tags'][0]
       self.responses.append(Response(
@@ -427,7 +427,7 @@ class TestCase(testutil.TestCase):
           unsent=['http://target1/post/url'],
           created=created))
 
-      created += datetime.timedelta(hours=1)
+      created += timedelta(hours=1)
 
       share = obj['tags'][1]
       self.responses.append(Response(
@@ -439,7 +439,7 @@ class TestCase(testutil.TestCase):
           unsent=['http://target1/post/url'],
           created=created))
 
-      created += datetime.timedelta(hours=1)
+      created += timedelta(hours=1)
 
       reaction = obj['tags'][2]
       self.responses.append(Response(
@@ -451,7 +451,7 @@ class TestCase(testutil.TestCase):
           unsent=['http://target1/post/url'],
           created=created))
 
-      created += datetime.timedelta(hours=1)
+      created += timedelta(hours=1)
 
     # publishes
     self.publishes = [Publish(

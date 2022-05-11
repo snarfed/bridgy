@@ -4,7 +4,7 @@
 import binascii
 import collections
 import copy
-import datetime
+from datetime import datetime, timedelta, timezone
 import logging
 import os
 import random
@@ -47,7 +47,7 @@ CONNEG_DOMAINS = {'rhiaro.co.uk'}
 CONNEG_PATHS = {'/twitter/rhiaro'}
 
 # alias allows unit tests to mock the function
-now_fn = datetime.datetime.now
+now_fn = lambda: datetime.now(tz=timezone.utc)
 
 # Domains that don't support webmentions. Mainly just the silos.
 # Subdomains are automatically blocklisted too.
@@ -183,7 +183,7 @@ class Redirect(RequestRedirect):
          for login in self.logins}))
 
       logger.info(f'setting logins cookie: {cookie}')
-      age = datetime.timedelta(days=365 * 2)
+      age = timedelta(days=365 * 2)
       expires = (now_fn() + age).replace(microsecond=0)
       resp.set_cookie('logins', cookie, max_age=age, expires=expires)
 

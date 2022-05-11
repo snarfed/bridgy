@@ -1,6 +1,6 @@
 # coding=utf-8
 """Unit tests for pages.py."""
-import datetime
+from datetime import datetime, timedelta, timezone
 import urllib.request, urllib.parse, urllib.error
 from urllib.parse import urlencode
 
@@ -44,8 +44,7 @@ class PagesTest(testutil.AppTest):
   def test_retry(self):
     source = self.sources[0]
     source.domain_urls = ['http://orig']
-    source.last_hfeed_refetch = last_hfeed_refetch = \
-        testutil.NOW - datetime.timedelta(minutes=1)
+    source.last_hfeed_refetch = last_hfeed_refetch = testutil.NOW - timedelta(minutes=1)
     source.put()
 
     resp = self.responses[0]
@@ -242,6 +241,8 @@ class PagesTest(testutil.AppTest):
                   resp.headers['Set-Cookie'].split(' '))
 
   def test_user_page(self):
+    self.sources[0].last_webmention_sent = util.now_fn()
+    self.sources[0].put()
     resp = self.client.get(self.sources[0].bridgy_path())
     self.assertEqual(200, resp.status_code)
 
@@ -408,7 +409,7 @@ class PagesTest(testutil.AppTest):
 
   def test_user_page_rate_limited_never_successfully_polled(self):
     self.sources[0].rate_limited = True
-    self.sources[0].last_poll_attempt = datetime.datetime(2019, 1, 1)
+    self.sources[0].last_poll_attempt = datetime(2019, 1, 1, tzinfo=timezone.utc)
     self.sources[0].put()
 
     resp = self.client.get(self.sources[0].bridgy_path())
@@ -452,7 +453,7 @@ class PagesTest(testutil.AppTest):
         resp.get_data(as_text=True))
 
   def test_logout(self):
-    util.now_fn = lambda: datetime.datetime(2000, 1, 1)
+    util.now_fn = lambda: datetime(2000, 1, 1, tzinfo=timezone.utc)
     resp = self.client.get('/logout')
     self.assertIn('logins=;', resp.headers['Set-Cookie'])
     self.assertEqual(302, resp.status_code)
