@@ -416,6 +416,15 @@ class PagesTest(testutil.AppTest):
     self.assertEqual(200, resp.status_code)
     self.assertIn('Not polled yet,', resp.get_data(as_text=True))
 
+  def test_user_page_responses_before_after(self):
+    for param in 'responses_before', 'responses_after':
+      resp = self.client.get(f'{self.sources[0].bridgy_path()}?{param}=2022-05-09T10:13:28')
+      self.assertEqual(200, resp.status_code)
+      resp = self.client.get(f'{self.sources[0].bridgy_path()}?{param}=2022-05-09T10:13:28.597816+00:00')
+      self.assertEqual(200, resp.status_code)
+      resp = self.client.get(f'{self.sources[0].bridgy_path()}?{param}=2022-05-09T10:13:28.597816 00:00')
+      self.assertEqual(200, resp.status_code)
+
   def test_blog_user_page_escapes_html_chars(self):
     html = '<xyz> a&b'
     escaped = '&lt;xyz&gt; a&amp;b'

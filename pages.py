@@ -140,7 +140,7 @@ def user(site, id):
     def get_paging_param(param):
       val = request.values.get(param)
       try:
-        return util.parse_iso8601(val) if val else None
+        return util.parse_iso8601(val.replace(' ', '+')) if val else None
       except BaseException:
         error(f"Couldn't parse {param}, {val!r} as ISO8601")
 
