@@ -49,6 +49,7 @@ $refresh
 <title>$title</title>
 <style type="text/css">
 body {
+  display: none;
   font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 .p-uid {
