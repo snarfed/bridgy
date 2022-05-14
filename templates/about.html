@@ -55,6 +55,7 @@ service.</a>
 <li><a href="#add-remove-url">How do I add or remove a web site URL from my Bridgy profile?</a></li>
 <li><a href="#disconnected">Bridgy stopped working for me!</a></li>
 <li><a href="#security">It looks like anyone can poll or disable my account or publish as me. Isn't that a security hole?</a></li>
+<li><a href="#connect">How do I connect my Bridgy accounts on different social networks?</a></li>
 <li><a href="#registration-api">Can users sign up for Bridgy without leaving my site or application?</a></li>
 <li><a href="#permissions">Why does Bridgy ask for all these permissions?</a></li>
 <li><a href="#api">Does Bridgy have an API?</a></li>
@@ -271,16 +272,16 @@ Bridgy's access expires or is revoked, or for other reasons.</p>
 <li id="security" class="question">It looks like anyone can poll or disable my
 account or publish as me. Isn't that a security hole?</li>
 <li class="answer">
-<p>Looks can be deceiving. Polling is harmless - Bridgy does it automatically
-anyway - and when you publish a post or try to disable an account, we check that
-you own it first. If you <a href="#webmentions">publish via webmention</a>, we
-<a href="#webmentions">require a Bridgy Publish backlink</a>
-in your post.
+<p>Looks can be deceiving. Polling is harmless - Bridgy does it automatically anyway - and when you publish a post or try to disable an account, we check that you own it first. If you <a href="#webmentions">publish via webmention</a>, we <a href="#webmentions">require a Bridgy Publish backlink</a> in your post.
 </p>
 </li>
 
-<li id="registration-api" class="question">Can users sign up for Bridgy
-without leaving my site or application?</li>
+<li id="connect" class="question">How do I connect my Bridgy accounts on different social networks?</li>
+<p>You don't! Bridgy could detect accounts that share the same web site(s), but it doesn't yet. If you think it should, <a href="https://github.com/snarfed/bridgy/issues/38">feel free to suggest what it would do</a>!
+</p>
+</li>
+
+<li id="registration-api" class="question">Can users sign up for Bridgy without leaving my site or application?</li>
 
 <p>Not exactly, but you can get close. Direct your users to <code>POST</code> to a Bridgy registration URL of the form <code>https://brid.gy/SITE/start</code> (where SITE is
 <code>twitter</code>, <code>flickr</code>, <code>github</code>, <code>mastodon</code>, or <code>reddit</code>) with the parameters:</p>
