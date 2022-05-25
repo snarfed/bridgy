@@ -14,6 +14,7 @@ from granary.tests.test_facebook import (
   MBASIC_ACTIVITIES_REPLIES,
   MBASIC_ACTIVITIES_REPLIES_REACTIONS,
   MBASIC_ACTIVITY,
+  MBASIC_FEED_ACTIVITIES,
   MBASIC_REACTION_TAGS,
 )
 from oauth_dropins.webutil.util import json_dumps, json_loads, trim_nulls
@@ -105,7 +106,7 @@ class FacebookTest(testutil.AppTest):
 
     resp = self.get_response('feed', data=MBASIC_HTML_TIMELINE)
     self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
-    self.assertEqual(MBASIC_ACTIVITIES, resp.json)
+    self.assertEqual(MBASIC_FEED_ACTIVITIES, resp.json)
 
   def test_post(self):
     self.source.put()
