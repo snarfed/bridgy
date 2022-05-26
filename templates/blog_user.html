@@ -72,7 +72,7 @@ Click to re-enable:
     {{ blogpost.pretty_url|safe }}
 
    </div><div class="col-sm-4">
-    {{ logs.maybe_link(blogpost.updated, blogpost.key, 'u-bridgy-log')|safe }}
+    {{ logs.maybe_link(blogpost.updated, blogpost.key, 'u-bridgy-log', module='background')|safe }}
     {% if blogpost.status == 'error' %}
      <span title="Error" class="glyphicon glyphicon-exclamation-sign"></span>
     {% else %}{% if blogpost.status == 'processing' %}
@@ -125,7 +125,7 @@ Click to re-enable:
      {{ wm.pretty_target|safe }}
 
    </div><div class="col-sm-3">
-    {{ logs.maybe_link(wm.updated, wm.key)|safe }}
+    {{ logs.maybe_link(wm.updated, wm.key, module='default')|safe }}
     {% if wm.status == 'failed' %}
      <span title="Error" class="glyphicon glyphicon-exclamation-sign"></span>
     {% else %}{% if wm.status == 'new' %}

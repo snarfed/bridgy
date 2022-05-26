@@ -36,7 +36,7 @@
       </a>
     {% endfor %}</td>
 
-    <td>{{ logs.maybe_link(r.updated, r.key)|safe }}</td>
+    <td>{{ logs.maybe_link(r.updated, r.key, module='background')|safe }}</td>
 
     <td>{{ naturaltime(r.created) }}</td>
 

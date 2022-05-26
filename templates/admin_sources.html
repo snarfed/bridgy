@@ -34,11 +34,11 @@ function maybeShowInputs(event) {
   <tr>
     <td><a target="_blank" href="{{ s.bridgy_path() }}">{{ s.label() }}</a></td>
 
-    <td>{{ logs.maybe_link(s.last_poll_attempt, s.key)|safe }}</td>
+    <td>{{ logs.maybe_link(s.last_poll_attempt, s.key, module='background')|safe }}</td>
 
     <td>
       {% if s.last_polled and s.last_polled > EPOCH %}
-        {{ logs.maybe_link(s.last_polled, s.key)|safe }}
+        {{ logs.maybe_link(s.last_polled, s.key, module='background')|safe }}
       {% else %}
         never
       {% endif %}

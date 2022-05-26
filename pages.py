@@ -564,4 +564,4 @@ def csp_report():
 @app.route('/log')
 @flask_util.cached(cache, logs.CACHE_TIME)
 def log():
-    return logs.log(module='background')
+    return logs.log(module=request.values.get('module'))
