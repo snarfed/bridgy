@@ -253,15 +253,15 @@ I occasionally generate [stats and graphs of usage and growth](https://snarfed.o
 1. [Export the full datastore to Google Cloud Storage.](https://cloud.google.com/datastore/docs/export-import-entities) Include all entities except `*Auth` and other internal details. Check to see if any new kinds have been added since the last time this command was run.
 
     ```
-    gcloud datastore export --async gs://brid-gy.appspot.com/stats/ --kinds Activity, Blogger,BlogPost,BlogWebmention,Facebook,FacebookPage,Flickr,GitHub,GooglePlusPage,Instagram,Mastodon,Medium,Meetup,Publish,PublishedPage,Reddit,Response,SyndicatedPost,Tumblr,Twitter,WordPress
+    gcloud datastore export --async gs://brid-gy.appspot.com/stats/ --kinds Activity,Blogger,BlogPost,BlogWebmention,Domain,Facebook,FacebookPage,Flickr,GitHub,GooglePlusPage,Instagram,Mastodon,Medium,Meetup,Publish,PublishedPage,Reddit,Response,SyndicatedPost,Tumblr,Twitter,WordPress
     ```
 
-    Note that `--kinds` is required. [From the export docs](https://cloud.google.com/datastore/docs/export-import-entities#limitations), _Data exported without specifying an entity filter cannot be loaded into BigQuery._
+    Note that `--kinds` is required. [From the export docs](https://cloud.google.com/datastore/docs/export-import-entities#limitations), _Data exported without specifying an entity filter cannot be loaded into BigQuery._ Also, expect this to cost around $10.
 1. Wait for it to be done with `gcloud datastore operations list | grep done`.
 1. [Import it into BigQuery](https://cloud.google.com/bigquery/docs/loading-data-cloud-datastore#loading_cloud_datastore_export_service_data):
 
     ```
-    for kind in Activity BlogPost BlogWebmention Publish Response SyndicatedPost; do
+    for kind in Activity BlogPost BlogWebmention Domain Publish SyndicatedPost; do
       bq load --replace --nosync --source_format=DATASTORE_BACKUP datastore.$kind gs://brid-gy.appspot.com/stats/all_namespaces/kind_$kind/all_namespaces_kind_$kind.export_metadata
     done
 
@@ -269,23 +269,97 @@ I occasionally generate [stats and graphs of usage and growth](https://snarfed.o
       bq load --replace --nosync --source_format=DATASTORE_BACKUP sources.$kind gs://brid-gy.appspot.com/stats/all_namespaces/kind_$kind/all_namespaces_kind_$kind.export_metadata
     done
     ```
+
+Open the Datastore entities page for the `Response` kind, sorted by `updated` ascending, and check out the first few rows: https://console.cloud.google.com/datastore/entities;kind=Response;ns=__$DEFAULT$__;sortCol=updated;sortDir=ASCENDING/query/kind?project=brid-gy
+
+Open the existing `Response` table in BigQuery: https://console.cloud.google.com/bigquery?project=brid-gy&ws=%211m10%211m4%214m3%211sbrid-gy%212sdatastore%213sResponse%211m4%211m3%211sbrid-gy%212sbquxjob_371f97c8_18131ff6e69%213sUS
+
+Query for the same first few rows sorted by `updated` ascending, check that they're the same:
+
+```
+SELECT * FROM `brid-gy.datastore.Response`
+WHERE updated >= TIMESTAMP('2020-11-01T00:00:00Z')
+ORDER BY updated ASC
+LIMIT 10
+```
+
+Delete those rows:
+
+```
+DELETE FROM `brid-gy.datastore.Response`
+WHERE updated >= TIMESTAMP('2020-11-01T00:00:00Z')
+```
+
+Load the new `Response` entities into a temporary table:
+```
+bq load --replace=false --nosync --source_format=DATASTORE_BACKUP datastore.Response-new gs://brid-gy.appspot.com/stats/all_namespaces/kind_Response/all_namespaces_kind_Response.export_metadata
+```
+
+Append that table to the existing `Response` table:
+
+```
+SELECT
+leased_until,
+original_posts,
+type,
+updated,
+error,
+sent,
+skipped,
+unsent,
+created,
+source,
+status,
+failed,
+
+ARRAY(
+  SELECT STRUCT<`string` string, text string, provided string>(a, null, 'string')
+  FROM UNNEST(activities_json) as a
+ ) AS activities_json,
+
+IF(urls_to_activity IS NULL, NULL,
+   STRUCT<`string` string, text string, provided string>
+     (urls_to_activity, null, 'string')) AS urls_to_activity,
+
+IF(response_json IS NULL, NULL,
+   STRUCT<`string` string, text string, provided string>
+     (response_json, null, 'string')) AS response_json,
+
+ARRAY(
+  SELECT STRUCT<`string` string, text string, provided string>(x, null, 'string')
+  FROM UNNEST(old_response_jsons) as x
+) AS old_response_jsons,
+
+__key__,
+__error__,
+__has_error__
+
+FROM `brid-gy.datastore.Response-new`
+```
+
+More => Query settings, Set a destination table for query results, dataset brid-gy.datastore, table Response, Append, check Allow large results, Save, Run.
+
+Open `sources.Facebook`, edit schema, add a `url` field, string, nullable.
+
 1. Check the jobs with `bq ls -j`, then wait for them with `bq wait`.
-1. [Run the full stats BigQuery query.](https://console.cloud.google.com/bigquery?sq=586366768654:9d8d4c13e988477bb976a5e29b63da3b) Download the results as CSV.
+1. [Run the full stats BigQuery query.](https://console.cloud.google.com/bigquery?sq=586366768654:4205685cc2154f18a665122613c0bc05) Download the results as CSV.
 1. [Open the stats spreadsheet.](https://docs.google.com/spreadsheets/d/1VhGiZ9Z9PEl7f9ciiVZZgupNcUTsRVltQ8_CqFETpfU/edit) Import the CSV, replacing the _data_ sheet.
+1. Change the underscores in column headings to spaces.
+1. Open each sheet, edit the chart, and extend the data range to include all of thee new rows.
 1. Check out the graphs! Save full size images with OS or browser screenshots, thumbnails with the _Download Chart_ button. Then post them!
 
 
 Delete old responses
 ---
-Bridgy only keeps responses that are over a year or two old. I garbage collect (ie delete) older responses manually, generally just once a year when I generate statistics (above).
+Bridgy's online datastore only keeps responses for a year or two. I garbage collect (ie delete) older responses manually, generally just once a year when I generate statistics (above). All historical responses are kept in [BigQuery](https://console.cloud.google.com/bigquery?p=brid-gy&d=datastore&page=dataset) for long term storage.
 
-I use the [Datastore Bulk Delete Dataflow template](https://cloud.google.com/dataflow/docs/guides/templates/provided-utilities#datastore-bulk-delete) with this GQL query:
+I use the [Datastore Bulk Delete Dataflow template](https://cloud.google.com/dataflow/docs/guides/templates/provided-utilities#datastore-bulk-delete) with a GQL query like this:
 
 ```sql
-SELECT * FROM `Response` WHERE updated < DATETIME('2020-11-01T00:00:00Z')
+SELECT * FROM Response WHERE updated < DATETIME('202X-11-01T00:00:00Z')
 ```
 
-I either [use the interactive web UI](https://console.cloud.google.com/dataflow/createjob?_ga=2.30358207.1290853518.1636209407-621750517.1595350949) or this command line:
+I either [use the interactive web UI](https://console.cloud.google.com/dataflow/createjob) or this command line:
 
 ```sh
 gcloud dataflow jobs run 'Delete Response datastore entities over 1y old'
@@ -294,6 +368,8 @@ gcloud dataflow jobs run 'Delete Response datastore entities over 1y old'
   --staging-location gs://brid-gy.appspot.com/tmp-datastore-delete
   --parameters datastoreReadGqlQuery="SELECT * FROM `Response` WHERE updated < DATETIME('2020-11-01T00:00:00Z'),datastoreReadProjectId=brid-gy,datastoreDeleteProjectId=brid-gy"
 ```
+
+Expect this to take at least a day or so.
 
 
 Misc
