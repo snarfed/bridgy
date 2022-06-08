@@ -28,7 +28,7 @@ class RedditTest(testutil.AppTest):
 
   def test_new(self):
     self.assertEqual(self.auth_entity, self.r.auth_entity.get())
-    self.assertEqual('silly_token', self.r.gr_source.refresh_token)
+    self.assertEqual('silly_token', self.r.gr_source.api.config.refresh_token)
     self.assertEqual('bonkerfield', self.r.key.string_id())
     self.assertEqual('https://styles.redditmedia.com/t5_2az095/styles/profileIcon_ek6onop1xbf41.png', self.r.picture)
     self.assertEqual('bonkerfield', self.r.name)
