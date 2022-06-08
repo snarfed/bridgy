@@ -21,3 +21,8 @@ cron:
   url: /cron/update_mastodon_pictures
   schedule: every 1 hours
   target: background
+
+- description: update changed reddit profile pictures
+  url: /cron/update_reddit_pictures
+  schedule: every 1 hours
+  target: background

@@ -15,6 +15,7 @@ from blogger import Blogger
 from flask_background import app
 from flickr import Flickr
 from mastodon import Mastodon
+from reddit import Reddit
 import models
 from models import Source
 from twitter import Twitter
@@ -71,10 +72,12 @@ class UpdatePictures(View):
     results, _, more = query.fetch_page(PAGE_SIZE)
     for source in results:
       if source.features and source.status != 'disabled':
-        logger.debug(f'checking for updated profile pictures for: {source.bridgy_url()}')
+        user_id = self.user_id(source)
+        logger.debug(f'checking for updated profile pictures for {source.bridgy_url()} {user_id}')
         try:
-          actor = source.gr_source.get_actor(self.user_id(source))
+          actor = source.gr_source.get_actor(user_id)
         except BaseException as e:
+          logging.debug('Failed', exc_info=True)
           # Mastodon API returns HTTP 404 for deleted (etc) users, and
           # often one or more users' Mastodon instances are down.
           code, _ = util.interpret_http_exception(e)
@@ -83,12 +86,12 @@ class UpdatePictures(View):
           raise
 
         if not actor:
-          logger.info(f"Couldn't fetch {source.bridgy_url()} 's user")
+          logger.info(f"Couldn't fetch user")
           continue
 
         new_pic = actor.get('image', {}).get('url')
         if not new_pic or source.picture == new_pic:
-          logger.info(f'No new picture found for {source.bridgy_url()}')
+          logger.info(f'No new picture found')
           continue
 
         @ndb.transactional()
@@ -97,7 +100,7 @@ class UpdatePictures(View):
           src.picture = new_pic
           src.put()
 
-        logger.info(f'Updating profile picture for {source.bridgy_url()} from {source.picture} to {new_pic}')
+        logger.info(f'Updating profile picture from {source.picture} to {new_pic}')
         update()
 
     LastUpdatedPicture(id=self.SOURCE_CLS.SHORT_NAME,
@@ -128,16 +131,16 @@ class UpdateTwitterPictures(UpdatePictures):
   SOURCE_CLS = Twitter
 
 
-# class UpdateBloggerPictures(UpdatePictures):
-#   """Finds :class:`Blogger` sources with new profile pictures and updates them."""
-#   SOURCE_CLS = Blogger
-
-#   # TODO: no granary.Blogger!
+class UpdateRedditPictures(UpdatePictures):
+  """Finds :class:`Reddit` sources with new profile pictures and updates them."""
+  SOURCE_CLS = Reddit
 
 
 app.add_url_rule('/cron/update_flickr_pictures',
                  view_func=UpdateFlickrPictures.as_view('update_flickr_pictures'))
 app.add_url_rule('/cron/update_mastodon_pictures',
                  view_func=UpdateMastodonPictures.as_view('update_mastodon_pictures'))
+app.add_url_rule('/cron/update_reddit_pictures',
+                 view_func=UpdateRedditPictures.as_view('update_reddit_pictures'))
 app.add_url_rule('/cron/update_twitter_pictures',
                  view_func=UpdateTwitterPictures.as_view('update_twitter_pictures'))
