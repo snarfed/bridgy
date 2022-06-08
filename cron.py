@@ -45,7 +45,7 @@ def replace_poll_tasks():
              for cls in models.sources.values() if cls.AUTO_POLL]
   for source in itertools.chain(*queries):
     age = now - source.last_poll_attempt
-    if age > max(source.poll_period() * 2, timedelta(hours=2)):
+    if age > max(source.poll_period() * 2, timedelta(days=2)):
       logger.info(f'{source.bridgy_url()} last polled {age} ago. Adding new poll task.')
       util.add_poll_task(source)
 
