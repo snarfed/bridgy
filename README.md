@@ -371,6 +371,8 @@ gcloud dataflow jobs run 'Delete Response datastore entities over 1y old'
 
 Expect this to take at least a day or so.
 
+Once it's done, [update the stats constants in `admin.py`](https://github.com/snarfed/bridgy/blob/main/admin.py).
+
 
 Misc
 ---

@@ -25,20 +25,20 @@ logger = logging.getLogger(__name__)
 NUM_ENTITIES = 10
 
 # Result of this query in BigQuery:
-# SELECT count(*) FROM `brid-gy.datastore.Response` WHERE updated < timestamp('2020-11-01T00:00:00Z')
-ARCHIVED_RESPONSES = 19988618
+# SELECT count(*) FROM `brid-gy.datastore.Response` WHERE updated < timestamp('2021-11-01T00:00:00Z')
+ARCHIVED_RESPONSES = 25313804
 
 # Result of this query in BigQuery:
 # SELECT SUM(ARRAY_LENGTH(sent) + ARRAY_LENGTH(unsent) + ARRAY_LENGTH(error) + ARRAY_LENGTH(failed) + ARRAY_LENGTH(skipped))
 # FROM `brid-gy.datastore.Response`
-# WHERE updated < timestamp('2020-11-01T00:00:00Z')
-ARCHIVED_LINKS = 3706943
+# WHERE updated < timestamp('2021-11-01T00:00:00Z')
+ARCHIVED_LINKS = 4355678
 
 # Result of this query in BigQuery:
 # SELECT SUM(ARRAY_LENGTH(sent))
 # FROM `brid-gy.datastore.Response`
-# WHERE updated < timestamp('2020-11-01T00:00:00Z')
-ARCHIVED_SENT_LINKS = 1655743
+# WHERE updated < timestamp('2021-11-01T00:00:00Z')
+ARCHIVED_SENT_LINKS = 2060197
 
 
 @app.route('/admin/responses')
