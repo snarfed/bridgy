@@ -28,7 +28,7 @@ kill %1  # datastore emulator
 md5sum -c keys.md5
 
 # # TODO: check package versions
-# missing=`pip freeze -q -r requirements.freeze.txt | join --nocheck-order -v 2 - requirements.freeze.txt`
+# missing=`pip freeze -q -r requirements.txt | join --nocheck-order -v 2 - requirements.txt`
 # if [[ "$missing" != "" ]]; then
 #   echo 'ERROR: Package version mismatch! Expected:'
 #   echo $missing
