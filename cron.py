@@ -41,7 +41,9 @@ class LastUpdatedPicture(StringIdModel):
 def replace_poll_tasks():
   """Finds sources missing their poll tasks and adds new ones."""
   now = util.now_fn()
-  queries = [cls.query(Source.features == 'listen', Source.status == 'enabled')
+  fields = [cls.last_polled, cls.last_poll_attempt, cls.rate_limited]
+  queries = [cls.query(Source.features == 'listen', Source.status == 'enabled',
+                       projection=fields)
              for cls in models.sources.values() if cls.AUTO_POLL]
   for source in itertools.chain(*queries):
     age = now - source.last_poll_attempt
