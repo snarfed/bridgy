@@ -38,6 +38,7 @@ class Twitter(models.Source):
   CAN_PUBLISH = True
   HAS_BLOCKS = True
   URL_CANONICALIZER = gr_twitter.Twitter.URL_CANONICALIZER
+  USERNAME_KEY_ID = True
 
   @staticmethod
   def new(auth_entity=None, **kwargs):
@@ -47,10 +48,12 @@ class Twitter(models.Source):
       auth_entity: :class:`oauth_dropins.twitter.TwitterAuth`
       kwargs: property values
     """
+    assert 'username' not in kwargs
+    assert 'id' not in kwargs
     user = json_loads(auth_entity.user_json)
     gr_source = gr_twitter.Twitter(*auth_entity.access_token())
     actor = gr_source.user_to_actor(user)
-    return Twitter(id=user['screen_name'],
+    return Twitter(username=user['screen_name'],
                    auth_entity=auth_entity.key,
                    url=actor.get('url'),
                    name=actor.get('displayName'),
@@ -59,11 +62,13 @@ class Twitter(models.Source):
 
   def silo_url(self):
     """Returns the Twitter account URL, e.g. https://twitter.com/foo."""
-    return self.gr_source.user_url(self.key_id())
+    # TODO: remove self.key_id() once we've backfilled
+    return self.gr_source.user_url(self.username or self.key_id())
 
   def label_name(self):
     """Returns the username."""
-    return self.key_id()
+    # TODO: remove self.key_id() once we've backfilled
+    return self.username or self.key_id()
 
   def search_for_links(self):
     """Searches for activities with links to any of this source's web sites.

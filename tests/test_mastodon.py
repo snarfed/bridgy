@@ -18,11 +18,11 @@ class MastodonTest(testutil.AppTest):
     app = oauth_mastodon.MastodonApp(instance='https://foo.com', data='')
     app.put()
     self.auth_entity = oauth_mastodon.MastodonAuth(
-      id='@me@foo.com', access_token_str='towkin', app=app.key, user_json=json_dumps({
+      id='@ME@foo.com', access_token_str='towkin', app=app.key, user_json=json_dumps({
         'id': '123',
-        'username': 'me',
-        'acct': 'me',
-        'url': 'https://foo.com/@me',
+        'username': 'ME',
+        'acct': 'ME',
+        'url': 'https://foo.com/@ME',
         'display_name': 'Ryan Barrett',
         'avatar': 'http://pi.ct/ure',
       }))
@@ -35,10 +35,10 @@ class MastodonTest(testutil.AppTest):
     self.assertEqual('@me@foo.com', self.m.key.string_id())
     self.assertEqual('http://pi.ct/ure', self.m.picture)
     self.assertEqual('Ryan Barrett', self.m.name)
-    self.assertEqual('https://foo.com/@me', self.m.url)
-    self.assertEqual('https://foo.com/@me', self.m.silo_url())
+    self.assertEqual('https://foo.com/@ME', self.m.url)
+    self.assertEqual('https://foo.com/@ME', self.m.silo_url())
     self.assertEqual('tag:foo.com,2013:me', self.m.user_tag_id())
-    self.assertEqual('@me@foo.com (Mastodon)', self.m.label())
+    self.assertEqual('@ME@foo.com (Mastodon)', self.m.label())
 
   def test_canonicalize_url(self):
     good = 'https://foo.com/@x/123'

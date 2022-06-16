@@ -17,9 +17,9 @@ from . import testutil
 USER = {
   'data': {
     'id': 'abcdef01234',
-    'username': 'ry',
+    'username': 'RY',
     'name': 'Ryan',
-    'url': 'http://medium.com/@ry',
+    'url': 'http://medium.com/@RY',
     'imageUrl': 'http://ava/tar',
   },
 }
@@ -77,11 +77,11 @@ class MediumTest(testutil.AppTest):
     self.assertEqual('@ry', medium.key.id())
     self.assertEqual(self.auth_entity.key, medium.auth_entity)
     self.assertEqual('Ryan', medium.name)
-    self.assertEqual('http://medium.com/@ry', medium.url)
+    self.assertEqual('http://medium.com/@RY', medium.url)
     self.assertEqual('http://ava/tar', medium.picture)
     self.assertFalse(medium.is_publication())
-    self.assertEqual('http://medium.com/feed/@ry', medium.feed_url())
-    self.assertEqual('http://medium.com/@ry', medium.silo_url())
+    self.assertEqual('http://medium.com/feed/@RY', medium.feed_url())
+    self.assertEqual('http://medium.com/@RY', medium.silo_url())
 
   def assert_created_publication(self, medium=None):
     if not medium:
@@ -100,11 +100,11 @@ class MediumTest(testutil.AppTest):
 
   def test_new_profile(self):
     self.assert_created_profile(
-      Medium.new(auth_entity=self.auth_entity, id='@ry'))
+      Medium.new(auth_entity=self.auth_entity, username='@RY'))
 
   def test_new_publication(self):
     self.assert_created_publication(
-      Medium.new(auth_entity=self.auth_entity, id='b45573563f5a'))
+      Medium.new(auth_entity=self.auth_entity, username='b45573563f5a'))
 
   def test_choose_blog_decline(self):
     with app.test_request_context():
@@ -132,7 +132,7 @@ class MediumTest(testutil.AppTest):
     with app.test_request_context():
       resp = ChooseBlog('/unused').finish(self.auth_entity)
       for expected in ('action="/medium/add" method="post"',
-                       '<input type="radio" name="blog" id="@ry"',
+                       '<input type="radio" name="blog" id="@RY"',
                        '<input type="radio" name="blog" id="b969ac62a46b"',
                        '<input type="radio" name="blog" id="b45573563f5a"',
                        ):
@@ -142,7 +142,7 @@ class MediumTest(testutil.AppTest):
 
   def test_add_profile(self):
     resp = self.client.post(
-      '/medium/add?auth_entity_key=%s&state={"feature":"webmention"}&blog=@ry' %
+      '/medium/add?auth_entity_key=%s&state={"feature":"webmention"}&blog=@RY' %
       self.auth_entity.key.urlsafe().decode())
 
     self.assertEqual(302, resp.status_code)

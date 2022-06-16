@@ -24,6 +24,7 @@ class Reddit(models.Source):
   }
   CAN_PUBLISH = False
   DISABLE_HTTP_CODES = ('401', '403')
+  USERNAME_KEY_ID = True
 
   @staticmethod
   def new(auth_entity=None, **kwargs):
@@ -33,9 +34,11 @@ class Reddit(models.Source):
       auth_entity: :class:`oauth_dropins.reddit.RedditAuth`
       kwargs: property values
     """
+    assert 'username' not in kwargs
+    assert 'id' not in kwargs
     user = json_loads(auth_entity.user_json)
     gr_source = gr_reddit.Reddit(auth_entity.refresh_token)
-    return Reddit(id=user.get('name'),
+    return Reddit(username=user.get('name'),
                   auth_entity=auth_entity.key,
                   url=gr_source.user_url(user.get('name')),
                   name=user.get('name'),
@@ -44,11 +47,13 @@ class Reddit(models.Source):
 
   def silo_url(self):
     """Returns the Reddit account URL, e.g. https://reddit.com/user/foo."""
-    return self.gr_source.user_url(self.key_id())
+    # TODO: remove self.key_id() once we've backfilled
+    return self.gr_source.user_url(self.username or self.key_id())
 
   def label_name(self):
     """Returns the username."""
-    return self.key_id()
+    # TODO: remove self.key_id() once we've backfilled
+    return self.username or self.key_id()
 
   def get_activities_response(self, *args, **kwargs):
     """Set user_id manually.
@@ -56,7 +61,7 @@ class Reddit(models.Source):
     ...since Reddit sometimes (always?) 400s our calls to
     https://oauth.reddit.com/api/v1/me (via PRAW's Reddit.user.me() ).
     """
-    kwargs.setdefault('user_id', self.key_id())
+    kwargs.setdefault('user_id', self.username)
     try:
       return super().get_activities_response(*args, **kwargs)
     except NotFound:

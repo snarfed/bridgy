@@ -36,9 +36,8 @@ class Flickr(models.Source):
     subdomain='www',
     trailing_slash=True)
 
-  # unique name optionally used in URLs instead of nsid (e.g.,
-  # flickr.com/photos/username)
-  username = ndb.StringProperty()
+  # username (defined in Source) is unique name optionally used in URLs instead
+  # of nsid, eg flickr.com/photos/username
 
   @staticmethod
   def new(auth_entity=None, **kwargs):
@@ -47,6 +46,8 @@ class Flickr(models.Source):
     Args:
       auth_entity: :class:`oauth_dropins.flickr.FlickrAuth`
     """
+    assert 'username' not in kwargs
+    assert 'id' not in kwargs
     person = json_loads(auth_entity.user_json).get('person', {})
     return Flickr(
       id=person.get('nsid'),
@@ -66,6 +67,7 @@ class Flickr(models.Source):
 
   def user_tag_id(self):
     """Returns the tag URI for this source, e.g. 'tag:flickr.com:123456'."""
+    # note that this is *not* the same as key id
     return self.gr_source.tag_uri(self.username)
 
   def label_name(self):

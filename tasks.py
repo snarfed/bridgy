@@ -401,6 +401,7 @@ class Poll(View):
         original_posts=resp.get('originals', []))
       if urls_to_activity and len(activities) > 1:
         resp_entity.urls_to_activity=json_dumps(urls_to_activity)
+      logging.info(f'@@@ {resp_entity.unsent} , {resp_entity.failed} , {resp_entity.urls_to_activity} , {resp_entity.activities_json}')
       resp_entity.get_or_save(source, restart=self.RESTART_EXISTING_TASKS)
 
     # update cache
@@ -500,6 +501,12 @@ class Discover(Poll):
     assert len(activities) == 1, activities
     activity = activities[0]
     activities = {activity['id']: activity}
+
+    # STATE: propagate tasks created by backfeed() here get started before their Response entities get created/updated, so they fail with https://github.com/snarfed/bridgy/issues/237 , but that's a red herring, it's really that activities_json and urls_to_activity are empty
+    # is poll transactional somehow, and this isn't?
+    # no more transactional tasks. https://github.com/googleapis/python-tasks/issues/26
+    # they're still supported in the new "bundled services" thing, but that seems like a dead end.
+    # https://groups.google.com/g/google-appengine/c/22BKInlWty0/m/05ObNEdsAgAJ
     self.backfeed(source, responses=activities, activities=activities)
 
     obj = activity.get('object') or activity
@@ -703,6 +710,7 @@ class SendWebmentions(View):
       new_status: string
     """
     existing = self.entity.key.get()
+    # STATE: send_webmentions() edits self.entity.unsent etc, so if it fails and hits here, those values may be lost mid flight!
     if existing and existing.status == 'processing':
       self.entity.status = new_status
       self.entity.leased_until = None

@@ -28,9 +28,6 @@ class Facebook(browser.BrowserSource):
   # blank granary Facebook object, shared across all instances
   gr_source = gr_facebook.Facebook()
 
-  # unique name used in FB URLs, e.g. facebook.com/[username]
-  username = ndb.StringProperty()
-
   @classmethod
   def new(cls, auth_entity=None, actor=None, **kwargs):
     """Creates and returns an entity based on an AS1 actor."""

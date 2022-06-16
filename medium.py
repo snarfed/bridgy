@@ -33,6 +33,7 @@ class Medium(models.Source):
   GR_CLASS = collections.namedtuple('FakeGrClass', ('NAME',))(NAME='Medium')
   OAUTH_START = oauth_medium.Start
   SHORT_NAME = 'medium'
+  USERNAME_KEY_ID = True
 
   def is_publication(self):
     return not self.key_id().startswith('@')
@@ -45,15 +46,16 @@ class Medium(models.Source):
     return self.url
 
   @staticmethod
-  def new(auth_entity=None, id=None, **kwargs):
+  def new(auth_entity=None, username=None, **kwargs):
     """Creates and returns a Medium for the logged in user.
 
     Args:
       auth_entity: :class:`oauth_dropins.medium.MediumAuth`
-      id: string, either username (starting with @) or publication id
+      username: string, either username (starting with @) or publication id
     """
-    assert id
-    medium = Medium(id=id,
+    assert username
+    assert 'id' not in kwargs
+    medium = Medium(username=username,
                     auth_entity=auth_entity.key,
                     superfeedr_secret=util.generate_secret(),
                     **kwargs)
@@ -97,7 +99,7 @@ class Medium(models.Source):
           'imageUrl': 'https://cdn-images-1.medium.com/fit/c/200/200/1*ccokMT4VXmDDO1EoQQHkzg@2x.png'
         }
     """
-    id = self.key_id().lstrip('@')
+    id = self.username.lstrip('@')
 
     user = json_loads(auth_entity.user_json).get('data')
     if user.get('username').lstrip('@') == id:
@@ -118,7 +120,7 @@ class Medium(models.Source):
 def medium_add():
   auth_entity = ndb.Key(urlsafe=request.values['auth_entity_key']).get()
   util.maybe_add_or_delete_source(Medium, auth_entity, request.values['state'],
-                                  id=request.values['blog'])
+                                  username=request.values['blog'])
 
 
 class ChooseBlog(oauth_medium.Callback):
@@ -142,7 +144,7 @@ class ChooseBlog(oauth_medium.Callback):
     pubs = json_loads(auth_entity.publications_json).get('data')
     if not pubs:
       util.maybe_add_or_delete_source(Medium, auth_entity, state,
-                                      id=username)
+                                      username=username)
       return
 
     # add user profile to start of pubs list

@@ -261,6 +261,19 @@ class SourceTest(testutil.AppTest):
     self.assert_equals(r'\__foo__', s.key.string_id())
     self.assert_equals('__foo__', s.key_id())
 
+  def test_username_key_id(self):
+    f = FakeSource(id='FoO')
+    self.assert_equals('FoO', f.key.string_id())
+
+    f = FakeSource(username='FoO')
+    self.assertIsNone(f.key)
+
+    self.mox.StubOutWithMock(FakeSource, 'USERNAME_KEY_ID')
+    FakeSource.USERNAME_KEY_ID = True
+    f = FakeSource(username='FoO')
+    self.assert_equals('foo', f.key.string_id())
+    self.assert_equals('FoO', f.username)
+
   def test_get_activities_injects_web_site_urls_into_user_mentions(self):
     source = FakeSource.new(domain_urls=['http://site1/', 'http://site2/'])
     source.put()

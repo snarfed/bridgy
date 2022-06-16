@@ -25,11 +25,12 @@ class TwitterTest(testutil.AppTest):
     self.auth_entity = oauth_dropins.twitter.TwitterAuth(
       id='my_string_id',
       token_key='my_key', token_secret='my_secret',
-      user_json=json_dumps({'name': 'Ryan Barrett',
-                            'screen_name': 'snarfed_org',
-                            'description': 'something about me',
-                            'profile_image_url': 'http://pi.ct/ure',
-                            }))
+      user_json=json_dumps({
+        'name': 'Ryan Barrett',
+        'screen_name': 'Snarfed_Org',
+        'description': 'something about me',
+        'profile_image_url': 'http://pi.ct/ure',
+      }))
     self.auth_entity.put()
     self.tw = Twitter.new(auth_entity=self.auth_entity)
 
@@ -40,10 +41,10 @@ class TwitterTest(testutil.AppTest):
     self.assertEqual('snarfed_org', self.tw.key.string_id())
     self.assertEqual('http://pi.ct/ure', self.tw.picture)
     self.assertEqual('Ryan Barrett', self.tw.name)
-    self.assertEqual('https://twitter.com/snarfed_org', self.tw.url)
-    self.assertEqual('https://twitter.com/snarfed_org', self.tw.silo_url())
+    self.assertEqual('https://twitter.com/Snarfed_Org', self.tw.url)
+    self.assertEqual('https://twitter.com/Snarfed_Org', self.tw.silo_url())
     self.assertEqual('tag:twitter.com,2013:snarfed_org', self.tw.user_tag_id())
-    self.assertEqual('snarfed_org (Twitter)', self.tw.label())
+    self.assertEqual('Snarfed_Org (Twitter)', self.tw.label())
 
   def test_new_massages_profile_image(self):
     """We should use profile_image_url_https and drop '_normal' if possible."""

@@ -44,6 +44,7 @@ class GitHub(Source):
   # This makes us backfeed issue/PR comments to previous comments on the same
   # issue/PR.
   IGNORE_SYNDICATION_LINK_FRAGMENTS = True
+  USERNAME_KEY_ID = True
 
   @staticmethod
   def new(auth_entity=None, **kwargs):
@@ -53,23 +54,27 @@ class GitHub(Source):
       auth_entity: :class:`oauth_dropins.github.GitHubAuth`
       kwargs: property values
     """
+    assert 'username' not in kwargs
+    assert 'id' not in kwargs
     user = json_loads(auth_entity.user_json)
     gr_source = gr_github.GitHub(access_token=auth_entity.access_token())
     actor = gr_source.user_to_actor(user)
-    return GitHub(id=auth_entity.key_id(),
-                  auth_entity=auth_entity.key,
-                  name=actor.get('displayName'),
-                  picture=actor.get('image', {}).get('url'),
-                  url=actor.get('url'),
-                  **kwargs)
+    return GitHub(username=auth_entity.key_id(),
+                 auth_entity=auth_entity.key,
+                 name=actor.get('displayName'),
+                 picture=actor.get('image', {}).get('url'),
+                 url=actor.get('url'),
+                 **kwargs)
 
   def silo_url(self):
     """Returns the GitHub account URL, e.g. https://github.com/foo."""
-    return self.gr_source.user_url(self.key_id())
+    # TODO: remove self.key_id() once we've backfilled
+    return self.gr_source.user_url(self.username or self.key_id())
 
   def label_name(self):
     """Returns the username."""
-    return self.key_id()
+    # TODO: remove self.key_id() once we've backfilled
+    return self.username or self.key_id()
 
   def user_tag_id(self):
     """Returns this user's tag URI, eg 'tag:github.com:2013,MDQ6VXNlcjc3OD='."""

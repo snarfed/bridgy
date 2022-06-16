@@ -66,6 +66,7 @@ class Mastodon(models.Source):
     'like': 'favorite',
   }
   DISABLE_HTTP_CODES = ('401', '403', '404')
+  USERNAME_KEY_ID = True
 
   @property
   def URL_CANONICALIZER(self):
@@ -80,20 +81,18 @@ class Mastodon(models.Source):
       auth_entity: :class:`oauth_dropins.mastodon.MastodonAuth`
       kwargs: property values
     """
+    assert 'username' not in kwargs
+    assert 'id' not in kwargs
     user = json_loads(auth_entity.user_json)
-    return Mastodon(id=auth_entity.key_id(),
+    return Mastodon(username=auth_entity.key_id(),
                     auth_entity=auth_entity.key,
                     url=user.get('url'),
                     name=user.get('display_name') or user.get('username'),
                     picture=user.get('avatar'),
                     **kwargs)
 
-  def username(self):
-    """Returns the Mastodon username, e.g. alice."""
-    return self._split_address()[0]
-
   def instance(self):
-    """Returns the Mastodon instance URL, e.g. https://foo.com/."""
+    """Returns the Mastodon instance domain, e.g. 'foo.com' ."""
     return self._split_address()[1]
 
   def _split_address(self):
@@ -103,15 +102,17 @@ class Mastodon(models.Source):
 
   def user_tag_id(self):
     """Returns the tag URI for this source, e.g. 'tag:foo.com:alice'."""
-    return self.gr_source.tag_uri(self.username())
+    username = self._split_address()[0]
+    return self.gr_source.tag_uri(username)
 
   def silo_url(self):
     """Returns the Mastodon profile URL, e.g. https://foo.com/@bar."""
     return json_loads(self.auth_entity.get().user_json).get('url')
 
   def label_name(self):
-    """Returns the username."""
-    return self.key_id()
+    """Returns the fully qualified address."""
+    # TODO: remove self.key_id() once we've backfilled
+    return self.username or self.key_id()
 
   @classmethod
   def button_html(cls, feature, **kwargs):

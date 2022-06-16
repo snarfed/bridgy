@@ -126,6 +126,8 @@ class Source(StringIdModel, metaclass=SourceMeta):
   BACKFEED_REQUIRES_SYNDICATION_LINK = False
   # ignore fragments when comparing syndication links in OPD
   IGNORE_SYNDICATION_LINK_FRAGMENTS = False
+  # convert username to all lower case to use as key name
+  USERNAME_KEY_ID = False
 
   # Maps Publish.type (e.g. 'like') to source-specific human readable type label
   # (e.g. 'favorite'). Subclasses should override this.
@@ -140,6 +142,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
 
   created = ndb.DateTimeProperty(auto_now_add=True, required=True, tzinfo=timezone.utc)
   url = ndb.StringProperty()
+  username = ndb.StringProperty()
   status = ndb.StringProperty(choices=STATUSES, default='enabled')
   poll_status = ndb.StringProperty(choices=POLL_STATUSES, default='ok')
   rate_limited = ndb.BooleanProperty(default=False)
@@ -194,6 +197,9 @@ class Source(StringIdModel, metaclass=SourceMeta):
 
   def __init__(self, *args, id=None, **kwargs):
     """Constructor. Escapes the key string id if it starts with `__`."""
+    username = kwargs.get('username')
+    if self.USERNAME_KEY_ID and username and not id:
+      id = username.lower()
     if id and id.startswith('__'):
       id = '\\' + id
     super().__init__(*args, id=id, **kwargs)
@@ -263,6 +269,9 @@ class Source(StringIdModel, metaclass=SourceMeta):
 
     By default, interprets id as just the key id. Subclasses may extend this to
     support usernames, etc.
+
+    TODO: if USERNAME_KEY_ID, normalize to lower case before looking up. Need to
+    wait until we've backfilled all existing entities with upper case key ids.
     """
     if id and id.startswith('__'):
       id = '\\' + id

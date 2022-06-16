@@ -16,6 +16,7 @@ class RedditTest(testutil.AppTest):
     oauth_dropins.reddit.REDDIT_APP_KEY = 'my_app_key'
     oauth_dropins.reddit.REDDIT_APP_SECRET = 'my_app_secret'
     user = oauth_dropins.reddit.praw_to_user(gr_reddit_test.FakeRedditor())
+    user['name'] = 'bONkerFIeld'
     self.auth_entity = oauth_dropins.reddit.RedditAuth(
       id='my_string_id',
       refresh_token='silly_token',
@@ -31,11 +32,11 @@ class RedditTest(testutil.AppTest):
     self.assertEqual('silly_token', self.r.gr_source.api.config.refresh_token)
     self.assertEqual('bonkerfield', self.r.key.string_id())
     self.assertEqual('https://styles.redditmedia.com/t5_2az095/styles/profileIcon_ek6onop1xbf41.png', self.r.picture)
-    self.assertEqual('bonkerfield', self.r.name)
-    self.assertEqual('https://reddit.com/user/bonkerfield', self.r.url)
-    self.assertEqual('https://reddit.com/user/bonkerfield', self.r.silo_url())
+    self.assertEqual('bONkerFIeld', self.r.name)
+    self.assertEqual('https://reddit.com/user/bONkerFIeld', self.r.url)
+    self.assertEqual('https://reddit.com/user/bONkerFIeld', self.r.silo_url())
     self.assertEqual('tag:reddit.com,2013:bonkerfield', self.r.user_tag_id())
-    self.assertEqual('bonkerfield (Reddit)', self.r.label())
+    self.assertEqual('bONkerFIeld (Reddit)', self.r.label())
 
   def test_search_for_links_no_urls(self):
     # only a blocklisted domain
