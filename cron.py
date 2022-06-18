@@ -40,17 +40,13 @@ class LastUpdatedPicture(StringIdModel):
 @app.route('/cron/replace_poll_tasks')
 def replace_poll_tasks():
   """Finds sources missing their poll tasks and adds new ones."""
-  now = util.now_fn()
-  fields = ['created', 'last_polled', 'last_poll_attempt', 'last_webmention_sent',
-            'rate_limited']
   queries = [cls.query(Source.features == 'listen', Source.status == 'enabled',
-                       projection=fields)
+                       Source.last_poll_attempt <  util.now_fn() - timedelta(days=2))
              for cls in models.sources.values() if cls.AUTO_POLL]
   for source in itertools.chain(*queries):
-    age = now - source.last_poll_attempt
-    if age > max(source.poll_period() * 2, timedelta(days=2)):
-      logger.info(f'{source.bridgy_url()} last polled {age} ago. Adding new poll task.')
-      util.add_poll_task(source)
+    age = util.now_fn() - source.last_poll_attempt
+    logger.info(f'{source.bridgy_url()} last polled {age} ago. Adding new poll task.')
+    util.add_poll_task(source)
 
   return ''
 

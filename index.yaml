@@ -89,3 +89,59 @@ indexes:
   properties:
   - name: "status"
   - name: "features"
+
+- kind: Blogger
+  properties:
+  - name: features
+  - name: status
+  - name: last_poll_attempt
+- kind: Facebook
+  properties:
+  - name: features
+  - name: status
+  - name: last_poll_attempt
+- kind: Flickr
+  properties:
+  - name: features
+  - name: status
+  - name: last_poll_attempt
+- kind: GitHub
+  properties:
+  - name: features
+  - name: status
+  - name: last_poll_attempt
+- kind: Instagram
+  properties:
+  - name: features
+  - name: status
+  - name: last_poll_attempt
+- kind: Mastodon
+  properties:
+  - name: features
+  - name: status
+  - name: last_poll_attempt
+- kind: Medium
+  properties:
+  - name: features
+  - name: status
+  - name: last_poll_attempt
+- kind: Reddit
+  properties:
+  - name: features
+  - name: status
+  - name: last_poll_attempt
+- kind: Tumblr
+  properties:
+  - name: features
+  - name: status
+  - name: last_poll_attempt
+- kind: Twitter
+  properties:
+  - name: features
+  - name: status
+  - name: last_poll_attempt
+- kind: WordPress
+  properties:
+  - name: features
+  - name: status
+  - name: last_poll_attempt
