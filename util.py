@@ -498,9 +498,7 @@ def maybe_add_or_delete_source(source_cls, auth_entity, state, **kwargs):
         def maybe_disable_original():
           orig = source_cls.get_by_id(source.username)
           if orig:
-            msg = f'Disabling {orig.bridgy_url()} for {source.bridgy_url()}'
-            logging.info(msg)
-            report_error(msg)
+            logging.info(f'Disabling {orig.bridgy_url()} for lower case {source.bridgy_url()}')
             orig.features = []
             orig.put()
 
