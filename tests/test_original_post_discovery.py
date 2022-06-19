@@ -2,6 +2,7 @@
 """Unit tests for original_post_discovery.py
 """
 from datetime import datetime, timezone
+from string import hexdigits
 
 from oauth_dropins.webutil.util import json_dumps, json_loads
 from requests.exceptions import HTTPError
@@ -9,7 +10,12 @@ from requests.exceptions import HTTPError
 from github import GitHub
 from models import SyndicatedPost
 import original_post_discovery
-from original_post_discovery import discover, refetch
+from original_post_discovery import (
+  discover,
+  refetch,
+  MAX_ORIGINAL_CANDIDATES,
+  MAX_MENTION_CANDIDATES,
+)
 from . import testutil
 import util
 
@@ -949,6 +955,15 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
     self.mox.ReplayAll()
 
     self.assert_discover([], ['http://author/permalink'])
+
+  def test_max_candidates(self):
+    """Check that we cap originals and mentions."""
+    origs = [f'http://author/{hexdigits[i]}' for i in range(MAX_ORIGINAL_CANDIDATES + 1)]
+    mentions = [f'http://other/{hexdigits[i]}' for i in range(MAX_MENTION_CANDIDATES + 1)]
+    self.activity['object']['content'] = f'{" ".join(origs)} {" ".join(mentions)}'
+
+    self.assert_discover(origs[:MAX_ORIGINAL_CANDIDATES],
+                         mentions[:MAX_MENTION_CANDIDATES], fetch_hfeed=False)
 
   def test_refetch_hfeed(self):
     """refetch should grab resources again, even if they were previously

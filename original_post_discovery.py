@@ -41,6 +41,8 @@ logger = logging.getLogger(__name__)
 MAX_PERMALINK_FETCHES = 10
 MAX_PERMALINK_FETCHES_BETA = 50
 MAX_FEED_ENTRIES = 100
+MAX_ORIGINAL_CANDIDATES = 10
+MAX_MENTION_CANDIDATES = 10
 # this was 30 in google.appengine.ext.ndb. haven't found it in google.cloud.ndb
 # yet, or whether it's even there at all, but we only rarely hit it anyway, so
 # let's just keep it as is for now.
@@ -71,7 +73,6 @@ def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True,
 
   Returns:
     (set(string original post URLs), set(string mention URLs)) tuple
-
   """
   label = activity.get('url') or activity.get('id')
   logger.debug(f'discovering original posts for: {label}')
@@ -120,6 +121,13 @@ def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True,
         source, att, include_redirect_sources=include_redirect_sources)
       logger.debug(f'original post discovery found originals for attachment, {att_origs}')
       mentions.update(att_origs)
+
+  if len(originals) > MAX_ORIGINAL_CANDIDATES:
+    logging.info(f'{len(originals)} originals, pruning down to {MAX_ORIGINAL_CANDIDATES}')
+    originals = sorted(originals)[:MAX_ORIGINAL_CANDIDATES]
+  if len(mentions) > MAX_MENTION_CANDIDATES:
+    logging.info(f'{len(mentions)} mentions, pruning down to {MAX_MENTION_CANDIDATES}')
+    mentions = sorted(mentions)[:MAX_MENTION_CANDIDATES]
 
   def resolve(urls):
     resolved = set()
