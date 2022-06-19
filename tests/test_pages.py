@@ -14,19 +14,25 @@ import tweepy
 from flask_app import app
 import models
 from models import Publish, PublishedPage, SyndicatedPost
-import pages
 import util
 from . import testutil
 from .testutil import FakeBlogSource
-
 
 import admin, app as _app, background, flask_app, flask_background
 
 # sources etc
 import blogger, facebook, flickr, github, indieauth, instagram, mastodon, medium, reddit, tumblr, twitter, wordpress_rest
 
+# import pages after testutil so that FakeBlogSource is defined when pages
+# generates its URL routes for all source classes
+import pages
+
 
 class PagesTest(testutil.AppTest):
+
+  def setUp(self):
+    super().setUp()
+    self.sources[0].put()
 
   def test_front_page(self):
     resp = self.client.get('/')
@@ -156,6 +162,7 @@ class PagesTest(testutil.AppTest):
     self.assertEqual(expected_auth_url, resp.headers['Location'])
 
     # assume that the silo auth finishes and redirects to /delete/finish
+    self.auth_entities[0].put()
     resp = self.client.get(
       '/delete/finish?'
       + 'auth_entity=' + self.sources[0].auth_entity.urlsafe().decode()
@@ -230,6 +237,7 @@ class PagesTest(testutil.AppTest):
         feature='listen', operation='delete',
         source=self.sources[0].key.urlsafe().decode())
 
+    self.auth_entities[0].put()
     auth_entity_key = self.sources[0].auth_entity.urlsafe().decode()
     resp = self.client.get(
       f'/delete/finish?auth_entity={auth_entity_key}&state={state}')
@@ -443,6 +451,8 @@ class PagesTest(testutil.AppTest):
     self.assertIn(escaped, resp.get_data(as_text=True))
 
   def test_users_page(self):
+    self.sources[1].put()
+
     resp = self.client.get('/users')
     for source in self.sources:
       self.assertIn(f'<a href="{source.bridgy_path()}" title="{source.label()}"',

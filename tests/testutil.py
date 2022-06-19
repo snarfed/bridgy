@@ -308,7 +308,7 @@ class TestCase(testutil.TestCase):
     self.ndb_context.__enter__()
 
     # sources
-    auth_entities = [
+    self.auth_entities = [
       FakeAuthEntity(
         key=ndb.Key('FakeAuthEntity', '01122334455'),
         user_json=json_dumps({
@@ -324,14 +324,11 @@ class TestCase(testutil.TestCase):
           'url': 'http://anotherfake.com/',
         }))
     ]
-    for entity in auth_entities:
-      entity.put()
 
-    self.sources = [FakeSource.new(auth_entity=auth_entities[0]),
-                    FakeSource.new(auth_entity=auth_entities[1])]
+    self.sources = [FakeSource.new(auth_entity=self.auth_entities[0]),
+                    FakeSource.new(auth_entity=self.auth_entities[1])]
     for entity in self.sources:
       entity.features = ['listen']
-      entity.put()
 
     with self.app.test_request_context():
       self.source_bridgy_url = self.sources[0].bridgy_url()

@@ -39,6 +39,10 @@ class TaskTest(testutil.BackgroundTest):
   """
   post_url = None
 
+  def setUp(self):
+    super().setUp()
+    self.sources[0].put()
+
   def post_task(self, expected_status=200, params={}, **kwargs):
     """Args:
       expected_status: integer, the expected HTTP return code
