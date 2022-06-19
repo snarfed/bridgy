@@ -14,8 +14,9 @@ from werkzeug.exceptions import BadRequest
 from werkzeug.routing import RequestRedirect
 
 from flask_app import app
+from models import Source
 from . import testutil
-from .testutil import FakeAuthEntity, FakeSource
+from .testutil import FakeAuthEntity, FakeGrSource, FakeSource
 from twitter import Twitter
 import util
 from util import Login
@@ -80,10 +81,9 @@ class UtilTest(testutil.AppTest):
 
     # source
     state['source'] = self.sources[0].key.urlsafe().decode()
-    with app.test_request_context():
-      with self.assertRaises(RequestRedirect) as rr:
-        util.maybe_add_or_delete_source(
-          FakeSource, None, util.encode_oauth_state(state))
+    with app.test_request_context(), self.assertRaises(RequestRedirect) as rr:
+      util.maybe_add_or_delete_source(
+        FakeSource, None, util.encode_oauth_state(state))
 
       self.assert_equals(302, rr.exception.code)
       self.assert_equals(self.source_bridgy_url, rr.exception.new_url)
@@ -101,6 +101,31 @@ class UtilTest(testutil.AppTest):
       self.assertEqual(302, rr.exception.code)
       self.assert_equals(f'http://localhost/edit-websites?source_key={key}',
                          rr.exception.new_url)
+
+  def test_maybe_add_or_delete_source_username_key_id_disables_other_source(self):
+    class UKISource(Source):
+      USERNAME_KEY_ID = True
+      GR_CLASS = FakeGrSource
+
+      @classmethod
+      def new(cls, **kwargs):
+        del kwargs['auth_entity']
+        return UKISource(username='FoO', domain_urls=['http://foo/'], **kwargs)
+
+    # original entity with capitalized key name
+    orig_key = UKISource(id='FoO', features=['listen']).put()
+
+    with app.test_request_context(), self.assertRaises(RequestRedirect) as rr:
+      state = util.construct_state_param_for_add(feature='publish')
+      util.maybe_add_or_delete_source(UKISource, FakeAuthEntity(id='x'), state)
+
+    self.assertEqual(302, rr.exception.code)
+    got = UKISource.get_by_id('foo')
+    self.assertEqual('FoO', got.username)
+    self.assertEqual(['publish'], got.features)
+
+    # original entity with capitalized key should be disabled
+    self.assertEqual([], orig_key.get().features)
 
   def test_add_to_logins_cookie(self):
     with app.test_request_context(headers={'Cookie': 'logins=/other/1?bob'}):

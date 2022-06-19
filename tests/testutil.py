@@ -226,7 +226,6 @@ class FakeSource(Source):
 
   string_id_counter = 1
   gr_source = FakeGrSource()
-  username = ndb.StringProperty()
   is_saved = False
 
   def is_beta_user(self):

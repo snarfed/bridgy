@@ -401,7 +401,6 @@ class Poll(View):
         original_posts=resp.get('originals', []))
       if urls_to_activity and len(activities) > 1:
         resp_entity.urls_to_activity=json_dumps(urls_to_activity)
-      logging.info(f'@@@ {resp_entity.unsent} , {resp_entity.failed} , {resp_entity.urls_to_activity} , {resp_entity.activities_json}')
       resp_entity.get_or_save(source, restart=self.RESTART_EXISTING_TASKS)
 
     # update cache

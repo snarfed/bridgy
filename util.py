@@ -488,33 +488,52 @@ def maybe_add_or_delete_source(source_cls, auth_entity, state, **kwargs):
                                    features=feature.split(',') if feature else [],
                                    user_url=user_url, **kwargs)
 
+
     if source:
+      # if we're normalizing username case to lower case to make the key id, check
+      # if there's and old Source with a capitalized key id, and if so, disable it
+      # https://github.com/snarfed/bridgy/issues/884
+      if source.USERNAME_KEY_ID and source.username != source.key_id():
+        @ndb.transactional()
+        def maybe_disable_original():
+          orig = source_cls.get_by_id(source.username)
+          if orig:
+            msg = f'Disabling {orig.bridgy_url()} for {source.bridgy_url()}'
+            logging.info(msg)
+            report_error(msg)
+            orig.features = []
+            orig.put()
+
+        maybe_disable_original()
+
       # add to login cookie
       logins = get_logins()
       logins.append(Login(path=source.bridgy_path(), site=source.SHORT_NAME,
                           name=source.label_name()))
 
-    if callback:
-      callback = util.add_query_params(callback, {
-        'result': 'success',
-        'user': source.bridgy_url(),
-        'key': source.key.urlsafe().decode(),
-      } if source else {'result': 'failure'})
-      logger.debug(
-        'finished adding source, redirect to external callback %s', callback)
-      redirect(callback, logins=logins)
+      if callback:
+        callback = util.add_query_params(callback, {
+          'result': 'success',
+          'user': source.bridgy_url(),
+          'key': source.key.urlsafe().decode(),
+        } if source else {'result': 'failure'})
+        logger.debug(
+          'finished adding source, redirect to external callback %s', callback)
+        redirect(callback, logins=logins)
+      elif not source.domains:
+        redirect('/edit-websites?' + urllib.parse.urlencode({
+          'source_key': source.key.urlsafe().decode(),
+        }), logins=logins)
+      else:
+        redirect(source.bridgy_url(), logins=logins)
 
-    elif source and not source.domains:
-      redirect('/edit-websites?' + urllib.parse.urlencode({
-        'source_key': source.key.urlsafe().decode(),
-      }), logins=logins)
-
-    else:
-      redirect(source.bridgy_url() if source else '/', logins=logins)
+    # no source
+    redirect('/')
 
   else:  # this is a delete
     if auth_entity:
-      redirect(f'/delete/finish?auth_entity={auth_entity.key.urlsafe().decode()}&state={state}', logins=logins)
+      # TODO: remove from logins cookie
+      redirect(f'/delete/finish?auth_entity={auth_entity.key.urlsafe().decode()}&state={state}')
     else:
       flash(f'If you want to disable, please approve the {source_cls.GR_CLASS.NAME} prompt.')
       source_key = state_obj.get('source')
