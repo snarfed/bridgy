@@ -62,6 +62,9 @@ class Reddit(models.Source):
     https://oauth.reddit.com/api/v1/me (via PRAW's Reddit.user.me() ).
     """
     kwargs.setdefault('user_id', self.username)
+    if kwargs.get('count'):
+      kwargs['count'] = min(kwargs['count'], 10)
+
     try:
       return super().get_activities_response(*args, **kwargs)
     except NotFound:

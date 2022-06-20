@@ -86,7 +86,7 @@ def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True,
   originals, mentions = gr_source.Source.original_post_discovery(
     activity, domains=source.domains,
     include_redirect_sources=include_redirect_sources,
-    include_reserved_hosts=DEBUG,
+    include_reserved_hosts=DEBUG, max_redirect_fetches=MAX_ORIGINAL_CANDIDATES,
     headers=util.request_headers(source=source))
 
   # only include mentions of the author themselves.
