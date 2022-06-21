@@ -47,13 +47,11 @@ class Reddit(models.Source):
 
   def silo_url(self):
     """Returns the Reddit account URL, e.g. https://reddit.com/user/foo."""
-    # TODO: remove self.key_id() once we've backfilled
-    return self.gr_source.user_url(self.username or self.key_id())
+    return self.gr_source.user_url(self.username)
 
   def label_name(self):
     """Returns the username."""
-    # TODO: remove self.key_id() once we've backfilled
-    return self.username or self.key_id()
+    return self.username
 
   def get_activities_response(self, *args, **kwargs):
     """Set user_id manually.

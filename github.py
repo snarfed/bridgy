@@ -68,13 +68,11 @@ class GitHub(Source):
 
   def silo_url(self):
     """Returns the GitHub account URL, e.g. https://github.com/foo."""
-    # TODO: remove self.key_id() once we've backfilled
-    return self.gr_source.user_url(self.username or self.key_id())
+    return self.gr_source.user_url(self.username)
 
   def label_name(self):
     """Returns the username."""
-    # TODO: remove self.key_id() once we've backfilled
-    return self.username or self.key_id()
+    return self.username
 
   def user_tag_id(self):
     """Returns this user's tag URI, eg 'tag:github.com:2013,MDQ6VXNlcjc3OD='."""

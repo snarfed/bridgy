@@ -169,7 +169,6 @@ class BrowserView(View):
     if not src.domains:
       self.error(f'No usable web sites found in your {self.gr_source().NAME} profile. Add one of your registered domains above!')
 
-
     # update actor so resolved URLs can be reused
     actor.pop('url', None)
     actor['urls'] = [{'value': url} for url in src.domain_urls]

@@ -111,8 +111,7 @@ class Mastodon(models.Source):
 
   def label_name(self):
     """Returns the fully qualified address."""
-    # TODO: remove self.key_id() once we've backfilled
-    return self.username or self.key_id()
+    return self.username
 
   @classmethod
   def button_html(cls, feature, **kwargs):
