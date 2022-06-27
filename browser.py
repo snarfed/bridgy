@@ -149,57 +149,27 @@ class BrowserView(View):
   def gr_source(self):
     return self.source_class().gr_source
 
-  def check_token_for_actor(self, actor):
-    """Checks that the given actor is public and matches the request's token.
+  def check_token(self, load_source=True):
+    """Loads the token and checks that it has at least one domain registered.
 
-    Returns: actor, with 'url' field removed and 'urls' set to only the resolved,
-      non-blocklisted urls
+    Expects token in the `token` query param.
 
-    Raises: :class:`HTTPException` with HTTP 403
+    Raises: :class:`HTTPException` with HTTP 403 if the token is missing or
+      invalid
     """
-    if not actor:
-      self.error('Scrape error: missing actor!')
-
-    if not gr_source.Source.is_public(actor):
-      self.error(f'Your {self.gr_source().NAME} account is private. Bridgy only supports public accounts.')
-
     token = request.values['token']
-    # create temporary source instance to get domains from actor
-    src = self.source_class().new(actor=actor)
-    if not src.domains:
-      self.error(f'No usable web sites found in your {self.gr_source().NAME} profile. Add one of your registered domains above!')
-
-    # update actor so resolved URLs can be reused
-    actor.pop('url', None)
-    actor['urls'] = [{'value': url} for url in src.domain_urls]
-
-    logger.info(f'Checking token against domains {src.domains}')
-    for domain in ndb.get_multi(ndb.Key(Domain, d) for d in src.domains):
-      if domain and token in domain.tokens:
-        return actor
-
-    self.error(f'Found link(s) to {src.domains} in your {self.gr_source().NAME} profile. Add one of your registered domains above!')
+    domains = Domain.query(Domain.tokens == token).fetch()
+    logging.info(f'Found domains for token {token}: {domains}')
+    if not domains:
+      self.error(f'No domains found for token {token}. Click Reconnect to Bridgy above to register your domain!', 403)
 
   def auth(self):
-    """Loads the source and token and checks that they're valid.
+    """Checks token and loads and returns the source.
 
-    Expects token in the `token` query param, source in `key` or `username`.
-
-    Raises: :class:`HTTPException` with HTTP 400 if the token or source are
-      missing or invalid
-
-    Returns: BrowserSource or None
+    Raises: :class:`HTTPException` with HTTP 400 or 403
     """
-    # Load source
-    source = util.load_source(error_fn=self.error)
-
-    # Load and check token
-    token = request.values['token']
-    for domain in Domain.query(Domain.tokens == token):
-      if domain.key.id() in source.domains:
-        return source
-
-    self.error(f'Token {token} is not authorized for any of: {source.domains}', 403)
+    self.check_token()
+    return util.load_source(error_fn=self.error)
 
   @staticmethod
   def error(msg, status=400):
@@ -217,7 +187,6 @@ class Status(BrowserView):
   """
   def dispatch_request(self):
     source = self.auth()
-    logger.info(f'Got source: {source}')
 
     out = {
       'status': source.status,
@@ -283,8 +252,20 @@ class Profile(Feed):
     _, actor = self.scrape()
     if not actor:
       actor = self.gr_source().scraped_to_actor(request.get_data(as_text=True))
-    # updated actor here has only non-silo, non-blocklisted 'urls' field
-    actor = self.check_token_for_actor(actor)
+
+    if not actor:
+      self.error('Scrape error: missing actor!')
+
+    if not gr_source.Source.is_public(actor):
+      self.error(f'Your {self.gr_source().NAME} account is private. Bridgy only supports public accounts.')
+
+    self.check_token()
+
+    # use temporary source instance to get only non-silo, non-blocklisted
+    # profile URLs from actor
+    src = self.source_class().new(actor=actor)
+    actor.pop('url', None)
+    actor['urls'] = [{'value': url} for url in src.domain_urls]
 
     # create/update the Bridgy account
     source = self.source_class().create_new(self, actor=actor)

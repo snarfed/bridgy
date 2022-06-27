@@ -247,9 +247,11 @@ class BrowserViewTest(testutil.AppTest):
   def test_profile_no_links(self):
     del FakeBrowserSource.gr_source.actor['url']
     resp = self.post('profile?token=towkin')
-    self.assertEqual(400, resp.status_code)
-    self.assertIn("No usable web sites found in your FakeSource profile.",
-                  resp.get_data(as_text=True))
+    self.assertEqual(200, resp.status_code)
+
+    src = self.source.get()
+    self.assertEqual([], src.domain_urls)
+    self.assertEqual([], src.domains)
 
   def test_profile_missing_token(self):
     resp = self.post('profile', auth=False)
@@ -259,15 +261,13 @@ class BrowserViewTest(testutil.AppTest):
   def test_profile_no_stored_token(self):
     self.domain.delete()
     resp = self.post('profile?token=towkin')
-    self.assertEqual(400, resp.status_code)
-    self.assertIn("Found link(s) to ['snarfed.org'] in your FakeSource profile",
-                  resp.get_data(as_text=True))
+    self.assertEqual(403, resp.status_code)
+    self.assertIn('No domains found for token towkin', resp.get_data(as_text=True))
 
   def test_profile_bad_token(self):
     resp = self.post('profile?token=nope')
-    self.assertEqual(400, resp.status_code)
-    self.assertIn("Found link(s) to ['snarfed.org'] in your FakeSource profile",
-                  resp.get_data(as_text=True))
+    self.assertEqual(403, resp.status_code)
+    self.assertIn('No domains found', resp.get_data(as_text=True))
 
   def test_feed(self):
     resp = self.post('feed')
@@ -287,8 +287,7 @@ class BrowserViewTest(testutil.AppTest):
   def test_feed_bad_token(self):
     resp = self.post(f'feed?token=nope&key={self.source.urlsafe().decode()}')
     self.assertEqual(403, resp.status_code, resp.get_data(as_text=True))
-    self.assertEqual("Token nope is not authorized for any of: ['snarfed.org']",
-                     resp.get_data(as_text=True))
+    self.assertIn('No domains found for token nope', resp.get_data(as_text=True))
 
   def test_feed_missing_key(self):
     resp = self.post('feed?token=towkin')
@@ -299,11 +298,6 @@ class BrowserViewTest(testutil.AppTest):
     self.assertEqual(400, resp.status_code, resp.get_data(as_text=True))
     # this comes from util.load_source() since the urlsafe key is malformed
     self.assertEqual('Bad value for key', resp.get_data(as_text=True))
-
-  def test_feed_token_domain_not_in_source(self):
-    resp = self.post(
-      f'feed?token=towkin&key={self.other_source.urlsafe().decode()}')
-    self.assertEqual(403, resp.status_code, resp.get_data(as_text=True))
 
   def test_feed_no_public_posts(self):
     for a in FakeGrSource.activities:
@@ -391,13 +385,7 @@ class BrowserViewTest(testutil.AppTest):
   def test_post_bad_token(self):
     resp = self.post(f'post?token=nope&key={self.source.urlsafe().decode()}')
     self.assertEqual(403, resp.status_code, resp.get_data(as_text=True))
-    self.assertEqual("Token nope is not authorized for any of: ['snarfed.org']",
-                     resp.get_data(as_text=True))
-
-  def test_post_token_domain_not_in_source(self):
-    resp = self.post(
-      f'post?token=towkin&key={self.other_source.urlsafe().decode()}')
-    self.assertEqual(403, resp.status_code, resp.get_data(as_text=True))
+    self.assertIn('No domains found for token nope', resp.get_data(as_text=True))
 
   def test_comments(self):
     key = Activity(id='tag:fa.ke,2013:123_456', source=self.source,
@@ -471,8 +459,7 @@ class BrowserViewTest(testutil.AppTest):
   def test_reactions_bad_token(self):
     resp = self.post(f'reactions?token=nope&key={self.source.urlsafe().decode()}')
     self.assertEqual(403, resp.status_code, resp.get_data(as_text=True))
-    self.assertEqual("Token nope is not authorized for any of: ['snarfed.org']",
-                     resp.get_data(as_text=True))
+    self.assertIn('No domains found for token nope', resp.get_data(as_text=True))
 
   def test_reactions_missing_key(self):
     resp = self.post('reactions?token=towkin')
@@ -481,11 +468,6 @@ class BrowserViewTest(testutil.AppTest):
   def test_reactions_bad_key(self):
     resp = self.post('reactions?token=towkin&key=asdf')
     self.assertEqual(400, resp.status_code, resp.get_data(as_text=True))
-
-  def test_reactions_token_domain_not_in_source(self):
-    resp = self.post(
-      f'reactions?token=towkin&key={self.other_source.urlsafe().decode()}')
-    self.assertEqual(403, resp.status_code, resp.get_data(as_text=True))
 
   def test_reactions_wrong_activity_source(self):
     Activity(id='tag:fa.ke,2013:123_456', source=self.other_source).put()
@@ -510,8 +492,7 @@ class BrowserViewTest(testutil.AppTest):
   def test_poll_bad_token(self):
     resp = self.post(f'poll?token=nope&key={self.source.urlsafe().decode()}')
     self.assertEqual(403, resp.status_code, resp.get_data(as_text=True))
-    self.assertEqual("Token nope is not authorized for any of: ['snarfed.org']",
-                     resp.get_data(as_text=True))
+    self.assertIn('No domains found for token nope', resp.get_data(as_text=True))
 
   def test_poll_missing_key(self):
     resp = self.post('poll?token=towkin')
@@ -520,11 +501,6 @@ class BrowserViewTest(testutil.AppTest):
   def test_poll_bad_key(self):
     resp = self.post('poll?token=towkin&key=asdf')
     self.assertEqual(400, resp.status_code, resp.get_data(as_text=True))
-
-  def test_poll_token_domain_not_in_source(self):
-    resp = self.post(
-      f'poll?token=towkin&key={self.other_source.urlsafe().decode()}')
-    self.assertEqual(403, resp.status_code, resp.get_data(as_text=True))
 
   def test_token_domains(self):
     resp = self.post('token-domains?token=towkin')
