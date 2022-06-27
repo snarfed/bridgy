@@ -26,7 +26,7 @@ extras==1.0.0
 feedgen==0.9.0
 fixtures==4.0.0
 Flask==2.1.2
-Flask-Caching==1.11.1
+Flask-Caching==2.0.0
 flask-gae-static==0.2
 gdata==4.0.1
 google-api-core==2.7.1
