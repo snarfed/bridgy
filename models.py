@@ -565,7 +565,15 @@ class Source(StringIdModel, metaclass=SourceMeta):
     source.put()
 
     if 'webmention' in source.features:
-      superfeedr.subscribe(source)
+      try:
+        superfeedr.subscribe(source)
+      except BaseException as e:
+        code, _ = util.interpret_http_exception(e)
+        if (code in superfeedr.TRANSIENT_ERROR_HTTP_CODES or
+            util.is_connection_failure(e)):
+          flash('Apologies, <a href="https://superfeedr.com/">Superfeedr</a> is having technical difficulties. Please try again later!')
+          return None
+        raise
 
     if 'listen' in source.features and source.AUTO_POLL:
       util.add_poll_task(source, now=True)

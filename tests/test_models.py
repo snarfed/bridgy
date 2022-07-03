@@ -571,6 +571,17 @@ class SourceTest(testutil.AppTest):
     self.assertEqual(['http://flaky/foo'], source.domain_urls)
     self.assertEqual(['flaky'], source.domains)
 
+  def test_create_new_superfeedr_subscribe_fails(self):
+    self.expect_requests_get('http://primary/', 'no webmention endpoint')
+    self.expect_requests_post(superfeedr.PUSH_API_URL, status_code=503,
+                              data=mox.IgnoreArg(), auth=mox.IgnoreArg())
+    self.mox.ReplayAll()
+
+    with self.app.test_request_context():
+      FakeSource.create_new(features=['webmention'],
+                            domains=['primary/'], domain_urls=['http://primary/'])
+      self.assertIn('is having technical difficulties', get_flashed_messages()[0])
+
   def test_verify(self):
     self.expect_requests_get('http://primary/', """
 <html><meta>

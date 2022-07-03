@@ -25,7 +25,7 @@ SUPERFEEDR_TOKEN = util.read('superfeedr_token')
 SUPERFEEDR_USERNAME = util.read('superfeedr_username')
 PUSH_API_URL = 'https://push.superfeedr.com'
 MAX_BLOGPOST_LINKS = 10
-
+TRANSIENT_ERROR_HTTP_CODES = ('500', '501', '502', '503', '429')
 
 def subscribe(source):
   """Subscribes to a source.
@@ -55,6 +55,8 @@ def subscribe(source):
   resp = util.requests_post(
     PUSH_API_URL, data=data,
     auth=HTTPBasicAuth(SUPERFEEDR_USERNAME, SUPERFEEDR_TOKEN))
+  resp.raise_for_status()
+
   handle_feed(resp.json(), source)
 
 
