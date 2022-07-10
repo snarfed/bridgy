@@ -727,6 +727,39 @@ class PollTest(TaskTest):
       unsent=['http://foo/post', 'http://foo/'],
     )], ignore=('activities_json', 'response_json', 'source', 'original_posts'))
 
+  def test_search_links_returns_comment_with_link(self):
+    """Legendary KeyError bug, https://github.com/snarfed/bridgy/issues/237"""
+    source = self.sources[0]
+    source.domain_urls = ['http://foo/']
+    source.domains = ['foo']
+    source.put()
+
+    comment = {
+      'id': 'tag:fake.com:9',
+      'object': {
+        'id': 'tag:fake.com:9',
+        'url': 'https://twitter.com/_/status/9',
+        'content': 'http://foo/post @foo',
+        'author': {
+          'name': 'bar',
+          'id': 'tag:source:2013:bar',  # someone else
+        },
+        'inReplyTo': [{
+          'id': 'tag:fake.com:456',
+          'url': 'https://twitter.com/_/status/456',
+        }],
+      },
+    }
+    FakeGrSource.activities = []
+    FakeGrSource.search_results = [comment]
+
+    self.post_task()
+    self.assert_responses([Response(
+      id='tag:fake.com:9',
+      type='post',
+      unsent=['http://foo/post'],
+    )], ignore=('activities_json', 'response_json', 'source', 'original_posts'))
+
   def test_quote_post_attachment(self):
     """One silo post references (quotes) another one; second should be propagated
     as a mention of the first.
@@ -1934,20 +1967,20 @@ class PropagateTest(TaskTest):
     self.post_task(expected_status=ERROR_HTTP_RETURN_CODE)
     self.assert_response_is('error', error=orig)
 
-  def test_source_url_index_error(self):
-    """We should gracefully retry when we hit the IndexError bug.
-
-    ...or any other exception outside the per-webmention try/except,
-    eg from source_url().
+  def test_source_url_empty_activities_json(self):
+    """If Response.activities_json is empty, we should use the response itself.
 
     https://github.com/snarfed/bridgy/issues/237
     """
     orig = list(self.responses[0].unsent)
     self.responses[0].activities_json = []
     self.responses[0].put()
+
+    self.expect_webmention(source_url='http://localhost/comment/fake/0123456789/1_2_a/1_2_a')
     self.mox.ReplayAll()
-    self.post_task(expected_status=ERROR_HTTP_RETURN_CODE)
-    self.assert_response_is('error', error=orig)
+
+    self.post_task()
+    self.assert_response_is('complete', sent=['http://target1/post/url'])
 
   def test_propagate_blogpost(self):
     """Blog post propagate task."""

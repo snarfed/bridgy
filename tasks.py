@@ -353,9 +353,8 @@ class Poll(View):
 
     for id, resp in responses.items():
       resp_type = Response.get_type(resp)
-      activities = resp.pop('activities', None)
-      if not activities:
-        assert resp_type == 'post' or is_quote_mention(resp, source)
+      activities = resp.pop('activities', [])
+      if not activities and (resp_type == 'post' or is_quote_mention(resp, source)):
         activities = [resp]
       too_long = set()
       urls_to_activity = {}
@@ -502,8 +501,6 @@ class Discover(Poll):
     activity = activities[0]
     activities = {activity['id']: activity}
 
-    # STATE: propagate tasks created by backfeed() here get started before their Response entities get created/updated, so they fail with https://github.com/snarfed/bridgy/issues/237 , but that's a red herring, it's really that activities_json and urls_to_activity are empty
-    # is poll transactional somehow, and this isn't?
     # no more transactional tasks. https://github.com/googleapis/python-tasks/issues/26
     # they're still supported in the new "bundled services" thing, but that seems like a dead end.
     # https://groups.google.com/g/google-appengine/c/22BKInlWty0/m/05ObNEdsAgAJ
@@ -710,7 +707,7 @@ class SendWebmentions(View):
       new_status: string
     """
     existing = self.entity.key.get()
-    # STATE: send_webmentions() edits self.entity.unsent etc, so if it fails and hits here, those values may be lost mid flight!
+    # TODO: send_webmentions() edits self.entity.unsent etc, so if it fails and hits here, those values may be lost mid flight!
     if existing and existing.status == 'processing':
       self.entity.status = new_status
       self.entity.leased_until = None
@@ -764,8 +761,8 @@ class PropagateResponse(SendWebmentions):
     logger.info(f'Created by this poll: {poll_url}')
 
     self.activities = [json_loads(a) for a in self.entity.activities_json]
-    response_obj = json_loads(self.entity.response_json)
-    if (not source.is_activity_public(response_obj) or
+    self.response_obj = json_loads(self.entity.response_json)
+    if (not source.is_activity_public(self.response_obj) or
         not all(source.is_activity_public(a) for a in self.activities)):
       logger.info('Response or activity is non-public. Dropping.')
       self.complete()
@@ -776,16 +773,19 @@ class PropagateResponse(SendWebmentions):
 
   def source_url(self, target_url):
     # determine which activity to use
-    try:
+    if self.activities:
       activity = self.activities[0]
       if self.entity.urls_to_activity:
         urls_to_activity = json_loads(self.entity.urls_to_activity)
         if urls_to_activity:
-          activity = self.activities[urls_to_activity[target_url]]
-    except (KeyError, IndexError):
-      error(f"""Hit https://github.com/snarfed/bridgy/issues/237 KeyError!
+          try:
+            activity = self.activities[urls_to_activity[target_url]]
+          except KeyError:
+            error(f"""Hit https://github.com/snarfed/bridgy/issues/237 KeyError!
 target url {target_url} not in urls_to_activity: {self.entity.urls_to_activity}
 activities: {self.activities}""", status=ERROR_HTTP_RETURN_CODE)
+    else:
+      activity = self.response_obj
 
     # generate source URL
     id = activity['id']
