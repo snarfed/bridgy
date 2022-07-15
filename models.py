@@ -53,7 +53,8 @@ def get_type(obj):
   elif verb in as1.RSVP_VERB_TO_COLLECTION:
     return 'rsvp'
   elif (type == 'comment' or obj.get('inReplyTo') or
-        obj.get('context', {}).get('inReplyTo')):
+        any(o.get('inReplyTo') for o in
+            (util.get_list(obj, 'object')) + util.get_list(obj, 'context'))):
     return 'comment'
   elif verb in VERB_TYPES:
     return verb

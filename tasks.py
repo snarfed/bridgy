@@ -353,7 +353,8 @@ class Poll(View):
     for id, resp in responses.items():
       resp_type = Response.get_type(resp)
       activities = resp.pop('activities', [])
-      if not activities and (resp_type == 'post' or is_quote_mention(resp, source)):
+      if not activities and (resp_type in ('post', 'comment') or
+                             is_quote_mention(resp, source)):
         activities = [resp]
       too_long = set()
       urls_to_activity = {}
@@ -464,8 +465,6 @@ class Discover(Poll):
   * post_id: string, silo post id(s)
 
   Inserts a propagate task for each response that hasn't been seen before.
-
-  Original feature request: https://github.com/snarfed/bridgy/issues/579
   """
   RESTART_EXISTING_TASKS = True
 

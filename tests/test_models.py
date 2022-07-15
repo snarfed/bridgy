@@ -211,6 +211,12 @@ class ResponseTest(testutil.AppTest):
       'context': {'inReplyTo': {'foo': 'bar'}},
     }))
     self.assertEqual('comment', Response.get_type({
+      'object': {
+        'objectType': 'note',
+        'inReplyTo': [{'foo': 'bar'}],
+      },
+    }))
+    self.assertEqual('comment', Response.get_type({
       'objectType': 'comment',
       'verb': 'post',
     }))
@@ -218,6 +224,16 @@ class ResponseTest(testutil.AppTest):
       'objectType': 'issue',
       'context': {'inReplyTo': {'foo': 'bar'}},
     }))
+    self.assertEqual('like', Response.get_type({
+      'verb': 'like',
+      'object': {'url': 'http://orig.domain/baz'},
+      },
+    ))
+    self.assertEqual('like', Response.get_type({
+      'verb': 'like',
+      'object': [{'url': 'http://orig.domain/baz'}],
+      },
+    ))
 
 
 class SourceTest(testutil.AppTest):

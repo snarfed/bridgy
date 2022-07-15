@@ -756,7 +756,7 @@ class PollTest(TaskTest):
     self.post_task()
     self.assert_responses([Response(
       id='tag:fake.com:9',
-      type='post',
+      type='comment',
       unsent=['http://foo/post'],
     )], ignore=('activities_json', 'response_json', 'source', 'original_posts'))
 
