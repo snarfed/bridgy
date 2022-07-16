@@ -7,8 +7,8 @@ from operator import itemgetter
 from flask import jsonify, make_response, request
 from flask.views import View
 from google.cloud import ndb
+from granary import as1
 from granary import microformats2
-from granary import source as gr_source
 from oauth_dropins.webutil import flask_util
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
@@ -234,7 +234,7 @@ class Feed(BrowserView):
     ids = ' '.join(a['id'] for a in activities)
     logger.info(f"Activities: {ids}")
 
-    if activities and not any(gr_src.is_public(a) for a in activities):
+    if activities and not any(as1.is_public(a) for a in activities):
       self.error(f'None of your recent {gr_src.NAME} posts are public. <a href="https://brid.gy/about#fully+public+posts">Bridgy only handles fully public posts.</a>')
 
     return activities, actor
@@ -256,7 +256,7 @@ class Profile(Feed):
     if not actor:
       self.error('Scrape error: missing actor!')
 
-    if not gr_source.Source.is_public(actor):
+    if not as1.is_public(actor):
       self.error(f'Your {self.gr_source().NAME} account is private. Bridgy only supports public accounts.')
 
     self.check_token()
@@ -302,10 +302,10 @@ class Post(BrowserView):
         existing_obj = existing_activity.get('object', {})
 
         replies = merged_obj.setdefault('replies', {})
-        gr_source.merge_by_id(replies, 'items',
-          existing_obj.get('replies', {}).get('items', []))
+        as1.merge_by_id(replies, 'items',
+                        existing_obj.get('replies', {}).get('items', []))
         replies['totalItems'] = len(replies.get('items', []))
-        gr_source.merge_by_id(merged_obj, 'tags', existing_obj.get('tags', []))
+        as1.merge_by_id(merged_obj, 'tags', existing_obj.get('tags', []))
         activity.activity_json = json_dumps(merged_activity)
 
       else:

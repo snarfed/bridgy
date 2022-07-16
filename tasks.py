@@ -9,7 +9,7 @@ from flask import g, request
 from flask.views import View
 from google.cloud import ndb
 from google.cloud.ndb._datastore_types import _MAX_STRING_LENGTH
-from granary.source import Source
+from granary import as1
 from oauth_dropins.webutil import logs, webmention
 from oauth_dropins.webutil.flask_util import error
 from oauth_dropins.webutil.util import json_dumps, json_loads
@@ -304,7 +304,7 @@ class Poll(View):
       likes = [t for t in tags if Response.get_type(t) == 'like']
       reactions = [t for t in tags if Response.get_type(t) == 'react']
       reposts = [t for t in tags if Response.get_type(t) == 'repost']
-      rsvps = Source.get_rsvps_from_event(obj)
+      rsvps = as1.get_rsvps_from_event(obj)
 
       # coalesce responses. drop any without ids
       for resp in replies + likes + reactions + reposts + rsvps:
@@ -326,7 +326,7 @@ class Poll(View):
         # background: https://github.com/snarfed/bridgy/issues/533
         existing = responses.get(id)
         if existing:
-          if source.gr_source.activity_changed(resp, existing, log=True):
+          if as1.activity_changed(resp, existing, log=True):
             logger.warning(f'Got two different versions of same response!\n{existing}\n{resp}')
           resp['activities'].extend(existing.get('activities', []))
 
@@ -341,7 +341,7 @@ class Poll(View):
       for seen in json_loads(source.seen_responses_cache_json):
         id = seen['id']
         resp = responses.get(id)
-        if resp and not source.gr_source.activity_changed(seen, resp, log=True):
+        if resp and not as1.activity_changed(seen, resp, log=True):
           unchanged_responses.append(seen)
           del responses[id]
 

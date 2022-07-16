@@ -6,6 +6,7 @@ import os
 import re
 
 from google.cloud import ndb
+from granary import as1
 from granary import microformats2
 from granary import source as gr_source
 from oauth_dropins.indieauth import IndieAuth
@@ -49,7 +50,7 @@ def get_type(obj):
     return 'repost'
   elif type == 'issue':
     return 'post'
-  elif verb in gr_source.RSVP_VERB_TO_COLLECTION:
+  elif verb in as1.RSVP_VERB_TO_COLLECTION:
     return 'rsvp'
   elif (type == 'comment' or obj.get('inReplyTo') or
         obj.get('context', {}).get('inReplyTo')):
@@ -780,9 +781,9 @@ class Source(StringIdModel, metaclass=SourceMeta):
   def is_activity_public(self, activity):
     """Returns True if the given activity is public, False otherwise.
 
-    Just wraps :meth:`granary.source.Source.is_public`. Subclasses may override.
+    Just wraps :meth:`granary.as1.is_public`. Subclasses may override.
     """
-    return gr_source.Source.is_public(activity)
+    return as1.is_public(activity)
 
   def is_beta_user(self):
     """Returns True if this is a "beta" user opted into new features.
@@ -949,15 +950,15 @@ class Response(Webmentions):
     resp = super().get_or_save()
 
     if (self.type != resp.type or
-        source.gr_source.activity_changed(json_loads(resp.response_json),
-                                          json_loads(self.response_json),
-                                          log=True)):
+        as1.activity_changed(json_loads(resp.response_json),
+                             json_loads(self.response_json),
+                             log=True)):
       logger.info(f'Response changed! Re-propagating. Original: {resp}')
 
       resp.old_response_jsons = [resp.response_json] + resp.old_response_jsons[:10]
 
       response_json_to_append = json_loads(self.response_json)
-      source.gr_source.append_in_reply_to(json_loads(resp.response_json), response_json_to_append)
+      as1.append_in_reply_to(json_loads(resp.response_json), response_json_to_append)
       self.response_json = json_dumps(util.trim_nulls(response_json_to_append))
       resp.response_json = self.response_json
       resp.restart(source)

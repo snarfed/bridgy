@@ -346,9 +346,9 @@ def prune_activity(activity, source):
   duplicated in both the activity and the object are removed from the object.
 
   Note that this only prunes the to field if it says the activity is public,
-  since :meth:`granary.source.Source.is_public()` defaults to saying an activity
-  is public if the to field is missing. If that ever changes, we'll need to
-  start preserving the to field here.
+  since :meth:`as1.is_public()` defaults to saying an activity is public if the
+  to field is missing. If that ever changes, we'll need to start preserving the
+  to field here.
 
   Args:
     activity: ActivityStreams activity dict

@@ -11,6 +11,7 @@ from oauth_dropins.webutil.appengine_config import ndb_client, tasks_client
 
 from google.cloud import ndb
 from google.cloud.tasks_v2.types import Task
+from granary import as1
 from granary import source as gr_source
 from mox3 import mox
 from oauth_dropins import views as oauth_views
@@ -122,13 +123,12 @@ class FakeGrSource(gr_source.Source):
 
   def merge_scraped_reactions(self, scraped, activity):
     likes = json_loads(scraped)
-    gr_source.merge_by_id(activity['object'], 'tags', likes)
+    as1.merge_by_id(activity['object'], 'tags', likes)
     return likes
 
   def merge_scraped_comments(self, scraped, activity):
     comments = json_loads(scraped)
-    gr_source.merge_by_id(activity['object'].setdefault('replies', {}),
-                          'items', comments)
+    as1.merge_by_id(activity['object'].setdefault('replies', {}), 'items', comments)
     return comments
 
   def create(self, obj, include_link=gr_source.OMIT_LINK,

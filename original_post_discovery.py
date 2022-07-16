@@ -29,8 +29,8 @@ import itertools
 import logging
 import mf2util
 
+from granary import as1
 from granary import microformats2
-from granary import source as gr_source
 from oauth_dropins.webutil.appengine_info import DEBUG
 import models
 from models import SyndicatedPost
@@ -83,7 +83,7 @@ def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True,
   if already_fetched_hfeeds is None:
     already_fetched_hfeeds = set()
 
-  originals, mentions = gr_source.Source.original_post_discovery(
+  originals, mentions = as1.original_post_discovery(
     activity, domains=source.domains,
     include_redirect_sources=include_redirect_sources,
     include_reserved_hosts=DEBUG, max_redirect_fetches=MAX_ORIGINAL_CANDIDATES,
