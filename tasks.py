@@ -242,7 +242,7 @@ class Poll(View):
     public = {}
     private = {}
     for id, activity in activities.items():
-      (public if source.is_activity_public(activity) else private)[id] = activity
+      (public if as1.is_public(activity) else private)[id] = activity
     logger.info(f'Found {len(public)} public activities: {public.keys()}')
     logger.info(f'Found {len(private)} private activities: {private.keys()}')
 
@@ -762,8 +762,8 @@ class PropagateResponse(SendWebmentions):
 
     self.activities = [json_loads(a) for a in self.entity.activities_json]
     self.response_obj = json_loads(self.entity.response_json)
-    if (not source.is_activity_public(self.response_obj) or
-        not all(source.is_activity_public(a) for a in self.activities)):
+    if (not as1.is_public(self.response_obj) or
+        not all(as1.is_public(a) for a in self.activities)):
       logger.info('Response or activity is non-public. Dropping.')
       self.complete()
       return ''

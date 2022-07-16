@@ -778,13 +778,6 @@ class Source(StringIdModel, metaclass=SourceMeta):
     """
     return False
 
-  def is_activity_public(self, activity):
-    """Returns True if the given activity is public, False otherwise.
-
-    Just wraps :meth:`granary.as1.is_public`. Subclasses may override.
-    """
-    return as1.is_public(activity)
-
   def is_beta_user(self):
     """Returns True if this is a "beta" user opted into new features.
 

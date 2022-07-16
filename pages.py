@@ -6,6 +6,7 @@ import urllib.request, urllib.parse, urllib.error
 
 from flask import render_template, request
 from google.cloud import ndb
+from granary import as1
 from oauth_dropins.webutil import logs
 from oauth_dropins.webutil import flask_util
 from oauth_dropins.webutil.flask_util import error, flash
@@ -160,8 +161,8 @@ def user(site, id):
       r.response = json_loads(r.response_json)
       r.activities = [json_loads(a) for a in r.activities_json]
 
-      if (not source.is_activity_public(r.response) or
-          not all(source.is_activity_public(a) for a in r.activities)):
+      if (not as1.is_public(r.response) or
+          not all(as1.is_public(a) for a in r.activities)):
         continue
       elif r.type == 'post':
         r.activities = []

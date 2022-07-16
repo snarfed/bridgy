@@ -19,6 +19,7 @@ from google.cloud import ndb
 from google.cloud.tasks_v2 import CreateTaskRequest
 from google.protobuf.timestamp_pb2 import Timestamp
 import google.protobuf.message
+from granary import as1
 from oauth_dropins.webutil.appengine_config import error_reporting_client, tasks_client
 from oauth_dropins.webutil.appengine_info import APP_ID, DEBUG, LOCAL
 from oauth_dropins.webutil.flask_util import error, flash
@@ -357,7 +358,7 @@ def prune_activity(activity, source):
     pruned activity dict
   """
   keep = ['id', 'url', 'content', 'fb_id', 'fb_object_id', 'fb_object_type']
-  if not source.is_activity_public(activity):
+  if not as1.is_public(activity):
     keep += ['to']
   pruned = {f: activity.get(f) for f in keep}
 
