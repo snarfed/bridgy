@@ -27,7 +27,6 @@ logger = logging.getLogger(__name__)
 NO_ENDPOINT = 'NONE'
 
 
-# TODO: move into granary.microformats2?
 def is_quote_mention(activity, source):
   obj = activity.get('object') or activity
   for att in obj.get('attachments', []):
