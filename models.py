@@ -272,8 +272,10 @@ class Source(StringIdModel, metaclass=SourceMeta):
     By default, interprets id as just the key id. Subclasses may extend this to
     support usernames, etc.
 
-    TODO: if USERNAME_KEY_ID, normalize to lower case before looking up. Need to
-    wait until we've backfilled all existing entities with upper case key ids.
+    Ideally, if USERNAME_KEY_ID, normalize to lower case before looking up. We'd
+    need to backfill all existing entities with upper case key ids, though,
+    which we're not planning to do.
+    https://github.com/snarfed/bridgy/issues/884
     """
     if id and id.startswith('__'):
       id = '\\' + id
