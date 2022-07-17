@@ -341,6 +341,19 @@ class UtilTest(testutil.AppTest):
       self.assertEqual('https://a.xyz/asdf', util.host_url('asdf'))
       self.assertEqual('https://a.xyz/foo/bar', util.host_url('/foo/bar'))
 
+  def test_load_source(self):
+    key = self.sources[0].key.urlsafe().decode()
+
+    for k in '', 'SELECT FOO', key, \
+        "(SELECT CONCAT(CONCAT('qkvjq',(CASE WHEN (8265=8265) THEN '1' ELSE '0' END)),'qvjkq'))":
+      with app.test_request_context(query_string=f'key={k}'), \
+           self.assertRaises(BadRequest):
+        util.load_source()
+
+    self.sources[0].put()
+    with app.test_request_context(query_string=f'key={key}'):
+      self.assert_entities_equal(self.sources[0], util.load_source())
+
 
 class RegistrationCallbackTest(testutil.AppTest):
 
