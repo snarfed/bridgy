@@ -436,7 +436,7 @@ def load_source(error_fn=None):
         if source:
           logger.info(f'Got source: {source}')
           return source
-    except (binascii.Error, google.protobuf.message.DecodeError):
+    except (ValueError, binascii.Error, google.protobuf.message.DecodeError):
       error_fn(f'Bad value for {param}')
 
   error_fn('Source key not found')
