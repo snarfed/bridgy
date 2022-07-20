@@ -79,7 +79,7 @@ class Silo {
    * @returns {String} silo URL path
    */
   static reactionsPath(activity) {
-    throw new Error('Not implemented')
+    return null
   }
 
   /**
@@ -186,7 +186,8 @@ class Silo {
       }
 
       // fetch reactions
-      var numReactions = 0
+      var numReactions = (resolved.object && resolved.object.tags)
+          ? resolved.object.tags.filter(t => t.verb == 'like').length : 0
       if (this.reactionsPath(activity)) {
         const reactions = await this.forward(this.reactionsPath(activity),
                                              `/reactions?id=${activity.id}`)

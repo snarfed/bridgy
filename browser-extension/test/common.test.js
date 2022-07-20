@@ -32,16 +32,18 @@ class FakeSilo extends Silo {
     return activity.reactions_count
   }
 
-  static reactionsPath(activity) {
-    return `/reactions/${activity.id}`
-  }
-
   static headers() {
     return {'foo': 'bar'}
   }
 }
 
-class FakeCommentsSilo extends FakeSilo {
+class FakeReactionsSilo extends FakeSilo {
+  static reactionsPath(activity) {
+    return `/reactions/${activity.id}`
+  }
+}
+
+class FakeEverythingSilo extends FakeReactionsSilo {
   static commentsPath(activity) {
     return `https://sub.fa.ke/comments/${activity.id}`
   }
@@ -87,7 +89,7 @@ test('forward', async () => {
   fetch.mockResponseOnce('silo resp')
   fetch.mockResponseOnce('"bridgy resp"')
 
-  expect(await FakeSilo.forward('/silo-path', '/bridgy-path')).toBe('bridgy resp')
+  expect(await FakeReactionsSilo.forward('/silo-path', '/bridgy-path')).toBe('bridgy resp')
 
   expect(fetch.mock.calls.length).toBe(2)
   expect(fetch.mock.calls[0]).toEqual([
@@ -113,7 +115,7 @@ test('forward, no stored key', async () => {
   fetch.mockResponseOnce('silo resp')
   fetch.mockResponseOnce('"bridgy resp"')
 
-  await FakeSilo.forward('/silo-path', '/bridgy-path')
+  await FakeReactionsSilo.forward('/silo-path', '/bridgy-path')
 
   expect(fetch.mock.calls[1]).toEqual([
     `${BRIDGY_BASE_URL}/fake/browser/bridgy-path?token=towkin`,
@@ -127,13 +129,13 @@ test('forward, no stored key', async () => {
 test('forward, non-JSON response from Bridgy', async () => {
   fetch.mockResponseOnce('resp')
   fetch.mockResponseOnce('')  // not valid JSON
-  expect(await FakeSilo.forward('/silo-path', '/bridgy-path')).toBeNull()
+  expect(await FakeReactionsSilo.forward('/silo-path', '/bridgy-path')).toBeNull()
 })
 
 test('poll, no stored token', async () => {
   // no token stored
   browser.storage.sync.data = {}
-  await FakeSilo.poll()
+  await FakeReactionsSilo.poll()
 
   expect(fetch.mock.calls.length).toBe(0)
   expect(browser.storage.local.data['fake-lastStart']).toBeUndefined()
@@ -146,47 +148,83 @@ async function pollWithResponses(cls) {
   fetch.mockResponseOnce('fake feed')
   fetch.mockResponseOnce(JSON.stringify(activities))
   fetch.mockResponseOnce('post 246')
-  if (cls == FakeCommentsSilo) {
+
+  if (cls == FakeEverythingSilo) {
     fetch.mockResponseOnce('{"id": "tag:instagram.com:123", "object": {}}')
     fetch.mockResponseOnce('fake comments')
     fetch.mockResponseOnce('[1, 2]')
   } else {
     fetch.mockResponseOnce('{"object": {"replies": {"items": [1, 2]}}}')
   }
-  fetch.mockResponseOnce('reactions 246')
-  fetch.mockResponseOnce('[1, 2, 3, 4]')
+
+  if (cls != FakeSilo) {
+    fetch.mockResponseOnce('reactions 246')
+    fetch.mockResponseOnce('[1, 2, 3, 4]')
+  }
+
   fetch.mockResponseOnce('post 357')
   fetch.mockResponseOnce('{"id": "tag:instagram.com:456", "object": {"replies": {"totalItems": 0}}}')
-  fetch.mockResponseOnce('reactions 357')
-  fetch.mockResponseOnce('[]')
+
+  if (cls != FakeSilo) {
+    fetch.mockResponseOnce('reactions 357')
+    fetch.mockResponseOnce('[]')
+  }
   fetch.mockResponseOnce('"OK"')
 
   await cls.poll()
-  expect(fetch.mock.calls.length).toBe(cls == FakeCommentsSilo ? 16 : 12)
+  expect(fetch.mock.calls.length).toBe(
+    cls == FakeSilo ? 8 : (cls == FakeReactionsSilo ? 12 : 16))
 }
 
-test('poll', async () => {
+async function checkTimestamps(start, end) {
+  for (const field of ['lastStart', 'lastSuccess', 'lastResponse']) {
+    const timestamp = await FakeReactionsSilo.storageGet(field)
+    expect(timestamp).toBeGreaterThanOrEqual(start)
+    expect(timestamp).toBeLessThanOrEqual(end)
+  }
+  expect(await FakeReactionsSilo.storageGet('lastSuccess')).toBeGreaterThanOrEqual(
+    await FakeReactionsSilo.storageGet('lastStart'))
+}
+
+function checkPollFetches() {
+  expect(fetch.mock.calls[1][0]).toBe('http://fa.ke/feed')
+  expect(fetch.mock.calls[2][0]).toBe(
+    `${BRIDGY_BASE_URL}/fake/browser/feed?token=towkin&key=KEE`)
+  expect(fetch.mock.calls[2][1].body).toBe('fake feed')
+
+  expect(fetch.mock.calls[fetch.mock.calls.length - 1][0]).toBe(
+    `${BRIDGY_BASE_URL}/fake/browser/poll?token=towkin&key=KEE`)
+}
+
+test('poll foo', async () => {
   const start = Date.now()
   await pollWithResponses(FakeSilo)
-  const end = Date.now()
+
+  expect(browser.storage.local.data).toMatchObject({
+    'fake-post-246': {c: 2, r: 0},
+    'fake-post-357': {c: 0, r: 0},
+  })
+
+  await checkTimestamps(start, Date.now())
+  checkPollFetches()
+  for (const [i, id] of [[3, '246'], [5, '357']]) {
+    expect(fetch.mock.calls[i][0]).toBe(`http://fa.ke/${id}`)
+    expect(fetch.mock.calls[i + 1][0]).toBe(
+      `${BRIDGY_BASE_URL}/fake/browser/post?token=towkin&key=KEE`)
+    expect(fetch.mock.calls[i + 1][1].body).toBe(`post ${id}`)
+  }
+})
+
+test('poll, with reactions', async () => {
+  const start = Date.now()
+  await pollWithResponses(FakeReactionsSilo)
 
   expect(browser.storage.local.data).toMatchObject({
     'fake-post-246': {c: 2, r: 4},
     'fake-post-357': {c: 0, r: 0},
   })
 
-  for (const field of ['lastStart', 'lastSuccess', 'lastResponse']) {
-    const timestamp = await FakeSilo.storageGet(field)
-    expect(timestamp).toBeGreaterThanOrEqual(start)
-    expect(timestamp).toBeLessThanOrEqual(end)
-  }
-  expect(await FakeSilo.storageGet('lastSuccess')).toBeGreaterThanOrEqual(
-    await FakeSilo.storageGet('lastStart'))
-
-  expect(fetch.mock.calls[1][0]).toBe('http://fa.ke/feed')
-  expect(fetch.mock.calls[2][0]).toBe(
-    `${BRIDGY_BASE_URL}/fake/browser/feed?token=towkin&key=KEE`)
-  expect(fetch.mock.calls[2][1].body).toBe('fake feed')
+  await checkTimestamps(start, Date.now())
 
   for (const [i, id] of [[3, '246'], [7, '357']]) {
     expect(fetch.mock.calls[i][0]).toBe(`http://fa.ke/${id}`)
@@ -198,9 +236,6 @@ test('poll', async () => {
       `${BRIDGY_BASE_URL}/fake/browser/reactions?id=${id}&token=towkin&key=KEE`)
     expect(fetch.mock.calls[i + 3][1].body).toBe(`reactions ${id}`)
   }
-
-  expect(fetch.mock.calls[11][0]).toBe(
-    `${BRIDGY_BASE_URL}/fake/browser/poll?token=towkin&key=KEE`)
 })
 
 test('poll, status disabled', async () => {
@@ -208,7 +243,7 @@ test('poll, status disabled', async () => {
     status: 'disabled',
     'poll-seconds': 180,
   }))
-  await FakeSilo.poll()
+  await FakeReactionsSilo.poll()
 
   expect(fetch.mock.calls.length).toBe(1)
   expect(browser.storage.local.data['fake-lastStart']).toBeUndefined()
@@ -222,7 +257,7 @@ test('poll, status disabled', async () => {
 test('poll, no stored token', async () => {
   // no token stored
   browser.storage.sync.data = {}
-  await FakeSilo.poll()
+  await FakeReactionsSilo.poll()
 
   expect(fetch.mock.calls.length).toBe(0)
   expect(browser.storage.local.data['fake-lastStart']).toBeUndefined()
@@ -238,7 +273,7 @@ test('poll, no stored bridgy source key', async () => {
   fetch.mockResponseOnce('fake profile')
   fetch.mockResponseOnce('"abc123"')
 
-  await FakeSilo.poll()
+  await FakeReactionsSilo.poll()
   expect(fetch.mock.calls[1][0]).toBe('http://fa.ke/profile')
   expect(fetch.mock.calls[2][0]).toBe(
     `${BRIDGY_BASE_URL}/fake/browser/profile?token=towkin`)
@@ -260,7 +295,7 @@ test('poll, skip comments and reactions', async () => {
     'fake-post-246': {c: 3, r: 5},
   })
 
-  await FakeSilo.poll()
+  await FakeReactionsSilo.poll()
   expect(fetch.mock.calls.length).toBe(8)
   expect(fetch.mock.calls[1][0]).toBe('http://fa.ke/feed')
   expect(fetch.mock.calls[3][0]).toBe('http://fa.ke/357')
@@ -280,7 +315,7 @@ test('poll, feed error', async () => {
   fetch.mockResponseOnce('{}')
   fetch.mockResponseOnce('fake feed')
   fetch.mockResponseOnce('air-roar', {status: 400})  // Bridgy returns an HTTP error
-  await FakeSilo.poll()
+  await FakeReactionsSilo.poll()
 
   expect(fetch.mock.calls.length).toBe(3)
   expect(browser.storage.local.data['fake-lastStart']).toBeDefined()
@@ -293,7 +328,7 @@ test('poll, Bridgy non-JSON response', async () => {
   fetch.mockResponseOnce('{}')
   fetch.mockResponseOnce('fake feed')
   fetch.mockResponseOnce('<html>xyz</html>')  // Bridgy returns invalid JSON
-  await FakeSilo.poll()
+  await FakeReactionsSilo.poll()
 
   expect(fetch.mock.calls.length).toBe(3)
   expect(browser.storage.local.data['fake-lastStart']).toBeDefined()
@@ -304,7 +339,7 @@ test('poll, not enabled', async () => {
   await browser.storage.local.set({
     'fake-enabled': false,
   })
-  await FakeSilo.poll()
+  await FakeReactionsSilo.poll()
 
   expect(fetch.mock.calls.length).toBe(0)
   expect(browser.storage.local.data['fake-lastStart']).toBeUndefined()
@@ -319,7 +354,7 @@ async function pollNoActivities() {
   fetch.mockResponseOnce('[]')
   fetch.mockResponseOnce('"OK"')
 
-  await FakeSilo.poll()
+  await FakeReactionsSilo.poll()
   expect(fetch.mock.calls.length).toBe(4)
 }
 
@@ -333,7 +368,7 @@ async function pollNoResponses() {
   fetch.mockResponseOnce('[]')
   fetch.mockResponseOnce('"OK"')
 
-  await FakeSilo.poll()
+  await FakeReactionsSilo.poll()
   expect(fetch.mock.calls.length).toBe(8)
 }
 
@@ -361,13 +396,13 @@ test('poll, existing lastResponse, no comments or reactions', async () => {
 
 
 test('poll, initial, with comments/reactions', async () => {
-  await pollWithResponses(FakeSilo)
+  await pollWithResponses(FakeReactionsSilo)
   expect(browser.storage.local.data['fake-lastResponse']).toBeDefined()
 })
 
 
 test('poll, initial, comments fetch', async () => {
-  await pollWithResponses(FakeCommentsSilo)
+  await pollWithResponses(FakeEverythingSilo)
   expect(browser.storage.local.data['fake-lastResponse']).toBeDefined()
 })
 
@@ -375,7 +410,7 @@ test('poll, existing lastResponse, with comments/reactions', async () => {
   browser.storage.local.data['fake-lastResponse'] = 123
   browser.storage.local.data['fake-lastError'] = 'foo'
   const start = Date.now()
-  await pollWithResponses(FakeSilo)
+  await pollWithResponses(FakeReactionsSilo)
   expect(browser.storage.local.data['fake-lastResponse']).toBeGreaterThanOrEqual(start)
   expect(browser.storage.local.data['fake-lastError']).toBeNull()
 })

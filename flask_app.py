@@ -12,7 +12,7 @@ from oauth_dropins.webutil.appengine_config import ndb_client
 from oauth_dropins.webutil.appengine_info import DEBUG
 
 import granary
-import appengine_config  # *after* import granary to overridde set_user_agent()
+import appengine_config  # *after* import granary to override set_user_agent()
 import models
 import util
 

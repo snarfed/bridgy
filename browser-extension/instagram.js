@@ -14,14 +14,14 @@ class Instagram extends Silo {
 
     if (!username) {
       // extract username from a logged in home page fetch
-      username = await this.forward('/', '/homepage')
+      username = await this.forward('https://www.instagram.com/', '/homepage')
       if (!username) {
         return
       }
       await this.storageSet('username', username)
     }
 
-    return `/${username}/`
+    return `/api/v1/users/web_profile_info/?username=${username}`
   }
 
   /**
@@ -39,21 +39,6 @@ class Instagram extends Silo {
   }
 
   /**
-   * Returns the URL path for a given activity's likes.
-   */
-  static reactionsPath(activity) {
-    return `/graphql/query/?query_hash=d5d763b1e2acf209d62d22d184488e57&variables={"shortcode":"${activity.object.ig_shortcode}","include_reel":false,"first":100}`
-  }
-
-  /**
-   * Returns the URL path for a given activity's comments.
-   */
-  static commentsPath(activity) {
-    const id = activity.id.split(':')[2].split('_')[0]
-    return `https://i.instagram.com/api/v1/media/${id}/comments/?can_support_threading=true&permalink_enabled=false`
-  }
-
-  /**
    * Returns HTTP headers to include in silo requests.
    */
   static headers() {
@@ -67,8 +52,8 @@ class Instagram extends Silo {
 
 Instagram.DOMAIN = 'instagram.com'
 Instagram.NAME = 'instagram'
-Instagram.BASE_URL = 'https://www.instagram.com'
-Instagram.LOGIN_URL = `${Instagram.BASE_URL}/accounts/login/`
+Instagram.BASE_URL = 'https://i.instagram.com'
+Instagram.LOGIN_URL = `https://www.instagram.com/accounts/login/`
 Instagram.COOKIE = 'sessionid'
 
 export {

@@ -21,7 +21,8 @@ const activities = [{
   object: {
     ig_shortcode: 'abc',
     ig_like_count: 5,
-    replies: {totalItems: 3}},
+    replies: {totalItems: 3},
+  },
 }, {
   id: 'tag:ig:357',
   url: 'https://www.instagram.com/357',
@@ -40,7 +41,8 @@ test('profilePath, homepage fetch for username', async () => {
   fetch.mockResponseOnce('ig home page')
   fetch.mockResponseOnce('"snarfed"')
 
-  expect(await Instagram.profilePath()).toBe('/snarfed/')
+  expect(await Instagram.profilePath()).toBe(
+    '/api/v1/users/web_profile_info/?username=snarfed')
   expect(await browser.storage.local.get()).toMatchObject({
     'instagram-username': 'snarfed',
   })
@@ -48,17 +50,8 @@ test('profilePath, homepage fetch for username', async () => {
 
 test('profilePath, stored username', async () => {
   browser.storage.local.data = {'instagram-username': 'snarfed'}
-  expect(await Instagram.profilePath()).toBe('/snarfed/')
-})
-
-test('commentsPath, id with underscore', async () => {
-  expect(Instagram.commentsPath({id: 'tag:ig:123_456'})
-        ).toEqual(expect.stringContaining('/api/v1/media/123'))
-})
-
-test('commentsPath, id without underscore', async () => {
-  expect(Instagram.commentsPath({id: 'tag:ig:123'})
-        ).toEqual(expect.stringContaining('/api/v1/media/123'))
+  expect(await Instagram.profilePath()).toBe(
+    '/api/v1/users/web_profile_info/?username=snarfed')
 })
 
 test('poll, no stored username', async () => {
@@ -71,21 +64,21 @@ test('poll, no stored username', async () => {
   fetch.mockResponseOnce('ig profile')
   fetch.mockResponseOnce(JSON.stringify(activities))
   fetch.mockResponseOnce('post 246')
-  fetch.mockResponseOnce('{"object": {"replies": {"items": [1,2]}}}')
-  fetch.mockResponseOnce('comments 246')
-  fetch.mockResponseOnce('[1,2]')
-  fetch.mockResponseOnce('reactions 246')
-  fetch.mockResponseOnce('[1,2,3]')
+  fetch.mockResponseOnce(JSON.stringify({
+    object: {
+      replies: {items: [1,2]},
+      tags: [
+        {verb: 'like', id: '7'},
+        {verb: 'like', id: '8'},
+        {verb: 'like', id: '9'},
+      ],
+    }}))
   fetch.mockResponseOnce('post 357')
   fetch.mockResponseOnce('{}')
-  fetch.mockResponseOnce('comments 357')
-  fetch.mockResponseOnce('[]')
-  fetch.mockResponseOnce('reactions 357')
-  fetch.mockResponseOnce('[]')
   fetch.mockResponseOnce('"OK"')
 
   await Instagram.poll()
-  expect(fetch.mock.calls.length).toBe(18)
+  expect(fetch.mock.calls.length).toBe(10)
 
   expect(fetch.mock.calls[1][0]).toBe('https://www.instagram.com/')
   expect(fetch.mock.calls[2][0]).toBe(
@@ -97,27 +90,20 @@ test('poll, no stored username', async () => {
     'instagram-post-tag:ig:357': {c: 0, r: 0},
   })
 
-  expect(fetch.mock.calls[3][0]).toBe('https://www.instagram.com/snarfed/')
+  expect(fetch.mock.calls[3][0]).toBe(
+    'https://i.instagram.com/api/v1/users/web_profile_info/?username=snarfed')
   expect(fetch.mock.calls[4][0]).toBe(
     `${BRIDGY_BASE_URL}/instagram/browser/feed?token=towkin&key=KEE`)
   expect(fetch.mock.calls[4][1].body).toBe('ig profile')
 
-  for (const [i, shortcode, id] of [[5, 'abc', '246'], [11, 'xyz', '357']]) {
+  for (const [i, shortcode, id] of [[5, 'abc', '246'], [7, 'xyz', '357']]) {
     expect(fetch.mock.calls[i][0]).toBe(`https://www.instagram.com/${id}`)
     expect(fetch.mock.calls[i + 1][0]).toBe(
       `${BRIDGY_BASE_URL}/instagram/browser/post?token=towkin&key=KEE`)
     expect(fetch.mock.calls[i + 1][1].body).toBe(`post ${id}`)
-    expect(fetch.mock.calls[i + 2][0]).toContain(`i.instagram.com/api/v1/media/${id}`)
-    expect(fetch.mock.calls[i + 3][0]).toBe(
-      `${BRIDGY_BASE_URL}/instagram/browser/comments?id=tag%3Aig%3A${id}&token=towkin&key=KEE`)
-    expect(fetch.mock.calls[i + 4][0]).toContain('www.instagram.com/graphql/')
-    expect(fetch.mock.calls[i + 4][0]).toContain(shortcode)
-    expect(fetch.mock.calls[i + 5][0]).toBe(
-      `${BRIDGY_BASE_URL}/instagram/browser/reactions?id=tag%3Aig%3A${id}&token=towkin&key=KEE`)
-    expect(fetch.mock.calls[i + 5][1].body).toBe(`reactions ${id}`)
   }
 
-  expect(fetch.mock.calls[17][0]).toBe(
+  expect(fetch.mock.calls[9][0]).toBe(
     `${BRIDGY_BASE_URL}/instagram/browser/poll?token=towkin&key=KEE`)
 })
 
@@ -139,7 +125,8 @@ test('poll, bridgy homepage error', async () => {
 test('poll, existing username stored', async () => {
   await browser.storage.local.set({'instagram-username': 'snarfed'})
   await Instagram.poll()
-  expect(fetch.mock.calls[1][0]).toBe('https://www.instagram.com/snarfed/')
+  expect(fetch.mock.calls[1][0]).toBe(
+    'https://i.instagram.com/api/v1/users/web_profile_info/?username=snarfed')
 })
 
 test('poll, feed error', async () => {
