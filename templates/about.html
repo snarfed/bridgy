@@ -43,6 +43,7 @@ service.</a>
 <p><em>General</em></p>
 <li><a href="#how">How does it work?</a></li>
 <li><a href="#cost">How much does it cost?</a></li>
+<li><a href="#terms">What are the terms of service?</a></li>
 <li><a href="#privacy">What do you do with my data?</a></li>
 <li><a href="#garbage-collecting">How long do you store data?</a></li>
 <li><a href="#who">Who are you? Why did you make this?</a></li>
@@ -61,6 +62,7 @@ service.</a>
 <li><a href="#api">Does Bridgy have an API?</a></li>
 <li><a href="#gdpr">Does Bridgy comply with the GDPR?</a></li>
 <li><a href="#ccpa">Does Bridgy comply with the CCPA?</a></li>
+<li><a href="#eu-data">Does Bridgy comply with the EU's data regulations, eg the DMA and DSA?</a></li>
 <li><a href="#bug">I found a bug! I have a feature request!</a></li>
 <li><a href="#vulnerability">I found a security vulnerability!</a></li>
 <li><a href="#cute">Brid.gy? Really?</a></li>
@@ -165,6 +167,14 @@ to fetch data from the silos and convert it to a standard format.
 </p>
 <p>On our side, it costs us about $50/month to run right now. <a href="https://snarfed.org/?s=bridgy%20stats">More details in the stats.</a>
 </p></li>
+
+<li id="terms" class="question">What are the terms of service?</li>
+<li class="answer">
+<p>Bridgy's terms of service are very simple. You agree not to deliberately attack, breach, or otherwise harm the service. If you manage to access private data such as API tokens, you agree to <a href="#vulnerability">report the vulnerability</a> and not use or disclose that data.
+</p>
+<p>Otherwise, you may use the service for any purpose you see fit. However, we may terminate or block your access for any reason, or no reason at all. (We've never done this, and we expect we never will. Just playing it safe.)
+</p>
+</li>
 
 <li id="privacy" class="question">What do you do with my data?</li>
 <li class="answer">
@@ -408,6 +418,30 @@ Here are the properties Bridgy uses:
 <li><em>Derives 50 percent or more of annual revenues from selling consumers’ personal information.</em><br>(Again, Bridgy doesn't sell or monetize personal information.)</li>
 </ul>
 </li>
+
+<li id="eu-data" class="question">Does Bridgy comply with the EU's data regulations, eg the DMA and DSA?</li>
+<li class="answer">
+<p>Probably! I haven't hired a lawyer, so I can't say for sure, but a number of us in the community have looked, and we believe it's exempt from most of the EU data regulations and complies with the rest. Specifically:</p>
+<ul>
+<li><a href="https://eur-lex.europa.eu/legal-content/en/TXT/?uri=COM:2020:842:FIN">DMA</a>: we believe doesn't apply</li>
+<li><a href="https://eur-lex.europa.eu/legal-content/en/TXT/?uri=COM:2020:825:FIN">DSA</a>:
+  <ul>
+  <li>Chapter 2: we'll comply with all lawful court orders (but we highly doubt we'll ever receive any)</li>
+  <li>Chapter 3:
+    <ul>
+    <li>Section 1: <a href="#terms">Our terms of service are here.</a> Our designated contact person is <a href="https://snarfed.org/">Ryan Barrett</a>.</li>
+    <li>Section 2: You may notify us of potential illegal content by <a href="https://github.com/snarfed/bridgy/issues">filing an issue on GitHub</a>. If we ever remove any specific content, we'll notify the responsible user. (So far, neither of these have ever happened.) </li>
+    <li>Sections 3 and 4: only apply to large platforms, not small entities like Bridgy (see articles 13, 17 through 24)
+    </ul>
+  </ul>
+</li>
+
+<li><a href="https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:52021PC0206">AI Regulation</a>: we believe doesn't apply</li>
+<li><a href="https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:52020PC0767">DGA</a>: we're not sure</li>
+<li><a href="https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=COM:2022:68:FIN">Data Act</a>: we're not sure</li>
+</ul>
+</li>
+
 
 <li id="bug" class="question">I found a bug! I have a feature request!</li>
 <li class="answer">
