@@ -168,6 +168,10 @@ Here's how to cut a new release of the browser extension and publish it [to addo
 
 Browser extension: Changelog
 ---
+0.5, 2022-07-21
+
+* Update Instagram scraping.
+
 0.4, 2022-01-30
 
 * Fix Instagram comments. Add extra client side API fetch, forward to new Bridgy endpoint.
