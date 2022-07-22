@@ -24,7 +24,7 @@ jobs:
           name: Base dependencies
           command: |
             curl -fsSL https://deb.nodesource.com/setup_current.x | bash -
-            apt-get install -y npm nodejs
+            apt-get install -y nodejs
 
       - run:
           name: Python dependencies
