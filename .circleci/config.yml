@@ -8,7 +8,7 @@ jobs:
   build:
     docker:
       # https://hub.docker.com/r/google/cloud-sdk
-      - image: google/cloud-sdk
+      - image: google/cloud-sdk:latest
 
     steps:
       - checkout
@@ -23,7 +23,7 @@ jobs:
       - run:
           name: Base dependencies
           command: |
-            apt-get update
+            curl -fsSL https://deb.nodesource.com/setup_current.x | bash -
             apt-get install -y npm nodejs
 
       - run:
