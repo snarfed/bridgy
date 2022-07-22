@@ -32,6 +32,17 @@ class Instagram extends Silo {
   }
 
   /**
+   * Returns the URL to scrape for a post.
+   *
+   * @param {Object} AS1 activity of the post
+   */
+  static postURL(activity) {
+    // id will be a tag URI, eg tag:instagram.com:123
+    const id = activity.id.split(':').at(-1)
+    return `${Instagram.BASE_URL}/api/v1/media/${id}/info/`
+  }
+
+  /**
    * Returns an AS activity's like count, if available.
    */
   static reactionsCount(activity) {

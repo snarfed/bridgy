@@ -58,6 +58,16 @@ class Silo {
   }
 
   /**
+   * Returns the URL path to scrape for a post.
+   *
+   * @param {Object} AS1 activity of the post
+   * @returns {String} silo URL path
+   */
+  static postURL(activity) {
+    return activity.url
+  }
+
+  /**
    * Returns an AS1 activity's reaction count, if available.
    *
    * To be implemented by subclasses.
@@ -165,7 +175,7 @@ class Silo {
       }
 
       // fetch post permalink
-      const resolved = await this.forward(activity.url, `/post`)
+      const resolved = await this.forward(this.postURL(activity), `/post`)
       if (!resolved) {
         await this.recordError("Bridgy couldn't translate post HTML")
         continue
