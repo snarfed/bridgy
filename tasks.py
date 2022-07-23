@@ -770,20 +770,16 @@ class PropagateResponse(SendWebmentions):
     return ('', ERROR_HTTP_RETURN_CODE) if getattr(g, 'failed', None) else 'OK'
 
   def source_url(self, target_url):
-    # determine which activity to use
+    # determine which activity to use. default to response.
+    activity = self.response_obj
     if self.activities:
       activity = self.activities[0]
       if self.entity.urls_to_activity:
         urls_to_activity = json_loads(self.entity.urls_to_activity)
         if urls_to_activity:
-          try:
-            activity = self.activities[urls_to_activity[target_url]]
-          except KeyError:
-            error(f"""Hit https://github.com/snarfed/bridgy/issues/237 KeyError!
-target url {target_url} not in urls_to_activity: {self.entity.urls_to_activity}
-activities: {self.activities}""", status=ERROR_HTTP_RETURN_CODE)
-    else:
-      activity = self.response_obj
+          index = urls_to_activity.get(target_url)
+          if index:
+            activity = self.activities[index]
 
     # generate source URL
     id = activity['id']

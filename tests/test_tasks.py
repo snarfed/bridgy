@@ -1972,11 +1972,28 @@ class PropagateTest(TaskTest):
 
     https://github.com/snarfed/bridgy/issues/237
     """
-    orig = list(self.responses[0].unsent)
     self.responses[0].activities_json = []
     self.responses[0].put()
 
     self.expect_webmention(source_url='http://localhost/comment/fake/0123456789/1_2_a/1_2_a')
+    self.mox.ReplayAll()
+
+    self.post_task()
+    self.assert_response_is('complete', sent=['http://target1/post/url'])
+
+  def test_source_url_missing_in_urls_to_activity(self):
+    """If the source URL isn't in Response.urls_to_activity, use the response.
+
+    https://github.com/snarfed/bridgy/issues/237
+    """
+    self.responses[0].activities_json = [json_dumps({
+      'id': 'tag:fake.com:555',
+      'object': {'content': 'http://activity/post'},
+    })]
+    self.responses[0].urls_to_activity = json_dumps({'http://activity/post': 0})
+    self.responses[0].put()
+
+    self.expect_webmention(source_url='http://localhost/comment/fake/0123456789/555/1_2_a')
     self.mox.ReplayAll()
 
     self.post_task()
