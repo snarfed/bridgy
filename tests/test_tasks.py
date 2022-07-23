@@ -795,7 +795,6 @@ class PollTest(TaskTest):
       activities_json=[json_dumps(util.prune_activity(post, source))],
     )], ignore=('response_json', 'source', 'original_posts'))
 
-  @skip("can't get quote reply to register as Response.type comment. #1124")
   def test_quote_reply_attachment(self):
     """One silo *reply* references (quotes) another post."""
     source = self.sources[0]
