@@ -1620,11 +1620,8 @@ class PropagateTest(TaskTest):
     self.assert_response_is('complete', sent=['http://target1/post/url'])
 
   def test_webmention_blocklist(self):
-    """Target URLs with domains in the blocklist should be ignored.
-
-    TODO: also invalid URLs that can't be parsed by urlparse?
-    """
-    self.responses[0].unsent = ['http://t.co/bad', 'http://foo/good']
+    """Target URLs with domains in the blocklist should be ignored."""
+    self.responses[0].unsent = ['http://t.co/bad', 'http://foo/good', 'bad url']
     self.responses[0].error = ['http://instagr.am/bad',
                                # urlparse raises ValueError: Invalid IPv6 URL
                                'http://foo]']

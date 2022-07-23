@@ -507,7 +507,7 @@ class Discover(Poll):
     obj = activity.get('object') or activity
     in_reply_to = util.get_first(obj, 'inReplyTo')
     if in_reply_to:
-      parsed = util.parse_tag_uri(in_reply_to.get('id', ''))  # TODO: fall back to url
+      parsed = util.parse_tag_uri(in_reply_to.get('id', ''))
       if parsed:
         util.add_discover_task(source, parsed[1])
 
@@ -638,8 +638,6 @@ class SendWebmentions(View):
 
     Also loads and sets `g.source`, and returns False if the source doesn't
     exist or is disabled.
-
-    TODO: unify with :meth:`complete()`
 
     Args:
       key: :class:`ndb.Key`

@@ -372,7 +372,6 @@ def delete_finish():
 
   logins = None
   if logged_in_as and logged_in_as.is_authority_for(source.auth_entity):
-    # TODO: remove credentials
     if feature in source.features:
       source.features.remove(feature)
       source.put()

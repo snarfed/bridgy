@@ -532,7 +532,6 @@ def maybe_add_or_delete_source(source_cls, auth_entity, state, **kwargs):
 
   else:  # this is a delete
     if auth_entity:
-      # TODO: remove from logins cookie
       redirect(f'/delete/finish?auth_entity={auth_entity.key.urlsafe().decode()}&state={state}')
     else:
       flash(f'If you want to disable, please approve the {source_cls.GR_CLASS.NAME} prompt.')
