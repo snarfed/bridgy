@@ -312,8 +312,16 @@ class Silo {
    * @returns {String} Response body from the silo
    */
   static async siloGet(url) {
-    // Set up cookies. Can't pass them to fetch directly because it blocks the
-    // Cookie header. :( Instead, we use webRequest, which lets us.
+    // Set up cookies. Can't use credentials: include in the fetch API because
+    // it requires the server to support CORS, with only some values for
+    // Access-Control-Allow-Origin, specifically not *, and it also doesn't work
+    // with Firefox Container Tabs.
+    // https://zellwk.com/blog/handling-cookies-with-fetchs-credentials/
+    //
+    // We also can't pass cookies to the fetch API directly because it blocks
+    // the Cookie header. :(
+    //
+    // Instead, we use webRequest, which lets us.
     // https://developer.mozilla.org/en-US/docs/Glossary/Forbidden_header_name
     // https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/webRequest/onBeforeSendHeaders
     //
