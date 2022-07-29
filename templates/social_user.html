@@ -21,7 +21,8 @@
 {% endif %}
 
 {% if not source.verified() and source.status != "disabled" and source.features %}
-{% if not source.domain_urls %}
+{% if not source.domain_urls and source.SHORT_NAME != 'facebook' %}
+<!-- Facebook profiles no longer show web site: https://github.com/snarfed/bridgy/issues/1110 -->
 <div class="row promo warning">
 <p id="edit-profile">First things first: what's your web site?
 {% block edit_profile %}
