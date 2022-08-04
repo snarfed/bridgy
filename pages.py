@@ -557,13 +557,6 @@ def logout():
   return redirect('/', logins=[])
 
 
-@app.route('/csp-report')
-def csp_report():
-  """Log Content-Security-Policy reports. https://content-security-policy.com/"""
-  logger.info(request.values.get_data(as_text=True))
-  return 'OK'
-
-
 @app.route('/log')
 @flask_util.cached(cache, logs.CACHE_TIME)
 def log():
