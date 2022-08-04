@@ -211,7 +211,7 @@ class PagesTest(testutil.AppTest):
         ('result', 'declined')
       ]), resp.headers['Location'])
 
-  def test_delete_start_redirect_url_error(self):
+  def test_delete_start_redirect_url_http_error(self):
     self.mox.StubOutWithMock(testutil.OAuthStart, 'redirect_url')
     testutil.OAuthStart.redirect_url(state=mox.IgnoreArg()
       ).AndRaise(tweepy.TweepyException('Connection closed unexpectedly...'))
@@ -226,6 +226,20 @@ class PagesTest(testutil.AppTest):
     self.assertEqual('/fake/0123456789', location.path)
     self.assertEqual(['FakeSource API error 504: Connection closed unexpectedly...'],
                       get_flashed_messages())
+
+  def test_delete_start_redirect_url_value_error(self):
+    self.mox.StubOutWithMock(testutil.OAuthStart, 'redirect_url')
+    testutil.OAuthStart.redirect_url(state=mox.IgnoreArg()).AndRaise(ValueError('foo bar'))
+    self.mox.ReplayAll()
+
+    resp = self.client.post('/delete/start', data={
+        'feature': 'listen',
+        'key': self.sources[0].key.urlsafe().decode(),
+      })
+    self.assertEqual(302, resp.status_code)
+    location = urllib.parse.urlparse(resp.headers['Location'])
+    self.assertEqual('/fake/0123456789', location.path)
+    self.assertEqual(['Error: foo bar'], get_flashed_messages())
 
   def test_delete_removes_from_logins_cookie(self):
     self.client.set_cookie(

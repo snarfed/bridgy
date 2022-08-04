@@ -330,6 +330,9 @@ def delete_start():
 
   try:
     return redirect(source.OAUTH_START(path).redirect_url(state=state))
+  except ValueError as e:
+      flash(f'Error: {e}')
+      return redirect(source.bridgy_url())
   except werkzeug.exceptions.HTTPException:
     # raised by us, probably via self.error()
     raise
