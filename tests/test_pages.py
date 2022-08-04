@@ -641,16 +641,19 @@ class DiscoverTest(testutil.AppTest):
 
   def test_discover_param_errors(self):
     for url in ('/discover',
+                '/discover?url=http://fa.ke/123',  # still missing key
                 '/discover?key=bad',
                 f'/discover?key={self.source.key.urlsafe().decode()}',
-                '/discover?url=bad',
-                '/discover?url=http://foo/bar',
                 ):
       resp = self.client.post(url)
       self.assertEqual(400, resp.status_code)
 
   def test_discover_url_not_site_or_silo_error(self):
     self.check_discover('http://not/site/or/silo',
+                        'Please enter a URL on either your web site or FakeSource.')
+
+  def test_discover_bad_url(self):
+    self.check_discover("""12345'"\\'\\");|]*\x00{\r\n<\x00>�''💡""",
                         'Please enter a URL on either your web site or FakeSource.')
 
   def test_discover_url_silo_post(self):
