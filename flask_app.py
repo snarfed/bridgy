@@ -18,7 +18,7 @@ import util
 
 
 # Flask app
-app = Flask(__name__)
+app = Flask(__name__, static_folder=None)
 app.template_folder = './templates'
 app.config.from_pyfile(Path(__file__).parent / 'config.py')
 app.url_map.converters['regex'] = flask_util.RegexConverter
