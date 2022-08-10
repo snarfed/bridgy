@@ -254,10 +254,10 @@ Stats
 ---
 I occasionally generate [stats and graphs of usage and growth](https://snarfed.org/2019-01-02_bridgy-stats-update-4) from the [BigQuery dataset](https://console.cloud.google.com/bigquery?p=brid-gy&d=datastore&page=dataset) ([#715](https://github.com/snarfed/bridgy/issues/715)). Here's how.
 
-1. [Export the full datastore to Google Cloud Storage.](https://cloud.google.com/datastore/docs/export-import-entities) Include all entities except `*Auth` and other internal details. Check to see if any new kinds have been added since the last time this command was run.
+1. [Export the full datastore to Google Cloud Storage.](https://cloud.google.com/datastore/docs/export-import-entities) Include all entities except `*Auth`, `Domain` and others with credentials or internal details. Check to see if any new kinds have been added since the last time this command was run.
 
     ```
-    gcloud datastore export --async gs://brid-gy.appspot.com/stats/ --kinds Activity,Blogger,BlogPost,BlogWebmention,Domain,Facebook,FacebookPage,Flickr,GitHub,GooglePlusPage,Instagram,Mastodon,Medium,Meetup,Publish,PublishedPage,Reddit,Response,SyndicatedPost,Tumblr,Twitter,WordPress
+    gcloud datastore export --async gs://brid-gy.appspot.com/stats/ --kinds Activity,Blogger,BlogPost,BlogWebmention,Facebook,FacebookPage,Flickr,GitHub,GooglePlusPage,Instagram,Mastodon,Medium,Meetup,Publish,PublishedPage,Reddit,Response,SyndicatedPost,Tumblr,Twitter,WordPress
     ```
 
     Note that `--kinds` is required. [From the export docs](https://cloud.google.com/datastore/docs/export-import-entities#limitations), _Data exported without specifying an entity filter cannot be loaded into BigQuery._ Also, expect this to cost around $10.
@@ -265,7 +265,7 @@ I occasionally generate [stats and graphs of usage and growth](https://snarfed.o
 1. [Import it into BigQuery](https://cloud.google.com/bigquery/docs/loading-data-cloud-datastore#loading_cloud_datastore_export_service_data):
 
     ```
-    for kind in Activity BlogPost BlogWebmention Domain Publish SyndicatedPost; do
+    for kind in Activity BlogPost BlogWebmention Publish SyndicatedPost; do
       bq load --replace --nosync --source_format=DATASTORE_BACKUP datastore.$kind gs://brid-gy.appspot.com/stats/all_namespaces/kind_$kind/all_namespaces_kind_$kind.export_metadata
     done
 
@@ -351,6 +351,8 @@ Open `sources.Facebook`, edit schema, add a `url` field, string, nullable.
 1. Change the underscores in column headings to spaces.
 1. Open each sheet, edit the chart, and extend the data range to include all of thee new rows.
 1. Check out the graphs! Save full size images with OS or browser screenshots, thumbnails with the _Download Chart_ button. Then post them!
+
+Final cleanup: delete the temporary `Response-new` table.
 
 
 Delete old responses
