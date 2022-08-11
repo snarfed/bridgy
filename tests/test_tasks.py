@@ -852,24 +852,22 @@ class PollTest(TaskTest):
     self.post_task()
     self.assertEqual('disabled', source.key.get().status)
 
-  def test_site_specific_disable_sources(self):
+  def test_site_specific_disable_source_401(self):
+    self._test_site_specific_disable_source(
+      urllib.error.HTTPError('url', 401, 'msg', {}, io.StringIO('body')))
+
+  def test_site_specific_disable_source_401_oauth(self):
     """HTTP 401 and 400 '' for Instagram should disable the source."""
-    try:
-      for err in (
-          urllib.error.HTTPError('url', 401, 'msg', {}, io.StringIO('body')),
-          urllib.error.HTTPError('url', 400, 'foo', {}, io.StringIO(
-            '{"meta":{"error_type":"OAuthAccessTokenException"}}')),
-      ):
-        self.mox.UnsetStubs()
-        self.setUp()
-        self.expect_get_activities().AndRaise(err)
-        self.mox.ReplayAll()
+    self._test_site_specific_disable_source(
+      urllib.error.HTTPError('url', 400, 'foo', {}, io.StringIO(
+        '{"meta":{"error_type":"OAuthAccessTokenException"}}')))
 
-        self.post_task()
-        self.assertEqual('disabled', self.sources[0].key.get().status)
+  def _test_site_specific_disable_source(self, err):
+      self.expect_get_activities().AndRaise(err)
+      self.mox.ReplayAll()
 
-    finally:
-      self.mox.UnsetStubs()
+      self.post_task()
+      self.assertEqual('disabled', self.sources[0].key.get().status)
 
   def test_rate_limiting_error(self):
     """Finish the task on rate limiting errors."""

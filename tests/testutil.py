@@ -473,7 +473,8 @@ class TestCase(testutil.TestCase):
 
   @staticmethod
   def clear_datastore():
-    orig_requests_post(f'http://0.0.0.0:8089/reset')
+    resp = orig_requests_post(f'http://0.0.0.0:8089/reset')
+    resp.raise_for_status()
 
   def stub_create_task(self):
     if not self.stubbed_create_task:
