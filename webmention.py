@@ -158,8 +158,10 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
         '"resp": "invalid_input"' in resp or
         # https://github.com/snarfed/bridgy/issues/750
         '"error": "jetpack_verification_failed"' in resp or
-        # https://console.cloud.google.com/errors/CMjIg52NkMLQYA
+        # https://console.cloud.google.com/errors/CMjIg52NkMLQYA?project=brid-gy
         'The Jetpack site encountered an error and could not process the API request' in resp or
+        # https://console.cloud.google.com/errors/CL6xvLS7k6qE3QE?project=brid-gy
+        'The Jetpack site is inaccessible or returned an error' in resp or
         # Blogger known bug
         # https://github.com/snarfed/bridgy/issues/175
         'bX-2i87au' in resp or
