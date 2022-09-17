@@ -168,6 +168,10 @@ Here's how to cut a new release of the browser extension and publish it [to addo
 
 Browser extension: Changelog
 ---
+0.6, unreleased
+
+* [Migrate from Manifest v2 to v3.](https://developer.chrome.com/docs/extensions/mv3/intro/mv3-migration/#man-sw) ([Ugh.](https://blog.mozilla.org/addons/2022/05/18/manifest-v3-in-firefox-recap-next-steps/))
+
 0.5, 2022-07-21
 
 * Update Instagram scraping.

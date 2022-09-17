@@ -21,15 +21,17 @@ import {Facebook} from './facebook.js'
 
 const FREQUENCY_MIN = 30
 
-function schedulePoll() {
-  browser.alarms.onAlarm.addListener((alarm) => {
-    if (alarm.name == 'bridgy-facebook-poll') {
-      Facebook.poll()
-    } else if (alarm.name == 'bridgy-instagram-poll') {
-      Instagram.poll()
-    }
-  })
+// Must be top level in non-persistent background (aka event) pages
+// https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Background_scripts#move_event_listeners
+browser.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name == 'bridgy-facebook-poll') {
+    Facebook.poll()
+  } else if (alarm.name == 'bridgy-instagram-poll') {
+    Instagram.poll()
+  }
+})
 
+function schedulePoll() {
   for (const silo of [Instagram, Facebook]) {
     const name = silo.alarmName()
     browser.alarms.get(name).then(function(alarm) {
