@@ -46,14 +46,6 @@ function schedulePoll() {
   }
 }
 
-for (const silo of [Instagram, Facebook]) {
-  silo.findCookies().then((cookies) => {
-    if (!cookies) {
-      browser.tabs.create({url: silo.LOGIN_URL})
-    }
-  })
-}
-
 login().then(() => {
   schedulePoll()
 })

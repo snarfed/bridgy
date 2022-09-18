@@ -173,6 +173,10 @@ Here's how to publish it [to the Chrome Web Store](https://chrome.google.com/web
 
 Browser extension: Changelog
 ---
+0.6.1, 2022-09-18
+
+* Don't open silo login pages if they're not logged in. This ran at extension startup time, which was mostly harmless in manifest v2 since the background page was persistent stayed loaded, but in manifest v3 it's a service worker or non-persistent background page, which gets unloaded and then reloaded every 5m.
+
 0.6.0, 2022-09-17
 
 * Migrate Chrome ([but not Firefox](https://blog.mozilla.org/addons/2022/05/18/manifest-v3-in-firefox-recap-next-steps/)) [from Manifest v2 to v3](https://developer.chrome.com/docs/extensions/mv3/intro/mv3-migration/#man-sw).
