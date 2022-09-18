@@ -162,8 +162,14 @@ Here's how to publish it [to the Chrome Web Store](https://chrome.google.com/web
 
 1. `ln -fs manifest.chrome.json manifest.json`
 1. Load the extension in Chrome (`chrome://extensions/`, Developer mode on). Check that it works.
+1. Build and sign the artifact:
+    ```sh
+    cd browser-extension/
+    npm test
+    ./node_modules/web-ext/bin/web-ext build
+    ```
 1. [Open the console.](https://chrome.google.com/webstore/devconsole/)
-1. Open the Bridgy item. Ryan to add you if you don't see it.
+1. Open the Bridgy item.
 1. Choose _Package_ on the left.
 1. Click the _Upload new package_ button.
 1. Upload the new version's zip file from `browser-extension/web-ext-artifacts/`.
