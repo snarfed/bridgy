@@ -312,8 +312,18 @@ class Silo {
    * @returns {String} Response body from the silo
    */
   static async siloGet(url) {
-    // Set up cookies. Can't use credentials: include in the fetch API because
-    // it requires the server to support CORS, with only some values for
+    // Set up cookies. Distinguish between browsers by checking for webRequest.
+    //
+    // Chrome with manifest v3
+    // ===
+    // We extract cookies and pass the Cookie header to fetch() directly. Didn't
+    // work in manifest v2, but does work in v3. Requires the cookies permission
+    // and instagram.com and facebook.com in host_permissions.
+    //
+    // Firefox with manifest v2
+    // ===
+    // Can't use credentials: include in the fetch API because it requires the
+    // server to support CORS, with only some values for
     // Access-Control-Allow-Origin, specifically not *, and it also doesn't work
     // with Firefox Container Tabs.
     // https://zellwk.com/blog/handling-cookies-with-fetchs-credentials/
@@ -337,7 +347,7 @@ class Silo {
     }
 
     const inject = this.injectCookies(cookies)
-    if (!browser.webRequest.onBeforeSendHeaders.hasListener(inject)) {
+    if (browser.webRequest && !browser.webRequest.onBeforeSendHeaders.hasListener(inject)) {
       browser.webRequest.onBeforeSendHeaders.addListener(
         inject,
         {urls: [`*://*.${this.DOMAIN}/*`]},
@@ -359,7 +369,7 @@ class Silo {
 
     // Make HTTP request
     console.debug(`Fetching ${url}`)
-    const headers = {'X-Bridgy': '1'}
+    const headers = browser.webRequest ? {'X-Bridgy': '1'} : {'Cookie': cookies}
     Object.assign(headers, this.headers())
     const res = await fetch(url, {
       method: 'GET',

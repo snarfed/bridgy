@@ -133,9 +133,10 @@ Here's how to send them in with a bug report:
 
 Browser extension: release
 ---
-Here's how to cut a new release of the browser extension and publish it [to addons.mozilla.org](https://addons.mozilla.org/en-US/firefox/addon/bridgy/) and [to the Chrome Web Store](https://chrome.google.com/webstore/detail/bridgy/lcpeamdhminbbjdfjbpmhgjgliaknflj):
+Here's how to cut a new release of the browser extension and publish it [to addons.mozilla.org](https://addons.mozilla.org/en-US/firefox/addon/bridgy/):
 
-1. Load the extension in Firefox (`about:debugging`) and Chrome (`chrome://extensions/`, Developer mode on). Check that it works in both.
+1. `ln -fs manifest.firefox.json manifest.json`
+1. Load the extension in Firefox (`about:debugging`). Check that it works.
 1. Bump the version in `browser-extension/manifest.json`.
 1. Update the Changelog in the README.md section below this one.
 1. Build and sign the artifact:
@@ -156,21 +157,25 @@ Here's how to cut a new release of the browser extension and publish it [to addo
     ...
     ```
     It's usually auto-approved within minutes. [Check the public listing here.](https://addons.mozilla.org/en-US/firefox/addon/bridgy/)
-1. Submit it to the Chrome Web Store:
-    1. [Open the console.](https://chrome.google.com/webstore/devconsole/)
-    1. Open the Bridgy item. Ryan to add you if you don't see it.
-    1. Choose _Package_ on the left.
-    1. Click the _Upload new package_ button.
-    1. Upload the new version's zip file from `browser-extension/web-ext-artifacts/`.
-    1. Update the Changelog in the _Description_ box. Leave the rest unchanged.
-    1. Click _Save draft_, then _Submit for review_.
+
+Here's how to publish it [to the Chrome Web Store](https://chrome.google.com/webstore/detail/bridgy/lcpeamdhminbbjdfjbpmhgjgliaknflj):
+
+1. `ln -fs manifest.chrome.json manifest.json`
+1. Load the extension in Chrome (`chrome://extensions/`, Developer mode on). Check that it works.
+1. [Open the console.](https://chrome.google.com/webstore/devconsole/)
+1. Open the Bridgy item. Ryan to add you if you don't see it.
+1. Choose _Package_ on the left.
+1. Click the _Upload new package_ button.
+1. Upload the new version's zip file from `browser-extension/web-ext-artifacts/`.
+1. Update the Changelog in the _Description_ box. Leave the rest unchanged.
+1. Click _Save draft_, then _Submit for review_.
 
 
 Browser extension: Changelog
 ---
-0.6, unreleased
+0.6.0, 2022-09-17
 
-* [Migrate from Manifest v2 to v3.](https://developer.chrome.com/docs/extensions/mv3/intro/mv3-migration/#man-sw) ([Ugh.](https://blog.mozilla.org/addons/2022/05/18/manifest-v3-in-firefox-recap-next-steps/))
+* Migrate Chrome ([but not Firefox](https://blog.mozilla.org/addons/2022/05/18/manifest-v3-in-firefox-recap-next-steps/)) [from Manifest v2 to v3](https://developer.chrome.com/docs/extensions/mv3/intro/mv3-migration/#man-sw).
 
 0.5, 2022-07-21
 
