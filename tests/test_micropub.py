@@ -26,6 +26,14 @@ class MicropubTest(testutil.AppTest):
     self.assertEqual(400, resp.status_code)
     self.assertEqual({'error': 'not_implemented'}, resp.json)
 
+  def test_bad_content_type(self):
+    resp = self.client.post('/micropub', data='foo', content_type='text/plain')
+    self.assertEqual(400, resp.status_code)
+    self.assertEqual({
+      'error': 'invalid_request',
+      'error_description': 'Unsupported Content-Type text/plain',
+    }, resp.json)
+
   # def test_no_token(self):
 
   # def test_invalid_token(self):
