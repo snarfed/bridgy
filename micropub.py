@@ -30,11 +30,24 @@ class Micropub(PublishBase):
     from tests import testutil
     self.source = testutil.FakeSource.query().get()
 
+    # Micropub query; currently only config is supported
     q = request.values.get('q')
     if q == 'config':
       return jsonify({})
     elif q:
       return self.error(error='not_implemented')
+
+    # handle input
+    if request.is_json:
+      pass
+    elif request.files:
+      pass
+    elif request.form:
+      pass
+    else:
+      return self.error(error='invalid_request', extra_json={
+        'error_description': f'Unsupported Content-Type {request.content_type}',
+      })
 
     obj = microformats2.json_to_object(request.json)
     logging.debug(f'Converted to ActivityStreams object: {json_dumps(obj, indent=2)}')
