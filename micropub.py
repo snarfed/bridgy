@@ -20,6 +20,14 @@ import webmention
 
 logger = logging.getLogger(__name__)
 
+RESERVED_PARAMS = ('access_token', 'action', 'q', 'url')
+RESERVED_PREFIX = 'mp-'
+
+
+def remove_reserved(params):
+  return {k: v for k, v in params.items()
+          if k not in RESERVED_PARAMS and not k.startswith(RESERVED_PREFIX)}
+
 
 class Micropub(PublishBase):
   """Micropub endpoint."""
@@ -39,21 +47,25 @@ class Micropub(PublishBase):
 
     # handle input
     if request.is_json:
-      pass
-    elif request.files:
-      pass
+      mf2 = request.json
     elif request.form:
+      mf2 = {
+        'h': request.values.get('h') or 'entry',
+        'properties': remove_reserved(request.form.to_dict()),
+      }
+    elif request.files:
       pass
     else:
       return self.error(error='invalid_request', extra_json={
         'error_description': f'Unsupported Content-Type {request.content_type}',
       })
 
-    obj = microformats2.json_to_object(request.json)
+    obj = microformats2.json_to_object(mf2)
     logging.debug(f'Converted to ActivityStreams object: {json_dumps(obj, indent=2)}')
 
     # TODO: is this the right idea to require mf2 url so I can de-dupe?
-    url = util.get_url(obj)
+    url = request.values.get('url') or util.get_url(obj)
+    assert url
 
     # done with the sanity checks, create the Publish entity
     self.entity = self.get_or_add_publish_entity(url)
