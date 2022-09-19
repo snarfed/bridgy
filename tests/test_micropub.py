@@ -2,6 +2,7 @@
 import html
 
 import micropub
+from models import Publish, PublishedPage
 from . import testutil
 
 
@@ -15,6 +16,34 @@ class MicropubTest(testutil.AppTest):
     self.source = testutil.FakeSource(
       id='foo.com', features=['publish'], auth_entity=auth_key)
     self.source.put()
+
+  def assert_response(self, status=201, **kwargs):
+    resp = self.client.post('/micropub', **kwargs)
+    body = resp.get_data(as_text=True)
+    self.assertEqual(status, resp.status_code,
+                     f'{status} != {resp.status_code}: {body}')
+    self.assertEqual('http://fake/url', resp.headers['Location'])
+    return resp
+
+  def check_entity(self, url='http://foo', content='foo bar baz',
+                   html_content=None, expected_html=None):
+    # if html_content is None:
+    #   html_content = content
+    self.assertTrue(PublishedPage.get_by_id(url))
+    publish = Publish.query().get()
+    self.assertEqual(self.source.key, publish.source)
+    self.assertEqual('complete', publish.status)
+    self.assertEqual('post', publish.type)
+    self.assertEqual('FakeSource post label', publish.type_label())
+    # if expected_html is None:
+    #   expected_html = (self.post_html % html_content)
+    # self.assertEqual(expected_html + self.backlink, publish.html)
+    self.assertEqual({
+      'id': 'fake id',
+      'url': 'http://fake/url',
+      'content': content,
+      'granary_message': 'granary message',
+    }, publish.published)
 
   def test_query_config(self):
     resp = self.client.get('/micropub?q=config')
@@ -40,17 +69,13 @@ class MicropubTest(testutil.AppTest):
 
   # def test_already_published(self):
 
-  # def test_create_form_encoded(self):
-  #   resp = self.client.post('/micropub', data={
-  #     'h': 'entry',
-  #     'content': 'Micropub+test+of+creating+a+basic+h-entry',
-  #   })
-  #   body = html.unescape(resp.get_data(as_text=True))
-  #   self.assertEqual(201, resp.status_code,
-  #                    f'201 != {resp.status_code}: {body}')
-  #   self.assertEqual('xyz', resp.headers['Location'])
-  #
-  #   # TODO: check Publish entity, Fake send
+  def test_create_form_encoded(self):
+    resp = self.assert_response(data={
+      'h': 'entry',
+      'content': 'foo bar baz',
+      'url': 'http://foo',
+    })
+    self.check_entity()
 
   # def test_create_form_encoded_token_param(self):
   #   resp = self.client.post('/micropub', data={
@@ -105,19 +130,14 @@ class MicropubTest(testutil.AppTest):
 # category=test1
 
   def test_create_json(self):
-    resp = self.client.post('/micropub', json={
+    resp = self.assert_response(json={
       'type': ['h-entry'],
       'properties': {
-        'content': ['Micropub test of creating an h-entry with a JSON request'],
+        'content': ['foo bar baz'],
         'url': ['http://foo'],
       },
     })
-    body = html.unescape(resp.get_data(as_text=True))
-    self.assertEqual(201, resp.status_code,
-                     f'201 != {resp.status_code}: {body}')
-    self.assertEqual('http://fake/url', resp.headers['Location'])
-
-    # TODO: check Publish entity, Fake send
+    self.check_entity()
 
 #   def test_create_json_multiple_categories(self):
 # {
