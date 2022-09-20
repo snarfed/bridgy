@@ -1,47 +1,52 @@
 """Unit tests for micropub.py."""
 import html
+from io import BytesIO
 
 import micropub
 from models import Publish, PublishedPage
-from . import testutil
+from .testutil import AppTest, FakeAuthEntity, FakeSource
 
 
-class MicropubTest(testutil.AppTest):
+class MicropubTest(AppTest):
+
+  @classmethod
+  def setUpClass(cls):
+    micropub.SOURCE_CLASSES = (
+      (FakeSource, FakeAuthEntity, FakeAuthEntity.access_token),
+    ) + micropub.SOURCE_CLASSES
 
   def setUp(self):
     super().setUp()
 
-    self.auth_entity = testutil.FakeAuthEntity(id='0123456789')
+    self.auth_entity = FakeAuthEntity(id='0123456789', access_token='towkin')
     auth_key = self.auth_entity.put()
-    self.source = testutil.FakeSource(
-      id='foo.com', features=['publish'], auth_entity=auth_key)
+    self.source = FakeSource(id='foo.com', features=['publish'],
+                             auth_entity=auth_key)
     self.source.put()
 
-  def assert_response(self, status=201, **kwargs):
+  def assert_response(self, status=201, token='towkin', **kwargs):
+    if token:
+      kwargs.setdefault('headers', {})['Authorization'] = f'Bearer {token}'
+
     resp = self.client.post('/micropub', **kwargs)
+
     body = resp.get_data(as_text=True)
-    self.assertEqual(status, resp.status_code,
-                     f'{status} != {resp.status_code}: {body}')
-    self.assertEqual('http://fake/url', resp.headers['Location'])
+    self.assertEqual(status, resp.status_code, body)
+    if status // 100 == 2:
+      self.assertEqual('http://fake/url', resp.headers['Location'])
     return resp
 
-  def check_entity(self, url='http://foo', content='foo bar baz',
-                   html_content=None, expected_html=None):
-    # if html_content is None:
-    #   html_content = content
+  def check_entity(self, url='http://foo', **kwargs):
     self.assertTrue(PublishedPage.get_by_id(url))
     publish = Publish.query().get()
     self.assertEqual(self.source.key, publish.source)
     self.assertEqual('complete', publish.status)
     self.assertEqual('post', publish.type)
     self.assertEqual('FakeSource post label', publish.type_label())
-    # if expected_html is None:
-    #   expected_html = (self.post_html % html_content)
-    # self.assertEqual(expected_html + self.backlink, publish.html)
     self.assertEqual({
       'id': 'fake id',
       'url': 'http://fake/url',
-      'content': content,
+      'content': 'foo bar baz',
       'granary_message': 'granary message',
     }, publish.published)
 
@@ -56,26 +61,46 @@ class MicropubTest(testutil.AppTest):
     self.assertEqual({'error': 'not_implemented'}, resp.json)
 
   def test_bad_content_type(self):
-    resp = self.client.post('/micropub', data='foo', content_type='text/plain')
-    self.assertEqual(400, resp.status_code)
+    resp = self.assert_response(status=400, data='foo', content_type='text/plain')
     self.assertEqual({
       'error': 'invalid_request',
       'error_description': 'Unsupported Content-Type text/plain',
     }, resp.json)
 
-  # def test_no_token(self):
+  def test_no_token(self):
+    self.assert_response(status=401, token=None)
 
-  # def test_invalid_token(self):
+  def test_invalid_token(self):
+    self.assert_response(status=401, token='bad', data={'x': 'y'})
+    self.assert_response(status=401, token=None, data={'x': 'y'},
+                         headers={'Authorization': 'foo bar'})
 
-  # def test_already_published(self):
+  def test_token_query_param(self):
+    self.assert_response(data={
+      'url': 'http://foo',
+      'h': 'entry',
+      'content': 'foo bar baz',
+      'access_token': 'towkin',
+    })
+
+  def test_already_published(self):
+    page = PublishedPage(id='http://foo')
+    Publish(parent=page.key, source=self.source.key, status='complete',
+            type='post', published={'content': 'foo'}).put()
+
+    self.assert_response(status=400, data={
+      'url': 'http://foo',
+      'h': 'entry',
+      'content': 'foo bar baz',
+    })
 
   def test_create_form_encoded(self):
     resp = self.assert_response(data={
+      'url': 'http://foo',
       'h': 'entry',
       'content': 'foo bar baz',
-      'url': 'http://foo',
     })
-    self.check_entity()
+    self.check_entity(content='foo bar baz')
 
   # def test_create_form_encoded_token_param(self):
   #   resp = self.client.post('/micropub', data={
@@ -87,19 +112,15 @@ class MicropubTest(testutil.AppTest):
   #                    f'201 != {resp.status_code}: {body}')
   #   self.assertEqual('xyz', resp.headers['Location'])
 
-#   def test_create_form_encoded_one_category(self):
-# Content-type: application/x-www-form-urlencoded; charset=utf-8
-
-# h=entry
-# content=Micropub+test+of+creating+an+h-entry+with+one+category.+This+post+should+have+one+category,+test1
-# category=test1
-
-#   def test_create_form_encoded_multiple_categories(self):
-# Content-type: application/x-www-form-urlencoded; charset=utf-8
-
-# h=entry
-# content=Micropub+test+of+creating+an+h-entry+with+categories.+This+post+should+have+two+categories,+test1+and+test2
-# category[]=test1category[]=test2
+  # def test_create_form_encoded_multiple_categories(self):
+  #   resp = self.assert_response(data={
+  #     'url': 'http://foo',
+  #     'h': 'entry',
+  #     'content': 'foo bar baz',
+  #     'category[]': 'A',
+  #     'category[]': 'B',
+  #   })
+  #   self.check_entity(content='foo bar baz')
 
 #   def test_create_form_encoded_photo_url(self):
 # Content-type: application/x-www-form-urlencoded; charset=utf-8
@@ -229,24 +250,13 @@ class MicropubTest(testutil.AppTest):
 #   }
 # }
 
-#   def test_create_multipart_photo(self):
-# multipart/form-data; boundary=553d9cee2030456a81931fb708ece92c
-
-# --553d9cee2030456a81931fb708ece92c
-# Content-Disposition: form-data; name="h"
-
-# entry
-# --553d9cee2030456a81931fb708ece92c
-# Content-Disposition: form-data; name="content"
-
-# Hello World!
-# --553d9cee2030456a81931fb708ece92c
-# Content-Disposition: form-data; name="photo"; filename="aaronpk.png"
-# Content-Type: image/png
-# Content-Transfer-Encoding: binary
-
-# ... (binary data) ...
-# --553d9cee2030456a81931fb708ece92c--
+  # def test_create_multipart_photo(self):
+  #   resp = self.assert_response(data={
+  #     'url': 'http://foo',
+  #     'h': 'entry',
+  #     'photo': (BytesIO('photo contents'), 'filename'),
+  #   })
+  #   self.check_entity()
 
 #   def test_create_multipart_multiple_photos(self):
 # multipart/form-data; boundary=553d9cee2030456a81931fb708ece92c

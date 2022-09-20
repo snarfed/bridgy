@@ -31,6 +31,7 @@ NOW = datetime.now(timezone.utc)
 
 class FakeAuthEntity(BaseAuth):
   user_json = ndb.TextProperty()
+  access_token = ndb.StringProperty()
 
 
 class FakeGrSource(gr_source.Source):
