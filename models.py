@@ -1039,6 +1039,7 @@ class Publish(ndb.Model):
   status = ndb.StringProperty(choices=STATUSES, default='new')
   source = ndb.KeyProperty()
   html = ndb.TextProperty()  # raw HTML fetched from source
+  mf2 = ndb.JsonProperty()   # mf2 from micropub request
   published = ndb.JsonProperty(compressed=True)
   created = ndb.DateTimeProperty(auto_now_add=True, tzinfo=timezone.utc)
   updated = ndb.DateTimeProperty(auto_now=True, tzinfo=timezone.utc)

@@ -36,8 +36,7 @@ class MicropubTest(AppTest):
       self.assertEqual('http://fake/url', resp.headers['Location'])
     return resp
 
-  def check_entity(self, url='http://foo', **kwargs):
-    self.assertTrue(PublishedPage.get_by_id(url))
+  def check_entity(self, **kwargs):
     publish = Publish.query().get()
     self.assertEqual(self.source.key, publish.source)
     self.assertEqual('complete', publish.status)
@@ -77,50 +76,17 @@ class MicropubTest(AppTest):
 
   def test_token_query_param(self):
     self.assert_response(data={
-      'url': 'http://foo',
       'h': 'entry',
       'content': 'foo bar baz',
       'access_token': 'towkin',
     })
 
-  def test_already_published(self):
-    page = PublishedPage(id='http://foo')
-    Publish(parent=page.key, source=self.source.key, status='complete',
-            type='post', published={'content': 'foo'}).put()
-
-    self.assert_response(status=400, data={
-      'url': 'http://foo',
-      'h': 'entry',
-      'content': 'foo bar baz',
-    })
-
   def test_create_form_encoded(self):
     resp = self.assert_response(data={
-      'url': 'http://foo',
       'h': 'entry',
       'content': 'foo bar baz',
     })
     self.check_entity(content='foo bar baz')
-
-  # def test_create_form_encoded_token_param(self):
-  #   resp = self.client.post('/micropub', data={
-  #     'h': 'entry',
-  #     'content': 'Micropub+test+of+creating+a+basic+h-entry',
-  #   })
-  #   body = html.unescape(resp.get_data(as_text=True))
-  #   self.assertEqual(201, resp.status_code,
-  #                    f'201 != {resp.status_code}: {body}')
-  #   self.assertEqual('xyz', resp.headers['Location'])
-
-  # def test_create_form_encoded_multiple_categories(self):
-  #   resp = self.assert_response(data={
-  #     'url': 'http://foo',
-  #     'h': 'entry',
-  #     'content': 'foo bar baz',
-  #     'category[]': 'A',
-  #     'category[]': 'B',
-  #   })
-  #   self.check_entity(content='foo bar baz')
 
 #   def test_create_form_encoded_photo_url(self):
 # Content-type: application/x-www-form-urlencoded; charset=utf-8
@@ -155,22 +121,9 @@ class MicropubTest(AppTest):
       'type': ['h-entry'],
       'properties': {
         'content': ['foo bar baz'],
-        'url': ['http://foo'],
       },
     })
     self.check_entity()
-
-#   def test_create_json_multiple_categories(self):
-# {
-#   "type": ["h-entry"],
-#   "properties": {
-#     "content": ["Micropub test of creating an h-entry with a JSON request containing multiple categories. This post should have two categories, test1 and test2."],
-#     "category": [
-#       "test1",
-#       "test2"
-#     ]
-#   }
-# }
 
 #   def test_create_json_html_content(self):
 # {
