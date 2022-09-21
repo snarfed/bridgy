@@ -3,7 +3,6 @@
 Micropub spec: https://www.w3.org/TR/micropub/
 """
 import logging
-import urllib.request, urllib.parse, urllib.error
 
 from flask import jsonify, request
 from granary import microformats2
@@ -20,8 +19,9 @@ from oauth_dropins.github import GitHubAuth
 from oauth_dropins.mastodon import MastodonAuth
 from oauth_dropins.twitter import TwitterAuth
 from mastodon import Mastodon
-from publish import PublishBase
+from models import Publish
 import models
+from publish import PublishBase
 from twitter import Twitter
 import util
 import webmention
@@ -89,7 +89,9 @@ class Micropub(PublishBase):
         'properties': remove_reserved(request.form.to_dict()),
       }
     elif request.files:
-      pass
+      return self.error(error='not_implemented', extra_json={
+        'error_description': 'Multipart/file upload is not yet supported',
+      })
     else:
       return self.error(error='invalid_request', extra_json={
         'error_description': f'Unsupported Content-Type {request.content_type}',
@@ -98,33 +100,21 @@ class Micropub(PublishBase):
     obj = microformats2.json_to_object(mf2)
     logging.debug(f'Converted to ActivityStreams object: {json_dumps(obj, indent=2)}')
 
-    # TODO: is this the right idea to require mf2 url so I can de-dupe?
-    url = request.values.get('url') or util.get_url(obj)
-    assert url
-
-    # done with the sanity checks, create the Publish entity
-    self.entity = self.get_or_add_publish_entity(url)
-    if not self.entity:  # get_or_add_publish_entity() populated the error response
-      return
-
-    # check that we haven't already published this URL
-    if self.entity.status == 'complete' and not appengine_info.LOCAL:
-      return self.error("Sorry, you've already published that page, and Bridgy Publish doesn't support updating existing posts. Details: https://github.com/snarfed/bridgy/issues/84",
-                        extra_json={'original': self.entity.published})
-
-    # TODO: convert form-encoded, multipart to JSON
-
+    # done with the sanity checks, start publishing
     self.preprocess(obj)
-
+    self.entity = Publish(source=self.source.key, mf2=mf2)
+    self.entity.put()
     result = self.source.gr_source.create(obj)
+
     logger.info(f'Result: {result}')
     if result.error_plain:
+      self.entity.status = 'failed'
+      self.entity.put()
       return self.error(result.error_plain)
 
     self.entity.published = result.content
-    if 'url' not in self.entity.published:
-      self.entity.published['url'] = obj.get('url')
     self.entity.type = self.entity.published.get('type') or models.get_type(obj)
+    self.entity.put()
 
     # except HTTPException:
     #   # raised by us, probably via self.error()
@@ -149,7 +139,8 @@ class Micropub(PublishBase):
     self.entity.status = 'complete'
     self.entity.put()
 
-    return '', 201, {'Location': self.entity.published['url']}
+    url = self.entity.published.get('url')
+    return '', 201, ({'Location': url} if url else {})
 
 
 app.add_url_rule('/micropub', view_func=Micropub.as_view('micropub'), methods=['GET', 'POST'])
