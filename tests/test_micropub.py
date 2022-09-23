@@ -74,6 +74,14 @@ class MicropubTest(AppTest):
     self.assert_response(status=401, token=None, data={'x': 'y'},
                          headers={'Authorization': 'foo bar'})
 
+  def test_publish_not_enabled(self):
+    self.source.features = ['listen']
+    self.source.put()
+    self.assert_response(status=403, data={
+      'h': 'entry',
+      'content': 'foo bar baz',
+    })
+
   def test_token_query_param(self):
     self.assert_response(data={
       'h': 'entry',

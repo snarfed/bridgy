@@ -79,6 +79,9 @@ class Micropub(PublishBase):
       return self.error(error='not_implemented')
 
     self.source = self.load_source()
+    if self.source.status == 'disabled' or 'publish' not in self.source.features:
+      return self.error(f'Publish is not enabled for {self.source.label()}',
+                        status=403)
 
     # handle input
     if request.is_json:
@@ -86,7 +89,7 @@ class Micropub(PublishBase):
     elif request.form:
       mf2 = {
         'h': request.values.get('h') or 'entry',
-        'properties': remove_reserved(request.form.to_dict()),
+        'properties': remove_reserved(request.form.to_dict(flat=False)),
       }
     elif request.files:
       return self.error(error='not_implemented', extra_json={
@@ -97,6 +100,7 @@ class Micropub(PublishBase):
         'error_description': f'Unsupported Content-Type {request.content_type}',
       })
 
+    logging.debug(f'Got microformats2: {json_dumps(mf2, indent=2)}')
     obj = microformats2.json_to_object(mf2)
     logging.debug(f'Converted to ActivityStreams object: {json_dumps(obj, indent=2)}')
 
