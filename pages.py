@@ -239,8 +239,10 @@ def user(site, id):
                                .order(-Publish.updated)\
                                .fetch(10)
     for p in publishes:
+      parent = p.key.parent()
       p.pretty_page = util.pretty_link(
-        p.key.parent().id(),
+        parent.id() if parent else p.published.get('url') if p.published else None,
+        text=p.published.get('text') if p.published else None,
         attrs={'class': 'original-post u-url u-name'},
         new_tab=True)
 

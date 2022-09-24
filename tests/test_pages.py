@@ -391,14 +391,19 @@ class PagesTest(testutil.AppTest):
     self.assertEqual(200, resp.status_code)
     self.assertNotIn('most of your recent posts are private', resp.get_data(as_text=True))
 
-  def test_user_page_publish_url_with_unicode_char(self):
-    """Check the custom mf2 we render on social user pages."""
+  def test_user_page_publishes(self):
+    """Check the publish mf2 we render on social user pages."""
     self.sources[0].features = ['publish']
     self.sources[0].put()
 
+    # unicode char
     url = 'https://ptt.com/ransomw…ocks-user-access/'
     Publish(parent=PublishedPage(id=url).key,
             source=self.sources[0].key).put()
+
+    # micropub publish, no parent
+    Publish(source=self.sources[0].key,
+            published={'url': 'http://foo', 'text': 'bar'}).put()
 
     user_url = self.sources[0].bridgy_path()
     resp = self.client.get(user_url)
