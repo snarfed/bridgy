@@ -240,11 +240,18 @@ def user(site, id):
                                .fetch(10)
     for p in publishes:
       parent = p.key.parent()
-      p.pretty_page = util.pretty_link(
-        parent.id() if parent else p.published.get('url') if p.published else None,
-        text=p.published.get('text') if p.published else None,
-        attrs={'class': 'original-post u-url u-name'},
-        new_tab=True)
+      published = p.published if isinstance(p.published, dict) else {}
+      url = parent.id() if parent else published.get('url')
+      text = published.get('text') or published
+
+      if url:
+        p.pretty_page = util.pretty_link(
+          url,
+          text=published.get('text'),
+          attrs={'class': 'original-post u-url u-name'},
+          new_tab=True)
+      else:
+        p.pretty_page = text
 
     vars['publishes'] = publishes
 
