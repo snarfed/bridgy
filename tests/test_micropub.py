@@ -63,20 +63,30 @@ class MicropubTest(AppTest):
     self.assertEqual(400, resp.status_code)
     self.assertEqual({'error': 'not_implemented'}, resp.json)
 
+  def test_create_http_get(self):
+    resp = self.client.get('/micropub?h=entry&content=foo&access_token=towkin')
+    self.assertEqual(405, resp.status_code)
+    self.assertEqual(0, Publish.query().count())
+
   def test_bad_content_type(self):
     resp = self.assert_response(status=400, data='foo', content_type='text/plain')
     self.assertEqual({
       'error': 'invalid_request',
       'error_description': 'Unsupported Content-Type text/plain',
     }, resp.json)
+    self.assertEqual(0, Publish.query().count())
 
   def test_no_token(self):
     self.assert_response(status=401, token=None)
+    self.assertEqual(0, Publish.query().count())
 
   def test_invalid_token(self):
     self.assert_response(status=401, token='bad', data={'x': 'y'})
+    self.assertEqual(0, Publish.query().count())
+
     self.assert_response(status=401, token=None, data={'x': 'y'},
                          headers={'Authorization': 'foo bar'})
+    self.assertEqual(0, Publish.query().count())
 
   def test_publish_not_enabled(self):
     self.source.features = ['listen']
@@ -85,13 +95,15 @@ class MicropubTest(AppTest):
       'h': 'entry',
       'content': 'foo bar baz',
     })
+    self.assertEqual(0, Publish.query().count())
 
   def test_token_query_param(self):
-    self.assert_response(data={
+    self.assert_response(token=None, data={
       'h': 'entry',
       'content': 'foo bar baz',
       'access_token': 'towkin',
     })
+    self.check_entity()
 
   def test_create_form_encoded(self):
     self.assert_response(data={
@@ -160,19 +172,6 @@ foo
       }
     })
     self.check_entity(images=['http://img', 'http://other'])
-
-  # def test_create_json_photo_alt_text(self):
-  #   self.assert_response(json={
-  #     'type': ['h-entry'],
-  #     'properties': {
-  #       'content': ['foo bar baz'],
-  #       'photo': [{
-  #         'value': 'http://img',
-  #         'alt': 'an img',
-  #       }],
-  #     },
-  #   })
-  #   entity = self.check_entity(images=['http://img'])
 
 #   def test_create_json_nested_checkin(self):
 # {
