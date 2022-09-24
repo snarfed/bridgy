@@ -2,6 +2,8 @@
 import html
 from io import BytesIO
 
+from werkzeug.datastructures import MultiDict
+
 import micropub
 from models import Publish, PublishedPage
 from .testutil import AppTest, FakeAuthEntity, FakeSource
@@ -47,6 +49,7 @@ class MicropubTest(AppTest):
       'url': 'http://fake/url',
       'content': 'foo bar baz',
       'granary_message': 'granary message',
+      **kwargs,
     }, publish.published)
 
   def test_query_config(self):
@@ -94,7 +97,24 @@ class MicropubTest(AppTest):
       'h': 'entry',
       'content': 'foo bar baz',
     })
-    self.check_entity(content='foo bar baz')
+    self.check_entity()
+
+  def test_create_form_encoded_single_photo(self):
+    resp = self.assert_response(data={
+      'h': 'entry',
+      'content': 'foo bar baz',
+      'photo': 'http://img',
+    })
+    self.check_entity(images=['http://img'])
+
+  def test_create_form_encoded_multiple_photos(self):
+    resp = self.assert_response(data=MultiDict((
+      ('h', 'entry'),
+      ('content', 'foo bar baz'),
+      ('photo[]', 'http://img'),
+      ('photo[]', 'http://other'),
+    )))
+    self.check_entity(images=['http://img', 'http://other'])
 
 #   def test_create_form_encoded_photo_url(self):
 # Content-type: application/x-www-form-urlencoded; charset=utf-8

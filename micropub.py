@@ -39,7 +39,7 @@ RESERVED_PREFIX = 'mp-'
 
 
 def remove_reserved(params):
-  return {k: v for k, v in params.items()
+  return {k.removesuffix('[]'): v for k, v in params.items()
           if k not in RESERVED_PARAMS and not k.startswith(RESERVED_PREFIX)}
 
 
