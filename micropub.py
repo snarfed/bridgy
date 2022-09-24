@@ -78,6 +78,10 @@ class Micropub(PublishBase):
     elif q:
       return self.error(error='not_implemented')
 
+    # now we assume it's a create/update/delete
+    if request.method != 'POST':
+      return self.error('Expected POST for Micropub create/update/delete', status=405)
+
     self.source = self.load_source()
     if self.source.status == 'disabled' or 'publish' not in self.source.features:
       return self.error(f'Publish is not enabled for {self.source.label()}',
