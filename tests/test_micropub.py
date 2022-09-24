@@ -34,23 +34,29 @@ class MicropubTest(AppTest):
 
     body = resp.get_data(as_text=True)
     self.assertEqual(status, resp.status_code, body)
-    if status // 100 == 2:
+    if status == 201:
       self.assertEqual('http://fake/url', resp.headers['Location'])
     return resp
 
-  def check_entity(self, **kwargs):
+  def check_entity(self, status='complete', **kwargs):
     publish = Publish.query().get()
     self.assertEqual(self.source.key, publish.source)
-    self.assertEqual('complete', publish.status)
+    self.assertEqual(status, publish.status)
     self.assertEqual('post', publish.type)
     self.assertEqual('FakeSource post label', publish.type_label())
-    self.assertEqual({
-      'id': 'fake id',
-      'url': 'http://fake/url',
-      'content': 'foo bar baz',
-      'granary_message': 'granary message',
-      **kwargs,
-    }, publish.published)
+    if status == 'complete':
+      self.assertEqual({
+        'id': 'fake id',
+        'url': 'http://fake/url',
+        'content': 'foo bar baz',
+        'granary_message': 'granary message',
+        **kwargs,
+      }, publish.published)
+    elif status == 'deleted':
+      self.assertEqual({
+        'url': 'http://fake/url',
+        'msg': 'delete 123',
+      }, publish.published)
     return publish
 
   def test_query_config(self):
@@ -61,7 +67,7 @@ class MicropubTest(AppTest):
   def test_query_source_not_implemented(self):
     resp = self.client.get('/micropub?q=source&url=abc')
     self.assertEqual(400, resp.status_code)
-    self.assertEqual({'error': 'not_implemented'}, resp.json)
+    self.assertEqual('not_implemented', resp.json['error'])
 
   def test_create_http_get(self):
     resp = self.client.get('/micropub?h=entry&content=foo&access_token=towkin')
@@ -82,8 +88,6 @@ class MicropubTest(AppTest):
 
   def test_invalid_token(self):
     self.assert_response(status=401, token='bad', data={'x': 'y'})
-    self.assertEqual(0, Publish.query().count())
-
     self.assert_response(status=401, token=None, data={'x': 'y'},
                          headers={'Authorization': 'foo bar'})
     self.assertEqual(0, Publish.query().count())
@@ -95,6 +99,10 @@ class MicropubTest(AppTest):
       'h': 'entry',
       'content': 'foo bar baz',
     })
+    self.assertEqual(0, Publish.query().count())
+
+  def test_unsupported_action(self):
+    self.assert_response(status=400, data={'action': 'update'})
     self.assertEqual(0, Publish.query().count())
 
   def test_token_query_param(self):
@@ -118,6 +126,13 @@ class MicropubTest(AppTest):
       'properties': {
         'content': ['foo bar baz'],
       },
+    })
+    self.check_entity()
+
+  def test_create_silo_error(self):
+    self.assert_response(data={
+      'h': 'entry',
+      'content': 'foo bar baz',
     })
     self.check_entity()
 
@@ -173,107 +188,34 @@ foo
     })
     self.check_entity(images=['http://img', 'http://other'])
 
-#   def test_create_json_nested_checkin(self):
-# {
-#     'type': [
-#         'h-entry'
-#     ],
-#     'properties': {
-#         'published': [
-#             '2017-05-31T12:03:36-07:00'
-#         ],
-#         'content': [
-#             'Lunch meeting'
-#         ],
-#         'checkin': [
-#             {
-#                 'type': [
-#                     'h-card'
-#                 ],
-#                 'properties': {
-#                     'name': ['Los Gorditos'],
-#                     'url': ['https://foursquare.com/v/502c4bbde4b06e61e06d1ebf'],
-#                     'latitude': [45.524330801154],
-#                     'longitude': [-122.68068808051],
-#                     'street-address': ['922 NW Davis St'],
-#                     'locality': ['Portland'],
-#                     'region': ['OR'],
-#                     'country-name': ['United States'],
-#                     'postal-code': ['97209']
-#                 }
-#             }
-#         ]
-#     }
-# }
+  def test_delete_form_encoded(self):
+    self.assert_response(data={
+      'action': 'delete',
+      'url': 'http://fa.ke/123',
+    }, status=204)
+    self.check_entity(status='deleted')
 
-  # def test_create_multipart_photo(self):
-  #   resp = self.assert_response(data={
-  #     'url': 'http://foo',
-  #     'h': 'entry',
-  #     'photo': (BytesIO('photo contents'), 'filename'),
-  #   })
-  #   self.check_entity()
+  def test_delete_json(self):
+    self.assert_response(json={
+      'action': 'delete',
+      'url': 'http://fa.ke/123',
+    }, status=204)
+    self.check_entity(status='deleted')
 
-#   def test_create_multipart_multiple_photos(self):
-# multipart/form-data; boundary=553d9cee2030456a81931fb708ece92c
+  def test_delete_no_url(self):
+    self.assert_response(status=400, data={'action': 'delete'})
+    self.assertEqual(0, Publish.query().count())
 
-# --553d9cee2030456a81931fb708ece92c
-# Content-Disposition: form-data; name="h"
+  def test_delete_not_silo_url(self):
+    self.assert_response(status=400, data={
+      'action': 'delete',
+      'url': 'https://other/123',
+    })
+    self.assertEqual(0, Publish.query().count())
 
-# entry
-# --553d9cee2030456a81931fb708ece92c
-# Content-Disposition: form-data; name="content"
-
-# Hello World!
-# --553d9cee2030456a81931fb708ece92c
-# Content-Disposition: form-data; name="photo"; filename="aaronpk.png"
-# Content-Type: image/png
-# Content-Transfer-Encoding: binary
-
-# ... (binary data) ...
-# --553d9cee2030456a81931fb708ece92c--
-
-#   def test_create_multipart_multiple_categories(self):
-# multipart/form-data; boundary=553d9cee2030456a81931fb708ece92c
-
-# --553d9cee2030456a81931fb708ece92c
-# Content-Disposition: form-data; name="h"
-
-# entry
-# --553d9cee2030456a81931fb708ece92c
-# Content-Disposition: form-data; name="content"
-
-# Hello World!
-# --553d9cee2030456a81931fb708ece92c
-# Content-Disposition: form-data; name="category[]"
-
-# foo
-# --553d9cee2030456a81931fb708ece92c
-# Content-Disposition: form-data; name="category[]"
-
-# bar
-# --553d9cee2030456a81931fb708ece92c--
-
-#   def test_delete_form_encoded():
-#   'postbody' => 'h=entrycontent=This+post+will+be+deleted+when+the+test+succeeds.',
-#   'content_type' => 'form',
-#   'deletebody' => 'action=deleteurl=%%%',
-
-#   def test_undelete_form_encoded():
-#   'postbody' => 'h=entry&amp;content=This+post+will+be+deleted,+and+should+be+restored+after+undeleting+it.',
-#   'content_type' => 'form',
-#   'deletebody' => 'action=delete&amp;url=%%%',
-#   'undeletebody' => 'action=undelete&amp;url=%%%',
-#     400
-
-#   def test_delete_json():
-#   'postbody' => '{"type":["h-entry"],"properties":{"content":["This post will be deleted when the test succeeds."]}}',
-#   'content_type' => 'json',
-#   'deletebody' => '{"action":"delete","url":"%%%"}',
-
-#   def test_undelete_json():
-#   'postbody' => '{"type":["h-entry"],"properties":{"content":["This post will be deleted, and should be restored after undeleting it."]}}',
-#   'content_type' => 'json',
-#   'deletebody' => '{"action":"delete","url":"%%%"}',
-#   'undeletebody' => '{"action":"undelete","url":"%%%"}',
-#     400
+  def test_delete_no_post_id_in_url(self):
+    self.assert_response(status=400, data={
+      'action': 'delete',
+      'url': 'https://fa.ke',
+    })
+    self.assertEqual(0, Publish.query().count())
