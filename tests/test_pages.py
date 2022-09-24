@@ -405,6 +405,9 @@ class PagesTest(testutil.AppTest):
     Publish(source=self.sources[0].key,
             published={'url': 'http://foo', 'text': 'bar'}).put()
 
+    # publish with string published property
+    Publish(source=self.sources[0].key, published='foo bar').put()
+
     user_url = self.sources[0].bridgy_path()
     resp = self.client.get(user_url)
     self.assertEqual(200, resp.status_code)
