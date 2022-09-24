@@ -39,7 +39,9 @@ RESERVED_PREFIX = 'mp-'
 
 
 def remove_reserved(params):
-  return {k.removesuffix('[]'): v for k, v in params.items()
+  # this should really be k.removesuffix('[]'), but removesuffix is new in
+  # Python 3.9, and Circle is on 3.7 right now
+  return {k.rstrip('[]'): v for k, v in params.items()
           if k not in RESERVED_PARAMS and not k.startswith(RESERVED_PREFIX)}
 
 
