@@ -171,9 +171,9 @@ class Micropub(PublishBase):
 
     url = self.entity.published.get('url')
     if action == 'create':
-      return '', 201, ({'Location': url} if url else {})
+      return result.content, 201, ({'Location': url} if url else {})
     else:
-      return '', 204
+      return result.content, 200
 
 
 app.add_url_rule('/micropub', view_func=Micropub.as_view('micropub'), methods=['GET', 'POST'])

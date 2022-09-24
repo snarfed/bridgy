@@ -192,14 +192,14 @@ foo
     self.assert_response(data={
       'action': 'delete',
       'url': 'http://fa.ke/123',
-    }, status=204)
+    }, status=200)
     self.check_entity(status='deleted')
 
   def test_delete_json(self):
     self.assert_response(json={
       'action': 'delete',
       'url': 'http://fa.ke/123',
-    }, status=204)
+    }, status=200)
     self.check_entity(status='deleted')
 
   def test_delete_no_url(self):
