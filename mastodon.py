@@ -38,6 +38,7 @@ class StartBase(oauth_dropins.mastodon.Start):
   REDIRECT_PATHS = (
     '/mastodon/callback',
     '/publish/mastodon/finish',
+    '/micropub-token/mastodon/finish',
     '/mastodon/delete/finish',
     '/delete/finish',
   )

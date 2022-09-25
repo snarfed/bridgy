@@ -4,7 +4,7 @@ Micropub spec: https://www.w3.org/TR/micropub/
 """
 import logging
 
-from flask import jsonify, request
+from flask import jsonify, render_template, request
 from granary import microformats2
 from granary import source as gr_source
 from oauth_dropins import (
@@ -96,8 +96,9 @@ class Micropub(PublishBase):
     elif q:
       return self.error('not_implemented', 'Only config query is supported')
 
-    # now we assume it's a create/update/delete
-    if request.method != 'POST':
+    if request.method == 'GET':
+      return render_template('micropub.html')
+    elif request.method != 'POST':
       return self.error('invalid_request',
                         'Expected POST for Micropub create/delete',
                         status=405)
@@ -188,21 +189,21 @@ class FlickrToken(oauth_flickr.Callback):
   def finish(self, auth_entity, state=None):
     if auth_entity:
       flash(f'Your Micropub token is <code>{auth_entity.token_secret}</code>')
-    return redirect(f'/twitter/{auth_entity.key_id()}')
+    return redirect(f'/flickr/{auth_entity.key_id()}')
 
 
 class GitHubToken(oauth_github.Callback):
   def finish(self, auth_entity, state=None):
     if auth_entity:
       flash(f'Your Micropub token is <code>{auth_entity.access_token_str}</code>')
-    return redirect(f'/twitter/{auth_entity.key_id()}')
+    return redirect(f'/github/{auth_entity.key_id()}')
 
 
 class MastodonToken(oauth_mastodon.Callback):
   def finish(self, auth_entity, state=None):
     if auth_entity:
       flash(f'Your Micropub token is <code>{auth_entity.access_token_str}</code>')
-    return redirect(f'/twitter/{auth_entity.key_id()}')
+    return redirect(f'/mastodon/{auth_entity.key_id()}')
 
 
 class TwitterToken(oauth_twitter.Callback):

@@ -69,8 +69,8 @@ class MicropubTest(AppTest):
     self.assertEqual(400, resp.status_code)
     self.assertEqual('not_implemented', resp.json['error'])
 
-  def test_create_http_get(self):
-    resp = self.client.get('/micropub?h=entry&content=foo&access_token=towkin')
+  def test_create_http_put(self):
+    resp = self.client.put('/micropub?h=entry&content=foo&access_token=towkin')
     self.assertEqual(405, resp.status_code)
     self.assertEqual(0, Publish.query().count())
 
