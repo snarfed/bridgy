@@ -7,23 +7,31 @@ import logging
 from flask import jsonify, request
 from granary import microformats2
 from granary import source as gr_source
-from oauth_dropins.webutil import appengine_info
+from oauth_dropins import (
+  flickr as oauth_flickr,
+  github as oauth_github,
+  mastodon as oauth_mastodon,
+  twitter as oauth_twitter,
+)
+from oauth_dropins.flickr import FlickrAuth
+from oauth_dropins.github import GitHubAuth
+from oauth_dropins.mastodon import MastodonAuth
+from oauth_dropins.twitter import TwitterAuth
+from oauth_dropins.webutil import appengine_info, flask_util
+from oauth_dropins.webutil.flask_util import flash
 from oauth_dropins.webutil.util import json_dumps, json_loads
 from werkzeug.exceptions import HTTPException
 
 from flask_app import app
 from flickr import Flickr
 from github import GitHub
-from oauth_dropins.flickr import FlickrAuth
-from oauth_dropins.github import GitHubAuth
-from oauth_dropins.mastodon import MastodonAuth
-from oauth_dropins.twitter import TwitterAuth
 from mastodon import Mastodon
 from models import Publish
 import models
 from publish import PublishBase
 from twitter import Twitter
 import util
+from util import redirect
 import webmention
 
 logger = logging.getLogger(__name__)
@@ -176,4 +184,44 @@ class Micropub(PublishBase):
       return result.content, 200
 
 
+class FlickrToken(oauth_flickr.Callback):
+  def finish(self, auth_entity, state=None):
+    if auth_entity:
+      flash(f'Your Micropub token is <code>{auth_entity.token_secret}</code>')
+    return redirect(f'/twitter/{auth_entity.key_id()}')
+
+
+class GitHubToken(oauth_github.Callback):
+  def finish(self, auth_entity, state=None):
+    if auth_entity:
+      flash(f'Your Micropub token is <code>{auth_entity.access_token_str}</code>')
+    return redirect(f'/twitter/{auth_entity.key_id()}')
+
+
+class MastodonToken(oauth_mastodon.Callback):
+  def finish(self, auth_entity, state=None):
+    if auth_entity:
+      flash(f'Your Micropub token is <code>{auth_entity.access_token_str}</code>')
+    return redirect(f'/twitter/{auth_entity.key_id()}')
+
+
+class TwitterToken(oauth_twitter.Callback):
+  def finish(self, auth_entity, state=None):
+    if auth_entity:
+      flash(f'Your Micropub token is <code>{auth_entity.token_secret}</code>')
+    return redirect(f'/twitter/{auth_entity.key_id()}')
+
+
 app.add_url_rule('/micropub', view_func=Micropub.as_view('micropub'), methods=['GET', 'POST'])
+
+app.add_url_rule('/micropub-token/flickr/start', view_func=oauth_flickr.Start.as_view('flickr_micropub_token_finish', '/micropub-token/flickr/finish'), methods=['POST'])
+app.add_url_rule('/micropub-token/flickr/finish', view_func=FlickrToken.as_view('micropub_token_flickr_finish', 'unused'))
+
+app.add_url_rule('/micropub-token/github/start', view_func=oauth_github.Start.as_view('github_micropub_token_finish', '/micropub-token/github/finish'), methods=['POST'])
+app.add_url_rule('/micropub-token/github/finish', view_func=GitHubToken.as_view('micropub_token_github_finish', 'unused'))
+
+app.add_url_rule('/micropub-token/mastodon/start', view_func=oauth_mastodon.Start.as_view('mastodon_micropub_token_finish', '/micropub-token/mastodon/finish'), methods=['POST'])
+app.add_url_rule('/micropub-token/mastodon/finish', view_func=MastodonToken.as_view('micropub_token_mastodon_finish', 'unused'))
+
+app.add_url_rule('/micropub-token/twitter/start', view_func=oauth_twitter.Start.as_view('twitter_micropub_token_finish', '/micropub-token/twitter/finish'), methods=['POST'])
+app.add_url_rule('/micropub-token/twitter/finish', view_func=TwitterToken.as_view('micropub_token_twitter_finish', 'unused'))

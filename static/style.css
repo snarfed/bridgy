@@ -256,6 +256,10 @@ button[disabled]:hover {
   background-color: lightgray !important;
 }
 
+#preview-ui {
+  margin-top: 1em;
+}
+
 #preview-ui > * {
   vertical-align: middle;
 }
@@ -271,12 +275,12 @@ button[disabled]:hover {
   color: #337AB7;
 }
 
-#delete-button, #bad-button {
+.disable-button, #bad-button {
   border-color: red;
   color: red;
 }
 
-#delete-button:hover, #bad-button:hover {
+.disable-button:hover, #bad-button:hover {
   background-color: #FCC;
 }
 
@@ -287,6 +291,16 @@ button[disabled]:hover {
 
 #good-button:hover {
   background-color: #DED;
+}
+
+#micropub-token-button, #disable-publish-button {
+  margin-top: -6px;
+}
+
+.mastodon-button {
+  height: 50px;
+  padding: 6px;
+  background-color: #323946;
 }
 
 #preview .verb {
@@ -301,12 +315,6 @@ button[disabled]:hover {
   font-family: inherit;
   font-size: inherit;
   max-width: 98%;
-}
-
-.mastodon-button {
-  height: 50px;
-  padding: 6px;
-  background-color: #323946;
 }
 
 #preview-text hr {
