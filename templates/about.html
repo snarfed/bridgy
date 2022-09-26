@@ -86,7 +86,9 @@ service.</a>
 <li><a href="#publishing">What do you mean, <em>publishing</em>?</a></li>
 <li><a href="#microformats">How does it decide which parts of my web page to include?</a></li>
 <li><a href="#publish-types">What can I publish, exactly?</a></li>
-<li><a href="#webmentions">Can I do this automatically, whenever I post something new on my web site?</a></li>
+<li><a href="#publish-automatically">Can I do this automatically, whenever I post something new on my web site?</a></li>
+<li><a href="#webmentions">How do I automate Bridgy Publish with webmentions?</a></li>
+<li><a href="#micropub">How do I use Micropub?</a></li>
 <li><a href="#reply">How do I reply to a tweet or toot from my web site?</a></li>
 <li><a href="#like">How do I like, favorite, retweet, or boost from my web site?</a></li>
 <li><a href="#picture">How do I post a picture?</a></li>
@@ -804,42 +806,36 @@ previewing a post to see how it will look!
 </li>
 </p></li>
 
-<li id="webmentions" class="question">Can I do this automatically, whenever
-  I post something new on my web site?</li>
+<li id="publish-automatically" class="question">Can I do this automatically, whenever I post something new on my web site?</li>
 <li class="answer">
-<p>Definitely! Just send
-a <a href="http://indiewebify.me/#send-webmentions">webmention</a>. Your server
-may be sending them already! Webmentions are pretty new,
-but <a href="https://indieweb.org/webmention#Publishing_Software">more and
-more web servers</a> are adding support for them. If you're not sure whether
-your server can send them, feel free
-to <a href="https://indieweb.org/IRC">ask on #indiewebcamp</a>, or you can
-even write a script to
-<a href="https://indieweb.org/webmention#How_to_Test_Webmentions">send them
-yourself</a>. It's just a single HTTP request!
+<p>Definitely! You can automate Bridgy Publish via either <a href="#webmentions">webmention</a> or <a href="#micropub">Micropub</a>.</p>
+</li>
+
+<li id="webmentions" class="question">How do I automate Bridgy Publish with webmentions?</li>
+<li class="answer">
+<p>Just send a <a href="http://indiewebify.me/#send-webmentions">webmention</a>. Your server may be sending them already! Webmentions are pretty new, but <a href="https://indieweb.org/webmention#Publishing_Software">more and more web servers</a> are adding support for them. If you're not sure whether your server can send them, feel free to <a href="https://indieweb.org/IRC">ask on #indiewebcamp</a>, or you can even write a script to <a href="https://indieweb.org/webmention#How_to_Test_Webmentions">send them yourself</a>. It's just a single HTTP request!
 </p>
-<p id="publish-backlink">Bridgy's webmention endpoint
-is <code>https://brid.gy/publish/webmention</code>, and the target URL
-should be one of:
+<p id="publish-backlink">Bridgy's webmention endpoint is <code>https://brid.gy/publish/webmention</code>, and the target URL should be one of:
 <ul>
 <li><code>https://brid.gy/publish/flickr</code></li>
 <li><code>https://brid.gy/publish/github</code></li>
 <li><code>https://brid.gy/publish/mastodon</code></li>
 <li><code>https://brid.gy/publish/twitter</code></li>
 </ul>
-Your post HTML must also include that same
-target URL to verify your intent to publish. It doesn't have to be in your
-<code>e-content</code> or <code>h-entry</code>; it can appear anywhere on the
-page.
+Your post HTML must also include that same target URL to verify your intent to publish. It doesn't have to be in your <code>e-content</code> or <code>h-entry</code>; it can appear anywhere on the page.
 </p>
-<p>If your server sends webmentions, just include any of these invisible links
-in your post to publish automatically!
+<p>If your server sends webmentions, just include any of these invisible links in your post to publish automatically!
 <pre>&lt;a href="<a href='https://brid.gy/publish/flickr'>https://brid.gy/publish/flickr</a>"&gt;&lt;/a&gt;
 &lt;a href="<a href='https://brid.gy/publish/github'>https://brid.gy/publish/github</a>"&gt;&lt;/a&gt;
 &lt;a href="<a href='https://brid.gy/publish/mastodon'>https://brid.gy/publish/mastodon</a>"&gt;&lt;/a&gt;
 &lt;a href="<a href='https://brid.gy/publish/twitter'>https://brid.gy/publish/twitter</a>"&gt;&lt;/a&gt;
 </pre>
 </p>
+</li>
+
+<li id="micropub" class="question">How do I use Micropub?</li>
+<li>
+<p><a href="https://micropub.net/">Micropub</a> is a standard protocol for creating, updating, and deleting posts. Usually it's used with web sites, but you can use it with Bridgy Publish too. The endpoint is <code>https://brid.gy/micropub</code>, it supports create and delete and photo/video URLs but not update or file upload. Once you've enabled publish on your user page, there will be a <em>Get token</em> button, use that as your Micropub token.</p>
 </li>
 
 <li id="reply" class="question">How do I reply to a tweet or toot from my web site?</li>
