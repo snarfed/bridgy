@@ -29,6 +29,7 @@ class Flickr(models.Source):
   SHORT_NAME = 'flickr'
   TRANSIENT_ERROR_HTTP_CODES = ('400',)
   CAN_PUBLISH = True
+  AUTH_MODEL = oauth_flickr.FlickrAuth
   MICROPUB_TOKEN_PROPERTY = 'token_secret'
   URL_CANONICALIZER = util.UrlCanonicalizer(
     domain=GR_CLASS.DOMAIN,

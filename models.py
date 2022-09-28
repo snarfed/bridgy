@@ -97,7 +97,9 @@ class Source(StringIdModel, metaclass=SourceMeta):
   GR_CLASS = None
   # oauth-dropins Start class
   OAUTH_START = None
-  # whether Bridgy supports listen for this silo - this is unlikely, so we default to True
+  # oauth-dropins datastore model class
+  AUTH_MODEL = None
+  # whether Bridgy supports listen for this silo
   CAN_LISTEN = True
   # whether Bridgy supports publish for this silo
   CAN_PUBLISH = None

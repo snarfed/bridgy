@@ -27,12 +27,6 @@ app.add_url_rule('/micropub-token/fake/finish',
 
 class MicropubTest(AppTest):
 
-  @classmethod
-  def setUpClass(cls):
-    micropub.SOURCE_CLASSES = (
-      (FakeSource, FakeAuthEntity, FakeAuthEntity.access_token),
-    ) + micropub.SOURCE_CLASSES
-
   def setUp(self):
     super().setUp()
 

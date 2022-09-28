@@ -38,12 +38,6 @@ import webmention
 
 logger = logging.getLogger(__name__)
 
-SOURCE_CLASSES = (
-  (Twitter, TwitterAuth, TwitterAuth.token_secret),
-  (Mastodon, MastodonAuth, MastodonAuth.access_token_str),
-  (GitHub, GitHubAuth, GitHubAuth.access_token_str),
-  (Flickr, FlickrAuth, FlickrAuth.token_secret),
-)
 RESERVED_PARAMS = ('access_token', 'action', 'q', 'url')
 RESERVED_PREFIX = 'mp-'
 
@@ -81,10 +75,12 @@ class Micropub(PublishBase):
                         'No token found in Authorization header or access_token param',
                         status=401)
 
-    for src_cls, auth_cls, prop in SOURCE_CLASSES:
-      auth_entity = auth_cls.query(prop == token).get()
-      if auth_entity:
-        return src_cls.query(src_cls.auth_entity == auth_entity.key).get()
+    for src_cls in models.sources.values():
+      if src_cls.CAN_PUBLISH:
+        token_prop = getattr(src_cls.AUTH_MODEL, src_cls.MICROPUB_TOKEN_PROPERTY)
+        auth_entity = src_cls.AUTH_MODEL.query(token_prop == token).get()
+        if auth_entity:
+          return src_cls.query(src_cls.auth_entity == auth_entity.key).get()
 
     return self.error('unauthorized', 'No user found with that token', status=401)
 
@@ -188,6 +184,7 @@ class Micropub(PublishBase):
 
 
 class GetToken(View):
+  """OAuth callback for 'Get token' button."""
   def finish(self, auth_entity, state=None):
     if not state:
       self.error('If you want a Micropub token, please approve the prompt.')

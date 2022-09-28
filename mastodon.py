@@ -4,7 +4,7 @@ import logging
 from flask import render_template, request
 from granary import mastodon as gr_mastodon
 from granary import source as gr_source
-import oauth_dropins.mastodon
+from oauth_dropins import mastodon as oauth_mastodon
 from oauth_dropins.webutil.flask_util import flash
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
@@ -29,10 +29,10 @@ PUBLISH_SCOPES = LISTEN_SCOPES + (
   'write:favourites',
   'write:media',
 )
-SCOPE_SEPARATOR = oauth_dropins.mastodon.Start.SCOPE_SEPARATOR
+SCOPE_SEPARATOR = oauth_mastodon.Start.SCOPE_SEPARATOR
 
 
-class StartBase(oauth_dropins.mastodon.Start):
+class StartBase(oauth_mastodon.Start):
   """Abstract base OAuth starter class with our redirect URLs."""
   DEFAULT_SCOPE = ''
   REDIRECT_PATHS = (
@@ -59,6 +59,7 @@ class Mastodon(models.Source):
   OAUTH_START = StartBase
   SHORT_NAME = 'mastodon'
   CAN_PUBLISH = True
+  AUTH_MODEL = oauth_mastodon.MastodonAuth
   MICROPUB_TOKEN_PROPERTY = 'access_token_str'
   HAS_BLOCKS = True
   TYPE_LABELS = {
@@ -80,7 +81,7 @@ class Mastodon(models.Source):
     """Creates and returns a :class:`Mastodon` entity.
 
     Args:
-      auth_entity: :class:`oauth_dropins.mastodon.MastodonAuth`
+      auth_entity: :class:`oauth_mastodon.MastodonAuth`
       kwargs: property values
     """
     assert 'username' not in kwargs
@@ -189,7 +190,7 @@ class Start(StartBase):
       redirect(request.path)
 
 
-class Callback(oauth_dropins.mastodon.Callback):
+class Callback(oauth_mastodon.Callback):
   def finish(self, auth_entity, state=None):
     source = util.maybe_add_or_delete_source(Mastodon, auth_entity, state)
 
@@ -206,6 +207,6 @@ app.add_url_rule('/mastodon/start',
                  view_func=Start.as_view('mastodon_start', '/mastodon/callback'), methods=['POST'])
 app.add_url_rule('/mastodon/callback', view_func=Callback.as_view('mastodon_callback', 'unused'))
 app.add_url_rule('/mastodon/delete/finish',
-                 view_func=oauth_dropins.mastodon.Callback.as_view('mastodon_delete_finish', '/delete/finish'))
+                 view_func=oauth_mastodon.Callback.as_view('mastodon_delete_finish', '/delete/finish'))
 app.add_url_rule('/mastodon/publish/start',
                  view_func=StartBase.as_view('mastodon_publish_finish', '/publish/mastodon/finish', scopes=PUBLISH_SCOPES), methods=['POST'])

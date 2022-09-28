@@ -218,12 +218,14 @@ FakeStart = util.oauth_starter(OAuthStart)
 class FakeSource(Source):
   GR_CLASS = FakeGrSource
   OAUTH_START = FakeStart
+  AUTH_MODEL = FakeAuthEntity
   SHORT_NAME = 'fake'
   TYPE_LABELS = {'post': 'FakeSource post label'}
   RATE_LIMITED_POLL = timedelta(hours=30)
   URL_CANONICALIZER = util.UrlCanonicalizer(domain=GR_CLASS.DOMAIN)
   PATH_BLOCKLIST = (re.compile('^/blocklisted/.*'),)
   HAS_BLOCKS = True
+  CAN_PUBLISH = True
   MICROPUB_TOKEN_PROPERTY = 'access_token'
 
   string_id_counter = 1
