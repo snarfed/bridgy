@@ -5,6 +5,8 @@ Micropub spec: https://www.w3.org/TR/micropub/
 import logging
 
 from flask import jsonify, render_template, request
+from flask.views import View
+from google.cloud import ndb
 from granary import microformats2
 from granary import source as gr_source
 from oauth_dropins import (
@@ -17,7 +19,7 @@ from oauth_dropins.flickr import FlickrAuth
 from oauth_dropins.github import GitHubAuth
 from oauth_dropins.mastodon import MastodonAuth
 from oauth_dropins.twitter import TwitterAuth
-from oauth_dropins.webutil import appengine_info, flask_util
+from oauth_dropins.webutil import appengine_info
 from oauth_dropins.webutil.flask_util import flash
 from oauth_dropins.webutil.util import json_dumps, json_loads
 from werkzeug.exceptions import HTTPException
@@ -185,32 +187,44 @@ class Micropub(PublishBase):
       return result.content, 200
 
 
-class FlickrToken(oauth_flickr.Callback):
+class GetToken(View):
   def finish(self, auth_entity, state=None):
-    if auth_entity:
-      flash(f'Your Micropub token is <code>{auth_entity.token_secret}</code>')
-    return redirect(f'/flickr/{auth_entity.key_id()}')
+    if not state:
+      self.error('If you want a Micropub token, please approve the prompt.')
+      return redirect('/')
+
+    source = ndb.Key(urlsafe=state).get()
+    if auth_entity is None:
+      self.error('If you want a Micropub token, please approve the prompt.')
+    elif not auth_entity.is_authority_for(source.auth_entity):
+      self.error(f'To get a Micropub token for {source.label_name()}, please log into {source.GR_CLASS.NAME} as that account.')
+    else:
+      token = getattr(auth_entity, source.MICROPUB_TOKEN_PROPERTY)
+      flash(f'Your Micropub token for {source.label()} is: <code>{token}</code>')
+
+    return redirect(source.bridgy_url())
+
+  def error(self, msg):
+    logging.info(msg)
+    flash(msg)
 
 
-class GitHubToken(oauth_github.Callback):
-  def finish(self, auth_entity, state=None):
-    if auth_entity:
-      flash(f'Your Micropub token is <code>{auth_entity.access_token_str}</code>')
-    return redirect(f'/github/{auth_entity.key_id()}')
+# We want Callback.get() and GetToken.finish(), so put Callback first and
+# override finish.
+class FlickrToken(oauth_flickr.Callback, GetToken):
+  finish = GetToken.finish
 
 
-class MastodonToken(oauth_mastodon.Callback):
-  def finish(self, auth_entity, state=None):
-    if auth_entity:
-      flash(f'Your Micropub token is <code>{auth_entity.access_token_str}</code>')
-    return redirect(f'/mastodon/{auth_entity.key_id()}')
+class GitHubToken(oauth_github.Callback, GetToken):
+  finish = GetToken.finish
 
 
-class TwitterToken(oauth_twitter.Callback):
-  def finish(self, auth_entity, state=None):
-    if auth_entity:
-      flash(f'Your Micropub token is <code>{auth_entity.token_secret}</code>')
-    return redirect(f'/twitter/{auth_entity.key_id()}')
+class MastodonToken(oauth_mastodon.Callback, GetToken):
+  finish = GetToken.finish
+
+
+class TwitterToken(oauth_twitter.Callback, GetToken):
+  finish = GetToken.finish
 
 
 app.add_url_rule('/micropub', view_func=Micropub.as_view('micropub'), methods=['GET', 'POST'])

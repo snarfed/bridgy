@@ -36,6 +36,7 @@ class Twitter(models.Source):
   }
   TRANSIENT_ERROR_HTTP_CODES = ('404',)
   CAN_PUBLISH = True
+  MICROPUB_TOKEN_PROPERTY = 'token_secret'
   HAS_BLOCKS = True
   URL_CANONICALIZER = gr_twitter.Twitter.URL_CANONICALIZER
   USERNAME_KEY_ID = True

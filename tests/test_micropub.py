@@ -1,12 +1,28 @@
 """Unit tests for micropub.py."""
 import html
 from io import BytesIO
+import urllib.request, urllib.parse, urllib.error
 
+from flask import get_flashed_messages
 from werkzeug.datastructures import MultiDict
 
+from flask_app import app
 import micropub
 from models import Publish, PublishedPage
 from .testutil import AppTest, FakeAuthEntity, FakeSource
+import util
+
+
+class FakeToken(micropub.GetToken):
+  # populated in setUp()
+  auth_entity = None
+  oauth_state = None
+
+  def dispatch_request(self):
+    return self.finish(self.auth_entity, state=self.oauth_state)
+
+app.add_url_rule('/micropub-token/fake/finish',
+                 view_func=FakeToken.as_view('test_micropub_token_fake'))
 
 
 class MicropubTest(AppTest):
@@ -20,11 +36,13 @@ class MicropubTest(AppTest):
   def setUp(self):
     super().setUp()
 
-    self.auth_entity = FakeAuthEntity(id='0123456789', access_token='towkin')
+    self.auth_entity = FakeToken.auth_entity = \
+      FakeAuthEntity(id='0123456789', access_token='towkin')
     auth_key = self.auth_entity.put()
     self.source = FakeSource(id='foo.com', features=['publish'],
                              auth_entity=auth_key)
     self.source.put()
+    FakeToken.oauth_state = self.source.key.urlsafe().decode()
 
   def assert_response(self, status=201, token='towkin', **kwargs):
     if token:
@@ -219,3 +237,37 @@ foo
       'url': 'https://fa.ke',
     })
     self.assertEqual(0, Publish.query().count())
+
+  def test_get_token(self):
+    resp = self.client.get('/micropub-token/fake/finish', data={
+      'source_key': self.source.key.urlsafe().decode(),
+    })
+    self.assertEqual(302, resp.status_code)
+    self.assertEqual('http://localhost/fake/foo.com', resp.headers['Location'])
+    self.assertEqual(
+      ['Your Micropub token for foo.com (FakeSource) is: <code>towkin</code>'],
+      get_flashed_messages())
+
+  def test_get_token_wrong_user(self):
+    other_source = FakeSource(id='other').put()
+    FakeToken.oauth_state = other_source.urlsafe().decode()
+
+    resp = self.client.get('/micropub-token/fake/finish', data={
+      'source_key': self.source.key.urlsafe().decode(),
+    })
+    self.assertEqual(302, resp.status_code)
+    self.assertEqual('http://localhost/fake/other', resp.headers['Location'])
+    self.assertEqual(
+      ['To get a Micropub token for other, please log into FakeSource as that account.'],
+      get_flashed_messages())
+
+  def test_get_token_oauth_decline(self):
+    FakeToken.auth_entity = None
+    resp = self.client.get('/micropub-token/fake/finish', data={
+      'source_key': self.source.key.urlsafe().decode(),
+    })
+    self.assertEqual(302, resp.status_code)
+    self.assertEqual('http://localhost/fake/foo.com', resp.headers['Location'])
+    self.assertEqual(
+      ['If you want a Micropub token, please approve the prompt.'],
+      get_flashed_messages())

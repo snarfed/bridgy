@@ -101,6 +101,8 @@ class Source(StringIdModel, metaclass=SourceMeta):
   CAN_LISTEN = True
   # whether Bridgy supports publish for this silo
   CAN_PUBLISH = None
+  # string name of oauth-dropins auth entity property to use as Micropub token
+  MICROPUB_TOKEN_PROPERTY = None
   # whether this source should poll automatically, or only when triggered
   # (eg Instagram)
   AUTO_POLL = True

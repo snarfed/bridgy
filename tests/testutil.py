@@ -224,6 +224,7 @@ class FakeSource(Source):
   URL_CANONICALIZER = util.UrlCanonicalizer(domain=GR_CLASS.DOMAIN)
   PATH_BLOCKLIST = (re.compile('^/blocklisted/.*'),)
   HAS_BLOCKS = True
+  MICROPUB_TOKEN_PROPERTY = 'access_token'
 
   string_id_counter = 1
   gr_source = FakeGrSource()

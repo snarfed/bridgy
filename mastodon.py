@@ -59,6 +59,7 @@ class Mastodon(models.Source):
   OAUTH_START = StartBase
   SHORT_NAME = 'mastodon'
   CAN_PUBLISH = True
+  MICROPUB_TOKEN_PROPERTY = 'access_token_str'
   HAS_BLOCKS = True
   TYPE_LABELS = {
     'post': 'toot',

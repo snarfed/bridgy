@@ -40,6 +40,7 @@ class GitHub(Source):
   BACKFEED_REQUIRES_SYNDICATION_LINK = True
   DISABLE_HTTP_CODES = Source.DISABLE_HTTP_CODES + ('403',)
   CAN_PUBLISH = True
+  MICROPUB_TOKEN_PROPERTY = 'access_token_str'
   URL_CANONICALIZER = util.UrlCanonicalizer(domain=GR_CLASS.DOMAIN, fragment=True)
   # This makes us backfeed issue/PR comments to previous comments on the same
   # issue/PR.
