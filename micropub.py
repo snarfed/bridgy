@@ -197,7 +197,7 @@ class GetToken(View):
       self.error(f'To get a Micropub token for {source.label_name()}, please log into {source.GR_CLASS.NAME} as that account.')
     else:
       token = getattr(auth_entity, source.MICROPUB_TOKEN_PROPERTY)
-      flash(f'Your Micropub token for {source.label()} is: <code>{token}</code>')
+      flash(f'Your <a href="/about#micropub">Micropub token</a> for {source.label()} is: <code>{token}</code>')
 
     return redirect(source.bridgy_url())
 

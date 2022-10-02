@@ -239,7 +239,7 @@ foo
     self.assertEqual(302, resp.status_code)
     self.assertEqual('http://localhost/fake/foo.com', resp.headers['Location'])
     self.assertEqual(
-      ['Your Micropub token for foo.com (FakeSource) is: <code>towkin</code>'],
+      ['Your <a href="/about#micropub">Micropub token</a> for foo.com (FakeSource) is: <code>towkin</code>'],
       get_flashed_messages())
 
   def test_get_token_wrong_user(self):
