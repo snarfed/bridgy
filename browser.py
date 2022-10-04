@@ -8,7 +8,6 @@ from flask import jsonify, make_response, request
 from flask.views import View
 from google.cloud import ndb
 from granary import as1
-from granary import microformats2
 from oauth_dropins.webutil import flask_util
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
@@ -118,7 +117,7 @@ class BrowserSource(Source):
 
     activities = [json_loads(a.activity_json) for a in activities]
     for a in activities:
-      microformats2.prefix_image_urls(a, IMAGE_PROXY_URL_BASE)
+      as1.prefix_urls(a, 'image', IMAGE_PROXY_URL_BASE)
 
     return self.gr_source.make_activities_base_response(activities)
 

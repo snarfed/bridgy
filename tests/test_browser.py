@@ -4,7 +4,7 @@ import copy
 import datetime
 import html
 
-from granary import microformats2
+from granary import as1
 from mox3 import mox
 from oauth_dropins.webutil.util import json_dumps, json_loads
 from oauth_dropins.webutil import util
@@ -74,7 +74,7 @@ class BrowserSourceTest(testutil.AppTest):
 
   def test_get_comment(self):
     expected = copy.deepcopy(self.activities[0]['object']['replies']['items'][0])
-    microformats2.prefix_image_urls(expected, browser.IMAGE_PROXY_URL_BASE)
+    as1.prefix_urls(expected, 'image', browser.IMAGE_PROXY_URL_BASE)
 
     got = self.source.get_comment('1_2_a', activity=self.activities[0])
     self.assert_equals(expected, got)
@@ -87,7 +87,7 @@ class BrowserSourceTest(testutil.AppTest):
 
   def test_get_like(self):
     expected = copy.deepcopy(self.activities[0]['object']['tags'][0])
-    microformats2.prefix_image_urls(expected, browser.IMAGE_PROXY_URL_BASE)
+    as1.prefix_urls(expected, 'image', browser.IMAGE_PROXY_URL_BASE)
 
     got = self.source.get_like('unused', 'unused', 'alice',
                                activity=self.activities[0])
