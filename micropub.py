@@ -135,7 +135,7 @@ class Micropub(PublishBase):
     obj = microformats2.json_to_object(mf2)
     logging.debug(f'Converted to ActivityStreams object: {json_dumps(obj, indent=2)}')
 
-    canonicalized = self.source.URL_CANONICALIZER(url) or ''
+    canonicalized = self.source.URL_CANONICALIZER(url or '') or ''
     post_id = self.source.gr_source.post_id(canonicalized)
     if action == 'delete':
       if not url:

@@ -222,7 +222,9 @@ class FakeSource(Source):
   SHORT_NAME = 'fake'
   TYPE_LABELS = {'post': 'FakeSource post label'}
   RATE_LIMITED_POLL = timedelta(hours=30)
-  URL_CANONICALIZER = util.UrlCanonicalizer(domain=GR_CLASS.DOMAIN)
+  URL_CANONICALIZER = util.UrlCanonicalizer(domain=GR_CLASS.DOMAIN,
+                                            # test these code paths
+                                            approve='NO', reject='NO')
   PATH_BLOCKLIST = (re.compile('^/blocklisted/.*'),)
   HAS_BLOCKS = True
   CAN_PUBLISH = True
