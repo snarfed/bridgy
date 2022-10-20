@@ -31,7 +31,10 @@ NOW = datetime.now(timezone.utc)
 
 class FakeAuthEntity(BaseAuth):
   user_json = ndb.TextProperty()
-  access_token = ndb.StringProperty()
+  access_token_str = ndb.StringProperty()
+
+  def access_token(self):
+    return self.access_token_str
 
 
 class FakeGrSource(gr_source.Source):
@@ -228,7 +231,7 @@ class FakeSource(Source):
   PATH_BLOCKLIST = (re.compile('^/blocklisted/.*'),)
   HAS_BLOCKS = True
   CAN_PUBLISH = True
-  MICROPUB_TOKEN_PROPERTY = 'access_token'
+  MICROPUB_TOKEN_PROPERTY = 'access_token_str'
 
   string_id_counter = 1
   gr_source = FakeGrSource()

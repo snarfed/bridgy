@@ -103,15 +103,18 @@ def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True,
   # original posts are only from the author themselves
   obj_author = obj.get('author', {})
   activity_author = activity.get('actor', {})
+  source_id = source.user_tag_id()
+  source_username = source.key.id()
   author_id = obj_author.get('id') or activity_author.get('id') or ''
   author_username = obj_author.get('username') or activity_author.get('username') or ''
   if source.USERNAME_KEY_ID:
+    source_id = source_id.lower()
+    source_username = source_username.lower()
     author_id = author_id.lower()
     author_username = author_username.lower()
 
-  if (author_id and author_id != source.user_tag_id() and
-      author_username != source.key.id()):
-    logger.info(f"Demoting original post links because user {source.user_tag_id()} doesn't match author id {author_id} username {author_username}")
+  if author_id and author_id != source_id and author_username != source_username:
+    logger.info(f"Demoting original post links because user {source_id} {source_username} doesn't match author {author_id} {author_username}")
     # this is someone else's post, so all links must be mentions
     mentions.update(originals)
     originals = set()

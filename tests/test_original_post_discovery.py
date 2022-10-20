@@ -924,11 +924,16 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
   def test_source_user_case_insensitive(self):
     """If USERNAME_KEY_ID, username comparison should ignore case."""
     self.mox.stubs.Set(testutil.FakeSource, 'USERNAME_KEY_ID', True)
+
+    self.source = testutil.FakeSource(
+      id='FOO_bar', domain_urls=['http://author/'], domains=['author'])
+    self.source.put()
+
     self.activity['object']['content'] = 'x http://author/post y'
     self.expect_requests_get('http://author/', '')
     self.mox.ReplayAll()
 
-    self.activity['object']['author'] = {'id': self.source.user_tag_id().upper()}
+    self.activity['object']['author'] = {'id': 'tag:fa.ke,2013:foo_BAR'}
     self.assert_discover(['http://author/post'], [])
 
   def test_compare_username(self):
@@ -1572,8 +1577,8 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
     </html>""")
 
     self.mox.ReplayAll()
-    self.source = GitHub(id='snarfed', domain_urls=['http://author/'],
-                         domains=['author'])
+    self.source = GitHub(id='snarfed', auth_entity=self.auth_entities[0].put(),
+                         domain_urls=['http://author/'], domains=['author'])
     self.source.put()
 
     result = refetch(self.source)

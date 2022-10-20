@@ -31,7 +31,7 @@ class MicropubTest(AppTest):
     super().setUp()
 
     self.auth_entity = FakeToken.auth_entity = \
-      FakeAuthEntity(id='0123456789', access_token='towkin')
+      FakeAuthEntity(id='0123456789', access_token_str='towkin')
     auth_key = self.auth_entity.put()
     self.source = FakeSource(id='foo.com', features=['publish'],
                              auth_entity=auth_key)
