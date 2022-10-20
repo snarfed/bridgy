@@ -272,7 +272,7 @@ def fetch_mf2(url, **kwargs):
 
 
 def requests_post(url, **kwargs):
-  """Wraps :func:`requests.get` with our user agent."""
+  """Wraps :func:`requests.post` with our headers."""
   kwargs.setdefault('headers', {}).update(request_headers(url=url))
   return util.requests_post(url, **kwargs)
 

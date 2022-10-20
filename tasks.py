@@ -583,7 +583,7 @@ class SendWebmentions(View):
 
         # see if we've cached webmention discovery for this domain. the cache
         # value is a string URL endpoint if discovery succeeded, NO_ENDPOINT if
-        # no endpoint was ofund.
+        # no endpoint was found.
         cache_key = util.webmention_endpoint_cache_key(target)
         endpoint = util.webmention_endpoint_cache.get(cache_key)
         if endpoint:
