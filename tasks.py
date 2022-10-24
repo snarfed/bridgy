@@ -592,7 +592,7 @@ class SendWebmentions(View):
         # send! and handle response or error
         headers = util.request_headers(source=g.source)
         if not endpoint:
-          endpoint, resp = webmention.discover(target, headers=headers)
+          endpoint, resp = webmention.discover(target, follow_meta_refresh=True, headers=headers)
           with util.webmention_endpoint_cache_lock:
             util.webmention_endpoint_cache[cache_key] = endpoint or NO_ENDPOINT
 
