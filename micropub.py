@@ -102,6 +102,7 @@ class Micropub(PublishBase):
                         status=405)
 
     self.source = self.load_source()
+    logger.info(f'Source: {self.source.label()} {self.source.key_id()}, {self.source.bridgy_url()}')
     if self.source.status == 'disabled' or 'publish' not in self.source.features:
       return self.error('forbidden',
                         f'Publish is not enabled for {self.source.label()}',
