@@ -15,10 +15,6 @@ from oauth_dropins import (
   mastodon as oauth_mastodon,
   twitter as oauth_twitter,
 )
-from oauth_dropins.flickr import FlickrAuth
-from oauth_dropins.github import GitHubAuth
-from oauth_dropins.mastodon import MastodonAuth
-from oauth_dropins.twitter import TwitterAuth
 from oauth_dropins.webutil import appengine_info
 from oauth_dropins.webutil.flask_util import flash
 from oauth_dropins.webutil.util import json_dumps, json_loads
@@ -27,6 +23,7 @@ from werkzeug.exceptions import HTTPException
 from flask_app import app
 from flickr import Flickr
 from github import GitHub
+import mastodon
 from mastodon import Mastodon
 from models import Publish
 import models
@@ -187,42 +184,55 @@ class Micropub(PublishBase):
 class GetToken(View):
   """OAuth callback for 'Get token' button."""
   def finish(self, auth_entity, state=None):
-    if not state:
-      self.error('If you want a Micropub token, please approve the prompt.')
+    if not auth_entity:
+      flash('If you want a Micropub token, please approve the prompt.')
       return redirect('/')
 
-    source = ndb.Key(urlsafe=state).get()
-    if auth_entity is None:
-      self.error('If you want a Micropub token, please approve the prompt.')
-    elif not auth_entity.is_authority_for(source.auth_entity):
-      self.error(f'To get a Micropub token for {source.label_name()}, please log into {source.GR_CLASS.NAME} as that account.')
+    # WARNING: this assumes the source entity and auth entity use the same key id!
+    source = self.source_cls.get_by_id(auth_entity.key.id())
+    if not auth_entity.is_authority_for(source.auth_entity):
+      flash(f'To get a Micropub token for {source.label_name()}, please log into {source.GR_CLASS.NAME} as that account.')
     else:
       token = getattr(auth_entity, source.MICROPUB_TOKEN_PROPERTY)
       flash(f'Your <a href="/about#micropub">Micropub token</a> for {source.label()} is: <code>{token}</code>')
 
     return redirect(source.bridgy_url())
 
-  def error(self, msg):
-    logging.info(msg)
-    flash(msg)
+
+class MastodonStart(mastodon.StartBase):
+  def dispatch_request(self):
+    source = util.load_source()
+    # request all scopes we currently need, since Mastodon and Pleroma scopes
+    # are per access token, and oauth-dropins overwrites the auth entity with
+    # the latest token. background:
+    # https://github.com/snarfed/bridgy/issues/1015
+    # https://github.com/snarfed/bridgy/issues/1342
+    self.scope = self.SCOPE_SEPARATOR.join(
+      mastodon.PUBLISH_SCOPES if 'publish' in source.features
+      else mastodon.LISTEN_SCOPES)
+    return super().dispatch_request()
 
 
 # We want Callback.get() and GetToken.finish(), so put Callback first and
 # override finish.
 class FlickrToken(oauth_flickr.Callback, GetToken):
   finish = GetToken.finish
+  source_cls = Flickr
 
 
 class GitHubToken(oauth_github.Callback, GetToken):
   finish = GetToken.finish
+  source_cls = GitHub
 
 
 class MastodonToken(oauth_mastodon.Callback, GetToken):
   finish = GetToken.finish
+  source_cls = Mastodon
 
 
 class TwitterToken(oauth_twitter.Callback, GetToken):
   finish = GetToken.finish
+  source_cls = Twitter
 
 
 app.add_url_rule('/micropub', view_func=Micropub.as_view('micropub'), methods=['GET', 'POST'])
@@ -233,7 +243,7 @@ app.add_url_rule('/micropub-token/flickr/finish', view_func=FlickrToken.as_view(
 app.add_url_rule('/micropub-token/github/start', view_func=oauth_github.Start.as_view('github_micropub_token_finish', '/micropub-token/github/finish'), methods=['POST'])
 app.add_url_rule('/micropub-token/github/finish', view_func=GitHubToken.as_view('micropub_token_github_finish', 'unused'))
 
-app.add_url_rule('/micropub-token/mastodon/start', view_func=oauth_mastodon.Start.as_view('mastodon_micropub_token_finish', '/micropub-token/mastodon/finish'), methods=['POST'])
+app.add_url_rule('/micropub-token/mastodon/start', view_func=MastodonStart.as_view('mastodon_micropub_token_finish', '/micropub-token/mastodon/finish'), methods=['POST'])
 app.add_url_rule('/micropub-token/mastodon/finish', view_func=MastodonToken.as_view('micropub_token_mastodon_finish', 'unused'))
 
 app.add_url_rule('/micropub-token/twitter/start', view_func=oauth_twitter.Start.as_view('twitter_micropub_token_finish', '/micropub-token/twitter/finish'), methods=['POST'])

@@ -197,8 +197,9 @@ class Callback(oauth_mastodon.Callback):
     features = util.decode_oauth_state(state).get('feature', '').split(',')
     if set(features) != set(source.features):
       # override features with whatever we requested scopes for just now, since
-      # scopes are per access token. background:
+      # Mastodon and Pleroma scopes are per access token. background:
       # https://github.com/snarfed/bridgy/issues/1015
+      # https://github.com/snarfed/bridgy/issues/1342
       source.features = features
       source.put()
 
