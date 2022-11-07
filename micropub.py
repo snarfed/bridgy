@@ -21,14 +21,10 @@ from oauth_dropins.webutil.util import json_dumps, json_loads
 from werkzeug.exceptions import HTTPException
 
 from flask_app import app
-from flickr import Flickr
-from github import GitHub
 import mastodon
-from mastodon import Mastodon
 from models import Publish
 import models
 from publish import PublishBase
-from twitter import Twitter
 import util
 from util import redirect
 import webmention
@@ -184,13 +180,13 @@ class Micropub(PublishBase):
 class GetToken(View):
   """OAuth callback for 'Get token' button."""
   def finish(self, auth_entity, state=None):
-    if not auth_entity:
-      flash('If you want a Micropub token, please approve the prompt.')
+    if not state:
       return redirect('/')
 
-    # WARNING: this assumes the source entity and auth entity use the same key id!
-    source = self.source_cls.get_by_id(auth_entity.key.id())
-    if not auth_entity.is_authority_for(source.auth_entity):
+    source = ndb.Key(urlsafe=state).get()
+    if not auth_entity:
+      flash('If you want a Micropub token, please approve the prompt.')
+    elif not auth_entity.is_authority_for(source.auth_entity):
       flash(f'To get a Micropub token for {source.label_name()}, please log into {source.GR_CLASS.NAME} as that account.')
     else:
       token = getattr(auth_entity, source.MICROPUB_TOKEN_PROPERTY)
@@ -217,22 +213,18 @@ class MastodonStart(mastodon.StartBase):
 # override finish.
 class FlickrToken(oauth_flickr.Callback, GetToken):
   finish = GetToken.finish
-  source_cls = Flickr
 
 
 class GitHubToken(oauth_github.Callback, GetToken):
   finish = GetToken.finish
-  source_cls = GitHub
 
 
 class MastodonToken(oauth_mastodon.Callback, GetToken):
   finish = GetToken.finish
-  source_cls = Mastodon
 
 
 class TwitterToken(oauth_twitter.Callback, GetToken):
   finish = GetToken.finish
-  source_cls = Twitter
 
 
 app.add_url_rule('/micropub', view_func=Micropub.as_view('micropub'), methods=['GET', 'POST'])

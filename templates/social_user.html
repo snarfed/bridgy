@@ -190,6 +190,7 @@ Click to enable <a href="/about#backfeed">backfeed</a>:
 </span>
 <form method="post" action="/micropub-token/{{ source.SHORT_NAME }}/start">
   <input name="key" type="hidden" value="{{ source.key.urlsafe().decode() }}" />
+  <input name="state" type="hidden" value="{{ source.key.urlsafe().decode() }}" />
   {% if source.SHORT_NAME == 'mastodon' %}
     <input name="instance" type="hidden" value="{{ source.instance() }}" />
   {% endif %}
