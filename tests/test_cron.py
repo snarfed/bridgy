@@ -168,7 +168,8 @@ class CronTest(testutil.BackgroundTest):
   def test_update_mastodon_pictures(self):
     self.expect_requests_get(
       'https://foo.com' + test_mastodon.API_ACCOUNT % 123,
-      test_mastodon.ACCOUNT, headers={'Authorization': 'Bearer towkin'})
+      test_mastodon.ACCOUNT, headers={'Authorization': 'Bearer towkin'},
+      content_type='application/json')
     self.mox.ReplayAll()
 
     mastodon = self._setup_mastodon()

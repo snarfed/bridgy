@@ -61,7 +61,8 @@ class MastodonTest(testutil.AppTest):
         'resolve': True,
         'offset': 0},
       response={'statuses': [STATUS]},
-      headers={'Authorization': 'Bearer towkin'})
+      headers={'Authorization': 'Bearer towkin'},
+      content_type='application/json')
     self.mox.ReplayAll()
 
     got = self.m.search_for_links()
