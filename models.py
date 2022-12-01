@@ -658,7 +658,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
     logger.debug(f'Extracting URLs and domains from actor: {json_dumps(actor, indent=2)}')
 
     candidates = util.trim_nulls(util.uniquify(
-        [user_url] + microformats2.object_urls(actor)))
+        [user_url] + as1.object_urls(actor)))
 
     if len(candidates) > MAX_AUTHOR_URLS:
       logger.info(f'Too many profile links! Only resolving the first {MAX_AUTHOR_URLS}: {candidates}')
@@ -759,7 +759,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
     for tag in obj.get('tags', []):
       if tag.get('objectType') == 'person':
         silo_url = None
-        for url in microformats2.object_urls(tag):
+        for url in as1.object_urls(tag):
           silo_url = url and self.infer_profile_url(url)
           if silo_url:
             break
