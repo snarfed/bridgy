@@ -757,23 +757,7 @@ and Bridgy will post it for you.</p>
 <li id="microformats" class="question">How does it decide which parts of my web
   page to include?</li>
 <li class="answer">
-<p>Magic! Most major blog engines and CMSes are supported out of the box, no
-setup necessary. Bridgy looks for
-<a href="http://microformats.org/">microformats</a> in your HTML, first
-the
-<a href="http://microformats.org/wiki/microformats2">microformats2</a>
-<code>e-content</code> class and then the legacy <code>entry-content</code>
-class. It also understands more advanced microformats2 classes like
-<a href="http://microformats.org/wiki/rel-in-reply-to"><code>in-reply-to</code></a>,
-<a href="https://indieweb.org/like"><code>u-like-of</code></a>,
-<a href="https://indieweb.org/like"><code>u-repost-of</code></a>,
-<a href="https://indieweb.org/photo"><code>u-photo</code></a>,
-<a href="https://indieweb.org/tag"><code>u-category</code></a> (for
-<a href="https://indieweb.org/person-tag">tagging</a>), and
-<a href="http://microformats.org/wiki/h-card"><code>h-card</code></a> and
-<a href="http://microformats.org/wiki/h-geo"><code>h-geo</code></a> (for location).
-
- Here's an example:
+<p>Magic! Most major blog engines and CMSes are supported out of the box, no setup necessary. Bridgy looks for <a href="http://microformats.org/">microformats</a> in your HTML, first the <a href="http://microformats.org/wiki/microformats2">microformats2</a> <code>e-content</code> class and then the legacy <code>entry-content</code> class. It also understands more advanced microformats2 classes like <a href="http://microformats.org/wiki/rel-in-reply-to"><code>in-reply-to</code></a>, <a href="https://indieweb.org/like"><code>u-like-of</code></a>, <a href="https://indieweb.org/like"><code>u-repost-of</code></a>, <a href="https://indieweb.org/photo"><code>u-photo</code></a>, <a href="https://indieweb.org/tag"><code>u-category</code></a> (for <a href="https://indieweb.org/person-tag">tagging</a>), and <a href="http://microformats.org/wiki/h-card"><code>h-card</code></a> and <a href="http://microformats.org/wiki/h-geo"><code>h-geo</code></a> (for <a href="#location">location</a>). Here's an example:
 
 <pre>&lt;div class="<span class='keyword'>h-entry</span>"&gt;&lt;p class="<span class='keyword'>e-content</span>"&gt;
   <span class='value'>Two naked tags walk into a bar. The bartender exclaims, "Hey, you can't come in here without microformats, this is a classy joint!"</span>
@@ -781,17 +765,13 @@ class. It also understands more advanced microformats2 classes like
 </pre>
 </p>
 
-<p>In general, Bridgy prefers to use <code>p-summary</code> if available, then
-the full <code>e-content</code>, and finally <code>p-name</code>, in that order.
-The one exception is original tweets (not <a href="#reply">@-replies</a>) on
-Twitter and Mastodon: for those, it prefers <code>p-name</code> before <code>e-content</code>.
-<a href="https://github.com/snarfed/bridgy/issues/228">Background</a>
-<a href="https://github.com/snarfed/bridgy/issues/219">discussion</a>.
+<p>One key part <a href="publish-types">varies from silo to silo</a>: the text contents. Text-based posts fall into two broad buckets: short <a href="https://indieweb.org/note">notes</a>, eg tweets and toots, and longer <a href="https://indieweb.org/article">articles</a>, eg blog posts. In the IndieWeb, <a href="https://indieweb.org/post-type-discovery#Algorithm">we differentiate based on whether the post has a title</a>: articles generally have them, notes don't.
 </p>
 
-<p>Bridgy also tries to preserve some formatting and whitespace, notably
-newlines and lists, when converting your post's HTML to plain text. Try
-previewing a post to see how it will look!
+<p>Twitter and Mastodon are both primarily designed for notes, not articles. For that reason, when you use Bridgy Publish to post an article to Twitter or Mastodon, it posts just the title, ie the <code>p-name</code> microformats2 element, and a link. (<a href="https://github.com/snarfed/bridgy/issues/228">Background</a> <a href="https://github.com/snarfed/bridgy/issues/219">discussion</a>.) Otherwise - for notes, replies, and everything on other silos - it posts the full contents of the <code>e-content</code> microformats2 element, falling back to <code>p-summary</code> and <code>p-name</code> if necessary. (<a href="#micropub">This is also what the Micropub interface <em>always</em> does</a>, even for articles on Twitter and Mastodon.)
+</p>
+
+<p>Bridgy also tries to preserve some formatting and whitespace, notably newlines and lists, when converting your HTML to plain text. Try previewing a post to see how it will look!
 </p>
 </li>
 
@@ -837,8 +817,10 @@ Your post HTML must also include that same target URL to verify your intent to p
 
 <li id="micropub" class="question">How do I use Micropub?</li>
 <li>
-<p><a href="https://micropub.net/">Micropub</a> is a standard protocol for creating, updating, and deleting posts. Usually it's used with web sites, but you can use it with Bridgy Publish too. The endpoint is <code>https://brid.gy/micropub</code>, it supports create and delete and photo/video URLs but not update or file upload. Once you've enabled publish on your user page, there will be a <em>Get token</em> button, use that as your Micropub token.</p>
-<p>Micropub behaves exactly the same as normal Bridgy Publish, and <a href="#microformats">supports the exact same microformats2 in the same ways</a>. It just gets them from the Micropub request rather than from a post on your site. Both <a href="https://micropub.spec.indieweb.org/#x3-1-1-form-encoded-and-multipart-requests">form-encoded</a> and <a href="https://micropub.spec.indieweb.org/#json-syntax">JSON</a> input formats are supported.
+<p><a href="https://micropub.net/">Micropub</a> is a standard protocol for creating, updating, and deleting posts. Usually it's used with web sites, but you can use it with Bridgy Publish too. The endpoint is <code>https://brid.gy/micropub</code>. Once you've enabled publish on your user page, there will be a <em>Get token</em> button, use that as your Micropub token.</p>
+<p>Micropub behaves largely the same as normal Bridgy Publish, and <a href="#microformats">supports the same microformats2 in the same ways</a>. It just gets them from the Micropub request rather than from a post on your site. It supports create and delete and photo/video URLs, but not update or file upload. Both <a href="https://micropub.spec.indieweb.org/#x3-1-1-form-encoded-and-multipart-requests">form-encoded</a> and <a href="https://micropub.spec.indieweb.org/#json-syntax">JSON</a> input formats are supported.
+</p>
+<p>(One difference <a href="#microformats">from normal Bridgy Publish</a> is that Micropub <em>always</em> posts the text from the <code>content</code> property, even if a <code>name</code> property is also included.)
 </p>
 <p>Here's an example of posting a reply with a photo to Twitter:
 <pre>
