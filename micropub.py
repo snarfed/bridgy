@@ -127,6 +127,10 @@ class Micropub(PublishBase):
 
     logging.debug(f'Got microformats2: {json_dumps(mf2, indent=2)}')
     obj = microformats2.json_to_object(mf2)
+    # override articles to be notes to force short-form granary sources like
+    # Twitter and Mastodon to use content, not displayName
+    if obj.get('objectType') == 'article':
+      obj['objectType'] = 'note'
     logging.debug(f'Converted to ActivityStreams object: {json_dumps(obj, indent=2)}')
 
     canonicalized = self.source.URL_CANONICALIZER(url or '') or ''

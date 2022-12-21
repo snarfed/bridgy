@@ -4,12 +4,13 @@ from io import BytesIO
 import urllib.request, urllib.parse, urllib.error
 
 from flask import get_flashed_messages
+from granary.source import CreationResult
 from werkzeug.datastructures import MultiDict
 
 from flask_app import app
 import micropub
 from models import Publish, PublishedPage
-from .testutil import AppTest, FakeAuthEntity, FakeSource
+from .testutil import AppTest, FakeAuthEntity, FakeGrSource, FakeSource
 import util
 
 
@@ -140,6 +141,23 @@ class MicropubTest(AppTest):
       },
     })
     self.check_entity()
+
+  def test_override_article_to_note(self):
+    self.mox.StubOutWithMock(FakeGrSource, 'create')
+    FakeGrSource.create({
+      'objectType': 'note',
+      'content': 'foo bar baz',
+      'displayName': "shouldn't be used",
+    }).AndReturn(CreationResult({'url': 'http://fake/url'}, None, None, None, None))
+    self.mox.ReplayAll()
+
+    self.assert_response(json={
+      'type': ['h-entry'],
+      'properties': {
+        'content': ['foo bar baz'],
+        'name': ["shouldn't be used"],
+      },
+    })
 
   def test_create_silo_error(self):
     self.assert_response(data={
