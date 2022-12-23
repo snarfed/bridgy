@@ -10,7 +10,7 @@ src=`dirname $0`/../..
 
 # run unit tests
 pkill datastore || true
-gcloud beta emulators datastore start --no-store-on-disk --consistency=1.0 --host-port=localhost:8089 < /dev/null >& /dev/null &
+gcloud beta emulators datastore start --no-store-on-disk ----use-firestore-in-datastore-mode --host-port=localhost:8089 < /dev/null >& /dev/null &
 sleep 2s
 
 cd $src/oauth-dropins && source local/bin/activate
