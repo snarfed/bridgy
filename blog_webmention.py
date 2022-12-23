@@ -171,7 +171,7 @@ class BlogWebmentionView(webmention.Webmention):
       content = props.setdefault('content', [{}])[0]
       text = content.get('html') or content.get('value')
 
-      for type in 'in-reply-to', 'like', 'like-of', 'repost', 'repost-of':
+      for type in 'in-reply-to', 'like-of', 'repost-of':
         urls = [urllib.parse.urldefrag(u)[0] for u in
                 microformats2.get_string_urls(props.get(type, []))]
         if self.any_target_in(urls):

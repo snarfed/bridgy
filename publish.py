@@ -252,8 +252,7 @@ class PublishBase(webmention.Webmention):
             self.error(result.error_plain, html=result.error_html, data=item)
           return
         # try the next item
-        for embedded in ('rsvp', 'invitee', 'repost', 'repost-of', 'like',
-                         'like-of', 'in-reply-to'):
+        for embedded in ('rsvp', 'invitee', 'repost-of', 'like-of', 'in-reply-to'):
           if embedded in item.get('properties', []):
             item_types.add(embedded)
         logging.info(
