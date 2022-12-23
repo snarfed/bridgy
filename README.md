@@ -12,21 +12,23 @@ License: This project is placed in the public domain.
 
 Development
 ---
-You'll need the [Google Cloud SDK](https://cloud.google.com/sdk/gcloud/) (aka `gcloud`) with the `gcloud-appengine-python`, `gcloud-appengine-python-extras` and `google-cloud-sdk-datastore-emulator` [components](https://cloud.google.com/sdk/docs/components#additional_components). Then, create a Python 3 virtualenv and install the dependencies with:
+Pull requests are welcome! Feel free to [ping me in #indieweb-dev](https://indieweb.org/discuss) with any questions.
+
+First, fork and clone this repo. Then, install the [Google Cloud SDK](https://cloud.google.com/sdk/) and run `gcloud components install beta cloud-datastore-emulator` to install the [datastore emulator](https://cloud.google.com/datastore/docs/tools/datastore-emulator). Once you have them, set up your environment by running these commands in the repo root directory:
 
 ```sh
+gcloud config set project brid-gy
 python3 -m venv local
 source local/bin/activate
 pip install -r requirements.txt
-# needed to serve static file handlers locally
+# needed to serve static files locally
 ln -s local/lib/python3*/site-packages/oauth_dropins/static oauth_dropins_static
-gcloud config set project brid-gy
 ```
 
 Now, you can fire up the gcloud emulator and run the tests:
 
 ```sh
-gcloud beta emulators datastore start --no-store-on-disk --consistency=1.0 --host-port=localhost:8089 --quiet
+gcloud beta emulators datastore start --use-firestore-in-datastore-mode --no-store-on-disk --host-port=localhost:8089 --quiet < /dev/null >& /dev/null &
 python3 -m unittest discover -s tests -t .
 kill %1
 ```
@@ -36,7 +38,7 @@ If you send a pull request, please include or update a test for your new code!
 To run the app locally, use [`flask run`](https://flask.palletsprojects.com/en/2.0.x/cli/#run-the-development-server):
 
 ```shell
-gcloud beta emulators datastore start --consistency=1.0 --host-port=localhost:8089 --quiet
+gcloud beta emulators datastore start --use-firestore-in-datastore-mode --no-store-on-disk --host-port=localhost:8089 --quiet < /dev/null >& /dev/null &
 GAE_ENV=localdev FLASK_ENV=development flask run -p 8080
 ```
 
