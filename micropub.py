@@ -103,10 +103,12 @@ class Micropub(PublishBase):
 
     # handle input
     if request.is_json:
+      logger.info('Got JSON input')
       mf2 = request.json
       action = mf2.get('action')
       url = mf2.get('url')
     elif request.form:
+      logger.info('Got form-encoded input')
       mf2 = {
         'h': request.form.get('h') or 'entry',
         'properties': form_to_mf2(request.form.to_dict(flat=False)),
@@ -126,7 +128,11 @@ class Micropub(PublishBase):
       return self.error('not_implemented', f'Action {action} not supported')
 
     logging.debug(f'Got microformats2: {json_dumps(mf2, indent=2)}')
-    obj = microformats2.json_to_object(mf2)
+    try:
+      obj = microformats2.json_to_object(mf2)
+    except (TypeError, ValueError) as e:
+      return self.error('invalid_request', f'Invalid microformats2 input: {e}')
+
     # override articles to be notes to force short-form granary sources like
     # Twitter and Mastodon to use content, not displayName
     if obj.get('objectType') == 'article':

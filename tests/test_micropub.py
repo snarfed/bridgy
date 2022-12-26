@@ -159,12 +159,15 @@ class MicropubTest(AppTest):
       },
     })
 
-  def test_create_silo_error(self):
-    self.assert_response(data={
-      'h': 'entry',
-      'content': 'foo bar baz',
+  def test_create_json_to_object_error(self):
+    self.assert_response(status=400, json={
+      'type': ['h-entry'],
+      'properties': {
+        'content': ['Tweaking workflows - https://decoding.io/2022/12/1693/'],
+        'syndication': {'1': 'https://micro.blog/zsbenke/15450788'},
+      },
     })
-    self.check_entity()
+    self.assertEqual(0, Publish.query().count())
 
   def test_create_json_html_content(self):
     self.assert_response(json={
