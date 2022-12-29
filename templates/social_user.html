@@ -104,8 +104,10 @@ WordPress.com, <a href="/">sign up here!</a>
   next poll
   {{ logs.maybe_link(next_poll, source.key, time_class="dt-bridgy-next-poll")|safe }}{% endif %}.
 
-  <input name="key" type="hidden" value="{{ source.key.urlsafe().decode() }}" />
-  <button id="poll-now-button" type="submit" class="btn btn-default">Poll now</button>
+  {% if source.AUTO_POLL %}
+    <input name="key" type="hidden" value="{{ source.key.urlsafe().decode() }}" />
+    <button id="poll-now-button" type="submit" class="btn btn-default">Poll now</button>
+  {% endif %}
 </form>
 {% endif %}
 <br>
