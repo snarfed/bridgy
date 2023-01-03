@@ -17,6 +17,7 @@ from granary.tests.test_facebook import (
   MBASIC_FEED_ACTIVITIES,
   MBASIC_REACTION_TAGS,
 )
+from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import json_dumps, json_loads, trim_nulls
 
 import browser
@@ -33,7 +34,7 @@ class FacebookTest(testutil.AppTest):
     self.source = Facebook.new(actor=self.actor)
     self.domain = Domain(id='snarfed.org', tokens=['towkin']).put()
     self.auth = f'token=towkin&key={self.source.key.urlsafe().decode()}'
-    self.mox.StubOutWithMock(gr_facebook, 'now_fn')
+    util.now = lambda **kwargs: datetime(1999, 1, 1)
 
   def get_response(self, path_query, auth=True, **kwargs):
     if auth and '?' not in path_query:
@@ -101,8 +102,6 @@ class FacebookTest(testutil.AppTest):
 
   def test_feed(self):
     self.source.put()
-    gr_facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
-    self.mox.ReplayAll()
 
     resp = self.get_response('feed', data=MBASIC_HTML_TIMELINE)
     self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
@@ -110,8 +109,6 @@ class FacebookTest(testutil.AppTest):
 
   def test_post(self):
     self.source.put()
-    gr_facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
-    self.mox.ReplayAll()
 
     resp = self.get_response('post', data=MBASIC_HTML_POST)
     self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
@@ -135,8 +132,6 @@ class FacebookTest(testutil.AppTest):
 
   def test_post_merge_comments(self):
     key = self.source.put()
-    gr_facebook.now_fn().MultipleTimes().AndReturn(datetime(1999, 1, 1))
-    self.mox.ReplayAll()
 
     # existing activity with one of the two comments in MBASIC_ACTIVITIES
     existing_activity = copy.deepcopy(MBASIC_ACTIVITIES[1])
