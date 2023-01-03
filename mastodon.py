@@ -141,20 +141,6 @@ class Mastodon(models.Source):
     """
     return json_loads(self.auth_entity.get().user_json).get('locked')
 
-  def search_for_links(self):
-    """Searches for activities with links to any of this source's web sites.
-
-    Returns:
-      sequence of ActivityStreams activity dicts
-    """
-    if not self.domains:
-      return []
-
-    query = ' OR '.join(self.domains)
-    return self.get_activities(
-      search_query=query, group_id=gr_source.SEARCH, fetch_replies=False,
-      fetch_likes=False, fetch_shares=False)
-
   def load_blocklist(self):
     try:
       return super().load_blocklist()

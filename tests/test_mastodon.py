@@ -52,29 +52,6 @@ class MastodonTest(testutil.AppTest):
     self.auth_entity.put()
     self.assertTrue(self.m.is_private())
 
-  def test_search_links(self):
-    self.m.domains = ['foo.com', 'bar']
-
-    self.expect_requests_get(
-      'https://foo.com' + API_SEARCH, params={
-        'q': 'foo.com OR bar',
-        'resolve': True,
-        'offset': 0},
-      response={'statuses': [STATUS]},
-      headers={'Authorization': 'Bearer towkin'},
-      content_type='application/json')
-    self.mox.ReplayAll()
-
-    got = self.m.search_for_links()
-    self.assert_equals(1, len(got))
-    # granary.test_mastodon's ACTIVITY has tag URIs without 2013, but we
-    # generate them, so work around that in this comparison.
-    self.assert_equals(util.tag_uri('foo.com', STATUS['id']), got[0]['id'])
-
-  def test_search_links_no_domains(self):
-    self.m.domains = []
-    self.assert_equals([], self.m.search_for_links())
-
   def test_load_blocklist_missing_scope(self):
     self.expect_requests_get('https://foo.com' + API_BLOCKS,
                              headers={'Authorization': 'Bearer towkin'},
