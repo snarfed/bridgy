@@ -5,7 +5,7 @@ queue:
 - name: poll
   target: background
   rate: 1/s
-  max_concurrent_requests: 1
+  max_concurrent_requests: 3
   retry_parameters:
     min_backoff_seconds: 120
 
