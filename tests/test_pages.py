@@ -8,6 +8,7 @@ from flask import get_flashed_messages
 from google.cloud import ndb
 from mox3 import mox
 from oauth_dropins.twitter import TwitterAuth
+from oauth_dropins.webutil.testutil import NOW
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import tweepy
 
@@ -50,7 +51,7 @@ class PagesTest(testutil.AppTest):
   def test_retry(self):
     source = self.sources[0]
     source.domain_urls = ['http://orig']
-    source.last_hfeed_refetch = last_hfeed_refetch = testutil.NOW - timedelta(minutes=1)
+    source.last_hfeed_refetch = last_hfeed_refetch = NOW - timedelta(minutes=1)
     source.put()
 
     resp = self.responses[0]
@@ -114,7 +115,7 @@ class PagesTest(testutil.AppTest):
   def test_crawl_now(self):
     source = self.sources[0]
     source.domain_urls = ['http://orig']
-    source.last_hfeed_refetch = source.last_feed_syndication_url = testutil.NOW
+    source.last_hfeed_refetch = source.last_feed_syndication_url = NOW
     source.put()
 
     key = source.key.urlsafe().decode()
@@ -263,7 +264,7 @@ class PagesTest(testutil.AppTest):
                   resp.headers['Set-Cookie'].split(' '))
 
   def test_user_page(self):
-    self.sources[0].last_webmention_sent = util.now_fn()
+    self.sources[0].last_webmention_sent = util.now()
     self.sources[0].put()
     resp = self.client.get(self.sources[0].bridgy_path())
     self.assertEqual(200, resp.status_code)
@@ -494,7 +495,7 @@ class PagesTest(testutil.AppTest):
         resp.get_data(as_text=True))
 
   def test_logout(self):
-    util.now_fn = lambda: datetime(2000, 1, 1, tzinfo=timezone.utc)
+    util.now = lambda: datetime(2000, 1, 1, tzinfo=timezone.utc)
     resp = self.client.get('/logout')
     self.assertIn('logins=;', resp.headers['Set-Cookie'])
     self.assertEqual(302, resp.status_code)
@@ -733,12 +734,12 @@ class DiscoverTest(testutil.AppTest):
       {'https://fa.ke/post/444': 'http://si.te/123'},
       ], [{sp.syndication: sp.original} for sp in models.SyndicatedPost.query()])
 
-    now = util.now_fn()
+    now = util.now()
     source = self.source.key.get()
     self.assertEqual(now, source.last_syndication_url)
 
   def test_discover_url_site_post_last_feed_syndication_url(self):
-    now = util.now_fn()
+    now = util.now()
     self.source.last_feed_syndication_url = now
     self.source.put()
 

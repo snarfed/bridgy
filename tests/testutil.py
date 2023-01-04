@@ -17,6 +17,8 @@ from mox3 import mox
 from oauth_dropins import views as oauth_views
 from oauth_dropins.models import BaseAuth
 from oauth_dropins.webutil import testutil
+from oauth_dropins.webutil.testutil import NOW
+from oauth_dropins.webutil import util as webutil_util
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
 from requests import post as orig_requests_post
@@ -25,8 +27,6 @@ import flask_app, flask_background, util
 from models import BlogPost, Publish, PublishedPage, Response, Source
 
 logger = logging.getLogger(__name__)
-
-NOW = datetime.now(timezone.utc)
 
 
 class FakeAuthEntity(BaseAuth):
@@ -278,7 +278,6 @@ class FakeSource(Source):
     return ndb.Key(cls, str(cls.string_id_counter))
 
 
-
 class FakeBlogSource(FakeSource):
   SHORT_NAME = 'fake_blog'
 
@@ -300,7 +299,6 @@ class TestCase(testutil.TestCase):
   def setUp(self):
     super().setUp()
     FakeGrSource.clear()
-    util.now_fn = lambda: NOW
 
     # add FakeSource everywhere necessary
     util.BLOCKLIST.add('fa.ke')
@@ -315,6 +313,10 @@ class TestCase(testutil.TestCase):
     self.clear_datastore()
     self.ndb_context = ndb_client.context()
     self.ndb_context.__enter__()
+
+    # webutil's testutil.TestCase.setUp() updated this, so make sure we update
+    # our util's to match
+    util.now = webutil_util.now
 
     # sources
     self.auth_entities = [
@@ -398,7 +400,7 @@ class TestCase(testutil.TestCase):
 
     # responses
     self.responses = []
-    created = datetime.now(timezone.utc) - timedelta(days=10)
+    created = util.now() - timedelta(days=10)
 
     for activity in self.activities:
       obj = activity['object']
@@ -522,7 +524,7 @@ class TestCase(testutil.TestCase):
 
       if eta_seconds is not None:
         got = (util.to_utc_timestamp(task.task.schedule_time) -
-               util.to_utc_timestamp(util.now_fn()))
+               util.to_utc_timestamp(util.now()))
         delta = eta_seconds * .2 + 10
         if not (got + delta >= eta_seconds >= got - delta):
           # print('expect_task: expected schedule_time %r, got %r' % (eta_seconds, got))

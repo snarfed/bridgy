@@ -80,7 +80,7 @@ class Poll(View):
     # mark this source as polling
     source.updates = {
       'poll_status': 'polling',
-      'last_poll_attempt': util.now_fn(),
+      'last_poll_attempt': util.now(),
       'rate_limited': False,
     }
     source = models.Source.put_updates(source)
@@ -199,7 +199,7 @@ class Poll(View):
       logger.info(f'refetching h-feed for source {source.label()}')
       relationships = original_post_discovery.refetch(source)
 
-      now = util.now_fn()
+      now = util.now()
       source.updates['last_hfeed_refetch'] = now
 
       if relationships:
@@ -653,7 +653,7 @@ class SendWebmentions(View):
       logger.warning('duplicate task already propagated this')
       return
     elif (self.entity.status == 'processing' and
-          util.now_fn() < self.entity.leased_until):
+          util.now() < self.entity.leased_until):
       return self.fail('duplicate task is currently processing!')
 
     g.source = self.entity.source.get()
@@ -664,7 +664,7 @@ class SendWebmentions(View):
 
     assert self.entity.status in ('new', 'processing', 'error'), self.entity.status
     self.entity.status = 'processing'
-    self.entity.leased_until = util.now_fn() + self.LEASE_LENGTH
+    self.entity.leased_until = util.now() + self.LEASE_LENGTH
     self.entity.put()
     return True
 
@@ -724,7 +724,7 @@ class SendWebmentions(View):
     """
     g.source = g.source.key.get()
     logger.info('Setting last_webmention_sent')
-    g.source.last_webmention_sent = util.now_fn()
+    g.source.last_webmention_sent = util.now()
 
     if (endpoint != g.source.webmention_endpoint and
         util.domain_from_link(target) in g.source.domains):

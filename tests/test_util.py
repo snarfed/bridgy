@@ -29,7 +29,7 @@ class UtilTest(testutil.AppTest):
 
   def setUp(self):
     super().setUp()
-    util.now_fn = lambda: datetime(2000, 1, 1, tzinfo=timezone.utc)
+    util.now = lambda: datetime(2000, 1, 1, tzinfo=timezone.utc)
 
   def test_maybe_add_or_delete_source(self):
     auth_entity = FakeAuthEntity(id='x', user_json=json_dumps(
@@ -327,7 +327,7 @@ class UtilTest(testutil.AppTest):
     self.expect_task('foo', eta_seconds=123, x='y')
     self.mox.ReplayAll()
 
-    eta = int(util.to_utc_timestamp(util.now_fn())) + 123
+    eta = int(util.to_utc_timestamp(util.now())) + 123
     util.add_task('foo', eta_seconds=eta, x='y', z=None)
 
   def test_host_url(self):

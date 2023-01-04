@@ -18,6 +18,7 @@ from google.cloud.tasks_v2.types import Task
 from mox3 import mox
 from oauth_dropins.webutil.appengine_config import tasks_client
 from oauth_dropins.webutil import appengine_info
+from oauth_dropins.webutil.testutil import NOW
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
 
@@ -26,7 +27,7 @@ from models import Response, SyndicatedPost
 from twitter import Twitter
 import tasks
 from . import testutil
-from .testutil import FakeSource, FakeGrSource, NOW
+from .testutil import FakeSource, FakeGrSource
 import util
 from util import ERROR_HTTP_RETURN_CODE, POLL_TASK_DATETIME_FORMAT
 
@@ -112,7 +113,7 @@ class PollTest(TaskTest):
   def post_task(self, expected_status=200, source=None, reset=False,
                 expect_poll=None, expect_last_polled=None):
     if expect_poll:
-      last_polled = (expect_last_polled or util.now_fn()).strftime(
+      last_polled = (expect_last_polled or util.now()).strftime(
         POLL_TASK_DATETIME_FORMAT)
       self.expect_task('poll', eta_seconds=expect_poll.total_seconds(),
                        source_key=self.sources[0], last_polled=last_polled)
@@ -382,7 +383,7 @@ class PollTest(TaskTest):
     del self.activities[0]['object']['to']
 
     self.activities[1]['object']['to'] = [{'objectType':'group', 'alias':'@private'}]
-    now = testutil.NOW.replace(microsecond=0)
+    now = NOW.replace(microsecond=0)
     self.activities[1]['object']['published'] = now.isoformat()
 
     self.activities[2]['object']['to'] = [{'objectType':'group', 'alias':'@public'}]
@@ -1493,7 +1494,7 @@ class PropagateTest(TaskTest):
     self.mox.ReplayAll()
 
     now = NOW
-    util.now_fn = lambda: now
+    util.now = lambda: now
 
     for r in self.responses[:4]:
       now += datetime.timedelta(hours=1)

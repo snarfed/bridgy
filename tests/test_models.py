@@ -9,6 +9,7 @@ from flask import get_flashed_messages
 from google.cloud import ndb
 from granary import source as gr_source
 from mox3 import mox
+from oauth_dropins.webutil.testutil import NOW
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
 
@@ -676,7 +677,7 @@ class SourceTest(testutil.AppTest):
     source.created = datetime(2000, 1, 1, tzinfo=timezone.utc)
     self.assertEqual(source.SLOW_POLL, source.poll_period())
 
-    now = util.now_fn()
+    now = util.now()
     source.last_webmention_sent = now - timedelta(days=8)
     self.assertEqual(source.FAST_POLL * 10, source.poll_period())
 
@@ -693,10 +694,10 @@ class SourceTest(testutil.AppTest):
     source.last_hfeed_refetch = models.REFETCH_HFEED_TRIGGER  # override
     self.assertTrue(source.should_refetch())
 
-    source.last_syndication_url = source.last_hfeed_refetch = testutil.NOW  # too soon
+    source.last_syndication_url = source.last_hfeed_refetch = NOW  # too soon
     self.assertFalse(source.should_refetch())
 
-    source.last_poll_attempt = testutil.NOW  # too soon
+    source.last_poll_attempt = NOW  # too soon
     self.assertFalse(source.should_refetch())
 
     hour = timedelta(hours=1)

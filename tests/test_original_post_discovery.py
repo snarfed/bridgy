@@ -4,6 +4,7 @@
 from datetime import datetime, timezone
 from string import hexdigits
 
+from oauth_dropins.webutil.testutil import NOW
 from oauth_dropins.webutil.util import json_dumps, json_loads
 from requests.exceptions import HTTPError
 
@@ -69,7 +70,7 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
     self.assert_discover(['http://author/post/permalink'])
     self.assert_syndicated_posts(('http://author/post/permalink',
                                   'https://fa.ke/post/url'))
-    self.assertEqual(testutil.NOW, self.source.updates['last_syndication_url'])
+    self.assertEqual(NOW, self.source.updates['last_syndication_url'])
 
   def test_syndication_url_in_hfeed(self):
     """Like test_single_post, but because the syndication URL is given in
@@ -89,8 +90,8 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
     self.assert_syndicated_posts(('http://author/post/permalink',
                                   'https://fa.ke/post/url'))
 
-    self.assertEqual(testutil.NOW, self.source.updates['last_syndication_url'])
-    self.assertEqual(testutil.NOW, self.source.updates['last_feed_syndication_url'])
+    self.assertEqual(NOW, self.source.updates['last_syndication_url'])
+    self.assertEqual(NOW, self.source.updates['last_feed_syndication_url'])
 
   def test_syndication_url_in_hfeed_with_redirect(self):
     """Like test_syndication_url_in_hfeed but u-url redirects to the
@@ -1278,8 +1279,8 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
     self.assert_equals(['https://fa.ke/changed/url'], list(results.keys()))
     self.assert_entities_equal(
       list(SyndicatedPost.query()), results['https://fa.ke/changed/url'])
-    self.assertEqual(testutil.NOW, self.source.updates['last_syndication_url'])
-    self.assertEqual(testutil.NOW, self.source.updates['last_feed_syndication_url'])
+    self.assertEqual(NOW, self.source.updates['last_syndication_url'])
+    self.assertEqual(NOW, self.source.updates['last_feed_syndication_url'])
 
   def test_refetch_deleted_syndication(self):
     """Deleted syndication links that have disappeared since our last fetch."""

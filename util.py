@@ -47,9 +47,6 @@ REQUEST_HEADERS_CONNEG = {'Accept': 'text/html, application/json; q=0.9, */*; q=
 CONNEG_DOMAINS = {'rhiaro.co.uk'}
 CONNEG_PATHS = {'/twitter/rhiaro'}
 
-# alias allows unit tests to mock the function
-now_fn = lambda: datetime.now(tz=timezone.utc)
-
 # Domains that don't support webmentions. Mainly just the silos.
 # Subdomains are automatically blocklisted too.
 #
@@ -115,7 +112,7 @@ def add_poll_task(source, now=False):
     eta_seconds = None
   else:
     queue = 'poll'
-    eta_seconds = int(util.to_utc_timestamp(now_fn()))
+    eta_seconds = int(util.to_utc_timestamp(util.now()))
     if source.AUTO_POLL:
       # add poll period. randomize task ETA to within +/- 20% to try to spread
       # out tasks and prevent thundering herds.
@@ -185,7 +182,7 @@ class Redirect(RequestRedirect):
 
       logger.info(f'setting logins cookie: {cookie}')
       age = timedelta(days=365 * 2)
-      expires = (now_fn() + age).replace(microsecond=0)
+      expires = (util.now() + age).replace(microsecond=0)
       resp.set_cookie('logins', cookie, max_age=age, expires=expires)
 
     return resp
@@ -308,7 +305,7 @@ def get_webmention_target(url, resolve=True, replace_test_domains=True):
   """
   url = util.clean_url(url)
   try:
-    domain = domain_from_link(url).lower()
+    domain = util.domain_from_link(url).lower()
   except BaseException:
     logger.info(f'Dropping bad URL: {url!r}.')
     return url, None, False

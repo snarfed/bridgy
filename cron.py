@@ -41,10 +41,10 @@ class LastUpdatedPicture(StringIdModel):
 def replace_poll_tasks():
   """Finds sources missing their poll tasks and adds new ones."""
   queries = [cls.query(Source.features == 'listen', Source.status == 'enabled',
-                       Source.last_poll_attempt <  util.now_fn() - timedelta(days=2))
+                       Source.last_poll_attempt <  util.now() - timedelta(days=2))
              for cls in models.sources.values() if cls.AUTO_POLL]
   for source in itertools.chain(*queries):
-    age = util.now_fn() - source.last_poll_attempt
+    age = util.now() - source.last_poll_attempt
     logger.info(f'{source.bridgy_url()} last polled {age} ago. Adding new poll task.')
     util.add_poll_task(source)
 

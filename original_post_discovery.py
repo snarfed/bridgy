@@ -398,7 +398,7 @@ def _process_author(source, author_url, refetch=False, store_blanks=True):
     # this author. this helps us decide whether to refetch periodically
     # and look for updates.
     # Source will be saved at the end of each round of polling
-    source.updates['last_syndication_url'] = util.now_fn()
+    source.updates['last_syndication_url'] = util.now()
 
   return results
 
@@ -491,7 +491,7 @@ def process_entry(source, permalink, feed_entry, refetch, preexisting,
   success = True
 
   if results:
-    source.updates['last_feed_syndication_url'] = util.now_fn()
+    source.updates['last_feed_syndication_url'] = util.now()
   elif not source.last_feed_syndication_url or not feed_entry:
     # fetch the full permalink page if we think it might have more details
     mf2 = None

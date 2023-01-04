@@ -231,7 +231,7 @@ def user(site, id):
 
     vars['next_poll'] = max(source.last_poll_attempt + source.poll_period(),
                             # lower bound is 1 minute from now
-                            util.now_fn() + datetime.timedelta(seconds=90))
+                            util.now() + datetime.timedelta(seconds=90))
 
   # Publishes
   if 'publish' in source.features:
@@ -494,7 +494,7 @@ def discover():
     if synd_links:
       for link in synd_links:
         util.add_discover_task(source, gr_source.post_id(link))
-      source.updates = {'last_syndication_url': util.now_fn()}
+      source.updates = {'last_syndication_url': util.now()}
       models.Source.put_updates(source)
     else:
       msg = f'Failed to fetch {util.pretty_link(url)} or find a {gr_source.NAME} syndication link.'

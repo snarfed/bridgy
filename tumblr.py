@@ -246,8 +246,6 @@ class ChooseBlog(oauth_tumblr.Callback):
                 for b in json_loads(auth_entity.user_json)['user']['blogs']
                 if b.get('name') and b.get('url')],
       }
-    print(logger.getEffectiveLevel())
-    assert logger.isEnabledFor(logging.DEBUG)
     logger.info(f'Rendering choose_blog.html with {vars}')
     return render_template('choose_blog.html', **vars)
 

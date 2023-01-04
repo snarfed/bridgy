@@ -342,7 +342,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
     this source, or the last one we sent was over a month ago, we drop them down
     to ~1d after a week long grace period.
     """
-    now = util.now_fn()
+    now = util.now()
     if self.rate_limited:
       return self.RATE_LIMITED_POLL
     elif now < self.created + self.FAST_POLL_GRACE_PERIOD:
@@ -358,7 +358,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
 
   def should_refetch(self):
     """Returns True if we should run OPD refetch on this source now."""
-    now = util.now_fn()
+    now = util.now()
     if self.last_hfeed_refetch == REFETCH_HFEED_TRIGGER:
       return True
     elif not self.last_syndication_url:
