@@ -133,14 +133,6 @@ class Mastodon(models.Source):
 </form>
 """
 
-  def is_private(self):
-    """Returns True if this Mastodon account is protected.
-
-    https://docs.joinmastodon.org/user/preferences/#misc
-    https://docs.joinmastodon.org/entities/account/
-    """
-    return json_loads(self.auth_entity.get().user_json).get('locked')
-
   def load_blocklist(self):
     try:
       return super().load_blocklist()

@@ -45,13 +45,6 @@ class MastodonTest(testutil.AppTest):
     self.assertEqual(good, self.m.canonicalize_url(good))
     self.assertEqual(good, self.m.canonicalize_url('http://foo.com/@x/123/'))
 
-  def test_is_private(self):
-    self.assertFalse(self.m.is_private())
-
-    self.auth_entity.user_json = json_dumps({'locked': True})
-    self.auth_entity.put()
-    self.assertTrue(self.m.is_private())
-
   def test_load_blocklist_missing_scope(self):
     self.expect_requests_get('https://foo.com' + API_BLOCKS,
                              headers={'Authorization': 'Bearer towkin'},
