@@ -140,7 +140,7 @@ class Poll(View):
     # this user's own activities (and user mentions)
     resp = source.get_activities_response(
       fetch_replies=True, fetch_likes=True, fetch_shares=True,
-      fetch_mentions=True, count=50, etag=source.last_activities_etag,
+      fetch_mentions=True, count=30, etag=source.last_activities_etag,
       min_id=source.last_activity_id, cache=cache)
     etag = resp.get('etag')  # used later
     user_activities = resp.get('items', [])
