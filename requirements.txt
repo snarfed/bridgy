@@ -54,7 +54,7 @@ MarkupSafe==2.1.1
 mf2py==1.1.2
 mox3==1.1.0
 oauthlib==3.2.2
-packaging==22.0
+packaging==23.0
 pbr==5.11.0
 praw==7.6.1
 prawcore==2.3.0
