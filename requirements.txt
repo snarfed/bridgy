@@ -8,7 +8,6 @@
 git+https://github.com/snarfed/oauth-dropins.git#egg=oauth_dropins
 git+https://github.com/snarfed/granary.git#egg=granary
 git+https://github.com/dvska/gdata-python3.git#egg=gdata
-git+https://github.com/kylewm/mf2util.git#egg=mf2util
 git+https://github.com/Alir3z4/html2text.git#egg=html2text
 
 beautifulsoup4==4.11.1
@@ -52,6 +51,7 @@ Jinja2==3.1.2
 lxml==4.9.2
 MarkupSafe==2.1.1
 mf2py==1.1.2
+mf2util==0.5.2
 mox3==1.1.0
 oauthlib==3.2.2
 packaging==23.0
