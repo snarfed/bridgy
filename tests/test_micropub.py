@@ -108,11 +108,24 @@ class MicropubTest(AppTest):
   def test_publish_not_enabled(self):
     self.source.features = ['listen']
     self.source.put()
-    self.assert_response(status=403, data={
+    self.assert_response(status=401, data={
       'h': 'entry',
       'content': 'foo bar baz',
     })
     self.assertEqual(0, Publish.query().count())
+
+  def test_multiple_users_same_auth_entity_some_disabled(self):
+    # other unusable sources with same auth entity
+    FakeSource(id='aaa-not-enabled', features=['publish'], status='disabled',
+               auth_entity=self.auth_entity.key).put()
+    FakeSource(id='aaa-no-publish', features=['listen'], status='enabled',
+               auth_entity=self.auth_entity.key).put()
+
+    self.assert_response(data={
+      'h': 'entry',
+      'content': 'foo bar baz',
+    })
+    self.check_entity()
 
   def test_unsupported_action(self):
     self.assert_response(status=400, data={'action': 'update'})

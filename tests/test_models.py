@@ -279,13 +279,15 @@ class SourceTest(testutil.AppTest):
     self.assert_equals('__foo__', s.key_id())
 
   def test_username_key_id(self):
+    self.mox.StubOutWithMock(FakeSource, 'USERNAME_KEY_ID')
+    FakeSource.USERNAME_KEY_ID = False
+
     f = FakeSource(id='FoO')
     self.assert_equals('FoO', f.key.string_id())
 
     f = FakeSource(username='FoO')
     self.assertIsNone(f.key)
 
-    self.mox.StubOutWithMock(FakeSource, 'USERNAME_KEY_ID')
     FakeSource.USERNAME_KEY_ID = True
     f = FakeSource(username='FoO')
     self.assert_equals('foo', f.key.string_id())

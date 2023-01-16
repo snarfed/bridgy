@@ -73,9 +73,14 @@ class Micropub(PublishBase):
         token_prop = getattr(src_cls.AUTH_MODEL, src_cls.MICROPUB_TOKEN_PROPERTY)
         auth_entity = src_cls.AUTH_MODEL.query(token_prop == token).get()
         if auth_entity:
-          return src_cls.query(src_cls.auth_entity == auth_entity.key).get()
+          src = src_cls.query(src_cls.auth_entity == auth_entity.key,
+                              src_cls.status == 'enabled',
+                              src_cls.features == 'publish',
+                              ).get()
+          if src:
+            return src
 
-    return self.error('unauthorized', 'No user found with that token', status=401)
+    return self.error('unauthorized', 'No publish user found with that token', status=401)
 
   def dispatch_request(self):
     logging.info(f'Params: {list(request.values.items())}')
