@@ -1,4 +1,5 @@
 """Mastodon source and datastore model classes."""
+from datetime import datetime
 import logging
 
 from flask import render_template, request
@@ -42,6 +43,8 @@ class StartBase(oauth_mastodon.Start):
     '/mastodon/delete/finish',
     '/delete/finish',
   )
+  # https://github.com/snarfed/bridgy/issues/1344
+  EXPIRE_APPS_BEFORE = datetime(2022, 9, 26)
 
   def app_name(self):
     return 'Bridgy'
