@@ -127,6 +127,7 @@ getglue.com
 getsatisfaction.com
 genius.com
 getpebble.com
+getrevue.co
 ggpht.com
 github.com
 gitorious.org
@@ -135,6 +136,7 @@ gnolia.com
 godudu.com
 goodreads.com
 google.com
+googleusercontent.com
 gowalla.com
 gu.com
 guardian.co.uk
@@ -186,6 +188,7 @@ myvideo.de
 nasdaq.com
 netlify.com
 news.ycombinator.com
+nintendo.com
 notion.so
 openstreetmap.org
 orkut.com
@@ -203,6 +206,7 @@ pinterest.com
 pinterest.co.uk
 plancast.com
 plaxo.com
+playstation.com
 plazes.com
 plinky.com
 plurk.com
@@ -268,6 +272,7 @@ twitter.com
 twittercounter.com
 typepad.com
 ubuntu.com
+unsplash.com
 userscripts.org
 ustream.tv
 v.gd
@@ -278,6 +283,8 @@ vimeo.com
 vodspot.tv
 vox.com
 wikipedia.org
+wordpress.org
+xbox.com
 xda-developers.com
 xfire.com
 xing.com
@@ -287,7 +294,7 @@ yelp.com
 yelp.de
 youtu.be
 youtube.com
-wordpress.org
+youtube-nocookie.com
 
 
 # URL shortener domains. Gratefully stolen from http://longurl.org/services
