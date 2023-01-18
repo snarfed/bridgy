@@ -122,7 +122,7 @@ class FlickrPollTest(FlickrBaseTest, testutil.BackgroundTest):
     """
     self.expect_call_api_method('flickr.people.getPhotos', {
       'extras': granary.flickr.Flickr.API_EXTRAS,
-      'per_page': 50,
+      'per_page': 10,
       'user_id': 'me',
     }, json_dumps({
       'stat': 'fail',
