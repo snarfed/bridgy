@@ -25,6 +25,7 @@ class Reddit(models.Source):
   CAN_PUBLISH = False
   DISABLE_HTTP_CODES = ('401', '403')
   USERNAME_KEY_ID = True
+  URL_CANONICALIZER = util.UrlCanonicalizer(domain=GR_CLASS.DOMAIN)
 
   @staticmethod
   def new(auth_entity=None, **kwargs):
