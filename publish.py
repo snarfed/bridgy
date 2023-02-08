@@ -277,7 +277,7 @@ class PublishBase(webmention.Webmention):
           raise
         msg = f"Error: {body or ''} {e}"
         return self.error(msg, status=code, report=code not in
-                          ('400', '403', '404', '406', '502', '503', '504'))
+                          ('400', '403', '404', '406', '422', '502', '503', '504'))
 
     if not self.entity.published:  # tried all the items
       types.discard('h-entry')
