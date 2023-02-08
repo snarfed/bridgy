@@ -164,7 +164,7 @@ def add_task(queue, eta_seconds=None, **kwargs):
     logger.info(f'Would add task: {queue_path} {params}')
   else:
     task = tasks_client.create_task(CreateTaskRequest(parent=queue_path, task=params))
-    logger.info(f'Added {queue} task {task.name} with ETA {eta_seconds}')
+    logger.info(f'Added {queue} task {task.name} with ETA {eta_seconds}: {params}')
 
 
 class Redirect(RequestRedirect):
