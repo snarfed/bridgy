@@ -756,6 +756,9 @@ class Source(StringIdModel, metaclass=SourceMeta):
     Args:
       obj: ActivityStreams activity or object dict
     """
+    if isinstance(obj, str):
+      return obj
+
     for tag in obj.get('tags', []):
       if tag.get('objectType') == 'person':
         silo_url = None

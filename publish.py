@@ -486,19 +486,9 @@ class PublishBase(webmention.Webmention):
     """
     for field in ('inReplyTo', 'object'):
       # microformats2.json_to_object de-dupes, no need to do it here
-      objs = activity.get(field)
-      if not objs:
-        continue
-
-      if isinstance(objs, dict):
-        objs = [objs]
-
-      augmented = list(objs)
-      for obj in objs:
-        url = obj.get('url')
-        if not url:
-          continue
-
+      urls = util.get_urls(activity, field)
+      augmented = list(urls)
+      for url in urls:
         parsed = urllib.parse.urlparse(url)
         # ignore home pages. https://github.com/snarfed/bridgy/issues/760
         if parsed.path in ('', '/'):
@@ -539,9 +529,10 @@ class PublishBase(webmention.Webmention):
             item.get('properties', {}).get('syndication', []))
 
         logging.debug(f'expand_target_urls found rel=syndication for url={url} : {synd_urls!r}')
-        augmented += [{'url': u} for u in synd_urls]
+        augmented += synd_urls
 
-      activity[field] = augmented
+      if augmented:
+        activity[field] = [{'url': u} for u in augmented]
 
   def get_or_add_publish_entity(self, source_url):
     """Creates and stores :class:`models.Publish` entity.
