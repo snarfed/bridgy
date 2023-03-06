@@ -79,10 +79,10 @@ class HandlersTest(testutil.AppTest):
 <span class="p-uid">tag:fa.ke,2013:000</span>
   <span class="p-author h-card">
     <data class="p-uid" value="{self.source.user_tag_id()}"></data>
-    <a class="u-url" href="http://fa.ke/{self.source.key.id()}">http://fa.ke/{self.source.key.id()}</a>
+    <a class="u-url" href="http://fa.ke/{self.source.key.id()}">fa.ke/{self.source.key.id()}</a>
     <img class="u-photo" src="https://example.com/ryan/image" alt="" />
   </span>
-<a class="u-url" href="http://fa.ke/000">http://fa.ke/000</a>
+<a class="u-url" href="http://fa.ke/000">fa.ke/000</a>
 <a class="u-url" href="http://or.ig/post"></a>
   <div class="e-content p-name">
   asdf http://other/link qwert
@@ -90,7 +90,7 @@ class HandlersTest(testutil.AppTest):
   </div>
 <span class="u-category h-card">
 <data class="p-uid" value="{self.source.user_tag_id()}"></data>
-<a class="u-url" href="http://or.ig">http://or.ig</a>
+<a class="u-url" href="http://or.ig">or.ig</a>
 <a class="u-url" href="https://fa.ke"></a>
 </span>
 </article>
@@ -226,7 +226,7 @@ asdf http://other/link qwert
   </div>
 <span class="u-category h-card">
 <data class="p-uid" value="{self.source.user_tag_id()}"></data>
-<a class="u-url" href="http://or.ig">http://or.ig</a>
+<a class="u-url" href="http://or.ig">or.ig</a>
 <a class="u-url" href="https://fa.ke"></a>
 </span>
 <a class="u-in-reply-to" href="http://fa.ke/000"></a>
@@ -353,7 +353,7 @@ asdf http://other/link qwert
 <span class="p-uid">tag:fa.ke,2013:111</span>
   <span class="p-author h-card">
     <data class="p-uid" value="tag:fa.ke,2013:reposter_id"></data>
-    <a class="u-url" href="http://personal.domain/">http://personal.domain/</a>
+    <a class="u-url" href="http://personal.domain/">personal.domain</a>
     <a class="u-url" href="http://fa.ke/reposter_id"></a>
     <img class="u-photo" src="https://example.com/ryan/image" alt="" />
   </span>
@@ -387,7 +387,7 @@ asdf http://other/link qwert
 <span class="p-uid">tag:fa.ke,2013:111</span>
   <span class="p-author h-card">
     <data class="p-uid" value="tag:fa.ke,2013:rsvper_id"></data>
-    <a class="u-url" href="http://fa.ke/rsvper_id">http://fa.ke/rsvper_id</a>
+    <a class="u-url" href="http://fa.ke/rsvper_id">fa.ke/rsvper_id</a>
     <img class="u-photo" src="https://example.com/ryan/image" alt="" />
   </span>
   <span class="p-name"><data class="p-rsvp" value="no">is not attending.</data></span>
