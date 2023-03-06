@@ -242,16 +242,16 @@ def user(site, id):
       parent = p.key.parent()
       published = p.published if isinstance(p.published, dict) else {}
       url = parent.id() if parent else published.get('url')
-      text = published.get('text') or published
+      text = published.get('text')
 
       if url:
         p.pretty_page = util.pretty_link(
           url,
-          text=published.get('text'),
+          text=text,
           attrs={'class': 'original-post u-url u-name'},
           new_tab=True)
       else:
-        p.pretty_page = text
+        p.pretty_page = text or ''
 
     vars['publishes'] = publishes
 
