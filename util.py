@@ -209,7 +209,7 @@ def redirect(path, code=302, logins=None):
 def webmention_endpoint_cache_key(url):
   """Returns cache key for a cached webmention endpoint for a given URL.
 
-  Example: 'W https snarfed.org /'
+  Example: 'https snarfed.org /'
 
   If the URL is the home page, ie path is / , the key includes a / at the end,
   so that we cache webmention endpoints for home pages separate from other pages.
@@ -218,7 +218,7 @@ def webmention_endpoint_cache_key(url):
   domain = util.domain_from_link(url)
   scheme = urllib.parse.urlparse(url).scheme
 
-  parts = ['W', scheme, domain]
+  parts = [scheme, domain]
   if urllib.parse.urlparse(url).path in ('', '/'):
     parts.append('/')
 

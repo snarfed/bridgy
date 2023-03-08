@@ -78,7 +78,7 @@ class PagesTest(testutil.AppTest):
     self.mox.ReplayAll()
 
     # cached webmention endpoint
-    util.webmention_endpoint_cache['W https skipped /'] = 'asdf'
+    util.webmention_endpoint_cache['https skipped /'] = 'asdf'
 
     response = self.client.post('/retry', data={'key': key})
     self.assertEqual(302, response.status_code)
@@ -95,7 +95,7 @@ class PagesTest(testutil.AppTest):
       self.assertEqual([], field)
 
     # webmention endpoints for URL domains should be refreshed
-    self.assertNotIn('W https skipped /', util.webmention_endpoint_cache)
+    self.assertNotIn('https skipped /', util.webmention_endpoint_cache)
 
     # shouldn't have refetched h-feed
     self.assertEqual(last_hfeed_refetch, source.key.get().last_hfeed_refetch)

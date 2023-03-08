@@ -315,10 +315,10 @@ class UtilTest(testutil.AppTest):
 
   def test_webmention_endpoint_cache_key(self):
     for expected, url in (
-        ('W http foo.com', 'http://foo.com/x'),
-        ('W https foo.com', 'https://foo.com/x/y'),
-        ('W http foo.com /', 'http://foo.com'),
-        ('W http foo.com /', 'http://foo.com/'),
+        ('http foo.com', 'http://foo.com/x'),
+        ('https foo.com', 'https://foo.com/x/y'),
+        ('http foo.com /', 'http://foo.com'),
+        ('http foo.com /', 'http://foo.com/'),
     ):
       got = util.webmention_endpoint_cache_key(url)
       self.assertEqual(expected, got, (url, got))
