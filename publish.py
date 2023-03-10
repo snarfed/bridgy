@@ -12,7 +12,7 @@ import urllib.request, urllib.parse, urllib.error
 
 from flask import render_template, request
 from google.cloud import ndb
-from granary import microformats2
+from granary import as1, microformats2
 from granary import source as gr_source
 import grpc
 from oauth_dropins import (
@@ -486,7 +486,8 @@ class PublishBase(webmention.Webmention):
     """
     for field in ('inReplyTo', 'object'):
       # microformats2.json_to_object de-dupes, no need to do it here
-      urls = util.get_urls(activity, field)
+      urls = util.dedupe_urls(o.get('url') or o.get('id')
+                              for o in as1.get_objects(activity, field))
       augmented = list(urls)
       for url in urls:
         parsed = urllib.parse.urlparse(url)
