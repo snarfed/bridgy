@@ -80,6 +80,7 @@ service.</a>
 <li><a href="#source-urls">What's the format for Bridgy's webmention source URLs?</a></li>
 <li><a href="#browser-extension">Wait, Instagram and Facebook need a browser extension now?</a></li>
 <li><a href="#facebook-profile-pictures">Where are the profile pictures for Facebook comments and likes?</a></li>
+<li><a href="#duplicates">Why did I get multiple duplicate copies of the same response?</a></li>
 
 <br />
 <p><em>Publishing</em></p>
@@ -724,6 +725,12 @@ so that recipients can fetch and parse them.
 <li id="facebook-profile-pictures" class="question">Where are the profile pictures for Facebook comments and likes?</li>
 <li class="answer">
 <p>We scrape Facebook via <a href="https://mbasic.facebook.com/">mbasic.facebook.com</a> (details above), which is imperfect in a number of ways. Notably, it doesn't show profile pictures on comments or likes, so we can't easily include those in the webmentions we send to your site.
+</p>
+</li>
+
+<li id="duplicates" class="question">Why did I get multiple duplicate copies of the same response?</li>
+<li class="answer">
+<p>If someone responds to one of your posts from more than one place, eg Mastodon and Twitter, or Instagram and their own web site, you'll get a separate webmention for each one. Bridgy doesn't currently try to de-duplicate these responses, but you're welcome to do it on your web site! The <a href="https://indieweb.org/deduplication">deduplication page on the IndieWeb wiki</a> has comprehensive background and techniques.
 </p>
 </li>
 
