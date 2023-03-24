@@ -81,12 +81,6 @@ class Source(StringIdModel, metaclass=SourceMeta):
   Each concrete silo class should subclass this class.
   """
 
-  # Turn off NDB instance and memcache caching.
-  # https://developers.google.com/appengine/docs/python/ndb/cache
-  # https://github.com/snarfed/bridgy/issues/558
-  # https://github.com/snarfed/bridgy/issues/68
-  _use_cache = False
-
   STATUSES = ('enabled', 'disabled')
   POLL_STATUSES = ('ok', 'error', 'polling')
   FEATURES = ('listen', 'publish', 'webmention', 'email')
@@ -832,10 +826,6 @@ class Webmentions(StringIdModel):
   """
   STATUSES = ('new', 'processing', 'complete', 'error')
 
-  # Turn off instance and memcache caching. See Source for details.
-  _use_cache = False
-  _use_memcache = False
-
   source = ndb.KeyProperty()
   status = ndb.StringProperty(choices=STATUSES, default='new')
   leased_until = ndb.DateTimeProperty(tzinfo=timezone.utc)
@@ -1038,10 +1028,6 @@ class Publish(ndb.Model):
   """
   STATUSES = ('new', 'complete', 'failed', 'deleted')
 
-  # Turn off instance and memcache caching. See Source for details.
-  _use_cache = False
-  _use_memcache = False
-
   type = ndb.StringProperty(choices=PUBLISH_TYPES)
   status = ndb.StringProperty(choices=STATUSES, default='new')
   source = ndb.KeyProperty()
@@ -1095,10 +1081,6 @@ class SyndicatedPost(ndb.Model):
   When a :class:`SyndicatedPost` entity is about to be stored,
   :meth:`source.Source.on_new_syndicated_post()` is called before it's stored.
   """
-
-  # Turn off instance and memcache caching. See Response for details.
-  _use_cache = False
-  _use_memcache = False
 
   syndication = ndb.StringProperty()
   original = ndb.StringProperty()
