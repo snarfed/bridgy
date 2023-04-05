@@ -177,7 +177,6 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
       ('http://author/post/permalink2', 'https://fa.ke/post/url2'),
     )
 
-
   def test_additional_requests_do_not_require_rework(self):
     """Test that original post discovery fetches and stores all entries up
     front so that it does not have to reparse the author's h-feed for
@@ -397,8 +396,21 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
     self.assertEqual(['author', 'other'], self.source.updates['domains'])
 
   def test_no_h_entries(self):
-    """Make sure nothing bad happens when fetching a feed without h-entries.
-    """
+    """Make sure nothing bad happens when fetching a feed without h-entries."""
+    self.expect_requests_get('http://author/', """
+    <html class="h-feed">
+    <p>under construction</p>
+    </html>""")
+
+    self.mox.ReplayAll()
+    self.assert_discover([])
+    self.assert_syndicated_posts((None, 'https://fa.ke/post/url'))
+
+  def test_fragment_not_found(self):
+    """Make sure nothing bad happens when fetching a feed without h-entries."""
+    self.source.domain_urls = ['http://author/#nope']
+    self.source.put()
+
     self.expect_requests_get('http://author/', """
     <html class="h-feed">
     <p>under construction</p>

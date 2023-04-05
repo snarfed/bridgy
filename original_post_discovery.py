@@ -313,6 +313,10 @@ def _process_author(source, author_url, refetch=False, store_blanks=True):
     logger.info(f'Could not fetch author url {author_url}', exc_info=True)
     return {}
 
+  if not author_mf2:
+    logger.debug('nothing found')
+    return {}
+
   feeditems = _find_feed_items(author_mf2)
 
   # try rel=feeds and rel=alternates
@@ -334,6 +338,9 @@ def _process_author(source, author_url, refetch=False, store_blanks=True):
     try:
       logger.debug(f"fetching author's rel-feed {feed_url}")
       feed_mf2 = util.fetch_mf2(feed_url)
+      if not feed_mf2:
+        logger.debug('nothing found')
+        continue
       feeditems = _merge_hfeeds(feeditems, _find_feed_items(feed_mf2))
       domain = util.domain_from_link(feed_url)
       if source.updates is not None and domain not in source.domains:
