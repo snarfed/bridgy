@@ -35,7 +35,8 @@ class Twitter(models.Source):
     'like': 'favorite',
   }
   TRANSIENT_ERROR_HTTP_CODES = ('404',)
-  CAN_PUBLISH = True
+  CAN_LISTEN = False
+  CAN_PUBLISH = False
   AUTH_MODEL = oauth_twitter.TwitterAuth
   MICROPUB_TOKEN_PROPERTY = 'token_secret'
   HAS_BLOCKS = True
