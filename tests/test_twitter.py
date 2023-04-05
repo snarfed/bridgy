@@ -2,6 +2,7 @@
 """
 import copy
 import urllib.request, urllib.parse, urllib.error
+from unittest import skip
 
 from granary import twitter as gr_twitter
 from granary.tests import test_twitter as gr_twitter_test
@@ -66,6 +67,7 @@ class TwitterTest(testutil.AppTest):
                     response_json=json_dumps(like)).put()
     self.assert_equals(like, self.tw.get_like('unused', '000', '222'))
 
+  @skip
   def test_get_like_fallback(self):
     """If there's no Response in the datastore, fall back to get_activities."""
     models.TWITTER_SCRAPE_HEADERS = {'x': 'y'}

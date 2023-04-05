@@ -302,7 +302,7 @@ class PublishTest(testutil.AppTest):
         'https://brid.gy/publish/instagram',
     ):
       self.assert_error(
-        'Target must be brid.gy/publish/[flickr,github,mastodon,twitter]',
+        'Target must be brid.gy/publish/[flickr,github,mastodon]',
         target=target)
 
   def test_source_url_redirects(self):
@@ -490,9 +490,6 @@ foo
     self.assert_error(
       "Looks like that's a FakeSource URL. Try one from your web site instead!",
       source='http://fa.ke/post/123')
-    self.assert_error(
-      "Looks like that's a Twitter URL. Try one from your web site instead!",
-      source='http://twitter.com/post/123')
 
   def test_embedded_type_not_implemented(self):
     self.expect_requests_get('http://foo.com/bar', """

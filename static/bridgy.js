@@ -21,10 +21,6 @@ function do_preview(site) {
       preview = document.getElementById('preview');
       preview.innerHTML = this.responseText;
       preview.scrollIntoView({behavior: 'smooth', block: 'nearest'});
-      // trigger re-render of twitter embed
-      if (typeof(twttr) != 'undefined') {
-        twttr.widgets.load();
-      }
     } else {
       this.onerror();
     }

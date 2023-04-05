@@ -333,9 +333,6 @@ def delete_start():
   path = ('/reddit/callback' if kind == 'Reddit'
           else '/wordpress/add' if kind == 'WordPress'
           else f'/{source.SHORT_NAME}/delete/finish')
-  kwargs = {}
-  if kind == 'Twitter':
-    kwargs['access_type'] = 'read' if feature == 'listen' else 'write'
 
   try:
     return redirect(source.OAUTH_START(path).redirect_url(state=state))

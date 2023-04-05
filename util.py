@@ -45,7 +45,6 @@ POLL_TASK_DATETIME_FORMAT = '%Y-%m-%d-%H-%M-%S'
 # https://github.com/snarfed/bridgy/issues/713
 REQUEST_HEADERS_CONNEG = {'Accept': 'text/html, application/json; q=0.9, */*; q=0.8'}
 CONNEG_DOMAINS = {'rhiaro.co.uk'}
-CONNEG_PATHS = {'/twitter/rhiaro'}
 
 # Domains that don't support webmentions. Mainly just the silos.
 # Subdomains are automatically blocklisted too.
@@ -280,8 +279,7 @@ def follow_redirects(url):
 
 
 def request_headers(url=None, source=None):
-  if (url and util.domain_from_link(url) in CONNEG_DOMAINS or
-      source and source.bridgy_path() in CONNEG_PATHS):
+  if url and util.domain_from_link(url) in CONNEG_DOMAINS:
     return REQUEST_HEADERS_CONNEG
 
   return {}

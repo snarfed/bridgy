@@ -70,8 +70,7 @@ def responses():
 @app.route('/admin/sources')
 def sources():
   """Find sources whose last poll errored out."""
-  CLASSES = (flickr.Flickr, github.GitHub, twitter.Twitter,
-             instagram.Instagram, mastodon.Mastodon)
+  CLASSES = (flickr.Flickr, github.GitHub, instagram.Instagram, mastodon.Mastodon)
   queries = [cls.query(Source.status == 'enabled',
                        Source.poll_status == 'error',
                        Source.rate_limited.IN((False, None)),

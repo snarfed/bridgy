@@ -7,7 +7,6 @@ from urllib.parse import urlencode
 from flask import get_flashed_messages
 from google.cloud import ndb
 from mox3 import mox
-from oauth_dropins.twitter import TwitterAuth
 from oauth_dropins.webutil.testutil import NOW
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import tweepy
@@ -22,7 +21,7 @@ from .testutil import FakeBlogSource
 import admin, app as _app, background, flask_app, flask_background
 
 # sources etc
-import blogger, facebook, flickr, github, indieauth, instagram, mastodon, medium, reddit, tumblr, twitter, wordpress_rest
+import blogger, facebook, flickr, github, indieauth, instagram, mastodon, medium, reddit, tumblr, wordpress_rest
 
 # import pages after testutil so that FakeBlogSource is defined when pages
 # generates its URL routes for all source classes
@@ -362,20 +361,6 @@ class PagesTest(testutil.AppTest):
     self.assertEqual([self.publishes[0].key.parent().id()], props['url'])
     self.assertEqual([self.publishes[0].status], props['bridgy-status'])
 
-  def test_user_page_private_twitter(self):
-    auth_entity = TwitterAuth(
-      id='foo',
-      user_json=json_dumps({'protected': True}),
-      token_key='', token_secret='',
-    ).put()
-    tw = twitter.Twitter(id='foo', auth_entity=auth_entity, features=['listen'])
-    tw.put()
-
-    resp = self.client.get(tw.bridgy_path())
-    self.assertEqual(200, resp.status_code)
-    self.assertIn('Your Twitter account is private!', resp.get_data(as_text=True))
-    self.assertNotIn('most of your recent posts are private', resp.get_data(as_text=True))
-
   def test_user_page_recent_private_posts(self):
     self.sources[0].recent_private_posts = pages.RECENT_PRIVATE_POSTS_THRESHOLD
     self.sources[0].put()
@@ -683,16 +668,6 @@ class DiscoverTest(testutil.AppTest):
   def test_discover_url_silo_not_post_url(self):
     self.check_discover('http://fa.ke/',
         "Sorry, that doesn't look like a FakeSource post URL.")
-
-  def test_discover_twitter_profile_url_error(self):
-    """https://console.cloud.google.com/errors/7553065641439031622"""
-    auth_entity = TwitterAuth(id='foo', user_json='',
-                              token_key='', token_secret='').put()
-    self.source = twitter.Twitter(id='foo', features=['listen'],
-                                  auth_entity=auth_entity)
-    self.source.put()
-    self.check_discover('https://twitter.com/bltavares',
-                        "Sorry, that doesn't look like a Twitter post URL.")
 
   def test_discover_url_site_post_fetch_fails(self):
     self.check_fail('fooey', status_code=404)

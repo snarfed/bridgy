@@ -13,7 +13,6 @@ from oauth_dropins import (
   flickr as oauth_flickr,
   github as oauth_github,
   mastodon as oauth_mastodon,
-  twitter as oauth_twitter,
 )
 from oauth_dropins.webutil import appengine_info
 from oauth_dropins.webutil.flask_util import flash
@@ -137,7 +136,7 @@ class Micropub(PublishBase):
       return self.error('invalid_request', f'Invalid microformats2 input: {e}')
 
     # override articles to be notes to force short-form granary sources like
-    # Twitter and Mastodon to use content, not displayName
+    # Mastodon to use content, not displayName
     if obj.get('objectType') == 'article':
       obj['objectType'] = 'note'
     logging.debug(f'Converted to ActivityStreams object: {json_dumps(obj, indent=2)}')
@@ -236,10 +235,6 @@ class MastodonToken(oauth_mastodon.Callback, GetToken):
   finish = GetToken.finish
 
 
-class TwitterToken(oauth_twitter.Callback, GetToken):
-  finish = GetToken.finish
-
-
 app.add_url_rule('/micropub', view_func=Micropub.as_view('micropub'), methods=['GET', 'POST'])
 
 app.add_url_rule('/micropub-token/flickr/start', view_func=oauth_flickr.Start.as_view('flickr_micropub_token_finish', '/micropub-token/flickr/finish'), methods=['POST'])
@@ -250,6 +245,3 @@ app.add_url_rule('/micropub-token/github/finish', view_func=GitHubToken.as_view(
 
 app.add_url_rule('/micropub-token/mastodon/start', view_func=MastodonStart.as_view('mastodon_micropub_token_finish', '/micropub-token/mastodon/finish'), methods=['POST'])
 app.add_url_rule('/micropub-token/mastodon/finish', view_func=MastodonToken.as_view('micropub_token_mastodon_finish', 'unused'))
-
-app.add_url_rule('/micropub-token/twitter/start', view_func=oauth_twitter.Start.as_view('twitter_micropub_token_finish', '/micropub-token/twitter/finish'), methods=['POST'])
-app.add_url_rule('/micropub-token/twitter/finish', view_func=TwitterToken.as_view('micropub_token_twitter_finish', 'unused'))

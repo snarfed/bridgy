@@ -4,15 +4,12 @@ import copy
 import datetime
 
 from granary import mastodon as gr_mastodon
-from granary import twitter as gr_twitter
 from granary.tests import test_flickr
 from granary.tests import test_mastodon
 import oauth_dropins.flickr
 import oauth_dropins.flickr_auth
 from oauth_dropins import indieauth
 import oauth_dropins.mastodon
-import oauth_dropins.twitter
-import oauth_dropins.twitter_auth
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
 from urllib3.exceptions import NewConnectionError
@@ -23,7 +20,6 @@ from mastodon import Mastodon
 import models
 from . import testutil
 from .testutil import FakeSource
-from twitter import Twitter
 import tasks
 import util
 
@@ -33,8 +29,6 @@ class CronTest(testutil.BackgroundTest):
     super().setUp()
     oauth_dropins.flickr_auth.FLICKR_APP_KEY = 'my_app_key'
     oauth_dropins.flickr_auth.FLICKR_APP_SECRET = 'my_app_secret'
-    oauth_dropins.twitter_auth.TWITTER_APP_KEY = 'my_app_key'
-    oauth_dropins.twitter_auth.TWITTER_APP_SECRET = 'my_app_secret'
 
   def test_replace_poll_tasks(self):
     now = util.now()
@@ -70,55 +64,6 @@ class CronTest(testutil.BackgroundTest):
 
     resp = self.client.get('/cron/replace_poll_tasks')
     self.assertEqual(200, resp.status_code)
-
-  def test_update_twitter_pictures(self):
-    sources = []
-    for screen_name in ('a', 'b', 'c'):
-      auth_entity = oauth_dropins.twitter.TwitterAuth(
-        id='id', token_key='key', token_secret='secret',
-        user_json=json_dumps({'name': 'Ryan',
-                              'screen_name': screen_name,
-                              'profile_image_url': 'http://pi.ct/ure',
-                              }))
-      auth_entity.put()
-      sources.append(Twitter.new(auth_entity=auth_entity, features=['listen']).put())
-
-    user_obj = {
-      'screen_name': sources[1].id(),
-      'profile_image_url_https': 'http://new/pic_normal.jpg',
-      'profile_image_url': 'http://bad/http',
-    }
-
-    lookup_url = gr_twitter.API_BASE + gr_twitter.API_USER
-    self.expect_urlopen(lookup_url % 'a', json_dumps(user_obj))
-    self.expect_urlopen(lookup_url % 'b', json_dumps(user_obj))
-    self.expect_urlopen(lookup_url % 'c', json_dumps(user_obj))
-    self.mox.ReplayAll()
-
-    resp = self.client.get('/cron/update_twitter_pictures')
-    self.assertEqual(200, resp.status_code)
-
-    for source in sources:
-      self.assertEqual('http://new/pic.jpg', source.get().picture)
-
-  def test_update_twitter_picture_user_lookup_404s(self):
-    auth_entity = oauth_dropins.twitter.TwitterAuth(
-      id='id', token_key='key', token_secret='secret',
-      user_json=json_dumps({'name': 'Bad',
-                            'screen_name': 'bad',
-                            'profile_image_url': 'http://pi.ct/ure',
-                           }))
-    auth_entity.put()
-    source = Twitter.new(auth_entity=auth_entity, features=['publish']).put()
-
-    lookup_url = gr_twitter.API_BASE + gr_twitter.API_USER
-    self.expect_urlopen(lookup_url % 'bad', status=404)
-    self.mox.ReplayAll()
-
-    resp = self.client.get('/cron/update_twitter_pictures')
-    self.assertEqual(200, resp.status_code)
-
-    self.assertEqual('http://pi.ct/ure', source.get().picture)
 
   def test_update_flickr_pictures(self):
     flickrs = self._setup_flickr()

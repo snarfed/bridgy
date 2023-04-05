@@ -18,7 +18,6 @@ from mastodon import Mastodon
 from reddit import Reddit
 import models
 from models import Source
-from twitter import Twitter
 import util
 
 logger = logging.getLogger(__name__)
@@ -121,15 +120,6 @@ class UpdateMastodonPictures(UpdatePictures):
     return source.auth_entity.get().user_id()
 
 
-class UpdateTwitterPictures(UpdatePictures):
-  """Finds :class:`Twitter` sources with new profile pictures and updates them.
-
-  https://github.com/snarfed/granary/commit/dfc3d406a20965a5ed14c9705e3d3c2223c8c3ff
-  http://indiewebcamp.com/Twitter#Profile_Image_URLs
-  """
-  SOURCE_CLS = Twitter
-
-
 class UpdateRedditPictures(UpdatePictures):
   """Finds :class:`Reddit` sources with new profile pictures and updates them."""
   SOURCE_CLS = Reddit
@@ -141,5 +131,3 @@ app.add_url_rule('/cron/update_mastodon_pictures',
                  view_func=UpdateMastodonPictures.as_view('update_mastodon_pictures'))
 app.add_url_rule('/cron/update_reddit_pictures',
                  view_func=UpdateRedditPictures.as_view('update_reddit_pictures'))
-app.add_url_rule('/cron/update_twitter_pictures',
-                 view_func=UpdateTwitterPictures.as_view('update_twitter_pictures'))

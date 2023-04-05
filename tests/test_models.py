@@ -22,7 +22,6 @@ import superfeedr
 from . import testutil
 from .testutil import FakeGrSource, FakeSource
 import tumblr
-import twitter
 import util
 import wordpress_rest
 
@@ -244,7 +243,6 @@ class SourceTest(testutil.AppTest):
     self.assertEqual(flickr.Flickr, models.sources['flickr'])
     self.assertEqual(instagram.Instagram, models.sources['instagram'])
     self.assertEqual(tumblr.Tumblr, models.sources['tumblr'])
-    self.assertEqual(twitter.Twitter, models.sources['twitter'])
     self.assertEqual(wordpress_rest.WordPress, models.sources['wordpress'])
 
   def _test_create_new(self, expected_msg, **kwargs):

@@ -17,7 +17,6 @@ from flask_app import app
 from models import Source
 from . import testutil
 from .testutil import FakeAuthEntity, FakeGrSource, FakeSource
-from twitter import Twitter
 import util
 from util import Login
 
@@ -280,7 +279,6 @@ class UtilTest(testutil.AppTest):
 
   def test_no_accept_header(self):
     self.assertEqual({}, util.request_headers(url='http://foo/bar'))
-    self.assertEqual({}, util.request_headers(source=Twitter(id='not-rhiaro')))
 
     self.expect_requests_get('http://foo/bar', '')
     self.mox.ReplayAll()
@@ -292,8 +290,6 @@ class UtilTest(testutil.AppTest):
     """
     self.assertEqual(util.REQUEST_HEADERS_CONNEG,
                       util.request_headers(url='http://rhiaro.co.uk/'))
-    self.assertEqual(util.REQUEST_HEADERS_CONNEG,
-                      util.request_headers(source=Twitter(id='rhiaro')))
 
     self.expect_requests_get('http://rhiaro.co.uk/', '',
                              headers=util.REQUEST_HEADERS_CONNEG)

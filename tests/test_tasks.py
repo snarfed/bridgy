@@ -1686,15 +1686,13 @@ class PropagateTest(TaskTest):
 
   def test_webmention_post_accept_header(self):
     """The webmention POST request should send Accept: */*."""
-    self.responses[0].source = Twitter(id='rhiaro').put()
-    self.responses[0].put()
     self.expect_requests_get(
-      'http://target1/post/url', timeout=15, headers=util.REQUEST_HEADERS_CONNEG,
+      'http://target1/post/url', timeout=15,
       response_headers={'Link': '<http://my/endpoint>; rel=webmention'})
 
     self.expect_requests_post(
       'http://my/endpoint', timeout=999,
-      data={'source': 'http://localhost/comment/twitter/rhiaro/a/1_2_a',
+      data={'source': 'http://localhost/comment/fake/0123456789/a/1_2_a',
             'target': 'http://target1/post/url'},
       allow_redirects=False, headers={'Accept': '*/*'})
 

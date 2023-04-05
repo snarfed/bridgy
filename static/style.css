@@ -324,11 +324,6 @@ input[type="text"], input[type="url"] {
   display: inline-block;
 }
 
-/* Override the inline display:block which makes it align left instead of center. */
-iframe#twitter-widget-0 {
-  display: inline !important;
-}
-
 #footer {
   margin-top: 2em;
   margin-bottom: 1em;

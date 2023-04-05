@@ -19,7 +19,7 @@ import util
 logger = logging.getLogger(__name__)
 
 
-@app.route('/publish/<any(flickr,github,mastodon,twitter):silo>',
+@app.route('/publish/<any(flickr,github,mastodon):silo>',
            methods=['GET', 'HEAD'])
 def webmention_get_or_head(silo):
   """Serves webmention discovery for HEADs to webmention endpoints."""
