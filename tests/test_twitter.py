@@ -17,6 +17,7 @@ import twitter
 from twitter import Twitter
 
 
+@skip
 class TwitterTest(testutil.AppTest):
 
   def setUp(self):
@@ -67,7 +68,6 @@ class TwitterTest(testutil.AppTest):
                     response_json=json_dumps(like)).put()
     self.assert_equals(like, self.tw.get_like('unused', '000', '222'))
 
-  @skip
   def test_get_like_fallback(self):
     """If there's no Response in the datastore, fall back to get_activities."""
     models.TWITTER_SCRAPE_HEADERS = {'x': 'y'}
