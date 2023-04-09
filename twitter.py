@@ -129,9 +129,6 @@ class Twitter(models.Source):
     resp = models.Response.get_by_id(id)
     if resp:
       return json_loads(resp.response_json)
-    else:
-      return super().get_like(activity_user_id, activity_id,
-                                           like_user_id, **kwargs)
 
   def is_private(self):
     """Returns True if this Twitter account is protected.

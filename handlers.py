@@ -30,6 +30,7 @@ from granary import microformats2
 from granary.microformats2 import first_props
 from oauth_dropins.webutil import flask_util
 from oauth_dropins.webutil.flask_util import error
+from oauth_dropins.webutil.util import json_dumps, json_loads
 
 from flask_app import app, cache
 import models
@@ -124,7 +125,7 @@ class Item(View):
     if not self.source:
       error(f'Source {site} {key_id} not found')
     elif (self.source.status == 'disabled' or
-          'listen' not in self.source.features):
+          'listen' not in self.source.features) and self.source.SHORT_NAME != 'twitter':
       error(f'Source {self.source.bridgy_path()} is disabled for backfeed')
 
     format = request.values.get('format', 'html')
@@ -219,8 +220,15 @@ class Item(View):
 # likes, reposts, or rsvps. Matches logic in poll() (step 4) in tasks.py!
 class Post(Item):
   def get_item(self, post_id):
-    posts = self.source.get_activities(activity_id=post_id,
-                                       user_id=self.source.key_id())
+    posts = None
+
+    if self.source.SHORT_NAME == 'twitter':
+      resp = models.Response.get_by_id(self.source.gr_source.tag_uri(post_id))
+      if resp and resp.response_json:
+        posts = [json_loads(resp.response_json)]
+    else:
+      posts = self.source.get_activities(activity_id=post_id,
+                                         user_id=self.source.key_id())
     if not posts:
       return None
 
@@ -236,13 +244,26 @@ class Post(Item):
 
 class Comment(Item):
   def get_item(self, post_id, comment_id):
-    fetch_replies = not self.source.gr_source.OPTIMIZED_COMMENTS
-    post = self.get_post(post_id, fetch_replies=fetch_replies)
-    has_replies = (post.get('object', {}).get('replies', {}).get('items')
-                   if post else False)
-    cmt = self.source.get_comment(
-      comment_id, activity_id=post_id, activity_author_id=self.source.key_id(),
-      activity=post if fetch_replies or has_replies else None)
+    if self.source.SHORT_NAME == 'twitter':
+      cmt = post = None
+      resp = models.Response.get_by_id(self.source.gr_source.tag_uri(comment_id))
+      if resp and resp.response_json:
+        cmt = json_loads(resp.response_json)
+        if resp.activities_json:
+          for activity in resp.activities_json:
+            activity = json_loads(activity)
+            if activity.get('id') == self.source.gr_source.tag_uri(post_id):
+              post = activity
+
+    else:
+      fetch_replies = not self.source.gr_source.OPTIMIZED_COMMENTS
+      post = self.get_post(post_id, fetch_replies=fetch_replies)
+      has_replies = (post.get('object', {}).get('replies', {}).get('items')
+                     if post else False)
+      cmt = self.source.get_comment(
+        comment_id, activity_id=post_id, activity_author_id=self.source.key_id(),
+        activity=post if fetch_replies or has_replies else None)
+
     if post:
       originals, mentions = original_post_discovery.discover(
         self.source, post, fetch_hfeed=False)
@@ -277,9 +298,22 @@ class Reaction(Item):
 
 class Repost(Item):
   def get_item(self, post_id, share_id):
-    post = self.get_post(post_id, fetch_shares=True)
-    repost = self.source.gr_source.get_share(
-      self.source.key_id(), post_id, share_id, activity=post)
+    if self.source.SHORT_NAME == 'twitter':
+      repost = post = None
+      resp = models.Response.get_by_id(self.source.gr_source.tag_uri(share_id))
+      if resp and resp.response_json:
+        repost = json_loads(resp.response_json)
+        if resp.activities_json:
+          for activity in resp.activities_json:
+            activity = json_loads(activity)
+            if activity.get('id') == self.source.gr_source.tag_uri(post_id):
+              post = activity
+
+    else:
+      post = self.get_post(post_id, fetch_shares=True)
+      repost = self.source.gr_source.get_share(
+        self.source.key_id(), post_id, share_id, activity=post)
+
     # webmention receivers don't want to see their own post in their
     # comments, so remove attachments before rendering.
     if repost and 'attachments' in repost:
@@ -288,6 +322,7 @@ class Repost(Item):
       originals, mentions = original_post_discovery.discover(
         self.source, post, fetch_hfeed=False)
       self.merge_urls(repost, 'object', originals)
+
     return repost
 
 
@@ -315,3 +350,5 @@ app.add_url_rule('/repost/<site>/<key_id>/<post_id>/<share_id>',
                  view_func=Repost.as_view('repost'))
 app.add_url_rule('/rsvp/<site>/<key_id>/<event_id>/<user_id>',
                  view_func=Rsvp.as_view('rsvp'))
+
+
