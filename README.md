@@ -1,7 +1,7 @@
 <img src="https://raw.github.com/snarfed/bridgy/main/static/bridgy_logo_with_alpha.png" alt="Bridgy" width="128" /> [Bridgy](https://brid.gy/) [![Circle CI](https://circleci.com/gh/snarfed/bridgy.svg?style=svg)](https://circleci.com/gh/snarfed/bridgy) [![Coverage Status](https://coveralls.io/repos/github/snarfed/bridgy/badge.svg?branch=main)](https://coveralls.io/github/snarfed/bridgy?branch=main)
 ===
 
-Bridgy connects your web site to social media. Likes, retweets, mentions, cross-posting, and more. [See the user docs](https://brid.gy/about) for more details, or the [developer docs](https://bridgy.readthedocs.io/) if you want to contribute.
+Bridgy connects your web site to social media. Likes, reposts, mentions, cross-posting, and more. [See the user docs](https://brid.gy/about) for more details, or the [developer docs](https://bridgy.readthedocs.io/) if you want to contribute.
 
 https://brid.gy/
 

@@ -1,9 +1,9 @@
 Bridgy developer documentation
 ------------------------------
 
-Bridgy connects your web site to social media. Likes, retweets,
-mentions, cross-posting, and more. `See the user
-docs <https://brid.gy/about>`__ for more details, or the `developer
+Bridgy connects your web site to social media. Likes, reposts, mentions,
+cross-posting, and more. `See the user docs <https://brid.gy/about>`__
+for more details, or the `developer
 docs <https://bridgy.readthedocs.io/>`__ if you want to contribute.
 
 https://brid.gy/
@@ -20,27 +20,31 @@ License: This project is placed in the public domain.
 Development
 -----------
 
-You’ll need the `Google Cloud
-SDK <https://cloud.google.com/sdk/gcloud/>`__ (aka ``gcloud``) with the
-``gcloud-appengine-python``, ``gcloud-appengine-python-extras`` and
-``google-cloud-sdk-datastore-emulator``
-`components <https://cloud.google.com/sdk/docs/components#additional_components>`__.
-Then, create a Python 3 virtualenv and install the dependencies with:
+Pull requests are welcome! Feel free to `ping me in
+#indieweb-dev <https://indieweb.org/discuss>`__ with any questions.
+
+First, fork and clone this repo. Then, install the `Google Cloud
+SDK <https://cloud.google.com/sdk/>`__ and run
+``gcloud components install beta cloud-datastore-emulator`` to install
+the `datastore
+emulator <https://cloud.google.com/datastore/docs/tools/datastore-emulator>`__.
+Once you have them, set up your environment by running these commands in
+the repo root directory:
 
 .. code:: sh
 
+   gcloud config set project brid-gy
    python3 -m venv local
    source local/bin/activate
    pip install -r requirements.txt
-   # needed to serve static file handlers locally
+   # needed to serve static files locally
    ln -s local/lib/python3*/site-packages/oauth_dropins/static oauth_dropins_static
-   gcloud config set project brid-gy
 
 Now, you can fire up the gcloud emulator and run the tests:
 
 .. code:: sh
 
-   gcloud beta emulators datastore start --no-store-on-disk --consistency=1.0 --host-port=localhost:8089 --quiet
+   gcloud beta emulators datastore start --use-firestore-in-datastore-mode --no-store-on-disk --host-port=localhost:8089 --quiet < /dev/null >& /dev/null &
    python3 -m unittest discover -s tests -t .
    kill %1
 
@@ -52,7 +56,7 @@ To run the app locally, use
 
 .. code:: shell
 
-   gcloud beta emulators datastore start --consistency=1.0 --host-port=localhost:8089 --quiet
+   gcloud beta emulators datastore start --use-firestore-in-datastore-mode --no-store-on-disk --host-port=localhost:8089 --quiet < /dev/null >& /dev/null &
    GAE_ENV=localdev FLASK_ENV=development flask run -p 8080
 
 Open `localhost:8080 <http://localhost:8080/>`__ and you should see the
@@ -184,22 +188,21 @@ Browser extension: release
 
 Here’s how to cut a new release of the browser extension and publish it
 `to
-addons.mozilla.org <https://addons.mozilla.org/en-US/firefox/addon/bridgy/>`__
-and `to the Chrome Web
-Store <https://chrome.google.com/webstore/detail/bridgy/lcpeamdhminbbjdfjbpmhgjgliaknflj>`__:
+addons.mozilla.org <https://addons.mozilla.org/en-US/firefox/addon/bridgy/>`__:
 
-1. Load the extension in Firefox (``about:debugging``) and Chrome
-   (``chrome://extensions/``, Developer mode on). Check that it works in
-   both.
+1. ``ln -fs manifest.firefox.json manifest.json``
 
-2. Bump the version in ``browser-extension/manifest.json``.
+2. Load the extension in Firefox (``about:debugging``). Check that it
+   works.
 
-3. Update the Changelog in the README.md section below this one.
+3. Bump the version in ``browser-extension/manifest.json``.
 
-4. Build and sign the artifact:
+4. Update the Changelog in the README.md section below this one.
+
+5. Build and sign the artifact:
    ``sh     cd browser-extension/     npm test     ./node_modules/web-ext/bin/web-ext build``
 
-5. Submit it to AMO. \`sh # get API secret from Ryan if you don’t have
+6. Submit it to AMO. \`sh # get API secret from Ryan if you don’t have
    it ./node_modules/web-ext/bin/web-ext sign –api-key user:14645521:476
    –api-secret …
 
@@ -209,21 +212,46 @@ Store <https://chrome.google.com/webstore/detail/bridgy/lcpeamdhminbbjdfjbpmhgjg
    auto-approved within minutes. `Check the public listing
    here. <https://addons.mozilla.org/en-US/firefox/addon/bridgy/>`__
 
-6. Submit it to the Chrome Web Store:
+Here’s how to publish it `to the Chrome Web
+Store <https://chrome.google.com/webstore/detail/bridgy/lcpeamdhminbbjdfjbpmhgjgliaknflj>`__:
 
-   1. `Open the
-      console. <https://chrome.google.com/webstore/devconsole/>`__
-   2. Open the Bridgy item. Ryan to add you if you don’t see it.
-   3. Choose *Package* on the left.
-   4. Click the *Upload new package* button.
-   5. Upload the new version’s zip file from
-      ``browser-extension/web-ext-artifacts/``.
-   6. Update the Changelog in the *Description* box. Leave the rest
-      unchanged.
-   7. Click *Save draft*, then *Submit for review*.
+1.  ``ln -fs manifest.chrome.json manifest.json``
+2.  Load the extension in Chrome (``chrome://extensions/``, Developer
+    mode on). Check that it works.
+3.  Build and sign the artifact:
+    ``sh     cd browser-extension/     npm test     ./node_modules/web-ext/bin/web-ext build``
+4.  `Open the
+    console. <https://chrome.google.com/webstore/devconsole/>`__
+5.  Open the Bridgy item.
+6.  Choose *Package* on the left.
+7.  Click the *Upload new package* button.
+8.  Upload the new version’s zip file from
+    ``browser-extension/web-ext-artifacts/``.
+9.  Update the Changelog in the *Description* box. Leave the rest
+    unchanged.
+10. Click *Save draft*, then *Submit for review*.
 
 Browser extension: Changelog
 ----------------------------
+
+0.6.1, 2022-09-18
+
+-  Don’t open silo login pages if they’re not logged in. This ran at
+   extension startup time, which was mostly harmless in manifest v2
+   since the background page was persistent stayed loaded, but in
+   manifest v3 it’s a service worker or non-persistent background page,
+   which gets unloaded and then reloaded every 5m.
+
+0.6.0, 2022-09-17
+
+-  Migrate Chrome (`but not
+   Firefox <https://blog.mozilla.org/addons/2022/05/18/manifest-v3-in-firefox-recap-next-steps/>`__)
+   `from Manifest v2 to
+   v3 <https://developer.chrome.com/docs/extensions/mv3/intro/mv3-migration/#man-sw>`__.
+
+0.5, 2022-07-21
+
+-  Update Instagram scraping.
 
 0.4, 2022-01-30
 
@@ -392,18 +420,18 @@ dataset <https://console.cloud.google.com/bigquery?p=brid-gy&d=datastore&page=da
 
 1. `Export the full datastore to Google Cloud
    Storage. <https://cloud.google.com/datastore/docs/export-import-entities>`__
-   Include all entities except ``*Auth`` and other internal details.
-   Check to see if any new kinds have been added since the last time
-   this command was run.
+   Include all entities except ``*Auth``, ``Domain`` and others with
+   credentials or internal details. Check to see if any new kinds have
+   been added since the last time this command was run.
 
    ::
 
-      gcloud datastore export --async gs://brid-gy.appspot.com/stats/ --kinds Activity, Blogger,BlogPost,BlogWebmention,Facebook,FacebookPage,Flickr,GitHub,GooglePlusPage,Instagram,Mastodon,Medium,Meetup,Publish,PublishedPage,Reddit,Response,SyndicatedPost,Tumblr,Twitter,WordPress
+      gcloud datastore export --async gs://brid-gy.appspot.com/stats/ --kinds Activity,Blogger,BlogPost,BlogWebmention,Facebook,FacebookPage,Flickr,GitHub,GooglePlusPage,Instagram,Mastodon,Medium,Meetup,Publish,PublishedPage,Reddit,Response,SyndicatedPost,Tumblr,Twitter,WordPress
 
    Note that ``--kinds`` is required. `From the export
    docs <https://cloud.google.com/datastore/docs/export-import-entities#limitations>`__,
    *Data exported without specifying an entity filter cannot be loaded
-   into BigQuery.*
+   into BigQuery.* Also, expect this to cost around $10.
 
 2. Wait for it to be done with
    ``gcloud datastore operations list | grep done``.
@@ -413,7 +441,7 @@ dataset <https://console.cloud.google.com/bigquery?p=brid-gy&d=datastore&page=da
 
    ::
 
-      for kind in Activity BlogPost BlogWebmention Publish Response SyndicatedPost; do
+      for kind in Activity BlogPost BlogWebmention Publish SyndicatedPost; do
         bq load --replace --nosync --source_format=DATASTORE_BACKUP datastore.$kind gs://brid-gy.appspot.com/stats/all_namespaces/kind_$kind/all_namespaces_kind_$kind.export_metadata
       done
 
@@ -421,39 +449,123 @@ dataset <https://console.cloud.google.com/bigquery?p=brid-gy&d=datastore&page=da
         bq load --replace --nosync --source_format=DATASTORE_BACKUP sources.$kind gs://brid-gy.appspot.com/stats/all_namespaces/kind_$kind/all_namespaces_kind_$kind.export_metadata
       done
 
-4. Check the jobs with ``bq ls -j``, then wait for them with
+Open the Datastore entities page for the ``Response`` kind, sorted by
+``updated`` ascending, and check out the first few rows:
+https://console.cloud.google.com/datastore/entities;kind=Response;ns=\ **:math:`DEFAULT`**;sortCol=updated;sortDir=ASCENDING/query/kind?project=brid-gy
+
+Open the existing ``Response`` table in BigQuery:
+https://console.cloud.google.com/bigquery?project=brid-gy&ws=%211m10%211m4%214m3%211sbrid-gy%212sdatastore%213sResponse%211m4%211m3%211sbrid-gy%212sbquxjob_371f97c8_18131ff6e69%213sUS
+
+Query for the same first few rows sorted by ``updated`` ascending, check
+that they’re the same:
+
+::
+
+   SELECT * FROM `brid-gy.datastore.Response`
+   WHERE updated >= TIMESTAMP('2020-11-01T00:00:00Z')
+   ORDER BY updated ASC
+   LIMIT 10
+
+Delete those rows:
+
+::
+
+   DELETE FROM `brid-gy.datastore.Response`
+   WHERE updated >= TIMESTAMP('2020-11-01T00:00:00Z')
+
+Load the new ``Response`` entities into a temporary table:
+
+::
+
+   bq load --replace=false --nosync --source_format=DATASTORE_BACKUP datastore.Response-new gs://brid-gy.appspot.com/stats/all_namespaces/kind_Response/all_namespaces_kind_Response.export_metadata
+
+Append that table to the existing ``Response`` table:
+
+::
+
+   SELECT
+   leased_until,
+   original_posts,
+   type,
+   updated,
+   error,
+   sent,
+   skipped,
+   unsent,
+   created,
+   source,
+   status,
+   failed,
+
+   ARRAY(
+     SELECT STRUCT<`string` string, text string, provided string>(a, null, 'string')
+     FROM UNNEST(activities_json) as a
+    ) AS activities_json,
+
+   IF(urls_to_activity IS NULL, NULL,
+      STRUCT<`string` string, text string, provided string>
+        (urls_to_activity, null, 'string')) AS urls_to_activity,
+
+   IF(response_json IS NULL, NULL,
+      STRUCT<`string` string, text string, provided string>
+        (response_json, null, 'string')) AS response_json,
+
+   ARRAY(
+     SELECT STRUCT<`string` string, text string, provided string>(x, null, 'string')
+     FROM UNNEST(old_response_jsons) as x
+   ) AS old_response_jsons,
+
+   __key__,
+   __error__,
+   __has_error__
+
+   FROM `brid-gy.datastore.Response-new`
+
+More => Query settings, Set a destination table for query results,
+dataset brid-gy.datastore, table Response, Append, check Allow large
+results, Save, Run.
+
+Open ``sources.Facebook``, edit schema, add a ``url`` field, string,
+nullable.
+
+1. Check the jobs with ``bq ls -j``, then wait for them with
    ``bq wait``.
-
-5. `Run the full stats BigQuery
-   query. <https://console.cloud.google.com/bigquery?sq=586366768654:9d8d4c13e988477bb976a5e29b63da3b>`__
+2. `Run the full stats BigQuery
+   query. <https://console.cloud.google.com/bigquery?sq=586366768654:4205685cc2154f18a665122613c0bc05>`__
    Download the results as CSV.
-
-6. `Open the stats
+3. `Open the stats
    spreadsheet. <https://docs.google.com/spreadsheets/d/1VhGiZ9Z9PEl7f9ciiVZZgupNcUTsRVltQ8_CqFETpfU/edit>`__
    Import the CSV, replacing the *data* sheet.
-
-7. Check out the graphs! Save full size images with OS or browser
+4. Change the underscores in column headings to spaces.
+5. Open each sheet, edit the chart, and extend the data range to include
+   all of thee new rows.
+6. Check out the graphs! Save full size images with OS or browser
    screenshots, thumbnails with the *Download Chart* button. Then post
    them!
+
+Final cleanup: delete the temporary ``Response-new`` table.
 
 Delete old responses
 --------------------
 
-Bridgy only keeps responses that are over a year or two old. I garbage
-collect (ie delete) older responses manually, generally just once a year
-when I generate statistics (above).
+Bridgy’s online datastore only keeps responses for a year or two. I
+garbage collect (ie delete) older responses manually, generally just
+once a year when I generate statistics (above). All historical responses
+are kept in
+`BigQuery <https://console.cloud.google.com/bigquery?p=brid-gy&d=datastore&page=dataset>`__
+for long term storage.
 
 I use the `Datastore Bulk Delete Dataflow
 template <https://cloud.google.com/dataflow/docs/guides/templates/provided-utilities#datastore-bulk-delete>`__
-with this GQL query:
+with a GQL query like this:
 
 .. code:: sql
 
-   SELECT * FROM `Response` WHERE updated < DATETIME('2020-11-01T00:00:00Z')
+   SELECT * FROM Response WHERE updated < DATETIME('202X-11-01T00:00:00Z')
 
 I either `use the interactive web
-UI <https://console.cloud.google.com/dataflow/createjob?_ga=2.30358207.1290853518.1636209407-621750517.1595350949>`__
-or this command line:
+UI <https://console.cloud.google.com/dataflow/createjob>`__ or this
+command line:
 
 .. code:: sh
 
@@ -462,6 +574,11 @@ or this command line:
      --region us-central1
      --staging-location gs://brid-gy.appspot.com/tmp-datastore-delete
      --parameters datastoreReadGqlQuery="SELECT * FROM `Response` WHERE updated < DATETIME('2020-11-01T00:00:00Z'),datastoreReadProjectId=brid-gy,datastoreDeleteProjectId=brid-gy"
+
+Expect this to take at least a day or so.
+
+Once it’s done, `update the stats constants in
+``admin.py <https://github.com/snarfed/bridgy/blob/main/admin.py>`__.
 
 Misc
 ----
