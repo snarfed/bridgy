@@ -70,12 +70,6 @@ $body
 """)
 
 
-@app.route('/<any(post,comment,like,react,repost,rsvp):_>/<path:__>',
-           methods=['HEAD'])
-def mf2_handler_head(_, __):
-  return ''
-
-
 class Item(View):
   """Fetches a post, repost, like, or comment and serves it as mf2 HTML or JSON.
   """
@@ -140,6 +134,15 @@ class Item(View):
     for id in kwargs.values():
       if not self.VALID_ID.match(id):
         error(f'Invalid id {id}', 404)
+
+    # short circuit downstream fetches for HEADs.
+    #
+    # this was originally implemented as a separate handler, but Flask overrides
+    # that when it automatically adds HEAD to GET routes, so this is their
+    # recommended approach.
+    # https://github.com/pallets/flask/issues/4395#issuecomment-1032882475
+    if request.method == 'HEAD':
+      return ''
 
     try:
       obj = self.get_item(**kwargs)

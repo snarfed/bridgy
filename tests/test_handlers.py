@@ -548,14 +548,24 @@ asdf http://other/link qwert
     self.assert_multiline_equals(orig.get_data(as_text=True),
                                  cached.get_data(as_text=True))
 
+  def test_head(self):
+    resp = self.client.head(f'/post/fake/{self.source.key.string_id()}/000')
+    self.assertEqual(200, resp.status_code)
+
+  @enable_flask_caching(app, cache)
+  def test_cache_includes_method(self):
+    path = f'/post/fake/{self.source.key.string_id()}/000'
+    resp = self.client.head(path)
+    self.assertEqual(200, resp.status_code)
+    self.assertEqual('', resp.text)
+
+    resp = self.client.get(path)
+    self.assertEqual(200, resp.status_code)
+    self.assertNotEqual('', resp.text)
+
   def test_in_blocklist(self):
     self.mox.StubOutWithMock(FakeSource, 'is_blocked')
     FakeSource.is_blocked(mox.IgnoreArg()).AndReturn(True)
     self.mox.ReplayAll()
 
     self.check_response('/comment/fake/%s/000/111', expected_status=410)
-
-  def test_head(self):
-    resp = self.client.get(
-      f'/post/fake/{self.source.key.string_id()}/000', method='HEAD')
-    self.assertEqual(200, resp.status_code)
