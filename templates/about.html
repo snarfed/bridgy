@@ -72,7 +72,7 @@ service.</a>
 <p><em>Backfeed</em></p>
 <li><a href="#which">Which things does it send, specifically?</a></li>
 <li><a href="#accept">How can I get my web site to accept webmentions?</a></li>
-<li><a href="#missing">Bridgy isn't seeing one of my comments or likes or reshares!</a></li>
+<li><a href="#missing">Bridgy isn't seeing one of my comments or likes or reposts!</a></li>
 <li><a href="#profile-links">Bridgy can't find my original posts! It just says <em>No webmention targets found</em>.</a></li>
 <li><a href="#link">Do my posts really need to link to my web site?</a></li>
 <li><a href="#domain">Bridgy used to find my syndication links, but then it stopped.</a></li>
@@ -91,13 +91,13 @@ service.</a>
 <li><a href="#publish-automatically">Can I do this automatically, whenever I post something new on my web site?</a></li>
 <li><a href="#webmentions">How do I automate Bridgy Publish with webmentions?</a></li>
 <li><a href="#micropub">How do I use Micropub?</a></li>
-<li><a href="#reply">How do I reply to a tweet or toot from my web site?</a></li>
+<li><a href="#reply">How do I reply to a post from my web site?</a></li>
 <li><a href="#like">How do I like, favorite, or repost from my web site?</a></li>
 <li><a href="#picture">How do I post a picture?</a></li>
 <li><a href="#video">How do I post a video?</a></li>
 <li><a href="#person-tag">How do I tag someone in a post?</a></li>
 <li><a href="#location">How do I include location in a post?</a></li>
-<li><a href="#delete">How do I delete a tweet or toot?</a></li>
+<li><a href="#delete">How do I delete a post?</a></li>
 <li><a href="#github-issue-comment">How do I create a GitHub issue or comment?</a></li>
 <li><a href="#github-reaction">How do I post an emoji reaction on a GitHub issue or PR?</a></li>
 <li><a href="#github-respond-to-comment">How do I respond to a GitHub comment?</a></li>
@@ -202,12 +202,7 @@ access to any of your passwords.
 <li id="who" class="question">Who are you? Why did you make this?</li>
 <li class="answer">
 <p>
-We're <a class="h-card" href="https://snarfed.org/">Ryan Barrett</a>,
-<a class="h-card" href="https://github.com/kylewm">Kyle Mahan</a>, and
-<a href="https://github.com/snarfed/bridgy/graphs/contributors">many other
-contributors</a>. We 
-<a href="https://snarfed.org/2012-07-25_why_i_have_my_own_web_site">like using
-our own websites</a> and <a href="https://indieweb.org/why">owning our data</a>.
+We're <a class="h-card" href="https://snarfed.org/">Ryan Barrett</a>, <a class="h-card" href="https://github.com/kylewm">Kyle Mahan</a>, and <a href="https://github.com/snarfed/bridgy/graphs/contributors">many other contributors</a>. We <a href="https://snarfed.org/2012-07-25_why_i_have_my_own_web_site">like using our own websites</a> and <a href="https://indieweb.org/why">owning our data</a>.
 </p>
 </li>
 
@@ -313,7 +308,7 @@ account or publish as me. Isn't that a security hole?</li>
 your site when it finishes.</p>
 <p>For example:</p>
 <pre>
-POST <a href="https://brid.gy/twitter/start">https://brid.gy/twitter/start</a>
+POST <a href="https://brid.gy/github/start">https://brid.gy/github/start</a>
 <span class="keyword">feature=</span><span class="value">listen,publish</span>&amp;<span class="keyword">callback=</span><span class="value">http%3A%2F%2Fexample.com%2Fbridgy-callback</span>
 </pre>
 <p>The callback will be passed back query parameters:</p>
@@ -340,16 +335,7 @@ POST <a href="https://brid.gy/twitter/start">https://brid.gy/twitter/start</a>
 
 <li id="api" class="question">Does Bridgy have an API?</li>
 <li class="answer">
-<p>Yes! In the spirit
-of <em><a href="https://aaronparecki.com/2015/04/26/22/html-is-my-api">HTML is
-my API</a></em>, Bridgy's HTML is its API. User pages
-(e.g. <a href="/twitter/schnarfed">/twitter/schnarfed</a>)
-include standard and custom
-<a href="http://microformats.org/wiki/microformats2">microformats2</a>
-properties that you can use to get information about users and their
-<a href="#backfeed">responses</a>,
-<a href="#publish">publishes</a>, and
-<a href="#blogs">blog posts</a>.
+<p>Yes! In the spirit of <em><a href="https://aaronparecki.com/2015/04/26/22/html-is-my-api">HTML is my API</a></em>, Bridgy's HTML is its API. User pages (e.g. <a href="/github/schnarfed">/github/snarfed</a>) include standard and custom <a href="http://microformats.org/wiki/microformats2">microformats2</a> properties that you can use to get information about users and their <a href="#backfeed">responses</a>, <a href="#publish">publishes</a>, and <a href="#blogs">blog posts</a>.
 </p>
 <p>
 Here are the properties Bridgy uses:
@@ -488,7 +474,7 @@ Here are the properties Bridgy uses:
 <li>Instagram comments and likes on your pictures.</li>
 <li>Flickr comments and favorites on your photos.</li>
 <li>GitHub comments and emoji reactions on your issues and pull requests from other people. (Not your own, since <a href="#GitHub+responses">we rely on notifications</a>, which those don't generate.)</li>
-<li>Mastodon replies, favorites, boosts, and mentions. (We can't backfeed links to your site because <a href="https://github.com/mastodon/mastodon/issues/9529#issuecomment-447577703">Mastodon has no global search</a>, and even <a href="https://docs.joinmastodon.org/user/network/#search">local instance search is limited to hashtags and your own posts</a>.)</li>
+<li>Mastodon replies, favorites, reposts, and mentions. (We can't backfeed links to your site because <a href="https://github.com/mastodon/mastodon/issues/9529#issuecomment-447577703">Mastodon has no global search</a>, and even <a href="https://docs.joinmastodon.org/user/network/#search">local instance search is limited to hashtags and your own posts</a>.)</li>
 <li>Reddit posts that link to your site and the top-level comments on those posts.</li>
 </ul>
 </li>
@@ -508,8 +494,7 @@ Indiewebcamp wiki</a> for a list of options.
 </p>
 
 <span id="realtime"></span>
-<li id="missing" class="question">Bridgy isn't seeing one of my comments or
-  likes or reshares!</li>
+<li id="missing" class="question">Bridgy isn't seeing one of my comments or likes or reposts!</li>
 <li class="answer">
 <p>This can happen for a number of different reasons.</p>
 <ul>
@@ -528,7 +513,7 @@ Bridgy needs at least one or the other so it can connect the two posts.
 crawl responses to other people's posts, even if they have links to your web
 site. It only sends back responses to <em>your</em> posts.
 </li>
-<li id="public">Is the post fully public? And the response too? Bridgy only shows and sends webmentions for fully public posts and responses. If your account is <a href="https://help.twitter.com/en/safety-and-security/public-and-protected-tweets">protected</a> or <a href="https://help.instagram.com/448523408565555">private</a>, Bridgy won't see it.
+<li id="public">Is the post fully public? And the response too? Bridgy only shows and sends webmentions for fully public posts and responses. Bridgy won't see eg <a href="https://docs.joinmastodon.org/user/posting/#private">followers-only posts</a> or work with <a href="https://help.instagram.com/448523408565555">private accounts</a>.
 </li>
 <li>Is it on an older post? Bridgy only looks at your 50 most recent posts. It doesn't go back arbitrarily far because that doesn't scale. You can get around this for an individual response by entering it into <em>Resend for post</em> on your user page.</a>
 </li>
@@ -537,7 +522,7 @@ fetched your post before you added the link. When that happens, Bridgy waits up
 to two hours before it refetches your post and reloads syndication links. Try
 clicking the <em>Crawl now</em> button on your user page.
 </li>
-<li>Instagram likes are even worse than Twitter likes. We have to scrape, which <a href="https://github.com/snarfed/bridgy/issues/898">currently limits us to the first 50 likes per photo</a>. Any likes beyond that won't be backfed.
+<li>We have to scrape Instagram, which <a href="https://github.com/snarfed/bridgy/issues/898">currently limits us to the first 50 likes per photo</a>. Any likes beyond that won't be backfed.
 </li>
 <li>Have you blocked the author inside the silo? If so, Bridgy won't send you any of their responses.
 </li>
@@ -649,13 +634,13 @@ so that recipients can fetch and parse them.
 <pre>/post/<span class='keyword'>SITE</span>/<span class='keyword'>USER_ID</span>/<span class='value'>POST_ID</span>
 /comment/<span class='keyword'>SITE</span>/<span class='keyword'>USER_ID</span>/<span class='value'>POST_ID</span>/<span class='value'>COMMENT_ID</span>
 /like/<span class='keyword'>SITE</span>/<span class='keyword'>USER_ID</span>/<span class='value'>POST_ID</span>/<span class='value'>LIKED_BY_USER_ID</span>
-/repost/<span class='keyword'>SITE</span>/<span class='keyword'>USER_ID</span>/<span class='value'>POST_ID</span>/<span class='value'>SHARE_POST_ID</span>
+/repost/<span class='keyword'>SITE</span>/<span class='keyword'>USER_ID</span>/<span class='value'>POST_ID</span>/<span class='value'>REPOST_POST_ID</span>
 </pre>
 
 <p>Examples:</p>
 <ul>
-<li><a href="/post/twitter/schnarfed/476408043819659264">
-  /post/twitter/schnarfed/476408043819659264
+<li><a href="/post/reddit/bonkerfield/iyrjpwq">
+  /post/reddit/bonkerfield/iyrjpwq
 </a></li>
 <li><a href="/comment/github/tantek/mozilla:standards-positions:155/mozilla:standards-positions:487311060">
   /comment/github/tantek/mozilla:standards-positions:155/mozilla:standards-positions:487311060
@@ -663,8 +648,8 @@ so that recipients can fetch and parse them.
 <li><a href="/like/flickr/36003160@N08/27058891471/25414664@N07">
   /like/flickr/36003160@N08/27058891471/25414664@N07
 </a></li>
-<li><a href="/repost/twitter/schnarfed/478564735265157120/478788580504899584">
-  /repost/twitter/schnarfed/478564735265157120/478788580504899584
+<li><a href="/repost/mastodon/@brettk@indieweb.social/110166176641387083/109425285510121102">
+  /repost/mastodon/@brettk@indieweb.social/110166176641387083/109425285510121102
 </a></li>
 </ul>
 <br />
@@ -760,7 +745,7 @@ like. If you like it, click <em>Send</em> and Bridgy will post it for you.</p>
 </pre>
 </p>
 
-<p>One key part <a href="publish-types">varies from silo to silo</a>: the text contents. Text-based posts fall into two broad buckets: short <a href="https://indieweb.org/note">notes</a>, eg toots, and longer <a href="https://indieweb.org/article">articles</a>, eg blog posts. In the IndieWeb, <a href="https://indieweb.org/post-type-discovery#Algorithm">we differentiate based on whether the post has a title</a>: articles generally have them, notes don't.
+<p>One key part <a href="publish-types">varies from silo to silo</a>: the text contents. Text-based posts fall into two broad buckets: short <a href="https://indieweb.org/note">notes</a>, eg on Mastodon, and longer <a href="https://indieweb.org/article">articles</a>, eg blog posts. In the IndieWeb, <a href="https://indieweb.org/post-type-discovery#Algorithm">we differentiate based on whether the post has a title</a>: articles generally have them, notes don't.
 </p>
 
 <p>Mastodon is primarily designed for notes, not articles. For that reason, when you use Bridgy Publish to post an article to Mastodon, it posts just the title, ie the <code>p-name</code> microformats2 element, and a link. (<a href="https://github.com/snarfed/bridgy/issues/228">Background</a> <a href="https://github.com/snarfed/bridgy/issues/219">discussion</a>.) Otherwise - for notes, replies, and everything on other silos - it posts the full contents of the <code>e-content</code> microformats2 element, falling back to <code>p-summary</code> and <code>p-name</code> if necessary. (<a href="#micropub">This is also what the Micropub interface <em>always</em> does</a>, even for articles on Mastodon.)
@@ -776,7 +761,7 @@ like. If you like it, click <em>Send</em> and Bridgy will post it for you.</p>
 <ul>
 <li>Flickr photos, videos, comments, favorites, and <a href="#add-tag">tags onto existing photos</a>. Photos may include <a href="#location">location</a>, <a href="https://indieweb.org/tags">tags</a>, and/or <a href="#person-tag">people tags</a>.</li>
 <li>GitHub issues, <a href="https://help.github.com/articles/about-stars">stars</a>, comments on issues and PRs, <a href="#add-label">labels onto existing issues</a>, and <a href="https://help.github.com/articles/about-conversations-on-github/#reacting-to-ideas-in-comments">emoji reactions</a> to issues, PRs, and comments.</li>
-<li>Mastodon toots, replies, favorites, and boosts. Toots and replies may include <a href="#picture">pictures</a> and <a href="#video">videos</a>. Toots may also be <a href="#delete">deleted</a>.</li>
+<li>Mastodon posts, replies, favorites, and reposts. Posts and replies may include <a href="#picture">pictures</a> and <a href="#video">videos</a>. Posts may also be <a href="#delete">deleted</a>.</li>
 <li>Nothing on Instagram, sorry. Likes used to be possible, but not since Instagram <a href="http://developers.instagram.com/post/133424514006/instagram-platform-update"> started locking down their API.</a> <a href="http://instagram.com/developer/endpoints/media/#get_media_popular">Photos, videos,</a> <a href="http://instagram.com/developer/endpoints/comments/#post_media_comments">and comments</a> were never possible.</li>
 </ul>
 </li>
@@ -814,7 +799,7 @@ Your post HTML must also include that same target URL to verify your intent to p
 </p>
 <p>(One difference <a href="#microformats">from normal Bridgy Publish</a> is that Micropub <em>always</em> posts the text from the <code>content</code> property, even if a <code>name</code> property is also included.)
 </p>
-<p>Here's an example of posting a reply with a photo to Twitter:
+<p>Here's an example of posting a reply with a photo to Mastodon:
 <pre>
 POST https://brid.gy/micropub
 
@@ -822,35 +807,35 @@ POST https://brid.gy/micropub
 
 <span class='keyword'>d</span>=<span class='value'>h-entry</span>
 &<span class='keyword'>content</span>=<span class='value'>I+hereby+reply</span>
-&<span class='keyword'>in-reply-to</span>=<a href='https://twitter.com/schnarfed/status/448205453911015425'>https://twitter.com/schnarfed/status/448205453911015425</a>
+&<span class='keyword'>in-reply-to</span>=<a href='https://indieweb.social/@dandean/110182757475616244'>https://indieweb.social/@dandean/110182757475616244</a>
 &<span class='keyword'>photo</span>=<span class='value'>https://example.com/picture.jpg</span>
 </pre>
 </p>
 <p>Bridgy Publish is primarily designed to be a <a href="https://indieweb.org/POSSE">POSSE</a> service for syndicating posts from your web site onto social networks. It's not intended to be a standalone client for Mastodon or anything else. That's why Bridgy's Micropub doesn't support file upload: photos, videos, and other file attachments will generally already be accessible on your web site. </p>
 </li>
 
-<li id="reply" class="question">How do I reply to a toot from my web site?</li>
+<li id="reply" class="question">How do I reply to a post from my web site?</li>
 <li class="answer">
 <p>
-Easy! Put the reply in a new post on your web site, and include a link to the toot you're replying to with class <code><a href="http://microformats.org/wiki/rel-in-reply-to">u-in-reply-to</a></code>, as if you were publishing a normal <a href="https://indieweb.org/comment">IndieWeb reply</a>. For example:
+Easy! Put the reply in a new post on your web site, and include a link to the post you're replying to with class <code><a href="http://microformats.org/wiki/rel-in-reply-to">u-in-reply-to</a></code>, as if you were publishing a normal <a href="https://indieweb.org/comment">IndieWeb reply</a>. For example:
 
 <pre>&lt;div class="<span class='keyword'>h-entry</span>"&gt;
   &lt;p class="<span class='keyword'>e-content</span>"&gt;<span class='value'>Highly entertaining. Please subscribe me to your newsletter.</span>&lt;/p&gt;
-  &lt;a class="<span class='keyword'>u-in-reply-to</span>" href="<a href='https://twitter.com/schnarfed/status/448205453911015425'>https://twitter.com/schnarfed/status/448205453911015425</a>"&gt;&lt;/a&gt;
-  &lt;a href="<a href='https://brid.gy/publish/twitter'>https://brid.gy/publish/twitter</a>"&gt;&lt;/a&gt;
+  &lt;a class="<span class='keyword'>u-in-reply-to</span>" href="<a href='https://indieweb.social/@dandean/110182757475616244'>https://indieweb.social/@dandean/110182757475616244</a>"&gt;&lt;/a&gt;
+  &lt;a href="<a href='https://brid.gy/publish/mastodon'>https://brid.gy/publish/mastodon</a>"&gt;&lt;/a&gt;
 &lt;/div&gt;
 </pre>
 
-The <code>u-in-reply-to</code> and <code>brid.gy/publish/twitter</code> (or <code>brid.gy/publish/mastodon</code>) links don't need any visible text unless you want them to. Then publish your post via the Bridgy UI or a webmention like normal!
+The <code>u-in-reply-to</code> and <code>brid.gy/publish/mastodon</code> links don't need any visible text unless you want them to. Then publish your post via the Bridgy UI or a webmention like normal!
 </p>
 <p>
 On the other hand, if your post is in reply to another IndieWeb post that is <em>also</em> syndicated, Bridgy will use <a href="https://indieweb.org/rel-syndication">rel-syndication</a> links in the other post to find the appropriate silo post to reply to.
 </p>
 </li>
 
-<li id="like" class="question">How do I like or boost from my web site?</li>
+<li id="like" class="question">How do I like or repost from my web site?</li>
 <li class="answer">
-<p>Liking and boosting are almost exactly the <a href="#reply">same as replying</a>. The only difference is that you use <code><a href="https://indieweb.org/like">u-like-of</a></code> for a like or favorite or <code><a href="https://indieweb.org/repost">u-repost-of</a></code> for a boost.
+<p>Liking and reposting are almost exactly the <a href="#reply">same as replying</a>. The only difference is that you use <code><a href="https://indieweb.org/like">u-like-of</a></code> for a like or favorite or <code><a href="https://indieweb.org/repost">u-repost-of</a></code> for a repost.
 
 <pre>
 &lt;a class="<span class='keyword'>u-like-of</span>" href="<a href='https://www.flickr.com/photos/40721178@N00/24476817906/'>https://www.flickr.com/photos/40721178@N00/24476817906/</a>"&gt;&lt;/a&gt;
@@ -873,7 +858,7 @@ tag. For example:
 I love scotch. Scotchy scotchy scotch.
 </pre>
 </p>
-<p>If you're posting to Mastodon, and your <code>&lt;img&gt;</code> tag includes <code>alt="..."</code>, Bridgy will pass on that alt text and it will be included with the picture in your toot.</p>
+<p>If you're posting to Mastodon, and your <code>&lt;img&gt;</code> tag includes <code>alt="..."</code>, Bridgy will pass on that alt text and it will be included with the picture in your post.</p>
 </li>
 
 <li id="video" class="question">How do I post a video?</li>
@@ -921,10 +906,10 @@ I'm
 </p>
 </li>
 
-<li id="delete" class="question">How do I delete a toot?</li>
+<li id="delete" class="question">How do I delete a post?</li>
 <li class="answer">
 <p><a href="https://indieweb.org/delete">Delete its original post by returning HTTP 410 Gone.</a> (The response body can be anything.)</p>
-<p>Bridgy Publish can only delete toots that it created originally, and it can't toot a URL on your web site more than once, even if the original toot is deleted. If you want to edit a toot, delete it, change its permalink on your site, and then republish it using that new URL.</p>
+<p>Bridgy Publish can only delete posts that it created originally, and it can't post a URL on your web site more than once, even if the original post is deleted. If you want to edit a post, delete it, change its permalink on your site, and then republish it using that new URL.</p>
 </li>
 
 <li id="github-issue-comment" class="question">How do I create a GitHub issue or comment?</li>
@@ -1036,15 +1021,15 @@ adding the <code>u-bridgy-ignore-formatting</code> class to a link in your post.
 the <code>p-bridgy-[SILO]-content</code> class in your post. This will override
 your post's actual content.
 </p>
-<p>Here's an example of publishing custom text for Twitter:
+<p>Here's an example of publishing custom text for Mastodon:
 </p>
 <pre>&lt;div class="<span class='keyword'>h-entry</span>"&gt;
   &lt;p class="e-content"&gt;This is a going to be a very long blog post. Pull up a chair, it's going to take a while. Ready? Here we go...&lt;/p&gt;
-  &lt;p class="<span class='keyword'>p-bridgy-twitter-content</span>"&gt;<span class='value'>Long form is the new short form.</span>&lt;/p&gt;
+  &lt;p class="<span class='keyword'>p-bridgy-mastodon-content</span>"&gt;<span class='value'>Long form is the new short form.</span>&lt;/p&gt;
 &lt;/div&gt;
 </pre>
 <p>You can hide these extra elements with <code>display: none</code>, or add the classes to existing elements like your title or summary, or anything else you like.</p>
-<p>If you use this, Bridgy will still include a link to your post. <a href="#omit-link">You can change that with <code>omit-link</code>.</a> It will also still truncate your text if it's <a href="https://developer.twitter.com/en/docs/basics/counting-characters">over 280 characters</a>. You can always <a href="#try+it">preview your post first</a> to see how Bridgy will handle it!</p>
+<p>If you use this, Bridgy will still include a link to your post. <a href="#omit-link">You can change that with <code>omit-link</code>.</a> It will also still truncate your text if it's over the silo's character limit, <a href="https://docs.joinmastodon.org/user/posting/#text">eg 500 for Mastodon</a>. You can always <a href="#try+it">preview your post first</a> to see how Bridgy will handle it!</p>
 </li>
 
 <li id="multiple-types" class="question">What if my original post does more than one thing?
@@ -1086,21 +1071,21 @@ responds. A <code>POST</code> to <code>https://brid.gy/publish/webmention</code>
 will return <code>201 Created</code> on success with a JSON response containing
 at least a <code>url</code> field that points to the silo object that it
 operated on. The same URL is included in the <code>Location</code> HTTP header.
-If a new object was created, e.g. a Mastodon toot, @-reply, or boost, there will also be
+If a new object was created, e.g. a Mastodon post, reply, or repost, there will also be
 an <code>id</code> field with the silo id of that object.
 </p>
 <p>For example, this request for an original post:
 </p>
 <pre>POST <span class="keyword">source</span>=<a>https://example.com/posts/123</a>
-     &<span class="keyword">target</span>=<a href="https://brid.gy/publish/twitter">https://brid.gy/publish/twitter</a></pre>
+     &<span class="keyword">target</span>=<a href="https://brid.gy/publish/mastodon">https://brid.gy/publish/mastodon</a></pre>
 <p>will receive this response:
 </p>
 <pre>HTTP/1.1 201 Created
 Content-Type: application/json
-Location: https://twitter.com/me/status/456789
+Location: https://indieweb.social/@me/456789
 
 {
-  "<span class='keyword'>url</span>": "<span class='value'>https://twitter.com/me/status/456789</span>",
+  "<span class='keyword'>url</span>": "<span class='value'>https://indieweb.social/@me/456789</span>",
   "<span class='keyword'>type</span>": "<span class='value'>post</span>",
   "<span class='keyword'>id</span>": "<span class='value'>456789</span>"
 }</pre>
