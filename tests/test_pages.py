@@ -243,8 +243,7 @@ class PagesTest(testutil.AppTest):
 
   def test_delete_removes_from_logins_cookie(self):
     self.client.set_cookie(
-      'localhost', 'logins',
-      f'/fake/{self.sources[0].key.id()}?Fake%20User|/other/1?bob')
+      'logins', f'/fake/{self.sources[0].key.id()}?Fake%20User|/other/1?bob')
 
     with app.test_request_context():
       state = util.construct_state_param_for_add(
@@ -259,7 +258,7 @@ class PagesTest(testutil.AppTest):
     self.assertEqual(302, resp.status_code)
     location = resp.headers['Location']
     self.assertEqual('http://localhost/', location)
-    self.assertIn('logins="/other/1?bob";',
+    self.assertIn('logins=/other/1?bob;',
                   resp.headers['Set-Cookie'].split(' '))
 
   def test_user_page(self):

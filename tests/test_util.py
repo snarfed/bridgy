@@ -45,7 +45,7 @@ class UtilTest(testutil.AppTest):
     self.assertEqual(['publish'], key.get().features)
 
     name = urllib.parse.quote_plus(UNICODE_STR.encode())
-    self.assertIn(f'logins="/fake/{key.id()}?{name}";',
+    self.assertIn(f'logins=/fake/{key.id()}?{name};',
                   rr.exception.get_response().headers['Set-Cookie'])
 
     for feature in None, '':
@@ -136,7 +136,7 @@ class UtilTest(testutil.AppTest):
       with self.assertRaises(RequestRedirect) as rr:
         util.maybe_add_or_delete_source(FakeSource, auth_entity, listen)
 
-      cookie = 'logins="/fake/{id}?fake|/other/1?bob";'
+      cookie = 'logins=/fake/{id}?fake|/other/1?bob;'
       self.assertIn(cookie.format(id=id),
                     rr.exception.get_response().headers['Set-Cookie'])
 
