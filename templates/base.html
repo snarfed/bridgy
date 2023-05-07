@@ -25,14 +25,13 @@
 <body class="{% block body_class %}{% endblock %}">
 
 {% with messages = get_flashed_messages() %}
-<div id="messages">
-  <p class="message shadow"><a href="https://twitterisgoinggreat.com/">Twitter is burning</a>, so <a href="https://snarfed.org/2023-04-03_so-long-twitter-api-and-thanks-for-all-the-fish">they've killed Bridgy's access</a>. 😢 So long, and thanks for all the fish!</p>
 {% if messages %}
+  <div id="messages">
   {% for message in messages %}
     <p class="message shadow">{{ message|safe }}</p>
   {% endfor %}
+  </div>
 {% endif %}
-</div>
 {% endwith %}
 
 <main class="tp-main lead container">
