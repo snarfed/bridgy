@@ -13,7 +13,7 @@
         "chrome-webstore-upload-cli": "^2.0.1",
         "jest": "^26.6.3",
         "jest-fetch-mock": "^3.0.3",
-        "web-ext": "^6.6.0",
-        "web-ext-submit": "^6.6.0"
+        "web-ext": "^7.0.0",
+        "web-ext-submit": "^7.0.0"
     }
 }
