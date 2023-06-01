@@ -2,6 +2,12 @@
 
 {% block ui %}
 
+{% if source.SHORT_NAME == 'twitter' %}
+<div class="row promo warning">
+<a href="https://snarfed.org/2023-04-03_so-long-twitter-api-and-thanks-for-all-the-fish">Twitter has killed off Bridgy's API access.</a> 😢 So long, and thanks for all the fish!
+</div>
+{% endif %}
+
 <!-- Promos to get fully up and running -->
 {% if "listen" in source.features %}
 {% if source.is_private() %}
@@ -32,6 +38,7 @@
 </div>
 
 {% else %}
+
 {% if not source.webmention_endpoint and not source.last_webmention_sent %}
 <div class="row promo warning">
 You
