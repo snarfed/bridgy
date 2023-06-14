@@ -79,7 +79,7 @@ service.</a>
 <li><a href="#order">Why are the Bridgy comments on my site out of order?</a></li>
 <li><a href="#appspot">What are all these brid.gy links in the comments that Bridgy sends to my site?</a></li>
 <li><a href="#source-urls">What's the format for Bridgy's webmention source URLs?</a></li>
-<li><a href="#browser-extension">Wait, Instagram and Facebook need a browser extension now?</a></li>
+<li><a href="#browser-extension">Wait, Facebook needs a browser extension now?</a></li>
 <li><a href="#facebook-profile-pictures">Where are the profile pictures for Facebook comments and likes?</a></li>
 <li><a href="#duplicates">Why did I get multiple duplicate copies of the same response?</a></li>
 
@@ -471,7 +471,6 @@ Here are the properties Bridgy uses:
 <li class="answer">
 <p>Bridgy detects and sends webmentions for:</p>
 <ul>
-<li>Instagram comments and likes on your pictures.</li>
 <li>Flickr comments and favorites on your photos.</li>
 <li>GitHub comments and emoji reactions on your issues and pull requests from other people. (Not your own, since <a href="#GitHub+responses">we rely on notifications</a>, which those don't generate.)</li>
 <li>Mastodon replies, favorites, reposts, and mentions. (We can't backfeed links to your site because <a href="https://github.com/mastodon/mastodon/issues/9529#issuecomment-447577703">Mastodon has no global search</a>, and even <a href="https://docs.joinmastodon.org/user/network/#search">local instance search is limited to hashtags and your own posts</a>.)</li>
@@ -521,8 +520,6 @@ site. It only sends back responses to <em>your</em> posts.
 fetched your post before you added the link. When that happens, Bridgy waits up
 to two hours before it refetches your post and reloads syndication links. Try
 clicking the <em>Crawl now</em> button on your user page.
-</li>
-<li>We have to scrape Instagram, which <a href="https://github.com/snarfed/bridgy/issues/898">currently limits us to the first 50 likes per photo</a>. Any likes beyond that won't be backfed.
 </li>
 <li>Have you blocked the author inside the silo? If so, Bridgy won't send you any of their responses.
 </li>
@@ -583,7 +580,7 @@ them</a>, and it also uses it to
 officially syndicating your posts and other people just mentioning them</a>.
 </p>
 
-<p>Instagram, Flickr, and GitHub only allow one web site link in your profile, so Bridgy <a href="https://github.com/snarfed/bridgy/issues/483">also looks for links in your profile's description field</a>. Reddit doesn't have a spot for any website links so Bridgy just searches your profile description.</p>
+<p>Flickr and GitHub only allow one web site link in your profile, so Bridgy <a href="https://github.com/snarfed/bridgy/issues/483">also looks for links in your profile's description field</a>. Reddit doesn't have a spot for any website links so Bridgy just searches your profile description.</p>
 </li>
 
 <li id="order" class="question">Why are the Bridgy comments on my site out of
@@ -683,15 +680,17 @@ so that recipients can fetch and parse them.
 </ul>
 </li>
 
-<li id="browser-extension" class="question">Wait, Instagram and Facebook need a browser extension now?</li>
+<li id="browser-extension" class="question">Wait, Facebook needs a browser extension now?</li>
 <li class="answer">
-<p>Bridgy now uses a browser extension to backfeed Instagram and Facebook responses (ie <a href="https://indieweb.org/backfeed">backfeed</a>). Grab it for <a href="https://chrome.google.com/webstore/detail/bridgy/lcpeamdhminbbjdfjbpmhgjgliaknflj" style="white-space: nowrap"><img src="/static/chrome_logo.png" style="height: 1em; margin-top: -.2em; white-space: nowrap" /> Chrome</a> or <a href="https://addons.mozilla.org/en-US/firefox/addon/bridgy/" style="white-space: nowrap"><img src="/static/firefox_logo.png" style="height: 1em; margin-top: -.2em" /> Firefox</a>, try it out, and <a href="https://indieweb.org/discuss">let us know what you think</a>!
+<p>Bridgy now uses a browser extension to backfeed Facebook responses (ie <a href="https://indieweb.org/backfeed">backfeed</a>). Grab it for <a href="https://chrome.google.com/webstore/detail/bridgy/lcpeamdhminbbjdfjbpmhgjgliaknflj" style="white-space: nowrap"><img src="/static/chrome_logo.png" style="height: 1em; margin-top: -.2em; white-space: nowrap" /> Chrome</a> or <a href="https://addons.mozilla.org/en-US/firefox/addon/bridgy/" style="white-space: nowrap"><img src="/static/firefox_logo.png" style="height: 1em; margin-top: -.2em" /> Firefox</a>, try it out, and <a href="https://indieweb.org/discuss">let us know what you think</a>!
 </p>
+<p>(We used to use a similar browser extension for Instagram, but they've gradually started suspending people's accounts for using it, so we've taken it down.)
+
 <p>When you first install the extension, it opens a Bridgy tab for you to <a href="https://indieauth.net/">IndieAuth</a> into your web site. (Your site needs to support IndieAuth, like before.) After that, it runs in the background, forwarding responses to Bridgy to send back to your site like normal. You can see status info and poke it on the extension's settings page.
 </p>
-<p>Instagram and Facebook have been thorns in Bridgy's side for many years now, as they both gradually locked down parts of their APIs that Bridgy needed. Facebook also had strong anti-scraping countermeasures, so we were <a href="#rip-facebook">forced to shut it down entirely</a>, but we <a href="https://github.com/snarfed/bridgy/issues/603">managed to scrape Instagram</a> enough to keep it limping along. <a href="https://github.com/snarfed/bridgy/issues/665">They recently stepped up their countermeasures too</a>, though, and we couldn't keep up.
+<p>Facebook and Instagram have been thorns in Bridgy's side for many years now, as they both gradually locked down parts of their APIs that Bridgy needed. Facebook also had strong anti-scraping countermeasures, so we were <a href="#rip-facebook">forced to shut it down entirely</a>, but we <a href="https://github.com/snarfed/bridgy/issues/603">managed to scrape Instagram</a> enough to keep it limping along. <a href="https://github.com/snarfed/bridgy/issues/665">They recently stepped up their countermeasures too</a>, though, and we couldn't keep up.
 </p>
-<p>Fortunately, you can log into Instagram and Facebook legitimately, in your own browser, so the browser extension lets you send your own data from those silos to Bridgy.
+<p>Fortunately, you can log into their sites legitimately, in your own browser, so the browser extension lets you send your own data from those silos to Bridgy.
 </p>
 </li>
 
