@@ -43,9 +43,9 @@ class Micropub(PublishBase):
   """Micropub endpoint."""
 
   def error(self, error, description, **kwargs):
-    return super().error(error=error,
-                         extra_json={'error_description': description},
-                         **kwargs)
+    super().error(error=error,
+                  extra_json={'error_description': description},
+                  **kwargs)
 
   def load_source(self):
     """Looks up the auth entity by the provided access token."""
@@ -53,17 +53,17 @@ class Micropub(PublishBase):
     if auth:
       parts = auth.split(' ')
       if len(parts) != 2 or parts[0] != 'Bearer':
-        return self.error('invalid_request',
-                          'Unsupported token format in Authorization header',
-                          status=401)
+        self.error('invalid_request',
+                   'Unsupported token format in Authorization header',
+                   status=401)
       token = parts[1]
     else:
       token = request.values.get('access_token')
 
     if not token:
-      return self.error('unauthorized',
-                        'No token found in Authorization header or access_token param',
-                        status=401)
+      self.error('unauthorized',
+                 'No token found in Authorization header or access_token param',
+                 status=401)
 
     for src_cls in models.sources.values():
       if src_cls.CAN_PUBLISH:
@@ -77,7 +77,7 @@ class Micropub(PublishBase):
           if src:
             return src
 
-    return self.error('unauthorized', 'No publish user found with that token', status=401)
+    self.error('unauthorized', 'No publish user found with that token', status=401)
 
   def dispatch_request(self):
     logging.info(f'Params: {list(request.values.items())}')
@@ -86,23 +86,23 @@ class Micropub(PublishBase):
     self.source = self.load_source()
     logger.info(f'Source: {self.source.label()} {self.source.key_id()}, {self.source.bridgy_url()}')
     if self.source.status == 'disabled' or 'publish' not in self.source.features:
-      return self.error('forbidden',
-                        f'Publish is not enabled for {self.source.label()}',
-                        status=403)
+      self.error('forbidden',
+                 f'Publish is not enabled for {self.source.label()}',
+                 status=403)
 
     # Micropub query; currently only config is supported
     q = request.values.get('q')
     if q == 'config':
       return jsonify({})
     elif q:
-      return self.error('not_implemented', 'Only config query is supported')
+      self.error('not_implemented', 'Only config query is supported')
 
     if request.method == 'GET':
       return render_template('micropub.html')
     elif request.method != 'POST':
-      return self.error('invalid_request',
-                        'Expected POST for Micropub create/delete',
-                        status=405)
+      self.error('invalid_request',
+                 'Expected POST for Micropub create/delete',
+                 status=405)
 
     # handle input
     if request.is_json:
@@ -119,22 +119,22 @@ class Micropub(PublishBase):
       action = request.form.get('action')
       url = request.form.get('url')
     elif request.files:
-      return self.error('not_implemented',
-                        'Multipart/file upload is not yet supported')
+      self.error('not_implemented',
+                 'Multipart/file upload is not yet supported')
     else:
-      return self.error('invalid_request',
-                        f'Unsupported Content-Type {request.content_type}')
+      self.error('invalid_request',
+                 f'Unsupported Content-Type {request.content_type}')
 
     if not action:
       action = 'create'
     if action not in ('create', 'delete'):
-      return self.error('not_implemented', f'Action {action} not supported')
+      self.error('not_implemented', f'Action {action} not supported')
 
     logging.debug(f'Got microformats2: {json_dumps(mf2, indent=2)}')
     try:
       obj = microformats2.json_to_object(mf2)
     except (TypeError, ValueError) as e:
-      return self.error('invalid_request', f'Invalid microformats2 input: {e}')
+      self.error('invalid_request', f'Invalid microformats2 input: {e}')
 
     # override articles to be notes to force short-form granary sources like
     # Mastodon to use content, not displayName
@@ -146,13 +146,12 @@ class Micropub(PublishBase):
     post_id = self.source.gr_source.post_id(canonicalized)
     if action == 'delete':
       if not url:
-        return self.error('invalid_request', 'url is required for delete')
+        self.error('invalid_request', 'url is required for delete')
       elif not canonicalized:
-        return self.error(
-          'invalid_request',
-          f"{url} doesn't look like a {self.source.gr_source.NAME} post URL")
+        self.error('invalid_request',
+                   f"{url} doesn't look like a {self.source.gr_source.NAME} post URL")
       elif not post_id:
-        return self.error(
+        self.error(
           'invalid_request',
           f"Couldn't determine {self.source.gr_source.NAME} post id from {url}")
 
@@ -173,7 +172,7 @@ class Micropub(PublishBase):
     if result.error_plain:
       self.entity.status = 'failed'
       self.entity.put()
-      return self.error('failed', result.error_plain)
+      self.error('failed', result.error_plain)
 
     self.entity.published = result.content
     self.entity.type = self.entity.published.get('type') or models.get_type(obj)
