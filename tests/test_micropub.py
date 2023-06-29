@@ -39,11 +39,11 @@ class MicropubTest(AppTest):
     self.source.put()
     FakeToken.oauth_state = self.source.key.urlsafe().decode()
 
-  def assert_response(self, status=201, token='towkin', **kwargs):
+  def assert_response(self, method='POST', status=201, token='towkin', **kwargs):
     if token:
       kwargs.setdefault('headers', {})['Authorization'] = f'Bearer {token}'
 
-    resp = self.client.post('/micropub', **kwargs)
+    resp = self.client.open('/micropub', method=method, **kwargs)
 
     body = resp.get_data(as_text=True)
     self.assertEqual(status, resp.status_code, body)
@@ -73,13 +73,21 @@ class MicropubTest(AppTest):
     return publish
 
   def test_query_config(self):
-    resp = self.client.get('/micropub?q=config')
-    self.assertEqual(200, resp.status_code)
+    resp = self.assert_response(status=200, token='towkin',
+                                query_string={'q': 'config'})
     self.assertEqual({}, resp.json)
 
+  def test_query_config_no_token(self):
+    resp = self.assert_response(status=401, token=None,
+                                query_string={'q': 'config'})
+    self.assertEqual({
+      'error': 'unauthorized',
+      'error_description': 'No token found in Authorization header or access_token param',
+    }, resp.json)
+
   def test_query_source_not_implemented(self):
-    resp = self.client.get('/micropub?q=source&url=abc')
-    self.assertEqual(400, resp.status_code)
+    resp = self.assert_response(status=400, token='towkin',
+                                query_string={'q': 'source', 'url': 'abc'})
     self.assertEqual('not_implemented', resp.json['error'])
 
   def test_create_http_put(self):

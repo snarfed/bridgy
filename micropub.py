@@ -82,6 +82,14 @@ class Micropub(PublishBase):
   def dispatch_request(self):
     logging.info(f'Params: {list(request.values.items())}')
 
+    # auth
+    self.source = self.load_source()
+    logger.info(f'Source: {self.source.label()} {self.source.key_id()}, {self.source.bridgy_url()}')
+    if self.source.status == 'disabled' or 'publish' not in self.source.features:
+      return self.error('forbidden',
+                        f'Publish is not enabled for {self.source.label()}',
+                        status=403)
+
     # Micropub query; currently only config is supported
     q = request.values.get('q')
     if q == 'config':
@@ -95,13 +103,6 @@ class Micropub(PublishBase):
       return self.error('invalid_request',
                         'Expected POST for Micropub create/delete',
                         status=405)
-
-    self.source = self.load_source()
-    logger.info(f'Source: {self.source.label()} {self.source.key_id()}, {self.source.bridgy_url()}')
-    if self.source.status == 'disabled' or 'publish' not in self.source.features:
-      return self.error('forbidden',
-                        f'Publish is not enabled for {self.source.label()}',
-                        status=403)
 
     # handle input
     if request.is_json:
