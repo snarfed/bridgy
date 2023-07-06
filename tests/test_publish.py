@@ -1457,17 +1457,6 @@ Join us!"""
     self.assert_error('Got fragment baz but no element found with that id.',
                       source='http://foo.com/bar#baz')
 
-  def test_not_implemented_error(self):
-    """https://github.com/snarfed/bridgy/issues/832"""
-    self.expect_requests_get('http://foo.com/bar', """
-<div class="h-entry">
-<a class="u-in-reply-to" href="http://x/y/z"></a>
-<a class="u-tag-of" href="http://a/b/c"></a>
-</div>
-""")
-    self.mox.ReplayAll()
-    self.assert_error('Combined in-reply-to and tag-of is not yet supported.')
-
   def test_delete_not_published_error(self):
     self.expect_requests_get('http://foo.com/bar', status_code=410)
     self.mox.ReplayAll()
