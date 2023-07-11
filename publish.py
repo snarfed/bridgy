@@ -657,8 +657,14 @@ class Send(PublishBase):
       self.error('If you want to publish or preview, please approve the prompt.')
       return redirect('/')
 
-    source = ndb.Key(urlsafe=self.state['source_key']).get()
-    if auth_entity is None:
+    source_key = self.state.get('source_key')
+    if not source_key:
+      error('State missing source_key')
+
+    source = ndb.Key(urlsafe=source_key).get()
+    if not source:
+      error(f'User {source_key} not found')
+    elif auth_entity is None:
       self.error('If you want to publish or preview, please approve the prompt.')
     elif not auth_entity.is_authority_for(source.auth_entity):
       self.error(f'Please log into {source.GR_CLASS.NAME} as {source.name} to publish that page.')
