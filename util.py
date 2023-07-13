@@ -424,6 +424,7 @@ def load_source(error_fn=None):
     error_fn = error
 
   for param in 'source_key', 'key':
+    # this is somewhat duplicated in micropub.GetToken :/
     try:
       val = request.values.get(param)
       if val:

@@ -307,3 +307,14 @@ foo
     self.assertEqual(
       ['If you want a Micropub token, please approve the prompt.'],
       get_flashed_messages())
+
+  def test_get_token_bad_state(self):
+    FakeToken.oauth_state = 'bad'
+
+    resp = self.client.get('/micropub-token/fake/finish', data={})
+    self.assertEqual(302, resp.status_code)
+    self.assertEqual('http://localhost/', resp.headers['Location'])
+    self.assertEqual(
+      ["Bad state value, couldn't find your user"],
+      get_flashed_messages())
+

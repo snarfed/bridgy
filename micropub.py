@@ -2,11 +2,13 @@
 
 Micropub spec: https://www.w3.org/TR/micropub/
 """
+import binascii
 import logging
 
 from flask import jsonify, render_template, request
 from flask.views import View
 from google.cloud import ndb
+import google.protobuf.message
 from granary import microformats2
 from granary import source as gr_source
 from oauth_dropins import (
@@ -195,7 +197,17 @@ class GetToken(View):
     if not state:
       return redirect('/')
 
-    source = ndb.Key(urlsafe=state).get()
+    # this somewhat duplicates util.load_source() :/
+    try:
+      source = ndb.Key(urlsafe=state).get()
+    except (ValueError, binascii.Error, google.protobuf.message.DecodeError):
+      source = None
+
+    logger.info(f'Got source: {source}')
+    if not source:
+      flash(f"Bad state value, couldn't find your user")
+      return redirect('/')
+
     if not auth_entity:
       flash('If you want a Micropub token, please approve the prompt.')
     elif not auth_entity.is_authority_for(source.auth_entity):
