@@ -44,7 +44,7 @@ grpc-google-iam-v1==0.12.6
 # "Waiting for thread pool to idle before forking"
 # https://github.com/grpc/grpc/issues/31885
 grpcio==1.56.0
-gunicorn==21.1.0
+gunicorn==21.2.0
 html5lib==1.1
 humanfriendly==10.0
 humanize==4.7.0
