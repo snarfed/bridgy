@@ -659,11 +659,13 @@ class Send(PublishBase):
 
     source_key = self.state.get('source_key')
     if not source_key:
-      error('State missing source_key')
+      self.error('State missing source_key')
+      return redirect('/')
 
     source = ndb.Key(urlsafe=source_key).get()
     if not source:
-      error(f'User {source_key} not found')
+      self.error(f'User {source_key} not found')
+      return redirect('/')
     elif auth_entity is None:
       self.error('If you want to publish or preview, please approve the prompt.')
     elif not auth_entity.is_authority_for(source.auth_entity):
