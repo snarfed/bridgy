@@ -24,7 +24,7 @@ from util import redirect
 from wordpress_rest import WordPress
 
 # populate models.sources
-import blogger, facebook, flickr, github, indieauth, instagram, mastodon, medium, reddit, tumblr, twitter, wordpress_rest
+import blogger, bluesky, facebook, flickr, github, indieauth, instagram, mastodon, medium, reddit, tumblr, twitter, wordpress_rest
 
 logger = logging.getLogger(__name__)
 
