@@ -17,7 +17,7 @@ from flask_background import app
 from models import Response
 from util import ERROR_HTTP_RETURN_CODE
 # need to import model class definitions since poll creates and saves entities.
-import blogger, facebook, flickr, github, instagram, mastodon, medium, reddit, tumblr, twitter, wordpress_rest
+import blogger, bluesky, facebook, flickr, github, instagram, mastodon, medium, reddit, tumblr, twitter, wordpress_rest
 
 logger = logging.getLogger(__name__)
 
@@ -784,7 +784,12 @@ class PropagateResponse(SendWebmentions):
     id = activity['id']
     parsed = util.parse_tag_uri(id)
     post_id = parsed[1] if parsed else id
-    parts = [self.entity.type, g.source.SHORT_NAME, g.source.key.string_id(), post_id]
+    parts = [
+            self.entity.type,
+            g.source.SHORT_NAME,
+            g.source.key.string_id(),
+            g.source.format_for_source_url(post_id)
+    ]
 
     if self.entity.type != 'post':
       # parse and add response id. (we know Response key ids are always tag URIs)
@@ -792,9 +797,9 @@ class PropagateResponse(SendWebmentions):
       reaction_id = response_id
       if self.entity.type in ('like', 'react', 'repost', 'rsvp'):
         response_id = response_id.split('_')[-1]  # extract responder user id
-      parts.append(response_id)
+      parts.append(g.source.format_for_source_url(response_id))
       if self.entity.type == 'react':
-        parts.append(reaction_id)
+        parts.append(g.source.format_for_source_url(reaction_id))
 
     return util.host_url('/'.join(parts))
 

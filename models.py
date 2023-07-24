@@ -257,6 +257,9 @@ class Source(StringIdModel, metaclass=SourceMeta):
       }
     elif self.key.kind() == 'Twitter':
       kwargs = {'username': self.key_id()}
+    elif self.key.kind() == 'Bluesky':
+      args = (json_loads(auth_entity.user_json).get('handle'),)
+      kwargs = {'did': auth_entity.did, 'app_password': auth_entity.password}
 
     self.gr_source = self.GR_CLASS(*args, **kwargs)
     return self.gr_source
@@ -482,6 +485,19 @@ class Source(StringIdModel, metaclass=SourceMeta):
       str: URL
     """
     raise NotImplementedError()
+
+  def format_for_source_url(self, key):
+    """Returns the given key formatted for a URL if necessary.
+    Some silos use keys containing slashes.
+    By default this is a no-op - can be overridden by subclasses.
+
+    Args:
+      key: The key to format
+
+    Returns:
+      string formatted key
+    """
+    return key
 
   @classmethod
   def button_html(cls, feature, **kwargs):

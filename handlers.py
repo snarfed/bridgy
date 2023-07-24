@@ -19,6 +19,7 @@ import datetime
 import logging
 import re
 import string
+from urllib.parse import unquote
 
 from flask import request
 from flask.views import View
@@ -26,7 +27,7 @@ from granary import microformats2
 from granary.microformats2 import first_props
 from oauth_dropins.webutil import flask_util
 from oauth_dropins.webutil.flask_util import error
-from oauth_dropins.webutil.util import json_dumps, json_loads
+from oauth_dropins.webutil.util import json_loads
 
 from flask_app import app, cache
 import models
@@ -72,7 +73,7 @@ class Item(View):
   """
   source = None
 
-  VALID_ID = re.compile(r'^[\w.+:@=<>-]+$')
+  VALID_ID = re.compile(r'^[\w.+/%@=<>-]+$')
 
   def get_item(self, **kwargs):
     """Fetches and returns an object from the given source.
@@ -218,6 +219,10 @@ class Post(Item):
   def get_item(self, post_id):
     posts = None
 
+    # Bluesky IDs need to be URL-decoded.
+    if self.source.SHORT_NAME == 'bluesky':
+      post_id = unquote(post_id)
+
     if self.source.SHORT_NAME == 'twitter':
       resp = models.Response.get_by_id(self.source.gr_source.tag_uri(post_id))
       if resp and resp.response_json:
@@ -240,6 +245,11 @@ class Post(Item):
 
 class Comment(Item):
   def get_item(self, post_id, comment_id):
+    # Bluesky IDs need to be URL-decoded.
+    if self.source.SHORT_NAME == 'bluesky':
+      post_id = unquote(post_id)
+      comment_id = unquote(comment_id)
+
     if self.source.SHORT_NAME == 'twitter':
       cmt = post = None
       resp = models.Response.get_by_id(self.source.gr_source.tag_uri(comment_id))
@@ -270,6 +280,10 @@ class Comment(Item):
 
 class Like(Item):
   def get_item(self, post_id, user_id):
+    if self.source.SHORT_NAME == 'bluesky':
+      post_id = unquote(post_id)
+      user_id = unquote(user_id)
+
     post = self.get_post(post_id, fetch_likes=True)
     like = self.source.get_like(self.source.key_id(), post_id, user_id,
                                 activity=post)
@@ -294,6 +308,10 @@ class Reaction(Item):
 
 class Repost(Item):
   def get_item(self, post_id, share_id):
+    if self.source.SHORT_NAME == 'bluesky':
+      post_id = unquote(post_id)
+      share_id = unquote(share_id)
+
     if self.source.SHORT_NAME == 'twitter':
       repost = post = None
       resp = models.Response.get_by_id(self.source.gr_source.tag_uri(share_id))

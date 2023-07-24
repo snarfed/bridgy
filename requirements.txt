@@ -12,6 +12,7 @@ git+https://github.com/snarfed/mox3.git#egg=mox3
 git+https://github.com/dvska/gdata-python3.git#egg=gdata
 git+https://github.com/Alir3z4/html2text.git#egg=html2text
 
+atproto==0.0.17
 beautifulsoup4==4.12.2
 bech32==1.2.0
 brevity==0.2.17
