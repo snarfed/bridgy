@@ -247,11 +247,15 @@ class Source(StringIdModel, metaclass=SourceMeta):
     elif self.key.kind() == 'Mastodon':
       args = (auth_entity.instance(),) + args
       inst = auth_entity.app.get().instance_info
+      if inst:
+        j = json_loads(inst)
+        truncate_text_length = j.get("configuration", {}).get('statuses', {}).get('max_characters', None) or j.get('max_toot_chars', None)
+      else:
+        truncate_text_length = None
       kwargs = {
         'user_id': json_loads(auth_entity.user_json).get('id'),
         # https://docs-develop.pleroma.social/backend/API/differences_in_mastoapi_responses/#instance
-        'truncate_text_length':
-          json_loads(inst).get('max_toot_chars') if inst else None,
+        'truncate_text_length': truncate_text_length,
       }
     elif self.key.kind() == 'Twitter':
       kwargs = {'username': self.key_id()}
