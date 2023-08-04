@@ -1,10 +1,8 @@
 """Unit tests for mastodon.py.
 """
-from granary.mastodon import API_BLOCKS, API_SEARCH
-from granary.tests.test_mastodon import STATUS
+from granary.mastodon import API_BLOCKS
 from oauth_dropins import mastodon as oauth_mastodon
-from oauth_dropins.webutil import util
-from oauth_dropins.webutil.util import json_dumps, json_loads
+from oauth_dropins.webutil.util import json_dumps
 
 from . import testutil
 from mastodon import Mastodon
@@ -59,3 +57,9 @@ class MastodonTest(testutil.AppTest):
     app.instance_info = '{"max_toot_chars": 999}'
     app.put()
     self.assert_equals(999, self.m.gr_source.TRUNCATE_TEXT_LENGTH)
+
+  def test_gr_class_with_max_characters(self):
+    app = self.auth_entity.app.get()
+    app.instance_info = '{"configuration": {"statuses": {"max_characters": 888}}}'
+    app.put()
+    self.assert_equals(888, self.m.gr_source.TRUNCATE_TEXT_LENGTH)
