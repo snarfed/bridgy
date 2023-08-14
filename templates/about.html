@@ -108,6 +108,7 @@ service.</a>
 <li><a href="#ignore-formatting">Can I disable the plain text whitespace and formatting?</a></li>
 <li><a href="#fragment">Can I publish just one part of a page?</a></li>
 <li><a href="#silo-content">I want more control over the text that gets posted.</li>
+<li><a href="#html-entities">Why is there a weird <code>&...;</code> in my post?</li>
 <li><a href="#multiple-types">What if my original post does more than one thing?</li>
 <li><a href="#short-link">Can I include a short link instead of the full link?</a></li>
 <li><a href="#response">How does Bridgy respond to webmentions?</a></li>
@@ -1028,6 +1029,11 @@ your post's actual content.
 <p>You can hide these extra elements with <code>display: none</code>, or add the classes to existing elements like your title or summary, or anything else you like.</p>
 <p>If you use this, Bridgy will still include a link to your post. <a href="#omit-link">You can change that with <code>omit-link</code>.</a> It will also still truncate your text if it's over the silo's character limit, <a href="https://docs.joinmastodon.org/user/posting/#text">eg 500 for Mastodon</a>. You can always <a href="#try+it">preview your post first</a> to see how Bridgy will handle it!</p>
 <p>The <code>e-</code> prefix tells Bridgy to try to preserve your HTML formatting and whitespace as much as possible. To prevent that and just use the plain text, use the <code>p-</code> prefix instead, eg <code>p-bridgy-[SILO]-content</code>.</p>
+</li>
+
+<li id="html-entities" class="question">Why is there a weird <code>&...;</code> in my post?</li>
+<li class="answer">
+<p>That's an <a href="https://developer.mozilla.org/en-US/docs/Glossary/Entity">HTML entity</a>. We parse HTML with (among other things) <a href="https://gitlab.gnome.org/GNOME/libxml2">libxml2</a>, which <a href="https://gitlab.gnome.org/GNOME/libxml2/-/issues/211">doesn't yet support HTML5 entities</a>, only HTML4 ones. 🫤 Feel free to weigh in on that bug report and tell them you want HTML5 support!</p>
 </li>
 
 <li id="multiple-types" class="question">What if my original post does more than one thing?
