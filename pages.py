@@ -197,10 +197,12 @@ def user(site, id):
         r.response['content'] = f'{r.actor.get("displayName") or ""} {phrase}.'
 
       # convert image URL to https if we're serving over SSL
-      image_url = r.actor.setdefault('image', {}).get('url')
+      # account for fact image might be a list
+      image = util.get_first(r.actor, 'image', {})
+      image_url = image.get('url')
       if image_url:
-        r.actor['image']['url'] = util.update_scheme(image_url, request)
-
+        image['url'] = util.update_scheme(image_url, request)
+        r.actor['image'] = image
       # generate original post links
       r.links = process_webmention_links(r)
       r.original_links = [util.pretty_link(url, new_tab=True)
