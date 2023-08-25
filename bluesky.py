@@ -18,7 +18,10 @@ class Bluesky(models.Source):
   GR_CLASS = gr_bluesky.Bluesky
   OAUTH_START = oauth_bluesky.Start
   AUTH_MODEL = oauth_bluesky.BlueskyAuth
-  URL_CANONICALIZER = gr_bluesky.Bluesky.URL_CANONICALIZER
+  URL_CANONICALIZER = util.UrlCanonicalizer(
+          domain=GR_CLASS.DOMAIN,
+          # Bluesky does not support HEAD requests.
+          redirects=False)
 
   @staticmethod
   def new(auth_entity, **kwargs):
