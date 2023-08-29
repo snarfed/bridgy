@@ -157,8 +157,9 @@ class Item(View):
 
     # use https for profile pictures so we don't cause SSL mixed mode errors
     # when serving over https.
+    # Account for the fact that image might be a list.
     author = obj.get('author', {})
-    image = author.get('image', {})
+    image = util.get_first(author, 'image', {})
     url = image.get('url')
     if url:
       image['url'] = util.update_scheme(url, request)
