@@ -129,9 +129,12 @@ class Item(View):
     if format not in ('html', 'json'):
       error(f'Invalid format {format}, expected html or json')
 
-    for id in kwargs.values():
+    for k, id in kwargs.items():
       if not self.VALID_ID.match(id):
         error(f'Invalid id {id}', 404)
+      # Bluesky IDs need to be URL-decoded.
+      if self.source.SHORT_NAME == 'bluesky':
+        kwargs[k] = unquote(id)
 
     # short circuit downstream fetches for HEADs.
     #
@@ -220,10 +223,6 @@ class Post(Item):
   def get_item(self, post_id):
     posts = None
 
-    # Bluesky IDs need to be URL-decoded.
-    if self.source.SHORT_NAME == 'bluesky':
-      post_id = unquote(post_id)
-
     if self.source.SHORT_NAME == 'twitter':
       resp = models.Response.get_by_id(self.source.gr_source.tag_uri(post_id))
       if resp and resp.response_json:
@@ -246,11 +245,6 @@ class Post(Item):
 
 class Comment(Item):
   def get_item(self, post_id, comment_id):
-    # Bluesky IDs need to be URL-decoded.
-    if self.source.SHORT_NAME == 'bluesky':
-      post_id = unquote(post_id)
-      comment_id = unquote(comment_id)
-
     if self.source.SHORT_NAME == 'twitter':
       cmt = post = None
       resp = models.Response.get_by_id(self.source.gr_source.tag_uri(comment_id))
@@ -281,10 +275,6 @@ class Comment(Item):
 
 class Like(Item):
   def get_item(self, post_id, user_id):
-    if self.source.SHORT_NAME == 'bluesky':
-      post_id = unquote(post_id)
-      user_id = unquote(user_id)
-
     post = self.get_post(post_id, fetch_likes=True)
     like = self.source.get_like(self.source.key_id(), post_id, user_id,
                                 activity=post)
@@ -309,10 +299,6 @@ class Reaction(Item):
 
 class Repost(Item):
   def get_item(self, post_id, share_id):
-    if self.source.SHORT_NAME == 'bluesky':
-      post_id = unquote(post_id)
-      share_id = unquote(share_id)
-
     if self.source.SHORT_NAME == 'twitter':
       repost = post = None
       resp = models.Response.get_by_id(self.source.gr_source.tag_uri(share_id))
