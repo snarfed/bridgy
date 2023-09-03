@@ -50,7 +50,11 @@ class Bluesky(models.Source):
     return self.gr_source.user_url(self.name)
 
   def format_for_source_url(self, id):
-    """Bluesky keys (AT URIs) contain slashes, so must be double-encoded."""
+    """
+    Bluesky keys (AT URIs) contain slashes, so must be double-encoded.
+    This is due to a particular behaviour in WSGI: https://github.com/pallets/flask/issues/900
+    They do not need to be decoded correspondingly.
+    """
     return quote(quote(id, safe=''))
 
   @classmethod
