@@ -73,7 +73,7 @@ class Item(View):
   """
   source = None
 
-  VALID_ID = re.compile(r'^[\w.+/%@=<>-]+$')
+  VALID_ID = re.compile(r'^[\w.+/%:@=<>-]+$')
 
   def get_item(self, **kwargs):
     """Fetches and returns an object from the given source.
