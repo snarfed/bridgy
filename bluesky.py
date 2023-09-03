@@ -49,9 +49,9 @@ class Bluesky(models.Source):
     """Returns the Bluesky account URL, e.g. https://bsky.app/profile/foo.bsky.social."""
     return self.gr_source.user_url(self.name)
 
-  def format_for_source_url(self, key):
+  def format_for_source_url(self, id):
     """Bluesky keys (AT URIs) contain slashes, so must be double-encoded."""
-    return quote(quote(key, safe=''))
+    return quote(quote(id, safe=''))
 
   @classmethod
   def button_html(cls, feature):

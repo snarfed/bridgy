@@ -486,18 +486,18 @@ class Source(StringIdModel, metaclass=SourceMeta):
     """
     raise NotImplementedError()
 
-  def format_for_source_url(self, key):
-    """Returns the given key formatted for a URL if necessary.
+  def format_for_source_url(self, id):
+    """Returns the given id formatted for a URL if necessary.
     Some silos use keys containing slashes.
     By default this is a no-op - can be overridden by subclasses.
 
     Args:
-      key: The key to format
+      id: The id to format
 
     Returns:
-      string formatted key
+      string formatted id
     """
-    return key
+    return id
 
   @classmethod
   def button_html(cls, feature, **kwargs):
