@@ -202,7 +202,7 @@ def user(site, id):
       image_url = image.get('url')
       if image_url:
         image['url'] = util.update_scheme(image_url, request)
-        r.actor['image'] = image
+      r.actor['image'] = image
       # generate original post links
       r.links = process_webmention_links(r)
       r.original_links = [util.pretty_link(url, new_tab=True)
