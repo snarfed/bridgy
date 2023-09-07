@@ -17,7 +17,6 @@ from google.cloud.ndb._datastore_types import _MAX_STRING_LENGTH
 from google.cloud.tasks_v2.types import Task
 from mox3 import mox
 from oauth_dropins.webutil.appengine_config import tasks_client
-from oauth_dropins.webutil import appengine_info
 from oauth_dropins.webutil.testutil import NOW
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
@@ -87,7 +86,6 @@ class PollTest(TaskTest):
   def setUp(self):
     super().setUp()
     FakeGrSource.DOMAIN = 'source'
-    appengine_info.LOCAL = True
 
     self.quote_post = {
       'id': 'tag:source,2013:1234',
@@ -107,7 +105,6 @@ class PollTest(TaskTest):
 
   def tearDown(self):
     FakeGrSource.DOMAIN = 'fa.ke'
-    appengine_info.LOCAL = False
     super().tearDown()
 
   def post_task(self, expected_status=200, source=None, reset=False,
@@ -1275,14 +1272,6 @@ class PollTest(TaskTest):
 class DiscoverTest(TaskTest):
 
   post_url = '/_ah/queue/discover'
-
-  def setUp(self):
-    super().setUp()
-    appengine_info.LOCAL = True
-
-  def tearDown(self):
-    appengine_info.LOCAL = False
-    super().tearDown()
 
   def discover(self, **kwargs):
     super().post_task(params={

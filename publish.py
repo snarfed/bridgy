@@ -215,7 +215,7 @@ class PublishBase(webmention.Webmention):
     # check that we haven't already published this URL. (we can't do this before
     # fetching because it might be a 410 delete, which we only know by fetching.)
     if (self.entity.status == 'complete' and self.entity.type != 'preview' and
-        not self.PREVIEW and not appengine_info.LOCAL):
+        not self.PREVIEW and not appengine_info.LOCAL_SERVER):
       return self.error("Sorry, you've already published that page, and Bridgy Publish doesn't support updating existing posts. Details: https://github.com/snarfed/bridgy/issues/84",
                         extra_json={'original': self.entity.published})
 
@@ -424,7 +424,7 @@ class PublishBase(webmention.Webmention):
     """
     assert self.entity
     if ((self.entity.status != 'complete' or self.entity.type == 'preview') and
-        not appengine_info.LOCAL):
+        not appengine_info.LOCAL_SERVER):
       return self.error(f"Can't delete this post from {self.source.gr_source.NAME} because Bridgy Publish didn't originally POSSE it there")
 
     id = self.entity.published.get('id')

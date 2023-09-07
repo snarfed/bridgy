@@ -20,8 +20,12 @@ from google.cloud.tasks_v2 import CreateTaskRequest
 from google.protobuf.timestamp_pb2 import Timestamp
 import google.protobuf.message
 from granary import as1
-from oauth_dropins.webutil.appengine_config import error_reporting_client, tasks_client
-from oauth_dropins.webutil.appengine_info import APP_ID, DEBUG, LOCAL
+from oauth_dropins.webutil.appengine_config import (
+  error_reporting_client,
+  tasks_client,
+)
+from oauth_dropins.webutil import appengine_info
+from oauth_dropins.webutil.appengine_info import APP_ID, DEBUG
 from oauth_dropins.webutil.flask_util import error, flash
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import *
@@ -159,7 +163,7 @@ def add_task(queue, eta_seconds=None, **kwargs):
     params['schedule_time'] = Timestamp(seconds=eta_seconds)
 
   queue_path = tasks_client.queue_path(APP_ID, TASKS_LOCATION, queue)
-  if LOCAL:
+  if appengine_info.LOCAL_SERVER:
     logger.info(f'Would add task: {queue_path} {params}')
   else:
     task = tasks_client.create_task(CreateTaskRequest(parent=queue_path, task=params))
@@ -251,7 +255,7 @@ def requests_get(url, **kwargs):
   http://docs.python-requests.org/en/latest/user/advanced/#body-content-workflow
   """
   host = urllib.parse.urlparse(url).netloc.split(':')[0]
-  if url in URL_BLOCKLIST or (not LOCAL and host in LOCAL_HOSTS):
+  if url in URL_BLOCKLIST or (not appengine_info.LOCAL_SERVER and host in LOCAL_HOSTS):
     resp = requests.Response()
     resp.status_code = HTTP_REQUEST_REFUSED_STATUS_CODE
     resp._text = 'Sorry, Bridgy has blocklisted this URL.'
@@ -332,7 +336,7 @@ def in_webmention_blocklist(domain):
   """Returns True if the domain or its root domain is in BLOCKLIST."""
   domain = domain.lower()
   return (util.domain_or_parent_in(domain, BLOCKLIST) or
-          (not LOCAL and domain in LOCAL_HOSTS))
+          (not appengine_info.LOCAL_SERVER and domain in LOCAL_HOSTS))
 
 
 def prune_activity(activity, source):
@@ -393,7 +397,7 @@ def replace_test_domains_with_localhost(url):
   Returns:
     a string with certain well-known domains replaced by localhost
   """
-  if url and LOCAL:
+  if url and appengine_info.LOCAL_SERVER:
     for test_domain, local_domain in LOCALHOST_TEST_DOMAINS:
       url = re.sub('https?://' + test_domain,
                    'http://' + local_domain, url)

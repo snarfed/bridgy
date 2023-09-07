@@ -8,6 +8,7 @@ from flask import Flask, get_flashed_messages, request
 from flask.views import View
 from google.cloud import ndb
 from oauth_dropins import views as oauth_views
+from oauth_dropins.webutil import appengine_info
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
 from werkzeug.exceptions import BadRequest
@@ -270,8 +271,6 @@ class UtilTest(testutil.AppTest):
     self.assertEqual('Sorry, Bridgy has blocklisted this URL.', resp.text)
 
   def test_blocklist_localhost_when_deployed(self):
-    self.mox.StubOutWithMock(util, 'LOCAL')
-    util.LOCAL = False
     for bad in 'http://localhost:8080/', 'http://127.0.0.1/':
       resp = util.requests_get(bad)
       self.assertEqual(util.HTTP_REQUEST_REFUSED_STATUS_CODE, resp.status_code)
@@ -303,10 +302,10 @@ class UtilTest(testutil.AppTest):
     for good in 'snarfed.org', 'www.snarfed.org', 't.co.com':
       self.assertFalse(util.in_webmention_blocklist(good), good)
 
-    self.mox.StubOutWithMock(util, 'LOCAL')
-    util.LOCAL = False
+    self.mox.StubOutWithMock(appengine_info, 'LOCAL_SERVER')
+    appengine_info.LOCAL_SERVER = False
     self.assertTrue(util.in_webmention_blocklist('localhost'))
-    util.LOCAL = True
+    appengine_info.LOCAL_SERVER = True
     self.assertFalse(util.in_webmention_blocklist('localhost'))
 
   def test_webmention_endpoint_cache_key(self):

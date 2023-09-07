@@ -37,7 +37,7 @@ def subscribe(source):
   Args:
     source: Blogger, Tumblr, or WordPress
   """
-  if appengine_info.LOCAL:
+  if appengine_info.LOCAL_SERVER:
     logger.info('Running locally, not subscribing to Superfeedr')
     return
 

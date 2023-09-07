@@ -4,6 +4,7 @@
 import urllib.request, urllib.parse, urllib.error
 
 from flask import get_flashed_messages
+from mox3 import mox
 from oauth_dropins import medium as oauth_medium
 from oauth_dropins.webutil.util import json_dumps, json_loads
 from oauth_dropins.webutil import appengine_info
@@ -11,6 +12,7 @@ from werkzeug.routing import RequestRedirect
 
 from flask_app import app
 from medium import ChooseBlog, Medium
+import superfeedr
 from . import testutil
 
 
@@ -47,14 +49,6 @@ class MediumTest(testutil.AppTest):
       id='abcdef01234', access_token_str='my token', user_json=json_dumps(USER),
       publications_json=json_dumps(PUBLICATIONS))
     self.auth_entity.put()
-
-    # prevent subscribing to superfeedr
-    self.orig_local = appengine_info.LOCAL
-    appengine_info.LOCAL = True
-
-  def tearDown(self):
-    appengine_info.LOCAL = self.orig_local
-    super().tearDown()
 
   def expect_requests_get(self, path, *args, **kwargs):
     return super().expect_requests_get(
@@ -141,6 +135,10 @@ class MediumTest(testutil.AppTest):
     self.assertEqual(0, Medium.query().count())
 
   def test_add_profile(self):
+    self.mox.StubOutWithMock(superfeedr, 'subscribe')
+    superfeedr.subscribe(mox.IgnoreArg())
+    self.mox.ReplayAll()
+
     resp = self.client.post(
       '/medium/add?auth_entity_key=%s&state={"feature":"webmention"}&blog=@RY' %
       self.auth_entity.key.urlsafe().decode())
@@ -151,6 +149,10 @@ class MediumTest(testutil.AppTest):
     self.assert_created_profile()
 
   def test_add_publication(self):
+    self.mox.StubOutWithMock(superfeedr, 'subscribe')
+    superfeedr.subscribe(mox.IgnoreArg())
+    self.mox.ReplayAll()
+
     resp = self.client.post(
       '/medium/add?auth_entity_key=%s&state={"feature":"webmention"}&blog=b45573563f5a' %
       self.auth_entity.key.urlsafe().decode())
