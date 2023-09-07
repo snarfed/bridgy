@@ -82,7 +82,7 @@ class Micropub(PublishBase):
     self.error('unauthorized', 'No publish user found with that token', status=401)
 
   def dispatch_request(self):
-    logging.info(f'Params: {list(request.values.items())}')
+    logger.info(f'Params: {list(request.values.items())}')
 
     # auth
     self.source = self.load_source()
@@ -132,7 +132,7 @@ class Micropub(PublishBase):
     if action not in ('create', 'delete'):
       self.error('not_implemented', f'Action {action} not supported')
 
-    logging.debug(f'Got microformats2: {json_dumps(mf2, indent=2)}')
+    logger.debug(f'Got microformats2: {json_dumps(mf2, indent=2)}')
     try:
       obj = microformats2.json_to_object(mf2)
     except (TypeError, ValueError) as e:
@@ -142,7 +142,7 @@ class Micropub(PublishBase):
     # Mastodon to use content, not displayName
     if obj.get('objectType') == 'article':
       obj['objectType'] = 'note'
-    logging.debug(f'Converted to ActivityStreams object: {json_dumps(obj, indent=2)}')
+    logger.debug(f'Converted to ActivityStreams object: {json_dumps(obj, indent=2)}')
 
     canonicalized = self.source.URL_CANONICALIZER(url or '') or ''
     post_id = self.source.gr_source.post_id(canonicalized)

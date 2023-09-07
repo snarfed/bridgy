@@ -75,7 +75,7 @@ class UpdatePictures(View):
         try:
           actor = source.gr_source.get_actor(user_id)
         except BaseException as e:
-          logging.debug('Failed', exc_info=True)
+          logger.debug('Failed', exc_info=True)
           # Mastodon API returns HTTP 404 for deleted (etc) users, and
           # often one or more users' Mastodon instances are down.
           code, _ = util.interpret_http_exception(e)

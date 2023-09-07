@@ -137,7 +137,7 @@ class PublishBase(webmention.Webmention):
 
   def _run(self):
     """Returns CreationResult on success, None otherwise."""
-    logging.info(f'Params: {list(request.values.items())}')
+    logger.info(f'Params: {list(request.values.items())}')
     assert self.PREVIEW in (True, False)
 
     # parse and validate target URL
@@ -253,7 +253,7 @@ class PublishBase(webmention.Webmention):
         for embedded in ('rsvp', 'invitee', 'repost-of', 'like-of', 'in-reply-to'):
           if embedded in item.get('properties', []):
             item_types.add(embedded)
-        logging.info(
+        logger.info(
           'Object type(s) %s not supported; error=%s; trying next.',
           item_types, result.error_plain)
         types = types.union(item_types)
@@ -266,7 +266,7 @@ class PublishBase(webmention.Webmention):
         if code in self.source.DISABLE_HTTP_CODES or isinstance(e, models.DisableSource):
           # the user deauthorized the bridgy app, or the token expired, so
           # disable this source.
-          logging.warning(f'Disabling source due to: {e}', exc_info=True)
+          logger.warning(f'Disabling source due to: {e}', exc_info=True)
           self.source.status = 'disabled'
           self.source.put()
         if isinstance(e, (NotImplementedError, ValueError, urllib.error.URLError)):
@@ -318,7 +318,7 @@ class PublishBase(webmention.Webmention):
     sources_ready = []
     best_match = None
     for source in sources:
-      logging.info(f'Source: {source.bridgy_url()} , features {source.features}, status {source.status}, poll status {source.poll_status}')
+      logger.info(f'Source: {source.bridgy_url()} , features {source.features}, status {source.status}, poll status {source.poll_status}')
       if source.status != 'disabled' and 'publish' in source.features:
         # use a source that has a domain_url matching the url provided,
         # including path. find the source with the closest match.
@@ -370,7 +370,7 @@ class PublishBase(webmention.Webmention):
       obj['url'] = self.source_url()
     elif 'url' not in obj:
       obj['url'] = self.fetched.url
-    logging.debug(f'Converted to ActivityStreams object: {json_dumps(obj, indent=2)}')
+    logger.debug(f'Converted to ActivityStreams object: {json_dumps(obj, indent=2)}')
 
     # posts and comments need content
     obj_type = obj.get('objectType')
@@ -410,7 +410,7 @@ class PublishBase(webmention.Webmention):
       self.entity.type = self.entity.published.get('type') or models.get_type(obj)
 
       ret = json_dumps(self.entity.published, indent=2)
-      logging.info(f'Returning {ret}')
+      logger.info(f'Returning {ret}')
       return gr_source.creation_result(ret)
 
   def delete(self, source_url):
@@ -442,16 +442,16 @@ class PublishBase(webmention.Webmention):
       except NotImplementedError:
         return self.error(f"Sorry, deleting isn't supported for {self.source.gr_source.NAME} yet")
 
-    logging.info(f'Deleting silo post id {id}')
+    logger.info(f'Deleting silo post id {id}')
     self.entity = models.Publish(parent=self.entity.key.parent(),
                                  source=self.source.key, type='delete')
     self.entity.put()
-    logging.debug(f"Publish entity for delete: {self.entity.key.urlsafe().decode()}")
+    logger.debug(f"Publish entity for delete: {self.entity.key.urlsafe().decode()}")
 
     resp = self.source.gr_source.delete(id)
     resp.content.setdefault('id', id)
     resp.content.setdefault('url', url)
-    logging.info(resp.content)
+    logger.info(resp.content)
     self.entity.published = resp.content
     self.entity.status = 'deleted'
     self.entity.put()
@@ -499,7 +499,7 @@ class PublishBase(webmention.Webmention):
         if not ok:
           continue
 
-        logging.debug(f'expand_target_urls fetching field={field}, url={url}')
+        logger.debug(f'expand_target_urls fetching field={field}, url={url}')
         try:
           mf2 = util.fetch_mf2(url)
         except AssertionError:
@@ -509,7 +509,7 @@ class PublishBase(webmention.Webmention):
           raise
         except BaseException:
           # it's not a big deal if we can't fetch an in-reply-to url
-          logging.info(f'expand_target_urls could not fetch field={field}, url={url}', exc_info=True)
+          logger.info(f'expand_target_urls could not fetch field={field}, url={url}', exc_info=True)
           continue
 
         synd_urls = mf2['rels'].get('syndication', [])
@@ -527,7 +527,7 @@ class PublishBase(webmention.Webmention):
           synd_urls += microformats2.get_string_urls(
             item.get('properties', {}).get('syndication', []))
 
-        logging.debug(f'expand_target_urls found rel=syndication for url={url} : {synd_urls!r}')
+        logger.debug(f'expand_target_urls found rel=syndication for url={url} : {synd_urls!r}')
         augmented += synd_urls
 
       if augmented:
@@ -549,7 +549,7 @@ class PublishBase(webmention.Webmention):
     except Exception as e:
       code = getattr(e, 'code', None)
       details = getattr(e, 'details', None)
-      logging.info((code and code(), details and details()))
+      logger.info((code and code(), details and details()))
       if (code and code() == grpc.StatusCode.ABORTED and
           details and 'too much contention' in details()):
         return self.error("You're already publishing that post in another request.",
@@ -566,7 +566,7 @@ class PublishBase(webmention.Webmention):
         Publish.status == 'new', Publish.type != 'preview',
         Publish.source == self.source.key, ancestor=page.key).get()
     if pending:
-      logging.warning(f'Collided with publish: {pending.key.urlsafe().decode()}')
+      logger.warning(f'Collided with publish: {pending.key.urlsafe().decode()}')
       raise CollisionError()
 
     entity = Publish.query(
@@ -578,7 +578,7 @@ class PublishBase(webmention.Webmention):
         entity.type = 'preview'
       entity.put()
 
-    logging.debug(f"Publish entity: {entity.key.urlsafe().decode()}")
+    logger.debug(f"Publish entity: {entity.key.urlsafe().decode()}")
     return entity
 
   def _render_preview(self, result, include_link=False):
@@ -604,7 +604,7 @@ class PublishBase(webmention.Webmention):
       'state': util.encode_oauth_state(state),
       **state,
     }
-    logging.info(f'Rendering preview with template vars {pprint.pformat(vars)}')
+    logger.info(f'Rendering preview with template vars {pprint.pformat(vars)}')
     return gr_source.creation_result(render_template('preview.html', **vars))
 
 
@@ -638,7 +638,7 @@ class Preview(PublishBase):
 
   def error(self, error, html=None, status=400, data=None, report=False, **kwargs):
     error = html or util.linkify(error)
-    logging.info(f'publish: {error}')
+    logger.info(f'publish: {error}')
     if report:
       self.report_error(error, status=status)
     flask_util.error(error, status=status)
@@ -691,7 +691,7 @@ class Send(PublishBase):
     return self.state['include_link']
 
   def error(self, error, html=None, status=400, data=None, report=False, **kwargs):
-    logging.info(f'publish: {error}')
+    logger.info(f'publish: {error}')
     error = html or util.linkify(error)
     flash(f'{error}')
     if report:
@@ -746,7 +746,7 @@ class Webmention(PublishBase):
     return False
 
   def error(self, error, **kwargs):
-    logging.info(f'publish: {error}')
+    logger.info(f'publish: {error}')
     return super().error(error, **kwargs)
 
 

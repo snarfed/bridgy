@@ -158,7 +158,7 @@ class BrowserView(View):
     """
     token = request.values['token']
     domains = Domain.query(Domain.tokens == token).fetch()
-    logging.info(f'Found domains for token {token}: {domains}')
+    logger.info(f'Found domains for token {token}: {domains}')
     if not domains:
       self.error(f'No domains found for token {token}. Click Reconnect to Bridgy above to register your domain!', 403)
 

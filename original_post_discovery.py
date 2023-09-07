@@ -130,10 +130,10 @@ def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True,
       mentions.update(att_origs)
 
   if len(originals) > MAX_ORIGINAL_CANDIDATES:
-    logging.info(f'{len(originals)} originals, pruning down to {MAX_ORIGINAL_CANDIDATES}')
+    logger.info(f'{len(originals)} originals, pruning down to {MAX_ORIGINAL_CANDIDATES}')
     originals = sorted(originals)[:MAX_ORIGINAL_CANDIDATES]
   if len(mentions) > MAX_MENTION_CANDIDATES:
-    logging.info(f'{len(mentions)} mentions, pruning down to {MAX_MENTION_CANDIDATES}')
+    logger.info(f'{len(mentions)} mentions, pruning down to {MAX_MENTION_CANDIDATES}')
     mentions = sorted(mentions)[:MAX_MENTION_CANDIDATES]
 
   def resolve(urls):
