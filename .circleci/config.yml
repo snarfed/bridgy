@@ -14,10 +14,10 @@ jobs:
 
       - restore_cache:
           keys:
-            - venv-npm-6-{{ .Branch }}-{{ checksum "requirements.txt" }}-{{ checksum "browser-extension/package.json" }}
-            - venv-npm-6-{{ .Branch }}-{{ checksum "requirements.txt" }}
-            - venv-npm-6-{{ .Branch }}
-            - venv-npm-6
+            - venv-npm-7-{{ .Branch }}-{{ checksum "requirements.txt" }}-{{ checksum "browser-extension/package.json" }}
+            - venv-npm-7-{{ .Branch }}-{{ checksum "requirements.txt" }}
+            - venv-npm-7-{{ .Branch }}
+            - venv-npm-7
 
       - run:
           name: Base dependencies
@@ -61,7 +61,7 @@ jobs:
             npm run test
 
       - save_cache:
-          key: venv-npm-6-{{ .Branch }}-{{ checksum "requirements.txt" }}-{{ checksum "browser-extension/package.json" }}
+          key: venv-npm-7-{{ .Branch }}-{{ checksum "requirements.txt" }}-{{ checksum "browser-extension/package.json" }}
           paths:
             - browser-extension/node_modules
             - /home/circleci/.pyenv
