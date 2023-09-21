@@ -1,7 +1,7 @@
 # https://cloud.google.com/appengine/docs/standard/python3/config/appref
 
 # application: brid-gy
-runtime: python39
+runtime: python311
 # default_expiration: 1h
 
 # https://cloud.google.com/appengine/docs/standard/python3/runtime#entrypoint_best_practices
