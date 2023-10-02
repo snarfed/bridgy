@@ -17,7 +17,7 @@ brevity==0.2.17
 Brotli==1.1.0
 cachetools==5.3.1
 certifi==2023.7.22
-charset-normalizer==3.2.0
+charset-normalizer==3.3.0
 click==8.1.7
 colorama==0.4.6
 Deprecated==1.2.14
