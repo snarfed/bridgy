@@ -59,7 +59,7 @@ MarkupSafe==2.1.3
 mf2py==1.1.3
 mf2util==0.5.2
 oauthlib==3.2.2
-packaging==23.1
+packaging==23.2
 pbr==5.11.1
 pkce==1.0.3
 praw==7.7.1
