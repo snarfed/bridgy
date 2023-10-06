@@ -7,18 +7,17 @@ Python GData API docs:
 http://gdata-python-client.googlecode.com/hg/pydocs/gdata.blogger.data.html
 
 To use, go to your Blogger blog's dashboard, click Template, Edit HTML, then
-put this in the head section:
+put this in the head section::
 
-<link rel="webmention" href="https://brid.gy/webmention/blogger"></link>
+    <link rel="webmention" href="https://brid.gy/webmention/blogger"></link>
 
-https://developers.google.com/blogger/docs/2.0/developers_guide_protocol
-https://support.google.com/blogger/answer/42064?hl=en
-create comment:
-https://developers.google.com/blogger/docs/2.0/developers_guide_protocol#CreatingComments
+* https://developers.google.com/blogger/docs/2.0/developers_guide_protocol
+* https://support.google.com/blogger/answer/42064?hl=en
+* https://developers.google.com/blogger/docs/2.0/developers_guide_protocol#CreatingComments
 
-test command line:
-curl localhost:8080/webmention/blogger \
-  -d 'source=http://localhost/response.html&target=http://freedom-io-2.blogspot.com/2014/04/blog-post.html'
+Test command line::
+
+    curl localhost:8080/webmention/blogger -d 'source=http://localhost/response.html&target=http://freedom-io-2.blogspot.com/2014/04/blog-post.html'
 """
 import collections
 import logging
@@ -70,8 +69,9 @@ class Blogger(models.Source):
     """Creates and returns a Blogger for the logged in user.
 
     Args:
-      auth_entity: :class:`oauth_dropins.blogger.BloggerV2Auth`
-      blog_id: which blog. optional. if not provided, uses the first available.
+      auth_entity (oauth_dropins.blogger.BloggerV2Auth):
+      blog_id (str): which blog, optional; if not provided, uses the first
+        available
     """
     urls, domains = Blogger.urls_and_domains(auth_entity, blog_id=blog_id)
     if not urls or not domains:
@@ -100,11 +100,11 @@ class Blogger(models.Source):
     """Returns an auth entity's URL and domain.
 
     Args:
-      auth_entity: oauth_dropins.blogger.BloggerV2Auth
+      auth_entity (oauth_dropins.blogger.BloggerV2Auth):
       blog_id: which blog. optional. if not provided, uses the first available.
 
     Returns:
-      ([string url], [string domain])
+      ([str url], [str domain])
     """
     for id, host in zip(auth_entity.blog_ids, auth_entity.blog_hostnames):
       if blog_id == id or (not blog_id and host):
@@ -118,16 +118,16 @@ class Blogger(models.Source):
     Must be implemented by subclasses.
 
     Args:
-      post_url: string
-      author_name: string
-      author_url: string
-      content: string
-      client: :class:`gdata.blogger.client.BloggerClient`. If None, one will be
+      post_url (str)
+      author_name (str)
+      author_url (str)
+      content (str)
+      client (gdata.blogger.client.BloggerClient): If None, one will be
         created from auth_entity. Used for dependency injection in the unit
         test.
 
     Returns:
-      JSON response dict with 'id' and other fields
+      dict: JSON response with ``id`` and other fields
     """
     if client is None:
       client = self.auth_entity.get().api()

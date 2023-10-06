@@ -1,27 +1,30 @@
 """Tumblr + Disqus blog webmention implementation.
 
 To use, go to your Tumblr dashboard, click Customize, Edit HTML, then put this
-in the head section:
+in the head section::
 
-<link rel="webmention" href="https://brid.gy/webmention/tumblr">
+    <link rel="webmention" href="https://brid.gy/webmention/tumblr">
 
-http://disqus.com/api/docs/
-http://disqus.com/api/docs/posts/create/
-http://help.disqus.com/customer/portal/articles/466253-what-html-tags-are-allowed-within-comments-
-create returns id, can lookup by id w/getContext?
+Misc notes and background:
 
-guest post (w/arbitrary author, url):
-http://spirytoos.blogspot.com/2013/12/not-so-easy-posting-as-guest-via-disqus.html
-http://stackoverflow.com/questions/15416688/disqus-api-create-comment-as-guest
-http://jonathonhill.net/2013-07-11/disqus-guest-posting-via-api/
+* http://disqus.com/api/docs/
+* http://disqus.com/api/docs/posts/create/
+* http://help.disqus.com/customer/portal/articles/466253-what-html-tags-are-allowed-within-comments-
 
-can send url and not look up disqus thread id!
-http://stackoverflow.com/questions/4549282/disqus-api-adding-comment
-https://disqus.com/api/docs/forums/listThreads/
+Guest post (w/arbitrary author, url):
 
-test command line:
-curl localhost:8080/webmention/tumblr \
-  -d 'source=http://localhost/response.html&target=http://snarfed.tumblr.com/post/60428995188/glen-canyon-http-t-co-fzc4ehiydp?foo=bar#baz'
+* http://spirytoos.blogspot.com/2013/12/not-so-easy-posting-as-guest-via-disqus.html
+* http://stackoverflow.com/questions/15416688/disqus-api-create-comment-as-guest
+* http://jonathonhill.net/2013-07-11/disqus-guest-posting-via-api/
+
+Can send url and not look up disqus thread id!
+
+* http://stackoverflow.com/questions/4549282/disqus-api-adding-comment
+* https://disqus.com/api/docs/forums/listThreads/
+
+Test command line::
+
+    curl localhost:8080/webmention/tumblr -d 'source=http://localhost/response.html&target=http://snarfed.tumblr.com/post/60428995188/glen-canyon-http-t-co-fzc4ehiydp?foo=bar#baz'
 """
 import collections
 import logging
@@ -89,8 +92,8 @@ class Tumblr(models.Source):
     """Creates and returns a :class:`Tumblr` for the logged in user.
 
     Args:
-      auth_entity: :class:`oauth_dropins.tumblr.TumblrAuth`
-      blog_name: which blog. optional. passed to urls_and_domains.
+      auth_entity (oauth_dropins.tumblr.TumblrAuth):
+      blog_name (str): which blog, optional, passed to :meth:`urls_and_domains`
     """
     urls, domains = Tumblr.urls_and_domains(auth_entity, blog_name=blog_name)
     if not urls or not domains:
@@ -112,12 +115,12 @@ class Tumblr(models.Source):
     """Returns this blog's URL and domain.
 
     Args:
-      auth_entity: :class:`oauth_dropins.tumblr.TumblrAuth`
-      blog_name: which blog. optional. matches the 'name' field for one of the
-        blogs in auth_entity.user_json['user']['blogs'].
+      auth_entity (oauth_dropins.tumblr.TumblrAuth)
+      blog_name (str): which blog, optional, matches the ``name`` field for one
+        of the blogs in ``auth_entity.user_json['user']['blogs']``
 
     Returns:
-      ([string url], [string domain])
+      ([str url], [str domain]):
     """
     for blog in json_loads(auth_entity.user_json).get('user', {}).get('blogs', []):
       if ((blog_name and blog_name == blog.get('name')) or
@@ -160,13 +163,13 @@ class Tumblr(models.Source):
     Must be implemented by subclasses.
 
     Args:
-      post_url: string
-      author_name: string
-      author_url: string
-      content: string
+      post_url (str)
+      author_name (str)
+      author_url (str)
+      content (str)
 
     Returns:
-      JSON response dict with 'id' and other fields
+      dict: JSON response with ``id`` and other fields
     """
     if not self.disqus_shortname:
       resp = util.requests_get(post_url)
@@ -207,13 +210,13 @@ class Tumblr(models.Source):
     """Makes a Disqus API call.
 
     Args:
-      method: requests function to use, e.g. requests.get
-      url: string
-      params: query parameters
+      method (callable): requests function to use, e.g. :func:`requests.get`
+      url (str)
+      params (dict): query parameters
       kwargs: passed through to method
 
     Returns:
-      dict, JSON response
+      dict: JSON response
     """
     logger.info(f"Calling Disqus {url.split('/')[-2:]} with {params}")
     params.update({

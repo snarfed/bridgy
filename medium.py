@@ -1,13 +1,17 @@
 """Medium hosted blog implementation.
 
+Medium's API is unsupported and degrading. We should probably sunset this.
+
 Only supports outbound webmentions right now, not inbound, since Medium's API
 doesn't support creating responses or recommendations yet.
-https://github.com/Medium/medium-api-docs/issues/71
-https://github.com/Medium/medium-api-docs/issues/72
+
+* https://github.com/Medium/medium-api-docs/issues/71
+* https://github.com/Medium/medium-api-docs/issues/72
 
 API docs:
-https://github.com/Medium/medium-api-docs#contents
-https://medium.com/developers/welcome-to-the-medium-api-3418f956552
+
+* https://github.com/Medium/medium-api-docs#contents
+* https://medium.com/developers/welcome-to-the-medium-api-3418f956552
 """
 import collections
 import logging
@@ -28,7 +32,7 @@ logger = logging.getLogger(__name__)
 class Medium(models.Source):
   """A Medium publication or user blog.
 
-  The key name is the username (with @ prefix) or publication name.
+  The key name is the username (with ``@`` prefix) or publication name.
   """
   GR_CLASS = collections.namedtuple('FakeGrClass', ('NAME',))(NAME='Medium')
   OAUTH_START = oauth_medium.Start
@@ -50,8 +54,8 @@ class Medium(models.Source):
     """Creates and returns a Medium for the logged in user.
 
     Args:
-      auth_entity: :class:`oauth_dropins.medium.MediumAuth`
-      username: string, either username (starting with @) or publication id
+      auth_entity (oauth_dropins.medium.MediumAuth):
+      username (str): either username (starting with ``@``) or publication id
     """
     assert username
     assert 'id' not in kwargs
@@ -82,6 +86,7 @@ class Medium(models.Source):
     https://github.com/Medium/medium-api-docs/#user-content-getting-the-authenticated-users-details
 
     Example user::
+
         {
           'imageUrl': 'https://cdn-images-1.medium.com/fit/c/200/200/0*4dsrv3pwIJfFraSz.jpeg',
           'url': 'https://medium.com/@snarfed',
@@ -91,6 +96,7 @@ class Medium(models.Source):
         }
 
     Example publication::
+
         {
           'id': 'b45573563f5a',
           'name': 'Developers',

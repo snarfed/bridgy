@@ -1,5 +1,4 @@
-"""Converts webmentions to comments on Blogger, Tumblr, and WP.com.
-"""
+"""Converts webmentions to comments on Blogger, Tumblr, and WP.com."""
 import logging
 import urllib.parse
 
@@ -158,10 +157,10 @@ class BlogWebmentionView(webmention.Webmention):
     content.value.
 
     Args:
-      items: sequence of mf2 item dicts
+      items (list of dict): mf2 items
 
     Returns:
-      mf2 item dict or None
+      dict: mf2 item, or None
     """
     # find target URL in source
     for item in items:

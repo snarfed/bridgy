@@ -1,4 +1,3 @@
-# coding=utf-8
 """Unit tests for pages.py."""
 from datetime import datetime, timedelta, timezone
 import urllib.request, urllib.parse, urllib.error

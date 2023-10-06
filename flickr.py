@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 class Flickr(models.Source):
   """A Flickr account.
 
-  The key name is the nsid.
+  The key name is the ``nsid``.
   """
   # Fetching comments and likes is extremely request-intensive, so let's dial
   # back the frequency for now.
@@ -46,7 +46,7 @@ class Flickr(models.Source):
     """Creates and returns a :class:`Flickr` for the logged in user.
 
     Args:
-      auth_entity: :class:`oauth_dropins.flickr.FlickrAuth`
+      auth_entity (oauth_dropins.flickr.FlickrAuth)
     """
     assert 'username' not in kwargs
     assert 'id' not in kwargs

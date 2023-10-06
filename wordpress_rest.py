@@ -1,22 +1,25 @@
 """WordPress REST API (including WordPress.com) hosted blog implementation.
 
 To use, go to your WordPress.com blog's admin console, then go to Appearance,
-Widgets, add a Text widget, and put this in its text section:
+Widgets, add a Text widget, and put this in its text section::
 
-<a href="https://brid.gy/webmention/wordpress" rel="webmention"></a>
+    <a href="https://brid.gy/webmention/wordpress" rel="webmention"></a>
 
-(not this, it breaks :/)
-<link rel="webmention" href="https://brid.gy/webmention/wordpress">
+Not this, it breaks::
+
+    <link rel="webmention" href="https://brid.gy/webmention/wordpress">
 
 https://developer.wordpress.com/docs/api/
-create returns id, can lookup by id
 
-test command line:
-curl localhost:8080/webmention/wordpress \
-  -d 'source=http://localhost/response.html&target=http://ryandc.wordpress.com/2013/03/24/mac-os-x/'
+Create returns id, can lookup by id.
 
-making an API call with an access token from the command line:
-curl -H 'Authorization: Bearer [TOKEN]' URL...
+Test command line::
+
+    curl localhost:8080/webmention/wordpress -d 'source=http://localhost/response.html&target=http://ryandc.wordpress.com/2013/03/24/mac-os-x/'
+
+Making an API call with an access token from the command line::
+
+    curl -H 'Authorization: Bearer [TOKEN]' URL...
 """
 import collections
 import logging
@@ -68,7 +71,7 @@ class WordPress(models.Source):
     """Creates and returns a WordPress for the logged in user.
 
     Args:
-      auth_entity: :class:`oauth_dropins.wordpress_rest.WordPressAuth`
+      auth_entity (oauth_dropins.wordpress_rest.WordPressAuth):
     """
     site_info = WordPress.get_site_info(auth_entity)
     if site_info is None:
@@ -98,26 +101,26 @@ class WordPress(models.Source):
       auth_entity: unused
 
     Returns:
-      ([string url], [string domain])
+      ([str url], [str domain]) tuple:
     """
     return [self.url], [self.key_id()]
 
   def create_comment(self, post_url, author_name, author_url, content):
     """Creates a new comment in the source silo.
 
-    If the last part of the post URL is numeric, e.g. http://site/post/123999,
-    it's used as the post id. Otherwise, we extract the last part of
-    the path as the slug, e.g. http: / / site / post / the-slug,
-    and look up the post id via the API.
+    If the last part of the post URL is numeric, e.g.
+    ``http://site/post/123999``\, it's used as the post id. Otherwise, we
+    extract the last part of the path as the slug, e.g.
+    ``http://site/post/the-slug``\, and look up the post id via the API.
 
     Args:
-      post_url: string
-      author_name: string
-      author_url: string
-      content: string
+      post_url (str)
+      author_name (str)
+      author_url (str)
+      content (str)
 
     Returns:
-      JSON response dict with 'id' and other fields
+      dict: JSON response with ``id`` and other fields
     """
     auth_entity = self.auth_entity.get()
     logger.info(f'Determining WordPress.com post id for {post_url}')
@@ -163,10 +166,10 @@ class WordPress(models.Source):
     """Fetches the site info from the API.
 
     Args:
-      auth_entity: :class:`oauth_dropins.wordpress_rest.WordPressAuth`
+      auth_entity (oauth_dropins.wordpress_rest.WordPressAuth)
 
     Returns:
-      site info dict, or None if API calls are disabled for this blog
+      dict: site info, or None if API calls are disabled for this blog
     """
     try:
       return cls.urlopen(auth_entity, API_SITE_URL % auth_entity.blog_id)

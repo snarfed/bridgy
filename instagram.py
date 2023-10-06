@@ -1,5 +1,4 @@
-"""Instagram browser extension source class and views.
-"""
+"""Instagram browser extension source class and views."""
 from granary import instagram as gr_instagram
 from oauth_dropins import instagram as oauth_instagram
 

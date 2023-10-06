@@ -434,7 +434,9 @@ dataset <https://console.cloud.google.com/bigquery?p=brid-gy&d=datastore&page=da
    into BigQuery.* Also, expect this to cost around $10.
 
 2. Wait for it to be done with
-   ``gcloud datastore operations list | grep done``.
+   ``gcloud datastore operations list | grep done`` or by watching the
+   `Datastore Import/Export
+   page <https://console.cloud.google.com/datastore/databases/-default-/import-export?project=brid-gy>`__.
 
 3. `Import it into
    BigQuery <https://cloud.google.com/bigquery/docs/loading-data-cloud-datastore#loading_cloud_datastore_export_service_data>`__:
@@ -456,13 +458,14 @@ https://console.cloud.google.com/datastore/entities;kind=Response;ns=\ **:math:`
 Open the existing ``Response`` table in BigQuery:
 https://console.cloud.google.com/bigquery?project=brid-gy&ws=%211m10%211m4%214m3%211sbrid-gy%212sdatastore%213sResponse%211m4%211m3%211sbrid-gy%212sbquxjob_371f97c8_18131ff6e69%213sUS
 
-Query for the same first few rows sorted by ``updated`` ascending, check
-that they’re the same:
+Update the year in the queries below to two years before today. Query
+for the same first few rows sorted by ``updated`` ascending, check that
+they’re the same:
 
 ::
 
    SELECT * FROM `brid-gy.datastore.Response`
-   WHERE updated >= TIMESTAMP('2020-11-01T00:00:00Z')
+   WHERE updated >= TIMESTAMP('202X-11-01T00:00:00Z')
    ORDER BY updated ASC
    LIMIT 10
 
@@ -471,7 +474,7 @@ Delete those rows:
 ::
 
    DELETE FROM `brid-gy.datastore.Response`
-   WHERE updated >= TIMESTAMP('2020-11-01T00:00:00Z')
+   WHERE updated >= TIMESTAMP('202X-11-01T00:00:00Z')
 
 Load the new ``Response`` entities into a temporary table:
 
@@ -538,7 +541,7 @@ nullable.
    Import the CSV, replacing the *data* sheet.
 4. Change the underscores in column headings to spaces.
 5. Open each sheet, edit the chart, and extend the data range to include
-   all of thee new rows.
+   all of the new rows.
 6. Check out the graphs! Save full size images with OS or browser
    screenshots, thumbnails with the *Download Chart* button. Then post
    them!
@@ -557,7 +560,8 @@ for long term storage.
 
 I use the `Datastore Bulk Delete Dataflow
 template <https://cloud.google.com/dataflow/docs/guides/templates/provided-utilities#datastore-bulk-delete>`__
-with a GQL query like this:
+with a GQL query like this. (Update the years below to two years before
+today.)
 
 .. code:: sql
 
@@ -573,7 +577,7 @@ command line:
      --gcs-location gs://dataflow-templates-us-central1/latest/Datastore_to_Datastore_Delete
      --region us-central1
      --staging-location gs://brid-gy.appspot.com/tmp-datastore-delete
-     --parameters datastoreReadGqlQuery="SELECT * FROM `Response` WHERE updated < DATETIME('2020-11-01T00:00:00Z'),datastoreReadProjectId=brid-gy,datastoreDeleteProjectId=brid-gy"
+     --parameters datastoreReadGqlQuery="SELECT * FROM `Response` WHERE updated < DATETIME('202X-11-01T00:00:00Z'),datastoreReadProjectId=brid-gy,datastoreDeleteProjectId=brid-gy"
 
 Expect this to take at least a day or so.
 

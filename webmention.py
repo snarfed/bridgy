@@ -38,10 +38,8 @@ class Webmention(View):
   """Webmention base view.
 
   Attributes:
-
-  * source: the :class:`models.Source` for this webmention
-  * entity: the :class:`models.Publish` or :class:`models.Webmention` entity for
-    this webmention
+  * source (models.Source): for this webmention
+  * entity (models.Publish or models.Webmention) entity for this webmention
   """
   source = None
   entity = None
@@ -49,19 +47,19 @@ class Webmention(View):
   def fetch_mf2(self, url, id=None, require_mf2=True, raise_errors=False):
     """Fetches a URL and extracts its mf2 data.
 
-    Side effects: sets :attr:`entity`\ .html on success, calls :attr:`error()`
-    on errors.
+    Side effects: sets ``entity.html`` on success, calls :attr:`error` on
+    errors.
 
     Args:
-      url: string
-      id: string, optional id of specific element to extract and parse. defaults
+      url: str
+      id: str, optional id of specific element to extract and parse. defaults
         to the whole page.
       require_mf2: boolean, whether to return error if no mf2 are found
       raise_errors: boolean, whether to let error exceptions propagate up or
         handle them
 
     Returns:
-      (:class:`requests.Response`, mf2 data dict) on success, None on failure
+      (requests.Response, mf2 data dict) tuple:
     """
     try:
       resp = util.requests_get(url)
@@ -122,13 +120,13 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
     """Handle an error. May be overridden by subclasses.
 
     Args:
-      error: string human-readable error message
-      html: string HTML human-readable error message
-      status: int HTTP response status code
-      data: mf2 data dict parsed from source page
-      log_exception: boolean, whether to include a stack trace in the log msg
-      report: boolean, whether to report to StackDriver Error Reporting
-      extra_json: dict to be merged into the JSON response body
+      error (str): human-readable error message
+      html (str): HTML human-readable error message
+      status (int): HTTP response status code
+      data (dict): mf2 data parsed from source page
+      log_exception (bool): whether to include a stack trace in the log msg
+      report (bool): whether to report to StackDriver Error Reporting
+      extra_json (dict): to be merged into the JSON response body
     """
     if self.entity and self.entity.status == 'new':
       self.entity.status = 'failed'

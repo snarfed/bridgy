@@ -1,6 +1,4 @@
-# coding=utf-8
-"""Unit tests for original_post_discovery.py
-"""
+"""Unit tests for original_post_discovery.py"""
 from datetime import datetime, timezone
 from string import hexdigits
 

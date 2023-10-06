@@ -1,5 +1,4 @@
-"""Datastore model classes.
-"""
+"""Datastore model classes."""
 from datetime import datetime, timedelta, timezone
 import logging
 import os
@@ -63,7 +62,7 @@ class DisableSource(Exception):
 
 
 class SourceMeta(ndb.MetaModel):
-  """:class:`Source` metaclass. Registers all subclasses in the sources global."""
+  """:class:`Source` metaclass. Registers all subclasses in the ``sources`` global."""
   def __new__(meta, name, bases, class_dict):
     cls = ndb.MetaModel.__new__(meta, name, bases, class_dict)
     if cls.SHORT_NAME:
@@ -76,7 +75,6 @@ class Source(StringIdModel, metaclass=SourceMeta):
 
   Each concrete silo class should subclass this class.
   """
-
   STATUSES = ('enabled', 'disabled')
   POLL_STATUSES = ('ok', 'error', 'polling')
   FEATURES = ('listen', 'publish', 'webmention', 'email')
@@ -192,7 +190,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
   # for __getattr__ to run when it's accessed.
 
   def __init__(self, *args, id=None, **kwargs):
-    """Constructor. Escapes the key string id if it starts with `__`."""
+    """Constructor. Escapes the key string id if it starts with ``__``."""
     username = kwargs.get('username')
     if self.USERNAME_KEY_ID and username and not id:
       id = username.lower()
@@ -270,17 +268,16 @@ class Source(StringIdModel, metaclass=SourceMeta):
     By default, interprets id as just the key id. Subclasses may extend this to
     support usernames, etc.
 
-    Ideally, if USERNAME_KEY_ID, normalize to lower case before looking up. We'd
-    need to backfill all existing entities with upper case key ids, though,
-    which we're not planning to do.
-    https://github.com/snarfed/bridgy/issues/884
+    Ideally, if ``USERNAME_KEY_ID``, normalize to lower case before looking up.
+    We'd need to backfill all existing entities with upper case key ids, though,
+    which we're not planning to do. https://github.com/snarfed/bridgy/issues/884
     """
     if id and id.startswith('__'):
       id = '\\' + id
     return ndb.Key(cls, id).get()
 
   def user_tag_id(self):
-    """Returns the tag URI for this source, e.g. 'tag:plus.google.com:123456'."""
+    """Returns the tag URI for this source, e.g. ``tag:plus.google.com:123456``."""
     return self.gr_source.tag_uri(self.key_id())
 
   def bridgy_path(self):
@@ -306,13 +303,13 @@ class Source(StringIdModel, metaclass=SourceMeta):
   @classmethod
   @ndb.transactional()
   def put_updates(cls, source):
-    """Writes source.updates to the datastore transactionally.
+    """Writes ``source.updates`` to the datastore transactionally.
 
     Returns:
-      source: :class:`Source`
+      source (Source)
 
     Returns:
-      the updated :class:`Source`
+      ``source``, updated
     """
     if not source.updates:
       return source
@@ -380,18 +377,18 @@ class Source(StringIdModel, metaclass=SourceMeta):
     In debug mode, replace test domains with localhost.
 
     Return:
-      a list of string URLs, possibly empty
+      list of str: URLs, possibly empty
     """
     return [util.replace_test_domains_with_localhost(u) for u in self.domain_urls]
 
   def search_for_links(self):
     """Searches for activities with links to any of this source's web sites.
 
-    https://github.com/snarfed/bridgy/issues/456
-    https://github.com/snarfed/bridgy/issues/565
+    * https://github.com/snarfed/bridgy/issues/456
+    * https://github.com/snarfed/bridgy/issues/565
 
     Returns:
-      sequence of ActivityStreams activity dicts
+      list of dict: ActivityStreams activities
     """
     return []
 
@@ -415,11 +412,11 @@ class Source(StringIdModel, metaclass=SourceMeta):
     Passes through to granary by default. May be overridden by subclasses.
 
     Args:
-      comment_id: string, site-specific comment id
+      comment_id (str): site-specific comment id
       kwargs: passed to :meth:`granary.source.Source.get_comment`
 
     Returns:
-      dict, decoded ActivityStreams comment object, or None
+      dict: decoded ActivityStreams comment object, or None
     """
     comment = self.gr_source.get_comment(comment_id, **kwargs)
     if comment:
@@ -427,16 +424,15 @@ class Source(StringIdModel, metaclass=SourceMeta):
     return comment
 
   def get_like(self, activity_user_id, activity_id, like_user_id, **kwargs):
-    """Returns an ActivityStreams 'like' activity object.
+    """Returns an ActivityStreams ``like`` activity object.
 
-    Passes through to granary by default. May be overridden
-    by subclasses.
+    Passes through to granary by default. May be overridden by subclasses.
 
     Args:
-      activity_user_id: string id of the user who posted the original activity
-      activity_id: string activity id
-      like_user_id: string id of the user who liked the activity
-      kwargs: passed to granary.Source.get_comment
+      activity_user_id (str): id of the user who posted the original activity
+      activity_id (str): activity id
+      like_user_id (str): id of the user who liked the activity
+      kwargs: passed to :meth:`granary.source.Source.get_comment`
     """
     return self.gr_source.get_like(activity_user_id, activity_id, like_user_id,
                                    **kwargs)
@@ -455,13 +451,13 @@ class Source(StringIdModel, metaclass=SourceMeta):
     Must be implemented by subclasses.
 
     Args:
-      post_url: string
-      author_name: string
-      author_url: string
-      content: string
+      post_url (str)
+      author_name (str)
+      author_url (str)
+      content (str)
 
     Returns:
-      response dict with at least 'id' field
+      dict: response with at least ``id`` field
     """
     raise NotImplementedError()
 
@@ -472,7 +468,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
     :mod:`blogger`, :mod:`medium`, :mod:`tumblr`, and :mod:`wordpress_rest`.
 
     Returns:
-      string URL
+      str: URL
     """
     raise NotImplementedError()
 
@@ -483,7 +479,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
     :mod:`blogger`, :mod:`medium`, :mod:`tumblr`, and :mod:`wordpress_rest`.
 
     Returns:
-      string URL
+      str: URL
     """
     raise NotImplementedError()
 
@@ -494,7 +490,8 @@ class Source(StringIdModel, metaclass=SourceMeta):
     Mostly just passes through to
     :meth:`oauth_dropins.handlers.Start.button_html`.
 
-    Returns: string, HTML
+    Returns:
+      str: HTML
     """
     assert set(feature.split(',')) <= set(cls.FEATURES)
     form_extra = (kwargs.pop('form_extra', '') +
@@ -519,11 +516,12 @@ class Source(StringIdModel, metaclass=SourceMeta):
     """Creates and saves a new :class:`Source` and adds a poll task for it.
 
     Args:
-      user_url: a string, optional. if provided, supersedes other urls when
-        determining the author_url
-      **kwargs: passed to :meth:`new()`
+      user_url (str): if provided, supersedes other urls when determining the
+        ``author_url``
+      kwargs: passed to :meth:`new()`
 
-    Returns: newly created :class:`Source`
+    Returns:
+      Source: newly created entity
     """
     source = cls.new(**kwargs)
     if source is None:
@@ -584,7 +582,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
     return source
 
   def verified(self):
-    """Returns True if this source is ready to be used, false otherwise.
+    """Returns True if this source is ready to be used, False otherwise.
 
     See :meth:`verify()` for details. May be overridden by subclasses, e.g.
     :class:`tumblr.Tumblr`.
@@ -608,7 +606,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
     May be overridden by subclasses, e.g. :class:`tumblr.Tumblr`.
 
     Args:
-      force: if True, fully verifies (e.g. re-fetches the blog's HTML and
+      force (bool): if True, fully verifies (e.g. re-fetches the blog's HTML and
         performs webmention discovery) even we already think this source is
         verified.
     """
@@ -633,19 +631,19 @@ class Source(StringIdModel, metaclass=SourceMeta):
                        resolve_source_domain=True):
     """Returns this user's valid (not webmention-blocklisted) URLs and domains.
 
-    Converts the auth entity's user_json to an ActivityStreams actor and uses
-    its 'urls' and 'url' fields. May be overridden by subclasses.
+    Converts the auth entity's ``user_json`` to an ActivityStreams actor and
+    uses its ``urls`` and ``url`` fields. May be overridden by subclasses.
 
     Args:
-      auth_entity: :class:`oauth_dropins.models.BaseAuth`
-      user_url: string, optional URL passed in when authorizing
-      actor: dict, optional AS actor for the user. If provided, overrides
+      auth_entity (oauth_dropins.models.BaseAuth)
+      user_url (str): optional URL passed in when authorizing
+      actor (dict): optional AS actor for the user. If provided, overrides
         auth_entity
-      resolve_source_domain: boolean, whether to follow redirects on URLs on
+      resolve_source_domain (bool): whether to follow redirects on URLs on
         this source's domain
 
     Returns:
-      ([string url, ...], [string domain, ...])
+      ([str url, ...], [str domain, ...]) tuple:
     """
     if not actor:
       actor = self.gr_source.user_to_actor(json_loads(auth_entity.user_json))
@@ -683,10 +681,11 @@ class Source(StringIdModel, metaclass=SourceMeta):
     """Resolves a profile URL to be added to a source.
 
     Args:
-      url: string
-      resolve: boolean, whether to make HTTP requests to follow redirects, etc.
+      url (str)
+      resolve (bool): whether to make HTTP requests to follow redirects, etc.
 
-    Returns: string, resolved URL, or None
+    Returns:
+      str: resolved URL, or None
     """
     final, _, ok = util.get_webmention_target(url, resolve=resolve)
     if not ok:
@@ -719,17 +718,17 @@ class Source(StringIdModel, metaclass=SourceMeta):
     return self.URL_CANONICALIZER(url, **kwargs) if self.URL_CANONICALIZER else url
 
   def infer_profile_url(self, url):
-    """Given an arbitrary URL representing a person, try to find their
-    profile URL for *this* service.
+    """Given a silo profile, tries to find the matching Bridgy user URL.
 
     Queries Bridgy's registered accounts for users with a particular
     domain in their silo profile.
 
     Args:
-      url: string, a person's URL
+      url (str): a person's URL
 
     Return:
-      a string URL for their profile on this service (or None)
+      str: URL for their profile on this service, or None
+
     """
     domain = util.domain_from_link(url)
     if domain == self.gr_source.DOMAIN:
@@ -742,13 +741,13 @@ class Source(StringIdModel, metaclass=SourceMeta):
     """Preprocess an object before trying to publish it.
 
     By default this tries to massage person tags so that the tag's
-    "url" points to the person's profile on this service (as opposed
+    ``url`` points to the person's profile on this service (as opposed
     to a person's homepage).
 
     The object is modified in place.
 
     Args:
-      obj: ActivityStreams activity or object dict
+      obj (dict): ActivityStreams activity or object
     """
     if isinstance(obj, str):
       return obj
@@ -771,7 +770,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
     """Called when a new :class:`SyndicatedPost` is stored for this source.
 
     Args:
-      syndpost: :class:`SyndicatedPost`
+      syndpost (SyndicatedPost)
     """
     pass
 
@@ -785,7 +784,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
   def is_beta_user(self):
     """Returns True if this is a "beta" user opted into new features.
 
-    Beta users come from beta_users.txt.
+    Beta users come from ``beta_users.txt``.
     """
     return self.bridgy_path() in util.BETA_USER_PATHS
 
@@ -1049,10 +1048,11 @@ class Publish(ndb.Model):
 class BlogWebmention(Publish, StringIdModel):
   """Datastore entity for webmentions for hosted blog providers.
 
-  Key id is the source URL and target URL concated with a space, ie 'SOURCE
-  TARGET'. The source URL is *always* the URL given in the webmention HTTP
-  request. If the source page has a u-url, that's stored in the u_url property.
-  The target URL is always the final URL, after any redirects.
+  Key id is the source URL and target URL concated with a space, ie ``SOURCE
+  TARGET``. The source URL is *always* the URL given in the webmention HTTP
+  request. If the source page has a ``u-url``, that's stored in the
+  :attr:`u_url` property. The target URL is always the final URL, after any
+  redirects.
 
   Reuses :class:`Publish`'s fields, but otherwise unrelated.
   """
@@ -1079,7 +1079,7 @@ class SyndicatedPost(ndb.Model):
   See :mod:`original_post_discovery`.
 
   When a :class:`SyndicatedPost` entity is about to be stored,
-  :meth:`source.Source.on_new_syndicated_post()` is called before it's stored.
+  :meth:`source.Source.on_new_syndicated_post` is called before it's stored.
   """
 
   syndication = ndb.StringProperty()
@@ -1095,8 +1095,8 @@ class SyndicatedPost(ndb.Model):
     there is, nothing will be added.
 
     Args:
-      source: :class:`Source` subclass
-      original: string
+      source (Source)
+      original (str)
     """
     if cls.query(cls.original == original, ancestor=source.key).get():
       return
@@ -1110,8 +1110,8 @@ class SyndicatedPost(ndb.Model):
     syndication. If there is, nothing will be added.
 
     Args:
-      source: :class:`Source` subclass
-      original: string
+      source (Source)
+      original (str)
     """
 
     if cls.query(cls.syndication == syndication, ancestor=source.key).get():
@@ -1131,9 +1131,9 @@ class SyndicatedPost(ndb.Model):
     removed. If non-blank relationships exist, they will be retained.
 
     Args:
-      source: :class:`Source` subclass
-      syndication: string (not None)
-      original: string (not None)
+      source (Source)
+      syndication (str)
+      original (str)
 
     Returns:
       SyndicatedPost: newly created or preexisting entity
@@ -1163,7 +1163,7 @@ class Domain(StringIdModel):
   domain. Clients can include a token with requests that operate on a given
   domain, eg sending posts and responses from the browser extension.
 
-  Key id is the string domain, eg 'example.com'.
+  Key id is the string domain, eg ``example.com``.
   """
   tokens = ndb.StringProperty(repeated=True)
   auth = ndb.KeyProperty(IndieAuth)

@@ -4,19 +4,15 @@ Docs: https://brid.gy/about#source-urls
 
 URL paths are:
 
-/post/SITE/USER_ID/POST_ID
+* ``/post/SITE/USER_ID/POST_ID``
   e.g. /post/flickr/212038/10100823411094363
-
-/comment/SITE/USER_ID/POST_ID/COMMENT_ID
+* ``/comment/SITE/USER_ID/POST_ID/COMMENT_ID``
   e.g. /comment/twitter/snarfed_org/10100823411094363/999999
-
-/like/SITE/USER_ID/POST_ID/LIKED_BY_USER_ID
+* ``/like/SITE/USER_ID/POST_ID/LIKED_BY_USER_ID``
   e.g. /like/twitter/snarfed_org/10100823411094363/999999
-
-/repost/SITE/USER_ID/POST_ID/REPOSTED_BY_USER_ID
+* ``/repost/SITE/USER_ID/POST_ID/REPOSTED_BY_USER_ID``
   e.g. /repost/twitter/snarfed_org/10100823411094363/999999
-
-/rsvp/SITE/USER_ID/EVENT_ID/RSVP_USER_ID
+* ``/rsvp/SITE/USER_ID/EVENT_ID/RSVP_USER_ID``
   e.g. /rsvp/facebook/212038/12345/67890
 """
 import datetime
@@ -85,7 +81,7 @@ class Item(View):
 
     Args:
       source: :class:`models.Source` subclass
-      id: string
+      id: str
 
     Returns:
       ActivityStreams object dict
@@ -96,7 +92,7 @@ class Item(View):
     """Fetch a post.
 
     Args:
-      id: string, site-specific post id
+      id: str, site-specific post id
       is_event: bool
       kwargs: passed through to :meth:`get_activities`
 
@@ -198,16 +194,16 @@ class Item(View):
   def merge_urls(self, obj, property, urls, object_type='article'):
     """Updates an object's ActivityStreams URL objects in place.
 
-    Adds all URLs in urls that don't already exist in obj[property].
+    Adds all URLs in urls that don't already exist in ``obj[property]``\.
 
     ActivityStreams schema details:
     http://activitystrea.ms/specs/json/1.0/#id-comparison
 
     Args:
-      obj: ActivityStreams object to merge URLs into
-      property: string property to merge URLs into
-      urls: sequence of string URLs to add
-      object_type: stored as the objectType alongside each URL
+      obj (dict): ActivityStreams object to merge URLs into
+      property (str): property to merge URLs into
+      urls (sequence of str): URLs to add
+      object_type (str): stored as the objectType alongside each URL
     """
     if obj:
       obj[property] = util.get_list(obj, property)

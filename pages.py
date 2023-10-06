@@ -60,11 +60,11 @@ def about():
 @app.route('/users')
 @flask_util.cached(cache, datetime.timedelta(hours=1))
 def users():
-  """View for /users.
+  """View for ``/users``.
 
   Semi-optimized. Pages by source name. Queries each source type for results
   with name greater than the start_name query param, then merge sorts the
-  results and truncates at PAGE_SIZE.
+  results and truncates at ``PAGE_SIZE``\.
 
   The start_name param is expected to be capitalized because capital letters
   sort lexicographically before lower case letters. An alternative would be to
@@ -293,10 +293,10 @@ def user(site, id):
 
 
 def process_webmention_links(e):
-  """Generates pretty HTML for the links in a :class:`Webmentions` entity.
+  """Generates pretty HTML for the links in a :class:`models.Webmentions` entity.
 
   Args:
-    e: :class:`Webmentions` subclass (:class:`Response` or :class:`BlogPost`)
+    e (models.Response or models.BlogPost)
   """
   def link(url, g):
     return util.pretty_link(

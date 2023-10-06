@@ -1,6 +1,4 @@
-# coding=utf-8
-"""Unit tests for tasks.py.
-"""
+"""Unit tests for tasks.py."""
 import copy
 import datetime
 import http.client

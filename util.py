@@ -1,6 +1,4 @@
-# coding=utf-8
-"""Misc utility constants and classes.
-"""
+"""Misc utility constants and classes."""
 import binascii
 import collections
 import copy
@@ -108,7 +106,7 @@ webmention_endpoint_cache = TTLCache(5000, 60 * 60 * 2)  # 2h expiration
 def add_poll_task(source, now=False):
   """Adds a poll task for the given source entity.
 
-  Pass now=True to insert a poll-now task.
+  Pass ``now=True`` to insert a ``poll-now`` task.
   """
   if now:
     queue = 'poll-now'
@@ -145,9 +143,9 @@ def add_task(queue, eta_seconds=None, **kwargs):
   """Adds a Cloud Tasks task for the given entity.
 
   Args:
-    queue: string, queue name
-    entity: Source or Webmentions instance
-    eta_seconds: integer, optional
+    queue (str): queue name
+    entity (Source or Webmentions)
+    eta_seconds (int): optional
     kwargs: added to task's POST body (form-encoded)
   """
   params = {
@@ -197,10 +195,9 @@ def redirect(path, code=302, logins=None):
   Specifically, raises :class:`werkzeug.routing.RequestRedirect`.
 
   Args:
-    url: str
-    code: int, HTTP status code
-    logins: optional, list of :class:`util.Login` to be set in a Set-Cookie HTTP
-      header
+    url (str)
+    code (int): HTTP status code
+    logins (list of util.Login): optional, set in a ``Set-Cookie`` HTTP header
   """
   logger.info(f'Redirecting to {path}')
   rr = Redirect(host_url(path))
@@ -212,11 +209,11 @@ def redirect(path, code=302, logins=None):
 def webmention_endpoint_cache_key(url):
   """Returns cache key for a cached webmention endpoint for a given URL.
 
-  Example: 'https snarfed.org /'
+  Example: ``https snarfed.org /``
 
-  If the URL is the home page, ie path is / , the key includes a / at the end,
-  so that we cache webmention endpoints for home pages separate from other pages.
-  https://github.com/snarfed/bridgy/issues/701
+  If the URL is the home page, ie path is ``/`` , the key includes a ``/`` at
+  the end, so that we cache webmention endpoints for home pages separate from
+  other pages. https://github.com/snarfed/bridgy/issues/701
   """
   domain = util.domain_from_link(url)
   scheme = urllib.parse.urlparse(url).scheme
@@ -234,7 +231,7 @@ def report_error(msg, **kwargs):
   https://cloud.google.com/error-reporting/docs/reference/libraries#client-libraries-install-python
 
   Args:
-    msg: string
+    msg (str)
   """
   try:
     error_reporting_client.report(msg, **kwargs)
@@ -246,10 +243,10 @@ def report_error(msg, **kwargs):
 def requests_get(url, **kwargs):
   """Wraps :func:`requests.get` with extra semantics and our user agent.
 
-  If a server tells us a response will be too big (based on Content-Length), we
-  hijack the response and return 599 and an error response body instead. We pass
-  stream=True to :func:`requests.get` so that it doesn't fetch the response body
-  until we access :attr:`requests.Response.content` (or
+  If a server tells us a response will be too big (based on ``Content-Length``),
+  we hijack the response and return 599 and an error response body instead. We
+  pass ``stream=True`` to :func:`requests.get` so that it doesn't fetch the
+  response body until we access :attr:`requests.Response.content` (or
   :attr:`requests.Response.text`).
 
   http://docs.python-requests.org/en/latest/user/advanced/#body-content-workflow
@@ -296,14 +293,15 @@ def get_webmention_target(url, resolve=True, replace_test_domains=True):
   tuple will be True! TODO: check callers and reconsider this.
 
   Args:
-    url: string
-    resolve: whether to follow redirects
-    replace_test_domains: whether to replace test user domains with localhost
+    url (str)
+    resolve (bool): whether to follow redirects
+    replace_test_domains (bool): whether to replace test user domains with
+      localhost
 
   Returns:
-    (string url, string pretty domain, boolean) tuple. The boolean is
-    True if we should send a webmention, False otherwise, e.g. if it's a bad
-    URL, not text/html, or in the blocklist.
+    (str url, str pretty domain, bool should send) tuple: target info.
+    should send is True if we should send a webmention, False otherwise, eg if
+    it's a bad URL, not ``text/html`` or in the blocklist.
   """
   url = util.clean_url(url)
   try:
@@ -333,7 +331,7 @@ def get_webmention_target(url, resolve=True, replace_test_domains=True):
 
 
 def in_webmention_blocklist(domain):
-  """Returns True if the domain or its root domain is in BLOCKLIST."""
+  """Returns True if the domain or its root domain is in ``BLOCKLIST``."""
   domain = domain.lower()
   return (util.domain_or_parent_in(domain, BLOCKLIST) or
           (not appengine_info.LOCAL_SERVER and domain in LOCAL_HOSTS))
@@ -351,10 +349,10 @@ def prune_activity(activity, source):
   to field here.
 
   Args:
-    activity: ActivityStreams activity dict
+    activity (dict): ActivityStreams activity
 
   Returns:
-    pruned activity dict
+    dict: pruned activity
   """
   keep = ['id', 'url', 'content', 'fb_id', 'fb_object_id', 'fb_object_type']
   if not as1.is_public(activity):
@@ -375,10 +373,10 @@ def prune_response(response):
   """Returns a response object dict with a few fields removed.
 
   Args:
-    response: ActivityStreams response object
+    response (dict): ActivityStreams response object
 
   Returns:
-    pruned response object
+    dict: pruned response object
   """
   obj = response.get('object')
   if obj:
@@ -389,13 +387,13 @@ def prune_response(response):
 
 
 def replace_test_domains_with_localhost(url):
-  """Replace domains in LOCALHOST_TEST_DOMAINS with localhost for local testing.
+  """Replace domains in ``LOCALHOST_TEST_DOMAINS` with localhost for testing.
 
   Args:
-    url: a string
+    url (str)
 
   Returns:
-    a string with certain well-known domains replaced by localhost
+    str: url with certain well-known domains replaced by ``localhost``
   """
   if url and appengine_info.LOCAL_SERVER:
     for test_domain, local_domain in LOCALHOST_TEST_DOMAINS:
@@ -412,16 +410,17 @@ def host_url(path_query=None):
 
 
 def load_source(error_fn=None):
-  """Loads a source from the `source_key` or `key` query parameter.
+  """Loads a source from the ``source_key`` or ``key`` query parameter.
 
   Expects the query parameter value to be a URL-safe key. Returns HTTP 400 if
   neither parameter is provided or the source doesn't exist.
 
   Args:
-    error_fn: callable to be called with errors. Takes one parameter, the string
-      error message.
+    error_fn (callable): to be called with errors. Takes one parameter, the
+      string error message.
 
-  Returns: :class:`models.Source`
+  Returns:
+    models.Source:
   """
   logger.debug(f'Params: {list(request.values.items())}')
   if error_fn is None:
@@ -443,18 +442,19 @@ def load_source(error_fn=None):
 
 
 def maybe_add_or_delete_source(source_cls, auth_entity, state, **kwargs):
-  """Adds or deletes a source if auth_entity is not None.
+  """Adds or deletes a source if ``auth_entity`` is not None.
 
   Used in each source's oauth-dropins :meth:`Callback.finish()` and
   :meth:`Callback.get()` methods, respectively.
 
   Args:
-    source_cls: source class, e.g. :class:`instagram.Instagram`
-    auth_entity: ouath-dropins auth entity
-    state: string, OAuth callback state parameter. a JSON serialized dict
-      with operation, feature, and an optional callback URL. For deletes,
-      it will also include the source key
-    kwargs: passed through to the source_cls constructor
+    source_cls (granary.source.Source subclass): eg
+      :class:`granary.instagram.Instagram`
+    auth_entity (oauth_dropins.models.BaseAuth subclass instance): auth entity
+    state (str): OAuth callback ``state`` parameter. a JSON serialized dict with
+      ``operation``, ``feature``, and an optional callback URL. For deletes, it
+      will also include the source key
+    kwargs: passed through to the ``source_cls`` constructor
 
   Returns:
     source entity if it was created or updated, otherwise None
@@ -548,10 +548,12 @@ def construct_state_param_for_add(state=None, **kwargs):
   """Construct the state parameter if one isn't explicitly passed in.
 
   The following keys are common:
-  - operation: 'add' or 'delete'
-  - feature: 'listen', 'publish', or 'webmention'
-  - callback: an optional external callback, that we will redirect to at the end of the authorization handshake
-  - source: the source key, only applicable to deletes
+
+  * ``operation``: ``add`` or ``delete``
+  * ``feature``: ``listen``, ``publish``, or ``webmention``
+  * ``callback``: an optional external callback URL that we will redirect to at
+    the end of the authorization handshake
+  * ``source``: the source entity key, only applicable to deletes
   """
   state_obj = util.decode_oauth_state(state)
   if not state_obj:
@@ -571,7 +573,7 @@ def get_logins():
   The logins cookie is set in :meth:`redirect` and :class:`Redirect`.
 
   Returns:
-    list of :class:`Login` objects
+    list of Login:
   """
   logins_str = request.cookies.get('logins')
   if not logins_str:
@@ -593,11 +595,11 @@ def get_logins():
 def preprocess_source(source):
   """Prepares a source entity for rendering in the source.html template.
 
-  - convert image URLs to https if we're serving over SSL
-  - set 'website_links' attr to list of pretty HTML links to domain_urls
+  * converts image URLs to https if we're serving over SSL
+  * sets ``website_links`` attr to list of pretty HTML links to domain_urls
 
   Args:
-    source: :class:`models.Source` entity
+    source (models.Source): entity
   """
   if source.picture:
     source.picture = util.update_scheme(source.picture, request)
@@ -611,9 +613,9 @@ def oauth_starter(oauth_start_view, **kwargs):
   """Returns an oauth-dropins start view that injects the state param.
 
   Args:
-    oauth_start_view: oauth-dropins :class:`Start` to use,
-      e.g. :class:`oauth_dropins.twitter.Start`.
-    kwargs: passed to :meth:`construct_state_param_for_add()`
+    oauth_start_view: (oauth_dropins.views.Start subclass instance):
+      eg :class:`oauth_dropins.twitter.Start`.
+    kwargs: passed to :meth:`construct_state_param_for_add`
   """
   class Start(oauth_start_view):
     def redirect_url(self, state=None, **ru_kwargs):
@@ -624,12 +626,12 @@ def oauth_starter(oauth_start_view, **kwargs):
 
 
 def unwrap_t_umblr_com(url):
-  """If url is a t.umblr.com short link, extract its destination URL.
+  """If url is a ``t.umblr.com`` short link, extract its destination URL.
 
-  Otherwise, return url unchanged.
+  Otherwise, return ``url`` unchanged.
 
-  Not in tumblr.py since models imports superfeedr, so it would be a circular
-  import.
+  Not in ``tumblr.py`` since ``models`` imports ``superfeedr``, so it would be a
+  circular import.
 
   Background: https://github.com/snarfed/bridgy/issues/609
   """

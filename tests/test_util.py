@@ -1,4 +1,3 @@
-# coding=utf-8
 """Unit tests for util.py."""
 from datetime import datetime, timezone
 import time

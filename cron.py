@@ -29,7 +29,7 @@ PAGE_SIZE = 20
 class LastUpdatedPicture(StringIdModel):
   """Stores the last user in a given silo that we updated profile picture for.
 
-  Key id is the silo's SHORT_NAME.
+  Key id is the silo's ``SHORT_NAME``.
   """
   last = ndb.KeyProperty()
   created = ndb.DateTimeProperty(auto_now_add=True, required=True, tzinfo=timezone.utc)

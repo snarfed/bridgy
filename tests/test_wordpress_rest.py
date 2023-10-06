@@ -1,6 +1,4 @@
-# coding=utf-8
-"""Unit tests for wordpress_rest.py.
-"""
+"""Unit tests for wordpress_rest.py."""
 import urllib.request, urllib.parse, urllib.error
 
 from flask import get_flashed_messages

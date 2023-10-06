@@ -1,5 +1,4 @@
-"""Facebook API code and datastore model classes.
-"""
+"""Facebook API code and datastore model classes."""
 import urllib.parse
 
 from google.cloud import ndb
@@ -69,14 +68,14 @@ class Facebook(browser.BrowserSource):
   def canonicalize_url(self, url, **kwargs):
     """Facebook-specific standardization of syndicated urls.
 
-    Canonical form is https://www.facebook.com/USERID/posts/POSTID
+    Canonical form is ``https://www.facebook.com/USERID/posts/POSTID``
 
     Args:
-      url: a string, the url of the syndicated content
+      url (str): the url of the syndicated content
       kwargs: unused
 
     Return:
-      a string, the canonical form of the syndication url
+      str: the canonical form of the syndication url
     """
     if util.domain_from_link(url) != self.gr_source.DOMAIN:
       return None

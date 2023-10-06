@@ -1,6 +1,4 @@
-# coding=utf-8
-"""Unit tests for tumblr.py.
-"""
+"""Unit tests for tumblr.py."""
 from flask import get_flashed_messages
 from mox3 import mox
 from oauth_dropins.tumblr import TumblrAuth

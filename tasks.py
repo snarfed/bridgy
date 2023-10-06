@@ -1,6 +1,4 @@
-# coding=utf-8
-"""Task queue handlers.
-"""
+"""Task queue handlers."""
 import datetime
 import gc
 import logging
@@ -40,19 +38,21 @@ class Poll(View):
 
   Request parameters:
 
-  * source_key: string key of source entity
-  * last_polled: timestamp, YYYY-MM-DD-HH-MM-SS
+  * ``source_key``: string key of source entity
+  * ``last_polled``: timestamp, ``YYYY-MM-DD-HH-MM-SS``
 
   Inserts a propagate task for each response that hasn't been seen before.
 
   Steps:
-  1: Fetch activities: posts by the user, links to the user's domain(s).
-  2: Extract responses, store their activities.
-  3: Filter out responses we've already seen, using Responses in the datastore.
-  4: Store new responses and enqueue propagate tasks.
-  5: Possibly refetch updated syndication urls.
 
-  1-4 are in backfeed(); 5 is in poll().
+  1. Fetch activities: posts by the user, links to the user's domain(s).
+  2. Extract responses, store their activities.
+  3. Filter out responses we've already seen, using :class:`models.Response`\s
+     in the datastore.
+  4. Store new responses and enqueue propagate tasks.
+  5. Possibly refetch updated syndication urls.
+
+  1-4 are in :meth:`backfeed`; 5 is in :meth:`poll`.
   """
   RESTART_EXISTING_TASKS = False  # overridden in Discover
 
@@ -119,7 +119,7 @@ class Poll(View):
   def poll(self, source):
     """Actually runs the poll.
 
-    Stores property names and values to update in source.updates.
+    Stores property names and values to update in ``source.updates``.
     """
     if source.last_activities_etag or source.last_activity_id:
       logger.debug(f'Using ETag {source.last_activities_etag}, last activity id {source.last_activity_id}')
@@ -224,9 +224,9 @@ class Poll(View):
     Stores property names and values to update in source.updates.
 
     Args:
-      source: Source
-      responses: dict mapping AS response id to AS object
-      activities: dict mapping AS activity id to AS object
+      source (models.Source)
+      responses (dict): maps AS response id to AS object
+      activities (dict): maps AS activity id to AS object
     """
     if responses is None:
       responses = {}
@@ -414,7 +414,7 @@ class Poll(View):
     We look through as many responses as we can until the datastore query expires.
 
     Args:
-      source: :class:`models.Source`
+      source (models.Source):
       relationships: refetch result
     """
     for response in (Response.query(Response.source == source.key)
@@ -461,8 +461,8 @@ class Discover(Poll):
 
   Request parameters:
 
-  * source_key: string key of source entity
-  * post_id: string, silo post id(s)
+  * source_key (string): key of source entity
+  * post_id (string): silo post id(s)
 
   Inserts a propagate task for each response that hasn't been seen before.
   """
@@ -519,8 +519,8 @@ class SendWebmentions(View):
 
   Attributes:
 
-  * entity: :class:`models.Webmentions` subclass instance (set in :meth:`lease_entity`)
-  * source: :class:`models.Source` entity (set in :meth:`send_webmentions`)
+  * entity (models.Webmentions): subclass instance (set in :meth:`lease_entity`)
+  * source (models.Source): entity (set in :meth:`send_webmentions`)
   """
   # request deadline (10m) plus some padding
   LEASE_LENGTH = datetime.timedelta(minutes=12)
@@ -531,10 +531,10 @@ class SendWebmentions(View):
     Subclasses must implement.
 
     Args:
-      target_url: string
+      target_url (str)
 
     Returns:
-      string
+      str
     """
     raise NotImplementedError()
 
@@ -636,13 +636,14 @@ class SendWebmentions(View):
   def lease(self, key):
     """Attempts to acquire and lease the :class:`models.Webmentions` entity.
 
-    Also loads and sets `g.source`, and returns False if the source doesn't
+    Also loads and sets ``g.source``, and returns False if the source doesn't
     exist or is disabled.
 
     Args:
-      key: :class:`ndb.Key`
+      key (ndb.Key):
 
-    Returns: True on success, False or None otherwise
+    Returns:
+      bool: True on success, False or None otherwise
     """
     self.entity = key.get()
 
@@ -700,7 +701,7 @@ class SendWebmentions(View):
     """Attempts to unlease the :class:`models.Webmentions` entity.
 
     Args:
-      new_status: string
+      new_status (str):
     """
     existing = self.entity.key.get()
     # TODO: send_webmentions() edits self.entity.unsent etc, so if it fails and hits here, those values may be lost mid flight!
@@ -719,8 +720,8 @@ class SendWebmentions(View):
     """Sets this source's last_webmention_sent and maybe webmention_endpoint.
 
     Args:
-      endpoint: str, URL
-      target: str, URL
+      endpoint (str): URL
+      target (str): URL
     """
     g.source = g.source.key.get()
     logger.info('Setting last_webmention_sent')
@@ -743,7 +744,7 @@ class PropagateResponse(SendWebmentions):
 
   Request parameters:
 
-  * response_key: string key of :class:`models.Response` entity
+  * response_key (str): key of :class:`models.Response` entity
   """
 
   def dispatch_request(self):
@@ -803,7 +804,7 @@ class PropagateBlogPost(SendWebmentions):
 
   Request parameters:
 
-  * key: string key of :class:`models.BlogPost` entity
+  * key (str): key of :class:`models.BlogPost` entity
   """
 
   def dispatch_request(self):

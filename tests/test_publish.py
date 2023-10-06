@@ -1,6 +1,4 @@
-# coding=utf-8
-"""Unit tests for publish.py.
-"""
+"""Unit tests for publish.py."""
 import html
 import socket
 import urllib.request, urllib.parse, urllib.error

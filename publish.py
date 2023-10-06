@@ -74,8 +74,8 @@ class PublishBase(webmention.Webmention):
   also override other methods.
 
   Attributes:
-    fetched: :class:`requests.Response` from fetching source_url
-    shortlink: rel-shortlink found in the original post, if any
+    fetched (requests.Response): fetched source_url
+    shortlink (str): rel-shortlink found in the original post, if any
   """
   PREVIEW = None
 
@@ -85,7 +85,7 @@ class PublishBase(webmention.Webmention):
   def authorize(self):
     """Returns True if the current user is authorized for this request.
 
-    Otherwise, should call :meth:`self.error()` to provide an appropriate
+    Otherwise, should call :meth:`error` to provide an appropriate
     error message.
     """
     return True
@@ -299,11 +299,12 @@ class PublishBase(webmention.Webmention):
     """Returns the source that should publish a post URL, or None if not found.
 
     Args:
-      source_cls: :class:`models.Source` subclass for this silo
-      url: string
-      domain: string, url's domain
+      source_cls (models.Source): subclass for this silo
+      url (str)
+      domain (str): url's domain
 
-    Returns: :class:`models.Source`
+    Returns:
+      models.Source:
     """
     domain = domain.lower()
     if util.domain_or_parent_in(domain, util.DOMAINS):
@@ -344,10 +345,10 @@ class PublishBase(webmention.Webmention):
     """Attempts to preview or publish a single mf2 item.
 
     Args:
-      item: mf2 item dict from mf2py
+      item (dict): mf2 item from mf2py
 
     Returns:
-      CreationResult
+      granary.source.CreationResult:
     """
     self.maybe_inject_silo_content(item)
     obj = microformats2.json_to_object(item)
@@ -417,10 +418,10 @@ class PublishBase(webmention.Webmention):
     """Attempts to delete or preview delete a published post.
 
     Args:
-      source_url: string, original post URL
+      source_url (str): original post URL
 
     Returns:
-      dict response data with at least id and url
+      dict: response data with at least ``id`` and ``url``
     """
     assert self.entity
     if ((self.entity.status != 'complete' or self.entity.type == 'preview') and
@@ -463,7 +464,7 @@ class PublishBase(webmention.Webmention):
     Specifically, expands inReplyTo/object URLs with rel=syndication URLs.
 
     Args:
-      activity: an ActivityStreams activity or object being published
+      activity (dict): ActivityStreams activity or object being published
     """
     self.source.preprocess_for_publish(activity)
     self.expand_target_urls(activity)
@@ -480,7 +481,7 @@ class PublishBase(webmention.Webmention):
     This method modifies the dict in place.
 
     Args:
-      activity: an ActivityStreams dict of the activity being published
+      activity (dict): ActivityStreams activity being published
     """
     for field in ('inReplyTo', 'object'):
       # microformats2.json_to_object de-dupes, no need to do it here
@@ -539,7 +540,7 @@ class PublishBase(webmention.Webmention):
     ...and if necessary, :class:`models.PublishedPage` entity.
 
     Args:
-      source_url: string
+      source_url (str)
     """
     try:
       return self._get_or_add_publish_entity(source_url)
@@ -585,10 +586,11 @@ class PublishBase(webmention.Webmention):
     """Renders a preview CreationResult as HTML.
 
     Args:
-      result: CreationResult
-      include_link: boolean
+      result (CreationResult)
+      include_link (bool)
 
-    Returns: CreationResult with the rendered HTML in content
+    Returns:
+      CreationResult: result, with rendered HTML in content
     """
     state = {
       'source_key': self.source.key.urlsafe().decode(),

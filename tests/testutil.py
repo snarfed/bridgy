@@ -1,6 +1,4 @@
-# coding=utf-8
-"""Unit test utilities.
-"""
+"""Unit test utilities."""
 import copy
 from datetime import datetime, timedelta, timezone
 import logging

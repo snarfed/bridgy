@@ -1,11 +1,8 @@
 """Superfeedr.
 
-https://superfeedr.com/users/snarfed
-http://documentation.superfeedr.com/subscribers.html
-http://documentation.superfeedr.com/schema.html
-
-If/when I add support for arbitrary RSS/Atom feeds, I should use
-http://feediscovery.appspot.com/ for feed discovery based on front page URL.
+* https://superfeedr.com/users/snarfed
+* http://documentation.superfeedr.com/subscribers.html
+* http://documentation.superfeedr.com/schema.html
 """
 import logging
 
@@ -35,7 +32,7 @@ def subscribe(source):
   http://documentation.superfeedr.com/subscribers.html#addingfeedswithpubsubhubbub
 
   Args:
-    source: Blogger, Tumblr, or WordPress
+    source (Blogger Tumblr, or WordPress)
   """
   if appengine_info.LOCAL_SERVER:
     logger.info('Running locally, not subscribing to Superfeedr')
@@ -66,12 +63,12 @@ def handle_feed(feed, source):
   Creates :class:`models.BlogPost` entities and adds propagate-blogpost tasks
   for new items.
 
-  http://documentation.superfeedr.com/schema.html#json
-  http://documentation.superfeedr.com/subscribers.html#pubsubhubbubnotifications
+  * http://documentation.superfeedr.com/schema.html#json
+  * http://documentation.superfeedr.com/subscribers.html#pubsubhubbubnotifications
 
   Args:
-    feed: unicode string, Superfeedr JSON feed
-    source: Blogger, Tumblr, or WordPress
+    feed (str): Superfeedr JSON feed
+    source (Blogger, Tumblr, or WordPress)
   """
   logger.info(f'Source: {source.label()} {source.key_id()}')
   logger.info(f'Raw feed: {feed}')
@@ -126,7 +123,7 @@ def handle_feed(feed, source):
 class Notify(View):
   """Handles a Superfeedr notification.
 
-  Abstract; subclasses must set the SOURCE_CLS attr.
+  Abstract; subclasses must set the :attr:`SOURCE_CLS` attr.
 
   http://documentation.superfeedr.com/subscribers.html#pubsubhubbubnotifications
   """

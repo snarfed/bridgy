@@ -1,6 +1,4 @@
-# coding=utf-8
-"""Unit tests for models.py.
-"""
+"""Unit tests for models.py."""
 from datetime import datetime, timedelta, timezone
 from unittest import skip
 import copy

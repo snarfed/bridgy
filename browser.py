@@ -1,5 +1,4 @@
-"""Browser extension views.
-"""
+"""Browser extension views."""
 import copy
 import logging
 from operator import itemgetter
@@ -31,10 +30,11 @@ def merge_by_id(existing, updates):
   with the same id. Requires all objects to have ids.
 
   Args:
-    existing: sequence of AS1 dicts
-    updates: sequence of AS1 dicts
+    existing (list of dict): AS1 objects
+    updates (list of dict): AS1 objects
 
-  Returns: merged list of AS1 dicts
+  Returns:
+    list of dict: merged objects
   """
   objs = {o['id']: o for o in existing}
   objs.update({o['id']: o for o in updates})
@@ -62,9 +62,10 @@ class BrowserSource(Source):
     To be implemented by subclasses.
 
     Args:
-      actor: dict AS1 actor
+      actor (dict): AS1 actor
 
-    Returns: str, key id to use for the corresponding datastore entity
+    Returns:
+      str: key id to use for the corresponding datastore entity
     """
     raise NotImplementedError()
 
@@ -74,7 +75,7 @@ class BrowserSource(Source):
 
     Args:
       auth_entity: unused
-      actor: dict AS1 actor
+      actor (dict): AS1 actor
     """
     assert not auth_entity
     assert actor
@@ -151,10 +152,9 @@ class BrowserView(View):
   def check_token(self, load_source=True):
     """Loads the token and checks that it has at least one domain registered.
 
-    Expects token in the `token` query param.
+    Expects token in the ``token`` query param.
 
-    Raises: :class:`HTTPException` with HTTP 403 if the token is missing or
-      invalid
+    Raises (HTTPException): HTTP 403 if the token is missing or invalid
     """
     token = request.values['token']
     domains = Domain.query(Domain.tokens == token).fetch()
@@ -165,7 +165,7 @@ class BrowserView(View):
   def auth(self):
     """Checks token and loads and returns the source.
 
-    Raises: :class:`HTTPException` with HTTP 400 or 403
+    Raises (HTTPException): HTTP 400 or 403
     """
     self.check_token()
     return util.load_source(error_fn=self.error)
@@ -181,8 +181,8 @@ class Status(BrowserView):
   """Runs preflight checks for a source and returns status and config info.
 
   Response body is a JSON map with these fields:
-    status: string, 'enabled' or 'disabled'
-    poll-seconds: integer, current poll frequency for this source in seconds
+    status (str): ``enabled`` or ``disabled``
+    poll-seconds (int): current poll frequency for this source in seconds
   """
   def dispatch_request(self):
     source = self.auth()
@@ -323,13 +323,13 @@ class Post(BrowserView):
 class Extras(BrowserView):
   """Merges extras (comments, reactions) from silo HTML into an existing Activity.
 
-  Requires the request parameter `id` with the silo post's id (not shortcode!).
+  Requires the request parameter ``id`` with the silo post's id (not shortcode!).
 
   Response body is the translated ActivityStreams JSON for the extras.
 
-  Subclasses must populate the MERGE_METHOD constant with the string name of the
-  granary source class's method that parses extras from silo HTML and merges
-  them into an activity.
+  Subclasses must populate the :attr:`MERGE_METHOD` constant with the string
+  name of the granary source class's method that parses extras from silo HTML
+  and merges them into an activity.
   """
   MERGE_METHOD = None
 

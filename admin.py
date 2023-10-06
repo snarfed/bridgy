@@ -1,6 +1,6 @@
 """Renders admin pages for ops and other management tasks.
 
-Currently just /admin/responses, which shows active responses with tasks that
+Currently just ``/admin/responses``, which shows active responses with tasks that
 haven't completed yet.
 """
 import datetime

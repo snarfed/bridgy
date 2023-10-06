@@ -1,6 +1,4 @@
-# coding=utf-8
-"""Unit tests for superfeedr.py.
-"""
+"""Unit tests for superfeedr.py."""
 from flask import Flask
 from google.cloud.ndb.key import _MAX_KEYPART_BYTES
 from google.cloud.ndb._datastore_types import _MAX_STRING_LENGTH

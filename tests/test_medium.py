@@ -1,6 +1,4 @@
-# coding=utf-8
-"""Unit tests for medium.py.
-"""
+"""Unit tests for medium.py."""
 import urllib.request, urllib.parse, urllib.error
 
 from flask import get_flashed_messages

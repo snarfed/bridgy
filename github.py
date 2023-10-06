@@ -1,5 +1,4 @@
-"""GitHub API code and datastore model classes.
-"""
+"""GitHub API code and datastore model classes."""
 import logging
 
 from flask import request
@@ -53,7 +52,7 @@ class GitHub(Source):
     """Creates and returns a :class:`GitHub` for the logged in user.
 
     Args:
-      auth_entity: :class:`oauth_dropins.github.GitHubAuth`
+      auth_entity (oauth_dropins.github.GitHubAuth):
       kwargs: property values
     """
     assert 'username' not in kwargs

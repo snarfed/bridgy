@@ -1,6 +1,4 @@
-# coding=utf-8
-"""Unit tests for handlers.py.
-"""
+"""Unit tests for handlers.py."""
 import html
 import io
 import urllib.request, urllib.error, urllib.parse

@@ -1,9 +1,6 @@
 """Twitter source code and datastore model classes.
 
-Twitter's rate limiting window is currently 15m. A normal poll with nothing new
-hits /statuses/user_timeline and /search/tweets once each. Both allow 180 calls
-per window before they're rate limited.
-https://dev.twitter.com/docs/rate-limiting/1.1/limits
+The Twitter API is dead, and so is this code.
 """
 import logging
 
@@ -48,7 +45,7 @@ class Twitter(models.Source):
     """Creates and returns a :class:`Twitter` entity.
 
     Args:
-      auth_entity: :class:`oauth_dropins.twitter.TwitterAuth`
+      auth_entity (oauth_dropins.twitter.TwitterAuth)
       kwargs: property values
     """
     assert 'username' not in kwargs
@@ -120,9 +117,9 @@ class Twitter(models.Source):
     first, if we have one, and only re-scrape HTML as a fallback.
 
     Args:
-      activity_user_id: string id of the user who posted the original activity
-      activity_id: string activity id
-      like_user_id: string id of the user who liked the activity
+      activity_user_id (str): id of the user who posted the original activity
+      activity_id (str): activity id
+      like_user_id (str): id of the user who liked the activity
       kwargs: passed to :meth:`granary.source.Source.get_comment`
     """
     id = self.gr_source.tag_uri(f'{activity_id}_favorited_by_{like_user_id}')
@@ -133,14 +130,14 @@ class Twitter(models.Source):
   def is_private(self):
     """Returns True if this Twitter account is protected.
 
-    https://dev.twitter.com/rest/reference/get/users/show#highlighter_25173
-    https://support.twitter.com/articles/14016
-    https://support.twitter.com/articles/20169886
+    * https://dev.twitter.com/rest/reference/get/users/show#highlighter_25173
+    * https://support.twitter.com/articles/14016
+    * https://support.twitter.com/articles/20169886
     """
     return json_loads(self.auth_entity.get().user_json).get('protected')
 
   def canonicalize_url(self, url, activity=None, **kwargs):
-    """Normalize /statuses/ to /status/.
+    """Normalize ``/statuses/`` to ``/status/``.
 
     https://github.com/snarfed/bridgy/issues/618
     """
@@ -155,7 +152,7 @@ class Auth():
     """Redirects to Twitter's OAuth endpoint to start the OAuth flow.
 
     Args:
-      feature: 'listen' or 'publish'
+      feature: ``listen`` or ``publish``
     """
     features = feature.split(',') if feature else []
     for feature in features:
@@ -188,9 +185,9 @@ class Add(oauth_twitter.Callback, Auth):
 
 
 class Start(oauth_twitter.Start, Auth):
-  """Custom OAuth start handler so we can use access_type=read for state=listen.
+  """Custom OAuth start handler that uses ``access_type=read`` for ``state=listen``.
 
-  Tweepy converts access_type to x_auth_access_type for Twitter's
+  Tweepy converts access_type to ``x_auth_access_type`` for Twitter's
   oauth/request_token endpoint. Details:
   https://dev.twitter.com/docs/api/1/post/oauth/request_token
   """

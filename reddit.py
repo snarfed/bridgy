@@ -32,7 +32,7 @@ class Reddit(models.Source):
     """Creates and returns a :class:`Reddit` entity.
 
     Args:
-      auth_entity: :class:`oauth_dropins.reddit.RedditAuth`
+      auth_entity (oauth_dropins.reddit.RedditAuth):
       kwargs: property values
     """
     assert 'username' not in kwargs
@@ -74,7 +74,7 @@ class Reddit(models.Source):
     """Searches for activities with links to any of this source's web sites.
 
     Returns:
-      sequence of ActivityStreams activity dicts
+      list of dict: ActivityStreams activities
     """
     urls = {util.schemeless(util.fragmentless(url), slashes=False)
             for url in self.domain_urls

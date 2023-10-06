@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 # Sphinx build configuration file.
 #
 # This file is execfile()d with the current directory set to its
@@ -80,7 +78,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'Bridgy'
-copyright = '2011-2022, Ryan Barrett'
+copyright = '2011-2023, Ryan Barrett'
 author = 'Ryan Barrett'
 
 # The version info for the project you're documenting, acts as replacement for

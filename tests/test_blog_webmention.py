@@ -1,6 +1,4 @@
-# coding=utf-8
-"""Unit tests for blog_webmention.py.
-"""
+"""Unit tests for blog_webmention.py."""
 import urllib.request, urllib.parse, urllib.error
 
 from mox3 import mox

@@ -56,7 +56,8 @@ class StartBase(oauth_mastodon.Start):
 class Mastodon(models.Source):
   """A Mastodon account.
 
-  The key name is the fully qualified address, eg '@snarfed@mastodon.technology'.
+  The key name is the fully qualified address, eg
+  ``@snarfed@mastodon.technology``.
   """
   GR_CLASS = gr_mastodon.Mastodon
   OAUTH_START = StartBase
@@ -76,7 +77,7 @@ class Mastodon(models.Source):
 
   @property
   def URL_CANONICALIZER(self):
-    """Generate URL_CANONICALIZER dynamically to use the instance's domain."""
+    """Generated dynamically to use the instance's domain."""
     return util.UrlCanonicalizer(domain=self.gr_source.DOMAIN)
 
   @staticmethod
@@ -84,7 +85,7 @@ class Mastodon(models.Source):
     """Creates and returns a :class:`Mastodon` entity.
 
     Args:
-      auth_entity: :class:`oauth_mastodon.MastodonAuth`
+      auth_entity (oauth_mastodon.MastodonAuth):
       kwargs: property values
     """
     assert 'username' not in kwargs
@@ -98,7 +99,7 @@ class Mastodon(models.Source):
                     **kwargs)
 
   def instance(self):
-    """Returns the Mastodon instance domain, e.g. 'foo.com' ."""
+    """Returns the Mastodon instance domain, e.g. ``foo.com`` ."""
     return self._split_address()[1]
 
   def _split_address(self):
@@ -107,7 +108,7 @@ class Mastodon(models.Source):
     return split[1], split[2]
 
   def user_tag_id(self):
-    """Returns the tag URI for this source, e.g. 'tag:foo.com:alice'."""
+    """Returns the tag URI for this source, e.g. ``tag:foo.com:alice``."""
     username = self._split_address()[0]
     return self.gr_source.tag_uri(username)
 
@@ -121,7 +122,7 @@ class Mastodon(models.Source):
 
   @classmethod
   def button_html(cls, feature, **kwargs):
-    """Override oauth-dropins's button_html() to not show the instance text box."""
+    """Override oauth-dropins's to not show the instance text box."""
     source = kwargs.get('source')
     instance = source.instance() if source else ''
     scopes = SCOPE_SEPARATOR.join(
