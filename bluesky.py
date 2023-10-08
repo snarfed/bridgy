@@ -35,7 +35,8 @@ class Bluesky(models.Source):
     assert 'username' not in kwargs
     assert 'id' not in kwargs
     user = json_loads(auth_entity.user_json)
-    gr_source = gr_bluesky.Bluesky(*auth_entity.access_token())
+    (_, app_password) = auth_entity.access_token()
+    gr_source = gr_bluesky.Bluesky(user.get('handle'), app_password=app_password)
     actor = gr_source.user_to_actor(user)
     return Bluesky(id=auth_entity.key_id(),
                    username=auth_entity.key_id(),
