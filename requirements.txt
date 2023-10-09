@@ -88,6 +88,6 @@ update-checker==0.18.0
 urllib3==2.0.6
 webencodings==0.5.1
 WebOb==1.8.7
-websocket-client==1.6.3
+websocket-client==1.6.4
 Werkzeug==3.0.0
 wrapt==1.15.0
