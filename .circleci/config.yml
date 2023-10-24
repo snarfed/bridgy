@@ -34,7 +34,7 @@ jobs:
             pip install -U pip
             pip -V
             # make sure we install these at head, below
-            pip uninstall -y granary oauth-dropins
+            pip uninstall -y arroba granary lexrpc oauth-dropins
             pip install -U -r requirements.txt
             pip install coverage coveralls
 
