@@ -64,7 +64,7 @@ class Bluesky(models.Source):
 
   @classmethod
   def button_html(cls, feature):
-    """Override oauth-dropins's button_html() to not show the instance text box."""
+    """Override oauth-dropins's button_html() so that it sends a GET."""
     return f"""\
 <form method="get" action="/bluesky/start">
   <input type="image" class="shadow" height="50" title="Bluesky"
