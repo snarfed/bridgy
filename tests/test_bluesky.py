@@ -34,10 +34,11 @@ class BlueskyTest(testutil.AppTest):
 
   def test_new(self):
     self.assertEqual(self.auth_entity, self.bsky.auth_entity.get())
-    self.assertEqual('alice.com', self.bsky.name)
-    self.assertEqual('did:web:alice.com', self.bsky.username)
+    self.assertEqual('Alice', self.bsky.name)
+    self.assertEqual('alice.com', self.bsky.username)
     self.assertEqual('did:web:alice.com', self.bsky.key.string_id())
     self.assertEqual('alice.com (Bluesky)', self.bsky.label())
+    self.assertEqual('alice.com', self.bsky.label_name())
     self.assertEqual('https://bsky.app/profile/alice.com', self.bsky.url)
     self.assertEqual('http://pi.ct/ure', self.bsky.picture)
     with mock.patch('lexrpc.Client.call', self.fake_lexrpc_call):
