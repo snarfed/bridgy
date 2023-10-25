@@ -39,16 +39,20 @@ class Bluesky(models.Source):
     gr_source = gr_bluesky.Bluesky(user.get('handle'), app_password=app_password)
     actor = gr_source.user_to_actor(user)
     return Bluesky(id=auth_entity.key_id(),
-                   username=auth_entity.key_id(),
+                   username=user.get('handle'),
                    auth_entity=auth_entity.key,
-                   name=user.get('handle'),
+                   name=user.get('displayName'),
                    picture=user.get('avatar'),
                    url=actor.get('url'),
                    **kwargs)
 
   def silo_url(self):
     """Returns the Bluesky account URL, e.g. https://bsky.app/profile/foo.bsky.social."""
-    return self.gr_source.user_url(self.name)
+    return self.gr_source.user_url(self.username)
+
+  def label_name(self):
+    """Returns the Bluesky handle."""
+    return self.username
 
   def format_for_source_url(self, id):
     """
