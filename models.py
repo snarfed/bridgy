@@ -303,6 +303,14 @@ class Source(StringIdModel, metaclass=SourceMeta):
     """Human-readable name or username for this source, whichever is preferred."""
     return self.name or self.key_id()
 
+  def post_id(self, url):
+    """
+    Resolve the ID of a post from a URL.
+    By default calls out to Granary's classmethod but can be
+    overridden if a URL needs user-specific treatment.
+    """
+    return self.gr_source.post_id(url)
+
   @classmethod
   @ndb.transactional()
   def put_updates(cls, source):

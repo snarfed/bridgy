@@ -481,7 +481,7 @@ def discover():
 
   gr_source = source.gr_source
   if domain == gr_source.DOMAIN:
-    post_id = gr_source.post_id(url)
+    post_id = source.post_id(url)
     if post_id:
       type = 'event' if path.startswith('/events/') else None
       util.add_discover_task(source, post_id, type=type)
@@ -492,7 +492,7 @@ def discover():
     synd_links = original_post_discovery.process_entry(source, url, {}, False, [])
     if synd_links:
       for link in synd_links:
-        util.add_discover_task(source, gr_source.post_id(link))
+        util.add_discover_task(source, source.post_id(link))
       source.updates = {'last_syndication_url': util.now()}
       models.Source.put_updates(source)
     else:
