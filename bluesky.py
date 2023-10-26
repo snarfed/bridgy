@@ -64,11 +64,9 @@ class Bluesky(models.Source):
 
   def post_id(self, url):
     if url.startswith('at://'):
-      if url.startswith(f'at://{self.username}'):
-        # Bluesky can't currently resolve AT URIs containing handles,
-        # even though they are technically valid. Replace it with DID.
-        return url.replace(f'at://{self.username}', f'{at://self.key_id()}')
-      return url
+      # Bluesky can't currently resolve AT URIs containing handles,
+      # even though they are technically valid. Replace it with DID.
+      return url.replace(f'at://{self.username}', f'at://{self.key_id()}')
     return gr_bluesky.web_url_to_at_uri(url, did=self.key_id(), handle=self.username)
 
   @classmethod
