@@ -10,6 +10,7 @@ from urllib.parse import quote
 
 logger = logging.getLogger(__name__)
 
+
 class Bluesky(models.Source):
   """
   A Bluesky account.
