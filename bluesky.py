@@ -10,7 +10,6 @@ from urllib.parse import quote
 
 logger = logging.getLogger(__name__)
 
-
 class Bluesky(models.Source):
   """
   A Bluesky account.
@@ -61,6 +60,15 @@ class Bluesky(models.Source):
     They do not need to be decoded correspondingly.
     """
     return quote(quote(id, safe=''))
+
+  def post_id(self, url):
+    if url.startswith('at://'):
+      if url.startswith(f'at://{self.username}'):
+        # Bluesky can't currently resolve AT URIs containing handles,
+        # even though they are technically valid. Replace it with DID.
+        return url.replace(self.username, self.key_id())
+      return url
+    return gr_bluesky.web_url_to_at_uri(url, did=self.key_id(), handle=self.username)
 
   @classmethod
   def button_html(cls, feature):
