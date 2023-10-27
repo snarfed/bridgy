@@ -59,3 +59,11 @@ class BlueskyTest(testutil.AppTest):
     self.assertEqual(good, self.bsky.post_id(good))
     self.assertEqual(good, self.bsky.post_id('at://alice.com/app.bsky.feed.post/123'))
     self.assertEqual(good, self.bsky.post_id('https://bsky.app/profile/alice.com/post/123'))
+
+  def test_canonicalize_url(self):
+    for input, expected in [
+        ('https://bsky.app/foo', 'https://bsky.app/foo'),
+        ('http://bsky.app/foo', 'https://bsky.app/foo'),
+        ('https://staging.bsky.app/foo', 'https://bsky.app/foo'),
+    ]:
+      self.assertEqual(expected, self.bsky.canonicalize_url(input))

@@ -80,6 +80,15 @@ class Bluesky(models.Source):
 </form>
 """
 
+  def canonicalize_url(self, url, **kwargs):
+    """Canonicalizes a post or object URL.
+
+    Overrides :class:`Source`'s to convert ``staging.bsky.app`` to ``bsky.app``.
+    """
+    url = url.replace('https://staging.bsky.app/', 'https://bsky.app/')
+    return super().canonicalize_url(url)
+
+
 class Callback(oauth_bluesky.Callback):
   def finish(self, auth_entity, state=None):
     if not auth_entity:
