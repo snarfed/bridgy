@@ -95,6 +95,11 @@ indexes:
   - name: features
   - name: status
   - name: last_poll_attempt
+- kind: Bluesky
+  properties:
+  - name: features
+  - name: status
+  - name: last_poll_attempt
 - kind: Facebook
   properties:
   - name: features

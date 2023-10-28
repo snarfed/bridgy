@@ -18,7 +18,7 @@ import models
 import util
 # Import source class files so their metaclasses are initialized.
 from models import BlogPost, Response, Source
-import blogger, flickr, github, instagram, mastodon, medium, tumblr, twitter, wordpress_rest
+import blogger, bluesky, flickr, github, instagram, mastodon, medium, reddit, tumblr, twitter, wordpress_rest
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +70,8 @@ def responses():
 @app.route('/admin/sources')
 def sources():
   """Find sources whose last poll errored out."""
-  CLASSES = (flickr.Flickr, github.GitHub, instagram.Instagram, mastodon.Mastodon)
+  CLASSES = (flickr.Flickr, github.GitHub, mastodon.Mastodon, reddit.Reddit,
+             bluesky.Bluesky)
   queries = [cls.query(Source.status == 'enabled',
                        Source.poll_status == 'error',
                        Source.rate_limited.IN((False, None)),
