@@ -35,15 +35,13 @@ class Bluesky(models.Source):
     assert 'username' not in kwargs
     assert 'id' not in kwargs
     user = json_loads(auth_entity.user_json)
-    (_, app_password) = auth_entity.access_token()
-    gr_source = gr_bluesky.Bluesky(user.get('handle'), app_password=app_password)
-    actor = gr_source.user_to_actor(user)
+    handle = user.get('handle')
     return Bluesky(id=auth_entity.key_id(),
-                   username=user.get('handle'),
+                   username=handle,
                    auth_entity=auth_entity.key,
                    name=user.get('displayName'),
                    picture=user.get('avatar'),
-                   url=actor.get('url'),
+                   url=gr_bluesky.Bluesky.user_url(handle),
                    **kwargs)
 
   def silo_url(self):
@@ -94,12 +92,12 @@ class Callback(oauth_bluesky.Callback):
     if not auth_entity:
       flash("Failed to log in to Bluesky. Are your credentials correct?")
       return util.redirect("/bluesky/start")
-    if auth_entity:
-      util.maybe_add_or_delete_source(
-        Bluesky,
-        auth_entity,
-        util.construct_state_param_for_add(),
-      )
+
+    util.maybe_add_or_delete_source(
+      Bluesky,
+      auth_entity,
+      util.construct_state_param_for_add(),
+    )
 
 @app.route('/bluesky/start', methods=['GET'])
 def provide_app_password():

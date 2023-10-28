@@ -258,8 +258,23 @@ class Source(StringIdModel, metaclass=SourceMeta):
     elif self.key.kind() == 'Twitter':
       kwargs = {'username': self.key_id()}
     elif self.key.kind() == 'Bluesky':
-      args = (json_loads(auth_entity.user_json).get('handle'),)
-      kwargs = {'did': auth_entity.did, 'app_password': auth_entity.password}
+      def store_session(session):
+        logger.info(f'Storing Bluesky session for {auth_entity.key.id()}: {session}')
+        auth_entity.session = session
+        auth_entity.put()
+
+      args = []
+      kwargs = {
+        'handle': json_loads(auth_entity.user_json).get('handle'),
+        'did': auth_entity.key.id(),
+        'app_password': auth_entity.password,
+        'session_callback': store_session,
+      }
+      if auth_entity.session:
+        kwargs.update({
+          'access_token': auth_entity.session.get('accessJwt'),
+          'refresh_token': auth_entity.session.get('refreshJwt'),
+        })
 
     self.gr_source = self.GR_CLASS(*args, **kwargs)
     return self.gr_source
