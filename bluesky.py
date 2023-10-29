@@ -68,15 +68,9 @@ class Bluesky(models.Source):
     return gr_bluesky.web_url_to_at_uri(url, did=self.key_id(), handle=self.username)
 
   @classmethod
-  def button_html(cls, feature):
-    """Override oauth-dropins's button_html() so that it sends a GET."""
-    return f"""\
-<form method="get" action="/bluesky/start">
-  <input type="image" class="shadow" height="50" title="Bluesky"
-         src="/oauth_dropins_static/bluesky_2x.png" />
-  <input name="feature" type="hidden" value="{feature}" />
-</form>
-"""
+  def button_html(cls, feature, **kwargs):
+    """Override oauth-dropins's button_html() to send a GET."""
+    return super().button_html(feature, form_method='get', **kwargs)
 
   def canonicalize_url(self, url, **kwargs):
     """Canonicalizes a post or object URL.
