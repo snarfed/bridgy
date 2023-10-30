@@ -81,8 +81,12 @@ class Bluesky(models.Source):
   def canonicalize_url(self, url, **kwargs):
     """Canonicalizes a post or object URL.
 
-    Overrides :class:`Source`'s to convert ``staging.bsky.app`` to ``bsky.app``.
+    Overrides :class:`Source`'s to convert ``staging.bsky.app`` to ``bsky.app``,
+    and to convert at:// URIs to bsky.app URLs.
     """
+    if url.startswith('at://'):
+      url = gr_bluesky.at_uri_to_web_url(url, handle=self.username)
+
     url = url.replace('https://staging.bsky.app/', 'https://bsky.app/')
     return super().canonicalize_url(url)
 
