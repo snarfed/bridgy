@@ -331,6 +331,7 @@ POST <a href="https://brid.gy/github/start">https://brid.gy/github/start</a>
   <li><b>Tumblr</b> doesn't have permissions at all, <a href="https://www.tumblr.com/docs/en/api/v2#oauth">just full access or nothing.</a> <a href="/static/permissions_screenshots/tumblr.png">Screenshot.</a></li>
   <li><b>WordPress.com</b>: doesn't have permissions at all, <a href="https://developer.wordpress.com/docs/oauth2/">just full access or nothing.</a> We ask for read and write access to a single blog that you specify, so we can see and handle new blog posts and to create comments. <a href="/static/permissions_screenshots/wordpress.com.png">Screenshot.</a></li>
   <li><b>Reddit</b> allows you to permit access to different <a href="https://www.reddit.com/api/v1/scopes.json">scopes</a>, we're asking for permission to confirm your identity and read posts that you can read.</li>
+  <li><b>Bluesky</b> doesn't currently have a proper auth setup - instead, we use an app-specific password that you generate in order to act on your behalf.</li>
 </ul>
 </li>
 
@@ -474,6 +475,7 @@ Here are the properties Bridgy uses:
 <li>GitHub comments and emoji reactions on your issues and pull requests from other people. (Not your own, since <a href="#GitHub+responses">we rely on notifications</a>, which those don't generate.)</li>
 <li>Mastodon replies, favorites, reposts, and mentions. (We can't backfeed links to your site because <a href="https://github.com/mastodon/mastodon/issues/9529#issuecomment-447577703">Mastodon has no global search</a>, and even <a href="https://docs.joinmastodon.org/user/network/#search">local instance search is limited to hashtags and your own posts</a>.)</li>
 <li>Reddit posts that link to your site and the top-level comments on those posts.</li>
+<li>Bluesky replies, likes, and reposts.</li>
 </ul>
 </li>
 </p></li>
@@ -651,7 +653,7 @@ so that recipients can fetch and parse them.
 <p>Details:</p>
 <ul>
 <li><code class='keyword'>SITE</code> is
-   <code>facebook</code>, <code>flickr</code>, <code>github</code>, <code>instagram</code>, or <code>mastodon</code>.
+  <code>facebook</code>, <code>flickr</code>, <code>github</code>, <code>instagram</code>,  <code>mastodon</code>, or <code>bluesky</code>.
 </li>
 <li><code>/post/...</code> URLs aren't currently used by Bridgy itself, but
   they're fun to play with if you want to convert silo posts to
@@ -662,6 +664,7 @@ so that recipients can fetch and parse them.
 </li>
 <li>For Instagram, Reddit, and GitHub, <code class='keyword'>USER_ID</code> is your
   username, but for Flickr and Mastodon, it's your numeric user id.
+  For Bluesky, it's your DID.
   <code class='value'>LIKED_BY_USER_ID</code> and
   <code class='value'>RSVP_USER_ID</code> are always numeric. You
   can get numeric user ids from the API consoles or
@@ -671,6 +674,7 @@ so that recipients can fetch and parse them.
   <em>not</em> the alphanumeric id in the photo's web URL. You can get a numeric
   id from <a href="https://granary.io/">granary</a>.
 </li>
+<li>For Bluesky, <code class='value'>POST_ID</code> is the full <code>at://</code> URI, double-encoded.</li>
 <li>If your webmention target complains about <code>brid.gy</code>'s SSL, try
 <code>brid-gy.appspot.com</code> instead.
 </li>
