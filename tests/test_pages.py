@@ -1,7 +1,7 @@
 """Unit tests for pages.py."""
 from datetime import datetime, timedelta, timezone
 import urllib.request, urllib.parse, urllib.error
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlparse, parse_qs
 
 from flask import get_flashed_messages
 from google.cloud import ndb
@@ -11,6 +11,8 @@ from oauth_dropins.webutil.util import json_dumps, json_loads
 import tweepy
 
 from flask_app import app
+from blogger import Blogger
+from bluesky import Bluesky
 import models
 from models import Publish, PublishedPage, SyndicatedPost
 import util
@@ -221,7 +223,7 @@ class PagesTest(testutil.AppTest):
         'key': self.sources[0].key.urlsafe().decode(),
       })
     self.assertEqual(302, resp.status_code)
-    location = urllib.parse.urlparse(resp.headers['Location'])
+    location = urlparse(resp.headers['Location'])
     self.assertEqual('/fake/0123456789', location.path)
     self.assertEqual(['FakeSource API error 504: Connection closed unexpectedly...'],
                       get_flashed_messages())
@@ -236,7 +238,7 @@ class PagesTest(testutil.AppTest):
         'key': self.sources[0].key.urlsafe().decode(),
       })
     self.assertEqual(302, resp.status_code)
-    location = urllib.parse.urlparse(resp.headers['Location'])
+    location = urlparse(resp.headers['Location'])
     self.assertEqual('/fake/0123456789', location.path)
     self.assertEqual(['Error: foo bar'], get_flashed_messages())
 
@@ -259,6 +261,53 @@ class PagesTest(testutil.AppTest):
     self.assertEqual('http://localhost/', location)
     self.assertIn('logins=/other/1?bob;',
                   resp.headers['Set-Cookie'].split(' '))
+
+  def test_delete_blogger(self):
+    source_key = Blogger(id='123').put().urlsafe().decode()
+
+    resp = self.client.post('/delete/start', data={
+        'feature': 'listen',
+        'key': source_key,
+      })
+    self.assertEqual(302, resp.status_code)
+
+    location = urlparse(resp.headers['Location'])
+    self.assertEqual('/blogger/delete/start', location.path)
+    self.assertEqual({
+      'operation': 'delete',
+      'feature': 'listen',
+      'source': source_key,
+    }, util.decode_oauth_state(parse_qs(location.query)['state'][0]))
+
+  def test_delete_bluesky(self):
+    source_key = Bluesky(id='did:foo').put().urlsafe().decode()
+
+    resp = self.client.post('/delete/start', data={
+        'feature': 'listen',
+        'key': source_key,
+      })
+    self.assertEqual(302, resp.status_code)
+    self.assertEqual('http://localhost/bluesky/delete/start',
+                     resp.headers['Location'])
+
+  def test_delete_finish_multiple_features(self):
+    self.sources[0].features = ['listen', 'publish']
+    self.sources[0].put()
+
+    with app.test_request_context():
+      state = util.construct_state_param_for_add(
+        feature='listen,publish',
+        operation='delete',
+        source=self.sources[0].key.urlsafe().decode())
+
+    self.auth_entities[0].put()
+    auth_entity_key = self.sources[0].auth_entity.urlsafe().decode()
+    resp = self.client.get(
+      f'/delete/finish?auth_entity={auth_entity_key}&state={state}')
+
+    self.assertEqual(302, resp.status_code)
+    got = self.sources[0].key.get()
+    self.assertEqual([], got.features)
 
   def test_user_page(self):
     self.sources[0].last_webmention_sent = util.now()
@@ -615,7 +664,7 @@ class DiscoverTest(testutil.AppTest):
         'url': url,
       })
       self.assertEqual(302, resp.status_code)
-      location = urllib.parse.urlparse(resp.headers['Location'])
+      location = urlparse(resp.headers['Location'])
       detail = ' '.join((url, str(resp.status_code), repr(location), repr(resp.get_data(as_text=True))))
       self.assertEqual(self.source.bridgy_path(), location.path, detail)
       self.assertEqual([expected_message], get_flashed_messages())

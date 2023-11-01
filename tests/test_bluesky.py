@@ -1,8 +1,15 @@
-from . import testutil
-from bluesky import Bluesky
+"""Unit tests for bluesky.py."""
+from unittest import mock
+from urllib.parse import parse_qs, urlparse
+
 from oauth_dropins import bluesky as oauth_bluesky
 from oauth_dropins.webutil.util import json_dumps
-from unittest import mock
+from werkzeug.routing import RequestRedirect
+
+from bluesky import Bluesky, Callback
+from flask_app import app
+import util
+from . import testutil
 
 
 class BlueskyTest(testutil.AppTest):
@@ -63,3 +70,23 @@ class BlueskyTest(testutil.AppTest):
         ('at://did:web:alice.com/app.bsky.feed.post/123', 'https://bsky.app/profile/alice.com/post/123'),
     ]:
       self.assertEqual(expected, self.bsky.canonicalize_url(input))
+
+  def test_delete(self):
+    self.bsky.features = ['listen', 'publish']
+    self.bsky.put()
+
+    with self.assertRaises(RequestRedirect) as redir, app.test_request_context(data={
+        'operation': 'delete',
+        'feature': 'listen,publish',
+      }):
+      Callback('unused').finish(self.auth_entity)
+
+    location = urlparse(redir.exception.get_response().headers['Location'])
+    self.assertEqual('/delete/finish', location.path)
+    query = parse_qs(location.query)
+    self.assertEqual([self.auth_entity.key.urlsafe().decode()], query['auth_entity'])
+    self.assertEqual({
+      'operation': 'delete',
+      'feature': 'listen,publish',
+      'source': self.bsky.key.urlsafe().decode(),
+    }, util.decode_oauth_state(query['state'][0]))

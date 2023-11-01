@@ -328,9 +328,12 @@ def delete_start():
     'callback': request.values.get('callback'),
   })
 
-  # Blogger don't support redirect_url() yet
   if kind == 'Blogger':
+    # Blogger doesn't support redirect_url() yet
     return redirect(f'/blogger/delete/start?state={state}')
+  elif kind == 'Bluesky':
+    # Bluesky isn't OAuth at all yet
+    return redirect(f'/bluesky/delete/start')
 
   path = ('/reddit/callback' if kind == 'Reddit'
           else '/wordpress/add' if kind == 'WordPress'
@@ -384,12 +387,10 @@ def delete_finish():
 
   logins = None
   if logged_in_as and logged_in_as.is_authority_for(source.auth_entity):
-    existing = set(source.features)
-    remaining = existing - set(features)
-    if remaining != existing:
-      source.features = list(remaining)
-      source.put()
+    source.features = set(source.features) - set(features)
+    source.put()
 
+    if not source.features:
       # remove login cookie
       logins = util.get_logins()
       login = util.Login(path=source.bridgy_path(), site=source.SHORT_NAME,
