@@ -374,17 +374,20 @@ def delete_finish():
   if not parts or 'feature' not in parts or 'source' not in parts:
     error('state query parameter must include "feature" and "source"')
 
-  feature = parts['feature']
-  if feature not in (Source.FEATURES):
-    error(f'cannot delete unknown feature {feature}')
+  features = parts['feature'].split(',')
+  for feature in features:
+    if feature not in (Source.FEATURES):
+      error(f'cannot delete unknown feature {feature}')
 
   logged_in_as = ndb.Key(urlsafe=request.args['auth_entity']).get()
   source = ndb.Key(urlsafe=parts['source']).get()
 
   logins = None
   if logged_in_as and logged_in_as.is_authority_for(source.auth_entity):
-    if feature in source.features:
-      source.features.remove(feature)
+    existing = set(source.features)
+    remaining = existing - set(features)
+    if remaining != existing:
+      source.features = list(remaining)
       source.put()
 
       # remove login cookie
