@@ -461,13 +461,15 @@ def maybe_add_or_delete_source(source_cls, auth_entity, state, **kwargs):
   """
   state_obj = util.decode_oauth_state(state)
   operation = state_obj.get('operation', 'add')
-  feature = state_obj.get('feature')
   callback = state_obj.get('callback')
   user_url = state_obj.get('user_url')
 
+  feat_str = state_obj.get('feature')
+  features = feat_str.split(',') if feat_str else []
+
   logger.debug(
-    'maybe_add_or_delete_source with operation=%s, feature=%s, callback=%s',
-    operation, feature, callback)
+    'maybe_add_or_delete_source with operation=%s feature=%s callback=%s',
+    operation, features, callback)
   logins = None
 
   if operation == 'add':  # this is an add/update
@@ -486,8 +488,7 @@ def maybe_add_or_delete_source(source_cls, auth_entity, state, **kwargs):
         redirect('/')
 
     logger.info(f'{source_cls.__class__.__name__}.create_new with {auth_entity.key}, {state}, {kwargs}')
-    source = source_cls.create_new(auth_entity=auth_entity,
-                                   features=feature.split(',') if feature else [],
+    source = source_cls.create_new(auth_entity=auth_entity, features=features,
                                    user_url=user_url, **kwargs)
 
 

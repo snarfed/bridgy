@@ -1,20 +1,20 @@
-import models
+import logging
+from urllib.parse import quote
+
+from flask import flash, render_template, request
 from granary import bluesky as gr_bluesky
 from oauth_dropins import bluesky as oauth_bluesky
-from flask_app import app
-import util
-import logging
-from flask import flash, render_template
 from oauth_dropins.webutil.util import json_loads
-from urllib.parse import quote
+
+from flask_app import app
+import models
+import util
 
 logger = logging.getLogger(__name__)
 
 
 class Bluesky(models.Source):
-  """
-  A Bluesky account.
-  """
+  """A Bluesky account. Key id is DID."""
   SHORT_NAME = 'bluesky'
   GR_CLASS = gr_bluesky.Bluesky
   OAUTH_START = oauth_bluesky.Start
@@ -45,7 +45,7 @@ class Bluesky(models.Source):
                    **kwargs)
 
   def silo_url(self):
-    """Returns the Bluesky account URL, e.g. https://bsky.app/profile/foo.bsky.social."""
+    """Returns the Bluesky account URL, e.g. ``https://bsky.app/profile/foo.com``."""
     return self.gr_source.user_url(self.username)
 
   def label_name(self):
@@ -55,7 +55,8 @@ class Bluesky(models.Source):
   def format_for_source_url(self, id):
     """
     Bluesky keys (AT URIs) contain slashes, so must be double-encoded.
-    This is due to a particular behaviour in WSGI: https://github.com/pallets/flask/issues/900
+    This is due to a particular behaviour in WSGI:
+    https://github.com/pallets/flask/issues/900
     They do not need to be decoded correspondingly.
     """
     return quote(quote(id, safe=''))
@@ -91,16 +92,27 @@ class Callback(oauth_bluesky.Callback):
       flash("Failed to log in to Bluesky. Are your credentials correct?")
       return util.redirect("/bluesky/start")
 
-    util.maybe_add_or_delete_source(
-      Bluesky,
-      auth_entity,
-      util.construct_state_param_for_add(),
-    )
+    state = {
+      'operation': request.form['operation'],
+      'feature': request.form['feature'],
+    }
+    if request.form['operation'] == 'delete':
+      state['source'] = Bluesky(id=auth_entity.key.id()).key.urlsafe().decode()
+
+    util.maybe_add_or_delete_source(Bluesky, auth_entity,
+                                    util.encode_oauth_state(state))
+
 
 @app.route('/bluesky/start', methods=['GET'])
-def provide_app_password():
-  """Serves the Bluesky login form page."""
-  return render_template('provide_app_password.html')
+def bluesky_start():
+  """Serves the Bluesky login form page to sign up."""
+  return render_template('provide_app_password.html', operation='add')
+
+
+@app.route('/bluesky/delete/start', methods=['GET'])
+def bluesky_delete():
+  """Serves the Bluesky login form page to delete an existing account."""
+  return render_template('provide_app_password.html', operation='delete')
 
 
 app.add_url_rule('/bluesky/callback', view_func=Callback.as_view('bluesky_callback', 'unused'), methods=['POST'])
