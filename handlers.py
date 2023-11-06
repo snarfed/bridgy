@@ -236,7 +236,7 @@ class Post(Item):
     post = posts[0]
     originals, mentions = original_post_discovery.discover(
       self.source, post, fetch_hfeed=False)
-    obj = post['object']
+    obj = post.get('object') or post
     obj['upstreamDuplicates'] = list(
       set(util.get_list(obj, 'upstreamDuplicates')) | originals)
     self.merge_urls(obj, 'tags', mentions, object_type='mention')

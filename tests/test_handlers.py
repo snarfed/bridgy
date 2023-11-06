@@ -40,6 +40,27 @@ class HandlersTest(testutil.AppTest):
         'upstreamDuplicates': ['http://or.ig/post'],
       }}]
     FakeGrSource.activities = self.activities
+    self.post_html = f"""\
+<article class="h-entry">
+<span class="p-uid">tag:fa.ke,2013:000</span>
+  <span class="p-author h-card">
+    <data class="p-uid" value="{self.source.user_tag_id()}"></data>
+    <a class="u-url" href="http://fa.ke/{self.source.key.id()}">fa.ke/{self.source.key.id()}</a>
+    <img class="u-photo" src="https://example.com/ryan/image" alt="" />
+  </span>
+<a class="u-url" href="http://fa.ke/000">fa.ke/000</a>
+<a class="u-url" href="http://or.ig/post"></a>
+  <div class="e-content p-name">
+  asdf http://other/link qwert
+  <a class="u-mention" aria-hidden="true" href="http://other/link"></a>
+  </div>
+<span class="u-category h-card">
+<data class="p-uid" value="{self.source.user_tag_id()}"></data>
+<a class="u-url" href="http://or.ig">or.ig</a>
+<a class="u-url" href="https://fa.ke"></a>
+</span>
+</article>
+"""
     FakeGrSource.comment = {
       'id': 'tag:fa.ke,2013:a1-b2.c3',  # test alphanumeric id (like G+)
       'content': 'qwert',
@@ -72,27 +93,7 @@ class HandlersTest(testutil.AppTest):
     return resp
 
   def test_post_html(self):
-    self.check_response('/post/fake/%s/000', f"""\
-<article class="h-entry">
-<span class="p-uid">tag:fa.ke,2013:000</span>
-  <span class="p-author h-card">
-    <data class="p-uid" value="{self.source.user_tag_id()}"></data>
-    <a class="u-url" href="http://fa.ke/{self.source.key.id()}">fa.ke/{self.source.key.id()}</a>
-    <img class="u-photo" src="https://example.com/ryan/image" alt="" />
-  </span>
-<a class="u-url" href="http://fa.ke/000">fa.ke/000</a>
-<a class="u-url" href="http://or.ig/post"></a>
-  <div class="e-content p-name">
-  asdf http://other/link qwert
-  <a class="u-mention" aria-hidden="true" href="http://other/link"></a>
-  </div>
-<span class="u-category h-card">
-<data class="p-uid" value="{self.source.user_tag_id()}"></data>
-<a class="u-url" href="http://or.ig">or.ig</a>
-<a class="u-url" href="https://fa.ke"></a>
-</span>
-</article>
-""")
+    self.check_response('/post/fake/%s/000', self.post_html)
 
   def test_post_json(self):
     resp = self.client.get(
@@ -131,6 +132,10 @@ asdf http://other/link qwert
   def test_post_missing(self):
     FakeGrSource.activities = []
     self.check_response('/post/fake/%s/000', expected_status=404)
+
+  def test_post_object_not_activity(self):
+    FakeGrSource.activities[0] = FakeGrSource.activities[0]['object']
+    self.check_response('/post/fake/%s/000', self.post_html)
 
   def test_bad_source_type(self):
     self.check_response('/post/not_a_type/%s/000', expected_status=400)

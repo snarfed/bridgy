@@ -95,7 +95,7 @@ class FakeGrSource(gr_source.Source):
 
     activities = copy.deepcopy(activities)
     for activity in activities:
-      obj = activity['object']
+      obj = activity.get('object') or activity
       obj['tags'] = [tag for tag in obj.get('tags', []) if
                      'verb' not in tag or
                      (tag['verb'] in ('like', 'react') and fetch_likes) or
