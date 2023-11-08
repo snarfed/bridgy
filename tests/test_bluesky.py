@@ -3,11 +3,14 @@ from unittest import mock
 from urllib.parse import parse_qs, urlparse
 
 from oauth_dropins import bluesky as oauth_bluesky
+from oauth_dropins.webutil.testutil import requests_response
 from oauth_dropins.webutil.util import json_dumps
+import requests
 from werkzeug.routing import RequestRedirect
 
 from bluesky import Bluesky, Callback
 from flask_app import app
+from models import DisableSource
 import util
 from . import testutil
 
@@ -90,3 +93,23 @@ class BlueskyTest(testutil.AppTest):
       'feature': 'listen,publish',
       'source': self.bsky.key.urlsafe().decode(),
     }, util.decode_oauth_state(query['state'][0]))
+
+  @mock.patch('requests.get', return_value=requests_response({}))
+  def test_get_activities(self, _):
+    self.assertEqual([], self.bsky.get_activities())
+
+  @mock.patch('requests.get', return_value=requests_response({}, status=400))
+  def test_get_activities_error(self, _):
+    with self.assertRaises(requests.HTTPError):
+      self.bsky.get_activities()
+
+  @mock.patch('requests.post')
+  @mock.patch('requests.get')
+  def test_get_activities_token_error(self, mock_get, mock_post):
+    mock_get.return_value = mock_post.return_value = requests_response({
+      'error': 'ExpiredToken',
+      'message': 'Token has been revoked',
+    }, status=400)
+
+    with self.assertRaises(DisableSource):
+      self.bsky.get_activities()

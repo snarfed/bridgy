@@ -3,8 +3,10 @@ from urllib.parse import quote
 
 from flask import flash, render_template, request
 from granary import bluesky as gr_bluesky
+import lexrpc.client
 from oauth_dropins import bluesky as oauth_bluesky
 from oauth_dropins.webutil.util import json_loads
+import requests
 
 from flask_app import app
 import models
@@ -84,6 +86,23 @@ class Bluesky(models.Source):
 
     url = url.replace('https://staging.bsky.app/', 'https://bsky.app/')
     return super().canonicalize_url(url)
+
+  def get_activities_response(self, *args, **kwargs):
+    """Raise DisableSource if we get a 400 with a token error.
+
+    https://atproto.com/specs/xrpc#summary-of-http-status-codes ...but not
+    explicitly mentioned there, or in https://atproto.com/specs/lexicon , or
+    anywhere else similar. Some discussion in
+    https://github.com/bluesky-social/atproto/discussions/1711#discussioncomment-7203160
+    """
+    try:
+      return super().get_activities_response(*args, **kwargs)
+    except requests.HTTPError as e:
+      util.interpret_http_exception(e)
+      if (e.response.headers.get('Content-Type') == 'application/json'
+          and e.response.json().get('error') in lexrpc.client.TOKEN_ERRORS):
+        raise models.DisableSource()
+      raise
 
 
 class Callback(oauth_bluesky.Callback):
