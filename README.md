@@ -7,7 +7,7 @@ https://brid.gy/
 
 Bridgy is part of the [IndieWeb](https://indieweb.org/) ecosystem. In IndieWeb terminology, Bridgy offers [backfeed](https://indieweb.org/backfeed), [POSSE](https://indieweb.org/POSSE), and [webmention](http://indiewebify.me/#send-webmentions) support as a service.
 
-License: This project is placed in the public domain.
+License: This project is placed in the public domain. You may also use it under the [CC0 License](https://creativecommons.org/publicdomain/zero/1.0/).
 
 
 Development
