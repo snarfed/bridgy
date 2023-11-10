@@ -100,7 +100,8 @@ class Bluesky(models.Source):
     except requests.HTTPError as e:
       util.interpret_http_exception(e)
       if (e.response.headers.get('Content-Type') == 'application/json'
-          and e.response.json().get('error') in lexrpc.client.TOKEN_ERRORS):
+          and (e.response.json().get('error') in lexrpc.client.TOKEN_ERRORS
+               or e.response.json().get('message') == 'Profile not found')):
         raise models.DisableSource()
       raise
 
