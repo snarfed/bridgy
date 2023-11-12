@@ -1267,6 +1267,24 @@ class PollTest(TaskTest):
     self.assert_responses(expected)
 
 
+  def test_opt_out(self):
+    """Responses from opted out users should be ignored."""
+    self.activities[0]['object']['replies']['items'][0]['author'] = {
+      'summary': 'foo #nobot bar',
+    }
+    self.activities[0]['object']['tags'][0]['actor'] = {
+      'description': 'foo #nobridge bar',
+    }
+
+    expected = self.responses[2:]
+    for resp in expected:
+      self.expect_task('propagate', response_key=resp)
+
+    self.post_task(expect_poll=FakeSource.FAST_POLL)
+    self.assertEqual(10, Response.query().count())
+    self.assert_responses(expected)
+
+
 class DiscoverTest(TaskTest):
 
   post_url = '/_ah/queue/discover'

@@ -307,6 +307,16 @@ class UtilTest(testutil.AppTest):
     appengine_info.LOCAL_SERVER = True
     self.assertFalse(util.in_webmention_blocklist('localhost'))
 
+  def test_is_opt_out(self):
+    for actor, expected in [
+      ({'summary': 'I like this'}, False),
+      ({'summary': 'well #nobot yeah'}, True),
+      ({'description': 'a #nobridge b'}, True),
+      # This is Mastodon's HTML around hashtags
+      ({'displayName': '<a class="hashtag">#<span>nobridge</span></a>'}, True),
+    ]:
+      self.assertEqual(expected, util.is_opt_out(actor))
+
   def test_webmention_endpoint_cache_key(self):
     for expected, url in (
         ('http foo.com', 'http://foo.com/x'),

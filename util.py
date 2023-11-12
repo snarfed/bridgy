@@ -18,6 +18,7 @@ from google.cloud.tasks_v2 import CreateTaskRequest
 from google.protobuf.timestamp_pb2 import Timestamp
 import google.protobuf.message
 from granary import as1
+from granary.source import html_to_text
 from oauth_dropins.webutil.appengine_config import (
   error_reporting_client,
   tasks_client,
@@ -63,6 +64,8 @@ with open(os.path.join(_dir, 'domain_blocklist.txt'), 'rt', encoding='utf-8') as
 URL_BLOCKLIST = frozenset((
   'http://www.evdemon.org/2015/learning-more-about-quill',
 ))
+
+OPT_OUT_TAGS = frozenset(('#nobot', '#nobridge'))
 
 # URL paths of users who opt into testing new "beta" features and changes
 # before we roll them out to everyone.
@@ -335,6 +338,34 @@ def in_webmention_blocklist(domain):
   domain = domain.lower()
   return (util.domain_or_parent_in(domain, BLOCKLIST) or
           (not appengine_info.LOCAL_SERVER and domain in LOCAL_HOSTS))
+
+
+def is_opt_out(actor):
+  """Whether this user has explicitly opted out of Bridgy.
+
+  Currently just looks for ``#nobridge`` or ``#nobot`` in profile
+  description/bio.
+
+  https://github.com/snarfed/bridgy/issues/1598
+
+  Duplicates ``Object.status`` in Bridgy Fed!
+
+  Args:
+    actor (dict): AS1 actor
+
+  Returns:
+    bool:
+  """
+  if not actor or not isinstance(actor, dict):
+    return None
+
+  for field in 'summary', 'description', 'displayName':
+    text = html_to_text(actor.get(field, ''))
+    for tag in OPT_OUT_TAGS:
+      if tag in text:
+        return True
+
+  return False
 
 
 def prune_activity(activity, source):

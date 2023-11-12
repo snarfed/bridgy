@@ -305,16 +305,16 @@ class Poll(View):
       reposts = [t for t in tags if Response.get_type(t) == 'repost']
       rsvps = as1.get_rsvps_from_event(obj)
 
-      # coalesce responses. drop any without ids
+      # coalesce responses. drop if missing id or author is blocked or opted out
       for resp in replies + likes + reactions + reposts + rsvps:
         id = resp.get('id')
         if not id:
           logger.error(f'Skipping response without id: {json_dumps(resp, indent=2)}')
           continue
 
-        if source.is_blocked(resp):
-          dump = json_dumps(resp.get('author') or resp.get('actor'), indent=2)
-          logger.info(f'Skipping response by blocked user: {dump}')
+        owner = as1.get_object(resp, 'actor') or as1.get_object(resp, 'author')
+        if source.is_blocked(resp) or util.is_opt_out(owner):
+          logger.info(f'Skipping blocked/opt out user: {json_dumps(owner, indent=2)}')
           continue
 
         resp.setdefault('activities', []).append(activity)
