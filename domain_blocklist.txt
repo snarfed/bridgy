@@ -57,6 +57,10 @@ analogindex.tumblr.com
 complexdoc.blogspot.com
 newsexchanger.wordpress.com
 
+# social network
+bsky.app
+bsky.social
+
 24sessions.com
 500px.com
 abakus-internet-marketing.de
