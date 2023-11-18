@@ -99,20 +99,15 @@ def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True,
   mentions -= other_user_mentions
 
   # original posts are only from the author themselves
-  obj_author = obj.get('author', {})
-  activity_author = activity.get('actor', {})
-  source_id = source.user_tag_id()
-  source_username = source.key.id()
-  author_id = obj_author.get('id') or activity_author.get('id') or ''
-  author_username = obj_author.get('username') or activity_author.get('username') or ''
+  owner = activity.get('actor') or obj.get('author') or {}
+  owner_ids = util.trim_nulls([owner.get('id'), owner.get('username')])
+  source_ids = util.trim_nulls([source.key.id(), source.user_tag_id()])
   if source.USERNAME_KEY_ID:
-    source_id = source_id.lower()
-    source_username = source_username.lower()
-    author_id = author_id.lower()
-    author_username = author_username.lower()
+    owner_ids = [id.lower() for id in owner_ids]
+    source_ids = [id.lower() for id in source_ids]
 
-  if author_id and author_id != source_id and author_username != source_username:
-    logger.info(f"Demoting original post links because user {source_id} {source_username} doesn't match author {author_id} {author_username}")
+  if owner_ids and not set(owner_ids) & set(source_ids):
+    logger.info(f"Demoting original post links because user ids {source_ids} don't match author ids {owner_ids}")
     # this is someone else's post, so all links must be mentions
     mentions.update(originals)
     originals = set()

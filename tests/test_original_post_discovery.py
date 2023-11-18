@@ -921,16 +921,17 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
     self.expect_requests_get('http://author/', '')
     self.mox.ReplayAll()
 
-    user_id = self.source.user_tag_id()
-    assert user_id
-    self.activity['object']['author'] = {'id': user_id}
+    self.activity['object']['author'] = {'id': self.source.user_tag_id()}
     self.assert_discover(['http://author/post'], [])
 
-    self.activity['object']['author'] = {'id': 'tag:fa.ke,2013:someone_else'}
-    self.assert_discover([], ['http://author/post'])
+    self.activity['object']['author'] = {'id': self.source.key.id()}
+    self.assert_discover(['http://author/post'], [])
 
     del self.activity['object']['author']
     self.assert_discover(['http://author/post'], [])
+
+    self.activity['actor'] = {'id': 'tag:fa.ke,2013:someone_else'}
+    self.assert_discover([], ['http://author/post'])
 
   def test_source_user_case_insensitive(self):
     """If USERNAME_KEY_ID, username comparison should ignore case."""
@@ -949,6 +950,18 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
 
   def test_compare_username(self):
     """Accept posts with author id with the user's username."""
+    self.activity['object']['content'] = 'x http://author/post y'
+    self.expect_requests_get('http://author/', '')
+    self.mox.ReplayAll()
+
+    self.activity['object']['author'] = {
+      'id': 'tag:fa.ke,2013:someone_else',
+      'username': self.source.key.id(),
+    }
+    self.assert_discover(['http://author/post'], [])
+
+  def test_compare_author_not_tag_uri(self):
+    """Accept posts with non-tag-URI author id."""
     self.activity['object']['content'] = 'x http://author/post y'
     self.expect_requests_get('http://author/', '')
     self.mox.ReplayAll()
