@@ -3,13 +3,33 @@
 {% block title %}Mastodon signup - Bridgy{% endblock %}
 
 {% block content %}
+{% with logins = get_logins()|selectattr('site', 'eq', 'mastodon')|list %}
+
+<br />
+
+{% if logins %}
+<p class="row big">Click to open an account you're currently logged into:</p>
+
+<ul class="user-items">
+{% for login in logins %}
+  <li class="row big">
+    <nobr class="col-sm-4 col-sm-offset-4">
+      <a href="{{ login.path }}" class="h-card u-url">
+        <img src="/static/{{ login.site }}_icon.png" width="24" />
+        <span class="p-name">{{ login.name }}</span>
+      </a>
+    </nobr>
+  </li>
+{% endfor %}
+</ul>
+{% endif %}
 
 <br />
 
 <form method="post" action="/mastodon/start">
 <p class="row big">
 <label for="website">
-Enter your
+{% if logins %} Or, enter a {% else %} Enter your {% endif %}
 <a href="https://joinmastodon.org/#getting-started" target="_blank">
 <img src="/oauth_dropins_static/mastodon_logo_large.png"
      style="height: 1em; margin-top: -.1em"/> Mastodon instance</a>:
@@ -23,4 +43,5 @@ Enter your
 </div>
 </form>
 
+{% endwith %}
 {% endblock %}
