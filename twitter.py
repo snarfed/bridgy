@@ -170,18 +170,7 @@ class Auth():
 
 class Add(oauth_twitter.Callback, Auth):
   def finish(self, auth_entity, state=None):
-    source = util.maybe_add_or_delete_source(Twitter, auth_entity, state)
-    feature = util.decode_oauth_state(state).get('feature')
-
-    if source is not None and feature == 'listen' and 'publish' in source.features:
-      # if we were already signed up for publish, we had a read/write token.
-      # when we sign up for listen, we use x_auth_access_type=read to request
-      # just read permissions, which *demotes* us to a read only token! ugh.
-      # so, do the whole oauth flow again to get a read/write token.
-      logger.info('Restarting OAuth flow to get publish permissions.')
-      source.features.remove('publish')
-      source.put()
-      return self.start_oauth_flow('publish')
+    util.maybe_add_or_delete_source(Twitter, auth_entity, state)
 
 
 class Start(oauth_twitter.Start, Auth):

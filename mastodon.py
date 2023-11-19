@@ -174,16 +174,8 @@ class Start(StartBase):
 
 class Callback(oauth_mastodon.Callback):
   def finish(self, auth_entity, state=None):
-    source = util.maybe_add_or_delete_source(Mastodon, auth_entity, state)
-
-    features = util.decode_oauth_state(state).get('feature', '').split(',')
-    if set(features) != set(source.features):
-      # override features with whatever we requested scopes for just now, since
-      # Mastodon and Pleroma scopes are per access token. background:
-      # https://github.com/snarfed/bridgy/issues/1015
-      # https://github.com/snarfed/bridgy/issues/1342
-      source.features = features
-      source.put()
+    logger.debug(f'finish with {auth_entity}, {state}')
+    util.maybe_add_or_delete_source(Mastodon, auth_entity, state)
 
 
 app.add_url_rule('/mastodon/start',

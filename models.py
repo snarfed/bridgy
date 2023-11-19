@@ -566,18 +566,19 @@ class Source(StringIdModel, metaclass=SourceMeta):
     if source is None:
       return None
 
-    if not source.domain_urls:  # defer to the source if it already set this
-      auth_entity = kwargs.get('auth_entity')
-      if auth_entity and hasattr(auth_entity, 'user_json'):
-        source.domain_urls, source.domains = source.urls_and_domains(
-          auth_entity, user_url)
+    auth_entity = kwargs.get('auth_entity')
+    # defer to the source if it already set domain_urls
+    if not source.domain_urls and auth_entity and hasattr(auth_entity, 'user_json'):
+      source.domain_urls, source.domains = source.urls_and_domains(
+        auth_entity, user_url)
     logger.debug(f'URLs/domains: {source.domain_urls} {source.domains}')
 
     # check if this source already exists
     existing = source.key.get()
     if existing:
       # merge some fields
-      source.features = set(source.features + existing.features)
+      if not auth_entity or not auth_entity.SCOPES_RESET:
+        source.features = set(source.features + existing.features)
       source.populate(**existing.to_dict(include=(
             'created', 'last_hfeed_refetch', 'last_poll_attempt', 'last_polled',
             'last_syndication_url', 'last_webmention_sent', 'superfeedr_secret',

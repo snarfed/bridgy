@@ -359,10 +359,21 @@ class SourceTest(testutil.AppTest):
       'Updated fake (FakeSource)', auth_entity=auth_entity, features=['publish'])
     self.assertEqual(orig_count, FakeSource.query().count())
 
-    source = source.key.get()
     self.assert_equals(['listen', 'publish'], source.features)
     for prop, value in props.items():
       self.assert_equals(value, getattr(source, prop), prop)
+
+  def test_create_new_already_exists_scopes_reset(self):
+    FakeSource.new(features=['listen']).put()
+
+    auth_entity = testutil.FakeAuthEntity()
+    auth_entity.SCOPES_RESET = True
+
+    FakeSource.string_id_counter -= 1
+    source = self._test_create_new(
+      'Updated fake (FakeSource)', auth_entity=auth_entity, features=['publish'])
+
+    self.assert_equals(['publish'], source.features)
 
   def test_create_new_publish(self):
     """If a source is publish only, we shouldn't insert a poll task."""
@@ -853,7 +864,7 @@ class SyndicatedPostTest(testutil.AppTest):
         SyndicatedPost.original == 'http://original/newly-discovered',
         SyndicatedPost.syndication == None, ancestor=self.source.key).get())
 
-  def test_insert_auguments_existing(self):
+  def test_insert_augments_existing(self):
     """Make sure we add newly discovered urls for a given syndication url,
     rather than overwrite them
     """

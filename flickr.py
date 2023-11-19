@@ -123,15 +123,7 @@ class AddFlickr(oauth_flickr.Callback, AuthHandler):
   """
   def finish(self, auth_entity, state=None):
     logger.debug(f'finish with {auth_entity}, {state}')
-    source = util.maybe_add_or_delete_source(Flickr, auth_entity, state)
-    feature = util.decode_oauth_state(state).get('feature')
-    if source and feature == 'listen' and 'publish' in source.features:
-      # we had signed up previously with publish, so we'll reauth to
-      # avoid losing that permission
-      logger.info('Restarting OAuth flow to get publish permissions.')
-      source.features.remove('publish')
-      source.put()
-      return self.start_oauth_flow('publish')
+    util.maybe_add_or_delete_source(Flickr, auth_entity, state)
 
 
 app.add_url_rule('/flickr/start', view_func=Start.as_view('flickr_start', '/flickr/add'), methods=['POST'])

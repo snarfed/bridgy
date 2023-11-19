@@ -180,7 +180,7 @@ WordPress.com, <a href="/">sign up here!</a>
 {% if source.AUTO_POLL %}
 <data class="p-bridgy-listen-status" value="disabled">
 <span class="big">Click to enable <a href="/about#backfeed">backfeed</a>:</span>
-{{ source.button_html('listen', source=source)|safe }}
+{{ source.button_html('listen,publish' if 'publish' in source.features else 'listen', source=source)|safe }}
 </data>
 {% endif %}
 {% endif %}

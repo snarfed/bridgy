@@ -478,6 +478,10 @@ def maybe_add_or_delete_source(source_cls, auth_entity, state, **kwargs):
   Used in each source's oauth-dropins :meth:`Callback.finish()` and
   :meth:`Callback.get()` methods, respectively.
 
+  This method _always_ ends by raising a :class:`Redirect` exception to return
+  an HTTP redirect response! That means that any code after a call to this
+  function _will not run_!
+
   Args:
     source_cls (granary.source.Source subclass): eg
       :class:`granary.instagram.Instagram`
@@ -489,6 +493,9 @@ def maybe_add_or_delete_source(source_cls, auth_entity, state, **kwargs):
 
   Returns:
     source entity if it was created or updated, otherwise None
+
+  Raises:
+    Redirect: to redirect to user page or callback URL
   """
   state_obj = util.decode_oauth_state(state)
   operation = state_obj.get('operation', 'add')
