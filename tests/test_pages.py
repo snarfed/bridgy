@@ -488,9 +488,8 @@ class PagesTest(testutil.AppTest):
       resp = self.client.get(f'{self.sources[0].bridgy_path()}?{param}=2022-05-09T10:13:28.597816 00:00')
       self.assertEqual(200, resp.status_code)
 
-  def test_blog_user_page_escapes_html_chars(self):
+  def test_blog_user_page_strips_html(self):
     html = '<xyz> a&b'
-    escaped = '&lt;xyz&gt; a&amp;b'
 
     source = FakeBlogSource.new()
     source.features = ['webmention']
@@ -503,7 +502,7 @@ class PagesTest(testutil.AppTest):
     resp = self.client.get(source.bridgy_path())
     self.assertEqual(200, resp.status_code)
     self.assertNotIn(html, resp.get_data(as_text=True))
-    self.assertIn(escaped, resp.get_data(as_text=True))
+    self.assertIn('ab', resp.get_data(as_text=True))
 
   def test_users_page(self):
     self.sources[1].put()

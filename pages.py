@@ -7,6 +7,7 @@ import urllib.request, urllib.parse, urllib.error
 from flask import render_template, request
 from google.cloud import ndb
 from granary import as1
+from granary.source import html_to_text
 from oauth_dropins.webutil import logs
 from oauth_dropins.webutil import flask_util
 from oauth_dropins.webutil.flask_util import error, flash
@@ -265,7 +266,7 @@ def user(site, id):
     for b in blogposts:
       b.links = process_webmention_links(b)
       try:
-        text = b.feed_item.get('title')
+        text = html_to_text(b.feed_item.get('title'))
       except ValueError:
         text = None
       b.pretty_url = util.pretty_link(
