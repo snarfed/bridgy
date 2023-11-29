@@ -61,6 +61,8 @@ newsexchanger.wordpress.com
 bsky.app
 bsky.social
 
+media.tumblr.com
+
 24sessions.com
 500px.com
 abakus-internet-marketing.de
@@ -140,6 +142,7 @@ gnolia.com
 godudu.com
 goodreads.com
 google.com
+googleapis.com
 googleusercontent.com
 gowalla.com
 gu.com
