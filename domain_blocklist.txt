@@ -62,6 +62,8 @@ bsky.app
 bsky.social
 
 media.tumblr.com
+www.tumblr.com
+tiktok.com
 
 24sessions.com
 500px.com
