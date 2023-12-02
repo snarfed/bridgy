@@ -28,7 +28,7 @@ import urllib.request, urllib.parse, urllib.error
 from flask import render_template, request
 from google.cloud import ndb
 from oauth_dropins import wordpress_rest as oauth_wordpress
-from oauth_dropins.webutil.flask_util import flash
+from oauth_dropins.webutil.flask_util import error, flash
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
 from flask_app import app
@@ -137,7 +137,7 @@ class WordPress(models.Source):
       url = API_POST_SLUG_URL % (auth_entity.blog_id, slug)
       post_id = self.urlopen(auth_entity, url).get('ID')
       if not post_id:
-        return self.error('Could not find post id', report=False)
+        return error('Could not find post id')
 
     logger.info(f'Post id is {post_id}')
 
@@ -151,7 +151,11 @@ class WordPress(models.Source):
       code, body = util.interpret_http_exception(e)
       try:
         parsed = json_loads(body) if body else {}
-        if ((code == '400' and parsed.get('error') == 'invalid_input') or
+        if code == '400' and parsed.get('error') == 'invalid_token':
+          self.status = 'disabled'
+          self.put()
+          return error('User is disabled')
+        elif ((code == '400' and parsed.get('error') == 'invalid_input') or
             (code == '403' and parsed.get('message') == 'Comments on this post are closed')):
           return parsed  # known error: https://github.com/snarfed/bridgy/issues/161
       except ValueError:

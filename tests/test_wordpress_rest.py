@@ -4,6 +4,7 @@ import urllib.request, urllib.parse, urllib.error
 from flask import get_flashed_messages
 from oauth_dropins.webutil.util import json_dumps, json_loads
 from oauth_dropins.wordpress_rest import WordPressAuth
+from werkzeug.exceptions import BadRequest
 from werkzeug.routing import RequestRedirect
 
 from flask_app import app
@@ -165,3 +166,13 @@ class WordPressTest(testutil.AppTest):
 
     self.assertRaises(urllib.error.HTTPError, self.wp.create_comment,
                       'http://primary/post/456', 'name', 'http://who', 'foo bar')
+
+  def test_create_comment_user_account_closed(self):
+    self.expect_new_reply(status=400, response=json_dumps({
+      'error': 'invalid_token',
+      'message': 'The user account has been closed.',
+    }))
+
+    self.assertRaises(BadRequest, self.wp.create_comment,
+                      'http://primary/post/456', 'name', 'http://who', 'foo bar')
+    self.assertEqual('disabled', self.wp.key.get().status)
