@@ -40,7 +40,7 @@ google-cloud-error-reporting==1.9.2
 google-cloud-logging==3.8.0
 google-cloud-ndb==2.2.2
 google-cloud-tasks==2.15.0
-googleapis-common-protos==1.61.0
+googleapis-common-protos==1.62.0
 grpc-google-iam-v1==0.13.0
 # 1.55.0 hangs on Mac in gunicorn/flask run with:
 # "Waiting for thread pool to idle before forking"
