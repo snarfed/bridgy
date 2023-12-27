@@ -154,7 +154,7 @@ class WordPress(models.Source):
         if code == '400' and parsed.get('error') == 'invalid_token':
           self.status = 'disabled'
           self.put()
-          return error('User is disabled')
+          return error('User is disabled', status=401)
         elif ((code == '400' and parsed.get('error') == 'invalid_input') or
             (code == '403' and parsed.get('message') == 'Comments on this post are closed')):
           return parsed  # known error: https://github.com/snarfed/bridgy/issues/161
