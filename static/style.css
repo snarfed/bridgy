@@ -30,6 +30,10 @@
   font-size: 1.5em;
 }
 
+.bigger {
+  font-size: 2.25em;
+}
+
 .small {
   font-size: .8em;
 }
@@ -46,6 +50,35 @@
   #header br {
     display: inline;
   }
+}
+
+.which-bridgy.row {
+  margin-bottom: 1em;
+}
+
+.which-bridgy .btn {
+  white-space: normal;
+  border-radius: 1em;
+}
+
+.which-bridgy .btn img {
+  height: 1em;
+}
+
+.which-bridgy .btn-default {
+  background-color: #CEF;
+  margin-bottom: 1em;
+}
+
+.which-bridgy .btn-default pre {
+  background-color: transparent;
+  border: none;
+}
+
+.which-bridgy .highlight {
+  background-color: lightgreen;
+  padding: .2em;
+  border-radius: .5em;
 }
 
 #title {

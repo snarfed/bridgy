@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Mastodon signup - Bridgy{% endblock %}
+
+{% block content %}
+
+<div class="row big which-bridgy">
+  What do you want to do?
+</div>
+
+<div class="row which-bridgy">
+
+<div class="col-lg-6 col-lg-offset-0 col-md-8 col-md-offset-2 col-sm-10 col-sm-offset-1 col-xs-12">
+<a class="btn btn-default" href="/mastodon/start">
+<p class="bigger">Cross-post to a Mastodon account:<br>
+@you@mastodon.server</p>
+<pre class="bigger">      <img title="Pleroma" style="height: 1.5em; margin-bottom: -.2em" src="/static/pleroma_logo.svg">
+    /
+<span class="highlight" style="background-color: khaki" title="Your web site">🌐</span> — <span class="highlight"><img title="Mastodon" src="/oauth_dropins_static/mastodon_2x.png"></span> — <img title="Friendica" src="/static/friendica_logo.svg">
+    \
+      <img title="Mastodon" src="/oauth_dropins_static/mastodon_2x.png">
+</pre>
+<p class="big">You already have a Mastodon account. You want to copy posts from your web site to Mastodon and send responses back to your site.</p>
+</a>
+</div>
+
+<div class="col-lg-6 col-lg-offset-0 col-md-8 col-md-offset-2 col-sm-10 col-sm-offset-1 col-xs-12">
+<a class="btn btn-default" href="https://fed.brid.gy/">
+<p class="bigger">Connect directly to the fediverse:<br>
+@yoursite.com</p>
+<pre class="bigger"><img title="Fediverse" src="/static/fediverse_logo.svg">   <img title="PeerTube" src="/static/peertube_logo.svg">
+\ /
+<img title="Misskey" src="/static/misskey_logo.png"> — <span class="highlight" title="Your web site">🌐</span> — <img title="Mastodon" src="/oauth_dropins_static/mastodon_2x.png">
+/ \
+<img title="GNU Social" src="/static/gnu_social_logo.svg">   <img title="Pixelfed" src="/oauth_dropins_static/pixelfed_2x.png">
+</pre>
+<p class="big">Your web site will be its own fediverse account. Its posts will show up in the fediverse automatically. People there can follow it directly.</p>
+</a>
+</div>
+</div>
+
+{% endblock %}

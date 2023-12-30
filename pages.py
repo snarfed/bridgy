@@ -58,6 +58,11 @@ def about():
   return render_template('about.html')
 
 
+@app.route('/which-bridgy')
+def which_bridgy():
+  return render_template('mastodon_which_bridgy.html')
+
+
 @app.route('/users')
 @flask_util.cached(cache, datetime.timedelta(hours=1))
 def users():
