@@ -1,7 +1,7 @@
 {
 	"name": "Bridgy",
-	"version": "0.6.1",
-	"description": "Bridgy connects your web site to social media. This extension adds Facebook and Instagram support.",
+	"version": "0.7.0",
+	"description": "Bridgy connects your web site to social media. This extension adds Facebook support.",
 	"homepage_url": "https://brid.gy/",
     "manifest_version": 3,
     "minimum_chrome_version": "88",
@@ -12,7 +12,6 @@
     ],
     "host_permissions": [
         "*://*.brid.gy/*",
-        "*://*.instagram.com/*",
         "*://*.facebook.com/*"
     ],
     "background": {

@@ -145,12 +145,12 @@ Here's how to cut a new release of the browser extension and publish it [to addo
     ```sh
     cd browser-extension/
     npm test
-    ./node_modules/web-ext/bin/web-ext build
+    ./node_modules/web-ext/bin/web-ext.js build
     ```
 1. Submit it to AMO.
     ```sh
     # get API secret from Ryan if you don't have it
-    ./node_modules/web-ext/bin/web-ext sign --api-key user:14645521:476 --api-secret ...
+    ./node_modules/web-ext/bin/web-ext.js sign --api-key user:14645521:476 --api-secret ...
 
     # If this succeeds, it will say:
     ...
@@ -168,7 +168,7 @@ Here's how to publish it [to the Chrome Web Store](https://chrome.google.com/web
     ```sh
     cd browser-extension/
     npm test
-    ./node_modules/web-ext/bin/web-ext build
+    ./node_modules/web-ext/bin/web-ext.js build
     ```
 1. [Open the console.](https://chrome.google.com/webstore/devconsole/)
 1. Open the Bridgy item.
@@ -181,6 +181,10 @@ Here's how to publish it [to the Chrome Web Store](https://chrome.google.com/web
 
 Browser extension: Changelog
 ---
+0.7.0, 2024-01-03
+
+* Remove Instgram. Their anti-bot defenses have led them to suspend a couple people's accounts for using this extension, so we're disabling it out of an abundance of caution. Sorry for the bad news.
+
 0.6.1, 2022-09-18
 
 * Don't open silo login pages if they're not logged in. This ran at extension startup time, which was mostly harmless in manifest v2 since the background page was persistent stayed loaded, but in manifest v3 it's a service worker or non-persistent background page, which gets unloaded and then reloaded every 5m.

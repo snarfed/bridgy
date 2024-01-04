@@ -18,12 +18,12 @@ async function update() {
   var domains
   if (token) {
     document.querySelector('#token').innerText = token
-    domains = await Instagram.postBridgy(`/token-domains?token=${token}`)
+    domains = await Facebook.postBridgy(`/token-domains?token=${token}`)
     document.querySelector('#domains').innerText = (domains ? domains.join(', ') : 'none')
   }
 
   const data = await browser.storage.local.get()
-  for (const silo of [Instagram, Facebook]) {
+  for (const silo of [/* Instagram, */ Facebook]) {
     const enabled = (data[`${silo.NAME}-enabled`] != false)
     document.getElementById(`${silo.NAME}-enabled`).checked = enabled
     document.getElementById(silo.NAME).className = (enabled) ? '' : 'disabled'
@@ -92,11 +92,11 @@ async function update() {
     }
   }
 
-  const igUsername = data['instagram-username']
-  if (igUsername) {
-    document.querySelector('#instagram-username').innerText = igUsername
-    document.querySelector('#instagram-username').href = `https://www.instagram.com/${igUsername}/`
-  }
+  // const igUsername = data['instagram-username']
+  // if (igUsername) {
+  //   document.querySelector('#instagram-username').innerText = igUsername
+  //   document.querySelector('#instagram-username').href = `https://www.instagram.com/${igUsername}/`
+  // }
 }
 
 function toggle(silo) {

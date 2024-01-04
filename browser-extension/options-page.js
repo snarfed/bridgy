@@ -14,7 +14,7 @@ import {
 document.addEventListener('DOMContentLoaded', function () {
   document.querySelector('#reconnect').addEventListener('click', () => login(true))
 
-  for (const silo of [Instagram, Facebook]) {
+  for (const silo of [/* Instagram, */ Facebook]) {
     document.getElementById(`${silo.NAME}-enabled`).addEventListener(
       'click', () => toggle(silo))
     document.getElementById(`${silo.NAME}-poll`).addEventListener(

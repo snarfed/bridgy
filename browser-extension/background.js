@@ -26,13 +26,13 @@ const FREQUENCY_MIN = 30
 browser.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name == 'bridgy-facebook-poll') {
     Facebook.poll()
-  } else if (alarm.name == 'bridgy-instagram-poll') {
-    Instagram.poll()
+  // } else if (alarm.name == 'bridgy-instagram-poll') {
+  //   Instagram.poll()
   }
 })
 
 function schedulePoll() {
-  for (const silo of [Instagram, Facebook]) {
+  for (const silo of [/* Instagram, */ Facebook]) {
     const name = silo.alarmName()
     browser.alarms.get(name).then(function(alarm) {
       if (!alarm) {
