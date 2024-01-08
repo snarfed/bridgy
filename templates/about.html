@@ -223,11 +223,15 @@ We're <a class="h-card" href="https://snarfed.org/">Ryan Barrett</a>, <a class="
 <p><a href="https://snarfed.org/?s=bridgy%20stats">Check out the stats!</a></p>
 </li>
 
+{# NOTE: this question is duplicated in bridgy-fed/templates/docs.html.
+   If you update it here, update it there too! #}
 <li id="bridgy-fed" class="question">What's the difference between this and Bridgy Fed?</li>
 <li class="answer">
-<p><a href="https://brid.gy/">Bridgy</a> - this service - bridges <em>centralized</em> social networks to IndieWeb web sites.</p>
-<p><a href="https://fed.brid.gy/">Bridgy Fed</a> is a separate service that bridges <em>decentralized</em> social networks like the <a href="https://en.wikipedia.org/wiki/Fediverse">fediverse</a>, <a href="https://blueskyweb.xyz/">Bluesky</a>/<a href="https://atproto.com/">AT Protocol</a>, <a href="https://nostr.com/">Nostr</a>, and the <a href="https://indieweb.org/">IndieWeb</a>.</p>
-<p>Both can integrate with the fediverse! The difference is that Bridgy connects your web site to a separate Mastodon account that you already have, while Bridgy Fed turns your web site <em>into</em> its own fediverse account.</p>
+<p><a href="https://brid.gy/">Bridgy</a> and <a href="https://fed.brid.gy/">Bridgy Fed</a> are separate services. They both connect web sites and social networks and translate posts and interactions back and forth, but they each do it very differently.</p>
+<p><a href="https://brid.gy/">Bridgy</a> - this service - connects <a href="https://indieweb.org/">IndieWeb</a> web sites to <em>existing</em> accounts on social networks, both centralized and decentralized, and provides <a href="https://indieweb.org/backfeed">backfeed</a> and <a href="https://indieweb.org/POSSE">POSSE</a> (aka cross-posting) as a service.</p>
+<a href="https://fed.brid.gy/">Bridgy Fed</a>, on the other hand, bridges accounts on decentralized social networks like the <a href="https://en.wikipedia.org/wiki/Fediverse">fediverse</a>, <a href="https://blueskyweb.xyz/">Bluesky</a>/<a href="https://atproto.com/">AT Protocol</a>, <a href="https://nostr.com/">Nostr</a>, and the IndieWeb <em>directly</em> across those networks.</p>
+<p>As an example, here's a visualization of how they each connect web sites to the fediverse:</p>
+
 <br>
 
 {% with titles=True %}
@@ -489,7 +493,7 @@ Here are the properties Bridgy uses:
 <ul>
 <li>Flickr comments and favorites on your photos.</li>
 <li>GitHub comments and emoji reactions on your issues and pull requests from other people. (Not your own, since <a href="#GitHub+responses">we rely on notifications</a>, which those don't generate.)</li>
-<li>Mastodon replies, favorites, reposts, and mentions. (We can't backfeed links to your site because <a href="https://github.com/mastodon/mastodon/issues/9529#issuecomment-447577703">Mastodon has no global search</a>, and even <a href="https://docs.joinmastodon.org/user/network/#search">local instance search is limited to hashtags and your own posts</a>.)</li>
+<li>Mastodon replies, favorites, reposts, and mentions. (We can't backfeed links to your site because <a href="https://github.com/mastodon/mastodon/issues/9529#issuecomment-447577703">Mastodon has no global search</a>, and even <a href="https://docs.joinmastodon.org/user/network/#search">local instance search is limited to hashtags, your own posts, and opted in accounts only</a>.)</li>
 <li>Reddit posts that link to your site and the top-level comments on those posts.</li>
 <li>Bluesky replies, likes, and reposts.</li>
 </ul>
