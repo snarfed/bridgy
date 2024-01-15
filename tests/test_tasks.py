@@ -839,14 +839,20 @@ class PollTest(TaskTest):
   def test_disable_source_on_deauthorized(self):
     """If the source raises DisableSource, disable it.
     """
+    self.auth_entities[0].put()
     source = self.sources[0]
+
     self.expect_get_activities().AndRaise(models.DisableSource)
     self.mox.ReplayAll()
 
     source.status = 'enabled'
     source.put()
     self.post_task()
-    self.assertEqual('disabled', source.key.get().status)
+
+    source = source.key.get()
+    self.assertEqual('disabled', source.status)
+    self.assertIsNone(source.auth_entity)
+    self.assertIsNone(self.auth_entities[0].key.get())
 
   def test_site_specific_disable_source_401(self):
     self._test_site_specific_disable_source(

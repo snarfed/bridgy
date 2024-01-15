@@ -148,6 +148,7 @@ class Item(View):
     try:
       obj = self.get_item(**kwargs)
     except models.DisableSource:
+      self.source.disable()
       error("Bridgy's access to your account has expired. Please visit https://brid.gy/ to refresh it!", 401)
     except ValueError as e:
       error(f'{self.source.GR_CLASS.NAME} error: {e}')

@@ -95,10 +95,7 @@ class Poll(View):
         # the user deauthorized the bridgy app, so disable this source.
         # let the task complete successfully so that it's not retried.
         logger.warning(f'Disabling source due to: {e}', exc_info=True)
-        source.updates.update({
-          'status': 'disabled',
-          'poll_status': 'ok',
-        })
+        source.disable()
       elif code in source.RATE_LIMIT_HTTP_CODES:
         logger.info(f'Rate limited. Marking as error and finishing. {e}')
         source.updates['rate_limited'] = True

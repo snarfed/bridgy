@@ -202,9 +202,18 @@ asdf http://other/link qwert
       ).AndRaise(models.DisableSource())
     self.mox.ReplayAll()
 
+    auth_entity_key = self.auth_entities[0].put()
+    self.source.auth_entity = auth_entity_key
+    self.source.put()
+
     resp = self.check_response('/post/fake/%s/000', expected_status=401)
     self.assertIn("Bridgy's access to your account has expired",
                   html.unescape(resp.get_data(as_text=True)))
+
+    self.assertIsNone(auth_entity_key.get())
+    source = self.source.key.get()
+    self.assertEqual('disabled', source.status)
+    self.assertIsNone(source.auth_entity)
 
   def test_handle_value_error(self):
     self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities')

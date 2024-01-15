@@ -691,6 +691,9 @@ f"""<div class="h-entry"><p class="e-content">
     self.expect_requests_get('http://foo.com/bar', self.post_html % 'xyz')
     self.mox.StubOutWithMock(self.source.gr_source, 'create',
                              use_mock_anything=True)
+
+    self.auth_entity.put()
+
     err = requests.HTTPError(response=requests_response('orig', status=401))
     self.source.gr_source.create(mox.IgnoreArg(),
                                  include_link=gr_source.INCLUDE_LINK,
@@ -699,6 +702,12 @@ f"""<div class="h-entry"><p class="e-content">
     self.mox.ReplayAll()
 
     self.assert_error('orig', status=401)
+
+    source = self.source.key.get()
+    self.assertEqual('disabled', source.status)
+    self.assertIsNone(source.auth_entity)
+    self.assertIsNone(self.auth_entity.key.get())
+
     self.assertEqual('disabled', self.source.key.get().status)
 
   def test_non_http_exception(self):

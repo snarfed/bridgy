@@ -267,8 +267,7 @@ class PublishBase(webmention.Webmention):
           # the user deauthorized the bridgy app, or the token expired, so
           # disable this source.
           logger.warning(f'Disabling source due to: {e}', exc_info=True)
-          self.source.status = 'disabled'
-          self.source.put()
+          self.source.disable()
         if isinstance(e, (NotImplementedError, ValueError, urllib.error.URLError)):
           code = '400'
         elif not code:
