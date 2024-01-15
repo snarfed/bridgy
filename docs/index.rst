@@ -15,7 +15,9 @@ IndieWeb terminology, Bridgy offers
 `webmention <http://indiewebify.me/#send-webmentions>`__ support as a
 service.
 
-License: This project is placed in the public domain.
+License: This project is placed in the public domain. You may also use
+it under the `CC0
+License <https://creativecommons.org/publicdomain/zero/1.0/>`__.
 
 Development
 -----------
@@ -200,11 +202,11 @@ addons.mozilla.org <https://addons.mozilla.org/en-US/firefox/addon/bridgy/>`__:
 4. Update the Changelog in the README.md section below this one.
 
 5. Build and sign the artifact:
-   ``sh     cd browser-extension/     npm test     ./node_modules/web-ext/bin/web-ext build``
+   ``sh     cd browser-extension/     npm test     ./node_modules/web-ext/bin/web-ext.js build``
 
 6. Submit it to AMO. \`sh # get API secret from Ryan if you don’t have
-   it ./node_modules/web-ext/bin/web-ext sign –api-key user:14645521:476
-   –api-secret …
+   it ./node_modules/web-ext/bin/web-ext.js sign –api-key
+   user:14645521:476 –api-secret …
 
    # If this succeeds, it will say: … Your add-on has been submitted for
    review. It passed validation but could not be automatically signed
@@ -219,7 +221,7 @@ Store <https://chrome.google.com/webstore/detail/bridgy/lcpeamdhminbbjdfjbpmhgjg
 2.  Load the extension in Chrome (``chrome://extensions/``, Developer
     mode on). Check that it works.
 3.  Build and sign the artifact:
-    ``sh     cd browser-extension/     npm test     ./node_modules/web-ext/bin/web-ext build``
+    ``sh     cd browser-extension/     npm test     ./node_modules/web-ext/bin/web-ext.js build``
 4.  `Open the
     console. <https://chrome.google.com/webstore/devconsole/>`__
 5.  Open the Bridgy item.
@@ -233,6 +235,12 @@ Store <https://chrome.google.com/webstore/detail/bridgy/lcpeamdhminbbjdfjbpmhgjg
 
 Browser extension: Changelog
 ----------------------------
+
+0.7.0, 2024-01-03
+
+-  Remove Instgram. Their anti-bot defenses have led them to suspend a
+   couple people’s accounts for using this extension, so we’re disabling
+   it out of an abundance of caution. Sorry for the bad news.
 
 0.6.1, 2022-09-18
 
@@ -426,7 +434,7 @@ dataset <https://console.cloud.google.com/bigquery?p=brid-gy&d=datastore&page=da
 
    ::
 
-      gcloud datastore export --async gs://brid-gy.appspot.com/stats/ --kinds Activity,Blogger,BlogPost,BlogWebmention,Facebook,FacebookPage,Flickr,GitHub,GooglePlusPage,Instagram,Mastodon,Medium,Meetup,Publish,PublishedPage,Reddit,Response,SyndicatedPost,Tumblr,Twitter,WordPress
+      gcloud datastore export --async gs://brid-gy.appspot.com/stats/ --kinds Activity,Blogger,BlogPost,BlogWebmention,Bluesky,Facebook,FacebookPage,Flickr,GitHub,GooglePlusPage,Instagram,Mastodon,Medium,Meetup,Publish,PublishedPage,Reddit,Response,SyndicatedPost,Tumblr,Twitter,WordPress
 
    Note that ``--kinds`` is required. `From the export
    docs <https://cloud.google.com/datastore/docs/export-import-entities#limitations>`__,
@@ -447,7 +455,7 @@ dataset <https://console.cloud.google.com/bigquery?p=brid-gy&d=datastore&page=da
         bq load --replace --nosync --source_format=DATASTORE_BACKUP datastore.$kind gs://brid-gy.appspot.com/stats/all_namespaces/kind_$kind/all_namespaces_kind_$kind.export_metadata
       done
 
-      for kind in Blogger Facebook FacebookPage Flickr GitHub GooglePlusPage Instagram Mastodon Medium Meetup Reddit Tumblr Twitter WordPress; do
+      for kind in Blogger Bluesky Facebook FacebookPage Flickr GitHub GooglePlusPage Instagram Mastodon Medium Meetup Reddit Tumblr Twitter WordPress; do
         bq load --replace --nosync --source_format=DATASTORE_BACKUP sources.$kind gs://brid-gy.appspot.com/stats/all_namespaces/kind_$kind/all_namespaces_kind_$kind.export_metadata
       done
 
