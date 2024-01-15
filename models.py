@@ -857,16 +857,6 @@ class Source(StringIdModel, metaclass=SourceMeta):
         if o.get(field, {}).get('numeric_id') in self.blocked_ids:
           return True
 
-  def disable(self):
-    """Sets ``status`` to ``disabled`` and deletes the auth entity."""
-    self.status = 'disabled'
-
-    if self.auth_entity:
-      self.auth_entity.delete()
-      self.auth_entity = None
-
-    self.put()
-
 
 class Webmentions(StringIdModel):
   """A bundle of links to send webmentions for.
