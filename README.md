@@ -303,7 +303,7 @@ Open the Datastore entities page for the `Response` kind, sorted by `updated` as
 
 Open the existing `Response` table in BigQuery: https://console.cloud.google.com/bigquery?project=brid-gy&ws=%211m10%211m4%214m3%211sbrid-gy%212sdatastore%213sResponse%211m4%211m3%211sbrid-gy%212sbquxjob_371f97c8_18131ff6e69%213sUS
 
-Update the year in the queries below to two years before today. Query for the same first few rows sorted by `updated` ascending, check that they're the same:
+Update the year in the queries below to three years before this year. Query for the same first few rows sorted by `updated` ascending, check that they're the same:
 
 ```
 SELECT * FROM `brid-gy.datastore.Response`
