@@ -8,6 +8,7 @@ from flask import request
 from granary import twitter as gr_twitter
 from granary import source as gr_source
 from oauth_dropins import twitter as oauth_twitter
+from oauth_dropins.webutil.flask_util import error
 from oauth_dropins.webutil.util import json_dumps, json_loads
 
 from flask_app import app
@@ -156,8 +157,8 @@ class Auth():
     """
     features = feature.split(',') if feature else []
     for feature in features:
-      if feature not in models.Source.FEATURES:
-        util.error(f'Unknown feature: {feature}')
+      if feature not in util.FEATURES:
+        error(f'Unknown feature: {feature}')
 
     # pass explicit 'write' instead of None for publish so that oauth-dropins
     # (and tweepy) don't use signin_with_twitter ie /authorize. this works

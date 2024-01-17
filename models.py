@@ -77,7 +77,6 @@ class Source(StringIdModel, metaclass=SourceMeta):
   """
   STATUSES = ('enabled', 'disabled')
   POLL_STATUSES = ('ok', 'error', 'polling')
-  FEATURES = ('listen', 'publish', 'webmention', 'email')
 
   # short name for this site type. used in URLs, etc.
   SHORT_NAME = None
@@ -144,7 +143,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
   picture = ndb.StringProperty()
   domains = ndb.StringProperty(repeated=True)
   domain_urls = ndb.StringProperty(repeated=True)
-  features = ndb.StringProperty(repeated=True, choices=FEATURES)
+  features = ndb.StringProperty(repeated=True, choices=util.FEATURES)
   superfeedr_secret = ndb.StringProperty()
   webmention_endpoint = ndb.StringProperty()
 
@@ -532,7 +531,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
     Returns:
       str: HTML
     """
-    assert set(feature.split(',')) <= set(cls.FEATURES)
+    assert set(feature.split(',')) <= set(util.FEATURES)
     form_extra = (kwargs.pop('form_extra', '') +
                   f'<input name="feature" type="hidden" value="{feature}" />')
 

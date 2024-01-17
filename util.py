@@ -102,6 +102,8 @@ DOMAINS = (PRIMARY_DOMAIN,) + OTHER_DOMAINS + LOCAL_DOMAINS
 # https://cloud.google.com/appengine/docs/locations
 TASKS_LOCATION = 'us-central1'
 
+FEATURES = ('listen', 'publish', 'webmention', 'email')
+
 webmention_endpoint_cache_lock = threading.RLock()
 webmention_endpoint_cache = TTLCache(5000, 60 * 60 * 2)  # 2h expiration
 
@@ -599,6 +601,10 @@ def construct_state_param_for_add(state=None, **kwargs):
     state_obj = {field: request.values.get(field) for field in
                  ('callback', 'feature', 'id', 'user_url')}
     state_obj['operation'] = request.values.get('operation') or 'add'
+
+  feature = state_obj.get('feature')
+  if feature and feature not in FEATURES:
+   error(f'Unknown feature {feature}')
 
   if kwargs:
     state_obj.update(kwargs)

@@ -385,7 +385,7 @@ def delete_finish():
 
   features = parts['feature'].split(',')
   for feature in features:
-    if feature not in (Source.FEATURES):
+    if feature not in (util.FEATURES):
       error(f'cannot delete unknown feature {feature}')
 
   logged_in_as = ndb.Key(urlsafe=request.args['auth_entity']).get()

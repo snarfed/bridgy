@@ -113,6 +113,13 @@ class FlickrTest(FlickrBaseTest, testutil.AppTest):
     self.flickr.username = None
     self.assertEqual('39216764@N00', self.flickr.label_name())
 
+  def test_start_bad_feature(self):
+    resp = self.client.post('/flickr/start', data ={
+      'feature': 'bad',
+      'id': '123abc',
+    })
+    self.assertEqual(400, resp.status_code)
+
 
 class FlickrPollTest(FlickrBaseTest, testutil.BackgroundTest):
 
