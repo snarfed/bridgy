@@ -27,7 +27,7 @@ ecdsa==0.18.0
 extras==1.0.0
 feedgen==1.0.0
 fixtures==4.1.0
-Flask==3.0.0
+Flask==3.0.1
 Flask-Caching==2.1.0
 flask-gae-static==1.0
 google-api-core[grpc]==2.11.1
