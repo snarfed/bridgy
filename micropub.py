@@ -19,6 +19,7 @@ from oauth_dropins import (
 from oauth_dropins.webutil import appengine_info
 from oauth_dropins.webutil.flask_util import flash
 from oauth_dropins.webutil.util import json_dumps, json_loads
+import requests
 from werkzeug.exceptions import HTTPException
 
 from flask_app import app
@@ -230,7 +231,13 @@ class MastodonStart(mastodon.StartBase):
     self.scope = self.SCOPE_SEPARATOR.join(
       mastodon.PUBLISH_SCOPES if 'publish' in source.features
       else mastodon.LISTEN_SCOPES)
-    return super().dispatch_request()
+
+    try:
+      return super().dispatch_request()
+    except (ValueError, requests.HTTPError) as e:
+      logger.warning('Bad Mastodon instance', exc_info=True)
+      flash(util.linkify(str(e), pretty=True))
+      redirect(source.bridgy_path())
 
 
 # We want Callback.get() and GetToken.finish(), so put Callback first and
