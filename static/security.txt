@@ -1,3 +1,14 @@
-Contact: mailto:bridgy@ryanb.org
-Expires: 2030-01-01T00:00:00.000Z
+Contact: mailto:security@brid.gy
+Expires: 2030-01-01T08:00:00.000Z
 Preferred-Languages: en
+Canonical: https://brid.gy/.well-known/security.txt
+Policy: https://brid.gy/about#vulnerability
+
+Thank you for investigating Bridgy's security! We appreciate any and all reports of vulnerabilities. The code is open source (https://github.com/snarfed/bridgy), feel free to try to break in, let us know if you succeed!
+
+A few guidelines for your report to qualify for a monetary reward:
+
+* Vulnerabilities must be in the application itself, not unrelated services like email (eg SPF/DKIM/DMARC).
+* Out of scope: rate limiting, XSS/CSRF attacks (Bridgy has no authenticated sessions), /admin/* pages.
+* User data is intentionally public. That's not a vulnerability.
+* No automated fuzzing, DoSes, or other high volume traffic. We block this traffic, and it will disqualify you from any possible award.
