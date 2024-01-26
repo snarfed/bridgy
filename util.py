@@ -602,9 +602,9 @@ def construct_state_param_for_add(state=None, **kwargs):
                  ('callback', 'feature', 'id', 'user_url')}
     state_obj['operation'] = request.values.get('operation') or 'add'
 
-  feature = state_obj.get('feature')
-  if feature and feature not in FEATURES:
-   error(f'Unknown feature {feature}')
+  for feature in (state_obj.get('feature') or '').split(','):
+    if feature and feature not in FEATURES:
+      error(f'Unknown feature {feature}')
 
   if kwargs:
     state_obj.update(kwargs)
