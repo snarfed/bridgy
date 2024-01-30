@@ -129,22 +129,28 @@ class Callback(oauth_bluesky.Callback):
                                     util.encode_oauth_state(state))
 
 
-@app.route('/bluesky/start', methods=['GET'])
+@app.get('/bluesky/start')
 def bluesky_start():
   """Serves the Bluesky login form page to sign up."""
   return render_template('provide_app_password.html',
                          post_url='/bluesky/callback',
-                         operation='add',
-                         )
+                         operation='add')
 
 
-@app.route('/bluesky/delete/start', methods=['GET'])
+@app.get('/bluesky/delete/start')
 def bluesky_delete():
   """Serves the Bluesky login form page to delete an existing account."""
   return render_template('provide_app_password.html',
                          post_url='/bluesky/callback',
                          operation='delete',
-                         )
+                         **request.values)
+
+
+@app.post('/bluesky/publish/start', endpoint='bluesky_publish_start')
+def bluesky_publish_start():
+  return render_template('provide_app_password.html',
+                         post_url='/publish/bluesky/finish',
+                         **request.values)
 
 
 app.add_url_rule('/bluesky/callback', view_func=Callback.as_view('bluesky_callback', 'unused'), methods=['POST'])

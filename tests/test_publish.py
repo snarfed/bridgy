@@ -37,7 +37,7 @@ class PublishTest(testutil.AppTest):
 
   def setUp(self):
     super().setUp()
-    publish.SOURCE_NAMES['fake'] = testutil.FakeSource
+    publish.SOURCES['fake'] = testutil.FakeSource
     publish.SOURCE_DOMAINS['fa.ke'] = testutil.FakeSource
 
     self.auth_entity = FakeSend.auth_entity = testutil.FakeAuthEntity(id='0123456789')
@@ -278,7 +278,7 @@ class PublishTest(testutil.AppTest):
     class FauxSource(testutil.FakeSource):
       SHORT_NAME = 'faux'
 
-    publish.SOURCE_NAMES['faux'] = FauxSource
+    publish.SOURCES['faux'] = FauxSource
     FauxSource(
       id='foo.com', features=['publish'], domains=['foo.com'],
       domain_urls=['http://foo.com/']).put()
@@ -299,9 +299,7 @@ class PublishTest(testutil.AppTest):
         'https://brid.gy/publish/googleplus',
         'https://brid.gy/publish/instagram',
     ):
-      self.assert_error(
-        'Target must be brid.gy/publish/[flickr,github,mastodon]',
-        target=target)
+      self.assert_error('Target must be brid.gy/publish/', target=target)
 
   def test_source_url_redirects(self):
     self.expect_requests_head('http://will/redirect', redirected_url='http://foo.com/1')

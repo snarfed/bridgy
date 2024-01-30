@@ -16,6 +16,7 @@ from granary import as1, microformats2
 from granary import source as gr_source
 import grpc
 from oauth_dropins import (
+  bluesky as oauth_bluesky,
   flickr as oauth_flickr,
   github as oauth_github,
   mastodon as oauth_mastodon,
@@ -27,10 +28,6 @@ from oauth_dropins.webutil.util import json_dumps, json_loads
 from werkzeug.exceptions import HTTPException
 
 from flask_app import app
-from flickr import Flickr
-from github import GitHub
-from instagram import Instagram
-from mastodon import Mastodon
 from models import Publish, PublishedPage
 import models
 import util
@@ -40,9 +37,8 @@ import webmention
 logger = logging.getLogger(__name__)
 
 
-SOURCES = (Flickr, GitHub, Mastodon)
-SOURCE_NAMES = {cls.SHORT_NAME: cls for cls in SOURCES}
-SOURCE_DOMAINS = {cls.GR_CLASS.DOMAIN: cls for cls in SOURCES}
+SOURCES = {name: cls for name, cls in models.sources.items() if cls.CAN_PUBLISH}
+SOURCE_DOMAINS = {cls.GR_CLASS.DOMAIN: cls for cls in SOURCES.values()}
 # image URLs matching this regexp should be ignored.
 # (This matches Wordpress Jetpack lazy loaded image placeholders.)
 # https://github.com/snarfed/bridgy/issues/798
@@ -148,13 +144,10 @@ class PublishBase(webmention.Webmention):
 
     domain = parsed.netloc
     path_parts = parsed.path.rsplit('/', 1)
-    source_cls = SOURCE_NAMES.get(path_parts[-1])
+    source_cls = SOURCES.get(path_parts[-1])
     if (domain not in util.DOMAINS or
         len(path_parts) != 2 or path_parts[0] != '/publish' or not source_cls):
-      self.error(
-        'Target must be brid.gy/publish/[flickr,github,mastodon]')
-    elif source_cls == Instagram:
-      self.error(f'Sorry, {source_cls.GR_CLASS.NAME} is not supported.')
+      self.error(f'Target must be brid.gy/publish/[{",".join(SOURCES.keys())}]')
 
     # resolve source URL
     source_url = self.source_url()
@@ -647,10 +640,7 @@ class Preview(PublishBase):
 
 
 class Send(PublishBase):
-  """Interactive publish handler. Redirected to after each silo's OAuth dance.
-
-  Note that this is GET, not POST, since HTTP redirects always GET.
-  """
+  """Interactive publish handler. Redirected to after each silo's OAuth dance."""
   PREVIEW = False
 
   def finish(self, auth_entity, state=None):
@@ -702,6 +692,10 @@ class Send(PublishBase):
 
 # We want Callback.get() and Send.finish(), so put
 # Callback first and override finish.
+class BlueskySend(oauth_bluesky.Callback, Send):
+  finish = Send.finish
+
+
 class FlickrSend(oauth_flickr.Callback, Send):
   finish = Send.finish
 
@@ -754,6 +748,7 @@ class Webmention(PublishBase):
 
 app.add_url_rule('/publish/preview', view_func=Preview.as_view('publish_preview'), methods=['POST'])
 app.add_url_rule('/publish/webmention', view_func=Webmention.as_view('publish_webmention'), methods=['POST'])
+app.add_url_rule('/publish/bluesky/finish', view_func=BlueskySend.as_view('publish_bluesky_finish', 'finish'), methods=['POST'])
 app.add_url_rule('/publish/flickr/finish', view_func=FlickrSend.as_view('publish_flickr_finish', 'unused'))
 app.add_url_rule('/publish/github/finish', view_func=GitHubSend.as_view('publish_github_finish', 'unused'))
 app.add_url_rule('/publish/mastodon/finish', view_func=MastodonSend.as_view('publish_mastodon_finish', 'unused'))

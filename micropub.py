@@ -225,7 +225,7 @@ class GetToken(View):
 def bluesky_start():
   return render_template('provide_app_password.html',
                          post_url='/micropub-token/bluesky/finish',
-                         )
+                         **request.values)
 
 
 class MastodonStart(mastodon.StartBase):
@@ -251,9 +251,7 @@ class MastodonStart(mastodon.StartBase):
 # We want Callback.get() and GetToken.finish(), so put Callback first and
 # override finish.
 class BlueskyToken(oauth_bluesky.Callback, GetToken):
-  def finish(self, auth_entity, state=None):
-    key = ndb.Key('Bluesky', auth_entity.key.id()).urlsafe()
-    return GetToken.finish(self, auth_entity, state=key)
+  finish = GetToken.finish
 
 
 class FlickrToken(oauth_flickr.Callback, GetToken):
@@ -270,7 +268,7 @@ class MastodonToken(oauth_mastodon.Callback, GetToken):
 
 app.add_url_rule('/micropub', view_func=Micropub.as_view('micropub'), methods=['GET', 'POST'])
 
-app.add_url_rule('/micropub-token/bluesky/finish', view_func=BlueskyToken.as_view('micropub_token_bluesky_finish', 'finish'), methods=['GET', 'POST'])
+app.add_url_rule('/micropub-token/bluesky/finish', view_func=BlueskyToken.as_view('micropub_token_bluesky_finish', 'finish'), methods=['POST'])
 
 app.add_url_rule('/micropub-token/flickr/start', view_func=oauth_flickr.Start.as_view('micropub_token_flickr_start', '/micropub-token/flickr/finish'), methods=['POST'])
 app.add_url_rule('/micropub-token/flickr/finish', view_func=FlickrToken.as_view('micropub_token_flickr_finish', 'unused'))
