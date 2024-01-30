@@ -19,8 +19,10 @@ class Bluesky(models.Source):
   """A Bluesky account. Key id is DID."""
   SHORT_NAME = 'bluesky'
   GR_CLASS = gr_bluesky.Bluesky
+  # CAN_PUBLISH = True
   OAUTH_START = oauth_bluesky.Start
   AUTH_MODEL = oauth_bluesky.BlueskyAuth
+  MICROPUB_TOKEN_PROPERTY = 'password'
   URL_CANONICALIZER = util.UrlCanonicalizer(
           domain=GR_CLASS.DOMAIN,
           # Bluesky does not support HEAD requests.
@@ -130,13 +132,19 @@ class Callback(oauth_bluesky.Callback):
 @app.route('/bluesky/start', methods=['GET'])
 def bluesky_start():
   """Serves the Bluesky login form page to sign up."""
-  return render_template('provide_app_password.html', operation='add')
+  return render_template('provide_app_password.html',
+                         post_url='/bluesky/callback',
+                         operation='add',
+                         )
 
 
 @app.route('/bluesky/delete/start', methods=['GET'])
 def bluesky_delete():
   """Serves the Bluesky login form page to delete an existing account."""
-  return render_template('provide_app_password.html', operation='delete')
+  return render_template('provide_app_password.html',
+                         post_url='/bluesky/callback',
+                         operation='delete',
+                         )
 
 
 app.add_url_rule('/bluesky/callback', view_func=Callback.as_view('bluesky_callback', 'unused'), methods=['POST'])

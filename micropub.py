@@ -12,6 +12,7 @@ import google.protobuf.message
 from granary import microformats2
 from granary import source as gr_source
 from oauth_dropins import (
+  bluesky as oauth_bluesky,
   flickr as oauth_flickr,
   github as oauth_github,
   mastodon as oauth_mastodon,
@@ -220,6 +221,13 @@ class GetToken(View):
     return redirect(source.bridgy_url())
 
 
+@app.post('/micropub-token/bluesky/start', endpoint='micropub_token_bluesky_start')
+def bluesky_start():
+  return render_template('provide_app_password.html',
+                         post_url='/micropub-token/bluesky/finish',
+                         )
+
+
 class MastodonStart(mastodon.StartBase):
   def dispatch_request(self):
     source = util.load_source()
@@ -242,6 +250,12 @@ class MastodonStart(mastodon.StartBase):
 
 # We want Callback.get() and GetToken.finish(), so put Callback first and
 # override finish.
+class BlueskyToken(oauth_bluesky.Callback, GetToken):
+  def finish(self, auth_entity, state=None):
+    key = ndb.Key('Bluesky', auth_entity.key.id()).urlsafe()
+    return GetToken.finish(self, auth_entity, state=key)
+
+
 class FlickrToken(oauth_flickr.Callback, GetToken):
   finish = GetToken.finish
 
@@ -256,11 +270,13 @@ class MastodonToken(oauth_mastodon.Callback, GetToken):
 
 app.add_url_rule('/micropub', view_func=Micropub.as_view('micropub'), methods=['GET', 'POST'])
 
-app.add_url_rule('/micropub-token/flickr/start', view_func=oauth_flickr.Start.as_view('flickr_micropub_token_finish', '/micropub-token/flickr/finish'), methods=['POST'])
+app.add_url_rule('/micropub-token/bluesky/finish', view_func=BlueskyToken.as_view('micropub_token_bluesky_finish', 'finish'), methods=['GET', 'POST'])
+
+app.add_url_rule('/micropub-token/flickr/start', view_func=oauth_flickr.Start.as_view('micropub_token_flickr_start', '/micropub-token/flickr/finish'), methods=['POST'])
 app.add_url_rule('/micropub-token/flickr/finish', view_func=FlickrToken.as_view('micropub_token_flickr_finish', 'unused'))
 
-app.add_url_rule('/micropub-token/github/start', view_func=oauth_github.Start.as_view('github_micropub_token_finish', '/micropub-token/github/finish'), methods=['POST'])
+app.add_url_rule('/micropub-token/github/start', view_func=oauth_github.Start.as_view('micropub_token_github_start', '/micropub-token/github/finish'), methods=['POST'])
 app.add_url_rule('/micropub-token/github/finish', view_func=GitHubToken.as_view('micropub_token_github_finish', 'unused'))
 
-app.add_url_rule('/micropub-token/mastodon/start', view_func=MastodonStart.as_view('mastodon_micropub_token_finish', '/micropub-token/mastodon/finish'), methods=['POST'])
+app.add_url_rule('/micropub-token/mastodon/start', view_func=MastodonStart.as_view('micropub_token_mastodon_start', '/micropub-token/mastodon/finish'), methods=['POST'])
 app.add_url_rule('/micropub-token/mastodon/finish', view_func=MastodonToken.as_view('micropub_token_mastodon_finish', 'unused'))
