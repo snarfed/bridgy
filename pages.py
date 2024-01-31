@@ -177,6 +177,7 @@ def user(site, id):
       r.actor = (r.response.get('object') if verb == 'invite'
                  else r.response.get('author') or r.response.get('actor')
                 ) or {}
+      r.actor['url'] = as1.get_url(r.actor)
 
       activity_content = ''
       for a in r.activities + [r.response]:
