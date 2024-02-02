@@ -560,7 +560,7 @@ class PublishBase(webmention.Webmention):
         Publish.status == 'new', Publish.type != 'preview',
         Publish.source == self.source.key, ancestor=page.key).get()
     if pending:
-      logger.warning(f'Collided with publish: {pending.key.urlsafe().decode()}')
+      logger.warning(f'Collided with publish: {pending.key} {pending.key.urlsafe().decode()}')
       raise CollisionError()
 
     entity = Publish.query(

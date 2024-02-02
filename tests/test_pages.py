@@ -280,15 +280,16 @@ class PagesTest(testutil.AppTest):
     }, util.decode_oauth_state(parse_qs(location.query)['state'][0]))
 
   def test_delete_bluesky(self):
-    source_key = Bluesky(id='did:foo').put().urlsafe().decode()
+    source_key = Bluesky(id='did:foo', username='foo.com').put().urlsafe().decode()
 
     resp = self.client.post('/delete/start', data={
         'feature': 'listen',
         'key': source_key,
       })
     self.assertEqual(302, resp.status_code)
-    self.assertEqual('http://localhost/bluesky/delete/start',
-                     resp.headers['Location'])
+    self.assertEqual(
+      'http://localhost/bluesky/delete/start?username=foo.com&feature=listen',
+      resp.headers['Location'])
 
   def test_delete_finish_multiple_features(self):
     self.sources[0].features = ['listen', 'publish']

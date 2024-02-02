@@ -340,7 +340,7 @@ def delete_start():
     return redirect(f'/blogger/delete/start?state={state}')
   elif kind == 'Bluesky':
     # Bluesky isn't OAuth at all yet
-    return redirect(f'/bluesky/delete/start')
+    return redirect(f'/bluesky/delete/start?username={source.username}&feature={feature}')
 
   path = ('/reddit/callback' if kind == 'Reddit'
           else '/wordpress/add' if kind == 'WordPress'
