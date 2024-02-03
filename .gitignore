@@ -43,3 +43,4 @@ wordpress.com_client_*
 *.crx
 *.xpi
 yarn.lock
+__pycache__/
