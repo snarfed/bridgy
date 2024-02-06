@@ -808,6 +808,7 @@ like. If you like it, click <em>Send</em> and Bridgy will post it for you.</p>
 <li class="answer">
 <p>Bridgy can publish:</p>
 <ul>
+<li>Bluesky posts, replies, likes, and reposts. Posts and replies may include <a href="#picture">pictures</a>. <a href="https://github.com/snarfed/bridgy/issues/1661">@-mentions, links, hashtags, and quote posts are coming soon.</a></li>
 <li>Flickr photos, videos, comments, favorites, and <a href="#add-tag">tags onto existing photos</a>. Photos may include <a href="#location">location</a>, <a href="https://indieweb.org/tags">tags</a>, and/or <a href="#person-tag">people tags</a>.</li>
 <li>GitHub issues, <a href="https://help.github.com/articles/about-stars">stars</a>, comments on issues and PRs, <a href="#add-label">labels onto existing issues</a>, and <a href="https://help.github.com/articles/about-conversations-on-github/#reacting-to-ideas-in-comments">emoji reactions</a> to issues, PRs, and comments.</li>
 <li>Mastodon posts, replies, favorites, and reposts. Posts and replies may include <a href="#picture">pictures</a> and <a href="#video">videos</a>. Posts may also be <a href="#delete">deleted</a>.</li>
@@ -826,6 +827,7 @@ like. If you like it, click <em>Send</em> and Bridgy will post it for you.</p>
 </p>
 <p id="publish-backlink">Bridgy's webmention endpoint is <code>https://brid.gy/publish/webmention</code>, and the target URL should be one of:
 <ul>
+<li><code>https://brid.gy/publish/bluesky</code></li>
 <li><code>https://brid.gy/publish/flickr</code></li>
 <li><code>https://brid.gy/publish/github</code></li>
 <li><code>https://brid.gy/publish/mastodon</code></li>
@@ -833,7 +835,8 @@ like. If you like it, click <em>Send</em> and Bridgy will post it for you.</p>
 Your post HTML must also include that same target URL to verify your intent to publish. It doesn't have to be in your <code>e-content</code> or <code>h-entry</code>; it can appear anywhere on the page.
 </p>
 <p>If your server sends webmentions, just include any of these invisible links in your post to publish automatically!
-<pre>&lt;a href="<a href='https://brid.gy/publish/flickr'>https://brid.gy/publish/flickr</a>"&gt;&lt;/a&gt;
+<pre>&lt;a href="<a href='https://brid.gy/publish/bluesky'>https://brid.gy/publish/bluesky</a>"&gt;&lt;/a&gt;
+&lt;a href="<a href='https://brid.gy/publish/flickr'>https://brid.gy/publish/flickr</a>"&gt;&lt;/a&gt;
 &lt;a href="<a href='https://brid.gy/publish/github'>https://brid.gy/publish/github</a>"&gt;&lt;/a&gt;
 &lt;a href="<a href='https://brid.gy/publish/mastodon'>https://brid.gy/publish/mastodon</a>"&gt;&lt;/a&gt;
 </pre>
@@ -906,7 +909,7 @@ tag. For example:
 I love scotch. Scotchy scotchy scotch.
 </pre>
 </p>
-<p>If you're posting to Mastodon, and your <code>&lt;img&gt;</code> tag includes <code>alt="..."</code>, Bridgy will pass on that alt text and it will be included with the picture in your post.</p>
+<p>If you're posting to Bluesky or Mastodon, and your <code>&lt;img&gt;</code> tag includes <code>alt="..."</code>, Bridgy will pass on that alt text and it will be included with the picture in your post.</p>
 </li>
 
 <li id="video" class="question">How do I post a video?</li>
