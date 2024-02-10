@@ -662,17 +662,25 @@ f"""<div class="h-entry"><p class="e-content">
     self.assert_error('fooey', status=429)
     self.assertEqual(429, self.get_response(preview=True).status_code)
 
-  def test_silo_500_returns_502(self):
+  def test_silo_500_returns_502_webmention(self):
+    self._test_silo_500_returns_502(interactive=False)
+
+  def test_silo_500_returns_502_interactive(self):
+    self._test_silo_500_returns_502(interactive=True)
+
+  def _test_silo_500_returns_502(self, **kwargs):
+    # kwargs are passed to assert_error
     self.expect_requests_get('http://foo.com/bar', self.post_html % 'xyz')
     self.mox.StubOutWithMock(self.source.gr_source, 'create',
                              use_mock_anything=True)
     err = requests.HTTPError(response=util.Struct(status_code='500', text='foooey bar'))
     self.source.gr_source.create(mox.IgnoreArg(),
                                  include_link=gr_source.INCLUDE_LINK,
-                                 ignore_formatting=False
+                                 ignore_formatting=False,
                                  ).AndRaise(err)
     self.mox.ReplayAll()
-    self.assert_error('Error: foooey bar', status=502)
+    self.assert_error('Error: foooey bar', status=502, **kwargs)
+    self.assertEqual('failed', Publish.query().get().status)
 
   def test_connection_error_returns_504(self):
     self.expect_requests_get('http://foo.com/bar', self.post_html % 'xyz')
@@ -680,10 +688,11 @@ f"""<div class="h-entry"><p class="e-content">
                              use_mock_anything=True)
     self.source.gr_source.create(mox.IgnoreArg(),
                                  include_link=gr_source.INCLUDE_LINK,
-                                 ignore_formatting=False
+                                 ignore_formatting=False,
                                  ).AndRaise(socket.timeout('foooey bar'))
     self.mox.ReplayAll()
     self.assert_error('Error: foooey bar', status=504)
+    self.assertEqual('failed', Publish.query().get().status)
 
   def test_auth_error_disables_source(self):
     self.expect_requests_get('http://foo.com/bar', self.post_html % 'xyz')
@@ -692,7 +701,7 @@ f"""<div class="h-entry"><p class="e-content">
     err = requests.HTTPError(response=requests_response('orig', status=401))
     self.source.gr_source.create(mox.IgnoreArg(),
                                  include_link=gr_source.INCLUDE_LINK,
-                                 ignore_formatting=False
+                                 ignore_formatting=False,
                                  ).AndRaise(err)
     self.mox.ReplayAll()
 
@@ -710,6 +719,7 @@ f"""<div class="h-entry"><p class="e-content">
                                  ).AndRaise(RuntimeError('baz'))
     self.mox.ReplayAll()
     self.assert_error('Internal Server Error', status=500)
+    self.assertEqual('failed', Publish.query().get().status)
 
   def test_value_error(self):
     """For example, Twitter raises ValueError on invalid in-reply-to URL....
@@ -725,6 +735,7 @@ f"""<div class="h-entry"><p class="e-content">
                                  ).AndRaise(ValueError('baz'))
     self.mox.ReplayAll()
     self.assert_error('baz', status=400)
+    self.assertEqual('failed', Publish.query().get().status)
 
   def test_preview(self):
     html = self.post_html % 'foo'

@@ -116,7 +116,7 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
     return resp, mf2
 
   def error(self, error, html=None, status=400, data=None, log_exception=False,
-            report=False, extra_json=None):
+            report=False, extra_json=None, http_response=True):
     """Handle an error. May be overridden by subclasses.
 
     Args:
@@ -127,6 +127,7 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
       log_exception (bool): whether to include a stack trace in the log msg
       report (bool): whether to report to StackDriver Error Reporting
       extra_json (dict): to be merged into the JSON response body
+      http_response (bool): whether to returning an error HTTP response
     """
     if self.entity and self.entity.status == 'new':
       self.entity.status = 'failed'
@@ -143,8 +144,9 @@ for details (skip to level 2, <em>Publishing on the IndieWeb</em>).
     if report and status != 404:
       self.report_error(error, status=status)
 
-    flask_util.error(str(resp), status=status, response=jsonify(resp),
-                     exc_info=log_exception)
+    if http_response:
+      flask_util.error(str(resp), status=status, response=jsonify(resp),
+                       exc_info=log_exception)
 
   def report_error(self, resp, status=None):
     """Report an error to StackDriver Error reporting."""

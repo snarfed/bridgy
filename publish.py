@@ -265,6 +265,8 @@ class PublishBase(webmention.Webmention):
         if isinstance(e, (NotImplementedError, ValueError, urllib.error.URLError)):
           code = '400'
         elif not code:
+          self.entity.status = 'failed'
+          self.entity.put()
           raise
         msg = f"Error: {body or ''} {e}"
         return self.error(msg, status=code, report=code not in
@@ -631,12 +633,9 @@ class Preview(PublishBase):
             else gr_source.INCLUDE_IF_TRUNCATED if val.lower() == 'maybe'
             else gr_source.OMIT_LINK)
 
-  def error(self, error, html=None, status=400, data=None, report=False, **kwargs):
-    error = html or util.linkify(error)
-    logger.info(f'publish: {error}')
-    if report:
-      self.report_error(error, status=status)
-    flask_util.error(error, status=status)
+  def error(self, error, html=None, status=400, **kwargs):
+    super().error(error, html=html, http_response=False, **kwargs)
+    flask_util.error(html or util.linkify(error), status=status)
 
 
 class Send(PublishBase):
@@ -682,12 +681,9 @@ class Send(PublishBase):
   def include_link(self, item):
     return self.state['include_link']
 
-  def error(self, error, html=None, status=400, data=None, report=False, **kwargs):
-    logger.info(f'publish: {error}')
-    error = html or util.linkify(error)
-    flash(f'{error}')
-    if report:
-      self.report_error(error, status=status)
+  def error(self, error, html=None, **kwargs):
+    flash(html or util.linkify(error))
+    return super().error(error, html=html, http_response=False, **kwargs)
 
 
 # We want Callback.get() and Send.finish(), so put
@@ -740,10 +736,6 @@ class Webmention(PublishBase):
 
     self.error(f"Couldn't find link to {expected[0]}")
     return False
-
-  def error(self, error, **kwargs):
-    logger.info(f'publish: {error}')
-    return super().error(error, **kwargs)
 
 
 app.add_url_rule('/publish/preview', view_func=Preview.as_view('publish_preview'), methods=['POST'])
