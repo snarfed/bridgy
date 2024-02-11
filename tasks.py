@@ -24,6 +24,8 @@ logger = logging.getLogger(__name__)
 # Used as a sentinel value in the webmention endpoint cache
 NO_ENDPOINT = 'NONE'
 
+WEBMENTION_SEND_TIMEOUT = datetime.timedelta(seconds=30)
+
 
 def is_quote_mention(activity, source):
   obj = activity.get('object') or activity
@@ -598,8 +600,8 @@ class SendWebmentions(View):
 
         if endpoint and endpoint != NO_ENDPOINT:
           logger.info('Sending...')
-          resp = webmention.send(endpoint, source_url, target, timeout=999,
-                                 headers=headers)
+          resp = webmention.send(endpoint, source_url, target, headers=headers,
+                                 timeout=WEBMENTION_SEND_TIMEOUT.total_seconds())
           logger.info(f'Sent! {resp}')
           self.record_source_webmention(endpoint, target)
           self.entity.sent.append(target)

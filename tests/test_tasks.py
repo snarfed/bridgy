@@ -1479,8 +1479,9 @@ class PropagateTest(TaskTest):
       call = self.expect_requests_post(endpoint, data={
         'source': source_url,
         'target': target,
-      }, status_code=send_status, allow_redirects=False, timeout=999,
-        **kwargs).InAnyOrder()
+      }, status_code=send_status, allow_redirects=False,
+        timeout=WEBMENTION_SEND_TIMEOUT.total_seconds(), **kwargs,
+      ).InAnyOrder()
 
     return call
 
@@ -1696,7 +1697,7 @@ class PropagateTest(TaskTest):
       response_headers={'Link': '<http://my/endpoint>; rel=webmention'})
 
     self.expect_requests_post(
-      'http://my/endpoint', timeout=999,
+      'http://my/endpoint', timeout=WEBMENTION_SEND_TIMEOUT.total_seconds(),
       data={'source': 'http://localhost/comment/fake/0123456789/a/1_2_a',
             'target': 'http://target1/post/url'},
       allow_redirects=False, headers={'Accept': '*/*'})
