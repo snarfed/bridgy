@@ -10,7 +10,6 @@ git+https://github.com/snarfed/granary.git#egg=granary
 git+https://github.com/snarfed/lexrpc.git#egg=lexrpc
 git+https://github.com/snarfed/mox3.git#egg=mox3
 git+https://github.com/dvska/gdata-python3.git#egg=gdata
-git+https://github.com/Alir3z4/html2text.git#egg=html2text
 
 # required for mox3, not prod
 fixtures==4.1.0
@@ -46,6 +45,7 @@ grpc-google-iam-v1==0.13.0
 grpcio==1.62.0
 grpcio-status==1.62.0
 gunicorn==21.2.0
+html2text==2024.2.25
 html5lib==1.1
 humanfriendly==10.0
 humanize==4.9.0
