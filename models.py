@@ -29,7 +29,7 @@ MAX_AUTHOR_URLS = 5
 REFETCH_HFEED_TRIGGER = datetime.fromtimestamp(-1, tz=timezone.utc)
 
 # limit size of block lists stored in source entities to try to keep whole
-# entiry under 1MB datastore limit:
+# entity under 1MB datastore limit:
 # https://cloud.google.com/datastore/docs/concepts/limits
 BLOCKLIST_MAX_IDS = 20000
 
