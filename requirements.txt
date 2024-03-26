@@ -63,7 +63,7 @@ praw==7.7.1
 prawcore==2.4.0
 proto-plus==1.23.0
 protobuf==4.24.3
-pyasn1==0.5.1
+pyasn1==0.6.0
 pyasn1-modules==0.4.0
 pymemcache==4.0.0
 pyparsing==3.1.2
