@@ -6,6 +6,7 @@ from google.cloud import ndb
 from granary import bluesky as gr_bluesky
 import lexrpc.client
 from oauth_dropins import bluesky as oauth_bluesky
+from oauth_dropins.webutil.flask_util import error
 from oauth_dropins.webutil.util import json_loads
 import requests
 
@@ -135,6 +136,9 @@ def bluesky_start():
   """Serves the Bluesky login form page to sign up."""
   request_values = request.values.to_dict()
   feature = request_values.pop('feature', 'listen')
+
+  if 'username' in request_values:
+    error(f'username parameter is not supported')
 
   username = ''
   if id := request_values.get('id'):
