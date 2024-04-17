@@ -48,7 +48,7 @@ jobs:
       - run:
           name: Python tests
           command: |
-            CLOUDSDK_CORE_PROJECT=brid-gy gcloud beta emulators datastore start --no-store-on-disk --consistency=1.0 --host-port=localhost:8089 < /dev/null >& /dev/null &
+            CLOUDSDK_CORE_PROJECT=brid-gy gcloud emulators firestore start --host-port=:8089 --database-mode=datastore-mode < /dev/null >& /tmp/datastore-emulator.log &
             sleep 5s
             python -m coverage run --source=. --omit=admin.py,appengine_config.py,logs.py,scripts/\*,tests/\* -m unittest discover -v
             python -m coverage html -d /tmp/coverage_html

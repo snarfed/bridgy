@@ -1484,7 +1484,7 @@ Join us!"""
     self.assertEqual(['Done! <a href="http://fake/url">Click here to view.</a>'],
                      get_flashed_messages())
 
-    delete = list(Publish.query())[-1]
+    delete = Publish.query().order('-created').get()
     self.assertEqual(delete.key.parent(), page.key)
     self.assertEqual('deleted', delete.status)
     self.assertEqual('delete', delete.type)
