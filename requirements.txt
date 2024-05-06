@@ -28,7 +28,7 @@ domain2idna==1.12.0
 ecdsa==0.19.0
 feedgen==1.0.0
 Flask==3.0.3
-Flask-Caching==2.2.0
+Flask-Caching==2.3.0
 flask-gae-static==1.0
 google-api-core[grpc]==2.17.1
 google-auth==2.27.0
