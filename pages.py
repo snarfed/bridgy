@@ -14,7 +14,7 @@ from oauth_dropins.webutil.flask_util import error, flash
 from oauth_dropins.webutil.util import json_dumps, json_loads
 import werkzeug.exceptions
 
-from flask_app import app, cache
+from flask_app import app
 from blogger import Blogger
 import models
 from models import BlogPost, BlogWebmention, Publish, Response, Source, Webmentions
@@ -47,7 +47,7 @@ def head(site=None, id=None):
 
 
 @app.route('/')
-@flask_util.cached(cache, datetime.timedelta(days=1))
+@flask_util.headers({'Cache-Control': 'public, max-age=86400'})
 def front_page():
   """View for the front page."""
   return render_template('index.html')
@@ -64,7 +64,7 @@ def which_bridgy():
 
 
 @app.route('/users')
-@flask_util.cached(cache, datetime.timedelta(hours=1))
+@flask_util.headers({'Cache-Control': 'public, max-age=3600'})
 def users():
   """View for ``/users``.
 
@@ -577,6 +577,8 @@ def logout():
 
 
 @app.route('/log')
-@flask_util.cached(cache, logs.CACHE_TIME)
+@flask_util.headers({
+  'Cache-Control': f'public, max-age={int(logs.CACHE_TIME.total_seconds())}',
+})
 def log():
     return logs.log(module=request.values.get('module'))

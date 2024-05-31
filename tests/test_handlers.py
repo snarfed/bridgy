@@ -7,7 +7,7 @@ from mox3 import mox
 from oauth_dropins.webutil.testutil import enable_flask_caching
 from util import json_dumps, json_loads
 
-from flask_app import app, cache
+from flask_app import app
 import handlers
 import models
 from . import testutil
@@ -539,32 +539,9 @@ asdf http://other/link qwert
 </article>
 """)
 
-  @enable_flask_caching(app, cache)
-  def test_cache(self):
-    orig = self.check_response('/post/fake/%s/000')
-
-    # should serve the cached response and not refetch
-    self.mox.StubOutWithMock(FakeGrSource, 'get_activities_response')
-    self.mox.ReplayAll()
-
-    cached = self.check_response('/post/fake/%s/000')
-    self.assert_multiline_equals(orig.get_data(as_text=True),
-                                 cached.get_data(as_text=True))
-
   def test_head(self):
     resp = self.client.head(f'/post/fake/{self.source.key.string_id()}/000')
     self.assertEqual(200, resp.status_code)
-
-  @enable_flask_caching(app, cache)
-  def test_cache_includes_method(self):
-    path = f'/post/fake/{self.source.key.string_id()}/000'
-    resp = self.client.head(path)
-    self.assertEqual(200, resp.status_code)
-    self.assertEqual('', resp.text)
-
-    resp = self.client.get(path)
-    self.assertEqual(200, resp.status_code)
-    self.assertNotEqual('', resp.text)
 
   def test_in_blocklist(self):
     self.mox.StubOutWithMock(FakeSource, 'is_blocked')

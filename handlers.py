@@ -29,14 +29,14 @@ from oauth_dropins.webutil import flask_util
 from oauth_dropins.webutil.flask_util import error
 from oauth_dropins.webutil.util import json_loads
 
-from flask_app import app, cache
+from flask_app import app
 import models
 import original_post_discovery
 import util
 
 logger = logging.getLogger(__name__)
 
-CACHE_TIME = datetime.timedelta(minutes=15)
+CACHE_CONTROL = {'Cache-Control': 'public, max-age=900'}  # 15m
 
 TEMPLATE = string.Template("""\
 <!DOCTYPE html>
@@ -111,7 +111,7 @@ class Item(View):
     except Exception as e:
       util.interpret_http_exception(e)
 
-  @flask_util.cached(cache, CACHE_TIME)
+  @flask_util.headers(CACHE_CONTROL)
   def dispatch_request(self, site, key_id, **kwargs):
     """Handle HTTP request."""
     source_cls = models.sources.get(site)

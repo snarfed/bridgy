@@ -5,7 +5,6 @@ import string
 import sys
 
 from flask import Flask
-from flask_caching import Cache
 import flask_gae_static
 import humanize
 from oauth_dropins.webutil import flask_util
@@ -43,8 +42,6 @@ app.jinja_env.globals.update({
   'util': util,
   'EPOCH': util.EPOCH,
 })
-
-cache = Cache(app)
 
 
 @app.route('/_ah/<any(start, stop, warmup):_>')
