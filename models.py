@@ -96,6 +96,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
   # (eg Instagram)
   AUTO_POLL = True
   # how often to poll for responses
+  VOLUME_POLL = timedelta(minutes=5)
   FAST_POLL = timedelta(minutes=30)
   # how often to poll sources that have never sent a webmention
   SLOW_POLL = timedelta(days=1)
@@ -354,7 +355,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
   def poll_period(self):
     """Returns the poll frequency for this source, as a :class:`datetime.timedelta`.
 
-    Defaults to ~15m, depending on silo. If we've never sent a webmention for
+    Defaults to ~30m, depending on silo. If we've never sent a webmention for
     this source, or the last one we sent was over a month ago, we drop them down
     to ~1d after a week long grace period.
     """
@@ -365,6 +366,9 @@ class Source(StringIdModel, metaclass=SourceMeta):
       return self.FAST_POLL
     elif not self.last_webmention_sent:
       return self.SLOW_POLL
+    elif (self.is_volume_user()
+          and self.last_webmention_sent > now - timedelta(hours=1)):
+      return self.VOLUME_POLL
     elif self.last_webmention_sent > now - timedelta(days=7):
       return self.FAST_POLL
     elif self.last_webmention_sent > now - timedelta(days=30):
@@ -826,6 +830,13 @@ class Source(StringIdModel, metaclass=SourceMeta):
     Beta users come from ``beta_users.txt``.
     """
     return self.bridgy_path() in util.BETA_USER_PATHS
+
+  def is_volume_user(self):
+    """Returns True if this is a "volume" user special cased to poll faster.
+
+    Volume users come from ``volume_users.txt``.
+    """
+    return self.bridgy_path() in util.VOLUME_USER_PATHS
 
   def load_blocklist(self):
     """Fetches this user's blocklist, if supported, and stores it in the entity."""

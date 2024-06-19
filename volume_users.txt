@@ -1,0 +1,4 @@
+# URL paths of high volume users that we've special cased to poll more often.
+
+# https://buttondown.email/
+/reddit/buttondown-email

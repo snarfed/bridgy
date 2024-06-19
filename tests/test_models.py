@@ -696,6 +696,21 @@ class SourceTest(testutil.AppTest):
     source.rate_limited = True
     self.assertEqual(source.RATE_LIMITED_POLL, source.poll_period())
 
+  def test_poll_period_volume_user(self):
+    source = FakeSource.new(created=datetime(2000, 1, 1, tzinfo=timezone.utc))
+    source.put()
+
+    self.mox.stubs.Set(util, 'VOLUME_USER_PATHS', set([source.bridgy_path()]))
+    self.assertTrue(source.is_volume_user())
+    self.assertEqual(source.SLOW_POLL, source.poll_period())
+
+    now = util.now()
+    source.last_webmention_sent = now - timedelta(hours=1)
+    self.assertEqual(source.FAST_POLL, source.poll_period())
+
+    source.last_webmention_sent = now - timedelta(minutes=45)
+    self.assertEqual(source.VOLUME_POLL, source.poll_period())
+
   def test_should_refetch(self):
     source = FakeSource.new()  # haven't found a synd url yet
     self.assertFalse(source.should_refetch())

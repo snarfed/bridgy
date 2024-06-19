@@ -72,6 +72,10 @@ OPT_OUT_TAGS = frozenset(('#nobot', '#nobridge'))
 with open(os.path.join(_dir, 'beta_users.txt'), 'rt', encoding='utf-8') as f:
   BETA_USER_PATHS = util.load_file_lines(f)
 
+# URL paths of high volume users that we've special cased to poll more often.
+with open(os.path.join(_dir, 'volume_users.txt'), 'rt', encoding='utf-8') as f:
+  VOLUME_USER_PATHS = util.load_file_lines(f)
+
 # Returned as the HTTP status code when an upstream API fails. Not 5xx so that
 # it doesn't show up as a server error in graphs or trigger StackDriver's error
 # reporting.
