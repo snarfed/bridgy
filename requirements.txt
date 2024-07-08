@@ -48,7 +48,7 @@ gunicorn==22.0.0
 html2text==2024.2.26
 html5lib==1.1
 humanfriendly==10.0
-humanize==4.9.0
+humanize==4.10.0
 idna==3.7
 itsdangerous==2.2.0
 Jinja2==3.1.4
