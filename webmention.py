@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 @app.route('/publish/<any(bluesky,flickr,github,mastodon):silo>',
            methods=['GET', 'HEAD'])
+@flask_util.headers({'Cache-Control': 'public, max-age=86400'})
 def webmention_get_or_head(silo):
   """Serves webmention discovery for HEADs to webmention endpoints."""
   return f"""\
