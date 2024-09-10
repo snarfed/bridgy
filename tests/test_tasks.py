@@ -810,7 +810,8 @@ class PollTest(TaskTest):
   def test_wrong_last_polled(self):
     """If the source doesn't have our last polled value, we should quit.
     """
-    self.sources[0].last_polled = datetime.datetime.utcfromtimestamp(3)
+    self.sources[0].last_polled = datetime.datetime.fromtimestamp(
+      3, tz=datetime.timezone.utc)
     self.sources[0].put()
     self.post_task()
     self.assertEqual([], list(Response.query()))
