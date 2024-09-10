@@ -105,10 +105,7 @@ class CronTest(testutil.BackgroundTest):
     self.assertEqual(flickrs[1].picture, flickrs[1].key.get().picture)
 
     cursor = cron.LastUpdatedPicture.get_by_id('flickr')
-    # this would be None on prod, but the datastore emulator always returns
-    # more=True even when there aren't more results. :(
-    # https://github.com/googleapis/python-ndb/issues/241
-    self.assertEqual(flickrs[1].key, cursor.last)
+    self.assertIsNone(cursor.last)
 
   def test_update_mastodon_pictures(self):
     self.expect_requests_get(
