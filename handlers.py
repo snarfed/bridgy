@@ -197,7 +197,7 @@ class Item(View):
       return mf2_json
 
   def merge_urls(self, obj, property, urls, object_type='article'):
-    """Updates an object's ActivityStreams URL objects in place.
+    r"""Updates an object's ActivityStreams URL objects in place.
 
     Adds all URLs in urls that don't already exist in ``obj[property]``\.
 

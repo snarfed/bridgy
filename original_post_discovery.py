@@ -51,7 +51,7 @@ MF2_HTML_MIME_TYPE= 'text/mf2+html'
 
 def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True,
              already_fetched_hfeeds=None):
-  """Augments the standard original post discovery algorithm with a
+  r"""Augments the standard original post discovery algorithm with a
   reverse lookup that supports posts without a backlink or citation.
 
   If ``fetch_hfeed`` is False, then we will check the db for previously found
@@ -171,7 +171,7 @@ def discover(source, activity, fetch_hfeed=True, include_redirect_sources=True,
 
 
 def refetch(source):
-  """Refetch the author's URLs and look for new or updated syndication
+  r"""Refetch the author's URLs and look for new or updated syndication
   links that might not have been there the first time we looked.
 
   Args:
@@ -277,7 +277,7 @@ def _posse_post_discovery(source, activity, syndication_url, fetch_hfeed,
 
 
 def _process_author(source, author_url, refetch=False, store_blanks=True):
-  """Fetch the author's domain URL, and look for syndicated posts.
+  r"""Fetch the author's domain URL, and look for syndicated posts.
 
   Args:
     source (models.Source)
@@ -404,7 +404,7 @@ def _process_author(source, author_url, refetch=False, store_blanks=True):
 
 
 def _merge_hfeeds(feed1, feed2):
-  """Merge items from two ``h-feeds`` into a composite feed.
+  r"""Merge items from two ``h-feeds`` into a composite feed.
 
   Skips items in ``feed2`` that are already represented in ``feed1``\, based on
   the ``url`` property.
@@ -455,7 +455,7 @@ def _find_feed_items(mf2):
 
 def process_entry(source, permalink, feed_entry, refetch, preexisting,
                   store_blanks=True):
-  """Fetch and process an h-entry and save a new :class:`models.SyndicatedPost`.
+  r"""Fetch and process an h-entry and save a new :class:`models.SyndicatedPost`.
 
   Args:
     source (models.Source)
@@ -560,7 +560,7 @@ def process_entry(source, permalink, feed_entry, refetch, preexisting,
 
 def _process_syndication_urls(source, permalink, syndication_urls,
                               preexisting):
-  """Process a list of syndication URLs looking for one that matches the
+  r"""Process a list of syndication URLs looking for one that matches the
   current source. If one is found, stores a new :class:`models.SyndicatedPost`
   in the db.
 

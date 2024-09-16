@@ -36,7 +36,7 @@ def is_quote_mention(activity, source):
 
 
 class Poll(View):
-  """Task handler that fetches and processes new responses from a single source.
+  r"""Task handler that fetches and processes new responses from a single source.
 
   Request parameters:
 

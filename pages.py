@@ -66,7 +66,7 @@ def which_bridgy():
 @app.route('/users')
 @flask_util.headers({'Cache-Control': 'public, max-age=3600'})
 def users():
-  """View for ``/users``.
+  r"""View for ``/users``.
 
   Semi-optimized. Pages by source name. Queries each source type for results
   with name greater than the start_name query param, then merge sorts the

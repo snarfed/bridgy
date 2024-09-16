@@ -57,12 +57,12 @@ DISQUS_API_SECRET = util.read('disqus_api_secret')
 # have a default way, but themes often do it themselves, differently. Sigh.
 # Details in https://github.com/snarfed/bridgy/issues/278
 DISQUS_SHORTNAME_RES = (
-  re.compile("""
+  re.compile(r"""
     (?:https?://disqus\.com/forums|disqus[ -_]?(?:user|short)?name)
     \ *[=:/]\ *['"]?
     ([^/"\' ]+)     # the actual shortname
     """, re.IGNORECASE | re.VERBOSE),
-  re.compile('https?://([^./"\' ]+)\.disqus\.com/embed\.js'),
+  re.compile(r'https?://([^./"\' ]+)\.disqus\.com/embed\.js'),
   )
 
 

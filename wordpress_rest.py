@@ -106,7 +106,7 @@ class WordPress(models.Source):
     return [self.url], [self.key_id()]
 
   def create_comment(self, post_url, author_name, author_url, content):
-    """Creates a new comment in the source silo.
+    r"""Creates a new comment in the source silo.
 
     If the last part of the post URL is numeric, e.g.
     ``http://site/post/123999``\, it's used as the post id. Otherwise, we
