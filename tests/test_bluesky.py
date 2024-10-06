@@ -94,7 +94,7 @@ class BlueskyTest(testutil.AppTest):
       'source': self.bsky.key.urlsafe().decode(),
     }, util.decode_oauth_state(query['state'][0]))
 
-  @mock.patch('requests.get', return_value=requests_response({}))
+  @mock.patch('requests.get', return_value=requests_response({'feed': []}))
   def test_get_activities(self, _):
     self.assertEqual([], self.bsky.get_activities())
 
