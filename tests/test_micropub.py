@@ -184,8 +184,7 @@ class MicropubTest(AppTest):
     self.assert_response(status=400, json={
       'type': ['h-entry'],
       'properties': {
-        'content': ['Tweaking workflows - https://decoding.io/2022/12/1693/'],
-        'syndication': {'1': 'https://micro.blog/zsbenke/15450788'},
+        'content': {'html': 'Tweaking workflows - https://decoding.io/2022/12/1693/'},
       },
     })
     self.assertEqual(0, Publish.query().count())

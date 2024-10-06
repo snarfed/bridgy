@@ -137,7 +137,7 @@ class Micropub(PublishBase):
     logger.debug(f'Got microformats2: {json_dumps(mf2, indent=2)}')
     try:
       obj = microformats2.json_to_object(mf2)
-    except (TypeError, ValueError) as e:
+    except (TypeError, ValueError, KeyError) as e:
       self.error('invalid_request', f'Invalid microformats2 input: {e}')
 
     # override articles to be notes to force short-form granary sources like
