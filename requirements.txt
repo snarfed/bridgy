@@ -27,7 +27,7 @@ colorama==0.4.6
 domain2idna==1.12.2
 ecdsa==0.19.0
 feedgen==1.0.0
-Flask==3.0.3
+Flask==3.1.0
 Flask-Caching==2.3.0
 flask-gae-static==1.0
 google-api-core[grpc]==2.19.1
