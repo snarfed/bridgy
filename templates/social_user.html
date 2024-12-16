@@ -203,6 +203,9 @@ WordPress.com, <a href="/">sign up here!</a>
   {% if source.SHORT_NAME == 'mastodon' %}
     <input name="instance" type="hidden" value="{{ source.instance() }}" />
   {% endif %}
+  {% if source.SHORT_NAME == 'bluesky' %}
+    <input name="username" type="hidden" value="{{ source.username }}" />
+  {% endif %}
  <button id="micropub-token-button" type="submit" class="btn btn-default"
     title="Shows your Micropub access token"
     >Get token</button>
