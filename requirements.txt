@@ -69,7 +69,7 @@ protobuf==5.29.2
 pyasn1==0.6.1
 pyasn1-modules==0.4.1
 pymemcache==4.0.0
-pyparsing==3.2.0
+pyparsing==3.2.1
 python-dateutil==2.9.0.post0
 python-tumblpy==1.1.4
 pytz==2024.2
