@@ -46,8 +46,13 @@ autodoc_member_order = 'bysource'
 autodoc_default_options = {
     'show-inheritance': True,
     'members': True,
-    'special-members': True,
+    'private-members': '_convert, _handle',
+    'no-undoc-members': True,
+    'no-special-members': True,
+    'no-imported-members': True,
+    'member-order': 'bysource',
 }
+autodoc_inherit_docstrings = False
 
 # Napoleon settings
 # http://www.sphinx-doc.org/en/stable/ext/napoleon.html
@@ -78,7 +83,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'Bridgy'
-copyright = '2011-2023, Ryan Barrett'
+copyright = '2011-2025, Ryan Barrett'
 author = 'Ryan Barrett'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -117,7 +122,8 @@ exclude_patterns = ['_build', '**/appengine_config.py', '**/tests', '**/test_*.p
 
 # If true, the current module name will be prepended to all description
 # unit titles (such as .. function::).
-#add_module_names = True
+add_module_names = False
+python_use_unqualified_type_names = True
 
 # If true, sectionauthor and moduleauthor directives will be shown in the
 # output. They are ignored by default.
@@ -337,6 +343,7 @@ intersphinx_mapping = {
   'flask': ('https://flask.palletsprojects.com/en/latest', None),
   'flask_caching': ('https://flask-caching.readthedocs.io/en/latest', None),
   'granary': ('https://granary.readthedocs.io/en/latest', None),
+  'lexrpc': ('https://lexrpc.readthedocs.io/en/stable', None),
   'ndb': ('https://googleapis.dev/python/python-ndb/latest/', None),
   'oauth_dropins': ('https://oauth-dropins.readthedocs.io/en/latest', None),
   'python': ('https://docs.python.org/3/', None),

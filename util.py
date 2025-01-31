@@ -424,7 +424,7 @@ def prune_response(response):
 
 
 def replace_test_domains_with_localhost(url):
-  """Replace domains in ``LOCALHOST_TEST_DOMAINS` with localhost for testing.
+  """Replace domains in ``LOCALHOST_TEST_DOMAINS`` with localhost for testing.
 
   Args:
     url (str)
@@ -486,7 +486,7 @@ def maybe_add_or_delete_source(source_cls, auth_entity, state, **kwargs):
 
   This method _always_ ends by raising a :class:`Redirect` exception to return
   an HTTP redirect response! That means that any code after a call to this
-  function _will not run_!
+  function *will not run!*
 
   Args:
     source_cls (granary.source.Source subclass): eg

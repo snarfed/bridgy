@@ -27,11 +27,11 @@ Pull requests are welcome! Feel free to `ping me in
 
 First, fork and clone this repo. Then, install the `Google Cloud
 SDK <https://cloud.google.com/sdk/>`__ and run
-``gcloud components install beta cloud-datastore-emulator`` to install
-the `datastore
-emulator <https://cloud.google.com/datastore/docs/tools/datastore-emulator>`__.
-Once you have them, set up your environment by running these commands in
-the repo root directory:
+``gcloud components install cloud-firestore-emulator`` to install the
+`Firestore
+emulator <https://cloud.google.com/firestore/docs/emulator>`__. Once you
+have them, set up your environment by running these commands in the repo
+root directory:
 
 .. code:: sh
 
@@ -46,7 +46,7 @@ Now, you can fire up the gcloud emulator and run the tests:
 
 .. code:: sh
 
-   gcloud beta emulators datastore start --use-firestore-in-datastore-mode --no-store-on-disk --host-port=localhost:8089 --quiet < /dev/null >& /dev/null &
+   gcloud emulators firestore start --host-port=:8089 --database-mode=datastore-mode < /dev/null >& /dev/null &
    python3 -m unittest discover -s tests -t .
    kill %1
 
@@ -58,7 +58,7 @@ To run the app locally, use
 
 .. code:: shell
 
-   gcloud beta emulators datastore start --use-firestore-in-datastore-mode --no-store-on-disk --host-port=localhost:8089 --quiet < /dev/null >& /dev/null &
+   gcloud emulators firestore start --host-port=:8089 --database-mode=datastore-mode < /dev/null >& /dev/null &
    GAE_ENV=localdev FLASK_ENV=development flask run -p 8080
 
 Open `localhost:8080 <http://localhost:8080/>`__ and you should see the
@@ -85,7 +85,7 @@ background task processing service, eg:
 
 .. code:: shell
 
-   gcloud beta emulators datastore start --consistency=1.0 --host-port=localhost:8089 --quiet
+   gcloud emulators firestore start --host-port=:8089 --database-mode=datastore-mode
    GAE_ENV=localdev FLASK_ENV=development flask run -p 8080
 
 Now, run the ``curl`` command you constructed above.
@@ -238,74 +238,74 @@ Browser extension: Changelog
 
 0.7.0, 2024-01-03
 
--  Remove Instgram. Their anti-bot defenses have led them to suspend a
-   couple people’s accounts for using this extension, so we’re disabling
-   it out of an abundance of caution. Sorry for the bad news.
+- Remove Instgram. Their anti-bot defenses have led them to suspend a
+  couple people’s accounts for using this extension, so we’re disabling
+  it out of an abundance of caution. Sorry for the bad news.
 
 0.6.1, 2022-09-18
 
--  Don’t open silo login pages if they’re not logged in. This ran at
-   extension startup time, which was mostly harmless in manifest v2
-   since the background page was persistent stayed loaded, but in
-   manifest v3 it’s a service worker or non-persistent background page,
-   which gets unloaded and then reloaded every 5m.
+- Don’t open silo login pages if they’re not logged in. This ran at
+  extension startup time, which was mostly harmless in manifest v2 since
+  the background page was persistent stayed loaded, but in manifest v3
+  it’s a service worker or non-persistent background page, which gets
+  unloaded and then reloaded every 5m.
 
 0.6.0, 2022-09-17
 
--  Migrate Chrome (`but not
-   Firefox <https://blog.mozilla.org/addons/2022/05/18/manifest-v3-in-firefox-recap-next-steps/>`__)
-   `from Manifest v2 to
-   v3 <https://developer.chrome.com/docs/extensions/mv3/intro/mv3-migration/#man-sw>`__.
+- Migrate Chrome (`but not
+  Firefox <https://blog.mozilla.org/addons/2022/05/18/manifest-v3-in-firefox-recap-next-steps/>`__)
+  `from Manifest v2 to
+  v3 <https://developer.chrome.com/docs/extensions/mv3/intro/mv3-migration/#man-sw>`__.
 
 0.5, 2022-07-21
 
--  Update Instagram scraping.
+- Update Instagram scraping.
 
 0.4, 2022-01-30
 
--  Fix Instagram comments. Add extra client side API fetch, forward to
-   new Bridgy endpoint.
--  Expand error messages in options UI.
+- Fix Instagram comments. Add extra client side API fetch, forward to
+  new Bridgy endpoint.
+- Expand error messages in options UI.
 
 0.3.5, 2021-03-04
 
--  Dynamically adjust polling frequency per silo based on how often
-   we’re seeing new comments and reactions, how recent the last
-   successful webmention was, etc.
+- Dynamically adjust polling frequency per silo based on how often we’re
+  seeing new comments and reactions, how recent the last successful
+  webmention was, etc.
 
 0.3.4, 2021-02-22
 
--  Allow individually enabling or disabling Instagram and Facebook.
+- Allow individually enabling or disabling Instagram and Facebook.
 
 0.3.3, 2021-02-20
 
--  Only override requests from the browser extension, not all requests
-   to the silos’ domains.
+- Only override requests from the browser extension, not all requests to
+  the silos’ domains.
 
 0.3.2, 2021-02-18
 
--  Fix compatibility with Facebook Container Tabs.
+- Fix compatibility with Facebook Container Tabs.
 
 0.3.1, 2021-02-17
 
--  Add Facebook support!
+- Add Facebook support!
 
 0.2.1, 2021-01-09
 
--  Add more details to extensions option page: Instagram login, Bridgy
-   IndieAuth registration, etc.
--  Support Firefox’s Facebook Container Tabs addon.
+- Add more details to extensions option page: Instagram login, Bridgy
+  IndieAuth registration, etc.
+- Support Firefox’s Facebook Container Tabs addon.
 
 0.2, 2021-01-03
 
--  Add IndieAuth login on https://brid.gy/ and token handling.
--  Add extension settings page with status info and buttons to login
-   again and poll now.
--  Better error handling.
+- Add IndieAuth login on https://brid.gy/ and token handling.
+- Add extension settings page with status info and buttons to login
+  again and poll now.
+- Better error handling.
 
 0.1.5, 2020-12-25
 
--  Initial beta release!
+- Initial beta release!
 
 Adding a new silo
 -----------------
@@ -466,9 +466,9 @@ https://console.cloud.google.com/datastore/entities;kind=Response;ns=\ **:math:`
 Open the existing ``Response`` table in BigQuery:
 https://console.cloud.google.com/bigquery?project=brid-gy&ws=%211m10%211m4%214m3%211sbrid-gy%212sdatastore%213sResponse%211m4%211m3%211sbrid-gy%212sbquxjob_371f97c8_18131ff6e69%213sUS
 
-Update the year in the queries below to two years before today. Query
-for the same first few rows sorted by ``updated`` ascending, check that
-they’re the same:
+Update the year in the queries below to three years before this year.
+Query for the same first few rows sorted by ``updated`` ascending, check
+that they’re the same:
 
 ::
 
