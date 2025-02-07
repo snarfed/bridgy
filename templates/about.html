@@ -99,6 +99,7 @@ service.</a>
 <li><a href="#picture">How do I post a picture?</a></li>
 <li><a href="#video">How do I post a video?</a></li>
 <li><a href="#person-tag">How do I tag someone in a post?</a></li>
+<li><a href="#user-mention">How do I @-mention someone?</a></li>
 <li><a href="#location">How do I include location in a post?</a></li>
 <li><a href="#delete">How do I delete a post?</a></li>
 <li><a href="#github-issue-comment">How do I create a GitHub issue or comment?</a></li>
@@ -808,10 +809,10 @@ like. If you like it, click <em>Send</em> and Bridgy will post it for you.</p>
 <li class="answer">
 <p>Bridgy can publish:</p>
 <ul>
-<li>Bluesky posts, replies, likes, reposts, and quote posts. Posts and replies may include <a href="#picture">pictures</a>, <a href="#video">videos</a>, <a href="#person-tag">@-mentions</a>, <a href="https://indieweb.org/tags#How_to_markup">hashtags</a>, and links. Posts may also be <a href="#delete">deleted</a>.</li>
+<li>Bluesky posts, replies, likes, reposts, and quote posts. Posts and replies may include <a href="#picture">pictures</a>, <a href="#video">videos</a>, <a href="#user-mention">@-mentions</a>, <a href="https://indieweb.org/tags#How_to_markup">hashtags</a>, and links. Posts may also be <a href="#delete">deleted</a>.</li>
 <li>Flickr photos, videos, comments, favorites, and <a href="#add-tag">tags onto existing photos</a>. Photos may include <a href="#location">location</a>, <a href="https://indieweb.org/tags">tags</a>, and/or <a href="#person-tag">people tags</a>.</li>
 <li>GitHub issues, <a href="https://help.github.com/articles/about-stars">stars</a>, comments on issues and PRs, <a href="#add-label">labels onto existing issues</a>, and <a href="https://help.github.com/articles/about-conversations-on-github/#reacting-to-ideas-in-comments">emoji reactions</a> to issues, PRs, and comments.</li>
-<li>Mastodon posts, replies, favorites, and reposts. Posts and replies may include <a href="#picture">pictures</a> and <a href="#video">videos</a>. Posts may also be <a href="#delete">deleted</a>.</li>
+<li>Mastodon posts, replies, favorites, and reposts. Posts and replies may include <a href="#picture">pictures</a>, <a href="#video">videos</a>, <a href="#user-mention">@-mentions</a>, and plain text hashtags and URLs. Posts may also be <a href="#delete">deleted</a>.</li>
 </ul>
 </li>
 </p></li>
@@ -926,6 +927,21 @@ tag. For example:
 </p>
 </li>
 
+<li id="video" class="question">How do I post a video?</li>
+<li class="answer">
+<p>
+Just <a href="https://indieweb.org/video">add the video</a>
+to your post in a <code>&lt;video class="u-video"&gt;</code>
+tag. For example:
+
+<pre>
+&lt;video class="<span class='keyword'>u-video</span>" src="<span class='value'>/cat_hunting.mp4</span>"&gt;
+  Kitty is on the hunt!
+&lt;/video&gt;
+</pre>
+</p>
+</li>
+
 <li id="person-tag" class="question">How do I tag someone in a post?</li>
 <li class="answer">
 <p>
@@ -935,6 +951,16 @@ Flickr supports tagging people in posts, photos, and checkins. Just include a <a
 &lt;a class="<span class='keyword'>u-category h-card</span>" href="<span class='value'>https://www.flickr.com/people/40721178@N00/</span>"&gt;
   Tag, you're it!
 &lt;/a&gt;
+</pre>
+</p>
+</li>
+
+<li id="user-mention" class="question">How do I @-mention someone?</li>
+<li class="answer">
+<p>Bluesky and Mastodon support @-mentions. Just link to a user's profile with a <code>@</code> character at the beginning of the link text; no microformats2 needed. For example:
+
+<pre>
+Hi &lt;a href="<span class='value'>https://bsky.app/profile/snarfed.org</span>"&gt;<span class='value'>@snarfed.org</span>&lt;/a&gt; what's up?
 </pre>
 </p>
 </li>
