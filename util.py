@@ -538,7 +538,7 @@ def maybe_add_or_delete_source(source_cls, auth_entity, state, **kwargs):
 
     if source:
       # if we're normalizing username case to lower case to make the key id, check
-      # if there's and old Source with a capitalized key id, and if so, disable it
+      # if there's an old Source with a capitalized key id, and if so, disable it
       # https://github.com/snarfed/bridgy/issues/884
       if source.USERNAME_KEY_ID and source.username != source.key_id():
         @ndb.transactional()
