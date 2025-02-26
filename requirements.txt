@@ -80,6 +80,7 @@ redis==5.2.1
 requests==2.32.3
 requests-oauthlib==1.4.0
 rsa==4.9
+secp256k1==0.14.0
 six==1.17.0
 soupsieve==2.6
 tlslite-ng==0.8.0a44
