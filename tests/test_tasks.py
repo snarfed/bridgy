@@ -400,6 +400,23 @@ class PollTest(TaskTest):
     self.assertEqual(public_date, source.last_public_post)
     self.assertEqual(2, source.recent_private_posts)
 
+  def test_non_public_responses(self,):
+    self.activities = FakeGrSource.activities = [self.activities[0]]
+
+    unlisted = [{'objectType':'group', 'alias':'@unlisted'}]
+    public = [{'objectType':'group', 'alias':'@public'}]
+
+    self.activities[0]['object']['replies']['items'][0]['author'] = {'to': unlisted}
+    self.activities[0]['object']['tags'][0]['actor'] = {'to': unlisted}
+    self.activities[0]['object']['tags'][1]['to'] = unlisted
+    self.activities[0]['object']['tags'][2]['to'] = public
+
+    self.expect_task('propagate', response_key=self.responses[3])
+    self.post_task(expect_poll=FakeSource.FAST_POLL)
+
+    source = self.sources[0].key.get()
+    self.assertEqual(0, source.recent_private_posts)
+
   def test_no_responses(self):
     """Handle activities without responses ok.
     """
@@ -1807,6 +1824,19 @@ class PropagateTest(TaskTest):
     """If the response is non-public, we should give up."""
     resp = json_loads(self.responses[0].response_json)
     resp['to'] = [{'objectType':'group', 'alias':'@private'}]
+    self.responses[0].response_json = json_dumps(resp)
+    self.responses[0].put()
+
+    self.post_task()
+    self.assert_response_is('complete', unsent=['http://target1/post/url'], sent=[])
+
+  def test_non_public_response_author(self):
+    """If the response's author is non-public, we should give up."""
+    resp = json_loads(self.responses[0].response_json)
+    resp['author'] = {
+      'id': 'tag:source.com,2013:alice',
+      'to': [{'objectType':'group', 'alias':'@private'}],
+    }
     self.responses[0].response_json = json_dumps(resp)
     self.responses[0].put()
 

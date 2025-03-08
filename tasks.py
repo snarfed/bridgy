@@ -27,6 +27,13 @@ NO_ENDPOINT = 'NONE'
 WEBMENTION_SEND_TIMEOUT = datetime.timedelta(seconds=30)
 
 
+def is_public(obj):
+  """Checks both the object and its author/actor."""
+  return (as1.is_public(obj, unlisted=False) and
+          as1.is_public(as1.get_object(obj, 'author'), unlisted=False) and
+          as1.is_public(as1.get_object(obj, 'actor'), unlisted=False))
+
+
 def is_quote_mention(activity, source):
   obj = activity.get('object') or activity
   for att in obj.get('attachments', []):
@@ -243,7 +250,7 @@ class Poll(View):
     public = {}
     private = {}
     for id, activity in activities.items():
-      (public if as1.is_public(activity) else private)[id] = activity
+      (public if is_public(activity) else private)[id] = activity
     logger.info(f'Found {len(public)} public activities: {public.keys()}')
     logger.info(f'Found {len(private)} private activities: {private.keys()}')
 
@@ -307,7 +314,8 @@ class Poll(View):
       reposts = [t for t in tags if Response.get_type(t) == 'repost']
       rsvps = as1.get_rsvps_from_event(obj)
 
-      # coalesce responses. drop if missing id or author is blocked or opted out
+      # coalesce responses. drop if missing id or author is blocked, non-public,
+      # or opted out
       for resp in replies + likes + reactions + reposts + rsvps:
         id = resp.get('id')
         if not id:
@@ -317,6 +325,9 @@ class Poll(View):
         owner = as1.get_object(resp, 'actor') or as1.get_object(resp, 'author')
         if source.is_blocked(resp) or util.is_opt_out(owner):
           logger.info(f'Skipping blocked/opt out user: {json_dumps(owner, indent=2)}')
+          continue
+        elif not is_public(resp):
+          logger.info(f'Skipping non-public response {id} or author')
           continue
 
         resp.setdefault('activities', []).append(activity)
@@ -761,9 +772,9 @@ class PropagateResponse(SendWebmentions):
 
     self.activities = [json_loads(a) for a in self.entity.activities_json]
     self.response_obj = json_loads(self.entity.response_json)
-    if (not as1.is_public(self.response_obj) or
-        not all(as1.is_public(a) for a in self.activities)):
-      logger.info('Response or activity is non-public. Dropping.')
+    if (not is_public(self.response_obj) or
+        not all(is_public(a) for a in self.activities)):
+      logger.info('Response or author or activity is non-public. Dropping.')
       self.complete()
       return ''
 
