@@ -83,7 +83,7 @@ rsa==4.9
 secp256k1==0.14.0
 six==1.17.0
 soupsieve==2.6
-tlslite-ng==0.8.0a44
+tlslite-ng==0.8.2
 tweepy==4.15.0
 ujson==5.10.0
 update-checker==0.18.0
