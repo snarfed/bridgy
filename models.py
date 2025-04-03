@@ -433,7 +433,21 @@ class Source(StringIdModel, metaclass=SourceMeta):
     return resp
 
   def get_activities(self, **kwargs):
-    return self.get_activities_response(**kwargs)['items']
+    activities = self.get_activities_response(**kwargs)['items']
+
+    # Ensure all activity and object ids are tag URIs
+    # https://github.com/snarfed/bridgy/issues/1913
+    def maybe_make_tag_id(obj):
+      if (id := obj.get('id')) and not id.startswith('tag:'):
+        if post_id := self.gr_source.post_id(id):
+          obj['id'] = self.gr_source.tag_uri(post_id)
+
+    for activity in activities:
+      maybe_make_tag_id(activity)
+      if obj := activity.get('object'):
+        maybe_make_tag_id(obj)
+
+    return activities
 
   def get_comment(self, comment_id, **kwargs):
     """Returns a comment from this source.

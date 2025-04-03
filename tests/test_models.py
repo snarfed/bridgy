@@ -775,6 +775,50 @@ class SourceTest(testutil.AppTest):
     with self.assertRaises(AttributeError):
       source.bad
 
+  def test_get_activities_converts_http_ids_to_tag_uris(self):
+    """Test that get_activities converts http IDs to tag URIs."""
+    source = FakeSource.new()
+
+    FakeGrSource.activities = [{
+      'id': 'https://fa.ke/post/123',
+      'object': {'id': 'https://fa.ke/object/456'}
+    }, {
+      'id': 'tag:fa.ke,2013:post/789',
+      'object': {'id': 'tag:fa.ke,2013:object/012'}
+    }, {
+      'id': 'tag:fa.ke,2013:post/345',
+      'object': {'id': 'https://fa.ke/object/678'}
+    }]
+
+    self.assert_equals([{
+      'id': 'tag:fa.ke,2013:123',
+      'object': {'id': 'tag:fa.ke,2013:456'}
+    }, {
+      'id': 'tag:fa.ke,2013:post/789',
+      'object': {'id': 'tag:fa.ke,2013:object/012'}
+    }, {
+      'id': 'tag:fa.ke,2013:post/345',
+      'object': {'id': 'tag:fa.ke,2013:678'}
+    }], source.get_activities())
+
+  def test_get_activities_handles_missing_ids(self):
+    """Test that get_activities handles activities with missing IDs."""
+    source = FakeSource.new()
+
+    FakeGrSource.activities = [{
+      'foo': 'bar',
+    }, {
+      'id': 'https://fa.ke/post/123',
+      'object': {'baz': 'biff'}
+    }]
+
+    self.assert_equals([{
+      'foo': 'bar',
+    }, {
+      'id': 'tag:fa.ke,2013:123',
+      'object': {'baz': 'biff'}
+    }], source.get_activities())
+
 
 class BlogPostTest(testutil.AppTest):
 

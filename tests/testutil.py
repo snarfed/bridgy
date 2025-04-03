@@ -105,7 +105,7 @@ class FakeGrSource(gr_source.Source):
         obj.pop('replies', None)
 
     return {
-      'items': activities,
+      'items': util.trim_nulls(activities),
       'etag': getattr(self, 'etag', None),
     }
 
