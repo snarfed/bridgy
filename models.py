@@ -435,17 +435,23 @@ class Source(StringIdModel, metaclass=SourceMeta):
   def get_activities(self, **kwargs):
     activities = self.get_activities_response(**kwargs)['items']
 
-    # Ensure all activity and object ids are tag URIs
+    # Try to make all ids tag URIs
     # https://github.com/snarfed/bridgy/issues/1913
-    def maybe_make_tag_id(obj):
-      if (id := obj.get('id')) and not id.startswith('tag:'):
-        if post_id := self.gr_source.post_id(id):
-          obj['id'] = self.gr_source.tag_uri(post_id)
+    def convert_to_tag_ids(obj):
+      if isinstance(obj, dict):
+        if (id := obj.get('id')) and (id.startswith('http:')
+                                      or id.startswith('https:')):
+          if post_id := self.post_id(id):
+            obj['id'] = self.gr_source.tag_uri(post_id)
+        for val in obj.values():
+          convert_to_tag_ids(val)
+
+      elif isinstance(obj, (tuple, list, set)):
+        for val in obj:
+          convert_to_tag_ids(val)
 
     for activity in activities:
-      maybe_make_tag_id(activity)
-      if obj := activity.get('object'):
-        maybe_make_tag_id(obj)
+      convert_to_tag_ids(activity)
 
     return activities
 

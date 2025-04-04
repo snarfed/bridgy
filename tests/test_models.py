@@ -781,10 +781,22 @@ class SourceTest(testutil.AppTest):
 
     FakeGrSource.activities = [{
       'id': 'https://fa.ke/post/123',
-      'object': {'id': 'https://fa.ke/object/456'}
+      'object': {
+        'id': 'https://fa.ke/object/456',
+        'replies': {
+          'items': [{'id': 'not a URL'}],
+        },
+        'tags': [{
+          'verb': 'like',
+          'object': {'id': 'http://fa.ke/like/5'},
+        }, {
+          'verb': 'share',
+          'object': {'id': 'http://fa.ke/repost/6'},
+        }],
+      }
     }, {
       'id': 'tag:fa.ke,2013:post/789',
-      'object': {'id': 'tag:fa.ke,2013:object/012'}
+      'object': {'id': 'not a URL'}
     }, {
       'id': 'tag:fa.ke,2013:post/345',
       'object': {'id': 'https://fa.ke/object/678'}
@@ -792,14 +804,27 @@ class SourceTest(testutil.AppTest):
 
     self.assert_equals([{
       'id': 'tag:fa.ke,2013:123',
-      'object': {'id': 'tag:fa.ke,2013:456'}
+      'object': {
+        'id': 'tag:fa.ke,2013:456',
+        'replies': {
+          'items': [{'id': 'tag:fa.ke,2013:789'}],
+          'items': [{'id': 'not a URL'}],
+        },
+        'tags': [{
+          'verb': 'like',
+          'object': {'id': 'tag:fa.ke,2013:5'},
+        }, {
+          'verb': 'share',
+          'object': {'id': 'tag:fa.ke,2013:6'},
+        }],
+      }
     }, {
       'id': 'tag:fa.ke,2013:post/789',
-      'object': {'id': 'tag:fa.ke,2013:object/012'}
+      'object': {'id': 'not a URL'}
     }, {
       'id': 'tag:fa.ke,2013:post/345',
       'object': {'id': 'tag:fa.ke,2013:678'}
-    }], source.get_activities())
+    }], source.get_activities(fetch_replies=True, fetch_likes=True, fetch_shares=True))
 
   def test_get_activities_handles_missing_ids(self):
     """Test that get_activities handles activities with missing IDs."""
