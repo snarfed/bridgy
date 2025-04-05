@@ -428,12 +428,6 @@ class Source(StringIdModel, metaclass=SourceMeta):
     """
     kwargs.setdefault('group_id', gr_source.SELF)
     resp = self.gr_source.get_activities_response(**kwargs)
-    for activity in resp['items']:
-      self._inject_user_urls(activity)
-    return resp
-
-  def get_activities(self, **kwargs):
-    activities = self.get_activities_response(**kwargs)['items']
 
     # Try to make all ids tag URIs
     # https://github.com/snarfed/bridgy/issues/1913
@@ -441,7 +435,8 @@ class Source(StringIdModel, metaclass=SourceMeta):
       if isinstance(obj, dict):
         if (id := obj.get('id')) and (id.startswith('http:')
                                       or id.startswith('https:')):
-          if post_id := self.post_id(id):
+          post_id = obj.get('numeric_id') or self.post_id(id)
+          if post_id:
             obj['id'] = self.gr_source.tag_uri(post_id)
         for val in obj.values():
           convert_to_tag_ids(val)
@@ -450,8 +445,14 @@ class Source(StringIdModel, metaclass=SourceMeta):
         for val in obj:
           convert_to_tag_ids(val)
 
-    for activity in activities:
+    for activity in resp['items']:
       convert_to_tag_ids(activity)
+      self._inject_user_urls(activity)
+
+    return resp
+
+  def get_activities(self, **kwargs):
+    activities = self.get_activities_response(**kwargs)['items']
 
     return activities
 
