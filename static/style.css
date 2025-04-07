@@ -406,3 +406,11 @@ iframe {
   border: 1px solid gray;
   height: 300px;
 }
+
+/* CSS View Transitions
+ * https://developer.chrome.com/docs/web-platform/view-transitions
+ * https://caniuse.com/view-transitions
+ */
+@view-transition {
+  navigation: auto;
+}
