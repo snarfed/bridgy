@@ -433,11 +433,14 @@ class Source(StringIdModel, metaclass=SourceMeta):
     # https://github.com/snarfed/bridgy/issues/1913
     def convert_to_tag_ids(obj):
       if isinstance(obj, dict):
-        if (id := obj.get('id')) and (id.startswith('http:')
-                                      or id.startswith('https:')):
+        if id := obj.get('id'):
           post_id = obj.get('numeric_id') or self.post_id(id)
-          if post_id:
+          if (as1.object_type(obj) in as1.ACTOR_TYPES
+              and (username := obj.get('username'))):
+            obj['id'] = self.gr_source.tag_uri(username)
+          elif post_id and (id.startswith('http:') or id.startswith('https:')):
             obj['id'] = self.gr_source.tag_uri(post_id)
+
         for val in obj.values():
           convert_to_tag_ids(val)
 

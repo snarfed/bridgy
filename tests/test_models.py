@@ -803,7 +803,19 @@ class SourceTest(testutil.AppTest):
       'object': {'id': 'not a URL'}
     }, {
       'id': 'tag:fa.ke,2013:post/345',
-      'object': {'id': 'https://fa.ke/object/678'}
+      'object': {
+        'id': 'https://fa.ke/object/678',
+        'author': {
+          'objectType': 'person',
+          'id': 'https://fa.ke/users/eve',
+        },
+      },
+      'actor': {
+        'objectType': 'group',
+        'id': 'https://fa.ke/users/bob',
+        'username': 'bob',
+        'numeric_id': '444',
+      },
     }]
 
     self.assert_equals({'etag': None, 'items': [{
@@ -831,7 +843,19 @@ class SourceTest(testutil.AppTest):
       'object': {'id': 'not a URL'}
     }, {
       'id': 'tag:fa.ke,2013:post/345',
-      'object': {'id': 'tag:fa.ke,2013:678'}
+      'object': {
+        'id': 'tag:fa.ke,2013:678',
+        'author': {
+          'objectType': 'person',
+          'id': 'tag:fa.ke,2013:eve',
+        },
+      },
+      'actor': {
+        'objectType': 'group',
+        'id': 'tag:fa.ke,2013:bob',
+        'username': 'bob',
+        'numeric_id': '444',
+      },
     }]}, source.get_activities_response(fetch_replies=True, fetch_likes=True,
                                        fetch_shares=True))
 
