@@ -15,7 +15,7 @@ git+https://github.com/snarfed/requests_oauth2client.git@all#egg=requests_oauth2
 git+https://github.com/dvska/gdata-python3.git#egg=gdata
 
 # required for mox3, not prod
-fixtures==4.2.2
+fixtures==4.2.5
 pbr==6.1.1
 
 beautifulsoup4==4.13.3
