@@ -18,7 +18,7 @@ git+https://github.com/dvska/gdata-python3.git#egg=gdata
 fixtures==4.2.5
 pbr==6.1.1
 
-beautifulsoup4==4.13.3
+beautifulsoup4==4.13.4
 bech32==1.2.0
 Brotli==1.1.0
 cachetools==5.5.1
