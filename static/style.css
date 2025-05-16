@@ -113,16 +113,17 @@ pre .value, code .value, code.value {
   margin-bottom: 1em;
 }
 
-/* tentatively removed since it didn't look great with webmention signups */
-/* @media (min-width: 768px) { */
-/*   #listen-signup, #listen-ui { */
-/*     border-left: 1px solid lightgray; */
-/*     border-right: 1px solid lightgray; */
-/*   } */
-/* } */
-
 #listen-signups input, #webmention-signups input {
   margin: .5em;
+}
+
+form[action="/bluesky/start"] input[type="text"] {
+  margin-right: 0 !important;
+  font-size: medium;
+}
+
+form[action="/bluesky/start"] input[type="image"] {
+  margin-left: 0 !important;
 }
 
 .header, #user, .promo, #listen-signups, #webmention-signups {
