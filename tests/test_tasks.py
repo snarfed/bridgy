@@ -725,8 +725,9 @@ class PollTest(TaskTest):
         },
         'content': 'http://foo/post @foo',
         'tags': [{
-          'objectType': 'person',
+          'objectType': 'mention',
           'id': f'tag:source,2013:{source.key.id()}',
+          'url': 'http://foo/',
         }],
       },
     }
@@ -737,8 +738,42 @@ class PollTest(TaskTest):
     self.assert_responses([Response(
       id='tag:source.com,2013:9',
       type='post',
-      unsent=['http://foo/post', 'http://foo/'],
-    )], ignore=('activities_json', 'response_json', 'source', 'original_posts'))
+      unsent=['http://foo/', 'http://foo/post'],
+      activities_json=[json_dumps({
+        'id': 'tag:source.com,2013:9',
+        'object': {'content': 'http://foo/post @foo'},
+      })],
+    )], ignore=('response_json', 'source', 'original_posts'))
+
+  def test_comment_has_user_mention(self):
+    """If a comment also @-memtions the OP's author (common on Mastodon), use the reply.
+
+    https://github.com/snarfed/bridgy/issues/533
+    """
+    source = self.sources[0]
+    post = self.activities[0]
+    del post['object']['tags']
+    self.activities = [post]
+
+    comment = self.activities[0]['object']['replies']['items'][0]
+    comment['tags'] = [{
+      'objectType': 'mention',
+      'id': 'tag:source,2013:should-not-use',
+      'url': 'http://foo/',
+    }]
+    FakeGrSource.activities = [post, comment]
+
+    self.post_task()
+    self.assert_responses([Response(
+      id='tag:source.com,2013:1_2_a',
+      type='comment',
+      unsent=['http://target1/post/url'],
+      activities_json=[json_dumps({
+        'id':'tag:source.com,2013:a',
+        'url':'http://fa.ke/post/url',
+        'object':{'content':'foo http://target1/post/url bar'},
+      })],
+    )], ignore=('response_json', 'source', 'original_posts'))
 
   def test_search_links_returns_comment_with_link(self):
     """Legendary KeyError bug, https://github.com/snarfed/bridgy/issues/237"""
@@ -1955,8 +1990,7 @@ class PropagateTest(TaskTest):
     self.post_task(base_url='https://brid.gy')
 
   def test_response_with_multiple_activities(self):
-    """Should use Response.urls_to_activity to generate the source URLs.
-    """
+    """Should use Response.urls_to_activity to generate the source URLs."""
     self.responses[0].activities_json = [
       '{"id": "000"}', '{"id": "111"}', '{"id": "222"}']
     self.responses[0].unsent = ['http://AAA', 'http://BBB', 'http://CCC']
@@ -1968,6 +2002,20 @@ class PropagateTest(TaskTest):
     self.expect_webmention(source_url=source_url % '000', target='http://AAA')
     self.expect_webmention(source_url=source_url % '111', target='http://BBB')
     self.expect_webmention(source_url=source_url % '222', target='http://CCC')
+
+    self.mox.ReplayAll()
+    self.post_task(base_url='https://brid.gy')
+
+  def test_response_with_single_activity(self):
+    """Should use the activity to generate source URL, even if urls_to_activity is unset."""
+    self.responses[0].activities_json = ['{"id": "000"}']
+    self.responses[0].unsent = ['http://AAA']
+    self.responses[0].urls_to_activity = None
+    self.responses[0].put()
+
+    self.expect_webmention(
+      source_url=f'https://brid.gy/comment/fake/{self.sources[0].key.string_id()}/000/1_2_a',
+      target='http://AAA')
 
     self.mox.ReplayAll()
     self.post_task(base_url='https://brid.gy')

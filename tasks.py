@@ -532,7 +532,7 @@ class SendWebmentions(View):
 
   Attributes:
 
-  * entity (models.Webmentions): subclass instance (set in :meth:`lease_entity`)
+  * entity (models.Webmentions): subclass instance (set in :meth:`lease`)
   * source (models.Source): entity (set in :meth:`send_webmentions`)
   """
   # request deadline (10m) plus some padding
