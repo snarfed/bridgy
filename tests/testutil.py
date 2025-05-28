@@ -414,6 +414,7 @@ class TestCase(testutil.TestCase):
       self.responses.append(Response(
           id=comment['id'],
           activities_json=[json_dumps(pruned_activity)],
+          urls_to_activity='{"http://target1/post/url":0}',
           response_json=json_dumps(comment),
           type='comment',
           source=self.sources[0].key,
@@ -426,6 +427,7 @@ class TestCase(testutil.TestCase):
       self.responses.append(Response(
           id=like['id'],
           activities_json=[json_dumps(pruned_activity)],
+          urls_to_activity='{"http://target1/post/url":0}',
           response_json=json_dumps(like),
           type='like',
           source=self.sources[0].key,
@@ -438,6 +440,7 @@ class TestCase(testutil.TestCase):
       self.responses.append(Response(
           id=share['id'],
           activities_json=[json_dumps(pruned_activity)],
+          urls_to_activity='{"http://target1/post/url":0}',
           response_json=json_dumps(share),
           type='repost',
           source=self.sources[0].key,
@@ -450,6 +453,7 @@ class TestCase(testutil.TestCase):
       self.responses.append(Response(
           id=reaction['id'],
           activities_json=[json_dumps(pruned_activity)],
+          urls_to_activity='{"http://target1/post/url":0}',
           response_json=json_dumps(reaction),
           type='react',
           source=self.sources[0].key,

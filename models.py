@@ -995,7 +995,6 @@ class Response(Webmentions):
   # to an event. Currently unused, kept for historical records only.
   old_response_jsons = ndb.TextProperty(repeated=True)
   # JSON dict mapping original post url to activity index in activities_json.
-  # only set when there's more than one activity.
   urls_to_activity = ndb.TextProperty()
   # Original post links found by original post discovery
   original_posts = ndb.StringProperty(repeated=True)
@@ -1021,16 +1020,39 @@ class Response(Webmentions):
                              log=True)):
       logger.info(f'Response changed! Re-propagating. Original: {resp}')
 
+      # merge response_json
       resp.old_response_jsons = [resp.response_json] + resp.old_response_jsons[:10]
 
       response_json_to_append = json_loads(self.response_json)
       as1.append_in_reply_to(json_loads(resp.response_json), response_json_to_append)
       self.response_json = json_dumps(util.trim_nulls(response_json_to_append))
       resp.response_json = self.response_json
-      resp.restart(source)
-    elif restart and resp is not self:  # ie it already existed
-      resp.restart(source)
 
+    elif resp is self or not restart:  # ie it already existed
+      return resp
+
+    # merge activities_json, urls_to_activity
+    urls_to_activities = {}
+    for r in self, resp:
+      if r.urls_to_activity:
+        urls_to_activity = json_loads(r.urls_to_activity)
+        assert len(urls_to_activity) == len(r.activities_json), (urls_to_activity, r.activities_json)
+        for url, index in urls_to_activity.items():
+          urls_to_activities[url] = r.activities_json[index]
+      elif r.activities_json:
+        # HACK: we used to not store urls_to_activity when activities_json was only
+        # one element. for those Responses, we won't have the target URL here, so
+        # just use None
+        assert len(r.activities_json) == 1, r.activities_json
+        urls_to_activities[None] = r.activities_json[0]
+
+    # this depends on the fact that dict key and value views have the same matching
+    # order, deterministically, since Python 3.7
+    resp.urls_to_activity = json_dumps(
+      {url: i for i, url in enumerate(urls_to_activities.keys())})
+    resp.activities_json = list(urls_to_activities.values())
+
+    resp.restart(source)
     return resp
 
   def restart(self, source=None):

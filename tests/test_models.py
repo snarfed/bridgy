@@ -87,6 +87,7 @@ class ResponseTest(testutil.AppTest):
     # no activity URLs. should skip SyndicatedPost query.
     response = self.responses[0]
     response.activities_json = []
+    response.urls_to_activity = None
     response.put()
 
     self.expect_task('propagate', response_key=response)

@@ -340,7 +340,10 @@ class Poll(View):
         if existing:
           if as1.activity_changed(resp, existing, log=True):
             logger.warning(f'Got two different versions of same response!\n{existing}\n{resp}')
-          resp['activities'].extend(existing.get('activities', []))
+
+          for activity in existing.get('activities', []):
+            if util.add(resp['activities'], activity):
+              resp['activities_changed'] = True
 
         responses[id] = resp
 
@@ -353,7 +356,8 @@ class Poll(View):
       for seen in json_loads(source.seen_responses_cache_json):
         id = seen['id']
         resp = responses.get(id)
-        if resp and not as1.activity_changed(seen, resp, log=True):
+        if (resp and not as1.activity_changed(seen, resp, log=True)
+            and not resp.get('activities_changed')):
           unchanged_responses.append(seen)
           del responses[id]
 
@@ -405,14 +409,13 @@ class Poll(View):
       resp_entity = Response(
         id=id,
         source=source.key,
-        activities_json=[json_dumps(util.prune_activity(a, source))
-                         for a in activities],
+        activities_json=[json_dumps(util.prune_activity(a, source)) for a in activities],
         response_json=json_dumps(pruned_response),
         type=resp_type,
         unsent=list(urls_to_activity.keys()),
         failed=list(too_long),
         original_posts=resp.get('originals', []))
-      if urls_to_activity and len(activities) > 1:
+      if urls_to_activity:
         resp_entity.urls_to_activity=json_dumps(urls_to_activity)
       resp_entity.get_or_save(source, restart=self.RESTART_EXISTING_TASKS)
 

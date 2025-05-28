@@ -59,6 +59,8 @@ class TaskTest(testutil.BackgroundTest):
       if 'activities_json' not in ignore:
         resp.activities_json = [json_dumps(json_loads(a), sort_keys=True)
                                 for a in resp.activities_json]
+      if resp.urls_to_activity and 'urls_to_activity' not in ignore:
+        resp.urls_to_activity = json_dumps(json_loads(resp.urls_to_activity), sort_keys=True)
       if 'response_json' not in ignore:
         resp.response_json = json_dumps(json_loads(resp.response_json), sort_keys=True)
 
@@ -563,8 +565,8 @@ class PollTest(TaskTest):
       })]
     expected += self.responses[:4]
 
-    self.assert_responses(expected, ignore=('activities_json', 'response_json',
-                                            'source', 'original_posts'))
+    self.assert_responses(expected, ignore=('activities_json', 'urls_to_activity',
+                                            'response_json', 'source', 'original_posts'))
 
   def test_other_peoples_links_dont_backfeed_comments(self):
     """Don't backfeed comments on links from other people (ie not the user).
@@ -599,7 +601,8 @@ class PollTest(TaskTest):
       id='tag:source.com,2013:777',
       type='post',
       unsent=['http://target/777'],
-    )], ignore=('activities_json', 'response_json', 'source', 'original_posts'))
+    )], ignore=('activities_json', 'urls_to_activity', 'response_json', 'source',
+                'original_posts'))
 
   def test_search_for_links_skips_posse_posts(self):
     """When mention search finds a POSSE post, it shouldn't backfeed it.
@@ -707,6 +710,7 @@ class PollTest(TaskTest):
       source=source.key,
       unsent=['http://foo/', 'https://bar'],
       original_posts=[],
+      urls_to_activity='{"http://foo/":0,"https://bar":0}',
     )])
 
   def test_post_has_both_link_and_user_mention(self):
@@ -743,6 +747,7 @@ class PollTest(TaskTest):
         'id': 'tag:source.com,2013:9',
         'object': {'content': 'http://foo/post @foo'},
       })],
+      urls_to_activity='{"http://foo/post":0,"http://foo/":0}',
     )], ignore=('response_json', 'source', 'original_posts'))
 
   def test_comment_has_user_mention(self):
@@ -773,7 +778,42 @@ class PollTest(TaskTest):
         'url':'http://fa.ke/post/url',
         'object':{'content':'foo http://target1/post/url bar'},
       })],
+      urls_to_activity='{"http://target1/post/url":0}',
     )], ignore=('response_json', 'source', 'original_posts'))
+
+  def test_first_find_as_user_mention_then_as_comment(self):
+    """If we find an @-mention, and later find it as a reply, we should add the OP activity.
+
+    https://github.com/snarfed/bridgy/issues/533
+    """
+    mention_activity = json_dumps({'id':'tag:source.com,2013:1_2_a'})
+    resp = Response(
+      id='tag:source.com,2013:1_2_a',
+      type='post',
+      activities_json=[mention_activity],
+      response_json=json_dumps({
+        'objectType': 'comment',
+        'id': 'tag:source.com,2013:1_2_a',
+        'url': 'http://fa.ke/comment/url',
+      }),
+    )
+    resp.put()
+
+    post = self.activities[0]
+    del post['object']['tags']
+    FakeGrSource.activities = [post]
+
+    self.post_task()
+
+    resp = resp.key.get()
+    self.assertEqual({
+      'null': mention_activity,
+      'http://target1/post/url': json_dumps({
+        'id': 'tag:source.com,2013:a',
+        'url': 'http://fa.ke/post/url',
+        'object': {'content': 'foo http://target1/post/url bar'},
+      }),
+    }, dict(zip(json_loads(resp.urls_to_activity), resp.activities_json)))
 
   def test_search_links_returns_comment_with_link(self):
     """Legendary KeyError bug, https://github.com/snarfed/bridgy/issues/237"""
@@ -806,7 +846,8 @@ class PollTest(TaskTest):
       id='tag:fake.com:9',
       type='comment',
       unsent=['http://foo/post'],
-    )], ignore=('activities_json', 'response_json', 'source', 'original_posts'))
+    )], ignore=('activities_json', 'urls_to_activity', 'response_json', 'source',
+                'original_posts'))
 
   def test_quote_post_attachment(self):
     """One silo post references (quotes) another one; second should be propagated
@@ -820,6 +861,7 @@ class PollTest(TaskTest):
       type='post',
       unsent=['http://author/permalink'],
       activities_json=[json_dumps(util.prune_activity(self.quote_post, source))],
+      urls_to_activity='{"http://author/permalink":0}',
     )], ignore=('response_json', 'source', 'original_posts'))
 
   def test_quote_post_attachment_and_user_mention(self):
@@ -841,6 +883,7 @@ class PollTest(TaskTest):
       type='post',
       unsent=['http://author', 'http://author/permalink'],
       activities_json=[json_dumps(util.prune_activity(post, source))],
+      urls_to_activity='{"http://author/permalink":0,"http://author":0}',
     )], ignore=('response_json', 'source', 'original_posts'))
 
   def test_quote_reply_attachment(self):
@@ -857,6 +900,7 @@ class PollTest(TaskTest):
       type='comment',
       unsent=['http://author/permalink'],
       activities_json=[json_dumps(util.prune_activity(reply, source))],
+      urls_to_activity='{"http://author/permalink":0}',
     )], ignore=('response_json', 'source', 'original_posts'))
 
   def test_wrong_last_polled(self):
@@ -1365,7 +1409,7 @@ class DiscoverTest(TaskTest):
       type='post',
       source=self.sources[0].key,
       status='complete',
-    )], ignore=('activities_json', 'response_json', 'original_posts'))
+    )], ignore=('activities_json', 'urls_to_activity', 'response_json', 'original_posts'))
 
   def test_no_post(self):
     """Silo post not found."""
@@ -1476,7 +1520,7 @@ class DiscoverTest(TaskTest):
       type='post',
       source=self.sources[0].key,
       status='complete',
-    )], ignore=('activities_json', 'response_json', 'original_posts'))
+    )], ignore=('activities_json', 'urls_to_activity', 'response_json', 'original_posts'))
 
 
 class PropagateTest(TaskTest):
