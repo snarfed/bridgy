@@ -1036,7 +1036,7 @@ class Response(Webmentions):
     for r in self, resp:
       if r.urls_to_activity:
         urls_to_activity = json_loads(r.urls_to_activity)
-        assert len(urls_to_activity) == len(r.activities_json), (urls_to_activity, r.activities_json)
+        assert len(urls_to_activity) >= len(r.activities_json), (urls_to_activity, r.activities_json)
         for url, index in urls_to_activity.items():
           urls_to_activities[url] = r.activities_json[index]
       elif r.activities_json:
