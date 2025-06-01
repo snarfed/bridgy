@@ -1043,8 +1043,7 @@ class Response(Webmentions):
         # HACK: we used to not store urls_to_activity when activities_json was only
         # one element. for those Responses, we won't have the target URL here, so
         # just use None
-        assert len(r.activities_json) == 1, r.activities_json
-        urls_to_activities[None] = r.activities_json[0]
+        urls_to_activities[None] = r.activities_json[-1]
 
     # this depends on the fact that dict key and value views have the same matching
     # order, deterministically, since Python 3.7
