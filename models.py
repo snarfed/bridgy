@@ -1032,24 +1032,23 @@ class Response(Webmentions):
       return resp
 
     # merge activities_json, urls_to_activity
-    urls_to_activities = {}
+    urls_to_full_activities = {}
     for r in self, resp:
       if r.urls_to_activity:
         urls_to_activity = json_loads(r.urls_to_activity)
-        assert len(urls_to_activity) >= len(r.activities_json), (urls_to_activity, r.activities_json)
         for url, index in urls_to_activity.items():
-          urls_to_activities[url] = r.activities_json[index]
+          urls_to_full_activities[url] = r.activities_json[index]
       elif r.activities_json:
         # HACK: we used to not store urls_to_activity when activities_json was only
         # one element. for those Responses, we won't have the target URL here, so
         # just use None
-        urls_to_activities[None] = r.activities_json[-1]
+        urls_to_full_activities[None] = r.activities_json[-1]
 
     # this depends on the fact that dict key and value views have the same matching
     # order, deterministically, since Python 3.7
     resp.urls_to_activity = json_dumps(
-      {url: i for i, url in enumerate(urls_to_activities.keys())})
-    resp.activities_json = list(urls_to_activities.values())
+      {url: i for i, url in enumerate(urls_to_full_activities.keys())})
+    resp.activities_json = list(urls_to_full_activities.values())
 
     resp.restart(source)
     return resp
