@@ -5,6 +5,7 @@
 #
 # Use this to bust that cache: gcloud -q beta app deploy --no-cache ...
 
+git+https://github.com/dvska/gdata-python3.git#egg=gdata
 git+https://github.com/kylewm/brevity.git#egg=brevity
 git+https://github.com/snarfed/arroba.git#egg=arroba
 git+https://github.com/snarfed/granary.git#egg=granary
@@ -12,7 +13,7 @@ git+https://github.com/snarfed/lexrpc.git#egg=lexrpc
 git+https://github.com/snarfed/mox3.git#egg=mox3
 git+https://github.com/snarfed/oauth-dropins.git#egg=oauth_dropins
 git+https://github.com/snarfed/requests_oauth2client.git@all#egg=requests_oauth2client
-git+https://github.com/dvska/gdata-python3.git#egg=gdata
+git+https://github.com/snarfed/secp256k1-py.git@setup-requires-pycparser#egg=secp256k1
 
 # required for mox3, not prod
 fixtures==4.2.5
@@ -80,7 +81,6 @@ redis==5.2.1
 requests==2.32.4
 requests-oauthlib==1.4.0
 rsa==4.9
-secp256k1==0.14.0
 six==1.17.0
 soupsieve==2.6
 tlslite-ng==0.8.0a44
