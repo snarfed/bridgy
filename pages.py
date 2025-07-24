@@ -4,7 +4,7 @@ import itertools
 import logging
 import urllib.request, urllib.parse, urllib.error
 
-from flask import render_template, request
+from flask import request
 from google.cloud import ndb
 from granary import as1
 from granary.source import html_to_text
@@ -21,7 +21,7 @@ from models import BlogPost, BlogWebmention, Publish, Response, Source, Webmenti
 import original_post_discovery
 from tumblr import Tumblr
 import util
-from util import redirect
+from util import render_template, redirect
 from wordpress_rest import WordPress
 
 # populate models.sources

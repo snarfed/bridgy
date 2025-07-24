@@ -25,7 +25,7 @@ import collections
 import logging
 import urllib.request, urllib.parse, urllib.error
 
-from flask import render_template, request
+from flask import request
 from google.cloud import ndb
 from oauth_dropins import wordpress_rest as oauth_wordpress
 from oauth_dropins.webutil.flask_util import error, flash
@@ -209,9 +209,9 @@ class Add(oauth_wordpress.Callback):
         return
       elif site_info.get('jetpack'):
         logger.info(f'This is a self-hosted WordPress blog! {auth_entity.key_id()} {auth_entity.blog_id}')
-        return render_template('confirm_self_hosted_wordpress.html',
-                               auth_entity_key=auth_entity.key.urlsafe().decode(),
-                               state=state)
+        return util.render_template('confirm_self_hosted_wordpress.html',
+                                    auth_entity_key=auth_entity.key.urlsafe().decode(),
+                                    state=state)
 
     util.maybe_add_or_delete_source(WordPress, auth_entity, state)
 

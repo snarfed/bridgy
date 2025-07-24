@@ -19,6 +19,12 @@
 <!-- Not async because it adds a DOMContentLoaded event listener, which may
   -- happen before an async script loads. -->
 <script src="/oauth_dropins_static/util.js"></script>
+
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Bridgy" />
+<meta property="og:description" content="Connects your web site to social media. Likes, reposts, mentions, cross-posting, and more..." />
+<meta property="og:url" content="{{ util.clean_url(request.url) }}" />
+<meta property="og:image" content="https://brid.gy/static/bridgy_logo.jpg" />
 </head>
 
 <!-- Content starts here -->

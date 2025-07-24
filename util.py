@@ -688,3 +688,7 @@ def unwrap_t_umblr_com(url):
   return (urllib.parse.parse_qs(parsed.query).get('z', [''])[0]
           if parsed.netloc == 't.umblr.com'
           else url)
+
+
+def render_template(template, **kwargs):
+    return flask.render_template(template, request=request, util=util, **kwargs)

@@ -1,7 +1,7 @@
 import logging
 from urllib.parse import quote
 
-from flask import flash, render_template, request
+from flask import flash, request
 from google.cloud import ndb
 from granary import bluesky as gr_bluesky
 import lexrpc.client
@@ -145,21 +145,21 @@ def bluesky_start():
     if source := Bluesky.get_by_id(id):
       username = source.username
 
-  return render_template('provide_app_password.html',
-                         post_url='/bluesky/callback',
-                         operation='add',
-                         feature=feature,
-                         username=username,
-                         **request_values)
+  return util.render_template('provide_app_password.html',
+                              post_url='/bluesky/callback',
+                              operation='add',
+                              feature=feature,
+                              username=username,
+                              **request_values)
 
 
 @app.get('/bluesky/delete/start')
 def bluesky_delete():
   """Serves the Bluesky login form page to delete an existing account."""
-  return render_template('provide_app_password.html',
-                         post_url='/bluesky/callback',
-                         operation='delete',
-                         **request.values)
+  return util.render_template('provide_app_password.html',
+                              post_url='/bluesky/callback',
+                              operation='delete',
+                              **request.values)
 
 
 @app.post('/bluesky/publish/start', endpoint='bluesky_publish_start')
@@ -170,10 +170,10 @@ def bluesky_publish_start():
     if source := ndb.Key(urlsafe=source_key).get():
       username = source.username
 
-  return render_template('provide_app_password.html',
-                         post_url='/publish/bluesky/finish',
-                         username=username,
-                         **request.values)
+  return util.render_template('provide_app_password.html',
+                              post_url='/publish/bluesky/finish',
+                              username=username,
+                              **request.values)
 
 
 app.add_url_rule('/bluesky/callback', view_func=Callback.as_view('bluesky_callback', 'unused'), methods=['POST'])

@@ -31,7 +31,7 @@ import logging
 import re
 import urllib.parse
 
-from flask import render_template, request
+from flask import request
 from google.cloud import ndb
 from oauth_dropins import tumblr as oauth_tumblr
 from oauth_dropins.webutil.flask_util import flash
@@ -250,7 +250,7 @@ class ChooseBlog(oauth_tumblr.Callback):
                 if b.get('name') and b.get('url')],
       }
     logger.info(f'Rendering choose_blog.html with {vars}')
-    return render_template('choose_blog.html', **vars)
+    return util.render_template('choose_blog.html', **vars)
 
 
 @app.route('/tumblr/add', methods=['POST'])

@@ -16,7 +16,7 @@ API docs:
 import collections
 import logging
 
-from flask import render_template, request
+from flask import request
 from google.cloud import ndb
 from oauth_dropins import medium as oauth_medium
 from oauth_dropins.webutil.util import json_dumps, json_loads
@@ -170,7 +170,7 @@ class ChooseBlog(oauth_medium.Callback):
       } for p in pubs if p.get('id')],
     }
     logger.info(f'Rendering choose_blog.html with {vars}')
-    return render_template('choose_blog.html', **vars)
+    return util.render_template('choose_blog.html', **vars)
 
 
 class SuperfeedrNotify(superfeedr.Notify):

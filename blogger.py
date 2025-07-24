@@ -24,7 +24,7 @@ import logging
 import re
 import urllib.parse
 
-from flask import render_template, request
+from flask import request
 from gdata.blogger.client import Query
 from gdata.client import Error
 from google.cloud import ndb
@@ -200,7 +200,7 @@ def oauth_callback():
                                          auth_entity.blog_hostnames)],
     }
   logger.info(f'Rendering choose_blog.html with {vars}')
-  return render_template('choose_blog.html', **vars)
+  return util.render_template('choose_blog.html', **vars)
 
 
 @app.route('/blogger/add', methods=['POST'])

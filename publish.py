@@ -10,7 +10,7 @@ import pprint
 import re
 import urllib.request, urllib.parse, urllib.error
 
-from flask import render_template, request
+from flask import request
 from google.cloud import ndb
 from granary import as1, microformats2
 from granary import source as gr_source
@@ -602,7 +602,7 @@ class PublishBase(webmention.Webmention):
       **state,
     }
     logger.info(f'Rendering preview with template vars {pprint.pformat(vars)}')
-    return gr_source.creation_result(render_template('preview.html', **vars))
+    return gr_source.creation_result(util.render_template('preview.html', **vars))
 
 
 class Preview(PublishBase):

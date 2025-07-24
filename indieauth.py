@@ -1,5 +1,5 @@
 """IndieAuth handlers for authenticating and proving ownership of a domain."""
-from flask import render_template, request
+from flask import request
 from google.cloud import ndb
 from oauth_dropins import indieauth
 from oauth_dropins.webutil.flask_util import flash
@@ -13,7 +13,7 @@ from util import redirect
 @app.route('/indieauth/start', methods=['GET'])
 def indieauth_enter_web_site():
   """Serves the "Enter your web site" form page."""
-  return render_template('indieauth.html', token=request.args['token'])
+  return util.render_template('indieauth.html', token=request.args['token'])
 
 
 class Start(indieauth.Start):

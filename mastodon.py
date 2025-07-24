@@ -2,7 +2,7 @@
 from datetime import datetime
 import logging
 
-from flask import render_template, request
+from flask import request
 from granary import mastodon as gr_mastodon
 from granary import source as gr_source
 from oauth_dropins import mastodon as oauth_mastodon
@@ -13,7 +13,6 @@ import requests
 from flask_app import app
 import models
 import util
-from util import redirect
 
 logger = logging.getLogger(__name__)
 
@@ -155,7 +154,7 @@ class Mastodon(models.Source):
 @app.route('/mastodon/start', methods=['GET'])
 def enter_your_instance():
   """Serves the "Enter your instance" form page."""
-  return render_template('mastodon_instance.html')
+  return util.render_template('mastodon_instance.html')
 
 
 class Start(StartBase):
@@ -169,7 +168,7 @@ class Start(StartBase):
     except (ValueError, requests.HTTPError) as e:
       logger.warning('Bad Mastodon instance', exc_info=True)
       flash(util.linkify(str(e), pretty=True))
-      redirect(request.path)
+      util.redirect(request.path)
 
 
 class Callback(oauth_mastodon.Callback):

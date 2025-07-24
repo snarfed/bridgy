@@ -7,7 +7,7 @@ import datetime
 import itertools
 import logging
 
-from flask import render_template, request
+from flask import request
 from google.cloud import ndb
 from google.cloud.ndb.stats import KindStat, KindPropertyNamePropertyTypeStat
 from oauth_dropins.webutil import logs
@@ -16,6 +16,7 @@ from oauth_dropins.webutil.util import json_dumps, json_loads
 from flask_app import app
 import models
 import util
+from util import render_template
 # Import source class files so their metaclasses are initialized.
 from models import BlogPost, Response, Source
 import blogger, bluesky, flickr, github, instagram, mastodon, medium, reddit, tumblr, twitter, wordpress_rest

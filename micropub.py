@@ -5,7 +5,7 @@ Micropub spec: https://www.w3.org/TR/micropub/
 import binascii
 import logging
 
-from flask import jsonify, render_template, request
+from flask import jsonify, request
 from flask.views import View
 from google.cloud import ndb
 import google.protobuf.message
@@ -102,7 +102,7 @@ class Micropub(PublishBase):
       self.error('not_implemented', 'Only config query is supported')
 
     if request.method == 'GET':
-      return render_template('micropub.html')
+      return util.render_template('micropub.html')
     elif request.method != 'POST':
       self.error('invalid_request',
                  'Expected POST for Micropub create/delete',
@@ -223,9 +223,9 @@ class GetToken(View):
 
 @app.post('/micropub-token/bluesky/start', endpoint='micropub_token_bluesky_start')
 def bluesky_start():
-  return render_template('provide_app_password.html',
-                         post_url='/micropub-token/bluesky/finish',
-                         **request.values)
+  return util.render_template('provide_app_password.html',
+                              post_url='/micropub-token/bluesky/finish',
+                              **request.values)
 
 
 class MastodonStart(mastodon.StartBase):
