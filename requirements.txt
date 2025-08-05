@@ -16,7 +16,7 @@ git+https://github.com/snarfed/requests_oauth2client.git@all#egg=requests_oauth2
 git+https://github.com/snarfed/secp256k1-py.git@setup-requires-pycparser#egg=secp256k1
 
 # required for mox3, not prod
-fixtures==4.2.5
+fixtures==4.2.6
 pbr==6.1.1
 
 beautifulsoup4==4.13.4
