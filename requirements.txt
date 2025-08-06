@@ -37,11 +37,11 @@ flask-gae-static==1.0
 google-api-core[grpc]==2.19.1
 google-auth==2.27.0
 google-cloud-appengine-logging==1.6.0
-google-cloud-audit-log==0.3.0
+google-cloud-audit-log==0.3.2
 google-cloud-core==2.3.2
 google-cloud-datastore==2.20.1
 google-cloud-error-reporting==1.11.1
-google-cloud-logging==3.11.4
+google-cloud-logging==3.12.1
 google-cloud-ndb==2.3.2
 google-cloud-tasks==2.19.0
 googleapis-common-protos==1.67.0
