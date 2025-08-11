@@ -167,7 +167,7 @@ class Start(StartBase):
       return starter.redirect_url(*args, instance=request.form['instance'], **kwargs)
     except (ValueError, requests.HTTPError) as e:
       logger.warning('Bad Mastodon instance', exc_info=True)
-      flash(util.linkify(str(e), pretty=True))
+      flash(util.linkify(str(e), pretty=True), escape=False)
       util.redirect(request.path)
 
 

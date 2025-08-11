@@ -638,7 +638,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
         code, _ = util.interpret_http_exception(e)
         if (code in superfeedr.TRANSIENT_ERROR_HTTP_CODES or
             util.is_connection_failure(e)):
-          flash('Apologies, <a href="https://superfeedr.com/">Superfeedr</a> is having technical difficulties. Please try again later!')
+          flash('Apologies, <a href="https://superfeedr.com/">Superfeedr</a> is having technical difficulties. Please try again later!', escape=False)
           return None
         raise
 

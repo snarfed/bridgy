@@ -664,10 +664,10 @@ class Send(PublishBase):
     else:
       result = self._run()
       if result and result.content:
-        flash(f"Done! <a href=\"{self.entity.published.get('url')}\">Click here to view.</a>")
+        flash(f"Done! <a href=\"{self.entity.published.get('url')}\">Click here to view.</a>", escape=False)
         granary_message = self.entity.published.get('granary_message')
         if granary_message:
-          flash(granary_message)
+          flash(granary_message, escape=False)
       # otherwise error() added an error message
 
     return redirect(source.bridgy_url())

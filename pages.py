@@ -512,7 +512,7 @@ def discover():
   else:
     msg = f'Please enter a URL on either your web site or {gr_source.NAME}.'
 
-  flash(msg)
+  flash(msg, escape=False)
   return redirect(source.bridgy_url())
 
 
@@ -538,15 +538,15 @@ def edit_websites_post():
     resolved = Source.resolve_profile_url(add)
     if resolved:
       if resolved in source.domain_urls:
-        flash(f'{link} already exists.')
+        flash(f'{link} already exists.', escape=False)
       else:
         source.domain_urls.append(resolved)
         domain = util.domain_from_link(resolved)
         source.domains.append(domain)
         source.put()
-        flash(f'Added {link}.')
+        flash(f'Added {link}.', escape=False)
     else:
-      flash(f"{link} doesn't look like your web site. Try again?")
+      flash(f"{link} doesn't look like your web site. Try again?", escape=False)
 
   else:
     assert delete
@@ -558,7 +558,7 @@ def edit_websites_post():
     if domain not in {util.domain_from_link(url) for url in source.domain_urls}:
       source.domains.remove(domain)
     source.put()
-    flash(f'Removed {link}.')
+    flash(f'Removed {link}.', escape=False)
 
   return redirect(redirect_url)
 

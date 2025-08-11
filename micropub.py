@@ -216,7 +216,7 @@ class GetToken(View):
       flash(f'To get a Micropub token for {source.label_name()}, please log into {source.GR_CLASS.NAME} as that account.')
     else:
       token = getattr(auth_entity, source.MICROPUB_TOKEN_PROPERTY)
-      flash(f'Your <a href="/about#micropub">Micropub token</a> for {source.label()} is: <code>{token}</code>')
+      flash(f'Your <a href="/about#micropub">Micropub token</a> for {source.label()} is: <code>{token}</code>', escape=False)
 
     return redirect(source.bridgy_url())
 
@@ -244,7 +244,7 @@ class MastodonStart(mastodon.StartBase):
       return super().dispatch_request()
     except (ValueError, requests.HTTPError) as e:
       logger.warning('Bad Mastodon instance', exc_info=True)
-      flash(util.linkify(str(e), pretty=True))
+      flash(util.linkify(str(e), pretty=True), escape=False)
       redirect(source.bridgy_path())
 
 
