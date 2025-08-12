@@ -29,7 +29,7 @@ click==8.1.8
 colorama==0.4.6
 cryptography==45.0.5
 domain2idna==1.12.3
-ecdsa==0.19.0
+ecdsa==0.19.1
 feedgen==1.0.0
 Flask==3.1.1
 Flask-Caching==2.3.0
