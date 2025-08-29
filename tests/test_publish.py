@@ -109,7 +109,8 @@ class PublishTest(testutil.AppTest):
 
   def assert_error(self, expected, status=400, interactive=False, **kwargs):
     status = 302 if interactive else status
-    return self.assert_response(expected, status=status, interactive=interactive, **kwargs)
+    return self.assert_response(expected, status=status, interactive=interactive,
+                                **kwargs)
 
   def _check_entity(self, url='http://foo.com/bar', content='foo',
                     html_content=None, expected_html=None):
@@ -420,7 +421,7 @@ foo
   def test_h_feed_no_items(self):
     self.expect_requests_get('http://foo.com/bar', '<div class="h-feed"></div>')
     self.mox.ReplayAll()
-    self.assert_error('Could not find content')
+    self.assert_error('No content')
     self.assertEqual('failed', Publish.query().get().status)
 
   def test_no_content(self):
@@ -428,7 +429,7 @@ foo
                              '<article class="h-entry"></article>')
     self.mox.ReplayAll()
 
-    self.assert_error('Could not find content')
+    self.assert_error('No content')
     self.assertEqual('failed', Publish.query().get().status)
 
   def test_no_content_ignore_formatting(self):
@@ -436,8 +437,7 @@ foo
                              '<article class="h-entry"></article>')
     self.mox.ReplayAll()
 
-    self.assert_error('Could not find content',
-                      params={'bridgy_ignore_formatting': ''})
+    self.assert_error('No content', params={'bridgy_ignore_formatting': ''})
     self.assertEqual('failed', Publish.query().get().status)
 
   def test_multiple_items_chooses_first_that_works(self):
@@ -562,7 +562,7 @@ this is my article
 </body>
 """)
     self.mox.ReplayAll()
-    self.assert_error('Could not find content')
+    self.assert_error('No content')
 
   def test_tumblr_special_case_does_not_override_mf1(self):
     """Tumblr's special case should not add "h-entry" on a class
@@ -1418,7 +1418,7 @@ Join us!"""
 </div></div>
 """)
     self.mox.ReplayAll()
-    self.assert_error("doesn't support type(s) h-as-entry")
+    self.assert_error('No content')
     self.assertEqual('failed', Publish.query().get().status)
 
   def test_nested_object_without_url(self):
