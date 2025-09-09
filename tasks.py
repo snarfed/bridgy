@@ -262,7 +262,7 @@ class Poll(View):
       if max_published > last_public_post:
         last_public_post = max_published
         source.updates['last_public_post'] = \
-          util.as_utc(util.parse_iso8601(max_published))
+          util.as_utc(datetime.datetime.fromisoformat(max_published))
 
     source.updates['recent_private_posts'] = \
       len([a for a in private.values()
