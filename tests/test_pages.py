@@ -11,7 +11,6 @@ from oauth_dropins.webutil.util import json_dumps, json_loads
 import tweepy
 
 from flask_app import app
-from blogger import Blogger
 from bluesky import Bluesky
 import models
 from models import Publish, PublishedPage, SyndicatedPost
@@ -22,7 +21,7 @@ from .testutil import FakeBlogSource
 import admin, app as _app, background, flask_app, flask_background
 
 # sources etc
-import blogger, facebook, flickr, github, indieauth, instagram, mastodon, medium, reddit, tumblr, wordpress_rest
+import facebook, flickr, github, indieauth, instagram, mastodon, medium, reddit, tumblr, wordpress_rest
 
 # import pages after testutil so that FakeBlogSource is defined when pages
 # generates its URL routes for all source classes
@@ -261,23 +260,6 @@ class PagesTest(testutil.AppTest):
     self.assertEqual('http://localhost/', location)
     self.assertIn('logins=/other/1?bob;',
                   resp.headers['Set-Cookie'].split(' '))
-
-  def test_delete_blogger(self):
-    source_key = Blogger(id='123').put().urlsafe().decode()
-
-    resp = self.client.post('/delete/start', data={
-        'feature': 'listen',
-        'key': source_key,
-      })
-    self.assertEqual(302, resp.status_code)
-
-    location = urlparse(resp.headers['Location'])
-    self.assertEqual('/blogger/delete/start', location.path)
-    self.assertEqual({
-      'operation': 'delete',
-      'feature': 'listen',
-      'source': source_key,
-    }, util.decode_oauth_state(parse_qs(location.query)['state'][0]))
 
   def test_delete_bluesky(self):
     source_key = Bluesky(id='did:foo', username='foo.com').put().urlsafe().decode()

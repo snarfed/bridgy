@@ -13,10 +13,6 @@ blog_webmention
 ---------------
 .. automodule:: blog_webmention
 
-blogger
--------
-.. automodule:: blogger
-
 browser
 -------
 .. automodule:: browser

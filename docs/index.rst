@@ -202,7 +202,7 @@ addons.mozilla.org <https://addons.mozilla.org/en-US/firefox/addon/bridgy/>`__:
 4. Update the Changelog in the README.md section below this one.
 
 5. Build and sign the artifact:
-   ``sh     cd browser-extension/     npm test     ./node_modules/web-ext/bin/web-ext.js build``
+   ``sh  cd browser-extension/  npm test  ./node_modules/web-ext/bin/web-ext.js build``
 
 6. Submit it to AMO. \`sh # get API secret from Ryan if you don’t have
    it ./node_modules/web-ext/bin/web-ext.js sign –api-key
@@ -221,7 +221,7 @@ Store <https://chrome.google.com/webstore/detail/bridgy/lcpeamdhminbbjdfjbpmhgjg
 2.  Load the extension in Chrome (``chrome://extensions/``, Developer
     mode on). Check that it works.
 3.  Build and sign the artifact:
-    ``sh     cd browser-extension/     npm test     ./node_modules/web-ext/bin/web-ext.js build``
+    ``sh  cd browser-extension/  npm test  ./node_modules/web-ext/bin/web-ext.js build``
 4.  `Open the
     console. <https://chrome.google.com/webstore/devconsole/>`__
 5.  Open the Bridgy item.

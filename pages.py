@@ -15,7 +15,6 @@ from oauth_dropins.webutil.util import json_dumps, json_loads
 import werkzeug.exceptions
 
 from flask_app import app
-from blogger import Blogger
 import models
 from models import BlogPost, BlogWebmention, Publish, Response, Source, Webmentions
 import original_post_discovery
@@ -25,7 +24,7 @@ from util import render_template, redirect
 from wordpress_rest import WordPress
 
 # populate models.sources
-import blogger, bluesky, facebook, flickr, github, indieauth, instagram, mastodon, medium, reddit, tumblr, twitter, wordpress_rest
+import bluesky, facebook, flickr, github, indieauth, instagram, mastodon, medium, reddit, tumblr, twitter, wordpress_rest
 
 logger = logging.getLogger(__name__)
 
@@ -123,14 +122,11 @@ def user(site, id):
 
   # Blog webmention promos
   if 'webmention' not in source.features:
-    if source.SHORT_NAME in ('blogger', 'medium', 'tumblr', 'wordpress'):
+    if source.SHORT_NAME in ('medium', 'tumblr', 'wordpress'):
       vars[source.SHORT_NAME + '_promo'] = True
     else:
       for domain in source.domains:
-        if ('.blogspot.' in domain and  # Blogger uses country TLDs
-            not Blogger.query(Blogger.domains == domain).get()):
-          vars['blogger_promo'] = True
-        elif (util.domain_or_parent_in(domain, ['tumblr.com']) and
+        if (util.domain_or_parent_in(domain, ['tumblr.com']) and
               not Tumblr.query(Tumblr.domains == domain).get()):
           vars['tumblr_promo'] = True
         elif (util.domain_or_parent_in(domain, ['wordpress.com']) and
@@ -335,10 +331,7 @@ def delete_start():
     'callback': request.values.get('callback'),
   })
 
-  if kind == 'Blogger':
-    # Blogger doesn't support redirect_url() yet
-    return redirect(f'/blogger/delete/start?state={state}')
-  elif kind == 'Bluesky':
+  if kind == 'Bluesky':
     # Bluesky isn't OAuth at all yet
     return redirect(f'/bluesky/delete/start?username={source.username}&feature={feature}')
 

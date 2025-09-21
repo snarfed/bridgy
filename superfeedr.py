@@ -32,7 +32,7 @@ def subscribe(source):
   http://documentation.superfeedr.com/subscribers.html#addingfeedswithpubsubhubbub
 
   Args:
-    source (Blogger Tumblr, or WordPress)
+    source (Tumblr, or WordPress)
   """
   if appengine_info.LOCAL_SERVER:
     logger.info('Running locally, not subscribing to Superfeedr')
@@ -68,7 +68,7 @@ def handle_feed(feed, source):
 
   Args:
     feed (str): Superfeedr JSON feed
-    source (Blogger, Tumblr, or WordPress)
+    source (Tumblr, or WordPress)
   """
   logger.info(f'Source: {source.label()} {source.key_id()}')
   logger.info(f'Raw feed: {feed}')

@@ -54,6 +54,7 @@ service.</a>
 <li><a href="#rip-facebook">What happened to Facebook?</li>
 <li><a href="#rip-google+">What happened to Google+?</li>
 <li><a href="#rip-meetup">What happened to Meetup?</li>
+<li><a href="#rip-blogger">What happened to Blogger?</li>
 <li><a href="#profile-link">Why does my web site URL need to be in my social network profile?</a></li>
 <li><a href="#add-remove-url">How do I add or remove a web site URL from my Bridgy profile?</a></li>
 <li><a href="#disconnected">Bridgy stopped working for me!</a></li>
@@ -268,7 +269,13 @@ We're <a class="h-card" href="https://snarfed.org/">Ryan Barrett</a>, <a class="
 
 <li id="rip-meetup" class="question">What happened to Meetup?</li>
 <li class="answer">
-<p>Bridgy Publish supported creating Meetup RSVPs from <a href="https://www.jvt.me/posts/2020/02/17/meetup-bridgy-support/">February 2020 to March 2020. This used their REST API, which they <a href="https://www.meetup.com/api/migrating/#graphQl-migrating">decommissioned in 2022 in favor of a new GraphQL API</a> that sadly <a href="https://www.meetup.com/api/schema/#p02-mutations-section">doesn't support creating RSVPs</a>. Ah well!
+<p>Bridgy Publish supported creating Meetup RSVPs <a href="https://www.jvt.me/posts/2020/02/17/meetup-bridgy-support/">from February 2020</a> to March 2020. This used their REST API, which they <a href="https://www.meetup.com/api/migrating/#graphQl-migrating">decommissioned in 2022 in favor of a new GraphQL API</a> that sadly <a href="https://www.meetup.com/api/schema/#p02-mutations-section">doesn't support creating RSVPs</a>. Ah well!
+</p>
+</li>
+
+<li id="rip-blogger" class="question">What happened to Blogger?</li>
+<li class="answer">
+<p>Bridgy supported adding webmentions to Blogger <a href="https://snarfed.org/2014-05-13_webmentions-for-blogger-tumblr-and-wordpress-com">from May 2014</a> to September 2025. This used their <a href="https://developers.google.com/blogger/docs/2.0/developers_guide">v2.0 API</a>, which supported creating comments. Google eventually disabled the v2.0 API in favor of v3.0, which <a href="https://developers.google.com/blogger/docs/3.0/using#WorkingWithComments">doesn't support creating comments</a>, so that meant Bridgy's Blogger support was dead in the water. 🫡
 </p>
 </li>
 
@@ -336,7 +343,6 @@ POST <a href="https://brid.gy/github/start">https://brid.gy/github/start</a>
 <p>Bridgy needs various permissions to access each social network accounts you connect. It prompts you when you first connect an acount, and also when you enable <a href="#backfeed">backfeed</a> or <a href="#publish">publishing</a> afterward. It <a href="https://en.wikipedia.org/wiki/Principle_of_least_privilege">asks for as little access as possible</a>, to only public data, but still often has to ask for more access than it needs, since many social networks have overly coarse permissions. Details:
 </p>
 <ul>
-  <li><b>Blogger</b> doesn't have permissions at all, <a href="https://developers.google.com/blogger/docs/2.0/developers_guide_protocol#OAuth2Authorizing">just full access or none.</a> <a href="/static/permissions_screenshots/blogger.png">Screenshot.</a></li>
   <li><b>Flickr</b> has <a href="https://www.flickr.com/services/api/auth.oauth.html#authorization">read, write, and delete permissions</a>. We ask for read for backfeed, write for publish. Screenshots: <a href="/static/permissions_screenshots/flickr_read.png">backfeed</a>, <a href="/static/permissions_screenshots/flickr_write.png">publish</a>.</li>
   <li><b>GitHub</b> has a few different permission models. We use an <a href="https://developer.github.com/apps/building-oauth-apps/scopes-for-oauth-apps/">OAuth app</a> to request read/write permission to public repository data, and notifications to see new comments and reactions. The alternative would have been a <a href="https://developer.github.com/apps/building-github-apps/">GitHub app,</a> which lets you grant read vs write permission to individual repos, but includes private repos, and doesn't include notifications. <a href="https://developer.github.com/apps/differences-between-apps/">More on the tradeoff here.</a> <a href="/static/permissions_screenshots/github.png">Screenshot.</a></li>
   <li><b>Mastodon</b> has <a href="https://docs.joinmastodon.org/api/permissions/">a number of fine grained permissions</a>, but backfeed needs most of the read categories, and publish needs most of the write ones, so Bridgy just asks for blanket read and write permission for each. Backfeed also uses your block list to suppress responses from accounts you've blocked, which <a href="https://docs.joinmastodon.org/api/rest/blocks/#get-api-v1-blocks">Mastodon unfortunately bundles with write access</a> and reports as <em>modify account relationships</em>. We don't actually modify any account relationships, promise!</li>
@@ -520,7 +526,7 @@ Here are the properties Bridgy uses:
   webmentions?</li>
 <li class="answer">
 <p>Webmentions are pretty new, but many web servers already support them. If
-you're on Blogger, Medium, Tumblr, or WordPress.com, <a href="/">you can sign
+you're on Medium, Tumblr, or WordPress.com, <a href="/">you can sign
 your blog up with Bridgy</a> to accept webmentions. If you're on self-hosted
 WordPress,
 <a href="http://wordpress.org/plugins/indieweb/">install the Indieweb
@@ -1216,9 +1222,8 @@ data from your original post, which is often helpful for debugging.
 part of both the <a href="https://indieweb.org/">IndieWeb</a> and Bridgy
 itself. The <a href="http://www.webmention.org/">webmention protocol</a> is
 growing fast, but it's still pretty new, so many large hosted blog providers
-don't yet support it. Bridgy lets you add webmention support to four of the
+don't yet support it. Bridgy lets you add webmention support to three of the
 largest providers:
-<a href="https://www.blogger.com/">Blogger</a>,
 <a href="https://medium.com/">Medium</a>,
 <a href="http://www.tumblr.com/">Tumblr</a>, and
 <a href="http://wordpress.com/">WordPress.com</a>.
@@ -1250,7 +1255,6 @@ my blog?</li>
 <p>When other web servers want to send your blog a webmention, they use that HTML line to determine where to send it. This is the <a href="https://webmention.net/draft/#sender-discovers-receiver-webmention-endpoint">webmention endpoint discovery</a> process. Follow the instructions on your user page to add it to your blog.</p>
 <p>If you're already familiar with <a href="http://www.webmention.org/">webmention</a>, Bridgy's endpoints for hosted blogs are:</p>
 <ul>
-<li><code>https://brid.gy/webmention/blogger</code></li>
 <li><code>https://brid.gy/webmention/tumblr</code></li>
 <li><code>https://brid.gy/webmention/wordpress</code></li>
 </ul>
@@ -1259,7 +1263,7 @@ my blog?</li>
 <li id="disqus" class="question">I'm on Tumblr. Why do I have to install
 <a href="http://disqus.com/">Disqus</a>?</li>
 <li class="answer">
-<p>Bridgy posts incoming webmentions as comments on Blogger and WordPress.com, but Tumblr doesn't have traditional comments. You can use your own Tumblr blog to <a href="http://www.tumblr.com/docs/en/blog_management#social">reply</a> to or <a href="http://www.tumblr.com/tips#reblog">reblog</a> someone else's post, but neither of those is quite right for a webmention, since the original is already posted somewhere else. Tumblr supports Disqus for commenting natively, which  lets Bridgy post webmentions on Tumblr blogs in the standard comment format.</p>
+<p>Bridgy posts incoming webmentions as comments on WordPress.com, but Tumblr doesn't have traditional comments. You can use your own Tumblr blog to <a href="http://www.tumblr.com/docs/en/blog_management#social">reply</a> to or <a href="http://www.tumblr.com/tips#reblog">reblog</a> someone else's post, but neither of those is quite right for a webmention, since the original is already posted somewhere else. Tumblr supports Disqus for commenting natively, which  lets Bridgy post webmentions on Tumblr blogs in the standard comment format.</p>
 </li>
 
 <li id="medium" class="question">I'm on Medium. Why doesn't Bridgy give me

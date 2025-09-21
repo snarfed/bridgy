@@ -45,16 +45,15 @@ You
 {% if "listen" in source.features %} need {% else %} might want {% endif %}
 <a href='http://indiewebify.me/#send-webmentions'>webmention</a> support.
 
-{% if blogger_promo or tumblr_promo or wordpress_promo %}
+{% if tumblr_promo or wordpress_promo %}
 Click here to add it:
-{% if blogger_promo %}{{ sources['blogger'].button_html('webmention')|safe }}{% endif %}
 {% if tumblr_promo %}{{ sources['tumblr'].button_html('webmention')|safe }}{% endif %}
 {% if wordpress_promo %}{{ sources['wordpress'].button_html('webmention')|safe }}{% endif %}
 {% else %}
 <a href="http://indiewebcamp.com/webmention#Publishing_Software">Here are some
 resources.</a> If you're on
 WordPress, <a href="http://wordpress.org/plugins/indieweb/">try the IndieWeb
-bundle plugin</a>. If you're on Blogger, Tumblr, or
+bundle plugin</a>. If you're on Tumblr, or
 WordPress.com, <a href="/">sign up here!</a>
 {% endif %}
 {% endif %}

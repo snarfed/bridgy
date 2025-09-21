@@ -1,4 +1,4 @@
-"""Converts webmentions to comments on Blogger, Tumblr, and WP.com."""
+"""Converts webmentions to comments on Tumblr and WordPress.com."""
 import logging
 import urllib.parse
 
@@ -216,5 +216,5 @@ class BlogWebmentionView(webmention.Webmention):
                for url in self.entity.redirected_target_urls + [self.target_url])
 
 
-app.add_url_rule('/webmention/<any(blogger,fake,tumblr,wordpress):site>',
+app.add_url_rule('/webmention/<any(fake,tumblr,wordpress):site>',
                  view_func=BlogWebmentionView.as_view('blog_wm'), methods=['POST'])
