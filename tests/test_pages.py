@@ -21,7 +21,7 @@ from .testutil import FakeBlogSource
 import admin, app as _app, background, flask_app, flask_background
 
 # sources etc
-import facebook, flickr, github, indieauth, instagram, mastodon, medium, reddit, tumblr, wordpress_rest
+import facebook, flickr, github, indieauth, instagram, mastodon, reddit, tumblr, wordpress_rest
 
 # import pages after testutil so that FakeBlogSource is defined when pages
 # generates its URL routes for all source classes

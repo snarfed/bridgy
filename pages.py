@@ -24,7 +24,7 @@ from util import render_template, redirect
 from wordpress_rest import WordPress
 
 # populate models.sources
-import bluesky, facebook, flickr, github, indieauth, instagram, mastodon, medium, reddit, tumblr, twitter, wordpress_rest
+import bluesky, facebook, flickr, github, indieauth, instagram, mastodon, reddit, tumblr, twitter, wordpress_rest
 
 logger = logging.getLogger(__name__)
 
@@ -122,7 +122,7 @@ def user(site, id):
 
   # Blog webmention promos
   if 'webmention' not in source.features:
-    if source.SHORT_NAME in ('medium', 'tumblr', 'wordpress'):
+    if source.SHORT_NAME in ('tumblr', 'wordpress'):
       vars[source.SHORT_NAME + '_promo'] = True
     else:
       for domain in source.domains:

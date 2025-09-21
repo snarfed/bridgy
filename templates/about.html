@@ -55,6 +55,7 @@ service.</a>
 <li><a href="#rip-google+">What happened to Google+?</li>
 <li><a href="#rip-meetup">What happened to Meetup?</li>
 <li><a href="#rip-blogger">What happened to Blogger?</li>
+<li><a href="#rip-medium">What happened to Medium?</li>
 <li><a href="#profile-link">Why does my web site URL need to be in my social network profile?</a></li>
 <li><a href="#add-remove-url">How do I add or remove a web site URL from my Bridgy profile?</a></li>
 <li><a href="#disconnected">Bridgy stopped working for me!</a></li>
@@ -127,8 +128,6 @@ service.</a>
 <li><a href="#incoming">What does it do with incoming webmentions send to my blog?</a></li>
 <li><a href="#endpoint">Why do I have to add a line of HTML to my blog?</a></li>
 <li><a href="#disqus">I'm on Tumblr. Why do I have to install Disqus?</a></li>
-<li><a href="#medium">I'm on Medium. Why doesn't Bridgy give me incoming webmentions?</li>
-<li><a href="#medium-mf2">I'm on Medium. Why do my webmentions look ugly and empty on their target pages?</li>
 <li><a href="#moderation">I received a webmention, but it's not showing up on my blog.</a></li>
 <li><a href="#user">All the comments for incoming webmentions come from me. That's ugly.</a></li>
 
@@ -279,6 +278,12 @@ We're <a class="h-card" href="https://snarfed.org/">Ryan Barrett</a>, <a class="
 </p>
 </li>
 
+<li id="rip-medium" class="question">What happened to Medium?</li>
+<li class="answer">
+<p>
+<p>Bridgy supported sending webmentions for Medium blogs <a href="https://snarfed.org/2016-08-17_18435">from August 2016</a> to September 2025. Medium never really committed to a real API, so we were never able to add incoming webmention support, and we had to use <a href="https://superfeedr.com/">Superfeedr</a> for outgoing webmentions. Medium gradually rate limited Superfeedr down into nothingness, so by the time we turned it off, even outgoing webmentions weren't really working any more. Sigh. 🫡
+</li>
+
 <li id="profile-link" class="question">Why does my web site URL need to be in my social network profile?</li>
 <li class="answer">
 <p>First, if you want to <a href="#publish">publish</a>, Bridgy uses this link to connect your web site to your social network account. Second, if you want to get responses without linking your posts to your web site, Bridgy uses this link to <a href="#link">fetch syndication URLs</a> from your site so it can map back from your posts.</p>
@@ -346,7 +351,6 @@ POST <a href="https://brid.gy/github/start">https://brid.gy/github/start</a>
   <li><b>Flickr</b> has <a href="https://www.flickr.com/services/api/auth.oauth.html#authorization">read, write, and delete permissions</a>. We ask for read for backfeed, write for publish. Screenshots: <a href="/static/permissions_screenshots/flickr_read.png">backfeed</a>, <a href="/static/permissions_screenshots/flickr_write.png">publish</a>.</li>
   <li><b>GitHub</b> has a few different permission models. We use an <a href="https://developer.github.com/apps/building-oauth-apps/scopes-for-oauth-apps/">OAuth app</a> to request read/write permission to public repository data, and notifications to see new comments and reactions. The alternative would have been a <a href="https://developer.github.com/apps/building-github-apps/">GitHub app,</a> which lets you grant read vs write permission to individual repos, but includes private repos, and doesn't include notifications. <a href="https://developer.github.com/apps/differences-between-apps/">More on the tradeoff here.</a> <a href="/static/permissions_screenshots/github.png">Screenshot.</a></li>
   <li><b>Mastodon</b> has <a href="https://docs.joinmastodon.org/api/permissions/">a number of fine grained permissions</a>, but backfeed needs most of the read categories, and publish needs most of the write ones, so Bridgy just asks for blanket read and write permission for each. Backfeed also uses your block list to suppress responses from accounts you've blocked, which <a href="https://docs.joinmastodon.org/api/rest/blocks/#get-api-v1-blocks">Mastodon unfortunately bundles with write access</a> and reports as <em>modify account relationships</em>. We don't actually modify any account relationships, promise!</li>
-  <li><b>Medium</b> has <a href="https://github.com/Medium/medium-api-docs/#user-content-21-browser-based-authentication">a few different permissions</a>. We ask for read acces to your profile, public posts, and publications. <a href="/static/permissions_screenshots/medium.png">Screenshot.</a></li>
   <li><b>Tumblr</b> doesn't have permissions at all, <a href="https://www.tumblr.com/docs/en/api/v2#oauth">just full access or nothing.</a> <a href="/static/permissions_screenshots/tumblr.png">Screenshot.</a></li>
   <li><b>WordPress.com</b>: doesn't have permissions at all, <a href="https://developer.wordpress.com/docs/oauth2/">just full access or nothing.</a> We ask for read and write access to a single blog that you specify, so we can see and handle new blog posts and to create comments. <a href="/static/permissions_screenshots/wordpress.com.png">Screenshot.</a></li>
   <li><b>Reddit</b> allows you to permit access to different <a href="https://www.reddit.com/api/v1/scopes.json">scopes</a>, we're asking for permission to confirm your identity and read posts that you can read.</li>
@@ -526,7 +530,7 @@ Here are the properties Bridgy uses:
   webmentions?</li>
 <li class="answer">
 <p>Webmentions are pretty new, but many web servers already support them. If
-you're on Medium, Tumblr, or WordPress.com, <a href="/">you can sign
+you're on Tumblr or WordPress.com, <a href="/">you can sign
 your blog up with Bridgy</a> to accept webmentions. If you're on self-hosted
 WordPress,
 <a href="http://wordpress.org/plugins/indieweb/">install the Indieweb
@@ -1222,13 +1226,10 @@ data from your original post, which is often helpful for debugging.
 part of both the <a href="https://indieweb.org/">IndieWeb</a> and Bridgy
 itself. The <a href="http://www.webmention.org/">webmention protocol</a> is
 growing fast, but it's still pretty new, so many large hosted blog providers
-don't yet support it. Bridgy lets you add webmention support to three of the
-largest providers:
-<a href="https://medium.com/">Medium</a>,
-<a href="http://www.tumblr.com/">Tumblr</a>, and
+don't yet support it. Bridgy lets you add webmention support to two of the
+larger providers,
+<a href="http://www.tumblr.com/">Tumblr</a> and
 <a href="http://wordpress.com/">WordPress.com</a>.
-Medium supports outgoing webmentions only; the other three support outgoing and
-incoming.
 Read on for more details, or
 <a href="/">head to the front page to sign up!</a></p>
 </li>
@@ -1264,25 +1265,6 @@ my blog?</li>
 <a href="http://disqus.com/">Disqus</a>?</li>
 <li class="answer">
 <p>Bridgy posts incoming webmentions as comments on WordPress.com, but Tumblr doesn't have traditional comments. You can use your own Tumblr blog to <a href="http://www.tumblr.com/docs/en/blog_management#social">reply</a> to or <a href="http://www.tumblr.com/tips#reblog">reblog</a> someone else's post, but neither of those is quite right for a webmention, since the original is already posted somewhere else. Tumblr supports Disqus for commenting natively, which  lets Bridgy post webmentions on Tumblr blogs in the standard comment format.</p>
-</li>
-
-<li id="medium" class="question">I'm on Medium. Why doesn't Bridgy give me
-incoming webmentions?</li>
-<li class="answer">
-<p><a href="https://github.com/Medium/medium-api-docs/">Medium's API</a> doesn't
-yet support
-<a href="https://help.medium.com/hc/en-us/articles/214578008-Responses">responding</a>
-or
-<a href="https://help.medium.com/hc/en-us/articles/215252328-Recommends">recommending</a>
-yet, so we can't publish incoming webmentions on your Medium posts. <a href="https://help.medium.com/hc/en-us/requests/new">Feel free to request that they add them!</a>
-</p>
-</li>
-
-<li id="medium-mf2" class="question">I'm on Medium. Why do my webmentions look
-  ugly and empty on their target pages?</li>
-<li class="answer">
-<p>Most webmention recipients look for <a href="http://microformats.org/wiki/microformats2">microformats2</a> in the source page (your Medium blog post) in order to render it nicely. Sadly, Medium doesn't yet have microformats of any kind. <a href="https://help.medium.com/hc/en-us/requests/new">Feel free to request that they add them!</a>
-</p>
 </li>
 
 <li id="moderation" class="question">I received a webmention, but it's not

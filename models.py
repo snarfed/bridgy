@@ -518,7 +518,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
     """Returns the RSS or Atom (or similar) feed URL for this source.
 
     Must be implemented by subclasses. Currently only implemented by
-    :mod:`medium`, :mod:`tumblr`, and :mod:`wordpress_rest`.
+    :mod:`tumblr` and :mod:`wordpress_rest`.
 
     Returns:
       str: URL
@@ -529,7 +529,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
     """Returns the URL for editing this blog's template HTML.
 
     Must be implemented by subclasses. Currently only implemented by
-    :mod:`medium`, :mod:`tumblr`, and :mod:`wordpress_rest`.
+    :mod:`tumblr` and :mod:`wordpress_rest`.
 
     Returns:
       str: URL

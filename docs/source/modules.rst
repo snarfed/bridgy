@@ -49,10 +49,6 @@ mastodon
 --------
 .. automodule:: mastodon
 
-medium
-------
-.. automodule:: medium
-
 models
 ------
 .. automodule:: models

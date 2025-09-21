@@ -19,7 +19,7 @@ import util
 from util import render_template
 # Import source class files so their metaclasses are initialized.
 from models import BlogPost, Response, Source
-import bluesky, flickr, github, instagram, mastodon, medium, reddit, tumblr, twitter, wordpress_rest
+import bluesky, flickr, github, instagram, mastodon, reddit, tumblr, twitter, wordpress_rest
 
 logger = logging.getLogger(__name__)
 

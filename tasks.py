@@ -17,7 +17,7 @@ from flask_background import app
 from models import Response
 from util import ERROR_HTTP_RETURN_CODE
 # need to import model class definitions since poll creates and saves entities.
-import bluesky, facebook, flickr, github, instagram, mastodon, medium, reddit, tumblr, twitter, wordpress_rest
+import bluesky, facebook, flickr, github, instagram, mastodon, reddit, tumblr, twitter, wordpress_rest
 
 logger = logging.getLogger(__name__)
 
