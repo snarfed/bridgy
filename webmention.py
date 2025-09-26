@@ -69,9 +69,10 @@ class Webmention(View):
       # raised by us, probably via self.error()
       raise
     except BaseException as e:
+      logger.warning(repr(e))
+      util.interpret_http_exception(e)  # log HTTP error, if any
       if raise_errors:
         raise
-      util.interpret_http_exception(e)  # log exception
       self.error(f'Could not fetch source URL {url}')
 
     if self.entity:
