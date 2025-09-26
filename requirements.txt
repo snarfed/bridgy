@@ -18,7 +18,7 @@ git+https://github.com/snarfed/secp256k1-py.git@setup-requires-pycparser#egg=sec
 fixtures==4.2.6
 pbr==6.1.1
 
-beautifulsoup4==4.13.4
+beautifulsoup4==4.13.5
 bech32==1.2.0
 Brotli==1.1.0
 cachetools==5.5.1
