@@ -425,6 +425,5 @@ i hereby mention
     self.assert_error('oops', status=502)
 
   def test_sources_global(self):
-    self.assertIsNotNone(models.sources['blogger'])
     self.assertIsNotNone(models.sources['tumblr'])
     self.assertIsNotNone(models.sources['wordpress'])

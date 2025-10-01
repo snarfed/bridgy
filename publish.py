@@ -273,14 +273,8 @@ class PublishBase(webmention.Webmention):
                           ('400', '403', '404', '406', '422', '502', '503', '504'))
 
     if not self.entity.published:  # tried all the items
-      types.discard('h-entry')
-      types.discard('h-note')
-      if types:
-        msg = f"{source_cls.GR_CLASS.NAME} doesn't support type(s) {' + '.join(types)}, or no content was found."
-        return self.error(msg, data=mf2)
-      else:
-        msg = 'Could not find content in <a href="http://microformats.org/wiki/h-entry">h-entry</a> or any other element!'
-        return self.error(msg, html=msg, data=mf2)
+      msg = 'No content or <a href="http://microformats.org/wiki/h-entry">h-entry</a> found. <a href="https://indiewebify.me/#validate-h-entry">Check your microformats?</a>'
+      return self.error(msg, html=msg, data=mf2)
 
     # write results to datastore, but don't overwrite a previous publish with a
     # preview.
@@ -682,7 +676,7 @@ class Send(PublishBase):
     return self.state['include_link']
 
   def error(self, error, html=None, **kwargs):
-    flash(html or util.linkify(error))
+    flash(html or util.linkify(error), escape=False)
     return super().error(error, html=html, http_response=False, **kwargs)
 
 

@@ -64,6 +64,9 @@ class BlueskyTest(testutil.AppTest):
     self.assertEqual(good, self.bsky.post_id('at://alice.com/app.bsky.feed.post/123'))
     self.assertEqual(good, self.bsky.post_id('https://bsky.app/profile/alice.com/post/123'))
 
+    # https://console.cloud.google.com/errors/detail/CI2OgbfAh-beEA?project=brid-gy
+    self.assertIsNone(self.bsky.post_id('https://bsky.app/search?q=https%3A%2F%2Fangadh.com%2Fgraeberandthiel'))
+
   def test_canonicalize_url(self):
     for input, expected in [
         ('https://bsky.app/foo', 'https://bsky.app/foo'),

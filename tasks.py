@@ -17,7 +17,7 @@ from flask_background import app
 from models import Response
 from util import ERROR_HTTP_RETURN_CODE
 # need to import model class definitions since poll creates and saves entities.
-import blogger, bluesky, facebook, flickr, github, instagram, mastodon, medium, reddit, tumblr, twitter, wordpress_rest
+import bluesky, facebook, flickr, github, instagram, mastodon, reddit, tumblr, twitter, wordpress_rest
 
 logger = logging.getLogger(__name__)
 
@@ -262,7 +262,7 @@ class Poll(View):
       if max_published > last_public_post:
         last_public_post = max_published
         source.updates['last_public_post'] = \
-          util.as_utc(util.parse_iso8601(max_published))
+          util.as_utc(datetime.datetime.fromisoformat(max_published))
 
     source.updates['recent_private_posts'] = \
       len([a for a in private.values()

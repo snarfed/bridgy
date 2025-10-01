@@ -13,10 +13,6 @@ blog_webmention
 ---------------
 .. automodule:: blog_webmention
 
-blogger
--------
-.. automodule:: blogger
-
 browser
 -------
 .. automodule:: browser
@@ -52,10 +48,6 @@ instagram
 mastodon
 --------
 .. automodule:: mastodon
-
-medium
-------
-.. automodule:: medium
 
 models
 ------
