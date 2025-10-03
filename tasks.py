@@ -291,7 +291,7 @@ class Poll(View):
                 include_redirect_sources=False,
                 already_fetched_hfeeds=fetched_hfeeds)
             activity['mentions'].update(u.get('value') for u in urls)
-            responses[id] = activity
+            _merge_activity_into_response(activity, responses)
             break
 
       # handle quote mentions
@@ -304,7 +304,7 @@ class Poll(View):
               source, activity, fetch_hfeed=True,
               include_redirect_sources=False,
               already_fetched_hfeeds=fetched_hfeeds)
-        responses[id] = activity
+        _merge_activity_into_response(activity, responses)
 
       # extract replies, likes, reactions, reposts, and rsvps
       replies = obj.get('replies', {}).get('items', [])
@@ -336,16 +336,7 @@ class Poll(View):
         # come from a link post or user mention, and this one is probably better
         # since it probably came from the user's activity, so prefer this one.
         # background: https://github.com/snarfed/bridgy/issues/533
-        existing = responses.get(id)
-        if existing:
-          if as1.activity_changed(resp, existing, log=True):
-            logger.warning(f'Got two different versions of same response!\n{existing}\n{resp}')
-
-          for activity in existing.get('activities', []):
-            if util.add(resp['activities'], activity):
-              resp['activities_changed'] = True
-
-        responses[id] = resp
+        _merge_activity_into_response(resp, responses)
 
     #
     # Step 3: filter out responses we've already seen
@@ -470,6 +461,33 @@ class Poll(View):
         response.unsent.extend(list(new_orig_urls))
         response.put()
         response.add_task()
+
+
+def _merge_activity_into_response(activity, responses):
+  """Merges an activity into the responses dict, preserving existing activities.
+
+  If the activity's id is already in responses (eg from a previous iteration),
+  merges their 'activities' lists together. Otherwise just adds it.
+
+  Args:
+    activity (dict): ActivityStreams activity to add/merge
+    responses (dict): maps AS response id to AS object, modified in place
+
+  Returns:
+    dict: the merged/added response object
+  """
+  id = activity['id']
+
+  if existing_resp := responses.get(id):
+    if as1.activity_changed(activity, existing_resp, log=True):
+      logger.warning(f'Got two different versions of same response!\n{existing_resp}\n{activity}')
+
+    activity.setdefault('activities', [])
+    for existing_activity in existing_resp.get('activities', []):
+      if util.add(activity['activities'], existing_activity):
+        activity['activities_changed'] = True
+
+  responses[id] = activity
 
 
 class Discover(Poll):

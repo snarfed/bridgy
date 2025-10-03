@@ -815,6 +815,76 @@ class PollTest(TaskTest):
       }),
     }, dict(zip(json_loads(resp.urls_to_activity), resp.activities_json)))
 
+  def test_reply_with_user_mention_to_original_author(self):
+    """Reply that also @-mentions the original post's author should backfeed correctly.
+
+    https://github.com/snarfed/bridgy/issues/1926
+
+    In this scenario, the reply is found via user mention (fetch_mentions=True in
+    get_activities_response) but is NOT in the original post's replies.items array.
+    This can happen if the mention notification arrives before the reply is added
+    to the parent post's context.
+    """
+    source = self.sources[0]
+
+    # The reply object (will be in both places)
+    reply_obj = {
+      'objectType': 'comment',
+      'id': 'tag:source.com,2013:reply_123',
+      'url': 'http://other.com/reply/url',
+      'inReplyTo': [{'id': 'tag:source.com,2013:original_post', 'url': 'http://fa.ke/original/url'}],
+      'content': 'Great post!',
+      'author': {
+        'id': 'tag:source.com,2013:other_person',
+        'url': 'http://other.com/person',
+      },
+      'to': [{'objectType':'group', 'alias':'@public'}],
+      'tags': [{
+        'objectType': 'person',
+        'id': source.user_tag_id(),
+        'url': 'http://author',
+        'urls': [{'value': 'http://author'}],
+      }],
+    }
+
+    # The original post with the reply in replies.items
+    original_post = {
+      'id': 'tag:source.com,2013:original_post',
+      'url': 'http://fa.ke/original/url',
+      'object': {
+        'id': 'tag:source.com,2013:original_post',
+        'url': 'http://fa.ke/original/url',
+        'content': 'This is my post http://author/original',
+        'author': {
+          'id': source.user_tag_id(),
+          'url': 'http://author',
+        },
+        'to': [{'objectType':'group', 'alias':'@public'}],
+        'replies': {
+          'items': [reply_obj],  # Reply is in the original post's replies
+        },
+        'tags': [],
+      },
+    }
+
+    # The reply as a separate activity (from mention notification)
+    reply_as_mention = {
+      'id': 'tag:source.com,2013:reply_123',
+      'url': 'http://other.com/reply/url',
+      'object': reply_obj,
+    }
+
+    FakeGrSource.activities = [original_post, reply_as_mention]
+    self.post_task()
+
+    responses = list(Response.query())
+    self.assertEqual(1, len(responses))
+    resp = responses[0]
+    self.assertEqual('tag:source.com,2013:reply_123', resp.key.id())
+    self.assertEqual('comment', resp.type)
+    # should have original post's discovered target, not just root domain
+    self.assertEqual(['http://author/original'], resp.unsent)
+
   def test_search_links_returns_comment_with_link(self):
     """Legendary KeyError bug, https://github.com/snarfed/bridgy/issues/237"""
     source = self.sources[0]
