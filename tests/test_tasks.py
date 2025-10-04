@@ -782,7 +782,8 @@ class PollTest(TaskTest):
     )], ignore=('response_json', 'source', 'original_posts'))
 
   def test_first_find_as_user_mention_then_as_comment(self):
-    """If we find an @-mention, and later find it as a reply, we should add the OP activity.
+    """If we find an @-mention, and later find it as a reply, we should add the OP
+    activity.
 
     https://github.com/snarfed/bridgy/issues/533
     """

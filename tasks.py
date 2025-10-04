@@ -482,10 +482,14 @@ def _merge_activity_into_response(activity, responses):
     if as1.activity_changed(activity, existing_resp, log=True):
       logger.warning(f'Got two different versions of same response!\n{existing_resp}\n{activity}')
 
-    activity.setdefault('activities', [])
-    for existing_activity in existing_resp.get('activities', []):
-      if util.add(activity['activities'], existing_activity):
+    existing_activities = existing_resp.get('activities', [])
+    new_activities = activity.setdefault('activities', [])
+    logger.info(f'Merging response activities {id}: existing {[a.get("id") for a in existing_activities]}, new {[a.get("id") for a in new_activities]}')
+
+    for existing_activity in existing_activities:
+      if util.add(new_activities, existing_activity):
         activity['activities_changed'] = True
+        logger.info(f'Added activity {existing_activity.get("id")} to merged response')
 
   responses[id] = activity
 
