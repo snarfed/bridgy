@@ -88,7 +88,7 @@ soupsieve==2.8
 tlslite-ng==0.9.0b2
 tweepy==4.16.0
 typing_extensions==4.15.0
-ujson==5.10.0
+ujson==5.11.0
 update-checker==0.18.0
 urllib3==2.5.0
 webencodings==0.5.1
