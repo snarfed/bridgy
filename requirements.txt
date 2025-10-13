@@ -21,7 +21,7 @@ pbr==7.0.1
 beautifulsoup4==4.14.2
 bech32==1.2.0
 Brotli==1.1.0
-cachetools==6.2.0
+cachetools==6.2.1
 certifi==2025.10.5
 charset-normalizer==3.4.3
 click==8.3.0
