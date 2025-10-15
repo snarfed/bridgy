@@ -70,7 +70,7 @@ Pillow==11.3.0
 praw==7.8.1
 prawcore==2.4.0
 proto-plus==1.26.1
-protobuf==6.32.1
+protobuf==6.33.0
 pyasn1==0.6.1
 pyasn1-modules==0.4.2
 pymemcache==4.0.0
