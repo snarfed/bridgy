@@ -634,12 +634,15 @@ f"""<div class="h-entry"><p class="e-content">
 
   def test_report_error(self):
     """Should report most errors from create() or preview_create()."""
+    self.mox.stubs.Set(util, 'DEBUG', False)
+    self.mox.stubs.Set(util, 'LOCAL_SERVER', False)
+
     for _ in range(2):
       self.expect_requests_get('http://foo.com/bar', self.post_html % 'foo')
 
     self.mox.StubOutWithMock(error_reporting_client, 'report',
                              use_mock_anything=True)
-    for subject in 'Webmention None failed', 'Preview preview new':
+    for subject in 'Webmention None failed', 'Preview preview failed':
       error_reporting_client.report(subject, http_context=mox.IgnoreArg(),
                                     user=u'http://localhost/fake/foo.com')
 

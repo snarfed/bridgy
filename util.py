@@ -24,7 +24,7 @@ from oauth_dropins.webutil.appengine_config import (
   tasks_client,
 )
 from oauth_dropins.webutil import appengine_info
-from oauth_dropins.webutil.appengine_info import APP_ID, DEBUG
+from oauth_dropins.webutil.appengine_info import APP_ID, DEBUG, LOCAL_SERVER
 from oauth_dropins.webutil.flask_util import error, flash
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import *
@@ -242,6 +242,10 @@ def report_error(msg, **kwargs):
   Args:
     msg (str)
   """
+  if DEBUG or LOCAL_SERVER:
+    logger.error(msg)
+    return
+
   try:
     error_reporting_client.report(msg, **kwargs)
   except BaseException:
