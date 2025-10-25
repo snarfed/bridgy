@@ -243,6 +243,8 @@ def report_error(msg, **kwargs):
     msg (str)
   """
   if DEBUG or LOCAL_SERVER:
+    # note that logging with exception info at error level or above will report to
+    # prod error reporting
     logger.error(msg)
     return
 
