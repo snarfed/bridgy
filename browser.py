@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 JSON_CONTENT_TYPE = 'application/json'
 
 # See https://www.cloudimage.io/
-IMAGE_PROXY_URL_BASE = 'https://aujtzahimq.cloudimg.io/v7/'
+IMAGE_PROXY_URL_BASE = 'https://xaasg3w5.cloudimg.io/'
 
 
 def merge_by_id(existing, updates):
