@@ -289,7 +289,7 @@ WordPress.com, <a href="/">sign up here!</a>
     {% with %}
     {% set r=response.response %}
     <a target="_blank" href="{{ response.actor.url }}"
-       title="{{ response.actor.displayName }}">
+       title="{{ response.actor.displayName|striptags }}">
       {% if response.actor.image.url %}
         <img class="profile" src="{{ response.actor.image.url }}" width="32" /></a>
       {% endif %}
