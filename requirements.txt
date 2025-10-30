@@ -16,7 +16,7 @@ git+https://github.com/snarfed/secp256k1-py.git@setup-requires-pycparser#egg=sec
 
 # required for mox3, not prod
 fixtures==4.2.6
-pbr==7.0.1
+pbr==7.0.2
 
 beautifulsoup4==4.14.2
 bech32==1.2.0
