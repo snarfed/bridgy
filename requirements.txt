@@ -34,7 +34,7 @@ Flask==3.1.2
 Flask-Caching==2.3.1
 flask-gae-static==1.0
 google-api-core[grpc]==2.25.1
-google-api-python-client==2.185.0
+google-api-python-client==2.186.0
 google-auth==2.41.1
 google-auth-httplib2==0.2.1
 google-cloud-appengine-logging==1.7.0
