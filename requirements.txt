@@ -22,7 +22,7 @@ beautifulsoup4==4.14.2
 bech32==1.2.0
 Brotli==1.2.0
 cachetools==6.2.1
-certifi==2025.10.5
+certifi==2025.11.12
 charset-normalizer==3.4.4
 click==8.3.0
 colorama==0.4.6
