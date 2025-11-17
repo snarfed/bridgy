@@ -24,7 +24,7 @@ Brotli==1.2.0
 cachetools==6.2.2
 certifi==2025.11.12
 charset-normalizer==3.4.4
-click==8.3.0
+click==8.3.1
 colorama==0.4.6
 cryptography==46.0.3
 domain2idna==1.12.3
