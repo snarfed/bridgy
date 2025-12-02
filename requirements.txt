@@ -93,4 +93,4 @@ update-checker==0.18.0
 urllib3==2.5.0
 webencodings==0.5.1
 websocket-client==1.9.0
-Werkzeug==3.1.3
+Werkzeug==3.1.4
