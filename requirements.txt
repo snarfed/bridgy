@@ -69,7 +69,7 @@ pkce==1.0.3
 praw==7.8.1
 prawcore==2.4.0
 proto-plus==1.26.1
-protobuf==6.33.1
+protobuf==6.33.2
 pyasn1==0.6.1
 pyasn1-modules==0.4.2
 pymediainfo==7.0.1
