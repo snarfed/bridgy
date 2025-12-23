@@ -14,7 +14,7 @@ git+https://github.com/snarfed/oauth-dropins.git#egg=oauth_dropins
 git+https://github.com/snarfed/secp256k1-py.git@setup-requires-pycparser#egg=secp256k1
 
 # required for mox3, not prod
-fixtures==4.2.6
+fixtures==4.2.7
 pbr==7.0.3
 
 beautifulsoup4==4.14.3
