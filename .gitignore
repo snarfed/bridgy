@@ -6,7 +6,6 @@
 /mapreduce
 /oauth_dropins_fonts
 /oauth_dropins_static
-.claude
 circleci_token
 datastore.dat*
 disqus_access_token

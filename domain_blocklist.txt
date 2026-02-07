@@ -293,6 +293,7 @@ vodspot.tv
 vox.com
 wikipedia.org
 wordpress.org
+x.com
 xbox.com
 xda-developers.com
 xfire.com
