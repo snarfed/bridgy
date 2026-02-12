@@ -45,6 +45,16 @@ handlers:
   static_files: static/security.txt
   upload: static/security.txt
 
+- url: /admin/disable
+  script: auto
+  secure: always
+  login: admin
+
+- url: /admin/mark_complete
+  script: auto
+  secure: always
+  login: admin
+
 # dynamic
 - url: .*
   script: auto
