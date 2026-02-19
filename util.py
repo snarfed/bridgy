@@ -446,10 +446,14 @@ def replace_test_domains_with_localhost(url):
 
 
 def host_url(path_query=None):
-  domain = util.domain_from_link(request.host_url)
-  base = (HOST_URL if util.domain_or_parent_in(domain, OTHER_DOMAINS)
-          else request.host_url)
-  return urllib.parse.urljoin(base, path_query)
+    if DEBUG or LOCAL_SERVER:
+        base = request.host_url
+    elif domain_or_parent_in(request.host, [PRIMARY_DOMAIN]):
+        base = request.host_url
+    else:
+        base = f'https://{PRIMARY_DOMAIN}/'
+
+    return urljoin(base, path_query)
 
 
 def load_source(error_fn=None):

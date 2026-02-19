@@ -2081,6 +2081,9 @@ class PropagateTest(TaskTest):
 
   def test_translate_appspot_to_brid_gy(self):
     """Tasks on brid-gy.appspot.com should translate source URLs to brid.gy."""
+    self.mox.StubOutWithMock(util, 'DEBUG')
+    util.DEBUG = False
+
     self.responses[0].unsent = ['http://good']
     self.responses[0].put()
     source_url = f'https://brid.gy/comment/fake/{self.sources[0].key.string_id()}/a/1_2_a'
