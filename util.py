@@ -469,7 +469,12 @@ def bluesky_oauth_client_metadata():
         'client_id': host_url('/bluesky/client-metadata.json'),
         'client_name': 'Bridgy',
         'client_uri': host_url(),
-        'redirect_uris': [host_url('/bluesky/oauth/callback')],
+        'redirect_uris': [
+          host_url('/bluesky/oauth/callback'),
+          host_url('/bluesky/delete/finish'),
+          host_url('/micropub-token/bluesky/finish'),
+          host_url('/publish/bluesky/finish'),
+        ],
     }
 
 
