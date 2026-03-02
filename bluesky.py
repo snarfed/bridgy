@@ -81,9 +81,8 @@ class Bluesky(models.Source):
       return None
 
   @classmethod
-  def button_html(cls, feature, form_extra='', **kwargs):
+  def button_html(cls, feature, form_extra='', source=None, **kwargs):
     """Override to POST directly to /bluesky/oauth/start with encoded state."""
-    kwargs.pop('source', None)
     state = util.encode_oauth_state({'operation': 'add', 'feature': feature})
 
     return cls.OAUTH_START.button_html(
@@ -91,6 +90,7 @@ class Bluesky(models.Source):
         form_extra=form_extra +
           f'\n<input name="state" type="hidden" value="{state}" />',
         image_prefix='/oauth_dropins_static/',
+        handle=source.username if source and source.username else None,
         **kwargs)
 
   def canonicalize_url(self, url, **kwargs):
