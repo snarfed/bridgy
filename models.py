@@ -271,7 +271,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
         if isinstance(auth_or_session, dict):
           auth_entity.session = auth_or_session
         else:
-          auth_entity.dpop_token = TokenSerializer().dumps(auth_obj.token)
+          auth_entity.dpop_token = TokenSerializer().dumps(auth_or_session.token)
         auth_entity.put()
 
       args = []
