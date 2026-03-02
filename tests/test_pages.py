@@ -13,8 +13,9 @@ import tweepy
 from flask_app import app
 from bluesky import Bluesky, OAuthStart
 import models
+from oauth_dropins import bluesky as oauth_bluesky
 from models import Publish, PublishedPage, SyndicatedPost
-from requests_oauth2client import OAuth2Client
+from requests_oauth2client import DPoPKey, DPoPToken, OAuth2Client, TokenSerializer
 import util
 from . import testutil
 from .testutil import FakeBlogSource
@@ -477,6 +478,43 @@ class PagesTest(testutil.AppTest):
       self.assertEqual(200, resp.status_code)
       resp = self.client.get(f'{self.sources[0].bridgy_path()}?{param}=2022-05-09T10:13:28.597816 00:00')
       self.assertEqual(200, resp.status_code)
+
+  def test_bluesky_user_page_password(self):
+    auth_entity = oauth_bluesky.BlueskyAuth(
+      id='did:plc:alice',
+      password='sekret',
+      user_json=json_dumps({'handle': 'alice.com'}),
+      session={'accessJwt': 'tok', 'refreshJwt': 'ref'},
+    )
+    auth_entity.put()
+    Bluesky(id='did:plc:alice', username='alice.com',
+            auth_entity=auth_entity.key, features=['publish']).put()
+
+    resp = self.client.get('/bluesky/did:plc:alice')
+    self.assertEqual(200, resp.status_code)
+    self.assertIn('Get token', resp.get_data(as_text=True))
+
+  def test_bluesky_user_page_dpop_token(self):
+    fake_client = self.mox.CreateMockAnything()
+    self.mox.StubOutWithMock(oauth_bluesky, 'oauth_client_for_pds')
+    oauth_bluesky.oauth_client_for_pds(
+      mox.IgnoreArg(), 'https://bsky.social').AndReturn(fake_client)
+    self.mox.ReplayAll()
+
+    dpop_token = DPoPToken(access_token='towkin', _dpop_key=DPoPKey.generate())
+    auth_entity = oauth_bluesky.BlueskyAuth(
+      id='did:plc:bob',
+      pds_url='https://bsky.social',
+      dpop_token=TokenSerializer().dumps(dpop_token),
+      user_json=json_dumps({'handle': 'bob.com'}),
+    )
+    auth_entity.put()
+    Bluesky(id='did:plc:bob', username='bob.com',
+            auth_entity=auth_entity.key, features=['publish']).put()
+
+    resp = self.client.get('/bluesky/did:plc:bob')
+    self.assertEqual(200, resp.status_code)
+    self.assertNotIn('Get token', resp.get_data(as_text=True))
 
   def test_blog_user_page_strips_html(self):
     html = '<xyz> a&b'
