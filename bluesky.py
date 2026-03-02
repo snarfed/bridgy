@@ -1,12 +1,12 @@
 import logging
 from urllib.parse import quote
 
-from flask import flash, request
+from flask import request
 from google.cloud import ndb
 from granary import bluesky as gr_bluesky
 import lexrpc.client
 from oauth_dropins import bluesky as oauth_bluesky
-from oauth_dropins.webutil.flask_util import error
+from oauth_dropins.webutil.flask_util import error, flash
 from oauth_dropins.webutil.util import json_loads
 import requests
 
@@ -155,6 +155,13 @@ class OAuthCallback(oauth_bluesky.OAuthCallback):
   @property
   def CLIENT_METADATA(self):
     return util.bluesky_oauth_client_metadata()
+
+  def dispatch_request(self):
+    try:
+      super().dispatch_request()
+    except ValueError as e:
+      flash(str(e))
+      return util.redirect('/')
 
   def finish(self, auth_entity, state=None):
     util.maybe_add_or_delete_source(Bluesky, auth_entity, state)
