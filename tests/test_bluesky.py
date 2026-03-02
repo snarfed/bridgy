@@ -129,7 +129,12 @@ class BlueskyTest(testutil.AppTest):
       'client_uri': 'http://localhost/',
       'dpop_bound_access_tokens': True,
       'grant_types': ['authorization_code', 'refresh_token'],
-      'redirect_uris': ['http://localhost/bluesky/oauth/callback'],
+      'redirect_uris': [
+        'http://localhost/bluesky/oauth/callback',
+        'http://localhost/bluesky/delete/finish',
+        'http://localhost/micropub-token/bluesky/finish',
+        'http://localhost/publish/bluesky/finish',
+      ],
       'response_types': ['code'],
       'scope': 'atproto transition:generic',
       'token_endpoint_auth_method': 'none',
