@@ -9,6 +9,7 @@ from oauth_dropins import bluesky as oauth_bluesky
 from oauth_dropins.webutil.flask_util import error, flash
 from oauth_dropins.webutil.util import json_loads
 import requests
+from requests_oauth2client import InvalidGrant
 
 from flask_app import app
 import models
@@ -115,6 +116,9 @@ class Bluesky(models.Source):
     """
     try:
       return super().get_activities_response(*args, **kwargs)
+    except InvalidGrant as e:
+      logging.warning(e)
+      raise models.DisableSource()
     except requests.HTTPError as e:
       util.interpret_http_exception(e)
       content_type = e.response.headers.get('Content-Type', '').split(';')[0]

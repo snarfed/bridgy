@@ -10,6 +10,7 @@ import requests
 from requests_oauth2client import (
   DPoPKey,
   DPoPToken,
+  InvalidGrant,
   OAuth2AccessTokenAuth,
   TokenSerializer,
 )
@@ -120,6 +121,14 @@ class BlueskyTest(testutil.AppTest):
       'error': 'ExpiredToken',
       'message': 'Token has been revoked',
     }, status=400)
+
+    with self.assertRaises(DisableSource):
+      self.bsky.get_activities()
+
+  @mock.patch('requests.post')
+  @mock.patch('requests.get')
+  def test_get_activities_oauth_exception(self, mock_get, mock_post):
+    mock_get.side_effect = mock_post.side_effect = InvalidGrant(None, 'foo', 'bar')
 
     with self.assertRaises(DisableSource):
       self.bsky.get_activities()
