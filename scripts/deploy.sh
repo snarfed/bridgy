@@ -9,10 +9,6 @@ set -e
 src=`dirname $0`/../..
 
 # run unit tests
-pkill datastore || true
-gcloud beta emulators datastore start --no-store-on-disk ----use-firestore-in-datastore-mode --host-port=localhost:8089 < /dev/null >& /dev/null &
-sleep 2s
-
 cd $src/bridgy && source local/bin/activate
 
 cd ../oauth-dropins
@@ -23,8 +19,6 @@ python -m unittest discover
 
 cd ../bridgy
 python -m unittest discover -s tests -t .
-
-kill %1  # datastore emulator
 
 # check silo app keys (aka client ids)
 md5sum -c keys.md5
