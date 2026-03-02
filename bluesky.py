@@ -52,7 +52,9 @@ class Bluesky(models.Source):
 
   def silo_url(self):
     """Returns the Bluesky account URL, e.g. ``https://bsky.app/profile/foo.com``."""
-    return self.gr_source.user_url(self.username)
+    # could use self.gr_source here, but that goes through heavyweight OAuth client
+    # setup, which we want to avoid
+    return gr_bluesky.Bluesky.user_url(self.username)
 
   def label_name(self):
     """Returns the Bluesky handle."""

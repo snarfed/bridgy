@@ -15,7 +15,7 @@ from bluesky import Bluesky, OAuthStart
 import models
 from oauth_dropins import bluesky as oauth_bluesky
 from models import Publish, PublishedPage, SyndicatedPost
-from requests_oauth2client import DPoPKey, DPoPToken, OAuth2Client, TokenSerializer
+from requests_oauth2client import OAuth2Client
 import util
 from . import testutil
 from .testutil import FakeBlogSource
@@ -495,17 +495,9 @@ class PagesTest(testutil.AppTest):
     self.assertIn('Get token', resp.get_data(as_text=True))
 
   def test_bluesky_user_page_dpop_token(self):
-    fake_client = self.mox.CreateMockAnything()
-    self.mox.StubOutWithMock(oauth_bluesky, 'oauth_client_for_pds')
-    oauth_bluesky.oauth_client_for_pds(
-      mox.IgnoreArg(), 'https://bsky.social').AndReturn(fake_client)
-    self.mox.ReplayAll()
-
-    dpop_token = DPoPToken(access_token='towkin', _dpop_key=DPoPKey.generate())
     auth_entity = oauth_bluesky.BlueskyAuth(
       id='did:plc:bob',
-      pds_url='https://bsky.social',
-      dpop_token=TokenSerializer().dumps(dpop_token),
+      dpop_token='towkin',
       user_json=json_dumps({'handle': 'bob.com'}),
     )
     auth_entity.put()
