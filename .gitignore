@@ -28,6 +28,7 @@ meetup_client_*
 node_modules
 package-lock.json
 private_notes
+pyrightconfig.json
 reddit_app_*
 service_account_creds.json
 superfeedr_token

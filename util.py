@@ -19,6 +19,7 @@ from google.protobuf.timestamp_pb2 import Timestamp
 import google.protobuf.message
 from granary import as1
 from granary.source import html_to_text
+from oauth_dropins import bluesky as oauth_bluesky
 from oauth_dropins.webutil.appengine_config import (
   error_reporting_client,
   tasks_client,
@@ -87,7 +88,6 @@ HTTP_REQUEST_REFUSED_STATUS_CODE = 599
 # Unpacked representation of logged in account in the logins cookie.
 Login = collections.namedtuple('Login', ('site', 'name', 'path'))
 
-HOST_URL = 'https://brid.gy'
 PRIMARY_DOMAIN = 'brid.gy'
 OTHER_DOMAINS = (
   'background.brid-gy.appspot.com',
@@ -454,6 +454,23 @@ def host_url(path_query=None):
         base = f'https://{PRIMARY_DOMAIN}/'
 
     return urljoin(base, path_query)
+
+
+def bluesky_oauth_client_metadata():
+    """Returns the Bluesky OAuth client metadata document.
+
+    https://docs.bsky.app/docs/advanced-guides/oauth-client#client-and-server-metadata
+
+    Returns:
+      dict:
+    """
+    return {
+        **oauth_bluesky.CLIENT_METADATA_TEMPLATE,
+        'client_id': host_url('/bluesky/client-metadata.json'),
+        'client_name': 'Bridgy',
+        'client_uri': host_url(),
+        'redirect_uris': [host_url('/bluesky/oauth/callback')],
+    }
 
 
 def load_source(error_fn=None):

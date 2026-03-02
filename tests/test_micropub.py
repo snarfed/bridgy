@@ -316,4 +316,3 @@ foo
     self.assertEqual(
       ["Bad state value, couldn't find your user"],
       get_flashed_messages())
-

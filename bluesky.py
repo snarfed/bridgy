@@ -22,7 +22,7 @@ class Bluesky(models.Source):
   SHORT_NAME = 'bluesky'
   GR_CLASS = gr_bluesky.Bluesky
   CAN_PUBLISH = True
-  OAUTH_START = oauth_bluesky.Start
+  OAUTH_START = oauth_bluesky.OAuthStart
   AUTH_MODEL = oauth_bluesky.BlueskyAuth
   MICROPUB_TOKEN_PROPERTY = 'password'
   URL_CANONICALIZER = util.UrlCanonicalizer(
@@ -79,9 +79,17 @@ class Bluesky(models.Source):
       return None
 
   @classmethod
-  def button_html(cls, feature, **kwargs):
-    """Override oauth-dropins's button_html() to send a GET."""
-    return super().button_html(feature, form_method='get', **kwargs)
+  def button_html(cls, feature, form_extra='', **kwargs):
+    """Override to POST directly to /bluesky/oauth/start with encoded state."""
+    kwargs.pop('source', None)
+    state = util.encode_oauth_state({'operation': 'add', 'feature': feature})
+
+    return cls.OAUTH_START.button_html(
+        '/bluesky/oauth/start',
+        form_extra=form_extra +
+          f'\n<input name="state" type="hidden" value="{state}" />',
+        image_prefix='/oauth_dropins_static/',
+        **kwargs)
 
   def canonicalize_url(self, url, **kwargs):
     """Canonicalizes a post or object URL.
@@ -122,7 +130,7 @@ class Callback(oauth_bluesky.Callback):
   def finish(self, auth_entity, state=None):
     if not auth_entity:
       flash("Failed to log in to Bluesky. Are your credentials correct?")
-      return util.redirect("/bluesky/start")
+      return util.redirect('/')
 
     state = {
       'operation': request.form['operation'],
@@ -135,49 +143,37 @@ class Callback(oauth_bluesky.Callback):
                                     util.encode_oauth_state(state))
 
 
-@app.get('/bluesky/start')
-def bluesky_start():
-  """Serves the Bluesky login form page to sign up."""
-  request_values = request.values.to_dict()
-  feature = request_values.pop('feature', 'listen')
-
-  if 'username' in request_values:
-    error(f'username parameter is not supported')
-
-  username = ''
-  if id := request_values.get('id'):
-    if source := Bluesky.get_by_id(id):
-      username = source.username
-
-  return util.render_template('provide_app_password.html',
-                              post_url='/bluesky/callback',
-                              operation='add',
-                              feature=feature,
-                              username=username,
-                              **request_values)
+class OAuthStart(oauth_bluesky.OAuthStart):
+  @property
+  def CLIENT_METADATA(self):
+    return util.bluesky_oauth_client_metadata()
 
 
-@app.get('/bluesky/delete/start')
-def bluesky_delete():
-  """Serves the Bluesky login form page to delete an existing account."""
-  return util.render_template('provide_app_password.html',
-                              post_url='/bluesky/callback',
-                              operation='delete',
-                              **request.values)
+class OAuthCallback(oauth_bluesky.OAuthCallback):
+  @property
+  def CLIENT_METADATA(self):
+    return util.bluesky_oauth_client_metadata()
+
+  def finish(self, auth_entity, state=None):
+    util.maybe_add_or_delete_source(Bluesky, auth_entity, state)
 
 
-@app.post('/bluesky/publish/start', endpoint='bluesky_publish_start')
-def bluesky_publish_start():
-  username = ''
-  state = util.decode_oauth_state(request.values.get('state') or '')
-  if source_key := state.get('source_key'):
-    if source := ndb.Key(urlsafe=source_key).get():
-      username = source.username
+Bluesky.OAUTH_START = OAuthStart
 
-  return util.render_template('provide_app_password.html',
-                              post_url='/publish/bluesky/finish',
-                              username=username,
-                              **request.values)
+
+@app.get('/bluesky/client-metadata.json')
+def bluesky_client_metadata():
+  """https://docs.bsky.app/docs/advanced-guides/oauth-client#client-and-server-metadata"""
+  return util.bluesky_oauth_client_metadata()
 
 
 app.add_url_rule('/bluesky/callback', view_func=Callback.as_view('bluesky_callback', 'unused'), methods=['POST'])
+app.add_url_rule('/bluesky/oauth/start',
+                 view_func=OAuthStart.as_view('bluesky_oauth_start', '/bluesky/oauth/callback'),
+                 methods=['POST'])
+app.add_url_rule('/bluesky/oauth/callback',
+                 view_func=OAuthCallback.as_view('bluesky_oauth_callback', 'unused'))
+app.add_url_rule('/bluesky/delete/finish',
+                 view_func=OAuthCallback.as_view('bluesky_delete_finish', '/delete/finish'))
+app.add_url_rule('/bluesky/publish/start',
+                 view_func=OAuthStart.as_view('bluesky_publish_finish', '/publish/bluesky/finish'), methods=['POST'])

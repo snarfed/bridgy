@@ -8,8 +8,10 @@ from google.cloud import ndb
 from granary import as1
 from granary import microformats2
 from granary import source as gr_source
+from oauth_dropins import bluesky as oauth_bluesky
 from oauth_dropins.indieauth import IndieAuth
 from oauth_dropins.instagram import INSTAGRAM_SESSIONID_COOKIE
+from requests_oauth2client import OAuth2AccessTokenAuth, TokenSerializer
 from oauth_dropins.webutil import webmention
 from oauth_dropins.webutil.flask_util import flash
 from oauth_dropins.webutil.models import StringIdModel
@@ -240,8 +242,10 @@ class Source(StringIdModel, metaclass=SourceMeta):
     kwargs = {}
     if self.key.kind() == 'FacebookPage' and auth_entity.type == 'user':
       kwargs = {'user_id': self.key_id()}
+
     elif self.key.kind() == 'Instagram':
       kwargs = {'scrape': True, 'cookie': INSTAGRAM_SESSIONID_COOKIE}
+
     elif self.key.kind() == 'Mastodon':
       args = (auth_entity.instance(),) + args
       inst = auth_entity.app.get().instance_info
@@ -255,22 +259,40 @@ class Source(StringIdModel, metaclass=SourceMeta):
         # https://docs-develop.pleroma.social/backend/API/differences_in_mastoapi_responses/#instance
         'truncate_text_length': truncate_text_length,
       }
+
     elif self.key.kind() == 'Twitter':
       kwargs = {'username': self.key_id()}
+
     elif self.key.kind() == 'Bluesky':
-      def store_session(session):
-        logger.info(f'Storing Bluesky session for {auth_entity.key.id()}: {session}')
-        auth_entity.session = session
+      did = auth_entity.key.id()
+
+      def session_callback(auth_or_session):
+        logger.info(f'Storing Bluesky creds for {did}: {auth_or_session}')
+        if isinstance(auth_or_session, dict):
+          auth_entity.session = auth_or_session
+        else:
+          auth_entity.dpop_token = TokenSerializer().dumps(auth_obj.token)
         auth_entity.put()
 
       args = []
       kwargs = {
         'handle': json_loads(auth_entity.user_json).get('handle'),
-        'did': auth_entity.key.id(),
-        'app_password': auth_entity.password,
-        'session_callback': store_session,
+        'did': did,
+        'session_callback': session_callback,
       }
-      if auth_entity.session:
+
+      if auth_entity.dpop_token:
+        # OAuth
+        pds_url = auth_entity.pds_url or oauth_bluesky.pds_for_did(did)
+        oauth_client = oauth_bluesky.oauth_client_for_pds(
+          util.bluesky_oauth_client_metadata(), pds_url)
+        token = TokenSerializer().loads(auth_entity.dpop_token)
+        kwargs.update({
+          'auth': OAuth2AccessTokenAuth(client=oauth_client, token=token),
+          'pds_url': pds_url,
+        })
+      else:
+        # app password based access token
         kwargs.update({
           'access_token': auth_entity.session.get('accessJwt'),
           'refresh_token': auth_entity.session.get('refreshJwt'),

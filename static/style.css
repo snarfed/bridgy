@@ -21,6 +21,10 @@
   margin-top: 2em;
 }
 
+#signups input {
+  font-size: 16px;
+}
+
 #signups hr {
   width: 50%;
   border-color: lightgray;
@@ -117,12 +121,12 @@ pre .value, code .value, code.value {
   margin: .5em;
 }
 
-form[action="/bluesky/start"] input[type="text"] {
+form[action="/bluesky/oauth/start"] input[type="text"] {
   margin-right: 0 !important;
   font-size: medium;
 }
 
-form[action="/bluesky/start"] input[type="image"] {
+form[action="/bluesky/oauth/start"] input[type="image"] {
   margin-left: 0 !important;
 }
 

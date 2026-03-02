@@ -2,13 +2,15 @@
 from unittest import mock
 from urllib.parse import parse_qs, urlparse
 
+from mox3 import mox
 from oauth_dropins import bluesky as oauth_bluesky
 from oauth_dropins.webutil.testutil import requests_response
 from oauth_dropins.webutil.util import json_dumps
 import requests
+from requests_oauth2client import DPoPKey, DPoPToken, TokenSerializer
 from werkzeug.routing import RequestRedirect
 
-from bluesky import Bluesky, Callback
+from bluesky import Bluesky, Callback, OAuthCallback
 from flask_app import app
 from models import DisableSource
 import util
@@ -116,3 +118,85 @@ class BlueskyTest(testutil.AppTest):
 
     with self.assertRaises(DisableSource):
       self.bsky.get_activities()
+
+  def test_bluesky_client_metadata(self):
+    resp = app.test_client().get('/bluesky/client-metadata.json')
+    self.assertEqual(200, resp.status_code)
+    self.assert_equals({
+      'application_type': 'web',
+      'client_id': 'http://localhost/bluesky/client-metadata.json',
+      'client_name': 'Bridgy',
+      'client_uri': 'http://localhost/',
+      'dpop_bound_access_tokens': True,
+      'grant_types': ['authorization_code', 'refresh_token'],
+      'redirect_uris': ['http://localhost/bluesky/oauth/callback'],
+      'response_types': ['code'],
+      'scope': 'atproto transition:generic',
+      'token_endpoint_auth_method': 'none',
+    }, resp.get_json())
+
+  def test_oauth_callback_add(self):
+    self.expect_requests_get('https://alice.com/', '')
+    self.mox.ReplayAll()
+
+    state = util.encode_oauth_state({'operation': 'add', 'feature': 'listen'})
+    with self.assertRaises(RequestRedirect) as redir, app.test_request_context('/'):
+      OAuthCallback('unused').finish(self.auth_entity, state=state)
+
+    location = urlparse(redir.exception.get_response().headers['Location'])
+    self.assertEqual('/bluesky/did:web:alice.com', location.path)
+
+  def test_oauth_callback_delete(self):
+    self.bsky.features = ['listen', 'publish']
+    self.bsky.put()
+
+    state = util.encode_oauth_state({
+      'operation': 'delete',
+      'feature': 'listen,publish',
+    })
+
+    with self.assertRaises(RequestRedirect) as redir, app.test_request_context('/'):
+      OAuthCallback('unused').finish(self.auth_entity, state=state)
+
+    location = urlparse(redir.exception.get_response().headers['Location'])
+    self.assertEqual('/delete/finish', location.path)
+    query = parse_qs(location.query)
+    self.assertEqual([self.auth_entity.key.urlsafe().decode()], query['auth_entity'])
+    self.assertEqual({
+      'operation': 'delete',
+      'feature': 'listen,publish',
+    }, util.decode_oauth_state(query['state'][0]))
+
+  def test_oauth_callback_no_auth_entity(self):
+    with self.assertRaises(RequestRedirect) as redir, app.test_request_context('/'):
+      OAuthCallback('unused').finish(None)
+
+    location = urlparse(redir.exception.get_response().headers['Location'])
+    self.assertEqual('/', location.path)
+
+  def test_gr_source_oauth(self):
+    fake_client = self.mox.CreateMockAnything()
+    self.mox.StubOutWithMock(oauth_bluesky, 'oauth_client_for_pds')
+    oauth_bluesky.oauth_client_for_pds(
+      mox.IgnoreArg(), 'https://bsky.social').AndReturn(fake_client)
+    self.mox.ReplayAll()
+
+    dpop_token = DPoPToken(access_token='towkin', _dpop_key=DPoPKey.generate())
+    auth_entity = oauth_bluesky.BlueskyAuth(
+      id='did:plc:alice',
+      pds_url='https://bsky.social',
+      dpop_token=TokenSerializer().dumps(dpop_token),
+      user_json=json_dumps({
+        '$type': 'app.bsky.actor.defs#profileViewDetailed',
+        'handle': 'alice.bsky.social',
+      }),
+    )
+    auth_entity.put()
+    bsky = Bluesky(id='did:plc:alice', auth_entity=auth_entity.key,
+                   username='alice.bsky.social')
+
+    with app.test_request_context('/'):
+      gr = bsky.gr_source
+
+    self.assertIsNotNone(gr._client.auth)
+    self.assertIsNone(gr._app_password)

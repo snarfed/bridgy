@@ -80,6 +80,9 @@ WordPress.com, <a href="/">sign up here!</a>
   {% if source.SHORT_NAME == 'mastodon' %}
     <input name="instance" type="hidden" value="{{ source.instance() }}" />
   {% endif %}
+  {% if source.SHORT_NAME == 'bluesky' %}
+    <input name="handle" type="hidden" value="{{ source.username }}" />
+  {% endif %}
 </p>
 </form>
 {% endif %}
@@ -203,7 +206,7 @@ WordPress.com, <a href="/">sign up here!</a>
     <input name="instance" type="hidden" value="{{ source.instance() }}" />
   {% endif %}
   {% if source.SHORT_NAME == 'bluesky' %}
-    <input name="username" type="hidden" value="{{ source.username }}" />
+    <input name="handle" type="hidden" value="{{ source.username }}" />
   {% endif %}
  <button id="micropub-token-button" type="submit" class="btn btn-default"
     title="Shows your Micropub access token"
@@ -217,6 +220,9 @@ WordPress.com, <a href="/">sign up here!</a>
     >Disable</button>
   {% if source.SHORT_NAME == 'mastodon' %}
     <input name="instance" type="hidden" value="{{ source.instance() }}" />
+  {% endif %}
+  {% if source.SHORT_NAME == 'bluesky' %}
+    <input name="handle" type="hidden" value="{{ source.username }}" />
   {% endif %}
 </form>
 </data>

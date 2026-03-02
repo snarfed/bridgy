@@ -11,9 +11,10 @@ from oauth_dropins.webutil.util import json_dumps, json_loads
 import tweepy
 
 from flask_app import app
-from bluesky import Bluesky
+from bluesky import Bluesky, OAuthStart
 import models
 from models import Publish, PublishedPage, SyndicatedPost
+from requests_oauth2client import OAuth2Client
 import util
 from . import testutil
 from .testutil import FakeBlogSource
@@ -262,16 +263,22 @@ class PagesTest(testutil.AppTest):
                   resp.headers['Set-Cookie'].split(' '))
 
   def test_delete_bluesky(self):
-    source_key = Bluesky(id='did:foo', username='foo.com').put().urlsafe().decode()
+    source_key = Bluesky(id='did:plc:foo', username='foo.com').put()
+
+    # avoid mocking all of the complicated requests_oauth2client machinery
+    self.mox.StubOutWithMock(OAuthStart, 'redirect_url')
+    OAuthStart.redirect_url(state=mox.IgnoreArg()).AndReturn(
+      'https://bsky.social/oauth/authorize?x=1')
+    self.mox.ReplayAll()
 
     resp = self.client.post('/delete/start', data={
         'feature': 'listen',
-        'key': source_key,
+        'key': source_key.urlsafe().decode(),
+        'handle': 'foo.com',
       })
     self.assertEqual(302, resp.status_code)
-    self.assertEqual(
-      'http://localhost/bluesky/delete/start?username=foo.com&feature=listen',
-      resp.headers['Location'])
+    self.assertEqual('https://bsky.social/oauth/authorize?x=1',
+                     resp.headers['Location'])
 
   def test_delete_finish_multiple_features(self):
     self.sources[0].features = ['listen', 'publish']
