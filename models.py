@@ -8,10 +8,8 @@ from google.cloud import ndb
 from granary import as1
 from granary import microformats2
 from granary import source as gr_source
-from oauth_dropins import bluesky as oauth_bluesky
 from oauth_dropins.indieauth import IndieAuth
 from oauth_dropins.instagram import INSTAGRAM_SESSIONID_COOKIE
-from requests_oauth2client import OAuth2AccessTokenAuth, TokenSerializer
 from oauth_dropins.webutil import webmention
 from oauth_dropins.webutil.flask_util import flash
 from oauth_dropins.webutil.models import StringIdModel
@@ -264,39 +262,9 @@ class Source(StringIdModel, metaclass=SourceMeta):
       kwargs = {'username': self.key_id()}
 
     elif self.key.kind() == 'Bluesky':
-      did = auth_entity.key.id()
-
-      def session_callback(auth_or_session):
-        logger.info(f'Storing Bluesky creds for {did}: {auth_or_session}')
-        if isinstance(auth_or_session, dict):
-          auth_entity.session = auth_or_session
-        else:
-          auth_entity.dpop_token = TokenSerializer().dumps(auth_or_session.token)
-        auth_entity.put()
-
-      args = []
-      kwargs = {
-        'handle': json_loads(auth_entity.user_json).get('handle'),
-        'did': did,
-        'session_callback': session_callback,
-      }
-
-      if auth_entity.dpop_token:
-        # OAuth
-        pds_url = auth_entity.pds_url or oauth_bluesky.pds_for_did(did)
-        oauth_client = oauth_bluesky.oauth_client_for_pds(
-          util.bluesky_oauth_client_metadata(), pds_url)
-        token = TokenSerializer().loads(auth_entity.dpop_token)
-        kwargs.update({
-          'auth': OAuth2AccessTokenAuth(client=oauth_client, token=token),
-          'pds_url': pds_url,
-        })
-      else:
-        # app password based access token
-        kwargs.update({
-          'access_token': auth_entity.session.get('accessJwt'),
-          'refresh_token': auth_entity.session.get('refreshJwt'),
-        })
+      cm = util.bluesky_oauth_client_metadata() if auth_entity.dpop_token else None
+      self.gr_source = self.GR_CLASS.from_auth(auth_entity, cm)
+      return self.gr_source
 
     self.gr_source = self.GR_CLASS(*args, **kwargs)
     return self.gr_source

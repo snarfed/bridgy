@@ -29,6 +29,7 @@ class BlueskyTest(testutil.AppTest):
     super().setUp()
     self.auth_entity = oauth_bluesky.BlueskyAuth(
       id='did:web:alice.com',
+      pds_url='https://pds.com',
       password='password',
       user_json=json_dumps({
         '$type': 'app.bsky.actor.defs#profileViewDetailed',
