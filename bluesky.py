@@ -6,7 +6,7 @@ from google.cloud import ndb
 from granary import bluesky as gr_bluesky
 import lexrpc.client
 from oauth_dropins import bluesky as oauth_bluesky
-from oauth_dropins.webutil.flask_util import error, flash
+from oauth_dropins.webutil.flask_util import error, flash, FlashErrors
 from oauth_dropins.webutil.util import json_loads
 import requests
 from requests_oauth2client import InvalidGrant
@@ -132,47 +132,20 @@ class Bluesky(models.Source):
       raise
 
 
-class Callback(oauth_bluesky.Callback):
-  def finish(self, auth_entity, state=None):
-    if not auth_entity:
-      flash("Failed to log in to Bluesky. Are your credentials correct?")
-      return util.redirect('/')
+class OAuthStart(FlashErrors, oauth_bluesky.OAuthStart):
+  ON_ERROR_REDIRECT_TO = '/'
 
-    state = {
-      'operation': request.form['operation'],
-      'feature': request.form['feature'],
-    }
-    if request.form['operation'] == 'delete':
-      state['source'] = Bluesky(id=auth_entity.key.id()).key.urlsafe().decode()
-
-    util.maybe_add_or_delete_source(Bluesky, auth_entity,
-                                    util.encode_oauth_state(state))
-
-
-class OAuthStart(oauth_bluesky.OAuthStart):
   @property
   def CLIENT_METADATA(self):
     return util.bluesky_oauth_client_metadata()
 
-  def dispatch_request(self):
-    try:
-      return super().dispatch_request()
-    except ValueError as e:
-      flash(str(e))
-      return util.redirect('/')
 
+class OAuthCallback(FlashErrors, oauth_bluesky.OAuthCallback):
+  ON_ERROR_REDIRECT_TO = '/'
 
-class OAuthCallback(oauth_bluesky.OAuthCallback):
   @property
   def CLIENT_METADATA(self):
     return util.bluesky_oauth_client_metadata()
-
-  def dispatch_request(self):
-    try:
-      return super().dispatch_request()
-    except ValueError as e:
-      flash(str(e))
-      return util.redirect('/')
 
   def finish(self, auth_entity, state=None):
     util.maybe_add_or_delete_source(Bluesky, auth_entity, state)
@@ -187,7 +160,6 @@ def bluesky_client_metadata():
   return util.bluesky_oauth_client_metadata()
 
 
-app.add_url_rule('/bluesky/callback', view_func=Callback.as_view('bluesky_callback', 'unused'), methods=['POST'])
 app.add_url_rule('/bluesky/oauth/start',
                  view_func=OAuthStart.as_view('bluesky_oauth_start', '/bluesky/oauth/callback'),
                  methods=['POST'])

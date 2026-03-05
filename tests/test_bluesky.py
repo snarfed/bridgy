@@ -16,7 +16,7 @@ from requests_oauth2client import (
 )
 from werkzeug.routing import RequestRedirect
 
-from bluesky import Bluesky, Callback, OAuthCallback
+from bluesky import Bluesky, OAuthCallback
 from flask_app import app
 from models import DisableSource
 import util
@@ -85,26 +85,6 @@ class BlueskyTest(testutil.AppTest):
         ('at://did:web:alice.com/app.bsky.feed.post/123', 'https://bsky.app/profile/alice.com/post/123'),
     ]:
       self.assertEqual(expected, self.bsky.canonicalize_url(input))
-
-  def test_delete(self):
-    self.bsky.features = ['listen', 'publish']
-    self.bsky.put()
-
-    with self.assertRaises(RequestRedirect) as redir, app.test_request_context(data={
-        'operation': 'delete',
-        'feature': 'listen,publish',
-      }):
-      Callback('unused').finish(self.auth_entity)
-
-    location = urlparse(redir.exception.get_response().headers['Location'])
-    self.assertEqual('/delete/finish', location.path)
-    query = parse_qs(location.query)
-    self.assertEqual([self.auth_entity.key.urlsafe().decode()], query['auth_entity'])
-    self.assertEqual({
-      'operation': 'delete',
-      'feature': 'listen,publish',
-      'source': self.bsky.key.urlsafe().decode(),
-    }, util.decode_oauth_state(query['state'][0]))
 
   @mock.patch('requests.get', return_value=requests_response({'feed': []}))
   def test_get_activities(self, _):
