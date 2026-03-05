@@ -154,6 +154,13 @@ class OAuthStart(oauth_bluesky.OAuthStart):
   def CLIENT_METADATA(self):
     return util.bluesky_oauth_client_metadata()
 
+  def dispatch_request(self):
+    try:
+      return super().dispatch_request()
+    except ValueError as e:
+      flash(str(e))
+      return util.redirect('/')
+
 
 class OAuthCallback(oauth_bluesky.OAuthCallback):
   @property
@@ -162,7 +169,7 @@ class OAuthCallback(oauth_bluesky.OAuthCallback):
 
   def dispatch_request(self):
     try:
-      super().dispatch_request()
+      return super().dispatch_request()
     except ValueError as e:
       flash(str(e))
       return util.redirect('/')
