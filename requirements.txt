@@ -22,7 +22,7 @@ bech32==1.2.0
 Brotli==1.2.0
 cachetools==6.2.4
 certifi==2026.2.25
-charset-normalizer==3.4.5
+charset-normalizer==3.4.6
 click==8.3.1
 colorama==0.4.6
 cryptography==46.0.5
