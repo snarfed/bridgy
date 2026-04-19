@@ -21,7 +21,7 @@ beautifulsoup4==4.14.3
 bech32==1.2.0
 blake3==1.0.8
 Brotli==1.2.0
-cachetools==6.2.4
+cachetools==7.0.5
 certifi==2026.2.25
 charset-normalizer==3.4.7
 click==8.3.2
