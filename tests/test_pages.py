@@ -1,5 +1,6 @@
 """Unit tests for pages.py."""
 from datetime import datetime, timedelta, timezone
+from unittest import skip
 import urllib.request, urllib.parse, urllib.error
 from urllib.parse import urlencode, urlparse, parse_qs
 
@@ -266,11 +267,13 @@ class PagesTest(testutil.AppTest):
   def test_delete_bluesky(self):
     source_key = Bluesky(id='did:plc:foo', username='foo.com').put()
 
+    # OAuth
+    # https://github.com/snarfed/bridgy/issues/1909
     # avoid mocking all of the complicated requests_oauth2client machinery
-    self.mox.StubOutWithMock(OAuthStart, 'redirect_url')
-    OAuthStart.redirect_url(state=mox.IgnoreArg()).AndReturn(
-      'https://bsky.social/oauth/authorize?x=1')
-    self.mox.ReplayAll()
+    # self.mox.StubOutWithMock(OAuthStart, 'redirect_url')
+    # OAuthStart.redirect_url(state=mox.IgnoreArg()).AndReturn(
+    #   'https://bsky.social/oauth/authorize?x=1')
+    # self.mox.ReplayAll()
 
     resp = self.client.post('/delete/start', data={
         'feature': 'listen',
@@ -278,8 +281,14 @@ class PagesTest(testutil.AppTest):
         'handle': 'foo.com',
       })
     self.assertEqual(302, resp.status_code)
-    self.assertEqual('https://bsky.social/oauth/authorize?x=1',
-                     resp.headers['Location'])
+    self.assertEqual(
+      'http://localhost/bluesky/delete/start?username=foo.com&feature=listen',
+      resp.headers['Location'])
+
+    # OAuth
+    # https://github.com/snarfed/bridgy/issues/1909
+    # self.assertEqual('https://bsky.social/oauth/authorize?x=1',
+    #                  resp.headers['Location'])
 
   def test_delete_finish_multiple_features(self):
     self.sources[0].features = ['listen', 'publish']
@@ -494,6 +503,9 @@ class PagesTest(testutil.AppTest):
     self.assertEqual(200, resp.status_code)
     self.assertIn('Get token', resp.get_data(as_text=True))
 
+  # OAuth
+  # https://github.com/snarfed/bridgy/issues/1909
+  @skip
   def test_bluesky_user_page_dpop_token(self):
     auth_entity = oauth_bluesky.BlueskyAuth(
       id='did:plc:bob',

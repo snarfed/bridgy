@@ -12,6 +12,7 @@ import google.protobuf.message
 from granary import microformats2
 from granary import source as gr_source
 from oauth_dropins import (
+  bluesky as oauth_bluesky,
   flickr as oauth_flickr,
   github as oauth_github,
   mastodon as oauth_mastodon,
@@ -221,6 +222,13 @@ class GetToken(View):
     return redirect(source.bridgy_url())
 
 
+@app.post('/micropub-token/bluesky/start', endpoint='micropub_token_bluesky_start')
+def bluesky_start():
+  return util.render_template('provide_app_password.html',
+                              post_url='/micropub-token/bluesky/finish',
+                              **request.values)
+
+
 class MastodonStart(mastodon.StartBase):
   def dispatch_request(self):
     source = util.load_source()
@@ -243,7 +251,7 @@ class MastodonStart(mastodon.StartBase):
 
 # We want Callback.get() and GetToken.finish(), so put Callback first and
 # override finish.
-class BlueskyToken(bluesky.OAuthCallback, GetToken):
+class BlueskyToken(oauth_bluesky.Callback, GetToken):
   finish = GetToken.finish
 
 
@@ -261,8 +269,11 @@ class MastodonToken(oauth_mastodon.Callback, GetToken):
 
 app.add_url_rule('/micropub', view_func=Micropub.as_view('micropub'), methods=['GET', 'POST'])
 
-app.add_url_rule('/micropub-token/bluesky/start', view_func=bluesky.OAuthStart.as_view('micropub_token_bluesky_start', '/micropub-token/bluesky/finish'), methods=['POST'])
-app.add_url_rule('/micropub-token/bluesky/finish', view_func=BlueskyToken.as_view('micropub_token_bluesky_finish', 'finish'))
+app.add_url_rule('/micropub-token/bluesky/finish', view_func=BlueskyToken.as_view('micropub_token_bluesky_finish', 'finish'), methods=['POST'])
+# OAuth
+# https://github.com/snarfed/bridgy/issues/1909
+# app.add_url_rule('/micropub-token/bluesky/start', view_func=bluesky.OAuthStart.as_view('micropub_token_bluesky_start', '/micropub-token/bluesky/finish'), methods=['POST'])
+# app.add_url_rule('/micropub-token/bluesky/finish', view_func=BlueskyToken.as_view('micropub_token_bluesky_finish', 'finish'))
 
 app.add_url_rule('/micropub-token/flickr/start', view_func=oauth_flickr.Start.as_view('micropub_token_flickr_start', '/micropub-token/flickr/finish'), methods=['POST'])
 app.add_url_rule('/micropub-token/flickr/finish', view_func=FlickrToken.as_view('micropub_token_flickr_finish', 'unused'))

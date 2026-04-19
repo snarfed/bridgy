@@ -209,12 +209,12 @@ WordPress.com, <a href="/">sign up here!</a>
     <input name="handle" type="hidden" value="{{ source.username }}" />
   {% endif %}
 
-  {# TODO: Micropub tokens for Bluesky OAuth, https://github.com/snarfed/bridgy/issues/2042 #}
-  {% if source.auth_entity.get().password %}
+  {# TODO: Micropub tokens for Bluesky OAuth, https://github.com/snarfed/bridgy/issues/2042
+  {% if source.auth_entity.get().password %} #}
   <button id="micropub-token-button" type="submit" class="btn btn-default"
      title="Shows your Micropub access token"
      >Get token</button>
-  {% endif %}
+  {# {% endif %} #}
 </form>
 <form method="post" action="/delete/start">
   <input name="key" type="hidden" value="{{ source.key.urlsafe().decode() }}" />

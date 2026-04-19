@@ -16,6 +16,7 @@ from granary import as1, microformats2
 from granary import source as gr_source
 import grpc
 from oauth_dropins import (
+  bluesky as oauth_bluesky,
   flickr as oauth_flickr,
   github as oauth_github,
   mastodon as oauth_mastodon,
@@ -682,7 +683,7 @@ class Send(PublishBase):
 
 # We want Callback.get() and Send.finish(), so put
 # Callback first and override finish.
-class BlueskySend(bluesky.OAuthCallback, Send):
+class BlueskySend(oauth_bluesky.Callback, Send):
   finish = Send.finish
 
 
@@ -734,7 +735,7 @@ class Webmention(PublishBase):
 
 app.add_url_rule('/publish/preview', view_func=Preview.as_view('publish_preview'), methods=['POST'])
 app.add_url_rule('/publish/webmention', view_func=Webmention.as_view('publish_webmention'), methods=['POST'])
-app.add_url_rule('/publish/bluesky/finish', view_func=BlueskySend.as_view('publish_bluesky_finish', 'finish'))
+app.add_url_rule('/publish/bluesky/finish', view_func=BlueskySend.as_view('publish_bluesky_finish', 'finish'), methods=['POST'])
 app.add_url_rule('/publish/flickr/finish', view_func=FlickrSend.as_view('publish_flickr_finish', 'unused'))
 app.add_url_rule('/publish/github/finish', view_func=GitHubSend.as_view('publish_github_finish', 'unused'))
 app.add_url_rule('/publish/mastodon/finish', view_func=MastodonSend.as_view('publish_mastodon_finish', 'unused'))

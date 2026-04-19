@@ -331,6 +331,11 @@ def delete_start():
     'callback': request.values.get('callback'),
   })
 
+  if kind == 'Bluesky':
+    # Bluesky isn't OAuth yet
+    # https://github.com/snarfed/bridgy/issues/1909
+    return redirect(f'/bluesky/delete/start?username={source.username}&feature={feature}')
+
   path = ('/reddit/callback' if kind == 'Reddit'
           else '/wordpress/add' if kind == 'WordPress'
           else f'/{source.SHORT_NAME}/delete/finish')
