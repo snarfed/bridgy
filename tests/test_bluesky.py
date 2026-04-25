@@ -106,31 +106,43 @@ class BlueskyTest(testutil.AppTest):
       'source': self.bsky.key.urlsafe().decode(),
     }, util.decode_oauth_state(query['state'][0]))
 
-  @mock.patch('requests.get', return_value=requests_response({'feed': []}))
-  def test_get_activities(self, _):
+  def test_get_activities(self):
+    util.session.get(
+      'https://pds.com/xrpc/app.bsky.feed.getAuthorFeed?actor=did%3Aweb%3Aalice.com',
+      auth=None, data=None, headers=mox.IgnoreArg(), json=None,
+    ).AndReturn(requests_response({'feed': []}, content_type='application/json'))
+    self.mox.ReplayAll()
     self.assertEqual([], self.bsky.get_activities())
 
-  @mock.patch('requests.get', return_value=requests_response({}, status=400))
-  def test_get_activities_error(self, _):
+  def test_get_activities_error(self):
+    util.session.get(
+      'https://pds.com/xrpc/app.bsky.feed.getAuthorFeed?actor=did%3Aweb%3Aalice.com',
+      auth=None, data=None, headers=mox.IgnoreArg(), json=None,
+    ).AndReturn(requests_response({}, status=400, content_type='application/json'))
+    self.mox.ReplayAll()
     with self.assertRaises(requests.HTTPError):
       self.bsky.get_activities()
 
-  @mock.patch('requests.post')
-  @mock.patch('requests.get')
-  def test_get_activities_token_error(self, mock_get, mock_post):
-    mock_get.return_value = mock_post.return_value = requests_response({
-      'error': 'ExpiredToken',
-      'message': 'Token has been revoked',
-    }, status=400)
-
+  def test_get_activities_token_error(self):
+    token_error = {'error': 'ExpiredToken', 'message': 'Token has been revoked'}
+    util.session.get(
+      'https://pds.com/xrpc/app.bsky.feed.getAuthorFeed?actor=did%3Aweb%3Aalice.com',
+      auth=None, data=None, headers=mox.IgnoreArg(), json=None,
+    ).AndReturn(requests_response(token_error, status=400, content_type='application/json'))
+    util.session.post(
+      'https://pds.com/xrpc/com.atproto.server.refreshSession',
+      auth=None, data=None, headers=mox.IgnoreArg(), json=None,
+    ).AndReturn(requests_response(token_error, status=400, content_type='application/json'))
+    self.mox.ReplayAll()
     with self.assertRaises(DisableSource):
       self.bsky.get_activities()
 
-  @mock.patch('requests.post')
-  @mock.patch('requests.get')
-  def test_get_activities_oauth_exception(self, mock_get, mock_post):
-    mock_get.side_effect = mock_post.side_effect = InvalidGrant(None, 'foo', 'bar')
-
+  def test_get_activities_oauth_exception(self):
+    util.session.get(
+      'https://pds.com/xrpc/app.bsky.feed.getAuthorFeed?actor=did%3Aweb%3Aalice.com',
+      auth=None, data=None, headers=mox.IgnoreArg(), json=None,
+    ).AndRaise(InvalidGrant(None, 'foo', 'bar'))
+    self.mox.ReplayAll()
     with self.assertRaises(DisableSource):
       self.bsky.get_activities()
 
