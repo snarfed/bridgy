@@ -27,9 +27,7 @@ app.after_request(flask_util.default_modern_headers)
 app.register_error_handler(Exception, flask_util.handle_exception)
 app.before_request(flask_util.canonicalize_domain(
   util.OTHER_DOMAINS, util.PRIMARY_DOMAIN))
-if (appengine_info.LOCAL_SERVER
-    # ugly hack to infer if we're running unit tests
-    and 'unittest' not in sys.modules):
+if appengine_info.LOCAL_SERVER and not appengine_info.TESTING:
   flask_gae_static.init_app(app)
 
 app.wsgi_app = flask_util.ndb_context_middleware(app.wsgi_app, client=ndb_client)
