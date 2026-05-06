@@ -181,7 +181,7 @@ WordPress.com, <a href="/">sign up here!</a>
 {% else %}
 {% if source.AUTO_POLL %}
 <data class="p-bridgy-listen-status" value="disabled">
-<span class="big">Click to enable <a href="/about#backfeed">backfeed</a>:</span>
+<span class="big">Enable <a href="/about#backfeed">backfeed</a>:</span>
 {{ source.button_html('listen,publish' if 'publish' in source.features else 'listen', source=source)|safe }}
 </data>
 {% endif %}
@@ -269,7 +269,7 @@ WordPress.com, <a href="/">sign up here!</a>
 {% else %}
 {% if source.CAN_PUBLISH %}
 <data class="p-bridgy-publish-status" value="disabled">
-<span class="big">Click to enable <a href="/about#publish">publishing</a>:</span>
+<span class="big">Enable <a href="/about#publish">publishing</a>:</span>
 {{ source.button_html('listen,publish' if 'listen' in source.features else 'publish', source=source)|safe }}
 </data>
 {% endif %}

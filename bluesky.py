@@ -84,7 +84,9 @@ class Bluesky(models.Source):
   @classmethod
   def button_html(cls, feature, form_extra='', source=None, **kwargs):
     """Override oauth-dropins's button_html() to send a GET."""
-    return super().button_html(feature, form_method='get', **kwargs)
+    return super().button_html(feature, form_method='get',
+                               handle=source.username if source else None,
+                               **kwargs)
 
     # OAuth
     # https://github.com/snarfed/bridgy/issues/1909
