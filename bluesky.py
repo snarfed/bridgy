@@ -241,4 +241,4 @@ app.add_url_rule('/bluesky/callback', view_func=Callback.as_view('bluesky_callba
 # app.add_url_rule('/bluesky/delete/finish',
 #                  view_func=OAuthCallback.as_view('bluesky_delete_finish', '/delete/finish'))
 # app.add_url_rule('/bluesky/publish/start',
-#                  view_func=OAuthStart.as_view('bluesky_publish_finish', '/publish/bluesky/finish'), methods=['POST'])
+#                  view_func=OAuthStart.as_view('bluesky_publish_start', '/publish/bluesky/finish'), methods=['POST'])

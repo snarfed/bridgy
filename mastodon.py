@@ -183,4 +183,4 @@ app.add_url_rule('/mastodon/callback', view_func=Callback.as_view('mastodon_call
 app.add_url_rule('/mastodon/delete/finish',
                  view_func=oauth_mastodon.Callback.as_view('mastodon_delete_finish', '/delete/finish'))
 app.add_url_rule('/mastodon/publish/start',
-                 view_func=StartBase.as_view('mastodon_publish_finish', '/publish/mastodon/finish', scopes=PUBLISH_SCOPES), methods=['POST'])
+                 view_func=StartBase.as_view('mastodon_publish_start', '/publish/mastodon/finish', scopes=PUBLISH_SCOPES), methods=['POST'])
