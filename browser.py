@@ -7,8 +7,8 @@ from flask import jsonify, make_response, request
 from flask.views import View
 from google.cloud import ndb
 from granary import as1
-from oauth_dropins.webutil import flask_util
-from oauth_dropins.webutil.util import json_dumps, json_loads
+from webutil import flask_util
+from webutil.util import json_dumps, json_loads
 
 from flask_app import app
 import models

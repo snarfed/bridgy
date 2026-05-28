@@ -8,8 +8,8 @@ from flask import request
 from granary import twitter as gr_twitter
 from granary import source as gr_source
 from oauth_dropins import twitter as oauth_twitter
-from oauth_dropins.webutil.flask_util import error
-from oauth_dropins.webutil.util import json_dumps, json_loads
+from webutil.flask_util import error
+from webutil.util import json_dumps, json_loads
 
 from flask_app import app
 import models

@@ -2,7 +2,7 @@
 """
 from granary.mastodon import API_BLOCKS
 from oauth_dropins import mastodon as oauth_mastodon
-from oauth_dropins.webutil.util import json_dumps
+from webutil.util import json_dumps
 
 from . import testutil
 from mastodon import Mastodon

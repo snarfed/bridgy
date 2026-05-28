@@ -34,8 +34,8 @@ import urllib.parse
 from flask import request
 from google.cloud import ndb
 from oauth_dropins import tumblr as oauth_tumblr
-from oauth_dropins.webutil.flask_util import flash
-from oauth_dropins.webutil.util import json_dumps, json_loads
+from webutil.flask_util import flash
+from webutil.util import json_dumps, json_loads
 from werkzeug.exceptions import BadRequest
 
 from flask_app import app

@@ -7,8 +7,8 @@ from flask import get_flashed_messages
 from google.cloud import ndb
 from granary import source as gr_source
 from mox3 import mox
-from oauth_dropins.webutil.testutil import NOW
-from oauth_dropins.webutil.util import json_dumps, json_loads
+from webutil.testutil import NOW
+from webutil.util import json_dumps, json_loads
 import requests
 
 import flickr

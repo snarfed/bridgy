@@ -28,8 +28,8 @@ import urllib.request, urllib.parse, urllib.error
 from flask import request
 from google.cloud import ndb
 from oauth_dropins import wordpress_rest as oauth_wordpress
-from oauth_dropins.webutil.flask_util import error, flash
-from oauth_dropins.webutil.util import json_dumps, json_loads
+from webutil.flask_util import error, flash
+from webutil.util import json_dumps, json_loads
 
 from flask_app import app
 import models

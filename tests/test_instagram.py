@@ -20,7 +20,7 @@ from granary.tests.test_instagram import (
   HTML_VIEWER_CONFIG,
   LIKE_OBJS,
 )
-from oauth_dropins.webutil.util import HTTP_TIMEOUT, json_dumps, json_loads
+from webutil.util import HTTP_TIMEOUT, json_dumps, json_loads
 
 import browser
 from instagram import Instagram

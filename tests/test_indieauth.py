@@ -4,8 +4,8 @@ import copy
 import urllib.request, urllib.parse, urllib.error
 
 from flask import get_flashed_messages
-from oauth_dropins.webutil.testutil import TestCase
-from oauth_dropins.webutil.util import json_dumps, json_loads
+from webutil.testutil import TestCase
+from webutil.util import json_dumps, json_loads
 from oauth_dropins import indieauth
 import requests
 

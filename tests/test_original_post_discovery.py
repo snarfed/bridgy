@@ -2,8 +2,8 @@
 from datetime import datetime, timezone
 from string import hexdigits
 
-from oauth_dropins.webutil.testutil import NOW
-from oauth_dropins.webutil.util import json_dumps, json_loads
+from webutil.testutil import NOW
+from webutil.util import json_dumps, json_loads
 from requests.exceptions import HTTPError
 
 from github import GitHub

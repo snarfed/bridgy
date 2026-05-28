@@ -2,7 +2,7 @@
 
 https://flask.palletsprojects.com/en/latest/config/
 """
-from oauth_dropins.webutil import appengine_info, util
+from webutil import appengine_info, util
 
 # This is primarily for flashed messages, since we don't use session data
 # otherwise.

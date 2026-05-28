@@ -2,7 +2,7 @@
 from flask import request
 from google.cloud import ndb
 from oauth_dropins import indieauth
-from oauth_dropins.webutil.flask_util import flash
+from webutil.flask_util import flash
 
 from flask_app import app
 from models import Domain

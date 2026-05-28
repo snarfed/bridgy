@@ -10,7 +10,7 @@ from flask import request
 from flask.views import View
 from google.cloud.ndb.key import _MAX_KEYPART_BYTES
 from google.cloud.ndb._datastore_types import _MAX_STRING_LENGTH
-from oauth_dropins.webutil import appengine_info
+from webutil import appengine_info
 from requests.auth import HTTPBasicAuth
 
 import models

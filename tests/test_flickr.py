@@ -5,7 +5,7 @@ import urllib.parse
 import granary
 import granary.tests.test_flickr as gr_test_flickr
 import oauth_dropins.flickr_auth
-from oauth_dropins.webutil.util import json_dumps, json_loads
+from webutil.util import json_dumps, json_loads
 
 import flickr
 import tasks

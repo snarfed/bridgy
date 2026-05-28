@@ -9,7 +9,7 @@ from granary.tests import test_twitter as gr_twitter_test
 from granary.twitter import API_BASE, API_SEARCH, API_STATUS, SCRAPE_LIKES_URL
 import oauth_dropins.twitter
 import oauth_dropins.twitter_auth
-from oauth_dropins.webutil.util import json_dumps, json_loads
+from webutil.util import json_dumps, json_loads
 
 import models
 from . import testutil

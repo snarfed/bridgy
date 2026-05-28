@@ -17,9 +17,9 @@ from oauth_dropins import (
   github as oauth_github,
   mastodon as oauth_mastodon,
 )
-from oauth_dropins.webutil import appengine_info
-from oauth_dropins.webutil.flask_util import flash
-from oauth_dropins.webutil.util import json_dumps, json_loads
+from webutil import appengine_info
+from webutil.flask_util import flash
+from webutil.util import json_dumps, json_loads
 import requests
 from werkzeug.exceptions import HTTPException
 

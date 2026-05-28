@@ -9,8 +9,8 @@ import logging
 from flask import jsonify, request
 from flask.views import View
 from google.cloud import error_reporting
-from oauth_dropins.webutil.util import json_dumps, json_loads
-from oauth_dropins.webutil import flask_util
+from webutil.util import json_dumps, json_loads
+from webutil import flask_util
 import werkzeug.exceptions
 
 from flask_app import app

@@ -7,9 +7,9 @@ from flask import get_flashed_messages
 from granary import source as gr_source
 import grpc
 from mox3 import mox
-from oauth_dropins.webutil.appengine_config import error_reporting_client
-from oauth_dropins.webutil.testutil import requests_response
-from oauth_dropins.webutil.util import json_dumps, json_loads
+from webutil.appengine_config import error_reporting_client
+from webutil.testutil import requests_response
+from webutil.util import json_dumps, json_loads
 import requests
 from werkzeug.exceptions import BadRequest
 

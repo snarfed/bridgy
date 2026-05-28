@@ -10,8 +10,8 @@ import logging
 from flask import request
 from google.cloud import ndb
 from google.cloud.ndb.stats import KindStat, KindPropertyNamePropertyTypeStat
-from oauth_dropins.webutil import logs
-from oauth_dropins.webutil.util import json_dumps, json_loads
+from webutil import logs
+from webutil.util import json_dumps, json_loads
 
 from flask_app import app
 import models

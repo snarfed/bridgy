@@ -17,8 +17,8 @@ from granary.tests.test_facebook import (
   MBASIC_FEED_ACTIVITIES,
   MBASIC_REACTION_TAGS,
 )
-from oauth_dropins.webutil import util
-from oauth_dropins.webutil.util import json_dumps, json_loads, trim_nulls
+from webutil import util
+from webutil.util import json_dumps, json_loads, trim_nulls
 
 import browser
 from facebook import Facebook

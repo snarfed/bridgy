@@ -7,9 +7,9 @@ import sys
 from flask import Flask
 import flask_gae_static
 import humanize
-from oauth_dropins.webutil import flask_util
-from oauth_dropins.webutil.appengine_config import ndb_client
-from oauth_dropins.webutil import appengine_info
+from webutil import flask_util
+from webutil.appengine_config import ndb_client
+from webutil import appengine_info
 
 import granary
 import appengine_config  # *after* import granary to override set_user_agent()

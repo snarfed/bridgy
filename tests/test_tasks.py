@@ -14,9 +14,9 @@ from google.cloud import ndb
 from google.cloud.ndb._datastore_types import _MAX_STRING_LENGTH
 from google.cloud.tasks_v2.types import Task
 from mox3 import mox
-from oauth_dropins.webutil.appengine_config import tasks_client
-from oauth_dropins.webutil.testutil import NOW
-from oauth_dropins.webutil.util import json_dumps, json_loads
+from webutil.appengine_config import tasks_client
+from webutil.testutil import NOW
+from webutil.util import json_dumps, json_loads
 import requests
 
 import models

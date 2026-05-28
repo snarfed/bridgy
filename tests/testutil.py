@@ -5,7 +5,7 @@ import logging
 import re
 import urllib.request, urllib.parse, urllib.error
 
-from oauth_dropins.webutil.appengine_config import ndb_client, tasks_client
+from webutil.appengine_config import ndb_client, tasks_client
 
 from google.cloud import ndb
 from google.cloud.tasks_v2.types import Task
@@ -14,10 +14,10 @@ from granary import source as gr_source
 from mox3 import mox
 from oauth_dropins import views as oauth_views
 from oauth_dropins.models import BaseAuth
-from oauth_dropins.webutil import testutil
-from oauth_dropins.webutil.testutil import NOW
-from oauth_dropins.webutil import util as webutil_util
-from oauth_dropins.webutil.util import json_dumps, json_loads
+from webutil import testutil
+from webutil.testutil import NOW
+from webutil import util as webutil_util
+from webutil.util import json_dumps, json_loads
 import requests
 from requests import post as orig_requests_post
 

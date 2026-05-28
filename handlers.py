@@ -25,9 +25,9 @@ from flask import request
 from flask.views import View
 from granary import microformats2
 from granary.microformats2 import first_props
-from oauth_dropins.webutil import flask_util
-from oauth_dropins.webutil.flask_util import error
-from oauth_dropins.webutil.util import json_loads
+from webutil import flask_util
+from webutil.flask_util import error
+from webutil.util import json_loads
 
 from flask_app import app
 import models

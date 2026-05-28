@@ -10,7 +10,7 @@ import oauth_dropins.flickr
 import oauth_dropins.flickr_auth
 from oauth_dropins import indieauth
 import oauth_dropins.mastodon
-from oauth_dropins.webutil.util import json_dumps, json_loads
+from webutil.util import json_dumps, json_loads
 import requests
 from urllib3.exceptions import NewConnectionError
 

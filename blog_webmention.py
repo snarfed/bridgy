@@ -4,7 +4,7 @@ import urllib.parse
 
 from flask import request
 from granary import microformats2
-from oauth_dropins.webutil.util import get_first
+from webutil.util import get_first
 
 from flask_app import app
 import models

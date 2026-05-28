@@ -2,7 +2,7 @@
 import urllib.request, urllib.parse, urllib.error
 
 from flask import get_flashed_messages
-from oauth_dropins.webutil.util import json_dumps, json_loads
+from webutil.util import json_dumps, json_loads
 from oauth_dropins.wordpress_rest import WordPressAuth
 from werkzeug.exceptions import Unauthorized
 from werkzeug.routing import RequestRedirect

@@ -8,10 +8,10 @@ from flask import request
 from google.cloud import ndb
 from granary import as1
 from granary.source import html_to_text
-from oauth_dropins.webutil import logs
-from oauth_dropins.webutil import flask_util
-from oauth_dropins.webutil.flask_util import error, flash
-from oauth_dropins.webutil.util import json_dumps, json_loads
+from webutil import logs
+from webutil import flask_util
+from webutil.flask_util import error, flash
+from webutil.util import json_dumps, json_loads
 import werkzeug.exceptions
 
 from flask_app import app

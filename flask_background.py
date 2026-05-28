@@ -2,8 +2,8 @@
 import logging
 
 from flask import Flask, g
-from oauth_dropins.webutil import flask_util
-from oauth_dropins.webutil.appengine_config import ndb_client
+from webutil import flask_util
+from webutil.appengine_config import ndb_client
 from werkzeug.exceptions import HTTPException
 
 import granary

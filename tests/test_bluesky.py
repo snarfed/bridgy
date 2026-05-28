@@ -4,8 +4,8 @@ from urllib.parse import parse_qs, urlparse
 
 from mox3 import mox
 from oauth_dropins import bluesky as oauth_bluesky
-from oauth_dropins.webutil.testutil import requests_response
-from oauth_dropins.webutil.util import json_dumps
+from webutil.testutil import requests_response
+from webutil.util import json_dumps
 import requests
 from requests_oauth2client import (
   DPoPKey,

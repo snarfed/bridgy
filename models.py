@@ -10,10 +10,10 @@ from granary import microformats2
 from granary import source as gr_source
 from oauth_dropins.indieauth import IndieAuth
 from oauth_dropins.instagram import INSTAGRAM_SESSIONID_COOKIE
-from oauth_dropins.webutil import webmention
-from oauth_dropins.webutil.flask_util import flash
-from oauth_dropins.webutil.models import StringIdModel
-from oauth_dropins.webutil.util import json_dumps, json_loads
+from webutil import webmention
+from webutil.flask_util import flash
+from webutil.models import StringIdModel
+from webutil.util import json_dumps, json_loads
 import requests
 
 import superfeedr
@@ -770,7 +770,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
   def canonicalize_url(self, url, activity=None, **kwargs):
     """Canonicalizes a post or object URL.
 
-    Wraps :class:`oauth_dropins.webutil.util.UrlCanonicalizer`.
+    Wraps :class:`webutil.util.UrlCanonicalizer`.
     """
     return self.URL_CANONICALIZER(url, **kwargs) if self.URL_CANONICALIZER else url
 

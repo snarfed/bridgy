@@ -5,7 +5,7 @@ from flask import request
 from flask.views import View
 from granary import github as gr_github
 from oauth_dropins import github as oauth_github
-from oauth_dropins.webutil.util import json_dumps, json_loads
+from webutil.util import json_dumps, json_loads
 
 from flask_app import app
 from models import Source

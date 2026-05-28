@@ -7,8 +7,8 @@ from urllib.parse import urlencode, urlparse, parse_qs
 from flask import get_flashed_messages
 from google.cloud import ndb
 from mox3 import mox
-from oauth_dropins.webutil.testutil import NOW
-from oauth_dropins.webutil.util import json_dumps, json_loads
+from webutil.testutil import NOW
+from webutil.util import json_dumps, json_loads
 import tweepy
 
 from flask_app import app

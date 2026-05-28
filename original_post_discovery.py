@@ -29,7 +29,7 @@ import mf2util
 
 from granary import as1
 from granary import microformats2
-from oauth_dropins.webutil.appengine_info import DEBUG
+from webutil.appengine_info import DEBUG
 import models
 from models import SyndicatedPost
 import util

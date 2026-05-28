@@ -8,7 +8,7 @@ import logging
 from flask import g
 from flask.views import View
 from google.cloud import ndb
-from oauth_dropins.webutil.models import StringIdModel
+from webutil.models import StringIdModel
 import requests
 
 from bluesky import Bluesky

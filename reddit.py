@@ -2,7 +2,7 @@
 from granary import reddit as gr_reddit
 from granary import source as gr_source
 from oauth_dropins import reddit as oauth_reddit
-from oauth_dropins.webutil.util import json_dumps, json_loads
+from webutil.util import json_dumps, json_loads
 from prawcore.exceptions import NotFound
 
 from flask_app import app

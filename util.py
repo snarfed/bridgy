@@ -20,15 +20,15 @@ import google.protobuf.message
 from granary import as1
 from granary.source import html_to_text
 from oauth_dropins import bluesky as oauth_bluesky
-from oauth_dropins.webutil.appengine_config import (
+from webutil.appengine_config import (
   error_reporting_client,
   tasks_client,
 )
-from oauth_dropins.webutil import appengine_info
-from oauth_dropins.webutil.appengine_info import APP_ID, DEBUG, LOCAL_SERVER
-from oauth_dropins.webutil.flask_util import error, flash
-from oauth_dropins.webutil import util
-from oauth_dropins.webutil.util import *
+from webutil import appengine_info
+from webutil.appengine_info import APP_ID, DEBUG, LOCAL_SERVER
+from webutil.flask_util import error, flash
+from webutil import util
+from webutil.util import *
 import requests
 from werkzeug.routing import RequestRedirect
 
@@ -279,7 +279,7 @@ def requests_get(url, **kwargs):
 
 
 def fetch_mf2(url, **kwargs):
-  """Injects :func:`requests_get` into :func:`oauth_dropins.webutil.util.fetch_mf2`."""
+  """Injects :func:`requests_get` into :func:`webutil.util.fetch_mf2`."""
   return util.fetch_mf2(url, get_fn=requests_get, **kwargs)
 
 
@@ -290,7 +290,7 @@ def requests_post(url, **kwargs):
 
 
 def follow_redirects(url):
-  """Wraps :func:`oauth_dropins.webutil.util.follow_redirects` with our headers."""
+  """Wraps :func:`webutil.util.follow_redirects` with our headers."""
   return util.follow_redirects(url, headers=request_headers(url=url))
 
 

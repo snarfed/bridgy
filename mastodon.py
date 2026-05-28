@@ -6,8 +6,8 @@ from flask import request
 from granary import mastodon as gr_mastodon
 from granary import source as gr_source
 from oauth_dropins import mastodon as oauth_mastodon
-from oauth_dropins.webutil.flask_util import flash
-from oauth_dropins.webutil.util import json_dumps, json_loads
+from webutil.flask_util import flash
+from webutil.util import json_dumps, json_loads
 import requests
 
 from flask_app import app

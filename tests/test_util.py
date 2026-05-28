@@ -7,8 +7,8 @@ from flask import Flask, get_flashed_messages, request
 from flask.views import View
 from google.cloud import ndb
 from oauth_dropins import views as oauth_views
-from oauth_dropins.webutil import appengine_info
-from oauth_dropins.webutil.util import json_dumps, json_loads
+from webutil import appengine_info
+from webutil.util import json_dumps, json_loads
 import requests
 from werkzeug.exceptions import BadRequest
 from werkzeug.routing import RequestRedirect

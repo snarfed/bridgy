@@ -2,7 +2,7 @@
 """
 from granary.tests import test_reddit as gr_reddit_test
 import oauth_dropins.reddit
-from oauth_dropins.webutil.util import json_dumps, json_loads
+from webutil.util import json_dumps, json_loads
 
 import models
 from . import testutil

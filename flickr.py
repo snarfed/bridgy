@@ -9,7 +9,7 @@ from google.cloud import ndb
 from granary import flickr as gr_flickr
 from granary.source import SELF
 from oauth_dropins import flickr as oauth_flickr
-from oauth_dropins.webutil.util import json_dumps, json_loads
+from webutil.util import json_dumps, json_loads
 
 from flask_app import app
 

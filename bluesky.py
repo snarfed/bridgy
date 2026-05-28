@@ -6,8 +6,8 @@ from google.cloud import ndb
 from granary import bluesky as gr_bluesky
 import lexrpc.client
 from oauth_dropins import bluesky as oauth_bluesky
-from oauth_dropins.webutil.flask_util import error, flash, FlashErrors
-from oauth_dropins.webutil.util import json_loads
+from webutil.flask_util import error, flash, FlashErrors
+from webutil.util import json_loads
 import requests
 from requests_oauth2client import InvalidGrant
 

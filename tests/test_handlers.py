@@ -4,7 +4,7 @@ import io
 import urllib.request, urllib.error, urllib.parse
 
 from mox3 import mox
-from oauth_dropins.webutil.testutil import enable_flask_caching
+from webutil.testutil import enable_flask_caching
 from util import json_dumps, json_loads
 
 from flask_app import app

@@ -8,9 +8,9 @@ from flask.views import View
 from google.cloud import ndb
 from google.cloud.ndb._datastore_types import _MAX_STRING_LENGTH
 from granary import as1
-from oauth_dropins.webutil import logs, webmention
-from oauth_dropins.webutil.flask_util import error
-from oauth_dropins.webutil.util import json_dumps, json_loads
+from webutil import logs, webmention
+from webutil.flask_util import error
+from webutil.util import json_dumps, json_loads
 
 import models, original_post_discovery, util
 from flask_background import app

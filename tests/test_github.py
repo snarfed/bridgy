@@ -4,7 +4,7 @@ import copy
 import granary
 import granary.tests.test_github as gr_test_github
 import oauth_dropins
-from oauth_dropins.webutil.util import json_dumps, json_loads
+from webutil.util import json_dumps, json_loads
 
 import github
 from . import testutil
