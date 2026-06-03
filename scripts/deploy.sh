@@ -2,7 +2,7 @@
 #
 # Checks pre-deploy safeguards - tests, app keys, package versions - then deploys.
 #
-# Expects that your local bridgy, granary, and oauth-dropins repos are all in
+# Expects that your local bridgy, granary, and webutil repos are all in
 # the same directory, and that you have gcloud installed.
 
 set -e
@@ -11,7 +11,7 @@ src=`dirname $0`/../..
 # run unit tests
 cd $src/bridgy && source local/bin/activate
 
-cd ../oauth-dropins
+cd ../webutil
 python -m unittest discover --pattern="test_*.py"
 
 cd ../granary
