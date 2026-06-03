@@ -66,22 +66,6 @@ GAE_ENV=localdev FLASK_ENV=development flask run -p 8080
 
 Now, run the `curl` command you constructed above.
 
-If you hit an error during setup, check out the [oauth-dropins Troubleshooting/FAQ section](https://github.com/snarfed/oauth-dropins#troubleshootingfaq). For searchability, here are a handful of error messages that [have solutions there](https://github.com/snarfed/oauth-dropins#troubleshootingfaq):
-
-```
-bash: ./bin/easy_install: ...bad interpreter: No such file or directory
-
-ImportError: cannot import name certs
-
-ImportError: cannot import name tweepy
-
-File ".../site-packages/tweepy/auth.py", line 68, in _get_request_token
-  raise TweepError(e)
-TweepError: must be _socket.socket, not socket
-
-error: option --home not recognized
-```
-
 There's a good chance you'll need to make changes to [granary](https://github.com/snarfed/granary) or [oauth-dropins](https://github.com/snarfed/oauth-dropins) at the same time as bridgy. To do that, clone their repos elsewhere, then install them in "source" mode with:
 
 ```
