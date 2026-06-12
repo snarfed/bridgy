@@ -7,6 +7,7 @@ import sys
 from flask import Flask
 import flask_gae_static
 import humanize
+from werkzeug.middleware.proxy_fix import ProxyFix
 from webutil import flask_util
 from webutil.appengine_config import ndb_client
 from webutil import appengine_info
@@ -31,6 +32,13 @@ if appengine_info.LOCAL_SERVER and not appengine_info.TESTING:
   flask_gae_static.init_app(app)
 
 app.wsgi_app = flask_util.ndb_context_middleware(app.wsgi_app, client=ndb_client)
+
+# make Flask's request info (request.url etc) reflect the actual end user's HTTP
+# request (https, host, etc), based on X-Forwarded-* etc headers
+#
+# https://docs.cloud.google.com/functions/docs/reference/headers
+# https://werkzeug.palletsprojects.com/en/stable/middleware/proxy_fix/
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_for=1)
 
 app.jinja_env.globals.update({
   'naturaltime': util.naturaltime,
