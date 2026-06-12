@@ -26,6 +26,7 @@ from webutil.appengine_config import (
 )
 from webutil import appengine_info
 from webutil.appengine_info import APP_ID, DEBUG, LOCAL_SERVER
+from webutil import flask_util
 from webutil.flask_util import error, flash
 from webutil import util
 from webutil.util import *
@@ -447,13 +448,13 @@ def replace_test_domains_with_localhost(url):
 
 def host_url(path_query=None):
     if DEBUG or LOCAL_SERVER:
-        base = request.host_url
+        base = flask_util.request_host_url()
     elif domain_or_parent_in(request.host, [PRIMARY_DOMAIN]):
-        base = request.host_url
+        base = flask_util.request_host_url()
     else:
         base = f'https://{PRIMARY_DOMAIN}/'
 
-    return urljoin(base, path_query)
+    return urljoin(base, path_query or '/')
 
 
 def bluesky_oauth_client_metadata():
