@@ -7,7 +7,7 @@ bech32==1.2.0
 binapy==0.8.0
 blake3==1.0.8
 blinker==1.9.0
-cachetools==6.2.6
+cachetools==7.1.4
 cbor2==6.0.1
 certifi==2026.6.17
 cffi==2.0.0
@@ -16,6 +16,7 @@ click==8.3.2
 colorama==0.4.6
 cryptography==49.0.0
 dag-cbor==0.3.3
+defusedxml==0.7.1
 dnspython==2.8.0
 domain2idna==1.12.4
 feedgen==1.0.0
@@ -39,8 +40,8 @@ google-cloud-tasks==2.22.0
 googleapis-common-protos==1.75.0
 grapheme==0.6.0
 grpc-google-iam-v1==0.14.4
-grpcio==1.81.0
-grpcio-status==1.81.0
+grpcio==1.81.1
+grpcio-status==1.81.1
 gunicorn==25.3.0
 h11==0.16.0
 html2text==2025.4.15
@@ -66,8 +67,8 @@ orderedmultidict==1.0.2
 packaging==26.2
 pbr==7.0.3
 pkce==1.0.3
-praw==7.8.2
-prawcore==2.4.0
+praw==8.0.1
+prawcore==4.0.0
 proto-plus==1.27.2
 protobuf==7.35.0
 pyasn1==0.6.3
@@ -80,7 +81,7 @@ python-dateutil==2.9.0.post0
 python-tumblpy==1.1.4
 pytz==2026.2
 pyyaml==6.0.3
-redis==7.0.1
+redis==7.4.1
 requests==2.34.2
 requests-hardened==1.2.2
 requests-oauth2client==1.8.0
@@ -93,8 +94,8 @@ soupsieve==2.8.4
 tweepy==4.16.0
 typing-extensions==4.15.0
 typing-validation==1.2.12
-ujson==5.12.1
-update-checker==0.18.0
+ujson==5.13.0
+update-checker==1.0.0
 uritemplate==4.2.0
 urllib3==2.7.0
 webencodings==0.5.1

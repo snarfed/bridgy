@@ -18,12 +18,14 @@ First, fork and clone this repo. Then, install the [Google Cloud SDK](https://cl
 
 ```sh
 gcloud config set project brid-gy
-python3 -m venv local
-source local/bin/activate
+python -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
 # needed to serve static files locally
 ln -s local/lib/python3*/site-packages/oauth_dropins/static oauth_dropins_static
 ```
+
+You can also use `uv` instead of `pip`, but if you do, pass it `--no-sources`.
 
 Now, you can fire up the gcloud emulator and run the tests:
 

@@ -36,6 +36,10 @@ app = [
 tests = [
     'mox3 @ git+https://github.com/snarfed/mox3.git',
 ]
+docs = [
+    'sphinx>=7.0.0',
+    'sphinx-rtd-theme>=3.0.0',
+]
 
 [tool.uv]
 package = false
@@ -66,5 +70,7 @@ extend_exclude = ['docs', 'scripts']
 DEP002 = [
     'gunicorn',
     'mox3',
+    'sphinx',
+    'sphinx-rtd-theme',
     'ujson',
 ]

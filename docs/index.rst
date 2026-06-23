@@ -90,27 +90,6 @@ background task processing service, eg:
 
 Now, run the ``curl`` command you constructed above.
 
-If you hit an error during setup, check out the `oauth-dropins
-Troubleshooting/FAQ
-section <https://github.com/snarfed/oauth-dropins#troubleshootingfaq>`__.
-For searchability, here are a handful of error messages that `have
-solutions
-there <https://github.com/snarfed/oauth-dropins#troubleshootingfaq>`__:
-
-::
-
-   bash: ./bin/easy_install: ...bad interpreter: No such file or directory
-
-   ImportError: cannot import name certs
-
-   ImportError: cannot import name tweepy
-
-   File ".../site-packages/tweepy/auth.py", line 68, in _get_request_token
-     raise TweepError(e)
-   TweepError: must be _socket.socket, not socket
-
-   error: option --home not recognized
-
 There’s a good chance you’ll need to make changes to
 `granary <https://github.com/snarfed/granary>`__ or
 `oauth-dropins <https://github.com/snarfed/oauth-dropins>`__ at the same
