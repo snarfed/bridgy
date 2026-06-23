@@ -9,15 +9,18 @@ set -e
 src=`dirname $0`/../..
 
 # run unit tests
-cd $src/bridgy && source local/bin/activate
+cd $src/bridgy
 
 cd ../webutil
+source .venv/bin/activate
 python -m unittest discover --pattern="test_*.py"
 
 cd ../granary
+source .venv/bin/activate
 python -m unittest discover
 
 cd ../bridgy
+source .venv/bin/activate
 python -m unittest discover -s tests -t .
 
 # check silo app keys (aka client ids)

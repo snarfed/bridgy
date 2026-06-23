@@ -1,0 +1,69 @@
+# bridgy is an application, not a packaged library, so this file is just for
+# managing dependencies. Use uv compile to compile the direct dependencies here
+# to the complete pinned list in requirements.pinned.txt.
+
+[project]
+name = 'bridgy'
+version = '1.0'
+requires-python = '>=3.12'
+
+[project.optional-dependencies]
+app = [
+    # our own packages, used at head via the editable local checkouts in
+    # [tool.uv.sources]; the deploy-time git refs are in requirements.txt
+    'flask-gae-static',
+    'granary',
+    'lexrpc[flask]',
+    'mf2util',
+    'oauth-dropins',
+    'pywebutil[google-cloud,html]',
+
+    # third-party
+    'cachetools>=5.0.0',
+    'flask>=3.0.0',
+    'google-cloud-error-reporting>=1.9',
+    'google-cloud-ndb>=2.0',
+    'google-cloud-tasks>=2.0',
+    'grpcio>=1.59.0',
+    'gunicorn>=20.1.0',
+    'humanize>=4.0',
+    'prawcore>=2.1',
+    'requests>=2.22',
+    'requests-oauth2client>=1.8.0',
+    'ujson>=5.7.0',
+    'werkzeug>=3.0.0',
+]
+tests = [
+    'mox3 @ git+https://github.com/snarfed/mox3.git',
+]
+
+[tool.uv]
+package = false
+
+# keep these sections in sync with requirements.txt
+[tool.uv.sources]
+arroba =            { editable = true, path = "../arroba" }
+brevity =           { editable = true, path = "../brevity" }
+flask-gae-static =  { editable = true, path = "../flask-gae-static" }
+granary =           { editable = true, path = "../granary" }
+lexrpc =            { editable = true, path = "../lexrpc" }
+mf2util =           { editable = true, path = "../mf2util" }
+mox3 =              { editable = true, path = "../mox3" }
+oauth-dropins =     { editable = true, path = "../oauth-dropins" }
+pywebutil =         { editable = true, path = "../webutil" }
+secp256k1 =         { editable = true, path = "../secp256k1-py" }
+
+[tool.uv.pip]
+# this is in ~/.config/uv/uv.toml
+
+[tool.deptry]
+extend_exclude = ['docs', 'scripts']
+
+[tool.deptry.per_rule_ignores]
+# these deps aren't imported directly but we still need them: gunicorn (WSGI
+# server), mox3 (tests), ujson
+DEP002 = [
+    'gunicorn',
+    'mox3',
+    'ujson',
+]
