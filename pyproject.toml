@@ -44,6 +44,7 @@ package = false
 [tool.uv.sources]
 arroba =            { editable = true, path = "../arroba" }
 brevity =           { editable = true, path = "../brevity" }
+carbox =            { editable = true, path = "../carbox" }
 flask-gae-static =  { editable = true, path = "../flask-gae-static" }
 granary =           { editable = true, path = "../granary" }
 lexrpc =            { editable = true, path = "../lexrpc" }

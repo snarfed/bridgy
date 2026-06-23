@@ -5,8 +5,9 @@
 #
 # Use this to bust that cache: gcloud -q beta app deploy --no-cache ...
 
-git+https://github.com/snarfed/brevity.git@new-tlds#egg=brevity
 git+https://github.com/snarfed/arroba.git#egg=arroba
+git+https://github.com/snarfed/brevity.git@new-tlds#egg=brevity
+git+https://github.com/snarfed/carbox.git#egg=carbox
 git+https://github.com/snarfed/flask-gae-static.git#egg=flask_gae_static
 git+https://github.com/snarfed/granary.git#egg=granary
 git+https://github.com/snarfed/lexrpc.git#egg=lexrpc
