@@ -59,7 +59,7 @@ class GitHub(Source):
     assert 'id' not in kwargs
     user = json_loads(auth_entity.user_json)
     gr_source = gr_github.GitHub(access_token=auth_entity.access_token())
-    actor = gr_source.user_to_actor(user)
+    actor = gr_source.to_as1_actor(user)
     return GitHub(username=auth_entity.key_id(),
                  auth_entity=auth_entity.key,
                  name=actor.get('displayName'),

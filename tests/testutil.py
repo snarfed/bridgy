@@ -51,7 +51,7 @@ class FakeGrSource(gr_source.Source):
   def user_url(self, id):
     return 'http://fa.ke/' + id
 
-  def user_to_actor(self, user):
+  def to_as1_actor(self, user):
     return user
 
   def get_comment(self, *args, **kwargs):

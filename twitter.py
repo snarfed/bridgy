@@ -53,7 +53,7 @@ class Twitter(models.Source):
     assert 'id' not in kwargs
     user = json_loads(auth_entity.user_json)
     gr_source = gr_twitter.Twitter(*auth_entity.access_token())
-    actor = gr_source.user_to_actor(user)
+    actor = gr_source.to_as1_actor(user)
     return Twitter(username=user['screen_name'],
                    auth_entity=auth_entity.key,
                    url=actor.get('url'),

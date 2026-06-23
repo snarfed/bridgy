@@ -703,7 +703,7 @@ class Source(StringIdModel, metaclass=SourceMeta):
       ([str url, ...], [str domain, ...]) tuple:
     """
     if not actor:
-      actor = self.gr_source.user_to_actor(json_loads(auth_entity.user_json))
+      actor = self.gr_source.to_as1_actor(json_loads(auth_entity.user_json))
     logger.debug(f'Extracting URLs and domains from actor: {json_dumps(actor, indent=2)}')
 
     candidates = util.trim_nulls(util.uniquify(
