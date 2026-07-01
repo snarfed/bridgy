@@ -12,7 +12,6 @@ git+https://github.com/snarfed/flask-gae-static.git#egg=flask_gae_static
 git+https://github.com/snarfed/granary.git#egg=granary
 git+https://github.com/snarfed/lexrpc.git#egg=lexrpc
 git+https://github.com/snarfed/mf2util.git#egg=mf2util
-git+https://github.com/snarfed/mox3.git#egg=mox3
 git+https://github.com/snarfed/oauth-dropins.git#egg=oauth_dropins
 git+https://github.com/snarfed/secp256k1-py.git@setup-requires-pycparser#egg=secp256k1
 git+https://github.com/snarfed/webutil.git#egg=pywebutil

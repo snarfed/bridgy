@@ -1,8 +1,9 @@
 """Unit tests for original_post_discovery.py"""
 from datetime import datetime, timezone
 from string import hexdigits
+from unittest.mock import patch
 
-from webutil.testutil import NOW
+from webutil.testutil import NOW, requests_response
 from webutil.util import json_dumps, json_loads
 from requests.exceptions import HTTPError
 
@@ -48,22 +49,22 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
     """Test that original post discovery does the reverse lookup to scan
     author's h-feed for rel=syndication links
     """
-    self.expect_requests_get('http://author/', """
-    <html class="h-feed">
+    self.mock_get.side_effect = [
+      requests_response("""
+      <html class="h-feed">
+        <div class="h-entry">
+          <a class="u-url" href="http://author/post/permalink"></a>
+        </div>
+      </html>""", url='http://author/'),
+      # syndicated to two places
+      requests_response("""
+      <link rel="syndication" href="http://not.real/statuses/postid">
+      <link rel="syndication" href="https://fa.ke/post/url">
       <div class="h-entry">
         <a class="u-url" href="http://author/post/permalink"></a>
-      </div>
-    </html>""")
+      </div>""", url='http://author/post/permalink'),
+    ]
 
-    # syndicated to two places
-    self.expect_requests_get('http://author/post/permalink', """
-    <link rel="syndication" href="http://not.real/statuses/postid">
-    <link rel="syndication" href="https://fa.ke/post/url">
-    <div class="h-entry">
-      <a class="u-url" href="http://author/post/permalink"></a>
-    </div>""")
-
-    self.mox.ReplayAll()
     self.assertIsNone(self.source.last_syndication_url)
     self.assert_discover(['http://author/post/permalink'])
     self.assert_syndicated_posts(('http://author/post/permalink',
@@ -75,7 +76,7 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
     the h-feed we skip fetching the permalink.
     """
     # silo domain is fa.ke
-    self.expect_requests_get('http://author/', """
+    self.mock_get.return_value = requests_response("""
     <html class="h-feed">
       <div class="h-entry">
         <a class="u-url" href="http://author/post/permalink"></a>
@@ -83,7 +84,6 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
       </div>
     </html>""")
 
-    self.mox.ReplayAll()
     self.assert_discover(['http://author/post/permalink'])
     self.assert_syndicated_posts(('http://author/post/permalink',
                                   'https://fa.ke/post/url'))
@@ -96,46 +96,45 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
     actual post URL. We should follow the redirect like we do everywhere
     else.
     """
-    self.expect_requests_head('https://fa.ke/post/url')
-    self.expect_requests_head('http://author/')
-    self.expect_requests_get('http://author/', """
+    self.mock_head.side_effect = [
+      requests_response('', url='https://fa.ke/post/url'),
+      requests_response('', url='http://author/'),
+      requests_response('', url='http://author/post/will-redirect',
+                        redirected_url='http://author/post/final'),
+    ]
+    self.mock_get.return_value = requests_response("""
     <html class="h-feed">
       <div class="h-entry">
         <a class="u-url" href="http://author/post/will-redirect"></a>
         <a class="u-syndication" href="https://fa.ke/post/url"></a>
       </div>
-    </html>""")
+    </html>""", url='http://author/')
 
-    self.expect_requests_head(
-      'http://author/post/will-redirect',
-      redirected_url='http://author/post/final')
-
-    self.mox.ReplayAll()
     self.assert_discover(['http://author/post/final'])
     self.assert_syndicated_posts(('http://author/post/final',
                                   'https://fa.ke/post/url'))
 
   def test_nested_hfeed(self):
     """Test that we find an h-feed nested inside an h-card like on tantek.com"""
-    self.expect_requests_get('http://author/', """
-    <html class="h-card">
-      <span class="p-name">Author</span>
-      <div class="h-feed">
-        <div class="h-entry">
-          <a class="u-url" href="http://author/post/permalink"></a>
+    self.mock_get.side_effect = [
+      requests_response("""
+      <html class="h-card">
+        <span class="p-name">Author</span>
+        <div class="h-feed">
+          <div class="h-entry">
+            <a class="u-url" href="http://author/post/permalink"></a>
+          </div>
         </div>
-      </div>
-    </html>
-    """)
+      </html>
+      """, url='http://author/'),
+      requests_response("""
+      <html class="h-entry">
+        <a class="u-url" href="http://author/post/permalink"></a>
+        <a class="u-syndication" href="https://fa.ke/post/url"></a>
+      </html>
+      """, url='http://author/post/permalink'),
+    ]
 
-    self.expect_requests_get('http://author/post/permalink', """
-    <html class="h-entry">
-      <a class="u-url" href="http://author/post/permalink"></a>
-      <a class="u-syndication" href="https://fa.ke/post/url"></a>
-    </html>
-    """)
-
-    self.mox.ReplayAll()
     self.assert_discover(['http://author/post/permalink'])
     self.assert_syndicated_posts(('http://author/post/permalink',
                                   'https://fa.ke/post/url'))
@@ -152,7 +151,7 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
       })
 
     # silo domain is fa.ke
-    self.expect_requests_get('http://author/', """
+    self.mock_get.return_value = requests_response("""
     <html>
       <div class="h-feed">
         <div class="h-entry">
@@ -168,7 +167,6 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
       </div>
     </html>""")
 
-    self.mox.ReplayAll()
     self.assert_discover(['http://author/post/permalink1'])
     self.assert_syndicated_posts(
       ('http://author/post/permalink1', 'https://fa.ke/post/url1'),
@@ -202,34 +200,30 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
       </div>
     </html>"""
 
-    self.expect_requests_get('http://author/', author_feed)
-
-    # first post is syndicated
-    self.expect_requests_get('http://author/post/permalink1', """
-    <div class="h-entry">
-      <a class="u-url" href="http://author/post/permalink1"></a>
-      <a class="u-syndication" href="https://fa.ke/post/url1"></a>
-    </div>""").InAnyOrder()
-
-    # second post is syndicated
-    self.expect_requests_get('http://author/post/perma✁2', u"""
-    <div class="h-entry">
-      <a class="u-url" href="http://author/post/perma✁2"></a>
-      <a class="u-syndication" href="https://fa.ke/post/url2"></a>
-    </div>""", content_type='text/html; charset=utf-8').InAnyOrder()
-
-    # third post is not syndicated
-    self.expect_requests_get('http://author/post/permalink3', """
-    <div class="h-entry">
-      <a class="u-url" href="http://author/post/permalink3"></a>
-    </div>""").InAnyOrder()
-
-    # the second activity lookup should not make any HTTP requests
-
-    # the third activity lookup will fetch the author's h-feed one more time
-    self.expect_requests_get('http://author/', author_feed).InAnyOrder()
-
-    self.mox.ReplayAll()
+    self.mock_get.side_effect = [
+      requests_response(author_feed, url='http://author/'),
+      # first post is syndicated
+      requests_response("""
+      <div class="h-entry">
+        <a class="u-url" href="http://author/post/permalink1"></a>
+        <a class="u-syndication" href="https://fa.ke/post/url1"></a>
+      </div>""", url='http://author/post/permalink1'),
+      # second post is syndicated
+      requests_response(u"""
+      <div class="h-entry">
+        <a class="u-url" href="http://author/post/perma✁2"></a>
+        <a class="u-syndication" href="https://fa.ke/post/url2"></a>
+      </div>""", url='http://author/post/perma✁2',
+                        content_type='text/html; charset=utf-8'),
+      # third post is not syndicated
+      requests_response("""
+      <div class="h-entry">
+        <a class="u-url" href="http://author/post/permalink3"></a>
+      </div>""", url='http://author/post/permalink3'),
+      # the second activity lookup should not make any HTTP requests
+      # the third activity lookup will fetch the author's h-feed one more time
+      requests_response(author_feed, url='http://author/'),
+    ]
 
     # first activity should trigger all the lookups and storage
     self.assert_discover(['http://author/post/permalink1'])
@@ -263,19 +257,20 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
     self.activity['object']['content'] = 'with a link http://author/post/url'
     original = 'http://author/post/url'
 
-    self.expect_requests_get('http://author/', f"""
-    <html class="h-feed">
+    self.mock_get.side_effect = [
+      requests_response(f"""
+      <html class="h-feed">
+        <div class="h-entry">
+          <a class="u-url" href="{original}"></a>
+        </div>
+      </html>""", url='http://author/'),
+      requests_response(f"""
       <div class="h-entry">
         <a class="u-url" href="{original}"></a>
-      </div>
-    </html>""")
-    self.expect_requests_get(original, f"""
-    <div class="h-entry">
-      <a class="u-url" href="{original}"></a>
-      <a class="u-syndication" href="{'https://fa.ke/post/url'}"></a>
-    </div>""")
+        <a class="u-syndication" href="{'https://fa.ke/post/url'}"></a>
+      </div>""", url=original),
+    ]
 
-    self.mox.ReplayAll()
     self.assert_discover([original])
 
   def test_exclude_mentions_except_user(self):
@@ -301,106 +296,108 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
     """We should ignore leading www when comparing syndicated URL domains."""
     self.activity['object']['url'] = 'http://www.fa.ke/post/url'
 
-    self.expect_requests_get('http://author/', """
-    <html class="h-feed">
+    self.mock_get.side_effect = [
+      requests_response("""
+      <html class="h-feed">
+        <div class="h-entry">
+          <a class="u-url" href="http://author/post/url"></a>
+        </div>
+      </html>""", url='http://author/'),
+      requests_response("""
       <div class="h-entry">
-        <a class="u-url" href="http://author/post/url"></a>
-      </div>
-    </html>""")
-    self.expect_requests_get('http://author/post/url', """
-    <div class="h-entry">
-      <a class="u-syndication" href="http://www.fa.ke/post/url"></a>
-    </div>""")
+        <a class="u-syndication" href="http://www.fa.ke/post/url"></a>
+      </div>""", url='http://author/post/url'),
+    ]
 
-    self.mox.ReplayAll()
     self.assert_discover(['http://author/post/url'])
 
   def test_ignore_synd_urls_on_other_silos(self):
     """We should ignore syndication URLs on other (silos') domains."""
-    self.expect_requests_get('http://author/', """
-    <html class="h-feed">
-      <div class="h-entry">
-        <a class="u-url" href="http://author/post/url"></a>
-        <a class="u-syndication" href="http://other/silo/url"></a>
-      </div>
-    </html>""")
-    self.expect_requests_get('http://author/post/url')
+    self.mock_get.side_effect = [
+      requests_response("""
+      <html class="h-feed">
+        <div class="h-entry">
+          <a class="u-url" href="http://author/post/url"></a>
+          <a class="u-syndication" href="http://other/silo/url"></a>
+        </div>
+      </html>""", url='http://author/'),
+      requests_response('', url='http://author/post/url'),
+    ]
 
-    self.mox.ReplayAll()
     self.assert_discover([])
     self.assert_syndicated_posts(('http://author/post/url', None),
                                  (None, 'https://fa.ke/post/url'))
 
   def test_rel_feed_alternate_links(self):
     """Check that we follow rel=feed and rel=alternate type=mf2+html links."""
-    self.expect_requests_get('http://author/', """
-    <html>
-      <head>
-        <link rel="feed" type="text/html" href="try_this.html">
-        <link rel="alternate" type="application/xml" href="not_this.html">
-        <link rel="alternate" type="text/mf2+html" href="and_this.html">
-        <link rel="alternate" type="application/xml" href="nor_this.html">
-      </head>
-    </html>""")
-
     html = """\
     <html class="h-feed">
       <body>
         <div class="h-entry">Hi</div>
       </body>
     </html>"""
-    self.expect_requests_get('http://author/try_this.html', html).InAnyOrder()
-    self.expect_requests_get('http://author/and_this.html', html).InAnyOrder()
+    self.mock_get.side_effect = [
+      requests_response("""
+      <html>
+        <head>
+          <link rel="feed" type="text/html" href="try_this.html">
+          <link rel="alternate" type="application/xml" href="not_this.html">
+          <link rel="alternate" type="text/mf2+html" href="and_this.html">
+          <link rel="alternate" type="application/xml" href="nor_this.html">
+        </head>
+      </html>""", url='http://author/'),
+      requests_response(html, url='http://author/try_this.html'),
+      requests_response(html, url='http://author/and_this.html'),
+    ]
 
-    self.mox.ReplayAll()
     discover(self.source, self.activity)
 
   def test_rel_feed_anchor(self):
     """Check that we follow the rel=feed when it's in an <a> tag instead of <link>
     """
-    self.expect_requests_get('http://author/', """
-    <html>
-      <head>
-        <link rel="alternate" type="application/xml" href="not_this.html">
-        <link rel="alternate" type="application/xml" href="nor_this.html">
-      </head>
-      <body>
-        <a href="try_this.html" rel="feed">full unfiltered feed</a>
-      </body>
-    </html>""")
+    self.mock_get.side_effect = [
+      requests_response("""
+      <html>
+        <head>
+          <link rel="alternate" type="application/xml" href="not_this.html">
+          <link rel="alternate" type="application/xml" href="nor_this.html">
+        </head>
+        <body>
+          <a href="try_this.html" rel="feed">full unfiltered feed</a>
+        </body>
+      </html>""", url='http://author/'),
+      requests_response("""
+      <html class="h-feed">
+        <body>
+          <div class="h-entry">Hi</div>
+        </body>
+      </html>""", url='http://author/try_this.html'),
+    ]
 
-    self.expect_requests_get('http://author/try_this.html', """
-    <html class="h-feed">
-      <body>
-        <div class="h-entry">Hi</div>
-      </body>
-    </html>""")
-
-    self.mox.ReplayAll()
     discover(self.source, self.activity)
 
   def test_rel_feed_adds_to_domains(self):
     """rel=feed discovery should update Source.domains."""
-    self.expect_requests_get('http://author/', """
-    <html>
-      <head>
-        <link rel="feed" type="text/html" href="http://other/domain">
-      </head>
-    </html>""")
-    self.expect_requests_get('http://other/domain', 'foo')
-    self.mox.ReplayAll()
+    self.mock_get.side_effect = [
+      requests_response("""
+      <html>
+        <head>
+          <link rel="feed" type="text/html" href="http://other/domain">
+        </head>
+      </html>""", url='http://author/'),
+      requests_response('foo', url='http://other/domain'),
+    ]
 
     discover(self.source, self.activity)
     self.assertEqual(['author', 'other'], self.source.updates['domains'])
 
   def test_no_h_entries(self):
     """Make sure nothing bad happens when fetching a feed without h-entries."""
-    self.expect_requests_get('http://author/', """
+    self.mock_get.return_value = requests_response("""
     <html class="h-feed">
     <p>under construction</p>
     </html>""")
 
-    self.mox.ReplayAll()
     self.assert_discover([])
     self.assert_syndicated_posts((None, 'https://fa.ke/post/url'))
 
@@ -409,12 +406,11 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
     self.source.domain_urls = ['http://author/#nope']
     self.source.put()
 
-    self.expect_requests_get('http://author/', """
+    self.mock_get.return_value = requests_response("""
     <html class="h-feed">
     <p>under construction</p>
     </html>""")
 
-    self.mox.ReplayAll()
     self.assert_discover([])
     self.assert_syndicated_posts((None, 'https://fa.ke/post/url'))
 
@@ -446,53 +442,49 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
     # from trying again
     self.assert_syndicated_posts((None, 'https://fa.ke/post/url'))
 
-  def _test_failed_domain_url_fetch(self, raise_exception):
+  def test_domain_url_not_found(self):
     """Make sure something reasonable happens when the author's domain url
-    gives an unexpected response
+    returns a 404 status code
     """
-    if raise_exception:
-      self.expect_requests_get('http://author/').AndRaise(HTTPError())
-    else:
-      self.expect_requests_get('http://author/', status_code=404)
+    self.mock_get.return_value = requests_response(status=404)
 
-    self.mox.ReplayAll()
     discover(self.source, self.activity)
 
     # nothing attempted, but we should have saved a placeholder to prevent us
     # from trying again
     self.assert_syndicated_posts((None, 'https://fa.ke/post/url'))
 
-  def test_domain_url_not_found(self):
-    """Make sure something reasonable happens when the author's domain url
-    returns a 404 status code
-    """
-    self._test_failed_domain_url_fetch(raise_exception=False)
-
   def test_domain_url_error(self):
     """Make sure something reasonable happens when fetching the author's
     domain url raises an exception
     """
-    self._test_failed_domain_url_fetch(raise_exception=True)
+    self.mock_get.side_effect = HTTPError()
+    discover(self.source, self.activity)
+
+    # nothing attempted, but we should have saved a placeholder to prevent us
+    # from trying again
+    self.assert_syndicated_posts((None, 'https://fa.ke/post/url'))
 
   def _expect_multiple_domain_url_fetches(self):
     self.source.domain_urls = ['http://author1', 'http://author2', 'http://author3']
     self.activity['object']['url'] = 'http://fa.ke/A'
-    self.expect_requests_get('http://author1', """
-    <html class="h-feed">
-      <div class="h-entry">
-        <a class="u-url" href="http://author1/A"></a>
-        <a class="u-syndication" href="http://fa.ke/A"></a>
-      </div>
-    </html>""")
-    self.expect_requests_get('http://author2').AndRaise(HTTPError())
-    self.expect_requests_get('http://author3', """
-    <html class="h-feed">
-      <div class="h-entry">
-        <a class="u-url" href="http://author3/B"></a>
-        <a class="u-syndication" href="http://fa.ke/B"></a>
-      </div>
-    </html>""")
-    self.mox.ReplayAll()
+    self.mock_get.side_effect = [
+      requests_response("""
+      <html class="h-feed">
+        <div class="h-entry">
+          <a class="u-url" href="http://author1/A"></a>
+          <a class="u-syndication" href="http://fa.ke/A"></a>
+        </div>
+      </html>""", url='http://author1'),
+      HTTPError(),
+      requests_response("""
+      <html class="h-feed">
+        <div class="h-entry">
+          <a class="u-url" href="http://author3/B"></a>
+          <a class="u-syndication" href="http://fa.ke/B"></a>
+        </div>
+      </html>""", url='http://author3'),
+    ]
 
   def test_canonicalize_drops_non_silo_activity_url(self):
     """For https://console.cloud.google.com/errors/CNnLpJml7O3cvAE ."""
@@ -519,15 +511,15 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
     """We should cap fetches at 5 URLs."""
     self.source.domain_urls = ['http://a1', 'http://b2', 'https://c3',
                                'http://d4', 'http://e5', 'https://f6']
-    for url in self.source.domain_urls[:5]:
-      self.expect_requests_get(url, '')
-    self.mox.ReplayAll()
+    self.mock_get.side_effect = [
+      requests_response('', url=url) for url in self.source.domain_urls[:5]
+    ]
     self.assert_discover([])
 
+  @patch.object(original_post_discovery, 'MAX_PERMALINK_FETCHES_BETA', new=3)
   def test_permalink_limit(self):
-    self.mox.stubs.Set(original_post_discovery, 'MAX_PERMALINK_FETCHES_BETA', 3)
-
-    self.expect_requests_get('http://author/', """
+    self.mock_get.side_effect = [
+      requests_response("""
 <html><body>
 <div class="h-feed first">
   <div class="h-entry"><a class="u-url" href="http://author/a"></a></div>
@@ -545,20 +537,18 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
   </div>
   <div class="h-entry"><a class="u-url" href="http://author/f"></a></div>
 </div>
-</body></html>""")
+</body></html>""", url='http://author/'),
+      # should sort by dt-updated/dt-published, then feed order
+      requests_response('', url='http://author/c'),
+      requests_response('', url='http://author/e'),
+      requests_response('', url='http://author/a'),
+    ]
 
-    # should sort by dt-updated/dt-published, then feed order
-    self.expect_requests_get('http://author/c')
-    self.expect_requests_get('http://author/e')
-    self.expect_requests_get('http://author/a')
-
-    self.mox.ReplayAll()
     self.assert_discover([])
 
+  @patch.object(original_post_discovery, 'MAX_FEED_ENTRIES', new=2)
   def test_feed_entry_limit(self):
-    self.mox.stubs.Set(original_post_discovery, 'MAX_FEED_ENTRIES', 2)
-
-    self.expect_requests_get('http://author/', """
+    self.mock_get.return_value = requests_response("""
 <html><body>
 <div class="h-feed">
   <div class="h-entry"><a class="u-url" href="http://author/a"></a>
@@ -571,48 +561,52 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
     <a class="u-syndication" href="http://fa.ke/post/url"></a></div>
 </body></html>""")
 
-    self.mox.ReplayAll()
     self.assert_discover(['http://author/a', 'http://author/b'])
     self.assert_syndicated_posts(('http://author/a', 'https://fa.ke/post/url'),
                                  ('http://author/b', 'https://fa.ke/post/url'))
 
   def test_homepage_too_big(self):
-    self.expect_requests_head('https://fa.ke/post/url')
-    self.expect_requests_head('http://author/',
-      response_headers={'Content-Length': str(util.MAX_HTTP_RESPONSE_SIZE + 1)})
+    self.mock_head.side_effect = [
+      requests_response('', url='https://fa.ke/post/url'),
+      requests_response(
+        headers={'Content-Length': str(util.MAX_HTTP_RESPONSE_SIZE + 1)}),
+    ]
     # no GET for /author since it's too big
-    self.mox.ReplayAll()
     self.assert_discover([])
 
   def test_feed_too_big(self):
-    self.expect_requests_head('https://fa.ke/post/url')
-    self.expect_requests_head('http://author/')
-    self.expect_requests_get(
-      'http://author/',
-      '<html><head><link rel="feed" type="text/html" href="/feed"></head></html>')
-    self.expect_requests_head('http://author/feed', response_headers={
-      'Content-Type': 'text/html',
-      'Content-Length': str(util.MAX_HTTP_RESPONSE_SIZE + 1),
-    })
+    self.mock_head.side_effect = [
+      requests_response('', url='https://fa.ke/post/url'),
+      requests_response('', url='http://author/'),
+      requests_response(headers={
+        'Content-Type': 'text/html',
+        'Content-Length': str(util.MAX_HTTP_RESPONSE_SIZE + 1),
+      }),
+    ]
+    self.mock_get.return_value = requests_response(
+      '<html><head><link rel="feed" type="text/html" href="/feed"></head></html>',
+      url='http://author/')
     # no GET for /author/feed since it's too big
-    self.mox.ReplayAll()
     self.assert_discover([])
 
   def test_syndication_url_head_error(self):
     """We should ignore syndication URLs that 4xx or 5xx."""
-    self.expect_requests_head('https://fa.ke/post/url')
-    self.expect_requests_head('http://author/')
-    self.expect_requests_get('http://author/', """
-    <html class="h-feed">
-      <div class="h-entry">
-        <a class="u-url" href="http://author/post"></a>
-        <a class="u-syndication" href="https://fa.ke/other"></a>
-      </div>
-    </html>""")
-    self.expect_requests_head('http://author/post')
-    self.expect_requests_get('http://author/post')
-    self.expect_requests_head('https://fa.ke/other', status_code=404)
-    self.mox.ReplayAll()
+    self.mock_head.side_effect = [
+      requests_response('', url='https://fa.ke/post/url'),
+      requests_response('', url='http://author/'),
+      requests_response('', url='http://author/post'),
+      requests_response('', url='https://fa.ke/other', status=404),
+    ]
+    self.mock_get.side_effect = [
+      requests_response("""
+      <html class="h-feed">
+        <div class="h-entry">
+          <a class="u-url" href="http://author/post"></a>
+          <a class="u-syndication" href="https://fa.ke/other"></a>
+        </div>
+      </html>""", url='http://author/'),
+      requests_response('', url='http://author/post'),
+    ]
 
     self.assert_discover([])
     self.assert_syndicated_posts(('http://author/post', None),
@@ -621,66 +615,70 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
   def test_rel_feed_link_error(self):
     """Author page has an h-feed link that raises an exception. We should
     recover and use the main page's h-entries as a fallback."""
-    self.expect_requests_get('http://author/', """
-    <html>
-      <head>
-        <link rel="feed" type="text/html" href="try_this.html">
-        <link rel="alternate" type="application/xml" href="not_this.html">
-        <link rel="alternate" type="application/xml" href="nor_this.html">
-      </head>
-      <body>
-        <div class="h-entry">
-          <a class="u-url" href="recover_and_fetch_this.html"></a>
-        </div>
-      </body>
-    </html>""")
+    self.mock_get.side_effect = [
+      requests_response("""
+      <html>
+        <head>
+          <link rel="feed" type="text/html" href="try_this.html">
+          <link rel="alternate" type="application/xml" href="not_this.html">
+          <link rel="alternate" type="application/xml" href="nor_this.html">
+        </head>
+        <body>
+          <div class="h-entry">
+            <a class="u-url" href="recover_and_fetch_this.html"></a>
+          </div>
+        </body>
+      </html>""", url='http://author/'),
+      # try to do this and fail
+      requests_response('nope', url='http://author/try_this.html', status=404),
+      # despite the error, should fallback on the main page's h-entries and
+      # check the permalink
+      requests_response('ok', url='http://author/recover_and_fetch_this.html'),
+    ]
 
-    # try to do this and fail
-    self.expect_requests_get('http://author/try_this.html', 'nope',
-                             status_code=404)
-
-    # despite the error, should fallback on the main page's h-entries and
-    # check the permalink
-    self.expect_requests_get('http://author/recover_and_fetch_this.html', 'ok')
-
-    self.mox.ReplayAll()
     discover(self.source, self.activity)
 
-  def _test_failed_post_permalink_fetch(self, raise_exception):
-    """Make sure something reasonable happens when we're unable to fetch
-    the permalink of an entry linked in the h-feed
+  def test_post_permalink_not_found(self):
+    """Make sure something reasonable happens when the permalink of an
+    entry returns a 404 not found
     """
-    self.expect_requests_get('http://author/', """
-    <html class="h-feed">
-      <article class="h-entry">
-        <a class="u-url" href="nonexistent.html"></a>
-      </article>
-    </html>
-    """)
+    self.mock_get.side_effect = [
+      requests_response("""
+      <html class="h-feed">
+        <article class="h-entry">
+          <a class="u-url" href="nonexistent.html"></a>
+        </article>
+      </html>
+      """, url='http://author/'),
+      requests_response('', url='http://author/nonexistent.html', status=410),
+    ]
 
-    if raise_exception:
-      self.expect_requests_get('http://author/nonexistent.html').AndRaise(HTTPError())
-    else:
-      self.expect_requests_get('http://author/nonexistent.html', status_code=410)
-
-    self.mox.ReplayAll()
     discover(self.source, self.activity)
     # we should have saved placeholders to prevent us from trying the
     # syndication url or permalink again
     self.assert_syndicated_posts(('http://author/nonexistent.html', None),
                                  (None, 'https://fa.ke/post/url'))
 
-  def test_post_permalink_not_found(self):
-    """Make sure something reasonable happens when the permalink of an
-    entry returns a 404 not found
-    """
-    self._test_failed_post_permalink_fetch(raise_exception=False)
-
   def test_post_permalink_error(self):
     """Make sure something reasonable happens when fetching the permalink
     of an entry raises an exception
     """
-    self._test_failed_post_permalink_fetch(raise_exception=True)
+    self.mock_get.side_effect = [
+      requests_response("""
+      <html class="h-feed">
+        <article class="h-entry">
+          <a class="u-url" href="nonexistent.html"></a>
+        </article>
+      </html>
+      """, url='http://author/'),
+      HTTPError(),
+    ]
+
+    discover(self.source, self.activity)
+    # we should have saved placeholders to prevent us from trying the
+    # syndication url or permalink again
+    self.assert_syndicated_posts(('http://author/nonexistent.html', None),
+                                 (None, 'https://fa.ke/post/url'))
 
   def test_no_author_url(self):
     """Make sure something reasonable happens when the author doesn't have
@@ -694,103 +692,97 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
   def test_feed_type_application_xml(self):
     """Confirm that we don't fetch non-HTML rel=feeds.
     """
-    self.expect_requests_head(self.activity['object']['url'])
-    self.expect_requests_head('http://author/')
-    self.expect_requests_get('http://author/', """
+    self.mock_head.side_effect = [
+      requests_response('', url=self.activity['object']['url']),
+      requests_response('', url='http://author/'),
+      requests_response(headers={'Content-Type': 'application/xml'}),
+    ]
+    self.mock_get.return_value = requests_response("""
     <html>
       <head>
         <link rel="feed" href="/updates.atom">
       </head>
     </html>
-    """)
-    self.expect_requests_head('http://author/updates.atom',
-                              response_headers={'Content-Type': 'application/xml'})
+    """, url='http://author/')
     # check that we don't GET http://author/updates.atom
-    self.mox.ReplayAll()
     discover(self.source, self.activity)
 
   def test_feed_head_request_failed(self):
     """Confirm that we fetch permalinks even if HEAD fails.
     """
-    self.expect_requests_get('http://author/', """
-    <html>
-      <head>
-        <link rel="feed" href="/updates">
-      </head>
-      <body>
-        <article class="h-entry">
-          <a class="u-url" href="permalink"></a>
-        </article>
-      </body>
-    </html>
-    """)
+    self.mock_get.side_effect = [
+      requests_response("""
+      <html>
+        <head>
+          <link rel="feed" href="/updates">
+        </head>
+        <body>
+          <article class="h-entry">
+            <a class="u-url" href="permalink"></a>
+          </article>
+        </body>
+      </html>
+      """, url='http://author/'),
+      # try and fail to get the feed
+      requests_response('', url='http://author/updates', status=400),
+      # fall back on the original page, and fetch the post permalink
+      requests_response('<html></html>', url='http://author/permalink'),
+    ]
+    self.mock_head.side_effect = [
+      # head request to follow redirects on the post url
+      requests_response('', url=self.activity['object']['url']),
+      # and for the author url
+      requests_response('', url='http://author/'),
+      requests_response('', url='http://author/updates', status=400),
+      requests_response('', url='http://author/permalink'),
+    ]
 
-    # head request to follow redirects on the post url
-    self.expect_requests_head(self.activity['object']['url'])
-
-    # and for the author url
-    self.expect_requests_head('http://author/')
-
-    # try and fail to get the feed
-    self.expect_requests_head('http://author/updates', status_code=400)
-    self.expect_requests_get('http://author/updates', status_code=400)
-
-    # fall back on the original page, and fetch the post permalink
-    self.expect_requests_head('http://author/permalink')
-    self.expect_requests_get('http://author/permalink', '<html></html>')
-
-    self.mox.ReplayAll()
     discover(self.source, self.activity)
 
   def test_feed_type_unknown(self):
     """Confirm that we look for an h-feed with type=text/html even when
     the type is not given in <link>, and keep looking until we find one.
     """
-    self.expect_requests_get('http://author/', """
-    <html>
-      <head>
-        <link rel="feed" href="/updates.atom">
-        <link rel="feed" href="/updates.html">
-        <link rel="feed" href="/updates.rss">
-      </head>
-    </html>""")
+    self.mock_get.side_effect = [
+      requests_response("""
+      <html>
+        <head>
+          <link rel="feed" href="/updates.atom">
+          <link rel="feed" href="/updates.html">
+          <link rel="feed" href="/updates.rss">
+        </head>
+      </html>""", url='http://author/'),
+      # now fetch the html feed
+      requests_response("""
+      <html class="h-feed">
+        <article class="h-entry">
+          <a class="u-url" href="/permalink">should follow this</a>
+        </article>
+      </html>""", url='http://author/updates.html'),
+      # should not try to get the rss feed at this point
+      # but we will follow the post permalink
+      requests_response("""
+      <html class="h-entry">
+        <p class="p-name">Title</p>
+      </html>""", url='http://author/permalink'),
+    ]
+    self.mock_head.side_effect = [
+      # head request to follow redirects on the post url
+      requests_response('', url=self.activity['object']['url']),
+      # and for the author url
+      requests_response('', url='http://author/'),
+      # try to get the atom feed first
+      requests_response('', url='http://author/updates.atom',
+                        content_type='application/xml'),
+      # keep looking for an html feed
+      requests_response('', url='http://author/updates.html'),
+      # look at the rss feed last
+      requests_response('', url='http://author/updates.rss',
+                        content_type='application/xml'),
+      # keep looking for an html feed
+      requests_response('', url='http://author/permalink'),
+    ]
 
-    # head request to follow redirects on the post url
-    self.expect_requests_head(self.activity['object']['url'])
-
-    # and for the author url
-    self.expect_requests_head('http://author/')
-
-    # try to get the atom feed first
-    self.expect_requests_head('http://author/updates.atom',
-                              content_type='application/xml')
-
-    # keep looking for an html feed
-    self.expect_requests_head('http://author/updates.html')
-
-    # look at the rss feed last
-    self.expect_requests_head('http://author/updates.rss',
-                              content_type='application/xml')
-
-    # now fetch the html feed
-    self.expect_requests_get('http://author/updates.html', """
-    <html class="h-feed">
-      <article class="h-entry">
-        <a class="u-url" href="/permalink">should follow this</a>
-      </article>
-    </html>""")
-
-    # should not try to get the rss feed at this point
-    # but we will follow the post permalink
-
-    # keep looking for an html feed
-    self.expect_requests_head('http://author/permalink')
-    self.expect_requests_get('http://author/permalink', """
-    <html class="h-entry">
-      <p class="p-name">Title</p>
-    </html>""")
-
-    self.mox.ReplayAll()
     discover(self.source, self.activity)
 
   # TODO: activity with existing responses, make sure they're merged right
@@ -799,44 +791,41 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
     """Make sure that we follow all rel=feed links, e.g. if notes and
     articles are in separate feeds."""
 
-    self.expect_requests_get('http://author/', """
-    <html>
-      <head>
-        <link rel="feed" href="/articles" type="text/html">
-        <link rel="feed" href="/notes" type="text/html">
-      </head>
-    </html>""")
-
-    # fetches all feeds first
-    self.expect_requests_get('http://author/articles', """
-    <html class="h-feed">
-      <article class="h-entry">
+    self.mock_get.side_effect = [
+      requests_response("""
+      <html>
+        <head>
+          <link rel="feed" href="/articles" type="text/html">
+          <link rel="feed" href="/notes" type="text/html">
+        </head>
+      </html>""", url='http://author/'),
+      # fetches all feeds first
+      requests_response("""
+      <html class="h-feed">
+        <article class="h-entry">
+          <a class="u-url" href="/article-permalink"></a>
+        </article>
+      </html>""", url='http://author/articles'),
+      requests_response("""
+      <html class="h-feed">
+        <article class="h-entry">
+          <a class="u-url" href="/note-permalink"></a>
+        </article>
+      </html>""", url='http://author/notes'),
+      # then the permalinks (in any order since they are hashed to
+      # remove duplicates)
+      requests_response("""
+      <html class="h-entry">
         <a class="u-url" href="/article-permalink"></a>
-      </article>
-    </html>""").InAnyOrder('feed')
-
-    self.expect_requests_get('http://author/notes', """
-    <html class="h-feed">
-      <article class="h-entry">
+        <a class="u-syndication" href="https://fa.ke/article"></a>
+      </html>""", url='http://author/article-permalink'),
+      requests_response("""
+      <html class="h-entry">
         <a class="u-url" href="/note-permalink"></a>
-      </article>
-    </html>""").InAnyOrder('feed')
+        <a class="u-syndication" href="https://fa.ke/note"></a>
+      </html>""", url='http://author/note-permalink'),
+    ]
 
-    # then the permalinks (in any order since they are hashed to
-    # remove duplicates)
-    self.expect_requests_get('http://author/article-permalink', """
-    <html class="h-entry">
-      <a class="u-url" href="/article-permalink"></a>
-      <a class="u-syndication" href="https://fa.ke/article"></a>
-    </html>""").InAnyOrder('permalink')
-
-    self.expect_requests_get('http://author/note-permalink', """
-    <html class="h-entry">
-      <a class="u-url" href="/note-permalink"></a>
-      <a class="u-syndication" href="https://fa.ke/note"></a>
-    </html>""").InAnyOrder('permalink')
-
-    self.mox.ReplayAll()
     discover(self.source, self.activity)
     self.assert_syndicated_posts(
       ('http://author/note-permalink', 'https://fa.ke/note'),
@@ -847,24 +836,27 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
     """Confirm that we check the author page's content type before
     fetching and parsing it
     """
-    # head request to follow redirects on the post url
-    self.expect_requests_head(self.activity['object']['url'])
-    self.expect_requests_head('http://author/', response_headers={
-      'content-type': 'application/xml',
-    })
+    self.mock_head.side_effect = [
+      # head request to follow redirects on the post url
+      requests_response('', url=self.activity['object']['url']),
+      requests_response(headers={'content-type': 'application/xml'}),
+    ]
 
     # give up
-    self.mox.ReplayAll()
     discover(self.source, self.activity)
 
   def test_avoid_permalink_with_bad_content_type(self):
     """Confirm that we don't follow u-url's that lead to anything that
     isn't text/html (e.g., PDF)
     """
-    # head request to follow redirects on the post url
-    self.expect_requests_head(self.activity['object']['url'])
-    self.expect_requests_head('http://author/')
-    self.expect_requests_get('http://author/', """
+    self.mock_head.side_effect = [
+      # head request to follow redirects on the post url
+      requests_response('', url=self.activity['object']['url']),
+      requests_response('', url='http://author/'),
+      # and to check the content-type of the article
+      requests_response(headers={'content-type': 'application/pdf'}),
+    ]
+    self.mock_get.return_value = requests_response("""
     <html>
       <body>
         <div class="h-entry">
@@ -872,16 +864,9 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
         </div>
       </body>
     </html>
-    """)
-
-    # and to check the content-type of the article
-    self.expect_requests_head('http://scholarly.com/paper.pdf',
-                              response_headers={
-                                'content-type': 'application/pdf'
-                              })
+    """, url='http://author/')
 
     # call to requests.get for permalink should be skipped
-    self.mox.ReplayAll()
     discover(self.source, self.activity)
 
   def test_do_not_fetch_hfeed(self):
@@ -894,8 +879,7 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
 
   def test_source_domains(self):
     """Only links to the user's own domains should end up in originals."""
-    self.expect_requests_get('http://author/', '')
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response('')
 
     self.activity['object']['content'] = 'x http://author/post y https://mention z'
     self.assert_discover(['http://author/post'], ['https://mention/'])
@@ -918,8 +902,7 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
   def test_source_user(self):
     """Only links from the user's own posts should end up in originals."""
     self.activity['object']['content'] = 'x http://author/post y'
-    self.expect_requests_get('http://author/', '')
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response('')
 
     self.activity['object']['author'] = {'id': self.source.user_tag_id()}
     self.assert_discover(['http://author/post'], [])
@@ -933,17 +916,15 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
     self.activity['actor'] = {'id': 'tag:fa.ke,2013:someone_else'}
     self.assert_discover([], ['http://author/post'])
 
+  @patch.object(testutil.FakeSource, 'USERNAME_KEY_ID', new=True)
   def test_source_user_case_insensitive(self):
     """If USERNAME_KEY_ID, username comparison should ignore case."""
-    self.mox.stubs.Set(testutil.FakeSource, 'USERNAME_KEY_ID', True)
-
     self.source = testutil.FakeSource(
       id='FOO_bar', domain_urls=['http://author/'], domains=['author'])
     self.source.put()
 
     self.activity['object']['content'] = 'x http://author/post y'
-    self.expect_requests_get('http://author/', '')
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response('')
 
     self.activity['object']['author'] = {'id': 'tag:fa.ke,2013:foo_BAR'}
     self.assert_discover(['http://author/post'], [])
@@ -951,8 +932,7 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
   def test_compare_username(self):
     """Accept posts with author id with the user's username."""
     self.activity['object']['content'] = 'x http://author/post y'
-    self.expect_requests_get('http://author/', '')
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response('')
 
     self.activity['object']['author'] = {
       'id': 'tag:fa.ke,2013:someone_else',
@@ -963,8 +943,7 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
   def test_compare_author_not_tag_uri(self):
     """Accept posts with non-tag-URI author id."""
     self.activity['object']['content'] = 'x http://author/post y'
-    self.expect_requests_get('http://author/', '')
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response('')
 
     self.activity['object']['author'] = {
       'id': 'tag:fa.ke,2013:someone_else',
@@ -990,8 +969,7 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
       'url': 'https://fa.ke/post/quoted',
     }]
 
-    self.expect_requests_get('http://author/', '')
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response('')
 
     self.assert_discover([], ['http://author/permalink'])
 
@@ -1025,34 +1003,32 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
                    original='http://author/permalink3',
                    syndication=None).put()
 
-    self.expect_requests_get('http://author/', """
+    self.mock_get.side_effect = [
+      requests_response("""
       <html class="h-feed">
         <a class="h-entry" href="/permalink1"></a>
         <a class="h-entry" href="/permalink2"></a>
         <a class="h-entry" href="/permalink3"></a>
-      </html>""")
-
-    # yay, permalink1 has an updated syndication url
-    self.expect_requests_get('http://author/permalink1', """
+      </html>""", url='http://author/'),
+      # yay, permalink1 has an updated syndication url
+      requests_response("""
       <html class="h-entry">
         <a class="u-url" href="/permalink1"></a>
         <a class="u-syndication" href="https://fa.ke/post/url1"></a>
-      </html>""").InAnyOrder()
-
-    # permalink2 hasn't changed since we first checked it
-    self.expect_requests_get('http://author/permalink2', """
+      </html>""", url='http://author/permalink1'),
+      # permalink2 hasn't changed since we first checked it
+      requests_response("""
       <html class="h-entry">
         <a class="u-url" href="/permalink2"></a>
         <a class="u-syndication" href="https://fa.ke/post/url2"></a>
-      </html>""").InAnyOrder()
-
-    # permalink3 hasn't changed since we first checked it
-    self.expect_requests_get('http://author/permalink3', """
+      </html>""", url='http://author/permalink2'),
+      # permalink3 hasn't changed since we first checked it
+      requests_response("""
       <html class="h-entry">
         <a class="u-url" href="/permalink3"></a>
-      </html>""").InAnyOrder()
+      </html>""", url='http://author/permalink3'),
+    ]
 
-    self.mox.ReplayAll()
     refetch(self.source)
     self.assert_syndicated_posts(
       ('http://author/permalink1', 'https://fa.ke/post/url1'),
@@ -1081,13 +1057,14 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
       <a class="u-url" href="http://author/post/permalink"></a>
     </html>"""
 
-    # original
-    self.expect_requests_get('http://author/', author_feed)
-    self.expect_requests_get('http://author/post/permalink', author_entry)
-    # refetch
-    self.expect_requests_get('http://author/', author_feed)
-    self.expect_requests_get('http://author/post/permalink', author_entry)
-    self.mox.ReplayAll()
+    self.mock_get.side_effect = [
+      # original
+      requests_response(author_feed, url='http://author/'),
+      requests_response(author_entry, url='http://author/post/permalink'),
+      # refetch
+      requests_response(author_feed, url='http://author/'),
+      requests_response(author_entry, url='http://author/post/permalink'),
+    ]
 
     for activity in self.activities:
       discover(self.source, activity)
@@ -1118,19 +1095,18 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
     <a class="u-syndication" href="https://fa.ke/post/url"></a>
     </html>"""
 
-    # first attempt, no syndication url yet
-    self.expect_requests_get('http://author/', hfeed)
-    self.expect_requests_get('http://author/permalink', unsyndicated)
+    self.mock_get.side_effect = [
+      # first attempt, no syndication url yet
+      requests_response(hfeed, url='http://author/'),
+      requests_response(unsyndicated, url='http://author/permalink'),
+      # refetch, still no syndication url
+      requests_response(hfeed, url='http://author/'),
+      requests_response(unsyndicated, url='http://author/permalink'),
+      # second refetch, has a syndication url this time
+      requests_response(hfeed, url='http://author/'),
+      requests_response(syndicated, url='http://author/permalink'),
+    ]
 
-    # refetch, still no syndication url
-    self.expect_requests_get('http://author/', hfeed)
-    self.expect_requests_get('http://author/permalink', unsyndicated)
-
-    # second refetch, has a syndication url this time
-    self.expect_requests_get('http://author/', hfeed)
-    self.expect_requests_get('http://author/permalink', syndicated)
-
-    self.mox.ReplayAll()
     discover(self.source, self.activities[0])
     refetch(self.source)
     self.assert_syndicated_posts(('http://author/permalink', None),
@@ -1162,16 +1138,14 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
        </html>""") for i in range(2)
     ]
 
-    self.expect_requests_get('http://author/', hfeed)
-    for permalink, content in hentries:
-      self.expect_requests_get(permalink, content)
+    self.mock_get.side_effect = (
+      [requests_response(hfeed, url='http://author/')] +
+      [requests_response(content, url=permalink) for permalink, content in hentries] +
+      # refetch
+      [requests_response(hfeed, url='http://author/')] +
+      [requests_response(content, url=permalink) for permalink, content in hentries]
+    )
 
-    # refetch
-    self.expect_requests_get('http://author/', hfeed)
-    for permalink, content in hentries:
-      self.expect_requests_get(permalink, content)
-
-    self.mox.ReplayAll()
     self.assert_discover(['http://author/post1', 'http://author/post2'])
     self.assert_syndicated_posts(('http://author/post1', 'https://fa.ke/post/url'),
                                  ('http://author/post2', 'https://fa.ke/post/url'))
@@ -1201,15 +1175,15 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
     <a class="u-syndication" href="https://fa.ke/post/url5"></a>
     </html>"""
 
-    self.expect_requests_get('http://author/', hfeed)
-    self.expect_requests_get('http://author/permalink', hentry)
+    self.mock_get.side_effect = [
+      requests_response(hfeed, url='http://author/'),
+      requests_response(hentry, url='http://author/permalink'),
+      # refetch
+      requests_response(hfeed, url='http://author/'),
+      # refetch grabs posts that it's seen before in case there have been updates
+      requests_response(hentry, url='http://author/permalink'),
+    ]
 
-    # refetch
-    self.expect_requests_get('http://author/', hfeed)
-    # refetch grabs posts that it's seen before in case there have been updates
-    self.expect_requests_get('http://author/permalink', hentry)
-
-    self.mox.ReplayAll()
     discover(self.source, self.activities[0])
     self.assert_syndicated_posts(
       ('http://author/permalink', 'https://fa.ke/post/url1'),
@@ -1228,43 +1202,40 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
       'url': 'https://fa.ke/post/url',
     })
 
-    # first attempt, no stub yet
-    self.expect_requests_get('http://author/', """
-    <html class="h-feed">
-    <a class="h-entry" href="/2014/08/09"></a>
-    </html>""")
-    self.expect_requests_get('http://author/2014/08/09', """
-    <html class="h-entry">
-    <a class="u-url" href="/2014/08/09"></a>
-    <a class="u-syndication" href="https://fa.ke/post/url"></a>
-    </html>""")
+    self.mock_get.side_effect = [
+      # first attempt, no stub yet
+      requests_response("""
+      <html class="h-feed">
+      <a class="h-entry" href="/2014/08/09"></a>
+      </html>""", url='http://author/'),
+      requests_response("""
+      <html class="h-entry">
+      <a class="u-url" href="/2014/08/09"></a>
+      <a class="u-syndication" href="https://fa.ke/post/url"></a>
+      </html>""", url='http://author/2014/08/09'),
+      # refetch, permalink has a stub now
+      requests_response("""
+      <html class="h-feed">
+      <a class="h-entry" href="/2014/08/09/this-is-a-stub"></a>
+      </html>""", url='http://author/'),
+      requests_response("""
+      <html class="h-entry">
+      <a class="u-url" href="/2014/08/09/this-is-a-stub"></a>
+      <a class="u-syndication" href="https://fa.ke/post/url"></a>
+      </html>""", url='http://author/2014/08/09/this-is-a-stub'),
+      # refetch again
+      requests_response("""
+      <html class="h-feed">
+      <a class="h-entry" href="/2014/08/09/this-is-a-stub"></a>
+      </html>""", url='http://author/'),
+      # permalink hasn't changed
+      requests_response("""
+      <html class="h-entry">
+      <a class="u-url" href="/2014/08/09/this-is-a-stub"></a>
+      <a class="u-syndication" href="https://fa.ke/post/url"></a>
+      </html>""", url='http://author/2014/08/09/this-is-a-stub'),
+    ]
 
-    # refetch, permalink has a stub now
-    self.expect_requests_get('http://author/', """
-    <html class="h-feed">
-    <a class="h-entry" href="/2014/08/09/this-is-a-stub"></a>
-    </html>""")
-
-    self.expect_requests_get('http://author/2014/08/09/this-is-a-stub', """
-    <html class="h-entry">
-    <a class="u-url" href="/2014/08/09/this-is-a-stub"></a>
-    <a class="u-syndication" href="https://fa.ke/post/url"></a>
-    </html>""")
-
-    # refetch again
-    self.expect_requests_get('http://author/', """
-    <html class="h-feed">
-    <a class="h-entry" href="/2014/08/09/this-is-a-stub"></a>
-    </html>""")
-
-    # permalink hasn't changed
-    self.expect_requests_get('http://author/2014/08/09/this-is-a-stub', """
-    <html class="h-entry">
-    <a class="u-url" href="/2014/08/09/this-is-a-stub"></a>
-    <a class="u-syndication" href="https://fa.ke/post/url"></a>
-    </html>""")
-
-    self.mox.ReplayAll()
     # modified activity should have /2014/08/09 as an upstreamDuplicate now
     self.assert_discover(['http://author/2014/08/09'])
 
@@ -1287,15 +1258,14 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
     SyndicatedPost(parent=self.source.key,
                    original='http://author/permalink',
                    syndication='https://fa.ke/post/url').put()
-    self.expect_requests_get('http://author/', """
+    self.mock_get.return_value = requests_response("""
     <html class="h-feed">
       <div class="h-entry">
         <a class="u-url" href="/permalink"></a>
         <a class="u-syndication" href="http://fa.ke/changed/url"></a>
       </div>
-    </html>""")
+    </html>""", url='http://author/')
 
-    self.mox.ReplayAll()
     results = refetch(self.source)
     self.assert_syndicated_posts(
       ('http://author/permalink', 'https://fa.ke/changed/url'))
@@ -1310,18 +1280,19 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
     SyndicatedPost(parent=self.source.key,
                    original='http://author/permalink',
                    syndication='https://fa.ke/post/url').put()
-    self.expect_requests_get('http://author/', """
-    <html class="h-feed">
-      <div class="h-entry">
-        <a class="u-url" href="/permalink"></a>
-      </div>
-    </html>""")
-    self.expect_requests_get('http://author/permalink', """
+    self.mock_get.side_effect = [
+      requests_response("""
+      <html class="h-feed">
+        <div class="h-entry">
+          <a class="u-url" href="/permalink"></a>
+        </div>
+      </html>""", url='http://author/'),
+      requests_response("""
       <html class="h-entry">
         <a class="u-url" href="/permalink"></a>
-      </html>""")
+      </html>""", url='http://author/permalink'),
+    ]
 
-    self.mox.ReplayAll()
     self.assert_equals({}, refetch(self.source))
     self.assert_syndicated_posts(('http://author/permalink', None))
 
@@ -1331,18 +1302,19 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
                            original='http://author/permalink',
                            syndication=None)
     blank.put()
-    self.expect_requests_get('http://author/', """
-    <html class="h-feed">
-      <div class="h-entry">
-        <a class="u-url" href="/permalink"></a>
-      </div>
-    </html>""")
-    self.expect_requests_get('http://author/permalink', """
+    self.mock_get.side_effect = [
+      requests_response("""
+      <html class="h-feed">
+        <div class="h-entry">
+          <a class="u-url" href="/permalink"></a>
+        </div>
+      </html>""", url='http://author/'),
+      requests_response("""
       <html class="h-entry">
         <a class="u-url" href="/permalink"></a>
-      </html>""")
+      </html>""", url='http://author/permalink'),
+    ]
 
-    self.mox.ReplayAll()
     self.assert_equals({}, refetch(self.source))
     self.assert_syndicated_posts(('http://author/permalink', None))
 
@@ -1352,15 +1324,14 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
                           original='http://author/permalink',
                           syndication='https://fa.ke/post/url')
     synd.put()
-    self.expect_requests_get('http://author/', """
+    self.mock_get.return_value = requests_response("""
     <html class="h-feed">
       <div class="h-entry">
         <a class="u-url" href="/permalink"></a>
         <a class="u-syndication" href="https://fa.ke/post/url"></a>
       </div>
-    </html>""")
+    </html>""", url='http://author/')
 
-    self.mox.ReplayAll()
     refetch(self.source)
     self.assert_entities_equal([synd], list(SyndicatedPost.query()))
 
@@ -1368,33 +1339,34 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
     self.source.last_feed_syndication_url = datetime(1970, 1, 1, tzinfo=timezone.utc)
     self.source.put()
 
-    self.expect_requests_get('http://author/', """
+    self.mock_get.return_value = requests_response("""
     <html class="h-feed">
       <div class="h-entry">
         <a class="u-url" href="/permalink"></a>
       </div>
-    </html>""")
+    </html>""", url='http://author/')
     # *don't* expect permalink fetch
 
-    self.mox.ReplayAll()
     self.assert_equals({}, refetch(self.source))
     self.assert_syndicated_posts(('http://author/permalink', None))
 
   def test_refetch_dont_follow_other_silo_syndication(self):
     """We should only resolve redirects if the initial domain is our silo."""
-    self.unstub_requests_head()
-    self.expect_requests_head('http://author/')
-    self.expect_requests_get('http://author/', """
-    <html class="h-feed">
-      <div class="h-entry">
-        <a class="u-url" href="/permalink"></a>
-        <a class="u-syndication" href="https://oth.er/post/url"></a>
-      </div>
-    </html>""")
-    self.expect_requests_head('http://author/permalink')
-    self.expect_requests_get('http://author/permalink')
+    self.mock_head.side_effect = [
+      requests_response('', url='http://author/'),
+      requests_response('', url='http://author/permalink'),
+    ]
+    self.mock_get.side_effect = [
+      requests_response("""
+      <html class="h-feed">
+        <div class="h-entry">
+          <a class="u-url" href="/permalink"></a>
+          <a class="u-syndication" href="https://oth.er/post/url"></a>
+        </div>
+      </html>""", url='http://author/'),
+      requests_response('', url='http://author/permalink'),
+    ]
 
-    self.mox.ReplayAll()
     refetch(self.source)
 
     synds = list(SyndicatedPost.query())
@@ -1404,35 +1376,39 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
 
   def test_refetch_syndication_url_head_error(self):
     """We should ignore syndication URLs that 4xx or 5xx."""
-    self.expect_requests_head('http://author/')
-    self.expect_requests_get('http://author/', """
-    <html class="h-feed">
-      <div class="h-entry">
-        <a class="u-url" href="http://author/post"></a>
-        <a class="u-syndication" href="https://fa.ke/post/url"></a>
-      </div>
-    </html>""")
-    self.expect_requests_head('http://author/post')
-    self.expect_requests_get('http://author/post')
-    self.expect_requests_head('https://fa.ke/post/url', status_code=404)
+    self.mock_head.side_effect = [
+      requests_response('', url='http://author/'),
+      requests_response('', url='http://author/post'),
+      requests_response('', url='https://fa.ke/post/url', status=404),
+    ]
+    self.mock_get.side_effect = [
+      requests_response("""
+      <html class="h-feed">
+        <div class="h-entry">
+          <a class="u-url" href="http://author/post"></a>
+          <a class="u-syndication" href="https://fa.ke/post/url"></a>
+        </div>
+      </html>""", url='http://author/'),
+      requests_response('', url='http://author/post'),
+    ]
 
-    self.mox.ReplayAll()
     refetch(self.source)
 
     self.assert_syndicated_posts(('http://author/post', None))
 
   def test_refetch_synd_url_on_other_silo(self):
     """We should ignore syndication URLs on other (silos') domains."""
-    self.expect_requests_get('http://author/', """
-    <html class="h-feed">
-      <div class="h-entry">
-        <a class="u-url" href="http://author/post/url"></a>
-        <a class="u-syndication" href="http://other/silo/url"></a>
-      </div>
-    </html>""")
-    self.expect_requests_get('http://author/post/url')
+    self.mock_get.side_effect = [
+      requests_response("""
+      <html class="h-feed">
+        <div class="h-entry">
+          <a class="u-url" href="http://author/post/url"></a>
+          <a class="u-syndication" href="http://other/silo/url"></a>
+        </div>
+      </html>""", url='http://author/'),
+      requests_response('', url='http://author/post/url'),
+    ]
 
-    self.mox.ReplayAll()
     refetch(self.source)
 
     self.assert_syndicated_posts(('http://author/post/url', None))
@@ -1448,14 +1424,13 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
     })
 
     # malformed u-url, should skip it without an unhashable dict error
-    self.expect_requests_get('http://author/', """
+    self.mock_get.return_value = requests_response("""
 <html class="h-feed">
   <div class="h-entry">
     <a class="u-url h-cite" href="/permalink">this is a strange permalink</a>
   </div>
-</html>""")
+</html>""", url='http://author/')
 
-    self.mox.ReplayAll()
     self.assert_discover([])
 
   def test_merge_front_page_and_h_feed(self):
@@ -1463,35 +1438,34 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
     checking that we visit h-entries that are only the front page or
     only the rel-feed page.
     """
-    self.expect_requests_get('http://author/', """
-    <link rel="feed" href="/feed">
-    <html class="h-feed">
-      <div class="h-entry">
-        <a class="u-url" href="http://author/only-on-frontpage"></a>
-      </div>
-      <div class="h-entry">
-        <a class="u-url" href="http://author/on-both"></a>
-      </div>
-    </html>""")
+    self.mock_get.side_effect = [
+      requests_response("""
+      <link rel="feed" href="/feed">
+      <html class="h-feed">
+        <div class="h-entry">
+          <a class="u-url" href="http://author/only-on-frontpage"></a>
+        </div>
+        <div class="h-entry">
+          <a class="u-url" href="http://author/on-both"></a>
+        </div>
+      </html>""", url='http://author/'),
+      requests_response("""
+      <link rel="feed" href="/feed">
+      <html class="h-feed">
+        <div class="h-entry">
+          <a class="u-url" href="http://author/on-both"></a>
+        </div>
+        <div class="h-entry">
+          <a class="u-url" href="http://author/only-on-feed"></a>
+        </div>
+      </html>""", url='http://author/feed'),
+    ] + [
+      requests_response(f"""<div class="h-entry">
+                          <a class="u-url" href="{orig}"></a>
+                        </div>""", url=f'http://author{orig}')
+      for orig in ('/only-on-frontpage', '/on-both', '/only-on-feed')
+    ]
 
-    self.expect_requests_get('http://author/feed', """
-    <link rel="feed" href="/feed">
-    <html class="h-feed">
-      <div class="h-entry">
-        <a class="u-url" href="http://author/on-both"></a>
-      </div>
-      <div class="h-entry">
-        <a class="u-url" href="http://author/only-on-feed"></a>
-      </div>
-    </html>""")
-
-    for orig in ('/only-on-frontpage', '/on-both', '/only-on-feed'):
-      self.expect_requests_get(f'http://author{orig}',
-                               f"""<div class="h-entry">
-                                 <a class="u-url" href="{orig}"></a>
-                               </div>""").InAnyOrder()
-
-    self.mox.ReplayAll()
     discover(self.source, self.activity)
     # should be three blank SyndicatedPosts now
     self.assert_syndicated_posts(('http://author/only-on-frontpage', None),
@@ -1507,7 +1481,7 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
     del self.activity['object']['url']
     self.activity['url'] = 'http://www.fa.ke/post/url'
 
-    self.expect_requests_get('http://author/', """
+    self.mock_get.return_value = requests_response("""
     <html class="h-feed">
       <div class="h-entry">
         <a class="u-url" href="http://author/post/url"></a>
@@ -1515,43 +1489,41 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
       </div>
     </html>""")
 
-    self.mox.ReplayAll()
     self.assert_discover(['http://author/post/url'])
 
   def test_skip_non_string_u_urls(self):
     """Make sure that we do not abort due to u-urls that contain objects
     """
-    self.expect_requests_get('http://author/', """
-    <link rel="feed" href="/feed">
-    <html class="h-feed">
-      <div class="h-entry">
-        <a class="u-url" href="http://author/post-with-mistake"></a>
-        <a class="u-url h-card" href="http://author/dummy-url">someone made a mistake</a>
-      </div>
-    </html>""")
+    self.mock_get.side_effect = [
+      requests_response("""
+      <link rel="feed" href="/feed">
+      <html class="h-feed">
+        <div class="h-entry">
+          <a class="u-url" href="http://author/post-with-mistake"></a>
+          <a class="u-url h-card" href="http://author/dummy-url">someone made a mistake</a>
+        </div>
+      </html>""", url='http://author/'),
+      requests_response("""
+      <html class="h-feed">
+        <div class="h-entry">
+          <a class="u-url h-card" href="http://author/dummy-url">someone made a mistake</a>
+          <a class="u-url" href="http://author/post-with-mistake"></a>
+        </div>
+        </div>
+        <div class="h-entry">
+          <a class="u-url" href="http://author/only-on-feed"></a>
+        </div>
+        <div class="h-entry">
+          <a class="u-url h-card" href="http://author/dummy-url">someone made a mistake, and no correct link</a>
+        </div>
+      </html>""", url='http://author/feed'),
+    ] + [
+      requests_response(f"""<div class="h-entry">
+                          <a class="u-url" href="{orig}"></a>
+                        </div>""", url=f'http://author{orig}')
+      for orig in ('/post-with-mistake', '/only-on-feed')
+    ]
 
-    self.expect_requests_get('http://author/feed', """
-    <html class="h-feed">
-      <div class="h-entry">
-        <a class="u-url h-card" href="http://author/dummy-url">someone made a mistake</a>
-        <a class="u-url" href="http://author/post-with-mistake"></a>
-      </div>
-      </div>
-      <div class="h-entry">
-        <a class="u-url" href="http://author/only-on-feed"></a>
-      </div>
-      <div class="h-entry">
-        <a class="u-url h-card" href="http://author/dummy-url">someone made a mistake, and no correct link</a>
-      </div>
-    </html>""")
-
-    for orig in ('/post-with-mistake', '/only-on-feed'):
-      self.expect_requests_get(f'http://author{orig}',
-                               f"""<div class="h-entry">
-                                 <a class="u-url" href="{orig}"></a>
-                               </div>""").InAnyOrder()
-
-    self.mox.ReplayAll()
     discover(self.source, self.activity)
     # should have found both posts successfully
     self.assert_syndicated_posts(('http://author/post-with-mistake', None),
@@ -1564,7 +1536,7 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
     ...even across resolving redirects.
     https://github.com/snarfed/bridgy/issues/984
     """
-    self.expect_requests_get('http://author/', """
+    self.mock_get.return_value = requests_response("""
     <html class="h-feed">
       <div class="h-entry">
         <a class="u-url" href="http://author/post"></a>
@@ -1572,17 +1544,13 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
       </div>
     </html>""")
 
-    self.mox.ReplayAll()
     result = refetch(self.source)
     self.assertCountEqual(['https://fa.ke/post'], result.keys(), result.keys())
     self.assert_syndicated_posts(('http://author/post', 'https://fa.ke/post'))
 
+  @patch.object(original_post_discovery, 'DEBUG', new=False)
   def test_drop_reserved_hosts(self):
     """We should should drop URLs with reserved and local hostnames."""
-    self.mox.StubOutWithMock(original_post_discovery, 'DEBUG')
-    original_post_discovery.DEBUG = False
-
-    self.mox.ReplayAll()
     self.activity['object']['content'] = 'http://localhost http://other/link https://x.test/ http://y.local/path'
     self.assert_discover([], fetch_hfeed=False)
 
@@ -1592,7 +1560,7 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
     ...even across resolving redirects.
     https://github.com/snarfed/bridgy/issues/984
     """
-    self.expect_requests_get('http://author/', """
+    self.mock_get.return_value = requests_response("""
     <html class="h-feed">
       <div class="h-entry">
         <a class="u-url" href="http://author/post"></a>
@@ -1600,7 +1568,6 @@ class OriginalPostDiscoveryTest(testutil.AppTest):
       </div>
     </html>""")
 
-    self.mox.ReplayAll()
     self.source = GitHub(id='snarfed', auth_entity=self.auth_entities[0].put(),
                          domain_urls=['http://author/'], domains=['author'])
     self.source.put()

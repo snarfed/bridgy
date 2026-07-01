@@ -2,6 +2,7 @@
 """
 from granary.mastodon import API_BLOCKS
 from oauth_dropins import mastodon as oauth_mastodon
+from webutil.testutil import requests_response
 from webutil.util import json_dumps
 
 from . import testutil
@@ -44,11 +45,9 @@ class MastodonTest(testutil.AppTest):
     self.assertEqual(good, self.m.canonicalize_url('http://foo.com/@x/123/'))
 
   def test_load_blocklist_missing_scope(self):
-    self.expect_requests_get('https://foo.com' + API_BLOCKS,
-                             headers={'Authorization': 'Bearer towkin'},
-                             status_code=403)
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response('', status=403)
     self.m.load_blocklist()
+    self.assert_requests_get('https://foo.com' + API_BLOCKS)
     self.assertEqual([], self.m.blocked_ids)
     self.assertFalse(self.m.is_blocked({'numeric_id': 123}))
 

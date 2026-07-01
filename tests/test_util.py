@@ -8,6 +8,7 @@ from flask.views import View
 from google.cloud import ndb
 from oauth_dropins import views as oauth_views
 from webutil import appengine_info
+from webutil.testutil import requests_response
 from webutil.util import json_dumps, json_loads
 import requests
 from werkzeug.exceptions import BadRequest
@@ -198,9 +199,8 @@ class UtilTest(testutil.AppTest):
         self.assertFalse(util.get_webmention_target(bad, resolve=resolve)[2], bad)
 
   def test_get_webmention_cleans_redirected_urls(self):
-    self.expect_requests_head('http://foo/bar',
-                              redirected_url='http://final?utm_source=x')
-    self.mox.ReplayAll()
+    self.mock_head.side_effect = None
+    self.mock_head.return_value = requests_response('', url='http://final?utm_source=x')
 
     self.assert_equals(('http://final', 'final', True),
                        util.get_webmention_target('http://foo/bar', resolve=True))
@@ -208,10 +208,9 @@ class UtilTest(testutil.AppTest):
                        util.get_webmention_target('http://foo/bar', resolve=False))
 
   def test_get_webmention_second_redirect_not_text_html(self):
-    self.expect_requests_head('http://orig',
-                              redirected_url=['http://middle', 'https://end'],
-                              content_type='application/pdf')
-    self.mox.ReplayAll()
+    self.mock_head.side_effect = None
+    self.mock_head.return_value = requests_response(
+      '', url='https://end', content_type='application/pdf')
     self.assert_equals(('https://end', 'end', False),
                        util.get_webmention_target('http://orig', resolve=True))
 
@@ -220,18 +219,16 @@ class UtilTest(testutil.AppTest):
 
     ...e.g. Google's redirector https://www.google.com/url?...
     """
-    self.expect_requests_head(
-      'http://orig',
-      redirected_url=['https://www.google.com/url?xyz', 'https://end'])
-    self.mox.ReplayAll()
+    self.mock_head.side_effect = None
+    self.mock_head.return_value = requests_response('', url='https://end')
     self.assert_equals(('https://end', 'end', True),
                        util.get_webmention_target('http://orig', resolve=True))
 
   def test_get_webmention_target_too_big(self):
-    self.expect_requests_head('http://orig', response_headers={
+    self.mock_head.side_effect = None
+    self.mock_head.return_value = requests_response('', url='http://orig', headers={
       'Content-Length': str(util.MAX_HTTP_RESPONSE_SIZE + 1),
     })
-    self.mox.ReplayAll()
     self.assert_equals(('http://orig', 'orig', False),
                        util.get_webmention_target('http://orig'))
 
@@ -240,25 +237,23 @@ class UtilTest(testutil.AppTest):
                        util.get_webmention_target('chrome://flags'))
 
   def test_get_webmention_text_mf2_html(self):
-    self.expect_requests_head('http://orig', content_type='text/mf2+html')
-    self.mox.ReplayAll()
+    self.mock_head.side_effect = None
+    self.mock_head.return_value = requests_response(
+      '', url='http://orig', content_type='text/mf2+html')
     self.assert_equals(('http://orig', 'orig', True),
                        util.get_webmention_target('http://orig'))
 
   def test_requests_get_too_big(self):
-    self.expect_requests_get(
-      'http://foo/bar', '',
-      response_headers={'Content-Length': str(util.MAX_HTTP_RESPONSE_SIZE + 1)})
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response(
+      '', headers={'Content-Length': str(util.MAX_HTTP_RESPONSE_SIZE + 1)})
 
     resp = util.requests_get('http://foo/bar')
     self.assertEqual(util.HTTP_RESPONSE_TOO_BIG_STATUS_CODE, resp.status_code)
     self.assertIn(' larger than our limit ', resp.text)
 
   def test_requests_get_content_length_not_int(self):
-    self.expect_requests_get('http://foo/bar', 'xyz',
-                             response_headers={'Content-Length': 'foo'})
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response(
+      'xyz', headers={'Content-Length': 'foo'})
 
     resp = util.requests_get('http://foo/bar')
     self.assertEqual(200, resp.status_code)
@@ -278,9 +273,8 @@ class UtilTest(testutil.AppTest):
   def test_no_accept_header(self):
     self.assertEqual({}, util.request_headers(url='http://foo/bar'))
 
-    self.expect_requests_get('http://foo/bar', '')
-    self.mox.ReplayAll()
     util.requests_get('http://foo/bar')
+    self.assert_requests_get('http://foo/bar')
 
   def test_rhiaro_accept_header(self):
     """Only send Accept header to rhiaro.co.uk right now.
@@ -289,10 +283,11 @@ class UtilTest(testutil.AppTest):
     self.assertEqual(util.REQUEST_HEADERS_CONNEG,
                       util.request_headers(url='http://rhiaro.co.uk/'))
 
-    self.expect_requests_get('http://rhiaro.co.uk/', '',
-                             headers=util.REQUEST_HEADERS_CONNEG)
-    self.mox.ReplayAll()
     util.requests_get('http://rhiaro.co.uk/')
+    self.assert_requests_get('http://rhiaro.co.uk/')
+    for k, v in util.REQUEST_HEADERS_CONNEG.items():
+      self.assertIn(k, self.mock_get.call_args.kwargs['headers'])
+      self.assertEqual(v, self.mock_get.call_args.kwargs['headers'][k])
 
   def test_in_webmention_blocklist(self):
     for bad in 't.co', 'x.t.co', 'X.Y.T.CO', 'abc.onion':
@@ -301,8 +296,8 @@ class UtilTest(testutil.AppTest):
     for good in 'snarfed.org', 'www.snarfed.org', 't.co.com':
       self.assertFalse(util.in_webmention_blocklist(good), good)
 
-    self.mox.StubOutWithMock(appengine_info, 'LOCAL_SERVER')
     appengine_info.LOCAL_SERVER = False
+    self.addCleanup(setattr, appengine_info, 'LOCAL_SERVER', False)
     self.assertTrue(util.in_webmention_blocklist('localhost'))
     appengine_info.LOCAL_SERVER = True
     self.assertFalse(util.in_webmention_blocklist('localhost'))
@@ -328,11 +323,9 @@ class UtilTest(testutil.AppTest):
       self.assertEqual(expected, got, (url, got))
 
   def test_add_task(self):
-    self.expect_task('foo', eta_seconds=123, x='y')
-    self.mox.ReplayAll()
-
     eta = int(util.to_utc_timestamp(util.now())) + 123
     util.add_task('foo', eta_seconds=eta, x='y', z=None)
+    self.assert_task('foo', eta_seconds=123, x='y')
 
   def test_host_url(self):
     with app.test_request_context():
@@ -412,10 +405,8 @@ class RegistrationCallbackTest(testutil.AppTest):
     """
     state = self.state()
 
-    self.expect_requests_get(
-      'http://fakeuser.com/',
-      response='<html><link rel="webmention" href="/webmention"></html>')
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response(
+      '<html><link rel="webmention" href="/webmention"></html>')
 
     resp = self.client.post('/fake/start', data={
         'feature': 'listen',
@@ -445,10 +436,8 @@ class RegistrationCallbackTest(testutil.AppTest):
     """
     state = self.state(user_url='https://kylewm.com')
 
-    self.expect_requests_get(
-      'https://kylewm.com/',
-      response='<html><link rel="webmention" href="/webmention"></html>')
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response(
+      '<html><link rel="webmention" href="/webmention"></html>')
 
     resp = self.client.post('/fake/start', data={
         'feature': 'listen',

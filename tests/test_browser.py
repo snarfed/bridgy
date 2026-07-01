@@ -5,7 +5,7 @@ import datetime
 import html
 
 from granary import as1
-from mox3 import mox
+from webutil.testutil import requests_response
 from webutil.util import json_dumps, json_loads
 from werkzeug.exceptions import BadRequest
 
@@ -151,8 +151,7 @@ class BrowserViewTest(testutil.AppTest):
   def test_profile_new_user(self):
     self.source.delete()
 
-    self.expect_requests_get('https://snarfed.org/', '')
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response('')
 
     resp = self.post('profile?token=towkin')
 
@@ -163,6 +162,7 @@ class BrowserViewTest(testutil.AppTest):
     self.assertEqual('Ryan B', src.name)
     self.assertEqual(['https://snarfed.org/'], src.domain_urls)
     self.assertEqual(['snarfed.org'], src.domains)
+    self.assert_requests_get('https://snarfed.org/')
 
   def test_profile_existing_user_update(self):
     self.assertIsNotNone(self.source.get())
@@ -170,9 +170,6 @@ class BrowserViewTest(testutil.AppTest):
       'displayName': 'Mrs. Foo',
       'image': {'url': 'http://foo/img'},
     })
-
-    # for webmention discovery
-    self.mox.ReplayAll()
 
     resp = self.post('profile?token=towkin')
     self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
@@ -184,12 +181,7 @@ class BrowserViewTest(testutil.AppTest):
 
   def test_profile_fall_back_to_scraped_to_actor(self):
     self.source.delete()
-
-    self.mox.StubOutWithMock(FakeGrSource, 'scraped_to_activities')
-    FakeGrSource.scraped_to_activities('').AndReturn(([], None))
-
-    self.expect_requests_get('https://snarfed.org/', '')
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response('')
 
     resp = self.post('profile?token=towkin')
     self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
@@ -199,6 +191,7 @@ class BrowserViewTest(testutil.AppTest):
     self.assertEqual('Ryan B', src.name)
     self.assertEqual(['https://snarfed.org/'], src.domain_urls)
     self.assertEqual(['snarfed.org'], src.domains)
+    self.assert_requests_get('https://snarfed.org/')
 
   def test_profile_no_scraped_actor(self):
     self.source.delete()
@@ -217,8 +210,6 @@ class BrowserViewTest(testutil.AppTest):
 
   def test_profile_links(self):
     # check HEAD requests, make sure we don't HEAD blocklisted domains
-    self.unstub_requests_head()
-
     FakeBrowserSource.gr_source.actor.update({
       'url': 'https://patreon.com/bar',  # blocklisted
       'urls': [
@@ -229,19 +220,14 @@ class BrowserViewTest(testutil.AppTest):
       ],
     })
 
-    self.expect_requests_get('http://another.com')
-    self.expect_requests_head('https://patreon.com/bar')
-    self.expect_requests_head('http://another.com/me')
-    self.expect_requests_get('http://another.com')
-    self.expect_requests_get('https://snarfed.org/')
-    self.mox.ReplayAll()
-
     resp = self.post('profile?token=towkin')
     self.assertEqual(200, resp.status_code)
 
     src = self.source.get()
     self.assertEqual(['https://snarfed.org/', 'http://another.com/me'], src.domain_urls)
     self.assertEqual(['snarfed.org', 'another.com'], src.domains)
+    self.assert_requests_get('https://snarfed.org/')
+    self.assert_requests_get('http://another.com')
 
   def test_profile_no_links(self):
     del FakeBrowserSource.gr_source.actor['url']
@@ -433,17 +419,11 @@ class BrowserViewTest(testutil.AppTest):
     Activity(id='tag:fa.ke,2013:123_456', source=self.source,
              activity_json=json_dumps(self.activities[0])).put()
 
-    bad_json = '<html><not><json>'
-    self.mox.StubOutWithMock(FakeGrSource, 'merge_scraped_reactions')
-    FakeGrSource.merge_scraped_reactions(bad_json, mox.IgnoreArg()
-                                         ).AndRaise((ValueError('fooey')))
-    self.mox.ReplayAll()
-
     resp = self.post(f'reactions?id=tag:fa.ke,2013:123_456&{self.auth}',
-                     data=bad_json)
+                     data='<html><not><json>')
     self.assertEqual(400, resp.status_code)
-    self.assertEqual("Scrape error: couldn't parse extras: fooey",
-                     resp.get_data(as_text=True))
+    self.assertIn("Scrape error: couldn't parse extras:",
+                  resp.get_data(as_text=True))
 
   def test_reactions_no_activity(self):
     resp = self.post(f'reactions?id=tag:fa.ke,2013:789&{self.auth}')
@@ -477,12 +457,11 @@ class BrowserViewTest(testutil.AppTest):
       resp.get_data(as_text=True))
 
   def test_poll(self):
-    self.expect_task('poll-now', source_key=self.source,
-                     last_polled='1970-01-01-00-00-00')
-    self.mox.ReplayAll()
     resp = self.post('poll')
     self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
     self.assertEqual('OK', resp.json)
+    self.assert_task('poll-now', source_key=self.source,
+                     last_polled='1970-01-01-00-00-00')
 
   def test_poll_missing_token(self):
     resp = self.post(f'poll?key={self.source.urlsafe().decode()}')

@@ -2,7 +2,6 @@
 from unittest import mock
 from urllib.parse import parse_qs, urlparse
 
-from mox3 import mox
 from oauth_dropins import bluesky as oauth_bluesky
 from webutil.testutil import requests_response
 from webutil.util import json_dumps
@@ -107,44 +106,39 @@ class BlueskyTest(testutil.AppTest):
     }, util.decode_oauth_state(query['state'][0]))
 
   def test_get_activities(self):
-    util.session.get(
-      'https://pds.com/xrpc/app.bsky.feed.getAuthorFeed?actor=did%3Aweb%3Aalice.com',
-      auth=None, data=None, headers=mox.IgnoreArg(), json=None,
-    ).AndReturn(requests_response({'feed': []}, content_type='application/json'))
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response(
+      {'feed': []}, content_type='application/json')
     self.assertEqual([], self.bsky.get_activities())
+    self.assert_requests_get(
+      'https://pds.com/xrpc/app.bsky.feed.getAuthorFeed?actor=did%3Aweb%3Aalice.com')
 
   def test_get_activities_error(self):
-    util.session.get(
-      'https://pds.com/xrpc/app.bsky.feed.getAuthorFeed?actor=did%3Aweb%3Aalice.com',
-      auth=None, data=None, headers=mox.IgnoreArg(), json=None,
-    ).AndReturn(requests_response({}, status=400, content_type='application/json'))
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response(
+      {}, status=400, content_type='application/json')
     with self.assertRaises(requests.HTTPError):
       self.bsky.get_activities()
+    self.assert_requests_get(
+      'https://pds.com/xrpc/app.bsky.feed.getAuthorFeed?actor=did%3Aweb%3Aalice.com')
 
   def test_get_activities_token_error(self):
     token_error = {'error': 'ExpiredToken', 'message': 'Token has been revoked'}
-    util.session.get(
-      'https://pds.com/xrpc/app.bsky.feed.getAuthorFeed?actor=did%3Aweb%3Aalice.com',
-      auth=None, data=None, headers=mox.IgnoreArg(), json=None,
-    ).AndReturn(requests_response(token_error, status=400, content_type='application/json'))
-    util.session.post(
-      'https://pds.com/xrpc/com.atproto.server.refreshSession',
-      auth=None, data=None, headers=mox.IgnoreArg(), json=None,
-    ).AndReturn(requests_response(token_error, status=400, content_type='application/json'))
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response(
+      token_error, status=400, content_type='application/json')
+    self.mock_post.return_value = requests_response(
+      token_error, status=400, content_type='application/json')
     with self.assertRaises(DisableSource):
       self.bsky.get_activities()
+    self.assert_requests_get(
+      'https://pds.com/xrpc/app.bsky.feed.getAuthorFeed?actor=did%3Aweb%3Aalice.com')
+    self.assert_requests_post(
+      'https://pds.com/xrpc/com.atproto.server.refreshSession')
 
   def test_get_activities_oauth_exception(self):
-    util.session.get(
-      'https://pds.com/xrpc/app.bsky.feed.getAuthorFeed?actor=did%3Aweb%3Aalice.com',
-      auth=None, data=None, headers=mox.IgnoreArg(), json=None,
-    ).AndRaise(InvalidGrant(None, 'foo', 'bar'))
-    self.mox.ReplayAll()
+    self.mock_get.side_effect = InvalidGrant(None, 'foo', 'bar')
     with self.assertRaises(DisableSource):
       self.bsky.get_activities()
+    self.assert_requests_get(
+      'https://pds.com/xrpc/app.bsky.feed.getAuthorFeed?actor=did%3Aweb%3Aalice.com')
 
   def test_bluesky_client_metadata(self):
     resp = app.test_client().get('/bluesky/client-metadata.json')
@@ -168,8 +162,7 @@ class BlueskyTest(testutil.AppTest):
     }, resp.get_json())
 
   def test_oauth_callback_add(self):
-    self.expect_requests_get('https://alice.com/', '')
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response('')
 
     state = util.encode_oauth_state({'operation': 'add', 'feature': 'listen'})
     with self.assertRaises(RequestRedirect) as redir, app.test_request_context('/'):
@@ -177,6 +170,7 @@ class BlueskyTest(testutil.AppTest):
 
     location = urlparse(redir.exception.get_response().headers['Location'])
     self.assertEqual('/bluesky/did:web:alice.com', location.path)
+    self.assert_requests_get('https://alice.com/')
 
   def test_oauth_callback_delete(self):
     self.bsky.features = ['listen', 'publish']
@@ -206,13 +200,8 @@ class BlueskyTest(testutil.AppTest):
     location = urlparse(redir.exception.get_response().headers['Location'])
     self.assertEqual('/', location.path)
 
-  def test_gr_source_oauth(self):
-    fake_client = self.mox.CreateMockAnything()
-    self.mox.StubOutWithMock(oauth_bluesky, 'oauth_client_for_pds')
-    oauth_bluesky.oauth_client_for_pds(
-      mox.IgnoreArg(), 'https://bsky.social').AndReturn(fake_client)
-    self.mox.ReplayAll()
-
+  @mock.patch('oauth_dropins.bluesky.oauth_client_for_pds')
+  def test_gr_source_oauth(self, _):
     dpop_token = DPoPToken(access_token='towkin', _dpop_key=DPoPKey.generate())
     auth_entity = oauth_bluesky.BlueskyAuth(
       id='did:plc:alice',
@@ -234,11 +223,8 @@ class BlueskyTest(testutil.AppTest):
     self.assertIsNone(gr._app_password)
 
   def test_gr_source_oauth_session_callback(self):
-    fake_client = self.mox.CreateMockAnything()
-    self.mox.StubOutWithMock(oauth_bluesky, 'oauth_client_for_pds')
-    oauth_bluesky.oauth_client_for_pds(
-      mox.IgnoreArg(), 'https://bsky.social').AndReturn(fake_client)
-    self.mox.ReplayAll()
+    fake_client = mock.MagicMock()
+    self.start_patch(oauth_bluesky, 'oauth_client_for_pds', return_value=fake_client)
 
     dpop_token = DPoPToken(access_token='towkin', _dpop_key=DPoPKey.generate())
     auth_entity = oauth_bluesky.BlueskyAuth(

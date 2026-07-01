@@ -1,10 +1,11 @@
 """Unit tests for micropub.py."""
 import html
 from io import BytesIO
+from unittest.mock import patch
 import urllib.request, urllib.parse, urllib.error
 
 from flask import get_flashed_messages
-from granary.source import CreationResult
+from granary import source as gr_source
 from werkzeug.datastructures import MultiDict
 
 from flask_app import app
@@ -163,21 +164,24 @@ class MicropubTest(AppTest):
     })
     self.check_entity()
 
-  def test_override_article_to_note(self):
-    self.mox.StubOutWithMock(FakeGrSource, 'create')
-    FakeGrSource.create({
-      'objectType': 'note',
-      'content': 'foo bar baz',
-      'displayName': "shouldn't be used",
-    }).AndReturn(CreationResult({'url': 'http://fake/url'}, None, None, None, None))
-    self.mox.ReplayAll()
-
+  @patch.object(FakeSource.gr_source, 'create',
+               return_value=gr_source.creation_result({
+                 'url': 'http://fake/url',
+                 'id': 'http://fake/url',
+                 'content': 'RSVPd yes',
+               }))
+  def test_override_article_to_note(self, mock_create):
     self.assert_response(json={
       'type': ['h-entry'],
       'properties': {
         'content': ['foo bar baz'],
         'name': ["shouldn't be used"],
       },
+    })
+    mock_create.assert_called_once_with({
+      'objectType': 'note',
+      'content': 'foo bar baz',
+      'displayName': "shouldn't be used",
     })
 
   def test_create_json_to_object_error(self):

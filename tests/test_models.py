@@ -1,13 +1,13 @@
 """Unit tests for models.py."""
 from datetime import datetime, timedelta, timezone
 from unittest import skip
+from unittest.mock import patch
 import copy
 
 from flask import get_flashed_messages
 from google.cloud import ndb
 from granary import source as gr_source
-from mox3 import mox
-from webutil.testutil import NOW
+from webutil.testutil import NOW, requests_response
 from webutil.util import json_dumps, json_loads
 import requests
 
@@ -30,14 +30,12 @@ class ResponseTest(testutil.AppTest):
     response = self.responses[0]
     self.assertEqual(0, Response.query().count())
 
-    self.expect_task('propagate', response_key=self.responses[0])
-    self.mox.ReplayAll()
-
     saved = response.get_or_save(self.sources[0])
     self.assertEqual(response.key, saved.key)
     self.assertEqual(response.source, saved.source)
     self.assertEqual('comment', saved.type)
     self.assertEqual([], saved.old_response_jsons)
+    self.assert_task('propagate', response_key=self.responses[0])
 
   def test_get_or_save_existing(self):
     """existing. shouldn't add a new propagate task."""
@@ -48,21 +46,17 @@ class ResponseTest(testutil.AppTest):
   def test_get_or_save_restart_new(self):
     response = self.responses[0]
 
-    # should add one propagate task total
-    self.expect_task('propagate', response_key=response)
-    self.mox.ReplayAll()
-
     response.get_or_save(self.sources[0], restart=True)
+    # should add one propagate task total
+    self.assert_task('propagate', response_key=response)
 
   def test_get_or_save_restart_existing(self):
     response = self.responses[0]
     response.put()
 
-    # should add a propagate task
-    self.expect_task('propagate', response_key=response)
-    self.mox.ReplayAll()
-
     response.get_or_save(self.sources[0], restart=True)
+    # should add a propagate task
+    self.assert_task('propagate', response_key=response)
 
   def test_get_or_save_restart_existing_new_synd_url(self):
     source = self.sources[0]
@@ -76,11 +70,9 @@ class ResponseTest(testutil.AppTest):
     SyndicatedPost(parent=source.key, original=None,
                    syndication=synd).put()  # check that we don't die on blanks
 
-    self.expect_task('propagate', response_key=response)
-    self.mox.ReplayAll()
-
     final = response.get_or_save(source, restart=True)
     self.assert_equals(['http://or/ig', 'http://target1/post/url'], final.unsent)
+    self.assert_task('propagate', response_key=response)
 
   def test_get_or_save_restart_no_activity_urls(self):
     # no activity URLs. should skip SyndicatedPost query.
@@ -89,21 +81,14 @@ class ResponseTest(testutil.AppTest):
     response.urls_to_activity = None
     response.put()
 
-    self.expect_task('propagate', response_key=response)
-    self.mox.ReplayAll()
-
     response.get_or_save(self.sources[0], restart=True)
+    self.assert_task('propagate', response_key=response)
 
   def test_get_or_save_activity_changed(self):
     """If the response activity has changed, we should update and resend."""
     # original response
     response = self.responses[0]
     response.put()
-
-    # should enqueue three propagate tasks total
-    for i in range(4):
-      self.expect_task('propagate', response_key=response)
-    self.mox.ReplayAll()
 
     # change response content
     old_resp_json = response.response_json
@@ -162,6 +147,9 @@ class ResponseTest(testutil.AppTest):
     for field in response.sent, response.error, response.failed, response.skipped:
       self.assertEqual([], field)
 
+    # should have enqueued four propagate tasks total
+    self.assert_tasks(*[{'queue': 'propagate', 'response_key': response}] * 4)
+
   def test_get_or_save_merge_urls(self):
     self.responses[0].failed = ['http://failed/1']
     self.responses[0].put()
@@ -176,8 +164,6 @@ class ResponseTest(testutil.AppTest):
 
   def test_get_or_save_objectType_note(self):
     response = self.responses[0]
-    self.expect_task('propagate', response_key=response)
-    self.mox.ReplayAll()
 
     response.response_json = json_dumps({
       'objectType': 'note',
@@ -185,6 +171,7 @@ class ResponseTest(testutil.AppTest):
       })
     saved = response.get_or_save(self.sources[0])
     self.assertEqual('comment', saved.type)
+    self.assert_task('propagate', response_key=response)
 
   def test_url(self):
     self.assertEqual(f'http://localhost/fake/{self.sources[0].key.string_id()}',
@@ -258,25 +245,23 @@ class SourceTest(testutil.AppTest):
 
   def test_create_new(self):
     key = FakeSource.next_key()
-    for queue in 'poll-now', 'poll':
-      self.expect_task(queue, source_key=key, last_polled='1970-01-01-00-00-00')
-    self.mox.ReplayAll()
-
     orig_count = FakeSource.query().count()
     self._test_create_new(
       "Added fake (FakeSource). Refresh in a minute to see what we've found!",
       features=['listen'])
     self.assertEqual(orig_count + 1, FakeSource.query().count())
+    self.assert_tasks(*[
+      {'queue': queue, 'source_key': key, 'last_polled': '1970-01-01-00-00-00'}
+      for queue in ('poll-now', 'poll')
+    ])
 
   def test_escape_key_id(self):
     s = Source(id='__foo__')
     self.assert_equals(r'\__foo__', s.key.string_id())
     self.assert_equals('__foo__', s.key_id())
 
+  @patch.object(FakeSource, 'USERNAME_KEY_ID', new=False)
   def test_username_key_id(self):
-    self.mox.StubOutWithMock(FakeSource, 'USERNAME_KEY_ID')
-    FakeSource.USERNAME_KEY_ID = False
-
     f = FakeSource(id='FoO')
     self.assert_equals('FoO', f.key.string_id())
 
@@ -344,10 +329,6 @@ class SourceTest(testutil.AppTest):
     key = FakeSource.new(features=['listen'], **props).put()
     self.assert_equals(['listen'], FakeSource.query().get().features)
 
-    for queue in 'poll-now', 'poll':
-      self.expect_task(queue, source_key=key, last_polled='1901-02-05-00-00-00')
-    self.mox.ReplayAll()
-
     FakeSource.string_id_counter -= 1
     auth_entity = testutil.FakeAuthEntity(
       id='x', user_json=json_dumps({'url': 'http://foo.com/'}))
@@ -361,6 +342,10 @@ class SourceTest(testutil.AppTest):
     self.assert_equals(['listen', 'publish'], source.features)
     for prop, value in props.items():
       self.assert_equals(value, getattr(source, prop), prop)
+    self.assert_tasks(*[
+      {'queue': queue, 'source_key': key, 'last_polled': '1901-02-05-00-00-00'}
+      for queue in ('poll-now', 'poll')
+    ])
 
   def test_create_new_already_exists_scopes_reset(self):
     FakeSource.new(features=['listen']).put()
@@ -380,31 +365,26 @@ class SourceTest(testutil.AppTest):
       FakeSource.create_new(features=['publish'])
     # tasks_client is stubbed out, it will complain if it gets called
 
-  def test_create_new_webmention(self):
+  @patch('superfeedr.subscribe')
+  def test_create_new_webmention(self, mock_subscribe):
     """We should subscribe to webmention sources in Superfeedr."""
-    self.expect_requests_get('http://primary/', 'no webmention endpoint')
-    self.mox.StubOutWithMock(superfeedr, 'subscribe')
+    self.mock_get.return_value = requests_response('no webmention endpoint')
 
-    def check_source(source):
-      assert isinstance(source, FakeSource)
-      assert source.is_saved
-      return True
-    superfeedr.subscribe(mox.Func(check_source))
-
-    self.mox.ReplayAll()
     with self.app.test_request_context():
       FakeSource.create_new(features=['webmention'],
                             domains=['primary/'], domain_urls=['http://primary/'])
+
+    self.assert_requests_get('http://primary/')
+    mock_subscribe.assert_called_once()
+    called_source = mock_subscribe.call_args.args[0]
+    self.assertIsInstance(called_source, FakeSource)
+    self.assertTrue(called_source.is_saved)
 
   def test_create_new_domain(self):
     """If the source has a URL set, extract its domain."""
     util.BLOCKLIST.remove('fa.ke')
 
-    self.expect_requests_get('http://fa.ke')
-    self.expect_requests_get('http://foo.com')
-    self.expect_requests_get('https://www.foo.com')
-    self.expect_requests_get('https://baj')
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response('')
 
     # bad URLs
     for user_json in (None, {}, {'url': 'not<a>url'},
@@ -450,13 +430,18 @@ class SourceTest(testutil.AppTest):
                       source.domain_urls)
     self.assertEqual(['foo.org', 'bar.com', 'baz', 'baj'], source.domains)
 
+    self.assert_requests_get('http://fa.ke')
+    self.assert_requests_get('http://foo.com')
+    self.assert_requests_get('https://www.foo.com')
+    self.assert_requests_get('https://baj')
+
     # a URL that redirects
     auth_entity = testutil.FakeAuthEntity(
       id='x', user_json=json_dumps({'url': 'http://orig'}))
     auth_entity.put()
 
-    self.expect_requests_head('http://orig', redirected_url='http://final')
-    self.mox.ReplayAll()
+    self.mock_head.side_effect = None
+    self.mock_head.return_value = requests_response('', url='http://final')
 
     with self.app.test_request_context():
       source = FakeSource.create_new(auth_entity=auth_entity)
@@ -469,8 +454,8 @@ class SourceTest(testutil.AppTest):
       id='x', user_json=json_dumps({'url': 'http://site'}))
     auth_entity.put()
 
-    self.expect_requests_head('http://site', redirected_url='https://site/path')
-    self.mox.ReplayAll()
+    self.mock_head.side_effect = None
+    self.mock_head.return_value = requests_response('', url='https://site/path')
 
     with self.app.test_request_context():
       source = FakeSource.create_new(auth_entity=auth_entity)
@@ -483,13 +468,13 @@ class SourceTest(testutil.AppTest):
       id='x', user_json=json_dumps({'url': 'http://site/path'}))
     auth_entity.put()
 
-    self.expect_requests_get('http://site', '<html><a href="http://site/path" rel="me">http://site/path</a></html>')
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response('<html><a href="http://site/path" rel="me">http://site/path</a></html>')
 
     with self.app.test_request_context():
       source = FakeSource.create_new(auth_entity=auth_entity)
     self.assertEqual(['http://site/'], source.domain_urls)
     self.assertEqual(['site'], source.domains)
+    self.assert_requests_get('http://site')
 
   def test_create_new_domain_url_no_root_relme(self):
     """If a profile URL contains a path, check the root for a rel=me to the path."""
@@ -497,13 +482,13 @@ class SourceTest(testutil.AppTest):
       id='x', user_json=json_dumps({'url': 'http://site/path'}))
     auth_entity.put()
 
-    self.expect_requests_get('http://site')
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response('')
 
     with self.app.test_request_context():
       source = FakeSource.create_new(auth_entity=auth_entity)
     self.assertEqual(['http://site/path'], source.domain_urls)
     self.assertEqual(['site'], source.domains)
+    self.assert_requests_get('http://site')
 
   def test_create_new_unicode_chars(self):
     """We should handle unusual unicode chars in the source's name ok."""
@@ -518,16 +503,17 @@ class SourceTest(testutil.AppTest):
     FakeSource.string_id_counter -= 1
     auth_entity = testutil.FakeAuthEntity(id='x', user_json=json_dumps(
         {'urls': [{'value': 'http://bar'}, {'value': 'http://baz'}]}))
-    self.expect_requests_get('http://bar/', 'no webmention endpoint')
+    self.mock_get.return_value = requests_response('no webmention endpoint')
 
-    for queue in 'poll-now', 'poll':
-      self.expect_task(queue, source_key=key, last_polled='1970-01-01-00-00-00')
-
-    self.mox.ReplayAll()
     with self.app.test_request_context():
       source = FakeSource.create_new(auth_entity=auth_entity)
     self.assertEqual(['http://bar/', 'http://baz/'], source.domain_urls)
     self.assertEqual(['bar', 'baz'], source.domains)
+    self.assert_tasks(*[
+      {'queue': queue, 'source_key': key, 'last_polled': '1970-01-01-00-00-00'}
+      for queue in ('poll-now', 'poll')
+    ])
+    self.assert_requests_get('http://bar/')
 
   @skip("can't keep old domains on signup until edit websites works. #623")
   def test_create_new_merges_domains(self):
@@ -537,9 +523,8 @@ class SourceTest(testutil.AppTest):
     FakeSource.string_id_counter -= 1
     auth_entity = testutil.FakeAuthEntity(id='x', user_json=json_dumps(
         {'urls': [{'value': 'http://bar'}, {'value': 'http://baz'}]}))
-    self.expect_requests_get('http://bar/', 'no webmention endpoint')
+    self.mock_get.return_value = requests_response('no webmention endpoint')
 
-    self.mox.ReplayAll()
     with self.app.test_request_context():
       source = FakeSource.create_new(auth_entity=auth_entity)
     self.assertEqual(['http://bar/', 'http://baz/', 'http://foo/'], source.domain_urls)
@@ -552,7 +537,6 @@ class SourceTest(testutil.AppTest):
                   {'value': 'http://foo/'},
                   {'value': 'http://foo'},
                 ]}))
-    self.mox.ReplayAll()
     with self.app.test_request_context():
       source = FakeSource.create_new(auth_entity=auth_entity)
     self.assertEqual(['https://foo/'], source.domain_urls)
@@ -563,100 +547,97 @@ class SourceTest(testutil.AppTest):
     auth_entity = testutil.FakeAuthEntity(id='x', user_json=json_dumps(
         {'urls': [{'value': u} for u in urls]}))
 
-    # we should only check the first 5
-    for url in urls[:models.MAX_AUTHOR_URLS]:
-      self.expect_requests_head(url)
-    self.mox.ReplayAll()
-
     with self.app.test_request_context():
       source = FakeSource.create_new(auth_entity=auth_entity)
     self.assertEqual(urls, source.domain_urls)
     self.assertEqual([str(i) for i in range(10)], source.domains)
 
+    # we should only check the first 5
+    self.assertEqual(models.MAX_AUTHOR_URLS, self.mock_head.call_count)
+
   def test_create_new_domain_url_path_fails(self):
     auth_entity = testutil.FakeAuthEntity(id='x', user_json=json_dumps(
         {'urls': [{'value': 'http://flaky/foo'}]}))
-    self.expect_requests_get('http://flaky', status_code=500)
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response('', status=500)
 
     with self.app.test_request_context():
       source = FakeSource.create_new(auth_entity=auth_entity)
     self.assertEqual(['http://flaky/foo'], source.domain_urls)
     self.assertEqual(['flaky'], source.domains)
+    self.assert_requests_get('http://flaky')
 
   def test_create_new_domain_url_path_connection_fails(self):
     auth_entity = testutil.FakeAuthEntity(id='x', user_json=json_dumps(
         {'urls': [{'value': 'http://flaky/foo'}]}))
-    self.expect_requests_get('http://flaky').AndRaise(
-      requests.ConnectionError('DNS lookup failed for URL: http://bad/'))
-    self.mox.ReplayAll()
+    self.mock_get.side_effect = requests.ConnectionError('DNS lookup failed for URL: http://bad/')
 
     with self.app.test_request_context():
       source = FakeSource.create_new(auth_entity=auth_entity)
     self.assertEqual(['http://flaky/foo'], source.domain_urls)
     self.assertEqual(['flaky'], source.domains)
+    self.assert_requests_get('http://flaky')
 
   def test_create_new_superfeedr_subscribe_fails(self):
-    self.expect_requests_get('http://primary/', 'no webmention endpoint')
-    self.expect_requests_post(superfeedr.PUSH_API_URL, status_code=503,
-                              data=mox.IgnoreArg(), auth=mox.IgnoreArg())
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response('no webmention endpoint')
+    self.mock_post.return_value = requests_response('', status=503)
 
     with self.app.test_request_context():
       FakeSource.create_new(features=['webmention'],
                             domains=['primary/'], domain_urls=['http://primary/'])
       self.assertIn('is having technical difficulties', get_flashed_messages()[0])
 
+    self.assert_requests_get('http://primary/')
+    self.assert_requests_post(superfeedr.PUSH_API_URL)
+
   def test_verify(self):
-    self.expect_requests_get('http://primary/', """
+    self.mock_get.return_value = requests_response("""
 <html><meta>
 <link rel="webmention" href="http://web.ment/ion">
 </meta></html>""")
-    self.mox.ReplayAll()
 
     source = FakeSource.new(features=['webmention'],
                             domain_urls=['http://primary/'], domains=['primary'])
     source.verify()
     self.assertEqual('http://web.ment/ion', source.webmention_endpoint)
+    self.assert_requests_get('http://primary/')
 
   def test_verify_unicode_characters(self):
     """Older versions of BS4 had an issue where it would check short HTML
     documents to make sure the user wasn't accidentally passing a URL,
     but converting the utf-8 document to ascii caused exceptions in some cases.
     """
-    self.expect_requests_get(
-      'http://primary/', """\xef\xbb\xbf<html><head>
+    self.mock_get.return_value = requests_response("""\xef\xbb\xbf<html><head>
 <link rel="webmention" href="http://web.ment/ion"></head>
 </html>""")
-    self.mox.ReplayAll()
 
     source = FakeSource.new(features=['webmention'],
                             domain_urls=['http://primary/'],
                             domains=['primary'])
     source.verify()
     self.assertEqual('http://web.ment/ion', source.webmention_endpoint)
+    self.assert_requests_get('http://primary/')
 
   def test_verify_without_webmention_endpoint(self):
-    self.expect_requests_get('http://primary/', 'no webmention endpoint here!')
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response('no webmention endpoint here!')
 
     source = FakeSource.new(features=['webmention'],
                             domain_urls=['http://primary/'], domains=['primary'])
     source.verify()
     self.assertIsNone(source.webmention_endpoint)
+    self.assert_requests_get('http://primary/')
 
   def test_verify_checks_blocklist(self):
-    self.expect_requests_get('http://good/', """
+    self.mock_get.return_value = requests_response("""
 <html><meta>
 <link rel="webmention" href="http://web.ment/ion">
 </meta></html>""")
-    self.mox.ReplayAll()
 
     source = FakeSource.new(features=['webmention'],
                             domain_urls=['http://bad.www/', 'http://good/'],
                             domains=['bad.www', 'good'])
     source.verify()
     self.assertEqual('http://web.ment/ion', source.webmention_endpoint)
+    self.assert_requests_get('http://good/')
 
   def test_has_bridgy_webmention_endpoint(self):
     source = FakeSource.new()
@@ -699,7 +680,7 @@ class SourceTest(testutil.AppTest):
     source = FakeSource.new(created=datetime(2000, 1, 1, tzinfo=timezone.utc))
     source.put()
 
-    self.mox.stubs.Set(util, 'VOLUME_USER_PATHS', set([source.bridgy_path()]))
+    self.start_patch(util, 'VOLUME_USER_PATHS', new=set([source.bridgy_path()]))
     self.assertTrue(source.is_volume_user())
     self.assertEqual(source.SLOW_POLL, source.poll_period())
 
@@ -737,14 +718,14 @@ class SourceTest(testutil.AppTest):
     source = Source(id='x')
     self.assertFalse(source.is_beta_user())
 
-    self.mox.stubs.Set(util, 'BETA_USER_PATHS', set())
-    self.assertFalse(source.is_beta_user())
+    with patch('util.BETA_USER_PATHS', new=set()):
+      self.assertFalse(source.is_beta_user())
 
-    self.mox.stubs.Set(util, 'BETA_USER_PATHS', set([source.bridgy_path()]))
-    self.assertTrue(source.is_beta_user())
+    with patch('util.BETA_USER_PATHS', new={source.bridgy_path()}):
+      self.assertTrue(source.is_beta_user())
 
+  @patch('models.BLOCKLIST_MAX_IDS', new=2)
   def test_load_blocklist(self):
-    self.mox.stubs.Set(models, 'BLOCKLIST_MAX_IDS', 2)
     FakeGrSource.blocklist_ids = [1, 2, 3]
 
     source = FakeSource(id='x')
@@ -753,10 +734,8 @@ class SourceTest(testutil.AppTest):
 
   def test_load_blocklist_rate_limited(self):
     source = FakeSource(id='x')
-    self.mox.StubOutWithMock(source.gr_source, 'get_blocklist_ids')
-    source.gr_source.get_blocklist_ids().AndRaise(
-      gr_source.RateLimited(partial=[4, 5]))
-    self.mox.ReplayAll()
+    self.start_patch(source.gr_source, 'get_blocklist_ids',
+                     side_effect=gr_source.RateLimited(partial=[4, 5]))
 
     source.load_blocklist()
     self.assertEqual([4, 5], source.blocked_ids)
@@ -890,15 +869,13 @@ class BlogPostTest(testutil.AppTest):
     self.assertEqual('BlogPost x http://perma/link', bp.label())
 
   def test_restart(self):
-    self.expect_task('propagate-blogpost', key=self.blogposts[0])
-    self.mox.ReplayAll()
-
     urls = self.blogposts[0].sent
     self.blogposts[0].restart()
 
     blogpost = self.blogposts[0].key.get()
     self.assert_equals(urls, blogpost.unsent)
     self.assert_equals([], blogpost.sent)
+    self.assert_task('propagate-blogpost', key=self.blogposts[0])
 
 
 class SyndicatedPostTest(testutil.AppTest):

@@ -18,6 +18,7 @@ from granary.tests.test_facebook import (
   MBASIC_REACTION_TAGS,
 )
 from webutil import util
+from webutil.testutil import requests_response
 from webutil.util import json_dumps, json_loads, trim_nulls
 
 import browser
@@ -87,8 +88,7 @@ class FacebookTest(testutil.AppTest):
     self.assertIsNone(Facebook.get_by_id('212038'))
 
     # webmention discovery
-    self.expect_requests_get('https://snarfed.org/', '')
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response('')
 
     resp = self.get_response('profile?token=towkin', data=MBASIC_HTML_ABOUT)
     self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
@@ -99,6 +99,7 @@ class FacebookTest(testutil.AppTest):
     self.assertEqual('https://scontent-sjc3-1.xx.fbcdn.net/v/t1.0-1/cp0/e15/q65/p74x74/39610935_10104076860151373_4179282966062563328_o.jpg?...', fb.picture)
     self.assertEqual(['https://snarfed.org/', 'https://foo.bar/'], fb.domain_urls)
     self.assertEqual(['snarfed.org', 'foo.bar'], fb.domains)
+    self.assert_requests_get('https://snarfed.org/')
 
   def test_feed(self):
     self.source.put()
@@ -165,12 +166,11 @@ class FacebookTest(testutil.AppTest):
 
   def test_poll(self):
     key = self.source.put()
-    self.expect_task('poll-now', source_key=key, last_polled='1970-01-01-00-00-00')
-    self.mox.ReplayAll()
 
     resp = self.get_response('poll')
     self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
     self.assertEqual('OK', resp.json)
+    self.assert_task('poll-now', source_key=key, last_polled='1970-01-01-00-00-00')
 
   def test_silo_url(self):
     self.source.username = None

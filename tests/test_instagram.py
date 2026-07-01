@@ -20,6 +20,7 @@ from granary.tests.test_instagram import (
   HTML_VIEWER_CONFIG,
   LIKE_OBJS,
 )
+from webutil.testutil import requests_response
 from webutil.util import HTTP_TIMEOUT, json_dumps, json_loads
 
 import browser
@@ -60,7 +61,6 @@ class InstagramTest(testutil.AppTest):
     self.assertEqual('snarfed (Instagram)', self.source.label())
 
   def test_canonicalize_url(self):
-    self.unstub_requests_head()
     for url in (
         'http://www.instagram.com/p/abcd',
         'https://www.instagram.com/p/abcd',
@@ -139,8 +139,7 @@ class InstagramTest(testutil.AppTest):
   def test_profile_new_user(self):
     self.assertIsNone(Instagram.get_by_id('snarfed'))
 
-    self.expect_requests_get('https://snarfed.org/', '')
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response('')
 
     resp = self.get_response('profile?token=towkin', data=HTML_PROFILE_COMPLETE)
 
@@ -153,6 +152,7 @@ class InstagramTest(testutil.AppTest):
     self.assertEqual('https://www.instagram.com/snarfed/', ig.silo_url())
     self.assertEqual(['https://snarfed.org/'], ig.domain_urls)
     self.assertEqual(['snarfed.org'], ig.domains)
+    self.assert_requests_get('https://snarfed.org/')
 
   def test_profile_private_account(self):
     resp = self.get_response('profile', data=HTML_PROFILE_PRIVATE_COMPLETE)
@@ -214,9 +214,8 @@ class InstagramTest(testutil.AppTest):
 
   def test_poll(self):
     key = self.source.put()
-    self.expect_task('poll-now', source_key=key, last_polled='1970-01-01-00-00-00')
-    self.mox.ReplayAll()
 
     resp = self.get_response('poll')
     self.assertEqual(200, resp.status_code, resp.get_data(as_text=True))
     self.assertEqual('OK', resp.json)
+    self.assert_task('poll-now', source_key=key, last_polled='1970-01-01-00-00-00')

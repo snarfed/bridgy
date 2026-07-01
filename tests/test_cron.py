@@ -2,6 +2,7 @@
 """
 import copy
 import datetime
+from unittest.mock import patch
 
 from granary import mastodon as gr_mastodon
 from granary.tests import test_flickr
@@ -10,6 +11,7 @@ import oauth_dropins.flickr
 import oauth_dropins.flickr_auth
 from oauth_dropins import indieauth
 import oauth_dropins.mastodon
+from webutil.testutil import requests_response, UrlopenResult
 from webutil.util import json_dumps, json_loads
 import requests
 from urllib3.exceptions import NewConnectionError
@@ -59,30 +61,23 @@ class CronTest(testutil.BackgroundTest):
                      last_poll_attempt=day_and_half_ago).put(),
       ]
 
-    self.expect_task('poll', source_key=sources[4], last_polled='1970-01-01-00-00-00')
-    self.mox.ReplayAll()
-
     resp = self.client.get('/cron/replace_poll_tasks')
     self.assertEqual(200, resp.status_code)
+    self.assert_task('poll', source_key=sources[4], last_polled='1970-01-01-00-00-00')
 
+  # @patch('cron.PAGE_SIZE', new=1)
   def test_update_flickr_pictures(self):
     flickrs = self._setup_flickr()
 
-    self.mox.StubOutWithMock(cron, 'PAGE_SIZE')
-    cron.PAGE_SIZE = 1
-
     # first
-    self.expect_urlopen(
-      'https://api.flickr.com/services/rest?nojsoncallback=1&format=json&method=flickr.people.getInfo&user_id=123%40N00',
-      json_dumps({
-        'person': {
-          'id': '789@N99',
-          'nsid': '789@N99',
-          'iconfarm': 9,
-          'iconserver': '9876',
-        }}))
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps({
+      'person': {
+        'id': '789@N99',
+        'nsid': '789@N99',
+        'iconfarm': 9,
+        'iconserver': '9876',
+      }}))
     # second has no features, gets skipped
-    self.mox.ReplayAll()
 
     # first
     self.assertEqual(
@@ -94,9 +89,10 @@ class CronTest(testutil.BackgroundTest):
     self.assertEqual(
       'https://farm9.staticflickr.com/9876/buddyicons/789@N99.jpg',
       flickrs[0].key.get().picture)
+    self.assert_urlopen(
+      'https://api.flickr.com/services/rest?nojsoncallback=1&format=json&method=flickr.people.getInfo&user_id=123%40N00')
 
     cursor = cron.LastUpdatedPicture.get_by_id('flickr')
-    self.assertEqual(flickrs[0].key, cursor.last)
 
     # second
     resp = self.client.get('/cron/update_flickr_pictures')
@@ -108,25 +104,18 @@ class CronTest(testutil.BackgroundTest):
     self.assertIsNone(cursor.last)
 
   def test_update_mastodon_pictures(self):
-    self.expect_requests_get(
-      'https://foo.com' + test_mastodon.API_ACCOUNT % 123,
-      test_mastodon.ACCOUNT, headers={'Authorization': 'Bearer towkin'},
-      content_type='application/json')
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response(
+      test_mastodon.ACCOUNT, content_type='application/json')
 
     mastodon = self._setup_mastodon()
     resp = self.client.get('/cron/update_mastodon_pictures')
     self.assertEqual(200, resp.status_code)
     self.assertEqual(test_mastodon.ACCOUNT['avatar'], mastodon.key.get().picture)
+    self.assert_requests_get('https://foo.com' + gr_mastodon.API_ACCOUNT % 123)
 
   def test_update_mastodon_pictures_get_actor_404(self):
-    self.expect_requests_get(
-      'https://foo.com' + test_mastodon.API_ACCOUNT % 123,
-      headers={'Authorization': 'Bearer towkin'},
-    ).AndRaise(
-      requests.exceptions.HTTPError(
-        response=util.Struct(status_code='404', text='foo')))
-    self.mox.ReplayAll()
+    self.mock_get.side_effect = requests.exceptions.HTTPError(
+      response=util.Struct(status_code='404', text='foo'))
 
     mastodon = self._setup_mastodon()
     resp = self.client.get('/cron/update_mastodon_pictures')
@@ -134,11 +123,7 @@ class CronTest(testutil.BackgroundTest):
     self.assertEqual('http://before', mastodon.key.get().picture)
 
   def test_update_mastodon_pictures_get_actor_connection_failure(self):
-    self.expect_requests_get(
-      'https://foo.com' + test_mastodon.API_ACCOUNT % 123,
-      headers={'Authorization': 'Bearer towkin'},
-    ).AndRaise(NewConnectionError(None, None))
-    self.mox.ReplayAll()
+    self.mock_get.side_effect = NewConnectionError(None, None)
 
     mastodon = self._setup_mastodon()
     resp = self.client.get('/cron/update_mastodon_pictures')

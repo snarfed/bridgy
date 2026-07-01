@@ -4,7 +4,7 @@ import copy
 import urllib.request, urllib.parse, urllib.error
 
 from flask import get_flashed_messages
-from webutil.testutil import TestCase
+from webutil.testutil import requests_response
 from webutil.util import json_dumps, json_loads
 from oauth_dropins import indieauth
 import requests
@@ -22,14 +22,7 @@ class IndieAuthTest(testutil.AppTest):
     self.auth_entity = indieauth.IndieAuth(id='http://snarfed.org')
 
   def expect_indieauth_check(self):
-    return TestCase.expect_requests_post(
-      self, indieauth.INDIEAUTH_URL, 'me=http://snarfed.org', data={
-        'me': 'http://snarfed.org',
-        'state': 'towkin',
-        'code': 'my_code',
-        'client_id': indieauth.INDIEAUTH_CLIENT_ID,
-        'redirect_uri': 'http://localhost/indieauth/callback',
-      })
+    self.mock_post.return_value = requests_response('me=http://snarfed.org')
 
   def expect_site_fetch(self, body=None):
     if body is None:
@@ -38,7 +31,7 @@ class IndieAuthTest(testutil.AppTest):
 <a rel="me" href="https://www.instagram.com/snarfed">me on insta</a>
 </body></html>
 """
-    return TestCase.expect_requests_get(self, 'http://snarfed.org', body)
+    self.mock_get.return_value = requests_response(body)
 
   def callback(self, token='towkin'):
     state = util.encode_oauth_state({
@@ -53,11 +46,18 @@ class IndieAuthTest(testutil.AppTest):
   def test_callback_new_domain(self):
     self.expect_indieauth_check()
     self.expect_site_fetch()
-    self.mox.ReplayAll()
 
     resp = self.callback()
     self.assertEqual('http://localhost/',resp.headers['Location'])
     self.assertEqual(['Authorized you for snarfed.org.'], get_flashed_messages())
+    self.assert_requests_post(indieauth.INDIEAUTH_URL, data={
+      'me': 'http://snarfed.org',
+      'state': 'towkin',
+      'code': 'my_code',
+      'client_id': indieauth.INDIEAUTH_CLIENT_ID,
+      'redirect_uri': 'http://localhost/indieauth/callback',
+    })
+    self.assert_requests_get('http://snarfed.org')
 
     self.assert_entities_equal([
       Domain(id='snarfed.org', tokens=['towkin'], auth=self.auth_entity.key),
@@ -69,7 +69,6 @@ class IndieAuthTest(testutil.AppTest):
 
   def test_start_post(self):
     self.expect_site_fetch()
-    self.mox.ReplayAll()
 
     resp = self.client.post('/indieauth/start', data={
       'token': 'foo',
@@ -78,3 +77,4 @@ class IndieAuthTest(testutil.AppTest):
     self.assertEqual(302, resp.status_code)
     self.assertTrue(resp.headers['Location'].startswith(indieauth.INDIEAUTH_URL),
                     resp.headers['Location'])
+    self.assert_requests_get('http://snarfed.org')

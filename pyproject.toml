@@ -34,7 +34,6 @@ app = [
     'werkzeug>=3.0.0',
 ]
 tests = [
-    'mox3 @ git+https://github.com/snarfed/mox3.git',
 ]
 docs = [
     'sphinx>=7.0.0',
@@ -53,7 +52,6 @@ flask-gae-static =  { editable = true, path = "../flask-gae-static" }
 granary =           { editable = true, path = "../granary" }
 lexrpc =            { editable = true, path = "../lexrpc" }
 mf2util =           { editable = true, path = "../mf2util" }
-mox3 =              { editable = true, path = "../mox3" }
 oauth-dropins =     { editable = true, path = "../oauth-dropins" }
 pywebutil =         { editable = true, path = "../webutil" }
 secp256k1 =         { editable = true, path = "../secp256k1-py" }
@@ -66,10 +64,9 @@ extend_exclude = ['docs', 'scripts']
 
 [tool.deptry.per_rule_ignores]
 # these deps aren't imported directly but we still need them: gunicorn (WSGI
-# server), mox3 (tests), ujson
+# server), ujson
 DEP002 = [
     'gunicorn',
-    'mox3',
     'sphinx',
     'sphinx-rtd-theme',
     'ujson',

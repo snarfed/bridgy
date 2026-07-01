@@ -7,15 +7,15 @@ import string
 import io
 import time
 from unittest import skip
+from unittest.mock import patch
 import urllib.request, urllib.parse, urllib.error
 
 from cachetools import TTLCache
 from google.cloud import ndb
 from google.cloud.ndb._datastore_types import _MAX_STRING_LENGTH
 from google.cloud.tasks_v2.types import Task
-from mox3 import mox
 from webutil.appengine_config import tasks_client
-from webutil.testutil import NOW
+from webutil.testutil import NOW, requests_response
 from webutil.util import json_dumps, json_loads
 import requests
 
@@ -67,18 +67,6 @@ class TaskTest(testutil.BackgroundTest):
     self.assert_entities_equal(expected, stored,
                                ignore=('created', 'updated') + ignore)
 
-  def expect_get_activities(self, **kwargs):
-    """Adds and returns an expected get_activities_response() call."""
-    self.mox.StubOutWithMock(FakeSource, 'get_activities_response')
-    params = {
-      'fetch_replies': True,
-      'fetch_likes': True,
-      'fetch_shares': True,
-    }
-    params.update(kwargs)
-    return FakeSource.get_activities_response(**params)
-
-
 class PollTest(TaskTest):
 
   post_url = '/_ah/queue/poll'
@@ -109,12 +97,15 @@ class PollTest(TaskTest):
 
   def post_task(self, expected_status=200, source=None, reset=False,
                 expect_poll=None, expect_last_polled=None):
+    """Returns the expected poll task spec dict, or None, for the caller to
+    pass to assert_task(s)().
+    """
+    poll_task = None
     if expect_poll:
       last_polled = (expect_last_polled or util.now()).strftime(
         POLL_TASK_DATETIME_FORMAT)
-      self.expect_task('poll', eta_seconds=expect_poll.total_seconds(),
-                       source_key=self.sources[0], last_polled=last_polled)
-      self.mox.ReplayAll()
+      poll_task = {'queue': 'poll', 'eta_seconds': expect_poll.total_seconds(),
+                   'source_key': self.sources[0], 'last_polled': last_polled}
 
     if source is None:
       source = self.sources[0]
@@ -128,74 +119,56 @@ class PollTest(TaskTest):
         'source_key': source.key.urlsafe().decode(),
         'last_polled': '1970-01-01-00-00-00',
       })
-
-  def expect_get_activities(self, **kwargs):
-    """Adds and returns an expected get_activities_response() call."""
-    full_kwargs = {
-      'fetch_mentions': True,
-      'count': mox.IgnoreArg(),
-      'etag': None,
-      'min_id': None,
-      'cache': mox.IgnoreArg(),
-    }
-    full_kwargs.update(kwargs)
-    return super().expect_get_activities(**full_kwargs)
+    return poll_task
 
   def test_poll(self):
     """A normal poll task."""
     self.assertEqual(0, Response.query().count())
 
-    for resp in self.responses:
-      self.expect_task('propagate', response_key=resp)
-
-    self.post_task(expect_poll=FakeSource.FAST_POLL)
+    poll_task = self.post_task(expect_poll=FakeSource.FAST_POLL)
     self.assertEqual(12, Response.query().count())
     self.assert_responses()
 
     source = self.sources[0].key.get()
     self.assertEqual(NOW, source.last_polled)
     self.assertEqual('ok', source.poll_status)
+    self.assert_tasks(
+      *[{'queue': 'propagate', 'response_key': resp} for resp in self.responses],
+      poll_task,
+    )
 
+  @patch.object(FakeSource, 'AUTO_POLL', new=False)
   def test_poll_no_auto_poll(self):
     FakeGrSource.clear()
-    self.stub_create_task()
-    self.mox.stubs.Set(FakeSource, 'AUTO_POLL', False)
-    self.mox.ReplayAll()
     self.post_task()
+    self.assert_tasks()
 
   def test_poll_status_polling(self):
-    def check_poll_status(*args, **kwargs):
+    def check_poll_status(**kw):
       self.assertEqual('polling', self.sources[0].key.get().poll_status)
+      return {'items': [], 'etag': None}
 
-    self.expect_get_activities().WithSideEffects(check_poll_status) \
-                                .AndReturn({'items': []})
-    self.mox.ReplayAll()
+    self.start_patch(FakeGrSource, 'get_activities_response', side_effect=check_poll_status)
     self.post_task()
     self.assertEqual('ok', self.sources[0].key.get().poll_status)
 
-  def test_poll_error(self):
+  @patch.object(FakeGrSource, 'get_activities_response', side_effect=Exception('foo'))
+  def test_poll_error(self, _):
     """If anything goes wrong, the poll status should be set to 'error'."""
-    self.expect_get_activities().AndRaise(Exception('foo'))
-    self.mox.ReplayAll()
-
     self.assertRaises(Exception, self.post_task, expect_poll=False)
     self.assertEqual('error', self.sources[0].key.get().poll_status)
 
-  def test_poll_silo_500(self):
+  @patch.object(FakeGrSource, 'get_activities_response',
+                side_effect=urllib.error.HTTPError('url', 505, 'msg', {}, None))
+  def test_poll_silo_500(self, _):
     """If a silo HTTP request 500s, we should quietly retry the task."""
-    self.expect_get_activities().AndRaise(
-      urllib.error.HTTPError('url', 505, 'msg', {}, None))
-    self.mox.ReplayAll()
-
     self.post_task(expected_status=ERROR_HTTP_RETURN_CODE)
     self.assertEqual('error', self.sources[0].key.get().poll_status)
 
-  def test_poll_silo_deadlines(self):
+  @patch.object(FakeGrSource, 'get_activities_response',
+                side_effect=urllib.error.URLError(socket.gaierror('deadlined')))
+  def test_poll_silo_deadlines(self, _):
     """If a silo HTTP request deadlines, we should quietly retry the task."""
-    self.expect_get_activities().AndRaise(
-      urllib.error.URLError(socket.gaierror('deadlined')))
-    self.mox.ReplayAll()
-
     self.post_task(expected_status=ERROR_HTTP_RETURN_CODE)
     self.assertEqual('error', self.sources[0].key.get().poll_status)
 
@@ -238,6 +211,7 @@ class PollTest(TaskTest):
     self.post_task()
     self.assert_equals(['https://tar.get/a'], self.responses[0].key.get().unsent)
 
+  @patch.object(FakeSource, 'BACKFEED_REQUIRES_SYNDICATION_LINK', new=True)
   def test_backfeed_requires_syndication_link(self):
     # trigger posse post discovery
     self.sources[0].domain_urls = ['http://author']
@@ -260,7 +234,6 @@ class PollTest(TaskTest):
                    original='http://tar.get/z',
                    syndication='https://fa.ke/post/url').put()
 
-    self.mox.stubs.Set(FakeSource, 'BACKFEED_REQUIRES_SYNDICATION_LINK', True)
     self.post_task()
     self.assert_equals(['http://tar.get/z'], self.responses[0].key.get().unsent)
 
@@ -271,9 +244,8 @@ class PollTest(TaskTest):
     obj['content'] = 'http://not/html'
     FakeGrSource.activities = [self.activities[0]]
 
-    self.expect_requests_head('http://not/html', content_type='application/pdf')
-
-    self.mox.ReplayAll()
+    self.mock_head.side_effect = lambda url, **kw: requests_response(
+      '', url=url, content_type='application/pdf')
     self.post_task()
     self.assert_equals([], self.responses[0].key.get().unsent)
 
@@ -284,9 +256,8 @@ class PollTest(TaskTest):
     obj['content'] = 'http://will/redirect'
     FakeGrSource.activities = [self.activities[0]]
 
-    self.expect_requests_head('http://will/redirect', redirected_url='http://final/url')
-
-    self.mox.ReplayAll()
+    self.mock_head.side_effect = lambda url, **kw: requests_response(
+      '', url='http://final/url')
     self.post_task()
     self.assert_equals(['http://final/url'], self.responses[0].key.get().unsent)
 
@@ -297,9 +268,8 @@ class PollTest(TaskTest):
       'content': 'http://fails/resolve',
     })
     FakeGrSource.activities = [self.activities[0]]
-    self.expect_requests_head('http://fails/resolve', status_code=400)
-
-    self.mox.ReplayAll()
+    self.mock_head.side_effect = None
+    self.mock_head.return_value = requests_response('', url='http://fails/resolve', status=400)
     self.post_task()
     self.assert_equals(['http://fails/resolve'],
                        self.responses[0].key.get().unsent)
@@ -345,11 +315,12 @@ class PollTest(TaskTest):
     self.activities[1]['object'].update({'content': 'http://redir/1'})
     FakeGrSource.activities = self.activities[0:2]
 
-    self.expect_requests_head(
-      'http://redir/0', redirected_url='http://first/?utm_medium=x').InAnyOrder()
-    self.expect_requests_head(
-      'http://redir/1', redirected_url='http://second/?utm_source=Twitter').InAnyOrder()
-    self.mox.ReplayAll()
+    redirects = {
+      'http://redir/0': 'http://first/?utm_medium=x',
+      'http://redir/1': 'http://second/?utm_source=Twitter',
+    }
+    self.mock_head.side_effect = lambda url, **kw: requests_response(
+      '', url=redirects.get(url, url))
     self.post_task()
 
     self.assertEqual(1, Response.query().count())
@@ -367,9 +338,7 @@ class PollTest(TaskTest):
     FakeGrSource.activities = [self.activities[0]]
 
     too_long = 'http://host/' + 'x' * _MAX_STRING_LENGTH
-    self.expect_requests_head('http://foo/bar', redirected_url=too_long)
-
-    self.mox.ReplayAll()
+    self.mock_head.side_effect = lambda url, **kw: requests_response('', url=too_long)
     self.post_task()
     resp = self.responses[0].key.get()
     self.assert_equals([], resp.unsent)
@@ -393,14 +362,16 @@ class PollTest(TaskTest):
     unknown['object']['to'] = [{'objectType': 'unknown'}]
     self.activities.append(unknown)
 
-    for resp in self.responses[:4] + self.responses[8:]:
-      self.expect_task('propagate', response_key=resp)
-
-    self.post_task(expect_poll=FakeSource.FAST_POLL)
+    poll_task = self.post_task(expect_poll=FakeSource.FAST_POLL)
 
     source = self.sources[0].key.get()
     self.assertEqual(public_date, source.last_public_post)
     self.assertEqual(2, source.recent_private_posts)
+    self.assert_tasks(
+      *[{'queue': 'propagate', 'response_key': resp}
+        for resp in self.responses[:4] + self.responses[8:]],
+      poll_task,
+    )
 
   def test_non_public_responses(self,):
     self.activities = FakeGrSource.activities = [self.activities[0]]
@@ -413,11 +384,12 @@ class PollTest(TaskTest):
     self.activities[0]['object']['tags'][1]['to'] = unlisted
     self.activities[0]['object']['tags'][2]['to'] = public
 
-    self.expect_task('propagate', response_key=self.responses[3])
-    self.post_task(expect_poll=FakeSource.FAST_POLL)
+    poll_task = self.post_task(expect_poll=FakeSource.FAST_POLL)
 
     source = self.sources[0].key.get()
     self.assertEqual(0, source.recent_private_posts)
+    self.assert_tasks(
+      {'queue': 'propagate', 'response_key': self.responses[3]}, poll_task)
 
   def test_no_responses(self):
     """Handle activities without responses ok.
@@ -469,9 +441,8 @@ class PollTest(TaskTest):
                    syndication='https://fa.ke/2').put()
 
     resp_key = ndb.Key(Response, 'tag:source.com,2013:only_reply')
-    self.expect_task('propagate', response_key=resp_key)
 
-    self.post_task(expect_poll=FakeSource.FAST_POLL)
+    poll_task = self.post_task(expect_poll=FakeSource.FAST_POLL)
     self.assertEqual(1, Response.query().count())
     resp = Response.query().get()
     self.assert_equals([f'tag:source.com,2013:{id}' for id in ('a', 'b', 'c')],
@@ -480,6 +451,8 @@ class PollTest(TaskTest):
     urls = ['http://from/tag', 'http://from/synd/post', 'http://target1/post/url']
     self.assert_equals(urls, resp.unsent)
     self.assert_equals(urls, list(json_loads(resp.urls_to_activity).keys()))
+    self.assert_tasks(
+      {'queue': 'propagate', 'response_key': resp_key}, poll_task)
 
   def test_multiple_activities_no_target_urls(self):
     """Response.urls_to_activity should be left unset.
@@ -645,9 +618,7 @@ class PollTest(TaskTest):
     FakeGrSource.search_results = [link]
     FakeGrSource.activities = []
 
-    self.expect_requests_head('http://sho.rt/post',
-                              redirected_url='http://or.ig/post')
-    self.mox.ReplayAll()
+    self.mock_head.side_effect = lambda url, **kw: requests_response('', url='http://or.ig/post' if url == 'http://sho.rt/post' else url)
     self.post_task()
 
     self.assert_responses([Response(
@@ -1004,13 +975,11 @@ class PollTest(TaskTest):
     self.post_task(expect_poll=False)
     self.assertEqual('enabled', self.sources[0].key.get().status)
 
-  def test_disable_source_on_deauthorized(self):
+  @patch.object(FakeGrSource, 'get_activities_response', side_effect=models.DisableSource)
+  def test_disable_source_on_deauthorized(self, _):
     """If the source raises DisableSource, disable it.
     """
     source = self.sources[0]
-    self.expect_get_activities().AndRaise(models.DisableSource)
-    self.mox.ReplayAll()
-
     source.status = 'enabled'
     source.put()
     self.post_task()
@@ -1027,11 +996,10 @@ class PollTest(TaskTest):
         '{"meta":{"error_type":"OAuthAccessTokenException"}}')))
 
   def _test_site_specific_disable_source(self, err):
-      self.expect_get_activities().AndRaise(err)
-      self.mox.ReplayAll()
+    self.start_patch(FakeGrSource, 'get_activities_response', side_effect=err)
 
-      self.post_task()
-      self.assertEqual('disabled', self.sources[0].key.get().status)
+    self.post_task()
+    self.assertEqual('disabled', self.sources[0].key.get().status)
 
   def test_rate_limiting_error(self):
     """Finish the task on rate limiting errors."""
@@ -1040,15 +1008,16 @@ class PollTest(TaskTest):
     error_body = json_dumps({"meta": {
       "code": 429, "error_message": "The maximum number of requests...",
       "error_type": "OAuthRateLimitException"}})
-    self.expect_get_activities().AndRaise(
-      urllib.error.HTTPError('url', 429, 'Rate limited', {},
-                             io.StringIO(error_body)))
+    self.start_patch(FakeGrSource, 'get_activities_response',
+                     side_effect=urllib.error.HTTPError(
+                       'url', 429, 'Rate limited', {}, io.StringIO(error_body)))
 
-    self.post_task(expect_poll=FakeSource.RATE_LIMITED_POLL,
-                   expect_last_polled=util.EPOCH)
+    poll_task = self.post_task(expect_poll=FakeSource.RATE_LIMITED_POLL,
+                               expect_last_polled=util.EPOCH)
     source = self.sources[0].key.get()
     self.assertEqual('error', source.poll_status)
     self.assertTrue(source.rate_limited)
+    self.assert_tasks(poll_task)
 
   def test_etag(self):
     """If we see an ETag, we should send it with the next get_activities()."""
@@ -1060,9 +1029,8 @@ class PollTest(TaskTest):
     source.last_polled = util.EPOCH
     source.put()
 
-    self.expect_get_activities(etag='"my etag"', min_id='c'
-      ).AndReturn({'items': [], 'etag': '"new etag"'})
-    self.mox.ReplayAll()
+    FakeGrSource.activities = []
+    FakeGrSource.etag = '"new etag"'
     self.post_task()
 
     source = self.sources[0].key.get()
@@ -1078,8 +1046,7 @@ class PollTest(TaskTest):
     source.last_polled = util.EPOCH
     source.put()
 
-    self.expect_get_activities(min_id='c').AndReturn({'items': []})
-    self.mox.ReplayAll()
+    FakeGrSource.activities = []
     self.post_task()
 
   def test_last_activity_id_not_tag_uri(self):
@@ -1107,7 +1074,8 @@ class PollTest(TaskTest):
     self.sources[0].put()
 
     FakeGrSource.activities = []
-    self.post_task(expect_poll=FakeSource.SLOW_POLL)
+    poll_task = self.post_task(expect_poll=FakeSource.SLOW_POLL)
+    self.assert_tasks(poll_task)
 
   def test_slow_poll_sent_webmention_over_month_ago(self):
     self.sources[0].created = NOW - (FakeSource.FAST_POLL_GRACE_PERIOD +
@@ -1116,14 +1084,16 @@ class PollTest(TaskTest):
     self.sources[0].put()
 
     FakeGrSource.activities = []
-    self.post_task(expect_poll=FakeSource.SLOW_POLL)
+    poll_task = self.post_task(expect_poll=FakeSource.SLOW_POLL)
+    self.assert_tasks(poll_task)
 
   def test_fast_poll_grace_period(self):
     self.sources[0].created = NOW - datetime.timedelta(minutes=1)
     self.sources[0].put()
 
     FakeGrSource.activities = []
-    self.post_task(expect_poll=FakeSource.FAST_POLL)
+    poll_task = self.post_task(expect_poll=FakeSource.FAST_POLL)
+    self.assert_tasks(poll_task)
 
   def test_fast_poll_hgr_sent_webmention(self):
     self.sources[0].created = NOW - (FakeSource.FAST_POLL_GRACE_PERIOD +
@@ -1132,10 +1102,11 @@ class PollTest(TaskTest):
     self.sources[0].put()
 
     FakeGrSource.activities = []
-    self.post_task(expect_poll=FakeSource.FAST_POLL)
+    poll_task = self.post_task(expect_poll=FakeSource.FAST_POLL)
+    self.assert_tasks(poll_task)
 
   def _expect_fetch_hfeed(self):
-    self.expect_requests_get('http://author', """
+    self.mock_get.return_value = requests_response("""
     <html class="h-feed">
       <a class="h-entry" href="/permalink"></a>
       <div class="h-entry">
@@ -1159,8 +1130,8 @@ class PollTest(TaskTest):
       r.put()
 
     self._expect_fetch_hfeed()
-    self.mox.ReplayAll()
     self.post_task()
+    self.assert_requests_get('http://author')
 
     # query source
     source = self.sources[0].key.get()
@@ -1180,8 +1151,8 @@ class PollTest(TaskTest):
       activity['object']['content'] = 'foo bar'
 
     self._expect_fetch_hfeed()
-    self.mox.ReplayAll()
     self.post_task()
+    self.assert_requests_get('http://author')
 
   def test_syndicated_post_does_not_prevent_fetch_hfeed(self):
     """The original fix to fetch the source's h-feed only once per task
@@ -1206,8 +1177,8 @@ class PollTest(TaskTest):
       self.sources[0].canonicalize_url(self.activities[0].get('url')))
 
     self._expect_fetch_hfeed()
-    self.mox.ReplayAll()
     self.post_task()
+    self.assert_requests_get('http://author')
 
   def _setup_refetch_hfeed(self):
     self.sources[0].domain_urls = ['http://author']
@@ -1237,7 +1208,7 @@ class PollTest(TaskTest):
     self.sources[0].last_hfeed_refetch = hour_ago = NOW - datetime.timedelta(hours=1)
     self.sources[0].put()
 
-    self.post_task(expect_poll=FakeSource.FAST_POLL)
+    poll_task = self.post_task(expect_poll=FakeSource.FAST_POLL)
     self.assertEqual(hour_ago, self.sources[0].key.get().last_hfeed_refetch)
 
     # should still be a blank SyndicatedPost
@@ -1247,8 +1218,8 @@ class PollTest(TaskTest):
     self.assertEqual(1, len(relationships))
     self.assertIsNone(relationships[0].syndication)
 
-    # should not have repropagated any responses. tasks_client is stubbed
-    # out in tests, mox will complain if it gets called.
+    # should not have repropagated any responses
+    self.assert_tasks(poll_task)
 
   def test_dont_repropagate_posses(self):
     """If we find a syndication URL for a POSSE post, we shouldn't repropagate it.
@@ -1271,10 +1242,12 @@ class PollTest(TaskTest):
     self.responses = [resp]
 
     self._expect_fetch_hfeed()
-    self.post_task(expect_poll=FakeSource.FAST_POLL)
+    poll_task = self.post_task(expect_poll=FakeSource.FAST_POLL)
+    self.assert_requests_get('http://author')
 
     # shouldn't repropagate it
     self.assertEqual('complete', resp.key.get().status)
+    self.assert_tasks(poll_task)
 
   def test_do_refetch_hfeed(self):
     """Emulate a situation where we've done posse-post-discovery earlier and
@@ -1284,11 +1257,9 @@ class PollTest(TaskTest):
     """
     self._setup_refetch_hfeed()
     self._expect_fetch_hfeed()
-    # should repropagate all 12 responses
-    for resp in self.responses:
-      self.expect_task('propagate', response_key=resp)
 
-    self.post_task(expect_poll=FakeSource.FAST_POLL)
+    poll_task = self.post_task(expect_poll=FakeSource.FAST_POLL)
+    self.assert_requests_get('http://author')
 
     # should have a new SyndicatedPost
     relationships = SyndicatedPost.query(
@@ -1300,6 +1271,11 @@ class PollTest(TaskTest):
     source = self.sources[0].key.get()
     self.assertEqual(NOW, source.last_syndication_url)
     self.assertEqual(NOW, source.last_hfeed_refetch)
+    # should repropagate all 12 responses
+    self.assert_tasks(
+      *[{'queue': 'propagate', 'response_key': resp} for resp in self.responses],
+      poll_task,
+    )
 
   def test_refetch_hfeed_trigger(self):
     self.sources[0].domain_urls = ['http://author']
@@ -1311,8 +1287,8 @@ class PollTest(TaskTest):
     FakeGrSource.activities = []
 
     self._expect_fetch_hfeed()
-    self.mox.ReplayAll()
     self.post_task()
+    self.assert_requests_get('http://author')
 
   def test_refetch_hfeed_repropagate_responses_query_expired(self):
     """https://github.com/snarfed/bridgy/issues/515"""
@@ -1338,12 +1314,11 @@ class PollTest(TaskTest):
     self._setup_refetch_hfeed()
     self._expect_fetch_hfeed()
 
-    self.mox.StubOutWithMock(Response, 'query')
-    Response.query(Response.source == self.sources[0].key).AndRaise(exception)
-    self.mox.ReplayAll()
+    self.start_patch(Response, 'query', side_effect=exception)
 
     # should 200
     self.post_task()
+    self.assert_requests_get('http://author')
     self.assertEqual(NOW, self.sources[0].key.get().last_hfeed_refetch)
 
   def test_response_changed(self):
@@ -1368,10 +1343,10 @@ class PollTest(TaskTest):
     replies = activity['object']['replies']['items']
     replies.append(self.activities[1]['object']['replies']['items'][0])
 
-    self.expect_task('propagate', response_key=self.responses[4])
-
-    self.post_task(reset=True, expect_poll=FakeSource.FAST_POLL)
+    poll_task = self.post_task(reset=True, expect_poll=FakeSource.FAST_POLL)
     self.assert_equals(replies, json_loads(source.key.get().seen_responses_cache_json))
+    self.assert_tasks(
+      {'queue': 'propagate', 'response_key': self.responses[4]}, poll_task)
     self.responses[4].key.delete()
 
     # new responses that don't include existing response. cache will have
@@ -1379,16 +1354,14 @@ class PollTest(TaskTest):
     del activity['object']['replies']
     activity['object']['tags'] = tags
 
-    self.mox.VerifyAll()
-    self.mox.UnsetStubs()
-    self.mox.StubOutWithMock(tasks_client, 'create_task')
-    for resp in self.responses[1:4]:
-      self.expect_task('propagate', response_key=resp)
-
-    self.post_task(reset=True, expect_poll=FakeSource.FAST_POLL)
+    poll_task = self.post_task(reset=True, expect_poll=FakeSource.FAST_POLL)
     self.assert_equals([r.key for r in self.responses[:4]],
                        list(Response.query().iter(keys_only=True)))
     self.assert_equals(tags, json_loads(source.key.get().seen_responses_cache_json))
+    self.assert_tasks(
+      *[{'queue': 'propagate', 'response_key': resp} for resp in self.responses[1:4]],
+      poll_task,
+    )
 
   def _change_response_and_poll(self):
     resp = self.responses[0].key.get() or self.responses[0]
@@ -1402,8 +1375,7 @@ class PollTest(TaskTest):
     reply['content'] += ' xyz'
     new_resp_json = json_dumps(reply)
 
-    self.expect_task('propagate', response_key=resp)
-    self.post_task(reset=True, expect_poll=FakeSource.FAST_POLL)
+    poll_task = self.post_task(reset=True, expect_poll=FakeSource.FAST_POLL)
 
     resp = resp.key.get()
     self.assertEqual(new_resp_json, resp.response_json)
@@ -1411,29 +1383,23 @@ class PollTest(TaskTest):
     self.assertEqual('new', resp.status)
     self.assertEqual(targets, resp.unsent)
     self.assertEqual([], resp.sent)
+    self.assert_tasks({'queue': 'propagate', 'response_key': resp}, poll_task)
 
     source = self.sources[0].key.get()
     self.assert_equals([reply], json_loads(source.seen_responses_cache_json))
 
-    self.mox.VerifyAll()
-    self.mox.UnsetStubs()
-    self.mox.StubOutWithMock(tasks_client, 'create_task')
-
-  def test_in_blocklist(self):
+  @patch.object(FakeSource, 'is_blocked', side_effect=[False, True] + [False] * 10)
+  def test_in_blocklist(self, _):
     """Responses from blocked users should be ignored."""
-    self.mox.StubOutWithMock(FakeSource, 'is_blocked')
-    FakeSource.is_blocked(mox.IgnoreArg()).AndReturn(False)
-    FakeSource.is_blocked(mox.IgnoreArg()).AndReturn(True)  # block second response
-    FakeSource.is_blocked(mox.IgnoreArg()).MultipleTimes(10).AndReturn(False)
-
     expected = [self.responses[0]] + self.responses[2:]
-    for resp in expected:
-      self.expect_task('propagate', response_key=resp)
 
-    self.post_task(expect_poll=FakeSource.FAST_POLL)
+    poll_task = self.post_task(expect_poll=FakeSource.FAST_POLL)
     self.assertEqual(11, Response.query().count())
     self.assert_responses(expected)
-
+    self.assert_tasks(
+      *[{'queue': 'propagate', 'response_key': resp} for resp in expected],
+      poll_task,
+    )
 
   def test_opt_out(self):
     """Responses from opted out users should be ignored."""
@@ -1445,12 +1411,14 @@ class PollTest(TaskTest):
     }
 
     expected = self.responses[2:]
-    for resp in expected:
-      self.expect_task('propagate', response_key=resp)
 
-    self.post_task(expect_poll=FakeSource.FAST_POLL)
+    poll_task = self.post_task(expect_poll=FakeSource.FAST_POLL)
     self.assertEqual(10, Response.query().count())
     self.assert_responses(expected)
+    self.assert_tasks(
+      *[{'queue': 'propagate', 'response_key': resp} for resp in expected],
+      poll_task,
+    )
 
 
 class DiscoverTest(TaskTest):
@@ -1465,13 +1433,7 @@ class DiscoverTest(TaskTest):
 
   def test_new(self):
     """A new silo post we haven't seen before."""
-    self.mox.StubOutWithMock(FakeSource, 'get_activities')
-    FakeSource.get_activities(
-      activity_id='b', fetch_replies=True, fetch_likes=True, fetch_shares=True,
-      user_id=self.sources[0].key.id()).AndReturn([self.activities[1]])
-    for resp in self.responses[4:8]:
-      self.expect_task('propagate', response_key=resp)
-    self.mox.ReplayAll()
+    FakeGrSource.activities = [self.activities[1]]
 
     self.assertEqual(0, Response.query().count())
     self.discover()
@@ -1481,13 +1443,15 @@ class DiscoverTest(TaskTest):
       source=self.sources[0].key,
       status='complete',
     )], ignore=('activities_json', 'urls_to_activity', 'response_json', 'original_posts'))
+    self.assert_tasks(*[
+      {'queue': 'propagate', 'response_key': resp} for resp in self.responses[4:8]])
 
   def test_no_post(self):
     """Silo post not found."""
-    self.mox.StubOutWithMock(tasks_client, 'create_task')
     FakeGrSource.activities = []
     self.discover()
     self.assert_responses([])
+    self.assert_tasks()
 
   def test_restart_existing_tasks(self):
     FakeGrSource.activities = [self.activities[1]]
@@ -1501,9 +1465,6 @@ class DiscoverTest(TaskTest):
         ['http://target/2']
     for resp in resps:
       resp.put()
-    for resp in resps:
-      self.expect_task('propagate', response_key=resp)
-    self.mox.ReplayAll()
 
     self.discover()
 
@@ -1513,23 +1474,21 @@ class DiscoverTest(TaskTest):
       self.assert_equals('new', resp.status)
       self.assert_equals(['http://target1/post/url', 'http://target/2'],
                          resp.unsent, resp.key)
+    self.assert_tasks(*[
+      {'queue': 'propagate', 'response_key': resp} for resp in resps])
 
   def test_reply(self):
     """If the activity is a reply, we should also enqueue the in-reply-to post."""
-    self.mox.StubOutWithMock(FakeSource, 'get_activities')
-    FakeSource.get_activities(
-      activity_id='b', fetch_replies=True, fetch_likes=True, fetch_shares=True,
-      user_id=self.sources[0].key.id()).AndReturn([{
+    FakeGrSource.activities = [{
+      'id': 'tag:fake.com:123',
+      'object': {
         'id': 'tag:fake.com:123',
-        'object': {
-          'id': 'tag:fake.com:123',
-          'url': 'https://twitter.com/_/status/123',
-          'inReplyTo': [{'id': 'tag:fake.com:456'}],
-        },
-      }])
-    self.expect_task('discover', source_key=self.sources[0], post_id='456')
-    self.mox.ReplayAll()
+        'url': 'https://twitter.com/_/status/123',
+        'inReplyTo': [{'id': 'tag:fake.com:456'}],
+      },
+    }]
     self.discover()
+    self.assert_task('discover', source_key=self.sources[0], post_id='456')
 
   def test_link_to_post(self):
     """If the activity links to a post, we should enqueue it itself."""
@@ -1538,26 +1497,22 @@ class DiscoverTest(TaskTest):
     source.domains = ['foo']
     source.put()
 
-    self.mox.StubOutWithMock(FakeSource, 'get_activities')
-    FakeSource.get_activities(
-      activity_id='b', fetch_replies=True, fetch_likes=True, fetch_shares=True,
-      user_id=self.sources[0].key.id()).AndReturn([{
+    FakeGrSource.activities = [{
+      'id': 'tag:fake.com:123',
+      'object': {
+        'author': {'id': 'tag:not-source'},
         'id': 'tag:fake.com:123',
-        'object': {
-          'author': {'id': 'tag:not-source'},
-          'id': 'tag:fake.com:123',
-          'url': 'https://fake.com/_/status/123',
-          'content': 'i like https://foo/post a lot',
-        },
-      }])
+        'url': 'https://fake.com/_/status/123',
+        'content': 'i like https://foo/post a lot',
+      },
+    }]
     resp_key = ndb.Key('Response', 'tag:fake.com:123')
-    self.expect_task('propagate', response_key=resp_key)
-    self.mox.ReplayAll()
 
     self.discover()
     resp = resp_key.get()
     self.assert_equals('new', resp.status)
     self.assert_equals(['https://foo/post'], resp.unsent)
+    self.assert_task('propagate', response_key=resp_key)
 
   def test_get_activities_error(self):
     self._test_get_activities_error(400)
@@ -1566,20 +1521,15 @@ class DiscoverTest(TaskTest):
     self._test_get_activities_error(429)
 
   def _test_get_activities_error(self, status):
-    self.expect_get_activities(activity_id='b', user_id=self.sources[0].key.id()
-        ).AndRaise(urllib.error.HTTPError('url', status, 'Rate limited', {}, None))
-    self.mox.StubOutWithMock(tasks_client, 'create_task')
-    self.mox.ReplayAll()
+    self.start_patch(FakeGrSource, 'get_activities_response',
+                     side_effect=urllib.error.HTTPError('url', status, 'Rate limited', {}, None))
 
     self.discover(expected_status=ERROR_HTTP_RETURN_CODE)
     self.assert_responses([])
+    self.assert_tasks()
 
   def test_event_type(self):
-    self.mox.StubOutWithMock(FakeGrSource, 'get_event')
-    FakeGrSource.get_event('321').AndReturn(self.activities[0])
-    for resp in self.responses[:4]:
-      self.expect_task('propagate', response_key=resp)
-    self.mox.ReplayAll()
+    self.start_patch(FakeGrSource, 'get_event', return_value=self.activities[0])
 
     self.post_task(params={
       'source_key': self.sources[0].key.urlsafe().decode(),
@@ -1592,6 +1542,8 @@ class DiscoverTest(TaskTest):
       source=self.sources[0].key,
       status='complete',
     )], ignore=('activities_json', 'urls_to_activity', 'response_json', 'original_posts'))
+    self.assert_tasks(*[
+      {'queue': 'propagate', 'response_key': resp} for resp in self.responses[:4]])
 
 
 class PropagateTest(TaskTest):
@@ -1630,28 +1582,43 @@ class PropagateTest(TaskTest):
   def expect_webmention(self, source_url=None, target='http://target1/post/url',
                         endpoint='http://webmention/endpoint',
                         discover=True, send=None, discover_status=200,
-                        send_status=200, **kwargs):
+                        send_status=200, error=None, **kwargs):
     if source_url is None:
       source_url = f'http://localhost/comment/fake/{self.sources[0].key.string_id()}/a/1_2_a'
 
-    # discover
+    if not hasattr(self, '_wm_get_by_url'):
+      self._wm_get_by_url = {}
+      self._wm_post_by_target = {}
+
     if discover:
-      html = f'<html><link rel="webmention" href="{endpoint or ""}"></html>'
-      call = self.expect_requests_get(target, html, status_code=discover_status,
-                                      **kwargs).InAnyOrder()
+      if error is not None:
+        self._wm_get_by_url[target] = error
+      else:
+        html = f'<html><link rel="webmention" href="{endpoint or ""}"></html>'
+        content_type = kwargs.get('content_type', 'text/html; charset=utf-8')
+        resp = requests_response(html, status=discover_status, content_type=content_type)
+        if kwargs.get('response_headers'):
+          resp.headers.update(kwargs['response_headers'])
+        self._wm_get_by_url[target] = resp
 
-    # send
-    if send:
-      assert endpoint
-    if send or (send is None and endpoint):
-      call = self.expect_requests_post(endpoint, data={
-        'source': source_url,
-        'target': target,
-      }, status_code=send_status, allow_redirects=False,
-        timeout=tasks.WEBMENTION_SEND_TIMEOUT.total_seconds(), **kwargs,
-      ).InAnyOrder()
+    if send or (send is None and endpoint and error is None):
+      self._wm_post_by_target[target] = requests_response('', status=send_status)
 
-    return call
+    def get_side_effect(url, **kw):
+      val = self._wm_get_by_url.get(url)
+      if val is None:
+        return requests_response('', url=url)
+      if isinstance(val, Exception):
+        raise val
+      return val
+
+    self.mock_get.side_effect = get_side_effect
+
+    def post_side_effect(url, **kw):
+      t = kw.get('data', {}).get('target')
+      return self._wm_post_by_target.get(t, requests_response(''))
+
+    self.mock_post.side_effect = post_side_effect
 
   def test_propagate(self):
     """Normal propagate tasks."""
@@ -1665,7 +1632,6 @@ class PropagateTest(TaskTest):
         f'http://localhost/react/fake/{id}/a/bob/a_scissors_by_bob',
     ):
       self.expect_webmention(source_url=url)
-    self.mox.ReplayAll()
 
     now = NOW
     util.now = lambda: now
@@ -1684,7 +1650,6 @@ class PropagateTest(TaskTest):
     self.responses[0].put()
 
     self.expect_webmention()
-    self.mox.ReplayAll()
     self.post_task()
     self.assert_response_is('complete', NOW + LEASE_LENGTH,
                             sent=['http://target1/post/url'])
@@ -1708,7 +1673,6 @@ class PropagateTest(TaskTest):
     self.expect_webmention(target='http://6', send_status=500)
     self.expect_webmention(target='http://9', send_status=429)
 
-    self.mox.ReplayAll()
     self.post_task(expected_status=ERROR_HTTP_RETURN_CODE)
     self.assert_response_is('error',
                             sent=['http://7', 'http://1', 'http://8'],
@@ -1723,7 +1687,6 @@ class PropagateTest(TaskTest):
     # second webmention should use the cached endpoint
     self.expect_webmention(discover=False)
 
-    self.mox.ReplayAll()
     self.post_task()
 
     self.responses[0].status = 'new'
@@ -1735,7 +1698,6 @@ class PropagateTest(TaskTest):
     self.expect_webmention(endpoint=None)
     # second time shouldn't try to send a webmention
 
-    self.mox.ReplayAll()
     self.post_task()
     self.assert_response_is('complete', skipped=['http://target1/post/url'])
 
@@ -1746,12 +1708,18 @@ class PropagateTest(TaskTest):
 
   def test_errors_and_caching_endpoint(self):
     """Only cache on wm endpoint failures, not discovery failures."""
-    self.expect_webmention(send=False).AndRaise(requests.ConnectionError())
-    # shouldn't have a cached endpoint
-    self.expect_webmention(send_status=500)
-    # should have and use a cached endpoint
-    self.expect_webmention(discover=False)
-    self.mox.ReplayAll()
+    # first: discover fails with ConnectionError, endpoint not cached
+    # second: discover succeeds, POST returns 500, endpoint is cached
+    # third: endpoint cached, POST returns 200
+    html = '<html><link rel="webmention" href="http://webmention/endpoint"></html>'
+    self.mock_get.side_effect = [
+      requests.ConnectionError(),
+      requests_response(html),
+    ]
+    self.mock_post.side_effect = [
+      requests_response('', status=500),
+      requests_response(''),
+    ]
 
     self.post_task(expected_status=ERROR_HTTP_RETURN_CODE)
     self.assert_response_is('error', error=['http://target1/post/url'])
@@ -1768,10 +1736,15 @@ class PropagateTest(TaskTest):
 
   def test_cached_webmention_discovery_shouldnt_refresh_cache(self):
     """A cached webmention discovery shouldn't be written back to the cache."""
-    # first wm discovers and finds no endpoint, second uses cache, third rediscovers
-    self.expect_webmention(endpoint=None)
-    self.expect_webmention()
-    self.mox.ReplayAll()
+    # first wm discovers and finds no endpoint, second uses cache (no GET),
+    # third rediscovers after TTL expires
+    html_no_endpoint = '<html><link rel="webmention" href=""></html>'
+    html_endpoint = '<html><link rel="webmention" href="http://webmention/endpoint"></html>'
+    self.mock_get.side_effect = [
+      requests_response(html_no_endpoint),
+      requests_response(html_endpoint),
+    ]
+    self.mock_post.return_value = requests_response('')
 
     # inject a fake time.time into the cache
     now = time.time()
@@ -1801,25 +1774,23 @@ class PropagateTest(TaskTest):
     self.responses[0].put()
 
     self.expect_webmention(target='http://foo/good')
-    self.mox.ReplayAll()
 
     self.post_task()
     self.assert_response_is('complete', sent=['http://foo/good'])
 
   def test_non_html_url(self):
     """Target URLs that aren't HTML should be ignored."""
-    self.expect_requests_head('http://target1/post/url',
-                              content_type='application/mpeg')
-    self.mox.ReplayAll()
+    self.mock_head.side_effect = None
+    self.mock_head.return_value = requests_response('', url='http://target1/post/url', content_type='application/mpeg')
     self.post_task()
     self.assert_response_is('complete')
 
   def test_non_html_file(self):
     """If our HEAD fails, we should still require content-type text/html."""
-    self.expect_requests_head('http://target1/post/url', status_code=405)
+    self.mock_head.side_effect = None
+    self.mock_head.return_value = requests_response('', url='http://target1/post/url', status=405)
     self.expect_webmention(content_type='image/gif', send=False)
 
-    self.mox.ReplayAll()
     self.post_task()
     self.assert_response_is('complete', skipped=['http://target1/post/url'])
 
@@ -1832,21 +1803,18 @@ class PropagateTest(TaskTest):
                            # we should ignore an error response's content type
                            content_type='text/html')
 
-    self.mox.ReplayAll()
     self.post_task()
     self.assert_response_is('complete', failed=['http://this/is/a.pdf'])
 
   def test_content_type_html_with_charset(self):
     """We should handle Content-Type: text/html; charset=... ok."""
     self.expect_webmention(content_type='text/html; charset=utf-8')
-    self.mox.ReplayAll()
     self.post_task()
     self.assert_response_is('complete', sent=['http://target1/post/url'])
 
   def test_no_content_type_header(self):
     """If the Content-Type header is missing, we should assume text/html."""
     self.expect_webmention(content_type=None)
-    self.mox.ReplayAll()
     self.post_task()
     self.assert_response_is('complete', sent=['http://target1/post/url'])
 
@@ -1854,32 +1822,29 @@ class PropagateTest(TaskTest):
     """We should support rel=webmention (no quotes) in the Link header."""
     self.expect_webmention(
       response_headers={'Link': '<http://webmention/endpoint>; rel=webmention'})
-    self.mox.ReplayAll()
     self.post_task()
     self.assert_response_is('complete', sent=['http://target1/post/url'])
 
   def test_webmention_post_accept_header(self):
     """The webmention POST request should send Accept: */*."""
-    self.expect_requests_get(
-      'http://target1/post/url', timeout=15,
-      response_headers={'Link': '<http://my/endpoint>; rel=webmention'})
+    resp = requests_response('')
+    resp.headers['Link'] = '<http://my/endpoint>; rel=webmention'
+    self.mock_get.return_value = resp
 
-    self.expect_requests_post(
-      'http://my/endpoint', timeout=tasks.WEBMENTION_SEND_TIMEOUT.total_seconds(),
-      data={'source': 'http://localhost/comment/fake/0123456789/a/1_2_a',
-            'target': 'http://target1/post/url'},
-      allow_redirects=False, headers={'Accept': '*/*'})
-
-    self.mox.ReplayAll()
     self.post_task()
     self.assert_response_is('complete', sent=['http://target1/post/url'])
+    self.assert_requests_get('http://target1/post/url')
+    call = next(c for c in self.mock_post.call_args_list if c.args[0] == 'http://my/endpoint')
+    self.assertEqual({'source': 'http://localhost/comment/fake/0123456789/a/1_2_a',
+                      'target': 'http://target1/post/url'}, call.kwargs['data'])
+    self.assertFalse(call.kwargs['allow_redirects'])
+    self.assertEqual('*/*', call.kwargs['headers']['Accept'])
 
   def test_no_targets(self):
     """No target URLs."""
     self.responses[0].unsent = []
     self.responses[0].put()
 
-    self.mox.ReplayAll()
     self.post_task()
     self.assert_response_is('complete', NOW + LEASE_LENGTH)
 
@@ -1892,7 +1857,6 @@ class PropagateTest(TaskTest):
     self.responses[0].put()
 
     self.expect_webmention(target=url)
-    self.mox.ReplayAll()
 
     self.post_task()
     self.assert_response_is('complete', sent=[url])
@@ -1919,7 +1883,6 @@ class PropagateTest(TaskTest):
     # target is in source.domains
     self.expect_webmention(target='http://foo/2', endpoint='http://yes')
 
-    self.mox.ReplayAll()
     self.post_task()
     self.assert_equals('http://yes', self.sources[0].key.get().webmention_endpoint)
 
@@ -1945,7 +1908,6 @@ class PropagateTest(TaskTest):
     self.responses[0].put()
 
     self.expect_webmention()
-    self.mox.ReplayAll()
     self.post_task()
     self.assert_response_is('complete', NOW + LEASE_LENGTH,
                            sent=['http://target1/post/url'])
@@ -1995,31 +1957,26 @@ class PropagateTest(TaskTest):
 
   def test_webmention_no_endpoint(self):
     self.expect_webmention(endpoint=None)
-    self.mox.ReplayAll()
     self.post_task()
     self.assert_response_is('complete', skipped=['http://target1/post/url'])
 
   def test_webmention_discover_400(self):
     self.expect_webmention(discover_status=400)
-    self.mox.ReplayAll()
     self.post_task()
     self.assert_response_is('complete', sent=['http://target1/post/url'])
 
   def test_webmention_send_400(self):
     self.expect_webmention(send_status=400)
-    self.mox.ReplayAll()
     self.post_task()
     self.assert_response_is('complete', failed=['http://target1/post/url'])
 
   def test_webmention_discover_500(self):
     self.expect_webmention(discover_status=500)
-    self.mox.ReplayAll()
     self.post_task()
     self.assert_response_is('complete', sent=['http://target1/post/url'])
 
   def test_webmention_send_500(self):
     self.expect_webmention(send_status=500)
-    self.mox.ReplayAll()
     self.post_task(expected_status=ERROR_HTTP_RETURN_CODE)
     self.assert_response_is('error', error=['http://target1/post/url'])
 
@@ -2036,7 +1993,6 @@ class PropagateTest(TaskTest):
     self.expect_webmention(target='http://first', send_status=500)
     self.expect_webmention(target='http://second')
 
-    self.mox.ReplayAll()
     self.post_task(expected_status=ERROR_HTTP_RETURN_CODE)
     self.assert_response_is('error', None, error=['http://first'],
                            sent=['http://second'])
@@ -2046,9 +2002,8 @@ class PropagateTest(TaskTest):
     """Exceptions on individual target URLs shouldn't stop the whole task."""
     self.responses[0].unsent = ['http://error', 'http://good']
     self.responses[0].put()
-    self.expect_webmention(target='http://error').AndRaise(Exception('foo'))
+    self.expect_webmention(target='http://error', error=Exception('foo'))
     self.expect_webmention(target='http://good')
-    self.mox.ReplayAll()
 
     self.post_task(expected_status=ERROR_HTTP_RETURN_CODE)
     self.assert_response_is('error', None, error=['http://error'],
@@ -2060,9 +2015,8 @@ class PropagateTest(TaskTest):
     https://github.com/snarfed/bridgy/issues/254
     """
     self.responses[0].put()
-    self.expect_webmention(send=False).AndRaise(
-      requests.exceptions.ConnectionError('DNS lookup failed for URL: foo'))
-    self.mox.ReplayAll()
+    self.expect_webmention(send=False,
+      error=requests.exceptions.ConnectionError('DNS lookup failed for URL: foo'))
 
     self.post_task()
     self.assert_response_is('complete', failed=['http://target1/post/url'])
@@ -2073,23 +2027,19 @@ class PropagateTest(TaskTest):
     https://github.com/snarfed/bridgy/issues/273
     """
     too_long = 'http://host/' + 'x' * _MAX_STRING_LENGTH
-    self.expect_requests_head('http://target1/post/url', redirected_url=too_long)
-    self.mox.ReplayAll()
+    self.mock_head.side_effect = lambda url, **kw: requests_response('', url=too_long)
 
     self.post_task()
     self.assert_response_is('complete', failed=['http://target1/post/url'])
 
+  @patch.object(util, 'DEBUG', new=False)
   def test_translate_appspot_to_brid_gy(self):
     """Tasks on brid-gy.appspot.com should translate source URLs to brid.gy."""
-    self.mox.StubOutWithMock(util, 'DEBUG')
-    util.DEBUG = False
-
     self.responses[0].unsent = ['http://good']
     self.responses[0].put()
     source_url = f'https://brid.gy/comment/fake/{self.sources[0].key.string_id()}/a/1_2_a'
     self.expect_webmention(source_url=source_url, target='http://good')
 
-    self.mox.ReplayAll()
     self.post_task(base_url='http://brid-gy.appspot.com')
 
   def test_activity_id_not_tag_uri(self):
@@ -2104,7 +2054,6 @@ class PropagateTest(TaskTest):
     source_url = f'https://brid.gy/comment/fake/{self.sources[0].key.string_id()}/AAA/1_2_a'
     self.expect_webmention(source_url=source_url, target='http://good')
 
-    self.mox.ReplayAll()
     self.post_task(base_url='https://brid.gy')
 
   def test_response_with_multiple_activities(self):
@@ -2121,7 +2070,6 @@ class PropagateTest(TaskTest):
     self.expect_webmention(source_url=source_url % '111', target='http://BBB')
     self.expect_webmention(source_url=source_url % '222', target='http://CCC')
 
-    self.mox.ReplayAll()
     self.post_task(base_url='https://brid.gy')
 
   def test_response_with_single_activity(self):
@@ -2135,16 +2083,12 @@ class PropagateTest(TaskTest):
       source_url=f'https://brid.gy/comment/fake/{self.sources[0].key.string_id()}/000/1_2_a',
       target='http://AAA')
 
-    self.mox.ReplayAll()
     self.post_task(base_url='https://brid.gy')
 
-  def test_complete_exception(self):
+  @patch.object(tasks.PropagateResponse, 'complete', side_effect=Exception('foo'))
+  def test_complete_exception(self, _):
     """If completing raises an exception, the lease should be released."""
     self.expect_webmention()
-    self.mox.StubOutWithMock(tasks.PropagateResponse, 'complete')
-    tasks.PropagateResponse.complete().AndRaise(Exception('foo'))
-    self.mox.ReplayAll()
-
     self.post_task(expected_status=500)
     self.assert_response_is('error', None, sent=['http://target1/post/url'])
 
@@ -2157,9 +2101,10 @@ class PropagateTest(TaskTest):
     https://github.com/snarfed/bridgy/issues/237
     """
     orig = list(self.responses[0].unsent)
-    self.responses[0].urls_to_activity = json_dumps({'bad': 9})
+    # urls_to_activity maps target URL to activity index; index 9 is out of
+    # range (only 1 activity), so source_url() will raise IndexError
+    self.responses[0].urls_to_activity = json_dumps({'http://target1/post/url': 9})
     self.responses[0].put()
-    self.mox.ReplayAll()
     self.post_task(expected_status=ERROR_HTTP_RETURN_CODE)
     self.assert_response_is('error', error=orig)
 
@@ -2172,7 +2117,6 @@ class PropagateTest(TaskTest):
     self.responses[0].put()
 
     self.expect_webmention(source_url='http://localhost/comment/fake/0123456789/1_2_a/1_2_a')
-    self.mox.ReplayAll()
 
     self.post_task()
     self.assert_response_is('complete', sent=['http://target1/post/url'])
@@ -2190,7 +2134,6 @@ class PropagateTest(TaskTest):
     self.responses[0].put()
 
     self.expect_webmention(source_url='http://localhost/comment/fake/0123456789/555/1_2_a')
-    self.mox.ReplayAll()
 
     self.post_task()
     self.assert_response_is('complete', sent=['http://target1/post/url'])
@@ -2204,11 +2147,12 @@ class PropagateTest(TaskTest):
     blogpost = models.BlogPost(id='http://x', source=source_key, unsent=links)
     blogpost.put()
 
-    self.expect_requests_head('http://fake/post')
-    self.expect_requests_head('http://ok/one.png', content_type='image/png')
-    self.expect_requests_head('http://ok/two')
+    def head_side_effect(url, **kw):
+      if url == 'http://ok/one.png':
+        return requests_response('', url=url, content_type='image/png')
+      return requests_response('', url=url)
+    self.mock_head.side_effect = head_side_effect
     self.expect_webmention(source_url='http://x', target='http://ok/two')
-    self.mox.ReplayAll()
 
     self.post_url = '/_ah/queue/propagate-blogpost'
     super().post_task(params={'key': blogpost.key.urlsafe().decode()})
@@ -2222,12 +2166,10 @@ class PropagateTest(TaskTest):
                                unsent=['https://brid.gy/publish/twitter'])
     blogpost.put()
 
-    self.expect_requests_head('https://brid.gy/publish/twitter')
     self.expect_webmention(
       source_url='http://x',
       target='https://brid.gy/publish/twitter',
       endpoint='https://brid.gy/publish/webmention')
-    self.mox.ReplayAll()
 
     self.post_url = '/_ah/queue/propagate-blogpost'
     super().post_task(params={'key': blogpost.key.urlsafe().decode()})
@@ -2240,9 +2182,7 @@ class PropagateTest(TaskTest):
                                unsent=['http://will/redirect'])
     blogpost.put()
 
-    self.expect_requests_head('http://will/redirect',
-                              redirected_url='http://www.fake/self/link')
-    self.mox.ReplayAll()
+    self.mock_head.side_effect = lambda url, **kw: requests_response('', url='http://www.fake/self/link' if url == 'http://will/redirect' else url)
 
     self.post_url = '/_ah/queue/propagate-blogpost'
     super().post_task(params={'key': blogpost.key.urlsafe().decode()})
@@ -2259,7 +2199,6 @@ class PropagateTest(TaskTest):
     self.responses[0].put()
 
     self.expect_webmention(source_url='http://localhost/post/fake/0123456789/a')
-    self.mox.ReplayAll()
     self.post_task()
 
 

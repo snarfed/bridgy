@@ -11,11 +11,12 @@ from google.cloud import ndb
 from google.cloud.tasks_v2.types import Task
 from granary import as1
 from granary import source as gr_source
-from mox3 import mox
+from unittest.mock import patch
+
 from oauth_dropins import views as oauth_views
 from oauth_dropins.models import BaseAuth
 from webutil import testutil
-from webutil.testutil import NOW
+from webutil.testutil import NOW, requests_response, UrlopenResult
 from webutil import util as webutil_util
 from webutil.util import json_dumps, json_loads
 import requests
@@ -39,8 +40,18 @@ class FakeGrSource(gr_source.Source):
   """Fake granary source class.
 
   Attributes:
-    activities, actor, like, reaction, share, event, rsvp, etag, search_results,
-    last_search_query, blocked_ids
+    * activities
+    * actor
+    * blocked_ids
+    * comment
+    * etag
+    * event
+    * last_search_query
+    * like
+    * reaction
+    * rsvp
+    * search_results
+    * share
   """
   NAME = 'FakeSource'
   DOMAIN = 'fa.ke'
@@ -74,6 +85,9 @@ class FakeGrSource(gr_source.Source):
 
   def get_blocklist_ids(self, *args, **kwargs):
     return copy.deepcopy(self.blocklist_ids)
+
+  def is_blocked(self, obj):
+    return obj.get('author', {}).get('id') in self.blocklist_ids
 
   @classmethod
   def clear(cls):
@@ -275,6 +289,9 @@ class FakeSource(Source):
   def next_key(cls):
     return ndb.Key(cls, str(cls.string_id_counter))
 
+  def create_comment(self, *args, **kwargs):
+    return {'id': 'fake id'}
+
 
 class FakeBlogSource(FakeSource):
   SHORT_NAME = 'fake_blog'
@@ -297,13 +314,23 @@ class TestCase(testutil.TestCase):
   def setUp(self):
     super().setUp()
     FakeGrSource.clear()
+    FakeSource.create_comment_calls = []
+
+    self.mock_get = self.start_patch(util.session, 'get',
+                                     return_value=requests_response(''))
+    self.mock_post = self.start_patch(util.session, 'post',
+                                      return_value=requests_response(''))
+    self.mock_head = self.start_patch(util.session, 'head',
+                                      side_effect=lambda url, **kw: requests_response('', url=url))
+    self.mock_urlopen = self.start_patch(util.urllib.request, 'urlopen',
+                                         return_value=UrlopenResult(200, ''))
 
     # add FakeSource everywhere necessary
     util.BLOCKLIST.add('fa.ke')
 
     util.webmention_endpoint_cache.clear()
-    self.stubbed_create_task = False
-    tasks_client.create_task = lambda *args, **kwargs: Task(name='foo')
+    self.mock_create_task = self.start_patch(tasks_client, 'create_task',
+                                             return_value=Task(name='my task'))
 
     self.client = self.app.test_client()
     self.client.__enter__()
@@ -489,53 +516,60 @@ class TestCase(testutil.TestCase):
     resp = orig_requests_post(f'http://0.0.0.0:8089/reset')
     resp.raise_for_status()
 
-  def stub_create_task(self):
-    if not self.stubbed_create_task:
-      self.mox.StubOutWithMock(tasks_client, 'create_task')
-      self.stubbed_create_task = True
+  def _task_spec(self, create_task_request):
+    """Converts a tasks_client.create_task call's request into a comparable
+    dict: queue name and request body kwargs.
+    """
+    queue = create_task_request.parent.rsplit('/', 1)[-1]
+    body = create_task_request.task.app_engine_http_request.body.decode()
+    return {'queue': queue, **dict(urllib.parse.parse_qsl(body))}
 
-  def expect_task(self, queue, eta_seconds=None, **kwargs):
-    self.stub_create_task()
+  def assert_tasks(self, *expected):
+    """Asserts that exactly these tasks were created since the last
+    assert_task(s) call, in any order, then resets the mock's call history.
 
-    def check_task(task):
-      if not task.parent.endswith('/' + queue):
-        # These can help for debugging, but can also be misleading, since many
-        # tests insert multiple tasks, so check_task() runs on all of them (due
-        # to InAnyOrder() below) until it finds one that matches.
-        # print("expect_task: %s doesn't end with /%s!" % (task.parent, queue))
-        return False
+    This is way too over-engineered. TODO: simplify.
 
-      req = task.task.app_engine_http_request
-      if not req.relative_uri.endswith('/' + queue):
-        # print("expect_task: relative_uri %s doesn't end with /%s!" % (
-        #   req.relative_uri, queue))
-        return False
+    Args:
+      expected: dicts with a 'queue' key, the expected request body kwargs,
+        and optionally 'eta_seconds' to check the task's schedule time
+        approximately, eg {'queue': 'propagate', 'response_key': response}.
+    """
+    actual = [c.args[0] for c in self.mock_create_task.call_args_list]
+    actual_specs = [self._task_spec(a) for a in actual]
 
-      # convert model objects and keys to url-safe key strings for comparison
-      for name, val in kwargs.items():
-        if isinstance(val, ndb.Model):
-          kwargs[name] = val.key.urlsafe().decode()
-        elif isinstance(val, ndb.Key):
-          kwargs[name] = val.urlsafe().decode()
-
-      got = set(urllib.parse.parse_qsl(req.body.decode()))
-      expected = set(kwargs.items())
-      if got != expected:
-        # print('expect_task: expected %s, got %s' % (expected, got))
-        return False
-
+    expected_etas = {}
+    expected_specs = []
+    for i, exp in enumerate(expected):
+      exp = dict(exp)
+      eta_seconds = exp.pop('eta_seconds', None)
       if eta_seconds is not None:
-        got = (util.to_utc_timestamp(task.task.schedule_time) -
-               util.to_utc_timestamp(util.now()))
-        delta = eta_seconds * .2 + 10
-        if not (got + delta >= eta_seconds >= got - delta):
-          # print('expect_task: expected schedule_time %r, got %r' % (eta_seconds, got))
-          return False
+        expected_etas[i] = eta_seconds
+      for name, val in exp.items():
+        if isinstance(val, ndb.Model):
+          exp[name] = val.key.urlsafe().decode()
+        elif isinstance(val, ndb.Key):
+          exp[name] = val.urlsafe().decode()
+      expected_specs.append(exp)
 
-      return True
+    self.assertCountEqual(expected_specs, actual_specs)
 
-    return tasks_client.create_task(
-      mox.Func(check_task)).InAnyOrder().AndReturn(Task(name='my task'))
+    for i, eta_seconds in expected_etas.items():
+      task = actual[actual_specs.index(expected_specs[i])]
+      got_eta = (util.to_utc_timestamp(task.task.schedule_time) -
+                 util.to_utc_timestamp(util.now()))
+      delta = eta_seconds * .2 + 10
+      self.assertTrue(got_eta + delta >= eta_seconds >= got_eta - delta,
+                      f'{eta_seconds} !~= {got_eta}')
+
+    self.mock_create_task.reset_mock()
+
+  def assert_task(self, queue, eta_seconds=None, **kwargs):
+    """Asserts that exactly one task was created, with this queue and kwargs."""
+    spec = {'queue': queue, **kwargs}
+    if eta_seconds is not None:
+      spec['eta_seconds'] = eta_seconds
+    self.assert_tasks(spec)
 
 
 class AppTest(TestCase):

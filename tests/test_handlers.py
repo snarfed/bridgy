@@ -2,9 +2,9 @@
 import html
 import io
 import urllib.request, urllib.error, urllib.parse
+from unittest.mock import patch
 
-from mox3 import mox
-from webutil.testutil import enable_flask_caching
+from webutil.testutil import enable_flask_caching, requests_response
 from util import json_dumps, json_loads
 
 from flask_app import app
@@ -173,46 +173,30 @@ asdf http://other/link qwert
   def test_ignore_unknown_query_params(self):
     self.check_response('/post/fake/%s/000?target=x/y/z')
 
-  def test_pass_through_source_errors(self):
-    user_id = self.source.key.string_id()
-    err = urllib.error.HTTPError('url', 410, 'Gone', {},
-                            io.StringIO('Gone baby gone'))
-    self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities')
-    testutil.FakeSource.get_activities(activity_id='000', user_id=user_id
-                                      ).AndRaise(err)
-    self.mox.ReplayAll()
-
+  @patch.object(FakeGrSource, 'get_activities_response',
+               side_effect=urllib.error.HTTPError('url', 410, 'Gone', {},
+                                                  io.StringIO('Gone baby gone')))
+  def test_pass_through_source_errors(self, _):
     resp = self.check_response('/post/fake/%s/000', expected_status=410)
     self.assertEqual('text/plain; charset=utf-8', resp.headers['Content-Type'])
     self.assertIn('Gone baby gone', resp.get_data(as_text=True))
 
-  def test_connection_failures_504(self):
-    user_id = self.source.key.string_id()
-    self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities')
-    testutil.FakeSource.get_activities(activity_id='000', user_id=user_id
-        ).AndRaise(Exception('Connection closed unexpectedly'))
-    self.mox.ReplayAll()
+  @patch.object(FakeGrSource, 'get_activities_response',
+               side_effect=Exception('Connection closed unexpectedly'))
+  def test_connection_failures_504(self, _):
     resp = self.check_response('/post/fake/%s/000', expected_status=504)
     self.assertIn('Connection closed unexpectedly', resp.get_data(as_text=True))
 
-  def test_handle_disable_source(self):
-    self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities')
-    testutil.FakeSource.get_activities(
-      activity_id='000', user_id=self.source.key.string_id()
-      ).AndRaise(models.DisableSource())
-    self.mox.ReplayAll()
-
+  @patch.object(FakeGrSource, 'get_activities_response',
+               side_effect=models.DisableSource())
+  def test_handle_disable_source(self, _):
     resp = self.check_response('/post/fake/%s/000', expected_status=401)
     self.assertIn("Bridgy's access to your account has expired",
                   html.unescape(resp.get_data(as_text=True)))
 
-  def test_handle_value_error(self):
-    self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities')
-    testutil.FakeSource.get_activities(
-      activity_id='000', user_id=self.source.key.string_id()
-      ).AndRaise(ValueError('foo bar'))
-    self.mox.ReplayAll()
-
+  @patch.object(FakeGrSource, 'get_activities_response',
+               side_effect=ValueError('foo bar'))
+  def test_handle_value_error(self, _):
     resp = self.check_response('/post/fake/%s/000', expected_status=400)
     self.assertIn('FakeSource error: foo bar', resp.get_data(as_text=True))
 
@@ -237,42 +221,23 @@ asdf http://other/link qwert
 </article>
 """)
 
+  @patch.object(FakeGrSource, 'OPTIMIZED_COMMENTS', new=True)
   def test_comment_optimized_comments(self):
-    self.mox.StubOutWithMock(self.source.gr_source, 'OPTIMIZED_COMMENTS')
-    self.source.gr_source.OPTIMIZED_COMMENTS = True
-
-    self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities')
-    testutil.FakeSource.get_activities(
-      activity_id='000', user_id=self.source.key.string_id(), fetch_replies=False,
-      ).AndReturn(self.activities[0])
-    self.mox.ReplayAll()
+    FakeGrSource.activities = [self.activities[0]]
 
     self.check_response('/comment/fake/%s/000/a1')
 
+  @patch.object(FakeGrSource, 'OPTIMIZED_COMMENTS', new=True)
   def test_comment_optimized_comments_activity_has_replies(self):
-    self.mox.StubOutWithMock(self.source.gr_source, 'OPTIMIZED_COMMENTS')
-    self.source.gr_source.OPTIMIZED_COMMENTS = True
-
-    replies = self.activities[0]['object']['replies'] = {
-      'items': [{
-        'objectType': 'comment',
-        'id': f'tag:source.com,2013:1_2_{id}',
-        'url': 'http://fa.ke/comment/url',
-        'content': 'foo bar',
-      }],
+    reply = {
+      'objectType': 'comment',
+      'id': f'tag:source.com,2013:1_2_{id}',
+      'url': 'http://fa.ke/comment/url',
+      'content': 'foo bar',
     }
-
-    self.mox.StubOutWithMock(testutil.FakeSource, 'get_activities')
-    testutil.FakeSource.get_activities(
-      activity_id='000', user_id=self.source.key.string_id(), fetch_replies=False,
-      ).AndReturn([self.activities[0]])
-
-    self.mox.StubOutWithMock(FakeSource, 'get_comment')
-    FakeSource.get_comment('a1', activity_id='000',
-                           activity_author_id=self.source.key_id(),
-                           activity=self.activities[0]).AndReturn(
-                             replies['items'][0])
-    self.mox.ReplayAll()
+    self.activities[0]['object']['replies'] = {'items': [reply]}
+    FakeGrSource.activities = [self.activities[0]]
+    FakeGrSource.comment = reply
 
     self.check_response('/comment/fake/%s/000/a1')
 
@@ -434,11 +399,8 @@ asdf http://other/link qwert
 </article>
 """)
 
-  def test_granary_source_user_url_not_implemented(self):
-    self.mox.StubOutWithMock(FakeGrSource, 'user_url')
-    FakeGrSource.user_url('reposter_id').AndRaise(NotImplementedError())
-    self.mox.ReplayAll()
-
+  @patch.object(FakeGrSource, 'user_url', side_effect=NotImplementedError())
+  def test_granary_source_user_url_not_implemented(self, _):
     FakeGrSource.share = {
       'objectType': 'activity',
       'verb': 'share',
@@ -455,12 +417,12 @@ asdf http://other/link qwert
       'inReplyTo': [{'url': 'http://fa.ke/000'}],
     }
 
-    self.expect_requests_head('https://fa.ke/000').InAnyOrder()
-    self.expect_requests_head(
-      'http://or.ig/post', redirected_url='http://or.ig/post/redirect').InAnyOrder()
-    self.expect_requests_head(
-      'http://other/link', redirected_url='http://other/link/redirect').InAnyOrder()
-    self.mox.ReplayAll()
+    redirects = {
+      'http://or.ig/post': 'http://or.ig/post/redirect',
+      'http://other/link': 'http://other/link/redirect',
+    }
+    self.mock_head.side_effect = lambda url, **kw: requests_response(
+      '', url=redirects.get(url, url))
 
     self.check_response('/comment/fake/%s/000/111', """\
 <article class="h-entry">
@@ -544,8 +506,8 @@ asdf http://other/link qwert
     self.assertEqual(200, resp.status_code)
 
   def test_in_blocklist(self):
-    self.mox.StubOutWithMock(FakeSource, 'is_blocked')
-    FakeSource.is_blocked(mox.IgnoreArg()).AndReturn(True)
-    self.mox.ReplayAll()
+    FakeGrSource.comment = dict(FakeGrSource.comment, author={'numeric_id': 'blocked'})
+    self.source.blocked_ids = ['blocked']
+    self.source.put()
 
     self.check_response('/comment/fake/%s/000/111', expected_status=410)

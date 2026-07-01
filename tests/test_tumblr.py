@@ -1,7 +1,7 @@
 """Unit tests for tumblr.py."""
 from flask import get_flashed_messages
-from mox3 import mox
 from oauth_dropins.tumblr import TumblrAuth
+from webutil.testutil import requests_response
 from webutil.util import json_dumps, json_loads
 from werkzeug.exceptions import BadRequest
 
@@ -32,15 +32,10 @@ class TumblrTest(testutil.AppTest):
         })
     return params
 
-  def expect_thread_details(self, resp=None, **kwargs):
+  def expect_thread_details(self, resp=None):
     if resp is None:
       resp = {'response': {'id': '87654'}}
-    self.expect_requests_get(
-      tumblr.DISQUS_API_THREAD_DETAILS_URL,
-      json_dumps(resp),
-      params=self.disqus_params({'forum': 'my-disqus-name',
-                                 'thread':'link:http://primary/post/123999'}),
-      **kwargs)
+    self.mock_get.return_value = requests_response(json_dumps(resp))
 
   def test_new(self):
     t = Tumblr.new(auth_entity=self.auth_entity)
@@ -84,70 +79,74 @@ class TumblrTest(testutil.AppTest):
       '  dsq.src = "http://my-disqus-name.disqus.com/embed.js";')
 
   def _test_verify_finds_disqus(self, snippet):
-    self.expect_requests_get(
-      'http://primary/', f'<html>\nstuff\n{snippet}\n</html>')
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response(f'<html>\nstuff\n{snippet}\n</html>')
     t = Tumblr.new(auth_entity=self.auth_entity, features=['webmention'])
     t.verify()
     self.assertEqual('my-disqus-name', t.disqus_shortname)
+    self.assert_requests_get('http://primary/')
 
   def test_verify_without_disqus(self):
-    self.expect_requests_get('http://primary/', 'no disqus here!')
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response('no disqus here!')
     t = Tumblr.new(auth_entity=self.auth_entity, features=['webmention'])
     t.verify()
     self.assertIsNone(t.disqus_shortname)
+    self.assert_requests_get('http://primary/')
 
   def test_create_comment(self):
     self.expect_thread_details()
-    self.expect_requests_post(
-      tumblr.DISQUS_API_CREATE_POST_URL,
-      json_dumps({'response': {'ok': 'sgtm'}}),
-      params=self.disqus_params({
-            'thread': '87654',
-            'message': '<a href="http://who">who</a>: foo bar'}))
-    self.mox.ReplayAll()
+    self.mock_post.return_value = requests_response(json_dumps({'response': {'ok': 'sgtm'}}))
 
     resp = self.tumblr.create_comment('http://primary/post/123999/xyz_abc?asdf',
                                       'who', 'http://who', 'foo bar')
     self.assertEqual({'ok': 'sgtm'}, resp)
+    self._assert_request(
+      self.mock_get, tumblr.DISQUS_API_THREAD_DETAILS_URL,
+      params=self.disqus_params({'forum': 'my-disqus-name',
+                                 'thread': 'link:http://primary/post/123999'}))
+    self._assert_request(
+      self.mock_post, tumblr.DISQUS_API_CREATE_POST_URL,
+      params=self.disqus_params({'thread': '87654',
+                                 'message': '<a href="http://who">who</a>: foo bar'}))
 
   def test_create_comment_with_unicode_chars(self):
     self.expect_thread_details()
-    self.expect_requests_post(
-      tumblr.DISQUS_API_CREATE_POST_URL,
-      json_dumps({}),
-      params=self.disqus_params({
-        'thread': '87654',
-        'message': '<a href="http://who">Degenève</a>: foo Degenève bar',
-      }))
-    self.mox.ReplayAll()
+    self.mock_post.return_value = requests_response(json_dumps({}))
 
     resp = self.tumblr.create_comment('http://primary/post/123999/xyz_abc',
                                       'Degenève', 'http://who', 'foo Degenève bar')
     self.assertEqual({}, resp)
+    self._assert_request(
+      self.mock_get, tumblr.DISQUS_API_THREAD_DETAILS_URL,
+      params=self.disqus_params({'forum': 'my-disqus-name',
+                                 'thread': 'link:http://primary/post/123999'}))
+    self._assert_request(
+      self.mock_post, tumblr.DISQUS_API_CREATE_POST_URL,
+      params=self.disqus_params({'thread': '87654',
+                                 'message': '<a href="http://who">Degenève</a>: foo Degenève bar'}))
 
   def test_create_comment_finds_disqus_shortname(self):
     self.tumblr.disqus_shortname = None
 
-    self.expect_requests_get('http://primary/post/123999',
-                             "fooo var disqus_shortname = 'my-disqus-name';")
-    self.expect_thread_details()
-    self.expect_requests_post(tumblr.DISQUS_API_CREATE_POST_URL,
-                              json_dumps({}), params=mox.IgnoreArg())
-    self.mox.ReplayAll()
+    self.mock_get.side_effect = [
+      requests_response("fooo var disqus_shortname = 'my-disqus-name';"),
+      requests_response(json_dumps({'response': {'id': '87654'}})),
+    ]
+    self.mock_post.return_value = requests_response(json_dumps({}))
 
     self.tumblr.create_comment('http://primary/post/123999', '', '', '')
     self.assertEqual('my-disqus-name', self.tumblr.key.get().disqus_shortname)
+    self.assert_requests_get('http://primary/post/123999')
+    self.assert_requests_get(tumblr.DISQUS_API_THREAD_DETAILS_URL)
+    self.assert_requests_post(tumblr.DISQUS_API_CREATE_POST_URL)
 
   def test_create_comment_doesnt_find_disqus_shortname(self):
     self.tumblr.disqus_shortname = None
 
-    self.expect_requests_get('http://primary/post/123999', 'no shortname here')
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response('no shortname here')
 
     with self.assertRaises(BadRequest):
       self.tumblr.create_comment('http://primary/post/123999', '', '', '')
+    self.assert_requests_get('http://primary/post/123999')
 
   # not implemented yet. see https://github.com/snarfed/bridgy/issues/177.
   # currently handled in webmention.error().

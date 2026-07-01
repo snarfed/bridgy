@@ -1,13 +1,13 @@
 """Unit tests for pages.py."""
 from datetime import datetime, timedelta, timezone
 from unittest import skip
+from unittest.mock import patch
 import urllib.request, urllib.parse, urllib.error
 from urllib.parse import urlencode, urlparse, parse_qs
 
 from flask import get_flashed_messages
 from google.cloud import ndb
-from mox3 import mox
-from webutil.testutil import NOW
+from webutil.testutil import NOW, requests_response
 from webutil.util import json_dumps, json_loads
 import tweepy
 
@@ -43,12 +43,11 @@ class PagesTest(testutil.AppTest):
 
   def test_poll_now(self):
     key = self.sources[0].key.urlsafe().decode()
-    self.expect_task ('poll-now', source_key=key, last_polled='1970-01-01-00-00-00')
-    self.mox.ReplayAll()
 
     resp = self.client.post('/poll-now', data={'key': key})
     self.assertEqual(302, resp.status_code)
     self.assertEqual(self.source_bridgy_url, resp.headers['Location'])
+    self.assert_task('poll-now', source_key=key, last_polled='1970-01-01-00-00-00')
 
   def test_retry(self):
     source = self.sources[0]
@@ -76,8 +75,6 @@ class PagesTest(testutil.AppTest):
     SyndicatedPost.insert(source, 'https://fa.ke/3', 'http://orig/3')
 
     key = resp.key.urlsafe().decode()
-    self.expect_task('propagate', response_key=key)
-    self.mox.ReplayAll()
 
     # cached webmention endpoint
     util.webmention_endpoint_cache['https skipped /'] = 'asdf'
@@ -101,18 +98,18 @@ class PagesTest(testutil.AppTest):
 
     # shouldn't have refetched h-feed
     self.assertEqual(last_hfeed_refetch, source.key.get().last_hfeed_refetch)
+    self.assert_task('propagate', response_key=key)
 
   def test_retry_redirect_to(self):
     key = self.responses[0].put().urlsafe().decode()
-    self.expect_task('propagate', response_key=key)
-    self.mox.ReplayAll()
 
     response = self.client.post('/retry', data={
-        'key': key,
-        'redirect_to': '/foo/bar',
-      })
+      'key': key,
+      'redirect_to': '/foo/bar',
+    })
     self.assertEqual(302, response.status_code)
     self.assertEqual('http://localhost/foo/bar', response.headers['Location'])
+    self.assert_task('propagate', response_key=key)
 
   def test_crawl_now(self):
     source = self.sources[0]
@@ -121,8 +118,6 @@ class PagesTest(testutil.AppTest):
     source.put()
 
     key = source.key.urlsafe().decode()
-    self.expect_task('poll-now', source_key=key, last_polled='1970-01-01-00-00-00')
-    self.mox.ReplayAll()
 
     response = self.client.post('/crawl-now', data={'key': key})
     self.assertEqual(302, response.status_code)
@@ -131,6 +126,7 @@ class PagesTest(testutil.AppTest):
     source = source.key.get()
     self.assertEqual(models.REFETCH_HFEED_TRIGGER, source.last_hfeed_refetch)
     self.assertIsNone(source.last_feed_syndication_url)
+    self.assert_task('poll-now', source_key=key, last_polled='1970-01-01-00-00-00')
 
   def test_poll_now_and_retry_response_missing_key(self):
     for endpoint in '/poll-now', '/retry':
@@ -142,10 +138,10 @@ class PagesTest(testutil.AppTest):
     key = self.sources[0].key.urlsafe().decode()
 
     resp = self.client.post('/delete/start', data={
-        'feature': 'listen',
-        'key': key,
-        'callback': 'http://withknown.com/bridgy_callback',
-      })
+      'feature': 'listen',
+      'key': key,
+      'callback': 'http://withknown.com/bridgy_callback',
+    })
 
     encoded_state = urllib.parse.quote_plus(json_dumps({
       'callback': 'http://withknown.com/bridgy_callback',
@@ -182,10 +178,10 @@ class PagesTest(testutil.AppTest):
   def test_delete_source_declined(self):
     key = self.sources[0].key.urlsafe().decode()
     resp = self.client.post('/delete/start', data={
-        'feature': 'listen',
-        'key': key,
-        'callback': 'http://withknown.com/bridgy_callback',
-      })
+      'feature': 'listen',
+      'key': key,
+      'callback': 'http://withknown.com/bridgy_callback',
+    })
 
     encoded_state = urllib.parse.quote_plus(json_dumps({
       'callback': 'http://withknown.com/bridgy_callback',
@@ -214,31 +210,26 @@ class PagesTest(testutil.AppTest):
         ('result', 'declined')
       ]), resp.headers['Location'])
 
-  def test_delete_start_redirect_url_http_error(self):
-    self.mox.StubOutWithMock(testutil.OAuthStart, 'redirect_url')
-    testutil.OAuthStart.redirect_url(state=mox.IgnoreArg()
-      ).AndRaise(tweepy.TweepyException('Connection closed unexpectedly...'))
-    self.mox.ReplayAll()
-
+  @patch.object(testutil.OAuthStart, 'redirect_url',
+                side_effect=tweepy.TweepyException('Connection closed unexpectedly...'))
+  def test_delete_start_redirect_url_http_error(self, _):
     resp = self.client.post('/delete/start', data={
-        'feature': 'listen',
-        'key': self.sources[0].key.urlsafe().decode(),
-      })
+      'feature': 'listen',
+      'key': self.sources[0].key.urlsafe().decode(),
+    })
     self.assertEqual(302, resp.status_code)
     location = urlparse(resp.headers['Location'])
     self.assertEqual('/fake/0123456789', location.path)
     self.assertEqual(['FakeSource API error 504: Connection closed unexpectedly...'],
-                      get_flashed_messages())
+                     get_flashed_messages())
 
-  def test_delete_start_redirect_url_value_error(self):
-    self.mox.StubOutWithMock(testutil.OAuthStart, 'redirect_url')
-    testutil.OAuthStart.redirect_url(state=mox.IgnoreArg()).AndRaise(ValueError('foo bar'))
-    self.mox.ReplayAll()
-
+  @patch.object(testutil.OAuthStart, 'redirect_url',
+                side_effect=ValueError('foo bar'))
+  def test_delete_start_redirect_url_value_error(self, _):
     resp = self.client.post('/delete/start', data={
-        'feature': 'listen',
-        'key': self.sources[0].key.urlsafe().decode(),
-      })
+      'feature': 'listen',
+      'key': self.sources[0].key.urlsafe().decode(),
+    })
     self.assertEqual(302, resp.status_code)
     location = urlparse(resp.headers['Location'])
     self.assertEqual('/fake/0123456789', location.path)
@@ -276,10 +267,10 @@ class PagesTest(testutil.AppTest):
     # self.mox.ReplayAll()
 
     resp = self.client.post('/delete/start', data={
-        'feature': 'listen',
-        'key': source_key.urlsafe().decode(),
-        'handle': 'foo.com',
-      })
+      'feature': 'listen',
+      'key': source_key.urlsafe().decode(),
+      'handle': 'foo.com',
+    })
     self.assertEqual(302, resp.status_code)
     self.assertEqual(
       'http://localhost/bluesky/delete/start?username=foo.com&feature=listen',
@@ -395,7 +386,7 @@ class PagesTest(testutil.AppTest):
       props = item['properties']
       self.assertEqual([resp.status], props['bridgy-status'])
       self.assertEqual([json_loads(resp.activities_json[0])['url']],
-                        props['bridgy-original-source'])
+                       props['bridgy-original-source'])
       self.assertEqual(resp.unsent, props['bridgy-target'])
 
     # check invite
@@ -543,7 +534,7 @@ class PagesTest(testutil.AppTest):
     for source in self.sources:
       self.assertIn(f'<a href="{source.bridgy_path()}" title="{source.label()}"',
                     resp.get_data(as_text=True))
-    self.assertEqual(200, resp.status_code)
+      self.assertEqual(200, resp.status_code)
 
   def test_users_page_hides_deleted_and_disabled(self):
     deleted = testutil.FakeSource.new(features=[])
@@ -659,7 +650,7 @@ class PagesTest(testutil.AppTest):
       f'http://localhost/edit-websites?source_key={source.key.urlsafe().decode()}',
       resp.headers['Location'])
     self.assertEqual(['Removed <a href="https://foo.com/baz">foo.com/baz</a>.'],
-                    get_flashed_messages())
+                     get_flashed_messages())
 
     source = source.key.get()
     self.assertEqual(['foo.com'], source.domains)
@@ -700,16 +691,13 @@ class DiscoverTest(testutil.AppTest):
       self.assertEqual(self.source.bridgy_path(), location.path, detail)
       self.assertEqual([expected_message], get_flashed_messages())
 
-  def check_fail(self, body, **kwargs):
-    self.expect_requests_get('http://si.te/123', body, **kwargs)
-    self.mox.ReplayAll()
+  def check_fail(self, body, status_code=200, **kwargs):
+    self.mock_get.return_value = requests_response(body, status=status_code, **kwargs)
 
     self.check_discover('http://si.te/123',
         'Failed to fetch <a href="http://si.te/123">si.te/123</a> or '
         'find a FakeSource syndication link.')
-
-    # tasks_client.create_task() is stubbed out, so if any calls to it were
-    # made, mox would notice that and fail.
+    self.assert_requests_get('http://si.te/123')
 
   def test_discover_param_errors(self):
     for url in ('/discover',
@@ -729,19 +717,15 @@ class DiscoverTest(testutil.AppTest):
                         'Please enter a URL on either your web site or FakeSource.')
 
   def test_discover_url_silo_post(self):
-    self.expect_task('discover', source_key=self.source, post_id='123')
-    self.mox.ReplayAll()
-
     self.check_discover('http://fa.ke/123',
         'Discovering now. Refresh in a minute to see the results!')
+    self.assert_task('discover', source_key=self.source, post_id='123')
 
   def test_discover_url_silo_event(self):
-    self.expect_task('discover', source_key=self.source, post_id='123',
-                     type='event')
-    self.mox.ReplayAll()
-
     self.check_discover('http://fa.ke/events/123',
                         'Discovering now. Refresh in a minute to see the results!')
+    self.assert_task('discover', source_key=self.source, post_id='123',
+                     type='event')
 
   def test_discover_url_silo_not_post_url(self):
     self.check_discover('http://fa.ke/',
@@ -766,17 +750,13 @@ class DiscoverTest(testutil.AppTest):
 </div>""")
 
   def test_discover_url_site_post_syndication_links(self):
-    self.expect_requests_get('http://si.te/123', """
+    self.mock_get.return_value = requests_response("""
 <div class="h-entry">
   foo
   <a class="u-syndication" href="http://fa.ke/222"></a>
   <a class="u-syndication" href="http://other/silo"></a>
   <a class="u-syndication" href="http://fa.ke/post/444"></a>
 </div>""")
-
-    self.expect_task('discover', source_key=self.source, post_id='222')
-    self.expect_task('discover', source_key=self.source, post_id='444')
-    self.mox.ReplayAll()
 
     self.assertEqual(0, SyndicatedPost.query().count())
     self.check_discover('http://si.te/123',
@@ -787,25 +767,29 @@ class DiscoverTest(testutil.AppTest):
       {'https://fa.ke/post/444': 'http://si.te/123'},
       ], [{sp.syndication: sp.original} for sp in models.SyndicatedPost.query()])
 
+    self.assert_requests_get('http://si.te/123')
     now = util.now()
     source = self.source.key.get()
     self.assertEqual(now, source.last_syndication_url)
+    self.assert_tasks(
+      {'queue': 'discover', 'source_key': self.source, 'post_id': '222'},
+      {'queue': 'discover', 'source_key': self.source, 'post_id': '444'},
+    )
 
   def test_discover_url_site_post_last_feed_syndication_url(self):
     now = util.now()
     self.source.last_feed_syndication_url = now
     self.source.put()
 
-    self.expect_requests_get('http://si.te/123', """
+    self.mock_get.return_value = requests_response("""
 <div class="h-entry">
   <a class="u-syndication" href="http://fa.ke/222"></a>
 </div>""")
 
-    self.expect_task('discover', source_key=self.source, post_id='222')
-    self.mox.ReplayAll()
-
     self.check_discover('http://si.te/123',
         'Discovering now. Refresh in a minute to see the results!')
+    self.assert_requests_get('http://si.te/123')
 
     source = self.source.key.get()
     self.assertEqual(now, source.last_syndication_url)
+    self.assert_task('discover', source_key=self.source, post_id='222')

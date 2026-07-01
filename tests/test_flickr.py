@@ -5,6 +5,7 @@ import urllib.parse
 import granary
 import granary.tests.test_flickr as gr_test_flickr
 import oauth_dropins.flickr_auth
+from webutil.testutil import UrlopenResult
 from webutil.util import json_dumps, json_loads
 
 import flickr
@@ -33,8 +34,9 @@ class FlickrBaseTest():
       'method': method,
     }
     full_params.update(params)
-    self.expect_urlopen('https://api.flickr.com/services/rest?'
-                        + urllib.parse.urlencode(full_params), result)
+    self._expected_flickr_url = ('https://api.flickr.com/services/rest?'
+                                 + urllib.parse.urlencode(full_params))
+    self.mock_urlopen.return_value = UrlopenResult(200, result)
 
 
 class FlickrTest(FlickrBaseTest, testutil.AppTest):
@@ -136,8 +138,6 @@ class FlickrPollTest(FlickrBaseTest, testutil.BackgroundTest):
       'code': 98,
       'message': 'Invalid auth token',
     }))
-    self.mox.ReplayAll()
-
     self.flickr.features = ['listen']
     self.flickr.put()
     self.assertEqual('enabled', self.flickr.status)
@@ -147,4 +147,5 @@ class FlickrPollTest(FlickrBaseTest, testutil.BackgroundTest):
       'last_polled': '1970-01-01-00-00-00',
     })
     self.assertEqual('disabled', self.flickr.key.get().status)
+    self.assert_urlopen(self._expected_flickr_url)
 

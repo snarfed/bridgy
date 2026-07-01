@@ -9,6 +9,7 @@ from granary.tests import test_twitter as gr_twitter_test
 from granary.twitter import API_BASE, API_SEARCH, API_STATUS, SCRAPE_LIKES_URL
 import oauth_dropins.twitter
 import oauth_dropins.twitter_auth
+from webutil.testutil import requests_response
 from webutil.util import json_dumps, json_loads
 
 import models
@@ -76,10 +77,10 @@ class TwitterTest(testutil.AppTest):
     tweet['favorite_count'] = 1
 
     self.expect_urlopen(API_BASE + API_STATUS % '100', json_dumps(tweet))
-    self.expect_requests_get(SCRAPE_LIKES_URL % '100', gr_twitter_test.LIKES_SCRAPED,
-                             headers={'x': 'y'})
+    self.mock_get.return_value = requests_response(
+      gr_twitter_test.LIKES_SCRAPED, url=SCRAPE_LIKES_URL % '100')
 
-    self.mox.ReplayAll()
+
     like = copy.deepcopy(gr_twitter_test.LIKE_OBJECTS[0])
     like['id'] = 'tag:twitter.com,2013:100_favorited_by_353'
     like['author']['id'] = 'tag:twitter.com,2013:ge'
@@ -136,7 +137,7 @@ class TwitterTest(testutil.AppTest):
                         {'q': urllib.parse.quote_plus('bar/baz OR foo'), 'count': 50},
                         json_dumps({'statuses': results}))
 
-    self.mox.ReplayAll()
+
     self.assert_equals(
       ['tag:twitter.com,2013:1', 'tag:twitter.com,2013:5', 'tag:twitter.com,2013:6'],
       [a['id'] for a in self.tw.search_for_links()])
@@ -145,7 +146,7 @@ class TwitterTest(testutil.AppTest):
     # only a blocklisted domain
     self.tw.domain_urls = ['https://t.co/xyz']
     self.tw.put()
-    self.mox.ReplayAll()
+
     self.assert_equals([], self.tw.search_for_links())
 
   def test_is_private(self):
@@ -168,7 +169,7 @@ class TwitterTest(testutil.AppTest):
     api_url = gr_twitter.API_BASE + gr_twitter.API_BLOCK_IDS % '2'
     self.expect_urlopen(api_url, status=429)
 
-    self.mox.ReplayAll()
+
     self.tw.load_blocklist()
     self.assert_equals(['1', '2'], self.tw.blocked_ids)
 
