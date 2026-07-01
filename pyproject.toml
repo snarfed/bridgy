@@ -40,6 +40,9 @@ docs = [
     'sphinx-rtd-theme>=3.0.0',
 ]
 
+[tool.setuptools]
+packages = []
+
 [tool.uv]
 package = false
 
