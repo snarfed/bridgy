@@ -91,7 +91,7 @@ sgmllib3k==1.0.0
 simple-websocket==1.1.0
 six==1.17.0
 soupsieve==2.8.4
-tweepy==4.16.0
+tweepy==4.17.0
 typing-extensions==4.16.0
 typing-validation==1.2.12
 ujson==5.13.0
