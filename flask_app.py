@@ -11,6 +11,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from webutil import flask_util
 from webutil.appengine_config import ndb_client
 from webutil import appengine_info
+from flask_wtf.csrf import CSRFProtect
 
 import granary
 import appengine_config  # *after* import granary to override set_user_agent()
@@ -30,6 +31,9 @@ app.before_request(flask_util.canonicalize_domain(
   util.OTHER_DOMAINS, util.PRIMARY_DOMAIN))
 if appengine_info.LOCAL_SERVER and not appengine_info.TESTING:
   flask_gae_static.init_app(app)
+
+# CSRF protection for state-changing operations
+csrf = CSRFProtect(app)
 
 app.wsgi_app = flask_util.ndb_context_middleware(app.wsgi_app, client=ndb_client)
 
