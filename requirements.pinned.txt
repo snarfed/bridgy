@@ -90,7 +90,7 @@ setuptools==83.0.0
 sgmllib3k==1.0.0
 simple-websocket==1.1.0
 six==1.17.0
-soupsieve==2.9
+soupsieve==2.9.1
 tweepy==4.17.0
 typing-extensions==4.16.0
 typing-validation==1.2.12
