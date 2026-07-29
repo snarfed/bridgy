@@ -600,6 +600,7 @@ def maybe_add_or_delete_source(source_cls, auth_entity, state, **kwargs):
       elif not source.domains:
         redirect('/edit-websites?' + urllib.parse.urlencode({
           'source_key': source.key.urlsafe().decode(),
+          'token': str(auth_entity.access_token()),
         }), logins=logins)
       else:
         redirect(source.bridgy_url(), logins=logins)

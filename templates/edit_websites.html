@@ -17,6 +17,8 @@
       <p class="row big">
         {{ util.pretty_link(url)|safe }}
         <input type="hidden" name="delete" value="{{ url }}" />
+        <input type="hidden" name="source_key" value="{{ source.key.urlsafe().decode() }}" />
+        <input type="hidden" name="token" value="{{ token }}" />
         <input type="submit" title="Remove" value="✖" class="btn delete-website" />
       </p>
     </form>
@@ -31,6 +33,7 @@
   <input required type="url" name="add" id="add" placeholder="http://..." />
   <input type="submit" class="btn btn-default" value="Add" />
   <input type="hidden" name="source_key" value="{{ source.key.urlsafe().decode() }}" />
+  <input type="hidden" name="token" value="{{ token }}" />
 </form>
 </div>
 

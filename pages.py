@@ -1,10 +1,11 @@
 """Bridgy user-facing pages: front page, user pages, delete POSTs, etc."""
 import datetime
 import itertools
+import functools
 import logging
 import urllib.request, urllib.parse, urllib.error
 
-from flask import request
+from flask import make_response, request
 from google.cloud import ndb
 from granary import as1
 from granary.source import html_to_text
@@ -31,6 +32,29 @@ logger = logging.getLogger(__name__)
 SITES = ','.join(list(models.sources.keys()) + ['fake'])  # for unit tests
 
 RECENT_PRIVATE_POSTS_THRESHOLD = 5
+
+
+def authed(fn):
+  """Authenticates a source by checking that the request contains its OAuth token.
+
+  Passes the loaded source to the wrapped function in the ``source`` kwarg.
+
+  Query params or form args:
+    * key or source_key (str): url-safe :class:`models.Source` ndb key
+    * token (str): OAuth token from the auth entity's ``access_token()``
+  """
+  @functools.wraps(fn)
+  def wrapper(*args, **kwargs):
+    source = util.load_source()
+
+    request_token = flask_util.get_required_param('token')
+    stored_token = source.auth_entity.get().access_token()
+    if not stored_token or str(stored_token) != request_token:
+      error("Missing or invalid token", status=403)
+
+    return fn(*args, **kwargs, source=source)
+
+  return wrapper
 
 
 @app.route('/', methods=['HEAD'])
@@ -511,15 +535,28 @@ def discover():
 
 
 @app.route('/edit-websites', methods=['GET'])
-def edit_websites_get():
-  return render_template('edit_websites.html',
-                         source=util.preprocess_source(util.load_source()))
+@authed
+def edit_websites_get(source=None):
+  assert source
+
+  return make_response(render_template(
+    'edit_websites.html',
+    source=util.preprocess_source(source),
+    token=source.auth_entity.get().access_token(),
+    # the OAuth token is in a query param, so try to prevent leaking it
+    headers={'Referrer-Policy': 'no-referrer'}))
 
 
 @app.route('/edit-websites', methods=['POST'])
-def edit_websites_post():
-  source = util.load_source()
-  redirect_url = f'{request.path}?{urllib.parse.urlencode({"source_key": source.key.urlsafe().decode()})}'
+@authed
+def edit_websites_post(source=None):
+  assert source
+
+  redirect_params = urllib.parse.urlencode({
+    'source_key': source.key.urlsafe().decode(),
+    'token': source.auth_entity.get().access_token(),
+  })
+  redirect_url = f'{request.path}?{redirect_params}'
 
   add = request.values.get('add')
   delete = request.values.get('delete')

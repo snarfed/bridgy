@@ -36,6 +36,8 @@ class PagesTest(testutil.AppTest):
   def setUp(self):
     super().setUp()
     self.sources[0].put()
+    self.auth_entities[0].access_token_str = 'towkin'
+    self.auth_entities[0].put()
 
   def test_front_page(self):
     resp = self.client.get('/')
@@ -556,17 +558,38 @@ class PagesTest(testutil.AppTest):
     self.assertEqual('http://localhost/', resp.headers['Location'])
     self.assertEqual(['Logged out.'], get_flashed_messages())
 
+  def test_edit_web_sites_get(self):
+    resp = self.client.get('/edit-websites', query_string={
+      'source_key': self.sources[0].key.urlsafe().decode(),
+      'token': 'towkin',
+    })
+    self.assertEqual(200, resp.status_code)
+
+  def test_edit_web_sites_get_missing_token(self):
+    resp = self.client.get('/edit-websites', query_string={
+      'source_key': self.sources[0].key.urlsafe().decode(),
+    })
+    self.assertEqual(400, resp.status_code)
+
+  def test_edit_web_sites_get_wrong_token(self):
+    resp = self.client.get('/edit-websites', query_string={
+      'source_key': self.sources[0].key.urlsafe().decode(),
+      'token': 'nope',
+    })
+    self.assertEqual(403, resp.status_code)
+
   def test_edit_web_sites_add(self):
     source = self.sources[0]
     self.assertNotIn('foo.com', source.domains)
 
     resp = self.client.post('/edit-websites', data={
       'source_key': source.key.urlsafe().decode(),
+      'token': 'towkin',
       'add': 'http://foo.com/',
     })
     self.assertEqual(302, resp.status_code)
     self.assertEqual(
-      f'http://localhost/edit-websites?source_key={source.key.urlsafe().decode()}',
+      f'http://localhost/edit-websites?source_key={source.key.urlsafe().decode()}&token=towkin',
       resp.headers['Location'])
     self.assertEqual(['Added <a href="http://foo.com/">foo.com</a>.'],
                      get_flashed_messages())
@@ -574,6 +597,18 @@ class PagesTest(testutil.AppTest):
     source = source.key.get()
     self.assertIn('foo.com', source.domains)
     self.assertIn('http://foo.com/', source.domain_urls)
+
+  def test_edit_web_sites_add_wrong_token(self):
+    source = self.sources[0]
+    resp = self.client.post('/edit-websites', data={
+      'source_key': source.key.urlsafe().decode(),
+      'token': 'nope',
+      'add': 'http://foo.com/',
+    })
+    self.assertEqual(403, resp.status_code)
+
+    source = source.key.get()
+    self.assertNotIn('foo.com', source.domains)
 
   def test_edit_web_sites_add_existing(self):
     source = self.sources[0]
@@ -583,11 +618,12 @@ class PagesTest(testutil.AppTest):
 
     resp = self.client.post('/edit-websites', data={
       'source_key': source.key.urlsafe().decode(),
+      'token': 'towkin',
       'add': 'http://foo.com/',
     })
     self.assertEqual(302, resp.status_code)
     self.assertEqual(
-      f'http://localhost/edit-websites?source_key={source.key.urlsafe().decode()}',
+      f'http://localhost/edit-websites?source_key={source.key.urlsafe().decode()}&token=towkin',
       resp.headers['Location'])
     self.assertEqual(['<a href="http://foo.com/">foo.com</a> already exists.'],
                      get_flashed_messages())
@@ -600,11 +636,12 @@ class PagesTest(testutil.AppTest):
     source = self.sources[0]
     resp = self.client.post('/edit-websites', data={
       'source_key': source.key.urlsafe().decode(),
+      'token': 'towkin',
       'add': 'http://facebook.com/',
     })
     self.assertEqual(302, resp.status_code)
     self.assertEqual(
-      f'http://localhost/edit-websites?source_key={source.key.urlsafe().decode()}',
+      f'http://localhost/edit-websites?source_key={source.key.urlsafe().decode()}&token=towkin',
       resp.headers['Location'])
     self.assertEqual(
       ['<a href="http://facebook.com/">facebook.com</a> doesn\'t look like your web site. Try again?'],
@@ -622,11 +659,12 @@ class PagesTest(testutil.AppTest):
 
     resp = self.client.post('/edit-websites', data={
       'source_key': source.key.urlsafe().decode(),
+      'token': 'towkin',
       'delete': 'https://bar',
     })
     self.assertEqual(302, resp.status_code)
     self.assertEqual(
-      f'http://localhost/edit-websites?source_key={source.key.urlsafe().decode()}',
+      f'http://localhost/edit-websites?source_key={source.key.urlsafe().decode()}&token=towkin',
       resp.headers['Location'])
     self.assertEqual(['Removed <a href="https://bar">bar</a>.'],
                      get_flashed_messages())
@@ -634,6 +672,22 @@ class PagesTest(testutil.AppTest):
     source = source.key.get()
     self.assertEqual(['foo'], source.domains)
     self.assertEqual(['http://foo/'], source.domain_urls)
+
+  def test_edit_web_sites_delete_wrong_token(self):
+    source = self.sources[0]
+    source.domain_urls = ['http://foo/', 'https://bar']
+    source.domains = ['foo', 'bar']
+    source.put()
+
+    resp = self.client.post('/edit-websites', data={
+      'source_key': source.key.urlsafe().decode(),
+      'token': 'nope',
+      'delete': 'https://bar',
+    })
+    self.assertEqual(403, resp.status_code)
+
+    source = source.key.get()
+    self.assertEqual(['http://foo/', 'https://bar'], source.domain_urls)
 
   def test_edit_web_sites_delete_multiple_urls_same_domain(self):
     source = self.sources[0]
@@ -643,11 +697,12 @@ class PagesTest(testutil.AppTest):
 
     resp = self.client.post('/edit-websites', data={
       'source_key': source.key.urlsafe().decode(),
+      'token': 'towkin',
       'delete': 'https://foo.com/baz',
     })
     self.assertEqual(302, resp.status_code)
     self.assertEqual(
-      f'http://localhost/edit-websites?source_key={source.key.urlsafe().decode()}',
+      f'http://localhost/edit-websites?source_key={source.key.urlsafe().decode()}&token=towkin',
       resp.headers['Location'])
     self.assertEqual(['Removed <a href="https://foo.com/baz">foo.com/baz</a>.'],
                      get_flashed_messages())
@@ -661,12 +716,12 @@ class PagesTest(testutil.AppTest):
 
     for data in (
         {},
-        {'source_key': source_key},
-        {'add': 'http://foo'},
-        {'delete': 'http://foo'},
-        {'source_key': 'asdf', 'add': 'http://foo'},
-        {'source_key': 'asdf', 'delete': 'http://foo', 'add': 'http://bar'},
-        {'source_key': source_key, 'delete': 'http://missing'},
+        {'source_key': source_key, 'token': 'towkin'},
+        {'token': 'towkin', 'add': 'http://foo'},
+        {'token': 'towkin', 'delete': 'http://foo'},
+        {'source_key': 'asdf', 'token': 'towkin', 'add': 'http://foo'},
+        {'source_key': 'asdf', 'token': 'towkin', 'delete': 'http://foo', 'add': 'http://bar'},
+        {'source_key': source_key, 'token': 'towkin', 'delete': 'http://missing'},
     ):
       resp = self.client.post('/edit-websites', data=data)
       self.assertEqual(400, resp.status_code)

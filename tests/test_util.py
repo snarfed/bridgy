@@ -91,7 +91,8 @@ class UtilTest(testutil.AppTest):
 
   def test_maybe_add_or_delete_without_web_site_redirects_to_edit_websites(self):
     for bad_url in None, 'not>a<url', 'http://fa.ke/xyz':
-      auth_entity = FakeAuthEntity(id='x', user_json=json_dumps({'url': bad_url}))
+      auth_entity = FakeAuthEntity(id='x', user_json=json_dumps({'url': bad_url}),
+                                   access_token_str='towkin')
       auth_entity.put()
 
       key = FakeSource.next_key().urlsafe().decode()
@@ -99,8 +100,9 @@ class UtilTest(testutil.AppTest):
         util.maybe_add_or_delete_source(FakeSource, auth_entity, '{}')
 
       self.assertEqual(302, rr.exception.code)
-      self.assert_equals(f'http://localhost/edit-websites?source_key={key}',
-                         rr.exception.new_url)
+      self.assert_equals(
+        f'http://localhost/edit-websites?source_key={key}&token=towkin',
+        rr.exception.new_url)
 
   def test_maybe_add_or_delete_source_username_key_id_disables_other_source(self):
     class UKISource(Source):
