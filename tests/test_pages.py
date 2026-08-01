@@ -712,6 +712,24 @@ class PagesTest(testutil.AppTest):
     self.assertEqual(['foo.com'], source.domains)
     self.assertEqual(['http://foo.com/bar'], source.domain_urls)
 
+  def test_edit_web_sites_delete_all_urls_for_duplicate_domain(self):
+    source = self.sources[0]
+    source.domain_urls = ['https://foo.com/bar', 'https://foo.com/baz']
+    source.domains = ['foo.com', 'foo.com']
+    source.put()
+
+    for url in 'https://foo.com/bar', 'https://foo.com/baz':
+      resp = self.client.post('/edit-websites', data={
+        'source_key': source.key.urlsafe().decode(),
+        'token': 'towkin',
+        'delete': url,
+      })
+      self.assertEqual(302, resp.status_code)
+
+    source = source.key.get()
+    self.assertEqual([], source.domains)
+    self.assertEqual([], source.domain_urls)
+
   def test_edit_web_sites_errors(self):
     source_key = self.sources[0].key.urlsafe().decode()
 

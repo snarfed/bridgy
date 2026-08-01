@@ -572,8 +572,7 @@ def edit_websites_post(source=None):
         flash(f'{link} already exists.', escape=False)
       else:
         source.domain_urls.append(resolved)
-        domain = util.domain_from_link(resolved)
-        source.domains.append(domain)
+        source.domains = [util.domain_from_link(u) for u in source.domain_urls]
         source.put()
         flash(f'Added {link}.', escape=False)
     else:
@@ -585,9 +584,7 @@ def edit_websites_post(source=None):
       source.domain_urls.remove(delete)
     except ValueError:
       error(f"{delete} not found in {source.label()}'s current web sites")
-    domain = util.domain_from_link(delete)
-    if domain not in {util.domain_from_link(url) for url in source.domain_urls}:
-      source.domains.remove(domain)
+    source.domains = [util.domain_from_link(u) for u in source.domain_urls]
     source.put()
     flash(f'Removed {link}.', escape=False)
 
