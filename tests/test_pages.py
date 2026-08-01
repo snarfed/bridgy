@@ -564,6 +564,7 @@ class PagesTest(testutil.AppTest):
       'token': 'towkin',
     })
     self.assertEqual(200, resp.status_code)
+    self.assertEqual('no-referrer', resp.headers['Referrer-Policy'])
 
   def test_edit_web_sites_get_missing_token(self):
     resp = self.client.get('/edit-websites', query_string={

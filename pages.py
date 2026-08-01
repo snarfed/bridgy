@@ -5,7 +5,7 @@ import functools
 import logging
 import urllib.request, urllib.parse, urllib.error
 
-from flask import make_response, request
+from flask import request
 from google.cloud import ndb
 from granary import as1
 from granary.source import html_to_text
@@ -535,16 +535,16 @@ def discover():
 
 
 @app.route('/edit-websites', methods=['GET'])
+# the OAuth token is in a query param, so try to prevent leaking it
+@flask_util.headers({'Referrer-Policy': 'no-referrer'})
 @authed
 def edit_websites_get(source=None):
   assert source
 
-  return make_response(render_template(
+  return render_template(
     'edit_websites.html',
     source=util.preprocess_source(source),
-    token=source.auth_entity.get().access_token(),
-    # the OAuth token is in a query param, so try to prevent leaking it
-    headers={'Referrer-Policy': 'no-referrer'}))
+    token=source.auth_entity.get().access_token())
 
 
 @app.route('/edit-websites', methods=['POST'])
