@@ -5,7 +5,7 @@ registered.
 """
 from flask_app import app
 
-import admin, blog_webmention, browser, handlers, micropub, pages, publish, superfeedr, webmention
+import admin, blog_webmention, handlers, micropub, pages, publish, superfeedr, webmention
 
 # sources
-import bluesky, facebook, flickr, github, indieauth, instagram, mastodon, reddit, tumblr, twitter, wordpress_rest
+import bluesky, flickr, github, indieauth, mastodon, reddit, tumblr, twitter, wordpress_rest

@@ -12,7 +12,6 @@ from webutil.util import json_dumps, json_loads
 import requests
 
 import flickr
-import instagram
 import models
 from models import BlogPost, Response, Source, SyndicatedPost
 import superfeedr
@@ -225,7 +224,6 @@ class SourceTest(testutil.AppTest):
 
   def test_sources_global(self):
     self.assertEqual(flickr.Flickr, models.sources['flickr'])
-    self.assertEqual(instagram.Instagram, models.sources['instagram'])
     self.assertEqual(tumblr.Tumblr, models.sources['tumblr'])
     self.assertEqual(wordpress_rest.WordPress, models.sources['wordpress'])
 

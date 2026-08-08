@@ -27,48 +27,21 @@ indexes:
   - name: "source"
   - name: "updated"
     direction: desc
-- kind: "Activity"
-  properties:
-  - name: "source"
-  - name: "updated"
-    direction: desc
-- kind: "Response"
-  properties:
-  - name: "source"
-  - name: "updated"
 - kind: "Publish"
   ancestor: yes
   properties:
   - name: "source"
   - name: "status"
   - name: "type"
+- kind: "Response"
+  properties:
+  - name: "source"
+  - name: "updated"
 - kind: "SyndicatedPost"
   ancestor: yes
   properties:
   - name: "syndication"
 - kind: "Blogger"
-  properties:
-  - name: "status"
-  - name: "features"
-- kind: "ExceptionRecord"
-  properties:
-  - name: "date"
-  - name: "major_version"
-  - name: "minor_version"
-    direction: desc
-- kind: "Facebook"
-  properties:
-  - name: "status"
-  - name: "features"
-- kind: "FacebookPage"
-  properties:
-  - name: "status"
-  - name: "features"
-- kind: "GooglePlusPage"
-  properties:
-  - name: "status"
-  - name: "features"
-- kind: "Instagram"
   properties:
   - name: "status"
   - name: "features"
@@ -78,10 +51,6 @@ indexes:
   - name: "status"
   - name: "type"
 - kind: "Tumblr"
-  properties:
-  - name: "status"
-  - name: "features"
-- kind: "Twitter"
   properties:
   - name: "status"
   - name: "features"
@@ -100,22 +69,12 @@ indexes:
   - name: features
   - name: status
   - name: last_poll_attempt
-- kind: Facebook
-  properties:
-  - name: features
-  - name: status
-  - name: last_poll_attempt
 - kind: Flickr
   properties:
   - name: features
   - name: status
   - name: last_poll_attempt
 - kind: GitHub
-  properties:
-  - name: features
-  - name: status
-  - name: last_poll_attempt
-- kind: Instagram
   properties:
   - name: features
   - name: status
@@ -136,11 +95,6 @@ indexes:
   - name: status
   - name: last_poll_attempt
 - kind: Tumblr
-  properties:
-  - name: features
-  - name: status
-  - name: last_poll_attempt
-- kind: Twitter
   properties:
   - name: features
   - name: status

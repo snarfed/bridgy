@@ -13,10 +13,6 @@ blog_webmention
 ---------------
 .. automodule:: blog_webmention
 
-browser
--------
-.. automodule:: browser
-
 cron
 ----
 .. automodule:: cron

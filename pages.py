@@ -25,7 +25,7 @@ from util import render_template, redirect
 from wordpress_rest import WordPress
 
 # populate models.sources
-import bluesky, facebook, flickr, github, indieauth, instagram, mastodon, reddit, tumblr, twitter, wordpress_rest
+import bluesky, flickr, github, indieauth, mastodon, reddit, tumblr, twitter, wordpress_rest
 
 logger = logging.getLogger(__name__)
 
