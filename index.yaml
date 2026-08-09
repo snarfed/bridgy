@@ -54,6 +54,10 @@ indexes:
   properties:
   - name: "status"
   - name: "features"
+- kind: "Twitter"
+  properties:
+  - name: "status"
+  - name: "features"
 - kind: "WordPress"
   properties:
   - name: "status"
