@@ -77,10 +77,6 @@ tumblr
 ------
 .. automodule:: tumblr
 
-twitter
--------
-.. automodule:: twitter
-
 util
 ----
 .. automodule:: util

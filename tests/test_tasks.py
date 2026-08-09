@@ -21,7 +21,6 @@ import requests
 
 import models
 from models import Response, SyndicatedPost
-from twitter import Twitter
 import tasks
 from . import testutil
 from .testutil import FakeSource, FakeGrSource

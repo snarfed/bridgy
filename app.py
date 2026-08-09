@@ -8,4 +8,4 @@ from flask_app import app
 import admin, blog_webmention, handlers, micropub, pages, publish, superfeedr, webmention
 
 # sources
-import bluesky, flickr, github, indieauth, mastodon, reddit, tumblr, twitter, wordpress_rest
+import bluesky, flickr, github, indieauth, mastodon, reddit, tumblr, wordpress_rest
