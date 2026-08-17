@@ -67,7 +67,7 @@ orderedmultidict==1.0.2
 packaging==26.3
 pbr==7.0.3
 pkce==1.0.3
-praw==8.0.2
+praw==8.0.3
 prawcore==4.0.0
 proto-plus==1.28.3
 protobuf==7.35.1
