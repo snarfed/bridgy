@@ -18,7 +18,7 @@ cryptography==50.0.0
 dag-cbor==0.3.3
 defusedxml==0.7.1
 dnspython==2.8.0
-domain2idna==1.12.4
+domain2idna==1.12.5
 feedgen==1.0.0
 feedparser==6.0.14
 fixtures==4.3.2
