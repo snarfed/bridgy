@@ -50,7 +50,7 @@ httplib2==0.32.0
 humanfriendly==10.0
 humanize==4.16.0
 idna==3.19
-importlib-metadata==9.0.0
+importlib-metadata==9.0.1
 iterators==0.2.0
 itsdangerous==2.2.0
 jinja2==3.1.6
