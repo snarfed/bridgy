@@ -123,7 +123,7 @@ class AddOrDelete(oauth_flickr.Callback, AuthHandler):
   """
   def finish(self, auth_entity, state=None):
     logger.debug(f'finish with {auth_entity}, {state}')
-    util.maybe_add_or_delete_source(Flickr, auth_entity, state)
+    util.finish_auth(Flickr, auth_entity, state)
 
 
 app.add_url_rule('/flickr/start', view_func=Start.as_view('flickr_start', '/flickr/add'), methods=['POST'])

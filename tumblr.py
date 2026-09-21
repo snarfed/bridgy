@@ -234,7 +234,7 @@ class Tumblr(models.Source):
 class ChooseBlogOrDelete(oauth_tumblr.Callback):
   def finish(self, auth_entity, state=None):
     if not auth_entity or util.decode_oauth_state(state).get('operation') == 'delete':
-      util.maybe_add_or_delete_source(Tumblr, auth_entity, state)
+      util.finish_auth(Tumblr, auth_entity, state)
       return
 
     vars = {
@@ -255,7 +255,7 @@ class ChooseBlogOrDelete(oauth_tumblr.Callback):
 
 @app.route('/tumblr/add', methods=['POST'])
 def tumblr_add():
-  util.maybe_add_or_delete_source(
+  util.finish_auth(
     Tumblr,
     ndb.Key(urlsafe=request.form['auth_entity_key']).get(),
     request.form['state'],

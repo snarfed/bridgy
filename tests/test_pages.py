@@ -163,7 +163,7 @@ class PagesTest(testutil.AppTest):
 
     # assume that the silo auth finishes and redirects to /fake/delete/finish
     with app.test_request_context(), self.assertRaises(RequestRedirect) as e:
-      util.maybe_add_or_delete_source(testutil.FakeSource, self.auth_entities[0], encoded_state)
+      util.finish_auth(testutil.FakeSource, self.auth_entities[0], encoded_state)
 
     resp = e.exception.get_response()
     self.assertEqual(302, resp.status_code)
@@ -201,7 +201,7 @@ class PagesTest(testutil.AppTest):
 
     # assume that the silo auth finishes
     with app.test_request_context(), self.assertRaises(RequestRedirect) as e:
-      util.maybe_add_or_delete_source(testutil.FakeSource, None, encoded_state)
+      util.finish_auth(testutil.FakeSource, None, encoded_state)
 
     resp = e.exception.get_response()
     self.assertEqual(302, resp.status_code)
@@ -252,7 +252,7 @@ class PagesTest(testutil.AppTest):
         source=self.sources[0].key.urlsafe().decode())
 
       with self.assertRaises(RequestRedirect) as e:
-        util.maybe_add_or_delete_source(testutil.FakeSource, self.auth_entities[0], state)
+        util.finish_auth(testutil.FakeSource, self.auth_entities[0], state)
 
     self.assertEqual('http://localhost/', e.exception.new_url)
     self.assertIn('logins=/other/1?bob;',
@@ -300,7 +300,7 @@ class PagesTest(testutil.AppTest):
         source=self.sources[0].key.urlsafe().decode())
 
       with self.assertRaises(RequestRedirect) as e:
-        util.maybe_add_or_delete_source(testutil.FakeSource, self.auth_entities[0], state)
+        util.finish_auth(testutil.FakeSource, self.auth_entities[0], state)
 
     self.assertEqual('http://localhost/', e.exception.new_url)
 

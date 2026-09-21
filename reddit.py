@@ -91,7 +91,7 @@ class Reddit(models.Source):
 
 class Callback(oauth_reddit.Callback):
   def finish(self, auth_entity, state=None):
-    util.maybe_add_or_delete_source(Reddit, auth_entity, state)
+    util.finish_auth(Reddit, auth_entity, state)
 
 
 app.add_url_rule('/reddit/start',

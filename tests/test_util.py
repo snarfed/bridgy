@@ -31,7 +31,7 @@ class UtilTest(testutil.AppTest):
     super().setUp()
     util.now = lambda: datetime(2000, 1, 1, tzinfo=timezone.utc)
 
-  def test_maybe_add_or_delete_source(self):
+  def test_finish_auth(self):
     auth_entity = FakeAuthEntity(id='x', user_json=json_dumps(
         {'url': 'http://foo.com/', 'name': UNICODE_STR}))
     auth_entity.put()
@@ -39,7 +39,7 @@ class UtilTest(testutil.AppTest):
     key = FakeSource.next_key()
     with app.test_request_context(), self.assertRaises(RequestRedirect) as rr:
       state = util.construct_state_param_for_add(feature='publish')
-      util.maybe_add_or_delete_source(FakeSource, auth_entity, state)
+      util.finish_auth(FakeSource, auth_entity, state)
       self.assertIn(UNICODE_STR, get_flashed_messages()[0])
 
     self.assertEqual(302, rr.exception.code)
@@ -53,16 +53,16 @@ class UtilTest(testutil.AppTest):
       key = FakeSource.next_key()
       with app.test_request_context(), self.assertRaises(RequestRedirect) as rr:
         state = util.construct_state_param_for_add(feature)
-        util.maybe_add_or_delete_source(FakeSource, auth_entity, state)
+        util.finish_auth(FakeSource, auth_entity, state)
       self.assertEqual([], key.get().features)
 
-  def test_maybe_add_or_delete_source_bad_state(self):
+  def test_finish_auth_bad_state(self):
     auth_entity = FakeAuthEntity(id='x', user_json='{}')
     auth_entity.put()
     with self.assertRaises(BadRequest):
-      util.maybe_add_or_delete_source(FakeSource, auth_entity, 'bad')
+      util.finish_auth(FakeSource, auth_entity, 'bad')
 
-  def test_maybe_add_or_delete_source_delete_declined(self):
+  def test_finish_auth_delete_declined(self):
     state = {
       'feature': 'webmention',
       'operation': 'delete',
@@ -72,7 +72,7 @@ class UtilTest(testutil.AppTest):
     # no source
     with app.test_request_context():
       with self.assertRaises(RequestRedirect) as rr:
-        util.maybe_add_or_delete_source(
+        util.finish_auth(
           FakeSource, None, util.encode_oauth_state(state))
 
       self.assert_equals(302, rr.exception.code)
@@ -82,14 +82,14 @@ class UtilTest(testutil.AppTest):
     # source
     state['source'] = self.sources[0].key.urlsafe().decode()
     with app.test_request_context(), self.assertRaises(RequestRedirect) as rr:
-      util.maybe_add_or_delete_source(
+      util.finish_auth(
         FakeSource, None, util.encode_oauth_state(state))
 
       self.assert_equals(302, rr.exception.code)
       self.assert_equals(self.source_bridgy_url, rr.exception.new_url)
       self.assertEqual([msg], get_flashed_messages())
 
-  def test_maybe_add_or_delete_without_web_site_redirects_to_edit_websites(self):
+  def test_finish_auth_without_web_site_redirects_to_edit_websites(self):
     for bad_url in None, 'not>a<url', 'http://fa.ke/xyz':
       auth_entity = FakeAuthEntity(id='x', user_json=json_dumps({'url': bad_url}),
                                    access_token_str='towkin')
@@ -97,14 +97,14 @@ class UtilTest(testutil.AppTest):
 
       key = FakeSource.next_key().urlsafe().decode()
       with app.test_request_context(), self.assertRaises(RequestRedirect) as rr:
-        util.maybe_add_or_delete_source(FakeSource, auth_entity, '{}')
+        util.finish_auth(FakeSource, auth_entity, '{}')
 
       self.assertEqual(302, rr.exception.code)
       self.assert_equals(
         f'http://localhost/edit-websites?source_key={key}&token=towkin',
         rr.exception.new_url)
 
-  def test_maybe_add_or_delete_source_username_key_id_disables_other_source(self):
+  def test_finish_auth_username_key_id_disables_other_source(self):
     class UKISource(Source):
       USERNAME_KEY_ID = True
       GR_CLASS = FakeGrSource
@@ -119,7 +119,7 @@ class UtilTest(testutil.AppTest):
 
     with app.test_request_context(), self.assertRaises(RequestRedirect) as rr:
       state = util.construct_state_param_for_add(feature='publish')
-      util.maybe_add_or_delete_source(UKISource, FakeAuthEntity(id='x'), state)
+      util.finish_auth(UKISource, FakeAuthEntity(id='x'), state)
 
     self.assertEqual(302, rr.exception.code)
     got = UKISource.get_by_id('foo')
@@ -137,7 +137,7 @@ class UtilTest(testutil.AppTest):
 
       id = FakeSource.next_key().id()
       with self.assertRaises(RequestRedirect) as rr:
-        util.maybe_add_or_delete_source(FakeSource, auth_entity, listen)
+        util.finish_auth(FakeSource, auth_entity, listen)
 
       cookie = 'logins=/fake/{id}?fake|/other/1?bob;'
       self.assertIn(cookie.format(id=id),
@@ -145,7 +145,7 @@ class UtilTest(testutil.AppTest):
 
       id = FakeSource.next_key().id()
       with self.assertRaises(RequestRedirect) as rr:
-        util.maybe_add_or_delete_source(FakeSource, auth_entity, listen)
+        util.finish_auth(FakeSource, auth_entity, listen)
       self.assertIn(cookie.format(id=id),
                     rr.exception.get_response().headers['Set-Cookie'])
 
@@ -361,8 +361,8 @@ class RegistrationCallbackTest(testutil.AppTest):
     auth_entity = None  # populated in setUp()
 
     def dispatch_request(self):
-      util.maybe_add_or_delete_source(FakeSource, self.auth_entity,
-                                      request.values.get('state'))
+      util.finish_auth(FakeSource, self.auth_entity,
+                       request.values.get('state'))
       return ''
 
   def setUp(self):

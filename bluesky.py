@@ -175,8 +175,8 @@ class Callback(oauth_bluesky.Callback):
     if request.form['operation'] == 'delete':
       state['source'] = Bluesky(id=auth_entity.key.id()).key.urlsafe().decode()
 
-    util.maybe_add_or_delete_source(Bluesky, auth_entity,
-                                    util.encode_oauth_state(state))
+    util.finish_auth(Bluesky, auth_entity,
+                     util.encode_oauth_state(state))
 
 
 @app.get('/bluesky/start')
@@ -219,7 +219,7 @@ class OAuthCallback(FlashErrors, oauth_bluesky.OAuthCallback):
     return util.bluesky_oauth_client_metadata()
 
   def finish(self, auth_entity, state=None):
-    util.maybe_add_or_delete_source(Bluesky, auth_entity, state)
+    util.finish_auth(Bluesky, auth_entity, state)
 
 
 # Bluesky.OAUTH_START = OAuthStart

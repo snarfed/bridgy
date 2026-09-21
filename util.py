@@ -510,11 +510,11 @@ def load_source(error_fn=None):
   error_fn('Source key not found')
 
 
-def maybe_add_or_delete_source(source_cls, auth_entity, state, **kwargs):
-  """Adds or deletes a source if ``auth_entity`` is not None.
+def finish_auth(source_cls, auth_entity, state, **kwargs):
+  """Adds or deletes a source after the user finishes authenticating.
 
-  Used in each source's oauth-dropins :meth:`Callback.finish()` and
-  :meth:`Callback.get()` methods, respectively.
+  Used in each source's oauth-dropins :meth:`Callback.finish()` method, and
+  other similar post-auth handlers.
 
   This method _always_ ends by raising a :class:`Redirect` exception to return
   an HTTP redirect response! That means that any code after a call to this
@@ -523,99 +523,126 @@ def maybe_add_or_delete_source(source_cls, auth_entity, state, **kwargs):
   Args:
     source_cls (granary.source.Source subclass): eg
       :class:`granary.instagram.Instagram`
-    auth_entity (oauth_dropins.models.BaseAuth subclass instance): auth entity
+    auth_entity (oauth_dropins.models.BaseAuth subclass instance): auth entity,
+      or None if the user declined
     state (str): OAuth callback ``state`` parameter. a JSON serialized dict with
       ``operation``, ``feature``, and an optional callback URL. For deletes, it
       will also include the source key
-    kwargs: passed through to the ``source_cls`` constructor
-
-  Returns:
-    source entity if it was created or updated, otherwise None
+    kwargs: passed through to the ``source_cls`` constructor for adds
 
   Raises:
     Redirect: to redirect to user page or callback URL
   """
   state_obj = util.decode_oauth_state(state)
   operation = state_obj.get('operation', 'add')
-  callback = state_obj.get('callback')
-  user_url = state_obj.get('user_url')
+  logger.debug(f'finish_auth with operation={operation} state={state_obj}')
 
-  feat_str = state_obj.get('feature')
+  if operation == 'add':
+    add_source(source_cls, auth_entity, state_obj, **kwargs)
+  else:
+    assert operation == 'delete'
+    delete_source(source_cls, auth_entity, state_obj)
+
+
+def add_source(source_cls, auth_entity, state, **kwargs):
+  """Adds or updates a source. Always raises :class:`Redirect`.
+
+  Args:
+    source_cls (granary.source.Source subclass)
+    auth_entity (oauth_dropins.models.BaseAuth subclass instance): auth entity,
+      or None if the user declined
+    state (dict): decoded OAuth callback ``state``, with ``feature`` and
+      optional ``callback`` and ``user_url``
+    kwargs: passed through to the ``source_cls`` constructor
+
+  Raises:
+    Redirect: to redirect to user page or callback URL
+  """
+  callback = state.get('callback')
+  feat_str = state.get('feature')
   features = feat_str.split(',') if feat_str else []
 
-  logger.debug(
-    'maybe_add_or_delete_source with operation=%s feature=%s callback=%s',
-    operation, features, callback)
-  logins = None
+  if not auth_entity:
+    # TODO: only show if we haven't already flashed another message?
+    # get_flashed_messages() caches so it's dangerous to call to check;
+    # use eg session.get('_flashes', []) instead.
+    # https://stackoverflow.com/a/17243946/186123
+    flash("OK, you're not signed up. Hope you reconsider!")
+    if callback:
+      callback = util.add_query_params(callback, {'result': 'declined'})
+      logger.debug(
+        f'user declined adding source, redirect to external callback {callback}')
+      redirect(callback)
+    else:
+      redirect('/')
 
-  if operation == 'add':  # this is an add/update
-    if not auth_entity:
-      # TODO: only show if we haven't already flashed another message?
-      # get_flashed_messages() caches so it's dangerous to call to check;
-      # use eg session.get('_flashes', []) instead.
-      # https://stackoverflow.com/a/17243946/186123
-      flash("OK, you're not signed up. Hope you reconsider!")
-      if callback:
-        callback = util.add_query_params(callback, {'result': 'declined'})
-        logger.debug(
-          f'user declined adding source, redirect to external callback {callback}')
-        redirect(callback)
-      else:
-        redirect('/')
-
-    logger.info(f'{source_cls.__class__.__name__}.create_new with {auth_entity.key}, {state}, {kwargs}')
-    source = source_cls.create_new(auth_entity=auth_entity, features=features,
-                                   user_url=user_url, **kwargs)
-
-
-    if source:
-      # if we're normalizing username case to lower case to make the key id, check
-      # if there's an old Source with a capitalized key id, and if so, disable it
-      # https://github.com/snarfed/bridgy/issues/884
-      if source.USERNAME_KEY_ID and source.username != source.key_id():
-        @ndb.transactional()
-        def maybe_disable_original():
-          orig = source_cls.get_by_id(source.username)
-          if orig:
-            logger.info(f'Disabling {orig.bridgy_url()} for lower case {source.bridgy_url()}')
-            orig.features = []
-            orig.put()
-
-        maybe_disable_original()
-
-      # add to login cookie
-      logins = get_logins()
-      logins.append(Login(path=source.bridgy_path(), site=source.SHORT_NAME,
-                          name=source.label_name()))
-
-      if callback:
-        callback = util.add_query_params(callback, {
-          'result': 'success',
-          'user': source.bridgy_url(),
-          'key': source.key.urlsafe().decode(),
-        } if source else {'result': 'failure'})
-        logger.debug(
-          'finished adding source, redirect to external callback %s', callback)
-        redirect(callback, logins=logins)
-      elif not source.domains:
-        redirect('/edit-websites?' + urllib.parse.urlencode({
-          'source_key': source.key.urlsafe().decode(),
-          'token': str(auth_entity.access_token()),
-        }), logins=logins)
-      else:
-        redirect(source.bridgy_url(), logins=logins)
-
-    # no source
+  logger.info(f'{source_cls.__class__.__name__}.create_new with {auth_entity.key}, {state}, {kwargs}')
+  source = source_cls.create_new(auth_entity=auth_entity, features=features,
+                                 user_url=state.get('user_url'), **kwargs)
+  if not source:
     redirect('/')
 
-  # this is a delete
+  # if we're normalizing username case to lower case to make the key id, check
+  # if there's an old Source with a capitalized key id, and if so, disable it
+  # https://github.com/snarfed/bridgy/issues/884
+  if source.USERNAME_KEY_ID and source.username != source.key_id():
+    @ndb.transactional()
+    def maybe_disable_original():
+      orig = source_cls.get_by_id(source.username)
+      if orig:
+        logger.info(f'Disabling {orig.bridgy_url()} for lower case {source.bridgy_url()}')
+        orig.features = []
+        orig.put()
+
+    maybe_disable_original()
+
+  # add to login cookie
+  logins = get_logins()
+  logins.append(Login(path=source.bridgy_path(), site=source.SHORT_NAME,
+                      name=source.label_name()))
+
+  if callback:
+    callback = util.add_query_params(callback, {
+      'result': 'success',
+      'user': source.bridgy_url(),
+      'key': source.key.urlsafe().decode(),
+    })
+    logger.debug(
+      'finished adding source, redirect to external callback %s', callback)
+    redirect(callback, logins=logins)
+  elif not source.domains:
+    redirect('/edit-websites?' + urllib.parse.urlencode({
+      'source_key': source.key.urlsafe().decode(),
+      'token': str(auth_entity.access_token()),
+    }), logins=logins)
+  else:
+    redirect(source.bridgy_url(), logins=logins)
+
+
+def delete_source(source_cls, auth_entity, state):
+  """Disables one or more features on a source. Always raises :class:`Redirect`.
+
+  Args:
+    source_cls (granary.source.Source subclass)
+    auth_entity (oauth_dropins.models.BaseAuth subclass instance): auth entity,
+      or None if the user declined
+    state (dict): decoded OAuth callback ``state``, with ``feature``,
+      ``source`` (urlsafe key), and optional ``callback``
+
+  Raises:
+    Redirect: to redirect to user page or callback URL
+  """
+  callback = state.get('callback')
+  feat_str = state.get('feature')
+  features = feat_str.split(',') if feat_str else []
+
   if not auth_entity:
     # declined means no change took place
     if callback:
       redirect(util.add_query_params(callback, {'result': 'declined'}))
 
     flash(f'If you want to disable, please approve the {source_cls.GR_CLASS.NAME} prompt.')
-    source_key = state_obj.get('source')
+    source_key = state.get('source')
     if source_key:
       source = ndb.Key(urlsafe=source_key).get()
       if source:
@@ -623,15 +650,16 @@ def maybe_add_or_delete_source(source_cls, auth_entity, state, **kwargs):
 
     redirect('/')
 
-  if not features or 'source' not in state_obj:
+  if not features or 'source' not in state:
     error('state query parameter must include "feature" and "source"')
 
   for feature in features:
     if feature not in FEATURES:
       error(f'cannot delete unknown feature {feature}')
 
-  source = ndb.Key(urlsafe=state_obj['source']).get()
+  source = ndb.Key(urlsafe=state['source']).get()
 
+  logins = None
   if auth_entity.is_authority_for(source.auth_entity):
     source.features = set(source.features) - set(features)
     source.put()

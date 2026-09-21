@@ -213,12 +213,12 @@ class Add(oauth_wordpress.Callback):
                                     auth_entity_key=auth_entity.key.urlsafe().decode(),
                                     state=state)
 
-    util.maybe_add_or_delete_source(WordPress, auth_entity, state)
+    util.finish_auth(WordPress, auth_entity, state)
 
 
 @app.route('/wordpress/confirm', methods=['POST'])
 def confirm_self_hosted():
-  util.maybe_add_or_delete_source(
+  util.finish_auth(
     WordPress,
     ndb.Key(urlsafe=request.form['auth_entity_key']).get(),
     request.form['state'])

@@ -171,7 +171,7 @@ class Auth():
 
 class Add(oauth_twitter.Callback, Auth):
   def finish(self, auth_entity, state=None):
-    util.maybe_add_or_delete_source(Twitter, auth_entity, state)
+    util.finish_auth(Twitter, auth_entity, state)
 
 
 class Start(oauth_twitter.Start, Auth):

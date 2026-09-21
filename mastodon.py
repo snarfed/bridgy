@@ -175,7 +175,7 @@ class Callback(FlashErrors, oauth_mastodon.Callback):
 
   def finish(self, auth_entity, state=None):
     logger.debug(f'finish with {auth_entity}, {state}')
-    util.maybe_add_or_delete_source(Mastodon, auth_entity, state)
+    util.finish_auth(Mastodon, auth_entity, state)
 
 
 app.add_url_rule('/mastodon/start',

@@ -102,7 +102,7 @@ class Start(View):
 class AddOrDelete(oauth_github.Callback):
   def finish(self, auth_entity, state=None):
     logger.debug(f'finish with {auth_entity}, {state}')
-    util.maybe_add_or_delete_source(GitHub, auth_entity, state)
+    util.finish_auth(GitHub, auth_entity, state)
 
 
 app.add_url_rule('/github/start', view_func=Start.as_view('github_start'), methods=['POST'])
