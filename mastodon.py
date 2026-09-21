@@ -6,7 +6,7 @@ from flask import request
 from granary import mastodon as gr_mastodon
 from granary import source as gr_source
 from oauth_dropins import mastodon as oauth_mastodon
-from webutil.flask_util import flash
+from webutil.flask_util import flash, FlashErrors
 from webutil.util import json_dumps, json_loads
 import requests
 
@@ -40,7 +40,6 @@ class StartBase(oauth_mastodon.Start):
     '/publish/mastodon/finish',
     '/micropub-token/mastodon/finish',
     '/mastodon/delete/finish',
-    '/delete/finish',
   )
   # https://github.com/snarfed/bridgy/issues/1344
   EXPIRE_APPS_BEFORE = datetime(2022, 9, 26)
@@ -171,7 +170,9 @@ class Start(StartBase):
       util.redirect(request.path)
 
 
-class Callback(oauth_mastodon.Callback):
+class Callback(FlashErrors, oauth_mastodon.Callback):
+  ON_ERROR_REDIRECT_TO = '/'
+
   def finish(self, auth_entity, state=None):
     logger.debug(f'finish with {auth_entity}, {state}')
     util.maybe_add_or_delete_source(Mastodon, auth_entity, state)
@@ -181,6 +182,6 @@ app.add_url_rule('/mastodon/start',
                  view_func=Start.as_view('mastodon_start', '/mastodon/callback'), methods=['POST'])
 app.add_url_rule('/mastodon/callback', view_func=Callback.as_view('mastodon_callback', 'unused'))
 app.add_url_rule('/mastodon/delete/finish',
-                 view_func=oauth_mastodon.Callback.as_view('mastodon_delete_finish', '/delete/finish'))
+                 view_func=Callback.as_view('mastodon_delete_finish', 'unused'))
 app.add_url_rule('/mastodon/publish/start',
                  view_func=StartBase.as_view('mastodon_publish_start', '/publish/mastodon/finish', scopes=PUBLISH_SCOPES), methods=['POST'])

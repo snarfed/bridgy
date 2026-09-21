@@ -200,7 +200,7 @@ def bluesky_start():
                               **request_values)
 
 
-# OAuth
+# OAuth. not currently used.
 # https://github.com/snarfed/bridgy/issues/1909
 
 class OAuthStart(FlashErrors, oauth_bluesky.OAuthStart):
@@ -239,6 +239,6 @@ app.add_url_rule('/bluesky/callback', view_func=Callback.as_view('bluesky_callba
 # app.add_url_rule('/bluesky/oauth/callback',
 #                  view_func=OAuthCallback.as_view('bluesky_oauth_callback', 'unused'))
 # app.add_url_rule('/bluesky/delete/finish',
-#                  view_func=OAuthCallback.as_view('bluesky_delete_finish', '/delete/finish'))
+#                  view_func=OAuthCallback.as_view('bluesky_delete_finish', 'unused'))
 # app.add_url_rule('/bluesky/publish/start',
 #                  view_func=OAuthStart.as_view('bluesky_publish_start', '/publish/bluesky/finish'), methods=['POST'])

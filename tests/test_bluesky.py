@@ -95,15 +95,9 @@ class BlueskyTest(testutil.AppTest):
       }):
       Callback('unused').finish(self.auth_entity)
 
-    location = urlparse(redir.exception.get_response().headers['Location'])
-    self.assertEqual('/delete/finish', location.path)
-    query = parse_qs(location.query)
-    self.assertEqual([self.auth_entity.key.urlsafe().decode()], query['auth_entity'])
-    self.assertEqual({
-      'operation': 'delete',
-      'feature': 'listen,publish',
-      'source': self.bsky.key.urlsafe().decode(),
-    }, util.decode_oauth_state(query['state'][0]))
+    self.assertEqual('http://localhost/',
+                     redir.exception.get_response().headers['Location'])
+    self.assertEqual([], self.bsky.key.get().features)
 
   def test_get_activities(self):
     self.mock_get.return_value = requests_response(
@@ -179,19 +173,15 @@ class BlueskyTest(testutil.AppTest):
     state = util.encode_oauth_state({
       'operation': 'delete',
       'feature': 'listen,publish',
+      'source': self.bsky.key.urlsafe().decode(),
     })
 
-    with self.assertRaises(RequestRedirect) as redir, app.test_request_context('/'):
+    with self.assertRaises(RequestRedirect) as redir, app.test_request_context():
       OAuthCallback('unused').finish(self.auth_entity, state=state)
 
-    location = urlparse(redir.exception.get_response().headers['Location'])
-    self.assertEqual('/delete/finish', location.path)
-    query = parse_qs(location.query)
-    self.assertEqual([self.auth_entity.key.urlsafe().decode()], query['auth_entity'])
-    self.assertEqual({
-      'operation': 'delete',
-      'feature': 'listen,publish',
-    }, util.decode_oauth_state(query['state'][0]))
+    self.assertEqual('http://localhost/',
+                     redir.exception.get_response().headers['Location'])
+    self.assertEqual([], self.bsky.key.get().features)
 
   def test_oauth_callback_no_auth_entity(self):
     with self.assertRaises(RequestRedirect) as redir, app.test_request_context('/'):

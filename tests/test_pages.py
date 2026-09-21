@@ -7,9 +7,10 @@ from urllib.parse import urlencode, urlparse, parse_qs
 
 from flask import get_flashed_messages
 from google.cloud import ndb
+import tweepy
 from webutil.testutil import NOW, requests_response
 from webutil.util import json_dumps, json_loads
-import tweepy
+from werkzeug.routing import RequestRedirect
 
 from flask_app import app
 from bluesky import Bluesky, OAuthStart
@@ -153,22 +154,18 @@ class PagesTest(testutil.AppTest):
     }, sort_keys=True))
 
     # when silo oauth is done, it should send us back to /SOURCE/delete/finish,
-    # which would in turn redirect to the more general /delete/finish.
     expected_auth_url = 'http://fake/auth/url?' + urlencode({
-      'redirect_uri': 'http://localhost/fake/delete/finish?state='
-      + encoded_state,
+      'redirect_uri': 'http://localhost/fake/delete/finish?state=' + encoded_state,
     })
 
     self.assertEqual(302, resp.status_code)
     self.assertEqual(expected_auth_url, resp.headers['Location'])
 
-    # assume that the silo auth finishes and redirects to /delete/finish
-    self.auth_entities[0].put()
-    resp = self.client.get(
-      '/delete/finish?'
-      + 'auth_entity=' + self.sources[0].auth_entity.urlsafe().decode()
-      + '&state=' + encoded_state)
+    # assume that the silo auth finishes and redirects to /fake/delete/finish
+    with app.test_request_context(), self.assertRaises(RequestRedirect) as e:
+      util.maybe_add_or_delete_source(testutil.FakeSource, self.auth_entities[0], encoded_state)
 
+    resp = e.exception.get_response()
     self.assertEqual(302, resp.status_code)
     self.assertEqual(
       'http://withknown.com/bridgy_callback?' + urlencode([
@@ -176,6 +173,8 @@ class PagesTest(testutil.AppTest):
         ('user', 'http://localhost/fake/0123456789'),
         ('key', ndb.Key('FakeSource', '0123456789').urlsafe().decode()),
       ]), resp.headers['Location'])
+
+    self.assertEqual([], self.sources[0].key.get().features)
 
   def test_delete_source_declined(self):
     key = self.sources[0].key.urlsafe().decode()
@@ -192,25 +191,26 @@ class PagesTest(testutil.AppTest):
       'source': key,
     }, sort_keys=True))
 
-    # when silo oauth is done, it should send us back to /SOURCE/delete/finish,
-    # which would in turn redirect to the more general /delete/finish.
+    # when silo oauth is done, it should send us back to /SOURCE/delete/finish
     expected_auth_url = 'http://fake/auth/url?' + urlencode({
       'redirect_uri': 'http://localhost/fake/delete/finish?state='
       + encoded_state,
     })
-
     self.assertEqual(302, resp.status_code)
     self.assertEqual(expected_auth_url, resp.headers['Location'])
 
     # assume that the silo auth finishes
-    resp = self.client.get(
-      '/delete/finish?declined=True&state=' + encoded_state)
+    with app.test_request_context(), self.assertRaises(RequestRedirect) as e:
+      util.maybe_add_or_delete_source(testutil.FakeSource, None, encoded_state)
 
+    resp = e.exception.get_response()
     self.assertEqual(302, resp.status_code)
     self.assertEqual(
       'http://withknown.com/bridgy_callback?' + urlencode([
         ('result', 'declined')
       ]), resp.headers['Location'])
+
+    self.assertEqual(['listen'], self.sources[0].key.get().features)
 
   @patch.object(testutil.OAuthStart, 'redirect_url',
                 side_effect=tweepy.TweepyException('Connection closed unexpectedly...'))
@@ -225,6 +225,8 @@ class PagesTest(testutil.AppTest):
     self.assertEqual(['FakeSource API error 504: Connection closed unexpectedly...'],
                      get_flashed_messages())
 
+    self.assertEqual(['listen'], self.sources[0].key.get().features)
+
   @patch.object(testutil.OAuthStart, 'redirect_url',
                 side_effect=ValueError('foo bar'))
   def test_delete_start_redirect_url_value_error(self, _):
@@ -237,28 +239,30 @@ class PagesTest(testutil.AppTest):
     self.assertEqual('/fake/0123456789', location.path)
     self.assertEqual(['Error: foo bar'], get_flashed_messages())
 
-  def test_delete_removes_from_logins_cookie(self):
-    self.client.set_cookie(
-      'logins', f'/fake/{self.sources[0].key.id()}?Fake%20User|/other/1?bob')
+    self.assertEqual(['listen'], self.sources[0].key.get().features)
 
-    with app.test_request_context():
+  def test_delete_removes_from_logins_cookie(self):
+    headers = {
+      'Cookie': f'logins=/fake/{self.sources[0].key.id()}?Fake%20User|/other/1?bob',
+    }
+
+    with app.test_request_context(headers=headers):
       state = util.construct_state_param_for_add(
         feature='listen', operation='delete',
         source=self.sources[0].key.urlsafe().decode())
 
-    self.auth_entities[0].put()
-    auth_entity_key = self.sources[0].auth_entity.urlsafe().decode()
-    resp = self.client.get(
-      f'/delete/finish?auth_entity={auth_entity_key}&state={state}')
+      with self.assertRaises(RequestRedirect) as e:
+        util.maybe_add_or_delete_source(testutil.FakeSource, self.auth_entities[0], state)
 
-    self.assertEqual(302, resp.status_code)
-    location = resp.headers['Location']
-    self.assertEqual('http://localhost/', location)
+    self.assertEqual('http://localhost/', e.exception.new_url)
     self.assertIn('logins=/other/1?bob;',
-                  resp.headers['Set-Cookie'].split(' '))
+                  e.exception.get_response().headers['Set-Cookie'].split(' '))
+
+    self.assertEqual([], self.sources[0].key.get().features)
 
   def test_delete_bluesky(self):
-    source_key = Bluesky(id='did:plc:foo', username='foo.com').put()
+    source = Bluesky(id='did:plc:foo', username='foo.com')
+    source.put()
 
     # OAuth
     # https://github.com/snarfed/bridgy/issues/1909
@@ -270,7 +274,7 @@ class PagesTest(testutil.AppTest):
 
     resp = self.client.post('/delete/start', data={
       'feature': 'listen',
-      'key': source_key.urlsafe().decode(),
+      'key': source.key.urlsafe().decode(),
       'handle': 'foo.com',
     })
     self.assertEqual(302, resp.status_code)
@@ -278,12 +282,14 @@ class PagesTest(testutil.AppTest):
       'http://localhost/bluesky/delete/start?username=foo.com&feature=listen',
       resp.headers['Location'])
 
+    self.assertEqual([], source.key.get().features)
+
     # OAuth
     # https://github.com/snarfed/bridgy/issues/1909
     # self.assertEqual('https://bsky.social/oauth/authorize?x=1',
     #                  resp.headers['Location'])
 
-  def test_delete_finish_multiple_features(self):
+  def test_delete_multiple_features(self):
     self.sources[0].features = ['listen', 'publish']
     self.sources[0].put()
 
@@ -293,14 +299,25 @@ class PagesTest(testutil.AppTest):
         operation='delete',
         source=self.sources[0].key.urlsafe().decode())
 
-    self.auth_entities[0].put()
-    auth_entity_key = self.sources[0].auth_entity.urlsafe().decode()
-    resp = self.client.get(
-      f'/delete/finish?auth_entity={auth_entity_key}&state={state}')
+      with self.assertRaises(RequestRedirect) as e:
+        util.maybe_add_or_delete_source(testutil.FakeSource, self.auth_entities[0], state)
 
-    self.assertEqual(302, resp.status_code)
-    got = self.sources[0].key.get()
-    self.assertEqual([], got.features)
+    self.assertEqual('http://localhost/', e.exception.new_url)
+
+    self.assertEqual([], self.sources[0].key.get().features)
+
+  def test_delete_finish_removed(self):
+    state = util.encode_oauth_state({
+      'feature': 'listen',
+      'operation': 'delete',
+      'source': self.sources[0].key.urlsafe().decode(),
+    })
+    auth_entity = self.auth_entities[0].key.urlsafe().decode()
+    resp = self.client.get(
+      f'/delete/finish?auth_entity={auth_entity}&state={state}')
+    self.assertEqual(404, resp.status_code)
+
+    self.assertEqual(['listen'], self.sources[0].key.get().features)
 
   def test_user_page(self):
     self.sources[0].last_webmention_sent = util.now()

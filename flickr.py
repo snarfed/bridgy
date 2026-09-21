@@ -115,8 +115,8 @@ class Start(oauth_flickr.Start, AuthHandler):
     return self.start_oauth_flow(request.form.get('feature'))
 
 
-class AddFlickr(oauth_flickr.Callback, AuthHandler):
-  """Custom handler to add Flickr source when auth completes.
+class AddOrDelete(oauth_flickr.Callback, AuthHandler):
+  """Custom handler to add or delete Flickr source when auth completes.
 
   If this account was previously authorized with greater permissions, this will
   trigger another round of auth with elevated permissions.
@@ -127,6 +127,6 @@ class AddFlickr(oauth_flickr.Callback, AuthHandler):
 
 
 app.add_url_rule('/flickr/start', view_func=Start.as_view('flickr_start', '/flickr/add'), methods=['POST'])
-app.add_url_rule('/flickr/add', view_func=AddFlickr.as_view('flickr_add', 'unused'))
-app.add_url_rule('/flickr/delete/finish', view_func=oauth_flickr.Callback.as_view('flickr_delete_finish', '/delete/finish'))
+app.add_url_rule('/flickr/add', view_func=AddOrDelete.as_view('flickr_add', 'unused'))
+app.add_url_rule('/flickr/delete/finish', view_func=AddOrDelete.as_view('flickr_delete_finish', 'unused'))
 app.add_url_rule('/flickr/publish/start', view_func=oauth_flickr.Start.as_view('flickr_publish_start', '/publish/flickr/finish'), methods=['POST'])

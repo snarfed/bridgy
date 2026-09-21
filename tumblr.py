@@ -231,9 +231,9 @@ class Tumblr(models.Source):
     return resp
 
 
-class ChooseBlog(oauth_tumblr.Callback):
+class ChooseBlogOrDelete(oauth_tumblr.Callback):
   def finish(self, auth_entity, state=None):
-    if not auth_entity:
+    if not auth_entity or util.decode_oauth_state(state).get('operation') == 'delete':
       util.maybe_add_or_delete_source(Tumblr, auth_entity, state)
       return
 
@@ -272,8 +272,8 @@ class SuperfeedrNotify(superfeedr.Notify):
 start = util.oauth_starter(oauth_tumblr.Start).as_view(
   'tumblr_start', '/tumblr/choose_blog')
 app.add_url_rule('/tumblr/start', view_func=start, methods=['POST'])
-app.add_url_rule('/tumblr/choose_blog', view_func=ChooseBlog.as_view(
+app.add_url_rule('/tumblr/choose_blog', view_func=ChooseBlogOrDelete.as_view(
   'tumblr_choose_blog', 'unused'))
-app.add_url_rule('/tumblr/delete/finish', view_func=oauth_tumblr.Callback.as_view(
-  'tumblr_delete_finish', '/delete/finish'))
+app.add_url_rule('/tumblr/delete/finish', view_func=ChooseBlogOrDelete.as_view(
+  'tumblr_delete_finish', 'unused'))
 app.add_url_rule('/tumblr/notify/<id>', view_func=SuperfeedrNotify.as_view('tumblr_notify'), methods=['POST'])

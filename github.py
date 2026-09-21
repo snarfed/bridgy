@@ -99,13 +99,13 @@ class Start(View):
     return starter.dispatch_request()
 
 
-class AddGitHub(oauth_github.Callback):
+class AddOrDelete(oauth_github.Callback):
   def finish(self, auth_entity, state=None):
     logger.debug(f'finish with {auth_entity}, {state}')
     util.maybe_add_or_delete_source(GitHub, auth_entity, state)
 
 
 app.add_url_rule('/github/start', view_func=Start.as_view('github_start'), methods=['POST'])
-app.add_url_rule('/github/add', view_func=AddGitHub.as_view('github_add', 'unused'))
-app.add_url_rule('/github/delete/finish', view_func=oauth_github.Callback.as_view('github_delete_finish', '/delete/finish'))
+app.add_url_rule('/github/add', view_func=AddOrDelete.as_view('github_add', 'unused'))
+app.add_url_rule('/github/delete/finish', view_func=AddOrDelete.as_view('github_delete_finish', 'unused'))
 app.add_url_rule('/github/publish/start', view_func=oauth_github.Start.as_view('github_publish_start', '/publish/github/finish', scopes=PUBLISH_SCOPES), methods=['POST'])

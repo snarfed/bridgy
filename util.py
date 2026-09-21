@@ -608,18 +608,65 @@ def maybe_add_or_delete_source(source_cls, auth_entity, state, **kwargs):
     # no source
     redirect('/')
 
-  else:  # this is a delete
-    if auth_entity:
-      redirect(f'/delete/finish?auth_entity={auth_entity.key.urlsafe().decode()}&state={state}')
-    else:
-      flash(f'If you want to disable, please approve the {source_cls.GR_CLASS.NAME} prompt.')
-      source_key = state_obj.get('source')
-      if source_key:
-        source = ndb.Key(urlsafe=source_key).get()
-        if source:
-          redirect(source.bridgy_url())
+  # this is a delete
+  if not auth_entity:
+    # declined means no change took place
+    if callback:
+      redirect(util.add_query_params(callback, {'result': 'declined'}))
 
-      redirect('/')
+    flash(f'If you want to disable, please approve the {source_cls.GR_CLASS.NAME} prompt.')
+    source_key = state_obj.get('source')
+    if source_key:
+      source = ndb.Key(urlsafe=source_key).get()
+      if source:
+        redirect(source.bridgy_url())
+
+    redirect('/')
+
+  if not features or 'source' not in state_obj:
+    error('state query parameter must include "feature" and "source"')
+
+  for feature in features:
+    if feature not in FEATURES:
+      error(f'cannot delete unknown feature {feature}')
+
+  source = ndb.Key(urlsafe=state_obj['source']).get()
+
+  if auth_entity.is_authority_for(source.auth_entity):
+    source.features = set(source.features) - set(features)
+    source.put()
+
+    if not source.features:
+      # remove login cookie
+      logins = get_logins()
+      login = Login(path=source.bridgy_path(), site=source.SHORT_NAME,
+                    name=source.label_name())
+      if login in logins:
+        logins.remove(login)
+
+    if callback:
+      callback = util.add_query_params(callback, {
+        'result': 'success',
+        'user': source.bridgy_url(),
+        'key': source.key.urlsafe().decode(),
+      })
+    else:
+      nouns = {
+        'webmention': 'webmentions',
+        'listen': 'backfeed',
+        'publish': 'publishing',
+      }
+      msg = f'Disabled {nouns[feature]} for {source.label()}.'
+      if not source.features:
+        msg += ' Sorry to see you go!'
+      flash(msg)
+  elif callback:
+    callback = util.add_query_params(callback, {'result': 'failure'})
+  else:
+    flash(f'Please log into {source.GR_CLASS.NAME} as {source.name} to disable it here.')
+
+  url = callback if callback else source.bridgy_url() if source.features else '/'
+  redirect(url, logins=logins)
 
 
 def construct_state_param_for_add(state=None, **kwargs):
