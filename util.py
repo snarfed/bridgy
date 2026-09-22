@@ -540,7 +540,6 @@ def finish_auth(source_cls, auth_entity, state, **kwargs):
   if operation == 'add':
     add_source(source_cls, auth_entity, state_obj, **kwargs)
   else:
-    assert operation == 'delete'
     delete_source(source_cls, auth_entity, state_obj)
 
 
