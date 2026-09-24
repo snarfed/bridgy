@@ -9,6 +9,6 @@ Thank you for investigating Bridgy's security! We appreciate any and all reports
 A few guidelines:
 
 * Vulnerabilities must be in the application itself, not unrelated services like email (eg SPF/DKIM/DMARC).
-* Out of scope: rate limiting, XSS/CSRF attacks (Bridgy has no authenticated sessions), /admin/* pages.
+* Out of scope: rate limiting, XSS/CSRF attacks (Bridgy has no persistent authenticated sessions), /admin/* pages.
 * User data is intentionally public. That's not a vulnerability.
-* No automated fuzzing, DoSes, or other high volume traffic. We block this traffic, and it will disqualify you from any possible award.
+* No automated fuzzing, DoSes, or other high volume traffic.
