@@ -82,6 +82,7 @@ class BlueskyTest(testutil.AppTest):
         ('https://staging.bsky.app/foo', 'https://bsky.app/foo'),
         ('at://did:web:alice.com', 'https://bsky.app/profile/alice.com'),
         ('at://did:web:alice.com/app.bsky.feed.post/123', 'https://bsky.app/profile/alice.com/post/123'),
+        ('at://did:web:alice.com/site.standard.document/123', None),
     ]:
       self.assertEqual(expected, self.bsky.canonicalize_url(input))
 

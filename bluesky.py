@@ -109,6 +109,8 @@ class Bluesky(models.Source):
     """
     if url.startswith('at://'):
       url = gr_bluesky.at_uri_to_web_url(url, handle=self.username)
+      if not url:
+        return None
 
     url = url.replace('https://staging.bsky.app/', 'https://bsky.app/')
     return super().canonicalize_url(url)
