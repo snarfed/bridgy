@@ -44,6 +44,11 @@ class PagesTest(testutil.AppTest):
     resp = self.client.get('/')
     self.assertEqual(200, resp.status_code)
 
+  def test_csp_report(self):
+    resp = self.client.post('/csp-report', data='{}',
+                            content_type='application/reports+json')
+    self.assertEqual(204, resp.status_code)
+
   def test_poll_now(self):
     key = self.sources[0].key.urlsafe().decode()
 
