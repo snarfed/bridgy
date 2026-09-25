@@ -1,14 +1,23 @@
 /** Misc JavaScript.
  */
 
-// Used for the "More..." link.
-function toggle(id) {
-  var elem = document.getElementById(id);
-  elem.style.display = (elem.style.display == 'none') ? 'block' : 'none';
-}
+// Used for the disabled account icon on user pages, to reconnect.
+document.addEventListener('click', (event) => {
+  if (event.target.closest('[data-submit-first-form]')) {
+    event.preventDefault();
+    document.forms[0].submit();
+  }
+});
+
+document.addEventListener('submit', (event) => {
+  if (event.target.name == 'preview') {
+    event.preventDefault();
+    do_preview();
+  }
+});
 
 // AJAX publish previews on user pages.
-function do_preview(site) {
+function do_preview() {
   var msgs = document.getElementById('messages');
   if (msgs) {
       msgs.style.display = 'none';

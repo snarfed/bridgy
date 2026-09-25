@@ -13,7 +13,7 @@
 {% if (source.AUTO_POLL and source.CAN_LISTEN) or source.CAN_PUBLISH %}
 <!-- TODO: make this work without javascript too -->
 <data class="p-bridgy-account-status" value="disabled">
-<a href="#" onclick="document.forms[0].submit(); return false;">
+<a href="#" data-submit-first-form>
   <span class="glyphicon glyphicon-pause"
         title="This account was disconnected on {{ source.GR_CLASS.NAME or source.key.kind }}'s end. Click to reconnect it!">
 </span></a>
@@ -25,15 +25,13 @@
 
 {% for link in source.website_links %}
   {% if loop.index0 == 3 %}
-    <span id="more-websites" style="display: none">
+    <details class="show-more"><summary>...</summary>
   {% endif %}
   &middot;
   {{ link|safe }}
 {% endfor %}
 {% if source.website_links|length > 3 %}
-  </span>
-  <a onclick="toggle('more-websites'); toggle('show-more-websites'); return false"
-     id="show-more-websites" href="#" />...</a>
+  </details>
 {% endif %}
 
 </div>

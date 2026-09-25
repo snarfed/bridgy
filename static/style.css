@@ -419,3 +419,13 @@ iframe {
 @view-transition {
   navigation: auto;
 }
+
+/* "..." to show more web sites on user pages */
+.show-more, .show-more > summary {
+  display: inline;
+  cursor: pointer;
+}
+
+.show-more[open] > summary {
+  display: none;
+}

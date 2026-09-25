@@ -44,6 +44,15 @@ class PagesTest(testutil.AppTest):
     resp = self.client.get('/')
     self.assertEqual(200, resp.status_code)
 
+  def test_templates_have_no_inline_js(self):
+    # inline event handlers, inline <script>s, and javascript: URLs would all
+    # need 'unsafe-inline' in our Content-Security-Policy
+    for name in app.jinja_env.list_templates(extensions=['html']):
+      source, _, _ = app.jinja_env.loader.get_source(app.jinja_env, name)
+      with self.subTest(name):
+        self.assertNotRegex(
+          source, r'(?i)\son[a-z]+=|<script(?![^>]*\ssrc=)[^>]*>|javascript:')
+
   def test_csp_report(self):
     resp = self.client.post('/csp-report', data='{}',
                             content_type='application/reports+json')

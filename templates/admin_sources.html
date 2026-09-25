@@ -6,21 +6,11 @@
   table { border-spacing: .5em; }
   th, td { border: none; }
   li { list-style: none; }
-  input { display: none; }
 </style>
 
-<script type="text/javascript">
-function maybeShowInputs(event) {
-  if (String.fromCharCode(event.charCode) == "x") {
-    for (const elem of document.getElementsByTagName("input")) {
-      elem.style.display = "inline";
-    }
-  }
-}
-</script>
 </head>
 
-<body onkeypress="maybeShowInputs(event)">
+<body>
 <h2>Poll error sources</h2>
 <table>
   <tr>
