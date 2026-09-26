@@ -5,6 +5,7 @@ Webmention spec: http://webmention.org/
 Bridgy request and response details: https://brid.gy/about#response
 """
 import collections
+from html import escape
 import logging
 import pprint
 import re
@@ -615,7 +616,7 @@ class Preview(PublishBase):
   def authorize(self):
     from_source = util.load_source()
     if from_source.key != self.source.key:
-      msg = f'Try publishing that page from <a href="{self.source.bridgy_path()}">{self.source.label()}</a> instead.'
+      msg = f'Try publishing that page from <a href="{escape(self.source.bridgy_path())}">{escape(self.source.label())}</a> instead.'
       self.error(msg, html=msg)
       return False
 
@@ -630,7 +631,7 @@ class Preview(PublishBase):
 
   def error(self, error, html=None, status=400, **kwargs):
     super().error(error, html=html, http_response=False, **kwargs)
-    flask_util.error(html or util.linkify(error), status=status)
+    flask_util.error(html or util.linkify(escape(error)), status=status)
 
 
 class Send(PublishBase):
@@ -677,7 +678,7 @@ class Send(PublishBase):
     return self.state['include_link']
 
   def error(self, error, html=None, **kwargs):
-    flash(html or util.linkify(error), escape=False)
+    flash(html or util.linkify(escape(error)), escape=False)
     return super().error(error, html=html, http_response=False, **kwargs)
 
 

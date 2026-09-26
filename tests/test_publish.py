@@ -100,7 +100,7 @@ class PublishTest(testutil.AppTest):
     elif interactive:
       for exp, got in zip([expected] if isinstance(expected, str) else expected,
                           get_flashed_messages()):
-        self.assertIn(exp, got)
+        self.assertIn(exp, html.unescape(got))
     else:
       if resp.headers['Content-Type'].startswith('application/json'):
         body = json_loads(body)['content' if status < 300 else 'error']
@@ -352,6 +352,39 @@ foo
 foo
 <a rel="shortlink" href="http://foo.com/short"></a>""")
     self.assert_created('foo - http://foo.com/short', source='http://will/redirect')
+
+  def test_error_escapes_source_url(self):
+    source = 'foo:<img src=x onerror=alert(1)>'
+    escaped = 'foo:&lt;img src=x onerror=alert(1)&gt;'
+
+    resp = self.get_response(source=source, preview=True)
+    self.assertEqual(400, resp.status_code)
+    body = resp.get_data(as_text=True)
+    self.assertIn(f'Unsupported source URL {escaped}', body)
+    self.assertNotIn('<img', body)
+
+    FakeSend.oauth_state['source_url'] = source
+    self.get_response(interactive=True)
+    self.assertEqual([f'Unsupported source URL {escaped}'], get_flashed_messages())
+
+  def test_preview_wrong_source_escapes_label(self):
+    self.source.name = '<b>x</b>'
+    self.source.put()
+    other = FakeSource(id='bar.com', features=['publish'], domains=['bar.com'],
+                       auth_entity=self.auth_entity.key)
+    other.put()
+    self.mock_get.return_value = self._get_response(
+      'http://foo.com/bar', self.post_html % 'foo')
+
+    resp = self.client.post('/publish/preview', data={
+      'source': 'http://foo.com/bar',
+      'target': 'https://brid.gy/publish/fake',
+      'source_key': other.key.urlsafe().decode(),
+    })
+    body = resp.get_data(as_text=True)
+    self.assertIn('Try publishing that page from', body)
+    self.assertIn('&lt;b&gt;x&lt;/b&gt;', body)
+    self.assertNotIn('<b>x</b>', body)
 
   def test_bad_source(self):
     # no source
