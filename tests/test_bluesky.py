@@ -210,7 +210,7 @@ class BlueskyTest(testutil.AppTest):
     with app.test_request_context('/'):
       gr = bsky.gr_source
 
-    self.assertIsNotNone(gr._client.auth)
+    self.assertIsNotNone(gr.client.auth)
     self.assertIsNone(gr._app_password)
 
   def test_gr_source_oauth_session_callback(self):
@@ -231,7 +231,7 @@ class BlueskyTest(testutil.AppTest):
 
     new_token = DPoPToken(access_token='nu_towkin', _dpop_key=DPoPKey.generate())
     auth = OAuth2AccessTokenAuth(client=fake_client, token=new_token)
-    gr._client.session_callback(auth)
+    gr.client.session_callback(auth)
 
     self.assertEqual(new_token,
                      TokenSerializer().loads(auth_entity.key.get().dpop_token))
