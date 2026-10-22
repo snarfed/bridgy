@@ -3,7 +3,9 @@ from urllib.parse import quote
 
 from flask import request
 from google.cloud import ndb
+from granary import as1
 from granary import bluesky as gr_bluesky
+from lexrpc.base import AT_URI_RE
 import lexrpc.client
 from oauth_dropins import bluesky as oauth_bluesky
 from webutil.flask_util import error, flash, FlashErrors
@@ -114,6 +116,23 @@ class Bluesky(models.Source):
 
     url = url.replace('https://staging.bsky.app/', 'https://bsky.app/')
     return super().canonicalize_url(url)
+
+  def preprocess_for_publish(self, obj):
+    """Extends :meth:`Source.preprocess_for_publish` to omit at:// URIs for
+    records that aren't ``app.bsky.feed.post``.
+
+    https://github.com/snarfed/bridgy/issues/2248
+    """
+    super().preprocess_for_publish(obj)
+
+    for field in ('inReplyTo', 'object'):
+      objs = as1.get_objects(obj, field)
+      posts = [o for o in objs
+               if not (match := AT_URI_RE.fullmatch(o.get('url') or o.get('id') or ''))
+               or match['collection'] == 'app.bsky.feed.post']
+      if len(posts) < len(objs):
+        logger.info(f'Omitting non-post at:// URIs from {field}')
+        obj[field] = posts
 
   def get_activities_response(self, *args, **kwargs):
     """Raise DisableSource if we get a 400 with a token error.

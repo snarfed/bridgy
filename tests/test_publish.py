@@ -6,6 +6,7 @@ import urllib.request, urllib.parse, urllib.error
 from flask import get_flashed_messages
 from granary import source as gr_source
 import grpc
+from oauth_dropins import bluesky as oauth_bluesky
 from unittest.mock import ANY, patch
 from webutil.appengine_config import error_reporting_client
 from webutil.testutil import requests_response
@@ -13,6 +14,7 @@ from webutil.util import json_dumps, json_loads
 import requests
 from werkzeug.exceptions import BadRequest
 
+from bluesky import Bluesky
 from flask_app import app
 from models import Publish, PublishedPage
 import publish
@@ -1069,6 +1071,95 @@ foo<br /> <blockquote>bar</blockquote>
       'objectType': 'activity',
       'content': '<span class="p-rsvp" value="yes">yes</span>\n<a class="u-in-reply-to" href="http://fa.ke/homebrew-website-club"></a>',
     }, include_link=gr_source.INCLUDE_LINK, ignore_formatting=False)
+
+  def test_bluesky_reply_omits_non_post_at_uris(self):
+    """Bluesky.preprocess_for_publish should see expand_target_urls's output.
+
+    https://github.com/snarfed/bridgy/issues/2248
+    """
+    auth_entity = oauth_bluesky.BlueskyAuth(
+      id='did:plc:alice',
+      pds_url='https://pds.com',
+      password='password',
+      user_json=json_dumps({'handle': 'alice.com'}),
+      session={
+        'handle': 'alice.com',
+        'did': 'did:plc:alice',
+        'accessJwt': 'towkin',
+        'refreshJwt': 'reephrush',
+      },
+    )
+    auth_entity.put()
+    self.source = Bluesky.new(auth_entity=auth_entity, features=['publish'],
+                              domains=['foo.com'], domain_urls=['http://foo.com/'])
+    self.source.put()
+
+    self.mock_get.side_effect = [
+      self._get_response('http://foo.com/bar', """
+      <article class="h-entry">
+        <a class="u-url" href="http://foo.com/bar"></a>
+        <p class="e-content">A reply</p>
+        <a class="u-in-reply-to" href="http://foo.com/orig"></a>
+      </article>
+      """, backlink='<a href="http://localhost/publish/bluesky"></a>'),
+      self._get_response('http://foo.com/orig', """
+      <article class="h-entry">
+        <p class="e-content">Original post</p>
+        <a class="u-syndication" href="at://did:plc:alice/site.standard.document/123"></a>
+        <a class="u-syndication" href="at://did:plc:alice/app.bsky.feed.post/456"></a>
+      </article>
+      """),
+      requests_response({
+        'uri': 'at://did:plc:alice/app.bsky.feed.post/456',
+        'cid': 'bafyorig',
+        'value': {
+          '$type': 'app.bsky.feed.post',
+          'text': 'Original post',
+          'createdAt': '2022-01-02T03:04:05.000Z',
+        },
+      }),
+    ]
+    self.mock_post.return_value = requests_response({
+      'uri': 'at://did:plc:alice/app.bsky.feed.post/789',
+      'cid': 'bafyreply',
+    })
+
+    resp = self.get_response(target='https://brid.gy/publish/bluesky')
+    self.assertEqual(201, resp.status_code, resp.get_data(as_text=True))
+    self.assertEqual({
+      'id': 'at://did:plc:alice/app.bsky.feed.post/789',
+      'url': 'https://bsky.app/profile/alice.com/post/789',
+    }, resp.json)
+
+    self.assert_requests_get('https://pds.com/xrpc/com.atproto.repo.getRecord?repo=did%3Aplc%3Aalice&collection=app.bsky.feed.post&rkey=456')
+    parent = {
+      'uri': 'at://did:plc:alice/app.bsky.feed.post/456',
+      'cid': 'bafyorig',
+    }
+    self.assert_requests_post(
+      'https://pds.com/xrpc/com.atproto.repo.createRecord',
+      json={
+        'repo': 'did:plc:alice',
+        'collection': 'app.bsky.feed.post',
+        'record': {
+          '$type': 'app.bsky.feed.post',
+          'text': 'A reply (http://foo.com/bar)',
+          'createdAt': '2022-01-02T03:04:05.000Z',
+          'reply': {
+            '$type': 'app.bsky.feed.post#replyRef',
+            'root': parent,
+            'parent': parent,
+          },
+          'facets': [{
+            '$type': 'app.bsky.richtext.facet',
+            'features': [{
+              '$type': 'app.bsky.richtext.facet#link',
+              'uri': 'http://foo.com/bar',
+            }],
+            'index': {'byteStart': 9, 'byteEnd': 27},
+          }],
+        },
+      })
 
   def test_in_reply_to_no_target(self):
     """in-reply-to an original that does not syndicate to the silo should

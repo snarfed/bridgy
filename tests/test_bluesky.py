@@ -86,6 +86,27 @@ class BlueskyTest(testutil.AppTest):
     ]:
       self.assertEqual(expected, self.bsky.canonicalize_url(input))
 
+  def test_preprocess_for_publish_omits_non_post_at_uris(self):
+    """https://github.com/snarfed/bridgy/issues/2248"""
+    obj = {
+      'objectType': 'comment',
+      'inReplyTo': [
+        {'url': 'http://orig.domain/baz'},
+        {'url': 'at://did:plc:foo/site.standard.document/123'},
+        {'url': 'https://bsky.app/profile/foo.com/post/456'},
+        {'url': 'at://did:plc:foo/app.bsky.feed.post/456'},
+      ],
+    }
+    self.bsky.preprocess_for_publish(obj)
+    self.assertEqual({
+      'objectType': 'comment',
+      'inReplyTo': [
+        {'url': 'http://orig.domain/baz'},
+        {'url': 'https://bsky.app/profile/foo.com/post/456'},
+        {'url': 'at://did:plc:foo/app.bsky.feed.post/456'},
+      ],
+    }, obj)
+
   def test_delete(self):
     self.bsky.features = ['listen', 'publish']
     self.bsky.put()

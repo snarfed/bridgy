@@ -457,8 +457,8 @@ class PublishBase(webmention.Webmention):
     Args:
       activity (dict): ActivityStreams activity or object being published
     """
-    self.source.preprocess_for_publish(activity)
     self.expand_target_urls(activity)
+    self.source.preprocess_for_publish(activity)
 
     activity['image'] = [img for img in util.get_list(activity, 'image')
                          if not IGNORE_IMAGE_RE.match(img.get('url', ''))]
