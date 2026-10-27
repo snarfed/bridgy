@@ -53,6 +53,21 @@ class Bluesky(models.Source):
                    url=gr_bluesky.Bluesky.user_url(handle),
                    **kwargs)
 
+  def urls_and_domains(self, auth_entity, user_url, actor=None, **kwargs):
+    """Adds the handle domain as a URL, unless it's on ``bsky.social``."""
+    if not actor:
+      actor = self.gr_source.to_as1_actor(json_loads(auth_entity.user_json))
+
+    handle = actor.get('username')
+    if handle and not util.domain_or_parent_in(handle, [gr_bluesky.DEFAULT_PDS_DOMAIN]):
+      logger.info(f'Adding handle domain {handle} to URLs')
+      actor = {
+        **actor,
+        'urls': [*as1.get_objects(actor, 'urls'), {'value': f'https://{handle}/'}],
+      }
+
+    return super().urls_and_domains(auth_entity, user_url, actor=actor, **kwargs)
+
   def silo_url(self):
     """Returns the Bluesky account URL, e.g. ``https://bsky.app/profile/foo.com``."""
     # could use self.gr_source here, but that goes through heavyweight OAuth client

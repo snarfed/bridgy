@@ -63,6 +63,15 @@ class BlueskyTest(testutil.AppTest):
       'refreshJwt': 'reephrush',
     }, self.bsky.gr_source.client.session)
 
+  def test_urls_and_domains_handle_domain(self):
+    self.assertEqual(
+      (['https://alice.com/'], ['alice.com']),
+      self.bsky.urls_and_domains(None, None, actor={'username': 'alice.com'}))
+
+  def test_urls_and_domains_bsky_social_handle(self):
+    self.assertEqual(([], []), self.bsky.urls_and_domains(
+      None, None, actor={'username': 'alice.bsky.social'}))
+
   def test_format_for_source_url(self):
     self.assertEqual('at%253A%252F%252Fid', self.bsky.format_for_source_url('at://id'))
 
