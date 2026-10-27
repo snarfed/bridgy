@@ -8,6 +8,8 @@ jobs:
   build:
     docker:
       - image: cimg/python:3.14-node
+      - image: guibeira/datastore-emulator:0.1.14
+        command: ["--host-port", "0.0.0.0:8089", "--no-store-on-disk"]
 
     steps:
       - checkout
@@ -23,11 +25,8 @@ jobs:
       - run:
           name: Base dependencies
           command: |
-            # google-cloud-sdk: https://cloud.google.com/sdk/docs/install#deb
-            echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
-            curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
             sudo apt-get update
-            sudo apt-get install -y apt-transport-https automake ca-certificates gnupg google-cloud-cli google-cloud-cli-firestore-emulator openjdk-21-jre-headless libtool pkg-config
+            sudo apt-get install -y automake ca-certificates libtool pkg-config
 
       - run:
           name: Python dependencies
@@ -49,8 +48,7 @@ jobs:
       - run:
           name: Python tests
           command: |
-            CLOUDSDK_CORE_PROJECT=brid-gy gcloud emulators firestore start --host-port=:8089 --database-mode=datastore-mode < /dev/null >& /tmp/firestore-emulator.log &
-            sleep 5s
+            curl --fail --silent --show-error --retry 30 --retry-all-errors --retry-delay 1 http://localhost:8089/
             python -m coverage run --source=. --omit=admin.py,appengine_config.py,logs.py,scripts/\*,tests/\* -m unittest discover
             python -m coverage html -d /tmp/coverage_html
             if [ "$COVERALLS_REPO_TOKEN" != "" ]; then python -m coveralls || true; fi
@@ -71,12 +69,6 @@ jobs:
           paths:
             - browser-extension/node_modules
             - /home/circleci/.pyenv
-            # Ideally we'd cache these, but they need root, and the cimg/python
-            # Docker image's default user is circleci :/
-            # https://github.com/cypress-io/circleci-orb/issues/269
-            #
-            # - /usr/lib/google-cloud-sdk
-            # - /usr/lib/jvm/java-11-openjdk-amd64
 
       - store_artifacts:
           path: /tmp/coverage_html
