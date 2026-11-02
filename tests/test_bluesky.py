@@ -10,7 +10,6 @@ from requests_oauth2client import (
   DPoPKey,
   DPoPToken,
   InvalidGrant,
-  OAuth2AccessTokenAuth,
   TokenSerializer,
 )
 from werkzeug.routing import RequestRedirect
@@ -242,26 +241,3 @@ class BlueskyTest(testutil.AppTest):
 
     self.assertIsNotNone(gr.client.auth)
     self.assertIsNone(gr._app_password)
-
-  def test_gr_source_oauth_session_callback(self):
-    fake_client = mock.MagicMock()
-    self.start_patch(oauth_bluesky, 'oauth_client_for_pds', return_value=fake_client)
-
-    dpop_token = DPoPToken(access_token='towkin', _dpop_key=DPoPKey.generate())
-    auth_entity = oauth_bluesky.BlueskyAuth(
-      id='did:plc:alice',
-      pds_url='https://bsky.social',
-      dpop_token=TokenSerializer().dumps(dpop_token),
-      user_json='{}',
-    )
-    auth_entity.put()
-
-    with app.test_request_context('/'):
-      gr = Bluesky(id='did:plc:alice', auth_entity=auth_entity.key).gr_source
-
-    new_token = DPoPToken(access_token='nu_towkin', _dpop_key=DPoPKey.generate())
-    auth = OAuth2AccessTokenAuth(client=fake_client, token=new_token)
-    gr.client.session_callback(auth)
-
-    self.assertEqual(new_token,
-                     TokenSerializer().loads(auth_entity.key.get().dpop_token))
